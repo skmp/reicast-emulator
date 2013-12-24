@@ -163,7 +163,22 @@ public class FileBrowser extends Fragment {
 									// current activity
 									parentActivity.finish();
 								}
-							});
+							})
+			.setNegativeButton("Settings",
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog,
+								int id) {
+							OptionsFragment optsFrag = (OptionsFragment)getActivity().getSupportFragmentManager().findFragmentByTag("OPTIONS_FRAG");
+                			if(optsFrag != null){
+	                			if(optsFrag.isVisible()){
+	                				return;	                				
+	                			}
+                			}
+                			optsFrag = new OptionsFragment();
+                			getActivity().getSupportFragmentManager().beginTransaction()
+            				.replace(R.id.fragment_container,optsFrag, "OPTIONS_FRAG").addToBackStack(null).commit();
+						}
+					});
 
 			// create alert dialog
 			AlertDialog alertDialog = alertDialogBuilder.create();

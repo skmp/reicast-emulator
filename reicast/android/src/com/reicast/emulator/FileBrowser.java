@@ -25,6 +25,7 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Vibrator;
@@ -72,12 +73,16 @@ public class FileBrowser extends Fragment {
 		if (b != null) {
 			ImgBrowse = b.getBoolean("ImgBrowse", true);
 			if (games = b.getBoolean("games_entry", false)) {
-				if (b.getString("path_entry", null) != null) {
-					home_directory = b.getString("path_entry");
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
+					if (b.getString("path_entry", null) != null) {
+						home_directory = b.getString("path_entry");
+					}
 				}
 			} else {
-				if (b.getString("path_entry", null) != null) {
-					game_directory = b.getString("path_entry");
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
+					if (b.getString("path_entry", null) != null) {
+						game_directory = b.getString("path_entry");
+					}
 				}
 			}
 		}
@@ -530,7 +535,7 @@ public class FileBrowser extends Fragment {
 										.fromFile(new File(root_sd
 												.getAbsolutePath())));
 								vib.vibrate(250);
-								
+
 								if (games) {
 									game_directory = root_sd.getAbsolutePath();
 									mPrefs.edit()
@@ -541,8 +546,8 @@ public class FileBrowser extends Fragment {
 									mPrefs.edit()
 											.putString("home_directory",
 													home_directory).commit();
-									File data_directory = new File(home_directory,
-											"data");
+									File data_directory = new File(
+											home_directory, "data");
 									if (!data_directory.exists()
 											|| !data_directory.isDirectory()) {
 										data_directory.mkdirs();

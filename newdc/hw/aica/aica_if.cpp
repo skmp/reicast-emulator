@@ -1,6 +1,7 @@
 /*
 	aica interface
-		Handles RTC, Display mode reg && arm reset reg !
+		Handles RTC, Display mode reg && arm reset reg!
+
 	arm7 is handled on a separate arm plugin now
 */
 #include "types.h"
@@ -180,14 +181,14 @@ void aica_Term()
 
 void Write_SB_ADST(u32 addr, u32 data)
 {
-	//0x005F7800	SB_ADSTAG	RW	AICA:G2-DMA G2 start address 
-	//0x005F7804	SB_ADSTAR	RW	AICA:G2-DMA system memory start address 
-	//0x005F7808	SB_ADLEN	RW	AICA:G2-DMA length 
-	//0x005F780C	SB_ADDIR	RW	AICA:G2-DMA direction 
-	//0x005F7810	SB_ADTSEL	RW	AICA:G2-DMA trigger select 
-	//0x005F7814	SB_ADEN	RW	AICA:G2-DMA enable 
-	//0x005F7818	SB_ADST	RW	AICA:G2-DMA start 
-	//0x005F781C	SB_ADSUSP	RW	AICA:G2-DMA suspend 
+	//0x005F7800    SB_ADSTAG    RW    AICA:G2-DMA G2 start address 
+	//0x005F7804    SB_ADSTAR    RW    AICA:G2-DMA system memory start address 
+	//0x005F7808    SB_ADLEN     RW    AICA:G2-DMA length 
+	//0x005F780C    SB_ADDIR     RW    AICA:G2-DMA direction 
+	//0x005F7810    SB_ADTSEL    RW    AICA:G2-DMA trigger select 
+	//0x005F7814    SB_ADEN      RW    AICA:G2-DMA enable 
+	//0x005F7818    SB_ADST      RW    AICA:G2-DMA start 
+	//0x005F781C    SB_ADSUSP    RW    AICA:G2-DMA suspend 
 	
 	if (data&1)
 	{
@@ -232,14 +233,14 @@ void Write_SB_ADST(u32 addr, u32 data)
 
 void Write_SB_E1ST(u32 addr, u32 data)
 {
-	//0x005F7800	SB_ADSTAG	RW	AICA:G2-DMA G2 start address 
-	//0x005F7804	SB_ADSTAR	RW	AICA:G2-DMA system memory start address 
-	//0x005F7808	SB_ADLEN	RW	AICA:G2-DMA length 
-	//0x005F780C	SB_ADDIR	RW	AICA:G2-DMA direction 
-	//0x005F7810	SB_ADTSEL	RW	AICA:G2-DMA trigger select 
-	//0x005F7814	SB_ADEN	RW	AICA:G2-DMA enable 
-	//0x005F7818	SB_ADST	RW	AICA:G2-DMA start 
-	//0x005F781C	SB_ADSUSP	RW	AICA:G2-DMA suspend 
+	//0x005F7800    SB_ADSTAG   RW    AICA:G2-DMA G2 start address 
+	//0x005F7804    SB_ADSTAR   RW    AICA:G2-DMA system memory start address 
+	//0x005F7808    SB_ADLEN    RW    AICA:G2-DMA length 
+	//0x005F780C    SB_ADDIR    RW    AICA:G2-DMA direction 
+	//0x005F7810    SB_ADTSEL   RW    AICA:G2-DMA trigger select 
+	//0x005F7814    SB_ADEN     RW    AICA:G2-DMA enable 
+	//0x005F7818    SB_ADST     RW    AICA:G2-DMA start 
+	//0x005F781C    SB_ADSUSP   RW    AICA:G2-DMA suspend 
 	
 	if (data&1)
 	{

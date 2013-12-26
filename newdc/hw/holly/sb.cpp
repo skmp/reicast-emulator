@@ -28,27 +28,27 @@ Array<RegisterStruct> sb_regs(0x540);
 
 u32 SB_ISTNRM;
 
-u32 sb_ReadMem(u32 addr,u32 sz)
+u32 sb_ReadMem(u32 addr, u32 size)
 {
 	u32 offset = addr-SB_BASE;
 #ifdef TRACE
 	if (offset & 3/*(size-1)*/) //4 is min align size
 	{
-		EMUERROR("Unaligned System Bus register read");
+		EMUERROR("Unaligned system bus register read");
 	}
 #endif
 
 	offset>>=2;
 
 #ifdef TRACE
-	if (sb_regs[offset].flags & sz)
+	if (sb_regs[offset].flags & size)
 	{
 #endif
 		if (!(sb_regs[offset].flags & REG_RF) )
 		{
-			if (sz==4)
+			if (size == 4)
 				return sb_regs[offset].data32;
-			else if (sz==2)
+			else if (size == 2)
 				return sb_regs[offset].data16;
 			else
 				return sb_regs[offset].data8;
@@ -63,33 +63,33 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 	else
 	{
 		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR("ERROR [wrong size read on register]");
+			EMUERROR("ERROR: Wrong size read on register");
 	}
 #endif
 //  if ((sb_regs[offset].flags& REG_NOT_IMPL))
-//      EMUERROR2("Read from System Control Regs , not  implemented , addr=%x",addr);
+//      EMUERROR2("Read from System Control Regs not implemented - addr=%x",addr);
 	return 0;
 }
 
-void sb_WriteMem(u32 addr,u32 data,u32 sz)
+void sb_WriteMem(u32 addr, u32 data, u32 size)
 {
 	u32 offset = addr-SB_BASE;
 #ifdef TRACE
 	if (offset & 3/*(size-1)*/) //4 is min align size
 	{
-		EMUERROR("Unaligned System bus register write");
+		EMUERROR("Unaligned system bus register write");
 	}
 #endif
 offset>>=2;
 #ifdef TRACE
-	if (sb_regs[offset].flags & sz)
+	if (sb_regs[offset].flags & size)
 	{
 #endif
 		if (!(sb_regs[offset].flags & REG_WF) )
 		{
-			if (sz==4)
+			if (size == 4)
 				sb_regs[offset].data32=data;
-			else if (sz==2)
+			else if (size == 2)
 				sb_regs[offset].data16=(u16)data;
 			else
 				sb_regs[offset].data8=(u8)data;
@@ -97,11 +97,11 @@ offset>>=2;
 		}
 		else
 		{
-			//printf("SBW: %08X\n",addr);
+			//printf("SBW: %08X\n", addr);
 			sb_regs[offset].writeFunctionAddr(addr,data);
 			/*
 			if (sb_regs[offset].flags & REG_CONST)
-				EMUERROR("Error [Write to read only register , const]");
+				EMUERROR("Error: Write to read-only const register");
 			else
 			{
 				if ()
@@ -112,7 +112,7 @@ offset>>=2;
 				else
 				{
 					if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-						EMUERROR("ERROR [Write to read only register]");
+						EMUERROR("ERROR: Write to read-only register");
 				}
 			}*/
 			return;
@@ -122,10 +122,10 @@ offset>>=2;
 	else
 	{
 		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR4("ERROR :wrong size write on register ; offset=%x , data=%x,sz=%d",offset,data,sz);
+			EMUERROR4("ERROR: Wrong size write on register - offset=%x, data=%x, size=%d", offset, data, size);
 	}
 	if ((sb_regs[offset].flags& REG_NOT_IMPL))
-		EMUERROR3("Write to System Control Regs , not  implemented , addr=%x,data=%x",addr,data);
+		EMUERROR3("Write to system control registers not implemented - addr=%x, data=%x", addr, data);
 #endif
 
 }

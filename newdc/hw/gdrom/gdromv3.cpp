@@ -718,13 +718,13 @@ void gd_process_spi_cmd()
 			{
 				cdda.StartAddr.FAD=cdda.CurrAddr.FAD=GetFAD(&packet_cmd.data_8[2],0);
 				cdda.EndAddr.FAD=GetFAD(&packet_cmd.data_8[8],0);
-				GDStatus.DSC=1;	//we did the seek xD lol
+				GDStatus.DSC=1; //we did the seek xD lol
 			}
 			else if (param_type==2)
 			{
 				cdda.StartAddr.FAD=cdda.CurrAddr.FAD=GetFAD(&packet_cmd.data_8[2],1);
 				cdda.EndAddr.FAD=GetFAD(&packet_cmd.data_8[8],1);
-				GDStatus.DSC=1;	//we did the seek xD lol
+				GDStatus.DSC=1; //we did the seek xD lol
 			}
 			else if (param_type==7)
 			{
@@ -854,7 +854,7 @@ void gd_process_spi_cmd()
 				subc_info[3]=0xE;
 				//4 Control ADR
 				subc_info[4]=(4<<4) | (1); //Audio :p
-				//5-13	DATA-Q
+				//5-13  DATA-Q
 				u8* data_q=&subc_info[5-1];
 				//-When ADR = 1
 				//Byte Description
@@ -889,13 +889,13 @@ void gd_process_spi_cmd()
 	}
 }
 //Read handler
-u32 ReadMem_gdrom(u32 Addr, u32 sz)
-{	
-	switch (Addr)
+u32 ReadMem_gdrom(u32 addr, u32 size)
+{
+	switch (addr)
 	{
 		//cancel interrupt
 	case GD_STATUS_Read :
-		asic_CancelInterrupt(holly_GDROM_CMD);	//Clear INTRQ signal
+		asic_CancelInterrupt(holly_GDROM_CMD); //Clear INTRQ signal
 		printf_rm("GDROM: STATUS [cancel int](v=%X)\n",GDStatus.full);
 		return GDStatus.full | (1<<4);
 
@@ -903,16 +903,16 @@ u32 ReadMem_gdrom(u32 Addr, u32 sz)
 		printf_rm("GDROM: Read From AltStatus (v=%X)\n",GDStatus.full);
 		return GDStatus.full | (1<<4);
 
-	case GD_BYCTLLO	:
+	case GD_BYCTLLO:
 		printf_rm("GDROM: Read From GD_BYCTLLO\n");
 		return ByteCount.low;
 
-	case GD_BYCTLHI	:
+	case GD_BYCTLHI:
 		printf_rm("GDROM: Read From GD_BYCTLHI\n");
 		return ByteCount.hi;
 
 	case GD_DATA:
-		if(2!=sz)
+		if(size != 2)
 			printf("GDROM: Bad size on DATA REG Read\n");
 
 		if (gd_state == gds_pio_send_data)
@@ -958,30 +958,31 @@ u32 ReadMem_gdrom(u32 Addr, u32 sz)
 		return SecNumber.full;
 
 	default:
-		printf("GDROM: Unhandled read from address %X, Size:%X\n",Addr,sz);
+		printf("GDROM: Unhandled read from address %X, Size:%X\n", addr, size);
 		return 0;
 	}
 }
 
 //Write Handler
-void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
+void WriteMem_gdrom(u32 addr, u32 data, u32 size)
 {
-	switch(Addr)
+	switch(addr)
 	{
 	case GD_BYCTLLO:
-		printf_rm("GDROM: Write to GD_BYCTLLO = %X, Size:%X\n",data,sz);
+		printf_rm("GDROM: Write to GD_BYCTLLO = %X, Size:%X\n", data, size);
 		ByteCount.low =(u8) data;
 		break;
 
 	case GD_BYCTLHI: 
-		printf_rm("GDROM: Write to GD_BYCTLHI = %X, Size:%X\n",data,sz);
+		printf_rm("GDROM: Write to GD_BYCTLHI = %X, Size:%X\n", data, size);
 		ByteCount.hi =(u8) data;
 		break;
 
 	case GD_DATA: 
 		{
-			if(2!=sz)
+			if(size != 2)
 				printf("GDROM: Bad size on DATA REG\n");
+
 			if (gd_state == gds_waitpacket)
 			{
 				packet_cmd.data_16[packet_cmd.index]=(u16)data;
@@ -1034,7 +1035,7 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 		break;
 
 	case GD_COMMAND_Write:
-		verify(sz==1);
+		verify(size == 1);
 		if ((data !=ATA_NOP) && (data != ATA_SOFT_RESET))
 			verify(gd_state==gds_waitcmd);
 		//printf("\nGDROM:\tCOMMAND: %X !\n", data);
@@ -1043,7 +1044,7 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 		break;
 
 	default:
-		printf("\nGDROM:\tUnhandled write to address %X <= %X, Size:%X\n",Addr,data,sz);
+		printf("\nGDROM:\tUnhandled write to address %X <= %X, Size:%X\n", addr, data, size);
 		break;
 	}
 }

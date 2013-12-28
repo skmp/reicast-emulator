@@ -8,8 +8,8 @@ void gdrom_reg_Init();
 void gdrom_reg_Term();
 void gdrom_reg_Reset(bool Manual);
 
-u32 ReadMem_gdrom(u32 Addr, u32 sz);
-void WriteMem_gdrom(u32 Addr, u32 data, u32 sz);
+u32 ReadMem_gdrom(u32 addr, u32 size);
+void WriteMem_gdrom(u32 addr, u32 data, u32 size);
 
 //Structs & unions
 struct SpiCommandInfo
@@ -28,14 +28,14 @@ struct GD_StatusT
 	{
 		struct 
 		{
-			u32 CHECK:1;    //Bit 0 (CHECK) : Becomes "1" when an error has occurred during execution of the command the previous time.
-			u32 res :1;     //Bit 1         : Reserved
-			u32 CORR:1;     //Bit 2 (CORR)  : Indicates that a correctable error has occurred. 
-			u32 DRQ:1;      //Bit 3 (DRQ)   : Becomes "1" when preparations for data transfer between drive and host are completed. Information held in the Interrupt Reason Register becomes valid in the packet command when DRQ is set.
-			u32 DSC:1;      //Bit 4 (DSC)   : Becomes "1" when seek processing is completed. 
-			u32 DF:1;       //Bit 5 (DF)    : Returns drive fault information. 
-			u32 DRDY:1;     //Bit 6 (DRDY)  : Set to "1" when the drive is able to respond to an ATA command. 
-			u32 BSY:1;      //Bit 7 (BSY)   : BSY is always set to "1" when the drive accesses the command block. 
+			u32 CHECK : 1;    //Bit 0 (CHECK) : Becomes "1" when an error has occurred during execution of the command the previous time.
+			u32 res   : 1;    //Bit 1         : Reserved
+			u32 CORR  : 1;    //Bit 2 (CORR)  : Indicates that a correctable error has occurred. 
+			u32 DRQ   : 1;    //Bit 3 (DRQ)   : Becomes "1" when preparations for data transfer between drive and host are completed. Information held in the Interrupt Reason Register becomes valid in the packet command when DRQ is set.
+			u32 DSC   : 1;    //Bit 4 (DSC)   : Becomes "1" when seek processing is completed. 
+			u32 DF    : 1;    //Bit 5 (DF)    : Returns drive fault information. 
+			u32 DRDY  : 1;    //Bit 6 (DRDY)  : Set to "1" when the drive is able to respond to an ATA command. 
+			u32 BSY   : 1;    //Bit 7 (BSY)   : BSY is always set to "1" when the drive accesses the command block. 
 		};
 		u8 full;
 	};
@@ -47,11 +47,11 @@ struct GD_ErrRegT
 	{
 		struct
 		{
-			u32 ILI:1;  //Bit 0 (ILI) : Command length is not correct (option). 
-			u32 EOM:1;  //Bit 1 (EOM) : Media end was detected (option). 
-			u32 ABRT:1; //Bit 2 (ABRT): Drive is not ready and command was made invalid (ATA level).
-			u32 MCR:1;  //Bit 3 (MCR) : Media change was requested and media have been ejected (ATA level). 
-			u32 Sense:4;//Bits 7 - 4  : Sense key. For details, refer to the Table 3.2. The Sense Key is only reflected in the SPI command mode, the same is true for ASC (Additional Sense Code), ASCQ (Additional Sense Code Qualifier). 
+			u32 ILI   : 1; //Bit 0 (ILI) : Command length is not correct (option). 
+			u32 EOM   : 1; //Bit 1 (EOM) : Media end was detected (option). 
+			u32 ABRT  : 1; //Bit 2 (ABRT): Drive is not ready and command was made invalid (ATA level).
+			u32 MCR   : 1; //Bit 3 (MCR) : Media change was requested and media have been ejected (ATA level). 
+			u32 Sense : 4; //Bits 7 - 4  : Sense key. For details, refer to the Table 3.2. The Sense Key is only reflected in the SPI command mode, the same is true for ASC (Additional Sense Code), ASCQ (Additional Sense Code Qualifier). 
 		};
 		u8 full;
 	};
@@ -64,13 +64,13 @@ struct GD_FeaturesT
 	{
 		struct 
 		{
-			u32 DMA:1;//Bit 0 (DMA): Send data for command in DMA mode. 
-			u32 res :7;//not used
+			u32 DMA : 1; //Bit 0 (DMA): Send data for command in DMA mode. 
+			u32 res : 7; //Not used
 		}CDRead;
 		struct 
 		{
-			u32 FeatureNumber:7;//Bit 6 - 0 (Feature Number): Set transfer mode by setting to 3. 
-			u32 Value :1;//not used
+			u32 FeatureNumber : 7;//Bit 6 - 0 (Feature Number): Set transfer mode by setting to 3. 
+			u32 Value         : 1;//Not used
 		}SetFeature;
 
 		u8 full;
@@ -83,9 +83,9 @@ struct GD_InterruptReasonT
 	{
 		struct
 		{
-			u32 CoD:1; //Bit 0 (CoD) : "0" indicates data and "1" indicates a command. 
-			u32 IO:1;  //Bit 1 (IO)  : "1" indicates transfer from device to host, and "0" from host to device.
-			u32 res :6;//not used
+			u32 CoD : 1; //Bit 0 (CoD) : "0" indicates data and "1" indicates a command. 
+			u32 IO  : 1; //Bit 1 (IO)  : "1" indicates transfer from device to host, and "0" from host to device.
+			u32 res : 6; //Not used
 		};
 		u8 full;
 	};
@@ -96,8 +96,8 @@ struct GD_SecCountT
 	{
 		struct
 		{
-			u32 ModeVal:4;//Mode Value
-			u32 TransMode:4;//Transfer Mode
+			u32 ModeVal   : 4; //Mode Value
+			u32 TransMode : 4; //Transfer Mode
 		};
 		u8 full;
 	};
@@ -108,8 +108,8 @@ struct GD_SecNumbT
 	{
 		struct
 		{
-			u32 Status:4;//Unit Status
-			u32 DiscFormat:4;//DiskFormat
+			u32 Status     : 4; //Unit Status
+			u32 DiscFormat : 4; //DiskFormat
 		};
 		u8 full;
 	};

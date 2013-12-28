@@ -14,8 +14,8 @@ union fp_22_10
 {
 	struct
 	{
-		u32 fp:10;
-		u32 ip:22;
+		u32 fp : 10;
+		u32 ip : 22;
 	};
 	u32 full;
 };
@@ -23,8 +23,8 @@ union fp_s_22_10
 {
 	struct
 	{
-		u32 fp:10;
-		s32 ip:22;
+		u32 fp : 10;
+		s32 ip : 22;
 	};
 	s32 full;
 };
@@ -32,8 +32,8 @@ union fp_20_12
 {
 	struct
 	{
-		u32 fp:12;
-		u32 ip:20;
+		u32 fp : 12;
+		u32 ip : 20;
 	};
 	u32 full;
 };

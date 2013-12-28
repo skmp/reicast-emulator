@@ -7,8 +7,8 @@
 
 
 
-u32 sb_ReadMem(u32 addr,u32 sz);
-void sb_WriteMem(u32 addr,u32 data,u32 sz);
+u32 sb_ReadMem(u32 addr, u32 size);
+void sb_WriteMem(u32 addr, u32 data, u32 size);
 void sb_Init();
 void sb_Reset(bool Manual);
 void sb_Term();

@@ -87,9 +87,12 @@ public class MainActivity extends FragmentActivity implements
 				// Config
 							navDrawerItems.add(new NavDrawerItem(navMenuTitles[2], navMenuIcons
 									.getResourceId(2, -1)));
+				// Controllers
+							navDrawerItems.add(new NavDrawerItem(navMenuTitles[3], navMenuIcons
+									.getResourceId(3, -1)));
 				// About
-				navDrawerItems.add(new NavDrawerItem(navMenuTitles[3], navMenuIcons
-						.getResourceId(3, -1)));
+				navDrawerItems.add(new NavDrawerItem(navMenuTitles[4], navMenuIcons
+						.getResourceId(4, -1)));
 
 				// Recycle the typed array
 				navMenuIcons.recycle();
@@ -341,6 +344,17 @@ public class MainActivity extends FragmentActivity implements
 			frag_tag = "CONFIG_FRAG";
 			break;
 		case 3:
+			fragment = (ControllersFragment) getSupportFragmentManager()
+					.findFragmentByTag("CONTROLLERS_FRAG");
+			if (fragment != null) {
+				if (fragment.isVisible()) {
+					return;
+				}
+			}
+			fragment = new ControllersFragment();
+			frag_tag = "CONTROLLERS_FRAG";
+			break;
+		case 4:
 			fragment = null;
 			// vib.vibrate(50);
 			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(

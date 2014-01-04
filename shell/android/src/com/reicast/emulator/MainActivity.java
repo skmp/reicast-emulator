@@ -159,18 +159,18 @@ public class MainActivity extends FragmentActivity implements
 
 			findViewById(R.id.config).setOnClickListener(new OnClickListener() {
 				public void onClick(View view) {
-					OptionsFragment optsFrag = (OptionsFragment) getSupportFragmentManager()
-							.findFragmentByTag("OPTIONS_FRAG");
-					if (optsFrag != null) {
-						if (optsFrag.isVisible()) {
+					ConfigureFragment configFrag = (ConfigureFragment) getSupportFragmentManager()
+							.findFragmentByTag("CONFIG_FRAG");
+					if (configFrag != null) {
+						if (configFrag.isVisible()) {
 							return;
 						}
 					}
-					optsFrag = new OptionsFragment();
+					configFrag = new ConfigureFragment();
 					getSupportFragmentManager()
 							.beginTransaction()
-							.replace(R.id.fragment_container, optsFrag,
-									"OPTIONS_FRAG").addToBackStack(null)
+							.replace(R.id.fragment_container, configFrag,
+									"CONFIG_FRAG").addToBackStack(null)
 							.commit();
 					/*
 					 * AlertDialog.Builder alertDialogBuilder = new
@@ -319,17 +319,6 @@ public class MainActivity extends FragmentActivity implements
 			frag_tag = "MAIN_BROWSER";
 			break;
 		case 1:
-			fragment = (OptionsFragment) getSupportFragmentManager()
-					.findFragmentByTag("OPTIONS_FRAG");
-			if (fragment != null) {
-				if (fragment.isVisible()) {
-					return;
-				}
-			}
-			fragment = new OptionsFragment();
-			frag_tag = "OPTIONS_FRAG";
-			break;
-		case 2:
 			fragment = (ConfigureFragment) getSupportFragmentManager()
 					.findFragmentByTag("CONFIG_FRAG");
 			if (fragment != null) {
@@ -339,6 +328,17 @@ public class MainActivity extends FragmentActivity implements
 			}
 			fragment = new ConfigureFragment();
 			frag_tag = "CONFIG_FRAG";
+			break;
+		case 2:
+			fragment = (OptionsFragment) getSupportFragmentManager()
+					.findFragmentByTag("OPTIONS_FRAG");
+			if (fragment != null) {
+				if (fragment.isVisible()) {
+					return;
+				}
+			}
+			fragment = new OptionsFragment();
+			frag_tag = "OPTIONS_FRAG";
 			break;
 		case 3:
 			fragment = null;

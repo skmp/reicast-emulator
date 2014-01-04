@@ -137,7 +137,7 @@ public class ConfigureFragment extends Fragment {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
 			Switch dynarec_opt = (Switch) getView().findViewById(
 					R.id.dynarec_option);
-			boolean dynarec = mPrefs.getBoolean("unstable_opt", dynarecopt);
+			boolean dynarec = mPrefs.getBoolean("dynarec_opt", dynarecopt);
 			if (dynarec) {
 				dynarec_opt.setChecked(true);
 			} else {
@@ -147,7 +147,7 @@ public class ConfigureFragment extends Fragment {
 		} else {
 			CheckBox dynarec_opt = (CheckBox) getView().findViewById(
 					R.id.dynarec_option);
-			boolean dynarec = mPrefs.getBoolean("unstable_opt", dynarecopt);
+			boolean dynarec = mPrefs.getBoolean("dynarec_opt", dynarecopt);
 			if (dynarec) {
 				dynarec_opt.setChecked(true);
 			} else {

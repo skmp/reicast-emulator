@@ -38,7 +38,7 @@
             android:layout_marginTop="2dp"
             android:scaleType="fitCenter"
             android:src="@drawable/open_folder" />
-        
+
         <ImageView
             android:id="@+id/config"
             android:layout_width="48dp"
@@ -60,5 +60,10 @@
             android:scaleType="fitCenter"
             android:src="@drawable/question" />
     </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </LinearLayout>

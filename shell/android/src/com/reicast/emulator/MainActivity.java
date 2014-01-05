@@ -57,6 +57,10 @@ public class MainActivity extends FragmentActivity implements
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.mainuilayout_fragment);
+		
+		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+		home_directory = mPrefs.getString("home_directory", home_directory);
+		JNIdc.config(home_directory);
 
 		// Check that the activity is using the layout version with
 		// the fragment_container FrameLayout
@@ -252,10 +256,6 @@ public class MainActivity extends FragmentActivity implements
 				}
 			});
 		}
-
-		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-		home_directory = mPrefs.getString("home_directory", home_directory);
-		JNIdc.config(home_directory);
 
 	}
 

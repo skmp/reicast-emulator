@@ -1,36 +1,27 @@
 package com.reicast.emulator;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 import tv.ouya.console.api.OuyaController;
-
-import com.reicast.emulator.GL2JNIView.EmuThread;
-
-import android.view.InputDevice;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Intent;
+import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.Window;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
+import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.Toast;
-import android.net.Uri;
-import android.content.Intent;
-import android.content.res.AssetFileDescriptor;
-import android.content.res.AssetManager;
-import android.content.res.Configuration;
-import android.content.res.Resources;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class GL2JNIActivity extends Activity {
@@ -254,7 +245,7 @@ public class GL2JNIActivity extends Activity {
 			float L2 = event.getAxisValue(OuyaController.AXIS_L2);
 			float R2 = event.getAxisValue(OuyaController.AXIS_R2);
 
-			if (xbox) {
+			if (xbox || nVidia) {
 				previousLS_X = globalLS_X;
 				previousLS_Y = globalLS_Y;
 				globalLS_X = LS_X;
@@ -270,7 +261,7 @@ public class GL2JNIActivity extends Activity {
 		
 		}
 		
-		if (xbox && globalLS_X == previousLS_X && globalLS_Y == previousLS_Y)
+		if ((xbox || nVidia) && globalLS_X == previousLS_X && globalLS_Y == previousLS_Y)
 			// Only handle Left Stick on an Xbox 360 controller if there was some actual motion on the stick,
 			// so otherwise the event can be handled as a DPAD event
 			return false;

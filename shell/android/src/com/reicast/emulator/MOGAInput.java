@@ -3,20 +3,9 @@ package com.reicast.emulator;
 
 /******************************************************************************/
 
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
 import android.app.Activity;
-import android.os.Bundle;
 import android.os.Handler;
-import android.os.SystemClock;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.TableLayout;
-import android.widget.TextView;
 import android.widget.Toast;
-
-import android.util.Log;
 
 import com.bda.controller.Controller;
 import com.bda.controller.ControllerListener;
@@ -193,7 +182,7 @@ public class MOGAInput
 		{
 			JNIdc.hide_osd();
 
-			if (event.getState() == ACTION_CONNECTED) {
+			if (event.getState() == StateEvent.STATE_CONNECTION && event.getAction() == ACTION_CONNECTED) {
         		Toast.makeText(act.getApplicationContext(), "MOGA Connected!", Toast.LENGTH_SHORT).show();
         		isActive = true;
 			}

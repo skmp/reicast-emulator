@@ -152,85 +152,12 @@ public class FileBrowser extends Fragment {
 		if (!home.exists() || !home.isDirectory()) {
 			Toast.makeText(getActivity(), "Please configure a home directory",
 					Toast.LENGTH_LONG).show();
-			OptionsFragment optsFrag = (OptionsFragment) getActivity()
-					.getSupportFragmentManager().findFragmentByTag(
-							"OPTIONS_FRAG");
-			if (optsFrag != null) {
-				if (optsFrag.isVisible()) {
-					return;
-				}
-			}
-			optsFrag = new OptionsFragment();
-			getActivity().getSupportFragmentManager().beginTransaction()
-					.replace(R.id.fragment_container, optsFrag, "OPTIONS_FRAG")
-					.addToBackStack(null).commit();
 		}
 
 		if (!ImgBrowse) {
 			navigate(sdcard);
 		} else {
 			generate(ExternalFiles(new File(game_directory)));
-		}
-
-		File bios = new File(home_directory, "data/dc_boot.bin");
-		File flash = new File(home_directory, "data/dc_flash.bin");
-
-		String msg = null;
-		if (!bios.exists())
-			msg = "BIOS Missing. The Dreamcast BIOS is required for this emulator to work. Place the BIOS file in "
-					+ home_directory + "/data/dc_boot.bin";
-		else if (!flash.exists())
-			msg = "Flash Missing. The Dreamcast Flash is required for this emulator to work. Place the Flash file in "
-					+ home_directory + "/data/dc_flash.bin";
-
-		if (msg != null) {
-			vib.vibrate(50);
-			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-					parentActivity);
-
-			// set title
-			alertDialogBuilder.setTitle("You have to provide the BIOS");
-
-			// set dialog message
-			alertDialogBuilder
-					.setMessage(msg)
-					.setCancelable(false)
-					.setPositiveButton("Dismiss",
-							new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog,
-										int id) {
-									// if this button is clicked, close
-									// current activity
-									parentActivity.finish();
-								}
-							})
-					.setNegativeButton("Options",
-							new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog,
-										int id) {
-									OptionsFragment optsFrag = (OptionsFragment) getActivity()
-											.getSupportFragmentManager()
-											.findFragmentByTag("OPTIONS_FRAG");
-									if (optsFrag != null) {
-										if (optsFrag.isVisible()) {
-											return;
-										}
-									}
-									optsFrag = new OptionsFragment();
-									getActivity()
-											.getSupportFragmentManager()
-											.beginTransaction()
-											.replace(R.id.fragment_container,
-													optsFrag, "OPTIONS_FRAG")
-											.addToBackStack(null).commit();
-								}
-							});
-
-			// create alert dialog
-			AlertDialog alertDialog = alertDialogBuilder.create();
-
-			// show it
-			alertDialog.show();
 		}
 	}
 

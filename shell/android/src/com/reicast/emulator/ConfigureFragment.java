@@ -18,13 +18,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.Spinner;
-import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
@@ -398,32 +393,6 @@ public class ConfigureFragment extends Fragment {
 			}
 			pvr_render.setOnCheckedChangeListener(pvr_rendering);
 		}*/
-		
-		// Add a compatibility button to access paths when menus unavailable
-		
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB_MR1) {
-			Button options_frag = new Button(parentActivity);
-			options_frag.setText("Path Locations");
-			options_frag.setOnClickListener(new View.OnClickListener() {
-				public void onClick(View view) {
-					OptionsFragment optsFrag = (OptionsFragment) getActivity()
-							.getSupportFragmentManager().findFragmentByTag(
-									"OPTIONS_FRAG");
-					if (optsFrag != null) {
-						if (optsFrag.isVisible()) {
-							return;
-						}
-					}
-					optsFrag = new OptionsFragment();
-					getActivity()
-							.getSupportFragmentManager()
-							.beginTransaction()
-							.replace(R.id.fragment_container, optsFrag,
-									"OPTIONS_FRAG").addToBackStack(null)
-							.commit();
-				}
-			});
-		}
 	}
 
 	private boolean executeAppendConfig(String identifier, String value) {

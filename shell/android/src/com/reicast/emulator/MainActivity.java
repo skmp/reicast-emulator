@@ -27,7 +27,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.AdapterView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 
 public class MainActivity extends FragmentActivity implements
@@ -160,20 +159,20 @@ public class MainActivity extends FragmentActivity implements
 			// }
 		} else {
 
-			findViewById(R.id.config).setOnClickListener(new OnClickListener() {
+			findViewById(R.id.options).setOnClickListener(new OnClickListener() {
 				public void onClick(View view) {
-					ConfigureFragment configFrag = (ConfigureFragment) getSupportFragmentManager()
-							.findFragmentByTag("CONFIG_FRAG");
-					if (configFrag != null) {
-						if (configFrag.isVisible()) {
+					OptionsFragment optionsFrag = (OptionsFragment) getSupportFragmentManager()
+							.findFragmentByTag("OPTIONS_FRAG");
+					if (optionsFrag != null) {
+						if (optionsFrag.isVisible()) {
 							return;
 						}
 					}
-					configFrag = new ConfigureFragment();
+					optionsFrag = new OptionsFragment();
 					getSupportFragmentManager()
 							.beginTransaction()
-							.replace(R.id.fragment_container, configFrag,
-									"CONFIG_FRAG").addToBackStack(null)
+							.replace(R.id.fragment_container, optionsFrag,
+									"OPTIONS_FRAG").addToBackStack(null)
 							.commit();
 					/*
 					 * AlertDialog.Builder alertDialogBuilder = new
@@ -193,6 +192,25 @@ public class MainActivity extends FragmentActivity implements
 					 * 
 					 * // show it alertDialog.show();
 					 */
+				}
+
+			});
+			
+			findViewById(R.id.config).setOnClickListener(new OnClickListener() {
+				public void onClick(View view) {
+					ConfigureFragment configFrag = (ConfigureFragment) getSupportFragmentManager()
+							.findFragmentByTag("CONFIG_FRAG");
+					if (configFrag != null) {
+						if (configFrag.isVisible()) {
+							return;
+						}
+					}
+					configFrag = new ConfigureFragment();
+					getSupportFragmentManager()
+							.beginTransaction()
+							.replace(R.id.fragment_container, configFrag,
+									"CONFIG_FRAG").addToBackStack(null)
+							.commit();
 				}
 
 			});

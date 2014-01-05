@@ -45,11 +45,11 @@
     </string-array>
 
     <!-- Nav Drawer List Item Icons -->
-    <!-- Keep them in order as the titles are in -->
+    <!-- Matched to Nav Drawer Menu Items -->
     <array name="nav_drawer_icons">
         <item>@drawable/disk_unknown</item>
         <item>@drawable/config</item>
-        <item>@drawable/config</item>
+        <item>@drawable/open_folder</item>
         <item>@drawable/question</item>
     </array>
 

@@ -62,72 +62,6 @@ public class MainActivity extends FragmentActivity implements
 		// Check that the activity is using the layout version with
 		// the fragment_container FrameLayout
 		if (findViewById(R.id.fragment_container) != null) {
-			
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
-
-				navMenuTitles = getResources().getStringArray(
-						R.array.nav_drawer_items);
-
-				// nav drawer icons from resources
-				navMenuIcons = getResources().obtainTypedArray(
-						R.array.nav_drawer_icons);
-
-				mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-				mDrawerList = (ListView) findViewById(R.id.list_slidermenu);
-
-				navDrawerItems = new ArrayList<NavDrawerItem>();
-
-				// adding nav drawer items to array
-				// Browser
-				navDrawerItems.add(new NavDrawerItem(navMenuTitles[0], navMenuIcons
-						.getResourceId(0, -1)));
-				// Options
-				navDrawerItems.add(new NavDrawerItem(navMenuTitles[1], navMenuIcons
-						.getResourceId(1, -1)));
-				// Config
-							navDrawerItems.add(new NavDrawerItem(navMenuTitles[2], navMenuIcons
-									.getResourceId(2, -1)));
-				// About
-				navDrawerItems.add(new NavDrawerItem(navMenuTitles[3], navMenuIcons
-						.getResourceId(3, -1)));
-
-				// Recycle the typed array
-				navMenuIcons.recycle();
-
-				mDrawerList.setOnItemClickListener(new SlideMenuClickListener());
-
-				// setting the nav drawer list adapter
-				adapter = new NavDrawerListAdapter(getApplicationContext(),
-						navDrawerItems);
-				mDrawerList.setAdapter(adapter);
-
-				// enabling action bar app icon and behaving it as toggle button
-				getActionBar().setDisplayHomeAsUpEnabled(true);
-				getActionBar().setHomeButtonEnabled(true);
-
-				mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
-						R.drawable.ic_drawer, // nav menu toggle icon
-						R.string.app_name, // nav drawer open - description for
-											// accessibility
-						R.string.app_name // nav drawer close - description for
-											// accessibility
-				) {
-					public void onDrawerClosed(View view) {
-						getActionBar().setTitle(mTitle);
-						// calling onPrepareOptionsMenu() to show action bar
-						// icons
-						invalidateOptionsMenu();
-					}
-
-					public void onDrawerOpened(View drawerView) {
-						getActionBar().setTitle(mDrawerTitle);
-						// calling onPrepareOptionsMenu() to hide action bar
-						// icons
-						invalidateOptionsMenu();
-					}
-				};
-				mDrawerLayout.setDrawerListener(mDrawerToggle);
-			}
 
 			// However, if we're being restored from a previous state,
 			// then we don't need to do anything and should return or else
@@ -155,7 +89,76 @@ public class MainActivity extends FragmentActivity implements
 					.add(R.id.fragment_container, firstFragment).commit();
 		}
 
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB_MR1) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
+
+			navMenuTitles = getResources().getStringArray(
+					R.array.nav_drawer_items);
+
+			// nav drawer icons from resources
+			navMenuIcons = getResources().obtainTypedArray(
+					R.array.nav_drawer_icons);
+
+			mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+			mDrawerList = (ListView) findViewById(R.id.list_slidermenu);
+
+			navDrawerItems = new ArrayList<NavDrawerItem>();
+
+			// adding nav drawer items to array
+			// Browser
+			navDrawerItems.add(new NavDrawerItem(navMenuTitles[0], navMenuIcons
+					.getResourceId(0, 0)));
+			// Settings
+			navDrawerItems.add(new NavDrawerItem(navMenuTitles[1], navMenuIcons
+					.getResourceId(1, 0)));
+			// Paths
+			navDrawerItems.add(new NavDrawerItem(navMenuTitles[2], navMenuIcons
+								.getResourceId(2, 0)));
+			// About
+			navDrawerItems.add(new NavDrawerItem(navMenuTitles[3], navMenuIcons
+					.getResourceId(3, 0)));
+
+			// Recycle the typed array
+			navMenuIcons.recycle();
+
+			mDrawerList.setOnItemClickListener(new SlideMenuClickListener());
+
+			// setting the nav drawer list adapter
+			adapter = new NavDrawerListAdapter(getApplicationContext(),
+					navDrawerItems);
+			mDrawerList.setAdapter(adapter);
+
+			// enabling action bar app icon and behaving it as toggle button
+			getActionBar().setDisplayHomeAsUpEnabled(true);
+			getActionBar().setHomeButtonEnabled(true);
+
+			mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
+					R.drawable.ic_drawer, // nav menu toggle icon
+					R.string.app_name, // nav drawer open - description for
+										// accessibility
+					R.string.app_name // nav drawer close - description for
+										// accessibility
+			) {
+				public void onDrawerClosed(View view) {
+					getActionBar().setTitle(mTitle);
+					// calling onPrepareOptionsMenu() to show action bar
+					// icons
+					invalidateOptionsMenu();
+				}
+
+				public void onDrawerOpened(View drawerView) {
+					getActionBar().setTitle(mDrawerTitle);
+					// calling onPrepareOptionsMenu() to hide action bar
+					// icons
+					invalidateOptionsMenu();
+				}
+			};
+			mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+			// if (savedInstanceState == null) {
+			// displayView(0);
+			//
+			// }
+		} else {
 
 			findViewById(R.id.config).setOnClickListener(new OnClickListener() {
 				public void onClick(View view) {
@@ -266,9 +269,12 @@ public class MainActivity extends FragmentActivity implements
 		FileBrowser firstFragment = new FileBrowser();
 		Bundle args = new Bundle();
 		args.putBoolean("ImgBrowse", false);
-		args.putString("browse_entry", path_entry);
-		args.putBoolean("games_entry", games);
 		// specify ImgBrowse option. true = images, false = folders only
+		args.putString("browse_entry", path_entry);
+		// specify a path for selecting folder options
+		args.putBoolean("games_entry", games);
+		// specify if the desired path is for games or data
+
 		firstFragment.setArguments(args);
 		// In case this activity was started with special instructions from
 		// an Intent, pass the Intent's extras to the fragment as arguments

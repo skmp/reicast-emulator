@@ -112,15 +112,18 @@ public class MainActivity extends FragmentActivity implements
 			// Browser
 			navDrawerItems.add(new NavDrawerItem(navMenuTitles[0], navMenuIcons
 					.getResourceId(0, 0)));
-			// Settings
+			// Controllers
 			navDrawerItems.add(new NavDrawerItem(navMenuTitles[1], navMenuIcons
-					.getResourceId(1, 0)));
-			// Paths
+					.getResourceId(1, -1)));
+			// Settings
 			navDrawerItems.add(new NavDrawerItem(navMenuTitles[2], navMenuIcons
 					.getResourceId(2, 0)));
-			// About
+			// Paths
 			navDrawerItems.add(new NavDrawerItem(navMenuTitles[3], navMenuIcons
 					.getResourceId(3, 0)));
+			// About
+			navDrawerItems.add(new NavDrawerItem(navMenuTitles[4], navMenuIcons
+					.getResourceId(4, 0)));
 
 			// Recycle the typed array
 			navMenuIcons.recycle();
@@ -413,6 +416,17 @@ public class MainActivity extends FragmentActivity implements
 			frag_tag = "MAIN_BROWSER";
 			break;
 		case 1:
+			fragment = (ControllersFragment) getSupportFragmentManager()
+ 					.findFragmentByTag("CONTROLLERS_FRAG");
+			if (fragment != null) {
+				if (fragment.isVisible()) {
+					return;
+				}
+			}
+			fragment = new ControllersFragment();
+			frag_tag = "CONTROLLERS_FRAG";
+			break;
+		case 2:
 			fragment = (ConfigureFragment) getSupportFragmentManager()
 					.findFragmentByTag("CONFIG_FRAG");
 			if (fragment != null) {
@@ -423,7 +437,7 @@ public class MainActivity extends FragmentActivity implements
 			fragment = new ConfigureFragment();
 			frag_tag = "CONFIG_FRAG";
 			break;
-		case 2:
+		case 3:
 			fragment = (OptionsFragment) getSupportFragmentManager()
 					.findFragmentByTag("OPTIONS_FRAG");
 			if (fragment != null) {
@@ -434,7 +448,7 @@ public class MainActivity extends FragmentActivity implements
 			fragment = new OptionsFragment();
 			frag_tag = "OPTIONS_FRAG";
 			break;
-		case 3:
+		case 4:
 			fragment = null;
 			// vib.vibrate(50);
 			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(

@@ -225,7 +225,7 @@ struct maple_sega_controller: maple_base
 		return MDRS_DataTransfer;
 
 		default:
-			printf("UNKOWN MAPLE COMMAND %d\n",cmd);
+			//printf("UNKOWN MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownFunction;
 		}
 	}	
@@ -644,12 +644,96 @@ struct maple_sega_vmu: maple_base
 
 
 		default:
-			printf("Unknown MAPLE COMMAND %d\n",cmd);
+			//printf("Unknown MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownCmd;
 		}
 	}	
 };
 #endif
+
+struct maple_microphone: maple_base
+{
+	virtual u32 dma(u32 cmd)
+	{
+		printf("maple_microphone::dma Called 0x%X;Command %d\n",this->maple_port,cmd);
+		switch (cmd)
+		{
+		case MDC_DeviceRequest:
+			//caps
+			//4
+			w32(MFID_4_Mic);
+
+			//struct data
+			//3*4
+			w32( 0xfe060f00);
+			w32( 0);
+			w32( 0);
+
+			//1	area code
+			w8(0xFF);
+
+			//1	direction
+			w8(0);
+			
+			//30
+			wstr(maple_sega_mic_name,30);
+
+			//60
+			wstr(maple_sega_brand,60);
+
+			//2
+			w16(0x01AE); 
+
+			//2
+			w16(0x01F4);
+
+			return MDRS_DeviceStatus;
+
+			//controller condition
+		case MDCF_GetCondition:
+			{
+				//PlainJoystickState pjs;
+				//config->GetInput(&pjs);
+				//caps
+				//4
+				w32(MFID_4_Mic);
+
+				//state data
+				//2 key code
+				//w16(pjs.kcode);
+
+				//triggers
+				//1 R
+				//w8(pjs.trigger[PJTI_R]);
+				//1 L
+				//w8(pjs.trigger[PJTI_L]);
+
+				//joyx
+				//1
+				//w8(pjs.joy[PJAI_X1]);
+				//joyy
+				//1
+				//w8(pjs.joy[PJAI_Y1]);
+
+				//not used
+				//1
+				w8(0x80);
+				//1
+				w8(0x80);
+			}
+
+		return MDRS_DataTransfer;
+		
+		case MDC_DeviceReset:
+		
+		return MDRS_DeviceReply;
+
+		default:
+			printf("maple_microphone::dma UNHANDLED MAPLE COMMAND %d\n",cmd);
+			return MDRE_UnknownFunction;
+		}
+	}	
+};
 
 maple_device* maple_Create(MapleDeviceType type)
 {
@@ -658,6 +742,9 @@ maple_device* maple_Create(MapleDeviceType type)
 	{
 	case MDT_SegaController:
 		rv=new maple_sega_controller();
+		break;
+	case MDT_Microphone:
+		rv=new maple_microphone();
 		break;
 #ifdef HAS_VMU
 	case MDT_SegaVMU:

@@ -182,7 +182,7 @@ bool InitDrive(u32 fileflags)
 	if (!InitDrive_(fn))
 	{
 		//msgboxf("Selected image failed to load",MBX_ICONERROR);
-		return true;
+		return false;
 	}
 	else
 	{

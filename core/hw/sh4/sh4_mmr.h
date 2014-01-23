@@ -1230,7 +1230,7 @@ extern DMAC_CHCR_type DMAC_CHCR[4];
 #define UBC_BRCR SH4IO_REG(UBC,BRCR,16)
 
 //TCNT exists only as cached state
-//#define TMU_TCNT(x) SH4IO_REG_OFS(TMU,TCNT,x,12,32)
+#define TMU_TCNT(x) SH4IO_REG_OFS(TMU,TCNT,x,12,32)
 
 #define TMU_TCOR(x) SH4IO_REG_OFS(TMU,TCOR,x,12,32)
 #define TMU_TCR(x) SH4IO_REG_OFS(TMU,TCR,x,12,16)

@@ -200,11 +200,12 @@ int UpdateSystem()
 {
 	//this is an optimisation (mostly for ARM)
 	//makes scheduling easier !
-	//update_fp* tmu=pUpdateTMU;
+	update_fp* tmu=pUpdateTMU;
 	
 	Sh4cntx.sh4_sched_next-=448;
 	if (Sh4cntx.sh4_sched_next<0)
 		sh4_sched_tick(448);
+	tmu(448);
 
 	return Sh4cntx.interrupt_pend;
 }

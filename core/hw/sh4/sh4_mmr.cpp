@@ -454,7 +454,7 @@ void DYNACALL WriteMem_sq(u32 addr,T data)
 template <u32 sz,class T>
 T DYNACALL ReadMem_area7(u32 addr)
 {
-	/*
+	
 	if (likely(addr==0xffd80024))
 	{
 		return TMU_TCNT(2);
@@ -463,7 +463,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	{
 		return TMU_TCNT(0);
 	}
-	else */if (likely(addr==0xFF000028))
+	else if (likely(addr==0xFF000028))
 	{
 		return CCN_INTEVT;
 	}

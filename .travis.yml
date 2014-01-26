@@ -4,6 +4,7 @@ compiler:
 
 before_install:
   - date
+  - ls
   - sudo ./travis-ci/setup.sh
   - export PATH=`pwd`/android-ndk:`pwd`/android-sdk-linux/tools:`pwd`/android-sdk-linux/platform-tools:$PATH
   - echo $PATH

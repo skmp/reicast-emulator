@@ -1,5 +1,5 @@
 language:
-  c
+  c++
 compiler:
 
 before_install:

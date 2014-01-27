@@ -18,11 +18,13 @@ Let's try to keep everything under a single project :)
 
 To build for android
 --------------------
-```
-cd newdc\android\libnewdc
-android update project -p .
+Tools required:
+* Latest Android SDK and NDK (duh)
+* Ant
 
-cd ..\..\..\reicast\android
+From project root directory:
+```
+cd shell\android
 android update project -p .
 
 ndk-build -j 4
@@ -41,7 +43,7 @@ Keep in mind we're located in Greece for the most part
 
 This has been tested/developed on
 * Galaxy tab 7.0 Plus
-* P990
+* LG P990
 * Archos 10G9
 * Some Chinese tablet
 * OUYA
@@ -61,11 +63,18 @@ We're planning for an indiegogo campaign later on to help with sustained develop
 
 Team
 ----
-The active team consists of drk||Raziel (mostly just writing code), PsyMan (debugging/testing and everything else) and a little bit of gb_away
+
+You can check the currently active committers on [the pretty graphs page](https://github.com/reicast/reicast-emulator/graphs/contributors)
+
+Chat on freenode #reicast. 
+
+The original reicast team consisted of drk||Raziel (mostly just writing code), PsyMan (debugging/testing and everything else) and a little bit of gb_away
 
 
+Special thanks
+--------------
 In previous iterations a lot of people have worked on this, notably David Miller (aka, ZeZu), the nullDC team, friends from #pcsx2 and all over the world :)
 
 
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/reicast/reicast-emulator/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 
-Thanks guys

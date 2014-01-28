@@ -57,6 +57,7 @@ package com.reicast.emulator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import android.graphics.PorterDuff;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -76,6 +77,8 @@ import android.webkit.WebViewDatabase;
 import android.webkit.WebSettings.PluginState;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
@@ -138,6 +141,12 @@ public class GitAdapter extends BaseAdapter {
 		final String url = commit.get("Url");
 		final String author = commit.get("Author");
 		final String avatar = commit.get("Avatar");
+		final String current = commit.get("Build");
+		
+		if (current.equals(sha)) {
+			RelativeLayout item = (RelativeLayout) vi.findViewById(R.id.change);
+			item.getBackground().setColorFilter(0xFF00FF00, PorterDuff.Mode.MULTIPLY);
+		}
 
 		dateText.setText(date);
 		committerText.setText(committer);

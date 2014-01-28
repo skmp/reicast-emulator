@@ -120,7 +120,7 @@ public class FileBrowser extends Fragment {
 			if (!file.exists()) {
 				file.createNewFile();
 				OutputStream fo = new FileOutputStream(file);
-				InputStream png = parentActivity.getBaseContext().getAssets()
+				InputStream png = parentActivity.getAssets()
 						.open("buttons.png");
 
 				byte[] buffer = new byte[4096];

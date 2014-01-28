@@ -56,9 +56,12 @@
 package com.reicast.emulator;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -82,6 +85,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
@@ -122,6 +126,7 @@ public class AboutFragment extends Fragment {
 	private ListView list;
 	private GitAdapter adapter;
 	private Handler handler;
+	private String buildId = null;
 
 	private Activity parentActivity;
 
@@ -136,13 +141,34 @@ public class AboutFragment extends Fragment {
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		parentActivity = getActivity();
 		handler = new Handler();
+		try {
+			String versionName = parentActivity.getPackageManager()
+					.getPackageInfo(parentActivity.getPackageName(), 0).versionName;
+			int versionCode = parentActivity.getPackageManager()
+					.getPackageInfo(parentActivity.getPackageName(), 0).versionCode;
+			TextView version = (TextView) getView().findViewById(
+					R.id.about_text);
+			version.setText(parentActivity.getString(R.string.about_text,
+					versionName + "(" + String.valueOf(versionCode) + ")"));
+			InputStream file = parentActivity.getAssets().open("build");
+			if (file != null) {
+				BufferedReader reader = new BufferedReader(
+						new InputStreamReader(file));
+				buildId = reader.readLine();
+				file.close();
+			}
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
+
 		slidingGithub = (SlidingDrawer) getView().findViewById(
 				R.id.slidingGithub);
-
 		slidingGithub.setOnDrawerOpenListener(new OnDrawerOpenListener() {
 			public void onDrawerOpened() {
 				String git = parentActivity.getString(R.string.git_api);
-				retrieveGitTask queryGithub = new retrieveGitTask();
+				retrieveGitTask queryGithub = new retrieveGitTask(buildId);
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 					queryGithub.executeOnExecutor(
 							AsyncTask.THREAD_POOL_EXECUTOR, git);
@@ -151,10 +177,17 @@ public class AboutFragment extends Fragment {
 				}
 			}
 		});
+		slidingGithub.open();
 	}
 
 	public class retrieveGitTask extends
 			AsyncTask<String, Integer, ArrayList<HashMap<String, String>>> {
+
+		private String buildId = "";
+
+		public retrieveGitTask(String buildId) {
+			this.buildId = buildId;
+		}
 
 		@Override
 		protected ArrayList<HashMap<String, String>> doInBackground(
@@ -162,7 +195,6 @@ public class AboutFragment extends Fragment {
 			ArrayList<HashMap<String, String>> commitList = new ArrayList<HashMap<String, String>>();
 			try {
 				JSONArray gitObject = getContent(paths[0]);
-
 				for (int i = 0; i < gitObject.length(); i++) {
 					JSONObject jsonObject = gitObject.getJSONObject(i);
 
@@ -196,7 +228,6 @@ public class AboutFragment extends Fragment {
 								+ jsonObject.getJSONObject("author").getString(
 										"login") + ")";
 					}
-
 					String sha = jsonObject.getString("sha");
 					String curl = jsonObject
 							.getString("url")
@@ -227,6 +258,7 @@ public class AboutFragment extends Fragment {
 					map.put("Url", curl);
 					map.put("Author", author);
 					map.put("Avatar", avatar);
+					map.put("Build", buildId);
 					commitList.add(map);
 				}
 

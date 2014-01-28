@@ -4,16 +4,17 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="center_horizontal"
-    android:orientation="vertical"
-    android:layout_marginLeft="6dp" >
-    
+    android:orientation="vertical" >
+
     <TextView
-        android:layout_height="wrap_content"
+        android:id="@+id/about_text"
         android:layout_width="match_parent"
-        android:text="@string/about_text"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="6dp"
+        android:layout_marginTop="10dp"
         android:ems="12"
         android:gravity="center"
-        android:layout_marginTop="10dp" />
+        android:text="@string/about_text" />
 
     <SlidingDrawer
         android:id="@+id/slidingGithub"

@@ -55,6 +55,8 @@
 
     <string name="about_text">reicast is a dreamcast emulator\n\nVersion: %1$s</string>
     <string name="git_api">https://api.github.com/repos/NoblesseOblige/reicast-emulator/commits</string>
+    <string name="app_site">http://reicast.com</string>
+    <string name="beta_site">http://reicast.loungekatt.com</string>
     
     <string-array name="controllers">
     <item>Controller A</item>

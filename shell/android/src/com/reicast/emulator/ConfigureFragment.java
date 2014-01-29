@@ -260,7 +260,7 @@ public class ConfigureFragment extends Fragment {
 			}
 
 			public void onNothingSelected(AdapterView<?> arg0) {
-				mPrefs.edit().putInt("dc_region", 3).commit();
+				mPrefs.edit().putInt("dc_region", dcregion).commit();
 			}
 
 		});

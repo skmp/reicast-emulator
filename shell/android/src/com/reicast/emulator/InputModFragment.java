@@ -260,6 +260,25 @@ public class InputModFragment extends Fragment {
 		joystick.setEnabled(false);
 		mPrefs.edit().remove("joystick").commit();
 		// Still needs better support for identifying the entire stick
+		
+		OnCheckedChangeListener dpad_joystick = new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				mPrefs.edit()
+						.putBoolean("dpad_js_layout" + player, isChecked)
+						.commit();
+			}
+		};
+		Switch dpad_js_layout = (Switch) getView().findViewById(
+				R.id.dpad_js_layout);
+		boolean joypad = mPrefs.getBoolean("dpad_js_layout" + player,
+				false);
+		if (joypad) {
+			dpad_js_layout.setChecked(true);
+		} else {
+			dpad_js_layout.setChecked(false);
+		}
+		dpad_js_layout.setOnCheckedChangeListener(dpad_joystick);
 
 		final TextView dpad_up_text = (TextView) getView().findViewById(
 				R.id.dpad_up_key);

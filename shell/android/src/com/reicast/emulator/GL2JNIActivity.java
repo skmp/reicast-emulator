@@ -227,8 +227,10 @@ public class GL2JNIActivity extends Activity {
 
 							custom[playerNum] = true;
 
-							globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
-							globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+							if (prefs.getBoolean("dpad_js_layout" + id, false)) {
+								globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+								globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+							}
 						} else if (InputDevice.getDevice(joys[i]).getName()
 								.equals("Sony PLAYSTATION(R)3 Controller")) {
 							map[playerNum] = new int[] {
@@ -348,8 +350,10 @@ public class GL2JNIActivity extends Activity {
 			custom[playerNum] = true;
 		}
 
-		globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
-		globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+		if (prefs.getBoolean("dpad_js_layout" + id, false)) {
+			globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+			globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+		}
 	}
 
 	private int[] setModifiedKeys(int player) {
@@ -383,8 +387,16 @@ public class GL2JNIActivity extends Activity {
 
 			if (playerNum == null)
 				return false;
+			
+			String[] players = getResources().getStringArray(R.array.controllers);
+			String id = "_" + players[playerNum].substring(
+					players[playerNum].lastIndexOf(" ") + 1, players[playerNum].length());
+			boolean[] handleJoystick = { false, false, false, false };
+			if (prefs.getBoolean("dpad_js_layout" + id, false) && custom[playerNum]) {
+				handleJoystick[playerNum] = true;
+			}
 
-			if (!moga.isActive[playerNum] && !custom[playerNum]) {
+			if (!moga.isActive[playerNum]) {
 				// TODO: Moga should handle this locally
 
 				// Joystick
@@ -398,7 +410,7 @@ public class GL2JNIActivity extends Activity {
 					float L2 = event.getAxisValue(OuyaController.AXIS_L2);
 					float R2 = event.getAxisValue(OuyaController.AXIS_R2);
 
-					if (custom[playerNum] || xbox[playerNum] || nVidia[playerNum]) {
+					if (handleJoystick[playerNum] || xbox[playerNum] || nVidia[playerNum]) {
 						previousLS_X[playerNum] = globalLS_X[playerNum];
 						previousLS_Y[playerNum] = globalLS_Y[playerNum];
 						globalLS_X[playerNum] = LS_X;
@@ -414,7 +426,7 @@ public class GL2JNIActivity extends Activity {
 
 			}
 
-			if ((custom[playerNum] || xbox[playerNum] || nVidia[playerNum])
+			if ((handleJoystick[playerNum] || xbox[playerNum] || nVidia[playerNum])
 					&& ((globalLS_X[playerNum] == previousLS_X[playerNum] && globalLS_Y[playerNum] == previousLS_Y[playerNum]) || (previousLS_X[playerNum] == 0.0f && previousLS_Y[playerNum] == 0.0f)))
 				// Only handle Left Stick on an Xbox 360 controller if there was
 				// some actual motion on the stick,

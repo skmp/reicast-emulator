@@ -73,10 +73,10 @@
     </string-array>
     
     <string-array name="region">
-        <item></item>
-        <item></item>
-        <item></item>
-        <item>(Default)</item>
+        <item>E - United States</item>
+        <item>J - Japanese</item>
+        <item>U - European</item>
+        <item>R - Region Free</item>
     </string-array>
 
     <string name="drawer_open">Slider Menu Opened</string>

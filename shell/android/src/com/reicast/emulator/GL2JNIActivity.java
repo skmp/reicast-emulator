@@ -373,10 +373,15 @@ public class GL2JNIActivity extends Activity {
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 
-			Integer playerNum = deviceDescriptor_PlayerNum
+			Integer playerNum = Arrays.asList(name).indexOf(event.getDeviceId());
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
+				playerNum = deviceDescriptor_PlayerNum
 					.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
+			} else {
+				playerNum = -1;
+			}
 
-			if (playerNum == null)
+			if (playerNum == null || playerNum == -1)
 				return false;
 
 			if (!moga.isActive[playerNum] || compat[playerNum]) {

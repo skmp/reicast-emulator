@@ -57,12 +57,12 @@ package com.reicast.emulator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import android.graphics.PorterDuff;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.PorterDuff;
 import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -71,13 +71,12 @@ import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
 import android.webkit.WebSettings;
+import android.webkit.WebSettings.PluginState;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebViewDatabase;
-import android.webkit.WebSettings.PluginState;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 

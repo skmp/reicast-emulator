@@ -16,7 +16,6 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
@@ -40,8 +39,10 @@ public class GL2JNIActivity extends Activity {
 	LayoutParams params;
 	MOGAInput moga = new MOGAInput();
 	private SharedPreferences prefs;
-	static boolean[] custom = { false, false, false, false }, xbox = { false,
-			false, false, false }, nVidia = { false, false, false, false };
+	static String[] portId = { "_A", "_B", "_C", "_D" };
+	static boolean[] compat = { false, false, false, false }, custom = { false,
+			false, false, false }, jsCompat = { false, false, false, false };
+	static boolean[] xbox = { false, false, false, false }, nVidia = { false, false, false, false };
 	int[] name = { -1, -1, -1, -1 };
 	float[] globalLS_X = new float[4], globalLS_Y = new float[4],
 			previousLS_X = new float[4], previousLS_Y = new float[4];
@@ -217,17 +218,15 @@ public class GL2JNIActivity extends Activity {
 						.get(deviceId_deviceDescriptor.get(joys[i]));
 
 				if (playerNum != null) {
-					String[] players = getResources().getStringArray(R.array.controllers);
-					String id = "_" + players[playerNum].substring(
-							players[playerNum].lastIndexOf(" ") + 1, players[playerNum].length());
-					boolean compat = prefs.getBoolean("controller_compat" + id, false);
-					if (!compat) {
-						if (prefs.getBoolean("modified_key_layout" + id, false)) {
+					String id = portId[playerNum];
+					custom[playerNum] = prefs.getBoolean("modified_key_layout" + id, false);
+					compat[playerNum] = prefs.getBoolean("controller_compat" + id, false);
+					jsCompat[playerNum] = prefs.getBoolean("dpad_js_layout" + id, false);
+					if (!compat[playerNum]) {
+						if (custom[playerNum]) {
 							map[playerNum] = setModifiedKeys(playerNum);
 
-							custom[playerNum] = true;
-
-							if (prefs.getBoolean("dpad_js_layout" + id, false)) {
+							if (jsCompat[playerNum]) {
 								globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
 								globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
 							}
@@ -307,7 +306,6 @@ public class GL2JNIActivity extends Activity {
 							};
 						}
 					} else {
-						custom[playerNum] = true;
 						getCompatibilityMap(playerNum, id);
 					}
 				}
@@ -334,11 +332,8 @@ public class GL2JNIActivity extends Activity {
 	
 	private void runCompatibilityMode() {
 		for (int n = 0; n < 4; n++) {
-			String[] players = getResources().getStringArray(R.array.controllers);
-			String id = "_" + players[n].substring(
-					players[n].lastIndexOf(" ") + 1, players[n].length());
-			if (prefs.getBoolean("controller_compat" + id, false)) {
-				getCompatibilityMap(n, id);
+			if (compat[n]) {
+				getCompatibilityMap(n, portId[n]);
 			}
 		}
 	}
@@ -348,17 +343,14 @@ public class GL2JNIActivity extends Activity {
 		if (name[playerNum] != -1) {
 			map[playerNum] = setModifiedKeys(playerNum);
 		}
-
-		if (prefs.getBoolean("dpad_js_layout" + id, false)) {
+		if (jsCompat[playerNum]) {
 			globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
 			globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
 		}
 	}
 
 	private int[] setModifiedKeys(int player) {
-		String[] players = getResources().getStringArray(R.array.controllers);
-		String id = "_" + players[player].substring(
-				players[player].lastIndexOf(" ") + 1, players[player].length());
+		String id = portId[player];
 		return new int[] { 
 			prefs.getInt("a_button" + id, OuyaController.BUTTON_O), key_CONT_A, 
 			prefs.getInt("b_button" + id, OuyaController.BUTTON_A), key_CONT_B,
@@ -386,16 +378,8 @@ public class GL2JNIActivity extends Activity {
 
 			if (playerNum == null)
 				return false;
-			
-			String[] players = getResources().getStringArray(R.array.controllers);
-			String id = "_" + players[playerNum].substring(
-					players[playerNum].lastIndexOf(" ") + 1, players[playerNum].length());
-			boolean[] handleJoystick = { false, false, false, false };
-			if (prefs.getBoolean("dpad_js_layout" + id, false) && custom[playerNum]) {
-				handleJoystick[playerNum] = true;
-			}
 
-			if (!moga.isActive[playerNum]) {
+			if (!moga.isActive[playerNum] || compat[playerNum]) {
 				// TODO: Moga should handle this locally
 
 				// Joystick
@@ -409,7 +393,7 @@ public class GL2JNIActivity extends Activity {
 					float L2 = event.getAxisValue(OuyaController.AXIS_L2);
 					float R2 = event.getAxisValue(OuyaController.AXIS_R2);
 
-					if (handleJoystick[playerNum] || xbox[playerNum] || nVidia[playerNum]) {
+					if (jsCompat[playerNum] || xbox[playerNum] || nVidia[playerNum]) {
 						previousLS_X[playerNum] = globalLS_X[playerNum];
 						previousLS_Y[playerNum] = globalLS_Y[playerNum];
 						globalLS_X[playerNum] = LS_X;
@@ -425,7 +409,7 @@ public class GL2JNIActivity extends Activity {
 
 			}
 
-			if ((handleJoystick[playerNum] || xbox[playerNum] || nVidia[playerNum])
+			if ((jsCompat[playerNum] || xbox[playerNum] || nVidia[playerNum])
 					&& ((globalLS_X[playerNum] == previousLS_X[playerNum] && globalLS_Y[playerNum] == previousLS_Y[playerNum]) || (previousLS_X[playerNum] == 0.0f && previousLS_Y[playerNum] == 0.0f)))
 				// Only handle Left Stick on an Xbox 360 controller if there was
 				// some actual motion on the stick,
@@ -533,9 +517,7 @@ public class GL2JNIActivity extends Activity {
 		}
 		
 		if (playerNum != null && playerNum != -1) {
-			String[] players = getResources().getStringArray(R.array.controllers);
-			String id = "_" + players[playerNum].substring(
-					players[playerNum].lastIndexOf(" ") + 1, players[playerNum].length());
+			String id = portId[playerNum];
 			if (custom[playerNum]) {
 				if (keyCode == prefs.getInt("l_button" + id, OuyaController.BUTTON_L1)) {
 					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);

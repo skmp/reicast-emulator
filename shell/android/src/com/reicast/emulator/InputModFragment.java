@@ -133,6 +133,7 @@ public class InputModFragment extends Fragment {
 		a_button_icon.setImageDrawable(getButtonImage(448 / sS, 0));
 		final TextView a_button_text = (TextView) getView().findViewById(
 				R.id.a_button_key);
+		getKeyCode("a_button", a_button_text);
 		Button a_button = (Button) getView().findViewById(R.id.a_button_edit);
 		a_button.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {

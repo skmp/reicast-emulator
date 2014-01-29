@@ -307,6 +307,7 @@ public class GL2JNIActivity extends Activity {
 							};
 						}
 					} else {
+						custom[playerNum] = true;
 						getCompatibilityMap(playerNum, id);
 					}
 				}
@@ -326,7 +327,6 @@ public class GL2JNIActivity extends Activity {
 		// Create the actual GLES view
 		mView = new GL2JNIView(getApplication(), fileName, false, 24, 0, false);
 		setContentView(mView);
-		moga.setGL2View(mView);
 
 		Toast.makeText(getApplicationContext(),
 				"Press the back button for a menu", Toast.LENGTH_SHORT).show();
@@ -347,7 +347,6 @@ public class GL2JNIActivity extends Activity {
 		name[playerNum] = prefs.getInt("controller" + id, -1);
 		if (name[playerNum] != -1) {
 			map[playerNum] = setModifiedKeys(playerNum);
-			custom[playerNum] = true;
 		}
 
 		if (prefs.getBoolean("dpad_js_layout" + id, false)) {
@@ -537,8 +536,7 @@ public class GL2JNIActivity extends Activity {
 			String[] players = getResources().getStringArray(R.array.controllers);
 			String id = "_" + players[playerNum].substring(
 					players[playerNum].lastIndexOf(" ") + 1, players[playerNum].length());
-			boolean compat = prefs.getBoolean("controller_compat" + id, false);
-			if (compat || custom[playerNum]) {
+			if (custom[playerNum]) {
 				if (keyCode == prefs.getInt("l_button" + id, OuyaController.BUTTON_L1)) {
 					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
 					GL2JNIView.lt[playerNum] = (int) (1.0 * 255);

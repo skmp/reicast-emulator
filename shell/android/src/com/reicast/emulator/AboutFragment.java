@@ -162,6 +162,14 @@ public class AboutFragment extends Fragment {
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 		}
+		
+		TextView website = (TextView) getView().findViewById(
+				R.id.site_text);
+		Linkify.addLinks(website, Linkify.ALL);
+		
+		TextView compiled = (TextView) getView().findViewById(
+				R.id.beta_text);
+		Linkify.addLinks(compiled, Linkify.ALL);
 
 		slidingGithub = (SlidingDrawer) getView().findViewById(
 				R.id.slidingGithub);

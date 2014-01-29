@@ -3,9 +3,6 @@ package com.reicast.emulator;
 import java.util.Arrays;
 import java.util.HashMap;
 
-// Keeping a reference just in case it's needed
-import com.reicast.emulator.GL2JNIView.EmuThread;
-
 import tv.ouya.console.api.OuyaController;
 import android.annotation.TargetApi;
 import android.app.Activity;

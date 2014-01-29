@@ -36,7 +36,9 @@ public class MOGAInput
 	Controller mController = null;
 	private Handler handler;
 	private String notify;
-	private GL2JNIView mView;
+	
+	float[] globalLS_X = new float[4], globalLS_Y = new float[4],
+			previousLS_X = new float[4], previousLS_Y = new float[4];
 
     public boolean isActive[] = { false, false, false, false };
     public boolean isMogaPro[] = { false, false, false, false };
@@ -100,10 +102,6 @@ public class MOGAInput
 		mMotions.put(MotionEvent.AXIS_LTRIGGER, new ExampleFloat("AXIS_LTRIGGER........."));
 		mMotions.put(MotionEvent.AXIS_RTRIGGER, new ExampleFloat("AXIS_RTRIGGER........."));
 		*/
-	}
-	
-	public void setGL2View(GL2JNIView mView) {
-		this.mView = mView;
 	}
 
 	protected void onCreate(Activity act)
@@ -191,31 +189,18 @@ public class MOGAInput
 	    		String id = "_" + players[playerNum].substring(
 	    				players[playerNum].lastIndexOf(" ") + 1, players[playerNum].length());
 	    		if (prefs.getBoolean("modified_key_layout"  + id, false)) {
-	    			float x = -1, y = -1;
-	    			if (event.getKeyCode() == prefs.getInt("l_button" + id, OuyaController.BUTTON_L1)) {
-	    				float LxC = prefs.getFloat("touch_x_shift_left_trigger", 0);
-	    				float LyC = prefs.getFloat("touch_y_shift_left_trigger", 0);
-	    				x = 440 + LxC + 1;
-	    				y = 200 + LyC + 1;
-	    			}
-	    			if (event.getKeyCode() == prefs.getInt("r_button" + id, OuyaController.BUTTON_R1)) {
-	    				float RxC = prefs.getFloat("touch_x_shift_right_trigger", 0);
-	    				float RyC = prefs.getFloat("touch_y_shift_right_trigger", 0);
-	    				x = 542 + RxC + 1;
-	    				y = 200 + RyC + 1;
-	    			}
-	    			if (mView != null && (x != -1 || y != -1)) {
-	    				JNIdc.show_osd();
-	    				long downTime = SystemClock.uptimeMillis();
-	    				long eventTime = SystemClock.uptimeMillis() + 100;
-	    				int metaState = 0;
-	    				android.view.MotionEvent motionEvent = android.view.MotionEvent.obtain(downTime, eventTime,
-	    						android.view.MotionEvent.ACTION_UP, x, y, metaState);
-	    				mView.dispatchTouchEvent(motionEvent);
-	    				if (playerNum == 0)
-	    					JNIdc.hide_osd();
-	    				return;
-	    			}
+	    				if (event.getKeyCode() == prefs.getInt("l_button" + id, OuyaController.BUTTON_L1)) {
+	    					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
+	    					GL2JNIView.lt[playerNum] = (int) (1.0 * 255);
+	    					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
+	    					GL2JNIView.lt[playerNum] = 0;
+	    				}
+	    				if (event.getKeyCode() == prefs.getInt("r_button" + id, OuyaController.BUTTON_R1)) {
+	    					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
+	    					GL2JNIView.lt[playerNum] = (int) (1.0 * 255);
+	    					GL2JNIView.lt[playerNum] = (int) (0.5 * 255);
+	    					GL2JNIView.lt[playerNum] = 0;
+	    				}
 	    		}
 
 			if(playerNum == 0)
@@ -246,6 +231,11 @@ public class MOGAInput
 			float LS_Y = event.getAxisValue(MotionEvent.AXIS_Y);
 			float L2 = event.getAxisValue(MotionEvent.AXIS_LTRIGGER);
 			float R2 = event.getAxisValue(MotionEvent.AXIS_RTRIGGER);
+			
+			previousLS_X[playerNum] = globalLS_X[playerNum];
+			previousLS_Y[playerNum] = globalLS_Y[playerNum];
+			globalLS_X[playerNum] = LS_X;
+			globalLS_Y[playerNum] = LS_Y;
 
 			GL2JNIView.lt[playerNum] = (int) (L2 * 255);
 			GL2JNIView.rt[playerNum] = (int) (R2 * 255);
@@ -278,11 +268,15 @@ public class MOGAInput
         			isActive[playerNum] = true;
         			isMogaPro[playerNum] = true;
         			setModifiedKeys(playerNum);
+        			globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+					globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
         			notify = act.getApplicationContext().getString(R.string.moga_pro_connect);
         		} else if (mControllerVersion == Controller.ACTION_VERSION_MOGA) {
         			isActive[playerNum] = true;
         			isMogaPro[playerNum] = false;
         			setModifiedKeys(playerNum);
+        			globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+					globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
         			notify = act.getApplicationContext().getString(R.string.moga_connect);
         		}
         		if (notify != null && !notify.equals(null)) {

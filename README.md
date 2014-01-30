@@ -34,7 +34,7 @@ ant debug
 
 Beta versions
 -------------------
-Compiled test versions are available at recast.loungekatt.com
+Compiled test versions are available at reicast.loungekatt.com
 
 Donations and stuff
 -------------------

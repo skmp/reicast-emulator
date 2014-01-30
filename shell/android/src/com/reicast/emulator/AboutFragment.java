@@ -98,7 +98,6 @@ public class AboutFragment extends Fragment {
 	private ListView list;
 	private GitAdapter adapter;
 	private Handler handler;
-	private String buildId = null;
 
 	private Activity parentActivity;
 
@@ -122,15 +121,6 @@ public class AboutFragment extends Fragment {
 					R.id.about_text);
 			version.setText(parentActivity.getString(R.string.about_text,
 					versionName + "(" + String.valueOf(versionCode) + ")"));
-			InputStream file = parentActivity.getAssets().open("build");
-			if (file != null) {
-				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(file));
-				buildId = reader.readLine();
-				file.close();
-			}
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -148,7 +138,7 @@ public class AboutFragment extends Fragment {
 		slidingGithub.setOnDrawerOpenListener(new OnDrawerOpenListener() {
 			public void onDrawerOpened() {
 				String git = parentActivity.getString(R.string.git_api);
-				retrieveGitTask queryGithub = new retrieveGitTask(buildId);
+				retrieveGitTask queryGithub = new retrieveGitTask();
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 					queryGithub.executeOnExecutor(
 							AsyncTask.THREAD_POOL_EXECUTOR, git);
@@ -165,8 +155,19 @@ public class AboutFragment extends Fragment {
 
 		private String buildId = "";
 
-		public retrieveGitTask(String buildId) {
-			this.buildId = buildId;
+		@Override
+		protected void onPreExecute() {
+			try {
+				InputStream file = parentActivity.getAssets().open("build");
+				if (file != null) {
+					BufferedReader reader = new BufferedReader(
+							new InputStreamReader(file));
+					buildId = reader.readLine();
+					file.close();
+				}
+			} catch (IOException ioe) {
+				ioe.printStackTrace();
+			}
 		}
 
 		@Override
@@ -267,11 +268,12 @@ public class AboutFragment extends Fragment {
 			return commitList;
 		}
 
+		@Override
 		protected void onPostExecute(
 				ArrayList<HashMap<String, String>> commitList) {
 			if (commitList != null && commitList.size() > 0) {
 				list = (ListView) getView().findViewById(R.id.list);
-
+				list.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 				adapter = new GitAdapter(parentActivity, commitList);
 				// Set adapter as specified collection
 				list.setAdapter(adapter);

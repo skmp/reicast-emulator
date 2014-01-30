@@ -141,9 +141,13 @@ public class GitAdapter extends BaseAdapter {
 		final String author = commit.get("Author");
 		final String avatar = commit.get("Avatar");
 		final String current = commit.get("Build");
-		if (current != null && current.equals(sha)) {
-			RelativeLayout item = (RelativeLayout) vi.findViewById(R.id.change);
-			item.getBackground().setColorFilter(0xFF00FF00, PorterDuff.Mode.MULTIPLY);
+
+		RelativeLayout item = (RelativeLayout) vi.findViewById(R.id.change);
+		if (current != null && !current.equals("") && current.equals(sha)) {
+			item.getBackground().setColorFilter(0xFF00FF00,
+					PorterDuff.Mode.MULTIPLY);
+		} else {
+			item.getBackground().setColorFilter(null);
 		}
 
 		dateText.setText(date);

@@ -39,6 +39,7 @@ public class InputModFragment extends Fragment {
 	private Switch switchCompatibilityEnabled;
 	private String player = "_A";
 	private int sS = 2;
+	private int playerNum = -1;
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
@@ -61,8 +62,13 @@ public class InputModFragment extends Fragment {
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(parentActivity);
 
-		String[] controllers = parentActivity.getResources().getStringArray(
+		final String[] controllers = parentActivity.getResources().getStringArray(
 				R.array.controllers);
+		
+		Bundle b = getArguments();
+		if (b != null) {
+			playerNum = b.getInt("portNumber", -1);
+		}
 
 		Spinner player_spnr = (Spinner) getView().findViewById(
 				R.id.player_spinner);
@@ -72,7 +78,9 @@ public class InputModFragment extends Fragment {
 		playerAdapter
 				.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		player_spnr.setAdapter(playerAdapter);
-
+		if (playerNum != -1) {
+			player_spnr.setSelection(playerNum, true);
+		}
 		player_spnr.setOnItemSelectedListener(new OnItemSelectedListener() {
 
 			public void onItemSelected(AdapterView<?> parent, View view,
@@ -84,7 +92,9 @@ public class InputModFragment extends Fragment {
 			}
 
 			public void onNothingSelected(AdapterView<?> arg0) {
-				player = "_A";
+				if (playerNum != -1) {
+					player = controllers[playerNum];	
+				}
 			}
 
 		});

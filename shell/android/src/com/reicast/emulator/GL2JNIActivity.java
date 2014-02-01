@@ -325,13 +325,14 @@ public class GL2JNIActivity extends Activity {
 
 		Toast.makeText(getApplicationContext(),
 				"Press the back button for a menu", Toast.LENGTH_SHORT).show();
-				
-						
-		//totally hijacking this to setup mic
-		SipEmulator sip = new SipEmulator();
-		sip.startRecording();
-		JNIdc.setupMic(sip);
 
+		//setup mic
+		boolean micPluggedIn = prefs.getBoolean("mic_plugged_in", false);
+		if(micPluggedIn){
+			SipEmulator sip = new SipEmulator();
+			sip.startRecording();
+			JNIdc.setupMic(sip);
+		}
 	}
 	
 	private void runCompatibilityMode() {

@@ -234,7 +234,9 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_JNIdc_vmuSwap(JNIEnv *env,jobje
 	maple_device* oldb = MapleDevices[0][1];
 	MapleDevices[0][0] = NULL;
 	MapleDevices[0][1] = NULL;
-	usleep(50000);//50 ms, wait for host to detect disconnect
+    while (MapleDevices[0][0] != NULL && MapleDevices[0][1] != NULL) {
+        usleep(5000);//5 ms query for host to detect disconnect
+    }
 
 	MapleDevices[0][0] = oldb;
 	MapleDevices[0][1] = olda;

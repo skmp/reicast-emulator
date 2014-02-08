@@ -90,38 +90,47 @@ public class GL2JNIActivity extends Activity {
 				GL2JNIActivity.this.finish();
 			}
 		}), params);
+		
+		if(prefs.getBoolean("debug_profling_tools", false)){
 
-		hlay.addView(addbut(R.drawable.config, new OnClickListener() {
+			hlay.addView(addbut(R.drawable.clear_cache, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.send(0, 0); //Killing texture cache
+					popUp.dismiss();
+				}
+			}), params);
+	
+			hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.send(1, 3000); //sample_Start(param);
+					popUp.dismiss();
+				}
+			}), params);
+	
+			hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.send(1, 0); //sample_Start(param);
+					popUp.dismiss();
+				}
+			}), params);
+	
+//			hlay.addView(addbut(R.drawable.disk_unknown, new OnClickListener() {
+//				public void onClick(View v) {
+//					JNIdc.send(0, 1); //settings.pvr.ta_skip
+//					popUp.dismiss();
+//				}
+//			}), params);
+	
+			hlay.addView(addbut(R.drawable.print_stats, new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.send(0, 2);
+					popUp.dismiss(); //print_stats=true;
+				}
+			}), params);
+		}
+		hlay.addView(addbut(R.drawable.vmu_swap, new OnClickListener() {
 			public void onClick(View v) {
-				JNIdc.send(0, 0);
-				popUp.dismiss();
-			}
-		}), params);
-
-		hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
-			public void onClick(View v) {
-				JNIdc.send(1, 3000);
-				popUp.dismiss();
-			}
-		}), params);
-
-		hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
-			public void onClick(View v) {
-				JNIdc.send(1, 0);
-				popUp.dismiss();
-			}
-		}), params);
-
-		hlay.addView(addbut(R.drawable.disk_unknown, new OnClickListener() {
-			public void onClick(View v) {
-				JNIdc.send(0, 1);
-				popUp.dismiss();
-			}
-		}), params);
-
-		hlay.addView(addbut(R.drawable.profiler, new OnClickListener() {
-			public void onClick(View v) {
-				JNIdc.send(0, 2);
+				JNIdc.vmuSwap();
 				popUp.dismiss();
 			}
 		}), params);
@@ -134,7 +143,8 @@ public class GL2JNIActivity extends Activity {
 	protected void onCreate(Bundle icicle) {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		moga.onCreate(this);
-
+		
+		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		createPopup();
 		/*
 		 * try { //int rID =
@@ -155,7 +165,6 @@ public class GL2JNIActivity extends Activity {
 		map = new int[4][];
 
 		// Populate device descriptor-to-player-map from preferences
-		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		deviceDescriptor_PlayerNum.put(
 				prefs.getString("device_descriptor_player_1", null), 0);
 		deviceDescriptor_PlayerNum.put(
@@ -281,12 +290,28 @@ public class GL2JNIActivity extends Activity {
 									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
 
 									OuyaController.BUTTON_MENU, key_CONT_START,
-									OuyaController.BUTTON_R1, key_CONT_START
+									108, key_CONT_START
 							};
 							nVidia[playerNum] = true;
 
 							globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
 							globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+						} else if (InputDevice.getDevice(joys[i]).getName()
+								.contains("keypad-zeus")) {
+							map[playerNum] = new int[] { 
+									23, key_CONT_A,
+									4, key_CONT_B,
+									OuyaController.BUTTON_U, key_CONT_X,
+									OuyaController.BUTTON_Y, key_CONT_Y,
+
+									OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
+									OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
+									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
+									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
+
+									OuyaController.BUTTON_MENU, key_CONT_START,
+									108, key_CONT_START
+							};
 						} else if (!moga.isActive[playerNum]) { // Ouya controller
 							map[playerNum] = new int[] {
 									OuyaController.BUTTON_O, key_CONT_A,
@@ -328,9 +353,19 @@ public class GL2JNIActivity extends Activity {
 			mView = new GL2JNIView(getApplication(), fileName, false, 24, 0, false);
 			setContentView(mView);
 		}
-
-		Toast.makeText(getApplicationContext(),
-				"Press the back button for a menu", Toast.LENGTH_SHORT).show();
+		
+		String menu_spec;
+		if (android.os.Build.MODEL.equals("R800")
+				|| android.os.Build.MODEL.equals("R800i")) {
+			menu_spec = getApplicationContext().getString(R.string.search_button);
+		} else {
+			menu_spec = getApplicationContext().getString(R.string.back_button);
+		}
+		Toast.makeText(
+				getApplicationContext(),
+				getApplicationContext()
+						.getString(R.string.bios_menu, menu_spec),
+				Toast.LENGTH_SHORT).show();
 
 		//setup mic
 		boolean micPluggedIn = prefs.getBoolean("mic_plugged_in", false);
@@ -597,24 +632,35 @@ public class GL2JNIActivity extends Activity {
 			return true;
 		}
 
-		if (keyCode == KeyEvent.KEYCODE_MENU
-				|| keyCode == KeyEvent.KEYCODE_BACK) {
-			if (!popUp.isShowing()) {
-				if (MainActivity.force_gpu) {
-					popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
-				} else {
-					popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-				}
-				popUp.update(LayoutParams.WRAP_CONTENT,
-						LayoutParams.WRAP_CONTENT);
-
-			} else {
-				popUp.dismiss();
+		if (android.os.Build.MODEL.equals("R800")
+				|| android.os.Build.MODEL.equals("R800i")) {
+			if ((keyCode == KeyEvent.KEYCODE_MENU)
+					|| (keyCode == KeyEvent.KEYCODE_SEARCH)) {
+				return showMenu();
 			}
+		} else {
+			if (keyCode == KeyEvent.KEYCODE_MENU
+					|| (keyCode == KeyEvent.KEYCODE_BACK)) {
+				return showMenu();
+			}
+		}
+		return super.onKeyDown(keyCode, event);
+	}
+	
+	private boolean showMenu() {
+		if (!popUp.isShowing()) {
+			if (MainActivity.force_gpu) {
+				popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
+			} else {
+				popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+			}
+			popUp.update(LayoutParams.WRAP_CONTENT,
+					LayoutParams.WRAP_CONTENT);
 
-			return true;
-		} else
-			return super.onKeyDown(keyCode, event);
+		} else {
+			popUp.dismiss();
+		}
+		return true;
 	}
 
 	@Override
@@ -648,11 +694,6 @@ public class GL2JNIActivity extends Activity {
 
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
-		if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-			// do your task
-		} else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-			// do your task
-		}
 		super.onConfigurationChanged(newConfig);
 	}
 

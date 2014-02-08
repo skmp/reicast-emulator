@@ -32,6 +32,9 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.android.util.DreamTime;
+
 import de.ankri.views.Switch;
 
 public class ConfigureFragment extends Fragment {
@@ -94,13 +97,13 @@ public class ConfigureFragment extends Fragment {
 
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"Dynarec.Enabled")) {
-						dynarecopt = Boolean.valueOf(currentLine.replace(
-								"Dynarec.Enabled=", ""));
+						dynarecopt = currentLine.replace(
+								"Dynarec.Enabled=", "").equals("1");
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"Dynarec.unstable-opt")) {
-						unstableopt = Boolean.valueOf(currentLine.replace(
-								"Dynarec.unstable-opt=", ""));
+						unstableopt = currentLine.replace(
+								"Dynarec.unstable-opt=", "").equals("1");
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"Dreamcast.Region")) {
@@ -109,26 +112,26 @@ public class ConfigureFragment extends Fragment {
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"aica.LimitFPS")) {
-						limitfps = Boolean.valueOf(currentLine.replace(
-								"aica.LimitFPS=", ""));
+						limitfps = currentLine.replace(
+								"aica.LimitFPS=", "").equals("1");
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"rend.UseMipmaps")) {
-						mipmaps = Boolean.valueOf(currentLine.replace(
-								"rend.UseMipmaps=", ""));
+						mipmaps = currentLine.replace(
+								"rend.UseMipmaps=", "").equals("1");
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"rend.WideScreen")) {
-						widescreen = Boolean.valueOf(currentLine.replace(
-								"rend.WideScreen=", ""));
+						widescreen = currentLine.replace(
+								"rend.WideScreen=", "").equals("1");
 					}
 					if (StringUtils.containsIgnoreCase(currentLine, "ta.skip")) {
 						frameskip = Integer.valueOf(currentLine.replace(
 								"ta.skip=", ""));
 					}
 					if (StringUtils.containsIgnoreCase(currentLine, "pvr.rend")) {
-						pvrrender = Boolean.valueOf(currentLine.replace(
-								"pvr.rend=", ""));
+						pvrrender = currentLine.replace(
+								"pvr.rend=", "").equals("1");
 					}
 					if (StringUtils.containsIgnoreCase(currentLine, "image")) {
 						cheatdisk = currentLine.replace("image=", "");
@@ -169,10 +172,8 @@ public class ConfigureFragment extends Fragment {
 					boolean isChecked) {
 				mPrefs.edit().putBoolean("dynarec_opt", isChecked).commit();
 				dynarecopt = isChecked;
-				if (!executeAppendConfig("Dynarec.Enabled",
-						String.valueOf(isChecked ? 1 : 0))) {
-					executeWriteConfig();
-				}
+				executeAppendConfig("Dynarec.Enabled",
+						String.valueOf(isChecked ? 1 : 0));
 			}
 		};
 		Switch dynarec_opt = (Switch) getView().findViewById(
@@ -191,10 +192,8 @@ public class ConfigureFragment extends Fragment {
 					boolean isChecked) {
 				mPrefs.edit().putBoolean("unstable_opt", isChecked).commit();
 				unstableopt = isChecked;
-				if (!executeAppendConfig("Dynarec.unstable-opt",
-						String.valueOf(isChecked ? 1 : 0))) {
-					executeWriteConfig();
-				}
+				executeAppendConfig("Dynarec.unstable-opt",
+						String.valueOf(isChecked ? 1 : 0));
 			}
 		};
 		Switch unstable_opt = (Switch) getView().findViewById(
@@ -227,10 +226,8 @@ public class ConfigureFragment extends Fragment {
 					int pos, long id) {
 				mPrefs.edit().putInt("dc_region", pos).commit();
 				dcregion = pos;
-				if (!executeAppendConfig("Dreamcast.Region",
-						String.valueOf(pos))) {
-					executeWriteConfig();
-				}
+				executeAppendConfig("Dreamcast.Region",
+						String.valueOf(pos));
 
 			}
 
@@ -246,10 +243,8 @@ public class ConfigureFragment extends Fragment {
 					boolean isChecked) {
 				mPrefs.edit().putBoolean("limit_fps", isChecked).commit();
 				limitfps = isChecked;
-				if (!executeAppendConfig("aica.LimitFPS",
-						String.valueOf(isChecked ? 1 : 0))) {
-					executeWriteConfig();
-				}
+				executeAppendConfig("aica.LimitFPS",
+						String.valueOf(isChecked ? 1 : 0));
 			}
 		};
 		Switch limit_fps = (Switch) getView()
@@ -268,10 +263,8 @@ public class ConfigureFragment extends Fragment {
 					boolean isChecked) {
 				mPrefs.edit().putBoolean("use_mipmaps", isChecked).commit();
 				mipmaps = isChecked;
-				if (!executeAppendConfig("rend.UseMipmaps",
-						String.valueOf(isChecked ? 1 : 0))) {
-					executeWriteConfig();
-				}
+				executeAppendConfig("rend.UseMipmaps",
+						String.valueOf(isChecked ? 1 : 0));
 			}
 		};
 		Switch mipmap_opt = (Switch) getView()
@@ -290,10 +283,8 @@ public class ConfigureFragment extends Fragment {
 					boolean isChecked) {
 				mPrefs.edit().putBoolean("stretch_view", isChecked).commit();
 				widescreen = isChecked;
-				if (!executeAppendConfig("rend.WideScreen",
-						String.valueOf(isChecked ? 1 : 0))) {
-					executeWriteConfig();
-				}
+				executeAppendConfig("rend.WideScreen",
+						String.valueOf(isChecked ? 1 : 0));
 			}
 		};
 		Switch stretch_view = (Switch) getView().findViewById(
@@ -305,6 +296,16 @@ public class ConfigureFragment extends Fragment {
 			stretch_view.setChecked(false);
 		}
 		stretch_view.setOnCheckedChangeListener(full_screen);
+		
+		Switch showProfilingToolsSwitch = (Switch) getView().findViewById(
+				R.id.debug_profling_tools);
+		boolean showProfilingTools = mPrefs.getBoolean("debug_profling_tools", false);
+		showProfilingToolsSwitch.setChecked(showProfilingTools);
+		showProfilingToolsSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				mPrefs.edit().putBoolean("debug_profling_tools", isChecked).commit();
+			}
+		});
 
 		mainFrames = (TextView) getView().findViewById(R.id.current_frames);
 		mainFrames.setText(String.valueOf(frameskip));
@@ -331,10 +332,8 @@ public class ConfigureFragment extends Fragment {
 			public void onStopTrackingTouch(SeekBar seekBar) {
 				mPrefs.edit().putInt("frame_skip", progressChanged).commit();
 				frameskip = progressChanged;
-				if (!executeAppendConfig("ta.skip",
-						String.valueOf(progressChanged))) {
-					executeWriteConfig();
-				}
+				executeAppendConfig("ta.skip",
+						String.valueOf(progressChanged));
 			}
 		});
 
@@ -344,10 +343,8 @@ public class ConfigureFragment extends Fragment {
 					boolean isChecked) {
 				mPrefs.edit().putBoolean("pvr_render", isChecked).commit();
 				pvrrender = isChecked;
-				if (!executeAppendConfig("pvr.rend",
-						String.valueOf(isChecked ? 1 : 0))) {
-					executeWriteConfig();
-				}
+				executeAppendConfig("pvr.rend",
+						String.valueOf(isChecked ? 1 : 0));
 			}
 		};
 		Switch pvr_render = (Switch) getView().findViewById(R.id.render_option);
@@ -368,9 +365,7 @@ public class ConfigureFragment extends Fragment {
 				if (cheatEdit.getText() != null) {
 					cheatdisk = cheatEdit.getText().toString();
 					mPrefs.edit().putString("cheat_disk", cheatdisk).commit();
-					if (!executeAppendConfig("image", cheatdisk)) {
-						executeWriteConfig();
-					}
+					executeAppendConfig("image", cheatdisk);
 				}
 			}
 
@@ -396,19 +391,19 @@ public class ConfigureFragment extends Fragment {
 		Toast.makeText(parentActivity,
 				parentActivity.getString(R.string.platform),
 				Toast.LENGTH_SHORT).show();
-		UploadLogs mUploadLogs = new UploadLogs(parentActivity);
+		GenerateLogs mGenerateLogs = new GenerateLogs(parentActivity);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			mUploadLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+			mGenerateLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
 					home_directory);
 		} else {
-			mUploadLogs.execute(home_directory);
+			mGenerateLogs.execute(home_directory);
 		}
 	}
 
-	public boolean executeAppendConfig(String identifier, String value) {
+	public void executeAppendConfig(String identifier, String value) {
 		File config = new File(home_directory, "emu.cfg");
-		if (config.exists()) {
-			try {
+		try {
+			if (config.exists()) {
 				// Read existing emu.cfg and substitute new setting value
 				StringBuilder rebuildFile = new StringBuilder();
 				Scanner scanner = new Scanner(config);
@@ -426,53 +421,41 @@ public class ConfigureFragment extends Fragment {
 				FileOutputStream fos = new FileOutputStream(config);
 				fos.write(rebuildFile.toString().getBytes());
 				fos.close();
-				return true;
-			} catch (Exception e) {
-				Log.d("reicast", "Exception: " + e);
+			} else if (config.createNewFile()) {
+				StringBuilder rebuildFile = new StringBuilder();
+				rebuildFile.append("[config]" + "\n");
+				rebuildFile.append("Dynarec.Enabled="
+						+ String.valueOf(dynarecopt ? 1 : 0) + "\n");
+				rebuildFile.append("Dynarec.idleskip=1" + "\n");
+				rebuildFile.append("Dynarec.unstable-opt="
+						+ String.valueOf(unstableopt ? 1 : 0) + "\n");
+				rebuildFile.append("Dreamcast.Cable=3" + "\n");
+				rebuildFile.append("Dreamcast.RTC=" + DreamTime.getDreamtime()
+						+ "\n");
+				rebuildFile.append("Dreamcast.Region="
+						+ String.valueOf(dcregion) + "\n");
+				rebuildFile.append("Dreamcast.Broadcast=4" + "\n");
+				rebuildFile.append("aica.LimitFPS="
+						+ String.valueOf(limitfps ? 1 : 0) + "\n");
+				rebuildFile.append("aica.NoBatch=0" + "\n");
+				rebuildFile.append("rend.UseMipmaps="
+						+ String.valueOf(mipmaps ? 1 : 0) + "\n");
+				rebuildFile.append("rend.WideScreen="
+						+ String.valueOf(widescreen ? 1 : 0) + "\n");
+				rebuildFile.append("pvr.Subdivide=0" + "\n");
+				rebuildFile.append("ta.skip=" + String.valueOf(frameskip)
+						+ "\n");
+				rebuildFile.append("pvr.rend="
+						+ String.valueOf(pvrrender ? 1 : 0) + "\n");
+				rebuildFile.append("image=" + cheatdisk + "\n");
+				FileOutputStream fos = new FileOutputStream(config);
+				fos.write(rebuildFile.toString().getBytes());
+				fos.close();
+			} else {
+				Toast.makeText(parentActivity,
+						parentActivity.getString(R.string.bios_config),
+						Toast.LENGTH_SHORT).show();
 			}
-		}
-		return false;
-	}
-
-	private void executeWriteConfig() {
-		try {
-			File config = new File(home_directory, "emu.cfg");
-			if (config.exists()) {
-				config.delete();
-			}
-
-			// Write new emu.cfg using current display values
-
-			StringBuilder rebuildFile = new StringBuilder();
-			rebuildFile.append("[config]" + "\n");
-			rebuildFile.append("Dynarec.Enabled="
-					+ String.valueOf(dynarecopt ? 1 : 0) + "\n");
-			rebuildFile.append("Dynarec.idleskip=1" + "\n");
-			rebuildFile.append("Dynarec.unstable-opt="
-					+ String.valueOf(unstableopt ? 1 : 0) + "\n");
-			rebuildFile.append("Dreamcast.Cable=3" + "\n");
-			long dreamTime = (System.currentTimeMillis() / 1000)
-					+ MainActivity.dreamRTC;
-			rebuildFile.append("Dreamcast.RTC=" + String.valueOf(dreamTime)
-					+ "\n");
-			rebuildFile.append("Dreamcast.Region=" + String.valueOf(dcregion)
-					+ "\n");
-			rebuildFile.append("Dreamcast.Broadcast=4" + "\n");
-			rebuildFile.append("aica.LimitFPS="
-					+ String.valueOf(limitfps ? 1 : 0) + "\n");
-			rebuildFile.append("aica.NoBatch=0" + "\n");
-			rebuildFile.append("rend.UseMipmaps="
-					+ String.valueOf(mipmaps ? 1 : 0) + "\n");
-			rebuildFile.append("rend.WideScreen="
-					+ String.valueOf(widescreen ? 1 : 0) + "\n");
-			rebuildFile.append("pvr.Subdivide=0" + "\n");
-			rebuildFile.append("ta.skip=" + String.valueOf(frameskip) + "\n");
-			rebuildFile.append("pvr.rend=" + String.valueOf(pvrrender ? 1 : 0)
-					+ "\n");
-			rebuildFile.append("image=" + cheatdisk + "\n");
-			FileOutputStream fos = new FileOutputStream(config);
-			fos.write(rebuildFile.toString().getBytes());
-			fos.close();
 		} catch (Exception e) {
 			Log.d("reicast", "Exception: " + e);
 		}

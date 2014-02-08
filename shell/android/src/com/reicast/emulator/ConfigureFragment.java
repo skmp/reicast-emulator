@@ -44,7 +44,7 @@ public class ConfigureFragment extends Fragment {
 	boolean unstableopt = false;
 	int dcregion = 3;
 	boolean limitfps = true;
-	boolean mipmaps = false;
+	boolean mipmaps = true;
 	boolean widescreen = false;
 	int frameskip = 0;
 	boolean pvrrender = false;
@@ -94,13 +94,13 @@ public class ConfigureFragment extends Fragment {
 
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"Dynarec.Enabled")) {
-						dynarecopt = Boolean.valueOf(currentLine.replace(
-								"Dynarec.Enabled=", ""));
+						dynarecopt = Integer.valueOf(currentLine.replace(
+								"Dynarec.Enabled=", ""))==1;
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"Dynarec.unstable-opt")) {
-						unstableopt = Boolean.valueOf(currentLine.replace(
-								"Dynarec.unstable-opt=", ""));
+						unstableopt = Integer.valueOf(currentLine.replace(
+								"Dynarec.unstable-opt=", ""))==1;
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"Dreamcast.Region")) {
@@ -109,26 +109,26 @@ public class ConfigureFragment extends Fragment {
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"aica.LimitFPS")) {
-						limitfps = Boolean.valueOf(currentLine.replace(
-								"aica.LimitFPS=", ""));
+						limitfps = Integer.valueOf(currentLine.replace(
+								"aica.LimitFPS=", ""))==1;
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"rend.UseMipmaps")) {
-						mipmaps = Boolean.valueOf(currentLine.replace(
-								"rend.UseMipmaps=", ""));
+						mipmaps = Integer.valueOf(currentLine.replace(
+								"rend.UseMipmaps=", ""))==1;
 					}
 					if (StringUtils.containsIgnoreCase(currentLine,
 							"rend.WideScreen")) {
-						widescreen = Boolean.valueOf(currentLine.replace(
-								"rend.WideScreen=", ""));
+						widescreen = Integer.valueOf(currentLine.replace(
+								"rend.WideScreen=", ""))==1;
 					}
 					if (StringUtils.containsIgnoreCase(currentLine, "ta.skip")) {
 						frameskip = Integer.valueOf(currentLine.replace(
 								"ta.skip=", ""));
 					}
 					if (StringUtils.containsIgnoreCase(currentLine, "pvr.rend")) {
-						pvrrender = Boolean.valueOf(currentLine.replace(
-								"pvr.rend=", ""));
+						pvrrender = Integer.valueOf(currentLine.replace(
+								"pvr.rend=", ""))==1;
 					}
 					if (StringUtils.containsIgnoreCase(currentLine, "image")) {
 						cheatdisk = currentLine.replace("image=", "");

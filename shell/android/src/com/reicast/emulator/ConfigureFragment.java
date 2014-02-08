@@ -40,11 +40,11 @@ public class ConfigureFragment extends Fragment {
 	TextView mainFrames;
 	OnClickListener mCallback;
 
-	boolean dynarecopt = true;
+	boolean dynarecopt = false;
 	boolean unstableopt = false;
 	int dcregion = 3;
-	boolean limitfps = true;
-	boolean mipmaps = true;
+	boolean limitfps = false;
+	boolean mipmaps = false;
 	boolean widescreen = false;
 	int frameskip = 0;
 	boolean pvrrender = false;

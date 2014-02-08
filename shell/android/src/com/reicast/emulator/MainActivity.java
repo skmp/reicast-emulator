@@ -2,6 +2,7 @@ package com.reicast.emulator;
 
 import java.io.File;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.Calendar;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -37,8 +38,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 	private static File sdcard = Environment.getExternalStorageDirectory();
 	public static String home_directory = sdcard + "/dc";
 	
-	public static long dreamRTC = ((20 * 365 + 5) * 86400);
-
 	private TextView menuHeading;
 	
 	private SlidingMenu sm;
@@ -338,10 +337,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 			// show it
 			alertDialog.show();
 		} else {
-			long dreamTime = (System.currentTimeMillis() / 1000) + dreamRTC;
 			ConfigureFragment config = new ConfigureFragment();
 			config.executeAppendConfig("Dreamcast.RTC",
-					String.valueOf(String.valueOf(dreamTime)));
+					String.valueOf(Utils.getDreamtime()));
 			Intent inte = new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
 					GL2JNIActivity.class);
 			startActivity(inte);

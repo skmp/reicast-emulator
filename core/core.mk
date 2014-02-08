@@ -54,5 +54,6 @@ RZDCY_CXXFLAGS	:= \
 	-D_ANDROID -DRELEASE -DTARGET_BEAGLE\
 	-march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16 \
 	-frename-registers -fsingle-precision-constant -ffast-math \
-	-ftree-vectorize -fomit-frame-pointer -fno-exceptions -fno-rtti -std=gnu++11
+	-ftree-vectorize -fomit-frame-pointer 
+LOCAL_CPPFLAGS := -fno-exceptions -std=gnu++11 -fno-rtti
 endif

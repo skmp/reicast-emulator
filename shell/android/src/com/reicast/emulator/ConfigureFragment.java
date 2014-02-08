@@ -427,9 +427,7 @@ public class ConfigureFragment extends Fragment {
 				rebuildFile.append("Dynarec.unstable-opt="
 						+ String.valueOf(unstableopt ? 1 : 0) + "\n");
 				rebuildFile.append("Dreamcast.Cable=3" + "\n");
-				long dreamTime = (System.currentTimeMillis() / 1000)
-						+ MainActivity.dreamRTC;
-				rebuildFile.append("Dreamcast.RTC=" + String.valueOf(dreamTime)
+				rebuildFile.append("Dreamcast.RTC=" + String.valueOf(Utils.getDreamtime())
 						+ "\n");
 				rebuildFile.append("Dreamcast.Region="
 						+ String.valueOf(dcregion) + "\n");

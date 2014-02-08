@@ -38,8 +38,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 	private static File sdcard = Environment.getExternalStorageDirectory();
 	public static String home_directory = sdcard + "/dc";
 	
-	public static long dreamRTC = ((20 * 365 + 5) * 86400);
-
 	private TextView menuHeading;
 	
 	private SlidingMenu sm;
@@ -339,12 +337,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 			// show it
 			alertDialog.show();
 		} else {
-			Calendar cal = Calendar.getInstance();
-			int utcOffset = cal.get(Calendar.ZONE_OFFSET)+cal.get(Calendar.DST_OFFSET);
-			long dreamTime = (System.currentTimeMillis() / 1000) + dreamRTC + utcOffset;
 			ConfigureFragment config = new ConfigureFragment();
 			config.executeAppendConfig("Dreamcast.RTC",
-					String.valueOf(String.valueOf(dreamTime)));
+					String.valueOf(Utils.getDreamtime()));
 			Intent inte = new Intent(Intent.ACTION_VIEW, uri, getBaseContext(),
 					GL2JNIActivity.class);
 			startActivity(inte);

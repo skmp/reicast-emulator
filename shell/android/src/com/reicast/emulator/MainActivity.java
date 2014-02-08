@@ -2,6 +2,7 @@ package com.reicast.emulator;
 
 import java.io.File;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.Calendar;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -338,7 +339,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 			// show it
 			alertDialog.show();
 		} else {
-			long dreamTime = (System.currentTimeMillis() / 1000) + dreamRTC;
+			Calendar cal = Calendar.getInstance();
+			int utcOffset = cal.get(Calendar.ZONE_OFFSET)+cal.get(Calendar.DST_OFFSET);
+			long dreamTime = (System.currentTimeMillis() / 1000) + dreamRTC + utcOffset;
 			ConfigureFragment config = new ConfigureFragment();
 			config.executeAppendConfig("Dreamcast.RTC",
 					String.valueOf(String.valueOf(dreamTime)));

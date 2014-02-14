@@ -29,6 +29,12 @@ import com.android.util.DreamTime;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu.OnOpenListener;
 import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
+import com.reicast.emulator.config.ConfigureFragment;
+import com.reicast.emulator.config.InputFragment;
+import com.reicast.emulator.config.OptionsFragment;
+import com.reicast.emulator.debug.GenerateLogs;
+import com.reicast.emulator.emu.GL2JNIActivity;
+import com.reicast.emulator.emu.JNIdc;
 
 public class MainActivity extends SlidingFragmentActivity implements
 		FileBrowser.OnItemSelectedListener, OptionsFragment.OnClickListener {
@@ -53,6 +59,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 		home_directory = mPrefs.getString("home_directory", home_directory);
 		JNIdc.config(home_directory);
+		
+		getFilesDir().mkdir();
 		
 		mUEHandler = new Thread.UncaughtExceptionHandler() {
 	        public void uncaughtException(Thread t, Throwable error) {
@@ -410,26 +418,39 @@ public class MainActivity extends SlidingFragmentActivity implements
 			Fragment fragment = (FileBrowser) getSupportFragmentManager()
 					.findFragmentByTag("MAIN_BROWSER");
 			if (fragment != null && fragment.isVisible()) {
-				MainActivity.this.finish();
+				boolean readyToQuit = true;
+				if (fragment.getArguments() != null) {
+					readyToQuit = fragment.getArguments().getBoolean(
+							"ImgBrowse", true);
+				}
+				if (readyToQuit) {
+					MainActivity.this.finish();
+				} else {
+					launchMainFragment(fragment);
+				}
 				return true;
 			} else {
-				fragment = new FileBrowser();
-				Bundle args = new Bundle();
-				args.putBoolean("ImgBrowse", true);
-				args.putString("browse_entry", null);
-				args.putBoolean("games_entry", false);
-				fragment.setArguments(args);
-				getSupportFragmentManager()
-				.beginTransaction()
-				.replace(R.id.fragment_container, fragment,
-						"MAIN_BROWSER").commit();
-				setTitle(getString(R.string.browser));
+				launchMainFragment(fragment);
 				return true;
 			}
 
 		}
 
 		return super.onKeyDown(keyCode, event);
+	}
+	
+	private void launchMainFragment(Fragment fragment) {
+		fragment = new FileBrowser();
+		Bundle args = new Bundle();
+		args.putBoolean("ImgBrowse", true);
+		args.putString("browse_entry", null);
+		args.putBoolean("games_entry", false);
+		fragment.setArguments(args);
+		getSupportFragmentManager()
+		.beginTransaction()
+		.replace(R.id.fragment_container, fragment,
+				"MAIN_BROWSER").commit();
+		setTitle(getString(R.string.browser));
 	}
 
 	@Override

@@ -1,7 +1,8 @@
-package com.reicast.emulator;
+package com.reicast.emulator.emu;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Vector;
 
 import tv.ouya.console.api.OuyaController;
 import android.annotation.TargetApi;
@@ -9,6 +10,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,10 +25,12 @@ import android.view.Window;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
+import com.reicast.emulator.R;
+import com.reicast.emulator.config.ConfigureFragment;
+
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class GL2JNIActivity extends Activity {
-	GL2JNIView mView;
-	GL2JNIViewV6 mView6;
+	public GL2JNIView mView;
 	OnScreenMenu menu;
 	PopupWindow popUp;
 	MOGAInput moga = new MOGAInput();
@@ -55,6 +59,7 @@ public class GL2JNIActivity extends Activity {
 		ConfigureFragment.getCurrentConfiguration(prefs);
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
 		popUp = menu.createPopup();
+
 		/*
 		 * try { //int rID =
 		 * getResources().getIdentifier("fortyonepost.com.lfas:raw/syms.map",
@@ -253,13 +258,8 @@ public class GL2JNIActivity extends Activity {
 			fileName = Uri.decode(intent.getData().toString());
 
 		// Create the actual GLES view
-		if (MainActivity.force_gpu) {
-			mView6 = new GL2JNIViewV6(getApplication(), fileName, false, 24, 0, false);
-			setContentView(mView6);
-		} else {
-			mView = new GL2JNIView(getApplication(), fileName, false, 24, 0, false);
-			setContentView(mView);
-		}
+		mView = new GL2JNIView(getApplication(), fileName, false, 24, 0, false);
+		setContentView(mView);
 		
 		String menu_spec;
 		if (android.os.Build.MODEL.equals("R800")
@@ -281,6 +281,10 @@ public class GL2JNIActivity extends Activity {
 			sip.startRecording();
 			JNIdc.setupMic(sip);
 		}
+		
+		//setup vmu screen
+		JNIdc.setupVmu(menu.getVmuLcd());
+		
 	}
 	
 	private void runCompatibilityMode() {
@@ -358,23 +362,15 @@ public class GL2JNIActivity extends Activity {
 						globalLS_Y[playerNum] = LS_Y;
 					}
 
-					if (MainActivity.force_gpu) {
-						GL2JNIViewV6.lt[playerNum] = (int) (L2 * 255);
-						GL2JNIViewV6.rt[playerNum] = (int) (R2 * 255);
+					GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+					GL2JNIView.rt[playerNum] = (int) (R2 * 255);
 
-						GL2JNIViewV6.jx[playerNum] = (int) (LS_X * 126);
-						GL2JNIViewV6.jy[playerNum] = (int) (LS_Y * 126);
-					} else {
-						GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-						GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-
-						GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
-						GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
-					}
+					GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
+					GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
 				}
 
 			}
-
+			mView.pushInput();
 			if ((jsCompat[playerNum] || xbox[playerNum] || nVidia[playerNum])
 					&& ((globalLS_X[playerNum] == previousLS_X[playerNum] && globalLS_Y[playerNum] == previousLS_Y[playerNum]) || (previousLS_X[playerNum] == 0.0f && previousLS_Y[playerNum] == 0.0f)))
 				// Only handle Left Stick on an Xbox 360 controller if there was
@@ -399,17 +395,10 @@ public class GL2JNIActivity extends Activity {
 						globalLS_X[playerNum] = 0;
 						globalLS_Y[playerNum] = 0;
 					}
-					if (MainActivity.force_gpu) {
-						GL2JNIViewV6.lt[playerNum] = (int) (L2 * 255);
-						GL2JNIViewV6.rt[playerNum] = (int) (R2 * 255);
-						GL2JNIViewV6.jx[playerNum] = (int) (0 * 126);
-						GL2JNIViewV6.jy[playerNum] = (int) (0 * 126);
-					} else {
-						GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-						GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-						GL2JNIView.jx[playerNum] = (int) (0 * 126);
-						GL2JNIView.jy[playerNum] = (int) (0 * 126);
-					}
+					GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+					GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+					GL2JNIView.jx[playerNum] = (int) (0 * 126);
+					GL2JNIView.jy[playerNum] = (int) (0 * 126);
 				}
 			if ((jsCompat[playerNum] || xbox[playerNum] || nVidia[playerNum])
 					&& ((globalLS_X[playerNum] == previousLS_X[playerNum] && globalLS_Y[playerNum] == previousLS_Y[playerNum]) || (previousLS_X[playerNum] == 0.0f && previousLS_Y[playerNum] == 0.0f)))
@@ -474,22 +463,15 @@ public class GL2JNIActivity extends Activity {
 			boolean rav = false;
 			for (int i = 0; i < map[playerNum].length; i += 2) {
 				if (map[playerNum][i + 0] == kc) {
-					if (MainActivity.force_gpu) {
-						if (down)
-							GL2JNIViewV6.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
-						else
-							GL2JNIViewV6.kcode_raw[playerNum] |= map[playerNum][i + 1];
-					} else {
-						if (down)
-							GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
-						else
-							GL2JNIView.kcode_raw[playerNum] |= map[playerNum][i + 1];
-					}
+					if (down)
+						GL2JNIView.kcode_raw[playerNum] &= ~map[playerNum][i + 1];
+					else
+						GL2JNIView.kcode_raw[playerNum] |= map[playerNum][i + 1];
 					rav = true;
 					break;
 				}
 			}
-
+			mView.pushInput();
 			return rav;
 
 		} else {
@@ -498,8 +480,8 @@ public class GL2JNIActivity extends Activity {
 	}
 	
 	public void displayPopUp(PopupWindow popUp) {
-		if (MainActivity.force_gpu) {
-			popUp.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
 		} else {
 			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
 		}
@@ -507,9 +489,19 @@ public class GL2JNIActivity extends Activity {
 				LayoutParams.WRAP_CONTENT);
 	}
 	
+	public void displayDebug(PopupWindow popUpDebug) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
+		} else {
+			popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		}
+		popUpDebug.update(LayoutParams.WRAP_CONTENT,
+				LayoutParams.WRAP_CONTENT);
+	}
+	
 	public void displayConfig(PopupWindow popUpConfig) {
-		if (MainActivity.force_gpu) {
-			popUpConfig.showAtLocation(mView6, Gravity.BOTTOM, 0, 0);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
 		} else {
 			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
 		}
@@ -578,7 +570,9 @@ public class GL2JNIActivity extends Activity {
 		if (!popUp.isShowing()) {
 			displayPopUp(popUp);
 		} else {
-			popUp.dismiss();
+			if (!menu.dismissPopUps()) {
+				popUp.dismiss();
+			}
 		}
 		return true;
 	}
@@ -586,11 +580,7 @@ public class GL2JNIActivity extends Activity {
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if (MainActivity.force_gpu) {
-			mView6.onPause();
-		} else {
-			mView.onPause();
-		}
+		mView.onPause();
 		moga.onPause();
 	}
 
@@ -604,11 +594,7 @@ public class GL2JNIActivity extends Activity {
 	protected void onStop() {
 		// TODO Auto-generated method stub
 		JNIdc.stop();
-		if (MainActivity.force_gpu) {
-			mView6.onStop();
-		} else {
-			mView.onStop();
-		}
+		mView.onStop();
 		super.onStop();
 	}
 
@@ -620,11 +606,7 @@ public class GL2JNIActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if (MainActivity.force_gpu) {
-			mView6.onResume();
-		} else {
-			mView.onResume();
-		}
+		mView.onResume();
 		moga.onResume();
 	}
 }

@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.reicast.emulator.config;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +29,9 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import com.reicast.emulator.R;
+
 import de.ankri.views.Switch;
 
 public class InputModFragment extends Fragment {
@@ -57,7 +60,6 @@ public class InputModFragment extends Fragment {
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		parentActivity = getActivity();
 
-		Runtime.getRuntime().freeMemory();
 		System.gc();
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(parentActivity);
@@ -410,7 +412,6 @@ public class InputModFragment extends Fragment {
 				return getButtonImage(x, y);
 			} else {
 				E.printStackTrace();
-				Runtime.getRuntime().freeMemory();
 				System.gc();
 			}
 		}

@@ -84,7 +84,7 @@
     
     <string-array name="region">
         <item>Japanese, Korean, Asian - (NTSC-J)</item>
-        <item>North American, Brazilian, Argentine - (NTSC-U/PAL-M/PAL-M)</item>
+        <item>North American, Brazilian, Argentine - (NTSC-U/PAL-M/PAL-N)</item>
         <item>European - (PAL-E)</item>
         <item>R - Region Free</item>
     </string-array>

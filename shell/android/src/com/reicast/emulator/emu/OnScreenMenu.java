@@ -20,6 +20,7 @@ import android.widget.TextView;
 
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
+import com.reicast.emulator.config.Config;
 import com.reicast.emulator.config.ConfigureFragment;
 import com.reicast.emulator.periph.VmuLcd;
 
@@ -49,8 +50,8 @@ public class OnScreenMenu {
 		if (prefs != null) {
 			this.prefs = prefs;
 			home_directory = prefs.getString("home_directory", home_directory);
-			widescreen = ConfigureFragment.widescreen;
-			frameskip = ConfigureFragment.frameskip;
+			widescreen = Config.widescreen;
+			frameskip = Config.frameskip;
 		}
 		vmuLcd = new VmuLcd(mContext);
 		vmuLcd.setOnClickListener(new OnClickListener() {

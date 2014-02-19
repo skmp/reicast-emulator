@@ -26,7 +26,7 @@ import android.widget.PopupWindow;
 import android.widget.Toast;
 
 import com.reicast.emulator.R;
-import com.reicast.emulator.config.ConfigureFragment;
+import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.emu.OnScreenMenu.MainPopup;
 import com.reicast.emulator.emu.OnScreenMenu.VmuPopup;
@@ -64,7 +64,7 @@ public class GL2JNIActivity extends Activity {
 		moga.onCreate(this);
 		
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		ConfigureFragment.getCurrentConfiguration(prefs);
+		Config.getConfigurationPrefs(prefs);
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
 
 		PackageManager pMan = getPackageManager();

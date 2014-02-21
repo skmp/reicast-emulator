@@ -56,6 +56,9 @@ public class GL2JNIActivity extends NativeActivity {
 	
 	private Config config;
 	private Gamepad gamepad;
+
+	public boolean isXperiaPlay;
+	public boolean isOuyaOrTV;
 	
 	float[] globalLS_X = new float[4], globalLS_Y = new float[4],
 			previousLS_X = new float[4], previousLS_Y = new float[4];
@@ -81,8 +84,8 @@ public class GL2JNIActivity extends NativeActivity {
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
 		gamepad = new Gamepad(GL2JNIActivity.this);
 
-		gamepad.isXperiaPlay = gamepad.IsXperiaPlay();
-		gamepad.isOuyaOrTV = gamepad.IsOuyaOrTV();
+		isXperiaPlay = gamepad.IsXperiaPlay();
+		isOuyaOrTV = gamepad.IsOuyaOrTV();
 
 		/*
 		 * try { //int rID =
@@ -239,7 +242,7 @@ public class GL2JNIActivity extends NativeActivity {
 		setContentView(mView);
 		
 		String menu_spec;
-		if (gamepad.isXperiaPlay) {
+		if (isXperiaPlay) {
 			menu_spec = getApplicationContext().getString(R.string.menu_button);
 		} else {
 			menu_spec = getApplicationContext().getString(R.string.back_button);
@@ -307,7 +310,7 @@ public class GL2JNIActivity extends NativeActivity {
 		// Log.w("INPUT", event.toString() + " " + event.getSource());
 		// Get all the axis for the KeyEvent
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && !useXperiaPlay) {
 
 			Integer playerNum = Arrays.asList(name).indexOf(event.getDeviceId());
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
@@ -488,62 +491,70 @@ public class GL2JNIActivity extends NativeActivity {
 	}
 
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		Integer playerNum = Arrays.asList(name).indexOf(event.getDeviceId());
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
-			playerNum = deviceDescriptor_PlayerNum
-				.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
-		} else {
-			playerNum = -1;
-		}
+		if (!useXperiaPlay) {
+			Integer playerNum = Arrays.asList(name).indexOf(event.getDeviceId());
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
+				playerNum = deviceDescriptor_PlayerNum
+						.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
+			} else {
+				playerNum = -1;
+			}
 
-		if (playerNum != null && playerNum != -1) {
-			if (compat[playerNum] || custom[playerNum]) {
-				String id = portId[playerNum];
-				if (keyCode == prefs.getInt("l_button" + id,
-						KeyEvent.KEYCODE_BUTTON_L1)
-						|| keyCode == prefs.getInt("r_button" + id,
-								KeyEvent.KEYCODE_BUTTON_R1)) {
-					return simulatedTouchEvent(playerNum, 0.0f, 0.0f);
+			if (playerNum != null && playerNum != -1) {
+				if (compat[playerNum] || custom[playerNum]) {
+					String id = portId[playerNum];
+					if (keyCode == prefs.getInt("l_button" + id,
+							KeyEvent.KEYCODE_BUTTON_L1)
+							|| keyCode == prefs.getInt("r_button" + id,
+									KeyEvent.KEYCODE_BUTTON_R1)) {
+						return simulatedTouchEvent(playerNum, 0.0f, 0.0f);
+					}
 				}
 			}
-		}
 
-		return handle_key(playerNum, keyCode, false)
-				|| super.onKeyUp(keyCode, event);
+			return handle_key(playerNum, keyCode, false)
+					|| super.onKeyUp(keyCode, event);
+		} else {
+			return super.onKeyUp(keyCode, event);
+		}
 	}
 
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		Integer playerNum = Arrays.asList(name).indexOf(event.getDeviceId());
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
-			playerNum = deviceDescriptor_PlayerNum
-				.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
-		} else {
-			playerNum = -1;
-		}
-		
-		if (playerNum != null && playerNum != -1) {
-			if (compat[playerNum] || custom[playerNum]) {
-				String id = portId[playerNum];
-				if (keyCode == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {
-					return simulatedTouchEvent(playerNum, 1.0f, 0.0f);
-				}
-				if (keyCode == prefs.getInt("r_button" + id, KeyEvent.KEYCODE_BUTTON_R1)) {
-					return simulatedTouchEvent(playerNum, 0.0f, 1.0f);
+		if (!useXperiaPlay) {
+			Integer playerNum = Arrays.asList(name).indexOf(event.getDeviceId());
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && playerNum == -1) {
+				playerNum = deviceDescriptor_PlayerNum
+						.get(deviceId_deviceDescriptor.get(event.getDeviceId()));
+			} else {
+				playerNum = -1;
+			}
+
+			if (playerNum != null && playerNum != -1) {
+				if (compat[playerNum] || custom[playerNum]) {
+					String id = portId[playerNum];
+					if (keyCode == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {
+						return simulatedTouchEvent(playerNum, 1.0f, 0.0f);
+					}
+					if (keyCode == prefs.getInt("r_button" + id, KeyEvent.KEYCODE_BUTTON_R1)) {
+						return simulatedTouchEvent(playerNum, 0.0f, 1.0f);
+					}
 				}
 			}
-		}
 
-		if (handle_key(playerNum, keyCode, true)) {
-			if (playerNum == 0)
-				JNIdc.hide_osd();
-			return true;
+			if (handle_key(playerNum, keyCode, true)) {
+				if (playerNum == 0)
+					JNIdc.hide_osd();
+				return true;
+			}
 		}
-
-		if (gamepad.isXperiaPlay) {
+		if (isXperiaPlay) {
 			if (keyCode == KeyEvent.KEYCODE_MENU) {
 				return showMenu();
 			}
-		} else if (gamepad.isOuyaOrTV) {
+			if (keyCode == KeyEvent.KEYCODE_BACK) {
+				return false;
+			}
+		} else if (isOuyaOrTV) {
 			if (keyCode == OuyaController.BUTTON_R3) {
 				return showMenu();
 			}

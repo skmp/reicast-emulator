@@ -21,8 +21,6 @@ public class Gamepad {
 
 	private SharedPreferences mPrefs;
 	private Context mContext;
-	public boolean isXperiaPlay;
-	public boolean isOuyaOrTV;
 
 	public Gamepad(Context mContext) {
 		this.mContext = mContext;

@@ -1,18 +1,19 @@
-package com.reicast.emulator.emu;
+package com.reicast.emulator;
 
 import java.util.Arrays;
 import java.util.HashMap;
 
 import tv.ouya.console.api.OuyaController;
 import android.annotation.TargetApi;
-import android.app.Activity;
+import android.app.NativeActivity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
@@ -25,52 +26,63 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
-import com.reicast.emulator.R;
-import com.reicast.emulator.config.ConfigureFragment;
+import com.reicast.emulator.config.Config;
+import com.reicast.emulator.emu.GL2JNIView;
+import com.reicast.emulator.emu.JNIdc;
+import com.reicast.emulator.emu.OnScreenMenu;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.emu.OnScreenMenu.MainPopup;
 import com.reicast.emulator.emu.OnScreenMenu.VmuPopup;
+import com.reicast.emulator.periph.Gamepad;
 import com.reicast.emulator.periph.MOGAInput;
 import com.reicast.emulator.periph.SipEmulator;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
-public class GL2JNIActivity extends Activity {
+public class GL2JNIActivity extends NativeActivity {
 	public GL2JNIView mView;
 	OnScreenMenu menu;
-	MainPopup popUp;
+	public MainPopup popUp;
 	VmuPopup vmuPop;
 	FpsPopup fpsPop;
 	MOGAInput moga = new MOGAInput();
 	private SharedPreferences prefs;
-	static String[] portId = { "_A", "_B", "_C", "_D" };
-	static boolean[] compat = { false, false, false, false }, custom = { false,
-			false, false, false }, jsCompat = { false, false, false, false };
-	static boolean[] xbox = { false, false, false, false }, nVidia = { false, false, false, false }, xPlay = { false, false, false, false };
-	int[] name = { -1, -1, -1, -1 };
+
+	public String[] portId = { "_A", "_B", "_C", "_D" };
+	public boolean[] compat = { false, false, false, false };
+	public boolean[] custom = { false, false, false, false };
+	public boolean[] jsDpad = { false, false, false, false };
+	public int[] name = { -1, -1, -1, -1 };
+	public boolean useXperiaPlay = false;
+	
+	private Config config;
+	private Gamepad gamepad;
+	
 	float[] globalLS_X = new float[4], globalLS_Y = new float[4],
 			previousLS_X = new float[4], previousLS_Y = new float[4];
-	private boolean isOuyaOrTV = false;
 
 	public static HashMap<Integer, String> deviceId_deviceDescriptor = new HashMap<Integer, String>();
 	public static HashMap<String, Integer> deviceDescriptor_PlayerNum = new HashMap<String, Integer>();
 
 	int map[][];
 
-	static byte[] syms;
+	public static byte[] syms;
 
 	@Override
 	protected void onCreate(Bundle icicle) {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		getWindow().takeSurface(null);
 		moga.onCreate(this);
-		
-		prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		ConfigureFragment.getCurrentConfiguration(prefs);
-		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
 
-		PackageManager pMan = getPackageManager();
-	    if (pMan.hasSystemFeature(PackageManager.FEATURE_TELEVISION)) {
-	    	isOuyaOrTV = true;
-	    }
+		registerTouchpad();
+
+		prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		config = new Config(GL2JNIActivity.this);
+		config.getConfigurationPrefs();
+		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
+		gamepad = new Gamepad(GL2JNIActivity.this);
+
+		gamepad.isXperiaPlay = gamepad.IsXperiaPlay();
+		gamepad.isOuyaOrTV = gamepad.IsOuyaOrTV();
 
 		/*
 		 * try { //int rID =
@@ -81,7 +93,9 @@ public class GL2JNIActivity extends Activity {
 		 * syms = new byte[(int) is.available()]; is.read(syms); is.close(); }
 		 * catch (IOException e) { e.getMessage(); e.printStackTrace(); }
 		 */
-		
+
+		useXperiaPlay = prefs.getBoolean("xperia_play", false);
+		enableXperiaPlay(!prefs.getBoolean("controller_compat_A", false) && useXperiaPlay);
 
 		String fileName = null;
 
@@ -147,115 +161,63 @@ public class GL2JNIActivity extends Activity {
 				Log.d("reidc", "InputDevice Descriptor: " + descriptor);
 				deviceId_deviceDescriptor.put(joys[i], descriptor);
 			}
+			
+			if (!prefs.getBoolean("controller_compat_A", false) && useXperiaPlay) {
+				if (prefs.getBoolean("modified_key_layout_A", false)) {
+					map[0] = gamepad.setModifiedKeys("_A", 0);
+				} else {
+					map[0] = gamepad.getXPlayController();
+				}
+				globalLS_X[0] = previousLS_X[0] = 0.0f;
+				globalLS_Y[0] = previousLS_Y[0] = 0.0f;
+			} else {
+				for (int i = 0; i < joys.length; i++) {
+					Integer playerNum = deviceDescriptor_PlayerNum
+							.get(deviceId_deviceDescriptor.get(joys[i]));
 
-			for (int i = 0; i < joys.length; i++) {
-				Integer playerNum = deviceDescriptor_PlayerNum
-						.get(deviceId_deviceDescriptor.get(joys[i]));
+					if (playerNum != null) {
+						String id = portId[playerNum];
+						custom[playerNum] = prefs.getBoolean("modified_key_layout" + id, false);
+						compat[playerNum] = prefs.getBoolean("controller_compat" + id, false);
+						jsDpad[playerNum] = prefs.getBoolean("dpad_js_layout" + id, false);
+						if (!compat[playerNum]) {
+							if (custom[playerNum]) {
+								map[playerNum] = gamepad.setModifiedKeys(id, playerNum);
 
-				if (playerNum != null) {
-					String id = portId[playerNum];
-					custom[playerNum] = prefs.getBoolean("modified_key_layout" + id, false);
-					compat[playerNum] = prefs.getBoolean("controller_compat" + id, false);
-					jsCompat[playerNum] = prefs.getBoolean("dpad_js_layout" + id, false);
-					if (!compat[playerNum]) {
-						if (custom[playerNum]) {
-							map[playerNum] = setModifiedKeys(playerNum);
+								if (jsDpad[playerNum]) {
+									globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+									globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+								}
+							} else if (InputDevice.getDevice(joys[i]).getName()
+									.equals("Sony PLAYSTATION(R)3 Controller")) {
+								map[playerNum] = gamepad.getConsoleController();
+							} else if (InputDevice.getDevice(joys[i]).getName()
+									.equals("Microsoft X-Box 360 pad")) {
+								map[playerNum] = gamepad.getConsoleController();
 
-							if (jsCompat[playerNum]) {
+								jsDpad[playerNum] = true;
+
 								globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
 								globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+							} else if (InputDevice.getDevice(joys[i]).getName()
+									.contains("NVIDIA Corporation NVIDIA Controller")) {
+								map[playerNum] = gamepad.getConsoleController();
+								jsDpad[playerNum] = true;
+
+								globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+								globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+							} else if (InputDevice.getDevice(joys[0]).getName()
+									.contains("keypad-zeus")) {
+								map[playerNum] = gamepad.getXPlayController();
+
+								globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
+								globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
+							} else if (!moga.isActive[playerNum]) { // Ouya controller
+								map[playerNum] = gamepad.getOUYAController();
 							}
-						} else if (InputDevice.getDevice(joys[i]).getName()
-								.equals("Sony PLAYSTATION(R)3 Controller")) {
-							map[playerNum] = new int[] {
-									OuyaController.BUTTON_O, key_CONT_A,
-									OuyaController.BUTTON_A, key_CONT_B,
-									OuyaController.BUTTON_U, key_CONT_X,
-									OuyaController.BUTTON_Y, key_CONT_Y,
-
-
-									OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
-									OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
-									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
-									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
-
-									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
-
-							};
-						} else if (InputDevice.getDevice(joys[i]).getName()
-								.equals("Microsoft X-Box 360 pad")) {
-							map[playerNum] = new int[] {
-									OuyaController.BUTTON_O, key_CONT_A,
-									OuyaController.BUTTON_A, key_CONT_B,
-									OuyaController.BUTTON_U, key_CONT_X,
-									OuyaController.BUTTON_Y, key_CONT_Y,
-
-									OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
-									OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
-									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
-									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
-
-									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
-							};
-
-							xbox[playerNum] = true;
-
-							globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
-							globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
-						} else if (InputDevice.getDevice(joys[i]).getName()
-								.contains("NVIDIA Corporation NVIDIA Controller")) {
-							map[playerNum] = new int[] { 
-									OuyaController.BUTTON_O, key_CONT_A,
-									OuyaController.BUTTON_A, key_CONT_B,
-									OuyaController.BUTTON_U, key_CONT_X,
-									OuyaController.BUTTON_Y, key_CONT_Y,
-
-									OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
-									OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
-									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
-									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
-
-									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
-							};
-							nVidia[playerNum] = true;
-
-							globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
-							globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
-						} else if (InputDevice.getDevice(joys[i]).getName()
-								.contains("keypad-zeus")) {
-							map[playerNum] = new int[] { 
-									KeyEvent.KEYCODE_DPAD_CENTER, key_CONT_A,
-									KeyEvent.KEYCODE_BACK, key_CONT_B,
-									OuyaController.BUTTON_U, key_CONT_X,
-									OuyaController.BUTTON_Y, key_CONT_Y,
-
-									OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
-									OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
-									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
-									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
-
-									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
-							};
-							
-							xPlay[playerNum] = true;
-						} else if (!moga.isActive[playerNum]) { // Ouya controller
-							map[playerNum] = new int[] {
-									OuyaController.BUTTON_O, key_CONT_A,
-									OuyaController.BUTTON_A, key_CONT_B,
-									OuyaController.BUTTON_U, key_CONT_X,
-									OuyaController.BUTTON_Y, key_CONT_Y,
-
-									OuyaController.BUTTON_DPAD_UP, key_CONT_DPAD_UP,
-									OuyaController.BUTTON_DPAD_DOWN, key_CONT_DPAD_DOWN,
-									OuyaController.BUTTON_DPAD_LEFT, key_CONT_DPAD_LEFT,
-									OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
-
-									OuyaController.BUTTON_MENU, key_CONT_START,
-									KeyEvent.KEYCODE_BUTTON_START, key_CONT_START
-							};
+						} else{
+							getCompatibilityMap(playerNum, id);
 						}
-					} else {
-						getCompatibilityMap(playerNum, id);
 					}
 				}
 			}
@@ -272,12 +234,13 @@ public class GL2JNIActivity extends Activity {
 			fileName = Uri.decode(intent.getData().toString());
 
 		// Create the actual GLES view
-		mView = new GL2JNIView(getApplication(), fileName, false, prefs.getInt("depth_render", 24), 0, false);
+		mView = new GL2JNIView(getApplication(), config, fileName, false,
+				prefs.getInt("depth_render", 24), 0, false);
 		setContentView(mView);
 		
 		String menu_spec;
-		if (android.os.Build.MODEL.startsWith("R800")) {
-			menu_spec = getApplicationContext().getString(R.string.search_button);
+		if (gamepad.isXperiaPlay) {
+			menu_spec = getApplicationContext().getString(R.string.menu_button);
 		} else {
 			menu_spec = getApplicationContext().getString(R.string.back_button);
 		}
@@ -331,29 +294,12 @@ public class GL2JNIActivity extends Activity {
 	private void getCompatibilityMap(int playerNum, String id) {
 		name[playerNum] = prefs.getInt("controller" + id, -1);
 		if (name[playerNum] != -1) {
-			map[playerNum] = setModifiedKeys(playerNum);
+			map[playerNum] = gamepad.setModifiedKeys(id, playerNum);
 		}
-		if (jsCompat[playerNum]) {
+		if (jsDpad[playerNum]) {
 			globalLS_X[playerNum] = previousLS_X[playerNum] = 0.0f;
 			globalLS_Y[playerNum] = previousLS_Y[playerNum] = 0.0f;
 		}
-	}
-
-	private int[] setModifiedKeys(int player) {
-		String id = portId[player];
-		return new int[] { 
-			prefs.getInt("a_button" + id, OuyaController.BUTTON_O), key_CONT_A, 
-			prefs.getInt("b_button" + id, OuyaController.BUTTON_A), key_CONT_B,
-			prefs.getInt("x_button" + id, OuyaController.BUTTON_U), key_CONT_X,
-			prefs.getInt("y_button" + id, OuyaController.BUTTON_Y), key_CONT_Y,
-
-			prefs.getInt("dpad_up" + id, OuyaController.BUTTON_DPAD_UP), key_CONT_DPAD_UP,
-			prefs.getInt("dpad_down" + id, OuyaController.BUTTON_DPAD_DOWN), key_CONT_DPAD_DOWN,
-			prefs.getInt("dpad_left" + id, OuyaController.BUTTON_DPAD_LEFT), key_CONT_DPAD_LEFT,
-			prefs.getInt("dpad_right" + id, OuyaController.BUTTON_DPAD_RIGHT), key_CONT_DPAD_RIGHT,
-
-			prefs.getInt("start_button" + id, KeyEvent.KEYCODE_BUTTON_START), key_CONT_START,
-		};
 	}
 
 	@Override
@@ -373,9 +319,8 @@ public class GL2JNIActivity extends Activity {
 
 			if (playerNum == null || playerNum == -1)
 				return false;
-
-			if (!moga.isActive[playerNum] || compat[playerNum]) {
-				// TODO: Moga should handle this locally
+			if (!moga.isActive[playerNum] /* && !gamepad.compat[playerNum]*/) {
+				// TODO: Moga should handle this locally, Compat as well
 
 				// Joystick
 				if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
@@ -388,7 +333,7 @@ public class GL2JNIActivity extends Activity {
 					float L2 = event.getAxisValue(OuyaController.AXIS_L2);
 					float R2 = event.getAxisValue(OuyaController.AXIS_R2);
 
-					if (jsCompat[playerNum] || xbox[playerNum] || nVidia[playerNum]) {
+					if (jsDpad[playerNum]) {
 						previousLS_X[playerNum] = globalLS_X[playerNum];
 						previousLS_Y[playerNum] = globalLS_Y[playerNum];
 						globalLS_X[playerNum] = LS_X;
@@ -401,10 +346,9 @@ public class GL2JNIActivity extends Activity {
 					GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
 					GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
 				}
-
+				mView.pushInput();
 			}
-			mView.pushInput();
-			if ((jsCompat[playerNum] || xbox[playerNum] || nVidia[playerNum])
+			if (jsDpad[playerNum]
 					&& ((globalLS_X[playerNum] == previousLS_X[playerNum] && globalLS_Y[playerNum] == previousLS_Y[playerNum]) || (previousLS_X[playerNum] == 0.0f && previousLS_Y[playerNum] == 0.0f)))
 				// Only handle Left Stick on an Xbox 360 controller if there was
 				// some actual motion on the stick,
@@ -420,38 +364,11 @@ public class GL2JNIActivity extends Activity {
 	}
 	
 	public boolean simulatedTouchEvent(int playerNum, float L2, float R2) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-			if (!moga.isActive[playerNum] || compat[playerNum]) {
-					if (jsCompat[playerNum] || xbox[playerNum] || nVidia[playerNum]) {
-						previousLS_X[playerNum] = globalLS_X[playerNum];
-						previousLS_Y[playerNum] = globalLS_Y[playerNum];
-						globalLS_X[playerNum] = 0;
-						globalLS_Y[playerNum] = 0;
-					}
-					GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-					GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-					GL2JNIView.jx[playerNum] = (int) (0 * 126);
-					GL2JNIView.jy[playerNum] = (int) (0 * 126);
-				}
-			if ((jsCompat[playerNum] || xbox[playerNum] || nVidia[playerNum])
-					&& ((globalLS_X[playerNum] == previousLS_X[playerNum] && globalLS_Y[playerNum] == previousLS_Y[playerNum]) || (previousLS_X[playerNum] == 0.0f && previousLS_Y[playerNum] == 0.0f)))
-				return false;
-			else
-				return true;
-		} else {
-			return false;
-		}
+		GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+		GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+		mView.pushInput();
+		return true;
 	}
-
-	private static final int key_CONT_B 			= 0x0002;
-	private static final int key_CONT_A 			= 0x0004;
-	private static final int key_CONT_START 		= 0x0008;
-	private static final int key_CONT_DPAD_UP 		= 0x0010;
-	private static final int key_CONT_DPAD_DOWN 	= 0x0020;
-	private static final int key_CONT_DPAD_LEFT 	= 0x0040;
-	private static final int key_CONT_DPAD_RIGHT 	= 0x0080;
-	private static final int key_CONT_Y 			= 0x0200;
-	private static final int key_CONT_X 			= 0x0400;
 
 	// TODO: Controller mapping in options. Trunk has Ouya layout. This is a DS3
 	// layout.
@@ -579,6 +496,18 @@ public class GL2JNIActivity extends Activity {
 			playerNum = -1;
 		}
 
+		if (playerNum != null && playerNum != -1) {
+			if (compat[playerNum] || custom[playerNum]) {
+				String id = portId[playerNum];
+				if (keyCode == prefs.getInt("l_button" + id,
+						KeyEvent.KEYCODE_BUTTON_L1)
+						|| keyCode == prefs.getInt("r_button" + id,
+								KeyEvent.KEYCODE_BUTTON_R1)) {
+					return simulatedTouchEvent(playerNum, 0.0f, 0.0f);
+				}
+			}
+		}
+
 		return handle_key(playerNum, keyCode, false)
 				|| super.onKeyUp(keyCode, event);
 	}
@@ -593,15 +522,13 @@ public class GL2JNIActivity extends Activity {
 		}
 		
 		if (playerNum != null && playerNum != -1) {
-			String id = portId[playerNum];
-			if (custom[playerNum] || xPlay[playerNum]) {
+			if (compat[playerNum] || custom[playerNum]) {
+				String id = portId[playerNum];
 				if (keyCode == prefs.getInt("l_button" + id, KeyEvent.KEYCODE_BUTTON_L1)) {
-					simulatedTouchEvent(playerNum, 1.0f, 0.0f);
-					simulatedTouchEvent(playerNum, 0.0f, 0.0f);
+					return simulatedTouchEvent(playerNum, 1.0f, 0.0f);
 				}
 				if (keyCode == prefs.getInt("r_button" + id, KeyEvent.KEYCODE_BUTTON_R1)) {
-					simulatedTouchEvent(playerNum, 0.0f, 1.0f);
-					simulatedTouchEvent(playerNum, 0.0f, 0.0f);
+					return simulatedTouchEvent(playerNum, 0.0f, 1.0f);
 				}
 			}
 		}
@@ -612,11 +539,11 @@ public class GL2JNIActivity extends Activity {
 			return true;
 		}
 
-		if (android.os.Build.MODEL.startsWith("R800")) {
-			if (keyCode == KeyEvent.KEYCODE_SEARCH) {
+		if (gamepad.isXperiaPlay) {
+			if (keyCode == KeyEvent.KEYCODE_MENU) {
 				return showMenu();
 			}
-		} else if (isOuyaOrTV) {
+		} else if (gamepad.isOuyaOrTV) {
 			if (keyCode == OuyaController.BUTTON_R3) {
 				return showMenu();
 			}
@@ -672,5 +599,55 @@ public class GL2JNIActivity extends Activity {
 		super.onResume();
 		mView.onResume();
 		moga.onResume();
+	}
+
+	static {
+        System.loadLibrary("sexplay");
+    }
+
+	public native int registerTouchpad();
+	public native void enableXperiaPlay(boolean active);
+
+	private long jsTrigger;
+
+	public void OnNativeKeyPress(int action, int keyCode, int metaState){
+		if (action == KeyEvent.ACTION_DOWN) {
+			if (keyCode == prefs.getInt("l_button_A", KeyEvent.KEYCODE_BUTTON_L1)) {
+				simulatedTouchEvent(0, 1.0f, 0.0f);
+			} else if (keyCode == prefs.getInt("r_button_A", KeyEvent.KEYCODE_BUTTON_R1)) {
+				simulatedTouchEvent(0, 0.0f, 1.0f);
+			} else {
+				handle_key(0, keyCode, true);
+			}
+		}
+		if (action == KeyEvent.ACTION_UP) {
+			if (keyCode == prefs.getInt("l_button_A",
+					KeyEvent.KEYCODE_BUTTON_L1)
+					|| keyCode == prefs.getInt("r_button_A",
+							KeyEvent.KEYCODE_BUTTON_R1)) {
+				simulatedTouchEvent(0, 0.0f, 0.0f);
+			} else {
+				handle_key(0, keyCode, false);
+			}
+		}
+		Log.e("reidc", action + ", " + keyCode + ", " + metaState);
+	}
+
+	public void OnNativeMotion(int action, int x, int y, int source, int device_id, boolean newEvent) {
+		if (source == 1048584 && newEvent) {
+			// Source is Xperia Play touchpad
+			if (SystemClock.uptimeMillis() >= jsTrigger + 500) {
+				previousLS_X[0] = globalLS_X[0];
+				previousLS_Y[0] = globalLS_Y[0];
+				globalLS_X[0] = x;
+				globalLS_Y[0] = y;
+
+				jsTrigger = SystemClock.uptimeMillis();
+				GL2JNIView.jx[0] = (int) (x * 126);
+				GL2JNIView.jy[0] = (int) (y * 126);
+				mView.pushInput();
+			}
+		}
+		Log.e("reidc", action + ", " + x + ", " + y + ", " + source);
 	}
 }

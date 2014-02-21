@@ -14,8 +14,8 @@ import com.bda.controller.ControllerListener;
 import com.bda.controller.KeyEvent;
 import com.bda.controller.MotionEvent;
 import com.bda.controller.StateEvent;
+import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.R;
-import com.reicast.emulator.emu.GL2JNIActivity;
 import com.reicast.emulator.emu.GL2JNIView;
 import com.reicast.emulator.emu.JNIdc;
 

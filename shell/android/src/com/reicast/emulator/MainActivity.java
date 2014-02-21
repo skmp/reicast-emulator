@@ -31,7 +31,6 @@ import com.reicast.emulator.config.ConfigureFragment;
 import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
 import com.reicast.emulator.debug.GenerateLogs;
-import com.reicast.emulator.emu.GL2JNIActivity;
 import com.reicast.emulator.emu.JNIdc;
 
 public class MainActivity extends SlidingFragmentActivity implements
@@ -280,34 +279,37 @@ public class MainActivity extends SlidingFragmentActivity implements
 	 * @param bundle
 	 *            The savedInstanceState passed from onCreate
 	 */
-	private void initiateReport(final String error, final Bundle savedInstanceState) {
+	private void initiateReport(final String error, Bundle savedInstanceState) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 		builder.setTitle(getString(R.string.report_issue));
 		builder.setMessage(error);
 		builder.setNegativeButton("Cancel",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						loadInterface(savedInstanceState);
 						dialog.dismiss();
 					}
 				});
 		builder.setPositiveButton("Report",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						GenerateLogs mGenerateLogs = new GenerateLogs(MainActivity.this);
-						mGenerateLogs.setUnhandled(error);
-						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-							mGenerateLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
-									home_directory);
-						} else {
-							mGenerateLogs.execute(home_directory);
-						}
-						loadInterface(savedInstanceState);
+						reportIssueUpstream(error);
 						dialog.dismiss();
 					}
 				});
 		builder.create();
 		builder.show();
+		loadInterface(savedInstanceState);
+	}
+
+	private void reportIssueUpstream(String error) {
+		GenerateLogs mGenerateLogs = new GenerateLogs(MainActivity.this);
+		mGenerateLogs.setUnhandled(error);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			mGenerateLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+					home_directory);
+		} else {
+			mGenerateLogs.execute(home_directory);
+		}
 	}
 
 	public static boolean isBiosExisting() {

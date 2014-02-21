@@ -18,9 +18,10 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
+import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
-import com.reicast.emulator.config.ConfigureFragment;
+import com.reicast.emulator.config.Config;
 import com.reicast.emulator.periph.VmuLcd;
 
 public class OnScreenMenu {
@@ -29,10 +30,6 @@ public class OnScreenMenu {
 	private SharedPreferences prefs;
 	private LinearLayout hlay;
 	private LayoutParams params;
-	private int frameskip;
-	private boolean widescreen;
-	private boolean limitframes;
-	private boolean audiodisabled;
 
 	private VmuLcd vmuLcd;
 
@@ -49,8 +46,6 @@ public class OnScreenMenu {
 		if (prefs != null) {
 			this.prefs = prefs;
 			home_directory = prefs.getString("home_directory", home_directory);
-			widescreen = ConfigureFragment.widescreen;
-			frameskip = ConfigureFragment.frameskip;
 		}
 		vmuLcd = new VmuLcd(mContext);
 		vmuLcd.setOnClickListener(new OnClickListener() {
@@ -153,6 +148,10 @@ public class OnScreenMenu {
 
 		private View fullscreen;
 		private View framelimit;
+		private int frames = Config.frameskip;
+		private boolean screen = Config.widescreen;
+		private boolean limit = Config.limitfps;
+		private boolean audio;
 
 		public ConfigPopup(Context c) {
 			super(c);
@@ -172,13 +171,13 @@ public class OnScreenMenu {
 				}
 			}), configParams);
 
-			if (!widescreen) {
+			if (!screen) {
 				fullscreen = addbut(R.drawable.widescreen,
 						new OnClickListener() {
 							public void onClick(View v) {
 								JNIdc.widescreen(1);
 								dismiss();
-								widescreen = true;
+								screen = true;
 							}
 						});
 			} else {
@@ -187,46 +186,46 @@ public class OnScreenMenu {
 							public void onClick(View v) {
 								JNIdc.widescreen(0);
 								dismiss();
-								widescreen = false;
+								screen = false;
 							}
 						});
 			}
 			hlay.addView(fullscreen, params);
 
-			final ImageButton frames_up = new ImageButton(mContext);
-			final ImageButton frames_down = new ImageButton(mContext);
+			final ImageButton fdown = new ImageButton(mContext);
+			final ImageButton fup = new ImageButton(mContext);
 
-			frames_up.setImageResource(R.drawable.frames_up);
-			frames_up.setScaleType(ScaleType.FIT_CENTER);
-			frames_up.setOnClickListener(new OnClickListener() {
+			fdown.setImageResource(R.drawable.frames_down);
+			fdown.setScaleType(ScaleType.FIT_CENTER);
+			fdown.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
-					frameskip++;
-					JNIdc.frameskip(frameskip);
-					enableState(frames_up, frames_down);
+					frames--;
+					JNIdc.frameskip(frames);
+					enableState(fup, fdown, frames);
+				}
+			});			
+
+			fup.setImageResource(R.drawable.frames_up);
+			fup.setScaleType(ScaleType.FIT_CENTER);
+			fup.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					frames++;
+					JNIdc.frameskip(frames);
+					enableState(fup, fdown, frames);
 				}
 			});
 
-			frames_down.setImageResource(R.drawable.frames_down);
-			frames_down.setScaleType(ScaleType.FIT_CENTER);
-			frames_down.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					frameskip--;
-					JNIdc.frameskip(frameskip);
-					enableState(frames_up, frames_down);
-				}
-			});
+			hlay.addView(fdown, params);
+			hlay.addView(fup, params);
+			enableState(fdown, fup, frames);
 
-			hlay.addView(frames_up, params);
-			hlay.addView(frames_down, params);
-			enableState(frames_up, frames_down);
-
-			if (!limitframes) {
+			if (!limit) {
 				framelimit = addbut(R.drawable.frames_limit_on,
 						new OnClickListener() {
 							public void onClick(View v) {
 								JNIdc.limitfps(1);
 								dismiss();
-								limitframes = true;
+								limit = true;
 							}
 						});
 			} else {
@@ -235,7 +234,7 @@ public class OnScreenMenu {
 							public void onClick(View v) {
 								JNIdc.limitfps(0);
 								dismiss();
-								limitframes = false;
+								limit = false;
 							}
 						});
 			}
@@ -243,24 +242,24 @@ public class OnScreenMenu {
 
 			if (prefs.getBoolean("sound_enabled", true)) {
 				View audiosetting;
-				if (!audiodisabled) {
-					audiosetting = addbut(R.drawable.mute_sound,
-							new OnClickListener() {
-								public void onClick(View v) {
-									mContext.mView.audioDisable(true);
-									dismiss();
-									audiodisabled = true;
-								}
-							});
-				} else {
+				if (!audio) {
 					audiosetting = addbut(R.drawable.enable_sound,
-							new OnClickListener() {
-								public void onClick(View v) {
-									mContext.mView.audioDisable(false);
-									dismiss();
-									audiodisabled = false;
-								}
-							});
+						new OnClickListener() {
+							public void onClick(View v) {
+								mContext.mView.audioDisable(false);
+								dismiss();
+								audio = true;
+							}
+						});
+				} else {
+					audiosetting = addbut(R.drawable.mute_sound,
+						new OnClickListener() {
+							public void onClick(View v) {
+								mContext.mView.audioDisable(true);
+								dismiss();
+								audio = false;
+							}
+						});
 				}
 				hlay.addView(audiosetting, params);
 			}
@@ -277,16 +276,16 @@ public class OnScreenMenu {
 		}
 	}
 
-	private void enableState(View frames_up, View frames_down) {
-		if (frameskip <= 0) {
-			frames_down.setEnabled(false);
+	private void enableState(View fdown, View fup, int frames) {
+		if (frames <= 0) {
+			fdown.setEnabled(false);
 		} else {
-			frames_down.setEnabled(true);
+			fdown.setEnabled(true);
 		}
-		if (frameskip >= 5) {
-			frames_up.setEnabled(false);
+		if (frames >= 5) {
+			fup.setEnabled(false);
 		} else {
-			frames_up.setEnabled(true);
+			fup.setEnabled(true);
 		}
 	}
 

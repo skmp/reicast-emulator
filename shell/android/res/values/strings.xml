@@ -58,6 +58,7 @@
     <string name="modified_layout">Enable Custom Key Layout</string>
     <string name="controller_compat">Enable Compatibility Mode</string>
     <string name="dpad_joystick">Joystick Uses DPAD Layout</string>
+    <string name="controller_xperia">Enable Xperia Play Mode</string>
     <string name="mic_in_port_2">Microphone plugged into port 2</string>
     
     <string name="customize_physical_controls">Customize Physical Controls</string>
@@ -66,7 +67,7 @@
     
     <string name="bios_menu">Press the %1$s button for a menu</string>
     <string name="back_button">back</string>
-    <string name="search_button">search</string>
+    <string name="menu_button">menu</string>
     
     <string name="moga_pro_connect">MOGA Pro Connected!</string>
     <string name="moga_connect">MOGA Connected!</string>
@@ -77,6 +78,7 @@
     <string name="beta_site">Betas: http://reicast.loungekatt.com</string>
     <string name="git_api">https://api.github.com/repos/reicast/reicast-emulator/commits</string>
     <string name="git_issues">https://github.com/reicast/reicast-emulator/issues/</string>
+    <string name="log_url">http://twisted.dyndns.tv:3194/ReicastBot/report/submit.php</string>
     
     <string-array name="controllers">
     <item>Controller A</item>

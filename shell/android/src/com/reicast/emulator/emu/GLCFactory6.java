@@ -12,6 +12,7 @@ import android.util.Log;
 
 public class GLCFactory6 {
 
+	public static final boolean DEBUG = false;
 	private static void LOGI(String S) { Log.i("GL2JNIView-v6",S); }
 	private static void LOGW(String S) { Log.w("GL2JNIView-v6",S); }
 	private static void LOGE(String S) { Log.e("GL2JNIView-v6",S); }
@@ -93,7 +94,7 @@ public class GLCFactory6 {
 						EGL14.EGL_GREEN_SIZE, 4, 
 						EGL14.EGL_BLUE_SIZE, 4,
 						EGL14.EGL_RENDERABLE_TYPE, renderableType,
-						EGL14.EGL_DEPTH_SIZE, 16,
+						EGL14.EGL_DEPTH_SIZE, 24,
 						EGL14.EGL_NONE
 				};
 
@@ -112,7 +113,7 @@ public class GLCFactory6 {
 
 			// Get all matching configurations.
 			EGLConfig[] configs = new EGLConfig[mValue[0]];
-			if (GL2JNIView.DEBUG)
+			if (DEBUG)
 				LOGW(String.format("%d configurations", configs.length));
 			if (!egl.eglChooseConfig(display, configSpec, configs, mValue[0], mValue)) {
 				throw new IllegalArgumentException("Could not get config data");
@@ -139,7 +140,7 @@ public class GLCFactory6 {
 
 					if (r == mRedSize && g == mGreenSize && b == mBlueSize
 							&& a == mAlphaSize)
-						if (GL2JNIView.DEBUG) {
+						if (DEBUG) {
 							LOGW(String.format("Configuration %d:", i));
 							printConfig(egl, display, configs[i]);
 						}

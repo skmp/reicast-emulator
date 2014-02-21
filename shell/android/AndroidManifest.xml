@@ -4,7 +4,7 @@
     android:versionName="0.r6" >
 
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="9"
         android:targetSdkVersion="19" />
 
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -30,8 +30,9 @@
         android:largeHeap="true"
         android:theme="@style/AppTheme" >
         <meta-data
-                android:name="xperiaplayoptimized_content"
-                android:resource="@drawable/ic_xperia_play" />
+            android:name="xperiaplayoptimized_content"
+            android:resource="@drawable/ic_xperia_play" />
+
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
@@ -44,13 +45,16 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.reicast.emulator.emu.GL2JNIActivity"
+            android:name=".GL2JNIActivity"
             android:configChanges="orientation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
             android:screenOrientation="landscape"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="dc" />
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="sexplay" />
 
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -91,7 +95,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.reicast.emulator.config.EditVJoyActivity"
+            android:name=".config.EditVJoyActivity"
             android:configChanges="orientation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
             android:screenOrientation="landscape"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />

@@ -42,6 +42,7 @@ public class InputFragment extends Fragment {
 	private AlertDialog alertDialogSelectController;
 	private SharedPreferences sharedPreferences;
 	private Switch switchTouchVibrationEnabled;
+	private Switch switchXperiaPlayEnabled;
 	private Switch micPluggedIntoFirstController;
 	
 	public MOGAInput moga = new MOGAInput();
@@ -109,6 +110,19 @@ public class InputFragment extends Fragment {
 			switchTouchVibrationEnabled.setChecked(false);
 		}
 		switchTouchVibrationEnabled.setOnCheckedChangeListener(touch_vibration);
+
+		OnCheckedChangeListener xperia_mode = new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				sharedPreferences.edit().putBoolean("xperia_play", isChecked)
+						.commit();
+			}
+		};
+		switchXperiaPlayEnabled = (Switch) getView().findViewById(
+				R.id.switchXperiaPlayEnabled);
+		switchXperiaPlayEnabled.setChecked(sharedPreferences.getBoolean(
+				"xperia_play", false));
+		switchXperiaPlayEnabled.setOnCheckedChangeListener(xperia_mode);
 		
 		micPluggedIntoFirstController = (Switch) getView().findViewById(
 				R.id.micInPort2);

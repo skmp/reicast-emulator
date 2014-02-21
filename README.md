@@ -25,7 +25,16 @@ Tools required:
 
 From project root directory:
 ```
-cd shell\android
+cd shell\android\xperia
+
+android update project -p .
+
+ndk-build -j4
+
+cp -R libs\armeabi-v7a\libsexplay.so ..\libs\armeabi-v7a\
+
+cd ..\
+
 android update project -p .
 
 ndk-build -j4

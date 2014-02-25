@@ -21,10 +21,18 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.StrictMode;
 
 import com.reicast.emulator.R;
 
-
+/**
+ * Upload the specialized logcat to reicast issues
+ * 
+ * @param context
+ *            The context this method will be executed from
+ * @param string
+ *            The system time at which the log was made
+ */
 public class UploadLogs extends AsyncTask<String, Integer, Object> {
 
 	private String currentTime;
@@ -35,22 +43,45 @@ public class UploadLogs extends AsyncTask<String, Integer, Object> {
 		this.mContext = mContext;
 		this.currentTime = currentTime;
 	}
-
+	
+	private void RedirectSubmission(Header[] headers, String content) {
+		UploadLogs mUploadLogs = new UploadLogs(mContext,
+				currentTime);
+		mUploadLogs.setPostUrl(headers[headers.length - 1]
+				.getValue());
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			mUploadLogs.executeOnExecutor(
+					AsyncTask.THREAD_POOL_EXECUTOR, content);
+		} else {
+			mUploadLogs.execute(content);
+		}
+	}
+	
+	/**
+	 * Set the URL for where the log will be uploaded
+	 * 
+	 * @param string
+	 *            The URL of the log upload server
+	 */
 	public void setPostUrl(String logUrl) {
 		this.logUrl = logUrl;
 	}
 
 	@SuppressLint("NewApi")
 	protected void onPreExecute() {
-
+		if (logUrl == null || logUrl.equals(null)) {
+			logUrl = "http://twisted.dyndns.tv:3194/ReicastBot/report/submit.php";
+		}
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+			StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+					.permitAll().build();
+			StrictMode.setThreadPolicy(policy);
+		}
 	}
 
 	@Override
 	protected Object doInBackground(String... params) {
 		HttpClient client = new DefaultHttpClient();
-		if (logUrl == null || logUrl.equals(null)) {
-			logUrl = "http://twisted.dyndns.tv:3194/ReicastBot/report/submit.php";
-		}
 		HttpPost post = new HttpPost(logUrl);
 		try {
 			ArrayList<NameValuePair> mPairs = new ArrayList<NameValuePair>();
@@ -62,16 +93,7 @@ public class UploadLogs extends AsyncTask<String, Integer, Object> {
 			if (statusCode != HttpStatus.SC_OK) {
 				Header[] headers = getResponse.getHeaders("Location");
 				if (headers != null && headers.length != 0) {
-					UploadLogs mUploadLogs = new UploadLogs(mContext,
-							currentTime);
-					mUploadLogs.setPostUrl(headers[headers.length - 1]
-							.getValue());
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-						mUploadLogs.executeOnExecutor(
-								AsyncTask.THREAD_POOL_EXECUTOR, params[0]);
-					} else {
-						mUploadLogs.execute(params[0]);
-					}
+					RedirectSubmission(headers, params[0]);
 				} else {
 					return null;
 				}

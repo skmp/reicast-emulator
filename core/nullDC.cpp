@@ -142,14 +142,12 @@ int dc_init(int argc,wchar* argv[])
 	{
 		return 69;
 	}
-
 	if(!cfgOpen())
 	{
 		msgboxf("Unable to open config file",MBX_ICONERROR);
 		return -4;
 	}
 	LoadSettings();
-
 #ifndef _ANDROID
 	os_CreateWindow();
 #endif

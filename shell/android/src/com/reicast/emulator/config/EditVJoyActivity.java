@@ -3,9 +3,11 @@ package com.reicast.emulator.config;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
@@ -30,6 +32,8 @@ public class EditVJoyActivity extends Activity {
 	GL2JNIView mView;
 	PopupWindow popUp;
 	LayoutParams params;
+
+	private Config config;
 	
 	private float[][] vjoy_d_cached;
 
@@ -52,8 +56,15 @@ public class EditVJoyActivity extends Activity {
 		// Call parent onCreate()
 		super.onCreate(icicle);
 
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		config = new Config(EditVJoyActivity.this);
+		config.getConfigurationPrefs();
+
 		// Create the actual GLES view
-		mView = new GL2JNIView(getApplication(), null, false, 24, 0, true);
+		mView = new GL2JNIView(getApplication(), config, null, false,
+				prefs.getInt("depth_render", 24), 0, true);
+		mView.setFpsDisplay(null);
 		setContentView(mView);
 
 		vjoy_d_cached = VJoy.readCustomVjoyValues(getApplicationContext());

@@ -100,6 +100,7 @@ public class AboutFragment extends Fragment {
 	private ListView list;
 	private GitAdapter adapter;
 	private Handler handler;
+	String buildId = "";
 
 	private Activity parentActivity;
 
@@ -114,15 +115,33 @@ public class AboutFragment extends Fragment {
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		parentActivity = getActivity();
 		handler = new Handler();
+
+		try {
+			InputStream file = parentActivity.getAssets().open("build");
+			if (file != null) {
+				BufferedReader reader = new BufferedReader(
+						new InputStreamReader(file));
+				buildId = reader.readLine();
+				file.close();
+			}
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		}
+
 		try {
 			String versionName = parentActivity.getPackageManager()
 					.getPackageInfo(parentActivity.getPackageName(), 0).versionName;
 			int versionCode = parentActivity.getPackageManager()
 					.getPackageInfo(parentActivity.getPackageName(), 0).versionCode;
 			TextView version = (TextView) getView().findViewById(
-					R.id.about_text);
-			version.setText(parentActivity.getString(R.string.about_text,
-					versionName + "(" + String.valueOf(versionCode) + ")"));
+					R.id.revision_text);
+			String revision = parentActivity.getString(R.string.revision_text,
+					versionName, String.valueOf(versionCode));
+			if (!buildId.equals("")) {
+				revision = parentActivity.getString(R.string.revision_text,
+						versionName, buildId.substring(0,7));
+			}
+			version.setText(revision);
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -130,10 +149,6 @@ public class AboutFragment extends Fragment {
 		TextView website = (TextView) getView().findViewById(
 				R.id.site_text);
 		Linkify.addLinks(website, Linkify.ALL);
-		
-		TextView compiled = (TextView) getView().findViewById(
-				R.id.beta_text);
-		Linkify.addLinks(compiled, Linkify.ALL);
 
 		slidingGithub = (SlidingDrawer) getView().findViewById(
 				R.id.slidingGithub);
@@ -155,21 +170,9 @@ public class AboutFragment extends Fragment {
 	public class retrieveGitTask extends
 			AsyncTask<String, Integer, ArrayList<HashMap<String, String>>> {
 
-		private String buildId = "";
-
 		@Override
 		protected void onPreExecute() {
-			try {
-				InputStream file = parentActivity.getAssets().open("build");
-				if (file != null) {
-					BufferedReader reader = new BufferedReader(
-							new InputStreamReader(file));
-					buildId = reader.readLine();
-					file.close();
-				}
-			} catch (IOException ioe) {
-				ioe.printStackTrace();
-			}
+			
 		}
 
 		@Override

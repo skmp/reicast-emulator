@@ -190,7 +190,7 @@ public class GL2JNIActivity extends Activity {
 		if (pad.isXperiaPlay) {
 			menu_spec = getApplicationContext().getString(R.string.menu_button);
 		} else if (pad.isOuyaOrTV) {
-			menu_spec = getApplicationContext().getString(R.string.right_button);
+			menu_spec = getApplicationContext().getString(R.string.menu_button);
 		} else {
 			menu_spec = getApplicationContext().getString(R.string.back_button);
 		}

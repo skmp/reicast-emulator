@@ -436,7 +436,7 @@ public class GL2JNIActivity extends Activity {
 			parent.removeView(menu.getVmu());
 			//add to floating window
 			vmuPop.showVmu();
-			vmuPop.showAtLocation(mView, Gravity.TOP | Gravity.RIGHT, 20, 20);
+			vmuPop.showAtLocation(mView, Gravity.TOP | Gravity.RIGHT, 0, 0);
 			vmuPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 		}else{
 			vmuPop.dismiss();

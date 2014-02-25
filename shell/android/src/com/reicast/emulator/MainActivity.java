@@ -47,6 +47,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 	
 	private UncaughtExceptionHandler mUEHandler;
 
+	Gamepad pad = new Gamepad();
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -486,8 +488,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 			}
 
 		}
-		if (keyCode == KeyEvent.KEYCODE_MENU
-				|| keyCode == Gamepad.getSelectButtonCode()) {
+		if (keyCode == KeyEvent.KEYCODE_MENU) {
 			sm.toggle(true);
 		}
 

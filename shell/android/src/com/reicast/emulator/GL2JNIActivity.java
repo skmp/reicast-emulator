@@ -377,7 +377,7 @@ public class GL2JNIActivity extends Activity {
 	public boolean handle_key(Integer playerNum, int kc, boolean down) {
 		if (playerNum == null || playerNum == -1)
 			return false;
-		if (kc == KeyEvent.KEYCODE_BUTTON_SELECT) {
+		if (kc == Gamepad.getSelectButtonCode()) {
 			return false;
 		}
 		if (pad.isActiveMoga[playerNum]) {
@@ -511,7 +511,7 @@ public class GL2JNIActivity extends Activity {
 			return true;
 		}
 
-		if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) {
+		if (keyCode == Gamepad.getSelectButtonCode()) {
 			return showMenu();
 		} 
 		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.GINGERBREAD_MR1

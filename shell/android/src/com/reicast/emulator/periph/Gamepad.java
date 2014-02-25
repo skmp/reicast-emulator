@@ -157,7 +157,7 @@ public class Gamepad {
 		return false;
 	}
 	
-	public static int getStartButtonCode() {
+	public int getStartButtonCode() {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
 			return 108;
 		} else {
@@ -165,7 +165,7 @@ public class Gamepad {
 		}
 	}
 	
-	public static int getSelectButtonCode() {
+	public int getSelectButtonCode() {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
 			return 109;
 		} else {

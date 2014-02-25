@@ -32,6 +32,7 @@ import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
 import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.JNIdc;
+import com.reicast.emulator.periph.Gamepad;
 
 public class MainActivity extends SlidingFragmentActivity implements
 		FileBrowser.OnItemSelectedListener, OptionsFragment.OnClickListener {
@@ -45,6 +46,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 	private SlidingMenu sm;
 	
 	private UncaughtExceptionHandler mUEHandler;
+
+	Gamepad pad = new Gamepad();
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -484,6 +487,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 				return true;
 			}
 
+		}
+		if (keyCode == KeyEvent.KEYCODE_MENU) {
+			sm.toggle(true);
 		}
 
 		return super.onKeyDown(keyCode, event);

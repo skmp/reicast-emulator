@@ -284,22 +284,36 @@ public class OnScreenMenu {
 					new OnClickListener() {
 						public void onClick(View v) {
 							if (boosted) {
-								if (mContext instanceof GL2JNINative) {
-									((GL2JNINative) mContext).mView
-											.fastForward(false);
+								if (audio) {
+									if (mContext instanceof GL2JNIActivity) {
+										((GL2JNIActivity) mContext).mView
+												.audioDisable(true);
+									}
 								}
+								if (limit) {
+									JNIdc.limitfps(0);
+								}
+								audiosetting.setEnabled(false);
 								if (mContext instanceof GL2JNIActivity) {
 									((GL2JNIActivity) mContext).mView
 											.fastForward(false);
 								}
+								framelimit.setEnabled(false);
 								boosted = false;
 								((ImageButton) fastforward)
 										.setImageResource(R.drawable.star);
 							} else {
-								if (mContext instanceof GL2JNINative) {
-									((GL2JNINative) mContext).mView
-											.fastForward(true);
+								if (audio) {
+									if (mContext instanceof GL2JNIActivity) {
+										((GL2JNIActivity) mContext).mView
+												.audioDisable(false);
+									}
 								}
+								audiosetting.setEnabled(true);
+								if (limit) {
+									JNIdc.limitfps(1);
+								}
+								framelimit.setEnabled(true);
 								if (mContext instanceof GL2JNIActivity) {
 									((GL2JNIActivity) mContext).mView
 											.fastForward(true);

@@ -38,6 +38,11 @@ public class OnScreenMenu {
 	private File sdcard = Environment.getExternalStorageDirectory();
 	private String home_directory = sdcard + "/dc";
 
+	private int frames = Config.frameskip;
+	private boolean screen = Config.widescreen;
+	private boolean limit = Config.limitfps;
+	private boolean audio;
+
 	public OnScreenMenu(Activity context, SharedPreferences prefs) {
 		if (context instanceof GL2JNIActivity) {
 			this.mContext = (GL2JNIActivity) context;
@@ -164,10 +169,6 @@ public class OnScreenMenu {
 		private View audiosetting;
 		private View fdown;
 		private View fup;
-		private int frames = Config.frameskip;
-		private boolean screen = Config.widescreen;
-		private boolean limit = Config.limitfps;
-		private boolean audio;
 
 		public ConfigPopup(Context c) {
 			super(c);
@@ -188,17 +189,17 @@ public class OnScreenMenu {
 			fullscreen = addbut(R.drawable.widescreen, new OnClickListener() {
 				public void onClick(View v) {
 					if (screen) {
-						JNIdc.widescreen(1);
-						screen = true;
-						((ImageButton) fullscreen)
-								.setImageResource(R.drawable.normal_view);
-					} else {
 						JNIdc.widescreen(0);
 						screen = false;
 						((ImageButton) fullscreen)
+								.setImageResource(R.drawable.normal_view);
+					} else {
+						JNIdc.widescreen(1);
+						screen = true;
+						((ImageButton) fullscreen)
 								.setImageResource(R.drawable.widescreen);
+
 					}
-					dismiss();
 				}
 			});
 			if (screen) {
@@ -233,20 +234,18 @@ public class OnScreenMenu {
 							if (limit) {
 								JNIdc.limitfps(0);
 								limit = false;
-								((ImageButton) audiosetting)
+								((ImageButton) framelimit)
 										.setImageResource(R.drawable.frames_limit_on);
 							} else {
 								JNIdc.limitfps(1);
 								limit = true;
-								((ImageButton) audiosetting)
+								((ImageButton) framelimit)
 										.setImageResource(R.drawable.frames_limit_off);
 							}
-							dismiss();
-
 						}
 					});
 			if (limit) {
-				((ImageButton) audiosetting)
+				((ImageButton) framelimit)
 						.setImageResource(R.drawable.frames_limit_off);
 			}
 			hlay.addView(framelimit, params);
@@ -257,20 +256,20 @@ public class OnScreenMenu {
 							if (audio) {
 								((ImageButton) audiosetting)
 										.setImageResource(R.drawable.mute_sound);
-								if (mContext instanceof GL2JNIActivity) {
-									((GL2JNIActivity) mContext).mView
-											.audioDisable(false);
-								}
-							} else {
-								((ImageButton) audiosetting)
-										.setImageResource(R.drawable.enable_sound);
+								audio = false;
 								if (mContext instanceof GL2JNIActivity) {
 									((GL2JNIActivity) mContext).mView
 											.audioDisable(true);
 								}
+							} else {
+								((ImageButton) audiosetting)
+										.setImageResource(R.drawable.enable_sound);
+								audio = true;
+								if (mContext instanceof GL2JNIActivity) {
+									((GL2JNIActivity) mContext).mView
+											.audioDisable(false);
+								}
 							}
-							dismiss();
-							audio = true;
 						}
 					});
 			audio = prefs.getBoolean("sound_enabled", true);

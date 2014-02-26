@@ -183,7 +183,8 @@ public class GL2JNIActivity extends Activity {
 			fileName = Uri.decode(intent.getData().toString());
 
 		// Create the actual GLES view
-		mView = new GL2JNIView(getApplication(), config, fileName, false, prefs.getInt("depth_render", 24), 0, false);
+		mView = new GL2JNIView(getApplication(), config, fileName, false,
+				prefs.getInt("depth_render", 24), 0, false);
 		setContentView(mView);
 		
 		String menu_spec;
@@ -436,7 +437,7 @@ public class GL2JNIActivity extends Activity {
 			parent.removeView(menu.getVmu());
 			//add to floating window
 			vmuPop.showVmu();
-			vmuPop.showAtLocation(mView, Gravity.TOP | Gravity.RIGHT, 0, 0);
+			vmuPop.showAtLocation(mView, Gravity.TOP | Gravity.RIGHT, 4, 4);
 			vmuPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 		}else{
 			vmuPop.dismiss();

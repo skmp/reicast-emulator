@@ -8,6 +8,14 @@
     <string name="browser_path">Default System Path</string>
     <string name="games_path">Storage Path (location of .gdi, .chd or .cdi images)</string>
     <string name="game_path">Default Game Storage</string>
+    
+    <string name="boot_bios">Boot Dreamcast Bios</string>
+    <string name="missing_bios">BIOS Missing. The Dreamcast BIOS is required for this emulator to work. Place the BIOS file in %1$s/data/dc_boot.bin</string>
+    <string name="missing_flash">Flash Missing. The Dreamcast Flash is required for this emulator to work. Place the Flash file in %1$s/data/dc_flash.bin</string>
+    <string name="require_bios">You have to provide the BIOS</string>
+    
+    <string name="folder_bios">BOOT BIOS</string>
+    <string name="folder_select">SELECT CURRENT FOLDER</string>
 
     <string name="select_dynarec">Dynarec Options</string>
     <string name="select_unstable">Unstable Optimisations</string>
@@ -20,16 +28,23 @@
 
     <string name="games_listing">Available Dreamcast Games</string>
 
-    <string name="controller_1">Controller 1</string>
-    <string name="controller_2">Controller 2</string>
-    <string name="controller_3">Controller 3</string>
-    <string name="controller_4">Controller 4</string>
-    <string name="controller_none">None</string>
-    <string name="select_controller">Select Controller</string>
-    <string name="remove_controller">Remove Controller</string>
+    <string name="customize_touch_controls">Customize Touch Controls</string>
+    <string name="launch_editor">Launch Editor</string>
+    <string name="touch_vibration">Touch Vibration</string>
+    <string name="controller_a">Controller A</string>
+    <string name="controller_b">Controller B</string>
+    <string name="controller_c">Controller C</string>
+    <string name="controller_d">Controller D</string>
+    <string name="controller_not_connected">Controller Not Connected</string>
+    <string name="controller_none_selected">No Controller Selected</string>
+    <string name="select">Select</string>
+    <string name="remove">Remove</string>
     <string name="select_controller_title">Select Controller</string>
     <string name="select_controller_message">Press any button on the controller to assign to port</string>
     <string name="controller_already_in_use">This controller is already in use!</string>
+
+    <string name="about_title">About reicast</string>
+    <string name="about_text">reicast is a dreamcast emulator\n\nVersion:</string>
     
     <string-array name="images">
         <item>cdi</item>
@@ -52,7 +67,7 @@
         <item>Browser</item>
         <item>Settings</item>
         <item>Paths</item>
-        <item>Controllers</item>
+        <item>Input</item>
         <item>About</item>
     </string-array>
 
@@ -62,11 +77,16 @@
         <item>@drawable/disk_unknown</item>
         <item>@drawable/config</item>
         <item>@drawable/open_folder</item>
-        <item>@drawable/config</item>
+        <item>@drawable/input</item>
         <item>@drawable/question</item>
     </array>
 
     <!-- Content Description -->
     <string name="desc_list_item_icon">Item Icon</string>
+    
+    <string name="textOn">ON</string>
+    <string name="textOff">OFF</string>
+
+    <string name="menu_debug">Save Error Logs</string>
 
 </resources>

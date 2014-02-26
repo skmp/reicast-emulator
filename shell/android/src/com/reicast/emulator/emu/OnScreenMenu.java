@@ -234,12 +234,12 @@ public class OnScreenMenu {
 								JNIdc.limitfps(0);
 								limit = false;
 								((ImageButton) framelimit)
-										.setImageResource(R.drawable.frames_limit_off);
+										.setImageResource(R.drawable.frames_limit_on);
 							} else {
 								JNIdc.limitfps(1);
 								limit = true;
 								((ImageButton) framelimit)
-										.setImageResource(R.drawable.frames_limit_on);
+										.setImageResource(R.drawable.frames_limit_off);
 							}
 						}
 					});
@@ -253,21 +253,21 @@ public class OnScreenMenu {
 					new OnClickListener() {
 						public void onClick(View v) {
 							if (audio) {
-								((ImageButton) audiosetting)
-										.setImageResource(R.drawable.mute_sound);
-								audio = false;
 								if (mContext instanceof GL2JNIActivity) {
 									((GL2JNIActivity) mContext).mView
 											.audioDisable(true);
 								}
-							} else {
 								((ImageButton) audiosetting)
 										.setImageResource(R.drawable.enable_sound);
-								audio = true;
+								audio = false;
+							} else {
 								if (mContext instanceof GL2JNIActivity) {
 									((GL2JNIActivity) mContext).mView
 											.audioDisable(false);
 								}
+								((ImageButton) audiosetting)
+										.setImageResource(R.drawable.mute_sound);
+								audio = true;
 							}
 						}
 					});

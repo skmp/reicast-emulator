@@ -2,13 +2,15 @@ package com.reicast.emulator;
 
 import java.io.File;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.List;
 
-import tv.ouya.console.api.OuyaFacade;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -43,6 +45,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 	public static String home_directory = sdcard + "/dc";
 
 	private TextView menuHeading;
+	private boolean hasAndroidMarket = false;
 	
 	private SlidingMenu sm;
 	
@@ -83,20 +86,17 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 		String prior_error = mPrefs.getString("prior_error", null);
 		if (prior_error != null && !prior_error.equals(null)) {
-			initiateReport(prior_error, savedInstanceState);
+			initiateReport(prior_error);
 			mPrefs.edit().remove("prior_error").commit();
-		} else {
-			loadInterface(savedInstanceState);
 		}
-	}
 
-	/**
-	 * Load the GUI interface for display to the user
-	 * 
-	 * @param bundle
-	 *            The savedInstanceState passed from onCreate
-	 */
-	private void loadInterface(Bundle savedInstanceState) {
+		Intent market = new Intent(Intent.ACTION_VIEW, Uri.parse("market://search?q=dummy"));
+		PackageManager manager = getPackageManager();
+		List<ResolveInfo> list = manager.queryIntentActivities(market, 0);
+		if (list != null && !list.isEmpty()) {
+			hasAndroidMarket = true;
+		}
+		
 		if (!getFilesDir().exists()) {
 			getFilesDir().mkdir();
 		}
@@ -257,7 +257,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 				});
 
 				View rateMe = findViewById(R.id.rateme_menu);
-				if(OuyaFacade.getInstance().isRunningOnOUYAHardware()){
+				if (!hasAndroidMarket) {
 					rateMe.setVisibility(View.GONE);
 				} else {
 					rateMe.setOnTouchListener(new OnTouchListener() {
@@ -296,34 +296,36 @@ public class MainActivity extends SlidingFragmentActivity implements
 	 * @param bundle
 	 *            The savedInstanceState passed from onCreate
 	 */
-	private void initiateReport(final String error, final Bundle savedInstanceState) {
+	private void initiateReport(final String error) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 		builder.setTitle(getString(R.string.report_issue));
 		builder.setMessage(error);
 		builder.setNegativeButton("Cancel",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						loadInterface(savedInstanceState);
 						dialog.dismiss();
 					}
 				});
 		builder.setPositiveButton("Report",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						GenerateLogs mGenerateLogs = new GenerateLogs(MainActivity.this);
-						mGenerateLogs.setUnhandled(error);
-						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-							mGenerateLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
-									home_directory);
-						} else {
-							mGenerateLogs.execute(home_directory);
-						}
-						loadInterface(savedInstanceState);
+						reportIssueUpstream(error);
 						dialog.dismiss();
 					}
 				});
 		builder.create();
 		builder.show();
+	}
+
+	private void reportIssueUpstream(String error) {
+		GenerateLogs mGenerateLogs = new GenerateLogs(MainActivity.this);
+		mGenerateLogs.setUnhandled(error);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			mGenerateLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+					home_directory);
+		} else {
+			mGenerateLogs.execute(home_directory);
+		}
 	}
 
 	public static boolean isBiosExisting() {

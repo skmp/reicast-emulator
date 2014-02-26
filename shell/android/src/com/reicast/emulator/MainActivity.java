@@ -3,6 +3,7 @@ package com.reicast.emulator;
 import java.io.File;
 import java.lang.Thread.UncaughtExceptionHandler;
 
+import tv.ouya.console.api.OuyaFacade;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -255,20 +256,25 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 				});
 
-				findViewById(R.id.rateme_menu).setOnTouchListener(new OnTouchListener() {
-					public boolean onTouch(View v, MotionEvent event) {
-						if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-							// vib.vibrate(50);
-							startActivity(new Intent(Intent.ACTION_VIEW, Uri
-									.parse("market://details?id="
-											+ getPackageName())));
-							//setTitle(getString(R.string.rateme));
-							sm.toggle(true);
-							return true;
-						} else
-							return false;
-					}
-				});
+				View rateMe = findViewById(R.id.rateme_menu);
+				if(OuyaFacade.getInstance().isRunningOnOUYAHardware()){
+					rateMe.setVisibility(View.GONE);
+				} else {
+					rateMe.setOnTouchListener(new OnTouchListener() {
+						public boolean onTouch(View v, MotionEvent event) {
+							if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+								// vib.vibrate(50);
+								startActivity(new Intent(Intent.ACTION_VIEW, Uri
+										.parse("market://details?id="
+												+ getPackageName())));
+								//setTitle(getString(R.string.rateme));
+								sm.toggle(true);
+								return true;
+							} else
+								return false;
+						}
+					});
+				}
 			}
 		});
 		findViewById(R.id.header_list).setOnTouchListener(new OnTouchListener() {

@@ -192,13 +192,12 @@ public class OnScreenMenu {
 						JNIdc.widescreen(0);
 						screen = false;
 						((ImageButton) fullscreen)
-								.setImageResource(R.drawable.normal_view);
+								.setImageResource(R.drawable.widescreen);
 					} else {
 						JNIdc.widescreen(1);
 						screen = true;
 						((ImageButton) fullscreen)
-								.setImageResource(R.drawable.widescreen);
-
+								.setImageResource(R.drawable.normal_view);
 					}
 				}
 			});
@@ -235,12 +234,12 @@ public class OnScreenMenu {
 								JNIdc.limitfps(0);
 								limit = false;
 								((ImageButton) framelimit)
-										.setImageResource(R.drawable.frames_limit_on);
+										.setImageResource(R.drawable.frames_limit_off);
 							} else {
 								JNIdc.limitfps(1);
 								limit = true;
 								((ImageButton) framelimit)
-										.setImageResource(R.drawable.frames_limit_off);
+										.setImageResource(R.drawable.frames_limit_on);
 							}
 						}
 					});

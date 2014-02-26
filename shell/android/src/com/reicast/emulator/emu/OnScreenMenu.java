@@ -42,6 +42,7 @@ public class OnScreenMenu {
 	private boolean screen = Config.widescreen;
 	private boolean limit = Config.limitfps;
 	private boolean audio;
+	private boolean boosted = false;
 
 	public OnScreenMenu(Activity context, SharedPreferences prefs) {
 		if (context instanceof GL2JNIActivity) {
@@ -51,6 +52,7 @@ public class OnScreenMenu {
 		if (prefs != null) {
 			this.prefs = prefs;
 			home_directory = prefs.getString("home_directory", home_directory);
+			audio = prefs.getBoolean("sound_enabled", true);
 		}
 		vmuLcd = new VmuLcd(mContext);
 		vmuLcd.setOnClickListener(new OnClickListener() {
@@ -167,6 +169,7 @@ public class OnScreenMenu {
 		private View fullscreen;
 		private View framelimit;
 		private View audiosetting;
+		private View fastforward;
 		private View fdown;
 		private View fup;
 
@@ -271,12 +274,47 @@ public class OnScreenMenu {
 							}
 						}
 					});
-			audio = prefs.getBoolean("sound_enabled", true);
 			if (audio) {
 				((ImageButton) audiosetting)
 						.setImageResource(R.drawable.mute_sound);
 			}
 			hlay.addView(audiosetting, params);
+
+			fastforward = addbut(R.drawable.star,
+					new OnClickListener() {
+						public void onClick(View v) {
+							if (boosted) {
+								if (mContext instanceof GL2JNINative) {
+									((GL2JNINative) mContext).mView
+											.fastForward(false);
+								}
+								if (mContext instanceof GL2JNIActivity) {
+									((GL2JNIActivity) mContext).mView
+											.fastForward(false);
+								}
+								boosted = false;
+								((ImageButton) fastforward)
+										.setImageResource(R.drawable.star);
+							} else {
+								if (mContext instanceof GL2JNINative) {
+									((GL2JNINative) mContext).mView
+											.fastForward(true);
+								}
+								if (mContext instanceof GL2JNIActivity) {
+									((GL2JNIActivity) mContext).mView
+											.fastForward(true);
+								}
+								boosted = true;
+								((ImageButton) fastforward)
+										.setImageResource(R.drawable.reset);
+							}
+						}
+					});
+			if (boosted) {
+				((ImageButton) fastforward)
+						.setImageResource(R.drawable.reset);
+			}
+			hlay.addView(fastforward, params);
 
 			hlay.addView(addbut(R.drawable.close, new OnClickListener() {
 				public void onClick(View v) {

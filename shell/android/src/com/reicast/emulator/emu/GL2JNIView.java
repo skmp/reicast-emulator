@@ -586,8 +586,10 @@ public class GL2JNIView extends GLSurfaceView
 	public void fastForward(boolean enabled) {
 		if (enabled) {
 			ethd.setPriority(Thread.MIN_PRIORITY);
+			audioDisable(true);
 		} else {
 			ethd.setPriority(Thread.NORM_PRIORITY);
+			audioDisable(false);
 		}
 	}
 

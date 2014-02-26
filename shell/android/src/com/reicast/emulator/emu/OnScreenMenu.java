@@ -42,6 +42,7 @@ public class OnScreenMenu {
 	private boolean screen = Config.widescreen;
 	private boolean limit = Config.limitfps;
 	private boolean audio;
+	private boolean masteraudio;
 	private boolean boosted = false;
 
 	public OnScreenMenu(Activity context, SharedPreferences prefs) {
@@ -52,7 +53,8 @@ public class OnScreenMenu {
 		if (prefs != null) {
 			this.prefs = prefs;
 			home_directory = prefs.getString("home_directory", home_directory);
-			audio = prefs.getBoolean("sound_enabled", true);
+			masteraudio = prefs.getBoolean("sound_enabled", true);
+			audio = masteraudio;
 		}
 		vmuLcd = new VmuLcd(mContext);
 		vmuLcd.setOnClickListener(new OnClickListener() {
@@ -277,6 +279,9 @@ public class OnScreenMenu {
 			if (audio) {
 				((ImageButton) audiosetting)
 						.setImageResource(R.drawable.mute_sound);
+			}
+			if (!masteraudio) {
+				audiosetting.setEnabled(false);
 			}
 			hlay.addView(audiosetting, params);
 

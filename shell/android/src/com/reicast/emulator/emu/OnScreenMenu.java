@@ -292,25 +292,6 @@ public class OnScreenMenu {
 								if (audio) {
 									if (mContext instanceof GL2JNIActivity) {
 										((GL2JNIActivity) mContext).mView
-												.audioDisable(true);
-									}
-								}
-								if (limit) {
-									JNIdc.limitfps(0);
-								}
-								audiosetting.setEnabled(false);
-								if (mContext instanceof GL2JNIActivity) {
-									((GL2JNIActivity) mContext).mView
-											.fastForward(false);
-								}
-								framelimit.setEnabled(false);
-								boosted = false;
-								((ImageButton) fastforward)
-										.setImageResource(R.drawable.star);
-							} else {
-								if (audio) {
-									if (mContext instanceof GL2JNIActivity) {
-										((GL2JNIActivity) mContext).mView
 												.audioDisable(false);
 									}
 								}
@@ -324,6 +305,25 @@ public class OnScreenMenu {
 											.fastForward(true);
 								}
 								boosted = true;
+								((ImageButton) fastforward)
+										.setImageResource(R.drawable.star);
+							} else {
+								if (audio) {
+									if (mContext instanceof GL2JNIActivity) {
+										((GL2JNIActivity) mContext).mView
+												.audioDisable(true);
+									}
+								}
+								if (limit) {
+									JNIdc.limitfps(0);
+								}
+								audiosetting.setEnabled(false);
+								if (mContext instanceof GL2JNIActivity) {
+									((GL2JNIActivity) mContext).mView
+											.fastForward(false);
+								}
+								framelimit.setEnabled(false);
+								boosted = false;
 								((ImageButton) fastforward)
 										.setImageResource(R.drawable.reset);
 							}

@@ -3,7 +3,6 @@ package com.reicast.emulator.emu;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -27,6 +26,7 @@ import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
 import android.view.View;
 
+import com.android.util.FileUtils;
 import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
@@ -542,6 +542,10 @@ public class GL2JNIView extends GLSurfaceView
 				fps.logFrame();
 			}
 			JNIdc.rendframe();
+			if(mView.takeScreenshot){
+				mView.takeScreenshot = false;
+				FileUtils.saveScreenshot(mView.getContext(), mView.getWidth(), mView.getHeight(), gl);
+			}
 		}
 
 		public void onSurfaceChanged(GL10 gl,int width,int height)
@@ -686,4 +690,10 @@ public class GL2JNIView extends GLSurfaceView
 					| View.SYSTEM_UI_FLAG_FULLSCREEN
 					| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);}
 	}
+
+	private boolean takeScreenshot = false;
+	public void screenGrab() {
+		takeScreenshot = true;
+	}
+	
 }

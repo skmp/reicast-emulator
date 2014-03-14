@@ -626,6 +626,7 @@ struct settings_t
 		u32 GlobalMute;
 		u32 DSPEnabled;		//0 -> no, 1 -> yes
 		u32 NoBatch;
+        u32 NoSound;        //0 ->sound, 1 -> no sound
 	} aica;
 
 	struct
@@ -703,6 +704,7 @@ static inline void do_nada(...) { }
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
 	#ifdef STRIP_TEXT
 		#define puts do_nada
 		#define printf do_nada

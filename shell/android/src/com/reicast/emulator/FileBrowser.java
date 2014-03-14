@@ -8,6 +8,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -15,11 +17,9 @@ import java.util.Locale;
 import org.apache.commons.lang3.StringUtils;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -42,15 +42,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.util.FileUtils;
+import com.reicast.emulator.config.Config;
+import com.reicast.emulator.emu.JNIdc;
 
 public class FileBrowser extends Fragment {
 
-	Vibrator vib;
-	Drawable orig_bg;
-	Activity parentActivity;
-	boolean ImgBrowse;
+	private Vibrator vib;
+	private Drawable orig_bg;
+	private Activity parentActivity;
+	private boolean ImgBrowse;
 	private boolean games;
-	OnItemSelectedListener mCallback;
+	private OnItemSelectedListener mCallback;
 
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
@@ -62,8 +64,8 @@ public class FileBrowser extends Fragment {
 		super.onCreate(savedInstanceState);
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-		home_directory = mPrefs.getString("home_directory", home_directory);
-		game_directory = mPrefs.getString("game_directory", game_directory);
+		home_directory = mPrefs.getString(Config.pref_home, home_directory);
+		game_directory = mPrefs.getString(Config.pref_games, game_directory);
 
 		Bundle b = getArguments();
 		if (b != null) {
@@ -83,9 +85,8 @@ public class FileBrowser extends Fragment {
 
 	// Container Activity must implement this interface
 	public interface OnItemSelectedListener {
-		public void onGameSelected(Uri uri);
-
-		public void onFolderSelected(Uri uri);
+		void onGameSelected(Uri uri);
+		void onFolderSelected(Uri uri);
 	}
 
 	@Override
@@ -117,7 +118,7 @@ public class FileBrowser extends Fragment {
 			if (!file.exists()) {
 				file.createNewFile();
 				OutputStream fo = new FileOutputStream(file);
-				InputStream png = parentActivity.getBaseContext().getAssets()
+				InputStream png = parentActivity.getAssets()
 						.open("buttons.png");
 
 				byte[] buffer = new byte[4096];
@@ -148,7 +149,7 @@ public class FileBrowser extends Fragment {
 
 		File home = new File(home_directory);
 		if (!home.exists() || !home.isDirectory()) {
-			Toast.makeText(getActivity(), "Please configure a home directory",
+			Toast.makeText(getActivity(), R.string.config_home,
 					Toast.LENGTH_LONG).show();
 		}
 
@@ -165,15 +166,14 @@ public class FileBrowser extends Fragment {
 		}
 	}
 
-	class LocateGames extends AsyncTask<String, Integer, List<File>> {
+	private final class LocateGames extends AsyncTask<String, Integer, List<File>> {
 
 		@Override
 		protected List<File> doInBackground(String... paths) {
-			final List<File> tFileList = new ArrayList<File>();
 			File storage = new File(paths[0]);
-			Resources resources = parentActivity.getResources();
+
 			// array of valid image file extensions
-			String[] mediaTypes = resources.getStringArray(R.array.images);
+			String[] mediaTypes = parentActivity.getResources().getStringArray(R.array.images);
 			FilenameFilter[] filter = new FilenameFilter[mediaTypes.length];
 
 			int i = 0;
@@ -195,38 +195,31 @@ public class FileBrowser extends Fragment {
 			}
 
 			FileUtils fileUtils = new FileUtils();
-			File[] allMatchingFiles = fileUtils.listFilesAsArray(storage,
-					filter, 1);
-			for (File mediaFile : allMatchingFiles) {
-				tFileList.add(mediaFile);
-			}
-			return tFileList;
+			Collection<File> files = fileUtils.listFiles(storage, filter, 1);
+			return (List<File>) files;
 		}
 
 		@Override
 		protected void onPostExecute(List<File> games) {
-			if (games != null && !games.isEmpty()) {
-				final LinearLayout list = (LinearLayout) parentActivity
-						.findViewById(R.id.game_list);
-				list.removeAllViews();
+			final LinearLayout list = (LinearLayout) parentActivity.findViewById(R.id.game_list);
+			list.removeAllViews();
 
-				String heading = parentActivity
-						.getString(R.string.games_listing);
-				createListHeader(heading, list, true);
-				for (int i = 0; i < games.size(); i++) {
-					createListItem(list, games.get(i));
+			String heading = parentActivity.getString(R.string.games_listing);
+			createListHeader(heading, list, true);
+			if (games != null && !games.isEmpty()) {
+				for (final File game : games) {
+					createListItem(list, game);
 				}
 			} else {
-				Toast.makeText(parentActivity, "Please configure a games directory",
-							Toast.LENGTH_LONG).show();
+				Toast.makeText(parentActivity, R.string.config_game, Toast.LENGTH_LONG).show();
 			}
+			list.invalidate();
 		}
-
 	}
 
-	class DirSort implements Comparator<File> {
+	private static final class DirSort implements Comparator<File> {
 
-		// Comparator interface requires defining compare method.
+		@Override
 		public int compare(File filea, File fileb) {
 
 			return ((filea.isFile() ? "a" : "b") + filea.getName().toLowerCase(
@@ -242,7 +235,7 @@ public class FileBrowser extends Fragment {
 					R.layout.bios_list_item, null, false);
 
 			((TextView) childview.findViewById(R.id.item_name))
-					.setText(parentActivity.getString(R.string.boot_bios));
+					.setText(R.string.boot_bios);
 
 			childview.setTag(null);
 
@@ -283,27 +276,26 @@ public class FileBrowser extends Fragment {
 				.setImageResource(R.drawable.open_folder);
 		((TextView) headerView.findViewById(R.id.item_name))
 				.setText(header_text);
+		((TextView) headerView.findViewById(R.id.item_name))
+				.setTypeface(Typeface.DEFAULT_BOLD);
 		((ViewGroup) view).addView(headerView);
 
 	}
 
 	private void createListItem(LinearLayout list, final File game) {
 		final String name = game.getName();
+		final String nameLower = name.toLowerCase(Locale.getDefault());
 		final View childview = parentActivity.getLayoutInflater().inflate(
 				R.layout.app_list_item, null, false);
 
 		((TextView) childview.findViewById(R.id.item_name)).setText(name);
 
 		((ImageView) childview.findViewById(R.id.item_icon))
-				.setImageResource(game == null ? R.drawable.config : game
-						.isDirectory() ? R.drawable.open_folder
-						: name.toLowerCase(Locale.getDefault())
-								.endsWith(".gdi") ? R.drawable.gdi : name
-								.toLowerCase(Locale.getDefault()).endsWith(
-										".cdi") ? R.drawable.cdi : name
-								.toLowerCase(Locale.getDefault()).endsWith(
-										".chd") ? R.drawable.chd
-								: R.drawable.disk_unknown);
+		        .setImageResource(game.isDirectory() ? R.drawable.open_folder
+		                : nameLower.endsWith(".gdi") ? R.drawable.gdi 
+		                : nameLower.endsWith(".cdi") ? R.drawable.cdi
+		                : nameLower.endsWith(".chd") ? R.drawable.chd
+		                : R.drawable.disk_unknown);
 
 		childview.setTag(name);
 
@@ -350,7 +342,6 @@ public class FileBrowser extends Fragment {
 		createListHeader(heading, v, false);
 
 		File flist[] = root_sd.listFiles();
-
 		File parent = root_sd.getParentFile();
 
 		list.add(null);
@@ -360,32 +351,27 @@ public class FileBrowser extends Fragment {
 
 		Arrays.sort(flist, new DirSort());
 
-		for (int i = 0; i < flist.length; i++)
-			list.add(flist[i]);
+		Collections.addAll(list, flist);
 
-		for (int i = 0; i < list.size(); i++) {
-			if (list.get(i) != null && !list.get(i).isDirectory())
+		for (final File file : list) {
+			if (file != null && !file.isDirectory())
 				continue;
 			final View childview = parentActivity.getLayoutInflater().inflate(
 					R.layout.app_list_item, null, false);
 
-			if (list.get(i) == null) {
-				((TextView) childview.findViewById(R.id.item_name))
-						.setText(getString(R.string.folder_select));
-			} else if (list.get(i) == parent)
-				((TextView) childview.findViewById(R.id.item_name))
-						.setText("..");
+			if (file == null) {
+				((TextView) childview.findViewById(R.id.item_name)).setText(R.string.folder_select);
+			} else if (file == parent)
+				((TextView) childview.findViewById(R.id.item_name)).setText("..");
 			else
-				((TextView) childview.findViewById(R.id.item_name))
-						.setText(list.get(i).getName());
+				((TextView) childview.findViewById(R.id.item_name)).setText(file.getName());
 
 			((ImageView) childview.findViewById(R.id.item_icon))
-					.setImageResource(list.get(i) == null ? R.drawable.config
-							: list.get(i).isDirectory() ? R.drawable.open_folder
+					.setImageResource(file == null ? R.drawable.config
+							: file.isDirectory() ? R.drawable.open_folder
 									: R.drawable.disk_unknown);
 
-			childview.setTag(list.get(i));
-			final File item = list.get(i);
+			childview.setTag(file);
 
 			orig_bg = childview.getBackground();
 
@@ -394,8 +380,8 @@ public class FileBrowser extends Fragment {
 			childview.findViewById(R.id.childview).setOnClickListener(
 					new OnClickListener() {
 						public void onClick(View view) {
-							if (item != null && item.isDirectory()) {
-								navigate(item);
+							if (file != null && file.isDirectory()) {
+								navigate(file);
 								ScrollView sv = (ScrollView) parentActivity
 										.findViewById(R.id.game_scroller);
 								sv.scrollTo(0, 0);
@@ -410,12 +396,12 @@ public class FileBrowser extends Fragment {
 								if (games) {
 									game_directory = heading;
 									mPrefs.edit()
-											.putString("game_directory",
+											.putString(Config.pref_games,
 													heading).commit();
 								} else {
 									home_directory = heading;
 									mPrefs.edit()
-											.putString("home_directory",
+											.putString(Config.pref_home,
 													heading).commit();
 									File data_directory = new File(heading,
 											"data");
@@ -432,11 +418,11 @@ public class FileBrowser extends Fragment {
 			childview.findViewById(R.id.childview).setOnTouchListener(
 					new OnTouchListener() {
 						@SuppressWarnings("deprecation")
-						public boolean onTouch(View view, MotionEvent arg1) {
-							if (arg1.getActionMasked() == MotionEvent.ACTION_DOWN) {
+						public boolean onTouch(View view, MotionEvent event) {
+							if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
 								view.setBackgroundColor(0xFF4F3FFF);
-							} else if (arg1.getActionMasked() == MotionEvent.ACTION_CANCEL
-									|| arg1.getActionMasked() == MotionEvent.ACTION_UP) {
+							} else if (event.getActionMasked() == MotionEvent.ACTION_CANCEL
+									|| event.getActionMasked() == MotionEvent.ACTION_UP) {
 								view.setBackgroundDrawable(orig_bg);
 							}
 
@@ -446,5 +432,6 @@ public class FileBrowser extends Fragment {
 					});
 			v.addView(childview);
 		}
+		v.invalidate();
 	}
 }

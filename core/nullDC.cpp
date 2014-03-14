@@ -142,14 +142,12 @@ int dc_init(int argc,wchar* argv[])
 	{
 		return 69;
 	}
-
 	if(!cfgOpen())
 	{
 		msgboxf("Unable to open config file",MBX_ICONERROR);
 		return -4;
 	}
 	LoadSettings();
-
 #ifndef _ANDROID
 	os_CreateWindow();
 #endif
@@ -207,21 +205,25 @@ void dc_term()
 	plugins_Term();
 	_vmem_release();
 
+#ifndef _ANDROID
 	SaveSettings();
+#endif
 	SaveRomFiles(GetPath("/data/"));
 }
 
 void LoadSettings()
 {
+#ifndef _ANDROID
 	settings.dynarec.Enable			= cfgLoadInt("config","Dynarec.Enabled", 1)!=0;
 	settings.dynarec.idleskip		= cfgLoadInt("config","Dynarec.idleskip",1)!=0;
 	settings.dynarec.unstable_opt	= cfgLoadInt("config","Dynarec.unstable-opt",0);
-	settings.dreamcast.cable		= cfgLoadInt("config","Dreamcast.Cable", 3);
+	settings.dreamcast.cable		= cfgLoadInt("config","Dreamcast.Cable",3);
 	settings.dreamcast.RTC			= cfgLoadInt("config","Dreamcast.RTC",GetRTC_now());
 	settings.dreamcast.region		= cfgLoadInt("config","Dreamcast.Region",3);
 	settings.dreamcast.broadcast	= cfgLoadInt("config","Dreamcast.Broadcast",4);
 	settings.aica.LimitFPS			= cfgLoadInt("config","aica.LimitFPS",1);
 	settings.aica.NoBatch			= cfgLoadInt("config","aica.NoBatch",0);
+    settings.aica.NoSound			= cfgLoadInt("config","aica.NoSound",0);
 	settings.rend.UseMipmaps		= cfgLoadInt("config","rend.UseMipmaps",1);
 	settings.rend.WideScreen		= cfgLoadInt("config","rend.WideScreen",0);
 	
@@ -229,6 +231,7 @@ void LoadSettings()
 	
 	settings.pvr.ta_skip			= cfgLoadInt("config","ta.skip",0);
 	settings.pvr.rend				= cfgLoadInt("config","pvr.rend",0);
+#endif
 
 #if (HOST_OS != OS_LINUX || defined(_ANDROID) || defined(TARGET_PANDORA))
 	settings.aica.BufferSize=2048;

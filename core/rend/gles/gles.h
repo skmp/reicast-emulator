@@ -32,7 +32,7 @@ struct PipelineShader
 {
 	GLuint program;
 
-	GLuint scale,depth_scale;
+	GLuint scale,depth_scale, vr_offs;
 	GLuint pp_ClipTest,cp_AlphaTestValue;
 	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY,sp_LOG_FOG_COEFS;
 

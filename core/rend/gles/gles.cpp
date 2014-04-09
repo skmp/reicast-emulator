@@ -66,6 +66,7 @@ const char* VertexShaderSource = "\
 uniform highp vec4      scale; \n\
 uniform highp vec4      depth_scale; \n\
 uniform highp float sp_FOG_DENSITY; \n\
+uniform highp float     vr_offs; \n\
 /* Vertex output */ \n\
 attribute highp vec4    in_pos; \n\
 attribute lowp vec4     in_base; \n\
@@ -87,6 +88,7 @@ void main() \n\
 	vpos.w=1.0/vpos.z;  \n\
 	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
 	vpos.xy*=vpos.w;  \n\
+	vpos.x += vr_offs; \n\
 	vpos.z=depth_scale.x+depth_scale.y*vpos.w;  \n\
 	gl_Position = vpos; \n\
 }";
@@ -438,6 +440,7 @@ struct ShaderUniforms_t
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
 	float fog_coefs[2];
+	float vr_offs;
 
 	void Set(PipelineShader* s)
 	{
@@ -447,6 +450,9 @@ struct ShaderUniforms_t
 		if (s->scale!=-1)
 			glUniform4fv( s->scale, 1, scale_coefs);
 		
+		if (s->vr_offs != -1)
+			glUniform1f(s->vr_offs, vr_offs);
+
 		if (s->depth_scale!=-1)
 			glUniform4fv( s->depth_scale, 1, depth_coefs);
 		
@@ -577,7 +583,8 @@ bool CompilePipelineShader(	PipelineShader* s)
 		glUniform1i(gu,0);
 
 	//get the uniform locations
-	s->scale	            = glGetUniformLocation(s->program, "scale");
+	s->scale	        = glGetUniformLocation(s->program, "scale");
+	s->vr_offs			= glGetUniformLocation(s->program, "vr_offs");
 	s->depth_scale      = glGetUniformLocation(s->program, "depth_scale");
 	
 	
@@ -1166,22 +1173,9 @@ void OSD_DRAW()
 #endif
 }
 
-bool RenderFrame()
+void innerRender(int vr)
 {
-	bool is_rtt=pvrrc.isRTT;//(FB_W_SOF1& 0x1000000)!=0;
-
-	//disable RTTs for now ..
-	if (is_rtt)
-		return false;
-
-	_pvrrc->rend_inuse.Lock();
-	_pvrrc->MarkRend();
-
-	if (!ta_parse_vdrc(_pvrrc))
-		return false;
-
-	OSD_HOOK();
-
+	bool is_rtt=pvrrc.isRTT;	
 	//if (FrameCount&7) return;
 
 	//Setup the matrix
@@ -1343,20 +1337,96 @@ bool RenderFrame()
 	/*
 		Handle Dc to screen scaling
 	*/
-	float dc2s_scale_h=screen_height/480.0f;
-	float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
+
+	float esc = screen_width;
+	float eso = 0;
+	float reso = 0;
+
+	static float top=80;
+	static float lso=-36;
+	static float rso=36;
+	static float vr_offs = 2;
+
+	static int esh = 401;//screen_height;
+
+	if (vr == 1) {
+		esc = screen_width/2;
+		eso = lso;
+		glViewport(0,0,esc,screen_height);
+	}
+	else if (vr == 2) {
+		esc = screen_width/2;
+		eso = rso;
+		reso = esc;
+		glViewport(reso,0,esc,screen_height);
+	}
+
+	/*
+		VR support related things:
+
+			lso/rso left/right offset
+			esh - target height (zooms out picture)
+
+			The vtxes are in screen coords with W, so we don't have their matrix to compute the vr stuff
+			My shaders don't use matrix maths for some reason (long story), but you can modify VertexShaderSource to do so (its in this file, search for it).
+			Then also modify struct PipelineShader and CompilePipelineShader to get the uniform id and ShaderUniforms_t && ShaderUniforms_t::Set to set the matrix to the shader.
+
+			happy hacking -- skmp :)
+	*/
+
+#ifdef _WIN32
+	if (GetAsyncKeyState('2'))
+	{
+		lso --;
+		rso ++;
+	}
+	
+	if (GetAsyncKeyState('1'))
+	{
+		lso ++;
+		rso --;
+	}
+
+
+	if (GetAsyncKeyState('3'))
+		esh--;
+	
+	if (GetAsyncKeyState('4'))
+		esh++;
+
+	if (GetAsyncKeyState('5'))
+		vr_offs += 1;
+
+	if (GetAsyncKeyState('6'))
+		vr_offs -= 1;
+
+	if (GetAsyncKeyState('7'))
+		vr_offs *= 1.5f;
+
+	if (GetAsyncKeyState('8'))
+		vr_offs /= 1.5F;
+
+#endif
+
+	float dc2s_scale_h=esh/480.0f;
+	float ds2s_offs_x=(esc-dc2s_scale_h*640)/2 + eso;
+	float ds2s_offs_y = (screen_height - esh)/2 + top;
+
+	float hratio = (float)esh/screen_height;
 
 	//-1 -> too much to left
-	ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h);
-	ShaderUniforms.scale_coefs[1]=(is_rtt?2:-2)/dc_height;
-	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
-	ShaderUniforms.scale_coefs[3]=is_rtt?1:-1;
+	ShaderUniforms.scale_coefs[0]=2.0f/(esc/dc2s_scale_h);
+	ShaderUniforms.scale_coefs[1]=(is_rtt?2:-2)/dc_height*hratio;
+	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(esc);
+	ShaderUniforms.scale_coefs[3]=is_rtt?1:-1 +2*ds2s_offs_y/(screen_height);
 
 
 	ShaderUniforms.depth_coefs[0]=2/(vtx_max_fZ-vtx_min_fZ);
 	ShaderUniforms.depth_coefs[1]=-vtx_min_fZ-1;
 	ShaderUniforms.depth_coefs[2]=0;
 	ShaderUniforms.depth_coefs[3]=0;
+
+	ShaderUniforms.vr_offs = vr == 0 ? 0 : vr == 1 ? -vr_offs : vr_offs;
 
 	//printf("scale: %f, %f, %f, %f\n",scale_coefs[0],scale_coefs[1],scale_coefs[2],scale_coefs[3]);
 
@@ -1479,14 +1549,6 @@ bool RenderFrame()
 	
 	//Clear depth
 	//Color is cleared by the bgp
-	if (settings.rend.WideScreen)
-		glClearColor(pvrrc.verts.head()->col[2]/255.0f,pvrrc.verts.head()->col[1]/255.0f,pvrrc.verts.head()->col[0]/255.0f,1.0f);
-	else
-		glClearColor(0,0,0,1.0f);
-
-	glClearDepthf(0.f); glCheck();
-	glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT); glCheck();
-
 
 	if (UsingAutoSort())
 		GenSorted();
@@ -1510,15 +1572,16 @@ bool RenderFrame()
 
 	palette_update();
 
-	int offs_x=ds2s_offs_x+0.5f;
+	int offs_x=ds2s_offs_x+0.5f+reso;
+	int offs_y=ds2s_offs_y+0.5f;
 	//this needs to be scaled
-	glScissor(offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
+	glScissor(offs_x+pvrrc.fb_X_CLIP.min/scale_x,offs_y+(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 	if (settings.rend.WideScreen && pvrrc.fb_X_CLIP.min==0 && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) && (pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ) )
 	{
 		glDisable(GL_SCISSOR_TEST);
 	}
 	else
-		glEnable(GL_SCISSOR_TEST);
+		glDisable(GL_SCISSOR_TEST);
 
 	DrawStrips();
 
@@ -1529,6 +1592,104 @@ bool RenderFrame()
 	eglCheck();
 
 	KillTex=false;
+}
+
+void spew_faces(FILE* f, List<PolyParam>* pl) {
+	
+	for (int pid = 0; pid<pl->used(); pid++)
+	{
+		int fist = pl->head()[pid].first;
+		int cnt = pl->head()[pid].count;
+		u16* idx = &pvrrc.idx.head()[fist];
+
+		for (int i=0;i<cnt;i++)
+		{
+			if (i & 1) 
+				fprintf(f, "f %d %d %d\n",idx[i]+1,idx[i+1]+1,idx[i+2]+1);
+			else
+				fprintf(f, "f %d %d %d\n",idx[i]+1,idx[i+2]+1,idx[i+1]+1);
+		}
+	}
+	
+}
+
+bool RenderFrame(int vr)
+{
+	bool is_rtt=pvrrc.isRTT;//(FB_W_SOF1& 0x1000000)!=0;
+
+	//disable RTTs for now ..
+	if (is_rtt)
+		return false;
+
+	_pvrrc->rend_inuse.Lock();
+	_pvrrc->MarkRend();
+
+	if (!ta_parse_vdrc(_pvrrc))
+		return false;
+
+	
+#if HOST_OS == OS_WINDOWS
+	if (GetAsyncKeyState('P')) {
+		FILE* f = fopen("c:\\scene.obj","w");
+
+		/*
+			# Blender v2.63 (sub 0) OBJ File: ''
+			# www.blender.org
+			o Cube_Cube.001
+			v -0.911915 -0.851241 1.196067
+			v -0.911915 -0.851241 -0.803933
+			v 1.088085 -0.851241 -0.803933
+			v 1.088085 -0.851241 1.196067
+			v -0.911915 1.148759 1.196067
+			v -0.911915 1.148759 -0.803933
+			v 1.088085 1.148759 -0.803933
+			v 1.088085 1.148759 1.196067
+			usemtl 
+			s off
+			f 2 1 5 6
+			f 6 7 3 2
+			f 7 8 4 3
+			f 1 4 8 5
+			f 1 2 3 4
+			f 8 7 6 5
+		*/
+
+		fputs("# reicast 3d scene export\n",f);
+		fputs("o DreamcastScene\n",f);
+		
+		for (int i=0;i<pvrrc.verts.used();i++)
+		{
+			float invw = pvrrc.verts.head()[i].z;
+			fprintf(f, "v %f %f %f\n",pvrrc.verts.head()[i].x/invw,pvrrc.verts.head()[i].y/invw,1/invw);
+		}
+
+		spew_faces(f, &pvrrc.global_param_op);
+		spew_faces(f, &pvrrc.global_param_pt);
+		spew_faces(f, &pvrrc.global_param_tr);
+
+		fclose(f);
+	}
+#endif
+
+	OSD_HOOK();
+
+	if (settings.rend.WideScreen)
+		glClearColor(pvrrc.verts.head()->col[2]/255.0f,pvrrc.verts.head()->col[1]/255.0f,pvrrc.verts.head()->col[0]/255.0f,1.0f);
+	else
+		glClearColor(0,0,0,1.0f);
+
+	glDisable(GL_SCISSOR_TEST);
+	glClearDepthf(0.f); glCheck();
+	glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT); glCheck();
+
+	glEnable(GL_SCISSOR_TEST);
+
+	if (is_rtt || vr == 0)
+		innerRender(0);
+	else {
+		innerRender(1);
+		innerRender(2);
+	}
 
 	return !is_rtt;
 }
@@ -1581,11 +1742,12 @@ struct glesrend : Renderer
 
 	bool Render() 
 	{ 
-		bool do_swp=RenderFrame();
+
+		bool do_swp=RenderFrame(1);
 
 		if (do_swp)
 		{
-			OSD_DRAW();
+			//OSD_DRAW();
 		}
 
 		return do_swp;

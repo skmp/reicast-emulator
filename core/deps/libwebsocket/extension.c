@@ -10,7 +10,7 @@ struct libwebsocket_extension libwebsocket_internal_extensions[] = {
 		lws_extension_callback_deflate_stream,
 		sizeof(struct lws_ext_deflate_stream_conn)
 	},
-#else
+#elif 0 //FIXME: Deflate is broken with large payloads (> 64K). 
 	{
 		"x-webkit-deflate-frame",
 		lws_extension_callback_deflate_frame,

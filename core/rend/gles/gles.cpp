@@ -391,6 +391,9 @@ void egl_stealcntx()
 	gl.setup.surface=eglGetCurrentSurface(EGL_DRAW);
 }
 
+int bmp_filesize;
+u8* bmp_pdata;
+
 //swap buffers
 void gl_swap()
 {
@@ -401,6 +404,57 @@ void gl_swap()
 		ioctl(fbdev,FBIO_WAITFORVSYNC,&arg);
 	}
 	#endif
+
+	{
+		int w = screen_width;
+		int h = screen_height;
+
+		int filesize = bmp_filesize = 54 + 3*w*h;  //w is your image width, h is image height, both int
+
+		/*
+		if (bmp_pdata)
+			delete [] bmp_pdata;
+		*/
+		if (!bmp_pdata)
+		bmp_pdata = new u8[14 + 40 + filesize];
+
+		u8* img = bmp_pdata + 14 + 40;
+		glReadPixels(0,0,screen_width,screen_height,GL_RGB, GL_UNSIGNED_BYTE,img);
+
+		for (int i=0;i<(screen_width*screen_height); i++) {
+			swap(img[i*3], img[i*3+2]);
+		}
+		//FILE *f;
+
+		unsigned char bmpfileheader[14] = {'B','M', 0,0,0,0, 0,0, 0,0, 54,0,0,0};
+		unsigned char bmpinfoheader[40] = {40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0};
+		unsigned char bmppad[3] = {0,0,0};
+
+		bmpfileheader[ 2] = (unsigned char)(filesize    );
+		bmpfileheader[ 3] = (unsigned char)(filesize>> 8);
+		bmpfileheader[ 4] = (unsigned char)(filesize>>16);
+		bmpfileheader[ 5] = (unsigned char)(filesize>>24);
+
+		bmpinfoheader[ 4] = (unsigned char)(       w    );
+		bmpinfoheader[ 5] = (unsigned char)(       w>> 8);
+		bmpinfoheader[ 6] = (unsigned char)(       w>>16);
+		bmpinfoheader[ 7] = (unsigned char)(       w>>24);
+		bmpinfoheader[ 8] = (unsigned char)(       h    );
+		bmpinfoheader[ 9] = (unsigned char)(       h>> 8);
+		bmpinfoheader[10] = (unsigned char)(       h>>16);
+		bmpinfoheader[11] = (unsigned char)(       h>>24);
+
+		memcpy(bmp_pdata+0,bmpfileheader,14);
+		memcpy(bmp_pdata+14,bmpinfoheader,40);
+
+		/*
+		f = fopen("c:\\img.bmp","wb");
+		fwrite(bmp_pdata,1,filesize,f);
+		fclose(f);
+		*/
+		//delete[] pdata;
+	}
+
 	eglSwapBuffers(gl.setup.display, gl.setup.surface);
 }
 

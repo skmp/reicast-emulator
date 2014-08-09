@@ -178,6 +178,9 @@ const char * get_mimetype(const char *file)
 	return NULL;
 }
 
+extern int bmp_filesize;
+extern u8* bmp_pdata;
+
 /* this protocol server (always the first one) just knows how to do HTTP */
 
 static int callback_http(struct libwebsocket_context *context,
@@ -233,25 +236,25 @@ static int callback_http(struct libwebsocket_context *context,
 
 		/* check for the "send a big file by hand" example case */
 
-		if (!strcmp((const char *)in, "/leaf.jpg")) {
+		if (!strcmp((const char *)in, "/screenshot")) {
 			if (strlen(resource_path) > sizeof(leaf_path) - 10)
 				return -1;
-			sprintf(leaf_path, "%s/leaf.jpg", resource_path);
+			//sprintf(leaf_path, "%s/screenshot.bmp", resource_path);
 
 			/* well, let's demonstrate how to send the hard way */
 
 			p = buffer;
 
 #ifdef WIN32
-			pss->fd = open(leaf_path, O_RDONLY | _O_BINARY);
+			//pss->fd = open(leaf_path, O_RDONLY | _O_BINARY);
 #else
-			pss->fd = open(leaf_path, O_RDONLY);
+	//		pss->fd = open(leaf_path, O_RDONLY);
 #endif
 
-			if (pss->fd < 0)
-				return -1;
+			//if (pss->fd < 0)
+				//return -1;
 
-			fstat(pss->fd, &stat_buf);
+			//fstat(pss->fd, &stat_buf);
 
 			/*
 			 * we will send a big jpeg file, but it could be
@@ -262,9 +265,9 @@ static int callback_http(struct libwebsocket_context *context,
 			p += sprintf((char *)p,
 				"HTTP/1.0 200 OK\x0d\x0a"
 				"Server: libwebsockets\x0d\x0a"
-				"Content-Type: image/jpeg\x0d\x0a"
+				"Content-Type: image/bmp\x0d\x0a"
 					"Content-Length: %u\x0d\x0a\x0d\x0a",
-					(unsigned int)stat_buf.st_size);
+					(unsigned int)bmp_filesize);
 
 			/*
 			 * send the http headers...
@@ -276,14 +279,18 @@ static int callback_http(struct libwebsocket_context *context,
 			n = libwebsocket_write(wsi, buffer,
 				   p - buffer, LWS_WRITE_HTTP);
 
+			n = libwebsocket_write(wsi, bmp_pdata,
+				bmp_filesize, LWS_WRITE_HTTP);
+			/*
 			if (n < 0) {
 				close(pss->fd);
 				return -1;
 			}
+			*/
 			/*
 			 * book us a LWS_CALLBACK_HTTP_WRITEABLE callback
 			 */
-			libwebsocket_callback_on_writable(context, wsi);
+			//libwebsocket_callback_on_writable(context, wsi);
 			break;
 		}
 
@@ -507,16 +514,22 @@ callback_dumb_increment(struct libwebsocket_context *context,
 		break;
 
 	case LWS_CALLBACK_SERVER_WRITEABLE:
-		n = sprintf((char *)p, "%d", pss->number++);
+		//n = sprintf((char *)p, "%d", pss->number++);
 		m = libwebsocket_write(wsi, (u8*)&p_sh4rcb->cntx, sizeof(p_sh4rcb->cntx), LWS_WRITE_BINARY);
-		if (m < n) {
+
+		//m = libwebsocket_write(wsi, bmp_pdata, bmp_filesize, LWS_WRITE_BINARY);
+		
+		/*
+		if (m < bmp_filesize) {
 			lwsl_err("ERROR %d writing to di socket\n", n);
 			return -1;
-		}
+		}*/
+		/*
 		if (close_testing && pss->number == 50) {
 			lwsl_info("close tesing limit, closing\n");
 			return -1;
 		}
+		*/
 		break;
 
 	case LWS_CALLBACK_RECEIVE:

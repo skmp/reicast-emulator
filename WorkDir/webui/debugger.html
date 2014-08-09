@@ -29,7 +29,7 @@
 <table><tr><td>
 <table class="content" width="200px">
 		<tr><td align=center><input type=button id=offset value="Reset counter" onclick="reset();" ></td></tr>
-		<tr><td width=200px align=center><div id=number> </div></td></tr>
+		<tr><td width=200px align=center><div id=number> </div><img id="dyn_img" /></td></tr>
 		<tr><td id=wsdi_statustd align=center class="explain"><div id=wsdi_status>Not initialized</div></td></tr>
 	</tr>
 </table>
@@ -253,7 +253,7 @@ document.getElementById("number").textContent = get_appropriate_ws_url();
 				   "dumb-increment-protocol");
 	}
 
-
+  var si= Date.now();
 	try {
 		socket_di.onopen = function() {
 			document.getElementById("wsdi_statustd").style.backgroundColor = "#40ff40";
@@ -261,7 +261,12 @@ document.getElementById("number").textContent = get_appropriate_ws_url();
 		} 
 
 		socket_di.onmessage =function got_packet(msg) {
-			document.getElementById("number").textContent = msg.data + "\n";
+			//document.getElementById("number").textContent = msg.data + "\n";
+			var img = document.getElementById("dyn_img");
+			img.src = "/screenshot?" + si++;
+			//var base64String = "data:image/bmp;base64," + btoa(String.fromCharCode.apply(null, new Uint8Array(msg.data)));
+			//img.src = URL.createObjectURL(msg.data)//base64String;
+			//URL.revokeObjectURL(old);
 		} 
 
 		socket_di.onclose = function(){

@@ -1,6 +1,6 @@
 #include "types.h"
 
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS && 0
 #include "common.h"
 
 #include <stddef.h>

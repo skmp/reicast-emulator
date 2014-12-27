@@ -1,0 +1,2 @@
+#TargetFrameworkVersion=:PlatformToolSet=v120:EnableManagedIncrementalBuild=false:VCToolArchitecture=Native32Bit
+Debug|Win32|Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\|

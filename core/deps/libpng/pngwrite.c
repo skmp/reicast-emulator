@@ -1,4 +1,6 @@
 
+#define _CRT_SECURE_NO_WARNINGS 1
+
 /* pngwrite.c - general routines to write a PNG file
  *
  * Last changed in libpng 1.4.0 [January 3, 2010]

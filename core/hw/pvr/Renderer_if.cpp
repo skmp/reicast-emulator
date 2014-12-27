@@ -225,7 +225,7 @@ bool rend_init()
 	renderer = rend_norend();
 #else
 
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS && 0
 	renderer = settings.pvr.rend == 0 ? rend_GLES2() : rend_D3D11();
 #else
 	renderer = rend_GLES2();
@@ -233,7 +233,7 @@ bool rend_init()
 
 #endif
 
-#if !defined(_ANDROID)
+#if !defined(_ANDROID) && 0
 	rthd.Start();
 #endif
 

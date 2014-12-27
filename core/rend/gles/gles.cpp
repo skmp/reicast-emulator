@@ -358,7 +358,7 @@ int screen_height;
 // Create a basic GLES context
 bool gl_init(void* wind, void* disp)
 {
-#if !defined(_ANDROID)
+#if !defined(_ANDROID) && 0
 	gl.setup.native_wind=(EGLNativeWindowType)wind;
 	gl.setup.native_disp=(EGLNativeDisplayType)disp;
 
@@ -394,7 +394,7 @@ bool gl_init(void* wind, void* disp)
 		return false;
 	}
 
-	gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, wind, NULL);
+	gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, (EGLNativeWindowType)wind, NULL);
 
 	if (eglCheck())
 		return false;
@@ -407,7 +407,10 @@ bool gl_init(void* wind, void* disp)
 
 	if (eglCheck())
 		return false;
-
+#else
+	gl.setup.context = eglGetCurrentContext();
+	gl.setup.display = eglGetCurrentDisplay();
+	gl.setup.surface = eglGetCurrentSurface(EGL_DRAW);
 #endif
 
 	eglMakeCurrent(gl.setup.display, gl.setup.surface, gl.setup.surface, gl.setup.context);
@@ -450,7 +453,7 @@ void gl_swap()
 void gl_term()
 {
 #if HOST_OS==OS_WINDOWS
-	ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
+//	ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
 #endif
 #ifdef TARGET_PANDORA
 	eglMakeCurrent( gl.setup.display, NULL, NULL, EGL_NO_CONTEXT );
@@ -903,7 +906,7 @@ bool gles_init()
 	if (!gl_create_resources())
 		return false;
 
-#ifdef GLES
+#if defined(GLES) && 0
 	#ifdef TARGET_PANDORA
 	fbdev=open("/dev/fb0", O_RDONLY);
 	#else

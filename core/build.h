@@ -35,6 +35,7 @@
 #define OS_WINDOWS   0x10000001
 #define OS_LINUX     0x10000002
 #define OS_DARWIN    0x10000003
+#define OS_WINRT	 0x10000004
 
 //HOST_CPU
 #define CPU_X86      0x20000001

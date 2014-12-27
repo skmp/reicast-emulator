@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS 1
 #include "private-libwebsockets.h"
 
 struct libwebsocket *libwebsocket_client_connect_2(

@@ -1825,7 +1825,7 @@ sh4op(i0110_nnnn_mmmm_1011)
 {//ToDo : Check This [26/4/05]
 	u32 n = GetN(op);
 	u32 m = GetM(op);
-	r[n] = -r[m];
+	r[n] = (u32)-(s32)r[m];
 }
 
 //not <REG_M>,<REG_N>

@@ -119,8 +119,8 @@ void sched_chan_tick(int ch)
 	if (togo>SH4_MAIN_CLOCK)
 		togo=SH4_MAIN_CLOCK;
 
-	if (togo>-sh4_sched_now())
-		togo=-sh4_sched_now();
+	if (togo>-(s32)sh4_sched_now())
+		togo=-(s32)sh4_sched_now();
 
 	sh4_sched_request(tmu_sched[ch],togo);
 }

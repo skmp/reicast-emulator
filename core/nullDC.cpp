@@ -45,7 +45,7 @@ int GetFile(char *szFileName, char *szParse=0,u32 flags=0)
 #if defined(OMAP4)
 		strcpy(szFileName,GetPath("/gdimage/crazy_taxi.chd").c_str());
 #else
-	#if HOST_OS==OS_WINDOWS
+	#if HOST_OS==OS_WINDOWS && 0
 		OPENFILENAME ofn;
 		ZeroMemory( &ofn , sizeof( ofn));
 	ofn.lStructSize = sizeof ( ofn );
@@ -131,7 +131,7 @@ void plugins_Reset(bool Manual)
 
 void* webui_th(void* p)
 {
-	#if (HOST_OS == OS_WINDOWS || HOST_OS == OS_LINUX)  && !defined(TARGET_PANDORA)
+	#if (HOST_OS == OS_WINDOWS || HOST_OS == OS_LINUX)  && !defined(TARGET_PANDORA) && 0
 		webui_start();
 	#endif
 

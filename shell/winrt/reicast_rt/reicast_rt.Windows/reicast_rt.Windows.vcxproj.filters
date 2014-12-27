@@ -1,0 +1,877 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Assets">
+      <UniqueIdentifier>60069b8c-a578-42b5-9251-9583e2a30139</UniqueIdentifier>
+      <Extensions>bmp;fbx;gif;jpg;jpeg;tga;tiff;tif;png</Extensions>
+    </Filter>
+    <Filter Include="Binaries">
+      <Extensions>dll;</Extensions>
+    </Filter>
+    <Image Include="Assets\Logo.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SmallLogo.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\StoreLogo.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SplashScreen.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Filter Include="Impl">
+      <UniqueIdentifier>{9145cf16-219e-4eec-a44e-c64825a1d3c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="reicast">
+      <UniqueIdentifier>{00606a64-f929-422a-a41d-1f4ba1af2812}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="OpenGLESPage.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="OpenGLESPage.xaml.cpp" />
+    <ClCompile Include="..\reicast_rt.Shared\HelloTriangleRenderer.cpp">
+      <Filter>Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reicast_rt.Shared\OpenGLES.cpp">
+      <Filter>Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reicast_rt.Shared\pch.cpp">
+      <Filter>Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reicast_rt.Shared\JitMagic.cpp">
+      <Filter>Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\cfg\cfg.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\cfg\cl.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\chdpsr\cdipsr.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\chdr\chdr.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\coreio\coreio.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\crypto\md5.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\crypto\sha1.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\crypto\sha256.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libelf\elf.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libelf\elf32.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libelf\elf64.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libpng\png.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libpng\pngerror.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libpng\pngget.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libpng\pngmem.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libpng\pngpread.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libpng\pngread.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libpng\pngrio.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libpng\pngrtran.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libpng\pngrutil.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libpng\pngset.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libpng\pngtrans.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libpng\pngwio.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libpng\pngwrite.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libpng\pngwtran.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libpng\pngwutil.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\libwebsocket\sha-1.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\zlib\adler32.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\zlib\compress.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\zlib\crc32.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\zlib\deflate.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\zlib\infback.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\zlib\inffast.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\zlib\inflate.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\zlib\inftrees.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\zlib\trees.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\zlib\uncompr.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\deps\zlib\zutil.c">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\emitter\x86_emitter.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\aica\aica.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\aica\aica_if.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\aica\aica_mem.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\aica\dsp.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\aica\sgc_if.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\arm7\arm7.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\arm7\arm_mem.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\arm7\vbaARM.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\arm7\virt_arm.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\gdrom\gdromv3.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\gdrom\gdrom_response.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\holly\holly_intc.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\holly\sb.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\holly\sb_dma.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\holly\sb_mem.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\maple\maple_cfg.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\maple\maple_devs.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\maple\maple_helper.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\maple\maple_if.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\mem\_vmem.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\pvr\drkPvr.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\pvr\pvr_mem.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\pvr\pvr_regs.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\pvr\pvr_sb_regs.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\pvr\Renderer_if.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\pvr\spg.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\pvr\ta.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\pvr\ta_ctx.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\pvr\ta_vtx.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\dyna\blockmanager.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\dyna\decoder.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\dyna\driver.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\dyna\shil.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\interpr\sh4_fpu.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\interpr\sh4_interpreter.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\interpr\sh4_opcodes.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\modules\bsc.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\modules\ccn.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\modules\cpg.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\modules\dmac.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\modules\intc.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\modules\mmu.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\modules\rtc.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\modules\serial.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\modules\tmu.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\modules\ubc.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\sh4_core_regs.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\sh4_interrupts.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\sh4_mem.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\sh4_mmr.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\sh4_opcode_list.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\sh4_rom.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\hw\sh4\sh4_sched.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\imgread\cdi.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\imgread\chd.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\imgread\common.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\imgread\gdi.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\imgread\ImgReader.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\imgread\ioctl.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\nullDC.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\oslib\alsa_audiostream.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\oslib\audiostream.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\oslib\ds_audiostream.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\profiler\profiler.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\rend\gles\glctx.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\rend\gles\gldraw.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\rend\gles\gles.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\rend\gles\glosd.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\rend\gles\gltex.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\rend\TexCache.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\stdclass.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\windows\win86_driver.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\windows\win86_il.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\core\windows\win86_ngen.cpp">
+      <Filter>reicast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reicast_rt.Shared\App.xaml.cpp" />
+    <ClCompile Include="ReiHooks.cpp">
+      <Filter>Impl</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="OpenGLESPage.xaml.h" />
+    <ClInclude Include="..\reicast_rt.Shared\HelloTriangleRenderer.h">
+      <Filter>Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reicast_rt.Shared\OpenGLES.h">
+      <Filter>Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reicast_rt.Shared\pch.h">
+      <Filter>Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reicast_rt.Shared\JitMagic.h">
+      <Filter>Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\arm_coding.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\arm_disasm.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\arm_emitter.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\arm_registers.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\E_Branches.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\E_DataOp.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\E_Extend.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\E_LoadStore.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\E_Misc.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\E_Multiply.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\E_Parallel.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\E_Special.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\E_Status.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\E_VDataOp.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\E_VLoadStore.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\E_VRegXfer.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\H_Branches.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\H_fp.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\H_LoadStore.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\H_psuedo.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\arm_emitter\H_state.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\build.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\cfg\cfg.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\chdpsr\cdipsr.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\chdr\chd.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\chdr\coretypes.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\coreio\coreio.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\crypto\md5.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\crypto\sha1.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\crypto\sha256.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\ifaddrs\ifaddrs.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\libelf\debug.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\libelf\elf.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\libelf\elf32.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\libelf\elf64.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\libpng\config.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\libpng\png.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\libpng\pngconf.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\libpng\pngpriv.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\libwebsocket\lextable.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\libwebsocket\libwebsockets.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\libwebsocket\lws_config.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\libwebsocket\private-libwebsockets.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\libzip\config.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\libzip\zip.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\libzip\zipint.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\zlib\crc32.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\zlib\deflate.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\zlib\inffast.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\zlib\inffixed.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\zlib\inflate.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\zlib\inftrees.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\zlib\trees.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\zlib\zconf.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\zlib\zconf.in.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\zlib\zlib.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\deps\zlib\zutil.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\emitter\generated_class_names.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\emitter\generated_class_names_string.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\emitter\generated_descriptors.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\emitter\generated_indexes.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\emitter\types.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\emitter\x86_emitter.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\emitter\x86_matcher.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\emitter\x86_op_classes.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\emitter\x86_op_encoder.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\emitter\x86_op_table.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\aica\aica_mem.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\aica\dsp.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\aica\sgc_if.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\arm7\arm-new.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\arm7\arm7.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\arm7\arm_mem.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\arm7\resource.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\arm7\virt_arm.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\flashrom\flashrom.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\gdrom\gdromv3.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\gdrom\gdrom_if.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\holly\holly_intc.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\holly\sb.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\holly\sb_mem.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\maple\maple_cfg.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\maple\maple_devs.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\maple\maple_helper.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\maple\maple_if.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\pvr\config.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\pvr\drkPvr.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\pvr\helper_classes.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\pvr\pvr_mem.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\pvr\pvr_regs.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\pvr\pvr_sb_regs.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\pvr\Renderer_if.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\pvr\spg.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\pvr\ta.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\pvr\ta_const_df.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\pvr\ta_ctx.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\pvr\ta_structs.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\dyna\blockmanager.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\dyna\decoder.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\dyna\decoder_opcodes.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\dyna\ngen.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\dyna\rec_config.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\dyna\regalloc.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\dyna\shil.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\dyna\shil_canonical.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\fsca-table.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\interpr\sh4_opcodes.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\modules\ccn.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\modules\dmac.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\modules\mmu.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\modules\modules.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\modules\tmu.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\sh4_core.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\sh4_if.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\sh4_interpreter.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\sh4_interrupts.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\sh4_mem.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\sh4_mmr.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\sh4_opcode.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\sh4_opcode_list.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\sh4_rom.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\hw\sh4\sh4_sched.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\imgread\common.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\imgread\gd_driver.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\imgread\ImgReader.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\imgread\SCSIDEFS.H">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\khronos\APPLE\egl.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\khronos\APPLE\eglplatform.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\khronos\APPLE\khrplatform.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\khronos\EGL\egl.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\khronos\EGL\eglext.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\khronos\EGL\eglplatform.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\khronos\GL3\gl3.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\khronos\GLES2\gl2.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\khronos\GLES2\gl2ext.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\khronos\GLES2\gl2platform.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\khronos\GLES3\gl2ext.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\khronos\GLES3\gl3.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\khronos\GLES3\gl3platform.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\khronos\KHR\khrplatform.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\linux\typedefs.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\oslib\audiostream_rif.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\oslib\oslib.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\profiler\profiler.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\rend\gles\gles.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\rend\rend.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\rend\TexCache.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\stdclass.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\types.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\webui\server.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\core\windows\win86_ngen.h">
+      <Filter>reicast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reicast_rt.Shared\App.xaml.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="reicast_rt.Windows_TemporaryKey.pfx" />
+    <None Include="$(AngleBinPath)libEGL.dll">
+      <Filter>Binaries</Filter>
+    </None>
+    <None Include="$(AngleBinPath)libGLESv2.dll">
+      <Filter>Binaries</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="..\reicast_rt.Shared\App.xaml">
+      <Filter>Impl</Filter>
+    </ApplicationDefinition>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,309 @@
+﻿Build started 27/12/2014 5:24:11 μμ.
+     1>Project "Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\reicast_rt\reicast_rt.Windows\reicast_rt.Windows.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I"Z:\Projects\scratch\angle-future-dev\include\\" /I"Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\reicast_rt\reicast_rt.Windows\\..\..\..\..\core\deps" /I"Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\reicast_rt\reicast_rt.Windows\\..\..\..\..\core" /I"Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\reicast_rt\reicast_rt.Windows\\" /IDebug\ /I"Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\reicast_rt\reicast_rt.Windows\\" /I"Generated Files\\" /IDebug\ /I"Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\reicast_rt\reicast_rt.Shared\\" /ZI /ZW /ZW:nostdlib /nologo /W3 /WX- /sdl /MP /Od /Oy- /D HOST_NO_REC /D GLES /D _UNICODE /D UNICODE /D _DEBUG /D WINAPI_FAMILY=WINAPI_FAMILY_APP /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /wd4453 /wd28204 /FU"C:\Program Files (x86)\Microsoft SDKs\Windows\v8.1\ExtensionSDKs\Microsoft.VCLibs\12.0\References\CommonConfiguration\neutral\platform.winmd" /FU"C:\Program Files (x86)\Windows Kits\8.1\References\CommonConfiguration\Neutral\Windows.winmd" /FU"C:\Program Files (x86)\Windows Kits\8.1\References\CommonConfiguration\Neutral\Windows.winmd" /analyze- /errorReport:prompt /bigobj ..\..\..\..\core\hw\pvr\Renderer_if.cpp ..\..\..\..\core\rend\TexCache.cpp ..\..\..\..\core\rend\gles\gltex.cpp
+         Renderer_if.cpp
+         TexCache.cpp
+         gltex.cpp
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(188): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\hw\pvr\Renderer_if.cpp)
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(185) : while compiling class template member function 'void convBMP_PL<pp_565>::Convert(PixelBuffer *,u8 *)'
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(328) : see reference to function template instantiation 'void convBMP_PL<pp_565>::Convert(PixelBuffer *,u8 *)' being compiled
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(320) : see reference to class template instantiation 'convBMP_PL<pp_565>' being compiled
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(396) : see reference to function template instantiation 'void texture_PL<convBMP_PL<pp_565>>(PixelBuffer *,u8 *,u32,u32)' being compiled
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(189): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\hw\pvr\Renderer_if.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(190): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\hw\pvr\Renderer_if.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(191): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\hw\pvr\Renderer_if.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(266): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\hw\pvr\Renderer_if.cpp)
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(263) : while compiling class template member function 'void convBMP_TW<pp_565>::Convert(PixelBuffer *,u8 *)'
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(355) : see reference to function template instantiation 'void convBMP_TW<pp_565>::Convert(PixelBuffer *,u8 *)' being compiled
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(342) : see reference to class template instantiation 'convBMP_TW<pp_565>' being compiled
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(403) : see reference to function template instantiation 'void texture_TW<convBMP_TW<pp_565>>(PixelBuffer *,u8 *,u32,u32)' being compiled
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(267): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\hw\pvr\Renderer_if.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(268): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\hw\pvr\Renderer_if.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(269): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\hw\pvr\Renderer_if.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(188): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\rend\TexCache.cpp)
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(185) : while compiling class template member function 'void convBMP_PL<pp_565>::Convert(PixelBuffer *,u8 *)'
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(328) : see reference to function template instantiation 'void convBMP_PL<pp_565>::Convert(PixelBuffer *,u8 *)' being compiled
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(320) : see reference to class template instantiation 'convBMP_PL<pp_565>' being compiled
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(396) : see reference to function template instantiation 'void texture_PL<convBMP_PL<pp_565>>(PixelBuffer *,u8 *,u32,u32)' being compiled
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(189): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\rend\TexCache.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(190): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\rend\TexCache.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(191): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\rend\TexCache.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(266): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\rend\TexCache.cpp)
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(263) : while compiling class template member function 'void convBMP_TW<pp_565>::Convert(PixelBuffer *,u8 *)'
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(355) : see reference to function template instantiation 'void convBMP_TW<pp_565>::Convert(PixelBuffer *,u8 *)' being compiled
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(342) : see reference to class template instantiation 'convBMP_TW<pp_565>' being compiled
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(403) : see reference to function template instantiation 'void texture_TW<convBMP_TW<pp_565>>(PixelBuffer *,u8 *,u32,u32)' being compiled
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(267): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\rend\TexCache.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(268): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\rend\TexCache.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(269): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\rend\TexCache.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(188): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\rend\gles\gltex.cpp)
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(185) : while compiling class template member function 'void convBMP_PL<pp_565>::Convert(PixelBuffer *,u8 *)'
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(328) : see reference to function template instantiation 'void convBMP_PL<pp_565>::Convert(PixelBuffer *,u8 *)' being compiled
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(320) : see reference to class template instantiation 'convBMP_PL<pp_565>' being compiled
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(396) : see reference to function template instantiation 'void texture_PL<convBMP_PL<pp_565>>(PixelBuffer *,u8 *,u32,u32)' being compiled
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(189): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\rend\gles\gltex.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(190): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\rend\gles\gltex.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(191): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\rend\gles\gltex.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(266): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\rend\gles\gltex.cpp)
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(263) : while compiling class template member function 'void convBMP_TW<pp_565>::Convert(PixelBuffer *,u8 *)'
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(355) : see reference to function template instantiation 'void convBMP_TW<pp_565>::Convert(PixelBuffer *,u8 *)' being compiled
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(342) : see reference to class template instantiation 'convBMP_TW<pp_565>' being compiled
+                 z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(403) : see reference to function template instantiation 'void texture_TW<convBMP_TW<pp_565>>(PixelBuffer *,u8 *,u32,u32)' being compiled
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(267): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\rend\gles\gltex.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(268): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\rend\gles\gltex.cpp)
+     1>z:\projects\projects\dreamcast\reicast-public\reicast-emulator\core\rend\texcache.h(269): warning C4333: '>>' : right shift by too large amount, data loss (..\..\..\..\core\rend\gles\gltex.cpp)
+       CreateWinMD:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\Debug\reicast_rt.Windows\reicast_rt.Windows.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\\lib\store" /LIBPATH:"C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\\lib" "Z:\Projects\scratch\angle-future-dev\projects\winrt\windows\src\Debug_Win32\lib\libGLESv2.lib" "Z:\Projects\scratch\angle-future-dev\projects\winrt\windows\src\Debug_Win32\lib\libEGL.lib" kernel32.lib /MANIFEST:NO /DEBUG /PDB:"Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\Debug\reicast_rt.Windows\reicast_rt.Windows.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /APPCONTAINER /WINMD:ONLY /WINMDFILE:"Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\Debug\reicast_rt.Windows\reicast_rt.winmd" /DYNAMICBASE /NXCOMPAT /MACHINE:X86 Debug\cfg.obj
+         Debug\cl.obj
+         Debug\cdipsr.obj
+         Debug\chdr.obj
+         Debug\coreio.obj
+         Debug\md5.obj
+         Debug\sha1.obj
+         Debug\sha256.obj
+         Debug\elf.obj
+         Debug\elf32.obj
+         Debug\elf64.obj
+         Debug\png.obj
+         Debug\pngerror.obj
+         Debug\pngget.obj
+         Debug\pngmem.obj
+         Debug\pngpread.obj
+         Debug\pngread.obj
+         Debug\pngrio.obj
+         Debug\pngrtran.obj
+         Debug\pngrutil.obj
+         Debug\pngset.obj
+         Debug\pngtrans.obj
+         Debug\pngwio.obj
+         Debug\pngwrite.obj
+         Debug\pngwtran.obj
+         Debug\pngwutil.obj
+         "Debug\sha-1.obj"
+         Debug\adler32.obj
+         Debug\compress.obj
+         Debug\crc32.obj
+         Debug\deflate.obj
+         Debug\infback.obj
+         Debug\inffast.obj
+         Debug\inflate.obj
+         Debug\inftrees.obj
+         Debug\trees.obj
+         Debug\uncompr.obj
+         Debug\zutil.obj
+         Debug\x86_emitter.obj
+         Debug\aica.obj
+         Debug\aica_if.obj
+         Debug\aica_mem.obj
+         Debug\dsp.obj
+         Debug\sgc_if.obj
+         Debug\arm7.obj
+         Debug\arm_mem.obj
+         Debug\vbaARM.obj
+         Debug\virt_arm.obj
+         Debug\gdromv3.obj
+         Debug\gdrom_response.obj
+         Debug\holly_intc.obj
+         Debug\sb.obj
+         Debug\sb_dma.obj
+         Debug\sb_mem.obj
+         Debug\maple_cfg.obj
+         Debug\maple_devs.obj
+         Debug\maple_helper.obj
+         Debug\maple_if.obj
+         Debug\_vmem.obj
+         Debug\drkPvr.obj
+         Debug\pvr_mem.obj
+         Debug\pvr_regs.obj
+         Debug\pvr_sb_regs.obj
+         Debug\Renderer_if.obj
+         Debug\spg.obj
+         Debug\ta.obj
+         Debug\ta_ctx.obj
+         Debug\ta_vtx.obj
+         Debug\blockmanager.obj
+         Debug\decoder.obj
+         Debug\driver.obj
+         Debug\shil.obj
+         Debug\sh4_fpu.obj
+         Debug\sh4_interpreter.obj
+         Debug\sh4_opcodes.obj
+         Debug\bsc.obj
+         Debug\ccn.obj
+         Debug\cpg.obj
+         Debug\dmac.obj
+         Debug\intc.obj
+         Debug\mmu.obj
+         Debug\rtc.obj
+         Debug\serial.obj
+         Debug\tmu.obj
+         Debug\ubc.obj
+         Debug\sh4_core_regs.obj
+         Debug\sh4_interrupts.obj
+         Debug\sh4_mem.obj
+         Debug\sh4_mmr.obj
+         Debug\sh4_opcode_list.obj
+         Debug\sh4_rom.obj
+         Debug\sh4_sched.obj
+         Debug\cdi.obj
+         Debug\chd.obj
+         Debug\common.obj
+         Debug\gdi.obj
+         Debug\ImgReader.obj
+         Debug\ioctl.obj
+         Debug\nullDC.obj
+         Debug\alsa_audiostream.obj
+         Debug\audiostream.obj
+         Debug\ds_audiostream.obj
+         Debug\profiler.obj
+         Debug\glctx.obj
+         Debug\gldraw.obj
+         Debug\gles.obj
+         Debug\glosd.obj
+         Debug\gltex.obj
+         Debug\TexCache.obj
+         Debug\stdclass.obj
+         Debug\win86_driver.obj
+         Debug\win86_il.obj
+         Debug\win86_ngen.obj
+         Debug\App.xaml.obj
+         Debug\HelloTriangleRenderer.obj
+         Debug\JitMagic.obj
+         Debug\OpenGLES.obj
+         Debug\pch.obj
+         Debug\OpenGLESPage.xaml.obj
+         Debug\ReiHooks.obj
+         Debug\XamlTypeInfo.Impl.g.obj
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\Debug\reicast_rt.Windows\reicast_rt.Windows.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\\lib\store" /LIBPATH:"C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\\lib" "Z:\Projects\scratch\angle-future-dev\projects\winrt\windows\src\Debug_Win32\lib\libGLESv2.lib" "Z:\Projects\scratch\angle-future-dev\projects\winrt\windows\src\Debug_Win32\lib\libEGL.lib" kernel32.lib /MANIFEST:NO /DEBUG /PDB:"Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\Debug\reicast_rt.Windows\reicast_rt.Windows.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /APPCONTAINER /WINMD:NO /WINMDFILE:"Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\Debug\reicast_rt.Windows\reicast_rt.winmd" /DYNAMICBASE /NXCOMPAT /MACHINE:X86 Debug\cfg.obj
+         Debug\cl.obj
+         Debug\cdipsr.obj
+         Debug\chdr.obj
+         Debug\coreio.obj
+         Debug\md5.obj
+         Debug\sha1.obj
+         Debug\sha256.obj
+         Debug\elf.obj
+         Debug\elf32.obj
+         Debug\elf64.obj
+         Debug\png.obj
+         Debug\pngerror.obj
+         Debug\pngget.obj
+         Debug\pngmem.obj
+         Debug\pngpread.obj
+         Debug\pngread.obj
+         Debug\pngrio.obj
+         Debug\pngrtran.obj
+         Debug\pngrutil.obj
+         Debug\pngset.obj
+         Debug\pngtrans.obj
+         Debug\pngwio.obj
+         Debug\pngwrite.obj
+         Debug\pngwtran.obj
+         Debug\pngwutil.obj
+         "Debug\sha-1.obj"
+         Debug\adler32.obj
+         Debug\compress.obj
+         Debug\crc32.obj
+         Debug\deflate.obj
+         Debug\infback.obj
+         Debug\inffast.obj
+         Debug\inflate.obj
+         Debug\inftrees.obj
+         Debug\trees.obj
+         Debug\uncompr.obj
+         Debug\zutil.obj
+         Debug\x86_emitter.obj
+         Debug\aica.obj
+         Debug\aica_if.obj
+         Debug\aica_mem.obj
+         Debug\dsp.obj
+         Debug\sgc_if.obj
+         Debug\arm7.obj
+         Debug\arm_mem.obj
+         Debug\vbaARM.obj
+         Debug\virt_arm.obj
+         Debug\gdromv3.obj
+         Debug\gdrom_response.obj
+         Debug\holly_intc.obj
+         Debug\sb.obj
+         Debug\sb_dma.obj
+         Debug\sb_mem.obj
+         Debug\maple_cfg.obj
+         Debug\maple_devs.obj
+         Debug\maple_helper.obj
+         Debug\maple_if.obj
+         Debug\_vmem.obj
+         Debug\drkPvr.obj
+         Debug\pvr_mem.obj
+         Debug\pvr_regs.obj
+         Debug\pvr_sb_regs.obj
+         Debug\Renderer_if.obj
+         Debug\spg.obj
+         Debug\ta.obj
+         Debug\ta_ctx.obj
+         Debug\ta_vtx.obj
+         Debug\blockmanager.obj
+         Debug\decoder.obj
+         Debug\driver.obj
+         Debug\shil.obj
+         Debug\sh4_fpu.obj
+         Debug\sh4_interpreter.obj
+         Debug\sh4_opcodes.obj
+         Debug\bsc.obj
+         Debug\ccn.obj
+         Debug\cpg.obj
+         Debug\dmac.obj
+         Debug\intc.obj
+         Debug\mmu.obj
+         Debug\rtc.obj
+         Debug\serial.obj
+         Debug\tmu.obj
+         Debug\ubc.obj
+         Debug\sh4_core_regs.obj
+         Debug\sh4_interrupts.obj
+         Debug\sh4_mem.obj
+         Debug\sh4_mmr.obj
+         Debug\sh4_opcode_list.obj
+         Debug\sh4_rom.obj
+         Debug\sh4_sched.obj
+         Debug\cdi.obj
+         Debug\chd.obj
+         Debug\common.obj
+         Debug\gdi.obj
+         Debug\ImgReader.obj
+         Debug\ioctl.obj
+         Debug\nullDC.obj
+         Debug\alsa_audiostream.obj
+         Debug\audiostream.obj
+         Debug\ds_audiostream.obj
+         Debug\profiler.obj
+         Debug\glctx.obj
+         Debug\gldraw.obj
+         Debug\gles.obj
+         Debug\glosd.obj
+         Debug\gltex.obj
+         Debug\TexCache.obj
+         Debug\stdclass.obj
+         Debug\win86_driver.obj
+         Debug\win86_il.obj
+         Debug\win86_ngen.obj
+         Debug\App.xaml.obj
+         Debug\HelloTriangleRenderer.obj
+         Debug\JitMagic.obj
+         Debug\OpenGLES.obj
+         Debug\pch.obj
+         Debug\OpenGLESPage.xaml.obj
+         Debug\ReiHooks.obj
+         Debug\XamlTypeInfo.Impl.g.obj
+         Debug\XamlTypeInfo.g.obj
+            Creating library Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\Debug\reicast_rt.Windows\reicast_rt.Windows.lib and object Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\Debug\reicast_rt.Windows\reicast_rt.Windows.exp
+         reicast_rt.Windows.vcxproj -> Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\Debug\reicast_rt.Windows\reicast_rt.Windows.exe
+       _GenerateProjectPriFileCore:
+         C:\Program Files (x86)\Windows Kits\8.1\bin\x64\MakePri.exe New -ProjectRoot Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\reicast_rt\reicast_rt.Windows\ -ConfigXml Debug\priconfig.xml -OutputFile Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\Debug\reicast_rt.Windows\resources.pri -IndexName 6cc9a5b1-daac-4de8-9fbd-447dd6e4d682 -Verbose -Overwrite  
+     1>Done Building Project "Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\reicast_rt\reicast_rt.Windows\reicast_rt.Windows.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:06.41

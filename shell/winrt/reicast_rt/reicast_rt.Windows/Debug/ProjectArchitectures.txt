@@ -1,0 +1,1 @@
+Z:\Projects\projects\dreamcast\reicast-public\reicast-emulator\shell\winrt\reicast_rt\reicast_rt.Windows\reicast_rt.Windows.vcxproj;x86

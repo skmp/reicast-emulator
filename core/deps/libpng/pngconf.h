@@ -270,7 +270,7 @@
  */
 
 #if !defined(PNG_NO_STDIO) && !defined(PNG_STDIO_SUPPORTED)
-#  define PNG_STDIO_SUPPORTED
+//#  define PNG_STDIO_SUPPORTED
 #endif
 
 

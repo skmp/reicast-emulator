@@ -22,6 +22,7 @@
 	#include <unistd.h>
 #endif
 
+#if 0
 size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void* pdata){
     string request;
     string response;
@@ -158,7 +159,12 @@ _data:
 
     return  rv;
 }
+#else
+size_t HTTP_GET(string host, int port, string path, size_t offs, size_t len, void* pdata) {
+	return 0;
+}
 
+#endif
 struct CORE_FILE {
 	FILE* f;
 	string path;

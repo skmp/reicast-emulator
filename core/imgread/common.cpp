@@ -15,7 +15,7 @@ Disc*(*drivers[])(const wchar* path)=
 	chd_parse,
 	gdi_parse,
 	cdi_parse,
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS && 0
 	ioctl_parse,
 #endif
 	0
@@ -131,7 +131,7 @@ bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 
 Disc* OpenDisc(const wchar* fn)
 {
-	Disc* rv;
+	Disc* rv = 0;
 	
 	for (int i=0;drivers[i] && !(rv=drivers[i](fn));i++) ;
 

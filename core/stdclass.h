@@ -218,7 +218,7 @@ public :
 	cMutex()
 	{
 #if HOST_OS==OS_WINDOWS
-		InitializeCriticalSection(&cs);
+		InitializeCriticalSectionEx(&cs,0,0);
 #else
 		mutx=PTHREAD_MUTEX_INITIALIZER;
 #endif

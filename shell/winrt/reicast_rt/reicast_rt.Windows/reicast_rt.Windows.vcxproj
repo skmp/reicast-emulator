@@ -477,10 +477,10 @@
       <CompileAsWinRT Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</CompileAsWinRT>
       <CompileAsWinRT Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</CompileAsWinRT>
     </ClCompile>
+    <ClCompile Include="..\reicast_rt.Shared\ReiHooks.cpp" />
     <ClCompile Include="OpenGLESPage.xaml.cpp">
       <DependentUpon>OpenGLESPage.xaml</DependentUpon>
     </ClCompile>
-    <ClCompile Include="ReiHooks.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\core\arm_emitter\arm_coding.h" />

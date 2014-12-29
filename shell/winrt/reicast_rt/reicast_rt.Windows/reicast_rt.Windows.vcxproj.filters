@@ -384,7 +384,7 @@
       <Filter>reicast</Filter>
     </ClCompile>
     <ClCompile Include="..\reicast_rt.Shared\App.xaml.cpp" />
-    <ClCompile Include="ReiHooks.cpp">
+    <ClCompile Include="..\reicast_rt.Shared\ReiHooks.cpp">
       <Filter>Impl</Filter>
     </ClCompile>
   </ItemGroup>

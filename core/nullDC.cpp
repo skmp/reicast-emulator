@@ -170,7 +170,7 @@ int dc_init(int argc,wchar* argv[])
 	int rv= 0;
 
 
-	if (!LoadRomFiles(GetPath("/data/")))
+	if (!LoadRomFiles(GetPath("\\")))
 	{
 		return -3;
 	}
@@ -223,7 +223,7 @@ void dc_term()
 #ifndef _ANDROID
 	SaveSettings();
 #endif
-	SaveRomFiles(GetPath("/data/"));
+	SaveRomFiles(GetPath("/"));
 }
 
 void LoadSettings()

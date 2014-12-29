@@ -10,6 +10,7 @@ int msgboxf(const wchar* text, unsigned int type, ...)
 	vsprintf(temp, text, args);
 	va_end(args);
 
+	puts(temp);
 
 	//return MessageBox(NULL, temp, VER_SHORTNAME, type | MB_TASKMODAL);
 
@@ -146,13 +147,39 @@ void* libPvr_GetRenderSurface()
 	return 0;
 }
 
+#include <ppltasks.h>
 
 void SetupPath()
 {
 	char fname[512];
 	//GetModuleFileName(0, fname, 512);
 
-	wcstombs(fname, Windows::Storage::ApplicationData::Current->RoamingFolder->Path->Data(), 512);
+	/*create_task(
+
+		->GetResults()->
+		*/
+	
+	;
+	//Concurrency::create_task(Windows::Storage::KnownFolders::RemovableDevices->GetFolderAsync("data")).then([](Windows::Storage::StorageFolder^ folder)
+	//{
+		Concurrency::create_task(Windows::ApplicationModel::Package::Current->InstalledLocation->GetFileAsync("Assets\\dc_boot.bin")).then([](Windows::Storage::StorageFile^ file) {
+			file->CopyAsync(Windows::Storage::ApplicationData::Current->LocalFolder);
+		}).wait();
+
+		Concurrency::create_task(Windows::ApplicationModel::Package::Current->InstalledLocation->GetFileAsync("Assets\\dc_flash.bin")).then([](Windows::Storage::StorageFile^ file) {
+			file->CopyAsync(Windows::Storage::ApplicationData::Current->LocalFolder);
+		}).wait();
+	//});
+	
+	/*
+		Concurrency::create_task(Windows::Storage::StorageFile::GetFileFromApplicationUriAsync("ms-appx:///Assets/dc_boot.bin")).then([]{
+
+		});
+	*/
+
+		
+	wcstombs(fname, Windows::Storage::ApplicationData::Current->LocalFolder->Path->Data(), 512);
+	//wcstombs(fname, L"ms-appx:///Assets", 512);
 	
 	//strcpy(fname, "ms-appdata");
 	string fn = string(fname);

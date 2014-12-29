@@ -117,6 +117,7 @@ fnVirtualAlloc rtVirtualAlloc;
 fnVirtualFree rtVirtualFree;
 fnVirtualProtect rtVirtualProtect;
 fnMapViewOfFileEx rtMapViewOfFileEx;
+fnCreateFileMappingW rtCreateFileMappingW;
 
 /*
 	VirtualAlloc
@@ -148,8 +149,9 @@ bool JitMagicInit() {
 	rtVirtualFree = (fnVirtualFree)PeGetProcAddressA(Tmp, "VirtualFree");
 	rtVirtualProtect = (fnVirtualProtect)PeGetProcAddressA(Tmp, "VirtualProtect");
 	rtMapViewOfFileEx = (fnMapViewOfFileEx)PeGetProcAddressA(Tmp, "MapViewOfFileEx");
+	rtCreateFileMappingW = (fnCreateFileMappingW)PeGetProcAddressA(Tmp, "CreateFileMappingW");
 
-	return rtVirtualAlloc != 0 && rtVirtualFree != 0 && rtVirtualProtect != 0 && rtMapViewOfFileEx != 0;
+	return rtVirtualAlloc != 0 && rtVirtualFree != 0 && rtVirtualProtect != 0 && rtMapViewOfFileEx != 0 && rtCreateFileMappingW != 0;
 }
 
 

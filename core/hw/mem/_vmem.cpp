@@ -450,7 +450,12 @@ void* _nvmem_unused_buffer(u32 start,u32 end)
 
 void* _nvmem_alloc_mem()
 {
+
+#if 0
 	mem_handle=CreateFileMappingFromApp(INVALID_HANDLE_VALUE,0,PAGE_READWRITE ,RAM_SIZE + VRAM_SIZE +ARAM_SIZE,0);
+#else
+	mem_handle = CreateFileMappingW(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, RAM_SIZE + VRAM_SIZE + ARAM_SIZE, 0);
+#endif
 
 	void* rv=(u8*)VirtualAlloc(0,512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE,MEM_RESERVE,PAGE_NOACCESS);
 	if (rv) VirtualFree(rv,0,MEM_RELEASE);

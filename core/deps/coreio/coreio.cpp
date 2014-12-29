@@ -8,7 +8,9 @@
 #define TRUE 1
 #define FALSE 0
 
+#if 0
 #pragma comment (lib, "wsock32.lib")
+#endif
 
 #include <string>
 #include <sstream>

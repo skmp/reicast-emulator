@@ -83,10 +83,10 @@ void SetFloatStatusReg()
 			temp|=(1<<15);
 
 		#if BUILD_COMPILER == COMPILER_VC
-				_asm
+				/*_asm
 				{
 					ldmxcsr temp; //load the float status :)
-				}
+				}*/
 		#else
 			asm("ldmxcsr %0" : : "m"(temp));
 		#endif

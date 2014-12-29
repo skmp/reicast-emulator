@@ -223,7 +223,7 @@ void mem_Term()
 	sh4_area0_Term();
 
 	//write back Flash/SRAM
-	SaveRomFiles(GetPath("/data/"));
+	SaveRomFiles(GetPath("/"));
 	
 	//mem_b.Term(); // handled by vmem
 

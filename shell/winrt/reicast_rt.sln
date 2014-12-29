@@ -11,7 +11,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "reicast_rt.WindowsPhone", "
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		reicast_rt\reicast_rt.Shared\reicast_rt.Shared.vcxitems*{9279ae93-f212-4781-95ff-c63db83bb721}*SharedItemsImports = 4
 		reicast_rt\reicast_rt.Shared\reicast_rt.Shared.vcxitems*{cccba4f4-a603-465d-ae9b-68b968b4d3d1}*SharedItemsImports = 4
 		reicast_rt\reicast_rt.Shared\reicast_rt.Shared.vcxitems*{15d7123b-318c-4613-8d13-754741f6e4a5}*SharedItemsImports = 9
 	EndGlobalSection

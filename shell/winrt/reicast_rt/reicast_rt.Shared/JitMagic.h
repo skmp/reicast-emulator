@@ -38,12 +38,26 @@ _In_ SIZE_T dwNumberOfBytesToMap,
 _In_opt_ LPVOID lpBaseAddress
 );
 
+
+typedef 
+HANDLE
+(WINAPI*fnCreateFileMappingW)(
+HANDLE hFile,
+LPSECURITY_ATTRIBUTES lpFileMappingAttributes,
+DWORD flProtect,
+DWORD dwMaximumSizeHigh,
+DWORD dwMaximumSizeLow,
+LPCWSTR lpName
+);
+
 extern fnVirtualAlloc rtVirtualAlloc;
 extern fnVirtualFree rtVirtualFree;
 extern fnVirtualProtect rtVirtualProtect;
 extern fnMapViewOfFileEx rtMapViewOfFileEx;
+extern fnCreateFileMappingW rtCreateFileMappingW;
 
 #define VirtualAlloc rtVirtualAlloc
 #define VirtualFree rtVirtualFree
 #define VirtualProtect rtVirtualProtect
 #define MapViewOfFileEx rtMapViewOfFileEx
+#define CreateFileMappingW rtCreateFileMappingW

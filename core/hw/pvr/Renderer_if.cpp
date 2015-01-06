@@ -6,7 +6,7 @@
 u32 VertexCount=0;
 u32 FrameCount=0;
 
-Renderer* rend;
+Renderer* rendr;
 cResetEvent rs(false,true);
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
@@ -29,7 +29,7 @@ bool rend_single_frame()
 
 	bool do_swp=false;
 	
-	do_swp=rend->Render();
+	do_swp=rendr->Render();
 	
 
 	if (do_swp)
@@ -74,15 +74,15 @@ void* rend_thread(void* p)
 
 
 
-	if (!rend->Init())
+	if (!rendr->Init())
 		die("rend->init() failed\n");
 
-	rend->Resize(640,480);
+	rendr->Resize(640,480);
 
 	for(;;)
 	{
 		if (rend_single_frame())
-			rend->Present();	
+			rendr->Present();	
 	}
 }
 
@@ -164,7 +164,7 @@ bool rend_init()
 #else
 
 #if HOST_OS == OS_WINDOWS
-	rend = settings.pvr.rend == 0 ? rend_GLES2() : rend_D3D11() ;
+	rendr = settings.pvr.rend == 0 ? rend_GLES2() : rend_D3D11() ;
 #else
 	rend = rend_GLES2();
 #endif

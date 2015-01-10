@@ -32,7 +32,7 @@ CXXFLAGS += -ffast-math -ftree-vectorize -fprefetch-loop-arrays
 #-std=c++0x
 
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-exceptions -fno-rtti
-CXXFLAGS += -D SUPPORT_X11 -DARM_HARDFP
+CXXFLAGS += -D SUPPORT_X11 -DARM_HARDFP -DGLES
 
 
 ifdef PGO_MAKE

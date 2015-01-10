@@ -10,12 +10,14 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/param.h>
+#include <sys/personality.h>
 #include <sys/mman.h>
 #include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
 #include <unistd.h>
+#include "bcm_host.h"
 
-
+#include <stdio.h>
 
 
 #if defined(SUPPORT_X11)
@@ -49,6 +51,8 @@
 #endif
 #define WINDOW_HEIGHT	480
 
+#define NUM_PORTS 4
+
 void* x11_win=0,* x11_disp=0;
 void* libPvr_GetRenderTarget() 
 { 
@@ -76,10 +80,10 @@ int msgboxf(const wchar* text,unsigned int type,...)
 
 
 
-u16 kcode[4];
-u32 vks[4];
-s8 joyx[4],joyy[4];
-u8 rt[4],lt[4];
+u16 kcode[NUM_PORTS];
+u32 vks[NUM_PORTS];
+s8 joyx[NUM_PORTS],joyy[NUM_PORTS];
+u8 rt[NUM_PORTS],lt[NUM_PORTS];
 
 enum DCPad {
 	Btn_C		= 1,
@@ -103,12 +107,14 @@ enum DCPad {
 	Axis_RT= 0x10001,
 	Axis_X= 0x20000,
 	Axis_Y= 0x20001,
+    
+    Quit = 16
 };
 
 
 void emit_WriteCodeCache();
 
-static int JoyFD    = -1;     // Joystick file descriptor
+static int JoyFD[NUM_PORTS]    = {-1, -1, -1, -1};     // Joystick file descriptors
 static int kbfd = -1; 
 #ifdef TARGET_PANDORA
 static int audio_fd = -1;
@@ -129,17 +135,61 @@ const u32 JMapBtn_360[MAP_SIZE] =
 const u32 JMapAxis_360[MAP_SIZE] =
   { Axis_X,Axis_Y,Axis_LT,0,0,Axis_RT,DPad_Left,DPad_Up,0,0 };
 
-const u32* JMapBtn=JMapBtn_USB;
-const u32* JMapAxis=JMapAxis_USB;
+//PS3 controller mappings
+const u32 JMapBtn_PS3[MAP_SIZE] =
+{ Btn_Z,Btn_C,Btn_D,Btn_Start,DPad_Up,DPad_Right,DPad_Down,DPad_Left,Axis_LT,Axis_RT,DPad2_Left,DPad2_Right,Btn_Y,Btn_B,Btn_A,Btn_X,Quit };
 
+const u32 JMapAxis_PS3[MAP_SIZE] =
+{ Axis_X,Axis_Y,DPad2_Up,DPad2_Down,0,0,0,0,0,0 };
+
+const u32* JMapBtn[NUM_PORTS]={JMapBtn_USB,JMapBtn_USB,JMapBtn_USB,JMapBtn_USB};
+const u32* JMapAxis[NUM_PORTS]={JMapAxis_USB,JMapAxis_USB,JMapAxis_USB,JMapAxis_USB};
 
 void SetupInput()
 {
-	for (int port=0;port<4;port++)
+	for (int port=0;port<NUM_PORTS;port++)
 	{
 		kcode[port]=0xFFFF;
 		rt[port]=0;
 		lt[port]=0;
+        
+        // Open joystick devices!
+        char portstr[32];
+        sprintf(portstr, "/dev/input/js%d", port);
+        JoyFD[port] = open(portstr,O_RDONLY);
+#if HOST_OS != OS_DARWIN        
+        if(JoyFD[port]>=0)
+        {
+            int AxisCount,ButtonCount;
+            char Name[128];
+            
+            AxisCount   = 0;
+            ButtonCount = 0;
+            Name[0]     = '\0';
+            
+            fcntl(JoyFD[port],F_SETFL,O_NONBLOCK);
+            ioctl(JoyFD[port],JSIOCGAXES,&AxisCount);
+            ioctl(JoyFD[port],JSIOCGBUTTONS,&ButtonCount);
+            ioctl(JoyFD[port],JSIOCGNAME(sizeof(Name)),&Name);
+            
+            printf("SDK port: Found '%s' joystick with %d axis and %d buttons\n",Name,AxisCount,ButtonCount);
+            
+            if (strcmp(Name,"Microsoft X-Box 360 pad")==0)
+            {
+                JMapBtn[port]=JMapBtn_360;
+                JMapAxis[port]=JMapAxis_360;
+                printf("Using Xbox 360 map\n");
+            }
+            if ((strcmp(Name,"PLAYSTATION(R)3 Controller")==0) ||
+                (strcmp(Name,"Sony Computer Entertainment Wireless Controller")==0) ||
+                (strcmp(Name,"Sony PLAYSTATION(R)3 Controller")==0))
+            {
+                JMapBtn[port]=JMapBtn_PS3;
+                JMapAxis[port]=JMapAxis_PS3;
+                printf("Using PS3 map\n");
+            }
+        }
+#endif
 	}
 
 #if HOST_OS != OS_DARWIN
@@ -162,35 +212,8 @@ void SetupInput()
 		}
 		else
 			perror("evdev open");
-	}
 #endif
-	// Open joystick device
-	JoyFD = open("/dev/input/js0",O_RDONLY);
-#if HOST_OS != OS_DARWIN		
-	if(JoyFD>=0)
-	{
-		int AxisCount,ButtonCount;
-		char Name[128];
-
-		AxisCount   = 0;
-		ButtonCount = 0;
-		Name[0]     = '\0';
-
-		fcntl(JoyFD,F_SETFL,O_NONBLOCK);
-		ioctl(JoyFD,JSIOCGAXES,&AxisCount);
-		ioctl(JoyFD,JSIOCGBUTTONS,&ButtonCount);
-		ioctl(JoyFD,JSIOCGNAME(sizeof(Name)),&Name);
-		
-		printf("SDK: Found '%s' joystick with %d axis and %d buttons\n",Name,AxisCount,ButtonCount);
-
-		if (strcmp(Name,"Microsoft X-Box 360 pad")==0)
-		{
-			JMapBtn=JMapBtn_360;
-			JMapAxis=JMapAxis_360;
-			printf("Using Xbox 360 map\n");
-		}
 	}
-#endif
 }
 
 bool HandleKb(u32 port) {
@@ -298,21 +321,21 @@ bool HandleJoystick(u32 port)
 {
 
   // Joystick must be connected
-  if(JoyFD<0) return false;
+  if(JoyFD[port]<0) return false;
 
 #if HOST_OS != OS_DARWIN
   struct js_event JE;
-  while(read(JoyFD,&JE,sizeof(JE))==sizeof(JE))
+  while(read(JoyFD[port],&JE,sizeof(JE))==sizeof(JE))
 	  if (JE.number<MAP_SIZE)
 	  {
 		  switch(JE.type & ~JS_EVENT_INIT)
 		  {
 		  case JS_EVENT_AXIS:
 			  {
-				  u32 mt=JMapAxis[JE.number]>>16;
-				  u32 mo=JMapAxis[JE.number]&0xFFFF;
-				  
-				 //printf("AXIS %d,%d\n",JE.number,JE.value);
+				  u32 mt=JMapAxis[port][JE.number]>>16;
+				  u32 mo=JMapAxis[port][JE.number]&0xFFFF;
+				  //Disabling all this string processing and console logging during emulation!
+//				 printf("AXIS %d,%d\n",JE.number,JE.value);
 				  s8 v=(s8)(JE.value/256); //-127 ... + 127 range
 				  
 				  if (mt==0)
@@ -328,13 +351,13 @@ bool HandleJoystick(u32 port)
 						  kcode[port]&=~(mo*2);
 					  }
 
-					 // printf("Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
+//					  printf("Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
 				  }
 				  else if (mt==1)
 				  {
 					  if (v>=0) v++;	//up to 255
 
-					//   printf("AXIS %d,%d Mapped to %d %d %d\n",JE.number,JE.value,mo,v,v+127);
+//					   printf("AXIS %d,%d Mapped to %d %d %d\n",JE.number,JE.value,mo,v,v+127);
 
 					  if (mo==0)
 						  lt[port]=v+127;
@@ -343,7 +366,7 @@ bool HandleJoystick(u32 port)
 				  }
 				  else if (mt==2)
 				  {
-					//  printf("AXIS %d,%d Mapped to %d %d [%d]",JE.number,JE.value,mo,v);
+//					  printf("AXIS %d,%d Mapped to %d %d [%d]",JE.number,JE.value,mo,v);
 					  if (mo==0)
 						  joyx[port]=v;
 					  else if (mo==1)
@@ -354,14 +377,21 @@ bool HandleJoystick(u32 port)
 
 		  case JS_EVENT_BUTTON:
 			  {
-				  u32 mt=JMapBtn[JE.number]>>16;
-				  u32 mo=JMapBtn[JE.number]&0xFFFF;
+				  u32 mt=JMapBtn[port][JE.number]>>16;
+				  u32 mo=JMapBtn[port][JE.number]&0xFFFF;
 
-				// printf("BUTTON %d,%d\n",JE.number,JE.value);
+                  //TODO: Actually map a Quit button, this is the actual PS3 button on the PS3 controller...
+                  if ((port == 0) && (JE.number == Quit) && (JE.value) && (JMapBtn[port] == JMapBtn_PS3))
+                  {
+                      printf("Detected Quit button!");
+                      die("Dying an honorable death, via controller mapping.  QAPLA!!");
+                  }
+
+//				 printf("BUTTON %d,%d\n",JE.number,JE.value);
 
 				  if (mt==0)
 				  {
-					 // printf("Mapped to %d\n",mo);
+//					  printf("Mapped to %d\n",mo);
 					  if (JE.value)
 						  kcode[port]&=~mo;
 					  else
@@ -369,13 +399,12 @@ bool HandleJoystick(u32 port)
 				  }
 				  else if (mt==1)
 				  {
-					 // printf("Mapped to %d %d\n",mo,JE.value?255:0);
+//					  printf("Mapped to %d %d\n",mo,JE.value?255:0);
 					  if (mo==0)
 						  lt[port]=JE.value?255:0;
 					  else if (mo==1)
 						  rt[port]=JE.value?255:0;
 				  }
-
 			  }
 			  break;
 		  }
@@ -417,14 +446,17 @@ void UpdateInputState(u32 port)
 {
 	static char key = 0;
 
+    //Try removing this block, seems like we would want to be able to hold down a damn button or trigger....
 	kcode[port]= x11_dc_buttons;
-	rt[port]=0;
-	lt[port]=0;
+//	rt[port]=0;
+//	lt[port]=0;
+
+	//hardcoded for rapi. Really, some configuration would make more sense than this ~skmp
+	HandleKb(port);
+	HandleJoystick(port);
+return;
 	
 #if defined(TARGET_GCW0) || defined(TARGET_PANDORA)
-	HandleJoystick(port);
-	HandleKb(port);
-return;
 #endif
 	for(;;)
 	{
@@ -753,7 +785,10 @@ void clean_exit(int sig_num) {
 	size_t size;
 	
 	// close files
-	if (JoyFD>=0) close(JoyFD);
+    if (JoyFD[0]>=0) close(JoyFD[0]);
+    if (JoyFD[1]>=0) close(JoyFD[1]);
+    if (JoyFD[2]>=0) close(JoyFD[2]);
+	if (JoyFD[3]>=0) close(JoyFD[3]);
 	if (kbfd>=0) close(kbfd);
 	if(audio_fd>=0) close(audio_fd);
 
@@ -803,13 +838,49 @@ void init_sound()
 }
 #endif
 
+#ifdef TARGET_RPI
+
+#include <sys/soundcard.h>
+
+static int audio_fd = -1;
+
+void init_sound()
+{
+    if((audio_fd=open("/dev/dsp",O_WRONLY))<0)
+                printf("Couldn't open /dev/dsp.\n");
+    else
+        {
+          printf("sound enabled, dsp openned for write\n");
+          int tmp=44100;
+          int err_ret;
+          err_ret=ioctl(audio_fd,SNDCTL_DSP_SPEED,&tmp);
+          printf("set Frequency to %i, return %i (rate=%i)\n", 44100, err_ret, tmp);
+          int channels=2;
+          err_ret=ioctl(audio_fd, SNDCTL_DSP_CHANNELS, &channels);
+          printf("set dsp to stereo (%i => %i)\n", channels, err_ret);
+          int format=AFMT_S16_LE;
+          err_ret=ioctl(audio_fd, SNDCTL_DSP_SETFMT, &format);
+          printf("set dsp to %s audio (%i/%i => %i)\n", "16bits signed" ,AFMT_S16_LE, format, err_ret);
+        }
+}
+
+void clean_exit(int sig_num) {
+        if(audio_fd>=0) close(audio_fd);
+}
+
+#endif
+
 int main(int argc, wchar* argv[])
 {
+	bcm_host_init();
 	//if (argc==2) 
 		//ndcid=atoi(argv[1]);
 
+	printf("Personality: %08X\n", personality(0xFFFFFFFF));
+	personality(~READ_IMPLIES_EXEC&personality(0xFFFFFFFF));
+	printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
 	if (setup_curses() < 0) die("failed to setup curses!\n");
-#ifdef TARGET_PANDORA
+#if defined  TARGET_PANDORA || defined TARGET_RPI
 	signal(SIGSEGV, clean_exit);
 	signal(SIGKILL, clean_exit);
 	
@@ -866,7 +937,7 @@ int main(int argc, wchar* argv[])
 
 	dc_run();
 	
-#ifdef TARGET_PANDORA
+#if defined  TARGET_PANDORA || defined TARGET_RPI
 	clean_exit(0);
 #endif
 
@@ -876,7 +947,7 @@ int main(int argc, wchar* argv[])
 u32 alsa_Push(void* frame, u32 samples, bool wait);
 u32 os_Push(void* frame, u32 samples, bool wait)
 {
-	#ifndef TARGET_PANDORA
+#ifdef TARGET_PANDORA
 		int audio_fd = -1;
 	#endif
 

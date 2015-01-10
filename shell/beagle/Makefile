@@ -1,12 +1,13 @@
 
 LOCAL_PATH := $(call my-dir)
 FOR_LINUX :=1
+WEBUI :=1
 
-RZDCY_SRC_DIR = ../../newdc
+RZDCY_SRC_DIR = ../../core
 
-include $(RZDCY_SRC_DIR)/newdc.mk
+include $(RZDCY_SRC_DIR)/core.mk
 
-CC_PREFIX ?= arm-none-linux-gnueabi-
+#CC_PREFIX ?= arm-none-linux-gnueabi-
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
@@ -15,7 +16,7 @@ STRIP=${CC_PREFIX}strip
 
 LD=${CC}
 
-MFLAGS := -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp -funroll-loops
+MFLAGS := -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -funroll-loops
 ASFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=softfp
 
 LDFLAGS	:=	-g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
@@ -25,13 +26,13 @@ SOURCES	:=	cfg/ hw/arm7/ hw/aica/ hw/asic/ hw/ hw/gdrom/ hw/maple/ \
  hw/extdev/ hw/arm/ imgread/ linux/ linux-dist/ ./ rec-ARM/ deps/zlib/ deps/chdr/ deps/crypto/ arm_emitter/ 
 
 
-CXXFLAGS := -g -O3  -D RELEASE -c -D TARGET_BEAGLE  
+CXXFLAGS := -g -O3  -D RELEASE -c -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7  
 CXXFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CXXFLAGS += -ffast-math -ftree-vectorize -fprefetch-loop-arrays 
 #-std=c++0x
 
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-exceptions -fno-rtti
-#CXXFLAGS += -D SUPPORT_X11
+CXXFLAGS += -D SUPPORT_X11 -DARM_HARDFP
 
 
 ifdef PGO_MAKE

@@ -44,7 +44,7 @@ struct sigcontext uc_mcontext;
 #ifdef _ANDROID
 #define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.eip)
 #else
-#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.gregs[REG_EIP])
+#define GET_PC_FROM_CONTEXT(c) (((ucontext_t *)(c))->uc_mcontext.gregs[REG_RIP])
 #endif
 #else
 #error fix ->pc support
@@ -58,7 +58,7 @@ bool BM_LockedWrite(u8* address);
 
 void fault_handler (int sn, siginfo_t * si, void *ctxr)
 {
-	bool dyna_cde=((u32)GET_PC_FROM_CONTEXT(ctxr)>(u32)CodeCache) && ((u32)GET_PC_FROM_CONTEXT(ctxr)<(u32)(CodeCache+CODE_SIZE));
+	bool dyna_cde=((unat)GET_PC_FROM_CONTEXT(ctxr)>(unat)CodeCache) && ((unat)GET_PC_FROM_CONTEXT(ctxr)<(unat)(CodeCache+CODE_SIZE));
 
 	ucontext_t* ctx=(ucontext_t*)ctxr;
 	//printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,ctx->uc_mcontext.arm_pc,dyna_cde);
@@ -69,12 +69,12 @@ void fault_handler (int sn, siginfo_t * si, void *ctxr)
 #ifndef HOST_NO_REC
 	else if (dyna_cde)
 	{
-		GET_PC_FROM_CONTEXT(ctxr)=(u32)ngen_readm_fail_v2((u32*)GET_PC_FROM_CONTEXT(ctxr),(u32*)&(ctx->uc_mcontext.arm_r0),(unat)si->si_addr);
+		GET_PC_FROM_CONTEXT(ctxr)=(unat)ngen_readm_fail_v2((u32*)GET_PC_FROM_CONTEXT(ctxr),(u32*)&(ctx->uc_mcontext.arm_r0),(unat)si->si_addr);
 	}
 #endif
 	else
 	{
-		printf("SIGSEGV @ fault_handler+0x%08X ... %08X -> was not in vram\n",GET_PC_FROM_CONTEXT(ctxr)-(u32)fault_handler,si->si_addr);
+		printf("SIGSEGV @ fault_handler+0x%08X ... %08X -> was not in vram\n",GET_PC_FROM_CONTEXT(ctxr)-(unat)fault_handler,si->si_addr);
 		die("segfault");
 //		asm volatile("bkpt 0x0001\n\t");
 		signal(SIGSEGV, SIG_DFL);

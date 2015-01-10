@@ -490,6 +490,7 @@ void os_CreateWindow()
 #if defined(SUPPORT_X11)
 	if (cfgLoadInt("pvr","nox11",0)==0)
 		{
+			XInitThreads();
 			// X11 variables
 			Window				x11Window	= 0;
 			Display*			x11Display	= 0;

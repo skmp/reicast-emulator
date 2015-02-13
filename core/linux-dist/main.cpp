@@ -14,7 +14,7 @@
 #include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
 #include <unistd.h>
-
+#include "bcm_host.h"
 
 
 
@@ -305,7 +305,7 @@ bool HandleJoystick(u32 port)
 				  u32 mt=JMapAxis[JE.number]>>16;
 				  u32 mo=JMapAxis[JE.number]&0xFFFF;
 				  
-				 //printf("AXIS %d,%d\n",JE.number,JE.value);
+				 printf("AXIS %d,%d\n",JE.number,JE.value);
 				  s8 v=(s8)(JE.value/256); //-127 ... + 127 range
 				  
 				  if (mt==0)
@@ -321,13 +321,13 @@ bool HandleJoystick(u32 port)
 						  kcode[port]&=~(mo*2);
 					  }
 
-					 // printf("Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
+					  printf("Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
 				  }
 				  else if (mt==1)
 				  {
 					  if (v>=0) v++;	//up to 255
 
-					//   printf("AXIS %d,%d Mapped to %d %d %d\n",JE.number,JE.value,mo,v,v+127);
+					   printf("AXIS %d,%d Mapped to %d %d %d\n",JE.number,JE.value,mo,v,v+127);
 
 					  if (mo==0)
 						  lt[port]=v+127;
@@ -336,7 +336,7 @@ bool HandleJoystick(u32 port)
 				  }
 				  else if (mt==2)
 				  {
-					//  printf("AXIS %d,%d Mapped to %d %d [%d]",JE.number,JE.value,mo,v);
+					  printf("AXIS %d,%d Mapped to %d %d [%d]",JE.number,JE.value,mo,v);
 					  if (mo==0)
 						  joyx[port]=v;
 					  else if (mo==1)
@@ -350,11 +350,11 @@ bool HandleJoystick(u32 port)
 				  u32 mt=JMapBtn[JE.number]>>16;
 				  u32 mo=JMapBtn[JE.number]&0xFFFF;
 
-				// printf("BUTTON %d,%d\n",JE.number,JE.value);
+				 printf("BUTTON %d,%d\n",JE.number,JE.value);
 
 				  if (mt==0)
 				  {
-					 // printf("Mapped to %d\n",mo);
+					  printf("Mapped to %d\n",mo);
 					  if (JE.value)
 						  kcode[port]&=~mo;
 					  else
@@ -362,7 +362,7 @@ bool HandleJoystick(u32 port)
 				  }
 				  else if (mt==1)
 				  {
-					 // printf("Mapped to %d %d\n",mo,JE.value?255:0);
+					  printf("Mapped to %d %d\n",mo,JE.value?255:0);
 					  if (mo==0)
 						  lt[port]=JE.value?255:0;
 					  else if (mo==1)
@@ -410,11 +410,11 @@ void UpdateInputState(u32 port)
 	kcode[port]=0xFFFF;
 	rt[port]=0;
 	lt[port]=0;
+	HandleJoystick(port);
+return;
 	
 #if defined(TARGET_GCW0) || defined(TARGET_PANDORA)
-	HandleJoystick(port);
 	HandleKb(port);
-return;
 #endif
 	for(;;)
 	{
@@ -702,6 +702,7 @@ void init_sound()
 
 int main(int argc, wchar* argv[])
 {
+	bcm_host_init();
 	//if (argc==2) 
 		//ndcid=atoi(argv[1]);
 

@@ -24,5 +24,6 @@ struct norend : Renderer
 	void Present() { }
 };
 
+u32 GetTexture(TSP tsp,TCW tcw) { return 0; }
 
 Renderer* rend_norend() { return new norend(); }

@@ -410,11 +410,13 @@ void UpdateInputState(u32 port)
 	kcode[port]=0xFFFF;
 	rt[port]=0;
 	lt[port]=0;
+
+	//hardcoded for rapi. Really, some configuration would make more sense than this ~skmp
+	HandleKb(port);
 	HandleJoystick(port);
 return;
 	
 #if defined(TARGET_GCW0) || defined(TARGET_PANDORA)
-	HandleKb(port);
 #endif
 	for(;;)
 	{

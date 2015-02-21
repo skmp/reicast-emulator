@@ -142,11 +142,21 @@ void SetupInput()
 	}
 
 	if (true) {
-		#ifdef TARGET_PANDORA
-		const char* device = "/dev/input/event4";
-		#else
-		const char* device = "/dev/event2";
-		#endif
+		const char* device = "/dev/input/event0";
+		cfgLoadStr("config","system.keyboard",settings.system.keyboard,"null");
+		printf("Keyboard = ",settings.system.keyboard, "\n");
+		if(strcmp(settings.system.keyboard,"null")!=0)
+		{
+			device = settings.system.keyboard;
+		}
+		else
+		{
+			#ifdef TARGET_PANDORA
+			const char* device = "/dev/input/event4";
+			#else
+			const char* device = "/dev/event2";
+			#endif
+		}
 		char name[256]= "Unknown";
 
 		if ((kbfd = open(device, O_RDONLY)) > 0) {
@@ -163,7 +173,16 @@ void SetupInput()
 	}
 
 	// Open joystick device
-	JoyFD = open("/dev/input/js0",O_RDONLY);
+	cfgLoadStr("config","system.joystick",settings.system.joystick,"null");
+	printf("Joystick = ", settings.system.joystick, "\n");
+	if(strcmp(settings.system.joystick,"null")!=0)
+	{
+		JoyFD = open(settings.system.joystick,O_RDONLY);
+	}
+	else
+	{
+		JoyFD = open("/dev/input/js0",O_RDONLY);
+	}
 		
 	if(JoyFD>=0)
 	{
@@ -816,11 +835,11 @@ int main(int argc, wchar* argv[])
 
 	common_linux_setup();
 
-	SetupInput();
-	
 	settings.profile.run_counts=0;
 		
 	dc_init(argc,argv);
+
+	SetupInput();
 
 	dc_run();
 	

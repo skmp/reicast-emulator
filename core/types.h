@@ -672,6 +672,11 @@ struct settings_t
 		u32 subdivide_transp;
 		u32 rend;
 	} pvr;
+	struct
+	{
+		char keyboard[512];
+		char joystick[512];
+	} system;
 };
 
 extern settings_t settings;

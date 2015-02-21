@@ -617,21 +617,24 @@ void os_CreateWindow()
 			// Creates the X11 window
 			x11Window = XCreateWindow( x11Display, RootWindow(x11Display, x11Screen), (ndcid%3)*640, (ndcid/3)*480, width, height,
 				0, depth, InputOutput, x11Visual->visual, ui32Mask, &sWA);
-			#ifdef TARGET_PANDORA
+			if (height==-1)
+			{
 				// fullscreen
 				Atom wmState = XInternAtom(x11Display, "_NET_WM_STATE", False);
 				Atom wmFullscreen = XInternAtom(x11Display, "_NET_WM_STATE_FULLSCREEN", False);
 				XChangeProperty(x11Display, x11Window, wmState, XA_ATOM, 32, PropModeReplace, (unsigned char *)&wmFullscreen, 1);
 				
 				XMapRaised(x11Display, x11Window);
-			#else
+			}
+			else
+			{
 				XMapWindow(x11Display, x11Window);
 
 				#if !defined(GLES)
 					x11_glc = glXCreateContext(x11Display, x11Visual, NULL, GL_TRUE);
 					//glXMakeCurrent(x11Display, x11Window, glc);
 				#endif
-			#endif
+			}
 			XFlush(x11Display);
 
 			

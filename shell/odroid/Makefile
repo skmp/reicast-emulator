@@ -1,6 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 FOR_LINUX :=1
 WEBUI :=1
+USE_OSS :=1
 #NO_REND := 1
 #NO_X11 := 1
 RZDCY_SRC_DIR = ../../core
@@ -9,8 +10,8 @@ include $(RZDCY_SRC_DIR)/core.mk
 
 #CC_PREFIX ?= arm-none-linux-gnueabi-
 
-CXX=${CC_PREFIX}g++-4.7
-CC=${CC_PREFIX}gcc-4.7
+CXX=${CC_PREFIX}g++
+CC=${CC_PREFIX}gcc
 AS=${CC_PREFIX}as
 STRIP=${CC_PREFIX}strip
 
@@ -28,7 +29,7 @@ CXXFLAGS += -ffast-math -ftree-vectorize -fprefetch-loop-arrays
 #-std=c++0x
 
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-exceptions -fno-rtti
-CXXFLAGS +=  -DARM_HARDFP -DGLES -DSUPPORT_X11 -DODROID -DUSE_OSS -DUSES_HOMEDIR
+CXXFLAGS +=  -DARM_HARDFP -DGLES -DSUPPORT_X11 -DODROID -DUSES_HOMEDIR
 
 ifdef PGO_MAKE
 	CXXFLAGS += -fprofile-generate -pg
@@ -47,11 +48,17 @@ ifdef LTO_TEST
 	LDFLAGS +=-flto -fwhole-program 
 endif
 
+ifdef USE_OSS
+        CXXFLAGS += -DUSE_OSS
+else
+        LIBS += -lasound
+endif
+
 INCS	:= -I/usr/include -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I../linux-deps/include
 
 LIBS    := -L/usr/lib/arm-linux-gnueabihf/ -L../linux-deps/lib
 LIBS    += -lm -lrt -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um 
-LIBS    += -lpthread -lasound -lX11
+LIBS    += -lpthread -lX11
 
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)

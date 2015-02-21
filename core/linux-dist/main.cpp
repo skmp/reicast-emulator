@@ -14,8 +14,9 @@
 #include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
 #include <unistd.h>
+#ifdef TARGET_RPI
 #include "bcm_host.h"
-
+#endif
 
 
 #if defined(SUPPORT_X11)
@@ -704,7 +705,9 @@ void init_sound()
 
 int main(int argc, wchar* argv[])
 {
+#ifdef TARGET_RPI
 	bcm_host_init();
+#endif
 	//if (argc==2) 
 		//ndcid=atoi(argv[1]);
 

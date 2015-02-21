@@ -187,6 +187,12 @@ void SetupInput()
 			JMapAxis=JMapAxis_360;
 			printf("Using Xbox 360 map\n");
 		}
+		if (strcmp(Name,"Xbox 360 Wireless Receiver")==0)
+		{
+			JMapBtn=JMapBtn_360;
+			JMapAxis=JMapAxis_360;
+			printf("Using Xbox 360 map\n");
+		}
 	}
 }
 

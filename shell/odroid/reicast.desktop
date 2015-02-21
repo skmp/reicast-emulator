@@ -1,0 +1,12 @@
+[Desktop Entry]
+Categories=Application;Game;
+Encoding=UTF-8
+Exec=reicast_start
+Icon=reicast
+Name=Reicast DreamCast Emulator
+Comment=Reicast DreamCast Emulator
+StartupNotify=true
+Terminal=true
+Type=Application
+Version=0.21
+X-KDE-SubstituteUID=false

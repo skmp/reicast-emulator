@@ -547,19 +547,29 @@ error:
 	void* _nvmem_alloc_mem()
 	{
 #ifndef _ANDROID
+#ifdef USE_VMEM_FILE
 		//shm is borken on the rapi
 		//using a file is slower, but works
 		//file in tmpfs would be better?
-		fd = -1;// shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
-		//if (fd != -1) { verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0); }
-		//shm_unlink("/dcnzorz_mem");
+		fd = -1;
+#else
+		fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
+		shm_unlink("/dcnzorz_mem");
+#endif
 		if (fd==-1)
 		{
+#ifdef USE_VMEM_FILE
 			printf("Falling back to file allocation..\n");
+#endif
 			fd = open("dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
+#ifdef USE_VMEM_FILE
 			verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
+#endif
 			unlink("dcnzorz_mem");
 		}
+#ifndef USE_VMEM_FILE
+		verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
+#endif
 
 #else
 

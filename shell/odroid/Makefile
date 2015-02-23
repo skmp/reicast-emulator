@@ -2,6 +2,7 @@ LOCAL_PATH := $(call my-dir)
 FOR_LINUX :=1
 WEBUI :=1
 USE_OSS :=1
+USE_VMEM_FILE :=1
 #NO_REND := 1
 #NO_X11 := 1
 RZDCY_SRC_DIR = ../../core
@@ -52,6 +53,10 @@ ifdef USE_OSS
         CXXFLAGS += -DUSE_OSS
 else
         LIBS += -lasound
+endif
+
+ifdef USE_VMEM_FILE
+        CXXFLAGS += -DUSE_VMEM_FILE
 endif
 
 INCS	:= -I/usr/include -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I../linux-deps/include

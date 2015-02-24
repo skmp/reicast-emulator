@@ -52,7 +52,7 @@ INCS	:= -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc
 
 LIBS    :=  -L/opt/vc/lib/  -L../linux-deps/lib
 LIBS    += -lm -lrt -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um 
-LIBS    += -lpthread -lasound -lX11 
+LIBS    += -lpthread -lasound -lX11 -lbcm_host
 
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)

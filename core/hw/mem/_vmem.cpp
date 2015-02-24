@@ -558,9 +558,7 @@ error:
 #endif
 		if (fd==-1)
 		{
-#ifdef USE_VMEM_FILE
 			printf("Falling back to file allocation..\n");
-#endif
 			fd = open("dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
 #ifdef USE_VMEM_FILE
 			verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);

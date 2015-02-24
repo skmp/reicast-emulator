@@ -22,13 +22,13 @@ ASFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=softfp
 LDFLAGS	:=	-g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
 
 
-CXXFLAGS := -g -O3  -D RELEASE -c -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7  
+CXXFLAGS := -g -O3  -D RELEASE -c -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -D TARGET_RPI
 CXXFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CXXFLAGS += -ffast-math -ftree-vectorize -fprefetch-loop-arrays 
 #-std=c++0x
 
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-exceptions -fno-rtti
-CXXFLAGS +=  -DARM_HARDFP -DGLES
+CXXFLAGS +=  -DARM_HARDFP -DGLES -DUSE_VMEM_FILE -DUSE_OSS
 
 
 ifdef PGO_MAKE
@@ -52,7 +52,7 @@ INCS	:= -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc
 
 LIBS    :=  -L/opt/vc/lib/  -L../linux-deps/lib
 LIBS    += -lm -lrt -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um 
-LIBS    += -lpthread -lasound -lX11 -lXdmcp -lXau  -lbcm_host
+LIBS    += -lpthread -lasound -lX11 
 
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)

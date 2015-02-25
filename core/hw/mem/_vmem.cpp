@@ -550,9 +550,9 @@ error:
 		//shm is borken on the rapi
 		//using a file is slower, but works
 		//file in tmpfs would be better?
-		fd = -1;// shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
-		//if (fd != -1) { verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0); }
-		//shm_unlink("/dcnzorz_mem");
+		fd = -1;shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
+		if (fd != -1) { verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0); }
+		shm_unlink("/dcnzorz_mem");
 		if (fd==-1)
 		{
 			printf("Falling back to file allocation..\n");

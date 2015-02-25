@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/param.h>
+#include <sys/personality.h>
 #include <sys/mman.h>
 #include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
@@ -708,6 +709,9 @@ int main(int argc, wchar* argv[])
 	//if (argc==2) 
 		//ndcid=atoi(argv[1]);
 
+	printf("Personality: %08X\n", personality(0xFFFFFFFF));
+	personality(~READ_IMPLIES_EXEC&personality(0xFFFFFFFF));
+	printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
 	if (setup_curses() < 0) die("failed to setup curses!\n");
 #ifdef TARGET_PANDORA
 	signal(SIGSEGV, clean_exit);

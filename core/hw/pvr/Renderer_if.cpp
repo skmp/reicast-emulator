@@ -132,7 +132,8 @@ void* rend_thread(void* p)
 	if (!renderer->Init())
 		die("rend->init() failed\n");
 
-	renderer->Resize(640, 480);
+	//we don't know if this is true, so let's not speculate here
+	//renderer->Resize(640, 480);
 
 	for(;;)
 	{
@@ -145,6 +146,11 @@ cThread rthd(rend_thread,0);
 
 
 bool pend_rend = false;
+
+void rend_resize(int width, int height) {
+	renderer->Resize(width, height);
+}
+
 
 void rend_start_render()
 {
@@ -199,7 +205,9 @@ void rend_end_render()
 {
 #if 1 //also disabled the printf, it takes quite some time ...
 	#if HOST_OS!=OS_WINDOWS && !(defined(_ANDROID) || defined(TARGET_PANDORA))
-		if (!re.state) printf("Render > Extended time slice ...\n");
+		//too much console spam.
+		//TODO: how about a counter?
+		//if (!re.state) printf("Render > Extended time slice ...\n");
 	#endif
 #endif
 

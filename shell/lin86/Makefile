@@ -68,7 +68,7 @@ LIBS    += -lm -lrt
 LIBS	+= -ldl -lGL #for desktop gl
 #use this for GLES 
 #LIBS	+= -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um
-LIBS    += -lpthread -lasound -lX11 -lXdmcp -lXau
+LIBS    += -lpthread -lasound -lX11 #-lXdmcp -lXau
 
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)

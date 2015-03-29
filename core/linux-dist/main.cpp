@@ -777,8 +777,9 @@ void clean_exit(int sig_num) {
 
 void init_sound()
 {
-    if((audio_fd=open("/dev/dsp",O_WRONLY))<0)
+    if((audio_fd=open("/dev/dsp",O_WRONLY))<0) {
 		printf("Couldn't open /dev/dsp.\n");
+    }
     else
 	{
 	  printf("sound enabled, dsp openned for write\n");
@@ -807,6 +808,9 @@ int main(int argc, wchar* argv[])
 	signal(SIGKILL, clean_exit);
 	
 	init_sound();
+#else
+	void os_InitAudio();
+	os_InitAudio();
 #endif
 
 #if defined(USES_HOMEDIR)
@@ -863,12 +867,20 @@ int main(int argc, wchar* argv[])
 	return 0;
 }
 
+u32 alsa_Push(void* frame, u32 samples, bool wait);
 u32 os_Push(void* frame, u32 samples, bool wait)
 {
-#ifdef TARGET_PANDORA
-	write(audio_fd, frame, samples*4);
-#endif
-return 1;
+	#ifndef TARGET_PANDORA
+		int audio_fd = -1;
+	#endif
+
+	if (audio_fd > 0) {
+		write(audio_fd, frame, samples*4);
+	} else {
+		return alsa_Push(frame, samples, wait);
+	}
+
+	return 1;
 }
 #endif
 

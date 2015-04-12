@@ -23,14 +23,18 @@ ASFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=hard
 
 LDFLAGS	:=	-g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
 
-
 CXXFLAGS := -g -O3  -D RELEASE -c -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7
 CXXFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CXXFLAGS += -ffast-math -ftree-vectorize -fprefetch-loop-arrays 
-#-std=c++0x
-
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-exceptions -fno-rtti
 CXXFLAGS += -DARM_HARDFP -DGLES -DODROID -DUSES_HOMEDIR
+#-std=c++0x
+
+INCS	:= -I/usr/include -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I../linux-deps/include
+
+LIBS    := -L/usr/lib/arm-linux-gnueabihf/ -L../linux-deps/lib
+LIBS    += -lm -lrt -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um 
+LIBS    += -lpthread
 
 ifndef NO_X11
 	CXXFLAGS += -DSUPPORT_X11
@@ -61,12 +65,6 @@ endif
 ifdef USE_VMEM_FILE
         CXXFLAGS += -DUSE_VMEM_FILE
 endif
-
-INCS	:= -I/usr/include -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I../linux-deps/include
-
-LIBS    := -L/usr/lib/arm-linux-gnueabihf/ -L../linux-deps/lib
-LIBS    += -lm -lrt -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um 
-LIBS    += -lpthread
 
 ifndef NO_X11
 	LIBS += -lX11

@@ -30,7 +30,11 @@ CXXFLAGS += -ffast-math -ftree-vectorize -fprefetch-loop-arrays
 #-std=c++0x
 
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-exceptions -fno-rtti
-CXXFLAGS +=  -DARM_HARDFP -DGLES -DSUPPORT_X11 -DODROID -DUSES_HOMEDIR
+CXXFLAGS += -DARM_HARDFP -DGLES -DODROID -DUSES_HOMEDIR
+
+ifndef NO_X11
+	CXXFLAGS += -DSUPPORT_X11
+endif
 
 ifdef PGO_MAKE
 	CXXFLAGS += -fprofile-generate -pg
@@ -42,7 +46,6 @@ endif
 ifdef PGO_USE
 	CXXFLAGS += -fprofile-use
 endif
-
 
 ifdef LTO_TEST
 	CXXFLAGS += -flto -fwhole-program 
@@ -63,8 +66,11 @@ INCS	:= -I/usr/include -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_
 
 LIBS    := -L/usr/lib/arm-linux-gnueabihf/ -L../linux-deps/lib
 LIBS    += -lm -lrt -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um 
-LIBS    += -lpthread -lX11
+LIBS    += -lpthread
 
+ifndef NO_X11
+	LIBS += -lX11
+endif
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)
 OBJECTS:=$(OBJECTS:.c=.build_obj)

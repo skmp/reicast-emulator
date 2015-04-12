@@ -38,6 +38,7 @@ LIBS    += -lpthread
 
 ifndef NO_X11
 	CXXFLAGS += -DSUPPORT_X11
+	LIBS += -lX11
 endif
 
 ifdef PGO_MAKE
@@ -64,10 +65,6 @@ endif
 
 ifdef USE_VMEM_FILE
         CXXFLAGS += -DUSE_VMEM_FILE
-endif
-
-ifndef NO_X11
-	LIBS += -lX11
 endif
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)

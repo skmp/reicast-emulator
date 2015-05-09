@@ -896,7 +896,7 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 	//printf("Failed %08X:%08X (%d,%d,%d,r%d, r%d,f%d,d%d) code %08X, addr %08X, native %08X (%08X), fixing via %s\n",ptr->full,fop,optp,read,offs,raddr,rt,ft,fd,ptr,sh4_addr,fault_addr,fault_offs,is_sq?"SQ":"MR");
 
 	//fault offset must always be the addr from ubfx (sanity check)
-	verify((fault_offs==0) || fault_offs==(0x1FFFFFFF&sh4_addr));
+	//verify((fault_offs==0) || fault_offs==(0x1FFFFFFF&sh4_addr));
 
 	if (settings.dynarec.unstable_opt && is_sq) //THPS2 uses cross area SZ_32F so this is disabled for now
 	{

@@ -10,11 +10,11 @@
 
 @@@@@@@@@@ some helpers @@@@@@@@@@
 
-.global do_sqw_nommu_area_3
-.hidden do_sqw_nommu_area_3
+.global do_sqw_nommu_area_3___
+.hidden do_sqw_nommu_area_3___
 @r0: addr
 @r1: sq_both
-do_sqw_nommu_area_3:
+do_sqw_nommu_area_3___:
 add r3,r1,#0x0C000000	@ get ram ptr from r1, part 1
 and r2,r0,#0x20			@ SQ# selection, isolate
 ubfx r0,r0,#5,#19		@ get ram offset

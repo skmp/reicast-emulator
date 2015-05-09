@@ -814,6 +814,41 @@ union arm_mem_op
 	u32 full;
 };
 
+void vmem_slowpath(eReg raddr, eReg rt, eFSReg ft, eFDReg fd, mem_op_type optp, bool read)
+{
+	if (raddr != r0)
+		MOV(r0, (eReg)raddr);
+
+	if (!read)
+	{
+		if (optp <= SZ_32I) MOV(r1, rt);
+		else if (optp == SZ_32F) VMOV(r1, ft);
+		else if (optp == SZ_64F) VMOV(r2, r3, fd);
+	}
+
+	if (fd != d0 && optp == SZ_64F)
+	{
+		die("BLAH");
+	}
+
+	u32 funct = 0;
+
+	if (optp <= SZ_32I)
+		funct = _mem_hndl[read][optp][raddr];
+	else
+		funct = _mem_func[read][optp];
+
+	verify(funct != 0);
+	CALL(funct);
+
+	if (read)
+	{
+		if (optp <= SZ_32I) MOV(rt, r0);
+		else if (optp == SZ_32F) VMOV(ft, r0);
+		else if (optp == SZ_64F) VMOV(fd, r0, r1);
+	}
+}
+
 u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 {
 	arm_mem_op* ptr=(arm_mem_op*)ptrv;
@@ -1127,32 +1162,37 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			{
 				eReg raddr=GenMemAddr(op);
 
-				AND(r1,raddr,0x00000000);
+				//AND(r1,raddr,0x00000000);
 				//UBFX(r1,raddr,0,29);
 				//SUB(r1,raddr,raddr);
 
 				switch(optp)
 				{
 				case SZ_8:	
-					LDRSB(reg.mapg(op->rd), r1, r1, true);
+					vmem_slowpath(raddr, reg.mapg(op->rd), f0, d0, optp, true);
+					//LDRSB(reg.mapg(op->rd), r1, r1, true);
 					break;
 
 				case SZ_16: 
-					LDRSH(reg.mapg(op->rd), r1, r1, true);
+					vmem_slowpath(raddr, reg.mapg(op->rd), f0, d0, optp, true);
+					//LDRSH(reg.mapg(op->rd), r1, r1, true);
 					break;
 
 				case SZ_32I: 
-					LDR(reg.mapg(op->rd), r1, r1, Offset, true);
+					vmem_slowpath(raddr, reg.mapg(op->rd), f0, d0, optp, true);
+					//LDR(reg.mapg(op->rd), r1, r1, Offset, true);
 					break;
 
 				case SZ_32F:
-					ADD(r1, r1, r1);	//3 opcodes, there's no [REG+REG] VLDR
-					VLDR(reg.mapf(op->rd),r1,0);
+					vmem_slowpath(raddr, r0, reg.mapf(op->rd), d0, optp, true);
+					//ADD(r1, r1, r1);	//3 opcodes, there's no [REG+REG] VLDR
+					//VLDR(reg.mapf(op->rd),r1,0);
 					break;
 
 				case SZ_64F:
-					ADD(r1, r1, r1);	//3 opcodes, there's no [REG+REG] VLDR
-					VLDR(d0,r1,0);	//TODO: use reg alloc
+					vmem_slowpath(raddr, r0, f0, d0, optp, true);
+					//ADD(r1, r1, r1);	//3 opcodes, there's no [REG+REG] VLDR
+					//VLDR(d0,r1,0);	//TODO: use reg alloc
 
 					VSTR(d0,r8,op->rd.reg_nofs()/4);
 					break;
@@ -1172,7 +1212,8 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			if (optp == SZ_64F)
 				VLDR(d0,r8,op->rs2.reg_nofs()/4);
 
-			AND(r1,raddr,0x00000000);
+
+//			AND(r1,raddr,0x00000000);
 			//UBFX(r1,raddr,0,29);
 			//SUB(r1,raddr,raddr);
 			
@@ -1180,16 +1221,19 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			switch(optp)
 			{
 			case SZ_8:
-				STRB(reg.mapg(op->rs2), r1, r1, Offset, true);
+				vmem_slowpath(raddr, reg.mapg(op->rs2), f0, d0, optp, false);
+				//STRB(reg.mapg(op->rs2), r1, r1, Offset, true);
 				break;
 
 			case SZ_16:
-				STRH(reg.mapg(op->rs2), r1, r1, true);
+				//STRH(reg.mapg(op->rs2), r1, r1, true);
+				vmem_slowpath(raddr, reg.mapg(op->rs2), f0, d0, optp, false);
 				break;
 
 			case SZ_32I:
 				if (op->flags2!=0x1337)
-					STR(reg.mapg(op->rs2),r1,r1,Offset,true); 
+					//STR(reg.mapg(op->rs2),r1,r1,Offset,true); 
+					vmem_slowpath(raddr, reg.mapg(op->rs2), f0, d0, optp, false);
 				else
 				{
 					verify(false);
@@ -1203,8 +1247,10 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			case SZ_32F:
 				if (op->flags2!=0x1337)
 				{
-					ADD(r1, r1, r1);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
-					VSTR(reg.mapf(op->rs2),r1,0);
+					vmem_slowpath(raddr, r0, reg.mapf(op->rs2), d0, optp, false);
+					//ADD(r1, r1, r1);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
+					//VSTR(reg.mapf(op->rs2),r1,0);
+
 				}
 				else
 				{
@@ -1219,8 +1265,9 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			case SZ_64F:
 				if (op->flags2!=0x1337)
 				{
-					ADD(r1, r1, r1);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
-					VSTR(d0,r1,0);	//TODO: use reg alloc
+					//ADD(r1, r1, r1);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
+					vmem_slowpath(raddr, r0, f0, d0, optp, false);
+					//VSTR(d0,r1,0);	//TODO: use reg alloc
 				}
 				else
 				{

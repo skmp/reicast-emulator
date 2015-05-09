@@ -1127,7 +1127,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			{
 				eReg raddr=GenMemAddr(op);
 
-				BIC(r1,raddr,0x00000000);
+				AND(r1,raddr,0x00000000);
 				//UBFX(r1,raddr,0,29);
 				//SUB(r1,raddr,raddr);
 
@@ -1172,7 +1172,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			if (optp == SZ_64F)
 				VLDR(d0,r8,op->rs2.reg_nofs()/4);
 
-			BIC(r1,raddr,0x00000000);
+			AND(r1,raddr,0x00000000);
 			//UBFX(r1,raddr,0,29);
 			//SUB(r1,raddr,raddr);
 			

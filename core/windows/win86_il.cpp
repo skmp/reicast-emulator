@@ -498,7 +498,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				if (size<=8)
 				{
 
-					if (size==8 && optimise)
+					if (size == 8 && optimise && virt_ram_base)
 					{
 						verify(op->rd.count()==2 && reg.IsAllocf(op->rd,0) && reg.IsAllocf(op->rd,1));
 

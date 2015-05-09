@@ -1127,31 +1127,31 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			{
 				eReg raddr=GenMemAddr(op);
 
-				BIC(r1,raddr,0xE0000000);
+				BIC(r1,raddr,0x00000000);
 				//UBFX(r1,raddr,0,29);
 				//SUB(r1,raddr,raddr);
 
 				switch(optp)
 				{
 				case SZ_8:	
-					LDRSB(reg.mapg(op->rd),r1,r8,true); 
+					LDRSB(reg.mapg(op->rd), r1, r1, true);
 					break;
 
 				case SZ_16: 
-					LDRSH(reg.mapg(op->rd),r1,r8,true); 
+					LDRSH(reg.mapg(op->rd), r1, r1, true);
 					break;
 
 				case SZ_32I: 
-					LDR(reg.mapg(op->rd),r1,r8,Offset,true); 
+					LDR(reg.mapg(op->rd), r1, r1, Offset, true);
 					break;
 
 				case SZ_32F:
-					ADD(r1,r1,r8);	//3 opcodes, there's no [REG+REG] VLDR
+					ADD(r1, r1, r1);	//3 opcodes, there's no [REG+REG] VLDR
 					VLDR(reg.mapf(op->rd),r1,0);
 					break;
 
 				case SZ_64F:
-					ADD(r1,r1,r8);	//3 opcodes, there's no [REG+REG] VLDR
+					ADD(r1, r1, r1);	//3 opcodes, there's no [REG+REG] VLDR
 					VLDR(d0,r1,0);	//TODO: use reg alloc
 
 					VSTR(d0,r8,op->rd.reg_nofs()/4);
@@ -1172,7 +1172,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			if (optp == SZ_64F)
 				VLDR(d0,r8,op->rs2.reg_nofs()/4);
 
-			BIC(r1,raddr,0xE0000000);
+			BIC(r1,raddr,0x00000000);
 			//UBFX(r1,raddr,0,29);
 			//SUB(r1,raddr,raddr);
 			
@@ -1180,18 +1180,19 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			switch(optp)
 			{
 			case SZ_8:
-				STRB(reg.mapg(op->rs2),r1,r8,Offset,true);
+				STRB(reg.mapg(op->rs2), r1, r1, Offset, true);
 				break;
 
 			case SZ_16:
-				STRH(reg.mapg(op->rs2),r1,r8,true);
+				STRH(reg.mapg(op->rs2), r1, r1, true);
 				break;
 
 			case SZ_32I:
 				if (op->flags2!=0x1337)
-					STR(reg.mapg(op->rs2),r1,r8,Offset,true); 
+					STR(reg.mapg(op->rs2),r1,r1,Offset,true); 
 				else
 				{
+					verify(false);
 					emit_Skip(-4);
 					AND(r1,raddr,0x3F);
 					ADD(r1,r1,r8);
@@ -1202,11 +1203,12 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			case SZ_32F:
 				if (op->flags2!=0x1337)
 				{
-					ADD(r1,r1,r8);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
+					ADD(r1, r1, r1);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
 					VSTR(reg.mapf(op->rs2),r1,0);
 				}
 				else
 				{
+					verify(false);
 					emit_Skip(-4);
 					AND(r1,raddr,0x3F);
 					ADD(r1,r1,r8);
@@ -1217,11 +1219,12 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			case SZ_64F:
 				if (op->flags2!=0x1337)
 				{
-					ADD(r1,r1,r8);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
+					ADD(r1, r1, r1);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
 					VSTR(d0,r1,0);	//TODO: use reg alloc
 				}
 				else
 				{
+					verify(false);
 					emit_Skip(-4);
 					AND(r1,raddr,0x3F);
 					ADD(r1,r1,r8);

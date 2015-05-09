@@ -76,7 +76,9 @@ void fault_handler (int sn, siginfo_t * si, void *ctxr)
 #endif
 	else
 	{
-		printf("SIGSEGV @ fault_handler+0x%08X ... %08X -> was not in vram\n",GET_PC_FROM_CONTEXT(ctxr)-(u32)fault_handler,si->si_addr);
+#ifndef HOST_NO_REC
+		printf("SIGSEGV @ fault_handler+0x%08X ... %08X -> was not in vram %d\n", GET_PC_FROM_CONTEXT(ctxr) - (u32)fault_handler, si->si_addr, dyna_cde);
+#endif
 		die("segfault");
 //		asm volatile("bkpt 0x0001\n\t");
 		signal(SIGSEGV, SIG_DFL);

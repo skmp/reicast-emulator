@@ -401,8 +401,8 @@ void recSh4_Init()
 	verify(rcb_noffs(&p_sh4rcb->cntx.sh4_sched_next)==-152);
 	verify(rcb_noffs(&p_sh4rcb->cntx.interrupt_pend)==-148);
 	
-
-	verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));
+	
+	//verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));
 
 	//align to next page ..
     CodeCache = (u8*)(((unat)SH4_TCB+4095)& ~4095);

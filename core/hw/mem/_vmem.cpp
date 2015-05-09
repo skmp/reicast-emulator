@@ -399,6 +399,8 @@ void _vmem_term()
 
 }
 
+bool _nvmem_direct_map = false;
+
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_mem.h"
 
@@ -451,8 +453,20 @@ void* _nvmem_alloc_mem()
 {
 	mem_handle=CreateFileMapping(INVALID_HANDLE_VALUE,0,PAGE_READWRITE ,0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE,0);
 
-	void* rv=(u8*)VirtualAlloc(0,512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE,MEM_RESERVE,PAGE_NOACCESS);
-	if (rv) VirtualFree(rv,0,MEM_RELEASE);
+	void* rv = 0;//(u8*)VirtualAlloc(0, 512 * 1024 * 1024 + sizeof(Sh4RCB) + ARAM_SIZE, MEM_RESERVE, PAGE_NOACCESS);
+	if (rv)
+	{
+		_nvmem_direct_map = true;
+		VirtualFree(rv, 0, MEM_RELEASE);
+	}
+	else
+	{
+		_nvmem_direct_map = false;
+		rv = (u8*)VirtualAlloc(0, sizeof(Sh4RCB) + ARAM_SIZE + VRAM_SIZE + RAM_SIZE, MEM_RESERVE, PAGE_NOACCESS);
+
+		if (rv) VirtualFree(rv, 0, MEM_RELEASE);
+	}
+
 	return rv;
 }
 
@@ -567,8 +581,8 @@ error:
 #endif
 
 		
-
-		u32 sz= 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE + 0x10000;
+		_nvmem_direct_map = false;
+		u32 sz= /*512*1024*1024 +*/ sizeof(Sh4RCB) + ARAM_SIZE + VRAM_SIZE + RAM_SIZE + 0x10000;
 		void* rv=mmap(0, sz, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
 		munmap(rv,sz);
 		return (u8*)rv + 0x10000 - unat(rv)%0x10000;//align to 64 KB (Needed for linaro mmap not to extend to next region)
@@ -630,8 +644,12 @@ bool _vmem_reserve()
 
 	verify((sizeof(Sh4RCB)%PAGE_SIZE)==0);
 
-	virt_ram_base=(u8*)_nvmem_alloc_mem();
-	p_sh4rcb=(Sh4RCB*)virt_ram_base;
+	u8* alloc_base=(u8*)_nvmem_alloc_mem();
+	
+	if (alloc_base == 0)
+		return false;
+
+	p_sh4rcb = (Sh4RCB*)alloc_base;
 
 #if HOST_OS==OS_WINDOWS
 	//verify(p_sh4rcb==VirtualAlloc(p_sh4rcb,sizeof(Sh4RCB),MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE));
@@ -642,67 +660,99 @@ bool _vmem_reserve()
 	verify(p_sh4rcb==mmap(p_sh4rcb,sizeof(Sh4RCB),PROT_NONE,MAP_PRIVATE | MAP_ANON, -1, 0));
 	mprotect((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb),sizeof(Sh4RCB)-sizeof(p_sh4rcb->fpcb),PROT_READ|PROT_WRITE);
 #endif
-	virt_ram_base+=sizeof(Sh4RCB);
-
-	if (virt_ram_base==0)
-		return false;
 	
-	//Area 0
-	//[0x00000000 ,0x00800000) -> unused
-	unused_buffer(0x00000000,0x00800000);
-
-	//I wonder, aica ram warps here ?.?
-	//I really should check teh docs before codin ;p
-	//[0x00800000,0x00A00000);
-	map_buffer(0x00800000,0x01000000,MAP_ARAM_START_OFFSET,ARAM_SIZE,false);
-	map_buffer(0x20000000,0x20000000+ARAM_SIZE,MAP_ARAM_START_OFFSET,ARAM_SIZE,true);
-
-	aica_ram.size=ARAM_SIZE;
-	aica_ram.data=(u8*)ptr;
-	//[0x01000000 ,0x04000000) -> unused
-	unused_buffer(0x01000000,0x04000000);
-	
-
-	//Area 1
-	//[0x04000000,0x05000000) -> vram (16mb, warped on dc)
-	map_buffer(0x04000000,0x05000000,MAP_VRAM_START_OFFSET,VRAM_SIZE,true);
-	
-	vram.size=VRAM_SIZE;
-	vram.data=(u8*)ptr;
-
-	//[0x05000000,0x06000000) -> unused (32b path)
-	unused_buffer(0x05000000,0x06000000);
-
-	//[0x06000000,0x07000000) -> vram   mirror
-	map_buffer(0x06000000,0x07000000,MAP_VRAM_START_OFFSET,VRAM_SIZE,true);
+	alloc_base += sizeof(Sh4RCB);
 
 
-	//[0x07000000,0x08000000) -> unused (32b path) mirror
-	unused_buffer(0x07000000,0x08000000);
-	
-	//Area 2
-	//[0x08000000,0x0C000000) -> unused
-	unused_buffer(0x08000000,0x0C000000);
-	
-	//Area 3
-	//[0x0C000000,0x0D000000) -> main ram
-	//[0x0D000000,0x0E000000) -> main ram mirror
-	//[0x0E000000,0x0F000000) -> main ram mirror
-	//[0x0F000000,0x10000000) -> main ram mirror
-	map_buffer(0x0C000000,0x10000000,MAP_RAM_START_OFFSET,RAM_SIZE,true);
-	
-	mem_b.size=RAM_SIZE;
-	mem_b.data=(u8*)ptr;
-	
-	printf("A8\n");
+	if (_nvmem_direct_map)
+	{
+		virt_ram_base = alloc_base;
 
-	//Area 4
-	//Area 5
-	//Area 6
-	//Area 7
-	//all -> Unused 
-	//[0x10000000,0x20000000) -> unused
-	unused_buffer(0x10000000,0x20000000);
+		//Area 0
+		//[0x00000000 ,0x00800000) -> unused
+		unused_buffer(0x00000000, 0x00800000);
+
+		//I wonder, aica ram warps here ?.?
+		//I really should check teh docs before codin ;p
+		//[0x00800000,0x00A00000);
+		map_buffer(0x00800000, 0x01000000, MAP_ARAM_START_OFFSET, ARAM_SIZE, false);
+		map_buffer(0x20000000, 0x20000000 + ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE, true);
+
+		aica_ram.size = ARAM_SIZE;
+		aica_ram.data = (u8*)ptr;
+		//[0x01000000 ,0x04000000) -> unused
+		unused_buffer(0x01000000, 0x04000000);
+
+
+		//Area 1
+		//[0x04000000,0x05000000) -> vram (16mb, warped on dc)
+		map_buffer(0x04000000, 0x05000000, MAP_VRAM_START_OFFSET, VRAM_SIZE, true);
+
+		vram.size = VRAM_SIZE;
+		vram.data = (u8*)ptr;
+
+		//[0x05000000,0x06000000) -> unused (32b path)
+		unused_buffer(0x05000000, 0x06000000);
+
+		//[0x06000000,0x07000000) -> vram   mirror
+		map_buffer(0x06000000, 0x07000000, MAP_VRAM_START_OFFSET, VRAM_SIZE, true);
+
+
+		//[0x07000000,0x08000000) -> unused (32b path) mirror
+		unused_buffer(0x07000000, 0x08000000);
+
+		//Area 2
+		//[0x08000000,0x0C000000) -> unused
+		unused_buffer(0x08000000, 0x0C000000);
+
+		//Area 3
+		//[0x0C000000,0x0D000000) -> main ram
+		//[0x0D000000,0x0E000000) -> main ram mirror
+		//[0x0E000000,0x0F000000) -> main ram mirror
+		//[0x0F000000,0x10000000) -> main ram mirror
+		map_buffer(0x0C000000, 0x10000000, MAP_RAM_START_OFFSET, RAM_SIZE, true);
+
+		mem_b.size = RAM_SIZE;
+		mem_b.data = (u8*)ptr;
+
+		printf("A8\n");
+
+		//Area 4
+		//Area 5
+		//Area 6
+		//Area 7
+		//all -> Unused 
+		//[0x10000000,0x20000000) -> unused
+		unused_buffer(0x10000000, 0x20000000);
+	}
+	else
+	{
+		virt_ram_base = 0;
+
+		aica_ram.size = ARAM_SIZE;
+#if HOST_OS==OS_WINDOWS
+		aica_ram.data = (u8*)VirtualAlloc(alloc_base, ARAM_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+#else
+		aica_ram.data = (u8*)mmap(alloc_base, ARAM_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
+#endif
+		alloc_base += ARAM_SIZE;
+
+		vram.size = VRAM_SIZE;
+#if HOST_OS==OS_WINDOWS
+		vram.data = (u8*)VirtualAlloc(alloc_base, VRAM_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+#else
+		vram.data = (u8*)mmap(alloc_base, VRAM_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
+#endif
+		alloc_base += VRAM_SIZE;
+
+		mem_b.size = RAM_SIZE;
+#if HOST_OS==OS_WINDOWS
+		mem_b.data = (u8*)VirtualAlloc(alloc_base, RAM_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+#else
+		mem_b.data = (u8*)mmap(alloc_base, RAM_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
+#endif
+		alloc_base += RAM_SIZE;
+	}
 
 	printf("vmem reserve: base: %08X, aram: %08x, vram: %08X, ram: %08X\n",virt_ram_base,aica_ram.data,vram.data,mem_b.data);
 
@@ -714,7 +764,7 @@ bool _vmem_reserve()
 
 	printf("Mem alloc successful!");
 
-	return virt_ram_base!=0;
+	return true;
 }
 #else
 

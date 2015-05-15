@@ -37,6 +37,7 @@ void DetectCpuFeatures()
 	if (detected) return;
 	detected=true;
 
+#if HOST_OS==OS_WINDOWS
 	__try
 	{
 		__asm addps xmm0,xmm0
@@ -83,6 +84,7 @@ void DetectCpuFeatures()
 	{
 		mmx=false;
 	}
+	#endif
 }
 
 
@@ -638,6 +640,9 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 	{
 		//General
 
+		//maintain 16 byte alignment
+		x86e->Emit(op_sub32, ESP, 12);
+
 		if ((sz==SZ_32F || sz==SZ_64F) && w==1)
 		{
 			if (sz==SZ_32F)
@@ -646,7 +651,6 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 			}
 			else
 			{
-				x86e->Emit(op_sub32,ESP,8);
 				x86e->Emit(op_movss,x86_mrm(ESP,x86_ptr::create(+4)),XMM1);
 				x86e->Emit(op_movss,x86_mrm(ESP,x86_ptr::create(-0)),XMM0);
 			}
@@ -661,6 +665,13 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 			{
 				x86e->Emit(op_movd_xmm_from_r32,XMM1,EDX);
 			}
+		}
+
+		if ((sz == SZ_64F) && w == 1) {
+			x86e->Emit(op_add32, ESP, 4);
+		}
+		else {
+			x86e->Emit(op_add32, ESP, 12);
 		}
 	}
 
@@ -746,11 +757,7 @@ bool ngen_Rewrite(unat& addr,unat retadr,unat acc)
 				{
 					//found !
 
-					if ((acc >> 26) == 0x38 && !w) {
-						printf("WARNING: SQ AREA READ, %08X from sh4:%08X. THIS IS UNDEFINED ON A REAL DREACMAST.\n", acc, bm_GetBlock(x86e->x86_buff)->addr);
-					}
-
-					if ((acc >> 26) == 0x38 && w) //sq ?
+					if ((acc >> 26) == 0x38) //sq ?
 					{
 						verify(w == 1);
 						x86e->Emit(op_call, x86_ptr_imm(mem_code[1][w][i]));

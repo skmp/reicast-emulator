@@ -188,7 +188,7 @@ void armt_init();
 //void CreateTables();
 void arm_Init()
 {
-#if !defined(HOST_NO_REC)
+#if !defined(HOST_NO_AREC)
 	armt_init();
 #endif
 	//CreateTables();
@@ -398,7 +398,7 @@ void FlushCache();
 
 void arm_Reset()
 {
-#if !defined(HOST_NO_REC)
+#if !defined(HOST_NO_AREC)
 	FlushCache();
 #endif
 	Arm7Enabled = false;
@@ -512,8 +512,16 @@ void update_armintc()
 	reg[INTR_PEND].I=e68k_out && armFiqEnable;
 }
 
-#ifdef HOST_NO_REC
-void arm_Run(u32 CycleCount) { arm_Run_(CycleCount); }
+void libAICA_TimeStep();
+
+#ifdef HOST_NO_AREC
+void arm_Run(u32 CycleCount) { 
+	for (int i=0;i<32;i++)
+	{
+		arm_Run_(CycleCount/32);
+		libAICA_TimeStep();
+	}
+}
 #else
 extern "C" void CompileCode();
 
@@ -789,7 +797,7 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 {
 	u32 rv=0;
 
-#if HOST_CPU==CPU_X86 && !defined(HOST_NO_REC)
+#if HOST_CPU==CPU_X86 && !defined(HOST_NO_AREC)
 	addr=virt_arm_reg(0);
 	data=virt_arm_reg(1);
 #endif
@@ -809,7 +817,7 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 			arm_WriteMem32(addr,data);
 	}
 
-	#if HOST_CPU==CPU_X86 && !defined(HOST_NO_REC)
+	#if HOST_CPU==CPU_X86 && !defined(HOST_NO_AREC)
 		virt_arm_reg(0)=rv;
 	#endif
 
@@ -1594,7 +1602,6 @@ void armv_MOV32(eReg regn, u32 imm)
 
 #endif	// HOST_CPU 
 
-void libAICA_TimeStep();
 //Run a timeslice for ARMREC
 //CycleCount is pretty much fixed to (512*32) for now (might change to a diff constant, but will be constant)
 void arm_Run(u32 CycleCount)

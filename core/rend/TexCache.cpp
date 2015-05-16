@@ -192,7 +192,7 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 		vramlist_lock.Lock();
 	
 		vram.LockRegion(block->start,block->len);
-		vram.LockRegion(block->start + VRAM_SIZE,block->len);
+		//vram.LockRegion(block->start + VRAM_SIZE,block->len);
 		vramlock_list_add(block);
 		
 		vramlist_lock.Unlock();
@@ -232,7 +232,7 @@ bool VramLockedWrite(u8* address)
 			list->clear();
 
 			vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)),PAGE_SIZE);
-			vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
+			//vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
 			
 			vramlist_lock.Unlock();
 		}

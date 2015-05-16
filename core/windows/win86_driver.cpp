@@ -579,7 +579,19 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 	{
 		//Buffer
 		x86e->Emit(op_mov32,EAX,ECX);
-		x86e->Emit(op_and32,ECX,0x1FFFFFFF);
+
+		if (virt_ram_base)
+		{
+			x86e->Emit(op_and32, ECX, 0x1FFFFFFF);
+		}
+		else
+		{
+			x86e->Emit(op_and32, ECX, 0);
+
+			x86e->Emit(op_nop);
+			x86e->Emit(op_nop);
+			x86e->Emit(op_nop);
+		}
 
 		x86_mrm_t buff=x86_mrm(ECX,virt_ram_base);
 		x86_mrm_t buff4=x86_mrm(ECX,virt_ram_base+4);

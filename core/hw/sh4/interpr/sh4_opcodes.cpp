@@ -1298,10 +1298,10 @@ INLINE void DYNACALL do_sqw(u32 Dest)
 }
 
 void DYNACALL do_sqw_mmu(u32 dst) { do_sqw<true>(dst); }
-#if HOST_CPU!=CPU_ARM
+#if 1
 extern "C" void DYNACALL do_sqw_nommu_area_3(u32 dst,u8* sqb)
 {
-	u8* pmem=sqb+512+0x0C000000;
+	u8* pmem = mem_b.data;// sqb + 512 + 0x0C000000;
 
 	memcpy((u64*)&pmem[dst&(RAM_MASK-0x1F)],(u64*)&sqb[dst & 0x20],32);
 }

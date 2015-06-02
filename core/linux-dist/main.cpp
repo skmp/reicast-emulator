@@ -447,7 +447,9 @@ void UpdateInputState(u32 port)
 	static char key = 0;
 
     //Try removing this block, seems like we would want to be able to hold down a damn button or trigger.... ~free5ty1e
+#if defined(SUPPORT_X11)
 	kcode[port]= x11_dc_buttons;
+#endif
 //	rt[port]=0;
 //	lt[port]=0;
 

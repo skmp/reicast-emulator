@@ -931,13 +931,15 @@ int main(int argc, wchar* argv[])
 
 	common_linux_setup();
 
+#ifdef TARGET_RPI        
         //Config file read tests, is this wired up yet elsewhere already?
         if (cfgOpen())
         {
-            s32 cfgBiosUseReios = cfgLoadInt("bios", "UseReios", -1);
-            printf("emu.cfg file entry bios.UseReios=%d\n",cfgBiosUseReios);
+            s32 cfgBiosUseReios = cfgLoadInt("config", "bios.UseReios", -1);
+            printf("emu.cfg file entry [config]bios.UseReios=%d\n",cfgBiosUseReios);
             //Test: looking for known entry in emu.cfg: bios.UseReios=0
         }
+#endif        
         
 	SetupInput();
 	
@@ -946,7 +948,7 @@ int main(int argc, wchar* argv[])
 	dc_init(argc,argv);
 
 	dc_run();
-	
+	              
 #if defined  TARGET_PANDORA || defined TARGET_RPI
 	clean_exit(0);
 #endif

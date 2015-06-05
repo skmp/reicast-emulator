@@ -85,7 +85,7 @@ u8 rt[NUM_PORTS], lt[NUM_PORTS];
 
 enum DCPad {
     Nothing = 0,
-    
+
     Btn_C = 1,
     Btn_B = 1 << 1,
     Btn_A = 1 << 2,
@@ -133,14 +133,18 @@ static int audio_fd = -1;
 //const u32 JMapAxis_PS3[MAP_SIZE] ={Axis_X, Axis_Y, DPad2_Up, DPad2_Down, 0, 0, 0, 0, 0, 0};
 
 //TODO: Initialize defaults in better way
-u32 JMapBtn[NUM_PORTS][MAP_SIZE] = {{Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start}, 
-{Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start},
-{Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start},
-{Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start}};
-u32 JMapAxis[NUM_PORTS][MAP_SIZE] = {{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
-{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
-{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
-{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0}};
+u32 JMapBtn[NUM_PORTS][MAP_SIZE] = {
+    {Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start},
+    {Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start},
+    {Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start},
+    {Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start}
+};
+u32 JMapAxis[NUM_PORTS][MAP_SIZE] = {
+    {Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
+    {Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
+    {Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
+    {Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0}
+};
 
 void SetupInput() {
     for (int port = 0; port < NUM_PORTS; port++) {
@@ -149,9 +153,9 @@ void SetupInput() {
         lt[port] = 0;
 
         // Open joystick devices!
-        char portstr[32];
-        sprintf(portstr, "/dev/input/js%d", port);
-        JoyFD[port] = open(portstr, O_RDONLY);
+        char stringConvertScratch[32];
+        sprintf(stringConvertScratch, "/dev/input/js%d", port);
+        JoyFD[port] = open(stringConvertScratch, O_RDONLY);
 #if HOST_OS != OS_DARWIN        
         if (JoyFD[port] >= 0) {
             int AxisCount, ButtonCount;
@@ -174,46 +178,45 @@ void SetupInput() {
                 //[PLAYSTATION(R)3 Controller]
                 //button.0=Btn_Z
                 //axis.0=Axis_X
-                
-//                string cfgControlMapName = cfgLoadStr("controlmap", "name", "controlmap.name.invalid");
-//                printf("emu.cfg file entry [controlmap]name=%s\n", cfgControlMapName.c_str());
+
+                //                string cfgControlMapName = cfgLoadStr("controlmap", "name", "controlmap.name.invalid");
+                //                printf("emu.cfg file entry [controlmap]name=%s\n", cfgControlMapName.c_str());
 
                 //for 0 to MAP_SIZE, check for mapped buttons:
-                string cfgControlMapButton0 = cfgLoadStr((new string(Name))->c_str(), "button.0", NULL);
-                printf("emu.cfg custom mapping entry found for your controller: [%s]button.0=%s\n", Name, cfgControlMapButton0.c_str());
-                
+                for (int i = 0; i < MAP_SIZE; i++) {
+                    sprintf(stringConvertScratch, "button.%d", i);
+                    string cfgControlMapButton = cfgLoadStr((new string(Name))->c_str(), stringConvertScratch, NULL);
+                    printf("emu.cfg custom mapping entry found for your controller: [%s]button.%d=%s\n", Name, i, cfgControlMapButton.c_str());
+                    if (cfgControlMapButton == "Nothing") {
+                        printf("emu.cfg mapping your controller button %d to Nothing\n", i);
+                        JMapBtn[port][i] = Nothing;
+                    } else if (cfgControlMapButton == "Btn_Z") {
+                        printf("emu.cfg mapping your controller button %d to Btn_Z\n", i);
+                        JMapBtn[port][i] = Btn_Z;
+                    }
+                }
+
                 //for 0 to MAP_SIZE, check for mapped axes:
-                
-                
-                
-//                string cfgControlMapButton1 = cfgLoadStr("controlmap", "button.1", NULL);
-//                printf("emu.cfg file entry [controlmap]button.1=%s\n", cfgControlMapButton1.c_str());
-                
-                if (cfgControlMapButton0 == "Nothing")
-                {
-                    printf("emu.cfg mapping your controller button 0 to Nothing\n");
-                    JMapBtn[port][0]=Nothing;
-                }
-                else if (cfgControlMapButton0 == "Btn_Z")
-                {
-                    printf("emu.cfg mapping your controller button 0 to Btn_Z\n");
-                    JMapBtn[port][0]=Btn_Z;
-                }
+
+
+                //                string cfgControlMapButton1 = cfgLoadStr("controlmap", "button.1", NULL);
+                //                printf("emu.cfg file entry [controlmap]button.1=%s\n", cfgControlMapButton1.c_str());
+
             }
 
 
-//            if (strcmp(Name, "Microsoft X-Box 360 pad") == 0) {
-//                JMapBtn[port] = JMapBtn_360;
-//                JMapAxis[port] = JMapAxis_360;
-//                printf("Using Xbox 360 map\n");
-//            }
-//            if ((strcmp(Name, "PLAYSTATION(R)3 Controller") == 0) ||
-//                    (strcmp(Name, "Sony Computer Entertainment Wireless Controller") == 0) ||
-//                    (strcmp(Name, "Sony PLAYSTATION(R)3 Controller") == 0)) {
-//                JMapBtn[port] = JMapBtn_PS3;
-//                JMapAxis[port] = JMapAxis_PS3;
-//                printf("Using PS3 map\n");
-//            }
+            //            if (strcmp(Name, "Microsoft X-Box 360 pad") == 0) {
+            //                JMapBtn[port] = JMapBtn_360;
+            //                JMapAxis[port] = JMapAxis_360;
+            //                printf("Using Xbox 360 map\n");
+            //            }
+            //            if ((strcmp(Name, "PLAYSTATION(R)3 Controller") == 0) ||
+            //                    (strcmp(Name, "Sony Computer Entertainment Wireless Controller") == 0) ||
+            //                    (strcmp(Name, "Sony PLAYSTATION(R)3 Controller") == 0)) {
+            //                JMapBtn[port] = JMapBtn_PS3;
+            //                JMapAxis[port] = JMapAxis_PS3;
+            //                printf("Using PS3 map\n");
+            //            }
         }
 #endif
     }
@@ -460,7 +463,7 @@ bool HandleJoystick(u32 port) {
                     u32 mo = JMapBtn[port][JE.number]&0xFFFF;
 
                     //TODO: Actually map a Quit button, this is the actual PS3 button on the PS3 controller...
-                    if ((port == 0) && (JE.number == Quit) && (JE.value) ) //&& (JMapBtn[port] == JMapBtn_PS3)
+                    if ((port == 0) && (JE.number == Quit) && (JE.value)) //&& (JMapBtn[port] == JMapBtn_PS3)
                     {
                         printf("Detected Quit button!");
                         die("Dying an honorable death, via controller mapping.  QAPLA!!");
@@ -709,7 +712,7 @@ void os_CreateWindow() {
 
 #if !defined(GLES)
         // Get a matching FB config
-        static int visual_attribs[] ={
+        static int visual_attribs[] = {
             GLX_X_RENDERABLE, True,
             GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
             GLX_RENDER_TYPE, GLX_RGBA_BIT,

@@ -182,8 +182,9 @@ void SetupInput() {
                 //                string cfgControlMapName = cfgLoadStr("controlmap", "name", "controlmap.name.invalid");
                 //                printf("emu.cfg file entry [controlmap]name=%s\n", cfgControlMapName.c_str());
 
-                //for 0 to MAP_SIZE, check for mapped buttons:
+
                 for (int i = 0; i < MAP_SIZE; i++) {
+                    //for 0 to MAP_SIZE, check for mapped buttons:
                     sprintf(stringConvertScratch, "button.%d", i);
                     string cfgControlMapButton = cfgLoadStr((new string(Name))->c_str(), stringConvertScratch, NULL);
                     if (cfgControlMapButton != NULL) {
@@ -196,9 +197,12 @@ void SetupInput() {
                         printf("emu.cfg mapping your controller button %d to %s\n", i, cfgControlMapButton);
                         JMapBtn[port][i] = Btn_Z;
                     }
+
+
+                    //for 0 to MAP_SIZE, check for mapped axes:
+
                 }
 
-                //for 0 to MAP_SIZE, check for mapped axes:
 
 
                 //                string cfgControlMapButton1 = cfgLoadStr("controlmap", "button.1", NULL);

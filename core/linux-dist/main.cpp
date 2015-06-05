@@ -931,6 +931,14 @@ int main(int argc, wchar* argv[])
 
 	common_linux_setup();
 
+        //Config file read tests, is this wired up yet elsewhere already?
+        if (cfgOpen())
+        {
+            s32 cfgBiosUseReios = cfgLoadInt("bios", "UseReios", "-1");
+            printf("emu.cfg file entry bios.UseReios=%d\n",cfgBiosUseReios);
+            //Test: looking for known entry in emu.cfg: bios.UseReios=0
+        }
+        
 	SetupInput();
 	
 	settings.profile.run_counts=0;

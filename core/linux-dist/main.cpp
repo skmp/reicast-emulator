@@ -171,16 +171,19 @@ void SetupInput() {
                 //button.0="Btn_Z"
                 //axis.0="Axis_X"
                 string cfgControlMapName = cfgLoadStr("controlmap", "name", "controlmap.name.invalid");
-                printf("emu.cfg file entry [controlmap]name=" + cfgControlMapName.c_str());
+                printf("emu.cfg file entry [controlmap]name=%s\n", cfgControlMapName.c_str());
 
                 string cfgControlMapButton0 = cfgLoadStr("controlmap", "button.0", NULL);
-                printf("emu.cfg file entry [controlmap]button.0=" + cfgControlMapButton0.c_str());
+                printf("emu.cfg file entry [controlmap]button.0=%s\n", cfgControlMapButton0.c_str());
                 
                 string cfgControlMapButton1 = cfgLoadStr("controlmap", "button.1", NULL);
-                printf("emu.cfg file entry [controlmap]button.1=" + cfgControlMapButton1.c_str());
+                printf("emu.cfg file entry [controlmap]button.1=%s\n", cfgControlMapButton1.c_str());
                 
+                if (cfgControlMapButton0 == "Btn_Z")
+                {
+                    printf("emu.cfg mapping your controller button 0 to Btn_Z\n");
+                }
             }
-
 
 
             if (strcmp(Name, "Microsoft X-Box 360 pad") == 0) {

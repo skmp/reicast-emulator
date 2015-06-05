@@ -186,7 +186,9 @@ void SetupInput() {
                 for (int i = 0; i < MAP_SIZE; i++) {
                     sprintf(stringConvertScratch, "button.%d", i);
                     string cfgControlMapButton = cfgLoadStr((new string(Name))->c_str(), stringConvertScratch, NULL);
-                    printf("emu.cfg custom mapping entry found for your controller: [%s]button.%d=%s\n", Name, i, cfgControlMapButton.c_str());
+                    if (cfgControlMapButton != NULL) {
+                        printf("emu.cfg custom mapping entry found for your controller: [%s]button.%d=%s\n", Name, i, cfgControlMapButton.c_str());
+                    }
                     if (cfgControlMapButton == "Nothing") {
                         printf("emu.cfg mapping your controller button %d to Nothing\n", i);
                         JMapBtn[port][i] = Nothing;

@@ -194,7 +194,7 @@ void SetupInput() {
                         printf("emu.cfg mapping your controller button %d to Nothing\n", i);
                         JMapBtn[port][i] = Nothing;
                     } else if (cfgControlMapButton == "Btn_Z") {
-                        printf("emu.cfg mapping your controller button %d to %s\n", i, cfgControlMapButton);
+                        printf("emu.cfg mapping your controller button %d to %s\n", i, (new string(cfgControlMapButton))->c_str());
                         JMapBtn[port][i] = Btn_Z;
                     }
 

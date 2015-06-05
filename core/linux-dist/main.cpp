@@ -164,20 +164,20 @@ void SetupInput() {
             printf("SDK port: Found '%s' joystick with %d axis and %d buttons\n", Name, AxisCount, ButtonCount);
 
             if (cfgOpen()) {
-                //TODO: Map controllers from config file, its gonna have to be strings mapped to the enum so the cfg makes sense
+                //Map controllers from config file, its gonna have to be strings mapped to the enum so the cfg makes sense
                 //Should be in this format:
-                //[controlmap]
-                //name="PLAYSTATION(R)3 Controller"
-                //button.0="Btn_Z"
-                //axis.0="Axis_X"
-                string cfgControlMapName = cfgLoadStr("controlmap", "name", "controlmap.name.invalid");
-                printf("emu.cfg file entry [controlmap]name=%s\n", cfgControlMapName.c_str());
-
-                string cfgControlMapButton0 = cfgLoadStr("controlmap", "button.0", NULL);
-                printf("emu.cfg file entry [controlmap]button.0=%s\n", cfgControlMapButton0.c_str());
+                //[PLAYSTATION(R)3 Controller]
+                //button.0=Btn_Z
+                //axis.0=Axis_X
                 
-                string cfgControlMapButton1 = cfgLoadStr("controlmap", "button.1", NULL);
-                printf("emu.cfg file entry [controlmap]button.1=%s\n", cfgControlMapButton1.c_str());
+//                string cfgControlMapName = cfgLoadStr("controlmap", "name", "controlmap.name.invalid");
+//                printf("emu.cfg file entry [controlmap]name=%s\n", cfgControlMapName.c_str());
+
+                string cfgControlMapButton0 = cfgLoadStr(str(Name), "button.0", NULL);
+                printf("emu.cfg custom mapping entry found for your controller: [%s]button.0=%s\n", str(Name), cfgControlMapButton0.c_str());
+                
+//                string cfgControlMapButton1 = cfgLoadStr("controlmap", "button.1", NULL);
+//                printf("emu.cfg file entry [controlmap]button.1=%s\n", cfgControlMapButton1.c_str());
                 
                 if (cfgControlMapButton0 == "Btn_Z")
                 {

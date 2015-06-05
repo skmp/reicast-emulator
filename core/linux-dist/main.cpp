@@ -173,7 +173,7 @@ void SetupInput() {
 //                string cfgControlMapName = cfgLoadStr("controlmap", "name", "controlmap.name.invalid");
 //                printf("emu.cfg file entry [controlmap]name=%s\n", cfgControlMapName.c_str());
 
-                string cfgControlMapButton0 = cfgLoadStr(new string(Name), "button.0", NULL);
+                string cfgControlMapButton0 = cfgLoadStr((new string(Name)).c_str(), "button.0", NULL);
                 printf("emu.cfg custom mapping entry found for your controller: [%s]button.0=%s\n", str(Name), cfgControlMapButton0.c_str());
                 
 //                string cfgControlMapButton1 = cfgLoadStr("controlmap", "button.1", NULL);

@@ -189,15 +189,18 @@ void SetupInput() {
                     string cfgControlMapButton = cfgLoadStr((new string(Name))->c_str(), stringConvertScratch, NULL);
                     if (cfgControlMapButton != NULL) {
                         printf("emu.cfg custom mapping entry found for your controller: [%s]button.%d=%s\n", Name, i, cfgControlMapButton.c_str());
-                    }
-                    if (cfgControlMapButton == "Nothing") {
-                        printf("emu.cfg mapping your controller button %d to Nothing\n", i);
-                        JMapBtn[port][i] = Nothing;
-                    } else if (cfgControlMapButton == "Btn_Z") {
-                        printf("emu.cfg mapping your controller button %d to %s\n", i, (new string(cfgControlMapButton))->c_str());
-                        JMapBtn[port][i] = Btn_Z;
-                    }
+                        switch (cfgControlMapButton) {
+                            case "Nothing":
+                                printf("emu.cfg mapping your controller button %d to Nothing\n", i);
+                                JMapBtn[port][i] = Nothing;
+                                break;
+                            case "Btn_Z":
+                                printf("emu.cfg mapping your controller button %d to %s\n", i, (new string(cfgControlMapButton))->c_str());
+                                JMapBtn[port][i] = Btn_Z;
 
+                                break;
+                        }
+                    }
 
                     //for 0 to MAP_SIZE, check for mapped axes:
 

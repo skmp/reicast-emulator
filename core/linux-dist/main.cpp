@@ -84,6 +84,8 @@ s8 joyx[NUM_PORTS], joyy[NUM_PORTS];
 u8 rt[NUM_PORTS], lt[NUM_PORTS];
 
 enum DCPad {
+    Nothing = 0,
+    
     Btn_C = 1,
     Btn_B = 1 << 1,
     Btn_A = 1 << 2,
@@ -120,22 +122,30 @@ static int audio_fd = -1;
 
 
 #define MAP_SIZE 32
+//TODO: Initialize defaults in better way
+u32 JMapButtons[NUM_PORTS][MAP_SIZE] = {{Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start}, 
+{Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start},
+{Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start},
+{Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start}};
 
-const u32 JMapBtn_USB[MAP_SIZE] ={Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start};
+//TODO: Initialize defaults in better way
+u32 JMapAxis[NUM_PORTS][MAP_SIZE] = {{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
+{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
+{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
+{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0}};
 
-const u32 JMapAxis_USB[MAP_SIZE] ={Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0};
+//const u32 JMapBtn_360[MAP_SIZE] ={Btn_A, Btn_B, Btn_X, Btn_Y, 0, 0, 0, Btn_Start, 0, 0};
+//
+//const u32 JMapAxis_360[MAP_SIZE] ={Axis_X, Axis_Y, Axis_LT, 0, 0, Axis_RT, DPad_Left, DPad_Up, 0, 0};
+//
+////PS3 controller mappings
+//const u32 JMapBtn_PS3[MAP_SIZE] ={Btn_Z, Btn_C, Btn_D, Btn_Start, DPad_Up, DPad_Right, DPad_Down, DPad_Left, Axis_LT, Axis_RT, DPad2_Left, DPad2_Right, Btn_Y, Btn_B, Btn_A, Btn_X, Quit};
+//
+//const u32 JMapAxis_PS3[MAP_SIZE] ={Axis_X, Axis_Y, DPad2_Up, DPad2_Down, 0, 0, 0, 0, 0, 0};
 
-const u32 JMapBtn_360[MAP_SIZE] ={Btn_A, Btn_B, Btn_X, Btn_Y, 0, 0, 0, Btn_Start, 0, 0};
-
-const u32 JMapAxis_360[MAP_SIZE] ={Axis_X, Axis_Y, Axis_LT, 0, 0, Axis_RT, DPad_Left, DPad_Up, 0, 0};
-
-//PS3 controller mappings
-const u32 JMapBtn_PS3[MAP_SIZE] ={Btn_Z, Btn_C, Btn_D, Btn_Start, DPad_Up, DPad_Right, DPad_Down, DPad_Left, Axis_LT, Axis_RT, DPad2_Left, DPad2_Right, Btn_Y, Btn_B, Btn_A, Btn_X, Quit};
-
-const u32 JMapAxis_PS3[MAP_SIZE] ={Axis_X, Axis_Y, DPad2_Up, DPad2_Down, 0, 0, 0, 0, 0, 0};
-
-const u32* JMapBtn[NUM_PORTS] = {JMapBtn_USB, JMapBtn_USB, JMapBtn_USB, JMapBtn_USB};
-const u32* JMapAxis[NUM_PORTS] = {JMapAxis_USB, JMapAxis_USB, JMapAxis_USB, JMapAxis_USB};
+//TODO: Initialize defaults in better way
+const u32* JMapBtn[NUM_PORTS] = {JMapButtons[0], JMapButtons[1], JMapButtons[2], JMapButtons[3]};
+const u32* JMapAxis[NUM_PORTS] = {JMapAxis[0], JMapAxis[1], JMapAxis[2], JMapAxis[3]};
 
 void SetupInput() {
     for (int port = 0; port < NUM_PORTS; port++) {
@@ -173,31 +183,42 @@ void SetupInput() {
 //                string cfgControlMapName = cfgLoadStr("controlmap", "name", "controlmap.name.invalid");
 //                printf("emu.cfg file entry [controlmap]name=%s\n", cfgControlMapName.c_str());
 
+                //for 0 to MAP_SIZE, check for mapped buttons:
                 string cfgControlMapButton0 = cfgLoadStr((new string(Name))->c_str(), "button.0", NULL);
                 printf("emu.cfg custom mapping entry found for your controller: [%s]button.0=%s\n", Name, cfgControlMapButton0.c_str());
+                
+                //for 0 to MAP_SIZE, check for mapped axes:
+                
+                
                 
 //                string cfgControlMapButton1 = cfgLoadStr("controlmap", "button.1", NULL);
 //                printf("emu.cfg file entry [controlmap]button.1=%s\n", cfgControlMapButton1.c_str());
                 
-                if (cfgControlMapButton0 == "Btn_Z")
+                if (cfgControlMapButton0 == "Nothing")
+                {
+                    printf("emu.cfg mapping your controller button 0 to Nothing\n");
+                    JMapBtn[port][0]=Nothing;
+                }
+                else if (cfgControlMapButton0 == "Btn_Z")
                 {
                     printf("emu.cfg mapping your controller button 0 to Btn_Z\n");
+                    JMapBtn[port][0]=Btn_Z;
                 }
             }
 
 
-            if (strcmp(Name, "Microsoft X-Box 360 pad") == 0) {
-                JMapBtn[port] = JMapBtn_360;
-                JMapAxis[port] = JMapAxis_360;
-                printf("Using Xbox 360 map\n");
-            }
-            if ((strcmp(Name, "PLAYSTATION(R)3 Controller") == 0) ||
-                    (strcmp(Name, "Sony Computer Entertainment Wireless Controller") == 0) ||
-                    (strcmp(Name, "Sony PLAYSTATION(R)3 Controller") == 0)) {
-                JMapBtn[port] = JMapBtn_PS3;
-                JMapAxis[port] = JMapAxis_PS3;
-                printf("Using PS3 map\n");
-            }
+//            if (strcmp(Name, "Microsoft X-Box 360 pad") == 0) {
+//                JMapBtn[port] = JMapBtn_360;
+//                JMapAxis[port] = JMapAxis_360;
+//                printf("Using Xbox 360 map\n");
+//            }
+//            if ((strcmp(Name, "PLAYSTATION(R)3 Controller") == 0) ||
+//                    (strcmp(Name, "Sony Computer Entertainment Wireless Controller") == 0) ||
+//                    (strcmp(Name, "Sony PLAYSTATION(R)3 Controller") == 0)) {
+//                JMapBtn[port] = JMapBtn_PS3;
+//                JMapAxis[port] = JMapAxis_PS3;
+//                printf("Using PS3 map\n");
+//            }
         }
 #endif
     }

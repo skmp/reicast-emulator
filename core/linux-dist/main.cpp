@@ -122,17 +122,6 @@ static int audio_fd = -1;
 
 
 #define MAP_SIZE 32
-//TODO: Initialize defaults in better way
-u32 JMapButtons[NUM_PORTS][MAP_SIZE] = {{Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start}, 
-{Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start},
-{Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start},
-{Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start}};
-
-//TODO: Initialize defaults in better way
-u32 JMapAxis[NUM_PORTS][MAP_SIZE] = {{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
-{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
-{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
-{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0}};
 
 //const u32 JMapBtn_360[MAP_SIZE] ={Btn_A, Btn_B, Btn_X, Btn_Y, 0, 0, 0, Btn_Start, 0, 0};
 //
@@ -144,8 +133,14 @@ u32 JMapAxis[NUM_PORTS][MAP_SIZE] = {{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
 //const u32 JMapAxis_PS3[MAP_SIZE] ={Axis_X, Axis_Y, DPad2_Up, DPad2_Down, 0, 0, 0, 0, 0, 0};
 
 //TODO: Initialize defaults in better way
-u32* JMapBtn[NUM_PORTS] = {JMapButtons[0], JMapButtons[1], JMapButtons[2], JMapButtons[3]};
-u32* JMapAxis[NUM_PORTS] = {JMapAxis[0], JMapAxis[1], JMapAxis[2], JMapAxis[3]};
+u32 JMapBtn[NUM_PORTS][MAP_SIZE] = {{Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start}, 
+{Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start},
+{Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start},
+{Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start}};
+u32 JMapAxis[NUM_PORTS][MAP_SIZE] = {{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
+{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
+{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
+{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0}};
 
 void SetupInput() {
     for (int port = 0; port < NUM_PORTS; port++) {

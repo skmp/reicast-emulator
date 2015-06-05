@@ -144,8 +144,8 @@ u32 JMapAxis[NUM_PORTS][MAP_SIZE] = {{Axis_X, Axis_Y, 0, 0, 0, 0, 0, 0, 0, 0},
 //const u32 JMapAxis_PS3[MAP_SIZE] ={Axis_X, Axis_Y, DPad2_Up, DPad2_Down, 0, 0, 0, 0, 0, 0};
 
 //TODO: Initialize defaults in better way
-const u32* JMapBtn[NUM_PORTS] = {JMapButtons[0], JMapButtons[1], JMapButtons[2], JMapButtons[3]};
-const u32* JMapAxis[NUM_PORTS] = {JMapAxis[0], JMapAxis[1], JMapAxis[2], JMapAxis[3]};
+u32* JMapBtn[NUM_PORTS] = {JMapButtons[0], JMapButtons[1], JMapButtons[2], JMapButtons[3]};
+u32* JMapAxis[NUM_PORTS] = {JMapAxis[0], JMapAxis[1], JMapAxis[2], JMapAxis[3]};
 
 void SetupInput() {
     for (int port = 0; port < NUM_PORTS; port++) {
@@ -465,7 +465,8 @@ bool HandleJoystick(u32 port) {
                     u32 mo = JMapBtn[port][JE.number]&0xFFFF;
 
                     //TODO: Actually map a Quit button, this is the actual PS3 button on the PS3 controller...
-                    if ((port == 0) && (JE.number == Quit) && (JE.value) && (JMapBtn[port] == JMapBtn_PS3)) {
+                    if ((port == 0) && (JE.number == Quit) && (JE.value) ) //&& (JMapBtn[port] == JMapBtn_PS3)
+                    {
                         printf("Detected Quit button!");
                         die("Dying an honorable death, via controller mapping.  QAPLA!!");
                     }

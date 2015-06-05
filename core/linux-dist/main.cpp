@@ -171,13 +171,13 @@ void SetupInput() {
                 //button.0="Btn_Z"
                 //axis.0="Axis_X"
                 string cfgControlMapName = cfgLoadStr("controlmap", "name", "controlmap.name.invalid");
-                printf("emu.cfg file entry [controlmap]name=%s\n", cfgControlMapName);
+                printf("emu.cfg file entry [controlmap]name=" + cfgControlMapName);
 
                 string cfgControlMapButton0 = cfgLoadStr("controlmap", "button.0", NULL);
-                printf("emu.cfg file entry [controlmap]button.0=%s\n", cfgControlMapButton0);
+                printf("emu.cfg file entry [controlmap]button.0=" + cfgControlMapButton0);
                 
                 string cfgControlMapButton1 = cfgLoadStr("controlmap", "button.1", NULL);
-                printf("emu.cfg file entry [controlmap]button.1=%s\n", cfgControlMapButton1);
+                printf("emu.cfg file entry [controlmap]button.1=" + cfgControlMapButton1);
                 
             }
 

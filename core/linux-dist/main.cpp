@@ -187,7 +187,9 @@ void SetupInput() {
                     //for 0 to MAP_SIZE, check for mapped buttons:
                     sprintf(stringConvertScratch, "button.%d", i);
                     string cfgControlMapButton = cfgLoadStr((new string(Name))->c_str(), stringConvertScratch, NULL);
-                    if (cfgControlMapButton != NULL) {
+                    if (cfgControlMapButton.isEmpty) {
+                        printf("%d mapping not found or empty / malformed", i);
+                    } else {
                         printf("emu.cfg custom mapping entry found for your controller: [%s]button.%d=%s\n", Name, i, cfgControlMapButton.c_str());
                         switch (cfgControlMapButton) {
                             case "Nothing":

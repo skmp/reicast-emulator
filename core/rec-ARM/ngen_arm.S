@@ -1,3 +1,6 @@
+@@TODO: Need to get the latest version of this file from the upstream master working, but it always fails compilation on any of the preprocessor macro functions on the RPI2.
+@@This is the older version of this file that compiles on the Raspberry Pi 2, from upstream SHA 7ef9de3:
+
 @@@@@@@@@@@@@
 
 @@

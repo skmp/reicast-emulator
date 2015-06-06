@@ -22,10 +22,12 @@ Plugins:
 */
 void UpdateInputState(u32 port);
 
-extern u16 kcode[4];
-extern u32 vks[4];
-extern s8 joyx[4],joyy[4];
-extern u8 rt[4],lt[4];
+#define NUM_PORTS 4
+
+extern u16 kcode[NUM_PORTS];
+extern u32 vks[NUM_PORTS];
+extern s8 joyx[NUM_PORTS],joyy[NUM_PORTS];
+extern u8 rt[NUM_PORTS],lt[NUM_PORTS];
 
 u8 GetBtFromSgn(s8 val)
 {
@@ -68,12 +70,14 @@ void mcfg_Create(MapleDeviceType type,u32 bus,u32 port)
 
 void mcfg_CreateDevices()
 {
-	mcfg_Create(MDT_SegaController,0,5);
+    for (int i = 0; i < NUM_PORTS; i++) {
+	mcfg_Create(MDT_SegaController,i,5);
 
 	#ifdef HAS_VMU
-	mcfg_Create(MDT_SegaVMU,0,0);
-	mcfg_Create(MDT_SegaVMU,0,1);
+	mcfg_Create(MDT_SegaVMU,i,0);
+	mcfg_Create(MDT_SegaVMU,i,1);
 	#endif
+    }
 }
 
 void mcfg_DestroyDevices()

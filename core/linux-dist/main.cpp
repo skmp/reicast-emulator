@@ -479,11 +479,10 @@ bool HandleJoystick(u32 port) {
                         }
                     } else if (mt == 1) {
                         //					  printf("Mapped to %d %d\n",mo,JE.value?255:0);
-//                        if ((mo == 2) && (port == 0) && (JE.value)) {
-//                            printf("Detected Port 0 Quit button!");
-//                            die("Dying an honorable death, via controller mapping.  QAPLA!!");
-//                        } else 
-                            if (mo == 0) {
+                        if ((mo == 2) && (port == 0) && (JE.value)) {
+                            printf("Detected Port 0 Quit button!");
+                            die("Dying an honorable death, via controller mapping.  QAPLA!!");
+                        } else if (mo == 0) {
                             lt[port] = JE.value ? 255 : 0;
                         }
                         else if (mo == 1) {

@@ -479,8 +479,7 @@ bool HandleJoystick(u32 port) {
                     u32 mt = JMapBtn[port][JE.number] >> 16;
                     u32 mo = JMapBtn[port][JE.number]&0xFFFF;
 
-                    //TODO: Actually map a Quit button, this is the actual PS3 button on the PS3 controller...
-                    if ((port == 0) && (JE.number == Quit) && (JE.value)) //&& (JMapBtn[port] == JMapBtn_PS3)
+                    if ((port == 0) && (JE.number == JMapBtn["Quit"]) && (JE.value)) 
                     {
                         printf("Detected Quit button!");
                         die("Dying an honorable death, via controller mapping.  QAPLA!!");

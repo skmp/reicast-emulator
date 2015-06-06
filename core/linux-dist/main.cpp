@@ -250,7 +250,7 @@ void checkForCustomControlMapping(int port, const char* Name, int controllerInde
         printf("emu.cfg custom mapping entry found for your port %d controller: [%s]%s.%d=%s\n", port, Name, prefix, controllerIndex, cfgControlMapButton.c_str());
         //For each potential defined emulator control, see if this emu.cfg entry matches up
 
-        typedef std::map<std::string, int>::iterator it_type;
+        typedef std::map<const char*, u32>::iterator it_type;
         for (it_type iterator = dreamcastControlNameToEnumMapping.begin(); iterator != dreamcastControlNameToEnumMapping.end(); iterator++) {
             // iterator->first = key
             // iterator->second = value

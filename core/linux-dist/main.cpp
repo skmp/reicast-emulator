@@ -245,7 +245,7 @@ void checkForCustomControlMapping(int port, const char* Name, int controllerInde
     sprintf(stringConvertScratch, "%s.%d", prefix, controllerIndex);
     string cfgControlMapButton = cfgLoadStr(Name, stringConvertScratch, NULL);
     if (cfgControlMapButton.empty()) {
-        printf("No %s, ", cfgControlMapButton);
+        printf("No %s, ", cfgControlMapButton.c_str());
     } else {
         //For each potential defined emulator control, see if this emu.cfg entry matches up
         typedef std::map<const char*, u32>::iterator it_type;

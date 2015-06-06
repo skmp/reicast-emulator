@@ -83,7 +83,6 @@ s8 joyx[NUM_PORTS], joyy[NUM_PORTS];
 u8 rt[NUM_PORTS], lt[NUM_PORTS];
 
 enum DCPad {
-    Nothing = 0,
     Btn_C = 1,
     Btn_B = 1 << 1,
     Btn_A = 1 << 2,
@@ -103,16 +102,13 @@ enum DCPad {
 
     Axis_LT = 0x10000,
     Axis_RT = 0x10001,
-
-    Quit = 0x10002,
-
     Axis_X = 0x20000,
     Axis_Y = 0x20001
 };
 
 map<const char*, u32> createControlNameMap() {
     map<const char*, u32> m;
-    m["Nothing"] = Nothing;
+    m["Nothing"] = 0;
     m["Btn_C"] = Btn_C;
     m["Btn_B"] = Btn_B;
     m["Btn_A"] = Btn_A;
@@ -133,7 +129,7 @@ map<const char*, u32> createControlNameMap() {
     m["Axis_RT"] = Axis_RT;
     m["Axis_X"] = Axis_X;
     m["Axis_Y"] = Axis_Y;
-    m["Quit"] = Quit;
+    m["Quit"] = 0x10002;
     return m;
 }
 map<const char*, u32> dreamcastControlNameToEnumMapping = createControlNameMap();

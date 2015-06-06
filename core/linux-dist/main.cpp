@@ -191,11 +191,15 @@ void SetupInput() {
                 //button.0=Btn_Z
                 //axis.0=Axis_X
                 void checkForCustomControlMapping(u32, const char*, int, const char*);
-
+                wchar* trim_ws(wchar* str);
+                
                 for (int i = 0; i < MAP_SIZE; i++) {
+                    //Trim dem trailing spaces for strange controller names
+                    wchar* trimmedName = trim_ws(Name);
+                    std::string trimmedNameString = std::string(trimmedName);
 
-                    checkForCustomControlMapping(port, (new string(Name))->c_str(), i, "button");
-                    checkForCustomControlMapping(port, (new string(Name))->c_str(), i, "axis");
+                    checkForCustomControlMapping(port, trimmedNameString.c_str(), i, "button");
+                    checkForCustomControlMapping(port, trimmedNameString.c_str(), i, "axis");
                 }
                 printf("Controller mapping for port %d complete\n", port);
             }
@@ -484,8 +488,7 @@ bool HandleJoystick(u32 port) {
                             die("Dying an honorable death, via controller mapping.  QAPLA!!");
                         } else if (mo == 0) {
                             lt[port] = JE.value ? 255 : 0;
-                        }
-                        else if (mo == 1) {
+                        } else if (mo == 1) {
                             rt[port] = JE.value ? 255 : 0;
                         }
                     }

@@ -107,7 +107,7 @@ enum DCPad {
     Axis_X = 0x20000,
     Axis_Y = 0x20001,
 
-    Quit = 16
+    Quit = 0x50000
 };
 
 map<const char*, u32> createControlNameMap() {
@@ -479,12 +479,6 @@ bool HandleJoystick(u32 port) {
                     u32 mt = JMapBtn[port][JE.number] >> 16;
                     u32 mo = JMapBtn[port][JE.number]&0xFFFF;
 
-                    if ((port == 0) && (JE.number == JMapBtn["Quit"]) && (JE.value)) 
-                    {
-                        printf("Detected Quit button!");
-                        die("Dying an honorable death, via controller mapping.  QAPLA!!");
-                    }
-
                     //				 printf("BUTTON %d,%d\n",JE.number,JE.value);
 
                     if (mt == 0) {
@@ -499,6 +493,11 @@ bool HandleJoystick(u32 port) {
                             lt[port] = JE.value ? 255 : 0;
                         else if (mo == 1)
                             rt[port] = JE.value ? 255 : 0;
+                    } else if (mt == 5) {
+                        if ((port == 0) && (JE.value)) {
+                            printf("Detected Port 0 Quit button!");
+                            die("Dying an honorable death, via controller mapping.  QAPLA!!");
+                        }
                     }
                 }
                     break;

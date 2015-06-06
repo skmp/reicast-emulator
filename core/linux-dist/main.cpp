@@ -110,7 +110,7 @@ enum DCPad {
     Quit = 16
 };
 
-map<const char*, enum> dreamcastControlNameToEnumMapping = {
+map<const char*, u32> dreamcastControlNameToEnumMapping = {
     {"Nothing", Nothing},
     {"Btn_C", Btn_C},
     {"Btn_B", Btn_B},

@@ -212,6 +212,7 @@ void SetupInput() {
                     checkForCustomControlMapping(port, (new string(Name))->c_str(), i, "button");
                     checkForCustomControlMapping(port, (new string(Name))->c_str(), i, "axis");
                 }
+                printf("Controller mapping for port %d complete\n", port);
             }
         }
 #endif

@@ -202,9 +202,12 @@ void SetupInput() {
                 //[PLAYSTATION(R)3 Controller]
                 //button.0=Btn_Z
                 //axis.0=Axis_X
+                void checkForCustomControlMapping(int, const char*, int, const char*);
+
                 for (int i = 0; i < MAP_SIZE; i++) {
-                    checkForCustomControlMapping(port, new string(Name)->c_str(), i, "button");
-                    checkForCustomControlMapping(port, new string(Name)->c_str(), i, "axis");
+
+                    checkForCustomControlMapping(port, (new string(Name))->c_str(), i, "button");
+                    checkForCustomControlMapping(port, (new string(Name))->c_str(), i, "axis");
                 }
             }
         }
@@ -234,7 +237,6 @@ void SetupInput() {
     }
 }
 
-void checkForCustomControlMapping(int, const char*, int, const char*);
 void checkForCustomControlMapping(int port, const char* Name, int controllerIndex, const char* prefix) {
     //for 0 to MAP_SIZE, check for mapped buttons:
     sprintf(stringConvertScratch, "%s.%d", prefix, controllerIndex);
@@ -244,12 +246,14 @@ void checkForCustomControlMapping(int port, const char* Name, int controllerInde
     } else {
         printf("emu.cfg custom mapping entry found for your port %d controller: [%s]%s.%d=%s\n", port, Name, prefix, controllerIndex, cfgControlMapButton.c_str());
         //For each potential defined emulator control, see if this emu.cfg entry matches up
-        for (auto const &iterator : dreamcastControlNameToEnumMapping) {
-            //iterator.first = key
-            //iterator.second = value
-            if (cfgControlMapButton == iterator.first) {
+
+        typedef std::map<std::string, int>::iterator it_type;
+        for (it_type iterator = dreamcastControlNameToEnumMapping.begin(); iterator != dreamcastControlNameToEnumMapping.end(); iterator++) {
+            // iterator->first = key
+            // iterator->second = value
+            if (cfgControlMapButton == iterator->first) {
                 printf("emu.cfg mapping your controller button %d to %s\n", controllerIndex, (new string(cfgControlMapButton))->c_str());
-                JMapBtn[port][controllerIndex] = iterator.second;
+                JMapBtn[port][controllerIndex] = iterator->second;
             }
         }
     }

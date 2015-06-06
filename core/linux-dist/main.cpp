@@ -136,7 +136,7 @@ map<const char*, u32> createControlNameMap() {
     m["Quit"] = Quit;
     return m;
 }
-map<int, int> dreamcastControlNameToEnumMapping = createControlNameMap();
+map<const char*, u32> dreamcastControlNameToEnumMapping = createControlNameMap();
 
 void emit_WriteCodeCache();
 

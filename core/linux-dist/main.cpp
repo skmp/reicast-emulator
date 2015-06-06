@@ -144,19 +144,8 @@ char stringConvertScratch[32];
 static int audio_fd = -1;
 #endif
 
-
 #define MAP_SIZE 32
 
-//const u32 JMapBtn_360[MAP_SIZE] ={Btn_A, Btn_B, Btn_X, Btn_Y, 0, 0, 0, Btn_Start, 0, 0};
-//
-//const u32 JMapAxis_360[MAP_SIZE] ={Axis_X, Axis_Y, Axis_LT, 0, 0, Axis_RT, DPad_Left, DPad_Up, 0, 0};
-//
-////PS3 controller mappings
-//const u32 JMapBtn_PS3[MAP_SIZE] ={Btn_Z, Btn_C, Btn_D, Btn_Start, DPad_Up, DPad_Right, DPad_Down, DPad_Left, Axis_LT, Axis_RT, DPad2_Left, DPad2_Right, Btn_Y, Btn_B, Btn_A, Btn_X, Quit};
-//
-//const u32 JMapAxis_PS3[MAP_SIZE] ={Axis_X, Axis_Y, DPad2_Up, DPad2_Down, 0, 0, 0, 0, 0, 0};
-
-//TODO: Initialize defaults in better way
 u32 JMapBtn[NUM_PORTS][MAP_SIZE] = {
     {Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start},
     {Btn_Y, Btn_B, Btn_A, Btn_X, 0, 0, 0, 0, 0, Btn_Start},
@@ -250,7 +239,7 @@ void checkForCustomControlMapping(u32 port, const char* Name, int controllerInde
             // iterator->first = key
             // iterator->second = value
             if (cfgControlMapButton == iterator->first) {
-                printf("Mapping port %d controller: [%s]%s.%d=%s, ", port, Name, prefix, controllerIndex, cfgControlMapButton.c_str());
+                printf("P%d.%s.%d=%s, ", port, prefix, controllerIndex, cfgControlMapButton.c_str());
                 JMapBtn[port][controllerIndex] = iterator->second;
             }
         }

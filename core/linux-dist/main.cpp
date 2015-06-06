@@ -239,8 +239,12 @@ void checkForCustomControlMapping(u32 port, const char* Name, int controllerInde
             // iterator->first = key
             // iterator->second = value
             if (cfgControlMapButton == iterator->first) {
-                JMapBtn[port][controllerIndex] = iterator->second;
-                printf("P%d.%s.%d=%s(%d), ", port, prefix, controllerIndex, cfgControlMapButton.c_str(), JMapBtn[port][controllerIndex]);
+                if (prefix == "axis") {
+                    JMapAxis[port][controllerIndex] = iterator->second;
+                } else {
+                    JMapBtn[port][controllerIndex] = iterator->second;
+                }
+                printf("P%d.%s.%d=%s(%d), ", port, prefix, controllerIndex, cfgControlMapButton.c_str(), iterator->second);
             }
         }
     }

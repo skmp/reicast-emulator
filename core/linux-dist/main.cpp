@@ -245,22 +245,19 @@ void checkForCustomControlMapping(int port, const char* Name, int controllerInde
     sprintf(stringConvertScratch, "%s.%d", prefix, controllerIndex);
     string cfgControlMapButton = cfgLoadStr(Name, stringConvertScratch, NULL);
     if (cfgControlMapButton.empty()) {
-        printf("%d mapping not found or empty / malformed\n", controllerIndex);
+        printf("No %s, ", cfgControlMapButton);
     } else {
-        printf("emu.cfg custom mapping entry found for your port %d controller: [%s]%s.%d=%s\n", port, Name, prefix, controllerIndex, cfgControlMapButton.c_str());
         //For each potential defined emulator control, see if this emu.cfg entry matches up
-
         typedef std::map<const char*, u32>::iterator it_type;
         for (it_type iterator = dreamcastControlNameToEnumMapping.begin(); iterator != dreamcastControlNameToEnumMapping.end(); iterator++) {
             // iterator->first = key
             // iterator->second = value
             if (cfgControlMapButton == iterator->first) {
-                printf("emu.cfg mapping your controller button %d to %s\n", controllerIndex, (new string(cfgControlMapButton))->c_str());
+                printf("Mapping port %d controller: [%s]%s.%d=%s, ", port, Name, prefix, controllerIndex, cfgControlMapButton.c_str());
                 JMapBtn[port][controllerIndex] = iterator->second;
             }
         }
     }
-
 }
 
 bool HandleKb(u32 port) {

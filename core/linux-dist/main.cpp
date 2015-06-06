@@ -203,8 +203,8 @@ void SetupInput() {
                 //button.0=Btn_Z
                 //axis.0=Axis_X
                 for (int i = 0; i < MAP_SIZE; i++) {
-                    checkForCustomControlMapping(port, i, "button");
-                    checkForCustomControlMapping(port, i, "axis");
+                    checkForCustomControlMapping(port, new string(Name)->c_str(), i, "button");
+                    checkForCustomControlMapping(port, new string(Name)->c_str(), i, "axis");
                 }
             }
         }
@@ -234,14 +234,15 @@ void SetupInput() {
     }
 }
 
-void checkForCustomControlMapping(int port, string Name, int controllerIndex, string prefix) {
+void checkForCustomControlMapping(int, const char*, int, const char*);
+void checkForCustomControlMapping(int port, const char* Name, int controllerIndex, const char* prefix) {
     //for 0 to MAP_SIZE, check for mapped buttons:
     sprintf(stringConvertScratch, "%s.%d", prefix, controllerIndex);
-    string cfgControlMapButton = cfgLoadStr(Name->c_str(), stringConvertScratch, NULL);
+    string cfgControlMapButton = cfgLoadStr(Name, stringConvertScratch, NULL);
     if (cfgControlMapButton.empty()) {
         printf("%d mapping not found or empty / malformed\n", controllerIndex);
     } else {
-        printf("emu.cfg custom mapping entry found for your port %d controller: [%s]%s.%d=%s\n", port, Name.c_str(), prefix.c_str(), controllerIndex, cfgControlMapButton.c_str());
+        printf("emu.cfg custom mapping entry found for your port %d controller: [%s]%s.%d=%s\n", port, Name, prefix, controllerIndex, cfgControlMapButton.c_str());
         //For each potential defined emulator control, see if this emu.cfg entry matches up
         for (auto const &iterator : dreamcastControlNameToEnumMapping) {
             //iterator.first = key

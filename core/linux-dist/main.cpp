@@ -205,7 +205,7 @@ void SetupInput() {
                 //[PLAYSTATION(R)3 Controller]
                 //button.0=Btn_Z
                 //axis.0=Axis_X
-                void checkForCustomControlMapping(int, const char*, int, const char*);
+                void checkForCustomControlMapping(u32, const char*, int, const char*);
 
                 for (int i = 0; i < MAP_SIZE; i++) {
 

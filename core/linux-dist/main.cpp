@@ -84,7 +84,6 @@ u8 rt[NUM_PORTS], lt[NUM_PORTS];
 
 enum DCPad {
     Nothing = 0,
-
     Btn_C = 1,
     Btn_B = 1 << 1,
     Btn_A = 1 << 2,
@@ -104,10 +103,11 @@ enum DCPad {
 
     Axis_LT = 0x10000,
     Axis_RT = 0x10001,
-    Axis_X = 0x20000,
-    Axis_Y = 0x20001,
 
-    Quit = 0x50000
+    Quit = 0x10002,
+
+    Axis_X = 0x20000,
+    Axis_Y = 0x20001
 };
 
 map<const char*, u32> createControlNameMap() {
@@ -241,7 +241,7 @@ void SetupInput() {
     }
 }
 
-void checkForCustomControlMapping(int port, const char* Name, int controllerIndex, const char* prefix) {
+void checkForCustomControlMapping(u32 port, const char* Name, int controllerIndex, const char* prefix) {
     //for 0 to MAP_SIZE, check for mapped buttons:
     sprintf(stringConvertScratch, "%s.%d", prefix, controllerIndex);
     string cfgControlMapButton = cfgLoadStr(Name, stringConvertScratch, NULL);
@@ -489,14 +489,14 @@ bool HandleJoystick(u32 port) {
                             kcode[port] |= mo;
                     } else if (mt == 1) {
                         //					  printf("Mapped to %d %d\n",mo,JE.value?255:0);
-                        if (mo == 0)
-                            lt[port] = JE.value ? 255 : 0;
-                        else if (mo == 1)
-                            rt[port] = JE.value ? 255 : 0;
-                    } else if (mt == 5) {
-                        if ((port == 0) && (JE.value)) {
+                        if ((mo == 2) && (port == 0) && (JE.value)) {
                             printf("Detected Port 0 Quit button!");
                             die("Dying an honorable death, via controller mapping.  QAPLA!!");
+                        } else if (mo == 0) {
+                            lt[port] = JE.value ? 255 : 0;
+                        }
+                        else if (mo == 1) {
+                            rt[port] = JE.value ? 255 : 0;
                         }
                     }
                 }

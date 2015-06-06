@@ -110,30 +110,33 @@ enum DCPad {
     Quit = 16
 };
 
-map<const char*, u32> dreamcastControlNameToEnumMapping = {
-    {"Nothing", Nothing},
-    {"Btn_C", Btn_C},
-    {"Btn_B", Btn_B},
-    {"Btn_A", Btn_A},
-    {"Btn_Start", Btn_Start},
-    {"DPad_Up", DPad_Up},
-    {"DPad_Down", DPad_Down},
-    {"DPad_Left", DPad_Left},
-    {"DPad_Right", DPad_Right},
-    {"Btn_Z", Btn_Z},
-    {"Btn_Y", Btn_Y},
-    {"Btn_X", Btn_X},
-    {"Btn_D", Btn_D},
-    {"DPad2_Up", DPad2_Up},
-    {"DPad2_Down", DPad2_Down},
-    {"DPad2_Left", DPad2_Left},
-    {"DPad2_Right", DPad2_Right},
-    {"Axis_LT", Axis_LT},
-    {"Axis_RT", Axis_RT},
-    {"Axis_X", Axis_X},
-    {"Axis_Y", Axis_Y},
-    {"Quit", Quit}
-};
+map<const char*, u32> createControlNameMap() {
+    map<const char*, u32> m;
+    m["Nothing"] = Nothing;
+    m["Btn_C"] = Btn_C;
+    m["Btn_B"] = Btn_B;
+    m["Btn_A"] = Btn_A;
+    m["Btn_Start"] = Btn_Start;
+    m["DPad_Up"] = DPad_Up;
+    m["DPad_Down"] = DPad_Down;
+    m["DPad_Left"] = DPad_Left;
+    m["DPad_Right"] = DPad_Right;
+    m["Btn_Z"] = Btn_Z;
+    m["Btn_Y"] = Btn_Y;
+    m["Btn_X"] = Btn_X;
+    m["Btn_D"] = Btn_D;
+    m["DPad2_Up"] = DPad2_Up;
+    m["DPad2_Down"] = DPad2_Down;
+    m["DPad2_Left"] = DPad2_Left;
+    m["DPad2_Right"] = DPad2_Right;
+    m["Axis_LT"] = Axis_LT;
+    m["Axis_RT"] = Axis_RT;
+    m["Axis_X"] = Axis_X;
+    m["Axis_Y"] = Axis_Y;
+    m["Quit"] = Quit;
+    return m;
+}
+map<int, int> dreamcastControlNameToEnumMapping = createControlNameMap();
 
 void emit_WriteCodeCache();
 

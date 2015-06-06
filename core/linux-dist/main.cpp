@@ -18,7 +18,7 @@
 #include "bcm_host.h"
 
 #include <stdio.h>
-
+#include <map>
 
 #if defined(SUPPORT_X11)
 #include <X11/Xlib.h>
@@ -30,7 +30,6 @@
 #include <GL/glx.h>
 #endif
 
-#include <map>
 map<int, int> x11_keymap;
 #endif
 
@@ -111,11 +110,37 @@ enum DCPad {
     Quit = 16
 };
 
+map<string, int> dreamcastControlNameToEnumMapping = {
+    {"Nothing", Nothing},
+    {"Btn_C", Btn_C},
+    {"Btn_B", Btn_B},
+    {"Btn_A", Btn_A},
+    {"Btn_Start", Btn_Start},
+    {"DPad_Up", DPad_Up},
+    {"DPad_Down", DPad_Down},
+    {"DPad_Left", DPad_Left},
+    {"DPad_Right", DPad_Right},
+    {"Btn_Z", Btn_Z},
+    {"Btn_Y", Btn_Y},
+    {"Btn_X", Btn_X},
+    {"Btn_D", Btn_D},
+    {"DPad2_Up", DPad2_Up},
+    {"DPad2_Down", DPad2_Down},
+    {"DPad2_Left", DPad2_Left},
+    {"DPad2_Right", DPad2_Right},
+    {"Axis_LT", Axis_LT},
+    {"Axis_RT", Axis_RT},
+    {"Axis_X", Axis_X},
+    {"Axis_Y", Axis_Y},
+    {"Quit", Quit}
+};
 
 void emit_WriteCodeCache();
 
 static int JoyFD[NUM_PORTS] = {-1, -1, -1, -1}; // Joystick file descriptors
 static int kbfd = -1;
+char stringConvertScratch[32];
+
 #ifdef TARGET_PANDORA
 static int audio_fd = -1;
 #endif
@@ -153,7 +178,6 @@ void SetupInput() {
         lt[port] = 0;
 
         // Open joystick devices!
-        char stringConvertScratch[32];
         sprintf(stringConvertScratch, "/dev/input/js%d", port);
         JoyFD[port] = open(stringConvertScratch, O_RDONLY);
 #if HOST_OS != OS_DARWIN        
@@ -170,7 +194,7 @@ void SetupInput() {
             ioctl(JoyFD[port], JSIOCGBUTTONS, &ButtonCount);
             ioctl(JoyFD[port], JSIOCGNAME(sizeof (Name)), &Name);
 
-            printf("SDK port: Found '%s' joystick with %d axis and %d buttons\n", Name, AxisCount, ButtonCount);
+            printf("SDK port %d: Found '%s' joystick with %d axis and %d buttons\n", port, Name, AxisCount, ButtonCount);
 
             if (cfgOpen()) {
                 //Map controllers from config file, its gonna have to be strings mapped to the enum so the cfg makes sense
@@ -178,53 +202,11 @@ void SetupInput() {
                 //[PLAYSTATION(R)3 Controller]
                 //button.0=Btn_Z
                 //axis.0=Axis_X
-
-                //                string cfgControlMapName = cfgLoadStr("controlmap", "name", "controlmap.name.invalid");
-                //                printf("emu.cfg file entry [controlmap]name=%s\n", cfgControlMapName.c_str());
-
-
                 for (int i = 0; i < MAP_SIZE; i++) {
-                    //for 0 to MAP_SIZE, check for mapped buttons:
-                    sprintf(stringConvertScratch, "button.%d", i);
-                    string cfgControlMapButton = cfgLoadStr((new string(Name))->c_str(), stringConvertScratch, NULL);
-                    if (cfgControlMapButton.empty()) {
-                        printf("%d mapping not found or empty / malformed", i);
-                    } else {
-                        printf("emu.cfg custom mapping entry found for your controller: [%s]button.%d=%s\n", Name, i, cfgControlMapButton.c_str());
-                    }
-                    if (cfgControlMapButton == "Nothing") {
-                        printf("emu.cfg mapping your controller button %d to Nothing\n", i);
-                        JMapBtn[port][i] = Nothing;
-                    } else if (cfgControlMapButton == "Btn_Z") {
-                        printf("emu.cfg mapping your controller button %d to %s\n", i, (new string(cfgControlMapButton))->c_str());
-                        JMapBtn[port][i] = Btn_Z;
-                    }
-
-
-                    //for 0 to MAP_SIZE, check for mapped axes:
-
+                    checkForCustomControlMapping(port, i, "button");
+                    checkForCustomControlMapping(port, i, "axis");
                 }
-
-
-
-                //                string cfgControlMapButton1 = cfgLoadStr("controlmap", "button.1", NULL);
-                //                printf("emu.cfg file entry [controlmap]button.1=%s\n", cfgControlMapButton1.c_str());
-
             }
-
-
-            //            if (strcmp(Name, "Microsoft X-Box 360 pad") == 0) {
-            //                JMapBtn[port] = JMapBtn_360;
-            //                JMapAxis[port] = JMapAxis_360;
-            //                printf("Using Xbox 360 map\n");
-            //            }
-            //            if ((strcmp(Name, "PLAYSTATION(R)3 Controller") == 0) ||
-            //                    (strcmp(Name, "Sony Computer Entertainment Wireless Controller") == 0) ||
-            //                    (strcmp(Name, "Sony PLAYSTATION(R)3 Controller") == 0)) {
-            //                JMapBtn[port] = JMapBtn_PS3;
-            //                JMapAxis[port] = JMapAxis_PS3;
-            //                printf("Using PS3 map\n");
-            //            }
         }
 #endif
     }
@@ -250,6 +232,27 @@ void SetupInput() {
             perror("evdev open");
 #endif
     }
+}
+
+void checkForCustomControlMapping(int port, string Name, int controllerIndex, string prefix) {
+    //for 0 to MAP_SIZE, check for mapped buttons:
+    sprintf(stringConvertScratch, "%s.%d", prefix, controllerIndex);
+    string cfgControlMapButton = cfgLoadStr(Name->c_str(), stringConvertScratch, NULL);
+    if (cfgControlMapButton.empty()) {
+        printf("%d mapping not found or empty / malformed\n", controllerIndex);
+    } else {
+        printf("emu.cfg custom mapping entry found for your port %d controller: [%s]%s.%d=%s\n", port, Name.c_str(), prefix.c_str(), controllerIndex, cfgControlMapButton.c_str());
+        //For each potential defined emulator control, see if this emu.cfg entry matches up
+        for (auto const &iterator : dreamcastControlNameToEnumMapping) {
+            //iterator.first = key
+            //iterator.second = value
+            if (cfgControlMapButton == iterator.first) {
+                printf("emu.cfg mapping your controller button %d to %s\n", controllerIndex, (new string(cfgControlMapButton))->c_str());
+                JMapBtn[port][controllerIndex] = iterator.second;
+            }
+        }
+    }
+
 }
 
 bool HandleKb(u32 port) {

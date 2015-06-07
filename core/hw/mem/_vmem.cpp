@@ -553,15 +553,20 @@ error:
         unlink(path.c_str());
         verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
 #elif !defined(_ANDROID)
-		fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
+		//shm is borken on the rapi
+		//using a file is slower, but works
+		//file in tmpfs would be better?
+		fd = -1;shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
+		if (fd != -1) { verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0); }
 		shm_unlink("/dcnzorz_mem");
 		if (fd==-1)
 		{
+			printf("Falling back to file allocation..\n");
 			fd = open("dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
+			verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
 			unlink("dcnzorz_mem");
 		}
 
-		verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
 #else
 
 		fd = ashmem_create_region(0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE);

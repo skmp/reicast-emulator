@@ -1015,7 +1015,7 @@ int main(int argc, wchar* argv[]) {
         
         string cfgHome = cfgLoadStr("config", "homedir", NULL);
         if (!cfgHome.empty()) {
-            printf("Custom homedir found: %s, ", cfgHome);
+            printf("Custom homedir found: %s, ", cfgHome.c_str());
             home = cfgHome; //Override actual current user homedir with config-speficied homedir
         }
     }

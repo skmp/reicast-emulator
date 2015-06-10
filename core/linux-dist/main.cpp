@@ -140,6 +140,8 @@ static int JoyFD[NUM_PORTS] = {-1, -1, -1, -1}; // Joystick file descriptors
 static int kbfd = -1;
 char stringConvertScratch[32];
 
+bool configOk = false;
+
 #ifdef TARGET_PANDORA
 static int audio_fd = -1;
 #endif
@@ -184,7 +186,7 @@ void SetupInput() {
 
             printf("SDK port %d: Found '%s' joystick with %d axis and %d buttons\n", port, Name, AxisCount, ButtonCount);
 
-            if (cfgOpen()) {
+            if (configOk) {
                 //Map controllers from config file, its gonna have to be strings mapped to the enum so the cfg makes sense
                 //Should be in this format:
                 //[PLAYSTATION(R)3 Controller]
@@ -1001,14 +1003,26 @@ int main(int argc, wchar* argv[]) {
     os_InitAudio();
 #endif
 
+    configOk = cfgOpen();
+
 #if defined(USES_HOMEDIR) && HOST_OS != OS_DARWIN
     string home = (string) getenv("HOME");
+    if (configOk) {
+        
+        string cfgHome = cfgLoadStr("config", "homedir", NULL);
+        if (!cfgHome.empty()) {
+            printf("Custom homedir found: %s, ", cfgHome);
+            home = cfgHome; //Override actual current user homedir with config-speficied homedir
+        }
+    }
+
     if (home.c_str()) {
         home += "/.reicast";
         mkdir(home.c_str(), 0755); // create the directory if missing
         SetHomeDir(home);
-    } else
+    } else {
         SetHomeDir(".");
+    }
 #else
     SetHomeDir(".");
 #endif
@@ -1070,11 +1084,11 @@ u32 os_Push(void* frame, u32 samples, bool wait) {
 }
 #endif
 
-int get_mic_data(u8* buffer) {
+int get_mic_data(u8 * buffer) {
     return 0;
 }
 
-int push_vmu_screen(u8* buffer) {
+int push_vmu_screen(u8 * buffer) {
     return 0;
 }
 

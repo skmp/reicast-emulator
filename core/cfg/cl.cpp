@@ -135,6 +135,8 @@ bool ParseCommandLine(int argc,wchar* argv[])
 			cfgSetVitual("config", "reios.enabled", "1");
 			cfgSetVitual("reios", "ElfFile", *arg);
 		}
+                
+                //TODO: Add -home parameter to specify home dir since RPI Reicast must be run with sudo
 		else
 		{
 			printf("wtf %s is suposed to do ?\n",*arg);

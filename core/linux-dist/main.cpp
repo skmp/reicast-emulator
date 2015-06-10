@@ -1003,9 +1003,13 @@ int main(int argc, wchar* argv[]) {
     os_InitAudio();
 #endif
 
+    //TODO: Determine if this causes issues parsing here and still allowing dc_init() to do it too...
+    ParseCommandLine(argc,argv);
+    
     configOk = cfgOpen();
 
 #if defined(USES_HOMEDIR) && HOST_OS != OS_DARWIN
+    
     string home = (string) getenv("HOME");
     if (configOk) {
         

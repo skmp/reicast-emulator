@@ -191,8 +191,8 @@ void SetupInput() {
                 //button.0=Btn_Z
                 //axis.0=Axis_X
                 void checkForCustomControlMapping(u32, const char*, int, const char*);
-                wchar* trim_ws(wchar* str);
-                
+                wchar * trim_ws(wchar * str);
+
                 for (int i = 0; i < MAP_SIZE; i++) {
                     //Trim dem trailing spaces for strange controller names
                     wchar* trimmedName = trim_ws(Name);
@@ -1034,11 +1034,11 @@ int main(int argc, wchar* argv[]) {
     x11_keymap[36] = Btn_Start;
 #endif
 
-    printf("Home dir is: %s\n", GetPath("/").c_str());
-
     common_linux_setup();
 
     SetupInput();
+
+    printf("Home dir is: %s\n", GetPath("/").c_str());
 
     settings.profile.run_counts = 0;
 

@@ -25,7 +25,7 @@ LDFLAGS	:=	-g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 CXXFLAGS := -g -O3  -D RELEASE -c -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7  
 CXXFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CXXFLAGS += -ffast-math -ftree-vectorize -fprefetch-loop-arrays 
-CXXFLAGS += -DUSE_OSS -DTARGET_RPI
+CXXFLAGS += -DUSE_OSS -DTARGET_RPI -DUSES_HOMEDIR
 #-std=c++0x
 
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-exceptions -fno-rtti

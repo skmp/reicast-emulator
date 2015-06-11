@@ -186,7 +186,7 @@ void SetupInput() {
 
             printf("SDK port %d: Found '%s' joystick with %d axis and %d buttons\n", port, Name, AxisCount, ButtonCount);
 
-            if (configOk) {
+            if (cfgOpen()) {
                 //Map controllers from config file, its gonna have to be strings mapped to the enum so the cfg makes sense
                 //Should be in this format:
                 //[PLAYSTATION(R)3 Controller]
@@ -1006,12 +1006,10 @@ int main(int argc, wchar* argv[]) {
     //TODO: Determine if this causes issues parsing here and still allowing dc_init() to do it too...
     ParseCommandLine(argc,argv);
     
-    configOk = cfgOpen();
-
 #if defined(USES_HOMEDIR) && HOST_OS != OS_DARWIN
     
     string home = (string) getenv("HOME");
-    if (configOk) {
+    if (cfgOpen()) {
         
         string cfgHome = cfgLoadStr("config", "homedir", NULL);
         if (!cfgHome.empty()) {

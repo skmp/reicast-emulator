@@ -203,8 +203,14 @@ bool rend_single_frame()
 		_pvrrc = DequeueRender();
 	}
 	while (!_pvrrc);
+
+	bool proc = renderer->Process(_pvrrc);
+	re.Set();
 	
-	bool do_swp = rend_frame(_pvrrc, true);
+	bool do_swp = proc && renderer->Render();
+		
+	if (do_swp)
+		renderer->DrawOSD();
 
 	//clear up & free data ..
 	FinishRender(_pvrrc);

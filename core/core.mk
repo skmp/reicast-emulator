@@ -26,7 +26,11 @@ ifndef NO_REC
 endif
 
 ifndef NOT_ARM
-    RZDCY_MODULES += rec-ARM/
+	ifdef OS_DARWIN
+	    RZDCY_MODULES += rec-ARM-DARWIN/
+	else
+	    RZDCY_MODULES += rec-ARM/
+	endif
 endif
 
 ifdef X86_REC

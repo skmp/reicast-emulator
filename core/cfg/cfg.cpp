@@ -335,7 +335,7 @@ bool cfgOpen()
 			wchar* str1=strstr(tl,"=");
 			if (!str1)
 			{
-				printf("Malformed entry on config - ignoring @ %d(%s)\n",cline,tl);
+				printf("Ignoring %d(%s), ",cline,tl);
 				continue;
 			}
 			*str1=0;
@@ -351,7 +351,7 @@ bool cfgOpen()
 			}
 			else
 			{
-				printf("Malformed entry on config - ignoring @ %d(%s)\n",cline,tl);
+				printf("Ignoring %d(%s), ",cline,tl);
 			}
 		}
 	}

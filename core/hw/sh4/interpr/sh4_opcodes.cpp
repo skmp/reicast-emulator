@@ -62,7 +62,7 @@ void dofoo(sh4_opcode op)
 void cpu_iNimp(u32 op, const char* info)
 {
 	printf("\n\nUnimplemented opcode : %X : %X \n", op,next_pc);
-	printf(info);
+	printf("%s", info);
 	die("iNimp reached\n");
 	//sh4_cpu.Stop();
 }
@@ -70,7 +70,7 @@ void cpu_iNimp(u32 op, const char* info)
 void cpu_iWarn(u32 op, const char* info)
 {
 	printf("Check opcode : %X : ", op);
-	printf(info);
+	printf("%s", info);
 	printf(" @ %X\n", curr_pc);
 }
 

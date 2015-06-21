@@ -502,10 +502,10 @@ return;
 	// HandleJoystick(port);
 	// HandleKb(port);
 	kcode[port]= x11_dc_buttons[port];
-	joyx[0] = temp_joyx[port];
-    joyy[0] = temp_joyy[port];
-    lt[0] = temp_lt[port];
-    rt[0] = temp_rt[port];	
+	joyx[port] = temp_joyx[port];
+    joyy[port] = temp_joyy[port];
+    lt[port] = temp_lt[port];
+    rt[port] = temp_rt[port];	
 	return;
 #endif
 	for(;;)
@@ -558,171 +558,174 @@ void os_DoEvents()
 {
 
 	#if defined(SUPPORT_X11)
-	for (int port = 0; port <=3; ++port)
-	{
- 		static bool ana_up = false;
-		static bool ana_down = false;
-		static bool ana_left = false;
-		static bool ana_right = false;    
-		// int x11_dc_buttons = 0xFFFF;
-    
-    	if (x11_win) {
-			//Handle X11
-			XEvent e;
-			if(XCheckWindowEvent((Display*)x11_disp, (Window)x11_win, KeyPressMask | KeyReleaseMask, &e)){
-				switch(e.type){
+	static bool ana_up[4] = {false, false, false, false};
+	static bool ana_down[4] = {false, false, false, false};
+	static bool ana_left[4] = {false, false, false, false};
+	static bool ana_right[4] = {false, false, false, false};
+	// int x11_dc_buttons = 0xFFFF;
 
-					case KeyPress:
-					case KeyRelease:
+	if (x11_win) {
+		//Handle X11
+		XEvent e;
+		if(XCheckWindowEvent((Display*)x11_disp, (Window)x11_win, KeyPressMask | KeyReleaseMask, &e)){
+			switch(e.type){
+
+				case KeyPress:
+				case KeyRelease:
+				{
+                    
+					for (int port = 0; port <= 3; ++port)
 					{
-	                    
-	                    //Detect up press
-	                    if(e.xkey.keycode == kb_maps[port].XANA_UP)
-	                    {
+                    	//Detect up press
+                    	if(e.xkey.keycode == kb_maps[port].XANA_UP)
+                    	{
 	                        if(e.type == KeyPress)
-	                        {    
-	                	        ana_up = true;
-	                        }
-	                        else if(e.type == KeyRelease)
-	                        {
-	                            ana_up = false;
-	                        }
-	                        else
-	                        {
-	                        }
-	                    } else {
+                        	{    
+	                	        ana_up[port] = true;
+                        	}
+                        	else if(e.type == KeyRelease)
+                        	{
+	                            ana_up[port] = false;
+                        	}
+                        	else
+                        	{
+                        	}
+                    	} else {
 
-	                    }
-	                    
-	                    //Detect down Press
-	                    if(e.xkey.keycode == kb_maps[port].XANA_DOWN)
-	                    {
+                    	}
+                    
+                    	//Detect down Press
+                    	if(e.xkey.keycode == kb_maps[port].XANA_DOWN)
+                    	{
 	                        if(e.type == KeyPress)
-	                        {    
-	                            ana_down = true;
-	                        }
-	                        else if(e.type == KeyRelease)
-	                        {
-	                            ana_down = false;
-	                        }
-	                        else
-	                        {
-	                        }
-	                    }
-	  
-	                    //Detect left press
-	                    if(e.xkey.keycode == kb_maps[port].XANA_LEFT)
-	                    {
+                        	{    
+	                            ana_down[port] = true;
+                        	}
+                        	else if(e.type == KeyRelease)
+                        	{
+	                            ana_down[port] = false;
+                        	}
+                        	else
+                        	{
+                        	}
+                    	}
+  
+                    	//Detect left press
+                    	if(e.xkey.keycode == kb_maps[port].XANA_LEFT)
+                    	{
 	                        if(e.type == KeyPress)
-	                        {    
-	                            ana_left = true;
-	                        }
-	                        else if(e.type == KeyRelease)
-	                        {
-	                            ana_left = false;
-	                        }
-	                        else
-	                        {
-	                        }
-	                    } 
-	                        
-	                    //Detect right Press
-	                    if(e.xkey.keycode == kb_maps[port].XANA_RIGHT)
-	                    {
+                        	{    
+	                            ana_left[port] = true;
+                        	}
+                        	else if(e.type == KeyRelease)
+                        	{
+	                            ana_left[port] = false;
+                        	}
+                        	else
+                        	{
+                        	}
+                    	} 
+                        
+                    	//Detect right Press
+                    	if(e.xkey.keycode == kb_maps[port].XANA_RIGHT)
+                    	{
 	                        if(e.type == KeyPress)
-	                        {    
-	                            ana_right = true;
-	                        }
-	                        else if(e.type == KeyRelease)
-	                        {
-	                            ana_right = false;
-	                        }
-	                        else
-	                        {
-	                        }
-	                    } 
-	                        
-	                    //detect LT press
-	                    if (e.xkey.keycode == kb_maps[port].XANA_LT)
-	                    {
+                        	{    
+	                            ana_right[port] = true;
+                        	}
+                        	else if(e.type == KeyRelease)
+                        	{
+	                            ana_right[port] = false;
+                        	}
+                        	else
+                        	{
+                        	}
+                    	}
+                        
+                    	//detect LT press
+                    	if (e.xkey.keycode == kb_maps[port].XANA_LT)
+                    	{
 	                        if (e.type == KeyPress)
-	                        {    
+                        	{    
 	                            temp_lt[port] = 255;
-	                        }
-	                        else if (e.type == KeyRelease)
-	                        {
+                        	}
+                        	else if (e.type == KeyRelease)
+                        	{
 	                            temp_lt[port] = 0;
-	                        }
-	                        else
-	                        {
-	                        }
-	                    }
-	                        
-	                    //detect RT press
-	                    if (e.xkey.keycode == kb_maps[port].XANA_RT)
-	                    {
+                        	}
+                        	else
+                        	{
+                        	}
+                    	}
+                        
+                    	//detect RT press
+                    	if (e.xkey.keycode == kb_maps[port].XANA_RT)
+                    	{
 	                        if (e.type == KeyPress)
-	                        {    
+                        	{    
 	                            temp_rt[port] = 255;
-	                        }
-	                        else if (e.type == KeyRelease)
-	                        {
+                        	}
+                        	else if (e.type == KeyRelease)
+                        	{
 	                            temp_rt[port] = 0;
-	                        }
-	                        else
-	                        {
-	                        }
-	                    }
-	                        
+                        	}
+                        	else
+                        	{
+                        	}
+                    	}
+   
 						int dc_key = kb_maps[port].keymap[e.xkey.keycode];
 
 						if (e.type == KeyPress)
 							x11_dc_buttons[port] &= ~dc_key;
 						else
 							x11_dc_buttons[port] |= dc_key;
-
 					}
-					break;
-
-					default:
-					{
-						printf("KEYRELEASE\n");
-					}
-					break;
 
 				}
-	        }
-	            
-	        /* Check analogue control states (up/down) */
-	        if((ana_up == true) && (ana_down == false))
-	        {
+				break;
+
+				default:
+				{
+					printf("KEYRELEASE\n");
+				}
+				break;
+
+			}
+        }
+            
+        /* Check analogue control states (up/down) */
+        for (int port = 0; port <= 3; ++port)
+		{
+	        if((ana_up[port] == true) && (ana_down[port] == false))
+        	{
 	            temp_joyy[port] = -127;
-	        }
-	        else if((ana_up == false) && (ana_down == true))
-	        {
+        	}
+        	else if((ana_up[port] == false) && (ana_down[port] == true))
+        	{
 	            temp_joyy[port] = 127;
-	        }
-	        else
-	        {
+        	}
+        	else
+        	{
 	            /* Either both pressed simultaniously or neither pressed */
-	            temp_joyy[port] = 0;
-	        }
+            	temp_joyy[port] = 0;
+        	}
 	            
-	        /* Check analogue control states (left/right) */
-	        if((ana_left == true) && (ana_right == false))
-	        {
+        	/* Check analogue control states (left/right) */
+        	if((ana_left[port] == true) && (ana_right[port] == false))
+        	{
 	            temp_joyx[port] = -127;
-	        }
-	        else if((ana_left == false) && (ana_right == true))
-	        {
+        	}
+        	else if((ana_left[port] == false) && (ana_right[port] == true))
+        	{
 	            temp_joyx[port] = 127;
-	        }
-	        else
-	        {
+        	}
+        	else
+        	{
 	            /* Either both pressed simultaniously or neither pressed */
-	            temp_joyx[port] = 0;
-	        }        
-		}
+            	temp_joyx[port] = 0;
+        	}        
+        }
 	}
     #endif
 }

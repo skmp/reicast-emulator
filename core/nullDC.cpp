@@ -206,7 +206,40 @@ int dc_init(int argc,wchar* argv[])
 	
 	mem_map_default();
 
-	mcfg_CreateDevices();
+	if (cfgOpen())
+	{
+		// Creation of first controller
+		// By default: present with two VMUs
+		if (cfgLoadInt("control1","present",1)==1)
+		{
+			bool vmu_top = cfgLoadInt("control1","vmu.top",1)==1;
+			bool vmu_bottom = cfgLoadInt("control1","vmu.bottom",1)==1;
+			mcfg_CreateDevices(0, vmu_top, vmu_bottom);
+		}
+
+		// Creation of remaining controllers
+		// By default: not present with no VMU
+		if (cfgLoadInt("control2","present",0)==1)
+		{
+			bool vmu_top = cfgLoadInt("control2","vmu.top",0)==1;
+			bool vmu_bottom = cfgLoadInt("control2","vmu.bottom",0)==1;
+			mcfg_CreateDevices(1, vmu_top, vmu_bottom);
+		}
+
+		if (cfgLoadInt("control3","present",0)==1)
+		{
+			bool vmu_top = cfgLoadInt("control3","vmu.top",0)==1;
+			bool vmu_bottom = cfgLoadInt("control3","vmu.bottom",0)==1;
+			mcfg_CreateDevices(2, vmu_top, vmu_bottom);
+		}
+
+		if (cfgLoadInt("control4","present",0)==1)
+		{
+			bool vmu_top = cfgLoadInt("control4","vmu.top",0)==1;
+			bool vmu_bottom = cfgLoadInt("control4","vmu.bottom",0)==1;
+			mcfg_CreateDevices(3, vmu_top, vmu_bottom);
+		}
+	}
 
 	plugins_Reset(false);
 	mem_Reset(false);

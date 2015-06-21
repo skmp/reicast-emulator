@@ -74,8 +74,6 @@ int msgboxf(const wchar* text,unsigned int type,...)
 	return MBX_OK;
 }
 
-
-
 u16 kcode[4];
 u32 vks[4];
 s8 joyx[4],joyy[4];
@@ -104,6 +102,77 @@ enum DCPad {
 	Axis_X= 0x20000,
 	Axis_Y= 0x20001,
 };
+
+
+#if defined(SUPPORT_X11) && !defined(TARGET_PANDORA)
+// Structure to store the mapping of each controller
+typedef struct{
+	// Analog simulation
+   	unsigned int XANA_UP;
+	unsigned int XANA_DOWN;
+	unsigned int XANA_LEFT;
+	unsigned int XANA_RIGHT;
+	unsigned int XANA_LT;
+	unsigned int XANA_RT;
+	// Button mapping
+	map<int, int> keymap;
+} keyboard_map;
+
+// Name of the sections in the configuration file 
+// corresponding to each controller
+char * config_section_names_keyboard[4] = {
+	"control1",
+	"control2",
+	"control3",
+	"control4"
+};
+
+// Keyboard maps of all controllers
+keyboard_map kb_maps[4];
+// Variables to store actions of the current frame before being reported to the
+// emulator
+u8 temp_joyx[4] = {0, 0, 0, 0};
+u8 temp_joyy[4] = {0, 0, 0, 0};
+u8 temp_lt[4] = {0, 0, 0, 0};
+u8 temp_rt[4] = {0, 0, 0, 0};
+
+// Loads a keyboard map for a given port
+void load_keyboard_map(int port)
+{
+	printf("Loading keyboard map for port %d\n", port);
+	if (cfgOpen())
+	{
+		// Loading analog keys
+		kb_maps[port].XANA_UP = cfgLoadInt(config_section_names_keyboard[port], "XANA_UP", 0);
+		kb_maps[port].XANA_DOWN = cfgLoadInt(config_section_names_keyboard[port], "XANA_DOWN", 0);
+		kb_maps[port].XANA_LEFT = cfgLoadInt(config_section_names_keyboard[port], "XANA_LEFT", 0);
+		kb_maps[port].XANA_RIGHT = cfgLoadInt(config_section_names_keyboard[port], "XANA_RIGHT", 0);
+		kb_maps[port].XANA_LT = cfgLoadInt(config_section_names_keyboard[port], "XANA_LT", 0);
+		kb_maps[port].XANA_RT = cfgLoadInt(config_section_names_keyboard[port], "XANA_RT", 0);
+
+		// Loading buttons keys
+		unsigned int XDPAD_UP = cfgLoadInt(config_section_names_keyboard[port], "XDPAD_UP", 0);
+		unsigned int XDPAD_DOWN = cfgLoadInt(config_section_names_keyboard[port], "XDPAD_DOWN", 0);
+		unsigned int XDPAD_LEFT = cfgLoadInt(config_section_names_keyboard[port], "XDPAD_LEFT", 0);
+		unsigned int XDPAD_RIGHT = cfgLoadInt(config_section_names_keyboard[port], "XDPAD_RIGHT", 0);
+		unsigned int XBTN_Y = cfgLoadInt(config_section_names_keyboard[port], "XBTN_Y", 0);
+		unsigned int XBTN_X = cfgLoadInt(config_section_names_keyboard[port], "XBTN_X", 0);
+		unsigned int XBTN_B = cfgLoadInt(config_section_names_keyboard[port], "XBTN_B", 0);
+		unsigned int XBTN_A = cfgLoadInt(config_section_names_keyboard[port], "XBTN_A", 0);
+		unsigned int XBTN_START = cfgLoadInt(config_section_names_keyboard[port], "XBTN_START", 0);
+
+		kb_maps[port].keymap[XDPAD_LEFT] = DPad_Left;
+		kb_maps[port].keymap[XDPAD_RIGHT] = DPad_Right;
+		kb_maps[port].keymap[XDPAD_UP] = DPad_Up;
+		kb_maps[port].keymap[XDPAD_DOWN] = DPad_Down;
+		kb_maps[port].keymap[XBTN_Y] = Btn_Y;
+		kb_maps[port].keymap[XBTN_X] = Btn_X;
+		kb_maps[port].keymap[XBTN_B] = Btn_B;
+		kb_maps[port].keymap[XBTN_A] = Btn_A;
+		kb_maps[port].keymap[XBTN_START] = Btn_Start;
+	}
+}
+#endif
 
 
 void emit_WriteCodeCache();
@@ -140,6 +209,10 @@ void SetupInput()
 		kcode[port]=0xFFFF;
 		rt[port]=0;
 		lt[port]=0;
+
+		#if defined(SUPPORT_X11) && !defined(TARGET_PANDORA)		
+		load_keyboard_map(port);
+		#endif
 	}
 
 #if HOST_OS != OS_DARWIN
@@ -411,13 +484,13 @@ static Cursor CreateNullCursor(Display *display, Window root)
 }
 #endif
 
-int x11_dc_buttons = 0xFFFF;
+int x11_dc_buttons[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
 
 void UpdateInputState(u32 port)
 {
 	static char key = 0;
 
-	kcode[port]= x11_dc_buttons;
+	kcode[port]= x11_dc_buttons[port];
 	rt[port]=0;
 	lt[port]=0;
 	
@@ -425,6 +498,15 @@ void UpdateInputState(u32 port)
 	HandleJoystick(port);
 	HandleKb(port);
 return;
+#elif defined(SUPPORT_X11)
+	// HandleJoystick(port);
+	// HandleKb(port);
+	kcode[port]= x11_dc_buttons[port];
+	joyx[0] = temp_joyx[port];
+    joyy[0] = temp_joyy[port];
+    lt[0] = temp_lt[port];
+    rt[0] = temp_rt[port];	
+	return;
 #endif
 	for(;;)
 	{
@@ -474,39 +556,175 @@ return;
 
 void os_DoEvents()
 {
+
 	#if defined(SUPPORT_X11)
-		if (x11_win) {
+	for (int port = 0; port <=3; ++port)
+	{
+ 		static bool ana_up = false;
+		static bool ana_down = false;
+		static bool ana_left = false;
+		static bool ana_right = false;    
+		// int x11_dc_buttons = 0xFFFF;
+    
+    	if (x11_win) {
 			//Handle X11
 			XEvent e;
-			if(XCheckWindowEvent((Display*)x11_disp, (Window)x11_win, KeyPressMask | KeyReleaseMask, &e))
-			{
-				switch(e.type)
-				{
+			if(XCheckWindowEvent((Display*)x11_disp, (Window)x11_win, KeyPressMask | KeyReleaseMask, &e)){
+				switch(e.type){
 
 					case KeyPress:
 					case KeyRelease:
 					{
-						int dc_key = x11_keymap[e.xkey.keycode];
+	                    
+	                    //Detect up press
+	                    if(e.xkey.keycode == kb_maps[port].XANA_UP)
+	                    {
+	                        if(e.type == KeyPress)
+	                        {    
+	                	        ana_up = true;
+	                        }
+	                        else if(e.type == KeyRelease)
+	                        {
+	                            ana_up = false;
+	                        }
+	                        else
+	                        {
+	                        }
+	                    } else {
+
+	                    }
+	                    
+	                    //Detect down Press
+	                    if(e.xkey.keycode == kb_maps[port].XANA_DOWN)
+	                    {
+	                        if(e.type == KeyPress)
+	                        {    
+	                            ana_down = true;
+	                        }
+	                        else if(e.type == KeyRelease)
+	                        {
+	                            ana_down = false;
+	                        }
+	                        else
+	                        {
+	                        }
+	                    }
+	  
+	                    //Detect left press
+	                    if(e.xkey.keycode == kb_maps[port].XANA_LEFT)
+	                    {
+	                        if(e.type == KeyPress)
+	                        {    
+	                            ana_left = true;
+	                        }
+	                        else if(e.type == KeyRelease)
+	                        {
+	                            ana_left = false;
+	                        }
+	                        else
+	                        {
+	                        }
+	                    } 
+	                        
+	                    //Detect right Press
+	                    if(e.xkey.keycode == kb_maps[port].XANA_RIGHT)
+	                    {
+	                        if(e.type == KeyPress)
+	                        {    
+	                            ana_right = true;
+	                        }
+	                        else if(e.type == KeyRelease)
+	                        {
+	                            ana_right = false;
+	                        }
+	                        else
+	                        {
+	                        }
+	                    } 
+	                        
+	                    //detect LT press
+	                    if (e.xkey.keycode == kb_maps[port].XANA_LT)
+	                    {
+	                        if (e.type == KeyPress)
+	                        {    
+	                            temp_lt[port] = 255;
+	                        }
+	                        else if (e.type == KeyRelease)
+	                        {
+	                            temp_lt[port] = 0;
+	                        }
+	                        else
+	                        {
+	                        }
+	                    }
+	                        
+	                    //detect RT press
+	                    if (e.xkey.keycode == kb_maps[port].XANA_RT)
+	                    {
+	                        if (e.type == KeyPress)
+	                        {    
+	                            temp_rt[port] = 255;
+	                        }
+	                        else if (e.type == KeyRelease)
+	                        {
+	                            temp_rt[port] = 0;
+	                        }
+	                        else
+	                        {
+	                        }
+	                    }
+	                        
+						int dc_key = kb_maps[port].keymap[e.xkey.keycode];
 
 						if (e.type == KeyPress)
-							x11_dc_buttons &= ~dc_key;
+							x11_dc_buttons[port] &= ~dc_key;
 						else
-							x11_dc_buttons |= dc_key;
+							x11_dc_buttons[port] |= dc_key;
 
-						//printf("KEY: %d -> %d: %d\n",e.xkey.keycode, dc_key, x11_dc_buttons );
 					}
 					break;
 
-					
+					default:
 					{
 						printf("KEYRELEASE\n");
 					}
 					break;
 
 				}
-			}
+	        }
+	            
+	        /* Check analogue control states (up/down) */
+	        if((ana_up == true) && (ana_down == false))
+	        {
+	            temp_joyy[port] = -127;
+	        }
+	        else if((ana_up == false) && (ana_down == true))
+	        {
+	            temp_joyy[port] = 127;
+	        }
+	        else
+	        {
+	            /* Either both pressed simultaniously or neither pressed */
+	            temp_joyy[port] = 0;
+	        }
+	            
+	        /* Check analogue control states (left/right) */
+	        if((ana_left == true) && (ana_right == false))
+	        {
+	            temp_joyx[port] = -127;
+	        }
+	        else if((ana_left == false) && (ana_right == true))
+	        {
+	            temp_joyx[port] = 127;
+	        }
+	        else
+	        {
+	            /* Either both pressed simultaniously or neither pressed */
+	            temp_joyx[port] = 0;
+	        }        
 		}
-	#endif
+	}
+    #endif
 }
 
 void os_SetWindowText(const char * text)

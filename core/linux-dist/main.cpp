@@ -611,6 +611,7 @@ void UpdateInputState(u32 port)
 	HandleKb(port);
 return;
 #elif defined(SUPPORT_X11)
+	kcode[port] = 0xFFFF;
 	if (!HandleJoystick(port))
 	{
 		HandleKb(port);
@@ -619,6 +620,8 @@ return;
 	    joyy[port] = temp_joyy[port];
 	    lt[port] = temp_lt[port];
 	    rt[port] = temp_rt[port];	
+	} else {
+
 	}
 	return;
 #endif

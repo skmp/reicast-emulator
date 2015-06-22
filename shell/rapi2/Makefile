@@ -1,8 +1,8 @@
-
 LOCAL_PATH := $(call my-dir)
 FOR_LINUX :=1
 WEBUI :=1
-
+#NO_REND := 1
+#NO_X11 := 1
 RZDCY_SRC_DIR = ../../core
 
 include $(RZDCY_SRC_DIR)/core.mk
@@ -21,18 +21,15 @@ ASFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=softfp
 
 LDFLAGS	:=	-g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
 
-SOURCES	:=	cfg/ hw/arm7/ hw/aica/ hw/asic/ hw/ hw/gdrom/ hw/maple/ \
- hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/rec_v2/ plugins/ profiler/ serial_ipc/ \
- hw/extdev/ hw/arm/ imgread/ linux/ linux-dist/ ./ rec-ARM/ deps/zlib/ deps/chdr/ deps/crypto/ arm_emitter/ 
-
 
 CXXFLAGS := -g -O3  -D RELEASE -c -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7  
 CXXFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant 
 CXXFLAGS += -ffast-math -ftree-vectorize -fprefetch-loop-arrays 
+CXXFLAGS += -DUSE_OSS -DTARGET_RPI -DUSES_HOMEDIR
 #-std=c++0x
 
 CXXFLAGS += $(CFLAGS) $(MFLAGS) -fno-exceptions -fno-rtti
-CXXFLAGS += -D SUPPORT_X11 -DARM_HARDFP -DGLES
+CXXFLAGS +=  -DARM_HARDFP -DGLES
 
 
 ifdef PGO_MAKE
@@ -52,11 +49,11 @@ ifdef LTO_TEST
 	LDFLAGS +=-flto -fwhole-program 
 endif
 
-INCS	:= -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I../linux-deps/include
+INCS	:= -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads  -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I../linux-deps/include
 
-LIBS    := -L../linux-deps/lib
+LIBS    :=  -L/opt/vc/lib/  -L../linux-deps/lib
 LIBS    += -lm -lrt -lEGL -lGLESv2 #-lglslcompiler -lIMGegl -lpvr2d -lsrv_um 
-LIBS    += -lpthread -lasound -lX11 -lXdmcp -lXau
+LIBS    += -lpthread -lasound -lX11 -lXdmcp -lXau  -lbcm_host
 
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)

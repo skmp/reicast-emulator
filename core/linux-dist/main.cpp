@@ -118,6 +118,21 @@ typedef struct{
 	map<int, int> keymap;
 } keyboard_map;
 
+typedef struct{
+	int file_descriptor;
+	int axis_count;
+	int button_count;
+	char name[128];
+} joystick;
+
+typedef struct{
+	joystick js;
+	// Axis mapping
+   	map<int, int> axis_map;
+	// Button mapping
+	map<int, int> btn_map;
+} joystick_map;
+
 // Name of the sections in the configuration file 
 // corresponding to each controller
 char * config_section_names_keyboard[4] = {
@@ -129,6 +144,10 @@ char * config_section_names_keyboard[4] = {
 
 // Keyboard maps of all controllers
 keyboard_map kb_maps[4];
+// Joystick map of all controllers
+joystick js[4];
+joystick_map js_maps[4];
+bool has_joystick;
 // Variables to store actions of the current frame before being reported to the
 // emulator
 u8 temp_joyx[4] = {0, 0, 0, 0};
@@ -170,6 +189,82 @@ void load_keyboard_map(int port)
 		kb_maps[port].keymap[XBTN_B] = Btn_B;
 		kb_maps[port].keymap[XBTN_A] = Btn_A;
 		kb_maps[port].keymap[XBTN_START] = Btn_Start;
+	}
+}
+
+// Loads a joystick
+void load_joystick(char * path, joystick & js)
+{
+	js.file_descriptor = open(path, O_RDONLY);
+	js.axis_count = 0;
+	js.button_count = 0;
+	js.name[0] = '\0';
+	if (js.file_descriptor >= 0)
+	{
+		fcntl(js.file_descriptor, F_SETFL, O_NONBLOCK);
+		ioctl(js.file_descriptor,JSIOCGAXES,&js.axis_count);
+		ioctl(js.file_descriptor,JSIOCGBUTTONS,&js.button_count);
+		ioctl(js.file_descriptor,JSIOCGNAME(sizeof(js.name)),&js.name);
+		printf("SDK: Found '%s' joystick with %d axis and %d buttons\n",js.name,js.axis_count,js.button_count);
+		has_joystick = true;
+	}
+}
+
+// Loads a keyboard map for a given port
+void load_joystick_map(int port)
+{
+	// Initialize the file descriptor for the current joystick in case 
+	// no joystick is found
+	js_maps[port].js.file_descriptor = -1;
+	printf("Loading joystick map for port %d\n", port);
+	if (cfgOpen())
+	{
+		// Finding proper file descriptor
+		char target_name[128];
+		cfgLoadStr(config_section_names_keyboard[port], "controller.name", target_name, "\0");
+		printf("Goal controller name for port %d: %s\n", port, target_name);
+		// We find the corresponding controller
+		for (int i = 0; i <= 3; ++i)
+		{
+			// We check if the names match
+			if (strcmp(js[i].name, target_name) == 0)
+			{
+				js_maps[port].js = js[i];
+				// We erase the name so the same controller is not used twice
+				js[i].name[0] = "\0";
+				printf("Joystick for controller %d was found :)\n", port);
+			}
+		}
+
+
+		// Loading axis mapping
+		unsigned int XANA_X = cfgLoadInt(config_section_names_keyboard[port], "JS_ANA_X", 0);
+		unsigned int XANA_Y = cfgLoadInt(config_section_names_keyboard[port], "JS_ANA_Y", 0);
+		unsigned int XANA_LT = cfgLoadInt(config_section_names_keyboard[port], "JS_ANA_LT", 0);
+		unsigned int XANA_RT = cfgLoadInt(config_section_names_keyboard[port], "JS_ANA_RT", 0);
+		unsigned int XDPAD_X = cfgLoadInt(config_section_names_keyboard[port], "JS_DPAD_X", 0);
+		unsigned int XDPAD_Y = cfgLoadInt(config_section_names_keyboard[port], "JS_DPAD_Y", 0);
+	
+
+		js_maps[port].axis_map[XANA_X] = Axis_X;
+		js_maps[port].axis_map[XANA_Y] = Axis_Y;
+		js_maps[port].axis_map[XANA_LT] = Axis_LT;
+		js_maps[port].axis_map[XANA_RT] = Axis_RT;
+		js_maps[port].btn_map[XDPAD_X] = DPad_Left;
+		js_maps[port].btn_map[XDPAD_Y] = DPad_Up;
+
+		// Loading buttons mapping
+		unsigned int XBTN_Y = cfgLoadInt(config_section_names_keyboard[port], "JS_BTN_Y", 0);
+		unsigned int XBTN_X = cfgLoadInt(config_section_names_keyboard[port], "JS_BTN_X", 0);
+		unsigned int XBTN_B = cfgLoadInt(config_section_names_keyboard[port], "JS_BTN_B", 0);
+		unsigned int XBTN_A = cfgLoadInt(config_section_names_keyboard[port], "JS_BTN_A", 0);
+		unsigned int XBTN_START = cfgLoadInt(config_section_names_keyboard[port], "JS_BTN_START", 0);
+
+		js_maps[port].btn_map[XBTN_Y] = Btn_Y;
+		js_maps[port].btn_map[XBTN_X] = Btn_X;
+		js_maps[port].btn_map[XBTN_B] = Btn_B;
+		js_maps[port].btn_map[XBTN_A] = Btn_A;
+		js_maps[port].btn_map[XBTN_START] = Btn_Start;
 	}
 }
 #endif
@@ -238,31 +333,18 @@ void SetupInput()
 	}
 #endif
 	// Open joystick device
-	JoyFD = open("/dev/input/js0",O_RDONLY);
-#if HOST_OS != OS_DARWIN		
-	if(JoyFD>=0)
-	{
-		int AxisCount,ButtonCount;
-		char Name[128];
+	
+#if HOST_OS != OS_DARWIN
+	has_joystick = false;		
+	load_joystick("/dev/input/js0", js[0]);
+	load_joystick("/dev/input/js1", js[1]);
+	load_joystick("/dev/input/js2", js[2]);
+	load_joystick("/dev/input/js3", js[3]);
 
-		AxisCount   = 0;
-		ButtonCount = 0;
-		Name[0]     = '\0';
-
-		fcntl(JoyFD,F_SETFL,O_NONBLOCK);
-		ioctl(JoyFD,JSIOCGAXES,&AxisCount);
-		ioctl(JoyFD,JSIOCGBUTTONS,&ButtonCount);
-		ioctl(JoyFD,JSIOCGNAME(sizeof(Name)),&Name);
-		
-		printf("SDK: Found '%s' joystick with %d axis and %d buttons\n",Name,AxisCount,ButtonCount);
-
-		if (strcmp(Name,"Microsoft X-Box 360 pad")==0)
-		{
-			JMapBtn=JMapBtn_360;
-			JMapAxis=JMapAxis_360;
-			printf("Using Xbox 360 map\n");
-		}
-	}
+	load_joystick_map(0);
+	load_joystick_map(1);
+	load_joystick_map(2);
+	load_joystick_map(3);
 #endif
 }
 
@@ -371,22 +453,48 @@ bool HandleJoystick(u32 port)
 {
 
   // Joystick must be connected
-  if(JoyFD<0) return false;
+  // if(JoyFD<0) return false;
+  if (js_maps[port].js.file_descriptor < 0) return false;
 
 #if HOST_OS != OS_DARWIN
   struct js_event JE;
-  while(read(JoyFD,&JE,sizeof(JE))==sizeof(JE))
+  while(read(js_maps[port].js.file_descriptor,&JE,sizeof(JE))==sizeof(JE))
 	  if (JE.number<MAP_SIZE)
 	  {
 		  switch(JE.type & ~JS_EVENT_INIT)
 		  {
 		  case JS_EVENT_AXIS:
 			  {
-				  u32 mt=JMapAxis[JE.number]>>16;
-				  u32 mo=JMapAxis[JE.number]&0xFFFF;
+
+				  // u32 mt=JMapAxis[JE.number]>>16;
+				  // u32 mo=JMapAxis[JE.number]&0xFFFF;
+			  	  u32 mt=js_maps[port].axis_map[JE.number]>>16;
+				  u32 mo=js_maps[port].axis_map[JE.number]&0xFFFF;
 				  
-				 //printf("AXIS %d,%d\n",JE.number,JE.value);
 				  s8 v=(s8)(JE.value/256); //-127 ... + 127 range
+
+				  // Before handling axis, we handle the D-pad (which appears as an axis)
+				  if (JE.number == 6)
+				  {
+				  	if (v > 0)	
+				  	{
+				  		kcode[port] &= ~DPad_Right;
+				  	} else if (v < 0){
+				  		kcode[port] &= ~DPad_Left;
+				  	}
+				  	break;
+				  }
+
+				  if (JE.number == 7)
+				  {
+				  	if (v > 0)	
+				  	{
+				  		kcode[port] &= ~DPad_Down;
+				  	} else if (v < 0){
+				  		kcode[port] &= ~DPad_Up;
+				  	}
+				  	break;
+				  }
 				  
 				  if (mt==0)
 				  {
@@ -427,8 +535,10 @@ bool HandleJoystick(u32 port)
 
 		  case JS_EVENT_BUTTON:
 			  {
-				  u32 mt=JMapBtn[JE.number]>>16;
-				  u32 mo=JMapBtn[JE.number]&0xFFFF;
+				  // u32 mt=JMapBtn[JE.number]>>16;
+				  // u32 mo=JMapBtn[JE.number]&0xFFFF;
+			  	u32 mt=js_maps[port].btn_map[JE.number]>>16;
+				u32 mo=js_maps[port].btn_map[JE.number]&0xFFFF;
 
 				// printf("BUTTON %d,%d\n",JE.number,JE.value);
 
@@ -447,6 +557,8 @@ bool HandleJoystick(u32 port)
 						  lt[port]=JE.value?255:0;
 					  else if (mo==1)
 						  rt[port]=JE.value?255:0;
+				  } else {
+				  	printf("JE: %d\n", JE.number);
 				  }
 
 			  }
@@ -499,13 +611,15 @@ void UpdateInputState(u32 port)
 	HandleKb(port);
 return;
 #elif defined(SUPPORT_X11)
-	// HandleJoystick(port);
-	// HandleKb(port);
-	kcode[port]= x11_dc_buttons[port];
-	joyx[port] = temp_joyx[port];
-    joyy[port] = temp_joyy[port];
-    lt[port] = temp_lt[port];
-    rt[port] = temp_rt[port];	
+	if (!HandleJoystick(port))
+	{
+		HandleKb(port);
+		kcode[port]= x11_dc_buttons[port];
+		joyx[port] = temp_joyx[port];
+	    joyy[port] = temp_joyy[port];
+	    lt[port] = temp_lt[port];
+	    rt[port] = temp_rt[port];	
+	}
 	return;
 #endif
 	for(;;)
@@ -562,7 +676,6 @@ void os_DoEvents()
 	static bool ana_down[4] = {false, false, false, false};
 	static bool ana_left[4] = {false, false, false, false};
 	static bool ana_right[4] = {false, false, false, false};
-	// int x11_dc_buttons = 0xFFFF;
 
 	if (x11_win) {
 		//Handle X11
@@ -974,7 +1087,9 @@ void clean_exit(int sig_num) {
 	size_t size;
 	
 	// close files
-	if (JoyFD>=0) close(JoyFD);
+	// if (JoyFD>=0) close(JoyFD);
+	for (int id_joystick = 0; id_joystick <= 3; ++id_joystick)
+		if (js[id_joystick].file_descriptor >= 0) close(js[id_joystick].file_descriptor);
 	if (kbfd>=0) close(kbfd);
 	if(audio_fd>=0) close(audio_fd);
 

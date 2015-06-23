@@ -527,6 +527,10 @@ bool HandleJoystick(u32 port)
   			// Axis handling
   			case JS_EVENT_AXIS:
   				
+  				if (id == 0)
+  				{
+  					printf("Event with value %d\n", signed_value);
+  				}
   				// Direction stick
   				if(id == js_maps[port].id_axis_x)
   				{
@@ -718,6 +722,10 @@ void os_DoEvents()
                     
 					for (int port = 0; port <= 3; ++port)
 					{
+						if (js_maps[port].js.file_descriptor > 0)
+						{
+							continue;
+						}
                     	//Detect up press
                     	if(e.xkey.keycode == kb_maps[port].key_axis_up)
                     	{
@@ -839,6 +847,10 @@ void os_DoEvents()
         /* Check analogue control states (up/down) */
         for (int port = 0; port <= 3; ++port)
 		{
+			if (js_maps[port].js.file_descriptor > 0)
+			{
+				continue;
+			}
 
 			// X axis
 	        if((ana_up[port] == true) && (ana_down[port] == false))

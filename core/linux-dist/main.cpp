@@ -22,6 +22,7 @@
 	#include <X11/Xlib.h>
 	#include <X11/Xatom.h>
 	#include <X11/Xutil.h>
+	#include <X11/XKBlib.h>
 
 	#if !defined(GLES)
 		#include <GL/gl.h>
@@ -105,7 +106,7 @@ enum DCPad {
 
 
 #if defined(SUPPORT_X11) && !defined(TARGET_PANDORA)
-// Structure to store the mapping of each controller
+// Structure to store the mapping of each controller using a keyboard
 typedef struct{
 	// Analog simulation
    	unsigned int XANA_UP;
@@ -118,6 +119,7 @@ typedef struct{
 	map<int, int> keymap;
 } keyboard_map;
 
+// Structure to store a joystick
 typedef struct{
 	int file_descriptor;
 	int axis_count;
@@ -125,12 +127,24 @@ typedef struct{
 	char name[128];
 } joystick;
 
+// Structure to store the mapping of each controller using a joystick
 typedef struct{
 	joystick js;
 	// Axis mapping
-   	map<int, int> axis_map;
+   	int ANA_X;
+   	int ANA_Y;
+   	int DPAD_X;
+   	int DPAD_Y;
+   	int TRIGGER_L;
+   	int TRIGGER_R;
 	// Button mapping
 	map<int, int> btn_map;
+	// Current joystick state
+	int buttons;
+	s8 ana_x;
+	s8 ana_y;
+	s8 trigger_left;
+	s8 trigger_right;
 } joystick_map;
 
 // Name of the sections in the configuration file 
@@ -144,16 +158,16 @@ char * config_section_names_keyboard[4] = {
 
 // Keyboard maps of all controllers
 keyboard_map kb_maps[4];
-// Joystick map of all controllers
+// Joysticks
 joystick js[4];
+// Joystick map of all controllers
 joystick_map js_maps[4];
-bool has_joystick;
 // Variables to store actions of the current frame before being reported to the
 // emulator
 u8 temp_joyx[4] = {0, 0, 0, 0};
 u8 temp_joyy[4] = {0, 0, 0, 0};
-u8 temp_lt[4] = {0, 0, 0, 0};
-u8 temp_rt[4] = {0, 0, 0, 0};
+s8 temp_lt[4] = {0, 0, 0, 0};
+s8 temp_rt[4] = {0, 0, 0, 0};
 
 // Loads a keyboard map for a given port
 void load_keyboard_map(int port)
@@ -206,7 +220,6 @@ void load_joystick(char * path, joystick & js)
 		ioctl(js.file_descriptor,JSIOCGBUTTONS,&js.button_count);
 		ioctl(js.file_descriptor,JSIOCGNAME(sizeof(js.name)),&js.name);
 		printf("SDK: Found '%s' joystick with %d axis and %d buttons\n",js.name,js.axis_count,js.button_count);
-		has_joystick = true;
 	}
 }
 
@@ -222,7 +235,7 @@ void load_joystick_map(int port)
 		// Finding proper file descriptor
 		char target_name[128];
 		cfgLoadStr(config_section_names_keyboard[port], "controller.name", target_name, "\0");
-		printf("Goal controller name for port %d: %s\n", port, target_name);
+		printf("Using following controller: %s\n", target_name);
 		// We find the corresponding controller
 		for (int i = 0; i <= 3; ++i)
 		{
@@ -232,39 +245,57 @@ void load_joystick_map(int port)
 				js_maps[port].js = js[i];
 				// We erase the name so the same controller is not used twice
 				js[i].name[0] = "\0";
-				printf("Joystick for controller %d was found :)\n", port);
+				// And we stop looking for other controllers
+				break;
 			}
 		}
 
 
 		// Loading axis mapping
-		unsigned int XANA_X = cfgLoadInt(config_section_names_keyboard[port], "JS_ANA_X", 0);
-		unsigned int XANA_Y = cfgLoadInt(config_section_names_keyboard[port], "JS_ANA_Y", 0);
-		unsigned int XANA_LT = cfgLoadInt(config_section_names_keyboard[port], "JS_ANA_LT", 0);
-		unsigned int XANA_RT = cfgLoadInt(config_section_names_keyboard[port], "JS_ANA_RT", 0);
-		unsigned int XDPAD_X = cfgLoadInt(config_section_names_keyboard[port], "JS_DPAD_X", 0);
-		unsigned int XDPAD_Y = cfgLoadInt(config_section_names_keyboard[port], "JS_DPAD_Y", 0);
+		int XANA_X = cfgLoadInt(config_section_names_keyboard[port], "JS_ANA_X", 0);
+		int XANA_Y = cfgLoadInt(config_section_names_keyboard[port], "JS_ANA_Y", 0);
+		int XANA_LT = cfgLoadInt(config_section_names_keyboard[port], "JS_ANA_LT", 0);
+		int XANA_RT = cfgLoadInt(config_section_names_keyboard[port], "JS_ANA_RT", 0);
+		int XDPAD_X = cfgLoadInt(config_section_names_keyboard[port], "JS_DPAD_X", 0);
+		int XDPAD_Y = cfgLoadInt(config_section_names_keyboard[port], "JS_DPAD_Y", 0);
 	
 
-		js_maps[port].axis_map[XANA_X] = Axis_X;
-		js_maps[port].axis_map[XANA_Y] = Axis_Y;
-		js_maps[port].axis_map[XANA_LT] = Axis_LT;
-		js_maps[port].axis_map[XANA_RT] = Axis_RT;
-		js_maps[port].btn_map[XDPAD_X] = DPad_Left;
-		js_maps[port].btn_map[XDPAD_Y] = DPad_Up;
+		js_maps[port].ANA_X = XANA_X;
+		js_maps[port].ANA_Y = XANA_Y;
+		js_maps[port].TRIGGER_L = XANA_LT;
+		js_maps[port].TRIGGER_R = XANA_RT;
+		js_maps[port].DPAD_X = XDPAD_X;
+		js_maps[port].DPAD_Y = XDPAD_Y;
+
+		printf("ANA_X: %d\n", js_maps[port].ANA_X);
+		printf("ANA_Y: %d\n", js_maps[port].ANA_Y);
+		printf("TRIGGER_L: %d\n", js_maps[port].TRIGGER_L);
+		printf("TRIGGER_R: %d\n", js_maps[port].TRIGGER_R);
+		printf("DPAD_X: %d\n", js_maps[port].DPAD_X);
+		printf("DPAD_Y: %d\n", js_maps[port].DPAD_Y);
 
 		// Loading buttons mapping
-		unsigned int XBTN_Y = cfgLoadInt(config_section_names_keyboard[port], "JS_BTN_Y", 0);
-		unsigned int XBTN_X = cfgLoadInt(config_section_names_keyboard[port], "JS_BTN_X", 0);
-		unsigned int XBTN_B = cfgLoadInt(config_section_names_keyboard[port], "JS_BTN_B", 0);
-		unsigned int XBTN_A = cfgLoadInt(config_section_names_keyboard[port], "JS_BTN_A", 0);
-		unsigned int XBTN_START = cfgLoadInt(config_section_names_keyboard[port], "JS_BTN_START", 0);
+		int XBTN_Y = cfgLoadInt(config_section_names_keyboard[port], "JS_BTN_Y", 0);
+		int XBTN_X = cfgLoadInt(config_section_names_keyboard[port], "JS_BTN_X", 0);
+		int XBTN_B = cfgLoadInt(config_section_names_keyboard[port], "JS_BTN_B", 0);
+		int XBTN_A = cfgLoadInt(config_section_names_keyboard[port], "JS_BTN_A", 0);
+		int XBTN_START = cfgLoadInt(config_section_names_keyboard[port], "JS_BTN_START", 0);
 
 		js_maps[port].btn_map[XBTN_Y] = Btn_Y;
 		js_maps[port].btn_map[XBTN_X] = Btn_X;
 		js_maps[port].btn_map[XBTN_B] = Btn_B;
 		js_maps[port].btn_map[XBTN_A] = Btn_A;
 		js_maps[port].btn_map[XBTN_START] = Btn_Start;
+
+		// Initialization of buttons as not pressed
+		js_maps[port].buttons = 0xFFFF;
+		// Initialization of all axis to 0
+		js_maps[port].ana_x = 0;
+		js_maps[port].ana_y = 0;
+		js_maps[port].trigger_left = 0;
+		js_maps[port].trigger_right = 0;
+
+
 	}
 }
 #endif
@@ -272,7 +303,6 @@ void load_joystick_map(int port)
 
 void emit_WriteCodeCache();
 
-static int JoyFD    = -1;     // Joystick file descriptor
 static int kbfd = -1; 
 #ifdef TARGET_PANDORA
 static int audio_fd = -1;
@@ -280,21 +310,6 @@ static int audio_fd = -1;
 
 
 #define MAP_SIZE 32
-
-const u32 JMapBtn_USB[MAP_SIZE] =
-  { Btn_Y,Btn_B,Btn_A,Btn_X,0,0,0,0,0,Btn_Start };
-
-const u32 JMapAxis_USB[MAP_SIZE] =
-  { Axis_X,Axis_Y,0,0,0,0,0,0,0,0 };
-
-const u32 JMapBtn_360[MAP_SIZE] =
-  { Btn_A,Btn_B,Btn_X,Btn_Y,0,0,0,Btn_Start,0,0 };
-
-const u32 JMapAxis_360[MAP_SIZE] =
-  { Axis_X,Axis_Y,Axis_LT,0,0,Axis_RT,DPad_Left,DPad_Up,0,0 };
-
-const u32* JMapBtn=JMapBtn_USB;
-const u32* JMapAxis=JMapAxis_USB;
 
 
 void SetupInput()
@@ -332,15 +347,15 @@ void SetupInput()
 			perror("evdev open");
 	}
 #endif
-	// Open joystick device
 	
 #if HOST_OS != OS_DARWIN
-	has_joystick = false;		
+	// Open joystick devices
 	load_joystick("/dev/input/js0", js[0]);
 	load_joystick("/dev/input/js1", js[1]);
 	load_joystick("/dev/input/js2", js[2]);
 	load_joystick("/dev/input/js3", js[3]);
 
+	// Load joystick mappings
 	load_joystick_map(0);
 	load_joystick_map(1);
 	load_joystick_map(2);
@@ -453,118 +468,99 @@ bool HandleJoystick(u32 port)
 {
 
   // Joystick must be connected
-  // if(JoyFD<0) return false;
   if (js_maps[port].js.file_descriptor < 0) return false;
 
 #if HOST_OS != OS_DARWIN
   struct js_event JE;
   while(read(js_maps[port].js.file_descriptor,&JE,sizeof(JE))==sizeof(JE))
-	  if (JE.number<MAP_SIZE)
-	  {
-		  switch(JE.type & ~JS_EVENT_INIT)
-		  {
-		  case JS_EVENT_AXIS:
-			  {
+  {
+  	if ((JE.type & ~JS_EVENT_INIT) == JE.type)
+  	{
+  		// Index of the axis / button
+  		int id = JE.number;
+  		// Value of the axis
+  		int value = JE.value;
+  		// Signed value in [-128, 127] (for direction axis)
+  		s8 signed_value = (s8)(value / 256);
+  		// Unsigned value in [0, 255] (for trigger axis)
+  		u8 unsigned_value = signed_value + 127;
+  		switch(JE.type)
+  		{
+  			// Axis handling
+  			case JS_EVENT_AXIS:
+  				
+  				// Direction stick
+  				if(id == js_maps[port].ANA_X)
+  				{
+  					js_maps[port].ana_x = signed_value;
+				}
+				else if (id == js_maps[port].ANA_Y)
+				{
+					js_maps[port].ana_y = signed_value;
+				}
 
-				  // u32 mt=JMapAxis[JE.number]>>16;
-				  // u32 mo=JMapAxis[JE.number]&0xFFFF;
-			  	  u32 mt=js_maps[port].axis_map[JE.number]>>16;
-				  u32 mo=js_maps[port].axis_map[JE.number]&0xFFFF;
-				  
-				  s8 v=(s8)(JE.value/256); //-127 ... + 127 range
+				// DPad (Handled as an axis by computer, but as buttons by the Dreamcast)
+  				else if (id == js_maps[port].DPAD_X)
+  				{
+  					if (signed_value < 0)
+  					{
+  						js_maps[port].buttons &= ~DPad_Left;
+  					}
+  					else if (signed_value > 0)
+  					{
+  						js_maps[port].buttons &= ~DPad_Right;
+  					}
+  					else
+  					{
+  					 	js_maps[port].buttons |= DPad_Left;
+  					 	js_maps[port].buttons |= DPad_Right;
+  					}
+  				}
+  				else if (id == js_maps[port].DPAD_Y)
+  				{
+  					if (signed_value < 0)
+  					{
+  						js_maps[port].buttons &= ~DPad_Up;
+  					}
+  					else if (signed_value > 0)
+  					{
+  						js_maps[port].buttons &= ~DPad_Down;
+  					}
+  					else
+  					{
+  					 	js_maps[port].buttons |= DPad_Up;
+  					 	js_maps[port].buttons |= DPad_Down;
+  					}
+  				}
 
-				  // Before handling axis, we handle the D-pad (which appears as an axis)
-				  if (JE.number == 6)
-				  {
-				  	if (v > 0)	
-				  	{
-				  		kcode[port] &= ~DPad_Right;
-				  	} else if (v < 0){
-				  		kcode[port] &= ~DPad_Left;
-				  	}
-				  	break;
-				  }
+  				// Triggers
+				else if (id == js_maps[port].TRIGGER_L)
+				{
+  					js_maps[port].trigger_left = unsigned_value;
+  				}
+  				else if (id == js_maps[port].TRIGGER_R)
+  				{
+  					js_maps[port].trigger_right = unsigned_value;
+  				}
+  				break;
 
-				  if (JE.number == 7)
-				  {
-				  	if (v > 0)	
-				  	{
-				  		kcode[port] &= ~DPad_Down;
-				  	} else if (v < 0){
-				  		kcode[port] &= ~DPad_Up;
-				  	}
-				  	break;
-				  }
-				  
-				  if (mt==0)
-				  {
-					  kcode[port]|=mo;
-					  kcode[port]|=mo*2;
-					  if (v<-64)
-					  {
-						  kcode[port]&=~mo;
-					  }
-					  else if (v>64)
-					  {
-						  kcode[port]&=~(mo*2);
-					  }
+  			// Button handling
+  			case JS_EVENT_BUTTON:
+  				js_maps[port].buttons ^= js_maps[port].btn_map[id];
+  				break;
+  			default:
+  				break;
+  		}
+  	}
+  }
 
-					 // printf("Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
-				  }
-				  else if (mt==1)
-				  {
-					  if (v>=0) v++;	//up to 255
+  // Report the current buttons to the emulator
+  joyx[port] = js_maps[port].ana_x;
+  joyy[port] = js_maps[port].ana_y;
+  lt[port] = js_maps[port].trigger_left;
+  rt[port] = js_maps[port].trigger_right;
+  kcode[port]= js_maps[port].buttons;
 
-					//   printf("AXIS %d,%d Mapped to %d %d %d\n",JE.number,JE.value,mo,v,v+127);
-
-					  if (mo==0)
-						  lt[port]=v+127;
-					  else if (mo==1)
-						  rt[port]=v+127;
-				  }
-				  else if (mt==2)
-				  {
-					//  printf("AXIS %d,%d Mapped to %d %d [%d]",JE.number,JE.value,mo,v);
-					  if (mo==0)
-						  joyx[port]=v;
-					  else if (mo==1)
-						  joyy[port]=v;
-				  }
-			  }
-			  break;
-
-		  case JS_EVENT_BUTTON:
-			  {
-				  // u32 mt=JMapBtn[JE.number]>>16;
-				  // u32 mo=JMapBtn[JE.number]&0xFFFF;
-			  	u32 mt=js_maps[port].btn_map[JE.number]>>16;
-				u32 mo=js_maps[port].btn_map[JE.number]&0xFFFF;
-
-				// printf("BUTTON %d,%d\n",JE.number,JE.value);
-
-				  if (mt==0)
-				  {
-					 // printf("Mapped to %d\n",mo);
-					  if (JE.value)
-						  kcode[port]&=~mo;
-					  else
-						  kcode[port]|=mo;
-				  }
-				  else if (mt==1)
-				  {
-					 // printf("Mapped to %d %d\n",mo,JE.value?255:0);
-					  if (mo==0)
-						  lt[port]=JE.value?255:0;
-					  else if (mo==1)
-						  rt[port]=JE.value?255:0;
-				  } else {
-				  	printf("JE: %d\n", JE.number);
-				  }
-
-			  }
-			  break;
-		  }
-	  }
 #endif
 	return true;
 
@@ -867,6 +863,10 @@ int ndcid=0;
 void os_CreateWindow()
 {
 #if defined(SUPPORT_X11)
+
+	// Variables regarding keyboard auto-repeat
+	Bool ar_set, ar_supp = false;
+
 	if (cfgLoadInt("pvr","nox11",0)==0)
 		{
 			XInitThreads();
@@ -1030,6 +1030,10 @@ void os_CreateWindow()
 			//(EGLNativeDisplayType)x11Display;
 			x11_disp=(void*)x11Display;
 			x11_win=(void*)x11Window;
+
+			// Turn off autorepeat so that keyboard controls do not simulate rapid on/off
+			ar_set = XkbSetDetectableAutoRepeat(x11Display, True, &ar_supp);
+            printf("XkbSetDetectableAutoRepeat returns %u, supported = %u\n",ar_set, ar_supp);
 		}
 		else
 			printf("Not creating X11 window ..\n");
@@ -1090,7 +1094,6 @@ void clean_exit(int sig_num) {
 	size_t size;
 	
 	// close files
-	// if (JoyFD>=0) close(JoyFD);
 	for (int id_joystick = 0; id_joystick <= 3; ++id_joystick)
 		if (js[id_joystick].file_descriptor >= 0) close(js[id_joystick].file_descriptor);
 	if (kbfd>=0) close(kbfd);

@@ -526,11 +526,6 @@ bool HandleJoystick(u32 port)
   		{
   			// Axis handling
   			case JS_EVENT_AXIS:
-  				
-  				if (id == 0)
-  				{
-  					printf("Event with value %d\n", signed_value);
-  				}
   				// Direction stick
   				if(id == js_maps[port].id_axis_x)
   				{

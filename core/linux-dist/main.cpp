@@ -813,11 +813,11 @@ void os_DoEvents()
                     	{
 	                        if (e.type == KeyPress)
                         	{    
-	                            dc_pads[port].axis_lt = 255;
+	                            dc_pads[port].axis_rt = 255;
                         	}
                         	else if (e.type == KeyRelease)
                         	{
-	                            dc_pads[port].axis_lt = 0;
+	                            dc_pads[port].axis_rt = 0;
                         	}
                         	else
                         	{

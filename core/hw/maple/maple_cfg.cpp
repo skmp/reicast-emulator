@@ -4,7 +4,6 @@
 #include "maple_devs.h"
 #include "maple_cfg.h"
 
-#define HAS_VMU
 /*
 bus_x=0{p0=1{config};p1=2{config};config;}
 Plugins:
@@ -66,14 +65,26 @@ void mcfg_Create(MapleDeviceType type,u32 bus,u32 port)
 	MapleDevices[bus][port]=dev;
 }
 
-void mcfg_CreateDevices()
+void mcfg_CreateDevices(int id_controller, bool has_vmu_top, bool has_vmu_bottom)
 {
-	mcfg_Create(MDT_SegaController,0,5);
+	if (id_controller > 3)
+	{
+		printf("Error: tried to create controller %d. Only up to 4 controllers are supported\n", id_controller);
+		return;
+	} else {
+		printf("Creating controller %d\n", id_controller);
+	}
 
-	#ifdef HAS_VMU
-	mcfg_Create(MDT_SegaVMU,0,0);
-	mcfg_Create(MDT_SegaVMU,0,1);
-	#endif
+	mcfg_Create(MDT_SegaController,id_controller,5);
+
+	if (has_vmu_top)
+	{
+		mcfg_Create(MDT_SegaVMU,id_controller,0);
+	}
+	if (has_vmu_bottom)
+	{
+		mcfg_Create(MDT_SegaVMU,id_controller,1);
+	}
 }
 
 void mcfg_DestroyDevices()

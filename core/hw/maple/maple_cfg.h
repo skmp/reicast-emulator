@@ -62,5 +62,5 @@ struct IMapleConfigMap
 	virtual ~IMapleConfigMap() {}
 };
 
-void mcfg_CreateDevices();
+void mcfg_CreateDevices(int id_controller = 0, bool has_vmu_top = true, bool has_vmu_bottom = true);
 void mcfg_DestroyDevices();

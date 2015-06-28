@@ -1,5 +1,6 @@
 #include "types.h"
 #include "cfg/cfg.h"
+#include "oslib/logging.h"
 
 #if HOST_OS==OS_LINUX
 #include <poll.h>
@@ -178,13 +179,13 @@ void SetupInput()
 		ioctl(JoyFD,JSIOCGBUTTONS,&ButtonCount);
 		ioctl(JoyFD,JSIOCGNAME(sizeof(Name)),&Name);
 		
-		printf("SDK: Found '%s' joystick with %d axis and %d buttons\n",Name,AxisCount,ButtonCount);
+		log_msg(LOG_INFO, "sdk", "Found '%s' joystick with %d axis and %d buttons", Name, AxisCount, ButtonCount);
 
 		if (strcmp(Name,"Microsoft X-Box 360 pad")==0)
 		{
 			JMapBtn=JMapBtn_360;
 			JMapAxis=JMapAxis_360;
-			printf("Using Xbox 360 map\n");
+			log_msg(LOG_INFO, "input", "Using Xbox 360 map");
 		}
 	}
 #endif
@@ -284,7 +285,7 @@ bool HandleKb(u32 port) {
 	return true;
 	#else
   	while(read(kbfd,&ie,sizeof(ie))==sizeof(ie)) {
-		printf("type %i key %i state %i\n", ie.type, ie.code, ie.value);
+		log_msg(LOG_DEBUG, "input", "type %i key %i state %i\n", ie.type, ie.code, ie.value);
 	}
 	#endif
 #endif
@@ -549,7 +550,7 @@ void os_CreateWindow()
 			x11Display = XOpenDisplay( 0 );
 			if (!x11Display && !(x11Display = XOpenDisplay( ":0" )))
 			{
-				printf("Error: Unable to open X display\n");
+				log_msg(LOG_ERROR, "x11", "Unable to open X display");
 				return;
 			}
 			x11Screen = XDefaultScreen( x11Display );
@@ -825,7 +826,7 @@ int main(int argc, wchar* argv[])
 		x11_keymap[36] = Btn_Start;
 	#endif
 
-	printf("Home dir is: %s\n",GetPath("/").c_str());
+	log_msg(LOG_INFO, "env", "Home dir is: %s",GetPath("/").c_str());
 
 	common_linux_setup();
 

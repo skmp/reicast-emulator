@@ -16,7 +16,9 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
+#if HOST_CPU != CPU_ARM
 #include <sys/personality.h>
+#endif
 #include <dlfcn.h>
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
@@ -295,7 +297,9 @@ void linux_rpi2_init() {
 
 void common_linux_setup()
 {
+#if HOST_CPU != CPU_ARM
 	linux_fix_personality();
+#endif
 	linux_rpi2_init();
 
 	enable_runfast();

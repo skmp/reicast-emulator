@@ -119,8 +119,6 @@ void FinishRender(TA_context* ctx)
 	mtx_rqueue.Lock();
 	rqueue = 0;
 	mtx_rqueue.Unlock();
-
-	tactx_Recycle(ctx);
 }
 
 cMutex mtx_pool;

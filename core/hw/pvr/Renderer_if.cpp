@@ -184,6 +184,7 @@ TA_context* read_frame(const char* file, u8* vram_ref) {
 
 bool rend_frame(TA_context* ctx, bool draw_osd) {
 	bool proc = renderer->Process(ctx);
+	FinishRender(_pvrrc);
 	re.Set();
 
 	bool do_swp = proc && renderer->Render();
@@ -207,7 +208,7 @@ bool rend_single_frame()
 	bool do_swp = rend_frame(_pvrrc, true);
 
 	//clear up & free data ..
-	FinishRender(_pvrrc);
+	tactx_Recycle(_pvrrc);
 	_pvrrc=0;
 
 	return do_swp;
@@ -260,6 +261,7 @@ cThread rthd(rend_thread,0);
 
 
 bool pend_rend = false;
+extern TA_context* rqueue;
 
 void rend_resize(int width, int height) {
 	renderer->Resize(width, height);
@@ -268,6 +270,10 @@ void rend_resize(int width, int height) {
 
 void rend_start_render()
 {
+	if (rqueue) {
+		rend_end_render();
+	}
+
 	pend_rend = false;
 	bool is_rtt=(FB_W_SOF1& 0x1000000)!=0;
 	TA_context* ctx = tactx_Pop(CORE_CURRENT_CTX);
@@ -314,7 +320,6 @@ void rend_start_render()
 	}
 }
 
-
 void rend_end_render()
 {
 #if 1 //also disabled the printf, it takes quite some time ...
@@ -325,8 +330,9 @@ void rend_end_render()
 	#endif
 #endif
 
-	if (pend_rend)
+	if (pend_rend) {
 		re.Wait();
+	}
 }
 
 /*

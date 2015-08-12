@@ -34,16 +34,20 @@
 #endif
 
 #if !defined(ANDROID) && HOST_OS != OS_DARWIN && !defined(TARGET_EMSCRIPTEN)
-  #define USE_EVDEV 1
-  #define USE_JOYSTICK 1
+  #include <sys/stat.h>
+  #include <sys/types.h>
+#endif
+
+#if defined(USE_EVDEV)
   #ifdef TARGET_PANDORA
     #define EVDEV_DEVICE "/dev/input/event4"
   #else
     #define EVDEV_DEVICE "/dev/event2"
   #endif
+#endif
+
+#if defined(USE_JOYSTICK)
   #include <linux/joystick.h>
-  #include <sys/stat.h>
-  #include <sys/types.h>
 #endif
 
 #ifdef TARGET_PANDORA

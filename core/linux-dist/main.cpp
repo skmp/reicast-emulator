@@ -85,10 +85,12 @@ int msgboxf(const wchar* text, unsigned int type, ...)
 
 
 
-u16 kcode[4];
+u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
+u8 rt[4] = {0, 0, 0, 0};
+u8 lt[4] = {0, 0, 0, 0};
+
 u32 vks[4];
 s8 joyx[4],joyy[4];
-u8 rt[4],lt[4];
 
 enum DCPad
 {
@@ -384,13 +386,6 @@ static int joystick_fd = -1; // Joystick file descriptor
 
 void SetupInput()
 {
-  for (int port=0; port<4; port++)
-  {
-    kcode[port]=0xFFFF;
-    rt[port]=0;
-    lt[port]=0;
-  }
-
   #if defined(USE_EVDEV)
     evdev_fd = input_evdev_init(EVDEV_DEVICE);
   #endif

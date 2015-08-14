@@ -29,7 +29,7 @@ void RegWriteInfo(shil_opcode* ops, shil_param p,size_t ord)
 		{
 			if (RegisterWrite[p._reg+i]>=RegisterRead[p._reg+i] && RegisterWrite[p._reg+i]!=0xFFFFFFFF)	//if last read was before last write, and there was a last write
 			{
-				printf("DEAD OPCODE %d %d!\n",RegisterWrite[p._reg+i],ord);
+				printf("DEAD OPCODE %d %lu!\n",RegisterWrite[p._reg+i],ord);
 				ops[RegisterWrite[p._reg+i]].Flow=1; //the last write was unused
 			}
 			RegisterWrite[p._reg+i]=ord;
@@ -697,7 +697,7 @@ void dejcond(RuntimeBlockInfo* blk)
 
 		if (found)
 		{
-			if (op->rd.is_reg() && op->rd._reg==reg_sr_T ||  op->op==shop_ifb)
+			if ((op->rd.is_reg() && op->rd._reg==reg_sr_T) ||  op->op==shop_ifb)
 			{
 				found=false;
 			}
@@ -840,9 +840,9 @@ void srt_waw(RuntimeBlockInfo* blk)
 
 		if (found)
 		{
-			if (op->rs1.is_reg() && op->rs1._reg==reg_sr_T
-				|| op->rs2.is_reg() && op->rs2._reg==reg_sr_T
-				|| op->rs3.is_reg() && op->rs3._reg==reg_sr_T
+			if ((op->rs1.is_reg() && op->rs1._reg==reg_sr_T)
+				|| (op->rs2.is_reg() && op->rs2._reg==reg_sr_T)
+				|| (op->rs3.is_reg() && op->rs3._reg==reg_sr_T)
 				|| op->op==shop_ifb)
 			{
 				found=false;

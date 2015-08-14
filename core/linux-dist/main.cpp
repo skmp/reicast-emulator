@@ -599,7 +599,7 @@ void os_CreateWindow()
  
 				// Get a visual
 				XVisualInfo *vi = glXGetVisualFromFBConfig( x11Display, bestFbc );
-				printf( "Chosen visual ID = 0x%x\n", vi->visualid );
+				printf( "Chosen visual ID = 0x%lx\n", vi->visualid );
 
 
 				depth = vi->depth;

@@ -148,7 +148,7 @@ void SetupInput()
   #endif
 
   #if defined(SUPPORT_X11)
-    input_x11_init();
+    //input_x11_init();
   #endif
 }
 
@@ -170,7 +170,7 @@ void UpdateInputState(u32 port)
 void os_DoEvents()
 {
   #if defined(SUPPORT_X11)
-    input_x11_handle();
+    //input_x11_handle();
   #endif
 }
 

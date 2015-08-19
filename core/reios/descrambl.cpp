@@ -7,7 +7,6 @@
 */
 
 #include "descrambl.h"
-#include <algorithm>
 
 #define MAXCHUNK (2048*1024)
 

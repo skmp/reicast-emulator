@@ -70,7 +70,6 @@ int GetFile(char *szFileName, char *szParse=0,u32 flags=0)
 	return 1; 
 }
 
-
 s32 plugins_Init()
 {
 
@@ -152,7 +151,7 @@ int dc_init(int argc,wchar* argv[])
 		msgboxf("Unable to open config file",MBX_ICONERROR);
 		return -4;
 	}
-	LoadSettings();
+	LoadSettings(&settings);
 #ifndef _ANDROID
 	os_CreateWindow();
 #endif
@@ -222,7 +221,7 @@ void dc_term()
 	_vmem_release();
 
 #ifndef _ANDROID
-	SaveSettings();
+	SaveSettings(&settings);
 #endif
 	SaveRomFiles(GetPath("/data/"));
 }

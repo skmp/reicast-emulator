@@ -1,5 +1,6 @@
 #include "types.h"
 #include "cfg/cfg.h"
+#include "nullDC.h"
 
 #if HOST_OS==OS_LINUX
 #include <poll.h>
@@ -199,8 +200,6 @@ void os_CreateWindow()
 }
 
 void common_linux_setup();
-int dc_init(int argc,wchar* argv[]);
-void dc_run();
 
 #ifdef TARGET_PANDORA
 	void gl_term();
@@ -262,9 +261,12 @@ int main(int argc, wchar* argv[])
 
 	settings.profile.run_counts=0;
 
-	dc_init(argc,argv);
+	settings_t dc_settings;
+	dc_get_settings(&dc_settings, argc,argv);
 
 	SetupInput();
+
+	dc_init(dc_settings);
 
 	#if !defined(TARGET_EMSCRIPTEN)
 		dc_run();

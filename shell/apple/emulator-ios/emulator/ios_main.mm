@@ -20,6 +20,7 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
+#include "nullDC.h"
 #include <unistd.h>
 
 
@@ -52,8 +53,6 @@ int darw_printf(const wchar* text,...) {
 
 
 void common_linux_setup();
-int dc_init(int argc,wchar* argv[]);
-void dc_run();
 
 u16 kcode[4];
 u32 vks[4];

@@ -8,6 +8,7 @@
 #import <Carbon/Carbon.h>
 
 #include "types.h"
+#include "nullDC.h"
 #include <sys/stat.h>
 
 #include <OpenGL/gl3.h>
@@ -83,9 +84,6 @@ void gl_term() {
 void gl_swap() {
     
 }
-
-int dc_init(int argc,wchar* argv[]);
-void dc_run();
 
 bool has_init = false;
 void* emuthread(void*) {

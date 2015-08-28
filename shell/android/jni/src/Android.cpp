@@ -444,11 +444,11 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_kcode(JNIEnv * env, j
 
 	for(int i = 0; i < MAPLE_NUM_PORTS; i++)
 	{
-		kcode[i] = k_code_body[i];	
-		lt[i] = l_t_body[i];
-		rt[i] = r_t_body[i];
-		joyx[i] = jx_body[i];
-		joyy[i] = jy_body[i];
+		maple_controller[i].buttons       = k_code_body[i];
+		maple_controller[i].trigger_left  = l_t_body[i];
+		maple_controller[i].trigger_right = r_t_body[i];
+		maple_controller[i].stick_x       = jx_body[i];
+		maple_controller[i].stick_y       = jy_body[i];
 	}
 
 	env->ReleaseIntArrayElements(k_code, k_code_body, 0);

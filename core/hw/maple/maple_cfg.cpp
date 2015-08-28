@@ -41,11 +41,11 @@ struct MapleConfigMap : IMapleConfigMap
 	{
 		UpdateInputState(dev->bus_id);
 
-		pjs->kcode=kcode[dev->bus_id] | 0xF901;
-		pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[dev->bus_id]);
-		pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[dev->bus_id]);
-		pjs->trigger[PJTI_R]=rt[dev->bus_id];
-		pjs->trigger[PJTI_L]=lt[dev->bus_id];
+		pjs->kcode           = maple_controller[dev->bus_id].buttons | 0xF901;
+		pjs->joy[PJAI_X1]    = GetBtFromSgn(maple_controller[dev->bus_id].stick_x);
+		pjs->joy[PJAI_Y1]    = GetBtFromSgn(maple_controller[dev->bus_id].stick_y);
+		pjs->trigger[PJTI_R] = maple_controller[dev->bus_id].trigger_right;
+		pjs->trigger[PJTI_L] = maple_controller[dev->bus_id].trigger_left;
 	}
 	void SetImage(void* img)
 	{
@@ -67,7 +67,7 @@ void mcfg_CreateDevices()
 	#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 		for(int port = 0; port < MAPLE_NUM_PORTS; port++)
 		{
-			if(port_enabled[port])
+			if(maple_controller[port].enabled)
 			{
 				mcfg_Create(MDT_SegaController, port, 5);
 				mcfg_Create(MDT_SegaVMU,        port, 0);

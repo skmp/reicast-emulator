@@ -206,20 +206,20 @@ void input_sdl_handle(u32 port)
 					{
 						// printf("Mapped to %d\n",mo);
 						if (value)
-						kcode[port] &= ~mo;
+						maple_controller[port].buttons &= ~mo;
 						else
-						kcode[port] |= mo;
+						maple_controller[port].buttons |= mo;
 					}
 					else if (mt == 1)
 					{
 						// printf("Mapped to %d %d\n",mo,JE.value?255:0);
 						if (mo == 0)
 						{
-							lt[port] = value ? 255 : 0;
+							maple_controller[port].trigger_left = value ? 255 : 0;
 						}
 						else if (mo == 1)
 						{
-							rt[port] = value ? 255 : 0;
+							maple_controller[port].trigger_right = value ? 255 : 0;
 						}
 					}
 					
@@ -240,18 +240,18 @@ void input_sdl_handle(u32 port)
 					
 					if (mt == 0)
 					{
-						kcode[port] |= mo;
-						kcode[port] |= mo*2;
+						maple_controller[port].buttons |= mo;
+						maple_controller[port].buttons |= mo*2;
 						if (v < -64)
 						{
-							kcode[port] &= ~mo;
+							maple_controller[port].buttons &= ~mo;
 						}
 						else if (v > 64)
 						{
-							kcode[port] &= ~(mo*2);
+							maple_controller[port].buttons &= ~(mo*2);
 						}
 						
-						// printf("Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
+						// printf("Mapped to %d %d %d\n",mo,maple_controller[port].buttons&mo,maple_controller[port].buttons&(mo*2));
 					}
 					else if (mt == 1)
 					{
@@ -261,11 +261,11 @@ void input_sdl_handle(u32 port)
 						
 						if (mo == 0)
 						{
-							lt[port] = v + 127;
+							maple_controller[port].trigger_left = v + 127;
 						}
 						else if (mo == 1)
 						{
-							rt[port] = v + 127;
+							maple_controller[port].trigger_right = v + 127;
 						}
 					}
 					else if (mt == 2)
@@ -273,11 +273,11 @@ void input_sdl_handle(u32 port)
 						//  printf("AXIS %d,%d Mapped to %d %d [%d]",JE.number,JE.value,mo,v);
 						if (mo == 0)
 						{
-							joyx[port] = v;
+							maple_controller[port].stick_x = v;
 						}
 						else if (mo==1)
 						{
-							joyy[port] = v;
+							maple_controller[port].stick_y = v;
 						}
 					}
 				}
@@ -325,39 +325,39 @@ void input_sdl_handle(u32 port)
 						case 1:  // Up=RT, Down=LT
 							if (yy<0)
 							{
-								rt[port] = -yy;
+								maple_controller[port].trigger_right = -yy;
 							}
 							else if (yy>0)
 							{
-								lt[port] = yy;
+								maple_controller[port].trigger_left = yy;
 							}
 							break;
 						case 2:  // Left=LT, Right=RT
 							if (xx < 0)
 							{
-								lt[port] = -xx;
+								maple_controller[port].trigger_left = -xx;
 							}
 							else if (xx > 0)
 							{
-								rt[port] = xx;
+								maple_controller[port].trigger_right = xx;
 							}
 							break;
 						case 3:  // Nub = ABXY
 							if (xx < -127)
 							{
-								kcode[port] &= ~DC_BTN_X;
+								maple_controller[port].buttons &= ~DC_BTN_X;
 							}
 							else if (xx > 127)
 							{
-								kcode[port] &= ~DC_BTN_B;
+								maple_controller[port].buttons &= ~DC_BTN_B;
 							}
 							if (yy < -127)
 							{
-								kcode[port] &= ~DC_BTN_Y;
+								maple_controller[port].buttons &= ~DC_BTN_Y;
 							}
 							else if (yy > 127)
 							{
-								kcode[port] &= ~DC_BTN_A;
+								maple_controller[port].buttons &= ~DC_BTN_A;
 							}
 							break;
 					}
@@ -365,16 +365,16 @@ void input_sdl_handle(u32 port)
 		}
 	}
 			
-	if (keys[0]) { kcode[port] &= ~DC_BTN_C; }
-	if (keys[6]) { kcode[port] &= ~DC_BTN_A; }
-	if (keys[7]) { kcode[port] &= ~DC_BTN_B; }
-	if (keys[5]) { kcode[port] &= ~DC_BTN_Y; }
-	if (keys[8]) { kcode[port] &= ~DC_BTN_X; }
-	if (keys[1]) { kcode[port] &= ~DC_BTN_DPAD_UP; }
-	if (keys[2]) { kcode[port] &= ~DC_BTN_DPAD_DOWN; }
-	if (keys[3]) { kcode[port] &= ~DC_BTN_DPAD_LEFT; }
-	if (keys[4]) { kcode[port] &= ~DC_BTN_DPAD_RIGHT; }
-	if (keys[12]){ kcode[port] &= ~DC_BTN_START; }
+	if (keys[0]) { maple_controller[port].buttons &= ~DC_BTN_C; }
+	if (keys[6]) { maple_controller[port].buttons &= ~DC_BTN_A; }
+	if (keys[7]) { maple_controller[port].buttons &= ~DC_BTN_B; }
+	if (keys[5]) { maple_controller[port].buttons &= ~DC_BTN_Y; }
+	if (keys[8]) { maple_controller[port].buttons &= ~DC_BTN_X; }
+	if (keys[1]) { maple_controller[port].buttons &= ~DC_BTN_DPAD_UP; }
+	if (keys[2]) { maple_controller[port].buttons &= ~DC_BTN_DPAD_DOWN; }
+	if (keys[3]) { maple_controller[port].buttons &= ~DC_BTN_DPAD_LEFT; }
+	if (keys[4]) { maple_controller[port].buttons &= ~DC_BTN_DPAD_RIGHT; }
+	if (keys[12]){ maple_controller[port].buttons &= ~DC_BTN_START; }
 	if (keys[9])
 	{ 
 		dc_term();
@@ -384,11 +384,11 @@ void input_sdl_handle(u32 port)
 	} 
 	if (keys[10])
 	{
-		rt[port] = 255;
+		maple_controller[port].trigger_right = 255;
 	}
 	if (keys[11])
 	{
-		lt[port] = 255;
+		maple_controller[port].trigger_left = 255;
 	}
 }
 

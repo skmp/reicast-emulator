@@ -26,9 +26,9 @@ int dpad_or_btn = 0;
 -(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
     
     if (dpad_or_btn &1)
-        kcode[0] &= ~(DC_BTN_START|DC_BTN_A);
+        maple_controller[0].buttons &= ~(DC_BTN_START|DC_BTN_A);
     else
-        kcode[0] &= ~(DC_BTN_DPAD_LEFT);
+        maple_controller[0].buttons &= ~(DC_BTN_DPAD_LEFT);
 }
 
 -(void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
@@ -36,9 +36,9 @@ int dpad_or_btn = 0;
     //	[event allTouches];
     
     if (dpad_or_btn &1)
-        kcode[0] |= (DC_BTN_START|DC_BTN_A);
+        maple_controller[0].buttons |= (DC_BTN_START|DC_BTN_A);
     else
-        kcode[0] |= (DC_BTN_DPAD_LEFT);
+        maple_controller[0].buttons |= (DC_BTN_DPAD_LEFT);
     
     dpad_or_btn++;
 }

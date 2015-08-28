@@ -1239,21 +1239,21 @@ static void OSD_HOOK()
 	osd_count=0;
 
 	#ifndef TARGET_PANDORA
-	DrawButton2(vjoy_pos[0],kcode[0]&DC_BTN_DPAD_LEFT);
-	DrawButton2(vjoy_pos[1],kcode[0]&DC_BTN_DPAD_UP);
-	DrawButton2(vjoy_pos[2],kcode[0]&DC_BTN_DPAD_RIGHT);
-	DrawButton2(vjoy_pos[3],kcode[0]&DC_BTN_DPAD_DOWN);
+	DrawButton2(vjoy_pos[0], maple_controller[0].buttons & DC_BTN_DPAD_LEFT);
+	DrawButton2(vjoy_pos[1], maple_controller[0].buttons & DC_BTN_DPAD_UP);
+	DrawButton2(vjoy_pos[2], maple_controller[0].buttons & DC_BTN_DPAD_RIGHT);
+	DrawButton2(vjoy_pos[3], maple_controller[0].buttons & DC_BTN_DPAD_DOWN);
 
-	DrawButton2(vjoy_pos[4],kcode[0]&DC_BTN_X);
-	DrawButton2(vjoy_pos[5],kcode[0]&DC_BTN_Y);
-	DrawButton2(vjoy_pos[6],kcode[0]&DC_BTN_B);
-	DrawButton2(vjoy_pos[7],kcode[0]&DC_BTN_A);
+	DrawButton2(vjoy_pos[4], maple_controller[0].buttons & DC_BTN_X);
+	DrawButton2(vjoy_pos[5], maple_controller[0].buttons & DC_BTN_Y);
+	DrawButton2(vjoy_pos[6], maple_controller[0].buttons & DC_BTN_B);
+	DrawButton2(vjoy_pos[7], maple_controller[0].buttons & DC_BTN_A);
 
-	DrawButton2(vjoy_pos[8],kcode[0]&DC_BTN_START);
+	DrawButton2(vjoy_pos[8], maple_controller[0].buttons & DC_BTN_START);
 
-	DrawButton(vjoy_pos[9],lt[0]);
+	DrawButton(vjoy_pos[9],  maple_controller[0].trigger_left);
 
-	DrawButton(vjoy_pos[10],rt[0]);
+	DrawButton(vjoy_pos[10], maple_controller[0].trigger_right);
 
 	DrawButton2(vjoy_pos[11],1);
 	DrawButton2(vjoy_pos[12],0);
@@ -1810,7 +1810,7 @@ bool rend_single_frame()
 	}
 
 	bool do_swp=false;
-	//if (kcode[0]&(1<<9))
+	//if (maple_controller[0].buttons&(1<<9))
 	{
 
 

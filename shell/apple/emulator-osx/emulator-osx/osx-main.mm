@@ -133,9 +133,9 @@ extern "C" void emu_gles_init() {
 
 void handle_key(int dckey, int state) {
     if (state)
-        kcode[0] &= ~dckey;
+        maple_controller[0].buttons &= ~dckey;
     else
-        kcode[0] |= dckey;
+        maple_controller[0].buttons |= dckey;
 }
 
 void handle_trig(u8* dckey, int state) {

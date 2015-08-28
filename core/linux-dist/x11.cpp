@@ -101,11 +101,11 @@ void input_x11_handle()
 						int dc_key = x11_keymap[e.xkey.keycode];
 						if (e.type == KeyPress)
 						{
-							kcode[0] &= ~dc_key;
+							maple_controller[0].buttons &= ~dc_key;
 						}
 						else
 						{
-							kcode[0] |= dc_key;
+							maple_controller[0].buttons |= dc_key;
 						}
 					}
 					//printf("KEY: %d -> %d: %d\n",e.xkey.keycode, dc_key, x11_dc_buttons );

@@ -73,18 +73,18 @@
 
 					if (mt == 0)
 					{
-						kcode[port] |= mo;
-						kcode[port] |= mo*2;
+						maple_controller[port].buttons |= mo;
+						maple_controller[port].buttons |= mo*2;
 						if (v<-64)
 						{
-							kcode[port] &= ~mo;
+							maple_controller[port].buttons &= ~mo;
 						}
 						else if (v>64)
 						{
-							kcode[port] &= ~(mo*2);
+							maple_controller[port].buttons &= ~(mo*2);
 						}
 
-					 //printf("Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
+					 //printf("Mapped to %d %d %d\n",mo,maple_controller[port].buttons&mo,maple_controller[port].buttons&(mo*2));
 					}
 					else if (mt == 1)
 					{
@@ -95,11 +95,11 @@
 						//printf("AXIS %d,%d Mapped to %d %d %d\n",JE.number,JE.value,mo,v,v+127);
 						if (mo == 0)
 						{
-							lt[port] = (v + 127);
+							maple_controller[port].trigger_left = (v + 127);
 						}
 						else if (mo == 1)
 						{
-							rt[port] = (v + 127);
+							maple_controller[port].trigger_right = (v + 127);
 						}
 					}
 					else if (mt == 2)
@@ -107,11 +107,11 @@
 						//  printf("AXIS %d,%d Mapped to %d %d [%d]",JE.number,JE.value,mo,v);
 						if (mo == 0)
 						{
-							joyx[port] = v;
+							maple_controller[port].stick_x = v;
 						}
 						else if (mo == 1)
 						{
-							joyy[port] = v;
+							maple_controller[port].stick_y = v;
 						}
 					}
 				}
@@ -129,11 +129,11 @@
 						// printf("Mapped to %d\n",mo);
 						if (JE.value)
 						{
-							kcode[port] &= ~mo;
+							maple_controller[port].buttons &= ~mo;
 						}
 						else
 						{
-							kcode[port] |= mo;
+							maple_controller[port].buttons |= mo;
 						}
 					}
 					else if (mt == 1)
@@ -141,11 +141,11 @@
 						// printf("Mapped to %d %d\n",mo,JE.value?255:0);
 						if (mo==0)
 						{
-							lt[port] = JE.value ? 255 : 0;
+							maple_controller[port].trigger_left = JE.value ? 255 : 0;
 						}
 						else if (mo==1)
 						{
-							rt[port] = JE.value ? 255 : 0;
+							maple_controller[port].trigger_right = JE.value ? 255 : 0;
 						}
 					}
 				}

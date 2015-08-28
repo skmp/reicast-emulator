@@ -177,44 +177,44 @@ int msgboxf(const wchar* text,unsigned int type,...)
 
 void UpdateInputState(u32 port)
 	{
-		//joyx[port]=pad.Lx;
-		//joyy[port]=pad.Ly;
-		lt[port]=GetAsyncKeyState('A')?255:0;
-		rt[port]=GetAsyncKeyState('S')?255:0;
+		//maple_controller[port].stick_x = pad.Lx;
+		//maple_controller[port].stick_y = pad.Ly;
+		maple_controller[port].trigger_left  = GetAsyncKeyState('A') ? 255 : 0;
+		maple_controller[port].trigger_right = GetAsyncKeyState('S') ? 255 : 0;
 
-		joyx[port]=joyy[port]=0;
+		maple_controller[port].stick_x = maple_controller[port].stick_y = 0;
 
 		if (GetAsyncKeyState('J'))
-			joyx[port]-=126;
+			maple_controller[port].stick_x -= 126;
 		if (GetAsyncKeyState('L'))
-			joyx[port]+=126;
+			maple_controller[port].stick_x += 126;
 
 		if (GetAsyncKeyState('I'))
-			joyy[port]-=126;
+			maple_controller[port].stick_y -= 126;
 		if (GetAsyncKeyState('K'))
-			joyy[port]+=126;
+			maple_controller[port].stick_y += 126;
 
-		kcode[port]=0xFFFF;
+		maple_controller[port].buttons = 0xFFFF;
 		if (GetAsyncKeyState('V'))
-			kcode[port]&=~DC_BTN_A;
+			maple_controller[port].buttons &= ~DC_BTN_A;
 		if (GetAsyncKeyState('C'))
-			kcode[port]&=~DC_BTN_B;
+			maple_controller[port].buttons &= ~DC_BTN_B;
 		if (GetAsyncKeyState('X'))
-			kcode[port]&=~DC_BTN_Y;
+			maple_controller[port].buttons &= ~DC_BTN_Y;
 		if (GetAsyncKeyState('Z'))
-			kcode[port]&=~DC_BTN_X;
+			maple_controller[port].buttons &= ~DC_BTN_X;
 
 		if (GetAsyncKeyState(VK_SHIFT))
-			kcode[port]&=~DC_BTN_START;
+			maple_controller[port].buttons &= ~DC_BTN_START;
 
 		if (GetAsyncKeyState(VK_UP))
-			kcode[port]&=~DC_BTN_DPAD_UP;
+			maple_controller[port].buttons &= ~DC_BTN_DPAD_UP;
 		if (GetAsyncKeyState(VK_DOWN))
-			kcode[port]&=~DC_BTN_DPAD_DOWN;
+			maple_controller[port].buttons &= ~DC_BTN_DPAD_DOWN;
 		if (GetAsyncKeyState(VK_LEFT))
-			kcode[port]&=~DC_BTN_DPAD_LEFT;
+			maple_controller[port].buttons &= ~DC_BTN_DPAD_LEFT;
 		if (GetAsyncKeyState(VK_RIGHT))
-			kcode[port]&=~DC_BTN_DPAD_RIGHT;
+			maple_controller[port].buttons &= ~DC_BTN_DPAD_RIGHT;
 
 		if (GetAsyncKeyState(VK_F1))
 			settings.pvr.ta_skip = 100;

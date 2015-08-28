@@ -314,43 +314,43 @@
 			{
 				case EV_KEY:
 					if (ie.code == controller->mapping->Btn_A) {
-						SET_FLAG(kcode[port], DC_BTN_A, ie.value);
+						SET_FLAG(maple_controller[port].buttons, DC_BTN_A, ie.value);
 					} else if (ie.code == controller->mapping->Btn_B) {
-						SET_FLAG(kcode[port], DC_BTN_B, ie.value);
+						SET_FLAG(maple_controller[port].buttons, DC_BTN_B, ie.value);
 					} else if (ie.code == controller->mapping->Btn_C) {
-						SET_FLAG(kcode[port], DC_BTN_C, ie.value);
+						SET_FLAG(maple_controller[port].buttons, DC_BTN_C, ie.value);
 					} else if (ie.code == controller->mapping->Btn_D) {
-						SET_FLAG(kcode[port], DC_BTN_D, ie.value);
+						SET_FLAG(maple_controller[port].buttons, DC_BTN_D, ie.value);
 					} else if (ie.code == controller->mapping->Btn_X) {
-						SET_FLAG(kcode[port], DC_BTN_X, ie.value);
+						SET_FLAG(maple_controller[port].buttons, DC_BTN_X, ie.value);
 					} else if (ie.code == controller->mapping->Btn_Y) {
-						SET_FLAG(kcode[port], DC_BTN_Y, ie.value);
+						SET_FLAG(maple_controller[port].buttons, DC_BTN_Y, ie.value);
 					} else if (ie.code == controller->mapping->Btn_Z) {
-						SET_FLAG(kcode[port], DC_BTN_Z, ie.value);
+						SET_FLAG(maple_controller[port].buttons, DC_BTN_Z, ie.value);
 					} else if (ie.code == controller->mapping->Btn_Start) {
-						SET_FLAG(kcode[port], DC_BTN_START, ie.value);
+						SET_FLAG(maple_controller[port].buttons, DC_BTN_START, ie.value);
 					} else if (ie.code == controller->mapping->Btn_Escape) {
 						die("death by escape key");
 					} else if (ie.code == controller->mapping->Btn_DPad_Left) {
-						SET_FLAG(kcode[port], DC_BTN_DPAD_LEFT, ie.value);
+						SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD_LEFT, ie.value);
 					} else if (ie.code == controller->mapping->Btn_DPad_Right) {
-						SET_FLAG(kcode[port], DC_BTN_DPAD_RIGHT, ie.value);
+						SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD_RIGHT, ie.value);
 					} else if (ie.code == controller->mapping->Btn_DPad_Up) {
-						SET_FLAG(kcode[port], DC_BTN_DPAD_UP, ie.value);
+						SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD_UP, ie.value);
 					} else if (ie.code == controller->mapping->Btn_DPad_Down) {
-						SET_FLAG(kcode[port], DC_BTN_DPAD_DOWN, ie.value);
+						SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD_DOWN, ie.value);
 					} else if (ie.code == controller->mapping->Btn_DPad2_Left) {
-						SET_FLAG(kcode[port], DC_BTN_DPAD2_LEFT, ie.value);
+						SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD2_LEFT, ie.value);
 					} else if (ie.code == controller->mapping->Btn_DPad2_Right) {
-						SET_FLAG(kcode[port], DC_BTN_DPAD2_RIGHT, ie.value);
+						SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD2_RIGHT, ie.value);
 					} else if (ie.code == controller->mapping->Btn_DPad2_Up) {
-						SET_FLAG(kcode[port], DC_BTN_DPAD2_UP, ie.value);
+						SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD2_UP, ie.value);
 					} else if (ie.code == controller->mapping->Btn_DPad2_Down) {
-						SET_FLAG(kcode[port], DC_BTN_DPAD2_DOWN, ie.value);
+						SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD2_DOWN, ie.value);
 					} else if (ie.code == controller->mapping->Btn_Trigger_Left) {
-						lt[port] = (ie.value ? 255 : 0);
+						maple_controller[port].trigger_left = (ie.value ? 255 : 0);
 					} else if (ie.code == controller->mapping->Btn_Trigger_Right) {
-						rt[port] = (ie.value ? 255 : 0);
+						maple_controller[port].trigger_right = (ie.value ? 255 : 0);
 					}
 					break;
 				case EV_ABS:
@@ -359,16 +359,16 @@
 						switch(ie.value)
 						{
 							case -1:
-								SET_FLAG(kcode[port], DC_BTN_DPAD_LEFT,  1);
-								SET_FLAG(kcode[port], DC_BTN_DPAD_RIGHT, 0);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD_LEFT,  1);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD_RIGHT, 0);
 								break;
 							case 0:
-								SET_FLAG(kcode[port], DC_BTN_DPAD_LEFT,  0);
-								SET_FLAG(kcode[port], DC_BTN_DPAD_RIGHT, 0);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD_LEFT,  0);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD_RIGHT, 0);
 								break;
 							case 1:
-								SET_FLAG(kcode[port], DC_BTN_DPAD_LEFT,  0);
-								SET_FLAG(kcode[port], DC_BTN_DPAD_RIGHT, 1);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD_LEFT,  0);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD_RIGHT, 1);
 								break;
 						}
 					}
@@ -377,16 +377,16 @@
 						switch(ie.value)
 						{
 							case -1:
-								SET_FLAG(kcode[port], DC_BTN_DPAD_UP,   1);
-								SET_FLAG(kcode[port], DC_BTN_DPAD_DOWN, 0);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD_UP,   1);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD_DOWN, 0);
 								break;
 							case 0:
-								SET_FLAG(kcode[port], DC_BTN_DPAD_UP,  0);
-								SET_FLAG(kcode[port], DC_BTN_DPAD_DOWN, 0);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD_UP,  0);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD_DOWN, 0);
 								break;
 							case 1:
-								SET_FLAG(kcode[port], DC_BTN_DPAD_UP,  0);
-								SET_FLAG(kcode[port], DC_BTN_DPAD_DOWN, 1);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD_UP,  0);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD_DOWN, 1);
 								break;
 						}
 					}
@@ -395,16 +395,16 @@
 						switch(ie.value)
 						{
 							case -1:
-								SET_FLAG(kcode[port], DC_BTN_DPAD2_LEFT,  1);
-								SET_FLAG(kcode[port], DC_BTN_DPAD2_RIGHT, 0);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD2_LEFT,  1);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD2_RIGHT, 0);
 								break;
 							case 0:
-								SET_FLAG(kcode[port], DC_BTN_DPAD2_LEFT,  0);
-								SET_FLAG(kcode[port], DC_BTN_DPAD2_RIGHT, 0);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD2_LEFT,  0);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD2_RIGHT, 0);
 								break;
 							case 1:
-								SET_FLAG(kcode[port], DC_BTN_DPAD2_LEFT,  0);
-								SET_FLAG(kcode[port], DC_BTN_DPAD2_RIGHT, 1);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD2_LEFT,  0);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD2_RIGHT, 1);
 								break;
 						}
 					}
@@ -413,34 +413,34 @@
 						switch(ie.value)
 						{
 							case -1:
-								SET_FLAG(kcode[port], DC_BTN_DPAD2_UP,   1);
-								SET_FLAG(kcode[port], DC_BTN_DPAD2_DOWN, 0);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD2_UP,   1);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD2_DOWN, 0);
 								break;
 							case 0:
-								SET_FLAG(kcode[port], DC_BTN_DPAD2_UP,  0);
-								SET_FLAG(kcode[port], DC_BTN_DPAD2_DOWN, 0);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD2_UP,  0);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD2_DOWN, 0);
 								break;
 							case 1:
-								SET_FLAG(kcode[port], DC_BTN_DPAD2_UP,  0);
-								SET_FLAG(kcode[port], DC_BTN_DPAD2_DOWN, 1);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD2_UP,  0);
+								SET_FLAG(maple_controller[port].buttons, DC_BTN_DPAD2_DOWN, 1);
 								break;
 						}
 					}
 					else if (ie.code == controller->mapping->Axis_Analog_X)
 					{
-						joyx[port] = (controller->data_x.convert(ie.value) + 128);
+						maple_controller[port].stick_x = (controller->data_x.convert(ie.value) + 128);
 					}
 					else if (ie.code == controller->mapping->Axis_Analog_Y)
 					{
-						joyy[port] = (controller->data_y.convert(ie.value) + 128);
+						maple_controller[port].stick_y = (controller->data_y.convert(ie.value) + 128);
 					}
 					else if (ie.code == controller->mapping->Axis_Trigger_Left)
 					{
-						lt[port] = controller->data_trigger_left.convert(ie.value);
+						maple_controller[port].trigger_left = controller->data_trigger_left.convert(ie.value);
 					}
 					else if (ie.code == controller->mapping->Axis_Trigger_Right)
 					{
-						rt[port] = controller->data_trigger_right.convert(ie.value);
+						maple_controller[port].trigger_right = controller->data_trigger_right.convert(ie.value);
 					}
 					break;
 			}

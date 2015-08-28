@@ -15,6 +15,7 @@
 
 #include "webui/server.h"
 #include "hw/naomi/naomi_cart.h"
+#include "nullDC.h"
 
 settings_t settings;
 
@@ -127,8 +128,36 @@ void* webui_th(void* p)
 cThread webui_thd(&webui_th,0);
 #endif
 
-int dc_init(int argc,wchar* argv[])
+int dc_get_settings(settings_t* p_settings, int argc, wchar* argv[])
 {
+	if(ParseCommandLine(argc,argv))
+	{
+		return 69;
+	}
+	if(!cfgOpen())
+	{
+		msgboxf("Unable to open config file",MBX_ICONERROR);
+		return -4;
+	}
+	LoadSettings(p_settings);
+	return 0;
+}
+
+int dc_init(int argc, wchar* argv[])
+{
+	// This is just a convenience function
+	settings_t dc_settings;
+	int rc = dc_get_settings(&dc_settings, argc, argv);
+	if(rc != 0)
+	{
+		return rc;
+	}
+	return dc_init(dc_settings);
+}
+
+int dc_init(settings_t p_settings)
+{
+	settings = p_settings;
 	setbuf(stdin,0);
 	setbuf(stdout,0);
 	setbuf(stderr,0);
@@ -142,16 +171,6 @@ int dc_init(int argc,wchar* argv[])
 	webui_thd.Start();
 #endif
 
-	if(ParseCommandLine(argc,argv))
-	{
-		return 69;
-	}
-	if(!cfgOpen())
-	{
-		msgboxf("Unable to open config file",MBX_ICONERROR);
-		return -4;
-	}
-	LoadSettings(&settings);
 #ifndef _ANDROID
 	os_CreateWindow();
 #endif

@@ -64,14 +64,19 @@ void mcfg_Create(MapleDeviceType type,u32 bus,u32 port)
 
 void mcfg_CreateDevices()
 {
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	mcfg_Create(MDT_SegaController,0,5);
-
-	mcfg_Create(MDT_SegaVMU,0,0);
-	mcfg_Create(MDT_SegaVMU,0,1);
-#else
-	mcfg_Create(MDT_NaomiJamma, 0, 5);
-#endif
+	#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+		for(int port = 0; port < MAPLE_NUM_PORTS; port++)
+		{
+			if(port_enabled[port])
+			{
+				mcfg_Create(MDT_SegaController, port, 5);
+				mcfg_Create(MDT_SegaVMU,        port, 0);
+				mcfg_Create(MDT_SegaVMU,        port, 1);
+			}
+		}
+	#else
+		mcfg_Create(MDT_NaomiJamma, 0, 5);
+	#endif
 }
 
 void mcfg_DestroyDevices()

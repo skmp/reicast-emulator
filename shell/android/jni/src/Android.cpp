@@ -208,7 +208,7 @@ static void *ThreadHandler(void *UserData)
   }
 
   // Add additonal controllers
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; i < (MAPLE_NUM_PORTS - 1); i++)
   {
     if (add_controllers[i])
       mcfg_Create(MDT_SegaController,i+1,5);
@@ -442,7 +442,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_kcode(JNIEnv * env, j
 	jint *jx_body = env->GetIntArrayElements(jx, 0);
 	jint *jy_body = env->GetIntArrayElements(jy, 0);
 
-	for(int i = 0; i < 4; i++)
+	for(int i = 0; i < MAPLE_NUM_PORTS; i++)
 	{
 		kcode[i] = k_code_body[i];	
 		lt[i] = l_t_body[i];

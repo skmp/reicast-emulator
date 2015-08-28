@@ -1,10 +1,16 @@
 #pragma once
 #include "types.h"
 
-extern u16 kcode[4];
-extern u32 vks[4];
-extern u8 rt[4], lt[4];
-extern s8 joyx[4], joyy[4];
+// If you change the value of MAPLE_NUM_PORTS, please note that you need to change the initializers in maple_controller.cpp as well
+#define MAPLE_NUM_PORTS 4
+
+extern u16 kcode[MAPLE_NUM_PORTS];
+extern u32 vks[MAPLE_NUM_PORTS];
+extern u8 rt[MAPLE_NUM_PORTS];
+extern u8 lt[MAPLE_NUM_PORTS];
+extern s8 joyx[MAPLE_NUM_PORTS];
+extern s8 joyy[MAPLE_NUM_PORTS];
+extern bool port_enabled[MAPLE_NUM_PORTS];
 
 enum MapleControllerCode
 {

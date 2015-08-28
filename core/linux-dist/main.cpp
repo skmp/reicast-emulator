@@ -80,12 +80,7 @@ void emit_WriteCodeCache();
 
 #if defined(USE_EVDEV)
 	/* evdev input */
-	static EvdevController evdev_controllers[4] = {
-		{ -1, NULL },
-		{ -1, NULL },
-		{ -1, NULL },
-		{ -1, NULL }
-	};
+	static EvdevController evdev_controllers[MAPLE_NUM_PORTS];
 #endif
 
 #if defined(USE_JOYSTICK)
@@ -96,14 +91,17 @@ void emit_WriteCodeCache();
 void SetupInput()
 {
 	#if defined(USE_EVDEV)
-		int evdev_device_id[4] = { -1, -1, -1, -1 };
+		int evdev_device_id[MAPLE_NUM_PORTS];
 		size_t size_needed;
 		int port, i;
 
 		char* evdev_device;
 
-		for (port = 0; port < 4; port++)
+		for (port = 0; port < MAPLE_NUM_PORTS; port++)
 		{
+			evdev_controllers[port] = { -1, NULL };
+			evdev_device_id[port] = -1;
+
 			size_needed = snprintf(NULL, 0, EVDEV_DEVICE_CONFIG_KEY, port+1) + 1;
 			char* evdev_config_key = (char*)malloc(size_needed);
 			sprintf(evdev_config_key, EVDEV_DEVICE_CONFIG_KEY, port+1);

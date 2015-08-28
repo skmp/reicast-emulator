@@ -134,6 +134,7 @@ void SetupInput()
 				free(evdev_config_key);
 
 				input_evdev_init(&evdev_controllers[port], evdev_device, mapping);
+				maple_controller[port].enabled = true;
 
 				free(evdev_device);
 			}

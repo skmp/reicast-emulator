@@ -3,6 +3,7 @@
 #include "maple_helper.h"
 #include "maple_devs.h"
 #include "maple_cfg.h"
+#include "maple_controller.h"	
 
 #define HAS_VMU
 /*
@@ -21,11 +22,6 @@ Plugins:
 		ImageUpdate(data);
 */
 void UpdateInputState(u32 port);
-
-extern u16 kcode[4];
-extern u32 vks[4];
-extern s8 joyx[4],joyy[4];
-extern u8 rt[4],lt[4];
 
 u8 GetBtFromSgn(s8 val)
 {

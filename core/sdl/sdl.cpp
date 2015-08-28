@@ -41,7 +41,7 @@ const u32 sdl_map_btn_xbox360[SDL_MAP_SIZE] =
 	{ DC_BTN_A, DC_BTN_B, DC_BTN_X, DC_BTN_Y, 0, 0, 0, DC_BTN_START, 0, 0 };
 
 const u32 sdl_map_axis_xbox360[SDL_MAP_SIZE] =
-	{ DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, 0, 0, DC_AXIS_RT, DC_DPAD_LEFT, DC_DPAD_UP, 0, 0 };
+	{ DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, 0, 0, DC_AXIS_RT, DC_BTN_DPAD_LEFT, DC_BTN_DPAD_UP, 0, 0 };
 
 const u32* sdl_map_btn  = sdl_map_btn_usb;
 const u32* sdl_map_axis = sdl_map_axis_usb;
@@ -370,10 +370,10 @@ void input_sdl_handle(u32 port)
 	if (keys[7]) { kcode[port] &= ~DC_BTN_B; }
 	if (keys[5]) { kcode[port] &= ~DC_BTN_Y; }
 	if (keys[8]) { kcode[port] &= ~DC_BTN_X; }
-	if (keys[1]) { kcode[port] &= ~DC_DPAD_UP; }
-	if (keys[2]) { kcode[port] &= ~DC_DPAD_DOWN; }
-	if (keys[3]) { kcode[port] &= ~DC_DPAD_LEFT; }
-	if (keys[4]) { kcode[port] &= ~DC_DPAD_RIGHT; }
+	if (keys[1]) { kcode[port] &= ~DC_BTN_DPAD_UP; }
+	if (keys[2]) { kcode[port] &= ~DC_BTN_DPAD_DOWN; }
+	if (keys[3]) { kcode[port] &= ~DC_BTN_DPAD_LEFT; }
+	if (keys[4]) { kcode[port] &= ~DC_BTN_DPAD_RIGHT; }
 	if (keys[12]){ kcode[port] &= ~DC_BTN_START; }
 	if (keys[9])
 	{ 

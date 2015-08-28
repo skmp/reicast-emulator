@@ -1,5 +1,6 @@
 #include "oslib\oslib.h"
 #include "oslib\audiostream.h"
+#include "hw\maple\maple_controller.h"
 #include "imgread\common.h"
 
 #define _WIN32_WINNT 0x0500 
@@ -174,26 +175,6 @@ int msgboxf(const wchar* text,unsigned int type,...)
 	return MessageBox(NULL,temp,VER_SHORTNAME,type | MB_TASKMODAL);
 }
 
-u16 kcode[4];
-u32 vks[4];
-s8 joyx[4],joyy[4];
-u8 rt[4],lt[4];
-#define key_CONT_C            (1 << 0)
-#define key_CONT_B            (1 << 1)
-#define key_CONT_A            (1 << 2)
-#define key_CONT_START        (1 << 3)
-#define key_CONT_DPAD_UP      (1 << 4)
-#define key_CONT_DPAD_DOWN    (1 << 5)
-#define key_CONT_DPAD_LEFT    (1 << 6)
-#define key_CONT_DPAD_RIGHT   (1 << 7)
-#define key_CONT_Z            (1 << 8)
-#define key_CONT_Y            (1 << 9)
-#define key_CONT_X            (1 << 10)
-#define key_CONT_D            (1 << 11)
-#define key_CONT_DPAD2_UP     (1 << 12)
-#define key_CONT_DPAD2_DOWN   (1 << 13)
-#define key_CONT_DPAD2_LEFT   (1 << 14)
-#define key_CONT_DPAD2_RIGHT  (1 << 15)
 void UpdateInputState(u32 port)
 	{
 		//joyx[port]=pad.Lx;
@@ -215,25 +196,25 @@ void UpdateInputState(u32 port)
 
 		kcode[port]=0xFFFF;
 		if (GetAsyncKeyState('V'))
-			kcode[port]&=~key_CONT_A;
+			kcode[port]&=~DC_BTN_A;
 		if (GetAsyncKeyState('C'))
-			kcode[port]&=~key_CONT_B;
+			kcode[port]&=~DC_BTN_B;
 		if (GetAsyncKeyState('X'))
-			kcode[port]&=~key_CONT_Y;
+			kcode[port]&=~DC_BTN_Y;
 		if (GetAsyncKeyState('Z'))
-			kcode[port]&=~key_CONT_X;
+			kcode[port]&=~DC_BTN_X;
 
 		if (GetAsyncKeyState(VK_SHIFT))
-			kcode[port]&=~key_CONT_START;
+			kcode[port]&=~DC_BTN_START;
 
 		if (GetAsyncKeyState(VK_UP))
-			kcode[port]&=~key_CONT_DPAD_UP;
+			kcode[port]&=~DC_BTN_DPAD_UP;
 		if (GetAsyncKeyState(VK_DOWN))
-			kcode[port]&=~key_CONT_DPAD_DOWN;
+			kcode[port]&=~DC_BTN_DPAD_DOWN;
 		if (GetAsyncKeyState(VK_LEFT))
-			kcode[port]&=~key_CONT_DPAD_LEFT;
+			kcode[port]&=~DC_BTN_DPAD_LEFT;
 		if (GetAsyncKeyState(VK_RIGHT))
-			kcode[port]&=~key_CONT_DPAD_RIGHT;
+			kcode[port]&=~DC_BTN_DPAD_RIGHT;
 
 		if (GetAsyncKeyState(VK_F1))
 			settings.pvr.ta_skip = 100;

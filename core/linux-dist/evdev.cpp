@@ -332,21 +332,21 @@
 					} else if (ie.code == controller->mapping->Btn_Escape) {
 						die("death by escape key");
 					} else if (ie.code == controller->mapping->Btn_DPad_Left) {
-						SET_FLAG(kcode[port], DC_DPAD_LEFT, ie.value);
+						SET_FLAG(kcode[port], DC_BTN_DPAD_LEFT, ie.value);
 					} else if (ie.code == controller->mapping->Btn_DPad_Right) {
-						SET_FLAG(kcode[port], DC_DPAD_RIGHT, ie.value);
+						SET_FLAG(kcode[port], DC_BTN_DPAD_RIGHT, ie.value);
 					} else if (ie.code == controller->mapping->Btn_DPad_Up) {
-						SET_FLAG(kcode[port], DC_DPAD_UP, ie.value);
+						SET_FLAG(kcode[port], DC_BTN_DPAD_UP, ie.value);
 					} else if (ie.code == controller->mapping->Btn_DPad_Down) {
-						SET_FLAG(kcode[port], DC_DPAD_DOWN, ie.value);
+						SET_FLAG(kcode[port], DC_BTN_DPAD_DOWN, ie.value);
 					} else if (ie.code == controller->mapping->Btn_DPad2_Left) {
-						SET_FLAG(kcode[port], DC_DPAD2_LEFT, ie.value);
+						SET_FLAG(kcode[port], DC_BTN_DPAD2_LEFT, ie.value);
 					} else if (ie.code == controller->mapping->Btn_DPad2_Right) {
-						SET_FLAG(kcode[port], DC_DPAD2_RIGHT, ie.value);
+						SET_FLAG(kcode[port], DC_BTN_DPAD2_RIGHT, ie.value);
 					} else if (ie.code == controller->mapping->Btn_DPad2_Up) {
-						SET_FLAG(kcode[port], DC_DPAD2_UP, ie.value);
+						SET_FLAG(kcode[port], DC_BTN_DPAD2_UP, ie.value);
 					} else if (ie.code == controller->mapping->Btn_DPad2_Down) {
-						SET_FLAG(kcode[port], DC_DPAD2_DOWN, ie.value);
+						SET_FLAG(kcode[port], DC_BTN_DPAD2_DOWN, ie.value);
 					} else if (ie.code == controller->mapping->Btn_Trigger_Left) {
 						lt[port] = (ie.value ? 255 : 0);
 					} else if (ie.code == controller->mapping->Btn_Trigger_Right) {
@@ -359,16 +359,16 @@
 						switch(ie.value)
 						{
 							case -1:
-								SET_FLAG(kcode[port], DC_DPAD_LEFT,  1);
-								SET_FLAG(kcode[port], DC_DPAD_RIGHT, 0);
+								SET_FLAG(kcode[port], DC_BTN_DPAD_LEFT,  1);
+								SET_FLAG(kcode[port], DC_BTN_DPAD_RIGHT, 0);
 								break;
 							case 0:
-								SET_FLAG(kcode[port], DC_DPAD_LEFT,  0);
-								SET_FLAG(kcode[port], DC_DPAD_RIGHT, 0);
+								SET_FLAG(kcode[port], DC_BTN_DPAD_LEFT,  0);
+								SET_FLAG(kcode[port], DC_BTN_DPAD_RIGHT, 0);
 								break;
 							case 1:
-								SET_FLAG(kcode[port], DC_DPAD_LEFT,  0);
-								SET_FLAG(kcode[port], DC_DPAD_RIGHT, 1);
+								SET_FLAG(kcode[port], DC_BTN_DPAD_LEFT,  0);
+								SET_FLAG(kcode[port], DC_BTN_DPAD_RIGHT, 1);
 								break;
 						}
 					}
@@ -377,16 +377,16 @@
 						switch(ie.value)
 						{
 							case -1:
-								SET_FLAG(kcode[port], DC_DPAD_UP,   1);
-								SET_FLAG(kcode[port], DC_DPAD_DOWN, 0);
+								SET_FLAG(kcode[port], DC_BTN_DPAD_UP,   1);
+								SET_FLAG(kcode[port], DC_BTN_DPAD_DOWN, 0);
 								break;
 							case 0:
-								SET_FLAG(kcode[port], DC_DPAD_UP,  0);
-								SET_FLAG(kcode[port], DC_DPAD_DOWN, 0);
+								SET_FLAG(kcode[port], DC_BTN_DPAD_UP,  0);
+								SET_FLAG(kcode[port], DC_BTN_DPAD_DOWN, 0);
 								break;
 							case 1:
-								SET_FLAG(kcode[port], DC_DPAD_UP,  0);
-								SET_FLAG(kcode[port], DC_DPAD_DOWN, 1);
+								SET_FLAG(kcode[port], DC_BTN_DPAD_UP,  0);
+								SET_FLAG(kcode[port], DC_BTN_DPAD_DOWN, 1);
 								break;
 						}
 					}
@@ -395,16 +395,16 @@
 						switch(ie.value)
 						{
 							case -1:
-								SET_FLAG(kcode[port], DC_DPAD2_LEFT,  1);
-								SET_FLAG(kcode[port], DC_DPAD2_RIGHT, 0);
+								SET_FLAG(kcode[port], DC_BTN_DPAD2_LEFT,  1);
+								SET_FLAG(kcode[port], DC_BTN_DPAD2_RIGHT, 0);
 								break;
 							case 0:
-								SET_FLAG(kcode[port], DC_DPAD2_LEFT,  0);
-								SET_FLAG(kcode[port], DC_DPAD2_RIGHT, 0);
+								SET_FLAG(kcode[port], DC_BTN_DPAD2_LEFT,  0);
+								SET_FLAG(kcode[port], DC_BTN_DPAD2_RIGHT, 0);
 								break;
 							case 1:
-								SET_FLAG(kcode[port], DC_DPAD2_LEFT,  0);
-								SET_FLAG(kcode[port], DC_DPAD2_RIGHT, 1);
+								SET_FLAG(kcode[port], DC_BTN_DPAD2_LEFT,  0);
+								SET_FLAG(kcode[port], DC_BTN_DPAD2_RIGHT, 1);
 								break;
 						}
 					}
@@ -413,16 +413,16 @@
 						switch(ie.value)
 						{
 							case -1:
-								SET_FLAG(kcode[port], DC_DPAD2_UP,   1);
-								SET_FLAG(kcode[port], DC_DPAD2_DOWN, 0);
+								SET_FLAG(kcode[port], DC_BTN_DPAD2_UP,   1);
+								SET_FLAG(kcode[port], DC_BTN_DPAD2_DOWN, 0);
 								break;
 							case 0:
-								SET_FLAG(kcode[port], DC_DPAD2_UP,  0);
-								SET_FLAG(kcode[port], DC_DPAD2_DOWN, 0);
+								SET_FLAG(kcode[port], DC_BTN_DPAD2_UP,  0);
+								SET_FLAG(kcode[port], DC_BTN_DPAD2_DOWN, 0);
 								break;
 							case 1:
-								SET_FLAG(kcode[port], DC_DPAD2_UP,  0);
-								SET_FLAG(kcode[port], DC_DPAD2_DOWN, 1);
+								SET_FLAG(kcode[port], DC_BTN_DPAD2_UP,  0);
+								SET_FLAG(kcode[port], DC_BTN_DPAD2_DOWN, 1);
 								break;
 						}
 					}

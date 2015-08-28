@@ -16,6 +16,7 @@
 #include "rend/TexCache.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
+#include "hw/maple/maple_controller.h"
 #include "oslib/audiobackend_android.h"
 
 #include "util.h"
@@ -175,10 +176,6 @@ static char CurFileName[256];
 // Additonal controllers 2, 3 and 4 connected ?
 static bool add_controllers[3] = { false, false, false };
 
-u16 kcode[4];
-u32 vks[4];
-s8 joyx[4],joyy[4];
-u8 rt[4],lt[4];
 float vjoy_pos[14][8];
 
 extern bool print_stats;

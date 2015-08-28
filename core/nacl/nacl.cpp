@@ -15,6 +15,7 @@
 #include "ppapi/utility/completion_callback_factory.h"
 
 #include "types.h"
+#include "hw/maple/maple_controller.h"
 
 #include <GLES2/gl2.h>
 
@@ -234,12 +235,6 @@ Module* CreateModule() {
   return new hello_world::HelloWorldModule();
 }
 }  // namespace pp
-
-
-u16 kcode[4];
-u32 vks[4];
-s8 joyx[4],joyy[4];
-u8 rt[4],lt[4];
 
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }

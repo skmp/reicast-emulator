@@ -20,6 +20,7 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
+#include "hw/maple/maple_controller.h"
 #include <unistd.h>
 
 
@@ -54,11 +55,6 @@ int darw_printf(const wchar* text,...) {
 void common_linux_setup();
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
-
-u16 kcode[4];
-u32 vks[4];
-s8 joyx[4],joyy[4];
-u8 rt[4],lt[4];
 
 extern "C" int reicast_main(int argc, wchar* argv[])
 {

@@ -8,6 +8,7 @@
 #import <Carbon/Carbon.h>
 
 #include "types.h"
+#include "hw/maple/maple_controller.h"
 #include <sys/stat.h>
 
 #include <OpenGL/gl3.h>
@@ -37,11 +38,6 @@ int darw_printf(const wchar* text,...) {
     
     return 0;
 }
-
-u16 kcode[4] = { 0xFFFF };
-u32 vks[4];
-s8 joyx[4],joyy[4];
-u8 rt[4],lt[4];
 
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }
@@ -135,30 +131,6 @@ extern "C" void emu_gles_init() {
     gles_init();
 }
 
-enum DCPad {
-    Btn_C		= 1,
-    Btn_B		= 1<<1,
-    Btn_A		= 1<<2,
-    Btn_Start	= 1<<3,
-    DPad_Up		= 1<<4,
-    DPad_Down	= 1<<5,
-    DPad_Left	= 1<<6,
-    DPad_Right	= 1<<7,
-    Btn_Z		= 1<<8,
-    Btn_Y		= 1<<9,
-    Btn_X		= 1<<10,
-    Btn_D		= 1<<11,
-    DPad2_Up	= 1<<12,
-    DPad2_Down	= 1<<13,
-    DPad2_Left	= 1<<14,
-    DPad2_Right	= 1<<15,
-    
-    Axis_LT= 0x10000,
-    Axis_RT= 0x10001,
-    Axis_X= 0x20000,
-    Axis_Y= 0x20001,
-};
-
 void handle_key(int dckey, int state) {
     if (state)
         kcode[0] &= ~dckey;
@@ -176,18 +148,18 @@ void handle_trig(u8* dckey, int state) {
 extern "C" void emu_key_input(char* keyt, int state) {
     int key = keyt[0];
     switch(key) {
-        case 'z':     handle_key(Btn_X, state); break;
-        case 'x':     handle_key(Btn_Y, state); break;
-        case 'c':     handle_key(Btn_B, state); break;
-        case 'v':     handle_key(Btn_A, state); break;
+        case 'z':     handle_key(DC_BTN_X, state); break;
+        case 'x':     handle_key(DC_BTN_Y, state); break;
+        case 'c':     handle_key(DC_BTN_B, state); break;
+        case 'v':     handle_key(DC_BTN_A, state); break;
         
         case 'a':     handle_trig(lt, state); break;
         case 's':     handle_trig(rt, state); break;
             
-        case 'j':     handle_key(DPad_Left, state); break;
-        case 'k':     handle_key(DPad_Down, state); break;
-        case 'l':     handle_key(DPad_Right, state); break;
-        case 'i':     handle_key(DPad_Up, state); break;
-        case 0xa:     handle_key(Btn_Start, state); break;
+        case 'j':     handle_key(DC_BTN_DPAD_LEFT,  state); break;
+        case 'k':     handle_key(DC_BTN_DPAD_DOWN,  state); break;
+        case 'l':     handle_key(DC_BTN_DPAD_RIGHT, state); break;
+        case 'i':     handle_key(DC_BTN_DPAD_UP,    state); break;
+        case 0xa:     handle_key(DC_BTN_START,      state); break;
     }
 }

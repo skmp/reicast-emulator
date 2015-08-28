@@ -9,7 +9,7 @@
 	const u32 joystick_map_axis_usb[JOYSTICK_MAP_SIZE]     = { DC_AXIS_X, DC_AXIS_Y, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	const u32 joystick_map_btn_xbox360[JOYSTICK_MAP_SIZE]  = { DC_BTN_A, DC_BTN_B, DC_BTN_X, DC_BTN_Y, 0, 0, 0, DC_BTN_START, 0, 0 };
-	const u32 joystick_map_axis_xbox360[JOYSTICK_MAP_SIZE] = { DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, 0, 0, DC_AXIS_RT, DC_DPAD_LEFT, DC_DPAD_UP, 0, 0 };
+	const u32 joystick_map_axis_xbox360[JOYSTICK_MAP_SIZE] = { DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, 0, 0, DC_AXIS_RT, DC_BTN_DPAD_LEFT, DC_BTN_DPAD_UP, 0, 0 };
 
 	const u32* joystick_map_btn = joystick_map_btn_usb;
 	const u32* joystick_map_axis = joystick_map_axis_usb;

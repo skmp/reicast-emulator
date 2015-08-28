@@ -92,6 +92,7 @@
     <ClCompile Include="..\core\hw\holly\sb_dma.cpp" />
     <ClCompile Include="..\core\hw\holly\sb_mem.cpp" />
     <ClCompile Include="..\core\hw\maple\maple_cfg.cpp" />
+    <ClCompile Include="..\core\hw\maple\maple_controller.cpp" />
     <ClCompile Include="..\core\hw\maple\maple_devs.cpp" />
     <ClCompile Include="..\core\hw\maple\maple_helper.cpp" />
     <ClCompile Include="..\core\hw\maple\maple_if.cpp" />

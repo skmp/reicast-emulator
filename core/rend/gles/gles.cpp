@@ -2,6 +2,7 @@
 #include "gles.h"
 #include "rend/TexCache.h"
 #include "cfg/cfg.h"
+#include "hw/maple/maple_controller.h"
 
 #ifdef TARGET_PANDORA
 #include <unistd.h>
@@ -1043,28 +1044,6 @@ void tryfit(float* x,float* y)
 	//printf("%f\n",B*log(maxdev)/log(2.0)+A);
 }
 
-
-
-extern u16 kcode[4];
-extern u8 rt[4],lt[4];
-
-#define key_CONT_C           (1 << 0)
-#define key_CONT_B           (1 << 1)
-#define key_CONT_A           (1 << 2)
-#define key_CONT_START       (1 << 3)
-#define key_CONT_DPAD_UP     (1 << 4)
-#define key_CONT_DPAD_DOWN   (1 << 5)
-#define key_CONT_DPAD_LEFT   (1 << 6)
-#define key_CONT_DPAD_RIGHT  (1 << 7)
-#define key_CONT_Z           (1 << 8)
-#define key_CONT_Y           (1 << 9)
-#define key_CONT_X           (1 << 10)
-#define key_CONT_D           (1 << 11)
-#define key_CONT_DPAD2_UP    (1 << 12)
-#define key_CONT_DPAD2_DOWN  (1 << 13)
-#define key_CONT_DPAD2_LEFT  (1 << 14)
-#define key_CONT_DPAD2_RIGHT (1 << 15)
-
 u32 osd_base;
 u32 osd_count;
 
@@ -1260,17 +1239,17 @@ static void OSD_HOOK()
 	osd_count=0;
 
 	#ifndef TARGET_PANDORA
-	DrawButton2(vjoy_pos[0],kcode[0]&key_CONT_DPAD_LEFT);
-	DrawButton2(vjoy_pos[1],kcode[0]&key_CONT_DPAD_UP);
-	DrawButton2(vjoy_pos[2],kcode[0]&key_CONT_DPAD_RIGHT);
-	DrawButton2(vjoy_pos[3],kcode[0]&key_CONT_DPAD_DOWN);
+	DrawButton2(vjoy_pos[0],kcode[0]&DC_BTN_DPAD_LEFT);
+	DrawButton2(vjoy_pos[1],kcode[0]&DC_BTN_DPAD_UP);
+	DrawButton2(vjoy_pos[2],kcode[0]&DC_BTN_DPAD_RIGHT);
+	DrawButton2(vjoy_pos[3],kcode[0]&DC_BTN_DPAD_DOWN);
 
-	DrawButton2(vjoy_pos[4],kcode[0]&key_CONT_X);
-	DrawButton2(vjoy_pos[5],kcode[0]&key_CONT_Y);
-	DrawButton2(vjoy_pos[6],kcode[0]&key_CONT_B);
-	DrawButton2(vjoy_pos[7],kcode[0]&key_CONT_A);
+	DrawButton2(vjoy_pos[4],kcode[0]&DC_BTN_X);
+	DrawButton2(vjoy_pos[5],kcode[0]&DC_BTN_Y);
+	DrawButton2(vjoy_pos[6],kcode[0]&DC_BTN_B);
+	DrawButton2(vjoy_pos[7],kcode[0]&DC_BTN_A);
 
-	DrawButton2(vjoy_pos[8],kcode[0]&key_CONT_START);
+	DrawButton2(vjoy_pos[8],kcode[0]&DC_BTN_START);
 
 	DrawButton(vjoy_pos[9],lt[0]);
 
@@ -1817,8 +1796,6 @@ bool RenderFrame()
 #define SET_AFNT 1
 #endif
 #endif
-
-extern u16 kcode[4];
 
 /*
 bool rend_single_frame()

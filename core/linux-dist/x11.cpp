@@ -112,11 +112,11 @@ void input_x11_handle()
 
 void input_x11_init()
 {
-	x11_keymap[113] = DC_DPAD_LEFT;
-	x11_keymap[114] = DC_DPAD_RIGHT;
+	x11_keymap[113] = DC_BTN_DPAD1_LEFT;
+	x11_keymap[114] = DC_BTN_DPAD1_RIGHT;
 
-	x11_keymap[111] = DC_DPAD_UP;
-	x11_keymap[116] = DC_DPAD_DOWN;
+	x11_keymap[111] = DC_BTN_DPAD1_UP;
+	x11_keymap[116] = DC_BTN_DPAD1_DOWN;
 
 	x11_keymap[53] = DC_BTN_X;
 	x11_keymap[54] = DC_BTN_B;

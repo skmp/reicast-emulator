@@ -98,101 +98,17 @@
 
 	void EvdevController::init()
 	{
-		this->data_x.init(this->fd, this->mapping->Axis_Analog_X, this->mapping->Axis_Analog_X_Inverted);
-		this->data_y.init(this->fd, this->mapping->Axis_Analog_Y, this->mapping->Axis_Analog_Y_Inverted);
-		this->data_trigger_left.init(this->fd, this->mapping->Axis_Trigger_Left, this->mapping->Axis_Trigger_Left_Inverted);
-		this->data_trigger_right.init(this->fd, this->mapping->Axis_Trigger_Right, this->mapping->Axis_Trigger_Right_Inverted);
+		ControllerAxis* axis_x  = this->mapping->get_axis_by_id(DC_AXIS_X);
+		ControllerAxis* axis_y  = this->mapping->get_axis_by_id(DC_AXIS_Y);
+		ControllerAxis* axis_lt = this->mapping->get_axis_by_id(DC_AXIS_TRIGGER_LEFT);
+		ControllerAxis* axis_rt = this->mapping->get_axis_by_id(DC_AXIS_TRIGGER_RIGHT);
+		this->data_x.init(this->fd, axis_x->code, axis_x->inverted);
+		this->data_y.init(this->fd, axis_y->code, axis_y->inverted);
+		this->data_trigger_left.init(this->fd, axis_lt->code, axis_lt->inverted);
+		this->data_trigger_right.init(this->fd, axis_rt->code, axis_rt->inverted);
 	}
 
-	std::map<std::string, EvdevControllerMapping> loaded_mappings;
-
-	int load_keycode(ConfigFile* cfg, string section, string dc_key)
-	{
-		int code = -1;
-
-		string keycode = cfg->get(section, dc_key, "-1");
-		if (strstr(keycode.c_str(), "KEY_") != NULL ||
-			strstr(keycode.c_str(), "BTN_") != NULL ||
-			strstr(keycode.c_str(), "ABS_") != NULL)
-		{
-			if(libevdev_available)
-			{
-				int type = ((strstr(keycode.c_str(), "ABS_") != NULL) ? EV_ABS : EV_KEY);
-				code = libevdev_event_code_from_name(type, keycode.c_str());
-			}
-			if(code < 0)
-			{
-				printf("evdev: failed to find keycode for '%s'\n", keycode.c_str());
-			}
-			else
-			{
-				printf("%s = %s (%d)\n", dc_key.c_str(), keycode.c_str(), code);
-			}
-			return code;
-		}
-
-		code = cfg->get_int(section, dc_key, -1);
-		if(code >= 0)
-		{
-			char* name = NULL;
-			if(libevdev_available)
-			{
-				int type = ((strstr(dc_key.c_str(), "axis_") != NULL) ? EV_ABS : EV_KEY);
-				name = (char*)libevdev_event_code_get_name(type, code);
-			}
-			if (name != NULL)
-			{
-				printf("%s = %s (%d)\n", dc_key.c_str(), name, code);
-			}
-			else
-			{
-				printf("%s = %d\n", dc_key.c_str(), code);
-			}
-		}
-		return code;
-	}
-
-	EvdevControllerMapping load_mapping(FILE* fd)
-	{
-		ConfigFile mf;
-		mf.parse(fd);
-
-		EvdevControllerMapping mapping = {
-			mf.get("emulator", "mapping_name", "<Unknown>").c_str(),
-			load_keycode(&mf, "dreamcast", "btn_a"),
-			load_keycode(&mf, "dreamcast", "btn_b"),
-			load_keycode(&mf, "dreamcast", "btn_c"),
-			load_keycode(&mf, "dreamcast", "btn_d"),
-			load_keycode(&mf, "dreamcast", "btn_x"),
-			load_keycode(&mf, "dreamcast", "btn_y"),
-			load_keycode(&mf, "dreamcast", "btn_z"),
-			load_keycode(&mf, "dreamcast", "btn_start"),
-			load_keycode(&mf, "emulator",  "btn_escape"),
-			load_keycode(&mf, "dreamcast", "btn_dpad1_left"),
-			load_keycode(&mf, "dreamcast", "btn_dpad1_right"),
-			load_keycode(&mf, "dreamcast", "btn_dpad1_up"),
-			load_keycode(&mf, "dreamcast", "btn_dpad1_down"),
-			load_keycode(&mf, "dreamcast", "btn_dpad2_left"),
-			load_keycode(&mf, "dreamcast", "btn_dpad2_right"),
-			load_keycode(&mf, "dreamcast", "btn_dpad2_up"),
-			load_keycode(&mf, "dreamcast", "btn_dpad2_down"),
-			load_keycode(&mf, "compat",    "btn_trigger_left"),
-			load_keycode(&mf, "compat",    "btn_trigger_right"),
-			load_keycode(&mf, "compat",    "axis_dpad1_x"),
-			load_keycode(&mf, "compat",    "axis_dpad1_y"),
-			load_keycode(&mf, "compat",    "axis_dpad2_x"),
-			load_keycode(&mf, "compat",    "axis_dpad2_y"),
-			load_keycode(&mf, "dreamcast", "axis_x"),
-			load_keycode(&mf, "dreamcast", "axis_y"),
-			load_keycode(&mf, "dreamcast", "axis_trigger_left"),
-			load_keycode(&mf, "dreamcast", "axis_trigger_right"),
-			mf.get_bool("compat", "axis_x_inverted", false),
-			mf.get_bool("compat", "axis_y_inverted", false),
-			mf.get_bool("compat", "axis_trigger_left_inverted", false),
-			mf.get_bool("compat", "axis_trigger_right_inverted", false)
-		};
-		return mapping;
-	}
+	std::map<std::string, ControllerMapping> loaded_mappings;
 
 	int input_evdev_init(EvdevController* controller, const char* device, const char* custom_mapping_fname = NULL)
 	{
@@ -266,6 +182,7 @@
 						size_t size_needed = snprintf(NULL, 0, EVDEV_MAPPING_PATH, mapping_fname) + 1;
 						char* mapping_path = (char*)malloc(size_needed);
 						sprintf(mapping_path, EVDEV_MAPPING_PATH, mapping_fname);
+						printf("evdev: reading mapping path: '%s'\n", get_readonly_data_path(mapping_path).c_str());
 						mapping_fd = fopen(get_readonly_data_path(mapping_path).c_str(), "r");
 						free(mapping_path);
 					}
@@ -273,9 +190,11 @@
 					if(mapping_fd != NULL)
 					{
 						printf("evdev: reading mapping file: '%s'\n", mapping_fname);
-						loaded_mappings.insert(std::make_pair(string(mapping_fname), load_mapping(mapping_fd)));
+						ControllerMapping mapping;
+						mapping.load(mapping_fd);
+						puts(mapping.name);
+						loaded_mappings.insert(std::make_pair(string(mapping_fname), mapping));
 						fclose(mapping_fd);
-
 					}
 					else
 					{
@@ -307,142 +226,84 @@
 		}
 
 		input_event ie;
+		DreamcastController button;
+		ControllerAxis* axis;
 
 		while(read(controller->fd, &ie, sizeof(ie)) == sizeof(ie))
 		{
 			switch(ie.type)
 			{
 				case EV_KEY:
-					if (ie.code == controller->mapping->Btn_A) {
-						SET_FLAG(kcode[port], DC_BTN_A, ie.value);
-					} else if (ie.code == controller->mapping->Btn_B) {
-						SET_FLAG(kcode[port], DC_BTN_B, ie.value);
-					} else if (ie.code == controller->mapping->Btn_C) {
-						SET_FLAG(kcode[port], DC_BTN_C, ie.value);
-					} else if (ie.code == controller->mapping->Btn_D) {
-						SET_FLAG(kcode[port], DC_BTN_D, ie.value);
-					} else if (ie.code == controller->mapping->Btn_X) {
-						SET_FLAG(kcode[port], DC_BTN_X, ie.value);
-					} else if (ie.code == controller->mapping->Btn_Y) {
-						SET_FLAG(kcode[port], DC_BTN_Y, ie.value);
-					} else if (ie.code == controller->mapping->Btn_Z) {
-						SET_FLAG(kcode[port], DC_BTN_Z, ie.value);
-					} else if (ie.code == controller->mapping->Btn_Start) {
-						SET_FLAG(kcode[port], DC_BTN_START, ie.value);
-					} else if (ie.code == controller->mapping->Btn_Escape) {
-						die("death by escape key");
-					} else if (ie.code == controller->mapping->Btn_DPad_Left) {
-						SET_FLAG(kcode[port], DC_DPAD_LEFT, ie.value);
-					} else if (ie.code == controller->mapping->Btn_DPad_Right) {
-						SET_FLAG(kcode[port], DC_DPAD_RIGHT, ie.value);
-					} else if (ie.code == controller->mapping->Btn_DPad_Up) {
-						SET_FLAG(kcode[port], DC_DPAD_UP, ie.value);
-					} else if (ie.code == controller->mapping->Btn_DPad_Down) {
-						SET_FLAG(kcode[port], DC_DPAD_DOWN, ie.value);
-					} else if (ie.code == controller->mapping->Btn_DPad2_Left) {
-						SET_FLAG(kcode[port], DC_DPAD2_LEFT, ie.value);
-					} else if (ie.code == controller->mapping->Btn_DPad2_Right) {
-						SET_FLAG(kcode[port], DC_DPAD2_RIGHT, ie.value);
-					} else if (ie.code == controller->mapping->Btn_DPad2_Up) {
-						SET_FLAG(kcode[port], DC_DPAD2_UP, ie.value);
-					} else if (ie.code == controller->mapping->Btn_DPad2_Down) {
-						SET_FLAG(kcode[port], DC_DPAD2_DOWN, ie.value);
-					} else if (ie.code == controller->mapping->Btn_Trigger_Left) {
-						lt[port] = (ie.value ? 255 : 0);
-					} else if (ie.code == controller->mapping->Btn_Trigger_Right) {
-						rt[port] = (ie.value ? 255 : 0);
+					button = controller->mapping->get_button(ie.code);
+					printf("BTN: %d, %d\n", ie.code, controller->mapping->get_button(ie.code));
+					switch(button)
+					{
+						case EMU_BTN_NONE:
+							printf("Ignoring %d\n", ie.code);
+							break;
+						case EMU_BTN_ESCAPE:
+							die("death by escape key");
+							break;
+						case EMU_BTN_TRIGGER_LEFT:
+							lt[port] = (ie.value ? 255 : 0);
+							break;
+						case EMU_BTN_TRIGGER_RIGHT:
+							rt[port] = (ie.value ? 255 : 0);
+							break;
+						default:
+							SET_FLAG(kcode[port], button, ie.value);
 					}
 					break;
 				case EV_ABS:
-					if (ie.code == controller->mapping->Axis_DPad_X)
+					axis = controller->mapping->get_axis_by_code(ie.code);
+					printf("ABS: %d, %d\n", ie.code, axis->id);
+					switch(axis->id)
 					{
-						switch(ie.value)
-						{
-							case -1:
-								SET_FLAG(kcode[port], DC_DPAD_LEFT,  1);
-								SET_FLAG(kcode[port], DC_DPAD_RIGHT, 0);
-								break;
-							case 0:
-								SET_FLAG(kcode[port], DC_DPAD_LEFT,  0);
-								SET_FLAG(kcode[port], DC_DPAD_RIGHT, 0);
-								break;
-							case 1:
-								SET_FLAG(kcode[port], DC_DPAD_LEFT,  0);
-								SET_FLAG(kcode[port], DC_DPAD_RIGHT, 1);
-								break;
-						}
+						case EMU_AXIS_DPAD1_X:
+						case EMU_AXIS_DPAD1_Y:
+						case EMU_AXIS_DPAD2_X:
+						case EMU_AXIS_DPAD2_Y:
+							DreamcastController axis_buttons[2];
+							switch(axis->id)
+							{
+								case EMU_AXIS_DPAD1_X:
+									axis_buttons[0] = DC_BTN_DPAD1_LEFT;
+									axis_buttons[1] = DC_BTN_DPAD1_RIGHT;
+									break;
+								case EMU_AXIS_DPAD1_Y:
+									axis_buttons[0] = DC_BTN_DPAD1_UP;
+									axis_buttons[1] = DC_BTN_DPAD1_DOWN;
+									break;
+								case EMU_AXIS_DPAD2_X:
+									axis_buttons[0] = DC_BTN_DPAD2_LEFT;
+									axis_buttons[1] = DC_BTN_DPAD2_RIGHT;
+									break;
+								case EMU_AXIS_DPAD2_Y:
+									axis_buttons[0] = DC_BTN_DPAD2_UP;
+									axis_buttons[1] = DC_BTN_DPAD2_DOWN;
+									break;
+								default:
+									axis_buttons[0] = EMU_BTN_NONE;
+									axis_buttons[1] = EMU_BTN_NONE;
+							}
+							bool value[2];
+							value[0] = (ie.value < 0);
+							value[1] = (ie.value > 0);
+							SET_FLAG(kcode[port], axis_buttons[0], value[0]);
+							SET_FLAG(kcode[port], axis_buttons[1], value[1]);
+							break;
+						case DC_AXIS_X:
+							joyx[port] = (controller->data_x.convert(ie.value) + 128);
+							break;
+						case DC_AXIS_Y:
+							joyy[port] = (controller->data_y.convert(ie.value) + 128);
+							break;
+						case DC_AXIS_TRIGGER_LEFT:
+							lt[port] = controller->data_trigger_left.convert(ie.value);
+							break;
+						case DC_AXIS_TRIGGER_RIGHT:
+							rt[port] = controller->data_trigger_right.convert(ie.value);
 					}
-					else if (ie.code == controller->mapping->Axis_DPad_Y)
-					{
-						switch(ie.value)
-						{
-							case -1:
-								SET_FLAG(kcode[port], DC_DPAD_UP,   1);
-								SET_FLAG(kcode[port], DC_DPAD_DOWN, 0);
-								break;
-							case 0:
-								SET_FLAG(kcode[port], DC_DPAD_UP,  0);
-								SET_FLAG(kcode[port], DC_DPAD_DOWN, 0);
-								break;
-							case 1:
-								SET_FLAG(kcode[port], DC_DPAD_UP,  0);
-								SET_FLAG(kcode[port], DC_DPAD_DOWN, 1);
-								break;
-						}
-					}
-					else if (ie.code == controller->mapping->Axis_DPad2_X)
-					{
-						switch(ie.value)
-						{
-							case -1:
-								SET_FLAG(kcode[port], DC_DPAD2_LEFT,  1);
-								SET_FLAG(kcode[port], DC_DPAD2_RIGHT, 0);
-								break;
-							case 0:
-								SET_FLAG(kcode[port], DC_DPAD2_LEFT,  0);
-								SET_FLAG(kcode[port], DC_DPAD2_RIGHT, 0);
-								break;
-							case 1:
-								SET_FLAG(kcode[port], DC_DPAD2_LEFT,  0);
-								SET_FLAG(kcode[port], DC_DPAD2_RIGHT, 1);
-								break;
-						}
-					}
-					else if (ie.code == controller->mapping->Axis_DPad2_X)
-					{
-						switch(ie.value)
-						{
-							case -1:
-								SET_FLAG(kcode[port], DC_DPAD2_UP,   1);
-								SET_FLAG(kcode[port], DC_DPAD2_DOWN, 0);
-								break;
-							case 0:
-								SET_FLAG(kcode[port], DC_DPAD2_UP,  0);
-								SET_FLAG(kcode[port], DC_DPAD2_DOWN, 0);
-								break;
-							case 1:
-								SET_FLAG(kcode[port], DC_DPAD2_UP,  0);
-								SET_FLAG(kcode[port], DC_DPAD2_DOWN, 1);
-								break;
-						}
-					}
-					else if (ie.code == controller->mapping->Axis_Analog_X)
-					{
-						joyx[port] = (controller->data_x.convert(ie.value) + 128);
-					}
-					else if (ie.code == controller->mapping->Axis_Analog_Y)
-					{
-						joyy[port] = (controller->data_y.convert(ie.value) + 128);
-					}
-					else if (ie.code == controller->mapping->Axis_Trigger_Left)
-					{
-						lt[port] = controller->data_trigger_left.convert(ie.value);
-					}
-					else if (ie.code == controller->mapping->Axis_Trigger_Right)
-					{
-						rt[port] = controller->data_trigger_right.convert(ie.value);
-					}
-					break;
 			}
 		}
 	}

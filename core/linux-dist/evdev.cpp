@@ -9,66 +9,12 @@
 #include <dlfcn.h>
 
 #if defined(USE_EVDEV)
-	bool libevdev_tried = false;
-	bool libevdev_available = false;
-	typedef int (*libevdev_func1_t)(int, const char*);
-	typedef const char* (*libevdev_func2_t)(int, int);
-	libevdev_func1_t libevdev_event_code_from_name;
-	libevdev_func2_t libevdev_event_code_get_name;
-
-	void load_libevdev()
-	{
-		if (libevdev_tried)
-		{
-			return;
-		}
-
-		libevdev_tried = true;
-		void* lib_handle = dlopen("libevdev.so", RTLD_NOW);
-
-		bool failed = false;
-
-		if (!lib_handle)
-		{
-			fprintf(stderr, "%s\n", dlerror());
-			failed = true;
-		}
-		else
-		{
-			libevdev_event_code_from_name = reinterpret_cast<libevdev_func1_t>(dlsym(lib_handle, "libevdev_event_code_from_name"));
-
-			const char* error1 = dlerror();
-			if (error1 != NULL)
-			{
-				fprintf(stderr, "%s\n", error1);
-				failed = true;
-			}
-
-			libevdev_event_code_get_name = reinterpret_cast<libevdev_func2_t>(dlsym(lib_handle, "libevdev_event_code_get_name"));
-
-			const char* error2 = dlerror();
-			if (error2 != NULL)
-			{
-				fprintf(stderr, "%s\n", error2);
-				failed = true;
-			}
-		}
-
-		if(failed)
-		{
-			puts("WARNING: libevdev is not available. You'll not be able to use button names instead of numeric codes in your controller mappings!\n");
-			return;
-		}
-
-		libevdev_available = true;
-	}
-
 	s8 EvdevAxisData::convert(s32 value)
 	{
 		return (((value - min) * 255) / range);
 	}
 
-	void EvdevAxisData::init(int fd, int code, bool inverted)
+	void EvdevAxisData::init(int fd, InputAxisCode code, bool inverted)
 	{
 		struct input_absinfo abs;
 		if(code < 0 || ioctl(fd, EVIOCGABS(code), &abs))
@@ -98,22 +44,26 @@
 
 	void EvdevController::init()
 	{
-		ControllerAxis* axis_x  = this->mapping->get_axis_by_id(DC_AXIS_X);
-		ControllerAxis* axis_y  = this->mapping->get_axis_by_id(DC_AXIS_Y);
-		ControllerAxis* axis_lt = this->mapping->get_axis_by_id(DC_AXIS_TRIGGER_LEFT);
-		ControllerAxis* axis_rt = this->mapping->get_axis_by_id(DC_AXIS_TRIGGER_RIGHT);
-		this->data_x.init(this->fd, axis_x->code, axis_x->inverted);
-		this->data_y.init(this->fd, axis_y->code, axis_y->inverted);
-		this->data_trigger_left.init(this->fd, axis_lt->code, axis_lt->inverted);
-		this->data_trigger_right.init(this->fd, axis_rt->code, axis_rt->inverted);
+		InputAxisID axis_ids[4] = { DC_AXIS_X, DC_AXIS_Y, DC_AXIS_TRIGGER_LEFT, DC_AXIS_TRIGGER_RIGHT };
+		EvdevAxisData* axis_data[4] = { &this->data_x, &this->data_y, &this->data_trigger_left, &this->data_trigger_right };
+		for(int i = 0; i < 4; i++)
+		{
+			const InputAxisCode* axis_code = this->mapping->get_axis_code(axis_ids[i]);
+			if(axis_code)
+			{
+				bool axis_inverted = this->mapping->get_axis_inverted(*axis_code);
+				if (axis_code != NULL)
+				{
+					axis_data[i]->init(this->fd, *axis_code, axis_inverted);
+				}
+			}
+		}
 	}
 
-	std::map<std::string, ControllerMapping> loaded_mappings;
+	std::map<std::string, InputMapping*> loaded_mappings;
 
 	int input_evdev_init(EvdevController* controller, const char* device, const char* custom_mapping_fname = NULL)
 	{
-		load_libevdev();
-
 		char name[256] = "Unknown";
 
 		printf("evdev: Trying to open device at '%s'\n", device);
@@ -190,10 +140,9 @@
 					if(mapping_fd != NULL)
 					{
 						printf("evdev: reading mapping file: '%s'\n", mapping_fname);
-						ControllerMapping mapping;
-						mapping.load(mapping_fd);
-						puts(mapping.name);
-						loaded_mappings.insert(std::make_pair(string(mapping_fname), mapping));
+						InputMapping* mapping = new InputMapping();
+						mapping->load(mapping_fd);
+						loaded_mappings.insert(std::pair<std::string, InputMapping*>(string(mapping_fname), mapping)).first;
 						fclose(mapping_fd);
 					}
 					else
@@ -203,8 +152,9 @@
 						return -3;
 					}
 				}
-				controller->mapping = &loaded_mappings[string(mapping_fname)];
+				controller->mapping = loaded_mappings.find(string(mapping_fname))->second;
 				printf("evdev: Using '%s' mapping\n", controller->mapping->name);
+				controller->mapping->print();
 				controller->init();
 
 				return 0;
@@ -226,19 +176,21 @@
 		}
 
 		input_event ie;
-		DreamcastController button;
-		ControllerAxis* axis;
-
 		while(read(controller->fd, &ie, sizeof(ie)) == sizeof(ie))
 		{
 			switch(ie.type)
 			{
 				case EV_KEY:
-					button = controller->mapping->get_button(ie.code);
-					printf("BTN: %d, %d\n", ie.code, controller->mapping->get_button(ie.code));
-					switch(button)
+				{
+					const InputButtonID* button_id = controller->mapping->get_button_id(ie.code);
+					if(button_id == NULL)
 					{
-						case EMU_BTN_NONE:
+						printf("Ignoring %d\n", ie.code);
+						break;
+					}
+					switch(*button_id)
+					{
+						case NULL:
 							printf("Ignoring %d\n", ie.code);
 							break;
 						case EMU_BTN_ESCAPE:
@@ -251,20 +203,26 @@
 							rt[port] = (ie.value ? 255 : 0);
 							break;
 						default:
-							SET_FLAG(kcode[port], button, ie.value);
-					}
+							SET_FLAG(kcode[port], *button_id, ie.value);
+					};
 					break;
+				}
 				case EV_ABS:
-					axis = controller->mapping->get_axis_by_code(ie.code);
-					printf("ABS: %d, %d\n", ie.code, axis->id);
-					switch(axis->id)
+				{
+					const InputAxisID* axis_id = controller->mapping->get_axis_id(ie.code);
+					if(axis_id == NULL)
+					{
+						printf("Ignoring %d\n", ie.code);
+						break;
+					}
+					switch(*axis_id)
 					{
 						case EMU_AXIS_DPAD1_X:
 						case EMU_AXIS_DPAD1_Y:
 						case EMU_AXIS_DPAD2_X:
 						case EMU_AXIS_DPAD2_Y:
-							DreamcastController axis_buttons[2];
-							switch(axis->id)
+							InputButtonID axis_buttons[2];
+							switch(*axis_id)
 							{
 								case EMU_AXIS_DPAD1_X:
 									axis_buttons[0] = DC_BTN_DPAD1_LEFT;
@@ -304,6 +262,8 @@
 						case DC_AXIS_TRIGGER_RIGHT:
 							rt[port] = controller->data_trigger_right.convert(ie.value);
 					}
+					break;
+				}
 			}
 		}
 	}

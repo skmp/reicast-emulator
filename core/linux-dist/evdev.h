@@ -7,14 +7,14 @@ struct EvdevAxisData
 {
 	s32 range; // smaller size than 32 bit might cause integer overflows
 	s32 min;
-	void init(int fd, int code, bool inverted);
-	s8 convert(int value);
+	void init(int fd, InputAxisCode code, bool inverted);
+	s8 convert(s32 value);
 };
 
 struct EvdevController
 {
 	int fd;
-	ControllerMapping* mapping;
+	InputMapping* mapping;
 	EvdevAxisData data_x;
 	EvdevAxisData data_y;
 	EvdevAxisData data_trigger_left;

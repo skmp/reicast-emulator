@@ -1,98 +1,159 @@
 #include "linux-dist/mapping.h"
 #include "cfg/ini.h"
 
-DreamcastController ControllerMapping::get_button(int code)
+struct ButtonMap
 {
-	if(this->buttons.count(code) != 1)
-	{
-		return EMU_BTN_NONE;
-	}
-	return this->buttons[code];
+	InputButtonID id;
+	string section;
+	string option;
+};
+
+struct AxisMap
+{
+	InputAxisID id;
+	string section;
+	string option;
+	string section_inverted;
+	string option_inverted;
+};
+
+static ButtonMap button_list[19] = {
+	{ DC_BTN_A, "dreamcast", "btn_a" },
+	{ DC_BTN_B, "dreamcast", "btn_b" },
+	{ DC_BTN_C, "dreamcast", "btn_c" },
+	{ DC_BTN_D, "dreamcast", "btn_d" },
+	{ DC_BTN_X, "dreamcast", "btn_x" },
+	{ DC_BTN_Y, "dreamcast", "btn_y" },
+	{ DC_BTN_Z, "dreamcast", "btn_z" },
+	{ DC_BTN_START, "dreamcast", "btn_start" },
+	{ DC_BTN_DPAD1_LEFT, "dreamcast", "btn_dpad1_left" },
+	{ DC_BTN_DPAD1_RIGHT, "dreamcast", "btn_dpad1_right" },
+	{ DC_BTN_DPAD1_UP, "dreamcast", "btn_dpad1_up" },
+	{ DC_BTN_DPAD1_DOWN, "dreamcast", "btn_dpad1_down" },
+	{ DC_BTN_DPAD2_LEFT, "dreamcast", "btn_dpad2_left" },
+	{ DC_BTN_DPAD2_RIGHT, "dreamcast", "btn_dpad2_right" },
+	{ DC_BTN_DPAD2_UP, "dreamcast", "btn_dpad2_up" },
+	{ DC_BTN_DPAD2_DOWN, "dreamcast", "btn_dpad2_down" },
+	{ EMU_BTN_ESCAPE, "emulator", "btn_escape" },
+	{ EMU_BTN_TRIGGER_LEFT, "compat", "btn_trigger_left" },
+	{ EMU_BTN_TRIGGER_RIGHT, "compat", "btn_trigger_right" }
+};
+
+static AxisMap axis_list[8] = {
+	{ DC_AXIS_X, "dreamcast", "axis_x", "compat", "axis_x_inverted" },
+	{ DC_AXIS_Y, "dreamcast", "axis_y", "compat", "axis_y_inverted" },
+	{ DC_AXIS_TRIGGER_LEFT,  "dreamcast", "axis_trigger_left",  "compat", "axis_trigger_left_inverted" },
+	{ DC_AXIS_TRIGGER_RIGHT, "dreamcast", "axis_trigger_right", "compat", "axis_trigger_right_inverted" },
+	{ EMU_AXIS_DPAD1_X, "compat", "axis_dpad1_x", "compat", "axis_dpad1_x_inverted" },
+	{ EMU_AXIS_DPAD1_Y, "compat", "axis_dpad1_y", "compat", "axis_dpad1_y_inverted" },
+	{ EMU_AXIS_DPAD2_X, "compat", "axis_dpad2_x", "compat", "axis_dpad2_x_inverted" },
+	{ EMU_AXIS_DPAD2_Y, "compat", "axis_dpad2_y", "compat", "axis_dpad2_y_inverted" }
+};
+
+const InputButtonID* InputMapping::get_button_id(InputButtonCode code)
+{
+	return this->buttons.get_by_value(code);
 }
 
-void ControllerMapping::set_button(int code, DreamcastController button_id)
+const InputButtonCode* InputMapping::get_button_code(InputButtonID id)
 {
-	if(button_id != EMU_BTN_NONE)
+	return this->buttons.get_by_key(id);
+}
+
+void InputMapping::set_button(InputButtonID id, InputButtonCode code)
+{
+	if(id != EMU_BTN_NONE)
 	{
-		this->buttons[code] = button_id;
+		this->buttons.insert(id, code);
 	}
 }
 
-ControllerAxis* ControllerMapping::get_axis_by_code(int code)
+const InputAxisID* InputMapping::get_axis_id(InputAxisCode code)
 {
-	if(this->axis_codes.count(code) != 1)
-	{
-		return NULL;
-	}
-	return &this->axis_codes[code];
+	return this->axes.get_by_value(code);
 }
 
-ControllerAxis* ControllerMapping::get_axis_by_id(DreamcastController axis_id)
+const InputAxisCode* InputMapping::get_axis_code(InputAxisID id)
 {
-	if(this->axis_ids.count(axis_id) != 1)
-	{
-		return NULL;
-	}
-	return this->axis_ids[axis_id];
+	return this->axes.get_by_key(id);
 }
 
-void ControllerMapping::set_axis(int code, ControllerAxis axis)
+bool InputMapping::get_axis_inverted(InputAxisCode code)
 {
-	if(axis.id != EMU_AXIS_NONE)
+	std::map<InputAxisCode, bool>::iterator it = this->axes_inverted.find('b');
+	if (it != this->axes_inverted.end())
 	{
-		this->axis_codes[code] = axis;
-		this->axis_ids[axis.id] = &this->axis_codes[code];
+		return it->second;
+	}
+	return false;
+}
+
+void InputMapping::set_axis(InputAxisID id, InputAxisCode code, bool is_inverted)
+{
+	if(id != EMU_AXIS_NONE)
+	{
+		this->axes.insert(id, code);
+		this->axes_inverted.insert(std::pair<InputAxisCode,bool>(code, is_inverted));
 	}
 }
-void ControllerMapping::load(FILE* fd)
+
+void InputMapping::load(FILE* fd)
 {
 	ConfigFile mf;
 	mf.parse(fd);
 
 	this->name = mf.get("emulator", "mapping_name", "<Unknown>").c_str();
-	puts(this->name);
-	this->set_button(mf.get_int("dreamcast", "btn_a", -1),             DC_BTN_A);
-	this->set_button(mf.get_int("dreamcast", "btn_b", -1),             DC_BTN_B);
-	this->set_button(mf.get_int("dreamcast", "btn_c", -1),             DC_BTN_C);
-	this->set_button(mf.get_int("dreamcast", "btn_d", -1),             DC_BTN_D);
-	this->set_button(mf.get_int("dreamcast", "btn_x", -1),             DC_BTN_X);
-	this->set_button(mf.get_int("dreamcast", "btn_y", -1),             DC_BTN_Y);
-	this->set_button(mf.get_int("dreamcast", "btn_z", -1),             DC_BTN_Z);
-	this->set_button(mf.get_int("dreamcast", "btn_start", -1),         DC_BTN_START);
-	this->set_button(mf.get_int("dreamcast", "btn_dpad1_left", -1),    DC_BTN_DPAD1_LEFT);
-	this->set_button(mf.get_int("dreamcast", "btn_dpad1_right", -1),   DC_BTN_DPAD1_RIGHT);
-	this->set_button(mf.get_int("dreamcast", "btn_dpad1_up", -1),      DC_BTN_DPAD1_UP);
-	this->set_button(mf.get_int("dreamcast", "btn_dpad1_down", -1),    DC_BTN_DPAD1_DOWN);
-	this->set_button(mf.get_int("dreamcast", "btn_dpad2_left", -1),    DC_BTN_DPAD2_LEFT);
-	this->set_button(mf.get_int("dreamcast", "btn_dpad2_right", -1),   DC_BTN_DPAD2_RIGHT);
-	this->set_button(mf.get_int("dreamcast", "btn_dpad2_up", -1),      DC_BTN_DPAD2_UP);
-	this->set_button(mf.get_int("dreamcast", "btn_dpad2_down", -1),    DC_BTN_DPAD2_DOWN);
-	this->set_button(mf.get_int("emulator",  "btn_escape", -1),        EMU_BTN_ESCAPE);
-	this->set_button(mf.get_int("compat",    "btn_trigger_left", -1),  EMU_BTN_TRIGGER_LEFT);
-	this->set_button(mf.get_int("compat",    "btn_trigger_right", -1), EMU_BTN_TRIGGER_RIGHT);
-	this->set_axis(mf.get_int("dreamcast", "axis_x", -1), {
-		DC_AXIS_X,
-		mf.get_int("dreamcast", "axis_x", -1),
-		mf.get_bool("compat", "axis_x_inverted", false)
-	});
-	this->set_axis(mf.get_int("dreamcast", "axis_y", -1), {
-		DC_AXIS_Y,
-		mf.get_int("dreamcast", "axis_y", -1),
-		mf.get_bool("compat", "axis_y_inverted", false)
-	});
-	this->set_axis(mf.get_int("dreamcast", "axis_trigger_left", -1), {
-		DC_AXIS_TRIGGER_LEFT,
-		mf.get_int("dreamcast", "axis_trigger_left", -1),
-		mf.get_bool("compat", "axis_trigger_left_inverted", false)
-	});
-	this->set_axis(mf.get_int("dreamcast", "axis_trigger_right", -1), {
-		DC_AXIS_TRIGGER_RIGHT,
-		mf.get_int("dreamcast", "axis_trigger_right", -1),
-		mf.get_bool("compat", "axis_trigger_right_inverted", false)
-	});
-	this->set_axis(mf.get_int("compat", "axis_dpad1_x", -1), { EMU_AXIS_DPAD1_X, mf.get_int("compat", "axis_dpad1_x", -1), false });
-	this->set_axis(mf.get_int("compat", "axis_dpad1_y", -1), { EMU_AXIS_DPAD1_Y, mf.get_int("compat", "axis_dpad1_y", -1), false });
-	this->set_axis(mf.get_int("compat", "axis_dpad2_x", -1), { EMU_AXIS_DPAD2_X, mf.get_int("compat", "axis_dpad2_x", -1), false });
-	this->set_axis(mf.get_int("compat", "axis_dpad2_y", -1), { EMU_AXIS_DPAD2_Y, mf.get_int("compat", "axis_dpad2_y", -1), false });
+
+	int i;
+	for(i = 0; i < 19; i++)
+	{
+		InputButtonCode button_code = mf.get_int(button_list[i].section, button_list[i].option, -1);
+		if (button_code >= 0)
+		{
+			this->set_button(button_list[i].id, button_code);
+		}
+	}
+
+	for(i = 0; i < 8; i++)
+	{
+		InputAxisCode axis_code = mf.get_int(axis_list[i].section, axis_list[i].option, -1);
+		if(axis_code >= 0)
+		{
+			this->set_axis(axis_list[i].id, axis_code, mf.get_bool(axis_list[i].section_inverted, axis_list[i].option_inverted, false));
+		}
+	}
+}
+
+void InputMapping::print()
+{
+	int i;
+
+	printf("\nMAPPING NAME: %s\n", this->name);
+
+	puts("MAPPED BUTTONS:");
+	for(i = 0; i < 19; i++)
+	{
+		const InputButtonCode* button_code = this->get_button_code(button_list[i].id);
+		if(button_code)
+		{
+			printf("%-18s = %d\n", button_list[i].option.c_str(), *button_code);
+		}
+	}
+
+	puts("MAPPED AXES:");
+	for(i = 0; i < 8; i++)
+	{
+		const InputAxisCode* axis_code = this->get_axis_code(axis_list[i].id);
+		if(axis_code)
+		{
+			printf("%-18s = %d", axis_list[i].option.c_str(), *axis_code);
+			if(this->get_axis_inverted(*axis_code))
+			{
+				printf("%s", "(inverted)");
+			}
+			printf("%s", "\n");
+		}
+	}
+	puts("");
 }
 

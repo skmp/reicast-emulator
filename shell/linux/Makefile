@@ -82,7 +82,7 @@ ifneq (,$(findstring x86,$(platform)))
 else ifneq (,$(findstring x64,$(platform)))
     X64_REC := 1
     NOT_ARM := 1
-    USE_X11 := 1
+    #USE_X11 := 1
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fsingle-precision-constant
     CXXFLAGS += -fexceptions
 
@@ -267,6 +267,12 @@ else
     DC_PLATFORM=dreamcast
     EXECUTABLE=reicast.elf
     EXECUTABLE_NAME=reicast
+endif
+
+ifdef LIBRETRO
+    CFLAGS += -fPIC
+    LDFLAGS += -shared -Wl,--version-script=../../core/libretro/link.T -Wl,--no-undefined
+    EXECUTABLE = libretro-reicast.so
 endif
 
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)

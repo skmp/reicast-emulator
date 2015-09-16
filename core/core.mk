@@ -56,11 +56,15 @@ ifdef FOR_ANDROID
 endif
 
 ifdef FOR_LINUX
-	ifdef USE_SDL
-		RZDCY_MODULES += sdl/
-	else
-		RZDCY_MODULES += linux-dist/
-	endif
+  ifdef LIBRETRO
+    RZDCY_MODULES += libretro/
+  else
+    ifdef USE_SDL
+      RZDCY_MODULES += sdl/
+    else
+      RZDCY_MODULES += linux-dist/
+    endif
+  endif
 endif
 
 RZDCY_FILES := $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))

@@ -2,6 +2,9 @@ box: ubuntu
 
 build:
     steps:
+        - script:
+            name: apt-get update
+            code: sudo apt-get update
         - install-packages:
             packages: build-essential libasound2-dev libgl1-mesa-dev libx11-dev
         - script:

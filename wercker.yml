@@ -8,6 +8,7 @@ build:
                 sudo echo "deb http://archive.ubuntu.com/ubuntu/ trusty main universe multiverse restricted" > /etc/apt/sources.list
                 sudo echo "deb http://archive.ubuntu.com/ubuntu/ trusty-updates main universe multiverse restricted" >> /etc/apt/sources.list
                 sudo apt-get update
+                sudo apt-get upgrade -y
         - install-packages:
             packages: build-essential libasound2-dev libgl1-mesa-dev libx11-dev
         - script:

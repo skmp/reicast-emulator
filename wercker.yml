@@ -4,7 +4,11 @@ build:
     steps:
         - script:
             name: apt-get update
-            code: sudo apt-get update
+            code: |-
+                sudo apt-get update
+                sudo echo "deb http://cn.archive.ubuntu.com/ubuntu/ trusty main universe multiverse restricted" > /etc/apt/sources.list
+                sudo echo "deb http://cn.archive.ubuntu.com/ubuntu/ trusty-updates main universe multiverse restricted" >> /etc/apt/sources.list
+
         - install-packages:
             packages: build-essential libasound2-dev libgl1-mesa-dev libx11-dev
         - script:

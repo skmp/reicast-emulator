@@ -15,6 +15,7 @@
 
 #include "webui/server.h"
 #include "hw/naomi/naomi_cart.h"
+#include "nullDC.h"
 
 settings_t settings;
 
@@ -69,7 +70,6 @@ int GetFile(char *szFileName, char *szParse=0,u32 flags=0)
 
 	return 1; 
 }
-
 
 s32 plugins_Init()
 {
@@ -128,8 +128,36 @@ void* webui_th(void* p)
 cThread webui_thd(&webui_th,0);
 #endif
 
-int dc_init(int argc,wchar* argv[])
+int dc_get_settings(settings_t* p_settings, int argc, wchar* argv[])
 {
+	if(ParseCommandLine(argc,argv))
+	{
+		return 69;
+	}
+	if(!cfgOpen())
+	{
+		msgboxf("Unable to open config file",MBX_ICONERROR);
+		return -4;
+	}
+	LoadSettings(p_settings);
+	return 0;
+}
+
+int dc_init(int argc, wchar* argv[])
+{
+	// This is just a convenience function
+	settings_t dc_settings;
+	int rc = dc_get_settings(&dc_settings, argc, argv);
+	if(rc != 0)
+	{
+		return rc;
+	}
+	return dc_init(dc_settings);
+}
+
+int dc_init(settings_t p_settings)
+{
+	settings = p_settings;
 	setbuf(stdin,0);
 	setbuf(stdout,0);
 	setbuf(stderr,0);
@@ -143,16 +171,6 @@ int dc_init(int argc,wchar* argv[])
 	webui_thd.Start();
 #endif
 
-	if(ParseCommandLine(argc,argv))
-	{
-		return 69;
-	}
-	if(!cfgOpen())
-	{
-		msgboxf("Unable to open config file",MBX_ICONERROR);
-		return -4;
-	}
-	LoadSettings();
 #ifndef _ANDROID
 	os_CreateWindow();
 #endif
@@ -222,63 +240,7 @@ void dc_term()
 	_vmem_release();
 
 #ifndef _ANDROID
-	SaveSettings();
+	SaveSettings(&settings);
 #endif
 	SaveRomFiles(get_writable_data_path("/data/"));
-}
-
-void LoadSettings()
-{
-#ifndef _ANDROID
-	settings.dynarec.Enable			= cfgLoadInt("config","Dynarec.Enabled", 1)!=0;
-	settings.dynarec.idleskip		= cfgLoadInt("config","Dynarec.idleskip",1)!=0;
-	settings.dynarec.unstable_opt	= cfgLoadInt("config","Dynarec.unstable-opt",0);
-	//disable_nvmem can't be loaded, because nvmem init is before cfg load
-	settings.dreamcast.cable		= cfgLoadInt("config","Dreamcast.Cable",3);
-	settings.dreamcast.RTC			= cfgLoadInt("config","Dreamcast.RTC",GetRTC_now());
-	settings.dreamcast.region		= cfgLoadInt("config","Dreamcast.Region",3);
-	settings.dreamcast.broadcast	= cfgLoadInt("config","Dreamcast.Broadcast",4);
-	settings.aica.LimitFPS			= cfgLoadInt("config","aica.LimitFPS",1);
-	settings.aica.NoBatch			= cfgLoadInt("config","aica.NoBatch",0);
-    settings.aica.NoSound			= cfgLoadInt("config","aica.NoSound",0);
-	settings.rend.UseMipmaps		= cfgLoadInt("config","rend.UseMipmaps",1);
-	settings.rend.WideScreen		= cfgLoadInt("config","rend.WideScreen",0);
-	
-	settings.pvr.subdivide_transp	= cfgLoadInt("config","pvr.Subdivide",0);
-	
-	settings.pvr.ta_skip			= cfgLoadInt("config","ta.skip",0);
-	settings.pvr.rend				= cfgLoadInt("config","pvr.rend",0);
-
-	settings.pvr.MaxThreads			= cfgLoadInt("config", "pvr.MaxThreads", 3);
-	settings.pvr.SynchronousRendering			= cfgLoadInt("config", "pvr.SynchronousRendering", 0);
-
-	settings.debug.SerialConsole = cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
-
-	settings.reios.ElfFile = cfgLoadStr("reios", "ElfFile","");
-
-	settings.validate.OpenGlChecks = cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
-#endif
-
-	settings.bios.UseReios = cfgLoadInt("config", "bios.UseReios", 0);
-
-#if (HOST_OS != OS_LINUX || defined(_ANDROID) || defined(TARGET_PANDORA))
-	settings.aica.BufferSize=2048;
-#else
-	settings.aica.BufferSize=1024;
-#endif
-
-/*
-	//make sure values are valid
-	settings.dreamcast.cable	= min(max(settings.dreamcast.cable,    0),3);
-	settings.dreamcast.region	= min(max(settings.dreamcast.region,   0),3);
-	settings.dreamcast.broadcast= min(max(settings.dreamcast.broadcast,0),4);
-*/
-}
-void SaveSettings()
-{
-	cfgSaveInt("config","Dynarec.Enabled",	settings.dynarec.Enable);
-	cfgSaveInt("config","Dreamcast.Cable",	settings.dreamcast.cable);
-	cfgSaveInt("config","Dreamcast.RTC",	settings.dreamcast.RTC);
-	cfgSaveInt("config","Dreamcast.Region",	settings.dreamcast.region);
-	cfgSaveInt("config","Dreamcast.Broadcast",settings.dreamcast.broadcast);
 }

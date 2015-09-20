@@ -15,6 +15,7 @@
 #include "ppapi/utility/completion_callback_factory.h"
 
 #include "types.h"
+#include "nullDC.h"
 
 #include <GLES2/gl2.h>
 
@@ -35,9 +36,6 @@ int msgboxf(const wchar* text,unsigned int type,...)
 	puts(temp);
 	return 0;
 }
-
-int dc_init(int argc,wchar* argv[]);
-void dc_run();
 
 bool rend_framePending();
 

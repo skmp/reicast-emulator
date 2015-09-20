@@ -709,8 +709,8 @@ struct settings_t
 
 extern settings_t settings;
 
-void LoadSettings();
-void SaveSettings();
+void LoadSettings(settings_t*);
+void SaveSettings(settings_t*);
 u32 GetRTC_now();
 extern u32 patchRB;
 

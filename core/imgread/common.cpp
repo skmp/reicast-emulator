@@ -200,7 +200,7 @@ bool InitDrive(u32 fileflags)
 	}
 
 	strcpy(settings.imgread.LastImage,fn);
-	SaveSettings();
+	SaveSettings(&settings);
 
 	if (!InitDrive_(fn))
 	{
@@ -257,7 +257,7 @@ bool DiscSwap(u32 fileflags)
 	}
 
 	strcpy(settings.imgread.LastImage,fn);
-	SaveSettings();
+	SaveSettings(&settings);
 
 	if (!InitDrive_(fn))
 	{

@@ -68,7 +68,7 @@ void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 			settings.dreamcast.RTC&=0xFFFF;
 			settings.dreamcast.RTC|=(data&0xFFFF)<<16;
 			rtc_EN=0;
-			SaveSettings();
+			SaveSettings(&settings);
 		}
 		return;
 	case 4:

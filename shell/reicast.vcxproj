@@ -22,6 +22,7 @@
     <ClCompile Include="..\core\cfg\cl.cpp" />
     <ClCompile Include="..\core\cfg\cfg.cpp" />
     <ClCompile Include="..\core\cfg\ini.cpp" />
+    <ClCompile Include="..\core\cfg\settings.cpp" />
     <ClCompile Include="..\core\deps\chdpsr\cdipsr.cpp" />
     <ClCompile Include="..\core\deps\chdr\chdr.cpp" />
     <ClCompile Include="..\core\deps\coreio\coreio.cpp" />

@@ -11,6 +11,7 @@
 #include <GLES2/gl2ext.h>
 
 #include "types.h"
+#include "nullDC.h"
 #include "profiler/profiler.h"
 #include "cfg/cfg.h"
 #include "rend/TexCache.h"
@@ -156,9 +157,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_dreamtime(JNIEnv *env
 
 void egl_stealcntx();
 void SetApplicationPath(wchar *path);
-int dc_init(int argc,wchar* argv[]);
-void dc_run();
-void dc_term();
 void mcfg_Create(MapleDeviceType type,u32 bus,u32 port);
 
 bool VramLockedWrite(u8* address);

@@ -1,4 +1,4 @@
-box: ubuntu:15.04
+box: ubuntu:14.04.3
 
 build:
     steps:

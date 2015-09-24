@@ -3,6 +3,7 @@
 #include <linux/input.h>
 #include "linux-dist/evdev.h"
 #include "linux-dist/main.h"
+#include "linux-dist/mappingstore.h"
 #include "cfg/ini.h"
 #include <vector>
 #include <map>
@@ -60,111 +61,78 @@
 		}
 	}
 
-	std::map<std::string, InputMapping*> loaded_mappings;
+	static InputMappingStore mapping_store;
 
 	int input_evdev_init(EvdevController* controller, const char* device, const char* custom_mapping_fname = NULL)
 	{
-		char name[256] = "Unknown";
+		char device_name[256] = "Unknown";
 
 		printf("evdev: Trying to open device at '%s'\n", device);
 
 		int fd = open(device, O_RDONLY);
 
-		if (fd >= 0)
-		{
-			fcntl(fd, F_SETFL, O_NONBLOCK);
-			if(ioctl(fd, EVIOCGNAME(sizeof(name)), name) < 0)
-			{
-				perror("evdev: ioctl");
-				return -2;
-			}
-			else
-			{
-				printf("evdev: Found '%s' at '%s'\n", name, device);
-
-				controller->fd = fd;
-
-				const char* mapping_fname;
-
-				if(custom_mapping_fname != NULL)
-				{
-					mapping_fname = custom_mapping_fname;
-				}
-				else
-				{
-					#if defined(TARGET_PANDORA)
-						mapping_fname = "controller_pandora.cfg";
-					#elif defined(TARGET_GCW0)
-						mapping_fname = "controller_gcwz.cfg";
-					#else
-						if (strcmp(name, "Microsoft X-Box 360 pad") == 0 ||
-							strcmp(name, "Xbox 360 Wireless Receiver") == 0 ||
-							strcmp(name, "Xbox 360 Wireless Receiver (XBOX)") == 0)
-						{
-							mapping_fname = "controller_xpad.cfg";
-						}
-						else if (strstr(name, "Xbox Gamepad (userspace driver)") != NULL)
-						{
-							mapping_fname = "controller_xboxdrv.cfg";
-						}
-						else if (strstr(name, "keyboard") != NULL ||
-								 strstr(name, "Keyboard") != NULL)
-						{
-							mapping_fname = "keyboard.cfg";
-						}
-						else
-						{
-							mapping_fname = "controller_generic.cfg";
-						}
-					#endif
-				}
-				if(loaded_mappings.count(string(mapping_fname)) == 0)
-				{
-					FILE* mapping_fd = NULL;
-					if(mapping_fname[0] == '/')
-					{
-						// Absolute mapping
-						mapping_fd = fopen(mapping_fname, "r");
-					}
-					else
-					{
-						// Mapping from ~/.reicast/mappings/
-						size_t size_needed = snprintf(NULL, 0, EVDEV_MAPPING_PATH, mapping_fname) + 1;
-						char* mapping_path = (char*)malloc(size_needed);
-						sprintf(mapping_path, EVDEV_MAPPING_PATH, mapping_fname);
-						printf("evdev: reading mapping path: '%s'\n", get_readonly_data_path(mapping_path).c_str());
-						mapping_fd = fopen(get_readonly_data_path(mapping_path).c_str(), "r");
-						free(mapping_path);
-					}
-					
-					if(mapping_fd != NULL)
-					{
-						printf("evdev: reading mapping file: '%s'\n", mapping_fname);
-						InputMapping* mapping = new InputMapping();
-						mapping->load(mapping_fd);
-						loaded_mappings.insert(std::pair<std::string, InputMapping*>(string(mapping_fname), mapping)).first;
-						fclose(mapping_fd);
-					}
-					else
-					{
-						printf("evdev: unable to open mapping file '%s'\n", mapping_fname);
-						perror("evdev");
-						return -3;
-					}
-				}
-				controller->mapping = loaded_mappings.find(string(mapping_fname))->second;
-				printf("evdev: Using '%s' mapping\n", controller->mapping->name);
-				controller->mapping->print();
-				controller->init();
-
-				return 0;
-			}
-		}
-		else
+		if (fd < 0)
 		{
 			perror("evdev: open");
 			return -1;
 		}
+
+		fcntl(fd, F_SETFL, O_NONBLOCK);
+		if(ioctl(fd, EVIOCGNAME(sizeof(device_name)), device_name) < 0)
+		{
+			perror("evdev: ioctl");
+			return -2;
+		}
+
+		printf("evdev: Found '%s' at '%s'\n", device_name, device);
+
+		controller->fd = fd;
+		controller->mapping = NULL;
+
+		if(custom_mapping_fname != NULL)
+		{
+			controller->mapping = mapping_store.get(std::string(custom_mapping_fname));
+		}
+
+		if(controller->mapping == NULL)
+		{
+			std::string filename;
+			#if defined(TARGET_PANDORA)
+				filename = "controller_pandora.cfg";
+			#elif defined(TARGET_GCW0)
+				filename = "controller_gcwz.cfg";
+			#else
+				if (strstr(device_name, "Microsoft X-Box 360 pad") == NULL || strstr(device_name, "Xbox 360 Wireless Receiver") == NULL)
+				{
+					filename = "controller_xpad.cfg";
+				}
+				else if (strstr(device_name, "Xbox Gamepad (userspace driver)") != NULL)
+				{
+					filename = "controller_xboxdrv.cfg";
+				}
+				else if (strstr(device_name, "keyboard") != NULL || strstr(device_name, "Keyboard") != NULL)
+				{
+					filename = "keyboard.cfg";
+				}
+				else
+				{
+					filename = "controller_generic.cfg";
+				}
+			#endif
+			controller->mapping = mapping_store.get(filename);
+		}
+		
+		if(controller->mapping == NULL)
+		{
+			printf("evdev: No mapping available for '%s', disabling controller\n", device_name);
+			return -3;
+		}
+
+		printf("evdev: Using '%s' mapping\n", controller->mapping->name);
+		controller->mapping->print();
+		controller->init();
+
+		return 0;
 	}
 
 	bool input_evdev_handle(EvdevController* controller, u32 port)

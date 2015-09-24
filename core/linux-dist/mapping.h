@@ -1,3 +1,4 @@
+#pragma once
 #include <map>
 #include "linux-dist/main.h"
 #include "linux-dist/bimap.h"

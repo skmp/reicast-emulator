@@ -25,7 +25,6 @@ struct EvdevController
 #define EVDEV_DEVICE_CONFIG_KEY "evdev_device_id_%d"
 #define EVDEV_MAPPING_CONFIG_KEY "evdev_mapping_%d"
 #define EVDEV_DEVICE_STRING "/dev/input/event%d"
-#define EVDEV_MAPPING_PATH "/mappings/%s"
 
 #ifdef TARGET_PANDORA
 	#define EVDEV_DEFAULT_DEVICE_ID_1 4

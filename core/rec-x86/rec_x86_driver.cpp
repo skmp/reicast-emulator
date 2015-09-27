@@ -289,6 +289,94 @@ void CheckBlock(RuntimeBlockInfo* block,x86_ptr_imm place)
 }
 
 
+RuntimeBlockInfo* old_block;
+
+u32 old_loop;
+u32 old_old_loop;
+#include <map>
+
+#include <algorithm>
+
+u32 loops[RAM_SIZE];
+u32 loops_cyc[RAM_SIZE];
+u32 loops_hot[RAM_SIZE];
+u32 loops_end[RAM_SIZE];
+
+
+void print_loop_stats() {
+	
+	vector<pair<u32, u32>> vc;
+	int loopc = 0;
+	int loopo = 0;
+
+	int ooc = 0;
+	int ooo = 0;
+
+	for (int i = 0; i < RAM_SIZE; i += 2) {
+		if (loops_hot[i]) {
+			vc.push_back(pair<u32, u32>(-loops_cyc[i], i));
+
+			loopc += loops[i];
+
+			loopo += loops_cyc[i];
+		}
+
+		ooc += loops[i];
+		ooo += loops_cyc[i];
+	}
+
+	sort(vc.begin(), vc.end());
+
+	printf("%d loops, %d, %d, %.2f, %.2f\n", vc.size(), loopc, loopo, loopc *100.0 / 1000000, loopo * 100.0 / ooo);
+
+	memset(loops, 0, sizeof(loops));
+	memset(loops_cyc, 0, sizeof(loops_cyc));
+	memset(loops_hot, 0, sizeof(loops_hot));
+	memset(loops_end, 0, sizeof(loops_end));
+}
+int counts = 10000;
+void DYNACALL ngen_enter(RuntimeBlockInfo* block) {
+	if (BET_GET_CLS(block->BlockType) == BET_CLS_Dynamic)
+		old_block = 0;
+
+	if (old_block) {
+		if ((old_block->addr & RAM_MASK) >= (block->addr & RAM_MASK)) {
+			loops[RAM_MASK & block->addr]++;
+			loops_cyc[RAM_MASK & block->addr] += block->guest_cycles;
+
+			loops_end[RAM_MASK & block->addr] = max(loops_end[RAM_MASK & block->addr], RAM_MASK & old_block->addr);
+
+			if (!loops_hot[RAM_MASK & block->addr] && loops[RAM_MASK & block->addr] > 1000) {
+				//printf("HOT LOOP %08X\n", block->addr);
+
+				loops_hot[RAM_MASK & block->addr] = 1;
+			}
+
+			old_old_loop = old_loop;
+			old_loop = old_block->addr & RAM_MASK;
+		}
+
+		else {
+			if ((block->addr & RAM_MASK) > loops_end[old_loop] && old_old_loop != -1) {
+				old_loop = old_old_loop;
+				old_old_loop = -1;
+			}
+
+			if ((block->addr & RAM_MASK) <= loops_end[old_loop]) {
+				loops[old_loop] ++;
+				loops_cyc[old_loop] += block->guest_cycles;
+			}
+		}
+	}
+
+	old_block = block;
+
+	if (--counts < 0) {
+		counts = 10000000;
+		print_loop_stats();
+	}
+}
+
 void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
 {
 	//initialise stuff
@@ -305,6 +393,10 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 	x86e->do_realloc=false;
 
 	block->code=(DynarecCodeEntryPtr)emit_GetCCPtr();
+
+	x86e->Emit(op_mov32, ECX, unat(block));
+
+	x86e->Emit(op_call, x86_ptr_imm(&ngen_enter));
 
 	x86e->Emit(op_add32,&memops_t,block->memops);
 	x86e->Emit(op_add32,&memops_l,block->linkedmemops);

@@ -32,7 +32,7 @@
 #endif
 
 #if defined(USE_EVDEV)
-	#include "linux-dist/evdev.h"
+	#include "linux-dist/handler_evdev.h"
 #endif
 
 #if defined(USE_JOYSTICK)
@@ -86,12 +86,7 @@ void emit_WriteCodeCache();
 
 #if defined(USE_EVDEV)
 	/* evdev input */
-	static EvdevController evdev_controllers[4] = {
-		{ -1, NULL },
-		{ -1, NULL },
-		{ -1, NULL },
-		{ -1, NULL }
-	};
+	static EvdevInputHandler evdev_controllers[4];
 #endif
 
 #if defined(USE_JOYSTICK)
@@ -102,49 +97,42 @@ void emit_WriteCodeCache();
 void SetupInput()
 {
 	#if defined(USE_EVDEV)
-		int evdev_device_id[4] = { -1, -1, -1, -1 };
-		size_t size_needed;
-		int port, i;
+		#define EVDEV_DEVICE_CONFIG_KEY "evdev_device_id_%d"
+		#define EVDEV_MAPPING_CONFIG_KEY "evdev_mapping_%d"
 
-		char* evdev_device;
+		#ifdef TARGET_PANDORA
+			#define EVDEV_DEFAULT_DEVICE_ID_1 "4"
+		#else
+			#define EVDEV_DEFAULT_DEVICE_ID_1 "0"
+		#endif
+		#define EVDEV_DEFAULT_DEVICE_ID(port) (port == 1 ? EVDEV_DEFAULT_DEVICE_ID_1 : "-1")
 
-		for (port = 0; port < 4; port++)
+		for (int port = 0; port < 4; port++)
 		{
+			size_t size_needed;
+			char* evdev_config_key;
+			std::string evdev_device;
+			std::string custom_mapping_filename;
+
 			size_needed = snprintf(NULL, 0, EVDEV_DEVICE_CONFIG_KEY, port+1) + 1;
-			char* evdev_config_key = (char*)malloc(size_needed);
+			evdev_config_key = (char*)malloc(size_needed);
 			sprintf(evdev_config_key, EVDEV_DEVICE_CONFIG_KEY, port+1);
-			evdev_device_id[port] = cfgLoadInt("input", evdev_config_key, EVDEV_DEFAULT_DEVICE_ID(port+1));
+			evdev_device = cfgLoadStr("input", evdev_config_key, EVDEV_DEFAULT_DEVICE_ID(port+1));
 			free(evdev_config_key);
 
-			// Check if the same device is already in use on another port
-			if (evdev_device_id[port] < 0)
+			if(evdev_device.c_str()[0] == '-')
 			{
 				printf("evdev: Controller %d disabled by config.\n", port + 1);
+				continue;
 			}
-			else
-			{
-				for (i = 0; i < port; i++)
-				{
-						if (evdev_device_id[port] == evdev_device_id[i])
-						{
-								die("You can't assign the same device to multiple ports!\n");
-						}
-				}
 
-				size_needed = snprintf(NULL, 0, EVDEV_DEVICE_STRING, evdev_device_id[port]) + 1;
-				evdev_device = (char*)malloc(size_needed);
-				sprintf(evdev_device, EVDEV_DEVICE_STRING, evdev_device_id[port]);
+			size_needed = snprintf(NULL, 0, EVDEV_MAPPING_CONFIG_KEY, port+1) + 1;
+			evdev_config_key = (char*)malloc(size_needed);
+			sprintf(evdev_config_key, EVDEV_MAPPING_CONFIG_KEY, port+1);
+			custom_mapping_filename = (cfgExists("input", evdev_config_key) == 2 ? cfgLoadStr("input", evdev_config_key, "") : "");
+			free(evdev_config_key);
 
-				size_needed = snprintf(NULL, 0, EVDEV_MAPPING_CONFIG_KEY, port+1) + 1;
-				evdev_config_key = (char*)malloc(size_needed);
-				sprintf(evdev_config_key, EVDEV_MAPPING_CONFIG_KEY, port+1);
-				const char* mapping = (cfgExists("input", evdev_config_key) == 2 ? cfgLoadStr("input", evdev_config_key, "").c_str() : NULL);
-				free(evdev_config_key);
-
-				input_evdev_init(&evdev_controllers[port], evdev_device, mapping);
-
-				free(evdev_device);
-			}
+			evdev_controllers[port].initialize(port, evdev_device, custom_mapping_filename);
 		}
 	#endif
 
@@ -183,7 +171,7 @@ void UpdateInputState(u32 port)
 	#endif
 
 	#if defined(USE_EVDEV)
-		input_evdev_handle(&evdev_controllers[port], port);
+		evdev_controllers[port].handle();
 	#endif
 
 	#if defined(USE_SDL)

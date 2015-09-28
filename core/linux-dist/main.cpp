@@ -14,6 +14,7 @@
 #include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
 #include <unistd.h>
+#include "proxy.h"
 
 #if defined(TARGET_EMSCRIPTEN)
 	#include <emscripten.h>
@@ -84,15 +85,12 @@ s8 joyx[4], joyy[4];
 
 void emit_WriteCodeCache();
 
-#if defined(USE_EVDEV)
-	/* evdev input */
-	static EvdevInputHandler evdev_controllers[4];
-#endif
-
 #if defined(USE_JOYSTICK)
 	/* legacy joystick input */
 	static int joystick_fd = -1; // Joystick file descriptor
 #endif
+
+static InputHandlerProxy input_handlers;
 
 void SetupInput()
 {
@@ -132,7 +130,9 @@ void SetupInput()
 			custom_mapping_filename = (cfgExists("input", evdev_config_key) == 2 ? cfgLoadStr("input", evdev_config_key, "") : "");
 			free(evdev_config_key);
 
-			evdev_controllers[port].initialize(port, evdev_device, custom_mapping_filename);
+			EvdevInputHandler* handler = new EvdevInputHandler();
+			handler->initialize(port, evdev_device, custom_mapping_filename);
+			input_handlers.add(port, handler);
 		}
 	#endif
 
@@ -166,12 +166,10 @@ void UpdateInputState(u32 port)
 		return;
 	#endif
 
+	input_handlers.handle(port);
+
 	#if defined(USE_JOYSTICK)
 		input_joystick_handle(joystick_fd, port);
-	#endif
-
-	#if defined(USE_EVDEV)
-		evdev_controllers[port].handle();
 	#endif
 
 	#if defined(USE_SDL)

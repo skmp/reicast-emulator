@@ -37,7 +37,7 @@
 #endif
 
 #if defined(USE_JOYSTICK)
-	#include "linux-dist/joystick.h"
+	#include "linux-dist/handler_linuxjs.h"
 #endif
 
 #ifdef TARGET_PANDORA
@@ -84,11 +84,6 @@ u32 vks[4];
 s8 joyx[4], joyy[4];
 
 void emit_WriteCodeCache();
-
-#if defined(USE_JOYSTICK)
-	/* legacy joystick input */
-	static int joystick_fd = -1; // Joystick file descriptor
-#endif
 
 static InputHandlerProxy input_handlers;
 
@@ -137,17 +132,21 @@ void SetupInput()
 	#endif
 
 	#if defined(USE_JOYSTICK)
-		int joystick_device_id = cfgLoadInt("input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
-		if (joystick_device_id < 0) {
-			puts("Legacy Joystick input disabled by config.\n");
+		#define JOYSTICK_DEFAULT_DEVICE_ID "-1"
+
+		std::string linuxjs_device;
+		std::string custom_mapping_filename = "";
+
+		linuxjs_device = cfgLoadStr("input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
+		if (linuxjs_device.c_str()[0] == '-')
+		{
+			puts("LinuxJoystick input disabled by config.\n");
 		}
 		else
 		{
-			int joystick_device_length = snprintf(NULL, 0, JOYSTICK_DEVICE_STRING, joystick_device_id);
-			char* joystick_device = (char*)malloc(joystick_device_length + 1);
-			sprintf(joystick_device, JOYSTICK_DEVICE_STRING, joystick_device_id);
-			joystick_fd = input_joystick_init(joystick_device);
-			free(joystick_device);
+			LinuxJoystickInputHandler* handler = new LinuxJoystickInputHandler();
+			handler->initialize(0, linuxjs_device, custom_mapping_filename);
+			input_handlers.add(0, handler);
 		}
 	#endif
 
@@ -167,10 +166,6 @@ void UpdateInputState(u32 port)
 	#endif
 
 	input_handlers.handle(port);
-
-	#if defined(USE_JOYSTICK)
-		input_joystick_handle(joystick_fd, port);
-	#endif
 
 	#if defined(USE_SDL)
 		input_sdl_handle(port);

@@ -1,4 +1,4 @@
-box: debian
+box: ubuntu
 
 build:
     steps:

@@ -1,4 +1,4 @@
-box: ubuntu:14.04.3
+box: debian
 
 build:
     steps:

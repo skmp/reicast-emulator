@@ -951,38 +951,6 @@ bool gl_create_resources();
 
 //setup
 
-
-bool gles_init()
-{
-
-	if (!gl_init((void*)libPvr_GetRenderTarget(),
-		         (void*)libPvr_GetRenderSurface()))
-			return false;
-
-	if (!gl_create_resources())
-		return false;
-
-#if defined(GLES) && HOST_OS != OS_DARWIN && !defined(TARGET_NACL32)
-	#ifdef TARGET_PANDORA
-	fbdev=open("/dev/fb0", O_RDONLY);
-	#else
-	eglSwapInterval(gl.setup.display,1);
-	#endif
-#endif
-
-	//clean up all buffers ...
-	for (int i=0;i<10;i++)
-	{
-		glClearColor(0.f, 0.f, 0.f, 0.f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		gl_swap();
-	}
-
-	return true;
-}
-
-
-
 float fog_coefs[]={0,0};
 void tryfit(float* x,float* y)
 {
@@ -1298,120 +1266,103 @@ extern GLuint osd_font;
 #define OSD_TEX_W 512
 #define OSD_TEX_H 256
 
-void OSD_DRAW()
-{
-	#ifndef TARGET_PANDORA
-	if (osd_tex)
-	{
-		float u=0;
-		float v=0;
+#if !defined(_ANDROID) && !defined(TARGET_NACL32)
+#if HOST_OS==OS_LINUX
+#define SET_AFNT 1
+#endif
+#endif
 
-		for (int i=0;i<13;i++)
-		{
-			//umin,vmin,umax,vmax
-			vjoy_pos[i][4]=(u+1)/OSD_TEX_W;
-			vjoy_pos[i][5]=(v+1)/OSD_TEX_H;
+extern u16 kcode[4];
 
-			vjoy_pos[i][6]=((u+vjoy_sz[0][i]-1))/OSD_TEX_W;
-			vjoy_pos[i][7]=((v+vjoy_sz[1][i]-1))/OSD_TEX_H;
-
-			u+=vjoy_sz[0][i];
-			if (u>=OSD_TEX_W)
-			{
-				u-=OSD_TEX_W;
-				v+=vjoy_sz[1][i];
-			}
-			//v+=vjoy_pos[i][3];
-		}
-
-		verify(glIsProgram(gl.OSD_SHADER.program));
-
-		glBindTexture(GL_TEXTURE_2D,osd_tex);
-		glUseProgram(gl.OSD_SHADER.program);
-
-		//reset rendering scale
 /*
-		float dc_width=640;
-		float dc_height=480;
+bool rend_single_frame()
+{
+	//wait render start only if no frame pending
+	_pvrrc = DequeueRender();
 
-		float dc2s_scale_h=screen_height/480.0f;
-		float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
-
-		//-1 -> too much to left
-		ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h);
-		ShaderUniforms.scale_coefs[1]=-2/dc_height;
-		ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
-		ShaderUniforms.scale_coefs[3]=-1;
-
-		glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
-*/
-
-		glEnable(GL_BLEND);
-		glDisable(GL_DEPTH_TEST);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		glDepthMask(false);
-		glDepthFunc(GL_ALWAYS);
-
-		glDisable(GL_CULL_FACE);
-		glDisable(GL_SCISSOR_TEST);
-
-		int dfa=osd_count/4;
-
-		for (int i=0;i<dfa;i++)
-			glDrawArrays(GL_TRIANGLE_STRIP,osd_base+i*4,4);
+	while (!_pvrrc)
+	{
+		rs.Wait();
+		_pvrrc = DequeueRender();
 	}
-#endif
-#ifdef TARGET_PANDORA
-  if (osd_font)
-  {
-    float u=0;
-    float v=0;
 
-    verify(glIsProgram(gl.OSD_SHADER.program));
-
-	float dc_width=640;
-	float dc_height=480;
-
-	float dc2s_scale_h=screen_height/480.0f;
-	float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
+	bool do_swp=false;
+	//if (kcode[0]&(1<<9))
+	{
 
 
-    glBindTexture(GL_TEXTURE_2D,osd_font);
-    glUseProgram(gl.OSD_SHADER.program);
+	//clear up & free data ..
+	tactx_Recycle(_pvrrc);
+	_pvrrc=0;
 
-  /*
-    //-1 -> too much to left
-    ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h);
-    ShaderUniforms.scale_coefs[1]=-2/dc_height;
-    ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
-    ShaderUniforms.scale_coefs[3]=-1;
-
-    glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
+	return do_swp;
+}
 */
 
-    glEnable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-
-    glDepthMask(false);
-    glDepthFunc(GL_ALWAYS);
-
-
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_SCISSOR_TEST);
-
-
-    int dfa=osd_count/4;
-
-   	for (int i=0;i<dfa;i++)
-		glDrawArrays(GL_TRIANGLE_STRIP,osd_base+i*4,4);
- }
-#endif
+void rend_set_fb_scale(float x,float y)
+{
+	fb_scale_x=x;
+	fb_scale_y=y;
 }
 
-bool ProcessFrame(TA_context* ctx)
+struct glesrend : Renderer
+{
+	bool Init();
+	void Resize(int width, int height);
+	void Term();
+
+	bool Process(TA_context* ctx);
+	bool Render();
+
+	void Present();
+
+	void DrawOSD();
+
+	virtual u32 GetTexture(TSP tsp, TCW tcw);
+};
+
+bool glesrend::Init()
+{
+	
+	if (!gl_init((void*)libPvr_GetRenderTarget(), (void*)libPvr_GetRenderSurface()))
+	{
+		return false;
+	}
+
+	if (!gl_create_resources())
+	{
+		return false;
+	}
+
+	#if defined(GLES) && HOST_OS != OS_DARWIN && !defined(TARGET_NACL32)
+		#ifdef TARGET_PANDORA
+			fbdev = open("/dev/fb0", O_RDONLY);
+		#else
+			eglSwapInterval(gl.setup.display,1);
+		#endif
+	#endif
+
+	//clean up all buffers ...
+	for (int i=0;i<10;i++)
+	{
+		glClearColor(0.f, 0.f, 0.f, 0.f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		gl_swap();
+	}
+
+	return true;
+}
+
+void glesrend::Resize(int width, int height)
+{
+	screen_width = width;
+	screen_height = height;
+}
+
+void glesrend::Term() { };
+
+bool glesrend::Process(TA_context* ctx)
 {
 	//disable RTTs for now ..
 	if (ctx->rend.isRTT)
@@ -1435,7 +1386,7 @@ bool ProcessFrame(TA_context* ctx)
 	return true;
 }
 
-bool RenderFrame()
+bool glesrend::Render()
 {
 	DoCleanup();
 
@@ -1737,10 +1688,10 @@ bool RenderFrame()
 	}
 	else
 	{
-#if HOST_OS != OS_DARWIN
-        //Fix this in a proper way
-		glBindFramebuffer(GL_FRAMEBUFFER,0);
-#endif
+		#if HOST_OS != OS_DARWIN
+			//Fix this in a proper way
+			glBindFramebuffer(GL_FRAMEBUFFER,0);
+		#endif
 	}
 
 	//Clear depth
@@ -1812,85 +1763,6 @@ bool RenderFrame()
 	return !is_rtt;
 }
 
-#if !defined(_ANDROID) && !defined(TARGET_NACL32)
-#if HOST_OS==OS_LINUX
-#define SET_AFNT 1
-#endif
-#endif
-
-extern u16 kcode[4];
-
-/*
-bool rend_single_frame()
-{
-	//wait render start only if no frame pending
-	_pvrrc = DequeueRender();
-
-	while (!_pvrrc)
-	{
-		rs.Wait();
-		_pvrrc = DequeueRender();
-	}
-
-	bool do_swp=false;
-	//if (kcode[0]&(1<<9))
-	{
-
-
-	//clear up & free data ..
-	tactx_Recycle(_pvrrc);
-	_pvrrc=0;
-
-	return do_swp;
-}
-*/
-
-
-void rend_set_fb_scale(float x,float y)
-{
-	fb_scale_x=x;
-	fb_scale_y=y;
-}
-
-struct glesrend : Renderer
-{
-	bool Init();
-	void Resize(int width, int height);
-	void Term();
-
-	bool Process(TA_context* ctx);
-	bool Render();
-
-	void Present();
-
-	void DrawOSD();
-
-	virtual u32 GetTexture(TSP tsp, TCW tcw);
-};
-
-bool Init()
-{
-	return gles_init();
-}
-
-void glesrend::Resize(int width, int height)
-{
-	screen_width = width;
-	screen_height = height;
-}
-
-void glesrend::Term() { };
-
-bool glesrend::Process(TA_context* ctx)
-{
-	return ProcessFrame(ctx);
-}
-
-bool glesrend::Render()
-{
-	return RenderFrame();
-}
-
 void glesrend::Present()
 {
 	gl_swap();
@@ -1899,7 +1771,79 @@ void glesrend::Present()
 
 void glesrend::DrawOSD()
 {
-	OSD_DRAW();
+	#ifdef TARGET_PANDORA
+	GLuint osd_texture = osd_font;
+	#else
+	GLuint osd_texture = osd_tex;
+	#endif
+
+	if (!osd_texture)
+	{
+		return;
+	}
+
+	verify(glIsProgram(gl.OSD_SHADER.program));
+
+	#ifndef TARGET_PANDORA
+		float u = 0;
+		float v = 0;
+		
+		for (int i = 0; i < 13; i++)
+		{
+			//umin,vmin,umax,vmax
+			vjoy_pos[i][4]=(u+1)/OSD_TEX_W;
+			vjoy_pos[i][5]=(v+1)/OSD_TEX_H;
+
+			vjoy_pos[i][6]=((u+vjoy_sz[0][i]-1))/OSD_TEX_W;
+			vjoy_pos[i][7]=((v+vjoy_sz[1][i]-1))/OSD_TEX_H;
+
+			u+=vjoy_sz[0][i];
+			if (u>=OSD_TEX_W)
+			{
+				u-=OSD_TEX_W;
+				v+=vjoy_sz[1][i];
+			}
+			//v+=vjoy_pos[i][3];
+		}
+	#endif
+
+	glBindTexture(GL_TEXTURE_2D, osd_texture);
+	glUseProgram(gl.OSD_SHADER.program);
+
+	/*
+	//reset rendering scale
+
+	float dc_width=640;
+	float dc_height=480;
+
+	float dc2s_scale_h=screen_height/480.0f;
+	float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
+
+	//-1 -> too much to left
+	ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h);
+	ShaderUniforms.scale_coefs[1]=-2/dc_height;
+	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
+	ShaderUniforms.scale_coefs[3]=-1;
+
+	glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
+	*/
+
+	glEnable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glDepthMask(false);
+	glDepthFunc(GL_ALWAYS);
+
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_SCISSOR_TEST);
+
+	int dfa = osd_count/4;
+
+	for (int i = 0; i < dfa; i++)
+	{
+		glDrawArrays(GL_TRIANGLE_STRIP, osd_base + i*4, 4);
+	}
 }
 
 u32 glesrend::GetTexture(TSP tsp, TCW tcw)

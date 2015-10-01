@@ -1,28 +1,3 @@
-#include <math.h>
-#include "gles.h"
-#include "glshaders.h"
-#include "rend/TexCache.h"
-#include "cfg/cfg.h"
-
-#ifdef TARGET_PANDORA
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <linux/fb.h>
-
-#ifndef FBIO_WAITFORVSYNC
-	#define FBIO_WAITFORVSYNC _IOW('F', 0x20, __u32)
-#endif
-int fbdev = -1;
-#endif
-
-#ifndef GLES
-#if HOST_OS != OS_DARWIN
-#include <GL3/gl3w.c>
-#pragma comment(lib,"Opengl32.lib")
-#endif
-#endif
-
 /*
 GL|ES 2
 Slower, smaller subset of gl2
@@ -55,18 +30,126 @@ Tile clip
 
 */
 
+#include <math.h>
+#include "cfg/cfg.h"
 #include "oslib/oslib.h"
 #include "rend/rend.h"
+#include "rend/TexCache.h"
 #include "hw/pvr/Renderer_if.h"
+#include "deps/libpng/png.h"
+#include "gles.h"
+#include "glshaders.h"
 
-void GenSorted();
+#ifdef TARGET_PANDORA
+	#include <unistd.h>
+	#include <fcntl.h>
+	#include <sys/ioctl.h>
+	#include <linux/fb.h>
+#endif
 
-float fb_scale_x,fb_scale_y;
+#if !defined(GLES) && HOST_OS != OS_DARWIN
+	#include <GL3/gl3w.c>
+	#pragma comment(lib,"Opengl32.lib")
+#endif
+
+#define OSD_TEX_W 512
+#define OSD_TEX_H 256
+
+#define key_CONT_C           (1 << 0)
+#define key_CONT_B           (1 << 1)
+#define key_CONT_A           (1 << 2)
+#define key_CONT_START       (1 << 3)
+#define key_CONT_DPAD_UP     (1 << 4)
+#define key_CONT_DPAD_DOWN   (1 << 5)
+#define key_CONT_DPAD_LEFT   (1 << 6)
+#define key_CONT_DPAD_RIGHT  (1 << 7)
+#define key_CONT_Z           (1 << 8)
+#define key_CONT_Y           (1 << 9)
+#define key_CONT_X           (1 << 10)
+#define key_CONT_D           (1 << 11)
+#define key_CONT_DPAD2_UP    (1 << 12)
+#define key_CONT_DPAD2_DOWN  (1 << 13)
+#define key_CONT_DPAD2_LEFT  (1 << 14)
+#define key_CONT_DPAD2_RIGHT (1 << 15)
 
 gl_ctx gl;
 
+float fb_scale_x;
+float fb_scale_y;
 int screen_width;
 int screen_height;
+
+GLuint osd_tex;
+
+extern u16 kcode[4];
+extern u8 rt[4];
+extern u8 lt[4];
+
+u32 osd_base;
+u32 osd_count;
+
+#if defined(_ANDROID)
+	extern float vjoy_pos[14][8];
+#else
+	float vjoy_pos[14][8]=
+	{
+		{24+0,24+64,64,64},     //LEFT
+		{24+64,24+0,64,64},     //UP
+		{24+128,24+64,64,64},   //RIGHT
+		{24+64,24+128,64,64},   //DOWN
+
+		{440+0,280+64,64,64},   //X
+		{440+64,280+0,64,64},   //Y
+		{440+128,280+64,64,64}, //B
+		{440+64,280+128,64,64}, //A
+
+		{320-32,360+32,64,64},  //Start
+
+		{440,200,90,64},        //RT
+		{542,200,90,64},        //LT
+
+		{-24,128+224,128,128},  //ANALOG_RING
+		{96,320,64,64},         //ANALOG_POINT
+		{1}
+	};
+#endif // !_ANDROID
+
+float vjoy_sz[2][14] = {
+	{ 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64 },
+	{ 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64 },
+};
+
+#ifdef TARGET_PANDORA
+	#ifndef FBIO_WAITFORVSYNC
+		#define FBIO_WAITFORVSYNC _IOW('F', 0x20, __u32)
+	#endif
+
+	int fbdev = -1;
+	char OSD_Info[128];
+	int  OSD_Delay = 0;
+	char OSD_Counters[256];
+	int  OSD_Counter = 0;
+	GLuint osd_font;
+#endif
+
+#if !defined(_ANDROID) && !defined(TARGET_NACL32) && HOST_OS==OS_LINUX
+	#define SET_AFNT 1
+#endif
+
+FILE* pngfile;
+
+void GenSorted();
+
+bool gl_init(void* wind, void* disp);
+
+//swap buffers
+void gl_swap();
+//destroy the gles context and free resources
+void gl_term();
+
+GLuint gl_CompileShader(const char* shader,GLuint type);
+
+bool gl_create_resources();
 
 #if (HOST_OS != OS_DARWIN) && !defined(TARGET_NACL32)
 #ifdef GLES
@@ -557,11 +640,6 @@ bool CompilePipelineShader(	PipelineShader* s)
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
-GLuint osd_tex;
-#ifdef TARGET_PANDORA
-GLuint osd_font;
-#endif
-
 bool gl_create_resources()
 {
 
@@ -652,17 +730,6 @@ bool gl_create_resources()
 	return true;
 }
 
-bool gl_init(void* wind, void* disp);
-
-//swap buffers
-void gl_swap();
-//destroy the gles context and free resources
-void gl_term();
-
-GLuint gl_CompileShader(const char* shader,GLuint type);
-
-bool gl_create_resources();
-
 //setup
 
 float fog_coefs[]={0,0};
@@ -724,64 +791,6 @@ void tryfit(float* x,float* y)
 	fog_coefs[1]=b;
 	//printf("%f\n",B*log(maxdev)/log(2.0)+A);
 }
-
-
-
-extern u16 kcode[4];
-extern u8 rt[4],lt[4];
-
-#define key_CONT_C           (1 << 0)
-#define key_CONT_B           (1 << 1)
-#define key_CONT_A           (1 << 2)
-#define key_CONT_START       (1 << 3)
-#define key_CONT_DPAD_UP     (1 << 4)
-#define key_CONT_DPAD_DOWN   (1 << 5)
-#define key_CONT_DPAD_LEFT   (1 << 6)
-#define key_CONT_DPAD_RIGHT  (1 << 7)
-#define key_CONT_Z           (1 << 8)
-#define key_CONT_Y           (1 << 9)
-#define key_CONT_X           (1 << 10)
-#define key_CONT_D           (1 << 11)
-#define key_CONT_DPAD2_UP    (1 << 12)
-#define key_CONT_DPAD2_DOWN  (1 << 13)
-#define key_CONT_DPAD2_LEFT  (1 << 14)
-#define key_CONT_DPAD2_RIGHT (1 << 15)
-
-u32 osd_base;
-u32 osd_count;
-
-
-#if defined(_ANDROID)
-extern float vjoy_pos[14][8];
-#else
-
-float vjoy_pos[14][8]=
-{
-	{24+0,24+64,64,64},     //LEFT
-	{24+64,24+0,64,64},     //UP
-	{24+128,24+64,64,64},   //RIGHT
-	{24+64,24+128,64,64},   //DOWN
-
-	{440+0,280+64,64,64},   //X
-	{440+64,280+0,64,64},   //Y
-	{440+128,280+64,64,64}, //B
-	{440+64,280+128,64,64}, //A
-
-	{320-32,360+32,64,64},  //Start
-
-	{440,200,90,64},        //RT
-	{542,200,90,64},        //LT
-
-	{-24,128+224,128,128},  //ANALOG_RING
-	{96,320,64,64},         //ANALOG_POINT
-	{1}
-};
-#endif // !_ANDROID
-
-float vjoy_sz[2][14] = {
-	{ 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64 },
-	{ 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64 },
-};
 
 static void DrawButton(float* xy, u32 state)
 {
@@ -923,13 +932,6 @@ static void DrawRightedText(float yy, float scale, int transparency, const char*
 }
 #endif
 
-#ifdef TARGET_PANDORA
-char OSD_Info[128];
-int  OSD_Delay=0;
-char OSD_Counters[256];
-int  OSD_Counter=0;
-#endif
-
 static void OSD_HOOK()
 {
 	osd_base=pvrrc.verts.used();
@@ -965,22 +967,6 @@ static void OSD_HOOK()
 	  }
 	#endif
 }
-
-extern GLuint osd_tex;
-#ifdef TARGET_PANDORA
-extern GLuint osd_font;
-#endif
-
-#define OSD_TEX_W 512
-#define OSD_TEX_H 256
-
-#if !defined(_ANDROID) && !defined(TARGET_NACL32)
-#if HOST_OS==OS_LINUX
-#define SET_AFNT 1
-#endif
-#endif
-
-extern u16 kcode[4];
 
 /*
 bool rend_single_frame()
@@ -1559,12 +1545,6 @@ u32 glesrend::GetTexture(TSP tsp, TCW tcw)
 	return gl_GetTexture(tsp, tcw);
 }
 
-
-
-#include "deps/libpng/png.h"
-
-FILE* pngfile;
-
 void png_cstd_read(png_structp png_ptr, png_bytep data, png_size_t length)
 {
 	fread(data,1, length,pngfile);
@@ -1710,6 +1690,5 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 
 	return texture;
 }
-
 
 Renderer* rend_GLES2() { return new glesrend(); }

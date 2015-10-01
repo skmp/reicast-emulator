@@ -1854,21 +1854,59 @@ void rend_set_fb_scale(float x,float y)
 
 struct glesrend : Renderer
 {
-	bool Init() { return gles_init(); }
-	void Resize(int w, int h) { screen_width=w; screen_height=h; }
-	void Term() { }
+	bool Init();
+	void Resize(int width, int height);
+	void Term();
 
-	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
-	bool Render() { return RenderFrame(); }
+	bool Process(TA_context* ctx);
+	bool Render();
 
-	void Present() { gl_swap(); glViewport(0, 0, screen_width, screen_height); }
+	void Present();
 
-	void DrawOSD() { OSD_DRAW(); }
+	void DrawOSD();
 
-	virtual u32 GetTexture(TSP tsp, TCW tcw) {
-		return gl_GetTexture(tsp, tcw);
-	}
+	virtual u32 GetTexture(TSP tsp, TCW tcw);
 };
+
+bool Init()
+{
+	return gles_init();
+}
+
+void glesrend::Resize(int width, int height)
+{
+	screen_width = width;
+	screen_height = height;
+}
+
+void glesrend::Term() { };
+
+bool glesrend::Process(TA_context* ctx)
+{
+	return ProcessFrame(ctx);
+}
+
+bool glesrend::Render()
+{
+	return RenderFrame();
+}
+
+void glesrend::Present()
+{
+	gl_swap();
+	glViewport(0, 0, screen_width, screen_height);
+}
+
+void glesrend::DrawOSD()
+{
+	OSD_DRAW();
+}
+
+u32 glesrend::GetTexture(TSP tsp, TCW tcw)
+{
+	return gl_GetTexture(tsp, tcw);
+}
+
 
 
 #include "deps/libpng/png.h"

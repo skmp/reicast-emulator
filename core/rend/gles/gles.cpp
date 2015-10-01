@@ -1107,12 +1107,6 @@ static void DrawButton(float* xy, u32 state)
 	osd_count+=4;
 }
 
-static void ClearBG()
-{
-
-}
-
-
 void DrawButton2(float* xy, bool state) { DrawButton(xy,state?0:255); }
 #ifdef TARGET_PANDORA
 static void DrawCenteredText(float yy, float scale, int transparency, const char* text)

@@ -206,6 +206,27 @@ shil_opc(writem)
 shil_recimp()
 shil_opc_end()
 
+//mem io v2
+
+//vref = vrans<mode|size>(ptr, nil)
+//vref = vrans<mode|size>(base, offset)
+shil_opc(vtrans)
+shil_recimp()
+shil_opc_end()
+
+//dst = readpvr<size>(vref)
+//dst = readpvr<size>(vref, nil, offs) w/ offs < 1024
+shil_opc(readvptr)
+shil_recimp()
+shil_opc_end()
+
+//writevptr<size>(vref, src)
+//writevptr<size>(vref, src, offs) w/ offs < 1024
+shil_opc(writevptr)
+shil_recimp()
+shil_opc_end()
+
+
 //Canonical impl. opcodes !
 shil_opc(sync_sr)
 shil_canonical

@@ -521,20 +521,39 @@ void constprop(RuntimeBlockInfo* blk)
 			rv[op->rd._reg]=op->rs1._imm;
 		}
 
-		//NOT WORKING
-		//WE NEED PROPER PAGELOCKS
-		if (op->op==shop_readm && op->rs1.is_imm() && op->rd.is_r32i() && op->rd._reg<16 && op->flags==0x4 && op->rs3.is_null())
-		{
-			u32 baddr=blk->addr&0x0FFFFFFF;
-
-			if (/*baddr==0xC158400 &&*/ blk->addr/PAGE_SIZE == op->rs1._imm/PAGE_SIZE)
+		if (0) {
+			//a more minimalistic but still broken approach for this.
+			//this is clearly a hack
+			if (op->op == shop_readm && op->rs1.is_imm() && IsOnRam(op->rs1.imm_value()))
 			{
-				isi[op->rd._reg]=true;
-				rv[op->rd._reg]= ReadMem32(op->rs1._imm);
-				printf("IMM MOVE: %08X -> %08X\n",op->rs1._imm,rv[op->rd._reg]);
+				u32 round = op->rs1.imm_value() & ~PAGE_MASK;
+				bool optmize_away = round == (blk->addr & ~PAGE_MASK) && (blk->addr & 0x007FFFFF) > 0x200000;
 
-				op->op=shop_mov32;
-				op->rs1._imm=rv[op->rd._reg];
+				if (optmize_away && op->flags == 4) {
+					u32 data = _vmem_ReadMem32(op->rs1.imm_value());
+					op->op = shop_mov32;
+					op->rs1.type = FMT_IMM;
+					op->rs1._imm = data;
+				}
+			}
+		}
+
+		if (0) {
+			//NOT WORKING
+			//WE NEED PROPER PAGELOCKS
+			if (op->op == shop_readm && op->rs1.is_imm() && op->rd.is_r32i() && op->rd._reg<16 && op->flags == 0x4 && op->rs3.is_null())
+			{
+				u32 baddr = blk->addr & 0x0FFFFFFF;
+
+				if (/*baddr==0xC158400 &&*/ blk->addr / PAGE_SIZE == op->rs1._imm / PAGE_SIZE)
+				{
+					isi[op->rd._reg] = true;
+					rv[op->rd._reg] = ReadMem32(op->rs1._imm);
+					printf("IMM MOVE: %08X -> %08X\n", op->rs1._imm, rv[op->rd._reg]);
+
+					op->op = shop_mov32;
+					op->rs1._imm = rv[op->rd._reg];
+				}
 			}
 		}
 	}
@@ -925,7 +944,7 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 	*/
 	if (settings.dynarec.unstable_opt)
 		sq_pref(blk);
-	//constprop(blk); // crashes on ip
+	constprop(blk); // maybe it works w/o the readm parts?
 #if HOST_CPU==CPU_X86
 //	rdgrp(blk);
 //	wtgrp(blk);

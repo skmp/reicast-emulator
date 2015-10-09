@@ -1,0 +1,4 @@
+{
+   global: libreicast_*;
+   local: *;
+};

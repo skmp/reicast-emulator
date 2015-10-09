@@ -83,7 +83,7 @@ ifneq (,$(findstring x86,$(platform)))
 else ifneq (,$(findstring x64,$(platform)))
     X64_REC := 1
     NOT_ARM := 1
-    USE_X11 := 1
+    USE_SDL2 := 1
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fsingle-precision-constant
     CXXFLAGS += -fexceptions
 
@@ -280,29 +280,38 @@ else
     EXECUTABLE_NAME=reicast
 endif
 
+LIBRARY=libreicast.so
+LIBRARY_CFLAGS=-fPIC
+LIBRARY_LDFLAGS=-shared 
+#-Wl,--version-script=../../core/linux-dist/libreicast.T 
+#-Wl,--no-undefined
+
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)
 OBJECTS:=$(OBJECTS:.c=.build_obj)
 OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,obj-$(DC_PLATFORM)-$(platform)/%,$(OBJECTS))
 
-all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
+all: $(CPPFILES) $(LIBARY) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 ifneq (,$(findstring gcwz,$(platform)))
 	mksquashfs $(EXECUTABLE_STRIPPED) $(GCWZ_PKG_FILES) $(GCWZ_PKG) -all-root
 endif
+
+$(LIBRARY): $(OBJECTS)
+	$(CXX) $(LIBRARY_CFLAGS) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(LIBRARY_LDFLAGS) $(OBJECTS) $(LIBS) -o $@
 	
-$(EXECUTABLE): $(OBJECTS)
-	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
+$(EXECUTABLE): $(LIBRARY)
+	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) -L. -lreicast ../../core/linux-dist/main.cpp -o $@
 
 $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
 	cp $< $@ && $(STRIP) $@
 
 obj-$(DC_PLATFORM)-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
 	mkdir -p $(dir $@)
-	$(CXX) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $(LIBRARY_CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
 	
 obj-$(DC_PLATFORM)-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
 	mkdir -p $(dir $@)
-	$(CC) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $< -o $@
+	$(CC) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $(LIBRARY_CFLAGS) $< -o $@
 
 obj-$(DC_PLATFORM)-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 	mkdir -p $(dir $@)	

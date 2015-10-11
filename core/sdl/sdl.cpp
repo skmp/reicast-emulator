@@ -428,6 +428,42 @@ void sdl_window_set_text(const char* text)
 
 int ndcid = 0;
 
+/* Workaround for using OpenGL with an SDL_Window created from HWND
+ *
+ * As of SDL 2.0.3, there seems to be no way to create an OpenGL-capable
+ * SDL window from a HWND/XWindowID. The SDL_WINDOW_OPENGL flags is not set
+ * when using SDL_CreateWindowFrom and the flags member is private and cannot
+ * be changed.
+ *
+ * To circumvent that, we define our own SDL_Window struct where the flags
+ * member is not private and add the SDL_WINDOW_OPENGL flags manually
+ * afterwards.
+ *
+ * Credit goes to user "perilsensitive" from the libsdl forum for this
+ * great idea: https://forums.libsdl.org/viewtopic.php?p=44620#44620
+ */
+
+struct SDL_Window
+{
+	const void *magic;
+	Uint32 id;
+	char *title;
+	SDL_Surface *icon;
+	int x, y;
+	int w, h;
+	int min_w, min_h;
+	int max_w, max_h;
+	Uint32 flags;
+};
+typedef struct SDL_Window SDL_Window;
+
+static void* sdl_hwnd = NULL;
+
+void sdl_set_hwnd(void* hwnd)
+{
+	sdl_hwnd = hwnd;
+}
+
 void sdl_window_create()
 {
 	if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
@@ -461,7 +497,19 @@ void sdl_window_create()
 		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-		window = SDL_CreateWindow("Reicast Emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,	window_width, window_height, flags);
+		if (sdl_hwnd != NULL)
+		{
+			printf("SDL: Trying to create a Window from %d\n", sdl_hwnd);
+			window = SDL_CreateWindowFrom((void*)sdl_hwnd);
+			window->flags |= SDL_WINDOW_OPENGL;
+			SDL_GL_LoadLibrary(NULL);
+			printf("SDL: Window from %d created!\n", sdl_hwnd);
+		}
+		else
+		{
+			window = SDL_CreateWindow("Reicast Emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,	window_width, window_height, flags);
+		}
+
 		if (!window)
 		{
 			die("error creating SDL window");

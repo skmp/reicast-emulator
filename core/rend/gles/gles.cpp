@@ -3,18 +3,6 @@
 #include "rend/TexCache.h"
 #include "cfg/cfg.h"
 
-#ifdef TARGET_PANDORA
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <linux/fb.h>
-
-#ifndef FBIO_WAITFORVSYNC
-	#define FBIO_WAITFORVSYNC _IOW('F', 0x20, __u32)
-#endif
-int fbdev = -1;
-#endif
-
 #ifndef GLES
 #if HOST_OS != OS_DARWIN
 #include <GL3/gl3w.c>
@@ -437,13 +425,6 @@ int screen_height;
 	//swap buffers
 	void gl_swap()
 	{
-		#ifdef TARGET_PANDORA0
-		if (fbdev >= 0)
-		{
-			int arg = 0;
-			ioctl(fbdev,FBIO_WAITFORVSYNC,&arg);
-		}
-		#endif
 		eglSwapBuffers(gl.setup.display, gl.setup.surface);
 	}
 
@@ -452,22 +433,6 @@ int screen_height;
 	{
 	#if HOST_OS==OS_WINDOWS
 		ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
-	#endif
-	#ifdef TARGET_PANDORA
-		eglMakeCurrent( gl.setup.display, NULL, NULL, EGL_NO_CONTEXT );
-		if (gl.setup.context)
-			eglDestroyContext(gl.setup.display, gl.setup.context);
-		if (gl.setup.surface)
-			eglDestroySurface(gl.setup.display, gl.setup.surface);
-		if (gl.setup.display)
-			eglTerminate(gl.setup.display);
-		if (fbdev>=0)
-			close( fbdev );
-
-		fbdev=-1;
-		gl.setup.context=0;
-		gl.setup.surface=0;
-		gl.setup.display=0;
 	#endif
 	}
 #else
@@ -844,9 +809,6 @@ bool CompilePipelineShader(	PipelineShader* s)
 }
 
 GLuint osd_tex;
-#ifdef TARGET_PANDORA
-GLuint osd_font;
-#endif
 
 bool gl_create_resources()
 {
@@ -931,9 +893,6 @@ bool gl_create_resources()
 
 	int w, h;
 	osd_tex=loadPNG(get_readonly_data_path("/data/buttons.png"),w,h);
-#ifdef TARGET_PANDORA
-	osd_font=loadPNG(get_readonly_data_path("/font2.png"),w,h);
-#endif
 
 	return true;
 }
@@ -963,11 +922,7 @@ bool gles_init()
 		return false;
 
 #if defined(GLES) && HOST_OS != OS_DARWIN && !defined(TARGET_NACL32)
-	#ifdef TARGET_PANDORA
-	fbdev=open("/dev/fb0", O_RDONLY);
-	#else
 	eglSwapInterval(gl.setup.display,1);
-	#endif
 #endif
 
 	//clean up all buffers ...
@@ -1146,120 +1101,13 @@ static void ClearBG()
 
 
 void DrawButton2(float* xy, bool state) { DrawButton(xy,state?0:255); }
-#ifdef TARGET_PANDORA
-static void DrawCenteredText(float yy, float scale, int transparency, const char* text)
-// Draw a centered text. Font is loaded from font2.png file. Each char is 16*16 size, so scale it down so it's not too big
-// Transparency 255=opaque, 0=not visible
-{
-  Vertex vtx;
 
-  vtx.z=1;
-
-  float w=float(strlen(text)*14)*scale;
-
-  float x=320-w/2.0f;
-  float y=yy;
-  float h=16.0f*scale;
-  w=14.0f*scale;
-  float step=32.0f/512.0f;
-  float step2=4.0f/512.0f;
-
-  if (transparency<0) transparency=0;
-  if (transparency>255) transparency=255;
-
-  for (int i=0; i<strlen(text); i++) {
-    int c=text[i];
-    float u=float(c%16);
-    float v=float(c/16);
-
-    vtx.col[0]=vtx.col[1]=vtx.col[2]=255;
-    vtx.col[3]=transparency;
-
-    vtx.x=x; vtx.y=y;
-    vtx.u=u*step+step2; vtx.v=v*step+step2;
-    *pvrrc.verts.Append()=vtx;
-
-    vtx.x=x+w; vtx.y=y;
-    vtx.u=u*step+step-step2; vtx.v=v*step+step2;
-    *pvrrc.verts.Append()=vtx;
-
-    vtx.x=x; vtx.y=y+h;
-    vtx.u=u*step+step2; vtx.v=v*step+step-step2;
-    *pvrrc.verts.Append()=vtx;
-
-    vtx.x=x+w; vtx.y=y+h;
-    vtx.u=u*step+step-step2; vtx.v=v*step+step-step2;
-    *pvrrc.verts.Append()=vtx;
-
-    x+=w;
-
-    osd_count+=4;
-  }
-}
-static void DrawRightedText(float yy, float scale, int transparency, const char* text)
-// Draw a text right justified. Font is loaded from font2.png file. Each char is 16*16 size, so scale it down so it's not too big
-// Transparency 255=opaque, 0=not visible
-{
-  Vertex vtx;
-
-  vtx.z=1;
-
-  float w=float(strlen(text)*14)*scale;
-
-  float x=640-w;
-  float y=yy;
-  float h=16.0f*scale;
-  w=14.0f*scale;
-  float step=32.0f/512.0f;
-  float step2=4.0f/512.0f;
-
-  if (transparency<0) transparency=0;
-  if (transparency>255) transparency=255;
-
-  for (int i=0; i<strlen(text); i++) {
-    int c=text[i];
-    float u=float(c%16);
-    float v=float(c/16);
-
-    vtx.col[0]=vtx.col[1]=vtx.col[2]=255;
-    vtx.col[3]=transparency;
-
-    vtx.x=x; vtx.y=y;
-    vtx.u=u*step+step2; vtx.v=v*step+step2;
-    *pvrrc.verts.Append()=vtx;
-
-    vtx.x=x+w; vtx.y=y;
-    vtx.u=u*step+step-step2; vtx.v=v*step+step2;
-    *pvrrc.verts.Append()=vtx;
-
-    vtx.x=x; vtx.y=y+h;
-    vtx.u=u*step+step2; vtx.v=v*step+step-step2;
-    *pvrrc.verts.Append()=vtx;
-
-    vtx.x=x+w; vtx.y=y+h;
-    vtx.u=u*step+step-step2; vtx.v=v*step+step-step2;
-    *pvrrc.verts.Append()=vtx;
-
-    x+=w;
-
-    osd_count+=4;
-  }
-}
-#endif
-
-#ifdef TARGET_PANDORA
-char OSD_Info[128];
-int  OSD_Delay=0;
-char OSD_Counters[256];
-int  OSD_Counter=0;
-#endif
 
 static void OSD_HOOK()
 {
 	osd_base=pvrrc.verts.used();
 	osd_count=0;
 
-	#ifndef TARGET_PANDORA
 	DrawButton2(vjoy_pos[0],kcode[0]&key_CONT_DPAD_LEFT);
 	DrawButton2(vjoy_pos[1],kcode[0]&key_CONT_DPAD_UP);
 	DrawButton2(vjoy_pos[2],kcode[0]&key_CONT_DPAD_RIGHT);
@@ -1278,29 +1126,15 @@ static void OSD_HOOK()
 
 	DrawButton2(vjoy_pos[11],1);
 	DrawButton2(vjoy_pos[12],0);
-	#endif
-	#ifdef TARGET_PANDORA
-	  if (OSD_Delay) {
-		DrawCenteredText(400, 1.0f, (OSD_Delay<255)?OSD_Delay:255, OSD_Info);
-		OSD_Delay--;    //*TODO* Delay should be in ms, not in ticks...
-	  }
-	  if (OSD_Counter) {
-		DrawRightedText(20, 1.0f, 255, OSD_Counters);
-	  }
-	#endif
 }
 
 extern GLuint osd_tex;
-#ifdef TARGET_PANDORA
-extern GLuint osd_font;
-#endif
 
 #define OSD_TEX_W 512
 #define OSD_TEX_H 256
 
 void OSD_DRAW()
 {
-	#ifndef TARGET_PANDORA
 	if (osd_tex)
 	{
 		float u=0;
@@ -1361,54 +1195,6 @@ void OSD_DRAW()
 		for (int i=0;i<dfa;i++)
 			glDrawArrays(GL_TRIANGLE_STRIP,osd_base+i*4,4);
 	}
-#endif
-#ifdef TARGET_PANDORA
-  if (osd_font)
-  {
-    float u=0;
-    float v=0;
-
-    verify(glIsProgram(gl.OSD_SHADER.program));
-
-	float dc_width=640;
-	float dc_height=480;
-
-	float dc2s_scale_h=screen_height/480.0f;
-	float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
-
-
-    glBindTexture(GL_TEXTURE_2D,osd_font);
-    glUseProgram(gl.OSD_SHADER.program);
-
-  /*
-    //-1 -> too much to left
-    ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h);
-    ShaderUniforms.scale_coefs[1]=-2/dc_height;
-    ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
-    ShaderUniforms.scale_coefs[3]=-1;
-
-    glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
-*/
-
-    glEnable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-
-    glDepthMask(false);
-    glDepthFunc(GL_ALWAYS);
-
-
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_SCISSOR_TEST);
-
-
-    int dfa=osd_count/4;
-
-   	for (int i=0;i<dfa;i++)
-		glDrawArrays(GL_TRIANGLE_STRIP,osd_base+i*4,4);
- }
-#endif
 }
 
 bool ProcessFrame(TA_context* ctx)
@@ -1800,10 +1586,6 @@ bool RenderFrame()
 	scale_x /= scissoring_scale_x;
 
 	DrawStrips();
-
-	#if HOST_OS==OS_WINDOWS
-		//Sleep(40); //to test MT stability
-	#endif
 
 	eglCheck();
 

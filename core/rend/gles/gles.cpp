@@ -707,8 +707,10 @@ bool gl_create_resources()
 	}
 	#endif
 
+#if 0
 	int w, h;
 	osd_tex=loadPNG(get_readonly_data_path("/data/buttons.png"),w,h);
+#endif
 
 	return true;
 }
@@ -923,97 +925,10 @@ static void OSD_HOOK()
 {
 	osd_base=pvrrc.verts.used();
 	osd_count=0;
-
-#if 0
-	DrawButton2(vjoy_pos[0],kcode[0]&key_CONT_DPAD_LEFT);
-	DrawButton2(vjoy_pos[1],kcode[0]&key_CONT_DPAD_UP);
-	DrawButton2(vjoy_pos[2],kcode[0]&key_CONT_DPAD_RIGHT);
-	DrawButton2(vjoy_pos[3],kcode[0]&key_CONT_DPAD_DOWN);
-
-	DrawButton2(vjoy_pos[4],kcode[0]&key_CONT_X);
-	DrawButton2(vjoy_pos[5],kcode[0]&key_CONT_Y);
-	DrawButton2(vjoy_pos[6],kcode[0]&key_CONT_B);
-	DrawButton2(vjoy_pos[7],kcode[0]&key_CONT_A);
-
-	DrawButton2(vjoy_pos[8],kcode[0]&key_CONT_START);
-
-	DrawButton(vjoy_pos[9],lt[0]);
-
-	DrawButton(vjoy_pos[10],rt[0]);
-
-	DrawButton2(vjoy_pos[11],1);
-	DrawButton2(vjoy_pos[12],0);
-#endif
 }
-
-extern GLuint osd_tex;
 
 #define OSD_TEX_W 512
 #define OSD_TEX_H 256
-
-void OSD_DRAW()
-{
-	if (osd_tex)
-	{
-		float u=0;
-		float v=0;
-
-		for (int i=0;i<13;i++)
-		{
-			//umin,vmin,umax,vmax
-			vjoy_pos[i][4]=(u+1)/OSD_TEX_W;
-			vjoy_pos[i][5]=(v+1)/OSD_TEX_H;
-
-			vjoy_pos[i][6]=((u+vjoy_sz[0][i]-1))/OSD_TEX_W;
-			vjoy_pos[i][7]=((v+vjoy_sz[1][i]-1))/OSD_TEX_H;
-
-			u+=vjoy_sz[0][i];
-			if (u>=OSD_TEX_W)
-			{
-				u-=OSD_TEX_W;
-				v+=vjoy_sz[1][i];
-			}
-			//v+=vjoy_pos[i][3];
-		}
-
-		verify(glIsProgram(gl.OSD_SHADER.program));
-
-		glBindTexture(GL_TEXTURE_2D,osd_tex);
-		glUseProgram(gl.OSD_SHADER.program);
-
-		//reset rendering scale
-/*
-		float dc_width=640;
-		float dc_height=480;
-
-		float dc2s_scale_h=screen_height/480.0f;
-		float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
-
-		//-1 -> too much to left
-		ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h);
-		ShaderUniforms.scale_coefs[1]=-2/dc_height;
-		ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
-		ShaderUniforms.scale_coefs[3]=-1;
-
-		glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
-*/
-
-		glEnable(GL_BLEND);
-		glDisable(GL_DEPTH_TEST);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		glDepthMask(false);
-		glDepthFunc(GL_ALWAYS);
-
-		glDisable(GL_CULL_FACE);
-		glDisable(GL_SCISSOR_TEST);
-
-		int dfa=osd_count/4;
-
-		for (int i=0;i<dfa;i++)
-			glDrawArrays(GL_TRIANGLE_STRIP,osd_base+i*4,4);
-	}
-}
 
 bool ProcessFrame(TA_context* ctx)
 {
@@ -1463,7 +1378,7 @@ struct glesrend : Renderer
 
 	void Present() { gl_swap(); glViewport(0, 0, screen_width, screen_height); }
 
-	void DrawOSD() { OSD_DRAW(); }
+	void DrawOSD() { }
 
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
 		return gl_GetTexture(tsp, tcw);

@@ -17,6 +17,7 @@
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 #include "oslib/audiobackend_android.h"
+#include "sdl/sdl.h"
 
 #include "util.h"
 
@@ -231,6 +232,11 @@ void UpdateInputState(u32 Port)
   // @@@ Nothing here yet
 }
 
+void os_CreateWindow()
+{
+	sdl_window_create();
+}
+
 void *libPvr_GetRenderTarget() 
 {
   // No X11 window in Android 
@@ -434,7 +440,7 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env,jobj
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframe(JNIEnv *env,jobject obj)
 {
-	while(!rend_single_frame()) ;
+	/*while(!rend_single_frame()) ;*/
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_kcode(JNIEnv * env, jobject obj, jintArray k_code, jintArray l_t, jintArray r_t, jintArray jx, jintArray jy)
@@ -468,10 +474,10 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinit(JNIEnv * env
 
   //gles_term();
 
-  egl_stealcntx();
+  //egl_stealcntx();
 
-  if (!gles_init())
-	die("OPENGL FAILED");
+  /*if (!gles_init())
+	die("OPENGL FAILED");*/
 
   install_prof_handler(1);
 }

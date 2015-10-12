@@ -392,7 +392,7 @@ bool rend_init()
 
 #endif
 
-#if !defined(_ANDROID) && HOST_OS != OS_DARWIN
+#if HOST_OS != OS_DARWIN
   #if !defined(TARGET_NO_THREADS)
     rthd.Start();
   #else

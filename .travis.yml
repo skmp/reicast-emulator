@@ -26,6 +26,10 @@ install:
 - export PATH=${PATH}:$NDK
 - mkdir -p ~/.android
 - mv debug.keystore ~/.android/debug.keystore
+- wget https://www.libsdl.org/release/SDL2-2.0.3.tar.gz
+- tar xzvf SDL2-2.0.3.tar.gz
+- ln -s $(pwd)/SDL2-2.0.3 shell/android/SDL
+- export NDK_MODULE_PATH="shell/android/SDL"
 before_script: 
 script:
 - cd shell/android

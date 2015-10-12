@@ -22,6 +22,7 @@ include $(CLEAR_VARS)
 FOR_ANDROID := 1
 WEBUI := 1
 USE_GLES := 1
+USE_SDL := 1
 
 ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
   NOT_ARM := 1
@@ -71,6 +72,15 @@ LOCAL_LDLIBS	:= -llog -lGLESv2 -lEGL -lz
 #-Wl,-Map,./res/raw/syms.mp3
 LOCAL_ARM_MODE	:= arm
 
+ifdef USE_SDL
+  LOCAL_CFLAGS += -D USE_SDL
+  LOCAL_CPPFLAGS += -D USE_SDL
+  LOCAL_CXXFLAGS += -D USE_SDL
+endif
+
+SDL_PATH := $(LOCAL_PATH)/SDL
+LOCAL_C_INCLUDES := $(SDL_PATH)/include
+LOCAL_SHARED_LIBRARIES := SDL2
 
 ifeq ($(TARGET_ARCH),mips)
   LOCAL_LDFLAGS += -Wl,--gc-sections
@@ -107,4 +117,5 @@ LOCAL_STATIC_LIBRARIES := android_native_app_glue
 
 include $(BUILD_SHARED_LIBRARY)
 
+$(call import-module,SDL)
 $(call import-module,android/native_app_glue)

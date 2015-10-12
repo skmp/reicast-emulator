@@ -153,9 +153,7 @@ int dc_init(int argc,wchar* argv[])
 		return -4;
 	}
 	LoadSettings();
-#ifndef _ANDROID
 	os_CreateWindow();
-#endif
 
 	int rv= 0;
 

@@ -15,16 +15,8 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include <unistd.h>
 
-#if defined(TARGET_EMSCRIPTEN)
-	#include <emscripten.h>
-#endif
-
 #if defined(SUPPORT_X11)
 	#include "linux-dist/x11.h"
-#endif
-
-#if defined(USE_SDL)
-	#include "sdl/sdl.h"
 #endif
 
 #if defined(USES_HOMEDIR)
@@ -37,12 +29,6 @@
 
 #if defined(USE_JOYSTICK)
 	#include "linux-dist/joystick.h"
-#endif
-
-#ifdef TARGET_PANDORA
-	#include <signal.h>
-	#include <execinfo.h>
-	#include <sys/soundcard.h>
 #endif
 
 #if FEAT_HAS_NIXPROF
@@ -166,28 +152,16 @@ void SetupInput()
 	#if defined(SUPPORT_X11)
 		input_x11_init();
 	#endif
-
-	#if defined(USE_SDL)
-		input_sdl_init();
-	#endif
 }
 
 void UpdateInputState(u32 port)
 {
-	#if defined(TARGET_EMSCRIPTEN)
-		return;
-	#endif
-
 	#if defined(USE_JOYSTICK)
 		input_joystick_handle(joystick_fd, port);
 	#endif
 
 	#if defined(USE_EVDEV)
 		input_evdev_handle(&evdev_controllers[port], port);
-	#endif
-
-	#if defined(USE_SDL)
-		input_sdl_handle(port);
 	#endif
 }
 
@@ -204,9 +178,6 @@ void os_SetWindowText(const char * text)
 	#if defined(SUPPORT_X11)
 		x11_window_set_text(text);
 	#endif
-	#if defined(USE_SDL)
-		sdl_window_set_text(text);
-	#endif
 }
 
 void os_CreateWindow()
@@ -214,51 +185,11 @@ void os_CreateWindow()
 	#if defined(SUPPORT_X11)
 		x11_window_create();
 	#endif
-	#if defined(USE_SDL)
-		sdl_window_create();
-	#endif
 }
 
 void common_linux_setup();
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
-
-#ifdef TARGET_PANDORA
-	void gl_term();
-
-	void clean_exit(int sig_num)
-	{
-		void* array[10];
-		size_t size;
-
-		if (joystick_fd >= 0) { close(joystick_fd); }
-		for (int port = 0; port < 4 ; port++)
-		{
-			if (evdev_controllers[port]->fd >= 0)
-			{
-				close(evdev_controllers[port]->fd);
-			}
-		}
-
-		// Close EGL context ???
-		if (sig_num!=0)
-		{
-			gl_term();
-		}
-
-		x11_window_destroy():
-
-		// finish cleaning
-		if (sig_num!=0)
-		{
-			write(2, "\nSignal received\n", sizeof("\nSignal received\n"));
-
-			size = backtrace(array, 10);
-			backtrace_symbols_fd(array, size, STDERR_FILENO);
-			exit(1);
-		}
-	}
-#endif
 
 string find_user_config_dir()
 {
@@ -399,11 +330,6 @@ std::vector<string> find_system_data_dirs()
 
 int main(int argc, wchar* argv[])
 {
-	#ifdef TARGET_PANDORA
-		signal(SIGSEGV, clean_exit);
-		signal(SIGKILL, clean_exit);
-	#endif
-
 	/* Set directories */
 	set_user_config_dir(find_user_config_dir());
 	set_user_data_dir(find_user_data_dir());
@@ -421,13 +347,6 @@ int main(int argc, wchar* argv[])
 	printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
 	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
 
-	#if defined(USE_SDL)
-		if (SDL_Init(0) != 0)
-		{
-			die("SDL: Initialization failed!");
-		}
-	#endif
-
 	common_linux_setup();
 
 	settings.profile.run_counts=0;
@@ -436,19 +355,10 @@ int main(int argc, wchar* argv[])
 
 	SetupInput();
 
-	#if !defined(TARGET_EMSCRIPTEN)
-		#if FEAT_HAS_NIXPROF
-		install_prof_handler(0);
-		#endif
-		dc_run();
-	#else
-		emscripten_set_main_loop(&dc_run, 100, false);
-	#endif
-
-
-	#ifdef TARGET_PANDORA
-		clean_exit(0);
-	#endif
+#if FEAT_HAS_NIXPROF
+   install_prof_handler(0);
+#endif
+   dc_run();
 
 	return 0;
 }
@@ -459,12 +369,8 @@ int push_vmu_screen(u8* buffer) { return 0; }
 
 void os_DebugBreak()
 {
-	#if !defined(TARGET_EMSCRIPTEN)
-		raise(SIGTRAP);
-	#else
-		printf("DEBUGBREAK!\n");
-		exit(-1);
-	#endif
+   printf("DEBUGBREAK!\n");
+   exit(-1);
 }
 
 

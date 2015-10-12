@@ -159,16 +159,6 @@ else ifneq (,$(findstring odroid,$(platform)))
 
         endif
     endif
-
-# GCW Zero
-else ifneq (,$(findstring gcwz,$(platform)))
-    NOT_ARM := 1
-    NO_REC := 1
-    CC_PREFIX ?= /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-
-    CFLAGS += -D TARGET_GCW0 -D TARGET_NO_REC -fsingle-precision-constant
-    LIBS += -L../linux-deps/lib -L./enta_viv -lglapi
-    GCWZ_PKG = reicast-gcwz.opk
-    GCWZ_PKG_FILES = gcwz/default.gcw0.desktop gcwz/icon-32.png
 else
     $(error Unknown platform)
 endif
@@ -291,39 +281,6 @@ obj-$(DC_PLATFORM)-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
 obj-$(DC_PLATFORM)-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 	mkdir -p $(dir $@)	
 	$(AS) $(ASFLAGS) $(INCS) $< -o $@
-
-install: $(EXECUTABLE)
-	mkdir -p $(DESTDIR)$(PREFIX)/bin 2>/dev/null || /bin/true
-	mkdir -p $(DESTDIR)$(PREFIX)/share/reicast/mappings 2>/dev/null || /bin/true
-	mkdir -p $(DESTDIR)$(MAN_DIR) 2>/dev/null || /bin/true
-	mkdir -p $(DESTDIR)$(MENUENTRY_DIR) 2>/dev/null || /bin/true
-	mkdir -p $(DESTDIR)$(ICON_DIR) 2>/dev/null || /bin/true
-	install -m755 $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
-	install -m755 tools/reicast-joyconfig.py $(DESTDIR)$(PREFIX)/bin/reicast-joyconfig
-	install -m644 mappings/controller_gcwz.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 mappings/controller_generic.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 mappings/controller_pandora.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 mappings/controller_xboxdrv.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 mappings/controller_xpad.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 mappings/keyboard.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 man/reicast.1 $(DESTDIR)$(MAN_DIR)
-	install -m644 man/reicast-joyconfig.1 $(DESTDIR)$(MAN_DIR)
-	install -m644 reicast.desktop $(DESTDIR)$(MENUENTRY_DIR)
-	install -m644 reicast.png $(DESTDIR)$(ICON_DIR)
-
-uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
-	rm -f $(DESTDIR)$(PREFIX)/bin/reicast-joyconfig
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_gcwz.cfg
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_generic.cfg
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_pandora.cfg
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_xboxdrv.cfg
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_xpad.cfg
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/keyboard.cfg
-	rm -f $(DESTDIR)$(MAN_DIR)/reicast.1
-	rm -f $(DESTDIR)$(MAN_DIR)/reicast-joyconfig.1
-	rm -f $(DESTDIR)$(MENUENTRY_DIR)/reicast.desktop
-	rm -f $(DESTDIR)$(ICON_DIR)/reicast.png
 
 clean:
 	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map

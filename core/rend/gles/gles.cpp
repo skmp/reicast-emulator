@@ -342,283 +342,99 @@ gl_ctx gl;
 int screen_width;
 int screen_height;
 
-#if (HOST_OS != OS_DARWIN) && !defined(TARGET_NACL32)
+#if (HOST_OS != OS_DARWIN)
 #ifdef GLES
-	// Create a basic GLES context
-	bool gl_init(void* wind, void* disp)
-	{
-	#if !defined(_ANDROID)
-		gl.setup.native_wind=(EGLNativeWindowType)wind;
-		gl.setup.native_disp=(EGLNativeDisplayType)disp;
+// Create a basic GLES context
+bool gl_init(void* wind, void* disp)
+{
+   eglMakeCurrent(gl.setup.display, gl.setup.surface, gl.setup.surface, gl.setup.context);
 
-		//try to get a display
-		gl.setup.display = eglGetDisplay(gl.setup.native_disp);
+   if (eglCheck())
+      return false;
 
-		//if failed, get the default display (this will not happen in win32)
-		if(gl.setup.display == EGL_NO_DISPLAY)
-			gl.setup.display = eglGetDisplay((EGLNativeDisplayType) EGL_DEFAULT_DISPLAY);
+   EGLint w,h;
+   eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_WIDTH, &w);
+   eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_HEIGHT, &h);
 
+   screen_width=w;
+   screen_height=h;
 
-		// Initialise EGL
-		EGLint maj, min;
-		if (!eglInitialize(gl.setup.display, &maj, &min))
-		{
-			printf("EGL Error: eglInitialize failed\n");
-			return false;
-		}
+   printf("EGL config: %08X, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
+   return true;
+}
 
-		printf("Info: EGL version %d.%d\n",maj,min);
+void egl_stealcntx()
+{
+   gl.setup.context=eglGetCurrentContext();
+   gl.setup.display=eglGetCurrentDisplay();
+   gl.setup.surface=eglGetCurrentSurface(EGL_DRAW);
+}
 
+//swap buffers
+void gl_swap()
+{
+   eglSwapBuffers(gl.setup.display, gl.setup.surface);
+}
 
-
-		EGLint pi32ConfigAttribs[]  = { EGL_SURFACE_TYPE, EGL_WINDOW_BIT, EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT , EGL_DEPTH_SIZE, 24, EGL_STENCIL_SIZE, 8, EGL_NONE };
-		EGLint pi32ContextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2 , EGL_NONE };
-
-		int num_config;
-
-		EGLConfig config;
-		if (!eglChooseConfig(gl.setup.display, pi32ConfigAttribs, &config, 1, &num_config) || (num_config != 1))
-		{
-			printf("EGL Error: eglChooseConfig failed\n");
-			return false;
-		}
-
-		gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, (EGLNativeWindowType)wind, NULL);
-
-		if (eglCheck())
-			return false;
-
-		eglBindAPI(EGL_OPENGL_ES_API);
-		if (eglCheck())
-			return false;
-
-		gl.setup.context = eglCreateContext(gl.setup.display, config, NULL, pi32ContextAttribs);
-
-		if (eglCheck())
-			return false;
-
-	#endif
-
-		eglMakeCurrent(gl.setup.display, gl.setup.surface, gl.setup.surface, gl.setup.context);
-
-		if (eglCheck())
-			return false;
-
-		EGLint w,h;
-		eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_WIDTH, &w);
-		eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_HEIGHT, &h);
-
-		screen_width=w;
-		screen_height=h;
-
-		printf("EGL config: %08X, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
-		return true;
-	}
-
-	void egl_stealcntx()
-	{
-		gl.setup.context=eglGetCurrentContext();
-		gl.setup.display=eglGetCurrentDisplay();
-		gl.setup.surface=eglGetCurrentSurface(EGL_DRAW);
-	}
-
-	//swap buffers
-	void gl_swap()
-	{
-		eglSwapBuffers(gl.setup.display, gl.setup.surface);
-	}
-
-	//destroy the gles context and free resources
-	void gl_term()
-	{
-	#if HOST_OS==OS_WINDOWS
-		ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
-	#endif
-	}
+//destroy the gles context and free resources
+void gl_term()
+{
+}
 #else
 
-	#if HOST_OS == OS_WINDOWS
-		#define WGL_DRAW_TO_WINDOW_ARB         0x2001
-		#define WGL_ACCELERATION_ARB           0x2003
-		#define WGL_SWAP_METHOD_ARB            0x2007
-		#define WGL_SUPPORT_OPENGL_ARB         0x2010
-		#define WGL_DOUBLE_BUFFER_ARB          0x2011
-		#define WGL_PIXEL_TYPE_ARB             0x2013
-		#define WGL_COLOR_BITS_ARB             0x2014
-		#define WGL_DEPTH_BITS_ARB             0x2022
-		#define WGL_STENCIL_BITS_ARB           0x2023
-		#define WGL_FULL_ACCELERATION_ARB      0x2027
-		#define WGL_SWAP_EXCHANGE_ARB          0x2028
-		#define WGL_TYPE_RGBA_ARB              0x202B
-		#define WGL_CONTEXT_MAJOR_VERSION_ARB  0x2091
-		#define WGL_CONTEXT_MINOR_VERSION_ARB  0x2092
-		#define WGL_CONTEXT_FLAGS_ARB              0x2094
+#if defined(SUPPORT_X11)
+//! windows && X11
+//let's assume glx for now
 
-		#define		WGL_CONTEXT_PROFILE_MASK_ARB  0x9126
-		#define 	WGL_CONTEXT_MAJOR_VERSION_ARB   0x2091
-		#define 	WGL_CONTEXT_MINOR_VERSION_ARB   0x2092
-		#define 	WGL_CONTEXT_LAYER_PLANE_ARB   0x2093
-		#define 	WGL_CONTEXT_FLAGS_ARB   0x2094
-		#define 	WGL_CONTEXT_DEBUG_BIT_ARB   0x0001
-		#define 	WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB   0x0002
-		#define 	ERROR_INVALID_VERSION_ARB   0x2095
-		#define		WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001
-
-		typedef BOOL (WINAPI * PFNWGLCHOOSEPIXELFORMATARBPROC) (HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats,
-		                                                        int *piFormats, UINT *nNumFormats);
-		typedef HGLRC (WINAPI * PFNWGLCREATECONTEXTATTRIBSARBPROC) (HDC hDC, HGLRC hShareContext, const int *attribList);
-		typedef BOOL (WINAPI * PFNWGLSWAPINTERVALEXTPROC) (int interval);
-
-		PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
-		PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
-		PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
+#include <X11/X.h>
+#include <X11/Xlib.h>
+#include <GL/gl.h>
+#include <GL/glx.h>
 
 
-		HDC ourWindowHandleToDeviceContext;
-		bool gl_init(void* hwnd, void* hdc)
-		{
-			PIXELFORMATDESCRIPTOR pfd =
-		    {
-		            sizeof(PIXELFORMATDESCRIPTOR),
-		            1,
-		            PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,    //Flags
-		            PFD_TYPE_RGBA,            //The kind of framebuffer. RGBA or palette.
-		            32,                        //Colordepth of the framebuffer.
-		            0, 0, 0, 0, 0, 0,
-		            0,
-		            0,
-		            0,
-		            0, 0, 0, 0,
-		            24,                        //Number of bits for the depthbuffer
-		            8,                        //Number of bits for the stencilbuffer
-		            0,                        //Number of Aux buffers in the framebuffer.
-		            PFD_MAIN_PLANE,
-		            0,
-		            0, 0, 0
-		    };
+bool gl_init(void* wind, void* disp)
+{
+   extern void* x11_glc;
 
-		    /*HDC*/ ourWindowHandleToDeviceContext = (HDC)hdc;//GetDC((HWND)hwnd);
+   glXMakeCurrent((Display*)libPvr_GetRenderSurface(),
+         (GLXDrawable)libPvr_GetRenderTarget(),
+         (GLXContext)x11_glc);
 
-		    int  letWindowsChooseThisPixelFormat;
-		    letWindowsChooseThisPixelFormat = ChoosePixelFormat(ourWindowHandleToDeviceContext, &pfd);
-		    SetPixelFormat(ourWindowHandleToDeviceContext,letWindowsChooseThisPixelFormat, &pfd);
+   screen_width = 640;
+   screen_height = 480;
+   return gl3wInit() != -1 && gl3wIsSupported(3, 1);
+}
 
-		    HGLRC ourOpenGLRenderingContext = wglCreateContext(ourWindowHandleToDeviceContext);
-		    wglMakeCurrent (ourWindowHandleToDeviceContext, ourOpenGLRenderingContext);
+void gl_swap()
+{
+   glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
 
-			bool rv = true;
+   Window win;
+   int temp;
+   unsigned int tempu, new_w, new_h;
+   XGetGeometry((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget(),
+         &win, &temp, &temp, &new_w, &new_h,&tempu,&tempu);
 
-			if (rv) {
+   //if resized, clear up the draw buffers, to avoid out-of-draw-area junk data
+   if (new_w != screen_width || new_h != screen_height) {
+      screen_width = new_w;
+      screen_height = new_h;
+   }
 
-				wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-				if(!wglChoosePixelFormatARB)
-				{
-					return false;
-				}
+#if 0
+   //handy to debug really stupid render-not-working issues ...
 
-				wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
-				if(!wglCreateContextAttribsARB)
-				{
-					return false;
-				}
-
-				wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-				if(!wglSwapIntervalEXT)
-				{
-					return false;
-				}
-
-				int attribs[] =
-		       {
-		            WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-		            WGL_CONTEXT_MINOR_VERSION_ARB, 1,
-		            WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
-		            WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-		            0
-		       };
-
-				HGLRC m_hrc = wglCreateContextAttribsARB(ourWindowHandleToDeviceContext,0, attribs);
-
-				if (m_hrc)
-					wglMakeCurrent(ourWindowHandleToDeviceContext,m_hrc);
-				else
-					rv = false;
-
-				wglDeleteContext(ourOpenGLRenderingContext);
-			}
-
-			if (rv) {
-				rv = gl3wInit() != -1 && gl3wIsSupported(3, 1);
-			}
-
-			RECT r;
-			GetClientRect((HWND)hwnd, &r);
-			screen_width = r.right - r.left;
-			screen_height = r.bottom - r.top;
-
-			return rv;
-		}
-		#include <Wingdi.h>
-		void gl_swap()
-		{
-			wglSwapLayerBuffers(ourWindowHandleToDeviceContext,WGL_SWAP_MAIN_PLANE);
-			//SwapBuffers(ourWindowHandleToDeviceContext);
-		}
-	#else
-		#if defined(SUPPORT_X11)
-			//! windows && X11
-			//let's assume glx for now
-
-			#include <X11/X.h>
-			#include <X11/Xlib.h>
-			#include <GL/gl.h>
-			#include <GL/glx.h>
+   glClearColor( 0, 0.5, 1, 1 );
+   glClear( GL_COLOR_BUFFER_BIT );
+   glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
 
 
-			bool gl_init(void* wind, void* disp)
-			{
-				extern void* x11_glc;
-
-				glXMakeCurrent((Display*)libPvr_GetRenderSurface(),
-					(GLXDrawable)libPvr_GetRenderTarget(),
-					(GLXContext)x11_glc);
-
-				screen_width = 640;
-				screen_height = 480;
-				return gl3wInit() != -1 && gl3wIsSupported(3, 1);
-			}
-
-			void gl_swap()
-			{
-				glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
-
-				Window win;
-				int temp;
-				unsigned int tempu, new_w, new_h;
-				XGetGeometry((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget(),
-							&win, &temp, &temp, &new_w, &new_h,&tempu,&tempu);
-
-				//if resized, clear up the draw buffers, to avoid out-of-draw-area junk data
-				if (new_w != screen_width || new_h != screen_height) {
-					screen_width = new_w;
-					screen_height = new_h;
-				}
-
-				#if 0
-					//handy to debug really stupid render-not-working issues ...
-
-					glClearColor( 0, 0.5, 1, 1 );
-					glClear( GL_COLOR_BUFFER_BIT );
-					glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
-
-
-					glClearColor ( 1, 0.5, 0, 1 );
-					glClear ( GL_COLOR_BUFFER_BIT );
-					glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
-				#endif
-			}
-		#endif
-	#endif
+   glClearColor ( 1, 0.5, 0, 1 );
+   glClear ( GL_COLOR_BUFFER_BIT );
+   glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
+#endif
+}
+#endif
 #endif
 
 #endif
@@ -921,7 +737,7 @@ bool gles_init()
 	if (!gl_create_resources())
 		return false;
 
-#if defined(GLES) && HOST_OS != OS_DARWIN && !defined(TARGET_NACL32)
+#if defined(GLES) && HOST_OS != OS_DARWIN
 	eglSwapInterval(gl.setup.display,1);
 #endif
 

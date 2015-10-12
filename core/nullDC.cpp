@@ -13,7 +13,6 @@
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_mem.h"
 
-#include "webui/server.h"
 #include "hw/naomi/naomi_cart.h"
 
 settings_t settings;
@@ -117,17 +116,6 @@ void plugins_Reset(bool Manual)
 	//libExtDevice_Reset(Manual);
 }
 
-#if !defined(TARGET_NO_WEBUI)
-
-void* webui_th(void* p)
-{
-	webui_start();
-	return 0;
-}
-
-cThread webui_thd(&webui_th,0);
-#endif
-
 int dc_init(int argc,wchar* argv[])
 {
 	setbuf(stdin,0);
@@ -138,10 +126,6 @@ int dc_init(int argc,wchar* argv[])
 		printf("Failed to alloc mem\n");
 		return -1;
 	}
-
-#if !defined(TARGET_NO_WEBUI)
-	webui_thd.Start();
-#endif
 
 	if(ParseCommandLine(argc,argv))
 	{

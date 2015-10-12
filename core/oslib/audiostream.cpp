@@ -2,11 +2,7 @@
 #include "cfg/cfg.h"
 #include "oslib/oslib.h"
 #include "audiostream.h"
-#include "oslib/audiobackend_directsound.h"
-#include "oslib/audiobackend_android.h"
 #include "oslib/audiobackend_alsa.h"
-#include "oslib/audiobackend_oss.h"
-#include "oslib/audiobackend_pulseaudio.h"
 
 struct SoundFrame { s16 l;s16 r; };
 #define SAMPLE_COUNT 512
@@ -70,20 +66,8 @@ bool RegisterAudioBackend(audiobackend_t *backend)
 }
 
 void RegisterAllAudioBackends() {
-		#if HOST_OS==OS_WINDOWS
-		RegisterAudioBackend(&audiobackend_directsound);
-		#endif
-		#if ANDROID
-		RegisterAudioBackend(&audiobackend_android);
-		#endif
 		#if USE_ALSA
 		RegisterAudioBackend(&audiobackend_alsa);
-		#endif
-		#if USE_OSS
-		RegisterAudioBackend(&audiobackend_oss);
-		#endif
-		#if USE_PULSEAUDIO
-		RegisterAudioBackend(&audiobackend_pulseaudio);
 		#endif
 		audiobackends_registered = true;
 }

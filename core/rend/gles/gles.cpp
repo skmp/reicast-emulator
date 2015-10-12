@@ -924,6 +924,7 @@ static void OSD_HOOK()
 	osd_base=pvrrc.verts.used();
 	osd_count=0;
 
+#if 0
 	DrawButton2(vjoy_pos[0],kcode[0]&key_CONT_DPAD_LEFT);
 	DrawButton2(vjoy_pos[1],kcode[0]&key_CONT_DPAD_UP);
 	DrawButton2(vjoy_pos[2],kcode[0]&key_CONT_DPAD_RIGHT);
@@ -942,6 +943,7 @@ static void OSD_HOOK()
 
 	DrawButton2(vjoy_pos[11],1);
 	DrawButton2(vjoy_pos[12],0);
+#endif
 }
 
 extern GLuint osd_tex;

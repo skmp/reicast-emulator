@@ -18,9 +18,6 @@ u32 gen_samples=0;
 
 double time_diff = 128/44100.0;
 double time_last;
-#ifdef LOG_SOUND
-WaveWriter rawout("d:\\aica_out.wav");
-#endif
 
 static bool audiobackends_registered = false;
 static unsigned int audiobackends_num_max = 1;

@@ -6,8 +6,6 @@ FOR_LINUX :=1
 #NO_REND := 1
 WEBUI :=1 
 USE_ALSA := 1
-USE_OSS := 1
-#USE_PULSEAUDIO := 1
 USE_EVDEV := 1
 USE_JOYSTICK := 1
 
@@ -239,10 +237,6 @@ endif
 ifdef USE_ALSA
     CXXFLAGS += -D USE_ALSA
     LIBS += -lasound
-endif
-
-ifdef USE_OSS
-    CXXFLAGS += -D USE_OSS
 endif
 
 ifdef USE_PULSEAUDIO

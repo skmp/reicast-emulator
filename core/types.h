@@ -2,7 +2,7 @@
 
 #include "build.h"
 
-#if BUILD_COMPILER==COMPILER_VC
+#ifdef _MSC_VER
 #define DECL_ALIGN(x) __declspec(align(x))
 #else
 #define __forceinline inline
@@ -13,18 +13,18 @@
 
 #if HOST_CPU == CPU_X86
 
-	#if BUILD_COMPILER==COMPILER_VC
-	#define DYNACALL  __fastcall
-	#else
-	//android defines fastcall as regparm(3), it doesn't work for us
-	#undef fastcall
-	#define DYNACALL __attribute__((fastcall))
-	#endif
+#ifdef _MSC_VER
+#define DYNACALL  __fastcall
 #else
-	#define DYNACALL
+//android defines fastcall as regparm(3), it doesn't work for us
+#undef fastcall
+#define DYNACALL __attribute__((fastcall))
+#endif
+#else
+#define DYNACALL
 #endif
 
-#if BUILD_COMPILER==COMPILER_VC
+#ifdef _MSC_VER
 #ifdef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
 #undef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
 #endif
@@ -43,9 +43,7 @@
 #pragma warning( disable : 4100)
 #endif
 
-
-
-#if BUILD_COMPILER==COMPILER_VC
+#ifdef _MSC_VER
 //SHUT UP M$ COMPILER !@#!@$#
 #ifdef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
 #undef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
@@ -442,7 +440,7 @@ int darw_printf(const wchar* Text,...);
 using namespace std;
 
 //used for asm-olny functions
-#if defined(X86) && COMPILER_VC==BUILD_COMPILER
+#if defined(X86) && defined(_MSC_VER)
 #define naked   __declspec( naked )
 #else
 #define naked
@@ -517,7 +515,7 @@ using namespace std;
 void os_DebugBreak();
 #define dbgbreak os_DebugBreak()
 
-#if COMPILER_VC==BUILD_COMPILER
+#ifdef _MSC_VER
 #pragma warning( disable : 4127 4996 /*4244*/)
 #else
 #define stricmp strcasecmp

@@ -60,8 +60,8 @@
 
 #include "build.h"
 
-#if BUILD_COMPILER == COMPILER_GCC
-	#define __fastcall BALLZZ!!
+#ifndef _MSC_VER
+#define __fastcall BALLZZ!!
 #endif
 
 

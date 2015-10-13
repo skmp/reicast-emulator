@@ -9,18 +9,18 @@ void os_DoEvents();
 void os_CreateWindow();
 void WriteSample(s16 right, s16 left);
 
-#if BUILD_COMPILER==COMPILER_VC
+#ifdef _MSC_VER
 #include <intrin.h>
 #endif
 
 u32 static INLINE bitscanrev(u32 v)
 {
-#if (BUILD_COMPILER==COMPILER_GCC)
-	return 31-__builtin_clz(v);
-#else
+#ifdef _MSC_VER
 	unsigned long rv;
 	_BitScanReverse(&rv,v);
 	return rv;
+#else
+	return 31-__builtin_clz(v);
 #endif
 }
 

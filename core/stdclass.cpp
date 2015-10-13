@@ -3,12 +3,12 @@
 #include <sys/stat.h>
 #include "types.h"
 
-#if BUILD_COMPILER==COMPILER_VC
-	#include <io.h>
-	#define access _access
-	#define R_OK   4
+#ifdef _MSC_VER
+#include <io.h>
+#define access _access
+#define R_OK   4
 #else
-	#include <unistd.h>
+#include <unistd.h>
 #endif
 
 #include "hw/mem/_vmem.h"

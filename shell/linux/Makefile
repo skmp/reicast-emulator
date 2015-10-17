@@ -7,7 +7,6 @@ FOR_LINUX :=1
 WEBUI :=1 
 USE_ALSA := 1
 USE_EVDEV := 1
-USE_JOYSTICK := 1
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
@@ -57,8 +56,6 @@ ifeq (,$(platform))
         else
             platform = armv7h
         endif
-    else ifneq (,$(findstring mips,$(ARCH)))
-        platform = gcwz
     else
         $(error Unsupported CPU architecture)
     endif
@@ -220,10 +217,6 @@ ifdef USE_EVDEV
 		CXXFLAGS += -D USE_EVDEV
 endif
 
-ifdef USE_JOYSTICK
-		CXXFLAGS += -D USE_JOYSTICK
-endif
-
 ifdef USE_ALSA
     CXXFLAGS += -D USE_ALSA
     LIBS += -lasound
@@ -260,9 +253,6 @@ OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,obj-$(DC_PLATFORM)-$(platform)/%,$(OBJECTS))
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
-ifneq (,$(findstring gcwz,$(platform)))
-	mksquashfs $(EXECUTABLE_STRIPPED) $(GCWZ_PKG_FILES) $(GCWZ_PKG) -all-root
-endif
 	
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@

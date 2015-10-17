@@ -27,10 +27,6 @@
 	#include "linux-dist/evdev.h"
 #endif
 
-#if defined(USE_JOYSTICK)
-	#include "linux-dist/joystick.h"
-#endif
-
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"
 #endif
@@ -78,11 +74,6 @@ void emit_WriteCodeCache();
 		{ -1, NULL },
 		{ -1, NULL }
 	};
-#endif
-
-#if defined(USE_JOYSTICK)
-	/* legacy joystick input */
-	static int joystick_fd = -1; // Joystick file descriptor
 #endif
 
 void SetupInput()
@@ -134,21 +125,6 @@ void SetupInput()
 		}
 	#endif
 
-	#if defined(USE_JOYSTICK)
-		int joystick_device_id = cfgLoadInt("input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
-		if (joystick_device_id < 0) {
-			puts("Legacy Joystick input disabled by config.\n");
-		}
-		else
-		{
-			int joystick_device_length = snprintf(NULL, 0, JOYSTICK_DEVICE_STRING, joystick_device_id);
-			char* joystick_device = (char*)malloc(joystick_device_length + 1);
-			sprintf(joystick_device, JOYSTICK_DEVICE_STRING, joystick_device_id);
-			joystick_fd = input_joystick_init(joystick_device);
-			free(joystick_device);
-		}
-	#endif
-
 	#if defined(SUPPORT_X11)
 		input_x11_init();
 	#endif
@@ -156,10 +132,6 @@ void SetupInput()
 
 void UpdateInputState(u32 port)
 {
-	#if defined(USE_JOYSTICK)
-		input_joystick_handle(joystick_fd, port);
-	#endif
-
 	#if defined(USE_EVDEV)
 		input_evdev_handle(&evdev_controllers[port], port);
 	#endif

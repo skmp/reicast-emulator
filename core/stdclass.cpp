@@ -55,17 +55,14 @@ string get_readonly_config_path(const string& filename)
 {
 	string user_filepath = get_writable_config_path(filename);
 	if(file_exists(user_filepath))
-	{
 		return user_filepath;
-	}
 
 	string filepath;
-	for (unsigned int i = 0; i < system_config_dirs.size(); i++) {
+	for (unsigned int i = 0; i < system_config_dirs.size(); i++)
+   {
 		filepath = system_config_dirs[i] + filename;
 		if (file_exists(filepath))
-		{
 			return filepath;
-		}
 	}
 
 	// Not found, so we return the user variant
@@ -84,17 +81,14 @@ string get_readonly_data_path(const string& filename)
 {
 	string user_filepath = get_writable_data_path(filename);
 	if(file_exists(user_filepath))
-	{
 		return user_filepath;
-	}
 
 	string filepath;
-	for (unsigned int i = 0; i < system_data_dirs.size(); i++) {
+	for (unsigned int i = 0; i < system_data_dirs.size(); i++)
+   {
 		filepath = system_data_dirs[i] + filename;
 		if (file_exists(filepath))
-		{
 			return filepath;
-		}
 	}
 
 	// Not found, so we return the user variant

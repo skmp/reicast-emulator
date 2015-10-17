@@ -178,9 +178,7 @@ void cResetEvent::Wait()//Wait for signal , then reset
 {
 	pthread_mutex_lock( &mutx );
 	if (!state)
-	{
 		pthread_cond_wait( &cond, &mutx );
-	}
 	state=false;
 	pthread_mutex_unlock( &mutx );
 }
@@ -301,28 +299,9 @@ void linux_fix_personality() {
         #endif
 }
 
-void linux_rpi2_init() {
-#if (HOST_OS == OS_LINUX) && !defined(_ANDROID) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
-	void* handle;
-	void (*rpi_bcm_init)(void);
-
-	handle = dlopen("libbcm_host.so", RTLD_LAZY);
-	
-	if (handle) {
-		printf("found libbcm_host\n");
-		*(void**) (&rpi_bcm_init) = dlsym(handle, "bcm_host_init");
-		if (rpi_bcm_init) {
-			printf("rpi2: bcm_init\n");
-			rpi_bcm_init();
-		}
-	}
-#endif
-}
-
 void common_linux_setup()
 {
 	linux_fix_personality();
-	linux_rpi2_init();
 
 	enable_runfast();
 	install_fault_handler();

@@ -104,18 +104,15 @@ int dc_init(int argc,wchar* argv[])
 	}
 
 	if(ParseCommandLine(argc,argv))
-	{
 		return 69;
-	}
+
 	if(!cfgOpen())
 	{
 		msgboxf("Unable to open config file",MBX_ICONERROR);
 		return -4;
 	}
 	LoadSettings();
-#ifndef _ANDROID
 	os_CreateWindow();
-#endif
 
 	int rv= 0;
 
@@ -155,11 +152,7 @@ int dc_init(int argc,wchar* argv[])
 	
 	mem_map_default();
 
-#ifndef _ANDROID
 	mcfg_CreateDevices();
-#else
-    mcfg_CreateDevices();
-#endif
 
 	plugins_Reset(false);
 	mem_Reset(false);
@@ -181,15 +174,12 @@ void dc_term()
 	plugins_Term();
 	_vmem_release();
 
-#ifndef _ANDROID
 	SaveSettings();
-#endif
 	SaveRomFiles(get_writable_data_path("/data/"));
 }
 
 void LoadSettings()
 {
-#ifndef _ANDROID
 	settings.dynarec.Enable			= cfgLoadInt("config","Dynarec.Enabled", 1)!=0;
 	settings.dynarec.idleskip		= cfgLoadInt("config","Dynarec.idleskip",1)!=0;
 	settings.dynarec.unstable_opt	= cfgLoadInt("config","Dynarec.unstable-opt",0);
@@ -217,7 +207,6 @@ void LoadSettings()
 	settings.reios.ElfFile = cfgLoadStr("reios", "ElfFile","");
 
 	settings.validate.OpenGlChecks = cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
-#endif
 
 	settings.bios.UseReios = cfgLoadInt("config", "bios.UseReios", 0);
 

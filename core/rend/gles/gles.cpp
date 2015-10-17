@@ -834,85 +834,10 @@ extern u8 rt[4],lt[4];
 u32 osd_base;
 u32 osd_count;
 
-
-#if defined(_ANDROID)
-extern float vjoy_pos[14][8];
-#else
-
-float vjoy_pos[14][8]=
-{
-	{24+0,24+64,64,64},     //LEFT
-	{24+64,24+0,64,64},     //UP
-	{24+128,24+64,64,64},   //RIGHT
-	{24+64,24+128,64,64},   //DOWN
-
-	{440+0,280+64,64,64},   //X
-	{440+64,280+0,64,64},   //Y
-	{440+128,280+64,64,64}, //B
-	{440+64,280+128,64,64}, //A
-
-	{320-32,360+32,64,64},  //Start
-
-	{440,200,90,64},        //RT
-	{542,200,90,64},        //LT
-
-	{-24,128+224,128,128},  //ANALOG_RING
-	{96,320,64,64},         //ANALOG_POINT
-	{1}
-};
-#endif // !_ANDROID
-
-float vjoy_sz[2][14] = {
-	{ 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64 },
-	{ 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64 },
-};
-
-static void DrawButton(float* xy, u32 state)
-{
-	Vertex vtx;
-
-	vtx.z=1;
-
-	float x=xy[0];
-	float y=xy[1];
-	float w=xy[2];
-	float h=xy[3];
-
-	vtx.col[0]=vtx.col[1]=vtx.col[2]=(0x7F-0x40*state/255)*vjoy_pos[13][0];
-
-	vtx.col[3]=0xA0*vjoy_pos[13][4];
-
-	vjoy_pos[13][4]+=(vjoy_pos[13][0]-vjoy_pos[13][4])/2;
-
-
-
-	vtx.x=x; vtx.y=y;
-	vtx.u=xy[4]; vtx.v=xy[5];
-	*pvrrc.verts.Append()=vtx;
-
-	vtx.x=x+w; vtx.y=y;
-	vtx.u=xy[6]; vtx.v=xy[5];
-	*pvrrc.verts.Append()=vtx;
-
-	vtx.x=x; vtx.y=y+h;
-	vtx.u=xy[4]; vtx.v=xy[7];
-	*pvrrc.verts.Append()=vtx;
-
-	vtx.x=x+w; vtx.y=y+h;
-	vtx.u=xy[6]; vtx.v=xy[7];
-	*pvrrc.verts.Append()=vtx;
-
-	osd_count+=4;
-}
-
 static void ClearBG()
 {
 
 }
-
-
-void DrawButton2(float* xy, bool state) { DrawButton(xy,state?0:255); }
-
 
 static void OSD_HOOK()
 {

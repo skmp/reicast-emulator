@@ -174,6 +174,9 @@ INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 LIBS += -lm -lrt -ldl
 LIBS  += -lpthread
 
+INCS += -I$(RZDCY_SRC_DIR)/linux-dist/libco
+RZDCY_FILES += ../../core/linux-dist/libco/libco.c
+
 PREFIX ?= /usr/local
 MAN_DIR ?= ${PREFIX}/share/man/man1
 MENUENTRY_DIR ?= ${PREFIX}/share/applications

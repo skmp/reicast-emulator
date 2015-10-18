@@ -91,6 +91,43 @@ void common_linux_setup();
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
 
+
+#include "libco.h"
+static cothread_t ct_main;
+static cothread_t ct_dc;
+
+static int co_argc;
+static wchar** co_argv;
+
+static void co_dc_thread()
+{
+	dc_init(co_argc,co_argv);
+	co_switch(ct_main);
+	
+	dc_run();
+}
+
+static void co_dc_init(int argc,wchar* argv[])
+{
+	ct_main = co_active();
+	ct_dc = co_create(1024*1024/*why does libco demand me to know this*/, co_dc_thread);
+	co_argc=argc;
+	co_argv=argv;
+	co_switch(ct_dc);
+}
+
+static void co_dc_run()
+{
+puts("ENTER LOOP");
+	co_switch(ct_dc);
+}
+
+void co_dc_yield()
+{
+	co_switch(ct_main);
+}
+
+
 string find_user_config_dir()
 {
 	// Unable to detect config dir, use the current folder
@@ -153,16 +190,6 @@ std::vector<string> find_system_data_dirs()
 		dirs.push_back("/usr/share/reicast");
 	}
 	return dirs;
-}
-
-static void co_dc_init(int argc,wchar* argv[])
-{
-	dc_init(argc,argv);
-}
-
-static void co_dc_run()
-{
-	dc_run();
 }
 
 static void retro_init(int argc, wchar *argv[] )

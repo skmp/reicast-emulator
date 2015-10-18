@@ -31,8 +31,6 @@ sh4_opcodelistentry* OpDesc[0x10000];
 #define GetImm12(str) ((str>>0) & 0xfff)
 #define GetSImm12(str) (((s16)((GetImm12(str))<<4))>>4)
 
-
-
 //,DEC_D_RN|DEC_S_RM|DEC_OP(shop_and)
 u64 dec_Fill(DecMode mode,DecParam d,DecParam s,shilop op,u32 extra=0)
 {
@@ -77,15 +75,9 @@ u64 dec_Bin_r0u8(shilop op, u32 haswrite=1)
 }
 u64 dec_shft(s32 offs,bool arithm)
 {
-	if (offs>0)
-	{
-		//left shift
+	if (offs>0) //left shift
 		return dec_Fill(DM_Shift,PRM_RN,PRM_RN,shop_shl,offs);
-	}
-	else
-	{
-		return dec_Fill(DM_Shift,PRM_RN,PRM_RN,arithm?shop_sar:shop_shr,-offs);
-	}
+   return dec_Fill(DM_Shift,PRM_RN,PRM_RN,arithm?shop_sar:shop_shr,-offs);
 
 }
 

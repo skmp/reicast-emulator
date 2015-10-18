@@ -39,13 +39,8 @@ int sh4_sched_next_id=-1;
 u32 sh4_sched_remaining(int id, u32 reference)
 {
 	if (list[id].end != -1)
-	{
 		return list[id].end - reference;
-	}
-	else
-	{
-		return -1;
-	}
+   return -1;
 }
 
 u32 sh4_sched_remaining(int id)
@@ -71,13 +66,9 @@ void sh4_sched_ffts()
 
 	sh4_sched_next_id=slot;
 	if (slot!=-1)
-	{
 		Sh4cntx.sh4_sched_next=diff;
-	}
 	else
-	{
 		Sh4cntx.sh4_sched_next=SH4_MAIN_CLOCK;
-	}
 
 	sh4_sched_ffb+=Sh4cntx.sh4_sched_next;
 }
@@ -112,9 +103,8 @@ void sh4_sched_request(int id, int cycles)
 
 	list[id].start=sh4_sched_now();
 
-	if (cycles == -1) {
+	if (cycles == -1)
 		list[id].end = -1;
-	}
 	else
 	{
 		list[id].end = list[id].start + cycles;
@@ -133,8 +123,8 @@ int sh4_sched_elapsed(int id)
 		list[id].start=sh4_sched_now();
 		return rv;
 	}
-	else
-		return -1;
+
+   return -1;
 }
 
 void handle_cb(int id)
@@ -162,7 +152,8 @@ void sh4_sched_tick(int cycles)
 		sh4_sched_intr++;
 		if (sh4_sched_next_id!=-1)
 		{
-			for (int i=0;i<list.size();i++)
+         unsigned i;
+			for (i=0;i<list.size();i++)
 			{
 				int remaining = sh4_sched_remaining(i, fztime);
 				verify(remaining >= 0 || remaining == -1);

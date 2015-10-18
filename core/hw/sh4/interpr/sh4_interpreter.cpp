@@ -105,43 +105,33 @@ void Sh4_int_Step()
 
 void Sh4_int_Skip()
 {
-	if (sh4_int_bCpuRun)
-	{
-		printf("Sh4 Is running, can't Skip\n");
-	}
-	else
-	{
+	if (!sh4_int_bCpuRun)
 		next_pc+=2;
-	}
 }
 
 void Sh4_int_Reset(bool Manual)
 {
-	if (sh4_int_bCpuRun)
-	{
-		printf("Sh4 Is running, can't Reset\n");
-	}
-	else
-	{
-		next_pc = 0xA0000000;
+   if (sh4_int_bCpuRun)
+      return;
 
-		memset(r,0,sizeof(r));
-		memset(r_bank,0,sizeof(r_bank));
+   next_pc = 0xA0000000;
 
-		gbr=ssr=spc=sgr=dbr=vbr=0;
-		mac.full=pr=fpul=0;
+   memset(r,0,sizeof(r));
+   memset(r_bank,0,sizeof(r_bank));
 
-		sr.SetFull(0x700000F0);
-		old_sr.status=sr.status;
-		UpdateSR();
+   gbr=ssr=spc=sgr=dbr=vbr=0;
+   mac.full=pr=fpul=0;
 
-		fpscr.full = 0x0004001;
-		old_fpscr=fpscr;
-		UpdateFPSCR();
+   sr.SetFull(0x700000F0);
+   old_sr.status=sr.status;
+   UpdateSR();
 
-		//Any more registers have default value ?
-		printf("Sh4 Reset\n");
-	}
+   fpscr.full = 0x0004001;
+   old_fpscr=fpscr;
+   UpdateFPSCR();
+
+   //Any more registers have default value ?
+   printf("Sh4 Reset\n");
 }
 
 bool Sh4_int_IsCpuRunning()

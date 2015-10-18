@@ -6,11 +6,6 @@
 	#define _XOPEN_SOURCE 1
 	#define __USE_GNU 1
 #endif
-#if !defined(TARGET_NACL32)
-#include <poll.h>
-#include <termios.h>
-#endif  
-//#include <curses.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <stdarg.h>

@@ -61,60 +61,51 @@ u32 ReadMem_aica_rtc(u32 addr,u32 sz)
 void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 {
 	switch( addr & 0xFF )
-	{
-	case 0:
-		if (rtc_EN)
-		{
-			settings.dreamcast.RTC&=0xFFFF;
-			settings.dreamcast.RTC|=(data&0xFFFF)<<16;
-			rtc_EN=0;
-			SaveSettings();
-		}
-		return;
-	case 4:
-		if (rtc_EN)
-		{
-			settings.dreamcast.RTC&=0xFFFF0000;
-			settings.dreamcast.RTC|= data&0xFFFF;
-			//TODO: Clean the internal timer ?
-		}
-		return;
-	case 8:
-		rtc_EN=data&1;
-		return;
-	}
-
-	return;
+   {
+      case 0:
+         if (rtc_EN)
+         {
+            settings.dreamcast.RTC&=0xFFFF;
+            settings.dreamcast.RTC|=(data&0xFFFF)<<16;
+            rtc_EN=0;
+            SaveSettings();
+         }
+         break;
+      case 4:
+         if (rtc_EN)
+         {
+            settings.dreamcast.RTC&=0xFFFF0000;
+            settings.dreamcast.RTC|= data&0xFFFF;
+            //TODO: Clean the internal timer ?
+         }
+         break;
+      case 8:
+         rtc_EN=data&1;
+         break;
+   }
 }
+
 u32 ReadMem_aica_reg(u32 addr,u32 sz)
 {
 	addr&=0x7FFF;
 	if (sz==1)
 	{
-		if (addr==0x2C01)
-		{
-			return VREG;
-		}
-		else if (addr==0x2C00)
-		{
-			return ARMRST;
-		}
-		else
-		{
-			return libAICA_ReadReg(addr, sz);
-		}
+      switch (addr)
+      {
+         case 0x2C01:
+            return VREG;
+         case 0x2C00:
+            return ARMRST;
+         default:
+            break;
+      }
 	}
 	else
 	{
 		if (addr==0x2C00)
-		{
 			return (VREG<<8) | ARMRST;
-		}
-		else
-		{
-			return libAICA_ReadReg(addr, sz);
-		}
 	}
+   return libAICA_ReadReg(addr, sz);
 }
 
 void ArmSetRST()
@@ -168,9 +159,7 @@ void aica_Init()
 void aica_Reset(bool Manual)
 {
 	if (!Manual)
-	{
 		aica_ram.Zero();
-	}
 }
 
 void aica_Term()

@@ -226,11 +226,6 @@
 #define FEAT_DSPREC DYNAREC_NONE
 #endif
 
-
-#if defined(TARGET_NO_NIXPROF)
-#define FEAT_HAS_NIXPROF 0
-#endif
-
 #if defined(TARGET_NO_COREIO_HTTP)
 #define FEAT_HAS_COREIO_HTTP 0
 #endif
@@ -259,12 +254,6 @@
 	#else
 		#define FEAT_DSPREC DYNAREC_NONE
 	#endif
-#endif
-
-#ifndef FEAT_HAS_NIXPROF
-  #if HOST_OS != OS_WINDOWS
-    #define FEAT_HAS_NIXPROF 1
-  #endif
 #endif
 
 #ifndef FEAT_HAS_COREIO_HTTP

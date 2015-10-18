@@ -122,7 +122,6 @@ else ifneq (,$(findstring beagle,$(platform)))
 else ifneq (,$(findstring pandora,$(platform)))
     FOR_PANDORA := 1
     USE_X11 := 1
-    USE_SDL := 1
     PGO_USE := 1
     USE_GLES := 1
     MFLAGS +== -marm -march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp -funroll-loops -fpermissive
@@ -165,7 +164,7 @@ include $(RZDCY_SRC_DIR)/core.mk
 
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 
-CFLAGS += -g -O3 -D RELEASE -c -D USES_HOMEDIR #-D NO_REND
+CFLAGS += -g -O3 -D RELEASE -c #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
 CFLAGS += -ffast-math -ftree-vectorize
 
@@ -184,11 +183,6 @@ ICON_DIR ?= ${PREFIX}/share/pixmaps
 ifndef NOT_ARM
     AS=${CC_PREFIX}gcc
     ASFLAGS += $(CFLAGS)
-endif
-
-ifdef USE_SDL
-    CXXFLAGS += `sdl-config --cflags` -D USE_SDL
-    LIBS += `sdl-config --libs`
 endif
 
 ifdef PGO_MAKE

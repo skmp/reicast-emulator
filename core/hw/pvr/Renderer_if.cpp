@@ -5,10 +5,6 @@
 
 #include "deps/zlib/zlib.h"
 
-#if FEAT_HAS_NIXPROF
-#include "profiler/profiler.h"
-#endif
-
 /*
 
 	rendv3 ideas
@@ -225,10 +221,6 @@ bool rend_single_frame()
 
 void* rend_thread(void* p)
 {
-#if FEAT_HAS_NIXPROF
-	install_prof_handler(1);
-#endif
-
 	#if SET_AFNT
 	cpu_set_t mask;
 

@@ -23,10 +23,6 @@
 	#include "linux-dist/evdev.h"
 #endif
 
-#if FEAT_HAS_NIXPROF
-#include "profiler/profiler.h"
-#endif
-
 int msgboxf(const wchar* text, unsigned int type, ...)
 {
 	va_list args;
@@ -245,10 +241,6 @@ static void retro_init(int argc, wchar *argv[] )
 	dc_init(argc,argv);
 
 	SetupInput();
-
-#if FEAT_HAS_NIXPROF
-   install_prof_handler(0);
-#endif
 }
 
 int main(int argc, wchar* argv[])

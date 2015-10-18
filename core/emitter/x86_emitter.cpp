@@ -116,19 +116,20 @@ struct x86_block_externs_i : x86_block_externs
 			u8* diff_offset=code_offset+externs[i].size;
 
 			u32 diff=(u32)(dest-diff_offset);
-			if (externs[i].size==1)
-			{
-				verify(IsS8(diff));
-				*code_offset=(u8)diff;
-			}
-			else if (externs[i].size==2)
-			{
-				*(u16*)code_offset=(u16)diff;
-			}
-			else if (externs[i].size==4)
-			{
-				*(u32*)code_offset=(u32)diff;
-			}
+
+         switch (externs[i].size)
+         {
+            case 1:
+               verify(IsS8(diff));
+               *code_offset=(u8)diff;
+               break;
+            case 2:
+               *(u16*)code_offset=(u16)diff;
+               break;
+            case 4:
+               *(u32*)code_offset=(u32)diff;
+               break;
+         }
 		}
 	}
 	bool Modify(u32 offs,u8* dst)
@@ -219,19 +220,21 @@ void x86_block::ApplyPatches(u8* base)
 		}
 
 		u32 diff=(u32)(dest-diff_offset);
-		if ((patches[i].type&0xF)==1)
-		{
-			verify(IsS8(diff));
-			*code_offset=(u8)diff;
-		}
-		else if ((patches[i].type&0xF)==2)
-		{
-			*(u16*)code_offset=(u16)diff;
-		}
-		else if ((patches[i].type&0xF)==4)
-		{
-			*(u32*)code_offset=(u32)diff;
-		}
+      u32 patch_type_size = patches[i].type & 0xF;
+
+      switch (patch_type_size)
+      {
+         case 1:
+            verify(IsS8(diff));
+            *code_offset=(u8)diff;
+            break;
+         case 2:
+            *(u16*)code_offset=(u16)diff;
+            break;
+         case 4:
+            *(u32*)code_offset=(u32)diff;
+            break;
+      }
 	}
 }
 x86_block::x86_block()
@@ -510,9 +513,7 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 			rv.sib=make_sib(0,ESP,base); //none*1+ESP
 
 			if ( disp.ptr_int!=0 )
-			{
 				rv.modrm |= EncodeDisp(disp.ptr_int,&rv,3);
-			}
 		}
 		else if (base == EBP)
 		{
@@ -534,9 +535,7 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 			//[reg] , [reg+disp8/32]
 			rv.modrm = make_modrm(0,base);
 			if (disp.ptr_int!=0)
-			{
 				rv.modrm |= EncodeDisp(disp.ptr_int,&rv,3); //32 or 16 bit disp
-			}
 		}
 	}
 	else
@@ -562,9 +561,7 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 			rv.sib=make_sib(scale,index,base);
 
 		if ( force_disp  || (disp.ptr_int!=0) )
-		{
 			rv.modrm |= EncodeDisp(disp.ptr_int,&rv,disp_sz);
-		}
 	}
 	return rv;
 }

@@ -227,30 +227,36 @@ public:
 
 				u32 size = op.flags & 0x7f;
 
-				if (size == 1) {
-					call((void*)ReadMem8);
-					movsx(rcx, al);
-				}
-				else if (size == 2) {
-					call((void*)ReadMem16);
-					movsx(rcx, ax);
-				}
-				else if (size == 4) {
-					call((void*)ReadMem32);
-					mov(rcx, rax);
-				}
-				else if (size == 8) {
-					call((void*)ReadMem64);
-					mov(rcx, rax);
-				}
-				else {
-					die("1..8 bytes");
-				}
+            switch (size)
+            {
+               case 1:
+                  call((void*)ReadMem8);
+                  movsx(rcx, al);
 
-				if (size != 8)
-					reg_to_sh(op.rd, ecx);
-				else
-					reg_to_sh(op.rd, rcx);
+                  reg_to_sh(op.rd, ecx);
+                  break;
+               case 2:
+                  call((void*)ReadMem16);
+                  movsx(rcx, ax);
+
+                  reg_to_sh(op.rd, ecx);
+                  break;
+               case 4:
+                  call((void*)ReadMem32);
+                  mov(rcx, rax);
+
+                  reg_to_sh(op.rd, ecx);
+                  break;
+               case 8:
+                  call((void*)ReadMem64);
+                  mov(rcx, rax);
+
+                  reg_to_sh(op.rd, rcx);
+                  break;
+               default:
+                  die("1..8 bytes");
+                  break;
+            }
 			}
 			break;
 
@@ -260,22 +266,28 @@ public:
 				sh_to_reg(op.rs1, mov, call_regs[0]);
 				sh_to_reg(op.rs3, add, call_regs[0]);
 
-				if (size != 8)
-					sh_to_reg(op.rs2, mov, call_regs[1]);
-				else
-					sh_to_reg(op.rs2, mov, call_regs64[1]);
-
-				if (size == 1)
-					call((void*)WriteMem8);
-				else if (size == 2)
-					call((void*)WriteMem16);
-				else if (size == 4)
-					call((void*)WriteMem32);
-				else if (size == 8)
-					call((void*)WriteMem64);
-				else {
-					die("1..8 bytes");
-				}
+            switch (size)
+            {
+               case 1:
+                  sh_to_reg(op.rs2, mov, call_regs[1]);
+                  call((void*)WriteMem8);
+                  break;
+               case 2:
+                  sh_to_reg(op.rs2, mov, call_regs[1]);
+                  call((void*)WriteMem16);
+                  break;
+               case 4:
+                  sh_to_reg(op.rs2, mov, call_regs[1]);
+                  call((void*)WriteMem32);
+                  break;
+               case 8:
+                  sh_to_reg(op.rs2, mov, call_regs64[1]);
+                  call((void*)WriteMem64);
+                  break;
+               default:
+                  die("1..8 bytes");
+                  break;
+            }
 			}
 			break;
 

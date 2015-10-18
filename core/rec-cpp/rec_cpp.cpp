@@ -1275,22 +1275,41 @@ public:
 				if (op.rs1.is_imm()) {
 					verify(op.rs2.is_null() && op.rs3.is_null());
 
-					if (size == 1)
-					{
-						auto opc = new opcode_readm_imm<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->dst = op.rd.reg_ptr();
-					}
-					else if (size == 2)
-					{
-						auto opc = new opcode_readm_imm<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->dst = op.rd.reg_ptr();
-					}
-					else if (size == 4)
-					{
-						auto opc = new opcode_readm_imm<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->dst = op.rd.reg_ptr();
-					}
-					else if (size == 8)
-					{
-						auto opc = new opcode_readm_imm<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->dst = op.rd.reg_ptr();
-					}
+               switch (size)
+               {
+                  case 1:
+                     {
+                        auto opc = new opcode_readm_imm<1>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.imm_value();
+                        opc->dst = op.rd.reg_ptr();
+                     }
+                     break;
+                  case 2:
+                     {
+                        auto opc = new opcode_readm_imm<2>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.imm_value();
+                        opc->dst = op.rd.reg_ptr();
+                     }
+                     break;
+                  case 4:
+                     {
+                        auto opc = new opcode_readm_imm<4>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.imm_value();
+                        opc->dst = op.rd.reg_ptr();
+                     }
+                     break;
+                  case 8:
+                     {
+                        auto opc = new opcode_readm_imm<8>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.imm_value();
+                        opc->dst = op.rd.reg_ptr();
+                     }
+                     break;
+               }
 				}
 				else if (op.rs3.is_imm()) {
 					verify(op.rs2.is_null());

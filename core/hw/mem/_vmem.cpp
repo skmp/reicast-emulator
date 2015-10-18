@@ -68,22 +68,18 @@ void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 	{
 		ismem=false;
 		const unat id=iirf;
-		if (sz==1)
-		{
-			return (void*)_vmem_RF8[id/4];
-		}
-		else if (sz==2)
-		{
-			return (void*)_vmem_RF16[id/4];
-		}
-		else if (sz==4)
-		{
-			return (void*)_vmem_RF32[id/4];
-		}
-		else
-		{
-			die("Invalid size");
-		}
+
+      switch (sz)
+      {
+         case 1:
+            return (void*)_vmem_RF8[id/4];
+         case 2:
+            return (void*)_vmem_RF16[id/4];
+         case 4:
+            return (void*)_vmem_RF32[id/4];
+         default:
+            break;
+      }
 	}
 	else
 	{
@@ -109,22 +105,17 @@ void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
 		ismem=false;
 		const unat id=iirf;
 		page_sz=24;
-		if (sz==1)
-		{
-			return rw?(void*)_vmem_RF8[id/4]:(void*)_vmem_WF8[id/4];
-		}
-		else if (sz==2)
-		{
-			return rw?(void*)_vmem_RF16[id/4]:(void*)_vmem_WF16[id/4];
-		}
-		else if (sz==4)
-		{
-			return rw?(void*)_vmem_RF32[id/4]:(void*)_vmem_WF32[id/4];
-		}
-		else
-		{
-			die("Invalid size");
-		}
+      switch (sz)
+      {
+         case 1:
+            return rw?(void*)_vmem_RF8[id/4]:(void*)_vmem_WF8[id/4];
+         case 2:
+            return rw?(void*)_vmem_RF16[id/4]:(void*)_vmem_WF16[id/4];
+         case 4:
+            return rw?(void*)_vmem_RF32[id/4]:(void*)_vmem_WF32[id/4];
+         default:
+            break;
+      }
 	}
 	else
 	{
@@ -159,29 +150,26 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 	else
 	{
 		const u32 id=iirf;
-		if (sz==1)
-		{
-			return (T)_vmem_RF8[id/4](addr);
-		}
-		else if (sz==2)
-		{
-			return (T)_vmem_RF16[id/4](addr);
-		}
-		else if (sz==4)
-		{
-			return _vmem_RF32[id/4](addr);
-		}
-		else if (sz==8)
-		{
-			T rv=_vmem_RF32[id/4](addr);
-			rv|=(T)((u64)_vmem_RF32[id/4](addr+4)<<32);
-			
-			return rv;
-		}
-		else
-		{
-			die("Invalid size");
-		}
+      switch (sz)
+      {
+         case 1:
+            return (T)_vmem_RF8[id/4](addr);
+         case 2:
+            return (T)_vmem_RF16[id/4](addr);
+         case 4:
+            return _vmem_RF32[id/4](addr);
+         case 8:
+            {
+               T rv=_vmem_RF32[id/4](addr);
+               rv|=(T)((u64)_vmem_RF32[id/4](addr+4)<<32);
+
+               return rv;
+            }
+         default:
+            break;
+      }
+
+      die("Invalid size");
 	}
 }
 template<typename T>
@@ -203,27 +191,25 @@ INLINE void DYNACALL _vmem_writet(u32 addr,T data)
 	else
 	{
 		const u32 id=iirf;
-		if (sz==1)
-		{
-			 _vmem_WF8[id/4](addr,data);
-		}
-		else if (sz==2)
-		{
-			 _vmem_WF16[id/4](addr,data);
-		}
-		else if (sz==4)
-		{
-			 _vmem_WF32[id/4](addr,data);
-		}
-		else if (sz==8)
-		{
-			_vmem_WF32[id/4](addr,(u32)data);
-			_vmem_WF32[id/4](addr+4,(u32)((u64)data>>32));
-		}
-		else
-		{
-			die("Invalid size");
-		}
+      switch (sz)
+      {
+         case 1:
+            _vmem_WF8[id/4](addr,data);
+            break;
+         case 2:
+            _vmem_WF16[id/4](addr,data);
+            break;
+         case 4:
+            _vmem_WF32[id/4](addr,data);
+            break;
+         case 8:
+            _vmem_WF32[id/4](addr,(u32)data);
+            _vmem_WF32[id/4](addr+4,(u32)((u64)data>>32));
+            break;
+         default:
+            die("Invalid size");
+            break;
+      }
 	}
 }
 

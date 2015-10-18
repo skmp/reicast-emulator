@@ -19,10 +19,6 @@
 	#include "linux-dist/x11.h"
 #endif
 
-#if defined(USE_EVDEV)
-	#include "linux-dist/evdev.h"
-#endif
-
 int msgboxf(const wchar* text, unsigned int type, ...)
 {
 	va_list args;
@@ -58,65 +54,8 @@ s8 joyx[4], joyy[4];
 
 void emit_WriteCodeCache();
 
-#if defined(USE_EVDEV)
-	/* evdev input */
-	static EvdevController evdev_controllers[4] = {
-		{ -1, NULL },
-		{ -1, NULL },
-		{ -1, NULL },
-		{ -1, NULL }
-	};
-#endif
-
 void SetupInput()
 {
-	#if defined(USE_EVDEV)
-		int evdev_device_id[4] = { -1, -1, -1, -1 };
-		size_t size_needed;
-		int port, i;
-
-		char* evdev_device;
-
-		for (port = 0; port < 4; port++)
-		{
-			size_needed = snprintf(NULL, 0, EVDEV_DEVICE_CONFIG_KEY, port+1) + 1;
-			char* evdev_config_key = (char*)malloc(size_needed);
-			sprintf(evdev_config_key, EVDEV_DEVICE_CONFIG_KEY, port+1);
-			evdev_device_id[port] = cfgLoadInt("input", evdev_config_key, EVDEV_DEFAULT_DEVICE_ID(port+1));
-			free(evdev_config_key);
-
-			// Check if the same device is already in use on another port
-			if (evdev_device_id[port] < 0)
-			{
-				printf("evdev: Controller %d disabled by config.\n", port + 1);
-			}
-			else
-			{
-				for (i = 0; i < port; i++)
-				{
-						if (evdev_device_id[port] == evdev_device_id[i])
-						{
-								die("You can't assign the same device to multiple ports!\n");
-						}
-				}
-
-				size_needed = snprintf(NULL, 0, EVDEV_DEVICE_STRING, evdev_device_id[port]) + 1;
-				evdev_device = (char*)malloc(size_needed);
-				sprintf(evdev_device, EVDEV_DEVICE_STRING, evdev_device_id[port]);
-
-				size_needed = snprintf(NULL, 0, EVDEV_MAPPING_CONFIG_KEY, port+1) + 1;
-				evdev_config_key = (char*)malloc(size_needed);
-				sprintf(evdev_config_key, EVDEV_MAPPING_CONFIG_KEY, port+1);
-				const char* mapping = (cfgExists("input", evdev_config_key) == 2 ? cfgLoadStr("input", evdev_config_key, "").c_str() : NULL);
-				free(evdev_config_key);
-
-				input_evdev_init(&evdev_controllers[port], evdev_device, mapping);
-
-				free(evdev_device);
-			}
-		}
-	#endif
-
 	#if defined(SUPPORT_X11)
 		input_x11_init();
 	#endif
@@ -124,9 +63,6 @@ void SetupInput()
 
 void UpdateInputState(u32 port)
 {
-	#if defined(USE_EVDEV)
-		input_evdev_handle(&evdev_controllers[port], port);
-	#endif
 }
 
 void os_DoEvents()

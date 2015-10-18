@@ -1285,6 +1285,8 @@ void rend_set_fb_scale(float x,float y)
 	fb_scale_y=y;
 }
 
+void co_dc_yield();
+
 struct glesrend : Renderer
 {
 	bool Init() { return gles_init(); }
@@ -1294,7 +1296,7 @@ struct glesrend : Renderer
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
 	bool Render() { return RenderFrame(); }
 
-	void Present() { gl_swap(); glViewport(0, 0, screen_width, screen_height); }
+	void Present() { gl_swap(); glViewport(0, 0, screen_width, screen_height); co_dc_yield(); }
 
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
 		return gl_GetTexture(tsp, tcw);

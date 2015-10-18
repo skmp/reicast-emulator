@@ -46,27 +46,32 @@ void ngen_FailedToFindBlock_internal() {
 
 void(*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
 
+static void ngen_mainloop_exec(Sh4RCB* ctx)
+{
+   cycle_counter = SH4_TIMESLICE;
+   do {
+      DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);
+      rcb();
+   } while (cycle_counter > 0);
+
+   if (UpdateSystem())
+      rdv_DoInterrupts_pc(ctx->cntx.pc);
+}
+
 void ngen_mainloop(void* v_cntx)
 {
 	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
 
 	cycle_counter = 0;
 
-#if !defined(TARGET_BOUNDED_EXECUTION)
-	for (;;) {
+   for (
+#if defined(TARGET_BOUNDED_EXECUTION)
+	int i=0; i<10000; i++
 #else
-	for (int i=0; i<10000; i++) {
+	;;
 #endif
-		cycle_counter = SH4_TIMESLICE;
-		do {
-			DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);
-			rcb();
-		} while (cycle_counter > 0);
-
-		if (UpdateSystem()) {
-			rdv_DoInterrupts_pc(ctx->cntx.pc);
-		}
-	}
+   )
+      ngen_mainloop_exec(ctx);
 }
 
 void ngen_init()

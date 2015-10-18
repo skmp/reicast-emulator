@@ -32,47 +32,56 @@
 #define GetN(str) ((str>>8) & 0xf)
 #define GetM(str) ((str>>4) & 0xf)
 
-void Sh4_int_Run()
+static void Sh4_int_Run_exec(s32 *l)
+{
+#if !defined(NO_MMU)
+   try {
+#endif
+      do
+      {
+         u32 addr = next_pc;
+         next_pc += 2;
+         u32 op = IReadMem16(addr);
+
+         OpPtr[op](op);
+         *l -= CPU_RATIO;
+      } while (*l > 0);
+      *l += SH4_TIMESLICE;
+      UpdateSystem_INTC();
+#if !defined(NO_MMU)
+   }
+   catch (SH4ThrownException ex) {
+      Do_Exception(ex.epc, ex.expEvn, ex.callVect);
+      *l -= CPU_RATIO * 5;
+   }
+#endif
+}
+
+#if defined(TARGET_BOUNDED_EXECUTION)
+void Sh4_int_Run(void)
 {
 	sh4_int_bCpuRun=true;
 
 	s32 l=SH4_TIMESLICE;
 
-#if !defined(TARGET_BOUNDED_EXECUTION)
-	do
-#else
 	for (int i=0; i<10000; i++)
-#endif
-	{
-#if !defined(NO_MMU)
-		try {
-#endif
-			do
-			{
-				u32 addr = next_pc;
-				next_pc += 2;
-				u32 op = IReadMem16(addr);
+      Sh4_int_Run_exec(&l);
+}
+#else
+void Sh4_int_Run(void)
+{
+	sh4_int_bCpuRun=true;
 
-				OpPtr[op](op);
-				l -= CPU_RATIO;
-			} while (l > 0);
-			l += SH4_TIMESLICE;
-			UpdateSystem_INTC();
-#if !defined(NO_MMU)
-		}
-		catch (SH4ThrownException ex) {
-			Do_Exception(ex.epc, ex.expEvn, ex.callVect);
-			l -= CPU_RATIO * 5;
-		}
-#endif
-#if !defined(TARGET_BOUNDED_EXECUTION)
+	s32 l=SH4_TIMESLICE;
+
+	do
+	{
+      Sh4_int_Run_exec(&l);
 	} while(sh4_int_bCpuRun);
 
 	sh4_int_bCpuRun=false;
-#else
-	}
-#endif
 }
+#endif
 
 void Sh4_int_Stop()
 {

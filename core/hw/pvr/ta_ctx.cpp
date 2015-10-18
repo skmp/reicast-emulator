@@ -41,7 +41,7 @@ void SetCurrentTARC(u32 addr)
 	}
 }
 
-bool TryDecodeTARC()
+bool TryDecodeTARC(void)
 {
 	verify(ta_ctx != 0);
 
@@ -58,11 +58,10 @@ bool TryDecodeTARC()
 		//signal the vdec thread
 		return true;
 	}
-	else
-		return false;
+   return false;
 }
 
-void VDecEnd()
+void VDecEnd(void)
 {
 	verify(vd_ctx != 0);
 
@@ -127,7 +126,7 @@ bool QueueRender(TA_context* ctx)
 	return true;
 }
 
-TA_context* DequeueRender()
+TA_context* DequeueRender(void)
 {
 	mtx_rqueue.Lock();
 	TA_context* rv = rqueue;
@@ -139,7 +138,8 @@ TA_context* DequeueRender()
 	return rv;
 }
 
-bool rend_framePending() {
+bool rend_framePending(void)
+{
 	mtx_rqueue.Lock();
 	TA_context* rv = rqueue;
 	mtx_rqueue.Unlock();
@@ -163,7 +163,7 @@ cMutex mtx_pool;
 vector<TA_context*> ctx_pool;
 vector<TA_context*> ctx_list;
 
-TA_context* tactx_Alloc()
+TA_context* tactx_Alloc(void)
 {
 	TA_context* rv = 0;
 
@@ -219,10 +219,8 @@ TA_context* tactx_Find(u32 addr, bool allocnew)
 
 		return rv;
 	}
-	else
-	{
-		return 0;
-	}
+
+   return 0;
 }
 
 TA_context* tactx_Pop(u32 addr)

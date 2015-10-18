@@ -22,7 +22,7 @@ void RegWrite_SB_C2DST(u32 addr, u32 data)
 	}
 }
 //PVR-DMA
-void do_pvr_dma()
+void do_pvr_dma(void)
 {
 	u32 chcr   = DMAC_CHCR(0).full;
 	u32 dmaor  = DMAC_DMAOR.full;
@@ -143,7 +143,7 @@ void pvr_sb_Init()
 	//0x005F6820    SB_SDST RW  Sort-DMA start
 	sb_rio_register(SB_SDST_addr,RIO_WF,0,&RegWrite_SB_SDST);
 }
-void pvr_sb_Term()
+void pvr_sb_Term(void)
 {
 }
 //Reset -> Reset - Initialise

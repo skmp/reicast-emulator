@@ -31,7 +31,7 @@ u32 YUV_y_curr;
 u32 YUV_x_size;
 u32 YUV_y_size;
 
-void YUV_init()
+void YUV_init(void)
 {
 	YUV_x_curr=0;
 	YUV_y_curr=0;
@@ -281,20 +281,20 @@ void pvr_Reset(bool Manual)
 
 u32 pvr_map32(u32 offset32)
 {
-		//64b wide bus is achieved by interleaving the banks every 32 bits
-		const u32 bank_bit = VRAM_BANK_BIT;
-		const u32 static_bits = VRAM_MASK - (VRAM_BANK_BIT * 2 - 1);
-		const u32 offset_bits = VRAM_BANK_BIT - 1;
+   //64b wide bus is achieved by interleaving the banks every 32 bits
+   const u32 bank_bit = VRAM_BANK_BIT;
+   const u32 static_bits = VRAM_MASK - (VRAM_BANK_BIT * 2 - 1);
+   const u32 offset_bits = VRAM_BANK_BIT - 1;
 
-		u32 bank = (offset32 & VRAM_BANK_BIT) / VRAM_BANK_BIT;
+   u32 bank = (offset32 & VRAM_BANK_BIT) / VRAM_BANK_BIT;
 
-		u32 rv = offset32 & static_bits;
+   u32 rv = offset32 & static_bits;
 
-		rv |= (offset32 & offset_bits) * 8;
+   rv |= (offset32 & offset_bits) * 8;
 
-		rv |= bank * 4;
+   rv |= bank * 4;
 
-		return rv;
+   return rv;
 }
 
 

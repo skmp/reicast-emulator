@@ -862,14 +862,10 @@ void StreamStep(ChannelEx* ch)
 			if (LPCTL)
 			{
 				if (PCMS==2) //if in adpcm non-stream mode, reset the decoder
-				{
 					ch->adpcm.Reset(ch);
-				}
 			}
 			else
-			{
 				ch->disable();
-			}
 		}
 
 		ch->CA=CA;
@@ -1173,12 +1169,10 @@ static SampleType mxlr[64];
 u32 samples_gen;
 
 //no DSP for now in this version
-void AICA_Sample32()
+void AICA_Sample32(void)
 {
 	if (settings.aica.NoBatch)
-	{
 		return;
-	}
 
 	memset(mxlr,0,sizeof(mxlr));
 
@@ -1292,7 +1286,7 @@ void AICA_Sample32()
 	}
 }
 
-void AICA_Sample()
+void AICA_Sample(void)
 {
 	SampleType mixl,mixr;
 	mixl = 0;
@@ -1335,9 +1329,7 @@ void AICA_Sample()
 	}
 
     if (settings.aica.NoSound)
-    {
         return;
-    }
 
 	//Mono !
 	if (CommonData->Mono)

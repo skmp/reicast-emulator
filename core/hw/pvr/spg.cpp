@@ -26,10 +26,8 @@ int time_sync;
 
 void CalculateSync()
 {
-	u32 pixel_clock;
 	float scale_x=1,scale_y=1;
-
-	pixel_clock=PIXEL_CLOCK / (FB_R_CTRL.vclk_div?1:2);
+	u32 pixel_clock=PIXEL_CLOCK / (FB_R_CTRL.vclk_div?1:2);
 
 	//We need to calculate the pixel clock
 
@@ -52,13 +50,9 @@ void CalculateSync()
 	else
 	{
 		if (FB_R_CTRL.vclk_div)
-		{
 			scale_y = 1.0f;//non interlaced VGA mode has full resolution :)
-		}
 		else
-		{
 			scale_y = 0.5f;//non interlaced modes have half resolution
-		}
 	}
 
 	rend_set_fb_scale(scale_x,scale_y);
@@ -133,73 +127,66 @@ int spg_line_sched(int tag, int cycl, int jit)
 			//TODO : rend_if_VBlank();
 			rend_vblank();//notify for vblank :)
 			
-			if ((os_GetSeconds()-last_fps)>2)
-			{
-				static int Last_FC;
-				double ts=os_GetSeconds()-last_fps;
-				double spd_fps=(FrameCount-Last_FC)/ts;
-				double spd_vbs=vblk_cnt/ts;
-				double spd_cpu=spd_vbs*Frame_Cycles;
-				spd_cpu/=1000000;	//mrhz kthx
-				double fullvbs=(spd_vbs/spd_cpu)*200;
-				double mv=VertexCount/ts/(spd_cpu/200);
-				char mv_c=' ';
+#if 0
+         if ((os_GetSeconds()-last_fps)>2)
+         {
+            static int Last_FC;
+            double ts=os_GetSeconds()-last_fps;
+            double spd_fps=(FrameCount-Last_FC)/ts;
+            double spd_vbs=vblk_cnt/ts;
+            double spd_cpu=spd_vbs*Frame_Cycles;
+            spd_cpu/=1000000;	//mrhz kthx
+            double fullvbs=(spd_vbs/spd_cpu)*200;
+            double mv=VertexCount/ts/(spd_cpu/200);
+            char mv_c=' ';
 
-				Last_FC=FrameCount;
+            Last_FC=FrameCount;
 
-				if (mv>750)
-				{
-					mv/=1000;	//KV
-					mv_c='K';
-				}
-				if (mv>750)
-				{
-					mv/=1000;	//
-					mv_c='M';
-				}
-				VertexCount=0;
-				vblk_cnt=0;
+            if (mv>750)
+            {
+               mv/=1000;	//KV
+               mv_c='K';
+            }
+            if (mv>750)
+            {
+               mv/=1000;	//
+               mv_c='M';
+            }
+            VertexCount=0;
+            vblk_cnt=0;
 
-				char fpsStr[256];
-				const char* mode=0;
-				const char* res=0;
+            char fpsStr[256];
+            const char* mode=0;
+            const char* res=0;
 
-				res=SPG_CONTROL.interlace?"480i":"240p";
+            res=SPG_CONTROL.interlace?"480i":"240p";
 
-				if (SPG_CONTROL.NTSC==0 && SPG_CONTROL.PAL==1)
-					mode="PAL";
-				else if (SPG_CONTROL.NTSC==1 && SPG_CONTROL.PAL==0)
-					mode="NTSC";
-				else
-				{
-					res=SPG_CONTROL.interlace?"480i":"480p";
-					mode="VGA";
-				}
+            if (SPG_CONTROL.NTSC==0 && SPG_CONTROL.PAL==1)
+               mode="PAL";
+            else if (SPG_CONTROL.NTSC==1 && SPG_CONTROL.PAL==0)
+               mode="NTSC";
+            else
+            {
+               res=SPG_CONTROL.interlace?"480i":"480p";
+               mode="VGA";
+            }
 
-				double frames_done=spd_cpu/2;
-				double mspdf=1/frames_done*1000;
+            double frames_done=spd_cpu/2;
+            double mspdf=1/frames_done*1000;
+            full_rps=(spd_fps+fskip/ts);
+            sprintf(fpsStr,"%s/%c - %4.2f (%4.2f) - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f", 
+                  VER_SHORTNAME,'n',mspdf,speed_load_mspdf,spd_cpu*100/200,spd_vbs,
+                  spd_vbs/full_rps,mode,res,fullvbs,
+                  spd_fps,fskip/ts
+                  , mv, mv_c, mips_counter/ 1024.0 / 1024.0);
+            mips_counter = 0;
+            os_SetWindowText(fpsStr);
+            last_fps=os_GetSeconds();
 
-				full_rps=(spd_fps+fskip/ts);
+            fskip=0;
 
-				#ifdef TARGET_PANDORA
-				sprintf(fpsStr,"CPU: %4.2f V: %4.2f (%s%s%4.2f) R: %4.2f+%4.2f", 
-					spd_cpu*100/200,spd_vbs,
-					mode,res,fullvbs,
-					spd_fps,fskip/ts);
-				#else
-				sprintf(fpsStr,"%s/%c - %4.2f (%4.2f) - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f", 
-					VER_SHORTNAME,'n',mspdf,speed_load_mspdf,spd_cpu*100/200,spd_vbs,
-					spd_vbs/full_rps,mode,res,fullvbs,
-					spd_fps,fskip/ts
-					, mv, mv_c, mips_counter/ 1024.0 / 1024.0);
-					mips_counter = 0;
-				#endif
-				
-				fskip=0;
-				os_SetWindowText(fpsStr);
-
-				last_fps=os_GetSeconds();
-			}
+         }
+#endif
 		}
 	}
 

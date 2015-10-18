@@ -23,56 +23,45 @@ void pvr_WriteReg(u32 paddr,u32 data)
 {
 	u32 addr=paddr&pvr_RegMask;
 
-	if (addr==ID_addr)
-		return;//read only
-	if (addr==REVISION_addr)
-		return;//read only
-	if (addr==TA_YUV_TEX_CNT_addr)
-		return;//read only
-
-	if (addr==STARTRENDER_addr)
-	{
-		//start render
-		rend_start_render();
-		return;
+   switch (addr)
+   {
+      case ID_addr: /* read-only */
+      case REVISION_addr:
+      case TA_YUV_TEX_CNT_addr:
+         return;
+      case STARTRENDER_addr:
+         //start render
+         rend_start_render();
+         return;
+      case TA_LIST_INIT_addr:
+         if (data>>31)
+         {
+            ta_vtx_ListInit();
+            data=0;
+         }
+         break;
+      case SOFTRESET_addr:
+         if (data!=0)
+         {
+            if (data&1)
+               ta_vtx_SoftReset();
+            data=0;
+         }
+         break;
+      case TA_LIST_CONT_addr:
+         //a write of anything works ?
+         ta_vtx_ListCont();
+         break;
+      case FB_R_CTRL_addr:
+      case SPG_CONTROL_addr:
+      case SPG_LOAD_addr:
+         PvrReg(addr,u32)=data;
+         CalculateSync();
+         return;
+      case TA_YUV_TEX_BASE_addr:
+         YUV_init();
+         break;
 	}
-
-	if (addr==TA_LIST_INIT_addr)
-	{
-		if (data>>31)
-		{
-			ta_vtx_ListInit();
-			data=0;
-		}
-	}
-
-	if (addr==SOFTRESET_addr)
-	{
-		if (data!=0)
-		{
-			if (data&1)
-				ta_vtx_SoftReset();
-			data=0;
-		}
-	}
-
-	if (addr==TA_LIST_CONT_addr)
-	{
-		//a write of anything works ?
-		ta_vtx_ListCont();
-	}
-	
-	if (addr == FB_R_CTRL_addr || 
-		addr == SPG_CONTROL_addr || 
-		addr == SPG_LOAD_addr)
-	{
-		PvrReg(addr,u32)=data;
-		CalculateSync();
-		return;
-	}
-
-	if (addr == TA_YUV_TEX_BASE_addr)
-		YUV_init();
 
 	if (addr>=PALETTE_RAM_START_addr)
 	{
@@ -87,9 +76,8 @@ void pvr_WriteReg(u32 paddr,u32 data)
 	}
 
 	if (addr>=FOG_TABLE_START_addr && addr<=FOG_TABLE_END_addr && PvrReg(addr,u32)!=data)
-	{
 		fog_needs_update=true;
-	}
+
 	PvrReg(addr,u32)=data;
 }
 

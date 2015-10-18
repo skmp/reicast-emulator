@@ -79,16 +79,14 @@ void Sh4_int_Run(void)
       Sh4_int_Run_exec(&l);
 	} while(sh4_int_bCpuRun);
 
-	sh4_int_bCpuRun=false;
+   Sh4_int_Stop();
 }
 #endif
 
 void Sh4_int_Stop()
 {
 	if (sh4_int_bCpuRun)
-	{
 		sh4_int_bCpuRun=false;
-	}
 }
 
 void Sh4_int_Step()

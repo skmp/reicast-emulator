@@ -409,16 +409,15 @@ bool _vmem_reserve_nonvmem()
 
 void _vmem_bm_reset_nvmem();
 
-void _vmem_bm_reset() {
-	if (virt_ram_base) {
-		#if !defined(TARGET_NO_NVMEM)
-			_vmem_bm_reset_nvmem();
-		#endif
-	}
+void _vmem_bm_reset()
+{
+#if !defined(TARGET_NO_NVMEM)
+	if (virt_ram_base)
+      _vmem_bm_reset_nvmem();
+#endif
     
-    if (!virt_ram_base || HOST_OS == OS_DARWIN) {
+    if (!virt_ram_base || HOST_OS == OS_DARWIN)
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
-	}
 }
 
 #if !defined(TARGET_NO_NVMEM)

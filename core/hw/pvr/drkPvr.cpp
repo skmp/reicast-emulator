@@ -34,16 +34,12 @@ void libPvr_Reset(bool Manual)
 
 s32 libPvr_Init()
 {
+   //failed
 	if (!spg_Init())
-	{
-		//failed
 		return rv_error;
-	}
+   //failed
 	if (!rend_init())
-	{
-		//failed
 		return rv_error;
-	}
 
 	return rv_ok;
 }

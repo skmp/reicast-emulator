@@ -116,9 +116,7 @@ void pvr_do_sort_dma()
 		//transfer global param
 		ta_vtx_data(ea_ptr,ea_ptr[0x18>>2]);
 		if (link_addr==2)
-		{
 			link_addr=calculate_start_link_addr();
-		}
 	}
 
 	// End of DMA :)
@@ -129,9 +127,7 @@ void pvr_do_sort_dma()
 void RegWrite_SB_SDST(u32 addr, u32 data)
 {
 	if(1&data)
-	{
 		pvr_do_sort_dma();
-	}
 }
 
 

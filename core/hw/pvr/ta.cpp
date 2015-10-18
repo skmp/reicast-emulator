@@ -66,30 +66,35 @@ u32 ta_fsm_cl=7;
 
 void fill_fsm(ta_state st, s8 pt, s8 obj, ta_state next, u32 proc=0, u32 sz64=0)
 {
-	for (int i=0;i<8;i++)
+   unsigned i, j;
+	for (i=0;i<8;i++)
 	{
 		if (pt != -1) i=pt;
 
-		for (int j=0;j<32;j++)
+		for (j=0;j<32;j++)
 		{
-			if (obj != -1) j=obj;
+			if (obj != -1)
+            j=obj;
 			verify(ta_fsm[(st<<8)+(i<<5)+j]==(0x80+st));
 			ta_fsm[(st<<8)+(i<<5)+j]=next | proc*16 /*| sz64*32*/;
-			if (obj != -1) break;
+			if (obj != -1)
+            break;
 		}
 
-		if (pt != -1) break;
+		if (pt != -1)
+         break;
 	}
 }
 
-void fill_fsm()
+void fill_fsm(void)
 {
+   unsigned i;
 	//initialise to invalid
-	for (int i=0;i<2048;i++)
+	for (i=0;i<2048;i++)
 		ta_fsm[i]=(i>>8) | 0x80;
 
 
-	for (int i=0;i<8;i++)
+	for (i=0;i<8;i++)
 	{
 		switch(i)
 		{
@@ -203,11 +208,7 @@ NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 	trans&=7;
 	//printf("Process state transition: %d || %d -> %d \n",cmd,state_in,trans&0xF);
 
-	if (cmd == 8)
-	{
-		//printf("Invalid TA Param %d\n", dat->pcw.ParaType);
-	}
-	else
+	if (cmd != 8)
 	{
 		if (dat->pcw.ParaType == ParamType_End_Of_List)
 		{

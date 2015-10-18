@@ -10,9 +10,7 @@ void GetSessionInfo(u8* out,u8 ses);
 void libGDR_ReadSubChannel(u8 * buff, u32 format, u32 len)
 {
 	if (format==0)
-	{
 		memcpy(buff,q_subchannel,len);
-	}
 }
 
 void libGDR_ReadSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz)
@@ -31,8 +29,7 @@ u32 libGDR_GetDiscType()
 {
 	if (disc)
 		return disc->type;
-	else
-		return NullDriveDiscType;
+   return NullDriveDiscType;
 }
 
 void libGDR_GetSessionInfo(u8* out,u8 ses)

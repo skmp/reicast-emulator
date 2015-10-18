@@ -47,31 +47,38 @@ template <u32 sz,class T>
 T arm_ReadReg(u32 addr)
 {
 	addr&=0x7FFF;
-	if (addr==REG_L)
-		return e68k_reg_L;
-	else if(addr==REG_M)
-		return e68k_reg_M;	//shouldn't really happen
-	else
-		return libAICA_ReadReg(addr,sz);
+
+   switch (addr)
+   {
+      case REG_L:
+         return e68k_reg_L;
+      case REG_M:
+         return e68k_reg_M;	//shouldn't really happen
+      default:
+         break;
+   }
+
+   return libAICA_ReadReg(addr,sz);
 }		
 template <u32 sz,class T>
 void arm_WriteReg(u32 addr,T data)
 {
 	addr &= 0x7FFF;
-	if (addr == REG_L)
-	{
-		return; // Shouldn't really happen (read only)
-	}
-	else if (addr == REG_M)
-	{
-		//accept interrupts
-		if (data & 1)
-			e68k_AcceptInterrupt();
-	}
-	else
-	{
-		return libAICA_WriteReg(addr, data, sz);
-	}
+
+   switch (addr)
+   {
+      case REG_L:
+         return; // Shouldn't really happen (read only)
+      case REG_M:
+         //accept interrupts
+         if (data & 1)
+            e68k_AcceptInterrupt();
+         break;
+      default:
+         break;
+   }
+
+   return libAICA_WriteReg(addr, data, sz);
 }
 
 //00000000~007FFFFF @DRAM_AREA* 

@@ -337,9 +337,7 @@ bool IsOnRam(u32 addr)
 	if (((addr>>26)&0x7)==3)
 	{
 		if ((((addr>>29) &0x7)!=7) && (((addr>>29) &0x7)!=3))
-		{
 			return true;
-		}
 	}
 
 	return false;

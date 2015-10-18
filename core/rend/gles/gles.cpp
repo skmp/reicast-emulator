@@ -1296,8 +1296,6 @@ struct glesrend : Renderer
 
 	void Present() { gl_swap(); glViewport(0, 0, screen_width, screen_height); }
 
-	void DrawOSD() { }
-
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
 		return gl_GetTexture(tsp, tcw);
 	}

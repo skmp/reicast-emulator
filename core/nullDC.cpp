@@ -210,7 +210,7 @@ void LoadSettings()
 
 	settings.bios.UseReios = cfgLoadInt("config", "bios.UseReios", 0);
 
-#if (HOST_OS != OS_LINUX || defined(_ANDROID) || defined(TARGET_PANDORA))
+#if (HOST_OS != OS_LINUX || defined(_ANDROID))
 	settings.aica.BufferSize=2048;
 #else
 	settings.aica.BufferSize=1024;

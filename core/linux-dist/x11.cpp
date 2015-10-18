@@ -14,13 +14,8 @@
 #include "linux-dist/x11.h"
 #include "linux-dist/main.h"
 
-#if defined(TARGET_PANDORA)
-	#define DEFAULT_FULLSCREEN    1
-	#define DEFAULT_WINDOW_WIDTH  800
-#else
-	#define DEFAULT_FULLSCREEN    0
-	#define DEFAULT_WINDOW_WIDTH  640
-#endif
+#define DEFAULT_FULLSCREEN    0
+#define DEFAULT_WINDOW_WIDTH  640
 #define DEFAULT_WINDOW_HEIGHT   480
 
 map<int, int> x11_keymap;

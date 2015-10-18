@@ -172,9 +172,6 @@
 #elif defined(TARGET_WIN64)
 	#define HOST_OS OS_WINDOWS
 	#define HOST_CPU CPU_X64
-#elif defined(TARGET_PANDORA)
-	#define HOST_OS OS_LINUX
-	#define HOST_CPU CPU_ARM
 #elif defined(TARGET_LINUX_ARMELv7)
 	#define HOST_OS OS_LINUX
 	#define HOST_CPU CPU_ARM

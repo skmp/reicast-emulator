@@ -83,12 +83,7 @@ bool rend_frame(TA_context* ctx, bool draw_osd) {
 	re.Set();
 #endif
 
-	bool do_swp = proc && renderer->Render();
-
-	if (do_swp && draw_osd)
-		renderer->DrawOSD();
-
-	return do_swp;
+	return proc && renderer->Render();
 }
 
 bool rend_single_frame()

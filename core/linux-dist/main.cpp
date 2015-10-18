@@ -155,6 +155,16 @@ std::vector<string> find_system_data_dirs()
 	return dirs;
 }
 
+static void co_dc_init(int argc,wchar* argv[])
+{
+	dc_init(argc,argv);
+}
+
+static void co_dc_run()
+{
+	dc_run();
+}
+
 static void retro_init(int argc, wchar *argv[] )
 {
 	/* Set directories */
@@ -174,7 +184,7 @@ static void retro_init(int argc, wchar *argv[] )
 
 	settings.profile.run_counts=0;
 
-	dc_init(argc,argv);
+	co_dc_init(argc,argv);
 
 	SetupInput();
 }
@@ -183,7 +193,10 @@ int main(int argc, wchar* argv[])
 {
    retro_init(argc, argv);
 
-   dc_run();
+   while (true)
+   {
+      co_dc_run();
+   }
 
 	return 0;
 }

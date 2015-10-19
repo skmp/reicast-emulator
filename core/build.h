@@ -223,10 +223,6 @@
 #define FEAT_DSPREC DYNAREC_NONE
 #endif
 
-#if defined(TARGET_NO_COREIO_HTTP)
-#define FEAT_HAS_COREIO_HTTP 0
-#endif
-
 //defaults
 
 #ifndef DC_PLATFORM 
@@ -251,10 +247,6 @@
 	#else
 		#define FEAT_DSPREC DYNAREC_NONE
 	#endif
-#endif
-
-#ifndef FEAT_HAS_COREIO_HTTP
-	#define FEAT_HAS_COREIO_HTTP 1
 #endif
 
 //Depricated build configs

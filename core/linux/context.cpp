@@ -18,13 +18,12 @@
 
 #define MCTX(p) (((ucontext_t *)(segfault_ctx))->uc_mcontext p)
 template <typename Ta, typename Tb>
-void bicopy(Ta& rei, Tb& seg, bool to_segfault) {
-	if (to_segfault) {
+void bicopy(Ta& rei, Tb& seg, bool to_segfault)
+{
+	if (to_segfault)
 		seg = rei;
-	}
-	else {
+	else
 		rei = seg;
-	}
 }
 
 void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_segfault) {

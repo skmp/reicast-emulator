@@ -1,88 +1,18 @@
 #include <GL3/gl3w.h>
-
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN 1
-#include <windows.h>
-
-static HMODULE libgl;
-
-static void open_libgl(void)
-{
-	libgl = LoadLibraryA("opengl32.dll");
-}
-
-static void close_libgl(void)
-{
-	FreeLibrary(libgl);
-}
-
-static void *get_proc(const char *proc)
-{
-	void *res;
-
-	res = wglGetProcAddress(proc);
-	if (!res)
-		res = GetProcAddress(libgl, proc);
-	return res;
-}
-#elif defined(__APPLE__) || defined(__APPLE_CC__)
-#include <Carbon/Carbon.h>
-
-CFBundleRef bundle;
-CFURLRef bundleURL;
-
-static void open_libgl(void)
-{
-	bundleURL = CFURLCreateWithFileSystemPath(kCFAllocatorDefault,
-		CFSTR("/System/Library/Frameworks/OpenGL.framework"),
-		kCFURLPOSIXPathStyle, true);
-
-	bundle = CFBundleCreate(kCFAllocatorDefault, bundleURL);
-	assert(bundle != NULL);
-}
-
-static void close_libgl(void)
-{
-	CFRelease(bundle);
-	CFRelease(bundleURL);
-}
-
-static void *get_proc(const char *proc)
-{
-	void *res;
-
-	CFStringRef procname = CFStringCreateWithCString(kCFAllocatorDefault, proc,
-		kCFStringEncodingASCII);
-	res = CFBundleGetFunctionPointerForName(bundle, procname);
-	CFRelease(procname);
-	return res;
-}
-#else
-#include <dlfcn.h>
 #include <GL/glx.h>
 
-static void *libgl;
-
 static void open_libgl(void)
 {
-	libgl = dlopen("libGL.so.1", RTLD_LAZY | RTLD_GLOBAL);
 }
 
 static void close_libgl(void)
 {
-	dlclose(libgl);
 }
 
 static void *get_proc(const char *proc)
 {
-	void *res;
-
-	res = (void*)glXGetProcAddress((const GLubyte *) proc);
-	if (!res)
-		res = dlsym(libgl, proc);
-	return res;
+	return (void*)glXGetProcAddress((const GLubyte *) proc);
 }
-#endif
 
 static struct {
 	int major, minor;
@@ -106,9 +36,7 @@ static void load_procs(void);
 
 int gl3wInit(void)
 {
-	open_libgl();
 	load_procs();
-	close_libgl();
 	return parse_version();
 }
 

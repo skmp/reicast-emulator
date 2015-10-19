@@ -236,8 +236,7 @@ CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
-LIBS += -lm -lrt -ldl
-LIBS  += -lpthread
+LIBS += -lm -lrt -lpthread
 
 INCS += -I$(RZDCY_SRC_DIR)/linux-dist/libco
 RZDCY_FILES += ../../core/linux-dist/libco/libco.c

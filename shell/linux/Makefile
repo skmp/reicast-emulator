@@ -200,10 +200,8 @@ RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(w
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.S))
 	
 RZDCY_CFLAGS	:= \
-	$(CFLAGS) -c -O3 -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
-	-D_ANDROID -DRELEASE\
-	-frename-registers -fsingle-precision-constant -ffast-math \
-	-ftree-vectorize -fomit-frame-pointer
+	$(CFLAGS) -c -O3 -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps  -DRELEASE\
+	-frename-registers -fsingle-precision-constant -ffast-math -ftree-vectorize -fomit-frame-pointer
 	
 	ifndef NOT_ARM
 		RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
@@ -234,12 +232,13 @@ CFLAGS += -ffast-math -ftree-vectorize
 
 CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
 
-INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
+INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I$(RZDCY_SRC_DIR)/libretro-common/include
 
 LIBS += -lm -lrt -lpthread
 
 INCS += -I$(RZDCY_SRC_DIR)/linux-dist/libco
 RZDCY_FILES += ../../core/linux-dist/libco/libco.c
+RZDCY_FILES += ../../core/libretro-common/memmap/memalign.c
 
 PREFIX ?= /usr/local
 MAN_DIR ?= ${PREFIX}/share/man/man1

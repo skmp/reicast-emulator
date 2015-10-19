@@ -2,6 +2,8 @@
 #include "rend/TexCache.h"
 #include "hw/pvr/pvr_mem.h"
 
+#include <memalign.h>
+
 /*
 Textures
 
@@ -307,8 +309,9 @@ struct TextureCacheData
 			if (tcw.MipMapped && settings.rend.UseMipmaps)
 				glGenerateMipmap(GL_TEXTURE_2D);
 		}
-		else {
-			#if HOST_OS == OS_WINDOWS
+#if 0
+		else
+      {
 				if (textype == GL_UNSIGNED_SHORT_5_6_5)
 					tex_type = 0;
 				else if (textype == GL_UNSIGNED_SHORT_5_5_5_1)
@@ -316,11 +319,10 @@ struct TextureCacheData
 				else if (textype == GL_UNSIGNED_SHORT_4_4_4_4)
 					tex_type = 2;
 	
-				if (pData) {
-					_mm_free(pData);
-				}
+				if (pData)
+					memalign_free(pData);
 	
-				pData = (u16*)_mm_malloc(w * h * 16, 16);
+				pData = (u16*)memalign_alloc(16, w * h * 16);
 				for (int y = 0; y < h; y++) {
 					for (int x = 0; x < w; x++) {
 						u32* data = (u32*)&pData[(x + y*w) * 8];
@@ -331,10 +333,8 @@ struct TextureCacheData
 						data[3] = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 0) % h * w]];
 					}
 				}
-			#else
-				die("Softrend only works for windows");
-			#endif
 		}
+#endif
 	}
 
 	//true if : dirty or paletted texture and revs don't match
@@ -342,15 +342,17 @@ struct TextureCacheData
 	
 	void Delete()
 	{
-		#if HOST_OS == OS_WINDOWS
-			if (pData) {
-				_mm_free(pData);
-				pData = 0;
-			}
-		#endif
-		if (texID) {
-			glDeleteTextures(1, &texID);
-		}
+#if 0
+      if (pData)
+      {
+         memalign_free(pData);
+         pData = 0;
+      }
+#endif
+		if (texID)
+      {
+         glDeleteTextures(1, &texID);
+      }
 		if (lock_block)
 			libCore_vramlock_Unlock_block(lock_block);
 		lock_block=0;

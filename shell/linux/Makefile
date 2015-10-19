@@ -159,7 +159,72 @@ else
 endif
 
 RZDCY_SRC_DIR = ../../core
-include $(RZDCY_SRC_DIR)/core.mk
+
+RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
+ hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
+ hw/extdev/ hw/arm/ hw/naomi/ imgread/ linux/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
+ deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/ 
+
+ifndef NO_REC
+	RZDCY_MODULES += hw/sh4/dyna/
+endif
+
+ifndef NOT_ARM
+    RZDCY_MODULES += rec-ARM/
+endif
+
+ifdef X86_REC
+    RZDCY_MODULES += rec-x86/ emitter/
+endif
+
+ifdef X64_REC
+    RZDCY_MODULES += rec-x64/
+endif
+
+ifdef CPP_REC
+    RZDCY_MODULES += rec-cpp/
+endif
+
+ifndef NO_REND
+    RZDCY_MODULES += rend/gles/
+else
+    RZDCY_MODULES += rend/norend/
+endif
+
+ifdef FOR_LINUX
+    RZDCY_MODULES += linux-dist/
+endif
+
+RZDCY_FILES := $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))
+RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.c))
+RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.S))
+	
+RZDCY_CFLAGS	:= \
+	$(CFLAGS) -c -O3 -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
+	-D_ANDROID -DRELEASE\
+	-frename-registers -fsingle-precision-constant -ffast-math \
+	-ftree-vectorize -fomit-frame-pointer
+	
+	ifndef NOT_ARM
+		RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
+		RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
+	else
+	  ifndef ISMIPS
+      RZDCY_CFLAGS += -DTARGET_LINUX_x86
+		else
+      RZDCY_CFLAGS += -DTARGET_LINUX_MIPS
+		endif
+	endif
+
+ifdef NO_REC
+  RZDCY_CFLAGS += -DTARGET_NO_REC
+endif
+
+ifdef USE_GLES
+  RZDCY_CFLAGS += -DGLES
+endif
+
+RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
 
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 

@@ -69,16 +69,10 @@ void os_wait_cycl(u32 c);
 
 int elapse_time(int tag, int cycl, int jit)
 {
-#if HOST_OS==OS_WINDOWS
-	//os_wait_cycl(cycl);
-#endif
 	return min(max(Frame_Cycles,(u32)1*1000*1000),(u32)8*1000*1000);
 }
-#if HOST_OS==OS_WINDOWS
-extern double speed_load_mspdf;
-#else
+
 double speed_load_mspdf;
-#endif
 
 int mips_counter;
 

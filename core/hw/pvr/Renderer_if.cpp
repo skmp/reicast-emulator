@@ -190,7 +190,7 @@ void rend_start_render()
 			max_mvo=max(max_mvo,ctx->rend.global_param_mvo.used());
 			max_modt=max(max_modt,ctx->rend.modtrig.used());
 
-#if HOST_OS==OS_WINDOWS && 0
+#if 0
 			printf("max: idx: %d, vtx: %d, op: %d, pt: %d, tr: %d, mvo: %d, modt: %d, ov: %d\n", max_idx, max_vtx, max_op, max_pt, max_tr, max_mvo, max_modt, ovrn);
 #endif
 			if (QueueRender(ctx))  {
@@ -245,26 +245,7 @@ bool rend_init()
 #ifdef NO_REND
 	renderer	 = rend_norend();
 #else
-
-#if HOST_OS == OS_WINDOWS
-	switch (settings.pvr.rend) {
-		default:
-		case 0:
-			renderer = rend_GLES2();
-			break;
-
-		case 1:
-			renderer = rend_D3D11();
-			break;
-
-		case 2:
-			renderer = rend_softrend();
-			break;
-	}
-#else
 	renderer = rend_GLES2();
-#endif
-
 #endif
 
 #if !defined(_ANDROID) && HOST_OS != OS_DARWIN

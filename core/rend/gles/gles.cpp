@@ -4,10 +4,7 @@
 #include "cfg/cfg.h"
 
 #ifndef GLES
-#if HOST_OS != OS_DARWIN
 #include <GL3/gl3w.c>
-#pragma comment(lib,"Opengl32.lib")
-#endif
 #endif
 
 /*
@@ -342,7 +339,6 @@ gl_ctx gl;
 int screen_width;
 int screen_height;
 
-#if (HOST_OS != OS_DARWIN)
 #ifdef GLES
 // Create a basic GLES context
 bool gl_init(void* wind, void* disp)
@@ -435,8 +431,6 @@ void gl_swap()
 #endif
 }
 #endif
-#endif
-
 #endif
 
 struct ShaderUniforms_t
@@ -732,7 +726,7 @@ bool gles_init()
 	if (!gl_create_resources())
 		return false;
 
-#if defined(GLES) && HOST_OS != OS_DARWIN
+#if defined(GLES)
 	eglSwapInterval(gl.setup.display,1);
 #endif
 
@@ -808,28 +802,6 @@ void tryfit(float* x,float* y)
 	fog_coefs[1]=b;
 	//printf("%f\n",B*log(maxdev)/log(2.0)+A);
 }
-
-
-
-extern u16 kcode[4];
-extern u8 rt[4],lt[4];
-
-#define key_CONT_C           (1 << 0)
-#define key_CONT_B           (1 << 1)
-#define key_CONT_A           (1 << 2)
-#define key_CONT_START       (1 << 3)
-#define key_CONT_DPAD_UP     (1 << 4)
-#define key_CONT_DPAD_DOWN   (1 << 5)
-#define key_CONT_DPAD_LEFT   (1 << 6)
-#define key_CONT_DPAD_RIGHT  (1 << 7)
-#define key_CONT_Z           (1 << 8)
-#define key_CONT_Y           (1 << 9)
-#define key_CONT_X           (1 << 10)
-#define key_CONT_D           (1 << 11)
-#define key_CONT_DPAD2_UP    (1 << 12)
-#define key_CONT_DPAD2_DOWN  (1 << 13)
-#define key_CONT_DPAD2_LEFT  (1 << 14)
-#define key_CONT_DPAD2_RIGHT (1 << 15)
 
 u32 osd_base;
 u32 osd_count;
@@ -1174,10 +1146,8 @@ bool RenderFrame()
 	}
 	else
 	{
-#if HOST_OS != OS_DARWIN
         //Fix this in a proper way
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
-#endif
 	}
 
 	//Clear depth
@@ -1245,14 +1215,6 @@ bool RenderFrame()
 	return !is_rtt;
 }
 
-#if !defined(_ANDROID) && !defined(TARGET_NACL32)
-#if HOST_OS==OS_LINUX
-#define SET_AFNT 1
-#endif
-#endif
-
-extern u16 kcode[4];
-
 /*
 bool rend_single_frame()
 {
@@ -1266,16 +1228,6 @@ bool rend_single_frame()
 	}
 
 	bool do_swp=false;
-	//if (kcode[0]&(1<<9))
-	{
-
-
-	//clear up & free data ..
-	tactx_Recycle(_pvrrc);
-	_pvrrc=0;
-
-	return do_swp;
-}
 */
 
 

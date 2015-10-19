@@ -13,10 +13,6 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
-#if !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX)
-  #include <sys/personality.h>
-  #include <dlfcn.h>
-#endif
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
 
@@ -286,18 +282,8 @@ void enable_runfast()
 	#endif
 }
 
-void linux_fix_personality() {
-        #if HOST_OS == OS_LINUX && !defined(_ANDROID) && !defined(TARGET_OS_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
-          printf("Personality: %08X\n", personality(0xFFFFFFFF));
-          personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
-          printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
-        #endif
-}
-
 void common_linux_setup()
 {
-	linux_fix_personality();
-
 	enable_runfast();
 	install_fault_handler();
 	signal(SIGINT, exit);

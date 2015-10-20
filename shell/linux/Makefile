@@ -64,8 +64,7 @@ $(info Platform: $(platform))
 
 # Generic 32 bit x86 (a.k.a. i386/i486/i686)
 ifneq (,$(findstring x86,$(platform)))
-    X86_REC := 1
-    NOT_ARM := 1
+	 WITH_DYNAREC := x86
     USE_X11 := 1
     MFLAGS += -m32
     ASFLAGS += --32
@@ -75,14 +74,14 @@ ifneq (,$(findstring x86,$(platform)))
 
 # Generic 64 bit x86 (a.k.a. x64/AMD64/x86_64/Intel64/EM64T)
 else ifneq (,$(findstring x64,$(platform)))
-    X64_REC := 1
-    NOT_ARM := 1
+	 WITH_DYNAREC := x64
     USE_X11 := 1
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fsingle-precision-constant
     CXXFLAGS += -fexceptions
 
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)
 else ifneq (,$(findstring armv7h,$(platform)))
+	WITH_DYNAREC := arm
     MFLAGS += -marm -mfloat-abi=hard -march=armv7-a -funroll-loops
     ASFLAGS += -mfloat-abi=hard -march=armv7-a
     ifneq (,$(findstring neon,$(platform)))
@@ -92,16 +91,9 @@ else ifneq (,$(findstring armv7h,$(platform)))
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
     USE_GLES := 1
 
-# LinCPP
-else ifneq (,$(findstring lincpp,$(platform)))
-    CPP_REC := 1
-    NOT_ARM := 1
-    USE_X11 := 1
-    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_JIT
-    CXXFLAGS += -fexceptions -std=gnu++11
-
 # Raspberry Pi 2
 else ifneq (,$(findstring rpi2,$(platform)))
+	WITH_DYNAREC := arm
     MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -funroll-loops
     ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
@@ -111,24 +103,16 @@ else ifneq (,$(findstring rpi2,$(platform)))
 
 # BeagleBone Black
 else ifneq (,$(findstring beagle,$(platform)))
+	WITH_DYNAREC := arm
     CC_PREFIX ?= arm-none-linux-gnueabi-
     MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp -funroll-loops
     ASFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=softfp
     CFLAGS += -D TARGET_BEAGLE -fsingle-precision-constant
     USE_GLES := 1
 
-# Pandora
-else ifneq (,$(findstring pandora,$(platform)))
-    FOR_PANDORA := 1
-    USE_X11 := 1
-    PGO_USE := 1
-    USE_GLES := 1
-    MFLAGS +== -marm -march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp -funroll-loops -fpermissive
-    ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
-    CFLAGS += -D TARGET_PANDORA  -D WEIRD_SLOWNESS -fsingle-precision-constant
-
 # ODROIDs
 else ifneq (,$(findstring odroid,$(platform)))
+	WITH_DYNAREC := arm
     MFLAGS += -marm -mfpu=neon -mfloat-abi=hard -funroll-loops
     ASFLAGS += -mfpu=neon -mfloat-abi=hard
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
@@ -256,28 +240,39 @@ SOURCES_CXX := $(CORE_DIR)/cfg/cfg.cpp \
 					$(CORE_DIR)/rend/gles/gles.cpp \
 					$(CORE_DIR)/rend/gles/gltex.cpp
 
-# Dynarec
+DYNAREC_USED = 0
 
+# Recompiler (x64)
+
+ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
+DYNAREC_USED = 1
+SOURCES_CXX += $(CORE_DIR)/rec-x64/rec_x64.cpp 
+endif
+
+# Recompiler (ARM)
+ifeq ($(WITH_DYNAREC), arm)
+DYNAREC_USED = 1
+SOURCES_CXX += $(CORE_DIR)/rec-ARM/rec-arm.cpp
+SOURCES_ASM += $(CORE_DIR)/rec-ARM/ngen_arm.S
+endif
+
+# Recompiler (x86 32bit)
+#
+ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), i386 i686 x86))
+DYNAREC_USED = 1
+SOURCES_CXX += $(CORE_DIR)/rec-x86/rec_x86_asm.cpp \
+					$(CORE_DIR)/rec-x86/rec_x86_driver.cpp \
+					$(CORE_DIR)/rec-x86/rec_x86_il.cpp
+SOURCES_ASM += $(CORE_DIR)/rec-x86/rec_lin86_asm.S
+endif
+
+ifeq ($(DYNAREC_USED),1)
+# Dynarec
 SOURCES_CXX += $(CORE_DIR)/hw/sh4/dyna/decoder.cpp \
 					$(CORE_DIR)/hw/sh4/dyna/driver.cpp \
 					$(CORE_DIR)/hw/sh4/dyna/blockmanager.cpp \
 					$(CORE_DIR)/hw/sh4/dyna/shil.cpp 
-
-# Recompiler (x64)
-
-SOURCES_CXX += $(CORE_DIR)/rec-x64/rec_x64.cpp 
-
-# Recompiler (ARM)
-#
-# SOURCES_CXX += $(CORE_DIR)/rec-ARM/rec-arm.cpp
-# SOURCES_ASM += $(CORE_DIR)/rec-ARM/ngen_arm.S
-
-# Recompiler (x86 32bit)
-#
-# SOURCES_CXX += $(CORE_DIR)/rec-x86/rec_x86_asm.cpp \
-#					  $(CORE_DIR)/rec-x86/rec_x86_driver.cpp \
-#					  $(CORE_DIR)/rec-x86/rec_x86_il.cpp
-# SOURCES_ASM += $(CORE_DIR)/rec-x86/rec_lin86_asm.S
+endif
 
 SOURCES_CXX += $(CORE_DIR)/linux-dist/main.cpp \
 					$(CORE_DIR)/linux-dist/x11.cpp
@@ -308,16 +303,16 @@ SOURCES_C +=   $(CORE_DIR)/deps/zlib/deflate.c \
 
 RZDCY_CFLAGS	:= $(CFLAGS) -c -O3 -DRELEASE -frename-registers -fsingle-precision-constant -ffast-math -ftree-vectorize -fomit-frame-pointer
 
-	ifndef NOT_ARM
-		RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
-		RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
-	else
-	  ifndef ISMIPS
-      RZDCY_CFLAGS += -DTARGET_LINUX_x86
-		else
-      RZDCY_CFLAGS += -DTARGET_LINUX_MIPS
-		endif
-	endif
+ifeq ($(WITH_DYNAREC), arm)
+RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
+RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
+else
+ifndef ISMIPS
+	RZDCY_CFLAGS += -DTARGET_LINUX_x86
+else
+	RZDCY_CFLAGS += -DTARGET_LINUX_MIPS
+endif
+endif
 
 ifdef NO_REC
   RZDCY_CFLAGS += -DTARGET_NO_REC
@@ -347,7 +342,8 @@ LIBS    += -lm -lrt -lpthread
 
 PREFIX        ?= /usr/local
 
-ifndef NOT_ARM
+ifeq ($(WITH_DYNAREC), arm)
+else
     AS=${CC_PREFIX}gcc
     ASFLAGS += $(CFLAGS)
 endif

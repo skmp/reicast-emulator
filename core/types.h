@@ -512,7 +512,7 @@ using namespace std;
 #define VER_SHORTNAME	VER_EMUNAME " git" _X_x_X_MMU_VER_STR
 
 
-void os_DebugBreak();
+void os_DebugBreak(void);
 #define dbgbreak os_DebugBreak()
 
 #ifdef _MSC_VER
@@ -534,7 +534,7 @@ void os_DebugBreak();
 
 //will be removed sometime soon
 //This shit needs to be moved to proper headers
-typedef u32  RegReadFP();
+typedef u32  RegReadFP(void);
 typedef u32  RegReadAddrFP(u32 addr);
 
 typedef void RegWriteFP(u32 data);
@@ -707,15 +707,15 @@ struct settings_t
 
 extern settings_t settings;
 
-void LoadSettings();
-void SaveSettings();
-u32 GetRTC_now();
+void LoadSettings(void);
+void SaveSettings(void);
+u32 GetRTC_now(void);
 extern u32 patchRB;
 
-inline bool is_s8(u32 v) { return (s8)v==(s32)v; }
-inline bool is_u8(u32 v) { return (u8)v==(s32)v; }
-inline bool is_s16(u32 v) { return (s16)v==(s32)v; }
-inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
+static inline bool is_s8(u32 v) { return (s8)v==(s32)v; }
+static inline bool is_u8(u32 v) { return (u8)v==(s32)v; }
+static inline bool is_s16(u32 v) { return (s16)v==(s32)v; }
+static inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
 
 #define verifyc(x) verify(!FAILED(x))
 
@@ -728,14 +728,14 @@ static inline void do_nada(...) { }
 extern sh4_if				  sh4_cpu;
 
 //sh4 thread
-s32 plugins_Init();
-void plugins_Term();
+s32 plugins_Init(void);
+void plugins_Term(void);
 void plugins_Reset(bool Manual);
 
 //PVR
-s32 libPvr_Init();
+s32 libPvr_Init(void);
 void libPvr_Reset(bool Manual);
-void libPvr_Term();
+void libPvr_Term(void);
 
 
 //void DYNACALL libPvr_TaSQ(u32* data);				//size is 32 byte transfer counts
@@ -744,13 +744,13 @@ void libPvr_WriteReg(u32 addr,u32 data,u32 size);
 
 void libPvr_LockedBlockWrite(vram_block* block,u32 addr);	//set to 0 if not used
 
-void* libPvr_GetRenderTarget();
-void* libPvr_GetRenderSurface();
+void* libPvr_GetRenderTarget(void);
+void* libPvr_GetRenderSurface(void);
 
 //AICA
-s32 libAICA_Init();
+s32 libAICA_Init(void);
 void libAICA_Reset(bool Manual);
-void libAICA_Term();
+void libAICA_Term(void);
 
 
 u32  libAICA_ReadReg(u32 addr,u32 size);
@@ -762,24 +762,24 @@ void libAICA_Update(u32 cycles);				//called every ~1800 cycles, set to 0 if not
 
 
 //GDR
-s32 libGDR_Init();
+s32 libGDR_Init(void);
 void libGDR_Reset(bool M);
-void libGDR_Term();
+void libGDR_Term(void);
 
-void libCore_gdrom_disc_change();
+void libCore_gdrom_disc_change(void);
 
 //IO
 void libGDR_ReadSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
 void libGDR_ReadSubChannel(u8 * buff, u32 format, u32 len);
 void libGDR_GetToc(u32* toc,u32 area);
-u32 libGDR_GetDiscType();
+u32 libGDR_GetDiscType(void);
 void libGDR_GetSessionInfo(u8* pout,u8 session);
 
 
 //ExtDev
-s32 libExtDevice_Init();
+s32 libExtDevice_Init(void);
 void libExtDevice_Reset(bool M);
-void libExtDevice_Term();
+void libExtDevice_Term(void);
 
 static u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size) { return 0; }
 static void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) { }
@@ -793,40 +793,54 @@ static u32 libExtDevice_ReadMem_A5(u32 addr,u32 size){ return 0; }
 static void libExtDevice_WriteMem_A5(u32 addr,u32 data,u32 size) { }
 
 //ARM
-s32 libARM_Init();
+s32 libARM_Init(void);
 void libARM_Reset(bool M);
-void libARM_Term();
+void libARM_Term(void);
 
 void libARM_SetResetState(u32 State);
 void libARM_Update(u32 cycles);
 
 
 #define 	ReadMemArrRet(arr,addr,sz)				\
-			{if (sz==1)								\
-				return arr[addr];					\
-			else if (sz==2)							\
-				return *(u16*)&arr[addr];			\
-			else if (sz==4)							\
-				return *(u32*)&arr[addr];}	
+         switch (sz) \
+         { \
+            case 1: \
+               return arr[addr]; \
+            case 2: \
+               return *(u16*)&arr[addr]; \
+            case 4: \
+               return *(u32*)&arr[addr]; \
+         }
 
 #define WriteMemArr(arr,addr,data,sz)				\
-			{if(sz==1)								\
-				{arr[addr]=(u8)data;}				\
-			else if (sz==2)							\
-				{*(u16*)&arr[addr]=(u16)data;}		\
-			else if (sz==4)							\
-			{*(u32*)&arr[addr]=data;}}	
+         switch (sz) \
+         { \
+            case 1: \
+              arr[addr]=(u8)data; \
+              break; \
+            case 2: \
+              *(u16*)&arr[addr]=(u16)data; \
+              break; \
+            case 4: \
+              *(u32*)&arr[addr]=data; \
+         }
 
 #define WriteMemArrRet(arr,addr,data,sz)				\
-			{if(sz==1)								\
-				{arr[addr]=(u8)data;return;}				\
-			else if (sz==2)							\
-				{*(u16*)&arr[addr]=(u16)data;return;}		\
-			else if (sz==4)							\
-			{*(u32*)&arr[addr]=data;return;}}	
+         switch (sz) \
+         { \
+            case 1: \
+               arr[addr]=(u8)data; \
+               return; \
+            case 2: \
+               *(u16*)&arr[addr]=(u16)data; \
+               return; \
+            case 4: \
+               *(u32*)&arr[addr]=data; \
+               return; \
+         }
 
 struct OnLoad
 {
-	typedef void OnLoadFP();
+	typedef void OnLoadFP(void);
 	OnLoad(OnLoadFP* fp) { fp(); }
 };

@@ -117,13 +117,8 @@ bool cfgOpen()
 s32  cfgExists(const wchar * Section, const wchar * Key)
 {
 	if(cfgdb.has_entry(string(Section), string(Key)))
-	{
 		return 2;
-	}
-	else
-	{
-		return (cfgdb.has_section(string(Section)) ? 1 : 0);
-	}
+   return (cfgdb.has_section(string(Section)) ? 1 : 0);
 }
 void  cfgLoadStr(const wchar * Section, const wchar * Key, wchar * Return,const wchar* Default)
 {
@@ -134,9 +129,7 @@ void  cfgLoadStr(const wchar * Section, const wchar * Key, wchar * Return,const 
 string  cfgLoadStr(const wchar * Section, const wchar * Key, const wchar* Default)
 {
 	if(!cfgdb.has_entry(string(Section), string(Key)))
-	{
-			cfgSaveStr(Section, Key, Default);
-	}
+      cfgSaveStr(Section, Key, Default);
 	return cfgdb.get(string(Section), string(Key), string(Default));
 }
 
@@ -145,18 +138,14 @@ void  cfgSaveInt(const wchar * Section, const wchar * Key, s32 Int)
 {
 	cfgdb.set_int(string(Section), string(Key), Int);
 	if(save_config)
-	{
-		savecfgf();
-	}
+      savecfgf();
 }
 
 s32  cfgLoadInt(const wchar * Section, const wchar * Key,s32 Default)
 {
 	if(!cfgdb.has_entry(string(Section), string(Key)))
-	{
-			cfgSaveInt(Section, Key, Default);
-	}
-	return cfgdb.get_int(string(Section), string(Key), Default);
+      cfgSaveInt(Section, Key, Default);
+   return cfgdb.get_int(string(Section), string(Key), Default);
 }
 
 void cfgSetVirtual(const wchar * Section, const wchar * Key, const wchar * String)

@@ -24,7 +24,7 @@ int render_end_schid;
 int vblank_schid;
 int time_sync;
 
-void CalculateSync()
+void CalculateSync(void)
 {
 	float scale_x=1,scale_y=1;
 	u32 pixel_clock=PIXEL_CLOCK / (FB_R_CTRL.vclk_div?1:2);
@@ -223,7 +223,7 @@ int rend_end_sch(int tag, int cycl, int jitt)
 	return 0;
 }
 
-bool spg_Init()
+bool spg_Init(void)
 {
 	render_end_schid=sh4_sched_register(0,&rend_end_sch);
 	vblank_schid=sh4_sched_register(0,&spg_line_sched);
@@ -234,7 +234,7 @@ bool spg_Init()
 	return true;
 }
 
-void spg_Term()
+void spg_Term(void)
 {
 }
 

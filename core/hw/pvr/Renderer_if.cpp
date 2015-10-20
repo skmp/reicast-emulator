@@ -257,11 +257,11 @@ bool rend_init(void)
 	return true;
 }
 
-void rend_term()
+void rend_term(void)
 {
 }
 
-void rend_vblank()
+void rend_vblank(void)
 {
 	os_DoEvents();
 }

@@ -256,20 +256,21 @@ NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 
 static OnLoad ol_fillfsm(&fill_fsm);
 
-void ta_vtx_ListCont()
+void ta_vtx_ListCont(void)
 {
 	SetCurrentTARC(TA_ISP_BASE);
 
 	ta_cur_state=TAS_NS;
 }
-void ta_vtx_ListInit()
+
+void ta_vtx_ListInit(void)
 {
 	SetCurrentTARC(TA_ISP_BASE);
 	ta_tad.ClearPartial();
 
 	ta_cur_state=TAS_NS;
 }
-void ta_vtx_SoftReset()
+void ta_vtx_SoftReset(void)
 {
 	ta_cur_state=TAS_NS;
 }

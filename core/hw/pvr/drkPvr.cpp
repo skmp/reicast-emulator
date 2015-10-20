@@ -32,7 +32,7 @@ void libPvr_Reset(bool Manual)
 	//rend_reset(); //*TODO* wtf ?
 }
 
-s32 libPvr_Init()
+s32 libPvr_Init(void)
 {
    //failed
 	if (!spg_Init())
@@ -45,7 +45,7 @@ s32 libPvr_Init()
 }
 
 //called when exiting from sh4 thread , from the new thread context (for any thread specific de init) :P
-void libPvr_Term()
+void libPvr_Term(void)
 {
 	rend_term();
 	spg_Term();

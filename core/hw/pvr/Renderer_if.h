@@ -5,13 +5,13 @@
 extern u32 VertexCount;
 extern u32 FrameCount;
 
-bool rend_init();
-void rend_term();
+bool rend_init(void);
+void rend_term(void);
 
-void rend_vblank();
-void rend_start_render();
-void rend_end_render();
-void rend_end_wait();
+void rend_vblank(void);
+void rend_start_render(void);
+void rend_end_render(void);
+void rend_end_wait(void);
 
 void rend_set_fb_scale(float x,float y);
 void rend_resize(int width, int height);
@@ -25,7 +25,6 @@ u32
 GetTexture(TSP tsp,TCW tcw);
 
 
-///////
 extern TA_context* _pvrrc;
 
 #define pvrrc (_pvrrc->rend)

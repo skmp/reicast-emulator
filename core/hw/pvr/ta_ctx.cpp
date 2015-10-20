@@ -93,10 +93,10 @@ bool QueueRender(TA_context* ctx)
  	//Try to limit speed to a "sane" level
  	//Speed is also limited via audio, but audio
  	//is sometimes not accurate enough (android, vista+)
- 	u32 cycle_span = sh4_sched_now64() - last_cyces;
- 	last_cyces = sh4_sched_now64();
+ 	u32 cycle_span   = sh4_sched_now64() - last_cyces;
+ 	last_cyces       = sh4_sched_now64();
  	double time_span = os_GetSeconds() - last_frame;
- 	last_frame = os_GetSeconds();
+ 	last_frame       = os_GetSeconds();
 
  	bool too_fast = (cycle_span / time_span) > (SH4_MAIN_CLOCK * 1.2);
 	

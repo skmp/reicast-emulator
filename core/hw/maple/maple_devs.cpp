@@ -5,14 +5,6 @@
 #include "maple_cfg.h"
 #include <time.h>
 
-#if _ANDROID
-#include <android/log.h>
-#include <jni.h>
-#else
-#define LOGW printf
-#define LOGI printf
-#endif
-
 #include "deps/zlib/zlib.h"
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
@@ -681,7 +673,7 @@ struct maple_microphone: maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
-			LOGI("maple_microphone::dma MDC_DeviceRequest");
+			printf("maple_microphone::dma MDC_DeviceRequest");
 			//this was copied from the controller case with just the id and name replaced!
 
 			//caps
@@ -716,7 +708,7 @@ struct maple_microphone: maple_base
 
 		case MDCF_GetCondition:
 			{
-				LOGI("maple_microphone::dma MDCF_GetCondition");
+				printf("maple_microphone::dma MDCF_GetCondition");
 				//this was copied from the controller case with just the id replaced!
 
 				//PlainJoystickState pjs;
@@ -753,7 +745,7 @@ struct maple_microphone: maple_base
 
 		case MDC_DeviceReset:
 			//uhhh do nothing?
-			LOGI("maple_microphone::dma MDC_DeviceReset");
+			printf("maple_microphone::dma MDC_DeviceReset");
 			return MDRS_DeviceReply;
 
 		case MDCF_MICControl:
@@ -792,7 +784,7 @@ struct maple_microphone: maple_base
 				{
 				case 0x01:
 				{
-					//LOGI("maple_microphone::dma MDCF_MICControl someone wants some data! (2nd word) %#010x\n", secondword);
+					//printf("maple_microphone::dma MDCF_MICControl someone wants some data! (2nd word) %#010x\n", secondword);
 
 					w32(MFID_4_Mic);
 
@@ -814,29 +806,29 @@ struct maple_microphone: maple_base
 					return MDRS_DataTransfer;
 				}
 				case 0x02:
-					LOGI("maple_microphone::dma MDCF_MICControl toggle recording %#010x\n",secondword);
+					printf("maple_microphone::dma MDCF_MICControl toggle recording %#010x\n",secondword);
 					return MDRS_DeviceReply;
 				case 0x03:
-					LOGI("maple_microphone::dma MDCF_MICControl set gain %#010x\n",secondword);
+					printf("maple_microphone::dma MDCF_MICControl set gain %#010x\n",secondword);
 					return MDRS_DeviceReply;
 				case MDRE_TransminAgain:
-					LOGW("maple_microphone::dma MDCF_MICControl MDRE_TransminAgain");
+					printf("maple_microphone::dma MDCF_MICControl MDRE_TransminAgain");
 					//apparently this doesnt matter
 					//wptr(micdata, SIZE_OF_MIC_DATA);
 					return MDRS_DeviceReply;//MDRS_DataTransfer;
 				default:
-					LOGW("maple_microphone::dma UNHANDLED secondword %#010x\n",secondword);
+					printf("maple_microphone::dma UNHANDLED secondword %#010x\n",secondword);
 					break;
 				}
 			}
 			default:
-				LOGW("maple_microphone::dma UNHANDLED function %#010x\n",function);
+				printf("maple_microphone::dma UNHANDLED function %#010x\n",function);
 				break;
 			}
 		}
 
 		default:
-			LOGW("maple_microphone::dma UNHANDLED MAPLE COMMAND %d\n",cmd);
+			printf("maple_microphone::dma UNHANDLED MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownFunction;
 		}
 	}	

@@ -3,7 +3,6 @@
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
 
-#include "deps/zlib/zlib.h"
 
 /*
 
@@ -77,76 +76,63 @@ int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
 
-bool rend_frame(TA_context* ctx, bool draw_osd) {
-	bool proc = renderer->Process(ctx);
+bool rend_frame(TA_context* ctx, bool draw_osd)
+{
+   bool proc = renderer->Process(ctx);
 #if !defined(TARGET_NO_THREADS)
-	re.Set();
+   re.Set();
 #endif
 
-	return proc && renderer->Render();
+   return proc && renderer->Render();
 }
 
-bool rend_single_frame()
+bool rend_single_frame(void)
 {
-	//wait render start only if no frame pending
-	do
-	{
+   //wait render start only if no frame pending
+   do
+   {
 #if !defined(TARGET_NO_THREADS)
-		rs.Wait();
+      rs.Wait();
 #endif
-		_pvrrc = DequeueRender();
-	}
-	while (!_pvrrc);
-	bool do_swp = rend_frame(_pvrrc, true);
+      _pvrrc = DequeueRender();
+   }
+   while (!_pvrrc);
+   bool do_swp = rend_frame(_pvrrc, true);
 
-	//clear up & free data ..
-	FinishRender(_pvrrc);
-	_pvrrc=0;
+   //clear up & free data ..
+   FinishRender(_pvrrc);
+   _pvrrc=0;
 
-	return do_swp;
+   return do_swp;
 }
 
 void* rend_thread(void* p)
 {
-	#if SET_AFNT
-	cpu_set_t mask;
+#if SET_AFNT
+   cpu_set_t mask;
 
-	/* CPU_ZERO initializes all the bits in the mask to zero. */
+   /* CPU_ZERO initializes all the bits in the mask to zero. */
+   CPU_ZERO( &mask );
+   /* CPU_SET sets only the bit corresponding to cpu. */
+   CPU_SET( 1, &mask );
 
-	CPU_ZERO( &mask );
+   /* sched_setaffinity returns 0 in success */
 
+   if( sched_setaffinity( 0, sizeof(mask), &mask ) == -1 )
+      printf("WARNING: Could not set CPU Affinity, continuing...\n");
+#endif
 
+   if (!renderer->Init())
+      die("rend->init() failed\n");
 
-	/* CPU_SET sets only the bit corresponding to cpu. */
+   //we don't know if this is true, so let's not speculate here
+   //renderer->Resize(640, 480);
 
-	CPU_SET( 1, &mask );
-
-
-
-	/* sched_setaffinity returns 0 in success */
-
-	if( sched_setaffinity( 0, sizeof(mask), &mask ) == -1 )
-
-	{
-
-		printf("WARNING: Could not set CPU Affinity, continuing...\n");
-
-	}
-	#endif
-
-
-
-	if (!renderer->Init())
-		die("rend->init() failed\n");
-
-	//we don't know if this is true, so let's not speculate here
-	//renderer->Resize(640, 480);
-
-	for(;;)
-	{
-		if (rend_single_frame())
-			renderer->Present();
-	}
+   for(;;)
+   {
+      if (rend_single_frame())
+         renderer->Present();
+   }
 }
 
 #if !defined(TARGET_NO_THREADS)
@@ -155,12 +141,13 @@ cThread rthd(rend_thread,0);
 
 bool pend_rend = false;
 
-void rend_resize(int width, int height) {
+void rend_resize(int width, int height)
+{
 	renderer->Resize(width, height);
 }
 
 
-void rend_start_render()
+void rend_start_render(void)
 {
 	pend_rend = false;
 	bool is_rtt=(FB_W_SOF1& 0x1000000)!=0;
@@ -213,33 +200,30 @@ void rend_start_render()
 }
 
 
-void rend_end_render()
+void rend_end_render(void)
 {
 #if 0 //also disabled the printf, it takes quite some time ...
    //if (!re.state) printf("Render > Extended time slice ...\n");
 #endif
 
-	if (pend_rend) {
 #if !defined(TARGET_NO_THREADS)
+   if (pend_rend)
 		re.Wait();
 #else
-		renderer->Present();
+   if (pend_rend)
+      renderer->Present();
 #endif
-	}
 }
 
 /*
 void rend_end_wait()
 {
-	#if HOST_OS!=OS_WINDOWS && !defined(_ANDROID)
-	//	if (!re.state) printf("Render End: Waiting ...\n");
-	#endif
 	re.Wait();
 	pvrrc.InUse=false;
 }
 */
 
-bool rend_init()
+bool rend_init(void)
 {
 
 #ifdef NO_REND
@@ -248,42 +232,26 @@ bool rend_init()
 	renderer = rend_GLES2();
 #endif
 
-#if !defined(_ANDROID) && HOST_OS != OS_DARWIN
-  #if !defined(TARGET_NO_THREADS)
-    rthd.Start();
-  #else
-    if (!renderer->Init()) die("rend->init() failed\n");
+#if !defined(TARGET_NO_THREADS)
+   rthd.Start();
+#else
+   if (!renderer->Init()) die("rend->init() failed\n");
 
-    renderer->Resize(640, 480);
-  #endif
+   renderer->Resize(640, 480);
 #endif
 
 #if SET_AFNT
 	cpu_set_t mask;
 
-
-
 	/* CPU_ZERO initializes all the bits in the mask to zero. */
-
 	CPU_ZERO( &mask );
-
-
-
 	/* CPU_SET sets only the bit corresponding to cpu. */
-
 	CPU_SET( 0, &mask );
-
-
 
 	/* sched_setaffinity returns 0 in success */
 
 	if( sched_setaffinity( 0, sizeof(mask), &mask ) == -1 )
-
-	{
-
 		printf("WARNING: Could not set CPU Affinity, continuing...\n");
-
-	}
 #endif
 
 	return true;

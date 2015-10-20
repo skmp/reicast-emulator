@@ -111,20 +111,6 @@ u32 PushAudio(void* frame, u32 amt, bool wait) {
 	return 0;
 }
 
-u32 asRingUsedCount()
-{
-	if (WritePtr>ReadPtr)
-		return WritePtr-ReadPtr;
-	else
-		return RingBufferSampleCount-(ReadPtr-WritePtr);
-	//s32 sz=(WritePtr+1)%RingBufferSampleCount-ReadPtr;
-	//return sz<0?sz+RingBufferSampleCount:sz;
-}
-u32 asRingFreeCount()
-{
-	return RingBufferSampleCount-asRingUsedCount();
-}
-
 void WriteSample(s16 r, s16 l)
 {
 	const u32 ptr=(WritePtr+1)%RingBufferSampleCount;

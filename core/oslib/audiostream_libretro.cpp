@@ -32,17 +32,6 @@ u32 PushAudio(void* frame, u32 amt, bool wait)
 	return 0;
 }
 
-u32 asRingUsedCount()
-{
-	if (WritePtr>ReadPtr)
-		return WritePtr-ReadPtr;
-   return RingBufferSampleCount-(ReadPtr-WritePtr);
-}
-u32 asRingFreeCount()
-{
-	return RingBufferSampleCount-asRingUsedCount();
-}
-
 void WriteSample(s16 r, s16 l)
 {
 	const u32 ptr=(WritePtr+1)%RingBufferSampleCount;
@@ -56,13 +45,6 @@ void WriteSample(s16 r, s16 l)
 
 void InitAudio()
 {
-	if (cfgLoadInt("audio", "disable", 0)) {
-		printf("WARNING: Audio disabled in config!\n");
-		return;
-	}
-
-	cfgSaveInt("audio","disable",0);
-
 	printf("Initializing audio backend...\n");
 }
 

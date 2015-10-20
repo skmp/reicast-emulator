@@ -158,74 +158,156 @@ else
     $(error Unknown platform)
 endif
 
-RZDCY_SRC_DIR = ../../core
+CORE_DIR := ../../core
 
-RZDCY_MODULES	:=	cfg/ \
-						hw/arm7/ \
-						hw/aica/ \
-						hw/holly/ \
-						hw/ \
-						hw/gdrom/ \
-						hw/maple/ \
-						hw/mem/ \
-						hw/pvr/ \
-						hw/sh4/ \
-						hw/sh4/interpr/ \
-						hw/sh4/modules/ \
-						plugins/ \
-						profiler/ \
-						oslib/ \
-						hw/extdev/ \
-						hw/arm/ \
-						hw/naomi/ \
-						imgread/ \
-						linux/ \
-						./ \
-						deps/coreio/ \
-						deps/zlib/ \
-						deps/chdr/ \
-						deps/crypto/ \
-						deps/libelf/ \
-						deps/chdpsr/ \
-						arm_emitter/ \
-						rend/ \
-						reios/ \
-						deps/libpng/
+SOURCES_CXX := $(CORE_DIR)/cfg/cfg.cpp \
+					$(CORE_DIR)/cfg/ini.cpp \
+					$(CORE_DIR)/cfg/cl.cpp \
+					\
+					$(CORE_DIR)/hw/arm7/arm_mem.cpp \
+					$(CORE_DIR)/hw/arm7/virt_arm.cpp \
+					$(CORE_DIR)/hw/arm7/arm7.cpp \
+					$(CORE_DIR)/hw/arm7/vbaARM.cpp \
+					\
+					$(CORE_DIR)/hw/aica/aica_mem.cpp \
+					$(CORE_DIR)/hw/aica/dsp.cpp \
+					$(CORE_DIR)/hw/aica/aica.cpp \
+					$(CORE_DIR)/hw/aica/sgc_if.cpp \
+					$(CORE_DIR)/hw/aica/aica_if.cpp \
+					\
+					$(CORE_DIR)/hw/holly/sb.cpp \
+					$(CORE_DIR)/hw/holly/sb_dma.cpp \
+					$(CORE_DIR)/hw/holly/holly_intc.cpp \
+					$(CORE_DIR)/hw/holly/sb_mem.cpp \
+					\
+					$(CORE_DIR)/hw/gdrom/gdrom_response.cpp \
+					$(CORE_DIR)/hw/gdrom/gdromv3.cpp \
+					\
+					$(CORE_DIR)/hw/maple/maple_helper.cpp \
+					$(CORE_DIR)/hw/maple/maple_devs.cpp \
+					$(CORE_DIR)/hw/maple/maple_if.cpp \
+					$(CORE_DIR)/hw/maple/maple_cfg.cpp \
+					\
+					$(CORE_DIR)/hw/mem/_vmem.cpp \
+					\
+					$(CORE_DIR)/hw/pvr/pvr_regs.cpp \
+					$(CORE_DIR)/hw/pvr/Renderer_if.cpp \
+					$(CORE_DIR)/hw/pvr/ta_ctx.cpp \
+					$(CORE_DIR)/hw/pvr/ta_vtx.cpp \
+					$(CORE_DIR)/hw/pvr/pvr_sb_regs.cpp \
+					$(CORE_DIR)/hw/pvr/pvr_mem.cpp \
+					$(CORE_DIR)/hw/pvr/spg.cpp \
+					$(CORE_DIR)/hw/pvr/ta.cpp \
+					$(CORE_DIR)/hw/pvr/drkPvr.cpp \
+					\
+					$(CORE_DIR)/hw/sh4/sh4_mmr.cpp \
+					$(CORE_DIR)/hw/sh4/sh4_mem.cpp \
+					$(CORE_DIR)/hw/sh4/sh4_interrupts.cpp \
+					$(CORE_DIR)/hw/sh4/sh4_rom.cpp \
+					$(CORE_DIR)/hw/sh4/sh4_core_regs.cpp \
+					$(CORE_DIR)/hw/sh4/sh4_sched.cpp \
+					$(CORE_DIR)/hw/sh4/sh4_opcode_list.cpp \
+					$(CORE_DIR)/hw/sh4/interpr/sh4_interpreter.cpp \
+					$(CORE_DIR)/hw/sh4/interpr/sh4_fpu.cpp \
+					$(CORE_DIR)/hw/sh4/interpr/sh4_opcodes.cpp \
+					$(CORE_DIR)/hw/sh4/modules/serial.cpp \
+					$(CORE_DIR)/hw/sh4/modules/rtc.cpp  \
+					$(CORE_DIR)/hw/sh4/modules/bsc.cpp \
+					$(CORE_DIR)/hw/sh4/modules/tmu.cpp \
+					$(CORE_DIR)/hw/sh4/modules/ccn.cpp \
+					$(CORE_DIR)/hw/sh4/modules/intc.cpp \
+					$(CORE_DIR)/hw/sh4/modules/ubc.cpp \
+					$(CORE_DIR)/hw/sh4/modules/cpg.cpp \
+					$(CORE_DIR)/hw/sh4/modules/dmac.cpp \
+					$(CORE_DIR)/hw/sh4/modules/mmu.cpp \
+					\
+					$(CORE_DIR)/profiler/profiler.cpp \
+					\
+					$(CORE_DIR)/oslib/audiostream.cpp \
+					\
+					$(CORE_DIR)/imgread/ImgReader.cpp \
+					$(CORE_DIR)/imgread/cdi.cpp \
+					$(CORE_DIR)/imgread/ioctl.cpp \
+					$(CORE_DIR)/imgread/chd.cpp \
+					$(CORE_DIR)/imgread/common.cpp \
+					$(CORE_DIR)/imgread/gdi.cpp \
+					\
+					$(CORE_DIR)/nullDC.cpp \
+					$(CORE_DIR)/stdclass.cpp \
+					\
+					$(CORE_DIR)/deps/coreio/coreio.cpp \
+					$(CORE_DIR)/deps/chdr/chdr.cpp \
+					$(CORE_DIR)/deps/crypto/sha1.cpp \
+					$(CORE_DIR)/deps/crypto/sha256.cpp \
+					$(CORE_DIR)/deps/crypto/md5.cpp \
+					$(CORE_DIR)/deps/libelf/elf.cpp \
+					$(CORE_DIR)/deps/libelf/elf32.cpp \
+					$(CORE_DIR)/deps/libelf/elf64.cpp \
+					$(CORE_DIR)/deps/chdpsr/cdipsr.cpp \
+					\
+					$(CORE_DIR)/rend/TexCache.cpp \
+					\
+					$(CORE_DIR)/reios/reios_elf.cpp \
+					$(CORE_DIR)/reios/reios.cpp \
+					$(CORE_DIR)/reios/gdrom_hle.cpp \
+					$(CORE_DIR)/reios/descrambl.cpp \
+					\
+					$(CORE_DIR)/rend/gles/gldraw.cpp \
+					$(CORE_DIR)/rend/gles/gles.cpp \
+					$(CORE_DIR)/rend/gles/gltex.cpp
 
-ifndef NO_REC
-	RZDCY_MODULES += hw/sh4/dyna/
-endif
+# Dynarec
 
-ifndef NOT_ARM
-    RZDCY_MODULES += rec-ARM/
-endif
+SOURCES_CXX += $(CORE_DIR)/hw/sh4/dyna/decoder.cpp \
+					$(CORE_DIR)/hw/sh4/dyna/driver.cpp \
+					$(CORE_DIR)/hw/sh4/dyna/blockmanager.cpp \
+					$(CORE_DIR)/hw/sh4/dyna/shil.cpp 
 
-ifdef X86_REC
-    RZDCY_MODULES += rec-x86/ emitter/
-endif
+# Recompiler (x64)
 
-ifdef X64_REC
-    RZDCY_MODULES += rec-x64/
-endif
+SOURCES_CXX += $(CORE_DIR)/rec-x64/rec_x64.cpp 
 
-ifdef CPP_REC
-    RZDCY_MODULES += rec-cpp/
-endif
+# Recompiler (ARM)
+#
+# SOURCES_CXX += $(CORE_DIR)/rec-ARM/rec-arm.cpp
+# SOURCES_ASM += $(CORE_DIR)/rec-ARM/ngen_arm.S
 
-ifndef NO_REND
-    RZDCY_MODULES += rend/gles/
-else
-    RZDCY_MODULES += rend/norend/
-endif
+# Recompiler (x86 32bit)
+#
+# SOURCES_CXX += $(CORE_DIR)/rec-x86/rec_x86_asm.cpp \
+#					  $(CORE_DIR)/rec-x86/rec_x86_driver.cpp \
+#					  $(CORE_DIR)/rec-x86/rec_x86_il.cpp
+# SOURCES_ASM += $(CORE_DIR)/rec-x86/rec_lin86_asm.S
 
-RZDCY_MODULES += linux-dist/
+SOURCES_CXX += $(CORE_DIR)/linux-dist/main.cpp \
+					$(CORE_DIR)/linux-dist/x11.cpp
 
-RZDCY_FILES := $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))
-RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.c))
-RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.S))
-	
+SOURCES_CXX += $(CORE_DIR)/oslib/audiobackend_alsa.cpp \
+					\
+					$(CORE_DIR)/linux/common.cpp \
+					$(CORE_DIR)/linux/context.cpp
+
+SOURCES_C +=   $(CORE_DIR)/linux-dist/libco/libco.c \
+					$(CORE_DIR)/libretro-common/memmap/memalign.c
+
+SOURCES_C +=   $(CORE_DIR)/deps/zlib/deflate.c \
+					$(CORE_DIR)/deps/zlib/gzlib.c \
+					$(CORE_DIR)/deps/zlib/uncompr.c \
+					$(CORE_DIR)/deps/zlib/zutil.c \
+					$(CORE_DIR)/deps/zlib/inffast.c \
+					$(CORE_DIR)/deps/zlib/gzread.c \
+					$(CORE_DIR)/deps/zlib/crc32.c \
+					$(CORE_DIR)/deps/zlib/gzwrite.c \
+					$(CORE_DIR)/deps/zlib/inflate.c \
+					$(CORE_DIR)/deps/zlib/infback.c \
+					$(CORE_DIR)/deps/zlib/inftrees.c \
+					$(CORE_DIR)/deps/zlib/trees.c \
+					$(CORE_DIR)/deps/zlib/gzclose.c \
+					$(CORE_DIR)/deps/zlib/compress.c \
+					$(CORE_DIR)/deps/zlib/adler32.c
+
 RZDCY_CFLAGS	:= $(CFLAGS) -c -O3 -DRELEASE -frename-registers -fsingle-precision-constant -ffast-math -ftree-vectorize -fomit-frame-pointer
-	
+
 	ifndef NOT_ARM
 		RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
 		RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
@@ -255,21 +337,15 @@ CFLAGS += -ffast-math -ftree-vectorize
 
 CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
 
-INCS += -I$(RZDCY_SRC_DIR) \
-		  -I$(RZDCY_SRC_DIR)/deps \
-		  -I$(RZDCY_SRC_DIR)/khronos \
-		  -I$(RZDCY_SRC_DIR)/libretro-common/include  \
-		  -I$(RZDCY_SRC_DIR)/linux-dist/libco
+INCS     += -I$(CORE_DIR) \
+				-I$(CORE_DIR)/deps \
+				-I$(CORE_DIR)/khronos \
+				-I$(CORE_DIR)/libretro-common/include  \
+				-I$(CORE_DIR)/linux-dist/libco
 
-LIBS += -lm -lrt -lpthread
+LIBS    += -lm -lrt -lpthread
 
-RZDCY_FILES += ../../core/linux-dist/libco/libco.c
-RZDCY_FILES += ../../core/libretro-common/memmap/memalign.c
-
-PREFIX ?= /usr/local
-MAN_DIR ?= ${PREFIX}/share/man/man1
-MENUENTRY_DIR ?= ${PREFIX}/share/applications
-ICON_DIR ?= ${PREFIX}/share/pixmaps
+PREFIX        ?= /usr/local
 
 ifndef NOT_ARM
     AS=${CC_PREFIX}gcc
@@ -328,10 +404,7 @@ else
     EXECUTABLE_NAME=reicast
 endif
 
-OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)
-OBJECTS:=$(OBJECTS:.c=.build_obj)
-OBJECTS:=$(OBJECTS:.S=.build_obj)
-OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,obj-$(DC_PLATFORM)-$(platform)/%,$(OBJECTS))
+OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o) $(SOURCES_ASM:.S=.o)
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 	
@@ -341,17 +414,14 @@ $(EXECUTABLE): $(OBJECTS)
 $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
 	cp $< $@ && $(STRIP) $@
 
-obj-$(DC_PLATFORM)-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
-	mkdir -p $(dir $@)
+%.o: %.cpp
 	$(CXX) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
 	
-obj-$(DC_PLATFORM)-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
-	mkdir -p $(dir $@)
+%.o: %.c
 	$(CC) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $< -o $@
 
-obj-$(DC_PLATFORM)-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
-	mkdir -p $(dir $@)	
-	$(AS) $(ASFLAGS) $(INCS) $< -o $@
+%.o: %.S
+	$(CC) $(ASFLAGS) $(INCS) $< -o $@
 
 clean:
 	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map

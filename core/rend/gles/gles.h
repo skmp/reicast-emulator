@@ -8,9 +8,7 @@
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
 #else
-#if !defined(TARGET_NACL32)
 #include <EGL/egl.h>
-#endif
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 #endif
@@ -63,7 +61,7 @@ struct PipelineShader
 
 struct gl_ctx
 {
-#if defined(GLES) && HOST_OS != OS_DARWIN && !defined(TARGET_NACL32)
+#if defined(GLES) && HOST_OS != OS_DARWIN
 	struct
 	{
 		EGLNativeWindowType native_wind;
@@ -84,10 +82,6 @@ struct gl_ctx
 	} modvol_shader;
 
 	PipelineShader pogram_table[768*2];
-	struct
-	{
-		GLuint program,scale,depth_scale;
-	} OSD_SHADER;
 
 	struct
 	{

@@ -193,26 +193,10 @@ bool naomi_cart_LoadRom(char* file)
 	return true;
 }
 
-bool naomi_cart_SelectFile(void* handle)
+bool naomi_cart_SelectFile(void)
 {
 	cfgLoadStr("config", "image", SelectedFile, "null");
 	
-#if HOST_OS == OS_WINDOWS
-	if (strcmp(SelectedFile, "null") == 0) {
-		OPENFILENAME ofn = { 0 };
-		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hInstance = (HINSTANCE)GetModuleHandle(0);
-		ofn.lpstrFile = SelectedFile;
-		ofn.nMaxFile = MAX_PATH;
-		ofn.lpstrFilter = "*.lst\0*.lst\0\0";
-		ofn.nFilterIndex = 0;
-		ofn.hwndOwner = (HWND)handle;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-
-		if (GetOpenFileName(&ofn) <= 0)
-			return true;
-	}
-#endif
 	if (!naomi_cart_LoadRom(SelectedFile))
 	{
 		cfgSaveStr("emu", "gamefile", "naomi_bios");

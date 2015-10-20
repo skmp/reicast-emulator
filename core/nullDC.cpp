@@ -42,41 +42,40 @@ int GetFile(char *szFileName, char *szParse=0,u32 flags=0)
 }
 
 
-s32 plugins_Init()
+s32 plugins_Init(void)
 {
+   if (s32 rv = libPvr_Init())
+      return rv;
 
-	if (s32 rv = libPvr_Init())
-		return rv;
+   if (s32 rv = libGDR_Init())
+      return rv;
+#if DC_PLATFORM == DC_PLATFORM_NAOMI
+   if (!naomi_cart_SelectFile())
+      return rv_serror;
+#endif
 
-	if (s32 rv = libGDR_Init())
-		return rv;
-	#if DC_PLATFORM == DC_PLATFORM_NAOMI
-	if (!naomi_cart_SelectFile(libPvr_GetRenderTarget()))
-		return rv_serror;
-	#endif
+   if (s32 rv = libAICA_Init())
+      return rv;
 
-	if (s32 rv = libAICA_Init())
-		return rv;
-	
-	if (s32 rv = libARM_Init())
-		return rv;
-	
-	//if (s32 rv = libExtDevice_Init())
-	//	return rv;
+   if (s32 rv = libARM_Init())
+      return rv;
 
+   //if (s32 rv = libExtDevice_Init())
+   //	return rv;
 
 
-	return rv_ok;
+
+   return rv_ok;
 }
 
-void plugins_Term()
+void plugins_Term(void)
 {
-	//term all plugins
-	//libExtDevice_Term();
-	libARM_Term();
-	libAICA_Term();
-	libGDR_Term();
-	libPvr_Term();
+   //term all plugins
+   //libExtDevice_Term();
+   libARM_Term();
+   libAICA_Term();
+   libGDR_Term();
+   libPvr_Term();
 }
 
 void plugins_Reset(bool Manual)
@@ -159,12 +158,12 @@ int dc_init(int argc,wchar* argv[])
 	return rv;
 }
 
-void dc_run()
+void dc_run(void)
 {
-	sh4_cpu.Run();
+   sh4_cpu.Run();
 }
 
-void dc_term()
+void dc_term(void)
 {
 	sh4_cpu.Term();
 	plugins_Term();
@@ -174,7 +173,7 @@ void dc_term()
 	SaveRomFiles(get_writable_data_path("/data/"));
 }
 
-void LoadSettings()
+void LoadSettings(void)
 {
 	settings.dynarec.Enable			= cfgLoadInt("config","Dynarec.Enabled", 1)!=0;
 	settings.dynarec.idleskip		= cfgLoadInt("config","Dynarec.idleskip",1)!=0;
@@ -215,7 +214,8 @@ void LoadSettings()
 	settings.dreamcast.broadcast= min(max(settings.dreamcast.broadcast,0),4);
 */
 }
-void SaveSettings()
+
+void SaveSettings(void)
 {
 	cfgSaveInt("config","Dynarec.Enabled",	settings.dynarec.Enable);
 	cfgSaveInt("config","Dreamcast.Cable",	settings.dreamcast.cable);

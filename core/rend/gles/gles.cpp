@@ -316,24 +316,6 @@ void main() \n\
 	" FRAGCOL "=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
 }";
 
-const char* OSD_Shader =
-#ifndef GLES
-	"#version 140 \n"
-	"out vec4 FragColor; \n"
-#endif
-" \
-" vary " lowp vec4 vtx_base; \n\
-" vary " mediump vec2 vtx_uv; \n\
-/* Vertex input*/ \n\
-uniform sampler2D tex; \n\
-void main() \n\
-{ \n\
-	mediump vec2 uv=vtx_uv; \n\
-	uv.y=1.0-uv.y; \n\
-	" FRAGCOL "=vtx_base*" TEXLOOKUP "(tex,uv.st); \n\n\
-}";
-
-
 gl_ctx gl;
 
 int screen_width;
@@ -683,13 +665,6 @@ bool gl_create_resources()
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
 
-
-	gl.OSD_SHADER.program=gl_CompileAndLink(VertexShaderSource,OSD_Shader);
-	printf("OSD: %d\n",gl.OSD_SHADER.program);
-	gl.OSD_SHADER.scale=glGetUniformLocation(gl.OSD_SHADER.program, "scale");
-	gl.OSD_SHADER.depth_scale=glGetUniformLocation(gl.OSD_SHADER.program, "depth_scale");
-	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"),0);		//bind osd texture to slot 0
-
 	//#define PRECOMPILE_SHADERS
 	#ifdef PRECOMPILE_SHADERS
 	for (u32 i=0;i<sizeof(gl.pogram_table)/sizeof(gl.pogram_table[0]);i++)
@@ -811,15 +786,6 @@ static void ClearBG()
 
 }
 
-static void OSD_HOOK()
-{
-	osd_base=pvrrc.verts.used();
-	osd_count=0;
-}
-
-#define OSD_TEX_W 512
-#define OSD_TEX_H 256
-
 bool ProcessFrame(TA_context* ctx)
 {
 	//disable RTTs for now ..
@@ -849,9 +815,6 @@ bool RenderFrame()
 	DoCleanup();
 
 	bool is_rtt=pvrrc.isRTT;
-
-
-	OSD_HOOK();
 
 	//if (FrameCount&7) return;
 
@@ -1080,10 +1043,6 @@ bool RenderFrame()
 
 
 	GLfloat td[4]={0.5,0,0,0};
-
-	glUseProgram(gl.OSD_SHADER.program);
-	glUniform4fv( gl.OSD_SHADER.scale, 1, ShaderUniforms.scale_coefs);
-	glUniform4fv( gl.OSD_SHADER.depth_scale, 1, td);
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 

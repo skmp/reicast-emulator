@@ -36,10 +36,7 @@ u32 asRingUsedCount()
 {
 	if (WritePtr>ReadPtr)
 		return WritePtr-ReadPtr;
-	else
-		return RingBufferSampleCount-(ReadPtr-WritePtr);
-	//s32 sz=(WritePtr+1)%RingBufferSampleCount-ReadPtr;
-	//return sz<0?sz+RingBufferSampleCount:sz;
+   return RingBufferSampleCount-(ReadPtr-WritePtr);
 }
 u32 asRingFreeCount()
 {

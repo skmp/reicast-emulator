@@ -79,10 +79,10 @@ void RegWrite_SB_PDST(u32 addr, u32 data)
 		do_pvr_dma();
 	}
 }
-u32 calculate_start_link_addr()
+u32 calculate_start_link_addr(void)
 {
-	u8* base=&mem_b[SB_SDSTAW & RAM_MASK];
 	u32 rv;
+	u8* base=&mem_b[SB_SDSTAW & RAM_MASK];
 	if (SB_SDWLT==0)
 	{
 		//16b width
@@ -97,9 +97,9 @@ u32 calculate_start_link_addr()
 
 	return rv;
 }
-void pvr_do_sort_dma()
-{
 
+void pvr_do_sort_dma(void)
+{
 	SB_SDDIV=0;//index is 0 now :)
 	u32 link_addr=calculate_start_link_addr();
 	u32 link_base_addr = SB_SDBAAW;
@@ -130,9 +130,8 @@ void RegWrite_SB_SDST(u32 addr, u32 data)
 		pvr_do_sort_dma();
 }
 
-
 //Init/Term , global
-void pvr_sb_Init()
+void pvr_sb_Init(void)
 {
 	//0x005F7C18    SB_PDST RW  PVR-DMA start
 	sb_rio_register(SB_PDST_addr,RIO_WF,0,&RegWrite_SB_PDST);

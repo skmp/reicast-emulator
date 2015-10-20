@@ -26,14 +26,14 @@ void pvr_WriteReg(u32 paddr,u32 data);
 void pvr_Update(u32 cycles);
 
 //Init/Term , global
-void pvr_Init();
-void pvr_Term();
+void pvr_Init(void);
+void pvr_Term(void);
 //Reset -> Reset - Initialise
 void pvr_Reset(bool Manual);
 
 void TAWrite(u32 address,u32* data,u32 count);
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
 
-void YUV_init();
+void YUV_init(void);
 //registers 
 #define PVR_BASE 0x005F8000

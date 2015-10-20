@@ -1,22 +1,15 @@
-
-
-LOCAL_PATH := $(call my-dir)
-FOR_LINUX :=1
-#NO_REC := 1
-#NO_REND := 1
-WEBUI :=1 
 USE_ALSA := 1
 
-CXX=${CC_PREFIX}g++
-CC=${CC_PREFIX}gcc
-AS=${CC_PREFIX}as
-STRIP=${CC_PREFIX}strip
-LD=${CC}
+CXX       = ${CC_PREFIX}g++
+CC        = ${CC_PREFIX}gcc
+CC_AS    ?= $(CC)
+STRIP     = ${CC_PREFIX}strip
+LD        = ${CC}
 
-MFLAGS := 
-ASFLAGS := 
-LDFLAGS :=
-INCS :=
+MFLAGS   := 
+ASFLAGS  := 
+LDFLAGS  :=
+INCFLAGS :=
 LIBS :=
 CFLAGS := 
 CXXFLAGS :=
@@ -97,7 +90,7 @@ else ifneq (,$(findstring rpi2,$(platform)))
     MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -funroll-loops
     ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
-    INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads -I../linux-deps/include
+    INCFLAGS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads -I../linux-deps/include
     LIBS += -L/opt/vc/lib/  -L../linux-deps/lib -lbcm_host
     USE_GLES := 1
 
@@ -144,162 +137,9 @@ endif
 
 CORE_DIR := ../../core
 
-SOURCES_CXX := $(CORE_DIR)/cfg/cfg.cpp \
-					$(CORE_DIR)/cfg/ini.cpp \
-					$(CORE_DIR)/cfg/cl.cpp \
-					\
-					$(CORE_DIR)/hw/arm7/arm_mem.cpp \
-					$(CORE_DIR)/hw/arm7/virt_arm.cpp \
-					$(CORE_DIR)/hw/arm7/arm7.cpp \
-					$(CORE_DIR)/hw/arm7/vbaARM.cpp \
-					\
-					$(CORE_DIR)/hw/aica/aica_mem.cpp \
-					$(CORE_DIR)/hw/aica/dsp.cpp \
-					$(CORE_DIR)/hw/aica/aica.cpp \
-					$(CORE_DIR)/hw/aica/sgc_if.cpp \
-					$(CORE_DIR)/hw/aica/aica_if.cpp \
-					\
-					$(CORE_DIR)/hw/holly/sb.cpp \
-					$(CORE_DIR)/hw/holly/sb_dma.cpp \
-					$(CORE_DIR)/hw/holly/holly_intc.cpp \
-					$(CORE_DIR)/hw/holly/sb_mem.cpp \
-					\
-					$(CORE_DIR)/hw/gdrom/gdrom_response.cpp \
-					$(CORE_DIR)/hw/gdrom/gdromv3.cpp \
-					\
-					$(CORE_DIR)/hw/maple/maple_helper.cpp \
-					$(CORE_DIR)/hw/maple/maple_devs.cpp \
-					$(CORE_DIR)/hw/maple/maple_if.cpp \
-					$(CORE_DIR)/hw/maple/maple_cfg.cpp \
-					\
-					$(CORE_DIR)/hw/mem/_vmem.cpp \
-					\
-					$(CORE_DIR)/hw/pvr/pvr_regs.cpp \
-					$(CORE_DIR)/hw/pvr/Renderer_if.cpp \
-					$(CORE_DIR)/hw/pvr/ta_ctx.cpp \
-					$(CORE_DIR)/hw/pvr/ta_vtx.cpp \
-					$(CORE_DIR)/hw/pvr/pvr_sb_regs.cpp \
-					$(CORE_DIR)/hw/pvr/pvr_mem.cpp \
-					$(CORE_DIR)/hw/pvr/spg.cpp \
-					$(CORE_DIR)/hw/pvr/ta.cpp \
-					$(CORE_DIR)/hw/pvr/drkPvr.cpp \
-					\
-					$(CORE_DIR)/hw/sh4/sh4_mmr.cpp \
-					$(CORE_DIR)/hw/sh4/sh4_mem.cpp \
-					$(CORE_DIR)/hw/sh4/sh4_interrupts.cpp \
-					$(CORE_DIR)/hw/sh4/sh4_rom.cpp \
-					$(CORE_DIR)/hw/sh4/sh4_core_regs.cpp \
-					$(CORE_DIR)/hw/sh4/sh4_sched.cpp \
-					$(CORE_DIR)/hw/sh4/sh4_opcode_list.cpp \
-					$(CORE_DIR)/hw/sh4/interpr/sh4_interpreter.cpp \
-					$(CORE_DIR)/hw/sh4/interpr/sh4_fpu.cpp \
-					$(CORE_DIR)/hw/sh4/interpr/sh4_opcodes.cpp \
-					$(CORE_DIR)/hw/sh4/modules/serial.cpp \
-					$(CORE_DIR)/hw/sh4/modules/rtc.cpp  \
-					$(CORE_DIR)/hw/sh4/modules/bsc.cpp \
-					$(CORE_DIR)/hw/sh4/modules/tmu.cpp \
-					$(CORE_DIR)/hw/sh4/modules/ccn.cpp \
-					$(CORE_DIR)/hw/sh4/modules/intc.cpp \
-					$(CORE_DIR)/hw/sh4/modules/ubc.cpp \
-					$(CORE_DIR)/hw/sh4/modules/cpg.cpp \
-					$(CORE_DIR)/hw/sh4/modules/dmac.cpp \
-					$(CORE_DIR)/hw/sh4/modules/mmu.cpp \
-					\
-					$(CORE_DIR)/profiler/profiler.cpp \
-					\
-					$(CORE_DIR)/oslib/audiostream.cpp \
-					\
-					$(CORE_DIR)/imgread/ImgReader.cpp \
-					$(CORE_DIR)/imgread/cdi.cpp \
-					$(CORE_DIR)/imgread/ioctl.cpp \
-					$(CORE_DIR)/imgread/chd.cpp \
-					$(CORE_DIR)/imgread/common.cpp \
-					$(CORE_DIR)/imgread/gdi.cpp \
-					\
-					$(CORE_DIR)/nullDC.cpp \
-					$(CORE_DIR)/stdclass.cpp \
-					\
-					$(CORE_DIR)/deps/coreio/coreio.cpp \
-					$(CORE_DIR)/deps/chdr/chdr.cpp \
-					$(CORE_DIR)/deps/crypto/sha1.cpp \
-					$(CORE_DIR)/deps/crypto/sha256.cpp \
-					$(CORE_DIR)/deps/crypto/md5.cpp \
-					$(CORE_DIR)/deps/libelf/elf.cpp \
-					$(CORE_DIR)/deps/libelf/elf32.cpp \
-					$(CORE_DIR)/deps/libelf/elf64.cpp \
-					$(CORE_DIR)/deps/chdpsr/cdipsr.cpp \
-					\
-					$(CORE_DIR)/rend/TexCache.cpp \
-					\
-					$(CORE_DIR)/reios/reios_elf.cpp \
-					$(CORE_DIR)/reios/reios.cpp \
-					$(CORE_DIR)/reios/gdrom_hle.cpp \
-					$(CORE_DIR)/reios/descrambl.cpp \
-					\
-					$(CORE_DIR)/rend/gles/gldraw.cpp \
-					$(CORE_DIR)/rend/gles/gles.cpp \
-					$(CORE_DIR)/rend/gles/gltex.cpp
-
 DYNAREC_USED = 0
 
-# Recompiler (x64)
-
-ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
-DYNAREC_USED = 1
-SOURCES_CXX += $(CORE_DIR)/rec-x64/rec_x64.cpp 
-endif
-
-# Recompiler (ARM)
-ifeq ($(WITH_DYNAREC), arm)
-DYNAREC_USED = 1
-SOURCES_CXX += $(CORE_DIR)/rec-ARM/rec-arm.cpp
-SOURCES_ASM += $(CORE_DIR)/rec-ARM/ngen_arm.S
-endif
-
-# Recompiler (x86 32bit)
-#
-ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), i386 i686 x86))
-DYNAREC_USED = 1
-SOURCES_CXX += $(CORE_DIR)/rec-x86/rec_x86_asm.cpp \
-					$(CORE_DIR)/rec-x86/rec_x86_driver.cpp \
-					$(CORE_DIR)/rec-x86/rec_x86_il.cpp
-SOURCES_ASM += $(CORE_DIR)/rec-x86/rec_lin86_asm.S
-endif
-
-ifeq ($(DYNAREC_USED),1)
-# Dynarec
-SOURCES_CXX += $(CORE_DIR)/hw/sh4/dyna/decoder.cpp \
-					$(CORE_DIR)/hw/sh4/dyna/driver.cpp \
-					$(CORE_DIR)/hw/sh4/dyna/blockmanager.cpp \
-					$(CORE_DIR)/hw/sh4/dyna/shil.cpp 
-endif
-
-SOURCES_CXX += $(CORE_DIR)/linux-dist/main.cpp \
-					$(CORE_DIR)/linux-dist/x11.cpp
-
-SOURCES_CXX += $(CORE_DIR)/oslib/audiobackend_alsa.cpp \
-					\
-					$(CORE_DIR)/linux/common.cpp \
-					$(CORE_DIR)/linux/context.cpp
-
-SOURCES_C +=   $(CORE_DIR)/linux-dist/libco/libco.c \
-					$(CORE_DIR)/libretro-common/memmap/memalign.c
-
-SOURCES_C +=   $(CORE_DIR)/deps/zlib/deflate.c \
-					$(CORE_DIR)/deps/zlib/gzlib.c \
-					$(CORE_DIR)/deps/zlib/uncompr.c \
-					$(CORE_DIR)/deps/zlib/zutil.c \
-					$(CORE_DIR)/deps/zlib/inffast.c \
-					$(CORE_DIR)/deps/zlib/gzread.c \
-					$(CORE_DIR)/deps/zlib/crc32.c \
-					$(CORE_DIR)/deps/zlib/gzwrite.c \
-					$(CORE_DIR)/deps/zlib/inflate.c \
-					$(CORE_DIR)/deps/zlib/infback.c \
-					$(CORE_DIR)/deps/zlib/inftrees.c \
-					$(CORE_DIR)/deps/zlib/trees.c \
-					$(CORE_DIR)/deps/zlib/gzclose.c \
-					$(CORE_DIR)/deps/zlib/compress.c \
-					$(CORE_DIR)/deps/zlib/adler32.c
+include Makefile.common
 
 RZDCY_CFLAGS	:= $(CFLAGS) -c -O3 -DRELEASE -frename-registers -fsingle-precision-constant -ffast-math -ftree-vectorize -fomit-frame-pointer
 
@@ -326,17 +166,12 @@ RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
 
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 
-CFLAGS += -g -O3 -D RELEASE -c #-D NO_REND
+CFLAGS += -g -O3 -D RELEASE -c
 CFLAGS += -frename-registers -fno-strict-aliasing
 CFLAGS += -ffast-math -ftree-vectorize
 
 CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
 
-INCS     += -I$(CORE_DIR) \
-				-I$(CORE_DIR)/deps \
-				-I$(CORE_DIR)/khronos \
-				-I$(CORE_DIR)/libretro-common/include  \
-				-I$(CORE_DIR)/linux-dist/libco
 
 LIBS    += -lm -lrt -lpthread
 
@@ -375,49 +210,45 @@ ifdef USE_ALSA
     LIBS += -lasound
 endif
 
-ifdef USE_PULSEAUDIO
-    CXXFLAGS += -D USE_PULSEAUDIO
-    LIBS += -lpulse-simple
-endif
-
 # GLES on x11?
 ifdef USE_GLES
     CXXFLAGS += -DGLES
-    LIBS += -lEGL -lGLESv2
+	 CFLAGS   += -DGLES
+    GL_LIB   += -lEGL -lGLESv2
 else
-    LIBS += -ldl -lGL #for desktop gl
+    GL_LIB += -ldl -lGL #for desktop gl
 endif
 
-EXECUTABLE_STRIPPED=nosym-reicast.elf
+TARGET_STRIPPED=nosym-reicast.elf
 ifdef NAOMI
     CFLAGS += -D TARGET_NAOMI
     DC_PLATFORM=naomi
-    EXECUTABLE=reicast_naomi.elf
-    EXECUTABLE_NAME=reicast-naomi
+    TARGET=reicast_naomi.elf
+    TARGET_NAME=reicast-naomi
 else
     DC_PLATFORM=dreamcast
-    EXECUTABLE=reicast.elf
-    EXECUTABLE_NAME=reicast
+    TARGET=reicast.elf
+    TARGET_NAME=reicast
 endif
 
 OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o) $(SOURCES_ASM:.S=.o)
 
-all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
+all: $(TARGET) $(TARGET_STRIPPED)
 	
-$(EXECUTABLE): $(OBJECTS)
-	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
+$(TARGET): $(OBJECTS)
+	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(GL_LIB) $(OBJECTS) $(LIBS) -o $@
 
-$(EXECUTABLE_STRIPPED): $(EXECUTABLE)
+$(TARGET_STRIPPED): $(TARGET)
 	cp $< $@ && $(STRIP) $@
 
 %.o: %.cpp
-	$(CXX) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) $(EXTRAFLAGS) $(INCFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
 	
 %.o: %.c
-	$(CC) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $< -o $@
+	$(CC) $(EXTRAFLAGS) $(INCFLAGS) $(CFLAGS) $< -o $@
 
 %.o: %.S
-	$(CC) $(ASFLAGS) $(INCS) $< -o $@
+	$(CC_AS) $(ASFLAGS) $(INCFLAGS) $< -o $@
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map
+	rm -f $(OBJECTS) $(TARGET) $(TARGET_STRIPPED) .map

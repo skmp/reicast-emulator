@@ -160,10 +160,37 @@ endif
 
 RZDCY_SRC_DIR = ../../core
 
-RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
- hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
- hw/extdev/ hw/arm/ hw/naomi/ imgread/ linux/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
- deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/ 
+RZDCY_MODULES	:=	cfg/ \
+						hw/arm7/ \
+						hw/aica/ \
+						hw/holly/ \
+						hw/ \
+						hw/gdrom/ \
+						hw/maple/ \
+						hw/mem/ \
+						hw/pvr/ \
+						hw/sh4/ \
+						hw/sh4/interpr/ \
+						hw/sh4/modules/ \
+						plugins/ \
+						profiler/ \
+						oslib/ \
+						hw/extdev/ \
+						hw/arm/ \
+						hw/naomi/ \
+						imgread/ \
+						linux/ \
+						./ \
+						deps/coreio/ \
+						deps/zlib/ \
+						deps/chdr/ \
+						deps/crypto/ \
+						deps/libelf/ \
+						deps/chdpsr/ \
+						arm_emitter/ \
+						rend/ \
+						reios/ \
+						deps/libpng/
 
 ifndef NO_REC
 	RZDCY_MODULES += hw/sh4/dyna/
@@ -191,17 +218,13 @@ else
     RZDCY_MODULES += rend/norend/
 endif
 
-ifdef FOR_LINUX
-    RZDCY_MODULES += linux-dist/
-endif
+RZDCY_MODULES += linux-dist/
 
 RZDCY_FILES := $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.c))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.S))
 	
-RZDCY_CFLAGS	:= \
-	$(CFLAGS) -c -O3 -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps  -DRELEASE\
-	-frename-registers -fsingle-precision-constant -ffast-math -ftree-vectorize -fomit-frame-pointer
+RZDCY_CFLAGS	:= $(CFLAGS) -c -O3 -DRELEASE -frename-registers -fsingle-precision-constant -ffast-math -ftree-vectorize -fomit-frame-pointer
 	
 	ifndef NOT_ARM
 		RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
@@ -232,11 +255,14 @@ CFLAGS += -ffast-math -ftree-vectorize
 
 CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
 
-INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos -I$(RZDCY_SRC_DIR)/libretro-common/include
+INCS += -I$(RZDCY_SRC_DIR) \
+		  -I$(RZDCY_SRC_DIR)/deps \
+		  -I$(RZDCY_SRC_DIR)/khronos \
+		  -I$(RZDCY_SRC_DIR)/libretro-common/include  \
+		  -I$(RZDCY_SRC_DIR)/linux-dist/libco
 
 LIBS += -lm -lrt -lpthread
 
-INCS += -I$(RZDCY_SRC_DIR)/linux-dist/libco
 RZDCY_FILES += ../../core/linux-dist/libco/libco.c
 RZDCY_FILES += ../../core/libretro-common/memmap/memalign.c
 
@@ -267,9 +293,9 @@ ifdef LTO_TEST
 endif
 
 ifdef USE_X11
-    CFLAGS += -D SUPPORT_X11
+    CFLAGS 	 += -D SUPPORT_X11
     CXXFLAGS += -D SUPPORT_X11 
-    LIBS += -lX11
+    LIBS     += -lX11
 endif
 
 ifdef USE_ALSA

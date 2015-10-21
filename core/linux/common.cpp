@@ -124,12 +124,12 @@ cThread::cThread(ThreadEntryFP* function,void* prm)
 
 void cThread::Start()
 {
-		pthread_create( (pthread_t*)&hThread, NULL, Entry, param);
+   hThread = (sthread_t*)sthread_create(Entry, param);
 }
 
 void cThread::WaitToEnd()
 {
-	pthread_join((pthread_t)hThread,0);
+   sthread_join(hThread);
 }
 
 //End thread class
@@ -140,8 +140,8 @@ cResetEvent::cResetEvent(bool State,bool Auto)
 {
 	//sem_init((sem_t*)hEvent, 0, State?1:0);
 	verify(State==false&&Auto==true);
-	pthread_mutex_init(&mutx, NULL);
-	pthread_cond_init(&cond, NULL);
+	mutx = slock_new();
+	cond = scond_new();
 }
 cResetEvent::~cResetEvent()
 {
@@ -150,16 +150,16 @@ cResetEvent::~cResetEvent()
 }
 void cResetEvent::Set()//Signal
 {
-	pthread_mutex_lock( &mutx );
+   slock_lock(mutx);
 	state=true;
-    pthread_cond_signal( &cond);
-	pthread_mutex_unlock( &mutx );
+   scond_signal(cond);
+   slock_unlock(mutx);
 }
 void cResetEvent::Reset()//reset
 {
-	pthread_mutex_lock( &mutx );
+   slock_lock(mutx);
 	state=false;
-	pthread_mutex_unlock( &mutx );
+   slock_unlock(mutx);
 }
 void cResetEvent::Wait(u32 msec)//Wait for signal , then reset
 {
@@ -167,11 +167,11 @@ void cResetEvent::Wait(u32 msec)//Wait for signal , then reset
 }
 void cResetEvent::Wait()//Wait for signal , then reset
 {
-	pthread_mutex_lock( &mutx );
+   slock_lock(mutx);
 	if (!state)
-		pthread_cond_wait( &cond, &mutx );
+		scond_wait( cond, mutx );
 	state=false;
-	pthread_mutex_unlock( &mutx );
+   slock_unlock(mutx);
 }
 
 //End AutoResetEvent

@@ -4,12 +4,7 @@
 #include <vector>
 #include <string.h>
 
-#if HOST_OS!=OS_WINDOWS
-#include <pthread.h>
-#else
-#include <Windows.h>
-#endif
-
+#include <rthreads/rthreads.h>
 
 #ifdef _ANDROID
 #include <sys/mman.h>
@@ -107,9 +102,7 @@ public:
 				{
 					u8*p =(u8*)&data[i];
 					for (size_t j=0;j<sizeof(T);j++)
-					{
 						p[j]=0;
-					}
 				}
 			}
 		}
@@ -160,13 +153,10 @@ public:
 	}
 };
 
-//Windoze code
 //Threads
 
 #if !defined(HOST_NO_THREADS)
 typedef  void* ThreadEntryFP(void* param);
-
-typedef void* THREADHANDLE;
 
 class cThread
 {
@@ -174,7 +164,7 @@ private:
 	ThreadEntryFP* Entry;
 	void* param;
 public :
-	THREADHANDLE hThread;
+	sthread_t *hThread;
 	cThread(ThreadEntryFP* function,void* param);
 	
 	void Start();
@@ -187,13 +177,8 @@ class cResetEvent
 {
 
 private:
-#if HOST_OS==OS_WINDOWS
-	EVENTHANDLE hEvent;
-#else
-	pthread_mutex_t mutx;
-	pthread_cond_t cond;
-
-#endif
+	slock_t *mutx;
+	scond_t *cond;
 
 public :
 	bool state;
@@ -208,45 +193,25 @@ public :
 class cMutex
 {
 private:
-#if HOST_OS==OS_WINDOWS
-	CRITICAL_SECTION cs;
-#else
-	pthread_mutex_t mutx;
-#endif
+   slock_t *mutx;
 
 public :
 	bool state;
 	cMutex()
 	{
-#if HOST_OS==OS_WINDOWS
-		InitializeCriticalSection(&cs);
-#else
-		pthread_mutex_init ( &mutx, NULL);
-#endif
+      mutx = slock_new();
 	}
 	~cMutex()
 	{
-#if HOST_OS==OS_WINDOWS
-		DeleteCriticalSection(&cs);
-#else
-		pthread_mutex_destroy(&mutx);
-#endif
+      slock_free(mutx);
 	}
 	void Lock()
 	{
-#if HOST_OS==OS_WINDOWS
-		EnterCriticalSection(&cs);
-#else
-		pthread_mutex_lock(&mutx);
-#endif
+      slock_lock(mutx);
 	}
 	void Unlock()
 	{
-#if HOST_OS==OS_WINDOWS
-		LeaveCriticalSection(&cs);
-#else
-		pthread_mutex_unlock(&mutx);
-#endif
+      slock_unlock(mutx);
 	}
 };
 
@@ -274,11 +239,11 @@ public:
 	void LockRegion(u32 offset,u32 size);
 	void UnLockRegion(u32 offset,u32 size);
 
-	void Zero()
-	{
-		UnLockRegion(0,size);
-		memset(data,0,size);
-	}
+   void Zero()
+   {
+      UnLockRegion(0, size);
+      memset(data, 0, size);
+   }
 
 	INLINE u8& operator [](const u32 i)
     {

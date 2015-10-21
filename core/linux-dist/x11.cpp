@@ -4,10 +4,8 @@
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 
-#if !defined(GLES)
-	#include <GL/gl.h>
-	#include <GL/glx.h>
-#endif
+#include <GL/gl.h>
+#include <GL/glx.h>
 
 #include "types.h"
 #include "cfg/cfg.h"
@@ -148,68 +146,56 @@ void x11_window_create()
 
 		int depth = CopyFromParent;
 
-		#if !defined(GLES)
-			// Get a matching FB config
-			static int visual_attribs[] =
-			{
-				GLX_X_RENDERABLE    , True,
-				GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
-				GLX_RENDER_TYPE     , GLX_RGBA_BIT,
-				GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
-				GLX_RED_SIZE        , 8,
-				GLX_GREEN_SIZE      , 8,
-				GLX_BLUE_SIZE       , 8,
-				GLX_ALPHA_SIZE      , 8,
-				GLX_DEPTH_SIZE      , 24,
-				GLX_STENCIL_SIZE    , 8,
-				GLX_DOUBLEBUFFER    , True,
-				//GLX_SAMPLE_BUFFERS  , 1,
-				//GLX_SAMPLES         , 4,
-				None
-			};
+      // Get a matching FB config
+      static int visual_attribs[] =
+      {
+         GLX_X_RENDERABLE    , True,
+         GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+         GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+         GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+         GLX_RED_SIZE        , 8,
+         GLX_GREEN_SIZE      , 8,
+         GLX_BLUE_SIZE       , 8,
+         GLX_ALPHA_SIZE      , 8,
+         GLX_DEPTH_SIZE      , 24,
+         GLX_STENCIL_SIZE    , 8,
+         GLX_DOUBLEBUFFER    , True,
+         //GLX_SAMPLE_BUFFERS  , 1,
+         //GLX_SAMPLES         , 4,
+         None
+      };
 
-			int glx_major, glx_minor;
+      int glx_major, glx_minor;
 
-			// FBConfigs were added in GLX version 1.3.
-			if (!glXQueryVersion(x11Display, &glx_major, &glx_minor) ||
-					((glx_major == 1) && (glx_minor < 3)) || (glx_major < 1))
-			{
-				printf("Invalid GLX version");
-				exit(1);
-			}
+      // FBConfigs were added in GLX version 1.3.
+      if (!glXQueryVersion(x11Display, &glx_major, &glx_minor) ||
+            ((glx_major == 1) && (glx_minor < 3)) || (glx_major < 1))
+      {
+         printf("Invalid GLX version");
+         exit(1);
+      }
 
-			int fbcount;
-			GLXFBConfig* fbc = glXChooseFBConfig(x11Display, x11Screen, visual_attribs, &fbcount);
-			if (!fbc)
-			{
-				printf("Failed to retrieve a framebuffer config\n");
-				exit(1);
-			}
-			printf("Found %d matching FB configs.\n", fbcount);
+      int fbcount;
+      GLXFBConfig* fbc = glXChooseFBConfig(x11Display, x11Screen, visual_attribs, &fbcount);
+      if (!fbc)
+      {
+         printf("Failed to retrieve a framebuffer config\n");
+         exit(1);
+      }
+      printf("Found %d matching FB configs.\n", fbcount);
 
-			GLXFBConfig bestFbc = fbc[0];
-			XFree(fbc);
+      GLXFBConfig bestFbc = fbc[0];
+      XFree(fbc);
 
-			// Get a visual
-			XVisualInfo *vi = glXGetVisualFromFBConfig(x11Display, bestFbc);
-			printf("Chosen visual ID = 0x%x\n", vi->visualid);
+      // Get a visual
+      XVisualInfo *vi = glXGetVisualFromFBConfig(x11Display, bestFbc);
+      printf("Chosen visual ID = 0x%x\n", vi->visualid);
 
 
-			depth = vi->depth;
-			x11Visual = vi;
+      depth = vi->depth;
+      x11Visual = vi;
 
-			x11Colormap = XCreateColormap(x11Display, RootWindow(x11Display, x11Screen), vi->visual, AllocNone);
-		#else
-			i32Depth = DefaultDepth(x11Display, x11Screen);
-			x11Visual = new XVisualInfo;
-			XMatchVisualInfo(x11Display, x11Screen, i32Depth, TrueColor, x11Visual);
-			if (!x11Visual)
-			{
-				printf("Error: Unable to acquire visual\n");
-				return;
-			}
-			x11Colormap = XCreateColormap(x11Display, sRootWindow, x11Visual->visual, AllocNone);
-		#endif
+      x11Colormap = XCreateColormap(x11Display, RootWindow(x11Display, x11Screen), vi->visual, AllocNone);
 
 		sWA.colormap = x11Colormap;
 
@@ -246,31 +232,27 @@ void x11_window_create()
 			XMapWindow(x11Display, x11Window);
 		}
 
-		#if !defined(GLES)
-			#define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
-			#define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
-			typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
+#define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
+#define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
+      typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 
-			glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
-			glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddressARB((const GLubyte*)"glXCreateContextAttribsARB");
-			verify(glXCreateContextAttribsARB != 0);
-			int context_attribs[] =
-			{
-				GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-				GLX_CONTEXT_MINOR_VERSION_ARB, 1,
-				GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_DEBUG_BIT_ARB,
-				GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
-				None
-			};
+      glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
+      glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddressARB((const GLubyte*)"glXCreateContextAttribsARB");
+      verify(glXCreateContextAttribsARB != 0);
+      int context_attribs[] =
+      {
+         GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
+         GLX_CONTEXT_MINOR_VERSION_ARB, 1,
+         GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_DEBUG_BIT_ARB,
+         GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
+         None
+      };
 
-			x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
-			XSync(x11Display, False);
+      x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
+      XSync(x11Display, False);
 
-			if (!x11_glc)
-			{
-				die("Failed to create GL3.1 context\n");
-			}
-		#endif
+      if (!x11_glc)
+         die("Failed to create GL3.1 context\n");
 
 		XFlush(x11Display);
 

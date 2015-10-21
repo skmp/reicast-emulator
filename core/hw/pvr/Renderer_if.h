@@ -50,7 +50,5 @@ struct Renderer
 extern Renderer* renderer;
 
 
-Renderer* rend_D3D11();
 Renderer* rend_GLES2();
-Renderer* rend_norend();
 Renderer* rend_softrend();

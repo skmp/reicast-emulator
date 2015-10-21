@@ -3,9 +3,7 @@
 #include "rend/TexCache.h"
 #include "cfg/cfg.h"
 
-#ifndef GLES
 #include <GL3/gl3w.c>
-#endif
 
 /*
 GL|ES 2
@@ -700,10 +698,6 @@ bool gles_init()
 
 	if (!gl_create_resources())
 		return false;
-
-#if defined(GLES)
-	eglSwapInterval(gl.setup.display,1);
-#endif
 
 	//clean up all buffers ...
 	for (int i=0;i<10;i++)

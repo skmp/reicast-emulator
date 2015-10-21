@@ -130,70 +130,11 @@ string find_user_data_dir()
 	return ".";
 }
 
-std::vector<string> find_system_config_dirs()
-{
-	std::vector<string> dirs;
-	if (getenv("XDG_DATA_DIRS") != NULL)
-	{
-		string s = (string)getenv("XDG_CONFIG_DIRS");
-
-		string::size_type pos = 0;
-		string::size_type n = s.find(":", pos);
-		while(n != std::string::npos)
-		{
-			dirs.push_back(s.substr(pos, n-pos) + "/reicast");
-			pos = n + 1;
-			n = s.find(":", pos);
-		}
-		// Separator not found
-		dirs.push_back(s.substr(pos) + "/reicast");
-	}
-	else
-	{
-		dirs.push_back("/etc/reicast"); // This isn't part of the XDG spec, but much more common than /etc/xdg/
-		dirs.push_back("/etc/xdg/reicast");
-	}
-	return dirs;
-}
-
-std::vector<string> find_system_data_dirs()
-{
-	std::vector<string> dirs;
-	if (getenv("XDG_DATA_DIRS") != NULL)
-	{
-		string s = (string)getenv("XDG_DATA_DIRS");
-
-		string::size_type pos = 0;
-		string::size_type n = s.find(":", pos);
-		while(n != std::string::npos)
-		{
-			dirs.push_back(s.substr(pos, n-pos) + "/reicast");
-			pos = n + 1;
-			n = s.find(":", pos);
-		}
-		// Separator not found
-		dirs.push_back(s.substr(pos) + "/reicast");
-	}
-	else
-	{
-		dirs.push_back("/usr/local/share/reicast");
-		dirs.push_back("/usr/share/reicast");
-	}
-	return dirs;
-}
-
 static void retro_init(int argc, wchar *argv[] )
 {
 	/* Set directories */
 	set_user_config_dir(find_user_config_dir());
 	set_user_data_dir(find_user_data_dir());
-	std::vector<string> dirs;
-	dirs = find_system_config_dirs();
-	for(unsigned int i = 0; i < dirs.size(); i++)
-		add_system_data_dir(dirs[i]);
-	dirs = find_system_data_dirs();
-	for(unsigned int i = 0; i < dirs.size(); i++)
-		add_system_data_dir(dirs[i]);
 	printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
 	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
 

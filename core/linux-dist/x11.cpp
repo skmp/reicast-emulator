@@ -16,6 +16,14 @@
 #define DEFAULT_WINDOW_WIDTH  640
 #define DEFAULT_WINDOW_HEIGHT   480
 
+#include <stdarg.h>
+
+u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
+u8 rt[4] = {0, 0, 0, 0};
+u8 lt[4] = {0, 0, 0, 0};
+u32 vks[4];
+s8 joyx[4], joyy[4];
+
 map<int, int> x11_keymap;
 int x11_dc_buttons = 0xFFFF;
 int x11_keyboard_input = 0;
@@ -42,6 +50,20 @@ void* libPvr_GetRenderTarget(void)
 void* libPvr_GetRenderSurface(void)
 {
 	return x11_disp;
+}
+
+int msgboxf(const wchar* text, unsigned int type, ...)
+{
+	va_list args;
+
+	wchar temp[2048];
+	va_start(args, type);
+	vsprintf(temp, text, args);
+	va_end(args);
+
+	//printf(NULL,temp,VER_SHORTNAME,type | MB_TASKMODAL);
+	puts(temp);
+	return MBX_OK;
 }
 
 void SetupInput(void)

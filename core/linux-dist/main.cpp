@@ -1,31 +1,10 @@
 #include "types.h"
 #include "cfg/cfg.h"
 
-#include <stdarg.h>
 #include "hw/sh4/dyna/blockmanager.h"
 #include <unistd.h>
 
 #include <libco.h>
-
-int msgboxf(const wchar* text, unsigned int type, ...)
-{
-	va_list args;
-
-	wchar temp[2048];
-	va_start(args, type);
-	vsprintf(temp, text, args);
-	va_end(args);
-
-	//printf(NULL,temp,VER_SHORTNAME,type | MB_TASKMODAL);
-	puts(temp);
-	return MBX_OK;
-}
-
-u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
-u8 rt[4] = {0, 0, 0, 0};
-u8 lt[4] = {0, 0, 0, 0};
-u32 vks[4];
-s8 joyx[4], joyy[4];
 
 void emit_WriteCodeCache(void);
 void SetupInput(void);
@@ -40,7 +19,7 @@ static cothread_t ct_dc;
 static int co_argc;
 static wchar** co_argv;
 
-static void co_dc_thread()
+static void co_dc_thread(void)
 {
 	dc_init(co_argc,co_argv);
 	co_switch(ct_main);
@@ -57,25 +36,24 @@ static void co_dc_init(int argc,wchar* argv[])
 	co_switch(ct_dc);
 }
 
-static void co_dc_run()
+void co_dc_run(void)
 {
    puts("ENTER LOOP");
 	co_switch(ct_dc);
 }
 
-void co_dc_yield()
+void co_dc_yield(void)
 {
 	co_switch(ct_main);
 }
 
-
-string find_user_config_dir()
+string find_user_config_dir(void)
 {
 	// Unable to detect config dir, use the current folder
 	return ".";
 }
 
-string find_user_data_dir()
+string find_user_data_dir(void)
 {
 	// Unable to detect config dir, use the current folder
 	return ".";
@@ -113,7 +91,7 @@ int main(int argc, wchar* argv[])
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }
 
-void os_DebugBreak()
+void os_DebugBreak(void)
 {
    printf("DEBUGBREAK!\n");
    exit(-1);

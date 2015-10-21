@@ -121,8 +121,7 @@ int dc_init(int argc,wchar* argv[])
 	{
 		if (!LoadHle(get_readonly_data_path(DATA_PATH)))
 			return -3;
-		else
-			printf("Did not load bios, using reios\n");
+      printf("Did not load bios, using reios\n");
 	}
 
 #if FEAT_SHREC != DYNAREC_NONE

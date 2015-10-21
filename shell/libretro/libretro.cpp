@@ -71,7 +71,7 @@ void retro_deinit(void)
 
 void retro_run (void)
 {
-   //dc_run();
+   co_dc_run();
 }
 
 void retro_reset (void)
@@ -164,7 +164,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
 unsigned retro_get_region (void)
 {
-   return RETRO_REGION_PAL; //TODO
+   return RETRO_REGION_NTSC; //TODO
 }
 
 
@@ -254,9 +254,4 @@ int msgboxf(const char* text, unsigned int type, ...)
       log_cb(RETRO_LOG_INFO, temp);
    }
    return 0;
-}
-
-void os_DebugBreak()
-{
-   // Nothing to do here
 }

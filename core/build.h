@@ -139,10 +139,6 @@
 #define CPU_X64      0x20000004
 #define CPU_GENERIC  0x20000005 //used for pnacl, emscripten, etc
 
-//BUILD_COMPILER
-#define COMPILER_VC  0x30000001
-#define COMPILER_GCC 0x30000002
-
 //FEAT_SHREC, FEAT_AREC, FEAT_DSPREC
 #define DYNAREC_NONE	0x40000001
 #define DYNAREC_JIT		0x40000002
@@ -157,12 +153,6 @@
 	#else
 		#define TARGET_WIN64
 	#endif
-#endif
-
-#ifdef __GNUC__ 
-	#define BUILD_COMPILER COMPILER_GCC
-#else
-	#define BUILD_COMPILER COMPILER_VC
 #endif
 
 //Targets

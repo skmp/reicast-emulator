@@ -167,8 +167,7 @@ RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 
 CFLAGS += -g -O3 -D RELEASE -c
-CFLAGS += -frename-registers -fno-strict-aliasing
-CFLAGS += -ffast-math -ftree-vectorize
+CFLAGS += -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
 
 CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
 

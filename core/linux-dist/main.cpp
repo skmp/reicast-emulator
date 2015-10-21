@@ -81,34 +81,34 @@ string find_user_data_dir()
 	return ".";
 }
 
-static void retro_init(int argc, wchar *argv[] )
+void main_init(int argc, wchar *argv[] )
 {
-	/* Set directories */
-	set_user_config_dir(find_user_config_dir());
-	set_user_data_dir(find_user_data_dir());
-	printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
-	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
+   /* Set directories */
+   set_user_config_dir(find_user_config_dir());
+   set_user_data_dir(find_user_data_dir());
+   printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
+   printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
 
-	common_linux_setup();
+   common_linux_setup();
 
-	settings.profile.run_counts=0;
+   settings.profile.run_counts=0;
 
-	co_dc_init(argc,argv);
+   co_dc_init(argc,argv);
 
-	SetupInput();
+   SetupInput();
 }
 
+#ifndef __LIBRETRO__
 int main(int argc, wchar* argv[])
 {
-   retro_init(argc, argv);
+   main_init(argc, argv);
 
    while (true)
-   {
       co_dc_run();
-   }
 
 	return 0;
 }
+#endif
 
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }

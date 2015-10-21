@@ -147,11 +147,7 @@ ifeq ($(WITH_DYNAREC), arm)
 RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
 RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
 else
-ifndef ISMIPS
-	RZDCY_CFLAGS += -DTARGET_LINUX_x86
-else
-	RZDCY_CFLAGS += -DTARGET_LINUX_MIPS
-endif
+RZDCY_CFLAGS += -DTARGET_LINUX_x86
 endif
 
 ifdef NO_REC

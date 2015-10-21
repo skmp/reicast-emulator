@@ -229,16 +229,6 @@ void gl_swap(void)
    //TODO
 }
 
-int get_mic_data(u8* buffer)
-{
-   return 0;
-}
-
-int push_vmu_screen(u8* buffer)
-{
-   return 0;
-}
-
 int msgboxf(const char* text, unsigned int type, ...)
 {
    if (log_cb)

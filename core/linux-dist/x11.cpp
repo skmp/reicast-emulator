@@ -1,4 +1,3 @@
-#if defined(SUPPORT_X11)
 #include <map>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
@@ -359,4 +358,11 @@ void x11_window_destroy()
 		x11_disp = 0;
 	}
 }
-#endif
+
+void main_run(int argc, wchar *argv[] );
+
+int main(int argc, wchar* argv[])
+{
+   main_run(argc, argv);
+	return 0;
+}

@@ -76,17 +76,13 @@ void main_init(int argc, wchar *argv[] )
    SetupInput();
 }
 
-#ifndef __LIBRETRO__
-int main(int argc, wchar* argv[])
+void main_run(int argc, wchar *argv[] )
 {
    main_init(argc, argv);
 
    while (true)
       co_dc_run();
-
-	return 0;
 }
-#endif
 
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }

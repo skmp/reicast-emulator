@@ -5,9 +5,10 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include <unistd.h>
 
-#if defined(SUPPORT_X11)
-	#include "linux-dist/x11.h"
-#endif
+#include <libco.h>
+
+/* forward declaration(s) */
+void SetupInput(void);
 
 int msgboxf(const wchar* text, unsigned int type, ...)
 {
@@ -23,19 +24,6 @@ int msgboxf(const wchar* text, unsigned int type, ...)
 	return MBX_OK;
 }
 
-void* x11_win = 0;
-void* x11_disp = 0;
-
-void* libPvr_GetRenderTarget()
-{
-	return x11_win;
-}
-
-void* libPvr_GetRenderSurface()
-{
-	return x11_disp;
-}
-
 u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
 u8 rt[4] = {0, 0, 0, 0};
 u8 lt[4] = {0, 0, 0, 0};
@@ -44,37 +32,8 @@ s8 joyx[4], joyy[4];
 
 void emit_WriteCodeCache();
 
-void SetupInput()
-{
-	#if defined(SUPPORT_X11)
-		input_x11_init();
-	#endif
-}
-
 void UpdateInputState(u32 port)
 {
-}
-
-void os_DoEvents()
-{
-	#if defined(SUPPORT_X11)
-		input_x11_handle();
-	#endif
-}
-
-void os_SetWindowText(const char * text)
-{
-	printf("%s\n",text);
-	#if defined(SUPPORT_X11)
-		x11_window_set_text(text);
-	#endif
-}
-
-void os_CreateWindow()
-{
-	#if defined(SUPPORT_X11)
-		x11_window_create();
-	#endif
 }
 
 void common_linux_setup();
@@ -82,7 +41,6 @@ int dc_init(int argc,wchar* argv[]);
 void dc_run();
 
 
-#include "libco.h"
 static cothread_t ct_main;
 static cothread_t ct_dc;
 
@@ -106,38 +64,19 @@ static void co_dc_init(int argc,wchar* argv[])
 	co_switch(ct_dc);
 }
 
-static void co_dc_run()
+static void co_dc_run(void)
 {
-puts("ENTER LOOP");
+   puts("ENTER LOOP");
 	co_switch(ct_dc);
 }
 
-void co_dc_yield()
+void co_dc_yield(void)
 {
 	co_switch(ct_main);
 }
 
-
-string find_user_config_dir()
-{
-	// Unable to detect config dir, use the current folder
-	return ".";
-}
-
-string find_user_data_dir()
-{
-	// Unable to detect config dir, use the current folder
-	return ".";
-}
-
 static void retro_init(int argc, wchar *argv[] )
 {
-	/* Set directories */
-	set_user_config_dir(find_user_config_dir());
-	set_user_data_dir(find_user_data_dir());
-	printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
-	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
-
 	common_linux_setup();
 
 	settings.profile.run_counts=0;
@@ -152,9 +91,7 @@ int main(int argc, wchar* argv[])
    retro_init(argc, argv);
 
    while (true)
-   {
       co_dc_run();
-   }
 
 	return 0;
 }

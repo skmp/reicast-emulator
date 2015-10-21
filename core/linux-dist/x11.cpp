@@ -31,6 +31,48 @@ enum
 	_NET_WM_STATE_TOGGLE =2
 };
 
+void* x11_win = 0;
+void* x11_disp = 0;
+
+void* libPvr_GetRenderTarget(void)
+{
+	return x11_win;
+}
+
+void* libPvr_GetRenderSurface(void)
+{
+	return x11_disp;
+}
+
+void os_DoEvents(void)
+{
+	#if defined(SUPPORT_X11)
+		input_x11_handle();
+	#endif
+}
+
+void SetupInput(void)
+{
+	#if defined(SUPPORT_X11)
+		input_x11_init();
+	#endif
+}
+
+void os_SetWindowText(const char * text)
+{
+	printf("%s\n",text);
+	#if defined(SUPPORT_X11)
+		x11_window_set_text(text);
+	#endif
+}
+
+void os_CreateWindow(void)
+{
+	#if defined(SUPPORT_X11)
+		x11_window_create();
+	#endif
+}
+
 void x11_window_set_fullscreen(bool fullscreen)
 {
 		XEvent xev;

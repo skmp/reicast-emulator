@@ -1,8 +1,7 @@
 INCFLAGS    += -I$(CORE_DIR) \
 					-I$(CORE_DIR)/deps \
 					-I$(CORE_DIR)/khronos \
-					-I$(CORE_DIR)/libretro-common/include  \
-					-I$(CORE_DIR)/linux-dist/libco
+					-I$(CORE_DIR)/libretro-common/include 
 
 SOURCES_CXX := $(CORE_DIR)/cfg/cfg.cpp \
 					$(CORE_DIR)/cfg/ini.cpp \
@@ -139,7 +138,7 @@ SOURCES_CXX += $(CORE_DIR)/linux-dist/main.cpp \
 					$(CORE_DIR)/linux-dist/x11.cpp
 
 
-SOURCES_C +=   $(CORE_DIR)/linux-dist/libco/libco.c \
+SOURCES_C +=   $(CORE_DIR)/libretro-common/libco/libco.c \
 					$(CORE_DIR)/libretro-common/memmap/memalign.c \
 					$(CORE_DIR)/libretro-common/rthreads/rthreads.c
 

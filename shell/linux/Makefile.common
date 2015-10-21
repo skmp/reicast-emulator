@@ -140,7 +140,8 @@ SOURCES_CXX += $(CORE_DIR)/linux-dist/main.cpp \
 
 
 SOURCES_C +=   $(CORE_DIR)/linux-dist/libco/libco.c \
-					$(CORE_DIR)/libretro-common/memmap/memalign.c
+					$(CORE_DIR)/libretro-common/memmap/memalign.c \
+					$(CORE_DIR)/libretro-common/rthreads/rthreads.c
 
 SOURCES_C +=   $(CORE_DIR)/deps/zlib/deflate.c \
 					$(CORE_DIR)/deps/zlib/gzlib.c \

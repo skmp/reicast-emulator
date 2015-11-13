@@ -1885,7 +1885,11 @@ struct glesrend : Renderer
 };
 
 
+#if USE_SHARED_LIBPNG
+#include <png.h>
+#else
 #include "deps/libpng/png.h"
+#endif
 
 FILE* pngfile;
 

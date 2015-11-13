@@ -8,6 +8,9 @@ USE_OSS := 1
 #USE_PULSEAUDIO := 1
 USE_EVDEV := 1
 USE_JOYSTICK := 1
+#USE_SHARED_LIBPNG := 1
+#USE_SHARED_ZLIB := 1
+#USE_SHARED_LIBWEBSOCKETS := 1
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
@@ -319,6 +322,22 @@ ifdef HAS_SOFTREND
 endif
 
 # these are also handled on core.mk, but ignored here
+
+ifdef USE_SHARED_ZLIB
+	CXXFLAGS += -D USE_SHARED_ZLIB
+	CFLAGS += -D USE_SHARED_ZLIB
+	LIBS += -lz
+endif
+
+ifdef USE_SHARED_LIBPNG
+	CXXFLAGS += -D USE_SHARED_LIBPNG
+	LIBS += -lpng
+endif
+
+ifdef USE_SHARED_LIBWEBSOCKETS
+	CXXFLAGS += -D USE_SHARED_LIBWEBSOCKETS
+	LIBS += -lwebsockets
+endif
 
 # GLES on x11?
 ifdef USE_GLES

@@ -8,13 +8,22 @@ RZDCY_SRC_DIR ?= $(call my-dir)
 
 RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
- hw/extdev/ hw/arm/ hw/naomi/ imgread/ linux/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
- deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/ 
+ hw/extdev/ hw/arm/ hw/naomi/ imgread/ linux/ ./ deps/coreio/ deps/chdr/ deps/crypto/ \
+ deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/
 
+ifndef USE_SHARED_ZLIB
+	RZDCY_MODULES += deps/zlib/
+endif
+
+ifndef USE_SHARED_LIBPNG
+	RZDCY_MODULES += deps/libpng/
+endif
 
 ifdef WEBUI
 	RZDCY_MODULES += webui/
-	RZDCY_MODULES += deps/libwebsocket/
+	ifndef USE_SHARED_LIBWEBSOCKETS
+		RZDCY_MODULES += deps/libwebsocket/
+	endif
 
 	ifdef FOR_ANDROID
 		RZDCY_MODULES += deps/ifaddrs/

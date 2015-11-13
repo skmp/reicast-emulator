@@ -63,12 +63,14 @@ Building for Linux
 ------------------
 Requirements:
 * build-essential
-* libasound2
-* libegl1-mesa-dev
-* libgles2-mesa-dev
 * libasound2-dev
+* libgl1-mesa-dev (only for desktop/GL build, or ARM boards which supports GL)
+* libegl1-mesa-dev (only for ARMhf/GLES build)
+* libgles2-mesa-dev (only for ARMhf/GLES build)
 * mesa-common-dev
-* libgl1-mesa-dev
+* libpulse-dev
+
+You can also install libpng-dev, libwebsockets-dev (>=1.3) and zlib1g-dev optionally, otherwise Reicast will link statically against these libraries.
 
 From project root directory:
 

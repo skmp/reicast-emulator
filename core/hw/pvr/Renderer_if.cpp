@@ -3,7 +3,11 @@
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
 
+#if USE_SHARED_ZLIB
+#include <zlib.h>
+#else
 #include "deps/zlib/zlib.h"
+#endif
 
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"

@@ -4,6 +4,7 @@ CC_AS    ?= $(CC)
 STRIP     = ${CC_PREFIX}strip
 LD        = ${CC}
 
+DEBUG    := 0
 NO_REND  := 1
 
 TARGET_NAME := reicast
@@ -139,7 +140,12 @@ DYNAREC_USED = 0
 
 include Makefile.common
 
-RZDCY_CFLAGS	:= $(CFLAGS) -c -O3 -DRELEASE -frename-registers -fsingle-precision-constant -ffast-math -ftree-vectorize -fomit-frame-pointer -D__LIBRETRO__
+ifeq ($(DEBUG),1)
+OPTFLAGS       := -O0
+else
+OPTFLAGS       := -O3
+endif
+RZDCY_CFLAGS	:= $(CFLAGS) -c $(OPTFLAGS) -DRELEASE -frename-registers -fsingle-precision-constant -ffast-math -ftree-vectorize -fomit-frame-pointer -D__LIBRETRO__
 
 ifeq ($(WITH_DYNAREC), arm)
 RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
@@ -165,9 +171,9 @@ endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
 
-LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
+LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,$(OPTFLAGS) -Wl,--sort-common
 
-CFLAGS += -g -O3 -D RELEASE -c
+CFLAGS += -g $(OPTFLAGS) -D RELEASE -c
 CFLAGS += -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
 
 CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names

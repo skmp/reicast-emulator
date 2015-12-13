@@ -103,7 +103,7 @@ int dc_init(int argc,wchar* argv[])
 
 	int rv= 0;
 
-#define DATA_PATH "/home/squarepusher/roms/dc/data"
+#define DATA_PATH "/home/squarepusher/roms/dc/data/"
     
 	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
 	{

@@ -370,6 +370,9 @@ void gl_term()
 
 bool gl_init(void* wind, void* disp)
 {
+#ifdef __LIBRETRO__
+   return 1;
+#else
    extern void* x11_glc;
 
    glXMakeCurrent((Display*)libPvr_GetRenderSurface(),
@@ -379,6 +382,7 @@ bool gl_init(void* wind, void* disp)
    screen_width = 640;
    screen_height = 480;
    return gl3wInit() != -1 && gl3wIsSupported(3, 1);
+#endif
 }
 
 void gl_swap()

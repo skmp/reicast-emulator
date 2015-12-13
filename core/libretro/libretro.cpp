@@ -9,6 +9,36 @@
 uint32_t video_width =  640;
 uint32_t video_height = 480;
 
+u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
+u8 rt[4] = {0, 0, 0, 0};
+u8 lt[4] = {0, 0, 0, 0};
+u32 vks[4];
+s8 joyx[4], joyy[4];
+
+enum DreamcastController
+{
+	DC_BTN_C       = 1,
+	DC_BTN_B       = 1<<1,
+	DC_BTN_A       = 1<<2,
+	DC_BTN_START   = 1<<3,
+	DC_DPAD_UP     = 1<<4,
+	DC_DPAD_DOWN   = 1<<5,
+	DC_DPAD_LEFT   = 1<<6,
+	DC_DPAD_RIGHT  = 1<<7,
+	DC_BTN_Z       = 1<<8,
+	DC_BTN_Y       = 1<<9,
+	DC_BTN_X       = 1<<10,
+	DC_BTN_D       = 1<<11,
+	DC_DPAD2_UP    = 1<<12,
+	DC_DPAD2_DOWN  = 1<<13,
+	DC_DPAD2_LEFT  = 1<<14,
+	DC_DPAD2_RIGHT = 1<<15,
+
+	DC_AXIS_LT = 0X10000,
+	DC_AXIS_RT = 0X10001,
+	DC_AXIS_X  = 0X20000,
+	DC_AXIS_Y  = 0X20001,
+};
 
 // Callbacks
 retro_log_printf_t         log_cb = NULL;
@@ -111,6 +141,7 @@ void retro_deinit(void)
 
 void retro_run (void)
 {
+
    co_dc_run();
 }
 
@@ -223,15 +254,55 @@ unsigned retro_api_version(void)
 
 //Reicast stuff
 
-u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
-u8 rt[4] = {0, 0, 0, 0};
-u8 lt[4] = {0, 0, 0, 0};
-u32 vks[4];
-s8 joyx[4], joyy[4];
 
 void os_DoEvents()
 {
-   //TODO
+   poll_cb();
+
+   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
+      kcode[0] |= DC_DPAD_UP;
+   else
+      kcode[0] &= ~DC_DPAD_UP;
+
+   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN))
+      kcode[0] |= DC_DPAD_DOWN;
+   else
+      kcode[0] &= ~DC_DPAD_DOWN;
+
+   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT))
+      kcode[0] |= DC_DPAD_LEFT;
+   else
+      kcode[0] &= ~DC_DPAD_LEFT;
+
+   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT))
+      kcode[0] |= DC_DPAD_RIGHT;
+   else
+      kcode[0] &= ~DC_DPAD_RIGHT;
+
+   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
+      kcode[0] |= DC_BTN_START;
+   else
+      kcode[0] &= ~DC_BTN_START;
+
+   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
+      kcode[0] |= DC_BTN_A;
+   else
+      kcode[0] &= ~DC_BTN_A;
+
+   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
+      kcode[0] |= DC_BTN_B;
+   else
+      kcode[0] &= ~DC_BTN_B;
+
+   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
+      kcode[0] |= DC_BTN_X;
+   else
+      kcode[0] &= ~DC_BTN_X;
+
+   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X))
+      kcode[0] |= DC_BTN_Y;
+   else
+      kcode[0] &= ~DC_BTN_Y;
 }
 
 void os_CreateWindow()

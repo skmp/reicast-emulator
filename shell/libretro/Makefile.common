@@ -3,9 +3,7 @@ INCFLAGS    += -I$(CORE_DIR) \
 					-I$(CORE_DIR)/khronos \
 					-I$(CORE_DIR)/libretro-common/include 
 
-SOURCES_CXX := $(CORE_DIR)/cfg/cfg.cpp \
-					$(CORE_DIR)/cfg/ini.cpp \
-					$(CORE_DIR)/cfg/cl.cpp \
+SOURCES_CXX := $(CORE_DIR)/cfg/ini.cpp \
 					\
 					$(CORE_DIR)/hw/arm7/arm_mem.cpp \
 					$(CORE_DIR)/hw/arm7/virt_arm.cpp \
@@ -66,7 +64,7 @@ SOURCES_CXX := $(CORE_DIR)/cfg/cfg.cpp \
 					\
 					$(CORE_DIR)/profiler/profiler.cpp \
 					\
-					$(CORE_DIR)/oslib/audiostream.cpp \
+					$(CORE_DIR)/oslib/audiostream_libretro.cpp \
 					\
 					$(CORE_DIR)/imgread/ImgReader.cpp \
 					$(CORE_DIR)/imgread/cdi.cpp \

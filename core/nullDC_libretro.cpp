@@ -36,7 +36,7 @@ settings_t settings;
 
 int GetFile(char *szFileName, char *szParse=0,u32 flags=0) 
 {
-	cfgLoadStr("config","image",szFileName,"null");
+   strcpy(szFileName, "/home/squarepusher/roms/dc/scalibur.cdi");
 
 	return 1; 
 }
@@ -97,9 +97,6 @@ int dc_init(int argc,wchar* argv[])
 		printf("Failed to alloc mem\n");
 		return -1;
 	}
-
-	if(ParseCommandLine(argc,argv))
-		return 69;
 
    LoadSettings();
 	os_CreateWindow();
@@ -208,9 +205,4 @@ void LoadSettings(void)
 
 void SaveSettings(void)
 {
-	cfgSaveInt("config","Dynarec.Enabled",	settings.dynarec.Enable);
-	cfgSaveInt("config","Dreamcast.Cable",	settings.dreamcast.cable);
-	cfgSaveInt("config","Dreamcast.RTC",	settings.dreamcast.RTC);
-	cfgSaveInt("config","Dreamcast.Region",	settings.dreamcast.region);
-	cfgSaveInt("config","Dreamcast.Broadcast",settings.dreamcast.broadcast);
 }

@@ -161,7 +161,7 @@ void dc_term(void)
 
 void LoadSettings(void)
 {
-	settings.dynarec.Enable			= 1;
+	settings.dynarec.Enable			= 0;
 	settings.dynarec.idleskip		= 1;
 	settings.dynarec.unstable_opt	= 0; 
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load

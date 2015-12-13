@@ -81,7 +81,6 @@ else ifneq (,$(findstring armv7h,$(platform)))
         ASFLAGS += -mfpu=neon
     endif
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
-    USE_GLES := 1
 
 # Raspberry Pi 2
 else ifneq (,$(findstring rpi2,$(platform)))
@@ -91,7 +90,6 @@ else ifneq (,$(findstring rpi2,$(platform)))
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
     INCFLAGS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads -I../linux-deps/include
     LIBS += -L/opt/vc/lib/  -L../linux-deps/lib -lbcm_host
-    USE_GLES := 1
 
 # BeagleBone Black
 else ifneq (,$(findstring beagle,$(platform)))
@@ -100,7 +98,6 @@ else ifneq (,$(findstring beagle,$(platform)))
     MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp -funroll-loops
     ASFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=softfp
     CFLAGS += -D TARGET_BEAGLE -fsingle-precision-constant
-    USE_GLES := 1
 
 # ODROIDs
 else ifneq (,$(findstring odroid,$(platform)))
@@ -108,7 +105,6 @@ else ifneq (,$(findstring odroid,$(platform)))
     MFLAGS += -marm -mfpu=neon -mfloat-abi=hard -funroll-loops
     ASFLAGS += -mfpu=neon -mfloat-abi=hard
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
-    USE_GLES := 1
 
     # ODROID-XU3, -XU3 Lite & -XU4
     ifneq (,$(findstring odroidxu3,$(platform)))
@@ -159,7 +155,6 @@ ifdef NO_REC
 endif
 
 ifeq ($(NO_REND),1)
-  USE_GLES = 0
   RZDCY_CFLAGS += -DNO_REND=1
   CFLAGS 	 += -DNO_REND
   CXXFLAGS += -DNO_REND
@@ -206,12 +201,14 @@ ifdef LTO_TEST
 endif
 
 # GLES on x11?
+ifdef USE_GL
 ifdef USE_GLES
     CXXFLAGS += -DGLES
 	 CFLAGS   += -DGLES
     GL_LIB   += -lEGL -lGLESv2
 else
     GL_LIB += -ldl -lGL #for desktop gl
+endif
 endif
 
 ifdef NAOMI

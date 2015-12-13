@@ -1,8 +1,9 @@
 #pragma once
 #include "rend/rend.h"
 
-
+#ifndef __LIBRETRO__
 #include <GL3/gl3w.h>
+#endif
 
 #define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
 #define eglCheck() false
@@ -12,10 +13,8 @@
 #define VERTEX_COL_OFFS_ARRAY 2
 #define VERTEX_UV_ARRAY 3
 
-
 //vertex types
 extern u32 gcflip;
-
 
 void DrawStrips();
 

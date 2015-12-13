@@ -370,9 +370,6 @@ void gl_term()
 
 bool gl_init(void* wind, void* disp)
 {
-#ifdef __LIBRETRO__
-   return 1;
-#else
    extern void* x11_glc;
 
    glXMakeCurrent((Display*)libPvr_GetRenderSurface(),
@@ -382,7 +379,6 @@ bool gl_init(void* wind, void* disp)
    screen_width = 640;
    screen_height = 480;
    return gl3wInit() != -1 && gl3wIsSupported(3, 1);
-#endif
 }
 
 void gl_swap()
@@ -604,8 +600,6 @@ bool CompilePipelineShader(	PipelineShader* s)
 
 bool gl_create_resources()
 {
-   /* Stub path for now */
-#ifdef __LIBRETRO__
 #ifndef GLES
 	//create vao
 	//This is really not "proper", vaos are suposed to be defined once
@@ -676,7 +670,6 @@ bool gl_create_resources()
 			return false;
 	}
 	#endif
-#endif
 
 	return true;
 }
@@ -705,7 +698,6 @@ bool gles_init()
 		return false;
 
    /* Stub path for now */
-#ifndef __LIBRETRO__
 	//clean up all buffers ...
 	for (int i=0;i<10;i++)
 	{
@@ -713,7 +705,6 @@ bool gles_init()
 		glClear(GL_COLOR_BUFFER_BIT);
 		gl_swap();
 	}
-#endif
 
 	return true;
 }

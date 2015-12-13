@@ -2,6 +2,7 @@
 #include "cfg/cfg.h"
 #include "oslib/oslib.h"
 #include "audiostream.h"
+#include "../libretro/libretro.h"
 
 struct SoundFrame { s16 l;s16 r; };
 #define SAMPLE_COUNT 512
@@ -18,6 +19,8 @@ u32 gen_samples=0;
 double time_diff = 128/44100.0;
 double time_last;
 
+extern retro_audio_sample_batch_t audio_batch_cb;
+
 bool RegisterAudioBackend(audiobackend_t *backend)
 {
 	return true;
@@ -28,8 +31,8 @@ void RegisterAllAudioBackends() {
 
 u32 PushAudio(void* frame, u32 amt, bool wait)
 {
-   /* audio_batch_cb goes here - return amount of samples */
-	return 0;
+   audio_batch_cb(frame, amt);
+	return amt;
 }
 
 void WriteSample(s16 r, s16 l)

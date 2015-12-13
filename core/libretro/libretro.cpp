@@ -254,9 +254,10 @@ void* libPvr_GetRenderSurface()
    return NULL;
 }
 
-void gl_init(void* disp, void* win)
+bool gl_init(void* disp, void* win)
 {
    //TODO
+   return true;
 }
 
 void os_SetWindowText(const char * text)

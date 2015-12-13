@@ -93,8 +93,8 @@ bool BM_LockedWrite(u8* address);
 DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
 	//rdv_FailedToFindBlock_pc=addr;
-	DynarecCodeEntryPtr rv=(DynarecCodeEntryPtr)FPCA(addr);
-	if (!rv) BM_LockedWrite((u8*)&FPCA(addr));
+	DynarecCodeEntryPtr& rv=FPCA(addr);
+	if (!rv) BM_LockedWrite((u8*)&rv);
 
 	return (DynarecCodeEntryPtr)rv;
 }

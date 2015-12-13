@@ -94,7 +94,7 @@ DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
 	//rdv_FailedToFindBlock_pc=addr;
 	DynarecCodeEntryPtr rv=(DynarecCodeEntryPtr)FPCA(addr);
-	if (!rv) BM_LockedWrite((u8*)(sh4rcb.fpcb + ((addr>>1)&FPCB_MASK)));
+	if (!rv) BM_LockedWrite((u8*)&FPCA(addr));
 
 	return (DynarecCodeEntryPtr)rv;
 }

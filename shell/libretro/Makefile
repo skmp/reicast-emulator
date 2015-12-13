@@ -4,6 +4,8 @@ CC_AS    ?= $(CC)
 STRIP     = ${CC_PREFIX}strip
 LD        = ${CC}
 
+NO_REND  := 1
+
 TARGET_NAME := reicast
 
 MFLAGS   := 
@@ -150,7 +152,14 @@ ifdef NO_REC
   RZDCY_CFLAGS += -DTARGET_NO_REC
 endif
 
-ifdef USE_GLES
+ifeq ($(NO_REND),1)
+  USE_GLES = 0
+  RZDCY_CFLAGS += -DNO_REND=1
+  CFLAGS 	 += -DNO_REND
+  CXXFLAGS += -DNO_REND
+endif
+
+ifeq ($(USE_GLES),1)
   RZDCY_CFLAGS += -DGLES
 endif
 

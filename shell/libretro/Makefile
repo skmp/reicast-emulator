@@ -4,6 +4,8 @@ CC_AS    ?= $(CC)
 STRIP     = ${CC_PREFIX}strip
 LD        = ${CC}
 
+TARGET_NAME := reicast
+
 MFLAGS   := 
 ASFLAGS  := 
 LDFLAGS  :=
@@ -51,12 +53,9 @@ ifeq (,$(platform))
     endif
 endif
 
-$(info Platform: $(platform))
-
 # Generic 32 bit x86 (a.k.a. i386/i486/i686)
 ifneq (,$(findstring x86,$(platform)))
 	 WITH_DYNAREC := x86
-    USE_X11 := 1
     MFLAGS += -m32
     ASFLAGS += --32
     LDFLAGS += -m32
@@ -66,7 +65,6 @@ ifneq (,$(findstring x86,$(platform)))
 # Generic 64 bit x86 (a.k.a. x64/AMD64/x86_64/Intel64/EM64T)
 else ifneq (,$(findstring x64,$(platform)))
 	 WITH_DYNAREC := x64
-    USE_X11 := 1
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fsingle-precision-constant
     CXXFLAGS += -fexceptions
 
@@ -204,19 +202,22 @@ endif
 ifdef NAOMI
     CFLAGS += -D TARGET_NAOMI
     DC_PLATFORM=naomi
-    TARGET=reicast_naomi.elf
-    TARGET_NAME=reicast-naomi
+    TARGET_NAME=$(TARGET_NAME)_naomi
 else
     DC_PLATFORM=dreamcast
-    TARGET=reicast.elf
-    TARGET_NAME=reicast
 endif
 
+fpic := -fPIC
+CFLAGS   += $(fpic)
+CXXFLAGS += $(fpic)
+SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined
+
 OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o) $(SOURCES_ASM:.S=.o)
+TARGET  := $(TARGET_NAME)_libretro.so
 
 all: $(TARGET)	
 $(TARGET): $(OBJECTS)
-	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(GL_LIB) $(OBJECTS) $(LIBS) -o $@
+	$(CXX) $(MFLAGS) $(fpic) $(SHARED) $(EXTRAFLAGS) $(LDFLAGS) $(GL_LIB) $(OBJECTS) $(LIBS) -o $@
 
 %.o: %.cpp
 	$(CXX) $(EXTRAFLAGS) $(INCFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@

@@ -697,7 +697,6 @@ bool gl_create_resources();
 
 bool gles_init()
 {
-
 	if (!gl_init((void*)libPvr_GetRenderTarget(),
 		         (void*)libPvr_GetRenderSurface()))
 			return false;
@@ -705,6 +704,8 @@ bool gles_init()
 	if (!gl_create_resources())
 		return false;
 
+   /* Stub path for now */
+#ifndef __LIBRETRO__
 	//clean up all buffers ...
 	for (int i=0;i<10;i++)
 	{
@@ -712,6 +713,7 @@ bool gles_init()
 		glClear(GL_COLOR_BUFFER_BIT);
 		gl_swap();
 	}
+#endif
 
 	return true;
 }

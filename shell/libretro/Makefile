@@ -207,7 +207,7 @@ ifdef USE_GLES
 	 CFLAGS   += -DGLES
     GL_LIB   += -lEGL -lGLESv2
 else
-    GL_LIB += -ldl -lGL #for desktop gl
+    GL_LIB += -ldl -lGL -lX11 #for desktop gl
 endif
 endif
 
@@ -229,7 +229,7 @@ TARGET  := $(TARGET_NAME)_libretro.so
 
 all: $(TARGET)	
 $(TARGET): $(OBJECTS)
-	$(CXX) $(MFLAGS) $(fpic) $(SHARED) $(EXTRAFLAGS) $(LDFLAGS) $(GL_LIB) $(OBJECTS) $(LIBS) -o $@
+	$(CXX) $(MFLAGS) $(fpic) $(SHARED) $(EXTRAFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBS) $(GL_LIB) -o $@
 
 %.o: %.cpp
 	$(CXX) $(EXTRAFLAGS) $(INCFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@

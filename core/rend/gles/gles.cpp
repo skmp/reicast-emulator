@@ -604,7 +604,8 @@ bool CompilePipelineShader(	PipelineShader* s)
 
 bool gl_create_resources()
 {
-
+   /* Stub path for now */
+#ifdef __LIBRETRO__
 #ifndef GLES
 	//create vao
 	//This is really not "proper", vaos are suposed to be defined once
@@ -675,6 +676,7 @@ bool gl_create_resources()
 			return false;
 	}
 	#endif
+#endif
 
 	return true;
 }

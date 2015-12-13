@@ -1,8 +1,10 @@
-#include "libretro/libretro.h"
-#include "libretro/reicast.h"
-#include "types.h"
 #include <cstdio>
 #include <cstdarg>
+#include "types.h"
+
+#include <libco.h>
+
+#include "libretro.h"
 
 uint32_t video_width =  640;
 uint32_t video_height = 480;
@@ -15,6 +17,44 @@ retro_input_poll_t         poll_cb = NULL;
 retro_input_state_t        input_cb = NULL;
 retro_audio_sample_batch_t audio_batch_cb = NULL;
 retro_environment_t        environ_cb = NULL;
+
+void common_linux_setup();
+int dc_init(int argc,wchar* argv[]);
+void dc_run();
+
+static cothread_t ct_main;
+static cothread_t ct_dc;
+
+static int co_argc;
+static wchar** co_argv;
+
+static void co_dc_thread(void)
+{
+	dc_init(co_argc,co_argv);
+	co_switch(ct_main);
+	
+	dc_run();
+}
+
+static void co_dc_init(int argc,wchar* argv[])
+{
+	ct_main = co_active();
+	ct_dc = co_create(1024*1024/*why does libco demand me to know this*/, co_dc_thread);
+	co_argc=argc;
+	co_argv=argv;
+	co_switch(ct_dc);
+}
+
+void co_dc_run(void)
+{
+   puts("ENTER LOOP");
+	co_switch(ct_dc);
+}
+
+void co_dc_yield(void)
+{
+	co_switch(ct_main);
+}
 
 void retro_set_video_refresh(retro_video_refresh_t cb)
 {
@@ -244,4 +284,13 @@ int msgboxf(const char* text, unsigned int type, ...)
       log_cb(RETRO_LOG_INFO, temp);
    }
    return 0;
+}
+
+int get_mic_data(u8* buffer) { return 0; }
+int push_vmu_screen(u8* buffer) { return 0; }
+
+void os_DebugBreak(void)
+{
+   printf("DEBUGBREAK!\n");
+   exit(-1);
 }

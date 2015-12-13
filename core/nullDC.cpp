@@ -174,6 +174,35 @@ void dc_term(void)
 
 void LoadSettings(void)
 {
+#ifdef __LIBRETRO__
+	settings.dynarec.Enable			= 1;
+	settings.dynarec.idleskip		= 1;
+	settings.dynarec.unstable_opt	= 0; 
+	//disable_nvmem can't be loaded, because nvmem init is before cfg load
+	settings.dreamcast.cable		= 3;
+	settings.dreamcast.RTC			= GetRTC_now();
+	settings.dreamcast.region		= 3;
+	settings.dreamcast.broadcast	= 4;
+	settings.aica.LimitFPS			= 1;
+	settings.aica.NoBatch			= 0;
+   settings.aica.NoSound			= 0;
+   settings.rend.UseMipmaps		= 1;
+   settings.rend.WideScreen		= 0; 
+	settings.pvr.subdivide_transp	= 0;
+	settings.pvr.ta_skip			   = 0;
+	settings.pvr.rend				   = 0;
+
+	settings.pvr.MaxThreads			      = 3;
+	settings.pvr.SynchronousRendering	= 0;
+
+	settings.debug.SerialConsole        = 0;
+
+	settings.reios.ElfFile              = "";
+
+	settings.validate.OpenGlChecks      = 0;
+
+	settings.bios.UseReios              = 0;
+#else
 	settings.dynarec.Enable			= cfgLoadInt("config","Dynarec.Enabled", 1)!=0;
 	settings.dynarec.idleskip		= cfgLoadInt("config","Dynarec.idleskip",1)!=0;
 	settings.dynarec.unstable_opt	= cfgLoadInt("config","Dynarec.unstable-opt",0);
@@ -203,6 +232,7 @@ void LoadSettings(void)
 	settings.validate.OpenGlChecks = cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
 
 	settings.bios.UseReios = cfgLoadInt("config", "bios.UseReios", 0);
+#endif
 
 	settings.aica.BufferSize=1024;
 

@@ -20,7 +20,7 @@ u32 GetRTC_now()
 {
 	
 	time_t rawtime=0;
-	tm  timeinfo;
+	tm  timeinfo={0};
 	timeinfo.tm_year=1998-1900;
 	timeinfo.tm_mon=11-1;
 	timeinfo.tm_mday=27;

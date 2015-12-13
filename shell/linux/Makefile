@@ -1,4 +1,5 @@
 USE_ALSA := 1
+#NO_REND  := 1
 
 CXX       = ${CC_PREFIX}g++
 CC        = ${CC_PREFIX}gcc
@@ -156,6 +157,12 @@ endif
 
 ifdef USE_GLES
   RZDCY_CFLAGS += -DGLES
+endif
+
+ifdef NO_REND
+  RZDCY_CFLAGS += -DNO_REND=1
+  CFLAGS 	 += -DNO_REND
+  CXXFLAGS += -DNO_REND
 endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11

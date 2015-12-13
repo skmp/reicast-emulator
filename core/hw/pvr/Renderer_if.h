@@ -51,4 +51,5 @@ extern Renderer* renderer;
 
 
 Renderer* rend_GLES2();
+Renderer* rend_norend();
 Renderer* rend_softrend();

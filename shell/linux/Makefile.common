@@ -95,12 +95,14 @@ SOURCES_CXX := $(CORE_DIR)/cfg/cfg.cpp \
 					$(CORE_DIR)/reios/gdrom_hle.cpp \
 					$(CORE_DIR)/reios/descrambl.cpp \
 					\
-					$(CORE_DIR)/rend/gles/gldraw.cpp \
-					$(CORE_DIR)/rend/gles/gles.cpp \
-					$(CORE_DIR)/rend/gles/gltex.cpp
 
-
-
+ifeq ($(NO_REND),1)
+	SOURCES_CXX += $(CORE_DIR)/rend/norend/norend.cpp
+else
+	SOURCES_CXX += $(CORE_DIR)/rend/gles/gldraw.cpp \
+						$(CORE_DIR)/rend/gles/gles.cpp \
+						$(CORE_DIR)/rend/gles/gltex.cpp
+endif
 
 # Recompiler (x64)
 

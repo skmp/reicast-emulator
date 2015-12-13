@@ -605,7 +605,6 @@ error:
 u32 pagecnt;
 void _vmem_bm_reset_nvmem()
 {
-return;
 	#if defined(TARGET_NO_NVMEM)
 		return;
 	#endif
@@ -685,7 +684,8 @@ bool _vmem_reserve()
 
 	verify(VirtualAlloc((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb),sizeof(Sh4RCB)-sizeof(p_sh4rcb->fpcb),MEM_COMMIT,PAGE_READWRITE));
 #else
-	verify(p_sh4rcb==mmap(p_sh4rcb,sizeof(Sh4RCB),PROT_READ|PROT_WRITE,MAP_PRIVATE | MAP_ANON, -1, 0));
+	verify(p_sh4rcb==mmap(p_sh4rcb,sizeof(Sh4RCB),PROT_NONE,MAP_PRIVATE | MAP_ANON, -1, 0));
+	mprotect((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb),sizeof(Sh4RCB)-sizeof(p_sh4rcb->fpcb),PROT_READ|PROT_WRITE);
 	//mprotect((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb),sizeof(Sh4RCB)-sizeof(p_sh4rcb->fpcb),PROT_READ|PROT_WRITE);
 #endif
 	virt_ram_base+=sizeof(Sh4RCB);

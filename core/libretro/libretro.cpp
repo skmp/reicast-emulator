@@ -230,7 +230,7 @@ bool retro_load_game(const struct retro_game_info *game)
 #endif
 #endif
    hw_render.context_reset      = context_reset;
-   hw_render.context_reset      = context_destroy;
+   hw_render.context_destroy    = context_destroy;
    hw_render.depth              = true;
    hw_render.stencil            = true;
    hw_render.bottom_left_origin = true;

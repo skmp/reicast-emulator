@@ -347,9 +347,17 @@ unsigned retro_api_version(void)
 }
 
 //Reicast stuff
-
-
 void os_DoEvents()
+{
+   poll_cb();
+}
+
+void os_CreateWindow()
+{
+   // Nothing to do here
+}
+
+void UpdateInputState(u32 port)
 {
    int id;
    static const uint16_t joymap[] = {
@@ -371,29 +379,16 @@ void os_DoEvents()
       /* JOYPAD_R3     */ 0,
    };
 
-   poll_cb();
-
    for (id = RETRO_DEVICE_ID_JOYPAD_B; id < RETRO_DEVICE_ID_JOYPAD_R3+1; ++id)
    {
       uint16_t dc_key = joymap[id];
-      bool is_down = input_cb(0, RETRO_DEVICE_JOYPAD, 0, id);
-      bool was_down = kcode[0] & ~dc_key;
+      bool is_down = input_cb(port, RETRO_DEVICE_JOYPAD, 0, id);
 
       if (is_down)
-         kcode[0] &= ~dc_key;
+         kcode[port] &= ~dc_key;
       else
-         kcode[0] |= dc_key;
+         kcode[port] |= dc_key;
    }
-}
-
-void os_CreateWindow()
-{
-   // Nothing to do here
-}
-
-void UpdateInputState(u32 port)
-{
-   //TODO
 }
 
 void* libPvr_GetRenderTarget()

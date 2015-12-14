@@ -43,24 +43,21 @@ struct BlockMapCMP
 	{
 		if ((unat)((u8*)blk-CodeCache)<CODE_SIZE)
 			return true;
-		else
-			return false;
+      return false;
 	}
 
 	static unat get_blkstart(RuntimeBlockInfo* blk)
 	{
 		if (is_code(blk)) 
 			return (unat)blk; 
-		else 
-			return (unat)blk->code;
+      return (unat)blk->code;
 	}
 
 	static unat get_blkend(RuntimeBlockInfo* blk)
 	{
 		if (is_code(blk)) 
 			return (unat)blk; 
-		else 
-			return (unat)blk->code+blk->host_code_size-1;
+      return (unat)blk->code+blk->host_code_size-1;
 	}
 
 	//return true if blkl > blkr
@@ -72,13 +69,8 @@ struct BlockMapCMP
 		unat blkr_start=get_blkstart(blkr),blkl_end=get_blkend(blkl);
 
 		if (blkl_end<blkr_start)
-		{
 			return true;
-		}
-		else
-		{
-			return false;
-		}
+      return false;
 	}
 };
 
@@ -109,8 +101,7 @@ RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr)
 
 	if (cde==ngen_FailedToFindBlock)
 		return 0;
-	else
-		return bm_GetBlock((void*)cde);
+   return bm_GetBlock((void*)cde);
 }
 
 RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
@@ -121,11 +112,9 @@ RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
 		verify((*iter)->contains_code((u8*)dynarec_code));
 		return *iter;
 	}
-	else
-	{
-		printf("bm_GetBlock(%08X) failed ..\n",dynarec_code);
-		return 0;
-	}
+
+   printf("bm_GetBlock(%08X) failed ..\n",dynarec_code);
+   return 0;
 }
 
 RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code)
@@ -183,9 +172,7 @@ bool PageIsConst(u32 addr)
 	{
 		addr&=RAM_MASK;
 		if (addr>0x0010100)
-		{
 			return PAGE_STATE[addr/32]&(1<<addr);
-		}
 	}
 
 	return false;
@@ -208,33 +195,26 @@ u32 FindPath(RuntimeBlockInfo* rbi, u32 sa,s32 mc,u32& plc)
 
 	plc++;
 	if (rbi->BlockType==BET_Cond_0 || rbi->BlockType==BET_Cond_1)
-	{
-		u32 plc1=plc,plc2=plc,v1=0,v2=0;
-		if (rbi->BranchBlock>sa)
-		{
-			v1=FindPath(bm_GetBlock(rbi->BranchBlock),rbi->addr,mc-rbi->guest_cycles,plc1);
-		}
-		v2=FindPath(bm_GetBlock(rbi->NextBlock),rbi->addr,mc-rbi->guest_cycles,plc2);
-		if (plc1>plc2)
-		{
-			plc=plc1;
-			return rbi->guest_cycles+v1;
-		}
-		else
-		{
-			plc=plc2;
-			return rbi->guest_cycles+v2;
-		}
-		
-	}
+   {
+      u32 plc1=plc,plc2=plc,v1=0,v2=0;
+      if (rbi->BranchBlock>sa)
+         v1=FindPath(bm_GetBlock(rbi->BranchBlock),rbi->addr,mc-rbi->guest_cycles,plc1);
+      v2=FindPath(bm_GetBlock(rbi->NextBlock),rbi->addr,mc-rbi->guest_cycles,plc2);
+
+      if (plc1>plc2)
+      {
+         plc=plc1;
+         return rbi->guest_cycles+v1;
+      }
+
+      plc=plc2;
+      return rbi->guest_cycles+v2;
+   }
 	else if (rbi->BlockType==BET_StaticJump)
 	{
 		if (rbi->BranchBlock>sa)
 			return rbi->guest_cycles+FindPath(bm_GetBlock(rbi->BranchBlock),rbi->addr,mc-rbi->guest_cycles,plc);
-		else
-		{
-			return rbi->guest_cycles;
-		}
+      return rbi->guest_cycles;
 	}
 	else
 	{
@@ -290,18 +270,14 @@ void bm_Periodical_1s()
 			{
 				RuntimeBlockInfo* bbi=bm_GetBlock(all_blocks[i]->BranchBlock);
 				if (bbi && bbi->runs)
-				{
 					vmap[all_blocks[i]->BranchBlock]=bbi->runs;
-				}
 			}
 
 			if (rbi->BlockType==BET_StaticCall)
 			{
 				RuntimeBlockInfo* bbi=bm_GetBlock(all_blocks[i]->BranchBlock);
 				if (bbi && bbi->runs)
-				{
 					calls[all_blocks[i]->BranchBlock]+=rbi->runs;
-				}
 			}
 		}
 		verify(rbi->NextBlock>rbi->addr);

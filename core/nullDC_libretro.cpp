@@ -17,6 +17,7 @@
 
 settings_t settings;
 
+extern char game_dir[1024];
 extern char *game_data;
 
 /*
@@ -105,11 +106,9 @@ int dc_init(int argc,wchar* argv[])
 
 	int rv= 0;
 
-#define DATA_PATH "/home/squarepusher/roms/dc/data/"
-    
-	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
+	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(game_dir)))
 	{
-		if (!LoadHle(get_readonly_data_path(DATA_PATH)))
+		if (!LoadHle(get_readonly_data_path(game_dir)))
 			return -3;
       printf("Did not load bios, using reios\n");
 	}

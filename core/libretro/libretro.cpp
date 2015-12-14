@@ -67,6 +67,7 @@ static int co_argc;
 static wchar** co_argv;
 
 char *game_data;
+char game_dir[1024];
 
 static void co_dc_thread(void)
 {
@@ -197,6 +198,10 @@ static void extract_directory(char *buf, const char *path, size_t size)
 bool retro_load_game(const struct retro_game_info *game)
 {
    game_data = strdup(game->path);
+
+   extract_directory(game_dir, game->path, sizeof(game_dir));
+
+   strcat(game_dir, "/data");
 
 #if defined(GL) || defined(GLES)
 #ifdef GLES

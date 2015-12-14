@@ -371,23 +371,35 @@ void UpdateInputState(u32 port)
       /* JOYPAD_RIGHT  */ DC_DPAD_RIGHT,
       /* JOYPAD_A      */ DC_BTN_B,
       /* JOYPAD_X      */ DC_BTN_Y,
-      /* JOYPAD_L      */ 0,
-      /* JOYPAD_R      */ 0,
-      /* JOYPAD_L2     */ 0,
-      /* JOYPAD_R2     */ 0,
+      /* JOYPAD_L      */ 0, /* half L */
+      /* JOYPAD_R      */ 0, /* half R */
+      /* JOYPAD_L2     */ 0, /* full L */
+      /* JOYPAD_R2     */ 0, /* full R */
       /* JOYPAD_L3     */ 0,
       /* JOYPAD_R3     */ 0,
    };
+
+
+   rt[port] = 0;
+   lt[port] = 0;
 
    for (id = RETRO_DEVICE_ID_JOYPAD_B; id < RETRO_DEVICE_ID_JOYPAD_R3+1; ++id)
    {
       uint16_t dc_key = joymap[id];
       bool is_down = input_cb(port, RETRO_DEVICE_JOYPAD, 0, id);
 
-      if (is_down)
-         kcode[port] &= ~dc_key;
-      else
-         kcode[port] |= dc_key;
+      switch (id)
+      {
+         case RETRO_DEVICE_ID_JOYPAD_L:  lt[port] |= 0x7f * is_down; break;
+         case RETRO_DEVICE_ID_JOYPAD_R:  rt[port] |= 0x7f * is_down; break;
+         case RETRO_DEVICE_ID_JOYPAD_L2: lt[port] |= 0xff * is_down; break;
+         case RETRO_DEVICE_ID_JOYPAD_R2: rt[port] |= 0xff * is_down; break;
+         default:
+            if (is_down)
+               kcode[port] &= ~dc_key;
+            else
+               kcode[port] |= dc_key;
+      }
    }
 
    joyx[port] = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X) / 256;

@@ -4,6 +4,10 @@
 
 #include <libco.h>
 
+#if defined(GL) || defined(GLES)
+#include <glsym/rglgen.h>
+#endif
+
 #include "libretro.h"
 
 uint32_t video_width =  640;
@@ -47,6 +51,10 @@ retro_input_poll_t         poll_cb = NULL;
 retro_input_state_t        input_cb = NULL;
 retro_audio_sample_batch_t audio_batch_cb = NULL;
 retro_environment_t        environ_cb = NULL;
+
+#if defined(GL) || defined(GLES)
+struct retro_hw_render_callback hw_render;
+#endif
 
 void common_linux_setup();
 int dc_init(int argc,wchar* argv[]);
@@ -147,7 +155,6 @@ void retro_deinit(void)
 
 void retro_run (void)
 {
-
    co_dc_run();
 }
 
@@ -156,11 +163,39 @@ void retro_reset (void)
    //TODO
 }
 
+#if defined(GL) || defined(GLES)
+static void context_reset(void)
+{
+   rglgen_resolve_symbols(hw_render.get_proc_address);
+}
+#endif
 
 // Loading/unloading games
 bool retro_load_game(const struct retro_game_info *game)
 {
    game_data = strdup(game->path);
+
+#if defined(GL) || defined(GLES)
+#ifdef GLES
+#if defined(GLES31)
+   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES_VERSION;
+   hw_render.version_major = 3;
+   hw_render.version_minor = 1;
+#elif defined(GLES3)
+   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES3;
+#else
+   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES2;
+#endif
+#else
+#ifdef CORE
+   hw_render.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
+   hw_render.version_major = 3;
+   hw_render.version_minor = 1;
+#else
+   hw_render.context_type = RETRO_HW_CONTEXT_OPENGL;
+#endif
+#endif
+#endif
 
    co_switch(ct_dc);
 }
@@ -335,20 +370,9 @@ void* libPvr_GetRenderSurface()
    return NULL;
 }
 
-bool gl_init(void* disp, void* win)
-{
-   //TODO
-   return true;
-}
-
 void os_SetWindowText(const char * text)
 {
    // Nothing to do here
-}
-
-void gl_swap(void)
-{
-   //TODO
 }
 
 int msgboxf(const char* text, unsigned int type, ...)

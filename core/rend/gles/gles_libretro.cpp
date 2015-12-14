@@ -1,5 +1,5 @@
 #include <math.h>
-#include "gles_libretro.h"
+#include "gles.h"
 #include "rend/TexCache.h"
 #include "cfg/cfg.h"
 
@@ -211,8 +211,8 @@ int screen_height;
 // Create a basic GLES context
 bool gl_init(void* wind, void* disp)
 {
-   screen_width=w;
-   screen_height=h;
+   screen_width  = 640;
+   screen_height = 480; 
 
    return true;
 }

@@ -205,11 +205,18 @@ ifeq ($(HAVE_GLES),1)
 	 CFLAGS   += -DGLES
     GL_LIB   += -lEGL -lGLESv2
 else
+	HAVE_CORE = 1
 	 RZDCY_CFLAGS += -DGL
     CXXFLAGS += -DGL
 	 CFLAGS   += -DGL
     GL_LIB += -ldl -lGL #for desktop gl
 endif
+endif
+
+ifdef HAVE_CORE
+	RZDCY_CFLAGS += -DCORE
+	CXXFLAGS += -DCORE
+	CFLAGS   += -DCORE
 endif
 
 ifdef NAOMI

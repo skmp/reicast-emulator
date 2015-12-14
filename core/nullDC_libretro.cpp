@@ -40,6 +40,7 @@ extern char *game_data;
 int GetFile(char *szFileName, char *szParse=0,u32 flags=0) 
 {
    strcpy(szFileName, game_data);
+   strcpy(settings.imgread.DefaultImage, szFileName);
 
 	return 1; 
 }

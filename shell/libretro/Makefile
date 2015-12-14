@@ -5,9 +5,9 @@ STRIP     = ${CC_PREFIX}strip
 LD        = ${CC}
 
 DEBUG      := 0
-NO_REND    := 1
-HAVE_GL    := 0
-NO_THREADS := 0
+NO_REND    := 0
+HAVE_GL    := 1
+NO_THREADS := 1
 
 TARGET_NAME := reicast
 

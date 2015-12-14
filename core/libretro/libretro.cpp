@@ -201,7 +201,7 @@ bool retro_load_game(const struct retro_game_info *game)
 
    extract_directory(game_dir, game->path, sizeof(game_dir));
 
-   strcat(game_dir, "/data");
+   strcat(game_dir, "/data/");
 
 #if defined(GL) || defined(GLES)
 #ifdef GLES

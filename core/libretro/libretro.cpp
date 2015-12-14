@@ -389,6 +389,9 @@ void UpdateInputState(u32 port)
       else
          kcode[port] |= dc_key;
    }
+
+   joyx[port] = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X) / 256;
+   joyy[port] = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y) / 256;
 }
 
 void* libPvr_GetRenderTarget()

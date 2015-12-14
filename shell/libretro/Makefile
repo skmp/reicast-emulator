@@ -4,9 +4,10 @@ CC_AS    ?= $(CC)
 STRIP     = ${CC_PREFIX}strip
 LD        = ${CC}
 
-DEBUG    := 0
-NO_REND  := 1
-HAVE_GL  := 0
+DEBUG      := 0
+NO_REND    := 1
+HAVE_GL    := 0
+NO_THREADS := 0
 
 TARGET_NAME := reicast
 
@@ -150,6 +151,12 @@ RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
 RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
 else
 RZDCY_CFLAGS += -DTARGET_LINUX_x86
+endif
+
+ifdef NO_THREADS
+  RZDCY_CFLAGS += -DTARGET_NO_THREADS
+  CFLAGS       += -DTARGET_NO_THREADS
+  CXXFLAGS     += -DTARGET_NO_THREADS
 endif
 
 ifdef NO_REC

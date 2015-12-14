@@ -169,6 +169,7 @@ void retro_reset (void)
 #if defined(GL) || defined(GLES)
 static void context_reset(void)
 {
+   printf("context_reset.\n");
    rglgen_resolve_symbols(hw_render.get_proc_address);
 }
 

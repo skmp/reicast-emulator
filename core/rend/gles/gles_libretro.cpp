@@ -205,8 +205,8 @@ void main() \n\
 
 gl_ctx gl;
 
-int screen_width;
-int screen_height;
+extern int screen_width;
+extern int screen_height;
 
 // Create a basic GLES context
 bool gl_init(void* wind, void* disp)

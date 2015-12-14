@@ -142,7 +142,8 @@ OPTFLAGS       := -O0
 else
 OPTFLAGS       := -O3
 endif
-RZDCY_CFLAGS	:= $(CFLAGS) -c $(OPTFLAGS) -DRELEASE -frename-registers -fsingle-precision-constant -ffast-math -ftree-vectorize -fomit-frame-pointer -D__LIBRETRO__
+RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -DRELEASE -frename-registers -fsingle-precision-constant -ffast-math -ftree-vectorize -fomit-frame-pointer -D__LIBRETRO__
+CFLAGS         += -D__LIBRETRO__
 
 ifeq ($(WITH_DYNAREC), arm)
 RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
@@ -235,7 +236,7 @@ $(TARGET): $(OBJECTS)
 	$(CXX) $(EXTRAFLAGS) $(INCFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
 	
 %.o: %.c
-	$(CC) $(EXTRAFLAGS) $(INCFLAGS) $(CFLAGS) $< -o $@
+	$(CC) $(EXTRAFLAGS) $(INCFLAGS) $(CFLAGS) $(MFLAGS) $< -o $@
 
 %.o: %.S
 	$(CC_AS) $(ASFLAGS) $(INCFLAGS) $< -o $@

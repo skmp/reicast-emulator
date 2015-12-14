@@ -10,8 +10,8 @@
 
 #include "libretro.h"
 
-uint32_t video_width =  640;
-uint32_t video_height = 480;
+int screen_width  = 640;
+int screen_height = 480;
 
 u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
 u8 rt[4] = {0, 0, 0, 0};
@@ -156,6 +156,9 @@ void retro_deinit(void)
 void retro_run (void)
 {
    co_dc_run();
+#if defined(GL) || defined(GLES)
+   video_cb(RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
+#endif
 }
 
 void retro_reset (void)
@@ -167,6 +170,10 @@ void retro_reset (void)
 static void context_reset(void)
 {
    rglgen_resolve_symbols(hw_render.get_proc_address);
+}
+
+static void context_destroy(void)
+{
 }
 #endif
 
@@ -195,9 +202,18 @@ bool retro_load_game(const struct retro_game_info *game)
    hw_render.context_type = RETRO_HW_CONTEXT_OPENGL;
 #endif
 #endif
+   hw_render.context_reset      = context_reset;
+   hw_render.context_reset      = context_destroy;
+   hw_render.depth              = true;
+   hw_render.stencil            = true;
+   hw_render.bottom_left_origin = true;
+
+   if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
+      return false;
 #endif
 
    co_switch(ct_dc);
+   return true;
 }
 
 bool retro_load_game_special(unsigned game_type, const struct retro_game_info *info, size_t num_info)
@@ -269,10 +285,10 @@ void retro_get_system_info(struct retro_system_info *info)
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
-   info->geometry.base_width   = video_width;
-   info->geometry.base_height  = video_height;
-   info->geometry.max_width    = video_width;
-   info->geometry.max_height   = video_height;
+   info->geometry.base_width   = screen_width;
+   info->geometry.base_height  = screen_height;
+   info->geometry.max_width    = screen_width;
+   info->geometry.max_height   = screen_height;
    info->geometry.aspect_ratio = 4.0 / 3.0;
    info->timing.fps = 60.0; //FIXME: This might differ for non-NTSC games
    info->timing.sample_rate = 44100.0;

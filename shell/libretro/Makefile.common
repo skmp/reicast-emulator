@@ -1,8 +1,8 @@
 INCFLAGS    += -I$(CORE_DIR) \
 					-I$(CORE_DIR)/deps \
-					-I$(CORE_DIR)/khronos \
 					-I$(CORE_DIR)/libretro-common/include 
 
+SOURCES_C   :=
 SOURCES_CXX := $(CORE_DIR)/cfg/ini.cpp \
 					\
 					$(CORE_DIR)/hw/arm7/arm_mem.cpp \
@@ -102,7 +102,8 @@ ifeq ($(HAVE_GL), 1)
 SOURCES_CXX += $(CORE_DIR)/rend/gles/gldraw.cpp \
 					$(CORE_DIR)/rend/gles/gles_libretro.cpp \
 					$(CORE_DIR)/rend/gles/gltex.cpp
-SOURCES_C   += $(CORE_DIR)/libretro-common/glsym/rglgen.c 
+SOURCES_C   += $(CORE_DIR)/libretro-common/glsym/rglgen.c  \
+					$(CORE_DIR)/libretro-common/glsym/glsym_gl.c
 endif
 
 

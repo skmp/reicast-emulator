@@ -1,7 +1,9 @@
 #pragma once
 #include "rend/rend.h"
 
-#ifndef __LIBRETRO__
+#ifdef __LIBRETRO__
+#include <glsym/glsym.h>
+#else
 #include <GL3/gl3w.h>
 #endif
 

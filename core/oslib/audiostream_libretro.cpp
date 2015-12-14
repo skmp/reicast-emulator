@@ -31,7 +31,7 @@ void RegisterAllAudioBackends() {
 
 u32 PushAudio(void* frame, u32 amt, bool wait)
 {
-   audio_batch_cb(frame, amt);
+   audio_batch_cb((const int16_t*)frame, amt);
 	return amt;
 }
 

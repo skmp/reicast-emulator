@@ -58,8 +58,12 @@ static cothread_t ct_dc;
 static int co_argc;
 static wchar** co_argv;
 
+uint8_t *game_data = NULL;
+uint32_t game_size = 0;
+
 static void co_dc_thread(void)
 {
+	co_switch(ct_main);
 	dc_init(co_argc,co_argv);
 	co_switch(ct_main);
 	
@@ -72,7 +76,6 @@ static void co_dc_init(int argc,wchar* argv[])
 	ct_dc = co_create(1024*1024/*why does libco demand me to know this*/, co_dc_thread);
 	co_argc=argc;
 	co_argv=argv;
-	co_switch(ct_dc);
 }
 
 void co_dc_run(void)
@@ -158,7 +161,11 @@ void retro_reset (void)
 // Loading/unloading games
 bool retro_load_game(const struct retro_game_info *game)
 {
-   //TODO
+   game_data = malloc(game->size);
+   memcpy(game_data, game->data, game->size);
+   game_size = game->size;
+
+   co_switch(ct_dc);
 }
 
 bool retro_load_game_special(unsigned game_type, const struct retro_game_info *info, size_t num_info)

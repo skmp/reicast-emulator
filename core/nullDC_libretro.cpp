@@ -36,7 +36,7 @@ settings_t settings;
 
 int GetFile(char *szFileName, char *szParse=0,u32 flags=0) 
 {
-   strcpy(szFileName, "/home/alcaro/Desktop/minir/cores/reicast-emulator/pirated-shit/pwrstn.cdi");
+   strcpy(szFileName, "/home/squarepusher/roms/dc/pwrstn.cdi");
 
 	return 1; 
 }
@@ -103,7 +103,7 @@ int dc_init(int argc,wchar* argv[])
 
 	int rv= 0;
 
-#define DATA_PATH "/home/alcaro/Desktop/minir/cores/reicast-emulator/pirated-shit/data/"
+#define DATA_PATH "/home/squarepusher/roms/dc/data/"
     
 	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
 	{

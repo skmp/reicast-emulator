@@ -17,6 +17,8 @@
 
 settings_t settings;
 
+extern char *game_data;
+
 /*
 	libndc
 
@@ -36,7 +38,7 @@ settings_t settings;
 
 int GetFile(char *szFileName, char *szParse=0,u32 flags=0) 
 {
-   strcpy(szFileName, "/home/squarepusher/roms/dc/pwrstn.cdi");
+   strcpy(szFileName, game_data);
 
 	return 1; 
 }

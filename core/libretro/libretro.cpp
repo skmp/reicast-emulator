@@ -58,8 +58,7 @@ static cothread_t ct_dc;
 static int co_argc;
 static wchar** co_argv;
 
-uint8_t *game_data = NULL;
-uint32_t game_size = 0;
+char *game_data;
 
 static void co_dc_thread(void)
 {
@@ -161,9 +160,7 @@ void retro_reset (void)
 // Loading/unloading games
 bool retro_load_game(const struct retro_game_info *game)
 {
-   game_data = malloc(game->size);
-   memcpy(game_data, game->data, game->size);
-   game_size = game->size;
+   game_data = strdup(game->path);
 
    co_switch(ct_dc);
 }

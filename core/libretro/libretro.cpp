@@ -89,7 +89,7 @@ static void co_dc_init(int argc,wchar* argv[])
 
 void co_dc_run(void)
 {
-   puts("ENTER LOOP");
+   //puts("ENTER LOOP");
 	co_switch(ct_dc);
 }
 

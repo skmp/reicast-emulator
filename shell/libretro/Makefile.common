@@ -96,9 +96,11 @@ SOURCES_CXX := $(CORE_DIR)/cfg/ini.cpp \
 
 ifeq ($(NO_REND), 1)
 SOURCES_CXX += $(CORE_DIR)/rend/norend/norend.cpp
-else
+endif
+
+ifeq ($(HAVE_GL), 1)
 SOURCES_CXX += $(CORE_DIR)/rend/gles/gldraw.cpp \
-					$(CORE_DIR)/rend/gles/gles.cpp \
+					$(CORE_DIR)/rend/gles/gles_libretro.cpp \
 					$(CORE_DIR)/rend/gles/gltex.cpp
 endif
 

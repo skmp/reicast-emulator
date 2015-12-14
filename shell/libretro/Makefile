@@ -6,6 +6,7 @@ LD        = ${CC}
 
 DEBUG    := 0
 NO_REND  := 1
+HAVE_GL  := 0
 
 TARGET_NAME := reicast
 
@@ -160,10 +161,6 @@ ifeq ($(NO_REND),1)
   CXXFLAGS += -DNO_REND
 endif
 
-ifeq ($(USE_GLES),1)
-  RZDCY_CFLAGS += -DGLES
-endif
-
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
 
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,$(OPTFLAGS) -Wl,--sort-common
@@ -200,14 +197,17 @@ ifdef LTO_TEST
     LDFLAGS +=-flto -fwhole-program 
 endif
 
-# GLES on x11?
-ifdef USE_GL
-ifdef USE_GLES
+ifeq ($(HAVE_GL), 1)
+ifeq ($(HAVE_GLES),1)
+	 RZDCY_CFLAGS += -DGLES
     CXXFLAGS += -DGLES
 	 CFLAGS   += -DGLES
     GL_LIB   += -lEGL -lGLESv2
 else
-    GL_LIB += -ldl -lGL -lX11 #for desktop gl
+	 RZDCY_CFLAGS += -DGL
+    CXXFLAGS += -DGL
+	 CFLAGS   += -DGL
+    GL_LIB += -ldl -lGL #for desktop gl
 endif
 endif
 

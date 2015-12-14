@@ -351,52 +351,39 @@ unsigned retro_api_version(void)
 
 void os_DoEvents()
 {
+   int id;
+   static const uint16_t joymap[] = {
+      /* JOYPAD_B      */ DC_BTN_A,
+      /* JOYPAD_Y      */ DC_BTN_X,
+      /* JOYPAD_SELECT */ 0,
+      /* JOYPAD_START  */ DC_BTN_START,
+      /* JOYPAD_UP     */ DC_DPAD_UP,
+      /* JOYPAD_DOWN   */ DC_DPAD_DOWN,
+      /* JOYPAD_LEFT   */ DC_DPAD_LEFT,
+      /* JOYPAD_RIGHT  */ DC_DPAD_RIGHT,
+      /* JOYPAD_A      */ DC_BTN_B,
+      /* JOYPAD_X      */ DC_BTN_Y,
+      /* JOYPAD_L      */ 0,
+      /* JOYPAD_R      */ 0,
+      /* JOYPAD_L2     */ 0,
+      /* JOYPAD_R2     */ 0,
+      /* JOYPAD_L3     */ 0,
+      /* JOYPAD_R3     */ 0,
+   };
+
    poll_cb();
 
-   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
-      kcode[0] |= DC_DPAD_UP;
-   else
-      kcode[0] &= ~DC_DPAD_UP;
+   for (id = RETRO_DEVICE_ID_JOYPAD_B; id < RETRO_DEVICE_ID_JOYPAD_R3+1; ++id)
+   {
+      uint16_t dc_key = joymap[id];
+      bool is_down = input_cb(0, RETRO_DEVICE_JOYPAD, 0, id);
+      bool was_down = kcode[0] & ~dc_key;
 
-   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN))
-      kcode[0] |= DC_DPAD_DOWN;
-   else
-      kcode[0] &= ~DC_DPAD_DOWN;
-
-   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT))
-      kcode[0] |= DC_DPAD_LEFT;
-   else
-      kcode[0] &= ~DC_DPAD_LEFT;
-
-   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT))
-      kcode[0] |= DC_DPAD_RIGHT;
-   else
-      kcode[0] &= ~DC_DPAD_RIGHT;
-
-   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
-      kcode[0] |= DC_BTN_START;
-   else
-      kcode[0] &= ~DC_BTN_START;
-
-   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
-      kcode[0] |= DC_BTN_A;
-   else
-      kcode[0] &= ~DC_BTN_A;
-
-   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
-      kcode[0] |= DC_BTN_B;
-   else
-      kcode[0] &= ~DC_BTN_B;
-
-   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
-      kcode[0] |= DC_BTN_X;
-   else
-      kcode[0] &= ~DC_BTN_X;
-
-   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X))
-      kcode[0] |= DC_BTN_Y;
-   else
-      kcode[0] &= ~DC_BTN_Y;
+      if (is_down)
+         kcode[0] &= ~dc_key;
+      else
+         kcode[0] |= dc_key;
+   }
 }
 
 void os_CreateWindow()

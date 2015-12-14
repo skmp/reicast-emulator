@@ -197,11 +197,16 @@ static void extract_directory(char *buf, const char *path, size_t size)
 // Loading/unloading games
 bool retro_load_game(const struct retro_game_info *game)
 {
+   const char *dir = NULL;
+
    game_data = strdup(game->path);
 
    extract_directory(game_dir, game->path, sizeof(game_dir));
 
-   strcat(game_dir, "/data/");
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
+      snprintf(game_dir, sizeof(game_dir), "%s/dc/", dir);
+   else
+      strcat(game_dir, "/data/");
 
 #if defined(GL) || defined(GLES)
 #ifdef GLES

@@ -102,6 +102,9 @@ int dc_init(int argc,wchar* argv[])
 		return -1;
 	}
 
+	if(ParseCommandLine(argc,argv))
+		return 69;
+
    LoadSettings();
 	os_CreateWindow();
 

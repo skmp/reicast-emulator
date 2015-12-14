@@ -914,11 +914,7 @@ bool RenderFrame()
 		}
 		BindRTT(FB_W_SOF1&VRAM_MASK,FB_X_CLIP.max-FB_X_CLIP.min+1,FB_Y_CLIP.max-FB_Y_CLIP.min+1,channels,format);
 	}
-	else
-	{
-        //Fix this in a proper way
-		glBindFramebuffer(GL_FRAMEBUFFER,0);
-	}
+
 
 	//Clear depth
 	//Color is cleared by the bgp

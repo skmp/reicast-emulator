@@ -6,6 +6,7 @@
 
 #if defined(GL) || defined(GLES)
 #include <glsym/rglgen.h>
+#include <glsym/glsym.h>
 #endif
 
 #include "libretro.h"
@@ -156,10 +157,14 @@ void retro_deinit(void)
 
 void retro_run (void)
 {
+   glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
    co_dc_run();
+   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 #if defined(GL) || defined(GLES)
    video_cb(RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
 #endif
+
 }
 
 void retro_reset (void)

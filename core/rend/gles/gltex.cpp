@@ -375,6 +375,7 @@ struct FBT
 
 FBT fb_rtt;
 
+/* FIXME: make this work with libretro-gl framebuffers */
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
 	FBT& rv=fb_rtt;

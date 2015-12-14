@@ -172,6 +172,7 @@ static void context_reset(void)
 {
    printf("context_reset.\n");
    rglgen_resolve_symbols(hw_render.get_proc_address);
+   co_switch(ct_dc);
 }
 
 static void context_destroy(void)
@@ -236,9 +237,10 @@ bool retro_load_game(const struct retro_game_info *game)
 
    if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
       return false;
+#else
+   co_switch(ct_dc);
 #endif
 
-   co_switch(ct_dc);
    return true;
 }
 

@@ -178,6 +178,21 @@ static void context_destroy(void)
 }
 #endif
 
+static void extract_directory(char *buf, const char *path, size_t size)
+{
+   strncpy(buf, path, size - 1);
+   buf[size - 1] = '\0';
+
+   char *base = strrchr(buf, '/');
+   if (!base)
+      base = strrchr(buf, '\\');
+
+   if (base)
+      *base = '\0';
+   else
+      buf[0] = '\0';
+}
+
 // Loading/unloading games
 bool retro_load_game(const struct retro_game_info *game)
 {

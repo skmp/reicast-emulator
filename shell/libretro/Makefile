@@ -424,7 +424,7 @@ endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
 
-LDFLAGS += -g -Wl,--gc-sections -Wl,$(OPTFLAGS) -Wl,--sort-common
+LDFLAGS += -g -Wl,$(OPTFLAGS) -Wl,--sort-common
 
 CFLAGS += -g $(OPTFLAGS) -D RELEASE -c
 CFLAGS += -fno-strict-aliasing -ffast-math -ftree-vectorize

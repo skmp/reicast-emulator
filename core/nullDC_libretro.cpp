@@ -178,7 +178,9 @@ void LoadSettings(void)
 	settings.aica.NoBatch			= 0;
    settings.aica.NoSound			= 0;
    settings.rend.UseMipmaps		= 1;
+#if 0
    settings.rend.WideScreen		= 0; 
+#endif
 	settings.pvr.subdivide_transp	= 0;
 	settings.pvr.ta_skip			   = 0;
 	settings.pvr.rend				   = 0;

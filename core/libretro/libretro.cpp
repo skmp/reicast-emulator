@@ -132,6 +132,10 @@ void retro_set_environment(retro_environment_t cb)
          "reicast_internal_resolution",
          "Internal resolution (restart); 640x480|720x576|800x600|960x720|1024x768|1280x720|1280x960|1280x1024|1600x1200|1920x1080|1920x1440|2048x2048|2560x1920|3200x2400|4096x4096",
       },
+      {
+         "reicast_widescreen_hack",
+         "Widescreen hack (restart); disabled|enabled",
+      },
       { NULL, NULL },
    };
 
@@ -167,6 +171,7 @@ void retro_deinit(void)
 
 static void update_variables(void)
 {
+   static bool widescreen_set = false;
    struct retro_variable var = {
       .key = "reicast_internal_resolution",
    };
@@ -185,6 +190,16 @@ static void update_variables(void)
          screen_height = strtoul(pch, NULL, 0);
 
       fprintf(stderr, "[reicast]: Got size: %u x %u.\n", screen_width, screen_height);
+   }
+
+   var.key = "reicast_widescreen_hack";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "enabled"))
+         settings.rend.WideScreen = true;
+      else
+         settings.rend.WideScreen = false;
    }
 }
 

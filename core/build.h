@@ -157,23 +157,41 @@
 
 //Targets
 #if defined(TARGET_WIN86)
-	#define HOST_CPU CPU_X86
+#ifndef HOST_CPU
+#define HOST_CPU CPU_X86
+#endif
 #elif defined(TARGET_WIN64)
-	#define HOST_CPU CPU_X64
+#ifndef HOST_CPU
+#define HOST_CPU CPU_X64
+#endif
 #elif defined(TARGET_LINUX_ARMELv7)
-	#define HOST_CPU CPU_ARM
+#ifndef HOST_CPU
+#define HOST_CPU CPU_ARM
+#endif
 #elif defined(TARGET_LINUX_x86)
-	#define HOST_CPU CPU_X86
+#ifndef HOST_CPU
+#define HOST_CPU CPU_X86
+#endif
 #elif defined(TARGET_LINUX_x64)
-	#define HOST_CPU CPU_X64
+#ifndef HOST_CPU
+#define HOST_CPU CPU_X64
+#endif
 #elif defined(TARGET_LINUX_MIPS)
-	#define HOST_CPU CPU_MIPS
+#ifndef HOST_CPU
+#define HOST_CPU CPU_MIPS
+#endif
 #elif defined(TARGET_GCW0)
-	#define HOST_CPU CPU_MIPS
+#ifndef HOST_CPU
+#define HOST_CPU CPU_MIPS
+#endif
 #elif defined(TARGET_IPHONE)
-    #define HOST_CPU CPU_ARM
+#ifndef HOST_CPU
+#define HOST_CPU CPU_ARM
+#endif
 #elif defined(TARGET_OSX)
-    #define HOST_CPU CPU_GENERIC
+#ifndef HOST_CPU
+#define HOST_CPU CPU_GENERIC
+#endif
 #else
 	#error Invalid Target: TARGET_* not defined
 #endif

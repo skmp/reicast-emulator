@@ -200,8 +200,8 @@ void main() \n\
 
 gl_ctx gl;
 
-extern int screen_width;
-extern int screen_height;
+static int gles_screen_width  = 640;
+static int gles_screen_height = 480;
 
 // Create a basic GLES context
 bool gl_init(void* wind, void* disp)
@@ -787,13 +787,13 @@ bool RenderFrame()
 	/*
 		Handle Dc to screen scaling
 	*/
-	float dc2s_scale_h=screen_height/480.0f;
-	float ds2s_offs_x=(screen_width-dc2s_scale_h*640)/2;
+	float dc2s_scale_h = gles_screen_height/480.0f;
+	float ds2s_offs_x  = (gles_screen_width-dc2s_scale_h*640)/2;
 
 	//-1 -> too much to left
-	ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h*scale_x);
+	ShaderUniforms.scale_coefs[0]=2.0f/(gles_screen_width/dc2s_scale_h*scale_x);
 	ShaderUniforms.scale_coefs[1]=(is_rtt?2:-2)/dc_height;
-	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
+	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(gles_screen_width);
 	ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
 
 
@@ -947,7 +947,7 @@ bool RenderFrame()
 
 	#if 0
 		//handy to debug really stupid render-not-working issues ...
-		printf("SS: %dx%d\n", screen_width, screen_height);
+		printf("SS: %dx%d\n", gles_screen_width, gles_screen_height);
 		printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
 		printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 	#endif
@@ -998,13 +998,13 @@ void co_dc_yield();
 struct glesrend : Renderer
 {
 	bool Init() { return gles_init(); }
-	void Resize(int w, int h) { screen_width=w; screen_height=h; }
+	void Resize(int w, int h) { gles_screen_width=w; gles_screen_height=h; }
 	void Term() { }
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
 	bool Render() { return RenderFrame(); }
 
-	void Present() { gl_swap(); glViewport(0, 0, screen_width, screen_height); co_dc_yield(); }
+	void Present() { gl_swap(); glViewport(0, 0, gles_screen_width, gles_screen_height); co_dc_yield(); }
 
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
 		return gl_GetTexture(tsp, tcw);

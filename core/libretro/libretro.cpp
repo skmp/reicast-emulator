@@ -11,8 +11,8 @@
 
 #include "libretro.h"
 
-int screen_width  = 640;
-int screen_height = 480;
+int screen_width;
+int screen_height;
 
 u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
 u8 rt[4] = {0, 0, 0, 0};
@@ -126,6 +126,16 @@ void retro_set_input_state(retro_input_state_t cb)
 void retro_set_environment(retro_environment_t cb)
 {
    environ_cb = cb;
+
+   struct retro_variable variables[] = {
+      {
+         "reicast_internal_resolution",
+         "Internal resolution (restart); 640x480|720x576|800x600|960x720|1024x768|1280x720|1280x960|1280x1024|1600x1200|1920x1080|1920x1440|2048x2048|2560x1920|3200x2400|4096x4096",
+      },
+      { NULL, NULL },
+   };
+
+   cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
 }
 
 
@@ -155,8 +165,35 @@ void retro_deinit(void)
    //TODO
 }
 
+static void update_variables(void)
+{
+   struct retro_variable var = {
+      .key = "reicast_internal_resolution",
+   };
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      char *pch;
+      char str[100];
+      snprintf(str, sizeof(str), "%s", var.value);
+      
+      pch = strtok(str, "x");
+      if (pch)
+         screen_width = strtoul(pch, NULL, 0);
+      pch = strtok(NULL, "x");
+      if (pch)
+         screen_height = strtoul(pch, NULL, 0);
+
+      fprintf(stderr, "[reicast]: Got size: %u x %u.\n", screen_width, screen_height);
+   }
+}
+
 void retro_run (void)
 {
+   bool updated = false;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
+      update_variables();
+
    glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
    co_dc_run();
    glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -213,6 +250,10 @@ bool retro_load_game(const struct retro_game_info *game)
       snprintf(game_dir, sizeof(game_dir), "%s/dc/", dir);
    else
       strcat(game_dir, "/data/");
+
+   screen_width  = 640;
+   screen_height = 480;
+   update_variables();
 
 #if defined(GL) || defined(GLES)
 #ifdef GLES

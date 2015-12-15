@@ -1,9 +1,3 @@
-CXX       = ${CC_PREFIX}g++
-CC        = ${CC_PREFIX}gcc
-CC_AS    ?= $(CC)
-STRIP     = ${CC_PREFIX}strip
-LD        = ${CC}
-
 DEBUG      := 0
 NO_REND    := 0
 HAVE_GL    := 1
@@ -20,122 +14,52 @@ LIBS :=
 CFLAGS := 
 CXXFLAGS :=
 
-# Platform auto-detection
-# Can be overridden by using:
-#   make platform=x64
-ifeq (,$(platform))
-    ARCH = $(shell uname -m)
-    ifeq ($(ARCH), $(filter $(ARCH), i386 i686))
-        platform = x86
-    else ifeq ($(ARCH), $(filter $(ARCH), x86_64 AMD64))
-        platform = x64
-    else ifneq (,$(findstring arm,$(ARCH)))
-        HARDWARE = $(shell grep Hardware /proc/cpuinfo)
-        ifneq (,$(findstring BCM2709,$(HARDWARE)))
-            platform = rpi2
-        else ifneq (,$(findstring AM33XX,$(HARDWARE)))
-            platform = beagle
-        else ifneq (,$(findstring Pandora,$(HARDWARE)))
-            platform = pandora
-        else ifneq (,$(findstring ODROIDC,$(HARDWARE)))
-            platform = odroidc1
-        else ifneq (,$(findstring ODROID-XU3,$(HARDWARE)))
-            platform = odroidxu3
-        else ifneq (,$(findstring ODROIDXU,$(HARDWARE)))
-            platform = odroidxu
-        else ifneq (,$(findstring ODROIDX2,$(HARDWARE)))
-            platform = odroidx2
-        else ifneq (,$(findstring ODROIDX,$(HARDWARE)))
-            platform = odroidx
-        else ifneq (,$(findstring ODROID-U2/U3,$(HARDWARE)))
-            platform = odroidu2
-        else ifneq (,$(findstring ODROIDU2,$(HARDWARE)))
-            platform = odroidu2
-        else
-            platform = armv7h
-        endif
-    else
-        $(error Unsupported CPU architecture)
-    endif
+UNAME=$(shell uname -a)
+
+LIBRETRO_DIR := .
+
+# Cross compile ?
+
+ifeq (,$(ARCH))
+	ARCH = $(shell uname -m)
 endif
 
-# Generic 32 bit x86 (a.k.a. i386/i486/i686)
-ifneq (,$(findstring x86,$(platform)))
-	 WITH_DYNAREC := x86
-    MFLAGS += -m32
-    ASFLAGS += --32
-    LDFLAGS += -m32
-    CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC
-    CXXFLAGS += -fno-exceptions
+# Target Dynarec
+WITH_DYNAREC = $(ARCH)
 
-# Generic 64 bit x86 (a.k.a. x64/AMD64/x86_64/Intel64/EM64T)
-else ifneq (,$(findstring x64,$(platform)))
-	 WITH_DYNAREC := x64
-    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC
-    CXXFLAGS += -fexceptions
-
-# Generic 32 bit ARMhf (a.k.a. ARMv7h)
-else ifneq (,$(findstring armv7h,$(platform)))
-	WITH_DYNAREC := arm
-	ARMV7A_FLAGS = 1
-	ARM_FLOAT_ABI_HARD=1
-	MFLAGS += -funroll-loops
-    ifneq (,$(findstring neon,$(platform)))
-        MFLAGS += -mfpu=neon
-        ASFLAGS += -mfpu=neon
-    endif
-    CFLAGS += -D TARGET_LINUX_ARMELv7
-
-# Raspberry Pi 2
-else ifneq (,$(findstring rpi2,$(platform)))
-	WITH_DYNAREC := arm
-	ARMV7A_FLAGS = 1
-	ARMV7_CORTEX_A9_FLAGS = 1
-	ARM_FLOAT_ABI_HARD=1
-    MFLAGS += -mfpu=neon -funroll-loops
-    ASFLAGS += -mfpu=neon -mfloat-abi=softfp
-    CFLAGS += -D TARGET_LINUX_ARMELv7
-    INCFLAGS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads -I../linux-deps/include
-    LIBS += -L/opt/vc/lib/  -L../linux-deps/lib -lbcm_host
-
-# BeagleBone Black
-else ifneq (,$(findstring beagle,$(platform)))
-	WITH_DYNAREC := arm
-    CC_PREFIX ?= arm-none-linux-gnueabi-
-	 ARMV7A_FLAGS = 1
-	 ARMV7_CORTEX_A9_FLAGS = 1
-    MFLAGS += -marm -mfpu=neon -mfloat-abi=softfp -funroll-loops
-    ASFLAGS := -mfpu=neon -mfloat-abi=softfp
-
-# ODROIDs
-else ifneq (,$(findstring odroid,$(platform)))
-	WITH_DYNAREC := arm
-	ARM_FLOAT_ABI_HARD=1
-    MFLAGS += -marm -mfpu=neon -funroll-loops
-    ASFLAGS += -mfpu=neon
-    CFLAGS += -D TARGET_LINUX_ARMELv7
-
-    # ODROID-XU3, -XU3 Lite & -XU4
-    ifneq (,$(findstring odroidxu3,$(platform)))
-        MFLAGS += -march=armv7ve -mtune=cortex-a15.cortex-a7
-        ASFLAGS += -march=armv7ve
-
-    # Other ODROIDs
-    else
-	     ARMV7A_FLAGS = 1
-
-        # ODROID-C1 & -C1+
-        ifneq (,$(findstring odroidc1,$(platform)))
-            MFLAGS += -mtune=cortex-a5
-
-        # ODROID-U2, -U3, -X & -X2
-        else
-	ARMV7_CORTEX_A9_FLAGS = 1
-        endif
-    endif
-else
-    $(error Unknown platform)
+ifeq ($(ARCH), $(filter $(ARCH), i386 i686))
+	WITH_DYNAREC = x86
 endif
+
+ifeq ($(platform),)
+	platform = unix
+ifeq ($(UNAME),)
+	platform = win
+else ifneq ($(findstring MINGW,$(UNAME)),)
+	platform = win
+else ifneq ($(findstring Darwin,$(UNAME)),)
+	platform = osx
+else ifneq ($(findstring win,$(UNAME)),)
+	platform = win
+endif
+endif
+
+# system platform
+system_platform = unix
+ifeq ($(shell uname -a),)
+	EXE_EXT = .exe
+	system_platform = win
+else ifneq ($(findstring Darwin,$(shell uname -a)),)
+	system_platform = osx
+	arch = intel
+ifeq ($(shell uname -p),powerpc)
+	arch = ppc
+endif
+else ifneq ($(findstring MINGW,$(shell uname -a)),)
+	system_platform = win
+endif
+
+CC_AS ?= $(CC)
 
 ifdef SINGLE_PREC_FLAGS
 CFLAGS += -fsingle-precision-constant
@@ -160,6 +84,310 @@ endif
 CORE_DIR := ../../core
 
 DYNAREC_USED = 0
+
+ifdef NAOMI
+    CFLAGS += -D TARGET_NAOMI
+    DC_PLATFORM=naomi
+    TARGET_NAME=$(TARGET_NAME)_naomi
+else
+    DC_PLATFORM=dreamcast
+endif
+HOST_CPU_X86=0x20000001
+HOST_CPU_ARM=0x20000002
+HOST_CPU_MIPS=0x20000003
+HOST_CPU_X64=0x20000004
+
+ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
+HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_X64)
+endif
+
+ifeq ($(WITH_DYNAREC), x86)
+HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_X86)
+endif
+
+ifeq ($(WITH_DYNAREC), arm)
+HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_ARM)
+endif
+
+ifeq ($(WITH_DYNAREC), mips)
+HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_MIPS)
+endif
+
+
+# Unix
+ifneq (,$(findstring unix,$(platform)))
+	TARGET := $(TARGET_NAME)_libretro.so
+	LDFLAGS += -shared -Wl,--version-script=link.T -Wl,--no-undefined
+
+	fpic = -fPIC
+
+ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
+	CFLAGS += -D TARGET_NO_AREC
+endif
+ifeq ($(WITH_DYNAREC), x86)
+	CFLAGS += -D TARGET_NO_AREC
+endif
+   CXXFLAGS += -fexceptions
+
+	ifneq (,$(findstring gles,$(platform)))
+		GLES = 1
+		GL_LIB := -lGLESv2
+	else
+		GL_LIB := -lGL
+	endif
+
+	PLATFORM_EXT := unix
+
+# Raspberry Pi
+else ifneq (,$(findstring rpi,$(platform)))
+	TARGET := $(TARGET_NAME)_libretro.so
+	LDFLAGS += -shared -Wl,--version-script=link.T
+	fpic = -fPIC
+	GLES = 1
+	GL_LIB := -L/opt/vc/lib -lGLESv2
+	INCFLAGS += -I/opt/vc/include
+	ifneq (,$(findstring rpi2,$(platform)))
+		CPUFLAGS += -DNO_ASM -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE
+		CFLAGS = -mcpu=cortex-a7 -mfloat-abi=hard
+		CXXFLAGS = -mcpu=cortex-a7 -mfloat-abi=hard
+		HAVE_NEON = 0
+	else
+		CPUFLAGS += -DARMv5_ONLY -DNO_ASM
+	endif
+	PLATFORM_EXT := unix
+	WITH_DYNAREC=arm
+
+# ODROIDs
+else ifneq (,$(findstring odroid,$(platform)))
+	TARGET := $(TARGET_NAME)_libretro.so
+	BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
+	LDFLAGS += -shared -Wl,--version-script=link.T
+	fpic = -fPIC
+	GLES = 1
+	GL_LIB := -lGLESv2
+	CPUFLAGS += -DNO_ASM -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE
+	CFLAGS += -marm -mfloat-abi=hard -mfpu=neon
+	CXXFLAGS += -marm -mfloat-abi=hard -mfpu=neon
+	GLIDE2GL = 1
+	HAVE_NEON = 1
+	ifneq (,$(findstring ODROIDC,$(BOARD)))
+		# ODROID-C1
+		CFLAGS += -mcpu=cortex-a5
+		CXXFLAGS += -mcpu=cortex-a5
+	else ifneq (,$(findstring ODROID-XU3,$(BOARD)))
+		# ODROID-XU3 & -XU3 Lite
+		ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
+			CFLAGS += -march=armv7ve -mcpu=cortex-a15.cortex-a7
+			CXXFLAGS += -march=armv7ve -mcpu=cortex-a15.cortex-a7
+		else
+			CFLAGS += -mcpu=cortex-a9
+			CXXFLAGS += -mcpu=cortex-a9
+		endif
+	else
+		# ODROID-U2, -U3, -X & -X2
+		CFLAGS += -mcpu=cortex-a9
+		CXXFLAGS += -mcpu=cortex-a9
+	endif
+	PLATFORM_EXT := unix
+	WITH_DYNAREC=arm
+
+# i.MX6
+else ifneq (,$(findstring imx6,$(platform)))
+	TARGET := $(TARGET_NAME)_libretro.so
+	LDFLAGS += -shared -Wl,--version-script=link.T
+	fpic = -fPIC
+	GLES = 1
+	GL_LIB := -lGLESv2
+	CPUFLAGS += -DNO_ASM
+	PLATFORM_EXT := unix
+	WITH_DYNAREC=arm
+	HAVE_NEON=1
+
+# OS X
+else ifneq (,$(findstring osx,$(platform)))
+	TARGET := $(TARGET_NAME)_libretro.dylib
+	LDFLAGS += -dynamiclib
+	OSXVER = `sw_vers -productVersion | cut -d. -f 2`
+	OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
+        LDFLAGS += -mmacosx-version-min=10.7
+	LDFLAGS += -stdlib=libc++
+	fpic = -fPIC
+
+	PLATCFLAGS += -D__MACOSX__ -DOSX
+	GL_LIB := -framework OpenGL
+	PLATFORM_EXT := unix
+
+	# Target Dynarec
+	ifeq ($(ARCH), $(filter $(ARCH), ppc))
+		WITH_DYNAREC =
+	endif
+
+# iOS
+else ifneq (,$(findstring ios,$(platform)))
+	ifeq ($(IOSSDK),)
+		IOSSDK := $(shell xcodebuild -version -sdk iphoneos Path)
+	endif
+
+	TARGET := $(TARGET_NAME)_libretro_ios.dylib
+	DEFINES += -DIOS
+	GLES = 1
+	WITH_DYNAREC=arm
+	PLATFORM_EXT := unix
+	HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_ARM)
+
+	PLATCFLAGS += -DHAVE_POSIX_MEMALIGN -DNO_ASM
+	PLATCFLAGS += -DIOS -marm
+	CPUFLAGS += -DNO_ASM  -DARM -D__arm__ -DARM_ASM -D__NEON_OPT
+	CPUFLAGS += -marm -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp
+	LDFLAGS += -dynamiclib
+	GLIDE2GL=1
+	GLIDE64MK2=0
+	HAVE_NEON=1
+
+	fpic = -fPIC
+	GL_LIB := -framework OpenGLES
+
+	CC = clang -arch armv7 -isysroot $(IOSSDK)
+	CC_AS = perl ./tools/gas-preprocessor.pl $(CC)
+	CXX = clang++ -arch armv7 -isysroot $(IOSSDK)
+ifeq ($(platform),ios9)
+	CC         += -miphoneos-version-min=8.0
+	CC_AS      += -miphoneos-version-min=8.0
+	CXX        += -miphoneos-version-min=8.0
+	PLATCFLAGS += -miphoneos-version-min=8.0
+else
+	CC += -miphoneos-version-min=5.0
+	CC_AS += -miphoneos-version-min=5.0
+	CXX += -miphoneos-version-min=5.0
+	PLATCFLAGS += -miphoneos-version-min=5.0
+endif
+
+# Theos iOS
+else ifneq (,$(findstring theos_ios,$(platform)))
+	DEPLOYMENT_IOSVERSION = 5.0
+	TARGET = iphone:latest:$(DEPLOYMENT_IOSVERSION)
+	ARCHS = armv7
+	TARGET_IPHONEOS_DEPLOYMENT_VERSION=$(DEPLOYMENT_IOSVERSION)
+	THEOS_BUILD_DIR := objs
+	include $(THEOS)/makefiles/common.mk
+
+	LIBRARY_NAME = $(TARGET_NAME)_libretro_ios
+	DEFINES += -DIOS
+	GLES = 1
+	WITH_DYNAREC=arm
+
+	PLATCFLAGS += -DHAVE_POSIX_MEMALIGN -DNO_ASM
+	PLATCFLAGS += -DIOS -marm
+	CPUFLAGS += -DNO_ASM  -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE
+	GLIDE2GL=1
+	GLIDE64MK2=0
+	HAVE_NEON=1
+
+
+# Android
+else ifneq (,$(findstring android,$(platform)))
+	fpic = -fPIC
+	TARGET := $(TARGET_NAME)_libretro_android.so
+	LDFLAGS += -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
+	GL_LIB := -lGLESv2
+
+	CC = arm-linux-androideabi-gcc
+	CXX = arm-linux-androideabi-g++
+	WITH_DYNAREC=arm
+	GLES = 1
+	PLATCFLAGS += -DANDROID
+	CPUCFLAGS  += -DNO_ASM
+	HAVE_NEON = 1
+	CPUFLAGS += -marm -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp -D__arm__ -DARM_ASM -D__NEON_OPT
+	CFLAGS += -DANDROID
+
+	PLATFORM_EXT := unix
+
+# QNX
+else ifeq ($(platform), qnx)
+	fpic = -fPIC
+	TARGET := $(TARGET_NAME)_libretro_qnx.so
+	LDFLAGS += -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
+	GL_LIB := -lGLESv2
+
+	CC = qcc -Vgcc_ntoarmv7le
+	CC_AS = qcc -Vgcc_ntoarmv7le
+	CXX = QCC -Vgcc_ntoarmv7le
+	AR = QCC -Vgcc_ntoarmv7le
+	WITH_DYNAREC=arm
+	GLES = 1
+	PLATCFLAGS += -DNO_ASM -D__BLACKBERRY_QNX__
+	HAVE_NEON = 1
+	CPUFLAGS += -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp -D__arm__ -DARM_ASM -D__NEON_OPT
+	CFLAGS += -D__QNX__
+
+	PLATFORM_EXT := unix
+
+# ARM
+else ifneq (,$(findstring armv,$(platform)))
+	TARGET := $(TARGET_NAME)_libretro.so
+	LDFLAGS += -shared -Wl,--version-script=link.T -Wl,--no-undefined
+	fpic := -fPIC
+	CPUFLAGS += -DNO_ASM -DARM -D__arm__ -DARM_ASM -DNOSSE
+	WITH_DYNAREC=arm
+	PLATCFLAGS += -DARM
+	ifneq (,$(findstring gles,$(platform)))
+		GLES = 1
+		GL_LIB := -lGLESv2
+	else
+		GL_LIB := -lGL
+	endif
+	ifneq (,$(findstring cortexa5,$(platform)))
+		CPUFLAGS += -marm -mcpu=cortex-a5
+	else ifneq (,$(findstring cortexa8,$(platform)))
+		CPUFLAGS += -marm -mcpu=cortex-a8
+	else ifneq (,$(findstring cortexa9,$(platform)))
+		CPUFLAGS += -marm -mcpu=cortex-a9
+	else ifneq (,$(findstring cortexa15a7,$(platform)))
+		CPUFLAGS += -marm -mcpu=cortex-a15.cortex-a7
+	else
+		CPUFLAGS += -marm
+	endif
+	ifneq (,$(findstring neon,$(platform)))
+		CPUFLAGS += -D__NEON_OPT -mfpu=neon
+		HAVE_NEON = 1
+	endif
+	ifneq (,$(findstring softfloat,$(platform)))
+		CPUFLAGS += -mfloat-abi=softfp
+	else ifneq (,$(findstring hardfloat,$(platform)))
+		CPUFLAGS += -mfloat-abi=hard
+	endif
+
+# emscripten
+else ifeq ($(platform), emscripten)
+	TARGET := $(TARGET_NAME)_libretro_emscripten.bc
+	GLES := 1
+	GLIDE2GL=1
+	WITH_DYNAREC :=
+	CPUFLAGS += -Dasm=asmerror -D__asm__=asmerror -DNO_ASM -DNOSSE
+	SINGLE_THREAD := 1
+	PLATCFLAGS += -Drglgen_symbol_map=mupen_rglgen_symbol_map \
+					  -Drglgen_resolve_symbols_custom=mupen_rglgen_resolve_symbols_custom \
+					  -Drglgen_resolve_symbols=mupen_rglgen_resolve_symbols
+
+	HAVE_NEON = 0
+	PLATFORM_EXT := unix
+	#HAVE_SHARED_CONTEXT := 1
+
+# Windows
+else ifneq (,$(findstring win,$(platform)))
+	TARGET := $(TARGET_NAME)_libretro.dll
+	LDFLAGS += -shared -static-libgcc -static-libstdc++ -Wl,--version-script=link.T -lwinmm -lgdi32
+	GL_LIB := -lopengl32
+	PLATFORM_EXT := win32
+	CC = gcc
+	CXX = g++
+
+endif
+
+CFLAGS += $(HOST_CPU_FLAGS)
+CXXFLAGS += $(HOST_CPU_FLAGS)
+RZDCY_CFLAGS += $(HOST_CPU_FLAGS)
 
 include Makefile.common
 
@@ -250,21 +478,11 @@ ifeq ($(HAVE_CORE), 1)
 	CFLAGS   += -DCORE
 endif
 
-ifdef NAOMI
-    CFLAGS += -D TARGET_NAOMI
-    DC_PLATFORM=naomi
-    TARGET_NAME=$(TARGET_NAME)_naomi
-else
-    DC_PLATFORM=dreamcast
-endif
-
-fpic := -fPIC
-CFLAGS   += $(fpic)
-CXXFLAGS += $(fpic)
-SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined
+CFLAGS     += $(fpic)
+CXXFLAGS   += $(fpic)
+LDFLAGS    += $(fpic)
 
 OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o) $(SOURCES_ASM:.S=.o)
-TARGET  := $(TARGET_NAME)_libretro.so
 
 all: $(TARGET)	
 $(TARGET): $(OBJECTS)

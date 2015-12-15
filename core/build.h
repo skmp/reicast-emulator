@@ -192,8 +192,6 @@
 #ifndef HOST_CPU
 #define HOST_CPU CPU_GENERIC
 #endif
-#else
-	#error Invalid Target: TARGET_* not defined
 #endif
 
 #if defined(TARGET_NAOMI)

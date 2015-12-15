@@ -118,6 +118,7 @@ endif
 ifneq (,$(findstring unix,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
 	LDFLAGS += -shared -Wl,--version-script=link.T -Wl,--no-undefined
+	LIBS += -lrt
 
 	fpic = -fPIC
 
@@ -144,6 +145,7 @@ else ifneq (,$(findstring rpi,$(platform)))
 	LDFLAGS += -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	GLES = 1
+	LIBS += -lrt
 	GL_LIB := -L/opt/vc/lib -lGLESv2
 	INCFLAGS += -I/opt/vc/include
 	ifneq (,$(findstring rpi2,$(platform)))
@@ -164,6 +166,7 @@ else ifneq (,$(findstring odroid,$(platform)))
 	LDFLAGS += -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	GLES = 1
+	LIBS += -lrt
 	GL_LIB := -lGLESv2
 	CPUFLAGS += -DNO_ASM -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE
 	CFLAGS += -marm -mfloat-abi=hard -mfpu=neon
@@ -198,6 +201,7 @@ else ifneq (,$(findstring imx6,$(platform)))
 	fpic = -fPIC
 	GLES = 1
 	GL_LIB := -lGLESv2
+	LIBS += -lrt
 	CPUFLAGS += -DNO_ASM
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm
@@ -423,15 +427,11 @@ endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
 
-LDFLAGS += -g 
-
-CFLAGS += -g $(OPTFLAGS) -D RELEASE -c
-CFLAGS += -fno-strict-aliasing -ffast-math -ftree-vectorize
-
+LDFLAGS  += -g -DNDEBUG
+CFLAGS   += -g $(OPTFLAGS) -D RELEASE -c
+CFLAGS   += -fno-strict-aliasing -ffast-math -ftree-vectorize
 CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
-
-
-LIBS    += -lm -lrt -lpthread
+LIBS     += -lm -lpthread
 
 PREFIX        ?= /usr/local
 

@@ -223,6 +223,9 @@ void rend_end_wait()
 }
 */
 
+extern int screen_width;
+extern int screen_height;
+
 bool rend_init(void)
 {
 
@@ -237,7 +240,7 @@ bool rend_init(void)
 #else
    if (!renderer->Init()) die("rend->init() failed\n");
 
-   renderer->Resize(640, 480);
+   renderer->Resize(screen_width, screen_height);
 #endif
 
 #if SET_AFNT

@@ -206,9 +206,6 @@ extern int screen_height;
 // Create a basic GLES context
 bool gl_init(void* wind, void* disp)
 {
-   screen_width  = 640;
-   screen_height = 480; 
-
    return true;
 }
 

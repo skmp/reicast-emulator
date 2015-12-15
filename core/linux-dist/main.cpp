@@ -6,6 +6,9 @@
 
 #include <libco.h>
 
+int screen_width  = 640;
+int screen_height = 480;
+
 void emit_WriteCodeCache(void);
 void SetupInput(void);
 

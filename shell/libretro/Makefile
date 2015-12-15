@@ -77,20 +77,24 @@ else ifneq (,$(findstring x64,$(platform)))
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)
 else ifneq (,$(findstring armv7h,$(platform)))
 	WITH_DYNAREC := arm
-    MFLAGS += -marm -mfloat-abi=hard -march=armv7-a -funroll-loops
-    ASFLAGS += -mfloat-abi=hard -march=armv7-a
+	ARMV7A_FLAGS = 1
+	ARM_FLOAT_ABI_HARD=1
+	MFLAGS += -funroll-loops
     ifneq (,$(findstring neon,$(platform)))
         MFLAGS += -mfpu=neon
         ASFLAGS += -mfpu=neon
     endif
-    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+    CFLAGS += -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
 
 # Raspberry Pi 2
 else ifneq (,$(findstring rpi2,$(platform)))
 	WITH_DYNAREC := arm
-    MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -funroll-loops
-    ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
-    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+	ARMV7A_FLAGS = 1
+	ARMV7_CORTEX_A9_FLAGS = 1
+	ARM_FLOAT_ABI_HARD=1
+    MFLAGS += -mfpu=neon -funroll-loops
+    ASFLAGS += -mfpu=neon -mfloat-abi=softfp
+    CFLAGS += -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
     INCFLAGS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads -I../linux-deps/include
     LIBS += -L/opt/vc/lib/  -L../linux-deps/lib -lbcm_host
 
@@ -98,16 +102,19 @@ else ifneq (,$(findstring rpi2,$(platform)))
 else ifneq (,$(findstring beagle,$(platform)))
 	WITH_DYNAREC := arm
     CC_PREFIX ?= arm-none-linux-gnueabi-
-    MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp -funroll-loops
-    ASFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=softfp
-    CFLAGS += -D TARGET_BEAGLE -fsingle-precision-constant
+	 ARMV7A_FLAGS = 1
+	 ARMV7_CORTEX_A9_FLAGS = 1
+    MFLAGS += -marm -mfpu=neon -mfloat-abi=softfp -funroll-loops
+    ASFLAGS := -mfpu=neon -mfloat-abi=softfp
+    CFLAGS += -fsingle-precision-constant
 
 # ODROIDs
 else ifneq (,$(findstring odroid,$(platform)))
 	WITH_DYNAREC := arm
-    MFLAGS += -marm -mfpu=neon -mfloat-abi=hard -funroll-loops
-    ASFLAGS += -mfpu=neon -mfloat-abi=hard
-    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+	ARM_FLOAT_ABI_HARD=1
+    MFLAGS += -marm -mfpu=neon -funroll-loops
+    ASFLAGS += -mfpu=neon
+    CFLAGS += -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
 
     # ODROID-XU3, -XU3 Lite & -XU4
     ifneq (,$(findstring odroidxu3,$(platform)))
@@ -116,8 +123,7 @@ else ifneq (,$(findstring odroid,$(platform)))
 
     # Other ODROIDs
     else
-        MFLAGS += -march=armv7-a
-        ASFLAGS += -march=armv7-a
+	     ARMV7A_FLAGS = 1
 
         # ODROID-C1 & -C1+
         ifneq (,$(findstring odroidc1,$(platform)))
@@ -125,12 +131,25 @@ else ifneq (,$(findstring odroid,$(platform)))
 
         # ODROID-U2, -U3, -X & -X2
         else
-            MFLAGS += -mtune=cortex-a9
-
+	ARMV7_CORTEX_A9_FLAGS = 1
         endif
     endif
 else
     $(error Unknown platform)
+endif
+
+ifdef ARMV7A_FLAGS
+	MFLAGS += -marm -march=armv7-a
+	ASFLAGS += -march=armv7-a
+endif
+
+ifdef ARMV7_CORTEX_A9_FLAGS
+	MFLAGS += -mtune=cortex-a9
+endif
+
+ifdef ARM_FLOAT_ABI_HARD
+	MFLAGS += -mfloat-abi=hard
+	ASFLAGS += -mfloat-abi=hard
 endif
 
 CORE_DIR := ../../core

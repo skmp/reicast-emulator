@@ -396,7 +396,7 @@ OPTFLAGS       := -O0
 else
 OPTFLAGS       := -O3
 endif
-RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -DRELEASE -frename-registers -ffast-math -ftree-vectorize -fomit-frame-pointer -D__LIBRETRO__
+RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -DRELEASE -ffast-math -ftree-vectorize -fomit-frame-pointer -D__LIBRETRO__
 CFLAGS         += -D__LIBRETRO__
 
 ifeq ($(WITH_DYNAREC), arm)
@@ -424,10 +424,10 @@ endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
 
-LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,$(OPTFLAGS) -Wl,--sort-common
+LDFLAGS += -g -Wl,--gc-sections -Wl,$(OPTFLAGS) -Wl,--sort-common
 
 CFLAGS += -g $(OPTFLAGS) -D RELEASE -c
-CFLAGS += -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
+CFLAGS += -fno-strict-aliasing -ffast-math -ftree-vectorize
 
 CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
 

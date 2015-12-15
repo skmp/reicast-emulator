@@ -7,6 +7,7 @@ LD        = ${CC}
 DEBUG      := 0
 NO_REND    := 0
 HAVE_GL    := 1
+HAVE_CORE  := 0
 NO_THREADS := 1
 
 TARGET_NAME := reicast
@@ -212,7 +213,6 @@ ifeq ($(HAVE_GLES),1)
 	 CFLAGS   += -DGLES -DHAVE_OPENGLES2
     GL_LIB   += -lEGL -lGLESv2
 else
-	HAVE_CORE = 1
 	 RZDCY_CFLAGS += -DGL
     CXXFLAGS += -DGL
 	 CFLAGS   += -DGL
@@ -220,7 +220,7 @@ else
 endif
 endif
 
-ifdef HAVE_CORE
+ifeq ($(HAVE_CORE), 1)
 	RZDCY_CFLAGS += -DCORE
 	CXXFLAGS += -DCORE
 	CFLAGS   += -DCORE

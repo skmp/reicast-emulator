@@ -43,35 +43,42 @@ void GenSorted();
 
 float fb_scale_x,fb_scale_y;
 
-#ifndef GLES
-#define attr "in"
-#define vary "out"
-#else
 #define attr "attribute"
 #define vary "varying"
+#define FRAGCOL "gl_FragColor"
+#define TEXLOOKUP "texture2D"
+
+#ifdef GLES
+#define HIGHP "highp"
+#define MEDIUMP "mediump"
+#define LOWP "lowp"
+#else
+#define HIGHP
+#define MEDIUMP
+#define LOWP
 #endif
 
 //Fragment and vertex shaders code
 //pretty much 1:1 copy of the d3d ones for now
 const char* VertexShaderSource =
 #ifndef GLES
-	"#version 140 \n"
+   "#version 120 \n"
 #endif
 "\
 /* Vertex constants*/  \n\
-uniform highp vec4      scale; \n\
-uniform highp vec4      depth_scale; \n\
-uniform highp float sp_FOG_DENSITY; \n\
+uniform " HIGHP " vec4      scale; \n\
+uniform " HIGHP " vec4      depth_scale; \n\
+uniform " HIGHP " float sp_FOG_DENSITY; \n\
 /* Vertex input */ \n\
-" attr " highp vec4    in_pos; \n\
-" attr " lowp vec4     in_base; \n\
-" attr " lowp vec4     in_offs; \n\
-" attr " mediump vec2  in_uv; \n\
+" attr " " HIGHP " vec4    in_pos; \n\
+" attr " " LOWP " vec4     in_base; \n\
+" attr " " LOWP " vec4     in_offs; \n\
+" attr " " MEDIUMP " vec2  in_uv; \n\
 /* output */ \n\
-" vary " lowp vec4 vtx_base; \n\
-" vary " lowp vec4 vtx_offs; \n\
-" vary " mediump vec2 vtx_uv; \n\
-" vary " highp vec3 vtx_xyz; \n\
+" vary " " LOWP " vec4 vtx_base; \n\
+" vary " " LOWP " vec4 vtx_offs; \n\
+" vary " " MEDIUMP " vec2 vtx_uv; \n\
+" vary " " HIGHP " vec3 vtx_xyz; \n\
 void main() \n\
 { \n\
 	vtx_base=in_base; \n\
@@ -87,20 +94,12 @@ void main() \n\
 	gl_Position = vpos; \n\
 }";
 
-#ifndef GLES
-#define FRAGCOL "FragColor"
-#define TEXLOOKUP "texture"
-#define vary "in"
-#else
-#define FRAGCOL "gl_FragColor"
-#define TEXLOOKUP "texture2D"
-#endif
+
 
 
 const char* PixelPipelineShader =
 #ifndef GLES
-	"#version 140 \n"
-	"out vec4 FragColor; \n"
+      "#version 120 \n"
 #endif
 "\
 \
@@ -114,24 +113,24 @@ const char* PixelPipelineShader =
 #define pp_FogCtrl %d \n\
 /* Shader program params*/ \n\
 /* gles has no alpha test stage, so its emulated on the shader */ \n\
-uniform lowp float cp_AlphaTestValue; \n\
-uniform lowp vec4 pp_ClipTest; \n\
-uniform lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
-uniform highp vec2 sp_LOG_FOG_COEFS; \n\
+uniform " LOWP " float cp_AlphaTestValue; \n\
+uniform " LOWP " vec4 pp_ClipTest; \n\
+uniform " LOWP " vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
+uniform " HIGHP " vec2 sp_LOG_FOG_COEFS; \n\
 uniform sampler2D tex,fog_table; \n\
 /* Vertex input*/ \n\
-" vary " lowp vec4 vtx_base; \n\
-" vary " lowp vec4 vtx_offs; \n\
-" vary " mediump vec2 vtx_uv; \n\
-" vary " highp vec3 vtx_xyz; \n\
-lowp float fog_mode2(highp float val) \n\
+" vary " " LOWP " vec4 vtx_base; \n\
+" vary " " LOWP " vec4 vtx_offs; \n\
+" vary " " MEDIUMP " vec2 vtx_uv; \n\
+" vary " " HIGHP " vec3 vtx_xyz; \n\
+" LOWP " float fog_mode2(" HIGHP " float val) \n\
 { \n\
-	highp float fog_idx=clamp(val,0.0,127.99); \n\
+   " HIGHP " float fog_idx=clamp(val,0.0,127.99); \n\
 	return clamp(sp_LOG_FOG_COEFS.y*log2(fog_idx)+sp_LOG_FOG_COEFS.x,0.001,1.0); //the clamp is required due to yet another bug !\n\
 } \n\
 void main() \n\
 { \n\
-	lowp vec4 color=vtx_base; \n\
+   " LOWP " vec4 color=vtx_base; \n\
 	#if pp_UseAlpha==0 \n\
 		color.a=1.0; \n\
 	#endif\n\
@@ -140,7 +139,7 @@ void main() \n\
 	#endif\n\
 	#if pp_Texture==1 \n\
 	{ \n\
-		lowp vec4 texcol=" TEXLOOKUP "(tex,vtx_uv); \n\
+      " LOWP " vec4 texcol=" TEXLOOKUP "(tex,vtx_uv); \n\
 		\n\
 		#if pp_IgnoreTexA==1 \n\
 			texcol.a=1.0;	 \n\
@@ -191,12 +190,8 @@ void main() \n\
 }";
 
 const char* ModifierVolumeShader =
-#ifndef GLES
-	"#version 140 \n"
-	"out vec4 FragColor; \n"
-#endif
 " \
-uniform lowp float sp_ShaderColor; \n\
+uniform " LOWP " float sp_ShaderColor; \n\
 /* Vertex input*/ \n\
 void main() \n\
 { \n\

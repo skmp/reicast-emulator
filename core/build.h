@@ -157,31 +157,22 @@
 
 //Targets
 #if defined(TARGET_WIN86)
-	#define HOST_OS OS_WINDOWS
 	#define HOST_CPU CPU_X86
 #elif defined(TARGET_WIN64)
-	#define HOST_OS OS_WINDOWS
 	#define HOST_CPU CPU_X64
 #elif defined(TARGET_LINUX_ARMELv7)
-	#define HOST_OS OS_LINUX
 	#define HOST_CPU CPU_ARM
 #elif defined(TARGET_LINUX_x86)
-	#define HOST_OS OS_LINUX
 	#define HOST_CPU CPU_X86
 #elif defined(TARGET_LINUX_x64)
-	#define HOST_OS OS_LINUX
 	#define HOST_CPU CPU_X64
 #elif defined(TARGET_LINUX_MIPS)
-	#define HOST_OS OS_LINUX
 	#define HOST_CPU CPU_MIPS
 #elif defined(TARGET_GCW0)
-	#define HOST_OS OS_LINUX
 	#define HOST_CPU CPU_MIPS
 #elif defined(TARGET_IPHONE)
-    #define HOST_OS OS_DARWIN
     #define HOST_CPU CPU_ARM
 #elif defined(TARGET_OSX)
-    #define HOST_OS OS_DARWIN
     #define HOST_CPU CPU_GENERIC
 #else
 	#error Invalid Target: TARGET_* not defined

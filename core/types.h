@@ -422,12 +422,6 @@ struct maple_device_instance
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifdef __MACH__
-int darw_printf(const wchar* Text,...);
-#define printf darw_printf
-#define puts(X) printf("%s\n", X)
-#endif
-
 //includes from c++rt
 #include <vector>
 #include <string>

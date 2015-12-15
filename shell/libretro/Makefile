@@ -366,8 +366,7 @@ else ifeq ($(platform), emscripten)
 	WITH_DYNAREC :=
 	CPUFLAGS += -Dasm=asmerror -D__asm__=asmerror -DNO_ASM -DNOSSE
 	SINGLE_THREAD := 1
-	PLATCFLAGS += -Drglgen_symbol_map=mupen_rglgen_symbol_map \
-					  -Drglgen_resolve_symbols_custom=mupen_rglgen_resolve_symbols_custom \
+	PLATCFLAGS += -Drglgen_resolve_symbols_custom=mupen_rglgen_resolve_symbols_custom \
 					  -Drglgen_resolve_symbols=mupen_rglgen_resolve_symbols
 
 	HAVE_NEON = 0
@@ -424,7 +423,7 @@ endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
 
-LDFLAGS += -g -Wl,$(OPTFLAGS) -Wl,--sort-common
+LDFLAGS += -g -Wl,--sort-common
 
 CFLAGS += -g $(OPTFLAGS) -D RELEASE -c
 CFLAGS += -fno-strict-aliasing -ffast-math -ftree-vectorize
@@ -498,4 +497,4 @@ $(TARGET): $(OBJECTS)
 	$(CC_AS) $(ASFLAGS) $(INCFLAGS) $< -o $@
 
 clean:
-	rm -f $(OBJECTS) $(TARGET) .map
+	rm -f $(OBJECTS) $(TARGET)

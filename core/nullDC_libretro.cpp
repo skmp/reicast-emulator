@@ -174,7 +174,7 @@ void LoadSettings(void)
 	settings.dreamcast.RTC			= GetRTC_now();
 	settings.dreamcast.region		= 3;
 	settings.dreamcast.broadcast	= 4;
-	settings.aica.LimitFPS			= 1;
+	settings.aica.LimitFPS			= 0;
 	settings.aica.NoBatch			= 0;
    settings.aica.NoSound			= 0;
    settings.rend.UseMipmaps		= 1;

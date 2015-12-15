@@ -56,7 +56,7 @@ struct DynaRBI: RuntimeBlockInfo
 #include <sys/syscall.h>  // for cache flushing.
 #endif
 
-#if HOST_OS == OS_DARWIN
+#ifdef __MACH__
 #include <libkern/OSCacheControl.h>
 void CacheFlush(void* code, void* pEnd)
 {
@@ -66,7 +66,7 @@ void CacheFlush(void* code, void* pEnd)
 #elif !defined(ARMCC)
 void CacheFlush(void* code, void* pEnd)
 {
-#if !defined(_ANDROID) && HOST_OS!=OS_DARWIN
+#if !defined(_ANDROID) && !defined(__MACH__)
 	__clear_cache((void*)code, pEnd);
 #else
 	void* start=code;
@@ -257,7 +257,7 @@ EmitAPI StoreSh4Reg64(eReg Rt, shil_param Sh4_Reg, eCC CC=CC_AL)
 
 #include "hw/sh4/dyna/regalloc.h"
 
-#if HOST_OS == OS_DARWIN
+#ifdef __MACH__
 eReg alloc_regs[]={r5,r6,r7,r10,(eReg)-1};
 #else
 eReg alloc_regs[]={r5,r6,r7,r10,r11,(eReg)-1};
@@ -2140,7 +2140,7 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 		cyc&=~3;
 	}
 
-#if HOST_OS == OS_DARWIN
+#ifdef __MACH__
 	SUB(r11,r11,cyc,true,CC_AL);
 #else
 	SUB(rfp_r9,rfp_r9,cyc,true,CC_AL);

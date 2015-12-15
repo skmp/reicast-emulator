@@ -1199,8 +1199,8 @@ void AICA_Sample32(void)
 			mxlr[i*2+1] += oRight;
 		}
 	}
-#if HOST_OS==OS_WINDOWS
-	samples_gen += sg;
+#ifdef _WIN32
+   samples_gen += sg;
 #endif
 	//OK , generated all Channels  , now DSP/ect + final mix ;p
 	//CDDA EXTS input

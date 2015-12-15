@@ -53,7 +53,7 @@
 extern u32* emit_ptr;
 extern u8* CodeCache;
 
-#if HOST_OS==OS_LINUX || HOST_OS==OS_DARWIN
+#if defined(__linux__) || defined(__MACH__)
 extern "C" {
 #endif
 
@@ -122,6 +122,6 @@ void ngen_CC_Finish(shil_opcode* op);
 
 RuntimeBlockInfo* ngen_AllocateBlock();
 
-#if HOST_OS==OS_LINUX || HOST_OS==OS_DARWIN
+#if defined(__linux__) || defined(__MACH__)
 }
 #endif

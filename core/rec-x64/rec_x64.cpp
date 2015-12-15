@@ -89,27 +89,27 @@ public:
 	vector<Xbyak::Xmm> call_regsxmm;
 
 	BlockCompiler() : Xbyak::CodeGenerator(64 * 1024, emit_GetCCPtr()) {
-		#if HOST_OS == OS_WINDOWS
-			call_regs.push_back(ecx);
-			call_regs.push_back(edx);
-			call_regs.push_back(r8d);
-			call_regs.push_back(r9d);
+#ifdef _WIN32
+      call_regs.push_back(ecx);
+      call_regs.push_back(edx);
+      call_regs.push_back(r8d);
+      call_regs.push_back(r9d);
 
-			call_regs64.push_back(rcx);
-			call_regs64.push_back(rdx);
-			call_regs64.push_back(r8);
-			call_regs64.push_back(r9);
-		#else
-			call_regs.push_back(edi);
-			call_regs.push_back(esi);
-			call_regs.push_back(edx);
-			call_regs.push_back(ecx);
+      call_regs64.push_back(rcx);
+      call_regs64.push_back(rdx);
+      call_regs64.push_back(r8);
+      call_regs64.push_back(r9);
+#else
+      call_regs.push_back(edi);
+      call_regs.push_back(esi);
+      call_regs.push_back(edx);
+      call_regs.push_back(ecx);
 
-			call_regs64.push_back(rdi);
-			call_regs64.push_back(rsi);
-			call_regs64.push_back(rdx);
-			call_regs64.push_back(rcx);
-		#endif
+      call_regs64.push_back(rdi);
+      call_regs64.push_back(rsi);
+      call_regs64.push_back(rdx);
+      call_regs64.push_back(rcx);
+#endif
 
 		call_regsxmm.push_back(xmm0);
 		call_regsxmm.push_back(xmm1);

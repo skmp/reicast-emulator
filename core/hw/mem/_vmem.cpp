@@ -416,8 +416,12 @@ void _vmem_bm_reset()
       _vmem_bm_reset_nvmem();
 #endif
     
-    if (!virt_ram_base || HOST_OS == OS_DARWIN)
-		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
+#if defined(__MACH__)
+   bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
+#else
+   if (!virt_ram_base)
+      bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
+#endif
 }
 
 #if !defined(TARGET_NO_NVMEM)
@@ -426,7 +430,7 @@ void _vmem_bm_reset()
 #define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)
 #define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)
 
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 #include <Windows.h>
 HANDLE mem_handle;
 
@@ -564,21 +568,21 @@ error:
 	void* _nvmem_alloc_mem()
 	{
         
-#if HOST_OS == OS_DARWIN
-		string path = get_writable_data_path("/dcnzorz_mem");
-        fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
-        unlink(path.c_str());
-        verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
+#ifdef __MACH__
+      string path = get_writable_data_path("/dcnzorz_mem");
+      fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
+      unlink(path.c_str());
+      verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
 #elif !defined(_ANDROID)
-		fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
-		shm_unlink("/dcnzorz_mem");
-		if (fd==-1)
-		{
-			fd = open("dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
-			unlink("dcnzorz_mem");
-		}
+      fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
+      shm_unlink("/dcnzorz_mem");
+      if (fd==-1)
+      {
+         fd = open("dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
+         unlink("dcnzorz_mem");
+      }
 
-		verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
+      verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
 #else
 
 		fd = ashmem_create_region(0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE);
@@ -609,24 +613,24 @@ void _vmem_bm_reset_nvmem()
 		return;
 	#endif
 
-	#if (HOST_OS == OS_DARWIN)
-		//On iOS & nacl we allways allocate all of the mapping table
-		mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_READ | PROT_WRITE);
-		return;
-	#endif
+#ifdef __MACH__
+      //On iOS & nacl we allways allocate all of the mapping table
+      mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_READ | PROT_WRITE);
+      return;
+#endif
 	pagecnt=0;
 
-#if HOST_OS==OS_WINDOWS
-	VirtualFree(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MEM_DECOMMIT);
+#ifdef _WIN32
+   VirtualFree(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MEM_DECOMMIT);
 #else
-	mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_NONE);
-	madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_DONTNEED);
-    #ifdef MADV_REMOVE
-	madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_REMOVE);
-    #else
-    //OSX, IOS
-    madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_FREE);
-    #endif
+   mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_NONE);
+   madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_DONTNEED);
+#ifdef MADV_REMOVE
+   madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_REMOVE);
+#else
+   //OSX, IOS
+   madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_FREE);
+#endif
 #endif
 
 	printf("Freeing fpcb\n");
@@ -646,10 +650,10 @@ bool BM_LockedWrite(u8* address)
 	{
 		//printf("Allocated %d PAGES [%08X]\n",++pagecnt,addr);
 
-#if HOST_OS==OS_WINDOWS
-		verify(VirtualAlloc(address,PAGE_SIZE,MEM_COMMIT,PAGE_READWRITE));
+#ifdef _WIN32
+      verify(VirtualAlloc(address,PAGE_SIZE,MEM_COMMIT,PAGE_READWRITE));
 #else
-		mprotect (address, PAGE_SIZE, PROT_READ | PROT_WRITE);
+      mprotect (address, PAGE_SIZE, PROT_READ | PROT_WRITE);
 #endif
 
 		bm_vmem_pagefill((void**)address,PAGE_SIZE);
@@ -678,15 +682,15 @@ bool _vmem_reserve()
 	
 	p_sh4rcb=(Sh4RCB*)virt_ram_base;
 
-#if HOST_OS==OS_WINDOWS
-	//verify(p_sh4rcb==VirtualAlloc(p_sh4rcb,sizeof(Sh4RCB),MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE));
-	verify(p_sh4rcb==VirtualAlloc(p_sh4rcb,sizeof(Sh4RCB),MEM_RESERVE,PAGE_NOACCESS));
+#ifdef _WIN32
+   //verify(p_sh4rcb==VirtualAlloc(p_sh4rcb,sizeof(Sh4RCB),MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE));
+   verify(p_sh4rcb==VirtualAlloc(p_sh4rcb,sizeof(Sh4RCB),MEM_RESERVE,PAGE_NOACCESS));
 
-	verify(VirtualAlloc((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb),sizeof(Sh4RCB)-sizeof(p_sh4rcb->fpcb),MEM_COMMIT,PAGE_READWRITE));
+   verify(VirtualAlloc((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb),sizeof(Sh4RCB)-sizeof(p_sh4rcb->fpcb),MEM_COMMIT,PAGE_READWRITE));
 #else
-	verify(p_sh4rcb==mmap(p_sh4rcb,sizeof(Sh4RCB),PROT_NONE,MAP_PRIVATE | MAP_ANON, -1, 0));
-	mprotect((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb),sizeof(Sh4RCB)-sizeof(p_sh4rcb->fpcb),PROT_READ|PROT_WRITE);
-	//mprotect((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb),sizeof(Sh4RCB)-sizeof(p_sh4rcb->fpcb),PROT_READ|PROT_WRITE);
+   verify(p_sh4rcb==mmap(p_sh4rcb,sizeof(Sh4RCB),PROT_NONE,MAP_PRIVATE | MAP_ANON, -1, 0));
+   mprotect((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb),sizeof(Sh4RCB)-sizeof(p_sh4rcb->fpcb),PROT_READ|PROT_WRITE);
+   //mprotect((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb),sizeof(Sh4RCB)-sizeof(p_sh4rcb->fpcb),PROT_READ|PROT_WRITE);
 #endif
 	virt_ram_base+=sizeof(Sh4RCB);
 

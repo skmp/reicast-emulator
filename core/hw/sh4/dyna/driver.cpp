@@ -1,10 +1,12 @@
 #include "types.h"
 
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 #include <windows.h>
-#elif HOST_OS==OS_LINUX
+#else
 #include <unistd.h>
+#if defined(__linux__) || defined(__MACH__)
 #include <sys/mman.h>
+#endif
 #endif
 
 #include "../sh4_interpreter.h"
@@ -30,11 +32,11 @@
 
 #if !defined(_WIN64)
 u8 SH4_TCB[CODE_SIZE+4096]
-#if HOST_OS == OS_WINDOWS || FEAT_SHREC != DYNAREC_JIT
+#ifdef _WIN32 || FEAT_SHREC != DYNAREC_JIT
 	;
-#elif HOST_OS == OS_LINUX
+#elif defined(__linux__)
 	__attribute__((section(".text")));
-#elif HOST_OS==OS_DARWIN
+#elif defined(__MACH__)
 	__attribute__((section("__TEXT,.text")));
 #else
 	#error SH4_TCB ALLOC
@@ -399,9 +401,6 @@ void recSh4_Reset(bool Manual)
 	Sh4_int_Reset(Manual);
 }
 
-#if HOST_OS == OS_DARWIN
-#include <sys/mman.h>
-#endif
 
 void recSh4_Init()
 {
@@ -437,15 +436,15 @@ void recSh4_Init()
 	CodeCache = (u8*)(((unat)SH4_TCB+4095)& ~4095);
 #endif
 
-#if HOST_OS == OS_DARWIN
+#ifdef __MACH__
     munmap(CodeCache, CODE_SIZE);
     CodeCache = (u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
 #endif
 
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 	DWORD old;
 	VirtualProtect(CodeCache,CODE_SIZE,PAGE_EXECUTE_READWRITE,&old);
-#elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
+#elif defined(__linux__) || defined(__MACH__)
 	
 	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
 
@@ -472,10 +471,6 @@ void recSh4_Term()
 	printf("recSh4 Term\n");
 	bm_Term();
 	Sh4_int_Term();
-
-#if HOST_OS == OS_LINUX
-	//hum ?
-#endif
 }
 
 bool recSh4_IsCpuRunning()

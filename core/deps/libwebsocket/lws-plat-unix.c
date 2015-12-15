@@ -2,7 +2,7 @@
 
 #include "build.h"
 
-#if HOST_OS != OS_WINDOWS
+#ifndef _WIN32
 /*
  * included from libwebsockets.c for unix builds
  */

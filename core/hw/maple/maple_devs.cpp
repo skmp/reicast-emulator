@@ -541,8 +541,8 @@ struct maple_sega_vmu: maple_base
 							}
 						}
 						config->SetImage(lcd_data_decoded);
-#if HOST_OS != OS_DARWIN
-						push_vmu_screen(lcd_data_decoded);
+#if !defined(__MACH__)
+                  push_vmu_screen(lcd_data_decoded);
 #endif
 #if 0
 						// Update LCD window
@@ -1031,8 +1031,8 @@ struct maple_naomi_jamma : maple_sega_controller
 					static unsigned short coin1 = 0x0000;
 					static unsigned short coin2 = 0x0000;
 					unsigned char Key[256] = { 0 };
-#if HOST_OS == OS_WINDOWS
-					GetKeyboardState(Key);
+#ifdef _WIN32
+               GetKeyboardState(Key);
 #endif
 					if (keycode&NAOMI_SERVICE_KEY_1)			//Service ?
 						glbl |= 0x80;

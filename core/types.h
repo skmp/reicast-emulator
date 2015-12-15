@@ -422,7 +422,7 @@ struct maple_device_instance
 #include <stdlib.h>
 #include <stdio.h>
 
-#if HOST_OS == OS_DARWIN
+#ifdef __MACH__
 int darw_printf(const wchar* Text,...);
 #define printf darw_printf
 #define puts(X) printf("%s\n", X)
@@ -454,16 +454,12 @@ using namespace std;
 #endif
 
 //no inline -- fixme
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 #define NOINLINE __declspec(noinline)
-#else
-#define NOINLINE __attribute__ ((noinline))
-#endif
-
-#if HOST_OS==OS_WINDOWS
 #define likely(x) x
 #define unlikely(x) x
 #else
+#define NOINLINE __attribute__ ((noinline))
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)       __builtin_expect((x),0)
 #endif

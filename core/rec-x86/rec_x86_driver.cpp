@@ -37,7 +37,7 @@ void DetectCpuFeatures()
 	if (detected) return;
 	detected=true;
 
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 	__try
 	{
 		__asm addps xmm0,xmm0
@@ -710,10 +710,10 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 	{
 		//General
 
-		#if HOST_OS != OS_WINDOWS
-			//maintain 16 byte alignment
-			x86e->Emit(op_sub32, ESP, 12);
-		#endif
+#ifndef _WIN32
+      //maintain 16 byte alignment
+      x86e->Emit(op_sub32, ESP, 12);
+#endif
 		if ((sz==SZ_32F || sz==SZ_64F) && w==1)
 		{
 			if (sz==SZ_32F)
@@ -722,10 +722,10 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 			}
 			else
 			{
-				#if HOST_OS == OS_WINDOWS
-					//on linux, we have scratch space on esp
-					x86e->Emit(op_sub32,ESP,8);
-				#endif
+#ifdef _WIN32
+            //on linux, we have scratch space on esp
+            x86e->Emit(op_sub32,ESP,8);
+#endif
 				x86e->Emit(op_movss,x86_mrm(ESP,x86_ptr::create(+4)),XMM1);
 				x86e->Emit(op_movss,x86_mrm(ESP,x86_ptr::create(-0)),XMM0);
 			}
@@ -741,15 +741,15 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 				x86e->Emit(op_movd_xmm_from_r32,XMM1,EDX);
 			}
 		}
-		#if HOST_OS != OS_WINDOWS
-			//maintain 16 byte alignment
-			if ((sz == SZ_64F) && w == 1) {
-				x86e->Emit(op_add32, ESP, 4);
-			}
-			else {
-				x86e->Emit(op_add32, ESP, 12);
-			}
-		#endif
+#ifndef _WIN32
+      //maintain 16 byte alignment
+      if ((sz == SZ_64F) && w == 1) {
+         x86e->Emit(op_add32, ESP, 4);
+      }
+      else {
+         x86e->Emit(op_add32, ESP, 12);
+      }
+#endif
 	}
 
 	x86e->Emit(op_ret);

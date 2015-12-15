@@ -1151,17 +1151,17 @@ _end:
 
 	verify(blk->oplist.size() <= BLOCK_MAX_SH_OPS_HARD);
 	
-#if HOST_OS == OS_WINDOWS
-	switch(rbi->addr)
-	{
-	case 0x8C09ED16:
-	case 0x8C0BA50E:
-	case 0x8C0BA506:
-	case 0x8C0BA526:
-	case 0x8C224800:
-		printf("HASH: %08X reloc %s\n",blk->addr,blk->hash(false,true));
-		break;
-	}
+#ifdef _WIN32
+   switch(rbi->addr)
+   {
+      case 0x8C09ED16:
+      case 0x8C0BA50E:
+      case 0x8C0BA506:
+      case 0x8C0BA526:
+      case 0x8C224800:
+         printf("HASH: %08X reloc %s\n",blk->addr,blk->hash(false,true));
+         break;
+   }
 #endif
 
 	//cycle tricks

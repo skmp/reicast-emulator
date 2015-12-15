@@ -3,7 +3,7 @@
 Disc* chd_parse(const wchar* file);
 Disc* gdi_parse(const wchar* file);
 Disc* cdi_parse(const wchar* file);
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 Disc* ioctl_parse(const wchar* file);
 #endif
 
@@ -15,7 +15,7 @@ Disc*(*drivers[])(const wchar* path)=
 	chd_parse,
 	gdi_parse,
 	cdi_parse,
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 	ioctl_parse,
 #endif
 	0

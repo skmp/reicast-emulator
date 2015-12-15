@@ -1,8 +1,7 @@
 #include "types.h"
 #include "cfg/cfg.h"
 
-#if HOST_OS==OS_LINUX || HOST_OS == OS_DARWIN
-#if HOST_OS == OS_DARWIN
+#ifdef __MACH__
 	#define _XOPEN_SOURCE 1
 	#define __USE_GNU 1
 #endif
@@ -26,7 +25,7 @@ u32* ngen_readm_fail_v2(u32* ptr,u32* regs,u32 saddr);
 bool VramLockedWrite(u8* address);
 bool BM_LockedWrite(u8* address);
 
-#if HOST_OS == OS_DARWIN
+#ifdef __MACH__
 void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 	
     rei_host_context_t ctx;
@@ -103,7 +102,7 @@ void install_fault_handler (void)
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_SIGINFO;
 	sigaction(SIGSEGV, &act, &segv_oact);
-#if HOST_OS == OS_DARWIN
+#ifdef __MACH__
     //this is broken on osx/ios/mach in general
     sigaction(SIGBUS, &act, &segv_oact);
     
@@ -212,7 +211,7 @@ void print_mem_addr()
     if (ofp == NULL) {
         fprintf(stderr, "Can't open output file %s!\n",
                 outputFilename);
-#if HOST_OS == OS_LINUX
+#ifdef __linux__
         ofp = stderr;
 #else
         exit(1);
@@ -256,7 +255,8 @@ double os_GetSeconds()
 void os_DebugBreak() {
     __asm__("trap");
 }
-#elif HOST_OS != OS_LINUX
+
+#if !defined(__linux__)
 void os_DebugBreak()
 {
 	__builtin_trap();

@@ -20,7 +20,7 @@
 #include "hw/sh4/sh4_mem.h"
 
 
-#if HOST_OS==OS_LINUX && defined(DYNA_OPROF)
+#if __linux__ && defined(DYNA_OPROF)
 #include <opagent.h>
 op_agent_t          oprofHandle;
 #endif
@@ -252,53 +252,8 @@ void bm_Periodical_1s()
 
 	del_blocks.clear();
 
-	if (rebuild_counter>0) rebuild_counter--;
-#if HOST_OS==OS_WINDOWS && 0
-	std::sort(all_blocks.begin(),all_blocks.end(),UDgreaterX);
-
-	map<u32,u32> vmap;
-	map<u32,u32> calls;
-
-	u32 total_runs=0;
-	for(int i=0;i<all_blocks.size();i++)
-	{
-		RuntimeBlockInfo* rbi=all_blocks[i];
-		total_runs+=rbi->runs;
-		if (rbi->BranchBlock!=-1 && rbi->BranchBlock < rbi->addr)
-		{
-			if (rbi->BlockType==BET_Cond_0 || rbi->BlockType==BET_Cond_1 || rbi->BlockType==BET_StaticJump)
-			{
-				RuntimeBlockInfo* bbi=bm_GetBlock(all_blocks[i]->BranchBlock);
-				if (bbi && bbi->runs)
-					vmap[all_blocks[i]->BranchBlock]=bbi->runs;
-			}
-
-			if (rbi->BlockType==BET_StaticCall)
-			{
-				RuntimeBlockInfo* bbi=bm_GetBlock(all_blocks[i]->BranchBlock);
-				if (bbi && bbi->runs)
-					calls[all_blocks[i]->BranchBlock]+=rbi->runs;
-			}
-		}
-		verify(rbi->NextBlock>rbi->addr);
-	}
-
-	map<u32,u32>::iterator iter=vmap.begin();
-
-	total_saved=0;
-	u32 total_l_runs=0;
-	while(iter!=vmap.end())
-	{
-		FindPath(iter->first);
-		total_l_runs+=iter->second;
-		iter++;
-	}
-
-	for(int i=0;i<all_blocks.size();i++)
-		all_blocks[i]->runs=0;
-
-	printf("Total Saved: %.2f || Total Loop Runs: %.2f  || Total Runs: %.2f\n",total_saved/1000.f,total_l_runs/1000.f,total_runs/1000.f);
-#endif
+	if (rebuild_counter>0)
+      rebuild_counter--;
 }
 
 void constprop(RuntimeBlockInfo* blk);
@@ -317,12 +272,11 @@ void bm_Rebuild()
 	{
 		bool do_opts=((all_blocks[i]->addr&0x3FFFFFFF)>0x0C010100);
 
+#if 0
 		if (all_blocks[i]->staging_runs<0 && do_opts)
 		{
-//#if HOST_OS==OS_WINDOWS
-			//constprop(all_blocks[i]);
-//#endif
 		}
+#endif
 		ngen_Compile(all_blocks[i],false,false,all_blocks[i]->staging_runs>0,do_opts);
 
 		blkmap.insert(all_blocks[i]);

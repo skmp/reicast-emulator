@@ -111,7 +111,7 @@ int dc_init(int argc,wchar* argv[])
 
 	int rv= 0;
 
-#if HOST_OS != OS_DARWIN
+#ifndef __MACH__
     #define DATA_PATH "/data/"
 #else
     #define DATA_PATH "/"

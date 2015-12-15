@@ -214,7 +214,7 @@ int DreamcastSecond(int tag, int c, int j)
 {
 	settings.dreamcast.RTC++;
 
-#if 1 //HOST_OS==OS_WINDOWS
+#if 1
 	prof_periodical();
 #endif
 

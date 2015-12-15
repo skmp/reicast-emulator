@@ -91,9 +91,9 @@ void prof_periodical()
 	//for (u32 i=0;i<all_blocks
 	return;
 
-	#if HOST_OS!=OS_WINDOWS
-		return;
-	#endif
+#ifndef _WIN32
+   return;
+#endif
 
 	printf("Samples Gen: %.2f %.2f\n",samples_gen/1000.0,samples_gen/44100.0);
 	samples_gen=0;

@@ -462,12 +462,10 @@ ifeq ($(HAVE_GLES),1)
 	 RZDCY_CFLAGS += -DGLES -DHAVE_OPENGLES2
     CXXFLAGS += -DGLES -DHAVE_OPENGLES2
 	 CFLAGS   += -DGLES -DHAVE_OPENGLES2
-    GL_LIB   += -lEGL -lGLESv2
 else
 	 RZDCY_CFLAGS += -DGL
     CXXFLAGS += -DGL
 	 CFLAGS   += -DGL
-    GL_LIB += -ldl -lGL #for desktop gl
 endif
 endif
 

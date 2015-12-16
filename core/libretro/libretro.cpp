@@ -135,7 +135,11 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_widescreen_hack",
-         "Widescreen hack (restart); disabled|enabled",
+         "Widescreen hack; disabled|enabled",
+      },
+      {
+         "reicast_cable_type",
+         "Cable type; TV (VBS/Y+S/C)|TV (RGB)|VGA (0)(RGB)|VGA (1)(RGB)",
       },
       { NULL, NULL },
    };
@@ -201,6 +205,20 @@ static void update_variables(void)
          settings.rend.WideScreen = true;
       else
          settings.rend.WideScreen = false;
+   }
+
+   var.key = "reicast_cable_type";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("VGA (0)(RGB)", var.value))
+         settings.dreamcast.cable = 0;
+      else if (!strcmp("VGA (1)(RGB)", var.value))
+         settings.dreamcast.cable = 1;
+      else if (!strcmp("TV (RGB)", var.value))
+         settings.dreamcast.cable = 2;
+      else if (!strcmp("TV (VBS/Y+S/C)", var.value))
+         settings.dreamcast.cable = 3;
    }
 }
 
@@ -273,6 +291,7 @@ bool retro_load_game(const struct retro_game_info *game)
       strcat(game_dir_no_slash, "/data");
    }
 
+   settings.dreamcast.cable = 3;
    screen_width  = 640;
    screen_height = 480;
    update_variables();

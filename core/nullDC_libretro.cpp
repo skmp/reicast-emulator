@@ -170,7 +170,9 @@ void LoadSettings(void)
 	settings.dynarec.idleskip		= 1;
 	settings.dynarec.unstable_opt	= 0; 
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
+#if 0
 	settings.dreamcast.cable		= 3;
+#endif
 	settings.dreamcast.RTC			= GetRTC_now();
 	settings.dreamcast.region		= 3;
 	settings.dreamcast.broadcast	= 4;
@@ -197,13 +199,6 @@ void LoadSettings(void)
 	settings.bios.UseReios              = 0;
 
 	settings.aica.BufferSize=1024;
-
-/*
-	//make sure values are valid
-	settings.dreamcast.cable	= min(max(settings.dreamcast.cable,    0),3);
-	settings.dreamcast.region	= min(max(settings.dreamcast.region,   0),3);
-	settings.dreamcast.broadcast= min(max(settings.dreamcast.broadcast,0),4);
-*/
 }
 
 void SaveSettings(void)

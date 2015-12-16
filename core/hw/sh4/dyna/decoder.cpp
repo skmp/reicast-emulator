@@ -707,54 +707,37 @@ bool MatchDiv32u(u32 op,u32 pc)
 		//DIV32U was perfectly matched :)
 		return true;
 	}
-	else //no match ...
-		return false;
+
+	//no match ...
+   return false;
 }
 
 bool MatchDiv32s(u32 op,u32 pc)
 {
-	u32 n = GetN(op);
-	u32 m = GetM(op);
+   u32 n = GetN(op);
+   u32 m = GetM(op);
 
-	div_som_reg1=NoReg;
-	div_som_reg2=(Sh4RegType)m;
-	div_som_reg3=(Sh4RegType)n;
+   div_som_reg1=NoReg;
+   div_som_reg2=(Sh4RegType)m;
+   div_som_reg3=(Sh4RegType)n;
 
-	u32 match=MatchDiv32(pc+2,div_som_reg1,div_som_reg2,div_som_reg3);
-	printf("DIV32S matched %d%% @ 0x%X\n",match*100/65,pc);
-	
-	if (match==65)
-	{
-		//DIV32S was perfectly matched :)
-		printf("div32s %d/%d/%d\n",div_som_reg1,div_som_reg2,div_som_reg3);
-		return true;
-	}
-	else //no match ...
-	{
-		/*
-		printf("%04X\n",ReadMem16(pc-2));
-		printf("%04X\n",ReadMem16(pc-0));
-		printf("%04X\n",ReadMem16(pc+2));
-		printf("%04X\n",ReadMem16(pc+4));
-		printf("%04X\n",ReadMem16(pc+6));*/
-		return false;
-	}
+   u32 match=MatchDiv32(pc+2,div_som_reg1,div_som_reg2,div_som_reg3);
+#ifndef NDEBUG
+   printf("DIV32S matched %d%% @ 0x%X\n",match*100/65,pc);
+#endif
+
+   if (match==65)
+   {
+      /* DIV32S was perfectly matched :) */
+#ifndef NDEBUG
+      printf("div32s %d/%d/%d\n",div_som_reg1,div_som_reg2,div_som_reg3);
+#endif
+      return true;
+   }
+
+   //no match ...
+   return false;
 }
-
-/*
-//This ended up too rare (and too hard to match)
-bool MatchDiv0S_0(u32 pc)
-{
-	if (ReadMem16(pc+0)==0x233A && //XOR   r3,r3
-		ReadMem16(pc+2)==0x2137 && //DIV0S r3,r1
-		ReadMem16(pc+4)==0x322A && //SUBC  r2,r2
-		ReadMem16(pc+6)==0x313A && //SUBC  r3,r1
-		(ReadMem16(pc+8)&0xF00F)==0x2007) //DIV0S x,x
-		return true;
-	else
-		return false;
-}
-*/
 
 bool dec_generic(u32 op)
 {
@@ -770,17 +753,6 @@ bool dec_generic(u32 op)
 	s=(DecParam)((inf>>8)&0xFF);
 	natop=(shilop)((inf>>0)&0xFF);
 
-	/*
-	if ((op&0xF00F)==0x300E)
-	{
-		return false;
-	}*/
-
-	/*
-	if (mode==DM_ADC)
-		return false;
-	*/
-
 	bool transfer_64=false;
 	if (op>=0xF000)
 	{
@@ -790,9 +762,7 @@ bool dec_generic(u32 op)
 			return false;
 
 		if (state.cpu.FSZ64 && (d==PRM_FRN_SZ || d==PRM_FRM_SZ || s==PRM_FRN_SZ || s==PRM_FRM_SZ))
-		{
 			transfer_64=true;
-		}
 	}
 
 	shil_param rs1,rs2,rs3,rd;
@@ -1066,25 +1036,6 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 				}
 				else
 				{
-					/*
-					if (MatchDiv0S_0(state.cpu.rpc))
-					{
-						//can also be emitted as
-						//sar   r2,31
-						//subcs r1,1
-						//in arm
-
-						//r1=r1-sign bit
-						//r2=sign mask
-						Emit(shop_shl,mk_reg(reg_sr_T),mk_reg(reg_r2),mk_imm(31));
-						Emit(shop_sar,mk_reg(reg_r2),mk_reg(reg_r2),mk_imm(31));
-						Emit(shop_sub,mk_reg(reg_r1),mk_reg(reg_r1),mk_reg(reg_sr_T));
-						blk->guest_cycles+=CPU_RATIO*4;
-						state.cpu.rpc+=2*4;
-						continue;
-					}
-					*/
-
 					u32 op=ReadMem16(state.cpu.rpc);
 					if (op==0 && state.cpu.is_delayslot)
 					{
@@ -1114,13 +1065,6 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 									dec_End(state.cpu.rpc+2,BET_StaticJump,false);
 								}
 							}
-							/*
-							else if (state.info.has_readm || state.info.has_writem)
-							{
-								if (!state.cpu.is_delayslot)
-								dec_End(state.cpu.rpc+2,BET_StaticJump,false);
-							}
-							*/
 						}
 						else
 						{

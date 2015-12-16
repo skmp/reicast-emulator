@@ -220,10 +220,7 @@ struct RegAlloc
 			}
 			return rv;
 		}
-		else
-		{
-			return false;
-		}
+      return false;
 	}
 
 	bool IsAllocg(Sh4RegType reg)
@@ -244,10 +241,7 @@ struct RegAlloc
 			verify(prm.count()==1);
 			return IsAllocg(prm._reg);
 		}
-		else
-		{
-			return false;
-		}
+      return false;
 	}
 
 	bool IsAllocf(Sh4RegType reg)
@@ -275,8 +269,7 @@ struct RegAlloc
 			verify(prm.count()==1);
 			return IsAllocf(prm._reg);
 		}
-		else
-			return false;
+      return false;
 	}
 
 	nreg_t mapg(Sh4RegType reg)
@@ -340,11 +333,9 @@ struct RegAlloc
 			verify(prm.count()==1);
 			return mapf(prm._reg);
 		}
-		else
-		{
-			die("map must return value\n");
-			return (nregf_t)-1;
-		}
+
+      die("map must return value\n");
+      return (nregf_t)-1;
 	}
 
 	nregf_t mapfv(const shil_param& prm,u32 i)
@@ -355,11 +346,9 @@ struct RegAlloc
 		{
 			return mapf((Sh4RegType)(prm._reg+i));
 		}
-		else
-		{
-			die("map must return value\n");
-			return (nregf_t)-1;
-		}
+
+      die("map must return value\n");
+      return (nregf_t)-1;
 	}
 	
 
@@ -655,17 +644,6 @@ struct RegAlloc
 					}
 					++iter;
 				}
-			
-				/*
-				for (int sid=0;sid<sh4_reg_count;sid++)
-				{
-					if (spans[sid]) 
-					{
-						spans[sid]->Flush();
-						spans[sid]=0;
-					}
-				}
-				*/
 			}
 
 		}

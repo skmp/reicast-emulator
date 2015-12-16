@@ -25,37 +25,36 @@ void* _vmem_MemInfo_ptr[0x100];
 
 void _vmem_get_ptrs(u32 sz,bool write,void*** vmap,void*** func)
 {
-	*vmap=_vmem_MemInfo_ptr;
-	switch(sz)
-	{
-	case 1:
-		*func=write?(void**)_vmem_WF8:(void**)_vmem_RF8;
-		return;
-
-	case 2:
-		*func=write?(void**)_vmem_WF16:(void**)_vmem_RF16;
-		return;
-
-	case 4:
-	case 8:
-		*func=write?(void**)_vmem_WF32:(void**)_vmem_RF32;
-		return;
-
-	default:
-		die("invalid size");
-	}
+   *vmap=_vmem_MemInfo_ptr;
+   switch(sz)
+   {
+      case 1:
+         *func=write?(void**)_vmem_WF8:(void**)_vmem_RF8;
+         break;
+      case 2:
+         *func=write?(void**)_vmem_WF16:(void**)_vmem_RF16;
+         break;
+      case 4:
+      case 8:
+         *func=write?(void**)_vmem_WF32:(void**)_vmem_RF32;
+         break;
+      default:
+         die("invalid size");
+         break;
+   }
 }
 
 void* _vmem_get_ptr2(u32 addr,u32& mask)
 {
-	u32   page=addr>>24;
-	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
-	void* ptr=(void*)(iirf&~HANDLER_MAX);
+   u32   page=addr>>24;
+   unat  iirf=(unat)_vmem_MemInfo_ptr[page];
+   void* ptr=(void*)(iirf&~HANDLER_MAX);
 
-	if (ptr==0) return 0;
+   if (ptr==0)
+      return 0;
 
-	mask=0xFFFFFFFF>>iirf;
-	return ptr;
+   mask=0xFFFFFFFF>>iirf;
+   return ptr;
 }
 
 void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
@@ -138,6 +137,7 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 	u32   page=addr>>24;	//1 op, shift/extract
 	unat  iirf=(unat)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
 	void* ptr=(void*)(iirf&~HANDLER_MAX);     //2 ops, and // 1 op insert
+   const u32 id=iirf;
 
 	if (likely(ptr!=0))
 	{
@@ -147,30 +147,27 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 		T data=(*((T*)&(((u8*)ptr)[addr])));
 		return data;
 	}
-	else
-	{
-		const u32 id=iirf;
-      switch (sz)
-      {
-         case 1:
-            return (T)_vmem_RF8[id/4](addr);
-         case 2:
-            return (T)_vmem_RF16[id/4](addr);
-         case 4:
-            return _vmem_RF32[id/4](addr);
-         case 8:
-            {
-               T rv=_vmem_RF32[id/4](addr);
-               rv|=(T)((u64)_vmem_RF32[id/4](addr+4)<<32);
 
-               return rv;
-            }
-         default:
-            break;
-      }
+   switch (sz)
+   {
+      case 1:
+         return (T)_vmem_RF8[id/4](addr);
+      case 2:
+         return (T)_vmem_RF16[id/4](addr);
+      case 4:
+         return _vmem_RF32[id/4](addr);
+      case 8:
+         {
+            T rv=_vmem_RF32[id/4](addr);
+            rv|=(T)((u64)_vmem_RF32[id/4](addr+4)<<32);
 
-      die("Invalid size");
-	}
+            return rv;
+         }
+      default:
+         break;
+   }
+
+   die("Invalid size");
 }
 template<typename T>
 INLINE void DYNACALL _vmem_writet(u32 addr,T data)
@@ -307,9 +304,7 @@ void _vmem_map_handler(_vmem_handler Handler,u32 start,u32 end)
 	verify(end<0x100);
 	verify(start<=end);
 	for (u32 i=start;i<=end;i++)
-	{
 		_vmem_MemInfo_ptr[i]=((u8*)0)+(0x00000000 + Handler*4);
-	}
 }
 
 //map a memory block to a mem region
@@ -382,14 +377,14 @@ void _vmem_term()
 
 u8* virt_ram_base;
 
-void* malloc_pages(size_t size) {
-
+void* malloc_pages(size_t size)
+{
 	u8* rv = (u8*)malloc(size + PAGE_SIZE);
 
 	return rv + PAGE_SIZE - ((unat)rv % PAGE_SIZE);
 }
 
-bool _vmem_reserve_nonvmem()
+bool _vmem_reserve_nonvmem(void)
 {
 	virt_ram_base = 0;
 
@@ -407,9 +402,9 @@ bool _vmem_reserve_nonvmem()
 	return true;
 }
 
-void _vmem_bm_reset_nvmem();
+void _vmem_bm_reset_nvmem(void);
 
-void _vmem_bm_reset()
+void _vmem_bm_reset(void)
 {
 #if !defined(TARGET_NO_NVMEM)
 	if (virt_ram_base)
@@ -524,77 +519,76 @@ error:
 }
 #endif
 
-	int fd;
-	void* _nvmem_unused_buffer(u32 start,u32 end)
-	{
-		void* ptr=mmap(&virt_ram_base[start], end-start, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
-		if (MAP_FAILED==ptr)
-			return 0;
-		return ptr;
-	}
-
+int fd;
+void* _nvmem_unused_buffer(u32 start,u32 end)
+{
+   void* ptr=mmap(&virt_ram_base[start], end-start, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
+   if (MAP_FAILED==ptr)
+      return 0;
+   return ptr;
+}
 	
-	void* _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
-	{
-		void* ptr;
-		void* rv;
+void* _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
+{
+   void* ptr;
+   void* rv;
 
-		printf("MAP %08X w/ %d\n",dst,offset);
-		u32 map_times=addrsz/size;
-		verify((addrsz%size)==0);
-		verify(map_times>=1);
-		u32 prot=PROT_READ|(w?PROT_WRITE:0);
-		rv= mmap(&virt_ram_base[dst], size, prot, MAP_SHARED | MAP_NOSYNC | MAP_FIXED, fd, offset);
-		if (MAP_FAILED==rv || rv!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0)) 
-		{
-			printf("MAP1 failed %d\n",errno);
-			return 0;
-		}
+   printf("MAP %08X w/ %d\n",dst,offset);
+   u32 map_times=addrsz/size;
+   verify((addrsz%size)==0);
+   verify(map_times>=1);
+   u32 prot=PROT_READ|(w?PROT_WRITE:0);
+   rv= mmap(&virt_ram_base[dst], size, prot, MAP_SHARED | MAP_NOSYNC | MAP_FIXED, fd, offset);
+   if (MAP_FAILED==rv || rv!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0)) 
+   {
+      printf("MAP1 failed %d\n",errno);
+      return 0;
+   }
 
-		for (u32 i=1;i<map_times;i++)
-		{
-			dst+=size;
-			ptr=mmap(&virt_ram_base[dst], size, prot , MAP_SHARED | MAP_NOSYNC | MAP_FIXED, fd, offset);
-			if (MAP_FAILED==ptr || ptr!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0))
-			{
-				printf("MAP2 failed %d\n",errno);
-				return 0;
-			}
-		}
-
-		return rv;
-	}
-
-	void* _nvmem_alloc_mem()
-	{
-        
-#ifdef __MACH__
-      string path = get_writable_data_path("/dcnzorz_mem");
-      fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
-      unlink(path.c_str());
-      verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
-#elif defined(ANDROID)
-      fd = ashmem_create_region(0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE);
-#else
-      fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
-      shm_unlink("/dcnzorz_mem");
-      if (fd==-1)
+   for (u32 i=1;i<map_times;i++)
+   {
+      dst+=size;
+      ptr=mmap(&virt_ram_base[dst], size, prot , MAP_SHARED | MAP_NOSYNC | MAP_FIXED, fd, offset);
+      if (MAP_FAILED==ptr || ptr!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0))
       {
-         fd = open("dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
-         unlink("dcnzorz_mem");
+         printf("MAP2 failed %d\n",errno);
+         return 0;
       }
+   }
 
-      verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
+   return rv;
+}
+
+void* _nvmem_alloc_mem(void)
+{
+
+#ifdef __MACH__
+   string path = get_writable_data_path("/dcnzorz_mem");
+   fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
+   unlink(path.c_str());
+   verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
+#elif defined(ANDROID)
+   fd = ashmem_create_region(0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE);
+#else
+   fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
+   shm_unlink("/dcnzorz_mem");
+   if (fd==-1)
+   {
+      fd = open("dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
+      unlink("dcnzorz_mem");
+   }
+
+   verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
 #endif
 
-		
 
-		u32 sz= 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE + 0x10000;
-		void* rv=mmap(0, sz, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
-		verify(rv != NULL);
-		munmap(rv,sz);
-		return (u8*)rv + 0x10000 - unat(rv)%0x10000;//align to 64 KB (Needed for linaro mmap not to extend to next region)
-	}
+
+   u32 sz= 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE + 0x10000;
+   void* rv=mmap(0, sz, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
+   verify(rv != NULL);
+   munmap(rv,sz);
+   return (u8*)rv + 0x10000 - unat(rv)%0x10000;//align to 64 KB (Needed for linaro mmap not to extend to next region)
+}
 #endif
 
 #define map_buffer(dsts,dste,offset,sz,w) {ptr=_nvmem_map_buffer(dsts,dste-dsts,offset,sz,w);if (!ptr) return false;}
@@ -660,7 +654,7 @@ die("BM_LockedWrite and NO REC");
 	return false;
 }
 
-bool _vmem_reserve()
+bool _vmem_reserve(void)
 {
 	void* ptr=0;
 
@@ -759,13 +753,13 @@ bool _vmem_reserve()
 }
 #else
 
-bool _vmem_reserve()
+bool _vmem_reserve(void)
 {
 	return _vmem_reserve_nonvmem();
 }
 #endif
 
-void _vmem_release()
+void _vmem_release(void)
 {
 	//TODO
 }

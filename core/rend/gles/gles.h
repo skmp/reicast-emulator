@@ -1,11 +1,7 @@
 #pragma once
 #include "rend/rend.h"
 
-#ifdef __LIBRETRO__
 #include <glsym/glsym.h>
-#else
-#include <GL3/gl3w.h>
-#endif
 
 #define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
 #define eglCheck() false

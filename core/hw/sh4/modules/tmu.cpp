@@ -28,53 +28,6 @@ u32 old_mode[3] = {0xFFFF,0xFFFF,0xFFFF};
 const InterruptID tmu_intID[3]={sh4_TMU0_TUNI0,sh4_TMU1_TUNI1,sh4_TMU2_TUNI2};
 int tmu_sched[3];
 
-#if 0
-//Accurate counts for the channel ch
-template<u32 ch>
-void UpdateTMU_chan(u32 clc)
-{
-	//if channel is on
-	//if ((TMU_TSTR & tmu_ch_bit[ch])!=0)
-	//{
-		//count :D
-		tmu_prescaler[ch]+=clc;
-		u32 steps=tmu_prescaler[ch]>>tmu_prescaler_shift[ch];
-		
-		//remove the full steps from the prescaler counter
-		tmu_prescaler[ch]&=tmu_prescaler_mask[ch];
-
-		if (unlikely(steps>TMU_TCNT(ch)))
-		{
-			//remove the 'extra' steps to overflow
-			steps-=TMU_TCNT(ch);
-			//refill the counter
-			TMU_TCNT(ch) = TMU_TCOR(ch);
-			//raise the interrupt
-			TMU_TCR(ch) |= tmu_underflow;
-			InterruptPend(tmu_intID[ch],1);
-			
-			//remove the full underflows (possible because we only check every 448 cycles)
-			//this can be done with a div, but its very very very rare so this is probably faster
-			//THIS can probably be replaced with a verify check on counter setup (haven't seen any game do this)
-			while(steps>TMU_TCOR(ch))
-				steps-=TMU_TCOR(ch);
-
-			//steps now has the partial steps needed for update, guaranteed it won't cause an overflow
-		}
-		//count down
-		TMU_TCNT(ch)-=steps;
-	//}
-}
-
-template<u32 chans>
-void UpdateTMU_i(u32 Cycles)
-{
-	if (chans & 1) UpdateTMU_chan<0>(Cycles);
-	if (chans & 2) UpdateTMU_chan<1>(Cycles);
-	if (chans & 4) UpdateTMU_chan<2>(Cycles);
-}
-#endif
-
 u32 tmu_ch_base[3];
 u64 tmu_ch_base64[3];
 

@@ -64,7 +64,6 @@ void DMAC_Ch2St()
 				TAWrite(dst,sys_buf,(new_len/32));
 				len-=new_len;
 				src+=new_len;
-				//dst+=new_len;
 			}
 			else
 			{
@@ -74,7 +73,6 @@ void DMAC_Ch2St()
 				break;
 			}
 		}
-		//libPvr_TADma(dst,sys_buf,(len/32));
 	}
 	// If SB_C2DSTAT reg is inrange from 0x11000000 to 0x11FFFFE0,	 set 1 in SB_LMMODE0 reg.
 	else if((dst >= 0x11000000) && (dst <= 0x11FFFFE0))
@@ -82,14 +80,11 @@ void DMAC_Ch2St()
 		//printf(">>\tDMAC: TEX LNMODE0 Ch2 DMA SRC=%X DST=%X LEN=%X | LN(%X::%X)\n", src, dst, len, *pSB_LMMODE0, *pSB_LMMODE1 );
 
 		dst=(dst&0xFFFFFF) |0xa4000000;
-		/*WriteMemBlock_nommu_ptr(dst,(u32*)GetMemPtr(src,len),len);
-		src+=len;*/
 		u32 p_addr=src & RAM_MASK;
 		while(len)
 		{
 			if ((p_addr+len)>RAM_SIZE)
 			{
-				//u32 *sys_buf=(u32 *)GetMemPtr(src,len);//(&mem_b[src&RAM_MASK]);
 				u32 new_len=RAM_SIZE-p_addr;
 				WriteMemBlock_nommu_dma(dst,src,new_len);
 				len-=new_len;
@@ -98,23 +93,17 @@ void DMAC_Ch2St()
 			}
 			else
 			{
-				//u32 *sys_buf=(u32 *)GetMemPtr(src,len);//(&mem_b[src&RAM_MASK]);
-				//WriteMemBlock_nommu_ptr(dst,sys_buf,len);
 				WriteMemBlock_nommu_dma(dst,src,len);
 				src+=len;
 				break;
 			}
 		}
-	//	*pSB_LMMODE0 = 1;           // this prob was done by system already
-	//	WriteMem(SB_LMMODE1, 0, 4); // should this be done ?
 	}
 	// If SB_C2DSTAT reg is in range from 0x13000000 to 0x13FFFFE0, set 1 in SB_LMMODE1 reg.
 	else if((dst >= 0x13000000) && (dst <= 0x13FFFFE0))
 	{
 		die(".\tPVR DList DMA LNMODE1\n\n");
 		src+=len;
-	//	*pSB_LMMODE1 = 1;           // this prob was done by system already
-	//	WriteMem(SB_LMMODE0, 0, 4); // should this be done ?
 	}
 	else 
 	{ 
@@ -153,20 +142,6 @@ void dmac_ddt_ch2_direct(u32 dst,u32 count)
 //transfer 22kb chunks (or less) [704 x 32] (22528)
 void UpdateDMA()
 {
-	/*if (DMAC_DMAOR.AE==1 || DMAC_DMAOR.DME==0)
-		return;//DMA disabled
-
-	//DMAC _must_ be on DDT mode
-	verify(DMAC_DMAOR.DDT==1);
-
-	for (int ch=0;ch<4;ch++)
-	{
-		if (DMAC_CHCR[ch].DE==1 && DMAC_CHCR[ch].TE==0)
-		{
-			verify(DMAC_CHCR[ch].RS<0x8);
-			verify(DMAC_CHCR[ch].RS<0x4);
-		}
-	}*/
 }
 
 template<u32 ch>

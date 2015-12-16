@@ -47,18 +47,12 @@ void do_pvr_dma(void)
 	if (SB_PDDIR)
 	{
 		//PVR -> System
-/*		for (u32 i=0;i<len;i+=4)
-		{
-			u32 temp=ReadMem32_nommu(dst+i);
-			WriteMem32_nommu(src+i,temp);
-		}*/
 		WriteMemBlock_nommu_dma(dst,src,len);
 	}
 	else
 	{
 		//System -> PVR
 		//TODO : FIX THAT , to warp around on dmas :)
-		//WriteMemBlock_nommu_ptr(dst,(u32*)GetMemPtr(src,len),len);
 		WriteMemBlock_nommu_dma(dst,src,len);
 	}
 
@@ -83,16 +77,12 @@ u32 calculate_start_link_addr(void)
 {
 	u32 rv;
 	u8* base=&mem_b[SB_SDSTAW & RAM_MASK];
-	if (SB_SDWLT==0)
-	{
-		//16b width
+
+	if (SB_SDWLT==0) /* 16b width */
 		rv=((u16*)base)[SB_SDDIV];
-	}
-	else
-	{
-		//32b width
+	else /* 32b width */
 		rv=((u32*)base)[SB_SDDIV];
-	}
+
 	SB_SDDIV++; //next index
 
 	return rv;

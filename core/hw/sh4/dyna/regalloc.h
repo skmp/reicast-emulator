@@ -707,20 +707,7 @@ struct RegAlloc
 			}
 
 			SplitSpans(cc_g,reg_cc_max_g,false,opid);
-
 			SplitSpans(cc_f,reg_cc_max_f,true,opid);
-
-			if (false)
-			{
-				printf("After reduction ..\n");
-				for (u32 sid=0;sid<all_spans.size();sid++)
-				{
-					RegSpan* spn=all_spans[sid];
-
-					if (spn->contains(opid))
-						printf("\t[%c]span: %d (r%d), [%d:%d],n: %d, p: %d\n",spn->cacc(opid)?'x':' ',sid,all_spans[sid]->regstart,all_spans[sid]->start,all_spans[sid]->end,all_spans[sid]->nacc(opid),all_spans[sid]->pacc(opid));
-				}
-			}
 		}
 
 		//Allocate the registers to the spans !

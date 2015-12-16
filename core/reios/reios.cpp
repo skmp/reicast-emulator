@@ -82,7 +82,8 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 			else
 				libGDR_ReadSector(GetMemPtr(0x8c010000, 0), lba + 150, (len + 2047) / 2048, 2048);
 
-			if (false) {
+			if (false)
+         {
 				FILE* f = fopen("z:\\1stboot.bin", "wb");
 				fwrite(GetMemPtr(0x8c010000, 0), 1, len, f);
 				fclose(f);

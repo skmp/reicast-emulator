@@ -573,7 +573,9 @@ error:
       fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
       unlink(path.c_str());
       verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
-#elif !defined(_ANDROID)
+#elif defined(ANDROID)
+      fd = ashmem_create_region(0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE);
+#else
       fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
       shm_unlink("/dcnzorz_mem");
       if (fd==-1)
@@ -583,14 +585,6 @@ error:
       }
 
       verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
-#else
-
-		fd = ashmem_create_region(0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE);
-		if (false)//this causes writebacks to flash -> slow and stuttery 
-		{
-		fd = open("/data/data/com.reicast.emulator/files/dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
-		unlink("/data/data/com.reicast.emulator/files/dcnzorz_mem");
-		}
 #endif
 
 		

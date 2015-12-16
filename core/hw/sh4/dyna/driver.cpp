@@ -32,7 +32,7 @@
 
 #if !defined(_WIN64)
 u8 SH4_TCB[CODE_SIZE+4096]
-#ifdef _WIN32 || FEAT_SHREC != DYNAREC_JIT
+#if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT
 	;
 #elif defined(__linux__)
 	__attribute__((section(".text")));

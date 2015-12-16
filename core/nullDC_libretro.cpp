@@ -110,9 +110,9 @@ int dc_init(int argc,wchar* argv[])
 
 	int rv= 0;
 
-	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(game_dir)))
+	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path("/")))
 	{
-		if (!LoadHle(get_readonly_data_path(game_dir)))
+		if (!LoadHle(get_readonly_data_path("/")))
 			return -3;
       printf("Did not load bios, using reios\n");
 	}

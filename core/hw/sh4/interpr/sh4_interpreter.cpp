@@ -193,18 +193,8 @@ const int AICA_TICK=145124;
 
 int AicaUpdate(int tag, int c, int j)
 {
-	//gpc_counter=0;
-	//bm_Periodical_14k();
-
-	//static int aica_sample_cycles=0;
-	//aica_sample_cycles+=14336*AICA_SAMPLE_GCM;
-
-	//if (aica_sample_cycles>=AICA_SAMPLE_CYCLES)
-	{
-		UpdateArm(512*32);
-		UpdateAica(1*32);
-		//aica_sample_cycles-=AICA_SAMPLE_CYCLES;
-	}
+   UpdateArm(512*32);
+   UpdateAica(1*32);
 
 	return AICA_TICK;
 }

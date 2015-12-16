@@ -10,11 +10,8 @@
 #include "modules/modules.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_core.h"
-//#include "hw/sh4/rec_v1/blockmanager.h"
 #include "hw/mem/_vmem.h"
 #include "modules/mmu.h"
-
-
 
 //main system mem
 VArray2 mem_b;
@@ -239,19 +236,13 @@ void WriteMemBlock_nommu_dma(u32 dst,u32 src,u32 size)
 	void* src_ptr=_vmem_get_ptr2(src,src_msk);
 
 	if (dst_ptr && src_ptr)
-	{
 		memcpy((u8*)dst_ptr+(dst&dst_msk),(u8*)src_ptr+(src&src_msk),size);
-	}
 	else if (src_ptr)
-	{
 		WriteMemBlock_nommu_ptr(dst,(u32*)((u8*)src_ptr+(src&src_msk)),size);
-	}
 	else
 	{
 		for (u32 i=0;i<size;i+=4)
-		{
 			WriteMem32_nommu(dst+i,ReadMem32_nommu(src+i));
-		}
 	}
 }
 void WriteMemBlock_nommu_ptr(u32 dst,u32* src,u32 size)
@@ -269,9 +260,7 @@ void WriteMemBlock_nommu_ptr(u32 dst,u32* src,u32 size)
 	else
 	{
 		for (u32 i=0;i<size;i+=4)
-		{
 			WriteMem32_nommu(dst+i,src[i>>2]);
-		}
 	}
 }
 
@@ -288,9 +277,7 @@ void WriteMemBlock_nommu_sq(u32 dst,u32* src)
 	else
 	{
 		for (u32 i=0;i<32;i+=4)
-		{
 			WriteMem32_nommu(dst+i,src[i>>2]);
-		}
 	}
 }
 
@@ -307,22 +294,25 @@ void WriteMemBlock_ptr(u32 addr,u32* data,u32 size)
 u8* GetMemPtr(u32 Addr,u32 size)
 {
 	verify((((Addr>>29) &0x7)!=7));
+
 	switch ((Addr>>26)&0x7)
-	{
-		case 3:
-		return &mem_b[Addr & RAM_MASK];
-		
-		case 0:
-		case 1:
-		case 2:
-		case 4:
-		case 5:
-		case 6:
-		case 7:
-		default:
-			printf("Get MemPtr unsupported area : addr=0x%X\n",Addr);
-			return 0;
-	}
+   {
+      case 3:
+         return &mem_b[Addr & RAM_MASK];
+
+      case 0:
+      case 1:
+      case 2:
+      case 4:
+      case 5:
+      case 6:
+      case 7:
+      default:
+         printf("Get MemPtr unsupported area : addr=0x%X\n",Addr);
+         break;
+   }
+
+   return 0;
 }
 
 //Get information about an area , eg ram /size /anything

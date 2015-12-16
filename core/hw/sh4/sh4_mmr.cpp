@@ -34,8 +34,8 @@ u32 sh4io_read_noacc(u32 addr)
 void sh4io_write_noacc(u32 addr, u32 data) 
 { 
 	printf("sh4io: Invalid write access @@ %08X %08X\n",addr,data);
-	//verify(false); 
 }
+
 void sh4io_write_const(u32 addr, u32 data) 
 { 
 	printf("sh4io: Const write ignored @@ %08X <- %08X\n",addr,data);
@@ -55,9 +55,7 @@ void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegR
 		arr[idx].writeFunctionAddr=&sh4io_write_noacc;
 	}
 	else if (flags == RIO_CONST)
-	{
 		arr[idx].writeFunctionAddr=&sh4io_write_const;
-	}
 	else
 	{
 		arr[idx].data32=0;
@@ -142,22 +140,6 @@ offset>>=2;
 		{
 			//printf("RSW: %08X\n",addr);
 			sb_regs[offset].writeFunctionAddr(addr,data);
-			/*
-			if (sb_regs[offset].flags & REG_CONST)
-				EMUERROR("Error [Write to read only register , const]");
-			else
-			{
-				if ()
-				{
-					sb_regs[offset].writeFunction(data);
-					return;
-				}
-				else
-				{
-					if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-						EMUERROR("ERROR [Write to read only register]");
-				}
-			}*/
 			return;
 		}
 #ifdef TRACE
@@ -178,11 +160,6 @@ offset>>=2;
 template <u32 sz,class T>
 T DYNACALL ReadMem_P4(u32 addr)
 {
-	/*if (((addr>>26)&0x7)==7)
-	{
-	return ReadMem_area7(addr,sz);	
-	}*/
-
 	switch((addr>>24)&0xFF)
 	{
 
@@ -192,18 +169,12 @@ T DYNACALL ReadMem_P4(u32 addr)
 	case 0xE3:
 		printf("Unhandled p4 read [Store queue] 0x%x\n",addr);
 		return 0;
-		break;
-
 	case 0xF0:
 		//printf("Unhandled p4 read [Instruction cache address array] 0x%x\n",addr);
 		return 0;
-		break;
-
 	case 0xF1:
 		//printf("Unhandled p4 read [Instruction cache data array] 0x%x\n",addr);
 		return 0;
-		break;
-
 	case 0xF2:
 		//printf("Unhandled p4 read [Instruction TLB address array] 0x%x\n",addr);
 		{
@@ -221,21 +192,19 @@ T DYNACALL ReadMem_P4(u32 addr)
 		break;
 
 	case 0xF4:
+#if 0
 		{
-			//int W,Set,A;
-			//W=(addr>>14)&1;
-			//A=(addr>>3)&1;
-			//Set=(addr>>5)&0xFF;
-			//printf("Unhandled p4 read [Operand cache address array] %d:%d,%d  0x%x\n",Set,W,A,addr);
-			return 0;
+			int W,Set,A;
+			W=(addr>>14)&1;
+			A=(addr>>3)&1;
+			Set=(addr>>5)&0xFF;
+			printf("Unhandled p4 read [Operand cache address array] %d:%d,%d  0x%x\n",Set,W,A,addr);
 		}
-		break;
-
+#endif
+      return 0;
 	case 0xF5:
 		//printf("Unhandled p4 read [Operand cache data array] 0x%x",addr);
 		return 0;
-		break;
-
 	case 0xF6:
 		//printf("Unhandled p4 read [Unified TLB address array] 0x%x\n",addr);
 		{
@@ -292,13 +261,9 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 	case 0xF0:
 		//printf("Unhandled p4 Write [Instruction cache address array] 0x%x = %x\n",addr,data);
 		return;
-		break;
-
 	case 0xF1:
 		//printf("Unhandled p4 Write [Instruction cache data array] 0x%x = %x\n",addr,data);
 		return;
-		break;
-
 	case 0xF2:
 		//printf("Unhandled p4 Write [Instruction TLB address array] 0x%x = %x\n",addr,data);
 		{
@@ -306,10 +271,8 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 			ITLB[entry].Address.reg_data=data & 0xFFFFFCFF;
 			ITLB[entry].Data.V=(data>>8) & 1;
 			ITLB_Sync(entry);
-			return;
 		}
-		break;
-
+      return;
 	case 0xF3:
 		if (addr&0x800000)
 		{
@@ -326,21 +289,19 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 		break;
 
 	case 0xF4:
+#if 0
 		{
-			//int W,Set,A;
-			//W=(addr>>14)&1;
-			//A=(addr>>3)&1;
-			//Set=(addr>>5)&0xFF;
-			//printf("Unhandled p4 Write [Operand cache address array] %d:%d,%d  0x%x = %x\n",Set,W,A,addr,data);
-			return;
+			int W,Set,A;
+			W=(addr>>14)&1;
+			A=(addr>>3)&1;
+			Set=(addr>>5)&0xFF;
+			printf("Unhandled p4 Write [Operand cache address array] %d:%d,%d  0x%x = %x\n",Set,W,A,addr,data);
 		}
-		break;
-
+#endif
+      return;
 	case 0xF5:
 		//printf("Unhandled p4 Write [Operand cache data array] 0x%x = %x\n",addr,data);
 		return;
-		break;
-
 	case 0xF6:
 		{
 			if (addr&0x80)
@@ -458,168 +419,133 @@ void DYNACALL WriteMem_sq(u32 addr,T data)
 template <u32 sz,class T>
 T DYNACALL ReadMem_area7(u32 addr)
 {
-	/*
-	if (likely(addr==0xffd80024))
-	{
-		return TMU_TCNT(2);
-	}
-	else if (likely(addr==0xFFD8000C))
-	{
-		return TMU_TCNT(0);
-	}
-	else */if (likely(addr==0xFF000028))
-	{
+	if (likely(addr==0xFF000028))
 		return CCN_INTEVT;
-	}
 	else if (likely(addr==0xFFA0002C))
-	{
 		return DMAC_CHCR(2).full;
-	}
-	//else if (addr==)
 
-	//printf("%08X\n",addr);
 	addr&=0x1FFFFFFF;
 	u32 map_base=addr>>16;
-	switch (map_base & 0x1FFF)
-	{
-	case A7_REG_HASH(CCN_BASE_addr):
-		if (addr<=0x1F00003C)
-		{
-			return (T)sh4_rio_read<sz>(CCN,addr & 0xFF);
-		}
-		else
-		{
-			EMUERROR2("Out of range on register index %x",addr);
-		}
-		break;
 
-	case A7_REG_HASH(UBC_BASE_addr):
-		if (addr<=0x1F200020)
-		{
-			return (T)sh4_rio_read<sz>(UBC,addr & 0xFF);
-		}
-		else
-		{
-			EMUERROR2("Out of range on register index %x",addr);
-		}
-		break;
+   switch (map_base & 0x1FFF)
+   {
+      case A7_REG_HASH(CCN_BASE_addr):
+         if (addr<=0x1F00003C)
+         return (T)sh4_rio_read<sz>(CCN,addr & 0xFF);
+         else
+         {
+            EMUERROR2("Out of range on register index %x",addr);
+         }
+         break;
 
-	case A7_REG_HASH(BSC_BASE_addr):
-		if (addr<=0x1F800048)
-		{
-			return (T)sh4_rio_read<sz>(BSC,addr & 0xFF);
-		}
-		else if ((addr>=BSC_SDMR2_addr) && (addr<= 0x1F90FFFF))
-		{
-			//dram settings 2 / write only
-			EMUERROR("Read from write-only registers [dram settings 2]");
-		}
-		else if ((addr>=BSC_SDMR3_addr) && (addr<= 0x1F94FFFF))
-		{
-			//dram settings 3 / write only
-			EMUERROR("Read from write-only registers [dram settings 3]");
-		}
-		else
-		{
-			EMUERROR2("Out of range on register index . %x",addr);
-		}
-		break;
+      case A7_REG_HASH(UBC_BASE_addr):
+         if (addr<=0x1F200020)
+         return (T)sh4_rio_read<sz>(UBC,addr & 0xFF);
+         else
+         {
+            EMUERROR2("Out of range on register index %x",addr);
+         }
+         break;
+
+      case A7_REG_HASH(BSC_BASE_addr):
+         if (addr<=0x1F800048)
+         return (T)sh4_rio_read<sz>(BSC,addr & 0xFF);
+         else if ((addr>=BSC_SDMR2_addr) && (addr<= 0x1F90FFFF))
+         {
+            //dram settings 2 / write only
+            EMUERROR("Read from write-only registers [dram settings 2]");
+         }
+         else if ((addr>=BSC_SDMR3_addr) && (addr<= 0x1F94FFFF))
+         {
+            //dram settings 3 / write only
+            EMUERROR("Read from write-only registers [dram settings 3]");
+         }
+         else
+         {
+            EMUERROR2("Out of range on register index . %x",addr);
+         }
+         break;
 
 
 
-	case A7_REG_HASH(DMAC_BASE_addr):
-		if (addr<=0x1FA00040)
-		{
-			return (T)sh4_rio_read<sz>(DMAC,addr & 0xFF);
-		}
-		else
-		{
-			EMUERROR2("Out of range on register index %x",addr);
-		}
-		break;
+      case A7_REG_HASH(DMAC_BASE_addr):
+         if (addr<=0x1FA00040)
+         return (T)sh4_rio_read<sz>(DMAC,addr & 0xFF);
+         else
+         {
+            EMUERROR2("Out of range on register index %x",addr);
+         }
+         break;
 
-	case A7_REG_HASH(CPG_BASE_addr):
-		if (addr<=0x1FC00010)
-		{
-			return (T)sh4_rio_read<sz>(CPG,addr & 0xFF);
-		}
-		else
-		{
-			EMUERROR2("Out of range on register index %x",addr);
-		}
-		break;
+      case A7_REG_HASH(CPG_BASE_addr):
+         if (addr<=0x1FC00010)
+         return (T)sh4_rio_read<sz>(CPG,addr & 0xFF);
+         else
+         {
+            EMUERROR2("Out of range on register index %x",addr);
+         }
+         break;
 
-	case A7_REG_HASH(RTC_BASE_addr):
-		if (addr<=0x1FC8003C)
-		{
-			return (T)sh4_rio_read<sz>(RTC,addr & 0xFF);
-		}
-		else
-		{
-			EMUERROR2("Out of range on register index %x",addr);
-		}
-		break;
+      case A7_REG_HASH(RTC_BASE_addr):
+         if (addr<=0x1FC8003C)
+         return (T)sh4_rio_read<sz>(RTC,addr & 0xFF);
+         else
+         {
+            EMUERROR2("Out of range on register index %x",addr);
+         }
+         break;
 
-	case A7_REG_HASH(INTC_BASE_addr):
-		if (addr<=0x1FD0000C)
-		{
-			return (T)sh4_rio_read<sz>(INTC,addr & 0xFF);
-		}
-		else
-		{
-			EMUERROR2("Out of range on register index %x",addr);
-		}
-		break;
+      case A7_REG_HASH(INTC_BASE_addr):
+         if (addr<=0x1FD0000C)
+         return (T)sh4_rio_read<sz>(INTC,addr & 0xFF);
+         else
+         {
+            EMUERROR2("Out of range on register index %x",addr);
+         }
+         break;
 
-	case A7_REG_HASH(TMU_BASE_addr):
-		if (addr<=0x1FD8002C)
-		{
-			return (T)sh4_rio_read<sz>(TMU,addr & 0xFF);
-		}
-		else
-		{
-			EMUERROR2("Out of range on register index %x",addr);
-		}
-		break;
+      case A7_REG_HASH(TMU_BASE_addr):
+         if (addr<=0x1FD8002C)
+         return (T)sh4_rio_read<sz>(TMU,addr & 0xFF);
+         else
+         {
+            EMUERROR2("Out of range on register index %x",addr);
+         }
+         break;
 
-	case A7_REG_HASH(SCI_BASE_addr):
-		if (addr<=0x1FE0001C)
-		{
-			return (T)sh4_rio_read<sz>(SCI,addr & 0xFF);
-		}
-		else
-		{
-			EMUERROR2("Out of range on register index %x",addr);
-		}
-		break;
+      case A7_REG_HASH(SCI_BASE_addr):
+         if (addr<=0x1FE0001C)
+         return (T)sh4_rio_read<sz>(SCI,addr & 0xFF);
+         else
+         {
+            EMUERROR2("Out of range on register index %x",addr);
+         }
+         break;
 
-	case A7_REG_HASH(SCIF_BASE_addr):
-		if (addr<=0x1FE80024)
-		{
-			return (T)sh4_rio_read<sz>(SCIF,addr & 0xFF);
-		}
-		else
-		{
-			EMUERROR2("Out of range on register index %x",addr);
-		}
-		break;
+      case A7_REG_HASH(SCIF_BASE_addr):
+         if (addr<=0x1FE80024)
+         return (T)sh4_rio_read<sz>(SCIF,addr & 0xFF);
+         else
+         {
+            EMUERROR2("Out of range on register index %x",addr);
+         }
+         break;
 
-		// Who really cares about ht-UDI? it's not existent on the Dreamcast IIRC
-	case A7_REG_HASH(UDI_BASE_addr):
-		switch(addr)
-		{
-			//UDI SDIR 0x1FF00000 0x1FF00000 16 0xFFFF Held Held Held Pclk
-		case UDI_SDIR_addr :
-			break;
+         // Who really cares about ht-UDI? it's not existent on the Dreamcast IIRC
+      case A7_REG_HASH(UDI_BASE_addr):
+         switch(addr)
+      {
+         //UDI SDIR 0x1FF00000 0x1FF00000 16 0xFFFF Held Held Held Pclk
+         case UDI_SDIR_addr :
+            break;
 
 
-			//UDI SDDR 0x1FF00008 0x1FF00008 32 Held Held Held Held Pclk
-		case UDI_SDDR_addr :
-			break;
-		}
-		break;
-	}
-
+            //UDI SDDR 0x1FF00008 0x1FF00008 32 Held Held Held Held Pclk
+         case UDI_SDDR_addr :
+            break;
+      }
+         break;
+   }
 
 	//EMUERROR2("Unknown Read from Area7 - addr=%x",addr);
 	return 0;
@@ -814,17 +740,17 @@ T DYNACALL ReadMem_area7_OCR_T(u32 addr)
 			return (T)*(u16*)&OnChipRAM[addr&OnChipRAM_MASK];
 		else if (sz==4)
 			return (T)*(u32*)&OnChipRAM[addr&OnChipRAM_MASK];
+#ifndef NDEBUG
 		else
-		{
 			printf("ReadMem_area7_OCR_T: template SZ is wrong = %d\n",sz);
-			return 0xDE;
-		}
+#endif
 	}
+#ifndef NDEBUG
 	else
-	{
-		printf("On Chip Ram Read, but OCR is disabled\n");
-		return 0xDE;
-	}
+      printf("On Chip Ram Read, but OCR is disabled\n");
+#endif
+
+   return 0xDE;
 }
 
 //Write OCR
@@ -839,20 +765,22 @@ void DYNACALL WriteMem_area7_OCR_T(u32 addr,T data)
 			*(u16*)&OnChipRAM[addr&OnChipRAM_MASK]=(u16)data;
 		else if (sz==4)
 			*(u32*)&OnChipRAM[addr&OnChipRAM_MASK]=data;
+#ifndef NDEBUG
 		else
-		{
 			printf("WriteMem_area7_OCR_T: template SZ is wrong = %d\n",sz);
-		}
+#endif
 	}
+#ifndef NDEBUG
 	else
 	{
 		printf("On Chip Ram Write, but OCR is disabled\n");
 	}
+#endif
 }
 
 
 //Init/Res/Term
-void sh4_mmr_init()
+void sh4_mmr_init(void)
 {
 	OnChipRAM.Resize(OnChipRAM_SIZE,false);
 

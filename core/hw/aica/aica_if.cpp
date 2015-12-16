@@ -16,7 +16,8 @@ VArray2 aica_ram;
 u32 VREG;//video reg =P
 u32 ARMRST;//arm reset reg
 u32 rtc_EN=0;
-u32 GetRTC_now()
+
+u32 GetRTC_now(void)
 {
 	
 	time_t rawtime=0;
@@ -43,24 +44,26 @@ u32 GetRTC_now()
 
 u32 ReadMem_aica_rtc(u32 addr,u32 sz)
 {
-	//settings.dreamcast.RTC=GetRTC_now();
-	switch( addr & 0xFF )
-	{
-	case 0:
-		return settings.dreamcast.RTC>>16;
-	case 4:
-		return settings.dreamcast.RTC &0xFFFF;
-	case 8:
-		return 0;
-	}
+   //settings.dreamcast.RTC=GetRTC_now();
+   switch( addr & 0xFF )
+   {
+      case 0:
+         return settings.dreamcast.RTC>>16;
+      case 4:
+         return settings.dreamcast.RTC &0xFFFF;
+      case 8:
+         break;
+      default:
+         printf("ReadMem_aica_rtc : invalid address\n");
+         break;
+   }
 
-	printf("ReadMem_aica_rtc : invalid address\n");
-	return 0;
+   return 0;
 }
 
 void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 {
-	switch( addr & 0xFF )
+   switch( addr & 0xFF )
    {
       case 0:
          if (rtc_EN)
@@ -80,7 +83,7 @@ void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
          }
          break;
       case 8:
-         rtc_EN=data&1;
+         rtc_EN = data&1;
          break;
    }
 }
@@ -108,32 +111,29 @@ u32 ReadMem_aica_reg(u32 addr,u32 sz)
    return libAICA_ReadReg(addr, sz);
 }
 
-void ArmSetRST()
+void ArmSetRST(void)
 {
 	ARMRST&=1;
 	libARM_SetResetState(ARMRST);
 }
+
 void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 {
 	addr&=0x7FFF;
 
 	if (sz==1)
 	{
-		if (addr==0x2C01)
+		if (addr==0x2C01) /* VREG */
 		{
 			VREG=data;
-			printf("VREG = %02X\n",VREG);
 		}
-		else if (addr==0x2C00)
+		else if (addr==0x2C00) /* ARMRST */
 		{
 			ARMRST=data;
-			printf("ARMRST = %02X\n",ARMRST);
 			ArmSetRST();
 		}
 		else
-		{
 			libAICA_WriteReg(addr,data,sz);
-		}
 	}
 	else
 	{
@@ -141,17 +141,14 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 		{
 			VREG=(data>>8)&0xFF;
 			ARMRST=data&0xFF;
-			printf("VREG = %02X ARMRST %02X\n",VREG,ARMRST);
 			ArmSetRST();
 		}
 		else
-		{
 			libAICA_WriteReg(addr,data,sz);
-		}
 	}
 }
 //Init/res/term
-void aica_Init()
+void aica_Init(void)
 {
 	//mmnnn ? gotta fill it w/ something
 }
@@ -162,118 +159,99 @@ void aica_Reset(bool Manual)
 		aica_ram.Zero();
 }
 
-void aica_Term()
+void aica_Term(void)
 {
 
 }
 
 void Write_SB_ADST(u32 addr, u32 data)
 {
-	//0x005F7800	SB_ADSTAG	RW	AICA:G2-DMA G2 start address 
-	//0x005F7804	SB_ADSTAR	RW	AICA:G2-DMA system memory start address 
-	//0x005F7808	SB_ADLEN	RW	AICA:G2-DMA length 
-	//0x005F780C	SB_ADDIR	RW	AICA:G2-DMA direction 
-	//0x005F7810	SB_ADTSEL	RW	AICA:G2-DMA trigger select 
-	//0x005F7814	SB_ADEN	RW	AICA:G2-DMA enable 
-	//0x005F7818	SB_ADST	RW	AICA:G2-DMA start 
-	//0x005F781C	SB_ADSUSP	RW	AICA:G2-DMA suspend 
-	
-	if (data&1)
-	{
-		if (SB_ADEN&1)
-		{
-			u32 src=SB_ADSTAR;
-			u32 dst=SB_ADSTAG;
-			u32 len=SB_ADLEN & 0x7FFFFFFF;
+   //0x005F7800	SB_ADSTAG	RW	AICA:G2-DMA G2 start address 
+   //0x005F7804	SB_ADSTAR	RW	AICA:G2-DMA system memory start address 
+   //0x005F7808	SB_ADLEN	RW	AICA:G2-DMA length 
+   //0x005F780C	SB_ADDIR	RW	AICA:G2-DMA direction 
+   //0x005F7810	SB_ADTSEL	RW	AICA:G2-DMA trigger select 
+   //0x005F7814	SB_ADEN	RW	AICA:G2-DMA enable 
+   //0x005F7818	SB_ADST	RW	AICA:G2-DMA start 
+   //0x005F781C	SB_ADSUSP	RW	AICA:G2-DMA suspend 
+   u32 src, dst, len;
+   bool check = (data & 1) && (SB_ADEN & 1);
 
-			if ((SB_ADDIR&1)==1)
-			{
-				//swap direction
-				u32 tmp=src;
-				src=dst;
-				dst=tmp;
-				printf("**AICA DMA : SB_ADDIR==1: Not sure this works, please report if broken/missing sound or crash\n**");
-			}
+   if (!check)
+      return;
 
-			WriteMemBlock_nommu_dma(dst,src,len);
-			/*
-			for (u32 i=0;i<len;i+=4)
-			{
-				u32 data=ReadMem32_nommu(src+i);
-				WriteMem32_nommu(dst+i,data);
-			}
-			*/
-			if (SB_ADLEN & 0x80000000)
-				SB_ADEN=1;//
-			else
-				SB_ADEN=0;//
+   src=SB_ADSTAR;
+   dst=SB_ADSTAG;
+   len=SB_ADLEN & 0x7FFFFFFF;
 
-			SB_ADSTAR+=len;
-			SB_ADSTAG+=len;
-			SB_ADST = 0x00000000;//dma done
-			SB_ADLEN = 0x00000000;
+   if ((SB_ADDIR&1)==1)
+   {
+      //swap direction
+      u32 tmp=src;
+      src=dst;
+      dst=tmp;
+#ifndef NDEBUG
+      printf("**AICA DMA : SB_ADDIR==1: Not sure this works, please report if broken/missing sound or crash\n**");
+#endif
+   }
 
-			
-			asic_RaiseInterrupt(holly_SPU_DMA);
-		}
-	}
+   WriteMemBlock_nommu_dma(dst,src,len);
+   SB_ADEN    = 0;
+
+   if (SB_ADLEN & 0x80000000)
+      SB_ADEN = 1;
+
+   SB_ADSTAR += len;
+   SB_ADSTAG += len;
+   SB_ADST    = 0x00000000;//dma done
+   SB_ADLEN   = 0x00000000;
+
+
+   asic_RaiseInterrupt(holly_SPU_DMA);
 }
 
 void Write_SB_E1ST(u32 addr, u32 data)
 {
-	//0x005F7800	SB_ADSTAG	RW	AICA:G2-DMA G2 start address 
-	//0x005F7804	SB_ADSTAR	RW	AICA:G2-DMA system memory start address 
-	//0x005F7808	SB_ADLEN	RW	AICA:G2-DMA length 
-	//0x005F780C	SB_ADDIR	RW	AICA:G2-DMA direction 
-	//0x005F7810	SB_ADTSEL	RW	AICA:G2-DMA trigger select 
-	//0x005F7814	SB_ADEN	RW	AICA:G2-DMA enable 
-	//0x005F7818	SB_ADST	RW	AICA:G2-DMA start 
-	//0x005F781C	SB_ADSUSP	RW	AICA:G2-DMA suspend 
-	
-	if (data&1)
-	{
-		if (SB_E1EN&1)
-		{
-			u32 src=SB_E1STAR;
-			u32 dst=SB_E1STAG;
-			u32 len=SB_E1LEN & 0x7FFFFFFF;
+   //0x005F7800	SB_ADSTAG	RW	AICA:G2-DMA G2 start address 
+   //0x005F7804	SB_ADSTAR	RW	AICA:G2-DMA system memory start address 
+   //0x005F7808	SB_ADLEN	RW	AICA:G2-DMA length 
+   //0x005F780C	SB_ADDIR	RW	AICA:G2-DMA direction 
+   //0x005F7810	SB_ADTSEL	RW	AICA:G2-DMA trigger select 
+   //0x005F7814	SB_ADEN	RW	AICA:G2-DMA enable 
+   //0x005F7818	SB_ADST	RW	AICA:G2-DMA start 
+   //0x005F781C	SB_ADSUSP	RW	AICA:G2-DMA suspend 
+   u32 src, dst, len;
+   bool check = (data & 1) && (SB_E1EN & 1);
 
-			if (SB_E1DIR==1)
-			{
-				u32 t=src;
-				src=dst;
-				dst=t;
-				printf("G2-EXT1 DMA : SB_E1DIR==1 DMA Read to 0x%X from 0x%X %d bytes\n",dst,src,len);
-			}
-			else
-				printf("G2-EXT1 DMA : SB_E1DIR==0:DMA Write to 0x%X from 0x%X %d bytes\n",dst,src,len);
+   src=SB_E1STAR;
+   dst=SB_E1STAG;
+   len=SB_E1LEN & 0x7FFFFFFF;
 
-			WriteMemBlock_nommu_dma(dst,src,len);
+   if (SB_E1DIR==1)
+   {
+      u32 t=src;
+      src=dst;
+      dst=t;
+      printf("G2-EXT1 DMA : SB_E1DIR==1 DMA Read to 0x%X from 0x%X %d bytes\n",dst,src,len);
+   }
+   else
+      printf("G2-EXT1 DMA : SB_E1DIR==0:DMA Write to 0x%X from 0x%X %d bytes\n",dst,src,len);
 
-			/*
-			for (u32 i=0;i<len;i+=4)
-			{
-				u32 data=ReadMem32_nommu(src+i);
-				WriteMem32_nommu(dst+i,data);
-			}*/
+   WriteMemBlock_nommu_dma(dst,src,len);
+   SB_E1EN=0;
 
-			if (SB_E1LEN & 0x80000000)
-				SB_E1EN=1;//
-			else
-				SB_E1EN=0;//
+   if (SB_E1LEN & 0x80000000)
+      SB_E1EN=1;
 
-			SB_E1STAR+=len;
-			SB_E1STAG+=len;
-			SB_E1ST = 0x00000000;//dma done
-			SB_E1LEN = 0x00000000;
+   SB_E1STAR+=len;
+   SB_E1STAG+=len;
+   SB_E1ST = 0x00000000;//dma done
+   SB_E1LEN = 0x00000000;
 
-			
-			asic_RaiseInterrupt(holly_EXT_DMA1);
-		}
-	}
+   asic_RaiseInterrupt(holly_EXT_DMA1);
 }
 
-void aica_sb_Init()
+void aica_sb_Init(void)
 {
 	//NRM
 	//6

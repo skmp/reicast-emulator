@@ -939,54 +939,46 @@ void AegStep(ChannelEx* ch)
 	switch(state)
 	{
 	case EG_Attack:
-		{
-			//wii
-			ch->AEG.val-=ch->AEG.AttackRate;
-			if (ch->AEG.GetValue()<=0)
-			{
-				ch->AEG.SetValue(0);
-				if (!ch->ccd->LPSLNK)
-				{
-					aeg_printf("[%d]AEG_step : Switching to EG_Decay1 %d\n",ch->AEG.GetValue());
-					ch->SetAegState(EG_Decay1);
-				}
-			}
-		}
+      //wii
+      ch->AEG.val-=ch->AEG.AttackRate;
+      if (ch->AEG.GetValue()<=0)
+      {
+         ch->AEG.SetValue(0);
+         if (!ch->ccd->LPSLNK)
+         {
+            aeg_printf("[%d]AEG_step : Switching to EG_Decay1 %d\n",ch->AEG.GetValue());
+            ch->SetAegState(EG_Decay1);
+         }
+      }
 		break;
 	case EG_Decay1:
-		{
-			//x2
-			ch->AEG.val+=ch->AEG.Decay1Rate;
-			if (((u32)ch->AEG.GetValue())>=ch->AEG.Decay2Value)
-			{
-				aeg_printf("[%d]AEG_step : Switching to EG_Decay2 @ %x\n",ch->AEG.GetValue());
-				ch->SetAegState(EG_Decay2);
-			}
-		}
+      //x2
+      ch->AEG.val+=ch->AEG.Decay1Rate;
+      if (((u32)ch->AEG.GetValue())>=ch->AEG.Decay2Value)
+      {
+         aeg_printf("[%d]AEG_step : Switching to EG_Decay2 @ %x\n",ch->AEG.GetValue());
+         ch->SetAegState(EG_Decay2);
+      }
 		break;
 	case EG_Decay2:
-		{
-			//x3
-			ch->AEG.val+=ch->AEG.Decay2Rate;
-			if (ch->AEG.GetValue()>=0x3FF)
-			{
-				aeg_printf("[%d]AEG_step : Switching to EG_Release @ %x\n",ch->AEG.GetValue());
-				ch->AEG.SetValue(0x3FF);
-				ch->SetAegState(EG_Release);
-			}
-		}
+      //x3
+      ch->AEG.val+=ch->AEG.Decay2Rate;
+      if (ch->AEG.GetValue()>=0x3FF)
+      {
+         aeg_printf("[%d]AEG_step : Switching to EG_Release @ %x\n",ch->AEG.GetValue());
+         ch->AEG.SetValue(0x3FF);
+         ch->SetAegState(EG_Release);
+      }
 		break;
 	case EG_Release: //only on key_off ?
-		{
-			ch->AEG.val+=ch->AEG.ReleaseRate;
-			
-			if (ch->AEG.GetValue()>=0x3FF)
-			{
-				aeg_printf("[%d]AEG_step : EG_Release End @ %x\n",ch->AEG.GetValue());
-				ch->AEG.SetValue(0x3FF); // TODO: mnn, should we do anything about it running wild ?
-				ch->disable(); // TODO: Is this ok here? It's a speed optimisation (since the channel is muted)
-			}
-		}
+      ch->AEG.val+=ch->AEG.ReleaseRate;
+
+      if (ch->AEG.GetValue()>=0x3FF)
+      {
+         aeg_printf("[%d]AEG_step : EG_Release End @ %x\n",ch->AEG.GetValue());
+         ch->AEG.SetValue(0x3FF); // TODO: mnn, should we do anything about it running wild ?
+         ch->disable(); // TODO: Is this ok here? It's a speed optimisation (since the channel is muted)
+      }
 		break;
 	}
 }
@@ -1071,6 +1063,7 @@ u32 CalcAegSteps(float t)
 	double steps=aeg_allsteps/scnt;
 	return (u32)(steps+0.5);
 }
+
 void sgc_Init()
 {
 	staticinitialise();
@@ -1115,37 +1108,37 @@ void WriteChannelReg8(u32 channel,u32 reg)
 
 void ReadCommonReg(u32 reg,bool byte)
 {
-	switch(reg)
-	{
-	case 0x2808:
-	case 0x2809:
-		CommonData->MIEMP=1;
-		CommonData->MOEMP=1;
-		break;
-	case 0x2810: //LP & misc
-	case 0x2811: //LP & misc
-		{
-			u32 chan=CommonData->MSLC;
-			
-			CommonData->LP=Chans[chan].loop.looped;
-			verify(CommonData->AFSET==0);
-		
-			CommonData->EG=Chans[chan].AEG.GetValue(); //AEG is only 10 bits, FEG is 13 bits
-			CommonData->SGC=Chans[chan].AEG.state;
+   switch(reg)
+   {
+      case 0x2808:
+      case 0x2809:
+         CommonData->MIEMP=1;
+         CommonData->MOEMP=1;
+         break;
+      case 0x2810: //LP & misc
+      case 0x2811: //LP & misc
+         {
+            u32 chan=CommonData->MSLC;
 
-			if (! (byte && reg==0x2810))
-				Chans[chan].loop.looped=0;
-		}
-		break;
-	case 0x2814: //CA
-	case 0x2815: //CA
-		{
-			u32 chan=CommonData->MSLC;
-			CommonData->CA = Chans[chan].CA /*& (~1023)*/; //mmnn??
-			//printf("[%d] CA read %d\n",chan,Chans[chan].CA);
-		}
-		break;
-	}
+            CommonData->LP=Chans[chan].loop.looped;
+            verify(CommonData->AFSET==0);
+
+            CommonData->EG=Chans[chan].AEG.GetValue(); //AEG is only 10 bits, FEG is 13 bits
+            CommonData->SGC=Chans[chan].AEG.state;
+
+            if (! (byte && reg==0x2810))
+               Chans[chan].loop.looped=0;
+         }
+         break;
+      case 0x2814: //CA
+      case 0x2815: //CA
+         {
+            u32 chan=CommonData->MSLC;
+            CommonData->CA = Chans[chan].CA /*& (~1023)*/; //mmnn??
+            //printf("[%d] CA read %d\n",chan,Chans[chan].CA);
+         }
+         break;
+   }
 }
 
 void WriteCommonReg8(u32 reg,u32 data)
@@ -1230,19 +1223,6 @@ void AICA_Sample32(void)
 			VOLPAN(EXTS0L,dsp_out_vol[16].EFSDL,dsp_out_vol[16].EFPAN,mixl,mixr);
 			VOLPAN(EXTS0R,dsp_out_vol[17].EFSDL,dsp_out_vol[17].EFPAN,mixl,mixr);
 		}
-
-		/*
-		no dsp for now -- needs special handling of oDSP for ch paraller version ...
-		if (settings.aica.DSPEnabled)
-		{
-			dsp_step();
-
-			for (int i=0;i<16;i++)
-			{
-				VOLPAN( (*(s16*)&DSPData->EFREG[i]) ,dsp_out_vol[i].EFSDL,dsp_out_vol[i].EFPAN,mixl,mixr);
-			}
-		}
-		*/
 
 		//Mono !
 		if (CommonData->Mono)
@@ -1371,4 +1351,3 @@ void AICA_Sample(void)
 
 	WriteSample(mixr,mixl);
 }
-

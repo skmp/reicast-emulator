@@ -16,7 +16,7 @@
 	test game suite.
 
 
-	Initiall code by skmp, now part of the reicast project.
+	Initial code by skmp, now part of the reicast project.
 	See LICENSE & COPYRIGHT files further details
 */
 
@@ -65,67 +65,6 @@ struct _INST
 
 
 #define DYNBUF  0x10000
-/*
-//#define USEFLOATPACK
-//pack s24 to s1e4s11
-naked u16 packasm(s32 val)
-{
-	__asm
-	{
-		mov edx,ecx;        //eax will be sign
-		and edx,0x80000;    //get the sign
-		
-		jz poz;
-		neg ecx;
-
-		poz:
-		bsr eax,ecx;
-		jz _zero;
-
-		//24 -> 11
-		//13 -> 0
-		//12..0 -> 0
-		sub eax,11;
-		cmovs eax,0;    //if <0 -> 0
-
-		shr ecx,eax;    //shift out mantissa as needed (yeah i know, no rounding here and all .. )
-
-		shr eax,12;     //[14:12] is exp
-		or edx,ecx;     //merge [15] | [11:0]
-		or eax,edx;     //merge [14:12] | ([15] | [11:0]), result on eax
-		ret;
-
-_zero:
-		xor eax,eax;
-		ret;
-	}
-}
-//ONLY lower 16 bits are valid, rest are ignored but do movzx to avoid partial stalls :)
-naked s32 unpackasm(u32 val)
-{
-	__asm
-	{
-		mov eax,ecx;        //get mantissa bits
-		and ecx,0x7FF;      //
-		
-		shl eax,11;         //get shift factor (shift)
-		mov edx,eax;        //keep a copy for the sign
-		and eax,0xF;        //get shift factor (mask)
-
-		shl ecx,eax;        //shift mantissa to normal position
-
-		test edx,0x10;      //signed ?
-		jnz _negme;
-		
-		ret;    //nop, return as is
-
-_negme:
-		//yep, negate and return
-		neg eax;
-		ret;
-
-	}
-}*/
 
 //float format is ?
 static u16 DYNACALL PACK(s32 val)
@@ -155,10 +94,10 @@ static u16 DYNACALL PACK(s32 val)
 
 static s32 DYNACALL UNPACK(u16 val)
 {
-	int sign = (val >> 15) & 0x1;
+	int sign     = (val >> 15) & 0x1;
 	int exponent = (val >> 11) & 0xF;
 	int mantissa = val & 0x7FF;
-	s32 uval = mantissa << 11;
+	s32 uval     = mantissa << 11;
 
 	if (exponent > 11)
 		exponent = 11;
@@ -172,8 +111,7 @@ static s32 DYNACALL UNPACK(u16 val)
 	return uval;
 }
 
-
-void dsp_init()
+void dsp_init(void)
 {
 	memset(&dsp,0,sizeof(dsp));
 	memset(DSPData,0,sizeof(*DSPData));
@@ -186,7 +124,9 @@ void dsp_init()
 
 	os_MakeExecutable(dsp.DynCode,sizeof(dsp.DynCode));
 }
-void dsp_recompile();
+
+void dsp_recompile(void);
+
 void DecodeInst(u32 *IPtr,_INST *i)
 {
 	i->TRA=(IPtr[0]>>9)&0x7F;
@@ -225,11 +165,13 @@ void* dyna_realloc(void*ptr,u32 oldsize,u32 newsize)
 {
 	return dsp.DynCode;
 }
-void _dsp_debug_step_start()
+
+void _dsp_debug_step_start(void)
 {
 	memset(&dsp.regs_init,0,sizeof(dsp.regs_init));
 }
-void _dsp_debug_step_end()
+
+void _dsp_debug_step_end(void)
 {
 	verify(dsp.regs_init.MAD_OUT);
 	verify(dsp.regs_init.MEM_ADDR);
@@ -806,12 +748,10 @@ void dsp_recompile()
 	x86e.Generate();
 }
 
-
-
 void dsp_print_mame();
 void dsp_step_mame();
 void dsp_emu_grandia();
-void dsp_step()
+void dsp_step(void)
 {
 	//clear output reg
 	memset(DSPData->EFREG,0,sizeof(DSPData->EFREG));

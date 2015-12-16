@@ -101,16 +101,13 @@ void WriteReg(u32 addr,u32 data)
 	else
 		WriteAicaReg<2>(addr,data);
 }
-//Aica reads (both sh4&arm)
+
+/* Aica reads (both sh4&arm) */
 u32 libAICA_ReadReg(u32 addr,u32 size)
 {
-	if (size==1)
-		return ReadReg<1>(addr & 0x7FFF);
-	else
-		return ReadReg<2>(addr & 0x7FFF);
-
-	//must never come here
-	return 0;
+   if (size==1)
+      return ReadReg<1>(addr & 0x7FFF);
+   return ReadReg<2>(addr & 0x7FFF);
 }
 
 void libAICA_WriteReg(u32 addr,u32 data,u32 size)
@@ -122,12 +119,13 @@ void libAICA_WriteReg(u32 addr,u32 data,u32 size)
 }
 
 //Map using _vmem .. yay
-void init_mem()
+void init_mem(void)
 {
 	memset(aica_reg,0,sizeof(aica_reg));
 	aica_ram.data[ARAM_SIZE-1]=1;
 	aica_ram.Zero();
 }
+
 //kill mem map & free used mem ;)
 void term_mem()
 {

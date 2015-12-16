@@ -20,62 +20,63 @@ InterruptInfo* SCIRE;
 //arm side
 u32 GetL(u32 witch)
 {
-	if (witch>7)
-		witch=7; //higher bits share bit 7
+   if (witch>7)
+      witch=7; //higher bits share bit 7
 
-	u32 bit=1<<witch;
-	u32 rv=0;
+   u32 bit=1<<witch;
+   u32 rv=0;
 
-	if (CommonData->SCILV0 & bit)
-		rv=1;
+   if (CommonData->SCILV0 & bit)
+      rv=1;
 
-	if (CommonData->SCILV1 & bit)
-		rv|=2;
-	
-	if (CommonData->SCILV2 & bit)
-		rv|=4;
+   if (CommonData->SCILV1 & bit)
+      rv|=2;
 
-	return rv;
+   if (CommonData->SCILV2 & bit)
+      rv|=4;
+
+   return rv;
 }
+
 void update_arm_interrupts()
 {
-	u32 p_ints=SCIEB->full & SCIPD->full;
+   u32 p_ints=SCIEB->full & SCIPD->full;
 
-	u32 Lval=0;
-	if (p_ints)
-	{
-		u32 bit_value=1;//first bit
-		//scan all interrupts , lo to hi bit.I assume low bit ints have higher priority over others
-		for (u32 i=0;i<11;i++)
-		{
-			if (p_ints & bit_value)
-			{
-				//for the first one , Set the L reg & exit
-				Lval=GetL(i);
-				break;
-			}
-			bit_value<<=1; //next bit
-		}
-	}
+   u32 Lval=0;
+   if (p_ints)
+   {
+      u32 bit_value=1;//first bit
+      //scan all interrupts , lo to hi bit.I assume low bit ints have higher priority over others
+      for (u32 i=0;i<11;i++)
+      {
+         if (p_ints & bit_value)
+         {
+            //for the first one , Set the L reg & exit
+            Lval=GetL(i);
+            break;
+         }
+         bit_value<<=1; //next bit
+      }
+   }
 
-	libARM_InterruptChange(p_ints,Lval);
+   libARM_InterruptChange(p_ints,Lval);
 }
 
 //sh4 side
-void UpdateSh4Ints()
+void UpdateSh4Ints(void)
 {
-	u32 p_ints = MCIEB->full & MCIPD->full;
-	if (p_ints)
-	{
+   u32 p_ints = MCIEB->full & MCIPD->full;
+   if (p_ints)
+   {
       //if no interrupt is already pending then raise one :)
-		if ((SB_ISTEXT & SH4_IRQ_BIT )==0)
-			asic_RaiseInterrupt(holly_SPU_IRQ);
-	}
-	else
-	{
-		if (SB_ISTEXT&SH4_IRQ_BIT)
-			asic_CancelInterrupt(holly_SPU_IRQ);
-	}
+      if ((SB_ISTEXT & SH4_IRQ_BIT )==0)
+         asic_RaiseInterrupt(holly_SPU_IRQ);
+   }
+   else
+   {
+      if (SB_ISTEXT&SH4_IRQ_BIT)
+         asic_CancelInterrupt(holly_SPU_IRQ);
+   }
 
 }
 
@@ -95,6 +96,7 @@ struct AicaTimerData
 		u32 data;
 	};
 };
+
 class AicaTimer
 {
 public:
@@ -177,68 +179,64 @@ void libAICA_TimeStep()
 template<u32 sz>
 void WriteAicaReg(u32 reg,u32 data)
 {
-	switch (reg)
-	{
-	case SCIPD_addr:
-		verify(sz!=1);
-		if (data & (1<<5))
-		{
-			SCIPD->SCPU=1;
-			update_arm_interrupts();
-		}
-		//Read only
-		return;
+   switch (reg)
+   {
+      case SCIPD_addr:
+         verify(sz!=1);
+         if (data & (1<<5))
+         {
+            SCIPD->SCPU=1;
+            update_arm_interrupts();
+         }
+         break;
 
-	case SCIRE_addr:
-		{
-			verify(sz!=1);
-			SCIPD->full&=~(data /*& SCIEB->full*/ );	//is the & SCIEB->full needed ? doesn't seem like it
-			data=0;//Write only
-			update_arm_interrupts();
-		}
-		break;
+      case SCIRE_addr:
+         {
+            verify(sz!=1);
+            SCIPD->full&=~(data /*& SCIEB->full*/ );	//is the & SCIEB->full needed ? doesn't seem like it
+            data=0;//Write only
+            update_arm_interrupts();
+         }
+         break;
 
-	case MCIPD_addr:
-		if (data & (1<<5))
-		{
-			verify(sz!=1);
-			MCIPD->SCPU=1;
-			UpdateSh4Ints();
-		}
-		//Read only
-		return;
+      case MCIPD_addr:
+         if (data & (1<<5))
+         {
+            verify(sz!=1);
+            MCIPD->SCPU=1;
+            UpdateSh4Ints();
+         }
+         break;
 
-	case MCIRE_addr:
-		{
-			verify(sz!=1);
-			MCIPD->full&=~data;
-			UpdateSh4Ints();
-			//Write only
-		}
-		break;
+      case MCIRE_addr:
+         {
+            verify(sz!=1);
+            MCIPD->full&=~data;
+            UpdateSh4Ints();
+            //Write only
+         }
+         break;
 
-	case TIMER_A:
-		WriteMemArr(aica_reg,reg,data,sz);
-		timers[0].RegisterWrite();
-		break;
+      case TIMER_A:
+         WriteMemArr(aica_reg,reg,data,sz);
+         timers[0].RegisterWrite();
+         break;
 
-	case TIMER_B:
-		WriteMemArr(aica_reg,reg,data,sz);
-		timers[1].RegisterWrite();
-		break;
+      case TIMER_B:
+         WriteMemArr(aica_reg,reg,data,sz);
+         timers[1].RegisterWrite();
+         break;
 
-	case TIMER_C:
-		WriteMemArr(aica_reg,reg,data,sz);
-		timers[2].RegisterWrite();
-		break;
+      case TIMER_C:
+         WriteMemArr(aica_reg,reg,data,sz);
+         timers[2].RegisterWrite();
+         break;
 
-	default:
-		WriteMemArr(aica_reg,reg,data,sz);
-		break;
-	}
+      default:
+         WriteMemArr(aica_reg,reg,data,sz);
+         break;
+   }
 }
-
-
 
 template void WriteAicaReg<1>(u32 reg,u32 data);
 template void WriteAicaReg<2>(u32 reg,u32 data);
@@ -274,7 +272,7 @@ void libAICA_Reset(bool m)
 {
 }
 
-void libAICA_Term()
+void libAICA_Term(void)
 {
 	sgc_Term();
 }

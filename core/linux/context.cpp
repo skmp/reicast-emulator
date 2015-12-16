@@ -20,14 +20,14 @@
 template <typename Ta, typename Tb>
 void bicopy(Ta& rei, Tb& seg, bool to_segfault)
 {
-	if (to_segfault)
-		seg = rei;
-	else
-		rei = seg;
+   if (to_segfault)
+      seg = rei;
+   else
+      rei = seg;
 }
 
-void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_segfault) {
-
+void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_segfault)
+{
 #if !defined(TARGET_NO_EXCEPTIONS)
 #if HOST_CPU == CPU_ARM
 #ifdef __linux__
@@ -62,20 +62,22 @@ void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_se
    bicopy(reictx->pc, MCTX(->__ss.__rip), to_segfault);
 #endif
 #elif HOST_CPU == CPU_MIPS
-	bicopy(reictx->pc, MCTX(.pc), to_segfault);
+   bicopy(reictx->pc, MCTX(.pc), to_segfault);
 #elif HOST_CPU == CPU_GENERIC
-    //nothing!
+   //nothing!
 #else
-	#error Unsupported HOST_CPU
+#error Unsupported HOST_CPU
 #endif
-	#endif
-	
+#endif
+
 }
 
-void context_from_segfault(rei_host_context_t* reictx, void* segfault_ctx) {
+void context_from_segfault(rei_host_context_t* reictx, void* segfault_ctx)
+{
 	context_segfault(reictx, segfault_ctx, false);
 }
 
-void context_to_segfault(rei_host_context_t* reictx, void* segfault_ctx) {
+void context_to_segfault(rei_host_context_t* reictx, void* segfault_ctx)
+{
 	context_segfault(reictx, segfault_ctx, true);
 }

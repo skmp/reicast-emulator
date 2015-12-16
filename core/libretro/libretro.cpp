@@ -69,6 +69,7 @@ static wchar** co_argv;
 
 char *game_data;
 char game_dir[1024];
+char game_dir_no_slash[1024];
 
 static void co_dc_thread(void)
 {
@@ -262,9 +263,15 @@ bool retro_load_game(const struct retro_game_info *game)
    extract_directory(game_dir, game->path, sizeof(game_dir));
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
+   {
       snprintf(game_dir, sizeof(game_dir), "%s/dc/", dir);
+      snprintf(game_dir_no_slash, sizeof(game_dir_no_slash), "%s/dc", dir);
+   }
    else
+   {
       strcat(game_dir, "/data/");
+      strcat(game_dir_no_slash, "/data");
+   }
 
    screen_width  = 640;
    screen_height = 480;

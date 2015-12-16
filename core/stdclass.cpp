@@ -71,10 +71,15 @@ string get_readonly_config_path(const string& filename)
 
 string get_writable_data_path(const string& filename)
 {
+#ifdef __LIBRETRO__
+   extern char game_dir_no_slash[1024];
+   return std::string(game_dir_no_slash + filename);
+#else
 	/* Only stuff in the user_data_dir is supposed to be writable,
 	 * so we always return that.
 	 */
 	return (user_data_dir + filename);
+#endif
 }
 
 string get_readonly_data_path(const string& filename)

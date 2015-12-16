@@ -392,7 +392,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
    info->library_name = "Reicast";
    info->library_version = "0.1";
-   info->valid_extensions = "cdi|gdi|chd";
+   info->valid_extensions = "cdi|gdi|chd|cue";
    info->need_fullpath = true;
    info->block_extract = false;
 }

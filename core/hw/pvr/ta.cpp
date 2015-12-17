@@ -210,43 +210,41 @@ NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 
 	if (cmd != 8)
 	{
-		if (dat->pcw.ParaType == ParamType_End_Of_List)
-		{
-			if (ta_fsm_cl==7)
-				ta_fsm_cl=dat->pcw.ListType;
-			//printf("List %d ended\n",ta_fsm_cl);
+      switch (dat->pcw.ParaType)
+      {
+         case ParamType_End_Of_List:
+            if (ta_fsm_cl==7)
+               ta_fsm_cl=dat->pcw.ListType;
+            //printf("List %d ended\n",ta_fsm_cl);
 
-			if (ta_fsm_cl==ListType_Translucent)
-			{
-				//ta_tad.early=os_GetSeconds();
-			}
-			asic_RaiseInterrupt( ListEndInterrupt[ta_fsm_cl]);
-			ta_fsm_cl=7;
-			trans=TAS_NS;
-		}
-		else if (dat->pcw.ParaType == ParamType_Polygon_or_Modifier_Volume)
-		{
-			if (ta_fsm_cl==7)
-				ta_fsm_cl=dat->pcw.ListType;
+            if (ta_fsm_cl==ListType_Translucent)
+            {
+               //ta_tad.early=os_GetSeconds();
+            }
+            asic_RaiseInterrupt( ListEndInterrupt[ta_fsm_cl]);
+            ta_fsm_cl=7;
+            trans=TAS_NS;
+            break;
+         case ParamType_Polygon_or_Modifier_Volume:
+            if (ta_fsm_cl==7)
+               ta_fsm_cl=dat->pcw.ListType;
 
-			if (!IsModVolList(ta_fsm_cl))
-				trans=TAS_PLV32;
-			else
-				trans=TAS_MLV64;
+            if (!IsModVolList(ta_fsm_cl))
+               trans=TAS_PLV32;
+            else
+               trans=TAS_MLV64;
+            break;
+         case ParamType_Sprite:
+            if (ta_fsm_cl==7)
+               ta_fsm_cl=dat->pcw.ListType;
 
-		}
-		else if (dat->pcw.ParaType == ParamType_Sprite)
-		{
-			if (ta_fsm_cl==7)
-				ta_fsm_cl=dat->pcw.ListType;
-
-			verify(!IsModVolList(ta_fsm_cl));
-			trans=TAS_PLV32;
-		}
-		else
-		{
-			die("WTF ?\n");
-		}
+            verify(!IsModVolList(ta_fsm_cl));
+            trans=TAS_PLV32;
+            break;
+         default:
+            die("WTF ?\n");
+            break;
+      }
 	}
 
 	u32 state_in = (trans<<8) | (dat->pcw.ParaType<<5) | (dat->pcw.obj_ctrl>>2)%32;

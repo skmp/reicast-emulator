@@ -1841,6 +1841,7 @@ static bool RenderFrame(void)
 		glClearColor(0,0,0,1.0f);
 
 	glClearDepthf(0.f);
+   glViewport(0, 0, gles_screen_width, gles_screen_height);
 	glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
 	if (UsingAutoSort())
@@ -1971,9 +1972,16 @@ struct glesrend : Renderer
 	void Term() { libCore_vramlock_Free(); }
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
-	bool Render() { return RenderFrame(); }
+	bool Render()
+   {
+      bool ret = RenderFrame();
+      return ret;
+   }
 
-	void Present() { glViewport(0, 0, gles_screen_width, gles_screen_height); co_dc_yield(); }
+	void Present()
+   {
+      co_dc_yield();
+   }
 
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
 		return gl_GetTexture(tsp, tcw);

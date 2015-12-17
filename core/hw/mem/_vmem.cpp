@@ -411,12 +411,8 @@ void _vmem_bm_reset(void)
       _vmem_bm_reset_nvmem();
 #endif
     
-#if defined(__MACH__)
-   bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
-#else
    if (!virt_ram_base)
       bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
-#endif
 }
 
 #if !defined(TARGET_NO_NVMEM)
@@ -595,16 +591,16 @@ void* _nvmem_alloc_mem(void)
 #define unused_buffer(start,end) {ptr=_nvmem_unused_buffer(start,end);if (!ptr) return false;}
 
 u32 pagecnt;
-void _vmem_bm_reset_nvmem()
+void _vmem_bm_reset_nvmem(void)
 {
-	#if defined(TARGET_NO_NVMEM)
-		return;
-	#endif
+#if defined(TARGET_NO_NVMEM)
+   return;
+#endif
 
 #ifdef __MACH__
-      //On iOS & nacl we allways allocate all of the mapping table
-      mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_READ | PROT_WRITE);
-      return;
+   /* On iOS & nacl we allways allocate all of the mapping table */
+   mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_READ | PROT_WRITE);
+   return;
 #endif
 	pagecnt=0;
 
@@ -616,7 +612,7 @@ void _vmem_bm_reset_nvmem()
 #ifdef MADV_REMOVE
    madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_REMOVE);
 #else
-   //OSX, IOS
+   /* OSX, IOS */
    madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_FREE);
 #endif
 #endif
@@ -678,7 +674,6 @@ bool _vmem_reserve(void)
 #else
    verify(p_sh4rcb==mmap(p_sh4rcb,sizeof(Sh4RCB),PROT_NONE,MAP_PRIVATE | MAP_ANON, -1, 0));
    mprotect((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb),sizeof(Sh4RCB)-sizeof(p_sh4rcb->fpcb),PROT_READ|PROT_WRITE);
-   //mprotect((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb),sizeof(Sh4RCB)-sizeof(p_sh4rcb->fpcb),PROT_READ|PROT_WRITE);
 #endif
 	virt_ram_base+=sizeof(Sh4RCB);
 

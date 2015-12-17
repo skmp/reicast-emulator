@@ -180,41 +180,51 @@ bool UDgreaterLOC ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
 
 u32 FindPath(RuntimeBlockInfo* rbi, u32 sa,s32 mc,u32& plc)
 {
+   u32 ret = 0;
 	if (mc < 0 || rbi==0)
 		return 0;
 
+   ret = rbi->guest_cycles;
 	plc++;
-	if (rbi->BlockType==BET_Cond_0 || rbi->BlockType==BET_Cond_1)
+
+   switch (rbi->BlockType)
    {
-      u32 plc1=plc,plc2=plc,v1=0,v2=0;
-      if (rbi->BranchBlock>sa)
-         v1=FindPath(bm_GetBlock(rbi->BranchBlock),rbi->addr,mc-rbi->guest_cycles,plc1);
-      v2=FindPath(bm_GetBlock(rbi->NextBlock),rbi->addr,mc-rbi->guest_cycles,plc2);
+      case BET_Cond_0:
+      case BET_Cond_1:
+         {
+            u32 plc1=plc,plc2=plc,v1=0,v2=0;
+            if (rbi->BranchBlock>sa)
+               v1=FindPath(bm_GetBlock(rbi->BranchBlock),rbi->addr,mc-rbi->guest_cycles,plc1);
+            v2=FindPath(bm_GetBlock(rbi->NextBlock),rbi->addr,mc-rbi->guest_cycles,plc2);
 
-      if (plc1>plc2)
-      {
-         plc=plc1;
-         return rbi->guest_cycles+v1;
-      }
+            if (plc1>plc2)
+            {
+               plc=plc1;
+               ret += v1;
+               break;
+            }
 
-      plc=plc2;
-      return rbi->guest_cycles+v2;
+            plc=plc2;
+            ret += v2;
+         }
+         break;
+      case BET_StaticJump:
+         if (rbi->BranchBlock>sa)
+            return rbi->guest_cycles+FindPath(bm_GetBlock(rbi->BranchBlock),rbi->addr,mc-rbi->guest_cycles,plc);
+         break;
+      default:
+#ifndef NDEBUG
+         if (plc!=1)
+            printf("Chain lost due to %d\n",rbi->BlockType);
+         else
+            printf("Chain fail due to %d\n",rbi->BlockType);
+#endif
+         break;
    }
-	else if (rbi->BlockType==BET_StaticJump)
-	{
-		if (rbi->BranchBlock>sa)
-			return rbi->guest_cycles+FindPath(bm_GetBlock(rbi->BranchBlock),rbi->addr,mc-rbi->guest_cycles,plc);
-      return rbi->guest_cycles;
-	}
-	else
-	{
-		if (plc!=1)
-			printf("Chain lost due to %d\n",rbi->BlockType);
-		else
-			printf("Chain fail due to %d\n",rbi->BlockType);
-		return rbi->guest_cycles;
-	}
+
+   return ret;
 }
+
 u32 total_saved;
 void FindPath(u32 start)
 {
@@ -225,11 +235,13 @@ void FindPath(u32 start)
 
 	u32 plen=0;
 	u32 pclc=FindPath(rbi,start,SH4_TIMESLICE,plen);
+#ifndef NDEBUG
 	if (plen>1)
 	{
 		total_saved+=(plen-1)*2*rbi->runs;
 		printf("%08X: %d, %d, %.2f, %.2f\n",start,pclc,plen,pclc/(float)plen,plen*2*rbi->runs/1000.f);
 	}
+#endif
 	rbi->runs=0;
 }
 

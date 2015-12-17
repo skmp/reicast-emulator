@@ -317,7 +317,7 @@ static void DrawList(const List<PolyParam>& gply)
       if (params->count>2) //this actually happens for some games. No idea why ..
       {
          SetGPState<Type,SortingEnabled>(params);
-         glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_SHORT, (GLvoid*)(2*params->first)); glCheck();
+         glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_SHORT, (GLvoid*)(2*params->first));
       }
 
       params++;
@@ -410,7 +410,7 @@ static inline void fill_id(u16* d, Vertex* v0, Vertex* v1, Vertex* v2,  Vertex* 
 	d[2]=v2-vb;
 }
 
-void GenSorted(void)
+static void GenSorted(void)
 {
 	u32 tess_gen=0;
 
@@ -483,8 +483,10 @@ void GenSorted(void)
 					u32 tess_x=(max3(v0->x,v1->x,v2->x)-min3(v0->x,v1->x,v2->x))/32;
 					u32 tess_y=(max3(v0->y,v1->y,v2->y)-min3(v0->y,v1->y,v2->y))/32;
 
-					if (tess_x==1) tess_x=0;
-					if (tess_y==1) tess_y=0;
+					if (tess_x==1)
+                  tess_x=0;
+					if (tess_y==1)
+                  tess_y=0;
 
 					//bool tess=(maxZ(v0,v1,v2)/minZ(v0,v1,v2))>=1.2;
 
@@ -625,7 +627,7 @@ void GenSorted(void)
 	if (pidx_sort.size())
 	{
 		//Bind and upload sorted index buffer
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2); glCheck();
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER,vidx_sort.size()*2,&vidx_sort[0],GL_STREAM_DRAW);
 
 		if (tess_gen) printf("Generated %.2fK Triangles !\n",tess_gen/1000.0);
@@ -638,7 +640,7 @@ static void DrawSorted(void)
    if (!pidx_sort.size())
       return;
 
-   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2); glCheck();
+   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
 
    u32 count=pidx_sort.size();
 
@@ -664,7 +666,7 @@ static void DrawSorted(void)
       if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
       {
          SetGPState<ListType_Translucent,true>(params);
-         glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first)); glCheck();
+         glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first));
       }
       params++;
    }
@@ -781,21 +783,21 @@ static void SetupMainVBO(void)
 	glBindVertexArray(vbo.vao);
 #endif
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo.geometry); glCheck();
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs); glCheck();
+	glBindBuffer(GL_ARRAY_BUFFER, vbo.geometry);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs);
 
 	//setup vertex buffers attrib pointers
-	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x)); glCheck();
+	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x));
 
-	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col)); glCheck();
+	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
+	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col));
 
-	glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,spc)); glCheck();
+	glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
+	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,spc));
 
-	glEnableVertexAttribArray(VERTEX_UV_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u)); glCheck();
+	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
+	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
 }
 
 static void SetupModvolVBO(void)
@@ -804,11 +806,11 @@ static void SetupModvolVBO(void)
 	glBindVertexArray(vbo.vao);
 #endif
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo.modvols); glCheck();
+	glBindBuffer(GL_ARRAY_BUFFER, vbo.modvols);
 
 	//setup vertex buffers attrib pointers
-	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, (void*)0); glCheck();
+	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, (void*)0);
 
 	glDisableVertexAttribArray(VERTEX_UV_ARRAY);
 	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
@@ -966,13 +968,13 @@ static void DrawModVols(void)
 	glDisable(GL_STENCIL_TEST);
 }
 
-void DrawStrips(void)
+static void DrawStrips(void)
 {
 	SetupMainVBO();
 	//Draw the strips !
 
 	//initial state
-	glDisable(GL_BLEND); glCheck();
+	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 
 	//We use sampler 0
@@ -1049,8 +1051,6 @@ Tile clip
 #include "oslib/oslib.h"
 #include "rend/rend.h"
 #include "hw/pvr/Renderer_if.h"
-
-void GenSorted(void);
 
 float fb_scale_x,fb_scale_y;
 
@@ -1894,9 +1894,8 @@ static bool RenderFrame(void)
 	else
 		glClearColor(0,0,0,1.0f);
 
-	glClearDepthf(0.f); glCheck();
-	glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT); glCheck();
-
+	glClearDepthf(0.f);
+	glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
 	if (UsingAutoSort())
 		GenSorted();
@@ -1904,18 +1903,18 @@ static bool RenderFrame(void)
 	//move vertex to gpu
 
 	//Main VBO
-	glBindBuffer(GL_ARRAY_BUFFER, vbo.geometry); glCheck();
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs); glCheck();
+	glBindBuffer(GL_ARRAY_BUFFER, vbo.geometry);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs);
 
-	glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
+	glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW);
 
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
 
 	//Modvol VBO
 	if (pvrrc.modtrig.used())
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, vbo.modvols); glCheck();
-		glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
+		glBindBuffer(GL_ARRAY_BUFFER, vbo.modvols);
+		glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW);
 	}
 
 	int offs_x=ds2s_offs_x+0.5f;

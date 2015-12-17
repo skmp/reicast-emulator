@@ -2,6 +2,8 @@
 #include "rend/TexCache.h"
 #include "hw/pvr/pvr_mem.h"
 
+#include <map>
+
 #include <memalign.h>
 
 /*
@@ -63,6 +65,7 @@ const u32 MipPoint[8] =
 
 const GLuint PAL_TYPE[4]=
 {GL_UNSIGNED_SHORT_5_5_5_1,GL_UNSIGNED_SHORT_5_6_5,GL_UNSIGNED_SHORT_4_4_4_4,GL_UNSIGNED_SHORT_4_4_4_4};
+
 
 
 //Texture Cache :)
@@ -129,13 +132,10 @@ struct TextureCacheData
 	//Create GL texture from tsp/tcw
 	void Create(bool isGL)
 	{
+      texID = 0;
 		//ask GL for texture ID
-		if (isGL) {
+		if (isGL)
 			glGenTextures(1, &texID);
-		}
-		else {
-			texID = 0;
-		}
 		
 		pData = 0;
 		tex_type = 0;
@@ -154,33 +154,34 @@ struct TextureCacheData
 		w=8<<tsp.TexU;                   //tex width
 		h=8<<tsp.TexV;                   //tex height
 
-		if (texID) {
-			//bind texture to set modes
-			glBindTexture(GL_TEXTURE_2D, texID);
+		if (texID)
+      {
+         //bind texture to set modes
+         glBindTexture(GL_TEXTURE_2D, texID);
 
-			//set texture repeat mode
-			SetRepeatMode(GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU);
-			SetRepeatMode(GL_TEXTURE_WRAP_T, tsp.ClampV, tsp.FlipV);
+         //set texture repeat mode
+         SetRepeatMode(GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU);
+         SetRepeatMode(GL_TEXTURE_WRAP_T, tsp.ClampV, tsp.FlipV);
 
 #ifdef GLES
-			glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
+         glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
 #endif
 
-			//set texture filter mode
-			if (tsp.FilterMode == 0)
-			{
-				//disable filtering, mipmaps
-				glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-				glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-			}
-			else
-			{
-				//bilinear filtering
-				//PowerVR supports also trilinear via two passes, but we ignore that for now
-				glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER, (tcw.MipMapped && settings.rend.UseMipmaps)?GL_LINEAR_MIPMAP_NEAREST:GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-			}
-		}
+         //set texture filter mode
+         if (tsp.FilterMode == 0)
+         {
+            //disable filtering, mipmaps
+            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+         }
+         else
+         {
+            //bilinear filtering
+            //PowerVR supports also trilinear via two passes, but we ignore that for now
+            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER, (tcw.MipMapped && settings.rend.UseMipmaps)?GL_LINEAR_MIPMAP_NEAREST:GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+         }
+      }
 
 		//PAL texture
 		if (tex->bpp==4)
@@ -258,7 +259,7 @@ struct TextureCacheData
       }
 	}
 
-	void Update()
+	void Update(void)
 	{
 		//texture state tracking stuff
 		Updates++;
@@ -359,7 +360,6 @@ struct TextureCacheData
 	}
 };
 
-#include <map>
 map<u64,TextureCacheData> TexCache;
 typedef map<u64,TextureCacheData>::iterator TexCacheIter;
 
@@ -374,6 +374,8 @@ struct FBT
 };
 
 FBT fb_rtt;
+
+
 
 /* FIXME: make this work with libretro-gl framebuffers */
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)

@@ -26,7 +26,7 @@ bool VramLockedWrite(u8* address);
 bool BM_LockedWrite(u8* address);
 
 #ifdef __MACH__
-void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx)
+static void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx)
 {
    rei_host_context_t ctx;
 

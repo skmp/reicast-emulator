@@ -220,4 +220,6 @@ void FinishRender(TA_context* ctx);
 
 //must be moved to proper header
 void FillBGP(TA_context* ctx);
-bool UsingAutoSort();
+bool UsingAutoSort(void);
+void ta_ctx_init(void);
+void ta_ctx_free(void);

@@ -190,31 +190,6 @@ public :
 	void Wait();	//Wait for signal , then reset[if auto]
 };
 
-class cMutex
-{
-private:
-   slock_t *mutx;
-
-public :
-	bool state;
-	cMutex()
-	{
-      mutx = slock_new();
-	}
-	~cMutex()
-	{
-      slock_free(mutx);
-	}
-	void Lock()
-	{
-      slock_lock(mutx);
-	}
-	void Unlock()
-	{
-      slock_unlock(mutx);
-	}
-};
-
 //Set the path !
 void set_user_config_dir(const string& dir);
 void set_user_data_dir(const string& dir);

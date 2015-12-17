@@ -507,15 +507,6 @@ bool gles_init()
 	if (!gl_create_resources())
 		return false;
 
-   /* Stub path for now */
-	//clean up all buffers ...
-	for (int i=0;i<10;i++)
-	{
-		glClearColor(0.f, 0.f, 0.f, 0.f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		gl_swap();
-	}
-
 	return true;
 }
 

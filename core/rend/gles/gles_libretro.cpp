@@ -586,7 +586,9 @@ bool ProcessFrame(TA_context* ctx)
 	if (ctx->rend.isRTT)
 		return false;
 
+#ifndef TARGET_NO_THREADS
    slock_lock(ctx->rend_inuse);
+#endif
 	ctx->MarkRend();
 
 	if (KillTex)

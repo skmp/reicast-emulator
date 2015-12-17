@@ -155,7 +155,9 @@ added_it:
 	}
 }
  
+#ifndef TARGET_NO_THREADS
 slock_t *vramlist_lock;
+#endif
 
 //simple IsInRange test
 inline bool IsInRange(vram_block* block,u32 offset)
@@ -190,20 +192,22 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 	block->userdata=userdata;
 	block->type=64;
 
-	{
-		slock_lock(vramlist_lock);
-	
-		vram.LockRegion(block->start,block->len);
+#ifndef TARGET_NO_THREADS
+   slock_lock(vramlist_lock);
+#endif
 
-		//TODO: Fix this for 32M wrap as well
-		if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-			vram.LockRegion(block->start + VRAM_SIZE, block->len);
-		}
-		
-		vramlock_list_add(block);
-		
-		slock_unlock(vramlist_lock);
-	}
+   vram.LockRegion(block->start,block->len);
+
+   //TODO: Fix this for 32M wrap as well
+   if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
+      vram.LockRegion(block->start + VRAM_SIZE, block->len);
+   }
+
+   vramlock_list_add(block);
+
+#ifndef TARGET_NO_THREADS
+   slock_unlock(vramlist_lock);
+#endif
 
 	return block;
 }
@@ -214,64 +218,73 @@ bool VramLockedWrite(u8* address)
 	size_t offset=address-vram.data;
 
 	if (offset<VRAM_SIZE)
-	{
+   {
 
-		size_t addr_hash = offset/PAGE_SIZE;
-		vector<vram_block*>* list=&VramLocks[addr_hash];
-		
-		{
-			slock_lock(vramlist_lock);
+      size_t addr_hash = offset/PAGE_SIZE;
+      vector<vram_block*>* list=&VramLocks[addr_hash];
 
-			for (size_t i=0;i<list->size();i++)
-			{
-				if ((*list)[i])
-				{
-					libPvr_LockedBlockWrite((*list)[i],(u32)offset);
-				
-					if ((*list)[i])
-					{
-						msgboxf("Error : pvr is supposed to remove lock",MBX_OK);
-						dbgbreak;
-					}
+#ifndef TARGET_NO_THREADS
+      slock_lock(vramlist_lock);
+#endif
 
-				}
-			}
-			list->clear();
+      for (size_t i=0;i<list->size();i++)
+      {
+         if ((*list)[i])
+         {
+            libPvr_LockedBlockWrite((*list)[i],(u32)offset);
 
-			vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)),PAGE_SIZE);
+            if ((*list)[i])
+            {
+               msgboxf("Error : pvr is supposed to remove lock",MBX_OK);
+               dbgbreak;
+            }
 
-			//TODO: Fix this for 32M wrap as well
-			if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-				vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
-			}
-			
-			slock_unlock(vramlist_lock);
-		}
+         }
+      }
+      list->clear();
 
-		return true;
-	}
+      vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)),PAGE_SIZE);
+
+      //TODO: Fix this for 32M wrap as well
+      if (_nvmem_enabled() && VRAM_SIZE == 0x800000)
+         vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
+
+#ifndef TARGET_NO_THREADS
+      slock_unlock(vramlist_lock);
+#endif
+
+      return true;
+   }
 	else
 		return false;
 }
 
 void libCore_vramlock_Free(void)
 {
+#ifndef TARGET_NO_THREADS
    slock_free(vramlist_lock);
    vramlist_lock = NULL;
+#endif
 }
 
 void libCore_vramlock_Init(void)
 {
+#ifndef TARGET_NO_THREADS
    vramlist_lock = slock_new();
+#endif
 }
 
 //unlocks mem
 //also frees the handle
 void libCore_vramlock_Unlock_block(vram_block* block)
 {
+#ifndef TARGET_NO_THREADS
 	slock_lock(vramlist_lock);
+#endif
 	libCore_vramlock_Unlock_block_wb(block);
+#ifndef TARGET_NO_THREADS
 	slock_unlock(vramlist_lock);
+#endif
 }
 
 void libCore_vramlock_Unlock_block_wb(vram_block* block)

@@ -700,15 +700,10 @@ bool MatchDiv32u(u32 op,u32 pc)
 
 	u32 match=MatchDiv32(pc+2,div_som_reg1,div_som_reg2,div_som_reg3);
 
-
 	//log("DIV32U matched %d%% @ 0x%X\n",match*100/65,pc);
-	if (match==65)
-	{
-		//DIV32U was perfectly matched :)
+	if (match==65) /* DIV32U was perfectly matched */
 		return true;
-	}
 
-	//no match ...
    return false;
 }
 
@@ -726,16 +721,14 @@ bool MatchDiv32s(u32 op,u32 pc)
    printf("DIV32S matched %d%% @ 0x%X\n",match*100/65,pc);
 #endif
 
-   if (match==65)
+   if (match==65) /* DIV32S was perfectly matched */
    {
-      /* DIV32S was perfectly matched :) */
 #ifndef NDEBUG
       printf("div32s %d/%d/%d\n",div_som_reg1,div_som_reg2,div_som_reg3);
 #endif
       return true;
    }
 
-   //no match ...
    return false;
 }
 

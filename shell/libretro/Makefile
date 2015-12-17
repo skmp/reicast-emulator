@@ -399,6 +399,11 @@ ifeq ($(DEBUG),1)
 OPTFLAGS       := -O0
 else
 OPTFLAGS       := -O3
+RZDCY_CFLAGS   += -DNDEBUG
+RZDCY_CXXFLAGS += -DNDEBUG
+CFLAGS         += -DNDEBUG
+CXXFLAGS       += -DNDEBUG
+LDFLAGS        += -DNDEBUG
 endif
 RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -DRELEASE -ffast-math -ftree-vectorize -fomit-frame-pointer -D__LIBRETRO__
 CFLAGS         += -D__LIBRETRO__
@@ -428,7 +433,7 @@ endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
 
-LDFLAGS  += -g -DNDEBUG
+LDFLAGS  += -g
 CFLAGS   += -g $(OPTFLAGS) -D RELEASE -c
 CFLAGS   += -fno-strict-aliasing -ffast-math -ftree-vectorize
 CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names

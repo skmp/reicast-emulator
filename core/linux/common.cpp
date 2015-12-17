@@ -112,28 +112,6 @@ void install_fault_handler (void)
 #endif
 }
 
-#if !defined(TARGET_NO_THREADS)
-
-//Thread class
-cThread::cThread(ThreadEntryFP* function,void* prm)
-{
-	Entry=function;
-	param=prm;
-}
-
-void cThread::Start()
-{
-   hThread = (sthread_t*)sthread_create(Entry, param);
-}
-
-void cThread::WaitToEnd()
-{
-   sthread_join(hThread);
-}
-
-//End thread class
-#endif
-
 //cResetEvent Calss
 cResetEvent::cResetEvent(bool State,bool Auto)
 {

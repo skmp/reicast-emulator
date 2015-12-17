@@ -2139,7 +2139,7 @@ void armt_init()
 	ICache = (u8*)(((unat)ARM7_TCB+4095)& ~4095);
 
 #ifdef __MACH__
-   //Can't just mprotect on iOS
+   /* Can't just mprotect on iOS */
    munmap(ICache, ICacheSize);
    ICache = (u8*)mmap(ICache, ICacheSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
 #endif

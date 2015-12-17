@@ -52,13 +52,13 @@ void ExecuteDelayslot();
 void ExecuteDelayslot_RTE();
 
 
-#if defined(__linux__) || defined(__MACH__)
+#ifdef __cplusplus
 extern "C" {
 #endif
 
 int UpdateSystem();
 int UpdateSystem_INTC();
 
-#if defined(__linux__) || defined(__MACH__)
+#ifdef __cplusplus
 }
 #endif

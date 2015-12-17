@@ -53,7 +53,7 @@
 extern u32* emit_ptr;
 extern u8* CodeCache;
 
-#if defined(__linux__) || defined(__MACH__)
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -122,6 +122,6 @@ void ngen_CC_Finish(shil_opcode* op);
 
 RuntimeBlockInfo* ngen_AllocateBlock();
 
-#if defined(__linux__) || defined(__MACH__)
+#ifdef __cplusplus
 }
 #endif

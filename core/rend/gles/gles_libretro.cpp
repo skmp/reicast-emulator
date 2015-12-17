@@ -3,6 +3,9 @@
 #include "gles.h"
 #include "rend/TexCache.h"
 #include "cfg/cfg.h"
+#include "../../libretro/libretro.h"
+
+extern struct retro_hw_render_callback hw_render;
 
 struct modvol_shader_type
 {
@@ -630,6 +633,7 @@ static void GenSorted(void)
 		//Bind and upload sorted index buffer
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER,vidx_sort.size()*2,&vidx_sort[0],GL_STREAM_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 		if (tess_gen) printf("Generated %.2fK Triangles !\n",tess_gen/1000.0);
 	}
@@ -1856,12 +1860,15 @@ static bool RenderFrame(void)
 	glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW);
 
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
+   glBindBuffer(GL_ARRAY_BUFFER, 0);
+   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	//Modvol VBO
 	if (pvrrc.modtrig.used())
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, vbo.modvols);
 		glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW);
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
 	int offs_x=ds2s_offs_x+0.5f;
@@ -1974,12 +1981,18 @@ struct glesrend : Renderer
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
 	bool Render()
    {
+      glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
       bool ret = RenderFrame();
       return ret;
    }
 
 	void Present()
    {
+      /* restore state */
+#ifndef GLES
+      glBindVertexArray(0);
+#endif
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
       co_dc_yield();
    }
 

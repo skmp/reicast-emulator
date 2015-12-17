@@ -228,9 +228,7 @@ void retro_run (void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       update_variables();
 
-   glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
    co_dc_run();
-   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 #if defined(GL) || defined(GLES)
    video_cb(RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);

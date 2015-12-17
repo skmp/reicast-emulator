@@ -202,10 +202,6 @@ void rend_start_render(void)
 
 void rend_end_render(void)
 {
-#if 0 //also disabled the printf, it takes quite some time ...
-   //if (!re.state) printf("Render > Extended time slice ...\n");
-#endif
-
 #if !defined(TARGET_NO_THREADS)
    if (pend_rend)
 		re.Wait();

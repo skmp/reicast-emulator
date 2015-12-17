@@ -248,18 +248,14 @@ extern u32 PVR_VTXC;
 
 void SetREP(TA_context* cntx)
 {
+   unsigned pending_cycles = 4096;
 	if (cntx && !cntx->rend.Overrun)
 	{
-		VertexCount+= cntx->rend.verts.used();
-		PVR_VTXC+= cntx->rend.verts.used();
-		int render_end_pending_cycles= cntx->rend.verts.used()*60;
-		//if (render_end_pending_cycles<500000)
-		render_end_pending_cycles+=500000*3;
+		VertexCount    += cntx->rend.verts.used();
+		PVR_VTXC       += cntx->rend.verts.used();
+		pending_cycles  = cntx->rend.verts.used()*60;
+		pending_cycles += 500000*3;
+	}
 
-		sh4_sched_request(render_end_schid,render_end_pending_cycles);
-	}
-	else
-	{
-		sh4_sched_request(render_end_schid, 4096);
-	}
+   sh4_sched_request(render_end_schid, pending_cycles);
 }

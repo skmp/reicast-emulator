@@ -1,6 +1,7 @@
 #include "TexCache.h"
 #include "hw/pvr/pvr_regs.h"
 #include "hw/mem/_vmem.h"
+#include <rthreads/rthreads.h>
 
 u8* vq_codebook;
 u32 palette_index;
@@ -154,7 +155,7 @@ added_it:
 	}
 }
  
-cMutex vramlist_lock;
+slock_t *vramlist_lock;
 
 //simple IsInRange test
 inline bool IsInRange(vram_block* block,u32 offset)
@@ -190,7 +191,7 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 	block->type=64;
 
 	{
-		vramlist_lock.Lock();
+		slock_lock(vramlist_lock);
 	
 		vram.LockRegion(block->start,block->len);
 
@@ -201,7 +202,7 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 		
 		vramlock_list_add(block);
 		
-		vramlist_lock.Unlock();
+		slock_unlock(vramlist_lock);
 	}
 
 	return block;
@@ -219,7 +220,7 @@ bool VramLockedWrite(u8* address)
 		vector<vram_block*>* list=&VramLocks[addr_hash];
 		
 		{
-			vramlist_lock.Lock();
+			slock_lock(vramlist_lock);
 
 			for (size_t i=0;i<list->size();i++)
 			{
@@ -244,7 +245,7 @@ bool VramLockedWrite(u8* address)
 				vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
 			}
 			
-			vramlist_lock.Unlock();
+			slock_unlock(vramlist_lock);
 		}
 
 		return true;
@@ -253,13 +254,24 @@ bool VramLockedWrite(u8* address)
 		return false;
 }
 
+void libCore_vramlock_Free(void)
+{
+   slock_free(vramlist_lock);
+   vramlist_lock = NULL;
+}
+
+void libCore_vramlock_Init(void)
+{
+   vramlist_lock = slock_new();
+}
+
 //unlocks mem
 //also frees the handle
 void libCore_vramlock_Unlock_block(vram_block* block)
 {
-	vramlist_lock.Lock();
+	slock_lock(vramlist_lock);
 	libCore_vramlock_Unlock_block_wb(block);
-	vramlist_lock.Unlock();
+	slock_unlock(vramlist_lock);
 }
 
 void libCore_vramlock_Unlock_block_wb(vram_block* block)

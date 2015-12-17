@@ -452,3 +452,5 @@ vram_block* vramlock_Lock_32(u32 start_offset32,u32 end_offset32,void* userdata)
 vram_block* vramlock_Lock_64(u32 start_offset64,u32 end_offset64,void* userdata);
 
 void vram_LockedWrite(u32 offset64);
+void libCore_vramlock_Free(void);
+void libCore_vramlock_Init(void);

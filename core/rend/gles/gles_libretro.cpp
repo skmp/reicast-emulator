@@ -988,9 +988,9 @@ void co_dc_yield();
 
 struct glesrend : Renderer
 {
-	bool Init() { return gles_init(); }
+	bool Init() { libCore_vramlock_Init(); return gles_init(); }
 	void Resize(int w, int h) { gles_screen_width=w; gles_screen_height=h; }
-	void Term() { }
+	void Term() { libCore_vramlock_Free(); }
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
 	bool Render() { return RenderFrame(); }

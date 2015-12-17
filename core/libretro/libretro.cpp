@@ -131,7 +131,7 @@ void retro_set_environment(retro_environment_t cb)
    struct retro_variable variables[] = {
       {
          "reicast_internal_resolution",
-         "Internal resolution (restart); 640x480|720x576|800x600|960x720|1024x768|1280x720|1280x960|1280x1024|1600x1200|1920x1080|1920x1440|2048x2048|2560x1920|3200x2400|4096x4096",
+         "Internal resolution (restart); 640x480|1280x960|1920x1440|2560x1920|3200x2400|3840x2880|4480x3360",
       },
       {
          "reicast_widescreen_hack",

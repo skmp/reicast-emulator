@@ -642,58 +642,17 @@ void GenSorted()
 	lst.resize(aused);
 
 	//sort them
-#if 1
 	std::stable_sort(lst.begin(),lst.end());
 
 	//Merge pids/draw cmds if two different pids are actually equal
-	if (true)
-	{
-		for (u32 k=1;k<aused;k++)
-		{
-			if (lst[k].pid!=lst[k-1].pid)
-			{
-				if (PP_EQ(&pp_base[lst[k].pid],&pp_base[lst[k-1].pid]))
-				{
-					lst[k].pid=lst[k-1].pid;
-				}
-			}
-		}
-	}
-#endif
-
-	
-#if 0
-	//tries to optimise draw calls by reordering non-intersecting polygons
-	//uber slow and not very effective
-	{
-		int opid=lst[0].pid;
-
-		for (int k=1;k<aused;k++)
-		{
-			if (lst[k].pid!=opid)
-			{
-				if (opid>lst[k].pid)
-				{
-					//MOVE UP
-					for (int j=k;j>0 && lst[j].pid!=lst[j-1].pid && !Intersect(lst[j],lst[j-1]);j--)
-					{
-						swap(lst[j],lst[j-1]);
-					}
-				}
-				else
-				{
-					//move down
-					for (int j=k+1;j<aused && lst[j].pid!=lst[j-1].pid && !Intersect(lst[j],lst[j-1]);j++)
-					{
-						swap(lst[j],lst[j-1]);
-					}
-				}
-			}
-
-			opid=lst[k].pid;
-		}
-	}
-#endif
+   for (u32 k=1;k<aused;k++)
+   {
+      if (lst[k].pid!=lst[k-1].pid)
+      {
+         if (PP_EQ(&pp_base[lst[k].pid],&pp_base[lst[k-1].pid]))
+            lst[k].pid=lst[k-1].pid;
+      }
+   }
 
 	//re-assemble them into drawing commands
 	static vector<u16> vidx_sort;
@@ -960,6 +919,7 @@ void DrawModVols()
 	glDepthMask(GL_FALSE);
 	glDepthFunc(GL_GREATER);
 
+#if 0
 	if(0 /*|| GetAsyncKeyState(VK_F5)*/ )
 	{
 		//simply draw the volumes -- for debugging
@@ -968,6 +928,7 @@ void DrawModVols()
 		SetupMainVBO();
 	}
 	else
+#endif
 	{
 		/*
 		mode :
@@ -987,6 +948,8 @@ void DrawModVols()
 
 		glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
 		glDepthFunc(GL_GREATER);
+
+#if 0
 		if ( 0 /* || GetAsyncKeyState(VK_F6)*/ )
 		{
 			//simple single level stencil
@@ -1002,6 +965,7 @@ void DrawModVols()
 			glDrawArrays(GL_TRIANGLES,0,pvrrc.modtrig.used()*3);
 		}
 		else if (true)
+#endif
 		{
 			//Full emulation
 			//the *out* mode is buggy
@@ -1113,7 +1077,6 @@ void DrawStrips()
 	//setup alpha test state
 	/*if (!GetAsyncKeyState(VK_F2))*/
 	DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt);
-
 
 	//Alpha blended
 	//Setup blending

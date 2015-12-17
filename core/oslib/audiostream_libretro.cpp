@@ -14,11 +14,6 @@ const u32 RingBufferSampleCount = SAMPLE_COUNT;
 volatile u32 WritePtr;  //last WRITEN sample
 volatile u32 ReadPtr;   //next sample to read
 
-u32 gen_samples=0;
-
-double time_diff = 128/44100.0;
-double time_last;
-
 extern retro_audio_sample_batch_t audio_batch_cb;
 
 bool RegisterAudioBackend(audiobackend_t *backend)

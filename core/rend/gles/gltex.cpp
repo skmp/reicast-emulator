@@ -159,8 +159,8 @@ struct TextureCacheData
 			glBindTexture(GL_TEXTURE_2D, texID);
 
 			//set texture repeat mode
-			SetRepeatMode(GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU); // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (tsp.ClampU ? GL_CLAMP_TO_EDGE : (tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
-			SetRepeatMode(GL_TEXTURE_WRAP_T, tsp.ClampV, tsp.FlipV); // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (tsp.ClampV ? GL_CLAMP_TO_EDGE : (tsp.FlipV ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
+			SetRepeatMode(GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU);
+			SetRepeatMode(GL_TEXTURE_WRAP_T, tsp.ClampV, tsp.FlipV);
 
 #ifdef GLES
 			glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
@@ -204,58 +204,58 @@ struct TextureCacheData
 
 			//Convert a pvr texture into OpenGL
 		switch (tcw.PixelFmt)
-		{
+      {
+         case 0: //0     1555 value: 1 bit; RGB values: 5 bits each
+         case 7: //7     Reserved        Regarded as 1555
+         case 1: //1     565      R value: 5 bits; G value: 6 bits; B value: 5 bits
+         case 2: //2     4444 value: 4 bits; RGB values: 4 bits each
+         case 3: //3     YUV422 32 bits per 2 pixels; YUYV values: 8 bits each
+         case 4: //4    -NOT_PROPERLY SUPPORTED- Bump Map        16 bits/pixel; S value: 8 bits; R value: 8 bits -NOT_PROPERLY SUPPORTED-
+         case 5: //5     4 BPP Palette   Palette texture with 4 bits/pixel
+         case 6: //6     8 BPP Palette   Palette texture with 8 bits/pixel
+            if (tcw.ScanOrder && tex->PL)
+            {
+               //Texture is stored 'planar' in memory, no deswizzle is needed
+               verify(tcw.VQ_Comp==0);
+               //Planar textures support stride selection, mostly used for non power of 2 textures (videos)
+               int stride=w;
+               if (tcw.StrideSel) 
+                  stride=(TEXT_CONTROL&31)*32;
+               //Call the format specific conversion code
+               texconv=tex->PL;
+               //calculate the size, in bytes, for the locking
+               size=stride*h*tex->bpp/8;
+            }
+            else
+            {
+               verify(w==h || !tcw.MipMapped); // are non square mipmaps supported ? i can't recall right now *WARN*
 
-		case 0: //0     1555 value: 1 bit; RGB values: 5 bits each
-		case 7: //7     Reserved        Regarded as 1555
-		case 1: //1     565      R value: 5 bits; G value: 6 bits; B value: 5 bits
-		case 2: //2     4444 value: 4 bits; RGB values: 4 bits each
-		case 3: //3     YUV422 32 bits per 2 pixels; YUYV values: 8 bits each
-		case 4: //4    -NOT_PROPERLY SUPPORTED- Bump Map        16 bits/pixel; S value: 8 bits; R value: 8 bits -NOT_PROPERLY SUPPORTED-
-		case 5: //5     4 BPP Palette   Palette texture with 4 bits/pixel
-		case 6: //6     8 BPP Palette   Palette texture with 8 bits/pixel
-			if (tcw.ScanOrder && tex->PL)
-			{
-				//Texture is stored 'planar' in memory, no deswizzle is needed
-				verify(tcw.VQ_Comp==0);
-				//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
-				int stride=w;
-				if (tcw.StrideSel) 
-					stride=(TEXT_CONTROL&31)*32;
-				//Call the format specific conversion code
-				texconv=tex->PL;
-				//calculate the size, in bytes, for the locking
-				size=stride*h*tex->bpp/8;
-			}
-			else
-			{
-				verify(w==h || !tcw.MipMapped); // are non square mipmaps supported ? i can't recall right now *WARN*
-
-				if (tcw.VQ_Comp)
-				{
-					verify(tex->VQ!=0);
-					indirect_color_ptr=sa;
-					if (tcw.MipMapped)
-						sa+=MipPoint[tsp.TexU];
-					texconv=tex->VQ;
-					size=w*h/8;
-				}
-				else
-				{
-					verify(tex->TW!=0)
-					if (tcw.MipMapped)
-						sa+=MipPoint[tsp.TexU]*tex->bpp/2;
-					texconv=tex->TW;
-					size=w*h*tex->bpp/8;
-				}
-			}
-			break;
-		default:
-			printf("Unhandled texture %d\n",tcw.PixelFmt);
-			size=w*h*2;
-			memset(temp_tex_buffer,0xFFFFFFFF,size);
-			texconv=0;
-		}
+               if (tcw.VQ_Comp)
+               {
+                  verify(tex->VQ!=0);
+                  indirect_color_ptr=sa;
+                  if (tcw.MipMapped)
+                     sa+=MipPoint[tsp.TexU];
+                  texconv=tex->VQ;
+                  size=w*h/8;
+               }
+               else
+               {
+                  verify(tex->TW!=0)
+                     if (tcw.MipMapped)
+                        sa+=MipPoint[tsp.TexU]*tex->bpp/2;
+                  texconv=tex->TW;
+                  size=w*h*tex->bpp/8;
+               }
+            }
+            break;
+         default:
+            printf("Unhandled texture %d\n",tcw.PixelFmt);
+            size=w*h*2;
+            memset(temp_tex_buffer,0xFFFFFFFF,size);
+            texconv=0;
+            break;
+      }
 	}
 
 	void Update()

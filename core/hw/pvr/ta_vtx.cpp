@@ -260,13 +260,11 @@ case num : {\
 			TaCmd=ta_modvolB_32;
 			return data+SZ32;
 		}
-		else
-		{
-			//all 64B done
-			AppendModVolVertexA(&vp->mvolA);
-			AppendModVolVertexB(&vp->mvolB);
-			return data+SZ64;
-		}
+
+      //all 64B done
+      AppendModVolVertexA(&vp->mvolA);
+      AppendModVolVertexB(&vp->mvolB);
+      return data+SZ64;
 	}
 	static Ta_Dma* TACALL ta_spriteB_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
@@ -279,30 +277,26 @@ case num : {\
 		return data+SZ32;
 	}
 	static Ta_Dma* TACALL ta_sprite_data(Ta_Dma* data,Ta_Dma* data_end)
-	{
-		TA_SPR;
-		verify(data->pcw.ParaType==ParamType_Vertex_Parameter);
-		if (data==data_end)
-		{
-			//32B more needed , 32B done :)
-			TaCmd=ta_spriteB_data;
+   {
+      TA_SPR;
+      verify(data->pcw.ParaType==ParamType_Vertex_Parameter);
+      TA_VertexParam* vp=(TA_VertexParam*)data;
 
-			TA_VertexParam* vp=(TA_VertexParam*)data;
+      if (data==data_end)
+      {
+         //32B more needed , 32B done :)
+         TaCmd=ta_spriteB_data;
 
-			AppendSpriteVertexA(&vp->spr1A);
-			return data+SZ32;
-		}
-		else
-		{
-			TA_VertexParam* vp=(TA_VertexParam*)data;
+         AppendSpriteVertexA(&vp->spr1A);
+         return data+SZ32;
+      }
 
-			AppendSpriteVertexA(&vp->spr1A);
-			AppendSpriteVertexB(&vp->spr1B);
+      AppendSpriteVertexA(&vp->spr1A);
+      AppendSpriteVertexB(&vp->spr1B);
 
-			//all 64B doneisimooooo la la la :*iiiiii  niarj
-			return data+SZ64;
-		}
-	}
+      //all 64B doneisimooooo la la la :*iiiiii  niarj
+      return data+SZ64;
+   }
 
 	template <u32 poly_type,u32 poly_size>
 	static Ta_Dma* TACALL ta_poly_data(Ta_Dma* data,Ta_Dma* data_end)
@@ -416,11 +410,8 @@ public:
 				break;
 				//32B
 			case ParamType_User_Tile_Clip:
-				{
-
-					SetTileClip(data->data_32[3]&63,data->data_32[4]&31,data->data_32[5]&63,data->data_32[6]&31);
-					data+=SZ32;
-				}
+            SetTileClip(data->data_32[3]&63,data->data_32[4]&31,data->data_32[5]&63,data->data_32[6]&31);
+            data+=SZ32;
 				break;
 				//32B
 			case ParamType_Object_List_Set:
@@ -596,23 +587,18 @@ public:
 				{
 					if (pcw.UV_16bit==0)
 						return 3;           //(Textured, Packed Color , 32b uv)
-					else
-						return 4;           //(Textured, Packed Color , 16b uv)
+               return 4;              //(Textured, Packed Color , 16b uv)
 				}
 				else if (pcw.Col_Type==1)
 				{
 					if (pcw.UV_16bit==0)
 						return 5;           //(Textured, Floating Color , 32b uv)
-					else
-						return 6;           //(Textured, Floating Color , 16b uv)
+               return 6;              //(Textured, Floating Color , 16b uv)
 				}
-				else
-				{
-					if (pcw.UV_16bit==0)
-						return 7;           //(Textured, Intensity , 32b uv)
-					else
-						return 8;           //(Textured, Intensity , 16b uv)
-				}
+
+            if (pcw.UV_16bit==0)
+               return 7;              //(Textured, Intensity , 32b uv)
+            return 8;                 //(Textured, Intensity , 16b uv)
 			}
 			else
 			{
@@ -621,24 +607,14 @@ public:
 				{
 					if (pcw.UV_16bit==0)
 						return 11;          //(Textured, Packed Color, with Two Volumes)	
-
-					else
-						return 12;          //(Textured, Packed Color, 16bit UV, with Two Volumes)
+               return 12;             //(Textured, Packed Color, 16bit UV, with Two Volumes)
 
 				}
-				else if (pcw.Col_Type==1)
-				{
-					//die ("invalid");
+				else if (pcw.Col_Type==1) /* invalid - die */
 					return 0xFFFFFFFF;
-				}
-				else
-				{
-					if (pcw.UV_16bit==0)
-						return 13;          //(Textured, Intensity, with Two Volumes)	
-
-					else
-						return 14;          //(Textured, Intensity, 16bit UV, with Two Volumes)
-				}
+            if (pcw.UV_16bit==0)
+               return 13;             //(Textured, Intensity, with Two Volumes)	
+            return 14;                //(Textured, Intensity, 16bit UV, with Two Volumes)
 			}
 		}
 		else
@@ -650,8 +626,7 @@ public:
 					return 0;               //(Non-Textured, Packed Color)
 				else if (pcw.Col_Type==1)
 					return 1;               //(Non-Textured, Floating Color)
-				else
-					return 2;               //(Non-Textured, Intensity)
+            return 2;                  //(Non-Textured, Intensity)
 			}
 			else
 			{
@@ -663,10 +638,7 @@ public:
 					//die ("invalid");
 					return 0xFFFFFFFF;
 				}
-				else
-				{
-					return 10;              //(Non-Textured, Intensity, with Two Volumes)
-				}
+            return 10;                 //(Non-Textured, Intensity, with Two Volumes)
 			}
 		}
 	}
@@ -676,26 +648,15 @@ public:
 		if (pcw.Volume == 0)
 		{
 			if ( pcw.Col_Type<2 ) //0,1
-			{
 				return 0  | 0;              //Polygon Type 0 -- SZ32
-			}
 			else if ( pcw.Col_Type == 2 )
 			{
 				if (pcw.Texture)
 				{
 					if (pcw.Offset)
-					{
 						return 2 | 0x80;    //Polygon Type 2 -- SZ64
-					}
-					else
-					{
-						return 1 | 0;       //Polygon Type 1 -- SZ32
-					}
 				}
-				else
-				{
-					return 1 | 0;           //Polygon Type 1 -- SZ32
-				}
+            return 1 | 0;           //Polygon Type 1 -- SZ32
 			}
 			else	//col_type ==3
 			{
@@ -705,21 +666,12 @@ public:
 		else
 		{
 			if ( pcw.Col_Type==0 ) //0
-			{
 				return 3 | 0;              //Polygon Type 3 -- SZ32
-			}
 			else if ( pcw.Col_Type==2 ) //2
-			{
 				return 4 | 0x80;           //Polygon Type 4 -- SZ64
-			}
 			else if ( pcw.Col_Type==3 ) //3
-			{
 				return 3 | 0;              //Polygon Type 3 -- SZ32
-			}
-			else
-			{
-				return 0xFFDDEEAA;//die ("data->pcw.Col_Type==1 && volume ==1");
-			}
+         return 0xFFDDEEAA;            //die ("data->pcw.Col_Type==1 && volume ==1");
 		}
 	}
 
@@ -776,12 +728,6 @@ public:
 		}
 	}
 
-	/*
-	if (CurrentPP==0 || CurrentPP->pcw.full!=pp->pcw.full || \
-	CurrentPP->tcw.full!=pp->tcw.full || \
-	CurrentPP->tsp.full!=pp->tsp.full || \
-	CurrentPP->isp.full!=pp->isp.full	) \
-	*/
 	//Polys  -- update code on sprites if that gets updated too --
 	template<class T>
 	static void glob_param_bdc_(T* pp)
@@ -1347,15 +1293,6 @@ public:
 
 		update_fz(cv[0].z);
 
-		/*
-		if (CurrentPP->count)
-		{
-			Vertex* vert=vert_reappend;
-			vert[-1].x=vert[0].x;
-			vert[-1].y=vert[0].y;
-			vert[-1].z=vert[0].z;
-			CurrentPP->count+=2;
-		}*/
 #if STRIPS_AS_PPARAMS
 		if (CurrentPPlist==&vdrc.global_param_tr)
 		{
@@ -1633,6 +1570,5 @@ bool UsingAutoSort()
 {
 	if (((FPU_PARAM_CFG >> 21) & 1) == 0)
 		return ((ISP_FEED_CFG & 1) == 0);
-	else
-		return ((vri(REGION_BASE) >> 29) & 1) == 0;
+   return ((vri(REGION_BASE) >> 29) & 1) == 0;
 }

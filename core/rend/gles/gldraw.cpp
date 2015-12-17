@@ -106,14 +106,6 @@ static struct
 
 s32 SetTileClip(u32 val, bool set)
 {
-	/*
-	if (set)
-	{
-		if (cache.clipmode==val)
-			return clip_mode;
-		cache.clipmode=val;
-	}*/
-
 	u32 clipmode=val>>28;
 	s32 clip_mode;
 	if (clipmode<2)
@@ -254,7 +246,6 @@ void DrawList(const List<PolyParam>& gply)
 		return;
 	//we want at least 1 PParam
 
-
 	//reset the cache state
 	cache.Reset(params);
 
@@ -370,101 +361,6 @@ bool operator<(const IndexTrig &left, const IndexTrig &right)
 {
 	return left.z<right.z;
 }
-
-
-#if 0
-/*
-
-	Per triangle sorting experiments
-
-*/
-
-//approximate the triangle area
-float area_x2(Vertex* v)
-{
-	return 2/3*fabs( (v[0].x-v[2].x)*(v[1].y-v[0].y) - (v[0].x-v[1].x)*(v[2].y-v[0].y)) ;
-}
-
-//approximate the distance ^2
-float distance_apprx(Vertex* a, Vertex* b)
-{
-	float xd=a->x-b->x;
-	float yd=a->y-b->y;
-
-	return xd*xd+yd*yd;
-}
-
-//was good idea, but not really working ..
-bool Intersect(Vertex* a, Vertex* b)
-{
-	float a1=area_x2(a);
-	float a2=area_x2(b);
-
-	float d = distance_apprx(a,b);
-
-	return (a1+a1)>d;
-}
-
-//root for quick-union
-u16 rid(vector<u16>& v, u16 id)
-{
-	while(id!=v[id]) id=v[id];
-	return id;
-}
-
-struct TrigBounds
-{
-	float xs,xe;
-	float ys,ye;
-	float zs,ze;
-};
-
-//find 3d bounding box for triangle
-TrigBounds bound(Vertex* v)
-{
-	TrigBounds rv = {	min(min(v[0].x,v[1].x),v[2].x), max(max(v[0].x,v[1].x),v[2].x),
-						min(min(v[0].y,v[1].y),v[2].y), max(max(v[0].y,v[1].y),v[2].y),
-						min(min(v[0].z,v[1].z),v[2].z), max(max(v[0].z,v[1].z),v[2].z),
-					};
-
-	return rv;
-}
-
-//bounding box 2d intersection
-bool Intersect(TrigBounds& a, TrigBounds& b)
-{
-	return  ( !(a.xe<b.xs || a.xs>b.xe) && !(a.ye<b.ys || a.ys>b.ye) /*&& !(a.ze<b.zs || a.zs>b.ze)*/ );
-}
-
-
-bool operator<(const IndexTrig &left, const IndexTrig &right)
-{
-	/*
-	TrigBounds l=bound(vtx_sort_base+left.id);
-	TrigBounds r=bound(vtx_sort_base+right.id);
-
-	if (!Intersect(l,r))
-	{
-		return true;
-	}
-	else
-	{
-		return (l.zs + l.ze) < (r.zs + r.ze);
-	}*/
-
-	return minZ(&vtx_sort_base[left.id])<minZ(&vtx_sort_base[right.id]);
-}
-
-//Not really working cuz of broken intersect
-bool Intersect(const IndexTrig &left, const IndexTrig &right)
-{
-	TrigBounds l=bound(vtx_sort_base+left.id);
-	TrigBounds r=bound(vtx_sort_base+right.id);
-
-	return Intersect(l,r);
-}
-
-#endif
 
 //are two poly params the same?
 bool PP_EQ(PolyParam* pp0, PolyParam* pp1)
@@ -662,28 +558,28 @@ void GenSorted()
 	int idx=-1;
 
 	for (u32 i=0; i<aused; i++)
-	{
-		int pid=lst[i].pid;
-		u16* midx=lst[i].id;
+   {
+      int pid=lst[i].pid;
+      u16* midx=lst[i].id;
 
-		vidx_sort[i*3 + 0]=midx[0];
-		vidx_sort[i*3 + 1]=midx[1];
-		vidx_sort[i*3 + 2]=midx[2];
+      vidx_sort[i*3 + 0]=midx[0];
+      vidx_sort[i*3 + 1]=midx[1];
+      vidx_sort[i*3 + 2]=midx[2];
 
-		if (idx!=pid /* && !PP_EQ(&pp_base[pid],&pp_base[idx]) */ )
-		{
-			SortTrigDrawParam stdp={pp_base + pid, (u16)(i*3), 0};
-			
-			if (idx!=-1)
-			{
-				SortTrigDrawParam* last=&pidx_sort[pidx_sort.size()-1];
-				last->count=stdp.first-last->first;
-			}
+      if (idx == pid)
+         continue;
 
-			pidx_sort.push_back(stdp);
-			idx=pid;
-		}
-	}
+      SortTrigDrawParam stdp={pp_base + pid, (u16)(i*3), 0};
+
+      if (idx!=-1)
+      {
+         SortTrigDrawParam* last=&pidx_sort[pidx_sort.size()-1];
+         last->count=stdp.first-last->first;
+      }
+
+      pidx_sort.push_back(stdp);
+      idx=pid;
+   }
 
 	SortTrigDrawParam* stdp=&pidx_sort[pidx_sort.size()-1];
 	stdp->count=aused*3-stdp->first;
@@ -705,57 +601,40 @@ void GenSorted()
 
 void DrawSorted()
 {
-	//if any drawing commands, draw them
-	if (pidx_sort.size())
-	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
+   //if any drawing commands, draw them
+   if (!pidx_sort.size())
+      return;
 
-		u32 count=pidx_sort.size();
-		
-		{
-			cache.Reset(pidx_sort[0].ppid);
+   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
 
-			//set some 'global' modes for all primitives
+   u32 count=pidx_sort.size();
 
-			//Z sorting is fixed for .. sorted stuff
-			glDepthFunc(Zfunction[6]);
+   cache.Reset(pidx_sort[0].ppid);
 
-			glEnable(GL_STENCIL_TEST);
-			glStencilFunc(GL_ALWAYS,0,0);
-			glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
+   //set some 'global' modes for all primitives
 
-		#ifndef NO_STENCIL_WORKAROUND
-			//This looks like a driver bug
-			glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
-		#endif
+   //Z sorting is fixed for .. sorted stuff
+   glDepthFunc(Zfunction[6]);
 
-			for (u32 p=0; p<count; p++)
-			{
-				PolyParam* params = pidx_sort[p].ppid;
-				if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
-				{
-					SetGPState<ListType_Translucent,true>(params);
-					glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first)); glCheck();
-				
-#if 0
-					//Verify restriping -- only valid if no sort
-					int fs=pidx_sort[p].first;
+   glEnable(GL_STENCIL_TEST);
+   glStencilFunc(GL_ALWAYS,0,0);
+   glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 
-					for (u32 j=0; j<(params->count-2); j++)
-					{
-						for (u32 k=0; k<3; k++)
-						{
-							verify(idx_base[params->first+j+k]==vidx_sort[fs++]);
-						}
-					}
-
-					verify(fs==(pidx_sort[p].first+pidx_sort[p].count));
+#ifndef NO_STENCIL_WORKAROUND
+   //This looks like a driver bug
+   glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 #endif
-				}
-				params++;
-			}
-		}
-	}
+
+   for (u32 p=0; p<count; p++)
+   {
+      PolyParam* params = pidx_sort[p].ppid;
+      if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
+      {
+         SetGPState<ListType_Translucent,true>(params);
+         glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first)); glCheck();
+      }
+      params++;
+   }
 }
 
 //All pixels are in area 0 by default.
@@ -864,7 +743,7 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 }
 
 
-void SetupMainVBO()
+void SetupMainVBO(void)
 {
 #ifndef GLES
 	glBindVertexArray(gl.vbo.vao);

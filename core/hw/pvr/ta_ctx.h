@@ -201,10 +201,8 @@ extern tad_context ta_tad;
 extern TA_context*  vd_ctx;
 extern rend_context vd_rc;
 
-TA_context* tactx_Find(u32 addr, bool allocnew=false);
 TA_context* tactx_Pop(u32 addr);
 
-TA_context* tactx_Alloc();
 void tactx_Recycle(TA_context* poped_ctx);
 
 /*
@@ -219,8 +217,6 @@ void SetCurrentTARC(u32 addr);
 bool QueueRender(TA_context* ctx);
 TA_context* DequeueRender();
 void FinishRender(TA_context* ctx);
-bool TryDecodeTARC();
-void VDecEnd();
 
 //must be moved to proper header
 void FillBGP(TA_context* ctx);

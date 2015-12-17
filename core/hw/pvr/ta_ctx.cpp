@@ -15,6 +15,59 @@ tad_context ta_tad;
 TA_context*  vd_ctx;
 rend_context vd_rc;
 
+cMutex mtx_rqueue;
+TA_context* rqueue;
+cResetEvent frame_finished(false, true);
+
+double last_frame = 0;
+u64 last_cyces = 0;
+
+cMutex mtx_pool;
+
+vector<TA_context*> ctx_pool;
+vector<TA_context*> ctx_list;
+
+static TA_context* tactx_Alloc(void)
+{
+	TA_context* rv = 0;
+
+	mtx_pool.Lock();
+	if (ctx_pool.size())
+	{
+		rv = ctx_pool[ctx_pool.size()-1];
+		ctx_pool.pop_back();
+	}
+	mtx_pool.Unlock();
+	
+	if (rv)
+      return rv;
+
+   rv = new TA_context();
+   rv->Alloc();
+   printf("new tactx\n");
+
+	return rv;
+}
+
+static TA_context* tactx_Find(u32 addr, bool allocnew)
+{
+   TA_context *rv = NULL;
+   for (size_t i=0; i<ctx_list.size(); i++)
+   {
+      if (ctx_list[i]->Address==addr)
+         return ctx_list[i];
+   }
+
+   if (!allocnew)
+      return 0;
+
+   rv = tactx_Alloc();
+   rv->Address=addr;
+   ctx_list.push_back(rv);
+
+   return rv;
+}
+
 void SetCurrentTARC(u32 addr)
 {
 	if (addr != TACTX_NONE)
@@ -41,7 +94,7 @@ void SetCurrentTARC(u32 addr)
 	}
 }
 
-bool TryDecodeTARC(void)
+static bool TryDecodeTARC(void)
 {
 	verify(ta_ctx != 0);
 
@@ -61,7 +114,7 @@ bool TryDecodeTARC(void)
    return false;
 }
 
-void VDecEnd(void)
+static void VDecEnd(void)
 {
 	verify(vd_ctx != 0);
 
@@ -72,12 +125,6 @@ void VDecEnd(void)
 	vd_ctx = 0;
 }
 
-cMutex mtx_rqueue;
-TA_context* rqueue;
-cResetEvent frame_finished(false, true);
-
-double last_frame = 0;
-u64 last_cyces = 0;
 
 bool QueueRender(TA_context* ctx)
 {
@@ -158,32 +205,7 @@ void FinishRender(TA_context* ctx)
 	frame_finished.Set();
 }
 
-cMutex mtx_pool;
 
-vector<TA_context*> ctx_pool;
-vector<TA_context*> ctx_list;
-
-TA_context* tactx_Alloc(void)
-{
-	TA_context* rv = 0;
-
-	mtx_pool.Lock();
-	if (ctx_pool.size())
-	{
-		rv = ctx_pool[ctx_pool.size()-1];
-		ctx_pool.pop_back();
-	}
-	mtx_pool.Unlock();
-	
-	if (rv)
-      return rv;
-
-   rv = new TA_context();
-   rv->Alloc();
-   printf("new tactx\n");
-
-	return rv;
-}
 
 void tactx_Recycle(TA_context* poped_ctx)
 {
@@ -203,24 +225,6 @@ void tactx_Recycle(TA_context* poped_ctx)
 	mtx_pool.Unlock();
 }
 
-TA_context* tactx_Find(u32 addr, bool allocnew)
-{
-   TA_context *rv = NULL;
-   for (size_t i=0; i<ctx_list.size(); i++)
-   {
-      if (ctx_list[i]->Address==addr)
-         return ctx_list[i];
-   }
-
-   if (!allocnew)
-      return 0;
-
-   rv = tactx_Alloc();
-   rv->Address=addr;
-   ctx_list.push_back(rv);
-
-   return rv;
-}
 
 TA_context* tactx_Pop(u32 addr)
 {

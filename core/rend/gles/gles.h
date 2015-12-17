@@ -4,7 +4,6 @@
 #include <glsym/glsym.h>
 
 #define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
-#define eglCheck() false
 
 #define VERTEX_POS_ARRAY 0
 #define VERTEX_COL_BASE_ARRAY 1
@@ -15,47 +14,6 @@
 extern u32 gcflip;
 
 void DrawStrips();
-
-struct PipelineShader
-{
-	GLuint program;
-
-	GLuint scale,depth_scale;
-	GLuint pp_ClipTest,cp_AlphaTestValue;
-	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY,sp_LOG_FOG_COEFS;
-
-	//
-	u32 cp_AlphaTest; s32 pp_ClipTestMode;
-	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
-};
-
-
-struct gl_ctx
-{
-	struct
-	{
-		GLuint program;
-
-		GLuint scale,depth_scale;
-		GLuint sp_ShaderColor;
-
-	} modvol_shader;
-
-	PipelineShader pogram_table[768*2];
-
-	struct
-	{
-		GLuint geometry,modvols,idxs,idxs2;
-#ifndef GLES
-		GLuint vao;
-#endif
-	} vbo;
-
-
-	//GLuint matrix;
-};
-
-extern gl_ctx gl;
 
 GLuint gl_GetTexture(TSP tsp,TCW tcw);
 struct text_info {
@@ -75,6 +33,6 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl);
 
-bool CompilePipelineShader(PipelineShader* s);
+bool CompilePipelineShader(void *data);
 #define TEXTURE_LOAD_ERROR 0
 GLuint loadPNG(const string& subpath, int &width, int &height);

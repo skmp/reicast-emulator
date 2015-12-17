@@ -101,8 +101,7 @@ SOURCES_CXX += $(CORE_DIR)/rend/norend/norend.cpp
 endif
 
 ifeq ($(HAVE_GL), 1)
-SOURCES_CXX += $(CORE_DIR)/rend/gles/gldraw.cpp \
-					$(CORE_DIR)/rend/gles/gles_libretro.cpp \
+SOURCES_CXX += $(CORE_DIR)/rend/gles/gles_libretro.cpp \
 					$(CORE_DIR)/rend/gles/gltex.cpp
 SOURCES_C   += $(CORE_DIR)/libretro-common/glsym/rglgen.c
 ifeq ($(HAVE_GLES), 1)

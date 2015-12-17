@@ -224,14 +224,6 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 #endif
 }
 
-double os_GetSeconds()
-{
-   timeval a;
-   gettimeofday (&a,0);
-   static u64 tvs_base=a.tv_sec;
-   return a.tv_sec-tvs_base+a.tv_usec/1000000.0;
-}
-
 #if TARGET_IPHONE
 void os_DebugBreak()
 {

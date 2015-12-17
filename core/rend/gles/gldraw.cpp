@@ -2,14 +2,12 @@
 #include "rend/rend.h"
 
 #include <algorithm>
+
+
 /*
 
 Drawing and related state management
 Takes vertex, textures and renders to the currently set up target
-
-
-
-
 */
 
 //Uncomment this to disable the stencil work around
@@ -74,7 +72,24 @@ const static u32 SrcBlendGL[] =
 	GL_ONE_MINUS_DST_ALPHA
 };
 
+Vertex* vtx_sort_base;
 
+struct IndexTrig
+{
+	u16 id[3];
+	u16 pid;
+	f32 z;
+};
+
+
+struct SortTrigDrawParam
+{
+	PolyParam* ppid;
+	u16 first;
+	u16 count;
+};
+
+static vector<SortTrigDrawParam>	pidx_sort;
 PipelineShader* CurrentShader;
 u32 gcflip;
 
@@ -106,6 +121,7 @@ static struct
 
 s32 SetTileClip(u32 val, bool set)
 {
+	float csx=0,csy=0,cex=0,cey=0;
 	u32 clipmode=val>>28;
 	s32 clip_mode;
 	if (clipmode<2)
@@ -116,9 +132,6 @@ s32 SetTileClip(u32 val, bool set)
 		clip_mode=-1;   //render stuff inside the region
 	else
 		clip_mode=1;    //render stuff outside the region
-
-	float csx=0,csy=0,cex=0,cey=0;
-
 
 	csx=(float)(val&63);
 	cex=(float)((val>>6)&63);
@@ -138,12 +151,10 @@ s32 SetTileClip(u32 val, bool set)
 	return clip_mode;
 }
 
-void SetCull(u32 CulliMode)
+static void SetCull(u32 CulliMode)
 {
 	if (CullMode[CulliMode]==GL_NONE)
-	{ 
 		glDisable(GL_CULL_FACE);
-	}
 	else
 	{
 		glEnable(GL_CULL_FACE);
@@ -152,128 +163,133 @@ void SetCull(u32 CulliMode)
 }
 
 template <u32 Type, bool SortingEnabled>
-__forceinline
-	void SetGPState(const PolyParam* gp,u32 cflip=0)
+static __forceinline void SetGPState(const PolyParam* gp,u32 cflip=0)
 {
-	//has to preserve cache_tsp/cache_isp
-	//can freely use cache_tcw
-	CurrentShader=&gl.pogram_table[GetProgramID(Type==ListType_Punch_Through?1:0,SetTileClip(gp->tileclip,false)+1,gp->pcw.Texture,gp->tsp.UseAlpha,gp->tsp.IgnoreTexA,gp->tsp.ShadInstr,gp->pcw.Offset,gp->tsp.FogCtrl)];
-	
-	if (CurrentShader->program == -1)
-		CompilePipelineShader(CurrentShader);
-	if (CurrentShader->program != cache.program)
-	{
-		cache.program=CurrentShader->program;
-		glUseProgram(CurrentShader->program);
-		SetTileClip(gp->tileclip,true);
-	}
+   //force everything to be shadowed
+   const u32 stencil=0x80;
 
-	//This for some reason doesn't work properly
-	//So, shadow bit emulation is disabled.
-	//This bit normally control which pixels are affected
-	//by modvols
+   //has to preserve cache_tsp/cache_isp
+   //can freely use cache_tcw
+   CurrentShader=&gl.pogram_table[GetProgramID(Type==ListType_Punch_Through
+         ? 1 : 0,
+         SetTileClip(gp->tileclip,false)+1,
+         gp->pcw.Texture,
+         gp->tsp.UseAlpha,
+         gp->tsp.IgnoreTexA,
+         gp->tsp.ShadInstr,
+         gp->pcw.Offset,
+         gp->tsp.FogCtrl)];
+
+   if (CurrentShader->program == -1)
+      CompilePipelineShader(CurrentShader);
+   if (CurrentShader->program != cache.program)
+   {
+      cache.program=CurrentShader->program;
+      glUseProgram(CurrentShader->program);
+      SetTileClip(gp->tileclip,true);
+   }
+
 #ifdef NO_STENCIL_WORKAROUND
-	const u32 stencil=(gp->pcw.Shadow!=0)?0x80:0x0;
-#else
-	//force everything to be shadowed
-	const u32 stencil=0x80;
+   //This for some reason doesn't work properly
+   //So, shadow bit emulation is disabled.
+   //This bit normally control which pixels are affected
+   //by modvols
+   if (gp->pcw.Shadow==0)
+      stencil = 0x0;
 #endif
 
-	if (cache.stencil_modvol_on!=stencil)
-	{
-		cache.stencil_modvol_on=stencil;
+   if (cache.stencil_modvol_on!=stencil)
+   {
+      cache.stencil_modvol_on=stencil;
 
-		glStencilFunc(GL_ALWAYS,stencil,stencil);
-	}
+      glStencilFunc(GL_ALWAYS,stencil,stencil);
+   }
 
-	if (gp->texid != cache.texture)
-	{
-		cache.texture=gp->texid;
-		if (gp->texid != -1) {
-			//verify(glIsTexture(gp->texid));
-			glBindTexture(GL_TEXTURE_2D, gp->texid);
-		}
-	}
+   if (gp->texid != cache.texture)
+   {
+      cache.texture=gp->texid;
+      if (gp->texid != -1)
+         glBindTexture(GL_TEXTURE_2D, gp->texid);
+   }
 
-	if (gp->tsp.full!=cache.tsp.full)
-	{
-		cache.tsp=gp->tsp;
+   if (gp->tsp.full!=cache.tsp.full)
+   {
+      cache.tsp=gp->tsp;
 
-		if (Type==ListType_Translucent)
-		{
-			glBlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
+      if (Type==ListType_Translucent)
+      {
+         glBlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
 
 #ifdef WEIRD_SLOWNESS
-			//SGX seems to be super slow with discard enabled blended pixels
-			//can't cache this -- due to opengl shader api
-			bool clip_alpha_on_zero=gp->tsp.SrcInstr==4 && (gp->tsp.DstInstr==1 || gp->tsp.DstInstr==5);
-			glUniform1f(CurrentShader->cp_AlphaTestValue,clip_alpha_on_zero?(1/255.f):(-2.f));
+         //SGX seems to be super slow with discard enabled blended pixels
+         //can't cache this -- due to opengl shader api
+         bool clip_alpha_on_zero=gp->tsp.SrcInstr==4 && (gp->tsp.DstInstr==1 || gp->tsp.DstInstr==5);
+         glUniform1f(CurrentShader->cp_AlphaTestValue,clip_alpha_on_zero?(1/255.f):(-2.f));
 #endif
-		}
-	}
+      }
+   }
 
-	//set cull mode !
-	//cflip is required when exploding triangles for triangle sorting
-	//gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
-	SetCull(gp->isp.CullMode^cflip^gcflip);
+   //set cull mode !
+   //cflip is required when exploding triangles for triangle sorting
+   //gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
+   SetCull(gp->isp.CullMode^cflip^gcflip);
 
 
-	if (gp->isp.full!= cache.isp.full)
-	{
-		cache.isp.full=gp->isp.full;
+   if (gp->isp.full!= cache.isp.full)
+   {
+      cache.isp.full=gp->isp.full;
 
-		//set Z mode, only if required
-		if (!(Type==ListType_Punch_Through || (Type==ListType_Translucent && SortingEnabled)))
-			glDepthFunc(Zfunction[gp->isp.DepthMode]);
-		
+      //set Z mode, only if required
+      if (!(Type==ListType_Punch_Through || (Type==ListType_Translucent && SortingEnabled)))
+         glDepthFunc(Zfunction[gp->isp.DepthMode]);
+
 #if TRIG_SORT
-		if (SortingEnabled)
-			glDepthMask(GL_FALSE);
-		else
+      if (SortingEnabled)
+         glDepthMask(GL_FALSE);
+      else
 #endif
-			glDepthMask(!gp->isp.ZWriteDis);
-	}
+         glDepthMask(!gp->isp.ZWriteDis);
+   }
 }
 
 template <u32 Type, bool SortingEnabled>
-void DrawList(const List<PolyParam>& gply)
+static void DrawList(const List<PolyParam>& gply)
 {
-	PolyParam* params=gply.head();
-	int count=gply.used();
+   PolyParam* params=gply.head();
+   int count=gply.used();
 
+   if (count==0)
+      return;
+   //we want at least 1 PParam
 
-	if (count==0)
-		return;
-	//we want at least 1 PParam
+   //reset the cache state
+   cache.Reset(params);
 
-	//reset the cache state
-	cache.Reset(params);
+   //set some 'global' modes for all primitives
 
-	//set some 'global' modes for all primitives
+   //Z funct. can be fixed on these combinations, avoid setting it all the time
+   if (Type==ListType_Punch_Through || (Type==ListType_Translucent && SortingEnabled))
+      glDepthFunc(Zfunction[6]);
 
-	//Z funct. can be fixed on these combinations, avoid setting it all the time
-	if (Type==ListType_Punch_Through || (Type==ListType_Translucent && SortingEnabled))
-		glDepthFunc(Zfunction[6]);
-
-	glEnable(GL_STENCIL_TEST);
-	glStencilFunc(GL_ALWAYS,0,0);
-	glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
+   glEnable(GL_STENCIL_TEST);
+   glStencilFunc(GL_ALWAYS,0,0);
+   glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 
 #ifndef NO_STENCIL_WORKAROUND
-	//This looks like a driver bug
-	glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
+   //This looks like a driver bug
+   glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 #endif
 
-	while(count-->0)
-	{
-		if (params->count>2) //this actually happens for some games. No idea why ..
-		{
-			SetGPState<Type,SortingEnabled>(params);
-			glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_SHORT, (GLvoid*)(2*params->first)); glCheck();
-		}
+   while(count-->0)
+   {
+      if (params->count>2) //this actually happens for some games. No idea why ..
+      {
+         SetGPState<Type,SortingEnabled>(params);
+         glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_SHORT, (GLvoid*)(2*params->first)); glCheck();
+      }
 
-		params++;
-	}
+      params++;
+   }
 }
 
 bool operator<(const PolyParam &left, const PolyParam &right)
@@ -284,75 +300,56 @@ bool operator<(const PolyParam &left, const PolyParam &right)
 }
 
 //Sort based on min-z of each strip
-void SortPParams()
+void SortPParams(void)
 {
-	if (pvrrc.verts.used()==0 || pvrrc.global_param_tr.used()<=1)
-		return;
+   if (pvrrc.verts.used()==0 || pvrrc.global_param_tr.used()<=1)
+      return;
 
-	Vertex* vtx_base=pvrrc.verts.head();
-	u16* idx_base=pvrrc.idx.head();
+   Vertex* vtx_base=pvrrc.verts.head();
+   u16* idx_base=pvrrc.idx.head();
 
-	PolyParam* pp=pvrrc.global_param_tr.head();
-	PolyParam* pp_end= pp + pvrrc.global_param_tr.used();
+   PolyParam* pp=pvrrc.global_param_tr.head();
+   PolyParam* pp_end= pp + pvrrc.global_param_tr.used();
 
-	while(pp!=pp_end)
-	{
-		if (pp->count<2)
-		{
-			pp->zvZ=0;
-		}
-		else
-		{
-			u16* idx=idx_base+pp->first;
+   while(pp!=pp_end)
+   {
+      if (pp->count<2)
+      {
+         pp->zvZ=0;
+      }
+      else
+      {
+         u16* idx=idx_base+pp->first;
 
-			Vertex* vtx=vtx_base+idx[0];
-			Vertex* vtx_end=vtx_base + idx[pp->count-1]+1;
+         Vertex* vtx=vtx_base+idx[0];
+         Vertex* vtx_end=vtx_base + idx[pp->count-1]+1;
 
-			u32 zv=0xFFFFFFFF;
-			while(vtx!=vtx_end)
-			{
-				zv=min(zv,(u32&)vtx->z);
-				vtx++;
-			}
+         u32 zv=0xFFFFFFFF;
+         while(vtx!=vtx_end)
+         {
+            zv=min(zv,(u32&)vtx->z);
+            vtx++;
+         }
 
-			pp->zvZ=(f32&)zv;
-		}
-		pp++;
-	}
+         pp->zvZ=(f32&)zv;
+      }
+      pp++;
+   }
 
-	std::stable_sort(pvrrc.global_param_tr.head(),pvrrc.global_param_tr.head()+pvrrc.global_param_tr.used());
+   std::stable_sort(pvrrc.global_param_tr.head(),pvrrc.global_param_tr.head()+pvrrc.global_param_tr.used());
 }
 
-Vertex* vtx_sort_base;
-
-
-struct IndexTrig
-{
-	u16 id[3];
-	u16 pid;
-	f32 z;
-};
-
-
-struct SortTrigDrawParam
-{
-	PolyParam* ppid;
-	u16 first;
-	u16 count;
-};
-
-float min3(float v0,float v1,float v2)
+static inline float min3(float v0,float v1,float v2)
 {
 	return min(min(v0,v1),v2);
 }
 
-float max3(float v0,float v1,float v2)
+static inline float max3(float v0,float v1,float v2)
 {
 	return max(max(v0,v1),v2);
 }
 
-
-float minZ(Vertex* v,u16* mod)
+static inline float minZ(Vertex* v,u16* mod)
 {
 	return min(min(v[mod[0]].z,v[mod[1]].z),v[mod[2]].z);
 }
@@ -363,21 +360,25 @@ bool operator<(const IndexTrig &left, const IndexTrig &right)
 }
 
 //are two poly params the same?
-bool PP_EQ(PolyParam* pp0, PolyParam* pp1)
+static inline bool PP_EQ(PolyParam* pp0, PolyParam* pp1)
 {
-	return (pp0->pcw.full&PCW_DRAW_MASK)==(pp1->pcw.full&PCW_DRAW_MASK) && pp0->isp.full==pp1->isp.full && pp0->tcw.full==pp1->tcw.full && pp0->tsp.full==pp1->tsp.full && pp0->tileclip==pp1->tileclip;
+	return 
+      (pp0->pcw.full&PCW_DRAW_MASK)==(pp1->pcw.full&PCW_DRAW_MASK) 
+      && pp0->isp.full==pp1->isp.full 
+      && pp0->tcw.full==pp1->tcw.full
+      && pp0->tsp.full==pp1->tsp.full
+      && pp0->tileclip==pp1->tileclip;
 }
 
-static vector<SortTrigDrawParam>	pidx_sort;
 
-void fill_id(u16* d, Vertex* v0, Vertex* v1, Vertex* v2,  Vertex* vb)
+static inline void fill_id(u16* d, Vertex* v0, Vertex* v1, Vertex* v2,  Vertex* vb)
 {
 	d[0]=v0-vb;
 	d[1]=v1-vb;
 	d[2]=v2-vb;
 }
 
-void GenSorted()
+void GenSorted(void)
 {
 	u32 tess_gen=0;
 
@@ -599,7 +600,7 @@ void GenSorted()
 	}
 }
 
-void DrawSorted()
+static void DrawSorted(void)
 {
    //if any drawing commands, draw them
    if (!pidx_sort.size())
@@ -660,7 +661,7 @@ void DrawSorted()
 	10 -> 00
 	11 -> 01
 */
-void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
+static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 {
 	if (mv_mode==0)	//normal trigs
 	{
@@ -742,8 +743,7 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 	}
 }
 
-
-void SetupMainVBO(void)
+static void SetupMainVBO(void)
 {
 #ifndef GLES
 	glBindVertexArray(gl.vbo.vao);
@@ -766,7 +766,7 @@ void SetupMainVBO(void)
 	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u)); glCheck();
 }
 
-void SetupModvolVBO()
+static void SetupModvolVBO(void)
 {
 #ifndef GLES
 	glBindVertexArray(gl.vbo.vao);
@@ -782,7 +782,8 @@ void SetupModvolVBO()
 	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
 	glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
 }
-void DrawModVols()
+
+static void DrawModVols(void)
 {
 	if (pvrrc.modtrig.used()==0 /*|| GetAsyncKeyState(VK_F4)*/)
 		return;
@@ -933,7 +934,7 @@ void DrawModVols()
 	glDisable(GL_STENCIL_TEST);
 }
 
-void DrawStrips()
+void DrawStrips(void)
 {
 	SetupMainVBO();
 	//Draw the strips !

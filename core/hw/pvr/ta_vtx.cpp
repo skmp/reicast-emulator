@@ -499,7 +499,6 @@ public:
 
 				//Variable size
 			case ParamType_Vertex_Parameter:
-				//log ("vtx");
 				{
 
 					//printf("VTX:0x%08X\n",VerxexDataFP);
@@ -720,12 +719,18 @@ public:
 	__forceinline
 		static void StartList(u32 ListType)
 	{
-		if (ListType==ListType_Opaque)
-			CurrentPPlist=&vdrc.global_param_op;
-		else if (ListType==ListType_Punch_Through)
-			CurrentPPlist=&vdrc.global_param_pt;
-		else if (ListType==ListType_Translucent)
-			CurrentPPlist=&vdrc.global_param_tr;
+      switch (ListType)
+      {
+         case ListType_Opaque:
+            CurrentPPlist=&vdrc.global_param_op;
+            break;
+         case ListType_Punch_Through:
+            CurrentPPlist=&vdrc.global_param_pt;
+            break;
+         case ListType_Translucent:
+            CurrentPPlist=&vdrc.global_param_tr;
+            break;
+      }
 
 		CurrentPP=&nullPP;
 	}

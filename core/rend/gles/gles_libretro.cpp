@@ -35,6 +35,7 @@ struct vbo_type
 vbo_type vbo;
 modvol_shader_type modvol_shader;
 PipelineShader program_table[768*2];
+static float fog_coefs[]={0,0};
 
 /*
 
@@ -817,6 +818,7 @@ static void SetupModvolVBO(void)
 	glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
 }
 
+#if 0
 static void DrawModVols(void)
 {
 	if (pvrrc.modtrig.used()==0 /*|| GetAsyncKeyState(VK_F4)*/)
@@ -833,7 +835,6 @@ static void DrawModVols(void)
 	glDepthMask(GL_FALSE);
 	glDepthFunc(GL_GREATER);
 
-#if 0
 	if(0 /*|| GetAsyncKeyState(VK_F5)*/ )
 	{
 		//simply draw the volumes -- for debugging
@@ -842,7 +843,6 @@ static void DrawModVols(void)
 		SetupMainVBO();
 	}
 	else
-#endif
 	{
 		/*
 		mode :
@@ -863,7 +863,6 @@ static void DrawModVols(void)
 		glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
 		glDepthFunc(GL_GREATER);
 
-#if 0
 		if ( 0 /* || GetAsyncKeyState(VK_F6)*/ )
 		{
 			//simple single level stencil
@@ -879,7 +878,6 @@ static void DrawModVols(void)
 			glDrawArrays(GL_TRIANGLES,0,pvrrc.modtrig.used()*3);
 		}
 		else if (true)
-#endif
 		{
 			//Full emulation
 			//the *out* mode is buggy
@@ -957,7 +955,7 @@ static void DrawModVols(void)
 		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
 
 		//Draw and blend
-		//glDrawArrays(GL_TRIANGLES,pvrrc.modtrig.used(),2);
+		glDrawArrays(GL_TRIANGLES,pvrrc.modtrig.used(),2);
 
 	}
 
@@ -967,54 +965,7 @@ static void DrawModVols(void)
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_STENCIL_TEST);
 }
-
-static void DrawStrips(void)
-{
-	SetupMainVBO();
-	//Draw the strips !
-
-	//initial state
-	glDisable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
-
-	//We use sampler 0
-	glActiveTexture(GL_TEXTURE0);
-
-	//Opaque
-	//Nothing extra needs to be setup here
-	/*if (!GetAsyncKeyState(VK_F1))*/
-	DrawList<ListType_Opaque,false>(pvrrc.global_param_op);
-
-	//DrawModVols();
-
-	//Alpha tested
-	//setup alpha test state
-	/*if (!GetAsyncKeyState(VK_F2))*/
-	DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt);
-
-	//Alpha blended
-	//Setup blending
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	/*if (!GetAsyncKeyState(VK_F3))*/
-	{
-		/*
-		if (UsingAutoSort())
-			SortRendPolyParamList(pvrrc.global_param_tr);
-		else
-			*/
-#if TRIG_SORT
-		if (pvrrc.isAutoSort)
-			DrawSorted();
-		else
-			DrawList<ListType_Translucent,false>(pvrrc.global_param_tr);
-#else
-		if (pvrrc.isAutoSort)
-			SortPParams();
-		DrawList<ListType_Translucent,true>(pvrrc.global_param_tr);
 #endif
-	}
-}
 
 /*
 GL|ES 2
@@ -1496,10 +1447,7 @@ static bool gles_init(void)
    return true;
 }
 
-
-
-float fog_coefs[]={0,0};
-void tryfit(float* x,float* y)
+static void tryfit(float* x,float* y)
 {
 	//y=B*ln(x)+A
 
@@ -1594,8 +1542,6 @@ static bool ProcessFrame(TA_context* ctx)
 
 static bool RenderFrame(void)
 {
-	DoCleanup();
-
 	bool is_rtt=pvrrc.isRTT;
 
 	//if (FrameCount&7) return;
@@ -1942,7 +1888,52 @@ static bool RenderFrame(void)
 	//restore scale_x
 	scale_x /= scissoring_scale_x;
 
-	DrawStrips();
+	SetupMainVBO();
+	//Draw the strips !
+
+	//initial state
+	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+
+	//We use sampler 0
+	glActiveTexture(GL_TEXTURE0);
+
+	//Opaque
+	//Nothing extra needs to be setup here
+	/*if (!GetAsyncKeyState(VK_F1))*/
+	DrawList<ListType_Opaque,false>(pvrrc.global_param_op);
+
+#if 0
+	DrawModVols();
+#endif
+
+	//Alpha tested
+	//setup alpha test state
+	/*if (!GetAsyncKeyState(VK_F2))*/
+	DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt);
+
+	//Alpha blended
+	//Setup blending
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	/*if (!GetAsyncKeyState(VK_F3))*/
+	{
+		/*
+		if (UsingAutoSort())
+			SortRendPolyParamList(pvrrc.global_param_tr);
+		else
+			*/
+#if TRIG_SORT
+		if (pvrrc.isAutoSort)
+			DrawSorted();
+		else
+			DrawList<ListType_Translucent,false>(pvrrc.global_param_tr);
+#else
+		if (pvrrc.isAutoSort)
+			SortPParams();
+		DrawList<ListType_Translucent,true>(pvrrc.global_param_tr);
+#endif
+	}
 
 	KillTex=false;
 

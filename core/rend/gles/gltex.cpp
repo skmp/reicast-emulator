@@ -552,15 +552,10 @@ void CollectCleanup() {
 	}
 }
 
-void DoCleanup() {
-
-}
-void killtex()
+void killtex(void)
 {
 	for (TexCacheIter i=TexCache.begin();i!=TexCache.end();i++)
-	{
 		i->second.Delete();
-	}
 
 	TexCache.clear();
 }

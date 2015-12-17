@@ -1,6 +1,7 @@
 #pragma once
 #include "ta.h"
 #include "pvr_regs.h"
+#include <rthreads/rthreads.h>
 
 //Vertex storage types
 struct Vertex
@@ -121,8 +122,8 @@ struct TA_context
 	u32 Address;
 	u32 LastUsed;
 
-	cMutex thd_inuse;
-	cMutex rend_inuse;
+	slock_t *thd_inuse;
+	slock_t *rend_inuse;
 
 	tad_context tad;
 	rend_context rend;
@@ -151,6 +152,8 @@ struct TA_context
 	}
 	void Alloc()
 	{
+      thd_inuse  = slock_new();
+      rend_inuse = slock_new();
 		tad.Reset((u8*)malloc(2*1024*1024));
 
 		rend.verts.InitBytes(1024*1024,&rend.Overrun); //up to 1 mb of vtx data/frame = ~ 38k vtx/frame
@@ -168,14 +171,18 @@ struct TA_context
 	void Reset()
 	{
 		tad.Clear();
-		rend_inuse.Lock();
+      slock_lock(rend_inuse);
 		rend.Clear();
 		rend.proc_end = rend.proc_start = tad.thd_root;
-		rend_inuse.Unlock();
+      slock_unlock(rend_inuse);
 	}
 
 	void Free()
 	{
+      slock_free(thd_inuse);
+      slock_free(rend_inuse);
+      thd_inuse  = NULL;
+      rend_inuse = NULL;
 		free(tad.thd_root);
 		rend.verts.Free();
 		rend.idx.Free();

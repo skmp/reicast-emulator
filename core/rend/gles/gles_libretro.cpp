@@ -586,7 +586,7 @@ bool ProcessFrame(TA_context* ctx)
 	if (ctx->rend.isRTT)
 		return false;
 
-	ctx->rend_inuse.Lock();
+   slock_lock(ctx->rend_inuse);
 	ctx->MarkRend();
 
 	if (KillTex)

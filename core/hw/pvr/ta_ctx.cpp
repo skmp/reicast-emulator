@@ -52,7 +52,7 @@ bool TryDecodeTARC(void)
 		vd_ctx->rend.proc_start = vd_ctx->rend.proc_end + 32;
 		vd_ctx->rend.proc_end = vd_ctx->tad.thd_data;
 			
-		vd_ctx->rend_inuse.Lock();
+      slock_lock(vd_ctx->rend_inuse);
 		vd_rc = vd_ctx->rend;
 
 		//signal the vdec thread
@@ -67,7 +67,7 @@ void VDecEnd(void)
 
 	vd_ctx->rend = vd_rc;
 
-	vd_ctx->rend_inuse.Unlock();
+   slock_unlock(vd_ctx->rend_inuse);
 
 	vd_ctx = 0;
 }

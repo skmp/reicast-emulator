@@ -1992,6 +1992,21 @@ struct glesrend : Renderer
 #ifndef GLES
       glBindVertexArray(0);
 #endif
+      glDisable(GL_BLEND);
+      glDisable(GL_CULL_FACE);
+      glDisable(GL_SCISSOR_TEST);
+      glDisable(GL_DEPTH_TEST);
+      glBlendFunc(GL_ONE, GL_ZERO);
+      glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+      glCullFace(GL_BACK);
+      glDepthMask(GL_TRUE);
+      glActiveTexture(GL_TEXTURE0);
+      glUseProgram(0);
+
+      /* Clear textures */
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, 0);
+
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
       co_dc_yield();
    }

@@ -24,7 +24,7 @@
 
 #include "md5.h"
 
-#ifndef LSB_FIRST
+#ifdef MSB_FIRST
 void
 byteSwap(UWORD32 *buf, unsigned words)
 {

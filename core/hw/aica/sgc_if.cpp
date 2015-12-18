@@ -1159,8 +1159,6 @@ u32 cdda_index=CDDA_SIZE<<1;
 
 static SampleType mxlr[64];
 
-u32 samples_gen;
-
 //no DSP for now in this version
 void AICA_Sample32(void)
 {
@@ -1192,9 +1190,7 @@ void AICA_Sample32(void)
 			mxlr[i*2+1] += oRight;
 		}
 	}
-#ifdef _WIN32
-   samples_gen += sg;
-#endif
+
 	//OK , generated all Channels  , now DSP/ect + final mix ;p
 	//CDDA EXTS input
 	

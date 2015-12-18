@@ -27,6 +27,33 @@ struct PipelineShader
 	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
 };
 
+struct gl_cached_state
+{
+   struct
+   {
+      GLuint r;
+      GLuint g;
+      GLuint b;
+      GLuint a;
+   } clear_color;
+   struct
+   {
+      GLint x;
+      GLint y;
+      GLsizei w;
+      GLsizei h;
+   } scissor;
+   struct
+   {
+      GLint x;
+      GLint y;
+      GLsizei w;
+      GLsizei h;
+   } viewport;
+   GLuint framebuf;
+   GLuint program; 
+};
+
 struct vbo_type
 {
    GLuint geometry,modvols,idxs,idxs2;
@@ -35,6 +62,7 @@ struct vbo_type
 #endif
 };
 
+gl_cached_state gl_state;
 vbo_type vbo;
 modvol_shader_type modvol_shader;
 PipelineShader program_table[768*2];
@@ -220,8 +248,9 @@ static __forceinline void SetGPState(const PolyParam* gp,u32 cflip=0)
       CompilePipelineShader(CurrentShader);
    if (CurrentShader->program != cache.program)
    {
-      cache.program=CurrentShader->program;
-      glUseProgram(CurrentShader->program);
+      cache.program    = CurrentShader->program;
+      gl_state.program = CurrentShader->program;
+      glUseProgram(gl_state.program);
       SetTileClip(gp->tileclip,true);
    }
 
@@ -833,7 +862,8 @@ static void DrawModVols(void)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glUseProgram(modvol_shader.program);
+   gl_state.program = modvol_shader.program;
+	glUseProgram(gl_state.program);
 	glUniform1f(modvol_shader.sp_ShaderColor,0.5f);
 
 	glDepthMask(GL_FALSE);
@@ -1687,7 +1717,8 @@ static bool RenderFrame(void)
 	dc_width  *= scale_x;
 	dc_height *= scale_y;
 
-	glUseProgram(modvol_shader.program);
+   gl_state.program = modvol_shader.program;
+	glUseProgram(gl_state.program);
 
 	/*
 
@@ -1768,7 +1799,8 @@ static bool RenderFrame(void)
 		tryfit(xvals,yvals);
 	}
 
-	glUseProgram(modvol_shader.program);
+   gl_state.program = modvol_shader.program;
+	glUseProgram(gl_state.program);
 
 	glUniform4fv(modvol_shader.scale, 1, ShaderUniforms.scale_coefs);
 	glUniform4fv(modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
@@ -1784,7 +1816,8 @@ static bool RenderFrame(void)
 		if (s->program == -1)
 			continue;
 
-		glUseProgram(s->program);
+      gl_state.program = s->program;
+		glUseProgram(gl_state.program);
 
 		ShaderUniforms.Set(s);
 	}
@@ -1836,16 +1869,31 @@ static bool RenderFrame(void)
 		BindRTT(FB_W_SOF1&VRAM_MASK,FB_X_CLIP.max-FB_X_CLIP.min+1,FB_Y_CLIP.max-FB_Y_CLIP.min+1,channels,format);
 	}
 
+   gl_state.clear_color.r = 0;
+   gl_state.clear_color.g = 0;
+   gl_state.clear_color.b = 0;
+   gl_state.clear_color.a = 1.0f;
 
-	//Clear depth
-	//Color is cleared by the bgp
 	if (settings.rend.WideScreen)
-		glClearColor(pvrrc.verts.head()->col[2]/255.0f,pvrrc.verts.head()->col[1]/255.0f,pvrrc.verts.head()->col[0]/255.0f,1.0f);
-	else
-		glClearColor(0,0,0,1.0f);
+   {
+      gl_state.clear_color.r = pvrrc.verts.head()->col[2]/255.0f;
+      gl_state.clear_color.g = pvrrc.verts.head()->col[1]/255.0f;
+      gl_state.clear_color.b = pvrrc.verts.head()->col[0]/255.0f;
+   }
 
+   glClearColor(gl_state.clear_color.r, gl_state.clear_color.g, gl_state.clear_color.b, gl_state.clear_color.a);
+#ifdef GLES
 	glClearDepthf(0.f);
-   glViewport(0, 0, gles_screen_width, gles_screen_height);
+#else
+   glClearDepth(0.f);
+#endif
+
+   gl_state.viewport.x = 0;
+   gl_state.viewport.y = 0;
+   gl_state.viewport.w = gles_screen_width;
+   gl_state.viewport.h = gles_screen_height;
+
+   glViewport(gl_state.viewport.x, gl_state.viewport.y, gl_state.viewport.w, gl_state.viewport.h);
 	glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
 	if (UsingAutoSort())
@@ -1884,7 +1932,13 @@ static bool RenderFrame(void)
 		printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 	#endif
 
-	glScissor(offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
+   gl_state.scissor.x = offs_x+pvrrc.fb_X_CLIP.min/scale_x;
+   gl_state.scissor.y = (pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h;
+   gl_state.scissor.w = (pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h;
+   gl_state.scissor.h = (pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h;
+
+   glScissor(gl_state.scissor.x, gl_state.scissor.y, gl_state.scissor.w, gl_state.scissor.h);
+
 	if (settings.rend.WideScreen && pvrrc.fb_X_CLIP.min==0 && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) && (pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ) )
 	{
 		glDisable(GL_SCISSOR_TEST);
@@ -1981,7 +2035,12 @@ struct glesrend : Renderer
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
 	bool Render()
    {
-      glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
+      gl_state.framebuf = hw_render.get_current_framebuffer();
+      glBindFramebuffer(GL_FRAMEBUFFER, gl_state.framebuf);
+      glClearColor(gl_state.clear_color.r, gl_state.clear_color.g, gl_state.clear_color.b, gl_state.clear_color.a);
+      glScissor(gl_state.scissor.x, gl_state.scissor.y, gl_state.scissor.w, gl_state.scissor.h);
+      glUseProgram(gl_state.program);
+      glViewport(gl_state.viewport.x, gl_state.viewport.y, gl_state.viewport.w, gl_state.viewport.h);
       bool ret = RenderFrame();
       return ret;
    }
@@ -2002,6 +2061,8 @@ struct glesrend : Renderer
       glDepthMask(GL_TRUE);
       glActiveTexture(GL_TEXTURE0);
       glUseProgram(0);
+      glClearColor(0,0,0,0.0f);
+      glStencilOp(GL_KEEP,GL_KEEP, GL_KEEP);
 
       /* Clear textures */
       glActiveTexture(GL_TEXTURE0);

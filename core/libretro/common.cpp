@@ -14,7 +14,7 @@
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
 
-#include "linux/context.h"
+#include "context.h"
 
 #include "hw/sh4/dyna/ngen.h"
 

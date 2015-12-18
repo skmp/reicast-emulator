@@ -1,20 +1,17 @@
 #include "context.h"
 
 #if defined(_ANDROID)
-	#include <asm/sigcontext.h>
+#include <asm/sigcontext.h>
 #else
 #ifdef __MACH__
 #define _XOPEN_SOURCE 1
 #define __USE_GNU 1
 #endif
 
-  #if !defined(TARGET_NO_EXCEPTIONS)
-    #include <ucontext.h>
-  #endif
+#if !defined(TARGET_NO_EXCEPTIONS)
+#include <ucontext.h>
 #endif
-
-
-//////
+#endif
 
 #define MCTX(p) (((ucontext_t *)(segfault_ctx))->uc_mcontext p)
 template <typename Ta, typename Tb>

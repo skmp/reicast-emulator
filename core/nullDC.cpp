@@ -17,6 +17,9 @@
 
 settings_t settings;
 
+extern char game_dir[1024];
+extern char *game_data;
+
 /*
 	libndc
 
@@ -36,7 +39,8 @@ settings_t settings;
 
 int GetFile(char *szFileName, char *szParse=0,u32 flags=0) 
 {
-	cfgLoadStr("config","image",szFileName,"null");
+   strcpy(szFileName, game_data);
+   strcpy(settings.imgread.DefaultImage, szFileName);
 
 	return 1; 
 }
@@ -101,25 +105,14 @@ int dc_init(int argc,wchar* argv[])
 	if(ParseCommandLine(argc,argv))
 		return 69;
 
-	if(!cfgOpen())
-	{
-		msgboxf("Unable to open config file",MBX_ICONERROR);
-		return -4;
-	}
-	LoadSettings();
+   LoadSettings();
 	os_CreateWindow();
 
 	int rv= 0;
 
-#ifndef __MACH__
-    #define DATA_PATH "/data/"
-#else
-    #define DATA_PATH "/"
-#endif
-    
-	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
+	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path("/")))
 	{
-		if (!LoadHle(get_readonly_data_path(DATA_PATH)))
+		if (!LoadHle(get_readonly_data_path("/")))
 			return -3;
       printf("Did not load bios, using reios\n");
 	}
@@ -168,26 +161,22 @@ void dc_term(void)
 	plugins_Term();
 	_vmem_release();
 
-	SaveSettings();
 	SaveRomFiles(get_writable_data_path("/data/"));
 }
 
 void LoadSettings(void)
 {
-#ifdef __LIBRETRO__
 	settings.dynarec.Enable			= 1;
 	settings.dynarec.idleskip		= 1;
 	settings.dynarec.unstable_opt	= 0; 
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
-	settings.dreamcast.cable		= 3;
 	settings.dreamcast.RTC			= GetRTC_now();
 	settings.dreamcast.region		= 3;
 	settings.dreamcast.broadcast	= 4;
-	settings.aica.LimitFPS			= 1;
+	settings.aica.LimitFPS			= 0;
 	settings.aica.NoBatch			= 0;
    settings.aica.NoSound			= 0;
    settings.rend.UseMipmaps		= 1;
-   settings.rend.WideScreen		= 0; 
 	settings.pvr.subdivide_transp	= 0;
 	settings.pvr.ta_skip			   = 0;
 	settings.pvr.rend				   = 0;
@@ -202,53 +191,10 @@ void LoadSettings(void)
 	settings.validate.OpenGlChecks      = 0;
 
 	settings.bios.UseReios              = 0;
-#else
-	settings.dynarec.Enable			= cfgLoadInt("config","Dynarec.Enabled", 1)!=0;
-	settings.dynarec.idleskip		= cfgLoadInt("config","Dynarec.idleskip",1)!=0;
-	settings.dynarec.unstable_opt	= cfgLoadInt("config","Dynarec.unstable-opt",0);
-	//disable_nvmem can't be loaded, because nvmem init is before cfg load
-	settings.dreamcast.cable		= cfgLoadInt("config","Dreamcast.Cable",3);
-	settings.dreamcast.RTC			= cfgLoadInt("config","Dreamcast.RTC",GetRTC_now());
-	settings.dreamcast.region		= cfgLoadInt("config","Dreamcast.Region",3);
-	settings.dreamcast.broadcast	= cfgLoadInt("config","Dreamcast.Broadcast",4);
-	settings.aica.LimitFPS			= cfgLoadInt("config","aica.LimitFPS",1);
-	settings.aica.NoBatch			= cfgLoadInt("config","aica.NoBatch",0);
-    settings.aica.NoSound			= cfgLoadInt("config","aica.NoSound",0);
-	settings.rend.UseMipmaps		= cfgLoadInt("config","rend.UseMipmaps",1);
-	settings.rend.WideScreen		= cfgLoadInt("config","rend.WideScreen",0);
-	
-	settings.pvr.subdivide_transp	= cfgLoadInt("config","pvr.Subdivide",0);
-	
-	settings.pvr.ta_skip			= cfgLoadInt("config","ta.skip",0);
-	settings.pvr.rend				= cfgLoadInt("config","pvr.rend",0);
-
-	settings.pvr.MaxThreads			= cfgLoadInt("config", "pvr.MaxThreads", 3);
-	settings.pvr.SynchronousRendering			= cfgLoadInt("config", "pvr.SynchronousRendering", 0);
-
-	settings.debug.SerialConsole = cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
-
-	settings.reios.ElfFile = cfgLoadStr("reios", "ElfFile","");
-
-	settings.validate.OpenGlChecks = cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
-
-	settings.bios.UseReios = cfgLoadInt("config", "bios.UseReios", 0);
-#endif
 
 	settings.aica.BufferSize=1024;
-
-/*
-	//make sure values are valid
-	settings.dreamcast.cable	= min(max(settings.dreamcast.cable,    0),3);
-	settings.dreamcast.region	= min(max(settings.dreamcast.region,   0),3);
-	settings.dreamcast.broadcast= min(max(settings.dreamcast.broadcast,0),4);
-*/
 }
 
 void SaveSettings(void)
 {
-	cfgSaveInt("config","Dynarec.Enabled",	settings.dynarec.Enable);
-	cfgSaveInt("config","Dreamcast.Cable",	settings.dreamcast.cable);
-	cfgSaveInt("config","Dreamcast.RTC",	settings.dreamcast.RTC);
-	cfgSaveInt("config","Dreamcast.Region",	settings.dreamcast.region);
-	cfgSaveInt("config","Dreamcast.Broadcast",settings.dreamcast.broadcast);
 }

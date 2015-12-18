@@ -75,7 +75,7 @@ SOURCES_CXX := $(CORE_DIR)/cfg/cfg_libretro.cpp \
 					$(CORE_DIR)/imgread/common.cpp \
 					$(CORE_DIR)/imgread/gdi.cpp \
 					\
-					$(CORE_DIR)/nullDC_libretro.cpp \
+					$(CORE_DIR)/nullDC.cpp \
 					$(CORE_DIR)/stdclass.cpp \
 					\
 					$(CORE_DIR)/deps/coreio/coreio.cpp \

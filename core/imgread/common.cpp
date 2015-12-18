@@ -3,9 +3,6 @@
 Disc* chd_parse(const wchar* file);
 Disc* gdi_parse(const wchar* file);
 Disc* cdi_parse(const wchar* file);
-#ifdef _WIN32
-Disc* ioctl_parse(const wchar* file);
-#endif
 
 u32 NullDriveDiscType;
 Disc* disc;
@@ -15,9 +12,6 @@ Disc*(*drivers[])(const wchar* path)=
 	chd_parse,
 	gdi_parse,
 	cdi_parse,
-#ifdef _WIN32
-	ioctl_parse,
-#endif
 	0
 };
 

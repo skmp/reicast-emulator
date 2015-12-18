@@ -2,7 +2,6 @@
 #include <algorithm>
 #include "gles.h"
 #include "rend/TexCache.h"
-#include "cfg/cfg.h"
 #include "../../libretro/libretro.h"
 
 extern struct retro_hw_render_callback hw_render;

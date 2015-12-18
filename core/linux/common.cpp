@@ -1,5 +1,4 @@
 #include "types.h"
-#include "cfg/cfg.h"
 
 #ifdef __MACH__
 	#define _XOPEN_SOURCE 1

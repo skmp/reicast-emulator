@@ -7,7 +7,6 @@
 #include "oslib/audiostream.h"
 #include "hw/mem/_vmem.h"
 #include "stdclass.h"
-#include "cfg/cfg.h"
 
 #include "types.h"
 #include "hw/maple/maple_cfg.h"
@@ -101,9 +100,6 @@ int dc_init(int argc,wchar* argv[])
 		printf("Failed to alloc mem\n");
 		return -1;
 	}
-
-	if(ParseCommandLine(argc,argv))
-		return 69;
 
    LoadSettings();
 	os_CreateWindow();

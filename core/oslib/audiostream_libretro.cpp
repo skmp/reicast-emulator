@@ -1,5 +1,4 @@
 #include <limits.h>
-#include "cfg/cfg.h"
 #include "oslib/oslib.h"
 #include "audiostream.h"
 #include "../libretro/libretro.h"

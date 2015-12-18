@@ -3,8 +3,6 @@
 
 #include "maple_if.h"
 
-#include "cfg/cfg.h"
-
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/holly/sb.h"

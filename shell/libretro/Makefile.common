@@ -3,11 +3,7 @@ INCFLAGS    += -I$(CORE_DIR) \
 					-I$(CORE_DIR)/libretro-common/include 
 
 SOURCES_C   :=
-SOURCES_CXX := $(CORE_DIR)/cfg/cfg_libretro.cpp \
-				   $(CORE_DIR)/cfg/cl.cpp \
-					$(CORE_DIR)/cfg/ini.cpp \
-					\
-					$(CORE_DIR)/hw/arm7/arm_mem.cpp \
+SOURCES_CXX := $(CORE_DIR)/hw/arm7/arm_mem.cpp \
 					$(CORE_DIR)/hw/arm7/virt_arm.cpp \
 					$(CORE_DIR)/hw/arm7/arm7.cpp \
 					$(CORE_DIR)/hw/arm7/vbaARM.cpp \

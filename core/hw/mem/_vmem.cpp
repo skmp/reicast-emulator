@@ -1,3 +1,13 @@
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#endif
 
 #include "_vmem.h"
 #include "hw/aica/aica_if.h"
@@ -418,7 +428,6 @@ void _vmem_bm_reset(void)
 #define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)
 
 #ifdef _WIN32
-#include <Windows.h>
 HANDLE mem_handle;
 
 void* _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
@@ -465,53 +474,13 @@ void* _nvmem_alloc_mem()
 }
 
 #else
-	#include <sys/mman.h>
-	#include <sys/types.h>
-	#include <sys/stat.h>
-	#include <fcntl.h>
-	#include <errno.h>
-	#include <unistd.h>
 
 #ifndef MAP_NOSYNC
 #define MAP_NOSYNC       0 //missing from linux :/ -- could be the cause of android slowness ?
 #endif
 
-#ifdef _ANDROID
-#include <linux/ashmem.h>
-
-#ifndef ASHMEM_DEVICE
-#define ASHMEM_DEVICE "/dev/ashmem"
-#endif
-int ashmem_create_region(const char *name, size_t size)
-{
-	int fd, ret;
-
-	fd = open(ASHMEM_DEVICE, O_RDWR);
-	if (fd < 0)
-		return fd;
-
-	if (name) {
-		char buf[ASHMEM_NAME_LEN];
-
-		strlcpy(buf, name, sizeof(buf));
-		ret = ioctl(fd, ASHMEM_SET_NAME, buf);
-		if (ret < 0)
-			goto error;
-	}
-
-	ret = ioctl(fd, ASHMEM_SET_SIZE, size);
-	if (ret < 0)
-		goto error;
-
-	return fd;
-
-error:
-	close(fd);
-	return ret;
-}
-#endif
-
 int fd;
+
 void* _nvmem_unused_buffer(u32 start,u32 end)
 {
    void* ptr=mmap(&virt_ram_base[start], end-start, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
@@ -519,7 +488,7 @@ void* _nvmem_unused_buffer(u32 start,u32 end)
       return 0;
    return ptr;
 }
-	
+
 void* _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
 {
    void* ptr;

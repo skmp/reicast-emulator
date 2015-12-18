@@ -27,6 +27,8 @@ struct PipelineShader
 	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
 };
 
+#define SGL_CAP_MAX 8
+
 struct gl_cached_state
 {
    struct
@@ -58,6 +60,12 @@ struct gl_cached_state
    GLenum cullmode;
    GLuint framebuf;
    GLuint program; 
+   int cap_state[SGL_CAP_MAX];
+};
+
+static const int cap_translate[SGL_CAP_MAX] = 
+{
+    GL_DEPTH_TEST, GL_BLEND, GL_POLYGON_OFFSET_FILL, GL_FOG, GL_CULL_FACE, GL_ALPHA_TEST, GL_SCISSOR_TEST, GL_STENCIL_TEST
 };
 
 struct vbo_type
@@ -224,11 +232,15 @@ s32 SetTileClip(u32 val, bool set)
 static void SetCull(u32 CulliMode)
 {
 	if (CullMode[CulliMode] == GL_NONE)
+   {
 		glDisable(GL_CULL_FACE);
+      gl_state.cap_state[4] = 0;
+   }
 	else
 	{
 		glEnable(GL_CULL_FACE);
-      gl_state.cullmode = CullMode[CulliMode];
+      gl_state.cap_state[4] = 1;
+      gl_state.cullmode     = CullMode[CulliMode];
 		glCullFace(gl_state.cullmode); //GL_FRONT/GL_BACK, ...
 	}
 }
@@ -346,6 +358,7 @@ static void DrawList(const List<PolyParam>& gply)
       glDepthFunc(Zfunction[6]);
 
    glEnable(GL_STENCIL_TEST);
+   gl_state.cap_state[7] = 1;
    glStencilFunc(GL_ALWAYS,0,0);
    glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 
@@ -695,6 +708,7 @@ static void DrawSorted(void)
    glDepthFunc(Zfunction[6]);
 
    glEnable(GL_STENCIL_TEST);
+   gl_state.cap_state[7] = 1;
    glStencilFunc(GL_ALWAYS,0,0);
    glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 
@@ -744,6 +758,7 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 	{
 		//set states
 		glEnable(GL_DEPTH_TEST);
+      gl_state.cap_state[0] = 1;
 		//write only bit 1
 		glStencilMask(2);
 		//no stencil testing
@@ -767,6 +782,8 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 
 		//no depth test
 		glDisable(GL_DEPTH_TEST);
+      gl_state.cap_state[0] = 0;
+
 		//write bits 1:0
 		glStencilMask(3);
 
@@ -869,6 +886,7 @@ static void DrawModVols(void)
 	SetupModvolVBO();
 
 	glEnable(GL_BLEND);
+   gl_state.cap_state[1] = 1;
    gl_state.blendfunc.sfactor = GL_SRC_ALPHA;
    gl_state.blendfunc.dfactor = GL_ONE_MINUS_SRC_ALPHA;
    glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
@@ -912,6 +930,7 @@ static void DrawModVols(void)
 		{
 			//simple single level stencil
 			glEnable(GL_STENCIL_TEST);
+         gl_state.cap_state[7] = 1;
 			glStencilFunc(GL_ALWAYS,0x1,0x1);
 			glStencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
 #ifndef NO_STENCIL_WORKAROUND
@@ -980,11 +999,13 @@ static void DrawModVols(void)
 
 		//black out any stencil with '1'
 		glEnable(GL_BLEND);
+      gl_state.cap_state[1] = 1;
       gl_state.blendfunc.sfactor = GL_SRC_ALPHA;
       gl_state.blendfunc.dfactor = GL_ONE_MINUS_SRC_ALPHA;
       glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
 		
 		glEnable(GL_STENCIL_TEST);
+      gl_state.cap_state[7] = 1;
 		glStencilFunc(GL_EQUAL,0x81,0x81); //only pixels that are Modvol enabled, and in area 1
 		
 		//clear the stencil result bit
@@ -997,6 +1018,7 @@ static void DrawModVols(void)
 
 		//don't do depth testing
 		glDisable(GL_DEPTH_TEST);
+      gl_state.cap_state[0] = 0;
 
 		SetupMainVBO();
 		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
@@ -1009,8 +1031,11 @@ static void DrawModVols(void)
 	//restore states
 	glDepthMask(GL_TRUE);
 	glDisable(GL_BLEND);
+   gl_state.cap_state[1] = 0;
 	glEnable(GL_DEPTH_TEST);
+   gl_state.cap_state[0] = 1;
 	glDisable(GL_STENCIL_TEST);
+   gl_state.cap_state[7] = 0;
 }
 #endif
 
@@ -1329,6 +1354,8 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	glUseProgram(program);
 
 	verify(glIsProgram(program));
+
+   gl_state.program = modvol_shader.program;
 
 	return program;
 }
@@ -1958,10 +1985,13 @@ static bool RenderFrame(void)
 	if (settings.rend.WideScreen && pvrrc.fb_X_CLIP.min==0 && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) && (pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ) )
 	{
 		glDisable(GL_SCISSOR_TEST);
+      gl_state.cap_state[6] = 0;
 	}
 	else
+   {
 		glEnable(GL_SCISSOR_TEST);
-
+      gl_state.cap_state[6] = 1;
+   }
 
 	//restore scale_x
 	scale_x /= scissoring_scale_x;
@@ -1971,7 +2001,9 @@ static bool RenderFrame(void)
 
 	//initial state
 	glDisable(GL_BLEND);
+   gl_state.cap_state[1] = 0;
 	glEnable(GL_DEPTH_TEST);
+   gl_state.cap_state[0] = 1;
 
 	//We use sampler 0
 	glActiveTexture(GL_TEXTURE0);
@@ -1993,6 +2025,7 @@ static bool RenderFrame(void)
 	//Alpha blended
 	//Setup blending
 	glEnable(GL_BLEND);
+   gl_state.cap_state[1] = 1;
    gl_state.blendfunc.sfactor = GL_SRC_ALPHA;
    gl_state.blendfunc.dfactor = GL_ONE_MINUS_SRC_ALPHA;
    glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.sfactor);
@@ -2057,6 +2090,8 @@ struct glesrend : Renderer
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
 	bool Render()
    {
+      unsigned i;
+
       glBindFramebuffer(GL_FRAMEBUFFER, gl_state.framebuf);
       glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
       glClearColor(gl_state.clear_color.r, gl_state.clear_color.g, gl_state.clear_color.b, gl_state.clear_color.a);
@@ -2064,6 +2099,13 @@ struct glesrend : Renderer
       glScissor(gl_state.scissor.x, gl_state.scissor.y, gl_state.scissor.w, gl_state.scissor.h);
       glUseProgram(gl_state.program);
       glViewport(gl_state.viewport.x, gl_state.viewport.y, gl_state.viewport.w, gl_state.viewport.h);
+      for(i = 0; i < SGL_CAP_MAX; i ++)
+      {
+         if (gl_state.cap_state[i])
+            glEnable(cap_translate[i]);
+         else
+            glDisable(cap_translate[i]);
+      }
       bool ret = RenderFrame();
       return ret;
    }

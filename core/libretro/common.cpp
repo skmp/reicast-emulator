@@ -1,5 +1,7 @@
 #include "types.h"
 
+#include <errno.h>
+
 #if defined(__MACH__) || defined(__linux__)
 
 #ifdef __MACH__
@@ -200,23 +202,7 @@ static void install_fault_handler (void)
 #endif
 }
 
-#include <errno.h>
 
-void VArray2::LockRegion(u32 offset,u32 size)
-{
-#if !defined(TARGET_NO_EXCEPTIONS)
-   u32 inpage=offset & PAGE_MASK;
-   u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ );
-   if (rv!=0)
-   {
-      printf("mprotect(%08X,%08X,R) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
-      die("mprotect  failed ..\n");
-   }
-
-#else
-   printf("VA2: LockRegion\n");
-#endif
-}
 
 static void print_mem_addr(void)
 {
@@ -241,21 +227,6 @@ static void print_mem_addr(void)
       fclose(ofp);
 }
 
-void VArray2::UnLockRegion(u32 offset,u32 size)
-{
-#if !defined(TARGET_NO_EXCEPTIONS)
-   u32 inpage=offset & PAGE_MASK;
-   u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ | PROT_WRITE);
-   if (rv!=0)
-   {
-      print_mem_addr();
-      printf("mprotect(%8p,%08X,RW) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
-      die("mprotect  failed ..\n");
-   }
-#else
-   printf("VA2: UnLockRegion\n");
-#endif
-}
 
 static void enable_runfast(void)
 {
@@ -277,9 +248,53 @@ static void enable_runfast(void)
 }
 #endif
 
+void VArray2::LockRegion(u32 offset,u32 size)
+{
+#ifdef _WIN32
+   verify(size!=0);
+	DWORD old;
+	VirtualProtect(((u8*)data)+offset , size, PAGE_READONLY,&old);
+#else
+#if !defined(TARGET_NO_EXCEPTIONS)
+   u32 inpage=offset & PAGE_MASK;
+   u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ );
+   if (rv!=0)
+   {
+      printf("mprotect(%08X,%08X,R) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
+      die("mprotect  failed ..\n");
+   }
+#endif
+#endif
+   printf("VA2: LockRegion\n");
+}
+
+void VArray2::UnLockRegion(u32 offset,u32 size)
+{
+#ifdef _WIN32
+   verify(size!=0);
+	DWORD old;
+	VirtualProtect(((u8*)data)+offset , size, PAGE_READWRITE,&old);
+#else
+#if !defined(TARGET_NO_EXCEPTIONS)
+   u32 inpage=offset & PAGE_MASK;
+   u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ | PROT_WRITE);
+   if (rv!=0)
+   {
+      print_mem_addr();
+      printf("mprotect(%8p,%08X,RW) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
+      die("mprotect  failed ..\n");
+   }
+#endif
+#endif
+   printf("VA2: UnLockRegion\n");
+}
+
 void common_libretro_setup(void)
 {
-#if defined(__MACH__) || defined(__linux__)
+#if defined(_WIN32)
+   ReserveBottomMemory();
+
+#elif defined(__MACH__) || defined(__linux__)
    enable_runfast();
    install_fault_handler();
    signal(SIGINT, exit);

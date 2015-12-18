@@ -139,8 +139,7 @@ SOURCES_CXX += $(CORE_DIR)/hw/sh4/dyna/decoder.cpp \
 endif
 
 SOURCES_CXX += $(CORE_DIR)/libretro/libretro.cpp \
-					$(CORE_DIR)/libretro/common.cpp \
-					$(CORE_DIR)/libretro/context.cpp
+					$(CORE_DIR)/libretro/common.cpp
 
 SOURCES_C +=   $(CORE_DIR)/libretro-common/libco/libco.c \
 					$(CORE_DIR)/libretro-common/memmap/memalign.c \

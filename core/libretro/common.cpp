@@ -1,9 +1,17 @@
 #include "types.h"
 
-#ifdef __MACH__
-	#define _XOPEN_SOURCE 1
-	#define __USE_GNU 1
+#if !defined(TARGET_NO_EXCEPTIONS)
+#include <ucontext.h>
 #endif
+#if defined(_ANDROID)
+#include <asm/sigcontext.h>
+#endif
+
+#ifdef __MACH__
+#define _XOPEN_SOURCE 1
+#define __USE_GNU 1
+#endif
+
 #include <fcntl.h>
 #include <semaphore.h>
 #include <stdarg.h>
@@ -14,9 +22,86 @@
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
 
-#include "context.h"
-
 #include "hw/sh4/dyna/ngen.h"
+
+struct rei_host_context_t {
+#if HOST_CPU != CPU_GENERIC
+	unat pc;
+#endif
+
+#if HOST_CPU == CPU_X86
+	u32 eax;
+	u32 ecx;
+	u32 esp;
+#elif HOST_CPU == CPU_ARM
+	u32 r[15];
+#endif
+};
+
+#define MCTX(p) (((ucontext_t *)(segfault_ctx))->uc_mcontext p)
+template <typename Ta, typename Tb>
+static void bicopy(Ta& rei, Tb& seg, bool to_segfault)
+{
+   if (to_segfault)
+      seg = rei;
+   else
+      rei = seg;
+}
+
+static void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_segfault)
+{
+#if !defined(TARGET_NO_EXCEPTIONS)
+#if HOST_CPU == CPU_ARM
+#ifdef __linux__
+   bicopy(reictx->pc, MCTX(.arm_pc), to_segfault);
+   u32* r =(u32*) &MCTX(.arm_r0);
+
+   for (int i = 0; i < 15; i++)
+      bicopy(reictx->r[i], r[i], to_segfault);
+#elif defined(__MACH__)
+   bicopy(reictx->pc, MCTX(->__ss.__pc), to_segfault);
+
+   for (int i = 0; i < 15; i++)
+      bicopy(reictx->r[i], MCTX(->__ss.__r[i]), to_segfault);
+#endif
+
+#elif HOST_CPU == CPU_X86
+#ifdef __linux__
+   bicopy(reictx->pc, MCTX(.gregs[REG_EIP]), to_segfault);
+   bicopy(reictx->esp, MCTX(.gregs[REG_ESP]), to_segfault);
+   bicopy(reictx->eax, MCTX(.gregs[REG_EAX]), to_segfault);
+   bicopy(reictx->ecx, MCTX(.gregs[REG_ECX]), to_segfault);
+#elif defined(__MACH__)
+   bicopy(reictx->pc, MCTX(->__ss.__eip), to_segfault);
+   bicopy(reictx->esp, MCTX(->__ss.__esp), to_segfault);
+   bicopy(reictx->eax, MCTX(->__ss.__eax), to_segfault);
+   bicopy(reictx->ecx, MCTX(->__ss.__ecx), to_segfault);
+#endif
+#elif HOST_CPU == CPU_X64
+#ifdef __linux__
+   bicopy(reictx->pc, MCTX(.gregs[REG_RIP]), to_segfault);
+#elif defined(__MACH__)
+   bicopy(reictx->pc, MCTX(->__ss.__rip), to_segfault);
+#endif
+#elif HOST_CPU == CPU_MIPS
+   bicopy(reictx->pc, MCTX(.pc), to_segfault);
+#elif HOST_CPU == CPU_GENERIC
+   //nothing!
+#else
+#error Unsupported HOST_CPU
+#endif
+#endif
+}
+
+static void context_from_segfault(rei_host_context_t* reictx, void* segfault_ctx)
+{
+   context_segfault(reictx, segfault_ctx, false);
+}
+
+static void context_to_segfault(rei_host_context_t* reictx, void* segfault_ctx)
+{
+	context_segfault(reictx, segfault_ctx, true);
+}
 
 #if !defined(TARGET_NO_EXCEPTIONS)
 bool ngen_Rewrite(unat& addr,unat retadr,unat acc);

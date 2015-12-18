@@ -2104,6 +2104,9 @@ struct glesrend : Renderer
       glScissor(gl_state.scissor.x, gl_state.scissor.y, gl_state.scissor.w, gl_state.scissor.h);
       glUseProgram(gl_state.program);
       glViewport(gl_state.viewport.x, gl_state.viewport.y, gl_state.viewport.w, gl_state.viewport.h);
+#ifdef CORE
+      glBindVertexArray(vbo.vao);
+#endif
       for(i = 0; i < SGL_CAP_MAX; i ++)
       {
          if (gl_state.cap_state[i])

@@ -2,8 +2,6 @@
 
 #include <errno.h>
 
-#if defined(__MACH__) || defined(__linux__)
-
 #ifdef __MACH__
 #define _XOPEN_SOURCE 1
 #define __USE_GNU 1
@@ -249,7 +247,6 @@ static void enable_runfast(void)
    printf("ARM VFP-Run Fast (NFP) enabled !\n");
 #endif
 }
-#endif
 
 void VArray2::LockRegion(u32 offset,u32 size)
 {

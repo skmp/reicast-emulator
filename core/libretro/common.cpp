@@ -6,7 +6,9 @@
 #endif
 
 #if !defined(TARGET_NO_EXCEPTIONS)
+#ifndef _WIN32
 #include <ucontext.h>
+#endif
 #endif
 #if defined(_ANDROID)
 #include <asm/sigcontext.h>

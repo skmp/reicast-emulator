@@ -1,15 +1,15 @@
 #include "types.h"
 
+#ifdef __MACH__
+#define _XOPEN_SOURCE 1
+#define __USE_GNU 1
+#endif
+
 #if !defined(TARGET_NO_EXCEPTIONS)
 #include <ucontext.h>
 #endif
 #if defined(_ANDROID)
 #include <asm/sigcontext.h>
-#endif
-
-#ifdef __MACH__
-#define _XOPEN_SOURCE 1
-#define __USE_GNU 1
 #endif
 
 #include <fcntl.h>

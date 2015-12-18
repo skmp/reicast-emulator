@@ -81,7 +81,7 @@ u32 bm_gc_luc,bm_gcf_luc;
 bool BM_LockedWrite(u8* address);
 DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
-	DynarecCodeEntryPtr rv=(DynarecCodeEntryPtr)FPCA(addr);
+   DynarecCodeEntryPtr& rv = FPCA(addr);
 
 	return (DynarecCodeEntryPtr)rv;
 }

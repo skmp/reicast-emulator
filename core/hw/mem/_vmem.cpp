@@ -553,28 +553,10 @@ void* _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
 
 void* _nvmem_alloc_mem(void)
 {
-
-#ifdef __MACH__
    string path = get_writable_data_path("/dcnzorz_mem");
    fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
    unlink(path.c_str());
    verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
-#elif defined(ANDROID)
-   fd = ashmem_create_region(0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE);
-#else
-   string path = get_writable_data_path("/dcnzorz_mem");
-   fd = shm_open(path.c_str(), O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
-   shm_unlink(path.c_str());
-   if (fd==-1)
-   {
-      fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
-      unlink(path.c_str());
-   }
-
-   verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
-#endif
-
-
 
    u32 sz= 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE + 0x10000;
    void* rv=mmap(0, sz, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);

@@ -70,7 +70,7 @@ static const int cap_translate[SGL_CAP_MAX] =
 struct vbo_type
 {
    GLuint geometry,modvols,idxs,idxs2;
-#ifndef GLES
+#ifdef CORE
    GLuint vao;
 #endif
 };
@@ -838,7 +838,7 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 
 static void SetupMainVBO(void)
 {
-#ifndef GLES
+#ifdef CORE
 	glBindVertexArray(vbo.vao);
 #endif
 
@@ -862,7 +862,7 @@ static void SetupMainVBO(void)
 
 static void SetupModvolVBO(void)
 {
-#ifndef GLES
+#ifdef CORE
 	glBindVertexArray(vbo.vao);
 #endif
 
@@ -1437,7 +1437,7 @@ bool CompilePipelineShader(void *data)
 
 static bool gl_create_resources(void)
 {
-#ifndef GLES
+#ifdef CORE
 	//create vao
 	//This is really not "proper", vaos are suposed to be defined once
 	//i keep updating the same one to make the es2 code work in 3.1 context
@@ -2118,7 +2118,7 @@ struct glesrend : Renderer
 	void Present()
    {
       /* restore state */
-#ifndef GLES
+#ifdef CORE
       glBindVertexArray(0);
 #endif
       glDisable(GL_BLEND);

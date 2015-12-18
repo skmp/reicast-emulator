@@ -181,8 +181,6 @@ void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 			RaiseException(0x40, 0x400);
 		else							//ITLBMISS - Instruction TLB Miss Exception
 			RaiseException(0x40, 0x400);
-
-		return;
 		break;
 
 		//TLB Multyhit
@@ -198,10 +196,7 @@ void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 		else if (am == MMU_TT_DREAD)		//READPROT - Data TLB Protection Violation Exception
 			RaiseException(0xA0, 0x100);
 		else
-		{
 			verify(false);
-		}
-		return;
 		break;
 
 		//Mem is write protected , firstwrite
@@ -210,8 +205,6 @@ void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 		verify(am == MMU_TT_DWRITE);
 		//FIRSTWRITE - Initial Page Write Exception
 		RaiseException(0x80, 0x100);
-
-		return;
 		break;
 
 		//data read/write missasligned
@@ -227,7 +220,6 @@ void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 			return;
 		}
 		printf_mmu("MMU_ERROR_BADADDR(d) 0x%X, handled\n", address);
-		return;
 		break;
 
 		//Can't Execute
@@ -236,11 +228,8 @@ void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 
 		//EXECPROT - Instruction TLB Protection Violation Exception
 		RaiseException(0xA0, 0x100);
-		return;
 		break;
 	}
-
-	__debugbreak();
 }
 
 bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data)
@@ -256,9 +245,7 @@ bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data)
 		bool asid_match = (Data.SH == 0) && ((sr.MD == 0) || (CCN_MMUCR.SV == 0));
 
 		if ((asid_match == false) || (Address.ASID == CCN_PTEH.ASID))
-		{
 			return true;
-		}
 	}
 
 	return false;
@@ -292,13 +279,8 @@ u32 mmu_full_lookup(u32 va, u32& idx, u32& rv)
 	if (nom != 1)
 	{
 		if (nom)
-		{
 			return MMU_ERROR_TLB_MHIT;
-		}
-		else
-		{
-			return MMU_ERROR_TLB_MISS;
-		}
+      return MMU_ERROR_TLB_MISS;
 	}
 
 	idx = entry;
@@ -489,13 +471,8 @@ retry_ITLB_Match:
 	else if (nom != 1)
 	{
 		if (nom)
-		{
 			return MMU_ERROR_TLB_MHIT;
-		}
-		else
-		{
-			return MMU_ERROR_TLB_MISS;
-		}
+      return MMU_ERROR_TLB_MISS;
 	}
 
 	CCN_MMUCR.LRUI &= ITLB_LRU_AND[entry];
@@ -506,9 +483,7 @@ retry_ITLB_Match:
 	//0X  & User mode-> protection violation
 	//Priv mode protection
 	if ((md == 0) && sr.MD == 0)
-	{
-		return MMU_ERROR_PROTECTED;
-	}
+      return MMU_ERROR_PROTECTED;
 
 	return MMU_ERROR_NONE;
 }

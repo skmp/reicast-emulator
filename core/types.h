@@ -7,7 +7,6 @@
 #else
 #define __forceinline inline
 #define DECL_ALIGN(x) __attribute__((aligned(x)))
-#define __debugbreak
 #endif
 
 

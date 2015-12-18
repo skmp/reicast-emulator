@@ -18,12 +18,15 @@
 #include <asm/sigcontext.h>
 #endif
 
+
 #include <fcntl.h>
 #include <semaphore.h>
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/param.h>
+#ifndef _WIN32
 #include <sys/mman.h>
+#endif
 #include <sys/time.h>
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"

@@ -15,7 +15,7 @@ volatile u32 ReadPtr;   //next sample to read
 
 extern retro_audio_sample_batch_t audio_batch_cb;
 
-bool RegisterAudioBackend(audiobackend_t *backend)
+bool RegisterAudioBackend(void)
 {
 	return true;
 }

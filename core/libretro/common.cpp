@@ -259,33 +259,21 @@ void VArray2::LockRegion(u32 offset,u32 size)
 
 void print_mem_addr(void)
 {
+   char line [ 512 ];
    FILE *ifp, *ofp;
-
-   char outputFilename[] = "/data/data/com.reicast.emulator/files/mem_alloc.txt";
 
    ifp = fopen("/proc/self/maps", "r");
 
-   if (ifp == NULL) {
+   if (ifp == NULL)
+   {
       fprintf(stderr, "Can't open input file /proc/self/maps!\n");
       exit(1);
    }
 
-   ofp = fopen(outputFilename, "w");
+   ofp = stderr;
 
-   if (ofp == NULL) {
-      fprintf(stderr, "Can't open output file %s!\n",
-            outputFilename);
-#ifdef __linux__
-      ofp = stderr;
-#else
-      exit(1);
-#endif
-   }
-
-   char line [ 512 ];
-   while (fgets(line, sizeof line, ifp) != NULL) {
+   while (fgets(line, sizeof line, ifp) != NULL)
       fprintf(ofp, "%s", line);
-   }
 
    fclose(ifp);
    if (ofp != stderr)

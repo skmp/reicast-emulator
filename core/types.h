@@ -5,7 +5,9 @@
 #ifdef _MSC_VER
 #define DECL_ALIGN(x) __declspec(align(x))
 #else
+#ifndef __forceinline
 #define __forceinline inline
+#endif
 #define DECL_ALIGN(x) __attribute__((aligned(x)))
 #endif
 

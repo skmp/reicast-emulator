@@ -62,7 +62,6 @@ SOURCES_CXX := $(CORE_DIR)/hw/arm7/arm_mem.cpp \
 					$(CORE_DIR)/oslib/audiostream.cpp \
 					$(CORE_DIR)/imgread/ImgReader.cpp \
 					$(CORE_DIR)/imgread/cdi.cpp \
-					$(CORE_DIR)/imgread/ioctl.cpp \
 					$(CORE_DIR)/imgread/chd.cpp \
 					$(CORE_DIR)/imgread/common.cpp \
 					$(CORE_DIR)/imgread/gdi.cpp \

@@ -28,9 +28,6 @@ Compression
 	look into it, but afaik PVRC is not realtime doable
 */
 
-u16 temp_tex_buffer[1024*1024];
-extern u32 decoded_colors[3][65536];
-
 typedef void TexConvFP(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
 
 struct PvrTexInfo
@@ -70,7 +67,19 @@ const u32 MipPoint[8] =
 const GLuint PAL_TYPE[4]=
 {GL_UNSIGNED_SHORT_5_5_5_1,GL_UNSIGNED_SHORT_5_6_5,GL_UNSIGNED_SHORT_4_4_4_4,GL_UNSIGNED_SHORT_4_4_4_4};
 
+u16 temp_tex_buffer[1024*1024];
+extern u32 decoded_colors[3][65536];
 
+
+struct FBT
+{
+	u32 TexAddr;
+	GLuint depthb,stencilb;
+	GLuint tex;
+	GLuint fbo;
+};
+
+FBT fb_rtt;
 
 //Texture Cache :)
 struct TextureCacheData
@@ -306,48 +315,55 @@ struct TextureCacheData
 		//lock the texture to detect changes in it
 		lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
 
-		if (texID) {
-			//upload to OpenGL !
-			glBindTexture(GL_TEXTURE_2D, texID);
-			GLuint comps=textype==GL_UNSIGNED_SHORT_5_6_5?GL_RGB:GL_RGBA;
-			glTexImage2D(GL_TEXTURE_2D, 0,comps , w, h, 0, comps, textype, temp_tex_buffer);
-			if (tcw.MipMapped && settings.rend.UseMipmaps)
-				glGenerateMipmap(GL_TEXTURE_2D);
-		}
+		if (texID)
+      {
+         //upload to OpenGL !
+         glBindTexture(GL_TEXTURE_2D, texID);
+         GLuint comps=textype==GL_UNSIGNED_SHORT_5_6_5?GL_RGB:GL_RGBA;
+         glTexImage2D(GL_TEXTURE_2D, 0,comps , w, h, 0, comps, textype, temp_tex_buffer);
+         if (tcw.MipMapped && settings.rend.UseMipmaps)
+            glGenerateMipmap(GL_TEXTURE_2D);
+      }
 		else
       {
-				if (textype == GL_UNSIGNED_SHORT_5_6_5)
-					tex_type = 0;
-				else if (textype == GL_UNSIGNED_SHORT_5_5_5_1)
-					tex_type = 1;
-				else if (textype == GL_UNSIGNED_SHORT_4_4_4_4)
-					tex_type = 2;
-	
-				if (pData)
-            {
+         switch (textype)
+         {
+            case GL_UNSIGNED_SHORT_5_6_5:
+               tex_type = 0;
+               break;
+            case GL_UNSIGNED_SHORT_5_5_5_1:
+               tex_type = 1;
+               break;
+            case GL_UNSIGNED_SHORT_4_4_4_4:
+               tex_type = 2;
+               break;
+         }
+
+         if (pData)
+         {
 #ifdef __SSE4_1__
-               _mm_free(pData);
+            _mm_free(pData);
 #else
-               memalign_free(pData);
+            memalign_free(pData);
 #endif
+         }
+
+#ifdef __SSE4_1__
+         pData = (u16*)_mm_malloc(w * h * 16, 16);
+#else
+         pData = (u16*)memalign_alloc(16, w * h * 16);
+#endif
+         for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+               u32* data = (u32*)&pData[(x + y*w) * 8];
+
+               data[0] = decoded_colors[tex_type][temp_tex_buffer[(x + 1) % w + (y + 1) % h * w]];
+               data[1] = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 1) % h * w]];
+               data[2] = decoded_colors[tex_type][temp_tex_buffer[(x + 1) % w + (y + 0) % h * w]];
+               data[3] = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 0) % h * w]];
             }
-	
-#ifdef __SSE4_1__
-            pData = (u16*)_mm_malloc(w * h * 16, 16);
-#else
-				pData = (u16*)memalign_alloc(16, w * h * 16);
-#endif
-				for (int y = 0; y < h; y++) {
-					for (int x = 0; x < w; x++) {
-						u32* data = (u32*)&pData[(x + y*w) * 8];
-	
-						data[0] = decoded_colors[tex_type][temp_tex_buffer[(x + 1) % w + (y + 1) % h * w]];
-						data[1] = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 1) % h * w]];
-						data[2] = decoded_colors[tex_type][temp_tex_buffer[(x + 1) % w + (y + 0) % h * w]];
-						data[3] = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 0) % h * w]];
-					}
-				}
-		}
+         }
+      }
 	}
 
 	//true if : dirty or paletted texture and revs don't match
@@ -375,18 +391,6 @@ map<u64,TextureCacheData> TexCache;
 typedef map<u64,TextureCacheData>::iterator TexCacheIter;
 
 //TexCacheList<TextureCacheData> TexCache;
-
-struct FBT
-{
-	u32 TexAddr;
-	GLuint depthb,stencilb;
-	GLuint tex;
-	GLuint fbo;
-};
-
-FBT fb_rtt;
-
-
 
 /* FIXME: make this work with libretro-gl framebuffers */
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)

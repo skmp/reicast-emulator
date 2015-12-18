@@ -858,6 +858,7 @@ static void SetupMainVBO(void)
 
 	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
 	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
+
 }
 
 static void SetupModvolVBO(void)
@@ -1026,6 +1027,8 @@ static void DrawModVols(void)
 		//Draw and blend
 		glDrawArrays(GL_TRIANGLES,pvrrc.modtrig.used(),2);
 
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
 	//restore states
@@ -2048,6 +2051,9 @@ static bool RenderFrame(void)
 #endif
 	}
 
+   glBindBuffer(GL_ARRAY_BUFFER, 0);
+   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 	KillTex=false;
 
 	return !is_rtt;
@@ -2124,7 +2130,6 @@ struct glesrend : Renderer
       glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
       glCullFace(GL_BACK);
       glDepthMask(GL_TRUE);
-      glActiveTexture(GL_TEXTURE0);
       glUseProgram(0);
       glClearColor(0,0,0,0.0f);
       glStencilOp(GL_KEEP,GL_KEEP, GL_KEEP);

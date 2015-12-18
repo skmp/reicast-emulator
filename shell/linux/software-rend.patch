@@ -13,43 +13,6 @@ index d0bc5a3..2bc6d22 100644
  #else
  	renderer = rend_GLES2();
  #endif
-diff --git a/core/linux-dist/x11.cpp b/core/linux-dist/x11.cpp
-index cd23568..2cecef4 100644
---- a/core/linux-dist/x11.cpp
-+++ b/core/linux-dist/x11.cpp
-@@ -27,9 +27,13 @@ map<int, int> x11_keymap;
- int x11_dc_buttons = 0xFFFF;
- int x11_keyboard_input = 0;
- 
-+int x11_width;
-+int x11_height;
-+
- int ndcid = 0;
- void* x11_glc;
- bool x11_fullscreen = false;
-+void *x11_vis;
- 
- enum
- {
-@@ -270,8 +274,8 @@ void x11_window_create()
- 		sWA.event_mask = StructureNotifyMask | ExposureMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask;
- 		ui32Mask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
- 
--		int x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
--		int x11_height = cfgLoadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
-+		x11_width      = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
-+		x11_height     = cfgLoadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
- 		x11_fullscreen = (cfgLoadInt("x11", "fullscreen", DEFAULT_FULLSCREEN) > 0);
- 
- 		if (x11_width < 0 || x11_height < 0)
-@@ -326,6 +330,7 @@ void x11_window_create()
- 		//(EGLNativeDisplayType)x11Display;
- 		x11_disp = (void*)x11Display;
- 		x11_win = (void*)x11Window;
-+      x11_vis = (void*)x11Visual->visual;
- 	}
- 	else
- 	{
 diff --git a/core/rend/gles/gltex.cpp b/core/rend/gles/gltex.cpp
 index 14c12e7..9e0b67a 100644
 --- a/core/rend/gles/gltex.cpp
@@ -470,29 +433,3 @@ index d816d64..1229394 100644
 -}
 \ No newline at end of file
 +}
-diff --git a/shell/linux/Makefile b/shell/linux/Makefile
-index 82fc98e..4d6c5d4 100644
---- a/shell/linux/Makefile
-+++ b/shell/linux/Makefile
-@@ -70,7 +70,9 @@ else ifneq (,$(findstring x64,$(platform)))
- 	 WITH_DYNAREC := x64
-     USE_X11 := 1
-     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fsingle-precision-constant
-+	 CFLAGS += -msse4.1
-     CXXFLAGS += -fexceptions
-+	 LDFLAGS += -fopenmp
- 
- # Generic 32 bit ARMhf (a.k.a. ARMv7h)
- else ifneq (,$(findstring armv7h,$(platform)))
-diff --git a/shell/linux/Makefile.common b/shell/linux/Makefile.common
-index 14dda45..a18446a 100644
---- a/shell/linux/Makefile.common
-+++ b/shell/linux/Makefile.common
-@@ -89,6 +89,7 @@ SOURCES_CXX := $(CORE_DIR)/cfg/cfg.cpp \
- 					$(CORE_DIR)/deps/chdpsr/cdipsr.cpp \
- 					\
- 					$(CORE_DIR)/rend/TexCache.cpp \
-+					$(CORE_DIR)/rend/soft/softrend.cpp \
- 					\
- 					$(CORE_DIR)/reios/reios_elf.cpp \
- 					$(CORE_DIR)/reios/reios.cpp \

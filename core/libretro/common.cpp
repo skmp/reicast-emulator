@@ -198,49 +198,6 @@ void install_fault_handler (void)
 #endif
 }
 
-//cResetEvent Calss
-cResetEvent::cResetEvent(bool State,bool Auto)
-{
-   //sem_init((sem_t*)hEvent, 0, State?1:0);
-   verify(State==false&&Auto==true);
-   mutx = slock_new();
-   cond = scond_new();
-}
-
-cResetEvent::~cResetEvent()
-{
-	//Destroy the event object ?
-
-}
-
-void cResetEvent::Set()//Signal
-{
-   slock_lock(mutx);
-	state=true;
-   scond_signal(cond);
-   slock_unlock(mutx);
-}
-void cResetEvent::Reset()//reset
-{
-   slock_lock(mutx);
-	state=false;
-   slock_unlock(mutx);
-}
-void cResetEvent::Wait(u32 msec)//Wait for signal , then reset
-{
-	verify(false);
-}
-void cResetEvent::Wait()//Wait for signal , then reset
-{
-   slock_lock(mutx);
-	if (!state)
-		scond_wait( cond, mutx );
-	state=false;
-   slock_unlock(mutx);
-}
-
-//End AutoResetEvent
-
 #include <errno.h>
 
 void VArray2::LockRegion(u32 offset,u32 size)

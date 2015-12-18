@@ -17,12 +17,12 @@
 #include <mmintrin.h>
 #include <xmmintrin.h>
 #include <emmintrin.h>
-
-BITMAPINFOHEADER bi = { sizeof(BITMAPINFOHEADER), 0, 0, 1, 32, BI_RGB };
+#ifdef __SSE4_1__
+#include <smmintrin.h>
+#endif
+#include <cmath>
 
 #include "rend/gles/gles.h"
-
-u32 decoded_colors[3][65536];
 
 #define MAX_RENDER_WIDTH 640
 #define MAX_RENDER_HEIGHT 480
@@ -34,7 +34,16 @@ u32 decoded_colors[3][65536];
 DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 2]; //Color + depth
 DECL_ALIGN(32) u32 pixels[MAX_RENDER_PIXELS];
 
-
+#ifdef __SSE2__
+union m128i
+{
+	__m128i mm;
+	int8_t m128i_i8[16];
+	int16_t m128i_i16[8];
+	int32_t m128i_i32[4];
+	uint32_t m128i_u32[4];
+};
+#endif
 
 static __m128 _mm_load_scaled_float(float v, float s)
 {
@@ -51,7 +60,7 @@ static __m128i _mm_broadcast_int(int v)
 }
 static __m128 _mm_load_ps_r(float a, float b, float c, float d)
 {
-	__declspec(align(128)) float v[4];
+   DECL_ALIGN(128) float v[4];
 	v[0] = a;
 	v[1] = b;
 	v[2] = c;
@@ -67,14 +76,14 @@ __forceinline int iround(float x)
 
 float mmin(float a, float b, float c, float d)
 {
-	int rv = min(a, b);
+	float rv = min(a, b);
 	rv = min(c, rv);
 	return max(d, rv);
 }
 
 float mmax(float a, float b, float c, float d)
 {
-	int rv = max(a, b);
+	float rv = max(a, b);
 	rv = max(c, rv);
 	return min(d, rv);
 }
@@ -237,11 +246,8 @@ typedef void(*RendtriangleFn)(PolyParam* pp, int vertex_offset, const Vertex &v1
 RendtriangleFn RendtriangleFns[3][2][2][2][4][2];
 
 
-__m128i const_setAlpha = { 0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000 };
-__m128i shuffle_alpha = {
-	0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80,
-	0x06, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80
-};
+__m128i const_setAlpha;
+__m128i shuffle_alpha;
 
 TPL_DECL_pixel
 static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8* cb, __m128 oldmask, IPs& ip)
@@ -303,7 +309,12 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 			__m128i vfi = _mm_cvttps_epi32(_mm_mul_ps(vf, _mm_set1_ps(256)));
 
 			//(int)v<<x+(int)u
-			__m128i textadr = _mm_add_epi32(_mm_slli_epi32(vi, 16), ui);//texture addresses ! 4x of em !
+         __m128i textadr;
+#ifdef __SSE4_1__
+			textadr.mm = _mm_add_epi32(_mm_slli_epi32(vi, 16), ui);//texture addresses ! 4x of em !
+#else
+			textadr    = _mm_add_epi32(_mm_slli_epi32(vi, 16), ui);//texture addresses ! 4x of em !
+#endif
 			__m128i textel;
 
 			for (int i = 0; i < 4; i++) {
@@ -383,13 +394,21 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 			}
 
 			if (pp_IgnoreTexA) {
+#ifdef __SSE4_1__
+            textel.mm = _mm_or_si128(textel.mm, const_setAlpha);
+#else
 				textel = _mm_or_si128(textel, const_setAlpha);
+#endif
 			}
 
 			if (pp_ShadInstr == 0){
 					//color.rgb = texcol.rgb;
 					//color.a = texcol.a;
-				rv = textel;
+#ifdef __SSE4_1__
+            rv = textel.mm;
+#else
+            rv = textel;
+#endif
 			}
 			else if (pp_ShadInstr == 1) {
 				//color.rgb *= texcol.rgb;
@@ -402,9 +421,13 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 				__m128i lo_rv = _mm_cvtepu8_epi16(rv);
 				__m128i hi_rv = _mm_cvtepu8_epi16(_mm_shuffle_epi32(rv, _MM_SHUFFLE(1, 0, 3, 2)));
 
-
+#ifdef __SSE4_1__
+            __m128i lo_fb = _mm_cvtepu8_epi16(textel.mm);
+            __m128i hi_fb = _mm_cvtepu8_epi16(_mm_shuffle_epi32(textel.mm, _MM_SHUFFLE(1, 0, 3, 2)));
+#else
 				__m128i lo_fb = _mm_cvtepu8_epi16(textel);
 				__m128i hi_fb = _mm_cvtepu8_epi16(_mm_shuffle_epi32(textel, _MM_SHUFFLE(1, 0, 3, 2)));
+#endif
 
 
 				lo_rv = _mm_mullo_epi16(lo_rv, lo_fb);
@@ -420,8 +443,13 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 				__m128i hi_rv = _mm_cvtepu8_epi16(_mm_shuffle_epi32(rv, _MM_SHUFFLE(1, 0, 3, 2)));
 
 
+#ifdef __SSE4_1__
+				__m128i lo_fb = _mm_cvtepu8_epi16(textel.mm);
+				__m128i hi_fb = _mm_cvtepu8_epi16(_mm_shuffle_epi32(textel.mm, _MM_SHUFFLE(1, 0, 3, 2)));
+#else
 				__m128i lo_fb = _mm_cvtepu8_epi16(textel);
 				__m128i hi_fb = _mm_cvtepu8_epi16(_mm_shuffle_epi32(textel, _MM_SHUFFLE(1, 0, 3, 2)));
+#endif
 
 				__m128i lo_rv_alpha = _mm_shuffle_epi8(lo_fb, shuffle_alpha);
 				__m128i hi_rv_alpha = _mm_shuffle_epi8(hi_fb, shuffle_alpha);
@@ -460,7 +488,11 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 			
 
 			//textadr = _mm_add_epi32(textadr, _mm_setr_epi32(tex_addr, tex_addr, tex_addr, tex_addr));
+#ifdef __SSE4_1__
+			//rv = textel.mm; // _mm_xor_si128(rv, textadr);
+#else
 			//rv = textel; // _mm_xor_si128(rv, textadr);
+#endif
 		}
 	}
 
@@ -471,12 +503,26 @@ static void PixelFlush(PolyParam* pp, text_info* texture, __m128 x, __m128 y, u8
 		__m128i fb = *(__m128i*)cb;
 
 #if 1
+#ifdef __SSE4_1__
+      m128i mm_rv, mm_fb;
+      mm_rv.mm = rv;
+      mm_fb.mm = fb;
+#endif
 		//ALPHA_TEST
-		for (int i = 0; i < 4; i++) {
-			if (rv.m128i_i8[i * 4 + 3] < PT_ALPHA_REF) {
+		for (int i = 0; i < 4; i++)
+      {
+#ifdef __SSE4_1__
+			if (mm_rv.m128i_i8[i * 4 + 3] < PT_ALPHA_REF)
+				mm_rv.m128i_u32[i] = mm_fb.m128i_u32[i];
+#else
+			if (rv.m128i_i8[i * 4 + 3] < PT_ALPHA_REF)
 				rv.m128i_u32[i] = fb.m128i_u32[i];
-			}
+#endif
 		}
+
+#ifdef __SSE4_1__
+		rv = mm_rv.mm;
+#endif
 #else
 		__m128i ALPHA_TEST = _mm_set1_epi8(PT_ALPHA_REF);
 		__m128i mask = _mm_cmplt_epi8(_mm_subs_epu16(ALPHA_TEST, rv), _mm_setzero_si128());
@@ -673,15 +719,15 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 	u8* cb_y = (u8*)colorBuffer;
 	cb_y += miny*stride_bytes + minx*(q * 4);
 
-	IPs __declspec(align(64)) ip;
+   DECL_ALIGN(64) IPs ip;
 
 	ip.Setup(pp, &texture, v1, v2, v3, minx, miny, q);
 	
 	
 	__m128 y_ps = _mm_broadcast_float(miny);
 	__m128 minx_ps = _mm_load_scaled_float(minx - q, 1);
-	static __declspec(align(16)) float ones_ps[4] = { 1, 1, 1, 1 };
-	static __declspec(align(16)) float q_ps[4] = { q, q, q, q };
+	static DECL_ALIGN(16) float ones_ps[4] = { 1, 1, 1, 1 };
+	static DECL_ALIGN(16) float q_ps[4] = { q, q, q, q };
 
 	// Loop through blocks
 	for (int y = spany; y > 0; y -= q)
@@ -878,25 +924,9 @@ struct softrend : Renderer
 
 
 	virtual bool Init() {
-		hWnd = (HWND)libPvr_GetRenderTarget();
-
-		bi.biWidth = 640;
-		bi.biHeight = 480;
-
-		RECT rect;
-
-		GetClientRect(hWnd, &rect);
-
-		HDC hdc = GetDC(hWnd);
-
-		FillRect(hdc, &rect, (HBRUSH)(COLOR_BACKGROUND));
-
-		bi.biSizeImage = bi.biWidth * bi.biHeight * 4;
-
-		hBMP = CreateCompatibleBitmap(hdc, bi.biWidth, bi.biHeight);
-		hmem = CreateCompatibleDC(hdc);
-		holdBMP = (HBITMAP)SelectObject(hmem, hBMP);
-		ReleaseDC(hWnd, hdc);
+		const_setAlpha = _mm_set1_epi32(0xFF000000);
+		u8 ushuffle[] = { 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80};
+		memcpy(&shuffle_alpha, ushuffle, sizeof(shuffle_alpha));
 
 		#define REP_16(x) ((x)* 16 + (x))
 		#define REP_32(x) ((x)* 8 + (x)/4)
@@ -1116,43 +1146,43 @@ struct softrend : Renderer
 	}
 
 	virtual void Term() {
-		if (hBMP) {
-			DeleteObject(SelectObject(hmem, holdBMP));
-			DeleteDC(hmem);
-		}
 	}
+
+	#define RR(x, a, b, c, d) (x + a), (x + b), (x + c), (x + d)
+	#define R(a, b, c, d) RR(12, a, b, c, d), RR(8, a, b, c, d), RR(4, a, b, c, d),  RR(0, a, b, c, d)
+
+	//R coefs should be adjusted to match pixel format
+	INLINE __m128 shuffle_pixel(__m128 v)
+   {
+		return (__m128)_mm_shuffle_epi8((__m128i)v, _mm_set_epi8(R(0x80,2,1, 0)));
+ 	}
 
 	virtual void Present() {
 
 		__m128* psrc = (__m128*)render_buffer;
 		__m128* pdst = (__m128*)pixels;
 
+		#define SHUFFL(v) v
+
+		#if HOST_OS == OS_WINDOWS
+			#define FLIP_Y 479 - 
+		#else
+			#define FLIP_Y
+		#endif
+
 		const int stride = STRIDE_PIXEL_OFFSET / 4;
 		for (int y = 0; y<MAX_RENDER_HEIGHT; y += 4)
 		{
 			for (int x = 0; x<MAX_RENDER_WIDTH; x += 4)
 			{
-				pdst[(479 - (y + 0))*stride + x / 4] = *psrc++;
-				pdst[(479 - (y + 1))*stride + x / 4] = *psrc++;
-				pdst[(479 - (y + 2))*stride + x / 4] = *psrc++;
-				pdst[(479 - (y + 3))*stride + x / 4] = *psrc++;
+				pdst[(FLIP_Y - (y + 0))*stride + x / 4] = SHUFFL(*psrc++);
+				pdst[(FLIP_Y - (y + 1))*stride + x / 4] = SHUFFL(*psrc++);
+				pdst[(FLIP_Y - (y + 2))*stride + x / 4] = SHUFFL(*psrc++);
+				pdst[(FLIP_Y - (y + 3))*stride + x / 4] = SHUFFL(*psrc++);
 			}
 		}
-		
-		SetDIBits(hmem, hBMP, 0, 480, pixels, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
 
-		RECT clientRect;
-
-		GetClientRect(hWnd, &clientRect);
-
-		HDC hdc = GetDC(hWnd);
-		int w = clientRect.right - clientRect.left;
-		int h = clientRect.bottom - clientRect.top;
-		int x = (w - 640) / 2;
-		int y = (h - 480) / 2;
-
-		BitBlt(hdc, x, y, 640 , 480 , hmem, 0, 0, SRCCOPY);
-		ReleaseDC(hWnd, hdc);
+      /* should do a video_cb call here */
 	}
 };
 

@@ -6,6 +6,10 @@
 
 #include <memalign.h>
 
+#ifdef __SSE4_1__
+#include <xmmintrin.h>
+#endif
+
 /*
 Textures
 
@@ -310,7 +314,6 @@ struct TextureCacheData
 			if (tcw.MipMapped && settings.rend.UseMipmaps)
 				glGenerateMipmap(GL_TEXTURE_2D);
 		}
-#if 0
 		else
       {
 				if (textype == GL_UNSIGNED_SHORT_5_6_5)
@@ -321,9 +324,19 @@ struct TextureCacheData
 					tex_type = 2;
 	
 				if (pData)
-					memalign_free(pData);
+            {
+#ifdef __SSE4_1__
+               _mm_free(pData);
+#else
+               memalign_free(pData);
+#endif
+            }
 	
+#ifdef __SSE4_1__
+            pData = (u16*)_mm_malloc(w * h * 16, 16);
+#else
 				pData = (u16*)memalign_alloc(16, w * h * 16);
+#endif
 				for (int y = 0; y < h; y++) {
 					for (int x = 0; x < w; x++) {
 						u32* data = (u32*)&pData[(x + y*w) * 8];
@@ -335,7 +348,6 @@ struct TextureCacheData
 					}
 				}
 		}
-#endif
 	}
 
 	//true if : dirty or paletted texture and revs don't match
@@ -343,17 +355,16 @@ struct TextureCacheData
 	
 	void Delete()
 	{
-#if 0
       if (pData)
-      {
+#ifdef __SSE4_1__
+         _mm_free(pData);
+#else
          memalign_free(pData);
-         pData = 0;
-      }
 #endif
+      pData = 0;
 		if (texID)
-      {
          glDeleteTextures(1, &texID);
-      }
+      texID = 0;
 		if (lock_block)
 			libCore_vramlock_Unlock_block(lock_block);
 		lock_block=0;

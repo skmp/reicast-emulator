@@ -1,5 +1,7 @@
 #include "types.h"
 
+#if defined(__MACH__) || defined(__linux__)
+
 #ifdef __MACH__
 #define _XOPEN_SOURCE 1
 #define __USE_GNU 1
@@ -26,7 +28,8 @@
 
 #include "hw/sh4/dyna/ngen.h"
 
-struct rei_host_context_t {
+struct rei_host_context_t
+{
 #if HOST_CPU != CPU_GENERIC
 	unat pc;
 #endif
@@ -130,8 +133,7 @@ static void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx)
 }
 #endif
 
-#if !defined(TARGET_NO_EXCEPTIONS)
-void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
+static void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 {
    rei_host_context_t ctx;
 
@@ -176,10 +178,10 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
       signal(SIGSEGV, SIG_DFL);
    }
 }
-#endif
 
 #endif
-void install_fault_handler (void)
+
+static void install_fault_handler (void)
 {
 #if !defined(TARGET_NO_EXCEPTIONS)
    struct sigaction act, segv_oact;
@@ -216,7 +218,7 @@ void VArray2::LockRegion(u32 offset,u32 size)
 #endif
 }
 
-void print_mem_addr(void)
+static void print_mem_addr(void)
 {
    char line [ 512 ];
    FILE *ifp, *ofp;
@@ -255,7 +257,7 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 #endif
 }
 
-void enable_runfast(void)
+static void enable_runfast(void)
 {
 #if HOST_CPU==CPU_ARM && !defined(ARMCC)
    static const unsigned int x = 0x04086060;
@@ -273,15 +275,20 @@ void enable_runfast(void)
    printf("ARM VFP-Run Fast (NFP) enabled !\n");
 #endif
 }
+#endif
 
-void common_linux_setup(void)
+void common_libretro_setup(void)
 {
+#if defined(__MACH__) || defined(__linux__)
    enable_runfast();
    install_fault_handler();
    signal(SIGINT, exit);
+#endif
 
    settings.profile.run_counts=0;
 
+#if defined(__MACH__) || defined(__linux__)
    printf("Linux paging: %08X %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
    verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
+#endif
 }

@@ -59,7 +59,7 @@ SOURCES_CXX := $(CORE_DIR)/hw/arm7/arm_mem.cpp \
 					$(CORE_DIR)/hw/sh4/modules/cpg.cpp \
 					$(CORE_DIR)/hw/sh4/modules/dmac.cpp \
 					$(CORE_DIR)/hw/sh4/modules/mmu.cpp \
-					$(CORE_DIR)/oslib/audiostream_libretro.cpp \
+					$(CORE_DIR)/oslib/audiostream.cpp \
 					$(CORE_DIR)/imgread/ImgReader.cpp \
 					$(CORE_DIR)/imgread/cdi.cpp \
 					$(CORE_DIR)/imgread/ioctl.cpp \
@@ -93,7 +93,7 @@ SOURCES_CXX += $(CORE_DIR)/rend/norend/norend.cpp
 endif
 
 ifeq ($(HAVE_GL), 1)
-SOURCES_CXX += $(CORE_DIR)/rend/gles/gles_libretro.cpp \
+SOURCES_CXX += $(CORE_DIR)/rend/gles/gles.cpp \
 					$(CORE_DIR)/rend/gles/gltex.cpp
 SOURCES_C   += $(CORE_DIR)/libretro-common/glsym/rglgen.c
 ifeq ($(HAVE_GLES), 1)

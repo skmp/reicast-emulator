@@ -664,7 +664,6 @@ bool _vmem_reserve(void)
 	p_sh4rcb=(Sh4RCB*)virt_ram_base;
 
 #ifdef _WIN32
-   //verify(p_sh4rcb==VirtualAlloc(p_sh4rcb,sizeof(Sh4RCB),MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE));
    verify(p_sh4rcb==VirtualAlloc(p_sh4rcb,sizeof(Sh4RCB),MEM_RESERVE,PAGE_NOACCESS));
 
    verify(VirtualAlloc((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb),sizeof(Sh4RCB)-sizeof(p_sh4rcb->fpcb),MEM_COMMIT,PAGE_READWRITE));

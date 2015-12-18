@@ -243,8 +243,9 @@ void spg_Reset(bool Manual)
 	CalculateSync();
 }
 
-
+#if 0
 extern u32 PVR_VTXC;
+#endif
 
 void SetREP(TA_context* cntx)
 {
@@ -252,7 +253,9 @@ void SetREP(TA_context* cntx)
 	if (cntx && !cntx->rend.Overrun)
 	{
 		VertexCount    += cntx->rend.verts.used();
+#if 0
 		PVR_VTXC       += cntx->rend.verts.used();
+#endif
 		pending_cycles  = cntx->rend.verts.used()*60;
 		pending_cycles += 500000*3;
 	}

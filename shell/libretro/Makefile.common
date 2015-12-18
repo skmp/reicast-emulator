@@ -59,11 +59,7 @@ SOURCES_CXX := $(CORE_DIR)/hw/arm7/arm_mem.cpp \
 					$(CORE_DIR)/hw/sh4/modules/cpg.cpp \
 					$(CORE_DIR)/hw/sh4/modules/dmac.cpp \
 					$(CORE_DIR)/hw/sh4/modules/mmu.cpp \
-					\
-					$(CORE_DIR)/profiler/profiler.cpp \
-					\
 					$(CORE_DIR)/oslib/audiostream_libretro.cpp \
-					\
 					$(CORE_DIR)/imgread/ImgReader.cpp \
 					$(CORE_DIR)/imgread/cdi.cpp \
 					$(CORE_DIR)/imgread/ioctl.cpp \

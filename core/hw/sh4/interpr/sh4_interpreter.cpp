@@ -18,7 +18,6 @@
 #include "../modules/tmu.h"
 #include "hw/sh4/sh4_mem.h"
 #include "../modules/ccn.h"
-#include "profiler/profiler.h"
 #include "../dyna/blockmanager.h"
 #include "../sh4_sched.h"
 
@@ -203,11 +202,6 @@ int AicaUpdate(int tag, int c, int j)
 int DreamcastSecond(int tag, int c, int j)
 {
 	settings.dreamcast.RTC++;
-
-#if 1
-	prof_periodical();
-#endif
-
 #if FEAT_SHREC != DYNAREC_NONE
 	bm_Periodical_1s();
 #endif

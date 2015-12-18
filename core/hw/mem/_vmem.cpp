@@ -95,15 +95,15 @@ void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 
 void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
 {
-	u32   page=addr>>24;
-	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
-	void* ptr=(void*)(iirf&~HANDLER_MAX);
-	
-	if (ptr==0)
-	{
-		ismem=false;
-		const unat id=iirf;
-		page_sz=24;
+   u32   page=addr>>24;
+   unat  iirf=(unat)_vmem_MemInfo_ptr[page];
+   void* ptr=(void*)(iirf&~HANDLER_MAX);
+
+   if (ptr==0)
+   {
+      ismem=false;
+      const unat id=iirf;
+      page_sz=24;
       switch (sz)
       {
          case 1:
@@ -113,20 +113,16 @@ void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
          case 4:
             return rw?(void*)_vmem_RF32[id/4]:(void*)_vmem_WF32[id/4];
          default:
-            break;
+            die("Invalid memory size");
+            return 0;
       }
-	}
-	else
-	{
-		ismem=true;
+   }
 
-		page_sz=32-(iirf&0x1F);
+   ismem=true;
 
-		return ptr;
-	}
-	die("Invalid memory size");
+   page_sz=32-(iirf&0x1F);
 
-	return 0;
+   return ptr;
 }
 
 template<typename T,typename Trv>
@@ -164,10 +160,10 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
             return rv;
          }
       default:
+         die("Invalid size");
          break;
    }
 
-   die("Invalid size");
 }
 template<typename T>
 INLINE void DYNACALL _vmem_writet(u32 addr,T data)
@@ -559,19 +555,19 @@ void* _nvmem_alloc_mem(void)
 {
 
 #ifdef __MACH__
-   string path = get_writable_data_path("/dcnzorz_mem");
    fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
    unlink(path.c_str());
    verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
 #elif defined(ANDROID)
    fd = ashmem_create_region(0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE);
 #else
-   fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
-   shm_unlink("/dcnzorz_mem");
+   string path = get_writable_data_path("/dcnzorz_mem");
+   fd = shm_open(path.c_str(), O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
+   shm_unlink(path.c_str());
    if (fd==-1)
    {
-      fd = open("dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
-      unlink("dcnzorz_mem");
+      fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
+      unlink(path.c_str());
    }
 
    verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);

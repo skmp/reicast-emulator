@@ -50,6 +50,12 @@ struct gl_cached_state
       GLsizei w;
       GLsizei h;
    } viewport;
+   struct
+   {
+      GLenum sfactor;
+      GLenum dfactor;
+   } blendfunc;
+   GLenum cullmode;
    GLuint framebuf;
    GLuint program; 
 };
@@ -217,12 +223,13 @@ s32 SetTileClip(u32 val, bool set)
 
 static void SetCull(u32 CulliMode)
 {
-	if (CullMode[CulliMode]==GL_NONE)
+	if (CullMode[CulliMode] == GL_NONE)
 		glDisable(GL_CULL_FACE);
 	else
 	{
 		glEnable(GL_CULL_FACE);
-		glCullFace(CullMode[CulliMode]); //GL_FRONT/GL_BACK, ...
+      gl_state.cullmode = CullMode[CulliMode];
+		glCullFace(gl_state.cullmode); //GL_FRONT/GL_BACK, ...
 	}
 }
 
@@ -283,7 +290,9 @@ static __forceinline void SetGPState(const PolyParam* gp,u32 cflip=0)
 
       if (Type==ListType_Translucent)
       {
-         glBlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
+         gl_state.blendfunc.sfactor = SrcBlendGL[gp->tsp.SrcInstr];
+         gl_state.blendfunc.dfactor = DstBlendGL[gp->tsp.DstInstr];
+         glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
 
 #ifdef WEIRD_SLOWNESS
          //SGX seems to be super slow with discard enabled blended pixels
@@ -297,7 +306,7 @@ static __forceinline void SetGPState(const PolyParam* gp,u32 cflip=0)
    //set cull mode !
    //cflip is required when exploding triangles for triangle sorting
    //gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
-   SetCull(gp->isp.CullMode^cflip^gcflip);
+   SetCull(gp->isp.CullMode ^ cflip ^ gcflip);
 
 
    if (gp->isp.full!= cache.isp.full)
@@ -860,7 +869,9 @@ static void DrawModVols(void)
 	SetupModvolVBO();
 
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+   gl_state.blendfunc.sfactor = GL_SRC_ALPHA;
+   gl_state.blendfunc.dfactor = GL_ONE_MINUS_SRC_ALPHA;
+   glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
 
    gl_state.program = modvol_shader.program;
 	glUseProgram(gl_state.program);
@@ -969,7 +980,9 @@ static void DrawModVols(void)
 
 		//black out any stencil with '1'
 		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+      gl_state.blendfunc.sfactor = GL_SRC_ALPHA;
+      gl_state.blendfunc.dfactor = GL_ONE_MINUS_SRC_ALPHA;
+      glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
 		
 		glEnable(GL_STENCIL_TEST);
 		glStencilFunc(GL_EQUAL,0x81,0x81); //only pixels that are Modvol enabled, and in area 1
@@ -1478,6 +1491,9 @@ static bool gles_init(void)
    if (!gl_create_resources())
       return false;
 
+   gl_state.framebuf = hw_render.get_current_framebuffer();
+   gl_state.cullmode = GL_BACK;
+
    return true;
 }
 
@@ -1977,7 +1993,9 @@ static bool RenderFrame(void)
 	//Alpha blended
 	//Setup blending
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+   gl_state.blendfunc.sfactor = GL_SRC_ALPHA;
+   gl_state.blendfunc.dfactor = GL_ONE_MINUS_SRC_ALPHA;
+   glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.sfactor);
 	/*if (!GetAsyncKeyState(VK_F3))*/
 	{
 		/*
@@ -2028,16 +2046,21 @@ void co_dc_yield(void);
 
 struct glesrend : Renderer
 {
-	bool Init() { libCore_vramlock_Init(); return gles_init(); }
+	bool Init()
+   {
+      libCore_vramlock_Init();
+      return gles_init();
+   }
 	void Resize(int w, int h) { gles_screen_width=w; gles_screen_height=h; }
 	void Term() { libCore_vramlock_Free(); }
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
 	bool Render()
    {
-      gl_state.framebuf = hw_render.get_current_framebuffer();
       glBindFramebuffer(GL_FRAMEBUFFER, gl_state.framebuf);
+      glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
       glClearColor(gl_state.clear_color.r, gl_state.clear_color.g, gl_state.clear_color.b, gl_state.clear_color.a);
+		glCullFace(gl_state.cullmode);
       glScissor(gl_state.scissor.x, gl_state.scissor.y, gl_state.scissor.w, gl_state.scissor.h);
       glUseProgram(gl_state.program);
       glViewport(gl_state.viewport.x, gl_state.viewport.y, gl_state.viewport.w, gl_state.viewport.h);

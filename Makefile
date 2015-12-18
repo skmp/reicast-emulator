@@ -81,7 +81,7 @@ ifdef ARM_FLOAT_ABI_HARD
 	CFLAGS += -DARM_HARDFP
 endif
 
-CORE_DIR := ../../core
+CORE_DIR := core
 
 DYNAREC_USED = 0
 

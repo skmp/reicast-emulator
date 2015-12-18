@@ -13,8 +13,7 @@ u32 detwiddle[2][8][1024];
 //U : x resolution , V : y resolution
 //twiddle works on 64b words
 
-
-u32 twiddle_slow(u32 x,u32 y,u32 x_sz,u32 y_sz)
+static u32 twiddle_slow(u32 x,u32 y,u32 x_sz,u32 y_sz)
 {
 	u32 rv=0;//low 2 bits are directly passed  -> needs some misc stuff to work.However
 			 //Pvr internally maps the 64b banks "as if" they were twiddled :p
@@ -46,7 +45,7 @@ u32 twiddle_slow(u32 x,u32 y,u32 x_sz,u32 y_sz)
 	return rv;
 }
 
-void BuildTwiddleTables()
+static void BuildTwiddleTables(void)
 {
 	for (u32 s=0;s<8;s++)
 	{
@@ -62,45 +61,37 @@ void BuildTwiddleTables()
 
 static OnLoad btt(&BuildTwiddleTables);
 
-void palette_update()
+void palette_update(void)
 {
-	if (pal_needs_update==false)
-		return;
-	memcpy(pal_rev_256,_pal_rev_256,sizeof(pal_rev_256));
-	memcpy(pal_rev_16,_pal_rev_16,sizeof(pal_rev_16));
+   if (pal_needs_update==false)
+      return;
+   memcpy(pal_rev_256,_pal_rev_256,sizeof(pal_rev_256));
+   memcpy(pal_rev_16,_pal_rev_16,sizeof(pal_rev_16));
 
 #define PixelPacker pp_dx
-	pal_needs_update=false;
-	switch(PAL_RAM_CTRL&3)
-	{
-	case 0:
-		for (int i=0;i<1024;i++)
-		{
-			palette_ram[i]=ARGB1555(PALETTE_RAM[i]);
-		}
-		break;
+   pal_needs_update=false;
+   switch(PAL_RAM_CTRL&3)
+   {
+      case 0:
+         for (int i=0;i<1024;i++)
+            palette_ram[i]=ARGB1555(PALETTE_RAM[i]);
+         break;
 
-	case 1:
-		for (int i=0;i<1024;i++)
-		{
-			palette_ram[i]=ARGB565(PALETTE_RAM[i]);
-		}
-		break;
+      case 1:
+         for (int i=0;i<1024;i++)
+            palette_ram[i]=ARGB565(PALETTE_RAM[i]);
+         break;
 
-	case 2:
-		for (int i=0;i<1024;i++)
-		{
-			palette_ram[i]=ARGB4444(PALETTE_RAM[i]);
-		}
-		break;
+      case 2:
+         for (int i=0;i<1024;i++)
+            palette_ram[i]=ARGB4444(PALETTE_RAM[i]);
+         break;
 
-	case 3:
-		for (int i=0;i<1024;i++)
-		{
-			palette_ram[i]=ARGB8888(PALETTE_RAM[i]);
-		}
-		break;
-	}
+      case 3:
+         for (int i=0;i<1024;i++)
+            palette_ram[i]=ARGB8888(PALETTE_RAM[i]);
+         break;
+   }
 
 }
 
@@ -124,9 +115,7 @@ void vramlock_list_remove(vram_block* block)
 		for (size_t j=0;j<list->size();j++)
 		{
 			if ((*list)[j]==block)
-			{
 				(*list)[j]=0;
-			}
 		}
 	}
 }

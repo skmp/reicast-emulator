@@ -255,19 +255,6 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 #endif
 }
 
-#if TARGET_IPHONE
-void os_DebugBreak()
-{
-    __asm__("trap");
-}
-
-#if !defined(__linux__)
-void os_DebugBreak()
-{
-	__builtin_trap();
-}
-#endif
-
 void enable_runfast(void)
 {
 #if HOST_CPU==CPU_ARM && !defined(ARMCC)
@@ -298,4 +285,3 @@ void common_linux_setup(void)
    printf("Linux paging: %08X %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
    verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
 }
-#endif

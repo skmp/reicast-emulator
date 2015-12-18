@@ -60,7 +60,6 @@ retro_environment_t        environ_cb = NULL;
 struct retro_hw_render_callback hw_render;
 #endif
 
-void common_linux_setup();
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
 
@@ -151,8 +150,6 @@ void retro_set_environment(retro_environment_t cb)
 }
 
 
-void install_fault_handler (void);//TODO: this is in core/linux/common.cpp and should not be referenced from libretro
-
 // Now comes the interesting stuff
 void retro_init(void)
 {
@@ -171,8 +168,6 @@ void retro_init(void)
    // Set color mode
    unsigned color_mode = RETRO_PIXEL_FORMAT_XRGB8888;
    environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &color_mode);
-
-   install_fault_handler();
 
    co_dc_init(0, NULL);
 }

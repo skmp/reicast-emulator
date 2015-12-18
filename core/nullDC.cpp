@@ -90,11 +90,17 @@ void plugins_Reset(bool Manual)
 	//libExtDevice_Reset(Manual);
 }
 
+
 int dc_init(int argc,wchar* argv[])
 {
 	setbuf(stdin,0);
 	setbuf(stdout,0);
 	setbuf(stderr,0);
+#if defined(__linux__) || defined(__MACH__)
+   extern void common_linux_setup(void);
+   common_linux_setup();
+#endif
+
 	if (!_vmem_reserve())
 	{
 		printf("Failed to alloc mem\n");

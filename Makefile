@@ -1,8 +1,9 @@
-DEBUG      := 0
-NO_REND    := 0
-HAVE_GL    := 1
-HAVE_CORE  := 0
-NO_THREADS := 1
+DEBUG         := 0
+NO_REND       := 0
+HAVE_GL       := 1
+HAVE_CORE     := 0
+NO_THREADS    := 1
+NO_EXCEPTIONS := 0
 
 TARGET_NAME := reicast
 
@@ -429,6 +430,12 @@ ifeq ($(NO_REND),1)
   RZDCY_CFLAGS += -DNO_REND=1
   CFLAGS 	 += -DNO_REND
   CXXFLAGS += -DNO_REND
+endif
+
+ifeq ($(NO_EXCEPTIONS),1)
+  RZDCY_CFLAGS += -DTARGET_NO_EXCEPTIONS=1
+  CFLAGS 	 += -DTARGET_NO_EXCEPTIONS
+  CXXFLAGS += -DTARGET_NO_EXCEPTIONS
 endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11

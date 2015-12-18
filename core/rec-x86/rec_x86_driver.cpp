@@ -1,9 +1,9 @@
 #include "types.h"
 
+#include "../libretro/libretro.h"
+
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
 #include "rec_x86_ngen.h"
-
-
 
 struct DynaRBI: RuntimeBlockInfo
 {
@@ -31,60 +31,34 @@ bool sse_3=true;
 bool ssse_3=true;
 bool mmx=true;
 
-void DetectCpuFeatures()
+extern retro_get_cpu_features_t perf_get_cpu_features_cb;
+
+void DetectCpuFeatures(void)
 {
+   unsigned cpu = 0;
 	static bool detected=false;
 	if (detected) return;
 	detected=true;
 
-#ifdef _WIN32
-	__try
-	{
-		__asm addps xmm0,xmm0
-	}
-	__except(1) 
-	{
-		sse_1=false;
-	}
+   if (perf_get_cpu_features_cb)
+      cpu = perf_get_cpu_features_cb();
 
-	__try
-	{
-		__asm addpd xmm0,xmm0
-	}
-	__except(1) 
-	{
-		sse_2=false;
-	}
-
-	__try
-	{
-		__asm addsubpd xmm0,xmm0
-	}
-	__except(1) 
-	{
-		sse_3=false;
-	}
-
-	__try
-	{
-		__asm phaddw xmm0,xmm0
-	}
-	__except(1) 
-	{
-		ssse_3=false;
-	}
-
-	
-	__try
-	{
-		__asm paddd mm0,mm1
-		__asm emms;
-	}
-	__except(1) 
-	{
-		mmx=false;
-	}
-	#endif
+   sse_1  = false;
+   sse_2  = false;
+   sse_3  = false;
+   ssse_3 = false;
+   mmx    = false;
+   
+   if (cpu & RETRO_SIMD_SSE)
+      sse_1 = true;
+   if (cpu & RETRO_SIMD_SSE2)
+      sse_2 = true;
+   if (cpu & RETRO_SIMD_SSE3)
+      sse_3 = true;
+   if (cpu & RETRO_SIMD_SSSE3)
+      ssse_3 = true;
+   if (cpu & RETRO_SIMD_MMX)
+      mmx    = true;
 }
 
 

@@ -45,6 +45,9 @@ enum DreamcastController
 	DC_AXIS_Y  = 0X20001,
 };
 
+struct retro_perf_callback perf_cb;
+retro_get_cpu_features_t perf_get_cpu_features_cb = NULL;
+
 // Callbacks
 retro_log_printf_t         log_cb = NULL;
 retro_video_refresh_t      video_cb = NULL;
@@ -159,6 +162,11 @@ void retro_init(void)
       log_cb = log.log;
    else
       log_cb = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_PERF_INTERFACE, &perf_cb))
+      perf_get_cpu_features_cb = perf_cb.get_cpu_features;
+   else
+      perf_get_cpu_features_cb = NULL;
 
    // Set color mode
    unsigned color_mode = RETRO_PIXEL_FORMAT_XRGB8888;

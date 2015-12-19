@@ -49,38 +49,43 @@ static struct
 	u32 sector_type;
 } read_params;
 
-static struct
+struct packet_cmd_t
 {
 	u32 index;
 	union
 	{
 		u16 data_16[6];
 		u8 data_8[12];
-		//Spi command structs
-		union 
-		{
-			struct 
-			{
-				u8 cc;
 
-				u8 prmtype  : 1 ;
-				u8 expdtype : 3 ;
-				//	u8 datasel	: 4 ;
-				u8 other    : 1 ; //"other" data. I guess that means SYNC/ECC/EDC ?
-				u8 data     : 1 ; //user data. 2048 for mode1, 2048 for m2f1, 2324 for m2f2
-				u8 subh     : 1 ; //8 bytes, mode2 subheader
-				u8 head     : 1 ; //4 bytes, main CDROM header
+      /* SPI command structs */
+      struct 
+      {
+         u8 cc;
 
-				u8 block[10];
-			};
+#ifdef MSB_FIRST
+         u8 head		: 1 ; //4 bytes, main cdrom header
+         u8 subh		: 1 ; //8 bytes, mode2 subheader
+         u8 data		: 1 ; //user data. 2048 for mode1, 2048 for m2f1, 2324 for m2f2
+         u8 other	: 1 ; //"other" data. I guess that means SYNC/ECC/EDC ?
+         //	u8 datasel	: 4 ;
+         u8 expdtype	: 3 ;
+         u8 prmtype	: 1 ;	
+#else
+         u8 prmtype	: 1 ;	
+         u8 expdtype	: 3 ;
+         //	u8 datasel	: 4 ;
+         u8 other	: 1 ; //"other" data. I guess that means SYNC/ECC/EDC ?
+         u8 data		: 1 ; //user data. 2048 for mode1, 2048 for m2f1, 2324 for m2f2
+         u8 subh		: 1 ; //8 bytes, mode2 subheader
+         u8 head		: 1 ; //4 bytes, main cdrom header
+#endif
 
-			struct 
-			{
-				u8 b[12];
-			};
-		}GDReadBlock;
+         u8 block[10];
+      }GDReadBlock;
 	};
-} packet_cmd;
+};
+
+static packet_cmd_t packet_cmd;
 
 //Buffer for sector reads [dma]
 static struct
@@ -568,11 +573,8 @@ void gd_process_spi_cmd()
 			else if(readcmd.head ||readcmd.subh || readcmd.other || (!readcmd.data)) // assert
 				printf("GDROM: *FIXME* ADD MORE CD READ SETTINGS %d %d %d %d 0x%01X\n",readcmd.head,readcmd.subh,readcmd.other,readcmd.data,readcmd.expdtype);
 
-			u32 start_sector = GetFAD(&readcmd.b[2],readcmd.prmtype);
-			u32 sector_count = (readcmd.b[8]<<16) | (readcmd.b[9]<<8) | (readcmd.b[10]);
-
-			read_params.start_sector=start_sector;
-			read_params.remaining_sectors=sector_count;
+         read_params.start_sector = GetFAD(&packet_cmd.data_8[2],packet_cmd.GDReadBlock.prmtype);
+         read_params.remaining_sectors = (u32)(packet_cmd.data_8[8]<<16) | (packet_cmd.data_8[9]<<8) | (packet_cmd.data_8[10]);
 			read_params.sector_type = sector_type;//yeah i know , not really many types supported...
 
 			printf_spicmd("SPI_CD_READ - Sector=%d Size=%d/%d DMA=%d\n",read_params.start_sector,read_params.remaining_sectors,read_params.sector_type,Features.CDRead.DMA);

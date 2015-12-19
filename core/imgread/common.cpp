@@ -288,20 +288,34 @@ void TermDrive()
 u32 CreateTrackInfo(u32 ctrl,u32 addr,u32 fad)
 {
 	u8 p[4];
+#ifdef MSB_FIRST
+	p[1]=(ctrl<<4)|(addr<<0);
+	p[0]=fad>>16;
+	p[3]=fad>>8;
+	p[2]=fad>>0;
+#else
 	p[0]=(ctrl<<4)|(addr<<0);
 	p[1]=fad>>16;
 	p[2]=fad>>8;
 	p[3]=fad>>0;
+#endif
 
 	return *(u32*)p;
 }
 u32 CreateTrackInfo_se(u32 ctrl,u32 addr,u32 tracknum)
 {
 	u8 p[4];
+#ifdef MSB_FIRST
+	p[1]=(ctrl<<4)|(addr<<0);
+	p[0]=tracknum;
+	p[3]=0;
+	p[2]=0;
+#else
 	p[0]=(ctrl<<4)|(addr<<0);
 	p[1]=tracknum;
 	p[2]=0;
 	p[3]=0;
+#endif
 	return *(u32*)p;
 }
 

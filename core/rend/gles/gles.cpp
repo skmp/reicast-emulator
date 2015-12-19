@@ -5,6 +5,7 @@
 #include "../../libretro/libretro.h"
 
 extern struct retro_hw_render_callback hw_render;
+extern bool enable_rtt;
 
 struct modvol_shader_type
 {
@@ -1595,11 +1596,9 @@ static void ClearBG(void)
 
 static bool ProcessFrame(TA_context* ctx)
 {
-#if 0
    //disable RTTs for now ..
-   if (ctx->rend.isRTT)
+   if (!enable_rtt && ctx->rend.isRTT)
       return false;
-#endif
 
 #ifndef TARGET_NO_THREADS
    slock_lock(ctx->rend_inuse);

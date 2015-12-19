@@ -143,6 +143,10 @@ void retro_set_environment(retro_environment_t cb)
          "reicast_cable_type",
          "Cable type; TV (VBS/Y+S/C)|TV (RGB)|VGA (0)(RGB)|VGA (1)(RGB)",
       },
+      {
+         "reicast_enable_rtt",
+         "Enable RTT (Render To Texture); enabled|disabled", 
+      },
       { NULL, NULL },
    };
 
@@ -176,6 +180,9 @@ void retro_deinit(void)
 {
    //TODO
 }
+
+bool enable_rtt     = true;
+static bool is_dupe = false;
 
 static void update_variables(void)
 {
@@ -223,9 +230,18 @@ static void update_variables(void)
       else if (!strcmp("TV (VBS/Y+S/C)", var.value))
          settings.dreamcast.cable = 3;
    }
+
+   var.key = "reicast_enable_rtt";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("disabled", var.value))
+         enable_rtt = false;
+      else
+         enable_rtt = true;
+   }
 }
 
-static bool is_dupe = false;
 
 void retro_run (void)
 {

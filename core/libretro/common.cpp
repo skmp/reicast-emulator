@@ -45,7 +45,7 @@ bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
 bool BM_LockedWrite(u8* address);
 
 
-LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
+static LONG ExceptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 {
    EXCEPTION_POINTERS* ep = ExceptionInfo;
 
@@ -136,7 +136,7 @@ __gnat_SEH_error_handler(struct _EXCEPTION_RECORD* ExceptionRecord,
    ep.ContextRecord = ContextRecord;
    ep.ExceptionRecord = ExceptionRecord;
 
-   return (EXCEPTION_DISPOSITION)ExeptionHandler(&ep);
+   return (EXCEPTION_DISPOSITION)ExceptionHandler(&ep);
 }
 
 PRUNTIME_FUNCTION

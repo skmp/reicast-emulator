@@ -344,6 +344,7 @@ static void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 
 #endif
 
+#ifndef _WIN32
 static void install_fault_handler (void)
 {
 #if !defined(TARGET_NO_EXCEPTIONS)
@@ -362,8 +363,7 @@ static void install_fault_handler (void)
 #endif
 #endif
 }
-
-
+#endif
 
 static void print_mem_addr(void)
 {

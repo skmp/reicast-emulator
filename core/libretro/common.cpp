@@ -265,7 +265,9 @@ void VArray2::LockRegion(u32 offset,u32 size)
    }
 #endif
 #endif
+#ifndef NDEBUG
    printf("VA2: LockRegion\n");
+#endif
 }
 
 void VArray2::UnLockRegion(u32 offset,u32 size)
@@ -286,7 +288,9 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
    }
 #endif
 #endif
+#ifndef NDEBUG
    printf("VA2: UnLockRegion\n");
+#endif
 }
 
 static void ReserveBottomMemory(void)

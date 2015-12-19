@@ -38,6 +38,7 @@
 #include <windows.h>
 
 #define UNW_FLAG_NHANDLER 0x00
+#define UNW_FLAG_UHANDLER 0x02
 
 bool VramLockedWrite(u8* address);
 bool ngen_Rewrite(unat& addr,unat retadr,unat acc);

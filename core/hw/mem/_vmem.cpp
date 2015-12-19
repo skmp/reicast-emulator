@@ -485,7 +485,10 @@ void* _nvmem_unused_buffer(u32 start,u32 end)
 {
    void* ptr=mmap(&virt_ram_base[start], end-start, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
    if (MAP_FAILED==ptr)
+   {
+      printf("nvmem_unused_buffer failed!\n");
       return 0;
+   }
    return ptr;
 }
 
@@ -528,8 +531,12 @@ void* _nvmem_alloc_mem(void)
    verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
 
    u32 sz= 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE + 0x10000;
+
    void* rv=mmap(0, sz, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
-   verify(rv != NULL);
+   if (rv == MAP_FAILED)
+   {
+      printf("nvmem_alloc_mem failed!\n");
+   }
    munmap(rv,sz);
    return (u8*)rv + 0x10000 - unat(rv)%0x10000;//align to 64 KB (Needed for linaro mmap not to extend to next region)
 }
@@ -619,7 +626,8 @@ bool _vmem_reserve(void)
 
    verify(VirtualAlloc((u8*)p_sh4rcb + sizeof(p_sh4rcb->fpcb),sizeof(Sh4RCB)-sizeof(p_sh4rcb->fpcb),MEM_COMMIT,PAGE_READWRITE));
 #else
-   verify(p_sh4rcb==mmap(p_sh4rcb,sizeof(Sh4RCB),PROT_READ|PROT_WRITE,MAP_PRIVATE | MAP_ANON, -1, 0));
+   void *ret = mmap(p_sh4rcb,sizeof(Sh4RCB),PROT_READ|PROT_WRITE,MAP_PRIVATE | MAP_ANON, -1, 0);
+   verify(p_sh4rcb == ret);
 #endif
 	virt_ram_base+=sizeof(Sh4RCB);
 

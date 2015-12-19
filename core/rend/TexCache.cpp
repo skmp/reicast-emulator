@@ -150,7 +150,7 @@ slock_t *vramlist_lock;
 #endif
 
 //simple IsInRange test
-inline bool IsInRange(vram_block* block,u32 offset)
+static inline bool IsInRange(vram_block* block,u32 offset)
 {
 	return (block->start<=offset) && (block->end>=offset);
 }

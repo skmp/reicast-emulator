@@ -383,14 +383,14 @@ void _vmem_term()
 
 u8* virt_ram_base;
 
-void* malloc_pages(size_t size)
+static void* malloc_pages(size_t size)
 {
 	u8* rv = (u8*)malloc(size + PAGE_SIZE);
 
 	return rv + PAGE_SIZE - ((unat)rv % PAGE_SIZE);
 }
 
-bool _vmem_reserve_nonvmem(void)
+static bool _vmem_reserve_nonvmem(void)
 {
 	virt_ram_base = 0;
 
@@ -430,7 +430,7 @@ void _vmem_bm_reset(void)
 #ifdef _WIN32
 HANDLE mem_handle;
 
-void* _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
+static void* _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
 {
 	void* ptr;
 	void* rv;
@@ -453,8 +453,7 @@ void* _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
 	return rv;
 }
 
-
-void* _nvmem_unused_buffer(u32 start,u32 end)
+static void* _nvmem_unused_buffer(u32 start,u32 end)
 {
 	void* ptr=VirtualAlloc(&virt_ram_base[start],end-start,MEM_RESERVE,PAGE_NOACCESS);
 
@@ -464,7 +463,7 @@ void* _nvmem_unused_buffer(u32 start,u32 end)
 	return ptr;
 }
 
-void* _nvmem_alloc_mem()
+static void* _nvmem_alloc_mem(void)
 {
 	mem_handle=CreateFileMapping(INVALID_HANDLE_VALUE,0,PAGE_READWRITE ,0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE,0);
 
@@ -481,7 +480,7 @@ void* _nvmem_alloc_mem()
 
 int fd;
 
-void* _nvmem_unused_buffer(u32 start,u32 end)
+static void* _nvmem_unused_buffer(u32 start,u32 end)
 {
    void* ptr=mmap(&virt_ram_base[start], end-start, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
    if (MAP_FAILED==ptr)
@@ -492,7 +491,7 @@ void* _nvmem_unused_buffer(u32 start,u32 end)
    return ptr;
 }
 
-void* _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
+static void * _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
 {
    void* ptr;
    void* rv;
@@ -523,7 +522,7 @@ void* _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
    return rv;
 }
 
-void* _nvmem_alloc_mem(void)
+static void* _nvmem_alloc_mem(void)
 {
    string path = get_writable_data_path("/dcnzorz_mem");
    fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);

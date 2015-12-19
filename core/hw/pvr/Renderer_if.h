@@ -42,8 +42,6 @@ struct Renderer
 
 	virtual void Present()=0;
 
-	virtual void DrawOSD() { }
-
 	virtual u32 GetTexture(TSP tsp, TCW tcw) { return 0; }
 };
 

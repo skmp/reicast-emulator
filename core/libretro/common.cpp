@@ -35,7 +35,6 @@
 #include "../oslib/oslib.h"
 #include "../imgread/common.h"
 
-#define _WIN32_WINNT 0x0500 
 #include <windows.h>
 
 bool VramLockedWrite(u8* address);

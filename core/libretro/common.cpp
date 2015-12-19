@@ -294,6 +294,7 @@ static void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx)
 }
 #endif
 
+#if defined(__MACH__) || defined(__linux__)
 static void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 {
    rei_host_context_t ctx;
@@ -339,6 +340,7 @@ static void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
       signal(SIGSEGV, SIG_DFL);
    }
 }
+#endif
 
 #endif
 

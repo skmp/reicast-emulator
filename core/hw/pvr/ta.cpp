@@ -11,15 +11,8 @@ extern u32 ta_type_lut[256];
 	Render/TA thread -> ta data -> draw lists -> draw
 */
 
-#ifdef _WIN32
-extern u32 SQW,DMAW;
-#define SQWC(x) (SQW+=x)
-#define DMAWC(x) (DMAW+=x)
-#else
 #define SQWC(x)
 #define DMAWC(x)
-
-#endif
 
 /*
 	Partial TA parsing for in emu-side handling. Properly tracks 32/64 byte state, and

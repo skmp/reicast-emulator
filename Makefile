@@ -4,7 +4,7 @@ HAVE_GL       := 1
 HAVE_CORE     := 0
 NO_THREADS    := 1
 NO_EXCEPTIONS := 0
-NO_VMEM       := 0
+NO_NVMEM      := 0
 
 TARGET_NAME := reicast
 

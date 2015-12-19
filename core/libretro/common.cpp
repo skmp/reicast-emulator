@@ -61,14 +61,10 @@ static LONG ExceptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
    //printf("[EXC] During access to : 0x%X\n", address);
 
    if (VramLockedWrite(address))
-   {
       return EXCEPTION_CONTINUE_EXECUTION;
-   }
 #ifndef TARGET_NO_NVMEM
-   else if (BM_LockedWrite(address))
-   {
+   if (BM_LockedWrite(address))
       return EXCEPTION_CONTINUE_EXECUTION;
-   }
 #endif
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
    else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
@@ -309,8 +305,12 @@ static void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
    //printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,ctx->uc_mcontext.arm_pc,dyna_cde);
 
 
-   if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
+   if (VramLockedWrite((u8*)si->si_addr))
       return;
+#ifndef TARGET_NO_NVMEM
+   if (BM_LockedWrite((u8*)si->si_addr))
+      return;
+#endif
 #if FEAT_SHREC == DYNAREC_JIT
 #if HOST_CPU==CPU_ARM
    else if (dyna_cde)

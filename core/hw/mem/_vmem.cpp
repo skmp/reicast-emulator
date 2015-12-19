@@ -701,6 +701,10 @@ bool _vmem_reserve(void)
 	return virt_ram_base!=0;
 }
 #else
+bool BM_LockedWrite(u8* address)
+{
+   return false;
+}
 
 bool _vmem_reserve(void)
 {

@@ -307,7 +307,10 @@ case num : {\
 	template <u32 poly_type,u32 poly_size>
 	static Ta_Dma* TACALL ta_poly_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
+#if 0
+      /* TODO/FIXME - honor this or not? */
 		__assume(data<=data_end);
+#endif
 
       //If SZ64  && 32 bytes
 #define IS_FIST_HALF ((poly_size!=SZ32) && (data==data_end))

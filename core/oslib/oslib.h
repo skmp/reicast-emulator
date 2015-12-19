@@ -23,7 +23,4 @@ u32 static INLINE bitscanrev(u32 v)
 #endif
 }
 
-//FIX ME
-#define __assume(x)
-
 void os_DebugBreak();

@@ -24,6 +24,14 @@ int render_end_schid;
 int vblank_schid;
 int time_sync;
 
+double speed_load_mspdf;
+
+int mips_counter;
+
+double full_rps;
+
+u32 fskip=0;
+
 void CalculateSync(void)
 {
 	float scale_x=1,scale_y=1;
@@ -67,20 +75,13 @@ void CalculateSync(void)
 
 void os_wait_cycl(u32 c);
 
-int elapse_time(int tag, int cycl, int jit)
+static int elapse_time(int tag, int cycl, int jit)
 {
 	return min(max(Frame_Cycles,(u32)1*1000*1000),(u32)8*1000*1000);
 }
 
-double speed_load_mspdf;
-
-int mips_counter;
-
-double full_rps;
-
-u32 fskip=0;
 //called from sh4 context , should update pvr/ta state and everything else
-int spg_line_sched(int tag, int cycl, int jit)
+static int spg_line_sched(int tag, int cycl, int jit)
 {
 	clc_pvr_scanline += cycl;
 
@@ -214,7 +215,7 @@ int spg_line_sched(int tag, int cycl, int jit)
 	return (min_active-prv_cur_scanline)*Line_Cycles;
 }
 
-int rend_end_sch(int tag, int cycl, int jitt)
+static int rend_end_sch(int tag, int cycl, int jitt)
 {
 	asic_RaiseInterrupt(holly_RENDER_DONE);
 	asic_RaiseInterrupt(holly_RENDER_DONE_isp);

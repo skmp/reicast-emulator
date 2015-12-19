@@ -14,6 +14,8 @@ extern u32 ta_type_lut[256];
 #define SQWC(x)
 #define DMAWC(x)
 
+#define ta_cur_state  (ta_fsm[2048])
+
 /*
 	Partial TA parsing for in emu-side handling. Properly tracks 32/64 byte state, and
 	Calls a helper function every time something important (SOL/EOL, etc) happens
@@ -46,15 +48,24 @@ enum ta_state
 
 
 	               // -> TAS_MLV64
-	TAS_MLV64_H,   //mv list, 64 bit half
+	TAS_MLV64_H    //mv list, 64 bit half
 };
 
-/* state | PTEOS | OBJ -> next, proc*/
-
-#define ta_cur_state  (ta_fsm[2048])
+const HollyInterruptID ListEndInterrupt[5]=
+{
+	holly_OPAQUE,
+	holly_OPAQUEMOD,
+	holly_TRANS,
+	holly_TRANSMOD,
+	holly_PUNCHTHRU
+};
 
 u8 ta_fsm[2049];	//[2048] stores the current state
 u32 ta_fsm_cl=7;
+
+
+/* state | PTEOS | OBJ -> next, proc*/
+
 
 static void fill_fsm(ta_state st, s8 pt, s8 obj, ta_state next, u32 proc=0, u32 sz64=0)
 {
@@ -171,17 +182,7 @@ static void fill_fsm(void)
 	fill_fsm(TAS_MLV64_H,-1,-1,TAS_MLV64); //64 MH -> expect M64
 }
 
-const HollyInterruptID ListEndInterrupt[5]=
-{
-	holly_OPAQUE,
-	holly_OPAQUEMOD,
-	holly_TRANS,
-	holly_TRANSMOD,
-	holly_PUNCHTHRU
-};
-
-
-NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
+static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 {
 	Ta_Dma* dat=(Ta_Dma*)(ta_tad.thd_data-32);
 
@@ -250,9 +251,7 @@ void ta_vtx_SoftReset(void)
 	ta_cur_state=TAS_NS;
 }
 
-
-INLINE
-void DYNACALL ta_thd_data32_i(void* data)
+static INLINE void DYNACALL ta_thd_data32_i(void* data)
 {		
 	f64* dst=(f64*)ta_tad.thd_data;
 	f64* src=(f64*)data;
@@ -276,7 +275,6 @@ void DYNACALL ta_thd_data32_i(void* data)
 	if (unlikely(must_handle))
 		ta_handle_cmd(trans);
 }
-
 
 void DYNACALL ta_vtx_data32(void* data)
 {

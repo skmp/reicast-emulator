@@ -67,7 +67,7 @@ static LONG ExceptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
       return EXCEPTION_CONTINUE_EXECUTION;
 #endif
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
-   else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
+   if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
    {
       //remove the call from call stack
       ep->ContextRecord->Esp+=4;
@@ -313,14 +313,14 @@ static void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 #endif
 #if FEAT_SHREC == DYNAREC_JIT
 #if HOST_CPU==CPU_ARM
-   else if (dyna_cde)
+   if (dyna_cde)
    {
       ctx.pc = (u32)ngen_readm_fail_v2((u32*)ctx.pc, ctx.r, (unat)si->si_addr);
 
       context_to_segfault(&ctx, segfault_ctx);
    }
 #elif HOST_CPU==CPU_X86
-   else if (ngen_Rewrite((unat&)ctx.pc, *(unat*)ctx.esp, ctx.eax))
+   if (ngen_Rewrite((unat&)ctx.pc, *(unat*)ctx.esp, ctx.eax))
    {
       //remove the call from call stack
       ctx.esp += 4;

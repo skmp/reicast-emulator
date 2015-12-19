@@ -54,6 +54,7 @@ void YUV_init(void)
 }
 
 
+#if 0
 INLINE u8 GetY420(int x, int y,u8* base)
 {
 	//u32 base=0;
@@ -79,8 +80,9 @@ INLINE u8 GetUV420(int x, int y,u8* base)
 
 	return base[realx+realy*8];
 }
+#endif
 
-void YUV_Block8x8(u8* inuv,u8* iny, u8* out)
+static void YUV_Block8x8(u8* inuv,u8* iny, u8* out)
 {
 	u8* line_out_0=out+0;
 	u8* line_out_1=out+YUV_x_size*2;
@@ -116,7 +118,7 @@ void YUV_Block8x8(u8* inuv,u8* iny, u8* out)
 	}
 }
 
-INLINE void YUV_Block384(u8* in, u8* out)
+static INLINE void YUV_Block384(u8* in, u8* out)
 {
 	u8* inuv=in;
 	u8* iny=in+128;
@@ -128,7 +130,7 @@ INLINE void YUV_Block384(u8* in, u8* out)
 	YUV_Block8x8(inuv+36,iny+192,p_out+YUV_x_size*8*2+8*2); //(8,8)
 }
 
-INLINE void YUV_ConvertMacroBlock(u8* datap)
+static INLINE void YUV_ConvertMacroBlock(u8* datap)
 {
 	//do shit
 	TA_YUV_TEX_CNT++;

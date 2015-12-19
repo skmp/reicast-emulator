@@ -1595,9 +1595,11 @@ static void ClearBG(void)
 
 static bool ProcessFrame(TA_context* ctx)
 {
+#if 0
    //disable RTTs for now ..
    if (ctx->rend.isRTT)
       return false;
+#endif
 
 #ifndef TARGET_NO_THREADS
    slock_lock(ctx->rend_inuse);
@@ -1758,6 +1760,41 @@ static bool RenderFrame(void)
 	{
 		scale_x*=2;
 	}
+
+   if (is_rtt)
+   {
+      switch (gles_screen_width)
+      {
+         case 640:
+            scale_x = 1;
+            scale_y = 1;
+            break;
+         case 1280:
+            scale_x = 2;
+            scale_y = 2;
+            break;
+         case 1920:
+            scale_x = 3;
+            scale_y = 3;
+            break;
+         case 2560:
+            scale_x = 4;
+            scale_y = 4;
+            break;
+         case 3200:
+            scale_x = 5;
+            scale_y = 5;
+            break;
+         case 3840:
+            scale_x = 6;
+            scale_y = 6;
+            break;
+         case 4480:
+            scale_x = 7;
+            scale_y = 7;
+            break;
+      }
+   }
 
 	dc_width  *= scale_x;
 	dc_height *= scale_y;

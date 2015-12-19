@@ -130,25 +130,11 @@ public:
 
 	INLINE T& operator [](const u32 i)
 	{
-#ifdef MEM_BOUND_CHECK
-		if (i>=Size)
-		{
-			printf("Error: Array %d , index out of range (%d>%d)\n",id,i,Size-1);
-			MEM_DO_BREAK;
-		}
-#endif
 		return data[i];
 	}
 
 	INLINE T& operator [](const s32 i)
 	{
-#ifdef MEM_BOUND_CHECK
-		if (!(i>=0 && i<(s32)Size))
-		{
-			printf("Error: Array %d , index out of range (%d > %d)\n",id,i,Size-1);
-			MEM_DO_BREAK;
-		}
-#endif
 		return data[i];
 	}
 };
@@ -206,13 +192,6 @@ public:
 
 	INLINE u8& operator [](const u32 i)
     {
-#ifdef MEM_BOUND_CHECK
-        if (i>=size)
-		{
-			printf("Error: VArray2 , index out of range (%d>%d)\n",i,size-1);
-			MEM_DO_BREAK;
-		}
-#endif
 		return data[i];
     }
 };

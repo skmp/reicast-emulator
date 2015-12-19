@@ -225,16 +225,19 @@ static void update_variables(void)
    }
 }
 
+static bool is_dupe = false;
+
 void retro_run (void)
 {
    bool updated = false;
+   is_dupe      = false;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       update_variables();
 
+   poll_cb();
    co_dc_run();
-
 #if defined(GL) || defined(GLES)
-   video_cb(RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
+   video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
 #endif
 
 }
@@ -429,9 +432,9 @@ unsigned retro_api_version(void)
 }
 
 //Reicast stuff
-void os_DoEvents()
+void os_DoEvents(void)
 {
-   poll_cb();
+   is_dupe = true;
 }
 
 void os_CreateWindow()

@@ -1586,9 +1586,6 @@ static void tryfit(float* x,float* y)
 	//printf("%f\n",B*log(maxdev)/log(2.0)+A);
 }
 
-u32 osd_base;
-u32 osd_count;
-
 static void ClearBG(void)
 {
 

@@ -181,8 +181,8 @@ void retro_deinit(void)
    //TODO
 }
 
-bool enable_rtt     = true;
-static bool is_dupe = false;
+bool enable_rtt = true;
+bool is_dupe    = false;
 
 static void update_variables(void)
 {
@@ -246,7 +246,6 @@ static void update_variables(void)
 void retro_run (void)
 {
    bool updated = false;
-   is_dupe      = false;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       update_variables();
 
@@ -255,7 +254,7 @@ void retro_run (void)
 #if defined(GL) || defined(GLES)
    video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
 #endif
-
+   is_dupe      = true;
 }
 
 void retro_reset (void)
@@ -450,7 +449,28 @@ unsigned retro_api_version(void)
 //Reicast stuff
 void os_DoEvents(void)
 {
-   is_dupe = true;
+   /* restore state */
+#ifdef CORE
+   glBindVertexArray(0);
+#endif
+   glDisable(GL_BLEND);
+   glDisable(GL_CULL_FACE);
+   glDisable(GL_SCISSOR_TEST);
+   glDisable(GL_DEPTH_TEST);
+   glBlendFunc(GL_ONE, GL_ZERO);
+   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+   glCullFace(GL_BACK);
+   glDepthMask(GL_TRUE);
+   glUseProgram(0);
+   glClearColor(0,0,0,0.0f);
+   glStencilOp(GL_KEEP,GL_KEEP, GL_KEEP);
+
+   /* Clear textures */
+   glActiveTexture(GL_TEXTURE0);
+   glBindTexture(GL_TEXTURE_2D, 0);
+
+   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+   co_dc_yield();
 }
 
 void os_CreateWindow()

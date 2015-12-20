@@ -2,7 +2,7 @@ DEBUG         := 0
 NO_REND       := 0
 HAVE_GL       := 1
 HAVE_CORE     := 0
-NO_THREADS    := 0
+NO_THREADS    := 1
 NO_EXCEPTIONS := 0
 NO_NVMEM      := 0
 

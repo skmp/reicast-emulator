@@ -6,7 +6,6 @@
 
 extern struct retro_hw_render_callback hw_render;
 extern bool enable_rtt;
-extern bool is_dupe;
 
 struct modvol_shader_type
 {
@@ -2154,7 +2153,28 @@ struct glesrend : Renderer
 
 	void Present()
    {
-      is_dupe = false;
+      /* restore state */
+#ifdef CORE
+      glBindVertexArray(0);
+#endif
+      glDisable(GL_BLEND);
+      glDisable(GL_CULL_FACE);
+      glDisable(GL_SCISSOR_TEST);
+      glDisable(GL_DEPTH_TEST);
+      glBlendFunc(GL_ONE, GL_ZERO);
+      glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+      glCullFace(GL_BACK);
+      glDepthMask(GL_TRUE);
+      glUseProgram(0);
+      glClearColor(0,0,0,0.0f);
+      glStencilOp(GL_KEEP,GL_KEEP, GL_KEEP);
+
+      /* Clear textures */
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, 0);
+
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+      co_dc_yield();
    }
 
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {

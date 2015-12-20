@@ -21,8 +21,9 @@ void RegWrite_SB_C2DST(u32 addr, u32 data)
 		DMAC_Ch2St();
 	}
 }
-//PVR-DMA
-void do_pvr_dma(void)
+
+/* PVR-DMA */
+static void do_pvr_dma(void)
 {
 	u32 chcr   = DMAC_CHCR(0).full;
 	u32 dmaor  = DMAC_DMAOR.full;
@@ -65,6 +66,7 @@ void do_pvr_dma(void)
 	//TODO : *CHECKME* is that ok here ? the docs don't say here it's used [PVR-DMA , bit 11]
 	asic_RaiseInterrupt(holly_PVR_DMA);
 }
+
 void RegWrite_SB_PDST(u32 addr, u32 data)
 {
 	if(1&data)
@@ -73,6 +75,7 @@ void RegWrite_SB_PDST(u32 addr, u32 data)
 		do_pvr_dma();
 	}
 }
+
 u32 calculate_start_link_addr(void)
 {
 	u32 rv;
@@ -88,7 +91,7 @@ u32 calculate_start_link_addr(void)
 	return rv;
 }
 
-void pvr_do_sort_dma(void)
+static void pvr_do_sort_dma(void)
 {
 	SB_SDDIV=0;//index is 0 now :)
 	u32 link_addr=calculate_start_link_addr();
@@ -113,6 +116,7 @@ void pvr_do_sort_dma(void)
 	SB_SDST=0;
 	asic_RaiseInterrupt(holly_PVR_SortDMA);
 }
+
 // Auto sort DMA :|
 void RegWrite_SB_SDST(u32 addr, u32 data)
 {

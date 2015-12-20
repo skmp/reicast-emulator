@@ -58,7 +58,7 @@ u8 float_to_satu8(float val)
 	This uses just 1k of lookup, but does more calcs
 	The full 64k table will be much faster -- as only a small sub-part of it will be used anyway (the same 1k)
 */
-u8 float_to_satu8_2(float val)
+static u8 float_to_satu8_2(float val)
 {
 	s32 vl=(s32&)val>>16;
 	u32 m1=(vl-0x3b80)>>31;	//1 if smaller 0x3b80 or negative
@@ -70,7 +70,8 @@ u8 float_to_satu8_2(float val)
 }
 
 #define saturate01(x) (((s32&)x)<0?0:(s32&)x>0x3f800000?1:x)
-u8 float_to_satu8_math(float val)
+
+static u8 float_to_satu8_math(float val)
 {
 	return u8(saturate01(val)*255);
 }
@@ -384,146 +385,132 @@ public:
 	//Group_En bit seems ignored, thanks p1pkin 
 #define group_EN() /*if (data->pcw.Group_En) */{ TileClipMode(data->pcw.User_Clip);}
 	static Ta_Dma* TACALL ta_main(Ta_Dma* data,Ta_Dma* data_end)
-	{
-		do
-		{
-			PLD(data,128);
-			switch (data->pcw.ParaType)
-			{
-				//Control parameter
-				//32Bw3
-			case ParamType_End_Of_List:
-				{
+   {
+      do
+      {
+         PLD(data,128);
+         switch (data->pcw.ParaType)
+         {
+            //Control parameter
+            //32Bw3
+            case ParamType_End_Of_List:
+               if (CurrentList==ListType_None)
+               {
+                  CurrentList=data->pcw.ListType;
+                  //printf("End_Of_List : list error\n");
+               }
+               else
+               {
+                  //end of list should be all 0's ...
+                  EndList(CurrentList);//end a list olny if it was realy started
+               }
 
-					if (CurrentList==ListType_None)
-					{
-						CurrentList=data->pcw.ListType;
-						//printf("End_Of_List : list error\n");
-					}
-					else
-					{
-						//end of list should be all 0's ...
-						EndList(CurrentList);//end a list olny if it was realy started
-					}
+               //printf("End list %X\n",CurrentList);
+               ListIsFinished[CurrentList]=true;
+               CurrentList=ListType_None;
+               VerxexDataFP=NullVertexData;
+               data+=SZ32;
+               TA_EOL;
+               break;
+               //32B
+            case ParamType_User_Tile_Clip:
+               SetTileClip(data->data_32[3]&63,data->data_32[4]&31,data->data_32[5]&63,data->data_32[6]&31);
+               data+=SZ32;
+               break;
+               //32B
+            case ParamType_Object_List_Set:
+               die("ParamType_Object_List_Set");
+               // *cough* ignore it :p
+               data+=SZ32;
+               break;
 
-					//printf("End list %X\n",CurrentList);
-					ListIsFinished[CurrentList]=true;
-					CurrentList=ListType_None;
-					VerxexDataFP=NullVertexData;
-					data+=SZ32;
-					TA_EOL;
-				}
-				break;
-				//32B
-			case ParamType_User_Tile_Clip:
-				{
+               //Global Parameter
+               //ModVolue :32B
+               //PolyType :32B/64B
+            case ParamType_Polygon_or_Modifier_Volume:
+               {
 
-					SetTileClip(data->data_32[3]&63,data->data_32[4]&31,data->data_32[5]&63,data->data_32[6]&31);
-					data+=SZ32;
-				}
-				break;
-				//32B
-			case ParamType_Object_List_Set:
-				{
+                  TA_PP;
+                  group_EN();
+                  //Yep , C++ IS lame & limited
+#include "ta_const_df.h"
+                  if (CurrentList==ListType_None)
+                     ta_list_start(data->pcw.ListType);	//start a list ;)
 
-					die("ParamType_Object_List_Set");
-					// *cough* ignore it :p
-					data+=SZ32;
-				}
-				break;
+                  if (IsModVolList(CurrentList))
+                  {
+                     //accept mod data
+                     StartModVol((TA_ModVolParam*)data);
+                     VerxexDataFP=ta_mod_vol_data;
+                     data+=SZ32;
+                  }
+                  else
+                  {
 
-				//Global Parameter
-				//ModVolue :32B
-				//PolyType :32B/64B
-			case ParamType_Polygon_or_Modifier_Volume:
-				{
+                     u32 uid=ta_type_lut[data->pcw.obj_ctrl];
+                     u32 psz=uid>>30;
+                     u32 pdid=(u8)(uid);
+                     u32 ppid=(u8)(uid>>8);
 
-					TA_PP;
-					group_EN();
-					//Yep , C++ IS lame & limited
-					#include "ta_const_df.h"
-					if (CurrentList==ListType_None)
-						ta_list_start(data->pcw.ListType);	//start a list ;)
+                     VerxexDataFP=ta_poly_data_lut[pdid];
 
-					if (IsModVolList(CurrentList))
-					{
-						//accept mod data
-						StartModVol((TA_ModVolParam*)data);
-						VerxexDataFP=ta_mod_vol_data;
-						data+=SZ32;
-					}
-					else
-					{
 
-						u32 uid=ta_type_lut[data->pcw.obj_ctrl];
-						u32 psz=uid>>30;
-						u32 pdid=(u8)(uid);
-						u32 ppid=(u8)(uid>>8);
+                     if (data != data_end || psz==1)
+                     {
 
-						VerxexDataFP=ta_poly_data_lut[pdid];
-							
+                        //poly , 32B/64B
+                        ta_poly_param_lut[ppid](data);
+                        data+=psz;
+                     }
+                     else
+                     {
 
-						if (data != data_end || psz==1)
-						{
+                        //AppendPolyParam64A((TA_PolyParamA*)data);
+                        //64b , first part
+                        ta_poly_param_a_lut[ppid](data);
+                        //Handle next 32B ;)
+                        TaCmd=ta_poly_param_b_lut[ppid];
+                        data+=SZ32;
+                     }
+                  }
+               }
+               break;
+               //32B
+               //Sets Sprite info , and switches to ta_sprite_data function
+            case ParamType_Sprite:
+               {
 
-							//poly , 32B/64B
-							ta_poly_param_lut[ppid](data);
-							data+=psz;
-						}
-						else
-						{
+                  TA_SP;
+                  group_EN();
+                  if (CurrentList==ListType_None)
+                     ta_list_start(data->pcw.ListType);	//start a list ;)
 
-							//AppendPolyParam64A((TA_PolyParamA*)data);
-							//64b , first part
-							ta_poly_param_a_lut[ppid](data);
-							//Handle next 32B ;)
-							TaCmd=ta_poly_param_b_lut[ppid];
-							data+=SZ32;
-						}
-					}
-				}
-				break;
-				//32B
-				//Sets Sprite info , and switches to ta_sprite_data function
-			case ParamType_Sprite:
-				{
+                  VerxexDataFP=ta_sprite_data;
+                  //printf("Sprite \n");
+                  AppendSpriteParam((TA_SpriteParam*)data);
+                  data+=SZ32;
+               }
+               break;
 
-					TA_SP;
-					group_EN();
-					if (CurrentList==ListType_None)
-						ta_list_start(data->pcw.ListType);	//start a list ;)
+               //Variable size
+            case ParamType_Vertex_Parameter:
+               //printf("VTX:0x%08X\n",VerxexDataFP);
+               //verify(VerxexDataFP!=NullVertexData);
+               data=VerxexDataFP(data,data_end);
+               break;
 
-					VerxexDataFP=ta_sprite_data;
-					//printf("Sprite \n");
-					AppendSpriteParam((TA_SpriteParam*)data);
-					data+=SZ32;
-				}
-				break;
-
-				//Variable size
-			case ParamType_Vertex_Parameter:
-				{
-
-					//printf("VTX:0x%08X\n",VerxexDataFP);
-					//verify(VerxexDataFP!=NullVertexData);
-					data=VerxexDataFP(data,data_end);
-				}
-				break;
-
-				//not handled
-				//Assumed to be 32B
-			case 3:
-			case 6:
-				{
-					die("Unhandled parameter");
-					data+=SZ32;
-				}
-				break;
-			}
-		}
-		while(data<=data_end);
-		return data;
-	}
+               //not handled
+               //Assumed to be 32B
+            case 3:
+            case 6:
+               die("Unhandled parameter");
+               data+=SZ32;
+               break;
+         }
+      }
+      while(data<=data_end);
+      return data;
+   }
 
 	//Fill in lookup table
 	FifoSplitter()
@@ -1443,10 +1430,9 @@ bool ta_parse_vdrc(TA_context* ctx)
 	return rv;
 }
 
-
 //decode a vertex in the native pvr format
 //used for bg poly
-void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
+static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 {
 	//ISP
 	//TSP

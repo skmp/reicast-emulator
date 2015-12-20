@@ -63,21 +63,21 @@ endif
 
 CC_AS ?= $(CC)
 
-ifeq ($(SINGLE_PREC_FLAGS),1)
+ifdef SINGLE_PREC_FLAGS
 CFLAGS += -fsingle-precision-constant
 RZDCY_CFLAGS += -fsingle-precision-constant
 endif
 
-ifeq ($(ARMV7A_FLAGS),1)
+ifdef ARMV7A_FLAGS
 	MFLAGS += -marm -march=armv7-a
 	ASFLAGS += -march=armv7-a
 endif
 
-ifeq ($(ARMV7_CORTEX_A9_FLAGS),1)
+ifdef ARMV7_CORTEX_A9_FLAGS
 	MFLAGS += -mtune=cortex-a9
 endif
 
-ifeq ($(ARM_FLOAT_ABI_HARD),1)
+ifdef ARM_FLOAT_ABI_HARD
 	MFLAGS += -mfloat-abi=hard
 	ASFLAGS += -mfloat-abi=hard
 	CFLAGS += -DARM_HARDFP
@@ -87,7 +87,7 @@ CORE_DIR := core
 
 DYNAREC_USED = 0
 
-ifeq ($(NAOMI),1)
+ifdef NAOMI
     CFLAGS += -D TARGET_NAOMI
     DC_PLATFORM=naomi
     TARGET_NAME=$(TARGET_NAME)_naomi
@@ -417,13 +417,13 @@ else
 RZDCY_CFLAGS += -DTARGET_LINUX_x86
 endif
 
-ifeq ($(NO_THREADS),1)
+ifdef NO_THREADS
   RZDCY_CFLAGS += -DTARGET_NO_THREADS
   CFLAGS       += -DTARGET_NO_THREADS
   CXXFLAGS     += -DTARGET_NO_THREADS
 endif
 
-ifeq ($(NO_REC),1)
+ifdef NO_REC
   RZDCY_CFLAGS += -DTARGET_NO_REC
 endif
 
@@ -461,18 +461,18 @@ else
     ASFLAGS += $(CFLAGS)
 endif
 
-ifeq ($(PGO_MAKE),1)
+ifdef PGO_MAKE
     CFLAGS += -fprofile-generate -pg
     LDFLAGS += -fprofile-generate
 else
     CFLAGS += -fomit-frame-pointer
 endif
 
-ifeq ($(PGO_USE),1)
+ifdef PGO_USE
     CFLAGS += -fprofile-use
 endif
 
-ifeq ($(LTO_TEST),1)
+ifdef LTO_TEST
     CFLAGS += -flto -fwhole-program 
     LDFLAGS +=-flto -fwhole-program 
 endif

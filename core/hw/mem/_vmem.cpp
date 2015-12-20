@@ -478,6 +478,41 @@ static void* _nvmem_alloc_mem(void)
 #define MAP_NOSYNC       0 //missing from linux :/ -- could be the cause of android slowness ?
 #endif
 
+#ifdef _ANDROID
+#include <linux/ashmem.h>
+
+#ifndef ASHMEM_DEVICE
+#define ASHMEM_DEVICE "/dev/ashmem"
+#endif
+int ashmem_create_region(const char *name, size_t size)
+{
+   int fd, ret;
+
+   fd = open(ASHMEM_DEVICE, O_RDWR);
+   if (fd < 0)
+      return fd;
+
+   if (name) {
+      char buf[ASHMEM_NAME_LEN];
+
+      strlcpy(buf, name, sizeof(buf));
+      ret = ioctl(fd, ASHMEM_SET_NAME, buf);
+      if (ret < 0)
+         goto error;
+   }
+
+   ret = ioctl(fd, ASHMEM_SET_SIZE, size);
+   if (ret < 0)
+      goto error;
+
+   return fd;
+
+error:
+   close(fd);
+   return ret;
+}
+#endif
+
 int fd;
 
 static void* _nvmem_unused_buffer(u32 start,u32 end)
@@ -525,17 +560,29 @@ static void * _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
 static void* _nvmem_alloc_mem(void)
 {
    string path = get_writable_data_path("/dcnzorz_mem");
+#ifdef __MACH__
    fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
    unlink(path.c_str());
+#elif defined(ANDROID)
+   fd = ashmem_create_region(0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE);
+#else
+   fd = shm_open(path.c_str(), O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
+   shm_unlink(path.c_str());
+   if (fd==-1)
+   {
+      fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
+      unlink(path.c_str());
+   }
+#endif
+#if defined(__MACH__) || !defined(ANDROID)
    verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
+#endif
+
+
 
    u32 sz= 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE + 0x10000;
-
    void* rv=mmap(0, sz, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
-   if (rv == MAP_FAILED)
-   {
-      printf("nvmem_alloc_mem failed!\n");
-   }
+   verify(rv != NULL);
    munmap(rv,sz);
    return (u8*)rv + 0x10000 - unat(rv)%0x10000;//align to 64 KB (Needed for linaro mmap not to extend to next region)
 }

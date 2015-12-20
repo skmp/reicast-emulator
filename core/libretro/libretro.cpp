@@ -252,7 +252,8 @@ void retro_run (void)
    poll_cb();
    co_dc_run();
 #if defined(GL) || defined(GLES)
-   video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
+   if (!is_dupe)
+      video_cb(RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
 #endif
    is_dupe      = true;
 }

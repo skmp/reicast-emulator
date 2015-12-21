@@ -2,7 +2,6 @@
 	This file is a mix of my code, Zezu's, and duno wtf-else (most likely ElSemi's ?)
 */
 #include "types.h"
-#include "cfg/cfg.h"
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/holly_intc.h"

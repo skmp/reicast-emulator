@@ -1,5 +1,4 @@
 #include "naomi_cart.h"
-#include "cfg/cfg.h"
 
 u8* RomPtr;
 u32 RomSize;
@@ -193,19 +192,12 @@ bool naomi_cart_LoadRom(char* file)
 	return true;
 }
 
+extern char *game_data;
+
 bool naomi_cart_SelectFile(void)
 {
-	cfgLoadStr("config", "image", SelectedFile, "null");
-	
-	if (!naomi_cart_LoadRom(SelectedFile))
-	{
-		cfgSaveStr("emu", "gamefile", "naomi_bios");
-	}
-	else
-	{
-		cfgSaveStr("emu", "gamefile", SelectedFile);
-	}
-
+	if (!naomi_cart_LoadRom(game_data))
+      return false;
 
 	printf("EEPROM file : %s.eeprom\n", SelectedFile);
 

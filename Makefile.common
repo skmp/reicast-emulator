@@ -102,8 +102,10 @@ else
 endif
 endif
 
-
-
+ifeq ($(NAOMI), 1)
+SOURCES_CXX += $(CORE_DIR)/hw/naomi/naomi.cpp \
+					$(CORE_DIR)/hw/naomi/naomi_cart.cpp 
+endif
 
 # Recompiler (x64)
 

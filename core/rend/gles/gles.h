@@ -1,8 +1,6 @@
 #pragma once
 #include "rend/rend.h"
 
-#include <glsym/glsym.h>
-
 #define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
 
 #define VERTEX_POS_ARRAY 0

@@ -7,6 +7,7 @@
 #if defined(GL) || defined(GLES)
 #include <glsym/rglgen.h>
 #include <glsym/glsym.h>
+#include "../rend/rend.h"
 #endif
 
 #include "libretro.h"
@@ -242,7 +243,6 @@ static void update_variables(void)
    }
 }
 
-
 void retro_run (void)
 {
    bool updated = false;
@@ -255,7 +255,6 @@ void retro_run (void)
 #if defined(GL) || defined(GLES)
    video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
 #endif
-
 }
 
 void retro_reset (void)

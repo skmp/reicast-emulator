@@ -5,8 +5,9 @@ HAVE_CORE     := 0
 NO_THREADS    := 1
 NO_EXCEPTIONS := 0
 NO_NVMEM      := 0
+NAOMI         := 0
 
-TARGET_NAME := reicast
+TARGET_NAME   := reicast
 
 MFLAGS   := 
 ASFLAGS  := 
@@ -88,9 +89,12 @@ CORE_DIR := core
 DYNAREC_USED = 0
 
 ifeq ($(NAOMI),1)
-    CFLAGS += -D TARGET_NAOMI
+    CFLAGS       += -DTARGET_NAOMI
+	 CXXFLAGS     += -DTARGET_NAOMI
+	 RZDCY_CFLAGS += -DTARGET_NAOMI
+
     DC_PLATFORM=naomi
-    TARGET_NAME=$(TARGET_NAME)_naomi
+	 TARGET_NAME   := reicast_naomi
 else
     DC_PLATFORM=dreamcast
 endif

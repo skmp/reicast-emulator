@@ -5,6 +5,7 @@ HAVE_CORE     := 0
 NO_THREADS    := 1
 NO_EXCEPTIONS := 0
 NO_NVMEM      := 0
+NO_VERIFY     := 1
 NAOMI         := 0
 
 TARGET_NAME   := reicast
@@ -87,6 +88,12 @@ endif
 CORE_DIR := core
 
 DYNAREC_USED = 0
+
+ifeq ($(NO_VERIFY),1)
+    CFLAGS       += -DNO_VERIFY
+	 CXXFLAGS     += -DNO_VERIFY
+	 RZDCY_CFLAGS += -DNO_VERIFY
+endif
 
 ifeq ($(NAOMI),1)
     CFLAGS       += -DTARGET_NAOMI

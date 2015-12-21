@@ -957,7 +957,13 @@ void AegStep(ChannelEx* ch)
       if (((u32)ch->AEG.GetValue())>=ch->AEG.Decay2Value)
       {
          aeg_printf("[%d]AEG_step : Switching to EG_Decay2 @ %x\n",ch->AEG.GetValue());
-         ch->SetAegState(EG_Decay2);
+
+         /* HACK - but better than nothing */
+         // No transition to Decay 2 when DL is zero.
+         if(ch->ccd->DL!=0)
+            ch->SetAegState(EG_Decay2);
+         else
+            ch->SetAegState(EG_Attack);
       }
 		break;
 	case EG_Decay2:

@@ -246,7 +246,6 @@ static void update_variables(void)
 void retro_run (void)
 {
    bool updated = false;
-   is_dupe      = false;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       update_variables();
 
@@ -255,6 +254,7 @@ void retro_run (void)
 #if defined(GL) || defined(GLES)
    video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
 #endif
+   is_dupe = true;
 }
 
 void retro_reset (void)
@@ -449,7 +449,7 @@ unsigned retro_api_version(void)
 //Reicast stuff
 void os_DoEvents(void)
 {
-   is_dupe = true;
+   is_dupe = false;
 }
 
 void os_CreateWindow()

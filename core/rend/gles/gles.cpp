@@ -2090,61 +2090,51 @@ struct glesrend : Renderer
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
 	bool Render()
    {
-      static unsigned OldFrameCount;
       unsigned i;
 
-      if (OldFrameCount != FrameCount)
-      {
-         glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
-         glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
-         glClearColor(gl_state.clear_color.r, gl_state.clear_color.g, gl_state.clear_color.b, gl_state.clear_color.a);
-         glCullFace(gl_state.cullmode);
-         glScissor(gl_state.scissor.x, gl_state.scissor.y, gl_state.scissor.w, gl_state.scissor.h);
-         glUseProgram(gl_state.program);
-         glViewport(gl_state.viewport.x, gl_state.viewport.y, gl_state.viewport.w, gl_state.viewport.h);
+      glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
+      glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
+      glClearColor(gl_state.clear_color.r, gl_state.clear_color.g, gl_state.clear_color.b, gl_state.clear_color.a);
+      glCullFace(gl_state.cullmode);
+      glScissor(gl_state.scissor.x, gl_state.scissor.y, gl_state.scissor.w, gl_state.scissor.h);
+      glUseProgram(gl_state.program);
+      glViewport(gl_state.viewport.x, gl_state.viewport.y, gl_state.viewport.w, gl_state.viewport.h);
 #ifdef CORE
-         glBindVertexArray(vbo.vao);
+      glBindVertexArray(vbo.vao);
 #endif
-         for(i = 0; i < SGL_CAP_MAX; i ++)
-         {
-            if (gl_state.cap_state[i])
-               glEnable(gl_state.cap_translate[i]);
-            else
-               glDisable(gl_state.cap_translate[i]);
-         }
-         OldFrameCount = FrameCount;
+      for(i = 0; i < SGL_CAP_MAX; i ++)
+      {
+         if (gl_state.cap_state[i])
+            glEnable(gl_state.cap_translate[i]);
+         else
+            glDisable(gl_state.cap_translate[i]);
       }
       bool ret = RenderFrame();
    }
 
 	void Present()
    {
-      static unsigned OldFrameCount;
-      if (OldFrameCount != FrameCount)
-      {
-         /* restore state */
+      /* restore state */
 #ifdef CORE
-         glBindVertexArray(0);
+      glBindVertexArray(0);
 #endif
-         glDisable(GL_BLEND);
-         glDisable(GL_CULL_FACE);
-         glDisable(GL_SCISSOR_TEST);
-         glDisable(GL_DEPTH_TEST);
-         glBlendFunc(GL_ONE, GL_ZERO);
-         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-         glCullFace(GL_BACK);
-         glDepthMask(GL_TRUE);
-         glUseProgram(0);
-         glClearColor(0,0,0,0.0f);
-         glStencilOp(GL_KEEP,GL_KEEP, GL_KEEP);
+      glDisable(GL_BLEND);
+      glDisable(GL_CULL_FACE);
+      glDisable(GL_SCISSOR_TEST);
+      glDisable(GL_DEPTH_TEST);
+      glBlendFunc(GL_ONE, GL_ZERO);
+      glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+      glCullFace(GL_BACK);
+      glDepthMask(GL_TRUE);
+      glUseProgram(0);
+      glClearColor(0,0,0,0.0f);
+      glStencilOp(GL_KEEP,GL_KEEP, GL_KEEP);
 
-         /* Clear textures */
-         glActiveTexture(GL_TEXTURE0);
-         glBindTexture(GL_TEXTURE_2D, 0);
+      /* Clear textures */
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, 0);
 
-         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-         OldFrameCount = FrameCount;
-      }
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
       co_dc_yield();
    }
 

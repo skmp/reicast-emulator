@@ -114,6 +114,11 @@ DYNAREC_USED = 1
 SOURCES_CXX += $(CORE_DIR)/rec-x64/rec_x64.cpp 
 endif
 
+ifeq ($(WITH_DYNAREC), cpp)
+DYNAREC_USED = 1
+SOURCES_CXX += $(CORE_DIR)/rec-cpp/rec_cpp.cpp
+endif
+
 # Recompiler (ARM)
 ifeq ($(WITH_DYNAREC), arm)
 DYNAREC_USED = 1

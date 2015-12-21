@@ -229,16 +229,16 @@ else ifneq (,$(findstring osx,$(platform)))
         LDFLAGS += -mmacosx-version-min=10.7
 	LDFLAGS += -stdlib=libc++
 	fpic = -fPIC
-	CFLAGS += -D TARGET_NO_AREC -DTARGET_NO_JIT
+	CFLAGS += -D TARGET_NO_AREC
 
 	PLATCFLAGS += -D__MACOSX__ -DOSX
 	GL_LIB := -framework OpenGL
 	PLATFORM_EXT := unix
 
 	# Target Dynarec
-	#ifeq ($(ARCH), $(filter $(ARCH), ppc))
-		WITH_DYNAREC = cpp
-	#endif
+	ifeq ($(ARCH), $(filter $(ARCH), ppc))
+		WITH_DYNAREC =
+	endif
 
 # iOS
 else ifneq (,$(findstring ios,$(platform)))

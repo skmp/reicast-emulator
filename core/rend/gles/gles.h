@@ -1,7 +1,11 @@
 #pragma once
 #include "rend/rend.h"
 
+#ifdef DEBUG
 #define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
+#else
+#define glCheck()
+#endif
 
 #define VERTEX_POS_ARRAY 0
 #define VERTEX_COL_BASE_ARRAY 1

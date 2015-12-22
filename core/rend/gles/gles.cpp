@@ -2066,6 +2066,15 @@ struct glesrend : Renderer
 	bool Init()
    {
       libCore_vramlock_Init();
+
+      gl_state.cap_translate[0] = GL_DEPTH_TEST;
+      gl_state.cap_translate[1] = GL_BLEND;
+      gl_state.cap_translate[2] = GL_POLYGON_OFFSET_FILL;
+      gl_state.cap_translate[3] = GL_FOG;
+      gl_state.cap_translate[4] = GL_CULL_FACE;
+      gl_state.cap_translate[5] = GL_ALPHA_TEST;
+      gl_state.cap_translate[6] = GL_SCISSOR_TEST;
+      gl_state.cap_translate[7] = GL_STENCIL_TEST;
       return gles_init();
    }
 	void Resize(int w, int h) { gles_screen_width=w; gles_screen_height=h; }

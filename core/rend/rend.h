@@ -41,10 +41,7 @@ struct gl_cached_state
    GLuint framebuf;
    GLuint program; 
    int cap_state[SGL_CAP_MAX];
-   const int cap_translate[SGL_CAP_MAX] = 
-   {
-      GL_DEPTH_TEST, GL_BLEND, GL_POLYGON_OFFSET_FILL, GL_FOG, GL_CULL_FACE, GL_ALPHA_TEST, GL_SCISSOR_TEST, GL_STENCIL_TEST
-   };
+   int cap_translate[SGL_CAP_MAX];
 };
 
 extern gl_cached_state gl_state;

@@ -149,55 +149,53 @@ void rend_resize(int width, int height)
 
 void rend_start_render(void)
 {
-	pend_rend = false;
-	bool is_rtt=(FB_W_SOF1& 0x1000000)!=0;
-	TA_context* ctx = tactx_Pop(CORE_CURRENT_CTX);
+   pend_rend = false;
+   TA_context* ctx = tactx_Pop(CORE_CURRENT_CTX);
 
-	SetREP(ctx);
+   SetREP(ctx);
 
-	if (ctx)
-	{
-		if (!ctx->rend.Overrun)
-		{
-			//printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
-			FillBGP(ctx);
-			
-			ctx->rend.isRTT=is_rtt;
-			ctx->rend.isAutoSort = UsingAutoSort();
+   if (!ctx)
+      return;
 
-			ctx->rend.fb_X_CLIP=FB_X_CLIP;
-			ctx->rend.fb_Y_CLIP=FB_Y_CLIP;
-			
-			max_idx=max(max_idx,ctx->rend.idx.used());
-			max_vtx=max(max_vtx,ctx->rend.verts.used());
-			max_op=max(max_op,ctx->rend.global_param_op.used());
-			max_pt=max(max_pt,ctx->rend.global_param_pt.used());
-			max_tr=max(max_tr,ctx->rend.global_param_tr.used());
-			
-			max_mvo=max(max_mvo,ctx->rend.global_param_mvo.used());
-			max_modt=max(max_modt,ctx->rend.modtrig.used());
+   if (ctx->rend.Overrun)
+   {
+      ovrn++;
+      printf("WARNING: Rendering context is overrun (%d), aborting frame\n",ovrn);
+      tactx_Recycle(ctx);
+      return;
+   }
+
+   //printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
+   FillBGP(ctx);
+
+   ctx->rend.isRTT      = (FB_W_SOF1& 0x1000000)!=0;
+   ctx->rend.isAutoSort = UsingAutoSort();
+
+   ctx->rend.fb_X_CLIP=FB_X_CLIP;
+   ctx->rend.fb_Y_CLIP=FB_Y_CLIP;
+
+   max_idx=max(max_idx,ctx->rend.idx.used());
+   max_vtx=max(max_vtx,ctx->rend.verts.used());
+   max_op=max(max_op,ctx->rend.global_param_op.used());
+   max_pt=max(max_pt,ctx->rend.global_param_pt.used());
+   max_tr=max(max_tr,ctx->rend.global_param_tr.used());
+
+   max_mvo=max(max_mvo,ctx->rend.global_param_mvo.used());
+   max_modt=max(max_modt,ctx->rend.modtrig.used());
 
 #if 0
-			printf("max: idx: %d, vtx: %d, op: %d, pt: %d, tr: %d, mvo: %d, modt: %d, ov: %d\n", max_idx, max_vtx, max_op, max_pt, max_tr, max_mvo, max_modt, ovrn);
+   printf("max: idx: %d, vtx: %d, op: %d, pt: %d, tr: %d, mvo: %d, modt: %d, ov: %d\n", max_idx, max_vtx, max_op, max_pt, max_tr, max_mvo, max_modt, ovrn);
 #endif
-			if (QueueRender(ctx) || !settings.QueueRender)
-         {
-				palette_update();
+   if (QueueRender(ctx) || !settings.QueueRender)
+   {
+      palette_update();
 #if !defined(TARGET_NO_THREADS)
-				rs.Set();
+      rs.Set();
 #else
-				rend_single_frame();
+      rend_single_frame();
 #endif
-				pend_rend = true;
-			}
-		}
-		else
-		{
-			ovrn++;
-			printf("WARNING: Rendering context is overrun (%d), aborting frame\n",ovrn);
-			tactx_Recycle(ctx);
-		}
-	}
+      pend_rend = true;
+   }
 }
 
 

@@ -17,11 +17,6 @@ string user_data_dir;
 std::vector<string> system_config_dirs;
 std::vector<string> system_data_dirs;
 
-bool file_exists(const string& filename)
-{
-	return (access(filename.c_str(), R_OK) == 0);
-}
-
 void set_user_data_dir(const string& dir)
 {
 	user_data_dir = dir;

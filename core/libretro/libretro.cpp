@@ -294,6 +294,11 @@ static void extract_directory(char *buf, const char *path, size_t size)
 bool retro_load_game(const struct retro_game_info *game)
 {
    const char *dir = NULL;
+#ifdef _WIN32
+   char slash = '\\';
+#else
+   char slash = '/';
+#endif
 
    game_data = strdup(game->path);
 
@@ -301,13 +306,16 @@ bool retro_load_game(const struct retro_game_info *game)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
    {
-      snprintf(game_dir, sizeof(game_dir), "%s/dc/", dir);
-      snprintf(game_dir_no_slash, sizeof(game_dir_no_slash), "%s/dc", dir);
+      snprintf(game_dir, sizeof(game_dir), "%s%cdc%c", dir, slash, slash);
+      snprintf(game_dir_no_slash, sizeof(game_dir_no_slash), "%s%cdc", dir, slash);
    }
    else
    {
-      strcat(game_dir, "/data/");
-      strcat(game_dir_no_slash, "/data");
+      strcat(game_dir, slash);
+      strcat(game_dir_no_slash, slash);
+      strcat(game_dir, "dc");
+      strcat(game_dir_no_slash, "dc");
+      strcat(game_dir, slash);
    }
 
    settings.dreamcast.cable = 3;

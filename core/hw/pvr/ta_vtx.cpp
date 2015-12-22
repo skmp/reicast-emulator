@@ -663,24 +663,24 @@ public:
                return 0 | 0;               //Polygon Type 0 -- SZ32
          }
 		}
-		else
-		{
-         switch (pcw.Col_Type)
-         {
-            case 0:
-               return 3 | 0;              //Polygon Type 3 -- SZ32
-            case 2:
-               return 4 | 0x80;           //Polygon Type 4 -- SZ64
-            case 3:
-               return 3 | 0;              //Polygon Type 3 -- SZ32
-            default:
-               return 0xFFDDEEAA;//die ("data->pcw.Col_Type==1 && volume ==1");
-         }
-		}
+
+      switch (pcw.Col_Type)
+      {
+         case 0:
+            return 3 | 0;              //Polygon Type 3 -- SZ32
+         case 2:
+            return 4 | 0x80;           //Polygon Type 4 -- SZ64
+         case 3:
+            return 3 | 0;              //Polygon Type 3 -- SZ32
+         default:
+            break;
+      }
+
+      return 0xFFDDEEAA;//die ("data->pcw.Col_Type==1 && volume ==1");
 	}
 
 
-	void vdec_init()
+	void vdec_init(void)
 	{
 		VDECInit();
 		TaCmd=ta_main;

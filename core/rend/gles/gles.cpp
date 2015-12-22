@@ -2053,22 +2053,6 @@ static bool RenderFrame(void)
 	return !is_rtt;
 }
 
-/*
-static bool rend_single_frame(void)
-{
-	//wait render start only if no frame pending
-	_pvrrc = DequeueRender();
-
-	while (!_pvrrc)
-	{
-		rs.Wait();
-		_pvrrc = DequeueRender();
-	}
-
-	bool do_swp=false;
-}
-*/
-
 void rend_set_fb_scale(float x,float y)
 {
 	fb_scale_x=x;

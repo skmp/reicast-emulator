@@ -76,7 +76,7 @@ int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
 
-bool rend_frame(TA_context* ctx, bool draw_osd)
+static bool rend_frame(TA_context* ctx, bool draw_osd)
 {
    bool proc = renderer->Process(ctx);
 #if !defined(TARGET_NO_THREADS)
@@ -86,7 +86,7 @@ bool rend_frame(TA_context* ctx, bool draw_osd)
    return proc && renderer->Render();
 }
 
-bool rend_single_frame(void)
+static bool rend_single_frame(void)
 {
    //wait render start only if no frame pending
    do

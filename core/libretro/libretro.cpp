@@ -311,11 +311,11 @@ bool retro_load_game(const struct retro_game_info *game)
    }
    else
    {
-      strcat(game_dir, slash);
-      strcat(game_dir_no_slash, slash);
+      strcat(game_dir, (const char*)slash);
+      strcat(game_dir_no_slash, (const char*)slash);
       strcat(game_dir, "dc");
       strcat(game_dir_no_slash, "dc");
-      strcat(game_dir, slash);
+      strcat(game_dir, (const char*)slash);
    }
 
    settings.dreamcast.cable = 3;

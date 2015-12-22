@@ -304,16 +304,11 @@ bool retro_load_game(const struct retro_game_info *game)
 
    extract_directory(game_dir, game->path, sizeof(game_dir));
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
-   {
-      snprintf(game_dir, sizeof(game_dir), "%s%cdc%c", dir, slash, slash);
-      snprintf(game_dir_no_slash, sizeof(game_dir_no_slash), "%s%cdc", dir, slash);
-   }
-   else
-   {
-      sprintf(game_dir, "%s%cdc%c", game_dir, slash, slash);
-      sprintf(game_dir_no_slash, "%s%cdc", game_dir, slash);
-   }
+   if (!(environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir))
+      dir = game_dir;
+
+   snprintf(game_dir, sizeof(game_dir), "%s%cdc%c", dir, slash, slash);
+   snprintf(game_dir_no_slash, sizeof(game_dir_no_slash), "%s%cdc", dir, slash);
 
    settings.dreamcast.cable = 3;
    screen_width  = 640;

@@ -141,7 +141,6 @@ endif
 ifeq ($(WITH_DYNAREC), x86)
 	CFLAGS += -D TARGET_NO_AREC
 endif
-   CXXFLAGS += -fexceptions
 
 	ifneq (,$(findstring gles,$(platform)))
 		GLES = 1
@@ -456,7 +455,7 @@ ifeq ($(NO_NVMEM),1)
   CXXFLAGS += -DTARGET_NO_NVMEM
 endif
 
-RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
+RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fexceptions -fno-rtti -std=gnu++11
 
 LDFLAGS  += -g
 CFLAGS   += -g $(OPTFLAGS) -D RELEASE -c

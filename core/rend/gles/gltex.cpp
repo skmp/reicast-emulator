@@ -242,7 +242,9 @@ struct TextureCacheData
             }
             else
             {
+#if 0
                verify(w==h || !tcw.MipMapped); // are non square mipmaps supported ? i can't recall right now *WARN*
+#endif
 
                if (tcw.VQ_Comp)
                {

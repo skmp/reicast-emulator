@@ -598,7 +598,7 @@ void _vmem_bm_reset_nvmem(void)
    return;
 #endif
 
-#ifdef __MACH__
+#ifdef IOS
    /* On iOS & nacl we allways allocate all of the mapping table */
    mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_READ | PROT_WRITE);
    return;

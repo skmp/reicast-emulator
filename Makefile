@@ -225,7 +225,7 @@ else ifneq (,$(findstring osx,$(platform)))
 	LDFLAGS += -dynamiclib
 	OSXVER = `sw_vers -productVersion | cut -d. -f 2`
 	OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
-        LDFLAGS += -mmacosx-version-min=10.7
+        fpic += -mmacosx-version-min=10.7
 	LDFLAGS += -stdlib=libc++
 	fpic = -fPIC
 	CFLAGS += -D TARGET_NO_AREC

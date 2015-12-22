@@ -51,51 +51,14 @@ string get_writable_config_path(const string& filename)
 	return (user_config_dir + filename);
 }
 
-string get_readonly_config_path(const string& filename)
-{
-	string user_filepath = get_writable_config_path(filename);
-	if(file_exists(user_filepath))
-		return user_filepath;
-
-	string filepath;
-	for (unsigned int i = 0; i < system_config_dirs.size(); i++)
-   {
-		filepath = system_config_dirs[i] + filename;
-		if (file_exists(filepath))
-			return filepath;
-	}
-
-	// Not found, so we return the user variant
-	return user_filepath;
-}
-
 string get_writable_data_path(const string& filename)
 {
-#ifdef __LIBRETRO__
    extern char game_dir_no_slash[1024];
-   return std::string(game_dir_no_slash + filename);
+   return std::string(game_dir_no_slash + 
+#ifdef _WIN32
+         std::string("\\")
 #else
-	/* Only stuff in the user_data_dir is supposed to be writable,
-	 * so we always return that.
-	 */
-	return (user_data_dir + filename);
+         std::string("/")
 #endif
-}
-
-string get_readonly_data_path(const string& filename)
-{
-	string user_filepath = get_writable_data_path(filename);
-	if(file_exists(user_filepath))
-		return user_filepath;
-
-	string filepath;
-	for (unsigned int i = 0; i < system_data_dirs.size(); i++)
-   {
-		filepath = system_data_dirs[i] + filename;
-		if (file_exists(filepath))
-			return filepath;
-	}
-
-	// Not found, so we return the user variant
-	return user_filepath;
+         + filename);
 }

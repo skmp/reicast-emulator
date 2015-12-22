@@ -110,9 +110,21 @@ int dc_init(int argc,wchar* argv[])
 
 	int rv= 0;
 
-	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path("/")))
+   extern char game_dir_no_slash[1024];
+
+   char new_system_dir[1024];
+
+#ifdef _WIN32
+   sprintf(new_system_dir, "%s\\", game_dir_no_slash);
+#else
+   sprintf(new_system_dir, "%s/", game_dir_no_slash);
+#endif
+
+   if (
+         settings.bios.UseReios || !LoadRomFiles(new_system_dir)
+      )
 	{
-		if (!LoadHle(get_readonly_data_path("/")))
+      if (!LoadHle(new_system_dir))
 			return -3;
       printf("Did not load bios, using reios\n");
 	}
@@ -161,7 +173,11 @@ void dc_term(void)
 	plugins_Term();
 	_vmem_release();
 
-	SaveRomFiles(get_writable_data_path("/data/"));
+#ifdef _WIN32
+	SaveRomFiles(get_writable_data_path("data\\"));
+#else
+	SaveRomFiles(get_writable_data_path("data/"));
+#endif
 }
 
 void LoadSettings(void)

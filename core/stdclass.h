@@ -169,9 +169,6 @@ void add_system_data_dir(const string& dir);
 //subpath format: /data/fsca-table.bit
 string get_writable_config_path(const string& filename);
 string get_writable_data_path(const string& filename);
-string get_readonly_config_path(const string& filename);
-string get_readonly_data_path(const string& filename);
-
 
 class VArray2
 {

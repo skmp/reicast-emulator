@@ -559,7 +559,7 @@ static void * _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
 
 static void* _nvmem_alloc_mem(void)
 {
-   string path = get_writable_data_path("/dcnzorz_mem");
+   string path = get_writable_data_path("dcnzorz_mem");
 #ifdef __MACH__
    fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
    unlink(path.c_str());

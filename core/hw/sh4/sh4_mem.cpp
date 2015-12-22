@@ -220,7 +220,11 @@ void mem_Term()
 	sh4_area0_Term();
 
 	//write back Flash/SRAM
-	SaveRomFiles(get_writable_data_path("/data/"));
+#ifdef _WIN32
+	SaveRomFiles(get_writable_data_path("data\\"));
+#else
+	SaveRomFiles(get_writable_data_path("data/"));
+#endif
 	
 	//mem_b.Term(); // handled by vmem
 

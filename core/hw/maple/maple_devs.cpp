@@ -268,7 +268,7 @@ struct maple_sega_vmu: maple_base
 		memset(flash_data,0,sizeof(flash_data));
 		memset(lcd_data,0,sizeof(lcd_data));
 		wchar tempy[512];
-		sprintf(tempy,"/vmu_save_%s.bin",logical_port);
+		sprintf(tempy,"vmu_save_%s.bin",logical_port);
 		string apath=get_writable_data_path(tempy);
 
 		file=fopen(apath.c_str(),"rb+");

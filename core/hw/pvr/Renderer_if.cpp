@@ -106,7 +106,7 @@ static bool rend_single_frame(void)
    return do_swp;
 }
 
-void* rend_thread(void* p)
+static void *rend_thread(void* p)
 {
 #if SET_AFNT
    cpu_set_t mask;

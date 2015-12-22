@@ -180,6 +180,7 @@ void LoadSettings(void)
 	settings.pvr.subdivide_transp	= 0;
 	settings.pvr.ta_skip			   = 0;
 	settings.pvr.rend				   = 0;
+   settings.QueueRender          = 0;
 
 	settings.pvr.MaxThreads			      = 3;
 	settings.pvr.SynchronousRendering	= 0;

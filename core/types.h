@@ -590,6 +590,8 @@ struct RegisterStruct
 
 struct settings_t
 {
+   bool QueueRender;
+
 	struct {
 		bool UseReios;
 	} bios;

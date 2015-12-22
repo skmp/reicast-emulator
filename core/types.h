@@ -507,11 +507,7 @@ void os_DebugBreak(void);
 #endif
 
 #ifndef STRIP_TEXT
-#ifdef NO_VERIFY
-#define verify(x) if((x)==false){ printf("Verify Failed  : " #x "\n in %s -> %s : %d \n",MBX_ICONERROR,(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
-#else
 #define verify(x) if((x)==false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d \n",MBX_ICONERROR,(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
-#endif
 #define die(reason) { msgboxf("Fatal error : %s\n in %s -> %s : %d \n",MBX_ICONERROR,(reason),(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
 #else
 #define verify(x) if((x)==false) { dbgbreak; }

@@ -311,7 +311,7 @@ static void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
    printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,uctx->uc_mcontext.gregs[REG_RIP],dyna_cde);
 #elif defined(__MACH__)
    ucontext_t* uctx=(ucontext_t*)&ctx;
-   printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,uctx->uc_mcontext.ss.rip,dyna_cde);
+   printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,uctx->uc_mcontext->__ss.__rip,dyna_cde);
 #endif
 #elif HOST_CPU==CPU_ARM
 #ifdef __linux__

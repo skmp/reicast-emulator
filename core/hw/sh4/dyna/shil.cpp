@@ -262,7 +262,7 @@ void wtgrp(RuntimeBlockInfo* blk)
 					blk->oplist[started].rs2.type=byts==8?FMT_V2:byts==12?FMT_V3:
 						byts==16?FMT_V4:byts==32?FMT_V8:FMT_V16;
 					blk->oplist[started].rs2._reg=regd;
-					blk->oplist[started].rs3._imm=-(rdc-1)*stride*4;
+               blk->oplist[started].rs3._imm=(u32)-(s32)(rdc-1)*stride*4;
 					blk->oplist[started].rs3.type=FMT_IMM;
 					blk->oplist[started].flags=byts|0x80;
 					if (stride==8)

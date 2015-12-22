@@ -263,7 +263,7 @@ shil_opc_end()
 
 //shop_neg
 shil_opc(neg)
-UN_OP_I(-)
+UN_OP_I((u32)-(s32))
 shil_opc_end()
 
 //shop_shl,

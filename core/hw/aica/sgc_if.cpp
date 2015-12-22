@@ -3,6 +3,7 @@
 #include "aica_mem.h"
 #include "hw/aica/aica_if.h"
 #include <math.h>
+
 #undef FAR
 
 //#define CLIP_WARN
@@ -1051,10 +1052,7 @@ void staticinitialise()
 AicaChannel AicaChannel::Chans[64];
 
 #define Chans AicaChannel::Chans 
-double dbToval(double db)
-{
-	return pow(10,db/20.0);
-}
+
 u32 CalcAegSteps(float t)
 {
 	const double aeg_allsteps=1024*(1<<AEG_STEP_BITS)-1;

@@ -565,7 +565,8 @@ void common_libretro_setup(void)
 #endif
 #ifdef _WIN32
 #ifdef _WIN64
-   setup_seh();
+   // setup_seh();
+   AddVectoredExceptionHandler(1, ExceptionHandler);
 #endif
    SetUnhandledExceptionFilter(0);
 #else

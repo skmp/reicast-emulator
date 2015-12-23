@@ -415,7 +415,7 @@ void recSh4_Init()
 
 
 		//align to next page ..
-		u8* ptr = (u8*)recSh4_Init - i * 1024 * 1024;
+		u8* ptr = (u8*)recSh4_Init + i * 1024 * 1024;
 
 		CodeCache = (u8*)VirtualAlloc(ptr, CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);//; (u8*)(((unat)SH4_TCB+4095)& ~4095);
 

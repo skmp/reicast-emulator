@@ -20,7 +20,6 @@
 
 RuntimeBlockInfo* blk;
 
-
 const char idle_hash[] = 
 	//BIOS
 	">:1:05:BD3BE51F:1E886EE6:6BDB3F70:7FB25EA3:DE0083A8"
@@ -56,18 +55,21 @@ const char idle_hash[] =
 	//looks like this one is
 	">1:08:AF4AC687:08BA1CD0:18592E67:45174350:C9EADF11";
 
-shil_param mk_imm(u32 immv)
+static inline shil_param mk_imm(u32 immv)
 {
 	return shil_param(FMT_IMM,immv);
 }
-shil_param mk_reg(Sh4RegType reg)
+
+static inline shil_param mk_reg(Sh4RegType reg)
 {
 	return shil_param(reg);
 }
-shil_param mk_regi(int reg)
+
+static inline shil_param mk_regi(int reg)
 {
 	return mk_reg((Sh4RegType)reg);
 }
+
 enum NextDecoderOperation
 {
 	NDO_NextOp,     //pc+=2
@@ -76,56 +78,62 @@ enum NextDecoderOperation
 	NDO_Jump,       //pc=JumpAddr,NextOp=JumpOp
 };
 
-
 struct
 {
-	NextDecoderOperation NextOp;
-	NextDecoderOperation DelayOp;
-	NextDecoderOperation JumpOp;
-	u32 JumpAddr;
-	u32 NextAddr;
-	BlockEndType BlockType;
+   NextDecoderOperation NextOp;
+   NextDecoderOperation DelayOp;
+   NextDecoderOperation JumpOp;
+   u32 JumpAddr;
+   u32 NextAddr;
+   BlockEndType BlockType;
 
-	struct
-	{
-		bool FPR64; //64 bit FPU opcodes
-		bool FSZ64; //64 bit FPU moves
-		bool RoundToZero; //false -> Round to nearest.
-		u32 rpc;
-		bool is_delayslot;
-	} cpu;
+   struct
+   {
+      bool FPR64; //64 bit FPU opcodes
+      bool FSZ64; //64 bit FPU moves
+      bool RoundToZero; //false -> Round to nearest.
+      u32 rpc;
+      bool is_delayslot;
+   } cpu;
 
-	ngen_features ngen;
+   ngen_features ngen;
 
-	struct
-	{
-		bool has_readm;
-		bool has_writem;
-		bool has_fpu;
-	} info;
+   struct
+   {
+      bool has_readm;
+      bool has_writem;
+      bool has_fpu;
+   } info;
 
-	void Setup(u32 rpc,fpscr_t fpu_cfg)
-	{
-		cpu.rpc=rpc;
-		cpu.is_delayslot=false;
-		cpu.FPR64=fpu_cfg.PR;
-		cpu.FSZ64=fpu_cfg.SZ;
-		cpu.RoundToZero=fpu_cfg.RM==1;
-		verify(fpu_cfg.RM<2);
-		//what about fp/fs ?
+   void Setup(u32 rpc,fpscr_t fpu_cfg)
+   {
+      cpu.rpc=rpc;
+      cpu.is_delayslot=false;
+      cpu.FPR64=fpu_cfg.PR;
+      cpu.FSZ64=fpu_cfg.SZ;
+      cpu.RoundToZero=fpu_cfg.RM==1;
+      verify(fpu_cfg.RM<2);
+      //what about fp/fs ?
 
-		NextOp=NDO_NextOp;
-		BlockType=BET_SCL_Intr;
-		JumpAddr=0xFFFFFFFF;
-		NextAddr=0xFFFFFFFF;
+      NextOp=NDO_NextOp;
+      BlockType=BET_SCL_Intr;
+      JumpAddr=0xFFFFFFFF;
+      NextAddr=0xFFFFFFFF;
 
-		info.has_readm=false;
-		info.has_writem=false;
-		info.has_fpu=false;
-	}
+      info.has_readm=false;
+      info.has_writem=false;
+      info.has_fpu=false;
+   }
 } state;
 
-void Emit(shilop op,shil_param rd=shil_param(),shil_param rs1=shil_param(),shil_param rs2=shil_param(),u32 flags=0,shil_param rs3=shil_param(),shil_param rd2=shil_param())
+static void Emit(shilop op,
+      shil_param rd=shil_param(),
+      shil_param rs1=shil_param(),
+      shil_param rs2=shil_param(),
+      u32 flags=0,
+      shil_param rs3=shil_param(),
+      shil_param rd2=shil_param()
+      )
 {
 	shil_opcode sp;
 		
@@ -141,7 +149,7 @@ void Emit(shilop op,shil_param rd=shil_param(),shil_param rs1=shil_param(),shil_
 	blk->oplist.push_back(sp);
 }
 
-void dec_fallback(u32 op)
+static void dec_fallback(u32 op)
 {
 	shil_opcode opcd;
 	opcd.op=shop_ifb;
@@ -152,8 +160,6 @@ void dec_fallback(u32 op)
 	opcd.rs3=shil_param(FMT_IMM,op);
 	blk->oplist.push_back(opcd);
 }
-
-#if 1
 
 #define FMT_I32 ERROR!WRONG++!!
 #define FMT_F32 ERROR!WRONG++!!
@@ -166,7 +172,7 @@ void dec_fallback(u32 op)
 #define FMT_PARAM ERROR!WRONG++!!
 #define FMT_MASK ERROR!WRONG++!!
 
-void dec_DynamicSet(u32 regbase,u32 offs=0)
+static void dec_DynamicSet(u32 regbase,u32 offs=0)
 {
 	if (offs==0)
 		Emit(shop_jdyn,reg_pc_dyn,mk_reg((Sh4RegType)regbase));
@@ -174,7 +180,7 @@ void dec_DynamicSet(u32 regbase,u32 offs=0)
 		Emit(shop_jdyn,reg_pc_dyn,mk_reg((Sh4RegType)regbase),mk_imm(offs));
 }
 
-void dec_End(u32 dst,BlockEndType flags,bool delay)
+static void dec_End(u32 dst,BlockEndType flags,bool delay)
 {
 	if (state.ngen.OnlyDynamicEnds && flags == BET_StaticJump)
 	{
@@ -412,7 +418,6 @@ sh4dec(i0100_nnnn_0010_0101)
 	Emit(shop_ror,rn,rn,mk_imm(1));
 	*/
 }
-#endif
 
 const Sh4RegType SREGS[] =
 {
@@ -456,176 +461,176 @@ const Sh4RegType CREGS[] =
 	reg_r7_Bank,
 };
 
-void dec_param(DecParam p,shil_param& r1,shil_param& r2, u32 op)
+static void dec_param(DecParam p,shil_param& r1,shil_param& r2, u32 op)
 {
-	switch(p)
-	{
-		//constants
-	case PRM_PC_D8_x2:
-		r1=mk_imm((state.cpu.rpc+4)+(GetImm8(op)<<1));
-		break;
+   switch(p)
+   {
+      //constants
+      case PRM_PC_D8_x2:
+         r1=mk_imm((state.cpu.rpc+4)+(GetImm8(op)<<1));
+         break;
 
-	case PRM_PC_D8_x4:
-		r1=mk_imm(((state.cpu.rpc+4)&0xFFFFFFFC)+(GetImm8(op)<<2));
-		break;
-	
-	case PRM_ZERO:
-		r1= mk_imm(0);
-		break;
+      case PRM_PC_D8_x4:
+         r1=mk_imm(((state.cpu.rpc+4)&0xFFFFFFFC)+(GetImm8(op)<<2));
+         break;
 
-	case PRM_ONE:
-		r1= mk_imm(1);
-		break;
+      case PRM_ZERO:
+         r1= mk_imm(0);
+         break;
 
-	case PRM_TWO:
-		r1= mk_imm(2);
-		break;
+      case PRM_ONE:
+         r1= mk_imm(1);
+         break;
 
-	case PRM_TWO_INV:
-		r1= mk_imm(~2);
-		break;
+      case PRM_TWO:
+         r1= mk_imm(2);
+         break;
 
-	case PRM_ONE_F32:
-		r1= mk_imm(0x3f800000);
-		break;
+      case PRM_TWO_INV:
+         r1= mk_imm(~2);
+         break;
 
-	//imms
-	case PRM_SIMM8:
-		r1=mk_imm(GetSImm8(op));
-		break;
-	case PRM_UIMM8:
-		r1=mk_imm(GetImm8(op));
-		break;
+      case PRM_ONE_F32:
+         r1= mk_imm(0x3f800000);
+         break;
 
-	//direct registers
-	case PRM_R0:
-		r1=mk_reg(reg_r0);
-		break;
+         //imms
+      case PRM_SIMM8:
+         r1=mk_imm(GetSImm8(op));
+         break;
+      case PRM_UIMM8:
+         r1=mk_imm(GetImm8(op));
+         break;
 
-	case PRM_RN:
-		r1=mk_regi(reg_r0+GetN(op));
-		break;
+         //direct registers
+      case PRM_R0:
+         r1=mk_reg(reg_r0);
+         break;
 
-	case PRM_RM:
-		r1=mk_regi(reg_r0+GetM(op));
-		break;
+      case PRM_RN:
+         r1=mk_regi(reg_r0+GetN(op));
+         break;
 
-	case PRM_FRN_SZ:
-		if (state.cpu.FSZ64)
-		{
-			int rx=GetN(op)/2;
-			if (GetN(op)&1)
-				rx+=regv_xd_0;
-			else
-				rx+=regv_dr_0;
+      case PRM_RM:
+         r1=mk_regi(reg_r0+GetM(op));
+         break;
 
-			r1=mk_regi(rx);
-			break;
-		}
-	case PRM_FRN:
-		r1=mk_regi(reg_fr_0+GetN(op));
-		break;
+      case PRM_FRN_SZ:
+         if (state.cpu.FSZ64)
+         {
+            int rx=GetN(op)/2;
+            if (GetN(op)&1)
+               rx+=regv_xd_0;
+            else
+               rx+=regv_dr_0;
 
-	case PRM_FRM_SZ:
-		if (state.cpu.FSZ64)
-		{
-			int rx=GetM(op)/2;
-			if (GetM(op)&1)
-				rx+=regv_xd_0;
-			else
-				rx+=regv_dr_0;
+            r1=mk_regi(rx);
+            break;
+         }
+      case PRM_FRN:
+         r1=mk_regi(reg_fr_0+GetN(op));
+         break;
 
-			r1=mk_regi(rx);
-			break;
-		}
-	case PRM_FRM:
-		r1=mk_regi(reg_fr_0+GetM(op));
-		break;
+      case PRM_FRM_SZ:
+         if (state.cpu.FSZ64)
+         {
+            int rx=GetM(op)/2;
+            if (GetM(op)&1)
+               rx+=regv_xd_0;
+            else
+               rx+=regv_dr_0;
 
-	case PRM_FPUL:
-		r1=mk_regi(reg_fpul);
-		break;
+            r1=mk_regi(rx);
+            break;
+         }
+      case PRM_FRM:
+         r1=mk_regi(reg_fr_0+GetM(op));
+         break;
 
-	case PRM_FPN:	//float pair, 3 bits
-		r1=mk_regi(regv_dr_0+GetN(op)/2);
-		break;
+      case PRM_FPUL:
+         r1=mk_regi(reg_fpul);
+         break;
 
-	case PRM_FVN:	//float quad, 2 bits
-		r1=mk_regi(regv_fv_0+GetN(op)/4);
-		break;
+      case PRM_FPN:	//float pair, 3 bits
+         r1=mk_regi(regv_dr_0+GetN(op)/2);
+         break;
 
-	case PRM_FVM:	//float quad, 2 bits
-		r1=mk_regi(regv_fv_0+(GetN(op)&0x3));
-		break;
+      case PRM_FVN:	//float quad, 2 bits
+         r1=mk_regi(regv_fv_0+GetN(op)/4);
+         break;
 
-	case PRM_XMTRX:	//float matrix, 0 bits
-		r1=mk_regi(regv_xmtrx);
-		break;
+      case PRM_FVM:	//float quad, 2 bits
+         r1=mk_regi(regv_fv_0+(GetN(op)&0x3));
+         break;
 
-	case PRM_FRM_FR0:
-		r1=mk_regi(reg_fr_0+GetM(op));
-		r2=mk_regi(reg_fr_0);
-		break;
+      case PRM_XMTRX:	//float matrix, 0 bits
+         r1=mk_regi(regv_xmtrx);
+         break;
 
-	case PRM_SR_T:
-		r1=mk_regi(reg_sr_T);
-		break;
+      case PRM_FRM_FR0:
+         r1=mk_regi(reg_fr_0+GetM(op));
+         r2=mk_regi(reg_fr_0);
+         break;
 
-	case PRM_SR_STATUS:
-		r1=mk_regi(reg_sr_status);
-		break;
+      case PRM_SR_T:
+         r1=mk_regi(reg_sr_T);
+         break;
 
-	case PRM_SREG:	//FPUL/FPSCR/MACH/MACL/PR/DBR/SGR
-		r1=mk_regi(SREGS[GetM(op)]);
-		break;
-	case PRM_CREG:	//SR/GBR/VBR/SSR/SPC/<RM_BANK>
-		r1=mk_regi(CREGS[GetM(op)]);
-		break;
-	
-	//reg/imm reg/reg
-	case PRM_RN_D4_x1:
-	case PRM_RN_D4_x2:
-	case PRM_RN_D4_x4:
-		{
-			u32 shft=p-PRM_RN_D4_x1;
-			r1=mk_regi(reg_r0+GetN(op));
-			r2=mk_imm(GetImm4(op)<<shft);
-		}
-		break;
+      case PRM_SR_STATUS:
+         r1=mk_regi(reg_sr_status);
+         break;
 
-	case PRM_RN_R0:
-		r1=mk_regi(reg_r0+GetN(op));
-		r2=mk_regi(reg_r0);
-		break;
+      case PRM_SREG:	//FPUL/FPSCR/MACH/MACL/PR/DBR/SGR
+         r1=mk_regi(SREGS[GetM(op)]);
+         break;
+      case PRM_CREG:	//SR/GBR/VBR/SSR/SPC/<RM_BANK>
+         r1=mk_regi(CREGS[GetM(op)]);
+         break;
 
-	case PRM_RM_D4_x1:
-	case PRM_RM_D4_x2:
-	case PRM_RM_D4_x4:
-		{
-			u32 shft=p-PRM_RM_D4_x1;
-			r1=mk_regi(reg_r0+GetM(op));
-			r2=mk_imm(GetImm4(op)<<shft);
-		}
-		break;
+         //reg/imm reg/reg
+      case PRM_RN_D4_x1:
+      case PRM_RN_D4_x2:
+      case PRM_RN_D4_x4:
+         {
+            u32 shft=p-PRM_RN_D4_x1;
+            r1=mk_regi(reg_r0+GetN(op));
+            r2=mk_imm(GetImm4(op)<<shft);
+         }
+         break;
 
-	case PRM_RM_R0:
-		r1=mk_regi(reg_r0+GetM(op));
-		r2=mk_regi(reg_r0);
-		break;
+      case PRM_RN_R0:
+         r1=mk_regi(reg_r0+GetN(op));
+         r2=mk_regi(reg_r0);
+         break;
 
-	case PRM_GBR_D8_x1:
-	case PRM_GBR_D8_x2:
-	case PRM_GBR_D8_x4:
-		{
-			u32 shft=p-PRM_GBR_D8_x1;
-			r1=mk_regi(reg_gbr);
-			r2=mk_imm(GetImm8(op)<<shft);
-		}
-		break;
+      case PRM_RM_D4_x1:
+      case PRM_RM_D4_x2:
+      case PRM_RM_D4_x4:
+         {
+            u32 shft=p-PRM_RM_D4_x1;
+            r1=mk_regi(reg_r0+GetM(op));
+            r2=mk_imm(GetImm4(op)<<shft);
+         }
+         break;
 
-	default:
-		die("Non-supported parameter used");
-	}
+      case PRM_RM_R0:
+         r1=mk_regi(reg_r0+GetM(op));
+         r2=mk_regi(reg_r0);
+         break;
+
+      case PRM_GBR_D8_x1:
+      case PRM_GBR_D8_x2:
+      case PRM_GBR_D8_x4:
+         {
+            u32 shft=p-PRM_GBR_D8_x1;
+            r1=mk_regi(reg_gbr);
+            r2=mk_imm(GetImm8(op)<<shft);
+         }
+         break;
+
+      default:
+         die("Non-supported parameter used");
+   }
 }
 
 #define MASK_N_M 0xF00F
@@ -641,58 +646,58 @@ Sh4RegType div_som_reg1;
 Sh4RegType div_som_reg2;
 Sh4RegType div_som_reg3;
 
-u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
+static u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 {
+   u32 v_pc=pc;
+   u32 match=1;
+   for (int i=0;i<32;i++)
+   {
+      u16 opcode=ReadMem16(v_pc);
+      v_pc+=2;
+      if ((opcode&MASK_N)==ROTCL_KEY)
+      {
+         if (reg1==NoReg)
+            reg1=(Sh4RegType)GetN(opcode);
+         else if (reg1!=(Sh4RegType)GetN(opcode))
+            break;
+         match++;
+      }
+      else
+      {
+         //printf("DIV MATCH BROKEN BY: %s\n",OpDesc[opcode]->diss);
+         break;
+      }
 
-	u32 v_pc=pc;
-	u32 match=1;
-	for (int i=0;i<32;i++)
-	{
-		u16 opcode=ReadMem16(v_pc);
-		v_pc+=2;
-		if ((opcode&MASK_N)==ROTCL_KEY)
-		{
-			if (reg1==NoReg)
-				reg1=(Sh4RegType)GetN(opcode);
-			else if (reg1!=(Sh4RegType)GetN(opcode))
-				break;
-			match++;
-		}
-		else
-		{
-			//printf("DIV MATCH BROKEN BY: %s\n",OpDesc[opcode]->diss);
-			break;
-		}
-		
-		opcode=ReadMem16(v_pc);
-		v_pc+=2;
-		if ((opcode&MASK_N_M)==DIV1_KEY)
-		{
-			if (reg2==NoReg)
-				reg2=(Sh4RegType)GetM(opcode);
-			else if (reg2!=(Sh4RegType)GetM(opcode))
-				break;
-			
-			if (reg2==reg1)
-				break;
+      opcode=ReadMem16(v_pc);
+      v_pc+=2;
+      if ((opcode&MASK_N_M)==DIV1_KEY)
+      {
+         if (reg2==NoReg)
+            reg2=(Sh4RegType)GetM(opcode);
+         else if (reg2!=(Sh4RegType)GetM(opcode))
+            break;
 
-			if (reg3==NoReg)
-				reg3=(Sh4RegType)GetN(opcode);
-			else if (reg3!=(Sh4RegType)GetN(opcode))
-				break;
-			
-			if (reg3==reg1)
-				break;
+         if (reg2==reg1)
+            break;
 
-			match++;
-		}
-		else
-			break;
-	}
-	
-	return match;
+         if (reg3==NoReg)
+            reg3=(Sh4RegType)GetN(opcode);
+         else if (reg3!=(Sh4RegType)GetN(opcode))
+            break;
+
+         if (reg3==reg1)
+            break;
+
+         match++;
+      }
+      else
+         break;
+   }
+
+   return match;
 }
-bool MatchDiv32u(u32 op,u32 pc)
+
+static bool MatchDiv32u(u32 op,u32 pc)
 {
 	div_som_reg1=NoReg;
 	div_som_reg2=NoReg;
@@ -707,7 +712,7 @@ bool MatchDiv32u(u32 op,u32 pc)
    return false;
 }
 
-bool MatchDiv32s(u32 op,u32 pc)
+static bool MatchDiv32s(u32 op,u32 pc)
 {
    u32 n = GetN(op);
    u32 m = GetM(op);
@@ -732,7 +737,7 @@ bool MatchDiv32s(u32 op,u32 pc)
    return false;
 }
 
-bool dec_generic(u32 op)
+static bool dec_generic(u32 op)
 {
 	DecMode mode;DecParam d;DecParam s;shilop natop;u32 e;
 	if (OpDesc[op]->decode==0)

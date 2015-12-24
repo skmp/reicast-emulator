@@ -86,11 +86,6 @@ DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 	return (DynarecCodeEntryPtr)rv;
 }
 
-DynarecCodeEntryPtr DYNACALL bm_GetCode2(u32 addr)
-{
-	return (DynarecCodeEntryPtr)bm_GetCode(addr);
-}
-
 RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr)
 {
 	DynarecCodeEntryPtr cde=bm_GetCode(addr);

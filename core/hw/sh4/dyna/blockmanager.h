@@ -83,15 +83,6 @@ void bm_WriteBlockMap(const string& file);
 
 DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr);
 
-
-#if defined(__linux__)
-extern "C" {
-#endif
-DynarecCodeEntryPtr DYNACALL bm_GetCode2(u32 addr);
-#if defined(__linux__)
-}
-#endif
-
 RuntimeBlockInfo* bm_GetBlock(void* dynarec_code);
 RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code);
 RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr);

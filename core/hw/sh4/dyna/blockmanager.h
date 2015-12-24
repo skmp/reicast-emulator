@@ -91,7 +91,6 @@ void bm_AddBlock(RuntimeBlockInfo* blk);
 void bm_Reset();
 void bm_Periodical_1s();
 void bm_Periodical_14k();
-void bm_Sort();
 
 void bm_Init();
 void bm_Term();

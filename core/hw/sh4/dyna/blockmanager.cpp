@@ -173,7 +173,7 @@ bool UDgreaterLOC ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
 	return elem1->addr < elem2->addr;
 }
 
-u32 FindPath(RuntimeBlockInfo* rbi, u32 sa,s32 mc,u32& plc)
+static u32 FindPath(RuntimeBlockInfo* rbi, u32 sa,s32 mc,u32& plc)
 {
    u32 ret = 0;
 	if (mc < 0 || rbi==0)
@@ -221,7 +221,8 @@ u32 FindPath(RuntimeBlockInfo* rbi, u32 sa,s32 mc,u32& plc)
 }
 
 u32 total_saved;
-void FindPath(u32 start)
+
+static void FindPath(u32 start)
 {
 	RuntimeBlockInfo* rbi=bm_GetBlock(start);
 
@@ -242,7 +243,8 @@ void FindPath(u32 start)
 
 #include <map>
 u32 rebuild_counter=20;
-void bm_Periodical_1s()
+
+void bm_Periodical_1s(void)
 {
 	for (u32 i=0;i<del_blocks.size();i++)
 		delete del_blocks[i];
@@ -254,7 +256,8 @@ void bm_Periodical_1s()
 }
 
 void constprop(RuntimeBlockInfo* blk);
-void bm_Rebuild()
+
+void bm_Rebuild(void)
 {
 	return;
 
@@ -283,9 +286,7 @@ void bm_Rebuild()
 	}
 
 	for(size_t i=0; i<all_blocks.size(); i++)
-	{
 		all_blocks[i]->Relink();
-	}
 
 	rebuild_counter=30;
 }
@@ -293,18 +294,14 @@ void bm_Rebuild()
 void bm_vmem_pagefill(void** ptr,u32 PAGE_SZ)
 {
 	for (size_t i=0; i<PAGE_SZ/sizeof(ptr[0]); i++)
-	{
 		ptr[i]=(void*)ngen_FailedToFindBlock;
-	}
 }
 
-void bm_Reset()
+void bm_Reset(void)
 {
 	ngen_ResetBlocks();
 	for (u32 i=0; i<BLOCKS_IN_PAGE_LIST_COUNT; i++)
-	{
 		blocks_page[i].clear();
-	}
 
 	_vmem_bm_reset();
 
@@ -335,8 +332,7 @@ void bm_Reset()
 #endif
 }
 
-
-void bm_Init()
+void bm_Init(void)
 {
 
 #ifdef DYNA_OPROF
@@ -348,10 +344,11 @@ void bm_Init()
 #endif
 }
 
-void bm_Term()
+void bm_Term(void)
 {
 #ifdef DYNA_OPROF
-	if (oprofHandle) op_close_agent(oprofHandle);
+	if (oprofHandle)
+      op_close_agent(oprofHandle);
 	
 	oprofHandle=0;
 #endif
@@ -374,24 +371,24 @@ void bm_WriteBlockMap(const string& file)
 	}
 }
 
-u32 GetLookup(RuntimeBlockInfo* elem)
+static u32 GetLookup(RuntimeBlockInfo* elem)
 {
 	return elem->lookups;
 }
 
-bool UDgreater ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
+static bool UDgreater ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
 {
 	return elem1->runs > elem2->runs;
 }
 
-bool UDgreater2 ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
+static bool UDgreater2 ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
 {
 	return elem1->runs*elem1->host_opcodes > elem2->runs*elem2->host_opcodes;
 }
 
-bool UDgreater3 ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
+static bool UDgreater3 ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
 {
-	return elem1->runs*elem1->host_opcodes/elem1->guest_cycles > elem2->runs*elem2->host_opcodes/elem2->guest_cycles;
+   return elem1->runs*elem1->host_opcodes/elem1->guest_cycles > elem2->runs*elem2->host_opcodes/elem2->guest_cycles;
 }
 
 void sh4_jitsym(FILE* out)
@@ -402,7 +399,7 @@ void sh4_jitsym(FILE* out)
 	}
 }
 
-void bm_PrintTopBlocks()
+static void bm_PrintTopBlocks(void)
 {
 	double total_lups=0;
 	double total_runs=0;
@@ -458,7 +455,7 @@ void bm_PrintTopBlocks()
 
 }
 
-void bm_Sort()
+static void bm_Sort(void)
 {
 	printf("!!!!!!!!!!!!!!!!!!! BLK REPORT !!!!!!!!!!!!!!!!!!!!n");
 
@@ -481,9 +478,7 @@ void bm_Sort()
 	printf("^^^^^^^^^^^^^^^^^^^ END REPORT ^^^^^^^^^^^^^^^^^^^\n");
 
 	for (size_t i=0;i<all_blocks.size();i++)
-	{
 		all_blocks[i]->runs=0;
-	}
 }
 
 
@@ -527,9 +522,7 @@ void fprint_hex(FILE* d,const char* init,u8* ptr, u32& ofs, u32 limit)
 	fputs("\n",d);
 }
 
-
-
-void print_blocks()
+void print_blocks(void)
 {
 	FILE* f=0;
 

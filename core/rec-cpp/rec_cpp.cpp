@@ -1087,7 +1087,7 @@ FNAFB fnnCtor_forreal(size_t n)
 	return FNA[n - 1];
 }
 
-class BlockCompiler {
+class BlockCompilercpp {
 public:
 
 	size_t opcode_index;
@@ -1619,9 +1619,9 @@ void ngen_Compile_cpp(RuntimeBlockInfo* block, bool force_checks, bool reset, bo
 {
 	verify(emit_FreeSpace() >= 16 * 1024);
 
-	compiler_data = static_cast<void*>(new BlockCompiler());
+	compiler_data = static_cast<void*>(new BlockCompilercpp());
 
-   BlockCompiler *compiler = (BlockCompiler*)compiler_data;
+   BlockCompilercpp *compiler = (BlockCompilercpp*)compiler_data;
 
 	compiler->compile(block, force_checks, reset, staging, optimise);
 
@@ -1630,24 +1630,24 @@ void ngen_Compile_cpp(RuntimeBlockInfo* block, bool force_checks, bool reset, bo
 
 void ngen_CC_Call_cpp(shil_opcode*op, void* function)
 {
-   BlockCompiler *compiler = (BlockCompiler*)compiler_data;
+   BlockCompilercpp *compiler = (BlockCompilercpp*)compiler_data;
 	compiler->ngen_CC_Call(op, function);
 }
 
 void ngen_CC_Finish_cpp(shil_opcode* op)
 {
-   BlockCompiler *compiler = (BlockCompiler*)compiler_data;
+   BlockCompilercpp *compiler = (BlockCompilercpp*)compiler_data;
 	compiler->ngen_CC_Finish(op);
 }
 
 void ngen_CC_Start_cpp(shil_opcode* op)
 {
-   BlockCompiler *compiler = (BlockCompiler*)compiler_data;
+   BlockCompilercpp *compiler = (BlockCompilercpp*)compiler_data;
    compiler->ngen_CC_Start(op);
 }
 
 void ngen_CC_Param_cpp(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 {
-   BlockCompiler *compiler = (BlockCompiler*)compiler_data;
+   BlockCompilercpp *compiler = (BlockCompilercpp*)compiler_data;
    compiler->ngen_CC_param(*op, *par, tp);
 }

@@ -16,14 +16,14 @@
 
 extern int cycle_counter;
 
-class BlockCompiler : public Xbyak::CodeGenerator{
+class BlockCompilerx64 : public Xbyak::CodeGenerator{
 public:
 
 	vector<Xbyak::Reg32> call_regs;
 	vector<Xbyak::Reg64> call_regs64;
 	vector<Xbyak::Xmm> call_regsxmm;
 
-	BlockCompiler() : Xbyak::CodeGenerator(64 * 1024, emit_GetCCPtr()) {
+	BlockCompilerx64() : Xbyak::CodeGenerator(64 * 1024, emit_GetCCPtr()) {
 #ifdef _WIN32
       call_regs.push_back(ecx);
       call_regs.push_back(edx);
@@ -392,9 +392,9 @@ void ngen_Compile_x64(RuntimeBlockInfo* block, bool force_checks, bool reset, bo
 {
 	verify(emit_FreeSpace() >= 16 * 1024);
 
-	compiler_data = static_cast<void*>(new BlockCompiler());
+	compiler_data = static_cast<void*>(new BlockCompilerx64());
 
-   BlockCompiler *compiler = (BlockCompiler*)compiler_data;
+   BlockCompilerx64 *compiler = (BlockCompilerx64*)compiler_data;
 	
 	compiler->compile(block, force_checks, reset, staging, optimise);
 
@@ -403,19 +403,19 @@ void ngen_Compile_x64(RuntimeBlockInfo* block, bool force_checks, bool reset, bo
 
 void ngen_CC_Call_x64(shil_opcode*op, void* function)
 {
-   BlockCompiler *compiler = (BlockCompiler*)compiler_data;
+   BlockCompilerx64 *compiler = (BlockCompilerx64*)compiler_data;
 	compiler->ngen_CC_Call(op, function);
 }
 
 void ngen_CC_Param_x64(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 {
-   BlockCompiler *compiler = (BlockCompiler*)compiler_data;
+   BlockCompilerx64 *compiler = (BlockCompilerx64*)compiler_data;
    compiler->ngen_CC_param(*op, *par, tp);
 }
 
 void ngen_CC_Start_x64(shil_opcode* op)
 {
-   BlockCompiler *compiler = (BlockCompiler*)compiler_data;
+   BlockCompilerx64 *compiler = (BlockCompilerx64*)compiler_data;
    compiler->ngen_CC_Start(op);
 }
 

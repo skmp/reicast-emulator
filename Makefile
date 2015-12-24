@@ -7,7 +7,7 @@ NO_EXCEPTIONS := 0
 NO_NVMEM      := 0
 NO_VERIFY     := 1
 NAOMI         := 0
-NO_JIT        := 0
+NO_JIT        := 1
 
 TARGET_NAME   := reicast
 

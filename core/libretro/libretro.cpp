@@ -132,6 +132,20 @@ void retro_set_environment(retro_environment_t cb)
    environ_cb = cb;
 
    struct retro_variable variables[] = {
+#if ((FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86) || (HOST_CPU == CPU_ARM) || (HOST_CPU == CPU_X64) || TARGET_NO_JIT)
+      {
+         "reicast_cpu_mode",
+         "CPU Mode (restart); "
+#if (FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86) || (HOST_CPU == CPU_ARM) || (HOST_CPU == CPU_X64)
+            "dynamic_recompiler"
+#endif
+#ifdef TARGET_NO_JIT
+            "|"
+            "generic_recompiler"
+#endif
+            ,
+      },
+#endif
       {
          "reicast_internal_resolution",
          "Internal resolution (restart); 640x480|1280x960|1920x1440|2560x1920|3200x2400|3840x2880|4480x3360",
@@ -206,6 +220,16 @@ static void update_variables(void)
          screen_height = strtoul(pch, NULL, 0);
 
       fprintf(stderr, "[reicast]: Got size: %u x %u.\n", screen_width, screen_height);
+   }
+
+   var.key = "reicast_cpu_mode";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "dynamic_recompiler"))
+         settings.dynarec.Type = 0;
+      else if (!strcmp(var.value, "generic_recompiler"))
+         settings.dynarec.Type = 1;
    }
 
    var.key = "reicast_widescreen_hack";

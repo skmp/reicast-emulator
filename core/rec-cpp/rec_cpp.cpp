@@ -4,7 +4,6 @@
 #include <map>
 #include <algorithm>
 
-#if FEAT_SHREC == DYNAREC_CPP
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/modules/ccn.h"
 #include "hw/sh4/sh4_interrupts.h"
@@ -1616,37 +1615,39 @@ public:
 
 };
 
-BlockCompiler* compiler;
-
-void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
+void ngen_Compile_cpp(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
 {
 	verify(emit_FreeSpace() >= 16 * 1024);
 
-	compiler = new BlockCompiler();
+	compiler_data = static_cast<void*>(new BlockCompiler());
 
+   BlockCompiler *compiler = (BlockCompiler*)compiler_data;
 
 	compiler->compile(block, force_checks, reset, staging, optimise);
 
 	delete compiler;
 }
 
-void ngen_CC_Start(shil_opcode* op)
+void ngen_CC_Call_cpp(shil_opcode*op, void* function)
 {
-	compiler->ngen_CC_Start(op);
-}
-
-void ngen_CC_Param(shil_opcode* op, shil_param* par, CanonicalParamType tp)
-{
-	compiler->ngen_CC_param(*op, *par, tp);
-}
-
-void ngen_CC_Call(shil_opcode*op, void* function)
-{
+   BlockCompiler *compiler = (BlockCompiler*)compiler_data;
 	compiler->ngen_CC_Call(op, function);
 }
 
-void ngen_CC_Finish(shil_opcode* op)
+void ngen_CC_Finish_cpp(shil_opcode* op)
 {
+   BlockCompiler *compiler = (BlockCompiler*)compiler_data;
 	compiler->ngen_CC_Finish(op);
 }
-#endif
+
+void ngen_CC_Start_cpp(shil_opcode* op)
+{
+   BlockCompiler *compiler = (BlockCompiler*)compiler_data;
+   compiler->ngen_CC_Start(op);
+}
+
+void ngen_CC_Param_cpp(shil_opcode* op,shil_param* par,CanonicalParamType tp)
+{
+   BlockCompiler *compiler = (BlockCompiler*)compiler_data;
+   compiler->ngen_CC_param(*op, *par, tp);
+}

@@ -100,8 +100,6 @@ typedef char wchar;
 
 #define EXPORT extern "C" __declspec(dllexport)
 
-
-
 #ifndef CDECL
 #define CDECL __cdecl
 #endif
@@ -595,7 +593,7 @@ struct settings_t
 	struct
 	{
 		bool Enable;
-      bool Type;
+      unsigned Type;
 		bool idleskip;
 		bool unstable_opt;
 		bool disable_nvmem;

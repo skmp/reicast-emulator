@@ -231,11 +231,6 @@ void DYNACALL PrintBlock(u32 pc)
 	printf("\n");
 }
 
-u32* GetRegPtr(u32 reg)
-{
-	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
-}
-
 u32 cvld;
 u32 rdmt[6];
 extern u32 memops_t,memops_l;
@@ -262,8 +257,7 @@ void CheckBlock(RuntimeBlockInfo* block,x86_ptr_imm place)
 	
 }
 
-
-void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
+void ngen_Compile_x86(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
 {
 	//initialise stuff
 	DetectCpuFeatures();

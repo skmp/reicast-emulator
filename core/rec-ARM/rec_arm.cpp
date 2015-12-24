@@ -566,11 +566,13 @@ struct CC_PS
 	shil_param* par;
 };
 vector<CC_PS> CC_pars;
-void ngen_CC_Start(shil_opcode* op) 
+
+void ngen_CC_Start_arm(shil_opcode* op) 
 { 
 	CC_pars.clear();
 }
-void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp) 
+
+void ngen_CC_Param_arm(shil_opcode* op,shil_param* par,CanonicalParamType tp) 
 { 
 	switch(tp)
 	{
@@ -629,7 +631,7 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 	}
 }
 
-void ngen_CC_Call(shil_opcode* op,void* function) 
+void ngen_CC_Call_arm(shil_opcode* op,void* function) 
 {
 	u32 rd=r0;
 	u32 fd=f0;
@@ -688,7 +690,8 @@ void ngen_CC_Call(shil_opcode* op,void* function)
 	//printf("used reg r0 to r%d, %d params, calling %08X\n",rd-1,CC_pars.size(),function);
 	CALL((u32)function);
 }
-void ngen_CC_Finish(shil_opcode* op) 
+
+void ngen_CC_Finish_arm(shil_opcode* op) 
 { 
 	CC_pars.clear(); 
 }
@@ -2070,7 +2073,7 @@ __default:
 }
 
 
-void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
+void ngen_Compile_arm(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
 {
 	//printf("Compile: %08X, %d, %d\n",block->addr,staging,optimise);
 	block->code=(DynarecCodeEntryPtr)EMIT_GET_PTR();

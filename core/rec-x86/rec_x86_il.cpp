@@ -69,11 +69,13 @@ void ngen_Unary(shil_opcode* op,x86_opcode_class natop)
 void* _vmem_read_const(u32 addr,bool& ismem,u32 sz);
 
 u32 ngen_CC_BytesPushed;
-void ngen_CC_Start(shil_opcode* op)
+
+void ngen_CC_Start_x86(shil_opcode* op)
 {
 	ngen_CC_BytesPushed=0;
 }
-void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
+
+void ngen_CC_Param_x86(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 {
 	switch(tp)
 	{
@@ -152,13 +154,13 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 	}
 }
 
-void ngen_CC_Call(shil_opcode*op,void* function)
+void ngen_CC_Call_x86(shil_opcode*op,void* function)
 {
 	reg.FreezeXMM();
 	x86e->Emit(op_call,x86_ptr_imm(function));
 	reg.ThawXMM();
 }
-void ngen_CC_Finish(shil_opcode* op)
+void ngen_CC_Finish_x86(shil_opcode* op)
 {
 	x86e->Emit(op_add32,ESP,ngen_CC_BytesPushed);
 }

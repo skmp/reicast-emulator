@@ -13,7 +13,7 @@
 u32 RegisterWrite[sh4_reg_count];
 u32 RegisterRead[sh4_reg_count];
 
-void RegReadInfo(shil_param p,size_t ord)
+static void RegReadInfo(shil_param p,size_t ord)
 {
 	if (p.is_reg())
 	{
@@ -21,7 +21,8 @@ void RegReadInfo(shil_param p,size_t ord)
 			RegisterRead[p._reg+i]=ord;
 	}
 }
-void RegWriteInfo(shil_opcode* ops, shil_param p,size_t ord)
+
+static void RegWriteInfo(shil_opcode* ops, shil_param p,size_t ord)
 {
 	if (p.is_reg())
 	{
@@ -40,7 +41,7 @@ u32 fallback_blocks;
 u32 total_blocks;
 u32 REMOVED_OPS;
 
-bool isdst(shil_opcode* op,Sh4RegType rd)
+static inline bool isdst(shil_opcode* op,Sh4RegType rd)
 {
 	return (op->rd.is_r32() && op->rd._reg==rd) || (op->rd2.is_r32() && op->rd2._reg==rd);
 }
@@ -48,7 +49,7 @@ bool isdst(shil_opcode* op,Sh4RegType rd)
 //really hacky ~
 //Isn't this now obsolete anyway ? (constprop pass should include it ..)
 // -> constprop has some small stability issues still, not ready to be used on ip/bios fully yet
-void PromoteConstAddress(RuntimeBlockInfo* blk)
+static void PromoteConstAddress(RuntimeBlockInfo* blk)
 {
 	bool is_const=false;
 	u32 value;
@@ -78,7 +79,7 @@ void PromoteConstAddress(RuntimeBlockInfo* blk)
 	}
 }
 
-void sq_pref(RuntimeBlockInfo* blk, int i, Sh4RegType rt, bool mark)
+static void sq_pref(RuntimeBlockInfo* blk, int i, Sh4RegType rt, bool mark)
 {
 	u32 data=0;
 	for (int c=i-1;c>0;c--)
@@ -96,15 +97,14 @@ void sq_pref(RuntimeBlockInfo* blk, int i, Sh4RegType rt, bool mark)
 		}
 
 		if (blk->oplist[c].op==shop_pref || (blk->oplist[c].rd.is_reg() && blk->oplist[c].rd._reg==rt && blk->oplist[c].op!= shop_sub))
-		{
 			break;
-		}
 
 		if (data==32)
 			break;
 	}
 
-	if (mark) return;
+	if (mark)
+      return;
 
 	if (data>=8)
 	{
@@ -118,9 +118,10 @@ void sq_pref(RuntimeBlockInfo* blk, int i, Sh4RegType rt, bool mark)
 	}
 }
 
-void sq_pref(RuntimeBlockInfo* blk)
+static void sq_pref(RuntimeBlockInfo* blk)
 {
-	for (int i=0;i<blk->oplist.size();i++)
+   unsigned i;
+	for (i=0;i<blk->oplist.size();i++)
 	{
 		blk->oplist[i].flags2=0;
 		if (blk->oplist[i].op==shop_pref)
@@ -129,7 +130,7 @@ void sq_pref(RuntimeBlockInfo* blk)
 }
 
 //Read Groups
-void rdgrp(RuntimeBlockInfo* blk)
+static void rdgrp(RuntimeBlockInfo* blk)
 {
 	int started=-1;
 	Sh4RegType reg;
@@ -206,8 +207,9 @@ void rdgrp(RuntimeBlockInfo* blk)
 		}
 	}
 }
+
 //Write Groups
-void wtgrp(RuntimeBlockInfo* blk)
+static void wtgrp(RuntimeBlockInfo* blk)
 {
 	int started=-1;
 	Sh4RegType reg;
@@ -293,17 +295,17 @@ void wtgrp(RuntimeBlockInfo* blk)
 	}
 }
 
-bool ReadsPhy(shil_opcode* op, u32 phy)
+static bool ReadsPhy(shil_opcode* op, u32 phy)
 {
 	return true;
 }
 
-bool WritesPhy(shil_opcode* op, u32 phy)
+static bool WritesPhy(shil_opcode* op, u32 phy)
 {
 	return true;
 }
 
-void rw_related(RuntimeBlockInfo* blk)
+static void rw_related(RuntimeBlockInfo* blk)
 {
 	u32 reg[sh4_reg_count]={0};
 
@@ -376,9 +378,8 @@ void rw_related(RuntimeBlockInfo* blk)
 	blk->linkedmemops=total;
 }
 
-
 //constprop
-void constprop(RuntimeBlockInfo* blk)
+static void constprop(RuntimeBlockInfo* blk)
 {
 	u32 rv[16];
 	bool isi[16]={0};
@@ -543,7 +544,7 @@ void constprop(RuntimeBlockInfo* blk)
 }
 
 //read_v4m3z1
-void read_v4m3z1(RuntimeBlockInfo* blk)
+static void read_v4m3z1(RuntimeBlockInfo* blk)
 {
 	
 	int state=0;
@@ -681,7 +682,7 @@ _end:
 }
 
 //dejcond
-void dejcond(RuntimeBlockInfo* blk)
+static void dejcond(RuntimeBlockInfo* blk)
 {
 	u32 rv[16];
 	bool isi[16]={0};
@@ -718,7 +719,7 @@ void dejcond(RuntimeBlockInfo* blk)
 }
 
 //detect bswaps and talk about them
-void enswap(RuntimeBlockInfo* blk)
+static void enswap(RuntimeBlockInfo* blk)
 {
 	Sh4RegType r;
 	int state=0;
@@ -781,7 +782,7 @@ void enswap(RuntimeBlockInfo* blk)
 //however, cause of reg alloc stuff in arm, this
 //speeds up access to SR_T (pc_dyn is stored in reg, not mem)
 //This is temporary til that limitation is fixed on the reg alloc logic
-void enjcond(RuntimeBlockInfo* blk)
+static void enjcond(RuntimeBlockInfo* blk)
 {
 	u32 rv[16];
 	bool isi[16]={0};
@@ -801,12 +802,13 @@ void enjcond(RuntimeBlockInfo* blk)
 
 
 //"links" consts to each other
-void constlink(RuntimeBlockInfo* blk)
+static void constlink(RuntimeBlockInfo* blk)
 {
 	Sh4RegType def=NoReg;
 	s32 val;
+   size_t i;
 
-	for (size_t i=0;i<blk->oplist.size();i++)
+	for (i=0;i<blk->oplist.size();i++)
 	{
 		shil_opcode* op=&blk->oplist[i];
 
@@ -828,13 +830,13 @@ void constlink(RuntimeBlockInfo* blk)
 	}
 }
 
-
-void srt_waw(RuntimeBlockInfo* blk)
+static void srt_waw(RuntimeBlockInfo* blk)
 {
 	bool found=false;
 	u32 srtw=0;
+   size_t i;
 
-	for (size_t i=0;i<blk->oplist.size();i++)
+	for (i=0;i<blk->oplist.size();i++)
 	{
 		shil_opcode* op=&blk->oplist[i];
 
@@ -926,12 +928,7 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 	if (settings.dynarec.unstable_opt)
 		sq_pref(blk);
 	//constprop(blk); // crashes on ip
-#if HOST_CPU==CPU_X86
-//	rdgrp(blk);
-//	wtgrp(blk);
-	//constprop(blk);
-	
-#endif
+   
 	bool last_op_sets_flags=!blk->has_jcond && blk->oplist.size() > 0 && 
 		blk->oplist[blk->oplist.size()-1].rd._reg==reg_sr_T;
 
@@ -1041,6 +1038,7 @@ string name_reg(u32 reg)
 
 	return ss.str();
 }
+
 string dissasm_param(const shil_param& prm, bool comma)
 {
 	stringstream ss;

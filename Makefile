@@ -418,6 +418,8 @@ include Makefile.common
 
 ifeq ($(DEBUG),1)
 OPTFLAGS       := -O0
+LDFLAGS  += -g
+CFLAGS   += -g
 else
 OPTFLAGS       := -O2
 RZDCY_CFLAGS   += -DNDEBUG
@@ -466,8 +468,7 @@ endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fexceptions -fno-rtti -std=gnu++11
 
-LDFLAGS  += -g
-CFLAGS   += -g $(OPTFLAGS) -D RELEASE -c
+CFLAGS   += $(OPTFLAGS) -D RELEASE -c
 CFLAGS   += -fno-strict-aliasing -ffast-math -ftree-vectorize
 CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
 LIBS     += -lm -lpthread

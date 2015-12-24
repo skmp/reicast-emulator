@@ -419,7 +419,7 @@ include Makefile.common
 ifeq ($(DEBUG),1)
 OPTFLAGS       := -O0
 else
-OPTFLAGS       := -O3
+OPTFLAGS       := -O2
 RZDCY_CFLAGS   += -DNDEBUG
 RZDCY_CXXFLAGS += -DNDEBUG
 CFLAGS         += -DNDEBUG

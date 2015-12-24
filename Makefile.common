@@ -107,23 +107,17 @@ SOURCES_CXX += $(CORE_DIR)/hw/naomi/naomi.cpp \
 					$(CORE_DIR)/hw/naomi/naomi_cart.cpp 
 endif
 
-# Recompiler (x64)
 
-ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
-DYNAREC_USED = 1
-SOURCES_CXX += $(CORE_DIR)/rec-x64/rec_x64.cpp 
-endif
-
-# Recompiler (ARM)
-ifeq ($(WITH_DYNAREC), arm)
-DYNAREC_USED = 1
-SOURCES_CXX += $(CORE_DIR)/rec-ARM/rec-arm.cpp
-SOURCES_ASM += $(CORE_DIR)/rec-ARM/ngen_arm.S
-endif
 
 ifeq ($(NO_JIT),1)
 DYNAREC_USED = 1
 SOURCES_CXX += $(CORE_DIR)/rec-cpp/rec_cpp.cpp
+
+# Recompiler (x64)
+
+else ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
+DYNAREC_USED = 1
+SOURCES_CXX += $(CORE_DIR)/rec-x64/rec_x64.cpp 
 
 # Recompiler (x86 32bit)
 #
@@ -133,6 +127,13 @@ SOURCES_CXX += $(CORE_DIR)/rec-x86/rec_x86_asm.cpp \
 					$(CORE_DIR)/rec-x86/rec_x86_driver.cpp \
 					$(CORE_DIR)/rec-x86/rec_x86_il.cpp
 SOURCES_ASM += $(CORE_DIR)/rec-x86/rec_lin86_asm.S
+
+# Recompiler (ARM)
+else ifeq ($(WITH_DYNAREC), arm)
+DYNAREC_USED = 1
+SOURCES_CXX += $(CORE_DIR)/rec-ARM/rec-arm.cpp
+SOURCES_ASM += $(CORE_DIR)/rec-ARM/ngen_arm.S
+
 endif
 
 ifeq ($(DYNAREC_USED),1)
@@ -142,6 +143,7 @@ SOURCES_CXX += $(CORE_DIR)/hw/sh4/dyna/decoder.cpp \
 					$(CORE_DIR)/hw/sh4/dyna/driver.cpp \
 					$(CORE_DIR)/hw/sh4/dyna/blockmanager.cpp \
 					$(CORE_DIR)/hw/sh4/dyna/shil.cpp 
+
 endif
 
 SOURCES_CXX += $(CORE_DIR)/libretro/libretro.cpp \

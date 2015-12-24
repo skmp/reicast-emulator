@@ -145,7 +145,7 @@ bool DoCheck(u32 pc)
 				return true;
 
 			default:
-				return false;
+            break;
 		}
 	}
 	return false;

@@ -66,10 +66,22 @@ void ngen_init(void)
 {
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
    extern void ngen_init_x86_32bit(void);
-   ngen_init_x86_32bit();
+
+   switch (settings.dynarec.Type)
+   {
+      case 0:
+         ngen_init_x86_32bit();
+         break;
+   }
 #elif defined(ARM_MOBILE)
    extern void ngen_init_arm(void);
-   nngen_init_arm();
+
+   switch (settings.dynarec.Type)
+   {
+      case 0:
+         ngen_init_arm();
+         break;
+   }
 #endif
 }
 

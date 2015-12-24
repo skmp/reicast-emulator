@@ -18,27 +18,27 @@ InterruptInfo* SCIRE;
 
 //Interrupts
 //arm side
-u32 GetL(u32 witch)
+static u32 GetL(u32 which)
 {
-   if (witch>7)
-      witch=7; //higher bits share bit 7
+   if (which > 7)
+      which = 7; //higher bits share bit 7
 
-   u32 bit=1<<witch;
-   u32 rv=0;
+   u32 bit = 1 << which;
+   u32 rv  = 0;
 
    if (CommonData->SCILV0 & bit)
-      rv=1;
+      rv = 1;
 
    if (CommonData->SCILV1 & bit)
-      rv|=2;
+      rv |= 2;
 
    if (CommonData->SCILV2 & bit)
-      rv|=4;
+      rv |= 4;
 
    return rv;
 }
 
-void update_arm_interrupts()
+static void update_arm_interrupts(void)
 {
    u32 p_ints=SCIEB->full & SCIPD->full;
 
@@ -161,13 +161,14 @@ public:
 };
 
 AicaTimer timers[3];
+
 //Mainloop
 void libAICA_Update(u32 Samples)
 {
 	AICA_Sample32();
 }
 
-void libAICA_TimeStep()
+void libAICA_TimeStep(void)
 {
 	for (int i=0;i<3;i++)
 		timers[i].StepTimer(1);
@@ -198,12 +199,10 @@ void WriteAicaReg(u32 reg,u32 data)
          break;
 
       case SCIRE_addr:
-         {
-            verify(sz!=1);
-            SCIPD->full&=~(data /*& SCIEB->full*/ );	//is the & SCIEB->full needed ? doesn't seem like it
-            data=0;//Write only
-            update_arm_interrupts();
-         }
+         verify(sz!=1);
+         SCIPD->full&=~(data /*& SCIEB->full*/ );	//is the & SCIEB->full needed ? doesn't seem like it
+         data=0;//Write only
+         update_arm_interrupts();
          break;
 
       case MCIPD_addr:
@@ -216,12 +215,10 @@ void WriteAicaReg(u32 reg,u32 data)
          break;
 
       case MCIRE_addr:
-         {
-            verify(sz!=1);
-            MCIPD->full&=~data;
-            UpdateSh4Ints();
-            //Write only
-         }
+         verify(sz!=1);
+         MCIPD->full&=~data;
+         UpdateSh4Ints();
+         //Write only
          break;
 
       case TIMER_A:
@@ -249,7 +246,7 @@ template void WriteAicaReg<1>(u32 reg,u32 data);
 template void WriteAicaReg<2>(u32 reg,u32 data);
 
 //misc :p
-s32 libAICA_Init()
+s32 libAICA_Init(void)
 {
 	init_mem();
 

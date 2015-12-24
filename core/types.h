@@ -605,6 +605,7 @@ struct settings_t
 	struct
 	{
 		bool Enable;
+      bool Type;
 		bool idleskip;
 		bool unstable_opt;
 		bool disable_nvmem;

@@ -11,7 +11,7 @@
 */
 
 //asic_RLXXPending: Update the intc flags for pending interrupts
-void asic_RL6Pending()
+static void asic_RL6Pending(void)
 {
 	bool t1=(SB_ISTNRM & SB_IML6NRM)!=0;
 	bool t2=(SB_ISTERR & SB_IML6ERR)!=0;
@@ -20,7 +20,7 @@ void asic_RL6Pending()
 	InterruptPend(sh4_IRL_9,t1|t2|t3);
 }
 
-void asic_RL4Pending()
+static void asic_RL4Pending(void)
 {
 	bool t1=(SB_ISTNRM & SB_IML4NRM)!=0;
 	bool t2=(SB_ISTERR & SB_IML4ERR)!=0;
@@ -29,7 +29,7 @@ void asic_RL4Pending()
 	InterruptPend(sh4_IRL_11,t1|t2|t3);
 }
 
-void asic_RL2Pending()
+static void asic_RL2Pending(void)
 {
 	bool t1=(SB_ISTNRM & SB_IML2NRM)!=0;
 	bool t2=(SB_ISTERR & SB_IML2ERR)!=0;
@@ -39,7 +39,7 @@ void asic_RL2Pending()
 }
 
 //Raise interrupt interface
-void RaiseAsicNormal(HollyInterruptID inter)
+static void RaiseAsicNormal(HollyInterruptID inter)
 {
 	if (inter==holly_SCANINT2)
 		maple_vblank();
@@ -52,7 +52,7 @@ void RaiseAsicNormal(HollyInterruptID inter)
 	asic_RL6Pending();
 }
 
-void RaiseAsicExt(HollyInterruptID inter)
+static void RaiseAsicExt(HollyInterruptID inter)
 {
 	u32 Interrupt = 1<<(u8)inter;
 	SB_ISTEXT |= Interrupt;
@@ -62,7 +62,7 @@ void RaiseAsicExt(HollyInterruptID inter)
 	asic_RL6Pending();
 }
 
-void RaiseAsicErr(HollyInterruptID inter)
+static void RaiseAsicErr(HollyInterruptID inter)
 {
 	u32 Interrupt = 1<<(u8)inter;
 	SB_ISTERR |= Interrupt;
@@ -89,7 +89,7 @@ void asic_RaiseInterrupt(HollyInterruptID inter)
 	}
 }
 
-u32 Read_SB_ISTNRM(u32 addr)
+static u32 Read_SB_ISTNRM(u32 addr)
 {
 	u32 tmp = SB_ISTNRM & 0x3FFFFFFF;
 
@@ -102,7 +102,7 @@ u32 Read_SB_ISTNRM(u32 addr)
 	return tmp;
 }
 
-void Write_SB_ISTNRM(u32 addr, u32 data)
+static void Write_SB_ISTNRM(u32 addr, u32 data)
 {
 	SB_ISTNRM &= ~data;
 
@@ -119,12 +119,12 @@ void asic_CancelInterrupt(HollyInterruptID inter)
 	asic_RL6Pending();
 }
 
-void Write_SB_ISTEXT(u32 addr, u32 data)
+static void Write_SB_ISTEXT(u32 addr, u32 data)
 {
 	//nothing happens -- asic_CancelInterrupt is used instead
 }
 
-void Write_SB_ISTERR(u32 addr, u32 data)
+static void Write_SB_ISTERR(u32 addr, u32 data)
 {
 	SB_ISTERR &= ~data;
 
@@ -133,65 +133,70 @@ void Write_SB_ISTERR(u32 addr, u32 data)
 	asic_RL6Pending();
 }
 
-void Write_SB_IML6NRM(u32 addr, u32 data)
+static void Write_SB_IML6NRM(u32 addr, u32 data)
 {
 	SB_IML6NRM=data;
 
 	asic_RL6Pending();
 }
 
-void Write_SB_IML4NRM(u32 addr, u32 data)
+static void Write_SB_IML4NRM(u32 addr, u32 data)
 {
 	SB_IML4NRM=data;
 
 	asic_RL4Pending();
 }
-void Write_SB_IML2NRM(u32 addr, u32 data)
+
+static void Write_SB_IML2NRM(u32 addr, u32 data)
 {
 	SB_IML2NRM=data;
 
 	asic_RL2Pending();
 }
 
-void Write_SB_IML6EXT(u32 addr, u32 data)
+static void Write_SB_IML6EXT(u32 addr, u32 data)
 {
 	SB_IML6EXT=data;
 
 	asic_RL6Pending();
 }
-void Write_SB_IML4EXT(u32 addr, u32 data)
+
+static void Write_SB_IML4EXT(u32 addr, u32 data)
 {
 	SB_IML4EXT=data;
 
 	asic_RL4Pending();
 }
-void Write_SB_IML2EXT(u32 addr, u32 data)
+
+static void Write_SB_IML2EXT(u32 addr, u32 data)
 {
 	SB_IML2EXT=data;
 
 	asic_RL2Pending();
 }
 
-void Write_SB_IML6ERR(u32 addr, u32 data)
+static void Write_SB_IML6ERR(u32 addr, u32 data)
 {
 	SB_IML6ERR=data;
 
 	asic_RL6Pending();
 }
-void Write_SB_IML4ERR(u32 addr, u32 data)
+
+static void Write_SB_IML4ERR(u32 addr, u32 data)
 {
 	SB_IML4ERR=data;
 
 	asic_RL4Pending();
 }
-void Write_SB_IML2ERR(u32 addr, u32 data)
+
+static void Write_SB_IML2ERR(u32 addr, u32 data)
 {
 	SB_IML2ERR=data;
 
 	asic_RL2Pending();
 }
 
-void asic_reg_Init()
+void asic_reg_Init(void)
 {
 	sb_rio_register(SB_ISTNRM_addr,RIO_FUNC,&Read_SB_ISTNRM,&Write_SB_ISTNRM);
 	/*
@@ -238,13 +243,13 @@ void asic_reg_Init()
 	//sb_regs[((SB_IML2ERR_addr-SB_BASE)>>2)].writeFunction=Write_SB_SB_IML2ERR;
 }
 
-void asic_reg_Term()
+void asic_reg_Term(void)
 {
 
 }
+
 //Reset -> Reset - Initialise to default values
 void asic_reg_Reset(bool Manual)
 {
-
 }
 

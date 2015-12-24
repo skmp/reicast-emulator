@@ -44,18 +44,19 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 #endif
 		if (!(sb_regs[offset].flags & REG_RF) )
 		{
-			if (sz==4)
-				return sb_regs[offset].data32;
-			else if (sz==2)
-				return sb_regs[offset].data16;
-			else
-				return sb_regs[offset].data8;
+         switch (sz)
+         {
+            case 4:
+               return sb_regs[offset].data32;
+            case 2:
+               return sb_regs[offset].data16;
+            default:
+               return sb_regs[offset].data8;
+         }
 		}
-		else
-		{
-			//printf("SB: %08X\n",addr);
-			return sb_regs[offset].readFunctionAddr(addr);
-		}
+
+      //printf("SB: %08X\n",addr);
+      return sb_regs[offset].readFunctionAddr(addr);
 #ifdef TRACE
 	}
 	else

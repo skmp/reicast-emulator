@@ -346,9 +346,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 
 	DynarecCodeEntryPtr rv=rdv_FindOrCompile();
 
-	bool do_link = bm_GetBlock(code);
-   
-	if (do_link != rbi)
+	if (bm_GetBlock(code) != rbi)
    {
       printf(" .. null RBI: %08X -- unlinked stale block\n",next_pc);
       return (void*)rv;

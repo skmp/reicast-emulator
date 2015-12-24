@@ -363,6 +363,7 @@ static void rw_related(RuntimeBlockInfo* blk)
 
 	}
 
+#ifndef NDEBUG
 	if (memtotal)
 	{
 		u32 lookups=memtotal-total;
@@ -373,6 +374,7 @@ static void rw_related(RuntimeBlockInfo* blk)
 	{
 		//printf("rw_related total: none\n");
 	}
+#endif
 
 	blk->memops=memtotal;
 	blk->linkedmemops=total;
@@ -982,6 +984,7 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 		}
 	}
 
+#ifndef NDEBUG
 	int affregs=0;
 	for (int i=0;i<16;i++)
 	{
@@ -991,6 +994,7 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 			//printf("r%02d:%02d ",i,RegisterWrite[i]);
 		}
 	}
+#endif
 	//printf("<> %d\n",affregs);
 
 	//printf("%d FB, %d native, %.2f%% || %d removed ops!\n",fallback_blocks,total_blocks-fallback_blocks,fallback_blocks*100.f/total_blocks,REMOVED_OPS);

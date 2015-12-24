@@ -50,9 +50,19 @@ u32 LastAddr;
 u32 LastAddr_min;
 u32* emit_ptr=0;
 
-void* emit_GetCCPtr() { return emit_ptr==0?(void*)&CodeCache[LastAddr]:(void*)emit_ptr; }
-void emit_SetBaseAddr() { LastAddr_min = LastAddr; }
-void emit_WriteCodeCache()
+void* emit_GetCCPtr(void)
+{
+   if (emit_ptr)
+      return (void*)emit_ptr;
+   return (void*)&CodeCache[LastAddr];
+}
+
+void emit_SetBaseAddr(void)
+{
+   LastAddr_min = LastAddr;
+}
+
+void emit_WriteCodeCache(void)
 {
 	wchar path[512];
 	sprintf(path,"code_cache_%8p.bin",CodeCache);
@@ -74,7 +84,8 @@ void RASDASD()
 	LastAddr=LastAddr_min;
 	memset(emit_GetCCPtr(),0xCC,emit_FreeSpace());
 }
-void recSh4_ClearCache()
+
+static void recSh4_ClearCache(void)
 {
 	LastAddr=LastAddr_min;
 	bm_Reset();
@@ -82,7 +93,7 @@ void recSh4_ClearCache()
 	printf("recSh4:Dynarec Cache clear at %08X\n",curr_pc);
 }
 
-void recSh4_Run()
+static void recSh4_Run(void)
 {
 	sh4_int_bCpuRun=true;
 
@@ -214,7 +225,7 @@ void RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	AnalyseBlock(this);
 }
 
-DynarecCodeEntryPtr rdv_CompilePC()
+DynarecCodeEntryPtr rdv_CompilePC(void)
 {
 	u32 pc=next_pc;
 
@@ -225,11 +236,11 @@ DynarecCodeEntryPtr rdv_CompilePC()
 	do
 	{
 		RuntimeBlockInfo* rbi = ngen_AllocateBlock();
-		if (rv==0) rv=rbi;
+		if (rv==0)
+         rv=rbi;
 
 		rbi->Setup(pc,fpscr);
 
-		
 		bool do_opts=((rbi->addr&0x3FFFFFFF)>0x0C010100);
 		rbi->staging_runs=do_opts?100:-100;
 		ngen_Compile(rbi,DoCheck(rbi->addr),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
@@ -237,10 +248,16 @@ DynarecCodeEntryPtr rdv_CompilePC()
 
 		bm_AddBlock(rbi);
 
-		if (rbi->BlockType==BET_Cond_0 || rbi->BlockType==BET_Cond_1)
-			pc=rbi->NextBlock;
-		else
-			pc=0;
+      switch (rbi->BlockType)
+      {
+         case BET_Cond_0:
+         case BET_Cond_1:
+            pc=rbi->NextBlock;
+            break;
+         default:
+            pc=0;
+            break;
+      }
 	} while(false && pc);
 
 	return rv->code;
@@ -279,7 +296,7 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc)
 	return rdv_CompilePC();
 }
 
-DynarecCodeEntryPtr rdv_FindCode()
+DynarecCodeEntryPtr rdv_FindCode(void)
 {
 	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
 	if (rv==ngen_FailedToFindBlock)
@@ -288,7 +305,7 @@ DynarecCodeEntryPtr rdv_FindCode()
 	return rv;
 }
 
-DynarecCodeEntryPtr rdv_FindOrCompile()
+DynarecCodeEntryPtr rdv_FindOrCompile(void)
 {
 	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
 	if (rv==ngen_FailedToFindBlock)
@@ -311,88 +328,91 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 
 	u32 bcls=BET_GET_CLS(rbi->BlockType);
 
-	if (bcls==BET_CLS_Static)
-	{
-		next_pc=rbi->BranchBlock;
-	}
-	else if (bcls==BET_CLS_Dynamic)
-	{
-		next_pc=dpc;
-	}
-	else if (bcls==BET_CLS_COND)
-	{
-		if (dpc)
-			next_pc=rbi->BranchBlock;
-		else
-			next_pc=rbi->NextBlock;
-	}
+   switch (bcls)
+   {
+      case BET_CLS_Static:
+         next_pc = rbi->BranchBlock;
+         break;
+      case BET_CLS_Dynamic:
+         next_pc = dpc;
+         break;
+      case BET_CLS_COND:
+         if (dpc)
+            next_pc=rbi->BranchBlock;
+         else
+            next_pc=rbi->NextBlock;
+         break;
+   }
 
 	DynarecCodeEntryPtr rv=rdv_FindOrCompile();
 
-	bool do_link=bm_GetBlock(code)==rbi;
+	bool do_link = bm_GetBlock(code);
+   
+	if (do_link != rbi)
+   {
+      printf(" .. null RBI: %08X -- unlinked stale block\n",next_pc);
+      return (void*)rv;
+   }
 
-	if (do_link)
-	{
-		if (bcls==BET_CLS_Dynamic)
-		{
-			verify(rbi->relink_data==0 || rbi->pBranchBlock==0);
+   switch (bcls)
+   {
+      case BET_CLS_Dynamic:
+         verify(rbi->relink_data==0 || rbi->pBranchBlock==0);
 
-			if (rbi->pBranchBlock!=0)
-			{
-				rbi->pBranchBlock->RemRef(rbi);
-				rbi->pBranchBlock=0;
-				rbi->relink_data=1;
-			}
-			else if (rbi->relink_data==0)
-			{
-				rbi->pBranchBlock=bm_GetBlock(next_pc);
-				rbi->pBranchBlock->AddRef(rbi);
-			}
-		}
-		else
-		{
-			RuntimeBlockInfo* nxt=bm_GetBlock(next_pc);
+         if (rbi->pBranchBlock!=0)
+         {
+            rbi->pBranchBlock->RemRef(rbi);
+            rbi->pBranchBlock=0;
+            rbi->relink_data=1;
+         }
+         else if (rbi->relink_data==0)
+         {
+            rbi->pBranchBlock=bm_GetBlock(next_pc);
+            rbi->pBranchBlock->AddRef(rbi);
+         }
+         break;
+      default:
+         {
+            RuntimeBlockInfo* nxt=bm_GetBlock(next_pc);
 
-			if (rbi->BranchBlock==next_pc)
-				rbi->pBranchBlock=nxt;
-			if (rbi->NextBlock==next_pc)
-				rbi->pNextBlock=nxt;
+            if (rbi->BranchBlock==next_pc)
+               rbi->pBranchBlock=nxt;
+            if (rbi->NextBlock==next_pc)
+               rbi->pNextBlock=nxt;
 
-			nxt->AddRef(rbi);
-		}
-		u32 ncs=rbi->relink_offset+rbi->Relink();
-		verify(rbi->host_code_size>=ncs);
-		rbi->host_code_size=ncs;
-	}
-	else
-	{
-		printf(" .. null RBI: %08X -- unlinked stale block\n",next_pc);
-	}
+            nxt->AddRef(rbi);
+         }
+         break;
+   }
+
+   u32 ncs=rbi->relink_offset+rbi->Relink();
+   verify(rbi->host_code_size>=ncs);
+   rbi->host_code_size=ncs;
 	
 	return (void*)rv;
 }
-void recSh4_Stop()
+
+static void recSh4_Stop(void)
 {
 	Sh4_int_Stop();
 }
 
-void recSh4_Step()
+static void recSh4_Step(void)
 {
 	Sh4_int_Step();
 }
 
-void recSh4_Skip()
+static void recSh4_Skip(void)
 {
 	Sh4_int_Skip();
 }
 
-void recSh4_Reset(bool Manual)
+static void recSh4_Reset(bool Manual)
 {
 	Sh4_int_Reset(Manual);
 }
 
-
-void recSh4_Init()
+static void recSh4_Init(void)
 {
 	printf("recSh4 Init\n");
 	Sh4_int_Init();
@@ -406,9 +426,8 @@ void recSh4_Init()
 	verify(rcb_noffs(&p_sh4rcb->cntx.sh4_sched_next) == -152);
 	verify(rcb_noffs(&p_sh4rcb->cntx.interrupt_pend) == -148);
 	
-	if (_nvmem_enabled()) {
+	if (_nvmem_enabled())
 		verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));
-	}
 	
 #if defined(_WIN64)
 	for (int i = 10; i < 1300; i++) {
@@ -456,14 +475,14 @@ void recSh4_Init()
 	ngen_init();
 }
 
-void recSh4_Term()
+static void recSh4_Term(void)
 {
 	printf("recSh4 Term\n");
 	bm_Term();
 	Sh4_int_Term();
 }
 
-bool recSh4_IsCpuRunning()
+static bool recSh4_IsCpuRunning(void)
 {
 	return Sh4_int_IsCpuRunning();
 }

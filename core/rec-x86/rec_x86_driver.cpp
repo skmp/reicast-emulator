@@ -20,7 +20,7 @@ struct DynaRBI: RuntimeBlockInfo
 
 x86_block* x86e;
 
-u32 cycle_counter;
+extern u32 cycle_counter;
 
 void* loop_no_update;
 void* intc_sched;
@@ -735,7 +735,7 @@ unat mem_code_base=0;
 unat mem_code_end=0;
 void* mem_code[3][2][5];
 
-void ngen_init()
+void ngen_init_x86_32bit(void)
 {
 	//Setup emitter
 	x86e = new x86_block();
@@ -770,23 +770,6 @@ void ngen_init()
 
 	emit_SetBaseAddr();
 }
-
-void ngen_ResetBlocks()
-{
-}
-
-void ngen_GetFeatures(ngen_features* dst)
-{
-	dst->InterpreterFallback=false;
-	dst->OnlyDynamicEnds=false;
-}
-
-
-RuntimeBlockInfo* ngen_AllocateBlock()
-{
-	return new DynaRBI();
-}
-
 
 bool ngen_Rewrite(unat& addr,unat retadr,unat acc)
 {

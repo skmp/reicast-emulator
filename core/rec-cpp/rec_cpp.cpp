@@ -22,77 +22,8 @@
 
 #define MIPS_COUNTER 0
 
-struct DynaRBI : RuntimeBlockInfo
-{
-	virtual u32 Relink() {
-		//verify(false);
-		return 0;
-	}
-
-	virtual void Relocate(void* dst) {
-		verify(false);
-	}
-};
-
-
-
-int cycle_counter;
 extern int mips_counter;
-
-void ngen_FailedToFindBlock_internal() {
-	rdv_FailedToFindBlock(Sh4cntx.pc);
-}
-
-void(*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
-
-static void ngen_mainloop_exec(Sh4RCB* ctx)
-{
-   cycle_counter = SH4_TIMESLICE;
-   do {
-      DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);
-      rcb();
-   } while (cycle_counter > 0);
-
-   if (UpdateSystem())
-      rdv_DoInterrupts_pc(ctx->cntx.pc);
-}
-
-void ngen_mainloop(void* v_cntx)
-{
-	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
-
-	cycle_counter = 0;
-
-   for (
-#if defined(TARGET_BOUNDED_EXECUTION)
-	int i=0; i<10000; i++
-#else
-	;;
-#endif
-   )
-      ngen_mainloop_exec(ctx);
-}
-
-void ngen_init()
-{
-}
-
-
-void ngen_GetFeatures(ngen_features* dst)
-{
-	dst->InterpreterFallback = false;
-	dst->OnlyDynamicEnds = false;
-}
-
-RuntimeBlockInfo* ngen_AllocateBlock()
-{
-	return new DynaRBI();
-}
-
-u32* GetRegPtr(u32 reg)
-{
-	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
-}
+extern int cycle_counter;
 
 class opcodeExec {
 	public:
@@ -1123,7 +1054,7 @@ void disaptchn() {
 	dispatchb[n].runner(dispatchb[n].fnb);
 }
 
-int idxnxx = 0;
+extern int idxnxx;
 //&disaptchn
 #define REP_1(x, phrase) phrase < x >
 #define REP_2(x, phrase) REP_1(x, phrase), REP_1(x+1, phrase)
@@ -1536,8 +1467,6 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 	delete compiler;
 }
 
-
-
 void ngen_CC_Start(shil_opcode* op)
 {
 	compiler->ngen_CC_Start(op);
@@ -1556,15 +1485,5 @@ void ngen_CC_Call(shil_opcode*op, void* function)
 void ngen_CC_Finish(shil_opcode* op)
 {
 	compiler->ngen_CC_Finish(op);
-}
-
-void ngen_ResetBlocks()
-{
-	idxnxx = 0;
-	int id = 0;
-	/*
-	while (dispatchb[id].fnb)
-		delete dispatchb[id].fnb;
-	*/
 }
 #endif

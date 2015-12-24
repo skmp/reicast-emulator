@@ -42,16 +42,6 @@
 
 */
 
-struct DynaRBI: RuntimeBlockInfo
-{
-	virtual u32 Relink();
-	virtual void Relocate(void* dst)
-	{
-
-	}
-};
-
-
 #ifdef _ANDROID
 #include <sys/syscall.h>  // for cache flushing.
 #endif
@@ -197,13 +187,6 @@ typedef void BinaryOP       (eReg Rd, eReg Rn, eReg Rm,       ConditionCode CC);
 typedef void BinaryOPImm    (eReg Rd, eReg Rn, s32 sImm8,     ConditionCode CC);
 typedef void UnaryOP        (eReg Rd, eReg Rs);
 
-
-u32* GetRegPtr(u32 reg)
-{
-	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
-}
-
-
 // you pick reg, loads Base with reg addr, no reg. mapping yet !
 void LoadSh4Reg_mem(eReg Rt, u32 Sh4_Reg, eCC CC=CC_AL)
 {
@@ -341,9 +324,6 @@ extern "C" void ngen_blockcheckfail();
 extern "C" void ngen_LinkBlock_Generic_stub();
 extern "C" void ngen_LinkBlock_cond_Branch_stub();
 extern "C" void ngen_LinkBlock_cond_Next_stub();
-
-extern "C" void ngen_FailedToFindBlock_();
-void (*ngen_FailedToFindBlock)()=&ngen_FailedToFindBlock_;  // in asm
 
 #include <map>
 
@@ -2215,13 +2195,8 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 	block->host_code_size=(pEnd-(u8*)block->code);
 
 	void emit_WriteCodeCache();
-//	emit_WriteCodeCache();
 }
 
-void ngen_ResetBlocks()
-{
-	printf("@@\tngen_ResetBlocks()\n");
-}
 /*
 	SHR ..
 	CMP ..
@@ -2230,7 +2205,7 @@ void ngen_ResetBlocks()
 	add
 	str
 */
-void ngen_init()
+void ngen_init_arm(void)
 {
     verify(FPCB_OFFSET == -0x2100000 || FPCB_OFFSET == -0x4100000);
     verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
@@ -2326,17 +2301,5 @@ void ngen_init()
 	//ccmap[shop_fsetgt]=CC_GT;
 
 }
-
-
-void ngen_GetFeatures(ngen_features* dst)
-{
-	dst->InterpreterFallback=false;
-	dst->OnlyDynamicEnds=false;
-}
-
-RuntimeBlockInfo* ngen_AllocateBlock()
-{
-	return new DynaRBI();
-};
 
 #endif

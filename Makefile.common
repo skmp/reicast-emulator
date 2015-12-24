@@ -136,6 +136,7 @@ SOURCES_ASM += $(CORE_DIR)/rec-x86/rec_lin86_asm.S
 endif
 
 ifeq ($(DYNAREC_USED),1)
+SOURCES_CXX += $(CORE_DIR)/rec.cpp
 # Dynarec
 SOURCES_CXX += $(CORE_DIR)/hw/sh4/dyna/decoder.cpp \
 					$(CORE_DIR)/hw/sh4/dyna/driver.cpp \

@@ -14,79 +14,7 @@
 #include "emitter/x86_emitter.h"
 #include "oslib/oslib.h"
 
-
-struct DynaRBI : RuntimeBlockInfo
-{
-	virtual u32 Relink() {
-		//verify(false);
-		return 0;
-	}
-
-	virtual void Relocate(void* dst) {
-		verify(false);
-	}
-};
-
-
-
-int cycle_counter;
-
-void ngen_FailedToFindBlock_internal() {
-	rdv_FailedToFindBlock(Sh4cntx.pc);
-}
-
-void(*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
-
-static void ngen_mainloop_exec(Sh4RCB* ctx)
-{
-	cycle_counter = SH4_TIMESLICE;
-
-   do {
-      DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);
-      rcb();
-   } while (cycle_counter > 0);
-
-   if (UpdateSystem())
-      rdv_DoInterrupts_pc(ctx->cntx.pc);
-}
-
-void ngen_mainloop(void* v_cntx)
-{
-	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
-
-   for (
-#if defined(TARGET_BOUNDED_EXECUTION)
-	int i=0; i<10000; i++
-#else
-	;;
-#endif
-   )
-      ngen_mainloop_exec(ctx);
-}
-
-void ngen_init()
-{
-}
-
-void ngen_ResetBlocks()
-{
-}
-
-void ngen_GetFeatures(ngen_features* dst)
-{
-	dst->InterpreterFallback = false;
-	dst->OnlyDynamicEnds = false;
-}
-
-RuntimeBlockInfo* ngen_AllocateBlock()
-{
-	return new DynaRBI();
-}
-
-u32* GetRegPtr(u32 reg)
-{
-	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
-}
+extern int cycle_counter;
 
 class BlockCompiler : public Xbyak::CodeGenerator{
 public:
@@ -164,7 +92,8 @@ public:
 				 movss(dword[rax], rs);				\
 		 		 } while (0)
 
-	void compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise) {
+	void compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
+   {
 		mov(rax, (size_t)&cycle_counter);
 
 		sub(dword[rax], block->guest_cycles);
@@ -431,27 +360,28 @@ public:
 		{
 			verify(xmmused < 4 && regused < 4);
 			shil_param& prm = *CC_pars[i].prm;
-			switch (CC_pars[i].type) {
-				//push the contents
+			switch (CC_pars[i].type)
+         {
+            //push the contents
 
-			case CPT_u32:
-				sh_to_reg(prm, mov, call_regs[regused++]);
-				break;
+            case CPT_u32:
+               sh_to_reg(prm, mov, call_regs[regused++]);
+               break;
 
-			case CPT_f32:
-				sh_to_reg_noimm(prm, movss, call_regsxmm[xmmused++]);
-				break;
+            case CPT_f32:
+               sh_to_reg_noimm(prm, movss, call_regsxmm[xmmused++]);
+               break;
 
-				//push the ptr itself
-			case CPT_ptr:
-				verify(prm.is_reg());
+               //push the ptr itself
+            case CPT_ptr:
+               verify(prm.is_reg());
 
-				mov(call_regs64[regused++], (size_t)prm.reg_ptr());
+               mov(call_regs64[regused++], (size_t)prm.reg_ptr());
 
-				//die("FAIL");
+               //die("FAIL");
 
-				break;
-			}
+               break;
+         }
 		}
 		call(function);
 	}

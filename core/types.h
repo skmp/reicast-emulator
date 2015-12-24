@@ -307,16 +307,6 @@ enum ndc_error_codes
 	rv_serror=-1	//silent error , it has been reported to the user
 };
 
-//Simple struct to store window rect  ;)
-//Top is 0,0 & numbers are in pixels.
-//Only client size
-struct NDC_WINDOW_RECT
-{
-	u32 width;
-	u32 height;
-};
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -706,8 +696,6 @@ static inline bool is_s16(u32 v) { return (s16)v==(s32)v; }
 static inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
 
 #define verifyc(x) verify(!FAILED(x))
-
-static inline void do_nada(...) { }
 
 #include "hw/sh4/sh4_if.h"
 

@@ -7,6 +7,7 @@ NO_EXCEPTIONS := 0
 NO_NVMEM      := 0
 NO_VERIFY     := 1
 NAOMI         := 0
+NO_JIT        := 0
 
 TARGET_NAME   := reicast
 
@@ -104,6 +105,14 @@ ifeq ($(NAOMI),1)
 	 TARGET_NAME   := reicast_naomi
 else
     DC_PLATFORM=dreamcast
+endif
+
+ifeq ($(NO_JIT),1)
+    CFLAGS       += -DTARGET_NO_JIT
+	 CXXFLAGS     += -DTARGET_NO_JIT
+	 RZDCY_CFLAGS += -DTARGET_NO_JIT
+	 CXXFLAGS     += -std=c++11
+	 WITH_DYNAREC = 
 endif
 HOST_CPU_X86=0x20000001
 HOST_CPU_ARM=0x20000002

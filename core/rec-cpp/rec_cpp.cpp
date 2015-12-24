@@ -798,7 +798,7 @@ struct fnrv {
 
 template<int opcode_slots>
 fnrv fnnCtor(int cycles) {
-	auto rv = new fnblock<opcode_slots>();
+	fnblock<opcode_slots> *rv = new fnblock<opcode_slots>();
 	rv->cc = cycles;
 	fnrv rvb = { rv, &fnblock<opcode_slots>::runner, rv->ops };
 	return rvb;
@@ -813,7 +813,7 @@ fnrv fnnCtor<0>(int cycles) {
 template <typename shilop, typename CTR>
 opcodeExec* createType2(const CC_pars_t& prms, void* fun) {
 	typedef typename CTR::template opex2<shilop> thetype;
-	auto rv = new thetype();
+	thetype *rv = new thetype();
 
 	rv->setup(prms, fun);
 	return rv;
@@ -842,12 +842,9 @@ opcodeExec* createType_fast<OPCODE_CC(sig)>(const CC_pars_t& prms, void* fun, sh
 #define FAST_gis \
 };\
 	\
-	if (funsf.count(fun)) { \
+	if (funsf.count(fun)) \
 		return funsf[fun](prms, fun); \
-	} \
-	else { \
-		return 0; \
-	} \
+   return 0; \
 }
 
 #define FAST_po2(n,fn) { (void*)&shil_opcl_##n::fn::impl, &createType2 < shil_opcl_##n::fn, CTR > },
@@ -1006,7 +1003,7 @@ opcodeExec* createType(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
 	}
 
 	typedef typename CTR::opex thetype;
-	auto rv = new thetype();
+	thetype *rv = new thetype();
 
 	rv->setup(prms, fun);
 	return rv;
@@ -1077,15 +1074,15 @@ DynarecCodeEntryPtr FNS[] = { REP_8192(0, &disaptchn) };
 DynarecCodeEntryPtr getndpn_forreal(int n) {
 	if (n >= 8192)
 		return 0;
-	else
-		return FNS[n];
+   return FNS[n];
 }
 
 typedef fnrv(*FNAFB)(int cycles);
 
 FNAFB FNA[] = { REP_512(1, &fnnCtor) };
 
-FNAFB fnnCtor_forreal(size_t n) {
+FNAFB fnnCtor_forreal(size_t n)
+{
 	verify(n > 0);
 	verify(n <= 512);
 	return FNA[n - 1];
@@ -1108,19 +1105,20 @@ public:
 
 		block->code = getndpn_forreal(idxnxx++);
 
-		if (getndpn_forreal(idxnxx) == 0) {
+		if (getndpn_forreal(idxnxx) == 0)
 			emit_Skip(emit_FreeSpace()-16);
-		}
 
-		for (size_t i = 0; i < block->oplist.size(); i++) {
+		for (size_t i = 0; i < block->oplist.size(); i++)
+      {
 			opcode_index = i;
 			shil_opcode& op = block->oplist[i];
 			switch (op.op) {
 
 			case shop_ifb:
 			{
-				if (op.rs1.imm_value()) {
-					auto opc = new opcode_ifb_pc();
+				if (op.rs1.imm_value())
+            {
+					opcode_ifb_pc *opc = new opcode_ifb_pc();
 					ptrs.ptrs[i] = opc;
 					
 					opc->pc = op.rs2.imm_value();
@@ -1128,8 +1126,9 @@ public:
 
 					opc->oph = OpDesc[op.rs3.imm_value()]->oph;
 				}
-				else {
-					auto opc = new opcode_ifb();
+				else
+            {
+					opcode_ifb *opc = new opcode_ifb();
 					ptrs.ptrs[i] = opc;
 
 					opc->opcode = op.rs3.imm_value();
@@ -1142,15 +1141,17 @@ public:
 			case shop_jcond:
 			case shop_jdyn:
 			{
-				if (op.rs2.is_imm()) {
-					auto opc = new opcode_jdyn_imm();
+				if (op.rs2.is_imm())
+            {
+					opcode_jdyn_imm *opc = new opcode_jdyn_imm();
 					ptrs.ptrs[i] = opc;
 
 					opc->src = op.rs1.reg_ptr();
 					opc->imm = op.rs2.imm_value();
 				}
-				else {
-					auto opc = new opcode_jdyn();
+				else
+            {
+					opcode_jdyn *opc = new opcode_jdyn();
 					ptrs.ptrs[i] = opc;
 
 					opc->src = op.rs1.reg_ptr();
@@ -1166,15 +1167,17 @@ public:
 				verify(op.rs1.is_reg() || op.rs1.is_imm());
 
 			
-				if (op.rs1.is_imm()) {
-					auto opc = new opcode_mov32_imm();
+				if (op.rs1.is_imm())
+            {
+					opcode_mov32_imm *opc = new opcode_mov32_imm();
 					ptrs.ptrs[i] = opc;
 
 					opc->src = op.rs1.imm_value();
 					opc->dst = op.rd.reg_ptr();
 				}
-				else {
-					auto opc = new opcode_mov32();
+				else
+            {
+					opcode_mov32 *opc = new opcode_mov32();
 					ptrs.ptrs[i] = opc;
 
 					opc->src = op.rs1.reg_ptr();
@@ -1191,7 +1194,7 @@ public:
 
 				verify(op.rs1.is_reg());
 
-				auto opc = new opcode_mov64();
+				opcode_mov64 *opc = new opcode_mov64();
 				ptrs.ptrs[i] = opc;
 
 				opc->src = (u64*) op.rs1.reg_ptr();
@@ -1202,14 +1205,15 @@ public:
 			case shop_readm:
 			{
 				u32 size = op.flags & 0x7f;
-				if (op.rs1.is_imm()) {
+				if (op.rs1.is_imm())
+            {
 					verify(op.rs2.is_null() && op.rs3.is_null());
 
                switch (size)
                {
                   case 1:
                      {
-                        auto opc = new opcode_readm_imm<1>();
+                        opcode_readm_imm<1> *opc = new opcode_readm_imm<1>();
                         ptrs.ptrs[i] = opc;
                         opc->src = op.rs1.imm_value();
                         opc->dst = op.rd.reg_ptr();
@@ -1217,7 +1221,7 @@ public:
                      break;
                   case 2:
                      {
-                        auto opc = new opcode_readm_imm<2>();
+                        opcode_readm_imm<2> *opc = new opcode_readm_imm<2>();
                         ptrs.ptrs[i] = opc;
                         opc->src = op.rs1.imm_value();
                         opc->dst = op.rd.reg_ptr();
@@ -1225,7 +1229,7 @@ public:
                      break;
                   case 4:
                      {
-                        auto opc = new opcode_readm_imm<4>();
+                        opcode_readm_imm<4> *opc = new opcode_readm_imm<4>();
                         ptrs.ptrs[i] = opc;
                         opc->src = op.rs1.imm_value();
                         opc->dst = op.rd.reg_ptr();
@@ -1233,7 +1237,7 @@ public:
                      break;
                   case 8:
                      {
-                        auto opc = new opcode_readm_imm<8>();
+                        opcode_readm_imm<8> *opc = new opcode_readm_imm<8>();
                         ptrs.ptrs[i] = opc;
                         opc->src = op.rs1.imm_value();
                         opc->dst = op.rd.reg_ptr();
@@ -1241,63 +1245,132 @@ public:
                      break;
                }
 				}
-				else if (op.rs3.is_imm()) {
+				else if (op.rs3.is_imm())
+            {
 					verify(op.rs2.is_null());
-					if (size == 1)
-					{
-						auto opc = new opcode_readm_offs_imm<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->dst = op.rd.reg_ptr();
-					}
-					else if (size == 2)
-					{
-						auto opc = new opcode_readm_offs_imm<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->dst = op.rd.reg_ptr();
-					}
-					else if (size == 4)
-					{
-						auto opc = new opcode_readm_offs_imm<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->dst = op.rd.reg_ptr();
-					}
-					else if (size == 8)
-					{
-						auto opc = new opcode_readm_offs_imm<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->dst = op.rd.reg_ptr();
-					}
+               switch (size)
+               {
+                  case 1:
+                     {
+                        opcode_readm_offs_imm<1> *opc = new opcode_readm_offs_imm<1>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->offs = op.rs3.imm_value();
+                        opc->dst = op.rd.reg_ptr();
+                     }
+                     break;
+                  case 2:
+                     {
+                        opcode_readm_offs_imm<2> *opc = new opcode_readm_offs_imm<2>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->offs = op.rs3.imm_value();
+                        opc->dst = op.rd.reg_ptr();
+                     }
+                     break;
+                  case 4:
+                     {
+                        opcode_readm_offs_imm<4> *opc = new opcode_readm_offs_imm<4>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->offs = op.rs3.imm_value();
+                        opc->dst = op.rd.reg_ptr();
+                     }
+                     break;
+                  case 8:
+                     {
+                        opcode_readm_offs_imm<8> *opc = new opcode_readm_offs_imm<8>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->offs = op.rs3.imm_value();
+                        opc->dst = op.rd.reg_ptr();
+                     }
+                     break;
+               }
 				}
-				else if (op.rs3.is_reg()) {
-					verify(op.rs2.is_null());
-					if (size == 1)
-					{
-						auto opc = new opcode_readm_offs<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->dst = op.rd.reg_ptr();
-					}
-					else if (size == 2)
-					{
-						auto opc = new opcode_readm_offs<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->dst = op.rd.reg_ptr();
-					}
-					else if (size == 4)
-					{
-						auto opc = new opcode_readm_offs<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->dst = op.rd.reg_ptr();
-					}
-					else if (size == 8)
-					{
-						auto opc = new opcode_readm_offs<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->dst = op.rd.reg_ptr();
-					}
-				}
-				else {
-					verify(op.rs2.is_null() && op.rs3.is_null());
-					if (size == 1)
-					{
-						auto opc = new opcode_readm<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->dst = op.rd.reg_ptr();
-					}
-					else if (size == 2)
-					{
-						auto opc = new opcode_readm<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->dst = op.rd.reg_ptr();
-					}
-					else if (size == 4)
-					{
-						auto opc = new opcode_readm<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->dst = op.rd.reg_ptr();
-					}
-					else if (size == 8)
-					{
-						auto opc = new opcode_readm<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->dst = op.rd.reg_ptr();
-					}
-				}
+				else if (op.rs3.is_reg())
+            {
+               verify(op.rs2.is_null());
+               switch (size)
+               {
+                  case 1:
+                     {
+                        opcode_readm_offs<1> *opc = new opcode_readm_offs<1>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->offs = op.rs3.reg_ptr();
+                        opc->dst = op.rd.reg_ptr();
+                     }
+                     break;
+                  case 2:
+                     {
+                        opcode_readm_offs<2> *opc = new opcode_readm_offs<2>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->offs = op.rs3.reg_ptr();
+                        opc->dst = op.rd.reg_ptr();
+                     }
+                     break;
+                  case 4:
+                     {
+                        opcode_readm_offs<4> *opc = new opcode_readm_offs<4>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->offs = op.rs3.reg_ptr();
+                        opc->dst = op.rd.reg_ptr();
+                     }
+                     break;
+                  case 8:
+                     {
+                        opcode_readm_offs<8> *opc = new opcode_readm_offs<8>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->offs = op.rs3.reg_ptr();
+                        opc->dst = op.rd.reg_ptr();
+                     }
+                     break;
+               }
+            }
+				else
+            {
+               verify(op.rs2.is_null() && op.rs3.is_null());
+
+               switch (size)
+               {
+                  case 1:
+                     {
+                        opcode_readm<1> *opc = new opcode_readm<1>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->dst = op.rd.reg_ptr();
+                     }
+                     break;
+                  case 2:
+                     {
+                        opcode_readm<2> *opc = new opcode_readm<2>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->dst = op.rd.reg_ptr();
+                     }
+                     break;
+                  case 4:
+                     {
+                        opcode_readm<4> *opc = new opcode_readm<4>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->dst = op.rd.reg_ptr();
+                     }
+                     break;
+                  case 8:
+                     {
+                        opcode_readm<8> *opc = new opcode_readm<8>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->dst = op.rd.reg_ptr();
+                     }
+                     break;
+               }
+            }
 			}
 			break;
 
@@ -1305,80 +1378,170 @@ public:
 			{
 				u32 size = op.flags & 0x7f;
 				
-				if (op.rs1.is_imm()) {
-					verify(op.rs3.is_null());
-					if (size == 1)
-					{
-						auto opc = new opcode_writem_imm<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->src2 = op.rs2.reg_ptr();
-					}
-					else if (size == 2)
-					{
-						auto opc = new opcode_writem_imm<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->src2 = op.rs2.reg_ptr();
-					}
-					else if (size == 4)
-					{
-						auto opc = new opcode_writem_imm<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->src2 = op.rs2.reg_ptr();
-					}
-					else if (size == 8)
-					{
-						auto opc = new opcode_writem_imm<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->src2 = op.rs2.reg_ptr();
-					}
-				}
-				else if (op.rs3.is_imm()) {
-					if (size == 1)
-					{
-						auto opc = new opcode_writem_offs_imm<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->src2 = op.rs2.reg_ptr();
-					}
-					else if (size == 2)
-					{
-						auto opc = new opcode_writem_offs_imm<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->src2 = op.rs2.reg_ptr();
-					}
-					else if (size == 4)
-					{
-						auto opc = new opcode_writem_offs_imm<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->src2 = op.rs2.reg_ptr();
-					}
-					else if (size == 8)
-					{
-						auto opc = new opcode_writem_offs_imm<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->src2 = op.rs2.reg_ptr();
-					}
-				}
-				else if (op.rs3.is_reg()) {
-					if (size == 1)
-					{
-						auto opc = new opcode_writem_offs<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
-					}
-					else if (size == 2)
-					{
-						auto opc = new opcode_writem_offs<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
-					}
-					else if (size == 4)
-					{
-						auto opc = new opcode_writem_offs<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
-					}
-					else if (size == 8)
-					{
-						auto opc = new opcode_writem_offs<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
-					}
-				}
-				else {
-					verify(op.rs3.is_null());
-					if (size == 1)
-					{
-						auto opc = new opcode_writem<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
-					}
-					else if (size == 2)
-					{
-						auto opc = new opcode_writem<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
-					}
-					else if (size == 4)
-					{
-						auto opc = new opcode_writem<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
-					}
-					else if (size == 8)
-					{
-						auto opc = new opcode_writem<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
-					}
-				}
+				if (op.rs1.is_imm())
+            {
+               verify(op.rs3.is_null());
+
+               switch (size)
+               {
+                  case 1:
+                     {
+                        opcode_writem_imm<1> *opc = new opcode_writem_imm<1>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.imm_value();
+                        opc->src2 = op.rs2.reg_ptr();
+                     }
+                     break;
+                  case 2:
+                     {
+                        opcode_writem_imm<2> *opc = new opcode_writem_imm<2>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.imm_value();
+                        opc->src2 = op.rs2.reg_ptr();
+                     }
+                     break;
+                  case 4:
+                     {
+                        opcode_writem_imm<4> *opc = new opcode_writem_imm<4>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.imm_value();
+                        opc->src2 = op.rs2.reg_ptr();
+                     }
+                     break;
+                  case 8:
+                     {
+                        opcode_writem_imm<8> *opc = new opcode_writem_imm<8>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.imm_value();
+                        opc->src2 = op.rs2.reg_ptr();
+                     }
+                     break;
+               }
+            }
+				else if (op.rs3.is_imm())
+            {
+               switch (size)
+               {
+                  case 1:
+                     {
+                        opcode_writem_offs_imm<1> *opc = new opcode_writem_offs_imm<1>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->offs = op.rs3.imm_value();
+                        opc->src2 = op.rs2.reg_ptr();
+                     }
+                     break;
+                  case 2:
+                     {
+                        opcode_writem_offs_imm<2> *opc = new opcode_writem_offs_imm<2>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->offs = op.rs3.imm_value();
+                        opc->src2 = op.rs2.reg_ptr();
+                     }
+                     break;
+                  case 4:
+                     {
+                        opcode_writem_offs_imm<4> *opc = new opcode_writem_offs_imm<4>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->offs = op.rs3.imm_value();
+                        opc->src2 = op.rs2.reg_ptr();
+                     }
+                     break;
+                  case 8:
+                     {
+                        opcode_writem_offs_imm<8> * opc = new opcode_writem_offs_imm<8>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->offs = op.rs3.imm_value();
+                        opc->src2 = op.rs2.reg_ptr();
+                     }
+                     break;
+               }
+            }
+				else if (op.rs3.is_reg())
+            {
+               switch (size)
+               {
+                  case 1:
+                     {
+                        opcode_writem_offs<1> *opc = new opcode_writem_offs<1>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->offs = op.rs3.reg_ptr();
+                        opc->src2 = op.rs2.reg_ptr();
+                     }
+                     break;
+                  case 2:
+                     {
+                        opcode_writem_offs<2> *opc = new opcode_writem_offs<2>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->offs = op.rs3.reg_ptr();
+                        opc->src2 = op.rs2.reg_ptr();
+                     }
+                     break;
+                  case 4:
+                     {
+                        opcode_writem_offs<4> *opc = new opcode_writem_offs<4>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->offs = op.rs3.reg_ptr();
+                        opc->src2 = op.rs2.reg_ptr();
+                     }
+                     break;
+                  case 8:
+                     {
+                        opcode_writem_offs<8> *opc = new opcode_writem_offs<8>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->offs = op.rs3.reg_ptr();
+                        opc->src2 = op.rs2.reg_ptr();
+                     }
+                     break;
+               }
+            }
+				else
+            {
+               verify(op.rs3.is_null());
+
+               switch (size)
+               {
+                  case 1:
+                     {
+                        opcode_writem<1> *opc = new opcode_writem<1>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->src2 = op.rs2.reg_ptr();
+                     }
+                     break;
+                  case 2:
+                     {
+                        opcode_writem<2> *opc = new opcode_writem<2>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->src2 = op.rs2.reg_ptr();
+                     }
+                     break;
+                  case 4:
+                     {
+                        opcode_writem<4> *opc = new opcode_writem<4>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->src2 = op.rs2.reg_ptr();
+                     }
+                     break;
+                  case 8:
+                     {
+                        opcode_writem<8> *opc = new opcode_writem<8>();
+                        ptrs.ptrs[i] = opc;
+                        opc->src = op.rs1.reg_ptr();
+                        opc->src2 = op.rs2.reg_ptr();
+                     }
+                     break;
+               }
+            }
 			}
 			break;
 			
@@ -1442,10 +1605,10 @@ public:
 		if (!nm.size())
 			nm = "vV";
 		
-		if (unmap.count(nm)) {
+		if (unmap.count(nm))
 			ptrsg[opcode_index] = unmap[nm](CC_pars, ccfn, op);
-		}
-		else {
+		else
+      {
 			printf("IMPLEMENT CC_CALL CLASS: %s\n", nm.c_str());
 			ptrsg[opcode_index] = new opcodeDie();
 		}

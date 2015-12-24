@@ -233,6 +233,7 @@ void DYNACALL _vmem_WriteMem32(u32 Address,u32 data) { _vmem_writet<u32>(Address
 void DYNACALL _vmem_WriteMem64(u32 Address,u64 data) { _vmem_writet<u64>(Address,data); }
 
 //0xDEADC0D3 or 0
+//#define MEM_LOG_SPAM
 #define MEM_ERROR_RETURN_VALUE 0xDEADC0D3
 
 //phew .. that was lota asm code ;) lets go back to C :D
@@ -240,31 +241,43 @@ void DYNACALL _vmem_WriteMem64(u32 Address,u64 data) { _vmem_writet<u64>(Address
 //default read handlers
 u8 DYNACALL _vmem_ReadMem8_not_mapped(u32 addresss)
 {
+#ifdef MEM_LOG_SPAM
 	printf("[sh4]Read8 from 0x%X, not mapped [_vmem default handler]\n",addresss);
+#endif
 	return (u8)MEM_ERROR_RETURN_VALUE;
 }
 u16 DYNACALL _vmem_ReadMem16_not_mapped(u32 addresss)
 {
+#ifdef MEM_LOG_SPAM
 	printf("[sh4]Read16 from 0x%X, not mapped [_vmem default handler]\n",addresss);
+#endif
 	return (u16)MEM_ERROR_RETURN_VALUE;
 }
 u32 DYNACALL _vmem_ReadMem32_not_mapped(u32 addresss)
 {
+#ifdef MEM_LOG_SPAM
 	printf("[sh4]Read32 from 0x%X, not mapped [_vmem default handler]\n",addresss);
+#endif
 	return (u32)MEM_ERROR_RETURN_VALUE;
 }
 //default write handers
 void DYNACALL _vmem_WriteMem8_not_mapped(u32 addresss,u8 data)
 {
+#ifdef MEM_LOG_SPAM
 	printf("[sh4]Write8 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
+#endif
 }
 void DYNACALL _vmem_WriteMem16_not_mapped(u32 addresss,u16 data)
 {
+#ifdef MEM_LOG_SPAM
 	printf("[sh4]Write16 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
+#endif
 }
 void DYNACALL _vmem_WriteMem32_not_mapped(u32 addresss,u32 data)
 {
+#ifdef MEM_LOG_SPAM
 	printf("[sh4]Write32 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
+#endif
 }
 //code to register handlers
 //0 is considered error :)

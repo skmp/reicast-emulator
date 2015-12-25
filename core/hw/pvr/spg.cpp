@@ -73,8 +73,6 @@ void CalculateSync(void)
 	sh4_sched_request(vblank_sched, Line_Cycles);
 }
 
-void os_wait_cycl(u32 c);
-
 static int elapse_time(int tag, int cycl, int jit)
 {
 	return min(max(Frame_Cycles,(u32)1*1000*1000),(u32)8*1000*1000);
@@ -122,66 +120,6 @@ static int spg_line_sched(int tag, int cycl, int jit)
 			//TODO : rend_if_VBlank();
 			rend_vblank();//notify for vblank :)
 			
-#if 0
-         if ((os_GetSeconds()-last_fps)>2)
-         {
-            static int Last_FC;
-            double ts=os_GetSeconds()-last_fps;
-            double spd_fps=(FrameCount-Last_FC)/ts;
-            double spd_vbs=vblk_cnt/ts;
-            double spd_cpu=spd_vbs*Frame_Cycles;
-            spd_cpu/=1000000;	//mrhz kthx
-            double fullvbs=(spd_vbs/spd_cpu)*200;
-            double mv=VertexCount/ts/(spd_cpu/200);
-            char mv_c=' ';
-
-            Last_FC=FrameCount;
-
-            if (mv>750)
-            {
-               mv/=1000;	//KV
-               mv_c='K';
-            }
-            if (mv>750)
-            {
-               mv/=1000;	//
-               mv_c='M';
-            }
-            VertexCount=0;
-            vblk_cnt=0;
-
-            char fpsStr[256];
-            const char* mode=0;
-            const char* res=0;
-
-            res=SPG_CONTROL.interlace?"480i":"240p";
-
-            if (SPG_CONTROL.NTSC==0 && SPG_CONTROL.PAL==1)
-               mode="PAL";
-            else if (SPG_CONTROL.NTSC==1 && SPG_CONTROL.PAL==0)
-               mode="NTSC";
-            else
-            {
-               res=SPG_CONTROL.interlace?"480i":"480p";
-               mode="VGA";
-            }
-
-            double frames_done=spd_cpu/2;
-            double mspdf=1/frames_done*1000;
-            full_rps=(spd_fps+fskip/ts);
-            sprintf(fpsStr,"%s/%c - %4.2f (%4.2f) - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f", 
-                  VER_SHORTNAME,'n',mspdf,speed_load_mspdf,spd_cpu*100/200,spd_vbs,
-                  spd_vbs/full_rps,mode,res,fullvbs,
-                  spd_fps,fskip/ts
-                  , mv, mv_c, mips_counter/ 1024.0 / 1024.0);
-            mips_counter = 0;
-            os_SetWindowText(fpsStr);
-            last_fps=os_GetSeconds();
-
-            fskip=0;
-
-         }
-#endif
 		}
 	}
 

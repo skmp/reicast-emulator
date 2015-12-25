@@ -40,19 +40,12 @@ extern u32 TA_VTXC,TA_SPRC,TA_EOSC,TA_PPC,TA_SPC,TA_EOLC,TA_V64HC;
 #define TA_V64H 
 #endif
 
-	
 //cache state vars
 u32 tileclip_val=0;
-
 u8 f32_su8_tbl[65536];
-/*
-__forceinline
-u8 float_to_satu8(float val)
-{
-	return f32_su8_tbl[((u32&)val)>>16];
-}
-*/
+
 #define float_to_satu8(val) f32_su8_tbl[((u32&)val)>>16]
+#define saturate01(x) (((s32&)x)<0?0:(s32&)x>0x3f800000?1:x)
 
 /*
 	This uses just 1k of lookup, but does more calcs
@@ -68,8 +61,6 @@ static u8 float_to_satu8_2(float val)
 	
 	return f32_su8_tbl[0x3b80+vo] | (~m2>>24);
 }
-
-#define saturate01(x) (((s32&)x)<0?0:(s32&)x>0x3f800000?1:x)
 
 static u8 float_to_satu8_math(float val)
 {
@@ -89,22 +80,14 @@ DECL_ALIGN(4) static u8 FaceOffsColor[4];
 DECL_ALIGN(4) static u32 SFaceBaseColor;
 DECL_ALIGN(4) static u32 SFaceOffsColor;
 
-
-
 //splitter function lookup
 extern u32 ta_type_lut[256];
-
-void TA_ListCont();
-void TA_ListInit();
-void TA_SoftReset();
 
 //hehe
 //as it seems, bit 1,2 are type, bit 0 is mod volume :p
 
-
 //misc ones
 const u32 ListType_None=-1;
-
 
 const u32 SZ32=1;
 const u32 SZ64=2;
@@ -127,15 +110,12 @@ static f32 f16(u16 v)
 	return *(f32*)&z;
 }
 
-	
 #if HOST_CPU==CPU_X86
 extern u32 TA_VTX_O;
 #define TA_VTX_OVH(n) (TA_VTX_O+=n);
 #else
 #define TA_VTX_OVH(n)
 #endif
-
-
 
 #define vdrc vd_rc
 
@@ -605,9 +585,7 @@ public:
                   return 6;               //(Textured, Floating Color , 16b uv)
                return 5;           //(Textured, Floating Color , 32b uv)
             }
-            else
-               return pcw.Col_Type;          //(Non-Textured, Floating Color)
-            break;
+            return pcw.Col_Type;          //(Non-Textured, Floating Color)
          case 2:
             if (pcw.Texture)
             {
@@ -814,9 +792,8 @@ public:
 
 			d_pp->texid = -1;
 
-			if (d_pp->pcw.Texture) {
+			if (d_pp->pcw.Texture)
 				d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
-			}
 		}
 	}
 
@@ -1450,7 +1427,7 @@ bool ta_parse_vdrc(TA_context* ctx)
 	vd_rc = vd_ctx->rend;
 	
 	ta_parse_cnt++;
-	if (0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
+	if ((ta_parse_cnt %  ( settings.pvr.ta_skip + 1)) == 0)
 	{
 		TAFifo0.vdec_init();
 		
@@ -1460,9 +1437,7 @@ bool ta_parse_vdrc(TA_context* ctx)
 		do
 		{
 			ta_data =TaCmd(ta_data,ta_data_end);
-
-		}
-		while(ta_data<=ta_data_end);
+		}while(ta_data<=ta_data_end);
 
 		rv = true; //whatever
 	}
@@ -1529,7 +1504,7 @@ static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 
 #define satu255(x) (((s32&)x)<0?0:(s32&)x>0x437f0000?255:(u8)x)
 
-void vtxdec_init()
+void vtxdec_init(void)
 {
 	/*
 		0x3b80 ~ 0x3f80 -> actual useful range. Rest is clamping to 0 or 255 ~
@@ -1634,10 +1609,9 @@ void FillBGP(TA_context* ctx)
 	cv[3].z=ISP_BACKGND_D.f;
 }
 
-bool UsingAutoSort()
+bool UsingAutoSort(void)
 {
 	if (((FPU_PARAM_CFG >> 21) & 1) == 0)
 		return ((ISP_FEED_CFG & 1) == 0);
-	else
-		return ((vri(REGION_BASE) >> 29) & 1) == 0;
+   return ((vri(REGION_BASE) >> 29) & 1) == 0;
 }

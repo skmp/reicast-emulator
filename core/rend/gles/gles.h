@@ -12,11 +12,6 @@
 #define VERTEX_COL_OFFS_ARRAY 2
 #define VERTEX_UV_ARRAY 3
 
-//vertex types
-extern u32 gcflip;
-
-void DrawStrips();
-
 GLuint gl_GetTexture(TSP tsp,TCW tcw);
 struct text_info {
 	u16* pdata;
@@ -27,10 +22,6 @@ struct text_info {
 
 text_info raw_GetTexture(TSP tsp, TCW tcw);
 void CollectCleanup();
-void DoCleanup();
 void SortPParams();
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
-
-#define TEXTURE_LOAD_ERROR 0
-GLuint loadPNG(const string& subpath, int &width, int &height);

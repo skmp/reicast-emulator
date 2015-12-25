@@ -171,7 +171,7 @@ struct SortTrigDrawParam
 
 static vector<SortTrigDrawParam>	pidx_sort;
 PipelineShader* CurrentShader;
-u32 gcflip;
+static u32 gcflip;
 
 static struct
 {

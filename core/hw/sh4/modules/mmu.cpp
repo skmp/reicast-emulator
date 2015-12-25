@@ -155,9 +155,9 @@ void RaiseException(u32 expEvnt, u32 callVect) {
 }
 
 u32 mmu_error_TT;
-void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
+void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 {
-	printf_mmu("mmu_raise_exeption -> pc = 0x%X : ", next_pc);
+	printf_mmu("mmu_raise_exception -> pc = 0x%X : ", next_pc);
 	CCN_TEA = address;
 	CCN_PTEH.VPN = address >> 10;
 
@@ -168,7 +168,7 @@ void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 	{
 		//No error
 	case MMU_ERROR_NONE:
-		printf("Error : mmu_raise_exeption(MMU_ERROR_NONE)\n");
+		printf("Error : mmu_raise_exception(MMU_ERROR_NONE)\n");
 		getc(stdin);
 		break;
 
@@ -523,7 +523,7 @@ u8 DYNACALL mmu_ReadMem8(u32 adr)
 	if (tv == 0)
 		return _vmem_ReadMem8(addr);
 	else
-		mmu_raise_exeption(tv, adr, MMU_TT_DREAD);
+		mmu_raise_exception(tv, adr, MMU_TT_DREAD);
 
 	return 0;
 }
@@ -532,7 +532,7 @@ u16 DYNACALL mmu_ReadMem16(u32 adr)
 {
 	if (adr & 1)
 	{
-		mmu_raise_exeption(MMU_ERROR_BADADDR, adr, MMU_TT_DREAD);
+		mmu_raise_exception(MMU_ERROR_BADADDR, adr, MMU_TT_DREAD);
 		return 0;
 	}
 	u32 addr;
@@ -540,7 +540,7 @@ u16 DYNACALL mmu_ReadMem16(u32 adr)
 	if (tv == 0)
 		return _vmem_ReadMem16(addr);
 	else
-		mmu_raise_exeption(tv, adr, MMU_TT_DREAD);
+		mmu_raise_exception(tv, adr, MMU_TT_DREAD);
 
 	return 0;
 }
@@ -548,7 +548,7 @@ u16 DYNACALL mmu_IReadMem16(u32 adr)
 {
 	if (adr & 1)
 	{
-		mmu_raise_exeption(MMU_ERROR_BADADDR, adr, MMU_TT_IREAD);
+		mmu_raise_exception(MMU_ERROR_BADADDR, adr, MMU_TT_IREAD);
 		return 0;
 	}
 	u32 addr;
@@ -556,7 +556,7 @@ u16 DYNACALL mmu_IReadMem16(u32 adr)
 	if (tv == 0)
 		return _vmem_ReadMem16(addr);
 	else
-		mmu_raise_exeption(tv, adr, MMU_TT_IREAD);
+		mmu_raise_exception(tv, adr, MMU_TT_IREAD);
 
 	return 0;
 }
@@ -565,7 +565,7 @@ u32 DYNACALL mmu_ReadMem32(u32 adr)
 {
 	if (adr & 3)
 	{
-		mmu_raise_exeption(MMU_ERROR_BADADDR, adr, MMU_TT_DREAD);
+		mmu_raise_exception(MMU_ERROR_BADADDR, adr, MMU_TT_DREAD);
 		return 0;
 	}
 	u32 addr;
@@ -573,7 +573,7 @@ u32 DYNACALL mmu_ReadMem32(u32 adr)
 	if (tv == 0)
 		return _vmem_ReadMem32(addr);
 	else
-		mmu_raise_exeption(tv, adr, MMU_TT_DREAD);
+		mmu_raise_exception(tv, adr, MMU_TT_DREAD);
 
 	return 0;
 }
@@ -581,7 +581,7 @@ u64 DYNACALL mmu_ReadMem64(u32 adr)
 {
 	if (adr & 7)
 	{
-		mmu_raise_exeption(MMU_ERROR_BADADDR, adr, MMU_TT_DREAD);
+		mmu_raise_exception(MMU_ERROR_BADADDR, adr, MMU_TT_DREAD);
 		return 0;
 	}
 	u32 addr;
@@ -591,7 +591,7 @@ u64 DYNACALL mmu_ReadMem64(u32 adr)
 		return _vmem_ReadMem64(addr);
 	}
 	else
-		mmu_raise_exeption(tv, adr, MMU_TT_DREAD);
+		mmu_raise_exception(tv, adr, MMU_TT_DREAD);
 
 	return 0;
 }
@@ -606,14 +606,14 @@ void DYNACALL mmu_WriteMem8(u32 adr, u8 data)
 		return;
 	}
 	else
-		mmu_raise_exeption(tv, adr, MMU_TT_DWRITE);
+		mmu_raise_exception(tv, adr, MMU_TT_DWRITE);
 }
 
 void DYNACALL mmu_WriteMem16(u32 adr, u16 data)
 {
 	if (adr & 1)
 	{
-		mmu_raise_exeption(MMU_ERROR_BADADDR, adr, MMU_TT_DWRITE);
+		mmu_raise_exception(MMU_ERROR_BADADDR, adr, MMU_TT_DWRITE);
 		return;
 	}
 	u32 addr;
@@ -624,13 +624,13 @@ void DYNACALL mmu_WriteMem16(u32 adr, u16 data)
 		return;
 	}
 	else
-		mmu_raise_exeption(tv, adr, MMU_TT_DWRITE);
+		mmu_raise_exception(tv, adr, MMU_TT_DWRITE);
 }
 void DYNACALL mmu_WriteMem32(u32 adr, u32 data)
 {
 	if (adr & 3)
 	{
-		mmu_raise_exeption(MMU_ERROR_BADADDR, adr, MMU_TT_DWRITE);
+		mmu_raise_exception(MMU_ERROR_BADADDR, adr, MMU_TT_DWRITE);
 		return;
 	}
 	u32 addr;
@@ -641,13 +641,13 @@ void DYNACALL mmu_WriteMem32(u32 adr, u32 data)
 		return;
 	}
 	else
-		mmu_raise_exeption(tv, adr, MMU_TT_DWRITE);
+		mmu_raise_exception(tv, adr, MMU_TT_DWRITE);
 }
 void DYNACALL mmu_WriteMem64(u32 adr, u64 data)
 {
 	if (adr & 7)
 	{
-		mmu_raise_exeption(MMU_ERROR_BADADDR, adr, MMU_TT_DWRITE);
+		mmu_raise_exception(MMU_ERROR_BADADDR, adr, MMU_TT_DWRITE);
 		return;
 	}
 	u32 addr;
@@ -658,7 +658,7 @@ void DYNACALL mmu_WriteMem64(u32 adr, u64 data)
 		return;
 	}
 	else
-		mmu_raise_exeption(tv, adr, MMU_TT_DWRITE);
+		mmu_raise_exception(tv, adr, MMU_TT_DWRITE);
 }
 
 bool mmu_TranslateSQW(u32 adr, u32* out)
@@ -669,7 +669,7 @@ bool mmu_TranslateSQW(u32 adr, u32* out)
 	u32 tv = mmu_full_SQ<MMU_TT_DREAD>(adr, addr);
 	if (tv != 0)
 	{
-		mmu_raise_exeption(tv, adr, MMU_TT_DREAD);
+		mmu_raise_exception(tv, adr, MMU_TT_DREAD);
 		return false;
 	}
 

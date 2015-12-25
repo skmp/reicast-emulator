@@ -20,8 +20,8 @@ float last_fps=0;
 #define PIXEL_CLOCK (54*1000*1000/2)
 u32 Line_Cycles=0;
 u32 Frame_Cycles=0;
-int render_end_schid;
-int vblank_schid;
+static int render_end_sched;
+static int vblank_sched;
 int time_sync;
 
 double speed_load_mspdf;
@@ -70,7 +70,7 @@ void CalculateSync(void)
 	Frame_Cycles=pvr_numscanlines*Line_Cycles;
 	prv_cur_scanline=0;
 
-	sh4_sched_request(vblank_schid,Line_Cycles);
+	sh4_sched_request(vblank_sched, Line_Cycles);
 }
 
 void os_wait_cycl(u32 c);
@@ -226,9 +226,9 @@ static int rend_end_sch(int tag, int cycl, int jitt)
 
 bool spg_Init(void)
 {
-	render_end_schid=sh4_sched_register(0,&rend_end_sch);
-	vblank_schid=sh4_sched_register(0,&spg_line_sched);
-	time_sync=sh4_sched_register(0,&elapse_time);
+	render_end_sched = sh4_sched_register(0,&rend_end_sch);
+	vblank_sched     = sh4_sched_register(0,&spg_line_sched);
+	time_sync        = sh4_sched_register(0,&elapse_time);
 
 	sh4_sched_request(time_sync,8*1000*1000);
 
@@ -261,5 +261,5 @@ void SetREP(TA_context* cntx)
 		pending_cycles += 500000*3;
 	}
 
-   sh4_sched_request(render_end_schid, pending_cycles);
+   sh4_sched_request(render_end_sched, pending_cycles);
 }

@@ -207,6 +207,30 @@ static void SetCull(u32 CulliMode)
 	}
 }
 
+static int GetProgramID(
+      u32 cp_AlphaTest,
+      u32 pp_ClipTestMode,
+      u32 pp_Texture,
+      u32 pp_UseAlpha,
+      u32 pp_IgnoreTexA,
+      u32 pp_ShadInstr,
+      u32 pp_Offset,
+      u32 pp_FogCtrl)
+{
+	u32 rv=0;
+
+	rv|=pp_ClipTestMode;
+	rv<<=1; rv|=cp_AlphaTest;
+	rv<<=1; rv|=pp_Texture;
+	rv<<=1; rv|=pp_UseAlpha;
+	rv<<=1; rv|=pp_IgnoreTexA;
+	rv<<=2; rv|=pp_ShadInstr;
+	rv<<=1; rv|=pp_Offset;
+	rv<<=2; rv|=pp_FogCtrl;
+
+	return rv;
+}
+
 template <u32 Type, bool SortingEnabled>
 static __forceinline void SetGPState(const PolyParam* gp,u32 cflip=0)
 {
@@ -1325,28 +1349,6 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	return program;
 }
 
-int GetProgramID(u32 cp_AlphaTest,
-      u32 pp_ClipTestMode,
-      u32 pp_Texture,
-      u32 pp_UseAlpha,
-      u32 pp_IgnoreTexA,
-      u32 pp_ShadInstr,
-      u32 pp_Offset,
-      u32 pp_FogCtrl)
-{
-	u32 rv=0;
-
-	rv|=pp_ClipTestMode;
-	rv<<=1; rv|=cp_AlphaTest;
-	rv<<=1; rv|=pp_Texture;
-	rv<<=1; rv|=pp_UseAlpha;
-	rv<<=1; rv|=pp_IgnoreTexA;
-	rv<<=2; rv|=pp_ShadInstr;
-	rv<<=1; rv|=pp_Offset;
-	rv<<=2; rv|=pp_FogCtrl;
-
-	return rv;
-}
 
 bool CompilePipelineShader(void *data)
 {

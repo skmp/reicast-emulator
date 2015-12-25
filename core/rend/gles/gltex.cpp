@@ -70,7 +70,6 @@ const GLuint PAL_TYPE[4]=
 u16 temp_tex_buffer[1024*1024];
 extern u32 decoded_colors[3][65536];
 
-
 struct FBT
 {
 	u32 TexAddr;
@@ -81,7 +80,7 @@ struct FBT
 
 FBT fb_rtt;
 
-//Texture Cache :)
+/* Texture Cache */
 struct TextureCacheData
 {
 	TSP tsp;        //dreamcast texture parameters
@@ -399,10 +398,14 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
 	FBT& rv=fb_rtt;
 
-	if (rv.fbo) glDeleteFramebuffers(1,&rv.fbo);
-	if (rv.tex) glDeleteTextures(1,&rv.tex);
-	if (rv.depthb) glDeleteRenderbuffers(1,&rv.depthb);
-	if (rv.stencilb) glDeleteRenderbuffers(1,&rv.stencilb);
+	if (rv.fbo)
+      glDeleteFramebuffers(1,&rv.fbo);
+	if (rv.tex)
+      glDeleteTextures(1,&rv.tex);
+	if (rv.depthb)
+      glDeleteRenderbuffers(1,&rv.depthb);
+	if (rv.stencilb)
+      glDeleteRenderbuffers(1,&rv.stencilb);
 
 	rv.TexAddr=addy>>3;
 
@@ -460,22 +463,19 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 GLuint gl_GetTexture(TSP tsp, TCW tcw)
 {
+	TextureCacheData* tf;
+
 	if (tcw.TexAddr==fb_rtt.TexAddr && fb_rtt.tex)
-	{
 		return fb_rtt.tex;
-	}
 
 	//lookup texture
-	TextureCacheData* tf;
 	//= TexCache.Find(tcw.full,tsp.full);
 	u64 key=((u64)tcw.full<<32) | tsp.full;
 
 	TexCacheIter tx=TexCache.find(key);
 
 	if (tx!=TexCache.end())
-	{
 		tf=&tx->second;
-	}
 	else //create if not existing
 	{
 		TextureCacheData tfc={0};
@@ -503,19 +503,15 @@ GLuint gl_GetTexture(TSP tsp, TCW tcw)
 
 text_info raw_GetTexture(TSP tsp, TCW tcw)
 {
+	TextureCacheData* tf; /* lookup texture */
 	text_info rv = { 0 };
-
-	//lookup texture
-	TextureCacheData* tf;
 	//= TexCache.Find(tcw.full,tsp.full);
 	u64 key = ((u64)tcw.full << 32) | tsp.full;
 
 	TexCacheIter tx = TexCache.find(key);
 
 	if (tx != TexCache.end())
-	{
 		tf = &tx->second;
-	}
 	else //create if not existing
 	{
 		TextureCacheData tfc = { 0 };
@@ -546,27 +542,28 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 	return rv;
 }
 
-void CollectCleanup() {
-	vector<u64> list;
+void CollectCleanup(void)
+{
+   vector<u64> list;
 
-	u32 TargetFrame = max((u32)120,FrameCount) - 120;
+   u32 TargetFrame = max((u32)120,FrameCount) - 120;
 
-	for (TexCacheIter i=TexCache.begin();i!=TexCache.end();i++)
-	{
-		if ( i->second.dirty &&  i->second.dirty < TargetFrame) {
-			list.push_back(i->first);
-		}
+   for (TexCacheIter i=TexCache.begin();i!=TexCache.end();i++)
+   {
+      if ( i->second.dirty &&  i->second.dirty < TargetFrame)
+         list.push_back(i->first);
 
-		if (list.size() > 5)
-			break;
-	}
+      if (list.size() > 5)
+         break;
+   }
 
-	for (size_t i=0; i<list.size(); i++) {
-		//printf("Deleting %d\n",TexCache[list[i]].texID);
-		TexCache[list[i]].Delete();
+   for (size_t i=0; i<list.size(); i++)
+   {
+      //printf("Deleting %d\n",TexCache[list[i]].texID);
+      TexCache[list[i]].Delete();
 
-		TexCache.erase(list[i]);
-	}
+      TexCache.erase(list[i]);
+   }
 }
 
 void killtex(void)

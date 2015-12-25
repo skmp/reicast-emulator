@@ -5,6 +5,10 @@
 #include "rend/TexCache.h"
 #include "../../libretro/libretro.h"
 
+#include "oslib/oslib.h"
+#include "rend/rend.h"
+#include "hw/pvr/Renderer_if.h"
+
 extern struct retro_hw_render_callback hw_render;
 extern bool enable_rtt;
 
@@ -27,6 +31,42 @@ struct PipelineShader
 	u32 cp_AlphaTest; s32 pp_ClipTestMode;
 	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
 };
+
+struct ShaderUniforms_t
+{
+	float PT_ALPHA;
+	float scale_coefs[4];
+	float depth_coefs[4];
+	float fog_den_float;
+	float ps_FOG_COL_RAM[3];
+	float ps_FOG_COL_VERT[3];
+	float fog_coefs[2];
+
+	void Set(PipelineShader* s)
+	{
+		if (s->cp_AlphaTestValue!=-1)
+			glUniform1f(s->cp_AlphaTestValue,PT_ALPHA);
+
+		if (s->scale!=-1)
+			glUniform4fv( s->scale, 1, scale_coefs);
+
+		if (s->depth_scale!=-1)
+			glUniform4fv( s->depth_scale, 1, depth_coefs);
+
+		if (s->sp_FOG_DENSITY!=-1)
+			glUniform1f( s->sp_FOG_DENSITY,fog_den_float);
+
+		if (s->sp_FOG_COL_RAM!=-1)
+			glUniform3fv( s->sp_FOG_COL_RAM, 1, ps_FOG_COL_RAM);
+
+		if (s->sp_FOG_COL_VERT!=-1)
+			glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
+
+		if (s->sp_LOG_FOG_COEFS!=-1)
+			glUniform2fv(s->sp_LOG_FOG_COEFS,1, fog_coefs);
+	}
+
+} ShaderUniforms;
 
 #define SGL_CAP_MAX 8
 
@@ -159,6 +199,164 @@ static struct
 	}
 } cache;
 
+float fb_scale_x,fb_scale_y;
+
+#define attr "attribute"
+#define vary "varying"
+#define FRAGCOL "gl_FragColor"
+#define TEXLOOKUP "texture2D"
+
+#ifdef GLES
+#define HIGHP "highp"
+#define MEDIUMP "mediump"
+#define LOWP "lowp"
+#else
+#define HIGHP
+#define MEDIUMP
+#define LOWP
+#endif
+
+//Fragment and vertex shaders code
+//pretty much 1:1 copy of the d3d ones for now
+const char* VertexShaderSource =
+#ifndef GLES
+   "#version 120 \n"
+#endif
+"\
+/* Vertex constants*/  \n\
+uniform " HIGHP " vec4      scale; \n\
+uniform " HIGHP " vec4      depth_scale; \n\
+uniform " HIGHP " float sp_FOG_DENSITY; \n\
+/* Vertex input */ \n\
+" attr " " HIGHP " vec4    in_pos; \n\
+" attr " " LOWP " vec4     in_base; \n\
+" attr " " LOWP " vec4     in_offs; \n\
+" attr " " MEDIUMP " vec2  in_uv; \n\
+/* output */ \n\
+" vary " " LOWP " vec4 vtx_base; \n\
+" vary " " LOWP " vec4 vtx_offs; \n\
+" vary " " MEDIUMP " vec2 vtx_uv; \n\
+" vary " " HIGHP " vec3 vtx_xyz; \n\
+void main() \n\
+{ \n\
+	vtx_base=in_base; \n\
+	vtx_offs=in_offs; \n\
+	vtx_uv=in_uv; \n\
+	vec4 vpos=in_pos; \n\
+	vtx_xyz.xy = vpos.xy;  \n\
+	vtx_xyz.z = vpos.z*sp_FOG_DENSITY;  \n\
+	vpos.w=1.0/vpos.z;  \n\
+	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
+	vpos.xy*=vpos.w;  \n\
+	vpos.z=depth_scale.x+depth_scale.y*vpos.w;  \n\
+	gl_Position = vpos; \n\
+}";
+
+const char* PixelPipelineShader =
+#ifndef GLES
+      "#version 120 \n"
+#endif
+"\
+\
+#define cp_AlphaTest %d \n\
+#define pp_ClipTestMode %d.0 \n\
+#define pp_UseAlpha %d \n\
+#define pp_Texture %d \n\
+#define pp_IgnoreTexA %d \n\
+#define pp_ShadInstr %d \n\
+#define pp_Offset %d \n\
+#define pp_FogCtrl %d \n\
+/* Shader program params*/ \n\
+/* gles has no alpha test stage, so its emulated on the shader */ \n\
+uniform " LOWP " float cp_AlphaTestValue; \n\
+uniform " LOWP " vec4 pp_ClipTest; \n\
+uniform " LOWP " vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
+uniform " HIGHP " vec2 sp_LOG_FOG_COEFS; \n\
+uniform sampler2D tex,fog_table; \n\
+/* Vertex input*/ \n\
+" vary " " LOWP " vec4 vtx_base; \n\
+" vary " " LOWP " vec4 vtx_offs; \n\
+" vary " " MEDIUMP " vec2 vtx_uv; \n\
+" vary " " HIGHP " vec3 vtx_xyz; \n\
+" LOWP " float fog_mode2(" HIGHP " float val) \n\
+{ \n\
+   " HIGHP " float fog_idx=clamp(val,0.0,127.99); \n\
+	return clamp(sp_LOG_FOG_COEFS.y*log2(fog_idx)+sp_LOG_FOG_COEFS.x,0.001,1.0); //the clamp is required due to yet another bug !\n\
+} \n\
+void main() \n\
+{ \n\
+   " LOWP " vec4 color=vtx_base; \n\
+	#if pp_UseAlpha==0 \n\
+		color.a=1.0; \n\
+	#endif\n\
+	#if pp_FogCtrl==3 \n\
+		color=vec4(sp_FOG_COL_RAM.rgb,fog_mode2(vtx_xyz.z)); \n\
+	#endif\n\
+	#if pp_Texture==1 \n\
+	{ \n\
+      " LOWP " vec4 texcol=" TEXLOOKUP "(tex,vtx_uv); \n\
+		\n\
+		#if pp_IgnoreTexA==1 \n\
+			texcol.a=1.0;	 \n\
+		#endif\n\
+		\n\
+		#if pp_ShadInstr==0 \n\
+		{ \n\
+			color.rgb=texcol.rgb; \n\
+			color.a=texcol.a; \n\
+		} \n\
+		#endif\n\
+		#if pp_ShadInstr==1 \n\
+		{ \n\
+			color.rgb*=texcol.rgb; \n\
+			color.a=texcol.a; \n\
+		} \n\
+		#endif\n\
+		#if pp_ShadInstr==2 \n\
+		{ \n\
+			color.rgb=mix(color.rgb,texcol.rgb,texcol.a); \n\
+		} \n\
+		#endif\n\
+		#if  pp_ShadInstr==3 \n\
+		{ \n\
+			color*=texcol; \n\
+		} \n\
+		#endif\n\
+		\n\
+		#if pp_Offset==1 \n\
+		{ \n\
+			color.rgb+=vtx_offs.rgb; \n\
+			if (pp_FogCtrl==1) \n\
+				color.rgb=mix(color.rgb,sp_FOG_COL_VERT.rgb,vtx_offs.a); \n\
+		} \n\
+		#endif\n\
+	} \n\
+	#endif\n\
+	#if pp_FogCtrl==0 \n\
+	{ \n\
+		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(vtx_xyz.z));  \n\
+	} \n\
+	#endif\n\
+	#if cp_AlphaTest == 1 \n\
+		if (cp_AlphaTestValue>color.a) discard;\n\
+	#endif  \n\
+	//color.rgb=vec3(vtx_xyz.z/255.0);\n\
+	" FRAGCOL "=color; \n\
+}";
+
+const char* ModifierVolumeShader =
+" \
+uniform " LOWP " float sp_ShaderColor; \n\
+/* Vertex input*/ \n\
+void main() \n\
+{ \n\
+	" FRAGCOL "=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
+}";
+
+
+static int gles_screen_width  = 640;
+static int gles_screen_height = 480;
+
 s32 SetTileClip(u32 val, bool set)
 {
 	float csx=0,csy=0,cex=0,cey=0;
@@ -229,6 +427,139 @@ static int GetProgramID(
 	rv<<=2; rv|=pp_FogCtrl;
 
 	return rv;
+}
+
+static GLuint gl_CompileShader(const char* shader,GLuint type)
+{
+	GLint result;
+	GLint compile_log_len;
+	GLuint rv=glCreateShader(type);
+	glShaderSource(rv, 1,&shader, NULL);
+	glCompileShader(rv);
+
+	//lets see if it compiled ...
+	glGetShaderiv(rv, GL_COMPILE_STATUS, &result);
+	glGetShaderiv(rv, GL_INFO_LOG_LENGTH, &compile_log_len);
+
+	if (!result && compile_log_len>0)
+	{
+		if (compile_log_len==0)
+			compile_log_len=1;
+		char* compile_log=(char*)malloc(compile_log_len);
+		*compile_log=0;
+
+		glGetShaderInfoLog(rv, compile_log_len, &compile_log_len, compile_log);
+		printf("Shader: %s \n%s\n",result?"compiled!":"failed to compile",compile_log);
+
+		free(compile_log);
+	}
+
+	return rv;
+}
+
+static GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
+{
+	GLint compile_log_len;
+	GLint result;
+	//create shaders
+	GLuint vs=gl_CompileShader(VertexShader ,GL_VERTEX_SHADER);
+	GLuint ps=gl_CompileShader(FragmentShader ,GL_FRAGMENT_SHADER);
+
+	GLuint program = glCreateProgram();
+	glAttachShader(program, vs);
+	glAttachShader(program, ps);
+
+	//bind vertex attribute to vbo inputs
+	glBindAttribLocation(program, VERTEX_POS_ARRAY,      "in_pos");
+	glBindAttribLocation(program, VERTEX_COL_BASE_ARRAY, "in_base");
+	glBindAttribLocation(program, VERTEX_COL_OFFS_ARRAY, "in_offs");
+	glBindAttribLocation(program, VERTEX_UV_ARRAY,       "in_uv");
+
+#ifndef GLES
+	glBindFragDataLocation(program, 0, "FragColor");
+#endif
+
+	glLinkProgram(program);
+	glGetProgramiv(program, GL_LINK_STATUS, &result);
+	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &compile_log_len);
+
+	if (!result && compile_log_len>0)
+	{
+      char *compile_log = NULL;
+
+		if (compile_log_len==0)
+			compile_log_len = 1;
+		compile_log_len   += 1024;
+		compile_log        = (char*)malloc(compile_log_len);
+		*compile_log       = 0;
+
+		glGetProgramInfoLog(program, compile_log_len, &compile_log_len, compile_log);
+		printf("Shader linking: %s \n (%d bytes), - %s -\n",result?"linked":"failed to link", compile_log_len,compile_log);
+
+		free(compile_log);
+		die("shader compile fail\n");
+	}
+
+	glDeleteShader(vs);
+	glDeleteShader(ps);
+
+	glUseProgram(program);
+
+	verify(glIsProgram(program));
+
+   gl_state.program = modvol_shader.program;
+
+	return program;
+}
+
+static bool CompilePipelineShader(void *data)
+{
+	char pshader[8192];
+   PipelineShader *s = (PipelineShader*)data;
+
+	sprintf(pshader,PixelPipelineShader,
+                s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
+                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl);
+
+	s->program            = gl_CompileAndLink(VertexShaderSource,pshader);
+
+
+	//setup texture 0 as the input for the shader
+	GLuint gu=glGetUniformLocation(s->program, "tex");
+	if (s->pp_Texture==1)
+		glUniform1i(gu,0);
+
+	//get the uniform locations
+	s->scale	             = glGetUniformLocation(s->program, "scale");
+	s->depth_scale        = glGetUniformLocation(s->program, "depth_scale");
+
+
+	s->pp_ClipTest        = glGetUniformLocation(s->program, "pp_ClipTest");
+
+	s->sp_FOG_DENSITY     = glGetUniformLocation(s->program, "sp_FOG_DENSITY");
+
+	s->cp_AlphaTestValue  = glGetUniformLocation(s->program, "cp_AlphaTestValue");
+
+	//FOG_COL_RAM,FOG_COL_VERT,FOG_DENSITY;
+	if (s->pp_FogCtrl==1 && s->pp_Texture==1)
+		s->sp_FOG_COL_VERT = glGetUniformLocation(s->program, "sp_FOG_COL_VERT");
+	else
+		s->sp_FOG_COL_VERT = -1;
+	if (s->pp_FogCtrl==0 || s->pp_FogCtrl==3)
+	{
+		s->sp_FOG_COL_RAM=glGetUniformLocation(s->program, "sp_FOG_COL_RAM");
+		s->sp_LOG_FOG_COEFS=glGetUniformLocation(s->program, "sp_LOG_FOG_COEFS");
+	}
+	else
+	{
+		s->sp_FOG_COL_RAM=-1;
+		s->sp_LOG_FOG_COEFS=-1;
+	}
+
+
+	ShaderUniforms.Set(s);
+
+	return glIsProgram(s->program)==GL_TRUE;
 }
 
 template <u32 Type, bool SortingEnabled>
@@ -1060,348 +1391,11 @@ Tile clip
 
 */
 
-#include "oslib/oslib.h"
-#include "rend/rend.h"
-#include "hw/pvr/Renderer_if.h"
-
-float fb_scale_x,fb_scale_y;
-
-#define attr "attribute"
-#define vary "varying"
-#define FRAGCOL "gl_FragColor"
-#define TEXLOOKUP "texture2D"
-
-#ifdef GLES
-#define HIGHP "highp"
-#define MEDIUMP "mediump"
-#define LOWP "lowp"
-#else
-#define HIGHP
-#define MEDIUMP
-#define LOWP
-#endif
-
-//Fragment and vertex shaders code
-//pretty much 1:1 copy of the d3d ones for now
-const char* VertexShaderSource =
-#ifndef GLES
-   "#version 120 \n"
-#endif
-"\
-/* Vertex constants*/  \n\
-uniform " HIGHP " vec4      scale; \n\
-uniform " HIGHP " vec4      depth_scale; \n\
-uniform " HIGHP " float sp_FOG_DENSITY; \n\
-/* Vertex input */ \n\
-" attr " " HIGHP " vec4    in_pos; \n\
-" attr " " LOWP " vec4     in_base; \n\
-" attr " " LOWP " vec4     in_offs; \n\
-" attr " " MEDIUMP " vec2  in_uv; \n\
-/* output */ \n\
-" vary " " LOWP " vec4 vtx_base; \n\
-" vary " " LOWP " vec4 vtx_offs; \n\
-" vary " " MEDIUMP " vec2 vtx_uv; \n\
-" vary " " HIGHP " vec3 vtx_xyz; \n\
-void main() \n\
-{ \n\
-	vtx_base=in_base; \n\
-	vtx_offs=in_offs; \n\
-	vtx_uv=in_uv; \n\
-	vec4 vpos=in_pos; \n\
-	vtx_xyz.xy = vpos.xy;  \n\
-	vtx_xyz.z = vpos.z*sp_FOG_DENSITY;  \n\
-	vpos.w=1.0/vpos.z;  \n\
-	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
-	vpos.xy*=vpos.w;  \n\
-	vpos.z=depth_scale.x+depth_scale.y*vpos.w;  \n\
-	gl_Position = vpos; \n\
-}";
-
-
-
-
-const char* PixelPipelineShader =
-#ifndef GLES
-      "#version 120 \n"
-#endif
-"\
-\
-#define cp_AlphaTest %d \n\
-#define pp_ClipTestMode %d.0 \n\
-#define pp_UseAlpha %d \n\
-#define pp_Texture %d \n\
-#define pp_IgnoreTexA %d \n\
-#define pp_ShadInstr %d \n\
-#define pp_Offset %d \n\
-#define pp_FogCtrl %d \n\
-/* Shader program params*/ \n\
-/* gles has no alpha test stage, so its emulated on the shader */ \n\
-uniform " LOWP " float cp_AlphaTestValue; \n\
-uniform " LOWP " vec4 pp_ClipTest; \n\
-uniform " LOWP " vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
-uniform " HIGHP " vec2 sp_LOG_FOG_COEFS; \n\
-uniform sampler2D tex,fog_table; \n\
-/* Vertex input*/ \n\
-" vary " " LOWP " vec4 vtx_base; \n\
-" vary " " LOWP " vec4 vtx_offs; \n\
-" vary " " MEDIUMP " vec2 vtx_uv; \n\
-" vary " " HIGHP " vec3 vtx_xyz; \n\
-" LOWP " float fog_mode2(" HIGHP " float val) \n\
-{ \n\
-   " HIGHP " float fog_idx=clamp(val,0.0,127.99); \n\
-	return clamp(sp_LOG_FOG_COEFS.y*log2(fog_idx)+sp_LOG_FOG_COEFS.x,0.001,1.0); //the clamp is required due to yet another bug !\n\
-} \n\
-void main() \n\
-{ \n\
-   " LOWP " vec4 color=vtx_base; \n\
-	#if pp_UseAlpha==0 \n\
-		color.a=1.0; \n\
-	#endif\n\
-	#if pp_FogCtrl==3 \n\
-		color=vec4(sp_FOG_COL_RAM.rgb,fog_mode2(vtx_xyz.z)); \n\
-	#endif\n\
-	#if pp_Texture==1 \n\
-	{ \n\
-      " LOWP " vec4 texcol=" TEXLOOKUP "(tex,vtx_uv); \n\
-		\n\
-		#if pp_IgnoreTexA==1 \n\
-			texcol.a=1.0;	 \n\
-		#endif\n\
-		\n\
-		#if pp_ShadInstr==0 \n\
-		{ \n\
-			color.rgb=texcol.rgb; \n\
-			color.a=texcol.a; \n\
-		} \n\
-		#endif\n\
-		#if pp_ShadInstr==1 \n\
-		{ \n\
-			color.rgb*=texcol.rgb; \n\
-			color.a=texcol.a; \n\
-		} \n\
-		#endif\n\
-		#if pp_ShadInstr==2 \n\
-		{ \n\
-			color.rgb=mix(color.rgb,texcol.rgb,texcol.a); \n\
-		} \n\
-		#endif\n\
-		#if  pp_ShadInstr==3 \n\
-		{ \n\
-			color*=texcol; \n\
-		} \n\
-		#endif\n\
-		\n\
-		#if pp_Offset==1 \n\
-		{ \n\
-			color.rgb+=vtx_offs.rgb; \n\
-			if (pp_FogCtrl==1) \n\
-				color.rgb=mix(color.rgb,sp_FOG_COL_VERT.rgb,vtx_offs.a); \n\
-		} \n\
-		#endif\n\
-	} \n\
-	#endif\n\
-	#if pp_FogCtrl==0 \n\
-	{ \n\
-		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(vtx_xyz.z));  \n\
-	} \n\
-	#endif\n\
-	#if cp_AlphaTest == 1 \n\
-		if (cp_AlphaTestValue>color.a) discard;\n\
-	#endif  \n\
-	//color.rgb=vec3(vtx_xyz.z/255.0);\n\
-	" FRAGCOL "=color; \n\
-}";
-
-const char* ModifierVolumeShader =
-" \
-uniform " LOWP " float sp_ShaderColor; \n\
-/* Vertex input*/ \n\
-void main() \n\
-{ \n\
-	" FRAGCOL "=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
-}";
-
-
-static int gles_screen_width  = 640;
-static int gles_screen_height = 480;
-
-void egl_stealcntx(void)
-{
-}
-
-struct ShaderUniforms_t
-{
-	float PT_ALPHA;
-	float scale_coefs[4];
-	float depth_coefs[4];
-	float fog_den_float;
-	float ps_FOG_COL_RAM[3];
-	float ps_FOG_COL_VERT[3];
-	float fog_coefs[2];
-
-	void Set(PipelineShader* s)
-	{
-		if (s->cp_AlphaTestValue!=-1)
-			glUniform1f(s->cp_AlphaTestValue,PT_ALPHA);
-
-		if (s->scale!=-1)
-			glUniform4fv( s->scale, 1, scale_coefs);
-
-		if (s->depth_scale!=-1)
-			glUniform4fv( s->depth_scale, 1, depth_coefs);
-
-		if (s->sp_FOG_DENSITY!=-1)
-			glUniform1f( s->sp_FOG_DENSITY,fog_den_float);
-
-		if (s->sp_FOG_COL_RAM!=-1)
-			glUniform3fv( s->sp_FOG_COL_RAM, 1, ps_FOG_COL_RAM);
-
-		if (s->sp_FOG_COL_VERT!=-1)
-			glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
-
-		if (s->sp_LOG_FOG_COEFS!=-1)
-			glUniform2fv(s->sp_LOG_FOG_COEFS,1, fog_coefs);
-	}
-
-} ShaderUniforms;
-
-GLuint gl_CompileShader(const char* shader,GLuint type)
-{
-	GLint result;
-	GLint compile_log_len;
-	GLuint rv=glCreateShader(type);
-	glShaderSource(rv, 1,&shader, NULL);
-	glCompileShader(rv);
-
-	//lets see if it compiled ...
-	glGetShaderiv(rv, GL_COMPILE_STATUS, &result);
-	glGetShaderiv(rv, GL_INFO_LOG_LENGTH, &compile_log_len);
-
-	if (!result && compile_log_len>0)
-	{
-		if (compile_log_len==0)
-			compile_log_len=1;
-		char* compile_log=(char*)malloc(compile_log_len);
-		*compile_log=0;
-
-		glGetShaderInfoLog(rv, compile_log_len, &compile_log_len, compile_log);
-		printf("Shader: %s \n%s\n",result?"compiled!":"failed to compile",compile_log);
-
-		free(compile_log);
-	}
-
-	return rv;
-}
-
-GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
-{
-	//create shaders
-	GLuint vs=gl_CompileShader(VertexShader ,GL_VERTEX_SHADER);
-	GLuint ps=gl_CompileShader(FragmentShader ,GL_FRAGMENT_SHADER);
-
-	GLuint program = glCreateProgram();
-	glAttachShader(program, vs);
-	glAttachShader(program, ps);
-
-	//bind vertex attribute to vbo inputs
-	glBindAttribLocation(program, VERTEX_POS_ARRAY,      "in_pos");
-	glBindAttribLocation(program, VERTEX_COL_BASE_ARRAY, "in_base");
-	glBindAttribLocation(program, VERTEX_COL_OFFS_ARRAY, "in_offs");
-	glBindAttribLocation(program, VERTEX_UV_ARRAY,       "in_uv");
-
-#ifndef GLES
-	glBindFragDataLocation(program, 0, "FragColor");
-#endif
-
-	glLinkProgram(program);
-
-	GLint result;
-	glGetProgramiv(program, GL_LINK_STATUS, &result);
-
-
-	GLint compile_log_len;
-	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &compile_log_len);
-
-	if (!result && compile_log_len>0)
-	{
-		if (compile_log_len==0)
-			compile_log_len=1;
-		compile_log_len+= 1024;
-		char* compile_log=(char*)malloc(compile_log_len);
-		*compile_log=0;
-
-		glGetProgramInfoLog(program, compile_log_len, &compile_log_len, compile_log);
-		printf("Shader linking: %s \n (%d bytes), - %s -\n",result?"linked":"failed to link", compile_log_len,compile_log);
-
-		free(compile_log);
-		die("shader compile fail\n");
-	}
-
-	glDeleteShader(vs);
-	glDeleteShader(ps);
-
-	glUseProgram(program);
-
-	verify(glIsProgram(program));
-
-   gl_state.program = modvol_shader.program;
-
-	return program;
-}
-
-
-bool CompilePipelineShader(void *data)
-{
-	char pshader[8192];
-   PipelineShader *s = (PipelineShader*)data;
-
-	sprintf(pshader,PixelPipelineShader,
-                s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl);
-
-	s->program=gl_CompileAndLink(VertexShaderSource,pshader);
-
-
-	//setup texture 0 as the input for the shader
-	GLuint gu=glGetUniformLocation(s->program, "tex");
-	if (s->pp_Texture==1)
-		glUniform1i(gu,0);
-
-	//get the uniform locations
-	s->scale	            = glGetUniformLocation(s->program, "scale");
-	s->depth_scale      = glGetUniformLocation(s->program, "depth_scale");
-
-
-	s->pp_ClipTest      = glGetUniformLocation(s->program, "pp_ClipTest");
-
-	s->sp_FOG_DENSITY   = glGetUniformLocation(s->program, "sp_FOG_DENSITY");
-
-	s->cp_AlphaTestValue= glGetUniformLocation(s->program, "cp_AlphaTestValue");
-
-	//FOG_COL_RAM,FOG_COL_VERT,FOG_DENSITY;
-	if (s->pp_FogCtrl==1 && s->pp_Texture==1)
-		s->sp_FOG_COL_VERT=glGetUniformLocation(s->program, "sp_FOG_COL_VERT");
-	else
-		s->sp_FOG_COL_VERT=-1;
-	if (s->pp_FogCtrl==0 || s->pp_FogCtrl==3)
-	{
-		s->sp_FOG_COL_RAM=glGetUniformLocation(s->program, "sp_FOG_COL_RAM");
-		s->sp_LOG_FOG_COEFS=glGetUniformLocation(s->program, "sp_LOG_FOG_COEFS");
-	}
-	else
-	{
-		s->sp_FOG_COL_RAM=-1;
-		s->sp_LOG_FOG_COEFS=-1;
-	}
-
-
-	ShaderUniforms.Set(s);
-
-	return glIsProgram(s->program)==GL_TRUE;
-}
-
 static bool gl_create_resources(void)
 {
+	PipelineShader* dshader=0;
+	u32 i, cp_AlphaTest, pp_ClipTestMode, compile=0;
+
 #ifdef CORE
 	//create vao
 	//This is really not "proper", vaos are suposed to be defined once
@@ -1417,12 +1411,11 @@ static bool gl_create_resources(void)
 
 	memset(program_table,0,sizeof(program_table));
 
-	PipelineShader* dshader=0;
-	u32 compile=0;
 #define forl(name,max) for(u32 name=0;name<=max;name++)
-	forl(cp_AlphaTest,1)
+
+   for(cp_AlphaTest = 0; cp_AlphaTest <= 1; cp_AlphaTest++)
 	{
-		forl(pp_ClipTestMode,2)
+      for (pp_ClipTestMode = 0; pp_ClipTestMode <= 1; pp_ClipTestMode++)
 		{
 			forl(pp_UseAlpha,1)
 			{
@@ -1439,15 +1432,15 @@ static bool gl_create_resources(void)
 									dshader=&program_table[GetProgramID(cp_AlphaTest,pp_ClipTestMode,pp_Texture,pp_UseAlpha,pp_IgnoreTexA,
 															pp_ShadInstr,pp_Offset,pp_FogCtrl)];
 
-									dshader->cp_AlphaTest = cp_AlphaTest;
+									dshader->cp_AlphaTest    = cp_AlphaTest;
 									dshader->pp_ClipTestMode = pp_ClipTestMode-1;
-									dshader->pp_Texture = pp_Texture;
-									dshader->pp_UseAlpha = pp_UseAlpha;
-									dshader->pp_IgnoreTexA = pp_IgnoreTexA;
-									dshader->pp_ShadInstr = pp_ShadInstr;
-									dshader->pp_Offset = pp_Offset;
-									dshader->pp_FogCtrl = pp_FogCtrl;
-									dshader->program = -1;
+									dshader->pp_Texture      = pp_Texture;
+									dshader->pp_UseAlpha     = pp_UseAlpha;
+									dshader->pp_IgnoreTexA   = pp_IgnoreTexA;
+									dshader->pp_ShadInstr    = pp_ShadInstr;
+									dshader->pp_Offset       = pp_Offset;
+									dshader->pp_FogCtrl      = pp_FogCtrl;
+									dshader->program         = -1;
 								}
 							}
 						}
@@ -1457,21 +1450,19 @@ static bool gl_create_resources(void)
 		}
 	}
 
-
-
-	modvol_shader.program=gl_CompileAndLink(VertexShaderSource,ModifierVolumeShader);
+	modvol_shader.program        = gl_CompileAndLink(VertexShaderSource,ModifierVolumeShader);
 	modvol_shader.scale          = glGetUniformLocation(modvol_shader.program, "scale");
 	modvol_shader.sp_ShaderColor = glGetUniformLocation(modvol_shader.program, "sp_ShaderColor");
 	modvol_shader.depth_scale    = glGetUniformLocation(modvol_shader.program, "depth_scale");
 
-	//#define PRECOMPILE_SHADERS
-	#ifdef PRECOMPILE_SHADERS
-	for (u32 i=0;i<sizeof(program_table)/sizeof(program_table[0]);i++)
-	{
-		if (!CompilePipelineShader(	&program_table[i] ))
-			return false;
-	}
-	#endif
+   //#define PRECOMPILE_SHADERS
+#ifdef PRECOMPILE_SHADERS
+   for (i=0;i<sizeof(program_table)/sizeof(program_table[0]);i++)
+   {
+      if (!CompilePipelineShader(	&program_table[i] ))
+         return false;
+   }
+#endif
 
 	return true;
 }
@@ -1494,12 +1485,14 @@ static bool gles_init(void)
 static void tryfit(float* x,float* y)
 {
 	//y=B*ln(x)+A
-
+   double a,b;
+   unsigned i;
+	float maxdev=0;
 	double sylnx=0,sy=0,slnx=0,slnx2=0;
 
 	u32 cnt=0;
 
-	for (int i=0;i<128;i++)
+	for (i=0;i<128;i++)
 	{
 		int rep=1;
 
@@ -1527,7 +1520,6 @@ static void tryfit(float* x,float* y)
 		}
 	}
 
-	double a,b;
 	b=(cnt*sylnx-sy*slnx)/(cnt*slnx2-slnx*slnx);
 	a=(sy-b*slnx)/(cnt);
 
@@ -1538,7 +1530,6 @@ static void tryfit(float* x,float* y)
 	//B*log(2)*log(x)+A
 	b*=logf(2.0);
 
-	float maxdev=0;
 	for (int i=0;i<128;i++)
 	{
 		float diff=min(max(b*logf(x[i])/logf(2.0)+a,(double)0),(double)1)-y[i];

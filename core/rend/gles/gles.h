@@ -32,6 +32,5 @@ void SortPParams();
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 
-bool CompilePipelineShader(void *data);
 #define TEXTURE_LOAD_ERROR 0
 GLuint loadPNG(const string& subpath, int &width, int &height);

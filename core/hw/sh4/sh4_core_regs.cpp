@@ -34,7 +34,7 @@ INLINE void ChangeFP()
 }
 
 //called when sr is changed and we must check for reg banks etc.. , returns true if interrupts got
-bool UpdateSR()
+bool UpdateSR(void)
 {
 	if (sr.MD)
 	{
@@ -47,14 +47,9 @@ bool UpdateSR()
 		{
 			printf("UpdateSR MD=0;RB=1 , this must not happen\n");
 			sr.RB =0;//error - must always be 0
-			if (old_sr.RB)
-				ChangeGPR();//switch
 		}
-		else
-		{
-			if (old_sr.RB)
-				ChangeGPR();//switch
-		}
+      if (old_sr.RB)
+         ChangeGPR();//switch
 	}
 
 	old_sr.status=sr.status;

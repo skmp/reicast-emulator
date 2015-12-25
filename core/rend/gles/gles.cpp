@@ -357,7 +357,7 @@ void main() \n\
 static int gles_screen_width  = 640;
 static int gles_screen_height = 480;
 
-s32 SetTileClip(u32 val, bool set)
+static s32 SetTileClip(u32 val, bool set)
 {
 	float csx=0,csy=0,cex=0,cey=0;
 	u32 clipmode=val>>28;
@@ -563,7 +563,7 @@ static bool CompilePipelineShader(void *data)
 }
 
 template <u32 Type, bool SortingEnabled>
-static __forceinline void SetGPState(const PolyParam* gp,u32 cflip=0)
+static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 {
    //force everything to be shadowed
    const u32 stencil=0x80;
@@ -688,7 +688,7 @@ static void DrawList(const List<PolyParam>& gply)
    {
       if (params->count>2) //this actually happens for some games. No idea why ..
       {
-         SetGPState<Type,SortingEnabled>(params);
+         SetGPState<Type,SortingEnabled>(params, 0);
          glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_SHORT, (GLvoid*)(2*params->first));
       }
 
@@ -1039,7 +1039,7 @@ static void DrawSorted(void)
       PolyParam* params = pidx_sort[p].ppid;
       if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
       {
-         SetGPState<ListType_Translucent,true>(params);
+         SetGPState<ListType_Translucent,true>(params, 0);
          glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first));
       }
       params++;
@@ -1470,17 +1470,6 @@ static bool gl_create_resources(void)
 GLuint gl_CompileShader(const char* shader,GLuint type);
 
 //setup
-
-static bool gles_init(void)
-{
-   if (!gl_create_resources())
-      return false;
-
-   gl_state.framebuf = hw_render.get_current_framebuffer();
-   gl_state.cullmode = GL_BACK;
-
-   return true;
-}
 
 static void tryfit(float* x,float* y)
 {
@@ -2068,7 +2057,14 @@ struct glesrend : Renderer
       gl_state.cap_translate[5] = GL_ALPHA_TEST;
       gl_state.cap_translate[6] = GL_SCISSOR_TEST;
       gl_state.cap_translate[7] = GL_STENCIL_TEST;
-      return gles_init();
+
+      if (!gl_create_resources())
+         return false;
+
+      gl_state.framebuf = hw_render.get_current_framebuffer();
+      gl_state.cullmode = GL_BACK;
+
+      return true;
    }
 	void Resize(int w, int h) { gles_screen_width=w; gles_screen_height=h; }
 	void Term() { libCore_vramlock_Free(); }

@@ -128,6 +128,21 @@ union sr_status_t
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 rsvd3   : 1;//<<31
+		u32 MD      : 1;//<<20
+		u32 RB      : 1;//<<29
+		u32 BL      : 1;//<<28
+		u32 rsvd2   : 12;//<<16
+		u32 FD      : 1;//<<15
+		u32 rsvd1   : 5;//<<10
+		u32 M       : 1;//<<9
+		u32 Q       : 1;//<<8
+		u32 IMASK   : 4;//<<4
+		u32 rsvd0   : 2;//<<2
+		u32 S       : 1;//<<1
+		u32 T_h     : 1;//<<0
+#else
 		u32 T_h     : 1;//<<0
 		u32 S       : 1;//<<1
 		u32 rsvd0   : 2;//<<2
@@ -141,9 +156,12 @@ union sr_status_t
 		u32 RB      : 1;//<<29
 		u32 MD      : 1;//<<20
 		u32 rsvd3   : 1;//<<31
+#endif
 	};
 	u32 status;
 };
+
+#define STATUS_MASK 0x700083F2
 
 //Status register bitfield
 struct sr_t
@@ -152,6 +170,21 @@ struct sr_t
 	{
 		struct
 		{
+#ifdef MSB_FIRST
+			u32 rsvd3   : 1;//<<31
+			u32 MD      : 1;//<<20
+			u32 RB      : 1;//<<29
+			u32 BL      : 1;//<<28
+			u32 rsvd2   : 12;//<<16
+			u32 FD      : 1;//<<15
+			u32 rsvd1   : 5;//<<10
+			u32 M       : 1;//<<9
+			u32 Q       : 1;//<<8
+			u32 IMASK   : 4;//<<4
+			u32 rsvd0   : 2;//<<2
+			u32 S       : 1;//<<1
+			u32 T_h     : 1;//<<0
+#else
 			u32 T_h     : 1;//<<0
 			u32 S       : 1;//<<1
 			u32 rsvd0   : 2;//<<2
@@ -165,18 +198,19 @@ struct sr_t
 			u32 RB      : 1;//<<29
 			u32 MD      : 1;//<<20
 			u32 rsvd3   : 1;//<<31
+#endif
 		};
 		u32 status;
 	};
 	u32 T;
 	INLINE u32 GetFull()
 	{
-		return (status & 0x700083F2) | T;
+		return (status & STATUS_MASK) | T;
 	}
 
 	INLINE void SetFull(u32 value)
 	{
-		status=value & 0x700083F2;
+		status=value & STATUS_MASK;
 		T=value&1;
 	}
 
@@ -190,6 +224,30 @@ struct fpscr_t
 		u32 full;
 		struct
 		{
+#ifdef MSB_FIRST
+			u32 pad        : 10;
+			u32 FR         : 1;
+			u32 SZ         : 1;
+			u32 PR         : 1;
+			u32 DN         : 1;
+			u32 cfpuerr    : 1;
+			u32 cinvalid   : 1;
+			u32 cdivbyzero : 1;
+			u32 coverflow  : 1;
+			u32 cunderflow : 1;
+			u32 cinexact   : 1;
+			u32 einvalidop : 1;
+			u32 edivbyzero : 1;
+			u32 eoverflow  : 1;
+			u32 eunderflow : 1;
+			u32 einexact   : 1;
+			u32 finvalidop : 1;
+			u32 fdivbyzero : 1;
+			u32 foverflow  : 1;
+			u32 funderflow : 1;
+			u32 finexact   : 1;
+			u32 RM         : 2;
+#else
 			u32 RM         : 2;
 			u32 finexact   : 1;
 			u32 funderflow : 1;
@@ -212,12 +270,19 @@ struct fpscr_t
 			u32 SZ         : 1;
 			u32 FR         : 1;
 			u32 pad        : 10;
+#endif
 		};
 		struct
 		{
+#ifdef MSB_FIRST
+			u32 nilz  : 11;
+			u32 PR_SZ : 2;
+			u32 _nil   : 2+1+1+1+1+4+8+1;
+#else
 			u32 _nil   : 2+1+1+1+1+4+8+1;
 			u32 PR_SZ : 2;
 			u32 nilz  : 11;
+#endif
 		};
 	};
 };

@@ -15,7 +15,7 @@
 
 void RegWrite_SB_C2DST(u32 addr, u32 data)
 {
-	if(1&data)
+	if(data & 1)
 	{
 		SB_C2DST=1;
 		DMAC_Ch2St();
@@ -33,7 +33,7 @@ static void do_pvr_dma(void)
 	u32 dst = SB_PDSTAP;
 	u32 len = SB_PDLEN;
 
-	if(0x8201 != (dmaor &DMAOR_MASK))
+	if((dmaor &DMAOR_MASK) != 0x8201)
 	{
 		printf("\n!\tDMAC: DMAOR has invalid settings (%X) !\n", dmaor);
 		return;
@@ -57,11 +57,11 @@ static void do_pvr_dma(void)
 		WriteMemBlock_nommu_dma(dst,src,len);
 	}
 
-	DMAC_SAR(0) = (src + len);
+	DMAC_SAR(0)        = (src + len);
 	DMAC_CHCR(0).full &= 0xFFFFFFFE;
-	DMAC_DMATCR(0) = 0x00000000;
+	DMAC_DMATCR(0)     = 0x00000000;
 
-	SB_PDST = 0x00000000;
+	SB_PDST            = 0x00000000;
 
 	//TODO : *CHECKME* is that ok here ? the docs don't say here it's used [PVR-DMA , bit 11]
 	asic_RaiseInterrupt(holly_PVR_DMA);
@@ -136,9 +136,11 @@ void pvr_sb_Init(void)
 	//0x005F6820    SB_SDST RW  Sort-DMA start
 	sb_rio_register(SB_SDST_addr,RIO_WF,0,&RegWrite_SB_SDST);
 }
+
 void pvr_sb_Term(void)
 {
 }
+
 //Reset -> Reset - Initialise
 void pvr_sb_Reset(bool Manual)
 {

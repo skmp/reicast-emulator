@@ -119,12 +119,18 @@ static void LoadSpecialSettings(void)
    {
       if (strstr(lut_games[i].product_number, reios_product_number))
       {
+         if (lut_games[i].palette_hack != -1)
+         {
+            settings.PaletteUpdateHack    = lut_games[i].palette_hack;
+         }
+
          if (lut_games[i].dynarec_type != -1)
          {
             settings.dynarec.Type = lut_games[i].dynarec_type;
             LoadSpecialSettingsCPU();
-            break;
          }
+
+         break;
       }
    }
 }
@@ -229,6 +235,7 @@ void LoadSettings(void)
 	settings.pvr.ta_skip			   = 0;
 	settings.pvr.rend				   = 0;
    settings.QueueRender          = 0;
+   settings.PaletteUpdateHack    = 0;
 
 	settings.pvr.MaxThreads			      = 3;
 	settings.pvr.SynchronousRendering	= 0;

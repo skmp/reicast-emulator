@@ -574,6 +574,7 @@ struct RegisterStruct
 
 struct settings_t
 {
+   bool PaletteUpdateHack;
    bool QueueRender;
 
 	struct {

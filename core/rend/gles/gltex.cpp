@@ -368,7 +368,12 @@ struct TextureCacheData
 	}
 
 	//true if : dirty or paletted texture and revs don't match
-	bool NeedsUpdate() { return (dirty) || (pal_table_rev!=0 && *pal_table_rev!=pal_local_rev); }
+	bool NeedsUpdate()
+   { 
+      if (settings.PaletteUpdateHack)
+         return (dirty) || (pal_table_rev!=0);
+      return (dirty) || (pal_table_rev!=0 && *pal_table_rev!=pal_local_rev);
+   }
 	
 	void Delete()
 	{

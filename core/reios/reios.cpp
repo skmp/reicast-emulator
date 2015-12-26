@@ -109,21 +109,22 @@ bool reios_locate_bootfile(const char* bootfile)
 }
 
 char reios_bootfile[32];
-char ip_bin[256];
-static char reios_hardware_id[17];
-static char reios_maker_id[17];
-static char reios_device_info[17];
-static char reios_area_symbols[9];
-static char reios_peripherals[9];
-static char reios_product_number[11];
-static char reios_product_version[7];
-static char reios_releasedate[17];
-static char reios_boot_filename[17];
-static char reios_software_company[17];
-static char reios_software_name[129];
+
+char reios_hardware_id[17];
+char reios_maker_id[17];
+char reios_device_info[17];
+char reios_area_symbols[9];
+char reios_peripherals[9];
+char reios_product_number[11];
+char reios_product_version[7];
+char reios_releasedate[17];
+char reios_boot_filename[17];
+char reios_software_company[17];
+char reios_software_name[129];
 
 const char* reios_locate_ip(void)
 {
+   char ip_bin[256];
    if (libGDR_GetDiscType() == GdRom)
    {
       base_fad = 45150;

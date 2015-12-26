@@ -92,6 +92,9 @@ void plugins_Reset(bool Manual)
 	//libExtDevice_Reset(Manual);
 }
 
+void LoadSpecialSettings(void)
+{
+}
 
 int dc_init(int argc,wchar* argv[])
 {
@@ -164,7 +167,9 @@ int dc_init(int argc,wchar* argv[])
    const char* bootfile = reios_locate_ip();
    if (!bootfile || !reios_locate_bootfile("1ST_READ.BIN"))
       printf("Failed to locate bootfile.\n");
-	
+
+   LoadSpecialSettings();
+
 	return rv;
 }
 

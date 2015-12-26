@@ -286,7 +286,7 @@ void TermDrive()
 //
 //convert our nice toc struct to dc's native one :)
 
-u32 CreateTrackInfo(u32 ctrl,u32 addr,u32 fad)
+static u32 CreateTrackInfo(u32 ctrl,u32 addr,u32 fad)
 {
 	u8 p[4];
 #ifdef MSB_FIRST
@@ -303,7 +303,8 @@ u32 CreateTrackInfo(u32 ctrl,u32 addr,u32 fad)
 
 	return *(u32*)p;
 }
-u32 CreateTrackInfo_se(u32 ctrl,u32 addr,u32 tracknum)
+
+static u32 CreateTrackInfo_se(u32 ctrl,u32 addr,u32 tracknum)
 {
 	u8 p[4];
 #ifdef MSB_FIRST
@@ -358,24 +359,20 @@ void GetDriveToc(u32* to,DiskArea area)
 	//Generate the TOC info
 
 	//-1 for 1..99 0 ..98
-	to[99]=CreateTrackInfo_se(disc->tracks[first_track-1].CTRL,disc->tracks[first_track-1].ADDR,first_track); 
-	to[100]=CreateTrackInfo_se(disc->tracks[last_track-1].CTRL,disc->tracks[last_track-1].ADDR,last_track); 
+	to[99]  = CreateTrackInfo_se(disc->tracks[first_track-1].CTRL,disc->tracks[first_track-1].ADDR,first_track); 
+	to[100] = CreateTrackInfo_se(disc->tracks[last_track-1].CTRL,disc->tracks[last_track-1].ADDR,last_track); 
 	
 	if (disc->type==GdRom)
 	{
 		//use smaller LEADOUT
 		if (area==SingleDensity)
-			to[101]=CreateTrackInfo(disc->LeadOut.CTRL,disc->LeadOut.ADDR,13085);
+			to[101] = CreateTrackInfo(disc->LeadOut.CTRL,disc->LeadOut.ADDR,13085);
 	}
 	else
-	{
 		to[101] = CreateTrackInfo(disc->LeadOut.CTRL, disc->LeadOut.ADDR, disc->LeadOut.StartFAD);
-	}
 
 	for (u32 i=first_track-1;i<last_track;i++)
-	{
-		to[i]=CreateTrackInfo(disc->tracks[i].CTRL,disc->tracks[i].ADDR,disc->tracks[i].StartFAD); 
-	}
+		to[i] = CreateTrackInfo(disc->tracks[i].CTRL,disc->tracks[i].ADDR,disc->tracks[i].StartFAD); 
 }
 
 void GetDriveSessionInfo(u8* to,u8 session)
@@ -426,6 +423,5 @@ DiscType GuessDiscType(bool m1, bool m2, bool da)
 		return  CdRom_XA;
 	else if (da && m1) 
 		return CdRom_Extra;
-	else
-		return CdRom;
+   return CdRom;
 }

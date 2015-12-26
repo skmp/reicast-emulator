@@ -239,9 +239,9 @@ int dc_init(int argc,wchar* argv[])
 			printf("Did not load bios, using reios\n");
 	}
 
-   LoadSpecialSettingsCPU();
+	LoadSpecialSettingsCPU();
 
-   InitAudio();
+	InitAudio();
 
 	sh4_cpu.Init();
 	mem_Init();
@@ -260,7 +260,9 @@ int dc_init(int argc,wchar* argv[])
 	mem_Reset(false);
 	
 	sh4_cpu.Reset(false);
-	
+
+	LoadSpecialSettings();
+
 	return rv;
 }
 

@@ -135,8 +135,7 @@ struct Track
 			file->Read(FAD,dst,sector_type,subcode,subcode_type);
 			return true;
 		}
-		else
-			return false;
+      return false;
 	}
 	void Destroy() { if (file) delete file; file=0; }
 };
@@ -277,16 +276,21 @@ struct RawTrackFile : TrackFile
 	virtual void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)
 	{
 		//for now hackish
-		if (fmt==2352)
-			*sector_type=SECFMT_2352;
-		else if (fmt==2048)
-			*sector_type=SECFMT_2048_MODE2_FORM1;
-		else if (fmt==2336)
-			*sector_type=SECFMT_2336_MODE2;
-		else
-		{
-			verify(false);
-		}
+      switch (fmt)
+      {
+         case 2352:
+            *sector_type=SECFMT_2352;
+            break;
+         case 2048:
+            *sector_type=SECFMT_2048_MODE2_FORM1;
+            break;
+         case 2336:
+            *sector_type=SECFMT_2336_MODE2;
+            break;
+         default:
+            verify(false);
+            break;
+      }
 
 		core_fseek(file,offset+FAD*fmt,SEEK_SET);
 		core_fread(file, dst, fmt);

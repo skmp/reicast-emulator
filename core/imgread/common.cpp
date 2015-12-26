@@ -50,9 +50,7 @@ static void PatchRegion_6(u8* sector,int size)
 	u8* usersect=sector;
 
 	if (size!=2048)
-	{
 		printf("PatchRegion_6 -> sector size %d , skipping patch\n",size);
-	}
 
 	//patch area symbols
 	u8* p_area_text=&usersect[0x700];
@@ -60,68 +58,63 @@ static void PatchRegion_6(u8* sector,int size)
 	memcpy(&p_area_text[4 + 32],"For USA and CANADA.         ",28);
 	memcpy(&p_area_text[4 + 32 + 32],"For EUROPE.                 ",28);
 }
+
 bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 {
-	//get subchannel data, if any
-	if (from==2448)
-	{
-		memcpy(q_subchannel,in_buff+2352,96);
-		from-=96;
-	}
-	//if no conversion
-	if (to==from)
-	{
-		memcpy(out_buff,in_buff,to);
-		return true;
-	}
-	switch (to)
-	{
-	case 2340:
-		{
-			verify((from==2352));
-			memcpy(out_buff,&in_buff[12],2340);
-		}
-		break;
-	case 2328:
-		{
-			verify((from==2352));
-			memcpy(out_buff,&in_buff[24],2328);
-		}
-		break;
-	case 2336:
-		verify(from>=2336);
-		verify((from==2352));
-		memcpy(out_buff,&in_buff[0x10],2336);
-		break;
-	case 2048:
-		{
-			verify(from>=2048);
-			verify((from==2448) || (from==2352) || (from==2336));
-			if ((from == 2352) || (from == 2448))
-			{
-				if (in_buff[15]==1)
-				{
-					memcpy(out_buff,&in_buff[0x10],2048); //0x10 -> mode1
-				}
-				else
-					memcpy(out_buff,&in_buff[0x18],2048); //0x18 -> mode2 (all forms ?)
-			}
-			else
-				memcpy(out_buff,&in_buff[0x8],2048);	//hmm only possible on mode2.Skip the mode2 header
-		}
-		break;
-	case 2352:
-		//if (from >= 2352)
-		{
-			memcpy(out_buff,&in_buff[0],2352);
-		}
-		break;
-	default :
-		printf("Sector conversion from %d to %d not supported \n", from , to);
-		break;
-	}
+   //get subchannel data, if any
+   if (from==2448)
+   {
+      memcpy(q_subchannel,in_buff+2352,96);
+      from-=96;
+   }
+   //if no conversion
+   if (to==from)
+   {
+      memcpy(out_buff,in_buff,to);
+      return true;
+   }
+   switch (to)
+   {
+      case 2340:
+         verify((from==2352));
+         memcpy(out_buff,&in_buff[12],2340);
+         break;
+      case 2328:
+         verify((from==2352));
+         memcpy(out_buff,&in_buff[24],2328);
+         break;
+      case 2336:
+         verify(from>=2336);
+         verify((from==2352));
+         memcpy(out_buff,&in_buff[0x10],2336);
+         break;
+      case 2048:
+         {
+            verify(from>=2048);
+            verify((from==2448) || (from==2352) || (from==2336));
+            if ((from == 2352) || (from == 2448))
+            {
+               if (in_buff[15]==1)
+                  memcpy(out_buff,&in_buff[0x10],2048); //0x10 -> mode1
+               else
+                  memcpy(out_buff,&in_buff[0x18],2048); //0x18 -> mode2 (all forms ?)
+            }
+            else
+               memcpy(out_buff,&in_buff[0x8],2048);	//hmm only possible on mode2.Skip the mode2 header
+         }
+         break;
+      case 2352:
+         //if (from >= 2352)
+         {
+            memcpy(out_buff,&in_buff[0],2352);
+         }
+         break;
+      default :
+         printf("Sector conversion from %d to %d not supported \n", from , to);
+         break;
+   }
 
-	return true;
+   return true;
 }
 
 Disc* OpenDisc(const wchar* fn)
@@ -169,8 +162,7 @@ bool InitDrive(u32 fileflags)
 			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR);
 			return false;
 		}
-		else
-			return true;
+      return true;
 	}
 
 	wchar fn[512];
@@ -180,19 +172,18 @@ bool InitDrive(u32 fileflags)
 #else
 	int gfrv=0;
 #endif
-	if (gfrv == 0)
-	{
-		NullDriveDiscType=NoDisk;
-		gd_setdisc();
-		sns_asc=0x29;
-		sns_ascq=0x00;
-		sns_key=0x6;
-		return true;
-	}
-	else if (gfrv == -1)
-	{
-		return false;
-	}
+   switch (gfrv)
+   {
+      case 0:
+         NullDriveDiscType=NoDisk;
+         gd_setdisc();
+         sns_asc=0x29;
+         sns_ascq=0x00;
+         sns_key=0x6;
+         return true;
+      case -1:
+         return false;
+   }
 
 	strcpy(settings.imgread.LastImage,fn);
 	SaveSettings();
@@ -207,10 +198,7 @@ bool InitDrive(u32 fileflags)
 			sns_key=0x6;
 		return true;
 	}
-	else
-	{
-		return true;
-	}
+   return true;
 }
 
 bool DiscSwap(u32 fileflags)
@@ -223,8 +211,7 @@ bool DiscSwap(u32 fileflags)
 			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR);
 			return false;
 		}
-		else
-			return true;
+      return true;
 	}
 
 	wchar fn[512];
@@ -324,16 +311,17 @@ static u32 CreateTrackInfo_se(u32 ctrl,u32 addr,u32 tracknum)
 
 void GetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz)
 {
-	//printf("GD: read %08X, %d\n",StartSector,SectorCount);
-	if (disc)
-	{
-		disc->ReadSectors(StartSector,SectorCount,buff,secsz);
-		if (disc->type == GdRom && StartSector==45150 && SectorCount==7)
-		{
-			PatchRegion_0(buff,secsz);
-			PatchRegion_6(buff+2048*6,secsz);
-		}
-	}
+   //printf("GD: read %08X, %d\n",StartSector,SectorCount);
+   if (!disc)
+      return;
+
+   disc->ReadSectors(StartSector,SectorCount,buff,secsz);
+
+   if (disc->type == GdRom && StartSector==45150 && SectorCount==7)
+   {
+      PatchRegion_0(buff,secsz);
+      PatchRegion_6(buff+2048*6,secsz);
+   }
 }
 void GetDriveToc(u32* to,DiskArea area)
 {
@@ -352,9 +340,7 @@ void GetDriveToc(u32* to,DiskArea area)
 	if (area==DoubleDensity)
 		first_track=3;
 	else if (disc->type==GdRom)
-	{
 		last_track=2;
-	}
 
 	//Generate the TOC info
 
@@ -407,9 +393,8 @@ void printtoc(TocInfo* toc,SessionInfo* ses)
 		for (u32 t=toc->FistTrack-1;t<=toc->LastTrack;t++)
 		{
 			if (toc->tracks[t].Session==i+1)
-			{
-				printf("\tTrack %d : FAD %d CTRL %d ADR %d\n",t,toc->tracks[t].FAD,toc->tracks[t].Control,toc->tracks[t].Addr);
-			}
+				printf("\tTrack %d : FAD %d CTRL %d ADR %d\n",
+                  t,toc->tracks[t].FAD,toc->tracks[t].Control,toc->tracks[t].Addr);
 		}
 	}
 	printf("Session END: FAD END %d\n",ses->SessionsEndFAD);

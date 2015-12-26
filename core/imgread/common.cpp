@@ -17,7 +17,7 @@ Disc*(*drivers[])(const wchar* path)=
 
 u8 q_subchannel[96];
 
-void PatchRegion_0(u8* sector,int size)
+static void PatchRegion_0(u8* sector,int size)
 {
 #ifndef NOT_REICAST
 	if (settings.imgread.PatchRegion==0)
@@ -37,7 +37,8 @@ void PatchRegion_0(u8* sector,int size)
 	u8* p_area_symbol=&usersect[0x30];
 	memcpy(p_area_symbol,"JUE     ",8);
 }
-void PatchRegion_6(u8* sector,int size)
+
+static void PatchRegion_6(u8* sector,int size)
 {
 #ifndef NOT_REICAST
 	if (settings.imgread.PatchRegion==0)

@@ -115,6 +115,12 @@ static char reios_maker_id[17];
 static char reios_device_info[17];
 static char reios_area_symbols[9];
 static char reios_peripherals[9];
+static char reios_product_number[11];
+static char reios_product_version[7];
+static char reios_releasedate[17];
+static char reios_boot_filename[17];
+static char reios_software_company[17];
+static char reios_software_name[129];
 
 const char* reios_locate_ip(void)
 {
@@ -141,6 +147,12 @@ const char* reios_locate_ip(void)
    memcpy(&reios_device_info[0], &ip_bin[32],   16 * sizeof(char));
    memcpy(&reios_area_symbols[0], &ip_bin[48],   8 * sizeof(char));
    memcpy(&reios_peripherals[0], &ip_bin[56],   8 * sizeof(char));
+   memcpy(&reios_product_number[0], &ip_bin[64],   10 * sizeof(char));
+   memcpy(&reios_product_version[0], &ip_bin[74],   6 * sizeof(char));
+   memcpy(&reios_releasedate[0], &ip_bin[80],   16 * sizeof(char));
+   memcpy(&reios_boot_filename[0], &ip_bin[96],   16 * sizeof(char));
+   memcpy(&reios_software_company[0], &ip_bin[112],   16 * sizeof(char));
+   memcpy(&reios_software_name[0], &ip_bin[128],   128 * sizeof(char));
 
    printf("reios: IP.bin is '%s'\n", ip_bin);
    printf("reios: Hardware ID is: %s\n", reios_hardware_id);
@@ -148,6 +160,12 @@ const char* reios_locate_ip(void)
    printf("reios: Device info is: %s\n",    reios_device_info);
    printf("reios: Area symbols is: %s\n",    reios_area_symbols);
    printf("reios: Peripherals is: %s\n",    reios_peripherals);
+   printf("reios: Product number is: %s\n",    reios_product_number);
+   printf("reios: Product version is: %s\n",    reios_product_version);
+   printf("reios: Release date is: %s\n",    reios_releasedate);
+   printf("reios: Boot filename is: %s\n",    reios_boot_filename);
+   printf("reios: Software company is: %s\n",    reios_software_company);
+   printf("reios: Software name is: %s\n",    reios_software_name);
 
    printf("reios: loading ip.bin from FAD: %d\n", base_fad);
 

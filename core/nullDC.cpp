@@ -92,8 +92,41 @@ void plugins_Reset(bool Manual)
 	//libExtDevice_Reset(Manual);
 }
 
-void LoadSpecialSettings(void)
+#include "rom_luts.c"
+
+static void LoadSpecialSettingsCPU(void)
 {
+#if FEAT_SHREC != DYNAREC_NONE
+	if(settings.dynarec.Enable)
+	{
+		Get_Sh4Recompiler(&sh4_cpu);
+		printf("Using Recompiler\n");
+	}
+	else
+#endif
+	{
+		Get_Sh4Interpreter(&sh4_cpu);
+		printf("Using Interpreter\n");
+	}
+   sh4_cpu.Reset(false);
+}
+
+static void LoadSpecialSettings(void)
+{
+   unsigned i;
+
+   for (i = 0; i < sizeof(lut_games)/sizeof(lut_games[0]); ++i)
+   {
+      if (strstr(lut_games[i].product_number, reios_product_number))
+      {
+         if (lut_games[i].dynarec_type != -1)
+         {
+            settings.dynarec.Type = lut_games[i].dynarec_type;
+            LoadSpecialSettingsCPU();
+            break;
+         }
+      }
+   }
 }
 
 int dc_init(int argc,wchar* argv[])
@@ -134,20 +167,9 @@ int dc_init(int argc,wchar* argv[])
       printf("Did not load bios, using reios\n");
 	}
 
-#if FEAT_SHREC != DYNAREC_NONE
-	if(settings.dynarec.Enable)
-	{
-		Get_Sh4Recompiler(&sh4_cpu);
-		printf("Using Recompiler\n");
-	}
-	else
-#endif
-	{
-		Get_Sh4Interpreter(&sh4_cpu);
-		printf("Using Interpreter\n");
-	}
-	
-  InitAudio();
+   LoadSpecialSettingsCPU();
+
+   InitAudio();
 
 	sh4_cpu.Init();
 	mem_Init();
@@ -161,7 +183,6 @@ int dc_init(int argc,wchar* argv[])
 	plugins_Reset(false);
 	mem_Reset(false);
 	
-
 	sh4_cpu.Reset(false);
 
    const char* bootfile = reios_locate_ip();

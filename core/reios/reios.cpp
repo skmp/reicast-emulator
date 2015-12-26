@@ -42,249 +42,263 @@ bool descrambl = false;
 
 //Read 32 bit 'bi-endian' integer
 //Uses big-endian bytes, that's what the dc bios does too
-u32 read_u32bi(u8* ptr) {
+static u32 read_u32bi(u8* ptr)
+{
 	return (ptr[4]<<24) | (ptr[5]<<16) | (ptr[6]<<8) | (ptr[7]<<0);
 }
 
-bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
-	u32 data_len = 2048 * 1024;
-	u8* temp = new u8[data_len];
+static bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN")
+{
+   u32 data_len = 2048 * 1024;
+   u8* temp = new u8[data_len];
 
-	libGDR_ReadSector(temp, base_fad + 16, 1, 2048);
+   libGDR_ReadSector(temp, base_fad + 16, 1, 2048);
 
-	if (memcmp(temp, "\001CD001\001", 7) == 0) {
-		printf("reios: iso9660 PVD found\n");
-		u32 lba = read_u32bi(&temp[156 + 2]); //make sure to use big endian
-		u32 len = read_u32bi(&temp[156 + 10]); //make sure to use big endian
-		
-		data_len = ((len + 2047) / 2048) *2048;
+   if (memcmp(temp, "\001CD001\001", 7) == 0) {
+      printf("reios: iso9660 PVD found\n");
+      u32 lba = read_u32bi(&temp[156 + 2]); //make sure to use big endian
+      u32 len = read_u32bi(&temp[156 + 10]); //make sure to use big endian
 
-		printf("reios: iso9660 root_directory, FAD: %d, len: %d\n", 150 + lba, data_len);
-		libGDR_ReadSector(temp, 150 + lba, data_len/2048, 2048);
-	}
-	else {
-		libGDR_ReadSector(temp, base_fad + 16, data_len / 2048, 2048);
-	}
+      data_len = ((len + 2047) / 2048) *2048;
 
-	for (int i = 0; i < (data_len-20); i++) {
-		if (memcmp(temp+i, bootfile, strlen(bootfile)) == 0){
-			printf("Found %s at %06X\n", bootfile, i);
+      printf("reios: iso9660 root_directory, FAD: %d, len: %d\n", 150 + lba, data_len);
+      libGDR_ReadSector(temp, 150 + lba, data_len/2048, 2048);
+   }
+   else {
+      libGDR_ReadSector(temp, base_fad + 16, data_len / 2048, 2048);
+   }
 
-			u32 lba = read_u32bi(&temp[i - 33 +  2]); //make sure to use big endian
-			u32 len = read_u32bi(&temp[i - 33 + 10]); //make sure to use big endian
-			
-			printf("filename len: %d\n", temp[i - 1]);
-			printf("file LBA: %d\n", lba);
-			printf("file LEN: %d\n", len);
+   for (int i = 0; i < (data_len-20); i++)
+   {
+      if (memcmp(temp+i, bootfile, strlen(bootfile)) == 0)
+      {
+         printf("Found %s at %06X\n", bootfile, i);
 
-			if (descrambl)
-				descrambl_file(lba + 150, len, GetMemPtr(0x8c010000, 0));
-			else
-				libGDR_ReadSector(GetMemPtr(0x8c010000, 0), lba + 150, (len + 2047) / 2048, 2048);
+         u32 lba = read_u32bi(&temp[i - 33 +  2]); //make sure to use big endian
+         u32 len = read_u32bi(&temp[i - 33 + 10]); //make sure to use big endian
 
-			if (false)
+         printf("filename len: %d\n", temp[i - 1]);
+         printf("file LBA: %d\n", lba);
+         printf("file LEN: %d\n", len);
+
+         if (descrambl)
+            descrambl_file(lba + 150, len, GetMemPtr(0x8c010000, 0));
+         else
+            libGDR_ReadSector(GetMemPtr(0x8c010000, 0), lba + 150, (len + 2047) / 2048, 2048);
+
+#if 0
+         if (false)
          {
-				FILE* f = fopen("z:\\1stboot.bin", "wb");
-				fwrite(GetMemPtr(0x8c010000, 0), 1, len, f);
-				fclose(f);
-			}
-			
-			delete[] temp;
-			return true;
-		}
-	}
+            FILE* f = fopen("z:\\1stboot.bin", "wb");
+            fwrite(GetMemPtr(0x8c010000, 0), 1, len, f);
+            fclose(f);
+         }
+#endif
 
-	delete[] temp;
-	return false;
+         delete[] temp;
+         return true;
+      }
+   }
+
+   delete[] temp;
+   return false;
 }
 
 char reios_bootfile[32];
-const char* reios_locate_ip() {
 
-	if (libGDR_GetDiscType() == GdRom) {
-		base_fad = 45150;
-		descrambl = false;
-	}
-	else {
-		u8 ses[6];
-		libGDR_GetSessionInfo(ses, 0);
-		libGDR_GetSessionInfo(ses, ses[2]);
-		base_fad = (ses[3] << 16) | (ses[4] << 8) | (ses[5] << 0);
-		descrambl = true;
-	}
+static const char* reios_locate_ip(void)
+{
+   if (libGDR_GetDiscType() == GdRom)
+   {
+      base_fad = 45150;
+      descrambl = false;
+   }
+   else
+   {
+      u8 ses[6];
+      libGDR_GetSessionInfo(ses, 0);
+      libGDR_GetSessionInfo(ses, ses[2]);
+      base_fad = (ses[3] << 16) | (ses[4] << 8) | (ses[5] << 0);
+      descrambl = true;
+   }
 
-	printf("reios: loading ip.bin from FAD: %d\n", base_fad);
+   printf("reios: loading ip.bin from FAD: %d\n", base_fad);
 
-	libGDR_ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 16, 2048);
-	
-	memset(reios_bootfile, 0, sizeof(reios_bootfile));
-	memcpy(reios_bootfile, GetMemPtr(0x8c008060, 0), 16);
+   libGDR_ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 16, 2048);
 
-	printf("reios: bootfile is '%s'\n", reios_bootfile);
+   memset(reios_bootfile, 0, sizeof(reios_bootfile));
+   memcpy(reios_bootfile, GetMemPtr(0x8c008060, 0), 16);
 
-	for (int i = 15; i >= 0; i--) {
-		if (reios_bootfile[i] != ' ')
-			break;
-		reios_bootfile[i] = 0;
-	}
-	return reios_bootfile;
+   printf("reios: bootfile is '%s'\n", reios_bootfile);
+
+   for (int i = 15; i >= 0; i--)
+   {
+      if (reios_bootfile[i] != ' ')
+         break;
+      reios_bootfile[i] = 0;
+   }
+   return reios_bootfile;
 }
 
+static void reios_sys_system(void)
+{
+   debugf("reios_sys_system\n");
 
-void reios_sys_system() {
-	debugf("reios_sys_system\n");
+   u32 cmd = Sh4cntx.r[7];
 
-	u32 cmd = Sh4cntx.r[7];
+   switch (cmd)
+   {
+      case 0:	//SYSINFO_INIT
+         Sh4cntx.r[0] = 0;
+         break;
 
-	switch (cmd) {
-		case 0:	//SYSINFO_INIT
-			Sh4cntx.r[0] = 0;
-			break;
+      case 2: //SYSINFO_ICON 
+         {
+            printf("SYSINFO_ICON\n");
+            /*
+               r4 = icon number (0-9, but only 5-9 seems to really be icons)
+               r5 = destination buffer (704 bytes in size)
+               */
+            Sh4cntx.r[0] = 704;
+         }
+         break;
 
-		case 2: //SYSINFO_ICON 
-		{
-			printf("SYSINFO_ICON\n");
-			/*
-				r4 = icon number (0-9, but only 5-9 seems to really be icons)
-				r5 = destination buffer (704 bytes in size)
-			*/
-			Sh4cntx.r[0] = 704;
-		}
-		break;
+      case 3: //SYSINFO_ID 
+         {
+            WriteMem32(SYSINFO_ID_ADDR + 0, 0xe1e2e3e4);
+            WriteMem32(SYSINFO_ID_ADDR + 4, 0xe5e6e7e8);
 
-		case 3: //SYSINFO_ID 
-		{
-			WriteMem32(SYSINFO_ID_ADDR + 0, 0xe1e2e3e4);
-			WriteMem32(SYSINFO_ID_ADDR + 4, 0xe5e6e7e8);
+            Sh4cntx.r[0] = SYSINFO_ID_ADDR;
+         }
+         break;
 
-			Sh4cntx.r[0] = SYSINFO_ID_ADDR;
-		}
-		break;
-
-		default:
-			printf("unhandled: reios_sys_system\n");
-			break;
-	}
+      default:
+         printf("unhandled: reios_sys_system\n");
+         break;
+   }
 }
 
-void reios_sys_font() {
+static void reios_sys_font(void)
+{
 	printf("reios_sys_font\n");
 }
 
-void reios_sys_flashrom() {
-	debugf("reios_sys_flashrom\n");
+static void reios_sys_flashrom(void)
+{
+   debugf("reios_sys_flashrom\n");
 
-	u32 cmd = Sh4cntx.r[7];
+   u32 cmd = Sh4cntx.r[7];
 
-	u32 flashrom_info[][2] = {
-		{ 0 * 1024, 8 * 1024 },
-		{ 8 * 1024, 8 * 1024 },
-		{ 16 * 1024, 16 * 1024 },
-		{ 32 * 1024, 32 * 1024 },
-		{ 64 * 1024, 64 * 1024 },
-	};
+   u32 flashrom_info[][2] = {
+      { 0 * 1024, 8 * 1024 },
+      { 8 * 1024, 8 * 1024 },
+      { 16 * 1024, 16 * 1024 },
+      { 32 * 1024, 32 * 1024 },
+      { 64 * 1024, 64 * 1024 },
+   };
 
-	switch (cmd) {
-			case 0: // FLASHROM_INFO 
-			{
-				/*
-					r4 = partition number(0 - 4)
-					r5 = pointer to two 32 bit integers to receive the result.
-						The first will be the offset of the partition start, in bytes from the start of the flashrom.
-						The second will be the size of the partition, in bytes.
+   switch (cmd) {
+      case 0: // FLASHROM_INFO 
+         {
+            /*
+               r4 = partition number(0 - 4)
+               r5 = pointer to two 32 bit integers to receive the result.
+               The first will be the offset of the partition start, in bytes from the start of the flashrom.
+               The second will be the size of the partition, in bytes.
 
-						#define FLASHROM_PT_SYSTEM      0   /< \brief Factory settings (read-only, 8K) 
-						#define FLASHROM_PT_RESERVED    1   /< \brief reserved (all 0s, 8K) 
-						#define FLASHROM_PT_BLOCK_1     2   /< \brief Block allocated (16K) 
-						#define FLASHROM_PT_SETTINGS    3   /< \brief Game settings (block allocated, 32K) 
-						#define FLASHROM_PT_BLOCK_2     4   /< \brief Block allocated (64K) 
-				*/
+#define FLASHROM_PT_SYSTEM      0   /< \brief Factory settings (read-only, 8K) 
+#define FLASHROM_PT_RESERVED    1   /< \brief reserved (all 0s, 8K) 
+#define FLASHROM_PT_BLOCK_1     2   /< \brief Block allocated (16K) 
+#define FLASHROM_PT_SETTINGS    3   /< \brief Game settings (block allocated, 32K) 
+#define FLASHROM_PT_BLOCK_2     4   /< \brief Block allocated (64K) 
+*/
 
-				u32 part = Sh4cntx.r[4];
-				u32 dest = Sh4cntx.r[5];
+            u32 part = Sh4cntx.r[4];
+            u32 dest = Sh4cntx.r[5];
 
-				u32* pDst = (u32*)GetMemPtr(dest, 8);
+            u32* pDst = (u32*)GetMemPtr(dest, 8);
 
-				if (part <= 4) {
-					pDst[0] = flashrom_info[part][0];
-					pDst[1] = flashrom_info[part][1];
-					
-					Sh4cntx.r[0] = 0;
-				}
-				else {
-					Sh4cntx.r[0] = -1;
-				}
-			}
-			break;
+            if (part <= 4) {
+               pDst[0] = flashrom_info[part][0];
+               pDst[1] = flashrom_info[part][1];
 
-			case 1:	//FLASHROM_READ 
-			{
-				/*
-				r4 = read start position, in bytes from the start of the flashrom
-				r5 = pointer to destination buffer
-				r6 = number of bytes to read
-				*/
-				u32 offs = Sh4cntx.r[4];
-				u32 dest = Sh4cntx.r[5];
-				u32 size = Sh4cntx.r[6];
+               Sh4cntx.r[0] = 0;
+            }
+            else {
+               Sh4cntx.r[0] = -1;
+            }
+         }
+         break;
 
-				memcpy(GetMemPtr(dest, size), flashrom + offs, size);
+      case 1:	//FLASHROM_READ 
+         {
+            /*
+               r4 = read start position, in bytes from the start of the flashrom
+               r5 = pointer to destination buffer
+               r6 = number of bytes to read
+               */
+            u32 offs = Sh4cntx.r[4];
+            u32 dest = Sh4cntx.r[5];
+            u32 size = Sh4cntx.r[6];
 
-				Sh4cntx.r[0] = size;
-			}
-			break;
+            memcpy(GetMemPtr(dest, size), flashrom + offs, size);
 
-			
-			case 2:	//FLASHROM_WRITE 
-			{
-				/*
-					r4 = write start position, in bytes from the start of the flashrom
-					r5 = pointer to source buffer
-					r6 = number of bytes to write
-				*/
+            Sh4cntx.r[0] = size;
+         }
+         break;
 
-				u32 offs = Sh4cntx.r[4];
-				u32 src = Sh4cntx.r[5];
-				u32 size = Sh4cntx.r[6];
 
-				u8* pSrc = GetMemPtr(src, size);
+      case 2:	//FLASHROM_WRITE 
+         {
+            /*
+               r4 = write start position, in bytes from the start of the flashrom
+               r5 = pointer to source buffer
+               r6 = number of bytes to write
+               */
 
-				for (int i = 0; i < size; i++) {
-					flashrom[offs + i] &= pSrc[i];
-				}
-			}
-			break;
+            u32 offs = Sh4cntx.r[4];
+            u32 src = Sh4cntx.r[5];
+            u32 size = Sh4cntx.r[6];
 
-			case 3:	//FLASHROM_DELETE  
-			{			
-				u32 offs = Sh4cntx.r[4];
-				u32 dest = Sh4cntx.r[5];
+            u8* pSrc = GetMemPtr(src, size);
 
-				u32 part = 5;
+            for (int i = 0; i < size; i++) {
+               flashrom[offs + i] &= pSrc[i];
+            }
+         }
+         break;
 
-				for (int i = 0; i <= 4; i++) {
-					if (offs >= flashrom_info[i][0] && offs < (flashrom_info[i][0] + flashrom_info[i][1])) {
-						part = i;
-						break;
-					}
-				}
+      case 3:	//FLASHROM_DELETE  
+         {			
+            u32 offs = Sh4cntx.r[4];
+            u32 dest = Sh4cntx.r[5];
 
-				if (part <= 4) {
-					memset(flashrom + flashrom_info[part][0], 0xFF, flashrom_info[part][1]);
-					Sh4cntx.r[0] = 0;
-				}
-				else {
-					Sh4cntx.r[0] = -1;
-				}
-			}
-			break;
-			
-	default:
-		printf("reios_sys_flashrom: not handled, %d\n", cmd);
-	}
+            u32 part = 5;
+
+            for (int i = 0; i <= 4; i++) {
+               if (offs >= flashrom_info[i][0] && offs < (flashrom_info[i][0] + flashrom_info[i][1])) {
+                  part = i;
+                  break;
+               }
+            }
+
+            if (part <= 4) {
+               memset(flashrom + flashrom_info[part][0], 0xFF, flashrom_info[part][1]);
+               Sh4cntx.r[0] = 0;
+            }
+            else {
+               Sh4cntx.r[0] = -1;
+            }
+         }
+         break;
+
+      default:
+         printf("reios_sys_flashrom: not handled, %d\n", cmd);
+   }
 }
 
-void reios_sys_gd() {
+void reios_sys_gd(void)
+{
 	gdrom_hle_op();
 }
 
@@ -295,53 +309,54 @@ void reios_sys_gd() {
 	- gdGdcInitSystem, 3
 	- gdGdcGetDrvStat, 4
 */
-void gd_do_bioscall()
+static void gd_do_bioscall(void)
 {
-	//looks like the "real" entrypoint for this on a dreamcast
-	gdrom_hle_op();
-	return;
+   //looks like the "real" entrypoint for this on a dreamcast
+   gdrom_hle_op();
+   return;
 
-	/*
-		int func1, func2, arg1, arg2;
-	*/
+   /*
+      int func1, func2, arg1, arg2;
+      */
 
-	switch (Sh4cntx.r[7]) {
-	case 0:	//gdGdcReqCmd, wth is r6 ?
-		GD_HLE_Command(Sh4cntx.r[4], Sh4cntx.r[5]);
-		Sh4cntx.r[0] = 0xf344312e;
-		break;
+   switch (Sh4cntx.r[7]) {
+      case 0:	//gdGdcReqCmd, wth is r6 ?
+         GD_HLE_Command(Sh4cntx.r[4], Sh4cntx.r[5]);
+         Sh4cntx.r[0] = 0xf344312e;
+         break;
 
-	case 1:	//gdGdcGetCmdStat, r4 -> id as returned by gdGdcReqCmd, r5 -> buffer to get status in ram, r6 ?
-		Sh4cntx.r[0] = 0; //All good, no status info
-		break;
+      case 1:	//gdGdcGetCmdStat, r4 -> id as returned by gdGdcReqCmd, r5 -> buffer to get status in ram, r6 ?
+         Sh4cntx.r[0] = 0; //All good, no status info
+         break;
 
-	case 2: //gdGdcExecServer
-		//nop? returns something, though.
-		//Bios seems to be based on a cooperative threading model
-		//this is the "context" switch entry point
-		break;
+      case 2: //gdGdcExecServer
+         //nop? returns something, though.
+         //Bios seems to be based on a cooperative threading model
+         //this is the "context" switch entry point
+         break;
 
-	case 3: //gdGdcInitSystem
-		//nop? returns something, though.
-		break;
-	case 4: //gdGdcGetDrvStat
-		/*
-			Looks to same as GDROM_CHECK_DRIVE
-		*/
-		WriteMem32(Sh4cntx.r[4] + 0, 0x02);	// STANDBY
-		WriteMem32(Sh4cntx.r[4] + 4, 0x80);	// CDROM | 0x80 for GDROM
-		Sh4cntx.r[0] = 0;					// RET SUCCESS
-		break;
+      case 3: //gdGdcInitSystem
+         //nop? returns something, though.
+         break;
+      case 4: //gdGdcGetDrvStat
+         /*
+            Looks to same as GDROM_CHECK_DRIVE
+            */
+      WriteMem32(Sh4cntx.r[4] + 0, 0x02);	// STANDBY
+      WriteMem32(Sh4cntx.r[4] + 4, 0x80);	// CDROM | 0x80 for GDROM
+      Sh4cntx.r[0] = 0;					// RET SUCCESS
+      break;
 
-	default:
-		printf("gd_do_bioscall: (%d) %d, %d, %d\n", Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6], Sh4cntx.r[7]);
-		break;
-	}
-	
-	//gdGdcInitSystem
+      default:
+      printf("gd_do_bioscall: (%d) %d, %d, %d\n", Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6], Sh4cntx.r[7]);
+      break;
+   }
+
+   //gdGdcInitSystem
 }
 
-void reios_sys_misc() {
+static void reios_sys_misc(void)
+{
 	printf("reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X\n", Sh4cntx.r[7], Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6]);
 	Sh4cntx.r[0] = 0;
 }
@@ -349,7 +364,8 @@ void reios_sys_misc() {
 typedef void hook_fp();
 u32 hook_addr(hook_fp* fn);
 
-void setup_syscall(u32 hook_addr, u32 syscall_addr) {
+static void setup_syscall(u32 hook_addr, u32 syscall_addr)
+{
 	WriteMem32(syscall_addr, hook_addr);
 	WriteMem16(hook_addr, REIOS_OPCODE);
 
@@ -357,7 +373,8 @@ void setup_syscall(u32 hook_addr, u32 syscall_addr) {
 	debugf("reios: - address %08X: data %04X [%04X]\n", hook_addr, ReadMem16(hook_addr), REIOS_OPCODE);
 }
 
-void reios_setup_state(u32 boot_addr) {
+void reios_setup_state(u32 boot_addr)
+{
 	/*
 	Post Boot registers from actual bios boot
 	r
@@ -428,7 +445,8 @@ void reios_setup_state(u32 boot_addr) {
 	sh4rcb.cntx.old_fpscr.full = 0x00040001;
 }
 
-void reios_setuo_naomi(u32 boot_addr) {
+void reios_setuo_naomi(u32 boot_addr)
+{
 	/*
 		SR 0x60000000 0x00000001
 		FPSRC 0x00040001
@@ -548,7 +566,9 @@ void reios_setuo_naomi(u32 boot_addr) {
 	sh4rcb.cntx.fpscr.full = 0x00040001;
 	sh4rcb.cntx.old_fpscr.full = 0x00040001;
 }
-void reios_boot() {
+
+static void reios_boot(void)
+{
 	printf("-----------------\n");
 	printf("REIOS: Booting up\n");
 	printf("-----------------\n");
@@ -568,35 +588,38 @@ void reios_boot() {
 	//Infinitive loop for arm !
 	WriteMem32(0x80800000, 0xEAFFFFFE);
 
-	if (settings.reios.ElfFile.size()) {
-		if (!reios_loadElf(settings.reios.ElfFile)) {
+	if (settings.reios.ElfFile.size())
+   {
+		if (!reios_loadElf(settings.reios.ElfFile))
 			msgboxf("Failed to open %s\n", MBX_ICONERROR, settings.reios.ElfFile.c_str());
-		}
 		reios_setup_state(0x8C010000);
 	}
-	else {
-		if (DC_PLATFORM == DC_PLATFORM_DREAMCAST) {
-			const char* bootfile = reios_locate_ip();
-			if (!bootfile || !reios_locate_bootfile(bootfile))
-				msgboxf("Failed to locate bootfile", MBX_ICONERROR);
-			reios_setup_state(0xac008300);
-		}
-		else {
-			verify(DC_PLATFORM == DC_PLATFORM_NAOMI);
-			
-			u32* sz = (u32*)naomi_cart_GetPtr(0x368, 4);
-			if (!sz) {
-				msgboxf("Naomi boot failure", MBX_ICONERROR);
-			}
+	else
+   {
+		if (DC_PLATFORM == DC_PLATFORM_DREAMCAST)
+      {
+         const char* bootfile = reios_locate_ip();
+         if (!bootfile || !reios_locate_bootfile(bootfile))
+            msgboxf("Failed to locate bootfile", MBX_ICONERROR);
+         reios_setup_state(0xac008300);
+      }
+		else
+      {
+         verify(DC_PLATFORM == DC_PLATFORM_NAOMI);
 
-			int size = *sz;
+         u32* sz = (u32*)naomi_cart_GetPtr(0x368, 4);
+         if (!sz) {
+            msgboxf("Naomi boot failure", MBX_ICONERROR);
+         }
 
-			verify(size < RAM_SIZE && naomi_cart_GetPtr(size - 1, 1) && "Invalid cart size");
+         int size = *sz;
 
-			WriteMemBlock_nommu_ptr(0x0c020000, (u32*)naomi_cart_GetPtr(0, size), size);
+         verify(size < RAM_SIZE && naomi_cart_GetPtr(size - 1, 1) && "Invalid cart size");
 
-			reios_setuo_naomi(0x0c021000);
-		}
+         WriteMemBlock_nommu_ptr(0x0c020000, (u32*)naomi_cart_GetPtr(0, size), size);
+
+         reios_setuo_naomi(0x0c021000);
+      }
 	}
 }
 
@@ -605,35 +628,37 @@ map<hook_fp*, u32> hooks_rev;
 
 #define SYSCALL_ADDR_MAP(addr) ((addr & 0x1FFFFFFF) | 0x80000000)
 
-void register_hook(u32 pc, hook_fp* fn) {
+void register_hook(u32 pc, hook_fp* fn)
+{
 	hooks[SYSCALL_ADDR_MAP(pc)] = fn;
 	hooks_rev[fn] = pc;
 }
 
-void DYNACALL reios_trap(u32 op) {
-	verify(op == REIOS_OPCODE);
-	u32 pc = sh4rcb.cntx.pc - 2;
-	sh4rcb.cntx.pc = sh4rcb.cntx.pr;
+void DYNACALL reios_trap(u32 op)
+{
+   verify(op == REIOS_OPCODE);
+   u32 pc = sh4rcb.cntx.pc - 2;
+   sh4rcb.cntx.pc = sh4rcb.cntx.pr;
 
-	u32 mapd = SYSCALL_ADDR_MAP(pc);
+   u32 mapd = SYSCALL_ADDR_MAP(pc);
 
-	debugf("reios: dispatch %08X -> %08X\n", pc, mapd);
+   debugf("reios: dispatch %08X -> %08X\n", pc, mapd);
 
-	hooks[mapd]();
+   hooks[mapd]();
 }
 
-u32 hook_addr(hook_fp* fn) {
+u32 hook_addr(hook_fp* fn)
+{
 	if (hooks_rev.count(fn))
 		return hooks_rev[fn];
-	else {
-		printf("hook_addr: Failed to reverse lookup %08X\n", (unat)fn);
-		verify(false);
-		return 0;
-	}
+
+   printf("hook_addr: Failed to reverse lookup %08X\n", (unat)fn);
+   verify(false);
+   return 0;
 }
 
-bool reios_init(u8* rom, u8* flash) {
-
+bool reios_init(u8* rom, u8* flash)
+{
 	printf("reios: Init\n");
 
 	biosrom = rom;
@@ -659,10 +684,10 @@ bool reios_init(u8* rom, u8* flash) {
 	return true;
 }
 
-void reios_reset() {
-
+void reios_reset(void)
+{
 }
 
-void reios_term() {
-
+void reios_term(void)
+{
 }

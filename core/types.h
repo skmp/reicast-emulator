@@ -603,6 +603,8 @@ struct RegisterStruct
 
 struct settings_t
 {
+   bool PaletteUpdateHack;
+
 	struct {
 		bool UseReios;
 	} bios;

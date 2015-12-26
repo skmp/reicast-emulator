@@ -14,6 +14,8 @@
 
 #include "hw/naomi/naomi_cart.h"
 
+#include "reios/reios.h"
+
 settings_t settings;
 
 extern char game_dir[1024];
@@ -158,6 +160,10 @@ int dc_init(int argc,wchar* argv[])
 	
 
 	sh4_cpu.Reset(false);
+
+   const char* bootfile = reios_locate_ip();
+   if (!bootfile || !reios_locate_bootfile("1ST_READ.BIN"))
+      printf("Failed to locate bootfile.\n");
 	
 	return rv;
 }

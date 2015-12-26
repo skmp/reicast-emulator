@@ -47,7 +47,9 @@ static u32 read_u32bi(u8* ptr)
 	return (ptr[4]<<24) | (ptr[5]<<16) | (ptr[6]<<8) | (ptr[7]<<0);
 }
 
-static bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN")
+static bool bootfile_inited = false;
+
+bool reios_locate_bootfile(const char* bootfile)
 {
    u32 data_len = 2048 * 1024;
    u8* temp = new u8[data_len];
@@ -96,6 +98,8 @@ static bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN")
 #endif
 
          delete[] temp;
+
+         bootfile_inited = true;
          return true;
       }
    }
@@ -106,7 +110,7 @@ static bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN")
 
 char reios_bootfile[32];
 
-static const char* reios_locate_ip(void)
+const char* reios_locate_ip(void)
 {
    if (libGDR_GetDiscType() == GdRom)
    {
@@ -598,8 +602,7 @@ static void reios_boot(void)
    {
 		if (DC_PLATFORM == DC_PLATFORM_DREAMCAST)
       {
-         const char* bootfile = reios_locate_ip();
-         if (!bootfile || !reios_locate_bootfile(bootfile))
+         if (!bootfile_inited)
             msgboxf("Failed to locate bootfile", MBX_ICONERROR);
          reios_setup_state(0xac008300);
       }

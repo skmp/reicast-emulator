@@ -109,6 +109,7 @@ bool reios_locate_bootfile(const char* bootfile)
 }
 
 char reios_bootfile[32];
+char ip_bin[256];
 
 const char* reios_locate_ip(void)
 {
@@ -125,6 +126,13 @@ const char* reios_locate_ip(void)
       base_fad = (ses[3] << 16) | (ses[4] << 8) | (ses[5] << 0);
       descrambl = true;
    }
+
+   libGDR_ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 256, 2048);
+
+   memset(ip_bin, 0, sizeof(ip_bin));
+   memcpy(ip_bin, GetMemPtr(0x8c008000, 0), 256);
+
+   printf("reios: IP.bin is '%s'\n", ip_bin);
 
    printf("reios: loading ip.bin from FAD: %d\n", base_fad);
 

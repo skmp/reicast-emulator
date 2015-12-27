@@ -209,6 +209,9 @@ int AicaUpdate(int tag, int c, int j)
 		//aica_sample_cycles-=AICA_SAMPLE_CYCLES;
 	}
 
+   if (settings.aica.InterruptHack)
+      aica_periodical(3584);
+
 	return AICA_TICK;
 }
 

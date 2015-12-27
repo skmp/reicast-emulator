@@ -158,9 +158,6 @@ static inline bool IsInRange(vram_block* block,u32 offset)
 vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* userdata)
 {
 	vram_block* block=(vram_block* )malloc(sizeof(vram_block));
- 
-   if (!settings.PaletteUpdateHack)
-      end_offset64=start_offset64+4095;
 
 	if (end_offset64>(VRAM_SIZE-1))
 	{

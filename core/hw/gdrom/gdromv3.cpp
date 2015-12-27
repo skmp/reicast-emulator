@@ -19,6 +19,8 @@
 
 int gdrom_schid;
 
+//#define GDROM_HACK
+
 //Sense: ASC - ASCQ - Key
 signed int sns_asc=0;
 signed int sns_ascq=0;
@@ -162,6 +164,17 @@ u32 data_write_mode=0;
 	
 //end
 
+#ifdef GDROM_HACK
+//This is a huge hack too, and should be replaced with proper sense emulation -- raz
+
+//Sense Combinations
+u32 sense20401=0; //Sense Key 6 / ASC 29 / ASCQ 0
+u32 sense62800=0; //Sense Key 6 / ASC 28 / ASCQ 0
+u32 sense62900=0; //Sense Key 6 / ASC 29 / ASCQ 0
+
+u32 BusyToken=0; // Busy Token -- this is such a hack psy <3 ~ raz
+#endif
+
 void nilprintf(...){}
 
 #define printf_rm nilprintf
@@ -225,7 +238,16 @@ void FillReadBuffer()
 void gd_set_state(gd_states state)
 {
 	gd_states prev=gd_state;
-	gd_state=state;
+
+#ifdef GDROM_HACK
+   //*HACK*: avoid killing the current state if we aren't accepting a command at idle.
+   //Makes it possible to accept ATA_NOP without killing the pio state (needed for D2)
+   if (!(state==gds_procata && prev!=gds_waitcmd))
+      gd_state=state;
+#else
+   gd_state=state;
+#endif
+
 	switch(state)
 	{
 		case gds_waitcmd:
@@ -361,34 +383,34 @@ void gd_setdisc()
 	DiscType newd = (DiscType)libGDR_GetDiscType();
 	
 	switch(newd)
-	{
-	case NoDisk:
-		SecNumber.Status = GD_NODISC;
-		//GDStatus.BSY=0;
-		//GDStatus.DRDY=1;
-		break;
+   {
+      case NoDisk:
+         SecNumber.Status = GD_NODISC;
+         //GDStatus.BSY=0;
+         //GDStatus.DRDY=1;
+         break;
 
-	case Open:
-		SecNumber.Status = GD_OPEN;
-		//GDStatus.BSY=0;
-		//GDStatus.DRDY=1;
-		break;
+      case Open:
+         SecNumber.Status = GD_OPEN;
+         //GDStatus.BSY=0;
+         //GDStatus.DRDY=1;
+         break;
 
-	case Busy:
-		SecNumber.Status = GD_BUSY;
-		GDStatus.BSY=1;
-		GDStatus.DRDY=0;
-		break;
+      case Busy:
+         SecNumber.Status = GD_BUSY;
+         GDStatus.BSY=1;
+         GDStatus.DRDY=0;
+         break;
 
-	default :
-		if (SecNumber.Status==GD_BUSY)
-			SecNumber.Status = GD_PAUSE;
-		else
-			SecNumber.Status = GD_STANDBY;
-		//GDStatus.BSY=0;
-		//GDStatus.DRDY=1;
-		break;
-	}
+      default :
+         if (SecNumber.Status==GD_BUSY)
+            SecNumber.Status = GD_PAUSE;
+         else
+            SecNumber.Status = GD_STANDBY;
+         //GDStatus.BSY=0;
+         //GDStatus.DRDY=1;
+         break;
+   }
 
 	if (gd_disk_type==Busy && newd!=Busy)
 	{

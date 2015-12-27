@@ -41,6 +41,7 @@ struct gl_cached_state
    GLuint framebuf;
    GLuint program; 
    GLboolean depthmask;
+   GLenum active_texture;
    int cap_state[SGL_CAP_MAX];
    int cap_translate[SGL_CAP_MAX];
 };

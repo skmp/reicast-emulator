@@ -69,7 +69,6 @@ void palette_update(void)
    memcpy(pal_rev_256,_pal_rev_256,sizeof(pal_rev_256));
    memcpy(pal_rev_16,_pal_rev_16,sizeof(pal_rev_16));
 
-#define PixelPacker pp_dx
    pal_needs_update=false;
    switch(PAL_RAM_CTRL&3)
    {

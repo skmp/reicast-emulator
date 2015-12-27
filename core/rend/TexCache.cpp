@@ -159,7 +159,8 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 {
 	vram_block* block=(vram_block* )malloc(sizeof(vram_block));
  
-	end_offset64=start_offset64+4095;
+   if (!settings.PaletteUpdateHack)
+      end_offset64=start_offset64+4095;
 
 	if (end_offset64>(VRAM_SIZE-1))
 	{

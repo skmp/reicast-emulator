@@ -324,6 +324,7 @@ struct TextureCacheData
          glTexImage2D(GL_TEXTURE_2D, 0,comps , w, h, 0, comps, textype, temp_tex_buffer);
          if (tcw.MipMapped && settings.rend.UseMipmaps)
             glGenerateMipmap(GL_TEXTURE_2D);
+         glBindTexture(GL_TEXTURE_2D, 0);
       }
 		else
       {

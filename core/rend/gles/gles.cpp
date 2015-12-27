@@ -1422,7 +1422,7 @@ static bool gl_create_resources(void)
 
    for(cp_AlphaTest = 0; cp_AlphaTest <= 1; cp_AlphaTest++)
 	{
-      for (pp_ClipTestMode = 0; pp_ClipTestMode <= 1; pp_ClipTestMode++)
+      for (pp_ClipTestMode = 0; pp_ClipTestMode <= 2; pp_ClipTestMode++)
 		{
 			forl(pp_UseAlpha,1)
 			{

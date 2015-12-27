@@ -31,6 +31,26 @@
 #define GetN(str) ((str>>8) & 0xf)
 #define GetM(str) ((str>>4) & 0xf)
 
+//448 Cycles (fixed)
+int UpdateSystem(void)
+{
+	//this is an optimisation (mostly for ARM)
+	//makes scheduling easier !
+	//update_fp* tmu=pUpdateTMU;
+	
+	Sh4cntx.sh4_sched_next-=448;
+	if (Sh4cntx.sh4_sched_next<0)
+		sh4_sched_tick(448);
+
+	return Sh4cntx.interrupt_pend;
+}
+
+int UpdateSystem_INTC(void)
+{
+	UpdateSystem();
+	return UpdateINTC();
+}
+
 static void Sh4_int_Run_exec(s32 *l)
 {
 #if !defined(NO_MMU)
@@ -54,6 +74,12 @@ static void Sh4_int_Run_exec(s32 *l)
       *l -= CPU_RATIO * 5;
    }
 #endif
+}
+
+void Sh4_int_Stop(void)
+{
+	if (sh4_int_bCpuRun)
+		sh4_int_bCpuRun=false;
 }
 
 #if defined(TARGET_BOUNDED_EXECUTION)
@@ -82,13 +108,8 @@ void Sh4_int_Run(void)
 }
 #endif
 
-void Sh4_int_Stop()
-{
-	if (sh4_int_bCpuRun)
-		sh4_int_bCpuRun=false;
-}
 
-void Sh4_int_Step()
+void Sh4_int_Step(void)
 {
 	if (sh4_int_bCpuRun)
 	{
@@ -102,7 +123,7 @@ void Sh4_int_Step()
 	}
 }
 
-void Sh4_int_Skip()
+void Sh4_int_Skip(void)
 {
 	if (!sh4_int_bCpuRun)
 		next_pc+=2;
@@ -133,13 +154,13 @@ void Sh4_int_Reset(bool Manual)
    printf("Sh4 Reset\n");
 }
 
-bool Sh4_int_IsCpuRunning()
+bool Sh4_int_IsCpuRunning(void)
 {
 	return sh4_int_bCpuRun;
 }
 
 //TODO : Check for valid delayslot instruction
-void ExecuteDelayslot()
+void ExecuteDelayslot(void)
 {
 #if !defined(NO_MMU)
 	try {
@@ -151,7 +172,8 @@ void ExecuteDelayslot()
 			ExecuteOpcode(op);
 #if !defined(NO_MMU)
 	}
-	catch (SH4ThrownException ex) {
+	catch (SH4ThrownException ex)
+   {
 		ex.epc -= 2;
 		//printf("Delay slot exception\n");
 		throw ex;
@@ -159,7 +181,7 @@ void ExecuteDelayslot()
 #endif
 }
 
-void ExecuteDelayslot_RTE()
+void ExecuteDelayslot_RTE(void)
 {
 	u32 oldsr = sr.GetFull();
 
@@ -171,9 +193,8 @@ void ExecuteDelayslot_RTE()
 		ExecuteDelayslot();
 #if !defined(NO_MMU)
 	}
-	catch (SH4ThrownException ex) {
+	catch (SH4ThrownException ex)
 		msgboxf("RTE Exception", MBX_ICONERROR);
-	}
 #endif
 }
 
@@ -190,7 +211,7 @@ int rtc_sched;
 
 const int AICA_TICK=145124;
 
-int AicaUpdate(int tag, int c, int j)
+static int AicaUpdate(int tag, int c, int j)
 {
    extern void aica_periodical(u32 cycl);
 
@@ -203,8 +224,7 @@ int AicaUpdate(int tag, int c, int j)
 	return AICA_TICK;
 }
 
-
-int DreamcastSecond(int tag, int c, int j)
+static int DreamcastSecond(int tag, int c, int j)
 {
 	settings.dreamcast.RTC++;
 #if FEAT_SHREC != DYNAREC_NONE
@@ -216,36 +236,11 @@ int DreamcastSecond(int tag, int c, int j)
 	return SH4_MAIN_CLOCK;
 }
 
-int UpdateSystem_rec()
-{
-	//WIP
-	if (Sh4cntx.sh4_sched_next<0)
-		sh4_sched_tick(448);
 
-	return Sh4cntx.interrupt_pend;
+static void sh4_int_resetcache(void)
+{
 }
 
-//448 Cycles (fixed)
-int UpdateSystem()
-{
-	//this is an optimisation (mostly for ARM)
-	//makes scheduling easier !
-	//update_fp* tmu=pUpdateTMU;
-	
-	Sh4cntx.sh4_sched_next-=448;
-	if (Sh4cntx.sh4_sched_next<0)
-		sh4_sched_tick(448);
-
-	return Sh4cntx.interrupt_pend;
-}
-
-int UpdateSystem_INTC()
-{
-	UpdateSystem();
-	return UpdateINTC();
-}
-
-void sh4_int_resetcache() { }
 //Get an interface to sh4 interpreter
 void Get_Sh4Interpreter(sh4_if* rv)
 {
@@ -273,7 +268,7 @@ void Sh4_int_Init()
 	memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 }
 
-void Sh4_int_Term()
+void Sh4_int_Term(void)
 {
 	Sh4_int_Stop();
 	printf("Sh4 Term\n");

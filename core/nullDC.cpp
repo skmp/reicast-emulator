@@ -120,9 +120,10 @@ static void LoadSpecialSettings(void)
       if (strstr(lut_games[i].product_number, reios_product_number))
       {
          if (lut_games[i].palette_hack != -1)
-         {
             settings.PaletteUpdateHack    = lut_games[i].palette_hack;
-         }
+
+         if (lut_games[i].aica_interrupt_hack != -1)
+            settings.aica.InterruptHack   = lut_games[i].aica_interrupt_hack;
 
          if (lut_games[i].dynarec_type != -1)
          {

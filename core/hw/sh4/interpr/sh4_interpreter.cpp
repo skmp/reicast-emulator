@@ -192,8 +192,13 @@ const int AICA_TICK=145124;
 
 int AicaUpdate(int tag, int c, int j)
 {
+   extern void aica_periodical(u32 cycl);
+
    UpdateArm(512*32);
    UpdateAica(1*32);
+
+   if (settings.aica.InterruptHack)
+      aica_periodical(3584);
 
 	return AICA_TICK;
 }

@@ -207,7 +207,7 @@ void Write_SB_ADST(u32 addr, u32 data)
    SB_ADLEN   = 0x00000000;
 
 
-   asic_RaiseInterrupt(holly_SPU_DMA);
+   asic_RaiseInterruptWait(holly_SPU_DMA);
 }
 
 void Write_SB_E1ST(u32 addr, u32 data)
@@ -248,7 +248,7 @@ void Write_SB_E1ST(u32 addr, u32 data)
    SB_E1ST = 0x00000000;//dma done
    SB_E1LEN = 0x00000000;
 
-   asic_RaiseInterrupt(holly_EXT_DMA1);
+   asic_RaiseInterruptWait(holly_EXT_DMA1);
 }
 
 void aica_sb_Init(void)

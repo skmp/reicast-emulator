@@ -167,6 +167,9 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 {
 	vram_block* block=(vram_block* )malloc(sizeof(vram_block));
  
+   if (!settings.PaletteUpdateHack)
+      end_offset64=start_offset64+4095;
+
 	if (end_offset64>(VRAM_SIZE-1))
 	{
 		msgboxf("vramlock_Lock_64: end_offset64>(VRAM_SIZE-1) \n Tried to lock area out of vram , possibly bug on the pvr plugin",MBX_OK);

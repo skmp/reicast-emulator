@@ -188,9 +188,8 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
    vram.LockRegion(block->start,block->len);
 
    //TODO: Fix this for 32M wrap as well
-   if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
+   if (_nvmem_enabled() && VRAM_SIZE == 0x800000)
       vram.LockRegion(block->start + VRAM_SIZE, block->len);
-   }
 
    vramlock_list_add(block);
 
@@ -204,9 +203,9 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 
 bool VramLockedWrite(u8* address)
 {
-	size_t offset=address-vram.data;
+   size_t offset=address-vram.data;
 
-	if (offset<VRAM_SIZE)
+   if (offset<VRAM_SIZE)
    {
 
       size_t addr_hash = offset/PAGE_SIZE;
@@ -244,8 +243,8 @@ bool VramLockedWrite(u8* address)
 
       return true;
    }
-	else
-		return false;
+
+   return false;
 }
 
 void libCore_vramlock_Free(void)
@@ -278,7 +277,7 @@ void libCore_vramlock_Unlock_block(vram_block* block)
 
 void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {
-		//VRAM_SIZE/PAGE_SIZE;
+   //VRAM_SIZE/PAGE_SIZE;
 	if (block->end>VRAM_SIZE)
 		msgboxf("Error : block end is after vram , skipping unlock",MBX_OK);
 	else

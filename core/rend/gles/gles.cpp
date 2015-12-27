@@ -648,10 +648,15 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 
 #if TRIG_SORT
       if (SortingEnabled)
-         glDepthMask(GL_FALSE);
+      {
+         gl_state.depthmask = GL_FALSE;
+      }
       else
 #endif
-         glDepthMask(!gp->isp.ZWriteDis);
+      {
+         gl_state.depthmask = !gp->isp.ZWriteDis;
+      }
+      glDepthMask(gl_state.depthmask);
    }
 }
 
@@ -1213,7 +1218,8 @@ static void DrawModVols(void)
 	glUseProgram(gl_state.program);
 	glUniform1f(modvol_shader.sp_ShaderColor,0.5f);
 
-	glDepthMask(GL_FALSE);
+   gl_state.depthmask = GL_FALSE;
+   glDepthMask(gl_state.depthmask);
 	glDepthFunc(GL_GREATER);
 
 	if(0 /*|| GetAsyncKeyState(VK_F5)*/ )
@@ -1349,7 +1355,8 @@ static void DrawModVols(void)
 	}
 
 	//restore states
-	glDepthMask(GL_TRUE);
+   gl_state.depthmask = GL_TRUE;
+   glDepthMask(gl_state.depthmask);
 	glDisable(GL_BLEND);
    gl_state.cap_state[1] = 0;
 	glEnable(GL_DEPTH_TEST);
@@ -2078,6 +2085,7 @@ struct glesrend : Renderer
       glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
       glClearColor(gl_state.clear_color.r, gl_state.clear_color.g, gl_state.clear_color.b, gl_state.clear_color.a);
       glCullFace(gl_state.cullmode);
+      glDepthMask(gl_state.depthmask);
       glScissor(gl_state.scissor.x, gl_state.scissor.y, gl_state.scissor.w, gl_state.scissor.h);
       glUseProgram(gl_state.program);
       glViewport(gl_state.viewport.x, gl_state.viewport.y, gl_state.viewport.w, gl_state.viewport.h);

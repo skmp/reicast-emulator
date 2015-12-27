@@ -183,8 +183,8 @@ void ExecuteDelayslot_RTE()
 #define AICA_SAMPLE_GCM 441
 #define AICA_SAMPLE_CYCLES (SH4_MAIN_CLOCK/(44100/AICA_SAMPLE_GCM)*32)
 
-int aica_schid;
-int rtc_schid;
+int aica_sched;
+int rtc_sched;
 
 //14336 Cycles
 
@@ -260,11 +260,11 @@ void Sh4_int_Init()
 {
 	verify(sizeof(Sh4cntx)==448);
 
-	aica_schid=sh4_sched_register(0,&AicaUpdate);
-	sh4_sched_request(aica_schid,AICA_TICK);
+	aica_sched=sh4_sched_register(0,&AicaUpdate);
+	sh4_sched_request(aica_sched,AICA_TICK);
 
-	rtc_schid=sh4_sched_register(0,&DreamcastSecond);
-	sh4_sched_request(rtc_schid,SH4_MAIN_CLOCK);
+	rtc_sched=sh4_sched_register(0,&DreamcastSecond);
+	sh4_sched_request(rtc_sched,SH4_MAIN_CLOCK);
 	memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 }
 

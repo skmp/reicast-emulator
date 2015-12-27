@@ -17,7 +17,7 @@
 
 #include "hw/sh4/sh4_sched.h"
 
-int gdrom_schid;
+int gdrom_sched;
 
 //Sense: ASC - ASCQ - Key
 signed int sns_asc=0;
@@ -1189,7 +1189,7 @@ void GDROM_DmaStart(u32 addr, u32 data)
 		SB_GDLEND=0;
 		//printf("Streamed GDMA start\n");
 		GDRomschd(0,0,0);
-		sh4_sched_request(gdrom_schid,GDROM_TICK);
+		sh4_sched_request(gdrom_sched,GDROM_TICK);
 	}
 }
 
@@ -1218,7 +1218,7 @@ void gdrom_reg_Init()
 	sb_regs[(SB_GDEN_addr-SB_BASE)>>2].writeFunction=GDROM_DmaEnable;
 	*/
 
-	gdrom_schid = sh4_sched_register(0, &GDRomschd);
+	gdrom_sched = sh4_sched_register(0, &GDRomschd);
 }
 void gdrom_reg_Term()
 {

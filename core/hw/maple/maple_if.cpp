@@ -13,7 +13,7 @@
 
 maple_device* MapleDevices[4][6];
 
-int maple_schid;
+int maple_sched;
 
 /*
 	Maple host controller
@@ -177,7 +177,7 @@ void maple_DoDma()
 	}
 
 	//printf("Maple XFER size %d bytes - %.2f ms\n",xfer_count,xfer_count*100.0f/(2*1024*1024/8));
-	sh4_sched_request(maple_schid,xfer_count*(SH4_MAIN_CLOCK/(2*1024*1024/8)));
+	sh4_sched_request(maple_sched,xfer_count*(SH4_MAIN_CLOCK/(2*1024*1024/8)));
 }
 
 int maple_schd(int tag, int c, int j)
@@ -214,7 +214,7 @@ void maple_Init()
 	sb_regs[(SB_MSHTCL_addr-SB_BASE)>>2].writeFunction=maple_SB_MSHTCL_Write;
 	*/
 
-	maple_schid=sh4_sched_register(0,&maple_schd);
+	maple_sched=sh4_sched_register(0,&maple_schd);
 }
 
 void maple_Reset(bool Manual)

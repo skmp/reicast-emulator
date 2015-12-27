@@ -231,7 +231,6 @@ void LoadSettings(void)
 	settings.aica.LimitFPS			= 0;
 	settings.aica.NoBatch			= 0;
    settings.aica.NoSound			= 0;
-   settings.rend.UseMipmaps		= 1;
 	settings.pvr.subdivide_transp	= 0;
 	settings.pvr.ta_skip			   = 0;
 	settings.pvr.rend				   = 0;

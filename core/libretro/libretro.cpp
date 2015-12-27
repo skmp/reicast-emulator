@@ -151,6 +151,10 @@ void retro_set_environment(retro_environment_t cb)
          "Internal resolution (restart); 640x480|1280x960|1920x1440|2560x1920|3200x2400|3840x2880|4480x3360",
       },
       {
+         "reicast_mipmapping",
+         "Mipmapping; enabled|disabled",
+      },
+      {
          "reicast_widescreen_hack",
          "Widescreen hack; disabled|enabled",
       },
@@ -231,6 +235,18 @@ static void update_variables(void)
       else if (!strcmp(var.value, "generic_recompiler"))
          settings.dynarec.Type = 1;
    }
+
+   var.key = "reicast_mipmapping";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "enabled"))
+         settings.rend.UseMipmaps		= 1;
+      else if (!strcmp(var.value, "disabled"))
+         settings.rend.UseMipmaps		= 0;
+   }
+   else
+      settings.rend.UseMipmaps		= 1;
 
    var.key = "reicast_widescreen_hack";
 

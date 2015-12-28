@@ -568,7 +568,8 @@ static bool CompilePipelineShader(void *data)
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
-static void SetGPState(u32 Type, bool SortingEnabled, const PolyParam* gp, u32 cflip)
+template <u32 Type, bool SortingEnabled>
+static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 {
    //force everything to be shadowed
    const u32 stencil=0x80;
@@ -670,7 +671,8 @@ static void SetGPState(u32 Type, bool SortingEnabled, const PolyParam* gp, u32 c
    }
 }
 
-static void DrawList(u32 Type, bool SortingEnabled, const List<PolyParam>& gply)
+template <u32 Type, bool SortingEnabled>
+static void DrawList(const List<PolyParam>& gply)
 {
    PolyParam* params=gply.head();
    int count=gply.used();
@@ -701,7 +703,7 @@ static void DrawList(u32 Type, bool SortingEnabled, const List<PolyParam>& gply)
    {
       if (params->count>2) //this actually happens for some games. No idea why ..
       {
-         SetGPState(Type, SortingEnabled, params, 0);
+         SetGPState<Type,SortingEnabled>(params, 0);
          glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_SHORT, (GLvoid*)(2*params->first));
       }
 
@@ -1067,7 +1069,7 @@ static void DrawSorted(void)
       PolyParam* params = pidx_sort[p].ppid;
       if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
       {
-         SetGPState(ListType_Translucent,true, params, 0);
+         SetGPState<ListType_Translucent,true>(params, 0);
          glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first));
       }
       params++;
@@ -2058,7 +2060,7 @@ static bool RenderFrame(void)
 	//Opaque
 	//Nothing extra needs to be setup here
 	/*if (!GetAsyncKeyState(VK_F1))*/
-	DrawList(ListType_Opaque,false, pvrrc.global_param_op);
+	DrawList<ListType_Opaque,false>(pvrrc.global_param_op);
 
 #if 0
 	DrawModVols();
@@ -2067,7 +2069,7 @@ static bool RenderFrame(void)
 	//Alpha tested
 	//setup alpha test state
 	/*if (!GetAsyncKeyState(VK_F2))*/
-	DrawList(ListType_Punch_Through,false, pvrrc.global_param_pt);
+	DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt);
 
 	//Alpha blended
 	//Setup blending
@@ -2087,11 +2089,11 @@ static bool RenderFrame(void)
 		if (pvrrc.isAutoSort)
 			DrawSorted();
 		else
-			DrawList(ListType_Translucent,false, pvrrc.global_param_tr);
+			DrawList<ListType_Translucent,false>(pvrrc.global_param_tr);
 #else
 		if (pvrrc.isAutoSort)
 			SortPParams();
-		DrawList(ListType_Translucent,true, pvrrc.global_param_tr);
+		DrawList<ListType_Translucent,true>(pvrrc.global_param_tr);
 #endif
 	}
 

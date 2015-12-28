@@ -1,3 +1,4 @@
+#include "../types.h"
 #include "TexCache.h"
 #include "hw/pvr/pvr_regs.h"
 

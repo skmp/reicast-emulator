@@ -2,7 +2,6 @@
 #include "Renderer_if.h"
 #include "pvr_regs.h"
 #include "hw/holly/holly_intc.h"
-#include "oslib/oslib.h"
 #include "hw/sh4/sh4_sched.h"
 
 //SPG emulation; Scanline/Raster beam registers & interrupts

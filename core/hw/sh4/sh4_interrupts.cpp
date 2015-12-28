@@ -13,7 +13,6 @@
 #include "sh4_interrupts.h"
 #include "sh4_core.h"
 #include "sh4_mmr.h"
-#include "oslib/oslib.h"
 
 /*
 

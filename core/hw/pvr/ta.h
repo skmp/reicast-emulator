@@ -2,7 +2,6 @@
 #include "drkPvr.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_if.h"
-#include "oslib/oslib.h"
 #include "ta_structs.h"
 
 struct TA_context;

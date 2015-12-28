@@ -12,7 +12,6 @@
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/dyna/regalloc.h"
-#include "oslib/oslib.h"
 
 #define SHIL_MODE 2
 #include "hw/sh4/dyna/shil_canonical.h"

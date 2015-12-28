@@ -3,8 +3,6 @@
 
 //initialse Emu
 #include "types.h"
-#include "oslib/oslib.h"
-#include "oslib/audiostream.h"
 #include "hw/mem/_vmem.h"
 #include "stdclass.h"
 

@@ -5,7 +5,6 @@
 #include "rend/TexCache.h"
 #include "../../libretro/libretro.h"
 
-#include "oslib/oslib.h"
 #include "rend/rend.h"
 #include "hw/pvr/Renderer_if.h"
 

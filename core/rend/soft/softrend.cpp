@@ -1,7 +1,6 @@
 #include <omp.h>
 #include "hw\pvr\Renderer_if.h"
 #include "hw\pvr\pvr_mem.h"
-#include "oslib\oslib.h"
 
 /*
 	SSE/MMX based softrend

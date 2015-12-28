@@ -13,6 +13,7 @@ SOURCES_CXX := $(CORE_DIR)/hw/arm7/arm_mem.cpp \
 					$(CORE_DIR)/hw/aica/aica.cpp \
 					$(CORE_DIR)/hw/aica/sgc_if.cpp \
 					$(CORE_DIR)/hw/aica/aica_if.cpp \
+					$(CORE_DIR)/hw/aica/audiostream.cpp \
 					\
 					$(CORE_DIR)/hw/holly/sb.cpp \
 					$(CORE_DIR)/hw/holly/sb_dma.cpp \
@@ -60,7 +61,6 @@ SOURCES_CXX := $(CORE_DIR)/hw/arm7/arm_mem.cpp \
 					$(CORE_DIR)/hw/sh4/modules/cpg.cpp \
 					$(CORE_DIR)/hw/sh4/modules/dmac.cpp \
 					$(CORE_DIR)/hw/sh4/modules/mmu.cpp \
-					$(CORE_DIR)/oslib/audiostream.cpp \
 					$(CORE_DIR)/imgread/ImgReader.cpp \
 					$(CORE_DIR)/imgread/cdi.cpp \
 					$(CORE_DIR)/imgread/chd.cpp \

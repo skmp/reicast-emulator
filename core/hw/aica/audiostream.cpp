@@ -1,6 +1,6 @@
 #include <limits.h>
-#include "oslib/oslib.h"
-#include "audiostream.h"
+
+#include "../../types.h"
 #include "../libretro/libretro.h"
 
 #define SAMPLE_COUNT 512

@@ -32,7 +32,6 @@
 #include "hw/sh4/dyna/ngen.h"
 
 #ifdef _WIN32
-#include "../oslib/oslib.h"
 #include "../imgread/common.h"
 
 #include <windows.h>

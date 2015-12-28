@@ -1,5 +1,4 @@
 #pragma once
-#include "oslib/oslib.h"
 
 extern u8* vq_codebook;
 extern u32 palette_index;

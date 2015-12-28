@@ -929,13 +929,10 @@ public:
 
 		//Color conversions
 	#define vert_packed_color_(to,src) \
-		{ \
-		u32 t=src; \
-		to[2] = (u8)(t);t>>=8;\
-		to[1] = (u8)(t);t>>=8;\
-		to[0] = (u8)(t);t>>=8;\
-		to[3] = (u8)(t);      \
-		}
+		to[2] = (u8)(src);  \
+		to[1] = (u8)(src >> 8); \
+		to[0] = (u8)(src >> 16); \
+		to[3] = (u8)(src >> 24);
 
 	#define vert_float_color_(to,a,r,g,b) \
 		to[0] = float_to_satu8(r); \

@@ -56,13 +56,13 @@ u32 interrupt_vmask; // Vector of masked interrupts             (-1 inhibits all
 u32 decoded_srimask; // Vector of interrupts allowed by SR.IMSK (-1 inhibits all interrupts)
 
 //bit 0 ~ 27 : interrupt source 27:0. 0 = lowest level, 27 = highest level.
-void recalc_pending_itrs()
+static void recalc_pending_itrs(void)
 {
 	Sh4cntx.interrupt_pend=interrupt_vpend&interrupt_vmask&decoded_srimask;
 }
 
 //Rebuild sorted interrupt id table (priorities were updated)
-void SIIDRebuild()
+void SIIDRebuild(void)
 {
 	u32 cnt=0;
 	u32 vpend=interrupt_vpend;
@@ -73,20 +73,21 @@ void SIIDRebuild()
 	for (u32 ilevel=0;ilevel<16;ilevel++)
 	{
 		for (u32 isrc=0;isrc<28;isrc++)
-		{
-			if (InterruptSourceList[isrc].GetPrLvl()==ilevel)
-			{
-				InterruptEnvId[cnt]=InterruptSourceList[isrc].IntEvnCode;
-				u32 p=InterruptBit[isrc]&vpend;
-				u32 m=InterruptBit[isrc]&vmask;
-				InterruptBit[isrc]=1<<cnt;
-				if (p)
-					interrupt_vpend|=InterruptBit[isrc];
-				if (m)
-					interrupt_vmask|=InterruptBit[isrc];
-				cnt++;
-			}
-		}
+      {
+         if (InterruptSourceList[isrc].GetPrLvl() != ilevel)
+            continue;
+
+         InterruptEnvId[cnt]=InterruptSourceList[isrc].IntEvnCode;
+         u32 p=InterruptBit[isrc]&vpend;
+         u32 m=InterruptBit[isrc]&vmask;
+         InterruptBit[isrc]=1<<cnt;
+         if (p)
+            interrupt_vpend|=InterruptBit[isrc];
+         if (m)
+            interrupt_vmask|=InterruptBit[isrc];
+         cnt++;
+      }
+
 		InterruptLevelBit[ilevel]=(1<<cnt)-1;
 	}
 
@@ -94,20 +95,15 @@ void SIIDRebuild()
 }
 
 //Decode SR.IMSK into a interrupt mask, update and return the interrupt state
-bool SRdecode()
+bool SRdecode(void)
 {
-	if (sr.BL)
-		decoded_srimask=~0xFFFFFFFF;
-	else
-		decoded_srimask=~InterruptLevelBit[sr.IMASK];
+   decoded_srimask = (sr.BL) ? ~0xFFFFFFFF : ~InterruptLevelBit[sr.IMASK];
 
 	recalc_pending_itrs();
 	return Sh4cntx.interrupt_pend;
 }
 
-
-
-int UpdateINTC()
+int UpdateINTC(void)
 {
 	if (!Sh4cntx.interrupt_pend)
 		return 0;
@@ -140,7 +136,6 @@ void ResetInterruptMask(InterruptID intr)
 	interrupt_vmask&=~InterruptBit[piid];
 	recalc_pending_itrs();
 }
-
 
 bool Do_Interrupt(u32 intEvn)
 {
@@ -177,9 +172,8 @@ bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect)
 	return true;
 }
 
-
 //Init/Res/Term
-void interrupts_init()
+void interrupts_init(void)
 {
 	InterptSourceList_Entry InterruptSourceList2[]=
 	{
@@ -237,7 +231,7 @@ void interrupts_init()
 	memcpy(InterruptSourceList,InterruptSourceList2,sizeof(InterruptSourceList));
 }
 
-void interrupts_reset()
+void interrupts_reset(void)
 {
 	//reset interrupts cache
 	interrupt_vpend=0x00000000;
@@ -251,8 +245,7 @@ void interrupts_reset()
 	SIIDRebuild();
 }
 
-void interrupts_term()
+void interrupts_term(void)
 {
 
 }
-

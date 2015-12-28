@@ -4,18 +4,15 @@
 
 enum InterruptType
 {
-	sh4_int   = 0x00000000,
-
-	/*
-	sh4_exp   = 0x01000000,
-	*/
-
-	InterruptTypeMask = 0x7F000000,
-	InterruptIntEVNTMask=0x00FFFF00,
-	InterruptPIIDMask=0x000000FF,
+   sh4_int              = 0x00000000,
+   sh4_exp              = 0x01000000,
+   InterruptTypeMask    = 0x7F000000,
+   InterruptIntEVNTMask = 0x00FFFF00,
+   InterruptPIIDMask    = 0x000000FF
 };
 
 #define KMIID(type,ID,PIID) ( (type) | ((ID)<<8) | (PIID))
+
 enum InterruptID
 {
 		//internal interrupts
@@ -109,18 +106,13 @@ void ResetInterruptMask(InterruptID intr);
 #define InterruptMask(intr,v) ((v)==0?ResetInterruptMask(intr):SetInterruptMask(intr))
 
 int UpdateINTC();
-//extern u32 interrupt_pend;    //nonzero if there are pending interrupts
 
 bool Do_Exception(u32 lvl, u32 expEvn, u32 CallVect);
 
-
-
-bool SRdecode();
-void SIIDRebuild();
-
-
+bool SRdecode(void);
+void SIIDRebuild(void);
 
 //Init/Res/Term
-void interrupts_init();
-void interrupts_reset();
-void interrupts_term();
+void interrupts_init(void);
+void interrupts_reset(void);
+void interrupts_term(void);

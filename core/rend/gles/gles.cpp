@@ -691,28 +691,13 @@ static void DrawList(const List<PolyParam>& gply)
       glDepthFunc(Zfunction[6]);
 
    glEnable(GL_STENCIL_TEST);
-   gl_state.cap_state[6] = 1;
-   gl_state.stencilfunc.func = GL_ALWAYS;
-   gl_state.stencilfunc.ref  = 0;
-   gl_state.stencilfunc.mask = 0;
    glStencilFunc(
-         gl_state.stencilfunc.func,
-         gl_state.stencilfunc.ref,
-         gl_state.stencilfunc.mask);
-   gl_state.stencilop.sfail  = GL_KEEP;
-   gl_state.stencilop.dpfail = GL_KEEP;
-   gl_state.stencilop.dppass = GL_REPLACE;
-   glStencilOp(gl_state.stencilop.sfail,
-         gl_state.stencilop.dpfail,
-         gl_state.stencilop.dppass);
-
-#ifndef NO_STENCIL_WORKAROUND
-   //this needs to be done .. twice ? looks like
-   //a bug somewhere, on gles/nvgl ?
-   glStencilOp(gl_state.stencilop.sfail,
-         gl_state.stencilop.dpfail,
-         gl_state.stencilop.dppass);
-#endif
+         GL_ALWAYS,
+         0,
+         0);
+   glStencilOp(GL_KEEP,
+         GL_KEEP,
+         GL_REPLACE);
 
    while(count-->0)
    {
@@ -724,6 +709,15 @@ static void DrawList(const List<PolyParam>& gply)
 
       params++;
    }
+
+   glDisable(GL_STENCIL_TEST);
+   glStencilFunc(
+         GL_ALWAYS,
+         0,
+         1);
+   glStencilOp(GL_KEEP,
+         GL_KEEP,
+         GL_KEEP);
 }
 
 bool operator<(const PolyParam &left, const PolyParam &right)
@@ -1070,14 +1064,6 @@ static void DrawSorted(void)
          gl_state.stencilop.dpfail,
          gl_state.stencilop.dppass);
 
-#ifndef NO_STENCIL_WORKAROUND
-   //this needs to be done .. twice ? looks like
-   //a bug somewhere, on gles/nvgl ?
-   glStencilOp(gl_state.stencilop.sfail,
-         gl_state.stencilop.dpfail,
-         gl_state.stencilop.dppass);
-#endif
-
    for (u32 p=0; p<count; p++)
    {
       PolyParam* params = pidx_sort[p].ppid;
@@ -1141,13 +1127,6 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 		glStencilOp(gl_state.stencilop.sfail,
             gl_state.stencilop.dpfail,
             gl_state.stencilop.dppass);
-#ifndef NO_STENCIL_WORKAROUND
-		//this needs to be done .. twice ? looks like
-		//a bug somewhere, on gles/nvgl ?
-		glStencilOp(gl_state.stencilop.sfail,
-            gl_state.stencilop.dpfail,
-            gl_state.stencilop.dppass);
-#endif
 		//Cull mode needs to be set
 		SetCull(ispc.CullMode);
 	}
@@ -1190,13 +1169,6 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
          glStencilOp(gl_state.stencilop.sfail,
                gl_state.stencilop.dpfail,
                gl_state.stencilop.dppass);
-#ifndef NO_STENCIL_WORKAROUND
-         //this needs to be done .. twice ? looks like
-         //a bug somewhere, on gles/nvgl ?
-         glStencilOp(gl_state.stencilop.sfail,
-               gl_state.stencilop.dpfail,
-               gl_state.stencilop.dppass);
-#endif
 
 			/*
 			//if !=0 -> set to 10
@@ -1234,13 +1206,6 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
          glStencilOp(gl_state.stencilop.sfail,
                gl_state.stencilop.dpfail,
                gl_state.stencilop.dppass);
-#ifndef NO_STENCIL_WORKAROUND
-         //this needs to be done .. twice ? looks like
-         //a bug somewhere, on gles/nvgl ?
-         glStencilOp(gl_state.stencilop.sfail,
-               gl_state.stencilop.dpfail,
-               gl_state.stencilop.dppass);
-#endif
 		}
 	}
 }
@@ -1289,6 +1254,11 @@ static void SetupModvolVBO(void)
 #if 0
 static void DrawModVols(void)
 {
+   /* A bit of explanation:
+     * In theory it works like this: generate a 1-bit stencil for each polygon
+     * volume, and then AND or OR it against the overall 1-bit tile stencil at 
+     * the end of the volume. */
+
 	if (pvrrc.modtrig.used()==0 /*|| GetAsyncKeyState(VK_F4)*/)
 		return;
 
@@ -1356,13 +1326,6 @@ static void DrawModVols(void)
          glStencilOp(gl_state.stencilop.sfail,
                gl_state.stencilop.dpfail,
                gl_state.stencilop.dppass);
-#ifndef NO_STENCIL_WORKAROUND
-         //this needs to be done .. twice ? looks like
-         //a bug somewhere, on gles/nvgl ?
-         glStencilOp(gl_state.stencilop.sfail,
-               gl_state.stencilop.dpfail,
-               gl_state.stencilop.dppass);
-#endif
          gl_state.stencilmask = 0x1;
          glStencilMask(gl_state.stencilmask);
 			SetCull(0);
@@ -1452,13 +1415,6 @@ static void DrawModVols(void)
       glStencilOp(gl_state.stencilop.sfail,
             gl_state.stencilop.dpfail,
             gl_state.stencilop.dppass);
-#ifndef NO_STENCIL_WORKAROUND
-      //this needs to be done .. twice ? looks like
-      //a bug somewhere, on gles/nvgl ?
-      glStencilOp(gl_state.stencilop.sfail,
-            gl_state.stencilop.dpfail,
-            gl_state.stencilop.dppass);
-#endif
 
 		//don't do depth testing
 		glDisable(GL_DEPTH_TEST);

@@ -1900,13 +1900,6 @@ static bool RenderFrame(void)
    gl_state.clear_color.b = 0;
    gl_state.clear_color.a = 1.0f;
 
-	if (settings.rend.WideScreen)
-   {
-      gl_state.clear_color.r = pvrrc.verts.head()->col[2]/255.0f;
-      gl_state.clear_color.g = pvrrc.verts.head()->col[1]/255.0f;
-      gl_state.clear_color.b = pvrrc.verts.head()->col[0]/255.0f;
-   }
-
    glClearColor(gl_state.clear_color.r, gl_state.clear_color.g, gl_state.clear_color.b, gl_state.clear_color.a);
 #ifdef GLES
 	glClearDepthf(0.f);
@@ -1965,16 +1958,8 @@ static bool RenderFrame(void)
 
    glScissor(gl_state.scissor.x, gl_state.scissor.y, gl_state.scissor.w, gl_state.scissor.h);
 
-	if (settings.rend.WideScreen && pvrrc.fb_X_CLIP.min==0 && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) && (pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ) )
-	{
-		glDisable(GL_SCISSOR_TEST);
-      gl_state.cap_state[5] = 0;
-	}
-	else
-   {
-		glEnable(GL_SCISSOR_TEST);
-      gl_state.cap_state[5] = 1;
-   }
+   glEnable(GL_SCISSOR_TEST);
+   gl_state.cap_state[5] = 1;
 
 	//restore scale_x
 	scale_x /= scissoring_scale_x;

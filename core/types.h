@@ -576,6 +576,7 @@ struct settings_t
 {
    bool PaletteUpdateHack;
    bool QueueRender;
+   bool MMUEnabled;
 
 	struct {
 		bool UseReios;

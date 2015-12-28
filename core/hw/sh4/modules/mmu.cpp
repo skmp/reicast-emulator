@@ -1,58 +1,13 @@
 #include "mmu.h"
+#include "mmu_impl.h"
+#include "ccn.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_core.h"
 #include "types.h"
 
-
 #include "hw/mem/_vmem.h"
 
-
-TLB_Entry UTLB[64];
-TLB_Entry ITLB[4];
-
-#if defined(NO_MMU)
-//SQ fast remap , mainly hackish , assumes 1MB pages
-//max 64MB can be remapped on SQ
-u32 sq_remap[64];
-
-//Sync memory mapping to MMU , suspend compiled blocks if needed.entry is a UTLB entry # , -1 is for full sync
-bool UTLB_Sync(u32 entry)
-{	
-	if ((UTLB[entry].Address.VPN & (0xFC000000 >> 10)) == (0xE0000000 >> 10))
-	{
-		u32 vpn_sq = ((UTLB[entry].Address.VPN & 0x7FFFF) >> 10) & 0x3F;//upper bits are always known [0xE0/E1/E2/E3]
-		sq_remap[vpn_sq] = UTLB[entry].Data.PPN << 10;
-		printf("SQ remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
-	}
-	else
-	{
-		printf("MEM remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
-	}
-
-	return true;
-}
-//Sync memory mapping to MMU, suspend compiled blocks if needed.entry is a ITLB entry # , -1 is for full sync
-void ITLB_Sync(u32 entry)
-{
-	printf("ITLB MEM remap %d : 0x%X to 0x%X\n",entry,ITLB[entry].Address.VPN<<10,ITLB[entry].Data.PPN<<10);
-}
-
-void MMU_init()
-{
-
-}
-
-void MMU_reset()
-{
-	memset(UTLB,0,sizeof(UTLB));
-	memset(ITLB,0,sizeof(ITLB));
-}
-
-void MMU_term()
-{
-}
-#else
 /*
 MMU support code
 This is mostly hacked-on as the core was never meant to have mmu support
@@ -62,14 +17,9 @@ and a fast-hack mode for 1mb sqremaps (for katana)
 
 defining NO_MMU disables the full mmu emulation
 */
-#include "mmu.h"
-#include "mmu_impl.h"
-#include "hw/sh4/sh4_if.h"
-#include "ccn.h"
-#include "hw/sh4/sh4_interrupts.h"
-#include "hw/sh4/sh4_if.h"
 
-#include "hw/mem/_vmem.h"
+TLB_Entry UTLB[64];
+TLB_Entry ITLB[4];
 
 #define printf_mmu(...)
 #define printf_win32(...)
@@ -110,6 +60,59 @@ const u32 ITLB_LRU_AND[4] =
 };
 u32 ITLB_LRU_USE[64];
 
+//SQ fast remap , mainly hackish , assumes 1MB pages
+//max 64MB can be remapped on SQ
+u32 sq_remap[64];
+
+void MMU_reset(void)
+{
+	memset(UTLB, 0, sizeof(UTLB));
+	memset(ITLB, 0, sizeof(ITLB));
+}
+
+void MMU_term(void)
+{
+}
+
+void RaiseException(u32 expEvnt, u32 callVect)
+{
+   if (settings.MMUEnabled)
+   {
+      SH4ThrownException ex = { next_pc - 2, expEvnt, callVect };
+      throw ex;
+   }
+   else
+      msgboxf("Can't raise exceptions yet", MBX_ICONERROR);
+}
+
+#if defined(NO_MMU)
+//Sync memory mapping to MMU , suspend compiled blocks if needed.entry is a UTLB entry # , -1 is for full sync
+bool UTLB_Sync(u32 entry)
+{	
+	if ((UTLB[entry].Address.VPN & (0xFC000000 >> 10)) == (0xE0000000 >> 10))
+	{
+		u32 vpn_sq = ((UTLB[entry].Address.VPN & 0x7FFFF) >> 10) & 0x3F;//upper bits are always known [0xE0/E1/E2/E3]
+		sq_remap[vpn_sq] = UTLB[entry].Data.PPN << 10;
+		printf("SQ remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
+	}
+	else
+	{
+		printf("MEM remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
+	}
+
+	return true;
+}
+//Sync memory mapping to MMU, suspend compiled blocks if needed.entry is a ITLB entry # , -1 is for full sync
+void ITLB_Sync(u32 entry)
+{
+	printf("ITLB MEM remap %d : 0x%X to 0x%X\n",entry,ITLB[entry].Address.VPN<<10,ITLB[entry].Data.PPN<<10);
+}
+
+void MMU_init(void)
+{
+
+}
+#else
 //sync mem mapping to mmu , suspend compiled blocks if needed.entry is a UTLB entry # , -1 is for full sync
 bool UTLB_Sync(u32 entry)
 {
@@ -119,24 +122,26 @@ bool UTLB_Sync(u32 entry)
 
 	if ((UTLB[entry].Address.VPN & (0xFC000000 >> 10)) == (0xE0000000 >> 10))
 	{
-#ifdef NO_MMU
-		u32 vpn_sq = ((UTLB[entry].Address.VPN & (0x3FFFFFF >> 10)) >> 10) & 0x3F;//upper bits are allways known [0xE0/E1/E2/E3]
-		sq_remap[vpn_sq] = UTLB[entry].Data.PPN << 10;
-		log("SQ remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
-#endif
+      if (settings.MMUEnabled)
+         return true;
+
+      u32 vpn_sq = ((UTLB[entry].Address.VPN & (0x3FFFFFF >> 10)) >> 10) & 0x3F;//upper bits are allways known [0xE0/E1/E2/E3]
+      sq_remap[vpn_sq] = UTLB[entry].Data.PPN << 10;
+      log("SQ remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
 		return true;
 	}
 	else
 	{
-#ifdef NO_MMU
-		if ((UTLB[entry].Address.VPN&(0x1FFFFFFF >> 10)) == (UTLB[entry].Data.PPN&(0x1FFFFFFF >> 10)))
-		{
-			log("Static remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
-			return true;
-		}
-		log("Dynamic remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
-#endif
-		return false;//log("MEM remap %d : 0x%X to 0x%X\n",entry,UTLB[entry].Address.VPN<<10,UTLB[entry].Data.PPN<<10);
+      if (settings.MMUEnabled)
+         return false;
+
+      if ((UTLB[entry].Address.VPN&(0x1FFFFFFF >> 10)) == (UTLB[entry].Data.PPN&(0x1FFFFFFF >> 10)))
+      {
+         log("Static remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
+         return true;
+      }
+      log("Dynamic remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
+      return false;//log("MEM remap %d : 0x%X to 0x%X\n",entry,UTLB[entry].Address.VPN<<10,UTLB[entry].Data.PPN<<10);
 	}
 }
 //sync mem mapping to mmu , suspend compiled blocks if needed.entry is a ITLB entry # , -1 is for full sync
@@ -145,14 +150,6 @@ void ITLB_Sync(u32 entry)
 	printf_mmu("ITLB MEM remap %d : 0x%X to 0x%X : %d\n", entry, ITLB[entry].Address.VPN << 10, ITLB[entry].Data.PPN << 10, ITLB[entry].Data.V);
 }
 
-void RaiseException(u32 expEvnt, u32 callVect) {
-#if !defined(NO_MMU)
-	SH4ThrownException ex = { next_pc - 2, expEvnt, callVect };
-	throw ex;
-#else
-	msgboxf("Can't raise exceptions yet", MBX_ICONERROR);
-#endif
-}
 
 u32 mmu_error_TT;
 void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
@@ -506,15 +503,6 @@ void MMU_init()
 }
 
 
-void MMU_reset()
-{
-	memset(UTLB, 0, sizeof(UTLB));
-	memset(ITLB, 0, sizeof(ITLB));
-}
-
-void MMU_term()
-{
-}
 
 u8 DYNACALL mmu_ReadMem8(u32 adr)
 {
@@ -662,30 +650,32 @@ void DYNACALL mmu_WriteMem64(u32 adr, u64 data)
 }
 #endif
 
-#if defined(NO_MMU)
-#if 0
-   /* Do we need this codepath for non-MMU enable ? */
-	//This will olny work for 1 mb pages .. hopefully nothing else is used
-	//*FIXME* to work for all page sizes ?
-
-	if (CCN_MMUCR.AT == 0)
-	{	//simple translation
-		*out = mmu_QACR_SQ(adr);
-	}
-	else
-	{	//remap table
-		*out = sq_remap[(adr >> 20) & 0x3F] | (adr & 0xFFFE0);
-	}
-#endif
 
 bool mmu_TranslateSQW(u32 addr, u32* mapped)
 {
-   *mapped = sq_remap[(addr>>20)&0x3F] | (addr & 0xFFFE0);
-   return true;
-}
+   if (!settings.MMUEnabled)
+   {
+#if 0
+      /* Do we need this codepath for non-MMU enable ? */
+
+      //This will only work for 1 mb pages .. hopefully nothing else is used
+      //*FIXME* to work for all page sizes ?
+
+      if (CCN_MMUCR.AT == 0)
+      {	//simple translation
+         *out = mmu_QACR_SQ(adr);
+      }
+      else
+      {	//remap table
+         *out = sq_remap[(adr >> 20) & 0x3F] | (adr & 0xFFFE0);
+      }
 #else
-bool mmu_TranslateSQW(u32 adr, u32* out)
-{
+      *mapped = sq_remap[(addr>>20)&0x3F] | (addr & 0xFFFE0);
+      return true;
+#endif
+   }
+
+#ifndef NO_MMU
 	u32 addr;
 	u32 tv = mmu_full_SQ<MMU_TT_DREAD>(adr, addr);
 	if (tv != 0)
@@ -695,7 +685,7 @@ bool mmu_TranslateSQW(u32 adr, u32* out)
 	}
 
 	*out = addr;
+#endif
 
 	return true;
 }
-#endif

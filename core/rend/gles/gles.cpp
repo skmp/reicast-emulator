@@ -14,21 +14,30 @@ extern bool enable_rtt;
 struct modvol_shader_type
 {
    GLuint program;
-
-   GLuint scale,depth_scale;
+   GLuint scale;
+   GLuint depth_scale;
    GLuint sp_ShaderColor;
 };
 
 struct PipelineShader
 {
 	GLuint program;
-
-	GLuint scale,depth_scale;
-	GLuint pp_ClipTest,cp_AlphaTestValue;
-	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY,sp_LOG_FOG_COEFS;
-
-	u32 cp_AlphaTest; s32 pp_ClipTestMode;
-	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
+	GLuint scale;
+   GLuint depth_scale;
+	GLuint pp_ClipTest;
+   GLuint cp_AlphaTestValue;
+	GLuint sp_FOG_COL_RAM;
+   GLuint sp_FOG_COL_VERT;
+   GLuint sp_FOG_DENSITY;
+   GLuint sp_LOG_FOG_COEFS;
+	u32 cp_AlphaTest;
+   s32 pp_ClipTestMode;
+	u32 pp_Texture;
+   u32 pp_UseAlpha;
+   u32 pp_IgnoreTexA;
+   u32 pp_ShadInstr;
+   u32 pp_Offset;
+   u32 pp_FogCtrl;
 };
 
 struct ShaderUniforms_t
@@ -40,13 +49,14 @@ struct ShaderUniforms_t
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
 	float fog_coefs[2];
-
-
 } ShaderUniforms;
 
 struct vbo_type
 {
-   GLuint geometry,modvols,idxs,idxs2;
+   GLuint geometry;
+   GLuint modvols;
+   GLuint idxs;
+   GLuint idxs2;
 #ifdef CORE
    GLuint vao;
 #endif
@@ -134,7 +144,6 @@ struct IndexTrig
 	u16 pid;
 	f32 z;
 };
-
 
 struct SortTrigDrawParam
 {

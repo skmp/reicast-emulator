@@ -14,8 +14,6 @@ This is mostly hacked-on as the core was never meant to have mmu support
 
 There are two modes, one with 'full' mmu emulation (for wince/bleem/wtfever)
 and a fast-hack mode for 1mb sqremaps (for katana)
-
-defining NO_MMU disables the full mmu emulation
 */
 
 TLB_Entry UTLB[64];
@@ -84,72 +82,6 @@ void RaiseException(u32 expEvnt, u32 callVect)
    else
       msgboxf("Can't raise exceptions yet", MBX_ICONERROR);
 }
-
-#if defined(NO_MMU)
-//Sync memory mapping to MMU , suspend compiled blocks if needed.entry is a UTLB entry # , -1 is for full sync
-bool UTLB_Sync(u32 entry)
-{	
-	if ((UTLB[entry].Address.VPN & (0xFC000000 >> 10)) == (0xE0000000 >> 10))
-	{
-		u32 vpn_sq = ((UTLB[entry].Address.VPN & 0x7FFFF) >> 10) & 0x3F;//upper bits are always known [0xE0/E1/E2/E3]
-		sq_remap[vpn_sq] = UTLB[entry].Data.PPN << 10;
-		printf("SQ remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
-	}
-	else
-	{
-		printf("MEM remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
-	}
-
-	return true;
-}
-//Sync memory mapping to MMU, suspend compiled blocks if needed.entry is a ITLB entry # , -1 is for full sync
-void ITLB_Sync(u32 entry)
-{
-	printf("ITLB MEM remap %d : 0x%X to 0x%X\n",entry,ITLB[entry].Address.VPN<<10,ITLB[entry].Data.PPN<<10);
-}
-
-void MMU_init(void)
-{
-
-}
-#else
-//sync mem mapping to mmu , suspend compiled blocks if needed.entry is a UTLB entry # , -1 is for full sync
-bool UTLB_Sync(u32 entry)
-{
-	printf_mmu("UTLB MEM remap %d : 0x%X to 0x%X : %d\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10, UTLB[entry].Data.V);
-	if (UTLB[entry].Data.V == 0)
-		return true;
-
-	if ((UTLB[entry].Address.VPN & (0xFC000000 >> 10)) == (0xE0000000 >> 10))
-	{
-      if (settings.MMUEnabled)
-         return true;
-
-      u32 vpn_sq = ((UTLB[entry].Address.VPN & (0x3FFFFFF >> 10)) >> 10) & 0x3F;//upper bits are allways known [0xE0/E1/E2/E3]
-      sq_remap[vpn_sq] = UTLB[entry].Data.PPN << 10;
-      log("SQ remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
-		return true;
-	}
-	else
-	{
-      if (settings.MMUEnabled)
-         return false;
-
-      if ((UTLB[entry].Address.VPN&(0x1FFFFFFF >> 10)) == (UTLB[entry].Data.PPN&(0x1FFFFFFF >> 10)))
-      {
-         log("Static remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
-         return true;
-      }
-      log("Dynamic remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
-      return false;//log("MEM remap %d : 0x%X to 0x%X\n",entry,UTLB[entry].Address.VPN<<10,UTLB[entry].Data.PPN<<10);
-	}
-}
-//sync mem mapping to mmu , suspend compiled blocks if needed.entry is a ITLB entry # , -1 is for full sync
-void ITLB_Sync(u32 entry)
-{
-	printf_mmu("ITLB MEM remap %d : 0x%X to 0x%X : %d\n", entry, ITLB[entry].Address.VPN << 10, ITLB[entry].Data.PPN << 10, ITLB[entry].Data.V);
-}
-
 
 u32 mmu_error_TT;
 void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
@@ -484,25 +416,81 @@ retry_ITLB_Match:
 
 	return MMU_ERROR_NONE;
 }
-void MMU_init()
+
+void MMU_init(void)
 {
-	memset(ITLB_LRU_USE, 0xFF, sizeof(ITLB_LRU_USE));
-	for (u32 e = 0; e<4; e++)
-	{
-		u32 match_key = ((~ITLB_LRU_AND[e]) & 0x3F);
-		u32 match_mask = match_key | ITLB_LRU_OR[e];
-		for (u32 i = 0; i<64; i++)
-		{
-			if ((i & match_mask) == match_key)
-			{
-				verify(ITLB_LRU_USE[i] == 0xFFFFFFFF);
-				ITLB_LRU_USE[i] = e;
-			}
-		}
-	}
+   if (!settings.MMUEnabled)
+      return;
+
+   memset(ITLB_LRU_USE, 0xFF, sizeof(ITLB_LRU_USE));
+   for (u32 e = 0; e<4; e++)
+   {
+      u32 match_key = ((~ITLB_LRU_AND[e]) & 0x3F);
+      u32 match_mask = match_key | ITLB_LRU_OR[e];
+      for (u32 i = 0; i<64; i++)
+      {
+         if ((i & match_mask) == match_key)
+         {
+            verify(ITLB_LRU_USE[i] == 0xFFFFFFFF);
+            ITLB_LRU_USE[i] = e;
+         }
+      }
+   }
 }
 
+//Sync memory mapping to MMU , suspend compiled blocks if needed.entry is a UTLB entry # , -1 is for full sync
+bool UTLB_Sync(u32 entry)
+{	
+   if (settings.MMUEnabled)
+   {
+      printf_mmu("UTLB MEM remap %d : 0x%X to 0x%X : %d\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10, UTLB[entry].Data.V);
+      if (UTLB[entry].Data.V == 0)
+         return true;
 
+      if ((UTLB[entry].Address.VPN & (0xFC000000 >> 10)) == (0xE0000000 >> 10))
+      {
+         if (settings.MMUEnabled)
+            return true;
+
+         u32 vpn_sq = ((UTLB[entry].Address.VPN & (0x3FFFFFF >> 10)) >> 10) & 0x3F;//upper bits are allways known [0xE0/E1/E2/E3]
+         sq_remap[vpn_sq] = UTLB[entry].Data.PPN << 10;
+         printf("SQ remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
+         return true;
+      }
+
+      if (settings.MMUEnabled)
+         return false;
+
+      if ((UTLB[entry].Address.VPN&(0x1FFFFFFF >> 10)) == (UTLB[entry].Data.PPN&(0x1FFFFFFF >> 10)))
+      {
+         printf("Static remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
+         return true;
+      }
+      printf("Dynamic remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
+      return false;//log("MEM remap %d : 0x%X to 0x%X\n",entry,UTLB[entry].Address.VPN<<10,UTLB[entry].Data.PPN<<10);
+   }
+
+   if ((UTLB[entry].Address.VPN & (0xFC000000 >> 10)) == (0xE0000000 >> 10))
+   {
+      u32 vpn_sq = ((UTLB[entry].Address.VPN & 0x7FFFF) >> 10) & 0x3F;//upper bits are always known [0xE0/E1/E2/E3]
+      sq_remap[vpn_sq] = UTLB[entry].Data.PPN << 10;
+      printf("SQ remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
+   }
+   else
+   {
+      printf("MEM remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
+   }
+   return true;
+}
+
+//Sync memory mapping to MMU, suspend compiled blocks if needed.entry is a ITLB entry # , -1 is for full sync
+void ITLB_Sync(u32 entry)
+{
+   if (settings.MMUEnabled)
+      printf_mmu("ITLB MEM remap %d : 0x%X to 0x%X : %d\n", entry, ITLB[entry].Address.VPN << 10, ITLB[entry].Data.PPN << 10, ITLB[entry].Data.V);
+   else
+      printf("ITLB MEM remap %d : 0x%X to 0x%X\n",entry,ITLB[entry].Address.VPN<<10,ITLB[entry].Data.PPN<<10);
+}
 
 u8 DYNACALL mmu_ReadMem8(u32 adr)
 {
@@ -532,6 +520,7 @@ u16 DYNACALL mmu_ReadMem16(u32 adr)
 
 	return 0;
 }
+
 u16 DYNACALL mmu_IReadMem16(u32 adr)
 {
 	if (adr & 1)
@@ -565,6 +554,7 @@ u32 DYNACALL mmu_ReadMem32(u32 adr)
 
 	return 0;
 }
+
 u64 DYNACALL mmu_ReadMem64(u32 adr)
 {
 	if (adr & 7)
@@ -614,6 +604,7 @@ void DYNACALL mmu_WriteMem16(u32 adr, u16 data)
 	else
 		mmu_raise_exception(tv, adr, MMU_TT_DWRITE);
 }
+
 void DYNACALL mmu_WriteMem32(u32 adr, u32 data)
 {
 	if (adr & 3)
@@ -631,6 +622,7 @@ void DYNACALL mmu_WriteMem32(u32 adr, u32 data)
 	else
 		mmu_raise_exception(tv, adr, MMU_TT_DWRITE);
 }
+
 void DYNACALL mmu_WriteMem64(u32 adr, u64 data)
 {
 	if (adr & 7)
@@ -648,10 +640,9 @@ void DYNACALL mmu_WriteMem64(u32 adr, u64 data)
 	else
 		mmu_raise_exception(tv, adr, MMU_TT_DWRITE);
 }
-#endif
 
 
-bool mmu_TranslateSQW(u32 addr, u32* mapped)
+bool mmu_TranslateSQW(u32 adr, u32* mapped)
 {
    if (!settings.MMUEnabled)
    {
@@ -663,19 +654,18 @@ bool mmu_TranslateSQW(u32 addr, u32* mapped)
 
       if (CCN_MMUCR.AT == 0)
       {	//simple translation
-         *out = mmu_QACR_SQ(adr);
+         *mapped = mmu_QACR_SQ(adr);
       }
       else
       {	//remap table
-         *out = sq_remap[(adr >> 20) & 0x3F] | (adr & 0xFFFE0);
+         *mapped = sq_remap[(adr >> 20) & 0x3F] | (adr & 0xFFFE0);
       }
 #else
-      *mapped = sq_remap[(addr>>20)&0x3F] | (addr & 0xFFFE0);
+      *mapped = sq_remap[(adr>>20)&0x3F] | (adr & 0xFFFE0);
       return true;
 #endif
    }
 
-#ifndef NO_MMU
 	u32 addr;
 	u32 tv = mmu_full_SQ<MMU_TT_DREAD>(adr, addr);
 	if (tv != 0)
@@ -684,8 +674,7 @@ bool mmu_TranslateSQW(u32 addr, u32* mapped)
 		return false;
 	}
 
-	*out = addr;
-#endif
+	*mapped = addr;
 
 	return true;
 }

@@ -1104,8 +1104,11 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 		//set states
 		glEnable(GL_DEPTH_TEST);
       gl_state.cap_state[0] = 1;
+
 		//write only bit 1
-		glStencilMask(2);
+      gl_state.stencilmask = 2;
+      glStencilMask(gl_state.stencilmask);
+
       //no stencil testing
       gl_state.stencilfunc.func = GL_ALWAYS;
       gl_state.stencilfunc.ref  = 0;
@@ -1136,7 +1139,8 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
       gl_state.cap_state[0] = 0;
 
 		//write bits 1:0
-		glStencilMask(3);
+      gl_state.stencilmask = 3;
+      glStencilMask(gl_state.stencilmask);
 
 		if (mv_mode==1)
 		{
@@ -1308,7 +1312,8 @@ static void DrawModVols(void)
 			//looks like a driver bug
 			glStencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
 #endif
-			glStencilMask(0x1);
+         gl_state.stencilmask = 0x1;
+         glStencilMask(gl_state.stencilmask);
 			SetCull(0);
 			glDrawArrays(GL_TRIANGLES,0,pvrrc.modtrig.used()*3);
 		}
@@ -1387,7 +1392,8 @@ static void DrawModVols(void)
             gl_state.stencilfunc.mask);
 		
 		//clear the stencil result bit
-		glStencilMask(0x3);    //write to lsb 
+      gl_state.stencilmask = 0x3; /* write to LSB */
+      glStencilMask(gl_state.stencilmask);
 		glStencilOp(GL_ZERO,GL_ZERO,GL_ZERO);
 #ifndef NO_STENCIL_WORKAROUND
 		//looks like a driver bug ?
@@ -2139,6 +2145,7 @@ struct glesrend : Renderer
          else
             glDisable(gl_state.cap_translate[i]);
       }
+      glStencilMask(gl_state.stencilmask);
       glStencilFunc(gl_state.stencilfunc.func,gl_state.stencilfunc.ref,
             gl_state.stencilfunc.mask);
       glActiveTexture(gl_state.active_texture);
@@ -2162,6 +2169,7 @@ struct glesrend : Renderer
       glDepthMask(GL_TRUE);
       glUseProgram(0);
       glClearColor(0,0,0,0.0f);
+      glStencilMask(1);
       glStencilOp(GL_KEEP,GL_KEEP, GL_KEEP);
       glStencilFunc(GL_ALWAYS,0,1);
 

@@ -43,6 +43,7 @@ struct gl_cached_state
       GLint ref;
       GLuint mask;
    } stencilfunc;
+   GLuint stencilmask;
    GLenum cullmode;
    GLuint framebuf;
    GLuint program; 

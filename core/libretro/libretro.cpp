@@ -569,11 +569,6 @@ void* libPvr_GetRenderSurface()
    return NULL;
 }
 
-void os_SetWindowText(const char * text)
-{
-   // Nothing to do here
-}
-
 int msgboxf(const char* text, unsigned int type, ...)
 {
    if (log_cb)

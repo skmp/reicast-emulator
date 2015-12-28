@@ -1,7 +1,6 @@
 #pragma once
 #include "types.h"
 
-void os_SetWindowText(const char* text);
 void os_MakeExecutable(void* ptr, u32 sz);
 
 void os_DoEvents();

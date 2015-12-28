@@ -247,8 +247,6 @@ void LoadSettings(void)
 	settings.validate.OpenGlChecks      = 0;
 
 	settings.bios.UseReios              = 0;
-
-	settings.aica.BufferSize=1024;
 }
 
 void SaveSettings(void)

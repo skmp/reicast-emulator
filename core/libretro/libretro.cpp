@@ -159,6 +159,10 @@ void retro_set_environment(retro_environment_t cb)
          "Widescreen hack; disabled|enabled",
       },
       {
+         "reicast_audio_buffer_size",
+         "Audio buffer size; 1024|2048",
+      },
+      {
          "reicast_cable_type",
          "Cable type; TV (VBS/Y+S/C)|TV (RGB)|VGA (0)(RGB)|VGA (1)(RGB)",
       },
@@ -257,6 +261,15 @@ static void update_variables(void)
       else
          settings.rend.WideScreen = false;
    }
+
+   var.key = "reicast_audio_buffer_size";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      settings.aica.BufferSize = atoi(var.value);
+   }
+   else
+      settings.aica.BufferSize = 1024;
 
    var.key = "reicast_cable_type";
 

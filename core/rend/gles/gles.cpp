@@ -41,29 +41,6 @@ struct ShaderUniforms_t
 	float ps_FOG_COL_VERT[3];
 	float fog_coefs[2];
 
-	void Set(PipelineShader* s)
-	{
-		if (s->cp_AlphaTestValue!=-1)
-			glUniform1f(s->cp_AlphaTestValue,PT_ALPHA);
-
-		if (s->scale!=-1)
-			glUniform4fv( s->scale, 1, scale_coefs);
-
-		if (s->depth_scale!=-1)
-			glUniform4fv( s->depth_scale, 1, depth_coefs);
-
-		if (s->sp_FOG_DENSITY!=-1)
-			glUniform1f( s->sp_FOG_DENSITY,fog_den_float);
-
-		if (s->sp_FOG_COL_RAM!=-1)
-			glUniform3fv( s->sp_FOG_COL_RAM, 1, ps_FOG_COL_RAM);
-
-		if (s->sp_FOG_COL_VERT!=-1)
-			glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
-
-		if (s->sp_LOG_FOG_COEFS!=-1)
-			glUniform2fv(s->sp_LOG_FOG_COEFS,1, fog_coefs);
-	}
 
 } ShaderUniforms;
 
@@ -509,6 +486,30 @@ static GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentSh
 	return program;
 }
 
+static void set_shader_uniforms(struct ShaderUniforms_t *uni, PipelineShader* s)
+{
+   if (s->cp_AlphaTestValue!=-1)
+      glUniform1f(s->cp_AlphaTestValue, uni->PT_ALPHA);
+
+   if (s->scale!=-1)
+      glUniform4fv( s->scale, 1, uni->scale_coefs);
+
+   if (s->depth_scale!=-1)
+      glUniform4fv( s->depth_scale, 1, uni->depth_coefs);
+
+   if (s->sp_FOG_DENSITY!=-1)
+      glUniform1f( s->sp_FOG_DENSITY, uni->fog_den_float);
+
+   if (s->sp_FOG_COL_RAM!=-1)
+      glUniform3fv( s->sp_FOG_COL_RAM, 1, uni->ps_FOG_COL_RAM);
+
+   if (s->sp_FOG_COL_VERT!=-1)
+      glUniform3fv( s->sp_FOG_COL_VERT, 1, uni->ps_FOG_COL_VERT);
+
+   if (s->sp_LOG_FOG_COEFS!=-1)
+      glUniform2fv(s->sp_LOG_FOG_COEFS,1, uni->fog_coefs);
+}
+
 static bool CompilePipelineShader(void *data)
 {
 	char pshader[8192];
@@ -553,8 +554,7 @@ static bool CompilePipelineShader(void *data)
 		s->sp_LOG_FOG_COEFS=-1;
 	}
 
-
-	ShaderUniforms.Set(s);
+	set_shader_uniforms(&ShaderUniforms, s);
 
 	return glIsProgram(s->program)==GL_TRUE;
 }
@@ -1845,8 +1845,9 @@ static bool RenderFrame(void)
       gl_state.program = s->program;
 		glUseProgram(gl_state.program);
 
-		ShaderUniforms.Set(s);
+      set_shader_uniforms(&ShaderUniforms, s);
 	}
+
 	//setup render target first
 	if (is_rtt)
 	{

@@ -43,6 +43,12 @@ struct gl_cached_state
       GLint ref;
       GLuint mask;
    } stencilfunc;
+   struct
+   {
+      GLenum sfail;
+      GLenum dpfail;
+      GLenum dppass;
+   } stencilop;
    GLuint stencilmask;
    GLenum cullmode;
    GLuint framebuf;

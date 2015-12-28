@@ -699,11 +699,19 @@ static void DrawList(const List<PolyParam>& gply)
          gl_state.stencilfunc.func,
          gl_state.stencilfunc.ref,
          gl_state.stencilfunc.mask);
-   glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
+   gl_state.stencilop.sfail  = GL_KEEP;
+   gl_state.stencilop.dpfail = GL_KEEP;
+   gl_state.stencilop.dppass = GL_REPLACE;
+   glStencilOp(gl_state.stencilop.sfail,
+         gl_state.stencilop.dpfail,
+         gl_state.stencilop.dppass);
 
 #ifndef NO_STENCIL_WORKAROUND
-   //This looks like a driver bug
-   glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
+   //this needs to be done .. twice ? looks like
+   //a bug somewhere, on gles/nvgl ?
+   glStencilOp(gl_state.stencilop.sfail,
+         gl_state.stencilop.dpfail,
+         gl_state.stencilop.dppass);
 #endif
 
    while(count-->0)
@@ -1055,11 +1063,19 @@ static void DrawSorted(void)
          gl_state.stencilfunc.func,
          gl_state.stencilfunc.ref,
          gl_state.stencilfunc.mask);
-   glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
+   gl_state.stencilop.sfail  = GL_KEEP;
+   gl_state.stencilop.dpfail = GL_KEEP;
+   gl_state.stencilop.dppass = GL_REPLACE;
+   glStencilOp(gl_state.stencilop.sfail,
+         gl_state.stencilop.dpfail,
+         gl_state.stencilop.dppass);
 
 #ifndef NO_STENCIL_WORKAROUND
-   //This looks like a driver bug
-   glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
+   //this needs to be done .. twice ? looks like
+   //a bug somewhere, on gles/nvgl ?
+   glStencilOp(gl_state.stencilop.sfail,
+         gl_state.stencilop.dpfail,
+         gl_state.stencilop.dppass);
 #endif
 
    for (u32 p=0; p<count; p++)
@@ -1117,12 +1133,20 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
             gl_state.stencilfunc.func,
             gl_state.stencilfunc.ref,
             gl_state.stencilfunc.mask);
+
 		//count the number of pixels in front of the Z buffer (and only keep the lower bit of the count)
-		glStencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
+      gl_state.stencilop.sfail  = GL_KEEP;
+      gl_state.stencilop.dpfail = GL_KEEP;
+      gl_state.stencilop.dppass = GL_INVERT;
+		glStencilOp(gl_state.stencilop.sfail,
+            gl_state.stencilop.dpfail,
+            gl_state.stencilop.dppass);
 #ifndef NO_STENCIL_WORKAROUND
 		//this needs to be done .. twice ? looks like
 		//a bug somewhere, on gles/nvgl ?
-		glStencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
+		glStencilOp(gl_state.stencilop.sfail,
+            gl_state.stencilop.dpfail,
+            gl_state.stencilop.dppass);
 #endif
 		//Cull mode needs to be set
 		SetCull(ispc.CullMode);
@@ -1159,10 +1183,19 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
                gl_state.stencilfunc.func,
                gl_state.stencilfunc.ref,
                gl_state.stencilfunc.mask);
-			glStencilOp(GL_ZERO,GL_ZERO,GL_REPLACE);
+
+         gl_state.stencilop.sfail  = GL_ZERO;
+         gl_state.stencilop.dpfail = GL_ZERO;
+         gl_state.stencilop.dppass = GL_REPLACE;
+         glStencilOp(gl_state.stencilop.sfail,
+               gl_state.stencilop.dpfail,
+               gl_state.stencilop.dppass);
 #ifndef NO_STENCIL_WORKAROUND
-			//Look @ comment above -- this looks like a driver bug
-			glStencilOp(GL_ZERO,GL_ZERO,GL_REPLACE);
+         //this needs to be done .. twice ? looks like
+         //a bug somewhere, on gles/nvgl ?
+         glStencilOp(gl_state.stencilop.sfail,
+               gl_state.stencilop.dpfail,
+               gl_state.stencilop.dppass);
 #endif
 
 			/*
@@ -1195,10 +1228,18 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
                gl_state.stencilfunc.func,
                gl_state.stencilfunc.ref,
                gl_state.stencilfunc.mask);
-			glStencilOp(GL_ZERO,GL_KEEP,GL_REPLACE);
+         gl_state.stencilop.sfail  = GL_ZERO;
+         gl_state.stencilop.dpfail = GL_KEEP;
+         gl_state.stencilop.dppass = GL_REPLACE;
+         glStencilOp(gl_state.stencilop.sfail,
+               gl_state.stencilop.dpfail,
+               gl_state.stencilop.dppass);
 #ifndef NO_STENCIL_WORKAROUND
-			//Look @ comment above -- this looks like a driver bug
-			glStencilOp(GL_ZERO,GL_KEEP,GL_REPLACE);
+         //this needs to be done .. twice ? looks like
+         //a bug somewhere, on gles/nvgl ?
+         glStencilOp(gl_state.stencilop.sfail,
+               gl_state.stencilop.dpfail,
+               gl_state.stencilop.dppass);
 #endif
 		}
 	}
@@ -1307,10 +1348,20 @@ static void DrawModVols(void)
                gl_state.stencilfunc.func,
                gl_state.stencilfunc.ref,
                gl_state.stencilfunc.mask);
-			glStencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
+
+         gl_state.stencilop.sfail  = GL_KEEP;
+         gl_state.stencilop.dpfail = GL_KEEP;
+         gl_state.stencilop.dppass = GL_INVERT;
+
+         glStencilOp(gl_state.stencilop.sfail,
+               gl_state.stencilop.dpfail,
+               gl_state.stencilop.dppass);
 #ifndef NO_STENCIL_WORKAROUND
-			//looks like a driver bug
-			glStencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
+         //this needs to be done .. twice ? looks like
+         //a bug somewhere, on gles/nvgl ?
+         glStencilOp(gl_state.stencilop.sfail,
+               gl_state.stencilop.dpfail,
+               gl_state.stencilop.dppass);
 #endif
          gl_state.stencilmask = 0x1;
          glStencilMask(gl_state.stencilmask);
@@ -1394,10 +1445,19 @@ static void DrawModVols(void)
 		//clear the stencil result bit
       gl_state.stencilmask = 0x3; /* write to LSB */
       glStencilMask(gl_state.stencilmask);
-		glStencilOp(GL_ZERO,GL_ZERO,GL_ZERO);
+
+      gl_state.stencilop.sfail  = GL_ZERO;
+      gl_state.stencilop.dpfail = GL_ZERO;
+      gl_state.stencilop.dppass = GL_ZERO;
+      glStencilOp(gl_state.stencilop.sfail,
+            gl_state.stencilop.dpfail,
+            gl_state.stencilop.dppass);
 #ifndef NO_STENCIL_WORKAROUND
-		//looks like a driver bug ?
-		glStencilOp(GL_ZERO,GL_ZERO,GL_ZERO);
+      //this needs to be done .. twice ? looks like
+      //a bug somewhere, on gles/nvgl ?
+      glStencilOp(gl_state.stencilop.sfail,
+            gl_state.stencilop.dpfail,
+            gl_state.stencilop.dppass);
 #endif
 
 		//don't do depth testing
@@ -2146,6 +2206,9 @@ struct glesrend : Renderer
             glDisable(gl_state.cap_translate[i]);
       }
       glStencilMask(gl_state.stencilmask);
+      glStencilOp(gl_state.stencilop.sfail,
+            gl_state.stencilop.dpfail,
+            gl_state.stencilop.dppass);
       glStencilFunc(gl_state.stencilfunc.func,gl_state.stencilfunc.ref,
             gl_state.stencilfunc.mask);
       glActiveTexture(gl_state.active_texture);

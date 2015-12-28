@@ -458,6 +458,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	// Attach the depth buffer we created earlier to our FBO.
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rv.depthb);
+   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rv.stencilb);
 
 	// Check that our FBO creation was successful
 	GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);

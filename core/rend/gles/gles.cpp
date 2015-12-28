@@ -1974,9 +1974,8 @@ static bool RenderFrame(void)
    gl_state.cap_state[0] = 1;
 
 	//We use sampler 0
-   gl_state.active_texture = GL_TEXTURE0 - GL_TEXTURE0;
-   if (gl_state.active_texture != 0)
-      glActiveTexture(gl_state.active_texture);
+   gl_state.active_texture = GL_TEXTURE0;
+   glActiveTexture(gl_state.active_texture);
 
 	//Opaque
 	//Nothing extra needs to be setup here
@@ -2082,8 +2081,7 @@ struct glesrend : Renderer
          else
             glDisable(gl_state.cap_translate[i]);
       }
-      if (gl_state.active_texture != 0)
-         glActiveTexture(gl_state.active_texture);
+      glActiveTexture(gl_state.active_texture);
       glBindBuffer(GL_ARRAY_BUFFER, 0);
       bool ret = RenderFrame();
    }

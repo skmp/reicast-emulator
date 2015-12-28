@@ -1251,7 +1251,6 @@ static void SetupModvolVBO(void)
 	glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
 }
 
-#if 0
 static void DrawModVols(void)
 {
    /* A bit of explanation:
@@ -1440,7 +1439,6 @@ static void DrawModVols(void)
 	glDisable(GL_STENCIL_TEST);
    gl_state.cap_state[6] = 0;
 }
-#endif
 
 /*
 GL|ES 2

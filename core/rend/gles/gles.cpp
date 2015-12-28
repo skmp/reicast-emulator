@@ -607,9 +607,14 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 
    if (cache.stencil_modvol_on!=stencil)
    {
-      cache.stencil_modvol_on=stencil;
-
-      glStencilFunc(GL_ALWAYS,stencil,stencil);
+      cache.stencil_modvol_on   = stencil;
+      gl_state.stencilfunc.func = GL_ALWAYS;
+      gl_state.stencilfunc.ref  = stencil;
+      gl_state.stencilfunc.mask = stencil;
+      glStencilFunc(
+            gl_state.stencilfunc.func,
+            gl_state.stencilfunc.ref,
+            gl_state.stencilfunc.mask);
    }
 
    if (gp->texid != cache.texture)
@@ -687,7 +692,13 @@ static void DrawList(const List<PolyParam>& gply)
 
    glEnable(GL_STENCIL_TEST);
    gl_state.cap_state[6] = 1;
-   glStencilFunc(GL_ALWAYS,0,0);
+   gl_state.stencilfunc.func = GL_ALWAYS;
+   gl_state.stencilfunc.ref  = 0;
+   gl_state.stencilfunc.mask = 0;
+   glStencilFunc(
+         gl_state.stencilfunc.func,
+         gl_state.stencilfunc.ref,
+         gl_state.stencilfunc.mask);
    glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 
 #ifndef NO_STENCIL_WORKAROUND
@@ -1037,7 +1048,13 @@ static void DrawSorted(void)
 
    glEnable(GL_STENCIL_TEST);
    gl_state.cap_state[6] = 1;
-   glStencilFunc(GL_ALWAYS,0,0);
+   gl_state.stencilfunc.func = GL_ALWAYS;
+   gl_state.stencilfunc.ref  = 0;
+   gl_state.stencilfunc.mask = 0;
+   glStencilFunc(
+         gl_state.stencilfunc.func,
+         gl_state.stencilfunc.ref,
+         gl_state.stencilfunc.mask);
    glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 
 #ifndef NO_STENCIL_WORKAROUND
@@ -1089,8 +1106,14 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
       gl_state.cap_state[0] = 1;
 		//write only bit 1
 		glStencilMask(2);
-		//no stencil testing
-		glStencilFunc(GL_ALWAYS,0,2);
+      //no stencil testing
+      gl_state.stencilfunc.func = GL_ALWAYS;
+      gl_state.stencilfunc.ref  = 0;
+      gl_state.stencilfunc.mask = 2;
+      glStencilFunc(
+            gl_state.stencilfunc.func,
+            gl_state.stencilfunc.ref,
+            gl_state.stencilfunc.mask);
 		//count the number of pixels in front of the Z buffer (and only keep the lower bit of the count)
 		glStencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
 #ifndef NO_STENCIL_WORKAROUND
@@ -1125,7 +1148,13 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 			
 
 			//if (1<=st) st=1; else st=0;
-			glStencilFunc(GL_LEQUAL,1,3);
+         gl_state.stencilfunc.func = GL_LEQUAL;
+         gl_state.stencilfunc.ref  = 1;
+         gl_state.stencilfunc.mask = 3;
+         glStencilFunc(
+               gl_state.stencilfunc.func,
+               gl_state.stencilfunc.ref,
+               gl_state.stencilfunc.mask);
 			glStencilOp(GL_ZERO,GL_ZERO,GL_REPLACE);
 #ifndef NO_STENCIL_WORKAROUND
 			//Look @ comment above -- this looks like a driver bug
@@ -1155,7 +1184,13 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 			//1   : 1   : 01
 
 			//if (2>st) st=1; else st=0;	//can't be done with a single pass
-			glStencilFunc(GL_GREATER,1,3);
+         gl_state.stencilfunc.func = GL_GREATER;
+         gl_state.stencilfunc.ref  = 1;
+         gl_state.stencilfunc.mask = 3;
+         glStencilFunc(
+               gl_state.stencilfunc.func,
+               gl_state.stencilfunc.ref,
+               gl_state.stencilfunc.mask);
 			glStencilOp(GL_ZERO,GL_KEEP,GL_REPLACE);
 #ifndef NO_STENCIL_WORKAROUND
 			//Look @ comment above -- this looks like a driver bug
@@ -1261,7 +1296,13 @@ static void DrawModVols(void)
 			//simple single level stencil
 			glEnable(GL_STENCIL_TEST);
          gl_state.cap_state[6] = 1;
-			glStencilFunc(GL_ALWAYS,0x1,0x1);
+         gl_state.stencilfunc.func = GL_ALWAYS;
+         gl_state.stencilfunc.ref  = 0x1;
+         gl_state.stencilfunc.mask = 0x1;
+         glStencilFunc(
+               gl_state.stencilfunc.func,
+               gl_state.stencilfunc.ref,
+               gl_state.stencilfunc.mask);
 			glStencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
 #ifndef NO_STENCIL_WORKAROUND
 			//looks like a driver bug
@@ -1336,7 +1377,14 @@ static void DrawModVols(void)
 		
 		glEnable(GL_STENCIL_TEST);
       gl_state.cap_state[6] = 1;
-		glStencilFunc(GL_EQUAL,0x81,0x81); //only pixels that are Modvol enabled, and in area 1
+      //only pixels that are Modvol enabled, and in area 1
+      gl_state.stencilfunc.func = GL_EQUAL;
+      gl_state.stencilfunc.ref  = 0x81;
+      gl_state.stencilfunc.mask = 0x81;
+      glStencilFunc(
+            gl_state.stencilfunc.func,
+            gl_state.stencilfunc.ref,
+            gl_state.stencilfunc.mask);
 		
 		//clear the stencil result bit
 		glStencilMask(0x3);    //write to lsb 
@@ -2091,6 +2139,8 @@ struct glesrend : Renderer
          else
             glDisable(gl_state.cap_translate[i]);
       }
+      glStencilFunc(gl_state.stencilfunc.func,gl_state.stencilfunc.ref,
+            gl_state.stencilfunc.mask);
       glActiveTexture(gl_state.active_texture);
       glBindBuffer(GL_ARRAY_BUFFER, 0);
       bool ret = RenderFrame();
@@ -2113,6 +2163,7 @@ struct glesrend : Renderer
       glUseProgram(0);
       glClearColor(0,0,0,0.0f);
       glStencilOp(GL_KEEP,GL_KEEP, GL_KEEP);
+      glStencilFunc(GL_ALWAYS,0,1);
 
       /* Clear textures */
       glActiveTexture(GL_TEXTURE0);

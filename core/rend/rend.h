@@ -37,6 +37,12 @@ struct gl_cached_state
       GLenum sfactor;
       GLenum dfactor;
    } blendfunc;
+   struct
+   {
+      GLenum func;
+      GLint ref;
+      GLuint mask;
+   } stencilfunc;
    GLenum cullmode;
    GLuint framebuf;
    GLuint program; 

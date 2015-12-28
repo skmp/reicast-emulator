@@ -677,7 +677,7 @@ static void DrawList(const List<PolyParam>& gply)
       glDepthFunc(Zfunction[6]);
 
    glEnable(GL_STENCIL_TEST);
-   gl_state.cap_state[7] = 1;
+   gl_state.cap_state[6] = 1;
    glStencilFunc(GL_ALWAYS,0,0);
    glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 
@@ -1027,7 +1027,7 @@ static void DrawSorted(void)
    glDepthFunc(Zfunction[6]);
 
    glEnable(GL_STENCIL_TEST);
-   gl_state.cap_state[7] = 1;
+   gl_state.cap_state[6] = 1;
    glStencilFunc(GL_ALWAYS,0,0);
    glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 
@@ -1251,7 +1251,7 @@ static void DrawModVols(void)
 		{
 			//simple single level stencil
 			glEnable(GL_STENCIL_TEST);
-         gl_state.cap_state[7] = 1;
+         gl_state.cap_state[6] = 1;
 			glStencilFunc(GL_ALWAYS,0x1,0x1);
 			glStencilOp(GL_KEEP,GL_KEEP,GL_INVERT);
 #ifndef NO_STENCIL_WORKAROUND
@@ -1326,7 +1326,7 @@ static void DrawModVols(void)
       glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
 		
 		glEnable(GL_STENCIL_TEST);
-      gl_state.cap_state[7] = 1;
+      gl_state.cap_state[6] = 1;
 		glStencilFunc(GL_EQUAL,0x81,0x81); //only pixels that are Modvol enabled, and in area 1
 		
 		//clear the stencil result bit
@@ -1359,7 +1359,7 @@ static void DrawModVols(void)
 	glEnable(GL_DEPTH_TEST);
    gl_state.cap_state[0] = 1;
 	glDisable(GL_STENCIL_TEST);
-   gl_state.cap_state[7] = 0;
+   gl_state.cap_state[6] = 0;
 }
 #endif
 
@@ -1968,12 +1968,12 @@ static bool RenderFrame(void)
 	if (settings.rend.WideScreen && pvrrc.fb_X_CLIP.min==0 && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) && (pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ) )
 	{
 		glDisable(GL_SCISSOR_TEST);
-      gl_state.cap_state[6] = 0;
+      gl_state.cap_state[5] = 0;
 	}
 	else
    {
 		glEnable(GL_SCISSOR_TEST);
-      gl_state.cap_state[6] = 1;
+      gl_state.cap_state[5] = 1;
    }
 
 	//restore scale_x

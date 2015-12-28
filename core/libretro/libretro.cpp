@@ -524,10 +524,10 @@ void UpdateInputState(u32 port)
       /* JOYPAD_RIGHT  */ DC_DPAD_RIGHT,
       /* JOYPAD_A      */ DC_BTN_B,
       /* JOYPAD_X      */ DC_BTN_Y,
-      /* JOYPAD_L      */ 0, /* half L */
-      /* JOYPAD_R      */ 0, /* half R */
-      /* JOYPAD_L2     */ 0, /* full L */
-      /* JOYPAD_R2     */ 0, /* full R */
+      /* JOYPAD_L      */ 0, /* full L */
+      /* JOYPAD_R      */ 0, /* full R */
+      /* JOYPAD_L2     */ 0, /* half L */
+      /* JOYPAD_R2     */ 0, /* half R */
       /* JOYPAD_L3     */ 0,
       /* JOYPAD_R3     */ 0,
    };
@@ -543,15 +543,24 @@ void UpdateInputState(u32 port)
 
       switch (id)
       {
-         case RETRO_DEVICE_ID_JOYPAD_L:  lt[port] |= 0x7f * is_down; break;
-         case RETRO_DEVICE_ID_JOYPAD_R:  rt[port] |= 0x7f * is_down; break;
-         case RETRO_DEVICE_ID_JOYPAD_L2: lt[port] |= 0xff * is_down; break;
-         case RETRO_DEVICE_ID_JOYPAD_R2: rt[port] |= 0xff * is_down; break;
+         case RETRO_DEVICE_ID_JOYPAD_L2:
+            lt[port] |= 0x7f * is_down;
+            break;
+         case RETRO_DEVICE_ID_JOYPAD_R2:
+            rt[port] |= 0x7f * is_down;
+            break;
+         case RETRO_DEVICE_ID_JOYPAD_L:
+            lt[port] |= 0xff * is_down;
+            break;
+         case RETRO_DEVICE_ID_JOYPAD_R:
+            rt[port] |= 0xff * is_down;
+            break;
          default:
             if (is_down)
                kcode[port] &= ~dc_key;
             else
                kcode[port] |= dc_key;
+
       }
    }
 

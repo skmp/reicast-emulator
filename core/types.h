@@ -460,13 +460,7 @@ using namespace std;
 #define EMUWARN3(x,a,b)(printf( "Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a,b))
 #define EMUWARN4(x,a,b,c)(printf("Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a,b,c))
 
-
-#ifndef NO_MMU
-#define _X_x_X_MMU_VER_STR "/mmu"
-#else
 #define _X_x_X_MMU_VER_STR ""
-#endif
-
 
 #if DC_PLATFORM==DC_PLATFORM_DREAMCAST
 	#define VER_EMUNAME		"reicast"

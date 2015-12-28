@@ -18,38 +18,30 @@ VArray2 mem_b;
 
 u8 DYNACALL ReadMem8(u32 Address)
 {
-#ifdef NO_MMU
+   if (settings.MMUEnabled)
+      return mmu_ReadMem8(Address);
    return _vmem_ReadMem8(Address);
-#else
-   return mmu_ReadMem8(Address);
-#endif
 }
 
 u16 DYNACALL ReadMem16(u32 Address)
 {
-#ifdef NO_MMU
+   if (settings.MMUEnabled)
+      return mmu_ReadMem16(Address);
    return _vmem_ReadMem16(Address);
-#else
-   return mmu_ReadMem16(Address);
-#endif
 }
 
 u32 DYNACALL ReadMem32(u32 Address)
 {
-#ifdef NO_MMU
+   if (settings.MMUEnabled)
+      return mmu_ReadMem32(Address);
    return _vmem_ReadMem32(Address);
-#else
-   return mmu_ReadMem32(Address);
-#endif
 }
 
 u64 DYNACALL ReadMem64(u32 Address)
 {
-#ifdef NO_MMU
+   if (settings.MMUEnabled)
+      return mmu_ReadMem64(Address);
    return _vmem_ReadMem64(Address);
-#else
-   return mmu_ReadMem64(Address);
-#endif
 }
 
 u16 DYNACALL IReadMem16(u32 Address)
@@ -64,38 +56,34 @@ u32 DYNACALL ReadMem32_i(u32 addr);
 
 void DYNACALL WriteMem8(u32 addr,u8 data)
 {
-#ifdef NO_MMU
-   _vmem_WriteMem8(addr, data);
-#else
-   mmu_WriteMem8(addr, data);
-#endif
+   if (settings.MMUEnabled)
+      mmu_WriteMem8(addr, data);
+   else
+      _vmem_WriteMem8(addr, data);
 }
 
 void DYNACALL WriteMem16(u32 addr,u16 data)
 {
-#ifdef NO_MMU
-   _vmem_WriteMem16(addr, data);
-#else
-   mmu_WriteMem16(addr, data);
-#endif
+   if (settings.MMUEnabled)
+      mmu_WriteMem16(addr, data);
+   else
+      _vmem_WriteMem16(addr, data);
 }
 
 void DYNACALL WriteMem32(u32 addr,u32 data)
 {
-#ifdef NO_MMU
-   _vmem_WriteMem32(addr, data);
-#else
-   mmu_WriteMem32(addr, data);
-#endif
+   if (settings.MMUEnabled)
+      mmu_WriteMem32(addr, data);
+   else
+      _vmem_WriteMem32(addr, data);
 }
 
 void DYNACALL WriteMem64(u32 addr,u64 data)
 {
-#ifdef NO_MMU
-   _vmem_WriteMem64(addr, data);
-#else
-   mmu_WriteMem64(addr, data);
-#endif
+   if (settings.MMUEnabled)
+      mmu_WriteMem64(addr, data);
+   else
+      _vmem_WriteMem64(addr, data);
 }
 
 void DYNACALL WriteMem8_i(u32 addr,u8 data);
@@ -366,9 +354,8 @@ void WriteMemBlock_nommu_sq(u32 dst,u32* src)
 
 void WriteMemBlock_ptr(u32 addr,u32* data,u32 size)
 {
-#ifndef NO_MMU
-	die("failed\n");
-#endif
+   if (settings.MMUEnabled)
+      die("failed\n");
 	WriteMemBlock_nommu_ptr(addr,data,size);
 }
 

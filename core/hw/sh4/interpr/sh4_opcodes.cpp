@@ -2209,13 +2209,13 @@ sh4op(i0100_nnnn_0000_1110)
 //Not implt
 sh4op(iNotImplemented)
 {
-#ifndef NO_MMU
-	printf("iNimp %04X\n", op);
-	SH4ThrownException ex = { next_pc - 2, 0x180, 0x100 };
-	throw ex;
-#else
-	cpu_iNimp(op, "Unknown opcode");
-#endif
-	
+   if (settings.MMUEnabled)
+      cpu_iNimp(op, "Unknown opcode");
+   else
+   {
+      printf("iNimp %04X\n", op);
+      SH4ThrownException ex = { next_pc - 2, 0x180, 0x100 };
+      throw ex;
+   }
 }
 

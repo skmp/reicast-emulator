@@ -313,38 +313,37 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
          {
             if (addr&0x80)
             {
-#ifdef NO_MMU
-               printf("Unhandled p4 Write [Unified TLB address array, Associative Write] 0x%x = %x\n",addr,data);
-#endif
+               if (!settings.MMUEnabled)
+                  printf("Unhandled p4 Write [Unified TLB address array, Associative Write] 0x%x = %x\n",addr,data);
 
                CCN_PTEH_type t;
                t.reg_data=data;
 
                u32 va=t.VPN<<10;
 
-               for (int i=0;i<64;i++)
+               if (settings.MMUEnabled)
                {
-#ifndef NO_MMU
-                  if (mmu_match(va,UTLB[i].Address,UTLB[i].Data))
+                  for (int i=0;i<64;i++)
                   {
-                     UTLB[i].Data.V=((u32)data>>8)&1;
-                     UTLB[i].Data.D=((u32)data>>9)&1;
-                     UTLB_Sync(i);
+                     if (mmu_match(va,UTLB[i].Address,UTLB[i].Data))
+                     {
+                        UTLB[i].Data.V=((u32)data>>8)&1;
+                        UTLB[i].Data.D=((u32)data>>9)&1;
+                        UTLB_Sync(i);
+                     }
                   }
-#endif
+
+                  for (int i=0;i<4;i++)
+                  {
+                     if (mmu_match(va,ITLB[i].Address,ITLB[i].Data))
+                     {
+                        ITLB[i].Data.V=((u32)data>>8)&1;
+                        ITLB[i].Data.D=((u32)data>>9)&1;
+                        ITLB_Sync(i);
+                     }
+                  }
                }
 
-               for (int i=0;i<4;i++)
-               {
-#ifndef NO_MMU
-                  if (mmu_match(va,ITLB[i].Address,ITLB[i].Data))
-                  {
-                     ITLB[i].Data.V=((u32)data>>8)&1;
-                     ITLB[i].Data.D=((u32)data>>9)&1;
-                     ITLB_Sync(i);
-                  }
-#endif
-               }
             }
             else
             {

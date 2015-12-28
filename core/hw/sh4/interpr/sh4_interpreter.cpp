@@ -51,29 +51,37 @@ int UpdateSystem_INTC(void)
 	return UpdateINTC();
 }
 
-static void Sh4_int_Run_exec(s32 *l)
+static inline void Sh4_int_Run_execInternal(s32 *l)
 {
-#if !defined(NO_MMU)
-   try {
-#endif
-      do
-      {
-         u32 addr = next_pc;
-         next_pc += 2;
-         u32 op = IReadMem16(addr);
+   do
+   {
+      u32 addr = next_pc;
+      next_pc += 2;
+      u32 op = IReadMem16(addr);
 
-         OpPtr[op](op);
-         *l -= CPU_RATIO;
-      } while (*l > 0);
-      *l += SH4_TIMESLICE;
-      UpdateSystem_INTC();
-#if !defined(NO_MMU)
+      OpPtr[op](op);
+      *l -= CPU_RATIO;
+   } while (*l > 0);
+   *l += SH4_TIMESLICE;
+   UpdateSystem_INTC();
+}
+
+static inline void Sh4_int_Run_exec(s32 *l)
+{
+   if (settings.MMUEnabled)
+   {
+      try
+      {
+         Sh4_int_Run_execInternal(l);
+      }
+      catch (SH4ThrownException ex)
+      {
+         Do_Exception(ex.epc, ex.expEvn, ex.callVect);
+         *l -= CPU_RATIO * 5;
+      }
    }
-   catch (SH4ThrownException ex) {
-      Do_Exception(ex.epc, ex.expEvn, ex.callVect);
-      *l -= CPU_RATIO * 5;
-   }
-#endif
+   else
+      Sh4_int_Run_execInternal(l);
 }
 
 void Sh4_int_Stop(void)
@@ -159,43 +167,54 @@ bool Sh4_int_IsCpuRunning(void)
 	return sh4_int_bCpuRun;
 }
 
+static void ExecuteDelayslotInternal(void)
+{
+   u32 addr = next_pc;
+   next_pc += 2;
+   u32 op = IReadMem16(addr);
+   if (op != 0)
+      ExecuteOpcode(op);
+}
+
 //TODO : Check for valid delayslot instruction
 void ExecuteDelayslot(void)
 {
-#if !defined(NO_MMU)
-	try {
-#endif
-		u32 addr = next_pc;
-		next_pc += 2;
-		u32 op = IReadMem16(addr);
-		if (op != 0)
-			ExecuteOpcode(op);
-#if !defined(NO_MMU)
-	}
-	catch (SH4ThrownException ex)
+   if (settings.MMUEnabled)
    {
-		ex.epc -= 2;
-		//printf("Delay slot exception\n");
-		throw ex;
-	}
-#endif
+      try {
+         ExecuteDelayslotInternal();
+      }
+      catch (SH4ThrownException ex)
+      {
+         ex.epc -= 2;
+         //printf("Delay slot exception\n");
+         throw ex;
+      }
+   }
+   else
+      ExecuteDelayslotInternal();
 }
 
 void ExecuteDelayslot_RTE(void)
 {
 	u32 oldsr = sr.GetFull();
 
-#if !defined(NO_MMU)
-	try {
-#endif
-		sr.SetFull(ssr);
-
-		ExecuteDelayslot();
-#if !defined(NO_MMU)
-	}
-	catch (SH4ThrownException ex)
-		msgboxf("RTE Exception", MBX_ICONERROR);
-#endif
+   if (settings.MMUEnabled)
+   {
+      try {
+         sr.SetFull(ssr);
+         ExecuteDelayslot();
+      }
+      catch (SH4ThrownException ex)
+      {
+         printf("RTE Exception\n");
+      }
+   }
+   else
+   {
+      sr.SetFull(ssr);
+      ExecuteDelayslot();
+   }
 }
 
 //General update

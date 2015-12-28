@@ -16,9 +16,87 @@
 //main system mem
 VArray2 mem_b;
 
+u8 DYNACALL ReadMem8(u32 Address)
+{
+#ifdef NO_MMU
+   return _vmem_ReadMem8(Address);
+#else
+   return mmu_ReadMem8(Address);
+#endif
+}
+
+u16 DYNACALL ReadMem16(u32 Address)
+{
+#ifdef NO_MMU
+   return _vmem_ReadMem16(Address);
+#else
+   return mmu_ReadMem16(Address);
+#endif
+}
+
+u32 DYNACALL ReadMem32(u32 Address)
+{
+#ifdef NO_MMU
+   return _vmem_ReadMem32(Address);
+#else
+   return mmu_ReadMem32(Address);
+#endif
+}
+
+u64 DYNACALL ReadMem64(u32 Address)
+{
+#ifdef NO_MMU
+   return _vmem_ReadMem64(Address);
+#else
+   return mmu_ReadMem64(Address);
+#endif
+}
+
+u16 DYNACALL IReadMem16(u32 Address)
+{
+   return ReadMem16(Address);
+}
+
+
 u8 DYNACALL ReadMem8_i(u32 addr);
 u16 DYNACALL ReadMem16_i(u32 addr);
 u32 DYNACALL ReadMem32_i(u32 addr);
+
+void DYNACALL WriteMem8(u32 addr,u8 data)
+{
+#ifdef NO_MMU
+   _vmem_WriteMem8(addr, data);
+#else
+   mmu_WriteMem8(addr, data);
+#endif
+}
+
+void DYNACALL WriteMem16(u32 addr,u16 data)
+{
+#ifdef NO_MMU
+   _vmem_WriteMem16(addr, data);
+#else
+   mmu_WriteMem16(addr, data);
+#endif
+}
+
+void DYNACALL WriteMem32(u32 addr,u32 data)
+{
+#ifdef NO_MMU
+   _vmem_WriteMem32(addr, data);
+#else
+   mmu_WriteMem32(addr, data);
+#endif
+}
+
+void DYNACALL WriteMem64(u32 addr,u64 data)
+{
+#ifdef NO_MMU
+   _vmem_WriteMem64(addr, data);
+#else
+   mmu_WriteMem64(addr, data);
+#endif
+}
 
 void DYNACALL WriteMem8_i(u32 addr,u8 data);
 void DYNACALL WriteMem16_i(u32 addr,u16 data);
@@ -284,6 +362,7 @@ void WriteMemBlock_nommu_sq(u32 dst,u32* src)
 			WriteMem32_nommu(dst+i,src[i>>2]);
 	}
 }
+
 
 void WriteMemBlock_ptr(u32 addr,u32* data,u32 size)
 {

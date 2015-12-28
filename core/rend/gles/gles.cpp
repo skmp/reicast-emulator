@@ -74,12 +74,6 @@ Drawing and related state management
 Takes vertex, textures and renders to the currently set up target
 */
 
-//Uncomment this to disable the stencil work around
-//Seems like there's a bug either on the wrapper, or nvogl making
-//stencil not work properly (requiring some double calls to get proper results)
-//#define NO_STENCIL_WORKAROUND
-
-
 const static u32 CullMode[]= 
 {
 
@@ -595,15 +589,6 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
       glUseProgram(gl_state.program);
       SetTileClip(gp->tileclip,true);
    }
-
-#ifdef NO_STENCIL_WORKAROUND
-   //This for some reason doesn't work properly
-   //So, shadow bit emulation is disabled.
-   //This bit normally control which pixels are affected
-   //by modvols
-   if (gp->pcw.Shadow==0)
-      stencil = 0x0;
-#endif
 
    if (cache.stencil_modvol_on!=stencil)
    {

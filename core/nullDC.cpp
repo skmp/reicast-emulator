@@ -176,8 +176,6 @@ int dc_init(int argc,wchar* argv[])
 
    LoadSpecialSettingsCPU();
 
-   InitAudio();
-
 	sh4_cpu.Init();
 	mem_Init();
 

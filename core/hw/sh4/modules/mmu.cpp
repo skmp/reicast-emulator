@@ -660,21 +660,11 @@ void DYNACALL mmu_WriteMem64(u32 adr, u64 data)
 	else
 		mmu_raise_exception(tv, adr, MMU_TT_DWRITE);
 }
+#endif
 
-bool mmu_TranslateSQW(u32 adr, u32* out)
-{
-#ifndef NO_MMU
-
-	u32 addr;
-	u32 tv = mmu_full_SQ<MMU_TT_DREAD>(adr, addr);
-	if (tv != 0)
-	{
-		mmu_raise_exception(tv, adr, MMU_TT_DREAD);
-		return false;
-	}
-
-	*out = addr;
-#else
+#if defined(NO_MMU)
+#if 0
+   /* Do we need this codepath for non-MMU enable ? */
 	//This will olny work for 1 mb pages .. hopefully nothing else is used
 	//*FIXME* to work for all page sizes ?
 
@@ -687,6 +677,25 @@ bool mmu_TranslateSQW(u32 adr, u32* out)
 		*out = sq_remap[(adr >> 20) & 0x3F] | (adr & 0xFFFE0);
 	}
 #endif
+
+bool mmu_TranslateSQW(u32 addr, u32* mapped)
+{
+   *mapped = sq_remap[(addr>>20)&0x3F] | (addr & 0xFFFE0);
+   return true;
+}
+#else
+bool mmu_TranslateSQW(u32 adr, u32* out)
+{
+	u32 addr;
+	u32 tv = mmu_full_SQ<MMU_TT_DREAD>(adr, addr);
+	if (tv != 0)
+	{
+		mmu_raise_exception(tv, adr, MMU_TT_DREAD);
+		return false;
+	}
+
+	*out = addr;
+
 	return true;
 }
 #endif

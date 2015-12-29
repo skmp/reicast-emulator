@@ -18,6 +18,8 @@
 #define clip_verify(x)
 #endif
 
+#define MAX_CHANNELS                    64
+
 #define CH_REC_FORMAT_KEY_LOOP          0x01
 #define CH_REC_FNS                      0x18
 #define CH_REC_FNS_OCT                  0x19
@@ -33,7 +35,7 @@
 s16 cdda_sector[CDDA_SIZE]={0};
 u32 cdda_index=CDDA_SIZE<<1;
 
-static SampleType mxlr[64];
+static SampleType mxlr[MAX_CHANNELS];
 
 //Sound generation, mixin, and channel regs emulation
 //x.15
@@ -60,8 +62,8 @@ double AEG_DSR_Time[]=
 
 #define AEG_STEP_BITS (16)
 //Steps per sample
-u32 AEG_ATT_SPS[64];
-u32 AEG_DSR_SPS[64];
+u32 AEG_ATT_SPS[MAX_CHANNELS];
+u32 AEG_DSR_SPS[MAX_CHANNELS];
 
 const char* stream_names[]=
 {
@@ -294,7 +296,7 @@ enum _EG_state
 
    struct ChannelEx
 {
-   static ChannelEx Chans[64];
+   static ChannelEx Chans[MAX_CHANNELS];
 
    ChannelCommonData* ccd;
 
@@ -461,7 +463,7 @@ enum _EG_state
 
    __forceinline static void StepAll(SampleType& mixl, SampleType& mixr)
    {
-      for (int i = 0; i < 64; i++)
+      for (int i = 0; i < MAX_CHANNELS; i++)
       {
          Chans[i].Step(mixl, mixr);
       }
@@ -669,7 +671,7 @@ enum _EG_state
             if (ccd->KYONEX)
             {
                ccd->KYONEX=0;
-               for (int i = 0; i < 64; i++)
+               for (int i = 0; i < MAX_CHANNELS; i++)
                {
                   if (Chans[i].ccd->KYONB)
                      Chans[i].KEY_ON();
@@ -1061,7 +1063,7 @@ static void staticinitialise(void)
 }
 #define AicaChannel ChannelEx
 
-AicaChannel AicaChannel::Chans[64];
+AicaChannel AicaChannel::Chans[MAX_CHANNELS];
 
 #define Chans AicaChannel::Chans 
 
@@ -1098,12 +1100,12 @@ void sgc_Init(void)
    for (int i=256;i<1024;i++)
       tl_lut[i]=0;
 
-   for (int i=0;i<64;i++)
+   for (int i = 0; i < MAX_CHANNELS; i++)
    {
       AEG_ATT_SPS[i]=CalcAegSteps(AEG_Attack_Time[i]);
       AEG_DSR_SPS[i]=CalcAegSteps(AEG_DSR_Time[i]);
    }
-   for (int i=0;i<64;i++)
+   for (int i = 0; i < MAX_CHANNELS; i++)
       Chans[i].Init(i,aica_reg);
    dsp_out_vol=(DSP_OUT_VOL_REG*)&aica_reg[0x2000];
 
@@ -1180,7 +1182,7 @@ void AICA_Sample32(void)
     * much more cache efficient ! */
    u32 sg=0;
 
-   for (int ch = 0; ch < 64; ch++)
+   for (int ch = 0; ch < MAX_CHANNELS; ch++)
    {
       for (int i=0;i<32;i++)
       {

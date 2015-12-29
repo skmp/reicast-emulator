@@ -98,8 +98,8 @@ struct TextureCacheData
 	u32 w,h;        //width & height of the texture
 	u32 size;       //size, in bytes, in vram
 
-	PvrTexInfo* tex;
-	TexConvFP*  texconv;
+	PvrTexInfo *tex;
+	TexConvFP  *texconv;
 
 	u32 dirty;
 	vram_block* lock_block;
@@ -159,19 +159,19 @@ struct TextureCacheData
 		lock_block=0;
 
 		//decode info from tsp/tcw into the texture struct
-		tex=&format[tcw.PixelFmt==7?0:tcw.PixelFmt];		//texture format table entry
+		tex=&format[tcw.PixelFmt==7?0:tcw.PixelFmt];		/* texture format table entry */
 
-		sa_tex = (tcw.TexAddr<<3) & VRAM_MASK;	//texture start address
-		sa = sa_tex;							//data texture start address (modified for MIPs, as needed)
-		w=8<<tsp.TexU;                   //tex width
-		h=8<<tsp.TexV;                   //tex height
+		sa_tex = (tcw.TexAddr<<3) & VRAM_MASK;          /* texture start address */
+		sa     = sa_tex;						               /* data texture start address (modified for MIPs, as needed) */
+		w      = 8 << tsp.TexU;                         /* texture width */
+		h      = 8 << tsp.TexV;                         /* texture height */
 
 		if (texID)
       {
-         //bind texture to set modes
+         /* Bind texture to set modes */
          glBindTexture(GL_TEXTURE_2D, texID);
 
-         //set texture repeat mode
+         /* Set texture repeat mode */
          SetRepeatMode(GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU);
          SetRepeatMode(GL_TEXTURE_WRAP_T, tsp.ClampV, tsp.FlipV);
 
@@ -179,43 +179,44 @@ struct TextureCacheData
          glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
 #endif
 
-         //set texture filter mode
+         /* Set texture filter mode */
          if (tsp.FilterMode == 0)
          {
-            //disable filtering, mipmaps
+            /* Disable filtering, mipmaps */
             glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
          }
          else
          {
-            //bilinear filtering
-            //PowerVR supports also trilinear via two passes, but we ignore that for now
+            /* Bilinear filtering */
+            /* PowerVR supports also trilinear via two passes, but we ignore that for now */
             glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER, (tcw.MipMapped && settings.rend.UseMipmaps)?GL_LINEAR_MIPMAP_NEAREST:GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
          }
       }
 
-		//PAL texture
-		if (tex->bpp==4)
-		{
-			pal_table_rev=&pal_rev_16[tcw.PalSelect];
-			indirect_color_ptr=tcw.PalSelect<<4;
-		}
-		else if (tex->bpp==8)
-		{
-			pal_table_rev=&pal_rev_256[tcw.PalSelect>>4];
-			indirect_color_ptr=(tcw.PalSelect>>4)<<8;
-		}
-		else
-		{
-			pal_table_rev=0;
-		}
+      pal_table_rev = 0;
 
-		//VQ table (if VQ tex)
+		/* PAL texture */
+      switch (tex->bpp)
+      {
+         case 4:
+            pal_table_rev=&pal_rev_16[tcw.PalSelect];
+            indirect_color_ptr=tcw.PalSelect<<4;
+            break;
+         case 8:
+            pal_table_rev=&pal_rev_256[tcw.PalSelect>>4];
+            indirect_color_ptr=(tcw.PalSelect>>4)<<8;
+            break;
+      }
+
+		/* VQ table (if VQ texture) */
 		if (tcw.VQ_Comp)
-			indirect_color_ptr=sa;
+			indirect_color_ptr = sa;
 
-			//Convert a pvr texture into OpenGL
+      texconv = 0;
+
+      /* Convert a PVR texture into OpenGL */
 		switch (tcw.PixelFmt)
       {
          case 0: //0     1555 value: 1 bit; RGB values: 5 bits each
@@ -228,16 +229,17 @@ struct TextureCacheData
          case 6: //6     8 BPP Palette   Palette texture with 8 bits/pixel
             if (tcw.ScanOrder && tex->PL)
             {
-               //Texture is stored 'planar' in memory, no deswizzle is needed
-               verify(tcw.VQ_Comp==0);
-               //Planar textures support stride selection, mostly used for non power of 2 textures (videos)
-               int stride=w;
-               if (tcw.StrideSel) 
-                  stride=(TEXT_CONTROL&31)*32;
-               //Call the format specific conversion code
-               texconv=tex->PL;
-               //calculate the size, in bytes, for the locking
-               size=stride*h*tex->bpp/8;
+               int stride = w;
+
+               verify(tcw.VQ_Comp==0);        /* Texture is stored 'planar' in memory, no deswizzle is needed */
+
+               /* Planar textures support stride selection,
+                * mostly used for NPOT textures (videos). */
+               if (tcw.StrideSel)
+                  stride  = (TEXT_CONTROL&31)*32;
+
+               texconv    = tex->PL;             /* Call the format specific conversion code */
+               size       = stride*h*tex->bpp/8; /* calculate the size, in bytes, for the locking. */
             }
             else
             {
@@ -245,80 +247,78 @@ struct TextureCacheData
                verify(w==h || !tcw.MipMapped); // are non square mipmaps supported ? i can't recall right now *WARN*
 #endif
 
+               size = w * h;
                if (tcw.VQ_Comp)
                {
-                  verify(tex->VQ!=0);
-                  indirect_color_ptr=sa;
+                  verify(tex->VQ    != 0);
+                  indirect_color_ptr = sa;
                   if (tcw.MipMapped)
-                     sa+=MipPoint[tsp.TexU];
-                  texconv=tex->VQ;
-                  size=w*h/8;
+                     sa             += MipPoint[tsp.TexU];
+                  texconv            = tex->VQ;
                }
                else
                {
-                  verify(tex->TW!=0)
-                     if (tcw.MipMapped)
-                        sa+=MipPoint[tsp.TexU]*tex->bpp/2;
-                  texconv=tex->TW;
-                  size=w*h*tex->bpp/8;
+                  verify(tex->TW    != 0);
+                  if (tcw.MipMapped)
+                     sa             += MipPoint[tsp.TexU]*tex->bpp/2;
+                  texconv            = tex->TW;
+                  size              *= tex->bpp;
                }
+               size /= 8;
             }
             break;
          default:
             printf("Unhandled texture %d\n",tcw.PixelFmt);
             size=w*h*2;
             memset(temp_tex_buffer,0xFFFFFFFF,size);
-            texconv=0;
             break;
       }
 	}
 
 	void Update(void)
-	{
-		//texture state tracking stuff
-		Updates++;
-		dirty=0;
+   {
+      PixelBuffer pbt;
 
-		GLuint textype=tex->type;
+      Updates++;                                   /* texture state tracking stuff */
+      dirty=0;
 
-		if (pal_table_rev) 
-		{
-			textype=PAL_TYPE[PAL_RAM_CTRL&3];
-			pal_local_rev=*pal_table_rev; //make sure to update the local rev, so it won't have to redo the tex
-		}
+      GLuint textype=tex->type;
 
-		palette_index=indirect_color_ptr; //might be used if pal. tex
-		vq_codebook=(u8*)&vram[indirect_color_ptr];  //might be used if VQ tex
-
-		//texture conversion work
-		PixelBuffer pbt;
-		pbt.p_buffer_start=pbt.p_current_line=temp_tex_buffer;
-		pbt.pixels_per_line=w;
-
-		u32 stride=w;
-
-		if (tcw.StrideSel && tcw.ScanOrder && tex->PL) 
-			stride=(TEXT_CONTROL&31)*32; //I think this needs +1 ?
-
-		if(texconv!=0)
-		{
-			texconv(&pbt,(u8*)&vram[sa],stride,h);
-		}
-		else
-		{
-			//fill it in with a temp color
-			printf("UNHANDLED TEXTURE\n");
-			memset(temp_tex_buffer,0xF88F8F7F,w*h*2);
-		}
-
-		//PrintTextureName();
-
-		//lock the texture to detect changes in it
-		lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
-
-		if (texID)
+      if (pal_table_rev) 
       {
-         //upload to OpenGL !
+         textype=PAL_TYPE[PAL_RAM_CTRL&3];
+         pal_local_rev=*pal_table_rev;             /* make sure to update the local rev, 
+                                                      so it won't have to redo the texture */
+      }
+
+      palette_index=indirect_color_ptr;            /* might be used if paletted texture */
+      vq_codebook=(u8*)&vram[indirect_color_ptr];  /* might be used if VQ texture */
+
+      //texture conversion work
+      pbt.p_buffer_start=pbt.p_current_line=temp_tex_buffer;
+      pbt.pixels_per_line=w;
+
+      u32 stride=w;
+
+      if (tcw.StrideSel && tcw.ScanOrder && tex->PL) 
+         stride=(TEXT_CONTROL&31)*32; //I think this needs +1 ?
+
+      if(texconv)
+         texconv(&pbt,(u8*)&vram[sa],stride,h);
+      else
+      {
+         /* fill it in with a temporary color. */
+         printf("UNHANDLED TEXTURE\n");
+         memset(temp_tex_buffer,0xF88F8F7F,w*h*2);
+      }
+
+      //PrintTextureName();
+
+      /* lock the texture to detect changes in it. */
+      lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
+
+      if (texID)
+      {
          glBindTexture(GL_TEXTURE_2D, texID);
          GLuint comps=textype==GL_UNSIGNED_SHORT_5_6_5?GL_RGB:GL_RGBA;
          glTexImage2D(GL_TEXTURE_2D, 0,comps , w, h, 0, comps, textype, temp_tex_buffer);
@@ -326,7 +326,7 @@ struct TextureCacheData
             glGenerateMipmap(GL_TEXTURE_2D);
          glBindTexture(GL_TEXTURE_2D, 0);
       }
-		else
+      else
       {
          switch (textype)
          {
@@ -366,9 +366,9 @@ struct TextureCacheData
             }
          }
       }
-	}
+   }
 
-	//true if : dirty or paletted texture and revs don't match
+	/* true if : dirty or paletted texture and revs don't match */
 	bool NeedsUpdate()
    { 
       return (dirty) || (pal_table_rev!=0 && *pal_table_rev!=pal_local_rev);
@@ -417,9 +417,6 @@ typedef map<u64,TextureCacheData>::iterator TexCacheIter;
 #define RARCH_GL_STENCIL_ATTACHMENT GL_STENCIL_ATTACHMENT
 #endif
 
-//TexCacheList<TextureCacheData> TexCache;
-
-/* FIXME: make this work with libretro-gl framebuffers */
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
 	FBT& rv=fb_rtt;
@@ -433,12 +430,12 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	rv.TexAddr=addy>>3;
 
-	// Find the largest square power of two texture that fits into the viewport
+	/* Find the largest square POT texture that fits into the viewport */
 
 	// Get the currently bound frame buffer object. On most platforms this just gives 0.
 	//glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_i32OriginalFbo);
 
-	// Generate and bind a render buffer which will become a depth buffer shared between our two FBOs
+	/* Generate and bind a render buffer which will become a depth buffer shared between our two FBOs */
 	glGenRenderbuffers(1, &rv.depthb);
 	glBindRenderbuffer(RARCH_GL_RENDERBUFFER, rv.depthb);
 
@@ -450,7 +447,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	glRenderbufferStorage(RARCH_GL_RENDERBUFFER, RARCH_GL_DEPTH24_STENCIL8, fbw, fbh);
 
-	// Create a texture for rendering to
+	/* Create a texture for rendering to */
 	glGenTextures(1, &rv.tex);
 	glBindTexture(GL_TEXTURE_2D, rv.tex);
 
@@ -461,11 +458,11 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	// Create the object that will allow us to render to the aforementioned texture
+	/* Create the object that will allow us to render to the aforementioned texture */
 	glGenFramebuffers(1, &rv.fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, rv.fbo);
 
-	// Attach the texture to the FBO
+	/* Attach the texture to the FBO */
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rv.tex, 0);
 
 	// Attach the depth buffer we created earlier to our FBO.
@@ -479,7 +476,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
          RARCH_GL_RENDERBUFFER, rv.depthb);
 #endif
 
-	// Check that our FBO creation was successful
+	/* Check that our FBO creation was successful */
 	GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
 	verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
@@ -489,19 +486,19 @@ GLuint gl_GetTexture(TSP tsp, TCW tcw)
 {
 	TextureCacheData* tf;
 
-	if (tcw.TexAddr==fb_rtt.TexAddr && fb_rtt.tex)
+	if (tcw.TexAddr == fb_rtt.TexAddr && fb_rtt.tex)
 		return fb_rtt.tex;
 
-	//lookup texture
-	//= TexCache.Find(tcw.full,tsp.full);
-	u64 key=((u64)tcw.full<<32) | tsp.full;
+	/* Lookup texture */
+	u64 key         = ((u64)tcw.full<<32) | tsp.full;
 
-	TexCacheIter tx=TexCache.find(key);
+	TexCacheIter tx = TexCache.find(key);
 
 	if (tx!=TexCache.end())
-		tf=&tx->second;
-	else //create if not existing
+		tf = &tx->second;
+	else
 	{
+      /* create if not existing */
 		TextureCacheData tfc={0};
 		TexCache[key]=tfc;
 
@@ -513,14 +510,14 @@ GLuint gl_GetTexture(TSP tsp, TCW tcw)
 		tf->Create(true);
 	}
 
-	//update if needed
+	/* Update if needed */
 	if (tf->NeedsUpdate())
 		tf->Update();
 
-	//update state for opts/stuff
+	/* Update state for opts/stuff */
 	tf->Lookups++;
 
-	//return gl texture
+	/* Return texture */
 	return tf->texID;
 }
 
@@ -528,16 +525,16 @@ GLuint gl_GetTexture(TSP tsp, TCW tcw)
 text_info raw_GetTexture(TSP tsp, TCW tcw)
 {
 	TextureCacheData* tf; /* lookup texture */
-	text_info rv = { 0 };
-	//= TexCache.Find(tcw.full,tsp.full);
-	u64 key = ((u64)tcw.full << 32) | tsp.full;
+	text_info rv    = { 0 };
+	u64 key         = ((u64)tcw.full << 32) | tsp.full;
 
 	TexCacheIter tx = TexCache.find(key);
 
 	if (tx != TexCache.end())
 		tf = &tx->second;
-	else //create if not existing
+	else
 	{
+      /* Create if not existing */
 		TextureCacheData tfc = { 0 };
 		TexCache[key] = tfc;
 
@@ -549,19 +546,18 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 		tf->Create(false);
 	}
 
-	//update if needed
+	/* update if needed */
 	if (tf->NeedsUpdate())
 		tf->Update();
 
-	//update state for opts/stuff
+	/* update state for opts/stuff */
 	tf->Lookups++;
 
-	//return gl texture
-	rv.height = tf->h;
-	rv.width = tf->w;
-	rv.pdata = tf->pData;
+	/* return gl texture */
+	rv.height  = tf->h;
+	rv.width   = tf->w;
+	rv.pdata   = tf->pData;
 	rv.textype = tf->tex_type;
-	
 	
 	return rv;
 }
@@ -583,9 +579,7 @@ void CollectCleanup(void)
 
    for (size_t i=0; i<list.size(); i++)
    {
-      //printf("Deleting %d\n",TexCache[list[i]].texID);
       TexCache[list[i]].Delete();
-
       TexCache.erase(list[i]);
    }
 }

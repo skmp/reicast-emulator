@@ -54,14 +54,14 @@ PvrTexInfo format[8]=
 
 const u32 MipPoint[8] =
 {
-	0x00006,//8
-	0x00016,//16
-	0x00056,//32
-	0x00156,//64
-	0x00556,//128
-	0x01556,//256
-	0x05556,//512
-	0x15556//1024
+	0x00006, /* 8 */
+	0x00016, /* 16 */
+	0x00056, /* 32 */
+	0x00156, /* 64 */
+	0x00556, /* 128 */
+	0x01556, /* 256  */
+	0x05556, /* 512 */
+	0x15556  /* 1024 */
 };
 
 const GLuint PAL_TYPE[4]=
@@ -83,20 +83,20 @@ FBT fb_rtt;
 /* Texture Cache */
 struct TextureCacheData
 {
-	TSP tsp;        //dreamcast texture parameters
+	TSP tsp;             /* PowerVR texture parameters */
 	TCW tcw;
 
-	GLuint texID;   //gl texture
+   GLuint texID;        /* GL texture ID */
 	u16* pData;
 	int tex_type;
 
 	u32 Lookups;
 
-	//decoded texture info
-	u32 sa;         //pixel data start address in vram (might be offset for mipmaps/etc)
-	u32 sa_tex;		//texture data start address in vram 
-	u32 w,h;        //width & height of the texture
-	u32 size;       //size, in bytes, in vram
+	/* decoded texture info */
+   u32 sa;              /* pixel data start address in VRAM (might be offset for mipmaps/etc) */
+   u32 sa_tex;		      /* texture data start address in VRAM */
+   u32 w,h;             /* Width & height of the texture */
+   u32 size;            /* Size, in bytes, in VRAM */
 
 	PvrTexInfo *tex;
 	TexConvFP  *texconv;
@@ -106,12 +106,13 @@ struct TextureCacheData
 
 	u32 Updates;
 
-	//used for palette updates
-	u32  pal_local_rev;         //local palette rev
-	u32* pal_table_rev;         //table palette rev pointer
-	u32  indirect_color_ptr;    //palette color table index for pal. tex
-	                            //VQ quantizers table for VQ tex
-	                            //a texture can't be both VQ and PAL at the same time
+	/* Used for palette updates */
+	u32  pal_local_rev;         /* Local palette rev */
+	u32* pal_table_rev;         /* Table palette rev pointer */
+	u32  indirect_color_ptr;    /* Palette color table index for paletted texture */
+
+	                            /* VQ quantizers table for VQ texture.
+	                             * A texture can't be both VQ and PAL (paletted) at the same time */
 
 	void PrintTextureName()
 	{
@@ -144,27 +145,26 @@ struct TextureCacheData
 	//Create GL texture from tsp/tcw
 	void Create(bool isGL)
 	{
-      texID = 0;
-		//ask GL for texture ID
+      texID      = 0;
+
 		if (isGL)
 			glGenTextures(1, &texID);
 		
-		pData = 0;
-		tex_type = 0;
+		/* Reset state info */
+		pData      = 0;
+		tex_type   = 0;
+		Lookups    = 0;
+		Updates    = 0;
+		dirty      = FrameCount;
+		lock_block = 0;
 
-		//Reset state info ..
-		Lookups=0;
-		Updates=0;
-		dirty=FrameCount;
-		lock_block=0;
+		/* Decode info from TSP/TCW into the texture struct */
+		tex        = &format[tcw.PixelFmt==7?0:tcw.PixelFmt];		/* texture format table entry */
 
-		//decode info from tsp/tcw into the texture struct
-		tex=&format[tcw.PixelFmt==7?0:tcw.PixelFmt];		/* texture format table entry */
-
-		sa_tex = (tcw.TexAddr<<3) & VRAM_MASK;          /* texture start address */
-		sa     = sa_tex;						               /* data texture start address (modified for MIPs, as needed) */
-		w      = 8 << tsp.TexU;                         /* texture width */
-		h      = 8 << tsp.TexV;                         /* texture height */
+		sa_tex     = (tcw.TexAddr<<3) & VRAM_MASK;               /* texture start address */
+		sa         = sa_tex;						                     /* data texture start address (modified for MIPs, as needed) */
+		w          = 8 << tsp.TexU;                              /* texture width */
+		h          = 8 << tsp.TexV;                              /* texture height */
 
 		if (texID)
       {
@@ -190,7 +190,8 @@ struct TextureCacheData
          {
             /* Bilinear filtering */
             /* PowerVR supports also trilinear via two passes, but we ignore that for now */
-            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER, (tcw.MipMapped && settings.rend.UseMipmaps)?GL_LINEAR_MIPMAP_NEAREST:GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,
+                  (tcw.MipMapped && settings.rend.UseMipmaps)?GL_LINEAR_MIPMAP_NEAREST:GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
          }
       }
@@ -231,20 +232,21 @@ struct TextureCacheData
             {
                int stride = w;
 
-               verify(tcw.VQ_Comp==0);        /* Texture is stored 'planar' in memory, no deswizzle is needed */
+               /* Texture is stored 'planar' in memory, no deswizzle is needed */
+               verify(tcw.VQ_Comp==0);        
 
                /* Planar textures support stride selection,
                 * mostly used for NPOT textures (videos). */
                if (tcw.StrideSel)
                   stride  = (TEXT_CONTROL&31)*32;
 
-               texconv    = tex->PL;             /* Call the format specific conversion code */
-               size       = stride*h*tex->bpp/8; /* calculate the size, in bytes, for the locking. */
+               texconv    = tex->PL;                  /* Call the format specific conversion code */
+               size       = stride * h * tex->bpp/8;  /* Calculate the size, in bytes, for the locking. */
             }
             else
             {
 #if 0
-               verify(w==h || !tcw.MipMapped); // are non square mipmaps supported ? i can't recall right now *WARN*
+               verify(w==h || !tcw.MipMapped); /* Are non-square mipmaps supported ? i can't recall right now *WARN* */
 #endif
 
                size = w * h;
@@ -278,33 +280,32 @@ struct TextureCacheData
 	void Update(void)
    {
       PixelBuffer pbt;
+      GLuint textype;
+      u32 stride         = w;
 
       Updates++;                                   /* texture state tracking stuff */
-      dirty=0;
-
-      GLuint textype=tex->type;
+      dirty              = 0;
+      textype            = tex->type;
 
       if (pal_table_rev) 
       {
-         textype=PAL_TYPE[PAL_RAM_CTRL&3];
-         pal_local_rev=*pal_table_rev;             /* make sure to update the local rev, 
+         textype         = PAL_TYPE[PAL_RAM_CTRL&3];
+         pal_local_rev   = *pal_table_rev;             /* make sure to update the local rev, 
                                                       so it won't have to redo the texture */
       }
 
-      palette_index=indirect_color_ptr;            /* might be used if paletted texture */
-      vq_codebook=(u8*)&vram[indirect_color_ptr];  /* might be used if VQ texture */
+      palette_index      = indirect_color_ptr;              /* might be used if paletted texture */
+      vq_codebook        = (u8*)&vram[indirect_color_ptr];  /* might be used if VQ texture */
 
       //texture conversion work
-      pbt.p_buffer_start=pbt.p_current_line=temp_tex_buffer;
+      pbt.p_buffer_start = pbt.p_current_line=temp_tex_buffer;
       pbt.pixels_per_line=w;
 
-      u32 stride=w;
-
       if (tcw.StrideSel && tcw.ScanOrder && tex->PL) 
-         stride=(TEXT_CONTROL&31)*32; //I think this needs +1 ?
+         stride = (TEXT_CONTROL&31)*32; //I think this needs +1 ?
 
       if(texconv)
-         texconv(&pbt,(u8*)&vram[sa],stride,h);
+         texconv(&pbt,(u8*)&vram[sa], stride, h);
       else
       {
          /* fill it in with a temporary color. */
@@ -355,14 +356,16 @@ struct TextureCacheData
 #else
          pData = (u16*)memalign_alloc(16, w * h * 16);
 #endif
-         for (int y = 0; y < h; y++) {
-            for (int x = 0; x < w; x++) {
+         for (int y = 0; y < h; y++)
+         {
+            for (int x = 0; x < w; x++)
+            {
                u32* data = (u32*)&pData[(x + y*w) * 8];
 
-               data[0] = decoded_colors[tex_type][temp_tex_buffer[(x + 1) % w + (y + 1) % h * w]];
-               data[1] = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 1) % h * w]];
-               data[2] = decoded_colors[tex_type][temp_tex_buffer[(x + 1) % w + (y + 0) % h * w]];
-               data[3] = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 0) % h * w]];
+               data[0]   = decoded_colors[tex_type][temp_tex_buffer[(x + 1) % w + (y + 1) % h * w]];
+               data[1]   = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 1) % h * w]];
+               data[2]   = decoded_colors[tex_type][temp_tex_buffer[(x + 1) % w + (y + 0) % h * w]];
+               data[3]   = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 0) % h * w]];
             }
          }
       }
@@ -432,8 +435,10 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	/* Find the largest square POT texture that fits into the viewport */
 
-	// Get the currently bound frame buffer object. On most platforms this just gives 0.
-	//glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_i32OriginalFbo);
+	/* Get the currently bound frame buffer object. On most platforms this just gives 0. */
+#if 0
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_i32OriginalFbo);
+#endif
 
 	/* Generate and bind a render buffer which will become a depth buffer shared between our two FBOs */
 	glGenRenderbuffers(1, &rv.depthb);

@@ -30,6 +30,11 @@
 #define CH_REC_ALFOS_ALFOWS_PLFOS       0x1c
 #define CH_REC_PLFOWS_LFOF_RE           0x1d
 
+#define CH_FORMAT_PCM16                 0
+#define CH_FORMAT_PCM8                  1
+#define CH_FORMAT_ADPCM1                2
+#define CH_FORMAT_ADPCM2                3
+
 #define CDDA_SIZE  (2352/2)
 
 s16 cdda_sector[CDDA_SIZE]={0};
@@ -793,7 +798,7 @@ static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
          s1>>=16;
          break;
 
-      case 0:
+      case CH_FORMAT_PCM16:
          {
             //s16* ptr=(s16*)&aica_ram[(addr&~1)+(CA<<1)];
             sptr16+=CA;
@@ -802,7 +807,7 @@ static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
          }
          break;
 
-      case 1:
+      case CH_FORMAT_PCM8:
          {
             //s8* ptr=(s8*)&aica_ram[addr+(CA)];
             sptr8+=CA;
@@ -811,8 +816,8 @@ static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
          }
          break;
 
-      case 2:
-      case 3:
+      case CH_FORMAT_ADPCM1:
+      case CH_FORMAT_ADPCM2:
          {
             //u32 offs=CA;
             u8 ad1=uptr8[CA>>1];

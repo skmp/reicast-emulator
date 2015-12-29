@@ -566,22 +566,25 @@ template <u32 Type, bool SortingEnabled>
 static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 {
    //force everything to be shadowed
-   const u32 stencil=0x80;
+   const u32 stencil = 0x80;
 
-   //has to preserve cache_tsp/cache_isp
-   //can freely use cache_tcw
-   CurrentShader=&program_table[GetProgramID(Type==ListType_Punch_Through
-         ? 1 : 0,
+   /* Has to preserve cache_TSP/ISP
+    * Can freely use cache TCW */
+
+   int prog_id   = GetProgramID(
+         (Type == ListType_Punch_Through) ? 1 : 0,
          SetTileClip(gp->tileclip,false)+1,
          gp->pcw.Texture,
          gp->tsp.UseAlpha,
          gp->tsp.IgnoreTexA,
          gp->tsp.ShadInstr,
          gp->pcw.Offset,
-         gp->tsp.FogCtrl)];
+         gp->tsp.FogCtrl);
+   CurrentShader = &program_table[prog_id];
 
    if (CurrentShader->program == -1)
       CompilePipelineShader(CurrentShader);
+
    if (CurrentShader->program != cache.program)
    {
       cache.program    = CurrentShader->program;
@@ -638,20 +641,15 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
    {
       cache.isp.full=gp->isp.full;
 
-      //set Z mode, only if required
+      /* Set Z mode, only if required */
       if (!(Type==ListType_Punch_Through || (Type==ListType_Translucent && SortingEnabled)))
          glDepthFunc(Zfunction[gp->isp.DepthMode]);
 
+      gl_state.depthmask    = !gp->isp.ZWriteDis;
 #if TRIG_SORT
       if (SortingEnabled)
-      {
          gl_state.depthmask = GL_FALSE;
-      }
-      else
 #endif
-      {
-         gl_state.depthmask = !gp->isp.ZWriteDis;
-      }
       glDepthMask(gl_state.depthmask);
    }
 }
@@ -1459,17 +1457,26 @@ Tile clip
 
 static bool gl_create_resources(void)
 {
-	PipelineShader* dshader=0;
-	u32 i, cp_AlphaTest, pp_ClipTestMode, compile=0;
+   u32 i;
+   u32 cp_AlphaTest;
+   u32 pp_ClipTestMode;
+   u32 pp_UseAlpha;
+   u32 pp_Texture;
+   u32 pp_FogCtrl;
+   u32 pp_IgnoreTexA;
+   u32 pp_Offset;
+   u32 pp_ShadInstr;
+	PipelineShader* dshader  = 0;
+   u32 compile              = 0;
 
 #ifdef CORE
-	//create vao
-	//This is really not "proper", vaos are suposed to be defined once
-	//i keep updating the same one to make the es2 code work in 3.1 context
+	/* create VAO
+	 * This is really not "proper", vaos are suposed to be defined once
+	 * I keep updating the same one to make the es2 code work in 3.1 context */
 	glGenVertexArrays(1, &vbo.vao);
 #endif
 
-	//create vbos
+	/* create VBOs */
 	glGenBuffers(1, &vbo.geometry);
 	glGenBuffers(1, &vbo.modvols);
 	glGenBuffers(1, &vbo.idxs);
@@ -1483,20 +1490,27 @@ static bool gl_create_resources(void)
 	{
       for (pp_ClipTestMode = 0; pp_ClipTestMode <= 2; pp_ClipTestMode++)
 		{
-			forl(pp_UseAlpha,1)
+			for (pp_UseAlpha = 0; pp_UseAlpha <= 1; pp_UseAlpha++)
 			{
-				forl(pp_Texture,1)
+				for (pp_Texture = 0; pp_Texture <= 1; pp_Texture++)
 				{
-					forl(pp_FogCtrl,3)
+					for (pp_FogCtrl = 0; pp_FogCtrl <= 3; pp_FogCtrl++)
 					{
-						forl(pp_IgnoreTexA,1)
+						for (pp_IgnoreTexA = 0; pp_IgnoreTexA <= 1; pp_IgnoreTexA++)
 						{
-							forl(pp_ShadInstr,3)
+							for (pp_ShadInstr = 0; pp_ShadInstr <= 3; pp_ShadInstr++)
 							{
-								forl(pp_Offset,1)
+								for (pp_Offset = 0; pp_Offset <= 1; pp_Offset++)
 								{
-									dshader=&program_table[GetProgramID(cp_AlphaTest,pp_ClipTestMode,pp_Texture,pp_UseAlpha,pp_IgnoreTexA,
-															pp_ShadInstr,pp_Offset,pp_FogCtrl)];
+                           int prog_id              = GetProgramID(
+                                 cp_AlphaTest,
+                                 pp_ClipTestMode,
+                                 pp_Texture,
+                                 pp_UseAlpha,
+                                 pp_IgnoreTexA,
+                                 pp_ShadInstr,
+                                 pp_Offset,pp_FogCtrl);
+									dshader                  = &program_table[prog_id];
 
 									dshader->cp_AlphaTest    = cp_AlphaTest;
 									dshader->pp_ClipTestMode = pp_ClipTestMode-1;

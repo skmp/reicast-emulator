@@ -74,7 +74,7 @@ void UpdateSh4Ints(void)
    }
    else
    {
-      if (SB_ISTEXT&SH4_IRQ_BIT)
+      if (SB_ISTEXT & SH4_IRQ_BIT)
          asic_CancelInterrupt(holly_SPU_IRQ);
    }
 
@@ -111,6 +111,7 @@ public:
 	s32 c_step;
 	u32 m_step;
 	u32 id;
+
 	void Init(u8* regbase,u32 timer)
 	{
 		data=(AicaTimerData*)&regbase[0x2890 + timer*4];
@@ -118,6 +119,7 @@ public:
 		m_step=1<<(data->md);
 		c_step=m_step;
 	}
+
 	void StepTimer(u32 samples)
 	{
 		do
@@ -125,39 +127,41 @@ public:
 			c_step--;
 			if (c_step==0)
 			{
-				c_step=m_step;
-				data->count++;
+				c_step       = m_step;
+				data->count += 1;
+
 				if (data->count==0)
 				{
-					if (id==0)
-					{
-						SCIPD->TimerA=1;
-						MCIPD->TimerA=1;
-					}
-					else if (id==1)
-					{
-						SCIPD->TimerB=1;
-						MCIPD->TimerB=1;
-					}
-					else
-					{
-						SCIPD->TimerC=1;
-						MCIPD->TimerC=1;
-					}
+               switch (id)
+               {
+                  case 0:
+                     SCIPD->TimerA=1;
+                     MCIPD->TimerA=1;
+                     break;
+                  case 1:
+                     SCIPD->TimerB=1;
+                     MCIPD->TimerB=1;
+                     break;
+                  default:
+                     SCIPD->TimerC=1;
+                     MCIPD->TimerC=1;
+                     break;
+               }
 				}
 			}
-		} while(--samples);
+		}while(--samples);
 	}
 
-	void RegisterWrite()
-	{
-		u32 n_step=1<<(data->md);
-		if (n_step!=m_step)
-		{
-			m_step=n_step;
-			c_step=m_step;
-		}
-	}
+	void RegisterWrite(void)
+   {
+      u32 n_step = 1 << (data->md);
+
+      if (n_step == m_step)
+         return;
+
+      m_step = n_step;
+      c_step = m_step;
+   }
 };
 
 AicaTimer timers[3];
@@ -191,6 +195,7 @@ void WriteAicaReg(u32 reg,u32 data)
    {
       case SCIPD_addr:
          verify(sz!=1);
+
          if (data & (1<<5))
          {
             SCIPD->SCPU=1;

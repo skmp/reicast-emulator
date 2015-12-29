@@ -395,16 +395,14 @@ enum _EG_state
          RegWrite(i);
       disable();
    }
-   void disable()
+
+   void disable(void)
    {
       enabled=false;
       SetAegState(EG_Release);
       AEG.SetValue(0x3FF);
    }
-   void enable()
-   {
-      enabled=true;
-   }
+
    __forceinline SampleType InterpolateSample()
    {
       SampleType rv;
@@ -483,7 +481,7 @@ enum _EG_state
       if (AEG.state != EG_Release)
          return;
 
-      enable();                  //if it was off then turn it on !
+      enabled = true;            //if it was off then turn it on !
       SetAegState(EG_Attack);    // reset AEG
       AEG.SetValue(0x3FF);       //start from 0x3FF ? .. it seems so !
 
@@ -812,10 +810,9 @@ static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
             s32 q=ch->adpcm.last_quant;
             s0=DecodeADPCM(ad1,ch->s0,q);
             ch->adpcm.last_quant=q;
+            s1 = 0;
             if (last)
                s1=DecodeADPCM(ad2,s0,q);
-            else
-               s1=0;
          }
          break;
    }

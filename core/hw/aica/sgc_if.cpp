@@ -75,8 +75,6 @@ const s32 adpcm_scale[16] =
 
 void AICA_Sample();
 
-//Remove the fractional part , with rounding ;) -- does not need an extra bit
-#define well(a,bits) (((a) + ((1<<(bits-1))))>>bits)
 //Remove the fractional part by chopping..
 #define FPChop(a,bits) ((a)>>bits)
 
@@ -940,7 +938,7 @@ static void CalcPlfo(ChannelEx* ch)
 }
 
 template<u32 state>
-void AegStep(ChannelEx* ch)
+static void AegStep(ChannelEx* ch)
 {
    switch(state)
    {

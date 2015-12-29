@@ -18,6 +18,16 @@
 #define clip_verify(x)
 #endif
 
+#define CH_REC_FORMAT_KEY_LOOP          0x01
+#define CH_REC_FNS                      0x18
+#define CH_REC_FNS_OCT                  0x19
+#define CH_REC_AR_D1R                   0x10
+#define CH_REC_D1R_D2R                  0x11
+#define CH_REC_RR_DL                    0x14
+#define CH_REC_DL_KRS_LS                0x15
+#define CH_REC_ALFOS_ALFOWS_PLFOS       0x1c
+#define CH_REC_PLFOWS_LFOF_RE           0x1d
+
 #define CDDA_SIZE  (2352/2)
 
 s16 cdda_sector[CDDA_SIZE]={0};
@@ -653,7 +663,7 @@ enum _EG_state
             UpdateSA();
             break;
 
-         case 0x01: //yay ?
+         case CH_REC_FORMAT_KEY_LOOP:
             UpdateStreamStep();
             UpdateSA();
             if (ccd->KYONEX)
@@ -681,24 +691,24 @@ enum _EG_state
             UpdateLoop();
             break;
 
-         case 0x10://D1R,AR
-         case 0x11://D2R,D1R
+         case CH_REC_AR_D1R:
+         case CH_REC_D1R_D2R:
             UpdateAEG();
             break;
 
-         case 0x14://RR,DL
-         case 0x15://DL,KRS,LPSLINK
+         case CH_REC_RR_DL:
+         case CH_REC_DL_KRS_LS:
             UpdateStreamStep();
             UpdateAEG();
             break;
 
-         case 0x18://FNS
-         case 0x19://FNS,OCT
+         case CH_REC_FNS:
+         case CH_REC_FNS_OCT:
             UpdatePitch();
             break;
 
-         case 0x1C://ALFOS,ALFOWS,PLFOS
-         case 0x1D://PLFOWS,LFOF,RE
+         case CH_REC_ALFOS_ALFOWS_PLFOS:
+         case CH_REC_PLFOWS_LFOF_RE:
             UpdateLFO();
             break;
 

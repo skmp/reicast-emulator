@@ -438,15 +438,15 @@ static GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentSh
 {
 	GLint compile_log_len;
 	GLint result;
-	//create shaders
-	GLuint vs=gl_CompileShader(VertexShader ,GL_VERTEX_SHADER);
-	GLuint ps=gl_CompileShader(FragmentShader ,GL_FRAGMENT_SHADER);
-
+	/* Create vertex/fragment shaders */
+	GLuint vs      = gl_CompileShader(VertexShader ,GL_VERTEX_SHADER);
+	GLuint ps      = gl_CompileShader(FragmentShader ,GL_FRAGMENT_SHADER);
 	GLuint program = glCreateProgram();
+
 	glAttachShader(program, vs);
 	glAttachShader(program, ps);
 
-	//bind vertex attribute to vbo inputs
+	/* Bind vertex attribute to VBO inputs */
 	glBindAttribLocation(program, VERTEX_POS_ARRAY,      "in_pos");
 	glBindAttribLocation(program, VERTEX_COL_BASE_ARRAY, "in_base");
 	glBindAttribLocation(program, VERTEX_COL_OFFS_ARRAY, "in_offs");
@@ -660,16 +660,16 @@ static void DrawList(const List<PolyParam>& gply)
    PolyParam* params=gply.head();
    int count=gply.used();
 
+   /* We want at least 1 PParam */
    if (count==0)
       return;
-   //we want at least 1 PParam
 
-   //reset the cache state
+   /* reset the cache state */
    cache.Reset(params);
 
-   //set some 'global' modes for all primitives
+   /* set some 'global' modes for all primitives */
 
-   //Z funct. can be fixed on these combinations, avoid setting it all the time
+   /* Z funct. can be fixed on these combinations, avoid setting it all the time */
    if (Type==ListType_Punch_Through || (Type==ListType_Translucent && SortingEnabled))
       glDepthFunc(Zfunction[6]);
 
@@ -684,7 +684,7 @@ static void DrawList(const List<PolyParam>& gply)
 
    while(count-->0)
    {
-      if (params->count>2) //this actually happens for some games. No idea why ..
+      if (params->count>2) /* this actually happens for some games. No idea why .. */
       {
          SetGPState<Type,SortingEnabled>(params, 0);
          glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_SHORT, (GLvoid*)(2*params->first));
@@ -705,40 +705,43 @@ static void DrawList(const List<PolyParam>& gply)
 
 bool operator<(const PolyParam &left, const PolyParam &right)
 {
-/* put any condition you want to sort on here */
-	return left.zvZ<right.zvZ;
-	//return left.zMin<right.zMax;
+   /* put any condition you want to sort on here */
+	return left.zvZ  < right.zvZ;
+#if 0
+	return left.zMin < right.zMax;
+#endif
 }
 
 //Sort based on min-z of each strip
 void SortPParams(void)
 {
+   u16 *idx_base      = NULL;
+   Vertex *vtx_base   = NULL;
+   PolyParam *pp      = NULL;
+   PolyParam *pp_end  = NULL;
+
    if (pvrrc.verts.used()==0 || pvrrc.global_param_tr.used()<=1)
       return;
 
-   Vertex* vtx_base=pvrrc.verts.head();
-   u16* idx_base=pvrrc.idx.head();
-
-   PolyParam* pp=pvrrc.global_param_tr.head();
-   PolyParam* pp_end= pp + pvrrc.global_param_tr.used();
+   vtx_base          = pvrrc.verts.head();
+   idx_base          = pvrrc.idx.head();
+   pp                = pvrrc.global_param_tr.head();
+   pp_end            = pp + pvrrc.global_param_tr.used();
 
    while(pp!=pp_end)
    {
       if (pp->count<2)
-      {
          pp->zvZ=0;
-      }
       else
       {
-         u16* idx=idx_base+pp->first;
+         u16*      idx   = idx_base+pp->first;
+         Vertex*   vtx   = vtx_base+idx[0];
+         Vertex* vtx_end = vtx_base + idx[pp->count-1]+1;
+         u32 zv          = 0xFFFFFFFF;
 
-         Vertex* vtx=vtx_base+idx[0];
-         Vertex* vtx_end=vtx_base + idx[pp->count-1]+1;
-
-         u32 zv=0xFFFFFFFF;
          while(vtx!=vtx_end)
          {
-            zv=min(zv,(u32&)vtx->z);
+            zv = min(zv,(u32&)vtx->z);
             vtx++;
          }
 
@@ -773,7 +776,7 @@ bool operator<(const IndexTrig &left, const IndexTrig &right)
 //are two poly params the same?
 static inline bool PP_EQ(PolyParam* pp0, PolyParam* pp1)
 {
-	return 
+   return 
       (pp0->pcw.full&PCW_DRAW_MASK)==(pp1->pcw.full&PCW_DRAW_MASK) 
       && pp0->isp.full==pp1->isp.full 
       && pp0->tcw.full==pp1->tcw.full
@@ -791,227 +794,240 @@ static inline void fill_id(u16* d, Vertex* v0, Vertex* v1, Vertex* v2,  Vertex* 
 
 static void GenSorted(void)
 {
-	u32 tess_gen=0;
+   static vector<IndexTrig> lst;
+   static vector<u16> vidx_sort;
 
-	pidx_sort.clear();
+   static u32 vtx_cnt;
+   int idx            = -1;
+#ifndef NDEBUG
+   u32 tess_gen       =  0;
+#endif
+   int pfsti          =  0;
 
-	if (pvrrc.verts.used()==0 || pvrrc.global_param_tr.used()<=1)
-		return;
+   pidx_sort.clear();
 
-	Vertex* vtx_base=pvrrc.verts.head();
-	u16* idx_base=pvrrc.idx.head();
+   if (pvrrc.verts.used()==0 || pvrrc.global_param_tr.used()<=1)
+      return;
 
-	PolyParam* pp_base=pvrrc.global_param_tr.head();
-	PolyParam* pp=pp_base;
-	PolyParam* pp_end= pp + pvrrc.global_param_tr.used();
-	
-	Vertex* vtx_arr=vtx_base+idx_base[pp->first];
-	vtx_sort_base=vtx_base;
+   Vertex* vtx_base=pvrrc.verts.head();
+   u16* idx_base=pvrrc.idx.head();
 
-	static u32 vtx_cnt;
+   PolyParam* pp_base=pvrrc.global_param_tr.head();
+   PolyParam* pp=pp_base;
+   PolyParam* pp_end= pp + pvrrc.global_param_tr.used();
 
-	int vtx_count=idx_base[pp_end[-1].first+pp_end[-1].count-1]-idx_base[pp->first];
-	if (vtx_count>vtx_cnt)
-		vtx_cnt=vtx_count;
+   Vertex* vtx_arr=vtx_base+idx_base[pp->first];
+   vtx_sort_base=vtx_base;
+   int vtx_count=idx_base[pp_end[-1].first+pp_end[-1].count-1]-idx_base[pp->first];
+   if (vtx_count>vtx_cnt)
+      vtx_cnt=vtx_count;
 
 #if PRINT_SORT_STATS
-	printf("TVTX: %d || %d\n",vtx_cnt,vtx_count);
+   printf("TVTX: %d || %d\n",vtx_cnt,vtx_count);
 #endif
-	
-	if (vtx_count<=0)
-		return;
 
-	//make lists of all triangles, with their pid and vid
-	static vector<IndexTrig> lst;
-	
-	lst.resize(vtx_count*4);
-	
+   if (vtx_count<=0)
+      return;
 
-	int pfsti=0;
+   /* Make lists of all triangles, with their PID and VID */
 
-	while(pp!=pp_end)
-	{
-		u32 ppid=(pp-pp_base);
+   lst.resize(vtx_count*4);
 
-		if (pp->count>2)
-		{
-			u16* idx=idx_base+pp->first;
-
-			Vertex* vtx=vtx_base+idx[0];
-			Vertex* vtx_end=vtx_base + idx[pp->count-1]-1;
-			u32 flip=0;
-			while(vtx!=vtx_end)
-			{
-				Vertex* v0, * v1, * v2, * v3, * v4, * v5;
-
-				if (flip)
-				{
-					v0=&vtx[2];
-					v1=&vtx[1];
-					v2=&vtx[0];
-				}
-				else
-				{
-					v0=&vtx[0];
-					v1=&vtx[1];
-					v2=&vtx[2];
-				}
-
-				if (settings.pvr.subdivide_transp)
-				{
-					u32 tess_x=(max3(v0->x,v1->x,v2->x)-min3(v0->x,v1->x,v2->x))/32;
-					u32 tess_y=(max3(v0->y,v1->y,v2->y)-min3(v0->y,v1->y,v2->y))/32;
-
-					if (tess_x==1)
-                  tess_x=0;
-					if (tess_y==1)
-                  tess_y=0;
-
-					//bool tess=(maxZ(v0,v1,v2)/minZ(v0,v1,v2))>=1.2;
-
-					if (tess_x + tess_y)
-					{
-						v3=pvrrc.verts.Append(3);
-						v4=v3+1;
-						v5=v4+1;
-
-						//xyz
-						for (int i=0;i<3;i++)
-						{
-							((float*)&v3->x)[i]=((float*)&v0->x)[i]*0.5f+((float*)&v2->x)[i]*0.5f;
-							((float*)&v4->x)[i]=((float*)&v0->x)[i]*0.5f+((float*)&v1->x)[i]*0.5f;
-							((float*)&v5->x)[i]=((float*)&v1->x)[i]*0.5f+((float*)&v2->x)[i]*0.5f;
-						}
-
-						//*TODO* Make it perspective correct
-
-						//uv
-						for (int i=0;i<2;i++)
-						{
-							((float*)&v3->u)[i]=((float*)&v0->u)[i]*0.5f+((float*)&v2->u)[i]*0.5f;
-							((float*)&v4->u)[i]=((float*)&v0->u)[i]*0.5f+((float*)&v1->u)[i]*0.5f;
-							((float*)&v5->u)[i]=((float*)&v1->u)[i]*0.5f+((float*)&v2->u)[i]*0.5f;
-						}
-
-						//color
-						for (int i=0;i<4;i++)
-						{
-							v3->col[i]=v0->col[i]/2+v2->col[i]/2;
-							v4->col[i]=v0->col[i]/2+v1->col[i]/2;
-							v5->col[i]=v1->col[i]/2+v2->col[i]/2;
-						}
-
-						fill_id(lst[pfsti].id,v0,v3,v4,vtx_base);
-						lst[pfsti].pid= ppid ;
-						lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-						pfsti++;
-
-						fill_id(lst[pfsti].id,v2,v3,v5,vtx_base);
-						lst[pfsti].pid= ppid ;
-						lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-						pfsti++;
-
-						fill_id(lst[pfsti].id,v3,v4,v5,vtx_base);
-						lst[pfsti].pid= ppid ;
-						lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-						pfsti++;
-
-						fill_id(lst[pfsti].id,v5,v4,v1,vtx_base);
-						lst[pfsti].pid= ppid ;
-						lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-						pfsti++;
-
-						tess_gen+=3;
-					}
-					else
-					{
-						fill_id(lst[pfsti].id,v0,v1,v2,vtx_base);
-						lst[pfsti].pid= ppid ;
-						lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-						pfsti++;
-					}
-				}
-				else
-				{
-					fill_id(lst[pfsti].id,v0,v1,v2,vtx_base);
-					lst[pfsti].pid= ppid ;
-					lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-					pfsti++;
-				}
-
-				flip ^= 1;
-				
-				vtx++;
-			}
-		}
-		pp++;
-	}
-
-	u32 aused=pfsti;
-
-	lst.resize(aused);
-
-	//sort them
-	std::stable_sort(lst.begin(),lst.end());
-
-	//Merge pids/draw cmds if two different pids are actually equal
-   for (u32 k=1;k<aused;k++)
+   while(pp != pp_end)
    {
-      if (lst[k].pid!=lst[k-1].pid)
+      Vertex *vtx     = NULL;
+      Vertex *vtx_end = NULL;
+      u16 *idx        = NULL;
+      u32 flip        = 0;
+      u32 ppid        = (pp-pp_base);
+
+      if (pp->count <= 2)
       {
-         if (PP_EQ(&pp_base[lst[k].pid],&pp_base[lst[k-1].pid]))
-            lst[k].pid=lst[k-1].pid;
+         pp++;
+         continue;
       }
+
+      idx             = idx_base + pp->first;
+      vtx             = vtx_base+idx[0];
+      vtx_end         = vtx_base + idx[pp->count-1]-1;
+      flip            = 0;
+
+      while(vtx != vtx_end)
+      {
+         Vertex *v0   = &vtx[0];
+         Vertex *v1   = &vtx[1];
+         Vertex *v2   = &vtx[2];
+
+         if (flip)
+         {
+            v0=&vtx[2];
+            v1=&vtx[1];
+            v2=&vtx[0];
+         }
+
+         if (settings.pvr.subdivide_transp)
+         {
+            u32 tess_x = (max3(v0->x,v1->x,v2->x)-min3(v0->x,v1->x,v2->x))/32;
+            u32 tess_y = (max3(v0->y,v1->y,v2->y)-min3(v0->y,v1->y,v2->y))/32;
+
+            if (tess_x == 1)
+               tess_x = 0;
+            if (tess_y == 1)
+               tess_y = 0;
+
+            //bool tess=(maxZ(v0,v1,v2)/minZ(v0,v1,v2))>=1.2;
+
+            if (tess_x + tess_y)
+            {
+               Vertex *v3 = pvrrc.verts.Append(3);
+               Vertex *v4 = v3+1;
+               Vertex *v5 = v4+1;
+
+               /* XYZ coordinates */
+               for (int i=0;i<3;i++)
+               {
+                  ((float*)&v3->x)[i]=((float*)&v0->x)[i]*0.5f+((float*)&v2->x)[i]*0.5f;
+                  ((float*)&v4->x)[i]=((float*)&v0->x)[i]*0.5f+((float*)&v1->x)[i]*0.5f;
+                  ((float*)&v5->x)[i]=((float*)&v1->x)[i]*0.5f+((float*)&v2->x)[i]*0.5f;
+               }
+
+               //*TODO* Make it perspective correct
+
+               /* UV coordinates */
+               for (int i=0;i<2;i++)
+               {
+                  ((float*)&v3->u)[i]=((float*)&v0->u)[i]*0.5f+((float*)&v2->u)[i]*0.5f;
+                  ((float*)&v4->u)[i]=((float*)&v0->u)[i]*0.5f+((float*)&v1->u)[i]*0.5f;
+                  ((float*)&v5->u)[i]=((float*)&v1->u)[i]*0.5f+((float*)&v2->u)[i]*0.5f;
+               }
+
+               /* Color coordinates */
+               for (int i=0;i<4;i++)
+               {
+                  v3->col[i]=v0->col[i]/2+v2->col[i]/2;
+                  v4->col[i]=v0->col[i]/2+v1->col[i]/2;
+                  v5->col[i]=v1->col[i]/2+v2->col[i]/2;
+               }
+
+               fill_id(lst[pfsti].id,v0,v3,v4,vtx_base);
+               lst[pfsti].pid= ppid ;
+               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
+               pfsti++;
+
+               fill_id(lst[pfsti].id,v2,v3,v5,vtx_base);
+               lst[pfsti].pid= ppid ;
+               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
+               pfsti++;
+
+               fill_id(lst[pfsti].id,v3,v4,v5,vtx_base);
+               lst[pfsti].pid= ppid ;
+               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
+               pfsti++;
+
+               fill_id(lst[pfsti].id,v5,v4,v1,vtx_base);
+               lst[pfsti].pid= ppid ;
+               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
+               pfsti++;
+
+#ifndef NDEBUG
+               tess_gen += 3;
+#endif
+            }
+            else
+            {
+               fill_id(lst[pfsti].id,v0,v1,v2,vtx_base);
+               lst[pfsti].pid= ppid ;
+               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
+               pfsti++;
+            }
+         }
+         else
+         {
+            fill_id(lst[pfsti].id,v0,v1,v2,vtx_base);
+            lst[pfsti].pid= ppid ;
+            lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
+            pfsti++;
+         }
+
+         flip ^= 1;
+         vtx++;
+      }
+      pp++;
    }
 
-	//re-assemble them into drawing commands
-	static vector<u16> vidx_sort;
+   u32 aused=pfsti;
 
-	vidx_sort.resize(aused*3);
+   lst.resize(aused);
 
-	int idx=-1;
+   /* sort them */
+   std::stable_sort(lst.begin(),lst.end());
 
-	for (u32 i=0; i<aused; i++)
+   /* Merge PIDs/draw commands if two different PIDs are actually equal */
+
+   for (u32 k = 1; k < aused; k++)
    {
-      int pid=lst[i].pid;
-      u16* midx=lst[i].id;
+      if (lst[k].pid == lst[k-1].pid)
+         continue;
 
-      vidx_sort[i*3 + 0]=midx[0];
-      vidx_sort[i*3 + 1]=midx[1];
-      vidx_sort[i*3 + 2]=midx[2];
+      if (PP_EQ(&pp_base[lst[k].pid],&pp_base[lst[k-1].pid]))
+         lst[k].pid=lst[k-1].pid;
+   }
+
+   /* Reassemble vertex indices into drawing commands */
+
+   vidx_sort.resize(aused*3);
+
+   for (u32 i=0; i<aused; i++)
+   {
+      SortTrigDrawParam stdp;
+      int   pid          = lst[i].pid;
+      u16* midx          = lst[i].id;
+
+      vidx_sort[i*3 + 0] = midx[0];
+      vidx_sort[i*3 + 1] = midx[1];
+      vidx_sort[i*3 + 2] = midx[2];
 
       if (idx == pid)
          continue;
 
-      SortTrigDrawParam stdp={pp_base + pid, (u16)(i*3), 0};
+      stdp.ppid  = pp_base + pid;
+      stdp.first = (u16)(i*3);
+      stdp.count = 0;
 
       if (idx!=-1)
       {
-         SortTrigDrawParam* last=&pidx_sort[pidx_sort.size()-1];
-         last->count=stdp.first-last->first;
+         SortTrigDrawParam *last = &pidx_sort[pidx_sort.size()-1];
+
+         if (last)
+            last->count=stdp.first-last->first;
       }
 
       pidx_sort.push_back(stdp);
       idx=pid;
    }
 
-	SortTrigDrawParam* stdp=&pidx_sort[pidx_sort.size()-1];
-	stdp->count=aused*3-stdp->first;
+   SortTrigDrawParam *stdp = &pidx_sort[pidx_sort.size()-1];
+
+   if (stdp)
+      stdp->count=aused*3-stdp->first;
 
 #if PRINT_SORT_STATS
-	printf("Reassembled into %d from %d\n",pidx_sort.size(),pp_end-pp_base);
+   printf("Reassembled into %d from %d\n",pidx_sort.size(),pp_end-pp_base);
 #endif
 
-	//Upload to GPU if needed
-	if (pidx_sort.size())
-	{
-		//Bind and upload sorted index buffer
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER,vidx_sort.size()*2,&vidx_sort[0],GL_STREAM_DRAW);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+   /* Upload to GPU if needed, otherwise return */
+   if (!pidx_sort.size())
+      return;
 
-		if (tess_gen) printf("Generated %.2fK Triangles !\n",tess_gen/1000.0);
-	}
+   /* Bind and upload sorted index buffer */
+   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
+   glBufferData(GL_ELEMENT_ARRAY_BUFFER,vidx_sort.size()*2,&vidx_sort[0],GL_STREAM_DRAW);
+   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+#ifndef NDEBUG
+   if (tess_gen)
+      printf("Generated %.2fK Triangles !\n",tess_gen/1000.0);
+#endif
 }
 
 static void DrawSorted(void)
@@ -1484,8 +1500,6 @@ static bool gl_create_resources(void)
 
 	memset(program_table,0,sizeof(program_table));
 
-#define forl(name,max) for(u32 name=0;name<=max;name++)
-
    for(cp_AlphaTest = 0; cp_AlphaTest <= 1; cp_AlphaTest++)
 	{
       for (pp_ClipTestMode = 0; pp_ClipTestMode <= 2; pp_ClipTestMode++)
@@ -1547,66 +1561,67 @@ static bool gl_create_resources(void)
 	return true;
 }
 
-GLuint gl_CompileShader(const char* shader,GLuint type);
-
-//setup
-
 static void tryfit(float* x,float* y)
 {
 	//y=B*ln(x)+A
    double a,b;
    unsigned i;
-	float maxdev=0;
-	double sylnx=0,sy=0,slnx=0,slnx2=0;
-
-	u32 cnt=0;
+	float maxdev = 0;
+	double sylnx = 0;
+   double sy    = 0;
+   double slnx  = 0;
+   double slnx2 = 0;
+	u32 cnt      = 0;
 
 	for (i=0;i<128;i++)
 	{
+      unsigned j;
 		int rep=1;
 
-		//discard values clipped to 0 or 1
+		/* Discard values clipped to 0 or 1 */
 		if (i<128 && y[i]==1 && y[i+1]==1)
 			continue;
 
 		if (i>0 && y[i]==0 && y[i-1]==0)
 			continue;
 
-		//Add many samples for first and last value (fog-in, fog-out -> important)
+		/* Add many samples for first and last value 
+       * (fog-in, fog-out -> important) */
 		if (i>0 && y[i]!=1 && y[i-1]==1)
-			rep=10000;
+			rep = 10000;
 
 		if (i<128 && y[i]!=0 && y[i+1]==0)
-			rep=10000;
+			rep = 10000;
 
-		for (int j=0;j<rep;j++)
+		for (j = 0; j < rep;j++)
 		{
+			sylnx       += y[i]*log((double)x[i]);
+			sy          += y[i];
+			slnx        += log((double)x[i]);
+			slnx2       += log((double)x[i])*log((double)x[i]);
 			cnt++;
-			sylnx+=y[i]*log((double)x[i]);
-			sy+=y[i];
-			slnx+=log((double)x[i]);
-			slnx2+=log((double)x[i])*log((double)x[i]);
 		}
 	}
 
-	b=(cnt*sylnx-sy*slnx)/(cnt*slnx2-slnx*slnx);
-	a=(sy-b*slnx)/(cnt);
+	b   = (cnt*sylnx-sy*slnx)/(cnt*slnx2-slnx*slnx);
+	a   = (sy-b*slnx)/(cnt);
 
 
 	//We use log2 and not ln on calculations	//B*log(x)+A
 	//log2(x)=log(x)/log(2)
 	//log(x)=log2(x)*log(2)
 	//B*log(2)*log(x)+A
-	b*=logf(2.0);
+	b  *= logf(2.0);
 
 	for (int i=0;i<128;i++)
 	{
 		float diff=min(max(b*logf(x[i])/logf(2.0)+a,(double)0),(double)1)-y[i];
 		maxdev=max((float)fabs((float)diff),(float)maxdev);
 	}
-	printf("FOG TABLE Curve match: maxdev: %.02f cents\n",maxdev*100);
 	fog_coefs[0]=a;
 	fog_coefs[1]=b;
+
+	printf("FOG TABLE Curve match: maxdev: %.02f cents\n",maxdev*100);
 	//printf("%f\n",B*log(maxdev)/log(2.0)+A);
 }
 
@@ -1771,8 +1786,8 @@ static bool RenderFrame(void)
 		//A second scaling is used here for scissoring
 		if (VO_CONTROL.pixel_double)
 		{
-			scissoring_scale_x = 0.5f;
-			scale_x *= 0.5f;
+			scissoring_scale_x  = 0.5f;
+			scale_x            *= 0.5f;
 		}
 	}
 

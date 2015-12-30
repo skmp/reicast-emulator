@@ -42,12 +42,8 @@
 
 #define EG_SHIFT 16
 
-//Remove the fractional part by chopping..
-#define FPChop(a,bits) ((a)>>bits)
-
-#define FPs FPChop
 //Fixed point mul w/ rounding :)
-#define FPMul(a,b,bits) (FPs(a*b,bits))
+#define FPMul(a, b, bits) ((a * b) >> bits)
 
 #define VOLPAN(value,vol,pan,outl,outr) \
 {\
@@ -403,12 +399,11 @@ struct ChannelEx
       AEG.SetValue(0x3FF);
    }
 
-   __forceinline SampleType InterpolateSample()
+   __forceinline SampleType InterpolateSample(void)
    {
-      SampleType rv;
-      u32 fp=step.fp;
-      rv=FPMul(s0,(s32)(1024-fp),10);
-      rv+=FPMul(s1,(s32)(fp),10);
+      u32        fp  = step.fp;
+      SampleType rv  = FPMul(s0,(s32)(1024-fp),10);
+      rv            += FPMul(s1,(s32)(fp),10);
 
       return rv;
    }
@@ -434,9 +429,9 @@ struct ChannelEx
 
       s32* logtable=ofsatt+tl_lut;
 
-      oLeft=FPMul(sample,logtable[VolMix.DLAtt],15);
-      oRight=FPMul(sample,logtable[VolMix.DRAtt],15);
-      oDsp=FPMul(sample,logtable[VolMix.DSPAtt],15);
+      oLeft   = FPMul(sample,logtable[VolMix.DLAtt],15);
+      oRight  = FPMul(sample,logtable[VolMix.DRAtt],15);
+      oDsp    = FPMul(sample,logtable[VolMix.DSPAtt],15);
 
       clip_verify(((s16)oLeft)==oLeft);
       clip_verify(((s16)oRight)==oRight);
@@ -1222,17 +1217,17 @@ void AICA_Sample32(void)
 
       /* MVOL !
        * we want to make sure mix* is *At least* 23 bits wide here, so 64 bit mul ! */
-      u32 mvol=CommonData->MVOL;
-      s32 val=volume_lut[mvol];
-      mixl=(s32)FPMul((s64)mixl,val,15);
-      mixr=(s32)FPMul((s64)mixr,val,15);
-
+      u32 mvol = CommonData->MVOL;
+      s32 val  = volume_lut[mvol];
+      mixl     = (s32)FPMul((s64)mixl,val,15);
+      mixr     = (s32)FPMul((s64)mixr,val,15);
 
       if (CommonData->DAC18B)
       {
          /* If 18 bit output , make it 16bit */
-         mixl=FPs(mixl,2);
-         mixr=FPs(mixr,2);
+         /* Remove the fractional part by chopping.. */
+         mixl >>= 2;
+         mixr >>= 2;
       }
 
       /* Sample is ready. clip/saturate and store */
@@ -1309,17 +1304,17 @@ void AICA_Sample(void)
 
    //MVOL !
    /* we want to make sure mix* is *At least* 23 bits wide here, so 64 bit mul ! */
-   u32 mvol=CommonData->MVOL;
-   s32 val=volume_lut[mvol];
-   mixl=(s32)FPMul((s64)mixl,val,15);
-   mixr=(s32)FPMul((s64)mixr,val,15);
-
+   u32 mvol = CommonData->MVOL;
+   s32 val  = volume_lut[mvol];
+   mixl     = (s32)FPMul((s64)mixl,val,15);
+   mixr     = (s32)FPMul((s64)mixr,val,15);
 
    if (CommonData->DAC18B)
    {
       /* If 18 bit output , make it 16bit */
-      mixl=FPs(mixl,2);
-      mixr=FPs(mixr,2);
+      /* Remove the fractional part by chopping.. */
+      mixl >>= 2;
+      mixr >>= 2;
    }
 
    /* Sample is ready. clip/saturate and store */

@@ -352,7 +352,7 @@ struct ChannelEx
    {
       s32 value;
       _EG_state state;
-   } FEG;//i have to figure out how this works w/ AEG and channel state, and the iir values
+   } FEG;//i have to figure out how this works w/ AEG and channel state, and the IIR values
 
    struct 
    {
@@ -365,9 +365,6 @@ struct ChannelEx
       u8 plfo_shft;
       void (* alfo_calc)(ChannelEx* ch);
       void (* plfo_calc)(ChannelEx* ch);
-      __forceinline void Step(ChannelEx* ch) { counter--;if (counter==0) { state++; counter=start_value; alfo_calc(ch);plfo_calc(ch); } }
-      void Reset(ChannelEx* ch) { state=0; counter=start_value; alfo_calc(ch); plfo_calc(ch); }
-      void SetStartValue(u32 nv) { start_value=nv;counter=start_value; }
    } lfo;
 
    bool enabled;	//set to false to 'freeze' the channel
@@ -383,6 +380,19 @@ static void ADPCM_Reset(ChannelEx* ch)
 static __forceinline SampleType InterpolateSample(struct ChannelEx *ch)
 {
    return FPMul(ch->s0,(s32)(1024 - ch->step.fp),10) + FPMul(ch->s1,(s32)(ch->step.fp),10);
+}
+
+static __forceinline void LFO_Step(ChannelEx* ch)
+{
+   ch->lfo.counter--;
+
+   if (ch->lfo.counter != 0)
+      return;
+
+   ch->lfo.state++;
+   ch->lfo.counter  = ch->lfo.start_value;
+   ch->lfo.alfo_calc(ch);
+   ch->lfo.plfo_calc(ch);
 }
 
 static __forceinline bool SlotStep(struct ChannelEx *ch, SampleType *oLeft, SampleType *oRight, SampleType *oDsp)
@@ -415,7 +425,7 @@ static __forceinline bool SlotStep(struct ChannelEx *ch, SampleType *oLeft, Samp
    ch->StepAEG(ch);
    ch->StepFEG(ch);
    ch->StepStream(ch);
-   ch->lfo.Step(ch);
+   LFO_Step(ch);
    return true;
 }
 
@@ -542,6 +552,21 @@ static void SlotUpdatePitch(struct ChannelEx *ch)
    ch->update_rate=update_rate;
 }
 
+
+static void LFO_Reset(struct ChannelEx *ch)
+{
+   ch->lfo.state   = 0;
+   ch->lfo.counter = ch->lfo.start_value;
+   ch->lfo.alfo_calc(ch);
+   ch->lfo.plfo_calc(ch);
+}
+
+static void LFO_SetStartValue(struct ChannelEx *ch, int val)
+{
+   ch->lfo.start_value  = val;
+   ch->lfo.counter      = ch->lfo.start_value;
+}
+
 //LFORE,LFOF,PLFOWS,PLFOS,LFOWS,ALFOS
 static void SlotUpdateLFO(struct ChannelEx *ch)
 {
@@ -552,7 +577,7 @@ static void SlotUpdateLFO(struct ChannelEx *ch)
    int L = (G-1) << 2;
    int O = L + G * (M+1);
 
-   ch->lfo.SetStartValue(O);
+   LFO_SetStartValue(ch, O);
 
    ch->lfo.plfo_shft=8-ch->ccd->PLFOS;
    ch->lfo.alfo_shft=8-ch->ccd->ALFOS;
@@ -561,7 +586,7 @@ static void SlotUpdateLFO(struct ChannelEx *ch)
    ch->lfo.plfo_calc=PLFOWS_CALC[ch->ccd->PLFOWS];
 
    if (ch->ccd->LFORE)
-      ch->lfo.Reset(ch);
+      LFO_Reset(ch);
    else
    {
       ch->lfo.alfo_calc(ch);

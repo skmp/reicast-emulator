@@ -16,8 +16,38 @@ InterruptInfo* SCIEB;
 InterruptInfo* SCIPD;
 InterruptInfo* SCIRE;
 
-//Interrupts
-//arm side
+/* Timers */
+struct AicaTimerData
+{
+	union
+	{
+		struct 
+		{
+#ifdef MSB_FIRST
+			u32 pad:16;
+			u32 nil:5;
+			u32 md:3;
+			u32 count:8;
+#else
+			u32 count:8;
+			u32 md:3;
+			u32 nil:5;
+			u32 pad:16;
+#endif
+		};
+		u32 data;
+	};
+};
+
+struct AicaTimer
+{
+	AicaTimerData* data;
+	s32 c_step;
+	u32 m_step;
+	u32 id;
+};
+
+/* Interrupts - ARM side */
 static u32 GetL(u32 which)
 {
    if (which > 7)
@@ -62,7 +92,7 @@ static void update_arm_interrupts(void)
    libARM_InterruptChange(p_ints,Lval);
 }
 
-//sh4 side
+/* Interrupts - SH4 side */
 void UpdateSh4Ints(void)
 {
    u32 p_ints = MCIEB->full & MCIPD->full;
@@ -77,41 +107,9 @@ void UpdateSh4Ints(void)
       if (SB_ISTEXT & SH4_IRQ_BIT)
          asic_CancelInterrupt(holly_SPU_IRQ);
    }
-
 }
 
-/* Timers */
-struct AicaTimerData
-{
-	union
-	{
-		struct 
-		{
-#ifdef MSB_FIRST
-			u32 pad:16;
-			u32 nil:5;
-			u32 md:3;
-			u32 count:8;
-#else
-			u32 count:8;
-			u32 md:3;
-			u32 nil:5;
-			u32 pad:16;
-#endif
-		};
-		u32 data;
-	};
-};
-
-struct AicaTimer
-{
-	AicaTimerData* data;
-	s32 c_step;
-	u32 m_step;
-	u32 id;
-};
-
-void AicaTimerStep(struct AicaTimer *timer, u32 samples)
+static void AicaTimerStep(struct AicaTimer *timer, u32 samples)
 {
    do
    {
@@ -165,7 +163,6 @@ static void AicaTimerRegisterWrite(struct AicaTimer *timer)
    timer->m_step = n_step;
    timer->c_step = timer->m_step;
 }
-
 
 AicaTimer timers[3];
 
@@ -263,12 +260,13 @@ s32 libAICA_Init(void)
 
 	CommonData=(CommonData_struct*)&aica_reg[0x2800];
 	DSPData=(DSPData_struct*)&aica_reg[0x3000];
-	//slave cpu (arm7)
 
+	/* slave CPU (ARM7) */
 	SCIEB=(InterruptInfo*)&aica_reg[0x289C];
 	SCIPD=(InterruptInfo*)&aica_reg[0x289C+4];
 	SCIRE=(InterruptInfo*)&aica_reg[0x289C+8];
-	//Main cpu (sh4)
+
+	/* Main CPU (SH4) */
 	MCIEB=(InterruptInfo*)&aica_reg[0x28B4];
 	MCIPD=(InterruptInfo*)&aica_reg[0x28B4+4];
 	MCIRE=(InterruptInfo*)&aica_reg[0x28B4+8];

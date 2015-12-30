@@ -285,16 +285,6 @@ struct ChannelCommonData
    KEY_ON->KEY_OFF : Switches to RELEASE state (does not disable channel)
 
 */
-struct ChannelEx;
-
-//make these DYNACALL ? they were fastcall before ..
-void (* STREAM_STEP_LUT[5][2][2])(ChannelEx* ch);
-void (* STREAM_INITAL_STEP_LUT[5])(ChannelEx* ch);
-void (* AEG_STEP_LUT[4])(ChannelEx* ch);
-void (* FEG_STEP_LUT[4])(ChannelEx* ch);
-void (* ALFOWS_CALC[4])(ChannelEx* ch);
-void (* PLFOWS_CALC[4])(ChannelEx* ch);
-
 
 struct ChannelEx
 {
@@ -336,8 +326,6 @@ struct ChannelEx
    struct
    {
       s32 volume;
-      __forceinline s32 GetValue() { return volume >> EG_SHIFT;}
-      void SetValue(u32 aegb) { volume = aegb << EG_SHIFT; }
 
       _EG_state state;
 
@@ -370,6 +358,24 @@ struct ChannelEx
    bool enabled;	//set to false to 'freeze' the channel
    int ChannelNumber;
 };
+
+//make these DYNACALL ? they were fastcall before ..
+void (* STREAM_STEP_LUT[5][2][2])(ChannelEx* ch);
+void (* STREAM_INITAL_STEP_LUT[5])(ChannelEx* ch);
+void (* AEG_STEP_LUT[4])(ChannelEx* ch);
+void (* FEG_STEP_LUT[4])(ChannelEx* ch);
+void (* ALFOWS_CALC[4])(ChannelEx* ch);
+void (* PLFOWS_CALC[4])(ChannelEx* ch);
+
+static __forceinline s32 EG_GetValue(struct ChannelEx *ch)
+{
+   return ch->AEG.volume >> EG_SHIFT;
+}
+
+static void EG_SetValue(struct ChannelEx *ch, u32 val)
+{
+   ch->AEG.volume = val << EG_SHIFT;
+}
 
 static void ADPCM_Reset(ChannelEx* ch)
 {
@@ -409,7 +415,7 @@ static __forceinline bool SlotStep(struct ChannelEx *ch, SampleType *oLeft, Samp
    //*Att is up to 511
    //logtable handles up to 1024, anything >=255 is mute
 
-   u32 ofsatt    = ch->lfo.alfo + (ch->AEG.GetValue()>>2);
+   u32 ofsatt    = ch->lfo.alfo + (EG_GetValue(ch) >> 2);
    s32* logtable = ofsatt+tl_lut;
    *oLeft        = FPMul(sample,logtable[ch->VolMix.DLAtt],15);
    *oRight       = FPMul(sample,logtable[ch->VolMix.DRAtt],15);
@@ -463,7 +469,7 @@ static void KEY_ON(struct ChannelEx *ch)
 
    ch->enabled = true;         /* if it was off then turn it on ! */
    SetAegState(ch, EG_ATTACK); /* reset AEG */
-   ch->AEG.SetValue(0x3FF);    /* start from 0x3FF ? .. it seems so ! */
+   EG_SetValue(ch, 0x3FF);     /* start from 0x3FF ? .. it seems so ! */
 
    SetFegState(ch, EG_ATTACK); /* reset FEG */
 
@@ -726,7 +732,7 @@ static void StopSlot(struct ChannelEx *ch)
 {
    ch->enabled = false;
    SetAegState(ch, EG_RELEASE);
-   ch->AEG.SetValue(0x3FF);
+   EG_SetValue(ch, 0x3FF);
 }
 
 static void SlotInit(struct ChannelEx *ch, int cn,u8* ccd_raw)
@@ -848,7 +854,7 @@ static void StreamStep(ChannelEx* ch)
          if ((ch->AEG.state==EG_ATTACK) && (CA>=ch->loop.LSA))
          {
 
-            step_printf("[%d]LPSLNK : Switching to EG_DECAY1 %X\n",Channel,AEG.GetValue());
+            step_printf("[%d]LPSLNK : Switching to EG_DECAY1 %X\n",Channel, EG_GetValue(ch));
             SetAegState(ch, EG_DECAY1);
          }
       }
@@ -942,12 +948,12 @@ static void AegStep(ChannelEx* ch)
    {
       case EG_ATTACK:
          ch->AEG.volume -= ch->AEG.AttackRate;
-         if (ch->AEG.GetValue()<=0)
+         if (EG_GetValue(ch) <= 0)
          {
-            ch->AEG.SetValue(0);
+            EG_SetValue(ch, 0);
             if (!ch->ccd->LPSLNK)
             {
-               aeg_printf("[%d]AEG_step : Switching to EG_DECAY1 %d\n",ch->AEG.GetValue());
+               aeg_printf("[%d]AEG_step : Switching to EG_DECAY1 %d\n", EG_GetValue(ch));
                SetAegState(ch, EG_DECAY1);
             }
          }
@@ -955,9 +961,9 @@ static void AegStep(ChannelEx* ch)
       case EG_DECAY1:
          //x2
          ch->AEG.volume += ch->AEG.Decay1Rate;
-         if (((u32)ch->AEG.GetValue())>=ch->AEG.Decay2Value)
+         if (((u32)EG_GetValue(ch)) >= ch->AEG.Decay2Value)
          {
-            aeg_printf("[%d]AEG_step : Switching to EG_DECAY2 @ %x\n",ch->AEG.GetValue());
+            aeg_printf("[%d]AEG_step : Switching to EG_DECAY2 @ %x\n",EG_GetValue(ch));
 
             // No transition to Decay 2 when DL is zero.
             if (settings.aica.AegStepHack && ch->ccd->DL == 0)
@@ -970,20 +976,20 @@ static void AegStep(ChannelEx* ch)
       case EG_DECAY2:
          //x3
          ch->AEG.volume += ch->AEG.Decay2Rate;
-         if (ch->AEG.GetValue()>=0x3FF)
+         if (EG_GetValue(ch) >= 0x3FF)
          {
-            aeg_printf("[%d]AEG_step : Switching to EG_RELEASE @ %x\n",ch->AEG.GetValue());
-            ch->AEG.SetValue(0x3FF);
+            aeg_printf("[%d]AEG_step : Switching to EG_RELEASE @ %x\n",EG_GetValue(ch));
+            EG_SetValue(ch, 0x3FF);
             SetAegState(ch, EG_RELEASE);
          }
          break;
       case EG_RELEASE: //only on key_off ?
          ch->AEG.volume += ch->AEG.ReleaseRate;
 
-         if (ch->AEG.GetValue()>=0x3FF)
+         if (EG_GetValue(ch) >= 0x3FF)
          {
-            aeg_printf("[%d]AEG_step : EG_RELEASE End @ %x\n",ch->AEG.GetValue());
-            ch->AEG.SetValue(0x3FF); // TODO: mnn, should we do anything about it running wild ?
+            aeg_printf("[%d]AEG_step : EG_RELEASE End @ %x\n", EG_GetValue(ch));
+            EG_SetValue(ch, 0x3FF); // TODO: mnn, should we do anything about it running wild ?
             StopSlot(ch); /* TODO: Is this ok here? It's a speed optimisation (since the channel is muted) */
          }
          break;
@@ -1122,8 +1128,8 @@ void ReadCommonReg(u32 reg,bool byte)
             CommonData->LP=Chans[chan].loop.looped;
             verify(CommonData->AFSET==0);
 
-            CommonData->EG=Chans[chan].AEG.GetValue(); //AEG is only 10 bits, FEG is 13 bits
-            CommonData->SGC=Chans[chan].AEG.state;
+            CommonData->EG  = EG_GetValue(&Chans[chan]); //AEG is only 10 bits, FEG is 13 bits
+            CommonData->SGC = Chans[chan].AEG.state;
 
             if (! (byte && reg==0x2810))
                Chans[chan].loop.looped=0;

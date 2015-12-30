@@ -37,6 +37,35 @@
 
 #define CDDA_SIZE  (2352/2)
 
+#define clip(x,min,max) if ((x)<(min)) (x)=(min); if ((x)>(max)) (x)=(max);
+#define ICLIP16(x) ((x <= -32768) ? -32768 : ((x > 32767) ? 32767 : x))
+
+#define EG_SHIFT 16
+
+//Remove the fractional part by chopping..
+#define FPChop(a,bits) ((a)>>bits)
+
+#define FPs FPChop
+//Fixed point mul w/ rounding :)
+#define FPMul(a,b,bits) (FPs(a*b,bits))
+
+#define VOLPAN(value,vol,pan,outl,outr) \
+{\
+   s32 temp=FPMul((value),volume_lut[(vol)],15);\
+   u32 t_pan=(pan);\
+   SampleType Sc=FPMul(temp,volume_lut[0xF-(t_pan&0xF)],15);\
+   if (t_pan& 0x10)\
+   {\
+      outl+=temp;\
+      outr+=Sc ;\
+   }\
+   else\
+   {\
+      outl+=Sc;\
+      outr+=temp;\
+   }\
+}
+
 enum _EG_state
 {
    EG_ATTACK = 0,
@@ -73,8 +102,6 @@ double AEG_DSR_Time[]=
 	920.0,790.0,690.0,550.0,460.0,390.0,340.0,270.0,230.0,200.0,170.0,140.0,110.0,98.0,85.0,68.0,57.0,49.0,43.0,34.0,
 	28.0,25.0,22.0,18.0,14.0,12.0,11.0,8.5,7.1,6.1,5.4,4.3,3.6,3.1
 };
-
-#define AEG_STEP_BITS (16)
 //Steps per sample
 u32 AEG_ATT_SPS[MAX_CHANNELS];
 u32 AEG_DSR_SPS[MAX_CHANNELS];
@@ -99,29 +126,6 @@ const s32 adpcm_scale[16] =
    -1,-3,-5,-7,-9,-11,-13,-15,
 };
 
-//Remove the fractional part by chopping..
-#define FPChop(a,bits) ((a)>>bits)
-
-#define FPs FPChop
-//Fixed point mul w/ rounding :)
-#define FPMul(a,b,bits) (FPs(a*b,bits))
-
-#define VOLPAN(value,vol,pan,outl,outr) \
-{\
-   s32 temp=FPMul((value),volume_lut[(vol)],15);\
-   u32 t_pan=(pan);\
-   SampleType Sc=FPMul(temp,volume_lut[0xF-(t_pan&0xF)],15);\
-   if (t_pan& 0x10)\
-   {\
-      outl+=temp;\
-      outr+=Sc ;\
-   }\
-   else\
-   {\
-      outl+=Sc;\
-      outr+=temp;\
-   }\
-}
 s16 pl=0,pr=0;
 
 struct DSP_OUT_VOL_REG
@@ -347,8 +351,8 @@ struct ChannelEx
    struct
    {
       s32 volume;
-      __forceinline s32 GetValue() { return volume >> AEG_STEP_BITS;}
-      void SetValue(u32 aegb) { volume = aegb << AEG_STEP_BITS; }
+      __forceinline s32 GetValue() { return volume >> EG_SHIFT;}
+      void SetValue(u32 aegb) { volume = aegb << EG_SHIFT; }
 
       _EG_state state;
 
@@ -741,7 +745,7 @@ static __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
    quant         = (quant * adpcm_qs[data])>>8;
 
    clip(quant,127,24576);
-   clip16(rv);
+   ICLIP16(rv);
    return rv;
 }
 
@@ -997,7 +1001,7 @@ AicaChannel AicaChannel::Chans[MAX_CHANNELS];
 
 static u32 CalcAegSteps(float t)
 {
-   const double aeg_allsteps=1024*(1<<AEG_STEP_BITS)-1;
+   const double aeg_allsteps=1024*(1<< EG_SHIFT)-1;
 
    if (t<0)
       return 0;
@@ -1081,6 +1085,7 @@ void sgc_Init(void)
       AEG_ATT_SPS[i]=CalcAegSteps(AEG_Attack_Time[i]);
       AEG_DSR_SPS[i]=CalcAegSteps(AEG_DSR_Time[i]);
    }
+
    for (int i = 0; i < MAX_CHANNELS; i++)
       Chans[i].Init(i,aica_reg);
    dsp_out_vol=(DSP_OUT_VOL_REG*)&aica_reg[0x2000];
@@ -1239,8 +1244,8 @@ void AICA_Sample32(void)
          printf("Clipped mixr %d\n",mixr);
 #endif
 
-      clip16(mixl);
-      clip16(mixr);
+      ICLIP16(mixl);
+      ICLIP16(mixr);
 
       pl=mixl;
       pr=mixr;
@@ -1325,8 +1330,8 @@ void AICA_Sample(void)
       printf("Clipped mixr %d\n",mixr);
 #endif
 
-   clip16(mixl);
-   clip16(mixr);
+   ICLIP16(mixl);
+   ICLIP16(mixr);
 
    pl=mixl;
    pr=mixr;

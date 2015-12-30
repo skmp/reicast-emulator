@@ -2,7 +2,7 @@
 #include <algorithm>
 #include "gles.h"
 #include "../rend.h"
-#include "rend/TexCache.h"
+#include "../../hw/pvr/TexCache.h"
 #include "../../libretro/libretro.h"
 
 #include "rend/rend.h"

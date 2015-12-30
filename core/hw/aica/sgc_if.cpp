@@ -469,8 +469,7 @@ static void KEY_ON(struct ChannelEx *ch)
 
    ch->enabled = true;         /* if it was off then turn it on ! */
    SetAegState(ch, EG_ATTACK); /* reset AEG */
-   EG_SetValue(ch, 0x3FF);     /* start from 0x3FF ? .. it seems so ! */
-
+   EG_SetValue(ch, 0x17F);     /* start from 0x17F */
    SetFegState(ch, EG_ATTACK); /* reset FEG */
 
    //Reset sampling state

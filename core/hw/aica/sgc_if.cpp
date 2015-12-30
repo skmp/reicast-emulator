@@ -317,19 +317,7 @@ struct ChannelEx
       u8 looped;
    } loop;
 
-   struct
-   {
-      //used in adpcm decoding
-      s32 last_quant;
-      //SampleType prev_sample;
-      void Reset(ChannelEx* ch)
-      {
-         last_quant=127;
-         //prev_sample=0;
-         ch->s0=0;
-      }
-   } adpcm;
-
+   s32 adpcm_last_quant;
    u32 noise_state;//for Noise generator
 
    struct
@@ -385,6 +373,12 @@ struct ChannelEx
    bool enabled;	//set to false to 'freeze' the channel
    int ChannelNumber;
 };
+
+static void ADPCM_Reset(ChannelEx* ch)
+{
+   ch->adpcm_last_quant = 127;
+   ch->s0               = 0;
+}
 
 static __forceinline SampleType InterpolateSample(struct ChannelEx *ch)
 {
@@ -468,7 +462,7 @@ static void KEY_ON(struct ChannelEx *ch)
    ch->step.full   = 0;
    ch->loop.looped = false;
 
-   ch->adpcm.Reset(ch);
+   ADPCM_Reset(ch);
    ch->StepStreamInitial(ch);
 
    key_printf("[%d] KEY_ON %s @ %f Hz, loop : %d\n",Channel,stream_names[ChanData->PCMS],(44100.0*update_rate)/1024,ChanData->LPCTL);
@@ -763,41 +757,35 @@ static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
          break;
 
       case CH_FORMAT_PCM16: /* 16-bit signed */
-         {
-            //s16* ptr=(s16*)&aica_ram[(addr&~1)+(CA<<1)];
-            sptr16+=CA;
-            s0=sptr16[0];
-            s1=sptr16[1];
-         }
+         sptr16             += CA;
+         s0                  = sptr16[0];
+         s1                  = sptr16[1];
          break;
 
       case CH_FORMAT_PCM8: /* 8-bit signed */
-         {
-            //s8* ptr=(s8*)&aica_ram[addr+(CA)];
-            sptr8+=CA;
-            s0=sptr8[0]<<8;
-            s1=sptr8[1]<<8;
-         }
+         sptr8              += CA;
+         s0                  = sptr8[0]<<8;
+         s1                  = sptr8[1]<<8;
          break;
 
       case CH_FORMAT_ADPCM1: /* 4-bit ADPCM */
       case CH_FORMAT_ADPCM2:
          {
-            //u32 offs=CA;
-            u8 ad1=uptr8[CA>>1];
-            u8 ad2=uptr8[(CA+1)>>1];
+            u8 ad1                 = uptr8[CA>>1];
+            u8 ad2                 = uptr8[(CA+1)>>1];
 
-            u8 sf=(CA&1)*4;
-            ad1>>=sf;
-            ad2>>=4-sf;
+            u8 sf                  = (CA&1)*4;
+            ad1                  >>= sf;
+            ad2                  >>= 4-sf;
 
-            ad1&=0xF;
-            ad2&=0xF;
+            ad1                   &= 0xF;
+            ad2                   &= 0xF;
 
-            s32 q=ch->adpcm.last_quant;
-            s0=DecodeADPCM(ad1,ch->s0,q);
-            ch->adpcm.last_quant=q;
-            s1 = 0;
+            s32 q                  = ch->adpcm_last_quant;
+            s0                     = DecodeADPCM(ad1,ch->s0,q);
+            ch->adpcm_last_quant   = q;
+            s1                     = 0;
+
             if (last)
                s1=DecodeADPCM(ad2,s0,q);
          }
@@ -853,7 +841,7 @@ static void StreamStep(ChannelEx* ch)
                break;
             case 1: /* normal loop */
                if (PCMS==2) //if in adpcm non-stream mode, reset the decoder
-                  ch->adpcm.Reset(ch);
+                  ADPCM_Reset(ch);
                break;
          }
       }

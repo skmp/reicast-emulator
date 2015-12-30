@@ -18,6 +18,9 @@
 #define clip_verify(x)
 #endif
 
+#define clip(x,min,max) if ((x)<(min)) (x)=(min); if ((x)>(max)) (x)=(max);
+#define clip16(x) clip(x,-32768,32767)
+
 #define MAX_CHANNELS                    64
 
 #define CH_REC_FORMAT_KEY_LOOP          0x01
@@ -37,43 +40,6 @@
 
 #define CDDA_SIZE  (2352/2)
 
-#define clip(x,min,max) if ((x)<(min)) (x)=(min); if ((x)>(max)) (x)=(max);
-#define ICLIP16(x) ((x <= -32768) ? -32768 : ((x > 32767) ? 32767 : x))
-
-#define EG_SHIFT 16
-
-//Remove the fractional part by chopping..
-#define FPChop(a,bits) ((a)>>bits)
-
-#define FPs FPChop
-//Fixed point mul w/ rounding :)
-#define FPMul(a,b,bits) (FPs(a*b,bits))
-
-#define VOLPAN(value,vol,pan,outl,outr) \
-{\
-   s32 temp=FPMul((value),volume_lut[(vol)],15);\
-   u32 t_pan=(pan);\
-   SampleType Sc=FPMul(temp,volume_lut[0xF-(t_pan&0xF)],15);\
-   if (t_pan& 0x10)\
-   {\
-      outl+=temp;\
-      outr+=Sc ;\
-   }\
-   else\
-   {\
-      outl+=Sc;\
-      outr+=temp;\
-   }\
-}
-
-enum _EG_state
-{
-   EG_ATTACK = 0,
-   EG_DECAY1,
-   EG_DECAY2,
-   EG_RELEASE
-};
-
 s16 cdda_sector[CDDA_SIZE]={0};
 u32 cdda_index=CDDA_SIZE<<1;
 
@@ -87,8 +53,7 @@ s32 volume_lut[16];
 u32 SendLevel[16]={255,14<<3,13<<3,12<<3,11<<3,10<<3,9<<3,8<<3,7<<3,6<<3,5<<3,4<<3,3<<3,2<<3,1<<3,0<<3};
 s32 tl_lut[256 + 768];	//xx.15 format. >=255 is muted
 
-/* Envelope time in milliseconds */
-
+//in ms :)
 double AEG_Attack_Time[]=
 {
 	-1,-1,8100.0,6900.0,6000.0,4800.0,4000.0,3400.0,3000.0,2400.0,2000.0,1700.0,1500.0,
@@ -102,6 +67,8 @@ double AEG_DSR_Time[]=
 	920.0,790.0,690.0,550.0,460.0,390.0,340.0,270.0,230.0,200.0,170.0,140.0,110.0,98.0,85.0,68.0,57.0,49.0,43.0,34.0,
 	28.0,25.0,22.0,18.0,14.0,12.0,11.0,8.5,7.1,6.1,5.4,4.3,3.6,3.1
 };
+
+#define AEG_STEP_BITS (16)
 //Steps per sample
 u32 AEG_ATT_SPS[MAX_CHANNELS];
 u32 AEG_DSR_SPS[MAX_CHANNELS];
@@ -126,6 +93,31 @@ const s32 adpcm_scale[16] =
    -1,-3,-5,-7,-9,-11,-13,-15,
 };
 
+void AICA_Sample();
+
+//Remove the fractional part by chopping..
+#define FPChop(a,bits) ((a)>>bits)
+
+#define FPs FPChop
+//Fixed point mul w/ rounding :)
+#define FPMul(a,b,bits) (FPs(a*b,bits))
+
+#define VOLPAN(value,vol,pan,outl,outr) \
+{\
+   s32 temp=FPMul((value),volume_lut[(vol)],15);\
+   u32 t_pan=(pan);\
+   SampleType Sc=FPMul(temp,volume_lut[0xF-(t_pan&0xF)],15);\
+   if (t_pan& 0x10)\
+   {\
+      outl+=temp;\
+      outr+=Sc ;\
+   }\
+   else\
+   {\
+      outl+=Sc;\
+      outr+=temp;\
+   }\
+}
 s16 pl=0,pr=0;
 
 struct DSP_OUT_VOL_REG
@@ -153,8 +145,8 @@ struct ChannelCommonData
    u32 LPCTL:1;
    u32 SSCTL:1;
    u32 res_1:3;
-   u32 KEYONB:1;
-   u32 KEYONEX:1;
+   u32 KYONB:1;
+   u32 KYONEX:1;
 
    u32 pad_2:16;
 
@@ -283,23 +275,34 @@ struct ChannelCommonData
    u32 pad_20:16;
 };
 
+
+
+enum _EG_state
+{
+   EG_Attack = 0,
+   EG_Decay1 = 1,
+   EG_Decay2 = 2,
+   EG_Release = 3
+};
+
 /*
    KEY_OFF->KEY_ON : Resets everything, and starts playback (EG: A)
    KEY_ON->KEY_ON  : nothing
    KEY_ON->KEY_OFF : Switches to RELEASE state (does not disable channel)
 
 */
-struct ChannelEx;
 
-//make these DYNACALL ? they were fastcall before ..
-void (* STREAM_STEP_LUT[5][2][2])(ChannelEx* ch);
-void (* STREAM_INITAL_STEP_LUT[5])(ChannelEx* ch);
-void (* AEG_STEP_LUT[4])(ChannelEx* ch);
-void (* FEG_STEP_LUT[4])(ChannelEx* ch);
-void (* ALFOWS_CALC[4])(ChannelEx* ch);
-void (* PLFOWS_CALC[4])(ChannelEx* ch);
+   struct ChannelEx;
 
-struct ChannelEx
+   //make these DYNACALL ? they were fastcall before ..
+   void (* STREAM_STEP_LUT[5][2][2])(ChannelEx* ch);
+   void (* STREAM_INITAL_STEP_LUT[5])(ChannelEx* ch);
+   void (* AEG_STEP_LUT[4])(ChannelEx* ch);
+   void (* FEG_STEP_LUT[4])(ChannelEx* ch);
+   void (* ALFOWS_CALC[4])(ChannelEx* ch);
+   void (* PLFOWS_CALC[4])(ChannelEx* ch);
+
+   struct ChannelEx
 {
    static ChannelEx Chans[MAX_CHANNELS];
 
@@ -350,9 +353,9 @@ struct ChannelEx
 
    struct
    {
-      s32 volume;
-      __forceinline s32 GetValue() { return volume >> EG_SHIFT;}
-      void SetValue(u32 aegb) { volume = aegb << EG_SHIFT; }
+      s32 val;
+      __forceinline s32 GetValue() { return val>>AEG_STEP_BITS;}
+      void SetValue(u32 aegb) { val=aegb<<AEG_STEP_BITS; }
 
       _EG_state state;
 
@@ -399,7 +402,7 @@ struct ChannelEx
    void disable(void)
    {
       enabled=false;
-      SetAegState(EG_RELEASE);
+      SetAegState(EG_Release);
       AEG.SetValue(0x3FF);
    }
 
@@ -467,8 +470,8 @@ struct ChannelEx
    {
       StepAEG=AEG_STEP_LUT[newstate];
       AEG.state=newstate;
-      if (newstate == EG_RELEASE)
-         ccd->KEYONB=0;
+      if (newstate==EG_Release)
+         ccd->KYONB=0;
    }
    void SetFegState(_EG_state newstate)
    {
@@ -478,14 +481,14 @@ struct ChannelEx
 
    void KEY_ON(void)
    {
-      if (AEG.state != EG_RELEASE)
+      if (AEG.state != EG_Release)
          return;
 
       enabled = true;            //if it was off then turn it on !
-      SetAegState(EG_ATTACK);    // reset AEG
+      SetAegState(EG_Attack);    // reset AEG
       AEG.SetValue(0x3FF);       //start from 0x3FF ? .. it seems so !
 
-      SetFegState(EG_ATTACK);    //reset FEG
+      SetFegState(EG_Attack);    //reset FEG
 
       //Reset sampling state
       CA          = 0;
@@ -500,11 +503,11 @@ struct ChannelEx
 
    void KEY_OFF(void)
    {
-      if (AEG.state == EG_RELEASE)
+      if (AEG.state == EG_Release)
          return;
 
       key_printf("[%d] KEY_OFF -> Release\n",Channel);
-      SetAegState(EG_RELEASE);
+      SetAegState(EG_Release);
       //switch to release state
    }
 
@@ -650,12 +653,12 @@ struct ChannelEx
          case CH_REC_FORMAT_KEY_LOOP:
             UpdateStreamStep();
             UpdateSA();
-            if (ccd->KEYONEX)
+            if (ccd->KYONEX)
             {
-               ccd->KEYONEX=0;
+               ccd->KYONEX=0;
                for (int i = 0; i < MAX_CHANNELS; i++)
                {
-                  if (Chans[i].ccd->KEYONB)
+                  if (Chans[i].ccd->KYONB)
                      Chans[i].KEY_ON();
                   else
                      Chans[i].KEY_OFF();
@@ -738,18 +741,21 @@ struct ChannelEx
 
 static __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
 {
-   s32 sign      = 1-2*(sample/8);
-   u32 data      = sample&7;
+   s32 sign=1-2*(sample/8);
+
+   u32 data=sample&7;
+
    /*(1 - 2 * L4) * (L3 + L2/2 +L1/4 + 1/8) * quantized width (ƒΆn) + decode value (Xn - 1) */
    SampleType rv = prev + sign*((quant*adpcm_scale[data])>>3);
-   quant         = (quant * adpcm_qs[data])>>8;
+
+   quant = (quant * adpcm_qs[data])>>8;
 
    clip(quant,127,24576);
-   ICLIP16(rv);
+   clip16(rv);
    return rv;
 }
 
-template<s32 PCMS,bool last>
+   template<s32 PCMS,bool last>
 static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
 {
    if (!last && PCMS<2)
@@ -772,7 +778,7 @@ static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
          s1>>=16;
          break;
 
-      case CH_FORMAT_PCM16: /* 16-bit signed */
+      case CH_FORMAT_PCM16:
          {
             //s16* ptr=(s16*)&aica_ram[(addr&~1)+(CA<<1)];
             sptr16+=CA;
@@ -781,7 +787,7 @@ static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
          }
          break;
 
-      case CH_FORMAT_PCM8: /* 8-bit signed */
+      case CH_FORMAT_PCM8:
          {
             //s8* ptr=(s8*)&aica_ram[addr+(CA)];
             sptr8+=CA;
@@ -790,7 +796,7 @@ static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
          }
          break;
 
-      case CH_FORMAT_ADPCM1: /* 4-bit ADPCM */
+      case CH_FORMAT_ADPCM1:
       case CH_FORMAT_ADPCM2:
          {
             //u32 offs=CA;
@@ -831,7 +837,7 @@ static void StreamStep(ChannelEx* ch)
    fp_22_10 sp=ch->step;
    ch->step.ip=0;
 
-   while(sp.ip > 0)
+   while(sp.ip>0)
    {
       sp.ip--;
 
@@ -843,29 +849,25 @@ static void StreamStep(ChannelEx* ch)
 
       if (LPSLNK)
       {
-         if ((ch->AEG.state==EG_ATTACK) && (CA>=ch->loop.LSA))
+         if ((ch->AEG.state==EG_Attack) && (CA>=ch->loop.LSA))
          {
 
-            step_printf("[%d]LPSLNK : Switching to EG_DECAY1 %X\n",Channel,AEG.GetValue());
-            ch->SetAegState(EG_DECAY1);
+            step_printf("[%d]LPSLNK : Switching to EG_Decay1 %X\n",Channel,AEG.GetValue());
+            ch->SetAegState(EG_Decay1);
          }
       }
 
       if (ca_t>=ch->loop.LEA)
       {
-         ch->loop.looped = 1;
-         CA              = ch->loop.LSA;
-
-         switch (LPCTL)
+         ch->loop.looped=1;
+         CA=ch->loop.LSA;
+         if (LPCTL)
          {
-            case 0: /* no loop */
-               ch->disable();
-               break;
-            case 1: /* normal loop */
-               if (PCMS==2) //if in adpcm non-stream mode, reset the decoder
-                  ch->adpcm.Reset(ch);
-               break;
+            if (PCMS==2) //if in adpcm non-stream mode, reset the decoder
+               ch->adpcm.Reset(ch);
          }
+         else
+            ch->disable();
       }
 
       ch->CA=CA;
@@ -901,36 +903,34 @@ static void CalcAlfo(ChannelEx* ch)
          rv=(ch->lfo.state>>3)^(ch->lfo.state<<3)^(ch->lfo.state&0xE3);
          break;
    }
-
-   ch->lfo.alfo = rv >> ch->lfo.alfo_shft;
+   ch->lfo.alfo=rv>>ch->lfo.alfo_shft;
 }
 
 template<s32 PLFOWS>
 static void CalcPlfo(ChannelEx* ch)
 {
    u32 rv;
-
    switch(PLFOWS)
    {
       case 0: // sawtooth
-         rv   = ch->lfo.state;
+         rv=ch->lfo.state;
          break;
 
       case 1: // square
-         rv   = ch->lfo.state&0x80?0x80:0x7F;
+         rv=ch->lfo.state&0x80?0x80:0x7F;
          break;
 
       case 2: // triangle
-         rv   = (ch->lfo.state&0x7f)^(ch->lfo.state&0x80 ? 0x7F:0);
-         rv <<= 1;
-         rv   = (u8)(rv-0x80); //2's complement
+         rv=(ch->lfo.state&0x7f)^(ch->lfo.state&0x80 ? 0x7F:0);
+         rv<<=1;
+         rv=(u8)(rv-0x80); //2's complement
          break;
 
       case 3:// random ! .. not :p
-         rv   = (ch->lfo.state >> 3) ^ (ch->lfo.state << 3) ^ (ch->lfo.state & 0xE3);
+         rv=(ch->lfo.state>>3)^(ch->lfo.state<<3)^(ch->lfo.state&0xE3);
          break;
    }
-   ch->lfo.alfo = rv >> ch->lfo.plfo_shft;
+   ch->lfo.alfo=rv>>ch->lfo.plfo_shft;
 }
 
 template<u32 state>
@@ -938,49 +938,50 @@ static void AegStep(ChannelEx* ch)
 {
    switch(state)
    {
-      case EG_ATTACK:
-         ch->AEG.volume -= ch->AEG.AttackRate;
+      case EG_Attack:
+         //wii
+         ch->AEG.val-=ch->AEG.AttackRate;
          if (ch->AEG.GetValue()<=0)
          {
             ch->AEG.SetValue(0);
             if (!ch->ccd->LPSLNK)
             {
-               aeg_printf("[%d]AEG_step : Switching to EG_DECAY1 %d\n",ch->AEG.GetValue());
-               ch->SetAegState(EG_DECAY1);
+               aeg_printf("[%d]AEG_step : Switching to EG_Decay1 %d\n",ch->AEG.GetValue());
+               ch->SetAegState(EG_Decay1);
             }
          }
          break;
-      case EG_DECAY1:
+      case EG_Decay1:
          //x2
-         ch->AEG.volume += ch->AEG.Decay1Rate;
+         ch->AEG.val+=ch->AEG.Decay1Rate;
          if (((u32)ch->AEG.GetValue())>=ch->AEG.Decay2Value)
          {
-            aeg_printf("[%d]AEG_step : Switching to EG_DECAY2 @ %x\n",ch->AEG.GetValue());
+            aeg_printf("[%d]AEG_step : Switching to EG_Decay2 @ %x\n",ch->AEG.GetValue());
 
             // No transition to Decay 2 when DL is zero.
             if (settings.aica.AegStepHack && ch->ccd->DL == 0)
-               ch->SetAegState(EG_ATTACK);
+               ch->SetAegState(EG_Attack);
             else
-               ch->SetAegState(EG_DECAY2);
+               ch->SetAegState(EG_Decay2);
 
          }
          break;
-      case EG_DECAY2:
+      case EG_Decay2:
          //x3
-         ch->AEG.volume += ch->AEG.Decay2Rate;
+         ch->AEG.val+=ch->AEG.Decay2Rate;
          if (ch->AEG.GetValue()>=0x3FF)
          {
-            aeg_printf("[%d]AEG_step : Switching to EG_RELEASE @ %x\n",ch->AEG.GetValue());
+            aeg_printf("[%d]AEG_step : Switching to EG_Release @ %x\n",ch->AEG.GetValue());
             ch->AEG.SetValue(0x3FF);
-            ch->SetAegState(EG_RELEASE);
+            ch->SetAegState(EG_Release);
          }
          break;
-      case EG_RELEASE: //only on key_off ?
-         ch->AEG.volume += ch->AEG.ReleaseRate;
+      case EG_Release: //only on key_off ?
+         ch->AEG.val+=ch->AEG.ReleaseRate;
 
          if (ch->AEG.GetValue()>=0x3FF)
          {
-            aeg_printf("[%d]AEG_step : EG_RELEASE End @ %x\n",ch->AEG.GetValue());
+            aeg_printf("[%d]AEG_step : EG_Release End @ %x\n",ch->AEG.GetValue());
             ch->AEG.SetValue(0x3FF); // TODO: mnn, should we do anything about it running wild ?
             ch->disable(); // TODO: Is this ok here? It's a speed optimisation (since the channel is muted)
          }
@@ -1001,7 +1002,7 @@ AicaChannel AicaChannel::Chans[MAX_CHANNELS];
 
 static u32 CalcAegSteps(float t)
 {
-   const double aeg_allsteps=1024*(1<< EG_SHIFT)-1;
+   const double aeg_allsteps=1024*(1<<AEG_STEP_BITS)-1;
 
    if (t<0)
       return 0;
@@ -1085,7 +1086,6 @@ void sgc_Init(void)
       AEG_ATT_SPS[i]=CalcAegSteps(AEG_Attack_Time[i]);
       AEG_DSR_SPS[i]=CalcAegSteps(AEG_DSR_Time[i]);
    }
-
    for (int i = 0; i < MAX_CHANNELS; i++)
       Chans[i].Init(i,aica_reg);
    dsp_out_vol=(DSP_OUT_VOL_REG*)&aica_reg[0x2000];
@@ -1112,8 +1112,8 @@ void ReadCommonReg(u32 reg,bool byte)
          CommonData->MIEMP=1;
          CommonData->MOEMP=1;
          break;
-      case 0x2810: /* LP check */
-      case 0x2811:
+      case 0x2810: //LP & misc
+      case 0x2811: //LP & misc
          {
             u32 chan=CommonData->MSLC;
 
@@ -1127,8 +1127,8 @@ void ReadCommonReg(u32 reg,bool byte)
                Chans[chan].loop.looped=0;
          }
          break;
-      case 0x2814: /* CA (slot address */
-      case 0x2815:
+      case 0x2814: //CA
+      case 0x2815: //CA
          {
             u32 chan=CommonData->MSLC;
             CommonData->CA = Chans[chan].CA /*& (~1023)*/; //mmnn??
@@ -1244,8 +1244,8 @@ void AICA_Sample32(void)
          printf("Clipped mixr %d\n",mixr);
 #endif
 
-      ICLIP16(mixl);
-      ICLIP16(mixr);
+      clip16(mixl);
+      clip16(mixr);
 
       pl=mixl;
       pr=mixr;
@@ -1330,8 +1330,8 @@ void AICA_Sample(void)
       printf("Clipped mixr %d\n",mixr);
 #endif
 
-   ICLIP16(mixl);
-   ICLIP16(mixr);
+   clip16(mixl);
+   clip16(mixr);
 
    pl=mixl;
    pr=mixr;

@@ -58,5 +58,3 @@ typedef s32 SampleType;
 
 void ReadCommonReg(u32 reg,bool byte);
 void WriteCommonReg8(u32 reg,u32 data);
-#define clip(x,min,max) if ((x)<(min)) (x)=(min); if ((x)>(max)) (x)=(max);
-#define clip16(x) clip(x,-32768,32767)

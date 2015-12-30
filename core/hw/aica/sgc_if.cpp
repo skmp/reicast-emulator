@@ -58,7 +58,8 @@ s32 volume_lut[16];
 u32 SendLevel[16]={255,14<<3,13<<3,12<<3,11<<3,10<<3,9<<3,8<<3,7<<3,6<<3,5<<3,4<<3,3<<3,2<<3,1<<3,0<<3};
 s32 tl_lut[256 + 768];	//xx.15 format. >=255 is muted
 
-//in ms :)
+/* Envelope time in milliseconds */
+
 double AEG_Attack_Time[]=
 {
 	-1,-1,8100.0,6900.0,6000.0,4800.0,4000.0,3400.0,3000.0,2400.0,2000.0,1700.0,1500.0,
@@ -345,9 +346,9 @@ struct ChannelEx
 
    struct
    {
-      s32 val;
-      __forceinline s32 GetValue() { return val>>AEG_STEP_BITS;}
-      void SetValue(u32 aegb) { val=aegb<<AEG_STEP_BITS; }
+      s32 volume;
+      __forceinline s32 GetValue() { return volume >> AEG_STEP_BITS;}
+      void SetValue(u32 aegb) { volume = aegb << AEG_STEP_BITS; }
 
       _EG_state state;
 
@@ -744,7 +745,7 @@ static __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
    return rv;
 }
 
-   template<s32 PCMS,bool last>
+template<s32 PCMS,bool last>
 static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
 {
    if (!last && PCMS<2)
@@ -928,8 +929,7 @@ static void AegStep(ChannelEx* ch)
    switch(state)
    {
       case EG_ATTACK:
-         //wii
-         ch->AEG.val-=ch->AEG.AttackRate;
+         ch->AEG.volume -= ch->AEG.AttackRate;
          if (ch->AEG.GetValue()<=0)
          {
             ch->AEG.SetValue(0);
@@ -942,7 +942,7 @@ static void AegStep(ChannelEx* ch)
          break;
       case EG_DECAY1:
          //x2
-         ch->AEG.val+=ch->AEG.Decay1Rate;
+         ch->AEG.volume += ch->AEG.Decay1Rate;
          if (((u32)ch->AEG.GetValue())>=ch->AEG.Decay2Value)
          {
             aeg_printf("[%d]AEG_step : Switching to EG_DECAY2 @ %x\n",ch->AEG.GetValue());
@@ -957,7 +957,7 @@ static void AegStep(ChannelEx* ch)
          break;
       case EG_DECAY2:
          //x3
-         ch->AEG.val+=ch->AEG.Decay2Rate;
+         ch->AEG.volume += ch->AEG.Decay2Rate;
          if (ch->AEG.GetValue()>=0x3FF)
          {
             aeg_printf("[%d]AEG_step : Switching to EG_RELEASE @ %x\n",ch->AEG.GetValue());
@@ -966,7 +966,7 @@ static void AegStep(ChannelEx* ch)
          }
          break;
       case EG_RELEASE: //only on key_off ?
-         ch->AEG.val+=ch->AEG.ReleaseRate;
+         ch->AEG.volume += ch->AEG.ReleaseRate;
 
          if (ch->AEG.GetValue()>=0x3FF)
          {

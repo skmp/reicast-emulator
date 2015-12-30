@@ -1,6 +1,6 @@
-#include "../types.h"
+#include "../../types.h"
 #include "TexCache.h"
-#include "hw/pvr/pvr_regs.h"
+#include "pvr_regs.h"
 
 u8* vq_codebook;
 u32 palette_index;

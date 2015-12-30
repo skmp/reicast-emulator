@@ -942,7 +942,7 @@ static void CalcPlfo(ChannelEx* ch)
 }
 
 template<u32 state>
-static void AegStep(ChannelEx* ch)
+static void EG_Step(ChannelEx* ch)
 {
    switch(state)
    {
@@ -1007,7 +1007,7 @@ AicaChannel AicaChannel::Chans[MAX_CHANNELS];
 
 #define Chans AicaChannel::Chans 
 
-static u32 CalcAegSteps(float t)
+static u32 Calc_EG_Steps(float t)
 {
    const double aeg_allsteps=1024*(1<< EG_SHIFT)-1;
 
@@ -1054,10 +1054,10 @@ void sgc_Init(void)
    STREAM_INITAL_STEP_LUT[3]=&StepDecodeSampleInitial<3>;
    STREAM_INITAL_STEP_LUT[4]=&StepDecodeSampleInitial<-1>;
 
-   AEG_STEP_LUT[0]=&AegStep<0>;
-   AEG_STEP_LUT[1]=&AegStep<1>;
-   AEG_STEP_LUT[2]=&AegStep<2>;
-   AEG_STEP_LUT[3]=&AegStep<3>;
+   AEG_STEP_LUT[0]=&EG_Step<0>;
+   AEG_STEP_LUT[1]=&EG_Step<1>;
+   AEG_STEP_LUT[2]=&EG_Step<2>;
+   AEG_STEP_LUT[3]=&EG_Step<3>;
 
    FEG_STEP_LUT[0]=&FegStep<0>;
    FEG_STEP_LUT[1]=&FegStep<1>;
@@ -1090,8 +1090,8 @@ void sgc_Init(void)
 
    for (int i = 0; i < MAX_CHANNELS; i++)
    {
-      AEG_ATT_SPS[i]=CalcAegSteps(AEG_Attack_Time[i]);
-      AEG_DSR_SPS[i]=CalcAegSteps(AEG_DSR_Time[i]);
+      AEG_ATT_SPS[i]=Calc_EG_Steps(AEG_Attack_Time[i]);
+      AEG_DSR_SPS[i]=Calc_EG_Steps(AEG_DSR_Time[i]);
    }
 
    for (int i = 0; i < MAX_CHANNELS; i++)

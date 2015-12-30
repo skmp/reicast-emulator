@@ -90,8 +90,6 @@ const s32 adpcm_scale[16] =
    -1,-3,-5,-7,-9,-11,-13,-15,
 };
 
-void AICA_Sample();
-
 //Remove the fractional part by chopping..
 #define FPChop(a,bits) ((a)>>bits)
 

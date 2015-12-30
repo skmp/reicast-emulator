@@ -383,346 +383,330 @@ struct ChannelEx
    } lfo;
 
    bool enabled;	//set to false to 'freeze' the channel
-   int ChanelNumber;
-
-
-
-   __forceinline SampleType InterpolateSample(void)
-   {
-      u32        fp  = step.fp;
-      SampleType rv  = FPMul(s0,(s32)(1024-fp),10);
-      rv            += FPMul(s1,(s32)(fp),10);
-
-      return rv;
-   }
-
-   __forceinline bool Step(SampleType& oLeft, SampleType& oRight, SampleType& oDsp)
-   {
-      if (!enabled)
-      {
-         oLeft=oRight=oDsp=0;
-         return false;
-      }
-
-      SampleType sample=InterpolateSample();
-
-      //Volume & Mixer processing
-      //All attenuations are added together then applied and mixed :)
-
-      //offset is up to 511
-      //*Att is up to 511
-      //logtable handles up to 1024, anything >=255 is mute
-
-      u32 ofsatt=lfo.alfo+(AEG.GetValue()>>2);
-
-      s32* logtable=ofsatt+tl_lut;
-
-      oLeft   = FPMul(sample,logtable[VolMix.DLAtt],15);
-      oRight  = FPMul(sample,logtable[VolMix.DRAtt],15);
-      oDsp    = FPMul(sample,logtable[VolMix.DSPAtt],15);
-
-      clip_verify(((s16)oLeft)==oLeft);
-      clip_verify(((s16)oRight)==oRight);
-      clip_verify(((s16)oDsp)==oDsp);
-      clip_verify(sample*oLeft>=0);
-      clip_verify(sample*oRight>=0);
-      clip_verify(sample*oDsp>=0);
-
-      StepAEG(this);
-      StepFEG(this);
-      StepStream(this);
-      lfo.Step(this);
-      return true;
-   }
-
-   __forceinline void Step(SampleType *mixl, SampleType *mixr)
-   {
-      SampleType oLeft,oRight,oDsp;
-
-      Step(oLeft,oRight,oDsp);
-
-      *VolMix.DSPOut += oDsp;
-      *mixl          += oLeft;
-      *mixr          += oRight;
-   }
-
-   void SetAegState(_EG_state newstate)
-   {
-      StepAEG=AEG_STEP_LUT[newstate];
-      AEG.state=newstate;
-      if (newstate == EG_RELEASE)
-         ccd->KEYONB=0;
-   }
-   void SetFegState(_EG_state newstate)
-   {
-      StepFEG=FEG_STEP_LUT[newstate];
-      FEG.state=newstate;
-   }
-
-   void KEY_ON(void)
-   {
-      if (AEG.state != EG_RELEASE)
-         return;
-
-      enabled = true;            //if it was off then turn it on !
-      SetAegState(EG_ATTACK);    // reset AEG
-      AEG.SetValue(0x3FF);       //start from 0x3FF ? .. it seems so !
-
-      SetFegState(EG_ATTACK);    //reset FEG
-
-      //Reset sampling state
-      CA          = 0;
-      step.full   = 0;
-      loop.looped = false;
-
-      adpcm.Reset(this);
-      StepStreamInitial(this);
-
-      key_printf("[%d] KEY_ON %s @ %f Hz, loop : %d\n",Channel,stream_names[ChanData->PCMS],(44100.0*update_rate)/1024,ChanData->LPCTL);
-   }
-
-   void KEY_OFF(void)
-   {
-      if (AEG.state == EG_RELEASE)
-         return;
-
-      key_printf("[%d] KEY_OFF -> Release\n",Channel);
-      SetAegState(EG_RELEASE);
-      //switch to release state
-   }
-
-   //PCMS,SSCTL,LPCTL,LPSLNK
-   void UpdateStreamStep(void)
-   {
-      s32 fmt = ccd->PCMS;
-      if (ccd->SSCTL)
-         fmt=4;
-
-      StepStream=STREAM_STEP_LUT[fmt][ccd->LPCTL][ccd->LPSLNK];
-      StepStreamInitial=STREAM_INITAL_STEP_LUT[fmt];
-   }
-
-   //SA,PCMS
-   void UpdateSA(void)
-   {
-      u32 addr = (ccd->SA_hi<<16) | ccd->SA_low;
-      if (ccd->PCMS==0)
-         addr&=~1; //0: 16 bit
-
-      SA=&aica_ram.data[addr];
-   }
-
-   //LSA,LEA
-   void UpdateLoop(void)
-   {
-      loop.LSA=ccd->LSA;
-      loop.LEA=ccd->LEA;
-   }
-
-   u32 AEG_EffRate(u32 re)
-   {
-      s32 rv=ccd->KRS+(ccd->FNS>>9) + re*2;
-      if (ccd->KRS==0xF)
-         rv-=0xF;
-      if (ccd->OCT&8)
-         rv-=(16-ccd->OCT)*2;
-      else
-         rv+=ccd->OCT*2;
-
-      if (rv<0)
-         rv=0;
-      if (rv>0x3f)
-         rv=0x3f;
-      return rv;
-   }
-
-   //D2R,D1R,AR,DL,RR,KRS, [OCT,FNS] for now
-   void UpdateAEG(void)
-   {
-      AEG.AttackRate = AEG_ATT_SPS[AEG_EffRate(ccd->AR)];
-      AEG.Decay1Rate = AEG_DSR_SPS[AEG_EffRate(ccd->D1R)];
-      AEG.Decay2Value = ccd->DL<<5;
-      AEG.Decay2Rate = AEG_DSR_SPS[AEG_EffRate(ccd->D2R)];
-      AEG.ReleaseRate = AEG_DSR_SPS[AEG_EffRate(ccd->RR)];
-   }
-
-   //OCT,FNS
-   void UpdatePitch(void)
-   {
-      u32 oct=ccd->OCT;
-
-      u32 update_rate = 1024 | ccd->FNS;
-      if (oct& 8)
-         update_rate>>=(16-oct);
-      else
-         update_rate<<=oct;
-
-      this->update_rate=update_rate;
-   }
-
-   //LFORE,LFOF,PLFOWS,PLFOS,LFOWS,ALFOS
-   void UpdateLFO(void)
-   {
-      int N=ccd->LFOF;
-      int S = N >> 2;
-      int M = (~N) & 3;
-      int G = 128>>S;
-      int L = (G-1)<<2;
-      int O = L + G * (M+1);
-      lfo.SetStartValue(O);
-
-      lfo.plfo_shft=8-ccd->PLFOS;
-      lfo.alfo_shft=8-ccd->ALFOS;
-
-      lfo.alfo_calc=ALFOWS_CALC[ccd->ALFOWS];
-      lfo.plfo_calc=PLFOWS_CALC[ccd->PLFOWS];
-
-      if (ccd->LFORE)
-         lfo.Reset(this);
-      else
-      {
-         lfo.alfo_calc(this);
-         lfo.plfo_calc(this);
-      }
-
-      ccd->LFORE=0;
-   }
-
-   //ISEL
-   void UpdateDSPMIX(void)
-   {
-      VolMix.DSPOut = &dsp.MIXS[ccd->ISEL];
-   }
-
-   //TL,DISDL,DIPAN,IMXL
-   void UpdateAtts(void)
-   {
-      u32 attFull=ccd->TL+SendLevel[ccd->DISDL];
-      u32 attPan=attFull+SendLevel[(~ccd->DIPAN)&0xF];
-
-      //0x1* -> R decreases
-      if (ccd->DIPAN&0x10)
-      {
-         VolMix.DLAtt=attFull;
-         VolMix.DRAtt=attPan;
-      }
-      else //0x0* -> L decreases
-      {
-         VolMix.DLAtt=attPan;
-         VolMix.DRAtt=attFull;
-      }
-
-      VolMix.DSPAtt = ccd->TL+SendLevel[ccd->IMXL];
-   }
-
-   //Q,FLV0,FLV1,FLV2,FLV3,FLV4,FAR,FD1R,FD2R,FRR
-   void UpdateFEG(void)
-   {
-      //this needs to be filled
-   }
-
-   void RegWrite(u32 offset)
-   {
-      switch(offset)
-      {
-         case 0x00: //yay ?
-            UpdateStreamStep();
-            UpdateSA();
-            break;
-
-         case CH_REC_FORMAT_KEY_LOOP:
-            UpdateStreamStep();
-            UpdateSA();
-            if (ccd->KEYONEX)
-            {
-               ccd->KEYONEX=0;
-               for (int i = 0; i < MAX_CHANNELS; i++)
-               {
-                  if (Chans[i].ccd->KEYONB)
-                     Chans[i].KEY_ON();
-                  else
-                     Chans[i].KEY_OFF();
-               }
-            }
-            break;
-
-         case 0x04:
-         case 0x05:
-            UpdateSA();
-            break;
-
-         case 0x08://LSA
-         case 0x09://LSA
-         case 0x0C://LEA
-         case 0x0D://LEA
-            UpdateLoop();
-            break;
-
-         case CH_REC_AR_D1R:
-         case CH_REC_D1R_D2R:
-            UpdateAEG();
-            break;
-
-         case CH_REC_RR_DL:
-         case CH_REC_DL_KRS_LS:
-            UpdateStreamStep();
-            UpdateAEG();
-            break;
-
-         case CH_REC_FNS:
-         case CH_REC_FNS_OCT:
-            UpdatePitch();
-            break;
-
-         case CH_REC_ALFOS_ALFOWS_PLFOS:
-         case CH_REC_PLFOWS_LFOF_RE:
-            UpdateLFO();
-            break;
-
-         case 0x20://ISEL,IMXL
-            //case 0x21://nothing here !
-            UpdateDSPMIX();
-            UpdateAtts();
-            break;
-
-         case 0x24://DIPAN
-         case 0x25://DISDL
-            UpdateAtts();
-            break;
-
-         case 0x28://Q
-            UpdateFEG();
-            break;
-
-         case 0x29://TL
-            UpdateAtts();
-            break;
-
-         case 0x2C: //FLV0
-         case 0x2D: //FLV0
-         case 0x30: //FLV1
-         case 0x31: //FLV1
-         case 0x34: //FLV2
-         case 0x35: //FLV2
-         case 0x38: //FLV3
-         case 0x39: //FLV3
-         case 0x3C: //FLV4
-         case 0x3D: //FLV4
-         case 0x40: //FD1R
-         case 0x41: //FAR
-         case 0x44: //FRR
-         case 0x45: //FD2R
-            UpdateFEG();
-            break;
-
-      }
-   } 
+   int ChannelNumber;
 };
+
+static __forceinline SampleType InterpolateSample(struct ChannelEx *ch)
+{
+   return FPMul(ch->s0,(s32)(1024 - ch->step.fp),10) + FPMul(ch->s1,(s32)(ch->step.fp),10);
+}
+
+static __forceinline bool SlotStep(struct ChannelEx *ch, SampleType *oLeft, SampleType *oRight, SampleType *oDsp)
+{
+   if (!ch->enabled)
+      return false;
+
+   SampleType sample=InterpolateSample(ch);
+
+   //Volume & Mixer processing
+   //All attenuations are added together then applied and mixed :)
+
+   //offset is up to 511
+   //*Att is up to 511
+   //logtable handles up to 1024, anything >=255 is mute
+
+   u32 ofsatt    = ch->lfo.alfo + (ch->AEG.GetValue()>>2);
+   s32* logtable = ofsatt+tl_lut;
+   *oLeft        = FPMul(sample,logtable[ch->VolMix.DLAtt],15);
+   *oRight       = FPMul(sample,logtable[ch->VolMix.DRAtt],15);
+   *oDsp         = FPMul(sample,logtable[ch->VolMix.DSPAtt],15);
+
+   clip_verify(((s16)*oLeft)      == *oLeft);
+   clip_verify(((s16)*oRight)     == *oRight);
+   clip_verify(((s16)*oDsp)       == *oDsp);
+   clip_verify(sample * (*oLeft)  >= 0);
+   clip_verify(sample * (*oRight) >= 0);
+   clip_verify(sample * (*oDsp)   >= 0);
+
+   ch->StepAEG(ch);
+   ch->StepFEG(ch);
+   ch->StepStream(ch);
+   ch->lfo.Step(ch);
+   return true;
+}
+
+static __forceinline void SlotStep(struct ChannelEx *ch, SampleType *mixl, SampleType *mixr)
+{
+   SampleType oLeft  = 0;
+   SampleType oRight = 0;
+   SampleType oDsp   = 0;
+
+   SlotStep(ch, &oLeft, &oRight, &oDsp);
+
+   *ch->VolMix.DSPOut += oDsp;
+   *mixl              += oLeft;
+   *mixr              += oRight;
+}
+
+static void SetAegState(struct ChannelEx *ch, _EG_state newstate)
+{
+   ch->StepAEG    = AEG_STEP_LUT[newstate];
+   ch->AEG.state  = newstate;
+   if (newstate == EG_RELEASE)
+      ch->ccd->KEYONB = 0;
+}
+
+static void SetFegState(struct ChannelEx *ch, _EG_state newstate)
+{
+   ch->StepFEG   = FEG_STEP_LUT[newstate];
+   ch->FEG.state = newstate;
+}
+
+static void KEY_ON(struct ChannelEx *ch)
+{
+   if (ch->AEG.state != EG_RELEASE)
+      return;
+
+   ch->enabled = true;         /* if it was off then turn it on ! */
+   SetAegState(ch, EG_ATTACK); /* reset AEG */
+   ch->AEG.SetValue(0x3FF);    /* start from 0x3FF ? .. it seems so ! */
+
+   SetFegState(ch, EG_ATTACK); /* reset FEG */
+
+   //Reset sampling state
+   ch->CA          = 0;
+   ch->step.full   = 0;
+   ch->loop.looped = false;
+
+   ch->adpcm.Reset(ch);
+   ch->StepStreamInitial(ch);
+
+   key_printf("[%d] KEY_ON %s @ %f Hz, loop : %d\n",Channel,stream_names[ChanData->PCMS],(44100.0*update_rate)/1024,ChanData->LPCTL);
+}
+
+static void KEY_OFF(struct ChannelEx *ch)
+{
+   if (ch->AEG.state == EG_RELEASE)
+      return;
+
+   key_printf("[%d] KEY_OFF -> Release\n",Channel);
+   SetAegState(ch, EG_RELEASE);
+   //switch to release state
+}
+
+//PCMS,SSCTL,LPCTL,LPSLNK
+void SlotUpdateStreamStep(struct ChannelEx *ch)
+{
+   s32 fmt = ch->ccd->PCMS;
+   if (ch->ccd->SSCTL)
+      fmt=4;
+
+   ch->StepStream        = STREAM_STEP_LUT[fmt][ch->ccd->LPCTL][ch->ccd->LPSLNK];
+   ch->StepStreamInitial = STREAM_INITAL_STEP_LUT[fmt];
+}
+
+//SA,PCMS
+static void SlotUpdateSA(struct ChannelEx *ch)
+{
+   u32 addr = (ch->ccd->SA_hi << 16) | ch->ccd->SA_low;
+   if (ch->ccd->PCMS == 0)
+      addr&=~1; //0: 16 bit
+
+   ch->SA= &aica_ram.data[addr];
+}
+
+static u32 SlotAEG_EffRate(struct ChannelEx *ch, u32 re)
+{
+   s32 rv = ch->ccd->KRS + (ch->ccd->FNS>>9) + re*2;
+
+   if (ch->ccd->KRS==0xF)
+      rv -= 0xF;
+
+   if (ch->ccd->OCT&8)
+      rv -= (16 - ch->ccd->OCT)*2;
+   else
+      rv += ch->ccd->OCT*2;
+
+   if (rv<0)
+      rv=0;
+   if (rv>0x3f)
+      rv=0x3f;
+   return rv;
+}
+
+//D2R,D1R,AR,DL,RR,KRS, [OCT,FNS] for now
+static void SlotUpdateAEG(struct ChannelEx *ch)
+{
+   ch->AEG.AttackRate   = AEG_ATT_SPS[SlotAEG_EffRate(ch, ch->ccd->AR)];
+   ch->AEG.Decay1Rate   = AEG_DSR_SPS[SlotAEG_EffRate(ch, ch->ccd->D1R)];
+   ch->AEG.Decay2Value  = ch->ccd->DL<<5;
+   ch->AEG.Decay2Rate   = AEG_DSR_SPS[SlotAEG_EffRate(ch, ch->ccd->D2R)];
+   ch->AEG.ReleaseRate  = AEG_DSR_SPS[SlotAEG_EffRate(ch, ch->ccd->RR)];
+}
+
+/* OCT,FNS */
+static void SlotUpdatePitch(struct ChannelEx *ch)
+{
+   u32 oct         = ch->ccd->OCT;
+   u32 update_rate = 1024 | ch->ccd->FNS;
+
+   if (oct& 8)
+      update_rate>>=(16-oct);
+   else
+      update_rate<<=oct;
+
+   ch->update_rate=update_rate;
+}
+
+//LFORE,LFOF,PLFOWS,PLFOS,LFOWS,ALFOS
+static void SlotUpdateLFO(struct ChannelEx *ch)
+{
+   int N = ch->ccd->LFOF;
+   int S = N     >> 2;
+   int M = (~N)   & 3;
+   int G = 128   >> S;
+   int L = (G-1) << 2;
+   int O = L + G * (M+1);
+
+   ch->lfo.SetStartValue(O);
+
+   ch->lfo.plfo_shft=8-ch->ccd->PLFOS;
+   ch->lfo.alfo_shft=8-ch->ccd->ALFOS;
+
+   ch->lfo.alfo_calc=ALFOWS_CALC[ch->ccd->ALFOWS];
+   ch->lfo.plfo_calc=PLFOWS_CALC[ch->ccd->PLFOWS];
+
+   if (ch->ccd->LFORE)
+      ch->lfo.Reset(ch);
+   else
+   {
+      ch->lfo.alfo_calc(ch);
+      ch->lfo.plfo_calc(ch);
+   }
+
+   ch->ccd->LFORE=0;
+}
+
+//TL,DISDL,DIPAN,IMXL
+static void SlotUpdateAtts(struct ChannelEx *ch)
+{
+   u32 attFull = ch->ccd->TL+SendLevel[ch->ccd->DISDL];
+   u32 attPan  = attFull+SendLevel[(~ch->ccd->DIPAN)&0xF];
+
+   //0x1* -> R decreases
+   if (ch->ccd->DIPAN & 0x10)
+   {
+      ch->VolMix.DLAtt=attFull;
+      ch->VolMix.DRAtt=attPan;
+   }
+   else //0x0* -> L decreases
+   {
+      ch->VolMix.DLAtt=attPan;
+      ch->VolMix.DRAtt=attFull;
+   }
+
+   ch->VolMix.DSPAtt = ch->ccd->TL+SendLevel[ch->ccd->IMXL];
+}
+
+//Q,FLV0,FLV1,FLV2,FLV3,FLV4,FAR,FD1R,FD2R,FRR
+static void SlotUpdateFEG(struct ChannelEx *ch)
+{
+   //this needs to be filled
+}
+
+static void SlotRegWrite(struct ChannelEx *ch, u32 offset)
+{
+   switch(offset)
+   {
+      case 0x00: //yay ?
+         SlotUpdateStreamStep(ch);
+         SlotUpdateSA(ch);
+         break;
+
+      case CH_REC_FORMAT_KEY_LOOP:
+         SlotUpdateStreamStep(ch);
+         SlotUpdateSA(ch);
+         if (ch->ccd->KEYONEX)
+         {
+            ch->ccd->KEYONEX=0;
+            for (int i = 0; i < MAX_CHANNELS; i++)
+            {
+               if (ch->Chans[i].ccd->KEYONB)
+                  KEY_ON(&ch->Chans[i]);
+               else
+                  KEY_OFF(&ch->Chans[i]);
+            }
+         }
+         break;
+
+      case 0x04:
+      case 0x05:
+         SlotUpdateSA(ch);
+         break;
+
+      case 0x08://LSA
+      case 0x09://LSA
+      case 0x0C://LEA
+      case 0x0D://LEA
+         ch->loop.LSA = ch->ccd->LSA;
+         ch->loop.LEA = ch->ccd->LEA;
+         break;
+
+      case CH_REC_AR_D1R:
+      case CH_REC_D1R_D2R:
+         SlotUpdateAEG(ch);
+         break;
+
+      case CH_REC_RR_DL:
+      case CH_REC_DL_KRS_LS:
+         SlotUpdateStreamStep(ch);
+         SlotUpdateAEG(ch);
+         break;
+
+      case CH_REC_FNS:
+      case CH_REC_FNS_OCT:
+         SlotUpdatePitch(ch);
+         break;
+
+      case CH_REC_ALFOS_ALFOWS_PLFOS:
+      case CH_REC_PLFOWS_LFOF_RE:
+         SlotUpdateLFO(ch);
+         break;
+
+      case 0x20://ISEL,IMXL
+         //case 0x21://nothing here !
+         //ISEL
+         ch->VolMix.DSPOut = &dsp.MIXS[ch->ccd->ISEL];
+         SlotUpdateAtts(ch);
+         break;
+
+      case 0x24://DIPAN
+      case 0x25://DISDL
+         SlotUpdateAtts(ch);
+         break;
+
+      case 0x28://Q
+         SlotUpdateFEG(ch);
+         break;
+
+      case 0x29://TL
+         SlotUpdateAtts(ch);
+         break;
+
+      case 0x2C: //FLV0
+      case 0x2D: //FLV0
+      case 0x30: //FLV1
+      case 0x31: //FLV1
+      case 0x34: //FLV2
+      case 0x35: //FLV2
+      case 0x38: //FLV3
+      case 0x39: //FLV3
+      case 0x3C: //FLV4
+      case 0x3D: //FLV4
+      case 0x40: //FD1R
+      case 0x41: //FAR
+      case 0x44: //FRR
+      case 0x45: //FD2R
+         SlotUpdateFEG(ch);
+         break;
+
+   }
+} 
 
 static void StopSlot(struct ChannelEx *ch)
 {
    ch->enabled = false;
-   ch->SetAegState(EG_RELEASE);
+   SetAegState(ch, EG_RELEASE);
    ch->AEG.SetValue(0x3FF);
 }
 
@@ -732,11 +716,11 @@ static void SlotInit(struct ChannelEx *ch, int cn,u8* ccd_raw)
    if (!ch)
       return;
 
-   ch->ccd          = (ChannelCommonData*)&ccd_raw[cn*0x80];
-   ch->ChanelNumber = cn;
+   ch->ccd           = (ChannelCommonData*)&ccd_raw[cn*0x80];
+   ch->ChannelNumber = cn;
 
    for (i = 0;i < 0x80; i++)
-      ch->RegWrite(i);
+      SlotRegWrite(ch, i);
 
    StopSlot(ch);
 }
@@ -853,7 +837,7 @@ static void StreamStep(ChannelEx* ch)
          {
 
             step_printf("[%d]LPSLNK : Switching to EG_DECAY1 %X\n",Channel,AEG.GetValue());
-            ch->SetAegState(EG_DECAY1);
+            SetAegState(ch, EG_DECAY1);
          }
       }
 
@@ -952,7 +936,7 @@ static void AegStep(ChannelEx* ch)
             if (!ch->ccd->LPSLNK)
             {
                aeg_printf("[%d]AEG_step : Switching to EG_DECAY1 %d\n",ch->AEG.GetValue());
-               ch->SetAegState(EG_DECAY1);
+               SetAegState(ch, EG_DECAY1);
             }
          }
          break;
@@ -965,9 +949,9 @@ static void AegStep(ChannelEx* ch)
 
             // No transition to Decay 2 when DL is zero.
             if (settings.aica.AegStepHack && ch->ccd->DL == 0)
-               ch->SetAegState(EG_ATTACK);
+               SetAegState(ch, EG_ATTACK);
             else
-               ch->SetAegState(EG_DECAY2);
+               SetAegState(ch, EG_DECAY2);
 
          }
          break;
@@ -978,7 +962,7 @@ static void AegStep(ChannelEx* ch)
          {
             aeg_printf("[%d]AEG_step : Switching to EG_RELEASE @ %x\n",ch->AEG.GetValue());
             ch->AEG.SetValue(0x3FF);
-            ch->SetAegState(EG_RELEASE);
+            SetAegState(ch, EG_RELEASE);
          }
          break;
       case EG_RELEASE: //only on key_off ?
@@ -1106,7 +1090,7 @@ void sgc_Term(void)
 
 void WriteChannelReg8(u32 channel,u32 reg)
 {
-   Chans[channel].RegWrite(reg);
+   SlotRegWrite(&Chans[channel], reg);
 }
 
 void ReadCommonReg(u32 reg,bool byte)
@@ -1173,10 +1157,12 @@ void AICA_Sample32(void)
    {
       for (int i=0;i<32;i++)
       {
-         SampleType oLeft,oRight,oDsp;
+         SampleType oLeft  = 0;
+         SampleType oRight = 0;
+         SampleType oDsp   = 0;
 
          /*stop working on this channel if its turned off ... */
-         if (!Chans[ch].Step(oLeft, oRight, oDsp))
+         if (!SlotStep(&Chans[ch], &oLeft, &oRight, &oDsp))
             break;
 
          sg++;
@@ -1262,13 +1248,12 @@ void AICA_Sample32(void)
 
 void AICA_Sample(void)
 {
-   SampleType mixl,mixr;
-   mixl = 0;
-   mixr = 0;
-   memset(dsp.MIXS,0,sizeof(dsp.MIXS));
+   SampleType mixl = 0;
+   SampleType mixr = 0;
+   memset(dsp.MIXS, 0, sizeof(dsp.MIXS));
 
    for (int i = 0; i < MAX_CHANNELS; i++)
-      ChannelEx::Chans[i].Step(&mixl, &mixr);
+      SlotStep(&ChannelEx::Chans[i], &mixl, &mixr);
 
    /* OK , generated all Channels  , now DSP/ect + final mix
     * CDDA EXTS input */

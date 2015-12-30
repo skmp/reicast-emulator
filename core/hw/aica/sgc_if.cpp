@@ -37,6 +37,14 @@
 
 #define CDDA_SIZE  (2352/2)
 
+enum _EG_state
+{
+   EG_ATTACK = 0,
+   EG_DECAY1,
+   EG_DECAY2,
+   EG_RELEASE
+};
+
 s16 cdda_sector[CDDA_SIZE]={0};
 u32 cdda_index=CDDA_SIZE<<1;
 
@@ -140,8 +148,8 @@ struct ChannelCommonData
    u32 LPCTL:1;
    u32 SSCTL:1;
    u32 res_1:3;
-   u32 KYONB:1;
-   u32 KYONEX:1;
+   u32 KEYONB:1;
+   u32 KEYONEX:1;
 
    u32 pad_2:16;
 
@@ -270,34 +278,23 @@ struct ChannelCommonData
    u32 pad_20:16;
 };
 
-
-
-enum _EG_state
-{
-   EG_Attack = 0,
-   EG_Decay1 = 1,
-   EG_Decay2 = 2,
-   EG_Release = 3
-};
-
 /*
    KEY_OFF->KEY_ON : Resets everything, and starts playback (EG: A)
    KEY_ON->KEY_ON  : nothing
    KEY_ON->KEY_OFF : Switches to RELEASE state (does not disable channel)
 
 */
+struct ChannelEx;
 
-   struct ChannelEx;
+//make these DYNACALL ? they were fastcall before ..
+void (* STREAM_STEP_LUT[5][2][2])(ChannelEx* ch);
+void (* STREAM_INITAL_STEP_LUT[5])(ChannelEx* ch);
+void (* AEG_STEP_LUT[4])(ChannelEx* ch);
+void (* FEG_STEP_LUT[4])(ChannelEx* ch);
+void (* ALFOWS_CALC[4])(ChannelEx* ch);
+void (* PLFOWS_CALC[4])(ChannelEx* ch);
 
-   //make these DYNACALL ? they were fastcall before ..
-   void (* STREAM_STEP_LUT[5][2][2])(ChannelEx* ch);
-   void (* STREAM_INITAL_STEP_LUT[5])(ChannelEx* ch);
-   void (* AEG_STEP_LUT[4])(ChannelEx* ch);
-   void (* FEG_STEP_LUT[4])(ChannelEx* ch);
-   void (* ALFOWS_CALC[4])(ChannelEx* ch);
-   void (* PLFOWS_CALC[4])(ChannelEx* ch);
-
-   struct ChannelEx
+struct ChannelEx
 {
    static ChannelEx Chans[MAX_CHANNELS];
 
@@ -397,7 +394,7 @@ enum _EG_state
    void disable(void)
    {
       enabled=false;
-      SetAegState(EG_Release);
+      SetAegState(EG_RELEASE);
       AEG.SetValue(0x3FF);
    }
 
@@ -465,8 +462,8 @@ enum _EG_state
    {
       StepAEG=AEG_STEP_LUT[newstate];
       AEG.state=newstate;
-      if (newstate==EG_Release)
-         ccd->KYONB=0;
+      if (newstate == EG_RELEASE)
+         ccd->KEYONB=0;
    }
    void SetFegState(_EG_state newstate)
    {
@@ -476,14 +473,14 @@ enum _EG_state
 
    void KEY_ON(void)
    {
-      if (AEG.state != EG_Release)
+      if (AEG.state != EG_RELEASE)
          return;
 
       enabled = true;            //if it was off then turn it on !
-      SetAegState(EG_Attack);    // reset AEG
+      SetAegState(EG_ATTACK);    // reset AEG
       AEG.SetValue(0x3FF);       //start from 0x3FF ? .. it seems so !
 
-      SetFegState(EG_Attack);    //reset FEG
+      SetFegState(EG_ATTACK);    //reset FEG
 
       //Reset sampling state
       CA          = 0;
@@ -498,11 +495,11 @@ enum _EG_state
 
    void KEY_OFF(void)
    {
-      if (AEG.state == EG_Release)
+      if (AEG.state == EG_RELEASE)
          return;
 
       key_printf("[%d] KEY_OFF -> Release\n",Channel);
-      SetAegState(EG_Release);
+      SetAegState(EG_RELEASE);
       //switch to release state
    }
 
@@ -648,12 +645,12 @@ enum _EG_state
          case CH_REC_FORMAT_KEY_LOOP:
             UpdateStreamStep();
             UpdateSA();
-            if (ccd->KYONEX)
+            if (ccd->KEYONEX)
             {
-               ccd->KYONEX=0;
+               ccd->KEYONEX=0;
                for (int i = 0; i < MAX_CHANNELS; i++)
                {
-                  if (Chans[i].ccd->KYONB)
+                  if (Chans[i].ccd->KEYONB)
                      Chans[i].KEY_ON();
                   else
                      Chans[i].KEY_OFF();
@@ -736,14 +733,11 @@ enum _EG_state
 
 static __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
 {
-   s32 sign=1-2*(sample/8);
-
-   u32 data=sample&7;
-
+   s32 sign      = 1-2*(sample/8);
+   u32 data      = sample&7;
    /*(1 - 2 * L4) * (L3 + L2/2 +L1/4 + 1/8) * quantized width (ƒΆn) + decode value (Xn - 1) */
    SampleType rv = prev + sign*((quant*adpcm_scale[data])>>3);
-
-   quant = (quant * adpcm_qs[data])>>8;
+   quant         = (quant * adpcm_qs[data])>>8;
 
    clip(quant,127,24576);
    clip16(rv);
@@ -844,11 +838,11 @@ static void StreamStep(ChannelEx* ch)
 
       if (LPSLNK)
       {
-         if ((ch->AEG.state==EG_Attack) && (CA>=ch->loop.LSA))
+         if ((ch->AEG.state==EG_ATTACK) && (CA>=ch->loop.LSA))
          {
 
-            step_printf("[%d]LPSLNK : Switching to EG_Decay1 %X\n",Channel,AEG.GetValue());
-            ch->SetAegState(EG_Decay1);
+            step_printf("[%d]LPSLNK : Switching to EG_DECAY1 %X\n",Channel,AEG.GetValue());
+            ch->SetAegState(EG_DECAY1);
          }
       }
 
@@ -933,7 +927,7 @@ static void AegStep(ChannelEx* ch)
 {
    switch(state)
    {
-      case EG_Attack:
+      case EG_ATTACK:
          //wii
          ch->AEG.val-=ch->AEG.AttackRate;
          if (ch->AEG.GetValue()<=0)
@@ -941,42 +935,42 @@ static void AegStep(ChannelEx* ch)
             ch->AEG.SetValue(0);
             if (!ch->ccd->LPSLNK)
             {
-               aeg_printf("[%d]AEG_step : Switching to EG_Decay1 %d\n",ch->AEG.GetValue());
-               ch->SetAegState(EG_Decay1);
+               aeg_printf("[%d]AEG_step : Switching to EG_DECAY1 %d\n",ch->AEG.GetValue());
+               ch->SetAegState(EG_DECAY1);
             }
          }
          break;
-      case EG_Decay1:
+      case EG_DECAY1:
          //x2
          ch->AEG.val+=ch->AEG.Decay1Rate;
          if (((u32)ch->AEG.GetValue())>=ch->AEG.Decay2Value)
          {
-            aeg_printf("[%d]AEG_step : Switching to EG_Decay2 @ %x\n",ch->AEG.GetValue());
+            aeg_printf("[%d]AEG_step : Switching to EG_DECAY2 @ %x\n",ch->AEG.GetValue());
 
             // No transition to Decay 2 when DL is zero.
             if (settings.aica.AegStepHack && ch->ccd->DL == 0)
-               ch->SetAegState(EG_Attack);
+               ch->SetAegState(EG_ATTACK);
             else
-               ch->SetAegState(EG_Decay2);
+               ch->SetAegState(EG_DECAY2);
 
          }
          break;
-      case EG_Decay2:
+      case EG_DECAY2:
          //x3
          ch->AEG.val+=ch->AEG.Decay2Rate;
          if (ch->AEG.GetValue()>=0x3FF)
          {
-            aeg_printf("[%d]AEG_step : Switching to EG_Release @ %x\n",ch->AEG.GetValue());
+            aeg_printf("[%d]AEG_step : Switching to EG_RELEASE @ %x\n",ch->AEG.GetValue());
             ch->AEG.SetValue(0x3FF);
-            ch->SetAegState(EG_Release);
+            ch->SetAegState(EG_RELEASE);
          }
          break;
-      case EG_Release: //only on key_off ?
+      case EG_RELEASE: //only on key_off ?
          ch->AEG.val+=ch->AEG.ReleaseRate;
 
          if (ch->AEG.GetValue()>=0x3FF)
          {
-            aeg_printf("[%d]AEG_step : EG_Release End @ %x\n",ch->AEG.GetValue());
+            aeg_printf("[%d]AEG_step : EG_RELEASE End @ %x\n",ch->AEG.GetValue());
             ch->AEG.SetValue(0x3FF); // TODO: mnn, should we do anything about it running wild ?
             ch->disable(); // TODO: Is this ok here? It's a speed optimisation (since the channel is muted)
          }

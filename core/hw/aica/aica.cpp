@@ -196,7 +196,7 @@ void WriteAicaReg(u32 reg,u32 data)
       case SCIPD_addr:
          verify(sz!=1);
 
-         if (data & (1<<5))
+         if (data & 0x20)
          {
             SCIPD->SCPU=1;
             update_arm_interrupts();
@@ -211,7 +211,7 @@ void WriteAicaReg(u32 reg,u32 data)
          break;
 
       case MCIPD_addr:
-         if (data & (1<<5))
+         if (data & 0x20)
          {
             verify(sz!=1);
             MCIPD->SCPU=1;

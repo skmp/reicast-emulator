@@ -295,6 +295,7 @@ void (* FEG_STEP_LUT[4])(ChannelEx* ch);
 void (* ALFOWS_CALC[4])(ChannelEx* ch);
 void (* PLFOWS_CALC[4])(ChannelEx* ch);
 
+
 struct ChannelEx
 {
    static ChannelEx Chans[MAX_CHANNELS];
@@ -383,21 +384,8 @@ struct ChannelEx
 
    bool enabled;	//set to false to 'freeze' the channel
    int ChanelNumber;
-   void Init(int cn,u8* ccd_raw)
-   {
-      ccd=(ChannelCommonData*)&ccd_raw[cn*0x80];
-      ChanelNumber=cn;
-      for (u32 i=0;i<0x80;i++)
-         RegWrite(i);
-      disable();
-   }
 
-   void disable(void)
-   {
-      enabled=false;
-      SetAegState(EG_RELEASE);
-      AEG.SetValue(0x3FF);
-   }
+
 
    __forceinline SampleType InterpolateSample(void)
    {
@@ -731,6 +719,29 @@ struct ChannelEx
    } 
 };
 
+static void StopSlot(struct ChannelEx *ch)
+{
+   ch->enabled = false;
+   ch->SetAegState(EG_RELEASE);
+   ch->AEG.SetValue(0x3FF);
+}
+
+static void SlotInit(struct ChannelEx *ch, int cn,u8* ccd_raw)
+{
+   unsigned i;
+   if (!ch)
+      return;
+
+   ch->ccd          = (ChannelCommonData*)&ccd_raw[cn*0x80];
+   ch->ChanelNumber = cn;
+
+   for (i = 0;i < 0x80; i++)
+      ch->RegWrite(i);
+
+   StopSlot(ch);
+}
+
+
 static __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
 {
    s32 sign      = 1-2*(sample/8);
@@ -854,7 +865,7 @@ static void StreamStep(ChannelEx* ch)
          switch (LPCTL)
          {
             case 0: /* no loop */
-               ch->disable();
+               StopSlot(ch);
                break;
             case 1: /* normal loop */
                if (PCMS==2) //if in adpcm non-stream mode, reset the decoder
@@ -977,7 +988,7 @@ static void AegStep(ChannelEx* ch)
          {
             aeg_printf("[%d]AEG_step : EG_RELEASE End @ %x\n",ch->AEG.GetValue());
             ch->AEG.SetValue(0x3FF); // TODO: mnn, should we do anything about it running wild ?
-            ch->disable(); // TODO: Is this ok here? It's a speed optimisation (since the channel is muted)
+            StopSlot(ch); /* TODO: Is this ok here? It's a speed optimisation (since the channel is muted) */
          }
          break;
    }
@@ -1082,7 +1093,7 @@ void sgc_Init(void)
    }
 
    for (int i = 0; i < MAX_CHANNELS; i++)
-      Chans[i].Init(i,aica_reg);
+      SlotInit(&Chans[i], i,aica_reg);
    dsp_out_vol=(DSP_OUT_VOL_REG*)&aica_reg[0x2000];
 
    dsp_init();

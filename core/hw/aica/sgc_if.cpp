@@ -768,7 +768,7 @@ static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
          s1>>=16;
          break;
 
-      case CH_FORMAT_PCM16:
+      case CH_FORMAT_PCM16: /* 16-bit signed */
          {
             //s16* ptr=(s16*)&aica_ram[(addr&~1)+(CA<<1)];
             sptr16+=CA;
@@ -777,7 +777,7 @@ static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
          }
          break;
 
-      case CH_FORMAT_PCM8:
+      case CH_FORMAT_PCM8: /* 8-bit signed */
          {
             //s8* ptr=(s8*)&aica_ram[addr+(CA)];
             sptr8+=CA;
@@ -786,7 +786,7 @@ static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
          }
          break;
 
-      case CH_FORMAT_ADPCM1:
+      case CH_FORMAT_ADPCM1: /* 4-bit ADPCM */
       case CH_FORMAT_ADPCM2:
          {
             //u32 offs=CA;
@@ -827,7 +827,7 @@ static void StreamStep(ChannelEx* ch)
    fp_22_10 sp=ch->step;
    ch->step.ip=0;
 
-   while(sp.ip>0)
+   while(sp.ip > 0)
    {
       sp.ip--;
 
@@ -849,15 +849,19 @@ static void StreamStep(ChannelEx* ch)
 
       if (ca_t>=ch->loop.LEA)
       {
-         ch->loop.looped=1;
-         CA=ch->loop.LSA;
-         if (LPCTL)
+         ch->loop.looped = 1;
+         CA              = ch->loop.LSA;
+
+         switch (LPCTL)
          {
-            if (PCMS==2) //if in adpcm non-stream mode, reset the decoder
-               ch->adpcm.Reset(ch);
+            case 0: /* no loop */
+               ch->disable();
+               break;
+            case 1: /* normal loop */
+               if (PCMS==2) //if in adpcm non-stream mode, reset the decoder
+                  ch->adpcm.Reset(ch);
+               break;
          }
-         else
-            ch->disable();
       }
 
       ch->CA=CA;

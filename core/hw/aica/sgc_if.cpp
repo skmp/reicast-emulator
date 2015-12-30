@@ -897,34 +897,36 @@ static void CalcAlfo(ChannelEx* ch)
          rv=(ch->lfo.state>>3)^(ch->lfo.state<<3)^(ch->lfo.state&0xE3);
          break;
    }
-   ch->lfo.alfo=rv>>ch->lfo.alfo_shft;
+
+   ch->lfo.alfo = rv >> ch->lfo.alfo_shft;
 }
 
 template<s32 PLFOWS>
 static void CalcPlfo(ChannelEx* ch)
 {
    u32 rv;
+
    switch(PLFOWS)
    {
       case 0: // sawtooth
-         rv=ch->lfo.state;
+         rv   = ch->lfo.state;
          break;
 
       case 1: // square
-         rv=ch->lfo.state&0x80?0x80:0x7F;
+         rv   = ch->lfo.state&0x80?0x80:0x7F;
          break;
 
       case 2: // triangle
-         rv=(ch->lfo.state&0x7f)^(ch->lfo.state&0x80 ? 0x7F:0);
-         rv<<=1;
-         rv=(u8)(rv-0x80); //2's complement
+         rv   = (ch->lfo.state&0x7f)^(ch->lfo.state&0x80 ? 0x7F:0);
+         rv <<= 1;
+         rv   = (u8)(rv-0x80); //2's complement
          break;
 
       case 3:// random ! .. not :p
-         rv=(ch->lfo.state>>3)^(ch->lfo.state<<3)^(ch->lfo.state&0xE3);
+         rv   = (ch->lfo.state >> 3) ^ (ch->lfo.state << 3) ^ (ch->lfo.state & 0xE3);
          break;
    }
-   ch->lfo.alfo=rv>>ch->lfo.plfo_shft;
+   ch->lfo.alfo = rv >> ch->lfo.plfo_shft;
 }
 
 template<u32 state>

@@ -761,24 +761,23 @@ static __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
 template<s32 PCMS,bool last>
 static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
 {
+   SampleType s0,s1;
+
    if (!last && PCMS<2)
       return ;
 
-   s16* sptr16=(s16*)ch->SA;
-   s8* sptr8=(s8*)sptr16;
-   u8* uptr8=(u8*)sptr16;
+   s16* sptr16 = (s16*)ch->SA;
+   s8* sptr8   = (s8*)sptr16;
+   u8* uptr8   = (u8*)sptr16;
 
-   SampleType s0,s1;
    switch(PCMS)
    {
       case -1:
-         ch->noise_state = ch->noise_state*16807 + 0xbeef;	//beef is good
-
-         s0=ch->noise_state;
-         s0>>=16;
-
-         s1=ch->noise_state*16807 + 0xbeef;
-         s1>>=16;
+         ch->noise_state     = ch->noise_state*16807 + 0xbeef;	//beef is good
+         s0                  = ch->noise_state;
+         s0                >>= 16;
+         s1                  = ch->noise_state*16807 + 0xbeef;
+         s1                >>= 16;
          break;
 
       case CH_FORMAT_PCM16: /* 16-bit signed */

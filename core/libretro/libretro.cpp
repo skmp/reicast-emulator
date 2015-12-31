@@ -4,6 +4,8 @@
 
 #include <libco.h>
 
+#include "../hw/pvr/pvr_regs.h"
+
 #if defined(GL) || defined(GLES)
 #include <glsym/rglgen.h>
 #include <glsym/glsym.h>
@@ -542,12 +544,35 @@ void retro_get_system_info(struct retro_system_info *info)
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
+   /*                        00=VGA    01=NTSC   10=PAL,   11=illegal/undocumented */
+   const int spg_clks[4] = { 26944080, 13458568, 13462800, 26944080 };
+	u32 pixel_clock= spg_clks[(SPG_CONTROL.full >> 6) & 3];
+
    info->geometry.base_width   = screen_width;
    info->geometry.base_height  = screen_height;
    info->geometry.max_width    = screen_width;
    info->geometry.max_height   = screen_height;
    info->geometry.aspect_ratio = 4.0 / 3.0;
-   info->timing.fps = 60.0; //FIXME: This might differ for non-NTSC games
+
+   switch (pixel_clock)
+   {
+      case 26944080:
+         info->timing.fps = 60.00; /* (VGA  480 @ 60.00) */
+         break;
+      case 26917135:
+         info->timing.fps = 59.94; /* (NTSC 480 @ 59.94) */
+         break;
+      case 13462800:
+         info->timing.fps = 50.00; /* (PAL 240  @ 50.00) */
+         break;
+      case 13458568:
+         info->timing.fps = 59.94; /* (NTSC 240 @ 59.94) */
+         break;
+      case 25925600:
+         info->timing.fps = 50.00; /* (PAL 480  @ 50.00) */
+         break;
+   }
+
    info->timing.sample_rate = 44100.0;
 }
 

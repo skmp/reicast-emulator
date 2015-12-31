@@ -440,20 +440,3 @@ template void texture_VQ<convBMP_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width
 
 void texture_PAL4(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
 void texture_PAL8(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-
-
-#define Is_64_Bit(addr) ((addr &0x1000000)==0)
- 
-//vram_block, vramLockCBFP on plugin headers
-
-
-u32 vramlock_ConvAddrtoOffset64(u32 Address);
-u32 vramlock_ConvOffset32toOffset64(u32 offset32);
-
-void vramlock_Unlock_block(vram_block* block);
-vram_block* vramlock_Lock_32(u32 start_offset32,u32 end_offset32,void* userdata);
-vram_block* vramlock_Lock_64(u32 start_offset64,u32 end_offset64,void* userdata);
-
-void vram_LockedWrite(u32 offset64);
-void libCore_vramlock_Free(void);
-void libCore_vramlock_Init(void);

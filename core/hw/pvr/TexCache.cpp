@@ -1,9 +1,16 @@
 #include "../../types.h"
-#include "TexCache.h"
 #include "pvr_regs.h"
+#include "TexCache.h"
+
+bool pal_needs_update=true;
 
 u8* vq_codebook;
 u32 palette_index;
+u32 _pal_rev_256[4]={0};
+u32 _pal_rev_16[64]={0};
+u32 pal_rev_256[4]={0};
+u32 pal_rev_16[64]={0};
+u32 palette_ram[1024];
 
 u32 decoded_colors[3][65536];
 u32 detwiddle[2][8][1024];

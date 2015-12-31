@@ -2,13 +2,14 @@
 #include <algorithm>
 #include "gles.h"
 #include "../rend.h"
-#include "../../hw/pvr/TexCache.h"
 #include "../../libretro/libretro.h"
 
 #include "rend/rend.h"
 #include "hw/pvr/Renderer_if.h"
+#include "hw/pvr/pvr_lock.h"
 
 extern struct retro_hw_render_callback hw_render;
+extern bool fog_needs_update;
 extern bool enable_rtt;
 bool KillTex=false;
 

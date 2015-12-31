@@ -446,7 +446,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	glBindFramebuffer(RARCH_GL_FRAMEBUFFER, rv.fbo);
 
 	/* Attach the texture to the FBO */
-	glFramebufferTexture2D(RARCH_GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rv.tex, 0);
+	glFramebufferTexture2D(RARCH_GL_FRAMEBUFFER, RARCH_GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rv.tex, 0);
 
 	// Attach the depth buffer we created earlier to our FBO.
 #if defined(HAVE_OPENGLES2) || defined(HAVE_OPENGLES1) || defined(OSX_PPC)

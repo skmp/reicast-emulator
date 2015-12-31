@@ -94,7 +94,10 @@ struct pp_565
 {
 	__forceinline static u32 packRGB(u8 R,u8 G,u8 B)
 	{
-		return ((R >> 3) <11) | ((G >> 2) <<5) | ((B >> 3) <<0);
+		R>>=3;
+		G>>=2;
+		B>>=3;
+		return (R<<11) | (G<<5) | (B<<0);
 	}
 };
 

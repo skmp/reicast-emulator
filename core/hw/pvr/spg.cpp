@@ -15,8 +15,6 @@ u32 vblk_cnt=0;
 
 float last_fps=0;
 
-//54 mhz pixel clock :)
-#define PIXEL_CLOCK (54*1000*1000/2)
 u32 Line_Cycles=0;
 u32 Frame_Cycles=0;
 static int render_end_sched;
@@ -33,15 +31,14 @@ u32 fskip=0;
 
 void CalculateSync(void)
 {
+   /*                        00=VGA    01=NTSC   10=PAL,   11=illegal/undocumented */
+   const int spg_clks[4] = { 26944080, 13458568, 13462800, 26944080 };
 	float scale_x=1,scale_y=1;
-	u32 pixel_clock=PIXEL_CLOCK / (FB_R_CTRL.vclk_div?1:2);
+	u32 pixel_clock= spg_clks[(SPG_CONTROL.full >> 6) & 3];
 
-	//We need to calculate the pixel clock
-
-	//u32 sync_cycles=(SPG_LOAD.hcount+1)*(SPG_LOAD.vcount+1);
-	pvr_numscanlines=SPG_LOAD.vcount+1;
+	pvr_numscanlines = SPG_LOAD.vcount+1;
 	
-	Line_Cycles=(u32)((u64)SH4_MAIN_CLOCK*(u64)(SPG_LOAD.hcount+1)/(u64)pixel_clock);
+	Line_Cycles      = (u32)((u64)SH4_MAIN_CLOCK*(u64)(SPG_LOAD.hcount+1)/(u64)pixel_clock);
 	
 	if (SPG_CONTROL.interlace)
 	{
@@ -63,8 +60,6 @@ void CalculateSync(void)
 	}
 
 	rend_set_fb_scale(scale_x,scale_y);
-	
-	//Frame_Cycles=(u64)DCclock*(u64)sync_cycles/(u64)pixel_clock;
 	
 	Frame_Cycles=pvr_numscanlines*Line_Cycles;
 	prv_cur_scanline=0;

@@ -10,6 +10,7 @@
 
 extern struct retro_hw_render_callback hw_render;
 extern bool enable_rtt;
+bool KillTex=false;
 
 struct modvol_shader_type
 {
@@ -1625,37 +1626,6 @@ static void tryfit(float* x,float* y)
 	//printf("%f\n",B*log(maxdev)/log(2.0)+A);
 }
 
-static void ClearBG(void)
-{
-
-}
-
-static bool ProcessFrame(TA_context* ctx)
-{
-   //disable RTTs for now ..
-   if (!enable_rtt && ctx->rend.isRTT)
-      return false;
-
-#ifndef TARGET_NO_THREADS
-   slock_lock(ctx->rend_inuse);
-#endif
-   ctx->MarkRend();
-
-   if (KillTex)
-   {
-      void killtex();
-      killtex();
-      printf("Texture cache cleared\n");
-   }
-
-   if (!ta_parse_vdrc(ctx))
-      return false;
-
-   CollectCleanup();
-
-   return true;
-}
-
 static bool RenderFrame(void)
 {
 	bool is_rtt=pvrrc.isRTT;
@@ -2112,7 +2082,7 @@ static bool RenderFrame(void)
    glBindBuffer(GL_ARRAY_BUFFER, 0);
    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-	KillTex=false;
+	KillTex = false;
 
 	return !is_rtt;
 }
@@ -2150,7 +2120,30 @@ struct glesrend : Renderer
 	void Resize(int w, int h) { gles_screen_width=w; gles_screen_height=h; }
 	void Term() { libCore_vramlock_Free(); }
 
-	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
+	bool Process(TA_context* ctx)
+   {
+      if (!enable_rtt && ctx->rend.isRTT)
+         return false;
+
+#ifndef TARGET_NO_THREADS
+      slock_lock(ctx->rend_inuse);
+#endif
+      ctx->MarkRend();
+
+      if (KillTex)
+      {
+         void killtex();
+         killtex();
+         printf("Texture cache cleared\n");
+      }
+
+      if (!ta_parse_vdrc(ctx))
+         return false;
+
+      CollectCleanup();
+
+      return true;
+   }
 	bool Render()
    {
       unsigned i;

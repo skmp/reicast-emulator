@@ -3,7 +3,7 @@
 extern u8* vq_codebook;
 extern u32 palette_index;
 extern u32 palette_ram[1024];
-extern bool pal_needs_update,fog_needs_update,KillTex;
+extern bool pal_needs_update,fog_needs_update;
 extern u32 pal_rev_256[4];
 extern u32 pal_rev_16[64];
 extern u32 _pal_rev_256[4];

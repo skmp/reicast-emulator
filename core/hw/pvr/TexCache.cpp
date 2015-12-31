@@ -4,7 +4,6 @@
 
 u8* vq_codebook;
 u32 palette_index;
-bool KillTex=false;
 
 u32 decoded_colors[3][65536];
 u32 detwiddle[2][8][1024];

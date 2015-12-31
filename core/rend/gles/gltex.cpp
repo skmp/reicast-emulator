@@ -398,28 +398,6 @@ struct TextureCacheData
 map<u64,TextureCacheData> TexCache;
 typedef map<u64,TextureCacheData>::iterator TexCacheIter;
 
-#if defined(HAVE_OPENGLES2)
-#define RARCH_GL_RENDERBUFFER GL_RENDERBUFFER
-#define RARCH_GL_DEPTH24_STENCIL8 GL_DEPTH24_STENCIL8_OES
-#define RARCH_GL_DEPTH_ATTACHMENT GL_DEPTH_ATTACHMENT
-#define RARCH_GL_STENCIL_ATTACHMENT GL_STENCIL_ATTACHMENT
-#elif defined(OSX_PPC)
-#define RARCH_GL_RENDERBUFFER GL_RENDERBUFFER_EXT
-#define RARCH_GL_DEPTH24_STENCIL8 GL_DEPTH24_STENCIL8_EXT
-#define RARCH_GL_DEPTH_ATTACHMENT GL_DEPTH_ATTACHMENT_EXT
-#define RARCH_GL_STENCIL_ATTACHMENT GL_STENCIL_ATTACHMENT_EXT
-#elif defined(HAVE_PSGL)
-#define RARCH_GL_RENDERBUFFER GL_RENDERBUFFER_OES
-#define RARCH_GL_DEPTH24_STENCIL8 GL_DEPTH24_STENCIL8_SCE
-#define RARCH_GL_DEPTH_ATTACHMENT GL_DEPTH_ATTACHMENT_OES
-#define RARCH_GL_STENCIL_ATTACHMENT GL_STENCIL_ATTACHMENT_OES
-#else
-#define RARCH_GL_RENDERBUFFER GL_RENDERBUFFER
-#define RARCH_GL_DEPTH24_STENCIL8 GL_DEPTH24_STENCIL8
-#define RARCH_GL_DEPTH_ATTACHMENT GL_DEPTH_ATTACHMENT
-#define RARCH_GL_STENCIL_ATTACHMENT GL_STENCIL_ATTACHMENT
-#endif
-
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
 	FBT& rv=fb_rtt;
@@ -465,26 +443,26 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	/* Create the object that will allow us to render to the aforementioned texture */
 	glGenFramebuffers(1, &rv.fbo);
-	glBindFramebuffer(GL_FRAMEBUFFER, rv.fbo);
+	glBindFramebuffer(RARCH_GL_FRAMEBUFFER, rv.fbo);
 
 	/* Attach the texture to the FBO */
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rv.tex, 0);
+	glFramebufferTexture2D(RARCH_GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rv.tex, 0);
 
 	// Attach the depth buffer we created earlier to our FBO.
 #if defined(HAVE_OPENGLES2) || defined(HAVE_OPENGLES1) || defined(OSX_PPC)
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, RARCH_GL_DEPTH_ATTACHMENT,
+	glFramebufferRenderbuffer(RARCH_GL_FRAMEBUFFER, RARCH_GL_DEPTH_ATTACHMENT,
          RARCH_GL_RENDERBUFFER, rv.depthb);
-   glFramebufferRenderbuffer(GL_FRAMEBUFFER, RARCH_GL_STENCIL_ATTACHMENT,
+   glFramebufferRenderbuffer(RARCH_GL_FRAMEBUFFER, RARCH_GL_STENCIL_ATTACHMENT,
          RARCH_GL_RENDERBUFFER, rv.depthb);
 #else
-   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+   glFramebufferRenderbuffer(RARCH_GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
          RARCH_GL_RENDERBUFFER, rv.depthb);
 #endif
 
 	/* Check that our FBO creation was successful */
-	GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	GLuint uStatus = glCheckFramebufferStatus(RARCH_GL_FRAMEBUFFER);
 
-	verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
+	verify(uStatus == RARCH_GL_FRAMEBUFFER_COMPLETE);
 }
 
 GLuint gl_GetTexture(TSP tsp, TCW tcw)

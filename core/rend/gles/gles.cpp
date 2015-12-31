@@ -2155,7 +2155,7 @@ struct glesrend : Renderer
    {
       unsigned i;
 
-      glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
+      glBindFramebuffer(RARCH_GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
       glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
       glClearColor(gl_state.clear_color.r, gl_state.clear_color.g, gl_state.clear_color.b, gl_state.clear_color.a);
       glCullFace(gl_state.cullmode);
@@ -2208,7 +2208,7 @@ struct glesrend : Renderer
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, 0);
 
-      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+      glBindFramebuffer(RARCH_GL_FRAMEBUFFER, 0);
       co_dc_yield();
    }
 

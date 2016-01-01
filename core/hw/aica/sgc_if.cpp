@@ -108,17 +108,6 @@ const char* stream_names[]=
    "3: 4-bit ADPCM long stream"
 };
 
-//x.8 format
-const s32 adpcm_qs[8] = 
-{
-   0x0e6, 0x0e6, 0x0e6, 0x0e6, 0x133, 0x199, 0x200, 0x266,
-};
-//x.3 format
-const s32 adpcm_scale[16] = 
-{
-   1,3,5,7,9,11,13,15,
-   -1,-3,-5,-7,-9,-11,-13,-15,
-};
 
 s16 pl=0,pr=0;
 
@@ -768,10 +757,14 @@ static void SlotInit(struct ChannelEx *slot, int cn,u8* ccd_raw)
 
 static __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32 *PrevQuant)
 {
+   //x.3 format
+   static const s32 quant_mul[16] = { 1,3,5,7,9,11,13,15, -1,-3,-5,-7,-9,-11,-13,-15};
+   //x.8 format
+   static const s32 adpcm_qs[8] = { 0x0e6, 0x0e6, 0x0e6, 0x0e6, 0x133, 0x199, 0x200, 0x266 };
    s32 sign           = 1-2*(sample/8);
    u32 data           = sample&7;
    /*(1 - 2 * L4) * (L3 + L2/2 +L1/4 + 1/8) * quantized width (ƒΆn) + decode value (Xn - 1) */
-   SampleType rv      = prev + sign*((*PrevQuant * adpcm_scale[data])>>3);
+   SampleType rv      = prev + sign*((*PrevQuant * quant_mul[data])>>3);
    *PrevQuant         = (*PrevQuant * adpcm_qs[data])>>8;
 
    clip(*PrevQuant,127,24576);

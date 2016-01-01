@@ -689,10 +689,16 @@ static void SlotRegWrite(struct ChannelEx *ch, u32 offset)
          ch->loop.LEA = ch->ccd->LEA;
          break;
 
+      case CH_REC_FNS:
+      case CH_REC_FNS_OCT:
+         ch->update_rate = SlotUpdatePitch(ch);
+         break;
+
       case CH_REC_RR_DL:
       case CH_REC_DL_KRS_LS:
          SlotUpdateStreamStep(ch);
          break;
+
 
       case CH_REC_ALFOS_ALFOWS_PLFOS:
       case CH_REC_PLFOWS_LFOF_RE:

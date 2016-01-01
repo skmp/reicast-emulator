@@ -302,8 +302,8 @@ struct ChannelEx
       u32 LSA;
       u32 LEA;
 
-      u8 looped;
    } loop;
+   u8 lpend;
 
    s32 adpcm_last_quant;
    u32 noise_state;//for Noise generator
@@ -476,7 +476,7 @@ static void StartSlot(struct ChannelEx *slot)
    //Reset sampling state
    slot->CA          = 0;
    slot->step.full   = 0;
-   slot->loop.looped = false;
+   slot->lpend       = 0;
    Compute_EG(slot);
    slot->update_rate = SlotUpdatePitch(slot);
 
@@ -878,7 +878,7 @@ static void StreamStep(ChannelEx *slot)
 
       if (ca_t>= slot->loop.LEA)
       {
-         slot->loop.looped = 1;
+         slot->lpend     = 1;
          CA              = slot->loop.LSA;
 
          switch (LPCTL)
@@ -1126,14 +1126,14 @@ void ReadCommonReg(u32 reg,bool byte)
          {
             u32 chan=CommonData->MSLC;
 
-            CommonData->LP=Chans[chan].loop.looped;
+            CommonData->LP=Chans[chan].lpend;
             verify(CommonData->AFSEL==0);
 
             CommonData->EG  = EG_GetValue(&Chans[chan]); //AEG is only 10 bits, FEG is 13 bits
             CommonData->SGC = Chans[chan].EG.state;
 
             if (! (byte && reg==0x2810))
-               Chans[chan].loop.looped=0;
+               Chans[chan].lpend = 0;
          }
          break;
       case 0x14: /* CA (slot address */

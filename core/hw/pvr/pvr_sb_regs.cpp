@@ -13,14 +13,6 @@
 #include "hw/sh4/sh4_mmr.h"
 #include "ta.h"
 
-void RegWrite_SB_C2DST(u32 addr, u32 data)
-{
-	if(data & 1)
-	{
-		SB_C2DST=1;
-		DMAC_Ch2St();
-	}
-}
 
 /* PVR-DMA */
 static void do_pvr_dma(void)
@@ -67,14 +59,6 @@ static void do_pvr_dma(void)
 	asic_RaiseInterruptWait(holly_PVR_DMA);
 }
 
-void RegWrite_SB_PDST(u32 addr, u32 data)
-{
-	if (data & 1)
-	{
-		SB_PDST=1;
-		do_pvr_dma();
-	}
-}
 
 u32 calculate_start_link_addr(void)
 {
@@ -117,12 +101,31 @@ static void pvr_do_sort_dma(void)
 	asic_RaiseInterruptWait(holly_PVR_SortDMA);
 }
 
+static void RegWrite_SB_PDST(u32 addr, u32 data)
+{
+	if (data & 1)
+	{
+		SB_PDST=1;
+		do_pvr_dma();
+	}
+}
+
+static void RegWrite_SB_C2DST(u32 addr, u32 data)
+{
+	if(data & 1)
+	{
+		SB_C2DST=1;
+		DMAC_Ch2St();
+	}
+}
+
 // Auto sort DMA :|
-void RegWrite_SB_SDST(u32 addr, u32 data)
+static void RegWrite_SB_SDST(u32 addr, u32 data)
 {
 	if(data & 1)
 		pvr_do_sort_dma();
 }
+
 
 //Init/Term , global
 void pvr_sb_Init(void)

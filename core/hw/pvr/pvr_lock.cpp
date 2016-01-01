@@ -14,7 +14,7 @@ VArray2 vram;
 void vramlock_list_remove(vram_block* block)
 {
 	u32 base = block->start/PAGE_SIZE;
-	u32 end = block->end/PAGE_SIZE;
+	u32 end  = block->end/PAGE_SIZE;
 
 	for (u32 i=base;i<=end;i++)
 	{

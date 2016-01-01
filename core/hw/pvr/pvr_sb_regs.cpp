@@ -29,9 +29,9 @@ static void do_pvr_dma(void)
 	u32 dmaor  = DMAC_DMAOR.full;
 	u32 dmatcr = DMAC_DMATCR(0);
 
-	u32 src = SB_PDSTAR;
-	u32 dst = SB_PDSTAP;
-	u32 len = SB_PDLEN;
+	u32 src    = SB_PDSTAR;
+	u32 dst    = SB_PDSTAP;
+	u32 len    = SB_PDLEN;
 
 	if((dmaor &DMAOR_MASK) != 0x8201)
 	{
@@ -69,7 +69,7 @@ static void do_pvr_dma(void)
 
 void RegWrite_SB_PDST(u32 addr, u32 data)
 {
-	if(1&data)
+	if (data & 1)
 	{
 		SB_PDST=1;
 		do_pvr_dma();
@@ -120,7 +120,7 @@ static void pvr_do_sort_dma(void)
 // Auto sort DMA :|
 void RegWrite_SB_SDST(u32 addr, u32 data)
 {
-	if(1&data)
+	if(data & 1)
 		pvr_do_sort_dma();
 }
 

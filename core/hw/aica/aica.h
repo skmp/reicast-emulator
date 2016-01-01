@@ -47,7 +47,7 @@ struct CommonData_struct
 	//+C
 	entry(MOBUF,8);
 	entry(MSLC,6);
-	entry(AFSET,1);
+	entry(AFSEL,1);
 	entry(padC_0,1);
 
 	u32 :16;

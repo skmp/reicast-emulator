@@ -1145,7 +1145,7 @@ void ReadCommonReg(u32 reg,bool byte)
             u32 chan=CommonData->MSLC;
 
             CommonData->LP=Chans[chan].loop.looped;
-            verify(CommonData->AFSET==0);
+            verify(CommonData->AFSEL==0);
 
             CommonData->EG  = EG_GetValue(&Chans[chan]); //AEG is only 10 bits, FEG is 13 bits
             CommonData->SGC = Chans[chan].EG.state;

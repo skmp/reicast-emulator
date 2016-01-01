@@ -766,15 +766,15 @@ static void SlotInit(struct ChannelEx *slot, int cn,u8* ccd_raw)
 }
 
 
-static __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
+static __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32 *PrevQuant)
 {
-   s32 sign      = 1-2*(sample/8);
-   u32 data      = sample&7;
+   s32 sign           = 1-2*(sample/8);
+   u32 data           = sample&7;
    /*(1 - 2 * L4) * (L3 + L2/2 +L1/4 + 1/8) * quantized width (ƒΆn) + decode value (Xn - 1) */
-   SampleType rv = prev + sign*((quant*adpcm_scale[data])>>3);
-   quant         = (quant * adpcm_qs[data])>>8;
+   SampleType rv      = prev + sign*((*PrevQuant * adpcm_scale[data])>>3);
+   *PrevQuant         = (*PrevQuant * adpcm_qs[data])>>8;
 
-   clip(quant,127,24576);
+   clip(*PrevQuant,127,24576);
    ICLIP16(rv);
    return rv;
 }
@@ -827,12 +827,12 @@ static __forceinline void StepDecodeSample(ChannelEx *slot, u32 CA)
             ad2                   &= 0xF;
 
             s32 q                  = slot->adpcm_last_quant;
-            s0                     = DecodeADPCM(ad1, slot->s0, q);
+            s0                     = DecodeADPCM(ad1, slot->s0, &q);
             slot->adpcm_last_quant = q;
             s1                     = 0;
 
             if (last)
-               s1=DecodeADPCM(ad2,s0,q);
+               s1=DecodeADPCM(ad2,s0,&q);
          }
          break;
    }

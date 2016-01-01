@@ -329,12 +329,12 @@ struct ChannelEx
 
       _EG_state state;
 
-      u32 AttackRate;
-      u32 Decay1Rate;
-      u32 Decay2Value;
-      u32 Decay2Rate;
-      u32 ReleaseRate;
-   } AEG;
+      u32 AR;           /* AttackRate */
+      u32 D1R;          /* Decay1Rate */
+      u32 DL;           /* DecayLevel */
+      u32 D2R;          /* Decay2Rate */
+      u32 RR;           /* ReleaseRate */
+   } EG;
 
    struct
    {
@@ -369,12 +369,12 @@ void (* PLFOWS_CALC[4])(ChannelEx* ch);
 
 static __forceinline s32 EG_GetValue(struct ChannelEx *ch)
 {
-   return ch->AEG.volume >> EG_SHIFT;
+   return ch->EG.volume >> EG_SHIFT;
 }
 
 static void EG_SetValue(struct ChannelEx *ch, u32 val)
 {
-   ch->AEG.volume = val << EG_SHIFT;
+   ch->EG.volume = val << EG_SHIFT;
 }
 
 static void ADPCM_Reset(ChannelEx* ch)
@@ -451,7 +451,7 @@ static __forceinline void SlotStep(struct ChannelEx *ch, SampleType *mixl, Sampl
 static void SetAegState(struct ChannelEx *ch, _EG_state newstate)
 {
    ch->StepAEG    = AEG_STEP_LUT[newstate];
-   ch->AEG.state  = newstate;
+   ch->EG.state  = newstate;
    if (newstate == EG_RELEASE)
       ch->ccd->KEYONB = 0;
 }
@@ -467,7 +467,7 @@ static void Compute_EG(struct ChannelEx *ch);
 
 static void StartSlot(struct ChannelEx *ch)
 {
-   if (ch->AEG.state != EG_RELEASE)
+   if (ch->EG.state != EG_RELEASE)
       return;
 
    ch->enabled = true;         /* if it was off then turn it on ! */
@@ -490,7 +490,7 @@ static void StartSlot(struct ChannelEx *ch)
 
 static void KEY_OFF(struct ChannelEx *ch)
 {
-   if (ch->AEG.state == EG_RELEASE)
+   if (ch->EG.state == EG_RELEASE)
       return;
 
    key_printf("[%d] KEY_OFF -> Release\n",Channel);
@@ -558,12 +558,12 @@ static void Compute_EG(struct ChannelEx *ch)
    if (ch->ccd->KRS != 0xF)
       rate    = octave + 2 * ch->ccd->KRS + ((ch->ccd->FNS>>9)&1);
 
-   ch->AEG.volume       = 0x17f << EG_SHIFT;
-   ch->AEG.AttackRate   = Get_AR(rate, ch->ccd->AR);
-   ch->AEG.Decay1Rate   = Get_DR(rate, ch->ccd->D1R);
-   ch->AEG.Decay2Value  = 0x1f - ch->ccd->DL;
-   ch->AEG.Decay2Rate   = Get_DR(rate, ch->ccd->D2R);
-   ch->AEG.ReleaseRate  = Get_RR(rate, ch->ccd->RR);
+   ch->EG.volume       = 0x17f << EG_SHIFT;
+   ch->EG.AR           = Get_AR(rate, ch->ccd->AR);
+   ch->EG.D1R          = Get_DR(rate, ch->ccd->D1R);
+   ch->EG.DL           = 0x1f - ch->ccd->DL;
+   ch->EG.D2R          = Get_DR(rate, ch->ccd->D2R);
+   ch->EG.RR           = Get_RR(rate, ch->ccd->RR);
 }
 
 /* OCT,FNS */
@@ -870,7 +870,7 @@ static void StreamStep(ChannelEx* ch)
 
       if (LPSLNK)
       {
-         if ((ch->AEG.state==EG_ATTACK) && (CA>=ch->loop.LSA))
+         if ((ch->EG.state==EG_ATTACK) && (CA>=ch->loop.LSA))
          {
 
             step_printf("[%d]LPSLNK : Switching to EG_DECAY1 %X\n",Channel, EG_GetValue(ch));
@@ -966,7 +966,7 @@ static void EG_Step(ChannelEx* ch)
    switch(state)
    {
       case EG_ATTACK:
-         ch->AEG.volume -= ch->AEG.AttackRate;
+         ch->EG.volume -= ch->EG.AR;
          if (EG_GetValue(ch) <= 0)
          {
             EG_SetValue(ch, 0);
@@ -979,8 +979,8 @@ static void EG_Step(ChannelEx* ch)
          break;
       case EG_DECAY1:
          //x2
-         ch->AEG.volume += ch->AEG.Decay1Rate;
-         if (((u32)EG_GetValue(ch)) >= ch->AEG.Decay2Value)
+         ch->EG.volume += ch->EG.D1R;
+         if (((u32)EG_GetValue(ch)) >= ch->EG.DL)
          {
             aeg_printf("[%d]AEG_step : Switching to EG_DECAY2 @ %x\n",EG_GetValue(ch));
 
@@ -994,7 +994,7 @@ static void EG_Step(ChannelEx* ch)
          break;
       case EG_DECAY2:
          //x3
-         ch->AEG.volume += ch->AEG.Decay2Rate;
+         ch->EG.volume += ch->EG.D2R;
          if (EG_GetValue(ch) >= 0x3FF)
          {
             aeg_printf("[%d]AEG_step : Switching to EG_RELEASE @ %x\n",EG_GetValue(ch));
@@ -1003,7 +1003,7 @@ static void EG_Step(ChannelEx* ch)
          }
          break;
       case EG_RELEASE: //only on key_off ?
-         ch->AEG.volume += ch->AEG.ReleaseRate;
+         ch->EG.volume += ch->EG.RR;
 
          if (EG_GetValue(ch) >= 0x3FF)
          {
@@ -1148,7 +1148,7 @@ void ReadCommonReg(u32 reg,bool byte)
             verify(CommonData->AFSET==0);
 
             CommonData->EG  = EG_GetValue(&Chans[chan]); //AEG is only 10 bits, FEG is 13 bits
-            CommonData->SGC = Chans[chan].AEG.state;
+            CommonData->SGC = Chans[chan].EG.state;
 
             if (! (byte && reg==0x2810))
                Chans[chan].loop.looped=0;

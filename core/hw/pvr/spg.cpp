@@ -31,20 +31,19 @@ u32 fskip=0;
 
 void CalculateSync(void)
 {
-   /*                        00=VGA    01=NTSC   10=PAL,   11=illegal/undocumented */
-   const int spg_clks[4] = { 26944080, 13458568, 13462800, 26944080 };
-	float scale_x=1,scale_y=1;
-	u32 pixel_clock= spg_clks[(SPG_CONTROL.full >> 6) & 3];
-
-	pvr_numscanlines = SPG_LOAD.vcount+1;
-	
-	Line_Cycles      = (u32)((u64)SH4_MAIN_CLOCK*(u64)(SPG_LOAD.hcount+1)/(u64)pixel_clock);
+   /*                          00=VGA    01=NTSC   10=PAL,   11=illegal/undocumented */
+   const int spg_clks[4]   = { 26944080, 13458568, 13462800, 26944080 };
+	float scale_x           = 1;
+   float scale_y           = 1;
+	u32 pixel_clock         = spg_clks[(SPG_CONTROL.full >> 6) & 3];
+	pvr_numscanlines        = SPG_LOAD.vcount+1;
+	Line_Cycles             = (u32)((u64)SH4_MAIN_CLOCK*(u64)(SPG_LOAD.hcount+1)/(u64)pixel_clock);
 	
 	if (SPG_CONTROL.interlace)
 	{
 		//this is a temp hack
-		Line_Cycles/=2;
-		u32 interl_mode=VO_CONTROL.field_mode;
+		Line_Cycles         /= 2;
+		u32 interl_mode      = VO_CONTROL.field_mode;
 		
 		//if (interl_mode==2)//3 will be funny =P
 		//  scale_y=0.5f;//single interlace
@@ -54,15 +53,15 @@ void CalculateSync(void)
 	else
 	{
 		if (FB_R_CTRL.vclk_div)
-			scale_y = 1.0f;//non interlaced VGA mode has full resolution :)
+			scale_y           = 1.0f;//non interlaced VGA mode has full resolution :)
 		else
-			scale_y = 0.5f;//non interlaced modes have half resolution
+			scale_y           = 0.5f;//non interlaced modes have half resolution
 	}
 
 	rend_set_fb_scale(scale_x,scale_y);
 	
-	Frame_Cycles=pvr_numscanlines*Line_Cycles;
-	prv_cur_scanline=0;
+	Frame_Cycles            = pvr_numscanlines*Line_Cycles;
+	prv_cur_scanline        = 0;
 
 	sh4_sched_request(vblank_sched, Line_Cycles);
 }
@@ -75,14 +74,14 @@ static int elapse_time(int tag, int cycl, int jit)
 //called from sh4 context , should update pvr/ta state and everything else
 static int spg_line_sched(int tag, int cycl, int jit)
 {
-	clc_pvr_scanline += cycl;
+	clc_pvr_scanline       += cycl;
 
 	while (clc_pvr_scanline >=  Line_Cycles)//60 ~hertz = 200 mhz / 60=3333333.333 cycles per screen refresh
 	{
 		//ok .. here , after much effort , we did one line
 		//now , we must check for raster beam interrupts and vblank
-		prv_cur_scanline=(prv_cur_scanline+1)%pvr_numscanlines;
-		clc_pvr_scanline -= Line_Cycles;
+		prv_cur_scanline     = (prv_cur_scanline+1) % pvr_numscanlines;
+		clc_pvr_scanline    -= Line_Cycles;
 		//Check for scanline interrupts -- really need to test the scanline values
 		
 		if (SPG_VBLANK_INT.vblank_in_interrupt_line_number == prv_cur_scanline)
@@ -92,23 +91,22 @@ static int spg_line_sched(int tag, int cycl, int jit)
 			asic_RaiseInterrupt(holly_SCANINT2);
 
 		if (SPG_VBLANK.vstart == prv_cur_scanline)
-			in_vblank=1;
+			in_vblank = 1;
 
 		if (SPG_VBLANK.vbend == prv_cur_scanline)
-			in_vblank=0;
+			in_vblank = 0;
 
-		SPG_STATUS.vsync=in_vblank;
-		SPG_STATUS.scanline=prv_cur_scanline;
+		SPG_STATUS.vsync    = in_vblank;
+		SPG_STATUS.scanline = prv_cur_scanline;
 		
 		//Vblank start -- really need to test the scanline values
 		if (prv_cur_scanline==0)
 		{
+         SPG_STATUS.fieldnum = 0;
 			if (SPG_CONTROL.interlace)
-				SPG_STATUS.fieldnum=~SPG_STATUS.fieldnum;
-			else
-				SPG_STATUS.fieldnum=0;
+				SPG_STATUS.fieldnum = ~SPG_STATUS.fieldnum;
 
-			//Vblank counter
+			/* Vblank counter */
 			vblk_cnt++;
 			asic_RaiseInterrupt(holly_HBLank);// -> This turned out to be HBlank btw , needs to be emulated ;(
 			//TODO : rend_if_VBlank();
@@ -185,12 +183,9 @@ void SetREP(TA_context* cntx)
    unsigned pending_cycles = 4096;
 	if (cntx && !cntx->rend.Overrun)
 	{
-		VertexCount    += cntx->rend.verts.used();
-#if 0
-		PVR_VTXC       += cntx->rend.verts.used();
-#endif
 		pending_cycles  = cntx->rend.verts.used()*60;
 		pending_cycles += 500000*3;
+		VertexCount    += cntx->rend.verts.used();
 	}
 
    sh4_sched_request(render_end_sched, pending_cycles);

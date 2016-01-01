@@ -465,7 +465,7 @@ static void SetFegState(struct ChannelEx *ch, _EG_state newstate)
 static u32 SlotUpdatePitch(struct ChannelEx *ch);
 static void Compute_EG(struct ChannelEx *ch);
 
-static void KEY_ON(struct ChannelEx *ch)
+static void StartSlot(struct ChannelEx *ch)
 {
    if (ch->AEG.state != EG_RELEASE)
       return;
@@ -669,7 +669,7 @@ static void SlotRegWrite(struct ChannelEx *ch, u32 offset)
             for (int i = 0; i < MAX_CHANNELS; i++)
             {
                if (ch->Chans[i].ccd->KEYONB)
-                  KEY_ON(&ch->Chans[i]);
+                  StartSlot(&ch->Chans[i]);
                else
                   KEY_OFF(&ch->Chans[i]);
             }

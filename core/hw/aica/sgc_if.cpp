@@ -821,8 +821,10 @@ static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
          break;
    }
 
-   ch->s0=s0;
-   ch->s1=s1;
+   ICLIP16(s0);
+   ICLIP16(s1);
+   ch->s0= s0;
+   ch->s1= s1;
 }
 
 template<s32 PCMS>

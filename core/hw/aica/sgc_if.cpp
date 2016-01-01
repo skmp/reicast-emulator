@@ -365,46 +365,46 @@ void (* FEG_STEP_LUT[4])(ChannelEx* ch);
 void (* ALFOWS_CALC[4])(ChannelEx* ch);
 void (* PLFOWS_CALC[4])(ChannelEx* ch);
 
-static __forceinline s32 EG_GetValue(struct ChannelEx *ch)
+static __forceinline s32 EG_GetValue(struct ChannelEx *slot)
 {
-   return ch->EG.volume >> EG_SHIFT;
+   return slot->EG.volume >> EG_SHIFT;
 }
 
-static void EG_SetValue(struct ChannelEx *ch, u32 val)
+static void EG_SetValue(struct ChannelEx *slot, u32 val)
 {
-   ch->EG.volume = val << EG_SHIFT;
+   slot->EG.volume = val << EG_SHIFT;
 }
 
-static void ADPCM_Reset(ChannelEx* ch)
+static void ADPCM_Reset(ChannelEx *slot)
 {
-   ch->adpcm_last_quant = 127;
-   ch->s0               = 0;
+   slot->adpcm_last_quant = 127;
+   slot->s0               = 0;
 }
 
-static __forceinline SampleType InterpolateSample(struct ChannelEx *ch)
+static __forceinline SampleType InterpolateSample(struct ChannelEx *slot)
 {
-   return FPMul(ch->s0,(s32)(1024 - ch->step.fp),10) + FPMul(ch->s1,(s32)(ch->step.fp),10);
+   return FPMul(slot->s0,(s32)(1024 - slot->step.fp),10) + FPMul(slot->s1,(s32)(slot->step.fp),10);
 }
 
-static __forceinline void LFO_Step(ChannelEx* ch)
+static __forceinline void LFO_Step(ChannelEx *slot)
 {
-   ch->lfo.counter--;
+   slot->lfo.counter--;
 
-   if (ch->lfo.counter != 0)
+   if (slot->lfo.counter != 0)
       return;
 
-   ch->lfo.state++;
-   ch->lfo.counter  = ch->lfo.start_value;
-   ch->lfo.alfo_calc(ch);
-   ch->lfo.plfo_calc(ch);
+   slot->lfo.state++;
+   slot->lfo.counter  = slot->lfo.start_value;
+   slot->lfo.alfo_calc(slot);
+   slot->lfo.plfo_calc(slot);
 }
 
-static __forceinline bool SlotStep(struct ChannelEx *ch, SampleType *oLeft, SampleType *oRight, SampleType *oDsp)
+static __forceinline bool SlotStep(struct ChannelEx *slot, SampleType *oLeft, SampleType *oRight, SampleType *oDsp)
 {
-   if (!ch->active)
+   if (!slot->active)
       return false;
 
-   SampleType sample=InterpolateSample(ch);
+   SampleType sample=InterpolateSample(slot);
 
    //Volume & Mixer processing
    //All attenuations are added together then applied and mixed :)
@@ -413,11 +413,11 @@ static __forceinline bool SlotStep(struct ChannelEx *ch, SampleType *oLeft, Samp
    //*Att is up to 511
    //logtable handles up to 1024, anything >=255 is mute
 
-   u32 ofsatt    = ch->lfo.alfo + (EG_GetValue(ch) >> 2);
+   u32 ofsatt    = slot->lfo.alfo + (EG_GetValue(slot) >> 2);
    s32* logtable = ofsatt+tl_lut;
-   *oLeft        = FPMul(sample,logtable[ch->VolMix.DLAtt],15);
-   *oRight       = FPMul(sample,logtable[ch->VolMix.DRAtt],15);
-   *oDsp         = FPMul(sample,logtable[ch->VolMix.DSPAtt],15);
+   *oLeft        = FPMul(sample,logtable[slot->VolMix.DLAtt],15);
+   *oRight       = FPMul(sample,logtable[slot->VolMix.DRAtt],15);
+   *oDsp         = FPMul(sample,logtable[slot->VolMix.DSPAtt],15);
 
    clip_verify(((s16)*oLeft)      == *oLeft);
    clip_verify(((s16)*oRight)     == *oRight);
@@ -426,95 +426,95 @@ static __forceinline bool SlotStep(struct ChannelEx *ch, SampleType *oLeft, Samp
    clip_verify(sample * (*oRight) >= 0);
    clip_verify(sample * (*oDsp)   >= 0);
 
-   ch->StepAEG(ch);
-   ch->StepFEG(ch);
-   ch->StepStream(ch);
-   LFO_Step(ch);
+   slot->StepAEG(slot);
+   slot->StepFEG(slot);
+   slot->StepStream(slot);
+   LFO_Step(slot);
    return true;
 }
 
-static __forceinline void SlotStep(struct ChannelEx *ch, SampleType *mixl, SampleType *mixr)
+static __forceinline void SlotStep(struct ChannelEx *slot, SampleType *mixl, SampleType *mixr)
 {
    SampleType oLeft  = 0;
    SampleType oRight = 0;
    SampleType oDsp   = 0;
 
-   SlotStep(ch, &oLeft, &oRight, &oDsp);
+   SlotStep(slot, &oLeft, &oRight, &oDsp);
 
-   *ch->VolMix.DSPOut += oDsp;
+   *slot->VolMix.DSPOut += oDsp;
    *mixl              += oLeft;
    *mixr              += oRight;
 }
 
-static void SetAegState(struct ChannelEx *ch, _EG_state newstate)
+static void SetAegState(struct ChannelEx *slot, _EG_state newstate)
 {
-   ch->StepAEG    = AEG_STEP_LUT[newstate];
-   ch->EG.state  = newstate;
+   slot->StepAEG    = AEG_STEP_LUT[newstate];
+   slot->EG.state  = newstate;
    if (newstate == EG_RELEASE)
-      ch->ccd->KEYONB = 0;
+      slot->ccd->KEYONB = 0;
 }
 
-static void SetFegState(struct ChannelEx *ch, _EG_state newstate)
+static void SetFegState(struct ChannelEx *slot, _EG_state newstate)
 {
-   ch->StepFEG   = FEG_STEP_LUT[newstate];
-   ch->FEG.state = newstate;
+   slot->StepFEG   = FEG_STEP_LUT[newstate];
+   slot->FEG.state = newstate;
 }
 
-static u32 SlotUpdatePitch(struct ChannelEx *ch);
-static void Compute_EG(struct ChannelEx *ch);
+static u32 SlotUpdatePitch(struct ChannelEx *slot);
+static void Compute_EG(struct ChannelEx *slot);
 
-static void StartSlot(struct ChannelEx *ch)
+static void StartSlot(struct ChannelEx *slot)
 {
-   if (ch->EG.state != EG_RELEASE)
+   if (slot->EG.state != EG_RELEASE)
       return;
 
-   ch->active = true;         /* if it was off then turn it on ! */
-   SetAegState(ch, EG_ATTACK); /* reset AEG */
-   EG_SetValue(ch, 0x17F);     /* start from 0x17F */
-   SetFegState(ch, EG_ATTACK); /* reset FEG */
+   slot->active = true;         /* if it was off then turn it on ! */
+   SetAegState(slot, EG_ATTACK); /* reset AEG */
+   EG_SetValue(slot, 0x17F);     /* start from 0x17F */
+   SetFegState(slot, EG_ATTACK); /* reset FEG */
 
    //Reset sampling state
-   ch->CA          = 0;
-   ch->step.full   = 0;
-   ch->loop.looped = false;
-   Compute_EG(ch);
-   ch->update_rate = SlotUpdatePitch(ch);
+   slot->CA          = 0;
+   slot->step.full   = 0;
+   slot->loop.looped = false;
+   Compute_EG(slot);
+   slot->update_rate = SlotUpdatePitch(slot);
 
-   ADPCM_Reset(ch);
-   ch->StepStreamInitial(ch);
+   ADPCM_Reset(slot);
+   slot->StepStreamInitial(slot);
 
    key_printf("[%d] KEY_ON %s @ %f Hz, loop : %d\n",Channel,stream_names[ChanData->PCMS],(44100.0*update_rate)/1024,ChanData->LPCTL);
 }
 
-static void KEY_OFF(struct ChannelEx *ch)
+static void KEY_OFF(struct ChannelEx *slot)
 {
-   if (ch->EG.state == EG_RELEASE)
+   if (slot->EG.state == EG_RELEASE)
       return;
 
    key_printf("[%d] KEY_OFF -> Release\n",Channel);
-   SetAegState(ch, EG_RELEASE);
+   SetAegState(slot, EG_RELEASE);
    //switch to release state
 }
 
 //PCMS,SSCTL,LPCTL,LPSLNK
-void SlotUpdateStreamStep(struct ChannelEx *ch)
+void SlotUpdateStreamStep(struct ChannelEx *slot)
 {
-   s32 fmt = ch->ccd->PCMS;
-   if (ch->ccd->SSCTL)
+   s32 fmt = slot->ccd->PCMS;
+   if (slot->ccd->SSCTL)
       fmt=4;
 
-   ch->StepStream        = STREAM_STEP_LUT[fmt][ch->ccd->LPCTL][ch->ccd->LPSLNK];
-   ch->StepStreamInitial = STREAM_INITAL_STEP_LUT[fmt];
+   slot->StepStream        = STREAM_STEP_LUT[fmt][slot->ccd->LPCTL][slot->ccd->LPSLNK];
+   slot->StepStreamInitial = STREAM_INITAL_STEP_LUT[fmt];
 }
 
 //SA,PCMS
-static void SlotUpdateSA(struct ChannelEx *ch)
+static void SlotUpdateSA(struct ChannelEx *slot)
 {
-   u32 addr = (ch->ccd->SA_hi << 16) | ch->ccd->SA_low;
-   if (ch->ccd->PCMS == 0)
+   u32 addr = (slot->ccd->SA_hi << 16) | slot->ccd->SA_low;
+   if (slot->ccd->PCMS == 0)
       addr&=~1; //0: 16 bit
 
-   ch->SA= &aica_ram.data[addr];
+   slot->SA= &aica_ram.data[addr];
 }
 
 static s32 Get_AR(s32 base, s32 R)
@@ -548,27 +548,27 @@ static s32 Get_RR(s32 base, s32 R)
 }
 
 //D2R,D1R,AR,DL,RR,KRS, [OCT,FNS] for now
-static void Compute_EG(struct ChannelEx *ch)
+static void Compute_EG(struct ChannelEx *slot)
 {
-   s32 octave = (ch->ccd->OCT ^ 8) - 8;
+   s32 octave = (slot->ccd->OCT ^ 8) - 8;
    s32 rate   = 0;
    
-   if (ch->ccd->KRS != 0xF)
-      rate    = octave + 2 * ch->ccd->KRS + ((ch->ccd->FNS>>9)&1);
+   if (slot->ccd->KRS != 0xF)
+      rate    = octave + 2 * slot->ccd->KRS + ((slot->ccd->FNS>>9)&1);
 
-   ch->EG.volume       = 0x17f << EG_SHIFT;
-   ch->EG.AR           = Get_AR(rate, ch->ccd->AR);
-   ch->EG.D1R          = Get_DR(rate, ch->ccd->D1R);
-   ch->EG.DL           = 0x1f - ch->ccd->DL;
-   ch->EG.D2R          = Get_DR(rate, ch->ccd->D2R);
-   ch->EG.RR           = Get_RR(rate, ch->ccd->RR);
+   slot->EG.volume       = 0x17f << EG_SHIFT;
+   slot->EG.AR           = Get_AR(rate, slot->ccd->AR);
+   slot->EG.D1R          = Get_DR(rate, slot->ccd->D1R);
+   slot->EG.DL           = 0x1f - slot->ccd->DL;
+   slot->EG.D2R          = Get_DR(rate, slot->ccd->D2R);
+   slot->EG.RR           = Get_RR(rate, slot->ccd->RR);
 }
 
 /* OCT,FNS */
-static u32 SlotUpdatePitch(struct ChannelEx *ch)
+static u32 SlotUpdatePitch(struct ChannelEx *slot)
 {
-   u32 octave      = ch->ccd->OCT;
-   u32 Fn          = 1024 | ch->ccd->FNS;
+   u32 octave      = slot->ccd->OCT;
+   u32 Fn          = 1024 | slot->ccd->FNS;
 
    if (octave & 8)
       Fn >>= (16-octave);
@@ -579,148 +579,148 @@ static u32 SlotUpdatePitch(struct ChannelEx *ch)
 }
 
 
-static void LFO_Reset(struct ChannelEx *ch)
+static void LFO_Reset(struct ChannelEx *slot)
 {
-   ch->lfo.state   = 0;
-   ch->lfo.counter = ch->lfo.start_value;
-   ch->lfo.alfo_calc(ch);
-   ch->lfo.plfo_calc(ch);
+   slot->lfo.state   = 0;
+   slot->lfo.counter = slot->lfo.start_value;
+   slot->lfo.alfo_calc(slot);
+   slot->lfo.plfo_calc(slot);
 }
 
-static void LFO_SetStartValue(struct ChannelEx *ch, int val)
+static void LFO_SetStartValue(struct ChannelEx *slot, int val)
 {
-   ch->lfo.start_value  = val;
-   ch->lfo.counter      = ch->lfo.start_value;
+   slot->lfo.start_value  = val;
+   slot->lfo.counter      = slot->lfo.start_value;
 }
 
 //LFORE,LFOF,PLFOWS,PLFOS,LFOWS,ALFOS
-static void Compute_LFO(struct ChannelEx *ch)
+static void Compute_LFO(struct ChannelEx *slot)
 {
-   int N = ch->ccd->LFOF;
+   int N = slot->ccd->LFOF;
    int S = N     >> 2;
    int M = (~N)   & 3;
    int G = 128   >> S;
    int L = (G-1) << 2;
    int O = L + G * (M+1);
 
-   LFO_SetStartValue(ch, O);
+   LFO_SetStartValue(slot, O);
 
-   ch->lfo.plfo_shft=8-ch->ccd->PLFOS;
-   ch->lfo.alfo_shft=8-ch->ccd->ALFOS;
+   slot->lfo.plfo_shft = 8 - slot->ccd->PLFOS;
+   slot->lfo.alfo_shft = 8 - slot->ccd->ALFOS;
 
-   ch->lfo.alfo_calc=ALFOWS_CALC[ch->ccd->ALFOWS];
-   ch->lfo.plfo_calc=PLFOWS_CALC[ch->ccd->PLFOWS];
+   slot->lfo.alfo_calc=ALFOWS_CALC[slot->ccd->ALFOWS];
+   slot->lfo.plfo_calc=PLFOWS_CALC[slot->ccd->PLFOWS];
 
-   if (ch->ccd->LFORE)
-      LFO_Reset(ch);
+   if (slot->ccd->LFORE)
+      LFO_Reset(slot);
    else
    {
-      ch->lfo.alfo_calc(ch);
-      ch->lfo.plfo_calc(ch);
+      slot->lfo.alfo_calc(slot);
+      slot->lfo.plfo_calc(slot);
    }
 
-   ch->ccd->LFORE=0;
+   slot->ccd->LFORE=0;
 }
 
 //TL,DISDL,DIPAN,IMXL
-static void SlotUpdateAtts(struct ChannelEx *ch)
+static void SlotUpdateAtts(struct ChannelEx *slot)
 {
    //Converts Send levels to TL-compatible values (DISDL, etc)
    static u32 SendLevel[16]={255,14<<3,13<<3,12<<3,11<<3,10<<3,9<<3,8<<3,7<<3,6<<3,5<<3,4<<3,3<<3,2<<3,1<<3,0<<3};
-   u32 attFull = ch->ccd->TL+SendLevel[ch->ccd->DISDL];
-   u32 attPan  = attFull+SendLevel[(~ch->ccd->DIPAN)&0xF];
+   u32 attFull = slot->ccd->TL + SendLevel[slot->ccd->DISDL];
+   u32 attPan  = attFull+SendLevel[(~slot->ccd->DIPAN)&0xF];
 
    //0x1* -> R decreases
-   if (ch->ccd->DIPAN & 0x10)
+   if (slot->ccd->DIPAN & 0x10)
    {
-      ch->VolMix.DLAtt=attFull;
-      ch->VolMix.DRAtt=attPan;
+      slot->VolMix.DLAtt=attFull;
+      slot->VolMix.DRAtt=attPan;
    }
    else //0x0* -> L decreases
    {
-      ch->VolMix.DLAtt=attPan;
-      ch->VolMix.DRAtt=attFull;
+      slot->VolMix.DLAtt=attPan;
+      slot->VolMix.DRAtt=attFull;
    }
 
-   ch->VolMix.DSPAtt = ch->ccd->TL+SendLevel[ch->ccd->IMXL];
+   slot->VolMix.DSPAtt = slot->ccd->TL+SendLevel[slot->ccd->IMXL];
 }
 
 //Q,FLV0,FLV1,FLV2,FLV3,FLV4,FAR,FD1R,FD2R,FRR
-static void SlotUpdateFEG(struct ChannelEx *ch)
+static void SlotUpdateFEG(struct ChannelEx *slot)
 {
    //this needs to be filled
 }
 
-static void SlotRegWrite(struct ChannelEx *ch, u32 offset)
+static void SlotRegWrite(struct ChannelEx *slot, u32 offset)
 {
-   switch(offset & 0x7f)
+   switch (offset & 0x7f)
    {
       case 0x00:
       case CH_REC_FORMAT_KEY_LOOP:
-         SlotUpdateStreamStep(ch);
-         SlotUpdateSA(ch);
-         if (ch->ccd->KEYONEX)
+         SlotUpdateStreamStep(slot);
+         SlotUpdateSA(slot);
+         if (slot->ccd->KEYONEX)
          {
-            ch->ccd->KEYONEX=0;
+            slot->ccd->KEYONEX=0;
             for (int i = 0; i < MAX_CHANNELS; i++)
             {
-               if (ch->Chans[i].ccd->KEYONB)
-                  StartSlot(&ch->Chans[i]);
+               if (slot->Chans[i].ccd->KEYONB)
+                  StartSlot(&slot->Chans[i]);
                else
-                  KEY_OFF(&ch->Chans[i]);
+                  KEY_OFF(&slot->Chans[i]);
             }
          }
          break;
 
       case 0x04:
       case 0x05:
-         SlotUpdateSA(ch);
+         SlotUpdateSA(slot);
          break;
 
       case 0x08://LSA
       case 0x09://LSA
       case 0x0C://LEA
       case 0x0D://LEA
-         ch->loop.LSA = ch->ccd->LSA;
-         ch->loop.LEA = ch->ccd->LEA;
+         slot->loop.LSA = slot->ccd->LSA;
+         slot->loop.LEA = slot->ccd->LEA;
          break;
 
       case CH_REC_FNS:
       case CH_REC_FNS_OCT:
-         ch->update_rate = SlotUpdatePitch(ch);
+         slot->update_rate = SlotUpdatePitch(slot);
          break;
 
       case CH_REC_RR_DL:
       case CH_REC_DL_KRS_LS:
-         SlotUpdateStreamStep(ch);
-         ch->EG.RR           = Get_RR(0, ch->ccd->RR);
-         ch->EG.DL           = 0x1f - ch->ccd->DL;
+         SlotUpdateStreamStep(slot);
+         slot->EG.RR           = Get_RR(0, slot->ccd->RR);
+         slot->EG.DL           = 0x1f - slot->ccd->DL;
          break;
 
 
       case CH_REC_ALFOS_ALFOWS_PLFOS:
       case CH_REC_PLFOWS_LFOF_RE:
-         Compute_LFO(ch);
+         Compute_LFO(slot);
          break;
 
       case 0x20://ISEL,IMXL
          //case 0x21://nothing here !
          //ISEL
-         ch->VolMix.DSPOut = &dsp.MIXS[ch->ccd->ISEL];
-         SlotUpdateAtts(ch);
+         slot->VolMix.DSPOut = &dsp.MIXS[slot->ccd->ISEL];
+         SlotUpdateAtts(slot);
          break;
 
       case 0x24://DIPAN
       case 0x25://DISDL
-         SlotUpdateAtts(ch);
+         SlotUpdateAtts(slot);
          break;
 
       case 0x28://Q
-         SlotUpdateFEG(ch);
+         SlotUpdateFEG(slot);
          break;
 
       case 0x29://TL
-         SlotUpdateAtts(ch);
+         SlotUpdateAtts(slot);
          break;
 
       case 0x2C: //FLV0
@@ -737,32 +737,32 @@ static void SlotRegWrite(struct ChannelEx *ch, u32 offset)
       case 0x41: //FAR
       case 0x44: //FRR
       case 0x45: //FD2R
-         SlotUpdateFEG(ch);
+         SlotUpdateFEG(slot);
          break;
 
    }
 } 
 
-static void StopSlot(struct ChannelEx *ch)
+static void StopSlot(struct ChannelEx *slot)
 {
-   ch->active = false;
-   SetAegState(ch, EG_RELEASE);
-   EG_SetValue(ch, 0x3FF);
+   slot->active = false;
+   SetAegState(slot, EG_RELEASE);
+   EG_SetValue(slot, 0x3FF);
 }
 
-static void SlotInit(struct ChannelEx *ch, int cn,u8* ccd_raw)
+static void SlotInit(struct ChannelEx *slot, int cn,u8* ccd_raw)
 {
    unsigned i;
-   if (!ch)
+   if (!slot)
       return;
 
-   ch->ccd           = (ChannelCommonData*)&ccd_raw[cn*0x80];
-   ch->ChannelNumber = cn;
+   slot->ccd           = (ChannelCommonData*)&ccd_raw[cn*0x80];
+   slot->ChannelNumber = cn;
 
    for (i = 0;i < 0x80; i++)
-      SlotRegWrite(ch, i);
+      SlotRegWrite(slot, i);
 
-   StopSlot(ch);
+   StopSlot(slot);
 }
 
 
@@ -780,25 +780,25 @@ static __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
 }
 
 template<s32 PCMS,bool last>
-static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
+static __forceinline void StepDecodeSample(ChannelEx *slot, u32 CA)
 {
    SampleType s0,s1;
 
    if (!last && PCMS<2)
       return ;
 
-   s16* sptr16 = (s16*)ch->SA;
+   s16* sptr16 = (s16*)slot->SA;
    s8* sptr8   = (s8*)sptr16;
    u8* uptr8   = (u8*)sptr16;
 
    switch(PCMS)
    {
       case -1:
-         ch->noise_state     = ch->noise_state*16807 + 0xbeef;	//beef is good
-         s0                  = ch->noise_state;
-         s0                >>= 16;
-         s1                  = ch->noise_state*16807 + 0xbeef;
-         s1                >>= 16;
+         slot->noise_state     = slot->noise_state*16807 + 0xbeef;	//beef is good
+         s0                    = slot->noise_state;
+         s0                  >>= 16;
+         s1                    = slot->noise_state*16807 + 0xbeef;
+         s1                  >>= 16;
          break;
 
       case CH_FORMAT_PCM16: /* 16-bit signed */
@@ -826,9 +826,9 @@ static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
             ad1                   &= 0xF;
             ad2                   &= 0xF;
 
-            s32 q                  = ch->adpcm_last_quant;
-            s0                     = DecodeADPCM(ad1,ch->s0,q);
-            ch->adpcm_last_quant   = q;
+            s32 q                  = slot->adpcm_last_quant;
+            s0                     = DecodeADPCM(ad1, slot->s0, q);
+            slot->adpcm_last_quant = q;
             s1                     = 0;
 
             if (last)
@@ -839,166 +839,166 @@ static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
 
    ICLIP16(s0);
    ICLIP16(s1);
-   ch->s0= s0;
-   ch->s1= s1;
+   slot->s0= s0;
+   slot->s1= s1;
 }
 
 template<s32 PCMS>
-static void StepDecodeSampleInitial(ChannelEx* ch)
+static void StepDecodeSampleInitial(ChannelEx *slot)
 {
-   StepDecodeSample<PCMS,true>(ch,0);
+   StepDecodeSample<PCMS,true>(slot, 0);
 }
 
 template<s32 PCMS,u32 LPCTL,u32 LPSLNK>
-static void StreamStep(ChannelEx* ch)
+static void StreamStep(ChannelEx *slot)
 {
-   ch->step.full+=ch->update_rate;
-   fp_22_10 sp=ch->step;
-   ch->step.ip=0;
+   slot->step.full += slot->update_rate;
+   fp_22_10 sp      = slot->step;
+   slot->step.ip    = 0;
 
    while(sp.ip > 0)
    {
       sp.ip--;
 
-      u32 CA=ch->CA + 1;
+      u32 CA  = slot->CA + 1;
+      u32 ca_t= CA;
 
-      u32 ca_t=CA;
       if (PCMS==3)
          ca_t&=~3;	//adpcm "stream" mode needs this ...
 
       if (LPSLNK)
       {
-         if ((ch->EG.state==EG_ATTACK) && (CA>=ch->loop.LSA))
+         if ((slot->EG.state==EG_ATTACK) && (CA >= slot->loop.LSA))
          {
 
-            step_printf("[%d]LPSLNK : Switching to EG_DECAY1 %X\n",Channel, EG_GetValue(ch));
-            SetAegState(ch, EG_DECAY1);
+            step_printf("[%d]LPSLNK : Switching to EG_DECAY1 %X\n",Channel, EG_GetValue(slot));
+            SetAegState(slot, EG_DECAY1);
          }
       }
 
-      if (ca_t>=ch->loop.LEA)
+      if (ca_t>= slot->loop.LEA)
       {
-         ch->loop.looped = 1;
-         CA              = ch->loop.LSA;
+         slot->loop.looped = 1;
+         CA              = slot->loop.LSA;
 
          switch (LPCTL)
          {
             case 0: /* no loop */
-               StopSlot(ch);
+               StopSlot(slot);
                break;
             case 1: /* normal loop */
                if (PCMS==2) //if in adpcm non-stream mode, reset the decoder
-                  ADPCM_Reset(ch);
+                  ADPCM_Reset(slot);
                break;
          }
       }
 
-      ch->CA=CA;
+      slot->CA=CA;
 
       //keep adpcm up to date
       if (sp.ip==0)
-         StepDecodeSample<PCMS,true>(ch,CA);
+         StepDecodeSample<PCMS,true>(slot,CA);
       else
-         StepDecodeSample<PCMS,false>(ch,CA);
+         StepDecodeSample<PCMS,false>(slot,CA);
    }
 }
 
 template<s32 ALFOWS>
-static void CalcAlfo(ChannelEx* ch)
+static void CalcAlfo(ChannelEx *slot)
 {
    u32 rv;
    switch(ALFOWS)
    {
       case 0: // Sawtooth
-         rv=ch->lfo.state;
+         rv = slot->lfo.state;
          break;
 
       case 1: // Square
-         rv=ch->lfo.state&0x80?255:0;
+         rv = slot->lfo.state&0x80?255:0;
          break;
 
       case 2: // Triangle
-         rv=(ch->lfo.state&0x7f)^(ch->lfo.state&0x80 ? 0x7F:0);
+         rv = (slot->lfo.state&0x7f) ^ (slot->lfo.state&0x80 ? 0x7F:0);
          rv<<=1;
          break;
 
       case 3:// Random ! .. not :p
-         rv=(ch->lfo.state>>3)^(ch->lfo.state<<3)^(ch->lfo.state&0xE3);
+         rv=(slot->lfo.state>>3) ^ (slot->lfo.state<<3) ^ (slot->lfo.state&0xE3);
          break;
    }
 
-   ch->lfo.alfo = rv >> ch->lfo.alfo_shft;
+   slot->lfo.alfo = rv >> slot->lfo.alfo_shft;
 }
 
 template<s32 PLFOWS>
-static void CalcPlfo(ChannelEx* ch)
+static void CalcPlfo(ChannelEx *slot)
 {
    u32 rv;
 
    switch(PLFOWS)
    {
       case 0: // sawtooth
-         rv   = ch->lfo.state;
+         rv   = slot->lfo.state;
          break;
 
       case 1: // square
-         rv   = ch->lfo.state&0x80?0x80:0x7F;
+         rv   = slot->lfo.state&0x80?0x80:0x7F;
          break;
 
       case 2: // triangle
-         rv   = (ch->lfo.state&0x7f)^(ch->lfo.state&0x80 ? 0x7F:0);
+         rv   = (slot->lfo.state&0x7f)^(slot->lfo.state&0x80 ? 0x7F:0);
          rv <<= 1;
          rv   = (u8)(rv-0x80); //2's complement
          break;
 
       case 3:// random ! .. not :p
-         rv   = (ch->lfo.state >> 3) ^ (ch->lfo.state << 3) ^ (ch->lfo.state & 0xE3);
+         rv   = (slot->lfo.state >> 3) ^ (slot->lfo.state << 3) ^ (slot->lfo.state & 0xE3);
          break;
    }
-   ch->lfo.alfo = rv >> ch->lfo.plfo_shft;
+   slot->lfo.alfo = rv >> slot->lfo.plfo_shft;
 }
 
 template<u32 state>
-static void EG_Step(ChannelEx* ch)
+static void EG_Step(ChannelEx *slot)
 {
    switch(state)
    {
       case EG_ATTACK:
-         ch->EG.volume -= ch->EG.AR;
-         if (EG_GetValue(ch) <= 0)
+         slot->EG.volume -= slot->EG.AR;
+         if (EG_GetValue(slot) <= 0)
          {
-            EG_SetValue(ch, 0);
-            if (!ch->ccd->LPSLNK)
-               SetAegState(ch, EG_DECAY1);
+            EG_SetValue(slot, 0);
+            if (!slot->ccd->LPSLNK)
+               SetAegState(slot, EG_DECAY1);
          }
          break;
       case EG_DECAY1:
-         ch->EG.volume += ch->EG.D1R;
-         if (((u32)EG_GetValue(ch)) >= ch->EG.DL)
-            SetAegState(ch, EG_DECAY2);
+         slot->EG.volume += slot->EG.D1R;
+         if (((u32)EG_GetValue(slot)) >= slot->EG.DL)
+            SetAegState(slot, EG_DECAY2);
          break;
       case EG_DECAY2:
-         ch->EG.volume += ch->EG.D2R;
-         if (EG_GetValue(ch) >= 0x3FF)
+         slot->EG.volume += slot->EG.D2R;
+         if (EG_GetValue(slot) >= 0x3FF)
          {
-            EG_SetValue(ch, 0x3FF);
-            SetAegState(ch, EG_RELEASE);
+            EG_SetValue(slot, 0x3FF);
+            SetAegState(slot, EG_RELEASE);
          }
          break;
       case EG_RELEASE: //only on key_off ?
-         ch->EG.volume += ch->EG.RR;
+         slot->EG.volume += slot->EG.RR;
 
-         if (EG_GetValue(ch) >= 0x3FF)
+         if (EG_GetValue(slot) >= 0x3FF)
          {
-            EG_SetValue(ch, 0x3FF); // TODO: mnn, should we do anything about it running wild ?
-            StopSlot(ch); /* TODO: Is this ok here? It's a speed optimisation (since the channel is muted) */
+            EG_SetValue(slot, 0x3FF); // TODO: mnn, should we do anything about it running wild ?
+            StopSlot(slot); /* TODO: Is this ok here? It's a speed optimisation (since the channel is muted) */
          }
          break;
    }
 }
 
 template<u32 state>
-static void FegStep(ChannelEx* ch)
+static void FegStep(ChannelEx *slot)
 {
 }
 

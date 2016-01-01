@@ -51,11 +51,11 @@ __forceinline u32 YUV422(s32 Y,s32 Yu,s32 Yv)
 	//s32 G = (76283*(Y - 16) - 53281 *(Yv - 128) - 25624*(Yu - 128))>>16;
 	//s32 R = (76283*(Y - 16) + 104595*(Yv - 128))>>16;
 	
-	s32 R = Y + Yv*11/8;            // Y + (Yv-128) * (11/8) ?
-	s32 G = Y - (Yu*11 + Yv*22)/32; // Y - (Yu-128) * (11/8) * 0.25 - (Yv-128) * (11/8) * 0.5 ?
-	s32 B = Y + Yu*110/64;          // Y + (Yu-128) * (11/8) * 1.25 ?
+	s32 R = clamp(0, 255, Y + Yv*11/8);            // Y + (Yv-128) * (11/8) ?
+	s32 G = clamp(0, 255, Y - (Yu*11 + Yv*22)/32); // Y - (Yu-128) * (11/8) * 0.25 - (Yv-128) * (11/8) * 0.5 ?
+	s32 B = clamp(0, 255, Y + Yu*110/64);          // Y + (Yu-128) * (11/8) * 1.25 ?
 
-	return PixelPacker::packRGB(clamp(0,255,R),clamp(0,255,G),clamp(0,255,B));
+   return ((R >> 3) << 11) | ((G >> 2) << 5) | ((B >> 3) << 0);
 }
 
 #define twop(x,y,bcx,bcy) (detwiddle[0][bcy][x]+detwiddle[1][bcx][y])
@@ -63,10 +63,6 @@ __forceinline u32 YUV422(s32 Y,s32 Yu,s32 Yv)
 //pixel packers !
 struct pp_565
 {
-	__forceinline static u32 packRGB(u8 R,u8 G,u8 B)
-	{
-		return ((R >> 3) << 11) | ((G >> 2) << 5) | ((B >> 3) << 0);
-	}
 };
 
 //pixel convertors !

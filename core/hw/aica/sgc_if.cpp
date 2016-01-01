@@ -355,7 +355,7 @@ struct ChannelEx
       void (* plfo_calc)(ChannelEx* ch);
    } lfo;
 
-   bool enabled;	//set to false to 'freeze' the channel
+   bool active;	//set to false to 'freeze' the channel
    int ChannelNumber;
 };
 
@@ -403,7 +403,7 @@ static __forceinline void LFO_Step(ChannelEx* ch)
 
 static __forceinline bool SlotStep(struct ChannelEx *ch, SampleType *oLeft, SampleType *oRight, SampleType *oDsp)
 {
-   if (!ch->enabled)
+   if (!ch->active)
       return false;
 
    SampleType sample=InterpolateSample(ch);
@@ -470,7 +470,7 @@ static void StartSlot(struct ChannelEx *ch)
    if (ch->EG.state != EG_RELEASE)
       return;
 
-   ch->enabled = true;         /* if it was off then turn it on ! */
+   ch->active = true;         /* if it was off then turn it on ! */
    SetAegState(ch, EG_ATTACK); /* reset AEG */
    EG_SetValue(ch, 0x17F);     /* start from 0x17F */
    SetFegState(ch, EG_ATTACK); /* reset FEG */
@@ -747,7 +747,7 @@ static void SlotRegWrite(struct ChannelEx *ch, u32 offset)
 
 static void StopSlot(struct ChannelEx *ch)
 {
-   ch->enabled = false;
+   ch->active = false;
    SetAegState(ch, EG_RELEASE);
    EG_SetValue(ch, 0x3FF);
 }

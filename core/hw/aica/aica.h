@@ -19,45 +19,122 @@
 struct CommonData_struct
 {
 	//+0
+
+   /* Master volume for digital output to DAC. */
 	entry(MVOL,4);
+
+   /* Reads out the LSI version. */
 	entry(VER,4);
+
+   /*
+    * 0 : The digital output is the 16-bit DAC interface.
+    * 1 : The digital output is the 18-bit DAC interface.
+    */
 	entry(DAC18B,1);
+
+   /* Specifies the memory to be used
+    * 0 : 16M_DRAM
+    * 1 : 64M_DRAM
+    * Relationships between sound memory space and used memory. */
 	entry(MEM8MB,1);
+
 	entry(pad0_0,5);
+
+   /* 
+    * 0 : Makes panpot information valid.
+    * 1 : Makes panpot information invalid.
+    *
+    * When panpot information has been made invalid, the
+    * sound coming from the channel on one side will
+    * double in volume, so the setting of MVOL must be lowered. */
 	entry(Mono,1);
 	
 	u32 :16;
 	//+4
+
+   /* Specifies the leading address of the ring buffer (1K word limit). */
 	entry(RBP,12);
+
 	entry(pad1_0,1);
+
+   /* Specifies the length of the ring buffer.
+    * 0 : 8K words
+    * 1 : 16K words
+    * 2 : 32K words
+    * 3 : 64K words
+    */
 	entry(RBL,2);
+
 	entry(TESTB0,1);
 
 	u32 :16;
 	//+8
+
+   /* MIDI input data buffer. (Consists of 4-byte FIFO). */
 	entry(MIBUF,8);
 	entry(MIEMP,1);
+
+   /* Indicates that the input FIFO is full.
+    * (The above two flags show the status before MIBUS [7:0] is read.)
+    */
 	entry(MIFUL ,1);
+
+   /* Indicates that the input FIFO has overflowed. */
 	entry(MIOVF ,1);
+
+   /* Indicates that the output FIFO is empty. */
 	entry(MOEMP ,1);
+
+   /* Indicates that the output FIFO is full. */
 	entry(MOFUL ,1);
 	entry(pad3_0,3);
 
 	u32 :16;
+
 	//+C
+   /* MIDI output data buffer */
 	entry(MOBUF,8);
+
+   /* Specifies the slot number to monitor SGC, CA, EG, and LP. */
 	entry(MSLC,6);
+
+   /* Decides whether ot make the EG monitor AEG or FEG.
+    * 0 : AEG monitor
+    * 1 : FEG monitor
+    */
 	entry(AFSEL,1);
+
 	entry(padC_0,1);
 
 	u32 :16;
 	//+10
+
+   /* Monitors the 13 high-order bits of the current
+    * EG value. During AEG monitoring, the low-order
+    * three bits are always "0". */
 	entry(EG,13);
+
+   /* Monitors the status of the current EG.
+    * 0 : Attack
+    * 1 : Decay 1
+    * 2 : Decay 2
+    * 3 : Release
+    */
 	entry(SGC,2);
+
+   /* Loop end flag.
+    * The channel is selected by MSLC [5:0}. 
+    * This flag shows that the loop has ended.
+    * This flag is cleared to "0" when it is read. */
 	entry(LP,1);
 	
 	u32 :16;
 	//+14
+
+   /* Currently shows the sample position read from
+    * the sound source as the 16 high-order bits of
+    * of the relative sample No. from SA. The lowest order
+    * bit is equivalent to one sample. */
 	entry(CA,16);
 
 	u32 :16;
@@ -88,17 +165,44 @@ struct CommonData_struct
 	entry(DEXE,1);
 	entry(pad8C_0,1);
 	entry(DLG,13);
+
+   /* Specifies the direction for DMA transmission.
+    * 0 : Transmits from sound memory to SCSP register.
+    * 1 : Transmits from SCSP register to sound memory. */
 	entry(DDIR,1);
 
 	u32 :16;
 	//+90
+
+   /* Timer A (Generates an interrupt request
+    * at the timing when the UP counter changes from
+    * all "1" to all "0".)
+    */
 	entry(TIMA,8);
+
+   /* Specifies the increment cycle of timer A.
+    * 0 : One increment per sample.
+    * 1 : One increment per 2 samples.
+    * 2 : One increment per 4 samples.
+    * 3 : One increment per 8 samples.
+    * 4 : One increment per 16 samples.
+    * 5 : One increment per 32 samples.
+    * 6 : One increment per 64 samples.
+    * 7 : One increment per 128 samples.
+    */
 	entry(TACTL,3);
+
 	entry(pad90_0,5);
 
 	u32 :16;
 	//+94
+
+   /* Timer B (Generation of interrupt is the same
+    * as for Timer A. ) */
 	entry(TIMB,8);
+
+   /* Specifies the increment cycle for timer B.
+    * (The code is the same as for timer A. */
 	entry(TBCTL,3);
 	entry(pad94_0,5);
 
@@ -213,6 +317,8 @@ struct CommonData_struct
 struct DSPData_struct
 {
 	//+0x000
+
+   /* Buffer for the DSP data quantity. (Data quantity: 128) */
 	u32 COEF[128];		//15:3
 
 	//+0x200
@@ -236,6 +342,10 @@ struct DSPData_struct
 	TEMP[128];
 
 	//+0x1400
+
+   /* Input data buffer from wave memory (Data quantity: 32)
+    * The actual write to MEMS [7:0] is executed at the
+    * same time as the write to MEMS [23:16]. */
 	struct 
 	{ 
 		u32 l;			//7:0

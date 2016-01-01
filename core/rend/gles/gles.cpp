@@ -1773,6 +1773,11 @@ static bool RenderFrame(void)
 
 	if (SCALER_CTL.hscale)
 	{
+      /* If the horizontal scaler is in use, we're (in principle) supposed to
+    	 * divide everything by 2. However in the interests of display quality,
+    	 * instead we want to render to the unscaled resolution and downsample
+    	 * only if/when required.
+    	 */
 		scale_x*=2;
 	}
 

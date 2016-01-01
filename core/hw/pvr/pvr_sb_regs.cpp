@@ -59,8 +59,7 @@ static void do_pvr_dma(void)
 	asic_RaiseInterruptWait(holly_PVR_DMA);
 }
 
-
-u32 calculate_start_link_addr(void)
+static u32 calculate_start_link_addr(void)
 {
 	u32 rv;
 	u8* base=&mem_b[SB_SDSTAW & RAM_MASK];
@@ -77,27 +76,27 @@ u32 calculate_start_link_addr(void)
 
 static void pvr_do_sort_dma(void)
 {
-	SB_SDDIV=0;//index is 0 now :)
-	u32 link_addr=calculate_start_link_addr();
+	SB_SDDIV           = 0; //index is 0 now :)
+	u32 link_addr      = calculate_start_link_addr();
 	u32 link_base_addr = SB_SDBAAW;
 
 	while (link_addr!=1)
 	{
 		if (SB_SDLAS==1)
-			link_addr*=32;
+			link_addr   *= 32;
 
-		u32 ea=(link_base_addr+link_addr) & RAM_MASK;
-		u32* ea_ptr=(u32*)&mem_b[ea];
+		u32 ea          = (link_base_addr+link_addr) & RAM_MASK;
+		u32* ea_ptr     = (u32*)&mem_b[ea];
+		link_addr       = ea_ptr[0x1C>>2];//Next link
 
-		link_addr=ea_ptr[0x1C>>2];//Next link
-		//transfer global param
+		/* transfer global param */
 		ta_vtx_data(ea_ptr,ea_ptr[0x18>>2]);
 		if (link_addr==2)
-			link_addr=calculate_start_link_addr();
+			link_addr    = calculate_start_link_addr();
 	}
 
 	// End of DMA :)
-	SB_SDST=0;
+	SB_SDST            = 0;
 	asic_RaiseInterruptWait(holly_PVR_SortDMA);
 }
 

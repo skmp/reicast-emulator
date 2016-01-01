@@ -79,8 +79,6 @@ static SampleType mxlr[MAX_CHANNELS];
 //x.15
 s32 volume_lut[16];
 //255 -> mute
-//Converts Send levels to TL-compatible values (DISDL, etc)
-u32 SendLevel[16]={255,14<<3,13<<3,12<<3,11<<3,10<<3,9<<3,8<<3,7<<3,6<<3,5<<3,4<<3,3<<3,2<<3,1<<3,0<<3};
 s32 tl_lut[256 + 768];	//xx.15 format. >=255 is muted
 
 /* Envelope time in milliseconds */
@@ -627,6 +625,8 @@ static void Compute_LFO(struct ChannelEx *ch)
 //TL,DISDL,DIPAN,IMXL
 static void SlotUpdateAtts(struct ChannelEx *ch)
 {
+   //Converts Send levels to TL-compatible values (DISDL, etc)
+   static u32 SendLevel[16]={255,14<<3,13<<3,12<<3,11<<3,10<<3,9<<3,8<<3,7<<3,6<<3,5<<3,4<<3,3<<3,2<<3,1<<3,0<<3};
    u32 attFull = ch->ccd->TL+SendLevel[ch->ccd->DISDL];
    u32 attPan  = attFull+SendLevel[(~ch->ccd->DIPAN)&0xF];
 

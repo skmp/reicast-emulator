@@ -86,12 +86,18 @@ offset>>=2;
 #endif
 		if (!(sb_regs[offset].flags & REG_WF) )
 		{
-			if (sz==4)
-				sb_regs[offset].data32=data;
-			else if (sz==2)
-				sb_regs[offset].data16=(u16)data;
-			else
-				sb_regs[offset].data8=(u8)data;
+         switch (sz)
+         {
+            case 4:
+               sb_regs[offset].data32 = data;
+               break;
+            case 2:
+               sb_regs[offset].data16 = (u16)data;
+               break;
+            default:
+               sb_regs[offset].data8  = (u8)data;
+               break;
+         }
 			return;
 		}
 		else
@@ -145,25 +151,25 @@ void sb_rio_register(u32 reg_addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrF
 
 	sb_regs[idx].flags = flags | REG_ACCESS_32;
 
-	if (flags == RIO_NO_ACCESS)
-	{
-		sb_regs[idx].readFunctionAddr=&sbio_read_noacc;
-		sb_regs[idx].writeFunctionAddr=&sbio_write_noacc;
-	}
-	else if (flags == RIO_CONST)
-	{
-		sb_regs[idx].writeFunctionAddr=&sbio_write_const;
-	}
-	else
-	{
-		sb_regs[idx].data32=0;
+   switch (flags)
+   {
+      case RIO_NO_ACCESS:
+         sb_regs[idx].readFunctionAddr=&sbio_read_noacc;
+         sb_regs[idx].writeFunctionAddr=&sbio_write_noacc;
+         break;
+      case RIO_CONST:
+         sb_regs[idx].writeFunctionAddr=&sbio_write_const;
+         break;
+      default:
+         sb_regs[idx].data32=0;
 
-		if (flags & REG_RF)
-			sb_regs[idx].readFunctionAddr=rf;
+         if (flags & REG_RF)
+            sb_regs[idx].readFunctionAddr=rf;
 
-		if (flags & REG_WF)
-			sb_regs[idx].writeFunctionAddr=wf==0?&sbio_write_noacc:wf;
-	}
+         if (flags & REG_WF)
+            sb_regs[idx].writeFunctionAddr=wf==0?&sbio_write_noacc:wf;
+         break;
+   }
 }
 
 template <u32 reg_addr>

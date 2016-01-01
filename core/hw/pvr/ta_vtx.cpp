@@ -95,6 +95,7 @@ const u32 SZ64=2;
 #include "ta_structs.h"
 
 typedef Ta_Dma* DYNACALL TaListFP(Ta_Dma* data,Ta_Dma* data_end);
+
 typedef void TACALL TaPolyParamFP(void* ptr);
 
 //#define TaCmd ((TaListFP*&)sh4rcb.tacmd_void)
@@ -145,8 +146,7 @@ public:
 	//part : 0 fill all data , 1 fill upper 32B , 2 fill lower 32B
 	//Poly decoder , will be moved to pvr code
 	template <u32 poly_type,u32 part>
-	__forceinline
-	static Ta_Dma* TACALL ta_handle_poly(Ta_Dma* data,Ta_Dma* data_end)
+	static __forceinline Ta_Dma* TACALL ta_handle_poly(Ta_Dma* data,Ta_Dma* data_end)
 	{
 		TA_VertexParam* vp=(TA_VertexParam*)data;
 		u32 rv=0;

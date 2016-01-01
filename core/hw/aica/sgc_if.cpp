@@ -693,6 +693,8 @@ static void SlotRegWrite(struct ChannelEx *ch, u32 offset)
       case CH_REC_RR_DL:
       case CH_REC_DL_KRS_LS:
          SlotUpdateStreamStep(ch);
+         ch->EG.RR           = Get_RR(0, ch->ccd->RR);
+         ch->EG.DL           = 0x1f - ch->ccd->DL;
          break;
 
 

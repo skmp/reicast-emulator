@@ -1563,6 +1563,9 @@ static bool gl_create_resources(void)
 	return true;
 }
 
+/**
+ * Compute the fog coefficients for all polygons using lookup-table fog. 
+ */
 static void scene_compute_lut_fog(void)
 {
 	//y=B*ln(x)+A
@@ -1634,6 +1637,12 @@ static void scene_compute_lut_fog(void)
 
 	printf("FOG TABLE Curve match: maxdev: %.02f cents\n",maxdev*100);
 	//printf("%f\n",B*log(maxdev)/log(2.0)+A);
+}
+
+static bool vertex_buffer_unmap(void)
+{
+   glBindBuffer(GL_ARRAY_BUFFER, 0);
+   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 static bool RenderFrame(void)
@@ -2085,8 +2094,7 @@ static bool RenderFrame(void)
 #endif
 	}
 
-   glBindBuffer(GL_ARRAY_BUFFER, 0);
-   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+   vertex_buffer_unmap();
 
 	KillTex = false;
 

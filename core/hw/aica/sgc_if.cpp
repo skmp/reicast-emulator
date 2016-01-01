@@ -516,21 +516,21 @@ static void SlotUpdateSA(struct ChannelEx *ch)
 
 static u32 SlotAEG_EffRate(struct ChannelEx *ch, u32 re)
 {
-   s32 rv = ch->ccd->KRS + (ch->ccd->FNS>>9) + re*2;
+   s32 rate = ch->ccd->KRS + (ch->ccd->FNS>>9) + re*2;
 
    if (ch->ccd->KRS == 0xF)
-      rv -= 0xF;
+      rate -= 0xF;
 
    if (ch->ccd->OCT&8)
-      rv -= (16 - ch->ccd->OCT)*2;
+      rate -= (16 - ch->ccd->OCT)*2;
    else
-      rv += ch->ccd->OCT*2;
+      rate += ch->ccd->OCT*2;
 
-   if (rv<0)
-      rv=0;
-   if (rv>0x3f)
-      rv=0x3f;
-   return rv;
+   if (rate < 0)
+      rate = 0;
+   if (rate > 0x3f)
+      rate =0x3f;
+   return rate;
 }
 
 //D2R,D1R,AR,DL,RR,KRS, [OCT,FNS] for now

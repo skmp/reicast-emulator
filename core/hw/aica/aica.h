@@ -328,6 +328,7 @@ struct DSPData_struct
 	u8 PAD0[0x100];
 
 	//+0x400
+   /* Buffer for DSP microprograms. (Data quantity: 128) */
 	u32 MPRO[128*4];	//15:0
 	
 	//+0xC00
@@ -354,6 +355,8 @@ struct DSPData_struct
 	MEMS[32];
 	
 	//+0x1500
+
+   /* Buffer for sound data from input mixer. (Data quantity: 16) */
 	struct 
 	{ 
 		u32 l;			//3:0
@@ -362,9 +365,11 @@ struct DSPData_struct
 	MIXS[16];
 
 	//+0x1580
+   /* DSP output buffer. (Data quantity: 16 */
 	u32 EFREG[16];		//15:0
 	
 	//+0x15C0
+   /* Data buffer for digital audio input. (Data quantity: 4) */
 	u32 EXTS[2];		//15:0
 };
 union InterruptInfo

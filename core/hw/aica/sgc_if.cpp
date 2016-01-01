@@ -294,6 +294,7 @@ struct ChannelEx
    } loop;
    u8 lpend;
 
+   s32 curstep;
    s32 cur_quant;
    u32 noise_state;//for Noise generator
 
@@ -469,7 +470,12 @@ static void StartSlot(struct ChannelEx *slot)
    Compute_EG(slot);
    slot->update_rate = SlotUpdatePitch(slot);
 
-   ADPCM_Reset(slot);
+   if (slot->ccd->PCMS >= 2)
+   {
+      slot->curstep = slot->loop.LSA;
+      ADPCM_Reset(slot);
+   }
+
    slot->StepStreamInitial(slot);
 
    key_printf("[%d] KEY_ON %s @ %f Hz, loop : %d\n",Channel,stream_names[ChanData->PCMS],(44100.0*update_rate)/1024,ChanData->LPCTL);
@@ -880,8 +886,12 @@ static void StreamStep(ChannelEx *slot)
                StopSlot(slot);
                break;
             case 1: /* normal loop */
-               if (PCMS==2) //if in adpcm non-stream mode, reset the decoder
-                  ADPCM_Reset(slot);
+               if (PCMS >= 2)
+               {
+                  slot->curstep = slot->loop.LSA;
+                  if (PCMS==2) //if in adpcm non-stream mode, reset the decoder
+                     ADPCM_Reset(slot);
+               }
                break;
          }
       }

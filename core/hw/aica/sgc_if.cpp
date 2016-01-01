@@ -462,6 +462,9 @@ static void SetFegState(struct ChannelEx *ch, _EG_state newstate)
    ch->FEG.state = newstate;
 }
 
+static u32 SlotUpdatePitch(struct ChannelEx *ch);
+static void Compute_EG(struct ChannelEx *ch);
+
 static void KEY_ON(struct ChannelEx *ch)
 {
    if (ch->AEG.state != EG_RELEASE)
@@ -476,6 +479,8 @@ static void KEY_ON(struct ChannelEx *ch)
    ch->CA          = 0;
    ch->step.full   = 0;
    ch->loop.looped = false;
+   Compute_EG(ch);
+   ch->update_rate = SlotUpdatePitch(ch);
 
    ADPCM_Reset(ch);
    ch->StepStreamInitial(ch);
@@ -684,20 +689,9 @@ static void SlotRegWrite(struct ChannelEx *ch, u32 offset)
          ch->loop.LEA = ch->ccd->LEA;
          break;
 
-      case CH_REC_AR_D1R:
-      case CH_REC_D1R_D2R:
-         Compute_EG(ch);
-         break;
-
       case CH_REC_RR_DL:
       case CH_REC_DL_KRS_LS:
          SlotUpdateStreamStep(ch);
-         Compute_EG(ch);
-         break;
-
-      case CH_REC_FNS:
-      case CH_REC_FNS_OCT:
-         ch->update_rate = SlotUpdatePitch(ch);
          break;
 
       case CH_REC_ALFOS_ALFOWS_PLFOS:

@@ -653,13 +653,9 @@ static void SlotUpdateFEG(struct ChannelEx *ch)
 
 static void SlotRegWrite(struct ChannelEx *ch, u32 offset)
 {
-   switch(offset)
+   switch(offset & 0x7f)
    {
-      case 0x00: //yay ?
-         SlotUpdateStreamStep(ch);
-         SlotUpdateSA(ch);
-         break;
-
+      case 0x00:
       case CH_REC_FORMAT_KEY_LOOP:
          SlotUpdateStreamStep(ch);
          SlotUpdateSA(ch);

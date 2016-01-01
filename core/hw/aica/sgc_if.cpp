@@ -545,7 +545,7 @@ static s32 Get_RR(s32 base, s32 R)
 }
 
 //D2R,D1R,AR,DL,RR,KRS, [OCT,FNS] for now
-static void SlotUpdateAEG(struct ChannelEx *ch)
+static void Compute_EG(struct ChannelEx *ch)
 {
    s32 octave = (ch->ccd->OCT ^ 8) - 8;
    s32 rate   = 0;
@@ -686,13 +686,13 @@ static void SlotRegWrite(struct ChannelEx *ch, u32 offset)
 
       case CH_REC_AR_D1R:
       case CH_REC_D1R_D2R:
-         SlotUpdateAEG(ch);
+         Compute_EG(ch);
          break;
 
       case CH_REC_RR_DL:
       case CH_REC_DL_KRS_LS:
          SlotUpdateStreamStep(ch);
-         SlotUpdateAEG(ch);
+         Compute_EG(ch);
          break;
 
       case CH_REC_FNS:

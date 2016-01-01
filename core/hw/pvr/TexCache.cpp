@@ -21,10 +21,10 @@ u32 detwiddle[2][8][1024];
 
 static u32 twiddle_slow(u32 x,u32 y,u32 x_sz,u32 y_sz)
 {
+	u32 sh=0;
 	u32 rv=0;//low 2 bits are directly passed  -> needs some misc stuff to work.However
 			 //Pvr internally maps the 64b banks "as if" they were twiddled :p
 
-	u32 sh=0;
 	x_sz>>=1;
 	y_sz>>=1;
 	while(x_sz!=0 || y_sz!=0)

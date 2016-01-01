@@ -15,22 +15,22 @@
 	  - Direct3D 10+ ?
 	- correct memory ordering model
 	- resource pools
-	- threaded ta
+	- threaded TA
 	- threaded rendering
-	- rtts
+	- RTTs
 	- framebuffers
 	- overlays
 
 
 	PHASES
-	- TA submition (memops, dma)
+	- TA submission (memops, dma)
 
 	- TA parsing (defered, rend thread)
 
 	- CORE render (in-order, defered, rend thread)
 
 
-	submition is done in-order
+	submission is done in-order
 	- Partial handling of TA values
 	- Gotchas with TA contexts
 
@@ -39,13 +39,13 @@
 
 	render is queued on RENDER_START, and won't stall the emulation or might be skipped
 	- VRAM integrity is an issue with out-of-order or delayed rendering.
-	- selective vram snapshots require ta parsing to complete in order with REND_START / REND_END
+	- selective vram snapshots require TA parsing to complete in order with REND_START / REND_END
 
 
 	Complications
 	- For some apis (gles2, maybe gl31) texture allocation needs to happen on the gpu thread
 	- multiple versions of different time snapshots of the same texture are required
-	- ta parsing vs frameskip logic
+	- TA parsing vs frameskip logic
 
 
 	Texture versioning and staging
@@ -170,17 +170,17 @@ void rend_start_render(void)
    ctx->rend.isRTT      = (FB_W_SOF1& 0x1000000)!=0;
    ctx->rend.isAutoSort = UsingAutoSort();
 
-   ctx->rend.fb_X_CLIP=FB_X_CLIP;
-   ctx->rend.fb_Y_CLIP=FB_Y_CLIP;
+   ctx->rend.fb_X_CLIP  = FB_X_CLIP;
+   ctx->rend.fb_Y_CLIP  = FB_Y_CLIP;
 
-   max_idx=max(max_idx,ctx->rend.idx.used());
-   max_vtx=max(max_vtx,ctx->rend.verts.used());
-   max_op=max(max_op,ctx->rend.global_param_op.used());
-   max_pt=max(max_pt,ctx->rend.global_param_pt.used());
-   max_tr=max(max_tr,ctx->rend.global_param_tr.used());
+   max_idx              = max(max_idx,  ctx->rend.idx.used());
+   max_vtx              = max(max_vtx,  ctx->rend.verts.used());
+   max_op               = max(max_op,   ctx->rend.global_param_op.used());
+   max_pt               = max(max_pt,   ctx->rend.global_param_pt.used());
+   max_tr               = max(max_tr,   ctx->rend.global_param_tr.used());
 
-   max_mvo=max(max_mvo,ctx->rend.global_param_mvo.used());
-   max_modt=max(max_modt,ctx->rend.modtrig.used());
+   max_mvo              = max(max_mvo,  ctx->rend.global_param_mvo.used());
+   max_modt             = max(max_modt, ctx->rend.modtrig.used());
 
 #if 0
    printf("max: idx: %d, vtx: %d, op: %d, pt: %d, tr: %d, mvo: %d, modt: %d, ov: %d\n", max_idx, max_vtx, max_op, max_pt, max_tr, max_mvo, max_modt, ovrn);

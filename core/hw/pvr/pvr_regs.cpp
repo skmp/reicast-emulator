@@ -44,7 +44,7 @@ void pvr_WriteReg(u32 paddr,u32 data)
       case SOFTRESET_addr:
          if (data!=0)
          {
-            if (data&1)
+            if (data & 1)
                ta_vtx_SoftReset();
             data=0;
          }
@@ -76,7 +76,9 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		}
 	}
 
-	if (addr>=FOG_TABLE_START_addr && addr<=FOG_TABLE_END_addr && PvrReg(addr,u32)!=data)
+	if (  addr >= FOG_TABLE_START_addr && 
+         addr <= FOG_TABLE_END_addr   &&
+         PvrReg(addr,u32) != data)
 		fog_needs_update=true;
 
 	PvrReg(addr,u32)=data;

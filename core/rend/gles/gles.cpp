@@ -1879,6 +1879,15 @@ static bool RenderFrame(void)
 	//VERT and RAM fog color constants
 	u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;
 	u8* fog_colram_bgra=(u8*)&FOG_COL_RAM;
+#ifdef MSB_FIRST
+	ShaderUniforms.ps_FOG_COL_VERT[0]=fog_colvert_bgra[2 ^ 3]/255.0f;
+	ShaderUniforms.ps_FOG_COL_VERT[1]=fog_colvert_bgra[1 ^ 3]/255.0f;
+	ShaderUniforms.ps_FOG_COL_VERT[2]=fog_colvert_bgra[0 ^ 3]/255.0f;
+
+	ShaderUniforms.ps_FOG_COL_RAM[0]=fog_colram_bgra [2  ^ 3]/255.0f;
+	ShaderUniforms.ps_FOG_COL_RAM[1]=fog_colram_bgra [1  ^ 3]/255.0f;
+	ShaderUniforms.ps_FOG_COL_RAM[2]=fog_colram_bgra [0  ^ 3]/255.0f;
+#else
 	ShaderUniforms.ps_FOG_COL_VERT[0]=fog_colvert_bgra[2]/255.0f;
 	ShaderUniforms.ps_FOG_COL_VERT[1]=fog_colvert_bgra[1]/255.0f;
 	ShaderUniforms.ps_FOG_COL_VERT[2]=fog_colvert_bgra[0]/255.0f;
@@ -1886,12 +1895,20 @@ static bool RenderFrame(void)
 	ShaderUniforms.ps_FOG_COL_RAM[0]=fog_colram_bgra [2]/255.0f;
 	ShaderUniforms.ps_FOG_COL_RAM[1]=fog_colram_bgra [1]/255.0f;
 	ShaderUniforms.ps_FOG_COL_RAM[2]=fog_colram_bgra [0]/255.0f;
+#endif
+
 
 	//Fog density constant
 	u8* fog_density=(u8*)&FOG_DENSITY;
+#ifdef MSB_FIRST
+	float fog_den_mant=fog_density[1^3]/128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
+	s32 fog_den_exp=(s8)fog_density[0^3];
+#else
 	float fog_den_mant=fog_density[1]/128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
 	s32 fog_den_exp=(s8)fog_density[0];
-	ShaderUniforms.fog_den_float=fog_den_mant*powf(2.0f,fog_den_exp);
+   float fog_den_float = fog_den_mant * powf(2.0f,fog_den_exp);
+#endif
+	ShaderUniforms.fog_den_float= fog_den_float;
 
 
 	if (fog_needs_update)

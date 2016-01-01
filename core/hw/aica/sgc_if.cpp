@@ -969,33 +969,18 @@ static void EG_Step(ChannelEx* ch)
          {
             EG_SetValue(ch, 0);
             if (!ch->ccd->LPSLNK)
-            {
-               aeg_printf("[%d]AEG_step : Switching to EG_DECAY1 %d\n", EG_GetValue(ch));
                SetAegState(ch, EG_DECAY1);
-            }
          }
          break;
       case EG_DECAY1:
-         //x2
          ch->EG.volume += ch->EG.D1R;
          if (((u32)EG_GetValue(ch)) >= ch->EG.DL)
-         {
-            aeg_printf("[%d]AEG_step : Switching to EG_DECAY2 @ %x\n",EG_GetValue(ch));
-
-            // No transition to Decay 2 when DL is zero.
-            if (settings.aica.AegStepHack && ch->ccd->DL == 0)
-               SetAegState(ch, EG_ATTACK);
-            else
-               SetAegState(ch, EG_DECAY2);
-
-         }
+            SetAegState(ch, EG_DECAY2);
          break;
       case EG_DECAY2:
-         //x3
          ch->EG.volume += ch->EG.D2R;
          if (EG_GetValue(ch) >= 0x3FF)
          {
-            aeg_printf("[%d]AEG_step : Switching to EG_RELEASE @ %x\n",EG_GetValue(ch));
             EG_SetValue(ch, 0x3FF);
             SetAegState(ch, EG_RELEASE);
          }
@@ -1005,7 +990,6 @@ static void EG_Step(ChannelEx* ch)
 
          if (EG_GetValue(ch) >= 0x3FF)
          {
-            aeg_printf("[%d]AEG_step : EG_RELEASE End @ %x\n", EG_GetValue(ch));
             EG_SetValue(ch, 0x3FF); // TODO: mnn, should we do anything about it running wild ?
             StopSlot(ch); /* TODO: Is this ok here? It's a speed optimisation (since the channel is muted) */
          }

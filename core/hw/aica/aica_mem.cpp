@@ -20,12 +20,12 @@ u32 ReadReg(u32 addr)
 	{
 		if (sz==1)
 		{
-			ReadCommonReg(addr,true);
+			ReadCommonReg(addr & 0xff,true);
 			ReadMemArrRet(aica_reg,addr,1);
 		}
 		else
 		{
-			ReadCommonReg(addr,false);
+			ReadCommonReg(addr & 0xff,false);
 			//ReadCommonReg8(addr+1);
 			ReadMemArrRet(aica_reg,addr,2);
 		}

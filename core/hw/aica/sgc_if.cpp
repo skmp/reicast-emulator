@@ -1116,13 +1116,13 @@ void ReadCommonReg(u32 reg,bool byte)
 {
    switch(reg)
    {
-      case 0x2808:
-      case 0x2809:
+      case 8:
+      case 9:
          CommonData->MIEMP=1;
          CommonData->MOEMP=1;
          break;
-      case 0x2810: /* LP check */
-      case 0x2811:
+      case 0x10: /* LP check */
+      case 0x11:
          {
             u32 chan=CommonData->MSLC;
 
@@ -1136,13 +1136,17 @@ void ReadCommonReg(u32 reg,bool byte)
                Chans[chan].loop.looped=0;
          }
          break;
-      case 0x2814: /* CA (slot address */
-      case 0x2815:
+      case 0x14: /* CA (slot address */
+      case 0x15:
          {
             u32 chan=CommonData->MSLC;
             CommonData->CA = Chans[chan].CA /*& (~1023)*/; //mmnn??
             //printf("[%d] CA read %d\n",chan,Chans[chan].CA);
          }
+         break;
+      case 0xb8:
+      case 0xb9:
+         /* TODO - to implement */
          break;
    }
 }

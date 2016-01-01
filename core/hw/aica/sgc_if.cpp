@@ -544,17 +544,17 @@ static void SlotUpdateAEG(struct ChannelEx *ch)
 }
 
 /* OCT,FNS */
-static void SlotUpdatePitch(struct ChannelEx *ch)
+static u32 SlotUpdatePitch(struct ChannelEx *ch)
 {
-   u32 oct         = ch->ccd->OCT;
-   u32 update_rate = 1024 | ch->ccd->FNS;
+   u32 octave      = ch->ccd->OCT;
+   u32 Fn          = 1024 | ch->ccd->FNS;
 
-   if (oct& 8)
-      update_rate>>=(16-oct);
+   if (octave & 8)
+      Fn >>= (16-octave);
    else
-      update_rate<<=oct;
+      Fn <<= octave;
 
-   ch->update_rate=update_rate;
+   return Fn;
 }
 
 
@@ -679,7 +679,7 @@ static void SlotRegWrite(struct ChannelEx *ch, u32 offset)
 
       case CH_REC_FNS:
       case CH_REC_FNS_OCT:
-         SlotUpdatePitch(ch);
+         ch->update_rate = SlotUpdatePitch(ch);
          break;
 
       case CH_REC_ALFOS_ALFOWS_PLFOS:

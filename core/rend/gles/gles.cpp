@@ -1563,17 +1563,26 @@ static bool gl_create_resources(void)
 	return true;
 }
 
-static void tryfit(float* x,float* y)
+static void scene_compute_lut_fog(void)
 {
 	//y=B*ln(x)+A
    double a,b;
    unsigned i;
+   float xvals[128];
+   float yvals[128];
 	float maxdev = 0;
 	double sylnx = 0;
    double sy    = 0;
    double slnx  = 0;
    double slnx2 = 0;
 	u32 cnt      = 0;
+   //Get the coefs for the fog curve
+   u8* fog_table=(u8*)FOG_TABLE;
+   for (int i=0;i<128;i++)
+   {
+      xvals[i]=powf(2.0f,i>>4)*(1+(i&15)/16.f);
+      yvals[i]=fog_table[i*4+1]/255.0f;
+   }
 
 	for (i=0;i<128;i++)
 	{
@@ -1581,26 +1590,26 @@ static void tryfit(float* x,float* y)
 		int rep=1;
 
 		/* Discard values clipped to 0 or 1 */
-		if (i<128 && y[i]==1 && y[i+1]==1)
+		if (i<128 && yvals[i]==1 && yvals[i+1]==1)
 			continue;
 
-		if (i>0 && y[i]==0 && y[i-1]==0)
+		if (i>0 && yvals[i]==0 && yvals[i-1]==0)
 			continue;
 
 		/* Add many samples for first and last value 
        * (fog-in, fog-out -> important) */
-		if (i>0 && y[i]!=1 && y[i-1]==1)
+		if (i>0 && yvals[i]!=1 && yvals[i-1]==1)
 			rep = 10000;
 
-		if (i<128 && y[i]!=0 && y[i+1]==0)
+		if (i<128 && yvals[i]!=0 && yvals[i+1]==0)
 			rep = 10000;
 
 		for (j = 0; j < rep;j++)
 		{
-			sylnx       += y[i]*log((double)x[i]);
-			sy          += y[i];
-			slnx        += log((double)x[i]);
-			slnx2       += log((double)x[i])*log((double)x[i]);
+			sylnx       += yvals[i]*log((double)xvals[i]);
+			sy          += yvals[i];
+			slnx        += log((double)xvals[i]);
+			slnx2       += log((double)xvals[i])*log((double)xvals[i]);
 			cnt++;
 		}
 	}
@@ -1617,7 +1626,7 @@ static void tryfit(float* x,float* y)
 
 	for (int i=0;i<128;i++)
 	{
-		float diff=min(max(b*logf(x[i])/logf(2.0)+a,(double)0),(double)1)-y[i];
+		float diff=min(max(b*logf(xvals[i])/logf(2.0)+a,(double)0),(double)1)-yvals[i];
 		maxdev=max((float)fabs((float)diff),(float)maxdev);
 	}
 	fog_coefs[0]=a;
@@ -1874,17 +1883,8 @@ static bool RenderFrame(void)
 	if (fog_needs_update)
 	{
 		fog_needs_update=false;
-		//Get the coefs for the fog curve
-		u8* fog_table=(u8*)FOG_TABLE;
-		float xvals[128];
-		float yvals[128];
-		for (int i=0;i<128;i++)
-		{
-			xvals[i]=powf(2.0f,i>>4)*(1+(i&15)/16.f);
-			yvals[i]=fog_table[i*4+1]/255.0f;
-		}
 
-		tryfit(xvals,yvals);
+		scene_compute_lut_fog();
 	}
 
    gl_state.program = modvol_shader.program;

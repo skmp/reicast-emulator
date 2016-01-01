@@ -596,7 +596,7 @@ static void LFO_SetStartValue(struct ChannelEx *ch, int val)
 }
 
 //LFORE,LFOF,PLFOWS,PLFOS,LFOWS,ALFOS
-static void SlotUpdateLFO(struct ChannelEx *ch)
+static void Compute_LFO(struct ChannelEx *ch)
 {
    int N = ch->ccd->LFOF;
    int S = N     >> 2;
@@ -702,7 +702,7 @@ static void SlotRegWrite(struct ChannelEx *ch, u32 offset)
 
       case CH_REC_ALFOS_ALFOWS_PLFOS:
       case CH_REC_PLFOWS_LFOF_RE:
-         SlotUpdateLFO(ch);
+         Compute_LFO(ch);
          break;
 
       case 0x20://ISEL,IMXL

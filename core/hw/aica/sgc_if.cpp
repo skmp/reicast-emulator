@@ -514,33 +514,51 @@ static void SlotUpdateSA(struct ChannelEx *ch)
    ch->SA= &aica_ram.data[addr];
 }
 
-static u32 SlotAEG_EffRate(struct ChannelEx *ch, u32 re)
+static s32 Get_AR(s32 base, s32 R)
 {
-   s32 rate = ch->ccd->KRS + (ch->ccd->FNS>>9) + re*2;
-
-   if (ch->ccd->KRS == 0xF)
-      rate -= 0xF;
-
-   if (ch->ccd->OCT&8)
-      rate -= (16 - ch->ccd->OCT)*2;
-   else
-      rate += ch->ccd->OCT*2;
-
-   if (rate < 0)
-      rate = 0;
+   s32 rate = base + (R << 1);
    if (rate > 0x3f)
       rate =0x3f;
-   return rate;
+   if (rate < 0)
+      rate = 0;
+   return ARTABLE[rate];
+}
+
+static s32 Get_DR(s32 base, s32 R)
+{
+   int Rate = base+(R<<1);
+   if(Rate>63)
+      Rate=63;
+   if(Rate<0)
+      Rate=0;
+   return DRTABLE[Rate];
+}
+
+static s32 Get_RR(s32 base, s32 R)
+{
+   int Rate=base+(R<<1);
+   if(Rate>63)
+      Rate=63;
+   if(Rate<0)
+      Rate=0;
+   return DRTABLE[Rate];
 }
 
 //D2R,D1R,AR,DL,RR,KRS, [OCT,FNS] for now
 static void SlotUpdateAEG(struct ChannelEx *ch)
 {
-   ch->AEG.AttackRate   = ARTABLE[SlotAEG_EffRate(ch, ch->ccd->AR)];
-   ch->AEG.Decay1Rate   = DRTABLE[SlotAEG_EffRate(ch, ch->ccd->D1R)];
-   ch->AEG.Decay2Value  = ch->ccd->DL<<5;
-   ch->AEG.Decay2Rate   = DRTABLE[SlotAEG_EffRate(ch, ch->ccd->D2R)];
-   ch->AEG.ReleaseRate  = DRTABLE[SlotAEG_EffRate(ch, ch->ccd->RR)];
+   s32 octave = (ch->ccd->OCT ^ 8) - 8;
+   s32 rate   = 0;
+   
+   if (ch->ccd->KRS != 0xF)
+      rate    = octave + 2 * ch->ccd->KRS + ((ch->ccd->FNS>>9)&1);
+
+   ch->AEG.volume       = 0x17f << EG_SHIFT;
+   ch->AEG.AttackRate   = Get_AR(rate, ch->ccd->AR);
+   ch->AEG.Decay1Rate   = Get_DR(rate, ch->ccd->D1R);
+   ch->AEG.Decay2Value  = 0x1f - ch->ccd->DL;
+   ch->AEG.Decay2Rate   = Get_DR(rate, ch->ccd->D2R);
+   ch->AEG.ReleaseRate  = Get_RR(rate, ch->ccd->RR);
 }
 
 /* OCT,FNS */

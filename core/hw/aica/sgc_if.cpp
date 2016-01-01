@@ -294,7 +294,7 @@ struct ChannelEx
    } loop;
    u8 lpend;
 
-   s32 adpcm_last_quant;
+   s32 cur_quant;
    u32 noise_state;//for Noise generator
 
    struct
@@ -366,7 +366,7 @@ static void EG_SetValue(struct ChannelEx *slot, u32 val)
 
 static void ADPCM_Reset(ChannelEx *slot)
 {
-   slot->adpcm_last_quant = 127;
+   slot->cur_quant        = 127;
    slot->s0               = 0;
 }
 
@@ -819,9 +819,9 @@ static __forceinline void StepDecodeSample(ChannelEx *slot, u32 CA)
             ad1                   &= 0xF;
             ad2                   &= 0xF;
 
-            s32 q                  = slot->adpcm_last_quant;
+            s32 q                  = slot->cur_quant;
             s0                     = DecodeADPCM(ad1, slot->s0, &q);
-            slot->adpcm_last_quant = q;
+            slot->cur_quant        = q;
             s1                     = 0;
 
             if (last)

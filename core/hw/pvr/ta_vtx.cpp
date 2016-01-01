@@ -231,24 +231,24 @@ case num : {\
 	}
 		
 	static Ta_Dma* TACALL ta_mod_vol_data(Ta_Dma* data,Ta_Dma* data_end)
-	{
-		TA_VertexParam* vp=(TA_VertexParam*)data;
-		TA_VTX;
-		if (data==data_end)
-		{
-			AppendModVolVertexA(&vp->mvolA);
-			//32B more needed , 32B done :)
-			TaCmd=ta_modvolB_32;
-			return data+SZ32;
-		}
-		else
-		{
-			//all 64B done
-			AppendModVolVertexA(&vp->mvolA);
-			AppendModVolVertexB(&vp->mvolB);
-			return data+SZ64;
-		}
-	}
+   {
+      TA_VTX;
+      TA_VertexParam* vp=(TA_VertexParam*)data;
+
+      if (data==data_end)
+      {
+         AppendModVolVertexA(&vp->mvolA);
+         //32B more needed , 32B done :)
+         TaCmd=ta_modvolB_32;
+         return data+SZ32;
+      }
+
+      //all 64B done
+      AppendModVolVertexA(&vp->mvolA);
+      AppendModVolVertexB(&vp->mvolB);
+      return data+SZ64;
+   }
+
 	static Ta_Dma* TACALL ta_spriteB_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
 		TA_V64H;
@@ -260,30 +260,27 @@ case num : {\
 		return data+SZ32;
 	}
 	static Ta_Dma* TACALL ta_sprite_data(Ta_Dma* data,Ta_Dma* data_end)
-	{
-		TA_SPR;
-		verify(data->pcw.ParaType==ParamType_Vertex_Parameter);
-		if (data==data_end)
-		{
-			//32B more needed , 32B done :)
-			TaCmd=ta_spriteB_data;
+   {
+      TA_SPR;
+      TA_VertexParam* vp=(TA_VertexParam*)data;
+      verify(data->pcw.ParaType==ParamType_Vertex_Parameter);
 
-			TA_VertexParam* vp=(TA_VertexParam*)data;
+      if (data==data_end)
+      {
+         //32B more needed , 32B done :)
+         TaCmd=ta_spriteB_data;
 
-			AppendSpriteVertexA(&vp->spr1A);
-			return data+SZ32;
-		}
-		else
-		{
-			TA_VertexParam* vp=(TA_VertexParam*)data;
 
-			AppendSpriteVertexA(&vp->spr1A);
-			AppendSpriteVertexB(&vp->spr1B);
+         AppendSpriteVertexA(&vp->spr1A);
+         return data+SZ32;
+      }
 
-			//all 64B doneisimooooo la la la :*iiiiii  niarj
-			return data+SZ64;
-		}
-	}
+      AppendSpriteVertexA(&vp->spr1A);
+      AppendSpriteVertexB(&vp->spr1B);
+
+      //all 64B doneisimooooo la la la :*iiiiii  niarj
+      return data+SZ64;
+   }
 
 	template <u32 poly_type,u32 poly_size>
 	static Ta_Dma* TACALL ta_poly_data(Ta_Dma* data,Ta_Dma* data_end)

@@ -654,7 +654,7 @@ static void SlotUpdateFEG(struct ChannelEx *slot)
    //this needs to be filled
 }
 
-static void SlotRegWrite(struct ChannelEx *slot, u32 offset)
+static void UpdateSlotReg(struct ChannelEx *slot, u32 offset)
 {
    switch (offset & 0x7f)
    {
@@ -665,7 +665,7 @@ static void SlotRegWrite(struct ChannelEx *slot, u32 offset)
          if (slot->ccd->KEYONEX)
          {
             slot->ccd->KEYONEX=0;
-            for (int i = 0; i < MAX_CHANNELS; i++)
+            for (int i = 0; i < 64; i++)
             {
                if (slot->Chans[i].ccd->KEYONB)
                   StartSlot(&slot->Chans[i]);
@@ -763,7 +763,7 @@ static void SlotInit(struct ChannelEx *slot, int cn,u8* ccd_raw)
    slot->ChannelNumber = cn;
 
    for (i = 0;i < 0x80; i++)
-      SlotRegWrite(slot, i);
+      UpdateSlotReg(slot, i);
 
    StopSlot(slot);
 }
@@ -1174,7 +1174,7 @@ void sgc_Term(void)
 
 void WriteChannelReg8(u32 channel,u32 reg)
 {
-   SlotRegWrite(&Chans[channel], reg);
+   UpdateSlotReg(&Chans[channel], reg);
 }
 
 void ReadCommonReg(u32 reg,bool byte)

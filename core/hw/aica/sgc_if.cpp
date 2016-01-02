@@ -41,6 +41,9 @@
 #define ICLIP16(x) clip(x,-32768,32767)
 
 #define EG_SHIFT 16
+#define SHIFT 12
+
+#define FIX(v) ((uint32_t) ((float) (1<<SHIFT)*(v)))
 
 //Fixed point mul w/ rounding :)
 #define FPMul(a, b, bits) ((a * b) >> bits)
@@ -74,6 +77,11 @@ s16 cdda_sector[CDDA_SIZE]={0};
 u32 cdda_index=CDDA_SIZE<<1;
 
 static SampleType mxlr[MAX_CHANNELS];
+
+static const float SDLT[16]={-1000000.0,-42.0,-39.0,-36.0,-33.0,-30.0,-27.0,-24.0,-21.0,-18.0,-15.0,-12.0,-9.0,-6.0,-3.0,0.0};
+
+int m_LPANTABLE[0x20000];
+int m_RPANTABLE[0x20000];
 
 //Sound generation, mixin, and channel regs emulation
 //x.15
@@ -1077,6 +1085,60 @@ void sgc_Init(void)
    PLFOWS_CALC[1]=&CalcPlfo<1>;
    PLFOWS_CALC[2]=&CalcPlfo<2>;
    PLFOWS_CALC[3]=&CalcPlfo<3>;
+
+   memset(m_LPANTABLE, 0, sizeof(m_LPANTABLE));
+	memset(m_RPANTABLE, 0, sizeof(m_RPANTABLE));
+
+   for(int i=0;i<0x20000;++i)
+   {
+      int iTL =(i>>0x0)&0xff;
+      int iPAN=(i>>0x8)&0x1f;
+      int iSDL=(i>>0xD)&0x0F;
+      float TL=1.0;
+      float SegaDB=0;
+      float fSDL=1.0;
+      float PAN=1.0;
+      float LPAN,RPAN;
+
+      if(iTL&0x01) SegaDB-=0.4f;
+      if(iTL&0x02) SegaDB-=0.8f;
+      if(iTL&0x04) SegaDB-=1.5f;
+      if(iTL&0x08) SegaDB-=3.0f;
+      if(iTL&0x10) SegaDB-=6.0f;
+      if(iTL&0x20) SegaDB-=12.0f;
+      if(iTL&0x40) SegaDB-=24.0f;
+      if(iTL&0x80) SegaDB-=48.0f;
+
+      TL=pow(10.0,SegaDB/20.0);
+
+      SegaDB=0;
+      if(iPAN&0x1) SegaDB-=3.0f;
+      if(iPAN&0x2) SegaDB-=6.0f;
+      if(iPAN&0x4) SegaDB-=12.0f;
+      if(iPAN&0x8) SegaDB-=24.0f;
+
+      if((iPAN&0xf)==0xf) PAN=0.0;
+      else PAN=pow(10.0,SegaDB/20.0);
+
+      if(iPAN<0x10)
+      {
+         LPAN=PAN;
+         RPAN=1.0;
+      }
+      else
+      {
+         RPAN=PAN;
+         LPAN=1.0;
+      }
+
+      if(iSDL)
+         fSDL=pow(10.0,(SDLT[iSDL])/20.0);
+      else
+         fSDL=0.0;
+
+      m_LPANTABLE[i]=FIX((4.0*LPAN*TL*fSDL));
+      m_RPANTABLE[i]=FIX((4.0*RPAN*TL*fSDL));
+   }
 
    for (int i=0;i<16;i++)
    {

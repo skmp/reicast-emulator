@@ -371,11 +371,6 @@ void (* FEG_STEP_LUT[4])(ChannelEx* ch);
 void (* ALFOWS_CALC[4])(ChannelEx* ch);
 void (* PLFOWS_CALC[4])(ChannelEx* ch);
 
-static __forceinline s32 EG_GetValue(struct ChannelEx *slot)
-{
-   return slot->EG.volume >> EG_SHIFT;
-}
-
 static void ADPCM_Reset(ChannelEx *slot)
 {
    slot->cur_quant        = 127;
@@ -414,7 +409,7 @@ static __forceinline bool SlotStep(struct ChannelEx *slot, SampleType *oLeft, Sa
    //*Att is up to 511
    //logtable handles up to 1024, anything >=255 is mute
 
-   u32 ofsatt    = slot->lfo.alfo + (EG_GetValue(slot) >> 2);
+   u32 ofsatt    = slot->lfo.alfo + ((slot->EG.volume >> EG_SHIFT) >> 2);
    s32* logtable = ofsatt+tl_lut;
    *oLeft        = FPMul(sample,logtable[slot->VolMix.DLAtt],15);
    *oRight       = FPMul(sample,logtable[slot->VolMix.DRAtt],15);
@@ -980,7 +975,7 @@ static void EG_Step(ChannelEx *slot)
    {
       case EG_ATTACK:
          slot->EG.volume -= slot->EG.AR;
-         if (EG_GetValue(slot) <= 0)
+         if ((slot->EG.volume >> EG_SHIFT) <= 0)
          {
             slot->EG.volume = 0 << EG_SHIFT;
             if (!slot->ccd->LPSLNK)
@@ -989,12 +984,12 @@ static void EG_Step(ChannelEx *slot)
          break;
       case EG_DECAY1:
          slot->EG.volume += slot->EG.D1R;
-         if (((u32)EG_GetValue(slot)) >= slot->EG.DL)
+         if ((slot->EG.volume >> EG_SHIFT) >= slot->EG.DL)
             SetAegState(slot, EG_DECAY2);
          break;
       case EG_DECAY2:
          slot->EG.volume += slot->EG.D2R;
-         if (EG_GetValue(slot) >= 0x3FF)
+         if ((slot->EG.volume >> EG_SHIFT) >= 0x3FF)
          {
             slot->EG.volume = 0x3ff << EG_SHIFT;
             SetAegState(slot, EG_RELEASE);
@@ -1003,7 +998,7 @@ static void EG_Step(ChannelEx *slot)
       case EG_RELEASE: //only on key_off ?
          slot->EG.volume += slot->EG.RR;
 
-         if (EG_GetValue(slot) >= 0x3FF)
+         if ((slot->EG.volume >> EG_SHIFT) >= 0x3FF)
          {
             StopSlot(slot); /* TODO: Is this ok here? It's a speed optimisation (since the channel is muted) */
          }
@@ -1202,7 +1197,7 @@ void ReadCommonReg(u32 reg,bool byte)
             CommonData->LP= slot->lpend;
             verify(CommonData->AFSEL==0);
 
-            CommonData->EG  = EG_GetValue(slot); //AEG is only 10 bits, FEG is 13 bits
+            CommonData->EG  = slot->EG.volume >> EG_SHIFT; //AEG is only 10 bits, FEG is 13 bits
             CommonData->SGC = slot->EG.state;
 
             if (! (byte && reg==0x2810))

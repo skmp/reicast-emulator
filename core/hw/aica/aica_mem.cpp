@@ -12,21 +12,23 @@ u8 aica_reg[0x8000];
 template<u32 sz>
 u32 ReadReg(u32 addr)
 {
+   u32 size = sz;
+
 	if (addr >= 0x2800 && addr < 0x2818)
 	{
       switch (sz)
       {
          case 1:
             ReadCommonReg(addr & 0xff,true);
-            return aica_reg[addr];
+            break;
          default:
             ReadCommonReg(addr & 0xff,false);
-            //ReadCommonReg8(addr+1);
-            return *(u16*)&aica_reg[addr];
+            size = 2;
+            break;
       }
 	}
 
-   switch (sz)
+   switch (size)
    {
       case 1:
          return aica_reg[addr];

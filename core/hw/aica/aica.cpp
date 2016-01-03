@@ -93,7 +93,7 @@ static void update_arm_interrupts(void)
 }
 
 /* Interrupts - SH4 side */
-void UpdateSh4Ints(void)
+static void CheckPendingIRQ_SH4(void)
 {
    u32 p_ints = MCIEB->full & MCIPD->full;
    if (p_ints)
@@ -184,7 +184,7 @@ void libAICA_TimeStep(void)
 
 	//Make sure sh4/arm interrupt system is up to date :)
 	update_arm_interrupts();
-	UpdateSh4Ints();	
+	CheckPendingIRQ_SH4();	
 }
 
 //Memory i/o
@@ -217,14 +217,14 @@ void WriteAicaReg(u32 reg,u32 data)
          {
             verify(sz!=1);
             MCIPD->SCPU=1;
-            UpdateSh4Ints();
+            CheckPendingIRQ_SH4();
          }
          break;
 
       case MCIRE_addr:
          verify(sz!=1);
          MCIPD->full&=~data;
-         UpdateSh4Ints();
+         CheckPendingIRQ_SH4();
          //Write only
          break;
 

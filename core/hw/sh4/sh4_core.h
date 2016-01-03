@@ -99,8 +99,6 @@ u32* Sh4_int_GetRegisterPtr(Sh4RegType reg);
 //needs to be made portable
 void SetFloatStatusReg();
 
-
-bool Do_Interrupt(u32 intEvn);
 bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect);
 
 struct SH4ThrownException {

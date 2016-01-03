@@ -47,12 +47,27 @@ DECL_ALIGN(64) u32 InterruptBit[32] = { 0 };
 //Maps sh4 interrupt level to inclusive bitfield
 DECL_ALIGN(64) u32 InterruptLevelBit[16] = { 0 };
 
-bool Do_Interrupt(u32 intEvn);
 bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect);
 
 u32 interrupt_vpend; // Vector of pending interrupts
 u32 interrupt_vmask; // Vector of masked interrupts             (-1 inhibits all interrupts)
 u32 decoded_srimask; // Vector of interrupts allowed by SR.IMSK (-1 inhibits all interrupts)
+
+static bool Do_Interrupt(u32 intEvn)
+{
+	CCN_INTEVT = intEvn;
+
+	ssr = sr.GetFull();
+	spc = next_pc;
+	sgr = r[15];
+	sr.BL = 1;
+	sr.MD = 1;
+	sr.RB = 1;
+	UpdateSR();
+	next_pc = vbr + 0x600;
+
+	return true;
+}
 
 //bit 0 ~ 27 : interrupt source 27:0. 0 = lowest level, 27 = highest level.
 static void recalc_pending_itrs(void)
@@ -136,21 +151,6 @@ void ResetInterruptMask(InterruptID intr)
 	recalc_pending_itrs();
 }
 
-bool Do_Interrupt(u32 intEvn)
-{
-	CCN_INTEVT = intEvn;
-
-	ssr = sr.GetFull();
-	spc = next_pc;
-	sgr = r[15];
-	sr.BL = 1;
-	sr.MD = 1;
-	sr.RB = 1;
-	UpdateSR();
-	next_pc = vbr + 0x600;
-
-	return true;
-}
 
 bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect)
 {

@@ -191,7 +191,6 @@ void libAICA_TimeStep(void)
 template<u32 sz>
 void WriteAicaReg(u32 reg,u32 data)
 {
-   bool write_to_mem       = false;
    struct AicaTimer *timer = NULL;
 
    switch (reg)
@@ -230,8 +229,6 @@ void WriteAicaReg(u32 reg,u32 data)
          break;
 
       default:
-         write_to_mem = true;
-
          switch (reg)
          {
             case TIMER_A:

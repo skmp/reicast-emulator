@@ -73,6 +73,8 @@ enum _EG_state
    EG_RELEASE
 };
 
+u32 m_AICARAM_LENGTH, m_RAM_MASK, m_RAM_MASK16;
+
 s16 cdda_sector[CDDA_SIZE]={0};
 u32 cdda_index=CDDA_SIZE<<1;
 
@@ -1011,6 +1013,10 @@ AicaChannel AicaChannel::Chans[MAX_CHANNELS];
 
 void sgc_Init(void)
 {
+   m_AICARAM_LENGTH = 2 * 1024 * 1024;
+   m_RAM_MASK       = m_AICARAM_LENGTH-1;
+   m_RAM_MASK16     = m_RAM_MASK & 0x7ffffe;
+
    STREAM_STEP_LUT[0][0][0]=&StreamStep<0,0,0>;
    STREAM_STEP_LUT[1][0][0]=&StreamStep<1,0,0>;
    STREAM_STEP_LUT[2][0][0]=&StreamStep<2,0,0>;

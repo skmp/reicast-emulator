@@ -90,18 +90,23 @@ void DYNACALL WriteMem8_i(u32 addr,u8 data);
 void DYNACALL WriteMem16_i(u32 addr,u16 data);
 void DYNACALL WriteMem32_i(u32 addr,u32 data);
 
-void _vmem_init();
-void _vmem_reset();
-void _vmem_term();
+void _vmem_init(void);
+void _vmem_reset(void);
+void _vmem_term(void);
 
-//MEM MAPPINNGG
+//MEM MAPPING
 
 //AREA 1
 _vmem_handler area1_32b;
-void map_area1_init()
+void map_area1_init(void)
 {
-	area1_32b = _vmem_register_handler(pvr_read_area1_8,pvr_read_area1_16,pvr_read_area1_32,
-									pvr_write_area1_8,pvr_write_area1_16,pvr_write_area1_32);
+	area1_32b = _vmem_register_handler(
+         pvr_read_area1_8,
+         pvr_read_area1_16,
+         pvr_read_area1_32,
+         pvr_write_area1_8,
+         pvr_write_area1_16,
+         pvr_write_area1_32);
 }
 
 void map_area1(u32 base)
@@ -120,7 +125,7 @@ void map_area1(u32 base)
 }
 
 //AREA 2
-void map_area2_init()
+void map_area2_init(void)
 {
 	//nothing to map :p
 }
@@ -132,7 +137,7 @@ void map_area2(u32 base)
 
 
 //AREA 3
-void map_area3_init()
+void map_area3_init(void)
 {
 }
 
@@ -143,7 +148,7 @@ void map_area3(u32 base)
 }
 
 //AREA 4
-void map_area4_init()
+void map_area4_init(void)
 {
 	
 }
@@ -173,7 +178,7 @@ void DYNACALL WriteMem_extdev_T(u32 addr,T data)
 }
 
 _vmem_handler area5_handler;
-void map_area5_init()
+void map_area5_init(void)
 {
 	area5_handler = _vmem_register_handler_Template(ReadMem_extdev_T,WriteMem_extdev_T);
 }
@@ -182,8 +187,7 @@ void map_area5(u32 base)
 {
 	//map whole region to plugin handler :)
 	_vmem_map_handler(area5_handler,base|0x14,base|0x17);
-}
-
+} 
 //AREA 6	--	Unassigned 
 void map_area6_init()
 {
@@ -196,7 +200,7 @@ void map_area6(u32 base)
 
 
 //set vmem to default values
-void mem_map_default()
+void mem_map_default(void)
 {
 	//vmem - init/reset :)
 	_vmem_init();
@@ -253,7 +257,7 @@ void mem_map_default()
 	//map p4 region :)
 	map_p4();
 }
-void mem_Init()
+void mem_Init(void)
 {
 	//Allocate mem for memory/bios/flash
 	//mem_b.Init(&sh4_reserved_mem[0x0C000000],RAM_SIZE);
@@ -279,7 +283,7 @@ void mem_Reset(bool Manual)
 	MMU_reset();
 }
 
-void mem_Term()
+void mem_Term(void)
 {
 	MMU_term();
 	sh4_mmr_term();
@@ -369,7 +373,6 @@ u8* GetMemPtr(u32 Addr,u32 size)
    {
       case 3:
          return &mem_b[Addr & RAM_MASK];
-
       case 0:
       case 1:
       case 2:

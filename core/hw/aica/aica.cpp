@@ -191,6 +191,9 @@ void libAICA_TimeStep(void)
 template<u32 sz>
 void WriteAicaReg(u32 reg,u32 data)
 {
+   bool write_to_mem       = false;
+   struct AicaTimer *timer = NULL;
+
    switch (reg)
    {
       case SCIPD_addr:
@@ -226,23 +229,38 @@ void WriteAicaReg(u32 reg,u32 data)
          //Write only
          break;
 
-      case TIMER_A:
-         WriteMemArr(aica_reg,reg,data,sz);
-         AicaTimerRegisterWrite(&timers[0]);
-         break;
-
-      case TIMER_B:
-         WriteMemArr(aica_reg,reg,data,sz);
-         AicaTimerRegisterWrite(&timers[1]);
-         break;
-
-      case TIMER_C:
-         WriteMemArr(aica_reg,reg,data,sz);
-         AicaTimerRegisterWrite(&timers[2]);
-         break;
-
       default:
-         WriteMemArr(aica_reg,reg,data,sz);
+         write_to_mem = true;
+
+         switch (reg)
+         {
+            case TIMER_A:
+               timer = &timers[0];
+               break;
+            case TIMER_B:
+               timer = &timers[1];
+               break;
+            case TIMER_C:
+               timer = &timers[2];
+               break;
+         }
+
+         switch (sz)
+         {
+            case 1:
+               aica_reg[reg]=(u8)data;
+               break;
+            case 2:
+               *(u16*)&aica_reg[reg]=(u16)data;
+               break;
+            case 4:
+               *(u32*)&aica_reg[reg]=data;
+               break;
+         }
+
+         if (timer)
+            AicaTimerRegisterWrite(timer);
+
          break;
    }
 }

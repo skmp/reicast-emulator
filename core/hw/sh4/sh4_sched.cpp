@@ -47,7 +47,7 @@ u32 sh4_sched_remaining(int id)
 	return sh4_sched_remaining(id, sh4_sched_now());
 }
 
-void sh4_sched_ffts()
+void sh4_sched_ffts(void)
 {
 	u32 diff=-1;
 	int slot=-1;
@@ -81,15 +81,15 @@ int sh4_sched_register(int tag, sh4_sched_callback* ssc)
 /*
 	Return current cycle count, in 32 bits (wraps after 21 dreamcast seconds)
 */
-u32 sh4_sched_now()
+u32 sh4_sched_now(void)
 {
 	return sh4_sched_ffb-Sh4cntx.sh4_sched_next;
 }
 
 /*
-	Return current cycle count, in 64 bits (effectivelly never wraps)
+	Return current cycle count, in 64 bits (effectively never wraps)
 */
-u64 sh4_sched_now64()
+u64 sh4_sched_now64(void)
 {
 	return sh4_sched_ffb-Sh4cntx.sh4_sched_next;
 }
@@ -97,11 +97,10 @@ void sh4_sched_request(int id, int cycles)
 {
 	verify(cycles== -1 || (cycles >= 0 && cycles <= SH4_MAIN_CLOCK));
 
-	list[id].start=sh4_sched_now();
+	list[id].start = sh4_sched_now();
+   list[id].end   = -1;
 
-	if (cycles == -1)
-		list[id].end = -1;
-	else
+	if (cycles != -1)
 	{
 		list[id].end = list[id].start + cycles;
 		if (list[id].end == -1)
@@ -111,19 +110,18 @@ void sh4_sched_request(int id, int cycles)
 	sh4_sched_ffts();
 }
 
-int sh4_sched_elapsed(int id)
+/* Returns how much time has passed for this callback */
+static int sh4_sched_elapsed(int id)
 {
-	if (list[id].end!=-1)
-	{
-		int rv=sh4_sched_now()-list[id].start;
-		list[id].start=sh4_sched_now();
-		return rv;
-	}
+   if (list[id].end == -1)
+      return -1;
 
-   return -1;
+   int rv=sh4_sched_now()-list[id].start;
+   list[id].start=sh4_sched_now();
+   return rv;
 }
 
-void handle_cb(int id)
+static void handle_cb(int id)
 {
 	int remain=list[id].end-list[id].start;
 	int elapsd=sh4_sched_elapsed(id);
@@ -153,9 +151,8 @@ void sh4_sched_tick(int cycles)
 			{
 				int remaining = sh4_sched_remaining(i, fztime);
 				verify(remaining >= 0 || remaining == -1);
-				if (remaining >= 0 && remaining <= (u32)cycles) {
+				if (remaining >= 0 && remaining <= (u32)cycles)
 					handle_cb(i);
-				}
 			}
 		}
 		sh4_sched_ffts();

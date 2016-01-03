@@ -1179,24 +1179,27 @@ void ReadCommonReg(u32 reg,bool byte)
       case 0x10: /* LP check */
       case 0x11:
          {
-            u32 chan=CommonData->MSLC;
+            u32 slotnum=CommonData->MSLC;
+            struct ChannelEx *slot = &Chans[slotnum];
 
-            CommonData->LP=Chans[chan].lpend;
+            CommonData->LP= slot->lpend;
             verify(CommonData->AFSEL==0);
 
-            CommonData->EG  = EG_GetValue(&Chans[chan]); //AEG is only 10 bits, FEG is 13 bits
-            CommonData->SGC = Chans[chan].EG.state;
+            CommonData->EG  = EG_GetValue(slot); //AEG is only 10 bits, FEG is 13 bits
+            CommonData->SGC = slot->EG.state;
 
             if (! (byte && reg==0x2810))
-               Chans[chan].lpend = 0;
+               slot->lpend = 0;
          }
          break;
       case 0x14: /* CA (slot address */
       case 0x15:
          {
-            u32 chan=CommonData->MSLC;
-            CommonData->CA = Chans[chan].CA /*& (~1023)*/; //mmnn??
-            //printf("[%d] CA read %d\n",chan,Chans[chan].CA);
+            u32 slotnum=CommonData->MSLC;
+            struct ChannelEx *slot = &Chans[slotnum];
+
+            CommonData->CA = slot->CA /*& (~1023)*/; //mmnn??
+            //printf("[%d] CA read %d\n",slotnum , slot->CA);
          }
          break;
       case 0xb8:

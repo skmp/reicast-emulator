@@ -296,6 +296,10 @@ struct ChannelEx
 
    SampleType s0,s1;
 
+   u32 prv_addr;    // previous play address (for ADPCM)
+	u32 cur_addr;    //current play address (24.8)
+	u32 nxt_addr;    //next play address
+
    struct
    {
       u32 LSA;
@@ -463,7 +467,9 @@ static void StartSlot(struct ChannelEx *slot)
    if (slot->EG.state != EG_RELEASE)
       return;
 
-   slot->active = true;         /* if it was off then turn it on ! */
+   slot->active   = true;         /* if it was off then turn it on ! */
+   slot->cur_addr = 0;
+   slot->nxt_addr = 1 << SHIFT;
    SetAegState(slot, EG_ATTACK); /* reset AEG */
    slot->EG.volume = 0x17f << EG_SHIFT;
    SetFegState(slot, EG_ATTACK); /* reset FEG */

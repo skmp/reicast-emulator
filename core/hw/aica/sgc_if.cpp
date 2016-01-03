@@ -485,7 +485,10 @@ static void StartSlot(struct ChannelEx *slot)
 
    if (slot->ccd->PCMS >= 2)
    {
+      u32 addr = (slot->ccd->SA_hi << 16) | slot->ccd->SA_low;
+
       slot->curstep = slot->loop.LSA;
+      slot->adbase = ((unsigned char *)(&aica_ram.data[addr & 0x7fffff]));
       ADPCM_Reset(slot);
    }
 

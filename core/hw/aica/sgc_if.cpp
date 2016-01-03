@@ -871,11 +871,7 @@ static void StreamStep(ChannelEx *slot)
       if (LPSLNK)
       {
          if ((slot->EG.state==EG_ATTACK) && (CA >= slot->loop.LSA))
-         {
-
-            step_printf("[%d]LPSLNK : Switching to EG_DECAY1 %X\n",Channel, EG_GetValue(slot));
             SetAegState(slot, EG_DECAY1);
-         }
       }
 
       if (ca_t>= slot->loop.LEA)

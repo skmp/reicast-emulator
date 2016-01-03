@@ -289,6 +289,8 @@ struct ChannelEx
 
    ChannelCommonData* ccd;
 
+   u8 *adbase, *adlpbase;
+
    u8* SA;
    u32 CA;
    fp_22_10 step;

@@ -11,7 +11,7 @@ Sh4RCB* p_sh4rcb;
 sh4_if  sh4_cpu;
 u8* sh4_dyna_rcb;
 
-INLINE void ChangeGPR()
+static INLINE void ChangeGPR(void)
 {
 	u32 temp;
 	for (int i=0;i<8;i++)
@@ -22,7 +22,7 @@ INLINE void ChangeGPR()
 	}
 }
 
-INLINE void ChangeFP()
+static INLINE void ChangeFP(void)
 {
 	u32 temp;
 	for (int i=0;i<16;i++)
@@ -61,7 +61,7 @@ bool UpdateSR(void)
 u32 old_rm=0xFF;
 u32 old_dn=0xFF;
 
-void SetFloatStatusReg()
+void SetFloatStatusReg(void)
 {
 	if ((old_rm!=fpscr.RM) || (old_dn!=fpscr.DN))
 	{
@@ -121,7 +121,7 @@ void SetFloatStatusReg()
 }
 
 //called when fpscr is changed and we must check for reg banks etc..
-void UpdateFPSCR()
+void UpdateFPSCR(void)
 {
 	if (fpscr.FR !=old_fpscr.FR)
 		ChangeFP(); // FPU bank change

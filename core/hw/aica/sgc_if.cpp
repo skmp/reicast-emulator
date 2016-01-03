@@ -1019,21 +1019,6 @@ AicaChannel AicaChannel::Chans[MAX_CHANNELS];
 
 #define Chans AicaChannel::Chans 
 
-static u32 Calc_EG_Steps(float t)
-{
-   const double aeg_allsteps=1024*(1<< EG_SHIFT)-1;
-
-   if (t<0)
-      return 0;
-   if (t==0)
-      return (u32)aeg_allsteps;
-
-   //44.1*ms = samples
-   double scnt=44.1*t;
-   double steps=aeg_allsteps/scnt;
-   return (u32)(steps+0.5);
-}
-
 void sgc_Init(void)
 {
    STREAM_STEP_LUT[0][0][0]=&StreamStep<0,0,0>;
@@ -1154,10 +1139,25 @@ void sgc_Init(void)
    for (int i=256;i<1024;i++)
       tl_lut[i]=0;
 
-   for (int i = 0; i < MAX_CHANNELS; i++)
+   ARTABLE[0]=DRTABLE[0]=0;    //Infinite time
+	ARTABLE[1]=DRTABLE[1]=0;    //Infinite time
+   for (int i = 2; i < 64; i++)
    {
-      ARTABLE[i]     = Calc_EG_Steps(ARTimes[i]);
-      DRTABLE[i]     = Calc_EG_Steps(DRTimes[i]);
+      double t,step,scale;
+      t=ARTimes[i];   //In ms
+      if(t!=0.0)
+      {
+         step=(1023*1000.0)/(44100.0*t);
+         scale=(double) (1<<EG_SHIFT);
+         ARTABLE[i]=(int) (step*scale);
+      }
+      else
+         ARTABLE[i]=1024<<EG_SHIFT;
+
+      t=DRTimes[i];   //In ms
+      step=(1023*1000.0)/(44100.0*t);
+      scale=(double) (1<<EG_SHIFT);
+      DRTABLE[i]=(int) (step*scale);
    }
 
    for (int i = 0; i < MAX_CHANNELS; i++)

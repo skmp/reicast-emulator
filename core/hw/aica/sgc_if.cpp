@@ -368,11 +368,6 @@ static __forceinline s32 EG_GetValue(struct ChannelEx *slot)
    return slot->EG.volume >> EG_SHIFT;
 }
 
-static void EG_SetValue(struct ChannelEx *slot, u32 val)
-{
-   slot->EG.volume = val << EG_SHIFT;
-}
-
 static void ADPCM_Reset(ChannelEx *slot)
 {
    slot->cur_quant        = 127;
@@ -468,7 +463,7 @@ static void StartSlot(struct ChannelEx *slot)
 
    slot->active = true;         /* if it was off then turn it on ! */
    SetAegState(slot, EG_ATTACK); /* reset AEG */
-   EG_SetValue(slot, 0x17F);     /* start from 0x17F */
+   slot->EG.volume = 0x17f << EG_SHIFT;
    SetFegState(slot, EG_ATTACK); /* reset FEG */
 
    //Reset sampling state
@@ -750,7 +745,7 @@ static void StopSlot(struct ChannelEx *slot)
 {
    slot->active = false;
    SetAegState(slot, EG_RELEASE);
-   EG_SetValue(slot, 0x3FF);
+   slot->EG.volume = 0x3ff << EG_SHIFT;
 }
 
 static void SlotInit(struct ChannelEx *slot, int cn,u8* ccd_raw)
@@ -978,7 +973,7 @@ static void EG_Step(ChannelEx *slot)
          slot->EG.volume -= slot->EG.AR;
          if (EG_GetValue(slot) <= 0)
          {
-            EG_SetValue(slot, 0);
+            slot->EG.volume = 0 << EG_SHIFT;
             if (!slot->ccd->LPSLNK)
                SetAegState(slot, EG_DECAY1);
          }
@@ -992,7 +987,7 @@ static void EG_Step(ChannelEx *slot)
          slot->EG.volume += slot->EG.D2R;
          if (EG_GetValue(slot) >= 0x3FF)
          {
-            EG_SetValue(slot, 0x3FF);
+            slot->EG.volume = 0x3ff << EG_SHIFT;
             SetAegState(slot, EG_RELEASE);
          }
          break;
@@ -1001,7 +996,6 @@ static void EG_Step(ChannelEx *slot)
 
          if (EG_GetValue(slot) >= 0x3FF)
          {
-            EG_SetValue(slot, 0x3FF); // TODO: mnn, should we do anything about it running wild ?
             StopSlot(slot); /* TODO: Is this ok here? It's a speed optimisation (since the channel is muted) */
          }
          break;

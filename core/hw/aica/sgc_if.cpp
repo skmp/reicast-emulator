@@ -761,13 +761,13 @@ static void StopSlot(struct ChannelEx *slot)
    slot->EG.volume = 0x3ff << EG_SHIFT;
 }
 
-static void SlotInit(struct ChannelEx *slot, int cn,u8* ccd_raw)
+static void SlotInit(struct ChannelEx *slot, int cn)
 {
    unsigned i;
    if (!slot)
       return;
 
-   slot->ccd           = (ChannelCommonData*)&ccd_raw[cn*0x80];
+   slot->ccd           = (ChannelCommonData*)&aica_reg[cn*0x80];
    slot->ChannelNumber = cn;
 
    for (i = 0;i < 0x80; i++)
@@ -1168,7 +1168,7 @@ void sgc_Init(void)
    }
 
    for (int i = 0; i < MAX_CHANNELS; i++)
-      SlotInit(&Chans[i], i,aica_reg);
+      SlotInit(&Chans[i], i);
    dsp_out_vol=(DSP_OUT_VOL_REG*)&aica_reg[0x2000];
 
    dsp_init();

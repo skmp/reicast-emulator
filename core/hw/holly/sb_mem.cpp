@@ -197,7 +197,15 @@ T DYNACALL ReadMem_area0(u32 addr)
 	{
 		//EMUERROR2("Read from area0_32 not implemented [AICA- Wave Memory], addr=%x",addr);
 		//return (T)libAICA_ReadMem_aica_ram(addr,sz);
-		ReadMemArrRet(aica_ram.data,addr&ARAM_MASK,sz);
+      switch (sz)
+      {
+         case 1:
+            return aica_ram.data[addr & ARAM_MASK];
+         case 2:
+            return *(u16*)&aica_ram.data[addr & ARAM_MASK];
+         case 4:
+            return *(u32*)&aica_ram.data[addr & ARAM_MASK];
+      }
 	}
 	//map 0x0100 to 0x01FF
 	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) //	:Ext. Device
@@ -286,7 +294,19 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	{
 		//EMUERROR4("Write to area0_32 not implemented [AICA- Wave Memory], addr=%x,data=%x,size=%d",addr,data,sz);
 		//aica_writeram(addr,data,sz);
-		WriteMemArrRet(aica_ram.data,addr&ARAM_MASK,data,sz);
+
+      switch (sz)
+      {
+         case 1:
+            aica_ram.data[addr & ARAM_MASK]         = (u8)data;
+            break;
+         case 2:
+            *(u16*)&aica_ram.data[addr & ARAM_MASK] = (u16)data;
+            break;
+         case 4:
+            *(u32*)&aica_ram.data[addr & ARAM_MASK] = data;
+            break;
+      }
 		return;
 	}
 	//map 0x0100 to 0x01FF

@@ -12,27 +12,33 @@ u8 aica_reg[0x8000];
 template<u32 sz>
 u32 ReadReg(u32 addr)
 {
-	if (addr<0x2800)
+	if (addr >= 0x2800 && addr < 0x2818)
 	{
-		ReadMemArrRet(aica_reg,addr,sz);
-	}
-	if (addr < 0x2818)
-	{
-		if (sz==1)
-		{
-			ReadCommonReg(addr & 0xff,true);
-			ReadMemArrRet(aica_reg,addr,1);
-		}
-		else
-		{
-			ReadCommonReg(addr & 0xff,false);
-			//ReadCommonReg8(addr+1);
-			ReadMemArrRet(aica_reg,addr,2);
-		}
+      switch (sz)
+      {
+         case 1:
+            ReadCommonReg(addr & 0xff,true);
+            return aica_reg[addr];
+         default:
+            ReadCommonReg(addr & 0xff,false);
+            //ReadCommonReg8(addr+1);
+            return *(u16*)&aica_reg[addr];
+      }
 	}
 
-	ReadMemArrRet(aica_reg,addr,sz);
+   switch (sz)
+   {
+      case 1:
+         return aica_reg[addr];
+      case 2:
+         return *(u16*)&aica_reg[addr];
+      case 4:
+         break;
+   }
+
+   return *(u32*)&aica_reg[addr];
 }
+
 template<u32 sz>
 void WriteReg(u32 addr,u32 data)
 {

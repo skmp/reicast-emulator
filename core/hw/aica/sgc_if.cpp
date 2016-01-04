@@ -1234,6 +1234,7 @@ void WriteCommonReg8(u32 reg,u32 data)
 
 static void AICA_Sample_Internal(SampleType *mixl, SampleType *mixr)
 {
+   //CDDA EXTS input
    if (cdda_index>=CDDA_SIZE)
    {
       cdda_index=0;
@@ -1341,8 +1342,6 @@ void AICA_Sample32(void)
       }
    }
 
-   //OK , generated all Channels  , now DSP/ect + final mix ;p
-   //CDDA EXTS input
 
    for (int i=0;i<32;i++)
    {
@@ -1363,10 +1362,6 @@ void AICA_Sample(void)
 
    for (int i = 0; i < MAX_CHANNELS; i++)
       SlotStep(&ChannelEx::Chans[i], &mixl, &mixr);
-
-
-   /* OK , generated all Channels  , now DSP/ect + final mix
-    * CDDA EXTS input */
 
    AICA_Sample_Internal(&mixl, &mixr);
 }

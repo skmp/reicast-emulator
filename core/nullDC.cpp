@@ -126,6 +126,9 @@ static void LoadSpecialSettings(void)
             LoadSpecialSettingsCPU();
          }
 
+         settings.pvr.Emulation.zMin = lut_games[i].zMin;
+         settings.pvr.Emulation.zMax = lut_games[i].zMax;
+
          break;
       }
    }
@@ -228,6 +231,8 @@ void LoadSettings(void)
 	settings.pvr.ta_skip			   = 0;
 	settings.pvr.rend				   = 0;
    settings.QueueRender          = 0;
+   settings.pvr.Emulation.zMin         = 0.f;
+   settings.pvr.Emulation.zMax         = 1.0f;
 
 	settings.pvr.MaxThreads			      = 3;
 	settings.pvr.SynchronousRendering	= 0;

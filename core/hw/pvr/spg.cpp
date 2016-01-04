@@ -174,10 +174,6 @@ void spg_Reset(bool Manual)
 	CalculateSync();
 }
 
-#if 0
-extern u32 PVR_VTXC;
-#endif
-
 void SetREP(TA_context* cntx)
 {
    unsigned pending_cycles = 4096;

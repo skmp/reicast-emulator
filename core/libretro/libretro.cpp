@@ -660,6 +660,51 @@ void UpdateInputState(u32 port)
       }
    }
 
+#if 0
+   int analogval = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X) / 256;
+
+   {
+      static f32 InitialzMax = -999.0f;
+      static f32 InitialzMin = -999.0f;
+      bool rendermsg = false;
+      char msg[256];
+      struct retro_message msg_obj = {0};
+
+      if (InitialzMax == -999.0f)
+         InitialzMax = settings.pvr.Emulation.zMax;
+      if (InitialzMin == -999.0f)
+         InitialzMin = settings.pvr.Emulation.zMin;
+     
+      if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3))
+      {
+         if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2))
+            settings.pvr.Emulation.zMax = 1.0;
+         else
+            settings.pvr.Emulation.zMax = InitialzMax;
+         rendermsg = true;
+      }
+
+      if (analogval <= -16 && analogval >= -0x8000)
+      {
+         settings.pvr.Emulation.zMax -= 0.1f;
+         rendermsg = true;
+      }
+      if (analogval >= 16 && analogval <= 0x7fff)
+      {
+         settings.pvr.Emulation.zMax += 0.1f;
+         rendermsg = true;
+      }
+
+      if (rendermsg)
+      {
+         sprintf(msg, "MaxZ: %.2f\n", settings.pvr.Emulation.zMax);
+         msg_obj.msg    = msg;
+         msg_obj.frames = 180;
+         environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, (void*)&msg_obj);
+      }
+   }
+#endif
+
    joyx[port] = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X) / 256;
    joyy[port] = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y) / 256;
 }

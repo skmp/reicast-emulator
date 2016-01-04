@@ -94,13 +94,15 @@ union FB_R_CTRL_type
 	};
 	u32 full;
 };
+
 enum fb_depth_enum
 {
-	fbde_0555 = 0, //0555, lower 3 bits on fb_concat
-	fbde_565  = 1, //565, lower 3 bits on fb_concat, [1:0] for G
-	fbde_888  = 2, //888, packed
-	fbde_C888 = 3, //C888, first byte used for chroma
+	FBDE_0555 = 0, //0555, lower 3 bits on fb_concat
+	FBDE_565  = 1, //565, lower 3 bits on fb_concat, [1:0] for G
+	FBDE_888  = 2, //888, packed
+	FBDE_C888 = 3  //C888, first byte used for chroma
 };
+
 union FB_R_SIZE_type
 {
 	struct

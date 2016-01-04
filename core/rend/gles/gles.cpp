@@ -1653,8 +1653,8 @@ static bool RenderFrame(void)
 
 	//Setup the matrix
 
-	float vtx_min_fZ = settings.pvr.Emulation.zMin;
-	float vtx_max_fZ = settings.pvr.Emulation.zMax;
+	float vtx_min_fZ = 0;
+	float vtx_max_fZ = pvrrc.fZ_max;
 
 	//sanitise the values, now with NaN detection (for omap)
 	//0x49800000 is 1024*1024. Using integer math to avoid issues w/ infs and nans

@@ -606,6 +606,9 @@ void os_CreateWindow()
    // Nothing to do here
 }
 
+bool update_zmax;
+bool update_zmin;
+
 void UpdateInputState(u32 port)
 {
    int id;
@@ -660,15 +663,12 @@ void UpdateInputState(u32 port)
       }
    }
 
-#if 0
-   int analogval = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X) / 256;
-
+#if 1
    {
       static f32 InitialzMax = -999.0f;
       static f32 InitialzMin = -999.0f;
-      bool rendermsg = false;
-      char msg[256];
-      struct retro_message msg_obj = {0};
+      int16_t rstick_x = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X) / 256;
+      int16_t rstick_y = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y) / 256;
 
       if (InitialzMax == -999.0f)
          InitialzMax = settings.pvr.Emulation.zMax;
@@ -681,26 +681,38 @@ void UpdateInputState(u32 port)
             settings.pvr.Emulation.zMax = 1.0;
          else
             settings.pvr.Emulation.zMax = InitialzMax;
-         rendermsg = true;
+         update_zmax = true;
       }
 
-      if (analogval <= -16 && analogval >= -0x8000)
+      if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3))
+      {
+         if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2))
+            settings.pvr.Emulation.zMin = 0.0;
+         else
+            settings.pvr.Emulation.zMin = InitialzMin;
+         update_zmin = true;
+      }
+
+      if (rstick_y <= -16 && rstick_y >= -0x8000)
+      {
+         settings.pvr.Emulation.zMin -= 0.1f;
+         update_zmin = true;
+      }
+      if (rstick_y >= 16 && rstick_y <= 0x7fff)
+      {
+         settings.pvr.Emulation.zMin += 0.1f;
+         update_zmin = true;
+      }
+
+      if (rstick_x <= -16 && rstick_x >= -0x8000)
       {
          settings.pvr.Emulation.zMax -= 0.1f;
-         rendermsg = true;
+         update_zmax = true;
       }
-      if (analogval >= 16 && analogval <= 0x7fff)
+      if (rstick_x >= 16 && rstick_x <= 0x7fff)
       {
          settings.pvr.Emulation.zMax += 0.1f;
-         rendermsg = true;
-      }
-
-      if (rendermsg)
-      {
-         sprintf(msg, "MaxZ: %.2f\n", settings.pvr.Emulation.zMax);
-         msg_obj.msg    = msg;
-         msg_obj.frames = 180;
-         environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, (void*)&msg_obj);
+         update_zmax = true;
       }
    }
 #endif

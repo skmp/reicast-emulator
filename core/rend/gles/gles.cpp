@@ -9,6 +9,7 @@
 #include "hw/pvr/pvr_lock.h"
 
 extern struct retro_hw_render_callback hw_render;
+extern retro_environment_t environ_cb;
 extern bool fog_needs_update;
 extern bool enable_rtt;
 bool KillTex=false;
@@ -1645,6 +1646,9 @@ static bool vertex_buffer_unmap(void)
    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+extern bool update_zmax;
+extern bool update_zmin;
+
 static bool RenderFrame(void)
 {
 	bool is_rtt=pvrrc.isRTT;
@@ -1652,8 +1656,32 @@ static bool RenderFrame(void)
 	//if (FrameCount&7) return;
 
 	//Setup the matrix
+   if (update_zmax || update_zmin)
+   {
+      char msg[512];
+      struct retro_message msg_obj = {0};
 
-	float vtx_min_fZ = 0;
+      sprintf(msg, "MaxZ OLD: %.2f NEW: %.2f | MinZ OLD: %.2f NEW: %.2f\n", pvrrc.fZ_max, settings.pvr.Emulation.zMax,
+            pvrrc.fZ_min, settings.pvr.Emulation.zMin);
+
+      if (update_zmax)
+      {
+         pvrrc.fZ_max = settings.pvr.Emulation.zMax;
+         update_zmax = false;
+      }
+      if (update_zmin)
+      {
+         pvrrc.fZ_min = settings.pvr.Emulation.zMin;
+         update_zmin  = false;
+      }
+
+      msg_obj.msg    = msg;
+      msg_obj.frames = 180;
+
+      environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, (void*)&msg_obj);
+   }
+
+	float vtx_min_fZ = (settings.pvr.Emulation.zMin != 0.0) ? settings.pvr.Emulation.zMin : 0;
 	float vtx_max_fZ = pvrrc.fZ_max;
 
 	//sanitise the values, now with NaN detection (for omap)

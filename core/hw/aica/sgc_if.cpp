@@ -1233,6 +1233,67 @@ void WriteCommonReg8(u32 reg,u32 data)
    }
 }
 
+static void AICA_Sample_Internal(SampleType *mixl, SampleType *mixr)
+{
+   if (cdda_index>=CDDA_SIZE)
+   {
+      cdda_index=0;
+      libCore_CDDA_Sector(cdda_sector);
+   }
+   s32 EXTS0L=cdda_sector[cdda_index];
+   s32 EXTS0R=cdda_sector[cdda_index+1];
+   cdda_index+=2;
+
+   /* Final mix
+    * Add CDDA / DSP effect(s) */
+
+   /* CDDA */
+   if (settings.aica.CDDAMute==0) 
+   {
+      VOLPAN(EXTS0L,dsp_out_vol[16].EFSDL,dsp_out_vol[16].EFPAN,*mixl,*mixr);
+      VOLPAN(EXTS0R,dsp_out_vol[17].EFSDL,dsp_out_vol[17].EFPAN,*mixl,*mixr);
+   }
+
+   /* Mono */
+   if (CommonData->Mono)
+   {
+      /* Yay for mono =P */
+      *mixl += *mixr;
+      *mixr  = *mixl;
+   }
+
+   /* MVOL !
+    * we want to make sure mix* is *At least* 23 bits wide here, so 64 bit mul ! */
+   u32 mvol = CommonData->MVOL;
+   s32 val  = volume_lut[mvol];
+   *mixl     = (s32)FPMul((s64)*mixl,val,15);
+   *mixr     = (s32)FPMul((s64)*mixr,val,15);
+
+   if (CommonData->DAC18B)
+   {
+      /* If 18 bit output , make it 16bit */
+      /* Remove the fractional part by chopping.. */
+      *mixl >>= 2;
+      *mixr >>= 2;
+   }
+
+   /* Sample is ready. clip/saturate and store */
+
+#ifdef CLIP_WARN
+   if (((s16)*mixl) != *mixl)
+      printf("Clipped mixl %d\n",*mixl);
+   if (((s16)*mixr) != *mixr)
+      printf("Clipped mixr %d\n",*mixr);
+#endif
+
+   ICLIP16(*mixl);
+   ICLIP16(*mixr);
+
+   pl=*mixl;
+   pr=*mixr;
+
+   if (!settings.aica.NoSound) WriteSample(*mixr,*mixl);
+}
 
 /* No DSP for now in this version */
 void AICA_Sample32(void)
@@ -1279,64 +1340,7 @@ void AICA_Sample32(void)
       mixl=mxlr[i*2+0];
       mixr=mxlr[i*2+1];
 
-      if (cdda_index>=CDDA_SIZE)
-      {
-         cdda_index=0;
-         libCore_CDDA_Sector(cdda_sector);
-      }
-      s32 EXTS0L=cdda_sector[cdda_index];
-      s32 EXTS0R=cdda_sector[cdda_index+1];
-      cdda_index+=2;
-
-      /* Final mix
-       * Add CDDA / DSP effect(s) */
-
-      /* CDDA */
-      if (settings.aica.CDDAMute==0) 
-      {
-         VOLPAN(EXTS0L,dsp_out_vol[16].EFSDL,dsp_out_vol[16].EFPAN,mixl,mixr);
-         VOLPAN(EXTS0R,dsp_out_vol[17].EFSDL,dsp_out_vol[17].EFPAN,mixl,mixr);
-      }
-
-      /* Mono */
-      if (CommonData->Mono)
-      {
-         /* Yay for mono =P */
-         mixl+=mixr;
-         mixr=mixl;
-      }
-
-      /* MVOL !
-       * we want to make sure mix* is *At least* 23 bits wide here, so 64 bit mul ! */
-      u32 mvol = CommonData->MVOL;
-      s32 val  = volume_lut[mvol];
-      mixl     = (s32)FPMul((s64)mixl,val,15);
-      mixr     = (s32)FPMul((s64)mixr,val,15);
-
-      if (CommonData->DAC18B)
-      {
-         /* If 18 bit output , make it 16bit */
-         /* Remove the fractional part by chopping.. */
-         mixl >>= 2;
-         mixr >>= 2;
-      }
-
-      /* Sample is ready. clip/saturate and store */
-
-#ifdef CLIP_WARN
-      if (((s16)mixl) != mixl)
-         printf("Clipped mixl %d\n",mixl);
-      if (((s16)mixr) != mixr)
-         printf("Clipped mixr %d\n",mixr);
-#endif
-
-      ICLIP16(mixl);
-      ICLIP16(mixr);
-
-      pl=mixl;
-      pr=mixr;
-
-      if (!settings.aica.NoSound) WriteSample(mixr,mixl);
+      AICA_Sample_Internal(&mixl, &mixr);
    }
 }
 

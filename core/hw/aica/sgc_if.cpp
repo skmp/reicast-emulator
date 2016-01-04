@@ -78,7 +78,6 @@ u32 m_AICARAM_LENGTH, m_RAM_MASK, m_RAM_MASK16;
 s16 cdda_sector[CDDA_SIZE]={0};
 u32 cdda_index=CDDA_SIZE<<1;
 
-static SampleType mxlr[MAX_CHANNELS];
 
 static const float SDLT[16]={-1000000.0,-42.0,-39.0,-36.0,-33.0,-30.0,-27.0,-24.0,-21.0,-18.0,-15.0,-12.0,-9.0,-6.0,-3.0,0.0};
 
@@ -1307,10 +1306,13 @@ static void AICA_Sample_Internal(SampleType *mixl, SampleType *mixr)
 /* No DSP for now in this version */
 void AICA_Sample32(void)
 {
+   static SampleType mxlr[MAX_CHANNELS];
+
    if (settings.aica.NoBatch)
       return;
 
    memset(mxlr,0,sizeof(mxlr));
+   memset(dsp.MIXS, 0, sizeof(dsp.MIXS));
 
    /* Generate 32 samples for each channel, 
     * before moving to next channel.

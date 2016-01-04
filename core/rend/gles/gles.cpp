@@ -1435,9 +1435,13 @@ bool ProcessFrame(TA_context* ctx)
 	return true;
 }
 
+extern bool update_zmax;
+extern bool update_zmin;
+
 bool RenderFrame()
 {
 	DoCleanup();
+
 
 	bool is_rtt=pvrrc.isRTT;
 
@@ -1447,8 +1451,32 @@ bool RenderFrame()
 	//if (FrameCount&7) return;
 
 	//Setup the matrix
+   if (update_zmax || update_zmin)
+   {
+      char msg[512];
+      struct retro_message msg_obj = {0};
 
-	float vtx_min_fZ = 0;
+      sprintf(msg, "MaxZ OLD: %.2f NEW: %.2f | MinZ OLD: %.2f NEW: %.2f\n", pvrrc.fZ_max, settings.pvr.Emulation.zMax,
+            pvrrc.fZ_min, settings.pvr.Emulation.zMin);
+
+      if (update_zmax)
+      {
+         pvrrc.fZ_max = settings.pvr.Emulation.zMax;
+         update_zmax = false;
+      }
+      if (update_zmin)
+      {
+         pvrrc.fZ_min = settings.pvr.Emulation.zMin;
+         update_zmin  = false;
+      }
+
+      msg_obj.msg    = msg;
+      msg_obj.frames = 180;
+
+      environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, (void*)&msg_obj);
+   }
+
+	float vtx_min_fZ = (settings.pvr.Emulation.zMin != 0.0) ? settings.pvr.Emulation.zMin : 0;
 	float vtx_max_fZ = pvrrc.fZ_max;
 
 	//sanitise the values, now with NaN detection (for omap)

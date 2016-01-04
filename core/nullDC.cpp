@@ -167,6 +167,9 @@ static void LoadSpecialSettings(void)
             LoadSpecialSettingsCPU();
          }
 
+         settings.pvr.Emulation.zMin = lut_games[i].zMin;
+         settings.pvr.Emulation.zMax = lut_games[i].zMax;
+
          break;
       }
    }
@@ -281,7 +284,9 @@ void LoadSettings()
 	settings.pvr.ta_skip			= cfgLoadInt("config","ta.skip",0);
 	settings.pvr.rend				= cfgLoadInt("config","pvr.rend",0);
 	
-	settings.PaletteUpdateHack    = 0;
+	settings.PaletteUpdateHack		= 0;
+	settings.pvr.Emulation.zMin		= 0.f;
+	settings.pvr.Emulation.zMax		= 1.0f;
 
 	settings.pvr.MaxThreads			= cfgLoadInt("config", "pvr.MaxThreads", 3);
 	settings.pvr.SynchronousRendering			= cfgLoadInt("config", "pvr.SynchronousRendering", 0);

@@ -685,6 +685,8 @@ struct settings_t
 			u32 ModVolMode;
 			u32 ZBufferMode;
 			u32 TexCacheMode;
+			f32 zMin;
+			f32 zMax;
 		} Emulation;
 
 		struct

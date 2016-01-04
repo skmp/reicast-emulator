@@ -99,79 +99,79 @@ static void fill_fsm(void)
 	for (i=0;i<8;i++)
 	{
 		switch(i)
-		{
-		case ParamType_End_Of_List:
-         //End of list -> process it !
-         fill_fsm(TAS_NS,ParamType_End_Of_List,-1,TAS_NS,1);
-         fill_fsm(TAS_PLV32,ParamType_End_Of_List,-1,TAS_NS,1);
-         fill_fsm(TAS_PLV64,ParamType_End_Of_List,-1,TAS_NS,1);
-         fill_fsm(TAS_MLV64,ParamType_End_Of_List,-1,TAS_NS,1);
-			break;
+      {
+         case PARAMTYPE_END_OF_LIST:
+            //End of list -> process it !
+            fill_fsm(TAS_NS, PARAMTYPE_END_OF_LIST,-1,TAS_NS,1);
+            fill_fsm(TAS_PLV32,PARAMTYPE_END_OF_LIST,-1,TAS_NS,1);
+            fill_fsm(TAS_PLV64,PARAMTYPE_END_OF_LIST,-1,TAS_NS,1);
+            fill_fsm(TAS_MLV64,PARAMTYPE_END_OF_LIST,-1,TAS_NS,1);
+            break;
 
-		case ParamType_User_Tile_Clip:
-		case ParamType_Object_List_Set:
-         //32B commands, no state change
-         fill_fsm(TAS_NS,i,-1,TAS_NS);
-         fill_fsm(TAS_PLV32,i,-1,TAS_PLV32);
-         fill_fsm(TAS_PLV64,i,-1,TAS_PLV64);
-         fill_fsm(TAS_MLV64,i,-1,TAS_MLV64);
-			break;
+         case PARAMTYPE_USER_TILE_CLIP:
+         case PARAMTYPE_OBJECT_LIST_SET:
+            //32B commands, no state change
+            fill_fsm(TAS_NS,i,-1,TAS_NS);
+            fill_fsm(TAS_PLV32,i,-1,TAS_PLV32);
+            fill_fsm(TAS_PLV64,i,-1,TAS_PLV64);
+            fill_fsm(TAS_MLV64,i,-1,TAS_MLV64);
+            break;
 
-		case 3:
-		case 6:
-			//invalid
-			break;
+         case 3:
+         case 6:
+            //invalid
+            break;
 
-		case ParamType_Polygon_or_Modifier_Volume:
-         //right .. its complicated alirte
+         case PARAMTYPE_POLYGON_OR_MODIFIER_VOLUME:
+            //right .. its complicated alirte
 
-         for (int k=0;k<32;k++)
-         {
-            u32 uid=ta_type_lut[k*4];
-            u32 vt=uid & 0x7f;
+            for (int k=0;k<32;k++)
+            {
+               u32 uid=ta_type_lut[k*4];
+               u32 vt=uid & 0x7f;
 
-            bool v64 = vt == 5 || vt == 6 || vt == 11 || vt == 12 || vt == 13 || vt == 14;
-            bool p64 = uid >> 31;
+               bool v64 = vt == 5 || vt == 6 || vt == 11 || vt == 12 || vt == 13 || vt == 14;
+               bool p64 = uid >> 31;
 
-            ta_state nxt = p64 ? (v64 ? TAS_PLHV64 : TAS_PLHV32) :
-               (v64 ? TAS_PLV64  : TAS_PLV32 ) ;
+               ta_state nxt = p64 ? (v64 ? TAS_PLHV64 : TAS_PLHV32) :
+                  (v64 ? TAS_PLV64  : TAS_PLV32 ) ;
 
-            fill_fsm(TAS_PLV32,i,k,nxt,0,p64);
-            fill_fsm(TAS_PLV64,i,k,nxt,0,p64);
-         }
+               fill_fsm(TAS_PLV32,i,k,nxt,0,p64);
+               fill_fsm(TAS_PLV64,i,k,nxt,0,p64);
+            }
 
 
-         //32B command, no state change
-         fill_fsm(TAS_MLV64,i,-1,TAS_MLV64);
+            //32B command, no state change
+            fill_fsm(TAS_MLV64,i,-1,TAS_MLV64);
 
-         //process and start list
-         fill_fsm(TAS_NS,i,-1,TAS_NS,1);
-			break;
+            //process and start list
+            fill_fsm(TAS_NS,i,-1,TAS_NS,1);
+            break;
 
-		case ParamType_Sprite:
-         //SPR: 32B -> expect 64B data (PL*)
-         fill_fsm(TAS_PLV32,i,-1,TAS_PLV64);
-         fill_fsm(TAS_PLV64,i,-1,TAS_PLV64);
+         case PARAMTYPE_SPRITE:
+            //SPR: 32B -> expect 64B data (PL*)
+            fill_fsm(TAS_PLV32,i,-1,TAS_PLV64);
+            fill_fsm(TAS_PLV64,i,-1,TAS_PLV64);
 
-         //invalid for ML
+            //invalid for ML
 
-         //process and start list
-         fill_fsm(TAS_NS,i,-1,TAS_NS,1);
-			break;
+            //process and start list
+            fill_fsm(TAS_NS,i,-1,TAS_NS,1);
+            break;
 
-		case ParamType_Vertex_Parameter:
-         //VTX: 32 B -> Expect more of it
-         fill_fsm(TAS_PLV32,i,-1,TAS_PLV32,0,0);
+         case PARAMTYPE_VERTEX_PARAMETER:
+            //VTX: 32 B -> Expect more of it
+            fill_fsm(TAS_PLV32,i,-1,TAS_PLV32,0,0);
 
-         //VTX: 64 B -> Expect next 32B
-         fill_fsm(TAS_PLV64,i,-1,TAS_PLV64_H,0,1);
+            //VTX: 64 B -> Expect next 32B
+            fill_fsm(TAS_PLV64,i,-1,TAS_PLV64_H,0,1);
 
-         //MVO: 64B -> expect next 32B
-         fill_fsm(TAS_MLV64,i,-1,TAS_MLV64_H,0,1);
+            //MVO: 64B -> expect next 32B
+            fill_fsm(TAS_MLV64,i,-1,TAS_MLV64_H,0,1);
 
-         //invalid for NS
-			break;
-		}
+            //invalid for NS
+            break;
+      }
 	}
 	//?
 
@@ -194,7 +194,7 @@ static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 	{
       switch (dat->pcw.ParaType)
       {
-         case ParamType_End_Of_List:
+         case PARAMTYPE_END_OF_LIST:
             if (ta_fsm_cl==7)
                ta_fsm_cl=dat->pcw.ListType;
             //printf("List %d ended\n",ta_fsm_cl);
@@ -203,7 +203,7 @@ static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
             ta_fsm_cl=7;
             trans=TAS_NS;
             break;
-         case ParamType_Polygon_or_Modifier_Volume:
+         case PARAMTYPE_POLYGON_OR_MODIFIER_VOLUME:
             if (ta_fsm_cl==7)
                ta_fsm_cl=dat->pcw.ListType;
 
@@ -212,7 +212,7 @@ static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
             else
                trans=TAS_MLV64;
             break;
-         case ParamType_Sprite:
+         case PARAMTYPE_SPRITE:
             if (ta_fsm_cl==7)
                ta_fsm_cl=dat->pcw.ListType;
 

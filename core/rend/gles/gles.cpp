@@ -574,7 +574,7 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
     * Can freely use cache TCW */
 
    int prog_id   = GetProgramID(
-         (Type == ListType_Punch_Through) ? 1 : 0,
+         (Type == LISTTYPE_PUNCH_THROUGH) ? 1 : 0,
          SetTileClip(gp->tileclip,false)+1,
          gp->pcw.Texture,
          gp->tsp.UseAlpha,
@@ -618,7 +618,7 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
    {
       cache.tsp=gp->tsp;
 
-      if (Type==ListType_Translucent)
+      if (Type==LISTTYPE_TRANSLUCENT)
       {
          gl_state.blendfunc.sfactor = SrcBlendGL[gp->tsp.SrcInstr];
          gl_state.blendfunc.dfactor = DstBlendGL[gp->tsp.DstInstr];
@@ -644,7 +644,7 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
       cache.isp.full=gp->isp.full;
 
       /* Set Z mode, only if required */
-      if (!(Type==ListType_Punch_Through || (Type==ListType_Translucent && SortingEnabled)))
+      if (!(Type == LISTTYPE_PUNCH_THROUGH || (Type == LISTTYPE_TRANSLUCENT && SortingEnabled)))
          glDepthFunc(Zfunction[gp->isp.DepthMode]);
 
       gl_state.depthmask    = !gp->isp.ZWriteDis;
@@ -672,7 +672,7 @@ static void DrawList(const List<PolyParam>& gply)
    /* set some 'global' modes for all primitives */
 
    /* Z funct. can be fixed on these combinations, avoid setting it all the time */
-   if (Type==ListType_Punch_Through || (Type==ListType_Translucent && SortingEnabled))
+   if (Type == LISTTYPE_PUNCH_THROUGH || (Type == LISTTYPE_TRANSLUCENT && SortingEnabled))
       glDepthFunc(Zfunction[6]);
 
    glEnable(GL_STENCIL_TEST);
@@ -1070,7 +1070,7 @@ static void DrawSorted(void)
       PolyParam* params = pidx_sort[p].ppid;
       if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
       {
-         SetGPState<ListType_Translucent,true>(params, 0);
+         SetGPState<LISTTYPE_TRANSLUCENT, true>(params, 0);
          glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first));
       }
       params++;
@@ -2074,7 +2074,7 @@ static bool RenderFrame(void)
 	//Opaque
 	//Nothing extra needs to be setup here
 	/*if (!GetAsyncKeyState(VK_F1))*/
-	DrawList<ListType_Opaque,false>(pvrrc.global_param_op);
+	DrawList<LISTTYPE_OPAQUE, false>(pvrrc.global_param_op);
 
 #if 0
 	DrawModVols();
@@ -2083,7 +2083,7 @@ static bool RenderFrame(void)
 	//Alpha tested
 	//setup alpha test state
 	/*if (!GetAsyncKeyState(VK_F2))*/
-	DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt);
+	DrawList<LISTTYPE_PUNCH_THROUGH, false>(pvrrc.global_param_pt);
 
 	//Alpha blended
 	//Setup blending
@@ -2103,11 +2103,11 @@ static bool RenderFrame(void)
 		if (pvrrc.isAutoSort)
 			DrawSorted();
 		else
-			DrawList<ListType_Translucent,false>(pvrrc.global_param_tr);
+			DrawList<LISTTYPE_TRANSLUCENT, false>(pvrrc.global_param_tr);
 #else
 		if (pvrrc.isAutoSort)
 			SortPParams();
-		DrawList<ListType_Translucent,true>(pvrrc.global_param_tr);
+		DrawList<LISTTYPE_TRANSLUCENT, true>(pvrrc.global_param_tr);
 #endif
 	}
 

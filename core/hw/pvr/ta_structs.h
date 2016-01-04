@@ -752,27 +752,30 @@ struct TA_VertexParam
 
 #pragma pack(pop)
 
-
-const u32 ListType_Opaque=0;
-const u32 ListType_Opaque_Modifier_Volume=1;
-const u32 ListType_Translucent =2;
-const u32 ListType_Translucent_Modifier_Volume=3;
-const u32 ListType_Punch_Through=4;
 #define IsModVolList(list) (((list)&1)!=0)
 
+enum
+{
+   LISTTYPE_OPAQUE                  = 0,
+   LISTTYPE_OPAQUE_MODIFIER_VOLUME,
+   LISTTYPE_TRANSLUCENT,
+   LISTTYPE_TRANSLUCENT_MODIFIER_VOLUME,
+   LISTTYPE_PUNCH_THROUGH
+};
 
-//Control Parameter
-const u32 ParamType_End_Of_List=0;
-const u32 ParamType_User_Tile_Clip=1;
-const u32 ParamType_Object_List_Set=2;
-
-//Global Parameter
-const u32 ParamType_Polygon_or_Modifier_Volume=4;
-const u32 ParamType_Sprite=5;
-
-//Vertex , Sprite or ModVolume Parameter
-const u32 ParamType_Vertex_Parameter=7;
-
-//Reserved
-const u32 ParamType_Reserved_1=3;
-const u32 ParamType_Reserved_2=6;
+enum
+{
+   /* Control Parameter */
+   PARAMTYPE_END_OF_LIST                     = 0,
+   PARAMTYPE_USER_TILE_CLIP                  = 1,
+   PARAMTYPE_OBJECT_LIST_SET                 = 2,
+   /* Reserved */
+   PARAMTYPE_RESERVED_ONE                    = 3,
+   /* Global Parameter */
+   PARAMTYPE_POLYGON_OR_MODIFIER_VOLUME      = 4,
+   PARAMTYPE_SPRITE                          = 5,
+   /* Reserved */
+   PARAMTYPE_RESERVED_TWO                    = 6,
+   /* Vertex , Sprite or ModVolume Parameter */
+   PARAMTYPE_VERTEX_PARAMETER                = 7
+};

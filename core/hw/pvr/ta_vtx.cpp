@@ -263,7 +263,7 @@ case num : {\
    {
       TA_SPR;
       TA_VertexParam* vp=(TA_VertexParam*)data;
-      verify(data->pcw.ParaType==ParamType_Vertex_Parameter);
+      verify(data->pcw.ParaType == PARAMTYPE_VERTEX_PARAMETER);
 
       if (data==data_end)
       {
@@ -300,7 +300,7 @@ case num : {\
 
 		do
       {
-         verify(data->pcw.ParaType==ParamType_Vertex_Parameter);
+         verify(data->pcw.ParaType == PARAMTYPE_VERTEX_PARAMETER);
          PLD(data,128);
          ta_handle_poly<poly_type,0>(data,0);
          if (data->pcw.EndOfStrip)
@@ -370,7 +370,7 @@ public:
          {
             //Control parameter
             //32Bw3
-            case ParamType_End_Of_List:
+            case PARAMTYPE_END_OF_LIST:
                if (CurrentList==ListType_None)
                {
                   CurrentList=data->pcw.ListType;
@@ -390,12 +390,12 @@ public:
                TA_EOL;
                break;
                //32B
-            case ParamType_User_Tile_Clip:
+            case PARAMTYPE_USER_TILE_CLIP:
                SetTileClip(data->data_32[3]&63,data->data_32[4]&31,data->data_32[5]&63,data->data_32[6]&31);
                data+=SZ32;
                break;
                //32B
-            case ParamType_Object_List_Set:
+            case PARAMTYPE_OBJECT_LIST_SET:
                die("ParamType_Object_List_Set");
                // *cough* ignore it :p
                data+=SZ32;
@@ -404,7 +404,7 @@ public:
                //Global Parameter
                //ModVolue :32B
                //PolyType :32B/64B
-            case ParamType_Polygon_or_Modifier_Volume:
+            case PARAMTYPE_POLYGON_OR_MODIFIER_VOLUME:
                {
 
                   TA_PP;
@@ -454,7 +454,7 @@ public:
                break;
                //32B
                //Sets Sprite info , and switches to ta_sprite_data function
-            case ParamType_Sprite:
+            case PARAMTYPE_SPRITE:
                {
 
                   TA_SP;
@@ -470,7 +470,7 @@ public:
                break;
 
                //Variable size
-            case ParamType_Vertex_Parameter:
+            case PARAMTYPE_VERTEX_PARAMETER:
                //printf("VTX:0x%08X\n",VerxexDataFP);
                //verify(VerxexDataFP!=NullVertexData);
                data=VerxexDataFP(data,data_end);
@@ -730,13 +730,13 @@ public:
 	{
       switch (ListType)
       {
-         case ListType_Opaque:
+         case LISTTYPE_OPAQUE:
             CurrentPPlist=&vdrc.global_param_op;
             break;
-         case ListType_Punch_Through:
+         case LISTTYPE_PUNCH_THROUGH:
             CurrentPPlist=&vdrc.global_param_pt;
             break;
-         case ListType_Translucent:
+         case LISTTYPE_TRANSLUCENT:
             CurrentPPlist=&vdrc.global_param_tr;
             break;
       }
@@ -749,7 +749,7 @@ public:
 	{
 		CurrentPP=&nullPP;
 		CurrentPPlist=0;
-		if (ListType==ListType_Opaque_Modifier_Volume)
+		if (ListType == LISTTYPE_OPAQUE_MODIFIER_VOLUME)
 		{
 			ISP_Modvol p;
 			p.id=vdrc.modtrig.used();
@@ -1350,7 +1350,7 @@ public:
 	//Mod Volume Vertex handlers
 	static void StartModVol(TA_ModVolParam* param)
 	{
-		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+		if (CurrentList != LISTTYPE_OPAQUE_MODIFIER_VOLUME)
 			return;
 		ISP_Modvol* p=vdrc.global_param_mvo.Append();
 		p->full=param->isp.full;
@@ -1360,7 +1360,7 @@ public:
 	__forceinline
 		static void AppendModVolVertexA(TA_ModVolA* mvv)
 	{
-		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+		if (CurrentList != LISTTYPE_OPAQUE_MODIFIER_VOLUME)
 			return;
 		lmr=vdrc.modtrig.Append();
 
@@ -1380,7 +1380,7 @@ public:
 	__forceinline
 		static void AppendModVolVertexB(TA_ModVolB* mvv)
 	{
-		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+		if (CurrentList != LISTTYPE_OPAQUE_MODIFIER_VOLUME)
 			return;
 		lmr->y2=mvv->y2;
 		lmr->z2=mvv->z2;

@@ -57,7 +57,7 @@ void _vmem_get_ptrs(u32 sz,bool write,void*** vmap,void*** func)
 void* _vmem_get_ptr2(u32 addr,u32& mask)
 {
    u32   page=addr>>24;
-   unat  iirf=(unat)_vmem_MemInfo_ptr[page];
+   size_t  iirf=(size_t)_vmem_MemInfo_ptr[page];
    void* ptr=(void*)(iirf&~HANDLER_MAX);
 
    if (ptr==0)
@@ -70,13 +70,13 @@ void* _vmem_get_ptr2(u32 addr,u32& mask)
 void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 {
 	u32   page=addr>>24;
-	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
+	size_t  iirf=(size_t)_vmem_MemInfo_ptr[page];
 	void* ptr=(void*)(iirf&~HANDLER_MAX);
 
 	if (ptr==0)
 	{
 		ismem=false;
-		const unat id=iirf;
+		const size_t id=iirf;
 
       switch (sz)
       {
@@ -106,13 +106,13 @@ void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
 {
    u32   page=addr>>24;
-   unat  iirf=(unat)_vmem_MemInfo_ptr[page];
+   size_t  iirf=(size_t)_vmem_MemInfo_ptr[page];
    void* ptr=(void*)(iirf&~HANDLER_MAX);
 
    if (ptr==0)
    {
       ismem=false;
-      const unat id=iirf;
+      const size_t id=iirf;
       page_sz=24;
       switch (sz)
       {
@@ -141,7 +141,7 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 	const u32 sz=sizeof(T);
 
 	u32   page=addr>>24;	//1 op, shift/extract
-	unat  iirf=(unat)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
+	size_t  iirf=(size_t)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
 	void* ptr=(void*)(iirf&~HANDLER_MAX);     //2 ops, and // 1 op insert
    const u32 id=iirf;
 
@@ -181,7 +181,7 @@ INLINE void DYNACALL _vmem_writet(u32 addr,T data)
 	const u32 sz=sizeof(T);
 
 	u32 page=addr>>24;
-	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
+	size_t  iirf=(size_t)_vmem_MemInfo_ptr[page];
 	void* ptr=(void*)(iirf&~HANDLER_MAX);
 
 	if (likely(ptr!=0))
@@ -332,7 +332,7 @@ void _vmem_map_block(void* base,u32 start,u32 end,u32 mask)
 	verify(start<0x100);
 	verify(end<0x100);
 	verify(start<=end);
-	verify((0xFF & (unat)base)==0);
+	verify((0xFF & (size_t)base)==0);
 	verify(base!=0);
 	u32 j=0;
 	for (u32 i=start;i<=end;i++)
@@ -400,7 +400,7 @@ static void* malloc_pages(size_t size)
 {
 	u8* rv = (u8*)malloc(size + PAGE_SIZE);
 
-	return rv + PAGE_SIZE - ((unat)rv % PAGE_SIZE);
+	return rv + PAGE_SIZE - ((size_t)rv % PAGE_SIZE);
 }
 
 static bool _vmem_reserve_nonvmem(void)
@@ -597,7 +597,7 @@ static void* _nvmem_alloc_mem(void)
    void* rv=mmap(0, sz, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
    verify(rv != NULL);
    munmap(rv,sz);
-   return (u8*)rv + 0x10000 - unat(rv)%0x10000;//align to 64 KB (Needed for linaro mmap not to extend to next region)
+   return (u8*)rv + 0x10000 - size_t(rv)%0x10000;//align to 64 KB (Needed for linaro mmap not to extend to next region)
 }
 #endif
 

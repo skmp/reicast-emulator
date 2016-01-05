@@ -725,8 +725,8 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 	emit_Skip(x86e->x86_indx-si);
 }
 
-unat mem_code_base=0;
-unat mem_code_end=0;
+size_t mem_code_base=0;
+size_t mem_code_end=0;
 void* mem_code[3][2][5];
 
 void ngen_init_x86_32bit(void)
@@ -739,7 +739,7 @@ void ngen_init_x86_32bit(void)
 	x86e->do_realloc=false;
 
 
-	mem_code_base=(unat)emit_GetCCPtr();
+	mem_code_base=(size_t)emit_GetCCPtr();
 
 	for (int sz=0;sz<5;sz++)
 	{
@@ -756,7 +756,7 @@ void ngen_init_x86_32bit(void)
 		}
 	}
 
-	mem_code_end=(unat)emit_GetCCPtr();
+	mem_code_end=(size_t)emit_GetCCPtr();
 
 	x86e->Generate();
 
@@ -765,7 +765,7 @@ void ngen_init_x86_32bit(void)
 	emit_SetBaseAddr();
 }
 
-bool ngen_Rewrite(unat& addr,unat retadr,unat acc)
+bool ngen_Rewrite(size_t& addr,size_t retadr,size_t acc)
 {
 	if (addr>=mem_code_base && addr<mem_code_end)
 	{

@@ -429,8 +429,8 @@ u32 DynaRBI::Relink()
 			{
 				MOV32(r1,pBranchBlock->addr);           //2
 				CMP(r4,r1);                             //1
-				JUMP((unat)pBranchBlock->code,CC_EQ);   //1
-				CALL((unat)ngen_LinkBlock_Generic_stub);//1
+				JUMP((size_t)pBranchBlock->code,CC_EQ);   //1
+				CALL((size_t)ngen_LinkBlock_Generic_stub);//1
 			}
 			else
 			{
@@ -765,12 +765,12 @@ u32 memop_bytes(mem_op_type tp)
 	call MEMHANDER<r1> // call MEMHANDLER64
 	vmov rd,r0 // vmov.d rd,r3:r2
 */
-unat _mem_hndl_SQ32[14];
-unat _mem_hndl[2][3][14];
-unat _mem_func[2][5]=
+size_t _mem_hndl_SQ32[14];
+size_t _mem_hndl[2][3][14];
+size_t _mem_func[2][5]=
 {
-	{0,0,0,(unat)_vmem_WriteMem32,(unat)_vmem_WriteMem64},
-	{0,0,0,(unat)_vmem_ReadMem32,(unat)_vmem_ReadMem64},
+	{0,0,0,(size_t)_vmem_WriteMem32,(size_t)_vmem_WriteMem64},
+	{0,0,0,(size_t)_vmem_ReadMem32,(size_t)_vmem_ReadMem64},
 };
 
 struct 
@@ -958,7 +958,7 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 		{
 			MOV(r1,rt);
 
-			CALL((unat)_mem_hndl_SQ32[raddr]);
+			CALL((size_t)_mem_hndl_SQ32[raddr]);
 		}
 		else
 		{
@@ -1108,7 +1108,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 									LDR(reg.mapg(op->rd),r0);
 									MOV32(r1,*(u32*)ptr);
 									CMP(reg.mapg(op->rd),r1);
-									//JUMP((unat)EMIT_GET_PTR()+24,CC_EQ);
+									//JUMP((size_t)EMIT_GET_PTR()+24,CC_EQ);
 									MOV32(r1,(u32)&op->flags);
 									MOV32(r2,~0x40000000);
 									LDR(r3,r1);
@@ -1747,7 +1747,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 
 				if (CCN_MMUCR.AT)
 				{
-					CALL((unat)&do_sqw_mmu,op->flags==0x1337?CC_AL:CC_EQ);
+					CALL((size_t)&do_sqw_mmu,op->flags==0x1337?CC_AL:CC_EQ);
 				}
 				else
 				{	
@@ -1863,7 +1863,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				reg.writeback_fpu+=2;
 
 				//r1: base ptr
-				MOVW(r1,((unat)sin_table)&0xFFFF);
+				MOVW(r1,((size_t)sin_table)&0xFFFF);
 				UXTH(r0,reg.mapg(op->rs1));
 				MOVT(r1,((u32)sin_table)>>16);
 				
@@ -2231,14 +2231,14 @@ void ngen_init_arm(void)
 			if (i==1 || i ==2 || i == 3 || i == 4 || i==12 || i==13)
 				continue;
 
-			unat v;
+			size_t v;
 			if (read)
 			{
 				if (i==0)
-					v=(unat)fn;
+					v=(size_t)fn;
 				else
 				{
-					v=(unat)EMIT_GET_PTR();
+					v=(size_t)EMIT_GET_PTR();
 					MOV(r0,(eReg)(i));
 					JUMP((u32)fn);
 				}
@@ -2246,10 +2246,10 @@ void ngen_init_arm(void)
 			else
 			{
 				if (i==0)
-					v=(unat)fn;
+					v=(size_t)fn;
 				else
 				{
-					v=(unat)EMIT_GET_PTR();
+					v=(size_t)EMIT_GET_PTR();
 					MOV(r0,(eReg)(i));
 					JUMP((u32)fn);
 				}
@@ -2264,7 +2264,7 @@ void ngen_init_arm(void)
 		if (i==1 || i ==2 || i == 3 || i == 4 || i==12 || i==13)
 			continue;
 
-		_mem_hndl_SQ32[i]=(unat)EMIT_GET_PTR();
+		_mem_hndl_SQ32[i]=(size_t)EMIT_GET_PTR();
 
 		//UBFX(r3,(eReg)i,0,6);
 		AND(r3,(eReg)i,0x3F);
@@ -2272,7 +2272,7 @@ void ngen_init_arm(void)
 		MOV(r0,(eReg)i);
 		ADD(r3,r3,r8);
 		CMP(r2,0x38);
-		JUMP((unat)&WriteMem32,CC_NE);
+		JUMP((size_t)&WriteMem32,CC_NE);
 		STR(r1,r3,rcb_noffs(sq_both));
 		BX(LR);
 	}

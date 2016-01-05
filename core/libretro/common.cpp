@@ -40,7 +40,7 @@
 #define UNW_FLAG_UHANDLER 0x02
 
 bool VramLockedWrite(u8* address);
-bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
+bool ngen_Rewrite(size_t &addr, size_t retadr, size_t acc);
 bool BM_LockedWrite(u8* address);
 
 
@@ -66,7 +66,7 @@ static LONG ExceptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
       return EXCEPTION_CONTINUE_EXECUTION;
 #endif
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
-   if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
+   if ( ngen_Rewrite((size_t&)ep->ContextRecord->Eip,*(size_t*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
    {
       //remove the call from call stack
       ep->ContextRecord->Esp+=4;
@@ -189,7 +189,7 @@ void setup_seh() {
 struct rei_host_context_t
 {
 #if HOST_CPU != CPU_GENERIC
-	unat pc;
+	size_t pc;
 #endif
 
 #if HOST_CPU == CPU_X86
@@ -267,7 +267,7 @@ static void context_to_segfault(rei_host_context_t* reictx, void* segfault_ctx)
 }
 
 #if !defined(TARGET_NO_EXCEPTIONS)
-bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
+bool ngen_Rewrite(size_t& addr,size_t retadr,size_t acc);
 u32* ngen_readm_fail_v2(u32* ptr,u32* regs,u32 saddr);
 bool VramLockedWrite(u8* address);
 bool BM_LockedWrite(u8* address);
@@ -279,10 +279,11 @@ static void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx)
 
    context_from_segfault(&ctx, segfault_ctx);
 
-   unat pc = (unat)ctx.pc;
-   bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE));
+   size_t pc     = (size_t)ctx.pc;
+   bool dyna_cde = (pc > (size_t)CodeCache) && (pc < (size_t)(CodeCache + CODE_SIZE));
 
-   printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n", pc, pc - (unat)sigill_handler, (unat)si->si_addr, dyna_cde);
+   printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n",
+         pc, pc - (size_t)sigill_handler, (size_t)si->si_addr, dyna_cde);
 
    printf("Entering infiniloop");
 
@@ -300,7 +301,7 @@ static void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 
    context_from_segfault(&ctx, segfault_ctx);
 
-   bool dyna_cde = ((unat)ctx.pc>(unat)CodeCache) && ((unat)ctx.pc<(unat)(CodeCache + CODE_SIZE));
+   bool dyna_cde = ((size_t)ctx.pc > (size_t)CodeCache) && ((size_t)ctx.pc < (size_t)(CodeCache + CODE_SIZE));
 
 #ifdef LOG_SIGHANDLER
 
@@ -319,12 +320,12 @@ printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n", ctx.pc, dyna_cde);
 #if HOST_CPU==CPU_ARM
    if (dyna_cde)
    {
-      ctx.pc = (u32)ngen_readm_fail_v2((u32*)ctx.pc, ctx.r, (unat)si->si_addr);
+      ctx.pc = (u32)ngen_readm_fail_v2((u32*)ctx.pc, ctx.r, (size_t)si->si_addr);
 
       context_to_segfault(&ctx, segfault_ctx);
    }
 #elif HOST_CPU==CPU_X86
-   if (ngen_Rewrite((unat&)ctx.pc, *(unat*)ctx.esp, ctx.eax))
+   if (ngen_Rewrite((size_t&)ctx.pc, *(size_t*)ctx.esp, ctx.eax))
    {
       //remove the call from call stack
       ctx.esp += 4;
@@ -341,7 +342,7 @@ printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n", ctx.pc, dyna_cde);
 #endif
    else
    {
-      printf("SIGSEGV @ %p (fault_handler+0x%p) ... %p -> was not in vram\n", ctx.pc, ctx.pc - (unat)fault_handler, si->si_addr);
+      printf("SIGSEGV @ %p (fault_handler+0x%p) ... %p -> was not in vram\n", ctx.pc, ctx.pc - (size_t)fault_handler, si->si_addr);
       die("segfault");
       signal(SIGSEGV, SIG_DFL);
    }

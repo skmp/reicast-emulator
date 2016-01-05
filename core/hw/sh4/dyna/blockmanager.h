@@ -52,7 +52,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 
 	bool contains_code(u8* ptr)
 	{
-		return ((unat)(ptr-(u8*)code))<host_code_size;
+		return ((size_t)(ptr-(u8*)code)) < host_code_size;
 	}
 
 	virtual ~RuntimeBlockInfo();

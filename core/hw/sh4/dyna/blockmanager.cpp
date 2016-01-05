@@ -38,32 +38,32 @@ struct BlockMapCMP
 {
 	static bool is_code(RuntimeBlockInfo* blk)
 	{
-		if ((unat)((u8*)blk-CodeCache)<CODE_SIZE)
+		if ((size_t)((u8*)blk-CodeCache)<CODE_SIZE)
 			return true;
       return false;
 	}
 
-	static unat get_blkstart(RuntimeBlockInfo* blk)
+	static size_t get_blkstart(RuntimeBlockInfo* blk)
 	{
 		if (is_code(blk)) 
-			return (unat)blk; 
-      return (unat)blk->code;
+			return (size_t)blk; 
+      return (size_t)blk->code;
 	}
 
-	static unat get_blkend(RuntimeBlockInfo* blk)
+	static size_t get_blkend(RuntimeBlockInfo* blk)
 	{
 		if (is_code(blk)) 
-			return (unat)blk; 
-      return (unat)blk->code+blk->host_code_size-1;
+			return (size_t)blk; 
+      return (size_t)blk->code+blk->host_code_size-1;
 	}
 
 	//return true if blkl > blkr
 	bool operator()(RuntimeBlockInfo* blkl, RuntimeBlockInfo* blkr) const
 	{
 		if (!is_code(blkl) && !is_code(blkr))
-			return (unat)blkl->code<(unat)blkr->code;
+			return (size_t)blkl->code < (size_t)blkr->code;
 
-		unat blkr_start=get_blkstart(blkr),blkl_end=get_blkend(blkl);
+		size_t blkr_start=get_blkstart(blkr),blkl_end=get_blkend(blkl);
 
 		if (blkl_end<blkr_start)
 			return true;

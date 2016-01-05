@@ -23,7 +23,7 @@ x86_ptr x86_ptr::create(void* ptr)
 	x86_ptr rv={ptr};
 	return rv;
 }*/
-x86_ptr x86_ptr::create(unat ptr)
+x86_ptr x86_ptr::create(size_t ptr)
 {
 #pragma warning(disable:4312)
 	x86_ptr rv(0);
@@ -37,7 +37,7 @@ x86_ptr_imm x86_ptr_imm::create(void* ptr)
 	x86_ptr_imm rv={ptr};
 	return rv;
 }*/
-x86_ptr_imm x86_ptr_imm::create(unat ptr)
+x86_ptr_imm x86_ptr_imm::create(size_t ptr)
 {
 #pragma warning(disable:4312) 
 	x86_ptr_imm rv(0);

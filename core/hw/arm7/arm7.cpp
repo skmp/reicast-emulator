@@ -2136,7 +2136,7 @@ void armt_init()
 	InitHash();
 
 	//align to next page ..
-	ICache = (u8*)(((unat)ARM7_TCB+4095)& ~4095);
+	ICache = (u8*)(((size_t)ARM7_TCB+4095)& ~4095);
 
 #ifdef __MACH__
    /* Can't just mprotect on iOS */

@@ -13,13 +13,13 @@ namespace ARM
 
 
 
-	inline static ptrdiff_t Literal(unat FnAddr)
+	inline static ptrdiff_t Literal(size_t FnAddr)
 	{
 		u8* pc_addr = (u8*)EMIT_GET_PTR();
 		return (ptrdiff_t)((ptrdiff_t)FnAddr - ((ptrdiff_t)pc_addr+8));
 	}
 
-	EAPI CALL(unat FnAddr, ConditionCode CC=AL)
+	EAPI CALL(size_t FnAddr, ConditionCode CC=AL)
 	{
         bool isThumb = FnAddr & 1;
         FnAddr &= ~1;
@@ -50,7 +50,7 @@ namespace ARM
 
 
 
-	EAPI JUMP(unat FnAddr, ConditionCode CC=AL)
+	EAPI JUMP(size_t FnAddr, ConditionCode CC=AL)
 	{
         bool isThumb = FnAddr & 1;
         FnAddr &= ~1;

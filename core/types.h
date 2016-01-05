@@ -89,12 +89,6 @@ typedef double f64;
 #define X64
 #endif
 
-typedef size_t unat;
-
-#ifdef X64
-typedef u64 unat;
-#endif
-
 typedef char wchar;
 
 #define EXPORT extern "C" __declspec(dllexport)

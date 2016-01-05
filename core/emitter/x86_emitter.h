@@ -207,9 +207,9 @@ struct /*__declspec(dllexport)*/  x86_ptr
 	union
 	{
 		void* ptr;
-		unat ptr_int;
+		size_t ptr_int;
 	};
-	static x86_ptr create(unat ptr);
+	static x86_ptr create(size_t ptr);
 	x86_ptr(void* ptr)
 	{
 		this->ptr=ptr;
@@ -221,9 +221,9 @@ struct /*__declspec(dllexport)*/  x86_ptr_imm
 	union
 	{
 		void* ptr;
-		unat ptr_int;
+		size_t ptr_int;
 	};
-	static x86_ptr_imm create(unat ptr);
+	static x86_ptr_imm create(size_t ptr);
 	x86_ptr_imm(void* ptr)
 	{
 		this->ptr=ptr;

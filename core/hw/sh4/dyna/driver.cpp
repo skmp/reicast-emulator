@@ -434,13 +434,13 @@ static void recSh4_Init(void)
 		//align to next page ..
 		u8* ptr = (u8*)recSh4_Init + i * 1024 * 1024;
 
-		CodeCache = (u8*)VirtualAlloc(ptr, CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);//; (u8*)(((unat)SH4_TCB+4095)& ~4095);
+		CodeCache = (u8*)VirtualAlloc(ptr, CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);//; (u8*)(((size_t)SH4_TCB+4095)& ~4095);
 
 		if (CodeCache)
 			break;
 	}
 #else
-	CodeCache = (u8*)(((unat)SH4_TCB+4095)& ~4095);
+	CodeCache = (u8*)(((size_t)SH4_TCB+4095)& ~4095);
 #endif
 
 #ifdef __MACH__

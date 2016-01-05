@@ -663,7 +663,7 @@ void UpdateInputState(u32 port)
       }
    }
 
-#if 1
+#if 0
    {
       static f32 InitialzMax = -999.0f;
       static f32 InitialzMin = -999.0f;

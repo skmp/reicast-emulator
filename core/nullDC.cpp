@@ -109,6 +109,8 @@ static void LoadSpecialSettingsCPU(void)
    sh4_cpu.Reset(false);
 }
 
+extern bool update_zmax;
+
 static void LoadSpecialSettings(void)
 {
    unsigned i;
@@ -122,12 +124,17 @@ static void LoadSpecialSettings(void)
 
          if (lut_games[i].dynarec_type != -1)
          {
+            printf("Applying dynarec type hack.\n");
             settings.dynarec.Type = lut_games[i].dynarec_type;
             LoadSpecialSettingsCPU();
          }
 
-         settings.pvr.Emulation.zMin = lut_games[i].zMin;
-         settings.pvr.Emulation.zMax = lut_games[i].zMax;
+         if (lut_games[i].zMax != 1)
+         {
+            printf("Applying zmax hack.\n");
+            settings.pvr.Emulation.zMax = lut_games[i].zMax;
+            update_zmax = true;
+         }
 
          break;
       }

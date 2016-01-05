@@ -355,8 +355,8 @@ union FPU_SHAD_SCALE_type
 {
 	struct
 	{
-		u32 scale_factor    : 8;
-		u32 intesity_shadow : 1;
+		u32 scale_factor     : 8;
+		u32 intensity_shadow : 1;
 	};
 	u32 full;
 };

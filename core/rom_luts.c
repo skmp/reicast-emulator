@@ -10,7 +10,7 @@ static struct game_type lut_games[] =
 {
    { "MK-51049  ",  1, -1, 1 },                /* Marvel Vs Capcom 2 */
    { "T1203N    ", -1,  1, 1 },                /* Street Fighter Alpha 3 */
-   { "MK0815    ", -1, -1, 3000.0 },           /* Soul Calibur (E) */
-   { "T1401M    ", -1, -1, 3000.0 },           /* Soul Calibur (J) */
-   { "T1401N    ", -1, -1, 3000.0 },           /* Soul Calibur (U) */
+   { "MK0815    ", -1, -1, 3500.0 },           /* Soul Calibur (E) */
+   { "T1401M    ", -1, -1, 3500.0 },           /* Soul Calibur (J) */
+   { "T1401N    ", -1, -1, 3500.0 },           /* Soul Calibur (U) */
 };

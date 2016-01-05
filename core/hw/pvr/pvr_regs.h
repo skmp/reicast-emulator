@@ -81,6 +81,18 @@ union FB_R_CTRL_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 Reserved            : 8; //31-24
+		u32 vclk_div            : 1; //23
+		u32 fb_strip_buf_en     : 1; //22
+		u32 fb_stripsize        : 6; //21-16
+		u32 fb_chroma_threshold : 8; //15-8
+		u32 R                   : 1; //7
+		u32 fb_concat           : 3; //6-4
+		u32 fb_depth            : 2; //3-2
+		u32 fb_line_double      : 1; //1
+		u32 fb_enable           : 1; //0
+#else
 		u32 fb_enable           : 1; //0
 		u32 fb_line_double      : 1; //1
 		u32 fb_depth            : 2; //3-2
@@ -91,6 +103,7 @@ union FB_R_CTRL_type
 		u32 fb_strip_buf_en     : 1; //22
 		u32 vclk_div            : 1; //23
 		u32 Reserved            : 8; //31-24
+#endif
 	};
 	u32 full;
 };
@@ -107,22 +120,38 @@ union FB_R_SIZE_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 fb_res     : 2; //30
+		u32 fb_modulus : 10; //20
+		u32 fb_y_size  : 10; //10
+		u32 fb_x_size  : 10; //0
+#else
 		u32 fb_x_size  : 10; //0
 		u32 fb_y_size  : 10; //10
 		u32 fb_modulus : 10; //20
 		u32 fb_res     : 2; //30
+#endif
 	};
 	u32 full;
 };
+
 union VO_BORDER_COL_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 res    : 7; //25
+		u32 Chroma : 1; //24
+		u32 Red    : 8; //16
+		u32 Green  : 8; //8
+		u32 Blue   : 8; //0
+#else
 		u32 Blue   : 8; //0
 		u32 Green  : 8; //8
 		u32 Red    : 8; //16
 		u32 Chroma : 1; //24
 		u32 res    : 7; //25
+#endif
 	};
 	u32 full;
 };
@@ -132,12 +161,21 @@ union SPG_STATUS_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 res      : 18; //31-14
+		u32 vsync    : 1;  //13
+		u32 hsync    : 1;  //12
+		u32 blank    : 1;  //11
+		u32 fieldnum : 1;  //10
+		u32 scanline : 10; //9-0
+#else
 		u32 scanline : 10; //9-0
 		u32 fieldnum : 1;  //10
 		u32 blank    : 1;  //11
 		u32 hsync    : 1;  //12
 		u32 vsync    : 1;  //13
 		u32 res      : 18; //31-14
+#endif
 	};
 	u32 full;
 };
@@ -146,12 +184,21 @@ union SPG_HBLANK_INT_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 res3 : 6;                 //31-26
+		u32 hblank_in_interrupt : 10; //25-16
+		u32 res2 : 2;                 //14-15
+		u32 hblank_int_mode: 2;       //12-13
+		u32 res1 : 2;                 //10-11
+		u32 line_comp_val : 10;       //9-0
+#else
 		u32 line_comp_val : 10;       //9-0
 		u32 res1 : 2;                 //10-11
 		u32 hblank_int_mode: 2;       //12-13
 		u32 res2 : 2;                 //14-15
 		u32 hblank_in_interrupt : 10; //25-16
 		u32 res3 : 6;                 //31-26
+#endif
 	};
 	u32 full;
 };
@@ -160,10 +207,17 @@ union SPG_VBLANK_INT_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 res1 : 6 ; //31-26
+		u32 vblank_out_interrupt_line_number : 10;//25-16
+		u32 res : 6 ; //15-10
+		u32 vblank_in_interrupt_line_number : 10;//9-0
+#else
 		u32 vblank_in_interrupt_line_number : 10;//9-0
 		u32 res : 6 ; //15-10
 		u32 vblank_out_interrupt_line_number : 10;//25-16
 		u32 res1 : 6 ; //31-26
+#endif
 	};
 	u32 full;
 };
@@ -171,6 +225,19 @@ union SPG_CONTROL_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 Reserved       : 22; //31-10
+		u32 csync_on_h     : 1;  //9
+		u32 sync_direction : 1;  //8
+		u32 PAL            : 1;  //7
+		u32 NTSC           : 1;  //6
+		u32 force_field2   : 1;  //5
+		u32 interlace      : 1;  //4
+		u32 spg_lock       : 1;  //3
+		u32 mcsync_pol     : 1;  //2
+		u32 mvsync_pol     : 1;  //1
+		u32 mhsync_pol     : 1;  //0
+#else
 		u32 mhsync_pol     : 1;  //0
 		u32 mvsync_pol     : 1;  //1
 		u32 mcsync_pol     : 1;  //2
@@ -182,6 +249,7 @@ union SPG_CONTROL_type
 		u32 sync_direction : 1;  //8
 		u32 csync_on_h     : 1;  //9
 		u32 Reserved       : 22; //31-10
+#endif
 	};
 	u32 full;
 };
@@ -189,10 +257,17 @@ union SPG_HBLANK_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 res1   : 6; //31-26
+		u32 hbend  : 10;//25-16
+		u32 res    : 6; //15-10
+		u32 hstart : 10;//9-0
+#else
 		u32 hstart : 10;//9-0
 		u32 res    : 6; //15-10
 		u32 hbend  : 10;//25-16
 		u32 res1   : 6; //31-26
+#endif
 	};
 	u32 full;
 };
@@ -201,10 +276,17 @@ union SPG_LOAD_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 res1   : 6 ; //31-26
+		u32 vcount : 10; //25-16
+		u32 res    : 6 ; //15-10	
+		u32 hcount : 10; //9-0
+#else
 		u32 hcount : 10; //9-0
 		u32 res    : 6 ; //15-10	
 		u32 vcount : 10; //25-16
 		u32 res1   : 6 ; //31-26
+#endif
 	};
 	u32 full;
 };
@@ -213,10 +295,17 @@ union SPG_VBLANK_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 res1   : 6 ; //31-26
+		u32 vbend  : 10; //25-16
+		u32 res    : 6 ; //15-10	
+		u32 vstart : 10; //9-0
+#else
 		u32 vstart : 10; //9-0
 		u32 res    : 6 ; //15-10	
 		u32 vbend  : 10; //25-16
 		u32 res1   : 6 ; //31-26
+#endif
 	};
 	u32 full;
 };
@@ -225,11 +314,19 @@ union SPG_WIDTH_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 eqwidth : 10; //31-22
+		u32 bpwidth : 10; //21-12
+		u32 vswidth : 4;  //8-11
+		u32 res     : 1;  //7-7
+		u32 hswidth : 7;  //6-0
+#else
 		u32 hswidth : 7;  //6-0
 		u32 res     : 1;  //7-7
 		u32 vswidth : 4;  //8-11
 		u32 bpwidth : 10; //21-12
 		u32 eqwidth : 10; //31-22
+#endif
 	};
 	u32 full;
 };
@@ -238,10 +335,17 @@ union SCALER_CTL_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 fieldselect  : 1; //18-18
+		u32 interlace    : 1; //17-17
+		u32 hscale       : 1; //16-16
+		u32 vscalefactor : 16;//15-0
+#else
 		u32 vscalefactor : 16;//15-0
 		u32 hscale       : 1; //16-16
 		u32 interlace    : 1; //17-17
 		u32 fieldselect  : 1; //18-18
+#endif
 	};
 	u32 full;
 };
@@ -250,10 +354,17 @@ union FB_X_CLIP_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 pad  : 5;
+		u32 max  : 11;
+		u32 pad1 : 5;
+		u32 min  : 11;
+#else
 		u32 min  : 11;
 		u32 pad1 : 5;
 		u32 max  : 11;
 		u32 pad  : 5;
+#endif
 	};
 	u32 full;
 };
@@ -262,10 +373,17 @@ union FB_Y_CLIP_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 pad  : 6;  //18-18
+		u32 max  : 10; //17-17
+		u32 pad1 : 6 ; //16-16
+		u32 min  : 10; //15-0
+#else
 		u32 min  : 10; //15-0
 		u32 pad1 : 6 ; //16-16
 		u32 max  : 10; //17-17
 		u32 pad  : 6;  //18-18
+#endif
 	};
 	u32 full;
 };
@@ -274,6 +392,17 @@ union VO_CONTROL_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 res_2        : 10; //22
+		u32 pclk_delay   : 6;  //16
+		u32 res_1        : 7;  //9
+		u32 pixel_double : 1;  //8
+		u32 field_mode   : 4;  //4
+		u32 blank_video  : 1;  //3
+		u32 blank_pol    : 1;  //2
+		u32 vsync_pol    : 1;  //1
+		u32 hsync_pol    : 1;  //0
+#else
 		u32 hsync_pol    : 1;  //0
 		u32 vsync_pol    : 1;  //1
 		u32 blank_pol    : 1;  //2
@@ -283,6 +412,7 @@ union VO_CONTROL_type
 		u32 res_1        : 7;  //9
 		u32 pclk_delay   : 6;  //16
 		u32 res_2        : 10; //22
+#endif
 	};
 	u32 full;
 };
@@ -291,8 +421,13 @@ union VO_STARTX_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 res_1  : 22; //10
+		u32 HStart : 10; //0
+#else
 		u32 HStart : 10; //0
 		u32 res_1  : 22; //10
+#endif
 	};
 	u32 full;
 };
@@ -300,10 +435,17 @@ union VO_STARTY_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 res_2:6;          //26
+		u32 VStart_field2:10; //16
+		u32 res_1:6;          //10
+		u32 VStart_field1:10; //0
+#else
 		u32 VStart_field1:10; //0
 		u32 res_1:6;          //10
 		u32 VStart_field2:10; //16
 		u32 res_2:6;          //26
+#endif
 	};
 	u32 full;
 };
@@ -318,11 +460,19 @@ union ISP_BACKGND_T_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 cache_bypass : 1;
+		u32 shadow       : 1;
+		u32 skip         : 3;
+		u32 tag_address  : 21;
+		u32 tag_offset   : 3;
+#else
 		u32 tag_offset   : 3;
 		u32 tag_address  : 21;
 		u32 skip         : 3;
 		u32 shadow       : 1;
 		u32 cache_bypass : 1;
+#endif
 	};
 	u32 full;
 };
@@ -331,12 +481,21 @@ union FB_W_CTRL_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 pad1               : 8;
+		u32 fb_alpha_threshold : 8;
+		u32 fb_kval            : 8;
+		u32 pad0               : 4;
+		u32 fb_dither          : 1;
+		u32 fb_packmode        : 3;
+#else
 		u32 fb_packmode        : 3;
 		u32 fb_dither          : 1;
 		u32 pad0               : 4;
 		u32 fb_kval            : 8;
 		u32 fb_alpha_threshold : 8;
 		u32 pad1               : 8;
+#endif
 	};
 	u32 full;
 };
@@ -345,8 +504,13 @@ union FB_W_LINESTRIDE_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 pad0   : 23;
+		u32 stride : 9;
+#else
 		u32 stride : 9;
 		u32 pad0   : 23;
+#endif
 	};
 	u32 full;
 };
@@ -355,8 +519,13 @@ union FPU_SHAD_SCALE_type
 {
 	struct
 	{
+#ifdef MSB_FIRST
+		u32 intensity_shadow : 1;
+		u32 scale_factor     : 8;
+#else
 		u32 scale_factor     : 8;
 		u32 intensity_shadow : 1;
+#endif
 	};
 	u32 full;
 };

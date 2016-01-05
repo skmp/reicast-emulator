@@ -127,19 +127,19 @@ struct SRamChip : MemChip
 	{
 		addr&=mask;
 		switch (sz)
-		{
-		case 1:
-			data[addr]=(u8)val;
-			return;
-		case 2:
-			*(u16*)&data[addr]=(u16)val;
-			return;
-		case 4:
-			*(u32*)&data[addr]=val;
-			return;
-		}
-
-		die("invalid access size");
+      {
+         case 1:
+            data[addr]=(u8)val;
+            break;
+         case 2:
+            *(u16*)&data[addr]=(u16)val;
+            break;
+         case 4:
+            *(u32*)&data[addr]=val;
+            break;
+         default:
+            die("invalid access size");
+      }
 	}
 };
 struct DCFlashChip : MemChip // I think its Micronix :p
@@ -191,64 +191,54 @@ struct DCFlashChip : MemChip // I think its Micronix :p
 		addr &= mask;
 		
 		switch(state)
-		{
-		case FS_Erase_AA:
-		case FS_CMD_AA:
-			{
-				verify(addr==0x5555 && val==0xAA);
-				state = (FlashState)(state + 1);
-			}
-			break;
+      {
+         case FS_Erase_AA:
+         case FS_CMD_AA:
+            verify(addr==0x5555 && val==0xAA);
+            state = (FlashState)(state + 1);
+            break;
 
-		case FS_Erase_55:
-		case FS_CMD_55:
-			{
-				verify((addr==0xAAAA || addr==0x2AAA) && val==0x55);
-				state = (FlashState)(state + 1);
-			}
-			break;
+         case FS_Erase_55:
+         case FS_CMD_55:
+            verify((addr==0xAAAA || addr==0x2AAA) && val==0x55);
+            state = (FlashState)(state + 1);
+            break;
 
-		case FS_CMD:
-			{
-				switch(val)
-				{
-				case 0xA0:
-					state=FS_Write;
-					break;
-				case 0x80:
-					state=FS_Erase_AA;
-					break;
-				default:
-					printf("Flash write: address=%06X, value=%08X, size=%d\n",addr,val,sz);
-					state=FS_CMD_AA;
-					die("lolwhut");
-				}
-			}
-			break;
+         case FS_CMD:
+            switch(val)
+            {
+               case 0xA0:
+                  state=FS_Write;
+                  break;
+               case 0x80:
+                  state=FS_Erase_AA;
+                  break;
+               default:
+                  printf("Flash write: address=%06X, value=%08X, size=%d\n",addr,val,sz);
+                  state=FS_CMD_AA;
+                  die("lolwhut");
+            }
+            break;
 
-		case FS_Erase:
-			{
-				switch(val)
-				{
-				case 0x30:
-					printf("Erase Sector %08X! (%08X)\n",addr,addr&(~0x3FFF));
-					memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
-					break;
-				default:
-					printf("Flash write: address=%06X, value=%08X, size=%d\n",addr,val,sz);
-					die("erase .. what ?");
-				}
-				state=FS_CMD_AA;
-			}
-			break;
+         case FS_Erase:
+            switch(val)
+            {
+               case 0x30:
+                  printf("Erase Sector %08X! (%08X)\n",addr,addr&(~0x3FFF));
+                  memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
+                  break;
+               default:
+                  printf("Flash write: address=%06X, value=%08X, size=%d\n",addr,val,sz);
+                  die("erase .. what ?");
+            }
+            state=FS_CMD_AA;
+            break;
 
-		case FS_Write:
-			{
-				//printf("flash write\n");
-				data[addr]&=val;
-				state=FS_CMD_AA;
-			}
-			break;
-		}
+         case FS_Write:
+            //printf("flash write\n");
+            data[addr]&=val;
+            state=FS_CMD_AA;
+            break;
+      }
 	}	
 };

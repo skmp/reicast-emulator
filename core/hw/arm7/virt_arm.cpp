@@ -34,16 +34,28 @@ namespace VARM
 	{
 		struct
 		{
+#ifdef MSB_FIRST
+			u8 B3;
+			u8 B2;
+			u8 B1;
+			u8 B0;
+#else
 			u8 B0;
 			u8 B1;
 			u8 B2;
 			u8 B3;
+#endif
 		} B;
 
 		struct
 		{
+#ifdef MSB_FIRST
+         u16 W1;
+         u16 W0;
+#else
 			u16 W0;
 			u16 W1;
+#endif
 		} W;
 
 		u32 I;

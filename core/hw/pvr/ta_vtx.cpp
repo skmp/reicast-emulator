@@ -1438,7 +1438,9 @@ bool ta_parse_vdrc(TA_context* ctx)
 
 	vd_ctx->rend = vd_rc;
 	vd_ctx = 0;
+#if !defined(TARGET_NO_THREADS)
    slock_unlock(ctx->rend_inuse);
+#endif
 
 	return rv;
 }

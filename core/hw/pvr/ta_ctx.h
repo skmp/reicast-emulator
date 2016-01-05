@@ -120,8 +120,10 @@ struct TA_context
 	u32 Address;
 	u32 LastUsed;
 
+#if !defined(TARGET_NO_THREADS)
 	slock_t *thd_inuse;
 	slock_t *rend_inuse;
+#endif
 
 	tad_context tad;
 	rend_context rend;
@@ -150,8 +152,10 @@ struct TA_context
 	}
 	void Alloc()
 	{
+#if !defined(TARGET_NO_THREADS)
       thd_inuse  = slock_new();
       rend_inuse = slock_new();
+#endif
 		tad.Reset((u8*)malloc(2*1024*1024));
 
 		rend.verts.InitBytes(1024*1024,&rend.Overrun); //up to 1 mb of vtx data/frame = ~ 38k vtx/frame
@@ -169,18 +173,24 @@ struct TA_context
 	void Reset()
 	{
 		tad.Clear();
+#if !defined(TARGET_NO_THREADS)
       slock_lock(rend_inuse);
+#endif
 		rend.Clear();
 		rend.proc_end = rend.proc_start = tad.thd_root;
+#if !defined(TARGET_NO_THREADS)
       slock_unlock(rend_inuse);
+#endif
 	}
 
 	void Free()
 	{
+#if !defined(TARGET_NO_THREADS)
       slock_free(thd_inuse);
       slock_free(rend_inuse);
       thd_inuse  = NULL;
       rend_inuse = NULL;
+#endif
 		free(tad.thd_root);
 		rend.verts.Free();
 		rend.idx.Free();

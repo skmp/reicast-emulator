@@ -253,12 +253,12 @@ void ta_vtx_SoftReset(void)
 
 static INLINE void DYNACALL ta_thd_data32_i(void* data)
 {		
-	f64* dst=(f64*)ta_tad.thd_data;
-	f64* src=(f64*)data;
+	double* dst=(double*)ta_tad.thd_data;
+	double* src=(double*)data;
 
 	ta_tad.thd_data+=32;
 
-	f64 t = src[0];
+	double t = src[0];
 	dst[0]=t;
 	dst[1]=src[1];
 	dst[2]=src[2];

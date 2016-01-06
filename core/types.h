@@ -82,7 +82,6 @@ typedef uint32_t u32;
 typedef uint64_t u64;
 
 typedef float f32;
-typedef double f64;
 
 #ifdef _M_X64
 #undef X86

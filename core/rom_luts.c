@@ -13,7 +13,9 @@ static struct game_type lut_games[] =
    { "T1213N    ", -1,  1, -1,  1 },				/* Street Fighter III -3rd Strike */
    { "MK-51049  ",  1, -1, -1,  1 },                /* Marvel Vs Capcom 2 */
    { "T1203N    ", -1,  1,  1,  1 },                /* Street Fighter Alpha 3 */
+#if defined(__linux__) || defined(__MACH__)
    { "MK0815    ", -1, -1, -1,  3500.0 },           /* Soul Calibur (E) */
    { "T1401M    ", -1, -1, -1,  3500.0 },           /* Soul Calibur (J) */
    { "T1401N    ", -1, -1, -1,  3500.0 },           /* Soul Calibur (U) */
+#endif
 };

@@ -1552,14 +1552,14 @@ static bool gl_create_resources(void)
 	modvol_shader.sp_ShaderColor = glGetUniformLocation(modvol_shader.program, "sp_ShaderColor");
 	modvol_shader.depth_scale    = glGetUniformLocation(modvol_shader.program, "depth_scale");
 
-   //#define PRECOMPILE_SHADERS
-#ifdef PRECOMPILE_SHADERS
-   for (i=0;i<sizeof(program_table)/sizeof(program_table[0]);i++)
+   if (settings.pvr.Emulation.precompile_shaders)
    {
-      if (!CompilePipelineShader(	&program_table[i] ))
-         return false;
+      for (i=0;i<sizeof(program_table)/sizeof(program_table[0]);i++)
+      {
+         if (!CompilePipelineShader(	&program_table[i] ))
+            return false;
+      }
    }
-#endif
 
 	return true;
 }

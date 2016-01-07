@@ -642,6 +642,7 @@ struct settings_t
 			u32 TexCacheMode;
          f32 zMin;
          f32 zMax;
+         bool precompile_shaders;
 		} Emulation;
 
 		struct

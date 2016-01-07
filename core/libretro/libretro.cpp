@@ -169,6 +169,10 @@ void retro_set_environment(retro_environment_t cb)
          "Cable type; TV (VBS/Y+S/C)|TV (RGB)|VGA (0)(RGB)|VGA (1)(RGB)",
       },
       {
+         "reicast_precompile_shaders",
+         "Precompile shaders; disabled|enabled",
+      },
+      {
          "reicast_enable_rtt",
          "Enable RTT (Render To Texture); enabled|disabled", 
       },
@@ -285,6 +289,16 @@ static void update_variables(void)
          settings.dreamcast.cable = 2;
       else if (!strcmp("TV (VBS/Y+S/C)", var.value))
          settings.dreamcast.cable = 3;
+   }
+
+   var.key = "reicast_precompile_shaders";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("disabled", var.value))
+         settings.pvr.Emulation.precompile_shaders = false;
+      else
+         settings.pvr.Emulation.precompile_shaders = true;
    }
 
    var.key = "reicast_enable_rtt";

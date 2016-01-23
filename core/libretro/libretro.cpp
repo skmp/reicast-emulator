@@ -16,12 +16,14 @@
 
 int screen_width;
 int screen_height;
+bool boot_to_bios;
 
 u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
 u8 rt[4] = {0, 0, 0, 0};
 u8 lt[4] = {0, 0, 0, 0};
 u32 vks[4];
 s8 joyx[4], joyy[4];
+
 
 enum DreamcastController
 {
@@ -149,6 +151,10 @@ void retro_set_environment(retro_environment_t cb)
       },
 #endif
       {
+         "reicast_boot_to_bios",
+         "Boot to BIOS (restart); disabled|enabled",
+      },
+      {
          "reicast_internal_resolution",
          "Internal resolution (restart); 640x480|1280x960|1920x1440|2560x1920|3200x2400|3840x2880|4480x3360",
       },
@@ -253,6 +259,18 @@ static void update_variables(void)
       else if (!strcmp(var.value, "generic_recompiler"))
          settings.dynarec.Type = 1;
    }
+
+   var.key = "reicast_boot_to_bios";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "enabled"))
+         boot_to_bios = true;
+      else if (!strcmp(var.value, "disabled"))
+         boot_to_bios = false;
+   }
+   else
+      boot_to_bios = false;
 
    var.key = "reicast_mipmapping";
 
@@ -477,7 +495,6 @@ bool retro_load_game(const struct retro_game_info *game)
       { 0 },
    };
 
-   game_data = strdup(game->path);
 
    extract_directory(game_dir, game->path, sizeof(game_dir));
 
@@ -493,6 +510,9 @@ bool retro_load_game(const struct retro_game_info *game)
    screen_width  = 640;
    screen_height = 480;
    update_variables();
+
+   if (!boot_to_bios)
+      game_data = strdup(game->path);
 
 #if defined(GL) || defined(GLES)
 #ifdef GLES

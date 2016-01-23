@@ -18,6 +18,7 @@ settings_t settings;
 
 extern char game_dir[1024];
 extern char *game_data;
+extern bool boot_to_bios;
 
 /*
 	libndc
@@ -38,8 +39,11 @@ extern char *game_data;
 
 int GetFile(char *szFileName, char *szParse=0,u32 flags=0) 
 {
-   strcpy(szFileName, game_data);
-   strcpy(settings.imgread.DefaultImage, szFileName);
+   if (!boot_to_bios)
+   {
+      strcpy(szFileName, game_data);
+      strcpy(settings.imgread.DefaultImage, szFileName);
+   }
 
 	return 1; 
 }

@@ -166,7 +166,11 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_cable_type",
-         "Cable type; TV (VBS/Y+S/C)|TV (RGB)|VGA (0)(RGB)|VGA (1)(RGB)",
+         "Cable type; TV (VBS/Y+S/C)|TV (RGB)|VGA (RGB)",
+      },
+      {
+         "reicast_region",
+         "Region; 0|1|2|3",
       },
       {
          "reicast_precompile_shaders",
@@ -281,15 +285,29 @@ static void update_variables(void)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (!strcmp("VGA (0)(RGB)", var.value))
+      if (!strcmp("VGA (RGB)", var.value))
          settings.dreamcast.cable = 0;
-      else if (!strcmp("VGA (1)(RGB)", var.value))
-         settings.dreamcast.cable = 1;
       else if (!strcmp("TV (RGB)", var.value))
          settings.dreamcast.cable = 2;
       else if (!strcmp("TV (VBS/Y+S/C)", var.value))
          settings.dreamcast.cable = 3;
    }
+
+   var.key = "reicast_region";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("0", var.value))
+         settings.dreamcast.region = 0;
+      else if (!strcmp("1", var.value))
+         settings.dreamcast.region = 1;
+      else if (!strcmp("2", var.value))
+         settings.dreamcast.region = 2;
+      else if (!strcmp("3", var.value))
+         settings.dreamcast.region = 3;
+   }
+   else
+         settings.dreamcast.region = 3;
 
    var.key = "reicast_precompile_shaders";
 

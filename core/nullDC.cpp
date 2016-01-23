@@ -229,7 +229,6 @@ void LoadSettings(void)
 	settings.dynarec.unstable_opt	= 0; 
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
 	settings.dreamcast.RTC			= GetRTC_now();
-	settings.dreamcast.region		= 3;
 	settings.dreamcast.broadcast	= 4;
 	settings.aica.LimitFPS			= 0;
 	settings.aica.NoBatch			= 0;

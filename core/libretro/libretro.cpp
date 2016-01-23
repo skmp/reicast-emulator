@@ -170,11 +170,11 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_broadcast",
-         "Region; 0|1|2|3|4",
+         "Broadcast; 4|0|1|2|3",
       },
       {
          "reicast_region",
-         "Region; 0|1|2|3",
+         "Region; 3|0|1|2",
       },
       {
          "reicast_precompile_shaders",

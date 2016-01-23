@@ -169,6 +169,10 @@ void retro_set_environment(retro_environment_t cb)
          "Cable type; TV (VBS/Y+S/C)|TV (RGB)|VGA (RGB)",
       },
       {
+         "reicast_broadcast",
+         "Region; 0|1|2|3|4",
+      },
+      {
          "reicast_region",
          "Region; 0|1|2|3",
       },
@@ -292,6 +296,24 @@ static void update_variables(void)
       else if (!strcmp("TV (VBS/Y+S/C)", var.value))
          settings.dreamcast.cable = 3;
    }
+
+   var.key = "reicast_broadcast";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("0", var.value))
+         settings.dreamcast.broadcast = 0;
+      else if (!strcmp("1", var.value))
+         settings.dreamcast.broadcast = 1;
+      else if (!strcmp("2", var.value))
+         settings.dreamcast.broadcast = 2;
+      else if (!strcmp("3", var.value))
+         settings.dreamcast.broadcast = 3;
+      else if (!strcmp("4", var.value))
+         settings.dreamcast.broadcast = 4;
+   }
+   else
+         settings.dreamcast.broadcast = 4;
 
    var.key = "reicast_region";
 

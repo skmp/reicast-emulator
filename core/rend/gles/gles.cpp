@@ -1051,7 +1051,7 @@ static void DrawSorted(void)
    glDepthFunc(Zfunction[6]);
 
    glEnable(GL_STENCIL_TEST);
-   gl_state.cap_state[6] = 1;
+   gl_state.cap_state[7] = 1;
    gl_state.stencilfunc.func = GL_ALWAYS;
    gl_state.stencilfunc.ref  = 0;
    gl_state.stencilfunc.mask = 0;
@@ -1311,7 +1311,7 @@ static void DrawModVols(void)
 		{
 			//simple single level stencil
 			glEnable(GL_STENCIL_TEST);
-         gl_state.cap_state[6] = 1;
+         gl_state.cap_state[7] = 1;
          gl_state.stencilfunc.func = GL_ALWAYS;
          gl_state.stencilfunc.ref  = 0x1;
          gl_state.stencilfunc.mask = 0x1;
@@ -1396,7 +1396,7 @@ static void DrawModVols(void)
       glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
 		
 		glEnable(GL_STENCIL_TEST);
-      gl_state.cap_state[6] = 1;
+      gl_state.cap_state[7] = 1;
       //only pixels that are Modvol enabled, and in area 1
       gl_state.stencilfunc.func = GL_EQUAL;
       gl_state.stencilfunc.ref  = 0x81;
@@ -1439,7 +1439,7 @@ static void DrawModVols(void)
 	glEnable(GL_DEPTH_TEST);
    gl_state.cap_state[0] = 1;
 	glDisable(GL_STENCIL_TEST);
-   gl_state.cap_state[6] = 0;
+   gl_state.cap_state[7] = 0;
 }
 
 /*
@@ -2083,7 +2083,7 @@ static bool RenderFrame(void)
    glScissor(gl_state.scissor.x, gl_state.scissor.y, gl_state.scissor.w, gl_state.scissor.h);
 
    glEnable(GL_SCISSOR_TEST);
-   gl_state.cap_state[5] = 1;
+   gl_state.cap_state[6] = 1;
 
 	//restore scale_x
 	scale_x /= scissoring_scale_x;

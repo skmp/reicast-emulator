@@ -2236,7 +2236,7 @@ struct glesrend : Renderer
             gl_state.stencilfunc.mask);
       glActiveTexture(gl_state.active_texture);
       glBindBuffer(GL_ARRAY_BUFFER, 0);
-      bool ret = RenderFrame();
+      return RenderFrame();
    }
 
 	void Present()

@@ -511,6 +511,9 @@ bool retro_load_game(const struct retro_game_info *game)
    screen_height = 480;
    update_variables();
 
+   if (game->path[0] == '\0')
+      boot_to_bios = true;
+
    if (!boot_to_bios)
       game_data = strdup(game->path);
 

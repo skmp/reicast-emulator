@@ -6,7 +6,7 @@
 #include <glsym/glsym.h>
 
 #ifndef SGL_CAP_MAX
-#define SGL_CAP_MAX 7
+#define SGL_CAP_MAX 8
 #endif
 
 struct gl_cached_state

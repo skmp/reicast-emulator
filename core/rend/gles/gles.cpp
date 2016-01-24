@@ -2167,8 +2167,9 @@ struct glesrend : Renderer
       gl_state.cap_translate[2] = GL_POLYGON_OFFSET_FILL;
       gl_state.cap_translate[3] = GL_FOG;
       gl_state.cap_translate[4] = GL_CULL_FACE;
-      gl_state.cap_translate[5] = GL_SCISSOR_TEST;
-      gl_state.cap_translate[6] = GL_STENCIL_TEST;
+      gl_state.cap_translate[5] = GL_ALPHA_TEST;
+      gl_state.cap_translate[6] = GL_SCISSOR_TEST;
+      gl_state.cap_translate[7] = GL_STENCIL_TEST;
 
       if (!gl_create_resources())
          return false;

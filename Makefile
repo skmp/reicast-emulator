@@ -8,6 +8,7 @@ NO_NVMEM      := 0
 NO_VERIFY     := 1
 NAOMI         := 0
 NO_JIT        := 1
+STATIC_LINKING:= 0
 
 TARGET_NAME   := reicast
 
@@ -135,11 +136,16 @@ ifeq ($(WITH_DYNAREC), mips)
 HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_MIPS)
 endif
 
+ifeq ($(STATIC_LINKING),1)
+EXT=a
+endif
 
 # Unix
 ifneq (,$(findstring unix,$(platform)))
-	TARGET := $(TARGET_NAME)_libretro.so
-	LDFLAGS += -shared -Wl,--version-script=link.T -Wl,--no-undefined
+	EXT    ?= so
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+	SHARED := -shared -Wl,--version-script=link.T
+	LDFLAGS +=  -Wl,--no-undefined
 	LIBS += -lrt
 
 	fpic = -fPIC
@@ -162,8 +168,9 @@ endif
 
 # Raspberry Pi
 else ifneq (,$(findstring rpi,$(platform)))
-	TARGET := $(TARGET_NAME)_libretro.so
-	LDFLAGS += -shared -Wl,--version-script=link.T
+	EXT    ?= so
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+	SHARED := -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	GLES = 1
 	LIBS += -lrt
@@ -182,9 +189,10 @@ else ifneq (,$(findstring rpi,$(platform)))
 
 # ODROIDs
 else ifneq (,$(findstring odroid,$(platform)))
-	TARGET := $(TARGET_NAME)_libretro.so
+	EXT    ?= so
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
-	LDFLAGS += -shared -Wl,--version-script=link.T
+	SHARED := -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	GLES = 1
 	LIBS += -lrt
@@ -217,8 +225,9 @@ else ifneq (,$(findstring odroid,$(platform)))
 
 # i.MX6
 else ifneq (,$(findstring imx6,$(platform)))
-	TARGET := $(TARGET_NAME)_libretro.so
-	LDFLAGS += -shared -Wl,--version-script=link.T
+	EXT    ?= so
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+	SHARED := -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	GLES = 1
 	GL_LIB := -lGLESv2
@@ -230,8 +239,9 @@ else ifneq (,$(findstring imx6,$(platform)))
 
 # OS X
 else ifneq (,$(findstring osx,$(platform)))
-	TARGET := $(TARGET_NAME)_libretro.dylib
-	LDFLAGS += -dynamiclib
+	EXT    ?= dylib
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+	SHARED += -dynamiclib
 	OSXVER = `sw_vers -productVersion | cut -d. -f 2`
 	OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
         fpic += -mmacosx-version-min=10.7
@@ -250,11 +260,12 @@ else ifneq (,$(findstring osx,$(platform)))
 
 # iOS
 else ifneq (,$(findstring ios,$(platform)))
+	EXT    ?= dylib
 	ifeq ($(IOSSDK),)
 		IOSSDK := $(shell xcodebuild -version -sdk iphoneos Path)
 	endif
 
-	TARGET := $(TARGET_NAME)_libretro_ios.dylib
+	TARGET := $(TARGET_NAME)_libretro_ios.$(EXT)
 	DEFINES += -DIOS
 	GLES = 1
 	WITH_DYNAREC=arm
@@ -265,7 +276,7 @@ else ifneq (,$(findstring ios,$(platform)))
 	PLATCFLAGS += -DIOS -marm
 	CPUFLAGS += -DNO_ASM  -DARM -D__arm__ -DARM_ASM -D__NEON_OPT
 	CPUFLAGS += -marm -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp
-	LDFLAGS += -dynamiclib
+	SHARED += -dynamiclib
 	GLIDE2GL=1
 	GLIDE64MK2=0
 	HAVE_NEON=1
@@ -313,8 +324,9 @@ else ifneq (,$(findstring theos_ios,$(platform)))
 # Android
 else ifneq (,$(findstring android,$(platform)))
 	fpic = -fPIC
-	TARGET := $(TARGET_NAME)_libretro_android.so
-	LDFLAGS += -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
+	EXT       ?= so
+	TARGET := $(TARGET_NAME)_libretro_android.$(EXT)
+	SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
 	GL_LIB := -lGLESv2
 
 	CC = arm-linux-androideabi-gcc
@@ -332,8 +344,9 @@ else ifneq (,$(findstring android,$(platform)))
 # QNX
 else ifeq ($(platform), qnx)
 	fpic = -fPIC
-	TARGET := $(TARGET_NAME)_libretro_qnx.so
-	LDFLAGS += -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
+	EXT       ?= so
+	TARGET := $(TARGET_NAME)_libretro_qnx.$(EXT)
+	SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
 	GL_LIB := -lGLESv2
 
 	CC = qcc -Vgcc_ntoarmv7le
@@ -351,8 +364,9 @@ else ifeq ($(platform), qnx)
 
 # ARM
 else ifneq (,$(findstring armv,$(platform)))
-	TARGET := $(TARGET_NAME)_libretro.so
-	LDFLAGS += -shared -Wl,--version-script=link.T -Wl,--no-undefined
+	EXT       ?= so
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+	SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined
 	fpic := -fPIC
 	CPUFLAGS += -DNO_ASM -DARM -D__arm__ -DARM_ASM -DNOSSE
 	WITH_DYNAREC=arm
@@ -386,7 +400,8 @@ else ifneq (,$(findstring armv,$(platform)))
 
 # emscripten
 else ifeq ($(platform), emscripten)
-	TARGET := $(TARGET_NAME)_libretro_emscripten.bc
+	EXT       ?= bc
+	TARGET := $(TARGET_NAME)_libretro_emscripten.$(EXT)
 	GLES := 1
 	GLIDE2GL=1
 	WITH_DYNAREC :=
@@ -401,13 +416,20 @@ else ifeq ($(platform), emscripten)
 
 # Windows
 else ifneq (,$(findstring win,$(platform)))
-	TARGET := $(TARGET_NAME)_libretro.dll
-	LDFLAGS += -shared -static-libgcc -static-libstdc++ -Wl,--version-script=link.T -lwinmm -lgdi32
+	EXT       ?= dll
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+	SHARED := -shared -shared -static-libgcc -static-libstdc++ -Wl,--version-script=link.T
+	LDFLAGS += -lwinmm -lgdi32
 	GL_LIB := -lopengl32
 	PLATFORM_EXT := win32
 	CC = gcc
 	CXX = g++
 
+endif
+
+ifeq ($(STATIC_LINKING),1)
+fpic=
+SHARED=
 endif
 
 CFLAGS += $(HOST_CPU_FLAGS)
@@ -523,7 +545,11 @@ OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o) $(SOURCES_ASM:.S=.o)
 
 all: $(TARGET)	
 $(TARGET): $(OBJECTS)
+ifeq ($(STATIC_LINKING), 1)
+	$(AR) rcs $@ $(OBJECTS)
+else
 	$(CXX) $(MFLAGS) $(fpic) $(SHARED) $(EXTRAFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBS) $(GL_LIB) -o $@
+endif
 
 %.o: %.cpp
 	$(CXX) $(EXTRAFLAGS) $(INCFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@

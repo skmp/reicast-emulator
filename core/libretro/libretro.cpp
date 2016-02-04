@@ -376,7 +376,6 @@ void retro_run (void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       update_variables();
 
-   poll_cb();
    co_dc_run();
 #if defined(GL) || defined(GLES)
    video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
@@ -676,6 +675,7 @@ unsigned retro_api_version(void)
 void os_DoEvents(void)
 {
    is_dupe = false;
+   poll_cb();
 }
 
 void os_CreateWindow()

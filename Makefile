@@ -138,12 +138,16 @@ endif
 
 ifeq ($(STATIC_LINKING),1)
 EXT=a
+
+ifeq ($(platform), unix)
+PLAT=_unix
+endif
 endif
 
 # Unix
 ifneq (,$(findstring unix,$(platform)))
 	EXT    ?= so
-	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+   TARGET := $(TARGET_NAME)_libretro$(PLAT).$(EXT)
 	SHARED := -shared -Wl,--version-script=link.T
 	LDFLAGS +=  -Wl,--no-undefined
 	LIBS += -lrt

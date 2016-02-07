@@ -24,6 +24,7 @@ u8 lt[4] = {0, 0, 0, 0};
 u32 vks[4];
 s8 joyx[4], joyy[4];
 
+bool enable_purupuru = true;
 
 enum DreamcastController
 {
@@ -60,6 +61,7 @@ retro_input_poll_t         poll_cb = NULL;
 retro_input_state_t        input_cb = NULL;
 retro_audio_sample_batch_t audio_batch_cb = NULL;
 retro_environment_t        environ_cb = NULL;
+static retro_rumble_interface rumble;
 
 #if defined(GL) || defined(GLES)
 struct retro_hw_render_callback hw_render;
@@ -189,6 +191,10 @@ void retro_set_environment(retro_environment_t cb)
       {
          "reicast_enable_rtt",
          "Enable RTT (Render To Texture); enabled|disabled", 
+      },
+      {
+         "reicast_enable_purupuru",
+         "Purupuru Pack (restart); enabled|disabled"
       },
       { NULL, NULL },
    };
@@ -368,6 +374,10 @@ static void update_variables(void)
       else
          enable_rtt = true;
    }
+
+   var.key = "reicast_enable_purupuru";
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      enable_purupuru = (strcmp("enabled", var.value) == 0);
 }
 
 void retro_run (void)
@@ -498,6 +508,9 @@ bool retro_load_game(const struct retro_game_info *game)
    extract_directory(game_dir, game->path, sizeof(game_dir));
 
    environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE, &rumble) && log_cb)
+        log_cb(RETRO_LOG_INFO, "Rumble interface supported!\n");
 
    if (!(environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir))
       dir = game_dir;
@@ -662,6 +675,11 @@ unsigned retro_get_region (void)
 void retro_set_controller_port_device(unsigned in_port, unsigned device)
 {
    //TODO
+   if (rumble.set_rumble_state)
+   {
+      rumble.set_rumble_state(in_port, RETRO_RUMBLE_STRONG, 0);
+      rumble.set_rumble_state(in_port, RETRO_RUMBLE_WEAK,   0);
+   }
 }
 
 
@@ -796,6 +814,26 @@ void UpdateInputState(u32 port)
 
    joyx[port] = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X) / 256;
    joyy[port] = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y) / 256;
+}
+
+void UpdateVibration(u32 port, u32 value)
+{
+   if (!rumble.set_rumble_state)
+      return;
+
+   u8 POW_POS = (value >> 8) & 0x3;
+   u8 POW_NEG = (value >> 12) & 0x3;
+   u8 FREQ = (value >> 16) & 0xFF;
+
+   double pow = (POW_POS + POW_NEG) / 7.0;
+   double pow_l = pow * (0x3B - FREQ) / 17.0;
+   double pow_r = pow * (FREQ - 0x07) / 15.0;
+
+   if (pow_l > 1.0) pow_l = 1.0;
+   if (pow_r > 1.0) pow_r = 1.0;
+
+   rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, (u16)(65535 * pow_l));
+   rumble.set_rumble_state(port, RETRO_RUMBLE_WEAK,   (u16)(65535 * pow_r));
 }
 
 void* libPvr_GetRenderTarget()

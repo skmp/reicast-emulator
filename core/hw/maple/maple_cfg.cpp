@@ -21,11 +21,13 @@ Plugins:
 		ImageUpdate(data);
 */
 void UpdateInputState(u32 port);
+void UpdateVibration(u32 port, u32 value);
 
 extern u16 kcode[4];
 extern u32 vks[4];
 extern s8 joyx[4],joyy[4];
 extern u8 rt[4],lt[4];
+extern bool enable_purupuru;
 
 u8 GetBtFromSgn(s8 val)
 {
@@ -40,6 +42,11 @@ struct MapleConfigMap : IMapleConfigMap
 	{
 		this->dev=dev;
 	}
+
+   void SetVibration(u32 value)
+   {
+      UpdateVibration(dev->bus_id, value);
+   }
 
 	void GetInput(PlainJoystickState* pjs)
 	{
@@ -75,7 +82,11 @@ void mcfg_CreateDevices()
       mcfg_Create(MDT_SegaController,bus,5);
 
       mcfg_Create(MDT_SegaVMU,bus,0);
-      mcfg_Create(MDT_SegaVMU,bus,1);
+
+      if (enable_purupuru)
+         mcfg_Create(MDT_PurupuruPack,bus,1);
+      else
+         mcfg_Create(MDT_SegaVMU,bus,1);
    }
 #else
 	mcfg_Create(MDT_NaomiJamma, 0, 5);

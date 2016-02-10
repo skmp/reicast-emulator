@@ -36,6 +36,10 @@ static void glsm_state_setup(void)
    gl_state.polygonoffset.used          = false;
 
    gl_state.depthfunc.func              = GL_LESS;
+
+#ifdef CORE
+   glGenVertexArrays(1, &gl_state.vao);
+#endif
 }
 
 static void glsm_state_bind(void)
@@ -86,7 +90,7 @@ static void glsm_state_bind(void)
          gl_state.viewport.w,
          gl_state.viewport.h);
 #ifdef CORE
-   glBindVertexArray(vbo.vao);
+   glBindVertexArray(gl_state.vao);
 #endif
    for(i = 0; i < SGL_CAP_MAX; i ++)
    {

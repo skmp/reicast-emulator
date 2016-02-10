@@ -59,9 +59,6 @@ struct vbo_type
    GLuint modvols;
    GLuint idxs;
    GLuint idxs2;
-#ifdef CORE
-   GLuint vao;
-#endif
 };
 
 gl_cached_state gl_state;
@@ -1224,7 +1221,7 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 static void SetupMainVBO(void)
 {
 #ifdef CORE
-	glBindVertexArray(vbo.vao);
+	glBindVertexArray(gl_state.vao);
 #endif
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo.geometry);
@@ -1248,7 +1245,7 @@ static void SetupMainVBO(void)
 static void SetupModvolVBO(void)
 {
 #ifdef CORE
-	glBindVertexArray(vbo.vao);
+	glBindVertexArray(gl_state.vao);
 #endif
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo.modvols);
@@ -1512,13 +1509,6 @@ static bool gl_create_resources(void)
    u32 pp_ShadInstr;
 	PipelineShader* dshader  = 0;
    u32 compile              = 0;
-
-#ifdef CORE
-	/* create VAO
-	 * This is really not "proper", vaos are suposed to be defined once
-	 * I keep updating the same one to make the es2 code work in 3.1 context */
-	glGenVertexArrays(1, &vbo.vao);
-#endif
 
 	/* create VBOs */
 	glGenBuffers(1, &vbo.geometry);
@@ -2187,10 +2177,10 @@ struct glesrend : Renderer
    {
       libCore_vramlock_Init();
 
+      glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
+
       if (!gl_create_resources())
          return false;
-
-      glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
 
       return true;
    }

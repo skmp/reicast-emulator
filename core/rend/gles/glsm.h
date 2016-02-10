@@ -130,6 +130,7 @@ struct gl_cached_state
    {
       GLenum mode;
    } frontface;
+   GLuint vao;
    GLuint stencilmask;
    GLenum cullmode;
    GLuint framebuf;

@@ -24,14 +24,30 @@ static void glsm_state_bind(void)
 {
    unsigned i;
 
-   glBindFramebuffer(RARCH_GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
-   glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
-   glClearColor(gl_state.clear_color.r, gl_state.clear_color.g, gl_state.clear_color.b, gl_state.clear_color.a);
+   glBindFramebuffer(
+         RARCH_GL_FRAMEBUFFER,
+         hw_render.get_current_framebuffer());
+   glBlendFunc(
+         gl_state.blendfunc.sfactor,
+         gl_state.blendfunc.dfactor);
+   glClearColor(
+         gl_state.clear_color.r,
+         gl_state.clear_color.g,
+         gl_state.clear_color.b,
+         gl_state.clear_color.a);
    glCullFace(gl_state.cullmode);
    glDepthMask(gl_state.depthmask);
-   glScissor(gl_state.scissor.x, gl_state.scissor.y, gl_state.scissor.w, gl_state.scissor.h);
+   glScissor(
+         gl_state.scissor.x,
+         gl_state.scissor.y,
+         gl_state.scissor.w,
+         gl_state.scissor.h);
    glUseProgram(gl_state.program);
-   glViewport(gl_state.viewport.x, gl_state.viewport.y, gl_state.viewport.w, gl_state.viewport.h);
+   glViewport(
+         gl_state.viewport.x,
+         gl_state.viewport.y,
+         gl_state.viewport.w,
+         gl_state.viewport.h);
 #ifdef CORE
    glBindVertexArray(vbo.vao);
 #endif
@@ -47,7 +63,9 @@ static void glsm_state_bind(void)
    glStencilOp(gl_state.stencilop.sfail,
          gl_state.stencilop.dpfail,
          gl_state.stencilop.dppass);
-   glStencilFunc(gl_state.stencilfunc.func,gl_state.stencilfunc.ref,
+   glStencilFunc(
+         gl_state.stencilfunc.func,
+         gl_state.stencilfunc.ref,
          gl_state.stencilfunc.mask);
    glActiveTexture(gl_state.active_texture);
    glBindBuffer(GL_ARRAY_BUFFER, 0);

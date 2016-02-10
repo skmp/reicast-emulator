@@ -645,7 +645,11 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 
       /* Set Z mode, only if required */
       if (!(Type == LISTTYPE_PUNCH_THROUGH || (Type == LISTTYPE_TRANSLUCENT && SortingEnabled)))
+      {
+         gl_state.depthfunc.used = true;
+         gl_state.depthfunc.func = Zfunction[gp->isp.DepthMode];
          glDepthFunc(Zfunction[gp->isp.DepthMode]);
+      }
 
       gl_state.depthmask    = !gp->isp.ZWriteDis;
 #if TRIG_SORT
@@ -673,7 +677,11 @@ static void DrawList(const List<PolyParam>& gply)
 
    /* Z funct. can be fixed on these combinations, avoid setting it all the time */
    if (Type == LISTTYPE_PUNCH_THROUGH || (Type == LISTTYPE_TRANSLUCENT && SortingEnabled))
+   {
+      gl_state.depthfunc.used = true;
+      gl_state.depthfunc.func = Zfunction[6];
       glDepthFunc(Zfunction[6]);
+   }
 
    glEnable(GL_STENCIL_TEST);
    glStencilFunc(
@@ -1047,6 +1055,8 @@ static void DrawSorted(void)
    //set some 'global' modes for all primitives
 
    //Z sorting is fixed for .. sorted stuff
+   gl_state.depthfunc.used = true;
+   gl_state.depthfunc.func = Zfunction[6];
    glDepthFunc(Zfunction[6]);
 
    glEnable(GL_STENCIL_TEST);
@@ -1276,6 +1286,9 @@ static void DrawModVols(void)
 
    gl_state.depthmask = GL_FALSE;
    glDepthMask(gl_state.depthmask);
+
+   gl_state.depthfunc.used = true;
+   gl_state.depthfunc.func = GL_GREATER;
 	glDepthFunc(GL_GREATER);
 
 	if(0 /*|| GetAsyncKeyState(VK_F5)*/ )
@@ -1309,6 +1322,9 @@ static void DrawModVols(void)
       gl_state.colormask.alpha = GL_FALSE;
       gl_state.colormask.used  = true;
 		glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+
+      gl_state.depthfunc.used = true;
+      gl_state.depthfunc.func = GL_GREATER;
 		glDepthFunc(GL_GREATER);
 
 		if ( 0 /* || GetAsyncKeyState(VK_F6)*/ )

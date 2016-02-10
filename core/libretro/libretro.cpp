@@ -7,8 +7,7 @@
 #include "../hw/pvr/pvr_regs.h"
 
 #if defined(GL) || defined(GLES)
-#include <glsym/rglgen.h>
-#include <glsym/glsym.h>
+#include "../rend/gles/glsm.h"
 #include "../rend/rend.h"
 #endif
 
@@ -62,10 +61,6 @@ retro_input_state_t        input_cb = NULL;
 retro_audio_sample_batch_t audio_batch_cb = NULL;
 retro_environment_t        environ_cb = NULL;
 static retro_rumble_interface rumble;
-
-#if defined(GL) || defined(GLES)
-struct retro_hw_render_callback hw_render;
-#endif
 
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
@@ -402,7 +397,7 @@ void retro_reset (void)
 static void context_reset(void)
 {
    printf("context_reset.\n");
-   rglgen_resolve_symbols(hw_render.get_proc_address);
+   glsm_ctl(GLSM_CTL_STATE_CONTEXT_RESET, NULL);
    co_switch(ct_dc);
 }
 
@@ -429,6 +424,7 @@ static void extract_directory(char *buf, const char *path, size_t size)
 // Loading/unloading games
 bool retro_load_game(const struct retro_game_info *game)
 {
+   glsm_ctx_params_t params;
    const char *dir = NULL;
 #ifdef _WIN32
    char slash = '\\';
@@ -530,32 +526,11 @@ bool retro_load_game(const struct retro_game_info *game)
       game_data = strdup(game->path);
 
 #if defined(GL) || defined(GLES)
-#ifdef GLES
-#if defined(GLES31)
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES_VERSION;
-   hw_render.version_major = 3;
-   hw_render.version_minor = 1;
-#elif defined(GLES3)
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES3;
-#else
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES2;
-#endif
-#else
-#ifdef CORE
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
-   hw_render.version_major = 3;
-   hw_render.version_minor = 1;
-#else
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGL;
-#endif
-#endif
-   hw_render.context_reset      = context_reset;
-   hw_render.context_destroy    = context_destroy;
-   hw_render.stencil            = true;
-   hw_render.depth              = true;
-   hw_render.bottom_left_origin = true;
+   params.context_reset         = context_reset;
+   params.context_destroy       = context_destroy;
+   params.environ_cb            = environ_cb;
 
-   if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
+   if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
       return false;
 #else
    co_switch(ct_dc);

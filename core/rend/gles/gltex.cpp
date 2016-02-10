@@ -1,4 +1,5 @@
 #include "gles.h"
+#include "glsm.h"
 #include "../../hw/pvr/TexCache.h"
 #include "../../hw/pvr/pvr_pixfmt.h"
 #include "../../hw/pvr/pvr_mem.h"

@@ -1,4 +1,5 @@
-INCFLAGS    += -I$(CORE_DIR) \
+INCFLAGS    += -I$(CORE_DIR)/libretro \
+					-I$(CORE_DIR) \
 					-I$(CORE_DIR)/deps \
 					-I$(CORE_DIR)/libretro-common/include 
 
@@ -95,7 +96,8 @@ endif
 ifeq ($(HAVE_GL), 1)
 SOURCES_CXX += $(CORE_DIR)/rend/gles/gles.cpp \
 					$(CORE_DIR)/rend/gles/gltex.cpp
-SOURCES_C   += $(CORE_DIR)/libretro-common/glsym/rglgen.c
+SOURCES_C   += $(CORE_DIR)/libretro-common/glsym/rglgen.c \
+					$(CORE_DIR)/rend/gles/glsm.c
 ifeq ($(HAVE_GLES), 1)
 	SOURCES_C += $(CORE_DIR)/libretro-common/glsym/glsym_es2.c
 else

@@ -15,8 +15,9 @@ static void glsm_state_setup(void)
    gl_state.cap_translate[6] = GL_SCISSOR_TEST;
    gl_state.cap_translate[7] = GL_STENCIL_TEST;
 
-   gl_state.framebuf = hw_render.get_current_framebuffer();
-   gl_state.cullmode = GL_BACK;
+   gl_state.framebuf         = hw_render.get_current_framebuffer();
+   gl_state.cullmode         = GL_BACK;
+   gl_state.frontface.mode   = GL_CCW; 
 }
 
 static void glsm_state_bind(void)
@@ -41,6 +42,7 @@ static void glsm_state_bind(void)
       else
          glDisable(gl_state.cap_translate[i]);
    }
+   glFrontFace(gl_state.frontface.mode);
    glStencilMask(gl_state.stencilmask);
    glStencilOp(gl_state.stencilop.sfail,
          gl_state.stencilop.dpfail,
@@ -53,9 +55,12 @@ static void glsm_state_bind(void)
 
 static void glsm_state_unbind(void)
 {
+   unsigned i;
 #ifdef CORE
    glBindVertexArray(0);
 #endif
+   for (i = 0; i < SGL_CAP_MAX; i ++)
+      glDisable(gl_state.cap_translate[i]);
    glDisable(GL_BLEND);
    glDisable(GL_CULL_FACE);
    glDisable(GL_SCISSOR_TEST);
@@ -67,6 +72,7 @@ static void glsm_state_unbind(void)
    glUseProgram(0);
    glClearColor(0,0,0,0.0f);
    glStencilMask(1);
+   glFrontFace(GL_CCW);
    glStencilOp(GL_KEEP,GL_KEEP, GL_KEEP);
    glStencilFunc(GL_ALWAYS,0,1);
 

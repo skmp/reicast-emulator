@@ -99,6 +99,10 @@ struct gl_cached_state
       GLenum dpfail;
       GLenum dppass;
    } stencilop;
+   struct
+   {
+      GLenum mode;
+   } frontface;
    GLuint stencilmask;
    GLenum cullmode;
    GLuint framebuf;

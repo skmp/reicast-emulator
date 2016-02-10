@@ -6,18 +6,36 @@ struct retro_hw_render_callback hw_render;
 
 static void glsm_state_setup(void)
 {
-   gl_state.cap_translate[0] = GL_DEPTH_TEST;
-   gl_state.cap_translate[1] = GL_BLEND;
-   gl_state.cap_translate[2] = GL_POLYGON_OFFSET_FILL;
-   gl_state.cap_translate[3] = GL_FOG;
-   gl_state.cap_translate[4] = GL_CULL_FACE;
-   gl_state.cap_translate[5] = GL_ALPHA_TEST;
-   gl_state.cap_translate[6] = GL_SCISSOR_TEST;
-   gl_state.cap_translate[7] = GL_STENCIL_TEST;
+   gl_state.cap_translate[0]            = GL_DEPTH_TEST;
+   gl_state.cap_translate[1]            = GL_BLEND;
+   gl_state.cap_translate[2]            = GL_POLYGON_OFFSET_FILL;
+   gl_state.cap_translate[3]            = GL_FOG;
+   gl_state.cap_translate[4]            = GL_CULL_FACE;
+   gl_state.cap_translate[5]            = GL_ALPHA_TEST;
+   gl_state.cap_translate[6]            = GL_SCISSOR_TEST;
+   gl_state.cap_translate[7]            = GL_STENCIL_TEST;
 
-   gl_state.framebuf         = hw_render.get_current_framebuffer();
-   gl_state.cullmode         = GL_BACK;
-   gl_state.frontface.mode   = GL_CCW; 
+   gl_state.framebuf                    = hw_render.get_current_framebuffer();
+   gl_state.cullmode                    = GL_BACK;
+   gl_state.frontface.mode              = GL_CCW; 
+
+   gl_state.blendfunc_separate.used     = false;
+   gl_state.blendfunc_separate.srcRGB   = GL_ONE;
+   gl_state.blendfunc_separate.dstRGB   = GL_ZERO;
+   gl_state.blendfunc_separate.srcAlpha = GL_ONE;
+   gl_state.blendfunc_separate.dstAlpha = GL_ZERO;
+
+   gl_state.depthfunc.used              = false;
+   
+   gl_state.colormask.used              = false;
+   gl_state.colormask.red               = GL_TRUE;
+   gl_state.colormask.green             = GL_TRUE;
+   gl_state.colormask.blue              = GL_TRUE;
+   gl_state.colormask.alpha             = GL_TRUE;
+
+   gl_state.polygonoffset.used          = false;
+
+   gl_state.depthfunc.func              = GL_LESS;
 }
 
 static void glsm_state_bind(void)
@@ -30,13 +48,32 @@ static void glsm_state_bind(void)
    glBlendFunc(
          gl_state.blendfunc.sfactor,
          gl_state.blendfunc.dfactor);
+   if (gl_state.blendfunc_separate.used)
+      glBlendFuncSeparate(
+            gl_state.blendfunc_separate.srcRGB,
+            gl_state.blendfunc_separate.dstRGB,
+            gl_state.blendfunc_separate.srcAlpha,
+            gl_state.blendfunc_separate.dstAlpha
+            );
    glClearColor(
          gl_state.clear_color.r,
          gl_state.clear_color.g,
          gl_state.clear_color.b,
          gl_state.clear_color.a);
+   if (gl_state.depthfunc.used)
+      glDepthFunc(gl_state.depthfunc.func);
+   if (gl_state.colormask.used)
+      glColorMask(
+            gl_state.colormask.red,
+            gl_state.colormask.green,
+            gl_state.colormask.blue,
+            gl_state.colormask.alpha);
    glCullFace(gl_state.cullmode);
    glDepthMask(gl_state.depthmask);
+   if (gl_state.polygonoffset.used)
+      glPolygonOffset(
+            gl_state.polygonoffset.factor,
+            gl_state.polygonoffset.units);
    glScissor(
          gl_state.scissor.x,
          gl_state.scissor.y,
@@ -84,13 +121,20 @@ static void glsm_state_unbind(void)
    glDisable(GL_SCISSOR_TEST);
    glDisable(GL_DEPTH_TEST);
    glBlendFunc(GL_ONE, GL_ZERO);
-   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+   if (gl_state.colormask.used)
+      glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+   if (gl_state.blendfunc_separate.used)
+      glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
    glCullFace(GL_BACK);
    glDepthMask(GL_TRUE);
+   if (gl_state.polygonoffset.used)
+      glPolygonOffset(0, 0);
    glUseProgram(0);
    glClearColor(0,0,0,0.0f);
    glStencilMask(1);
    glFrontFace(GL_CCW);
+   if (gl_state.depthfunc.used)
+      glDepthFunc(GL_LESS);
    glStencilOp(GL_KEEP,GL_KEEP, GL_KEEP);
    glStencilFunc(GL_ALWAYS,0,1);
 
@@ -129,7 +173,7 @@ static bool glsm_state_ctx_init(void *data)
 #endif
    hw_render.context_reset      = params->context_reset;
    hw_render.context_destroy    = params->context_destroy;
-   hw_render.stencil            = true;
+   hw_render.stencil            = params->stencil;
    hw_render.depth              = true;
    hw_render.bottom_left_origin = true;
 

@@ -1303,6 +1303,11 @@ static void DrawModVols(void)
 			write to stencil bits 1:0
 		*/
 
+      gl_state.colormask.red   = GL_FALSE;
+      gl_state.colormask.green = GL_FALSE;
+      gl_state.colormask.blue  = GL_FALSE;
+      gl_state.colormask.alpha = GL_FALSE;
+      gl_state.colormask.used  = true;
 		glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
 		glDepthFunc(GL_GREATER);
 
@@ -1385,6 +1390,11 @@ static void DrawModVols(void)
 		//disable culling
 		SetCull(0);
 		//enable color writes
+      gl_state.colormask.red   = GL_TRUE;
+      gl_state.colormask.green = GL_TRUE;
+      gl_state.colormask.blue  = GL_TRUE;
+      gl_state.colormask.alpha = GL_TRUE;
+      gl_state.colormask.used  = true;
 		glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 
 		//black out any stencil with '1'

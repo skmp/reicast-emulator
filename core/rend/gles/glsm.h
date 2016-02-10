@@ -89,6 +89,33 @@ struct gl_cached_state
    } blendfunc;
    struct
    {
+      bool used;
+      GLenum srcRGB;
+      GLenum dstRGB;
+      GLenum srcAlpha;
+      GLenum dstAlpha;
+   } blendfunc_separate;
+   struct
+   {
+      bool used;
+      GLboolean red;
+      GLboolean green;
+      GLboolean blue;
+      GLboolean alpha;
+   } colormask;
+   struct
+   {
+      bool used;
+      GLenum func;
+   } depthfunc;
+   struct
+   {
+      bool used;
+      GLfloat factor;
+      GLfloat units;
+   } polygonoffset;
+   struct
+   {
       GLenum func;
       GLint ref;
       GLuint mask;
@@ -118,6 +145,7 @@ typedef struct glsm_ctx_params
    retro_hw_context_reset_t context_reset;
    retro_hw_context_reset_t context_destroy;
    retro_environment_t environ_cb;
+   bool stencil;
    unsigned major;
    unsigned minor;
 } glsm_ctx_params_t;

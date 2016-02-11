@@ -32,6 +32,15 @@ void rglClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
    gl_state.clear_color.a = alpha;
 }
 
+void rglScissor(GLint x, GLint y, GLsizei width, GLsizei height)
+{
+   glScissor(x, y, width, height);
+   gl_state.scissor.x = x;
+   gl_state.scissor.y = y;
+   gl_state.scissor.w = width;
+   gl_state.scissor.h = height;
+}
+
 void rglViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
    glViewport(x, y, width, height);

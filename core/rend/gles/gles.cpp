@@ -2023,12 +2023,12 @@ static bool RenderFrame(void)
 		printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 	#endif
 
-   gl_state.scissor.x = offs_x+pvrrc.fb_X_CLIP.min/scale_x;
-   gl_state.scissor.y = (pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h;
-   gl_state.scissor.w = (pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h;
-   gl_state.scissor.h = (pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h;
-
-   glScissor(gl_state.scissor.x, gl_state.scissor.y, gl_state.scissor.w, gl_state.scissor.h);
+   glScissor(
+         offs_x + pvrrc.fb_X_CLIP.min / scale_x,
+         (pvrrc.fb_Y_CLIP.min / scale_y) * dc2s_scale_h,
+         (pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,
+         (pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h
+         );
 
    glEnable(GL_SCISSOR_TEST);
 

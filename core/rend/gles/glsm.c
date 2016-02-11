@@ -289,6 +289,14 @@ static void glsm_state_bind(void)
 {
    unsigned i;
 
+   for (i = 0; i < MAX_ATTRIB; i++)
+   {
+      if (gl_state.vertex_attrib_pointer.enabled[i])
+         glEnableVertexAttribArray(i);
+      else
+         glDisableVertexAttribArray(i);
+   }
+
    glBindFramebuffer(
          RARCH_GL_FRAMEBUFFER,
          hw_render.get_current_framebuffer());

@@ -813,6 +813,9 @@ static bool glsm_state_ctx_init(void *data)
    imm_vbo_draw                 = params->imm_vbo_draw;
    imm_vbo_disable              = params->imm_vbo_disable;
 
+   if (imm_vbo_draw != NULL && imm_vbo_disable != NULL)
+      glsm_ctl(GLSM_CTL_SET_IMM_VBO, NULL);
+
    if (!params->environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
       return false;
 
@@ -821,8 +824,18 @@ static bool glsm_state_ctx_init(void *data)
 
 bool glsm_ctl(enum glsm_state_ctl state, void *data)
 {
+   static bool imm_vbo_enable = false;
+
    switch (state)
    {
+      case GLSM_CTL_IS_IMM_VBO:
+         return imm_vbo_enable;
+      case GLSM_CTL_SET_IMM_VBO:
+         imm_vbo_enable = true;
+         break;
+      case GLSM_CTL_UNSET_IMM_VBO:
+         imm_vbo_enable = false;
+         break;
       case GLSM_CTL_STATE_CONTEXT_RESET:
          rglgen_resolve_symbols(hw_render.get_proc_address);
          break;

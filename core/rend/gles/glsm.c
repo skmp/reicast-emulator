@@ -29,6 +29,14 @@ void rglCullFace(GLenum mode)
    gl_state.cullmode = mode;
 }
 
+void rglStencilOp(GLenum sfail, GLenum dpfail, GLenum dppass)
+{
+   glStencilOp(sfail, dpfail, dppass);
+   gl_state.stencilop.sfail  = sfail;
+   gl_state.stencilop.dpfail = dpfail;
+   gl_state.stencilop.dppass = dppass;
+}
+
 void rglStencilFunc(GLenum func, GLint ref, GLuint mask)
 {
    glStencilFunc(func, ref, mask);

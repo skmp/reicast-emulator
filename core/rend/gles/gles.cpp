@@ -1033,12 +1033,7 @@ static void DrawSorted(void)
 
    glEnable(GL_STENCIL_TEST);
    glStencilFunc(GL_ALWAYS, 0, 0);
-   gl_state.stencilop.sfail  = GL_KEEP;
-   gl_state.stencilop.dpfail = GL_KEEP;
-   gl_state.stencilop.dppass = GL_REPLACE;
-   glStencilOp(gl_state.stencilop.sfail,
-         gl_state.stencilop.dpfail,
-         gl_state.stencilop.dppass);
+   glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
    for (u32 p=0; p<count; p++)
    {
@@ -1089,12 +1084,7 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
       glStencilFunc(GL_ALWAYS, 0, 2);
 
 		//count the number of pixels in front of the Z buffer (and only keep the lower bit of the count)
-      gl_state.stencilop.sfail  = GL_KEEP;
-      gl_state.stencilop.dpfail = GL_KEEP;
-      gl_state.stencilop.dppass = GL_INVERT;
-		glStencilOp(gl_state.stencilop.sfail,
-            gl_state.stencilop.dpfail,
-            gl_state.stencilop.dppass);
+      glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
 		//Cull mode needs to be set
 		SetCull(ispc.CullMode);
 	}
@@ -1123,12 +1113,7 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 			//if (1<=st) st=1; else st=0;
          glStencilFunc(GL_LEQUAL, 1, 3);
 
-         gl_state.stencilop.sfail  = GL_ZERO;
-         gl_state.stencilop.dpfail = GL_ZERO;
-         gl_state.stencilop.dppass = GL_REPLACE;
-         glStencilOp(gl_state.stencilop.sfail,
-               gl_state.stencilop.dpfail,
-               gl_state.stencilop.dppass);
+         glStencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
 
 			/*
 			//if !=0 -> set to 10
@@ -1154,12 +1139,7 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 
 			//if (2>st) st=1; else st=0;	//can't be done with a single pass
          glStencilFunc(GL_GREATER, 1, 3);
-         gl_state.stencilop.sfail  = GL_ZERO;
-         gl_state.stencilop.dpfail = GL_KEEP;
-         gl_state.stencilop.dppass = GL_REPLACE;
-         glStencilOp(gl_state.stencilop.sfail,
-               gl_state.stencilop.dpfail,
-               gl_state.stencilop.dppass);
+         glStencilOp(GL_ZERO, GL_KEEP, GL_REPLACE);
 		}
 	}
 }
@@ -1260,13 +1240,7 @@ static void DrawModVols(void)
 			glEnable(GL_STENCIL_TEST);
          glStencilFunc(GL_ALWAYS, 0x1, 0x1);
 
-         gl_state.stencilop.sfail  = GL_KEEP;
-         gl_state.stencilop.dpfail = GL_KEEP;
-         gl_state.stencilop.dppass = GL_INVERT;
-
-         glStencilOp(gl_state.stencilop.sfail,
-               gl_state.stencilop.dpfail,
-               gl_state.stencilop.dppass);
+         glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
          glStencilMask(0x1);
 			SetCull(0);
 			glDrawArrays(GL_TRIANGLES,0,pvrrc.modtrig.used()*3);
@@ -1337,13 +1311,7 @@ static void DrawModVols(void)
 		
 		//clear the stencil result bit
       glStencilMask(0x3); /* write to LSB */
-
-      gl_state.stencilop.sfail  = GL_ZERO;
-      gl_state.stencilop.dpfail = GL_ZERO;
-      gl_state.stencilop.dppass = GL_ZERO;
-      glStencilOp(gl_state.stencilop.sfail,
-            gl_state.stencilop.dpfail,
-            gl_state.stencilop.dppass);
+      glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
 
 		//don't do depth testing
 		glDisable(GL_DEPTH_TEST);

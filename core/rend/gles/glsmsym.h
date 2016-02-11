@@ -62,6 +62,7 @@ extern "C" {
 #define glIsEnabled                 rglIsEnabled
 #define glStencilFunc               rglStencilFunc
 #define glCullFace                  rglCullFace
+#define glStencilOp                 rglStencilOp
 
 void glBindTexture(GLenum target, GLuint texture);
 void glActiveTexture(GLenum texture);
@@ -127,6 +128,7 @@ void rglScissor(GLint x, GLint y, GLsizei width, GLsizei height);
 GLboolean rglIsEnabled(GLenum cap);
 void rglStencilFunc(GLenum func, GLint ref, GLuint mask);
 void rglCullFace(GLenum mode);
+void rglStencilOp(GLenum sfail, GLenum dpfail, GLenum dppass);
 
 #ifdef __cplusplus
 }

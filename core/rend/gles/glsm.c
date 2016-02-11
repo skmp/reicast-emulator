@@ -64,6 +64,7 @@ struct gl_cached_state
 
    struct
    {
+      bool used;
       GLdouble depth;
    } cleardepth;
 
@@ -75,6 +76,7 @@ struct gl_cached_state
 
    struct
    {
+      bool used;
       GLclampd zNear;
       GLclampd zFar;
    } depthrange;
@@ -141,6 +143,7 @@ void rglClearDepth(GLdouble depth)
 #else
    glClearDepth(depth);
 #endif
+   gl_state.cleardepth.used  = true;
    gl_state.cleardepth.depth = depth;
 }
 
@@ -151,6 +154,7 @@ void rglDepthRange(GLclampd zNear, GLclampd zFar)
 #else
    glDepthRange(zNear, zFar);
 #endif
+   gl_state.depthrange.used  = true;
    gl_state.depthrange.zNear = zNear;
    gl_state.depthrange.zFar  = zFar;
 }

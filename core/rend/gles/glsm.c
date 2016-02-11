@@ -20,6 +20,7 @@ struct gl_cached_state
       GLuint b;
       GLuint a;
    } clear_color;
+
    struct
    {
       GLint x;
@@ -27,6 +28,7 @@ struct gl_cached_state
       GLsizei w;
       GLsizei h;
    } scissor;
+
    struct
    {
       GLint x;
@@ -34,12 +36,14 @@ struct gl_cached_state
       GLsizei w;
       GLsizei h;
    } viewport;
+
    struct
    {
       bool used;
       GLenum sfactor;
       GLenum dfactor;
    } blendfunc;
+
    struct
    {
       bool used;
@@ -48,6 +52,7 @@ struct gl_cached_state
       GLenum srcAlpha;
       GLenum dstAlpha;
    } blendfunc_separate;
+
    struct
    {
       bool used;
@@ -56,47 +61,58 @@ struct gl_cached_state
       GLboolean blue;
       GLboolean alpha;
    } colormask;
+
    struct
    {
       GLdouble depth;
    } cleardepth;
+
    struct
    {
       bool used;
       GLenum func;
    } depthfunc;
+
    struct
    {
       GLclampd zNear;
       GLclampd zFar;
    } depthrange;
+
    struct
    {
       bool used;
       GLfloat factor;
       GLfloat units;
    } polygonoffset;
+
    struct
    {
+      bool used;
       GLenum func;
       GLint ref;
       GLuint mask;
    } stencilfunc;
+
    struct
    {
+      bool used;
       GLenum sfail;
       GLenum dpfail;
       GLenum dppass;
    } stencilop;
+
    struct
    {
       GLenum mode;
    } frontface;
+
    struct 
    {
       bool used;
       GLenum mode;
    } cullface;
+
    GLuint vao;
    GLuint stencilmask;
    GLuint framebuf;
@@ -168,6 +184,7 @@ void rglCullFace(GLenum mode)
 void rglStencilOp(GLenum sfail, GLenum dpfail, GLenum dppass)
 {
    glStencilOp(sfail, dpfail, dppass);
+   gl_state.stencilop.used   = true;
    gl_state.stencilop.sfail  = sfail;
    gl_state.stencilop.dpfail = dpfail;
    gl_state.stencilop.dppass = dppass;
@@ -176,6 +193,7 @@ void rglStencilOp(GLenum sfail, GLenum dpfail, GLenum dppass)
 void rglStencilFunc(GLenum func, GLint ref, GLuint mask)
 {
    glStencilFunc(func, ref, mask);
+   gl_state.stencilfunc.used = true;
    gl_state.stencilfunc.func = func;
    gl_state.stencilfunc.ref  = ref;
    gl_state.stencilfunc.mask = mask;
@@ -661,13 +679,17 @@ static void glsm_state_bind(void)
    }
    glFrontFace(gl_state.frontface.mode);
    glStencilMask(gl_state.stencilmask);
-   glStencilOp(gl_state.stencilop.sfail,
-         gl_state.stencilop.dpfail,
-         gl_state.stencilop.dppass);
-   glStencilFunc(
-         gl_state.stencilfunc.func,
-         gl_state.stencilfunc.ref,
-         gl_state.stencilfunc.mask);
+
+   if (gl_state.stencilop.used)
+      glStencilOp(gl_state.stencilop.sfail,
+            gl_state.stencilop.dpfail,
+            gl_state.stencilop.dppass);
+
+   if (gl_state.stencilfunc.used)
+      glStencilFunc(
+            gl_state.stencilfunc.func,
+            gl_state.stencilfunc.ref,
+            gl_state.stencilfunc.mask);
 
    for (i = 0; i < MAX_TEXTURE; i ++)
    {

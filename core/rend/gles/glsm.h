@@ -71,98 +71,6 @@ enum glsm_state_ctl
    GLSM_CTL_STATE_CONTEXT_INIT
 };
 
-struct gl_cached_state
-{
-   struct
-   {
-      GLuint ids[MAX_TEXTURE];
-   } bind_textures;
-
-   struct
-   {
-      bool enabled[MAX_ATTRIB];
-   } vertex_attrib_pointer;
-
-   struct
-   {
-      GLuint r;
-      GLuint g;
-      GLuint b;
-      GLuint a;
-   } clear_color;
-   struct
-   {
-      GLint x;
-      GLint y;
-      GLsizei w;
-      GLsizei h;
-   } scissor;
-   struct
-   {
-      GLint x;
-      GLint y;
-      GLsizei w;
-      GLsizei h;
-   } viewport;
-   struct
-   {
-      GLenum sfactor;
-      GLenum dfactor;
-   } blendfunc;
-   struct
-   {
-      bool used;
-      GLenum srcRGB;
-      GLenum dstRGB;
-      GLenum srcAlpha;
-      GLenum dstAlpha;
-   } blendfunc_separate;
-   struct
-   {
-      bool used;
-      GLboolean red;
-      GLboolean green;
-      GLboolean blue;
-      GLboolean alpha;
-   } colormask;
-   struct
-   {
-      bool used;
-      GLenum func;
-   } depthfunc;
-   struct
-   {
-      bool used;
-      GLfloat factor;
-      GLfloat units;
-   } polygonoffset;
-   struct
-   {
-      GLenum func;
-      GLint ref;
-      GLuint mask;
-   } stencilfunc;
-   struct
-   {
-      GLenum sfail;
-      GLenum dpfail;
-      GLenum dppass;
-   } stencilop;
-   struct
-   {
-      GLenum mode;
-   } frontface;
-   GLuint vao;
-   GLuint stencilmask;
-   GLenum cullmode;
-   GLuint framebuf;
-   GLuint program; 
-   GLboolean depthmask;
-   GLenum active_texture;
-   int cap_state[SGL_CAP_MAX];
-   int cap_translate[SGL_CAP_MAX];
-};
-
 typedef struct glsm_ctx_params
 {
    retro_hw_context_reset_t context_reset;
@@ -172,8 +80,6 @@ typedef struct glsm_ctx_params
    unsigned major;
    unsigned minor;
 } glsm_ctx_params_t;
-
-extern struct gl_cached_state gl_state;
 
 bool glsm_ctl(enum glsm_state_ctl state, void *data);
 

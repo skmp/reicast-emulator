@@ -61,7 +61,6 @@ struct vbo_type
    GLuint idxs2;
 };
 
-gl_cached_state gl_state;
 vbo_type vbo;
 modvol_shader_type modvol_shader;
 PipelineShader program_table[768*2];
@@ -1146,10 +1145,6 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 
 static void SetupMainVBO(void)
 {
-#ifdef CORE
-	glBindVertexArray(gl_state.vao);
-#endif
-
 	glBindBuffer(GL_ARRAY_BUFFER, vbo.geometry);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs);
 
@@ -1170,10 +1165,6 @@ static void SetupMainVBO(void)
 
 static void SetupModvolVBO(void)
 {
-#ifdef CORE
-	glBindVertexArray(gl_state.vao);
-#endif
-
 	glBindBuffer(GL_ARRAY_BUFFER, vbo.modvols);
 
 	//setup vertex buffers attrib pointers

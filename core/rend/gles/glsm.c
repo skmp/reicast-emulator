@@ -1,8 +1,101 @@
 #include <glsym/glsym.h>
 #include "glsm.h"
 
+struct gl_cached_state
+{
+   struct
+   {
+      GLuint ids[MAX_TEXTURE];
+   } bind_textures;
+
+   struct
+   {
+      bool enabled[MAX_ATTRIB];
+   } vertex_attrib_pointer;
+
+   struct
+   {
+      GLuint r;
+      GLuint g;
+      GLuint b;
+      GLuint a;
+   } clear_color;
+   struct
+   {
+      GLint x;
+      GLint y;
+      GLsizei w;
+      GLsizei h;
+   } scissor;
+   struct
+   {
+      GLint x;
+      GLint y;
+      GLsizei w;
+      GLsizei h;
+   } viewport;
+   struct
+   {
+      GLenum sfactor;
+      GLenum dfactor;
+   } blendfunc;
+   struct
+   {
+      bool used;
+      GLenum srcRGB;
+      GLenum dstRGB;
+      GLenum srcAlpha;
+      GLenum dstAlpha;
+   } blendfunc_separate;
+   struct
+   {
+      bool used;
+      GLboolean red;
+      GLboolean green;
+      GLboolean blue;
+      GLboolean alpha;
+   } colormask;
+   struct
+   {
+      bool used;
+      GLenum func;
+   } depthfunc;
+   struct
+   {
+      bool used;
+      GLfloat factor;
+      GLfloat units;
+   } polygonoffset;
+   struct
+   {
+      GLenum func;
+      GLint ref;
+      GLuint mask;
+   } stencilfunc;
+   struct
+   {
+      GLenum sfail;
+      GLenum dpfail;
+      GLenum dppass;
+   } stencilop;
+   struct
+   {
+      GLenum mode;
+   } frontface;
+   GLuint vao;
+   GLuint stencilmask;
+   GLenum cullmode;
+   GLuint framebuf;
+   GLuint program; 
+   GLboolean depthmask;
+   GLenum active_texture;
+   int cap_state[SGL_CAP_MAX];
+   int cap_translate[SGL_CAP_MAX];
+};
+
 struct retro_hw_render_callback hw_render;
 static int glsm_stop;
+static struct gl_cached_state gl_state;
 
 /* GL wrapper-side */
 
@@ -13,7 +106,8 @@ void rglDepthFunc(GLenum func)
    glDepthFunc(func);
 }
 
-void rglColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha)
+void rglColorMask(GLboolean red, GLboolean green,
+      GLboolean blue, GLboolean alpha)
 {
    glColorMask(red, green, blue, alpha);
    gl_state.colormask.red   = red;
@@ -50,7 +144,8 @@ GLboolean rglIsEnabled(GLenum cap)
    return gl_state.cap_state[cap] ? GL_TRUE : GL_FALSE;
 }
 
-void rglClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
+void rglClearColor(GLclampf red, GLclampf green,
+      GLclampf blue, GLclampf alpha)
 {
    glClearColor(red, green, blue, alpha);
    gl_state.clear_color.r = red;
@@ -197,7 +292,8 @@ void rglGenFramebuffers(GLsizei n, GLuint *ids)
 void rglBindFramebuffer(GLenum target, GLuint framebuffer)
 {
    if (!glsm_stop)
-      glBindFramebuffer(GL_FRAMEBUFFER, framebuffer ? framebuffer : hw_render.get_current_framebuffer());
+      glBindFramebuffer(GL_FRAMEBUFFER, framebuffer 
+            ? framebuffer : hw_render.get_current_framebuffer());
 }
 
 void rglGenerateMipmap(GLenum target)

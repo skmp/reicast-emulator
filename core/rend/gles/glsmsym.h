@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define glDrawArrays                rglDrawArrays
+#define glCompressedTexImage2D      rglCompressedTexImage2D
 #define glBindTexture               rglBindTexture
 #define glActiveTexture             rglActiveTexture
 #define glFramebufferTexture2D      rglFramebufferTexture2D
@@ -48,7 +50,9 @@ extern "C" {
 #define glDeleteShader              rglDeleteShader
 #define glUniform1f                 rglUniform1f
 #define glUniform1i                 rglUniform1i
+#define glUniform2f                 rglUniform2f
 #define glUniform2fv                rglUniform2fv
+#define glUniform3f                 rglUniform3f
 #define glUniform3fv                rglUniform3fv
 #define glUniform4f                 rglUniform4f
 #define glUniform4fv                rglUniform4fv
@@ -66,7 +70,11 @@ extern "C" {
 #define glFrontFace                 rglFrontFace
 #define glDepthRange                rglDepthRange
 #define glClearDepth                rglClearDepth
+#define glPolygonOffset             rglPolygonOffset
 
+void rglCompressedTexImage2D(GLenum target, GLint level,
+      GLenum internalformat, GLsizei width, GLsizei height,
+      GLint border, GLsizei imageSize, const GLvoid *data);
 void glBindTexture(GLenum target, GLuint texture);
 void glActiveTexture(GLenum texture);
 void rglFramebufferTexture2D(GLenum target, GLenum attachment,
@@ -117,7 +125,9 @@ GLuint rglCreateShader(GLenum shader);
 void rglDeleteShader(GLuint shader);
 void rglUniform1f(GLint location, GLfloat v0);
 void rglUniform1i(GLint location, GLint v0);
+void rglUniform2f(GLint location, GLfloat v0, GLfloat v1);
 void rglUniform2fv(GLint location, GLsizei count, const GLfloat *value);
+void sglUniform3f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
 void rglUniform3fv(GLint location, GLsizei count, const GLfloat *value);
 void rglUniform4f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
 void rglUniform4fv(GLint location, GLsizei count, const GLfloat *value);
@@ -135,6 +145,8 @@ void rglStencilOp(GLenum sfail, GLenum dpfail, GLenum dppass);
 void rglFrontFace(GLenum mode);
 void rglDepthRange(GLclampd zNear, GLclampd zFar);
 void rglClearDepth(GLdouble depth);
+void rglPolygonOffset(GLfloat factor, GLfloat units);
+void rglDrawArrays(GLenum mode, GLint first, GLsizei count);
 
 #ifdef __cplusplus
 }

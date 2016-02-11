@@ -288,6 +288,19 @@ void rglFramebufferTexture2D(GLenum target, GLenum attachment,
    glFramebufferTexture2D(target, attachment, textarget, texture, level);
 }
 
+void rglDrawArrays(GLenum mode, GLint first, GLsizei count)
+{
+   glDrawArrays(mode, first, count);
+}
+
+void rglCompressedTexImage2D(GLenum target, GLint level,
+      GLenum internalformat, GLsizei width, GLsizei height,
+      GLint border, GLsizei imageSize, const GLvoid *data)
+{
+   glCompressedTexImage2D(target, level, internalformat, 
+         width, height, border, imageSize, data);
+}
+
 void rglFramebufferRenderbuffer(GLenum target, GLenum attachment,
       GLenum renderbuffertarget, GLuint renderbuffer)
 {
@@ -450,9 +463,19 @@ void rglUniform1i(GLint location, GLint v0)
    glUniform1i(location, v0);
 }
 
+void rglUniform2f(GLint location, GLfloat v0, GLfloat v1)
+{
+   glUniform2f(location, v0, v1);
+}
+
 void rglUniform2fv(GLint location, GLsizei count, const GLfloat *value)
 {
    glUniform2fv(location, count, value);
+}
+
+void sglUniform3f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
+{
+   glUniform3f(location, v0, v1, v2);
 }
 
 void rglUniform3fv(GLint location, GLsizei count, const GLfloat *value)
@@ -468,6 +491,14 @@ void rglUniform4f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3
 void rglUniform4fv(GLint location, GLsizei count, const GLfloat *value)
 {
    glUniform4fv(location, count, value);
+}
+
+void rglPolygonOffset(GLfloat factor, GLfloat units)
+{
+  glPolygonOffset(factor, units);
+  gl_state.polygonoffset.used   = true;
+  gl_state.polygonoffset.factor = factor;
+  gl_state.polygonoffset.units  = units;
 }
 
 /* GLSM-side */

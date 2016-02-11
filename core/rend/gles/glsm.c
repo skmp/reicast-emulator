@@ -383,6 +383,11 @@ void rglDeleteFramebuffers(GLsizei n, GLuint *framebuffers)
    glDeleteFramebuffers(n, framebuffers);
 }
 
+void rglDeleteTextures(GLsizei n, const GLuint *textures)
+{
+   glDeleteTextures(n, textures);
+}
+
 void rglRenderbufferStorage(GLenum target, GLenum internalFormat,
       GLsizei width, GLsizei height)
 {
@@ -469,6 +474,11 @@ GLuint rglCreateProgram(void)
    return glCreateProgram();
 }
 
+void rglGenTextures(GLsizei n, GLuint *textures)
+{
+   glGenTextures(n, textures);
+}
+
 void rglGetShaderInfoLog(GLuint shader, GLsizei maxLength,
       GLsizei *length, GLchar *infoLog)
 {
@@ -535,6 +545,11 @@ GLuint rglCreateShader(GLenum shaderType)
    return glCreateShader(shaderType);
 }
 
+void rglDeleteProgram(GLuint program)
+{
+   glDeleteProgram(program);
+}
+
 void rglDeleteShader(GLuint shader)
 {
    glDeleteShader(shader);
@@ -543,6 +558,11 @@ void rglDeleteShader(GLuint shader)
 GLint rglGetUniformLocation(GLuint program, const GLchar *name)
 {
    return glGetUniformLocation(program, name);
+}
+
+void rglDeleteBuffers(GLsizei n, const GLuint *buffers)
+{
+   glDeleteBuffers(n, buffers);
 }
 
 void rglGenBuffers(GLsizei n, GLuint *buffers)

@@ -21,11 +21,14 @@ extern "C" {
 #define glFramebufferTexture2D      rglFramebufferTexture2D
 #define glFramebufferRenderbuffer   rglFramebufferRenderbuffer
 #define glDeleteFramebuffers        rglDeleteFramebuffers
+#define glDeleteTextures            rglDeleteTextures
+#define glDeleteBuffers             rglDeleteBuffers
 #define glRenderbufferStorage       rglRenderbufferStorage
 #define glBindRenderbuffer          rglBindRenderbuffer
 #define glDeleteRenderbuffers       rglDeleteRenderbuffers
 #define glGenRenderbuffers          rglGenRenderbuffers
 #define glGenFramebuffers           rglGenFramebuffers
+#define glGenTextures               rglGenTextures
 #define glBindFramebuffer           rglBindFramebuffer
 #define glGenerateMipmap            rglGenerateMipmap
 #define glCheckFramebufferStatus    rglCheckFramebufferStatus
@@ -56,6 +59,7 @@ extern "C" {
 #define glBindBuffer                rglBindBuffer
 #define glCreateShader              rglCreateShader
 #define glDeleteShader              rglDeleteShader
+#define glDeleteProgram             rglDeleteProgram
 #define glUniform1f                 rglUniform1f
 #define glUniform1i                 rglUniform1i
 #define glUniform2f                 rglUniform2f
@@ -95,10 +99,12 @@ void rglFramebufferRenderbuffer(GLenum target, GLenum attachment,
 void rglDeleteFramebuffers(GLsizei n, GLuint *framebuffers);
 void rglRenderbufferStorage(GLenum target, GLenum internalFormat,
       GLsizei width, GLsizei height);
+void rglDeleteTextures(GLsizei n, const GLuint *textures);
 void rglBindRenderbuffer(GLenum target, GLuint renderbuffer);
 void rglDeleteRenderbuffers(GLsizei n, GLuint *renderbuffers);
 void rglGenRenderbuffers(GLsizei n, GLuint *renderbuffers);
 void rglGenFramebuffers(GLsizei n, GLuint *ids);
+void rglGenTextures(GLsizei n, GLuint *textures);
 void rglBindFramebuffer(GLenum target, GLuint framebuffer);
 void rglGenerateMipmap(GLenum target);
 GLenum rglCheckFramebufferStatus(GLenum target);
@@ -163,7 +169,8 @@ void rglDrawArrays(GLenum mode, GLint first, GLsizei count);
 void rglVertexAttrib4f(GLuint name, GLfloat x, GLfloat y,
       GLfloat z, GLfloat w);
 void rglVertexAttrib4fv(GLuint name, GLfloat* v);
-
+void rglDeleteProgram(GLuint program);
+void rglDeleteBuffers(GLsizei n, const GLuint *buffers);
 
 #ifdef __cplusplus
 }

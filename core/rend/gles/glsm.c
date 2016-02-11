@@ -397,6 +397,9 @@ static void glsm_state_unbind(void)
    glActiveTexture(GL_TEXTURE0);
    glBindTexture(GL_TEXTURE_2D, 0);
 
+   for (i = 0; i < MAX_ATTRIB; i ++)
+      glDisableVertexAttribArray(i);
+
    glBindFramebuffer(RARCH_GL_FRAMEBUFFER, 0);
 }
 

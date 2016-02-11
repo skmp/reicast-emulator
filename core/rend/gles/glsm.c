@@ -137,10 +137,10 @@ struct gl_cached_state
    int cap_translate[SGL_CAP_MAX];
 };
 
-static glsm_imm_vbo_draw imm_vbo_draw    = NULL;
-static glsm_imm_vbo_draw imm_vbo_disable = NULL;
+static glsm_framebuffer_lock glsm_fb_lock = NULL;
+static glsm_imm_vbo_draw imm_vbo_draw     = NULL;
+static glsm_imm_vbo_draw imm_vbo_disable  = NULL;
 struct retro_hw_render_callback hw_render;
-static int glsm_stop;
 static struct gl_cached_state gl_state;
 
 /* GL wrapper-side */
@@ -412,7 +412,7 @@ void rglGenFramebuffers(GLsizei n, GLuint *ids)
 void rglBindFramebuffer(GLenum target, GLuint framebuffer)
 {
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
-   if (!glsm_stop)
+   if (!glsm_ctl(GLSM_CTL_IS_FRAMEBUFFER_LOCKED, NULL))
       glBindFramebuffer(GL_FRAMEBUFFER, framebuffer 
             ? framebuffer : hw_render.get_current_framebuffer());
 }
@@ -605,8 +605,6 @@ static void glsm_state_setup(void)
 {
    unsigned i;
 
-   glsm_stop = 0;
-   
    gl_state.cap_translate[SGL_DEPTH_TEST]           = GL_DEPTH_TEST;
    gl_state.cap_translate[SGL_BLEND]                = GL_BLEND;
    gl_state.cap_translate[SGL_POLYGON_OFFSET_FILL]  = GL_POLYGON_OFFSET_FILL;
@@ -799,6 +797,12 @@ static void glsm_state_unbind(void)
    glBindFramebuffer(RARCH_GL_FRAMEBUFFER, 0);
 }
 
+static bool dummy_framebuffer_lock(void *data)
+{
+   (void)data;
+   return false;
+}
+
 static bool glsm_state_ctx_init(void *data)
 {
    glsm_ctx_params_t *params = (glsm_ctx_params_t*)data;
@@ -839,6 +843,10 @@ static bool glsm_state_ctx_init(void *data)
    if (params->imm_vbo_disable != NULL)
       imm_vbo_disable              = params->imm_vbo_disable;
 
+   glsm_fb_lock                    = dummy_framebuffer_lock;
+   if (params->framebuffer_lock)
+      glsm_fb_lock                 = params->framebuffer_lock;
+
    if (imm_vbo_draw != NULL && imm_vbo_disable != NULL)
       glsm_ctl(GLSM_CTL_SET_IMM_VBO, NULL);
 
@@ -850,10 +858,12 @@ static bool glsm_state_ctx_init(void *data)
 
 bool glsm_ctl(enum glsm_state_ctl state, void *data)
 {
-   static bool imm_vbo_enable = false;
+   static bool imm_vbo_enable        = false;
 
    switch (state)
    {
+      case GLSM_CTL_IS_FRAMEBUFFER_LOCKED:
+         return glsm_fb_lock(NULL);
       case GLSM_CTL_IMM_VBO_DRAW:
          if (imm_vbo_draw == NULL || !imm_vbo_enable)
             return false;

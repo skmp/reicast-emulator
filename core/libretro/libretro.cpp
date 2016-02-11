@@ -424,7 +424,7 @@ static void extract_directory(char *buf, const char *path, size_t size)
 // Loading/unloading games
 bool retro_load_game(const struct retro_game_info *game)
 {
-   glsm_ctx_params_t params;
+   glsm_ctx_params_t params = {0};
    const char *dir = NULL;
 #ifdef _WIN32
    char slash = '\\';

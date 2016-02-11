@@ -479,8 +479,6 @@ static GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentSh
 
 	verify(glIsProgram(program));
 
-   gl_state.program = modvol_shader.program;
-
 	return program;
 }
 

@@ -23,6 +23,14 @@ void rglColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alph
    gl_state.colormask.used  = true;
 }
 
+void rglStencilFunc(GLenum func, GLint ref, GLuint mask)
+{
+   glStencilFunc(func, ref, mask);
+   gl_state.stencilfunc.func = func;
+   gl_state.stencilfunc.ref  = ref;
+   gl_state.stencilfunc.mask = mask;
+}
+
 GLboolean rglIsEnabled(GLenum cap)
 {
    return gl_state.cap_state[cap] ? GL_TRUE : GL_FALSE;

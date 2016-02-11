@@ -588,13 +588,7 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
    if (cache.stencil_modvol_on!=stencil)
    {
       cache.stencil_modvol_on   = stencil;
-      gl_state.stencilfunc.func = GL_ALWAYS;
-      gl_state.stencilfunc.ref  = stencil;
-      gl_state.stencilfunc.mask = stencil;
-      glStencilFunc(
-            gl_state.stencilfunc.func,
-            gl_state.stencilfunc.ref,
-            gl_state.stencilfunc.mask);
+      glStencilFunc(GL_ALWAYS, stencil, stencil);
    }
 
    if (gp->texid != cache.texture)
@@ -1039,13 +1033,7 @@ static void DrawSorted(void)
    glDepthFunc(Zfunction[6]);
 
    glEnable(GL_STENCIL_TEST);
-   gl_state.stencilfunc.func = GL_ALWAYS;
-   gl_state.stencilfunc.ref  = 0;
-   gl_state.stencilfunc.mask = 0;
-   glStencilFunc(
-         gl_state.stencilfunc.func,
-         gl_state.stencilfunc.ref,
-         gl_state.stencilfunc.mask);
+   glStencilFunc(GL_ALWAYS, 0, 0);
    gl_state.stencilop.sfail  = GL_KEEP;
    gl_state.stencilop.dpfail = GL_KEEP;
    gl_state.stencilop.dppass = GL_REPLACE;
@@ -1099,13 +1087,7 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
       glStencilMask(2);
 
       //no stencil testing
-      gl_state.stencilfunc.func = GL_ALWAYS;
-      gl_state.stencilfunc.ref  = 0;
-      gl_state.stencilfunc.mask = 2;
-      glStencilFunc(
-            gl_state.stencilfunc.func,
-            gl_state.stencilfunc.ref,
-            gl_state.stencilfunc.mask);
+      glStencilFunc(GL_ALWAYS, 0, 2);
 
 		//count the number of pixels in front of the Z buffer (and only keep the lower bit of the count)
       gl_state.stencilop.sfail  = GL_KEEP;
@@ -1140,13 +1122,7 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 			
 
 			//if (1<=st) st=1; else st=0;
-         gl_state.stencilfunc.func = GL_LEQUAL;
-         gl_state.stencilfunc.ref  = 1;
-         gl_state.stencilfunc.mask = 3;
-         glStencilFunc(
-               gl_state.stencilfunc.func,
-               gl_state.stencilfunc.ref,
-               gl_state.stencilfunc.mask);
+         glStencilFunc(GL_LEQUAL, 1, 3);
 
          gl_state.stencilop.sfail  = GL_ZERO;
          gl_state.stencilop.dpfail = GL_ZERO;
@@ -1178,13 +1154,7 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 			//1   : 1   : 01
 
 			//if (2>st) st=1; else st=0;	//can't be done with a single pass
-         gl_state.stencilfunc.func = GL_GREATER;
-         gl_state.stencilfunc.ref  = 1;
-         gl_state.stencilfunc.mask = 3;
-         glStencilFunc(
-               gl_state.stencilfunc.func,
-               gl_state.stencilfunc.ref,
-               gl_state.stencilfunc.mask);
+         glStencilFunc(GL_GREATER, 1, 3);
          gl_state.stencilop.sfail  = GL_ZERO;
          gl_state.stencilop.dpfail = GL_KEEP;
          gl_state.stencilop.dppass = GL_REPLACE;
@@ -1289,13 +1259,7 @@ static void DrawModVols(void)
 		{
 			//simple single level stencil
 			glEnable(GL_STENCIL_TEST);
-         gl_state.stencilfunc.func = GL_ALWAYS;
-         gl_state.stencilfunc.ref  = 0x1;
-         gl_state.stencilfunc.mask = 0x1;
-         glStencilFunc(
-               gl_state.stencilfunc.func,
-               gl_state.stencilfunc.ref,
-               gl_state.stencilfunc.mask);
+         glStencilFunc(GL_ALWAYS, 0x1, 0x1);
 
          gl_state.stencilop.sfail  = GL_KEEP;
          gl_state.stencilop.dpfail = GL_KEEP;
@@ -1370,13 +1334,7 @@ static void DrawModVols(void)
 		
 		glEnable(GL_STENCIL_TEST);
       //only pixels that are Modvol enabled, and in area 1
-      gl_state.stencilfunc.func = GL_EQUAL;
-      gl_state.stencilfunc.ref  = 0x81;
-      gl_state.stencilfunc.mask = 0x81;
-      glStencilFunc(
-            gl_state.stencilfunc.func,
-            gl_state.stencilfunc.ref,
-            gl_state.stencilfunc.mask);
+      glStencilFunc(GL_EQUAL, 0x81, 0x81);
 		
 		//clear the stencil result bit
       glStencilMask(0x3); /* write to LSB */

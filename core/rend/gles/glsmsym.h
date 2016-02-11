@@ -60,6 +60,7 @@ extern "C" {
 #define glViewport                  rglViewport
 #define glScissor                   rglScissor
 #define glIsEnabled                 rglIsEnabled
+#define glStencilFunc               rglStencilFunc
 
 void glBindTexture(GLenum target, GLuint texture);
 void glActiveTexture(GLenum texture);
@@ -123,6 +124,7 @@ void rglClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 void rglViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 void rglScissor(GLint x, GLint y, GLsizei width, GLsizei height);
 GLboolean rglIsEnabled(GLenum cap);
+void rglStencilFunc(GLenum func, GLint ref, GLuint mask);
 
 #ifdef __cplusplus
 }

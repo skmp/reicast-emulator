@@ -23,6 +23,24 @@ void rglColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alph
    gl_state.colormask.used  = true;
 }
 
+void rglClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
+{
+   glClearColor(red, green, blue, alpha);
+   gl_state.clear_color.r = red;
+   gl_state.clear_color.g = green;
+   gl_state.clear_color.b = blue;
+   gl_state.clear_color.a = alpha;
+}
+
+void rglViewport(GLint x, GLint y, GLsizei width, GLsizei height)
+{
+   glViewport(x, y, width, height);
+   gl_state.viewport.x = x;
+   gl_state.viewport.y = y;
+   gl_state.viewport.w = width;
+   gl_state.viewport.h = height;
+}
+
 void rglBlendFunc(GLenum sfactor, GLenum dfactor)
 {
    gl_state.blendfunc.sfactor = sfactor;

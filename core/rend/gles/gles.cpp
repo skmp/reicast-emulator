@@ -1977,24 +1977,14 @@ static bool RenderFrame(void)
 		BindRTT(FB_W_SOF1&VRAM_MASK,FB_X_CLIP.max-FB_X_CLIP.min+1,FB_Y_CLIP.max-FB_Y_CLIP.min+1,channels,format);
 	}
 
-   gl_state.clear_color.r = 0;
-   gl_state.clear_color.g = 0;
-   gl_state.clear_color.b = 0;
-   gl_state.clear_color.a = 1.0f;
-
-   glClearColor(gl_state.clear_color.r, gl_state.clear_color.g, gl_state.clear_color.b, gl_state.clear_color.a);
+   glClearColor(0, 0, 0, 1.0f);
 #ifdef GLES
 	glClearDepthf(0.f);
 #else
    glClearDepth(0.f);
 #endif
 
-   gl_state.viewport.x = 0;
-   gl_state.viewport.y = 0;
-   gl_state.viewport.w = gles_screen_width;
-   gl_state.viewport.h = gles_screen_height;
-
-   glViewport(gl_state.viewport.x, gl_state.viewport.y, gl_state.viewport.w, gl_state.viewport.h);
+   glViewport(0, 0, gles_screen_width, gles_screen_height);
 	glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
 	if (UsingAutoSort())

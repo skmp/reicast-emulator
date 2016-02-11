@@ -56,6 +56,8 @@ extern "C" {
 #define glBlendFuncSeparate         rglBlendFuncSeparate
 #define glDepthFunc                 rglDepthFunc
 #define glColorMask                 rglColorMask
+#define glClearColor                rglClearColor
+#define glViewport                  rglViewport
 
 void glBindTexture(GLenum target, GLuint texture);
 void glActiveTexture(GLenum texture);
@@ -115,6 +117,8 @@ void rglBlendFunc(GLenum sfactor, GLenum dfactor);
 void rglBlendFuncSeparate(GLenum sfactor, GLenum dfactor);
 void rglDepthFunc(GLenum func);
 void rglColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
+void rglClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
+void rglViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 #ifdef __cplusplus
 }

@@ -36,6 +36,7 @@ struct gl_cached_state
    } viewport;
    struct
    {
+      bool used;
       GLenum sfactor;
       GLenum dfactor;
    } blendfunc;
@@ -91,9 +92,13 @@ struct gl_cached_state
    {
       GLenum mode;
    } frontface;
+   struct 
+   {
+      bool used;
+      GLenum mode;
+   } cullface;
    GLuint vao;
    GLuint stencilmask;
-   GLenum cullmode;
    GLuint framebuf;
    GLuint program; 
    GLboolean depthmask;
@@ -156,7 +161,8 @@ void rglColorMask(GLboolean red, GLboolean green,
 void rglCullFace(GLenum mode)
 {
    glCullFace(mode);
-   gl_state.cullmode = mode;
+   gl_state.cullface.used = true;
+   gl_state.cullface.mode = mode;
 }
 
 void rglStencilOp(GLenum sfail, GLenum dpfail, GLenum dppass)
@@ -210,6 +216,7 @@ void rglViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 
 void rglBlendFunc(GLenum sfactor, GLenum dfactor)
 {
+   gl_state.blendfunc.used    = true;
    gl_state.blendfunc.sfactor = sfactor;
    gl_state.blendfunc.dfactor = dfactor;
    glBlendFunc(sfactor, dfactor);
@@ -553,7 +560,7 @@ static void glsm_state_setup(void)
       gl_state.vertex_attrib_pointer.enabled[i] = 0;
 
    gl_state.framebuf                    = hw_render.get_current_framebuffer();
-   gl_state.cullmode                    = GL_BACK;
+   gl_state.cullface.mode               = GL_BACK;
    gl_state.frontface.mode              = GL_CCW; 
 
    gl_state.blendfunc_separate.used     = false;
@@ -594,9 +601,12 @@ static void glsm_state_bind(void)
    glBindFramebuffer(
          RARCH_GL_FRAMEBUFFER,
          hw_render.get_current_framebuffer());
-   glBlendFunc(
-         gl_state.blendfunc.sfactor,
-         gl_state.blendfunc.dfactor);
+
+   if (gl_state.blendfunc.used)
+      glBlendFunc(
+            gl_state.blendfunc.sfactor,
+            gl_state.blendfunc.dfactor);
+
    if (gl_state.blendfunc_separate.used)
       glBlendFuncSeparate(
             gl_state.blendfunc_separate.srcRGB,
@@ -609,15 +619,20 @@ static void glsm_state_bind(void)
          gl_state.clear_color.g,
          gl_state.clear_color.b,
          gl_state.clear_color.a);
+
    if (gl_state.depthfunc.used)
       glDepthFunc(gl_state.depthfunc.func);
+
    if (gl_state.colormask.used)
       glColorMask(
             gl_state.colormask.red,
             gl_state.colormask.green,
             gl_state.colormask.blue,
             gl_state.colormask.alpha);
-   glCullFace(gl_state.cullmode);
+
+   if (gl_state.cullface.used)
+      glCullFace(gl_state.cullface.mode);
+
    glDepthMask(gl_state.depthmask);
    if (gl_state.polygonoffset.used)
       glPolygonOffset(

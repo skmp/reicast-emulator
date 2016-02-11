@@ -828,6 +828,16 @@ bool glsm_ctl(enum glsm_state_ctl state, void *data)
 
    switch (state)
    {
+      case GLSM_CTL_IMM_VBO_DRAW:
+         if (imm_vbo_draw == NULL)
+            return false;
+         imm_vbo_draw(NULL);
+         break;
+      case GLSM_CTL_IMM_VBO_DISABLE:
+         if (imm_vbo_disable == NULL)
+            return false;
+         imm_vbo_disable(NULL);
+         break;
       case GLSM_CTL_IS_IMM_VBO:
          return imm_vbo_enable;
       case GLSM_CTL_SET_IMM_VBO:

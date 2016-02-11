@@ -71,7 +71,9 @@ enum glsm_state_ctl
    GLSM_CTL_STATE_CONTEXT_INIT,
    GLSM_CTL_IS_IMM_VBO,
    GLSM_CTL_SET_IMM_VBO,
-   GLSM_CTL_UNSET_IMM_VBO
+   GLSM_CTL_UNSET_IMM_VBO,
+   GLSM_CTL_IMM_VBO_DISABLE,
+   GLSM_CTL_IMM_VBO_DRAW
 };
 
 typedef bool (*glsm_imm_vbo_draw)(void *);

@@ -22,14 +22,14 @@ void rglEnable(GLenum cap)
 
 static void glsm_state_setup(void)
 {
-   gl_state.cap_translate[0]            = GL_DEPTH_TEST;
-   gl_state.cap_translate[1]            = GL_BLEND;
-   gl_state.cap_translate[2]            = GL_POLYGON_OFFSET_FILL;
-   gl_state.cap_translate[3]            = GL_FOG;
-   gl_state.cap_translate[4]            = GL_CULL_FACE;
-   gl_state.cap_translate[5]            = GL_ALPHA_TEST;
-   gl_state.cap_translate[6]            = GL_SCISSOR_TEST;
-   gl_state.cap_translate[7]            = GL_STENCIL_TEST;
+   gl_state.cap_translate[SGL_DEPTH_TEST]           = GL_DEPTH_TEST;
+   gl_state.cap_translate[SGL_BLEND]                = GL_BLEND;
+   gl_state.cap_translate[SGL_POLYGON_OFFSET_FILL]  = GL_POLYGON_OFFSET_FILL;
+   gl_state.cap_translate[SGL_FOG]                  = GL_FOG;
+   gl_state.cap_translate[SGL_CULL_FACE]            = GL_CULL_FACE;
+   gl_state.cap_translate[SGL_ALPHA_TEST]           = GL_ALPHA_TEST;
+   gl_state.cap_translate[SGL_SCISSOR_TEST]         = GL_SCISSOR_TEST;
+   gl_state.cap_translate[SGL_STENCIL_TEST]         = GL_STENCIL_TEST;
 
    gl_state.framebuf                    = hw_render.get_current_framebuffer();
    gl_state.cullmode                    = GL_BACK;
@@ -174,21 +174,21 @@ static bool glsm_state_ctx_init(void *data)
 
 #ifdef GLES
 #if defined(GLES31)
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES_VERSION;
-   hw_render.version_major = 3;
-   hw_render.version_minor = 1;
+   hw_render.context_type       = RETRO_HW_CONTEXT_OPENGLES_VERSION;
+   hw_render.version_major      = 3;
+   hw_render.version_minor      = 1;
 #elif defined(GLES3)
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES3;
+   hw_render.context_type       = RETRO_HW_CONTEXT_OPENGLES3;
 #else
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES2;
+   hw_render.context_type       = RETRO_HW_CONTEXT_OPENGLES2;
 #endif
 #else
 #ifdef CORE
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
-   hw_render.version_major = 3;
-   hw_render.version_minor = 1;
+   hw_render.context_type       = RETRO_HW_CONTEXT_OPENGL_CORE;
+   hw_render.version_major      = 3;
+   hw_render.version_minor      = 1;
 #else
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGL;
+   hw_render.context_type       = RETRO_HW_CONTEXT_OPENGL;
 #endif
 #endif
    hw_render.context_reset      = params->context_reset;

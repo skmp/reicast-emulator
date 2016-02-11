@@ -71,8 +71,13 @@ enum glsm_state_ctl
    GLSM_CTL_STATE_CONTEXT_INIT
 };
 
+typedef bool (*glsm_imm_vbo_draw)(void *);
+typedef bool (*glsm_imm_vbo_disable)(void *);
+
 typedef struct glsm_ctx_params
 {
+   glsm_imm_vbo_draw        imm_vbo_draw;
+   glsm_imm_vbo_disable     imm_vbo_disable;
    retro_hw_context_reset_t context_reset;
    retro_hw_context_reset_t context_destroy;
    retro_environment_t environ_cb;

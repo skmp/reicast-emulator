@@ -137,6 +137,8 @@ struct gl_cached_state
    int cap_translate[SGL_CAP_MAX];
 };
 
+static glsm_imm_vbo_draw imm_vbo_draw    = NULL;
+static glsm_imm_vbo_draw imm_vbo_disable = NULL;
 struct retro_hw_render_callback hw_render;
 static int glsm_stop;
 static struct gl_cached_state gl_state;
@@ -808,6 +810,8 @@ static bool glsm_state_ctx_init(void *data)
    hw_render.stencil            = params->stencil;
    hw_render.depth              = true;
    hw_render.bottom_left_origin = true;
+   imm_vbo_draw                 = params->imm_vbo_draw;
+   imm_vbo_disable              = params->imm_vbo_disable;
 
    if (!params->environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
       return false;

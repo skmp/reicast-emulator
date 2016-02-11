@@ -372,8 +372,7 @@ static void SetCull(u32 CulliMode)
 	else
 	{
 		glEnable(GL_CULL_FACE);
-      gl_state.cullmode     = CullMode[CulliMode];
-		glCullFace(gl_state.cullmode); //GL_FRONT/GL_BACK, ...
+		glCullFace(CullMode[CulliMode]); //GL_FRONT/GL_BACK, ...
 	}
 }
 

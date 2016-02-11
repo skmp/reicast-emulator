@@ -23,6 +23,12 @@ void rglColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alph
    gl_state.colormask.used  = true;
 }
 
+void rglCullFace(GLenum mode)
+{
+   glCullFace(mode);
+   gl_state.cullmode = mode;
+}
+
 void rglStencilFunc(GLenum func, GLint ref, GLuint mask)
 {
    glStencilFunc(func, ref, mask);

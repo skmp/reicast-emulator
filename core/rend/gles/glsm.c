@@ -13,6 +13,16 @@ void rglDepthFunc(GLenum func)
    glDepthFunc(func);
 }
 
+void rglColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha)
+{
+   glColorMask(red, green, blue, alpha);
+   gl_state.colormask.red   = red;
+   gl_state.colormask.green = green;
+   gl_state.colormask.blue  = blue;
+   gl_state.colormask.alpha = alpha;
+   gl_state.colormask.used  = true;
+}
+
 void rglBlendFunc(GLenum sfactor, GLenum dfactor)
 {
    gl_state.blendfunc.sfactor = sfactor;

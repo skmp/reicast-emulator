@@ -612,9 +612,7 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 
       if (Type==LISTTYPE_TRANSLUCENT)
       {
-         gl_state.blendfunc.sfactor = SrcBlendGL[gp->tsp.SrcInstr];
-         gl_state.blendfunc.dfactor = DstBlendGL[gp->tsp.DstInstr];
-         glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
+         glBlendFunc(SrcBlendGL[gp->tsp.SrcInstr], DstBlendGL[gp->tsp.DstInstr]);
 
 #ifdef WEIRD_SLOWNESS
          //SGX seems to be super slow with discard enabled blended pixels
@@ -1263,9 +1261,7 @@ static void DrawModVols(void)
 	SetupModvolVBO();
 
 	glEnable(GL_BLEND);
-   gl_state.blendfunc.sfactor = GL_SRC_ALPHA;
-   gl_state.blendfunc.dfactor = GL_ONE_MINUS_SRC_ALPHA;
-   glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glUseProgram(modvol_shader.program);
 	glUniform1f(modvol_shader.sp_ShaderColor,0.5f);
@@ -1398,9 +1394,7 @@ static void DrawModVols(void)
 
 		//black out any stencil with '1'
 		glEnable(GL_BLEND);
-      gl_state.blendfunc.sfactor = GL_SRC_ALPHA;
-      gl_state.blendfunc.dfactor = GL_ONE_MINUS_SRC_ALPHA;
-      glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		
 		glEnable(GL_STENCIL_TEST);
       //only pixels that are Modvol enabled, and in area 1
@@ -2105,9 +2099,7 @@ static bool RenderFrame(void)
 	//Setup blending
 	glEnable(GL_BLEND);
 
-   gl_state.blendfunc.sfactor = GL_SRC_ALPHA;
-   gl_state.blendfunc.dfactor = GL_ONE_MINUS_SRC_ALPHA;
-   glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.sfactor);
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	/*if (!GetAsyncKeyState(VK_F3))*/
 	{
 		/*

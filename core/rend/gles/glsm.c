@@ -6,6 +6,13 @@ static int glsm_stop;
 
 /* GL wrapper-side */
 
+void rglBlendFunc(GLenum sfactor, GLenum dfactor)
+{
+   gl_state.blendfunc.sfactor = sfactor;
+   gl_state.blendfunc.dfactor = dfactor;
+   glBlendFunc(sfactor, dfactor);
+}
+
 void rglActiveTexture(GLenum texture)
 {
    gl_state.active_texture = texture - GL_TEXTURE0;

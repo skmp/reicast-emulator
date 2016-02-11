@@ -59,6 +59,7 @@ extern "C" {
 #define glClearColor                rglClearColor
 #define glViewport                  rglViewport
 #define glScissor                   rglScissor
+#define glIsEnabled                 rglIsEnabled
 
 void glBindTexture(GLenum target, GLuint texture);
 void glActiveTexture(GLenum texture);
@@ -121,6 +122,7 @@ void rglColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alph
 void rglClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 void rglViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 void rglScissor(GLint x, GLint y, GLsizei width, GLsizei height);
+GLboolean rglIsEnabled(GLenum cap);
 
 #ifdef __cplusplus
 }

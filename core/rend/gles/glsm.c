@@ -23,6 +23,11 @@ void rglColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alph
    gl_state.colormask.used  = true;
 }
 
+GLboolean rglIsEnabled(GLenum cap)
+{
+   return gl_state.cap_state[cap] ? GL_TRUE : GL_FALSE;
+}
+
 void rglClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
    glClearColor(red, green, blue, alpha);

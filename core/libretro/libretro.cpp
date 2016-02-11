@@ -6,10 +6,10 @@
 
 #include "../hw/pvr/pvr_regs.h"
 
-#if defined(GL) || defined(GLES)
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 #include <glsm/glsm.h>
-#include "../rend/rend.h"
 #endif
+#include "../rend/rend.h"
 
 #include "libretro.h"
 
@@ -382,7 +382,7 @@ void retro_run (void)
       update_variables();
 
    co_dc_run();
-#if defined(GL) || defined(GLES)
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
    video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
 #endif
    is_dupe = true;
@@ -393,7 +393,7 @@ void retro_reset (void)
    //TODO
 }
 
-#if defined(GL) || defined(GLES)
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 static void context_reset(void)
 {
    printf("context_reset.\n");
@@ -525,7 +525,7 @@ bool retro_load_game(const struct retro_game_info *game)
    if (!boot_to_bios)
       game_data = strdup(game->path);
 
-#if defined(GL) || defined(GLES)
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
    params.context_reset         = context_reset;
    params.context_destroy       = context_destroy;
    params.environ_cb            = environ_cb;

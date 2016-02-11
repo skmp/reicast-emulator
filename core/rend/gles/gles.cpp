@@ -181,7 +181,7 @@ float fb_scale_x,fb_scale_y;
 #define FRAGCOL "gl_FragColor"
 #define TEXLOOKUP "texture2D"
 
-#ifdef GLES
+#ifdef HAVE_OPENGLES
 #define HIGHP "highp"
 #define MEDIUMP "mediump"
 #define LOWP "lowp"
@@ -194,7 +194,7 @@ float fb_scale_x,fb_scale_y;
 //Fragment and vertex shaders code
 //pretty much 1:1 copy of the d3d ones for now
 const char* VertexShaderSource =
-#ifndef GLES
+#ifndef HAVE_OPENGLES
    "#version 120 \n"
 #endif
 "\
@@ -228,7 +228,7 @@ void main() \n\
 }";
 
 const char* PixelPipelineShader =
-#ifndef GLES
+#ifndef HAVE_OPENGLES
       "#version 120 \n"
 #endif
 "\
@@ -445,7 +445,7 @@ static GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentSh
 	glBindAttribLocation(program, VERTEX_COL_OFFS_ARRAY, "in_offs");
 	glBindAttribLocation(program, VERTEX_UV_ARRAY,       "in_uv");
 
-#ifndef GLES
+#ifndef HAVE_OPENGLES
 	glBindFragDataLocation(program, 0, "FragColor");
 #endif
 
@@ -1892,11 +1892,7 @@ static bool RenderFrame(void)
 	}
 
    glClearColor(0, 0, 0, 1.0f);
-#ifdef GLES
-	glClearDepthf(0.f);
-#else
-   glClearDepth(0.f);
-#endif
+	glClearDepth(0.f);
 
    glViewport(0, 0, gles_screen_width, gles_screen_height);
 	glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);

@@ -178,7 +178,7 @@ struct TextureCacheData
          SetRepeatMode(GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU);
          SetRepeatMode(GL_TEXTURE_WRAP_T, tsp.ClampV, tsp.FlipV);
 
-#ifdef GLES
+#ifdef HAVE_OPENGLES
          glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
 #endif
 

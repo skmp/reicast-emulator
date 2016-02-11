@@ -7,7 +7,10 @@
 extern "C" {
 #endif
 
+#define glVertexAttrib4f            rglVertexAttrib4f
+#define glVertexAttrib4fv           rglVertexAttrib4fv
 #define glDrawArrays                rglDrawArrays
+#define glDrawElements              rglDrawElements
 #define glCompressedTexImage2D      rglCompressedTexImage2D
 #define glBindTexture               rglBindTexture
 #define glActiveTexture             rglActiveTexture
@@ -72,6 +75,8 @@ extern "C" {
 #define glClearDepth                rglClearDepth
 #define glPolygonOffset             rglPolygonOffset
 
+void rglDrawElements(GLenum mode, GLsizei count, GLenum type,
+                           const GLvoid * indices);
 void rglCompressedTexImage2D(GLenum target, GLint level,
       GLenum internalformat, GLsizei width, GLsizei height,
       GLint border, GLsizei imageSize, const GLvoid *data);
@@ -147,6 +152,10 @@ void rglDepthRange(GLclampd zNear, GLclampd zFar);
 void rglClearDepth(GLdouble depth);
 void rglPolygonOffset(GLfloat factor, GLfloat units);
 void rglDrawArrays(GLenum mode, GLint first, GLsizei count);
+void rglVertexAttrib4f(GLuint name, GLfloat x, GLfloat y,
+      GLfloat z, GLfloat w);
+void rglVertexAttrib4fv(GLuint name, GLfloat* v);
+
 
 #ifdef __cplusplus
 }

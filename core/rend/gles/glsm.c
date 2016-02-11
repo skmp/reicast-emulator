@@ -426,11 +426,28 @@ void rglDisableVertexAttribArray(GLuint index)
    glDisableVertexAttribArray(index);
 }
 
+void rglDrawElements(GLenum mode, GLsizei count, GLenum type,
+                           const GLvoid * indices)
+{
+   glDrawElements(mode, count, type, indices);
+}
+
 void rglVertexAttribPointer(GLuint name, GLint size,
       GLenum type, GLboolean normalized, GLsizei stride,
       const GLvoid* pointer)
 {
    glVertexAttribPointer(name, size, type, normalized, stride, pointer);
+}
+
+void rglVertexAttrib4f(GLuint name, GLfloat x, GLfloat y,
+      GLfloat z, GLfloat w)
+{
+    glVertexAttrib4f(name, x, y, z, w);
+}
+
+void rglVertexAttrib4fv(GLuint name, GLfloat* v)
+{
+    glVertexAttrib4fv(name, v);
 }
 
 GLuint rglCreateShader(GLenum shaderType)

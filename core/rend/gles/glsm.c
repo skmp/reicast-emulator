@@ -107,6 +107,7 @@ struct gl_cached_state
 
    struct
    {
+      bool used;
       GLenum mode;
    } frontface;
 
@@ -168,6 +169,7 @@ void rglDepthRange(GLclampd zNear, GLclampd zFar)
 void rglFrontFace(GLenum mode)
 {
    glFrontFace(mode);
+   gl_state.frontface.used = true;
    gl_state.frontface.mode = mode; 
 }
 
@@ -702,7 +704,9 @@ static void glsm_state_bind(void)
       else
          glDisable(gl_state.cap_translate[i]);
    }
-   glFrontFace(gl_state.frontface.mode);
+
+   if (gl_state.frontface.used)
+      glFrontFace(gl_state.frontface.mode);
 
    if (gl_state.stencilmask.used)
       glStencilMask(gl_state.stencilmask.mask);

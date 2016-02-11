@@ -1,6 +1,6 @@
 #pragma once
 #include "rend/rend.h"
-#include "glsmsym.h"
+#include <glsm/glsmsym.h>
 
 #ifdef DEBUG
 #define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)

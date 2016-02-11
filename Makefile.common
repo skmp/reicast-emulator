@@ -97,7 +97,7 @@ ifeq ($(HAVE_GL), 1)
 SOURCES_CXX += $(CORE_DIR)/rend/gles/gles.cpp \
 					$(CORE_DIR)/rend/gles/gltex.cpp
 SOURCES_C   += $(CORE_DIR)/libretro-common/glsym/rglgen.c \
-					$(CORE_DIR)/rend/gles/glsm.c
+					$(CORE_DIR)/libretro-common/glsm/glsm.c
 ifeq ($(HAVE_GLES), 1)
 	SOURCES_C += $(CORE_DIR)/libretro-common/glsym/glsym_es2.c
 else

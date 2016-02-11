@@ -7,7 +7,7 @@
 #include "../hw/pvr/pvr_regs.h"
 
 #if defined(GL) || defined(GLES)
-#include "../rend/gles/glsm.h"
+#include <glsm/glsm.h>
 #include "../rend/rend.h"
 #endif
 

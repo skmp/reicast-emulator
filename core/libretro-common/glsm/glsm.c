@@ -1,5 +1,5 @@
 #include <glsym/glsym.h>
-#include "glsm.h"
+#include <glsm/glsm.h>
 
 struct gl_cached_state
 {

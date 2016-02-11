@@ -18,6 +18,12 @@ void rglEnable(GLenum cap)
    gl_state.cap_state[cap] = 1;
 }
 
+void rglUseProgram(GLuint program)
+{
+   gl_state.program = program;
+   glUseProgram(program);
+}
+
 /* GLSM-side */
 
 static void glsm_state_setup(void)

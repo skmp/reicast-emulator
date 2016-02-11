@@ -583,8 +583,7 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
    if (CurrentShader->program != cache.program)
    {
       cache.program    = CurrentShader->program;
-      gl_state.program = CurrentShader->program;
-      glUseProgram(gl_state.program);
+      glUseProgram(CurrentShader->program);
       SetTileClip(gp->tileclip,true);
    }
 
@@ -1269,8 +1268,7 @@ static void DrawModVols(void)
    gl_state.blendfunc.dfactor = GL_ONE_MINUS_SRC_ALPHA;
    glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
 
-   gl_state.program = modvol_shader.program;
-	glUseProgram(gl_state.program);
+	glUseProgram(modvol_shader.program);
 	glUniform1f(modvol_shader.sp_ShaderColor,0.5f);
 
    gl_state.depthmask = GL_FALSE;
@@ -1858,8 +1856,7 @@ static bool RenderFrame(void)
 	dc_width  *= scale_x;
 	dc_height *= scale_y;
 
-   gl_state.program = modvol_shader.program;
-	glUseProgram(gl_state.program);
+	glUseProgram(modvol_shader.program);
 
 	/*
 
@@ -1948,8 +1945,7 @@ static bool RenderFrame(void)
 		scene_compute_lut_fog();
 	}
 
-   gl_state.program = modvol_shader.program;
-	glUseProgram(gl_state.program);
+	glUseProgram(modvol_shader.program);
 
 	glUniform4fv(modvol_shader.scale, 1, ShaderUniforms.scale_coefs);
 	glUniform4fv(modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
@@ -1965,8 +1961,7 @@ static bool RenderFrame(void)
 		if (s->program == -1)
 			continue;
 
-      gl_state.program = s->program;
-		glUseProgram(gl_state.program);
+		glUseProgram(s->program);
 
       set_shader_uniforms(&ShaderUniforms, s);
 	}

@@ -204,7 +204,6 @@ else ifneq (,$(findstring odroid,$(platform)))
 	CPUFLAGS += -DNO_ASM -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE
 	CFLAGS += -marm -mfloat-abi=hard -mfpu=neon
 	CXXFLAGS += -marm -mfloat-abi=hard -mfpu=neon
-	GLIDE2GL = 1
 	HAVE_NEON = 1
 	ifneq (,$(findstring ODROIDC,$(BOARD)))
 		# ODROID-C1
@@ -281,8 +280,6 @@ else ifneq (,$(findstring ios,$(platform)))
 	CPUFLAGS += -DNO_ASM  -DARM -D__arm__ -DARM_ASM -D__NEON_OPT
 	CPUFLAGS += -marm -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp
 	SHARED += -dynamiclib
-	GLIDE2GL=1
-	GLIDE64MK2=0
 	HAVE_NEON=1
 
 	fpic = -fPIC
@@ -320,8 +317,6 @@ else ifneq (,$(findstring theos_ios,$(platform)))
 	PLATCFLAGS += -DHAVE_POSIX_MEMALIGN -DNO_ASM
 	PLATCFLAGS += -DIOS -marm
 	CPUFLAGS += -DNO_ASM  -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE
-	GLIDE2GL=1
-	GLIDE64MK2=0
 	HAVE_NEON=1
 
 
@@ -407,7 +402,6 @@ else ifeq ($(platform), emscripten)
 	EXT       ?= bc
 	TARGET := $(TARGET_NAME)_libretro_emscripten.$(EXT)
 	GLES := 1
-	GLIDE2GL=1
 	WITH_DYNAREC :=
 	CPUFLAGS += -Dasm=asmerror -D__asm__=asmerror -DNO_ASM -DNOSSE
 	SINGLE_THREAD := 1

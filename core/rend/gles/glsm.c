@@ -1,8 +1,8 @@
-#include <glsym/rglgen.h>
-
+#include <glsym/glsym.h>
 #include "glsm.h"
 
 struct retro_hw_render_callback hw_render;
+static int glsm_stop;
 
 /* GL wrapper-side */
 
@@ -30,10 +30,222 @@ void rglDepthMask(GLboolean flag)
    glDepthMask(flag);
 }
 
+void rglStencilMask(GLenum mask)
+{
+   gl_state.stencilmask = mask;
+   glStencilMask(mask);
+}
+
+void rglBufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage)
+{
+   glBufferData(target, size, data, usage);
+}
+
+void rglBindBuffer(GLenum target, GLuint buffer)
+{
+   glBindBuffer(target, buffer);
+}
+
+void rglLinkProgram(GLuint program)
+{
+   glLinkProgram(program);
+}
+
+void rglFramebufferTexture2D(GLenum target, GLenum attachment,
+      GLenum textarget, GLuint texture, GLint level)
+{
+   glFramebufferTexture2D(target, attachment, textarget, texture, level);
+}
+
+void rglFramebufferRenderbuffer(GLenum target, GLenum attachment,
+      GLenum renderbuffertarget, GLuint renderbuffer)
+{
+   glFramebufferRenderbuffer(target, attachment, renderbuffertarget, renderbuffer);
+}
+
+void rglDeleteFramebuffers(GLsizei n, GLuint *framebuffers)
+{
+   glDeleteFramebuffers(n, framebuffers);
+}
+
+void rglRenderbufferStorage(GLenum target, GLenum internalFormat,
+      GLsizei width, GLsizei height)
+{
+   glRenderbufferStorage(target, internalFormat, width, height);
+}
+
+void rglBindRenderbuffer(GLenum target, GLuint renderbuffer)
+{
+   glBindRenderbuffer(target, renderbuffer);
+}
+
+void rglDeleteRenderbuffers(GLsizei n, GLuint *renderbuffers)
+{
+   glDeleteRenderbuffers(n, renderbuffers);
+}
+
+void rglGenRenderbuffers(GLsizei n, GLuint *renderbuffers)
+{
+   glGenRenderbuffers(n, renderbuffers);
+}
+
+void rglGenFramebuffers(GLsizei n, GLuint *ids)
+{
+   glGenFramebuffers(n, ids);
+}
+
+void rglBindFramebuffer(GLenum target, GLuint framebuffer)
+{
+   if (!glsm_stop)
+      glBindFramebuffer(GL_FRAMEBUFFER, framebuffer ? framebuffer : hw_render.get_current_framebuffer());
+}
+
+void rglGenerateMipmap(GLenum target)
+{
+   glGenerateMipmap(target);
+}
+
+GLenum rglCheckFramebufferStatus(GLenum target)
+{
+   return glCheckFramebufferStatus(target);
+}
+
+void rglBindFragDataLocation(GLuint program, GLuint colorNumber,
+                                   const char * name)
+{
+   glBindFragDataLocation(program, colorNumber, name);
+}
+
+void rglBindAttribLocation(GLuint program, GLuint index, const GLchar *name)
+{
+   glBindAttribLocation(program, index, name);
+}
+
+void rglGetProgramiv(GLuint shader, GLenum pname, GLint *params)
+{
+   glGetProgramiv(shader, pname, params);
+}
+
+void rglGetShaderiv(GLuint shader, GLenum pname, GLint *params)
+{
+   glGetShaderiv(shader, pname, params);
+}
+
+void rglAttachShader(GLuint program, GLuint shader)
+{
+   glAttachShader(program, shader);
+}
+
+void rglShaderSource(GLuint shader, GLsizei count,
+      const GLchar **string, const GLint *length)
+{
+   return glShaderSource(shader, count, string, length);
+}
+
+void rglCompileShader(GLuint shader)
+{
+   glCompileShader(shader);
+}
+
+GLuint rglCreateProgram(void)
+{
+   return glCreateProgram();
+}
+
+void rglGetShaderInfoLog(GLuint shader, GLsizei maxLength,
+      GLsizei *length, GLchar *infoLog)
+{
+   glGetShaderInfoLog(shader, maxLength, length, infoLog);
+}
+
+void rglGetProgramInfoLog(GLuint shader, GLsizei maxLength,
+      GLsizei *length, GLchar *infoLog)
+{
+   glGetProgramInfoLog(shader, maxLength, length, infoLog);
+}
+
+GLboolean rglIsProgram(GLuint program)
+{
+   glIsProgram(program);
+}
+
+void rglEnableVertexAttribArray(GLuint index)
+{
+   gl_state.vertex_attrib_pointer.enabled[index] = 1;
+   glEnableVertexAttribArray(index);
+}
+
+void rglDisableVertexAttribArray(GLuint index)
+{
+   gl_state.vertex_attrib_pointer.enabled[index] = 0;
+   glDisableVertexAttribArray(index);
+}
+
+void rglVertexAttribPointer(GLuint name, GLint size,
+      GLenum type, GLboolean normalized, GLsizei stride,
+      const GLvoid* pointer)
+{
+   glVertexAttribPointer(name, size, type, normalized, stride, pointer);
+}
+
+GLuint rglCreateShader(GLenum shaderType)
+{
+   return glCreateShader(shaderType);
+}
+
+void rglDeleteShader(GLuint shader)
+{
+   glDeleteShader(shader);
+}
+
+GLint rglGetUniformLocation(GLuint program, const GLchar *name)
+{
+   return glGetUniformLocation(program, name);
+}
+
+void rglGenBuffers(GLsizei n, GLuint *buffers)
+{
+   glGenBuffers(n, buffers);
+}
+
+void rglUniform1f(GLint location, GLfloat v0)
+{
+   glUniform1f(location, v0);
+}
+
+void rglUniform1i(GLint location, GLint v0)
+{
+   glUniform1i(location, v0);
+}
+
+void rglUniform2fv(GLint location, GLsizei count, const GLfloat *value)
+{
+   glUniform2fv(location, count, value);
+}
+
+void rglUniform3fv(GLint location, GLsizei count, const GLfloat *value)
+{
+   glUniform3fv(location, count, value);
+}
+
+void rglUniform4f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3)
+{
+   glUniform4f(location, v0, v1, v2, v3);
+}
+
+void rglUniform4fv(GLint location, GLsizei count, const GLfloat *value)
+{
+   glUniform4fv(location, count, value);
+}
+
 /* GLSM-side */
 
 static void glsm_state_setup(void)
 {
+   unsigned i;
+
+   glsm_stop = 0;
+   
    gl_state.cap_translate[SGL_DEPTH_TEST]           = GL_DEPTH_TEST;
    gl_state.cap_translate[SGL_BLEND]                = GL_BLEND;
    gl_state.cap_translate[SGL_POLYGON_OFFSET_FILL]  = GL_POLYGON_OFFSET_FILL;
@@ -42,6 +254,9 @@ static void glsm_state_setup(void)
    gl_state.cap_translate[SGL_ALPHA_TEST]           = GL_ALPHA_TEST;
    gl_state.cap_translate[SGL_SCISSOR_TEST]         = GL_SCISSOR_TEST;
    gl_state.cap_translate[SGL_STENCIL_TEST]         = GL_STENCIL_TEST;
+
+   for (i = 0; i < MAX_ATTRIB; i++)
+      gl_state.vertex_attrib_pointer.enabled[i] = 0;
 
    gl_state.framebuf                    = hw_render.get_current_framebuffer();
    gl_state.cullmode                    = GL_BACK;

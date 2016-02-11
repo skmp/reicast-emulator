@@ -1,9 +1,9 @@
 #ifndef LIBRETRO_SDK_GLSM_H
 #define LIBRETRO_SDK_GLSM_H
 
-#include <glsym/glsym.h>
 #include <boolean.h>
 #include <libretro.h>
+#include <glsym/rglgen_headers.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,6 +45,9 @@ extern "C" {
 #define RARCH_GL_COLOR_ATTACHMENT0 GL_COLOR_ATTACHMENT0
 #endif
 
+#define MAX_ATTRIB 8
+#define MAX_TEXTURE 32
+
 enum
 {
    SGL_DEPTH_TEST             = 0,
@@ -70,6 +73,11 @@ enum glsm_state_ctl
 
 struct gl_cached_state
 {
+   struct
+   {
+      bool enabled[MAX_ATTRIB];
+   } vertex_attrib_pointer;
+
    struct
    {
       GLuint r;
@@ -165,7 +173,7 @@ extern struct gl_cached_state gl_state;
 bool glsm_ctl(enum glsm_state_ctl state, void *data);
 
 #ifdef __cplusplus
-   }
+}
 #endif
 
 #endif

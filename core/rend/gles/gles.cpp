@@ -1110,8 +1110,7 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 		glEnable(GL_DEPTH_TEST);
 
 		//write only bit 1
-      gl_state.stencilmask = 2;
-      glStencilMask(gl_state.stencilmask);
+      glStencilMask(2);
 
       //no stencil testing
       gl_state.stencilfunc.func = GL_ALWAYS;
@@ -1143,8 +1142,7 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 		glDisable(GL_DEPTH_TEST);
 
 		//write bits 1:0
-      gl_state.stencilmask = 3;
-      glStencilMask(gl_state.stencilmask);
+      glStencilMask(3);
 
 		if (mv_mode==1)
 		{
@@ -1333,8 +1331,7 @@ static void DrawModVols(void)
          glStencilOp(gl_state.stencilop.sfail,
                gl_state.stencilop.dpfail,
                gl_state.stencilop.dppass);
-         gl_state.stencilmask = 0x1;
-         glStencilMask(gl_state.stencilmask);
+         glStencilMask(0x1);
 			SetCull(0);
 			glDrawArrays(GL_TRIANGLES,0,pvrrc.modtrig.used()*3);
 		}
@@ -1416,8 +1413,7 @@ static void DrawModVols(void)
             gl_state.stencilfunc.mask);
 		
 		//clear the stencil result bit
-      gl_state.stencilmask = 0x3; /* write to LSB */
-      glStencilMask(gl_state.stencilmask);
+      glStencilMask(0x3); /* write to LSB */
 
       gl_state.stencilop.sfail  = GL_ZERO;
       gl_state.stencilop.dpfail = GL_ZERO;

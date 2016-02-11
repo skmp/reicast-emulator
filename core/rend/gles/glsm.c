@@ -570,7 +570,7 @@ void rglUniform2fv(GLint location, GLsizei count, const GLfloat *value)
    glUniform2fv(location, count, value);
 }
 
-void sglUniform3f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
+void rglUniform3f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
 {
    glUniform3f(location, v0, v1, v2);
 }

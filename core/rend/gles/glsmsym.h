@@ -140,7 +140,7 @@ void rglUniform1f(GLint location, GLfloat v0);
 void rglUniform1i(GLint location, GLint v0);
 void rglUniform2f(GLint location, GLfloat v0, GLfloat v1);
 void rglUniform2fv(GLint location, GLsizei count, const GLfloat *value);
-void sglUniform3f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
+void rglUniform3f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
 void rglUniform3fv(GLint location, GLsizei count, const GLfloat *value);
 void rglUniform4f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
 void rglUniform4fv(GLint location, GLsizei count, const GLfloat *value);

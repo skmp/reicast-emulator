@@ -368,14 +368,10 @@ static s32 SetTileClip(u32 val, bool set)
 static void SetCull(u32 CulliMode)
 {
 	if (CullMode[CulliMode] == GL_NONE)
-   {
 		glDisable(GL_CULL_FACE);
-      gl_state.cap_state[4] = 0;
-   }
 	else
 	{
 		glEnable(GL_CULL_FACE);
-      gl_state.cap_state[4] = 1;
       gl_state.cullmode     = CullMode[CulliMode];
 		glCullFace(gl_state.cullmode); //GL_FRONT/GL_BACK, ...
 	}
@@ -1057,7 +1053,6 @@ static void DrawSorted(void)
    glDepthFunc(Zfunction[6]);
 
    glEnable(GL_STENCIL_TEST);
-   gl_state.cap_state[7] = 1;
    gl_state.stencilfunc.func = GL_ALWAYS;
    gl_state.stencilfunc.ref  = 0;
    gl_state.stencilfunc.mask = 0;
@@ -1113,7 +1108,6 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 	{
 		//set states
 		glEnable(GL_DEPTH_TEST);
-      gl_state.cap_state[0] = 1;
 
 		//write only bit 1
       gl_state.stencilmask = 2;
@@ -1147,7 +1141,6 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 
 		//no depth test
 		glDisable(GL_DEPTH_TEST);
-      gl_state.cap_state[0] = 0;
 
 		//write bits 1:0
       gl_state.stencilmask = 3;
@@ -1272,7 +1265,6 @@ static void DrawModVols(void)
 	SetupModvolVBO();
 
 	glEnable(GL_BLEND);
-   gl_state.cap_state[1] = 1;
    gl_state.blendfunc.sfactor = GL_SRC_ALPHA;
    gl_state.blendfunc.dfactor = GL_ONE_MINUS_SRC_ALPHA;
    glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
@@ -1328,7 +1320,6 @@ static void DrawModVols(void)
 		{
 			//simple single level stencil
 			glEnable(GL_STENCIL_TEST);
-         gl_state.cap_state[7] = 1;
          gl_state.stencilfunc.func = GL_ALWAYS;
          gl_state.stencilfunc.ref  = 0x1;
          gl_state.stencilfunc.mask = 0x1;
@@ -1412,13 +1403,11 @@ static void DrawModVols(void)
 
 		//black out any stencil with '1'
 		glEnable(GL_BLEND);
-      gl_state.cap_state[1] = 1;
       gl_state.blendfunc.sfactor = GL_SRC_ALPHA;
       gl_state.blendfunc.dfactor = GL_ONE_MINUS_SRC_ALPHA;
       glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.dfactor);
 		
 		glEnable(GL_STENCIL_TEST);
-      gl_state.cap_state[7] = 1;
       //only pixels that are Modvol enabled, and in area 1
       gl_state.stencilfunc.func = GL_EQUAL;
       gl_state.stencilfunc.ref  = 0x81;
@@ -1441,7 +1430,6 @@ static void DrawModVols(void)
 
 		//don't do depth testing
 		glDisable(GL_DEPTH_TEST);
-      gl_state.cap_state[0] = 0;
 
 		SetupMainVBO();
 		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
@@ -1457,11 +1445,8 @@ static void DrawModVols(void)
    gl_state.depthmask = GL_TRUE;
    glDepthMask(gl_state.depthmask);
 	glDisable(GL_BLEND);
-   gl_state.cap_state[1] = 0;
 	glEnable(GL_DEPTH_TEST);
-   gl_state.cap_state[0] = 1;
 	glDisable(GL_STENCIL_TEST);
-   gl_state.cap_state[7] = 0;
 }
 
 /*
@@ -2098,7 +2083,6 @@ static bool RenderFrame(void)
    glScissor(gl_state.scissor.x, gl_state.scissor.y, gl_state.scissor.w, gl_state.scissor.h);
 
    glEnable(GL_SCISSOR_TEST);
-   gl_state.cap_state[6] = 1;
 
 	//restore scale_x
 	scale_x /= scissoring_scale_x;
@@ -2108,9 +2092,7 @@ static bool RenderFrame(void)
 
 	//initial state
 	glDisable(GL_BLEND);
-   gl_state.cap_state[1] = 0;
 	glEnable(GL_DEPTH_TEST);
-   gl_state.cap_state[0] = 1;
 
 	//We use sampler 0
    gl_state.active_texture = GL_TEXTURE0;
@@ -2133,7 +2115,7 @@ static bool RenderFrame(void)
 	//Alpha blended
 	//Setup blending
 	glEnable(GL_BLEND);
-   gl_state.cap_state[1] = 1;
+
    gl_state.blendfunc.sfactor = GL_SRC_ALPHA;
    gl_state.blendfunc.dfactor = GL_ONE_MINUS_SRC_ALPHA;
    glBlendFunc(gl_state.blendfunc.sfactor, gl_state.blendfunc.sfactor);

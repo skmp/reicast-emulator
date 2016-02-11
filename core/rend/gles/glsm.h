@@ -9,10 +9,6 @@
 extern "C" {
 #endif
 
-#ifndef SGL_CAP_MAX
-#define SGL_CAP_MAX 8
-#endif
-
 #if defined(HAVE_OPENGLES2)
 #define RARCH_GL_RENDERBUFFER GL_RENDERBUFFER
 #define RARCH_GL_DEPTH24_STENCIL8 GL_DEPTH24_STENCIL8_OES
@@ -48,6 +44,19 @@ extern "C" {
 #define RARCH_GL_FRAMEBUFFER_COMPLETE GL_FRAMEBUFFER_COMPLETE
 #define RARCH_GL_COLOR_ATTACHMENT0 GL_COLOR_ATTACHMENT0
 #endif
+
+enum
+{
+   SGL_DEPTH_TEST             = 0,
+   SGL_BLEND                  = 1,
+   SGL_POLYGON_OFFSET_FILL    = 2,
+   SGL_FOG                    = 3,
+   SGL_CULL_FACE              = 4,
+   SGL_ALPHA_TEST             = 5,
+   SGL_SCISSOR_TEST           = 6,
+   SGL_STENCIL_TEST           = 7,
+   SGL_CAP_MAX
+};
 
 enum glsm_state_ctl
 {
@@ -156,7 +165,7 @@ extern struct gl_cached_state gl_state;
 bool glsm_ctl(enum glsm_state_ctl state, void *data);
 
 #ifdef __cplusplus
-}
+   }
 #endif
 
 #endif

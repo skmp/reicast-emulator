@@ -4,6 +4,22 @@
 
 struct retro_hw_render_callback hw_render;
 
+/* GL wrapper-side */
+
+void rglDisable(GLenum cap)
+{
+   glDisable(gl_state.cap_translate[cap]);
+   gl_state.cap_state[cap] = 0;
+}
+
+void rglEnable(GLenum cap)
+{
+   glEnable(gl_state.cap_translate[cap]);
+   gl_state.cap_state[cap] = 1;
+}
+
+/* GLSM-side */
+
 static void glsm_state_setup(void)
 {
    gl_state.cap_translate[0]            = GL_DEPTH_TEST;

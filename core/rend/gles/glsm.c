@@ -13,6 +13,16 @@ void rglBlendFunc(GLenum sfactor, GLenum dfactor)
    glBlendFunc(sfactor, dfactor);
 }
 
+void rglBlendFuncSeparate(GLenum sfactor, GLenum dfactor)
+{
+   gl_state.blendfunc_separate.used     = true;
+   gl_state.blendfunc_separate.srcRGB   = sfactor;
+   gl_state.blendfunc_separate.dstRGB   = dfactor;
+   gl_state.blendfunc_separate.srcAlpha = sfactor;
+   gl_state.blendfunc_separate.dstAlpha = dfactor;
+   glBlendFunc(sfactor, dfactor);
+}
+
 void rglActiveTexture(GLenum texture)
 {
    gl_state.active_texture = texture - GL_TEXTURE0;

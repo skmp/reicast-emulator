@@ -113,8 +113,13 @@ struct gl_cached_state
       GLenum mode;
    } cullface;
 
+   struct
+   {
+      bool used;
+      GLuint mask;
+   } stencilmask;
+
    GLuint vao;
-   GLuint stencilmask;
    GLuint framebuf;
    GLuint program; 
    GLboolean depthmask;
@@ -288,8 +293,9 @@ void rglDepthMask(GLboolean flag)
 
 void rglStencilMask(GLenum mask)
 {
-   gl_state.stencilmask = mask;
    glStencilMask(mask);
+   gl_state.stencilmask.used = true;
+   gl_state.stencilmask.mask = mask;
 }
 
 void rglBufferData(GLenum target, GLsizeiptr size,
@@ -678,7 +684,9 @@ static void glsm_state_bind(void)
          glDisable(gl_state.cap_translate[i]);
    }
    glFrontFace(gl_state.frontface.mode);
-   glStencilMask(gl_state.stencilmask);
+
+   if (gl_state.stencilmask.used)
+      glStencilMask(gl_state.stencilmask.mask);
 
    if (gl_state.stencilop.used)
       glStencilOp(gl_state.stencilop.sfail,

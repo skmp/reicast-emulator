@@ -530,6 +530,8 @@ bool retro_load_game(const struct retro_game_info *game)
    params.context_destroy       = context_destroy;
    params.environ_cb            = environ_cb;
    params.stencil               = true;
+   params.imm_vbo_draw          = NULL;
+   params.imm_vbo_disable       = NULL;
 
    if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
       return false;

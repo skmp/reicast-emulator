@@ -147,6 +147,7 @@ static struct gl_cached_state gl_state;
 
 void rglClearDepth(GLdouble depth)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
 #ifdef GLES
    glClearDepthf(depth);
 #else
@@ -170,6 +171,7 @@ void rglDepthRange(GLclampd zNear, GLclampd zFar)
 
 void rglFrontFace(GLenum mode)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glFrontFace(mode);
    gl_state.frontface.used = true;
    gl_state.frontface.mode = mode; 
@@ -177,6 +179,7 @@ void rglFrontFace(GLenum mode)
 
 void rglDepthFunc(GLenum func)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    gl_state.depthfunc.used = true;
    gl_state.depthfunc.func = func;
    glDepthFunc(func);
@@ -185,6 +188,7 @@ void rglDepthFunc(GLenum func)
 void rglColorMask(GLboolean red, GLboolean green,
       GLboolean blue, GLboolean alpha)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glColorMask(red, green, blue, alpha);
    gl_state.colormask.red   = red;
    gl_state.colormask.green = green;
@@ -195,6 +199,7 @@ void rglColorMask(GLboolean red, GLboolean green,
 
 void rglCullFace(GLenum mode)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glCullFace(mode);
    gl_state.cullface.used = true;
    gl_state.cullface.mode = mode;
@@ -226,6 +231,7 @@ GLboolean rglIsEnabled(GLenum cap)
 void rglClearColor(GLclampf red, GLclampf green,
       GLclampf blue, GLclampf alpha)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glClearColor(red, green, blue, alpha);
    gl_state.clear_color.r = red;
    gl_state.clear_color.g = green;
@@ -235,6 +241,7 @@ void rglClearColor(GLclampf red, GLclampf green,
 
 void rglScissor(GLint x, GLint y, GLsizei width, GLsizei height)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glScissor(x, y, width, height);
    gl_state.scissor.used = true;
    gl_state.scissor.x    = x;
@@ -245,6 +252,7 @@ void rglScissor(GLint x, GLint y, GLsizei width, GLsizei height)
 
 void rglViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glViewport(x, y, width, height);
    gl_state.viewport.x = x;
    gl_state.viewport.y = y;
@@ -254,6 +262,7 @@ void rglViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 
 void rglBlendFunc(GLenum sfactor, GLenum dfactor)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    gl_state.blendfunc.used    = true;
    gl_state.blendfunc.sfactor = sfactor;
    gl_state.blendfunc.dfactor = dfactor;
@@ -262,6 +271,7 @@ void rglBlendFunc(GLenum sfactor, GLenum dfactor)
 
 void rglBlendFuncSeparate(GLenum sfactor, GLenum dfactor)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    gl_state.blendfunc_separate.used     = true;
    gl_state.blendfunc_separate.srcRGB   = sfactor;
    gl_state.blendfunc_separate.dstRGB   = dfactor;
@@ -272,36 +282,42 @@ void rglBlendFuncSeparate(GLenum sfactor, GLenum dfactor)
 
 void rglActiveTexture(GLenum texture)
 {
-   gl_state.active_texture = texture - GL_TEXTURE0;
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glActiveTexture(texture);
+   gl_state.active_texture = texture - GL_TEXTURE0;
 }
 
 void rglBindTexture(GLenum target, GLuint texture)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glBindTexture(target, texture);
    gl_state.bind_textures.ids[gl_state.active_texture] = texture;
 }
 
 void rglDisable(GLenum cap)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glDisable(gl_state.cap_translate[cap]);
    gl_state.cap_state[cap] = 0;
 }
 
 void rglEnable(GLenum cap)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glEnable(gl_state.cap_translate[cap]);
    gl_state.cap_state[cap] = 1;
 }
 
 void rglUseProgram(GLuint program)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    gl_state.program = program;
    glUseProgram(program);
 }
 
 void rglDepthMask(GLboolean flag)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glDepthMask(flag);
    gl_state.depthmask.used = true;
    gl_state.depthmask.mask = flag;
@@ -328,6 +344,7 @@ void rglBufferSubData(GLenum target, GLintptr offset,
 
 void rglBindBuffer(GLenum target, GLuint buffer)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glBindBuffer(target, buffer);
 }
 
@@ -394,6 +411,7 @@ void rglGenFramebuffers(GLsizei n, GLuint *ids)
 
 void rglBindFramebuffer(GLenum target, GLuint framebuffer)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    if (!glsm_stop)
       glBindFramebuffer(GL_FRAMEBUFFER, framebuffer 
             ? framebuffer : hw_render.get_current_framebuffer());
@@ -470,6 +488,7 @@ GLboolean rglIsProgram(GLuint program)
 
 void rglEnableVertexAttribArray(GLuint index)
 {
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    gl_state.vertex_attrib_pointer.enabled[index] = 1;
    glEnableVertexAttribArray(index);
 }
@@ -573,10 +592,11 @@ void rglUniform4fv(GLint location, GLsizei count, const GLfloat *value)
 
 void rglPolygonOffset(GLfloat factor, GLfloat units)
 {
-  glPolygonOffset(factor, units);
-  gl_state.polygonoffset.used   = true;
-  gl_state.polygonoffset.factor = factor;
-  gl_state.polygonoffset.units  = units;
+   glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
+   glPolygonOffset(factor, units);
+   gl_state.polygonoffset.used   = true;
+   gl_state.polygonoffset.factor = factor;
+   gl_state.polygonoffset.units  = units;
 }
 
 /* GLSM-side */
@@ -810,8 +830,14 @@ static bool glsm_state_ctx_init(void *data)
    hw_render.stencil            = params->stencil;
    hw_render.depth              = true;
    hw_render.bottom_left_origin = true;
-   imm_vbo_draw                 = params->imm_vbo_draw;
-   imm_vbo_disable              = params->imm_vbo_disable;
+
+   imm_vbo_draw                 = NULL;
+   imm_vbo_disable              = NULL;
+
+   if (params->imm_vbo_draw != NULL)
+      imm_vbo_draw                 = params->imm_vbo_draw;
+   if (params->imm_vbo_disable != NULL)
+      imm_vbo_disable              = params->imm_vbo_disable;
 
    if (imm_vbo_draw != NULL && imm_vbo_disable != NULL)
       glsm_ctl(GLSM_CTL_SET_IMM_VBO, NULL);
@@ -829,12 +855,12 @@ bool glsm_ctl(enum glsm_state_ctl state, void *data)
    switch (state)
    {
       case GLSM_CTL_IMM_VBO_DRAW:
-         if (imm_vbo_draw == NULL)
+         if (imm_vbo_draw == NULL || !imm_vbo_enable)
             return false;
          imm_vbo_draw(NULL);
          break;
       case GLSM_CTL_IMM_VBO_DISABLE:
-         if (imm_vbo_disable == NULL)
+         if (imm_vbo_disable == NULL || !imm_vbo_enable)
             return false;
          imm_vbo_disable(NULL);
          break;

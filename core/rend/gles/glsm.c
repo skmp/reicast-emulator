@@ -24,6 +24,12 @@ void rglUseProgram(GLuint program)
    glUseProgram(program);
 }
 
+void rglDepthMask(GLboolean flag)
+{
+   gl_state.depthmask = flag;
+   glDepthMask(flag);
+}
+
 /* GLSM-side */
 
 static void glsm_state_setup(void)

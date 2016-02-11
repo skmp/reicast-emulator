@@ -633,7 +633,8 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 
    if (gp->isp.full!= cache.isp.full)
    {
-      cache.isp.full=gp->isp.full;
+      GLboolean flag;
+      cache.isp.full = gp->isp.full;
 
       /* Set Z mode, only if required */
       if (!(Type == LISTTYPE_PUNCH_THROUGH || (Type == LISTTYPE_TRANSLUCENT && SortingEnabled)))
@@ -643,12 +644,12 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
          glDepthFunc(Zfunction[gp->isp.DepthMode]);
       }
 
-      gl_state.depthmask    = !gp->isp.ZWriteDis;
+      flag    = !gp->isp.ZWriteDis;
 #if TRIG_SORT
       if (SortingEnabled)
-         gl_state.depthmask = GL_FALSE;
+         flag = GL_FALSE;
 #endif
-      glDepthMask(gl_state.depthmask);
+      glDepthMask(flag);
    }
 }
 
@@ -1271,8 +1272,7 @@ static void DrawModVols(void)
 	glUseProgram(modvol_shader.program);
 	glUniform1f(modvol_shader.sp_ShaderColor,0.5f);
 
-   gl_state.depthmask = GL_FALSE;
-   glDepthMask(gl_state.depthmask);
+   glDepthMask(GL_FALSE);
 
    gl_state.depthfunc.used = true;
    gl_state.depthfunc.func = GL_GREATER;
@@ -1440,8 +1440,7 @@ static void DrawModVols(void)
 	}
 
 	//restore states
-   gl_state.depthmask = GL_TRUE;
-   glDepthMask(gl_state.depthmask);
+   glDepthMask(GL_TRUE);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_STENCIL_TEST);

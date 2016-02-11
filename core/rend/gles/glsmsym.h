@@ -10,10 +10,12 @@ extern "C" {
 #define glDisable(T) rglDisable(S##T)
 #define glEnable(T)  rglEnable(S##T)
 #define glUseProgram rglUseProgram
+#define glDepthMask  rglDepthMask
 
 void rglDisable(GLenum cap);
 void rglEnable(GLenum cap);
 void rglUseProgram(GLuint program);
+void rglDepthMask(GLboolean flag);
 
 #ifdef __cplusplus
 }

@@ -122,10 +122,15 @@ struct gl_cached_state
       GLuint mask;
    } stencilmask;
 
+   struct
+   {
+      bool used;
+      GLboolean mask;
+   } depthmask;
+
    GLuint vao;
    GLuint framebuf;
    GLuint program; 
-   GLboolean depthmask;
    GLenum active_texture;
    int cap_state[SGL_CAP_MAX];
    int cap_translate[SGL_CAP_MAX];
@@ -293,8 +298,9 @@ void rglUseProgram(GLuint program)
 
 void rglDepthMask(GLboolean flag)
 {
-   gl_state.depthmask = flag;
    glDepthMask(flag);
+   gl_state.depthmask.used = true;
+   gl_state.depthmask.mask = flag;
 }
 
 void rglStencilMask(GLenum mask)
@@ -664,7 +670,9 @@ static void glsm_state_bind(void)
    if (gl_state.cullface.used)
       glCullFace(gl_state.cullface.mode);
 
-   glDepthMask(gl_state.depthmask);
+   if (gl_state.depthmask.used)
+      glDepthMask(gl_state.depthmask.mask);
+
    if (gl_state.polygonoffset.used)
       glPolygonOffset(
             gl_state.polygonoffset.factor,

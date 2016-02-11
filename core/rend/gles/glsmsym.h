@@ -7,6 +7,10 @@
 extern "C" {
 #endif
 
+/* deprecated old FF-style GL symbols */
+#define glTexCoord2f                rglTexCoord2f
+
+/* more forward-compatible GL subset symbols */
 #define glVertexAttrib4f            rglVertexAttrib4f
 #define glVertexAttrib4fv           rglVertexAttrib4fv
 #define glDrawArrays                rglDrawArrays
@@ -48,6 +52,7 @@ extern "C" {
 #define glDepthMask                 rglDepthMask
 #define glStencilMask               rglStencilMask
 #define glBufferData                rglBufferData
+#define glBufferSubData             rglBufferSubData
 #define glBindBuffer                rglBindBuffer
 #define glCreateShader              rglCreateShader
 #define glDeleteShader              rglDeleteShader
@@ -75,6 +80,7 @@ extern "C" {
 #define glClearDepth                rglClearDepth
 #define glPolygonOffset             rglPolygonOffset
 
+void rglTexCoord2f(GLfloat s, GLfloat t);
 void rglDrawElements(GLenum mode, GLsizei count, GLenum type,
                            const GLvoid * indices);
 void rglCompressedTexImage2D(GLenum target, GLint level,
@@ -125,6 +131,8 @@ void rglUseProgram(GLuint program);
 void rglDepthMask(GLboolean flag);
 void rglStencilMask(GLenum mask);
 void rglBufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage);
+void rglBufferSubData(GLenum target, GLintptr offset,
+      GLsizeiptr size, const GLvoid *data);
 void rglBindBuffer(GLenum target, GLuint buffer);
 GLuint rglCreateShader(GLenum shader);
 void rglDeleteShader(GLuint shader);

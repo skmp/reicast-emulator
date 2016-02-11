@@ -267,9 +267,16 @@ void rglStencilMask(GLenum mask)
    glStencilMask(mask);
 }
 
-void rglBufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage)
+void rglBufferData(GLenum target, GLsizeiptr size,
+      const GLvoid *data, GLenum usage)
 {
    glBufferData(target, size, data, usage);
+}
+
+void rglBufferSubData(GLenum target, GLintptr offset,
+      GLsizeiptr size, const GLvoid *data)
+{
+   glBufferSubData(target, offset, size, data);
 }
 
 void rglBindBuffer(GLenum target, GLuint buffer)
@@ -430,6 +437,13 @@ void rglDrawElements(GLenum mode, GLsizei count, GLenum type,
                            const GLvoid * indices)
 {
    glDrawElements(mode, count, type, indices);
+}
+
+void rglTexCoord2f(GLfloat s, GLfloat t)
+{
+#ifdef HAVE_LEGACY_GL
+   glTexCoord2f(s, t);
+#endif
 }
 
 void rglVertexAttribPointer(GLuint name, GLint size,

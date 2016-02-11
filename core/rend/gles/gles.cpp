@@ -2085,8 +2085,7 @@ static bool RenderFrame(void)
 	glEnable(GL_DEPTH_TEST);
 
 	//We use sampler 0
-   gl_state.active_texture = GL_TEXTURE0;
-   glActiveTexture(gl_state.active_texture);
+   glActiveTexture(GL_TEXTURE0);
 
 	//Opaque
 	//Nothing extra needs to be setup here

@@ -75,6 +75,11 @@ struct gl_cached_state
 {
    struct
    {
+      GLuint ids[MAX_TEXTURE];
+   } bind_textures;
+
+   struct
+   {
       bool enabled[MAX_ATTRIB];
    } vertex_attrib_pointer;
 

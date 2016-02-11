@@ -6,6 +6,18 @@ static int glsm_stop;
 
 /* GL wrapper-side */
 
+void rglActiveTexture(GLenum texture)
+{
+   gl_state.active_texture = texture - GL_TEXTURE0;
+   glActiveTexture(texture);
+}
+
+void rglBindTexture(GLenum target, GLuint texture)
+{
+   glBindTexture(target, texture);
+   gl_state.bind_textures.ids[gl_state.active_texture] = texture;
+}
+
 void rglDisable(GLenum cap)
 {
    glDisable(gl_state.cap_translate[cap]);
@@ -359,7 +371,15 @@ static void glsm_state_bind(void)
          gl_state.stencilfunc.func,
          gl_state.stencilfunc.ref,
          gl_state.stencilfunc.mask);
-   glActiveTexture(gl_state.active_texture);
+
+   for (i = 0; i < MAX_TEXTURE; i ++)
+   {
+      glActiveTexture(GL_TEXTURE0 + i);
+      glBindTexture(GL_TEXTURE_2D, gl_state.bind_textures.ids[i]);
+   }
+
+   glActiveTexture(GL_TEXTURE0 + gl_state.active_texture);
+
    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -394,8 +414,12 @@ static void glsm_state_unbind(void)
    glStencilFunc(GL_ALWAYS,0,1);
 
    /* Clear textures */
+   for (i = 0; i < MAX_TEXTURE; i ++)
+   {
+      glActiveTexture(GL_TEXTURE0 + i);
+      glBindTexture(GL_TEXTURE_2D, 0);
+   }
    glActiveTexture(GL_TEXTURE0);
-   glBindTexture(GL_TEXTURE_2D, 0);
 
    for (i = 0; i < MAX_ATTRIB; i ++)
       glDisableVertexAttribArray(i);

@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define glBindTexture               rglBindTexture
+#define glActiveTexture             rglActiveTexture
 #define glFramebufferTexture2D      rglFramebufferTexture2D
 #define glFramebufferRenderbuffer   rglFramebufferRenderbuffer
 #define glDeleteFramebuffers        rglDeleteFramebuffers
@@ -51,6 +53,8 @@ extern "C" {
 #define glUniform4f                 rglUniform4f
 #define glUniform4fv                rglUniform4fv
 
+void glBindTexture(GLenum target, GLuint texture);
+void glActiveTexture(GLenum texture);
 void rglFramebufferTexture2D(GLenum target, GLenum attachment,
       GLenum textarget, GLuint texture, GLint level);
 void rglFramebufferRenderbuffer(GLenum target, GLenum attachment,

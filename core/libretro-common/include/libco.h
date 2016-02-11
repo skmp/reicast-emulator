@@ -21,7 +21,7 @@ extern "C" {
 
 typedef void* cothread_t;
 
-cothread_t co_active(void);
+cothread_t co_active();
 cothread_t co_create(unsigned int, void (*)(void));
 void co_delete(cothread_t);
 void co_switch(cothread_t);

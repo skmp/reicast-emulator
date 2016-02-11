@@ -9,6 +9,11 @@
 extern "C" {
 #endif
 
+#ifdef HAVE_OPENGLES2
+typedef GLfloat GLdouble;
+typedef GLclampf GLclampd;
+#endif
+
 #if defined(HAVE_OPENGLES2)
 #define RARCH_GL_RENDERBUFFER GL_RENDERBUFFER
 #define RARCH_GL_DEPTH24_STENCIL8 GL_DEPTH24_STENCIL8_OES
@@ -43,6 +48,14 @@ extern "C" {
 #define RARCH_GL_FRAMEBUFFER GL_FRAMEBUFFER
 #define RARCH_GL_FRAMEBUFFER_COMPLETE GL_FRAMEBUFFER_COMPLETE
 #define RARCH_GL_COLOR_ATTACHMENT0 GL_COLOR_ATTACHMENT0
+#endif
+
+#ifndef GL_FOG
+#define GL_FOG 0x0B60
+#endif
+
+#ifndef GL_ALPHA_TEST
+#define GL_ALPHA_TEST 0x0BC0
 #endif
 
 #define MAX_ATTRIB 8

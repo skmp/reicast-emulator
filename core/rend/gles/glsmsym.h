@@ -151,7 +151,8 @@ void rglUniform3fv(GLint location, GLsizei count, const GLfloat *value);
 void rglUniform4f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
 void rglUniform4fv(GLint location, GLsizei count, const GLfloat *value);
 void rglBlendFunc(GLenum sfactor, GLenum dfactor);
-void rglBlendFuncSeparate(GLenum sfactor, GLenum dfactor);
+void rglBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha,
+      GLenum dstAlpha);
 void rglDepthFunc(GLenum func);
 void rglColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
 void rglClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);

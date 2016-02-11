@@ -865,7 +865,7 @@ static bool glsm_state_ctx_init(void *data)
       imm_vbo_disable              = params->imm_vbo_disable;
 
    glsm_fb_lock                    = dummy_framebuffer_lock;
-   if (params->framebuffer_lock)
+   if (params->framebuffer_lock != NULL)
       glsm_fb_lock                 = params->framebuffer_lock;
 
    if (imm_vbo_draw != NULL && imm_vbo_disable != NULL)

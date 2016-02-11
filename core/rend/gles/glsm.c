@@ -57,9 +57,18 @@ struct gl_cached_state
    } colormask;
    struct
    {
+      GLdouble depth;
+   } cleardepth;
+   struct
+   {
       bool used;
       GLenum func;
    } depthfunc;
+   struct
+   {
+      GLclampd zNear;
+      GLclampd zFar;
+   } depthrange;
    struct
    {
       bool used;
@@ -98,6 +107,33 @@ static int glsm_stop;
 static struct gl_cached_state gl_state;
 
 /* GL wrapper-side */
+
+void rglClearDepth(GLdouble depth)
+{
+#ifdef GLES
+   glClearDepthf(depth);
+#else
+   glClearDepth(depth);
+#endif
+   gl_state.cleardepth.depth = depth;
+}
+
+void rglDepthRange(GLclampd zNear, GLclampd zFar)
+{
+#ifdef GLES
+   glDepthRangef(zNear, zFar);
+#else
+   glDepthRange(zNear, zFar);
+#endif
+   gl_state.depthrange.zNear = zNear;
+   gl_state.depthrange.zFar  = zFar;
+}
+
+void rglFrontFace(GLenum mode)
+{
+   glFrontFace(mode);
+   gl_state.frontface.mode = mode; 
+}
 
 void rglDepthFunc(GLenum func)
 {

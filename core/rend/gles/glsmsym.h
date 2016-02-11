@@ -63,6 +63,9 @@ extern "C" {
 #define glStencilFunc               rglStencilFunc
 #define glCullFace                  rglCullFace
 #define glStencilOp                 rglStencilOp
+#define glFrontFace                 rglFrontFace
+#define glDepthRange                rglDepthRange
+#define glClearDepth                rglClearDepth
 
 void glBindTexture(GLenum target, GLuint texture);
 void glActiveTexture(GLenum texture);
@@ -129,6 +132,9 @@ GLboolean rglIsEnabled(GLenum cap);
 void rglStencilFunc(GLenum func, GLint ref, GLuint mask);
 void rglCullFace(GLenum mode);
 void rglStencilOp(GLenum sfail, GLenum dpfail, GLenum dppass);
+void rglFrontFace(GLenum mode);
+void rglDepthRange(GLclampd zNear, GLclampd zFar);
+void rglClearDepth(GLdouble depth);
 
 #ifdef __cplusplus
 }

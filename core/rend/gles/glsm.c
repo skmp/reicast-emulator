@@ -23,6 +23,7 @@ struct gl_cached_state
 
    struct
    {
+      bool used;
       GLint x;
       GLint y;
       GLsizei w;
@@ -226,10 +227,11 @@ void rglClearColor(GLclampf red, GLclampf green,
 void rglScissor(GLint x, GLint y, GLsizei width, GLsizei height)
 {
    glScissor(x, y, width, height);
-   gl_state.scissor.x = x;
-   gl_state.scissor.y = y;
-   gl_state.scissor.w = width;
-   gl_state.scissor.h = height;
+   gl_state.scissor.used = true;
+   gl_state.scissor.x    = x;
+   gl_state.scissor.y    = y;
+   gl_state.scissor.w    = width;
+   gl_state.scissor.h    = height;
 }
 
 void rglViewport(GLint x, GLint y, GLsizei width, GLsizei height)
@@ -642,6 +644,7 @@ static void glsm_state_bind(void)
             gl_state.blendfunc_separate.srcAlpha,
             gl_state.blendfunc_separate.dstAlpha
             );
+
    glClearColor(
          gl_state.clear_color.r,
          gl_state.clear_color.g,
@@ -666,12 +669,16 @@ static void glsm_state_bind(void)
       glPolygonOffset(
             gl_state.polygonoffset.factor,
             gl_state.polygonoffset.units);
-   glScissor(
-         gl_state.scissor.x,
-         gl_state.scissor.y,
-         gl_state.scissor.w,
-         gl_state.scissor.h);
+
+   if (gl_state.scissor.used)
+      glScissor(
+            gl_state.scissor.x,
+            gl_state.scissor.y,
+            gl_state.scissor.w,
+            gl_state.scissor.h);
+
    glUseProgram(gl_state.program);
+
    glViewport(
          gl_state.viewport.x,
          gl_state.viewport.y,

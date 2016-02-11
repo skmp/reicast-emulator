@@ -6,6 +6,13 @@ static int glsm_stop;
 
 /* GL wrapper-side */
 
+void rglDepthFunc(GLenum func)
+{
+   gl_state.depthfunc.used = true;
+   gl_state.depthfunc.func = func;
+   glDepthFunc(func);
+}
+
 void rglBlendFunc(GLenum sfactor, GLenum dfactor)
 {
    gl_state.blendfunc.sfactor = sfactor;

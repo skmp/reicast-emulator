@@ -54,6 +54,7 @@ extern "C" {
 #define glUniform4fv                rglUniform4fv
 #define glBlendFunc                 rglBlendFunc
 #define glBlendFuncSeparate         rglBlendFuncSeparate
+#define glDepthFunc                 rglDepthFunc
 
 void glBindTexture(GLenum target, GLuint texture);
 void glActiveTexture(GLenum texture);
@@ -111,6 +112,7 @@ void rglUniform4f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3
 void rglUniform4fv(GLint location, GLsizei count, const GLfloat *value);
 void rglBlendFunc(GLenum sfactor, GLenum dfactor);
 void rglBlendFuncSeparate(GLenum sfactor, GLenum dfactor);
+void rglDepthFunc(GLenum func);
 
 #ifdef __cplusplus
 }

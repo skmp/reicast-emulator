@@ -160,16 +160,34 @@ void SetupPath()
 		*/
 	
 	;
-	//Concurrency::create_task(Windows::Storage::KnownFolders::RemovableDevices->GetFolderAsync("data")).then([](Windows::Storage::StorageFolder^ folder)
-	//{
-		Concurrency::create_task(Windows::ApplicationModel::Package::Current->InstalledLocation->GetFileAsync("Assets\\dc_boot.bin")).then([](Windows::Storage::StorageFile^ file) {
-			file->CopyAsync(Windows::Storage::ApplicationData::Current->LocalFolder);
+
+	if (1) {
+		//Concurrency::create_task(Windows::Storage::KnownFolders::RemovableDevices->GetFolderAsync("data")).then([](Windows::Storage::StorageFolder^ folder)
+		//{
+		auto local = Windows::Storage::ApplicationData::Current->LocalFolder;
+
+		Concurrency::create_task(Windows::ApplicationModel::Package::Current->InstalledLocation->GetFilesAsync()).then([=](Windows::Foundation::Collections::IVectorView<Windows::Storage::StorageFile^>^ filesInFolder) {
+			//Iterate over the results and print the list of files
+			// to the visual studio output window
+			for (auto it = filesInFolder->First(); it->HasCurrent; it->MoveNext())
+			{
+				auto file = it->Current;
+				auto output = file->Name + "\n";
+				OutputDebugString(output->Begin());
+			}
+		});
+		
+
+		Concurrency::create_task(Windows::ApplicationModel::Package::Current->InstalledLocation->GetFileAsync("dc_boot.bin")).then([&](Windows::Storage::StorageFile^ file) {
+			file->CopyAsync(local);
 		}).wait();
 
-		Concurrency::create_task(Windows::ApplicationModel::Package::Current->InstalledLocation->GetFileAsync("Assets\\dc_flash.bin")).then([](Windows::Storage::StorageFile^ file) {
-			file->CopyAsync(Windows::Storage::ApplicationData::Current->LocalFolder);
+		Concurrency::create_task(Windows::ApplicationModel::Package::Current->InstalledLocation->GetFileAsync("dc_flash.bin")).then([&](Windows::Storage::StorageFile^ file) {
+			file->CopyAsync(local);
 		}).wait();
-	//});
+		//});
+
+	}
 	
 	/*
 		Concurrency::create_task(Windows::Storage::StorageFile::GetFileFromApplicationUriAsync("ms-appx:///Assets/dc_boot.bin")).then([]{

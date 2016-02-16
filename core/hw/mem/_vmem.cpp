@@ -416,8 +416,8 @@ HANDLE mem_handle;
 
 void* _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
 {
-	void* ptr;
-	void* rv;
+	void* ptr=0;
+	void* rv=0;
 
 	u32 map_times=addrsz/size;
 	verify((addrsz%size)==0);

@@ -237,7 +237,7 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
    {
       case 0:
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
-         extern void ngen_Compile_x86(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
+         extern void ngen_Compile_x86(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise);
          ngen_Compile_x86(block, force_checks, reset, staging, optimise);
          break;
 #elif FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_ARM

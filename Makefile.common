@@ -136,7 +136,7 @@ endif
 # Recompiler (ARM)
 ifeq ($(WITH_DYNAREC), arm)
 DYNAREC_USED = 1
-SOURCES_CXX += $(CORE_DIR)/rec-ARM/rec-arm.cpp
+SOURCES_CXX += $(CORE_DIR)/rec-ARM/rec_arm.cpp
 SOURCES_ASM += $(CORE_DIR)/rec-ARM/ngen_arm.S
 endif
 

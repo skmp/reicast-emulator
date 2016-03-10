@@ -8,6 +8,7 @@ NO_NVMEM      := 0
 NO_VERIFY     := 1
 NAOMI         := 0
 NO_JIT        := 1
+FORCE_GLES    := 0
 STATIC_LINKING:= 0
 
 TARGET_NAME   := reicast
@@ -161,7 +162,10 @@ ifeq ($(WITH_DYNAREC), x86)
 	CFLAGS += -D TARGET_NO_AREC
 endif
 
-	ifneq (,$(findstring gles,$(platform)))
+   ifeq ($(FORCE_GLES),1)
+		GLES = 1
+		GL_LIB := -lGLESv2
+	else ifneq (,$(findstring gles,$(platform)))
 		GLES = 1
 		GL_LIB := -lGLESv2
 	else
@@ -518,7 +522,7 @@ ifeq ($(LTO_TEST),1)
 endif
 
 ifeq ($(HAVE_GL), 1)
-ifeq ($(HAVE_GLES),1)
+ifeq ($(GLES),1)
 	 RZDCY_CFLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES2
     CXXFLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES2
 	 CFLAGS   += -DHAVE_OPENGLES -DHAVE_OPENGLES2

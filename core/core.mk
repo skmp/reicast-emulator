@@ -111,4 +111,8 @@ ifdef HAS_SOFTREND
 	RZDCY_CFLAGS += -DTARGET_SOFTREND
 endif
 
+ifndef WEBUI
+	RZDCY_CFLAGS += -DTARGET_NO_WEBUI
+endif
+
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11

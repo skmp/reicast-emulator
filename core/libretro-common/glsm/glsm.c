@@ -204,6 +204,16 @@ void rglClear(GLbitfield mask)
 /*
  *
  * Core in:
+ * OpenGL    : 2.0
+ */
+void rglValidateProgram(GLuint program)
+{
+   glValidateProgram(program);
+}
+
+/*
+ *
+ * Core in:
  * OpenGL    : 1.0
  * OpenGLES  : N/A
  */
@@ -823,6 +833,7 @@ void rglGetActiveUniform(GLuint program, GLuint index, GLsizei bufsize,
 }
 
 /*
+ * Category: UBO
  *
  * Core in:
  *
@@ -882,6 +893,7 @@ void rglGetUniformIndices(GLuint program,
 }
 
 /*
+ * Category: UBO
  *
  * Core in:
  *
@@ -900,6 +912,8 @@ void rglBindBufferBase( 	GLenum target,
 
 /*
  *
+ * Category: UBO
+ *
  * Core in:
  *
  * OpenGLES  : 3.0
@@ -916,6 +930,7 @@ GLuint rglGetUniformBlockIndex( 	GLuint program,
 }
 
 /*
+ * Category: UBO
  *
  * Core in:
  *
@@ -1128,6 +1143,7 @@ void rglTexCoord2f(GLfloat s, GLfloat t)
  *
  * Core in:
  * OpenGL    : 2.0 
+ *
  */
 void rglDisableVertexAttribArray(GLuint index)
 {
@@ -1148,6 +1164,12 @@ void rglEnableVertexAttribArray(GLuint index)
    glEnableVertexAttribArray(index);
 }
 
+/*
+ * Category: Shaders
+ *
+ * Core in:
+ * OpenGL    : 2.0 
+ */
 void rglVertexAttribIPointer(
       GLuint index,
       GLint size,
@@ -1292,6 +1314,73 @@ void rglGenBuffers(GLsizei n, GLuint *buffers)
 void rglUniform1f(GLint location, GLfloat v0)
 {
    glUniform1f(location, v0);
+}
+
+/*
+ * Category: Shaders
+ *
+ * Core in:
+ * OpenGL    : 2.0 
+ */
+void rglUniform1fv(GLint location,  GLsizei count,  const GLfloat *value)
+{
+   glUniform1fv(location, count, value);
+}
+
+/*
+ * Category: Shaders
+ *
+ * Core in:
+ * OpenGL    : 2.0 
+ */
+void rglUniform1iv(GLint location,  GLsizei count,  const GLint *value)
+{
+   glUniform1iv(location, count, value);
+}
+
+void rglClearBufferfv( 	GLenum buffer,
+  	GLint drawBuffer,
+  	const GLfloat * value)
+{
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES_3)
+   glClearBufferfv(buffer, drawBuffer, value);
+#endif
+}
+
+void rglTexBuffer(GLenum target, GLenum internalFormat, GLuint buffer)
+{
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES_3_2)
+   glTexBuffer(target, internalFormat, buffer);
+#endif
+}
+
+const GLubyte* rglGetStringi(GLenum name, GLuint index)
+{
+   glGetStringi(name, index);
+}
+
+void rglClearBufferfi( 	GLenum buffer,
+  	GLint drawBuffer,
+  	GLfloat depth,
+  	GLint stencil)
+{
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES_3)
+   glClearBufferfi(buffer, drawBuffer, depth, stencil);
+#endif
+}
+
+/*
+ *
+ * Core in:
+ * OpenGL    : 3.0 
+ */
+void rglRenderbufferStorageMultisample( 	GLenum target,
+  	GLsizei samples,
+  	GLenum internalformat,
+  	GLsizei width,
+  	GLsizei height)
+{
+   glRenderbufferStorageMultisample(target, samples, internalformat, width, height);
 }
 
 /*
@@ -1608,6 +1697,7 @@ void rglBlendColor(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 }
 
 /*
+ * Category: Blending
  *
  * Core in:
  * OpenGL    : 2.0 

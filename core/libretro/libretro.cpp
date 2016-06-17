@@ -403,6 +403,7 @@ static void context_reset(void)
 
 static void context_destroy(void)
 {
+   glsm_ctl(GLSM_CTL_STATE_CONTEXT_DESTROY, NULL);
 }
 #endif
 

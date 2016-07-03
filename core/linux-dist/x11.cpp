@@ -66,8 +66,7 @@ void x11_window_set_fullscreen(bool fullscreen)
 		XSendEvent((Display*)x11_disp, DefaultRootWindow((Display*)x11_disp), False, SubstructureNotifyMask, &xev);
 }
 
-void ngen_terminate();
-void rend_terminate();
+void start_shutdown(void);
 
 void event_x11_handle()
 {
@@ -79,8 +78,7 @@ void event_x11_handle()
 		if (event.type == ClientMessage &&
 		event.xclient.data.l[0] == wmDeleteMessage) {
 			printf("Caught window close event\n");
-			rend_terminate();
-			ngen_terminate();
+			start_shutdown();
 		}
 	}
 }
@@ -100,11 +98,7 @@ void input_x11_handle()
 				case KeyRelease:
 					if (e.type == KeyRelease && e.xkey.keycode == 9) // ESC button
 					{
-						/* Terminate the main program loop */
-						rend_terminate();
-						ngen_terminate();
-						
-						//die("death by escape key");
+						start_shutdown();
 					}
 #if FEAT_HAS_NIXPROF
 					else if (e.type == KeyRelease && e.xkey.keycode == 76) // F10 button
@@ -280,9 +274,9 @@ void x11_window_create()
 		x11Window = XCreateWindow(x11Display, RootWindow(x11Display, x11Screen), (ndcid%3)*640, (ndcid/3)*480, x11_width, x11_height,
 			0, depth, InputOutput, x11Visual->visual, ui32Mask, &sWA);
 		
-        // Capture the close window event
-        wmDeleteMessage = XInternAtom(x11Display, "WM_DELETE_WINDOW", False);
-        XSetWMProtocols(x11Display, x11Window, &wmDeleteMessage, 1);
+ 		// Capture the close window event
+		wmDeleteMessage = XInternAtom(x11Display, "WM_DELETE_WINDOW", False);
+		XSetWMProtocols(x11Display, x11Window, &wmDeleteMessage, 1);
 
 		if(x11_fullscreen)
 		{

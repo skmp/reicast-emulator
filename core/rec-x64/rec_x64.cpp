@@ -38,7 +38,7 @@ void ngen_FailedToFindBlock_internal() {
 
 void(*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
 
-int ngen_required = true;
+unsigned int ngen_required = true;
 
 void ngen_mainloop(void* v_cntx)
 {
@@ -60,11 +60,11 @@ void ngen_mainloop(void* v_cntx)
 }
 
 #if HOST_OS==OS_LINUX
-	void ngen_terminate()
-	{
-		ngen_required = false;
-		printf("ngen thread stopped\n");
-	}
+void ngen_terminate()
+{
+	ngen_required = false;
+	printf("ngen thread stopped\n");
+}
 #endif
 
 void ngen_init()

@@ -276,6 +276,8 @@ void* rend_thread(void* p)
 		if (rend_single_frame())
 			renderer->Present();
 	}
+	
+	return (0);
 }
 
 #if HOST_OS==OS_LINUX

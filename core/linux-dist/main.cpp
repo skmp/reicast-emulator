@@ -195,7 +195,7 @@ void os_DoEvents()
 {
 	#if defined(SUPPORT_X11)
 		input_x11_handle();
-	    event_x11_handle();
+		event_x11_handle();
 	#endif
 }
 
@@ -397,10 +397,26 @@ std::vector<string> find_system_data_dirs()
 	return dirs;
 }
 
-/* Required Prototypes */
-void x11_gl_context_destroy();
-void x11_window_destroy();
+#if HOST_OS==OS_LINUX
+
+#if defined(SUPPORT_X11)
+    /* Required Prototypes */
+    void x11_gl_context_destroy();
+    void x11_window_destroy();
+#endif
+
 void dc_term();
+void rend_terminate();
+void ngen_terminate();
+
+void start_shutdown(void)
+{
+    printf("start_shutdown called\n");
+    rend_terminate();
+    ngen_terminate();
+}
+
+#endif
 
 int main(int argc, wchar* argv[])
 {
@@ -450,31 +466,36 @@ int main(int argc, wchar* argv[])
 		emscripten_set_main_loop(&dc_run, 100, false);
 	#endif
 
-	/* Attempt a relatively clean exit on linux. This will only 
-	   happen if the ngen thread is terminated */
-    #if HOST_OS==OS_LINUX
-	    /* Close processes and save the bios settings */
-		dc_term();
-	
-		/* close the controllers */
-		for (int port = 0; port < 4 ; port++)
-		{
-			if (evdev_controllers[port].fd >= 0)
-			{
-				close(evdev_controllers[port].fd);
-			}
-		}
-	
-		/*Close the GL context */
-		x11_gl_context_destroy();
-	
-		/* Destroy the window */
-		x11_window_destroy();
-	#endif
 	
 	#ifdef TARGET_PANDORA
 		clean_exit(0);
 	#endif
+
+        #if HOST_OS==OS_LINUX
+
+            printf("main loop ended\n");
+
+            dc_term();
+
+            printf("closing any open controllers\n");
+
+            for (int port = 0; port < 4 ; port++)
+            {
+                if(evdev_controllers[port].fd >= 0)
+                {
+                    close(evdev_controllers[port].fd);
+                }
+            }
+
+            #if defined(SUPPORT_X11)
+                /*Close the GL context */
+                x11_gl_context_destroy();
+	
+	        /* Destroy the window */
+	        x11_window_destroy();
+            #endif
+
+        #endif
 
 	return 0;
 }

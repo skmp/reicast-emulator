@@ -102,6 +102,7 @@
 		this->data_y.init(this->fd, this->mapping->Axis_Analog_Y, this->mapping->Axis_Analog_Y_Inverted);
 		this->data_trigger_left.init(this->fd, this->mapping->Axis_Trigger_Left, this->mapping->Axis_Trigger_Left_Inverted);
 		this->data_trigger_right.init(this->fd, this->mapping->Axis_Trigger_Right, this->mapping->Axis_Trigger_Right_Inverted);
+		this->rumble_effect_id = -1;
 	}
 
 	std::map<std::string, EvdevControllerMapping> loaded_mappings;
@@ -202,7 +203,7 @@
 
 		printf("evdev: Trying to open device at '%s'\n", device);
 
-		int fd = open(device, O_RDONLY);
+		int fd = open(device, O_RDWR);
 
 		if (fd >= 0)
 		{
@@ -222,7 +223,9 @@
 
 				if(custom_mapping_fname != NULL)
 				{
+					// custom mapping defined in config, use that
 					mapping_fname = custom_mapping_fname;
+					printf("evdev: user defined custom mapping found (%s)\n", custom_mapping_fname);
 				}
 				else
 				{
@@ -231,27 +234,47 @@
 					#elif defined(TARGET_GCW0)
 						mapping_fname = "controller_gcwz.cfg";
 					#else
-						if (strcmp(name, "Microsoft X-Box 360 pad") == 0 ||
-							strcmp(name, "Xbox 360 Wireless Receiver") == 0 ||
-							strcmp(name, "Xbox 360 Wireless Receiver (XBOX)") == 0)
-						{
-							mapping_fname = "controller_xpad.cfg";
+						// check if a config file name <device>.cfg exists in the /mappings/ directory
+						char* name_cfg = (char*)malloc(strlen(name)+4);
+						strcpy(name_cfg, name);
+						strcat(name_cfg, ".cfg");
+
+						size_t size_needed = snprintf(NULL, 0, EVDEV_MAPPING_PATH, name_cfg) + 1;
+                                                char* mapping_path = (char*)malloc(size_needed);
+                                                sprintf(mapping_path, EVDEV_MAPPING_PATH, name_cfg);
+
+						string dir = get_readonly_data_path(mapping_path);
+						free(mapping_path);
+						if (file_exists(dir)) {
+							printf("evdev: found a named mapping for the device (%s)\n", name_cfg);
+							mapping_fname = name_cfg;
 						}
-						else if (strstr(name, "Xbox Gamepad (userspace driver)") != NULL)
-						{
-							mapping_fname = "controller_xboxdrv.cfg";
-						}
-						else if (strstr(name, "keyboard") != NULL ||
-								 strstr(name, "Keyboard") != NULL)
-						{
-							mapping_fname = "keyboard.cfg";
-						}
-						else
-						{
-							mapping_fname = "controller_generic.cfg";
+						else {
+							free(name_cfg);
+
+							if (strcmp(name, "Microsoft X-Box 360 pad") == 0 ||
+								strcmp(name, "Xbox 360 Wireless Receiver") == 0 ||
+								strcmp(name, "Xbox 360 Wireless Receiver (XBOX)") == 0)
+							{
+								mapping_fname = "controller_xpad.cfg";
+							}
+							else if (strstr(name, "Xbox Gamepad (userspace driver)") != NULL)
+							{
+								mapping_fname = "controller_xboxdrv.cfg";
+							}
+							else if (strstr(name, "keyboard") != NULL ||
+									 strstr(name, "Keyboard") != NULL)
+							{
+								mapping_fname = "keyboard.cfg";
+							}
+							else
+							{
+								mapping_fname = "controller_generic.cfg";
+							}
 						}
 					#endif
 				}
+
 				if(loaded_mappings.count(string(mapping_fname)) == 0)
 				{
 					FILE* mapping_fd = NULL;
@@ -269,7 +292,7 @@
 						mapping_fd = fopen(get_readonly_data_path(mapping_path).c_str(), "r");
 						free(mapping_path);
 					}
-					
+
 					if(mapping_fd != NULL)
 					{
 						printf("evdev: reading mapping file: '%s'\n", mapping_fname);
@@ -443,6 +466,44 @@
 						rt[port] = controller->data_trigger_right.convert(ie.value);
 					}
 					break;
+			}
+		}
+	}
+
+	void input_evdev_rumble(EvdevController* controller, u16 pow_strong, u16 pow_weak)
+	{
+		if (controller->fd < 0 || controller->rumble_effect_id == -2)
+		{
+			// Either the controller is not used or previous rumble effect failed
+			printf("RUMBLE: %s\n", "Skipped!");
+			return;
+		}
+		printf("RUMBLE: %u / %u (%d)\n", pow_strong, pow_weak, controller->rumble_effect_id);
+		struct ff_effect effect;
+		effect.type = FF_RUMBLE;
+		effect.id = controller->rumble_effect_id;
+		effect.u.rumble.strong_magnitude = pow_strong;
+		effect.u.rumble.weak_magnitude = pow_weak;
+		effect.replay.length = 0;
+		effect.replay.delay = 0;
+		if (ioctl(controller->fd, EVIOCSFF, &effect) == -1)
+		{
+			perror("evdev: Force feedback error");
+			controller->rumble_effect_id = -2;
+		}
+		else
+		{
+			controller->rumble_effect_id = effect.id;
+
+			// Let's play the effect
+			input_event play;
+			play.type = EV_FF;
+			play.code = effect.id;
+			play.value = 1;
+			if (write(controller->fd, (const void*) &play, sizeof(play)) == -1)
+			{
+				perror("evdev: Force feedback error");
+				controller->rumble_effect_id = -2;
 			}
 		}
 	}

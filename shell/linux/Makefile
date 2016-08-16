@@ -1,5 +1,3 @@
-
-
 LOCAL_PATH := $(call my-dir)
 FOR_LINUX :=1
 #NO_REC := 1
@@ -64,6 +62,11 @@ ifeq (,$(platform))
     else
         $(error Unsupported CPU architecture)
     endif
+
+    FLAGS = $(shell grep flags /proc/cpuinfo)
+    ifneq (,$(findstring sse4_1,$(FLAGS)))
+        platform += sse4_1
+    endif
 endif
 
 $(info Platform: $(platform))
@@ -79,6 +82,10 @@ ifneq (,$(findstring x86,$(platform)))
     CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC -fsingle-precision-constant
     CXXFLAGS += -fno-exceptions
 
+    ifneq (,$(findstring sse4_1,$(platform)))
+        HAS_SOFTREND := 1
+    endif
+
 # Generic 64 bit x86 (a.k.a. x64/AMD64/x86_64/Intel64/EM64T)
 else ifneq (,$(findstring x64,$(platform)))
     X64_REC := 1
@@ -86,6 +93,10 @@ else ifneq (,$(findstring x64,$(platform)))
     USE_X11 := 1
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fsingle-precision-constant
     CXXFLAGS += -fexceptions
+
+    ifneq (,$(findstring sse4_1,$(platform)))
+        HAS_SOFTREND := 1
+    endif
 
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)
 else ifneq (,$(findstring armv7h,$(platform)))
@@ -202,8 +213,8 @@ ifndef NOT_ARM
 endif
 
 ifdef USE_SDL
-    CXXFLAGS += `sdl-config --cflags` -D USE_SDL
-    LIBS += `sdl-config --libs`
+    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL
+    LIBS += `sdl2-config --libs`
 endif
 
 ifdef PGO_MAKE
@@ -229,11 +240,11 @@ ifdef USE_X11
 endif
 
 ifdef USE_EVDEV
-		CXXFLAGS += -D USE_EVDEV
+    CXXFLAGS += -D USE_EVDEV
 endif
 
 ifdef USE_JOYSTICK
-		CXXFLAGS += -D USE_JOYSTICK
+    CXXFLAGS += -D USE_JOYSTICK
 endif
 
 ifdef USE_ALSA
@@ -250,12 +261,24 @@ ifdef USE_PULSEAUDIO
     LIBS += -lpulse-simple
 endif
 
+ifdef HAS_SOFTREND
+    CFLAGS += -fopenmp -msse4.1
+    LDFLAGS += -fopenmp
+endif
+
+# these are also handled on core.mk, but ignored here
+
 # GLES on x11?
 ifdef USE_GLES
     CXXFLAGS += -DGLES
     LIBS += -lEGL -lGLESv2
 else
     LIBS += -ldl -lGL #for desktop gl
+endif
+
+#softrend?
+ifdef HAS_SOFTREND
+    CXXFLAGS += -DTARGET_SOFTREND
 endif
 
 EXECUTABLE_STRIPPED=nosym-reicast.elf
@@ -270,10 +293,14 @@ else
     EXECUTABLE_NAME=reicast
 endif
 
+CHAR_EMPTY:=
+CHAR_SPACE:=$(CHAR_EMPTY) $(CHAR_EMPTY)
+BUILDDIR:=obj-$(DC_PLATFORM)-$(subst $(CHAR_SPACE),-,$(platform))
+
 OBJECTS=$(RZDCY_FILES:.cpp=.build_obj)
 OBJECTS:=$(OBJECTS:.c=.build_obj)
 OBJECTS:=$(OBJECTS:.S=.build_obj)
-OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,obj-$(DC_PLATFORM)-$(platform)/%,$(OBJECTS))
+OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
 ifneq (,$(findstring gcwz,$(platform)))
@@ -286,15 +313,15 @@ $(EXECUTABLE): $(OBJECTS)
 $(EXECUTABLE_STRIPPED): $(EXECUTABLE)
 	cp $< $@ && $(STRIP) $@
 
-obj-$(DC_PLATFORM)-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
+$(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
 	
-obj-$(DC_PLATFORM)-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
+$(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.c
 	mkdir -p $(dir $@)
 	$(CC) $(EXTRAFLAGS) $(INCS) $(CFLAGS) $< -o $@
 
-obj-$(DC_PLATFORM)-$(platform)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
+$(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.S
 	mkdir -p $(dir $@)	
 	$(AS) $(ASFLAGS) $(INCS) $< -o $@
 

@@ -5,9 +5,15 @@
 
 #include "deps/zlib/zlib.h"
 
+#include "deps/crypto/md5.h"
+
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"
 #endif
+
+#define FRAME_MD5 0x1
+FILE* fLogFrames;
+FILE* fCheckFrames;
 
 /*
 
@@ -291,6 +297,48 @@ void rend_start_render()
 
 	if (ctx)
 	{
+		if (fLogFrames || fCheckFrames) {
+			MD5Context md5;
+			u8 digest[16];
+
+			MD5Init(&md5);
+			MD5Update(&md5, ctx->tad.thd_root, ctx->tad.End() - ctx->tad.thd_root);
+			MD5Final(digest, &md5);
+
+			if (fLogFrames) {
+				fputc(FRAME_MD5, fLogFrames);
+				fwrite(digest, 1, 16, fLogFrames);
+				fflush(fLogFrames);
+			}
+
+			if (fCheckFrames) {
+				u8 v;
+				u8 digest2[16];
+				int ch = fgetc(fCheckFrames);
+
+				if (ch == EOF) {
+					printf("Testing: TA Hash log matches, exiting\n");
+					exit(1);
+				}
+				
+				verify(ch == FRAME_MD5);
+
+				fread(digest2, 1, 16, fCheckFrames);
+
+				verify(memcmp(digest, digest2, 16) == 0);
+
+				
+			}
+
+			/*
+			u8* dig = digest;
+			printf("FRAME: %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n",
+				digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
+				digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]
+				);
+			*/
+		}
+
 		if (!ctx->rend.Overrun)
 		{
 			//printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
@@ -366,29 +414,36 @@ void rend_end_wait()
 
 bool rend_init()
 {
+	if (fLogFrames = fopen(settings.pvr.HashLogFile.c_str(), "wb")) {
+		printf("Saving frame hashes to: '%s'\n", settings.pvr.HashLogFile.c_str());
+	}
+
+	if (fCheckFrames = fopen(settings.pvr.HashCheckFile.c_str(), "rb")) {
+		printf("Comparing frame hashes against: '%s'\n", settings.pvr.HashCheckFile.c_str());
+	}
 
 #ifdef NO_REND
 	renderer	 = rend_norend();
 #else
 
-#if HOST_OS == OS_WINDOWS
+
 	switch (settings.pvr.rend) {
 		default:
 		case 0:
 			renderer = rend_GLES2();
 			break;
-
+#if HOST_OS == OS_WINDOWS
 		case 1:
 			renderer = rend_D3D11();
 			break;
+#endif
 
+#if FEAT_HAS_SOFTREND
 		case 2:
 			renderer = rend_softrend();
 			break;
-	}
-#else
-	renderer = rend_GLES2();
 #endif
+	}
 
 #endif
 
@@ -435,6 +490,11 @@ bool rend_init()
 
 void rend_term()
 {
+	if (fCheckFrames)
+		fclose(fCheckFrames);
+
+	if (fLogFrames)
+		fclose(fLogFrames);
 }
 
 void rend_vblank()

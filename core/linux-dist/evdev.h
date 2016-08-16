@@ -4,38 +4,38 @@
 
 struct EvdevControllerMapping
 {
-	const char* name;
-	const int Btn_A;
-	const int Btn_B;
-	const int Btn_C;
-	const int Btn_D;
-	const int Btn_X;
-	const int Btn_Y;
-	const int Btn_Z;
-	const int Btn_Start;
-	const int Btn_Escape;
-	const int Btn_DPad_Left;
-	const int Btn_DPad_Right;
-	const int Btn_DPad_Up;
-	const int Btn_DPad_Down;
-	const int Btn_DPad2_Left;
-	const int Btn_DPad2_Right;
-	const int Btn_DPad2_Up;
-	const int Btn_DPad2_Down;
-	const int Btn_Trigger_Left;
-	const int Btn_Trigger_Right;
-	const int Axis_DPad_X;
-	const int Axis_DPad_Y;
-	const int Axis_DPad2_X;
-	const int Axis_DPad2_Y;
-	const int Axis_Analog_X;
-	const int Axis_Analog_Y;
-	const int Axis_Trigger_Left;
-	const int Axis_Trigger_Right;
-	const bool Axis_Analog_X_Inverted;
-	const bool Axis_Analog_Y_Inverted;
-	const bool Axis_Trigger_Left_Inverted;
-	const bool Axis_Trigger_Right_Inverted;
+	char* name;
+	int Btn_A;
+	int Btn_B;
+	int Btn_C;
+	int Btn_D;
+	int Btn_X;
+	int Btn_Y;
+	int Btn_Z;
+	int Btn_Start;
+	int Btn_Escape;
+	int Btn_DPad_Left;
+	int Btn_DPad_Right;
+	int Btn_DPad_Up;
+	int Btn_DPad_Down;
+	int Btn_DPad2_Left;
+	int Btn_DPad2_Right;
+	int Btn_DPad2_Up;
+	int Btn_DPad2_Down;
+	int Btn_Trigger_Left;
+	int Btn_Trigger_Right;
+	int Axis_DPad_X;
+	int Axis_DPad_Y;
+	int Axis_DPad2_X;
+	int Axis_DPad2_Y;
+	int Axis_Analog_X;
+	int Axis_Analog_Y;
+	int Axis_Trigger_Left;
+	int Axis_Trigger_Right;
+	bool Axis_Analog_X_Inverted;
+	bool Axis_Analog_Y_Inverted;
+	bool Axis_Trigger_Left_Inverted;
+	bool Axis_Trigger_Right_Inverted;
 };
 
 struct EvdevAxisData
@@ -54,7 +54,6 @@ struct EvdevController
 	EvdevAxisData data_y;
 	EvdevAxisData data_trigger_left;
 	EvdevAxisData data_trigger_right;
-	int rumble_effect_id;
 	void init();
 };
 
@@ -73,4 +72,3 @@ struct EvdevController
 
 extern int input_evdev_init(EvdevController* controller, const char* device, const char* mapping_fname);
 extern bool input_evdev_handle(EvdevController* controller, u32 port);
-extern void input_evdev_rumble(EvdevController* controller, u16 pow_strong, u16 pow_weak);

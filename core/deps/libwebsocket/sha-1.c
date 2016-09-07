@@ -55,14 +55,6 @@ struct sha1_ctxt {
 };
 
 /* sanity check */
-#if !defined(BYTE_ORDER) || !defined(LITTLE_ENDIAN) || !defined(BIG_ENDIAN)
-# define unsupported 1
-#elif BYTE_ORDER != BIG_ENDIAN
-# if BYTE_ORDER != LITTLE_ENDIAN
-#  define unsupported 1
-# endif
-#endif
-
 #ifndef unsupported
 
 /* constant table */
@@ -107,7 +99,7 @@ sha1_step(struct sha1_ctxt *ctxt)
 	unsigned int	a, b, c, d, e, tmp;
 	size_t t, s;
 
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef MSB_FIRST
 	struct sha1_ctxt tctxt;
 
 	memcpy(&tctxt.m.b8[0], &ctxt->m.b8[0], 64);
@@ -221,7 +213,7 @@ sha1_pad(struct sha1_ctxt *ctxt)
 	bzero(&ctxt->m.b8[padstart], padlen - 8);
 	COUNT += (padlen - 8);
 	COUNT %= 64;
-#if BYTE_ORDER == BIG_ENDIAN
+#ifdef MSB_FIRST
 	PUTPAD(ctxt->c.b8[0]); PUTPAD(ctxt->c.b8[1]);
 	PUTPAD(ctxt->c.b8[2]); PUTPAD(ctxt->c.b8[3]);
 	PUTPAD(ctxt->c.b8[4]); PUTPAD(ctxt->c.b8[5]);
@@ -266,7 +258,7 @@ sha1_result(struct sha1_ctxt *ctxt, void *digest0)
 
 	digest = (unsigned char *)digest0;
 	sha1_pad(ctxt);
-#if BYTE_ORDER == BIG_ENDIAN
+#ifdef MSB_FIRST
 	memcpy(digest, &ctxt->h.b8[0], 20);
 #else
 	digest[0] = ctxt->h.b8[3]; digest[1] = ctxt->h.b8[2];

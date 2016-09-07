@@ -180,15 +180,6 @@ SHA1(const unsigned char *d, size_t n, unsigned char *md);
 
 #if defined(WIN32) || defined(_WIN32)
 
-#ifndef BIG_ENDIAN
-#define BIG_ENDIAN    4321  /* to show byte order (taken from gcc) */
-#endif
-#ifndef LITTLE_ENDIAN
-#define LITTLE_ENDIAN 1234
-#endif
-#ifndef BYTE_ORDER
-#define BYTE_ORDER LITTLE_ENDIAN
-#endif
 typedef unsigned __int64 u_int64_t;
 
 #undef __P
@@ -212,16 +203,6 @@ typedef unsigned __int64 u_int64_t;
 #include <sys/endian.h>
 #elif defined(__linux__)
 #include <endian.h>
-#endif
-
-#if !defined(BYTE_ORDER)
-# define BYTE_ORDER __BYTE_ORDER
-#endif
-#if !defined(LITTLE_ENDIAN)
-# define LITTLE_ENDIAN __LITTLE_ENDIAN
-#endif
-#if !defined(BIG_ENDIAN)
-# define BIG_ENDIAN __BIG_ENDIAN
 #endif
 
 #endif

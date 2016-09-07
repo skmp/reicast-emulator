@@ -1,7 +1,10 @@
-INCFLAGS    += -I$(CORE_DIR)/libretro \
+DEPS_DIR          = $(CORE_DIR)/deps
+LIBRETRO_COMM_DIR = $(CORE_DIR)/libretro-common
+
+INCFLAGS    := -I$(CORE_DIR)/libretro \
 					-I$(CORE_DIR) \
-					-I$(CORE_DIR)/deps \
-					-I$(CORE_DIR)/libretro-common/include 
+					-I$(DEPS_DIR) \
+					-I$(LIBRETRO_COMM_DIR)/include 
 
 SOURCES_C   :=
 SOURCES_CXX := $(CORE_DIR)/hw/arm7/arm_mem.cpp \
@@ -72,15 +75,15 @@ SOURCES_CXX := $(CORE_DIR)/hw/arm7/arm_mem.cpp \
 					$(CORE_DIR)/nullDC.cpp \
 					$(CORE_DIR)/stdclass.cpp \
 					\
-					$(CORE_DIR)/deps/coreio/coreio.cpp \
-					$(CORE_DIR)/deps/chdr/chdr.cpp \
-					$(CORE_DIR)/deps/crypto/sha1.cpp \
-					$(CORE_DIR)/deps/crypto/sha256.cpp \
-					$(CORE_DIR)/deps/crypto/md5.cpp \
-					$(CORE_DIR)/deps/libelf/elf.cpp \
-					$(CORE_DIR)/deps/libelf/elf32.cpp \
-					$(CORE_DIR)/deps/libelf/elf64.cpp \
-					$(CORE_DIR)/deps/chdpsr/cdipsr.cpp \
+					$(DEPS_DIR)/coreio/coreio.cpp \
+					$(DEPS_DIR)/chdr/chdr.cpp \
+					$(DEPS_DIR)/crypto/sha1.cpp \
+					$(DEPS_DIR)/crypto/sha256.cpp \
+					$(DEPS_DIR)/crypto/md5.cpp \
+					$(DEPS_DIR)/libelf/elf.cpp \
+					$(DEPS_DIR)/libelf/elf32.cpp \
+					$(DEPS_DIR)/libelf/elf64.cpp \
+					$(DEPS_DIR)/chdpsr/cdipsr.cpp \
 					\
 					\
 					$(CORE_DIR)/reios/reios_elf.cpp \
@@ -96,12 +99,12 @@ endif
 ifeq ($(HAVE_GL), 1)
 SOURCES_CXX += $(CORE_DIR)/rend/gles/gles.cpp \
 					$(CORE_DIR)/rend/gles/gltex.cpp
-SOURCES_C   += $(CORE_DIR)/libretro-common/glsym/rglgen.c \
-					$(CORE_DIR)/libretro-common/glsm/glsm.c
+SOURCES_C   += $(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
+					$(LIBRETRO_COMM_DIR)/glsm/glsm.c
 ifeq ($(GLES), 1)
-	SOURCES_C += $(CORE_DIR)/libretro-common/glsym/glsym_es2.c
+	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_es2.c
 else
-	SOURCES_C += $(CORE_DIR)/libretro-common/glsym/glsym_gl.c
+	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c
 endif
 endif
 
@@ -153,22 +156,22 @@ endif
 SOURCES_CXX += $(CORE_DIR)/libretro/libretro.cpp \
 					$(CORE_DIR)/libretro/common.cpp
 
-SOURCES_C +=   $(CORE_DIR)/libretro-common/libco/libco.c \
-					$(CORE_DIR)/libretro-common/memmap/memalign.c \
-					$(CORE_DIR)/libretro-common/rthreads/rthreads.c
+SOURCES_C +=   $(LIBRETRO_COMM_DIR)/libco/libco.c \
+					$(LIBRETRO_COMM_DIR)/memmap/memalign.c \
+					$(LIBRETRO_COMM_DIR)/rthreads/rthreads.c
 
-SOURCES_C +=   $(CORE_DIR)/deps/zlib/deflate.c \
-					$(CORE_DIR)/deps/zlib/gzlib.c \
-					$(CORE_DIR)/deps/zlib/uncompr.c \
-					$(CORE_DIR)/deps/zlib/zutil.c \
-					$(CORE_DIR)/deps/zlib/inffast.c \
-					$(CORE_DIR)/deps/zlib/gzread.c \
-					$(CORE_DIR)/deps/zlib/crc32.c \
-					$(CORE_DIR)/deps/zlib/gzwrite.c \
-					$(CORE_DIR)/deps/zlib/inflate.c \
-					$(CORE_DIR)/deps/zlib/infback.c \
-					$(CORE_DIR)/deps/zlib/inftrees.c \
-					$(CORE_DIR)/deps/zlib/trees.c \
-					$(CORE_DIR)/deps/zlib/gzclose.c \
-					$(CORE_DIR)/deps/zlib/compress.c \
-					$(CORE_DIR)/deps/zlib/adler32.c
+SOURCES_C +=   $(DEPS_DIR)/zlib/deflate.c \
+					$(DEPS_DIR)/zlib/gzlib.c \
+					$(DEPS_DIR)/zlib/uncompr.c \
+					$(DEPS_DIR)/zlib/zutil.c \
+					$(DEPS_DIR)/zlib/inffast.c \
+					$(DEPS_DIR)/zlib/gzread.c \
+					$(DEPS_DIR)/zlib/crc32.c \
+					$(DEPS_DIR)/zlib/gzwrite.c \
+					$(DEPS_DIR)/zlib/inflate.c \
+					$(DEPS_DIR)/zlib/infback.c \
+					$(DEPS_DIR)/zlib/inftrees.c \
+					$(DEPS_DIR)/zlib/trees.c \
+					$(DEPS_DIR)/zlib/gzclose.c \
+					$(DEPS_DIR)/zlib/compress.c \
+					$(DEPS_DIR)/zlib/adler32.c

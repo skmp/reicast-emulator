@@ -1163,8 +1163,8 @@ struct softrend : Renderer
 	#define R(a, b, c, d) RR(12, a, b, c, d), RR(8, a, b, c, d), RR(4, a, b, c, d),  RR(0, a, b, c, d)
 
 	//R coefs should be adjusted to match pixel format
-	INLINE __m128 shuffle_pixel(__m128 v) {
-		return (__m128&)_mm_shuffle_epi8((__m128i&)v, _mm_set_epi8(R(0x80,2,1, 0)));
+	INLINE __m128i shuffle_pixel(__m128 v) {
+		return (__m128i)_mm_shuffle_epi8((__m128i&)v, _mm_set_epi8(R(0x80,2,1, 0)));
 	}
 
 	virtual void Present() {

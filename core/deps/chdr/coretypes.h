@@ -1,4 +1,4 @@
-
+#include <retro_miscellaneous.h>
 #include "types.h"
 
 typedef u64 UINT64;
@@ -14,5 +14,3 @@ typedef s8 INT8;
 #ifndef INLINE
 #define INLINE inline
 #endif
-
-#define ARRAY_LENGTH(x) (sizeof(x)/sizeof(x[0]))

@@ -414,7 +414,7 @@ else ifeq ($(platform), emscripten)
 	#HAVE_SHARED_CONTEXT := 1
 
 # Windows
-else ifneq (,$(findstring win,$(platform)))
+else
 	EXT       ?= dll
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	SHARED := -shared -shared -static-libgcc -static-libstdc++ -Wl,--version-script=link.T

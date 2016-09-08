@@ -529,13 +529,13 @@ chd_error chd_open_file(core_file *file, int mode, chd_file *parent, chd_file **
 		EARLY_EXIT(err = CHDERR_OUT_OF_MEMORY);
 
 	/* find the codec interface */
-	for (intfnum = 0; intfnum < ARRAY_LENGTH(codec_interfaces); intfnum++)
+	for (intfnum = 0; intfnum < ARRAY_SIZE(codec_interfaces); intfnum++)
 		if (codec_interfaces[intfnum].compression == newchd->header.compression)
 		{
 			newchd->codecintf = &codec_interfaces[intfnum];
 			break;
 		}
-	if (intfnum == ARRAY_LENGTH(codec_interfaces))
+	if (intfnum == ARRAY_SIZE(codec_interfaces))
 		EARLY_EXIT(err = CHDERR_UNSUPPORTED_FORMAT);
 
 	/* initialize the codec */
@@ -968,10 +968,10 @@ static chd_error header_validate(const chd_header *header)
 		return CHDERR_INVALID_PARAMETER;
 
 	/* require a supported compression mechanism */
-	for (intfnum = 0; intfnum < ARRAY_LENGTH(codec_interfaces); intfnum++)
+	for (intfnum = 0; intfnum < ARRAY_SIZE(codec_interfaces); intfnum++)
 		if (codec_interfaces[intfnum].compression == header->compression)
 			break;
-	if (intfnum == ARRAY_LENGTH(codec_interfaces))
+	if (intfnum == ARRAY_SIZE(codec_interfaces))
 		return CHDERR_INVALID_PARAMETER;
 
 	/* require a valid hunksize */

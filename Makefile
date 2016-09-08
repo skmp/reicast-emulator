@@ -140,15 +140,12 @@ endif
 ifeq ($(STATIC_LINKING),1)
 EXT=a
 
-ifeq ($(platform), unix)
-PLAT=_unix
-endif
 endif
 
 # Unix
 ifneq (,$(findstring unix,$(platform)))
 	EXT    ?= so
-   TARGET := $(TARGET_NAME)_libretro$(PLAT).$(EXT)
+   TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	SHARED := -shared -Wl,--version-script=link.T
 	LDFLAGS +=  -Wl,--no-undefined
 	LIBS += -lrt
@@ -348,7 +345,7 @@ else ifneq (,$(findstring android,$(platform)))
 else ifeq ($(platform), qnx)
 	fpic = -fPIC
 	EXT       ?= so
-	TARGET := $(TARGET_NAME)_libretro_qnx.$(EXT)
+	TARGET := $(TARGET_NAME)_libretro_$(platform).$(EXT)
 	SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
 	GL_LIB := -lGLESv2
 
@@ -404,7 +401,7 @@ else ifneq (,$(findstring armv,$(platform)))
 # emscripten
 else ifeq ($(platform), emscripten)
 	EXT       ?= bc
-	TARGET := $(TARGET_NAME)_libretro_emscripten.$(EXT)
+	TARGET := $(TARGET_NAME)_libretro_$(platform).$(EXT)
 	GLES := 1
 	WITH_DYNAREC :=
 	CPUFLAGS += -Dasm=asmerror -D__asm__=asmerror -DNO_ASM -DNOSSE

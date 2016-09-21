@@ -12,35 +12,27 @@ u8 aica_reg[0x8000];
 template<u32 sz>
 u32 ReadReg(u32 addr)
 {
-   u32 size = sz;
-
-	if (addr >= 0x2800 && addr < 0x2818)
+	if (addr<0x2800)
 	{
-      switch (sz)
-      {
-         case 1:
-            ReadCommonReg(addr & 0xff,true);
-            break;
-         default:
-            ReadCommonReg(addr & 0xff,false);
-            size = 2;
-            break;
-      }
+		ReadMemArrRet(aica_reg,addr,sz);
+	}
+	if (addr < 0x2818)
+	{
+		if (sz==1)
+		{
+			ReadCommonReg(addr,true);
+			ReadMemArrRet(aica_reg,addr,1);
+		}
+		else
+		{
+			ReadCommonReg(addr,false);
+			//ReadCommonReg8(addr+1);
+			ReadMemArrRet(aica_reg,addr,2);
+		}
 	}
 
-   switch (size)
-   {
-      case 1:
-         return aica_reg[addr];
-      case 2:
-         return *(u16*)&aica_reg[addr];
-      case 4:
-         break;
-   }
-
-   return *(u32*)&aica_reg[addr];
+	ReadMemArrRet(aica_reg,addr,sz);
 }
-
 template<u32 sz>
 void WriteReg(u32 addr,u32 data)
 {
@@ -51,12 +43,12 @@ void WriteReg(u32 addr,u32 data)
 		u32 reg=addr&0x7F;
 		if (sz==1)
 		{
-         aica_reg[addr] = (u8)data;
+			WriteMemArr(aica_reg,addr,data,1);
 			WriteChannelReg8(chan,reg);
 		}
 		else
 		{
-         *(u16*)&aica_reg[addr] = (u16)data;
+			WriteMemArr(aica_reg,addr,data,2);
 			WriteChannelReg8(chan,reg);
 			WriteChannelReg8(chan,reg+1);
 		}
@@ -67,11 +59,11 @@ void WriteReg(u32 addr,u32 data)
 	{
 		if (sz==1)
 		{
-         aica_reg[addr] = (u8)data;
+			WriteMemArr(aica_reg,addr,data,1);
 		}
 		else 
 		{
-         *(u16*)&aica_reg[addr] = (u16)data;
+			WriteMemArr(aica_reg,addr,data,2);
 		}
 		return;
 	}
@@ -94,12 +86,12 @@ void WriteReg(u32 addr,u32 data)
 	{
 		if (sz==1)
 		{
-         aica_reg[addr] = (u8)data;
+			WriteMemArr(aica_reg,addr,data,1);
 			dsp_writenmem(addr);
 		}
 		else
 		{
-         *(u16*)&aica_reg[addr] = (u16)data;
+			WriteMemArr(aica_reg,addr,data,2);
 			dsp_writenmem(addr);
 			dsp_writenmem(addr+1);
 		}

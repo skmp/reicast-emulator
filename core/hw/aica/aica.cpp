@@ -16,38 +16,8 @@ InterruptInfo* SCIEB;
 InterruptInfo* SCIPD;
 InterruptInfo* SCIRE;
 
-/* Timers */
-struct AicaTimerData
-{
-	union
-	{
-		struct 
-		{
-#ifdef MSB_FIRST
-			u32 pad:16;
-			u32 nil:5;
-			u32 md:3;
-			u32 count:8;
-#else
-			u32 count:8;
-			u32 md:3;
-			u32 nil:5;
-			u32 pad:16;
-#endif
-		};
-		u32 data;
-	};
-};
-
-struct AicaTimer
-{
-	AicaTimerData* data;
-	s32 c_step;
-	u32 m_step;
-	u32 id;
-};
-
-/* Interrupts - ARM side */
+//Interrupts
+//arm side
 static u32 GetL(u32 which)
 {
    if (which > 7)
@@ -92,8 +62,8 @@ static void update_arm_interrupts(void)
    libARM_InterruptChange(p_ints,Lval);
 }
 
-/* Interrupts - SH4 side */
-static void CheckPendingIRQ_SH4(void)
+//sh4 side
+void UpdateSh4Ints(void)
 {
    u32 p_ints = MCIEB->full & MCIPD->full;
    if (p_ints)
@@ -104,65 +74,91 @@ static void CheckPendingIRQ_SH4(void)
    }
    else
    {
-      if (SB_ISTEXT & SH4_IRQ_BIT)
+      if (SB_ISTEXT&SH4_IRQ_BIT)
          asic_CancelInterrupt(holly_SPU_IRQ);
    }
+
 }
 
-static void AicaTimerStep(struct AicaTimer *timer, u32 samples)
+////
+//Timers :)
+struct AicaTimerData
 {
-   do
-   {
-      timer->c_step--;
+	union
+	{
+		struct 
+		{
+#ifdef MSB_FIRST
+			u32 pad:16;
+			u32 nil:5;
+			u32 md:3;
+			u32 count:8;
+#else
+			u32 count:8;
+			u32 md:3;
+			u32 nil:5;
+			u32 pad:16;
+#endif
+		};
+		u32 data;
+	};
+};
 
-      if (timer->c_step==0)
-      {
-         timer->c_step         = timer->m_step;
-         timer->data->count   += 1;
-
-         if (timer->data->count == 0)
-         {
-            switch (timer->id)
-            {
-               case 0:
-                  SCIPD->TimerA=1;
-                  MCIPD->TimerA=1;
-                  break;
-               case 1:
-                  SCIPD->TimerB=1;
-                  MCIPD->TimerB=1;
-                  break;
-               default:
-                  SCIPD->TimerC=1;
-                  MCIPD->TimerC=1;
-                  break;
-            }
-         }
-      }
-   }while(--samples);
-}
-
-static void AicaTimerInit(struct AicaTimer *timer, u8* regbase,u32 _timer)
+class AicaTimer
 {
-   if (!timer)
-      return;
+public:
+	AicaTimerData* data;
+	s32 c_step;
+	u32 m_step;
+	u32 id;
+	void Init(u8* regbase,u32 timer)
+	{
+		data=(AicaTimerData*)&regbase[0x2890 + timer*4];
+		id=timer;
+		m_step=1<<(data->md);
+		c_step=m_step;
+	}
+	void StepTimer(u32 samples)
+	{
+		do
+		{
+			c_step--;
+			if (c_step==0)
+			{
+				c_step=m_step;
+				data->count++;
+				if (data->count==0)
+				{
+					if (id==0)
+					{
+						SCIPD->TimerA=1;
+						MCIPD->TimerA=1;
+					}
+					else if (id==1)
+					{
+						SCIPD->TimerB=1;
+						MCIPD->TimerB=1;
+					}
+					else
+					{
+						SCIPD->TimerC=1;
+						MCIPD->TimerC=1;
+					}
+				}
+			}
+		} while(--samples);
+	}
 
-   timer->data        = (AicaTimerData*)&regbase[0x2890 + _timer*4];
-   timer->id          = _timer;
-   timer->m_step      = 1 << (timer->data->md);
-   timer->c_step      = timer->m_step;
-}
-
-static void AicaTimerRegisterWrite(struct AicaTimer *timer)
-{
-   u32 n_step = 1 << (timer->data->md);
-
-   if (n_step == timer->m_step)
-      return;
-
-   timer->m_step = n_step;
-   timer->c_step = timer->m_step;
-}
+	void RegisterWrite()
+	{
+		u32 n_step=1<<(data->md);
+		if (n_step!=m_step)
+		{
+			m_step=n_step;
+			c_step=m_step;
+		}
+	}
+};
 
 AicaTimer timers[3];
 
@@ -175,7 +171,7 @@ void libAICA_Update(u32 Samples)
 void libAICA_TimeStep(void)
 {
 	for (int i=0;i<3;i++)
-		AicaTimerStep(&timers[i], 1);
+		timers[i].StepTimer(1);
 
 	SCIPD->SAMPLE_DONE=1;
 
@@ -184,21 +180,18 @@ void libAICA_TimeStep(void)
 
 	//Make sure sh4/arm interrupt system is up to date :)
 	update_arm_interrupts();
-	CheckPendingIRQ_SH4();	
+	UpdateSh4Ints();	
 }
 
 //Memory i/o
 template<u32 sz>
 void WriteAicaReg(u32 reg,u32 data)
 {
-   struct AicaTimer *timer = NULL;
-
    switch (reg)
    {
       case SCIPD_addr:
          verify(sz!=1);
-
-         if (data & 0x20)
+         if (data & (1<<5))
          {
             SCIPD->SCPU=1;
             update_arm_interrupts();
@@ -213,51 +206,38 @@ void WriteAicaReg(u32 reg,u32 data)
          break;
 
       case MCIPD_addr:
-         if (data & 0x20)
+         if (data & (1<<5))
          {
             verify(sz!=1);
             MCIPD->SCPU=1;
-            CheckPendingIRQ_SH4();
+            UpdateSh4Ints();
          }
          break;
 
       case MCIRE_addr:
          verify(sz!=1);
          MCIPD->full&=~data;
-         CheckPendingIRQ_SH4();
+         UpdateSh4Ints();
          //Write only
          break;
 
+      case TIMER_A:
+         WriteMemArr(aica_reg,reg,data,sz);
+         timers[0].RegisterWrite();
+         break;
+
+      case TIMER_B:
+         WriteMemArr(aica_reg,reg,data,sz);
+         timers[1].RegisterWrite();
+         break;
+
+      case TIMER_C:
+         WriteMemArr(aica_reg,reg,data,sz);
+         timers[2].RegisterWrite();
+         break;
+
       default:
-         switch (reg)
-         {
-            case TIMER_A:
-               timer = &timers[0];
-               break;
-            case TIMER_B:
-               timer = &timers[1];
-               break;
-            case TIMER_C:
-               timer = &timers[2];
-               break;
-         }
-
-         switch (sz)
-         {
-            case 1:
-               aica_reg[reg]=(u8)data;
-               break;
-            case 2:
-               *(u16*)&aica_reg[reg]=(u16)data;
-               break;
-            case 4:
-               *(u32*)&aica_reg[reg]=data;
-               break;
-         }
-
-         if (timer)
-            AicaTimerRegisterWrite(timer);
-
+         WriteMemArr(aica_reg,reg,data,sz);
          break;
    }
 }
@@ -275,20 +255,19 @@ s32 libAICA_Init(void)
 
 	CommonData=(CommonData_struct*)&aica_reg[0x2800];
 	DSPData=(DSPData_struct*)&aica_reg[0x3000];
+	//slave cpu (arm7)
 
-	/* slave CPU (ARM7) */
 	SCIEB=(InterruptInfo*)&aica_reg[0x289C];
 	SCIPD=(InterruptInfo*)&aica_reg[0x289C+4];
 	SCIRE=(InterruptInfo*)&aica_reg[0x289C+8];
-
-	/* Main CPU (SH4) */
+	//Main cpu (sh4)
 	MCIEB=(InterruptInfo*)&aica_reg[0x28B4];
 	MCIPD=(InterruptInfo*)&aica_reg[0x28B4+4];
 	MCIRE=(InterruptInfo*)&aica_reg[0x28B4+8];
 
 	sgc_Init();
 	for (int i=0;i<3;i++)
-		AicaTimerInit(&timers[i], aica_reg,i);
+		timers[i].Init(aica_reg,i);
 
 	return rv_ok;
 }

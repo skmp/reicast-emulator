@@ -91,21 +91,23 @@ void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 u32 ReadMem_aica_reg(u32 addr,u32 sz)
 {
 	addr&=0x7FFF;
-
-   switch (addr)
-   {
-      case 0x2C00:
-         if (sz == 1)
-            return ARMRST;
-         return (VREG<<8) | ARMRST;
-      case 0x2C01:
-         if (sz == 1)
+	if (sz==1)
+	{
+      switch (addr)
+      {
+         case 0x2C01:
             return VREG;
-         /* fall-through */
-      default:
-         break;
-   }
-
+         case 0x2C00:
+            return ARMRST;
+         default:
+            break;
+      }
+	}
+	else
+	{
+		if (addr==0x2C00)
+			return (VREG<<8) | ARMRST;
+	}
    return libAICA_ReadReg(addr, sz);
 }
 
@@ -119,31 +121,32 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 {
 	addr&=0x7FFF;
 
-   switch (addr)
-   {
-      case 0x2C00: /* ARMRST */
-         ARMRST = data;
-
-         if (sz != 1)
-         {
-            VREG   = (data>>8)&0xFF;
-            ARMRST &= 0xFF;
-         }
-         ArmSetRST();
-         break;
-      case 0x2C01: /* VREG */
-         if (sz == 1)
-         {
-            VREG=data;
-            break;
-         }
-         /* fall-through */
-      default:
-         libAICA_WriteReg(addr,data,sz);
-         break;
-   }
+	if (sz==1)
+	{
+		if (addr==0x2C01) /* VREG */
+		{
+			VREG=data;
+		}
+		else if (addr==0x2C00) /* ARMRST */
+		{
+			ARMRST=data;
+			ArmSetRST();
+		}
+		else
+			libAICA_WriteReg(addr,data,sz);
+	}
+	else
+	{
+		if (addr==0x2C00)
+		{
+			VREG=(data>>8)&0xFF;
+			ARMRST=data&0xFF;
+			ArmSetRST();
+		}
+		else
+			libAICA_WriteReg(addr,data,sz);
+	}
 }
-
 //Init/res/term
 void aica_Init(void)
 {

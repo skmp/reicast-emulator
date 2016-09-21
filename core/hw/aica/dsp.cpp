@@ -221,7 +221,7 @@ void dsp_rec_DRAM_CI(x86_block& x86e,_INST& prev_op,u32 step,x86_gpr_reg MEM_RD_
 		x86e.Emit(op_mov32,EAX,&dsp.regs.MEM_ADDR);
 		x86e.Emit(op_and32,EAX,AICA_RAM_MASK);
 
-		x86e.Emit(op_add32,EAX, (size_t)aica_ram.data);
+		x86e.Emit(op_add32,EAX,(unat)aica_ram.data);
 
 		//prev. opcode did a mem read request ?
 		if (prev_op.MRD)

@@ -406,8 +406,8 @@ else ifeq ($(platform), emscripten)
 	WITH_DYNAREC :=
 	CPUFLAGS += -Dasm=asmerror -D__asm__=asmerror -DNO_ASM -DNOSSE
 	SINGLE_THREAD := 1
-	PLATCFLAGS += -Drglgen_resolve_symbols_custom=mupen_rglgen_resolve_symbols_custom \
-					  -Drglgen_resolve_symbols=mupen_rglgen_resolve_symbols
+	PLATCFLAGS += -Drglgen_resolve_symbols_custom=reicast_rglgen_resolve_symbols_custom \
+					  -Drglgen_resolve_symbols=reicast_rglgen_resolve_symbols
 
 	HAVE_NEON = 0
 	PLATFORM_EXT := unix

@@ -13,8 +13,6 @@ u32 pvr_numscanlines=512;
 u32 prv_cur_scanline=-1;
 u32 vblk_cnt=0;
 
-float last_fps=0;
-
 u32 Line_Cycles=0;
 u32 Frame_Cycles=0;
 static int render_end_sched;

@@ -338,9 +338,7 @@ static s32 SetTileClip(u32 val, bool set)
 	u32 clipmode=val>>28;
 	s32 clip_mode;
 	if (clipmode<2)
-	{
 		clip_mode=0;    //always passes
-	}
 	else if (clipmode&1)
 		clip_mode=-1;   //render stuff inside the region
 	else

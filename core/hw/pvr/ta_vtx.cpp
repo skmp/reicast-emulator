@@ -1301,6 +1301,7 @@ public:
 		P.u = A_u + k1 * AB_u + k2 * AC_u;
 		P.v = A_v + k1 * AB_v + k2 * AC_v;
 	}
+
 	__forceinline
 		static void AppendSpriteVertexB(TA_Sprite1B* sv)
 	{
@@ -1324,15 +1325,6 @@ public:
 
 		update_fz(cv[0].z);
 
-		/*
-		if (CurrentPP->count)
-		{
-			Vertex* vert=vert_reappend;
-			vert[-1].x=vert[0].x;
-			vert[-1].y=vert[0].y;
-			vert[-1].z=vert[0].z;
-			CurrentPP->count+=2;
-		}*/
 #if STRIPS_AS_PPARAMS
 		if (CurrentPPlist==&vdrc.global_param_tr)
 		{
@@ -1341,6 +1333,15 @@ public:
 			CurrentPP=d_pp;
 			d_pp->first=vdrc.idx.used(); 
 			d_pp->count=0;
+		}
+#else
+		if (CurrentPP->count)
+		{
+			Vertex* vert=vert_reappend;
+			vert[-1].x=vert[0].x;
+			vert[-1].y=vert[0].y;
+			vert[-1].z=vert[0].z;
+			CurrentPP->count+=2;
 		}
 #endif
 	}
@@ -1357,6 +1358,7 @@ public:
 		p->VolumeLast=param->pcw.Volume;
 		p->id=vdrc.modtrig.used();
 	}
+
 	__forceinline
 		static void AppendModVolVertexA(TA_ModVolA* mvv)
 	{
@@ -1367,14 +1369,18 @@ public:
 		lmr->x0=mvv->x0;
 		lmr->y0=mvv->y0;
 		lmr->z0=mvv->z0;
-		//update_fz(mvv->z0);
 
 		lmr->x1=mvv->x1;
 		lmr->y1=mvv->y1;
 		lmr->z1=mvv->z1;
-		//update_fz(mvv->z1);
 
 		lmr->x2=mvv->x2;
+
+      /* TODO/FIXME - should maybe enable this again */
+#ifdef ENABLE_MODVOLS
+		update_fz(mvv->z0);
+		update_fz(mvv->z1);
+#endif
 	}
 
 	__forceinline
@@ -1384,7 +1390,9 @@ public:
 			return;
 		lmr->y2=mvv->y2;
 		lmr->z2=mvv->z2;
-		//update_fz(mvv->z2);
+#ifdef ENABLE_MODVOLS
+		update_fz(mvv->z2);
+#endif
 	}
 
 	static void VDECInit()

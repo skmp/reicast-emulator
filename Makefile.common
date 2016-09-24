@@ -91,7 +91,7 @@ SOURCES_CXX := $(CORE_DIR)/hw/arm7/arm_mem.cpp \
 					$(CORE_DIR)/reios/reios.cpp \
 					$(CORE_DIR)/reios/gdrom_hle.cpp \
 					$(CORE_DIR)/reios/descrambl.cpp \
-					\
+SOURCES_ASM :=
 
 ifeq ($(NO_REND), 1)
 SOURCES_CXX += $(CORE_DIR)/rend/norend/norend.cpp

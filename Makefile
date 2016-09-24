@@ -7,7 +7,7 @@ NO_EXCEPTIONS := 0
 NO_NVMEM      := 0
 NO_VERIFY     := 1
 NAOMI         := 0
-HAVE_GENERIC_JIT   := 1
+HAVE_GENERIC_JIT   := 0
 FORCE_GLES    := 0
 STATIC_LINKING:= 0
 
@@ -449,7 +449,7 @@ CFLAGS         += -DNDEBUG
 CXXFLAGS       += -DNDEBUG
 LDFLAGS        += -DNDEBUG
 endif
-RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -DRELEASE -ffast-math -ftree-vectorize -fomit-frame-pointer -D__LIBRETRO__
+RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -DRELEASE -ffast-math -fomit-frame-pointer -D__LIBRETRO__
 CFLAGS         += -D__LIBRETRO__
 
 ifeq ($(WITH_DYNAREC), arm)
@@ -490,7 +490,7 @@ endif
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fexceptions -fno-rtti -std=gnu++11
 
 CFLAGS   += $(OPTFLAGS) -D RELEASE -c
-CFLAGS   += -fno-strict-aliasing -ffast-math -ftree-vectorize
+CFLAGS   += -fno-strict-aliasing -ffast-math
 CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
 LIBS     += -lm -lpthread
 

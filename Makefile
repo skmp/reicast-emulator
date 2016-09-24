@@ -20,6 +20,7 @@ INCFLAGS :=
 LIBS :=
 CFLAGS := 
 CXXFLAGS :=
+CC_AS ?= $(AS)
 
 UNAME=$(shell uname -a)
 
@@ -65,8 +66,6 @@ endif
 else ifneq ($(findstring MINGW,$(shell uname -a)),)
 	system_platform = win
 endif
-
-CC_AS ?= $(CC)
 
 ifeq ($(SINGLE_PREC_FLAGS),1)
 CFLAGS += -fsingle-precision-constant

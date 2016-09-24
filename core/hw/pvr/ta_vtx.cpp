@@ -120,8 +120,7 @@ extern u32 TA_VTX_O;
 
 #define vdrc vd_rc
 
-	//Splitter function (normally ta_dma_main , modified for split dma's)
-	//extern TaListFP* TaCmd;
+//Splitter function (normally ta_dma_main , modified for split dma's)
 
 template<u32 instance>
 class FifoSplitter
@@ -278,18 +277,13 @@ case num : {\
       AppendSpriteVertexA(&vp->spr1A);
       AppendSpriteVertexB(&vp->spr1B);
 
-      //all 64B doneisimooooo la la la :*iiiiii  niarj
+      //all 64B done
       return data+SZ64;
    }
 
 	template <u32 poly_type,u32 poly_size>
 	static Ta_Dma* TACALL ta_poly_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
-#if 0
-      /* TODO/FIXME - honor this or not? */
-		__assume(data<=data_end);
-#endif
-
       //If SZ64  && 32 bytes
 #define IS_FIST_HALF ((poly_size!=SZ32) && (data==data_end))
 
@@ -963,9 +957,6 @@ public:
 		cv->spc[1] = FaceOffsColor[1]*satint/256;  \
 		cv->spc[2] = FaceOffsColor[2]*satint/256;  \
 		cv->spc[3] = FaceOffsColor[3]; }
-
-	//vert_float_color_(cv->spc,FaceOffsColor[3],FaceOffsColor[0]*satint/256,FaceOffsColor[1]*satint/256,FaceOffsColor[2]*satint/256); }
-
 
 	//(Non-Textured, Packed Color)
 	__forceinline

@@ -13,24 +13,16 @@
 
 void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool staging, bool optimise);
 
-#ifdef __cplusplus__ 
-extern "C" 
-{
-#endif	
 
-void ngen_LinkBlock_Generic_stub();
-void ngen_LinkBlock_cond_Next_stub();
-void ngen_LinkBlock_cond_Branch_stub();
-void ngen_FailedToFindBlock_();
+void ngen_LinkBlock_Generic_stub(void);
+void ngen_LinkBlock_cond_Next_stub(void);
+void ngen_LinkBlock_cond_Branch_stub(void);
+void ngen_FailedToFindBlock_(void);
 void ngen_mainloop(void* cntx);
 
 
 void DYNACALL ngen_blockcheckfail(u32 addr);
 void DYNACALL ngen_blockcheckfail2(u32 addr);
-
-#ifdef __cplusplus__ 
-}
-#endif
 
 extern x86_block* x86e;
 

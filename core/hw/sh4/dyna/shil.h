@@ -44,6 +44,7 @@ struct shil_param
 	{
 		type=FMT_NULL;
 		_imm=0xFFFFFFFF;
+		natreg = -1;
 	}
 	shil_param(u32 type,u32 imm)
 	{
@@ -51,6 +52,7 @@ struct shil_param
 		if (type >= FMT_REG_BASE)
 			new (this) shil_param((Sh4RegType)imm);
 		_imm=imm;
+		natreg = -1;
 	}
 
 	shil_param(Sh4RegType reg)
@@ -99,6 +101,7 @@ struct shil_param
 		Sh4RegType _reg;
 	};
 	u32 type;
+	int natreg;
 
 	bool is_null() const { return type==FMT_NULL; }
 	bool is_imm() const { return type==FMT_IMM; }

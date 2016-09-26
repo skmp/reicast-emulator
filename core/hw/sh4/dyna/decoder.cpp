@@ -56,6 +56,27 @@ const char idle_hash[] =
 	//looks like this one is
 	">1:08:AF4AC687:08BA1CD0:18592E67:45174350:C9EADF11";
 
+static int tempVals = 0;
+
+shil_param mk_tempval(shil_param_type type)
+{
+	shil_param rv(type, regv_temp + tempVals++);
+
+	return rv;
+}
+
+shil_param mk_tempval(Sh4RegType prototypeReg)
+{
+	if (prototypeReg == NoReg)
+		return shil_param();
+
+	shil_param rv(prototypeReg);
+
+	rv._imm = regv_temp + tempVals++;
+
+	return rv;
+}
+
 shil_param mk_imm(u32 immv)
 {
 	return shil_param(FMT_IMM,immv);
@@ -125,7 +146,7 @@ struct
 	}
 } state;
 
-void Emit(shilop op,shil_param rd=shil_param(),shil_param rs1=shil_param(),shil_param rs2=shil_param(),u32 flags=0,shil_param rs3=shil_param(),shil_param rd2=shil_param())
+shil_opcode* Emit_low(shilop op, shil_param rd = shil_param(), shil_param rs1 = shil_param(), shil_param rs2 = shil_param(), u32 flags = 0, shil_param rs3 = shil_param(), shil_param rd2 = shil_param())
 {
 	shil_opcode sp;
 		
@@ -139,7 +160,64 @@ void Emit(shilop op,shil_param rd=shil_param(),shil_param rs1=shil_param(),shil_
 	sp.guest_offs=state.cpu.rpc-blk->addr;
 
 	blk->oplist.push_back(sp);
+
+	return &(blk->oplist.back());
 }
+
+shil_param Load_reg(Sh4RegType reg)
+{
+	return Emit_low(shop_load_reg, mk_tempval(reg), reg)->rd;
+}
+
+shil_opcode* Store_reg(Sh4RegType reg, shil_param val)
+{
+	verify(val._imm >= regv_temp);
+
+	return Emit_low(shop_store_reg, reg, val);
+}
+
+shil_opcode* Emit(shilop op, shil_param rd = shil_param(), shil_param rs1 = shil_param(), shil_param rs2 = shil_param(), u32 flags = 0, shil_param rs3 = shil_param(), shil_param rd2 = shil_param())
+{
+	shil_opcode* shop;
+
+	if (op == shop_mov_v)
+	{
+		shop = Store_reg(rd._reg, rs1.is_reg() ? Load_reg(rs1._reg) : rs1);
+	}
+	else
+	{
+		auto rdt = rd;
+
+		if (!rd.is_null())
+			rdt = mk_tempval(rd._reg);
+
+		auto rd2t = rd2;
+
+		if (!rd2.is_null())
+			rd2t = mk_tempval(rd2._reg);
+
+		if (rs1.is_reg())
+			rs1 = Load_reg(rs1._reg);
+
+		if (rs2.is_reg())
+			rs2 = Load_reg(rs2._reg);
+
+		if (rs3.is_reg())
+			rs3 = Load_reg(rs3._reg);
+
+		shop = Emit_low(op, rdt, rs1, rs2, flags, rs3, rd2t);
+
+		if (!rdt.is_null())
+			Store_reg(rd._reg, rdt);
+
+		if (!rd2t.is_null())
+			Store_reg(rd._reg, rd2t);
+	}
+
+
+	return shop;
+}
+
 
 void dec_fallback(u32 op)
 {
@@ -178,7 +256,7 @@ void dec_End(u32 dst,BlockEndType flags,bool delay)
 {
 	if (state.ngen.OnlyDynamicEnds && flags == BET_StaticJump)
 	{
-		Emit(shop_mov32,mk_reg(reg_nextpc),mk_imm(dst));
+		Store_reg(reg_nextpc, mk_imm(dst));
 		dec_DynamicSet(reg_nextpc);
 		dec_End(0xFFFFFFFF,BET_DynamicJump,delay);
 		return;
@@ -219,7 +297,7 @@ u32 dec_jump_simm12(u32 op)
 u32 dec_set_pr()
 {
 	u32 retaddr=state.cpu.rpc + 4;
-	Emit(shop_mov32,reg_pr,mk_imm(retaddr));
+	Store_reg(reg_pr, mk_imm(retaddr));
 	return retaddr;
 }
 void dec_write_sr(shil_param src)
@@ -374,7 +452,7 @@ sh4dec(i1111_0011_1111_1101)
 sh4dec(i1111_1011_1111_1101)
 {
 	Emit(shop_xor,reg_fpscr,reg_fpscr,mk_imm(1<<21));
-	Emit(shop_mov32,reg_old_fpscr,reg_fpscr);
+	Store_reg(reg_old_fpscr,Load_reg(reg_fpscr));
 	shil_param rmn;//null param
 	Emit(shop_frswap,regv_xmtrx,regv_fmtrx,regv_xmtrx,0,rmn,regv_fmtrx);
 }
@@ -437,7 +515,7 @@ const Sh4RegType SREGS[] =
 
 const Sh4RegType CREGS[] =
 {
-	reg_sr,
+	regv_sr,
 	reg_gbr,
 	reg_vbr,
 	reg_ssr,
@@ -803,7 +881,7 @@ bool dec_generic(u32 op)
 	switch(mode)
 	{
 	case DM_ReadSRF:
-		Emit(shop_mov32,rs1,reg_sr_status);
+		Store_reg((Sh4RegType)rs1._imm, Load_reg(reg_sr_status));
 		Emit(shop_or,rs1,rs1,reg_sr_T);
 		break;
 
@@ -854,9 +932,6 @@ bool dec_generic(u32 op)
 		break;
 
 	case DM_UnaryOp: //d= op s
-		if (transfer_64 && natop==shop_mov32) 
-			natop=shop_mov64;
-
 		if (natop==shop_cvt_i2f_n && state.cpu.RoundToZero)
 			natop=shop_cvt_i2f_z;
 
@@ -976,7 +1051,7 @@ bool dec_generic(u32 op)
 					u32 qm=(1<<8)|(1<<9);
 					Emit(shop_and,mk_reg(reg_sr_status),mk_reg(reg_sr_status),mk_imm(~qm));
 					//clear T !
-					Emit(shop_mov32,mk_reg(reg_sr_T),mk_imm(0));
+					Store_reg(reg_sr_T, mk_imm(0));
 				}
 			}
 			else
@@ -1041,6 +1116,7 @@ bool dec_generic(u32 op)
 
 void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 {
+	tempVals = 0;
 	blk=rbi;
 	state.Setup(blk->addr,blk->fpu_cfg);
 	ngen_GetFeatures(&state.ngen);

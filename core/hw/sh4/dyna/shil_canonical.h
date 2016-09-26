@@ -172,14 +172,16 @@ shil_compile( \
 
 SHIL_START
 
-
-//shop_mov32
-shil_opc(mov32)
+shil_opc(load_reg)
 shil_recimp()
 shil_opc_end()
 
-//shop_mov64
-shil_opc(mov64)
+shil_opc(store_reg)
+shil_recimp()
+shil_opc_end()
+
+//shop_mov32
+shil_opc(mov_v)
 shil_recimp()
 shil_opc_end()
 

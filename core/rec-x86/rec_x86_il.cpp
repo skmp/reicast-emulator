@@ -879,7 +879,12 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				//x86e->Emit(op_mov32,op->rd.reg_ptr(),EAX);
 			}
 			break;
-			
+
+
+		case shop_load_reg:
+		case shop_store_reg:
+			break;
+#if 0
 		case shop_mov64:
 			{
 				verify(op->rd.is_r64());
@@ -955,7 +960,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				
 			}
 			break;
-
+#endif
 //if CANONICAL_TEST is defined all opcodes use the C-based  canonical implementation !
 //#define CANONICAL_TEST 1
 #ifndef CANONICAL_TEST

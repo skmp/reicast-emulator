@@ -3,6 +3,8 @@
 */
 #include "types.h"
 #include "decoder.h"
+#include <list>
+
 #pragma once
 
 typedef void (*DynarecCodeEntryPtr)();
@@ -48,7 +50,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	BlockEndType BlockType;
 	bool has_jcond;
 
-	vector<shil_opcode> oplist;
+	list<shil_opcode> oplist;
 
 	bool contains_code(u8* ptr)
 	{

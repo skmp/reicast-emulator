@@ -79,7 +79,6 @@ enum Sh4RegType
 	reg_pr,
 	reg_fpul,
 	reg_nextpc,
-	reg_sr,            //Includes T (combined on read/separated on write)
 	reg_old_sr_status, //Only the status bits
 	reg_sr_status,     //Only the status bits
 	reg_sr_T,          //Only T
@@ -93,6 +92,9 @@ enum Sh4RegType
 	/*
 		These are virtual registers, used by the dynarec decoder
 	*/
+	regv_sr,            //Includes T (combined on read/separated on write)
+
+	//double regs
 	regv_dr_0,
 	regv_dr_2,
 	regv_dr_4,
@@ -118,6 +120,9 @@ enum Sh4RegType
 
 	regv_xmtrx,
 	regv_fmtrx,
+
+	//registers starting from this are temporary values
+	regv_temp = 0x1000,
 
 	NoReg=-1
 };

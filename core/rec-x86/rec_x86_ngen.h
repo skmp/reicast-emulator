@@ -46,9 +46,10 @@ extern bool sse_3;
 extern bool ssse_3;
 extern bool mmx;
 
-struct x86_reg_alloc: RegAlloc<x86_reg,x86_reg>
+struct x86_reg_alloc: RegAssign<x86_reg,x86_reg>
 {
 	virtual void Preload(u32 reg,x86_reg nreg);
+	virtual void Preload_Imm(u32 imm, x86_reg nreg);
 	virtual void Writeback(u32 reg,x86_reg nreg);
 	virtual void Preload_FPU(u32 reg,x86_reg nreg);
 	virtual void Writeback_FPU(u32 reg,x86_reg nreg);

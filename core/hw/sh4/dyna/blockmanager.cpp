@@ -438,8 +438,8 @@ void bm_WriteBlockMap(const string& file)
 		for (size_t i=0; i<all_blocks.size(); i++)
 		{
 			fprintf(f,"block: %d:%08X:%08X:%d:%d:%d\n",all_blocks[i]->BlockType,all_blocks[i]->addr,all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes);
-			for(size_t j=0;j<all_blocks[i]->oplist.size();j++)
-				fprintf(f,"\top: %d:%d:%s\n",j,all_blocks[i]->oplist[j].guest_offs,all_blocks[i]->oplist[j].dissasm().c_str());
+			for (auto j = all_blocks[i]->oplist.begin(); j != all_blocks[i]->oplist.end() ; j++)
+				fprintf(f,"\top: %d:%d:%s\n",0,j->guest_offs,j->dissasm().c_str());
 		}
 		fclose(f);
 		printf("Finished writing block map\n");
@@ -642,9 +642,10 @@ void print_blocks()
 			size_t j=0;
 			
 			fprintf(f,"{\n");
-			for (;j<blk->oplist.size();j++)
+			for (auto j = blk->oplist.begin(); j != blk->oplist.end(); j++)
 			{
-				shil_opcode* op=&all_blocks[i]->oplist[j];
+				shil_opcode* op = &(*j);
+
 				fprint_hex(f,"//h:",pucode,hcode,op->host_offs);
 
 				if (gcode!=op->guest_offs)

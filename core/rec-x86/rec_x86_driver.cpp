@@ -116,6 +116,11 @@ void x86_reg_alloc::Preload(u32 reg,x86_reg nreg)
 {
 	x86e->Emit(op_mov32,nreg,GetRegPtr(reg));
 }
+
+void x86_reg_alloc::Preload_Imm(u32 imm, x86_reg nreg)
+{
+	x86e->Emit(op_mov32, nreg, imm);
+}
 void x86_reg_alloc::Writeback(u32 reg,x86_reg nreg)
 {
 	x86e->Emit(op_mov32,GetRegPtr(reg),nreg);
@@ -139,7 +144,7 @@ void x86_reg_alloc::FreezeXMM()
 	f32* slpc=thaw_regs;
 	while(*fpreg!=-1)
 	{
-		if (SpanNRegfIntr(current_opid,*fpreg))	
+//		if (SpanNRegfIntr(current_opid,*fpreg))	
 			x86e->Emit(op_movss,slpc++,*fpreg);
 		fpreg++;
 	}
@@ -154,7 +159,7 @@ void x86_reg_alloc::ThawXMM()
 	f32* slpc=thaw_regs;
 	while(*fpreg!=-1)
 	{
-		if (SpanNRegfIntr(current_opid,*fpreg))	
+//		if (SpanNRegfIntr(current_opid,*fpreg))	
 			x86e->Emit(op_movss,*fpreg,slpc++);
 		fpreg++;
 	}
@@ -350,9 +355,9 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 		x86e->Emit(op_add32,&prof.counters.blkrun.cycles[block->guest_cycles],1);
 	}
 
-	for (size_t i=0;i<block->oplist.size();i++)
+	for (auto i = block->oplist.begin(); i != block->oplist.end(); i++)
 	{
-		shil_opcode* op=&block->oplist[i];
+		shil_opcode* op=&(*i);
 
 		u32 opcd_start=x86e->opcode_count;
 		if (prof.enable) 
@@ -406,7 +411,7 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 			}
 		}
 		
-		reg.OpBegin(op,i);
+		reg.OpBegin(op,0);
 			
 		ngen_opcode(block,op,x86e,staging,optimise);
 

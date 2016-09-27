@@ -9,8 +9,8 @@ void ngen_Bin(shil_opcode* op,x86_opcode_class natop,bool has_imm=true,bool has_
 {
 	//x86e->Emit(op_mov32,EAX,op->rs1.reg_ptr());
 
-	verify(reg.IsAllocg(op->rs1._reg));
-	verify(reg.IsAllocg(op->rd._reg));
+	verify(reg.IsAllocg(op->rs1));
+	verify(reg.IsAllocg(op->rd));
 
 	if (has_wb && reg.mapg(op->rs1)!=reg.mapg(op->rd))
 	{
@@ -23,7 +23,7 @@ void ngen_Bin(shil_opcode* op,x86_opcode_class natop,bool has_imm=true,bool has_
 	}
 	else if (op->rs2.is_r32i())
 	{
-		verify(reg.IsAllocg(op->rs2._reg));
+		verify(reg.IsAllocg(op->rs2));
 		
 		x86e->Emit(natop,has_wb?reg.mapg(op->rd):reg.mapg(op->rs1),reg.mapg(op->rs2));
 	}
@@ -107,6 +107,7 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 
 			x86e->Emit(op_push,(unat)par->reg_ptr());
 
+			/*
 			for (u32 ri=0; ri<(*par).count(); ri++)
 			{
 				if (reg.IsAllocf(*par,ri))
@@ -119,7 +120,7 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 					verify(!reg.IsAllocAny((Sh4RegType)(par->_reg+ri)));
 				}
 			}
-
+			*/
 			
 			ngen_CC_BytesPushed+=4;
 			break;
@@ -230,12 +231,13 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 	
 				verify(op->rs1.is_imm() || reg.IsAllocg(op->rs1));
 				verify(op->rs3.is_null() || op->rs3.is_imm() || reg.IsAllocg(op->rs3));
-				
+	
+/*
 				for (u32 i=0;i<op->rd.count();i++)
 				{
 					verify(reg.IsAllocAny((Sh4RegType)(op->rd._reg+i)));
 				}
-
+*/
 				u32 size=op->flags&0x7f;
 
 				if (op->rs1.is_imm())
@@ -484,9 +486,15 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 					}
 					else
 					{
-						x86e->Emit(op_movss, reg.mapfv(op->rd, 0), XMM0);
-						if (Lsz == 4)
-							x86e->Emit(op_movss, reg.mapfv(op->rd, 1), XMM1);
+						if (Lsz == 3)
+						{
+							x86e->Emit(op_movss, reg.mapf(op->rd), XMM0);
+						}
+						else if (Lsz == 4)
+						{
+							x86e->Emit(op_unpcklps, XMM0, XMM1);
+							x86e->Emit(op_movaps, reg.mapf(op->rd), XMM0);
+						}
 					}
 					break;
 #endif
@@ -548,10 +556,11 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 					}
 					else
 					{
-						verify(op->rd.count()==2 && reg.IsAllocf(op->rd,0) && reg.IsAllocf(op->rd,1));
-						
-						x86e->Emit(op_movd_xmm_from_r32,reg.mapfv(op->rd,0),EAX);
-						x86e->Emit(op_movd_xmm_from_r32,reg.mapfv(op->rd,1),EDX);
+						verify(op->rd.count()==2 && reg.IsAllocf(op->rd));
+						x86e->Emit(op_movd_xmm_from_r32,XMM0,EAX);
+						x86e->Emit(op_movd_xmm_from_r32,XMM1,EDX);
+						x86e->Emit(op_unpcklps, XMM0, XMM1);
+						x86e->Emit(op_movaps, reg.mapf(op->rd), XMM1);
 					}
 
 				}
@@ -563,7 +572,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				u32 size=op->flags&0x7f;
 				verify(reg.IsAllocg(op->rs1) || op->rs1.is_imm());
 				
-				verify(op->rs2.is_r32() || (op->rs2.count()==2 && reg.IsAllocf(op->rs2,0) && reg.IsAllocf(op->rs2,1)));
+				verify(op->rs2.is_r32() || (op->rs2.count()==2 && reg.IsAllocf(op->rs2)));
 
 				if (op->rs1.is_imm() && size<=4)
 				{
@@ -637,9 +646,14 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 						x86e->Emit(op_mov32,EDX,reg.mapg(op->rs2));
 					else 
 					{
-						x86e->Emit(op_movss,XMM0,reg.mapfv(op->rs2,0));
-						if (Lsz==4)
-							x86e->Emit(op_movss,XMM1,reg.mapfv(op->rs2,1));
+						if (Lsz == 3)
+							x86e->Emit(op_movss, XMM0, reg.mapf(op->rs2));
+						else
+						{
+							x86e->Emit(op_movss, XMM0, reg.mapf(op->rs2));
+							x86e->Emit(op_movss, XMM1, reg.mapf(op->rs2));
+							x86e->Emit(op_shufps, XMM1, XMM1, 0xAA);
+						}
 					}
 
 					reg.FreezeXMM();
@@ -1092,6 +1106,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 		
 		case shop_sync_sr:
 			{
+#if 0
 				//reg alloc should be flushed here. Add Check
 				for (int i=0;i<8;i++)
 				{
@@ -1101,7 +1116,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 
 				verify(!reg.IsAllocAny(reg_old_sr_status));
 				verify(!reg.IsAllocAny(reg_sr_status));
-
+#endif
 				//reg alloc should be flushed here, add checks
 				x86e->Emit(op_call,x86_ptr_imm(UpdateSR));
 			}
@@ -1109,6 +1124,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 
 		case shop_sync_fpscr:
 			{
+#if 0
 				//reg alloc should be flushed here. Add Check
 				for (int i=0;i<16;i++)
 				{
@@ -1118,7 +1134,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 
 				verify(!reg.IsAllocAny(reg_old_fpscr));
 				verify(!reg.IsAllocAny(reg_fpscr));
-
+#endif
 
 				//reg alloc should be flushed here, add checks
 				x86e->Emit(op_call,x86_ptr_imm(UpdateFPSCR));
@@ -1200,12 +1216,11 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				//verify(op->rd.is_vector); //double ? vector(2) ?
 
 				verify(reg.IsAllocg(op->rs1));
-				verify(reg.IsAllocf(op->rd,0) && reg.IsAllocf(op->rd,1));
+				verify(reg.IsAllocf(op->rd));
 
 				//sin/cos
 				x86e->Emit(op_movzx16to32,EAX,reg.mapg(op->rs1));
-				x86e->Emit(op_movss,reg.mapfv(op->rd,0),x86_mrm(EAX,sib_scale_8,x86_ptr(&sin_table->u[0])));
-				x86e->Emit(op_movss,reg.mapfv(op->rd,1),x86_mrm(EAX,sib_scale_8,x86_ptr(&sin_table->u[1])));
+				x86e->Emit(op_movlps,reg.mapf(op->rd),x86_mrm(EAX,sib_scale_8,x86_ptr(&sin_table->u[0])));
 			}
 			break;
 

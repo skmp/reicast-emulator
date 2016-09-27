@@ -117,22 +117,33 @@ void x86_reg_alloc::Preload(u32 reg,x86_reg nreg)
 	x86e->Emit(op_mov32,nreg,GetRegPtr(reg));
 }
 
-void x86_reg_alloc::Preload_Imm(u32 imm, x86_reg nreg)
+void x86_reg_alloc::Writeback_Imm(u32 reg, u32 imm)
 {
-	x86e->Emit(op_mov32, nreg, imm);
+	x86e->Emit(op_mov32, GetRegPtr(reg), imm);
 }
 void x86_reg_alloc::Writeback(u32 reg,x86_reg nreg)
 {
 	x86e->Emit(op_mov32,GetRegPtr(reg),nreg);
 }
 
-void x86_reg_alloc::Preload_FPU(u32 reg,x86_reg nreg)
+void x86_reg_alloc::Preload_FPU(u32 reg, x86_reg nreg, int size)
 {
-	x86e->Emit(op_movss,nreg,GetRegPtr(reg));
+	verify(size == 1 || size == 2);
+
+	if (size == 1)
+		x86e->Emit(op_movss,nreg,GetRegPtr(reg));
+	else
+		x86e->Emit(op_movlps, nreg, GetRegPtr(reg));
 }
-void x86_reg_alloc::Writeback_FPU(u32 reg,x86_reg nreg)
+
+void x86_reg_alloc::Writeback_FPU(u32 reg,x86_reg nreg, int size)
 {
-	x86e->Emit(op_movss,GetRegPtr(reg),nreg);
+	verify(size == 1 || size == 2);
+
+	if (size == 1)
+		x86e->Emit(op_movss, GetRegPtr(reg), nreg);
+	else
+		x86e->Emit(op_movlps,GetRegPtr(reg),nreg);
 }
 #ifdef PROF2
 extern u32 flsh;
@@ -808,8 +819,8 @@ void ngen_ResetBlocks()
 
 void ngen_GetFeatures(ngen_features* dst)
 {
-	dst->InterpreterFallback=false;
-	dst->OnlyDynamicEnds=false;
+	dst->InterpreterFallback=true;
+	dst->OnlyDynamicEnds = false;
 }
 
 

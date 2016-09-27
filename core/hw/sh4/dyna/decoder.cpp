@@ -171,7 +171,7 @@ shil_param Load_reg(Sh4RegType reg)
 
 shil_opcode* Store_reg(Sh4RegType reg, shil_param val)
 {
-	verify(val._imm >= regv_temp);
+	verify(val.is_imm() || val._reg >= regv_temp);
 
 	return Emit_low(shop_store_reg, reg, val);
 }
@@ -183,6 +183,10 @@ shil_opcode* Emit(shilop op, shil_param rd = shil_param(), shil_param rs1 = shil
 	if (op == shop_mov_v)
 	{
 		shop = Store_reg(rd._reg, rs1.is_reg() ? Load_reg(rs1._reg) : rs1);
+	}
+	else if (op == shop_frswap)
+	{
+		shop = Emit_low(op, rd, rs1, rs2, flags, rs3, rd2);
 	}
 	else
 	{
@@ -863,7 +867,7 @@ bool dec_generic(u32 op)
 	if (op>=0xF000)
 	{
 		state.info.has_fpu=true;
-		//return false;//FPU off for now
+		return false;//FPU off for now
 		if (state.cpu.FPR64 /*|| state.cpu.FSZ64*/)
 			return false;
 

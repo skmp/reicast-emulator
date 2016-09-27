@@ -171,11 +171,11 @@ sh4_opcodelistentry opcodes[]=
 	{0                          ,i0011_nnnn_mmmm_0110   ,Mask_n_m       ,0x3006 ,Normal         ,"cmp/hi <REG_M>,<REG_N>"               ,1,1,MT,fix_none    ,dec_cmp(shop_setab,PRM_RN,PRM_RM)},    // cmp/hi <REG_M>,<REG_N>
 	{0                          ,i0011_nnnn_mmmm_0111   ,Mask_n_m       ,0x3007 ,Normal         ,"cmp/gt <REG_M>,<REG_N>"               ,1,1,MT,fix_none    ,dec_cmp(shop_setgt,PRM_RN,PRM_RM)},    //cmp/gt <REG_M>,<REG_N>
 	{0                          ,i0011_nnnn_mmmm_1000   ,Mask_n_m       ,0x3008 ,Normal         ,"sub <REG_M>,<REG_N>"                  ,1,1,EX,fix_none    ,dec_Bin_rNrM(shop_sub)},   // sub <REG_M>,<REG_N>
-	{0                          ,i0011_nnnn_mmmm_1010   ,Mask_n_m       ,0x300A ,Normal         ,"subc <REG_M>,<REG_N>"                 ,1,1,EX,fix_none,   dec_Fill(DM_ADC,PRM_RN,PRM_RM,shop_sbc,-1)},    //subc <REG_M>,<REG_N>
+	{0                          ,i0011_nnnn_mmmm_1010   ,Mask_n_m       ,0x300A ,Normal         ,"subc <REG_M>,<REG_N>"                 ,1,1,EX,fix_none/*,  dec_Fill(DM_ADC,PRM_RN,PRM_RM,shop_sbc,-1)*/},    //subc <REG_M>,<REG_N>
 	{0                          ,i0011_nnnn_mmmm_1011   ,Mask_n_m       ,0x300B ,Normal         ,"subv <REG_M>,<REG_N>"                 ,1,1,EX,fix_none},  //subv <REG_M>,<REG_N>
 	{0                          ,i0011_nnnn_mmmm_1100   ,Mask_n_m       ,0x300C ,Normal         ,"add <REG_M>,<REG_N>"                  ,1,1,EX,fix_none    ,dec_Bin_rNrM(shop_add)},   //add <REG_M>,<REG_N>
 	{0                          ,i0011_nnnn_mmmm_1101   ,Mask_n_m       ,0x300D ,Normal         ,"dmuls.l <REG_M>,<REG_N>"              ,1,4,CO,fix_none    ,dec_mul(-64)}, //dmuls.l <REG_M>,<REG_N>
-	{0                          ,i0011_nnnn_mmmm_1110   ,Mask_n_m       ,0x300E ,Normal         ,"addc <REG_M>,<REG_N>"                 ,1,1,EX,fix_none,   dec_Fill(DM_ADC,PRM_RN,PRM_RM,shop_adc,-1)},    //addc <REG_M>,<REG_N>
+	{0                          ,i0011_nnnn_mmmm_1110   ,Mask_n_m       ,0x300E ,Normal         ,"addc <REG_M>,<REG_N>"                 ,1,1,EX,fix_none/*,   dec_Fill(DM_ADC,PRM_RN,PRM_RM,shop_adc,-1)*/},    //addc <REG_M>,<REG_N>
 	{0                          ,i0011_nnnn_mmmm_1111   ,Mask_n_m       ,0x300F ,Normal         ,"addv <REG_M>,<REG_N>"                 ,1,1,EX,fix_none},  // addv <REG_M>,<REG_N>
 
 	//Normal readm/writem

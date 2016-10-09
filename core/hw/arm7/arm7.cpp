@@ -1618,11 +1618,11 @@ void arm_Run(u32 CycleCount)
 	if (!Arm7Enabled)
 		return;
 
-	for (int i=0;i<32;i++)
-	{
+	//for (int i=0;i<32;i++)
+	//{
 		arm_mainloop(CycleCount/32);
 		libAICA_TimeStep();
-	}
+	//}
 
 	/*
 	s32 clktks=reg[CYCL_CNT].I+CycleCount;

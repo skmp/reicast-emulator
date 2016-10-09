@@ -75,20 +75,15 @@ typedef std::set<RuntimeBlockInfo*,BlockMapCMP> blkmap_t;
 blkmap_t blkmap;
 u32 bm_gc_luc,bm_gcf_luc;
 
-
-#define FPCA(x) ((DynarecCodeEntryPtr&)sh4rcb.fpcb[(x>>1)&FPCB_MASK])
-
 bool BM_LockedWrite(u8* address);
 DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
-   DynarecCodeEntryPtr& rv = FPCA(addr);
-
-	return (DynarecCodeEntryPtr)rv;
+	return (DynarecCodeEntryPtr)FPCA(addr);
 }
 
 RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr)
 {
-	DynarecCodeEntryPtr cde=bm_GetCode(addr);
+	DynarecCodeEntryPtr cde= (DynarecCodeEntryPtr)FPCA(addr);
 
 	if (cde==ngen_FailedToFindBlock)
 		return 0;
@@ -130,7 +125,7 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 	blkmap.insert(blk);
 
 
-	verify((void*)bm_GetCode(blk->addr)==(void*)ngen_FailedToFindBlock);
+   verify((void*)(DynarecCodeEntryPtr)FPCA(blk->addr)==(void*)ngen_FailedToFindBlock);
 	FPCA(blk->addr)=blk->code;
 
 #ifdef DYNA_OPROF

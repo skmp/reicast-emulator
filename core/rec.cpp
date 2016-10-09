@@ -34,7 +34,7 @@ static void ngen_mainloop_exec(Sh4RCB* ctx)
 	cycle_counter = SH4_TIMESLICE;
 
    do {
-      DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);
+      DynarecCodeEntryPtr rcb = (DynarecCodeEntryPtr)FPCA(ctx->cntx.pc);
       rcb();
    } while (cycle_counter > 0);
 

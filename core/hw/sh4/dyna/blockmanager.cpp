@@ -17,11 +17,6 @@
 #include "hw/sh4/sh4_mem.h"
 
 
-#if __linux__ && defined(DYNA_OPROF)
-#include <opagent.h>
-op_agent_t          oprofHandle;
-#endif
-
 #if FEAT_SHREC != DYNAREC_NONE
 
 
@@ -127,21 +122,6 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 
    verify((void*)(DynarecCodeEntryPtr)FPCA(blk->addr)==(void*)ngen_FailedToFindBlock);
 	FPCA(blk->addr)=blk->code;
-
-#ifdef DYNA_OPROF
-	if (oprofHandle)
-	{
-		char fname[512];
-
-		sprintf(fname,"sh4:%08X,c:%d,s:%d,h:%d",blk->addr,blk->guest_cycles,blk->guest_opcodes,blk->host_opcodes);
-
-		if (op_write_native_code(oprofHandle, fname, (uint64_t)blk->code, (void*)blk->code, blk->host_code_size) != 0) 
-		{
-			printf("op_write_native_code error\n");
-		}
-	}
-#endif
-
 }
 
 u32 PAGE_STATE[RAM_SIZE/32];
@@ -312,41 +292,14 @@ void bm_Reset(void)
 
 	all_blocks.clear();
 	blkmap.clear();
-
-#ifdef DYNA_OPROF
-	if (oprofHandle)
-	{
-		for (int i=0;i<del_blocks.size();i++)
-		{
-			if (op_unload_native_code(oprofHandle, (uint64_t)del_blocks[i]->code) != 0)
-			{
-				printf("op_unload_native_code error\n");
-			}
-		}
-	}
-#endif
 }
 
 void bm_Init(void)
 {
-
-#ifdef DYNA_OPROF
-	oprofHandle=op_open_agent();
-	if (oprofHandle==0)
-		printf("bm: Failed to open oprofile\n");
-	else
-		printf("bm: Oprofile integration enabled !\n");
-#endif
 }
 
 void bm_Term(void)
 {
-#ifdef DYNA_OPROF
-	if (oprofHandle)
-      op_close_agent(oprofHandle);
-	
-	oprofHandle=0;
-#endif
 }
 
 void bm_WriteBlockMap(const string& file)

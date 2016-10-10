@@ -21,13 +21,13 @@ u32 ReadReg(u32 addr)
 		if (sz==1)
 		{
 			ReadCommonReg(addr,true);
-			ReadMemArrRet(aica_reg,addr,1);
+         return aica_reg[addr];
 		}
 		else
 		{
 			ReadCommonReg(addr,false);
 			//ReadCommonReg8(addr+1);
-			ReadMemArrRet(aica_reg,addr,2);
+         return *(u16*)&aica_reg[addr];
 		}
 	}
 
@@ -43,12 +43,12 @@ void WriteReg(u32 addr,u32 data)
 		u32 reg=addr&0x7F;
 		if (sz==1)
 		{
-			WriteMemArr(aica_reg,addr,data,1);
+         aica_reg[addr]=(u8)data;
 			WriteChannelReg8(chan,reg);
 		}
 		else
 		{
-			WriteMemArr(aica_reg,addr,data,2);
+         *(u16*)&aica_reg[addr]=(u16)data;
 			WriteChannelReg8(chan,reg);
 			WriteChannelReg8(chan,reg+1);
 		}
@@ -58,13 +58,9 @@ void WriteReg(u32 addr,u32 data)
 	if (addr<0x2800)
 	{
 		if (sz==1)
-		{
-			WriteMemArr(aica_reg,addr,data,1);
-		}
+         aica_reg[addr]=(u8)data;
 		else 
-		{
-			WriteMemArr(aica_reg,addr,data,2);
-		}
+         *(u16*)&aica_reg[addr]=(u16)data;
 		return;
 	}
 
@@ -86,12 +82,12 @@ void WriteReg(u32 addr,u32 data)
 	{
 		if (sz==1)
 		{
-			WriteMemArr(aica_reg,addr,data,1);
+         aica_reg[addr]=(u8)data;
 			dsp_writenmem(addr);
 		}
 		else
 		{
-			WriteMemArr(aica_reg,addr,data,2);
+         *(u16*)&aica_reg[addr]=(u16)data;
 			dsp_writenmem(addr);
 			dsp_writenmem(addr+1);
 		}

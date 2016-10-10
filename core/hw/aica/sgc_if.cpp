@@ -1147,7 +1147,7 @@ void ReadCommonReg(u32 reg,bool byte)
 
 void WriteCommonReg8(u32 reg,u32 data)
 {
-	WriteMemArr(aica_reg,reg,data,1);
+   aica_reg[reg]=(u8)data;
 	if (reg==0x2804 || reg==0x2805)
 	{
 		dsp.RBL=(8192<<CommonData->RBL)-1;

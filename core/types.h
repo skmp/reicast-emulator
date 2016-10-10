@@ -785,20 +785,6 @@ void libARM_Update(u32 cycles);
               *(u32*)&arr[addr]=data; \
          }
 
-#define WriteMemArrRet(arr,addr,data,sz)				\
-         switch (sz) \
-         { \
-            case 1: \
-               arr[addr]=(u8)data; \
-               return; \
-            case 2: \
-               *(u16*)&arr[addr]=(u16)data; \
-               return; \
-            case 4: \
-               *(u32*)&arr[addr]=data; \
-               return; \
-         }
-
 struct OnLoad
 {
 	typedef void OnLoadFP(void);

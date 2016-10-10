@@ -2,8 +2,6 @@
 #include <cstdarg>
 #include "types.h"
 
-#include <libco.h>
-
 #include "../hw/pvr/pvr_regs.h"
 
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
@@ -24,6 +22,8 @@ u32 vks[4];
 s8 joyx[4], joyy[4];
 
 bool enable_purupuru = true;
+
+bool inside_loop     = true;
 
 enum DreamcastController
 {
@@ -65,9 +65,6 @@ static retro_rumble_interface rumble;
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
 
-static cothread_t ct_main;
-static cothread_t ct_dc;
-
 static int co_argc;
 static wchar** co_argv;
 
@@ -77,30 +74,20 @@ char game_dir_no_slash[1024];
 
 static void co_dc_thread(void)
 {
-	co_switch(ct_main);
 	dc_init(co_argc,co_argv);
-	co_switch(ct_main);
 	
 	dc_run();
-}
-
-static void co_dc_init(int argc,wchar* argv[])
-{
-	ct_main = co_active();
-	ct_dc = co_create(1024*1024/*why does libco demand me to know this*/, co_dc_thread);
-	co_argc=argc;
-	co_argv=argv;
 }
 
 void co_dc_run(void)
 {
    //puts("ENTER LOOP");
-	co_switch(ct_dc);
+   dc_run();
 }
 
 void co_dc_yield(void)
 {
-	co_switch(ct_main);
+   inside_loop = false;
 }
 
 void retro_set_video_refresh(retro_video_refresh_t cb)
@@ -216,8 +203,6 @@ void retro_init(void)
    // Set color mode
    unsigned color_mode = RETRO_PIXEL_FORMAT_XRGB8888;
    environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &color_mode);
-
-   co_dc_init(0, NULL);
 }
 
 void retro_deinit(void)
@@ -375,17 +360,27 @@ static void update_variables(void)
       enable_purupuru = (strcmp("enabled", var.value) == 0);
 }
 
+static bool first_run = true;
+
 void retro_run (void)
 {
    bool updated = false;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       update_variables();
 
+   if (first_run)
+   {
+      co_dc_thread();
+      first_run = false;
+      return;
+   }
+
    co_dc_run();
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
    video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
 #endif
-   is_dupe = true;
+   is_dupe     = true;
+   inside_loop = true;
 }
 
 void retro_reset (void)
@@ -398,7 +393,6 @@ static void context_reset(void)
 {
    printf("context_reset.\n");
    glsm_ctl(GLSM_CTL_STATE_CONTEXT_RESET, NULL);
-   co_switch(ct_dc);
 }
 
 static void context_destroy(void)
@@ -536,9 +530,8 @@ bool retro_load_game(const struct retro_game_info *game)
 
    if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
       return false;
-#else
-   co_switch(ct_dc);
 #endif
+
 
    return true;
 }

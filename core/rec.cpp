@@ -29,6 +29,8 @@ struct DynaRBI : RuntimeBlockInfo
 };
 
 #if (FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64)
+extern bool inside_loop;
+
 static void ngen_mainloop_exec(Sh4RCB* ctx)
 {
 	cycle_counter = SH4_TIMESLICE;
@@ -46,13 +48,7 @@ void ngen_mainloop(void* v_cntx)
 {
 	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
 
-   for (
-#if defined(TARGET_BOUNDED_EXECUTION)
-	int i=0; i<10000; i++
-#else
-	;;
-#endif
-   )
+   while (inside_loop)
       ngen_mainloop_exec(ctx);
 }
 #endif

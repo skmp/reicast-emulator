@@ -98,14 +98,9 @@ static void recSh4_Run(void)
 	sh4_int_bCpuRun=true;
 
 	sh4_dyna_rcb=(u8*)&Sh4cntx + sizeof(Sh4cntx);
-	printf("cntx // fpcb offset: %d // pc offset: %d // pc %08X\n",(u8*)&sh4rcb.fpcb-sh4_dyna_rcb,(u8*)&sh4rcb.cntx.pc-sh4_dyna_rcb,sh4rcb.cntx.pc);
-	
-	verify(rcb_noffs(&next_pc)==-184);
+	//printf("cntx // fpcb offset: %d // pc offset: %d // pc %08X\n",(u8*)&sh4rcb.fpcb-sh4_dyna_rcb,(u8*)&sh4rcb.cntx.pc-sh4_dyna_rcb,sh4rcb.cntx.pc);
+	//verify(rcb_noffs(&next_pc)==-184);
 	ngen_mainloop(sh4_dyna_rcb);
-
-#if !defined(TARGET_BOUNDED_EXECUTION)
-	sh4_int_bCpuRun=false;
-#endif
 }
 
 void emit_Write32(u32 data)

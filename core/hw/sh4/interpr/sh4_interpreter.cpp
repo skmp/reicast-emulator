@@ -90,7 +90,6 @@ void Sh4_int_Stop(void)
 		sh4_int_bCpuRun=false;
 }
 
-#if defined(TARGET_BOUNDED_EXECUTION)
 void Sh4_int_Run(void)
 {
 	sh4_int_bCpuRun=true;
@@ -100,21 +99,6 @@ void Sh4_int_Run(void)
 	for (int i=0; i<10000; i++)
       Sh4_int_Run_exec(&l);
 }
-#else
-void Sh4_int_Run(void)
-{
-	sh4_int_bCpuRun=true;
-
-	s32 l=SH4_TIMESLICE;
-
-	do
-	{
-      Sh4_int_Run_exec(&l);
-	} while(sh4_int_bCpuRun);
-
-   Sh4_int_Stop();
-}
-#endif
 
 
 void Sh4_int_Step(void)

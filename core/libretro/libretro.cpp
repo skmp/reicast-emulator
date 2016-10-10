@@ -844,6 +844,7 @@ void os_DebugBreak(void)
    exit(-1);
 }
 
+#ifndef TARGET_NO_THREADS
 cResetEvent::cResetEvent(bool State,bool Auto)
 {
    //sem_init((sem_t*)hEvent, 0, State?1:0);
@@ -883,3 +884,4 @@ void cResetEvent::Wait()//Wait for signal , then reset
 	state=false;
    slock_unlock(mutx);
 }
+#endif

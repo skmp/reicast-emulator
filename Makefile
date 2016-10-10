@@ -17,8 +17,8 @@ MFLAGS   :=
 ASFLAGS  := 
 LDFLAGS  :=
 INCFLAGS :=
-LIBS :=
-CFLAGS := 
+LIBS     :=
+CFLAGS   := 
 CXXFLAGS :=
 CC_AS ?= $(AS)
 
@@ -462,6 +462,8 @@ ifeq ($(NO_THREADS),1)
   RZDCY_CFLAGS += -DTARGET_NO_THREADS
   CFLAGS       += -DTARGET_NO_THREADS
   CXXFLAGS     += -DTARGET_NO_THREADS
+else
+  LIBS         += -lpthread
 endif
 
 ifeq ($(NO_REC),1)
@@ -491,7 +493,7 @@ RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fexceptions -fno-rtti -std=gnu++11
 CFLAGS   += $(OPTFLAGS) -D RELEASE -c
 CFLAGS   += -fno-strict-aliasing -ffast-math
 CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
-LIBS     += -lm -lpthread
+LIBS     += -lm 
 
 PREFIX        ?= /usr/local
 

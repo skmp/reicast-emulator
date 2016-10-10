@@ -1,7 +1,10 @@
 #pragma once
 #include "ta.h"
 #include "pvr_regs.h"
+
+#ifndef TARGET_NO_THREADS
 #include <rthreads/rthreads.h>
+#endif
 
 //Vertex storage types
 struct Vertex

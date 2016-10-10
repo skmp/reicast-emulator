@@ -158,8 +158,7 @@ endif
 SOURCES_CXX += $(CORE_DIR)/libretro/libretro.cpp \
 					$(CORE_DIR)/libretro/common.cpp
 
-SOURCES_C +=   $(LIBRETRO_COMM_DIR)/libco/libco.c \
-					$(LIBRETRO_COMM_DIR)/memmap/memalign.c \
+SOURCES_C +=   $(LIBRETRO_COMM_DIR)/memmap/memalign.c \
 					$(LIBRETRO_COMM_DIR)/rthreads/rthreads.c
 
 SOURCES_C +=   $(DEPS_DIR)/zlib/deflate.c \

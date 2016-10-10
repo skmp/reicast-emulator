@@ -2196,8 +2196,6 @@ void ngen_Compile_arm(RuntimeBlockInfo* block,bool force_checks, bool reset, boo
 
 	//host code size needs to cover the entire range of the block
 	block->host_code_size=(pEnd-(u8*)block->code);
-
-	void emit_WriteCodeCache();
 }
 
 /*

@@ -62,23 +62,6 @@ void emit_SetBaseAddr(void)
    LastAddr_min = LastAddr;
 }
 
-void emit_WriteCodeCache(void)
-{
-	wchar path[512];
-	sprintf(path,"code_cache_%8p.bin",CodeCache);
-	string pt2=get_writable_data_path(path);
-	printf("Writing code cache to %s\n",pt2.c_str());
-	FILE*f=fopen(pt2.c_str(),"wb");
-	if (f)
-	{
-		fwrite(CodeCache,LastAddr,1,f);
-		fclose(f);
-		printf("Writen!\n");
-	}
-
-	bm_WriteBlockMap(pt2+".map");
-}
-
 void RASDASD()
 {
 	LastAddr=LastAddr_min;

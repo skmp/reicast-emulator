@@ -5,8 +5,6 @@
 
 #ifdef _MSC_VER
 #include <io.h>
-#define access _access
-#define R_OK   4
 #else
 #include <unistd.h>
 #endif

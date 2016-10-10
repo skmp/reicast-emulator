@@ -104,7 +104,7 @@ enum HollyInterruptType
 {
 	holly_nrm = 0x0000,
 	holly_ext = 0x0100,
-	holly_err = 0x0200,
+	holly_err = 0x0200
 };
 
 enum HollyInterruptID

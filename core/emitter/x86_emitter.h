@@ -1,5 +1,5 @@
 #pragma once
-#include "types.h"
+#include "../types.h"
 #include "x86_op_classes.h"
 
 using namespace std;

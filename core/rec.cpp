@@ -12,8 +12,6 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/dyna/regalloc.h"
 
-int cycle_counter;
-
 struct DynaRBI : RuntimeBlockInfo
 {
    /* NOTE/TODO - this was virtual u32 Relink();
@@ -27,31 +25,6 @@ struct DynaRBI : RuntimeBlockInfo
 	virtual void Relocate(void* dst) {
 	}
 };
-
-#if (FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64)
-extern bool inside_loop;
-
-static void ngen_mainloop_exec(Sh4RCB* ctx)
-{
-	cycle_counter = SH4_TIMESLICE;
-
-   do {
-      DynarecCodeEntryPtr rcb = (DynarecCodeEntryPtr)FPCA(ctx->cntx.pc);
-      rcb();
-   } while (cycle_counter > 0);
-
-   if (UpdateSystem())
-      rdv_DoInterrupts_pc(ctx->cntx.pc);
-}
-
-void ngen_mainloop(void* v_cntx)
-{
-	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
-
-   while (inside_loop)
-      ngen_mainloop_exec(ctx);
-}
-#endif
 
 void ngen_init(void)
 {

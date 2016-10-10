@@ -1,8 +1,5 @@
 #include "types.h"
 
-#include <map>
-#include <algorithm>
-
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/modules/ccn.h"
 #include "hw/sh4/sh4_interrupts.h"

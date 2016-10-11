@@ -69,14 +69,14 @@ void* _vmem_get_ptr2(u32 addr,u32& mask)
 
 void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 {
-	u32   page=addr>>24;
-	size_t  iirf=(size_t)_vmem_MemInfo_ptr[page];
-	void* ptr=(void*)(iirf&~HANDLER_MAX);
+   u32   page=addr>>24;
+   size_t  iirf=(size_t)_vmem_MemInfo_ptr[page];
+   void* ptr=(void*)(iirf&~HANDLER_MAX);
 
-	if (ptr==0)
-	{
-		ismem=false;
-		const size_t id=iirf;
+   if (ptr==0)
+   {
+      ismem=false;
+      const size_t id=iirf;
 
       switch (sz)
       {
@@ -87,20 +87,18 @@ void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
          case 4:
             return (void*)_vmem_RF32[id/4];
          default:
+            die("Invalid memory size");
             break;
       }
-	}
-	else
-	{
-		ismem=true;
-		addr<<=iirf;
-		addr>>=iirf;
 
-		return &(((u8*)ptr)[addr]);
-	}
-	die("Invalid memory size");
+      return 0;
+   }
 
-	return 0;
+   ismem=true;
+   addr<<=iirf;
+   addr>>=iirf;
+
+   return &(((u8*)ptr)[addr]);
 }
 
 void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)

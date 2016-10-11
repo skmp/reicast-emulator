@@ -795,7 +795,6 @@ void os_MakeExecutable(void* ptr, u32 sz);
 
 void os_DoEvents();
 void os_CreateWindow();
-void WriteSample(s16 right, s16 left);
 
 #ifdef _MSC_VER
 #include <intrin.h>

@@ -4,18 +4,15 @@
 #include "hw/aica/aica_if.h"
 #include <math.h>
 
+#include "../libretro/libretro.h"
+
 #undef FAR
 
-//#define CLIP_WARN
 #define key_printf(...)
 #define aeg_printf(...)
 #define step_printf(...)
 
-#ifdef CLIP_WARN
-#define clip_verify(x) verify(x)
-#else
 #define clip_verify(x)
-#endif
 
 //Sound generation, mixin, and channel regs emulation
 //x.15
@@ -1156,12 +1153,37 @@ void WriteCommonReg8(u32 reg,u32 data)
 	}
 }
 
-#define CDDA_SIZE  (2352/2)
+#define CDDA_SIZE    (2352/2)
+#define SAMPLE_COUNT 512
+
 s16 cdda_sector[CDDA_SIZE]={0};
 u32 cdda_index=CDDA_SIZE<<1;
 
-
 static SampleType mxlr[64];
+
+struct SoundFrame
+{
+   s16 l;
+   s16 r;
+};
+
+extern retro_audio_sample_batch_t audio_batch_cb;
+
+static inline void WriteSample(s16 r, s16 l)
+{
+   static SoundFrame RingBuffer[SAMPLE_COUNT];
+   static const u32 RingBufferByteSize = sizeof(RingBuffer);
+   static const u32 RingBufferSampleCount = SAMPLE_COUNT;
+   static volatile u32 WritePtr;  //last written sample
+   static volatile u32 ReadPtr;   //next sample to read
+	const u32 ptr = (WritePtr+1)%RingBufferSampleCount;
+	RingBuffer[ptr].r=r;
+	RingBuffer[ptr].l=l;
+	WritePtr=ptr;
+
+	if (WritePtr==(SAMPLE_COUNT-1))
+      audio_batch_cb((const int16_t*)RingBuffer, SAMPLE_COUNT);
+}
 
 //no DSP for now in this version
 void AICA_Sample32(void)
@@ -1247,14 +1269,7 @@ void AICA_Sample32(void)
 			mixr=FPs(mixr,2);
 		}
 
-		//Sample is ready ! clip/saturate and store :}
-
-#ifdef CLIP_WARN
-		if (((s16)mixl) != mixl)
-			printf("Clipped mixl %d\n",mixl);
-		if (((s16)mixr) != mixr)
-			printf("Clipped mixr %d\n",mixr);
-#endif
+		//Sample is ready ! clip/saturate and store
 
 		clip16(mixl);
 		clip16(mixr);
@@ -1262,7 +1277,7 @@ void AICA_Sample32(void)
 		pl=mixl;
 		pr=mixr;
 
-		if (!settings.aica.NoSound) WriteSample(mixr,mixl);
+		WriteSample(mixr,mixl);
 	}
 }
 
@@ -1334,15 +1349,7 @@ void AICA_Sample(void)
 		mixr=FPs(mixr,2);
 	}
 
-	//Sample is ready ! clip/saturate and store :}
-
-#ifdef CLIP_WARN
-	if (((s16)mixl) != mixl)
-		printf("Clipped mixl %d\n",mixl);
-	if (((s16)mixr) != mixr)
-		printf("Clipped mixr %d\n",mixr);
-#endif
-
+	//Sample is ready ! clip/saturate and store
 	clip16(mixl);
 	clip16(mixr);
 

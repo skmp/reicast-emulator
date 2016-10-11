@@ -1169,7 +1169,7 @@ struct SoundFrame
 
 extern retro_audio_sample_batch_t audio_batch_cb;
 
-static inline void WriteSample(s16 r, s16 l)
+static void WriteSample(s16 r, s16 l)
 {
    static SoundFrame RingBuffer[SAMPLE_COUNT];
    static const u32 RingBufferByteSize = sizeof(RingBuffer);

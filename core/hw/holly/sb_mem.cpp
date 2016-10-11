@@ -10,6 +10,7 @@
 #include "sb_mem.h"
 #include "sb.h"
 #include "hw/pvr/pvr_mem.h"
+#include "hw/pvr/pvr_regs.h"
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/aica/aica_if.h"
 #include "hw/naomi/naomi.h"
@@ -166,7 +167,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 		{
 			//EMUERROR2("Read from area0_32 not implemented [TA / PVR Core Reg], addr=%x",addr);
 			verify(sz==4);
-			return (T)pvr_ReadReg(addr);
+			return (T)PvrReg(addr, u32);
 		}
 	}
 	//map 0x0060 to 0x0060

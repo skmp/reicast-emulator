@@ -17,7 +17,6 @@ void DYNACALL pvr_write_area1_16(u32 addr,u16 data);
 void DYNACALL pvr_write_area1_32(u32 addr,u32 data);
 
 //regs
-u32 pvr_ReadReg(u32 addr);
 void pvr_WriteReg(u32 paddr,u32 data);
 
 void pvr_Update(u32 cycles);

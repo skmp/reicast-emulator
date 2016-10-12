@@ -10,7 +10,7 @@ u8 aica_reg[0x8000];
 //00802800~00802FFF @COMMON_DATA 
 //00803000~00807FFF @DSP_DATA 
 template<u32 sz>
-u32 ReadReg(u32 addr)
+static u32 ReadReg(u32 addr)
 {
 	if (addr<0x2800)
 	{
@@ -33,8 +33,9 @@ u32 ReadReg(u32 addr)
 
 	ReadMemArrRet(aica_reg,addr,sz);
 }
+
 template<u32 sz>
-void WriteReg(u32 addr,u32 data)
+static void WriteReg(u32 addr,u32 data)
 {
 	if (addr < 0x2000)
 	{

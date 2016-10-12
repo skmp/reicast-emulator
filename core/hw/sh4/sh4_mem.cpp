@@ -16,75 +16,9 @@
 //main system mem
 VArray2 mem_b;
 
-u8 DYNACALL ReadMem8(u32 Address)
-{
-   if (settings.MMUEnabled)
-      return mmu_ReadMem8(Address);
-   return _vmem_ReadMem8(Address);
-}
-
-u16 DYNACALL ReadMem16(u32 Address)
-{
-   if (settings.MMUEnabled)
-      return mmu_ReadMem16(Address);
-   return _vmem_ReadMem16(Address);
-}
-
-u32 DYNACALL ReadMem32(u32 Address)
-{
-   if (settings.MMUEnabled)
-      return mmu_ReadMem32(Address);
-   return _vmem_ReadMem32(Address);
-}
-
-u64 DYNACALL ReadMem64(u32 Address)
-{
-   if (settings.MMUEnabled)
-      return mmu_ReadMem64(Address);
-   return _vmem_ReadMem64(Address);
-}
-
-u16 DYNACALL IReadMem16(u32 Address)
-{
-   return ReadMem16(Address);
-}
-
-
 u8 DYNACALL ReadMem8_i(u32 addr);
 u16 DYNACALL ReadMem16_i(u32 addr);
 u32 DYNACALL ReadMem32_i(u32 addr);
-
-void DYNACALL WriteMem8(u32 addr,u8 data)
-{
-   if (settings.MMUEnabled)
-      mmu_WriteMem8(addr, data);
-   else
-      _vmem_WriteMem8(addr, data);
-}
-
-void DYNACALL WriteMem16(u32 addr,u16 data)
-{
-   if (settings.MMUEnabled)
-      mmu_WriteMem16(addr, data);
-   else
-      _vmem_WriteMem16(addr, data);
-}
-
-void DYNACALL WriteMem32(u32 addr,u32 data)
-{
-   if (settings.MMUEnabled)
-      mmu_WriteMem32(addr, data);
-   else
-      _vmem_WriteMem32(addr, data);
-}
-
-void DYNACALL WriteMem64(u32 addr,u64 data)
-{
-   if (settings.MMUEnabled)
-      mmu_WriteMem64(addr, data);
-   else
-      _vmem_WriteMem64(addr, data);
-}
 
 void DYNACALL WriteMem8_i(u32 addr,u8 data);
 void DYNACALL WriteMem16_i(u32 addr,u16 data);

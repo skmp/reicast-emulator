@@ -57,7 +57,7 @@ static inline void Sh4_int_Run_execInternal(s32 *l)
    {
       u32 addr = next_pc;
       next_pc += 2;
-      u32 op = IReadMem16(addr);
+      u32 op = ReadMem16(addr);
 
       OpPtr[op](op);
       *l -= CPU_RATIO;
@@ -155,7 +155,7 @@ static void ExecuteDelayslotInternal(void)
 {
    u32 addr = next_pc;
    next_pc += 2;
-   u32 op = IReadMem16(addr);
+   u32 op = ReadMem16(addr);
    if (op != 0)
       ExecuteOpcode(op);
 }

@@ -293,12 +293,3 @@ u32 pvr_map32(u32 offset32)
 
    return rv;
 }
-
-f32 vrf(u32 addr)
-{
-   return *(f32*)&vram[pvr_map32(addr) & VRAM_MASK];
-}
-u32 vri(u32 addr)
-{
-   return *(u32*)&vram[pvr_map32(addr) & VRAM_MASK];
-}

@@ -1408,6 +1408,9 @@ FifoSplitter<0> TAFifo0;
 
 int ta_parse_cnt = 0;
 
+#define vrf(addr) (*(f32*)&vram[pvr_map32((addr)) & VRAM_MASK])
+#define vri(addr) (*(u32*)&vram[pvr_map32((addr)) & VRAM_MASK])
+
 /*
 	Also: gotta stage textures here
 */
@@ -1465,9 +1468,12 @@ static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 	//Offset Col
 
 	//XYZ are _allways_ there :)
-	cv->x=vrf(ptr);ptr+=4;
-	cv->y=vrf(ptr);ptr+=4;
-	cv->z=vrf(ptr);ptr+=4;
+	cv->x=vrf(ptr);
+   ptr+=4;
+	cv->y=vrf(ptr);
+   ptr+=4;
+	cv->z=vrf(ptr);
+   ptr+=4;
 
 	if (isp.Texture)
 	{	//Do texture , if any
@@ -1480,8 +1486,10 @@ static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 		}
 		else
 		{
-			cv->u=vrf(ptr);ptr+=4;
-			cv->v=vrf(ptr);ptr+=4;
+			cv->u=vrf(ptr);
+         ptr+=4;
+			cv->v=vrf(ptr);
+         ptr+=4;
 		}
 	}
 

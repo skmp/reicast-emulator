@@ -408,6 +408,7 @@ else ifeq ($(platform), emscripten)
 	PLATCFLAGS += -Drglgen_resolve_symbols_custom=reicast_rglgen_resolve_symbols_custom \
 					  -Drglgen_resolve_symbols=reicast_rglgen_resolve_symbols
 
+NO_REC=0
 	HAVE_NEON = 0
 	PLATFORM_EXT := unix
 	#HAVE_SHARED_CONTEXT := 1

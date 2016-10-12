@@ -1513,7 +1513,7 @@ static void scene_compute_lut_fog(void)
 	//printf("%f\n",B*log(maxdev)/log(2.0)+A);
 }
 
-static bool vertex_buffer_unmap(void)
+static void vertex_buffer_unmap(void)
 {
    glBindBuffer(GL_ARRAY_BUFFER, 0);
    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

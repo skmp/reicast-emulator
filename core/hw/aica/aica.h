@@ -309,5 +309,5 @@ void AICA_Term();
 //u32 ReadAicaReg(u32 reg);
 void WriteAicaReg8(u32 reg,u32 data);
 
-template<u32 sz>
-void WriteAicaReg(u32 reg,u32 data);
+void WriteAicaReg1(u32 reg,u32 data);
+void WriteAicaReg2(u32 reg,u32 data);

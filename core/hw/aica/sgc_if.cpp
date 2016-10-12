@@ -1428,7 +1428,7 @@ static void WriteReg2(u32 addr,u32 data)
       dsp_writenmem(addr+1);
 	}
 
-   WriteAicaReg<2>(addr,data);
+   WriteAicaReg2(addr,data);
 }
 
 static void WriteReg1(u32 addr,u32 data)
@@ -1461,7 +1461,7 @@ static void WriteReg1(u32 addr,u32 data)
       dsp_writenmem(addr);
 	}
 
-   WriteAicaReg<1>(addr,data);
+   WriteAicaReg1(addr,data);
 }
 
 void libAICA_WriteReg(u32 addr,u32 data,u32 size)

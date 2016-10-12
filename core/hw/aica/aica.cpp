@@ -184,13 +184,36 @@ void libAICA_TimeStep(void)
 }
 
 //Memory i/o
-template<u32 sz>
-void WriteAicaReg(u32 reg,u32 data)
+void WriteAicaReg1(u32 reg,u32 data)
+{
+   switch (reg)
+   {
+      case TIMER_A:
+         aica_reg[reg]=(u8)data;
+         timers[0].RegisterWrite();
+         break;
+
+      case TIMER_B:
+         aica_reg[reg]=(u8)data;
+         timers[1].RegisterWrite();
+         break;
+
+      case TIMER_C:
+         aica_reg[reg]=(u8)data;
+         timers[2].RegisterWrite();
+         break;
+
+      default:
+         aica_reg[reg]=(u8)data;
+         break;
+   }
+}
+
+void WriteAicaReg2(u32 reg,u32 data)
 {
    switch (reg)
    {
       case SCIPD_addr:
-         verify(sz!=1);
          if (data & (1<<5))
          {
             SCIPD->SCPU=1;
@@ -199,7 +222,6 @@ void WriteAicaReg(u32 reg,u32 data)
          break;
 
       case SCIRE_addr:
-         verify(sz!=1);
          SCIPD->full&=~(data /*& SCIEB->full*/ );	//is the & SCIEB->full needed ? doesn't seem like it
          data=0;//Write only
          update_arm_interrupts();
@@ -208,42 +230,37 @@ void WriteAicaReg(u32 reg,u32 data)
       case MCIPD_addr:
          if (data & (1<<5))
          {
-            verify(sz!=1);
             MCIPD->SCPU=1;
             UpdateSh4Ints();
          }
          break;
 
       case MCIRE_addr:
-         verify(sz!=1);
          MCIPD->full&=~data;
          UpdateSh4Ints();
          //Write only
          break;
 
       case TIMER_A:
-         WriteMemArr(aica_reg,reg,data,sz);
+         *(u16*)&aica_reg[reg]=(u16)data;
          timers[0].RegisterWrite();
          break;
 
       case TIMER_B:
-         WriteMemArr(aica_reg,reg,data,sz);
+         *(u16*)&aica_reg[reg]=(u16)data;
          timers[1].RegisterWrite();
          break;
 
       case TIMER_C:
-         WriteMemArr(aica_reg,reg,data,sz);
+         *(u16*)&aica_reg[reg]=(u16)data;
          timers[2].RegisterWrite();
          break;
 
       default:
-         WriteMemArr(aica_reg,reg,data,sz);
+         *(u16*)&aica_reg[reg]=(u16)data;
          break;
    }
 }
-
-template void WriteAicaReg<1>(u32 reg,u32 data);
-template void WriteAicaReg<2>(u32 reg,u32 data);
 
 //misc :p
 s32 libAICA_Init(void)

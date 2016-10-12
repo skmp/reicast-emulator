@@ -4,70 +4,19 @@
 //main system mem
 extern VArray2 mem_b;
 
-#include <retro_inline.h>
-
 #include "hw/mem/_vmem.h"
 #include "modules/mmu.h"
 
-static INLINE u8 DYNACALL ReadMem8(u32 Address)
-{
-   if (settings.MMUEnabled)
-      return mmu_ReadMem8(Address);
-   return _vmem_ReadMem8(Address);
-}
+u8 DYNACALL ReadMem8(u32 Address);
+u16 DYNACALL ReadMem16(u32 Address);
+u16 DYNACALL IReadMem16(u32 Address);
+u32 DYNACALL ReadMem32(u32 Address);
+u64 DYNACALL ReadMem64(u32 Address);
 
-static INLINE u16 DYNACALL ReadMem16(u32 Address)
-{
-   if (settings.MMUEnabled)
-      return mmu_ReadMem16(Address);
-   return _vmem_ReadMem16(Address);
-}
-
-static INLINE u32 DYNACALL ReadMem32(u32 Address)
-{
-   if (settings.MMUEnabled)
-      return mmu_ReadMem32(Address);
-   return _vmem_ReadMem32(Address);
-}
-
-static INLINE u64 DYNACALL ReadMem64(u32 Address)
-{
-   if (settings.MMUEnabled)
-      return mmu_ReadMem64(Address);
-   return _vmem_ReadMem64(Address);
-}
-
-static INLINE void DYNACALL WriteMem8(u32 addr,u8 data)
-{
-   if (settings.MMUEnabled)
-      mmu_WriteMem8(addr, data);
-   else
-      _vmem_WriteMem8(addr, data);
-}
-
-static INLINE void DYNACALL WriteMem16(u32 addr,u16 data)
-{
-   if (settings.MMUEnabled)
-      mmu_WriteMem16(addr, data);
-   else
-      _vmem_WriteMem16(addr, data);
-}
-
-static INLINE void DYNACALL WriteMem32(u32 addr,u32 data)
-{
-   if (settings.MMUEnabled)
-      mmu_WriteMem32(addr, data);
-   else
-      _vmem_WriteMem32(addr, data);
-}
-
-static INLINE void DYNACALL WriteMem64(u32 addr,u64 data)
-{
-   if (settings.MMUEnabled)
-      mmu_WriteMem64(addr, data);
-   else
-      _vmem_WriteMem64(addr, data);
-}
+void DYNACALL WriteMem8(u32 addr,u8 data);
+void DYNACALL WriteMem16(u32 addr,u16 data);
+void DYNACALL WriteMem32(u32 addr,u32 data);
+void DYNACALL WriteMem64(u32 addr,u64 data);
 
 #define ReadMem8_nommu _vmem_ReadMem8
 #define ReadMem16_nommu _vmem_ReadMem16

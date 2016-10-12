@@ -251,47 +251,6 @@ u64 DYNACALL _vmem_ReadMem64(u32 addr)
    }
 }
 
-template<typename T>
-INLINE void DYNACALL _vmem_writet(u32 addr,T data)
-{
-	const u32 sz=sizeof(T);
-
-	u32 page=addr>>24;
-	size_t  iirf=(size_t)_vmem_MemInfo_ptr[page];
-	void* ptr=(void*)(iirf&~HANDLER_MAX);
-
-	if (likely(ptr!=0))
-	{
-		addr<<=iirf;
-		addr>>=iirf;
-
-		*((T*)&(((u8*)ptr)[addr]))=data;
-	}
-	else
-	{
-		const u32 id=iirf;
-      switch (sz)
-      {
-         case 1:
-            _vmem_WF8[id/4](addr,data);
-            break;
-         case 2:
-            _vmem_WF16[id/4](addr,data);
-            break;
-         case 4:
-            _vmem_WF32[id/4](addr,data);
-            break;
-         case 8:
-            _vmem_WF32[id/4](addr,(u32)data);
-            _vmem_WF32[id/4](addr+4,(u32)((u64)data>>32));
-            break;
-         default:
-            die("Invalid size");
-            break;
-      }
-	}
-}
-
 //WriteMem
 void DYNACALL _vmem_WriteMem8(u32 addr,u8 data)
 {

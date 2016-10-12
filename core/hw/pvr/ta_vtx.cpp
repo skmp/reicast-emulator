@@ -102,7 +102,7 @@ typedef void TACALL TaPolyParamFP(void* ptr);
 TaListFP* TaCmd;
 	
 u32 CurrentList;
-TaListFP* VerxexDataFP;
+TaListFP* VertexDataFP;
 bool ListIsFinished[5];
 
 static f32 f16(u16 v)
@@ -379,7 +379,7 @@ public:
                //printf("End list %X\n",CurrentList);
                ListIsFinished[CurrentList]=true;
                CurrentList=ListType_None;
-               VerxexDataFP=NullVertexData;
+               VertexDataFP=NullVertexData;
                data+=SZ32;
                TA_EOL;
                break;
@@ -412,7 +412,7 @@ public:
                   {
                      //accept mod data
                      StartModVol((TA_ModVolParam*)data);
-                     VerxexDataFP=ta_mod_vol_data;
+                     VertexDataFP=ta_mod_vol_data;
                      data+=SZ32;
                   }
                   else
@@ -423,7 +423,7 @@ public:
                      u32 pdid=(u8)(uid);
                      u32 ppid=(u8)(uid>>8);
 
-                     VerxexDataFP=ta_poly_data_lut[pdid];
+                     VertexDataFP=ta_poly_data_lut[pdid];
 
 
                      if (data != data_end || psz==1)
@@ -456,7 +456,7 @@ public:
                   if (CurrentList==ListType_None)
                      ta_list_start(data->pcw.ListType);	//start a list ;)
 
-                  VerxexDataFP=ta_sprite_data;
+                  VertexDataFP=ta_sprite_data;
                   //printf("Sprite \n");
                   AppendSpriteParam((TA_SpriteParam*)data);
                   data+=SZ32;
@@ -465,9 +465,9 @@ public:
 
                //Variable size
             case PARAMTYPE_VERTEX_PARAMETER:
-               //printf("VTX:0x%08X\n",VerxexDataFP);
-               //verify(VerxexDataFP!=NullVertexData);
-               data=VerxexDataFP(data,data_end);
+               //printf("VTX:0x%08X\n",VertexDataFP);
+               //verify(VertexDataFP!=NullVertexData);
+               data=VertexDataFP(data,data_end);
                break;
 
                //not handled

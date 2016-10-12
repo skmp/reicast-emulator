@@ -12,30 +12,24 @@ u8 aica_reg[0x8000];
 
 static u32 ReadReg1(u32 addr)
 {
-	if (addr<0x2800)
-		ReadMemArrRet(aica_reg,addr,1);
-
-	if (addr < 0x2818)
+	if ((addr >= 0x2800) && (addr < 0x2818))
    {
       ReadCommonReg(addr,true);
       return aica_reg[addr];
    }
 
-	ReadMemArrRet(aica_reg,addr,1);
+   return aica_reg[addr];
 }
 
 static u32 ReadReg2(u32 addr)
 {
-	if (addr<0x2800)
-		ReadMemArrRet(aica_reg,addr,2);
-
-	if (addr < 0x2818)
+	if ((addr >= 0x2800) && (addr < 0x2818))
    {
       ReadCommonReg(addr,false);
       return *(u16*)&aica_reg[addr];
    }
 
-	ReadMemArrRet(aica_reg,addr,2);
+   return *(u16*)&aica_reg[addr];
 }
 
 /* Aica reads (both sh4&arm) */

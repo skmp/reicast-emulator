@@ -761,17 +761,6 @@ void libARM_Term(void);
 void libARM_SetResetState(u32 State);
 void libARM_Update(u32 cycles);
 
-#define 	ReadMemArrRet(arr,addr,sz)				\
-         switch (sz) \
-         { \
-            case 1: \
-               return arr[addr]; \
-            case 2: \
-               return *(u16*)&arr[addr]; \
-            case 4: \
-               return *(u32*)&arr[addr]; \
-         }
-
 #define WriteMemArr(arr,addr,data,sz)				\
          switch (sz) \
          { \

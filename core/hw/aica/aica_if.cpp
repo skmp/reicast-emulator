@@ -8,6 +8,7 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/sb.h"
 #include "types.h"
+#include "hw/arm7/arm7.h"
 #include "hw/holly/holly_intc.h"
 
 #include <time.h>
@@ -114,7 +115,7 @@ u32 ReadMem_aica_reg(u32 addr,u32 sz)
 void ArmSetRST(void)
 {
 	ARMRST&=1;
-	libARM_SetResetState(ARMRST);
+	arm_SetEnabled(ARMRST==0);
 }
 
 void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)

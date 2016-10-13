@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "../arm7/arm7.h"
 
 extern u32 VREG;
 extern VArray2 aica_ram;
@@ -12,8 +13,10 @@ void aica_Init();
 void aica_Reset(bool Manual);
 void aica_Term();
 
+#define arm_sh4_bias (2)
+
 #define UpdateAica(clc) libAICA_Update(clc)
-#define UpdateArm(clc) libARM_Update(clc)
+#define UpdateArm(clc) arm_Run(clc / arm_sh4_bias)
 
 void aica_sb_Init();
 void aica_sb_Reset(bool Manual);

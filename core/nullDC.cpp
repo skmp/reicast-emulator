@@ -9,6 +9,7 @@
 #include "types.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_mem.h"
+#include "hw/arm7/arm7.h"
 
 #include "hw/naomi/naomi_cart.h"
 
@@ -19,6 +20,10 @@ settings_t settings;
 extern char game_dir[1024];
 extern char *game_data;
 extern bool boot_to_bios;
+
+extern void init_mem();
+extern void arm_Init();
+extern void term_mem();
 
 /*
 	libndc
@@ -64,8 +69,8 @@ s32 plugins_Init(void)
    if (s32 rv = libAICA_Init())
       return rv;
 
-   if (s32 rv = libARM_Init())
-      return rv;
+   init_mem();
+   arm_Init();
 
    //if (s32 rv = libExtDevice_Init())
    //	return rv;
@@ -79,8 +84,11 @@ void plugins_Term(void)
 {
    //term all plugins
    //libExtDevice_Term();
-   libARM_Term();
+   
+	term_mem();
+	//arm7_Term ?
    libAICA_Term();
+
    libGDR_Term();
    libPvr_Term();
 }
@@ -90,7 +98,10 @@ void plugins_Reset(bool Manual)
 	libPvr_Reset(Manual);
 	libGDR_Reset(Manual);
 	libAICA_Reset(Manual);
-	libARM_Reset(Manual);
+
+	arm_Reset();
+	arm_SetEnabled(false);
+
 	//libExtDevice_Reset(Manual);
 }
 

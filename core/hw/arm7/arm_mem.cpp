@@ -3,9 +3,6 @@
 #include "types.h"
 #include "hw/aica/aica_if.h"
 
-#define REG_L (0x2D00)
-#define REG_M (0x2D04)
-
 //Set to true when aica interrupt is pending
 bool aica_interr=false;
 u32 aica_reg_L=0;

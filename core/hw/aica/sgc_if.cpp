@@ -735,7 +735,7 @@ struct ChannelEx
 	} 
 };
 
-__forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
+static __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
 {
 	s32 sign=1-2*(sample/8);
 
@@ -752,7 +752,7 @@ __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
 }
 
 template<s32 PCMS,bool last>
-__forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
+static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
 {
 	if (!last && PCMS<2)
 		return ;
@@ -828,8 +828,9 @@ void StepDecodeSampleInitial(ChannelEx* ch)
 {
 	StepDecodeSample<PCMS,true>(ch,0);
 }
+
 template<s32 PCMS,u32 LPCTL,u32 LPSLNK>
-void StreamStep(ChannelEx* ch)
+static void StreamStep(ChannelEx* ch)
 {
 	ch->step.full+=ch->update_rate;
 	fp_22_10 sp=ch->step;
@@ -881,7 +882,7 @@ void StreamStep(ChannelEx* ch)
 }
 
 template<s32 ALFOWS>
-void CalcAlfo(ChannelEx* ch)
+static void CalcAlfo(ChannelEx* ch)
 {
 	u32 rv;
 	switch(ALFOWS)
@@ -907,7 +908,7 @@ void CalcAlfo(ChannelEx* ch)
 }
 
 template<s32 PLFOWS>
-void CalcPlfo(ChannelEx* ch)
+static void CalcPlfo(ChannelEx* ch)
 {
 	u32 rv;
 	switch(PLFOWS)
@@ -934,7 +935,7 @@ void CalcPlfo(ChannelEx* ch)
 }
 
 template<u32 state>
-void AegStep(ChannelEx* ch)
+static void AegStep(ChannelEx* ch)
 {
 	switch(state)
 	{

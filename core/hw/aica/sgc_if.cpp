@@ -16,6 +16,49 @@
 #define clip(x,min,max) if ((x)<(min)) (x)=(min); if ((x)>(max)) (x)=(max);
 #define clip16(x) clip(x,-32768,32767)
 
+union fp_22_10
+{
+	struct
+	{
+#ifdef MSB_FIRST
+		u32 ip:22;
+		u32 fp:10;
+#else
+		u32 fp:10;
+		u32 ip:22;
+#endif
+	};
+	u32 full;
+};
+union fp_s_22_10
+{
+	struct
+	{
+#ifdef MSB_FIRST
+		s32 ip:22;
+		u32 fp:10;
+#else
+		u32 fp:10;
+		s32 ip:22;
+#endif
+	};
+	s32 full;
+};
+union fp_20_12
+{
+	struct
+	{
+#ifdef MSB_FIRST
+		u32 ip:20;
+		u32 fp:12;
+#else
+		u32 fp:12;
+		u32 ip:20;
+#endif
+	};
+	u32 full;
+};
+
 //Sound generation, mixin, and channel regs emulation
 //x.15
 s32 volume_lut[16];
@@ -79,7 +122,7 @@ void AICA_Sample();
 {\
 	s32 temp=FPMul((value),volume_lut[(vol)],15);\
 	u32 t_pan=(pan);\
-	SampleType Sc=FPMul(temp,volume_lut[0xF-(t_pan&0xF)],15);\
+	int32_t Sc=FPMul(temp,volume_lut[0xF-(t_pan&0xF)],15);\
 	if (t_pan& 0x10)\
 	{\
 		outl+=temp;\
@@ -286,7 +329,7 @@ struct ChannelEx
 	fp_22_10 step;
 	u32 update_rate;
 
-	SampleType s0,s1;
+	int32_t s0,s1;
 
 	struct
 	{
@@ -300,7 +343,7 @@ struct ChannelEx
 	{
 		//used in adpcm decoding
 		s32 last_quant;
-		//SampleType prev_sample;
+		//int32_t prev_sample;
 		void Reset(ChannelEx* ch)
 		{
 			last_quant=127;
@@ -316,7 +359,7 @@ struct ChannelEx
 		u32 DLAtt;
 		u32 DRAtt;
 		u32 DSPAtt;
-		SampleType* DSPOut;
+		int32_t* DSPOut;
 	} VolMix;
 	
 	void (* StepAEG)(ChannelEx* ch);
@@ -381,16 +424,16 @@ struct ChannelEx
 	{
 		enabled=true;
 	}
-	__forceinline SampleType InterpolateSample()
+	__forceinline int32_t InterpolateSample()
 	{
-		SampleType rv;
+		int32_t rv;
 		u32 fp=step.fp;
 		rv=FPMul(s0,(s32)(1024-fp),10);
 		rv+=FPMul(s1,(s32)(fp),10);
 
 		return rv;
 	}
-	__forceinline bool Step(SampleType& oLeft, SampleType& oRight, SampleType& oDsp)
+	__forceinline bool Step(int32_t& oLeft, int32_t& oRight, int32_t& oDsp)
 	{
 		if (!enabled)
 		{
@@ -399,7 +442,7 @@ struct ChannelEx
 		}
 		else
 		{
-			SampleType sample=InterpolateSample();
+			int32_t sample=InterpolateSample();
 
 			//Volume & Mixer processing
 			//All attenuations are added together then applied and mixed :)
@@ -431,9 +474,9 @@ struct ChannelEx
 		}
 	}
 
-	__forceinline void Step(SampleType& mixl, SampleType& mixr)
+	__forceinline void Step(int32_t& mixl, int32_t& mixr)
 	{
-		SampleType oLeft,oRight,oDsp;
+		int32_t oLeft,oRight,oDsp;
 
 		Step(oLeft,oRight,oDsp);
 
@@ -442,7 +485,7 @@ struct ChannelEx
 		mixr+=oRight;
 	}
 
-	__forceinline static void StepAll(SampleType& mixl, SampleType& mixr)
+	__forceinline static void StepAll(int32_t& mixl, int32_t& mixr)
 	{
 		for (int i = 0; i < 64; i++)
 		{
@@ -735,14 +778,14 @@ struct ChannelEx
 	} 
 };
 
-static __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
+static __forceinline int32_t DecodeADPCM(u32 sample,s32 prev,s32& quant)
 {
 	s32 sign=1-2*(sample/8);
 
 	u32 data=sample&7;
 
 	/*(1 - 2 * L4) * (L3 + L2/2 +L1/4 + 1/8) * quantized width (¿¿n) + decode value (Xn - 1) */
-	SampleType rv = prev + sign*((quant*adpcm_scale[data])>>3);
+	int32_t rv = prev + sign*((quant*adpcm_scale[data])>>3);
 
 	quant = (quant * adpcm_qs[data])>>8;
 
@@ -761,7 +804,7 @@ static __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
 	s8* sptr8=(s8*)sptr16;
 	u8* uptr8=(u8*)sptr16;
 
-	SampleType s0,s1;
+	int32_t s0,s1;
 	switch(PCMS)
 	{
 	case -1:
@@ -1156,7 +1199,7 @@ static void ReadCommonReg(u32 reg,bool byte)
 s16 cdda_sector[CDDA_SIZE]={0};
 u32 cdda_index=CDDA_SIZE<<1;
 
-static SampleType mxlr[64];
+static int32_t mxlr[64];
 
 struct SoundFrame
 {
@@ -1197,7 +1240,7 @@ void AICA_Sample32(void)
 	{
 		for (int i=0;i<32;i++)
 		{
-			SampleType oLeft,oRight,oDsp;
+			int32_t oLeft,oRight,oDsp;
 			//stop working on this channel if its turned off ...
 			if (!Chans[ch].Step(oLeft, oRight, oDsp))
 				break;
@@ -1219,7 +1262,7 @@ void AICA_Sample32(void)
 	
 	for (int i=0;i<32;i++)
 	{
-		SampleType mixl,mixr;
+		int32_t mixl,mixr;
 
 		mixl=mxlr[i*2+0];
 		mixr=mxlr[i*2+1];
@@ -1280,9 +1323,8 @@ void AICA_Sample32(void)
 
 void AICA_Sample(void)
 {
-	SampleType mixl,mixr;
-	mixl = 0;
-	mixr = 0;
+	int32_t mixl = 0;
+   int32_t mixr = 0;
 	memset(dsp.MIXS,0,sizeof(dsp.MIXS));
 
 	ChannelEx::StepAll(mixl,mixr);

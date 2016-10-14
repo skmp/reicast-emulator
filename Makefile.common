@@ -8,7 +8,6 @@ INCFLAGS    := -I$(CORE_DIR)/libretro \
 
 SOURCES_C   :=
 SOURCES_CXX := $(CORE_DIR)/hw/arm7/arm_mem.cpp \
-					$(CORE_DIR)/hw/arm7/virt_arm.cpp \
 					$(CORE_DIR)/hw/arm7/arm7.cpp \
 					\
 					$(CORE_DIR)/hw/aica/dsp.cpp \

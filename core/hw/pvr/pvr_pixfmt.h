@@ -161,39 +161,39 @@ pixelcvt_start(conv565_TW,2,2)
 	//convert 4x1 565 to 4x1 8888
 	u16* p_in=(u16*)data;
 	//0,0
-	pb->prel(0,0,ARGB565(p_in[0]));
+   pb->p_current_pixel[0]                   = ARGB565(p_in[0]);
 	//0,1
-	pb->prel(0,1,ARGB565(p_in[1]));
+   pb->p_current_pixel[1*pb->pixels_per_line]   = ARGB565(p_in[1]);
 	//1,0
-	pb->prel(1,0,ARGB565(p_in[2]));
+   pb->p_current_pixel[1]                   = ARGB565(p_in[2]);
 	//1,1
-	pb->prel(1,1,ARGB565(p_in[3]));
+   pb->p_current_pixel[1*pb->pixels_per_line+1] = ARGB565(p_in[3]);
 }
 pixelcvt_next(conv1555_TW,2,2)
 {
 	//convert 4x1 565 to 4x1 8888
 	u16* p_in=(u16*)data;
 	//0,0
-	pb->prel(0,0,ARGB1555(p_in[0]));
+   pb->p_current_pixel[0]                   = ARGB1555(p_in[0]);
 	//0,1
-	pb->prel(0,1,ARGB1555(p_in[1]));
+   pb->p_current_pixel[1*pb->pixels_per_line]   = ARGB1555(p_in[1]);
 	//1,0
-	pb->prel(1,0,ARGB1555(p_in[2]));
+   pb->p_current_pixel[1]                   = ARGB1555(p_in[2]);
 	//1,1
-	pb->prel(1,1,ARGB1555(p_in[3]));
+   pb->p_current_pixel[1*pb->pixels_per_line+1] = ARGB1555(p_in[3]);
 }
 pixelcvt_next(conv4444_TW,2,2)
 {
 	//convert 4x1 565 to 4x1 8888
 	u16* p_in=(u16*)data;
 	//0,0
-	pb->prel(0,0,ARGB4444(p_in[0]));
+   pb->p_current_pixel[0] = ARGB4444(p_in[0]);
 	//0,1
-	pb->prel(0,1,ARGB4444(p_in[1]));
+   pb->p_current_pixel[1*pb->pixels_per_line] = ARGB4444(p_in[1]);
 	//1,0
-	pb->prel(1,0,ARGB4444(p_in[2]));
+   pb->p_current_pixel[1] = ARGB4444(p_in[2]);
 	//1,1
-	pb->prel(1,1,ARGB4444(p_in[3]));
+   pb->p_current_pixel[1*pb->pixels_per_line+1] = ARGB4444(p_in[3]);
 }
 
 pixelcvt_next(convYUV_TW,2,2)

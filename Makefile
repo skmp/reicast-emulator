@@ -402,7 +402,7 @@ else ifeq ($(platform), emscripten)
 	EXT       ?= bc
 	TARGET := $(TARGET_NAME)_libretro_$(platform).$(EXT)
 	GLES := 1
-	WITH_DYNAREC :=
+	WITH_DYNAREC=
 	CPUFLAGS += -Dasm=asmerror -D__asm__=asmerror -DNO_ASM -DNOSSE
 	SINGLE_THREAD := 1
 	PLATCFLAGS += -Drglgen_resolve_symbols_custom=reicast_rglgen_resolve_symbols_custom \

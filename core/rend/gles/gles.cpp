@@ -780,9 +780,6 @@ static void GenSorted(void)
 
    static u32 vtx_cnt;
    int idx            = -1;
-#ifndef NDEBUG
-   u32 tess_gen       =  0;
-#endif
    int pfsti          =  0;
 
    pidx_sort.clear();
@@ -831,7 +828,6 @@ static void GenSorted(void)
       idx             = idx_base + pp->first;
       vtx             = vtx_base+idx[0];
       vtx_end         = vtx_base + idx[pp->count-1]-1;
-      flip            = 0;
 
       while(vtx != vtx_end)
       {
@@ -846,89 +842,10 @@ static void GenSorted(void)
             v2=&vtx[0];
          }
 
-         if (settings.pvr.subdivide_transp)
-         {
-            u32 tess_x = (max3(v0->x,v1->x,v2->x)-min3(v0->x,v1->x,v2->x))/32;
-            u32 tess_y = (max3(v0->y,v1->y,v2->y)-min3(v0->y,v1->y,v2->y))/32;
-
-            if (tess_x == 1)
-               tess_x = 0;
-            if (tess_y == 1)
-               tess_y = 0;
-
-            //bool tess=(maxZ(v0,v1,v2)/minZ(v0,v1,v2))>=1.2;
-
-            if (tess_x + tess_y)
-            {
-               Vertex *v3 = pvrrc.verts.Append(3);
-               Vertex *v4 = v3+1;
-               Vertex *v5 = v4+1;
-
-               /* XYZ coordinates */
-               for (int i=0;i<3;i++)
-               {
-                  ((float*)&v3->x)[i]=((float*)&v0->x)[i]*0.5f+((float*)&v2->x)[i]*0.5f;
-                  ((float*)&v4->x)[i]=((float*)&v0->x)[i]*0.5f+((float*)&v1->x)[i]*0.5f;
-                  ((float*)&v5->x)[i]=((float*)&v1->x)[i]*0.5f+((float*)&v2->x)[i]*0.5f;
-               }
-
-               //*TODO* Make it perspective correct
-
-               /* UV coordinates */
-               for (int i=0;i<2;i++)
-               {
-                  ((float*)&v3->u)[i]=((float*)&v0->u)[i]*0.5f+((float*)&v2->u)[i]*0.5f;
-                  ((float*)&v4->u)[i]=((float*)&v0->u)[i]*0.5f+((float*)&v1->u)[i]*0.5f;
-                  ((float*)&v5->u)[i]=((float*)&v1->u)[i]*0.5f+((float*)&v2->u)[i]*0.5f;
-               }
-
-               /* Color coordinates */
-               for (int i=0;i<4;i++)
-               {
-                  v3->col[i]=v0->col[i]/2+v2->col[i]/2;
-                  v4->col[i]=v0->col[i]/2+v1->col[i]/2;
-                  v5->col[i]=v1->col[i]/2+v2->col[i]/2;
-               }
-
-               fill_id(lst[pfsti].id,v0,v3,v4,vtx_base);
-               lst[pfsti].pid= ppid ;
-               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-               pfsti++;
-
-               fill_id(lst[pfsti].id,v2,v3,v5,vtx_base);
-               lst[pfsti].pid= ppid ;
-               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-               pfsti++;
-
-               fill_id(lst[pfsti].id,v3,v4,v5,vtx_base);
-               lst[pfsti].pid= ppid ;
-               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-               pfsti++;
-
-               fill_id(lst[pfsti].id,v5,v4,v1,vtx_base);
-               lst[pfsti].pid= ppid ;
-               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-               pfsti++;
-
-#ifndef NDEBUG
-               tess_gen += 3;
-#endif
-            }
-            else
-            {
-               fill_id(lst[pfsti].id,v0,v1,v2,vtx_base);
-               lst[pfsti].pid= ppid ;
-               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-               pfsti++;
-            }
-         }
-         else
-         {
-            fill_id(lst[pfsti].id,v0,v1,v2,vtx_base);
-            lst[pfsti].pid= ppid ;
-            lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-            pfsti++;
-         }
+         fill_id(lst[pfsti].id,v0,v1,v2,vtx_base);
+         lst[pfsti].pid= ppid ;
+         lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
+         pfsti++;
 
          flip ^= 1;
          vtx++;
@@ -1004,11 +921,6 @@ static void GenSorted(void)
    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
    glBufferData(GL_ELEMENT_ARRAY_BUFFER,vidx_sort.size()*2,&vidx_sort[0],GL_STREAM_DRAW);
    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-#ifndef NDEBUG
-   if (tess_gen)
-      printf("Generated %.2fK Triangles !\n",tess_gen/1000.0);
-#endif
 }
 
 static void DrawSorted(void)

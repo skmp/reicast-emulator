@@ -14,10 +14,6 @@ struct PixelBuffer
 		p_buffer_start=p_current_line=p_current_pixel=(u16*)data;
 		pixels_per_line=ppl_bytes/sizeof(u16);
 	}
-	__forceinline void prel(u32 x,u16 value)
-	{
-		p_current_pixel[x]=value;
-	}
 
 	__forceinline void prel(u32 x,u32 y,u16 value)
 	{
@@ -82,40 +78,43 @@ pixelcvt_start(conv565_PL,4,1)
 	//convert 4x1
 	u16* p_in=(u16*)data;
 	//0,0
-	pb->prel(0,ARGB565(p_in[0]));
+   pb->p_current_pixel[0] = ARGB565(p_in[0]);
 	//1,0
-	pb->prel(1,ARGB565(p_in[1]));
+   pb->p_current_pixel[1] = ARGB565(p_in[1]);
 	//2,0
-	pb->prel(2,ARGB565(p_in[2]));
+   pb->p_current_pixel[2] = ARGB565(p_in[2]);
 	//3,0
-	pb->prel(3,ARGB565(p_in[3]));
+   pb->p_current_pixel[3] = ARGB565(p_in[3]);
 }
+
 pixelcvt_next(conv1555_PL,4,1)
 {
 	//convert 4x1
 	u16* p_in=(u16*)data;
 	//0,0
-	pb->prel(0,ARGB1555(p_in[0]));
+   pb->p_current_pixel[0] = ARGB1555(p_in[0]);
 	//1,0
-	pb->prel(1,ARGB1555(p_in[1]));
+   pb->p_current_pixel[1] = ARGB1555(p_in[1]);
 	//2,0
-	pb->prel(2,ARGB1555(p_in[2]));
+   pb->p_current_pixel[2] = ARGB1555(p_in[2]);
 	//3,0
-	pb->prel(3,ARGB1555(p_in[3]));
+   pb->p_current_pixel[3] = ARGB1555(p_in[3]);
 }
+
 pixelcvt_next(conv4444_PL,4,1)
 {
 	//convert 4x1
 	u16* p_in=(u16*)data;
 	//0,0
-	pb->prel(0,ARGB4444(p_in[0]));
+	pb->p_current_pixel[0] = ARGB4444(p_in[0]);
 	//1,0
-	pb->prel(1,ARGB4444(p_in[1]));
+	pb->p_current_pixel[1] = ARGB4444(p_in[1]);
 	//2,0
-	pb->prel(2,ARGB4444(p_in[2]));
+	pb->p_current_pixel[2] = ARGB4444(p_in[2]);
 	//3,0
-	pb->prel(3,ARGB4444(p_in[3]));
+	pb->p_current_pixel[3] = ARGB4444(p_in[3]);
 }
+
 pixelcvt_next(convYUV_PL,4,1)
 {
 	//convert 4x1 4444 to 4x1 8888
@@ -128,9 +127,9 @@ pixelcvt_next(convYUV_PL,4,1)
 	s32 Yv = (p_in[0]>>16) &255; //p_in[2]
 
 	//0,0
-	pb->prel(0,YUV422<PixelPacker>(Y0,Yu,Yv));
+   pb->p_current_pixel[0] = YUV422<PixelPacker>(Y0,Yu,Yv);
 	//1,0
-	pb->prel(1,YUV422<PixelPacker>(Y1,Yu,Yv));
+   pb->p_current_pixel[1] = YUV422<PixelPacker>(Y1,Yu,Yv);
 
 	//next 4 bytes
 	p_in+=1;
@@ -141,18 +140,20 @@ pixelcvt_next(convYUV_PL,4,1)
 	Yv = (p_in[0]>>16) &255; //p_in[2]
 
 	//0,0
-	pb->prel(2,YUV422<PixelPacker>(Y0,Yu,Yv));
+   pb->p_current_pixel[2] = YUV422<PixelPacker>(Y0,Yu,Yv);
 	//1,0
-	pb->prel(3,YUV422<PixelPacker>(Y1,Yu,Yv));
+   pb->p_current_pixel[3] = YUV422<PixelPacker>(Y1,Yu,Yv);
 }
+
 pixelcvt_next(convBMP_PL,4,1)
 {
 	u16* p_in=(u16*)data;
-	pb->prel(0,ARGB8888(p_in[0]));
-	pb->prel(1,ARGB8888(p_in[1]));
-	pb->prel(2,ARGB8888(p_in[2]));
-	pb->prel(3,ARGB8888(p_in[3]));
+   pb->p_current_pixel[0] = ARGB8888(p_in[0]);
+   pb->p_current_pixel[1] = ARGB8888(p_in[1]);
+   pb->p_current_pixel[2] = ARGB8888(p_in[2]);
+   pb->p_current_pixel[3] = ARGB8888(p_in[3]);
 }
+
 pixelcvt_end;
 //twiddled 
 pixelcvt_start(conv565_TW,2,2)
@@ -194,6 +195,7 @@ pixelcvt_next(conv4444_TW,2,2)
 	//1,1
 	pb->prel(1,1,ARGB4444(p_in[3]));
 }
+
 pixelcvt_next(convYUV_TW,2,2)
 {
 	//convert 4x1 4444 to 4x1 8888

@@ -9,12 +9,6 @@ struct PixelBuffer
 
 	u32 pixels_per_line;
 
-	void init(void* data,u32 ppl_bytes)
-	{
-		p_buffer_start=p_current_line=p_current_pixel=(u16*)data;
-		pixels_per_line=ppl_bytes/sizeof(u16);
-	}
-
 	__forceinline void prel(u32 x,u32 y,u16 value)
 	{
 		p_current_pixel[y*pixels_per_line+x]=value;

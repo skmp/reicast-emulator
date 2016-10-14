@@ -1,6 +1,5 @@
 #pragma once
 
-//Pixel buffer class (realy helpfull ;) )
 struct PixelBuffer
 {
 	u16* p_buffer_start;
@@ -8,11 +7,6 @@ struct PixelBuffer
 	u16* p_current_pixel;
 
 	u32 pixels_per_line;
-
-	__forceinline void prel(u32 x,u32 y,u16 value)
-	{
-		p_current_pixel[y*pixels_per_line+x]=value;
-	}
 };
 
 template<class PixelPacker>
@@ -186,9 +180,10 @@ pixelcvt_next(convYUV_TW,2,2)
 	s32 Yv = (p_in[2]>>0) &255; //p_in[2]
 
 	//0,0
-	pb->prel(0,0,YUV422<PixelPacker>(Y0,Yu,Yv));
+   pb->p_current_pixel[0]= YUV422<PixelPacker>(Y0,Yu,Yv);
+
 	//1,0
-	pb->prel(1,0,YUV422<PixelPacker>(Y1,Yu,Yv));
+   pb->p_current_pixel[1]=YUV422<PixelPacker>(Y1,Yu,Yv);
 
 	//next 4 bytes
 	//p_in+=2;
@@ -199,18 +194,19 @@ pixelcvt_next(convYUV_TW,2,2)
 	Yv = (p_in[3]>>0) &255; //p_in[2]
 
 	//0,1
-	pb->prel(0,1,YUV422<PixelPacker>(Y0,Yu,Yv));
+   pb->p_current_pixel[1*pb->pixels_per_line]=YUV422<PixelPacker>(Y0,Yu,Yv);
 	//1,1
-	pb->prel(1,1,YUV422<PixelPacker>(Y1,Yu,Yv));
+   pb->p_current_pixel[1*pb->pixels_per_line+1]=YUV422<PixelPacker>(Y1,Yu,Yv);
 }
 pixelcvt_next(convBMP_TW,2,2)
 {
 	u16* p_in=(u16*)data;
-	pb->prel(0,0,ARGB8888(p_in[0]));
-	pb->prel(0,1,ARGB8888(p_in[1]));
-	pb->prel(1,0,ARGB8888(p_in[2]));
-	pb->prel(1,1,ARGB8888(p_in[3]));
+   pb->p_current_pixel[0]                  =ARGB8888(p_in[0]);
+   pb->p_current_pixel[1*pb->pixels_per_line]  =ARGB8888(p_in[1]);
+   pb->p_current_pixel[1]                  =ARGB8888(p_in[2]);
+   pb->p_current_pixel[1*pb->pixels_per_line+1]=ARGB8888(p_in[3]);
 }
+
 pixelcvt_end;
 
 pixelcvt_start(convPAL4_TW,4,4)
@@ -218,32 +214,32 @@ pixelcvt_start(convPAL4_TW,4,4)
 	u8* p_in=(u8*)data;
 	u32* pal=&palette_ram[palette_index];
 
-	pb->prel(0,0,pal[p_in[0]&0xF]);
-	pb->prel(0,1,pal[(p_in[0]>>4)&0xF]);
+   pb->p_current_pixel[0]=pal[p_in[0]&0xF];
+   pb->p_current_pixel[1*pb->pixels_per_line]=pal[(p_in[0]>>4)&0xF];
    p_in++;
-	pb->prel(1,0,pal[p_in[0]&0xF]);
-	pb->prel(1,1,pal[(p_in[0]>>4)&0xF]);
-   p_in++;
-
-	pb->prel(0,2,pal[p_in[0]&0xF]);
-	pb->prel(0,3,pal[(p_in[0]>>4)&0xF]);
-   p_in++;
-	pb->prel(1,2,pal[p_in[0]&0xF]);
-	pb->prel(1,3,pal[(p_in[0]>>4)&0xF]);
+   pb->p_current_pixel[1]=pal[p_in[0]&0xF];
+   pb->p_current_pixel[1*pb->pixels_per_line+1]=pal[(p_in[0]>>4)&0xF];
    p_in++;
 
-	pb->prel(2,0,pal[p_in[0]&0xF]);
-	pb->prel(2,1,pal[(p_in[0]>>4)&0xF]);
+   pb->p_current_pixel[2*pb->pixels_per_line]=pal[p_in[0]&0xF];
+   pb->p_current_pixel[3*pb->pixels_per_line]=pal[(p_in[0]>>4)&0xF];
    p_in++;
-	pb->prel(3,0,pal[p_in[0]&0xF]);
-	pb->prel(3,1,pal[(p_in[0]>>4)&0xF]);
+   pb->p_current_pixel[2*pb->pixels_per_line+1]=pal[p_in[0]&0xF];
+   pb->p_current_pixel[3*pb->pixels_per_line+1]=pal[(p_in[0]>>4)&0xF];
    p_in++;
 
-	pb->prel(2,2,pal[p_in[0]&0xF]);
-	pb->prel(2,3,pal[(p_in[0]>>4)&0xF]);
+   pb->p_current_pixel[2]=pal[p_in[0]&0xF];
+   pb->p_current_pixel[1*pb->pixels_per_line+2]=pal[(p_in[0]>>4)&0xF];
    p_in++;
-	pb->prel(3,2,pal[p_in[0]&0xF]);
-	pb->prel(3,3,pal[(p_in[0]>>4)&0xF]);
+   pb->p_current_pixel[3]=pal[p_in[0]&0xF];
+   pb->p_current_pixel[1*pb->pixels_per_line+3]=pal[(p_in[0]>>4)&0xF];
+   p_in++;
+
+   pb->p_current_pixel[2*pb->pixels_per_line+2]=pal[p_in[0]&0xF];
+   pb->p_current_pixel[3*pb->pixels_per_line+2]=pal[(p_in[0]>>4)&0xF];
+   p_in++;
+   pb->p_current_pixel[2*pb->pixels_per_line+3]=pal[p_in[0]&0xF];
+   pb->p_current_pixel[3*pb->pixels_per_line+3]=pal[(p_in[0]>>4)&0xF];
    p_in++;
 }
 pixelcvt_next(convPAL8_TW,2,4)
@@ -251,22 +247,22 @@ pixelcvt_next(convPAL8_TW,2,4)
 	u8* p_in=(u8*)data;
 	u32* pal=&palette_ram[palette_index];
 
-	pb->prel(0,0,pal[p_in[0]]);
+   pb->p_current_pixel[0]=pal[p_in[0]];
    p_in++;
-	pb->prel(0,1,pal[p_in[0]]);
+   pb->p_current_pixel[1*pb->pixels_per_line]=pal[p_in[0]];
    p_in++;
-	pb->prel(1,0,pal[p_in[0]]);
+   pb->p_current_pixel[1]=pal[p_in[0]];
    p_in++;
-	pb->prel(1,1,pal[p_in[0]]);
+   pb->p_current_pixel[1*pb->pixels_per_line+1]=pal[p_in[0]];
    p_in++;
 
-	pb->prel(0,2,pal[p_in[0]]);
+   pb->p_current_pixel[2*pb->pixels_per_line]=pal[p_in[0]];
    p_in++;
-	pb->prel(0,3,pal[p_in[0]]);
+   pb->p_current_pixel[3*pb->pixels_per_line]=pal[p_in[0]];
    p_in++;
-	pb->prel(1,2,pal[p_in[0]]);
+   pb->p_current_pixel[2*pb->pixels_per_line+1]=pal[p_in[0]];
    p_in++;
-	pb->prel(1,3,pal[p_in[0]]);
+   pb->p_current_pixel[3*pb->pixels_per_line+1]=pal[p_in[0]];
    p_in++;
 }
 pixelcvt_end;

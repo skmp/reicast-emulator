@@ -9,7 +9,6 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/dyna/regalloc.h"
 #include "emitter/x86_emitter.h"
-#include "profiler/profiler.h"
 
 void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool staging, bool optimise);
 

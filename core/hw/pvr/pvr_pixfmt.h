@@ -219,39 +219,55 @@ pixelcvt_start(convPAL4_TW,4,4)
 	u32* pal=&palette_ram[palette_index];
 
 	pb->prel(0,0,pal[p_in[0]&0xF]);
-	pb->prel(0,1,pal[(p_in[0]>>4)&0xF]);p_in++;
+	pb->prel(0,1,pal[(p_in[0]>>4)&0xF]);
+   p_in++;
 	pb->prel(1,0,pal[p_in[0]&0xF]);
-	pb->prel(1,1,pal[(p_in[0]>>4)&0xF]);p_in++;
+	pb->prel(1,1,pal[(p_in[0]>>4)&0xF]);
+   p_in++;
 
 	pb->prel(0,2,pal[p_in[0]&0xF]);
-	pb->prel(0,3,pal[(p_in[0]>>4)&0xF]);p_in++;
+	pb->prel(0,3,pal[(p_in[0]>>4)&0xF]);
+   p_in++;
 	pb->prel(1,2,pal[p_in[0]&0xF]);
-	pb->prel(1,3,pal[(p_in[0]>>4)&0xF]);p_in++;
+	pb->prel(1,3,pal[(p_in[0]>>4)&0xF]);
+   p_in++;
 
 	pb->prel(2,0,pal[p_in[0]&0xF]);
-	pb->prel(2,1,pal[(p_in[0]>>4)&0xF]);p_in++;
+	pb->prel(2,1,pal[(p_in[0]>>4)&0xF]);
+   p_in++;
 	pb->prel(3,0,pal[p_in[0]&0xF]);
-	pb->prel(3,1,pal[(p_in[0]>>4)&0xF]);p_in++;
+	pb->prel(3,1,pal[(p_in[0]>>4)&0xF]);
+   p_in++;
 
 	pb->prel(2,2,pal[p_in[0]&0xF]);
-	pb->prel(2,3,pal[(p_in[0]>>4)&0xF]);p_in++;
+	pb->prel(2,3,pal[(p_in[0]>>4)&0xF]);
+   p_in++;
 	pb->prel(3,2,pal[p_in[0]&0xF]);
-	pb->prel(3,3,pal[(p_in[0]>>4)&0xF]);p_in++;
+	pb->prel(3,3,pal[(p_in[0]>>4)&0xF]);
+   p_in++;
 }
 pixelcvt_next(convPAL8_TW,2,4)
 {
 	u8* p_in=(u8*)data;
 	u32* pal=&palette_ram[palette_index];
 
-	pb->prel(0,0,pal[p_in[0]]);p_in++;
-	pb->prel(0,1,pal[p_in[0]]);p_in++;
-	pb->prel(1,0,pal[p_in[0]]);p_in++;
-	pb->prel(1,1,pal[p_in[0]]);p_in++;
+	pb->prel(0,0,pal[p_in[0]]);
+   p_in++;
+	pb->prel(0,1,pal[p_in[0]]);
+   p_in++;
+	pb->prel(1,0,pal[p_in[0]]);
+   p_in++;
+	pb->prel(1,1,pal[p_in[0]]);
+   p_in++;
 
-	pb->prel(0,2,pal[p_in[0]]);p_in++;
-	pb->prel(0,3,pal[p_in[0]]);p_in++;
-	pb->prel(1,2,pal[p_in[0]]);p_in++;
-	pb->prel(1,3,pal[p_in[0]]);p_in++;
+	pb->prel(0,2,pal[p_in[0]]);
+   p_in++;
+	pb->prel(0,3,pal[p_in[0]]);
+   p_in++;
+	pb->prel(1,2,pal[p_in[0]]);
+   p_in++;
+	pb->prel(1,3,pal[p_in[0]]);
+   p_in++;
 }
 pixelcvt_end;
 //handler functions

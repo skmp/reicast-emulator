@@ -72,19 +72,6 @@ char *game_data;
 char game_dir[1024];
 char game_dir_no_slash[1024];
 
-static void co_dc_thread(void)
-{
-	dc_init(co_argc,co_argv);
-	
-	dc_run();
-}
-
-void co_dc_run(void)
-{
-   //puts("ENTER LOOP");
-   dc_run();
-}
-
 void co_dc_yield(void)
 {
    inside_loop = false;
@@ -370,12 +357,13 @@ void retro_run (void)
 
    if (first_run)
    {
-      co_dc_thread();
+      dc_init(co_argc,co_argv);
+      dc_run();
       first_run = false;
       return;
    }
 
-   co_dc_run();
+   dc_run();
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
    video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
 #endif

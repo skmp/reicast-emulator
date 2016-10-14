@@ -765,14 +765,6 @@ static inline bool PP_EQ(PolyParam* pp0, PolyParam* pp1)
       && pp0->tileclip==pp1->tileclip;
 }
 
-
-static inline void fill_id(u16* d, Vertex* v0, Vertex* v1, Vertex* v2,  Vertex* vb)
-{
-	d[0]=v0-vb;
-	d[1]=v1-vb;
-	d[2]=v2-vb;
-}
-
 static void GenSorted(void)
 {
    static vector<IndexTrig> lst;
@@ -842,7 +834,12 @@ static void GenSorted(void)
             v2=&vtx[0];
          }
 
-         fill_id(lst[pfsti].id,v0,v1,v2,vtx_base);
+         u16* d =lst[pfsti].id;
+         Vertex *vb = vtx_base;
+         d[0]=v0-vb;
+         d[1]=v1-vb;
+         d[2]=v2-vb;
+
          lst[pfsti].pid= ppid ;
          lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
          pfsti++;

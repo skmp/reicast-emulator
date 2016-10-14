@@ -3,6 +3,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
+#include <X11/XKBlib.h>
 
 #if !defined(GLES)
 	#include <GL/gl.h>
@@ -99,6 +100,114 @@ void input_x11_handle()
 					else
 					{
 						int dc_key = x11_keymap[e.xkey.keycode];
+						static bool ana_up = false;
+						static bool ana_down = false;
+						static bool ana_left = false;
+						static bool ana_right = false;
+						//Detect up press
+						if(e.xkey.keycode == 25)
+						{
+							if(e.type == KeyPress)
+							{
+								ana_up = true;
+							}
+							else if(e.type == KeyRelease)
+							{
+								ana_up = false;
+							}
+							else
+							{
+							}
+						}
+						//Detect down press
+						if(e.xkey.keycode == 39)
+						{
+							if(e.type == KeyPress)
+							{
+								ana_down = true;
+							}
+							else if(e.type == KeyRelease)
+							{
+								ana_down = false;
+							}
+							else
+							{
+							}
+						}
+						//Detect left press
+						if(e.xkey.keycode == 38)
+						{
+							if(e.type == KeyPress)
+							{
+								ana_left = true;
+							}
+							else if(e.type == KeyRelease)
+							{
+								ana_left = false;
+							}
+							else
+							{
+							}
+						}
+						//Detect right press
+						if(e.xkey.keycode == 40)
+						{
+							if(e.type == KeyPress)
+							{
+								ana_right = true;
+							}
+							else if(e.type == KeyRelease)
+							{
+								ana_right = false;
+							}
+							else
+							{
+							}
+						}
+						/* Check analogue control states (up/down) */
+						if((ana_up == true) && (ana_down == false))
+						{
+							joyy[0] = -127;
+						}
+						else if((ana_up == false) && (ana_down == true))
+						{
+							joyy[0] = 127;
+						}
+						else
+						{
+							/* Either both pressed simultaniously or neither pressed */
+							joyy[0] = 0;
+						}
+						/* Check analogue control states (left/right) */
+						if((ana_left == true) && (ana_right == false))
+						{
+							joyx[0] = -127;
+						}
+						else if((ana_left == false) && (ana_right == true))
+						{
+							joyx[0] = 127;
+						}
+						else
+						{
+							/* Either both pressed simultaniously or neither pressed */
+							joyx[0] = 0;
+						}
+						if (e.xkey.keycode == 24)
+						{
+							// Left shoulder button pressed (lt)
+							if (e.type == KeyPress)
+								lt[0] = 255;
+							else
+								lt[0] = 0;
+						}
+						else if (e.xkey.keycode == 26)
+						{
+							// Right shoulder button pressed (rt)
+							if (e.type == KeyPress)
+								rt[0] = 255;
+							else
+								rt[0] = 0;
+						}
 						if (e.type == KeyPress)
 						{
 							kcode[0] &= ~dc_key;
@@ -123,15 +232,14 @@ void input_x11_init()
 	x11_keymap[111] = DC_DPAD_UP;
 	x11_keymap[116] = DC_DPAD_DOWN;
 
+	x11_keymap[52] = DC_BTN_Y;
 	x11_keymap[53] = DC_BTN_X;
 	x11_keymap[54] = DC_BTN_B;
 	x11_keymap[55] = DC_BTN_A;
 
-	/*
-	//TODO: Fix sliders
-	x11_keymap[38] = DPad_Down;
-	x11_keymap[39] = DPad_Down;
-	*/
+	x11_keymap[10] = DC_BTN_Z;
+	x11_keymap[11] = DC_BTN_C;
+	x11_keymap[12] = DC_BTN_D;
 
 	x11_keymap[36] = DC_BTN_START;
 
@@ -140,6 +248,8 @@ void input_x11_init()
 
 void x11_window_create()
 {
+	Bool ar_set, ar_supp = false;
+
 	if (cfgLoadInt("pvr", "nox11", 0) == 0)
 	{
 		XInitThreads();
@@ -302,6 +412,9 @@ void x11_window_create()
 		x11_disp = (void*)x11Display;
 		x11_win = (void*)x11Window;
 		x11_vis = (void*)x11Visual->visual;
+
+		ar_set = XkbSetDetectableAutoRepeat(x11Display, True, &ar_supp);
+		printf("XkbSetDetectableAutoRepeat returns %u, supported = %u\n", ar_set, ar_supp);
 	}
 	else
 	{

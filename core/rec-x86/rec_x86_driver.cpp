@@ -306,79 +306,20 @@ void ngen_Compile_x86(RuntimeBlockInfo* block,bool force_checks, bool reset, boo
 	//stating counter
 	if (staging) x86e->Emit(op_sub32,&block->staging_runs,1);
 
-	//profiler
-	if (prof.enable || 1)
+	if (1)
 		x86e->Emit(op_add32,&block->runs,1);
-
-	if (prof.enable)
-	{
-		if (force_checks)
-		x86e->Emit(op_add32,&prof.counters.blkrun.force_check,1);
-
-		x86e->Emit(op_add32,&prof.counters.blkrun.cycles[block->guest_cycles],1);
-	}
 
 	for (size_t i=0;i<block->oplist.size();i++)
 	{
 		shil_opcode* op=&block->oplist[i];
 
 		u32 opcd_start=x86e->opcode_count;
-		if (prof.enable) 
-		{
-			x86e->Emit(op_add32,&prof.counters.shil.executed[op->op],1);
-		}
 
 		op->host_offs=x86e->x86_indx;
-		
-		if (prof.enable)
-		{
-			set<int> reg_wt;
-			set<int> reg_rd;
-
-			for (int z=0;op->rd.is_reg() && z<op->rd.count();z++)
-				reg_wt.insert(op->rd._reg+z);
-
-			for (int z=0;op->rd2.is_reg() && z<op->rd2.count();z++)
-				reg_wt.insert(op->rd2._reg+z);
-
-			for (int z=0;op->rs1.is_reg() && z<op->rs1.count();z++)
-				reg_rd.insert(op->rs1._reg+z);
-
-			for (int z=0;op->rs2.is_reg() && z<op->rs2.count();z++)
-				reg_rd.insert(op->rs2._reg+z);
-
-			for (int z=0;op->rs3.is_reg() && z<op->rs3.count();z++)
-				reg_rd.insert(op->rs3._reg+z);
-
-			set<int>::iterator iter=reg_wt.begin();
-			while( iter != reg_wt.end() ) 
-			{
-				if (reg_rd.count(*iter))
-				{
-					reg_rd.erase(*iter);
-					x86e->Emit(op_add32, &prof.counters.ralloc.reg_rw[*iter], 1);
-				}
-				else
-				{
-					x86e->Emit(op_add32, &prof.counters.ralloc.reg_w[*iter], 1);
-				}
-
-				++iter;
-			}
-
-			iter=reg_rd.begin();
-			while( iter != reg_rd.end() ) 
-			{
-				x86e->Emit(op_add32,&prof.counters.ralloc.reg_r[*iter],1);
-				++iter;
-			}
-		}
 		
 		reg.OpBegin(op,i);
 			
 		ngen_opcode(block,op,x86e,staging,optimise);
-
-		if (prof.enable) x86e->Emit(op_add32,&prof.counters.shil.host_ops[op->op],x86e->opcode_count-opcd_start);
 
 		reg.OpEnd(op);
 	}

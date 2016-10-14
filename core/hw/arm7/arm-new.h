@@ -372,7 +372,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
         {\
           reg[15].I &= 0xFFFFFFFC;\
@@ -405,7 +405,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
         {\
           reg[15].I &= 0xFFFFFFFC;\
@@ -443,7 +443,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
         {\
           reg[15].I &= 0xFFFFFFFC;\
@@ -474,7 +474,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
         {\
           reg[15].I &= 0xFFFFFFFC;\
@@ -513,7 +513,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
         {\
           reg[15].I &= 0xFFFFFFFC;\
@@ -552,7 +552,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
        {\
           reg[15].I &= 0xFFFFFFFC;\
@@ -593,7 +593,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
         {\
           reg[15].I &= 0xFFFFFFFC;\
@@ -631,7 +631,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
         {\
           reg[15].I &= 0xFFFFFFFC;\
@@ -675,7 +675,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
         {\
           reg[15].I &= 0xFFFFFFFC;\
@@ -708,7 +708,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
           reg[15].I &= 0xFFFFFFFC;\
           armNextPC = reg[15].I;\
@@ -738,7 +738,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
           reg[15].I &= 0xFFFFFFFC;\
           armNextPC = reg[15].I;\
@@ -773,7 +773,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
           reg[15].I &= 0xFFFFFFFC;\
           armNextPC = reg[15].I;\
@@ -801,7 +801,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
           reg[15].I &= 0xFFFFFFFC;\
           armNextPC = reg[15].I;\
@@ -837,7 +837,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
           reg[15].I &= 0xFFFFFFFC;\
           armNextPC = reg[15].I;\
@@ -873,7 +873,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
           reg[15].I &= 0xFFFFFFFC;\
           armNextPC = reg[15].I;\
@@ -911,7 +911,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
           reg[15].I &= 0xFFFFFFFC;\
           armNextPC = reg[15].I;\
@@ -946,7 +946,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
           reg[15].I &= 0xFFFFFFFC;\
           armNextPC = reg[15].I;\
@@ -987,7 +987,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
           reg[15].I &= 0xFFFFFFFC;\
           armNextPC = reg[15].I;\
@@ -1017,7 +1017,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
           reg[15].I &= 0xFFFFFFFC;\
           armNextPC = reg[15].I;\
@@ -1045,7 +1045,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
           reg[15].I &= 0xFFFFFFFC;\
           armNextPC = reg[15].I;\
@@ -1075,7 +1075,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
         {\
           reg[15].I &= 0xFFFFFFFC;\
@@ -1105,7 +1105,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
 		{\
           reg[15].I &= 0xFFFFFFFC;\
@@ -1139,7 +1139,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
         {\
           reg[15].I &= 0xFFFFFFFC;\
@@ -1173,7 +1173,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
 		{\
           reg[15].I &= 0xFFFFFFFC;\
@@ -1209,7 +1209,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
        {\
           reg[15].I &= 0xFFFFFFFC;\
@@ -1244,7 +1244,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
         {\
           reg[15].I &= 0xFFFFFFFC;\
@@ -1285,7 +1285,7 @@
         /* todo */\
         if(opcode & 0x00100000) {\
           clockTicks++;\
-          CPUSwitchMode(reg[17].I & 0x1f, false);\
+          CPUSwitchMode(reg[17].I & 0x1f, false, true);\
         }\
         {\
           reg[15].I &= 0xFFFFFFFC;\
@@ -2297,7 +2297,7 @@ if(cond_res) {
       if(opcode & 0x00080000)
         newValue = (newValue & 0x00FFFFFF) | (value & 0xFF000000);
       newValue |= 0x10;
-      CPUSwitchMode(newValue & 0x1f, false);
+      CPUSwitchMode(newValue & 0x1f, false, true);
       reg[16].I = newValue;
       CPUUpdateFlags();
     }
@@ -2409,7 +2409,7 @@ if(cond_res) {
 
       newValue |= 0x10;
 
-      CPUSwitchMode(newValue & 0x1f, false);
+      CPUSwitchMode(newValue & 0x1f, false, true);
       reg[16].I = newValue;
       CPUUpdateFlags();
     }
@@ -5498,7 +5498,7 @@ if(cond_res) {
         else
           clockTicks += 2 + CPUUpdateTicksAccessSeq32(address);
 
-        CPUSwitchMode(reg[17].I & 0x1f, false);
+        CPUSwitchMode(reg[17].I & 0x1f, false, true);
         {
           armNextPC = reg[15].I & 0xFFFFFFFC;
           reg[15].I = armNextPC + 4;
@@ -5580,7 +5580,7 @@ if(cond_res) {
         if(!(opcode & (1 << base)))    
           reg[base].I = temp;
 
-        CPUSwitchMode(reg[17].I & 0x1f, false);
+        CPUSwitchMode(reg[17].I & 0x1f, false, true);
         {
           armNextPC = reg[15].I & 0xFFFFFFFC;
           reg[15].I = armNextPC + 4;
@@ -5731,7 +5731,7 @@ if(cond_res) {
         else
           clockTicks += 2 + CPUUpdateTicksAccessSeq32(address);
 
-        CPUSwitchMode(reg[17].I & 0x1f, false);
+        CPUSwitchMode(reg[17].I & 0x1f, false, true);
         {
           armNextPC = reg[15].I & 0xFFFFFFFC;
           reg[15].I = armNextPC + 4;
@@ -5811,7 +5811,7 @@ if(cond_res) {
         if(!(opcode & (1 << base)))    
           reg[base].I = temp;
 
-        CPUSwitchMode(reg[17].I & 0x1f, false);
+        CPUSwitchMode(reg[17].I & 0x1f, false, true);
         {
           armNextPC = reg[15].I & 0xFFFFFFFC;
           reg[15].I = armNextPC + 4;
@@ -5964,7 +5964,7 @@ if(cond_res) {
         else
           clockTicks += 2 + CPUUpdateTicksAccessSeq32(address);
 
-        CPUSwitchMode(reg[17].I & 0x1f, false);
+        CPUSwitchMode(reg[17].I & 0x1f, false, true);
         {
           armNextPC = reg[15].I & 0xFFFFFFFC;
           reg[15].I = armNextPC + 4;
@@ -6044,7 +6044,7 @@ if(cond_res) {
         if(!(opcode & (1 << base)))    
           reg[base].I = temp;
 
-        CPUSwitchMode(reg[17].I & 0x1f, false);
+        CPUSwitchMode(reg[17].I & 0x1f, false, true);
         {
           armNextPC = reg[15].I & 0xFFFFFFFC;
           reg[15].I = armNextPC + 4;
@@ -6193,7 +6193,7 @@ if(cond_res) {
         else
           clockTicks += 2 + CPUUpdateTicksAccessSeq32(address);
 
-        CPUSwitchMode(reg[17].I & 0x1f, false);
+        CPUSwitchMode(reg[17].I & 0x1f, false, true);
         {
           armNextPC = reg[15].I & 0xFFFFFFFC;
           reg[15].I = armNextPC + 4;
@@ -6273,7 +6273,7 @@ if(cond_res) {
         if(!(opcode & (1 << base)))    
           reg[base].I = temp;
 
-        CPUSwitchMode(reg[17].I & 0x1f, false);
+        CPUSwitchMode(reg[17].I & 0x1f, false, true);
        {
           armNextPC = reg[15].I & 0xFFFFFFFC;
           reg[15].I = armNextPC + 4;

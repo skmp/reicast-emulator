@@ -28,102 +28,18 @@
 #define reg arm_Reg
 #define armNextPC reg[R15_ARM_NEXT].I
 
-
 #define CPUUpdateTicksAccesint(a) 1
 #define CPUUpdateTicksAccessSeq32(a) 1
 #define CPUUpdateTicksAccesshort(a) 1
 #define CPUUpdateTicksAccess32(a) 1
 #define CPUUpdateTicksAccess16(a) 1
 
-
-enum
-{
-	RN_CPSR      = 16,
-	RN_SPSR      = 17,
-
-	R13_IRQ      = 18,
-	R14_IRQ      = 19,
-	SPSR_IRQ     = 20,
-	R13_USR      = 26,
-	R14_USR      = 27,
-	R13_SVC      = 28,
-	R14_SVC      = 29,
-	SPSR_SVC     = 30,
-	R13_ABT      = 31,
-	R14_ABT      = 32,
-	SPSR_ABT     = 33,
-	R13_UND      = 34,
-	R14_UND      = 35,
-	SPSR_UND     = 36,
-	R8_FIQ       = 37,
-	R9_FIQ       = 38,
-	R10_FIQ      = 39,
-	R11_FIQ      = 40,
-	R12_FIQ      = 41,
-	R13_FIQ      = 42,
-	R14_FIQ      = 43,
-	SPSR_FIQ     = 44,
-	RN_PSR_FLAGS = 45,
-	R15_ARM_NEXT = 46,
-	INTR_PEND    = 47,
-	CYCL_CNT     = 48,
-
-	RN_ARM_REG_COUNT,
-};
-
-typedef union
-{
-	struct
-	{
-		u8 B0;
-		u8 B1;
-		u8 B2;
-		u8 B3;
-	} B;
-	
-	struct
-	{
-		u16 W0;
-		u16 W1;
-	} W;
-
-	union
-	{
-		struct
-		{
-			u32 _pad0 : 28;
-			u32 V     : 1; //Bit 28
-			u32 C     : 1; //Bit 29
-			u32 Z     : 1; //Bit 30
-			u32 N     : 1; //Bit 31
-		};
-
-		struct
-		{
-			u32 _pad1 : 28;
-			u32 NZCV  : 4; //Bits [31:28]
-		};
-	} FLG;
-
-	struct
-	{
-		u32 M     : 5;  //mode, PSR[4:0]
-		u32 _pad0 : 1;  //not used / zero
-		u32 F     : 1;  //FIQ disable, PSR[6]
-		u32 I     : 1;  //IRQ disable, PSR[7]
-		u32 _pad1 : 20; //not used / zero
-		u32 NZCV  : 4;  //Bits [31:28]
-	} PSR;
-
-	u32 I;
-} reg_pair;
-
 //bool arm_FiqPending; -- not used , i use the input directly :)
 //bool arm_IrqPending;
 
 DECL_ALIGN(8) reg_pair arm_Reg[RN_ARM_REG_COUNT];
 
-void CPUSwap(u32 *a, u32 *b)
+static INLINE void CPUSwap(u32 *a, u32 *b)
 {
 	u32 c = *b;
 	*b = *a;
@@ -154,58 +70,59 @@ bool intState = false;
 bool stopState = false;
 bool holdState = false;
 
-
-
-void CPUSwitchMode(int mode, bool saveState, bool breakLoop=true);
 extern "C" void CPUFiq();
-void CPUUpdateCPSR();
-void CPUUpdateFlags();
-void CPUSoftwareInterrupt(int comment);
-void CPUUndefinedException();
 
-void arm_Run_(u32 CycleCount)
+static void CPUUpdateCPSR(void)
 {
-	if (!Arm7Enabled)
-		return;
+	reg_pair CPSR;
 
-	u32 clockTicks=0;
-	while (clockTicks<CycleCount)
-	{
-		if (reg[INTR_PEND].I)
-		{
-			CPUFiq();
-		}
+	CPSR.I = reg[RN_CPSR].I & 0x40;
 
-		reg[15].I = armNextPC + 8;
-		#include "arm-new.h"
-	}
+	/*
+	if(N_FLAG)
+		CPSR |= 0x80000000;
+	if(Z_FLAG)
+		CPSR |= 0x40000000;
+	if(C_FLAG)
+		CPSR |= 0x20000000;
+	if(V_FLAG)
+		CPSR |= 0x10000000;
+	if(!armState)
+		CPSR |= 0x00000020;
+	*/
+
+	CPSR.PSR.NZCV=reg[RN_PSR_FLAGS].FLG.NZCV;
+
+
+	if (!armFiqEnable)
+		CPSR.I |= 0x40;
+	if(!armIrqEnable)
+		CPSR.I |= 0x80;
+
+	CPSR.PSR.M=armMode;
+	
+	reg[16].I = CPSR.I;
 }
 
-void CPUInterrupt();
-
-
-void armt_init();
-//void CreateTables();
-void arm_Init()
+static void CPUUpdateFlags(void)
 {
-#if FEAT_AREC != DYNAREC_NONE
-	armt_init();
-#endif
-	//CreateTables();
-	arm_Reset();
+	u32 CPSR = reg[16].I;
 
-	for (int i = 0; i < 256; i++)
-	{
-		int count = 0;
-		for (int j = 0; j < 8; j++)
-			if (i & (1 << j))
-				count++;
+	reg[RN_PSR_FLAGS].FLG.NZCV=reg[16].PSR.NZCV;
 
-		cpuBitsSet[i] = count;
-	}
+	/*
+	N_FLAG = (CPSR & 0x80000000) ? true: false;
+	Z_FLAG = (CPSR & 0x40000000) ? true: false;
+	C_FLAG = (CPSR & 0x20000000) ? true: false;
+	V_FLAG = (CPSR & 0x10000000) ? true: false;
+	*/
+	//armState = (CPSR & 0x20) ? false : true;
+	armIrqEnable = (CPSR & 0x80) ? false : true;
+	armFiqEnable = (CPSR & 0x40) ? false : true;
+	update_armintc();
 }
 
-void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
+static void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
 {
 	CPUUpdateCPSR();
 
@@ -319,57 +236,7 @@ void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
 	CPUUpdateCPSR();
 }
 
-void CPUUpdateCPSR()
-{
-	reg_pair CPSR;
-
-	CPSR.I = reg[RN_CPSR].I & 0x40;
-
-	/*
-	if(N_FLAG)
-		CPSR |= 0x80000000;
-	if(Z_FLAG)
-		CPSR |= 0x40000000;
-	if(C_FLAG)
-		CPSR |= 0x20000000;
-	if(V_FLAG)
-		CPSR |= 0x10000000;
-	if(!armState)
-		CPSR |= 0x00000020;
-	*/
-
-	CPSR.PSR.NZCV=reg[RN_PSR_FLAGS].FLG.NZCV;
-
-
-	if (!armFiqEnable)
-		CPSR.I |= 0x40;
-	if(!armIrqEnable)
-		CPSR.I |= 0x80;
-
-	CPSR.PSR.M=armMode;
-	
-	reg[16].I = CPSR.I;
-}
-
-void CPUUpdateFlags()
-{
-	u32 CPSR = reg[16].I;
-
-	reg[RN_PSR_FLAGS].FLG.NZCV=reg[16].PSR.NZCV;
-
-	/*
-	N_FLAG = (CPSR & 0x80000000) ? true: false;
-	Z_FLAG = (CPSR & 0x40000000) ? true: false;
-	C_FLAG = (CPSR & 0x20000000) ? true: false;
-	V_FLAG = (CPSR & 0x10000000) ? true: false;
-	*/
-	//armState = (CPSR & 0x20) ? false : true;
-	armIrqEnable = (CPSR & 0x80) ? false : true;
-	armFiqEnable = (CPSR & 0x40) ? false : true;
-	update_armintc();
-}
-
-void CPUSoftwareInterrupt(int comment)
+static void CPUSoftwareInterrupt(int comment)
 {
 	u32 PC = reg[R15_ARM_NEXT].I+4;
 	//bool savedArmState = armState;
@@ -382,7 +249,7 @@ void CPUSoftwareInterrupt(int comment)
 //	reg[15].I += 4;
 }
 
-void CPUUndefinedException()
+static void CPUUndefinedException(void)
 {
 	printf("arm7: CPUUndefinedException(). SOMETHING WENT WRONG\n");
 	u32 PC = reg[R15_ARM_NEXT].I+4;
@@ -394,7 +261,46 @@ void CPUUndefinedException()
 //	reg[15].I += 4;  
 }
 
-void FlushCache();
+
+void arm_Run_(u32 CycleCount)
+{
+	if (!Arm7Enabled)
+		return;
+
+	u32 clockTicks=0;
+	while (clockTicks<CycleCount)
+	{
+		if (reg[INTR_PEND].I)
+		{
+			CPUFiq();
+		}
+
+		reg[15].I = armNextPC + 8;
+		#include "arm-new.h"
+	}
+}
+
+void armt_init(void);
+
+void arm_Init()
+{
+#if FEAT_AREC != DYNAREC_NONE
+	armt_init();
+#endif
+	arm_Reset();
+
+	for (int i = 0; i < 256; i++)
+	{
+		int count = 0;
+		for (int j = 0; j < 8; j++)
+			if (i & (1 << j))
+				count++;
+
+		cpuBitsSet[i] = count;
+	}
+}
+
+static void FlushCache(void);
 
 void arm_Reset()
 {
@@ -507,15 +413,11 @@ u32 DYNACALL arm_single_op(u32 opcode)
 	return clockTicks;
 }
 
-void update_armintc()
-{
-	reg[INTR_PEND].I=e68k_out && armFiqEnable;
-}
-
 void libAICA_TimeStep();
 
 #if FEAT_AREC == DYNAREC_NONE
-void arm_Run(u32 CycleCount) { 
+void arm_Run(u32 CycleCount)
+{ 
 	for (int i=0;i<32;i++)
 	{
 		arm_Run_(CycleCount/32);
@@ -523,7 +425,7 @@ void arm_Run(u32 CycleCount) {
 	}
 }
 #else
-extern "C" void CompileCode();
+extern "C" void CompileCode(void);
 
 /*
 
@@ -645,7 +547,7 @@ enum OpFlags
 
 */
 
-void AddDPOP(u32 subcd, u32 rflags, u32 wflags)
+static void AddDPOP(u32 subcd, u32 rflags, u32 wflags)
 {
 	ArmDPOP op;
 
@@ -677,7 +579,7 @@ void AddDPOP(u32 subcd, u32 rflags, u32 wflags)
 	ops.push_back(op);
 }
 
-void InitHash()
+static void InitHash(void)
 {
 	/*
 		COND | 00 I OP1  S Rn Rd OPER2 -- Data opcode, PSR xfer
@@ -722,9 +624,6 @@ void InitHash()
 	AddDPOP(15,DP_R_OFC, DP_W_RFC);
 }
 
-
-
-
 /*
  *	
  *	X86 Compiler
@@ -733,7 +632,6 @@ void InitHash()
 
 void  armEmit32(u32 emit32);
 void *armGetEmitPtr();
-
 
 #define _DEVEL          (1)
 #define EMIT_I          armEmit32((I))
@@ -745,9 +643,7 @@ const u32 ICacheSize=1024*1024;
 #if defined(_WIN32)
 u8 ARM7_TCB[ICacheSize+4096];
 #elif defined(__linux__)
-
 u8 ARM7_TCB[ICacheSize+4096] __attribute__((section(".text")));
-
 #elif defined(__MACH__)
 u8 ARM7_TCB[ICacheSize+4096] __attribute__((section("__TEXT, .text")));
 #else
@@ -757,9 +653,7 @@ u8 ARM7_TCB[ICacheSize+4096] __attribute__((section("__TEXT, .text")));
 #include "arm_emitter/arm_emitter.h"
 #undef I
 
-
 using namespace ARM;
-
 
 void* EntryPoints[ARAM_SIZE/4];
 
@@ -773,10 +667,8 @@ enum OpType
 	VOT_Read,   //Actually, this handles LDR and STR
 	//VOT_LDM,  //This Isn't used anymore
 	VOT_MRS,
-	VOT_MSR,
+	VOT_MSR
 };
-
-
 
 void armv_call(void* target);
 void armv_setup();
@@ -788,13 +680,13 @@ void armv_imm_to_reg(u32 regn, u32 imm);
 void armv_MOV32(eReg regn, u32 imm);
 void armv_prof(OpType opt,u32 op,u32 flg);
 
-extern "C" void arm_dispatch();
-extern "C" void arm_exit();
+extern "C" void arm_dispatch(void);
+extern "C" void arm_exit(void);
 extern "C" void DYNACALL arm_mainloop(u32 cycl);
-extern "C" void DYNACALL arm_compilecode();
+extern "C" void DYNACALL arm_compilecode(void);
 
 template <bool L, bool B>
-u32 DYNACALL DoMemOp(u32 addr,u32 data)
+static u32 DYNACALL DoMemOp(u32 addr,u32 data)
 {
 	u32 rv=0;
 
@@ -865,27 +757,23 @@ void DYNACALL DoLDM(u32 addr, u32 mask)
 }
 #endif
 
-void* GetMemOp(bool L, bool B)
+static void* GetMemOp(bool L, bool B)
 {
-	if (L)
-	{
-		if (B)
-			return (void*)(u32(DYNACALL*)(u32,u32))&DoMemOp<true,true>;
-		else
-			return (void*)(u32(DYNACALL*)(u32,u32))&DoMemOp<true,false>;
-	}
-	else
-	{
-		if (B)
-			return (void*)(u32(DYNACALL*)(u32,u32))&DoMemOp<false,true>;
-		else
-			return (void*)(u32(DYNACALL*)(u32,u32))&DoMemOp<false,false>;
-	}
+   if (L)
+   {
+      if (B)
+         return (void*)(u32(DYNACALL*)(u32,u32))&DoMemOp<true,true>;
+      return (void*)(u32(DYNACALL*)(u32,u32))&DoMemOp<true,false>;
+   }
+
+   if (B)
+      return (void*)(u32(DYNACALL*)(u32,u32))&DoMemOp<false,true>;
+   return (void*)(u32(DYNACALL*)(u32,u32))&DoMemOp<false,false>;
 }
 
 //Decodes an opcode, returns type. 
 //opcd might be changed (currently for LDM/STM -> LDR/STR transforms)
-OpType DecodeOpcode(u32& opcd,u32& flags)
+static OpType DecodeOpcode(u32& opcd,u32& flags)
 {
 	//by default, PC has to be updated
 	flags=OP_READS_PC;
@@ -941,9 +829,7 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 
 	//No support for COND branching opcodes apart from the forms above ..
 	if (CC!=CC_AL && _set_pc)
-	{
 		return VOT_Fallback;
-	}
 
 	u32 RList=opcd&0xFFFF;
 	u32 Rn=(opcd>>16)&15;
@@ -1145,13 +1031,9 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 		return VOT_Read;
 	}
 	else if (CHK_BTS(0xE10F0FFF,0,0xE10F0000))
-	{
 		return VOT_MRS;
-	}
 	else if (CHK_BTS(0xEFBFFFF0,0,0xE129F000))
-	{
 		return VOT_MSR;
-	}
 	else if ((opcd>>25)==(0xE8/2) && CHK_BTS(32768,0,0))
 	{
 		arm_printf("ARM: MEM FB %08X\n",opcd);
@@ -1618,34 +1500,8 @@ void arm_Run(u32 CycleCount)
 	if (!Arm7Enabled)
 		return;
 
-	//for (int i=0;i<32;i++)
-	//{
-		arm_mainloop(CycleCount/32);
-		libAICA_TimeStep();
-	//}
-
-	/*
-	s32 clktks=reg[CYCL_CNT].I+CycleCount;
-
-	//While we have time to spend
-	do
-	{
-		//Check for interrupts
-		if (reg[INTR_PEND].I)
-		{
-			CPUFiq();
-		}
-
-		//lookup code at armNextPC, run a block & remove its cycles from the timeslice
-		clktks-=EntryPoints[(armNextPC & ARAM_MASK)/4]();
-		
-		#if HOST_CPU==CPU_X86
-			verify(armNextPC<=ARAM_MASK);
-		#endif
-	} while(clktks>0);
-
-	reg[CYCL_CNT].I=clktks;
-	*/
+   arm_mainloop(CycleCount/32);
+   libAICA_TimeStep();
 }
 
 
@@ -1658,7 +1514,7 @@ void arm_Run(u32 CycleCount)
 */
 
 //Mem operand 2 calculation, if Reg or large imm
-void MemOperand2(eReg dst,bool I, bool U,u32 offs, u32 opcd)
+static void MemOperand2(eReg dst,bool I, bool U,u32 offs, u32 opcd)
 {
 	if (I==true)
 	{
@@ -1682,7 +1538,7 @@ void MemOperand2(eReg dst,bool I, bool U,u32 offs, u32 opcd)
 }
 
 template<u32 Pd>
-void DYNACALL MSR_do(u32 v)
+static void DYNACALL MSR_do(u32 v)
 {
 #if HOST_CPU==CPU_X86
 	v=virt_arm_reg(r0);
@@ -1716,7 +1572,7 @@ void DYNACALL MSR_do(u32 v)
 }
 
 //Compile & run block of code, starting armNextPC
-extern "C" void CompileCode()
+extern "C" void CompileCode(void)
 {
 	//Get the code ptr
 	void* rv=EMIT_GET_PTR();
@@ -2091,16 +1947,12 @@ extern "C" void CompileCode()
 	armv_end((void*)rv,Cycles);
 }
 
-
-
-void FlushCache()
+static void FlushCache(void)
 {
 	icPtr=ICache;
 	for (u32 i=0;i<ARAM_SIZE/4;i++)
 		EntryPoints[i]=(void*)&arm_compilecode;
 }
-
-
 
 #if HOST_CPU==CPU_X86 && defined(_WIN32)
 
@@ -2123,15 +1975,14 @@ void armEmit32(u32 emit32)
 }
 
 
-void *armGetEmitPtr()
+void *armGetEmitPtr(void)
 {
 	return icPtr;
 }
 
 #endif
 
-
-void armt_init()
+void armt_init(void)
 {
 	InitHash();
 
@@ -2167,6 +2018,5 @@ void armt_init()
 
 	icPtr=ICache;
 }
-
 
 #endif

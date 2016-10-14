@@ -143,5 +143,3 @@ void term_mem();
 #define AICA_MEMMAP_RAM_MASK (AICA_MEMMAP_RAM_SIZE-1)
 
 extern bool e68k_out;
-
-void update_armintc();

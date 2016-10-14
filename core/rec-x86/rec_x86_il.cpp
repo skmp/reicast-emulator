@@ -242,7 +242,6 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 
 				if (op->rs1.is_imm())
 				{
-					if (prof.enable) x86e->Emit(op_add32,&prof.counters.shil.readm_const,1);
 					void* ptr=_vmem_read_const(op->rs1._imm,isram,size);
 					if (isram)
 					{
@@ -310,19 +309,15 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 					if (op->rs3.is_imm())
 					{
 						x86e->Emit(op_add32,ECX,op->rs3._imm);
-						if (prof.enable) x86e->Emit(op_add32,&prof.counters.shil.readm_reg_imm,1);
 					}
 					else if (op->rs3.is_r32i())
 					{
 						x86e->Emit(op_add32,ECX,reg.mapg(op->rs3));
-						if (prof.enable) x86e->Emit(op_add32,&prof.counters.shil.readm_reg_reg,1);
 					}
 					else if (!op->rs3.is_null())
 					{
 						die("invalid rs3");
 					}
-					else
-						if (prof.enable) x86e->Emit(op_add32,&prof.counters.shil.readm_reg,1);
 #if 0
 					if (op->flags==0x431 || op->flags==0x440)
 					{
@@ -569,7 +564,6 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 
 				if (op->rs1.is_imm() && size<=4)
 				{
-					if (prof.enable) x86e->Emit(op_add32,&prof.counters.shil.readm_const,1);
 					bool isram;
 					void* ptr=_vmem_read_const(op->rs1._imm,isram,size);
 					if (isram)

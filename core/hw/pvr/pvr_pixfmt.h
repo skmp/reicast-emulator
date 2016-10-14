@@ -19,22 +19,6 @@ struct PixelBuffer
 	{
 		p_current_pixel[y*pixels_per_line+x]=value;
 	}
-
-	__forceinline void rmovex(u32 value)
-	{
-		p_current_pixel+=value;
-	}
-	__forceinline void rmovey(u32 value)
-	{
-		p_current_line+=pixels_per_line*value;
-		p_current_pixel=p_current_line;
-	}
-	__forceinline void amove(u32 x_m,u32 y_m)
-	{
-		//p_current_pixel=p_buffer_start;
-		p_current_line=p_buffer_start+pixels_per_line*y_m;
-		p_current_pixel=p_current_line + x_m;
-	}
 };
 
 template<class PixelPacker>
@@ -280,7 +264,8 @@ pixelcvt_end;
 template<class PixelConvertor>
 void texture_PL(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height)
 {
-	pb->amove(0,0);
+   pb->p_current_line  = pb->p_buffer_start;
+   pb->p_current_pixel = pb->p_current_line;
 
 	Height/=PixelConvertor::ypp;
 	Width/=PixelConvertor::xpp;
@@ -293,16 +278,18 @@ void texture_PL(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height)
 			PixelConvertor::Convert(pb,p);
 			p_in+=8;
 
-			pb->rmovex(PixelConvertor::xpp);
+         pb->p_current_pixel += PixelConvertor::xpp;
 		}
-		pb->rmovey(PixelConvertor::ypp);
+      pb->p_current_line += pb->pixels_per_line * PixelConvertor::ypp;
+		pb->p_current_pixel = pb->p_current_line;
 	}
 }
 
 template<class PixelConvertor>
 void texture_TW(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height)
 {
-	pb->amove(0,0);
+   pb->p_current_line  = pb->p_buffer_start;
+   pb->p_current_pixel = pb->p_current_line;
 
 	const u32 divider=PixelConvertor::xpp*PixelConvertor::ypp;
 
@@ -319,9 +306,11 @@ void texture_TW(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height)
 			u8* p = &p_in[(twop(x,y,bcx,bcy)/divider)<<3];
 			PixelConvertor::Convert(pb,p);
 
-			pb->rmovex(PixelConvertor::xpp);
+         pb->p_current_pixel += PixelConvertor::xpp;
 		}
-		pb->rmovey(PixelConvertor::ypp);
+
+      pb->p_current_line += pb->pixels_per_line * PixelConvertor::ypp;
+		pb->p_current_pixel = pb->p_current_line;
 	}
 }
 
@@ -329,7 +318,9 @@ template<class PixelConvertor>
 void texture_VQ(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height)
 {
 	p_in+=256*4*2;
-	pb->amove(0,0);
+
+   pb->p_current_line  = pb->p_buffer_start;
+   pb->p_current_pixel = pb->p_current_line;
 
 	const u32 divider=PixelConvertor::xpp*PixelConvertor::ypp;
 	unsigned long bcx_,bcy_;
@@ -349,9 +340,11 @@ void texture_VQ(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height)
 #endif
 			PixelConvertor::Convert(pb,&vq_codebook[p*8]);
 
-			pb->rmovex(PixelConvertor::xpp);
+         pb->p_current_pixel += PixelConvertor::xpp;
 		}
-		pb->rmovey(PixelConvertor::ypp);
+
+      pb->p_current_line += pb->pixels_per_line * PixelConvertor::ypp;
+		pb->p_current_pixel = pb->p_current_line;
 	}
 }
 

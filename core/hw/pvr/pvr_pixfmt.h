@@ -9,7 +9,6 @@ struct PixelBuffer
 	u32 pixels_per_line;
 };
 
-template<class PixelPacker>
 __forceinline u32 YUV422(s32 Y,s32 Yu,s32 Yv)
 {
 	Yu-=128;
@@ -28,13 +27,8 @@ __forceinline u32 YUV422(s32 Y,s32 Yu,s32 Yv)
 
 #define twop(x,y,bcx,bcy) (detwiddle[0][bcy][x]+detwiddle[1][bcx][y])
 
-//pixel packers !
-struct pp_565
-{
-};
-
 //pixel convertors !
-#define pixelcvt_start(name,x,y) template<class PixelPacker> \
+#define pixelcvt_start(name,x,y) \
 struct name \
 { \
 	static const u32 xpp=x;\
@@ -99,9 +93,9 @@ pixelcvt_next(convYUV_PL,4,1)
 	s32 Yv = (p_in[0]>>16) &255; //p_in[2]
 
 	//0,0
-   pb->p_current_pixel[0] = YUV422<PixelPacker>(Y0,Yu,Yv);
+   pb->p_current_pixel[0] = YUV422(Y0,Yu,Yv);
 	//1,0
-   pb->p_current_pixel[1] = YUV422<PixelPacker>(Y1,Yu,Yv);
+   pb->p_current_pixel[1] = YUV422(Y1,Yu,Yv);
 
 	//next 4 bytes
 	p_in+=1;
@@ -112,9 +106,9 @@ pixelcvt_next(convYUV_PL,4,1)
 	Yv = (p_in[0]>>16) &255; //p_in[2]
 
 	//0,0
-   pb->p_current_pixel[2] = YUV422<PixelPacker>(Y0,Yu,Yv);
+   pb->p_current_pixel[2] = YUV422(Y0,Yu,Yv);
 	//1,0
-   pb->p_current_pixel[3] = YUV422<PixelPacker>(Y1,Yu,Yv);
+   pb->p_current_pixel[3] = YUV422(Y1,Yu,Yv);
 }
 
 pixelcvt_next(convBMP_PL,4,1)
@@ -180,10 +174,10 @@ pixelcvt_next(convYUV_TW,2,2)
 	s32 Yv = (p_in[2]>>0) &255; //p_in[2]
 
 	//0,0
-   pb->p_current_pixel[0]= YUV422<PixelPacker>(Y0,Yu,Yv);
+   pb->p_current_pixel[0]= YUV422(Y0,Yu,Yv);
 
 	//1,0
-   pb->p_current_pixel[1]=YUV422<PixelPacker>(Y1,Yu,Yv);
+   pb->p_current_pixel[1]=YUV422(Y1,Yu,Yv);
 
 	//next 4 bytes
 	//p_in+=2;
@@ -194,9 +188,9 @@ pixelcvt_next(convYUV_TW,2,2)
 	Yv = (p_in[3]>>0) &255; //p_in[2]
 
 	//0,1
-   pb->p_current_pixel[1*pb->pixels_per_line]=YUV422<PixelPacker>(Y0,Yu,Yv);
+   pb->p_current_pixel[1*pb->pixels_per_line]=YUV422(Y0,Yu,Yv);
 	//1,1
-   pb->p_current_pixel[1*pb->pixels_per_line+1]=YUV422<PixelPacker>(Y1,Yu,Yv);
+   pb->p_current_pixel[1*pb->pixels_per_line+1]=YUV422(Y1,Yu,Yv);
 }
 pixelcvt_next(convBMP_TW,2,2)
 {
@@ -357,48 +351,48 @@ void texture_VQ(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height)
 //We ask the compiler to generate the templates here
 //;)
 //planar formats !
-template void texture_PL<conv565_PL<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_PL<conv1555_PL<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_PL<conv4444_PL<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_PL<convYUV_PL<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_PL<convBMP_PL<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_PL<conv565_PL >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_PL<conv1555_PL >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_PL<conv4444_PL >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_PL<convYUV_PL >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_PL<convBMP_PL >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
 
 //twiddled formats !
-template void texture_TW<conv565_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<conv1555_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<conv4444_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<convYUV_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<convBMP_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_TW<conv565_TW >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_TW<conv1555_TW >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_TW<conv4444_TW >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_TW<convYUV_TW >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_TW<convBMP_TW >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
 
-template void texture_TW<convPAL4_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<convPAL8_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_TW<convPAL4_TW >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_TW<convPAL8_TW >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
 
 //VQ formats !
-template void texture_VQ<conv565_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_VQ<conv1555_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_VQ<conv4444_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_VQ<convYUV_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_VQ<convBMP_TW<pp_565> >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_VQ<conv565_TW >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_VQ<conv1555_TW >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_VQ<conv4444_TW >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_VQ<convYUV_TW >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
+template void texture_VQ<convBMP_TW >(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
 
 //Planar
-#define tex565_PL texture_PL<conv565_PL<pp_565> >
-#define tex1555_PL texture_PL<conv1555_PL<pp_565> >
-#define tex4444_PL texture_PL<conv4444_PL<pp_565> >
-#define texYUV422_PL texture_PL<convYUV_PL<pp_565> >
-#define texBMP_PL texture_PL<convBMP_PL<pp_565> >
+#define tex565_PL texture_PL<conv565_PL >
+#define tex1555_PL texture_PL<conv1555_PL >
+#define tex4444_PL texture_PL<conv4444_PL >
+#define texYUV422_PL texture_PL<convYUV_PL >
+#define texBMP_PL texture_PL<convBMP_PL >
 
 //Twiddle
-#define tex565_TW texture_TW<conv565_TW<pp_565> >
-#define tex1555_TW texture_TW<conv1555_TW<pp_565> >
-#define tex4444_TW texture_TW<conv4444_TW<pp_565> >
-#define texYUV422_TW texture_TW<convYUV_TW<pp_565> >
-#define texBMP_TW texture_TW<convBMP_TW<pp_565> >
-#define texPAL4_TW texture_TW<convPAL4_TW<pp_565> >
-#define texPAL8_TW  texture_TW<convPAL8_TW<pp_565> >
+#define tex565_TW texture_TW<conv565_TW >
+#define tex1555_TW texture_TW<conv1555_TW >
+#define tex4444_TW texture_TW<conv4444_TW >
+#define texYUV422_TW texture_TW<convYUV_TW >
+#define texBMP_TW texture_TW<convBMP_TW >
+#define texPAL4_TW texture_TW<convPAL4_TW >
+#define texPAL8_TW  texture_TW<convPAL8_TW >
 
 //VQ
-#define tex565_VQ texture_VQ<conv565_TW<pp_565> >
-#define tex1555_VQ texture_VQ<conv1555_TW<pp_565> >
-#define tex4444_VQ texture_VQ<conv4444_TW<pp_565> >
-#define texYUV422_VQ texture_VQ<convYUV_TW<pp_565> >
-#define texBMP_VQ texture_VQ<convBMP_TW<pp_565> >
+#define tex565_VQ texture_VQ<conv565_TW >
+#define tex1555_VQ texture_VQ<conv1555_TW >
+#define tex4444_VQ texture_VQ<conv4444_TW >
+#define texYUV422_VQ texture_VQ<convYUV_TW >
+#define texBMP_VQ texture_VQ<convBMP_TW >

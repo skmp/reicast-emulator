@@ -20,6 +20,9 @@
 
 #define VRAM_BANK_BIT 0x400000
 
+#define TA_YUV420_MACROBLOCK_SIZE 384
+#define TA_YUV422_MACROBLOCK_SIZE 512
+
 //YUV converter code :)
 //inits the YUV converter
 u32 YUV_tempdata[512/4];//512 bytes
@@ -168,7 +171,8 @@ void YUV_data(u32* data , u32 count)
       YUV_init();
    }
 
-   u32 block_size=(TA_YUV_TEX_CTRL & (1<<24))==0?384:512;
+   u32 block_size=(TA_YUV_TEX_CTRL & (1<<24))==0 ?
+      TA_YUV420_MACROBLOCK_SIZE : TA_YUV422_MACROBLOCK_SIZE;
 
    count *= 32;
 
@@ -259,7 +263,7 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
    {
       //shouldn't really get here (?)
       //printf("Vram Write 0x%X , size %d\n",address,count*32);
-      u8* vram=sqb+512+0x04000000;
+      u8* vram=sqb + TA_YUV422_MACROBLOCK_SIZE + 0x04000000;
       MemWrite32(&vram[address_w&(VRAM_MASK-0x1F)],sq);
    }
 }

@@ -11,7 +11,7 @@
 */
 
 //asic_RLXXPending: Update the intc flags for pending interrupts
-static void asic_RL6Pending(void)
+static INLINE void asic_RL6Pending(void)
 {
 	bool t1=(SB_ISTNRM & SB_IML6NRM)!=0;
 	bool t2=(SB_ISTERR & SB_IML6ERR)!=0;
@@ -20,7 +20,7 @@ static void asic_RL6Pending(void)
 	InterruptPend(sh4_IRL_9,t1|t2|t3);
 }
 
-static void asic_RL4Pending(void)
+static INLINE void asic_RL4Pending(void)
 {
 	bool t1=(SB_ISTNRM & SB_IML4NRM)!=0;
 	bool t2=(SB_ISTERR & SB_IML4ERR)!=0;
@@ -29,7 +29,7 @@ static void asic_RL4Pending(void)
 	InterruptPend(sh4_IRL_11,t1|t2|t3);
 }
 
-static void asic_RL2Pending(void)
+static INLINE void asic_RL2Pending(void)
 {
 	bool t1=(SB_ISTNRM & SB_IML2NRM)!=0;
 	bool t2=(SB_ISTERR & SB_IML2ERR)!=0;
@@ -130,32 +130,40 @@ void asic_RaiseInterruptWait(HollyInterruptID inter)
 
 static u32 Read_SB_ISTNRM(u32 addr)
 {
-	u32 tmp = SB_ISTNRM & 0x3FFFFFFF;
+   /* Note that the two highest bits indicate
+    * the OR'ed result of all the bits in
+    * SB_ISTEXT and SB_ISTERR, respectively,
+    * and writes to these two bits are ignored. */
+	u32 v = SB_ISTNRM & 0x3FFFFFFF;
 
 	if (SB_ISTEXT)
-		tmp|=0x40000000;
+		v |= 0x40000000;
 
 	if (SB_ISTERR)
-		tmp|=0x80000000;
+		v |= 0x80000000;
 
-	return tmp;
+	return v;
 }
 
-static void Write_SB_ISTNRM(u32 addr, u32 data)
+static void holly_update_interrupts(void)
 {
-	SB_ISTNRM &= ~data;
+   asic_RL2Pending();
+   asic_RL4Pending();
+   asic_RL6Pending();
+}
 
-	asic_RL2Pending();
-	asic_RL4Pending();
-	asic_RL6Pending();
+static void Write_SB_ISTNRM(u32 addr, u32 value)
+{
+   /* writing a 1 clears the interrupt */
+	SB_ISTNRM &= ~value;
+
+   holly_update_interrupts();
 }
 
 void asic_CancelInterrupt(HollyInterruptID inter)
 {
 	SB_ISTEXT&=~(1<<(u8)inter);
-	asic_RL2Pending();
-	asic_RL4Pending();
-	asic_RL6Pending();
+   holly_update_interrupts();
 }
 
 static void Write_SB_ISTEXT(u32 addr, u32 data)
@@ -167,16 +175,14 @@ static void Write_SB_ISTERR(u32 addr, u32 data)
 {
 	SB_ISTERR &= ~data;
 
-	asic_RL2Pending();
-	asic_RL4Pending();
-	asic_RL6Pending();
+   holly_update_interrupts();
 }
 
-static void Write_SB_IML6NRM(u32 addr, u32 data)
+static void Write_SB_IML2NRM(u32 addr, u32 data)
 {
-	SB_IML6NRM=data;
+	SB_IML2NRM=data;
 
-	asic_RL6Pending();
+	asic_RL2Pending();
 }
 
 static void Write_SB_IML4NRM(u32 addr, u32 data)
@@ -186,12 +192,13 @@ static void Write_SB_IML4NRM(u32 addr, u32 data)
 	asic_RL4Pending();
 }
 
-static void Write_SB_IML2NRM(u32 addr, u32 data)
+static void Write_SB_IML6NRM(u32 addr, u32 data)
 {
-	SB_IML2NRM=data;
+	SB_IML6NRM=data;
 
-	asic_RL2Pending();
+	asic_RL6Pending();
 }
+
 
 static void Write_SB_IML6EXT(u32 addr, u32 data)
 {

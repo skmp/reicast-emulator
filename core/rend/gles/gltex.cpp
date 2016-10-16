@@ -223,14 +223,14 @@ struct TextureCacheData
       /* Convert a PVR texture into OpenGL */
 		switch (tcw.PixelFmt)
       {
-         case 0: //0     1555 value: 1 bit; RGB values: 5 bits each
-         case 7: //7     Reserved        Regarded as 1555
-         case 1: //1     565      R value: 5 bits; G value: 6 bits; B value: 5 bits
-         case 2: //2     4444 value: 4 bits; RGB values: 4 bits each
-         case 3: //3     YUV422 32 bits per 2 pixels; YUYV values: 8 bits each
-         case 4: //4    -NOT_PROPERLY SUPPORTED- Bump Map        16 bits/pixel; S value: 8 bits; R value: 8 bits -NOT_PROPERLY SUPPORTED-
-         case 5: //5     4 BPP Palette   Palette texture with 4 bits/pixel
-         case 6: //6     8 BPP Palette   Palette texture with 8 bits/pixel
+         case TA_PIXEL_1555:     /* value: 1 bit; RGB values: 5 bits each */
+         case TA_PIXEL_RESERVED: /* Regarded as 1555 */
+         case TA_PIXEL_565:      /* R value: 5 bits; G value: 6 bits; B value: 5 bits */
+         case TA_PIXEL_4444:     /* value: 4 bits; RGB values: 4 bits each */
+         case TA_PIXEL_YUV422:   /* 32 bits per 2 pixels; YUYV values: 8 bits each */
+         case TA_PIXEL_BUMPMAP:  /* NOT_PROPERLY SUPPORTED- 16 bits/pixel; S value: 8 bits; R value: 8 bits */
+         case TA_PIXEL_4BPP:     /* Palette texture with 4 bits/pixel */
+         case TA_PIXEL_8BPP:     /* Palette texture with 8 bits/pixel */
             if (tcw.ScanOrder && tex->PL)
             {
                int stride = w;

@@ -51,8 +51,6 @@ struct List
 
 		daty=(T*)malloc(maxbytes);
 		
-		verify(daty!=0);
-
 		avail=size=maxbytes/sizeof(T);
 
 		overrun=ovrn;

@@ -29,11 +29,13 @@ static TA_context* tactx_Alloc(void)
 #ifndef TARGET_NO_THREADS
    slock_lock(mtx_pool);
 #endif
+
 	if (ctx_pool.size())
 	{
 		rv = ctx_pool[ctx_pool.size()-1];
 		ctx_pool.pop_back();
 	}
+
 #ifndef TARGET_NO_THREADS
    slock_unlock(mtx_pool);
 #endif
@@ -74,7 +76,6 @@ void SetCurrentTARC(u32 addr)
 		if (ta_ctx)
 			SetCurrentTARC(TACTX_NONE);
 
-		verify(ta_ctx == 0);
 		//set new context
 		ta_ctx = tactx_Find(addr,true);
 
@@ -84,7 +85,6 @@ void SetCurrentTARC(u32 addr)
 	else
 	{
 		//Flush cache to context
-		verify(ta_ctx != 0);
 		ta_ctx->tad=ta_tad;
 		
 		//clear context
@@ -95,8 +95,6 @@ void SetCurrentTARC(u32 addr)
 
 static bool TryDecodeTARC(void)
 {
-	verify(ta_ctx != 0);
-
 	if (vd_ctx == 0)
 	{
 		vd_ctx = ta_ctx;
@@ -115,54 +113,31 @@ static bool TryDecodeTARC(void)
    return false;
 }
 
+
+#ifdef TARGET_NO_THREADS
 static void VDecEnd(void)
 {
-	verify(vd_ctx != 0);
-
 	vd_ctx->rend = vd_rc;
-
-#ifndef TARGET_NO_THREADS
-   slock_unlock(vd_ctx->rend_inuse);
-#endif
-
 	vd_ctx = 0;
 }
 
-
 bool QueueRender(TA_context* ctx)
 {
-	verify(ctx != 0);
-	
 	if (rqueue)
    {
 		tactx_Recycle(ctx);
 		return false;
 	}
 
-#ifndef TARGET_NO_THREADS
-	frame_finished.Reset();
-   slock_lock(mtx_rqueue);
-#endif
 	TA_context* old = rqueue;
 	rqueue=ctx;
-#ifndef TARGET_NO_THREADS
-   slock_unlock(mtx_rqueue);
-#endif
-
-	verify(!old);
 
 	return true;
 }
 
 TA_context* DequeueRender(void)
 {
-#ifndef TARGET_NO_THREADS
-   slock_lock(mtx_rqueue);
-#endif
 	TA_context* rv = rqueue;
-#ifndef TARGET_NO_THREADS
-   slock_unlock(mtx_rqueue);
-#endif
 
 	if (rv)
 		FrameCount++;
@@ -172,33 +147,91 @@ TA_context* DequeueRender(void)
 
 bool rend_framePending(void)
 {
-#ifndef TARGET_NO_THREADS
-   slock_lock(mtx_rqueue);
-#endif
 	TA_context* rv = rqueue;
-#ifndef TARGET_NO_THREADS
+	return rv != 0;
+}
+
+void FinishRender(TA_context* ctx)
+{
+	rqueue = 0;
+
+	tactx_Recycle(ctx);
+}
+
+void ta_ctx_free(void) { }
+void ta_ctx_init(void) { }
+#else
+static void VDecEnd(void)
+{
+	vd_ctx->rend = vd_rc;
+
+   slock_unlock(vd_ctx->rend_inuse);
+
+	vd_ctx = 0;
+}
+
+bool QueueRender(TA_context* ctx)
+{
+	if (rqueue)
+   {
+		tactx_Recycle(ctx);
+		return false;
+	}
+
+	frame_finished.Reset();
+   slock_lock(mtx_rqueue);
+	TA_context* old = rqueue;
+	rqueue=ctx;
    slock_unlock(mtx_rqueue);
-#endif
+
+	return true;
+}
+
+TA_context* DequeueRender(void)
+{
+   slock_lock(mtx_rqueue);
+	TA_context* rv = rqueue;
+   slock_unlock(mtx_rqueue);
+
+	if (rv)
+		FrameCount++;
+
+	return rv;
+}
+
+bool rend_framePending(void)
+{
+   slock_lock(mtx_rqueue);
+	TA_context* rv = rqueue;
+   slock_unlock(mtx_rqueue);
 
 	return rv != 0;
 }
 
 void FinishRender(TA_context* ctx)
 {
-	verify(rqueue == ctx);
-#ifndef TARGET_NO_THREADS
    slock_lock(mtx_rqueue);
-#endif
 	rqueue = 0;
-#ifndef TARGET_NO_THREADS
    slock_unlock(mtx_rqueue);
-#endif
 
 	tactx_Recycle(ctx);
-#ifndef TARGET_NO_THREADS
 	frame_finished.Set();
-#endif
 }
+
+void ta_ctx_free(void)
+{
+   slock_free(mtx_rqueue);
+   slock_free(mtx_pool);
+   mtx_rqueue = NULL;
+   mtx_pool   = NULL;
+}
+
+void ta_ctx_init(void)
+{
+   mtx_rqueue = slock_new();
+   mtx_pool   = slock_new();
+}
+#endif
 
 
 
@@ -243,20 +276,4 @@ TA_context* tactx_Pop(u32 addr)
 	return 0;
 }
 
-void ta_ctx_free(void)
-{
-#ifndef TARGET_NO_THREADS
-   slock_free(mtx_rqueue);
-   slock_free(mtx_pool);
-   mtx_rqueue = NULL;
-   mtx_pool   = NULL;
-#endif
-}
 
-void ta_ctx_init(void)
-{
-#ifndef TARGET_NO_THREADS
-   mtx_rqueue = slock_new();
-   mtx_pool   = slock_new();
-#endif
-}

@@ -170,8 +170,6 @@ void YUV_data(u32* data , u32 count)
 
    u32 block_size=(TA_YUV_TEX_CTRL & (1<<24))==0?384:512;
 
-   verify(block_size==384); //no support for 512
-
    count *= 32;
 
    while(count>=block_size)
@@ -180,8 +178,6 @@ void YUV_data(u32* data , u32 count)
       data  += block_size>>2;
       count -= block_size;
    }
-
-   verify(count==0);
 }
 
 //Regs

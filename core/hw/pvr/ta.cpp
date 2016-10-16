@@ -78,7 +78,6 @@ static void fill_fsm(ta_state st, s8 pt, s8 obj, ta_state next, u32 proc=0, u32 
 		{
 			if (obj != -1)
             j=obj;
-			verify(ta_fsm[(st<<8)+(i<<5)+j]==(0x80+st));
 			ta_fsm[(st<<8)+(i<<5)+j]=next | proc*16 /*| sz64*32*/;
 			if (obj != -1)
             break;
@@ -216,7 +215,6 @@ static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
             if (ta_fsm_cl==7)
                ta_fsm_cl=dat->pcw.ListType;
 
-            verify(!IsModVolList(ta_fsm_cl));
             trans=TAS_PLV32;
             break;
          default:
@@ -227,7 +225,6 @@ static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 
 	u32 state_in = (trans<<8) | (dat->pcw.ParaType<<5) | (dat->pcw.obj_ctrl>>2)%32;
 	ta_cur_state=(ta_state)(ta_fsm[state_in]&0xF);
-	verify(ta_cur_state<=7);
 }
 
 static OnLoad ol_fillfsm(&fill_fsm);

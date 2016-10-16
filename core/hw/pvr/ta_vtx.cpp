@@ -14,10 +14,6 @@ u32 ta_type_lut[256];
 
 
 #define TACALL DYNACALL
-#ifdef RELEASE
-#undef verify
-#define verify(x)
-#endif
 #define PLD(ptr,offs) //  __asm __volatile ( "pld	 [%0, #" #offs "]\n"::"r" (ptr): );
 
 #if HOST_CPU==CPU_X86
@@ -129,8 +125,6 @@ public:
 
 	static void ta_list_start(u32 new_list)
 	{
-		verify(CurrentList==ListType_None);
-		//verify(ListIsFinished[new_list]==false);
 		//printf("Starting list %d\n",new_list);
 		CurrentList=new_list;
 		StartList(CurrentList);
@@ -262,7 +256,7 @@ case num : {\
    {
       TA_SPR;
       TA_VertexParam* vp=(TA_VertexParam*)data;
-      verify(data->pcw.ParaType == PARAMTYPE_VERTEX_PARAMETER);
+      //verify(data->pcw.ParaType == PARAMTYPE_VERTEX_PARAMETER);
 
       if (data==data_end)
       {
@@ -294,7 +288,7 @@ case num : {\
 
 		do
       {
-         verify(data->pcw.ParaType == PARAMTYPE_VERTEX_PARAMETER);
+         //verify(data->pcw.ParaType == PARAMTYPE_VERTEX_PARAMETER);
          PLD(data,128);
          ta_handle_poly<poly_type,0>(data,0);
          if (data->pcw.EndOfStrip)
@@ -1418,7 +1412,6 @@ bool ta_parse_vdrc(TA_context* ctx)
 {
 	bool rv=false;
 
-	verify( vd_ctx == 0);
 	vd_ctx = ctx;
 	vd_rc = vd_ctx->rend;
 	
@@ -1524,10 +1517,6 @@ void vtxdec_init(void)
 	{
 		u32 fr=i<<16;
 		f32 ff=(f32&)fr;
-
-		verify(float_to_satu8_math(ff)==float_to_satu8_2(ff));
-		verify(float_to_satu8_math(ff)==float_to_satu8(ff));
-
 	}
 }
 

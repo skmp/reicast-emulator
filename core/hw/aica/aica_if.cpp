@@ -43,9 +43,8 @@ u32 GetRTC_now(void)
 	return RTC;
 }
 
-u32 ReadMem_aica_rtc(u32 addr,u32 sz)
+u32 aica_rtc_reg_read(u32 addr,u32 sz)
 {
-   //settings.dreamcast.RTC=GetRTC_now();
    switch( addr & 0xFF )
    {
       case 0:
@@ -62,7 +61,7 @@ u32 ReadMem_aica_rtc(u32 addr,u32 sz)
    return 0;
 }
 
-void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
+void aica_rtc_reg_write(u32 addr,u32 data,u32 sz)
 {
    switch( addr & 0xFF )
    {

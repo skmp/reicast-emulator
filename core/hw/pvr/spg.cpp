@@ -80,9 +80,11 @@ static int spg_line_sched(int tag, int cycl, int jit)
 		clc_pvr_scanline    -= Line_Cycles;
 		//Check for scanline interrupts -- really need to test the scanline values
 		
+      /* Vblank in */
 		if (SPG_VBLANK_INT.vblank_in_interrupt_line_number == prv_cur_scanline)
 			asic_RaiseInterrupt(holly_SCANINT1);
 
+      /* Vblank Out */
 		if (SPG_VBLANK_INT.vblank_out_interrupt_line_number == prv_cur_scanline)
 			asic_RaiseInterrupt(holly_SCANINT2);
 
@@ -104,10 +106,10 @@ static int spg_line_sched(int tag, int cycl, int jit)
 
 			/* Vblank counter */
 			vblk_cnt++;
-			asic_RaiseInterrupt(holly_HBLank);// -> This turned out to be HBlank btw , needs to be emulated ;(
-			//TODO : rend_if_VBlank();
+
+         /* HBlank in */
+			asic_RaiseInterrupt(holly_HBLank);
 			rend_vblank();//notify for vblank :)
-			
 		}
 	}
 
@@ -121,19 +123,19 @@ static int spg_line_sched(int tag, int cycl, int jit)
 	u32 min_scanline=prv_cur_scanline+1;
 	u32 min_active=pvr_numscanlines;
 
-	if (min_scanline<SPG_VBLANK_INT.vblank_in_interrupt_line_number)
+	if (min_scanline < SPG_VBLANK_INT.vblank_in_interrupt_line_number)
 		min_active=min(min_active,SPG_VBLANK_INT.vblank_in_interrupt_line_number);
 
-	if (min_scanline<SPG_VBLANK_INT.vblank_out_interrupt_line_number)
+	if (min_scanline < SPG_VBLANK_INT.vblank_out_interrupt_line_number)
 		min_active=min(min_active,SPG_VBLANK_INT.vblank_out_interrupt_line_number);
 
-	if (min_scanline<SPG_VBLANK.vstart)
+	if (min_scanline < SPG_VBLANK.vstart)
 		min_active=min(min_active,SPG_VBLANK.vstart);
 
-	if (min_scanline<SPG_VBLANK.vbend)
+	if (min_scanline < SPG_VBLANK.vbend)
 		min_active=min(min_active,SPG_VBLANK.vbend);
 
-	if (min_scanline<pvr_numscanlines)
+	if (min_scanline < pvr_numscanlines)
 		min_active=min(min_active,pvr_numscanlines);
 
 	min_active=max(min_active,min_scanline);

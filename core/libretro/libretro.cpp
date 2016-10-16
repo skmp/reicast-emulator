@@ -192,9 +192,11 @@ void retro_init(void)
    environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &color_mode);
 }
 
+void dc_term(void);
+
 void retro_deinit(void)
 {
-   //TODO
+   dc_term();
 }
 
 bool enable_rtt     = true;

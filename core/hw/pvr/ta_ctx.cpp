@@ -160,6 +160,20 @@ void FinishRender(TA_context* ctx)
 
 void ta_ctx_free(void) { }
 void ta_ctx_init(void) { }
+
+void tactx_Recycle(TA_context* poped_ctx)
+{
+   if (ctx_pool.size()>2)
+   {
+      poped_ctx->Free();
+      delete poped_ctx;
+   }
+   else
+   {
+      poped_ctx->Reset();
+      ctx_pool.push_back(poped_ctx);
+   }
+}
 #else
 static void VDecEnd(void)
 {
@@ -231,15 +245,10 @@ void ta_ctx_init(void)
    mtx_rqueue = slock_new();
    mtx_pool   = slock_new();
 }
-#endif
-
-
 
 void tactx_Recycle(TA_context* poped_ctx)
 {
-#ifndef TARGET_NO_THREADS
    slock_lock(mtx_pool);
-#endif
    if (ctx_pool.size()>2)
    {
       poped_ctx->Free();
@@ -250,11 +259,9 @@ void tactx_Recycle(TA_context* poped_ctx)
       poped_ctx->Reset();
       ctx_pool.push_back(poped_ctx);
    }
-#ifndef TARGET_NO_THREADS
    slock_unlock(mtx_pool);
-#endif
 }
-
+#endif
 
 TA_context* tactx_Pop(u32 addr)
 {

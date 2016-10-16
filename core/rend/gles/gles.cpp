@@ -1418,7 +1418,7 @@ static void scene_compute_lut_fog(void)
 	fog_coefs[0]=a;
 	fog_coefs[1]=b;
 
-	printf("FOG TABLE Curve match: maxdev: %.02f cents\n",maxdev*100);
+	//printf("FOG TABLE Curve match: maxdev: %.02f cents\n",maxdev*100);
 	//printf("%f\n",B*log(maxdev)/log(2.0)+A);
 }
 

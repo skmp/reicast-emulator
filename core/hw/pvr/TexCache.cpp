@@ -1,4 +1,5 @@
 #include "../../types.h"
+#include "ta_structs.h"
 #include "pvr_regs.h"
 #include "TexCache.h"
 
@@ -77,22 +78,22 @@ void palette_update(void)
    pal_needs_update=false;
    switch(PAL_RAM_CTRL&3)
    {
-      case 0:
+      case TA_PAL_ARGB1555:
          for (int i=0;i<1024;i++)
             palette_ram[i]=ARGB1555(PALETTE_RAM[i]);
          break;
 
-      case 1:
+      case TA_PAL_RGB565:
          for (int i=0;i<1024;i++)
             palette_ram[i]=ARGB565(PALETTE_RAM[i]);
          break;
 
-      case 2:
+      case TA_PAL_ARGB4444:
          for (int i=0;i<1024;i++)
             palette_ram[i]=ARGB4444(PALETTE_RAM[i]);
          break;
 
-      case 3:
+      case TA_PAL_ARGB8888:
          for (int i=0;i<1024;i++)
             palette_ram[i]=ARGB8888(PALETTE_RAM[i]);
          break;

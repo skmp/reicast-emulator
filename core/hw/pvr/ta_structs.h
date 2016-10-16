@@ -4,6 +4,44 @@
 //bits that affect drawing (for caching params)
 #define PCW_DRAW_MASK (0x000000CC)
 
+#define IsModVolList(list) (((list)&1)!=0)
+
+enum
+{
+   TA_LIST_OPAQUE                  = 0,
+   TA_LIST_OPAQUE_MODVOL,
+   TA_LIST_TRANSLUCENT,
+   TA_LIST_TRANSLUCENT_MODVOL,
+   TA_LIST_PUNCH_THROUGH,
+   TA_NUM_LISTS
+};
+
+enum
+{
+   /* Control Parameter */
+   TA_PARAM_END_OF_LIST                     = 0,
+   TA_PARAM_USER_TILE_CLIP,
+   TA_PARAM_OBJ_LIST_SET,
+   /* Reserved */
+   TA_PARAM_RESERVED0,
+   /* Global Parameter */
+   TA_PARAM_POLY_OR_VOL,
+   TA_PARAM_SPRITE,
+   /* Reserved */
+   TA_PARAM_RESERVED1,
+   /* Vertex , Sprite or ModVolume Parameter */
+   TA_PARAM_VERTEX,
+   TA_NUM_PARAMS
+};
+
+enum
+{
+   TA_PAL_ARGB1555 = 0,
+   TA_PAL_RGB565,
+   TA_PAL_ARGB4444,
+   TA_PAL_ARGB8888
+};
+
 #pragma pack(push, 1)   // n = 1
 //	Global Param/misc structs
 //4B
@@ -752,30 +790,3 @@ struct TA_VertexParam
 
 #pragma pack(pop)
 
-#define IsModVolList(list) (((list)&1)!=0)
-
-enum
-{
-   LISTTYPE_OPAQUE                  = 0,
-   LISTTYPE_OPAQUE_MODIFIER_VOLUME,
-   LISTTYPE_TRANSLUCENT,
-   LISTTYPE_TRANSLUCENT_MODIFIER_VOLUME,
-   LISTTYPE_PUNCH_THROUGH
-};
-
-enum
-{
-   /* Control Parameter */
-   PARAMTYPE_END_OF_LIST                     = 0,
-   PARAMTYPE_USER_TILE_CLIP                  = 1,
-   PARAMTYPE_OBJECT_LIST_SET                 = 2,
-   /* Reserved */
-   PARAMTYPE_RESERVED_ONE                    = 3,
-   /* Global Parameter */
-   PARAMTYPE_POLYGON_OR_MODIFIER_VOLUME      = 4,
-   PARAMTYPE_SPRITE                          = 5,
-   /* Reserved */
-   PARAMTYPE_RESERVED_TWO                    = 6,
-   /* Vertex , Sprite or ModVolume Parameter */
-   PARAMTYPE_VERTEX_PARAMETER                = 7
-};

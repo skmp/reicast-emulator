@@ -99,16 +99,16 @@ static void fill_fsm(void)
 	{
 		switch(i)
       {
-         case PARAMTYPE_END_OF_LIST:
+         case TA_PARAM_END_OF_LIST:
             //End of list -> process it !
-            fill_fsm(TAS_NS, PARAMTYPE_END_OF_LIST,-1,TAS_NS,1);
-            fill_fsm(TAS_PLV32,PARAMTYPE_END_OF_LIST,-1,TAS_NS,1);
-            fill_fsm(TAS_PLV64,PARAMTYPE_END_OF_LIST,-1,TAS_NS,1);
-            fill_fsm(TAS_MLV64,PARAMTYPE_END_OF_LIST,-1,TAS_NS,1);
+            fill_fsm(TAS_NS,   TA_PARAM_END_OF_LIST,-1,TAS_NS,1);
+            fill_fsm(TAS_PLV32,TA_PARAM_END_OF_LIST,-1,TAS_NS,1);
+            fill_fsm(TAS_PLV64,TA_PARAM_END_OF_LIST,-1,TAS_NS,1);
+            fill_fsm(TAS_MLV64,TA_PARAM_END_OF_LIST,-1,TAS_NS,1);
             break;
 
-         case PARAMTYPE_USER_TILE_CLIP:
-         case PARAMTYPE_OBJECT_LIST_SET:
+         case TA_PARAM_USER_TILE_CLIP:
+         case TA_PARAM_OBJ_LIST_SET:
             //32B commands, no state change
             fill_fsm(TAS_NS,i,-1,TAS_NS);
             fill_fsm(TAS_PLV32,i,-1,TAS_PLV32);
@@ -121,7 +121,7 @@ static void fill_fsm(void)
             //invalid
             break;
 
-         case PARAMTYPE_POLYGON_OR_MODIFIER_VOLUME:
+         case TA_PARAM_POLY_OR_VOL:
             //right .. its complicated alirte
 
             for (int k=0;k<32;k++)
@@ -147,7 +147,7 @@ static void fill_fsm(void)
             fill_fsm(TAS_NS,i,-1,TAS_NS,1);
             break;
 
-         case PARAMTYPE_SPRITE:
+         case TA_PARAM_SPRITE:
             //SPR: 32B -> expect 64B data (PL*)
             fill_fsm(TAS_PLV32,i,-1,TAS_PLV64);
             fill_fsm(TAS_PLV64,i,-1,TAS_PLV64);
@@ -158,7 +158,7 @@ static void fill_fsm(void)
             fill_fsm(TAS_NS,i,-1,TAS_NS,1);
             break;
 
-         case PARAMTYPE_VERTEX_PARAMETER:
+         case TA_PARAM_VERTEX:
             //VTX: 32 B -> Expect more of it
             fill_fsm(TAS_PLV32,i,-1,TAS_PLV32,0,0);
 
@@ -193,7 +193,7 @@ static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 	{
       switch (dat->pcw.ParaType)
       {
-         case PARAMTYPE_END_OF_LIST:
+         case TA_PARAM_END_OF_LIST:
             if (ta_fsm_cl==7)
                ta_fsm_cl=dat->pcw.ListType;
             //printf("List %d ended\n",ta_fsm_cl);
@@ -202,7 +202,7 @@ static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
             ta_fsm_cl=7;
             trans=TAS_NS;
             break;
-         case PARAMTYPE_POLYGON_OR_MODIFIER_VOLUME:
+         case TA_PARAM_POLY_OR_VOL:
             if (ta_fsm_cl==7)
                ta_fsm_cl=dat->pcw.ListType;
 
@@ -211,7 +211,7 @@ static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
             else
                trans=TAS_MLV64;
             break;
-         case PARAMTYPE_SPRITE:
+         case TA_PARAM_SPRITE:
             if (ta_fsm_cl==7)
                ta_fsm_cl=dat->pcw.ListType;
 

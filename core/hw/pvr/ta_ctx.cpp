@@ -19,6 +19,7 @@ cResetEvent frame_finished(false, true);
 
 TA_context* rqueue;
 
+/* texture cache entry pool. */
 vector<TA_context*> ctx_pool;
 vector<TA_context*> ctx_list;
 

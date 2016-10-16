@@ -561,7 +561,7 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
     * Can freely use cache TCW */
 
    int prog_id   = GetProgramID(
-         (Type == LISTTYPE_PUNCH_THROUGH) ? 1 : 0,
+         (Type == TA_LIST_PUNCH_THROUGH) ? 1 : 0,
          SetTileClip(gp->tileclip,false)+1,
          gp->pcw.Texture,
          gp->tsp.UseAlpha,
@@ -598,7 +598,7 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
    {
       cache.tsp=gp->tsp;
 
-      if (Type==LISTTYPE_TRANSLUCENT)
+      if (Type==TA_LIST_TRANSLUCENT)
       {
          glBlendFunc(SrcBlendGL[gp->tsp.SrcInstr], DstBlendGL[gp->tsp.DstInstr]);
 
@@ -623,7 +623,7 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
       cache.isp.full = gp->isp.full;
 
       /* Set Z mode, only if required */
-      if (!(Type == LISTTYPE_PUNCH_THROUGH || (Type == LISTTYPE_TRANSLUCENT && SortingEnabled)))
+      if (!(Type == TA_LIST_PUNCH_THROUGH || (Type == TA_LIST_TRANSLUCENT && SortingEnabled)))
          glDepthFunc(Zfunction[gp->isp.DepthMode]);
 
       flag    = !gp->isp.ZWriteDis;
@@ -651,7 +651,7 @@ static void DrawList(const List<PolyParam>& gply)
    /* set some 'global' modes for all primitives */
 
    /* Z funct. can be fixed on these combinations, avoid setting it all the time */
-   if (Type == LISTTYPE_PUNCH_THROUGH || (Type == LISTTYPE_TRANSLUCENT && SortingEnabled))
+   if (Type == TA_LIST_PUNCH_THROUGH || (Type == TA_LIST_TRANSLUCENT && SortingEnabled))
       glDepthFunc(Zfunction[6]);
 
    glEnable(GL_STENCIL_TEST);
@@ -946,7 +946,7 @@ static void DrawSorted(void)
       PolyParam* params = pidx_sort[p].ppid;
       if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
       {
-         SetGPState<LISTTYPE_TRANSLUCENT, true>(params, 0);
+         SetGPState<TA_LIST_TRANSLUCENT, true>(params, 0);
          glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first));
       }
       params++;
@@ -1858,7 +1858,7 @@ static bool RenderFrame(void)
 	//Opaque
 	//Nothing extra needs to be setup here
 	/*if (!GetAsyncKeyState(VK_F1))*/
-	DrawList<LISTTYPE_OPAQUE, false>(pvrrc.global_param_op);
+	DrawList<TA_LIST_OPAQUE, false>(pvrrc.global_param_op);
 
 #if 0
 	DrawModVols();
@@ -1867,7 +1867,7 @@ static bool RenderFrame(void)
 	//Alpha tested
 	//setup alpha test state
 	/*if (!GetAsyncKeyState(VK_F2))*/
-	DrawList<LISTTYPE_PUNCH_THROUGH, false>(pvrrc.global_param_pt);
+	DrawList<TA_LIST_PUNCH_THROUGH, false>(pvrrc.global_param_pt);
 
 	//Alpha blended
 	//Setup blending
@@ -1885,11 +1885,11 @@ static bool RenderFrame(void)
 		if (pvrrc.isAutoSort)
 			DrawSorted();
 		else
-			DrawList<LISTTYPE_TRANSLUCENT, false>(pvrrc.global_param_tr);
+			DrawList<TA_LIST_TRANSLUCENT, false>(pvrrc.global_param_tr);
 #else
 		if (pvrrc.isAutoSort)
 			SortPParams();
-		DrawList<LISTTYPE_TRANSLUCENT, true>(pvrrc.global_param_tr);
+		DrawList<TA_LIST_TRANSLUCENT, true>(pvrrc.global_param_tr);
 #endif
 	}
 

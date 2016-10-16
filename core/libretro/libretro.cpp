@@ -11,8 +11,8 @@
 
 #include "libretro.h"
 
-int screen_width;
-int screen_height;
+int screen_width  = 640;
+int screen_height = 480;
 bool boot_to_bios;
 
 u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
@@ -352,7 +352,6 @@ static void update_variables(void)
       enable_purupuru = (strcmp("enabled", var.value) == 0);
 }
 
-
 void retro_run (void)
 {
    bool updated = false;
@@ -378,6 +377,10 @@ void retro_run (void)
 void retro_reset (void)
 {
    //TODO
+   dc_term();
+   first_run = true;
+   settings.dreamcast.cable = 3;
+   update_variables();
 }
 
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
@@ -502,8 +505,6 @@ bool retro_load_game(const struct retro_game_info *game)
    snprintf(game_dir_no_slash, sizeof(game_dir_no_slash), "%s%cdc", dir, slash);
 
    settings.dreamcast.cable = 3;
-   screen_width  = 640;
-   screen_height = 480;
    update_variables();
 
    if (game->path[0] == '\0')

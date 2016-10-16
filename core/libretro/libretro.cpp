@@ -24,6 +24,7 @@ s8 joyx[4], joyy[4];
 bool enable_purupuru = true;
 
 bool inside_loop     = true;
+static bool first_run = true;
 
 enum DreamcastController
 {
@@ -194,9 +195,11 @@ void retro_init(void)
 
 void dc_term(void);
 
+
 void retro_deinit(void)
 {
    dc_term();
+   first_run = true;
 }
 
 bool enable_rtt     = true;
@@ -349,7 +352,6 @@ static void update_variables(void)
       enable_purupuru = (strcmp("enabled", var.value) == 0);
 }
 
-static bool first_run = true;
 
 void retro_run (void)
 {

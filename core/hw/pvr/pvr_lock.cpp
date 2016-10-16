@@ -152,12 +152,21 @@ bool VramLockedWrite(u8* address)
    return false;
 }
 
+#ifdef TARGET_NO_THREADS
+void libCore_vramlock_Free(void) { }
+void libCore_vramlock_Init(void) { }
+
+//unlocks mem
+//also frees the handle
+void libCore_vramlock_Unlock_block(vram_block* block)
+{
+	libCore_vramlock_Unlock_block_wb(block);
+}
+#else
 void libCore_vramlock_Free(void)
 {
-#ifndef TARGET_NO_THREADS
    slock_free(vramlist_lock);
    vramlist_lock = NULL;
-#endif
 }
 
 void libCore_vramlock_Init(void)
@@ -171,14 +180,11 @@ void libCore_vramlock_Init(void)
 //also frees the handle
 void libCore_vramlock_Unlock_block(vram_block* block)
 {
-#ifndef TARGET_NO_THREADS
 	slock_lock(vramlist_lock);
-#endif
 	libCore_vramlock_Unlock_block_wb(block);
-#ifndef TARGET_NO_THREADS
 	slock_unlock(vramlist_lock);
-#endif
 }
+#endif
 
 void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {

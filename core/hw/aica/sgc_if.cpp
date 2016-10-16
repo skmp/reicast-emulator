@@ -40,6 +40,9 @@ double AEG_DSR_Time[]=
 };
 
 #define AEG_STEP_BITS (16)
+
+#define AICA_NUM_CHANNELS 64
+
 //Steps per sample
 u32 AEG_ATT_SPS[64];
 u32 AEG_DSR_SPS[64];
@@ -277,7 +280,7 @@ void (* PLFOWS_CALC[4])(ChannelEx* ch);
 
 struct ChannelEx
 {
-	static ChannelEx Chans[64];
+	static ChannelEx Chans[AICA_NUM_CHANNELS];
 
 	ChannelCommonData* ccd;
 
@@ -444,7 +447,7 @@ struct ChannelEx
 
 	__forceinline static void StepAll(SampleType& mixl, SampleType& mixr)
 	{
-		for (int i = 0; i < 64; i++)
+		for (int i = 0; i < AICA_NUM_CHANNELS; i++)
 		{
 			Chans[i].Step(mixl, mixr);
 		}
@@ -652,7 +655,7 @@ struct ChannelEx
 			if (ccd->KYONEX)
 			{
 				ccd->KYONEX=0;
-				for (int i = 0; i < 64; i++)
+				for (int i = 0; i < AICA_NUM_CHANNELS; i++)
 				{
 					if (Chans[i].ccd->KYONB)
 						Chans[i].KEY_ON();
@@ -1054,7 +1057,7 @@ void staticinitialise()
 #define AicaChannel ChannelEx
 
 
-AicaChannel AicaChannel::Chans[64];
+AicaChannel AicaChannel::Chans[AICA_NUM_CHANNELS];
 
 #define Chans AicaChannel::Chans 
 double dbToval(double db)
@@ -1095,12 +1098,12 @@ void sgc_Init()
 	for (int i=256;i<1024;i++)
 		tl_lut[i]=0;
 
-	for (int i=0;i<64;i++)
+	for (int i=0; i < AICA_NUM_CHANNELS;i++)
 	{
 		AEG_ATT_SPS[i]=CalcAegSteps(AEG_Attack_Time[i]);
 		AEG_DSR_SPS[i]=CalcAegSteps(AEG_DSR_Time[i]);
 	}
-	for (int i=0;i<64;i++)
+	for (int i=0; i < AICA_NUM_CHANNELS; i++)
 		Chans[i].Init(i,aica_reg);
 	dsp_out_vol=(DSP_OUT_VOL_REG*)&aica_reg[0x2000];
 
@@ -1185,7 +1188,7 @@ void AICA_Sample32()
 	//Generate 32 samples for each channel, before moving to next channel
 	//much more cache efficient !
 	u32 sg=0;
-	for (int ch = 0; ch < 64; ch++)
+	for (int ch = 0; ch < AICA_NUM_CHANNELS; ch++)
 	{
 		for (int i=0;i<32;i++)
 		{

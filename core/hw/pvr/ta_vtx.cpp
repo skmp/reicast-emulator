@@ -538,119 +538,38 @@ public:
 	//helpers 0-14
 	static u32 poly_data_type_id(PCW pcw)
 	{
-      switch (pcw.Col_Type)
+      if (pcw.Volume)
       {
-         case 0:
-            if (pcw.Texture)
-            {
-               if (pcw.Volume)
-               {
-                  if (pcw.UV_16bit)
-                     return 12;          //(Textured, Packed Color, 16bit UV, with Two Volumes)
-                  return 11;             //(Textured, Packed Color, with Two Volumes)	
-               }
-               else
-               {
-                  if (pcw.UV_16bit)
-                     return 4;           //(Textured, Packed Color , 16b uv)
-                  return 3;           //(Textured, Packed Color , 32b uv)
-               }
-            }
-            else
-            {
-               if (pcw.Volume)
-                  return 9;               //(Non-Textured, Packed Color, with Two Volumes)
-               return pcw.Col_Type;       //(Non-Textured, Packed Color)
-            }
-            break;
-         case 1:
-            if (pcw.Texture)
-            {
-               if (pcw.UV_16bit)
-                  return 6;               //(Textured, Floating Color , 16b uv)
-               return 5;           //(Textured, Floating Color , 32b uv)
-            }
-            return pcw.Col_Type;          //(Non-Textured, Floating Color)
-         case 2:
-            if (pcw.Texture)
-            {
-               if (pcw.Volume)
-               {
-#if 0
-                  sendPrimEnd = sendPolygonExt;
-#endif
+         if (pcw.Texture)
+         {
+            if (pcw.Col_Type == 0)
+               return pcw.UV_16bit ? 12 : 11;
+            if (pcw.Col_Type == 2 || pcw.Col_Type == 3)
+               return pcw.UV_16bit ? 14 : 13;
+         }
 
-                  if (pcw.UV_16bit)
-                     return 14;          //(Textured, Intensity, 16bit UV, with Two Volumes)
-                  return 13;          //(Textured, Intensity, with Two Volumes)	
-               }
-               else if (pcw.Offset)
-               {
-#if 0
-                  sendPrimEnd = sendPolygonExt;
-#endif
-
-                  if (pcw.UV_16bit)
-                     return 8;           //(Textured, Intensity , 16b uv)
-                  return 7;           //(Textured, Intensity , 32b uv)
-               }
-               else
-               {
-                  if (pcw.UV_16bit)
-                     return 8;           //(Textured, Intensity , 16b uv)
-                  return 7;           //(Textured, Intensity , 32b uv)
-               }
-            }
-            else
-            {
-               if (pcw.Volume)
-                  return 10;              //(Non-Textured, Intensity, with Two Volumes)
-               else if (pcw.Offset)
-               {
-#if 0
-                  sendPrimEnd = sendPolygonExt;
-#endif
-
-                  return 2;                  //(Non-Textured, Intensity)
-               }
-               else
-               {
-                  return 2;                  //(Non-Textured, Intensity)
-#if 0
-                  polygon.FaceAlpha = *(float*)&mem[4];
-                  polygon.FaceRed = *(float*)&mem[5];
-                  polygon.FaceGreen = *(float*)&mem[6];
-                  polygon.FaceBlue = *(float*)&mem[7];
-#endif
-               }
-            }
-            break;
-         case 3:
-            if (pcw.Texture)
-            {
-               if (pcw.Volume)
-               {
-                  if (pcw.UV_16bit)
-                     return 14;          //(Textured, Intensity, 16bit UV, with Two Volumes)
-                  return 13;          //(Textured, Intensity, with Two Volumes)	
-               }
-               else
-               {
-                  if (pcw.UV_16bit)
-                     return 8;           //(Textured, Intensity , 16b uv)
-                  return 7;           //(Textured, Intensity , 32b uv)
-               }
-            }
-            else
-            {
-               if (pcw.Volume)
-                  return 10;              //(Non-Textured, Intensity, with Two Volumes)
-               return 2;                  //(Non-Textured, Intensity)
-            }
-            break;
+         if (pcw.Col_Type == 0)
+            return 9;
+         if (pcw.Col_Type == 2 || pcw.Col_Type == 3)
+            return 10;
       }
 
-      return 0; /* should not reach */
+      if (pcw.Texture)
+      {
+         if (pcw.Col_Type == 0)
+            return pcw.UV_16bit ? 4 : 3;
+         if (pcw.Col_Type == 1)
+            return pcw.UV_16bit ? 6 : 5;
+         if (pcw.Col_Type == 2 || pcw.Col_Type == 3)
+            return pcw.UV_16bit ? 8 : 7;
+      }
+
+      if (pcw.Col_Type == 1)
+         return 1;
+      if (pcw.Col_Type == 2 || pcw.Col_Type == 3)
+         return 2;
+
+      return 0;
 	}
 	//0-4 | 0x80
 	static u32 poly_header_type_size(PCW pcw)

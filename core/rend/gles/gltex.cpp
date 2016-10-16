@@ -55,16 +55,16 @@ PvrTexInfo format[8]=
 	{"ns/1555", 0},	//ns, 1555
 };
 
-const u32 MipPoint[8] =
+const u32 compressed_mipmap_offsets[8] =
 {
-	0x00006, /* 8 */
-	0x00016, /* 16 */
-	0x00056, /* 32 */
-	0x00156, /* 64 */
-	0x00556, /* 128 */
-	0x01556, /* 256  */
-	0x05556, /* 512 */
-	0x15556  /* 1024 */
+	0x00006, /*    8  x 8*/
+	0x00016, /*   16  x 16*/
+	0x00056, /*   32  x 32 */
+	0x00156, /*   64  x 64 */
+	0x00556, /*  128  x 128*/
+	0x01556, /*  256  x 256*/
+	0x05556, /*  512  x 512 */
+	0x15556  /* 1024  x 1024 */
 };
 
 const GLuint PAL_TYPE[4]=
@@ -258,14 +258,14 @@ struct TextureCacheData
                   verify(tex->VQ    != 0);
                   indirect_color_ptr = sa;
                   if (tcw.MipMapped)
-                     sa             += MipPoint[tsp.TexU];
+                     sa             += compressed_mipmap_offsets[tsp.TexU];
                   texconv            = tex->VQ;
                }
                else
                {
                   verify(tex->TW    != 0);
                   if (tcw.MipMapped)
-                     sa             += MipPoint[tsp.TexU]*tex->bpp/2;
+                     sa             += compressed_mipmap_offsets[tsp.TexU]*tex->bpp/2;
                   texconv            = tex->TW;
                   size              *= tex->bpp;
                }

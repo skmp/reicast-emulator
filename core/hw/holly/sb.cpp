@@ -32,20 +32,21 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 
    offset>>=2;
 
-   if (!(sb_regs[offset].flags & REG_RF) )
+   if ((sb_regs[offset].flags & REG_RF) )
+      return sb_regs[offset].readFunctionAddr(addr);
+
+   switch (sz)
    {
-      switch (sz)
-      {
-         case 4:
-            return sb_regs[offset].data32;
-         case 2:
-            return sb_regs[offset].data16;
-         default:
-            return sb_regs[offset].data8;
-      }
+      case 4:
+         return sb_regs[offset].data32;
+      case 2:
+         return sb_regs[offset].data16;
+      default:
+         break;
    }
 
-   return sb_regs[offset].readFunctionAddr(addr);
+   return sb_regs[offset].data8;
+
 }
 
 void sb_WriteMem(u32 addr,u32 data,u32 sz)

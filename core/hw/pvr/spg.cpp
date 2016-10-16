@@ -25,8 +25,6 @@ int mips_counter;
 
 double full_rps;
 
-u32 fskip=0;
-
 void CalculateSync(void)
 {
    /*                          00=VGA    01=NTSC   10=PAL,   11=illegal/undocumented */

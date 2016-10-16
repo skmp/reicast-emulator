@@ -233,7 +233,6 @@ void texture_PL(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height)
    pb->p_current_line  = pb->p_buffer_start;
    pb->p_current_pixel = pb->p_current_line;
 
-	Height/=PixelConvertor::ypp;
 	Width/=PixelConvertor::xpp;
 
 	for (u32 y=0;y<Height;y++)
@@ -246,7 +245,7 @@ void texture_PL(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height)
 
          pb->p_current_pixel += PixelConvertor::xpp;
 		}
-      pb->p_current_line += pb->pixels_per_line * PixelConvertor::ypp;
+      pb->p_current_line += pb->pixels_per_line;
 		pb->p_current_pixel = pb->p_current_line;
 	}
 }

@@ -145,7 +145,7 @@ static u32 Read_SB_ISTNRM(u32 addr)
 	return v;
 }
 
-static void holly_update_interrupts(void)
+static INLINE void holly_update_interrupts(void)
 {
    asic_RL2Pending();
    asic_RL4Pending();

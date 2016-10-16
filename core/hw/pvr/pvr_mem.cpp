@@ -58,35 +58,6 @@ void YUV_init(void)
    }
 }
 
-
-#if 0
-INLINE u8 GetY420(int x, int y,u8* base)
-{
-   //u32 base=0;
-   if (x > 7)
-   {
-      x -= 8;
-      base += 64;
-   }
-
-   if (y > 7)
-   {
-      y -= 8;
-      base += 128;
-   }
-
-   return base[x+y*8];
-}
-
-INLINE u8 GetUV420(int x, int y,u8* base)
-{
-   int realx=x>>1;
-   int realy=y>>1;
-
-   return base[realx+realy*8];
-}
-#endif
-
 static void ta_yuv_process_block(u8* in_uv,u8* in_y, u8* out_uyvy)
 {
    unsigned y, x;
@@ -125,8 +96,15 @@ static void ta_yuv_process_block(u8* in_uv,u8* in_y, u8* out_uyvy)
    }
 }
 
-static INLINE void YUV_Block384(u8* in, u8* out)
+static INLINE void YUV_ConvertMacroBlock(u8* datap)
 {
+   /* YUV420 data comes in as a series of 16x16 
+    * macroblocks that need to be converted into a single
+    * UYVY422 texture */
+   TA_YUV_TEX_CNT++;
+
+   u8 *in     = (u8*)datap;
+   u8 *out    = vram.data + YUV_dest;
    u8* inuv   = in;
    u8* iny    = in + 128;
    u8* p_out  = out;
@@ -136,16 +114,6 @@ static INLINE void YUV_Block384(u8* in, u8* out)
    ta_yuv_process_block(inuv+ 4,iny+64,p_out+8*2);                 /* (8,0) */
    ta_yuv_process_block(inuv+32,iny+128,p_out+YUV_x_size*8*2);     /* (0,8) */
    ta_yuv_process_block(inuv+36,iny+192,p_out+YUV_x_size*8*2+8*2); /* (8,8) */
-}
-
-static INLINE void YUV_ConvertMacroBlock(u8* datap)
-{
-   /* YUV420 data comes in as a series of 16x16 
-    * macroblcoks that need to be converted into a single
-    * UYVY422 texture */
-   TA_YUV_TEX_CNT++;
-
-   YUV_Block384((u8*)datap,vram.data + YUV_dest);
 
    YUV_dest   += 32;
    YUV_x_curr += 16;
@@ -169,6 +137,7 @@ static INLINE void YUV_ConvertMacroBlock(u8* datap)
       asic_RaiseInterruptWait(holly_YUV_DMA);
    }
 }
+
 void YUV_data(u32* data , u32 count)
 {
    if (YUV_blockcount==0)

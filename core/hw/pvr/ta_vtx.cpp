@@ -483,9 +483,9 @@ public:
 		for (int i=0;i<256;i++)
 		{
 			PCW pcw;
-			pcw.obj_ctrl=i;
-			u32 rv=	poly_data_type_id(pcw);
-			u32 type= poly_header_type_size(pcw);
+			pcw.obj_ctrl = i;
+			u32 rv       = poly_data_type_id(pcw);
+			u32 type     = poly_header_type_size(pcw);
 
 			if (type& 0x80)
 				rv|=(SZ64<<30);
@@ -574,35 +574,28 @@ public:
 	//0-4 | 0x80
 	static u32 poly_header_type_size(PCW pcw)
 	{
-		if (pcw.Volume == 0)
+		if (pcw.Volume)
 		{
-         switch (pcw.Col_Type)
-         {
-            case 0:
-            case 1:
-               return 0  | 0;              //Polygon Type 0 -- SZ32
-            case 2:
-               if (pcw.Texture && pcw.Offset)
-                  return 2 | 0x80;         //Polygon Type 2 -- SZ64
-               return 1 | 0;               //Polygon Type 1 -- SZ32
-            case 3:
-               return 0 | 0;               //Polygon Type 0 -- SZ32
-         }
+         if (pcw.Col_Type == 0 || pcw.Col_Type == 3)
+               return 3 | 0;              //Polygon Type 3 -- SZ32
+         if (pcw.Col_Type == 2)
+               return 4 | 0x80;           //Polygon Type 4 -- SZ64
 		}
 
-      switch (pcw.Col_Type)
+      if (pcw.Col_Type == 0 || pcw.Col_Type == 1 || pcw.Col_Type == 3)
+         return 0;
+
+      if (pcw.Col_Type == 2)
       {
-         case 0:
-            return 3 | 0;              //Polygon Type 3 -- SZ32
-         case 2:
-            return 4 | 0x80;           //Polygon Type 4 -- SZ64
-         case 3:
-            return 3 | 0;              //Polygon Type 3 -- SZ32
-         default:
-            break;
+         if (pcw.Texture && !pcw.Offset)
+            return 1 | 0;               //Polygon Type 1 -- SZ32
+         if (pcw.Texture && pcw.Offset)
+            return 2 | 0x80;         //Polygon Type 2 -- SZ64
+         if (!pcw.Texture)
+            return 1;
       }
 
-      return 0xFFDDEEAA;//die ("data->pcw.Col_Type==1 && volume ==1");
+      return 0;
 	}
 
 

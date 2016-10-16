@@ -68,22 +68,50 @@ Renderer* renderer;
 #if !defined(TARGET_NO_THREADS)
 cResetEvent rs(false,true);
 cResetEvent re(false,true);
+sthread_t *rthd;
 #endif
+
+bool pend_rend = false;
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
 
+#if defined(TARGET_NO_THREADS)
+static bool rend_frame(TA_context* ctx, bool draw_osd)
+{
+   return renderer->Process(ctx) && renderer->Render();
+}
+
+void rend_end_render(void)
+{
+   if (pend_rend)
+      renderer->Present();
+}
+
+void rend_term(void) { }
+#else
 static bool rend_frame(TA_context* ctx, bool draw_osd)
 {
    bool proc = renderer->Process(ctx);
-#if !defined(TARGET_NO_THREADS)
    re.Set();
-#endif
 
    return proc && renderer->Render();
 }
+
+void rend_end_render(void)
+{
+   if (pend_rend)
+		re.Wait();
+}
+
+void rend_term(void)
+{
+   sthread_join(rthd);
+   rthd = NULL;
+}
+#endif
 
 static bool rend_single_frame(void)
 {
@@ -134,11 +162,6 @@ static void *rend_thread(void* p)
    }
 }
 
-#if !defined(TARGET_NO_THREADS)
-sthread_t *rthd;
-#endif
-
-bool pend_rend = false;
 
 void rend_resize(int width, int height)
 {
@@ -198,16 +221,6 @@ void rend_start_render(void)
 }
 
 
-void rend_end_render(void)
-{
-#if !defined(TARGET_NO_THREADS)
-   if (pend_rend)
-		re.Wait();
-#else
-   if (pend_rend)
-      renderer->Present();
-#endif
-}
 
 /*
 void rend_end_wait()
@@ -222,7 +235,6 @@ extern int screen_height;
 
 bool rend_init(void)
 {
-
 #ifdef NO_REND
 	renderer	 = rend_norend();
 #else
@@ -254,13 +266,6 @@ bool rend_init(void)
 	return true;
 }
 
-void rend_term(void)
-{
-#if !defined(TARGET_NO_THREADS)
-   sthread_join(rthd);
-   rthd = NULL;
-#endif
-}
 
 void rend_vblank(void)
 {

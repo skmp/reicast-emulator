@@ -28,111 +28,49 @@ u32 SB_ISTNRM;
 
 u32 sb_ReadMem(u32 addr,u32 sz)
 {
-	u32 offset = addr-SB_BASE;
-#ifdef TRACE
-	if (offset & 3/*(size-1)*/) //4 is min align size
-	{
-		EMUERROR("Unaligned System Bus register read");
-	}
-#endif
+   u32 offset = addr-SB_BASE;
 
-	offset>>=2;
+   offset>>=2;
 
-#ifdef TRACE
-	if (sb_regs[offset].flags & sz)
-	{
-#endif
-		if (!(sb_regs[offset].flags & REG_RF) )
-		{
-         switch (sz)
-         {
-            case 4:
-               return sb_regs[offset].data32;
-            case 2:
-               return sb_regs[offset].data16;
-            default:
-               return sb_regs[offset].data8;
-         }
-		}
+   if (!(sb_regs[offset].flags & REG_RF) )
+   {
+      switch (sz)
+      {
+         case 4:
+            return sb_regs[offset].data32;
+         case 2:
+            return sb_regs[offset].data16;
+         default:
+            return sb_regs[offset].data8;
+      }
+   }
 
-      //printf("SB: %08X\n",addr);
-      return sb_regs[offset].readFunctionAddr(addr);
-#ifdef TRACE
-	}
-	else
-	{
-		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR("ERROR [wrong size read on register]");
-	}
-#endif
-//  if ((sb_regs[offset].flags& REG_NOT_IMPL))
-//      EMUERROR2("Read from System Control Regs , not  implemented , addr=%x",addr);
-	return 0;
+   return sb_regs[offset].readFunctionAddr(addr);
 }
 
 void sb_WriteMem(u32 addr,u32 data,u32 sz)
 {
-	u32 offset = addr-SB_BASE;
-#ifdef TRACE
-	if (offset & 3/*(size-1)*/) //4 is min align size
-	{
-		EMUERROR("Unaligned System bus register write");
-	}
-#endif
-offset>>=2;
-#ifdef TRACE
-	if (sb_regs[offset].flags & sz)
-	{
-#endif
-		if (!(sb_regs[offset].flags & REG_WF) )
-		{
-         switch (sz)
-         {
-            case 4:
-               sb_regs[offset].data32 = data;
-               break;
-            case 2:
-               sb_regs[offset].data16 = (u16)data;
-               break;
-            default:
-               sb_regs[offset].data8  = (u8)data;
-               break;
-         }
-			return;
-		}
-		else
-		{
-			//printf("SBW: %08X\n",addr);
-			sb_regs[offset].writeFunctionAddr(addr,data);
-			/*
-			if (sb_regs[offset].flags & REG_CONST)
-				EMUERROR("Error [Write to read only register , const]");
-			else
-			{
-				if ()
-				{
-					sb_regs[offset].writeFunction(data);
-					return;
-				}
-				else
-				{
-					if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-						EMUERROR("ERROR [Write to read only register]");
-				}
-			}*/
-			return;
-		}
-#ifdef TRACE
-	}
-	else
-	{
-		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR4("ERROR :wrong size write on register ; offset=%x , data=%x,sz=%d",offset,data,sz);
-	}
-	if ((sb_regs[offset].flags& REG_NOT_IMPL))
-		EMUERROR3("Write to System Control Regs , not  implemented , addr=%x,data=%x",addr,data);
-#endif
+   u32 offset = addr-SB_BASE;
+   offset>>=2;
+   if ((sb_regs[offset].flags & REG_WF) )
+   {
+      //printf("SBW: %08X\n",addr);
+      sb_regs[offset].writeFunctionAddr(addr,data);
+      return;
+   }
 
+   switch (sz)
+   {
+      case 4:
+         sb_regs[offset].data32 = data;
+         break;
+      case 2:
+         sb_regs[offset].data16 = (u16)data;
+         break;
+      default:
+         sb_regs[offset].data8  = (u8)data;
+         break;
+   }
 }
 
 u32 sbio_read_noacc(u32 addr) { verify(false); return 0; }
@@ -184,18 +122,18 @@ u32 RegRead_SB_FFST(u32 addr)
 {
 	SB_FFST_rc++;
 	if (SB_FFST_rc & 0x8)
-	{
 		SB_FFST^=31;
-	}
 	return 0; //SB_FFST -> does the fifo status has really to be faked ?
 }
 
 void SB_SFRES_write32(u32 addr, u32 data)
 {
+#if 0
 	if ((u16)data==0x7611)
 	{
 		printf("SB/HOLLY: System reset requested -- but cannot SOFT_RESET\n");
 	}
+#endif
 }
 void sb_Init()
 {

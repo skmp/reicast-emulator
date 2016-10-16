@@ -2,6 +2,8 @@
 #include <cstdarg>
 #include "types.h"
 
+#include <sys/stat.h>
+
 #include "../hw/pvr/pvr_regs.h"
 
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
@@ -512,6 +514,23 @@ bool retro_load_game(const struct retro_game_info *game)
 
    if (!boot_to_bios)
       game_data = strdup(game->path);
+
+   {
+      char data_dir[1024];
+
+      snprintf(data_dir, sizeof(data_dir), "%s%s", game_dir, "data");
+
+      printf("Creating dir: %s\n", data_dir);
+      struct stat buf;
+      if (stat(data_dir, &buf) < 0)
+      {
+#ifdef _WIN32
+         _mkdir(data_dir);
+#else
+         mkdir(data_dir, 0750);
+#endif
+      }
+   }
 
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
    params.context_reset         = context_reset;

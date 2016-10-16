@@ -16,14 +16,6 @@ u32 ta_type_lut[256];
 #define TACALL DYNACALL
 #define PLD(ptr,offs) //  __asm __volatile ( "pld	 [%0, #" #offs "]\n"::"r" (ptr): );
 
-#define TA_VTX 
-#define TA_SPR 
-#define TA_EOS 
-#define TA_PP 
-#define TA_SP 
-#define TA_EOL 
-#define TA_V64H 
-
 //cache state vars
 u32 tileclip_val=0;
 u8 f32_su8_tbl[65536];
@@ -95,8 +87,6 @@ static f32 f16(u16 v)
 	return *(f32*)&z;
 }
 
-#define TA_VTX_OVH(n)
-
 #define vdrc vd_rc
 
 //Splitter function (normally ta_dma_main , modified for split dma's)
@@ -128,17 +118,14 @@ public:
 		u32 rv=0;
 
 		if (part==2)
-		{
-			TA_V64H;
 			TaCmd=ta_main;
-		}
 
 		switch (poly_type)
 		{
 #define ver_32B_def(num) \
 case num : {\
 AppendPolyVertex##num(&vp->vtx##num);\
-rv=SZ32; TA_VTX; }\
+rv=SZ32; }\
 break;
 
 			//32b , always in one pass :)
@@ -159,7 +146,6 @@ case num : {\
 /*process first half*/\
 	if (part!=2)\
 	{\
-	TA_VTX;\
 	rv+=SZ32;\
 	AppendPolyVertex##num##A(&vp->vtx##num##A);\
 	}\
@@ -208,7 +194,6 @@ case num : {\
 		
 	static Ta_Dma* TACALL ta_mod_vol_data(Ta_Dma* data,Ta_Dma* data_end)
    {
-      TA_VTX;
       TA_VertexParam* vp=(TA_VertexParam*)data;
 
       if (data==data_end)
@@ -227,7 +212,6 @@ case num : {\
 
 	static Ta_Dma* TACALL ta_spriteB_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
-		TA_V64H;
 		//32B more needed , 32B done :)
 		TaCmd=ta_main;
 			
@@ -237,7 +221,6 @@ case num : {\
 	}
 	static Ta_Dma* TACALL ta_sprite_data(Ta_Dma* data,Ta_Dma* data_end)
    {
-      TA_SPR;
       TA_VertexParam* vp=(TA_VertexParam*)data;
       //verify(data->pcw.ParaType == TA_PARAM_VERTEX);
 
@@ -296,7 +279,6 @@ strip_end:
 		TaCmd=ta_main;
 		if (data->pcw.EndOfStrip)
 			EndPolyStrip();
-		TA_EOS;
 		return data+poly_size;
 	}
 
@@ -358,7 +340,6 @@ public:
                CurrentList=ListType_None;
                VertexDataFP=NullVertexData;
                data+=SZ32;
-               TA_EOL;
                break;
                //32B
             case TA_PARAM_USER_TILE_CLIP:
@@ -377,8 +358,6 @@ public:
                //PolyType :32B/64B
             case TA_PARAM_POLY_OR_VOL:
                {
-
-                  TA_PP;
                   group_EN();
                   //Yep , C++ IS lame & limited
 #include "ta_const_df.h"
@@ -427,8 +406,6 @@ public:
                //Sets Sprite info , and switches to ta_sprite_data function
             case TA_PARAM_SPRITE:
                {
-
-                  TA_SP;
                   group_EN();
                   if (CurrentList==ListType_None)
                      ta_list_start(data->pcw.ListType);	//start a list ;)

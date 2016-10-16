@@ -582,9 +582,6 @@ public:
                return 4 | 0x80;           //Polygon Type 4 -- SZ64
 		}
 
-      if (pcw.Col_Type == 0 || pcw.Col_Type == 1 || pcw.Col_Type == 3)
-         return 0;
-
       if (pcw.Col_Type == 2)
       {
          if (pcw.Texture && !pcw.Offset)

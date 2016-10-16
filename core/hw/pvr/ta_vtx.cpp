@@ -16,17 +16,6 @@ u32 ta_type_lut[256];
 #define TACALL DYNACALL
 #define PLD(ptr,offs) //  __asm __volatile ( "pld	 [%0, #" #offs "]\n"::"r" (ptr): );
 
-#if HOST_CPU==CPU_X86
-extern u32 TA_VTXC,TA_SPRC,TA_EOSC,TA_PPC,TA_SPC,TA_EOLC,TA_V64HC;
-
-#define TA_VTX (TA_VTXC++)
-#define TA_SPR (TA_SPRC++)
-#define TA_EOS (TA_EOSC++)
-#define TA_PP (TA_PPC++)
-#define TA_SP (TA_SPC++)
-#define TA_EOL (TA_EOLC++)
-#define TA_V64H (TA_V64HC++)
-#else
 #define TA_VTX 
 #define TA_SPR 
 #define TA_EOS 
@@ -34,7 +23,6 @@ extern u32 TA_VTXC,TA_SPRC,TA_EOSC,TA_PPC,TA_SPC,TA_EOLC,TA_V64HC;
 #define TA_SP 
 #define TA_EOL 
 #define TA_V64H 
-#endif
 
 //cache state vars
 u32 tileclip_val=0;
@@ -107,12 +95,7 @@ static f32 f16(u16 v)
 	return *(f32*)&z;
 }
 
-#if HOST_CPU==CPU_X86
-extern u32 TA_VTX_O;
-#define TA_VTX_OVH(n) (TA_VTX_O+=n);
-#else
 #define TA_VTX_OVH(n)
-#endif
 
 #define vdrc vd_rc
 

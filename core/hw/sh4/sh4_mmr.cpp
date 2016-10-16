@@ -74,94 +74,50 @@ void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegR
 template<u32 sz>
 u32 sh4_rio_read(Array<RegisterStruct>& sb_regs, u32 addr)
 {	
-	u32 offset = addr&255;
-#ifdef TRACE
-	if (offset & 3/*(size-1)*/) //4 is min align size
-	{
-		EMUERROR("Unalinged System Bus register read");
-	}
-#endif
+   u32 offset = addr&255;
 
-	offset>>=2;
+   offset>>=2;
 
-#ifdef TRACE
-	if (sb_regs[offset].flags & sz)
-	{
-#endif
-		if (!(sb_regs[offset].flags & REG_RF) )
-		{
-         switch (sz)
-         {
-            case 4:
-               return  sb_regs[offset].data32;
-            case 2:
-               return  sb_regs[offset].data16;
-            default:
-               return  sb_regs[offset].data8;
-         }
-		}
-
+   if ((sb_regs[offset].flags & REG_RF) )
       return sb_regs[offset].readFunctionAddr(addr);
-#ifdef TRACE
-	}
-	else
-	{
-		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR("ERROR [wrong size read on register]");
-	}
-#endif
-//	if ((sb_regs[offset].flags& REG_NOT_IMPL))
-//		EMUERROR2("Read from System Control Regs , not  implemented , addr=%x",addr);
-	return 0;
+
+   switch (sz)
+   {
+      case 4:
+         return  sb_regs[offset].data32;
+      case 2:
+         return  sb_regs[offset].data16;
+      default:
+         break;
+   }
+
+   return  sb_regs[offset].data8;
 }
 
 template<u32 sz>
 void sh4_rio_write(Array<RegisterStruct>& sb_regs, u32 addr, u32 data)
 {
-	u32 offset = addr&255;
-#ifdef TRACE
-	if (offset & 3/*(size-1)*/) //4 is min align size
-	{
-		EMUERROR("Unaligned System bus register write");
-	}
-#endif
-offset>>=2;
-#ifdef TRACE
-	if (sb_regs[offset].flags & sz)
-	{
-#endif
-		if (!(sb_regs[offset].flags & REG_WF) )
-		{
-         switch (sz)
-         {
-            case 4:
-               sb_regs[offset].data32=data;
-               break;
-            case 2:
-               sb_regs[offset].data16=(u16)data;
-               break;
-            default:
-               sb_regs[offset].data8=(u8)data;
-               break;
-         }
-		}
-		else
-		{
-			//printf("RSW: %08X\n",addr);
-			sb_regs[offset].writeFunctionAddr(addr,data);
-			return;
-		}
-#ifdef TRACE
-	}
-	else
-	{
-		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR4("ERROR: Wrong size write on register - offset=%x, data=%x, size=%d",offset,data,sz);
-	}
-	if ((sb_regs[offset].flags& REG_NOT_IMPL))
-		EMUERROR3("Write to System Control Regs, not implemented - addr=%x, data=%x",addr,data);
-#endif
-	
+   u32 offset = addr&255;
+   offset>>=2;
+   if ((sb_regs[offset].flags & REG_WF) )
+   {
+      //printf("RSW: %08X\n",addr);
+      sb_regs[offset].writeFunctionAddr(addr,data);
+      return;
+   }
+
+   switch (sz)
+   {
+      case 4:
+         sb_regs[offset].data32=data;
+         break;
+      case 2:
+         sb_regs[offset].data16=(u16)data;
+         break;
+      default:
+         sb_regs[offset].data8=(u8)data;
+         break;
+   }
 }
 
 //Region P4

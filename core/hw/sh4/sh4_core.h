@@ -41,10 +41,6 @@ union DoubleReg
 
 static INLINE double GetDR(u32 n)
 {
-#ifdef TRACE
-	if (n>7)
-		printf("DR_r INDEX OVERRUN %d >7",n);
-#endif
 	DoubleReg t;
 
 	t.sgl[1]=fr[(n<<1) + 0];
@@ -55,10 +51,6 @@ static INLINE double GetDR(u32 n)
 
 static INLINE double GetXD(u32 n)
 {
-#ifdef TRACE
-	if (n>7)
-		printf("XD_r INDEX OVERRUN %d >7",n);
-#endif
 	DoubleReg t;
 
 	t.sgl[1]=xf[(n<<1) + 0];
@@ -69,10 +61,6 @@ static INLINE double GetXD(u32 n)
 
 static INLINE void SetDR(u32 n, double val)
 {
-#ifdef TRACE
-	if (n>7)
-		printf("DR_w INDEX OVERRUN %d >7",n);
-#endif
 	DoubleReg t;
 	t.dbl=val;
 
@@ -83,11 +71,6 @@ static INLINE void SetDR(u32 n, double val)
 
 static INLINE void SetXD(u32 n, double val)
 {
-#ifdef TRACE
-	if (n>7)
-		printf("XD_w INDEX OVERRUN %d >7",n);
-#endif
-
 	DoubleReg t;
 	t.dbl=val;
 

@@ -57,12 +57,7 @@ public:
 	~Array()
 	{
 		if  (data)
-		{
-			#ifdef MEM_ALLOC_TRACE
-			printf("WARNING : DESTRUCTOR WITH NON FREED ARRAY [arrayid:%d]\n",id);
-			#endif
 			Free();
-		}
 	}
 
 	void SetPtr(T* Source,u32 ellements)
@@ -78,13 +73,7 @@ public:
 		if (size==0)
 		{
 			if (data)
-			{
-				#ifdef MEM_ALLOC_TRACE
-				printf("Freeing data -> resize to zero[Array:%d]\n",id);
-				#endif
 				Free();
-			}
-
 		}
 		
 		if (!data)

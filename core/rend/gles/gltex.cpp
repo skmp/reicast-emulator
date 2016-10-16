@@ -137,14 +137,6 @@ struct TextureCacheData
 		printf("\n");
 	}
 
-	void SetRepeatMode(GLuint dir,u32 clamp,u32 mirror)
-	{
-		if (clamp)
-			glTexParameteri (GL_TEXTURE_2D, dir, GL_CLAMP_TO_EDGE);
-		else 
-			glTexParameteri (GL_TEXTURE_2D, dir, mirror?GL_MIRRORED_REPEAT : GL_REPEAT);
-	}
-
 	//Create GL texture from tsp/tcw
 	void Create(bool isGL)
 	{
@@ -175,8 +167,15 @@ struct TextureCacheData
          glBindTexture(GL_TEXTURE_2D, texID);
 
          /* Set texture repeat mode */
-         SetRepeatMode(GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU);
-         SetRepeatMode(GL_TEXTURE_WRAP_T, tsp.ClampV, tsp.FlipV);
+         if (tsp.ClampU)
+            glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+         else 
+            glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT);
+
+         if (tsp.ClampV)
+            glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+         else 
+            glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, tsp.FlipV ? GL_MIRRORED_REPEAT : GL_REPEAT);
 
 #ifdef HAVE_OPENGLES
          glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
@@ -235,9 +234,6 @@ struct TextureCacheData
             {
                int stride = w;
 
-               /* Texture is stored 'planar' in memory, no deswizzle is needed */
-               verify(tcw.VQ_Comp==0);        
-
                /* Planar textures support stride selection,
                 * mostly used for NPOT textures (videos). */
                if (tcw.StrideSel)
@@ -248,14 +244,9 @@ struct TextureCacheData
             }
             else
             {
-#if 0
-               verify(w==h || !tcw.MipMapped); /* Are non-square mipmaps supported ? i can't recall right now *WARN* */
-#endif
-
                size = w * h;
                if (tcw.VQ_Comp)
                {
-                  verify(tex->VQ    != 0);
                   indirect_color_ptr = sa;
                   if (tcw.MipMapped)
                      sa             += compressed_mipmap_offsets[tsp.TexU];
@@ -263,7 +254,6 @@ struct TextureCacheData
                }
                else
                {
-                  verify(tex->TW    != 0);
                   if (tcw.MipMapped)
                      sa             += compressed_mipmap_offsets[tsp.TexU]*tex->bpp/2;
                   texconv            = tex->TW;

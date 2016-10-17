@@ -186,14 +186,30 @@ public:
 
          /* (Non-Textured, Packed Color) */
          case 0:
-            AppendPolyVertex0(&vp->vtx0);
+            {
+               TA_Vertex0 *vtx = (TA_Vertex0*)&vp->vtx0;
+               Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
+
+               cv->col[2] = (u8)(vtx->BaseCol);
+               cv->col[1] = (u8)(vtx->BaseCol >> 8);
+               cv->col[0] = (u8)(vtx->BaseCol >> 16);
+               cv->col[3] = (u8)(vtx->BaseCol >> 24);
+            }
             rv=SZ32;
             break;
 
             /* (Non-Textured, Floating Color) */
          case 1:
-            AppendPolyVertex1(&vp->vtx1);
-            rv=SZ32;
+            {
+               TA_Vertex1 *vtx = (TA_Vertex1*)&vp->vtx1;
+               Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
+
+               cv->col[0] = float_to_satu8(vtx->BaseR);
+               cv->col[1] = float_to_satu8(vtx->BaseG);
+               cv->col[2] = float_to_satu8(vtx->BaseB);
+               cv->col[3] = float_to_satu8(vtx->BaseA);
+               rv=SZ32;
+            }
             break;
 
             /* (Non-Textured, Intensity) */
@@ -992,25 +1008,6 @@ public:
 		cv->z=invW;
 		update_fz(invW);
 		return cv;
-	}
-
-
-	//(Non-Textured, Packed Color)
-	__forceinline
-		static void AppendPolyVertex0(TA_Vertex0* vtx)
-	{
-		vert_cvt_base;
-
-      vert_packed_color_(cv->col,vtx->BaseCol);
-	}
-
-	//(Non-Textured, Floating Color)
-	__forceinline
-		static void AppendPolyVertex1(TA_Vertex1* vtx)
-	{
-		vert_cvt_base;
-
-      vert_float_color_(cv->col,vtx->BaseA,vtx->BaseR,vtx->BaseG,vtx->BaseB)
 	}
 
 	//(Non-Textured, Intensity)

@@ -97,20 +97,6 @@ static INLINE f32 f16(u16 v)
    to[2] = float_to_satu8(b);	\
    to[3] = float_to_satu8(a);
    
-#define vert_cvt_base Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx)
-
-/* Resume vertex base (for B part) */
-#define vert_res_base Vertex* cv=vdrc.verts.LastPtr();
-
-//uv 16/32
-#define vert_uv_32(u_name,v_name) \
-   cv->u = (vtx->u_name);\
-   cv->v = (vtx->v_name);
-
-#define vert_uv_16(u_name,v_name) \
-   cv->u = f16(vtx->u_name);\
-   cv->v = f16(vtx->v_name);
-
 //Color conversions
 #define vert_packed_color_(to,src) \
    to[2] = (u8)(src);  \
@@ -214,7 +200,16 @@ public:
 
             /* (Non-Textured, Intensity) */
          case 2:
-            AppendPolyVertex2(&vp->vtx2);
+            {
+               TA_Vertex2* vtx = (TA_Vertex2*)&vp->vtx2;
+               Vertex   * cv = vert_cvt_base_((TA_Vertex0*)vtx);
+               u32    satint = float_to_satu8(vtx->BaseInt);
+
+               cv->col[0] = FaceBaseColor[0]*satint/256; 
+               cv->col[1] = FaceBaseColor[1]*satint/256; 
+               cv->col[2] = FaceBaseColor[2]*satint/256; 
+               cv->col[3] = FaceBaseColor[3];
+            }
             rv=SZ32;
             break;
 
@@ -1010,54 +1005,47 @@ public:
 		return cv;
 	}
 
-	//(Non-Textured, Intensity)
-	__forceinline
-		static void AppendPolyVertex2(TA_Vertex2* vtx)
-	{
-		vert_cvt_base;
-
-		vert_face_base_color(BaseInt);
-	}
-
 	//(Textured, Packed Color)
 	__forceinline
 		static void AppendPolyVertex3(TA_Vertex3* vtx)
 	{
-		vert_cvt_base;
+		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
       vert_packed_color_(cv->col,vtx->BaseCol);
       vert_packed_color_(cv->spc,vtx->OffsCol);
 
-		vert_uv_32(u,v);
+      cv->u = (vtx->u);
+      cv->v = (vtx->v);
 	}
 
 	//(Textured, Packed Color, 16bit UV)
 	__forceinline
 		static void AppendPolyVertex4(TA_Vertex4* vtx)
 	{
-		vert_cvt_base;
+		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
       vert_packed_color_(cv->col,vtx->BaseCol);
       vert_packed_color_(cv->spc,vtx->OffsCol);
 
-		vert_uv_16(u,v);
+      cv->u = f16(vtx->u);
+      cv->v = f16(vtx->v);
 	}
 
 	//(Textured, Floating Color)
 	__forceinline
 		static void AppendPolyVertex5A(TA_Vertex5A* vtx)
 	{
-		vert_cvt_base;
+		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
 		//Colors are on B
-
-		vert_uv_32(u,v);
+      cv->u = (vtx->u);
+      cv->v = (vtx->v);
 	}
 
 	__forceinline
 		static void AppendPolyVertex5B(TA_Vertex5B* vtx)
 	{
-		vert_res_base;
+		Vertex* cv=vdrc.verts.LastPtr();
 
       vert_float_color_(cv->col,vtx->BaseA,vtx->BaseR,vtx->BaseG,vtx->BaseB);
       vert_float_color_(cv->spc,vtx->OffsA,vtx->OffsR,vtx->OffsG,vtx->OffsB);
@@ -1067,16 +1055,17 @@ public:
 	__forceinline
 		static void AppendPolyVertex6A(TA_Vertex6A* vtx)
 	{
-		vert_cvt_base;
+		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
 		//Colors are on B
 
-		vert_uv_16(u,v);
+      cv->u = f16(vtx->u);
+      cv->v = f16(vtx->v);
 	}
 	__forceinline
 		static void AppendPolyVertex6B(TA_Vertex6B* vtx)
 	{
-		vert_res_base;
+		Vertex* cv=vdrc.verts.LastPtr();
 
       vert_float_color_(cv->col,vtx->BaseA,vtx->BaseR,vtx->BaseG,vtx->BaseB);
       vert_float_color_(cv->spc,vtx->OffsA,vtx->OffsR,vtx->OffsG,vtx->OffsB);
@@ -1086,24 +1075,26 @@ public:
 	__forceinline
 		static void AppendPolyVertex7(TA_Vertex7* vtx)
 	{
-		vert_cvt_base;
+		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
 		vert_face_base_color(BaseInt);
 		vert_face_offs_color(OffsInt);
 
-		vert_uv_32(u,v);
+      cv->u = (vtx->u);
+      cv->v = (vtx->v);
 	}
 
 	//(Textured, Intensity, 16bit UV)
 	__forceinline
 		static void AppendPolyVertex8(TA_Vertex8* vtx)
 	{
-		vert_cvt_base;
+		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
 		vert_face_base_color(BaseInt);
 		vert_face_offs_color(OffsInt);
 
-		vert_uv_16(u,v);
+      cv->u = f16(vtx->u);
+      cv->v = f16(vtx->v);
 
 	}
 
@@ -1111,7 +1102,7 @@ public:
 	__forceinline
 		static void AppendPolyVertex9(TA_Vertex9* vtx)
 	{
-		vert_cvt_base;
+		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
       vert_packed_color_(cv->col,vtx->BaseCol0);
 	}
@@ -1120,7 +1111,7 @@ public:
 	__forceinline
 		static void AppendPolyVertex10(TA_Vertex10* vtx)
 	{
-		vert_cvt_base;
+		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
 		vert_face_base_color(BaseInt0);
 	}
@@ -1129,35 +1120,36 @@ public:
 	__forceinline
 		static void AppendPolyVertex11A(TA_Vertex11A* vtx)
 	{
-		vert_cvt_base;
+		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
       vert_packed_color_(cv->col,vtx->BaseCol0);
       vert_packed_color_(cv->spc,vtx->OffsCol0);
 
-		vert_uv_32(u0,v0);
+      cv->u = (vtx->u0);
+      cv->v = (vtx->v0);
 	}
 	__forceinline
 		static void AppendPolyVertex11B(TA_Vertex11B* vtx)
 	{
-		vert_res_base;
-
+		Vertex* cv=vdrc.verts.LastPtr();
 	}
 
 	//(Textured, Packed Color, 16bit UV, with Two Volumes)
 	__forceinline
 		static void AppendPolyVertex12A(TA_Vertex12A* vtx)
 	{
-		vert_cvt_base;
+		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
       vert_packed_color_(cv->col,vtx->BaseCol0);
       vert_packed_color_(cv->spc,vtx->OffsCol0);
 
-		vert_uv_16(u0,v0);
+      cv->u = f16(vtx->u0);
+      cv->v = f16(vtx->v0);
 	}
 	__forceinline
 		static void AppendPolyVertex12B(TA_Vertex12B* vtx)
 	{
-		vert_res_base;
+		Vertex* cv=vdrc.verts.LastPtr();
 
 	}
 
@@ -1165,17 +1157,18 @@ public:
 	__forceinline
 		static void AppendPolyVertex13A(TA_Vertex13A* vtx)
 	{
-		vert_cvt_base;
+		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
 		vert_face_base_color(BaseInt0);
 		vert_face_offs_color(OffsInt0);
 
-		vert_uv_32(u0,v0);
+      cv->u = (vtx->u0);
+      cv->v = (vtx->v0);
 	}
 	__forceinline
 		static void AppendPolyVertex13B(TA_Vertex13B* vtx)
 	{
-		vert_res_base;
+		Vertex* cv=vdrc.verts.LastPtr();
 
 	}
 
@@ -1183,17 +1176,18 @@ public:
 	__forceinline
 		static void AppendPolyVertex14A(TA_Vertex14A* vtx)
 	{
-		vert_cvt_base;
+		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
 		vert_face_base_color(BaseInt0);
 		vert_face_offs_color(OffsInt0);
 
-		vert_uv_16(u0,v0);
+      cv->u = f16(vtx->u0);
+      cv->v = f16(vtx->v0);
 	}
 	__forceinline
 		static void AppendPolyVertex14B(TA_Vertex14B* vtx)
 	{
-		vert_res_base;
+		Vertex* cv=vdrc.verts.LastPtr();
 
 	}
 
@@ -1330,7 +1324,7 @@ public:
 	__forceinline
 		static void AppendSpriteVertexB(TA_Sprite1B* sv)
 	{
-		vert_res_base;
+		Vertex* cv=vdrc.verts.LastPtr();
 		cv-=3;
 
 		cv[1].y=sv->y2;

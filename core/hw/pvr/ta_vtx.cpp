@@ -89,12 +89,6 @@ static INLINE f32 f16(u16 v)
 
 #define vdrc vd_rc
 
-#define poly_float_color_(to,a,r,g,b) \
-   to[0] = float_to_satu8(r);	\
-   to[1] = float_to_satu8(g);	\
-   to[2] = float_to_satu8(b);	\
-   to[3] = float_to_satu8(a);
-   
 //Color conversions
 #define vert_packed_color_(to,src) \
    to[2] = (u8)(src);  \
@@ -1005,38 +999,6 @@ public:
 		}
 	}
 
-	/*
-	if (CurrentPP==0 || CurrentPP->pcw.full!=pp->pcw.full || \
-	CurrentPP->tcw.full!=pp->tcw.full || \
-	CurrentPP->tsp.full!=pp->tsp.full || \
-	CurrentPP->isp.full!=pp->isp.full	) \
-	*/
-	//Polys  -- update code on sprites if that gets updated too --
-	template<class T>
-	static __forceinline void glob_param_bdc_(T* pp)
-   {
-      PolyParam* d_pp=CurrentPP;
-      if (CurrentPP->count!=0)
-      {
-         d_pp=CurrentPPlist->Append(); 
-         CurrentPP=d_pp;
-      }
-      d_pp->first=vdrc.idx.used(); 
-      d_pp->count=0; 
-
-      d_pp->isp=pp->isp; 
-      d_pp->tsp=pp->tsp; 
-      d_pp->tcw=pp->tcw;
-      d_pp->pcw=pp->pcw; 
-      d_pp->tileclip=tileclip_val;
-
-      d_pp->texid = -1;
-
-      if (d_pp->pcw.Texture)
-         d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
-   }
-
-
 	//poly param handling
 	__forceinline
 		static void TACALL AppendPolyParam0(void* vpp)
@@ -1047,7 +1009,30 @@ public:
             CurrentPP->tcw.full!=pp->tcw.full || 
             CurrentPP->tsp.full!=pp->tsp.full || 
             CurrentPP->isp.full!=pp->isp.full	) 
-         glob_param_bdc_( (TA_PolyParam0*)pp);
+      {
+         /* Polys  -- update code on sprites if that gets updated too -- */
+         TA_PolyParam0 *npp  = (TA_PolyParam0*)pp;
+         PolyParam     *d_pp = CurrentPP;
+
+         if (CurrentPP->count!=0)
+         {
+            d_pp=CurrentPPlist->Append(); 
+            CurrentPP=d_pp;
+         }
+         d_pp->first=vdrc.idx.used(); 
+         d_pp->count=0; 
+
+         d_pp->isp=npp->isp; 
+         d_pp->tsp=npp->tsp; 
+         d_pp->tcw=npp->tcw;
+         d_pp->pcw=npp->pcw; 
+         d_pp->tileclip=tileclip_val;
+
+         d_pp->texid = -1;
+
+         if (d_pp->pcw.Texture)
+            d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
+      }
 	}
 	__forceinline
 		static void TACALL AppendPolyParam1(void* vpp)
@@ -1058,8 +1043,34 @@ public:
             CurrentPP->tcw.full!=pp->tcw.full || 
             CurrentPP->tsp.full!=pp->tsp.full || 
             CurrentPP->isp.full!=pp->isp.full	) 
-         glob_param_bdc_( (TA_PolyParam0*)pp);
-      poly_float_color_(FaceBaseColor,pp->FaceColorA,pp->FaceColorR,pp->FaceColorG,pp->FaceColorB);
+      {
+         /* Polys  -- update code on sprites if that gets updated too -- */
+         TA_PolyParam0 *npp  = (TA_PolyParam0*)pp;
+         PolyParam     *d_pp = CurrentPP;
+         if (CurrentPP->count!=0)
+         {
+            d_pp=CurrentPPlist->Append(); 
+            CurrentPP=d_pp;
+         }
+         d_pp->first=vdrc.idx.used(); 
+         d_pp->count=0; 
+
+         d_pp->isp=npp->isp; 
+         d_pp->tsp=npp->tsp; 
+         d_pp->tcw=npp->tcw;
+         d_pp->pcw=npp->pcw; 
+         d_pp->tileclip=tileclip_val;
+
+         d_pp->texid = -1;
+
+         if (d_pp->pcw.Texture)
+            d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
+      }
+
+      FaceBaseColor[0] = float_to_satu8(pp->FaceColorR);
+      FaceBaseColor[1] = float_to_satu8(pp->FaceColorG);
+      FaceBaseColor[2] = float_to_satu8(pp->FaceColorB);
+      FaceBaseColor[3] = float_to_satu8(pp->FaceColorA);
 	}
 	__forceinline
 		static void TACALL AppendPolyParam2A(void* vpp)
@@ -1070,15 +1081,44 @@ public:
             CurrentPP->tcw.full!=pp->tcw.full || 
             CurrentPP->tsp.full!=pp->tsp.full || 
             CurrentPP->isp.full!=pp->isp.full	) 
-         glob_param_bdc_( (TA_PolyParam0*)pp);
+      {
+         /* Polys  -- update code on sprites if that gets updated too -- */
+         TA_PolyParam0 *npp  = (TA_PolyParam0*)pp;
+         PolyParam     *d_pp = CurrentPP;
+         if (CurrentPP->count!=0)
+         {
+            d_pp=CurrentPPlist->Append(); 
+            CurrentPP=d_pp;
+         }
+         d_pp->first=vdrc.idx.used(); 
+         d_pp->count=0; 
+
+         d_pp->isp=npp->isp; 
+         d_pp->tsp=npp->tsp; 
+         d_pp->tcw=npp->tcw;
+         d_pp->pcw=npp->pcw; 
+         d_pp->tileclip=tileclip_val;
+
+         d_pp->texid = -1;
+
+         if (d_pp->pcw.Texture)
+            d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
+      }
 	}
 	__forceinline
 		static void TACALL AppendPolyParam2B(void* vpp)
 	{
 		TA_PolyParam2B* pp=(TA_PolyParam2B*)vpp;
 
-      poly_float_color_(FaceBaseColor,pp->FaceColorA,pp->FaceColorR,pp->FaceColorG,pp->FaceColorB);
-      poly_float_color_(FaceOffsColor,pp->FaceOffsetA,pp->FaceOffsetR,pp->FaceOffsetG,pp->FaceOffsetB);
+      FaceBaseColor[0] = float_to_satu8(pp->FaceColorR);
+      FaceBaseColor[1] = float_to_satu8(pp->FaceColorG);
+      FaceBaseColor[2] = float_to_satu8(pp->FaceColorB);
+      FaceBaseColor[3] = float_to_satu8(pp->FaceColorA);
+
+      FaceOffsColor[0] = float_to_satu8(pp->FaceOffsetR);
+      FaceOffsColor[1] = float_to_satu8(pp->FaceOffsetG);
+      FaceOffsColor[2] = float_to_satu8(pp->FaceOffsetB);
+      FaceOffsColor[3] = float_to_satu8(pp->FaceOffsetA);
 	}
 	__forceinline
 		static void TACALL AppendPolyParam3(void* vpp)
@@ -1089,7 +1129,29 @@ public:
             CurrentPP->tcw.full!=pp->tcw.full || 
             CurrentPP->tsp.full!=pp->tsp.full || 
             CurrentPP->isp.full!=pp->isp.full	) 
-         glob_param_bdc_( (TA_PolyParam0*)pp);
+      {
+         /* Polys  -- update code on sprites if that gets updated too -- */
+         TA_PolyParam0 *npp  = (TA_PolyParam0*)pp;
+         PolyParam     *d_pp = CurrentPP;
+         if (CurrentPP->count!=0)
+         {
+            d_pp=CurrentPPlist->Append(); 
+            CurrentPP=d_pp;
+         }
+         d_pp->first=vdrc.idx.used(); 
+         d_pp->count=0; 
+
+         d_pp->isp=npp->isp; 
+         d_pp->tsp=npp->tsp; 
+         d_pp->tcw=npp->tcw;
+         d_pp->pcw=npp->pcw; 
+         d_pp->tileclip=tileclip_val;
+
+         d_pp->texid = -1;
+
+         if (d_pp->pcw.Texture)
+            d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
+      }
 	}
 	__forceinline
 		static void TACALL AppendPolyParam4A(void* vpp)
@@ -1100,14 +1162,39 @@ public:
             CurrentPP->tcw.full!=pp->tcw.full || 
             CurrentPP->tsp.full!=pp->tsp.full || 
             CurrentPP->isp.full!=pp->isp.full	) 
-         glob_param_bdc_( (TA_PolyParam0*)pp);
+      {
+         /* Polys  -- update code on sprites if that gets updated too -- */
+         TA_PolyParam0 *npp  = (TA_PolyParam0*)pp;
+         PolyParam     *d_pp = CurrentPP;
+         if (CurrentPP->count!=0)
+         {
+            d_pp=CurrentPPlist->Append(); 
+            CurrentPP=d_pp;
+         }
+         d_pp->first=vdrc.idx.used(); 
+         d_pp->count=0; 
+
+         d_pp->isp=npp->isp; 
+         d_pp->tsp=npp->tsp; 
+         d_pp->tcw=npp->tcw;
+         d_pp->pcw=npp->pcw; 
+         d_pp->tileclip=tileclip_val;
+
+         d_pp->texid = -1;
+
+         if (d_pp->pcw.Texture)
+            d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
+      }
 	}
 	__forceinline
 		static void TACALL AppendPolyParam4B(void* vpp)
 	{
 		TA_PolyParam4B* pp=(TA_PolyParam4B*)vpp;
 
-      poly_float_color_(FaceBaseColor,pp->FaceColor0A,pp->FaceColor0R,pp->FaceColor0G,pp->FaceColor0B)
+      FaceBaseColor[0] = float_to_satu8(pp->FaceColor0R);
+      FaceBaseColor[1] = float_to_satu8(pp->FaceColor0G);
+      FaceBaseColor[2] = float_to_satu8(pp->FaceColor0B);
+      FaceBaseColor[3] = float_to_satu8(pp->FaceColor0A);
 	}
 
 	//Poly Strip handling

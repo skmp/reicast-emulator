@@ -226,7 +226,23 @@ public:
 
             /* (Textured, Packed Color, 16bit UV) */
          case 4:
-            AppendPolyVertex4(&vp->vtx4);
+            {
+               TA_Vertex4 *vtx = (TA_Vertex4*)&vp->vtx4;
+               Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
+
+               cv->col[2] = (u8)(vtx->BaseCol);
+               cv->col[1] = (u8)(vtx->BaseCol >> 8);
+               cv->col[0] = (u8)(vtx->BaseCol >> 16);
+               cv->col[3] = (u8)(vtx->BaseCol >> 24);
+
+               cv->spc[2] = (u8)(vtx->OffsCol);
+               cv->spc[1] = (u8)(vtx->OffsCol >> 8);
+               cv->spc[0] = (u8)(vtx->OffsCol >> 16);
+               cv->spc[3] = (u8)(vtx->OffsCol >> 24);
+
+               cv->u = f16(vtx->u);
+               cv->v = f16(vtx->v);
+            }
             rv=SZ32;
             break;
 
@@ -279,7 +295,15 @@ public:
 
             /* (Non-Textured, Packed Color, with Two Volumes) */
          case 9:
-            AppendPolyVertex9(&vp->vtx9);
+            {
+               TA_Vertex9 *vtx = (TA_Vertex9*)&vp->vtx9;
+               Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
+
+               cv->col[2] = (u8)(vtx->BaseCol0);
+               cv->col[1] = (u8)(vtx->BaseCol0 >> 8);
+               cv->col[0] = (u8)(vtx->BaseCol0 >> 16);
+               cv->col[3] = (u8)(vtx->BaseCol0 >> 24);
+            }
             rv=SZ32;
             break;
 
@@ -416,8 +440,23 @@ public:
             /*process first half*/
             if (part!=2)
             {
+               TA_Vertex12A *vtx = (TA_Vertex12A*)&vp->vtx12A;
+               Vertex       *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
+
+               cv->col[2] = (u8)(vtx->BaseCol0);
+               cv->col[1] = (u8)(vtx->BaseCol0 >> 8);
+               cv->col[0] = (u8)(vtx->BaseCol0 >> 16);
+               cv->col[3] = (u8)(vtx->BaseCol0 >> 24);
+
+               cv->spc[2] = (u8)(vtx->OffsCol0);
+               cv->spc[1] = (u8)(vtx->OffsCol0 >> 8);
+               cv->spc[0] = (u8)(vtx->OffsCol0 >> 16);
+               cv->spc[3] = (u8)(vtx->OffsCol0 >> 24);
+
+               cv->u = f16(vtx->u0);
+               cv->v = f16(vtx->v0);
+
                rv+=SZ32;
-               AppendPolyVertex12A(&vp->vtx12A);
             }
             /*process second half*/
             if (part==0 || part == 2)
@@ -1107,58 +1146,6 @@ public:
 		cv->z=invW;
 		update_fz(invW);
 		return cv;
-	}
-
-	//(Textured, Packed Color, 16bit UV)
-	__forceinline
-		static void AppendPolyVertex4(TA_Vertex4* vtx)
-	{
-		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
-
-      cv->col[2] = (u8)(vtx->BaseCol);
-      cv->col[1] = (u8)(vtx->BaseCol >> 8);
-      cv->col[0] = (u8)(vtx->BaseCol >> 16);
-      cv->col[3] = (u8)(vtx->BaseCol >> 24);
-
-      cv->spc[2] = (u8)(vtx->OffsCol);
-      cv->spc[1] = (u8)(vtx->OffsCol >> 8);
-      cv->spc[0] = (u8)(vtx->OffsCol >> 16);
-      cv->spc[3] = (u8)(vtx->OffsCol >> 24);
-
-      cv->u = f16(vtx->u);
-      cv->v = f16(vtx->v);
-	}
-
-	//(Non-Textured, Packed Color, with Two Volumes)
-	__forceinline
-		static void AppendPolyVertex9(TA_Vertex9* vtx)
-	{
-		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
-
-      cv->col[2] = (u8)(vtx->BaseCol0);
-      cv->col[1] = (u8)(vtx->BaseCol0 >> 8);
-      cv->col[0] = (u8)(vtx->BaseCol0 >> 16);
-      cv->col[3] = (u8)(vtx->BaseCol0 >> 24);
-	}
-
-	//(Textured, Packed Color, 16bit UV, with Two Volumes)
-	__forceinline
-		static void AppendPolyVertex12A(TA_Vertex12A* vtx)
-	{
-		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
-
-      cv->col[2] = (u8)(vtx->BaseCol0);
-      cv->col[1] = (u8)(vtx->BaseCol0 >> 8);
-      cv->col[0] = (u8)(vtx->BaseCol0 >> 16);
-      cv->col[3] = (u8)(vtx->BaseCol0 >> 24);
-
-      cv->spc[2] = (u8)(vtx->OffsCol0);
-      cv->spc[1] = (u8)(vtx->OffsCol0 >> 8);
-      cv->spc[0] = (u8)(vtx->OffsCol0 >> 16);
-      cv->spc[3] = (u8)(vtx->OffsCol0 >> 24);
-
-      cv->u = f16(vtx->u0);
-      cv->v = f16(vtx->v0);
 	}
 
 	//Sprites

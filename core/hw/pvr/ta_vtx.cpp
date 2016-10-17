@@ -302,18 +302,9 @@ public:
                AppendPolyVertex11A(&vp->vtx11A);
             }
             /*process second half*/
-            if (part==0)
-            {
-               AppendPolyVertex11B(&vp->vtx11B);
+            if (part==0 || part == 2)
                rv+=SZ32;
-            }
-            else if (part==2)
-            {
-               AppendPolyVertex11B((TA_Vertex11B*)data);
-               rv+=SZ32;
-            }
             break;
-
             /* (Textured, Packed Color, 16bit UV, with Two Volumes) */
          case 12 :
             /*process first half*/
@@ -323,16 +314,8 @@ public:
                AppendPolyVertex12A(&vp->vtx12A);
             }
             /*process second half*/
-            if (part==0)
-            {
-               AppendPolyVertex12B(&vp->vtx12B);
+            if (part==0 || part == 2)
                rv+=SZ32;
-            }
-            else if (part==2)
-            {
-               AppendPolyVertex12B((TA_Vertex12B*)data);
-               rv+=SZ32;
-            }
             break;
 
             /* (Textured, Intensity, with Two Volumes) */
@@ -344,16 +327,8 @@ public:
                AppendPolyVertex13A(&vp->vtx13A);
             }
             /*process second half*/
-            if (part==0)
-            {
-               AppendPolyVertex13B(&vp->vtx13B);
+            if (part==0 || part == 2)
                rv+=SZ32;
-            }
-            else if (part==2)
-            {
-               AppendPolyVertex13B((TA_Vertex13B*)data);
-               rv+=SZ32;
-            }
             break;
 
             /* (Textured, Intensity, 16bit UV, with Two Volumes) */
@@ -365,16 +340,8 @@ public:
                AppendPolyVertex14A(&vp->vtx14A);
             }
             /*process second half*/
-            if (part==0)
-            {
-               AppendPolyVertex14B(&vp->vtx14B);
+            if (part==0 || part == 2)
                rv+=SZ32;
-            }
-            else if (part==2)
-            {
-               AppendPolyVertex14B((TA_Vertex14B*)data);
-               rv+=SZ32;
-            }
             break;
       }
 
@@ -1128,11 +1095,6 @@ public:
       cv->u = (vtx->u0);
       cv->v = (vtx->v0);
 	}
-	__forceinline
-		static void AppendPolyVertex11B(TA_Vertex11B* vtx)
-	{
-		Vertex* cv=vdrc.verts.LastPtr();
-	}
 
 	//(Textured, Packed Color, 16bit UV, with Two Volumes)
 	__forceinline
@@ -1145,12 +1107,6 @@ public:
 
       cv->u = f16(vtx->u0);
       cv->v = f16(vtx->v0);
-	}
-	__forceinline
-		static void AppendPolyVertex12B(TA_Vertex12B* vtx)
-	{
-		Vertex* cv=vdrc.verts.LastPtr();
-
 	}
 
 	//(Textured, Intensity,	with Two Volumes)
@@ -1165,12 +1121,6 @@ public:
       cv->u = (vtx->u0);
       cv->v = (vtx->v0);
 	}
-	__forceinline
-		static void AppendPolyVertex13B(TA_Vertex13B* vtx)
-	{
-		Vertex* cv=vdrc.verts.LastPtr();
-
-	}
 
 	//(Textured, Intensity, 16bit UV, with Two Volumes)
 	__forceinline
@@ -1183,12 +1133,6 @@ public:
 
       cv->u = f16(vtx->u0);
       cv->v = f16(vtx->v0);
-	}
-	__forceinline
-		static void AppendPolyVertex14B(TA_Vertex14B* vtx)
-	{
-		Vertex* cv=vdrc.verts.LastPtr();
-
 	}
 
 	//Sprites

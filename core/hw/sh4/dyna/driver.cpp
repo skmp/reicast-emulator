@@ -77,7 +77,7 @@ static void recSh4_ClearCache(void)
 }
 
 #if (FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64)
-int cycle_counter;
+extern int cycle_counter;
 extern bool inside_loop;
 
 static void ngen_mainloop(void* v_cntx)

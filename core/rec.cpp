@@ -9,6 +9,8 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/dyna/regalloc.h"
 
+int cycle_counter;
+
 struct DynaRBI : RuntimeBlockInfo
 {
    /* NOTE/TODO - this was virtual u32 Relink();

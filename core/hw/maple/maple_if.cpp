@@ -42,9 +42,6 @@ static void maple_DoDma(void)
 	verify(SB_MDEN &1)
 	verify(SB_MDST &1)
 
-#if debug_maple
-	printf("Maple: DoMapleDma\n");
-#endif
 	u32 addr = SB_MDSTAR;
 	u32 xfer_count=0;
 	bool last = false;
@@ -165,13 +162,6 @@ void maple_SB_MDST_Write(u32 addr, u32 data)
 void maple_SB_MDEN_Write(u32 addr, u32 data)
 {
 	SB_MDEN=data&1;
-
-#if debug_maple
-	if ((data & 0x1)==0  && SB_MDST)
-	{
-		die("Maple DMA abort ?\n");
-	}
-#endif
 }
 
 int maple_schd(int tag, int c, int j)

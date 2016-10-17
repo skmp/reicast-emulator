@@ -245,9 +245,7 @@ case num : {\
 	static Ta_Dma* TACALL ta_poly_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
       //If SZ64  && 32 bytes
-#define IS_FIST_HALF ((poly_size!=SZ32) && (data==data_end))
-
-		if (IS_FIST_HALF)
+		if ((poly_size!=SZ32) && (data==data_end))
 			goto fist_half;
 
       bool has_full_data;
@@ -263,15 +261,9 @@ case num : {\
          has_full_data = (poly_size==SZ32 ? (data<=data_end) : (data<data_end));
       } while(has_full_data);
 			
-      if (IS_FIST_HALF)
-      {
-fist_half:
-         ta_handle_poly<poly_type,1>(data,0);
-         if (data->pcw.EndOfStrip) EndPolyStrip();
-         TaCmd=ta_handle_poly<poly_type,2>;
-
-         data+=SZ32;
-      }
+      //If SZ64  && 32 bytes
+		if ((poly_size!=SZ32) && (data==data_end))
+         goto fist_half;
 			
 		return data;
 
@@ -280,6 +272,14 @@ strip_end:
 		if (data->pcw.EndOfStrip)
 			EndPolyStrip();
 		return data+poly_size;
+
+fist_half:
+      ta_handle_poly<poly_type,1>(data,0);
+      if (data->pcw.EndOfStrip) EndPolyStrip();
+      TaCmd=ta_handle_poly<poly_type,2>;
+
+      data+=SZ32;
+      return data;
 	}
 
 	static void TACALL AppendPolyParam2Full(void* vpp)

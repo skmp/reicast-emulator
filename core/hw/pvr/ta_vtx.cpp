@@ -93,67 +93,61 @@ static f32 f16(u16 v)
 
 #define poly_float_color_(to,a,r,g,b) \
    to[0] = float_to_satu8(r);	\
-to[1] = float_to_satu8(g);	\
-to[2] = float_to_satu8(b);	\
-to[3] = float_to_satu8(a);
-
-#define poly_float_color(to,src) \
-   poly_float_color_(to,pp->src##A,pp->src##R,pp->src##G,pp->src##B)
-
+   to[1] = float_to_satu8(g);	\
+   to[2] = float_to_satu8(b);	\
+   to[3] = float_to_satu8(a);
+   
 #define vert_cvt_base Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx)
 
-//Resume vertex base (for B part)
-#define vert_res_base \
-   Vertex* cv=vdrc.verts.LastPtr();
+/* Resume vertex base (for B part) */
+#define vert_res_base Vertex* cv=vdrc.verts.LastPtr();
 
 //uv 16/32
 #define vert_uv_32(u_name,v_name) \
    cv->u = (vtx->u_name);\
-cv->v = (vtx->v_name);
+   cv->v = (vtx->v_name);
 
 #define vert_uv_16(u_name,v_name) \
    cv->u = f16(vtx->u_name);\
-cv->v = f16(vtx->v_name);
+   cv->v = f16(vtx->v_name);
 
 //Color conversions
 #define vert_packed_color_(to,src) \
    to[2] = (u8)(src);  \
-to[1] = (u8)(src >> 8); \
-to[0] = (u8)(src >> 16); \
-to[3] = (u8)(src >> 24);
+   to[1] = (u8)(src >> 8); \
+   to[0] = (u8)(src >> 16); \
+   to[3] = (u8)(src >> 24);
 
 #define vert_float_color_(to,a,r,g,b) \
    to[0] = float_to_satu8(r); \
-to[1] = float_to_satu8(g); \
-to[2] = float_to_satu8(b); \
-to[3] = float_to_satu8(a);
+   to[1] = float_to_satu8(g); \
+   to[2] = float_to_satu8(b); \
+   to[3] = float_to_satu8(a);
 
-//Macros to make thins easier ;)
-#define vert_packed_color(to,src) \
-   vert_packed_color_(cv->to,vtx->src);
+/* Intensity handling */
 
-#define vert_float_color(to,src) \
-   vert_float_color_(cv->to,vtx->src##A,vtx->src##R,vtx->src##G,vtx->src##B)
-
-//Intensity handling
-
-//Notes:
-//Alpha doesn't get intensity
-//Intensity is clamped before the mul, as well as on face color to work the same as the hardware. [Fixes red dog]
+/* Notes:
+ * Alpha doesn't get intensity
+ * Intensity is clamped before the mul, 
+ * as well as on face color to work the same as the hardware. [Fixes red dog] */
 
 #define vert_face_base_color(baseint) \
-{ u32 satint=float_to_satu8(vtx->baseint); \
+{ \
+   u32 satint=float_to_satu8(vtx->baseint); \
    cv->col[0] = FaceBaseColor[0]*satint/256;  \
    cv->col[1] = FaceBaseColor[1]*satint/256;  \
    cv->col[2] = FaceBaseColor[2]*satint/256;  \
-   cv->col[3] = FaceBaseColor[3]; }
+   cv->col[3] = FaceBaseColor[3]; \
+}
 
 #define vert_face_offs_color(offsint) \
-{ u32 satint=float_to_satu8(vtx->offsint); \
+{ \
+   u32 satint=float_to_satu8(vtx->offsint); \
    cv->spc[0] = FaceOffsColor[0]*satint/256;  \
    cv->spc[1] = FaceOffsColor[1]*satint/256;  \
    cv->spc[2] = FaceOffsColor[2]*satint/256;  \
-   cv->spc[3] = FaceOffsColor[3]; }
+   cv->spc[3] = FaceOffsColor[3]; \
+}
 
 //Splitter function (normally ta_dma_main , modified for split dma's)
 
@@ -911,7 +905,7 @@ public:
 		TA_PolyParam1* pp=(TA_PolyParam1*)vpp;
 
 		glob_param_bdc(pp);
-		poly_float_color(FaceBaseColor,FaceColor);
+      poly_float_color_(FaceBaseColor,pp->FaceColorA,pp->FaceColorR,pp->FaceColorG,pp->FaceColorB);
 	}
 	__forceinline
 		static void TACALL AppendPolyParam2A(void* vpp)
@@ -925,8 +919,8 @@ public:
 	{
 		TA_PolyParam2B* pp=(TA_PolyParam2B*)vpp;
 
-		poly_float_color(FaceBaseColor,FaceColor);
-		poly_float_color(FaceOffsColor,FaceOffset);
+      poly_float_color_(FaceBaseColor,pp->FaceColorA,pp->FaceColorR,pp->FaceColorG,pp->FaceColorB);
+      poly_float_color_(FaceOffsColor,pp->FaceOffsetA,pp->FaceOffsetR,pp->FaceOffsetG,pp->FaceOffsetB);
 	}
 	__forceinline
 		static void TACALL AppendPolyParam3(void* vpp)
@@ -947,7 +941,7 @@ public:
 	{
 		TA_PolyParam4B* pp=(TA_PolyParam4B*)vpp;
 
-		poly_float_color(FaceBaseColor,FaceColor0);
+      poly_float_color_(FaceBaseColor,pp->FaceColor0A,pp->FaceColor0R,pp->FaceColor0G,pp->FaceColor0B)
 	}
 
 	//Poly Strip handling
@@ -1007,7 +1001,7 @@ public:
 	{
 		vert_cvt_base;
 
-		vert_packed_color(col,BaseCol);
+      vert_packed_color_(cv->col,vtx->BaseCol);
 	}
 
 	//(Non-Textured, Floating Color)
@@ -1016,7 +1010,7 @@ public:
 	{
 		vert_cvt_base;
 
-		vert_float_color(col,Base);
+      vert_float_color_(cv->col,vtx->BaseA,vtx->BaseR,vtx->BaseG,vtx->BaseB)
 	}
 
 	//(Non-Textured, Intensity)
@@ -1034,8 +1028,8 @@ public:
 	{
 		vert_cvt_base;
 
-		vert_packed_color(col,BaseCol);
-		vert_packed_color(spc,OffsCol);
+      vert_packed_color_(cv->col,vtx->BaseCol);
+      vert_packed_color_(cv->spc,vtx->OffsCol);
 
 		vert_uv_32(u,v);
 	}
@@ -1046,8 +1040,8 @@ public:
 	{
 		vert_cvt_base;
 
-		vert_packed_color(col,BaseCol);
-		vert_packed_color(spc,OffsCol);
+      vert_packed_color_(cv->col,vtx->BaseCol);
+      vert_packed_color_(cv->spc,vtx->OffsCol);
 
 		vert_uv_16(u,v);
 	}
@@ -1068,8 +1062,8 @@ public:
 	{
 		vert_res_base;
 
-		vert_float_color(col,Base);
-		vert_float_color(spc,Offs);
+      vert_float_color_(cv->col,vtx->BaseA,vtx->BaseR,vtx->BaseG,vtx->BaseB);
+      vert_float_color_(cv->spc,vtx->OffsA,vtx->OffsR,vtx->OffsG,vtx->OffsB);
 	}
 
 	//(Textured, Floating Color, 16bit UV)
@@ -1087,8 +1081,8 @@ public:
 	{
 		vert_res_base;
 
-		vert_float_color(col,Base);
-		vert_float_color(spc,Offs);
+      vert_float_color_(cv->col,vtx->BaseA,vtx->BaseR,vtx->BaseG,vtx->BaseB);
+      vert_float_color_(cv->spc,vtx->OffsA,vtx->OffsR,vtx->OffsG,vtx->OffsB);
 	}
 
 	//(Textured, Intensity)
@@ -1122,7 +1116,7 @@ public:
 	{
 		vert_cvt_base;
 
-		vert_packed_color(col,BaseCol0);
+      vert_packed_color_(cv->col,vtx->BaseCol0);
 	}
 
 	//(Non-Textured, Intensity,	with Two Volumes)
@@ -1140,8 +1134,8 @@ public:
 	{
 		vert_cvt_base;
 
-		vert_packed_color(col,BaseCol0);
-		vert_packed_color(spc,OffsCol0);
+      vert_packed_color_(cv->col,vtx->BaseCol0);
+      vert_packed_color_(cv->spc,vtx->OffsCol0);
 
 		vert_uv_32(u0,v0);
 	}
@@ -1158,8 +1152,8 @@ public:
 	{
 		vert_cvt_base;
 
-		vert_packed_color(col,BaseCol0);
-		vert_packed_color(spc,OffsCol0);
+      vert_packed_color_(cv->col,vtx->BaseCol0);
+      vert_packed_color_(cv->spc,vtx->OffsCol0);
 
 		vert_uv_16(u0,v0);
 	}

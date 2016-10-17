@@ -271,16 +271,29 @@ public:
                   cv->v = (vtx->v);
                }
             }
-            /*process second half*/
-            if (part==0)
             {
-               AppendPolyVertex5B(&vp->vtx5B);
-               rv+=SZ32;
-            }
-            else if (part==2)
-            {
-               AppendPolyVertex5B((TA_Vertex5B*)data);
-               rv+=SZ32;
+               TA_Vertex5B *vtx = NULL;
+               /*process second half*/
+               if (part==0)
+                  vtx = (TA_Vertex5B*)&vp->vtx5B;
+               else if (part == 2)
+                  vtx = (TA_Vertex5B*)data;
+
+               if (vtx)
+               {
+                  Vertex* cv=vdrc.verts.LastPtr();
+
+                  cv->col[0] = float_to_satu8(vtx->BaseR);
+                  cv->col[1] = float_to_satu8(vtx->BaseG);
+                  cv->col[2] = float_to_satu8(vtx->BaseB);
+                  cv->col[3] = float_to_satu8(vtx->BaseA);
+
+                  cv->spc[0] = float_to_satu8(vtx->OffsR);
+                  cv->spc[1] = float_to_satu8(vtx->OffsG);
+                  cv->spc[2] = float_to_satu8(vtx->OffsB);
+                  cv->spc[3] = float_to_satu8(vtx->OffsA);
+                  rv+=SZ32;
+               }
             }
             break;
 
@@ -300,16 +313,30 @@ public:
                   cv->v = f16(vtx->v);
                }
             }
-            /*process second half*/
-            if (part==0)
+
             {
-               AppendPolyVertex6B(&vp->vtx6B);
-               rv+=SZ32;
-            }
-            else if (part==2)
-            {
-               AppendPolyVertex6B((TA_Vertex6B*)data);
-               rv+=SZ32;
+               TA_Vertex6B *vtx = NULL;
+               /*process second half*/
+               if (part==0)
+                  vtx = (TA_Vertex6B*)&vp->vtx6B;
+               else if (part == 2)
+                  vtx = (TA_Vertex6B*)data;
+
+               if (vtx)
+               {
+                  Vertex* cv=vdrc.verts.LastPtr();
+
+                  cv->col[0] = float_to_satu8(vtx->BaseR);
+                  cv->col[1] = float_to_satu8(vtx->BaseG);
+                  cv->col[2] = float_to_satu8(vtx->BaseB);
+                  cv->col[3] = float_to_satu8(vtx->BaseA);
+
+                  cv->spc[0] = float_to_satu8(vtx->OffsR);
+                  cv->spc[1] = float_to_satu8(vtx->OffsG);
+                  cv->spc[2] = float_to_satu8(vtx->OffsB);
+                  cv->spc[3] = float_to_satu8(vtx->OffsA);
+                  rv+=SZ32;
+               }
             }
             break;
 
@@ -1003,38 +1030,6 @@ public:
 
       cv->u = f16(vtx->u);
       cv->v = f16(vtx->v);
-	}
-
-	__forceinline
-		static void AppendPolyVertex5B(TA_Vertex5B* vtx)
-	{
-		Vertex* cv=vdrc.verts.LastPtr();
-
-      cv->col[0] = float_to_satu8(vtx->BaseR);
-      cv->col[1] = float_to_satu8(vtx->BaseG);
-      cv->col[2] = float_to_satu8(vtx->BaseB);
-      cv->col[3] = float_to_satu8(vtx->BaseA);
-
-      cv->spc[0] = float_to_satu8(vtx->OffsR);
-      cv->spc[1] = float_to_satu8(vtx->OffsG);
-      cv->spc[2] = float_to_satu8(vtx->OffsB);
-      cv->spc[3] = float_to_satu8(vtx->OffsA);
-	}
-
-	__forceinline
-		static void AppendPolyVertex6B(TA_Vertex6B* vtx)
-	{
-		Vertex* cv=vdrc.verts.LastPtr();
-
-      cv->col[0] = float_to_satu8(vtx->BaseR);
-      cv->col[1] = float_to_satu8(vtx->BaseG);
-      cv->col[2] = float_to_satu8(vtx->BaseB);
-      cv->col[3] = float_to_satu8(vtx->BaseA);
-
-      cv->spc[0] = float_to_satu8(vtx->OffsR);
-      cv->spc[1] = float_to_satu8(vtx->OffsG);
-      cv->spc[2] = float_to_satu8(vtx->OffsB);
-      cv->spc[3] = float_to_satu8(vtx->OffsA);
 	}
 
 	//(Textured, Intensity)

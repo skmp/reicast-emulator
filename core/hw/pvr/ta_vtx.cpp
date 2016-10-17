@@ -104,36 +104,12 @@ static INLINE f32 f16(u16 v)
    to[0] = (u8)(src >> 16); \
    to[3] = (u8)(src >> 24);
 
-#define vert_float_color_(to,a,r,g,b) \
-   to[0] = float_to_satu8(r); \
-   to[1] = float_to_satu8(g); \
-   to[2] = float_to_satu8(b); \
-   to[3] = float_to_satu8(a);
-
 /* Intensity handling */
 
 /* Notes:
  * Alpha doesn't get intensity
  * Intensity is clamped before the mul, 
  * as well as on face color to work the same as the hardware. [Fixes red dog] */
-
-#define vert_face_base_color(baseint) \
-{ \
-   u32 satint=float_to_satu8(vtx->baseint); \
-   cv->col[0] = FaceBaseColor[0]*satint/256;  \
-   cv->col[1] = FaceBaseColor[1]*satint/256;  \
-   cv->col[2] = FaceBaseColor[2]*satint/256;  \
-   cv->col[3] = FaceBaseColor[3]; \
-}
-
-#define vert_face_offs_color(offsint) \
-{ \
-   u32 satint=float_to_satu8(vtx->offsint); \
-   cv->spc[0] = FaceOffsColor[0]*satint/256;  \
-   cv->spc[1] = FaceOffsColor[1]*satint/256;  \
-   cv->spc[2] = FaceOffsColor[2]*satint/256;  \
-   cv->spc[3] = FaceOffsColor[3]; \
-}
 
 #define append_sprite(indx) \
    vert_packed_color_(cv[indx].col,SFaceBaseColor)\
@@ -215,8 +191,8 @@ public:
          case 2:
             {
                TA_Vertex2* vtx = (TA_Vertex2*)&vp->vtx2;
-               Vertex   * cv = vert_cvt_base_((TA_Vertex0*)vtx);
-               u32    satint = float_to_satu8(vtx->BaseInt);
+               Vertex   * cv   = vert_cvt_base_((TA_Vertex0*)vtx);
+               u32    satint   = float_to_satu8(vtx->BaseInt);
 
                cv->col[0] = FaceBaseColor[0]*satint/256; 
                cv->col[1] = FaceBaseColor[1]*satint/256; 
@@ -1034,8 +1010,15 @@ public:
 	{
 		Vertex* cv=vdrc.verts.LastPtr();
 
-      vert_float_color_(cv->col,vtx->BaseA,vtx->BaseR,vtx->BaseG,vtx->BaseB);
-      vert_float_color_(cv->spc,vtx->OffsA,vtx->OffsR,vtx->OffsG,vtx->OffsB);
+      cv->col[0] = float_to_satu8(vtx->BaseR);
+      cv->col[1] = float_to_satu8(vtx->BaseG);
+      cv->col[2] = float_to_satu8(vtx->BaseB);
+      cv->col[3] = float_to_satu8(vtx->BaseA);
+
+      cv->spc[0] = float_to_satu8(vtx->OffsR);
+      cv->spc[1] = float_to_satu8(vtx->OffsG);
+      cv->spc[2] = float_to_satu8(vtx->OffsB);
+      cv->spc[3] = float_to_satu8(vtx->OffsA);
 	}
 
 	__forceinline
@@ -1043,8 +1026,15 @@ public:
 	{
 		Vertex* cv=vdrc.verts.LastPtr();
 
-      vert_float_color_(cv->col,vtx->BaseA,vtx->BaseR,vtx->BaseG,vtx->BaseB);
-      vert_float_color_(cv->spc,vtx->OffsA,vtx->OffsR,vtx->OffsG,vtx->OffsB);
+      cv->col[0] = float_to_satu8(vtx->BaseR);
+      cv->col[1] = float_to_satu8(vtx->BaseG);
+      cv->col[2] = float_to_satu8(vtx->BaseB);
+      cv->col[3] = float_to_satu8(vtx->BaseA);
+
+      cv->spc[0] = float_to_satu8(vtx->OffsR);
+      cv->spc[1] = float_to_satu8(vtx->OffsG);
+      cv->spc[2] = float_to_satu8(vtx->OffsB);
+      cv->spc[3] = float_to_satu8(vtx->OffsA);
 	}
 
 	//(Textured, Intensity)
@@ -1053,8 +1043,17 @@ public:
 	{
 		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
-		vert_face_base_color(BaseInt);
-		vert_face_offs_color(OffsInt);
+      u32 satint0=float_to_satu8(vtx->BaseInt);
+      u32 satint1=float_to_satu8(vtx->OffsInt);
+      cv->col[0] = FaceBaseColor[0]*satint0/256; 
+      cv->col[1] = FaceBaseColor[1]*satint0/256;
+      cv->col[2] = FaceBaseColor[2]*satint0/256;
+      cv->col[3] = FaceBaseColor[3];
+
+      cv->spc[0] = FaceOffsColor[0]*satint1/256; 
+      cv->spc[1] = FaceOffsColor[1]*satint1/256; 
+      cv->spc[2] = FaceOffsColor[2]*satint1/256; 
+      cv->spc[3] = FaceOffsColor[3];
 
       cv->u = (vtx->u);
       cv->v = (vtx->v);
@@ -1065,9 +1064,18 @@ public:
 		static void AppendPolyVertex8(TA_Vertex8* vtx)
 	{
 		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
+      u32 satint0=float_to_satu8(vtx->BaseInt);
+      u32 satint1=float_to_satu8(vtx->OffsInt);
 
-		vert_face_base_color(BaseInt);
-		vert_face_offs_color(OffsInt);
+      cv->col[0] = FaceBaseColor[0]*satint0/256; 
+      cv->col[1] = FaceBaseColor[1]*satint0/256;
+      cv->col[2] = FaceBaseColor[2]*satint0/256;
+      cv->col[3] = FaceBaseColor[3];
+
+      cv->spc[0] = FaceOffsColor[0]*satint1/256; 
+      cv->spc[1] = FaceOffsColor[1]*satint1/256; 
+      cv->spc[2] = FaceOffsColor[2]*satint1/256; 
+      cv->spc[3] = FaceOffsColor[3];
 
       cv->u = f16(vtx->u);
       cv->v = f16(vtx->v);
@@ -1089,7 +1097,11 @@ public:
 	{
 		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
-		vert_face_base_color(BaseInt0);
+      u32 satint=float_to_satu8(vtx->BaseInt0);
+      cv->col[0] = FaceBaseColor[0]*satint/256; 
+      cv->col[1] = FaceBaseColor[1]*satint/256;
+      cv->col[2] = FaceBaseColor[2]*satint/256;
+      cv->col[3] = FaceBaseColor[3];
 	}
 
 	//(Textured, Packed Color,	with Two Volumes)	
@@ -1123,9 +1135,17 @@ public:
 		static void AppendPolyVertex13A(TA_Vertex13A* vtx)
 	{
 		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
+      u32 satint0=float_to_satu8(vtx->BaseInt0);
+      u32 satint1=float_to_satu8(vtx->OffsInt0);
+      cv->col[0] = FaceBaseColor[0]*satint0/256; 
+      cv->col[1] = FaceBaseColor[1]*satint0/256;
+      cv->col[2] = FaceBaseColor[2]*satint0/256;
+      cv->col[3] = FaceBaseColor[3];
 
-		vert_face_base_color(BaseInt0);
-		vert_face_offs_color(OffsInt0);
+      cv->spc[0] = FaceOffsColor[0]*satint1/256; 
+      cv->spc[1] = FaceOffsColor[1]*satint1/256; 
+      cv->spc[2] = FaceOffsColor[2]*satint1/256; 
+      cv->spc[3] = FaceOffsColor[3];
 
       cv->u = (vtx->u0);
       cv->v = (vtx->v0);
@@ -1136,9 +1156,18 @@ public:
 		static void AppendPolyVertex14A(TA_Vertex14A* vtx)
 	{
 		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
+      u32 satint0=float_to_satu8(vtx->BaseInt0);
+      u32 satint1=float_to_satu8(vtx->OffsInt0);
 
-		vert_face_base_color(BaseInt0);
-		vert_face_offs_color(OffsInt0);
+      cv->col[0] = FaceBaseColor[0]*satint0/256; 
+      cv->col[1] = FaceBaseColor[1]*satint0/256;
+      cv->col[2] = FaceBaseColor[2]*satint0/256;
+      cv->col[3] = FaceBaseColor[3];
+
+      cv->spc[0] = FaceOffsColor[0]*satint1/256; 
+      cv->spc[1] = FaceOffsColor[1]*satint1/256; 
+      cv->spc[2] = FaceOffsColor[2]*satint1/256; 
+      cv->spc[3] = FaceOffsColor[3];
 
       cv->u = f16(vtx->u0);
       cv->v = f16(vtx->v0);
@@ -1461,7 +1490,9 @@ static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 
 	//Color
 	u32 col=vri(ptr);ptr+=4;
+
 	vert_packed_color_(cv->col,col);
+
 	if (isp.Offset)
 	{
 		//Intensity color (can be missing too ;p)

@@ -1,6 +1,21 @@
+/*
+ * Notes
+ * Games that need certain settings activated in order to function properly:
+ *
+ * update mode type -
+ * * Street Fighter III Double Impact (would run at choppy framerate otherwise)
+ *
+ * dynarec_type -
+ * * Marvel Vs Capcom 2 (would hang at beginning of second stage if not set to generic_recompiler)
+ *
+ * aica_interrupt_hack -
+ * * Street Fighter Alpha 3 (would hang at startup screen otherwise
+ */
+
 struct game_type
 {
    char product_number[11];
+   int updatemode_type;     /* -1, make no decision, 0 = update mode normal, 1 = update mode fullspeed */
    int dynarec_type;        /* -1, make no decision, 0 = dynamic recompiler, 1 = generic_recompiler */
    int palette_hack;        /* -1, make no decision, 0 = normal, 1 = enable hack */
    int aica_interrupt_hack; /* -1, make no decision, 0 = normal, 1 = enable hack */

@@ -706,6 +706,9 @@ struct settings_t
 		string HashCheckFile;
 	} pvr;
 
+   unsigned UpdateMode;
+   unsigned UpdateModeForced;
+
 	struct {
 		bool SerialConsole;
 	} debug;

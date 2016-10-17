@@ -170,6 +170,12 @@ static void LoadSpecialSettings(void)
             LoadSpecialSettingsCPU();
          }
 
+         if (lut_games[i].updatemode_type != -1)
+         {
+            printf("Applying update mode type hack.\n");
+            settings.UpdateModeForced = 1;
+         }
+
          if (lut_games[i].zMax != 1)
          {
             printf("Applying zmax hack.\n");
@@ -276,6 +282,7 @@ void LoadSettings()
 	settings.dynarec.idleskip		= cfgLoadInt("config","Dynarec.idleskip",1)!=0;
 	settings.dynarec.unstable_opt	= cfgLoadInt("config","Dynarec.unstable-opt",0);
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
+	settings.UpdateModeForced		= 0;
 	settings.dreamcast.cable		= cfgLoadInt("config","Dreamcast.Cable",3);
 	settings.dreamcast.RTC			= cfgLoadInt("config","Dreamcast.RTC",GetRTC_now());
 	settings.dreamcast.region		= cfgLoadInt("config","Dreamcast.Region",3);

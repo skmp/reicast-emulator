@@ -238,7 +238,10 @@ int rend_end_sch(int tag, int cycl, int jitt)
 	asic_RaiseInterrupt(holly_RENDER_DONE);
 	asic_RaiseInterrupt(holly_RENDER_DONE_isp);
 	asic_RaiseInterrupt(holly_RENDER_DONE_vd);
-	rend_end_render();
+
+   if (!settings.UpdateMode && !settings.UpdateModeForced)
+      rend_end_render();
+
 	return 0;
 }
 

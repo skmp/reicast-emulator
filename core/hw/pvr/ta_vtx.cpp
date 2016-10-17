@@ -81,7 +81,7 @@ u32 CurrentList;
 TaListFP* VertexDataFP;
 bool ListIsFinished[5];
 
-static f32 f16(u16 v)
+static INLINE f32 f16(u16 v)
 {
 	u32 z=v<<16;
 	return *(f32*)&z;

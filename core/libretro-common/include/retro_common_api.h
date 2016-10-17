@@ -75,6 +75,20 @@ typedef int ssize_t;
 #include <sys/types.h>
 #endif
 
+#ifdef _WIN32
+#define STRING_REP_INT64  "%I64u"
+#define STRING_REP_UINT64 "%I64u"
+#define STRING_REP_ULONG  "%Iu"
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__>=199901L && !defined(VITA)
+#define STRING_REP_INT64  "%llu"
+#define STRING_REP_UINT64 "%llu"
+#define STRING_REP_ULONG  "%zu"
+#else
+#define STRING_REP_INT64  "%llu"
+#define STRING_REP_UINT64 "%llu"
+#define STRING_REP_ULONG  "%lu"
+#endif
+
 /*
 I would like to see retro_inline.h moved in here; possibly boolean too.
 

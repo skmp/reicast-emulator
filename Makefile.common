@@ -152,7 +152,8 @@ endif
 SOURCES_CXX += $(CORE_DIR)/libretro/libretro.cpp \
 					$(CORE_DIR)/libretro/common.cpp
 
-SOURCES_C +=   $(LIBRETRO_COMM_DIR)/memmap/memalign.c
+SOURCES_C +=   $(LIBRETRO_COMM_DIR)/memmap/memalign.c \
+					$(LIBRETRO_COMM_DIR)/file/retro_stat.c
 
 ifeq ($(NO_THREADS),1)
 else

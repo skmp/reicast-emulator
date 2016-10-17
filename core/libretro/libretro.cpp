@@ -3,6 +3,7 @@
 #include "types.h"
 
 #include <sys/stat.h>
+#include <retro_stat.h>
 
 #include "../hw/pvr/pvr_regs.h"
 
@@ -542,11 +543,7 @@ bool retro_load_game(const struct retro_game_info *game)
       struct stat buf;
       if (stat(data_dir, &buf) < 0)
       {
-#ifdef _WIN32
-         _mkdir(data_dir);
-#else
-         mkdir(data_dir, 0750);
-#endif
+         mkdir_norecurse(data_dir);
       }
    }
 

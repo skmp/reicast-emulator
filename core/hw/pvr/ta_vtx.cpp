@@ -89,8 +89,6 @@ static INLINE f32 f16(u16 v)
 
 #define vdrc vd_rc
 
-#define glob_param_bdc(pp) glob_param_bdc_( (TA_PolyParam0*)pp)
-
 #define poly_float_color_(to,a,r,g,b) \
    to[0] = float_to_satu8(r);	\
    to[1] = float_to_satu8(g);	\
@@ -1015,34 +1013,28 @@ public:
 	*/
 	//Polys  -- update code on sprites if that gets updated too --
 	template<class T>
-	static void glob_param_bdc_(T* pp)
-	{
-		if (CurrentPP->pcw.full!=pp->pcw.full || 
-			CurrentPP->tcw.full!=pp->tcw.full || 
-			CurrentPP->tsp.full!=pp->tsp.full || 
-			CurrentPP->isp.full!=pp->isp.full	) 
-		{
-			PolyParam* d_pp=CurrentPP;
-			if (CurrentPP->count!=0)
-			{
-				d_pp=CurrentPPlist->Append(); 
-				CurrentPP=d_pp;
-			}
-			d_pp->first=vdrc.idx.used(); 
-			d_pp->count=0; 
+	static __forceinline void glob_param_bdc_(T* pp)
+   {
+      PolyParam* d_pp=CurrentPP;
+      if (CurrentPP->count!=0)
+      {
+         d_pp=CurrentPPlist->Append(); 
+         CurrentPP=d_pp;
+      }
+      d_pp->first=vdrc.idx.used(); 
+      d_pp->count=0; 
 
-			d_pp->isp=pp->isp; 
-			d_pp->tsp=pp->tsp; 
-			d_pp->tcw=pp->tcw;
-			d_pp->pcw=pp->pcw; 
-			d_pp->tileclip=tileclip_val;
+      d_pp->isp=pp->isp; 
+      d_pp->tsp=pp->tsp; 
+      d_pp->tcw=pp->tcw;
+      d_pp->pcw=pp->pcw; 
+      d_pp->tileclip=tileclip_val;
 
-			d_pp->texid = -1;
+      d_pp->texid = -1;
 
-			if (d_pp->pcw.Texture)
-				d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
-		}
-	}
+      if (d_pp->pcw.Texture)
+         d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
+   }
 
 
 	//poly param handling
@@ -1051,14 +1043,22 @@ public:
 	{
 		TA_PolyParam0* pp=(TA_PolyParam0*)vpp;
 
-		glob_param_bdc(pp);
+      if (CurrentPP->pcw.full!=pp->pcw.full || 
+            CurrentPP->tcw.full!=pp->tcw.full || 
+            CurrentPP->tsp.full!=pp->tsp.full || 
+            CurrentPP->isp.full!=pp->isp.full	) 
+         glob_param_bdc_( (TA_PolyParam0*)pp);
 	}
 	__forceinline
 		static void TACALL AppendPolyParam1(void* vpp)
 	{
 		TA_PolyParam1* pp=(TA_PolyParam1*)vpp;
 
-		glob_param_bdc(pp);
+      if (CurrentPP->pcw.full!=pp->pcw.full || 
+            CurrentPP->tcw.full!=pp->tcw.full || 
+            CurrentPP->tsp.full!=pp->tsp.full || 
+            CurrentPP->isp.full!=pp->isp.full	) 
+         glob_param_bdc_( (TA_PolyParam0*)pp);
       poly_float_color_(FaceBaseColor,pp->FaceColorA,pp->FaceColorR,pp->FaceColorG,pp->FaceColorB);
 	}
 	__forceinline
@@ -1066,7 +1066,11 @@ public:
 	{
 		TA_PolyParam2A* pp=(TA_PolyParam2A*)vpp;
 
-		glob_param_bdc(pp);
+      if (CurrentPP->pcw.full!=pp->pcw.full || 
+            CurrentPP->tcw.full!=pp->tcw.full || 
+            CurrentPP->tsp.full!=pp->tsp.full || 
+            CurrentPP->isp.full!=pp->isp.full	) 
+         glob_param_bdc_( (TA_PolyParam0*)pp);
 	}
 	__forceinline
 		static void TACALL AppendPolyParam2B(void* vpp)
@@ -1081,14 +1085,22 @@ public:
 	{
 		TA_PolyParam3* pp=(TA_PolyParam3*)vpp;
 
-		glob_param_bdc(pp);
+      if (CurrentPP->pcw.full!=pp->pcw.full || 
+            CurrentPP->tcw.full!=pp->tcw.full || 
+            CurrentPP->tsp.full!=pp->tsp.full || 
+            CurrentPP->isp.full!=pp->isp.full	) 
+         glob_param_bdc_( (TA_PolyParam0*)pp);
 	}
 	__forceinline
 		static void TACALL AppendPolyParam4A(void* vpp)
 	{
 		TA_PolyParam4A* pp=(TA_PolyParam4A*)vpp;
 
-		glob_param_bdc(pp);
+      if (CurrentPP->pcw.full!=pp->pcw.full || 
+            CurrentPP->tcw.full!=pp->tcw.full || 
+            CurrentPP->tsp.full!=pp->tsp.full || 
+            CurrentPP->isp.full!=pp->isp.full	) 
+         glob_param_bdc_( (TA_PolyParam0*)pp);
 	}
 	__forceinline
 		static void TACALL AppendPolyParam4B(void* vpp)

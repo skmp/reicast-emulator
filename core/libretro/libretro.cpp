@@ -77,6 +77,8 @@ char game_dir_no_slash[1024];
 
 void co_dc_yield(void)
 {
+   if (settings.UpdateMode || settings.UpdateModeForced)
+      return;
    inside_loop = false;
 }
 
@@ -151,6 +153,10 @@ void retro_set_environment(retro_environment_t cb)
       {
          "reicast_broadcast",
          "Broadcast; 4|0|1|2|3",
+      },
+      {
+         "reicast_framerate",
+         "Framerate; normal|fullspeed",
       },
       {
          "reicast_region",
@@ -312,6 +318,18 @@ static void update_variables(void)
    }
    else
          settings.dreamcast.broadcast = 4;
+
+   var.key = "reicast_framerate";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("normal", var.value))
+         settings.UpdateMode = 0;
+      else if (!strcmp("fullspeed", var.value))
+         settings.UpdateMode = 1;
+   }
+   else
+      settings.UpdateMode = 0;
 
    var.key = "reicast_region";
 
@@ -678,6 +696,12 @@ void os_DoEvents(void)
 {
    is_dupe = false;
    poll_cb();
+
+   if (settings.UpdateMode || settings.UpdateModeForced)
+   {
+      inside_loop = false;
+      rend_end_render();
+   }
 }
 
 void os_CreateWindow()

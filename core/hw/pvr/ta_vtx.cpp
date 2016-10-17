@@ -89,6 +89,72 @@ static f32 f16(u16 v)
 
 #define vdrc vd_rc
 
+#define glob_param_bdc(pp) glob_param_bdc_( (TA_PolyParam0*)pp)
+
+#define poly_float_color_(to,a,r,g,b) \
+   to[0] = float_to_satu8(r);	\
+to[1] = float_to_satu8(g);	\
+to[2] = float_to_satu8(b);	\
+to[3] = float_to_satu8(a);
+
+#define poly_float_color(to,src) \
+   poly_float_color_(to,pp->src##A,pp->src##R,pp->src##G,pp->src##B)
+
+#define vert_cvt_base Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx)
+
+//Resume vertex base (for B part)
+#define vert_res_base \
+   Vertex* cv=vdrc.verts.LastPtr();
+
+//uv 16/32
+#define vert_uv_32(u_name,v_name) \
+   cv->u = (vtx->u_name);\
+cv->v = (vtx->v_name);
+
+#define vert_uv_16(u_name,v_name) \
+   cv->u = f16(vtx->u_name);\
+cv->v = f16(vtx->v_name);
+
+//Color conversions
+#define vert_packed_color_(to,src) \
+   to[2] = (u8)(src);  \
+to[1] = (u8)(src >> 8); \
+to[0] = (u8)(src >> 16); \
+to[3] = (u8)(src >> 24);
+
+#define vert_float_color_(to,a,r,g,b) \
+   to[0] = float_to_satu8(r); \
+to[1] = float_to_satu8(g); \
+to[2] = float_to_satu8(b); \
+to[3] = float_to_satu8(a);
+
+//Macros to make thins easier ;)
+#define vert_packed_color(to,src) \
+   vert_packed_color_(cv->to,vtx->src);
+
+#define vert_float_color(to,src) \
+   vert_float_color_(cv->to,vtx->src##A,vtx->src##R,vtx->src##G,vtx->src##B)
+
+//Intensity handling
+
+//Notes:
+//Alpha doesn't get intensity
+//Intensity is clamped before the mul, as well as on face color to work the same as the hardware. [Fixes red dog]
+
+#define vert_face_base_color(baseint) \
+{ u32 satint=float_to_satu8(vtx->baseint); \
+   cv->col[0] = FaceBaseColor[0]*satint/256;  \
+   cv->col[1] = FaceBaseColor[1]*satint/256;  \
+   cv->col[2] = FaceBaseColor[2]*satint/256;  \
+   cv->col[3] = FaceBaseColor[3]; }
+
+#define vert_face_offs_color(offsint) \
+{ u32 satint=float_to_satu8(vtx->offsint); \
+   cv->spc[0] = FaceOffsColor[0]*satint/256;  \
+   cv->spc[1] = FaceOffsColor[1]*satint/256;  \
+   cv->spc[2] = FaceOffsColor[2]*satint/256;  \
+   cv->spc[3] = FaceOffsColor[3]; }
+
 //Splitter function (normally ta_dma_main , modified for split dma's)
 
 template<u32 instance>
@@ -830,17 +896,6 @@ public:
 		}
 	}
 
-	#define glob_param_bdc(pp) glob_param_bdc_( (TA_PolyParam0*)pp)
-
-	#define poly_float_color_(to,a,r,g,b) \
-		to[0] = float_to_satu8(r);	\
-		to[1] = float_to_satu8(g);	\
-		to[2] = float_to_satu8(b);	\
-		to[3] = float_to_satu8(a);
-
-
-	#define poly_float_color(to,src) \
-		poly_float_color_(to,pp->src##A,pp->src##R,pp->src##G,pp->src##B)
 
 	//poly param handling
 	__forceinline
@@ -945,60 +1000,6 @@ public:
 		return cv;
 	}
 
-	#define vert_cvt_base Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx)
-
-		//Resume vertex base (for B part)
-	#define vert_res_base \
-		Vertex* cv=vdrc.verts.LastPtr();
-
-		//uv 16/32
-	#define vert_uv_32(u_name,v_name) \
-		cv->u = (vtx->u_name);\
-		cv->v = (vtx->v_name);
-
-	#define vert_uv_16(u_name,v_name) \
-		cv->u = f16(vtx->u_name);\
-		cv->v = f16(vtx->v_name);
-
-		//Color conversions
-	#define vert_packed_color_(to,src) \
-		to[2] = (u8)(src);  \
-		to[1] = (u8)(src >> 8); \
-		to[0] = (u8)(src >> 16); \
-		to[3] = (u8)(src >> 24);
-
-	#define vert_float_color_(to,a,r,g,b) \
-		to[0] = float_to_satu8(r); \
-		to[1] = float_to_satu8(g); \
-		to[2] = float_to_satu8(b); \
-		to[3] = float_to_satu8(a);
-
-		//Macros to make thins easier ;)
-	#define vert_packed_color(to,src) \
-		vert_packed_color_(cv->to,vtx->src);
-
-	#define vert_float_color(to,src) \
-		vert_float_color_(cv->to,vtx->src##A,vtx->src##R,vtx->src##G,vtx->src##B)
-
-		//Intensity handling
-
-		//Notes:
-		//Alpha doesn't get intensity
-		//Intensity is clamped before the mul, as well as on face color to work the same as the hardware. [Fixes red dog]
-
-	#define vert_face_base_color(baseint) \
-		{ u32 satint=float_to_satu8(vtx->baseint); \
-		cv->col[0] = FaceBaseColor[0]*satint/256;  \
-		cv->col[1] = FaceBaseColor[1]*satint/256;  \
-		cv->col[2] = FaceBaseColor[2]*satint/256;  \
-		cv->col[3] = FaceBaseColor[3]; }
-
-	#define vert_face_offs_color(offsint) \
-		{ u32 satint=float_to_satu8(vtx->offsint); \
-		cv->spc[0] = FaceOffsColor[0]*satint/256;  \
-		cv->spc[1] = FaceOffsColor[1]*satint/256;  \
-		cv->spc[2] = FaceOffsColor[2]*satint/256;  \
-		cv->spc[3] = FaceOffsColor[3]; }
 
 	//(Non-Textured, Packed Color)
 	__forceinline

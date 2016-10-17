@@ -275,11 +275,11 @@ strip_end:
 
 fist_half:
       ta_handle_poly<poly_type,1>(data,0);
-      if (data->pcw.EndOfStrip) EndPolyStrip();
+      if (data->pcw.EndOfStrip)
+         EndPolyStrip();
       TaCmd=ta_handle_poly<poly_type,2>;
 
-      data+=SZ32;
-      return data;
+      return data+SZ32;
 	}
 
 	static void TACALL AppendPolyParam2Full(void* vpp)

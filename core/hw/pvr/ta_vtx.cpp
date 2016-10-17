@@ -393,8 +393,15 @@ public:
                   TA_Vertex11A *vtx = (TA_Vertex11A*)&vp->vtx11A;
                   Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
-                  vert_packed_color_(cv->col,vtx->BaseCol0);
-                  vert_packed_color_(cv->spc,vtx->OffsCol0);
+                  cv->col[2] = (u8)(vtx->BaseCol0);
+                  cv->col[1] = (u8)(vtx->BaseCol0 >> 8);
+                  cv->col[0] = (u8)(vtx->BaseCol0 >> 16);
+                  cv->col[3] = (u8)(vtx->BaseCol0 >> 24);
+
+                  cv->spc[2] = (u8)(vtx->OffsCol0);
+                  cv->spc[1] = (u8)(vtx->OffsCol0 >> 8);
+                  cv->spc[0] = (u8)(vtx->OffsCol0 >> 16);
+                  cv->spc[3] = (u8)(vtx->OffsCol0 >> 24);
 
                   cv->u = (vtx->u0);
                   cv->v = (vtx->v0);
@@ -1108,8 +1115,15 @@ public:
 	{
 		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
-      vert_packed_color_(cv->col,vtx->BaseCol);
-      vert_packed_color_(cv->spc,vtx->OffsCol);
+      cv->col[2] = (u8)(vtx->BaseCol);
+      cv->col[1] = (u8)(vtx->BaseCol >> 8);
+      cv->col[0] = (u8)(vtx->BaseCol >> 16);
+      cv->col[3] = (u8)(vtx->BaseCol >> 24);
+
+      cv->spc[2] = (u8)(vtx->OffsCol);
+      cv->spc[1] = (u8)(vtx->OffsCol >> 8);
+      cv->spc[0] = (u8)(vtx->OffsCol >> 16);
+      cv->spc[3] = (u8)(vtx->OffsCol >> 24);
 
       cv->u = f16(vtx->u);
       cv->v = f16(vtx->v);
@@ -1121,7 +1135,10 @@ public:
 	{
 		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
-      vert_packed_color_(cv->col,vtx->BaseCol0);
+      cv->col[2] = (u8)(vtx->BaseCol0);
+      cv->col[1] = (u8)(vtx->BaseCol0 >> 8);
+      cv->col[0] = (u8)(vtx->BaseCol0 >> 16);
+      cv->col[3] = (u8)(vtx->BaseCol0 >> 24);
 	}
 
 	//(Textured, Packed Color, 16bit UV, with Two Volumes)
@@ -1130,8 +1147,15 @@ public:
 	{
 		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
-      vert_packed_color_(cv->col,vtx->BaseCol0);
-      vert_packed_color_(cv->spc,vtx->OffsCol0);
+      cv->col[2] = (u8)(vtx->BaseCol0);
+      cv->col[1] = (u8)(vtx->BaseCol0 >> 8);
+      cv->col[0] = (u8)(vtx->BaseCol0 >> 16);
+      cv->col[3] = (u8)(vtx->BaseCol0 >> 24);
+
+      cv->spc[2] = (u8)(vtx->OffsCol0);
+      cv->spc[1] = (u8)(vtx->OffsCol0 >> 8);
+      cv->spc[0] = (u8)(vtx->OffsCol0 >> 16);
+      cv->spc[3] = (u8)(vtx->OffsCol0 >> 24);
 
       cv->u = f16(vtx->u0);
       cv->v = f16(vtx->v0);
@@ -1455,13 +1479,20 @@ static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 	//Color
 	u32 col=vri(ptr);ptr+=4;
 
-	vert_packed_color_(cv->col,col);
+   cv->col[2] = (u8)(col); 
+   cv->col[1] = (u8)(col >> 8);
+   cv->col[0] = (u8)(col >> 16);
+   cv->col[3] = (u8)(col >> 24);
 
 	if (isp.Offset)
 	{
 		//Intensity color (can be missing too ;p)
 		u32 col=vri(ptr);ptr+=4;
-		vert_packed_color_(cv->spc,col);
+
+      cv->spc[2] = (u8)(col); 
+      cv->spc[1] = (u8)(col >> 8);
+      cv->spc[0] = (u8)(col >> 16);
+      cv->spc[3] = (u8)(col >> 24);
 	}
 }
 

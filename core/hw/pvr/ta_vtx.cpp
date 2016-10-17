@@ -135,6 +135,19 @@ static INLINE f32 f16(u16 v)
    cv->spc[3] = FaceOffsColor[3]; \
 }
 
+#define append_sprite(indx) \
+   vert_packed_color_(cv[indx].col,SFaceBaseColor)\
+   vert_packed_color_(cv[indx].spc,SFaceOffsColor)
+
+#define append_sprite_yz(indx,set,st2) \
+   cv[indx].y=sv->y##set; \
+   cv[indx].z=sv->z##st2; \
+   update_fz(sv->z##st2);
+
+#define sprite_uv(indx,u_name,v_name) \
+   cv[indx].u = f16(sv->u_name);\
+   cv[indx].v = f16(sv->v_name);
+
 //Splitter function (normally ta_dma_main , modified for split dma's)
 
 template<u32 instance>
@@ -1161,18 +1174,6 @@ public:
 		SFaceOffsColor=spr->OffsCol;
 	}
 
-	#define append_sprite(indx) \
-		vert_packed_color_(cv[indx].col,SFaceBaseColor)\
-		vert_packed_color_(cv[indx].spc,SFaceOffsColor)
-
-	#define append_sprite_yz(indx,set,st2) \
-		cv[indx].y=sv->y##set; \
-		cv[indx].z=sv->z##st2; \
-		update_fz(sv->z##st2);
-
-	#define sprite_uv(indx,u_name,v_name) \
-		cv[indx].u = f16(sv->u_name);\
-		cv[indx].v = f16(sv->v_name);
 
 	//Sprite Vertex Handlers
 	__forceinline

@@ -640,10 +640,33 @@ fist_half:
 	template <int t>
 	static Ta_Dma* TACALL ta_poly_B_32(Ta_Dma* data,Ta_Dma* data_end)
 	{
+      f32 r, g, b, a;
 		if (t==2)
-			AppendPolyParam2B((TA_PolyParam2B*)data);
-		else
-			AppendPolyParam4B((TA_PolyParam4B*)data);
+      {
+         TA_PolyParam2B* pp=(TA_PolyParam2B*)data;
+         r = pp->FaceColorR;
+         g = pp->FaceColorG;
+         b = pp->FaceColorB;
+         a = pp->FaceColorA;
+
+         FaceOffsColor[0] = float_to_satu8(pp->FaceOffsetR);
+         FaceOffsColor[1] = float_to_satu8(pp->FaceOffsetG);
+         FaceOffsColor[2] = float_to_satu8(pp->FaceOffsetB);
+         FaceOffsColor[3] = float_to_satu8(pp->FaceOffsetA);
+      }
+      else
+      {
+         TA_PolyParam4B* pp=(TA_PolyParam4B*)data;
+         r = pp->FaceColor0R;
+         g = pp->FaceColor0G;
+         b = pp->FaceColor0B;
+         a = pp->FaceColor0A;
+      }
+
+      FaceBaseColor[0] = float_to_satu8(r);
+      FaceBaseColor[1] = float_to_satu8(g);
+      FaceBaseColor[2] = float_to_satu8(b);
+      FaceBaseColor[3] = float_to_satu8(a);
 	
 		TaCmd=ta_main;
 		return data+SZ32;
@@ -1120,6 +1143,18 @@ public:
       FaceOffsColor[2] = float_to_satu8(pp->FaceOffsetB);
       FaceOffsColor[3] = float_to_satu8(pp->FaceOffsetA);
 	}
+
+	__forceinline
+		static void TACALL AppendPolyParam4B(void* vpp)
+	{
+		TA_PolyParam4B* pp=(TA_PolyParam4B*)vpp;
+
+      FaceBaseColor[0] = float_to_satu8(pp->FaceColor0R);
+      FaceBaseColor[1] = float_to_satu8(pp->FaceColor0G);
+      FaceBaseColor[2] = float_to_satu8(pp->FaceColor0B);
+      FaceBaseColor[3] = float_to_satu8(pp->FaceColor0A);
+	}
+
 	__forceinline
 		static void TACALL AppendPolyParam3(void* vpp)
 	{
@@ -1185,16 +1220,6 @@ public:
          if (d_pp->pcw.Texture)
             d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
       }
-	}
-	__forceinline
-		static void TACALL AppendPolyParam4B(void* vpp)
-	{
-		TA_PolyParam4B* pp=(TA_PolyParam4B*)vpp;
-
-      FaceBaseColor[0] = float_to_satu8(pp->FaceColor0R);
-      FaceBaseColor[1] = float_to_satu8(pp->FaceColor0G);
-      FaceBaseColor[2] = float_to_satu8(pp->FaceColor0B);
-      FaceBaseColor[3] = float_to_satu8(pp->FaceColor0A);
 	}
 
 	//Poly Strip handling

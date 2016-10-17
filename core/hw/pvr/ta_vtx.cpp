@@ -215,7 +215,23 @@ public:
 
             /* (Textured, Packed Color) */
          case 3:
-            AppendPolyVertex3(&vp->vtx3);
+            {
+               TA_Vertex3 *vtx = (TA_Vertex3*)&vp->vtx3;
+               Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
+
+               cv->col[2] = (u8)(vtx->BaseCol);
+               cv->col[1] = (u8)(vtx->BaseCol >> 8);
+               cv->col[0] = (u8)(vtx->BaseCol >> 16);
+               cv->col[3] = (u8)(vtx->BaseCol >> 24);
+
+               cv->spc[2] = (u8)(vtx->OffsCol);
+               cv->spc[1] = (u8)(vtx->OffsCol >> 8);
+               cv->spc[0] = (u8)(vtx->OffsCol >> 16);
+               cv->spc[3] = (u8)(vtx->OffsCol >> 24);
+
+               cv->u = (vtx->u);
+               cv->v = (vtx->v);
+            }
             rv=SZ32;
             break;
 
@@ -257,7 +273,14 @@ public:
             if (part!=2)
             {
                rv+=SZ32;
-               AppendPolyVertex5A(&vp->vtx5A);
+               {
+                  TA_Vertex5A *vtx = (TA_Vertex5A*)&vp->vtx5A;
+                  Vertex      *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
+
+                  //Colors are on B
+                  cv->u = (vtx->u);
+                  cv->v = (vtx->v);
+               }
             }
             /*process second half*/
             if (part==0)
@@ -278,7 +301,15 @@ public:
             if (part!=2)
             {
                rv+=SZ32;
-               AppendPolyVertex6A(&vp->vtx6A);
+               {
+                  TA_Vertex6A *vtx = (TA_Vertex6A*)&vp->vtx6A;
+                  Vertex      *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
+
+                  //Colors are on B
+
+                  cv->u = f16(vtx->u);
+                  cv->v = f16(vtx->v);
+               }
             }
             /*process second half*/
             if (part==0)
@@ -972,19 +1003,6 @@ public:
 		return cv;
 	}
 
-	//(Textured, Packed Color)
-	__forceinline
-		static void AppendPolyVertex3(TA_Vertex3* vtx)
-	{
-		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
-
-      vert_packed_color_(cv->col,vtx->BaseCol);
-      vert_packed_color_(cv->spc,vtx->OffsCol);
-
-      cv->u = (vtx->u);
-      cv->v = (vtx->v);
-	}
-
 	//(Textured, Packed Color, 16bit UV)
 	__forceinline
 		static void AppendPolyVertex4(TA_Vertex4* vtx)
@@ -998,17 +1016,6 @@ public:
       cv->v = f16(vtx->v);
 	}
 
-	//(Textured, Floating Color)
-	__forceinline
-		static void AppendPolyVertex5A(TA_Vertex5A* vtx)
-	{
-		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
-
-		//Colors are on B
-      cv->u = (vtx->u);
-      cv->v = (vtx->v);
-	}
-
 	__forceinline
 		static void AppendPolyVertex5B(TA_Vertex5B* vtx)
 	{
@@ -1018,17 +1025,6 @@ public:
       vert_float_color_(cv->spc,vtx->OffsA,vtx->OffsR,vtx->OffsG,vtx->OffsB);
 	}
 
-	//(Textured, Floating Color, 16bit UV)
-	__forceinline
-		static void AppendPolyVertex6A(TA_Vertex6A* vtx)
-	{
-		Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
-
-		//Colors are on B
-
-      cv->u = f16(vtx->u);
-      cv->v = f16(vtx->v);
-	}
 	__forceinline
 		static void AppendPolyVertex6B(TA_Vertex6B* vtx)
 	{
@@ -1168,8 +1164,6 @@ public:
 	#define append_sprite(indx) \
 		vert_packed_color_(cv[indx].col,SFaceBaseColor)\
 		vert_packed_color_(cv[indx].spc,SFaceOffsColor)
-		//cv[indx].base_int=1;\
-		//cv[indx].offset_int=1;
 
 	#define append_sprite_yz(indx,set,st2) \
 		cv[indx].y=sv->y##set; \

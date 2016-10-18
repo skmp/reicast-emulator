@@ -22,6 +22,9 @@ u8 f32_su8_tbl[65536];
 #define float_to_satu8(val) f32_su8_tbl[((u32&)val)>>16]
 #define saturate01(x) (((s32&)x)<0?0:(s32&)x>0x3f800000?1:x)
 
+#define vrf(addr) (*(f32*)&vram[pvr_map32((addr)) & VRAM_MASK])
+#define vri(addr) (*(u32*)&vram[pvr_map32((addr)) & VRAM_MASK])
+
 /*
 	This uses just 1k of lookup, but does more calcs
 	The full 64k table will be much faster -- as only a small sub-part of it will be used anyway (the same 1k)
@@ -167,8 +170,8 @@ public:
                cv->col[1] = float_to_satu8(vtx->BaseG);
                cv->col[2] = float_to_satu8(vtx->BaseB);
                cv->col[3] = float_to_satu8(vtx->BaseA);
-               rv=SZ32;
             }
+            rv=SZ32;
             break;
 
             /* (Non-Textured, Intensity) */
@@ -512,7 +515,15 @@ public:
 		
 	static Ta_Dma* TACALL ta_modvolB_32(Ta_Dma* data,Ta_Dma* data_end)
 	{
-		AppendModVolVertexB((TA_ModVolB*)data);
+      if (CurrentList == TA_LIST_OPAQUE_MODVOL)
+      {
+         TA_ModVolB* mvv = (TA_ModVolB*)data;
+         lmr->y2=mvv->y2;
+         lmr->z2=mvv->z2;
+#ifdef ENABLE_MODVOLS
+         update_fz(mvv->z2);
+#endif
+      }
 		TaCmd=ta_main;
 		return data+SZ32;
 	}
@@ -521,17 +532,49 @@ public:
    {
       TA_VertexParam* vp=(TA_VertexParam*)data;
 
+      if (data == data_end || CurrentList == TA_LIST_OPAQUE_MODVOL)
+      {
+         if (CurrentList == TA_LIST_OPAQUE_MODVOL)
+         {
+            TA_ModVolA* mvv = (TA_ModVolA*)&vp->mvolA;
+            lmr=vdrc.modtrig.Append();
+
+            lmr->x0=mvv->x0;
+            lmr->y0=mvv->y0;
+            lmr->z0=mvv->z0;
+
+            lmr->x1=mvv->x1;
+            lmr->y1=mvv->y1;
+            lmr->z1=mvv->z1;
+
+            lmr->x2=mvv->x2;
+
+            /* TODO/FIXME - should maybe enable this again */
+#ifdef ENABLE_MODVOLS
+            update_fz(mvv->z0);
+            update_fz(mvv->z1);
+#endif
+         }
+      }
+
       if (data==data_end)
       {
-         AppendModVolVertexA(&vp->mvolA);
          //32B more needed , 32B done :)
          TaCmd=ta_modvolB_32;
          return data+SZ32;
       }
 
       //all 64B done
-      AppendModVolVertexA(&vp->mvolA);
-      AppendModVolVertexB(&vp->mvolB);
+      if (CurrentList == TA_LIST_OPAQUE_MODVOL)
+      {
+         TA_ModVolB* mvv = (TA_ModVolB*)&vp->mvolB;
+
+         lmr->y2=mvv->y2;
+         lmr->z2=mvv->z2;
+#ifdef ENABLE_MODVOLS
+         update_fz(mvv->z2);
+#endif
+      }
       return data+SZ64;
    }
 
@@ -838,33 +881,31 @@ public:
                //32B
                //Sets Sprite info , and switches to ta_sprite_data function
             case TA_PARAM_SPRITE:
+               TileClipMode(data->pcw.User_Clip);
+               if (CurrentList==ListType_None)
                {
-                  TileClipMode(data->pcw.User_Clip);
-                  if (CurrentList==ListType_None)
+                  //printf("Starting list %d\n",new_list);
+                  switch (data->pcw.ListType)
                   {
-                     //printf("Starting list %d\n",new_list);
-                     switch (data->pcw.ListType)
-                     {
-                        case TA_LIST_OPAQUE:
-                           CurrentPPlist=&vdrc.global_param_op;
-                           break;
-                        case TA_LIST_PUNCH_THROUGH:
-                           CurrentPPlist=&vdrc.global_param_pt;
-                           break;
-                        case TA_LIST_TRANSLUCENT:
-                           CurrentPPlist=&vdrc.global_param_tr;
-                           break;
-                     }
-
-                     CurrentList = data->pcw.ListType;
-                     CurrentPP   = &nullPP;
+                     case TA_LIST_OPAQUE:
+                        CurrentPPlist=&vdrc.global_param_op;
+                        break;
+                     case TA_LIST_PUNCH_THROUGH:
+                        CurrentPPlist=&vdrc.global_param_pt;
+                        break;
+                     case TA_LIST_TRANSLUCENT:
+                        CurrentPPlist=&vdrc.global_param_tr;
+                        break;
                   }
 
-                  VertexDataFP=ta_sprite_data;
-                  //printf("Sprite \n");
-                  AppendSpriteParam((TA_SpriteParam*)data);
-                  data+=SZ32;
+                  CurrentList = data->pcw.ListType;
+                  CurrentPP   = &nullPP;
                }
+
+               VertexDataFP=ta_sprite_data;
+               //printf("Sprite \n");
+               AppendSpriteParam((TA_SpriteParam*)data);
+               data+=SZ32;
                break;
 
                //Variable size
@@ -1350,6 +1391,7 @@ public:
 
 		cv[1].x=sv->x2;
 	}
+
 	static void CaclulateSpritePlane(Vertex* base)
 	{
 		const Vertex& A=base[2];
@@ -1436,44 +1478,6 @@ public:
 		}
 #endif
 	}
-
-	//ModVolumes
-
-	__forceinline
-		static void AppendModVolVertexA(TA_ModVolA* mvv)
-	{
-		if (CurrentList != TA_LIST_OPAQUE_MODVOL)
-			return;
-		lmr=vdrc.modtrig.Append();
-
-		lmr->x0=mvv->x0;
-		lmr->y0=mvv->y0;
-		lmr->z0=mvv->z0;
-
-		lmr->x1=mvv->x1;
-		lmr->y1=mvv->y1;
-		lmr->z1=mvv->z1;
-
-		lmr->x2=mvv->x2;
-
-      /* TODO/FIXME - should maybe enable this again */
-#ifdef ENABLE_MODVOLS
-		update_fz(mvv->z0);
-		update_fz(mvv->z1);
-#endif
-	}
-
-	__forceinline
-		static void AppendModVolVertexB(TA_ModVolB* mvv)
-	{
-		if (CurrentList != TA_LIST_OPAQUE_MODVOL)
-			return;
-		lmr->y2=mvv->y2;
-		lmr->z2=mvv->z2;
-#ifdef ENABLE_MODVOLS
-		update_fz(mvv->z2);
-#endif
-	}
 };
 
 
@@ -1481,20 +1485,17 @@ FifoSplitter<0> TAFifo0;
 
 int ta_parse_cnt = 0;
 
-#define vrf(addr) (*(f32*)&vram[pvr_map32((addr)) & VRAM_MASK])
-#define vri(addr) (*(u32*)&vram[pvr_map32((addr)) & VRAM_MASK])
 
 /*
 	Also: gotta stage textures here
 */
 bool ta_parse_vdrc(TA_context* ctx)
 {
-	bool rv=false;
-
 	vd_ctx = ctx;
-	vd_rc = vd_ctx->rend;
-	
+	vd_rc  = vd_ctx->rend;
+
 	ta_parse_cnt++;
+
 	if ((ta_parse_cnt %  ( settings.pvr.ta_skip + 1)) == 0)
 	{
 		TAFifo0.vdec_init();
@@ -1506,8 +1507,6 @@ bool ta_parse_vdrc(TA_context* ctx)
 		{
 			ta_data =TaCmd(ta_data,ta_data_end);
 		}while(ta_data<=ta_data_end);
-
-		rv = true; //whatever
 	}
 
 	vd_ctx->rend = vd_rc;
@@ -1516,7 +1515,7 @@ bool ta_parse_vdrc(TA_context* ctx)
    slock_unlock(ctx->rend_inuse);
 #endif
 
-	return rv;
+	return true;
 }
 
 //decode a vertex in the native pvr format

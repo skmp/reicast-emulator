@@ -501,29 +501,26 @@ public:
    {
       TA_VertexParam* vp=(TA_VertexParam*)data;
 
-      if (data == data_end || CurrentList == TA_LIST_OPAQUE_MODVOL)
+      if (CurrentList == TA_LIST_OPAQUE_MODVOL)
       {
-         if (CurrentList == TA_LIST_OPAQUE_MODVOL)
-         {
-            TA_ModVolA* mvv = (TA_ModVolA*)&vp->mvolA;
-            lmr=vdrc.modtrig.Append();
+         TA_ModVolA* mvv = (TA_ModVolA*)&vp->mvolA;
+         lmr=vdrc.modtrig.Append();
 
-            lmr->x0=mvv->x0;
-            lmr->y0=mvv->y0;
-            lmr->z0=mvv->z0;
+         lmr->x0=mvv->x0;
+         lmr->y0=mvv->y0;
+         lmr->z0=mvv->z0;
 
-            lmr->x1=mvv->x1;
-            lmr->y1=mvv->y1;
-            lmr->z1=mvv->z1;
+         lmr->x1=mvv->x1;
+         lmr->y1=mvv->y1;
+         lmr->z1=mvv->z1;
 
-            lmr->x2=mvv->x2;
+         lmr->x2=mvv->x2;
 
-            /* TODO/FIXME - should maybe enable this again */
+         /* TODO/FIXME - should maybe enable this again */
 #ifdef ENABLE_MODVOLS
-            update_fz(mvv->z0);
-            update_fz(mvv->z1);
+         update_fz(mvv->z0);
+         update_fz(mvv->z1);
 #endif
-         }
       }
 
       if (data==data_end)

@@ -489,9 +489,7 @@ public:
          TA_ModVolB* mvv = (TA_ModVolB*)data;
          lmr->y2=mvv->y2;
          lmr->z2=mvv->z2;
-#ifdef ENABLE_MODVOLS
          update_fz(mvv->z2);
-#endif
       }
 		TaCmd=ta_main;
 		return data+SZ32;
@@ -517,10 +515,8 @@ public:
          lmr->x2=mvv->x2;
 
          /* TODO/FIXME - should maybe enable this again */
-#ifdef ENABLE_MODVOLS
          update_fz(mvv->z0);
          update_fz(mvv->z1);
-#endif
       }
 
       if (data==data_end)
@@ -537,9 +533,7 @@ public:
 
          lmr->y2=mvv->y2;
          lmr->z2=mvv->z2;
-#ifdef ENABLE_MODVOLS
          update_fz(mvv->z2);
-#endif
       }
       return data+SZ64;
    }

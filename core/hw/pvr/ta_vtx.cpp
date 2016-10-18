@@ -654,6 +654,34 @@ public:
    {
       do
       {
+         if ((data->pcw.ParaType == TA_PARAM_POLY_OR_VOL ||
+             (data->pcw.ParaType == TA_PARAM_SPRITE)))
+         {
+            TileClipMode(data->pcw.User_Clip);
+            if (CurrentList==ListType_None)
+            {
+#if 0
+               printf("Starting list %d\n",new_list);
+#endif
+
+               switch (data->pcw.ListType)
+               {
+                  case TA_LIST_OPAQUE:
+                     CurrentPPlist=&vdrc.global_param_op;
+                     break;
+                  case TA_LIST_PUNCH_THROUGH:
+                     CurrentPPlist=&vdrc.global_param_pt;
+                     break;
+                  case TA_LIST_TRANSLUCENT:
+                     CurrentPPlist=&vdrc.global_param_tr;
+                     break;
+               }
+
+               CurrentList = data->pcw.ListType;
+               CurrentPP   = &nullPP;
+            }
+         }
+
          switch (data->pcw.ParaType)
          {
             //Control parameter
@@ -711,28 +739,6 @@ public:
                //ModVolue :32B
                //PolyType :32B/64B
             case TA_PARAM_POLY_OR_VOL:
-               TileClipMode(data->pcw.User_Clip);
-
-               if (CurrentList==ListType_None)
-               {
-                  //printf("Starting list %d\n",new_list);
-
-                  switch (data->pcw.ListType)
-                  {
-                     case TA_LIST_OPAQUE:
-                        CurrentPPlist=&vdrc.global_param_op;
-                        break;
-                     case TA_LIST_PUNCH_THROUGH:
-                        CurrentPPlist=&vdrc.global_param_pt;
-                        break;
-                     case TA_LIST_TRANSLUCENT:
-                        CurrentPPlist=&vdrc.global_param_tr;
-                        break;
-                  }
-
-                  CurrentList = data->pcw.ListType;
-                  CurrentPP   = &nullPP;
-               }
 
                if (IsModVolList(CurrentList))
                {
@@ -915,27 +921,6 @@ public:
                //32B
                //Sets Sprite info , and switches to ta_sprite_data function
             case TA_PARAM_SPRITE:
-               TileClipMode(data->pcw.User_Clip);
-               if (CurrentList==ListType_None)
-               {
-                  //printf("Starting list %d\n",new_list);
-                  switch (data->pcw.ListType)
-                  {
-                     case TA_LIST_OPAQUE:
-                        CurrentPPlist=&vdrc.global_param_op;
-                        break;
-                     case TA_LIST_PUNCH_THROUGH:
-                        CurrentPPlist=&vdrc.global_param_pt;
-                        break;
-                     case TA_LIST_TRANSLUCENT:
-                        CurrentPPlist=&vdrc.global_param_tr;
-                        break;
-                  }
-
-                  CurrentList = data->pcw.ListType;
-                  CurrentPP   = &nullPP;
-               }
-
                VertexDataFP=ta_sprite_data;
                //printf("Sprite \n");
                AppendSpriteParam((TA_SpriteParam*)data);

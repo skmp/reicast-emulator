@@ -546,22 +546,21 @@ public:
 
 		return data+SZ32;
 	}
+
 	static Ta_Dma* TACALL ta_sprite_data(Ta_Dma* data,Ta_Dma* data_end)
    {
       TA_VertexParam* vp=(TA_VertexParam*)data;
       //verify(data->pcw.ParaType == TA_PARAM_VERTEX);
 
+      AppendSpriteVertexA(&vp->spr1A);
+
       if (data==data_end)
       {
          //32B more needed , 32B done :)
          TaCmd=ta_spriteB_data;
-
-
-         AppendSpriteVertexA(&vp->spr1A);
          return data+SZ32;
       }
 
-      AppendSpriteVertexA(&vp->spr1A);
       AppendSpriteVertexB(&vp->spr1B);
 
       //all 64B done
@@ -571,11 +570,11 @@ public:
 	template <u32 poly_type,u32 poly_size>
 	static Ta_Dma* TACALL ta_poly_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
-      //If SZ64  && 32 bytes
+      bool has_full_data = false;
+
+      /*If SZ64  && 32 bytes */
 		if ((poly_size!=SZ32) && (data==data_end))
 			goto fist_half;
-
-      bool has_full_data;
 
 		do
       {

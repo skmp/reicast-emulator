@@ -65,7 +65,7 @@ extern u32 ta_type_lut[256];
 //as it seems, bit 1,2 are type, bit 0 is mod volume :p
 
 //misc ones
-const u32 ListType_None=-1;
+#define LISTTYPE_NONE -1
 
 #define SZ32 1
 #define SZ64 2
@@ -478,9 +478,9 @@ public:
        * other than Vertex Parameters were input, the polygon data
        * in question is ignored and an interrupt signal is output. */
 		return data+rv;
-	};
+	}
 
-	//Code Splitter/routers
+	/* Code Splitter/routers */
 		
 	static Ta_Dma* TACALL ta_modvolB_32(Ta_Dma* data,Ta_Dma* data_end)
 	{
@@ -646,8 +646,15 @@ public:
          if ((data->pcw.ParaType == TA_PARAM_POLY_OR_VOL ||
              (data->pcw.ParaType == TA_PARAM_SPRITE)))
          {
-            TileClipMode(data->pcw.User_Clip);
-            if (CurrentList==ListType_None)
+            /* Tile clip mode */
+#if 0
+            /* Group_En bit seems ignored, thanks p1pkin  */
+            if (data->pcw.Group_En)
+#endif
+               tileclip_val=(tileclip_val&(~0xF0000000)) | (data->pcw.User_Clip << 28);
+
+
+            if (CurrentList== LISTTYPE_NONE)
             {
 #if 0
                printf("Starting list %d\n",new_list);
@@ -676,7 +683,7 @@ public:
             //Control parameter
             //32Bw3
             case TA_PARAM_END_OF_LIST:
-               if (CurrentList==ListType_None)
+               if (CurrentList == LISTTYPE_NONE)
                {
                   CurrentList=data->pcw.ListType;
                   //printf("End_Of_List : list error\n");
@@ -696,9 +703,9 @@ public:
                }
 
                //printf("End list %X\n",CurrentList);
-               ListIsFinished[CurrentList]=true;
-               CurrentList=ListType_None;
-               VertexDataFP=NullVertexData;
+               ListIsFinished[CurrentList] = true;
+               CurrentList                 = LISTTYPE_NONE;
+               VertexDataFP                = NullVertexData;
                data+=SZ32;
                break;
                //32B
@@ -728,7 +735,6 @@ public:
                //ModVolue :32B
                //PolyType :32B/64B
             case TA_PARAM_POLY_OR_VOL:
-
                if (IsModVolList(CurrentList))
                {
                   if (CurrentList == TA_LIST_OPAQUE_MODVOL)
@@ -764,13 +770,12 @@ public:
                   };
                   bool append_poly_param = false;
                   u32  append_data       = SZ32;
+                  u32 uid                = ta_type_lut[data->pcw.obj_ctrl];
+                  u32 psz                = uid>>30;
+                  u32 pdid               = (u8)(uid);
+                  u32 ppid               = (u8)(uid>>8);
 
-                  u32 uid=ta_type_lut[data->pcw.obj_ctrl];
-                  u32 psz=uid>>30;
-                  u32 pdid=(u8)(uid);
-                  u32 ppid=(u8)(uid>>8);
-
-                  VertexDataFP=ta_poly_data_lut[pdid];
+                  VertexDataFP           = ta_poly_data_lut[pdid];
 
                   if (data != data_end || psz==1)
                   {
@@ -1070,21 +1075,15 @@ public:
 		idx[3]=vbase+3;
 		vd_rc.verts.Append(4);
 
-		TaCmd=ta_main;
-		CurrentList = ListType_None;
-		ListIsFinished[0]=ListIsFinished[1]=ListIsFinished[2]=ListIsFinished[3]=ListIsFinished[4]=false;
+		TaCmd             = ta_main;
+		CurrentList       = LISTTYPE_NONE;
+		ListIsFinished[0] = false;
+      ListIsFinished[1] = false;
+      ListIsFinished[2] = false;
+      ListIsFinished[3] = false;
+      ListIsFinished[4] = false;
 	}
 		
-	__forceinline
-		static void TileClipMode(u32 mode)
-	{
-#if 0
-      /* Group_En bit seems ignored, thanks p1pkin  */
-      if (data->pcw.Group_En)
-#endif
-         tileclip_val=(tileclip_val&(~0xF0000000)) | (mode<<28);
-	}
-
 	//Poly Strip handling
 	//We unite Strips together by duplicating the [last,first].On odd sized strips
 	//a second [first] vert is needed to make sure Culling works fine :)

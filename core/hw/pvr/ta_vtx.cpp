@@ -514,7 +514,6 @@ public:
 
          lmr->x2=mvv->x2;
 
-         /* TODO/FIXME - should maybe enable this again */
          update_fz(mvv->z0);
          update_fz(mvv->z1);
       }

@@ -67,8 +67,8 @@ extern u32 ta_type_lut[256];
 //misc ones
 const u32 ListType_None=-1;
 
-const u32 SZ32=1;
-const u32 SZ64=2;
+#define SZ32 1
+#define SZ64 2
 
 #include "ta_structs.h"
 
@@ -767,6 +767,8 @@ public:
                      ta_poly_data<13,SZ64>,
                      ta_poly_data<14,SZ64>,
                   };
+                  bool append_poly_param = false;
+                  u32  append_data       = SZ32;
 
                   u32 uid=ta_type_lut[data->pcw.obj_ctrl];
                   u32 psz=uid>>30;
@@ -775,10 +777,8 @@ public:
 
                   VertexDataFP=ta_poly_data_lut[pdid];
 
-
                   if (data != data_end || psz==1)
                   {
-                     bool append_poly_param = false;
                      //32/64b , full
 
                      //poly , 32B/64B
@@ -839,32 +839,7 @@ public:
                            break;
                      }
 
-                     if (append_poly_param)
-                     {
-                        /* Polys  -- update code on sprites if that gets updated too -- */
-                        TA_PolyParam0 *npp  = (TA_PolyParam0*)data;
-                        PolyParam     *d_pp = CurrentPP;
-                        if (CurrentPP->count!=0)
-                        {
-                           d_pp=CurrentPPlist->Append(); 
-                           CurrentPP=d_pp;
-                        }
-                        d_pp->first=vdrc.idx.used(); 
-                        d_pp->count=0; 
-
-                        d_pp->isp=npp->isp; 
-                        d_pp->tsp=npp->tsp; 
-                        d_pp->tcw=npp->tcw;
-                        d_pp->pcw=npp->pcw; 
-                        d_pp->tileclip=tileclip_val;
-
-                        d_pp->texid = -1;
-
-                        if (d_pp->pcw.Texture)
-                           d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
-                     }
-
-                     data+=psz;
+                     append_data = psz;
                   }
                   else
                   {
@@ -903,35 +878,38 @@ public:
                            break;
                      }
 
-                     if (append_poly_param)
-                     {
-                        /* Polys  -- update code on sprites if that gets updated too -- */
-                        TA_PolyParam0 *npp  = (TA_PolyParam0*)data;
-                        PolyParam     *d_pp = CurrentPP;
-                        if (CurrentPP->count!=0)
-                        {
-                           d_pp=CurrentPPlist->Append(); 
-                           CurrentPP=d_pp;
-                        }
-                        d_pp->first=vdrc.idx.used(); 
-                        d_pp->count=0; 
-
-                        d_pp->isp=npp->isp; 
-                        d_pp->tsp=npp->tsp; 
-                        d_pp->tcw=npp->tcw;
-                        d_pp->pcw=npp->pcw; 
-                        d_pp->tileclip=tileclip_val;
-
-                        d_pp->texid = -1;
-
-                        if (d_pp->pcw.Texture)
-                           d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
-                     }
-
                      //Handle next 32B ;)
                      TaCmd=ta_poly_param_b_lut[ppid];
-                     data+=SZ32;
+
+                     append_data = SZ32;
                   }
+
+                  if (append_poly_param)
+                  {
+                     /* Polys  -- update code on sprites if that gets updated too -- */
+                     TA_PolyParam0 *npp  = (TA_PolyParam0*)data;
+                     PolyParam     *d_pp = CurrentPP;
+                     if (CurrentPP->count!=0)
+                     {
+                        d_pp=CurrentPPlist->Append(); 
+                        CurrentPP=d_pp;
+                     }
+                     d_pp->first=vdrc.idx.used(); 
+                     d_pp->count=0; 
+
+                     d_pp->isp=npp->isp; 
+                     d_pp->tsp=npp->tsp; 
+                     d_pp->tcw=npp->tcw;
+                     d_pp->pcw=npp->pcw; 
+                     d_pp->tileclip=tileclip_val;
+
+                     d_pp->texid = -1;
+
+                     if (d_pp->pcw.Texture)
+                        d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
+                  }
+
+                  data += append_data;
                }
                break;
                //32B

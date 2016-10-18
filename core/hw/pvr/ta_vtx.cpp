@@ -59,9 +59,6 @@ extern u32 ta_type_lut[256];
 
 typedef Ta_Dma* DYNACALL TaListFP(Ta_Dma* data,Ta_Dma* data_end);
 
-typedef void TACALL TaPolyParamFP(void* ptr);
-
-//#define TaCmd ((TaListFP*&)sh4rcb.tacmd_void)
 TaListFP* TaCmd;
 	
 u32 CurrentList;
@@ -1359,20 +1356,15 @@ static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 	//Color
 	u32 col=vri(ptr);ptr+=4;
 
-   cv->col[2] = (u8)(col); 
-   cv->col[1] = (u8)(col >> 8);
-   cv->col[0] = (u8)(col >> 16);
-   cv->col[3] = (u8)(col >> 24);
+   tr_parse_color(cv->col, col);
 
 	if (isp.Offset)
 	{
 		//Intensity color (can be missing too ;p)
-		u32 col=vri(ptr);ptr+=4;
+		u32 col=vri(ptr);
+      ptr+=4;
 
-      cv->spc[2] = (u8)(col); 
-      cv->spc[1] = (u8)(col >> 8);
-      cv->spc[0] = (u8)(col >> 16);
-      cv->spc[3] = (u8)(col >> 24);
+      tr_parse_offset_color(cv, col);
 	}
 }
 

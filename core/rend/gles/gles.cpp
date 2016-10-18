@@ -555,7 +555,7 @@ template <u32 Type, bool SortingEnabled>
 static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 {
    //force everything to be shadowed
-   const u32 stencil = 0x80;
+   const u32 stencil = (gp->pcw.Shadow!=0)?0x80:0;
 
    /* Has to preserve cache_TSP/ISP
     * Can freely use cache TCW */

@@ -330,11 +330,8 @@ public:
 
                   tr_parse_color_rgba(cv->col, vtx->BaseR,
                         vtx->BaseG, vtx->BaseB, vtx->BaseA);
-
-                  cv->spc[0] = float_to_satu8(vtx->OffsR);
-                  cv->spc[1] = float_to_satu8(vtx->OffsG);
-                  cv->spc[2] = float_to_satu8(vtx->OffsB);
-                  cv->spc[3] = float_to_satu8(vtx->OffsA);
+                  tr_parse_color_rgba(cv->spc, vtx->OffsR,
+                        vtx->OffsG, vtx->OffsB, vtx->OffsA);
                   rv+=SZ32;
                }
             }
@@ -371,11 +368,8 @@ public:
 
                   tr_parse_color_rgba(cv->col, vtx->BaseR,
                         vtx->BaseG, vtx->BaseB, vtx->BaseA);
-
-                  cv->spc[0] = float_to_satu8(vtx->OffsR);
-                  cv->spc[1] = float_to_satu8(vtx->OffsG);
-                  cv->spc[2] = float_to_satu8(vtx->OffsB);
-                  cv->spc[3] = float_to_satu8(vtx->OffsA);
+                  tr_parse_color_rgba(cv->spc, vtx->OffsR,
+                        vtx->OffsG, vtx->OffsB, vtx->OffsA);
                   rv+=SZ32;
                }
             }

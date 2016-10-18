@@ -812,9 +812,21 @@ public:
                         case 2:
                            {
                               Ta_Dma* pp=(Ta_Dma*)data;
+                              TA_PolyParam2A* ppa=(TA_PolyParam2A*)&pp[0];
+                              TA_PolyParam2B* ppb=(TA_PolyParam2B*)&pp[1];
 
-                              AppendPolyParam2A((TA_PolyParam2A*)&pp[0]);
-                              AppendPolyParam2B((TA_PolyParam2B*)&pp[1]);
+                              if (should_append_poly_param(ppa))
+                                 append_poly_param = true;
+
+                              FaceBaseColor[0] = float_to_satu8(ppb->FaceColorR);
+                              FaceBaseColor[1] = float_to_satu8(ppb->FaceColorG);
+                              FaceBaseColor[2] = float_to_satu8(ppb->FaceColorB);
+                              FaceBaseColor[3] = float_to_satu8(ppb->FaceColorA);
+
+                              FaceOffsColor[0] = float_to_satu8(ppb->FaceOffsetR);
+                              FaceOffsColor[1] = float_to_satu8(ppb->FaceOffsetG);
+                              FaceOffsColor[2] = float_to_satu8(ppb->FaceOffsetB);
+                              FaceOffsColor[3] = float_to_satu8(ppb->FaceOffsetA);
                            }
                            break;
                         case 3:
@@ -827,9 +839,16 @@ public:
                         case 4:
                            {
                               Ta_Dma* pp=(Ta_Dma*)data;
+                              TA_PolyParam4A* ppa=(TA_PolyParam4A*)&pp[0];
+                              TA_PolyParam4B* ppb=(TA_PolyParam4B*)&pp[1];
 
-                              AppendPolyParam4A((TA_PolyParam4A*)&pp[0]);
-                              AppendPolyParam4B((TA_PolyParam4B*)&pp[1]);
+                              if (should_append_poly_param(ppa))
+                                 append_poly_param = true;
+
+                              FaceBaseColor[0] = float_to_satu8(ppb->FaceColor0R);
+                              FaceBaseColor[1] = float_to_satu8(ppb->FaceColor0G);
+                              FaceBaseColor[2] = float_to_satu8(ppb->FaceColor0B);
+                              FaceBaseColor[3] = float_to_satu8(ppb->FaceColor0A);
                            }
                            break;
                      }
@@ -1097,10 +1116,7 @@ public:
 	{
 		TA_PolyParam2A* pp=(TA_PolyParam2A*)vpp;
 
-      if (CurrentPP->pcw.full!=pp->pcw.full || 
-            CurrentPP->tcw.full!=pp->tcw.full || 
-            CurrentPP->tsp.full!=pp->tsp.full || 
-            CurrentPP->isp.full!=pp->isp.full	) 
+      if (should_append_poly_param(pp))
       {
          /* Polys  -- update code on sprites if that gets updated too -- */
          TA_PolyParam0 *npp  = (TA_PolyParam0*)pp;
@@ -1125,42 +1141,13 @@ public:
             d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
       }
 	}
-	__forceinline
-		static void TACALL AppendPolyParam2B(void* vpp)
-	{
-		TA_PolyParam2B* pp=(TA_PolyParam2B*)vpp;
-
-      FaceBaseColor[0] = float_to_satu8(pp->FaceColorR);
-      FaceBaseColor[1] = float_to_satu8(pp->FaceColorG);
-      FaceBaseColor[2] = float_to_satu8(pp->FaceColorB);
-      FaceBaseColor[3] = float_to_satu8(pp->FaceColorA);
-
-      FaceOffsColor[0] = float_to_satu8(pp->FaceOffsetR);
-      FaceOffsColor[1] = float_to_satu8(pp->FaceOffsetG);
-      FaceOffsColor[2] = float_to_satu8(pp->FaceOffsetB);
-      FaceOffsColor[3] = float_to_satu8(pp->FaceOffsetA);
-	}
-
-	__forceinline
-		static void TACALL AppendPolyParam4B(void* vpp)
-	{
-		TA_PolyParam4B* pp=(TA_PolyParam4B*)vpp;
-
-      FaceBaseColor[0] = float_to_satu8(pp->FaceColor0R);
-      FaceBaseColor[1] = float_to_satu8(pp->FaceColor0G);
-      FaceBaseColor[2] = float_to_satu8(pp->FaceColor0B);
-      FaceBaseColor[3] = float_to_satu8(pp->FaceColor0A);
-	}
 
 	__forceinline
 		static void TACALL AppendPolyParam4A(void* vpp)
 	{
 		TA_PolyParam4A* pp=(TA_PolyParam4A*)vpp;
 
-      if (CurrentPP->pcw.full!=pp->pcw.full || 
-            CurrentPP->tcw.full!=pp->tcw.full || 
-            CurrentPP->tsp.full!=pp->tsp.full || 
-            CurrentPP->isp.full!=pp->isp.full	) 
+      if (should_append_poly_param(pp))
       {
          /* Polys  -- update code on sprites if that gets updated too -- */
          TA_PolyParam0 *npp  = (TA_PolyParam0*)pp;

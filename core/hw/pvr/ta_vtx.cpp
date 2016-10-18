@@ -123,13 +123,6 @@ class FifoSplitter
 {
 public:
 
-	static void ta_list_start(u32 new_list)
-	{
-		//printf("Starting list %d\n",new_list);
-		CurrentList=new_list;
-		StartList(CurrentList);
-	}
-
 	static Ta_Dma* DYNACALL NullVertexData(Ta_Dma* data,Ta_Dma* data_end)
 	{
 		printf("TA: Invalid state, ignoring VTX data\n");
@@ -674,8 +667,6 @@ fist_half:
 
 public:
 	
-	//Group_En bit seems ignored, thanks p1pkin 
-#define group_EN() /*if (data->pcw.Group_En) */{ TileClipMode(data->pcw.User_Clip);}
 	static Ta_Dma* TACALL ta_main(Ta_Dma* data,Ta_Dma* data_end)
    {
       do
@@ -693,8 +684,16 @@ public:
                }
                else
                {
-                  //end of list should be all 0's ...
-                  EndList(CurrentList);//end a list olny if it was realy started
+                  /* end of list should be all 0's ...
+                   * end a list only if it was really started */
+                  CurrentPP=&nullPP;
+                  CurrentPPlist=0;
+                  if (CurrentList == TA_LIST_OPAQUE_MODVOL)
+                  {
+                     ISP_Modvol p;
+                     p.id=vdrc.modtrig.used();
+                     *vdrc.global_param_mvo.Append()=p;
+                  }
                }
 
                //printf("End list %X\n",CurrentList);
@@ -705,7 +704,18 @@ public:
                break;
                //32B
             case TA_PARAM_USER_TILE_CLIP:
-               SetTileClip(data->data_32[3]&63,data->data_32[4]&31,data->data_32[5]&63,data->data_32[6]&31);
+               {
+                  u32 xmin = data->data_32[3]&63;
+                  u32 ymin = data->data_32[4]&31;
+                  u32 xmax = data->data_32[5]&63;
+                  u32 ymax = data->data_32[6]&31;
+                  u32 rv=tileclip_val & 0xF0000000;
+                  rv|=xmin; //6 bits
+                  rv|=xmax<<6; //6 bits
+                  rv|=ymin<<12; //5 bits
+                  rv|=ymax<<17; //5 bits
+                  tileclip_val=rv;
+               }
                data+=SZ32;
                break;
                //32B
@@ -720,7 +730,7 @@ public:
                //PolyType :32B/64B
             case TA_PARAM_POLY_OR_VOL:
                {
-                  group_EN();
+                  TileClipMode(data->pcw.User_Clip);
                   //Yep , C++ IS lame & limited
                   static TaListFP* ta_poly_data_lut[15] = 
                   {
@@ -770,7 +780,25 @@ public:
                   };
 
                   if (CurrentList==ListType_None)
-                     ta_list_start(data->pcw.ListType);	//start a list ;)
+                  {
+                     //printf("Starting list %d\n",new_list);
+
+                     switch (data->pcw.ListType)
+                     {
+                        case TA_LIST_OPAQUE:
+                           CurrentPPlist=&vdrc.global_param_op;
+                           break;
+                        case TA_LIST_PUNCH_THROUGH:
+                           CurrentPPlist=&vdrc.global_param_pt;
+                           break;
+                        case TA_LIST_TRANSLUCENT:
+                           CurrentPPlist=&vdrc.global_param_tr;
+                           break;
+                     }
+
+                     CurrentList = data->pcw.ListType;
+                     CurrentPP   = &nullPP;
+                  }
 
                   if (IsModVolList(CurrentList))
                   {
@@ -814,9 +842,26 @@ public:
                //Sets Sprite info , and switches to ta_sprite_data function
             case TA_PARAM_SPRITE:
                {
-                  group_EN();
+                  TileClipMode(data->pcw.User_Clip);
                   if (CurrentList==ListType_None)
-                     ta_list_start(data->pcw.ListType);	//start a list ;)
+                  {
+                     //printf("Starting list %d\n",new_list);
+                     switch (data->pcw.ListType)
+                     {
+                        case TA_LIST_OPAQUE:
+                           CurrentPPlist=&vdrc.global_param_op;
+                           break;
+                        case TA_LIST_PUNCH_THROUGH:
+                           CurrentPPlist=&vdrc.global_param_pt;
+                           break;
+                        case TA_LIST_TRANSLUCENT:
+                           CurrentPPlist=&vdrc.global_param_tr;
+                           break;
+                     }
+
+                     CurrentList = data->pcw.ListType;
+                     CurrentPP   = &nullPP;
+                  }
 
                   VertexDataFP=ta_sprite_data;
                   //printf("Sprite \n");
@@ -973,53 +1018,13 @@ public:
 	}
 		
 	__forceinline
-		static void SetTileClip(u32 xmin,u32 ymin,u32 xmax,u32 ymax)
-	{
-		u32 rv=tileclip_val & 0xF0000000;
-		rv|=xmin; //6 bits
-		rv|=xmax<<6; //6 bits
-		rv|=ymin<<12; //5 bits
-		rv|=ymax<<17; //5 bits
-		tileclip_val=rv;
-	}
-
-	__forceinline
 		static void TileClipMode(u32 mode)
 	{
-		tileclip_val=(tileclip_val&(~0xF0000000)) | (mode<<28);
-	}
-
-	//list handling
-	__forceinline
-		static void StartList(u32 ListType)
-	{
-      switch (ListType)
-      {
-         case TA_LIST_OPAQUE:
-            CurrentPPlist=&vdrc.global_param_op;
-            break;
-         case TA_LIST_PUNCH_THROUGH:
-            CurrentPPlist=&vdrc.global_param_pt;
-            break;
-         case TA_LIST_TRANSLUCENT:
-            CurrentPPlist=&vdrc.global_param_tr;
-            break;
-      }
-
-		CurrentPP=&nullPP;
-	}
-
-	__forceinline
-		static void EndList(u32 ListType)
-	{
-		CurrentPP=&nullPP;
-		CurrentPPlist=0;
-		if (ListType == TA_LIST_OPAQUE_MODVOL)
-		{
-			ISP_Modvol p;
-			p.id=vdrc.modtrig.used();
-			*vdrc.global_param_mvo.Append()=p;
-		}
+#if 0
+      /* Group_En bit seems ignored, thanks p1pkin  */
+      if (data->pcw.Group_En)
+#endif
+         tileclip_val=(tileclip_val&(~0xF0000000)) | (mode<<28);
 	}
 
 	//poly param handling

@@ -1090,7 +1090,7 @@ static void DrawModVols(void)
      * volume, and then AND or OR it against the overall 1-bit tile stencil at 
      * the end of the volume. */
 
-	if (pvrrc.modtrig.used()==0 /*|| GetAsyncKeyState(VK_F4)*/)
+	if (pvrrc.modtrig.used()==0 || settings.pvr.Emulation.ModVolMode == 0)
 		return;
 
 	SetupModvolVBO();
@@ -1104,7 +1104,7 @@ static void DrawModVols(void)
    glDepthMask(GL_FALSE);
 	glDepthFunc(GL_GREATER);
 
-	if(0 /*|| GetAsyncKeyState(VK_F5)*/ )
+	if(settings.pvr.Emulation.ModVolMode == 1)
 	{
 		//simply draw the volumes -- for debugging
 		SetCull(0);
@@ -1132,7 +1132,7 @@ static void DrawModVols(void)
 		glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
 		glDepthFunc(GL_GREATER);
 
-		if ( 0 /* || GetAsyncKeyState(VK_F6)*/ )
+		if (settings.pvr.Emulation.ModVolMode == 2)
 		{
 			//simple single level stencil
 			glEnable(GL_STENCIL_TEST);
@@ -1143,7 +1143,7 @@ static void DrawModVols(void)
 			SetCull(0);
 			glDrawArrays(GL_TRIANGLES,0,pvrrc.modtrig.used()*3);
 		}
-		else if (true)
+		else if (settings.pvr.Emulation.ModVolMode == 3)
 		{
 			//Full emulation
 			//the *out* mode is buggy
@@ -1860,9 +1860,7 @@ static bool RenderFrame(void)
 	/*if (!GetAsyncKeyState(VK_F1))*/
 	DrawList<TA_LIST_OPAQUE, false>(pvrrc.global_param_op);
 
-#if 0
 	DrawModVols();
-#endif
 
 	//Alpha tested
 	//setup alpha test state

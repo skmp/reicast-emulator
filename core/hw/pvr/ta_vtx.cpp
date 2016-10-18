@@ -104,6 +104,12 @@ static INLINE f32 f16(u16 v)
    col[0] = (u8)(base_color >> 16); \
    col[3] = (u8)(base_color >> 24)
 
+#define tr_parse_offset_color(cv, offset_color) \
+   cv->spc[2] = (u8)(offset_color); \
+   cv->spc[1] = (u8)(offset_color >> 8); \
+   cv->spc[0] = (u8)(offset_color >> 16); \
+   cv->spc[3] = (u8)(offset_color >> 24)
+
 #define tr_parse_color_rgba(col, r, g, b, a) \
    col[0] = float_to_satu8(r); \
    col[1] = float_to_satu8(g); \
@@ -115,6 +121,12 @@ static INLINE f32 f16(u16 v)
    col[1] = val[1] * base_intensity / 256; \
    col[2] = val[2] * base_intensity / 256; \
    col[3] = val[3]
+
+#define tr_parse_offset_color_intensity(col, base_intensity) \
+   col[0] = FaceOffsColor[0] * base_intensity / 256;  \
+   col[1] = FaceOffsColor[1] * base_intensity / 256;  \
+   col[2] = FaceOffsColor[2] * base_intensity / 256;  \
+   col[3] = FaceOffsColor[3]
 
 /* Intensity handling */
 
@@ -208,10 +220,7 @@ public:
 
                tr_parse_color(cv->col, vtx->BaseCol);
 
-               cv->spc[2] = (u8)(vtx->OffsCol);
-               cv->spc[1] = (u8)(vtx->OffsCol >> 8);
-               cv->spc[0] = (u8)(vtx->OffsCol >> 16);
-               cv->spc[3] = (u8)(vtx->OffsCol >> 24);
+               tr_parse_offset_color(cv, vtx->OffsCol);
 
                cv->u = (vtx->u);
                cv->v = (vtx->v);
@@ -226,11 +235,7 @@ public:
                Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
 
                tr_parse_color(cv->col, vtx->BaseCol);
-
-               cv->spc[2] = (u8)(vtx->OffsCol);
-               cv->spc[1] = (u8)(vtx->OffsCol >> 8);
-               cv->spc[0] = (u8)(vtx->OffsCol >> 16);
-               cv->spc[3] = (u8)(vtx->OffsCol >> 24);
+               tr_parse_offset_color(cv, vtx->OffsCol);
 
                cv->u = f16(vtx->u);
                cv->v = f16(vtx->v);
@@ -248,11 +253,8 @@ public:
 
                tr_parse_color_intensity(cv->col, satint0,
                      FaceBaseColor);
-
-               cv->spc[0] = FaceOffsColor[0]*satint1/256; 
-               cv->spc[1] = FaceOffsColor[1]*satint1/256; 
-               cv->spc[2] = FaceOffsColor[2]*satint1/256; 
-               cv->spc[3] = FaceOffsColor[3];
+               tr_parse_offset_color_intensity(cv->spc, 
+                     satint1);
 
                cv->u = (vtx->u);
                cv->v = (vtx->v);
@@ -270,11 +272,8 @@ public:
 
                tr_parse_color_intensity(cv->col, satint0,
                      FaceBaseColor);
-
-               cv->spc[0] = FaceOffsColor[0]*satint1/256; 
-               cv->spc[1] = FaceOffsColor[1]*satint1/256; 
-               cv->spc[2] = FaceOffsColor[2]*satint1/256; 
-               cv->spc[3] = FaceOffsColor[3];
+               tr_parse_offset_color_intensity(cv->spc, 
+                     satint1);
 
                cv->u = f16(vtx->u);
                cv->v = f16(vtx->v);
@@ -400,15 +399,8 @@ public:
                   TA_Vertex11A *vtx = (TA_Vertex11A*)&vp->vtx11A;
                   Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
 
-                  cv->col[2] = (u8)(vtx->BaseCol0);
-                  cv->col[1] = (u8)(vtx->BaseCol0 >> 8);
-                  cv->col[0] = (u8)(vtx->BaseCol0 >> 16);
-                  cv->col[3] = (u8)(vtx->BaseCol0 >> 24);
-
-                  cv->spc[2] = (u8)(vtx->OffsCol0);
-                  cv->spc[1] = (u8)(vtx->OffsCol0 >> 8);
-                  cv->spc[0] = (u8)(vtx->OffsCol0 >> 16);
-                  cv->spc[3] = (u8)(vtx->OffsCol0 >> 24);
+                  tr_parse_color(cv->col, vtx->BaseCol0);
+                  tr_parse_offset_color(cv, vtx->OffsCol0);
 
                   cv->u = (vtx->u0);
                   cv->v = (vtx->v0);
@@ -426,15 +418,9 @@ public:
                TA_Vertex12A *vtx = (TA_Vertex12A*)&vp->vtx12A;
                Vertex       *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
 
-               cv->col[2] = (u8)(vtx->BaseCol0);
-               cv->col[1] = (u8)(vtx->BaseCol0 >> 8);
-               cv->col[0] = (u8)(vtx->BaseCol0 >> 16);
-               cv->col[3] = (u8)(vtx->BaseCol0 >> 24);
+               tr_parse_color(cv->col, vtx->BaseCol0);
+               tr_parse_offset_color(cv, vtx->OffsCol0);
 
-               cv->spc[2] = (u8)(vtx->OffsCol0);
-               cv->spc[1] = (u8)(vtx->OffsCol0 >> 8);
-               cv->spc[0] = (u8)(vtx->OffsCol0 >> 16);
-               cv->spc[3] = (u8)(vtx->OffsCol0 >> 24);
 
                cv->u = f16(vtx->u0);
                cv->v = f16(vtx->v0);
@@ -455,15 +441,12 @@ public:
                Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
                u32 satint0=float_to_satu8(vtx->BaseInt0);
                u32 satint1=float_to_satu8(vtx->OffsInt0);
-               cv->col[0] = FaceBaseColor[0]*satint0/256; 
-               cv->col[1] = FaceBaseColor[1]*satint0/256;
-               cv->col[2] = FaceBaseColor[2]*satint0/256;
-               cv->col[3] = FaceBaseColor[3];
 
-               cv->spc[0] = FaceOffsColor[0]*satint1/256; 
-               cv->spc[1] = FaceOffsColor[1]*satint1/256; 
-               cv->spc[2] = FaceOffsColor[2]*satint1/256; 
-               cv->spc[3] = FaceOffsColor[3];
+               tr_parse_color_intensity(cv->col, satint0,
+                     FaceBaseColor);
+
+               tr_parse_offset_color_intensity(cv->spc, 
+                     satint1);
 
                cv->u = (vtx->u0);
                cv->v = (vtx->v0);
@@ -484,15 +467,11 @@ public:
                u32       satint0 = float_to_satu8(vtx->BaseInt0);
                u32       satint1 = float_to_satu8(vtx->OffsInt0);
 
-               cv->col[0] = FaceBaseColor[0]*satint0/256; 
-               cv->col[1] = FaceBaseColor[1]*satint0/256;
-               cv->col[2] = FaceBaseColor[2]*satint0/256;
-               cv->col[3] = FaceBaseColor[3];
+               tr_parse_color_intensity(cv->col, satint0,
+                     FaceBaseColor);
 
-               cv->spc[0] = FaceOffsColor[0]*satint1/256; 
-               cv->spc[1] = FaceOffsColor[1]*satint1/256; 
-               cv->spc[2] = FaceOffsColor[2]*satint1/256; 
-               cv->spc[3] = FaceOffsColor[3];
+               tr_parse_offset_color_intensity(cv->spc, 
+                     satint1);
 
                cv->u = f16(vtx->u0);
                cv->v = f16(vtx->v0);

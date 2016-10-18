@@ -729,9 +729,44 @@ public:
                //ModVolue :32B
                //PolyType :32B/64B
             case TA_PARAM_POLY_OR_VOL:
+               TileClipMode(data->pcw.User_Clip);
+
+               if (CurrentList==ListType_None)
                {
-                  TileClipMode(data->pcw.User_Clip);
-                  //Yep , C++ IS lame & limited
+                  //printf("Starting list %d\n",new_list);
+
+                  switch (data->pcw.ListType)
+                  {
+                     case TA_LIST_OPAQUE:
+                        CurrentPPlist=&vdrc.global_param_op;
+                        break;
+                     case TA_LIST_PUNCH_THROUGH:
+                        CurrentPPlist=&vdrc.global_param_pt;
+                        break;
+                     case TA_LIST_TRANSLUCENT:
+                        CurrentPPlist=&vdrc.global_param_tr;
+                        break;
+                  }
+
+                  CurrentList = data->pcw.ListType;
+                  CurrentPP   = &nullPP;
+               }
+
+               if (IsModVolList(CurrentList))
+               {
+                  if (CurrentList == TA_LIST_OPAQUE_MODVOL)
+                  {
+                     TA_ModVolParam *param = (TA_ModVolParam*)data;
+                     ISP_Modvol* p=vdrc.global_param_mvo.Append();
+                     p->full=param->isp.full;
+                     p->VolumeLast=param->pcw.Volume;
+                     p->id=vdrc.modtrig.used();
+                  }
+                  VertexDataFP=ta_mod_vol_data;
+                  data+=SZ32;
+               }
+               else
+               {
                   static TaListFP* ta_poly_data_lut[15] = 
                   {
                      ta_poly_data<0,SZ32>,
@@ -750,97 +785,58 @@ public:
                      ta_poly_data<13,SZ64>,
                      ta_poly_data<14,SZ64>,
                   };
-                  //32/64b , full
-                  static TaPolyParamFP* ta_poly_param_lut[5]=
-                  {
-                     AppendPolyParam0,
-                     AppendPolyParam1,
-                     AppendPolyParam2Full,
-                     AppendPolyParam3,
-                     AppendPolyParam4Full
-                  };
-                  //64b , first part
-                  static TaPolyParamFP* ta_poly_param_a_lut[5]=
-                  {
-                     (TaPolyParamFP*)0,
-                     (TaPolyParamFP*)0,
-                     AppendPolyParam2A,
-                     (TaPolyParamFP*)0,
-                     AppendPolyParam4A
-                  };
 
-                  //64b , , second part
-                  static TaListFP* ta_poly_param_b_lut[5]=
-                  {
-                     (TaListFP*)0,
-                     (TaListFP*)0,
-                     ta_poly_B_32<2>,
-                     (TaListFP*)0,
-                     ta_poly_B_32<4>
-                  };
+                  u32 uid=ta_type_lut[data->pcw.obj_ctrl];
+                  u32 psz=uid>>30;
+                  u32 pdid=(u8)(uid);
+                  u32 ppid=(u8)(uid>>8);
 
-                  if (CurrentList==ListType_None)
-                  {
-                     //printf("Starting list %d\n",new_list);
+                  VertexDataFP=ta_poly_data_lut[pdid];
 
-                     switch (data->pcw.ListType)
+
+                  if (data != data_end || psz==1)
+                  {
+                     //32/64b , full
+                     static TaPolyParamFP* ta_poly_param_lut[5]=
                      {
-                        case TA_LIST_OPAQUE:
-                           CurrentPPlist=&vdrc.global_param_op;
-                           break;
-                        case TA_LIST_PUNCH_THROUGH:
-                           CurrentPPlist=&vdrc.global_param_pt;
-                           break;
-                        case TA_LIST_TRANSLUCENT:
-                           CurrentPPlist=&vdrc.global_param_tr;
-                           break;
-                     }
+                        AppendPolyParam0,
+                        AppendPolyParam1,
+                        AppendPolyParam2Full,
+                        AppendPolyParam3,
+                        AppendPolyParam4Full
+                     };
 
-                     CurrentList = data->pcw.ListType;
-                     CurrentPP   = &nullPP;
-                  }
-
-                  if (IsModVolList(CurrentList))
-                  {
-                     if (CurrentList == TA_LIST_OPAQUE_MODVOL)
-                     {
-                        TA_ModVolParam *param = (TA_ModVolParam*)data;
-                        ISP_Modvol* p=vdrc.global_param_mvo.Append();
-                        p->full=param->isp.full;
-                        p->VolumeLast=param->pcw.Volume;
-                        p->id=vdrc.modtrig.used();
-                     }
-                     VertexDataFP=ta_mod_vol_data;
-                     data+=SZ32;
+                     //poly , 32B/64B
+                     ta_poly_param_lut[ppid](data);
+                     data+=psz;
                   }
                   else
                   {
-
-                     u32 uid=ta_type_lut[data->pcw.obj_ctrl];
-                     u32 psz=uid>>30;
-                     u32 pdid=(u8)(uid);
-                     u32 ppid=(u8)(uid>>8);
-
-                     VertexDataFP=ta_poly_data_lut[pdid];
-
-
-                     if (data != data_end || psz==1)
+                     //64b , first part
+                     static TaPolyParamFP* ta_poly_param_a_lut[5]=
                      {
-
-                        //poly , 32B/64B
-                        ta_poly_param_lut[ppid](data);
-                        data+=psz;
-                     }
-                     else
+                        (TaPolyParamFP*)0,
+                        (TaPolyParamFP*)0,
+                        AppendPolyParam2A,
+                        (TaPolyParamFP*)0,
+                        AppendPolyParam4A
+                     };
+                     //64b , , second part
+                     static TaListFP* ta_poly_param_b_lut[5]=
                      {
+                        (TaListFP*)0,
+                        (TaListFP*)0,
+                        ta_poly_B_32<2>,
+                        (TaListFP*)0,
+                        ta_poly_B_32<4>
+                     };
 
-                        //AppendPolyParam64A((TA_PolyParamA*)data);
-                        //64b , first part
-                        ta_poly_param_a_lut[ppid](data);
-                        //Handle next 32B ;)
-                        TaCmd=ta_poly_param_b_lut[ppid];
-                        data+=SZ32;
-                     }
+                     //AppendPolyParam64A((TA_PolyParamA*)data);
+                     //64b , first part
+                     ta_poly_param_a_lut[ppid](data);
+                     //Handle next 32B ;)
+                     TaCmd=ta_poly_param_b_lut[ppid];
+                     data+=SZ32;
                   }
                }
                break;

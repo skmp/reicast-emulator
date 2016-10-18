@@ -98,6 +98,12 @@ static INLINE f32 f16(u16 v)
    to[0] = (u8)(src >> 16); \
    to[3] = (u8)(src >> 24);
 
+#define tr_parse_color(col, base_color) \
+   col[2] = (u8)(base_color); \
+   col[1] = (u8)(base_color >> 8); \
+   col[0] = (u8)(base_color >> 16); \
+   col[3] = (u8)(base_color >> 24)
+
 /* Intensity handling */
 
 /* Notes:
@@ -152,10 +158,7 @@ public:
                TA_Vertex0 *vtx = (TA_Vertex0*)&vp->vtx0;
                Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
 
-               cv->col[2] = (u8)(vtx->BaseCol);
-               cv->col[1] = (u8)(vtx->BaseCol >> 8);
-               cv->col[0] = (u8)(vtx->BaseCol >> 16);
-               cv->col[3] = (u8)(vtx->BaseCol >> 24);
+               tr_parse_color(cv->col, vtx->BaseCol);
             }
             rv=SZ32;
             break;
@@ -195,10 +198,7 @@ public:
                TA_Vertex3 *vtx = (TA_Vertex3*)&vp->vtx3;
                Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
 
-               cv->col[2] = (u8)(vtx->BaseCol);
-               cv->col[1] = (u8)(vtx->BaseCol >> 8);
-               cv->col[0] = (u8)(vtx->BaseCol >> 16);
-               cv->col[3] = (u8)(vtx->BaseCol >> 24);
+               tr_parse_color(cv->col, vtx->BaseCol);
 
                cv->spc[2] = (u8)(vtx->OffsCol);
                cv->spc[1] = (u8)(vtx->OffsCol >> 8);
@@ -217,10 +217,7 @@ public:
                TA_Vertex4 *vtx = (TA_Vertex4*)&vp->vtx4;
                Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
 
-               cv->col[2] = (u8)(vtx->BaseCol);
-               cv->col[1] = (u8)(vtx->BaseCol >> 8);
-               cv->col[0] = (u8)(vtx->BaseCol >> 16);
-               cv->col[3] = (u8)(vtx->BaseCol >> 24);
+               tr_parse_color(cv->col, vtx->BaseCol);
 
                cv->spc[2] = (u8)(vtx->OffsCol);
                cv->spc[1] = (u8)(vtx->OffsCol >> 8);
@@ -286,10 +283,7 @@ public:
                TA_Vertex9 *vtx = (TA_Vertex9*)&vp->vtx9;
                Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
 
-               cv->col[2] = (u8)(vtx->BaseCol0);
-               cv->col[1] = (u8)(vtx->BaseCol0 >> 8);
-               cv->col[0] = (u8)(vtx->BaseCol0 >> 16);
-               cv->col[3] = (u8)(vtx->BaseCol0 >> 24);
+               tr_parse_color(cv->col, vtx->BaseCol0);
             }
             rv=SZ32;
             break;
@@ -508,6 +502,12 @@ public:
             break;
       }
 
+      /* In the case of the Polygon type, the last struct
+       * vertex Parameter for an object must have "End of
+       * Strip" specified. If Vertex Parameters with the "End
+       * of Strip" specification were not input, but parameters
+       * other than Vertex Parameters were input, the polygon data
+       * in question is ignored and an interrupt signal is output. */
 		return data+rv;
 	};
 
@@ -620,7 +620,6 @@ public:
 
 		do
       {
-         //verify(data->pcw.ParaType == TA_PARAM_VERTEX);
          ta_handle_poly<poly_type,0>(data,0);
          if (data->pcw.EndOfStrip)
             goto strip_end;

@@ -142,6 +142,8 @@ static INLINE f32 f16(u16 v)
    cv[indx].u = f16(sv->u_name);\
    cv[indx].v = f16(sv->v_name);
 
+#define should_append_poly_param(pp) (CurrentPP->pcw.full!=pp->pcw.full || CurrentPP->tcw.full!=pp->tcw.full || CurrentPP->tsp.full!=pp->tsp.full || CurrentPP->isp.full!=pp->isp.full) 
+
 //Splitter function (normally ta_dma_main , modified for split dma's)
 
 template<u32 instance>
@@ -615,21 +617,6 @@ fist_half:
       return data+SZ32;
 	}
 
-	static void TACALL AppendPolyParam2Full(void* vpp)
-	{
-		Ta_Dma* pp=(Ta_Dma*)vpp;
-
-		AppendPolyParam2A((TA_PolyParam2A*)&pp[0]);
-		AppendPolyParam2B((TA_PolyParam2B*)&pp[1]);
-	}
-
-	static void TACALL AppendPolyParam4Full(void* vpp)
-	{
-		Ta_Dma* pp=(Ta_Dma*)vpp;
-
-		AppendPolyParam4A((TA_PolyParam4A*)&pp[0]);
-		AppendPolyParam4B((TA_PolyParam4B*)&pp[1]);
-	}
 	//Second part of poly data
 	template <int t>
 	static Ta_Dma* TACALL ta_poly_B_32(Ta_Dma* data,Ta_Dma* data_end)
@@ -796,26 +783,80 @@ public:
 
                   if (data != data_end || psz==1)
                   {
+                     bool append_poly_param = false;
                      //32/64b , full
 
                      //poly , 32B/64B
                      switch (ppid)
                      {
                         case 0:
-                           AppendPolyParam0(data);
+                           {
+                              TA_PolyParam0* pp=(TA_PolyParam0*)data;
+                              if (should_append_poly_param(pp))
+                                 append_poly_param = true;
+                           }
                            break;
                         case 1:
-                           AppendPolyParam1(data);
+                           {
+                              TA_PolyParam1* pp=(TA_PolyParam1*)data;
+
+                              if (should_append_poly_param(pp))
+                                 append_poly_param = true;
+
+                              FaceBaseColor[0] = float_to_satu8(pp->FaceColorR);
+                              FaceBaseColor[1] = float_to_satu8(pp->FaceColorG);
+                              FaceBaseColor[2] = float_to_satu8(pp->FaceColorB);
+                              FaceBaseColor[3] = float_to_satu8(pp->FaceColorA);
+                           }
                            break;
                         case 2:
-                           AppendPolyParam2Full(data);
+                           {
+                              Ta_Dma* pp=(Ta_Dma*)data;
+
+                              AppendPolyParam2A((TA_PolyParam2A*)&pp[0]);
+                              AppendPolyParam2B((TA_PolyParam2B*)&pp[1]);
+                           }
                            break;
                         case 3:
-                           AppendPolyParam3(data);
+                           {
+                              TA_PolyParam3* pp=(TA_PolyParam3*)data;
+                              if (should_append_poly_param(pp))
+                                 append_poly_param = true;
+                           }
                            break;
                         case 4:
-                           AppendPolyParam4Full(data);
+                           {
+                              Ta_Dma* pp=(Ta_Dma*)data;
+
+                              AppendPolyParam4A((TA_PolyParam4A*)&pp[0]);
+                              AppendPolyParam4B((TA_PolyParam4B*)&pp[1]);
+                           }
                            break;
+                     }
+
+                     if (append_poly_param)
+                     {
+                        /* Polys  -- update code on sprites if that gets updated too -- */
+                        TA_PolyParam0 *npp  = (TA_PolyParam0*)data;
+                        PolyParam     *d_pp = CurrentPP;
+                        if (CurrentPP->count!=0)
+                        {
+                           d_pp=CurrentPPlist->Append(); 
+                           CurrentPP=d_pp;
+                        }
+                        d_pp->first=vdrc.idx.used(); 
+                        d_pp->count=0; 
+
+                        d_pp->isp=npp->isp; 
+                        d_pp->tsp=npp->tsp; 
+                        d_pp->tcw=npp->tcw;
+                        d_pp->pcw=npp->pcw; 
+                        d_pp->tileclip=tileclip_val;
+
+                        d_pp->texid = -1;
+
+                        if (d_pp->pcw.Texture)
+                           d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
                      }
 
                      data+=psz;
@@ -1051,79 +1092,6 @@ public:
          tileclip_val=(tileclip_val&(~0xF0000000)) | (mode<<28);
 	}
 
-	//poly param handling
-	__forceinline
-		static void TACALL AppendPolyParam0(void* vpp)
-	{
-		TA_PolyParam0* pp=(TA_PolyParam0*)vpp;
-
-      if (CurrentPP->pcw.full!=pp->pcw.full || 
-            CurrentPP->tcw.full!=pp->tcw.full || 
-            CurrentPP->tsp.full!=pp->tsp.full || 
-            CurrentPP->isp.full!=pp->isp.full	) 
-      {
-         /* Polys  -- update code on sprites if that gets updated too -- */
-         TA_PolyParam0 *npp  = (TA_PolyParam0*)pp;
-         PolyParam     *d_pp = CurrentPP;
-
-         if (CurrentPP->count!=0)
-         {
-            d_pp=CurrentPPlist->Append(); 
-            CurrentPP=d_pp;
-         }
-         d_pp->first=vdrc.idx.used(); 
-         d_pp->count=0; 
-
-         d_pp->isp=npp->isp; 
-         d_pp->tsp=npp->tsp; 
-         d_pp->tcw=npp->tcw;
-         d_pp->pcw=npp->pcw; 
-         d_pp->tileclip=tileclip_val;
-
-         d_pp->texid = -1;
-
-         if (d_pp->pcw.Texture)
-            d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
-      }
-	}
-	__forceinline
-		static void TACALL AppendPolyParam1(void* vpp)
-	{
-		TA_PolyParam1* pp=(TA_PolyParam1*)vpp;
-
-      if (CurrentPP->pcw.full!=pp->pcw.full || 
-            CurrentPP->tcw.full!=pp->tcw.full || 
-            CurrentPP->tsp.full!=pp->tsp.full || 
-            CurrentPP->isp.full!=pp->isp.full	) 
-      {
-         /* Polys  -- update code on sprites if that gets updated too -- */
-         TA_PolyParam0 *npp  = (TA_PolyParam0*)pp;
-         PolyParam     *d_pp = CurrentPP;
-         if (CurrentPP->count!=0)
-         {
-            d_pp=CurrentPPlist->Append(); 
-            CurrentPP=d_pp;
-         }
-         d_pp->first=vdrc.idx.used(); 
-         d_pp->count=0; 
-
-         d_pp->isp=npp->isp; 
-         d_pp->tsp=npp->tsp; 
-         d_pp->tcw=npp->tcw;
-         d_pp->pcw=npp->pcw; 
-         d_pp->tileclip=tileclip_val;
-
-         d_pp->texid = -1;
-
-         if (d_pp->pcw.Texture)
-            d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
-      }
-
-      FaceBaseColor[0] = float_to_satu8(pp->FaceColorR);
-      FaceBaseColor[1] = float_to_satu8(pp->FaceColorG);
-      FaceBaseColor[2] = float_to_satu8(pp->FaceColorB);
-      FaceBaseColor[3] = float_to_satu8(pp->FaceColorA);
-	}
 	__forceinline
 		static void TACALL AppendPolyParam2A(void* vpp)
 	{
@@ -1184,39 +1152,6 @@ public:
       FaceBaseColor[3] = float_to_satu8(pp->FaceColor0A);
 	}
 
-	__forceinline
-		static void TACALL AppendPolyParam3(void* vpp)
-	{
-		TA_PolyParam3* pp=(TA_PolyParam3*)vpp;
-
-      if (CurrentPP->pcw.full!=pp->pcw.full || 
-            CurrentPP->tcw.full!=pp->tcw.full || 
-            CurrentPP->tsp.full!=pp->tsp.full || 
-            CurrentPP->isp.full!=pp->isp.full	) 
-      {
-         /* Polys  -- update code on sprites if that gets updated too -- */
-         TA_PolyParam0 *npp  = (TA_PolyParam0*)pp;
-         PolyParam     *d_pp = CurrentPP;
-         if (CurrentPP->count!=0)
-         {
-            d_pp=CurrentPPlist->Append(); 
-            CurrentPP=d_pp;
-         }
-         d_pp->first=vdrc.idx.used(); 
-         d_pp->count=0; 
-
-         d_pp->isp=npp->isp; 
-         d_pp->tsp=npp->tsp; 
-         d_pp->tcw=npp->tcw;
-         d_pp->pcw=npp->pcw; 
-         d_pp->tileclip=tileclip_val;
-
-         d_pp->texid = -1;
-
-         if (d_pp->pcw.Texture)
-            d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
-      }
-	}
 	__forceinline
 		static void TACALL AppendPolyParam4A(void* vpp)
 	{

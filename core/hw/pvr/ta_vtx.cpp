@@ -92,12 +92,6 @@ static INLINE f32 f16(u16 v)
 #define vdrc vd_rc
 
 //Color conversions
-#define vert_packed_color_(to,src) \
-   to[2] = (u8)(src);  \
-   to[1] = (u8)(src >> 8); \
-   to[0] = (u8)(src >> 16); \
-   to[3] = (u8)(src >> 24);
-
 #define tr_parse_color(col, base_color) \
    col[2] = (u8)(base_color); \
    col[1] = (u8)(base_color >> 8); \
@@ -136,8 +130,8 @@ static INLINE f32 f16(u16 v)
  * as well as on face color to work the same as the hardware. [Fixes red dog] */
 
 #define append_sprite(indx) \
-   vert_packed_color_(cv[indx].col,SFaceBaseColor)\
-   vert_packed_color_(cv[indx].spc,SFaceOffsColor)
+   tr_parse_color(cv[indx].col,SFaceBaseColor); \
+   tr_parse_color(cv[indx].spc,SFaceOffsColor)
 
 #define append_sprite_yz(indx,set,st2) \
    cv[indx].y=sv->y##set; \
@@ -334,10 +328,8 @@ public:
                {
                   Vertex* cv=vdrc.verts.LastPtr();
 
-                  cv->col[0] = float_to_satu8(vtx->BaseR);
-                  cv->col[1] = float_to_satu8(vtx->BaseG);
-                  cv->col[2] = float_to_satu8(vtx->BaseB);
-                  cv->col[3] = float_to_satu8(vtx->BaseA);
+                  tr_parse_color_rgba(cv->col, vtx->BaseR,
+                        vtx->BaseG, vtx->BaseB, vtx->BaseA);
 
                   cv->spc[0] = float_to_satu8(vtx->OffsR);
                   cv->spc[1] = float_to_satu8(vtx->OffsG);

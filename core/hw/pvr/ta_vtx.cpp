@@ -14,7 +14,6 @@ u32 ta_type_lut[256];
 
 
 #define TACALL DYNACALL
-#define PLD(ptr,offs) //  __asm __volatile ( "pld	 [%0, #" #offs "]\n"::"r" (ptr): );
 
 //cache state vars
 u32 tileclip_val=0;
@@ -511,12 +510,6 @@ public:
 
 	//Code Splitter/routers
 		
-	//helper function for dummy dma's.Handles 32B and then switches to ta_main for next data
-	static Ta_Dma* TACALL ta_dummy_32(Ta_Dma* data,Ta_Dma* data_end)
-	{
-		TaCmd=ta_main;
-		return data+SZ32;
-	}
 	static Ta_Dma* TACALL ta_modvolB_32(Ta_Dma* data,Ta_Dma* data_end)
 	{
 		AppendModVolVertexB((TA_ModVolB*)data);
@@ -585,7 +578,6 @@ public:
 		do
       {
          //verify(data->pcw.ParaType == TA_PARAM_VERTEX);
-         PLD(data,128);
          ta_handle_poly<poly_type,0>(data,0);
          if (data->pcw.EndOfStrip)
             goto strip_end;
@@ -671,7 +663,6 @@ public:
    {
       do
       {
-         PLD(data,128);
          switch (data->pcw.ParaType)
          {
             //Control parameter
@@ -802,8 +793,14 @@ public:
 
                   if (IsModVolList(CurrentList))
                   {
-                     //accept mod data
-                     StartModVol((TA_ModVolParam*)data);
+                     if (CurrentList == TA_LIST_OPAQUE_MODVOL)
+                     {
+                        TA_ModVolParam *param = (TA_ModVolParam*)data;
+                        ISP_Modvol* p=vdrc.global_param_mvo.Append();
+                        p->full=param->isp.full;
+                        p->VolumeLast=param->pcw.Volume;
+                        p->id=vdrc.modtrig.used();
+                     }
                      VertexDataFP=ta_mod_vol_data;
                      data+=SZ32;
                   }
@@ -885,8 +882,8 @@ public:
                data+=SZ32;
                break;
          }
-      }
-      while(data<=data_end);
+      }while(data<=data_end);
+
       return data;
    }
 
@@ -1011,7 +1008,19 @@ public:
 
 	void vdec_init(void)
 	{
-		VDECInit();
+		vd_rc.Clear();
+
+		//allocate storage for BG poly
+		vd_rc.global_param_op.Append();
+		u16* idx=vd_rc.idx.Append(4);
+		int vbase=vd_rc.verts.used();
+
+		idx[0]=vbase+0;
+		idx[1]=vbase+1;
+		idx[2]=vbase+2;
+		idx[3]=vbase+3;
+		vd_rc.verts.Append(4);
+
 		TaCmd=ta_main;
 		CurrentList = ListType_None;
 		ListIsFinished[0]=ListIsFinished[1]=ListIsFinished[2]=ListIsFinished[3]=ListIsFinished[4]=false;
@@ -1253,8 +1262,6 @@ public:
 		}
 #endif
 	}
-
-
 	
 	static inline void update_fz(float z)
 	{
@@ -1262,10 +1269,9 @@ public:
 			vdrc.fZ_max=z;
 	}
 
-		//Poly Vertex handlers
-		//Append vertex base
-	template<class T>
-	static Vertex* vert_cvt_base_(T* vtx)
+   /* Poly Vertex handlers
+    * Append vertex base */
+	static Vertex* vert_cvt_base_(TA_Vertex0* vtx)
 	{
 		f32 invW=vtx->xyz[2];
 		*vdrc.idx.Append()=vdrc.verts.used();
@@ -1366,27 +1372,21 @@ public:
 
 		float k3 = (AC_x * AB_y - AC_y * AB_x);
 
+#if 0
 		if (k3 == 0)
 		{
-			//throw new Exception("WTF?!");
+			/*throw new Exception("WTF?!"); */
 		}
+#endif
 
 		float k2 = (AP_x * AB_y - AP_y * AB_x) / k3;
 
 		float k1 = 0;
 
 		if (AB_x == 0)
-		{
-			//if (AB_y == 0)
-			//	;
-			//    //throw new Exception("WTF?!");
-
 			k1 = (P_y - A_y - k2 * AC_y) / AB_y;
-		}
 		else
-		{
 			k1 = (P_x - A_x - k2 * AC_x) / AB_x;
-		}
 
 		P.z = A_z + k1 * AB_z + k2 * AC_z;
 		P.u = A_u + k1 * AB_u + k2 * AC_u;
@@ -1439,17 +1439,6 @@ public:
 
 	//ModVolumes
 
-	//Mod Volume Vertex handlers
-	static void StartModVol(TA_ModVolParam* param)
-	{
-		if (CurrentList != TA_LIST_OPAQUE_MODVOL)
-			return;
-		ISP_Modvol* p=vdrc.global_param_mvo.Append();
-		p->full=param->isp.full;
-		p->VolumeLast=param->pcw.Volume;
-		p->id=vdrc.modtrig.used();
-	}
-
 	__forceinline
 		static void AppendModVolVertexA(TA_ModVolA* mvv)
 	{
@@ -1484,22 +1473,6 @@ public:
 #ifdef ENABLE_MODVOLS
 		update_fz(mvv->z2);
 #endif
-	}
-
-	static void VDECInit()
-	{
-		vd_rc.Clear();
-
-		//allocate storage for BG poly
-		vd_rc.global_param_op.Append();
-		u16* idx=vd_rc.idx.Append(4);
-		int vbase=vd_rc.verts.used();
-
-		idx[0]=vbase+0;
-		idx[1]=vbase+1;
-		idx[2]=vbase+2;
-		idx[3]=vbase+3;
-		vd_rc.verts.Append(4);
 	}
 };
 
@@ -1611,9 +1584,6 @@ static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
       cv->spc[3] = (u8)(col >> 24);
 	}
 }
-
-
-#define satu255(x) (((s32&)x)<0?0:(s32&)x>0x437f0000?255:(u8)x)
 
 void vtxdec_init(void)
 {

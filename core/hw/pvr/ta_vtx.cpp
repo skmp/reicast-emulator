@@ -25,21 +25,6 @@ u8 f32_su8_tbl[65536];
 #define vrf(addr) (*(f32*)&vram[pvr_map32((addr)) & VRAM_MASK])
 #define vri(addr) (*(u32*)&vram[pvr_map32((addr)) & VRAM_MASK])
 
-/*
-	This uses just 1k of lookup, but does more calcs
-	The full 64k table will be much faster -- as only a small sub-part of it will be used anyway (the same 1k)
-*/
-static u8 float_to_satu8_2(float val)
-{
-	s32 vl=(s32&)val>>16;
-	u32 m1=(vl-0x3b80)>>31;	//1 if smaller 0x3b80 or negative
-	u32 m2=(vl-0x3f80)>>31;  //1 if smaller 0x3f80 or negative
-	u32 vo=vl-0x3b80;
-	vo &= (~m1>>22);
-	
-	return f32_su8_tbl[0x3b80+vo] | (~m2>>24);
-}
-
 static u8 float_to_satu8_math(float val)
 {
 	return u8(saturate01(val)*255);

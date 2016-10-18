@@ -19,16 +19,19 @@ struct game_type
    int dynarec_type;        /* -1, make no decision, 0 = dynamic recompiler, 1 = generic_recompiler */
    int aica_interrupt_hack; /* -1, make no decision, 0 = normal, 1 = enable hack */
    f32 zMax;
+   int alpha_sort_mode;     /* -1, make no decision */
 };
 
 static struct game_type lut_games[] = 
 {
-   { "T1210N    ",  1, -1, -1, 1 },                /* Street Fighter III Double Impact */
-   { "MK-51049  ", -1,  1, -1, 1 },                /* Marvel Vs Capcom 2 */
-   { "T1203N    ", -1, -1,  1, 1 },                /* Street Fighter Alpha 3 */
+   { "T1210N    ",  1, -1, -1, 1,   -1},                 /* Street Fighter III Double Impact */
+   { "MK-51049  ", -1,  1, -1, 1,   -1 },                /* Marvel Vs Capcom 2 */
+   { "T1203N    ", -1, -1,  1, 1,   -1 },                /* Street Fighter Alpha 3 */
+   { "MK-5100050", -1, -1, -1, 1,   1  },                /* Sonic Adventure */
+   { "MK-5105950", -1, -1, -1, 1,   1  },                /* Shenmue */
 #if defined(__linux__) || defined(__MACH__)
-   { "MK0815    ", -1, -1, -1, 3500.0 },           /* Soul Calibur (E) */
-   { "T1401M    ", -1, -1, -1, 3500.0 },           /* Soul Calibur (J) */
-   { "T1401N    ", -1, -1, -1, 3500.0 },           /* Soul Calibur (U) */
+   { "MK0815    ", -1, -1, -1, 3500.0, -1 },             /* Soul Calibur (E) */
+   { "T1401M    ", -1, -1, -1, 3500.0, -1  },            /* Soul Calibur (J) */
+   { "T1401N    ", -1, -1, -1, 3500.0, -1  },            /* Soul Calibur (U) */
 #endif
 };

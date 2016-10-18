@@ -627,10 +627,8 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
          glDepthFunc(Zfunction[gp->isp.DepthMode]);
 
       flag    = !gp->isp.ZWriteDis;
-#if TRIG_SORT
-      if (SortingEnabled)
+      if (SortingEnabled && settings.pvr.Emulation.AlphaSortMode == 0)
          flag = GL_FALSE;
-#endif
       glDepthMask(flag);
    }
 }
@@ -1872,24 +1870,20 @@ static bool RenderFrame(void)
 	glEnable(GL_BLEND);
 
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	/*if (!GetAsyncKeyState(VK_F3))*/
-	{
-		/*
-		if (UsingAutoSort())
-			SortRendPolyParamList(pvrrc.global_param_tr);
-		else
-			*/
-#if TRIG_SORT
-		if (pvrrc.isAutoSort)
-			DrawSorted();
-		else
-			DrawList<TA_LIST_TRANSLUCENT, false>(pvrrc.global_param_tr);
-#else
-		if (pvrrc.isAutoSort)
-			SortPParams();
-		DrawList<TA_LIST_TRANSLUCENT, true>(pvrrc.global_param_tr);
-#endif
-	}
+
+   if (settings.pvr.Emulation.AlphaSortMode == 0)
+   {
+      if (pvrrc.isAutoSort)
+         DrawSorted();
+      else
+         DrawList<TA_LIST_TRANSLUCENT, false>(pvrrc.global_param_tr);
+   }
+   else if (settings.pvr.Emulation.AlphaSortMode == 1)
+   {
+      if (pvrrc.isAutoSort)
+         SortPParams();
+      DrawList<TA_LIST_TRANSLUCENT, true>(pvrrc.global_param_tr);
+   }
 
    vertex_buffer_unmap();
 

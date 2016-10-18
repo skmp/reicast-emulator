@@ -144,6 +144,12 @@ static void LoadSpecialSettings(void)
             LoadSpecialSettingsCPU();
          }
 
+         if (lut_games[i].alpha_sort_mode != -1)
+         {
+            printf("Applying alpha sort hack.\n");
+            settings.pvr.Emulation.AlphaSortMode = lut_games[i].alpha_sort_mode;
+         }
+
          if (lut_games[i].updatemode_type != -1)
          {
             printf("Applying update mode type hack.\n");
@@ -258,6 +264,7 @@ void LoadSettings(void)
 	settings.pvr.ta_skip			   = 0;
 	settings.pvr.rend				   = 0;
    settings.QueueRender          = 0;
+   settings.pvr.Emulation.AlphaSortMode = 0;
    settings.pvr.Emulation.zMin         = 0.f;
    settings.pvr.Emulation.zMax         = 1.0f;
 

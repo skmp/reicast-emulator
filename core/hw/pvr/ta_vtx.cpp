@@ -630,10 +630,8 @@ fist_half:
          b = pp->FaceColorB;
          a = pp->FaceColorA;
 
-         FaceOffsColor[0] = float_to_satu8(pp->FaceOffsetR);
-         FaceOffsColor[1] = float_to_satu8(pp->FaceOffsetG);
-         FaceOffsColor[2] = float_to_satu8(pp->FaceOffsetB);
-         FaceOffsColor[3] = float_to_satu8(pp->FaceOffsetA);
+         tr_parse_color_rgba(FaceOffsColor, pp->FaceOffsetR,
+               pp->FaceOffsetG, pp->FaceOffsetB, pp->FaceOffsetA);
       }
       else
       {
@@ -644,10 +642,7 @@ fist_half:
          a = pp->FaceColor0A;
       }
 
-      FaceBaseColor[0] = float_to_satu8(r);
-      FaceBaseColor[1] = float_to_satu8(g);
-      FaceBaseColor[2] = float_to_satu8(b);
-      FaceBaseColor[3] = float_to_satu8(a);
+      tr_parse_color_rgba(FaceBaseColor, r, g, b, a);
 	
 		TaCmd=ta_main;
 		return data+SZ32;
@@ -803,10 +798,8 @@ public:
                               if (should_append_poly_param(pp))
                                  append_poly_param = true;
 
-                              FaceBaseColor[0] = float_to_satu8(pp->FaceColorR);
-                              FaceBaseColor[1] = float_to_satu8(pp->FaceColorG);
-                              FaceBaseColor[2] = float_to_satu8(pp->FaceColorB);
-                              FaceBaseColor[3] = float_to_satu8(pp->FaceColorA);
+                              tr_parse_color_rgba(FaceBaseColor, pp->FaceColorR, pp->FaceColorG,
+                                    pp->FaceColorB, pp->FaceColorA);
                            }
                            break;
                         case 2:
@@ -818,15 +811,10 @@ public:
                               if (should_append_poly_param(ppa))
                                  append_poly_param = true;
 
-                              FaceBaseColor[0] = float_to_satu8(ppb->FaceColorR);
-                              FaceBaseColor[1] = float_to_satu8(ppb->FaceColorG);
-                              FaceBaseColor[2] = float_to_satu8(ppb->FaceColorB);
-                              FaceBaseColor[3] = float_to_satu8(ppb->FaceColorA);
-
-                              FaceOffsColor[0] = float_to_satu8(ppb->FaceOffsetR);
-                              FaceOffsColor[1] = float_to_satu8(ppb->FaceOffsetG);
-                              FaceOffsColor[2] = float_to_satu8(ppb->FaceOffsetB);
-                              FaceOffsColor[3] = float_to_satu8(ppb->FaceOffsetA);
+                              tr_parse_color_rgba(FaceBaseColor, ppb->FaceColorR, ppb->FaceColorG,
+                                    ppb->FaceColorB, ppb->FaceColorA);
+                              tr_parse_color_rgba(FaceOffsColor, ppb->FaceOffsetR, ppb->FaceOffsetG,
+                                    ppb->FaceOffsetB, ppb->FaceOffsetA);
                            }
                            break;
                         case 3:
@@ -845,10 +833,8 @@ public:
                               if (should_append_poly_param(ppa))
                                  append_poly_param = true;
 
-                              FaceBaseColor[0] = float_to_satu8(ppb->FaceColor0R);
-                              FaceBaseColor[1] = float_to_satu8(ppb->FaceColor0G);
-                              FaceBaseColor[2] = float_to_satu8(ppb->FaceColor0B);
-                              FaceBaseColor[3] = float_to_satu8(ppb->FaceColor0A);
+                              tr_parse_color_rgba(FaceBaseColor, ppb->FaceColor0R, ppb->FaceColor0G,
+                                    ppb->FaceColor0B, ppb->FaceColor0A);
                            }
                            break;
                      }

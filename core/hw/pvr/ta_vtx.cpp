@@ -104,6 +104,18 @@ static INLINE f32 f16(u16 v)
    col[0] = (u8)(base_color >> 16); \
    col[3] = (u8)(base_color >> 24)
 
+#define tr_parse_color_rgba(col, r, g, b, a) \
+   col[0] = float_to_satu8(r); \
+   col[1] = float_to_satu8(g); \
+   col[2] = float_to_satu8(b); \
+   col[3] = float_to_satu8(a)
+
+#define tr_parse_color_intensity(col, base_intensity, val) \
+   col[0] = val[0] * base_intensity / 256;  \
+   col[1] = val[1] * base_intensity / 256; \
+   col[2] = val[2] * base_intensity / 256; \
+   col[3] = val[3]
+
 /* Intensity handling */
 
 /* Notes:
@@ -169,10 +181,8 @@ public:
                TA_Vertex1 *vtx = (TA_Vertex1*)&vp->vtx1;
                Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
 
-               cv->col[0] = float_to_satu8(vtx->BaseR);
-               cv->col[1] = float_to_satu8(vtx->BaseG);
-               cv->col[2] = float_to_satu8(vtx->BaseB);
-               cv->col[3] = float_to_satu8(vtx->BaseA);
+               tr_parse_color_rgba(cv->col, vtx->BaseR,
+                     vtx->BaseG, vtx->BaseB, vtx->BaseA);
             }
             rv=SZ32;
             break;
@@ -184,10 +194,8 @@ public:
                Vertex   * cv   = vert_cvt_base_((TA_Vertex0*)vtx);
                u32    satint   = float_to_satu8(vtx->BaseInt);
 
-               cv->col[0] = FaceBaseColor[0]*satint/256; 
-               cv->col[1] = FaceBaseColor[1]*satint/256; 
-               cv->col[2] = FaceBaseColor[2]*satint/256; 
-               cv->col[3] = FaceBaseColor[3];
+               tr_parse_color_intensity(cv->col, satint,
+                     FaceBaseColor);
             }
             rv=SZ32;
             break;
@@ -237,10 +245,9 @@ public:
                Vertex      *cv = vert_cvt_base_((TA_Vertex0*)vtx);
                u32     satint0 = float_to_satu8(vtx->BaseInt);
                u32     satint1 = float_to_satu8(vtx->OffsInt);
-               cv->col[0] = FaceBaseColor[0]*satint0/256; 
-               cv->col[1] = FaceBaseColor[1]*satint0/256;
-               cv->col[2] = FaceBaseColor[2]*satint0/256;
-               cv->col[3] = FaceBaseColor[3];
+
+               tr_parse_color_intensity(cv->col, satint0,
+                     FaceBaseColor);
 
                cv->spc[0] = FaceOffsColor[0]*satint1/256; 
                cv->spc[1] = FaceOffsColor[1]*satint1/256; 
@@ -261,10 +268,8 @@ public:
                u32     satint0 = float_to_satu8(vtx->BaseInt);
                u32     satint1 = float_to_satu8(vtx->OffsInt);
 
-               cv->col[0] = FaceBaseColor[0]*satint0/256; 
-               cv->col[1] = FaceBaseColor[1]*satint0/256;
-               cv->col[2] = FaceBaseColor[2]*satint0/256;
-               cv->col[3] = FaceBaseColor[3];
+               tr_parse_color_intensity(cv->col, satint0,
+                     FaceBaseColor);
 
                cv->spc[0] = FaceOffsColor[0]*satint1/256; 
                cv->spc[1] = FaceOffsColor[1]*satint1/256; 
@@ -294,10 +299,9 @@ public:
                TA_Vertex10 *vtx = (TA_Vertex10*)&vp->vtx10;
                Vertex      *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
                u32       satint = float_to_satu8(vtx->BaseInt0);
-               cv->col[0] = FaceBaseColor[0]*satint/256; 
-               cv->col[1] = FaceBaseColor[1]*satint/256;
-               cv->col[2] = FaceBaseColor[2]*satint/256;
-               cv->col[3] = FaceBaseColor[3];
+
+               tr_parse_color_intensity(cv->col, satint,
+                     FaceBaseColor);
             }
             rv=SZ32;
             break;
@@ -374,10 +378,8 @@ public:
                {
                   Vertex* cv=vdrc.verts.LastPtr();
 
-                  cv->col[0] = float_to_satu8(vtx->BaseR);
-                  cv->col[1] = float_to_satu8(vtx->BaseG);
-                  cv->col[2] = float_to_satu8(vtx->BaseB);
-                  cv->col[3] = float_to_satu8(vtx->BaseA);
+                  tr_parse_color_rgba(cv->col, vtx->BaseR,
+                        vtx->BaseG, vtx->BaseB, vtx->BaseA);
 
                   cv->spc[0] = float_to_satu8(vtx->OffsR);
                   cv->spc[1] = float_to_satu8(vtx->OffsG);

@@ -797,30 +797,31 @@ public:
                   if (data != data_end || psz==1)
                   {
                      //32/64b , full
-                     static TaPolyParamFP* ta_poly_param_lut[5]=
-                     {
-                        AppendPolyParam0,
-                        AppendPolyParam1,
-                        AppendPolyParam2Full,
-                        AppendPolyParam3,
-                        AppendPolyParam4Full
-                     };
 
                      //poly , 32B/64B
-                     ta_poly_param_lut[ppid](data);
+                     switch (ppid)
+                     {
+                        case 0:
+                           AppendPolyParam0(data);
+                           break;
+                        case 1:
+                           AppendPolyParam1(data);
+                           break;
+                        case 2:
+                           AppendPolyParam2Full(data);
+                           break;
+                        case 3:
+                           AppendPolyParam3(data);
+                           break;
+                        case 4:
+                           AppendPolyParam4Full(data);
+                           break;
+                     }
+
                      data+=psz;
                   }
                   else
                   {
-                     //64b , first part
-                     static TaPolyParamFP* ta_poly_param_a_lut[5]=
-                     {
-                        (TaPolyParamFP*)0,
-                        (TaPolyParamFP*)0,
-                        AppendPolyParam2A,
-                        (TaPolyParamFP*)0,
-                        AppendPolyParam4A
-                     };
                      //64b , , second part
                      static TaListFP* ta_poly_param_b_lut[5]=
                      {
@@ -833,7 +834,18 @@ public:
 
                      //AppendPolyParam64A((TA_PolyParamA*)data);
                      //64b , first part
-                     ta_poly_param_a_lut[ppid](data);
+                     switch (ppid)
+                     {
+                        case 2:
+                           AppendPolyParam2A(data);
+                           break;
+                        case 4:
+                           AppendPolyParam4A(data);
+                           break;
+                        default:
+                           break;
+                     }
+
                      //Handle next 32B ;)
                      TaCmd=ta_poly_param_b_lut[ppid];
                      data+=SZ32;

@@ -171,9 +171,7 @@ void libCore_vramlock_Free(void)
 
 void libCore_vramlock_Init(void)
 {
-#ifndef TARGET_NO_THREADS
    vramlist_lock = slock_new();
-#endif
 }
 
 //unlocks mem
@@ -188,10 +186,7 @@ void libCore_vramlock_Unlock_block(vram_block* block)
 
 void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {
-   //VRAM_SIZE/PAGE_SIZE;
-	if (block->end>VRAM_SIZE)
-		msgboxf("Error : block end is after vram , skipping unlock",MBX_OK);
-	else
+	if (block->end <= VRAM_SIZE)
 	{
 		vramlock_list_remove(block);
 		//more work needed

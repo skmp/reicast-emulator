@@ -143,14 +143,14 @@ public:
 	//Poly decoder , will be moved to pvr code
 	template <u32 poly_type,u32 part>
 	static __forceinline Ta_Dma* TACALL ta_handle_poly(Ta_Dma* data,Ta_Dma* data_end)
-	{
-		TA_VertexParam* vp=(TA_VertexParam*)data;
-		u32 rv=0;
+   {
+      TA_VertexParam* vp=(TA_VertexParam*)data;
+      u32 rv=0;
 
-		if (part==2)
-			TaCmd=ta_main;
+      if (part==2)
+         TaCmd=ta_main;
 
-		switch (poly_type)
+      switch (poly_type)
       {
          //32b , always in one pass :)
 
@@ -459,8 +459,8 @@ public:
        * of Strip" specification were not input, but parameters
        * other than Vertex Parameters were input, the polygon data
        * in question is ignored and an interrupt signal is output. */
-		return data+rv;
-	}
+      return data+rv;
+   }
 
 	/* Code Splitter/routers */
 		

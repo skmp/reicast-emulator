@@ -471,7 +471,6 @@ public:
          TA_ModVolB* mvv = (TA_ModVolB*)data;
          lmr->y2=mvv->y2;
          lmr->z2=mvv->z2;
-         update_fz(mvv->z2);
       }
 		TaCmd=ta_main;
 		return data+SZ32;
@@ -495,9 +494,6 @@ public:
          lmr->z1=mvv->z1;
 
          lmr->x2=mvv->x2;
-
-         update_fz(mvv->z0);
-         update_fz(mvv->z1);
       }
 
       if (data==data_end)
@@ -514,7 +510,6 @@ public:
 
          lmr->y2=mvv->y2;
          lmr->z2=mvv->z2;
-         update_fz(mvv->z2);
       }
       return data+SZ64;
    }

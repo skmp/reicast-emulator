@@ -877,19 +877,55 @@ public:
                         (TaListFP*)0,
                         ta_poly_B_32<4>
                      };
+                     bool append_poly_param = false;
 
                      //AppendPolyParam64A((TA_PolyParamA*)data);
                      //64b , first part
                      switch (ppid)
                      {
                         case 2:
-                           AppendPolyParam2A(data);
+                           {
+                              TA_PolyParam2A* pp=(TA_PolyParam2A*)data;
+
+                              if (should_append_poly_param(pp))
+                                 append_poly_param = true;
+                           }
                            break;
                         case 4:
-                           AppendPolyParam4A(data);
+                           {
+                              TA_PolyParam4A* pp=(TA_PolyParam4A*)data;
+
+                              if (should_append_poly_param(pp))
+                                 append_poly_param = true;
+                           }
                            break;
                         default:
                            break;
+                     }
+
+                     if (append_poly_param)
+                     {
+                        /* Polys  -- update code on sprites if that gets updated too -- */
+                        TA_PolyParam0 *npp  = (TA_PolyParam0*)data;
+                        PolyParam     *d_pp = CurrentPP;
+                        if (CurrentPP->count!=0)
+                        {
+                           d_pp=CurrentPPlist->Append(); 
+                           CurrentPP=d_pp;
+                        }
+                        d_pp->first=vdrc.idx.used(); 
+                        d_pp->count=0; 
+
+                        d_pp->isp=npp->isp; 
+                        d_pp->tsp=npp->tsp; 
+                        d_pp->tcw=npp->tcw;
+                        d_pp->pcw=npp->pcw; 
+                        d_pp->tileclip=tileclip_val;
+
+                        d_pp->texid = -1;
+
+                        if (d_pp->pcw.Texture)
+                           d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
                      }
 
                      //Handle next 32B ;)
@@ -1095,68 +1131,6 @@ public:
       if (data->pcw.Group_En)
 #endif
          tileclip_val=(tileclip_val&(~0xF0000000)) | (mode<<28);
-	}
-
-	__forceinline
-		static void TACALL AppendPolyParam2A(void* vpp)
-	{
-		TA_PolyParam2A* pp=(TA_PolyParam2A*)vpp;
-
-      if (should_append_poly_param(pp))
-      {
-         /* Polys  -- update code on sprites if that gets updated too -- */
-         TA_PolyParam0 *npp  = (TA_PolyParam0*)pp;
-         PolyParam     *d_pp = CurrentPP;
-         if (CurrentPP->count!=0)
-         {
-            d_pp=CurrentPPlist->Append(); 
-            CurrentPP=d_pp;
-         }
-         d_pp->first=vdrc.idx.used(); 
-         d_pp->count=0; 
-
-         d_pp->isp=npp->isp; 
-         d_pp->tsp=npp->tsp; 
-         d_pp->tcw=npp->tcw;
-         d_pp->pcw=npp->pcw; 
-         d_pp->tileclip=tileclip_val;
-
-         d_pp->texid = -1;
-
-         if (d_pp->pcw.Texture)
-            d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
-      }
-	}
-
-	__forceinline
-		static void TACALL AppendPolyParam4A(void* vpp)
-	{
-		TA_PolyParam4A* pp=(TA_PolyParam4A*)vpp;
-
-      if (should_append_poly_param(pp))
-      {
-         /* Polys  -- update code on sprites if that gets updated too -- */
-         TA_PolyParam0 *npp  = (TA_PolyParam0*)pp;
-         PolyParam     *d_pp = CurrentPP;
-         if (CurrentPP->count!=0)
-         {
-            d_pp=CurrentPPlist->Append(); 
-            CurrentPP=d_pp;
-         }
-         d_pp->first=vdrc.idx.used(); 
-         d_pp->count=0; 
-
-         d_pp->isp=npp->isp; 
-         d_pp->tsp=npp->tsp; 
-         d_pp->tcw=npp->tcw;
-         d_pp->pcw=npp->pcw; 
-         d_pp->tileclip=tileclip_val;
-
-         d_pp->texid = -1;
-
-         if (d_pp->pcw.Texture)
-            d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
-      }
 	}
 
 	//Poly Strip handling

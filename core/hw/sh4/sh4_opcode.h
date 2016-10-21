@@ -19,8 +19,3 @@ enum OpcodeAccessFlags
 	OAF_MEM,
 	OAF_SQWB,
 };
-
-struct sh4_opcode
-{
-	uint16_t raw;
-};

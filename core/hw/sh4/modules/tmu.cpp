@@ -63,11 +63,11 @@ void sched_chan_tick(int ch)
 	//sched_tmu_cb
 }
 
-void write_TMU_TCNTch(u32 ch, u32 data)
+static void write_TMU_TCNTch(u32 ch, u32 data)
 {
 	//u32 TCNT=read_TMU_TCNTch(ch);
-	tmu_ch_base[ch]=data+((sh4_sched_now64()>>tmu_shift[ch])&tmu_mask[ch]);
-	tmu_ch_base64[ch] = data + ((sh4_sched_now64() >> tmu_shift[ch])&tmu_mask64[ch]);
+	tmu_ch_base[ch]   = data + ((sh4_sched_now64() >> tmu_shift[ch]) & tmu_mask[ch]);
+	tmu_ch_base64[ch] = data + ((sh4_sched_now64() >> tmu_shift[ch]) & tmu_mask64[ch]);
 
 	sched_chan_tick(ch);
 }
@@ -86,8 +86,8 @@ void write_TMU_TCNT(u32 addr, u32 data)
 
 void turn_on_off_ch(u32 ch, bool on)
 {
-	u32 TCNT=read_TMU_TCNTch(ch);
-	tmu_mask[ch]=on?0xFFFFFFFF:0x00000000;
+	u32 TCNT       = read_TMU_TCNTch(ch);
+	tmu_mask[ch]   = on ? 0xFFFFFFFF         : 0x00000000;
 	tmu_mask64[ch] = on ? 0xFFFFFFFFFFFFFFFF : 0x0000000000000000;
 	write_TMU_TCNTch(ch,TCNT);
 
@@ -102,8 +102,8 @@ void UpdateTMUCounts(u32 reg)
 
 	if (old_mode[reg]==(TMU_TCR(reg) & 0x7))
 		return;
-	else
-		old_mode[reg]=(TMU_TCR(reg) & 0x7);
+
+   old_mode[reg]=(TMU_TCR(reg) & 0x7);
 
 	u32 TCNT=read_TMU_TCNTch(reg);
 	switch(TMU_TCR(reg) & 0x7)
@@ -165,49 +165,44 @@ void TMU_TCPR2_write(u32 addr, u32 data)
 	EMUERROR2("Write to TMU_TCPR2 - this register should be not used on Dreamcast according to docs, data=%d",data);
 }
 
-void write_TMU_TSTR(u32 addr, u32 data)
+static void write_TMU_TSTR(u32 addr, u32 data)
 {
+   unsigned i;
 	TMU_TSTR=data;
-	//?
 
-	for (int i=0;i<3;i++)
+	for (i = 0;i < 3; i++)
 		turn_on_off_ch(i,data&(1<<i));
 }
 
 int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 {
-	if (tmu_mask[ch]) {
-		
-		u32 tcnt = read_TMU_TCNTch(ch);
-		
-		s64 tcnt64 = (s64)read_TMU_TCNTch64(ch);
+   if (tmu_mask[ch])
+   {
+      u32 tcnt    = read_TMU_TCNTch(ch);
+      s64 tcnt64  = (s64)read_TMU_TCNTch64(ch);
+      u32 tcor    = TMU_TCOR(ch);
+      u32 cycles  = tcor << tmu_shift[ch];
+      u32 data    = tcnt;
 
-		u32 tcor = TMU_TCOR(ch);
+      /* 64 bit maths to differentiate big values from overflows */
+      if (tcnt64 <= jitter)
+      {
+         /* raise interrupt, timer counted down */
+         TMU_TCR(ch) |= tmu_underflow;
+         InterruptPend(tmu_intID[ch], 1);
 
-		u32 cycles = tcor << tmu_shift[ch];
+#if 0
+         printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
+#endif
 
-		//64 bit maths to differentiate big values from overflows
-		if (tcnt64 <= jitter) {
-			//raise interrupt, timer counted down
-			TMU_TCR(ch) |= tmu_underflow;
-			InterruptPend(tmu_intID[ch], 1);
-			
-			//printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
+         data += tcor;
+      }
 
-			//schedule next trigger by writing the TCNT register
-			write_TMU_TCNTch(ch, tcor + tcnt);
-		}
-		else {
-			
-			//schedule next trigger by writing the TCNT register
-			write_TMU_TCNTch(ch, tcnt);
-		}
+      /* schedule next trigger by writing the TCNT register */
+      write_TMU_TCNTch(ch, data);
+   }
 
-		return 0;	//has already been scheduled by TCNT write
-	}
-	else {
-		return 0;	//this channel is disabled, no need to schedule next event
-	}
+   return 0;
 }
 
 //Init/Res/Term
@@ -256,7 +251,7 @@ void tmu_init()
 }
 
 
-void tmu_reset()
+void tmu_reset(void)
 {
 	TMU_TOCR=TMU_TSTR=0;
 	TMU_TCOR(0) = TMU_TCOR(1) = TMU_TCOR(2) = 0xffffffff;

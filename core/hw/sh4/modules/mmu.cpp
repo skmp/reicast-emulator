@@ -22,8 +22,8 @@ TLB_Entry ITLB[4];
 #define printf_mmu(...)
 #define printf_win32(...)
 
-//SQ fast remap , mailny hackish , assumes 1 mb pages
-//max 64 mb can be remapped on SQ
+//SQ fast remap , mainly hackish , assumes 1 MB pages
+//max 64 MB can be remapped on SQ
 
 const u32 mmu_mask[4] =
 {

@@ -24,15 +24,15 @@ DMAC_DMAOR_type DMAC_DMAOR;
 
 */
 
-void DMAC_Ch2St()
+void DMAC_Ch2St(void)
 {
-	u32 chcr = DMAC_CHCR(2).full;
-	u32 dmaor = DMAC_DMAOR.full;
+	u32 chcr   = DMAC_CHCR(2).full;
+	u32 dmaor  = DMAC_DMAOR.full;
 	u32 dmatcr = DMAC_DMATCR(2);
 
-	u32 src = DMAC_SAR(2);
-	u32 dst = SB_C2DSTAT;
-	u32 len = SB_C2DLEN ;
+	u32 src    = DMAC_SAR(2);
+	u32 dst    = SB_C2DSTAT;
+	u32 len    = SB_C2DLEN ;
 
 	if(0x8201 != (dmaor &DMAOR_MASK))
 	{
@@ -111,16 +111,15 @@ void DMAC_Ch2St()
 		src+=len;
 	}
 
-
 	// Setup some of the regs so it thinks we've finished DMA
 
-	DMAC_SAR(2) = (src);
+	DMAC_SAR(2)        = (src);
 	DMAC_CHCR(2).full &= 0xFFFFFFFE;
-	DMAC_DMATCR(2) = 0x00000000;
+	DMAC_DMATCR(2)     = 0x00000000;
 
-	SB_C2DST = 0x00000000;
-	SB_C2DLEN = 0x00000000;
-	SB_C2DSTAT = (src );
+	SB_C2DST           = 0x00000000;
+	SB_C2DLEN          = 0x00000000;
+	SB_C2DSTAT         = (src );
 
 	// The DMA end interrupt flag (SB_ISTNRM - bit 19: DTDE2INT) is set to "1."
 	//-> fixed , holly_PVR_DMA is for different use now (fixed the interrupts enum too)
@@ -140,7 +139,7 @@ void dmac_ddt_ch2_direct(u32 dst,u32 count)
 }
 
 //transfer 22kb chunks (or less) [704 x 32] (22528)
-void UpdateDMA()
+void UpdateDMA(void)
 {
 }
 

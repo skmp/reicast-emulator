@@ -14,33 +14,32 @@
 
 //Register writes need interrupt re-testing !
 
-void write_INTC_IPRA(u32 addr, u32 data)
+static void write_INTC_IPRA(u32 addr, u32 data)
 {
-	if (INTC_IPRA.reg_data!=(u16)data)
-	{
-		INTC_IPRA.reg_data=(u16)data;
-		SIIDRebuild();	//we need to rebuild the table
-	}
+   if (INTC_IPRA.reg_data==(u16)data)
+      return;
+   INTC_IPRA.reg_data=(u16)data;
+   SIIDRebuild();	//we need to rebuild the table
 }
-void write_INTC_IPRB(u32 addr, u32 data)
+
+static void write_INTC_IPRB(u32 addr, u32 data)
 {
-	if (INTC_IPRB.reg_data!=(u16)data)
-	{
-		INTC_IPRB.reg_data=(u16)data;
-		SIIDRebuild(); //we need to rebuild the table
-	}
+   if (INTC_IPRB.reg_data==(u16)data)
+      return;
+   INTC_IPRB.reg_data=(u16)data;
+   SIIDRebuild(); //we need to rebuild the table
 }
-void write_INTC_IPRC(u32 addr, u32 data)
+
+static void write_INTC_IPRC(u32 addr, u32 data)
 {
-	if (INTC_IPRC.reg_data!=(u16)data)
-	{
-		INTC_IPRC.reg_data=(u16)data;
-		SIIDRebuild(); //we need to rebuild the table
-	}
+   if (INTC_IPRC.reg_data == (u16)data)
+      return;
+   INTC_IPRC.reg_data=(u16)data;
+   SIIDRebuild(); //we need to rebuild the table
 }
 
 //Init/Res/Term
-void intc_init()
+void intc_init(void)
 {
 	//INTC ICR 0xFFD00000 0x1FD00000 16 0x0000 0x0000 Held Held Pclk
 	sh4_rio_reg(INTC,INTC_ICR_addr,RIO_DATA,16);

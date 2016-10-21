@@ -33,8 +33,6 @@ struct InterptSourceList_Entry
 	u16* PrioReg;
 	u32 Shift;
 	u32 IntEvnCode;
-
-	u32 GetPrLvl() const { return ((*PrioReg)>>Shift)&0xF; }
 };
 
 //Can't be statically initialised because registers are dynamically allocated
@@ -75,6 +73,8 @@ static void recalc_pending_itrs(void)
 	Sh4cntx.interrupt_pend=interrupt_vpend&interrupt_vmask&decoded_srimask;
 }
 
+#define GET_PRIO_LEVEL(intr) (((*intr.PrioReg) >> intr.Shift)&0xF)
+
 //Rebuild sorted interrupt id table (priorities were updated)
 void SIIDRebuild(void)
 {
@@ -88,7 +88,7 @@ void SIIDRebuild(void)
 	{
 		for (u32 isrc=0;isrc<28;isrc++)
       {
-         if (InterruptSourceList[isrc].GetPrLvl() != ilevel)
+         if (GET_PRIO_LEVEL(InterruptSourceList[isrc]) != ilevel)
             continue;
 
          InterruptEnvId[cnt]=InterruptSourceList[isrc].IntEvnCode;
@@ -119,10 +119,9 @@ bool SRdecode(void)
 
 int UpdateINTC(void)
 {
-	if (!Sh4cntx.interrupt_pend)
-		return 0;
-
-	return Do_Interrupt(InterruptEnvId[bitscanrev(Sh4cntx.interrupt_pend)]);
+	if (Sh4cntx.interrupt_pend)
+      return Do_Interrupt(InterruptEnvId[bitscanrev(Sh4cntx.interrupt_pend)]);
+   return 0;
 }
 
 void SetInterruptPend(InterruptID intr)

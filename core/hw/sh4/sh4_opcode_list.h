@@ -30,8 +30,9 @@ enum sh4_exept_fixup
 	rn_opt_2,    //2 if n!=m
 	rn_opt_4,    //4 if n!=m
 	rn_4,        //Always 4 from rn
-	rn_fpu_4,    //4 or 8, according to FPU size
+	rn_fpu_4    //4 or 8, according to FPU size
 };
+
 typedef void ( RecOpCallFP) (u32 op);
 struct sh4_opcodelistentry
 {
@@ -127,7 +128,7 @@ enum DecParam
 
 	PRM_GBR_D8_x1,
 	PRM_GBR_D8_x2,
-	PRM_GBR_D8_x4,
+	PRM_GBR_D8_x4
 };
 
 enum DecMode
@@ -145,5 +146,5 @@ enum DecMode
 	DM_EXTOP,
 	DM_MUL,
 	DM_DIV0,
-	DM_ADC,
+	DM_ADC
 };

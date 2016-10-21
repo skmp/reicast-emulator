@@ -649,27 +649,22 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 template <u32 sz,class T>
 T DYNACALL ReadMem_area7_OCR_T(u32 addr)
 {
-   if (!CCN_CCR.ORA)
+   if (CCN_CCR.ORA)
    {
+      switch (sz)
+      {
+         case 1:
+            return (T)OnChipRAM[addr&OnChipRAM_MASK];
+         case 2:
+            return (T)*(u16*)&OnChipRAM[addr&OnChipRAM_MASK];
+         case 4:
+            return (T)*(u32*)&OnChipRAM[addr&OnChipRAM_MASK];
+         default:
 #ifndef NDEBUG
-      printf("On Chip Ram Read, but OCR is disabled\n");
+            printf("ReadMem_area7_OCR_T: template SZ is wrong = %d\n",sz);
 #endif
-      return 0xDE;
-   }
-
-   switch (sz)
-   {
-      case 1:
-         return (T)OnChipRAM[addr&OnChipRAM_MASK];
-      case 2:
-         return (T)*(u16*)&OnChipRAM[addr&OnChipRAM_MASK];
-      case 4:
-         return (T)*(u32*)&OnChipRAM[addr&OnChipRAM_MASK];
-      default:
-#ifndef NDEBUG
-         printf("ReadMem_area7_OCR_T: template SZ is wrong = %d\n",sz);
-#endif
-         break;
+            break;
+      }
    }
 
    return 0xDE;
@@ -679,30 +674,25 @@ T DYNACALL ReadMem_area7_OCR_T(u32 addr)
 template <u32 sz,class T>
 void DYNACALL WriteMem_area7_OCR_T(u32 addr,T data)
 {
-   if (!CCN_CCR.ORA)
+   if (CCN_CCR.ORA)
    {
+      switch (sz)
+      {
+         case 1:
+            OnChipRAM[addr&OnChipRAM_MASK]=(u8)data;
+            break;
+         case 2:
+            *(u16*)&OnChipRAM[addr&OnChipRAM_MASK]=(u16)data;
+            break;
+         case 4:
+            *(u32*)&OnChipRAM[addr&OnChipRAM_MASK]=data;
+            break;
+         default:
 #ifndef NDEBUG
-      printf("On Chip Ram Write, but OCR is disabled\n");
+            printf("WriteMem_area7_OCR_T: template SZ is wrong = %d\n",sz);
 #endif
-      return;
-   }
-
-   switch (sz)
-   {
-      case 1:
-         OnChipRAM[addr&OnChipRAM_MASK]=(u8)data;
-         break;
-      case 2:
-         *(u16*)&OnChipRAM[addr&OnChipRAM_MASK]=(u16)data;
-         break;
-      case 4:
-         *(u32*)&OnChipRAM[addr&OnChipRAM_MASK]=data;
-         break;
-      default:
-#ifndef NDEBUG
-         printf("WriteMem_area7_OCR_T: template SZ is wrong = %d\n",sz);
-#endif
-         break;
+            break;
+      }
    }
 }
 

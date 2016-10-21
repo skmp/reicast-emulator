@@ -18,8 +18,6 @@
 #include "../modules/tmu.h"
 #include "hw/gdrom/gdrom_if.h"
 
-#include "hw/sh4/sh4_opcode.h"
-
 #define GetN(str) ((str>>8) & 0xf)
 #define GetM(str) ((str>>4) & 0xf)
 #define GetImm4(str) ((str>>0) & 0xf)

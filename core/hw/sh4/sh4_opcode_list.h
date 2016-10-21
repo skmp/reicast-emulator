@@ -1,10 +1,6 @@
 #pragma once
 #include "types.h"
 #include "sh4_interpreter.h"
-//#include "dc\sh4\rec_v1\BasicBlock.h"
-
-//class BasicBlock;
-//typedef void (FASTCALL RecOpCallFP) (u32 op,u32 pc,BasicBlock* bb);
 
 extern OpCallFP* OpPtr[0x10000];
 
@@ -34,6 +30,13 @@ enum sh4_exept_fixup
 };
 
 typedef void ( RecOpCallFP) (u32 op);
+
+#define OPCODE_SETPC(type)   ((type & WritesPC)    != 0)
+#define OPCODE_NEEDPC(type)  ((type & ReadsPC)     != 0)
+#define OPCODE_SETSR(type)   ((type & WritesSR)    != 0)
+#define OPCODE_SETFPSCR(type)((type & WritesFPSCR) != 0)
+#define OPCODE_DISASM(diss, strout, pc, params)  sprintf(strout,"%s:%08X:%04X",diss,pc,params)
+
 struct sh4_opcodelistentry
 {
 	RecOpCallFP* rec_oph;
@@ -48,31 +51,6 @@ struct sh4_opcodelistentry
 	sh4_exept_fixup ex_fixup;
 	u64 decode;
 	u64 fallbacks;
-	void Dissasemble(char* strout,u32 pc , u16 params) const
-	{
-		sprintf(strout,"%s:%08X:%04X",diss,pc,params);
-	}
-
-	INLINE bool SetPC() const
-	{
-		return (type & WritesPC)!=0;
-	}
-
-	INLINE bool NeedPC() const
-	{
-		return (type & ReadsPC)!=0;
-	}
-
-	INLINE bool SetSR() const
-	{
-		return (type & WritesSR)!=0;
-	}
-
-	INLINE bool SetFPSCR() const
-	{
-		return (type & WritesFPSCR)!=0;
-	}
-
 };
 
 extern sh4_opcodelistentry* OpDesc[0x10000];

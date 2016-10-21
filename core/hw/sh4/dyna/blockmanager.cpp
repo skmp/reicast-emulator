@@ -523,7 +523,7 @@ void print_blocks(void)
 					u16 op=ReadMem16(rpc);
 
 					char temp[128];
-					OpDesc[op]->Dissasemble(temp,rpc,op);
+					OPCODE_DISASM(OpDesc[op]->diss, temp,rpc,op);
 
 					fprintf(f,"//g:%s\n",temp);
 				}

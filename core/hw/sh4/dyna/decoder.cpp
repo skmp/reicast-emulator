@@ -154,7 +154,7 @@ static void dec_fallback(u32 op)
 	shil_opcode opcd;
 	opcd.op=shop_ifb;
 
-	opcd.rs1=shil_param(FMT_IMM,OpDesc[op]->NeedPC());
+	opcd.rs1=shil_param(FMT_IMM,OPCODE_NEEDPC(OpDesc[op]->type));
 
 	opcd.rs2=shil_param(FMT_IMM,state.cpu.rpc+2);
 	opcd.rs3=shil_param(FMT_IMM,op);
@@ -1047,18 +1047,18 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 						else
 							blk->guest_cycles+=CPU_RATIO;
 
-						verify(!(state.cpu.is_delayslot && OpDesc[op]->SetPC()));
+						verify(!(state.cpu.is_delayslot && OPCODE_SETPC(OpDesc[op]->type)));
 						if (state.ngen.OnlyDynamicEnds || !OpDesc[op]->rec_oph)
 						{
 							if (state.ngen.InterpreterFallback || !dec_generic(op))
 							{
 								dec_fallback(op);
-								if (OpDesc[op]->SetPC())
+								if (OPCODE_SETPC(OpDesc[op]->type))
 								{
 									dec_DynamicSet(reg_nextpc);
 									dec_End(0xFFFFFFFF,BET_DynamicJump,false);
 								}
-								if (OpDesc[op]->SetFPSCR() && !state.cpu.is_delayslot)
+								if (OPCODE_SETFPSCR(OpDesc[op]->type) && !state.cpu.is_delayslot)
 								{
 									dec_End(state.cpu.rpc+2,BET_StaticJump,false);
 								}

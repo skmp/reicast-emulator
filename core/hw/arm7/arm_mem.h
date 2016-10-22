@@ -16,7 +16,7 @@ static INLINE u8 DYNACALL ReadMemArm1(u32 addr)
 {
 	addr&=0x00FFFFFF;
 	if (addr<0x800000)
-		return *(u8*)&aica_ram[addr&(ARAM_MASK)];
+		return *(u8*)&aica_ram.data[addr&(ARAM_MASK)];
 
 	addr&=0x7FFF;
 
@@ -37,7 +37,7 @@ static INLINE u16 DYNACALL ReadMemArm2(u32 addr)
 {
 	addr&=0x00FFFFFF;
 	if (addr<0x800000)
-		return *(u16*)&aica_ram[addr&(ARAM_MASK-(1))];
+		return *(u16*)&aica_ram.data[addr&(ARAM_MASK-(1))];
 
 	addr&=0x7FFF;
 
@@ -59,7 +59,7 @@ static INLINE u32 DYNACALL ReadMemArm4(u32 addr)
 	addr&=0x00FFFFFF;
 	if (addr<0x800000)
 	{
-		u32 rv=*(u32*)&aica_ram[addr&(ARAM_MASK-(3))];
+		u32 rv=*(u32*)&aica_ram.data[addr&(ARAM_MASK-(3))];
 		
 		if (unlikely(addr&3))
 		{
@@ -89,7 +89,7 @@ static INLINE void DYNACALL WriteMemArm1(u32 addr,u8 data)
 	addr&=0x00FFFFFF;
 	if (addr<0x800000)
    {
-		*(u8*)&aica_ram[addr&(ARAM_MASK)]=data;
+		*(u8*)&aica_ram.data[addr&(ARAM_MASK)]=data;
       return;
    }
 
@@ -101,7 +101,7 @@ static INLINE void DYNACALL WriteMemArm2(u32 addr,u16 data)
 	addr&=0x00FFFFFF;
 	if (addr<0x800000)
    {
-		*(u16*)&aica_ram[addr&(ARAM_MASK-(1))]=data;
+		*(u16*)&aica_ram.data[addr&(ARAM_MASK-(1))]=data;
       return;
    }
 
@@ -113,7 +113,7 @@ static INLINE void DYNACALL WriteMemArm4(u32 addr,u32 data)
 	addr&=0x00FFFFFF;
 	if (addr<0x800000)
    {
-		*(u32*)&aica_ram[addr&(ARAM_MASK-(3))]=data;
+		*(u32*)&aica_ram.data[addr&(ARAM_MASK-(3))]=data;
       return;
    }
 

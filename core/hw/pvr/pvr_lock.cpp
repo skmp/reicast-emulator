@@ -90,11 +90,11 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
    slock_lock(vramlist_lock);
 #endif
 
-   vram.LockRegion(block->start,block->len);
+   VArray2_LockRegion(&vram, block->start,block->len);
 
    //TODO: Fix this for 32M wrap as well
    if (_nvmem_enabled() && VRAM_SIZE == 0x800000)
-      vram.LockRegion(block->start + VRAM_SIZE, block->len);
+      VArray2_LockRegion(&vram, block->start + VRAM_SIZE, block->len);
 
    vramlock_list_add(block);
 
@@ -136,11 +136,11 @@ bool VramLockedWrite(u8* address)
       }
       list->clear();
 
-      vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)),PAGE_SIZE);
+      VArray2_UnLockRegion(&vram, (u32)offset&(~(PAGE_SIZE-1)),PAGE_SIZE);
 
       //TODO: Fix this for 32M wrap as well
       if (_nvmem_enabled() && VRAM_SIZE == 0x800000)
-         vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
+         VArray2_UnLockRegion(&vram, (u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
 
 #ifndef TARGET_NO_THREADS
       slock_unlock(vramlist_lock);

@@ -158,28 +158,15 @@ void add_system_data_dir(const string& dir);
 //subpath format: /data/fsca-table.bit
 string get_writable_data_path(const string& filename);
 
-class VArray2
+struct VArray2
 {
-public:
-
 	u8* data;
 	u32 size;
-	//void Init(void* data,u32 sz);
-	//void Term();
-	void LockRegion(u32 offset,u32 size);
-	void UnLockRegion(u32 offset,u32 size);
-
-   void Zero()
-   {
-      UnLockRegion(0, size);
-      memset(data, 0, size);
-   }
-
-	INLINE u8& operator [](const u32 i)
-    {
-		return data[i];
-    }
 };
+
+void VArray2_LockRegion(VArray2 *varray2, u32 offset, u32 size);
+void VArray2_UnLockRegion(VArray2 *varray2, u32 offset, u32 size);
+void VArray2_Zero(VArray2 *varray2);
 
 int ExeptionHandler(u32 dwCode, void* pExceptionPointers);
 int msgboxf(const wchar* text,unsigned int type,...);

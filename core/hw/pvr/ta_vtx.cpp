@@ -22,8 +22,8 @@ u8 f32_su8_tbl[65536];
 #define float_to_satu8(val) f32_su8_tbl[((u32&)val)>>16]
 #define saturate01(x) (((s32&)x)<0?0:(s32&)x>0x3f800000?1:x)
 
-#define vrf(addr) (*(f32*)&vram[pvr_map32((addr)) & VRAM_MASK])
-#define vri(addr) (*(u32*)&vram[pvr_map32((addr)) & VRAM_MASK])
+#define vrf(addr) (*(f32*)&vram.data[pvr_map32((addr)) & VRAM_MASK])
+#define vri(addr) (*(u32*)&vram.data[pvr_map32((addr)) & VRAM_MASK])
 
 static u8 float_to_satu8_math(float val)
 {

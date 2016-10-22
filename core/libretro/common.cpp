@@ -415,19 +415,25 @@ static void enable_runfast(void)
 #endif
 }
 
-void VArray2::LockRegion(u32 offset,u32 size)
+void VArray2_Zero(VArray2 *varr)
+{
+   VArray2_UnLockRegion(varr, 0, varr->size);
+   memset(varr->data, 0, varr->size);
+}
+
+void VArray2_LockRegion(VArray2 *varr, u32 offset,u32 size)
 {
 #ifdef _WIN32
    verify(size!=0);
 	DWORD old;
-	VirtualProtect(((u8*)data)+offset , size, PAGE_READONLY,&old);
+	VirtualProtect(((u8*)varr->data)+offset , size, PAGE_READONLY,&old);
 #else
 #if !defined(TARGET_NO_EXCEPTIONS)
    u32 inpage=offset & PAGE_MASK;
-   u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ );
+   u32 rv=mprotect (varr->data + offset - inpage, size+inpage, PROT_READ );
    if (rv!=0)
    {
-      printf("mprotect(%08X,%08X,R) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
+      printf("mprotect(%08X,%08X,R) failed: %d | %d\n",varr->data + offset - inpage,size+inpage,rv,errno);
       die("mprotect  failed ..\n");
    }
 #endif
@@ -437,20 +443,20 @@ void VArray2::LockRegion(u32 offset,u32 size)
 #endif
 }
 
-void VArray2::UnLockRegion(u32 offset,u32 size)
+void VArray2_UnLockRegion(VArray2 *varr, u32 offset,u32 size)
 {
 #ifdef _WIN32
    verify(size!=0);
 	DWORD old;
-	VirtualProtect(((u8*)data)+offset , size, PAGE_READWRITE,&old);
+	VirtualProtect(((u8*)varr->data)+offset , size, PAGE_READWRITE,&old);
 #else
 #if !defined(TARGET_NO_EXCEPTIONS)
    u32 inpage=offset & PAGE_MASK;
-   u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ | PROT_WRITE);
+   u32 rv=mprotect (varr->data+offset-inpage, size+inpage, PROT_READ | PROT_WRITE);
    if (rv!=0)
    {
       print_mem_addr();
-      printf("mprotect(%8p,%08X,RW) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
+      printf("mprotect(%8p,%08X,RW) failed: %d | %d\n",varr->data + offset-inpage,size+inpage,rv,errno);
       die("mprotect  failed ..\n");
    }
 #endif

@@ -156,7 +156,7 @@ void aica_Init(void)
 void aica_Reset(bool Manual)
 {
 	if (!Manual)
-		aica_ram.Zero();
+		VArray2_Zero(&aica_ram);
 }
 
 void aica_Term(void)

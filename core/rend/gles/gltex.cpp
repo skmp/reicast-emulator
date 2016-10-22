@@ -288,7 +288,7 @@ struct TextureCacheData
       }
 
       palette_index      = indirect_color_ptr;              /* might be used if paletted texture */
-      vq_codebook        = (u8*)&vram[indirect_color_ptr];  /* might be used if VQ texture */
+      vq_codebook        = (u8*)&vram.data[indirect_color_ptr];  /* might be used if VQ texture */
 
       //texture conversion work
       pbt.p_buffer_start = pbt.p_current_line=temp_tex_buffer;
@@ -298,7 +298,7 @@ struct TextureCacheData
          stride = (TEXT_CONTROL&31)*32; //I think this needs +1 ?
 
       if(texconv)
-         texconv(&pbt,(u8*)&vram[sa], stride, h);
+         texconv(&pbt,(u8*)&vram.data[sa], stride, h);
       else
       {
          /* fill it in with a temporary color. */

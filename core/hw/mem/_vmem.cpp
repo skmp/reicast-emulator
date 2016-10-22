@@ -852,9 +852,9 @@ bool _vmem_reserve(void)
 
 	printf("Resetting mem\n");
 
-	aica_ram.Zero();
-	vram.Zero();
-	mem_b.Zero();
+	VArray2_Zero(&aica_ram);
+	VArray2_Zero(&vram);
+	VArray2_Zero(&mem_b);
 
 	printf("Mem alloc successful!");
 

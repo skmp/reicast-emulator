@@ -274,7 +274,7 @@ void mem_Reset(bool Manual)
 	if (!Manual)
 	{
 		//fill mem w/ 0's
-		mem_b.Zero();
+		VArray2_Zero(&mem_b);
 	}
 
 	//Reset registers
@@ -372,7 +372,7 @@ u8* GetMemPtr(u32 Addr,u32 size)
 	switch ((Addr>>26)&0x7)
    {
       case 3:
-         return &mem_b[Addr & RAM_MASK];
+         return &mem_b.data[Addr & RAM_MASK];
       case 0:
       case 1:
       case 2:

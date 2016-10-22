@@ -62,7 +62,7 @@ static void do_pvr_dma(void)
 static u32 calculate_start_link_addr(void)
 {
 	u32 rv;
-	u8* base=&mem_b[SB_SDSTAW & RAM_MASK];
+	u8* base=&mem_b.data[SB_SDSTAW & RAM_MASK];
 
 	if (SB_SDWLT==0) /* 16b width */
 		rv=((u16*)base)[SB_SDDIV];
@@ -86,7 +86,7 @@ static void pvr_do_sort_dma(void)
 			link_addr   *= 32;
 
 		u32 ea          = (link_base_addr+link_addr) & RAM_MASK;
-		u32* ea_ptr     = (u32*)&mem_b[ea];
+		u32* ea_ptr     = (u32*)&mem_b.data[ea];
 		link_addr       = ea_ptr[0x1C>>2];//Next link
 
 		/* transfer global param */

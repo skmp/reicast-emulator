@@ -14,7 +14,7 @@
 #endif
 
 //#define CPUReadHalfWordQuick(addr) arm_ReadMem16(addr & 0x7FFFFF)
-#define CPUReadMemoryQuick(addr) (*(u32*)&aica_ram[addr&ARAM_MASK])
+#define CPUReadMemoryQuick(addr) (*(u32*)&aica_ram.data[addr&ARAM_MASK])
 #define CPUReadByte arm_ReadMem8
 #define CPUReadMemory arm_ReadMem32
 #define CPUReadHalfWord arm_ReadMem16

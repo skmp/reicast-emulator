@@ -138,7 +138,7 @@ void SB_SFRES_write32(u32 addr, u32 data)
 }
 void sb_Init()
 {
-	sb_regs.Zero();
+   memset(sb_regs.data, 0, sizeof(RegisterStruct) * sb_regs.Size);
 
 	for (u32 i=0;i<sb_regs.Size;i++)
 	{

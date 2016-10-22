@@ -24,12 +24,12 @@ public:
 	T* data;
 	u32 Size;
 
-	Array(u32 ellements,bool zero)
+	Array(u32 size,bool bZero)
 	{
 		//initialise array
 		data=0;
-		Resize(ellements,zero);
-		Size=ellements;
+		Resize(size, bZero);
+		Size = size;
 	}
 
 	Array()
@@ -43,14 +43,6 @@ public:
 	{
 		if  (data)
 			Free();
-	}
-
-	void SetPtr(T* Source,u32 ellements)
-	{
-		//initialise array
-		Free();
-		data=Source;
-		Size=ellements;
 	}
 
 	T* Resize(u32 size,bool bZero)
@@ -83,11 +75,6 @@ public:
 		Size=size;
 
 		return data;
-	}
-
-	void Zero()
-	{
-		memset(data,0,sizeof(T)*Size);
 	}
 
 	void Free()

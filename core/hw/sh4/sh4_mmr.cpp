@@ -730,7 +730,7 @@ void sh4_mmr_init(void)
 
 void sh4_mmr_reset(void)
 {
-	OnChipRAM.Zero();
+   memset(OnChipRAM.data, 0, sizeof(u8) * OnChipRAM.Size);
 	//Reset register values
 	bsc_reset();
 	ccn_reset();

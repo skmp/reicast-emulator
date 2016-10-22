@@ -24,21 +24,6 @@ public:
 	T* data;
 	u32 Size;
 
-	Array(T* Source,u32 ellements)
-	{
-		//initialise array
-		data=Source;
-		Size=ellements;
-	}
-
-	Array(u32 ellements)
-	{
-		//initialise array
-		data=0;
-		Resize(ellements,false);
-		Size=ellements;
-	}
-
 	Array(u32 ellements,bool zero)
 	{
 		//initialise array

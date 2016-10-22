@@ -13,7 +13,7 @@
 
 #include "hw/naomi/naomi.h"
 
-Array<RegisterStruct> sb_regs(0x540);
+Array<RegisterStruct> sb_regs(0x540, false);
 
 //(addr>= 0x005F6800) && (addr<=0x005F7CFF) -> 0x1500 bytes -> 0x540 possible registers , 125 actually exist only
 // System Control Reg.   //0x100 bytes

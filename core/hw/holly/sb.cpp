@@ -32,20 +32,20 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 
    offset>>=2;
 
-   if ((sb_regs[offset].flags & REG_RF) )
-      return sb_regs[offset].readFunctionAddr(addr);
+   if ((sb_regs.data[offset].flags & REG_RF) )
+      return sb_regs.data[offset].readFunctionAddr(addr);
 
    switch (sz)
    {
       case 4:
-         return sb_regs[offset].data32;
+         return sb_regs.data[offset].data32;
       case 2:
-         return sb_regs[offset].data16;
+         return sb_regs.data[offset].data16;
       default:
          break;
    }
 
-   return sb_regs[offset].data8;
+   return sb_regs.data[offset].data8;
 
 }
 
@@ -53,23 +53,23 @@ void sb_WriteMem(u32 addr,u32 data,u32 sz)
 {
    u32 offset = addr-SB_BASE;
    offset>>=2;
-   if ((sb_regs[offset].flags & REG_WF) )
+   if ((sb_regs.data[offset].flags & REG_WF) )
    {
       //printf("SBW: %08X\n",addr);
-      sb_regs[offset].writeFunctionAddr(addr,data);
+      sb_regs.data[offset].writeFunctionAddr(addr,data);
       return;
    }
 
    switch (sz)
    {
       case 4:
-         sb_regs[offset].data32 = data;
+         sb_regs.data[offset].data32 = data;
          break;
       case 2:
-         sb_regs[offset].data16 = (u16)data;
+         sb_regs.data[offset].data16 = (u16)data;
          break;
       default:
-         sb_regs[offset].data8  = (u8)data;
+         sb_regs.data[offset].data8  = (u8)data;
          break;
    }
 }
@@ -88,25 +88,25 @@ void sb_rio_register(u32 reg_addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrF
 
 	verify(idx<sb_regs.Size);
 
-	sb_regs[idx].flags = flags | REG_ACCESS_32;
+	sb_regs.data[idx].flags = flags | REG_ACCESS_32;
 
    switch (flags)
    {
       case RIO_NO_ACCESS:
-         sb_regs[idx].readFunctionAddr=&sbio_read_noacc;
-         sb_regs[idx].writeFunctionAddr=&sbio_write_noacc;
+         sb_regs.data[idx].readFunctionAddr=&sbio_read_noacc;
+         sb_regs.data[idx].writeFunctionAddr=&sbio_write_noacc;
          break;
       case RIO_CONST:
-         sb_regs[idx].writeFunctionAddr=&sbio_write_const;
+         sb_regs.data[idx].writeFunctionAddr=&sbio_write_const;
          break;
       default:
-         sb_regs[idx].data32=0;
+         sb_regs.data[idx].data32=0;
 
          if (flags & REG_RF)
-            sb_regs[idx].readFunctionAddr=rf;
+            sb_regs.data[idx].readFunctionAddr=rf;
 
          if (flags & REG_WF)
-            sb_regs[idx].writeFunctionAddr=wf==0?&sbio_write_noacc:wf;
+            sb_regs.data[idx].writeFunctionAddr=wf==0?&sbio_write_noacc:wf;
          break;
    }
 }

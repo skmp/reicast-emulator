@@ -48,25 +48,25 @@ void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegR
 
 	verify(idx<arr.Size);
 
-	arr[idx].flags = flags | REG_ACCESS_32;
+	arr.data[idx].flags = flags | REG_ACCESS_32;
 
    switch (flags)
    {
       case RIO_NO_ACCESS:
-         arr[idx].readFunctionAddr=&sh4io_read_noacc;
-         arr[idx].writeFunctionAddr=&sh4io_write_noacc;
+         arr.data[idx].readFunctionAddr=&sh4io_read_noacc;
+         arr.data[idx].writeFunctionAddr=&sh4io_write_noacc;
          break;
       case RIO_CONST:
-         arr[idx].writeFunctionAddr=&sh4io_write_const;
+         arr.data[idx].writeFunctionAddr=&sh4io_write_const;
          break;
       default:
-         arr[idx].data32=0;
+         arr.data[idx].data32=0;
 
          if (flags & REG_RF)
-            arr[idx].readFunctionAddr=rf;
+            arr.data[idx].readFunctionAddr=rf;
 
          if (flags & REG_WF)
-            arr[idx].writeFunctionAddr=wf==0?&sh4io_write_noacc:wf;
+            arr.data[idx].writeFunctionAddr=wf==0?&sh4io_write_noacc:wf;
          break;
    }
 }
@@ -78,20 +78,20 @@ u32 sh4_rio_read(Array<RegisterStruct>& sb_regs, u32 addr)
 
    offset>>=2;
 
-   if ((sb_regs[offset].flags & REG_RF) )
-      return sb_regs[offset].readFunctionAddr(addr);
+   if ((sb_regs.data[offset].flags & REG_RF) )
+      return sb_regs.data[offset].readFunctionAddr(addr);
 
    switch (sz)
    {
       case 4:
-         return  sb_regs[offset].data32;
+         return  sb_regs.data[offset].data32;
       case 2:
-         return  sb_regs[offset].data16;
+         return  sb_regs.data[offset].data16;
       default:
          break;
    }
 
-   return  sb_regs[offset].data8;
+   return  sb_regs.data[offset].data8;
 }
 
 template<u32 sz>
@@ -99,23 +99,23 @@ void sh4_rio_write(Array<RegisterStruct>& sb_regs, u32 addr, u32 data)
 {
    u32 offset = addr&255;
    offset>>=2;
-   if ((sb_regs[offset].flags & REG_WF) )
+   if ((sb_regs.data[offset].flags & REG_WF) )
    {
       //printf("RSW: %08X\n",addr);
-      sb_regs[offset].writeFunctionAddr(addr,data);
+      sb_regs.data[offset].writeFunctionAddr(addr,data);
       return;
    }
 
    switch (sz)
    {
       case 4:
-         sb_regs[offset].data32=data;
+         sb_regs.data[offset].data32=data;
          break;
       case 2:
-         sb_regs[offset].data16=(u16)data;
+         sb_regs.data[offset].data16=(u16)data;
          break;
       default:
-         sb_regs[offset].data8=(u8)data;
+         sb_regs.data[offset].data8=(u8)data;
          break;
    }
 }
@@ -654,11 +654,11 @@ T DYNACALL ReadMem_area7_OCR_T(u32 addr)
       switch (sz)
       {
          case 1:
-            return (T)OnChipRAM[addr&OnChipRAM_MASK];
+            return (T)OnChipRAM.data[addr&OnChipRAM_MASK];
          case 2:
-            return (T)*(u16*)&OnChipRAM[addr&OnChipRAM_MASK];
+            return (T)*(u16*)&OnChipRAM.data[addr&OnChipRAM_MASK];
          case 4:
-            return (T)*(u32*)&OnChipRAM[addr&OnChipRAM_MASK];
+            return (T)*(u32*)&OnChipRAM.data[addr&OnChipRAM_MASK];
          default:
 #ifndef NDEBUG
             printf("ReadMem_area7_OCR_T: template SZ is wrong = %d\n",sz);
@@ -679,13 +679,13 @@ void DYNACALL WriteMem_area7_OCR_T(u32 addr,T data)
       switch (sz)
       {
          case 1:
-            OnChipRAM[addr&OnChipRAM_MASK]=(u8)data;
+            OnChipRAM.data[addr&OnChipRAM_MASK]=(u8)data;
             break;
          case 2:
-            *(u16*)&OnChipRAM[addr&OnChipRAM_MASK]=(u16)data;
+            *(u16*)&OnChipRAM.data[addr&OnChipRAM_MASK]=(u16)data;
             break;
          case 4:
-            *(u32*)&OnChipRAM[addr&OnChipRAM_MASK]=data;
+            *(u32*)&OnChipRAM.data[addr&OnChipRAM_MASK]=data;
             break;
          default:
 #ifndef NDEBUG

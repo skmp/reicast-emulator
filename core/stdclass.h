@@ -115,17 +115,6 @@ public:
 			data = NULL;
 		}
 	}
-
-
-	INLINE T& operator [](const u32 i)
-	{
-		return data[i];
-	}
-
-	INLINE T& operator [](const s32 i)
-	{
-		return data[i];
-	}
 };
 
 //Threads

@@ -42,7 +42,7 @@ void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegR
 
 #define A7_REG_HASH(addr) ((addr>>16)&0x1FFF)
 
-#define SH4IO_REGN(mod,addr,size) (mod[(addr&255)/4].data##size)
+#define SH4IO_REGN(mod,addr,size) (mod.data[(addr&255)/4].data##size)
 #define SH4IO_REG(mod,name,size) SH4IO_REGN(mod,mod##_##name##_addr,size)
 #define SH4IO_REG_T(mod,name,size) ((mod##_##name##_type&)SH4IO_REG(mod,name,size))
 

@@ -314,7 +314,7 @@ extern Array<RegisterStruct> sb_regs;
 //0x005F7CF8    SB_PDLEND   R   PVR-DMA transfer counter
 #define SB_PDLEND_addr 0x005F7CF8
 
-#define SB_REGN_32(addr) (sb_regs[(addr-SB_BASE)/4].data32)
+#define SB_REGN_32(addr) (sb_regs.data[(addr-SB_BASE)/4].data32)
 #define SB_REG_32(name) SB_REGN_32(SB_##name##_addr)
 #define SB_REG_T(name) ((SB_name##_t&)SB_REG_T(name))
 

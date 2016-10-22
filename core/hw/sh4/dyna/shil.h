@@ -23,7 +23,7 @@ enum shil_param_type
 	FMT_REG_BASE=FMT_I32,
 	FMT_VECTOR_BASE=FMT_V2,
 
-	FMT_MASK=0xFFFF,
+	FMT_MASK=0xFFFF
 };
 
 /*

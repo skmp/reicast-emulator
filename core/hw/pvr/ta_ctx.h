@@ -22,8 +22,6 @@ struct PolyParam
 	u32 first;		//entry index , holds vertex/pos data
 	u32 count;
 
-	//lets see what more :)
-
 	u32 texid;
 
 	TSP tsp;
@@ -46,33 +44,13 @@ struct ModTriangle
 	f32 x0,y0,z0,x1,y1,z1,x2,y2,z2;
 };
 
+#define TAD_END(tad) (tad.thd_data == tad.thd_root ? tad.thd_old_data : tad.thd_data)
+
 struct  tad_context
 {
 	u8* thd_data;
 	u8* thd_root;
 	u8* thd_old_data;
-
-	void Clear()
-	{
-		thd_old_data = thd_data = thd_root;
-	}
-
-	void ClearPartial()
-	{
-		thd_old_data = thd_data;
-		thd_data = thd_root;
-	}
-	
-	u8* End()
-	{
-		return thd_data == thd_root ? thd_old_data : thd_data;
-	}
-
-	void Reset(u8* ptr)
-	{
-		thd_data = thd_root = thd_old_data = ptr;
-	}
-
 };
 
 struct rend_context
@@ -151,7 +129,7 @@ struct TA_context
 	void MarkRend()
 	{
 		rend.proc_start = tad.thd_root;
-		rend.proc_end = tad.End();
+		rend.proc_end   = TAD_END(tad);
 	}
 	void Alloc()
 	{
@@ -159,7 +137,8 @@ struct TA_context
       thd_inuse  = slock_new();
       rend_inuse = slock_new();
 #endif
-		tad.Reset((u8*)malloc(2*1024*1024));
+      u8 *ptr = (u8*)malloc(2*1024*1024);
+      tad.thd_data = tad.thd_root = tad.thd_old_data = ptr;
 
 		rend.verts.InitBytes(1024*1024,&rend.Overrun); //up to 1 mb of vtx data/frame = ~ 38k vtx/frame
 		rend.idx.Init(60*1024,&rend.Overrun);			//up to 60K indexes ( idx have stripification overhead )
@@ -175,7 +154,8 @@ struct TA_context
 
 	void Reset()
 	{
-		tad.Clear();
+		tad.thd_old_data = tad.thd_data = tad.thd_root;
+
 #if !defined(TARGET_NO_THREADS)
       slock_lock(rend_inuse);
 #endif

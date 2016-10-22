@@ -90,7 +90,7 @@ void SetCurrentTARC(u32 addr)
 		
 		//clear context
 		ta_ctx=0;
-		ta_tad.Reset(0);
+      ta_tad.thd_data = ta_tad.thd_root = ta_tad.thd_old_data = NULL;
 	}
 }
 

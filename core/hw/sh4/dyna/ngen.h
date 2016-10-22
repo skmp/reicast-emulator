@@ -117,7 +117,7 @@ enum CanonicalParamType
 	CPT_u64rvH,
 	CPT_f32,
 	CPT_f32rv,
-	CPT_ptr,
+	CPT_ptr
 };
 
 void ngen_CC_Start(shil_opcode* op);

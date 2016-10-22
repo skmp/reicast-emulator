@@ -73,7 +73,7 @@ enum InterruptID
 
 		//REF
 		sh4_REF_RCMI        = KMIID(sh4_int,0x580,26),
-		sh4_REF_ROVI        = KMIID(sh4_int,0x5A0,27),
+		sh4_REF_ROVI        = KMIID(sh4_int,0x5A0,27)
 
 		/*
 		//sh4 exceptions

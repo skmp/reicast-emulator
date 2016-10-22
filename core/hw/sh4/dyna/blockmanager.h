@@ -19,31 +19,28 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	void Setup(u32 pc,fpscr_t fpu_cfg);
 	const char* hash(bool full=true, bool reloc=false);
 
-	u32 host_code_size;	//in bytes
-	u32 sh4_code_size; //in bytes
+	u32 host_code_size;	   /* in bytes */
+	u32 sh4_code_size;      /* in bytes */
 
 	u32 runs;
 	s32 staging_runs;
 
-	/*
-		
-	*/
 	fpscr_t fpu_cfg;
 	u32 guest_cycles;
 	u32 guest_opcodes;
 	u32 host_opcodes;
 
 
-	u32 BranchBlock; //if not 0xFFFFFFFF then jump target
-	u32 NextBlock;   //if not 0xFFFFFFFF then next block (by position)
+	u32 BranchBlock; /* if not 0xFFFFFFFF then jump target */
+	u32 NextBlock;   /* if not 0xFFFFFFFF then next block (by position) */
 
-	//0 if not available
+	/* 0 if not available */
 	RuntimeBlockInfo* pBranchBlock;
 	RuntimeBlockInfo* pNextBlock; 
 
 	u32 relink_offset;
 	u32 relink_data;
-	u32 csc_RetCache; //only for stats for now
+	u32 csc_RetCache; /* only for stats for now */
 
 	BlockEndType BlockType;
 	bool has_jcond;
@@ -60,7 +57,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	virtual u32 Relink()=0;
 	virtual void Relocate(void* dst)=0;
 	
-	//predecessors references
+	/* predecessors references */
 	vector<RuntimeBlockInfo*> pre_refs;
 
 	void AddRef(RuntimeBlockInfo* other);

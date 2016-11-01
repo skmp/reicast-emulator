@@ -178,46 +178,6 @@ static void fill_fsm(void)
 	fill_fsm(TAS_MLV64_H,-1,-1,TAS_MLV64); //64 MH -> expect M64
 }
 
-static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
-{
-	Ta_Dma* dat=(Ta_Dma*)(ta_tad.thd_data-32);
-
-	u32 cmd = trans>>4;
-	trans&=7;
-	//printf("Process state transition: %d || %d -> %d \n",cmd,state_in,trans&0xF);
-
-	if (cmd != 8)
-	{
-      switch (dat->pcw.ParaType)
-      {
-         case TA_PARAM_END_OF_LIST:
-            if (ta_fsm_cl==7)
-               ta_fsm_cl=dat->pcw.ListType;
-            //printf("List %d ended\n",ta_fsm_cl);
-
-            asic_RaiseInterrupt( ListEndInterrupt[ta_fsm_cl]);
-            ta_fsm_cl=7;
-            trans=TAS_NS;
-            break;
-         case TA_PARAM_POLY_OR_VOL:
-         case TA_PARAM_SPRITE:
-            if (ta_fsm_cl==7)
-               ta_fsm_cl=dat->pcw.ListType;
-
-            trans=TAS_PLV32;
-            if (dat->pcw.ParaType == TA_PARAM_POLY_OR_VOL &&
-                  IsModVolList(ta_fsm_cl))
-               trans=TAS_MLV64;
-            break;
-         default:
-            break;
-      }
-	}
-
-	u32 state_in = (trans<<8) | (dat->pcw.ParaType<<5) | (dat->pcw.obj_ctrl>>2)%32;
-	ta_cur_state=(ta_state)(ta_fsm[state_in]&0xF);
-}
-
 static OnLoad ol_fillfsm(&fill_fsm);
 
 void ta_vtx_ListCont(void)
@@ -242,57 +202,68 @@ void ta_vtx_SoftReset(void)
 	ta_cur_state=TAS_NS;
 }
 
-void DYNACALL ta_thd_data32_i(double *src)
-{		
-	double* dst = (double*)ta_tad.thd_data;
-
-	ta_tad.thd_data+=32;
-
-	dst[0]=src[0];
-	dst[1]=src[1];
-	dst[2]=src[2];
-	dst[3]=src[3];
-
-	PCW pcw=(PCW&)src[0];
-	u32 state_in = (ta_cur_state<<8) | (pcw.ParaType<<5) | (pcw.obj_ctrl>>2)%32;
-		
-	u8 trans = ta_fsm[state_in];
-	ta_cur_state =  (ta_state)trans;
-	bool must_handle=trans&0xF0;
-
-
-	if (unlikely(must_handle))
-		ta_handle_cmd(trans);
-}
-
 void ta_vtx_data(u32* data, u32 size)
 {
-	while(size>4)
-	{
-		ta_thd_data32_i((double*)data);
-
-		data+=8;
-		size--;
-
-		ta_thd_data32_i((double*)data);
-
-		data+=8;
-		size--;
-
-		ta_thd_data32_i((double*)data);
-		data+=8;
-		size--;
-
-		ta_thd_data32_i((double*)data);
-		data+=8;
-		size--;
-	}
-
 	while(size>0)
-	{
-		ta_thd_data32_i((double*)data);
+   {
+      double *src = (double*)data; 
+      double *dst = (double*)ta_tad.thd_data;
 
-		data+=8;
-		size--;
-	}
+      ta_tad.thd_data+=32;
+
+      dst[0]=src[0];
+      dst[1]=src[1];
+      dst[2]=src[2];
+      dst[3]=src[3];
+
+      PCW pcw          = (PCW&)src[0];
+      u32 state_in     = (ta_cur_state<<8) | (pcw.ParaType<<5) | (pcw.obj_ctrl>>2)%32;
+
+      u8 trans         = ta_fsm[state_in];
+      ta_cur_state     = (ta_state)trans;
+      bool must_handle = trans&0xF0;
+
+      if (unlikely(must_handle))
+      {
+         Ta_Dma* dat=(Ta_Dma*)(ta_tad.thd_data-32);
+
+         u32 cmd = trans>>4;
+         trans&=7;
+         //printf("Process state transition: %d || %d -> %d \n",cmd,state_in,trans&0xF);
+
+         if (cmd != 8)
+         {
+            switch (dat->pcw.ParaType)
+            {
+               case TA_PARAM_END_OF_LIST:
+                  if (ta_fsm_cl==7)
+                     ta_fsm_cl=dat->pcw.ListType;
+                  //printf("List %d ended\n",ta_fsm_cl);
+
+                  asic_RaiseInterrupt( ListEndInterrupt[ta_fsm_cl]);
+                  ta_fsm_cl=7;
+                  trans=TAS_NS;
+                  break;
+               case TA_PARAM_POLY_OR_VOL:
+               case TA_PARAM_SPRITE:
+                  if (ta_fsm_cl==7)
+                     ta_fsm_cl=dat->pcw.ListType;
+
+                  trans=TAS_PLV32;
+                  if (dat->pcw.ParaType == TA_PARAM_POLY_OR_VOL &&
+                        IsModVolList(ta_fsm_cl))
+                     trans=TAS_MLV64;
+                  break;
+               default:
+                  break;
+            }
+         }
+
+         u32 state_in = (trans<<8) | (dat->pcw.ParaType<<5) | (dat->pcw.obj_ctrl>>2)%32;
+         ta_cur_state=(ta_state)(ta_fsm[state_in]&0xF);
+      }
+
+      data+=8;
+      size--;
+   }
 }

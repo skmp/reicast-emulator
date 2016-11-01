@@ -138,7 +138,7 @@ static INLINE void YUV_ConvertMacroBlock(u8* datap)
    }
 }
 
-void YUV_data(u32* data , u32 count)
+static void YUV_data(u32* data , u32 count)
 {
    if (YUV_blockcount==0)
    {
@@ -229,7 +229,7 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
 
    if (likely(address_w<0x800000))//TA poly
    {
-      ta_thd_data32_i((double*)sq);
+      ta_vtx_data((u32*)sq, 1);
    }
    else if(likely(address_w<0x1000000)) //Yuv Converter
    {

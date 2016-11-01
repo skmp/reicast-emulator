@@ -57,9 +57,8 @@ const HollyInterruptID ListEndInterrupt[5]=
 	holly_PUNCHTHRU
 };
 
-u8 ta_fsm[2049];	//[2048] stores the current state
-u32 ta_fsm_cl=7;
-
+static u8 ta_fsm[2049];	//[2048] stores the current state
+static u32 ta_fsm_cl=7;
 
 /* state | PTEOS | OBJ -> next, proc*/
 
@@ -260,7 +259,7 @@ void ta_vtx_data(u32* data, u32 size)
          }
 
          u32 state_in = (trans<<8) | (dat->pcw.ParaType<<5) | (dat->pcw.obj_ctrl>>2)%32;
-         ta_cur_state=(ta_state)(ta_fsm[state_in]&0xF);
+         ta_cur_state = (ta_state)(ta_fsm[state_in]&0xF);
       }
 
       data+=8;

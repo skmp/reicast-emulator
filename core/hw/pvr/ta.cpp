@@ -11,9 +11,6 @@ extern u32 ta_type_lut[256];
 	Render/TA thread -> ta data -> draw lists -> draw
 */
 
-#define SQWC(x)
-#define DMAWC(x)
-
 #define ta_cur_state  (ta_fsm[2048])
 
 /*
@@ -203,22 +200,16 @@ static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
             trans=TAS_NS;
             break;
          case TA_PARAM_POLY_OR_VOL:
-            if (ta_fsm_cl==7)
-               ta_fsm_cl=dat->pcw.ListType;
-
-            if (!IsModVolList(ta_fsm_cl))
-               trans=TAS_PLV32;
-            else
-               trans=TAS_MLV64;
-            break;
          case TA_PARAM_SPRITE:
             if (ta_fsm_cl==7)
                ta_fsm_cl=dat->pcw.ListType;
 
             trans=TAS_PLV32;
+            if (dat->pcw.ParaType == TA_PARAM_POLY_OR_VOL &&
+                  IsModVolList(ta_fsm_cl))
+               trans=TAS_MLV64;
             break;
          default:
-            die("WTF ?\n");
             break;
       }
 	}
@@ -251,20 +242,18 @@ void ta_vtx_SoftReset(void)
 	ta_cur_state=TAS_NS;
 }
 
-static INLINE void DYNACALL ta_thd_data32_i(void* data)
+void DYNACALL ta_thd_data32_i(double *src)
 {		
-	double* dst=(double*)ta_tad.thd_data;
-	double* src=(double*)data;
+	double* dst = (double*)ta_tad.thd_data;
 
 	ta_tad.thd_data+=32;
 
-	double t = src[0];
-	dst[0]=t;
+	dst[0]=src[0];
 	dst[1]=src[1];
 	dst[2]=src[2];
 	dst[3]=src[3];
 
-	PCW pcw=(PCW&)t;
+	PCW pcw=(PCW&)src[0];
 	u32 state_in = (ta_cur_state<<8) | (pcw.ParaType<<5) | (pcw.obj_ctrl>>2)%32;
 		
 	u8 trans = ta_fsm[state_in];
@@ -276,39 +265,32 @@ static INLINE void DYNACALL ta_thd_data32_i(void* data)
 		ta_handle_cmd(trans);
 }
 
-void DYNACALL ta_vtx_data32(void* data)
-{
-	SQWC(1);
-	ta_thd_data32_i(data);
-}
-
 void ta_vtx_data(u32* data, u32 size)
 {
-	DMAWC(size);
 	while(size>4)
 	{
-		ta_thd_data32_i(data);
+		ta_thd_data32_i((double*)data);
 
 		data+=8;
 		size--;
 
-		ta_thd_data32_i(data);
+		ta_thd_data32_i((double*)data);
 
 		data+=8;
 		size--;
 
-		ta_thd_data32_i(data);
+		ta_thd_data32_i((double*)data);
 		data+=8;
 		size--;
 
-		ta_thd_data32_i(data);
+		ta_thd_data32_i((double*)data);
 		data+=8;
 		size--;
 	}
 
 	while(size>0)
 	{
-		ta_thd_data32_i(data);
+		ta_thd_data32_i((double*)data);
 
 		data+=8;
 		size--;

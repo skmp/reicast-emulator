@@ -18,6 +18,8 @@ void ta_vtx_SoftReset();
 void DYNACALL ta_vtx_data32(void* data);
 void ta_vtx_data(u32* data, u32 size);
 
+void DYNACALL ta_thd_data32_i(double *src);
+
 bool ta_parse_vdrc(TA_context* ctx);
 
 #define STRIPS_AS_PPARAMS 1

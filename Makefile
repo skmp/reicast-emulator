@@ -423,6 +423,7 @@ else
 	PLATFORM_EXT := win32
 	CC = gcc
 	CXX = g++
+	LDFLAGS += -m32
 
 	CFLAGS += -D TARGET_NO_AREC
 
@@ -502,8 +503,9 @@ PREFIX        ?= /usr/local
 
 ifeq ($(WITH_DYNAREC), arm)
 else
-    AS=${CC_PREFIX}gcc
-    ASFLAGS += $(CFLAGS)
+    CC_AS=gcc
+    ASFLAGS += -m32
+    LDFLAGS += -m32
 endif
 
 ifeq ($(PGO_MAKE),1)

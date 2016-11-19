@@ -3,22 +3,22 @@
 
 
 .extern rdv_LinkBlock
+.extern rdv_FailedToFindBlock
+.extern rdv_DoInterrupts
+.extern rdv_BlockCheckFail
 .globl p_sh4rcb
 .globl gas_offs
-.globl rdv_FailedToFindBlock
 .globl cycle_counter
 .globl loop_no_update
 .globl intc_sched
 .globl bm_GetCode
 .globl cycle_counter
 .globl UpdateSystem
-.globl rdv_DoInterrupts
-.globl rdv_BlockCheckFail
+
 
 ###########################################
 
 .globl ngen_LinkBlock_Shared_stub
-.type ngen_LinkBlock_Shared_stub, @function
 
 ngen_LinkBlock_Shared_stub:
 	pop ecx
@@ -31,7 +31,6 @@ ngen_LinkBlock_Shared_stub:
 ###########################################
 
 .globl ngen_LinkBlock_cond_Next_stub
-.type ngen_LinkBlock_cond_Next_stub, @function
 
 ngen_LinkBlock_cond_Next_stub:
 	mov edx,0
@@ -42,7 +41,6 @@ ngen_LinkBlock_cond_Next_stub:
 ###########################################
 
 .globl ngen_LinkBlock_cond_Branch_stub
-.type ngen_LinkBlock_cond_Branch_stub, @function
 
 ngen_LinkBlock_cond_Branch_stub:
 	mov edx,1
@@ -52,7 +50,6 @@ ngen_LinkBlock_cond_Branch_stub:
 ###########################################
 
 .globl ngen_LinkBlock_Generic_stub
-.type ngen_LinkBlock_Generic_stub, @function
 
 # u32 gas_offs=offsetof(Sh4RCB,cntx.jdyn);
 ngen_LinkBlock_Generic_stub:
@@ -67,7 +64,6 @@ ngen_LinkBlock_Generic_stub:
 ###########################################
 
 .globl ngen_FailedToFindBlock_
-.type ngen_FailedToFindBlock_, @function
 
 ngen_FailedToFindBlock_:
 	mov ecx,esi
@@ -80,7 +76,6 @@ ngen_FailedToFindBlock_:
 #define SH4_TIMESLICE 448
 
 .globl ngen_mainloop
-.type ngen_mainloop, @function
 
 ngen_mainloop:
 	# quick hack to maintain 16-byte alignment
@@ -140,7 +135,6 @@ cleanup:
 ###########################################
 
 .globl ngen_blockcheckfail
-.type ngen_blockcheckfail, @function
 
 ngen_blockcheckfail:
 	call rdv_BlockCheckFail
@@ -150,7 +144,6 @@ ngen_blockcheckfail:
 ###########################################
 
 .globl ngen_blockcheckfail2
-.type ngen_blockcheckfail2, @function
 
 ngen_blockcheckfail2:
 	int 3

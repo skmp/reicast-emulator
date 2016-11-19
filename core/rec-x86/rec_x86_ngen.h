@@ -10,6 +10,10 @@
 #include "hw/sh4/dyna/regalloc.h"
 #include "emitter/x86_emitter.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool staging, bool optimise);
 
 
@@ -47,3 +51,8 @@ struct x86_reg_alloc: RegAlloc<x86_reg,x86_reg>
 };
 
 extern x86_reg_alloc reg;
+
+#ifdef __cplusplus
+}
+#endif
+

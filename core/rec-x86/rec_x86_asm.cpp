@@ -61,17 +61,17 @@ void ngen_mainloop(void* cntx)
 {
 	 __asm__ __volatile__  (
         ".intel_syntax noprefix    \n\t"          // Tell gcc that we're intel, not at&t
+        "push esi \n\t"
+        "push esi \n\t"
+        "push esi \n\t"
 		"push esi \n\t"
 		"push edi \n\t"
 		"push ebp \n\t"
 		"push ebx \n\t"
-
 		"mov ecx,0xA0000000 \n\t"
-		//"mov [cycle_counter],SH4_TIMESLICE \n\t"
-
-		//"mov [loop_no_update],offset no_update \n\t"
-		//"mov [intc_sched],offset intc_sched_offs \n\t"
-		
+		"mov dword ptr [_cycle_counter], 448\n\t"  //#SH4_TIMESLICE 
+		"mov dword ptr [_loop_no_update],offset no_update \n\t"
+		"mov dword ptr [_intc_sched],offset intc_sched_offs \n\t"
 		"mov eax,0 \n\t"
 		//next_pc _MUST_ be on ecx
 "no_update:\n\t"

@@ -76,7 +76,7 @@ static void recSh4_ClearCache(void)
 	printf("recSh4:Dynarec Cache clear at %08X\n",curr_pc);
 }
 
-#if (FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64)
+#if (FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86)
 extern int cycle_counter;
 extern bool inside_loop;
 

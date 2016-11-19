@@ -16,7 +16,7 @@ extern "C" {
 
 void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool staging, bool optimise);
 
-
+void ngen_LinkBlock_Shared_stub(void);
 void ngen_LinkBlock_Generic_stub(void);
 void ngen_LinkBlock_cond_Next_stub(void);
 void ngen_LinkBlock_cond_Branch_stub(void);
@@ -40,6 +40,11 @@ extern bool sse_3;
 extern bool ssse_3;
 extern bool mmx;
 
+#ifdef __cplusplus
+}
+#endif
+
+
 struct x86_reg_alloc: RegAlloc<x86_reg,x86_reg>
 {
 	virtual void Preload(u32 reg,x86_reg nreg);
@@ -52,7 +57,4 @@ struct x86_reg_alloc: RegAlloc<x86_reg,x86_reg>
 
 extern x86_reg_alloc reg;
 
-#ifdef __cplusplus
-}
-#endif
 

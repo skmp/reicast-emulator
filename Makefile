@@ -424,6 +424,8 @@ else
 	CC = gcc
 	CXX = g++
 
+	CFLAGS += -D TARGET_NO_AREC
+
 endif
 
 ifeq ($(STATIC_LINKING),1)

@@ -76,7 +76,7 @@ void ngen_mainloop(void* cntx)
 		//next_pc _MUST_ be on ecx
 "no_update:\n\t"
 		"mov esi,ecx \n\t"
-		"call bm_GetCode \n\t"
+		"call _bm_GetCode \n\t"
 		"jmp eax \n\t"
 
 "intc_sched_offs: \n\t"

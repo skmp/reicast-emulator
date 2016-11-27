@@ -504,9 +504,6 @@ PREFIX        ?= /usr/local
 
 ifeq ($(WITH_DYNAREC), arm)
 else
-    CC_AS=gcc
-    ASFLAGS += -m32
-    LDFLAGS += -m32
 endif
 
 ifeq ($(PGO_MAKE),1)

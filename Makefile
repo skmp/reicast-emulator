@@ -423,8 +423,9 @@ else
 	PLATFORM_EXT := win32
 	CC = gcc
 	CXX = g++
+ifeq ($(WITH_DYNAREC), x86)
 	LDFLAGS += -m32
-
+endif
 	CFLAGS += -D TARGET_NO_AREC
 
 endif

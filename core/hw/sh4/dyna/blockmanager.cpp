@@ -76,16 +76,7 @@ DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 	return (DynarecCodeEntryPtr)FPCA(addr);
 }
 
-RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr)
-{
-	DynarecCodeEntryPtr cde= (DynarecCodeEntryPtr)FPCA(addr);
-
-	if (cde==ngen_FailedToFindBlock)
-		return 0;
-   return bm_GetBlock((void*)cde);
-}
-
-RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
+RuntimeBlockInfo* bm_GetBlock2(void* dynarec_code)
 {
 	blkmap_t::iterator iter=blkmap.find((RuntimeBlockInfo*)dynarec_code);
 	if (iter!=blkmap.end())
@@ -97,6 +88,17 @@ RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
    printf("bm_GetBlock(%08X) failed ..\n",dynarec_code);
    return 0;
 }
+
+
+RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr)
+{
+	DynarecCodeEntryPtr cde= (DynarecCodeEntryPtr)FPCA(addr);
+
+	if (cde==ngen_FailedToFindBlock)
+		return 0;
+   return bm_GetBlock2((void*)cde);
+}
+
 
 RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code)
 {

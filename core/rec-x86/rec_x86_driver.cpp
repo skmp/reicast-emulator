@@ -18,6 +18,11 @@ struct DynaRBI: RuntimeBlockInfo
 	}
 };
 
+RuntimeBlockInfo* ngen_AllocateBlock(void)
+{
+   return new DynaRBI();
+}
+
 x86_block* x86e;
 
 extern int cycle_counter;

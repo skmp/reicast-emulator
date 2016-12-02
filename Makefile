@@ -425,6 +425,7 @@ else
 	CXX = g++
 ifeq ($(WITH_DYNAREC), x86)
 	LDFLAGS += -m32
+	CFLAGS += -D TARGET_NO_AREC -m32
 endif
 	CFLAGS += -D TARGET_NO_AREC
 

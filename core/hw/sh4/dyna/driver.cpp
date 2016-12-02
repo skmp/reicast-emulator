@@ -286,7 +286,7 @@ u32 DYNACALL rdv_DoInterrupts_pc(u32 pc)
 void bm_Rebuild();
 u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 {
-	RuntimeBlockInfo* rbi = bm_GetBlock(block_cpde);
+	RuntimeBlockInfo* rbi = bm_GetBlock2(block_cpde);
 	return rdv_DoInterrupts_pc(rbi->addr);
 }
 
@@ -317,7 +317,7 @@ DynarecCodeEntryPtr rdv_FindOrCompile(void)
 
 void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 {
-	RuntimeBlockInfo* rbi=bm_GetBlock(code);
+	RuntimeBlockInfo* rbi=bm_GetBlock2(code);
 
 	if (!rbi)
 	{
@@ -347,7 +347,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 
 	DynarecCodeEntryPtr rv=rdv_FindOrCompile();
 
-	if (bm_GetBlock(code) != rbi)
+	if (bm_GetBlock2(code) != rbi)
    {
       printf(" .. null RBI: %08X -- unlinked stale block\n",next_pc);
       return (void*)rv;

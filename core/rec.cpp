@@ -11,19 +11,6 @@
 
 int cycle_counter;
 
-struct DynaRBI : RuntimeBlockInfo
-{
-   /* NOTE/TODO - this was virtual u32 Relink();
-    * for rec_arm.cpp - check this in case of
-    * errors */
-	virtual u32 Relink()
-   {
-		return 0;
-	}
-
-	virtual void Relocate(void* dst) {
-	}
-};
 
 void ngen_init(void)
 {
@@ -44,6 +31,27 @@ void ngen_init(void)
 }
 
 #if !(FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86)
+
+struct DynaRBI : RuntimeBlockInfo
+{
+   /* NOTE/TODO - this was virtual u32 Relink();
+    * for rec_arm.cpp - check this in case of
+    * errors */
+   virtual u32 Relink()
+   {
+      return 0;
+   }
+
+   virtual void Relocate(void* dst) {
+   }
+};
+
+RuntimeBlockInfo* ngen_AllocateBlock(void)
+{
+   return new DynaRBI();
+}
+
+
 extern "C" {
 
 void ngen_FailedToFindBlock_internal(void)
@@ -229,10 +237,7 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
    }
 }
 
-RuntimeBlockInfo* ngen_AllocateBlock(void)
-{
-	return new DynaRBI();
-}
+
 
 u32* GetRegPtr(u32 reg)
 {

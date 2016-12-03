@@ -1824,12 +1824,12 @@ static bool RenderFrame(void)
 	//not all scaling affects pixel operations, scale to adjust for that
 	scale_x *= scissoring_scale_x;
 
-	#if 0
-		//handy to debug really stupid render-not-working issues ...
-		printf("SS: %dx%d\n", gles_screen_width, gles_screen_height);
-		printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
-		printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
-	#endif
+#if 0
+   //handy to debug really stupid render-not-working issues ...
+   printf("SS: %dx%d\n", gles_screen_width, gles_screen_height);
+   printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
+   printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
+#endif
 
    glScissor(
          offs_x + pvrrc.fb_X_CLIP.min / scale_x,

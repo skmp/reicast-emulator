@@ -257,7 +257,7 @@ void bm_Rebuild(void)
 		ngen_Compile(all_blocks[i],false,false,all_blocks[i]->staging_runs>0,do_opts);
 
 		blkmap.insert(all_blocks[i]);
-		verify(bm_GetBlock((RuntimeBlockInfo*)all_blocks[i]->code)==all_blocks[i]);
+		verify(bm_GetBlock2((RuntimeBlockInfo*)all_blocks[i]->code)==all_blocks[i]);
 
 		FPCA(all_blocks[i]->addr)=all_blocks[i]->code;
 	}

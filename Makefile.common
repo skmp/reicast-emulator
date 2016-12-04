@@ -124,6 +124,11 @@ SOURCES_CXX += $(CORE_DIR)/rec-x64/rec_x64.cpp
 #
 else ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), i386 i686 x86))
 DYNAREC_USED = 1
+ifeq ($(platform), unix)
+SOURCES_ASM += $(CORE_DIR)/rec-x86/rec_lin86_asm.S
+else
+SOURCES_ASM += $(CORE_DIR)/rec-x86/rec_win86_asm.S
+endif
 SOURCES_CXX += $(CORE_DIR)/rec-x86/rec_x86_asm.cpp \
 					$(CORE_DIR)/rec-x86/rec_x86_driver.cpp \
 					$(CORE_DIR)/rec-x86/rec_x86_il.cpp \

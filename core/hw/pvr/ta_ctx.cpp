@@ -14,7 +14,7 @@ rend_context vd_rc;
 #if !defined(TARGET_NO_THREADS)
 slock_t *mtx_rqueue;
 slock_t *mtx_pool;
-cResetEvent frame_finished(false, true);
+cResetEvent frame_finished;
 #endif
 
 TA_context* rqueue;
@@ -193,7 +193,10 @@ bool QueueRender(TA_context* ctx)
 		return false;
 	}
 
-	frame_finished.Reset();
+   slock_lock(frame_finished.mutx);
+   frame_finished.state = false;
+   slock_unlock(frame_finished.mutx);
+
    slock_lock(mtx_rqueue);
 	TA_context* old = rqueue;
 	rqueue=ctx;
@@ -230,7 +233,11 @@ void FinishRender(TA_context* ctx)
    slock_unlock(mtx_rqueue);
 
 	tactx_Recycle(ctx);
-	frame_finished.Set();
+
+   slock_lock(frame_finished.mutx);
+   frame_finished.state = true;
+   scond_signal(frame_finished.cond);
+   slock_unlock(frame_finished.mutx);
 }
 
 void ta_ctx_free(void)

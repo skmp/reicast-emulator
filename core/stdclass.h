@@ -92,22 +92,12 @@ public:
 //Threads
 
 //Wait Events
-typedef void* EVENTHANDLE;
-class cResetEvent
+struct cResetEvent
 {
+   slock_t *mutx;
+   scond_t *cond;
 
-private:
-	slock_t *mutx;
-	scond_t *cond;
-
-public :
-	bool state;
-	cResetEvent(bool State,bool Auto);
-	~cResetEvent();
-	void Set();		//Set state to signaled
-	void Reset();	//Set state to non signaled
-	void Wait(u32 msec);//Wait for signal , then reset[if auto]
-	void Wait();	//Wait for signal , then reset[if auto]
+   bool state;
 };
 
 //Set the path !

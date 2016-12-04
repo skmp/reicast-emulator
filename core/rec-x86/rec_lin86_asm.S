@@ -104,7 +104,7 @@ ngen_mainloop:
 #	next_pc _MUST_ be on ecx
 no_update:
 	mov esi,ecx
-	call _Z10bm_GetCodej #bm_GetCode
+	call bm_GetCode #bm_GetCode
 	jmp eax
 
 intc_sched_offs:

@@ -59,6 +59,10 @@ void UpdateInputState(u32 port) {
     
 }
 
+void UpdateVibration(u32 port, u32 value) {
+
+}
+
 void os_CreateWindow() {
     
 }
@@ -123,7 +127,7 @@ extern int screen_width,screen_height;
 bool rend_single_frame();
 bool gles_init();
 
-extern "C" bool emu_single_frame(int w, int h) {
+extern "C" int emu_single_frame(int w, int h) {
     if (!has_init)
         return true;
     screen_width = w;

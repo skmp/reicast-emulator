@@ -3,6 +3,7 @@
 #include "maple_helper.h"
 #include "maple_devs.h"
 #include "maple_cfg.h"
+#include "cfg/cfg.h"
 
 #define HAS_VMU
 /*
@@ -21,6 +22,7 @@ Plugins:
 		ImageUpdate(data);
 */
 void UpdateInputState(u32 port);
+void UpdateVibration(u32 port, u32 value);
 
 extern u16 kcode[4];
 extern u32 vks[4];
@@ -39,6 +41,11 @@ struct MapleConfigMap : IMapleConfigMap
 	MapleConfigMap(maple_device* dev)
 	{
 		this->dev=dev;
+	}
+
+	void SetVibration(u32 value)
+	{
+		UpdateVibration(dev->bus_id, value);
 	}
 
 	void GetInput(PlainJoystickState* pjs)
@@ -68,8 +75,16 @@ void mcfg_Create(MapleDeviceType type,u32 bus,u32 port)
 
 void mcfg_CreateDevices()
 {
+int numberOfControl = cfgLoadInt("players", "nb", 1);
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	mcfg_Create(MDT_SegaController,0,5);
+	if (numberOfControl <= 0)
+		numberOfControl = 1;
+	if (numberOfControl > 4)
+		numberOfControl = 4;
+
+	for (int i = 0; i < numberOfControl; i++){
+		mcfg_Create(MDT_SegaController, i, 5);
+	}
 
 	mcfg_Create(MDT_SegaVMU,0,0);
 	mcfg_Create(MDT_SegaVMU,0,1);

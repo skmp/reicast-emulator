@@ -146,6 +146,7 @@ endif()
 
 if(USE_PULSEAUDIO)
   add_definitions(-DUSE_PULSEAUDIO)
+  list(APPEND libs pulse-simple)
 endif()
 
 # Graphic stuffs:
@@ -174,6 +175,7 @@ if(WINDOWS)
   add_directory(core/rend/norend)
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL Linux)
   add_directory(core/linux)
+  add_directory(core/linux/nixprof)
 else()
   message(FATAL_ERROR "Which OS?")
 endif()

@@ -30,6 +30,8 @@ import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import de.ankri.views.Switch;
+
 import com.bda.controller.Controller;
 import com.bda.controller.ControllerListener;
 import com.bda.controller.MotionEvent;
@@ -38,8 +40,6 @@ import com.reicast.emulator.MainActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.periph.Gamepad;
 import com.reicast.emulator.periph.MOGAInput;
-
-import de.ankri.views.Switch;
 
 public class InputFragment extends Fragment {
 

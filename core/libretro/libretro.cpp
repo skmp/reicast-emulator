@@ -531,6 +531,8 @@ bool retro_load_game(const struct retro_game_info *game)
       { 0 },
    };
 
+   if (!game)
+      return false;
 
    extract_directory(game_dir, game->path, sizeof(game_dir));
 

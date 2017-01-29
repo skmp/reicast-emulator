@@ -1,5 +1,6 @@
 #if defined(SUPPORT_X11)
 #include <map>
+#include <X11/XKBlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
@@ -99,44 +100,97 @@ void input_x11_handle()
 					else
 					{
 						int dc_key = x11_keymap[e.xkey.keycode];
+						// replaced hardcoded controller index (0) with a variable (where should we get it from though?..)
+						const int controllerIdx = 0;
 						if (e.type == KeyPress)
 						{
-							kcode[0] &= ~dc_key;
+							kcode[controllerIdx] &= ~dc_key;
 						}
 						else
 						{
-							kcode[0] |= dc_key;
+							kcode[controllerIdx] |= dc_key;
 						}
+						if (dc_key == COMPAT_T_RIGHT) {
+							rt[controllerIdx] = 255 * (e.type == KeyPress);
+						}
+						if (dc_key == COMPAT_T_LEFT) {
+							lt[controllerIdx] = 255 * (e.type == KeyPress);
+						}
+						
+						if (dc_key == DC_DPAD2_RIGHT || dc_key == DC_DPAD2_LEFT) {
+							if (e.type == KeyPress) {
+								joyx[controllerIdx] = (dc_key == DC_DPAD2_RIGHT) ? 127 : -128;
+							} else {
+								joyx[controllerIdx] = 0;
+							}
+						}
+						
+						if (dc_key == DC_DPAD2_DOWN || dc_key == DC_DPAD2_UP) {
+							if (e.type == KeyPress) {
+								joyy[controllerIdx] = (dc_key == DC_DPAD2_DOWN) ? 127 : -128;
+							} else {
+								joyy[controllerIdx] = 0;
+							}
+						}
+
+						printf("KEY: %d -> %d: %d\n",e.xkey.keycode, dc_key, x11_dc_buttons );
 					}
-					//printf("KEY: %d -> %d: %d\n",e.xkey.keycode, dc_key, x11_dc_buttons );
 					break;
 			}
 		}
 	}
 }
 
-void input_x11_init()
-{
-	x11_keymap[113] = DC_DPAD_LEFT;
-	x11_keymap[114] = DC_DPAD_RIGHT;
+// todo: find out when USE_EVDEV is not defined and if supporting it makes sense at all
+#if defined(USE_EVDEV)
+	void input_x11_init(EvdevController *cntrl)
+	{
+		x11_keymap[cntrl->mapping->Btn_DPad_Left] = DC_DPAD_LEFT;
+		x11_keymap[cntrl->mapping->Btn_DPad_Right] = DC_DPAD_RIGHT;
+		x11_keymap[cntrl->mapping->Btn_DPad_Up] = DC_DPAD_UP;
+		x11_keymap[cntrl->mapping->Btn_DPad_Down] = DC_DPAD_DOWN;
+	
+		x11_keymap[cntrl->mapping->Btn_DPad2_Left] = DC_DPAD2_LEFT;
+		x11_keymap[cntrl->mapping->Btn_DPad2_Right] = DC_DPAD2_RIGHT;
+		x11_keymap[cntrl->mapping->Btn_DPad2_Up] = DC_DPAD2_UP;
+		x11_keymap[cntrl->mapping->Btn_DPad2_Down] = DC_DPAD2_DOWN;
 
-	x11_keymap[111] = DC_DPAD_UP;
-	x11_keymap[116] = DC_DPAD_DOWN;
+		x11_keymap[cntrl->mapping->Btn_X] = DC_BTN_X;
+		x11_keymap[cntrl->mapping->Btn_B] = DC_BTN_B;
+		x11_keymap[cntrl->mapping->Btn_A] = DC_BTN_A;
+		x11_keymap[cntrl->mapping->Btn_Y] = DC_BTN_Y;
 
-	x11_keymap[53] = DC_BTN_X;
-	x11_keymap[54] = DC_BTN_B;
-	x11_keymap[55] = DC_BTN_A;
+		x11_keymap[cntrl->mapping->Btn_Trigger_Right] = COMPAT_T_RIGHT;
+		x11_keymap[cntrl->mapping->Btn_Trigger_Left] = COMPAT_T_LEFT;
 
-	/*
-	//TODO: Fix sliders
-	x11_keymap[38] = DPad_Down;
-	x11_keymap[39] = DPad_Down;
-	*/
+		x11_keymap[cntrl->mapping->Btn_Start] = DC_BTN_START;
 
-	x11_keymap[36] = DC_BTN_START;
-
-	x11_keyboard_input = cfgLoadInt("input", "enable_x11_keyboard", 1);
-}
+		x11_keyboard_input = cfgLoadInt("input", "enable_x11_keyboard", 1);
+	}
+#else
+	void input_x11_init() 
+	{ 
+	  x11_keymap[113] = DC_DPAD_LEFT; 
+	  x11_keymap[114] = DC_DPAD_RIGHT; 
+	 
+	  x11_keymap[111] = DC_DPAD_UP; 
+	  x11_keymap[116] = DC_DPAD_DOWN; 
+	 
+	  x11_keymap[53] = DC_BTN_X; 
+	  x11_keymap[54] = DC_BTN_B; 
+	  x11_keymap[55] = DC_BTN_A; 
+	 
+	  /* 
+	  //TODO: Fix sliders 
+	  x11_keymap[38] = DPad_Down; 
+	  x11_keymap[39] = DPad_Down; 
+	  */ 
+	 
+	  x11_keymap[36] = DC_BTN_START; 
+	 
+	  x11_keyboard_input = cfgLoadInt("input", "enable_x11_keyboard", 1); 
+	} 
+#endif
 
 void x11_window_create()
 {
@@ -254,6 +308,9 @@ void x11_window_create()
 		// Creates the X11 window
 		x11Window = XCreateWindow(x11Display, RootWindow(x11Display, x11Screen), (ndcid%3)*640, (ndcid/3)*480, x11_width, x11_height,
 			0, depth, InputOutput, x11Visual->visual, ui32Mask, &sWA);
+			
+		Bool temp;
+		XkbSetDetectableAutoRepeat(x11Display, True, &temp);
 
 		if(x11_fullscreen)
 		{

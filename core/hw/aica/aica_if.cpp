@@ -20,15 +20,18 @@ u32 rtc_EN=0;
 
 u32 GetRTC_now(void)
 {
-	
+	tm  timeinfo;
 	time_t rawtime=0;
-	tm  timeinfo={0};
-	timeinfo.tm_year=1998-1900;
-	timeinfo.tm_mon=11-1;
-	timeinfo.tm_mday=27;
-	timeinfo.tm_hour=0;
-	timeinfo.tm_min=0;
-	timeinfo.tm_sec=0;
+
+	timeinfo.tm_sec  = 0;
+	timeinfo.tm_min  = 0;
+	timeinfo.tm_hour = 0;
+	timeinfo.tm_mday = 27;
+	timeinfo.tm_mon  = 11-1;
+	timeinfo.tm_year = 1998-1900;
+   timeinfo.tm_wday = 0;
+   timeinfo.tm_yday = 0;
+   timeinfo.tm_isdst= 0;
 
 	rawtime=mktime( &timeinfo );
 	

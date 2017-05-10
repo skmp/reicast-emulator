@@ -1199,8 +1199,8 @@ static void ReadCommonReg(u32 reg,bool byte)
 #define CDDA_SIZE    (2352/2)
 #define SAMPLE_COUNT 512
 
-s16 cdda_sector[CDDA_SIZE]={0};
-u32 cdda_index=CDDA_SIZE<<1;
+static s16 cdda_sector[CDDA_SIZE] = {0};
+static u32 cdda_index             = CDDA_SIZE<<1;
 
 static int32_t mxlr[64];
 

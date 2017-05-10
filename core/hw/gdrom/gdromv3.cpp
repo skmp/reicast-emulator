@@ -235,7 +235,6 @@ void gd_set_state(gd_states state)
 			break;
 
 		case gds_procata:
-			//verify(prev==gds_waitcmd);    // Validate the previous command ;)
 
 			GDStatus.DRDY=0;   // Can't accept ATA command
 			GDStatus.BSY=1;    // Accessing command block to process command
@@ -243,7 +242,6 @@ void gd_set_state(gd_states state)
 			break;
 
 		case gds_waitpacket:
-			verify(prev==gds_procata); // Validate the previous command ;)
 
 			// Prepare for packet command
 			packet_cmd.index=0;
@@ -261,7 +259,6 @@ void gd_set_state(gd_states state)
 			break;
 
 		case gds_procpacket:
-			verify(prev==gds_waitpacket); // Validate the previous state ;)
 
 			GDStatus.DRQ=0;     // Can't accept ATA command
 			GDStatus.BSY=1;     // Accessing command block to process command
@@ -429,7 +426,6 @@ void libCore_gdrom_disc_change()
 //This handles the work of setting up the pio regs/state :)
 void gd_spi_pio_end(u8* buffer, u32 len, gd_states next_state)
 {
-	verify(len<0xFFFF);
 	pio_buff.index=0;
 	pio_buff.size=len>>1;
 	pio_buff.next_state=next_state;
@@ -444,7 +440,6 @@ void gd_spi_pio_end(u8* buffer, u32 len, gd_states next_state)
 }
 void gd_spi_pio_read_end(u32 len, gd_states next_state)
 {
-	verify(len<0xFFFF);
 	pio_buff.index=0;
 	pio_buff.size=len>>1;
 	pio_buff.next_state=next_state;
@@ -640,7 +635,7 @@ void gd_process_spi_cmd()
 			printf_spicmd("SPI_SET_MODE\n");
 			u32 Offset = packet_cmd.data_8[2];
 			u32 Count = packet_cmd.data_8[4];
-			verify((Offset+Count)<11);	//cant set write olny things :P
+
 			set_mode_offset=Offset;
 			gd_spi_pio_read_end(Count,gds_process_set_mode);
 		}
@@ -682,8 +677,6 @@ void gd_process_spi_cmd()
 			//9 0   0   0   0   0   0   0   0
 			stat[9]=0;
 
-			
-			verify((packet_cmd.data_8[2]+packet_cmd.data_8[4])<11);
 			gd_spi_pio_end(&stat[packet_cmd.data_8[2]],packet_cmd.data_8[4]);
 		}
 		break;
@@ -948,12 +941,10 @@ u32 ReadMem_gdrom(u32 Addr, u32 sz)
 				u32 rv= pio_buff.data[pio_buff.index];
 				pio_buff.index+=1;
 				ByteCount.full-=2;
+
+            //end of pio transfer !
 				if (pio_buff.index==pio_buff.size)
-				{
-					verify(pio_buff.next_state != gds_pio_send_data);
-					//end of pio transfer !
 					gd_set_state(pio_buff.next_state);
-				}
 				return rv;
 			}
 
@@ -1017,10 +1008,7 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 				pio_buff.data[pio_buff.index]=(u16)data;
 				pio_buff.index+=1;
 				if (pio_buff.size==pio_buff.index)
-				{
-					verify(pio_buff.next_state!=gds_pio_get_data);
 					gd_set_state(pio_buff.next_state);
-				}
 			}
 			else
 			{
@@ -1059,9 +1047,6 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 		break;
 
 	case GD_COMMAND_Write:
-		verify(sz==1);
-		if ((data !=ATA_NOP) && (data != ATA_SOFT_RESET))
-			verify(gd_state==gds_waitcmd);
 		//printf("\nGDROM:\tCOMMAND: %X !\n", data);
 		ata_cmd.command=(u8)data;
 		gd_set_state(gds_procata);
@@ -1079,9 +1064,7 @@ const int GDROM_TICK=1500000;
 int GDRomschd(int i, int c, int j)
 {
 	if(!(SB_GDST&1) || !(SB_GDEN &1) || (read_buff.cache_size==0 && read_params.remaining_sectors==0))
-	{
 		return 0;
-	}
 
 	//SB_GDST=0;
 
@@ -1098,24 +1081,24 @@ int GDRomschd(int i, int c, int j)
 	}
 
 	//if we don't have any more sectors to read
+   //make sure we don't underrun the cache :)
 	if (read_params.remaining_sectors == 0)
-	{
-		//make sure we don't underrun the cache :)
 		len = min(len, read_buff.cache_size);
-	}
 
 	len = min(len, (u32)10240);
+
+#if 0
 	// do we need to do this for GDROM DMA?
 	if(0x8201 != (dmaor &DMAOR_MASK))
 	{
 		printf("\n!\tGDROM: DMAOR has invalid settings (%X) !\n", dmaor);
-		//return;
 	}
 
 	if(len == 0)
 	{
 		printf("\n!\tGDROM: Len: %X, Abnormal Termination !\n", len);
 	}
+#endif
 
 	u32 len_backup = len;
 	if(1 == SB_GDDIR) 
@@ -1123,18 +1106,13 @@ int GDRomschd(int i, int c, int j)
 		while(len)
 		{
 			u32 buff_size =read_buff.cache_size;
+         //buffer is empty , fill it
 			if (buff_size==0)
-			{
-				verify(read_params.remaining_sectors>0);
-				//buffer is empty , fill it :)
 				FillReadBuffer();
-			}
 
 			//transfer up to len bytes
 			if (buff_size>len)
-			{
 				buff_size=len;
-			}
 			WriteMemBlock_nommu_ptr(src,(u32*)&read_buff.cache[read_buff.cache_index], buff_size);
 			read_buff.cache_index+=buff_size;
 			read_buff.cache_size-=buff_size;
@@ -1165,10 +1143,7 @@ int GDRomschd(int i, int c, int j)
 	{
 		//And all buffer :p
 		if (read_buff.cache_size==0)
-		{
-			//verify(!SB_GDST&1) -> dc can do multi read dma
 			gd_set_state(gds_procpacketdone);
-		}
 	}
 
 	return GDROM_TICK;
@@ -1221,7 +1196,8 @@ void gdrom_reg_Init()
 
 	gdrom_sched = sh4_sched_register(0, &GDRomschd);
 }
-void gdrom_reg_Term()
+
+void gdrom_reg_Term(void)
 {
 	
 }

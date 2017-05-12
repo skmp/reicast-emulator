@@ -249,6 +249,7 @@ static int protect_pages(void *ptr, size_t size, enum page_access access)
 }
 
 #define MCTX(p) (((ucontext_t *)(segfault_ctx))->uc_mcontext p)
+
 template <typename Ta, typename Tb>
 static void bicopy(Ta& rei, Tb& seg, bool to_segfault)
 {
@@ -614,8 +615,6 @@ void common_libretro_setup(void)
    exception_handler_install_platform();
    signal(SIGINT, exit);
 #endif
-
-   settings.profile.run_counts=0;
 
 #if defined(__MACH__) || defined(__linux__)
    printf("Linux paging: %08X %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);

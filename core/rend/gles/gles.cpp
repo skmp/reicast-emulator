@@ -4,8 +4,6 @@
 #include "../rend.h"
 #include "../../libretro/libretro.h"
 
-#include "rend/rend.h"
-#include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/pvr.h"
 
 extern retro_environment_t environ_cb;
@@ -1061,7 +1059,7 @@ static void SetupMainVBO(void)
 	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col));
 
 	glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
-	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,spc));
+	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,vtx_spc));
 
 	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
 	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));

@@ -1,18 +1,18 @@
 #include "types.h"
 #include "pvr.h"
-#include "spg.h"
 #include "ta.h"
 #include "hw/mem/_vmem.h"
 
 #include "ta.h"
-#include "Renderer_if.h"
 #include "hw/mem/_vmem.h"
+#include "TexCache.h"
 
 //TODO : move code later to a plugin
 //TODO : Fix registers arrays , they must be smaller now doe to the way SB registers are handled
 #include "hw/holly/holly.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/modules/dmac.h"
+#include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_mem.h"
 
 #include <rthreads/rthreads.h>
@@ -34,9 +34,246 @@ bool fog_needs_update=true;
 
 u8 pvr_regs[pvr_RegSize];
 
+u32 in_vblank=0;
+u32 clc_pvr_scanline;
+u32 pvr_numscanlines=512;
+u32 prv_cur_scanline=-1;
+u32 vblk_cnt=0;
+
+u32 Line_Cycles=0;
+u32 Frame_Cycles=0;
+static int render_end_sched;
+static int vblank_sched;
+int time_sync;
+
+double speed_load_mspdf;
+
+int mips_counter;
+
+double full_rps;
+
+u32 VertexCount=0;
+u32 FrameCount=1;
+
+Renderer* renderer;
+
+#if !defined(TARGET_NO_THREADS)
+cResetEvent rs;
+cResetEvent re;
+sthread_t *rthd;
+#endif
+
+bool pend_rend = false;
+
+int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
+
+TA_context* _pvrrc;
+
+//SPG emulation; Scanline/Raster beam registers & interrupts
+//Time to emulate that stuff correctly ;)
+
+static void CalculateSync(void)
+{
+   /*                          00=VGA    01=NTSC   10=PAL,   11=illegal/undocumented */
+   const int spg_clks[4]   = { 26944080, 13458568, 13462800, 26944080 };
+	float scale_x           = 1;
+   float scale_y           = 1;
+	u32 pixel_clock         = spg_clks[(SPG_CONTROL.full >> 6) & 3];
+	pvr_numscanlines        = SPG_LOAD.vcount+1;
+	Line_Cycles             = (u32)((u64)SH4_MAIN_CLOCK*(u64)(SPG_LOAD.hcount+1)/(u64)pixel_clock);
+	
+	if (SPG_CONTROL.interlace)
+	{
+		//this is a temp hack
+		Line_Cycles         /= 2;
+		u32 interl_mode      = VO_CONTROL.field_mode;
+		
+		//if (interl_mode==2)//3 will be funny =P
+		//  scale_y=0.5f;//single interlace
+		//else
+			scale_y=1;
+	}
+	else
+	{
+		if (FB_R_CTRL.vclk_div)
+			scale_y           = 1.0f;//non interlaced VGA mode has full resolution :)
+		else
+			scale_y           = 0.5f;//non interlaced modes have half resolution
+	}
+
+	rend_set_fb_scale(scale_x,scale_y);
+	
+	Frame_Cycles            = pvr_numscanlines*Line_Cycles;
+	prv_cur_scanline        = 0;
+
+	sh4_sched_request(vblank_sched, Line_Cycles);
+}
+
+static int elapse_time(int tag, int cycl, int jit)
+{
+	return min(max(Frame_Cycles,(u32)1*1000*1000),(u32)8*1000*1000);
+}
+
+//called from sh4 context , should update pvr/ta state and everything else
+static int spg_line_sched(int tag, int cycl, int jit)
+{
+	clc_pvr_scanline       += cycl;
+
+	while (clc_pvr_scanline >=  Line_Cycles)//60 ~hertz = 200 mhz / 60=3333333.333 cycles per screen refresh
+	{
+		//ok .. here , after much effort , we did one line
+		//now , we must check for raster beam interrupts and vblank
+		prv_cur_scanline     = (prv_cur_scanline+1) % pvr_numscanlines;
+		clc_pvr_scanline    -= Line_Cycles;
+		//Check for scanline interrupts -- really need to test the scanline values
+		
+      /* Vblank in */
+		if (SPG_VBLANK_INT.vblank_in_interrupt_line_number == prv_cur_scanline)
+			asic_RaiseInterrupt(holly_SCANINT1);
+
+      /* Vblank Out */
+		if (SPG_VBLANK_INT.vblank_out_interrupt_line_number == prv_cur_scanline)
+			asic_RaiseInterrupt(holly_SCANINT2);
+
+		if (SPG_VBLANK.vstart == prv_cur_scanline)
+			in_vblank = 1;
+
+		if (SPG_VBLANK.vbend == prv_cur_scanline)
+			in_vblank = 0;
+
+		SPG_STATUS.vsync    = in_vblank;
+		SPG_STATUS.scanline = prv_cur_scanline;
+		
+		//Vblank start -- really need to test the scanline values
+		if (prv_cur_scanline==0)
+		{
+         SPG_STATUS.fieldnum = 0;
+			if (SPG_CONTROL.interlace)
+				SPG_STATUS.fieldnum = ~SPG_STATUS.fieldnum;
+
+			/* Vblank counter */
+			vblk_cnt++;
+
+         /* HBlank in */
+			asic_RaiseInterrupt(holly_HBLank);
+         os_DoEvents();
+		}
+	}
+
+	//interrupts
+	//0
+	//vblank_in_interrupt_line_number
+	//vblank_out_interrupt_line_number
+	//vstart
+	//vbend
+	//pvr_numscanlines
+	u32 min_scanline=prv_cur_scanline+1;
+	u32 min_active=pvr_numscanlines;
+
+	if (min_scanline < SPG_VBLANK_INT.vblank_in_interrupt_line_number)
+		min_active=min(min_active,SPG_VBLANK_INT.vblank_in_interrupt_line_number);
+
+	if (min_scanline < SPG_VBLANK_INT.vblank_out_interrupt_line_number)
+		min_active=min(min_active,SPG_VBLANK_INT.vblank_out_interrupt_line_number);
+
+	if (min_scanline < SPG_VBLANK.vstart)
+		min_active=min(min_active,SPG_VBLANK.vstart);
+
+	if (min_scanline < SPG_VBLANK.vbend)
+		min_active=min(min_active,SPG_VBLANK.vbend);
+
+	if (min_scanline < pvr_numscanlines)
+		min_active=min(min_active,pvr_numscanlines);
+
+	min_active=max(min_active,min_scanline);
+
+	return (min_active-prv_cur_scanline)*Line_Cycles;
+}
+
+static int rend_end_sch(int tag, int cycl, int jitt)
+{
+	asic_RaiseInterrupt(holly_RENDER_DONE);
+	asic_RaiseInterrupt(holly_RENDER_DONE_isp);
+	asic_RaiseInterrupt(holly_RENDER_DONE_vd);
+
+   if (!settings.UpdateMode && !settings.UpdateModeForced)
+      rend_end_render();
+
+	return 0;
+}
+
+static void SetREP(TA_context* cntx)
+{
+   unsigned pending_cycles = 4096;
+	if (cntx && !cntx->rend.Overrun)
+	{
+		pending_cycles  = cntx->rend.verts.used()*60;
+		pending_cycles += 500000*3;
+		VertexCount    += cntx->rend.verts.used();
+	}
+
+   sh4_sched_request(render_end_sched, pending_cycles);
+}
+
+void libPvr_LockedBlockWrite (vram_block* block,u32 addr)
+{
+	rend_text_invl(block);
+}
+
+void libPvr_Reset(bool Manual)
+{
+	ID                  = 0x17FD11DB;
+	REVISION            = 0x00000011;
+	SOFTRESET           = 0x00000007;
+	SPG_HBLANK_INT.full = 0x031D0000;
+	SPG_VBLANK_INT.full = 0x01500104;
+	FPU_PARAM_CFG       = 0x0007DF77;
+	HALF_OFFSET         = 0x00000007;
+	ISP_FEED_CFG        = 0x00402000;
+	SDRAM_REFRESH       = 0x00000020;
+	SDRAM_ARB_CFG       = 0x0000001F;
+	SDRAM_CFG           = 0x15F28997;
+	SPG_HBLANK.full     = 0x007E0345;
+	SPG_LOAD.full       = 0x01060359;
+	SPG_VBLANK.full     = 0x01500104;
+	SPG_WIDTH.full      = 0x07F1933F;
+	VO_CONTROL.full     = 0x00000108;
+	VO_STARTX.full      = 0x0000009D;
+	VO_STARTY.full      = 0x00000015;
+	SCALER_CTL.full     = 0x00000400;
+	FB_BURSTCTRL        = 0x00090639;
+	PT_ALPHA_REF        = 0x000000FF;
+	CalculateSync();
+	//rend_reset(); //*TODO* wtf ?
+}
+
+s32 libPvr_Init(void)
+{
+   ta_ctx_init();
+   
+	render_end_sched = sh4_sched_register(0,&rend_end_sch);
+	vblank_sched     = sh4_sched_register(0,&spg_line_sched);
+	time_sync        = sh4_sched_register(0,&elapse_time);
+
+	sh4_sched_request(time_sync,8*1000*1000);
+
+   //failed
+	if (!rend_init())
+		return rv_error;
+
+	return rv_ok;
+}
+
+//called when exiting from sh4 thread , from the new thread context (for any thread specific de init) :P
+void libPvr_Term(void)
+{
+	rend_term();
+   ta_ctx_free();
+}
+
 //List functions
 //
-void vramlock_list_remove(vram_block* block)
+static void vramlock_list_remove(vram_block* block)
 {
 	u32 base = block->start/PAGE_SIZE;
 	u32 end  = block->end/PAGE_SIZE;
@@ -52,7 +289,7 @@ void vramlock_list_remove(vram_block* block)
 	}
 }
  
-void vramlock_list_add(vram_block* block)
+static void vramlock_list_add(vram_block* block)
 {
 	u32 base = block->start/PAGE_SIZE;
 	u32 end = block->end/PAGE_SIZE;
@@ -245,7 +482,7 @@ u32 YUV_y_curr;
 u32 YUV_x_size;
 u32 YUV_y_size;
 
-void YUV_init(void)
+static void YUV_init(void)
 {
    YUV_x_curr     = 0;
    YUV_y_curr     = 0;
@@ -349,11 +586,7 @@ static INLINE void YUV_ConvertMacroBlock(u8* datap)
 static void YUV_data(u32* data , u32 count)
 {
    if (YUV_blockcount==0)
-   {
-      die("YUV_data : YUV decoder not inited , *WATCH*\n");
-      //wtf ? not inited
       YUV_init();
-   }
 
    u32 block_size=(TA_YUV_TEX_CTRL & (1<<24))==0 ?
       TA_YUV420_MACROBLOCK_SIZE : TA_YUV422_MACROBLOCK_SIZE;
@@ -424,11 +657,6 @@ void TAWrite(u32 address,u32* data,u32 count)
    }
 }
 
-static void NOINLINE MemWrite32(void* dst, void* src)
-{
-   memcpy((u64*)dst,(u64*)src,32);
-}
-
 #if HOST_CPU!=CPU_ARM
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
 {
@@ -447,8 +675,11 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
    {
       //shouldn't really get here (?)
       //printf("Vram Write 0x%X , size %d\n",address,count*32);
-      u8* vram=sqb + TA_YUV422_MACROBLOCK_SIZE + 0x04000000;
-      MemWrite32(&vram[address_w&(VRAM_MASK-0x1F)],sq);
+      u8* vram  = sqb + TA_YUV422_MACROBLOCK_SIZE + 0x04000000;
+      void *dst = &vram[address_w&(VRAM_MASK-0x1F)];
+      void *src = sq;
+
+      memcpy((u64*)dst,(u64*)src,32);
    }
 }
 #endif
@@ -476,6 +707,135 @@ u32 pvr_map32(u32 offset32)
    rv |= bank * 4;
 
    return rv;
+}
+
+#if defined(TARGET_NO_THREADS)
+static bool rend_frame(TA_context* ctx, bool draw_osd)
+{
+   return renderer->Process(ctx) && renderer->Render();
+}
+
+void rend_end_render(void)
+{
+   if (pend_rend)
+      renderer->Present();
+}
+
+void rend_term(void) { }
+#else
+static bool rend_frame(TA_context* ctx, bool draw_osd)
+{
+   bool proc = renderer->Process(ctx);
+   
+   slock_lock(re.mutx);
+   re.state = true;
+   scond_signal(re.cond);
+   slock_unlock(re.mutx);
+
+   return proc && renderer->Render();
+}
+
+void rend_end_render(void)
+{
+   if (pend_rend)
+   {
+      slock_lock(re.mutx);
+      if (!re.state)
+         scond_wait( re.cond, re.mutx );
+      re.state=false;
+      slock_unlock(re.mutx);
+   }
+}
+
+void rend_term(void)
+{
+   sthread_join(rthd);
+   rthd = NULL;
+
+   slock_free(re.mutx);
+   slock_free(rs.mutx);
+   scond_free(re.cond);
+   scond_free(rs.cond);
+   re.mutx = NULL;
+   rs.mutx = NULL;
+   re.cond = NULL;
+   rs.cond = NULL;
+}
+#endif
+
+static bool rend_single_frame(void)
+{
+   //wait render start only if no frame pending
+   do
+   {
+#if !defined(TARGET_NO_THREADS)
+      slock_lock(rs.mutx);
+      if (!rs.state)
+         scond_wait( rs.cond, rs.mutx );
+      rs.state=false;
+      slock_unlock(rs.mutx);
+#endif
+      _pvrrc = DequeueRender();
+   }
+   while (!_pvrrc);
+   bool do_swp = rend_frame(_pvrrc, true);
+
+   //clear up & free data ..
+   FinishRender(_pvrrc);
+   _pvrrc=0;
+
+   return do_swp;
+}
+
+static void rend_start_render(void)
+{
+   pend_rend = false;
+   TA_context* ctx = tactx_Pop(CORE_CURRENT_CTX);
+
+   SetREP(ctx);
+
+   if (!ctx)
+      return;
+
+   if (ctx->rend.Overrun)
+   {
+      ovrn++;
+      printf("WARNING: Rendering context is overrun (%d), aborting frame\n",ovrn);
+      tactx_Recycle(ctx);
+      return;
+   }
+
+   //printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
+   FillBGP(ctx);
+
+   ctx->rend.isRTT      = (FB_W_SOF1& 0x1000000)!=0;
+   ctx->rend.isAutoSort = UsingAutoSort();
+
+   ctx->rend.fb_X_CLIP  = FB_X_CLIP;
+   ctx->rend.fb_Y_CLIP  = FB_Y_CLIP;
+
+   max_idx              = max(max_idx,  ctx->rend.idx.used());
+   max_vtx              = max(max_vtx,  ctx->rend.verts.used());
+   max_op               = max(max_op,   ctx->rend.global_param_op.used());
+   max_pt               = max(max_pt,   ctx->rend.global_param_pt.used());
+   max_tr               = max(max_tr,   ctx->rend.global_param_tr.used());
+
+   max_mvo              = max(max_mvo,  ctx->rend.global_param_mvo.used());
+   max_modt             = max(max_modt, ctx->rend.modtrig.used());
+
+   if (QueueRender(ctx) || !settings.QueueRender)
+   {
+      palette_update();
+#if !defined(TARGET_NO_THREADS)
+      slock_lock(rs.mutx);
+      rs.state=true;
+      scond_signal(rs.cond);
+      slock_unlock(rs.mutx);
+#else
+      rend_single_frame();
+#endif
+      pend_rend = true;
+   }
 }
 
 void pvr_WriteReg(u32 paddr,u32 data)
@@ -542,30 +902,6 @@ void pvr_WriteReg(u32 paddr,u32 data)
 	PvrReg(addr,u32)=data;
 }
 
-void Regs_Reset(bool Manual)
-{
-	ID                  = 0x17FD11DB;
-	REVISION            = 0x00000011;
-	SOFTRESET           = 0x00000007;
-	SPG_HBLANK_INT.full = 0x031D0000;
-	SPG_VBLANK_INT.full = 0x01500104;
-	FPU_PARAM_CFG       = 0x0007DF77;
-	HALF_OFFSET         = 0x00000007;
-	ISP_FEED_CFG        = 0x00402000;
-	SDRAM_REFRESH       = 0x00000020;
-	SDRAM_ARB_CFG       = 0x0000001F;
-	SDRAM_CFG           = 0x15F28997;
-	SPG_HBLANK.full     = 0x007E0345;
-	SPG_LOAD.full       = 0x01060359;
-	SPG_VBLANK.full     = 0x01500104;
-	SPG_WIDTH.full      = 0x07F1933F;
-	VO_CONTROL.full     = 0x00000108;
-	VO_STARTX.full      = 0x0000009D;
-	VO_STARTY.full      = 0x00000015;
-	SCALER_CTL.full     = 0x00000400;
-	FB_BURSTCTRL        = 0x00090639;
-	PT_ALPHA_REF        = 0x000000FF;
-}
 
 /*
 	PVR-SB handling
@@ -704,4 +1040,140 @@ void pvr_sb_Term(void)
 //Reset -> Reset - Initialise
 void pvr_sb_Reset(bool Manual)
 {
+}
+
+
+/*
+
+	rendv3 ideas
+	- multiple backends
+	  - ESish
+	    - OpenGL ES2.0
+	    - OpenGL ES3.0
+	    - OpenGL 3.1
+	  - OpenGL 4.x
+	  - Direct3D 10+ ?
+	- correct memory ordering model
+	- resource pools
+	- threaded TA
+	- threaded rendering
+	- RTTs
+	- framebuffers
+	- overlays
+
+
+	PHASES
+	- TA submission (memops, dma)
+
+	- TA parsing (defered, rend thread)
+
+	- CORE render (in-order, defered, rend thread)
+
+
+	submission is done in-order
+	- Partial handling of TA values
+	- Gotchas with TA contexts
+
+	parsing is done on demand and out-of-order, and might be skipped
+	- output is only consumed by renderer
+
+	render is queued on RENDER_START, and won't stall the emulation or might be skipped
+	- VRAM integrity is an issue with out-of-order or delayed rendering.
+	- selective vram snapshots require TA parsing to complete in order with REND_START / REND_END
+
+
+	Complications
+	- For some apis (gles2, maybe gl31) texture allocation needs to happen on the gpu thread
+	- multiple versions of different time snapshots of the same texture are required
+	- TA parsing vs frameskip logic
+
+
+	Texture versioning and staging
+	 A memory copy of the texture can be used to temporary store the texture before upload to vram
+	 This can be moved to another thread
+	 If the api supports async resource creation, we don't need the extra copy
+	 Texcache lookups need to be versioned
+
+
+	rendv2x hacks
+	- Only a single pending render. Any renders while still pending are dropped (before parsing)
+	- wait and block for parse/texcache. Render is async
+*/
+
+static void *rend_thread(void* p)
+{
+#if SET_AFNT
+   cpu_set_t mask;
+
+   /* CPU_ZERO initializes all the bits in the mask to zero. */
+   CPU_ZERO( &mask );
+   /* CPU_SET sets only the bit corresponding to cpu. */
+   CPU_SET( 1, &mask );
+
+   /* sched_setaffinity returns 0 in success */
+
+   if( sched_setaffinity( 0, sizeof(mask), &mask ) == -1 )
+      printf("WARNING: Could not set CPU Affinity, continuing...\n");
+#endif
+
+   if (!renderer->Init())
+      die("rend->init() failed\n");
+
+   //we don't know if this is true, so let's not speculate here
+   //renderer->Resize(640, 480);
+
+   for(;;)
+   {
+      if (rend_single_frame())
+         renderer->Present();
+   }
+}
+
+
+void rend_resize(int width, int height)
+{
+	renderer->Resize(width, height);
+}
+
+
+
+extern int screen_width;
+extern int screen_height;
+
+bool rend_init(void)
+{
+#ifdef NO_REND
+	renderer	 = rend_norend();
+#else
+	renderer = rend_GLES2();
+#endif
+
+#if !defined(TARGET_NO_THREADS)
+   rthd = (sthread_t*)sthread_create(rend_thread, 0);
+
+   rs.mutx = slock_new();
+   rs.cond = scond_new();
+   re.mutx = slock_new();
+   re.cond = scond_new();
+#else
+   if (!renderer->Init()) die("rend->init() failed\n");
+
+   renderer->Resize(screen_width, screen_height);
+#endif
+
+#if SET_AFNT
+	cpu_set_t mask;
+
+	/* CPU_ZERO initializes all the bits in the mask to zero. */
+	CPU_ZERO( &mask );
+	/* CPU_SET sets only the bit corresponding to cpu. */
+	CPU_SET( 0, &mask );
+
+	/* sched_setaffinity returns 0 in success */
+
+	if( sched_setaffinity( 0, sizeof(mask), &mask ) == -1 )
+		printf("WARNING: Could not set CPU Affinity, continuing...\n");
+#endif
+
+	return true;
 }

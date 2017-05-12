@@ -1,5 +1,4 @@
 #include "../../types.h"
-#include "ta_structs.h"
 #include "pvr.h"
 #include "TexCache.h"
 

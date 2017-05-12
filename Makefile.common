@@ -26,12 +26,7 @@ SOURCES_CXX := $(CORE_DIR)/hw/arm7/arm_mem.cpp \
 					$(CORE_DIR)/hw/mem/_vmem.cpp \
 					\
 					$(CORE_DIR)/hw/pvr/pvr.cpp \
-					$(CORE_DIR)/hw/pvr/Renderer_if.cpp \
-					$(CORE_DIR)/hw/pvr/ta_ctx.cpp \
-					$(CORE_DIR)/hw/pvr/ta_vtx.cpp \
-					$(CORE_DIR)/hw/pvr/spg.cpp \
 					$(CORE_DIR)/hw/pvr/ta.cpp \
-					$(CORE_DIR)/hw/pvr/drkPvr.cpp \
 					$(CORE_DIR)/hw/pvr/TexCache.cpp \
 					\
 					$(CORE_DIR)/hw/sh4/sh4_mmr.cpp \

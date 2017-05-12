@@ -127,29 +127,29 @@ void DMAC_Ch2St(void)
 
 //on demand data transfer
 //ch0/on demand data transfer request
-void dmac_ddt_ch0_ddt(u32 src,u32 dst,u32 count)
+static void dmac_ddt_ch0_ddt(u32 src,u32 dst,u32 count)
 {
 	
 }
 
 //ch2/direct data transfer request
-void dmac_ddt_ch2_direct(u32 dst,u32 count)
+static void dmac_ddt_ch2_direct(u32 dst,u32 count)
 {
 }
 
 //transfer 22kb chunks (or less) [704 x 32] (22528)
-void UpdateDMA(void)
+static void UpdateDMA(void)
 {
 }
 
 template<u32 ch>
-void WriteCHCR(u32 addr, u32 data)
+static void WriteCHCR(u32 addr, u32 data)
 {
 	DMAC_CHCR(ch).full=data;
 	//printf("Write to CHCR%d = 0x%X\n",ch,data);
 }
 
-void WriteDMAOR(u32 addr, u32 data)
+static void WriteDMAOR(u32 addr, u32 data)
 {
 	DMAC_DMAOR.full=data;
 	//printf("Write to DMAOR = 0x%X\n",data);
@@ -236,6 +236,7 @@ void dmac_reset()
 	DMAC_CHCR(3).full = 0x0;
 	DMAC_DMAOR.full = 0x0;
 }
-void dmac_term()
+
+void dmac_term(void)
 {
 }

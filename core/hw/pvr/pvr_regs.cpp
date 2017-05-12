@@ -1,8 +1,8 @@
 #include "pvr_regs.h"
 #include "pvr_mem.h"
 #include "Renderer_if.h"
-#include "ta.h"
 #include "spg.h"
+#include "ta.h"
 
 extern bool pal_needs_update;
 extern u32 _pal_rev_256[4];

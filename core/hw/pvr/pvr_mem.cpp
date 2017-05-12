@@ -14,7 +14,7 @@
 //TODO : move code later to a plugin
 //TODO : Fix registers arrays , they must be smaller now doe to the way SB registers are handled
 #include "types.h"
-#include "hw/holly/holly_intc.h"
+#include "hw/holly/holly.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/pvr/ta.h"
 

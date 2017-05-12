@@ -4,8 +4,7 @@
 */
 
 #include "types.h"
-#include "hw/holly/holly_intc.h"
-#include "hw/holly/sb.h"
+#include "hw/holly/holly.h"
 #include "hw/sh4/modules/dmac.h"
 #include "hw/sh4/sh4_mem.h"
 #include "pvr_sb_regs.h"

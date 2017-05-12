@@ -1,6 +1,6 @@
 #pragma once
 #include "drkPvr.h"
-#include "hw/holly/holly_intc.h"
+#include "hw/holly/holly.h"
 #include "hw/sh4/sh4_if.h"
 #include "ta_structs.h"
 

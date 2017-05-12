@@ -5,10 +5,9 @@
 
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_sched.h"
-#include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
 #include "types.h"
-#include "hw/holly/holly_intc.h"
+#include "hw/holly/holly.h"
 #include "hw/maple/maple_helper.h"
 
 maple_device* MapleDevices[4][6];

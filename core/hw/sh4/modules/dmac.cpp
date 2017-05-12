@@ -6,12 +6,11 @@
 */
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
-#include "hw/holly/sb.h"
+#include "hw/holly/holly.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/pvr/pvr_mem.h"
 #include "dmac.h"
 #include "hw/sh4/sh4_interrupts.h"
-#include "hw/holly/holly_intc.h"
 #include "types.h"
 
 /*

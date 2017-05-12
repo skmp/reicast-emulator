@@ -494,9 +494,9 @@ void VArray2_UnLockRegion(VArray2 *varr, u32 offset,u32 size)
 #endif
 }
 
+#if defined(_WIN64) && defined(_DEBUG)
 static void ReserveBottomMemory(void)
 {
-#if defined(_WIN64) && defined(_DEBUG)
     static bool s_initialized = false;
     if ( s_initialized )
         return;
@@ -585,12 +585,12 @@ static void ReserveBottomMemory(void)
             totalReservation / (1024 * 1024.0),
             (int)numVAllocs, (int)numHeapAllocs);
     OutputDebugStringA(buffer);
-#endif
 }
+#endif
 
 void common_libretro_setup(void)
 {
-#if defined(_WIN32)
+#if defined(_WIN64) && defined(_DEBUG)
    ReserveBottomMemory();
 #endif
 

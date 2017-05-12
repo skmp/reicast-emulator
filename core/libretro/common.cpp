@@ -91,6 +91,46 @@ static LONG ExceptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
    return EXCEPTION_CONTINUE_SEARCH;
 }
 
+static int access_to_protect_flags(enum page_access access)
+{
+   switch (access)
+   {
+      case ACC_READONLY:
+#ifdef _WIN32
+         return PAGE_READONLY;
+#else
+         return PROT_READ;
+#endif
+      case ACC_READWRITE:
+#ifdef _WIN32
+         return PAGE_READWRITE;
+#else
+         return PROT_READ | PROT_WRITE;
+#endif
+      case ACC_READWRITEEXEC:
+#ifdef _WIN32
+         return PAGE_EXECUTE_READWRITE;
+#else
+         return PROT_READ | PROT_WRITE | PROT_EXEC;
+#endif
+      default:
+         break;
+   }
+
+   return PROT_NONE;
+}
+
+static int protect_pages(void *ptr, size_t size, enum page_access access)
+{
+   int prot = access_to_protect_flags(access);
+#ifdef _WIN32
+   DWORD old_protect;
+   return VirtualProtect(ptr, size, (DWORD)prot, &old_protect) != 0;
+#else
+   return mprotect(ptr, size, prot) == 0;
+#endif
+}
+
 void os_MakeExecutable(void* ptr, u32 sz)
 {
    protect_pages(ptr, sz, ACC_READWRITEEXEC);
@@ -208,45 +248,6 @@ struct rei_host_context_t
 #endif
 };
 
-static int access_to_protect_flags(enum page_access access)
-{
-   switch (access)
-   {
-      case ACC_READONLY:
-#ifdef _WIN32
-         return PAGE_READONLY;
-#else
-         return PROT_READ;
-#endif
-      case ACC_READWRITE:
-#ifdef _WIN32
-         return PAGE_READWRITE;
-#else
-         return PROT_READ | PROT_WRITE;
-#endif
-      case ACC_READWRITEEXEC:
-#ifdef _WIN32
-         return PAGE_EXECUTE_READWRITE;
-#else
-         return PROT_READ | PROT_WRITE | PROT_EXEC;
-#endif
-      default:
-         break;
-   }
-
-   return PROT_NONE;
-}
-
-static int protect_pages(void *ptr, size_t size, enum page_access access)
-{
-   int prot = access_to_protect_flags(access);
-#ifdef _WIN32
-   DWORD old_protect;
-   return VirtualProtect(ptr, size, (DWORD)new_protect, &old_protect) != 0;
-#else
-   return mprotect(ptr, size, prot) == 0;
-#endif
-}
 
 #define MCTX(p) (((ucontext_t *)(segfault_ctx))->uc_mcontext p)
 

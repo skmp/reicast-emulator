@@ -156,8 +156,9 @@ seh_callback(
    printf("TABLE CALLBACK\n");
    return Table;
 }
-void setup_seh() {
-#if 1
+
+void setup_seh(void)
+{
    /* Get the base of the module.  */
    /* Current version is always 1 and we are registering an
       exception handler.  */
@@ -180,7 +181,6 @@ void setup_seh() {
    Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
    /* Register the unwind information.  */
    RtlAddFunctionTable(Table, 1, (DWORD64)CodeCache);
-#endif
 }
 #endif
 #endif
@@ -329,7 +329,7 @@ static void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx)
    size_t pc     = (size_t)ctx.pc;
    bool dyna_cde = (pc > (size_t)CodeCache) && (pc < (size_t)(CodeCache + CODE_SIZE));
 
-   printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n",
+   printf("SIGILL @ %08X, signal_handler + 0x%08X ... %08X -> was not in vram, %d\n",
          pc, pc - (size_t)sigill_handler, (size_t)si->si_addr, dyna_cde);
 
    printf("Entering infiniloop");
@@ -342,7 +342,7 @@ static void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx)
 #if defined(__MACH__) || defined(__linux__)
 //#define LOG_SIGHANDLER
 
-static void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
+static void signal_handler(int sn, siginfo_t * si, void *segfault_ctx)
 {
    rei_host_context_t ctx;
 
@@ -351,11 +351,8 @@ static void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
    bool dyna_cde = ((size_t)ctx.pc > (size_t)CodeCache) && ((size_t)ctx.pc < (size_t)(CodeCache + CODE_SIZE));
 
 #ifdef LOG_SIGHANDLER
-
 printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n", ctx.pc, dyna_cde);
-
 #endif
-
 
    if (VramLockedWrite((u8*)si->si_addr))
       return;
@@ -389,7 +386,7 @@ printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n", ctx.pc, dyna_cde);
 #endif
    else
    {
-      printf("SIGSEGV @ %p (fault_handler+0x%p) ... %p -> was not in vram\n", ctx.pc, ctx.pc - (size_t)fault_handler, si->si_addr);
+      printf("SIGSEGV @ %p (signal_handler + 0x%p) ... %p -> was not in vram\n", ctx.pc, ctx.pc - (size_t)signal_handler, si->si_addr);
       die("segfault");
       signal(SIGSEGV, SIG_DFL);
    }
@@ -399,23 +396,33 @@ printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n", ctx.pc, dyna_cde);
 #endif
 
 #ifndef _WIN32
-static void install_fault_handler (void)
+#if !defined(TARGET_NO_EXCEPTIONS)
+static struct sigaction old_sigsegv;
+static struct sigaction old_sigill;
+#endif
+
+static int exception_handler_install_platform(void)
 {
 #if !defined(TARGET_NO_EXCEPTIONS)
-   struct sigaction act, segv_oact;
-   memset(&act, 0, sizeof(act));
-   act.sa_sigaction = fault_handler;
-   sigemptyset(&act.sa_mask);
-   act.sa_flags = SA_SIGINFO;
-   sigaction(SIGSEGV, &act, &segv_oact);
-#ifdef __MACH__
-   //this is broken on osx/ios/mach in general
-   sigaction(SIGBUS, &act, &segv_oact);
+   struct sigaction new_sa;
+   new_sa.sa_flags = SA_SIGINFO;
+   sigemptyset(&new_sa.sa_mask);
+   new_sa.sa_sigaction = signal_handler;
 
-   act.sa_sigaction = sigill_handler;
-   sigaction(SIGILL, &act, &segv_oact);
+   if (sigaction(SIGSEGV, &new_sa, &old_sigsegv) != 0)
+      return 0;
+
+#ifdef __MACH__
+   /* this is broken on OSX/iOS/Mach in general */
+   sigaction(SIGBUS, &new_sa, &old_sigsegv);
+   new_sa.sa_sigaction = sigill_handler;
 #endif
+
+   if (sigaction(SIGILL, &new_sa, &old_sigill))
+         return 0;
 #endif
+
+   return 1;
 }
 #endif
 
@@ -604,7 +611,7 @@ void common_libretro_setup(void)
 #endif
    SetUnhandledExceptionFilter(0);
 #else
-   install_fault_handler();
+   exception_handler_install_platform();
    signal(SIGINT, exit);
 #endif
 

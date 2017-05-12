@@ -72,7 +72,7 @@ TA_context* _pvrrc;
 //SPG emulation; Scanline/Raster beam registers & interrupts
 //Time to emulate that stuff correctly ;)
 
-static void CalculateSync(void)
+static void pvr_reconfigure_spg(void)
 {
    /*                          00=VGA    01=NTSC   10=PAL,   11=illegal/undocumented */
    const int spg_clks[4]   = { 26944080, 13458568, 13462800, 26944080 };
@@ -243,7 +243,8 @@ void libPvr_Reset(bool Manual)
 	SCALER_CTL.full     = 0x00000400;
 	FB_BURSTCTRL        = 0x00090639;
 	PT_ALPHA_REF        = 0x000000FF;
-	CalculateSync();
+
+	pvr_reconfigure_spg();
 	//rend_reset(); //*TODO* wtf ?
 }
 
@@ -875,7 +876,7 @@ void pvr_WriteReg(u32 paddr,u32 data)
       case SPG_CONTROL_addr:
       case SPG_LOAD_addr:
          PvrReg(addr,u32)=data;
-         CalculateSync();
+         pvr_reconfigure_spg();
          return;
       case TA_YUV_TEX_BASE_addr:
          YUV_init();

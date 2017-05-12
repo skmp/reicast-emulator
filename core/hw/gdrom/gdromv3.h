@@ -160,17 +160,6 @@ struct GD_SecNumbT
 	};
 };
 
-#define GD_BUSY    0x00 // State transition
-#define GD_PAUSE   0x01 // Pause
-#define GD_STANDBY 0x02 // Standby (drive stop)
-#define GD_PLAY    0x03 // CD playback
-#define GD_SEEK    0x04 // Seeking
-#define GD_SCAN    0x05 // Scanning
-#define GD_OPEN    0x06 // Tray is open
-#define GD_NODISC  0x07 // No disc
-#define GD_RETRY   0x08 // Read retry in progress (option)
-#define GD_ERROR   0x09 // Reading of disc TOC failed (state does not allow access) 
-
 //Response strings
 extern u16 reply_a1[];
 extern u16 reply_11[];

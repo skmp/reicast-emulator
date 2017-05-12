@@ -1,6 +1,5 @@
 ﻿#include "dsp.h"
-#include "aica_mem.h"
-#include "hw/aica/aica_if.h"
+#include "aica.h"
 
 /*
 	DSP rec_v1

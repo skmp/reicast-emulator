@@ -1,7 +1,7 @@
 #include "arm_mem.h"
 #include "arm7.h"
 #include "types.h"
-#include "hw/aica/aica_if.h"
+#include "hw/aica/aica.h"
 
 //Set to true when aica interrupt is pending
 bool aica_interr=false;

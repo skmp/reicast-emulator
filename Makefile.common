@@ -12,8 +12,6 @@ SOURCES_CXX := $(CORE_DIR)/hw/arm7/arm_mem.cpp \
 					\
 					$(CORE_DIR)/hw/aica/dsp.cpp \
 					$(CORE_DIR)/hw/aica/aica.cpp \
-					$(CORE_DIR)/hw/aica/sgc_if.cpp \
-					$(CORE_DIR)/hw/aica/aica_if.cpp \
 					\
 					$(CORE_DIR)/hw/holly/sb.cpp \
 					$(CORE_DIR)/hw/holly/holly_intc.cpp \

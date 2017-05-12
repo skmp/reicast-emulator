@@ -1,6 +1,7 @@
 #pragma once
 #include "types.h"
 #include "assert.h"
+#include "../arm7/arm7.h"
 
 #define SCIEB_addr 0x289C
 #define SCIPD_addr (0x289C+4)
@@ -306,8 +307,40 @@ void UpdateAICA(u32 Cycles);
 void AICA_Init();
 void AICA_Term();
 
-//u32 ReadAicaReg(u32 reg);
-void WriteAicaReg8(u32 reg,u32 data);
+extern u32 VREG;
+extern VArray2 aica_ram;
+u32 aica_rtc_reg_read(u32 addr,u32 sz);
+void aica_rtc_reg_write(u32 addr,u32 data,u32 sz);
+u32 ReadMem_aica_reg(u32 addr,u32 sz);
+void WriteMem_aica_reg(u32 addr,u32 data,u32 sz);
 
-void WriteAicaReg1(u32 reg,u32 data);
-void WriteAicaReg2(u32 reg,u32 data);
+void aica_Init();
+void aica_Reset(bool Manual);
+void aica_Term();
+
+#define arm_sh4_bias (2)
+
+#define UpdateAica(clc) libAICA_Update(clc)
+#define UpdateArm(clc) arm_Run(clc / arm_sh4_bias)
+
+void aica_sb_Init();
+void aica_sb_Reset(bool Manual);
+void aica_sb_Term();
+
+u32 libAICA_ReadReg(u32 addr,u32 size);
+void libAICA_WriteReg(u32 addr,u32 data,u32 size);
+
+void init_mem();
+void term_mem();
+
+extern u8 aica_reg[0x8000];
+#define aica_reg_16 ((u16*)aica_reg)
+
+#define AICA_RAM_SIZE (ARAM_SIZE)
+#define AICA_RAM_MASK (ARAM_MASK)
+
+void AICA_Sample();
+void AICA_Sample32();
+
+void sgc_Init();
+void sgc_Term();

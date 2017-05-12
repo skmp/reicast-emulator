@@ -17,7 +17,7 @@
 
 #include "hw/sh4/sh4_mem.h"
 #include "hw/pvr/pvr_mem.h"
-#include "hw/aica/aica_if.h"
+#include "hw/aica/aica.h"
 #include "hw/gdrom/gdrom_if.h"
 
 #include <time.h>

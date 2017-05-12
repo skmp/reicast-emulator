@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "hw/aica/aica_if.h"
+#include "hw/aica/aica.h"
 
 #define REG_L (0x2D00)
 #define REG_M (0x2D04)

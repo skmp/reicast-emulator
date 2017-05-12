@@ -12,7 +12,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "hw/pvr/pvr_regs.h"
 #include "hw/gdrom/gdrom_if.h"
-#include "hw/aica/aica_if.h"
+#include "hw/aica/aica.h"
 #include "hw/naomi/naomi.h"
 
 #include "hw/flashrom/flashrom.h"

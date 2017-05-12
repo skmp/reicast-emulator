@@ -32,6 +32,14 @@
 
 #include "hw/sh4/dyna/ngen.h"
 
+enum page_access
+{
+   ACC_NONE = 0,
+   ACC_READONLY,
+   ACC_READWRITE,
+   ACC_READWRITEEXEC
+};
+
 #ifdef _WIN32
 #include "../imgread/common.h"
 
@@ -184,14 +192,6 @@ void setup_seh(void)
 }
 #endif
 #endif
-
-enum page_access
-{
-   ACC_NONE = 0,
-   ACC_READONLY,
-   ACC_READWRITE,
-   ACC_READWRITEEXEC
-};
 
 struct rei_host_context_t
 {

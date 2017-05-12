@@ -1,9 +1,9 @@
 #include <glsm/glsm.h>
 
 #include "gles.h"
-#include "../../hw/pvr/TexCache.h"
-#include "../../hw/pvr/pvr_pixfmt.h"
 #include "../../hw/pvr/pvr.h"
+#include "../../hw/pvr/tr.h"
+#include "../../hw/pvr/pvr_pixfmt.h"
 
 #include <map>
 

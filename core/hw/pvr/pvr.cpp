@@ -4,8 +4,8 @@
 #include "hw/mem/_vmem.h"
 
 #include "ta.h"
+#include "tr.h"
 #include "hw/mem/_vmem.h"
-#include "TexCache.h"
 
 //TODO : move code later to a plugin
 //TODO : Fix registers arrays , they must be smaller now doe to the way SB registers are handled

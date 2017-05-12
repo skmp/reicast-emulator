@@ -12,6 +12,7 @@
 #include <ucontext.h>
 #endif
 #endif
+
 #if defined(_ANDROID)
 #include <asm/sigcontext.h>
 #endif
@@ -42,7 +43,6 @@
 bool VramLockedWrite(u8* address);
 bool ngen_Rewrite(size_t &addr, size_t retadr, size_t acc);
 bool BM_LockedWrite(u8* address);
-
 
 static LONG ExceptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 {
@@ -85,8 +85,7 @@ static LONG ExceptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 
 void os_MakeExecutable(void* ptr, u32 sz)
 {
-   DWORD old;
-   VirtualProtect(ptr,sizeof(sz),PAGE_EXECUTE_READWRITE,&old);
+   protect_pages(ptr, sz, ACC_READWRITEEXEC);
 }
 
 #ifdef _WIN64
@@ -186,6 +185,14 @@ void setup_seh() {
 #endif
 #endif
 
+enum page_access
+{
+   ACC_NONE = 0,
+   ACC_READONLY,
+   ACC_READWRITE,
+   ACC_READWRITEEXEC
+};
+
 struct rei_host_context_t
 {
 #if HOST_CPU != CPU_GENERIC
@@ -200,6 +207,46 @@ struct rei_host_context_t
 	u32 r[15];
 #endif
 };
+
+static int access_to_protect_flags(enum page_access access)
+{
+   switch (access)
+   {
+      case ACC_READONLY:
+#ifdef _WIN32
+         return PAGE_READONLY;
+#else
+         return PROT_READ;
+#endif
+      case ACC_READWRITE:
+#ifdef _WIN32
+         return PAGE_READWRITE;
+#else
+         return PROT_READ | PROT_WRITE;
+#endif
+      case ACC_READWRITEEXEC:
+#ifdef _WIN32
+         return PAGE_EXECUTE_READWRITE;
+#else
+         return PROT_READ | PROT_WRITE | PROT_EXEC;
+#endif
+      default:
+         break;
+   }
+
+   return PROT_NONE;
+}
+
+static int protect_pages(void *ptr, size_t size, enum page_access access)
+{
+   int prot = access_to_protect_flags(access);
+#ifdef _WIN32
+   DWORD old_protect;
+   return VirtualProtect(ptr, size, (DWORD)new_protect, &old_protect) != 0;
+#else
+   return mprotect(ptr, size, prot) == 0;
+#endif
+}
 
 #define MCTX(p) (((ucontext_t *)(segfault_ctx))->uc_mcontext p)
 template <typename Ta, typename Tb>
@@ -424,45 +471,26 @@ void VArray2_Zero(VArray2 *varr)
 void VArray2_LockRegion(VArray2 *varr, u32 offset,u32 size)
 {
 #ifdef _WIN32
-   verify(size!=0);
-	DWORD old;
-	VirtualProtect(((u8*)varr->data)+offset , size, PAGE_READONLY,&old);
-#else
-#if !defined(TARGET_NO_EXCEPTIONS)
+   protect_pages(((u8*)varr->data)+offset, size, ACC_READONLY);
+#elif !defined(TARGET_NO_EXCEPTIONS)
    u32 inpage=offset & PAGE_MASK;
-   u32 rv=mprotect (varr->data + offset - inpage, size+inpage, PROT_READ );
-   if (rv!=0)
-   {
-      printf("mprotect(%08X,%08X,R) failed: %d | %d\n",varr->data + offset - inpage,size+inpage,rv,errno);
-      die("mprotect  failed ..\n");
-   }
-#endif
-#endif
-#ifndef NDEBUG
-   printf("VA2: LockRegion\n");
+   if (!protect_pages(varr->data + offset - inpage, size + inpage, ACC_READONLY))
+      die("protect_pages  failed ..\n");
 #endif
 }
 
 void VArray2_UnLockRegion(VArray2 *varr, u32 offset,u32 size)
 {
 #ifdef _WIN32
-   verify(size!=0);
-	DWORD old;
-	VirtualProtect(((u8*)varr->data)+offset , size, PAGE_READWRITE,&old);
-#else
-#if !defined(TARGET_NO_EXCEPTIONS)
+   protect_pages(((u8*)varr->data)+offset, size, ACC_READWRITE);
+#elif !defined(TARGET_NO_EXCEPTIONS)
    u32 inpage=offset & PAGE_MASK;
-   u32 rv=mprotect (varr->data+offset-inpage, size+inpage, PROT_READ | PROT_WRITE);
-   if (rv!=0)
+
+   if (!protect_pages(varr->data + offset - inpage, size + inpage, ACC_READWRITE))
    {
       print_mem_addr();
-      printf("mprotect(%8p,%08X,RW) failed: %d | %d\n",varr->data + offset-inpage,size+inpage,rv,errno);
-      die("mprotect  failed ..\n");
+      die("protect_pages  failed ..\n");
    }
-#endif
-#endif
-#ifndef NDEBUG
-   printf("VA2: UnLockRegion\n");
 #endif
 }
 

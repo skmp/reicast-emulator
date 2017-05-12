@@ -47,54 +47,31 @@ static INLINE void asic_RL2Pending(void)
 	InterruptPend(sh4_IRL_13,t1|t2|t3);
 }
 
-//Raise interrupt interface
-static void RaiseAsicNormal(HollyInterruptID inter)
-{
-	if (inter==holly_SCANINT2)
-		maple_vblank();
-
-	u32 Interrupt = 1<<(u8)inter;
-	SB_ISTNRM |= Interrupt;
-
-	asic_RL2Pending();
-	asic_RL4Pending();
-	asic_RL6Pending();
-}
-
-static void RaiseAsicExt(HollyInterruptID inter)
-{
-	u32 Interrupt = 1<<(u8)inter;
-	SB_ISTEXT |= Interrupt;
-
-	asic_RL2Pending();
-	asic_RL4Pending();
-	asic_RL6Pending();
-}
-
-static void RaiseAsicErr(HollyInterruptID inter)
-{
-	u32 Interrupt = 1<<(u8)inter;
-	SB_ISTERR |= Interrupt;
-
-	asic_RL2Pending();
-	asic_RL4Pending();
-	asic_RL6Pending();
-}
-
 static void asic_RaiseInterruptInternal(HollyInterruptID inter)
 {
    u8 m=inter>>8;
+
    switch(m)
    {
       case 0:
-         RaiseAsicNormal(inter);
+         if (inter==holly_SCANINT2)
+            maple_vblank();
+
+         SB_ISTNRM |= 1 << (u8)inter;
          break;
       case 1:
-         RaiseAsicExt(inter);
+         SB_ISTEXT |= 1 << (u8)inter;
          break;
       case 2:
-         RaiseAsicErr(inter);
+         SB_ISTERR |= 1 << (u8)inter;
          break;
+   }
+
+   if ((m >= 0) && (m <= 2))
+   {
+      asic_RL2Pending();
+      asic_RL4Pending();
+      asic_RL6Pending();
    }
 }
 
@@ -326,7 +303,7 @@ Array<RegisterStruct> sb_regs(0x540, false);
 
 u32 SB_ISTNRM;
 
-u32 sb_ReadMem(u32 addr,u32 sz)
+static u32 sb_ReadMem(u32 addr,u32 sz)
 {
    u32 offset = addr-SB_BASE;
 
@@ -349,7 +326,7 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 
 }
 
-void sb_WriteMem(u32 addr,u32 data,u32 sz)
+static void sb_WriteMem(u32 addr,u32 data,u32 sz)
 {
    u32 offset = addr-SB_BASE;
    offset>>=2;
@@ -412,14 +389,15 @@ void sb_rio_register(u32 reg_addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrF
 }
 
 template <u32 reg_addr>
-void sb_writeonly(u32 addr, u32 data)
+static void sb_writeonly(u32 addr, u32 data)
 {
 	SB_REGN_32(reg_addr)=data;
 }
 
 u32 SB_FFST_rc;
 u32 SB_FFST;
-u32 RegRead_SB_FFST(u32 addr)
+
+static u32 RegRead_SB_FFST(u32 addr)
 {
 	SB_FFST_rc++;
 	if (SB_FFST_rc & 0x8)
@@ -427,7 +405,7 @@ u32 RegRead_SB_FFST(u32 addr)
 	return 0; //SB_FFST -> does the fifo status has really to be faked ?
 }
 
-void SB_SFRES_write32(u32 addr, u32 data)
+static void SB_SFRES_write32(u32 addr, u32 data)
 {
 #if 0
 	if ((u16)data==0x7611)
@@ -1019,7 +997,7 @@ void sb_Init()
 	aica_sb_Init();
 }
 
-void sb_Reset(bool Manual)
+static void sb_Reset(bool Manual)
 {
 	asic_reg_Reset(Manual);
 #if DC_PLATFORM!=DC_PLATFORM_NAOMI
@@ -1032,7 +1010,7 @@ void sb_Reset(bool Manual)
 	aica_sb_Reset(Manual);
 }
 
-void sb_Term()
+static void sb_Term(void)
 {
 	aica_sb_Term();
 	maple_Term();

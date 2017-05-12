@@ -101,33 +101,25 @@ public:
 
             case shop_jcond:
             case shop_jdyn:
-               {
-                  mov(rax, (size_t)op.rs1.reg_ptr());
+               mov(rax, (size_t)op.rs1.reg_ptr());
 
-                  mov(ecx, dword[rax]);
+               mov(ecx, dword[rax]);
 
-                  if (op.rs2.is_imm())
-                     add(ecx, op.rs2._imm);
+               if (op.rs2.is_imm())
+                  add(ecx, op.rs2._imm);
 
-                  mov(rdx, (size_t)op.rd.reg_ptr());
-                  mov(dword[rdx], ecx);
-               }
+               mov(rdx, (size_t)op.rd.reg_ptr());
+               mov(dword[rdx], ecx);
                break;
 
             case shop_mov32:
-               {
-                  sh_to_reg(op.rs1, mov, ecx);
-
-                  reg_to_sh(op.rd, ecx);
-               }
+               sh_to_reg(op.rs1, mov, ecx);
+               reg_to_sh(op.rd, ecx);
                break;
 
             case shop_mov64:
-               {
-                  sh_to_reg(op.rs1, mov, rcx);
-
-                  reg_to_sh(op.rd, rcx);
-               }
+               sh_to_reg(op.rs1, mov, rcx);
+               reg_to_sh(op.rd, rcx);
                break;
 
             case shop_readm:

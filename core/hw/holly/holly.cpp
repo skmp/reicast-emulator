@@ -228,7 +228,7 @@ static void Write_SB_IML2ERR(u32 addr, u32 data)
 	asic_RL2Pending();
 }
 
-void asic_reg_Init(void)
+static void asic_reg_Init(void)
 {
 	sb_rio_register(SB_ISTNRM_addr,RIO_FUNC,&Read_SB_ISTNRM,&Write_SB_ISTNRM);
 	/*
@@ -275,13 +275,13 @@ void asic_reg_Init(void)
 	//sb_regs[((SB_IML2ERR_addr-SB_BASE)>>2)].writeFunction=Write_SB_SB_IML2ERR;
 }
 
-void asic_reg_Term(void)
+static void asic_reg_Term(void)
 {
 
 }
 
 //Reset -> Reset - Initialise to default values
-void asic_reg_Reset(bool Manual)
+static void asic_reg_Reset(bool Manual)
 {
 }
 
@@ -414,7 +414,8 @@ static void SB_SFRES_write32(u32 addr, u32 data)
 	}
 #endif
 }
-void sb_Init()
+
+static void sb_Init(void)
 {
    memset(sb_regs.data, 0, sizeof(RegisterStruct) * sb_regs.Size);
 

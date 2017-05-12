@@ -3,7 +3,7 @@
 #include "gles.h"
 #include "../../hw/pvr/pvr.h"
 #include "../../hw/pvr/tr.h"
-#include "../../hw/pvr/pvr_pixfmt.h"
+#include "../../hw/pvr/pixel_convert.h"
 
 #include <map>
 

@@ -117,7 +117,11 @@ static int access_to_protect_flags(enum page_access access)
          break;
    }
 
+#ifdef _WIN32
+   return PAGE_NOACCESS;
+#else
    return PROT_NONE;
+#endif
 }
 
 static int protect_pages(void *ptr, size_t size, enum page_access access)

@@ -200,85 +200,6 @@ void libAICA_TimeStep(void)
 	UpdateSh4Ints();	
 }
 
-//Memory i/o
-static void WriteAicaReg1(u32 reg,u32 data)
-{
-   switch (reg)
-   {
-      case TIMER_A:
-         aica_reg[reg]=(u8)data;
-         timers[0].RegisterWrite();
-         break;
-
-      case TIMER_B:
-         aica_reg[reg]=(u8)data;
-         timers[1].RegisterWrite();
-         break;
-
-      case TIMER_C:
-         aica_reg[reg]=(u8)data;
-         timers[2].RegisterWrite();
-         break;
-
-      default:
-         aica_reg[reg]=(u8)data;
-         break;
-   }
-}
-
-static void WriteAicaReg2(u32 reg,u32 data)
-{
-   switch (reg)
-   {
-      case SCIPD_addr:
-         if (data & (1<<5))
-         {
-            SCIPD->SCPU=1;
-            update_arm_interrupts();
-         }
-         break;
-
-      case SCIRE_addr:
-         SCIPD->full&=~(data /*& SCIEB->full*/ );	//is the & SCIEB->full needed ? doesn't seem like it
-         data=0;//Write only
-         update_arm_interrupts();
-         break;
-
-      case MCIPD_addr:
-         if (data & (1<<5))
-         {
-            MCIPD->SCPU=1;
-            UpdateSh4Ints();
-         }
-         break;
-
-      case MCIRE_addr:
-         MCIPD->full&=~data;
-         UpdateSh4Ints();
-         //Write only
-         break;
-
-      case TIMER_A:
-         *(u16*)&aica_reg[reg]=(u16)data;
-         timers[0].RegisterWrite();
-         break;
-
-      case TIMER_B:
-         *(u16*)&aica_reg[reg]=(u16)data;
-         timers[1].RegisterWrite();
-         break;
-
-      case TIMER_C:
-         *(u16*)&aica_reg[reg]=(u16)data;
-         timers[2].RegisterWrite();
-         break;
-
-      default:
-         *(u16*)&aica_reg[reg]=(u16)data;
-         break;
-   }
-}
-
 //misc :p
 s32 libAICA_Init(void)
 {
@@ -1702,7 +1623,6 @@ void sgc_Term()
 	
 }
 
-
 static void ReadCommonReg(u32 reg,bool byte)
 {
    switch(reg)
@@ -1959,19 +1879,22 @@ u8 aica_reg[0x8000];
 //00802800~00802FFF @COMMON_DATA 
 //00803000~00807FFF @DSP_DATA 
 
-static u32 ReadReg1(u32 addr)
+/* Aica reads (both sh4&arm) */
+u32 libAICA_ReadReg(u32 addr,u32 size)
 {
-	if ((addr >= 0x2800) && (addr < 0x2818))
+   addr = addr & 0x7FFF;
+
+   if (size==1)
    {
-      ReadCommonReg(addr,true);
+      if ((addr >= 0x2800) && (addr < 0x2818))
+      {
+         ReadCommonReg(addr,true);
+         return aica_reg[addr];
+      }
+
       return aica_reg[addr];
    }
 
-   return aica_reg[addr];
-}
-
-static u32 ReadReg2(u32 addr)
-{
 	if ((addr >= 0x2800) && (addr < 0x2818))
    {
       ReadCommonReg(addr,false);
@@ -1979,15 +1902,6 @@ static u32 ReadReg2(u32 addr)
    }
 
    return *(u16*)&aica_reg[addr];
-}
-
-/* Aica reads (both sh4&arm) */
-u32 libAICA_ReadReg(u32 addr,u32 size)
-{
-   if (size==1)
-      return ReadReg1(addr & 0x7FFF);
-
-   return ReadReg2(addr & 0x7FFF);
 }
 
 #define WriteChannelReg8(channel, reg) Chans[(channel)].RegWrite((reg))
@@ -2025,7 +1939,55 @@ static void WriteReg2(u32 addr,u32 data)
       dsp_writenmem(addr+1);
 	}
 
-   WriteAicaReg2(addr,data);
+   switch (addr)
+   {
+      case SCIPD_addr:
+         if (data & (1<<5))
+         {
+            SCIPD->SCPU=1;
+            update_arm_interrupts();
+         }
+         break;
+
+      case SCIRE_addr:
+         SCIPD->full&=~(data /*& SCIEB->full*/ );	//is the & SCIEB->full needed ? doesn't seem like it
+         data=0;//Write only
+         update_arm_interrupts();
+         break;
+
+      case MCIPD_addr:
+         if (data & (1<<5))
+         {
+            MCIPD->SCPU=1;
+            UpdateSh4Ints();
+         }
+         break;
+
+      case MCIRE_addr:
+         MCIPD->full&=~data;
+         UpdateSh4Ints();
+         //Write only
+         break;
+
+      case TIMER_A:
+         *(u16*)&aica_reg[addr]=(u16)data;
+         timers[0].RegisterWrite();
+         break;
+
+      case TIMER_B:
+         *(u16*)&aica_reg[addr]=(u16)data;
+         timers[1].RegisterWrite();
+         break;
+
+      case TIMER_C:
+         *(u16*)&aica_reg[addr]=(u16)data;
+         timers[2].RegisterWrite();
+         break;
+
+      default:
+         *(u16*)&aica_reg[addr]=(u16)data;
+         break;
+   }
 }
 
 static void WriteReg1(u32 addr,u32 data)
@@ -2058,7 +2020,27 @@ static void WriteReg1(u32 addr,u32 data)
       dsp_writenmem(addr);
 	}
 
-   WriteAicaReg1(addr,data);
+   switch (addr)
+   {
+      case TIMER_A:
+         aica_reg[addr]=(u8)data;
+         timers[0].RegisterWrite();
+         break;
+
+      case TIMER_B:
+         aica_reg[addr]=(u8)data;
+         timers[1].RegisterWrite();
+         break;
+
+      case TIMER_C:
+         aica_reg[addr]=(u8)data;
+         timers[2].RegisterWrite();
+         break;
+
+      default:
+         aica_reg[addr]=(u8)data;
+         break;
+   }
 }
 
 void libAICA_WriteReg(u32 addr,u32 data,u32 size)

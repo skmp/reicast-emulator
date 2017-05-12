@@ -6,7 +6,7 @@
 
 #include "rend/rend.h"
 #include "hw/pvr/Renderer_if.h"
-#include "hw/pvr/pvr_lock.h"
+#include "hw/pvr/pvr.h"
 
 extern retro_environment_t environ_cb;
 extern bool fog_needs_update;

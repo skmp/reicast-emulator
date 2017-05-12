@@ -9,7 +9,7 @@
 #include "../sh4_core.h"
 #include "../sh4_rom.h"
 #include "../sh4_if.h"
-#include "hw/pvr/pvr_mem.h"
+#include "hw/pvr/pvr.h"
 #include "hw/aica/aica.h"
 #include "../modules/dmac.h"
 #include "hw/gdrom/gdrom_if.h"

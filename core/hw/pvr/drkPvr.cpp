@@ -13,8 +13,7 @@
 
 #include "ta.h"
 #include "spg.h"
-#include "pvr_regs.h"
-#include "pvr_mem.h"
+#include "pvr.h"
 #include "Renderer_if.h"
 #include <algorithm>
 

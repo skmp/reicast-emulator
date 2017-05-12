@@ -10,6 +10,9 @@
 #endif
 
 #include "_vmem.h"
+#include "hw/pvr/pvr.h"
+#include "hw/sh4/sh4_mem.h"
+
 #include "hw/aica/aica.h"
 #include "hw/sh4/dyna/blockmanager.h"
 
@@ -491,9 +494,6 @@ void _vmem_term()
 {
 
 }
-
-#include "hw/pvr/pvr_mem.h"
-#include "hw/sh4/sh4_mem.h"
 
 u8* virt_ram_base;
 

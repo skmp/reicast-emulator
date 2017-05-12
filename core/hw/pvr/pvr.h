@@ -1,5 +1,40 @@
 #pragma once
+#include "types.h"
 #include "drkPvr.h"
+
+u32 pvr_map32(u32 offset32);
+
+//vram 32-64b
+extern VArray2 vram;
+//read
+u8 DYNACALL pvr_read_area1_8(u32 addr);
+u16 DYNACALL pvr_read_area1_16(u32 addr);
+u32 DYNACALL pvr_read_area1_32(u32 addr);
+//write
+void DYNACALL pvr_write_area1_8(u32 addr,u8 data);
+void DYNACALL pvr_write_area1_16(u32 addr,u16 data);
+void DYNACALL pvr_write_area1_32(u32 addr,u32 data);
+
+//regs
+void pvr_WriteReg(u32 paddr,u32 data);
+
+void pvr_Update(u32 cycles);
+
+//Init/Term , global
+void pvr_Init(void);
+void pvr_Term(void);
+//Reset -> Reset - Initialise
+void pvr_Reset(bool Manual);
+
+void TAWrite(u32 address,u32* data,u32 count);
+extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
+
+void YUV_init(void);
+//registers 
+#define PVR_BASE 0x005F8000
+
+void libCore_vramlock_Free(void);
+void libCore_vramlock_Init(void);
 
 #define pvr_RegSize (0x8000)
 #define pvr_RegMask (pvr_RegSize-1)
@@ -656,3 +691,9 @@ union FPU_SHAD_SCALE_type
 
 #define TA_CURRENT_CTX (TA_ISP_BASE & 0xF00000)
 #define CORE_CURRENT_CTX (PARAM_BASE & 0xF00000)
+
+//Init/Term , global
+void pvr_sb_Init();
+void pvr_sb_Term();
+//Reset -> Reset - Initialise
+void pvr_sb_Reset(bool Manual);

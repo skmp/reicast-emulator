@@ -1,6 +1,6 @@
 #include "../../types.h"
 #include "ta_structs.h"
-#include "pvr_regs.h"
+#include "pvr.h"
 #include "TexCache.h"
 
 bool pal_needs_update=true;

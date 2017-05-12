@@ -11,7 +11,7 @@
 #include "../sh4_opcode_list.h"
 #include "../sh4_core.h"
 #include "../sh4_if.h"
-#include "hw/pvr/pvr_mem.h"
+#include "hw/pvr/pvr.h"
 #include "hw/aica/aica.h"
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/sh4/sh4_mem.h"

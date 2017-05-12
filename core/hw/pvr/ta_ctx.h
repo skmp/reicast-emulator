@@ -1,6 +1,6 @@
 #pragma once
 #include "ta.h"
-#include "pvr_regs.h"
+#include "pvr.h"
 
 #ifndef TARGET_NO_THREADS
 #include <rthreads/rthreads.h>

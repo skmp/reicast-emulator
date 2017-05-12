@@ -6,7 +6,7 @@
 #include "types.h"
 #include "ccn.h"
 #include "../sh4_core.h"
-#include "hw/pvr/pvr_mem.h"
+#include "hw/pvr/pvr.h"
 #include "hw/mem/_vmem.h"
 
 

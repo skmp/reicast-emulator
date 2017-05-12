@@ -3,7 +3,7 @@
 #include "gles.h"
 #include "../../hw/pvr/TexCache.h"
 #include "../../hw/pvr/pvr_pixfmt.h"
-#include "../../hw/pvr/pvr_mem.h"
+#include "../../hw/pvr/pvr.h"
 
 #include <map>
 

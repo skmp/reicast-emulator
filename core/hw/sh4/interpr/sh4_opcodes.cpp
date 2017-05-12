@@ -8,7 +8,7 @@
 #include "types.h"
 
 
-#include "hw/pvr/pvr_mem.h"
+#include "hw/pvr/pvr.h"
 #include "../sh4_interpreter.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_mmr.h"

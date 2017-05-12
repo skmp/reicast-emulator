@@ -1,6 +1,6 @@
 #include "spg.h"
 #include "Renderer_if.h"
-#include "pvr_regs.h"
+#include "pvr.h"
 #include "hw/holly/holly.h"
 #include "hw/sh4/sh4_sched.h"
 

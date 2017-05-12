@@ -1,6 +1,6 @@
 #include "Renderer_if.h"
 #include "ta.h"
-#include "hw/pvr/pvr_mem.h"
+#include "pvr.h"
 #include "TexCache.h"
 
 /*

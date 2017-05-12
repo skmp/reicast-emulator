@@ -945,6 +945,7 @@ u32 branch_target_s8(u32 op)
 {
 	return GetSImm8(op)*2 + 2 + next_pc;
 }
+
 // bf <bdisp8>
 sh4op(i1000_1011_iiii_iiii)
 {

@@ -27,10 +27,6 @@
 #define SH4_TIMESLICE (448)
 #define CPU_RATIO      (8)
 
-//uh uh
-#define GetN(str) ((str>>8) & 0xf)
-#define GetM(str) ((str>>4) & 0xf)
-
 //448 Cycles (fixed)
 int UpdateSystem(void)
 {

@@ -120,61 +120,73 @@ struct AicaTimerData
 	};
 };
 
-class AicaTimer
+struct AicaTimer
 {
-public:
 	AicaTimerData* data;
 	s32 c_step;
 	u32 m_step;
 	u32 id;
-	void Init(u8* regbase,u32 timer)
-	{
-		data=(AicaTimerData*)&regbase[0x2890 + timer*4];
-		id=timer;
-		m_step=1<<(data->md);
-		c_step=m_step;
-	}
-	void StepTimer(u32 samples)
-	{
-		do
-		{
-			c_step--;
-			if (c_step==0)
-			{
-				c_step=m_step;
-				data->count++;
-				if (data->count==0)
-				{
-					if (id==0)
-					{
-						SCIPD->TimerA=1;
-						MCIPD->TimerA=1;
-					}
-					else if (id==1)
-					{
-						SCIPD->TimerB=1;
-						MCIPD->TimerB=1;
-					}
-					else
-					{
-						SCIPD->TimerC=1;
-						MCIPD->TimerC=1;
-					}
-				}
-			}
-		} while(--samples);
-	}
 
-	void RegisterWrite()
-	{
-		u32 n_step=1<<(data->md);
-		if (n_step!=m_step)
-		{
-			m_step=n_step;
-			c_step=m_step;
-		}
-	}
 };
+
+static void Timer_StepTimer(AicaTimer *timer, u32 samples)
+{
+   do
+   {
+      timer->c_step--;
+      if (timer->c_step == 0)
+      {
+         timer->c_step = timer->m_step;
+         timer->data->count++;
+
+         if (timer->data->count==0)
+         {
+            if (timer->id==0)
+            {
+               SCIPD->TimerA=1;
+               MCIPD->TimerA=1;
+            }
+            else if (timer->id==1)
+            {
+               SCIPD->TimerB=1;
+               MCIPD->TimerB=1;
+            }
+            else
+            {
+               SCIPD->TimerC=1;
+               MCIPD->TimerC=1;
+            }
+         }
+      }
+   } while(--samples);
+}
+
+static void Timer_RegisterWrite(AicaTimer *timer)
+{
+   u32 n_step = 1 << timer->data->md;
+
+   if (n_step != timer->m_step)
+   {
+      timer->m_step = n_step;
+      timer->c_step = timer->m_step;
+   }
+}
+
+static void Timer_Deinit(AicaTimer *timer)
+{
+   timer->data   = NULL;
+   timer->id     = 0;
+   timer->m_step = 0;
+   timer->c_step = 0;
+}
+
+static void Timer_Init(AicaTimer *t, u8* regbase,u32 timer)
+{
+   t->data   = (AicaTimerData*)&regbase[0x2890 + timer*4];
+   t->id     = timer;
+   t->m_step = 1<< (t->data->md);
+   t->c_step = t->m_step;
+}
 
 AicaTimer timers[3];
 
@@ -187,7 +199,7 @@ void libAICA_Update(u32 Samples)
 void libAICA_TimeStep(void)
 {
 	for (int i=0;i<3;i++)
-		timers[i].StepTimer(1);
+		Timer_StepTimer(&timers[i], 1);
 
 	SCIPD->SAMPLE_DONE=1;
 
@@ -221,7 +233,7 @@ s32 libAICA_Init(void)
 
 	sgc_Init();
 	for (int i=0;i<3;i++)
-		timers[i].Init(aica_reg,i);
+		Timer_Init(&timers[i], aica_reg, i);
 
 	return rv_ok;
 }
@@ -232,6 +244,9 @@ void libAICA_Reset(bool m)
 
 void libAICA_Term(void)
 {
+	for (int i=0;i<3;i++)
+		Timer_Deinit(&timers[i]);
+
 	sgc_Term();
 }
 
@@ -1970,17 +1985,17 @@ static void WriteReg2(u32 addr,u32 data)
 
       case TIMER_A:
          *(u16*)&aica_reg[addr]=(u16)data;
-         timers[0].RegisterWrite();
+         Timer_RegisterWrite(&timers[0]);
          break;
 
       case TIMER_B:
          *(u16*)&aica_reg[addr]=(u16)data;
-         timers[1].RegisterWrite();
+         Timer_RegisterWrite(&timers[1]);
          break;
 
       case TIMER_C:
          *(u16*)&aica_reg[addr]=(u16)data;
-         timers[2].RegisterWrite();
+         Timer_RegisterWrite(&timers[2]);
          break;
 
       default:
@@ -2023,17 +2038,17 @@ static void WriteReg1(u32 addr,u32 data)
    {
       case TIMER_A:
          aica_reg[addr]=(u8)data;
-         timers[0].RegisterWrite();
+         Timer_RegisterWrite(&timers[0]);
          break;
 
       case TIMER_B:
          aica_reg[addr]=(u8)data;
-         timers[1].RegisterWrite();
+         Timer_RegisterWrite(&timers[1]);
          break;
 
       case TIMER_C:
          aica_reg[addr]=(u8)data;
-         timers[2].RegisterWrite();
+         Timer_RegisterWrite(&timers[2]);
          break;
 
       default:

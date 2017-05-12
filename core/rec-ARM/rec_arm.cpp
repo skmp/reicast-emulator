@@ -161,7 +161,7 @@ asm void CacheFlush(void* code, void* pEnd)
 
 #define _DEVEL 1
 
-#include "arm_emitter/arm_emitter.h"
+#include "arm_emitter.h"
 using namespace ARM;
 
 

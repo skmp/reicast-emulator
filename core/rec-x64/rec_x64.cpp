@@ -11,7 +11,6 @@
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/dyna/regalloc.h"
-#include "emitter/x86_emitter.h"
 
 extern int cycle_counter;
 

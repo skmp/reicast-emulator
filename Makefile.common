@@ -132,7 +132,7 @@ endif
 SOURCES_CXX += $(CORE_DIR)/rec-x86/rec_x86_asm.cpp \
 					$(CORE_DIR)/rec-x86/rec_x86_driver.cpp \
 					$(CORE_DIR)/rec-x86/rec_x86_il.cpp \
-					$(CORE_DIR)/emitter/x86_emitter.cpp
+					$(CORE_DIR)/rec-x86/x86_emitter.cpp
 endif
 
 

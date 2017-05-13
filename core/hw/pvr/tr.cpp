@@ -42,11 +42,11 @@ static u8 float_to_satu8_math(float val)
 }
 
 //vdec state variables
-ModTriangle* lmr=0;
-PolyParam nullPP;
+static ModTriangle* lmr=0;
+static PolyParam nullPP;
 
-PolyParam* CurrentPP=&nullPP;
-List<PolyParam>* CurrentPPlist;
+static PolyParam* CurrentPP=&nullPP;
+static List<PolyParam>* CurrentPPlist;
 
 //TA state vars	
 DECL_ALIGN(4) static u8 FaceBaseColor[4];

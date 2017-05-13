@@ -1801,16 +1801,15 @@ static void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 #endif
 
 	/* Generate and bind a render buffer which will become a depth buffer shared between our two FBOs */
-	glGenRenderbuffers(1, &rv.depthb);
-	glBindRenderbuffer(RARCH_GL_RENDERBUFFER, rv.depthb);
-
 	/*
 		Currently it is unknown to GL that we want our new render buffer to be a depth buffer.
 		glRenderbufferStorage will fix this and in this case will allocate a depth buffer
 		m_i32TexSize by m_i32TexSize.
 	*/
-
-	glRenderbufferStorage(RARCH_GL_RENDERBUFFER, RARCH_GL_DEPTH24_STENCIL8, fbw, fbh);
+	glGenRenderbuffers(1, &rv.depthb);
+	glBindRenderbuffer(RARCH_GL_RENDERBUFFER, rv.depthb);
+   glRenderbufferStorage(RARCH_GL_RENDERBUFFER, RARCH_GL_DEPTH24_STENCIL8, fbw, fbh);
+	glBindRenderbuffer(RARCH_GL_RENDERBUFFER, 0);
 
 	/* Create a texture for rendering to */
 	glGenTextures(1, &rv.tex);
@@ -1823,13 +1822,11 @@ static void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	/* Create the object that will allow us to render to the aforementioned texture */
+   /* Create FBO */
 	glGenFramebuffers(1, &rv.fbo);
 	glBindFramebuffer(RARCH_GL_FRAMEBUFFER, rv.fbo);
-
-	/* Attach the texture to the FBO */
-	glFramebufferTexture2D(RARCH_GL_FRAMEBUFFER, RARCH_GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rv.tex, 0);
-
+	glFramebufferTexture2D(RARCH_GL_FRAMEBUFFER, RARCH_GL_COLOR_ATTACHMENT0,
+         GL_TEXTURE_2D, rv.tex, 0);
 	// Attach the depth buffer we created earlier to our FBO.
 #if defined(HAVE_OPENGLES2) || defined(HAVE_OPENGLES1) || defined(OSX_PPC)
 	glFramebufferRenderbuffer(RARCH_GL_FRAMEBUFFER, RARCH_GL_DEPTH_ATTACHMENT,
@@ -1843,6 +1840,8 @@ static void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	/* Check that our FBO creation was successful */
 	GLuint uStatus = glCheckFramebufferStatus(RARCH_GL_FRAMEBUFFER);
+
+	glBindFramebuffer(RARCH_GL_FRAMEBUFFER, 0);
 
 	verify(uStatus == RARCH_GL_FRAMEBUFFER_COMPLETE);
 }

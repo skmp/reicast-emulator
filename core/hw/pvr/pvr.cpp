@@ -28,7 +28,6 @@ extern u32 _pal_rev_256[4];
 extern u32 _pal_rev_16[64];
 extern u32 pal_rev_256[4];
 extern u32 pal_rev_16[64];
-extern u32 palette_ram[1024];
 
 bool fog_needs_update=true;
 

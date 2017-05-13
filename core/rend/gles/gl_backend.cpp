@@ -1793,34 +1793,22 @@ static void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	rv.TexAddr=addy>>3;
 
-	/* Find the largest square POT texture that fits into the viewport */
+	/* create color component */
+	glGenTextures(1, &rv.tex);
+	glBindTexture(GL_TEXTURE_2D, rv.tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw, fbh, 0, channels, fmt, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	/* Get the currently bound frame buffer object. On most platforms this just gives 0. */
-#if 0
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_i32OriginalFbo);
-#endif
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+   glBindTexture(GL_TEXTURE_2D, 0);
 
-	/* Generate and bind a render buffer which will become a depth buffer shared between our two FBOs */
-	/*
-		Currently it is unknown to GL that we want our new render buffer to be a depth buffer.
-		glRenderbufferStorage will fix this and in this case will allocate a depth buffer
-		m_i32TexSize by m_i32TexSize.
-	*/
+   /* create depth component */
 	glGenRenderbuffers(1, &rv.depthb);
 	glBindRenderbuffer(RARCH_GL_RENDERBUFFER, rv.depthb);
    glRenderbufferStorage(RARCH_GL_RENDERBUFFER, RARCH_GL_DEPTH24_STENCIL8, fbw, fbh);
 	glBindRenderbuffer(RARCH_GL_RENDERBUFFER, 0);
-
-	/* Create a texture for rendering to */
-	glGenTextures(1, &rv.tex);
-	glBindTexture(GL_TEXTURE_2D, rv.tex);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw, fbh, 0, channels, fmt, 0);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
    /* Create FBO */
 	glGenFramebuffers(1, &rv.fbo);
@@ -1838,12 +1826,10 @@ static void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
          RARCH_GL_RENDERBUFFER, rv.depthb);
 #endif
 
-	/* Check that our FBO creation was successful */
-	GLuint uStatus = glCheckFramebufferStatus(RARCH_GL_FRAMEBUFFER);
+	GLenum status = glCheckFramebufferStatus(RARCH_GL_FRAMEBUFFER);
+	verify(status == RARCH_GL_FRAMEBUFFER_COMPLETE);
 
 	glBindFramebuffer(RARCH_GL_FRAMEBUFFER, 0);
-
-	verify(uStatus == RARCH_GL_FRAMEBUFFER_COMPLETE);
 }
 
 static bool RenderFrame(void)

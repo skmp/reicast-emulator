@@ -6922,7 +6922,7 @@ void libARM_InterruptChange(u32 bits,u32 L)
 
 //Reg reads from arm side ..
 template <u32 sz,class T>
-T arm_ReadReg(u32 addr)
+static T arm_ReadReg(u32 addr)
 {
 	addr&=0x7FFF;
 

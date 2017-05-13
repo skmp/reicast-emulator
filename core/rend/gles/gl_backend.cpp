@@ -243,9 +243,6 @@ struct FBT
 
 FBT fb_rtt;
 
-
-
-
 /* Texture Cache */
 struct TextureCacheData
 {
@@ -529,7 +526,8 @@ struct TextureCacheData
 	}
 };
 
-float fb_scale_x,fb_scale_y;
+float fb_scale_x = 0.0f;
+float fb_scale_y = 0.0f;
 
 #define attr "attribute"
 #define vary "varying"
@@ -1273,15 +1271,9 @@ static void GenSorted(void)
    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-static void DrawSorted(void)
+static void DrawSorted(u32 count)
 {
-   //if any drawing commands, draw them
-   if (!pidx_sort.size())
-      return;
-
    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
-
-   u32 count=pidx_sort.size();
 
    cache.Reset(pidx_sort[0].ppid);
 
@@ -1423,19 +1415,6 @@ static void SetupMainVBO(void)
 
 }
 
-static void SetupModvolVBO(void)
-{
-	glBindBuffer(GL_ARRAY_BUFFER, vbo.modvols);
-
-	//setup vertex buffers attrib pointers
-	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
-	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, (void*)0);
-
-	glDisableVertexAttribArray(VERTEX_UV_ARRAY);
-	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
-	glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
-}
-
 static void DrawModVols(void)
 {
    /* A bit of explanation:
@@ -1446,7 +1425,15 @@ static void DrawModVols(void)
 	if (pvrrc.modtrig.used()==0 || settings.pvr.Emulation.ModVolMode == 0)
 		return;
 
-	SetupModvolVBO();
+	glBindBuffer(GL_ARRAY_BUFFER, vbo.modvols);
+
+	//setup vertex buffers attrib pointers
+	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, (void*)0);
+
+	glDisableVertexAttribArray(VERTEX_UV_ARRAY);
+	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
+	glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
 
 	glEnable(GL_BLEND);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -2298,8 +2285,10 @@ static bool RenderFrame(void)
 
    if (settings.pvr.Emulation.AlphaSortMode == 0)
    {
-      if (pvrrc.isAutoSort)
-         DrawSorted();
+      u32 count = pidx_sort.size();
+      //if any drawing commands, draw them
+      if (pvrrc.isAutoSort && count)
+         DrawSorted(count);
       else
          DrawList<TA_LIST_TRANSLUCENT, false>(pvrrc.global_param_tr);
    }

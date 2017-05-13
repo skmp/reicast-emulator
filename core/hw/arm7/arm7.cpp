@@ -1297,9 +1297,9 @@
 bool aica_interr=false;
 u32 aica_reg_L=0;
 //Set to true when the out of the intc is 1
-bool e68k_out = false;
-u32 e68k_reg_L;
-u32 e68k_reg_M=0; //constant ?
+static bool e68k_out  = false;
+static u32 e68k_reg_L = 0;
+static u32 e68k_reg_M = 0; //constant ?
 
 static INLINE u8 DYNACALL ReadMemArm1(u32 addr)
 {
@@ -1371,6 +1371,47 @@ static INLINE u32 DYNACALL ReadMemArm4(u32 addr)
    }
 
    return libAICA_ReadReg(addr,4);
+}
+
+static void update_e68k(void)
+{
+	if (!e68k_out && aica_interr)
+	{
+		//Set the pending signal
+		//Is L register held here too ?
+		e68k_out=1;
+		e68k_reg_L=aica_reg_L;
+
+		update_armintc();
+	}
+}
+
+static void e68k_AcceptInterrupt(void)
+{
+	e68k_out=false;
+	update_e68k();
+	update_armintc();
+}
+
+template <u32 sz,class T>
+static void arm_WriteReg(u32 addr,T data)
+{
+	addr &= 0x7FFF;
+
+   switch (addr)
+   {
+      case REG_L:
+         return; // Shouldn't really happen (read only)
+      case REG_M:
+         //accept interrupts
+         if (data & 1)
+            e68k_AcceptInterrupt();
+         break;
+      default:
+         break;
+   }
+
+   return libAICA_WriteReg(addr, data, sz);
 }
 
 static INLINE void DYNACALL WriteMemArm1(u32 addr,u8 data)
@@ -6870,19 +6911,6 @@ void arm_Run(u32 CycleCount)
    }
 }
 
-void update_e68k(void)
-{
-	if (!e68k_out && aica_interr)
-	{
-		//Set the pending signal
-		//Is L register held here too ?
-		e68k_out=1;
-		e68k_reg_L=aica_reg_L;
-
-		update_armintc();
-	}
-}
-
 void libARM_InterruptChange(u32 bits,u32 L)
 {
 	aica_interr=bits!=0;
@@ -6891,12 +6919,6 @@ void libARM_InterruptChange(u32 bits,u32 L)
 	update_e68k();
 }
 
-void e68k_AcceptInterrupt(void)
-{
-	e68k_out=false;
-	update_e68k();
-	update_armintc();
-}
 
 //Reg reads from arm side ..
 template <u32 sz,class T>
@@ -6916,26 +6938,6 @@ T arm_ReadReg(u32 addr)
 
    return libAICA_ReadReg(addr,sz);
 }		
-template <u32 sz,class T>
-void arm_WriteReg(u32 addr,T data)
-{
-	addr &= 0x7FFF;
-
-   switch (addr)
-   {
-      case REG_L:
-         return; // Shouldn't really happen (read only)
-      case REG_M:
-         //accept interrupts
-         if (data & 1)
-            e68k_AcceptInterrupt();
-         break;
-      default:
-         break;
-   }
-
-   return libAICA_WriteReg(addr, data, sz);
-}
 
 //00000000~007FFFFF @DRAM_AREA* 
 //00800000~008027FF @CHANNEL_DATA 

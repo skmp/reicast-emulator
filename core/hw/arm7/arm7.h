@@ -88,11 +88,6 @@ typedef union
 } reg_pair;
 
 extern bool armFiqEnable;
-extern u32 e68k_reg_L;
-extern u32 e68k_reg_M; //constant ?
-
-template <u32 sz,class T>
-void arm_WriteReg(u32 addr,T data);
 
 extern DECL_ALIGN(8) reg_pair arm_Reg[RN_ARM_REG_COUNT];
 
@@ -106,13 +101,3 @@ void sh4_WriteMem_reg(u32 addr,u32 data,u32 size);
 
 void init_mem();
 void term_mem();
-
-#define aica_reg_16 ((u16*)aica_reg)
-
-#define AICA_RAM_SIZE (ARAM_SIZE)
-#define AICA_RAM_MASK (ARAM_MASK)
-
-#define AICA_MEMMAP_RAM_SIZE (8*1024*1024)				//this is the max for the map, the actual ram size is AICA_RAM_SIZE
-#define AICA_MEMMAP_RAM_MASK (AICA_MEMMAP_RAM_SIZE-1)
-
-extern bool e68k_out;

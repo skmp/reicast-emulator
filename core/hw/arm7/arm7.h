@@ -96,8 +96,6 @@ void arm_WriteReg(u32 addr,T data);
 
 extern DECL_ALIGN(8) reg_pair arm_Reg[RN_ARM_REG_COUNT];
 
-#define update_armintc() arm_Reg[INTR_PEND].I=e68k_out && armFiqEnable
-
 void arm_Init();
 void arm_Reset();
 void arm_Run(u32 uNumCycles);

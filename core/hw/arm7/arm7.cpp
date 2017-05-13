@@ -20,7 +20,9 @@
 #include "arm7.h"
 #include "types.h"
 
-#include <map>
+#include "hw/sh4/sh4_core.h"
+
+#define update_armintc() arm_Reg[INTR_PEND].I=e68k_out && armFiqEnable
 
 #define OP_AND reg[dest].I = reg[(opcode>>16)&15].I & value;
 
@@ -6840,9 +6842,6 @@ extern "C" NOINLINE void CPUFiq(void)
 	The output of the sci* bits is input to the e68k , and the output of e68k is inputed into the FIQ
 	pin on arm7
 */
-#include "hw/sh4/sh4_core.h"
-
-
 void arm_SetEnabled(bool enabled)
 {
 	if(!Arm7Enabled && enabled)

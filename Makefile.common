@@ -80,7 +80,7 @@ SOURCES_CXX += $(CORE_DIR)/rend/norend/norend.cpp
 endif
 
 ifeq ($(HAVE_GL), 1)
-SOURCES_CXX += $(CORE_DIR)/rend/gles/gles.cpp
+SOURCES_CXX += $(CORE_DIR)/rend/gles/gl_backend.cpp
 SOURCES_C   += $(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
 					$(LIBRETRO_COMM_DIR)/glsm/glsm.c
 ifeq ($(GLES), 1)

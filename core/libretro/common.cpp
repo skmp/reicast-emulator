@@ -32,14 +32,6 @@
 
 #include "hw/sh4/dyna/ngen.h"
 
-enum page_access
-{
-   ACC_NONE = 0,
-   ACC_READONLY,
-   ACC_READWRITE,
-   ACC_READWRITEEXEC
-};
-
 static int access_to_protect_flags(enum page_access access)
 {
    switch (access)
@@ -73,7 +65,7 @@ static int access_to_protect_flags(enum page_access access)
 #endif
 }
 
-static int protect_pages(void *ptr, size_t size, enum page_access access)
+int protect_pages(void *ptr, size_t size, enum page_access access)
 {
    int prot = access_to_protect_flags(access);
 #ifdef _WIN32

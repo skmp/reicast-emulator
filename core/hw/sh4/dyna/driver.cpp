@@ -449,28 +449,16 @@ static void recSh4_Init(void)
     CodeCache = (u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
 #endif
 
-#ifdef _WIN32
-	DWORD old;
-	VirtualProtect(CodeCache,CODE_SIZE,PAGE_EXECUTE_READWRITE,&old);
-#elif defined(__linux__) || defined(__MACH__)
-	
-	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
+    protect_pages(CodeCache, CODE_SIZE, ACC_READWRITEEXEC);
 
-	#if FEAT_SHREC == DYNAREC_JIT
-		if (mprotect(CodeCache, CODE_SIZE, PROT_READ|PROT_WRITE|PROT_EXEC))
-		{
-			perror("\n\tError,Couldn’t mprotect CodeCache!");
-			die("Couldn’t mprotect CodeCache");
-		}
-	#endif
-
+#if defined(__linux__) || defined(__MACH__)
 #if TARGET_IPHONE
 	memset((u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0),0xFF,CODE_SIZE);
 #else
 	memset(CodeCache,0xFF,CODE_SIZE);
 #endif
-
 #endif
+
 	ngen_init();
 }
 

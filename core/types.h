@@ -97,7 +97,13 @@ typedef char wchar;
 #endif
 
 
-
+enum page_access
+{
+   ACC_NONE = 0,
+   ACC_READONLY,
+   ACC_READWRITE,
+   ACC_READWRITEEXEC
+};
 
 //intc function pointer and enums
 enum HollyInterruptType
@@ -769,6 +775,8 @@ struct OnLoad
 	typedef void OnLoadFP(void);
 	OnLoad(OnLoadFP* fp) { fp(); }
 };
+
+int protect_pages(void *ptr, size_t size, enum page_access access);
 
 void os_MakeExecutable(void* ptr, u32 sz);
 

@@ -76,36 +76,7 @@
 
 #define PT_ALPHA_REF_addr       0x0000011C // RW  Alpha value for Punch Through polygon comparison
 
-union FB_R_CTRL_type
-{
-	struct
-	{
-#ifdef MSB_FIRST
-		u32 Reserved            : 8; //31-24
-		u32 vclk_div            : 1; //23
-		u32 fb_strip_buf_en     : 1; //22
-		u32 fb_stripsize        : 6; //21-16
-		u32 fb_chroma_threshold : 8; //15-8
-		u32 R                   : 1; //7
-		u32 fb_concat           : 3; //6-4
-		u32 fb_depth            : 2; //3-2
-		u32 fb_line_double      : 1; //1
-		u32 fb_enable           : 1; //0
-#else
-		u32 fb_enable           : 1; //0
-		u32 fb_line_double      : 1; //1
-		u32 fb_depth            : 2; //3-2
-		u32 fb_concat           : 3; //6-4
-		u32 R                   : 1; //7
-		u32 fb_chroma_threshold : 8; //15-8
-		u32 fb_stripsize        : 6; //21-16
-		u32 fb_strip_buf_en     : 1; //22
-		u32 vclk_div            : 1; //23
-		u32 Reserved            : 8; //31-24
-#endif
-	};
-	u32 full;
-};
+#include "pvr_types.h"
 
 enum fb_depth_enum
 {
@@ -154,7 +125,6 @@ union VO_BORDER_COL_type
 	};
 	u32 full;
 };
-
 
 union SPG_STATUS_type
 {
@@ -455,50 +425,6 @@ union ISP_BACKGND_D_type
 	f32 f;
 };
 
-union ISP_BACKGND_T_type
-{
-	struct
-	{
-#ifdef MSB_FIRST
-		u32 cache_bypass : 1;
-		u32 shadow       : 1;
-		u32 skip         : 3;
-		u32 tag_address  : 21;
-		u32 tag_offset   : 3;
-#else
-		u32 tag_offset   : 3;
-		u32 tag_address  : 21;
-		u32 skip         : 3;
-		u32 shadow       : 1;
-		u32 cache_bypass : 1;
-#endif
-	};
-	u32 full;
-};
-
-union FB_W_CTRL_type
-{
-	struct
-	{
-#ifdef MSB_FIRST
-		u32 pad1               : 8;
-		u32 fb_alpha_threshold : 8;
-		u32 fb_kval            : 8;
-		u32 pad0               : 4;
-		u32 fb_dither          : 1;
-		u32 fb_packmode        : 3;
-#else
-		u32 fb_packmode        : 3;
-		u32 fb_dither          : 1;
-		u32 pad0               : 4;
-		u32 fb_kval            : 8;
-		u32 fb_alpha_threshold : 8;
-		u32 pad1               : 8;
-#endif
-	};
-	u32 full;
-};
-
 union FB_W_LINESTRIDE_type
 {
 	struct
@@ -575,8 +501,8 @@ union FPU_SHAD_SCALE_type
 #define SPAN_SORT_CFG     PvrReg(SPAN_SORT_CFG_addr,u32) // RW  Span Sorter control
 
 #define VO_BORDER_COL     PvrReg(VO_BORDER_COL_addr,VO_BORDER_COL_type)     // RW  Border area color
-#define FB_R_CTRL         PvrReg(FB_R_CTRL_addr,FB_R_CTRL_type)             // RW  Frame buffer read control
-#define FB_W_CTRL         PvrReg(FB_W_CTRL_addr,FB_W_CTRL_type)             // RW  Frame buffer write control
+#define FB_R_CTRL         PvrReg(FB_R_CTRL_addr,fb_r_ctrl)             // RW  Frame buffer read control
+#define FB_W_CTRL         PvrReg(FB_W_CTRL_addr,fb_w_ctrl)             // RW  Frame buffer write control
 #define FB_W_LINESTRIDE   PvrReg(FB_W_LINESTRIDE_addr,FB_W_LINESTRIDE_type) // RW  Frame buffer line stride
 #define FB_R_SOF1         PvrReg(FB_R_SOF1_addr,u32)                      // RW  Read start address for field - 1/strip - 1
 #define FB_R_SOF2         PvrReg(FB_R_SOF2_addr,u32)                      // RW  Read start address for field - 2/strip - 2
@@ -594,7 +520,7 @@ union FPU_SHAD_SCALE_type
 #define HALF_OFFSET       PvrReg(HALF_OFFSET_addr,u32)                    // RW  Pixel sampling control
 #define FPU_PERP_VAL      PvrReg(FPU_PERP_VAL_addr,u32)                   // RW  Comparison value for perpendicular polygons
 #define ISP_BACKGND_D     PvrReg(ISP_BACKGND_D_addr,ISP_BACKGND_D_type)   // RW  Background surface depth
-#define ISP_BACKGND_T     PvrReg(ISP_BACKGND_T_addr,ISP_BACKGND_T_type)   // RW  Background surface tag
+#define ISP_BACKGND_T     PvrReg(ISP_BACKGND_T_addr,isp_backgnd_t)   // RW  Background surface tag
 
 #define ISP_FEED_CFG      PvrReg(ISP_FEED_CFG_addr,u32)                   // RW  Translucent polygon sort mode
 

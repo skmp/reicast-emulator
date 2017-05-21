@@ -54,8 +54,8 @@ ifeq (,$(platform))
             platform = odroidu2
         else ifneq (,$(findstring ODROIDU2,$(HARDWARE)))
             platform = odroidu2
-	else ifneq (,$(findstring sun8i,$(HARDWARE)))
-            platform = sun8i
+	#else ifneq (,$(findstring sun8i,$(HARDWARE)))
+        #    platform = sun8i
         else
             platform = armv7h
         endif
@@ -184,6 +184,7 @@ else ifneq (,$(findstring gcwz,$(platform)))
     LIBS += -L../linux-deps/lib -L./enta_viv -lglapi
     GCWZ_PKG = reicast-gcwz.opk
     GCWZ_PKG_FILES = gcwz/default.gcw0.desktop gcwz/icon-32.png
+ 
 # sun8i
 else ifneq (,$(findstring sun8i,$(platform)))
     MFLAGS += -marm -mfpu=neon -mfloat-abi=hard -funroll-loops

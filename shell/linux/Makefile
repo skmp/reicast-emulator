@@ -54,8 +54,8 @@ ifeq (,$(platform))
             platform = odroidu2
         else ifneq (,$(findstring ODROIDU2,$(HARDWARE)))
             platform = odroidu2
-	#else ifneq (,$(findstring sun8i,$(HARDWARE)))
-        #    platform = sun8i
+	else ifneq (,$(findstring sun8i,$(HARDWARE)))
+            platform = sun8i
         else
             platform = armv7h
         endif

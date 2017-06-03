@@ -42,6 +42,14 @@
 
 */
 
+struct DynaRBI: RuntimeBlockInfo
+{
+	virtual u32 Relink();
+	virtual void Relocate(void* dst)
+	{
+	}
+};
+
 #ifdef _ANDROID
 #include <sys/syscall.h>  // for cache flushing.
 #endif
@@ -57,7 +65,7 @@ void CacheFlush(void* code, void* pEnd)
 void CacheFlush(void* code, void* pEnd)
 {
 #if !defined(_ANDROID) && !defined(__MACH__)
-	__clear_cache((void*)code, pEnd);
+	__builtin___clear_cache((void*)code, pEnd);
 #else
 	void* start=code;
 	size_t size=(u8*)pEnd-(u8*)start+4;

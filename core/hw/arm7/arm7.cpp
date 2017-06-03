@@ -1349,7 +1349,7 @@ static INLINE u32 DYNACALL ReadMemArm4(u32 addr)
 	if (addr<0x800000)
 	{
 		u32 rv=*(u32*)&aica_ram.data[addr&(ARAM_MASK-(3))];
-		
+
 		if (unlikely(addr&3))
 		{
 			u32 sf=(addr&3)*8;
@@ -1545,7 +1545,7 @@ static void CPUUpdateCPSR(void)
 		CPSR.I |= 0x80;
 
 	CPSR.PSR.M=armMode;
-	
+
 	reg[16].I = CPSR.I;
 }
 
@@ -1688,7 +1688,7 @@ static void CPUSoftwareInterrupt(int comment)
 	CPUSwitchMode(0x13, true, false);
 	reg[14].I = PC;
 //	reg[15].I = 0x08;
-	
+
 	armIrqEnable = false;
 	armNextPC = 0x08;
 //	reg[15].I += 4;
@@ -1703,7 +1703,7 @@ static void CPUUndefinedException(void)
 //	reg[15].I = 0x04;
 	armIrqEnable = false;
 	armNextPC = 0x04;
-//	reg[15].I += 4;  
+//	reg[15].I += 4;
 }
 
 
@@ -1718,7 +1718,7 @@ void arm_Run_(u32 CycleCount)
 
       reg[15].I = armNextPC + 8;
 
-#ifdef CPUReadMemoryQuick 
+#ifdef CPUReadMemoryQuick
 #ifndef NO_OPCODE_READ
       u32 opcode = CPUReadMemoryQuick(armNextPC);
       armNextPC += 4;
@@ -1745,13 +1745,13 @@ void arm_Run_(u32 CycleCount)
       else
       {
          switch(cond)
-         { 
-            case 0x00: // EQ 
+         {
+            case 0x00: // EQ
                cond_res = Z_FLAG;
                break;
             case 0x01: // NE
                cond_res = !Z_FLAG;
-               break; 
+               break;
             case 0x02: // CS
                cond_res = C_FLAG;
                break;
@@ -1784,12 +1784,12 @@ void arm_Run_(u32 CycleCount)
                break;
             case 0x0C: // GT
                cond_res = !Z_FLAG &&(N_FLAG == V_FLAG);	//two possible states
-               break;    
+               break;
             case 0x0D: // LE
                cond_res = Z_FLAG || (N_FLAG != V_FLAG);	//two possible states
-               break; 
-            case 0x0E: 
-               cond_res = true; 
+               break;
+            case 0x0E:
+               cond_res = true;
                break;
             case 0x0F:
             default:
@@ -2493,7 +2493,7 @@ void arm_Run_(u32 CycleCount)
             // UMULL RdLo, RdHi, Rn, Rs
             u32 umult = reg[(opcode & 0x0F)].I;
             u32 usource = reg[(opcode >> 8) & 0x0F].I;
-            int destLo = (opcode >> 12) & 0x0F;         
+            int destLo = (opcode >> 12) & 0x0F;
             int destHi = (opcode >> 16) & 0x0F;
             u64 uTemp = ((u64)umult)*((u64)usource);
             reg[destLo].I = (u32)uTemp;
@@ -2513,7 +2513,7 @@ void arm_Run_(u32 CycleCount)
             // UMULLS RdLo, RdHi, Rn, Rs
             u32 umult = reg[(opcode & 0x0F)].I;
             u32 usource = reg[(opcode >> 8) & 0x0F].I;
-            int destLo = (opcode >> 12) & 0x0F;         
+            int destLo = (opcode >> 12) & 0x0F;
             int destHi = (opcode >> 16) & 0x0F;
             u64 uTemp = ((u64)umult)*((u64)usource);
             reg[destLo].I = (u32)uTemp;
@@ -2537,7 +2537,7 @@ void arm_Run_(u32 CycleCount)
             // UMLAL RdLo, RdHi, Rn, Rs
             u32 umult = reg[(opcode & 0x0F)].I;
             u32 usource = reg[(opcode >> 8) & 0x0F].I;
-            int destLo = (opcode >> 12) & 0x0F;         
+            int destLo = (opcode >> 12) & 0x0F;
             int destHi = (opcode >> 16) & 0x0F;
             u64 uTemp = (u64)reg[destHi].I;
             uTemp <<= 32;
@@ -2560,7 +2560,7 @@ void arm_Run_(u32 CycleCount)
             // UMLALS RdLo, RdHi, Rn, Rs
             u32 umult = reg[(opcode & 0x0F)].I;
             u32 usource = reg[(opcode >> 8) & 0x0F].I;
-            int destLo = (opcode >> 12) & 0x0F;         
+            int destLo = (opcode >> 12) & 0x0F;
             int destHi = (opcode >> 16) & 0x0F;
             u64 uTemp = (u64)reg[destHi].I;
             uTemp <<= 32;
@@ -2585,7 +2585,7 @@ void arm_Run_(u32 CycleCount)
             case 0x0c9:
          {
             // SMULL RdLo, RdHi, Rm, Rs
-            int destLo = (opcode >> 12) & 0x0F;         
+            int destLo = (opcode >> 12) & 0x0F;
             int destHi = (opcode >> 16) & 0x0F;
             u32 rs = reg[(opcode >> 8) & 0x0F].I;
             s64 m = (s32)reg[(opcode & 0x0F)].I;
@@ -2608,7 +2608,7 @@ void arm_Run_(u32 CycleCount)
             case 0x0d9:
          {
             // SMULLS RdLo, RdHi, Rm, Rs
-            int destLo = (opcode >> 12) & 0x0F;         
+            int destLo = (opcode >> 12) & 0x0F;
             int destHi = (opcode >> 16) & 0x0F;
             u32 rs = reg[(opcode >> 8) & 0x0F].I;
             s64 m = (s32)reg[(opcode & 0x0F)].I;
@@ -2635,7 +2635,7 @@ void arm_Run_(u32 CycleCount)
             case 0x0e9:
          {
             // SMLAL RdLo, RdHi, Rm, Rs
-            int destLo = (opcode >> 12) & 0x0F;         
+            int destLo = (opcode >> 12) & 0x0F;
             int destHi = (opcode >> 16) & 0x0F;
             u32 rs = reg[(opcode >> 8) & 0x0F].I;
             s64 m = (s32)reg[(opcode & 0x0F)].I;
@@ -2661,7 +2661,7 @@ void arm_Run_(u32 CycleCount)
             case 0x0f9:
          {
             // SMLALS RdLo, RdHi, Rm, Rs
-            int destLo = (opcode >> 12) & 0x0F;         
+            int destLo = (opcode >> 12) & 0x0F;
             int destHi = (opcode >> 16) & 0x0F;
             u32 rs = reg[(opcode >> 8) & 0x0F].I;
             s64 m = (s32)reg[(opcode & 0x0F)].I;
@@ -2873,7 +2873,7 @@ void arm_Run_(u32 CycleCount)
          }
          break;
          CASE_16(0x400)
-            // T versions shouldn't be different on GBA      
+            // T versions shouldn't be different on GBA
             CASE_16(0x420)
             {
                // STR Rd, [Rn], -#
@@ -3083,7 +3083,7 @@ void arm_Run_(u32 CycleCount)
          }
          break;
          CASE_16(0x440)
-            // T versions shouldn't be different on GBA      
+            // T versions shouldn't be different on GBA
             CASE_16(0x460)
             {
                // STRB Rd, [Rn], -#
@@ -3473,7 +3473,7 @@ void arm_Run_(u32 CycleCount)
             int dest = (opcode >> 12) & 15;
             int base = (opcode >> 16) & 15;
             u32 address = reg[base].I - offset;
-            reg[base].I = address;      
+            reg[base].I = address;
             CPUWriteMemory(address, reg[dest].I);
             clockTicks += 2 + CPUUpdateTicksAccess32(address);
          }
@@ -3512,7 +3512,7 @@ void arm_Run_(u32 CycleCount)
             int dest = (opcode >> 12) & 15;
             int base = (opcode >> 16) & 15;
             u32 address = reg[base].I - value;
-            reg[base].I = address;      
+            reg[base].I = address;
             CPUWriteMemory(address, reg[dest].I);
             clockTicks += 2 + CPUUpdateTicksAccess32(address);
          }
@@ -3601,7 +3601,7 @@ void arm_Run_(u32 CycleCount)
             int dest = (opcode >> 12) & 15;
             int base = (opcode >> 16) & 15;
             u32 address = reg[base].I + offset;
-            reg[base].I = address;      
+            reg[base].I = address;
             CPUWriteMemory(address, reg[dest].I);
             clockTicks += 2 + CPUUpdateTicksAccess32(address);
          }
@@ -3640,7 +3640,7 @@ void arm_Run_(u32 CycleCount)
             int dest = (opcode >> 12) & 15;
             int base = (opcode >> 16) & 15;
             u32 address = reg[base].I + value;
-            reg[base].I = address;      
+            reg[base].I = address;
             CPUWriteMemory(address, reg[dest].I);
             clockTicks += 2 + CPUUpdateTicksAccess32(address);
          }
@@ -3974,7 +3974,7 @@ void arm_Run_(u32 CycleCount)
             u32 address = reg[base].I - offset;
             reg[dest].I = CPUReadMemory(address);
             if(dest != base)
-               reg[base].I = address;      
+               reg[base].I = address;
             clockTicks += 3 + CPUUpdateTicksAccess32(address);
             if(dest == 15) {
                clockTicks += 2;
@@ -4027,7 +4027,7 @@ void arm_Run_(u32 CycleCount)
             u32 address = reg[base].I - value;
             reg[dest].I = CPUReadMemory(address);
             if(dest != base)
-               reg[base].I = address;      
+               reg[base].I = address;
             clockTicks += 3 + CPUUpdateTicksAccess32(address);
             if(dest == 15) {
                clockTicks += 2;
@@ -4154,7 +4154,7 @@ void arm_Run_(u32 CycleCount)
             u32 address = reg[base].I + offset;
             reg[dest].I = CPUReadMemory(address);
             if(dest != base)
-               reg[base].I = address;      
+               reg[base].I = address;
             clockTicks += 3 + CPUUpdateTicksAccess32(address);
             if(dest == 15) {
                clockTicks += 2;
@@ -4457,7 +4457,7 @@ void arm_Run_(u32 CycleCount)
             int dest = (opcode >> 12) & 15;
             int base = (opcode >> 16) & 15;
             u32 address = reg[base].I - offset;
-            reg[base].I = address;      
+            reg[base].I = address;
             CPUWriteByte(address, reg[dest].B.B0);
             clockTicks += 2 + CPUUpdateTicksAccess16(address);
          }
@@ -4496,7 +4496,7 @@ void arm_Run_(u32 CycleCount)
             int dest = (opcode >> 12) & 15;
             int base = (opcode >> 16) & 15;
             u32 address = reg[base].I - value;
-            reg[base].I = address;      
+            reg[base].I = address;
             CPUWriteByte(address, reg[dest].B.B0);
             clockTicks += 2 + CPUUpdateTicksAccess16(address);
          }
@@ -4585,7 +4585,7 @@ void arm_Run_(u32 CycleCount)
             int dest = (opcode >> 12) & 15;
             int base = (opcode >> 16) & 15;
             u32 address = reg[base].I + offset;
-            reg[base].I = address;      
+            reg[base].I = address;
             CPUWriteByte(address, reg[dest].B.B0);
             clockTicks += 2 + CPUUpdateTicksAccess16(address);
          }
@@ -4624,7 +4624,7 @@ void arm_Run_(u32 CycleCount)
             int dest = (opcode >> 12) & 15;
             int base = (opcode >> 16) & 15;
             u32 address = reg[base].I + value;
-            reg[base].I = address;      
+            reg[base].I = address;
             CPUWriteByte(address, reg[dest].B.B0);
             clockTicks += 2 + CPUUpdateTicksAccess16(address);
          }
@@ -4880,7 +4880,7 @@ void arm_Run_(u32 CycleCount)
             u32 address = reg[base].I - offset;
             reg[dest].I = CPUReadByte(address);
             if(dest != base)
-               reg[base].I = address;      
+               reg[base].I = address;
             clockTicks += 3 + CPUUpdateTicksAccess16(address);
          }
          break;
@@ -4921,7 +4921,7 @@ void arm_Run_(u32 CycleCount)
             u32 address = reg[base].I - value;
             reg[dest].I = CPUReadByte(address);
             if(dest != base)
-               reg[base].I = address;      
+               reg[base].I = address;
             clockTicks += 3 + CPUUpdateTicksAccess16(address);
          }
          break;
@@ -5012,7 +5012,7 @@ void arm_Run_(u32 CycleCount)
             u32 address = reg[base].I + offset;
             reg[dest].I = CPUReadByte(address);
             if(dest != base)
-               reg[base].I = address;      
+               reg[base].I = address;
             clockTicks += 3 + CPUUpdateTicksAccess16(address);
          }
          break;
@@ -5053,7 +5053,7 @@ void arm_Run_(u32 CycleCount)
             u32 address = reg[base].I + value;
             reg[dest].I = CPUReadByte(address);
             if(dest != base)
-               reg[base].I = address;      
+               reg[base].I = address;
             clockTicks += 3 + CPUUpdateTicksAccess16(address);
          }
          break;
@@ -5085,7 +5085,7 @@ void arm_Run_(u32 CycleCount)
             // STMDA Rn, {Rlist}
          {
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I - 
+            u32 temp = reg[base].I -
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = (temp + 4) & 0xFFFFFFFC;
             clockTicks += 2;
@@ -5118,7 +5118,7 @@ void arm_Run_(u32 CycleCount)
          {
             // STMDA Rn!, {Rlist}
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I - 
+            u32 temp = reg[base].I -
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = (temp+4) & 0xFFFFFFFC;
             clockTicks += 2;
@@ -5153,7 +5153,7 @@ void arm_Run_(u32 CycleCount)
          {
             // STMDA Rn, {Rlist}^
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I - 
+            u32 temp = reg[base].I -
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = (temp+4) & 0xFFFFFFFC;
             clockTicks += 2;
@@ -5175,7 +5175,7 @@ void arm_Run_(u32 CycleCount)
                STM_REG(1024, R10_FIQ);
                STM_REG(2048, R11_FIQ);
                STM_REG(4096, R12_FIQ);
-            } else 
+            } else
 #else
                verify(armMode==0);
 #endif
@@ -5190,7 +5190,7 @@ void arm_Run_(u32 CycleCount)
             if(armMode != 0x10 && armMode != 0x1f) {
                STM_REG(8192, R13_USR);
                STM_REG(16384, R14_USR);
-            } else 
+            } else
 #endif
             {
                STM_REG(8192, 13);
@@ -5210,7 +5210,7 @@ void arm_Run_(u32 CycleCount)
          {
             // STMDA Rn!, {Rlist}^
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I - 
+            u32 temp = reg[base].I -
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = (temp+4) & 0xFFFFFFFC;
             clockTicks += 2;
@@ -5232,7 +5232,7 @@ void arm_Run_(u32 CycleCount)
                STMW_REG(1024, R10_FIQ);
                STMW_REG(2048, R11_FIQ);
                STMW_REG(4096, R12_FIQ);
-            } else 
+            } else
 #else
                verify(armMode==0);
 #endif
@@ -5248,7 +5248,7 @@ void arm_Run_(u32 CycleCount)
             if(armMode != 0x10 && armMode != 0x1f) {
                STMW_REG(8192, R13_USR);
                STMW_REG(16384, R14_USR);
-            } else 
+            } else
 #endif
             {
                STMW_REG(8192, 13);
@@ -5353,7 +5353,7 @@ void arm_Run_(u32 CycleCount)
                STM_REG(1024, R10_FIQ);
                STM_REG(2048, R11_FIQ);
                STM_REG(4096, R12_FIQ);
-            } else 
+            } else
 #else
                verify(armMode==0);
 #endif
@@ -5362,13 +5362,13 @@ void arm_Run_(u32 CycleCount)
                STM_REG(512, 9);
                STM_REG(1024, 10);
                STM_REG(2048, 11);
-               STM_REG(4096, 12);      
+               STM_REG(4096, 12);
             }
 #ifdef CPUReadMemoryQuick
             if(armMode != 0x10 && armMode != 0x1f) {
                STM_REG(8192, R13_USR);
                STM_REG(16384, R14_USR);
-            } else 
+            } else
 #endif
             {
                STM_REG(8192, 13);
@@ -5391,7 +5391,7 @@ void arm_Run_(u32 CycleCount)
             clockTicks += 2;
             int offset = 0;
             u32 temp = reg[base].I + 4*(cpuBitsSet[opcode & 0xFF] +
-                  cpuBitsSet[(opcode >> 8) & 255]);    
+                  cpuBitsSet[(opcode >> 8) & 255]);
             STMW_REG(1, 0);
             STMW_REG(2, 1);
             STMW_REG(4, 2);
@@ -5408,7 +5408,7 @@ void arm_Run_(u32 CycleCount)
                STMW_REG(1024, R10_FIQ);
                STMW_REG(2048, R11_FIQ);
                STMW_REG(4096, R12_FIQ);
-            } else 
+            } else
 #else
                verify(armMode==0);
 #endif
@@ -5417,14 +5417,14 @@ void arm_Run_(u32 CycleCount)
                STMW_REG(512, 9);
                STMW_REG(1024, 10);
                STMW_REG(2048, 11);
-               STMW_REG(4096, 12);      
+               STMW_REG(4096, 12);
             }
 
 #ifdef CPUReadMemoryQuick
             if(armMode != 0x10 && armMode != 0x1f) {
                STMW_REG(8192, R13_USR);
                STMW_REG(16384, R14_USR);
-            } else 
+            } else
 #endif
             {
                STMW_REG(8192, 13);
@@ -5445,7 +5445,7 @@ void arm_Run_(u32 CycleCount)
          {
             // STMDB Rn, {Rlist}
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I - 
+            u32 temp = reg[base].I -
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = temp & 0xFFFFFFFC;
             clockTicks += 2;
@@ -5478,7 +5478,7 @@ void arm_Run_(u32 CycleCount)
          {
             // STMDB Rn!, {Rlist}
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I - 
+            u32 temp = reg[base].I -
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = temp & 0xFFFFFFFC;
             clockTicks += 2;
@@ -5513,7 +5513,7 @@ void arm_Run_(u32 CycleCount)
          {
             // STMDB Rn, {Rlist}^
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I - 
+            u32 temp = reg[base].I -
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = temp & 0xFFFFFFFC;
             clockTicks += 2;
@@ -5535,7 +5535,7 @@ void arm_Run_(u32 CycleCount)
                STM_REG(1024, R10_FIQ);
                STM_REG(2048, R11_FIQ);
                STM_REG(4096, R12_FIQ);
-            } else 
+            } else
 #else
                verify(armMode==0);
 #endif
@@ -5551,7 +5551,7 @@ void arm_Run_(u32 CycleCount)
             if(armMode != 0x10 && armMode != 0x1f) {
                STM_REG(8192, R13_USR);
                STM_REG(16384, R14_USR);
-            } else 
+            } else
 #endif
             {
                STM_REG(8192, 13);
@@ -5571,7 +5571,7 @@ void arm_Run_(u32 CycleCount)
          {
             // STMDB Rn!, {Rlist}^
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I - 
+            u32 temp = reg[base].I -
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = temp & 0xFFFFFFFC;
             clockTicks += 2;
@@ -5593,10 +5593,10 @@ void arm_Run_(u32 CycleCount)
                STMW_REG(1024, R10_FIQ);
                STMW_REG(2048, R11_FIQ);
                STMW_REG(4096, R12_FIQ);
-            } else 
+            } else
 #else
                verify(armMode==0);
-#endif 
+#endif
             {
                STMW_REG(256, 8);
                STMW_REG(512, 9);
@@ -5609,7 +5609,7 @@ void arm_Run_(u32 CycleCount)
             if(armMode != 0x10 && armMode != 0x1f) {
                STMW_REG(8192, R13_USR);
                STMW_REG(16384, R14_USR);
-            } else 
+            } else
 #endif
             {
                STMW_REG(8192, 13);
@@ -5715,7 +5715,7 @@ void arm_Run_(u32 CycleCount)
                STM_REG(1024, R10_FIQ);
                STM_REG(2048, R11_FIQ);
                STM_REG(4096, R12_FIQ);
-            } else 
+            } else
 #else
                verify(armMode==0);
 #endif
@@ -5724,7 +5724,7 @@ void arm_Run_(u32 CycleCount)
                STM_REG(512, 9);
                STM_REG(1024, 10);
                STM_REG(2048, 11);
-               STM_REG(4096, 12);      
+               STM_REG(4096, 12);
             }
 
 
@@ -5732,7 +5732,7 @@ void arm_Run_(u32 CycleCount)
             if(armMode != 0x10 && armMode != 0x1f) {
                STM_REG(8192, R13_USR);
                STM_REG(16384, R14_USR);
-            } else 
+            } else
 #endif
             {
                STM_REG(8192, 13);
@@ -5755,7 +5755,7 @@ void arm_Run_(u32 CycleCount)
             clockTicks += 2;
             int offset = 0;
             u32 temp = reg[base].I + 4*(cpuBitsSet[opcode & 0xFF] +
-                  cpuBitsSet[(opcode >> 8) & 255]);    
+                  cpuBitsSet[(opcode >> 8) & 255]);
             STMW_REG(1, 0);
             STMW_REG(2, 1);
             STMW_REG(4, 2);
@@ -5772,7 +5772,7 @@ void arm_Run_(u32 CycleCount)
                STMW_REG(1024, R10_FIQ);
                STMW_REG(2048, R11_FIQ);
                STMW_REG(4096, R12_FIQ);
-            } else 
+            } else
 #else
                verify(armMode==0);
 #endif
@@ -5781,14 +5781,14 @@ void arm_Run_(u32 CycleCount)
                STMW_REG(512, 9);
                STMW_REG(1024, 10);
                STMW_REG(2048, 11);
-               STMW_REG(4096, 12);      
+               STMW_REG(4096, 12);
             }
 
 #ifdef CPUReadMemoryQuick
             if(armMode != 0x10 && armMode != 0x1f) {
                STMW_REG(8192, R13_USR);
                STMW_REG(16384, R14_USR);
-            } else 
+            } else
 #endif
             {
                STMW_REG(8192, 13);
@@ -5821,7 +5821,7 @@ void arm_Run_(u32 CycleCount)
          {
             // LDMDA Rn, {Rlist}
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I - 
+            u32 temp = reg[base].I -
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = (temp + 4) & 0xFFFFFFFC;
             clockTicks += 2;
@@ -5856,7 +5856,7 @@ void arm_Run_(u32 CycleCount)
          {
             // LDMDA Rn!, {Rlist}
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I - 
+            u32 temp = reg[base].I -
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = (temp + 4) & 0xFFFFFFFC;
             clockTicks += 2;
@@ -5893,7 +5893,7 @@ void arm_Run_(u32 CycleCount)
          {
             // LDMDA Rn, {Rlist}^
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I - 
+            u32 temp = reg[base].I -
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = (temp + 4) & 0xFFFFFFFC;
             clockTicks += 2;
@@ -5943,7 +5943,7 @@ void arm_Run_(u32 CycleCount)
                   LDM_REG(1024, R10_FIQ);
                   LDM_REG(2048, R11_FIQ);
                   LDM_REG(4096, R12_FIQ);
-               } else 
+               } else
 #else
                   verify(armMode==0);
 #endif
@@ -5959,7 +5959,7 @@ void arm_Run_(u32 CycleCount)
                if(armMode != 0x10 && armMode != 0x1f) {
                   LDM_REG(8192, R13_USR);
                   LDM_REG(16384, R14_USR);
-               } else 
+               } else
 #endif
                {
                   LDM_REG(8192, 13);
@@ -5972,7 +5972,7 @@ void arm_Run_(u32 CycleCount)
          {
             // LDMDA Rn!, {Rlist}^
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I - 
+            u32 temp = reg[base].I -
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = (temp + 4) & 0xFFFFFFFC;
             clockTicks += 2;
@@ -5996,11 +5996,11 @@ void arm_Run_(u32 CycleCount)
 
                reg[15].I = CPUReadMemory(address);
                if(!offset)
-                  clockTicks += 2 + CPUUpdateTicksAccess32(address);      
+                  clockTicks += 2 + CPUUpdateTicksAccess32(address);
                else
                   clockTicks += 2 + CPUUpdateTicksAccessSeq32(address);
 
-               if(!(opcode & (1 << base)))    
+               if(!(opcode & (1 << base)))
                   reg[base].I = temp;
 
                CPUSwitchMode(reg[17].I & 0x1f, false, true);
@@ -6025,7 +6025,7 @@ void arm_Run_(u32 CycleCount)
                   LDM_REG(1024, R10_FIQ);
                   LDM_REG(2048, R11_FIQ);
                   LDM_REG(4096, R12_FIQ);
-               } else 
+               } else
 #else
                   verify(armMode==0);
 #endif
@@ -6041,14 +6041,14 @@ void arm_Run_(u32 CycleCount)
                if(armMode != 0x10 && armMode != 0x1f) {
                   LDM_REG(8192, R13_USR);
                   LDM_REG(16384, R14_USR);
-               } else 
+               } else
 #endif
                {
                   LDM_REG(8192, 13);
                   LDM_REG(16384, 14);
                }
 
-               if(!(opcode & (1 << base)))    
+               if(!(opcode & (1 << base)))
                   reg[base].I = temp;
             }
          }
@@ -6091,7 +6091,7 @@ void arm_Run_(u32 CycleCount)
          {
             // LDMIA Rn!, {Rlist}
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I + 
+            u32 temp = reg[base].I +
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = reg[base].I & 0xFFFFFFFC;
             clockTicks += 2;
@@ -6176,7 +6176,7 @@ void arm_Run_(u32 CycleCount)
                   LDM_REG(1024, R10_FIQ);
                   LDM_REG(2048, R11_FIQ);
                   LDM_REG(4096, R12_FIQ);
-               } else 
+               } else
 #endif
                {
                   LDM_REG(256, 8);
@@ -6190,7 +6190,7 @@ void arm_Run_(u32 CycleCount)
                if(armMode != 0x10 && armMode != 0x1f) {
                   LDM_REG(8192, R13_USR);
                   LDM_REG(16384, R14_USR);
-               } else 
+               } else
 #endif
                {
                   LDM_REG(8192, 13);
@@ -6227,11 +6227,11 @@ void arm_Run_(u32 CycleCount)
 
                reg[15].I = CPUReadMemory(address);
                if(!offset)
-                  clockTicks += 2 + CPUUpdateTicksAccess32(address);      
+                  clockTicks += 2 + CPUUpdateTicksAccess32(address);
                else
                   clockTicks += 2 + CPUUpdateTicksAccessSeq32(address);
 
-               if(!(opcode & (1 << base)))    
+               if(!(opcode & (1 << base)))
                   reg[base].I = temp;
 
                CPUSwitchMode(reg[17].I & 0x1f, false, true);
@@ -6256,7 +6256,7 @@ void arm_Run_(u32 CycleCount)
                   LDM_REG(1024, R10_FIQ);
                   LDM_REG(2048, R11_FIQ);
                   LDM_REG(4096, R12_FIQ);
-               } else 
+               } else
 #endif
                {
                   LDM_REG(256, 8);
@@ -6270,14 +6270,14 @@ void arm_Run_(u32 CycleCount)
                if(armMode != 0x10 && armMode != 0x1f) {
                   LDM_REG(8192, R13_USR);
                   LDM_REG(16384, R14_USR);
-               } else 
+               } else
 #endif
                {
                   LDM_REG(8192, 13);
                   LDM_REG(16384, 14);
                }
 
-               if(!(opcode & (1 << base)))    
+               if(!(opcode & (1 << base)))
                   reg[base].I = temp;
             }
          }
@@ -6287,7 +6287,7 @@ void arm_Run_(u32 CycleCount)
          {
             // LDMDB Rn, {Rlist}
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I - 
+            u32 temp = reg[base].I -
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = temp & 0xFFFFFFFC;
             clockTicks += 2;
@@ -6322,7 +6322,7 @@ void arm_Run_(u32 CycleCount)
          {
             // LDMDB Rn!, {Rlist}
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I - 
+            u32 temp = reg[base].I -
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = temp & 0xFFFFFFFC;
             clockTicks += 2;
@@ -6359,7 +6359,7 @@ void arm_Run_(u32 CycleCount)
          {
             // LDMDB Rn, {Rlist}^
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I - 
+            u32 temp = reg[base].I -
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = temp & 0xFFFFFFFC;
             clockTicks += 2;
@@ -6409,7 +6409,7 @@ void arm_Run_(u32 CycleCount)
                   LDM_REG(1024, R10_FIQ);
                   LDM_REG(2048, R11_FIQ);
                   LDM_REG(4096, R12_FIQ);
-               } else 
+               } else
 #endif
                {
                   LDM_REG(256, 8);
@@ -6423,7 +6423,7 @@ void arm_Run_(u32 CycleCount)
                if(armMode != 0x10 && armMode != 0x1f) {
                   LDM_REG(8192, R13_USR);
                   LDM_REG(16384, R14_USR);
-               } else 
+               } else
 #endif
                {
                   LDM_REG(8192, 13);
@@ -6436,7 +6436,7 @@ void arm_Run_(u32 CycleCount)
          {
             // LDMDB Rn!, {Rlist}^
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I - 
+            u32 temp = reg[base].I -
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = temp & 0xFFFFFFFC;
             clockTicks += 2;
@@ -6460,11 +6460,11 @@ void arm_Run_(u32 CycleCount)
 
                reg[15].I = CPUReadMemory(address);
                if(!offset)
-                  clockTicks += 2 + CPUUpdateTicksAccess32(address);      
+                  clockTicks += 2 + CPUUpdateTicksAccess32(address);
                else
                   clockTicks += 2 + CPUUpdateTicksAccessSeq32(address);
 
-               if(!(opcode & (1 << base)))    
+               if(!(opcode & (1 << base)))
                   reg[base].I = temp;
 
                CPUSwitchMode(reg[17].I & 0x1f, false, true);
@@ -6489,7 +6489,7 @@ void arm_Run_(u32 CycleCount)
                   LDM_REG(1024, R10_FIQ);
                   LDM_REG(2048, R11_FIQ);
                   LDM_REG(4096, R12_FIQ);
-               } else 
+               } else
 #endif
                {
                   LDM_REG(256, 8);
@@ -6503,14 +6503,14 @@ void arm_Run_(u32 CycleCount)
                if(armMode != 0x10 && armMode != 0x1f) {
                   LDM_REG(8192, R13_USR);
                   LDM_REG(16384, R14_USR);
-               } else 
+               } else
 #endif
                {
                   LDM_REG(8192, 13);
                   LDM_REG(16384, 14);
                }
 
-               if(!(opcode & (1 << base)))    
+               if(!(opcode & (1 << base)))
                   reg[base].I = temp;
             }
          }
@@ -6553,7 +6553,7 @@ void arm_Run_(u32 CycleCount)
          {
             // LDMIB Rn!, {Rlist}
             int base = (opcode & 0x000F0000) >> 16;
-            u32 temp = reg[base].I + 
+            u32 temp = reg[base].I +
                4 * (cpuBitsSet[opcode & 255] + cpuBitsSet[(opcode >> 8) & 255]);
             u32 address = (reg[base].I+4) & 0xFFFFFFFC;
             clockTicks += 2;
@@ -6585,7 +6585,7 @@ void arm_Run_(u32 CycleCount)
             if(!(opcode & (1 << base)))
                reg[base].I = temp;
          }
-         break;    
+         break;
          CASE_16(0x9d0)
          {
             // LDMIB Rn, {Rlist}^
@@ -6638,7 +6638,7 @@ void arm_Run_(u32 CycleCount)
                   LDM_REG(1024, R10_FIQ);
                   LDM_REG(2048, R11_FIQ);
                   LDM_REG(4096, R12_FIQ);
-               } else 
+               } else
 #endif
                {
                   LDM_REG(256, 8);
@@ -6652,7 +6652,7 @@ void arm_Run_(u32 CycleCount)
                if(armMode != 0x10 && armMode != 0x1f) {
                   LDM_REG(8192, R13_USR);
                   LDM_REG(16384, R14_USR);
-               } else 
+               } else
 #endif
                {
                   LDM_REG(8192, 13);
@@ -6689,11 +6689,11 @@ void arm_Run_(u32 CycleCount)
 
                reg[15].I = CPUReadMemory(address);
                if(!offset)
-                  clockTicks += 2 + CPUUpdateTicksAccess32(address);      
+                  clockTicks += 2 + CPUUpdateTicksAccess32(address);
                else
                   clockTicks += 2 + CPUUpdateTicksAccessSeq32(address);
 
-               if(!(opcode & (1 << base)))    
+               if(!(opcode & (1 << base)))
                   reg[base].I = temp;
 
                CPUSwitchMode(reg[17].I & 0x1f, false, true);
@@ -6718,7 +6718,7 @@ void arm_Run_(u32 CycleCount)
                   LDM_REG(1024, R10_FIQ);
                   LDM_REG(2048, R11_FIQ);
                   LDM_REG(4096, R12_FIQ);
-               } else 
+               } else
 #endif
                {
                   LDM_REG(256, 8);
@@ -6732,18 +6732,18 @@ void arm_Run_(u32 CycleCount)
                if(armMode != 0x10 && armMode != 0x1f) {
                   LDM_REG(8192, R13_USR);
                   LDM_REG(16384, R14_USR);
-               } else 
+               } else
 #endif
                {
                   LDM_REG(8192, 13);
                   LDM_REG(16384, 14);
                }
 
-               if(!(opcode & (1 << base)))    
+               if(!(opcode & (1 << base)))
                   reg[base].I = temp;
             }
          }
-         break;    
+         break;
          CASE_256(0xa00)
          {
             // B <offset>
@@ -6776,7 +6776,7 @@ void arm_Run_(u32 CycleCount)
          CASE_256(0xf00)
             // SWI <comment>
             clockTicks += 3;
-         CPUSoftwareInterrupt(opcode & 0x00FFFFFF);      
+         CPUSoftwareInterrupt(opcode & 0x00FFFFFF);
          break;
             default:
          CPUUndefinedException();
@@ -6819,7 +6819,7 @@ void arm_Reset(void)
 	reg[16].I = 0x00000000;
 	reg[R13_IRQ].I = 0x03007FA0;
 	reg[R13_SVC].I = 0x03007FE0;
-	armIrqEnable = true;      
+	armIrqEnable = true;
 	armFiqEnable = false;
 	update_armintc();
 
@@ -6877,7 +6877,7 @@ extern "C" NOINLINE void CPUFiq(void)
 
 /*
 	--Seems like aica has 3 interrupt controllers actualy (damn lazy sega ..)
-	The "normal" one (the one that exists on scsp) , one to emulate the 68k intc , and , 
+	The "normal" one (the one that exists on scsp) , one to emulate the 68k intc , and ,
 	of course , the arm7 one
 
 	The output of the sci* bits is input to the e68k , and the output of e68k is inputed into the FIQ
@@ -6887,14 +6887,14 @@ void arm_SetEnabled(bool enabled)
 {
 	if(!Arm7Enabled && enabled)
 			arm_Reset();
-	
+
 	Arm7Enabled=enabled;
 }
 
 void libAICA_TimeStep();
 
 void arm_Run(u32 CycleCount)
-{ 
+{
    unsigned i;
    if (Arm7Enabled)
    {
@@ -6937,12 +6937,12 @@ static T arm_ReadReg(u32 addr)
    }
 
    return libAICA_ReadReg(addr,sz);
-}		
+}
 
-//00000000~007FFFFF @DRAM_AREA* 
-//00800000~008027FF @CHANNEL_DATA 
-//00802800~00802FFF @COMMON_DATA 
-//00803000~00807FFF @DSP_DATA 
+//00000000~007FFFFF @DRAM_AREA*
+//00800000~008027FF @CHANNEL_DATA
+//00802800~00802FFF @COMMON_DATA
+//00803000~00807FFF @DSP_DATA
 
 template u8 arm_ReadReg<1,u8>(u32 adr);
 template u16 arm_ReadReg<2,u16>(u32 adr);
@@ -6951,3 +6951,5 @@ template u32 arm_ReadReg<4,u32>(u32 adr);
 template void arm_WriteReg<1>(u32 adr,u8 data);
 template void arm_WriteReg<2>(u32 adr,u16 data);
 template void arm_WriteReg<4>(u32 adr,u32 data);
+
+void* EntryPoints[ARAM_SIZE/4];

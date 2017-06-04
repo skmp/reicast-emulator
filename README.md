@@ -76,6 +76,33 @@ cd shell/linux
 make
 ```
 
+Building for ARM
+----------------
+Same tools as Linux install required.
+
+In addition, you should install a cross-compile tool if you are compiling from a non-ARM architecture.
+
+See ```binutils``` or ```crossdev``` according to your distribution.  You will need to call ```make``` prefixed by ```CC_PREFIX="{your_compiler_prefix}"```, for example ```CC_PREFIX="armv7ve-hardfloat-linux-gnueabi-"```.
+
+Example:
+```
+CC_PREFIX="armv7ve-hardfloat-linux-gnueabi-" platform=odroid ARCH=arm make
+```
+
+Supported platform values are:
+* rpi
+* rpi2
+* odroid
+* imx6
+* armv
+
+For platform=odroid, the Makefile you auto-detect the board you are compiling on.  If you are cross-compiling, this would return empty.  Use ```BOARD="{target board}"``` to make sure you are compiling for the right CPU.
+
+Odroid supported board values are:
+* ODROIDC (for ODROID-C1)
+* ODROID-XU3 (including ODROID-XU4)
+* {empty} would target ODROID-U and ODROID-X series
+
 
 Translations
 ------------

@@ -78,7 +78,7 @@ ifeq ($(ARMV7A_FLAGS),1)
 endif
 
 ifeq ($(ARMV7_CORTEX_A9_FLAGS),1)
-	MFLAGS += -mtune=cortex-a9
+	MFLAGS += -mcpu=cortex-a9
 endif
 
 ifeq ($(ARM_FLOAT_ABI_HARD),1)
@@ -193,9 +193,15 @@ else ifneq (,$(findstring rpi,$(platform)))
 
 # ODROIDs
 else ifneq (,$(findstring odroid,$(platform)))
+	AS = ${CC_PREFIX}gcc #The ngen_arm.S must be compiled with gcc, not as
+	CC = ${CC_PREFIX}gcc
+	CXX = ${CC_PREFIX}g++
+
 	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+ifeq ($(BOARD),1)
 	BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
+endif
 	SHARED := -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	GLES = 1
@@ -223,6 +229,10 @@ else ifneq (,$(findstring odroid,$(platform)))
 		CFLAGS += -mcpu=cortex-a9
 		CXXFLAGS += -mcpu=cortex-a9
 	endif
+
+	#Since we are using GCC, we use the CFLAGS and we add some extra parameters to be able to compile (taken from reicast/reicast-emulator)
+	ASFLAGS += $(CFLAGS) -c  -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
+
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm
 
@@ -458,7 +468,7 @@ RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -DRELEASE -ffast-math -fomit-frame-poin
 CFLAGS         += -D__LIBRETRO__
 
 ifeq ($(WITH_DYNAREC), arm)
-RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
+RZDCY_CFLAGS += -march=armv7-a -mcpu=cortex-a9 -mfpu=vfpv3-d16
 RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
 else
 RZDCY_CFLAGS += -DTARGET_LINUX_x86

@@ -393,11 +393,15 @@ static void update_variables(void)
       enable_purupuru = (strcmp("enabled", var.value) == 0);
 }
 
+bool doCleanFrame = false;
+
 void retro_run (void)
 {
    bool updated = false;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       update_variables();
+
+   doCleanFrame = true;
 
    if (first_run)
    {

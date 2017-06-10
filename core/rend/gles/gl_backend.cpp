@@ -1770,6 +1770,7 @@ static void vertex_buffer_unmap(void)
 
 extern bool update_zmax;
 extern bool update_zmin;
+extern bool doCleanFrame;
 
 #ifdef MSB_FIRST
 #define INDEX_GET(a) (a^3)
@@ -2201,11 +2202,15 @@ static bool RenderFrame(void)
 		BindRTT(FB_W_SOF1&VRAM_MASK,FB_X_CLIP.max-FB_X_CLIP.min+1,FB_Y_CLIP.max-FB_Y_CLIP.min+1,channels,format);
 	}
 
-   glClearColor(0, 0, 0, 1.0f);
-	glClearDepth(0.f);
 
    glViewport(0, 0, gles_screen_width, gles_screen_height);
-	glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+   if (doCleanFrame)
+   {
+      glClearColor(0, 0, 0, 1.0f);
+      glClearDepth(0.f);
+      glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+      doCleanFrame = false;
+   }
 
 	if (UsingAutoSort())
 		GenSorted();

@@ -61,7 +61,7 @@ ifeq ($(TARGET_ARCH_ABI),x86)
 endif
 
 LOCAL_CPP_FEATURES := 
-LOCAL_SHARED_LIBRARIES:= libcutils libutils
+#LOCAL_SHARED_LIBRARIES:= libcutils libutils
 LOCAL_PRELINK_MODULE  := false
 
 LOCAL_MODULE	:= dc

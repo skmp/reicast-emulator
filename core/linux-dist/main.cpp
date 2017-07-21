@@ -446,6 +446,11 @@ void start_shutdown(void)
 
 int main(int argc, wchar* argv[])
 {
+
+	#ifdef NO_VIRTUAL_CFG
+		printf("Virtual CFG support is disabled in this build! \n");
+	#endif
+
 	#ifdef TARGET_PANDORA
 		signal(SIGSEGV, clean_exit);
 		signal(SIGKILL, clean_exit);
@@ -503,6 +508,7 @@ int main(int argc, wchar* argv[])
 
             dc_term();
 
+	#if defined(USE_EVDEV)
             printf("closing any open controllers\n");
 
             for (int port = 0; port < 4 ; port++)
@@ -512,14 +518,14 @@ int main(int argc, wchar* argv[])
                     close(evdev_controllers[port].fd);
                 }
             }
+	#endif
 
-            #if defined(SUPPORT_X11)
-                /*Close the GL context */
-                x11_gl_context_destroy();
-	
-	        /* Destroy the window */
-	        x11_window_destroy();
-            #endif
+	#if defined(SUPPORT_X11)
+		/*Close the GL context */
+		x11_gl_context_destroy();
+		/* Destroy the window */
+		x11_window_destroy();
+	#endif
 
         #endif
 

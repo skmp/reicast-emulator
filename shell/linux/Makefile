@@ -8,6 +8,7 @@ USE_OSS := 1
 #USE_PULSEAUDIO := 1
 USE_EVDEV := 1
 USE_JOYSTICK := 1
+#NO_VIRTUAL_CFG := 1
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
@@ -290,6 +291,10 @@ endif
 ifdef HAS_SOFTREND
     CFLAGS += -fopenmp -msse4.1
     LDFLAGS += -fopenmp
+endif
+
+ifdef NO_VIRTUAL_CFG
+    CFLAGS += -D NO_VIRTUAL_CFG
 endif
 
 # these are also handled on core.mk, but ignored here

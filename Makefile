@@ -123,9 +123,11 @@ else ifneq (,$(findstring rpi,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	SHARED := -shared -Wl,--version-script=link.T
 	fpic = -fPIC
-	GLES = 1
 	LIBS += -lrt
-
+	ARM_FLOAT_ABI_HARD = 1
+	FORCE_GLES = 1
+	SINGLE_PREC_FLAGS = 1
+	
 	ifeq (,$(findstring mesa,$(platform)))
 		GL_LIB := -L/opt/vc/lib
 		INCFLAGS += -I/opt/vc/include

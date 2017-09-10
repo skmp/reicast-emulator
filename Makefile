@@ -67,26 +67,6 @@ else ifneq ($(findstring MINGW,$(shell uname -a)),)
 	system_platform = win
 endif
 
-ifeq ($(SINGLE_PREC_FLAGS),1)
-CFLAGS += -fsingle-precision-constant
-RZDCY_CFLAGS += -fsingle-precision-constant
-endif
-
-ifeq ($(ARMV7A_FLAGS),1)
-	MFLAGS += -marm -march=armv7-a
-	ASFLAGS += -march=armv7-a
-endif
-
-ifeq ($(ARMV7_CORTEX_A9_FLAGS),1)
-	MFLAGS += -mcpu=cortex-a9
-endif
-
-ifeq ($(ARM_FLOAT_ABI_HARD),1)
-	MFLAGS += -mfloat-abi=hard
-	ASFLAGS += -mfloat-abi=hard
-	CFLAGS += -DARM_HARDFP
-endif
-
 CORE_DIR := core
 
 DYNAREC_USED = 0
@@ -108,33 +88,10 @@ else
     DC_PLATFORM=dreamcast
 endif
 
-ifeq ($(HAVE_GENERIC_JIT),1)
-    CFLAGS       += -DTARGET_NO_JIT
-	 CXXFLAGS     += -DTARGET_NO_JIT
-	 RZDCY_CFLAGS += -DTARGET_NO_JIT
-	 CXXFLAGS     += -std=c++11
-endif
-
 HOST_CPU_X86=0x20000001
 HOST_CPU_ARM=0x20000002
 HOST_CPU_MIPS=0x20000003
 HOST_CPU_X64=0x20000004
-
-ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
-HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_X64)
-endif
-
-ifeq ($(WITH_DYNAREC), x86)
-HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_X86)
-endif
-
-ifeq ($(WITH_DYNAREC), arm)
-HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_ARM)
-endif
-
-ifeq ($(WITH_DYNAREC), mips)
-HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_MIPS)
-endif
 
 ifeq ($(STATIC_LINKING),1)
 EXT=a
@@ -158,16 +115,6 @@ ifeq ($(WITH_DYNAREC), x86)
 	CFLAGS += -D TARGET_NO_AREC
 endif
 
-   ifeq ($(FORCE_GLES),1)
-		GLES = 1
-		GL_LIB := -lGLESv2
-	else ifneq (,$(findstring gles,$(platform)))
-		GLES = 1
-		GL_LIB := -lGLESv2
-	else
-		GL_LIB := -lGL
-	endif
-
 	PLATFORM_EXT := unix
 
 # Raspberry Pi
@@ -178,8 +125,12 @@ else ifneq (,$(findstring rpi,$(platform)))
 	fpic = -fPIC
 	GLES = 1
 	LIBS += -lrt
+
+
 	GL_LIB := -L/opt/vc/lib -lGLESv2
 	INCFLAGS += -I/opt/vc/include
+
+
 	ifneq (,$(findstring rpi2,$(platform)))
 		CPUFLAGS += -DNO_ASM -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE
 		CFLAGS = -mcpu=cortex-a7 -mfloat-abi=hard
@@ -444,6 +395,59 @@ endif
 ifeq ($(STATIC_LINKING),1)
 fpic=
 SHARED=
+endif
+
+ifeq ($(SINGLE_PREC_FLAGS),1)
+	CFLAGS += -fsingle-precision-constant
+	RZDCY_CFLAGS += -fsingle-precision-constant
+endif
+
+ifeq ($(ARMV7A_FLAGS),1)
+	MFLAGS += -marm -march=armv7-a
+	ASFLAGS += -march=armv7-a
+endif
+
+ifeq ($(ARMV7_CORTEX_A9_FLAGS),1)
+	MFLAGS += -mcpu=cortex-a9
+endif
+
+ifeq ($(ARM_FLOAT_ABI_HARD),1)
+	MFLAGS += -mfloat-abi=hard
+	ASFLAGS += -mfloat-abi=hard
+	CFLAGS += -DARM_HARDFP
+endif
+
+ifeq ($(HAVE_GENERIC_JIT),1)
+	CFLAGS       += -DTARGET_NO_JIT
+	CXXFLAGS     += -DTARGET_NO_JIT
+	RZDCY_CFLAGS += -DTARGET_NO_JIT
+	CXXFLAGS     += -std=c++11
+endif
+
+ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
+	HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_X64)
+endif
+
+ifeq ($(WITH_DYNAREC), x86)
+	HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_X86)
+endif
+
+ifeq ($(WITH_DYNAREC), arm)
+	HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_ARM)
+endif
+
+ifeq ($(WITH_DYNAREC), mips)
+	HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_MIPS)
+endif
+
+ifeq ($(FORCE_GLES),1)
+	GLES = 1
+	GL_LIB := -lGLESv2
+else ifneq (,$(findstring gles,$(platform)))
+	GLES = 1
+	GL_LIB := -lGLESv2
+else
+	GL_LIB := -lGL
 endif
 
 CFLAGS += $(HOST_CPU_FLAGS)

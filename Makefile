@@ -41,15 +41,15 @@ endif
 
 ifeq ($(platform),)
 	platform = unix
-ifeq ($(UNAME),)
-	platform = win
-else ifneq ($(findstring MINGW,$(UNAME)),)
-	platform = win
-else ifneq ($(findstring Darwin,$(UNAME)),)
-	platform = osx
-else ifneq ($(findstring win,$(UNAME)),)
-	platform = win
-endif
+	ifeq ($(UNAME),)
+		platform = win
+	else ifneq ($(findstring MINGW,$(UNAME)),)
+		platform = win
+	else ifneq ($(findstring Darwin,$(UNAME)),)
+		platform = osx
+	else ifneq ($(findstring win,$(UNAME)),)
+		platform = win
+	endif
 endif
 
 # system platform
@@ -60,9 +60,9 @@ ifeq ($(shell uname -a),)
 else ifneq ($(findstring Darwin,$(shell uname -a)),)
 	system_platform = osx
 	arch = intel
-ifeq ($(shell uname -p),powerpc)
-	arch = ppc
-endif
+	ifeq ($(shell uname -p),powerpc)
+		arch = ppc
+	endif
 else ifneq ($(findstring MINGW,$(shell uname -a)),)
 	system_platform = win
 endif
@@ -72,20 +72,20 @@ CORE_DIR := core
 DYNAREC_USED = 0
 
 ifeq ($(NO_VERIFY),1)
-    CFLAGS       += -DNO_VERIFY
-	 CXXFLAGS     += -DNO_VERIFY
-	 RZDCY_CFLAGS += -DNO_VERIFY
+	CFLAGS       += -DNO_VERIFY
+	CXXFLAGS     += -DNO_VERIFY
+	RZDCY_CFLAGS += -DNO_VERIFY
 endif
 
 ifeq ($(NAOMI),1)
-    CFLAGS       += -DTARGET_NAOMI
-	 CXXFLAGS     += -DTARGET_NAOMI
-	 RZDCY_CFLAGS += -DTARGET_NAOMI
+	CFLAGS       += -DTARGET_NAOMI
+	CXXFLAGS     += -DTARGET_NAOMI
+	RZDCY_CFLAGS += -DTARGET_NAOMI
 
-    DC_PLATFORM=naomi
-	 TARGET_NAME   := reicast_naomi
+	DC_PLATFORM=naomi
+	TARGET_NAME   := reicast_naomi
 else
-    DC_PLATFORM=dreamcast
+	DC_PLATFORM=dreamcast
 endif
 
 HOST_CPU_X86=0x20000001
@@ -108,12 +108,11 @@ ifneq (,$(findstring unix,$(platform)))
 
 	fpic = -fPIC
 
-ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
-	CFLAGS += -D TARGET_NO_AREC
-endif
-ifeq ($(WITH_DYNAREC), x86)
-	CFLAGS += -D TARGET_NO_AREC
-endif
+	ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
+		CFLAGS += -D TARGET_NO_AREC
+	else ifeq ($(WITH_DYNAREC), x86)
+		CFLAGS += -D TARGET_NO_AREC
+	endif
 
 	PLATFORM_EXT := unix
 
@@ -152,9 +151,9 @@ else ifneq (,$(findstring odroid,$(platform)))
 
 	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
-ifeq ($(BOARD),1)
-	BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
-endif
+	ifeq ($(BOARD),1)
+		BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
+	endif
 	SHARED := -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	GLES = 1
@@ -251,17 +250,17 @@ else ifneq (,$(findstring ios,$(platform)))
 	CC = clang -arch armv7 -isysroot $(IOSSDK)
 	CC_AS = perl ./tools/gas-preprocessor.pl $(CC)
 	CXX = clang++ -arch armv7 -isysroot $(IOSSDK)
-ifeq ($(platform),ios9)
-	CC         += -miphoneos-version-min=8.0
-	CC_AS      += -miphoneos-version-min=8.0
-	CXX        += -miphoneos-version-min=8.0
-	PLATCFLAGS += -miphoneos-version-min=8.0
-else
-	CC += -miphoneos-version-min=5.0
-	CC_AS += -miphoneos-version-min=5.0
-	CXX += -miphoneos-version-min=5.0
-	PLATCFLAGS += -miphoneos-version-min=5.0
-endif
+	ifeq ($(platform),ios9)
+		CC         += -miphoneos-version-min=8.0
+		CC_AS      += -miphoneos-version-min=8.0
+		CXX        += -miphoneos-version-min=8.0
+		PLATCFLAGS += -miphoneos-version-min=8.0
+	else
+		CC += -miphoneos-version-min=5.0
+		CC_AS += -miphoneos-version-min=5.0
+		CXX += -miphoneos-version-min=5.0
+		PLATCFLAGS += -miphoneos-version-min=5.0
+	endif
 
 # Theos iOS
 else ifneq (,$(findstring theos_ios,$(platform)))
@@ -371,7 +370,7 @@ else ifeq ($(platform), emscripten)
 	PLATCFLAGS += -Drglgen_resolve_symbols_custom=reicast_rglgen_resolve_symbols_custom \
 					  -Drglgen_resolve_symbols=reicast_rglgen_resolve_symbols
 
-NO_REC=0
+	NO_REC=0
 	HAVE_NEON = 0
 	PLATFORM_EXT := unix
 	#HAVE_SHARED_CONTEXT := 1
@@ -395,8 +394,8 @@ endif
 endif
 
 ifeq ($(STATIC_LINKING),1)
-fpic=
-SHARED=
+	fpic=
+	SHARED=
 endif
 
 ifeq ($(SINGLE_PREC_FLAGS),1)
@@ -452,62 +451,63 @@ else
 	GL_LIB := -lGL
 endif
 
-CFLAGS += $(HOST_CPU_FLAGS)
-CXXFLAGS += $(HOST_CPU_FLAGS)
+CFLAGS       += $(HOST_CPU_FLAGS)
+CXXFLAGS     += $(HOST_CPU_FLAGS)
 RZDCY_CFLAGS += $(HOST_CPU_FLAGS)
 
 include Makefile.common
 
 ifeq ($(DEBUG),1)
-OPTFLAGS       := -O0
-LDFLAGS  += -g
-CFLAGS   += -g
+	OPTFLAGS       := -O0
+	LDFLAGS        += -g
+	CFLAGS         += -g
 else
-OPTFLAGS       := -O2
-RZDCY_CFLAGS   += -DNDEBUG
-RZDCY_CXXFLAGS += -DNDEBUG
-CFLAGS         += -DNDEBUG
-CXXFLAGS       += -DNDEBUG
-LDFLAGS        += -DNDEBUG
+	OPTFLAGS       := -O2
+	RZDCY_CFLAGS   += -DNDEBUG
+	RZDCY_CXXFLAGS += -DNDEBUG
+	CFLAGS         += -DNDEBUG
+	CXXFLAGS       += -DNDEBUG
+	LDFLAGS        += -DNDEBUG
 endif
+
 RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -DRELEASE -ffast-math -fomit-frame-pointer -D__LIBRETRO__
 CFLAGS         += -D__LIBRETRO__
 
 ifeq ($(WITH_DYNAREC), arm)
-RZDCY_CFLAGS += -march=armv7-a -mcpu=cortex-a9 -mfpu=vfpv3-d16
-RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
+	RZDCY_CFLAGS += -march=armv7-a -mcpu=cortex-a9 -mfpu=vfpv3-d16
+	RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
 else
-RZDCY_CFLAGS += -DTARGET_LINUX_x86
+	RZDCY_CFLAGS += -DTARGET_LINUX_x86
 endif
 
 ifeq ($(NO_THREADS),1)
-  RZDCY_CFLAGS += -DTARGET_NO_THREADS
-  CFLAGS       += -DTARGET_NO_THREADS
-  CXXFLAGS     += -DTARGET_NO_THREADS
+	RZDCY_CFLAGS += -DTARGET_NO_THREADS
+	CFLAGS       += -DTARGET_NO_THREADS
+	CXXFLAGS     += -DTARGET_NO_THREADS
 else
-  LIBS         += -lpthread
+	LIBS         += -lpthread
 endif
 
 ifeq ($(NO_REC),1)
-  RZDCY_CFLAGS += -DTARGET_NO_REC
+	RZDCY_CFLAGS += -DTARGET_NO_REC
 endif
 
 ifeq ($(NO_REND),1)
-  RZDCY_CFLAGS += -DNO_REND=1
-  CFLAGS 	 += -DNO_REND
-  CXXFLAGS += -DNO_REND
+	RZDCY_CFLAGS += -DNO_REND=1
+	CFLAGS       += -DNO_REND
+	CXXFLAGS     += -DNO_REND
 endif
 
 ifeq ($(NO_EXCEPTIONS),1)
-  RZDCY_CFLAGS += -DTARGET_NO_EXCEPTIONS=1
-  CFLAGS 	 += -DTARGET_NO_EXCEPTIONS
-  CXXFLAGS += -DTARGET_NO_EXCEPTIONS
+	RZDCY_CFLAGS += -DTARGET_NO_EXCEPTIONS=1
+	CFLAGS       += -DTARGET_NO_EXCEPTIONS
+	CXXFLAGS     += -DTARGET_NO_EXCEPTIONS
 endif
 
 ifeq ($(NO_NVMEM),1)
-  RZDCY_CFLAGS += -DTARGET_NO_NVMEM=1
-  CFLAGS 	 += -DTARGET_NO_NVMEM
-  CXXFLAGS += -DTARGET_NO_NVMEM
+	RZDCY_CFLAGS += -DTARGET_NO_NVMEM=1
+	CFLAGS       += -DTARGET_NO_NVMEM
+	CXXFLAGS     += -DTARGET_NO_NVMEM
 endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fexceptions -fno-rtti -std=gnu++11
@@ -525,31 +525,31 @@ ifneq (,$(findstring arm, $(ARCH)))
 endif
 
 ifeq ($(PGO_MAKE),1)
-    CFLAGS += -fprofile-generate -pg
-    LDFLAGS += -fprofile-generate
+	CFLAGS += -fprofile-generate -pg
+	LDFLAGS += -fprofile-generate
 else
-    CFLAGS += -fomit-frame-pointer
+	CFLAGS += -fomit-frame-pointer
 endif
 
 ifeq ($(PGO_USE),1)
-    CFLAGS += -fprofile-use
+	CFLAGS += -fprofile-use
 endif
 
 ifeq ($(LTO_TEST),1)
-    CFLAGS += -flto -fwhole-program 
-    LDFLAGS +=-flto -fwhole-program 
+	CFLAGS += -flto -fwhole-program 
+	LDFLAGS +=-flto -fwhole-program 
 endif
 
 ifeq ($(HAVE_GL), 1)
-ifeq ($(GLES),1)
-	 RZDCY_CFLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES2
-    CXXFLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES2
-	 CFLAGS   += -DHAVE_OPENGLES -DHAVE_OPENGLES2
-else
-	 RZDCY_CFLAGS += -DHAVE_OPENGL
-    CXXFLAGS += -DHAVE_OPENGL
-	 CFLAGS   += -DHAVE_OPENGL
-endif
+	ifeq ($(GLES),1)
+		RZDCY_CFLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES2
+		CXXFLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES2
+		CFLAGS   += -DHAVE_OPENGLES -DHAVE_OPENGLES2
+	else
+		RZDCY_CFLAGS += -DHAVE_OPENGL
+		CXXFLAGS += -DHAVE_OPENGL
+		CFLAGS   += -DHAVE_OPENGL
+	endif
 endif
 
 ifeq ($(HAVE_CORE), 1)

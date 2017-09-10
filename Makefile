@@ -126,12 +126,17 @@ else ifneq (,$(findstring rpi,$(platform)))
 	GLES = 1
 	LIBS += -lrt
 
-	GL_LIB := -L/opt/vc/lib -lGLESv2
-	INCFLAGS += -I/opt/vc/include
+	ifeq (,$(findstring mesa,$(platform)))
+		GL_LIB := -L/opt/vc/lib
+		INCFLAGS += -I/opt/vc/include
+	endif
 
 	ifneq (,$(findstring rpi2,$(platform)))
-		CFLAGS = -mcpu=cortex-a7 -mfloat-abi=hard
-		CXXFLAGS = -mcpu=cortex-a7 -mfloat-abi=hard
+		CFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+		CXXFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+	else ifneq (,$(findstring rpi3,$(platform)))
+		CFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+		CXXFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
 	endif
 
 	PLATFORM_EXT := unix

@@ -126,19 +126,14 @@ else ifneq (,$(findstring rpi,$(platform)))
 	GLES = 1
 	LIBS += -lrt
 
-
 	GL_LIB := -L/opt/vc/lib -lGLESv2
 	INCFLAGS += -I/opt/vc/include
 
-
 	ifneq (,$(findstring rpi2,$(platform)))
-		CPUFLAGS += -DNO_ASM -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE
 		CFLAGS = -mcpu=cortex-a7 -mfloat-abi=hard
 		CXXFLAGS = -mcpu=cortex-a7 -mfloat-abi=hard
-		HAVE_NEON = 0
-	else
-		CPUFLAGS += -DARMv5_ONLY -DNO_ASM
 	endif
+
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm
 

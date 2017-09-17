@@ -145,10 +145,6 @@ else ifneq (,$(findstring rpi,$(platform)))
 
 # ODROIDs
 else ifneq (,$(findstring odroid,$(platform)))
-	AS = ${CC_PREFIX}gcc #The ngen_arm.S must be compiled with gcc, not as
-	CC = ${CC_PREFIX}gcc
-	CXX = ${CC_PREFIX}g++
-
 	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	ifeq ($(BOARD),1)
@@ -156,10 +152,11 @@ else ifneq (,$(findstring odroid,$(platform)))
 	endif
 	SHARED := -shared -Wl,--version-script=link.T
 	fpic = -fPIC
-	GLES = 1
 	LIBS += -lrt
-	GL_LIB := -lGLESv2
-	CPUFLAGS += -DNO_ASM -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE
+	ARM_FLOAT_ABI_HARD = 1
+	FORCE_GLES = 1
+	SINGLE_PREC_FLAGS = 1
+
 	CFLAGS += -marm -mfloat-abi=hard -mfpu=neon
 	CXXFLAGS += -marm -mfloat-abi=hard -mfpu=neon
 	HAVE_NEON = 1

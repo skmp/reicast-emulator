@@ -159,7 +159,7 @@ else ifneq (,$(findstring odroid,$(platform)))
 
 	CFLAGS += -marm -mfloat-abi=hard -mfpu=neon
 	CXXFLAGS += -marm -mfloat-abi=hard -mfpu=neon
-	HAVE_NEON = 1
+
 	ifneq (,$(findstring ODROIDC,$(BOARD)))
 		# ODROID-C1
 		CFLAGS += -mcpu=cortex-a5
@@ -197,7 +197,6 @@ else ifneq (,$(findstring imx6,$(platform)))
 	CPUFLAGS += -DNO_ASM
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm
-	HAVE_NEON=1
 
 # OS X
 else ifneq (,$(findstring osx,$(platform)))
@@ -239,7 +238,6 @@ else ifneq (,$(findstring ios,$(platform)))
 	CPUFLAGS += -DNO_ASM  -DARM -D__arm__ -DARM_ASM -D__NEON_OPT
 	CPUFLAGS += -marm -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp
 	SHARED += -dynamiclib
-	HAVE_NEON=1
 
 	fpic = -fPIC
 	GL_LIB := -framework OpenGLES
@@ -276,7 +274,6 @@ else ifneq (,$(findstring theos_ios,$(platform)))
 	PLATCFLAGS += -DHAVE_POSIX_MEMALIGN -DNO_ASM
 	PLATCFLAGS += -DIOS -marm
 	CPUFLAGS += -DNO_ASM  -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE
-	HAVE_NEON=1
 
 
 # Android
@@ -293,7 +290,6 @@ else ifneq (,$(findstring android,$(platform)))
 	GLES = 1
 	PLATCFLAGS += -DANDROID
 	CPUCFLAGS  += -DNO_ASM
-	HAVE_NEON = 1
 	CPUFLAGS += -marm -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp -D__arm__ -DARM_ASM -D__NEON_OPT
 	CFLAGS += -DANDROID
 
@@ -314,7 +310,6 @@ else ifeq ($(platform), qnx)
 	WITH_DYNAREC=arm
 	GLES = 1
 	PLATCFLAGS += -DNO_ASM -D__BLACKBERRY_QNX__
-	HAVE_NEON = 1
 	CPUFLAGS += -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp -D__arm__ -DARM_ASM -D__NEON_OPT
 	CFLAGS += -D__QNX__
 
@@ -348,7 +343,6 @@ else ifneq (,$(findstring armv,$(platform)))
 	endif
 	ifneq (,$(findstring neon,$(platform)))
 		CPUFLAGS += -D__NEON_OPT -mfpu=neon
-		HAVE_NEON = 1
 	endif
 	ifneq (,$(findstring softfloat,$(platform)))
 		CPUFLAGS += -mfloat-abi=softfp
@@ -368,7 +362,6 @@ else ifeq ($(platform), emscripten)
 					  -Drglgen_resolve_symbols=reicast_rglgen_resolve_symbols
 
 	NO_REC=0
-	HAVE_NEON = 0
 	PLATFORM_EXT := unix
 	#HAVE_SHARED_CONTEXT := 1
 

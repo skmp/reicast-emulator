@@ -124,12 +124,14 @@ else ifneq (,$(findstring rpi,$(platform)))
 	fpic = -fPIC
 	LIBS += -lrt
 	ARM_FLOAT_ABI_HARD = 1
-	FORCE_GLES = 1
 	SINGLE_PREC_FLAGS = 1
 	
 	ifeq (,$(findstring mesa,$(platform)))
-		GL_LIB := -L/opt/vc/lib
+		GLES = 1
+		GL_LIB := -L/opt/vc/lib -lbrcmGLESv2
 		INCFLAGS += -I/opt/vc/include
+	else
+		FORCE_GLES = 1
 	endif
 
 	ifneq (,$(findstring rpi2,$(platform)))
@@ -191,8 +193,7 @@ else ifneq (,$(findstring imx6,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	SHARED := -shared -Wl,--version-script=link.T
 	fpic = -fPIC
-	GLES = 1
-	GL_LIB := -lGLESv2
+	FORCE_GLES = 1
 	LIBS += -lrt
 	CPUFLAGS += -DNO_ASM
 	PLATFORM_EXT := unix
@@ -268,7 +269,7 @@ else ifneq (,$(findstring theos_ios,$(platform)))
 
 	LIBRARY_NAME = $(TARGET_NAME)_libretro_ios
 	DEFINES += -DIOS
-	GLES = 1
+	FORCE_GLES = 1
 	WITH_DYNAREC=arm
 
 	PLATCFLAGS += -DHAVE_POSIX_MEMALIGN -DNO_ASM
@@ -282,12 +283,11 @@ else ifneq (,$(findstring android,$(platform)))
 	EXT       ?= so
 	TARGET := $(TARGET_NAME)_libretro_android.$(EXT)
 	SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
-	GL_LIB := -lGLESv2
 
 	CC = arm-linux-androideabi-gcc
 	CXX = arm-linux-androideabi-g++
 	WITH_DYNAREC=arm
-	GLES = 1
+	FORCE_GLES = 1
 	PLATCFLAGS += -DANDROID
 	CPUCFLAGS  += -DNO_ASM
 	CPUFLAGS += -marm -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp -D__arm__ -DARM_ASM -D__NEON_OPT
@@ -301,14 +301,13 @@ else ifeq ($(platform), qnx)
 	EXT       ?= so
 	TARGET := $(TARGET_NAME)_libretro_$(platform).$(EXT)
 	SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
-	GL_LIB := -lGLESv2
 
 	CC = qcc -Vgcc_ntoarmv7le
 	CC_AS = qcc -Vgcc_ntoarmv7le
 	CXX = QCC -Vgcc_ntoarmv7le
 	AR = QCC -Vgcc_ntoarmv7le
 	WITH_DYNAREC=arm
-	GLES = 1
+	FORCE_GLES = 1
 	PLATCFLAGS += -DNO_ASM -D__BLACKBERRY_QNX__
 	CPUFLAGS += -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp -D__arm__ -DARM_ASM -D__NEON_OPT
 	CFLAGS += -D__QNX__
@@ -325,10 +324,7 @@ else ifneq (,$(findstring armv,$(platform)))
 	WITH_DYNAREC=arm
 	PLATCFLAGS += -DARM
 	ifneq (,$(findstring gles,$(platform)))
-		GLES = 1
-		GL_LIB := -lGLESv2
-	else
-		GL_LIB := -lGL
+		FORCE_GLES = 1
 	endif
 	ifneq (,$(findstring cortexa5,$(platform)))
 		CPUFLAGS += -marm -mcpu=cortex-a5
@@ -354,7 +350,7 @@ else ifneq (,$(findstring armv,$(platform)))
 else ifeq ($(platform), emscripten)
 	EXT       ?= bc
 	TARGET := $(TARGET_NAME)_libretro_$(platform).$(EXT)
-	GLES := 1
+	FORCE_GLES := 1
 	WITH_DYNAREC=
 	CPUFLAGS += -Dasm=asmerror -D__asm__=asmerror -DNO_ASM -DNOSSE
 	SINGLE_THREAD := 1

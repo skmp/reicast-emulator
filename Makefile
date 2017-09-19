@@ -13,6 +13,10 @@ STATIC_LINKING:= 0
 
 TARGET_NAME   := reicast
 
+CXX      = ${CC_PREFIX}g++
+CC       = ${CC_PREFIX}gcc
+CC_AS    = ${CC_PREFIX}as
+
 MFLAGS   := 
 ASFLAGS  := 
 LDFLAGS  :=
@@ -20,7 +24,6 @@ INCFLAGS :=
 LIBS     :=
 CFLAGS   := 
 CXXFLAGS :=
-CC_AS ?= $(AS)
 
 UNAME=$(shell uname -a)
 
@@ -506,8 +509,8 @@ LIBS     += -lm
 PREFIX        ?= /usr/local
 
 ifneq (,$(findstring arm, $(ARCH)))
-	AS=${CC_PREFIX}gcc
-	ASFLAGS += $(CFLAGS)
+	CC_AS    = ${CC_PREFIX}gcc #The ngen_arm.S must be compiled with gcc, not as
+	ASFLAGS  += $(CFLAGS)
 endif
 
 ifeq ($(PGO_MAKE),1)

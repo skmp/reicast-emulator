@@ -127,7 +127,6 @@ endif
 ifeq ($(WITH_DYNAREC), arm)
 DYNAREC_USED = 1
 SOURCES_CXX += $(CORE_DIR)/rec-ARM/rec_arm.cpp
-SOURCES_ASM += $(CORE_DIR)/rec-ARM/ngen_arm.S
 endif
 
 ifeq ($(DYNAREC_USED),1)
@@ -138,6 +137,10 @@ SOURCES_CXX += $(CORE_DIR)/hw/sh4/dyna/decoder.cpp \
 					$(CORE_DIR)/hw/sh4/dyna/blockmanager.cpp \
 					$(CORE_DIR)/hw/sh4/dyna/shil.cpp 
 
+endif
+
+ifneq (,$(findstring arm, $(ARCH)))
+SOURCES_ASM += $(CORE_DIR)/rec-ARM/ngen_arm.S
 endif
 
 SOURCES_CXX += $(CORE_DIR)/libretro/libretro.cpp \

@@ -13,6 +13,10 @@ STATIC_LINKING:= 0
 
 TARGET_NAME   := reicast
 
+CXX      = ${CC_PREFIX}g++
+CC       = ${CC_PREFIX}gcc
+CC_AS    = ${CC_PREFIX}as
+
 MFLAGS   := 
 ASFLAGS  := 
 LDFLAGS  :=
@@ -20,7 +24,6 @@ INCFLAGS :=
 LIBS     :=
 CFLAGS   := 
 CXXFLAGS :=
-CC_AS ?= $(AS)
 
 UNAME=$(shell uname -a)
 
@@ -41,15 +44,15 @@ endif
 
 ifeq ($(platform),)
 	platform = unix
-ifeq ($(UNAME),)
-	platform = win
-else ifneq ($(findstring MINGW,$(UNAME)),)
-	platform = win
-else ifneq ($(findstring Darwin,$(UNAME)),)
-	platform = osx
-else ifneq ($(findstring win,$(UNAME)),)
-	platform = win
-endif
+	ifeq ($(UNAME),)
+		platform = win
+	else ifneq ($(findstring MINGW,$(UNAME)),)
+		platform = win
+	else ifneq ($(findstring Darwin,$(UNAME)),)
+		platform = osx
+	else ifneq ($(findstring win,$(UNAME)),)
+		platform = win
+	endif
 endif
 
 # system platform
@@ -60,31 +63,11 @@ ifeq ($(shell uname -a),)
 else ifneq ($(findstring Darwin,$(shell uname -a)),)
 	system_platform = osx
 	arch = intel
-ifeq ($(shell uname -p),powerpc)
-	arch = ppc
-endif
+	ifeq ($(shell uname -p),powerpc)
+		arch = ppc
+	endif
 else ifneq ($(findstring MINGW,$(shell uname -a)),)
 	system_platform = win
-endif
-
-ifeq ($(SINGLE_PREC_FLAGS),1)
-CFLAGS += -fsingle-precision-constant
-RZDCY_CFLAGS += -fsingle-precision-constant
-endif
-
-ifeq ($(ARMV7A_FLAGS),1)
-	MFLAGS += -marm -march=armv7-a
-	ASFLAGS += -march=armv7-a
-endif
-
-ifeq ($(ARMV7_CORTEX_A9_FLAGS),1)
-	MFLAGS += -mcpu=cortex-a9
-endif
-
-ifeq ($(ARM_FLOAT_ABI_HARD),1)
-	MFLAGS += -mfloat-abi=hard
-	ASFLAGS += -mfloat-abi=hard
-	CFLAGS += -DARM_HARDFP
 endif
 
 CORE_DIR := core
@@ -92,49 +75,26 @@ CORE_DIR := core
 DYNAREC_USED = 0
 
 ifeq ($(NO_VERIFY),1)
-    CFLAGS       += -DNO_VERIFY
-	 CXXFLAGS     += -DNO_VERIFY
-	 RZDCY_CFLAGS += -DNO_VERIFY
+	CFLAGS       += -DNO_VERIFY
+	CXXFLAGS     += -DNO_VERIFY
+	RZDCY_CFLAGS += -DNO_VERIFY
 endif
 
 ifeq ($(NAOMI),1)
-    CFLAGS       += -DTARGET_NAOMI
-	 CXXFLAGS     += -DTARGET_NAOMI
-	 RZDCY_CFLAGS += -DTARGET_NAOMI
+	CFLAGS       += -DTARGET_NAOMI
+	CXXFLAGS     += -DTARGET_NAOMI
+	RZDCY_CFLAGS += -DTARGET_NAOMI
 
-    DC_PLATFORM=naomi
-	 TARGET_NAME   := reicast_naomi
+	DC_PLATFORM=naomi
+	TARGET_NAME   := reicast_naomi
 else
-    DC_PLATFORM=dreamcast
-endif
-
-ifeq ($(HAVE_GENERIC_JIT),1)
-    CFLAGS       += -DTARGET_NO_JIT
-	 CXXFLAGS     += -DTARGET_NO_JIT
-	 RZDCY_CFLAGS += -DTARGET_NO_JIT
-	 CXXFLAGS     += -std=c++11
+	DC_PLATFORM=dreamcast
 endif
 
 HOST_CPU_X86=0x20000001
 HOST_CPU_ARM=0x20000002
 HOST_CPU_MIPS=0x20000003
 HOST_CPU_X64=0x20000004
-
-ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
-HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_X64)
-endif
-
-ifeq ($(WITH_DYNAREC), x86)
-HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_X86)
-endif
-
-ifeq ($(WITH_DYNAREC), arm)
-HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_ARM)
-endif
-
-ifeq ($(WITH_DYNAREC), mips)
-HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_MIPS)
-endif
 
 ifeq ($(STATIC_LINKING),1)
 EXT=a
@@ -151,21 +111,10 @@ ifneq (,$(findstring unix,$(platform)))
 
 	fpic = -fPIC
 
-ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
-	CFLAGS += -D TARGET_NO_AREC
-endif
-ifeq ($(WITH_DYNAREC), x86)
-	CFLAGS += -D TARGET_NO_AREC
-endif
-
-   ifeq ($(FORCE_GLES),1)
-		GLES = 1
-		GL_LIB := -lGLESv2
-	else ifneq (,$(findstring gles,$(platform)))
-		GLES = 1
-		GL_LIB := -lGLESv2
-	else
-		GL_LIB := -lGL
+	ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
+		CFLAGS += -D TARGET_NO_AREC
+	else ifeq ($(WITH_DYNAREC), x86)
+		CFLAGS += -D TARGET_NO_AREC
 	endif
 
 	PLATFORM_EXT := unix
@@ -176,41 +125,46 @@ else ifneq (,$(findstring rpi,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	SHARED := -shared -Wl,--version-script=link.T
 	fpic = -fPIC
-	GLES = 1
 	LIBS += -lrt
-	GL_LIB := -L/opt/vc/lib -lGLESv2
-	INCFLAGS += -I/opt/vc/include
-	ifneq (,$(findstring rpi2,$(platform)))
-		CPUFLAGS += -DNO_ASM -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE
-		CFLAGS = -mcpu=cortex-a7 -mfloat-abi=hard
-		CXXFLAGS = -mcpu=cortex-a7 -mfloat-abi=hard
-		HAVE_NEON = 0
+	ARM_FLOAT_ABI_HARD = 1
+	SINGLE_PREC_FLAGS = 1
+	
+	ifeq (,$(findstring mesa,$(platform)))
+		GLES = 1
+		GL_LIB := -L/opt/vc/lib -lbrcmGLESv2
+		INCFLAGS += -I/opt/vc/include
 	else
-		CPUFLAGS += -DARMv5_ONLY -DNO_ASM
+		FORCE_GLES = 1
 	endif
+
+	ifneq (,$(findstring rpi2,$(platform)))
+		CFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+		CXXFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+	else ifneq (,$(findstring rpi3,$(platform)))
+		CFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+		CXXFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+	endif
+
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm
 
 # ODROIDs
 else ifneq (,$(findstring odroid,$(platform)))
-	AS = ${CC_PREFIX}gcc #The ngen_arm.S must be compiled with gcc, not as
-	CC = ${CC_PREFIX}gcc
-	CXX = ${CC_PREFIX}g++
-
 	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
-ifeq ($(BOARD),1)
-	BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
-endif
+	ifeq ($(BOARD),1)
+		BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
+	endif
 	SHARED := -shared -Wl,--version-script=link.T
 	fpic = -fPIC
-	GLES = 1
 	LIBS += -lrt
-	GL_LIB := -lGLESv2
-	CPUFLAGS += -DNO_ASM -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE
+	ARM_FLOAT_ABI_HARD = 1
+	FORCE_GLES = 1
+	SINGLE_PREC_FLAGS = 1
+
 	CFLAGS += -marm -mfloat-abi=hard -mfpu=neon
 	CXXFLAGS += -marm -mfloat-abi=hard -mfpu=neon
-	HAVE_NEON = 1
+
 	ifneq (,$(findstring ODROIDC,$(BOARD)))
 		# ODROID-C1
 		CFLAGS += -mcpu=cortex-a5
@@ -242,13 +196,11 @@ else ifneq (,$(findstring imx6,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	SHARED := -shared -Wl,--version-script=link.T
 	fpic = -fPIC
-	GLES = 1
-	GL_LIB := -lGLESv2
+	FORCE_GLES = 1
 	LIBS += -lrt
 	CPUFLAGS += -DNO_ASM
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm
-	HAVE_NEON=1
 
 # OS X
 else ifneq (,$(findstring osx,$(platform)))
@@ -290,7 +242,6 @@ else ifneq (,$(findstring ios,$(platform)))
 	CPUFLAGS += -DNO_ASM  -DARM -D__arm__ -DARM_ASM -D__NEON_OPT
 	CPUFLAGS += -marm -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp
 	SHARED += -dynamiclib
-	HAVE_NEON=1
 
 	fpic = -fPIC
 	GL_LIB := -framework OpenGLES
@@ -298,17 +249,17 @@ else ifneq (,$(findstring ios,$(platform)))
 	CC = clang -arch armv7 -isysroot $(IOSSDK)
 	CC_AS = perl ./tools/gas-preprocessor.pl $(CC)
 	CXX = clang++ -arch armv7 -isysroot $(IOSSDK)
-ifeq ($(platform),ios9)
-	CC         += -miphoneos-version-min=8.0
-	CC_AS      += -miphoneos-version-min=8.0
-	CXX        += -miphoneos-version-min=8.0
-	PLATCFLAGS += -miphoneos-version-min=8.0
-else
-	CC += -miphoneos-version-min=5.0
-	CC_AS += -miphoneos-version-min=5.0
-	CXX += -miphoneos-version-min=5.0
-	PLATCFLAGS += -miphoneos-version-min=5.0
-endif
+	ifeq ($(platform),ios9)
+		CC         += -miphoneos-version-min=8.0
+		CC_AS      += -miphoneos-version-min=8.0
+		CXX        += -miphoneos-version-min=8.0
+		PLATCFLAGS += -miphoneos-version-min=8.0
+	else
+		CC += -miphoneos-version-min=5.0
+		CC_AS += -miphoneos-version-min=5.0
+		CXX += -miphoneos-version-min=5.0
+		PLATCFLAGS += -miphoneos-version-min=5.0
+	endif
 
 # Theos iOS
 else ifneq (,$(findstring theos_ios,$(platform)))
@@ -321,13 +272,12 @@ else ifneq (,$(findstring theos_ios,$(platform)))
 
 	LIBRARY_NAME = $(TARGET_NAME)_libretro_ios
 	DEFINES += -DIOS
-	GLES = 1
+	FORCE_GLES = 1
 	WITH_DYNAREC=arm
 
 	PLATCFLAGS += -DHAVE_POSIX_MEMALIGN -DNO_ASM
 	PLATCFLAGS += -DIOS -marm
 	CPUFLAGS += -DNO_ASM  -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE
-	HAVE_NEON=1
 
 
 # Android
@@ -336,15 +286,13 @@ else ifneq (,$(findstring android,$(platform)))
 	EXT       ?= so
 	TARGET := $(TARGET_NAME)_libretro_android.$(EXT)
 	SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
-	GL_LIB := -lGLESv2
 
 	CC = arm-linux-androideabi-gcc
 	CXX = arm-linux-androideabi-g++
 	WITH_DYNAREC=arm
-	GLES = 1
+	FORCE_GLES = 1
 	PLATCFLAGS += -DANDROID
 	CPUCFLAGS  += -DNO_ASM
-	HAVE_NEON = 1
 	CPUFLAGS += -marm -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp -D__arm__ -DARM_ASM -D__NEON_OPT
 	CFLAGS += -DANDROID
 
@@ -356,16 +304,14 @@ else ifeq ($(platform), qnx)
 	EXT       ?= so
 	TARGET := $(TARGET_NAME)_libretro_$(platform).$(EXT)
 	SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
-	GL_LIB := -lGLESv2
 
 	CC = qcc -Vgcc_ntoarmv7le
 	CC_AS = qcc -Vgcc_ntoarmv7le
 	CXX = QCC -Vgcc_ntoarmv7le
 	AR = QCC -Vgcc_ntoarmv7le
 	WITH_DYNAREC=arm
-	GLES = 1
+	FORCE_GLES = 1
 	PLATCFLAGS += -DNO_ASM -D__BLACKBERRY_QNX__
-	HAVE_NEON = 1
 	CPUFLAGS += -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp -D__arm__ -DARM_ASM -D__NEON_OPT
 	CFLAGS += -D__QNX__
 
@@ -381,10 +327,7 @@ else ifneq (,$(findstring armv,$(platform)))
 	WITH_DYNAREC=arm
 	PLATCFLAGS += -DARM
 	ifneq (,$(findstring gles,$(platform)))
-		GLES = 1
-		GL_LIB := -lGLESv2
-	else
-		GL_LIB := -lGL
+		FORCE_GLES = 1
 	endif
 	ifneq (,$(findstring cortexa5,$(platform)))
 		CPUFLAGS += -marm -mcpu=cortex-a5
@@ -399,7 +342,6 @@ else ifneq (,$(findstring armv,$(platform)))
 	endif
 	ifneq (,$(findstring neon,$(platform)))
 		CPUFLAGS += -D__NEON_OPT -mfpu=neon
-		HAVE_NEON = 1
 	endif
 	ifneq (,$(findstring softfloat,$(platform)))
 		CPUFLAGS += -mfloat-abi=softfp
@@ -411,15 +353,14 @@ else ifneq (,$(findstring armv,$(platform)))
 else ifeq ($(platform), emscripten)
 	EXT       ?= bc
 	TARGET := $(TARGET_NAME)_libretro_$(platform).$(EXT)
-	GLES := 1
+	FORCE_GLES := 1
 	WITH_DYNAREC=
 	CPUFLAGS += -Dasm=asmerror -D__asm__=asmerror -DNO_ASM -DNOSSE
 	SINGLE_THREAD := 1
 	PLATCFLAGS += -Drglgen_resolve_symbols_custom=reicast_rglgen_resolve_symbols_custom \
 					  -Drglgen_resolve_symbols=reicast_rglgen_resolve_symbols
 
-NO_REC=0
-	HAVE_NEON = 0
+	NO_REC=0
 	PLATFORM_EXT := unix
 	#HAVE_SHARED_CONTEXT := 1
 
@@ -442,66 +383,120 @@ endif
 endif
 
 ifeq ($(STATIC_LINKING),1)
-fpic=
-SHARED=
+	fpic=
+	SHARED=
 endif
 
-CFLAGS += $(HOST_CPU_FLAGS)
-CXXFLAGS += $(HOST_CPU_FLAGS)
+ifeq ($(SINGLE_PREC_FLAGS),1)
+	CFLAGS += -fsingle-precision-constant
+	RZDCY_CFLAGS += -fsingle-precision-constant
+endif
+
+ifeq ($(ARMV7A_FLAGS),1)
+	MFLAGS += -marm -march=armv7-a
+	ASFLAGS += -march=armv7-a
+endif
+
+ifeq ($(ARMV7_CORTEX_A9_FLAGS),1)
+	MFLAGS += -mcpu=cortex-a9
+endif
+
+ifeq ($(ARM_FLOAT_ABI_HARD),1)
+	MFLAGS += -mfloat-abi=hard
+	ASFLAGS += -mfloat-abi=hard
+	CFLAGS += -DARM_HARDFP
+endif
+
+ifeq ($(HAVE_GENERIC_JIT),1)
+	CFLAGS       += -DTARGET_NO_JIT
+	CXXFLAGS     += -DTARGET_NO_JIT
+	RZDCY_CFLAGS += -DTARGET_NO_JIT
+	CXXFLAGS     += -std=c++11
+endif
+
+ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
+	HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_X64)
+endif
+
+ifeq ($(WITH_DYNAREC), x86)
+	HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_X86)
+endif
+
+ifeq ($(WITH_DYNAREC), arm)
+	HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_ARM)
+endif
+
+ifeq ($(WITH_DYNAREC), mips)
+	HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_MIPS)
+endif
+
+ifeq ($(FORCE_GLES),1)
+	GLES = 1
+	GL_LIB := -lGLESv2
+else ifneq (,$(findstring gles,$(platform)))
+	GLES = 1
+	GL_LIB := -lGLESv2
+else
+	GL_LIB := -lGL
+endif
+
+CFLAGS       += $(HOST_CPU_FLAGS)
+CXXFLAGS     += $(HOST_CPU_FLAGS)
 RZDCY_CFLAGS += $(HOST_CPU_FLAGS)
 
 include Makefile.common
 
 ifeq ($(DEBUG),1)
-OPTFLAGS       := -O0
-LDFLAGS  += -g
-CFLAGS   += -g
+	OPTFLAGS       := -O0
+	LDFLAGS        += -g
+	CFLAGS         += -g
 else
-OPTFLAGS       := -O2
-RZDCY_CFLAGS   += -DNDEBUG
-RZDCY_CXXFLAGS += -DNDEBUG
-CFLAGS         += -DNDEBUG
-CXXFLAGS       += -DNDEBUG
-LDFLAGS        += -DNDEBUG
+	OPTFLAGS       := -O2
+	RZDCY_CFLAGS   += -DNDEBUG
+	RZDCY_CXXFLAGS += -DNDEBUG
+	CFLAGS         += -DNDEBUG
+	CXXFLAGS       += -DNDEBUG
+	LDFLAGS        += -DNDEBUG
 endif
+
 RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -DRELEASE -ffast-math -fomit-frame-pointer -D__LIBRETRO__
 CFLAGS         += -D__LIBRETRO__
 
 ifeq ($(WITH_DYNAREC), arm)
-RZDCY_CFLAGS += -march=armv7-a -mcpu=cortex-a9 -mfpu=vfpv3-d16
-RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
+	RZDCY_CFLAGS += -march=armv7-a -mcpu=cortex-a9 -mfpu=vfpv3-d16
+	RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
 else
-RZDCY_CFLAGS += -DTARGET_LINUX_x86
+	RZDCY_CFLAGS += -DTARGET_LINUX_x86
 endif
 
 ifeq ($(NO_THREADS),1)
-  RZDCY_CFLAGS += -DTARGET_NO_THREADS
-  CFLAGS       += -DTARGET_NO_THREADS
-  CXXFLAGS     += -DTARGET_NO_THREADS
+	RZDCY_CFLAGS += -DTARGET_NO_THREADS
+	CFLAGS       += -DTARGET_NO_THREADS
+	CXXFLAGS     += -DTARGET_NO_THREADS
 else
-  LIBS         += -lpthread
+	LIBS         += -lpthread
 endif
 
 ifeq ($(NO_REC),1)
-  RZDCY_CFLAGS += -DTARGET_NO_REC
+	RZDCY_CFLAGS += -DTARGET_NO_REC
 endif
 
 ifeq ($(NO_REND),1)
-  RZDCY_CFLAGS += -DNO_REND=1
-  CFLAGS 	 += -DNO_REND
-  CXXFLAGS += -DNO_REND
+	RZDCY_CFLAGS += -DNO_REND=1
+	CFLAGS       += -DNO_REND
+	CXXFLAGS     += -DNO_REND
 endif
 
 ifeq ($(NO_EXCEPTIONS),1)
-  RZDCY_CFLAGS += -DTARGET_NO_EXCEPTIONS=1
-  CFLAGS 	 += -DTARGET_NO_EXCEPTIONS
-  CXXFLAGS += -DTARGET_NO_EXCEPTIONS
+	RZDCY_CFLAGS += -DTARGET_NO_EXCEPTIONS=1
+	CFLAGS       += -DTARGET_NO_EXCEPTIONS
+	CXXFLAGS     += -DTARGET_NO_EXCEPTIONS
 endif
 
 ifeq ($(NO_NVMEM),1)
-  RZDCY_CFLAGS += -DTARGET_NO_NVMEM=1
-  CFLAGS 	 += -DTARGET_NO_NVMEM
-  CXXFLAGS += -DTARGET_NO_NVMEM
+	RZDCY_CFLAGS += -DTARGET_NO_NVMEM=1
+	CFLAGS       += -DTARGET_NO_NVMEM
+	CXXFLAGS     += -DTARGET_NO_NVMEM
 endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fexceptions -fno-rtti -std=gnu++11
@@ -513,38 +508,37 @@ LIBS     += -lm
 
 PREFIX        ?= /usr/local
 
-ifeq ($(WITH_DYNAREC), arm)
-else
-AS=${CC_PREFIX}gcc
-ASFLAGS += $(CFLAGS)
+ifneq (,$(findstring arm, $(ARCH)))
+	CC_AS    = ${CC_PREFIX}gcc #The ngen_arm.S must be compiled with gcc, not as
+	ASFLAGS  += $(CFLAGS)
 endif
 
 ifeq ($(PGO_MAKE),1)
-    CFLAGS += -fprofile-generate -pg
-    LDFLAGS += -fprofile-generate
+	CFLAGS += -fprofile-generate -pg
+	LDFLAGS += -fprofile-generate
 else
-    CFLAGS += -fomit-frame-pointer
+	CFLAGS += -fomit-frame-pointer
 endif
 
 ifeq ($(PGO_USE),1)
-    CFLAGS += -fprofile-use
+	CFLAGS += -fprofile-use
 endif
 
 ifeq ($(LTO_TEST),1)
-    CFLAGS += -flto -fwhole-program 
-    LDFLAGS +=-flto -fwhole-program 
+	CFLAGS += -flto -fwhole-program 
+	LDFLAGS +=-flto -fwhole-program 
 endif
 
 ifeq ($(HAVE_GL), 1)
-ifeq ($(GLES),1)
-	 RZDCY_CFLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES2
-    CXXFLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES2
-	 CFLAGS   += -DHAVE_OPENGLES -DHAVE_OPENGLES2
-else
-	 RZDCY_CFLAGS += -DHAVE_OPENGL
-    CXXFLAGS += -DHAVE_OPENGL
-	 CFLAGS   += -DHAVE_OPENGL
-endif
+	ifeq ($(GLES),1)
+		RZDCY_CFLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES2
+		CXXFLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES2
+		CFLAGS   += -DHAVE_OPENGLES -DHAVE_OPENGLES2
+	else
+		RZDCY_CFLAGS += -DHAVE_OPENGL
+		CXXFLAGS += -DHAVE_OPENGL
+		CFLAGS   += -DHAVE_OPENGL
+	endif
 endif
 
 ifeq ($(HAVE_CORE), 1)

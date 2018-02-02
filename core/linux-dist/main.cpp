@@ -138,11 +138,16 @@ void SetupInput()
 				size_needed = snprintf(NULL, 0, EVDEV_MAPPING_CONFIG_KEY, port+1) + 1;
 				evdev_config_key = (char*)malloc(size_needed);
 				sprintf(evdev_config_key, EVDEV_MAPPING_CONFIG_KEY, port+1);
-				const char* mapping = (cfgExists("input", evdev_config_key) == 2 ? cfgLoadStr("input", evdev_config_key, "").c_str() : NULL);
+				
+				// fix bug with dangling pointer to a possibly destructed temporary string returned by c_str()
+				if (cfgExists("input", evdev_config_key) == 2) {
+					std::string cfgName = cfgLoadStr("input", evdev_config_key, "");
+					input_evdev_init(&evdev_controllers[port], evdev_device, cfgName.c_str());
+				} else {
+					input_evdev_init(&evdev_controllers[port], evdev_device, NULL);
+				}
+				
 				free(evdev_config_key);
-
-				input_evdev_init(&evdev_controllers[port], evdev_device, mapping);
-
 				free(evdev_device);
 			}
 		}
@@ -164,7 +169,11 @@ void SetupInput()
 	#endif
 
 	#if defined(SUPPORT_X11)
-		input_x11_init();
+		#if defined(USE_EVDEV)
+			input_x11_init(&(evdev_controllers[0]));
+		#else
+			input_x11_init();
+		#endif
 	#endif
 
 	#if defined(USE_SDL)

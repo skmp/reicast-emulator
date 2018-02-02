@@ -218,85 +218,85 @@
 				printf("evdev: Found '%s' at '%s'\n", name, device);
 
 				controller->fd = fd;
-
-				const char* mapping_fname;
-
-				if(custom_mapping_fname != NULL)
-				{
-					mapping_fname = custom_mapping_fname;
-				}
-				else
-				{
-					#if defined(TARGET_PANDORA)
-						mapping_fname = "controller_pandora.cfg";
-					#elif defined(TARGET_GCW0)
-						mapping_fname = "controller_gcwz.cfg";
-					#else
-						if (strcmp(name, "Microsoft X-Box 360 pad") == 0 ||
-							strcmp(name, "Xbox 360 Wireless Receiver") == 0 ||
-							strcmp(name, "Xbox 360 Wireless Receiver (XBOX)") == 0)
-						{
-							mapping_fname = "controller_xpad.cfg";
-						}
-						else if (strstr(name, "Xbox Gamepad (userspace driver)") != NULL)
-						{
-							mapping_fname = "controller_xboxdrv.cfg";
-						}
-						else if (strstr(name, "keyboard") != NULL ||
-								 strstr(name, "Keyboard") != NULL)
-						{
-							mapping_fname = "keyboard.cfg";
-						}
-						else
-						{
-							mapping_fname = "controller_generic.cfg";
-						}
-					#endif
-				}
-				if(loaded_mappings.count(string(mapping_fname)) == 0)
-				{
-					FILE* mapping_fd = NULL;
-					if(mapping_fname[0] == '/')
-					{
-						// Absolute mapping
-						mapping_fd = fopen(mapping_fname, "r");
-					}
-					else
-					{
-						// Mapping from ~/.reicast/mappings/
-						size_t size_needed = snprintf(NULL, 0, EVDEV_MAPPING_PATH, mapping_fname) + 1;
-						char* mapping_path = (char*)malloc(size_needed);
-						sprintf(mapping_path, EVDEV_MAPPING_PATH, mapping_fname);
-						mapping_fd = fopen(get_readonly_data_path(mapping_path).c_str(), "r");
-						free(mapping_path);
-					}
-					
-					if(mapping_fd != NULL)
-					{
-						printf("evdev: reading mapping file: '%s'\n", mapping_fname);
-						loaded_mappings.insert(std::make_pair(string(mapping_fname), load_mapping(mapping_fd)));
-						fclose(mapping_fd);
-
-					}
-					else
-					{
-						printf("evdev: unable to open mapping file '%s'\n", mapping_fname);
-						perror("evdev");
-						return -3;
-					}
-				}
-				controller->mapping = &loaded_mappings.find(string(mapping_fname))->second;
-				printf("evdev: Using '%s' mapping\n", controller->mapping->name);
-				controller->init();
-
-				return 0;
 			}
 		}
 		else
 		{
 			perror("evdev: open");
-			return -1;
+			//return -1;
 		}
+		
+		const char* mapping_fname;
+
+		if(custom_mapping_fname != NULL)
+		{
+			mapping_fname = custom_mapping_fname;
+		}
+		else
+		{
+			#if defined(TARGET_PANDORA)
+				mapping_fname = "controller_pandora.cfg";
+			#elif defined(TARGET_GCW0)
+				mapping_fname = "controller_gcwz.cfg";
+			#else
+				if (strcmp(name, "Microsoft X-Box 360 pad") == 0 ||
+					strcmp(name, "Xbox 360 Wireless Receiver") == 0 ||
+					strcmp(name, "Xbox 360 Wireless Receiver (XBOX)") == 0)
+				{
+					mapping_fname = "controller_xpad.cfg";
+				}
+				else if (strstr(name, "Xbox Gamepad (userspace driver)") != NULL)
+				{
+					mapping_fname = "controller_xboxdrv.cfg";
+				}
+				else if (strstr(name, "keyboard") != NULL ||
+						 strstr(name, "Keyboard") != NULL)
+				{
+					mapping_fname = "keyboard.cfg";
+				}
+				else
+				{
+					mapping_fname = "controller_generic.cfg";
+				}
+			#endif
+		}
+		if(loaded_mappings.count(string(mapping_fname)) == 0)
+		{
+			FILE* mapping_fd = NULL;
+			if(mapping_fname[0] == '/')
+			{
+				// Absolute mapping
+				mapping_fd = fopen(mapping_fname, "r");
+			}
+			else
+			{
+				// Mapping from ~/.reicast/mappings/
+				size_t size_needed = snprintf(NULL, 0, EVDEV_MAPPING_PATH, mapping_fname) + 1;
+				char* mapping_path = (char*)malloc(size_needed);
+				sprintf(mapping_path, EVDEV_MAPPING_PATH, mapping_fname);
+				mapping_fd = fopen(get_readonly_data_path(mapping_path).c_str(), "r");
+				free(mapping_path);
+			}
+			
+			if(mapping_fd != NULL)
+			{
+				printf("evdev: reading mapping file: '%s'\n", mapping_fname);
+				loaded_mappings.insert(std::make_pair(string(mapping_fname), load_mapping(mapping_fd)));
+				fclose(mapping_fd);
+
+			}
+			else
+			{
+				printf("evdev: unable to open mapping file '%s'\n", mapping_fname);
+				perror("evdev");
+				return -3;
+			}
+		}
+		controller->mapping = &loaded_mappings.find(string(mapping_fname))->second;
+		printf("evdev: Using '%s' mapping %d\n", controller->mapping->name, controller->mapping->Btn_DPad_Left);
+		controller->init();
+
+		return 0;
 	}
 
 	bool input_evdev_handle(EvdevController* controller, u32 port)

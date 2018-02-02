@@ -27,6 +27,8 @@ enum DreamcastController
 	DC_DPAD2_DOWN  = 1<<13,
 	DC_DPAD2_LEFT  = 1<<14,
 	DC_DPAD2_RIGHT = 1<<15,
+	COMPAT_T_LEFT  = 1<<16,
+	COMPAT_T_RIGHT = 1<<17,
 
 	DC_AXIS_LT = 0X10000,
 	DC_AXIS_RT = 0X10001,

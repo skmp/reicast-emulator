@@ -9,7 +9,9 @@
 
 #if !defined(TARGET_NO_EXCEPTIONS)
 #ifndef _WIN32
+#ifndef __HAIKU__
 #include <ucontext.h>
+#endif
 #endif
 #endif
 
@@ -338,7 +340,7 @@ static void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx)
 }
 #endif
 
-#if defined(__MACH__) || defined(__linux__)
+#if defined(__MACH__) || defined(__linux__) || defined(__HAIKU__)
 //#define LOG_SIGHANDLER
 
 static void signal_handler(int sn, siginfo_t * si, void *segfault_ctx)

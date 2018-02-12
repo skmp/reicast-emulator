@@ -1,6 +1,10 @@
 #pragma once
 #include "types.h"
 
+#if defined(__HAIKU__)
+#include <posix/sys/mman.h>
+#endif
+
 //Typedef's
 //ReadMem 
 typedef u8 DYNACALL _vmem_ReadMem8FP(u32 Address);

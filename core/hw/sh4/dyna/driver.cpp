@@ -38,6 +38,8 @@ u8 SH4_TCB[CODE_SIZE+4096]
 	__attribute__((section(".text")));
 #elif defined(__MACH__)
 	__attribute__((section("__TEXT,.text")));
+#elif defined(__HAIKU__)
+	__attribute__((section(".text")));
 #else
 	#error SH4_TCB ALLOC
 #endif

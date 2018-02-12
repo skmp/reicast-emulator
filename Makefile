@@ -107,7 +107,11 @@ ifneq (,$(findstring unix,$(platform)))
    TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	SHARED := -shared -Wl,--version-script=link.T
 	LDFLAGS +=  -Wl,--no-undefined
+ifneq (,$(findstring Haiku,$(shell uname -s)))
+	LIBS += -lroot
+else
 	LIBS += -lrt
+endif
 
 	fpic = -fPIC
 

@@ -10,6 +10,7 @@
 #include "hw/sh4/sh4_mem.h"
 #include "blockmanager.h"
 
+#if 0
 u32 RegisterWrite[sh4_reg_count];
 u32 RegisterRead[sh4_reg_count];
 
@@ -999,6 +1000,8 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 	//printf("%d FB, %d native, %.2f%% || %d removed ops!\n",fallback_blocks,total_blocks-fallback_blocks,fallback_blocks*100.f/total_blocks,REMOVED_OPS);
 	//printf("\nBlock: %d affecter regs %d c\n",affregs,blk->guest_cycles);
 }
+
+#endif
 
 void UpdateFPSCR();
 bool UpdateSR();

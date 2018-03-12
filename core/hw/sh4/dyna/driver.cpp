@@ -209,7 +209,7 @@ void RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	oplist.clear();
 
 	dec_DecodeBlock(this,SH4_TIMESLICE/2);
-	AnalyseBlock(this);
+	//AnalyseBlock(this);
 }
 
 DynarecCodeEntryPtr rdv_CompilePC()

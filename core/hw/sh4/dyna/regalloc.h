@@ -3,6 +3,7 @@
 
 #include <set>
 #include <deque>
+#include <map>
 
 static inline bool operator < (const shil_param &lhs, const shil_param &rhs)
 {
@@ -1145,4 +1146,306 @@ struct RegAlloc
 
 	virtual void Preload_FPU(u32 reg,nregf_t nreg)=0;
 	virtual void Writeback_FPU(u32 reg,nregf_t nreg)=0;
+};
+
+template<typename nreg_t, typename nregf_t>
+struct RegAssign
+{
+	virtual void Preload(u32 reg, nreg_t nreg) = 0;
+	virtual void Writeback_Imm(u32 reg, u32 imm) = 0;
+	virtual void Writeback(u32 reg, nreg_t nreg) = 0;
+
+	virtual void Preload_FPU(u32 reg, nregf_t nreg, int size) = 0;
+	virtual void Writeback_FPU(u32 reg, nregf_t nreg, int size) = 0;
+
+	bool IsAllocAny(const shil_param& prm)
+	{
+		if (prm.is_reg())
+		{
+			return IsAllocg(prm) || IsAllocf(prm);
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	bool IsAllocg(const shil_param& prm)
+	{
+		if (prm.is_r32i())
+		{
+			verify(prm.count() == 1);
+
+			return prm.natreg != -1;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	bool IsAllocf(const shil_param& prm)
+	{
+		if (prm.is_r32f())
+		{
+			return prm.natreg != -1;
+		}
+		else
+			return false;
+	}
+
+	nreg_t mapg(const shil_param& prm)
+	{
+		verify(IsAllocg(prm));
+
+		
+		return (nreg_t)prm.natreg;
+	}
+
+	nregf_t mapf(const shil_param& prm)
+	{
+		verify(IsAllocf(prm));
+
+		return (nregf_t)prm.natreg;
+	}
+
+	deque<nreg_t> regsg;
+	deque<nregf_t> regsf;
+
+	map<int, int> maps;
+	void mapReg(shil_param* prm)
+	{
+		if (prm->is_reg())
+		{
+			verify(prm->_reg >= regv_temp);
+
+			verify(maps.count(prm->_reg) == 1);
+			
+			prm->natreg = maps[prm->_reg];
+		}
+		else
+		{
+			prm->natreg = -1;
+		}
+	}
+
+	void allocReg(shil_param* prm)
+	{
+		if (prm->is_r32())
+		{
+			verify(prm->_reg >= regv_temp);
+			if (maps.count(prm->_reg) == 0)
+			{
+				int reg = -1;
+
+				if (prm->is_r32i())
+				{
+					auto d = regsg.back();
+					regsg.pop_back();
+					reg = (int)d;
+				}
+				else
+				{
+					auto d = regsf.back();
+					regsf.pop_back();
+					reg = (int)d;
+				}
+
+				prm->natreg = reg;
+
+				maps[prm->_reg] = reg;
+			}
+			else
+			{
+				verify(maps.count(prm->_reg) == 1);
+				prm->natreg = maps[prm->_reg];
+			}
+		}
+	}
+
+	void freeReg(shil_param* prm, int ordinal)
+	{
+		if (prm->is_reg())
+		{
+			if (prm->_reg >= regv_temp && lastUse[prm->_reg] == ordinal)
+			{
+				verify(maps.count(prm->_reg) == 1);
+				verify(prm->_reg >= regv_temp);
+
+
+				if (prm->is_r32i())
+				{
+					regsg.push_back((nreg_t)maps[prm->_reg]);
+				}
+				else
+				{
+					regsf.push_back((nregf_t)maps[prm->_reg]);
+				}
+
+				maps.erase(prm->_reg);
+			}
+		}
+	}
+
+	map<u32, int> lastUse;
+
+	void updateLiveRange(shil_param* prm, int ordinal)
+	{
+		if (prm->is_r32() && prm->_reg >= regv_temp)
+		{
+			lastUse[prm->_reg] = ordinal;
+		}
+	}
+
+	void DoAlloc(RuntimeBlockInfo* block, const nreg_t* nregs_avail, const nregf_t* nregsf_avail)
+	{
+		// create register lists
+
+		regsg.clear();
+		regsf.clear();
+
+
+		const nreg_t* nregs = nregs_avail;
+
+		while (*nregs != -1)
+			regsg.push_back(*nregs++);
+
+		u32 reg_cc_max_g = regsg.size();
+
+		const nregf_t* nregsf = nregsf_avail;
+
+		while (*nregsf != -1)
+			regsf.push_back(*nregsf++);
+
+		u32 reg_cc_max_f = regsf.size();
+
+
+		lastUse.clear();
+
+		int ordinal;
+
+		ordinal = 0;
+		for (auto op = block->oplist.begin(); op != block->oplist.end(); op++, ordinal++)
+		{
+			updateLiveRange(&op->rd, ordinal);
+			updateLiveRange(&op->rd2, ordinal);
+			updateLiveRange(&op->rs1, ordinal);
+			updateLiveRange(&op->rs2, ordinal);
+			updateLiveRange(&op->rs3, ordinal);
+		}
+
+		maps.clear();
+
+		ordinal = 0;
+
+		for (auto op = block->oplist.begin(); op != block->oplist.end(); op++, ordinal++)
+		{
+			if (op->op == shop_frswap)
+			{
+				continue;
+			}
+			else if (op->op != shop_load_reg && op->op != shop_store_reg)
+			{
+				verify(!op->rd.is_reg() || op->rd._imm >= regv_temp);
+				verify(!op->rd2.is_reg() || op->rd2._imm >= regv_temp);
+				verify(!op->rs1.is_reg() || op->rs1._imm >= regv_temp);
+				verify(!op->rs2.is_reg() || op->rs2._imm >= regv_temp);
+				verify(!op->rs3.is_reg() || op->rs3._imm >= regv_temp);
+
+				allocReg(&op->rd);
+				allocReg(&op->rd2);
+				
+				mapReg(&op->rs1);
+				mapReg(&op->rs2);
+				mapReg(&op->rs3);
+			}
+			else
+			{
+				verify(!op->rd2.is_reg() && !op->rs2.is_reg() && !op->rs3.is_reg());
+				verify(op->rd.is_reg());
+
+				if (op->op == shop_load_reg)
+				{
+					verify(op->rs1.is_reg());
+					verify(op->rs1._reg < regv_temp);
+
+					verify(op->rd._reg >= regv_temp);
+
+					allocReg(&op->rd);
+				}
+				else
+				{
+					verify(op->rd._reg < regv_temp);
+					verify(!op->rs1.is_reg() || op->rs1._reg >= regv_temp);
+
+					mapReg(&op->rs1);
+				}
+			}
+
+			freeReg(&op->rd, ordinal);
+			freeReg(&op->rd2, ordinal);
+			freeReg(&op->rs1, ordinal);
+			freeReg(&op->rs2, ordinal);
+			freeReg(&op->rs3, ordinal);
+		}
+	}
+
+	void OpBegin(shil_opcode* op, int opid)
+	{
+		if (op->op == shop_load_reg)
+		{
+			if (op->rs1.is_r32i())
+			{
+				verifyc(op->rd.natreg != -1);
+
+				verify(op->rs1.is_reg());
+
+				Preload(op->rs1._imm, (nreg_t)op->rd.natreg);
+			}
+			else if (op->rs1.is_r32f() || (op->rs1.is_reg() && op->rs1.count() == 2))
+			{
+				verify(op->rd.natreg != -1);
+
+				Preload_FPU(op->rs1._imm, (nregf_t)op->rd.natreg, op->rs1.count());
+			}
+			else
+			{
+				verify(op->rd.natreg == -1);
+			}
+		}
+		else if (op->op == shop_store_reg)
+		{
+			if (op->rd.is_r32i())
+			{
+				if (op->rs1.is_reg())
+				{
+					verify(op->rs1.natreg != -1);
+					Writeback(op->rd._reg, (nreg_t)op->rs1.natreg);
+				}
+				else if (op->rs1.is_imm())
+				{
+					Writeback_Imm(op->rd._reg, (nreg_t)op->rs1._imm);
+				}
+				else
+				{
+					die("invalid path");
+				}
+				
+			}
+			else if (op->rd.is_r32f() || (op->rd.is_reg() && op->rd.count() == 2))
+			{
+				verify(op->rs1.natreg != -1);
+				Writeback_FPU(op->rd._imm, (nregf_t)op->rs1.natreg, op->rd.count());
+			}
+			else
+			{
+				verify(op->rs1.natreg == -1);
+			}
+		}
+	}
+
+	void OpEnd(shil_opcode* ops)
+	{
+
+	}
 };

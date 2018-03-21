@@ -33,8 +33,8 @@ Disc* load_gdi(const char* file)
 
 	char path[512];
 	strcpy(path,file);
-	size_t len=strlen(file);
-	while (len>2)
+	ssize_t len=strlen(file);
+	while (len>=0)
 	{
 		if (path[len]=='\\' || path[len]=='/')
 			break;

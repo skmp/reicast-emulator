@@ -1,9 +1,5 @@
 package com.reicast.emulator;
 
-import java.io.File;
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.List;
-
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -18,20 +14,22 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
+import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.View.OnSystemUiVisibilityChangeListener;
-import android.view.View.OnTouchListener;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -44,19 +42,22 @@ import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.periph.Gamepad;
 
-public class MainActivity extends FragmentActivity implements
-		FileBrowser.OnItemSelectedListener, OptionsFragment.OnClickListener {
-	
-	private DrawerLayout mDrawerLayout;
-	private ActionBarDrawerToggle mDrawerToggle;
+import java.io.File;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity implements
+		FileBrowser.OnItemSelectedListener, OptionsFragment.OnClickListener, NavigationView.OnNavigationItemSelectedListener {
+
 
 	private SharedPreferences mPrefs;
 	private static File sdcard = Environment.getExternalStorageDirectory();
 	public static String home_directory = sdcard.getAbsolutePath();
 
-	private TextView menuHeading;
 	private boolean hasAndroidMarket = false;
-	
+	private ActionBarDrawerToggle toggle;
+	DrawerLayout drawer;
+	private Toolbar toolbar;
 	private UncaughtExceptionHandler mUEHandler;
 
 	Gamepad pad = new Gamepad();
@@ -64,25 +65,25 @@ public class MainActivity extends FragmentActivity implements
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.mainuilayout_fragment);
-		
+		setContentView(R.layout.activity_main);
+
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			getWindow().getDecorView().setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
 				public void onSystemUiVisibilityChange(int visibility) {
 					if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
 						getWindow().getDecorView().setSystemUiVisibility(
-//                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE | 
+//                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
 								View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                                | View.SYSTEM_UI_FLAG_FULLSCREEN
-                                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+										| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+										| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+										| View.SYSTEM_UI_FLAG_FULLSCREEN
+										| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 					}
 				}
 			});
 		} else {
 			getWindow().setFlags (WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+					WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		}
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -115,12 +116,12 @@ public class MainActivity extends FragmentActivity implements
 		if (isCallable(market)) {
 			hasAndroidMarket = true;
 		}
-		
+
 		if (!getFilesDir().exists()) {
 			getFilesDir().mkdir();
 		}
 		JNIdc.config(home_directory);
-		
+
 		// When viewing a resource, pass its URI to the native code for opening
 		Intent intent = getIntent();
 		if (intent.getAction() != null) {
@@ -128,8 +129,8 @@ public class MainActivity extends FragmentActivity implements
 				onGameSelected(Uri.parse(intent.getData().toString()));
 				// Flush the intent to prevent multiple calls
 				getIntent().setData(null);
-		        setIntent(null);
-		        Config.externalIntent = true;
+				setIntent(null);
+				Config.externalIntent = true;
 			}
 		}
 
@@ -162,188 +163,26 @@ public class MainActivity extends FragmentActivity implements
 
 			// Add the fragment to the 'fragment_container' FrameLayout
 			getSupportFragmentManager()
-			.beginTransaction()
-			.replace(R.id.fragment_container, firstFragment,
-					"MAIN_BROWSER").commit();
+					.beginTransaction()
+					.replace(R.id.fragment_container, firstFragment,
+							"MAIN_BROWSER").commit();
 		}
 
-		menuHeading = (TextView) findViewById(R.id.menu_heading);
-		
-		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-		mDrawerToggle = new ActionBarDrawerToggle(
-			MainActivity.this,      /* host Activity */
-			mDrawerLayout,			/* DrawerLayout object */
-			R.drawable.ic_drawer,	/* nav drawer icon to replace 'Up' caret */
-			R.string.drawer_open,	/* "open drawer" description */
-			R.string.drawer_shut	/* "close drawer" description */
-		) {
-			/** Called when a drawer has settled in a completely closed state. */
-			public void onDrawerClosed(View view) {
-				super.onDrawerClosed(view);
-			}
-			
-			/** Called when a drawer has settled in a completely open state. */
-			public void onDrawerOpened(View drawerView) {
-				super.onDrawerOpened(drawerView);
-				findViewById(R.id.browser_menu).setOnClickListener(new OnClickListener() {
-					public void onClick(View view) {
-						FileBrowser browseFrag = (FileBrowser) getSupportFragmentManager()
-								.findFragmentByTag("MAIN_BROWSER");
-						if (browseFrag != null) {
-							if (browseFrag.isVisible()) {
-								return;
-							}
-						}
-						browseFrag = new FileBrowser();
-						Bundle args = new Bundle();
-						args.putBoolean("ImgBrowse", true);
-						args.putString("browse_entry", null);
-						// specify a path for selecting folder options
-						args.putBoolean("games_entry", false);
-						// specify if the desired path is for games or data
-						browseFrag.setArguments(args);
-						getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.fragment_container, browseFrag,
-								"MAIN_BROWSER").addToBackStack(null)
-								.commit();
-						setTitle(R.string.browser);
-						toggleDrawer(true);
-					}
 
-				});
+		/*The new staff about navigation menu*/
+		toolbar = (Toolbar) findViewById(R.id.toolbar);
+		setSupportActionBar(toolbar);
 
-				findViewById(R.id.settings_menu).setOnClickListener(
-						new OnClickListener() {
-							public void onClick(View view) {
-								OptionsFragment optionsFrag = (OptionsFragment) getSupportFragmentManager()
-										.findFragmentByTag("OPTIONS_FRAG");
-								if (optionsFrag != null) {
-									if (optionsFrag.isVisible()) {
-										return;
-									}
-								}
-								optionsFrag = new OptionsFragment();
-								getSupportFragmentManager()
-								.beginTransaction()
-								.replace(R.id.fragment_container,
-										optionsFrag, "OPTIONS_FRAG")
-										.addToBackStack(null).commit();
-								setTitle(R.string.settings);
-								toggleDrawer(true);
-							}
+		drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+		toggle = new android.support.v7.app.ActionBarDrawerToggle(
+				this, drawer, R.string.drawer_open, R.string.drawer_shut);
+		drawer.addDrawerListener(toggle);
+		toggle.syncState();
 
-						});
-
-				findViewById(R.id.input_menu).setOnClickListener(new OnClickListener() {
-					public void onClick(View view) {
-						InputFragment inputFrag = (InputFragment) getSupportFragmentManager()
-								.findFragmentByTag("INPUT_FRAG");
-						if (inputFrag != null) {
-							if (inputFrag.isVisible()) {
-								return;
-							}
-						}
-						inputFrag = new InputFragment();
-						getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.fragment_container, inputFrag,
-								"INPUT_FRAG").addToBackStack(null).commit();
-						setTitle(R.string.input);
-						toggleDrawer(true);
-					}
-
-				});
-
-				findViewById(R.id.about_menu).setOnClickListener(new OnClickListener() {
-					public void onClick(View view) {
-						AboutFragment aboutFrag = (AboutFragment) getSupportFragmentManager()
-								.findFragmentByTag("ABOUT_FRAG");
-						if (aboutFrag != null) {
-							if (aboutFrag.isVisible()) {
-								return;
-							}
-						}
-						aboutFrag = new AboutFragment();
-						getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.fragment_container, aboutFrag,
-								"ABOUT_FRAG").addToBackStack(null).commit();
-						setTitle(R.string.about);
-						toggleDrawer(true);
-					}
-
-				});
-				
-				findViewById(R.id.cloud_menu).setOnClickListener(new OnClickListener() {
-					public void onClick(View view) {
-						CloudFragment cloudFrag = (CloudFragment) getSupportFragmentManager()
-								.findFragmentByTag("CLOUD_FRAG");
-						if (cloudFrag != null) {
-							if (cloudFrag.isVisible()) {
-								return;
-							}
-						}
-						cloudFrag = new CloudFragment();
-						getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.fragment_container,
-						cloudFrag, "CLOUD_FRAG")
-							.addToBackStack(null).commit();
-						setTitle(R.string.cloud);
-						toggleDrawer(true);
-					}
-
-				});
-
-				View rateMe = findViewById(R.id.rateme_menu);
-				if (!hasAndroidMarket) {
-					rateMe.setVisibility(View.GONE);
-				} else {
-					rateMe.setOnTouchListener(new OnTouchListener() {
-						public boolean onTouch(View v, MotionEvent event) {
-							if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-								// vib.vibrate(50);
-								startActivity(new Intent(Intent.ACTION_VIEW, Uri
-										.parse("market://details?id=" + getPackageName())));
-								//setTitle(R.string.rateme);
-								toggleDrawer(true);
-								return true;
-							} else
-								return false;
-						}
-					});
-				}
-				
-				findViewById(R.id.message_menu).setOnClickListener(new OnClickListener() {
-						public void onClick(View view) {
-							generateErrorLog();
-						}
-					});
-				}
-		};
-		
-		// Set the drawer toggle as the DrawerListener
-		mDrawerLayout.setDrawerListener(mDrawerToggle);
-
-		findViewById(R.id.header_list).setOnTouchListener(new OnTouchListener() {
-			public boolean onTouch(View v, MotionEvent event) {
-				if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-					toggleDrawer(false);
-					return true;
-				} else
-					return false;
-			}
-		});
+		NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+		navigationView.setNavigationItemSelectedListener(this);
 	}
-	
-	public void toggleDrawer(boolean close) {
-		if (mDrawerLayout.isDrawerOpen(Gravity.LEFT)) {
-			mDrawerLayout.closeDrawer(Gravity.LEFT);
-		} else if (!close) {
-			mDrawerLayout.openDrawer(Gravity.LEFT);
-		}
-	}
+
 
 	public void generateErrorLog() {
 		new GenerateLogs(MainActivity.this).execute(getFilesDir().getAbsolutePath());
@@ -351,7 +190,7 @@ public class MainActivity extends FragmentActivity implements
 
 	/**
 	 * Display a dialog to notify the user of prior crash
-	 * 
+	 *
 	 * @param string
 	 *            A generalized summary of the crash cause
 	 * @param bundle
@@ -377,19 +216,19 @@ public class MainActivity extends FragmentActivity implements
 		builder.show();
 	}
 
-    public static boolean isBiosExisting(Context context) {
-        SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-        home_directory = mPrefs.getString("home_directory", home_directory);
-        File bios = new File(home_directory, "data/dc_boot.bin");
-        return bios.exists();
-    }
+	public static boolean isBiosExisting(Context context) {
+		SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+		home_directory = mPrefs.getString("home_directory", home_directory);
+		File bios = new File(home_directory, "data/dc_boot.bin");
+		return bios.exists();
+	}
 
-    public static boolean isFlashExisting(Context context) {
-        SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-        home_directory = mPrefs.getString("home_directory", home_directory);
-        File flash = new File(home_directory, "data/dc_flash.bin");
-        return flash.exists();
-    }
+	public static boolean isFlashExisting(Context context) {
+		SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+		home_directory = mPrefs.getString("home_directory", home_directory);
+		File flash = new File(home_directory, "data/dc_flash.bin");
+		return flash.exists();
+	}
 
 	public void onGameSelected(Uri uri) {
 		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
@@ -414,7 +253,7 @@ public class MainActivity extends FragmentActivity implements
 			}
 		}
 	}
-	
+
 	private void launchBIOSdetection() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle(R.string.bios_selection);
@@ -443,10 +282,10 @@ public class MainActivity extends FragmentActivity implements
 						// Add the fragment to the
 						// 'fragment_container' FrameLayout
 						getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.fragment_container,
-								firstFragment,
-								"MAIN_BROWSER")
+								.beginTransaction()
+								.replace(R.id.fragment_container,
+										firstFragment,
+										"MAIN_BROWSER")
 								.addToBackStack(null).commit();
 					}
 				});
@@ -502,13 +341,13 @@ public class MainActivity extends FragmentActivity implements
 	@SuppressLint("NewApi")
 	@Override
 	public void setTitle(CharSequence title) {
-		menuHeading.setText(title);
+		toolbar.setTitle(title);
 	}
 
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
-		mDrawerToggle.onConfigurationChanged(newConfig);
+//		mDrawerToggle.onConfigurationChanged(newConfig);
 	}
 
 	@Override
@@ -535,12 +374,12 @@ public class MainActivity extends FragmentActivity implements
 
 		}
 		if (keyCode == KeyEvent.KEYCODE_MENU) {
-			toggleDrawer(false);
+//			toggleDrawer(false);
 		}
 
 		return super.onKeyDown(keyCode, event);
 	}
-	
+
 	private void launchMainFragment(Fragment fragment) {
 		fragment = new FileBrowser();
 		Bundle args = new Bundle();
@@ -588,7 +427,7 @@ public class MainActivity extends FragmentActivity implements
 				fragment.moga.onResume();
 			}
 		}
-		
+
 		CloudFragment cloudfragment = (CloudFragment) getSupportFragmentManager()
 				.findFragmentByTag("CLOUD_FRAG");
 		if (cloudfragment != null && cloudfragment.isVisible()) {
@@ -597,24 +436,19 @@ public class MainActivity extends FragmentActivity implements
 			}
 		}
 	}
-	
-	@Override
-	public void onPostCreate(Bundle savedInstanceState) {
-		super.onPostCreate(savedInstanceState);
-		mDrawerToggle.syncState();
-	}
-	
+
+
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
 		if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			getWindow().getDecorView().setSystemUiVisibility(
 					View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-	                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-	                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-	                | View.SYSTEM_UI_FLAG_FULLSCREEN
-	                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-        }
+							| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+							| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+							| View.SYSTEM_UI_FLAG_FULLSCREEN
+							| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+		}
 	}
 
 	public boolean isCallable(Intent intent) {
@@ -622,9 +456,9 @@ public class MainActivity extends FragmentActivity implements
 				intent, PackageManager.MATCH_DEFAULT_ONLY);
 		return list.size() > 0;
 	}
-	
+
 	public static void showToastMessage(Context context, String message,
-			int resource, int duration) {
+										int resource, int duration) {
 		LayoutInflater inflater = (LayoutInflater) context
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		View layout = inflater.inflate(R.layout.toast_layout, null);
@@ -642,9 +476,149 @@ public class MainActivity extends FragmentActivity implements
 
 		Toast toast = new Toast(context);
 		toast.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0,
-						(int) (72 * metrics.density + 0.5f));
+				(int) (72 * metrics.density + 0.5f));
 		toast.setDuration(duration);
 		toast.setView(layout);
 		toast.show();
 	}
+
+	@Override
+	public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+		// Handle navigation view item clicks here.
+		switch (item.getItemId()) {
+			case R.id.browser_menu:
+				browserMenuItem();
+				break;
+			case R.id.settings_menu:
+				settingsMenuItem();
+				break;
+			case R.id.input_menu:
+				inputMenuItem();
+				break;
+			case R.id.about_menu:
+				aboutMenuItem();
+				break;
+			case R.id.cloud_menu:
+				cloudMenuItem();
+				break;
+			case R.id.rateme_menu:
+				rateMeMenuItem();
+				break;
+			case R.id.message_menu:
+				messageMenuItem();
+				break;
+		}
+
+		DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+		drawer.closeDrawer(GravityCompat.START);
+		return true;
+	}
+
+
+	public void browserMenuItem(){
+		FileBrowser browseFrag = (FileBrowser) getSupportFragmentManager()
+				.findFragmentByTag("MAIN_BROWSER");
+		if (browseFrag != null) {
+			if (browseFrag.isVisible()) {
+				return;
+			}
+		}
+		browseFrag = new FileBrowser();
+		Bundle args = new Bundle();
+		args.putBoolean("ImgBrowse", true);
+		args.putString("browse_entry", null);
+		// specify a path for selecting folder options
+		args.putBoolean("games_entry", false);
+		// specify if the desired path is for games or data
+		browseFrag.setArguments(args);
+		getSupportFragmentManager()
+				.beginTransaction()
+				.replace(R.id.fragment_container, browseFrag,
+						"MAIN_BROWSER").addToBackStack(null)
+				.commit();
+		setTitle(R.string.browser);
+	}
+
+
+	public void settingsMenuItem(){
+		OptionsFragment optionsFrag = (OptionsFragment) getSupportFragmentManager()
+				.findFragmentByTag("OPTIONS_FRAG");
+		if (optionsFrag != null) {
+			if (optionsFrag.isVisible()) {
+				return;
+			}
+		}
+		optionsFrag = new OptionsFragment();
+		getSupportFragmentManager()
+				.beginTransaction()
+				.replace(R.id.fragment_container,
+						optionsFrag, "OPTIONS_FRAG")
+				.addToBackStack(null).commit();
+		setTitle(R.string.settings);
+	}
+
+
+	public void inputMenuItem(){
+		InputFragment inputFrag = (InputFragment) getSupportFragmentManager()
+				.findFragmentByTag("INPUT_FRAG");
+		if (inputFrag != null) {
+			if (inputFrag.isVisible()) {
+				return;
+			}
+		}
+		inputFrag = new InputFragment();
+		getSupportFragmentManager()
+				.beginTransaction()
+				.replace(R.id.fragment_container, inputFrag,
+						"INPUT_FRAG").addToBackStack(null).commit();
+		setTitle(R.string.input);
+	}
+
+
+	public void aboutMenuItem(){
+		AboutFragment aboutFrag = (AboutFragment) getSupportFragmentManager()
+				.findFragmentByTag("ABOUT_FRAG");
+		if (aboutFrag != null) {
+			if (aboutFrag.isVisible()) {
+				return;
+			}
+		}
+		aboutFrag = new AboutFragment();
+		getSupportFragmentManager()
+				.beginTransaction()
+				.replace(R.id.fragment_container, aboutFrag,
+						"ABOUT_FRAG").addToBackStack(null).commit();
+		setTitle(R.string.about);
+	}
+
+
+	public void cloudMenuItem(){
+		CloudFragment cloudFrag = (CloudFragment) getSupportFragmentManager()
+				.findFragmentByTag("CLOUD_FRAG");
+		if (cloudFrag != null) {
+			if (cloudFrag.isVisible()) {
+				return;
+			}
+		}
+		cloudFrag = new CloudFragment();
+		getSupportFragmentManager()
+				.beginTransaction()
+				.replace(R.id.fragment_container,
+						cloudFrag, "CLOUD_FRAG")
+				.addToBackStack(null).commit();
+		setTitle(R.string.cloud);
+	}
+
+
+	public void rateMeMenuItem(){
+		// vib.vibrate(50);
+		startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + getPackageName())));
+		setTitle(R.string.rateme);
+	}
+
+
+	public void messageMenuItem(){
+		new GenerateLogs(MainActivity.this).execute(getFilesDir().getAbsolutePath());
+	}
+
 }

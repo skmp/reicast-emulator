@@ -86,7 +86,7 @@ public class FileBrowser extends Fragment {
 		}
 
 	}
-	
+
 	public static HashSet<String> getExternalMounts() {
 		final HashSet<String> out = new HashSet<String>();
 		String reg = "(?i).*vold.*(vfat|ntfs|exfat|fat32|ext3|ext4|fuse).*rw.*";
@@ -146,12 +146,12 @@ public class FileBrowser extends Fragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		return inflater.inflate(R.layout.activity_main, container, false);
+		return inflater.inflate(R.layout.file_browser_fragment, container, false);
 	}
 
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		// setContentView(R.layout.activity_main);
+		// setContentView(R.layout.file_browser_fragment);
 		parentActivity = getActivity();
 		try {
 			File buttons = null;
@@ -195,18 +195,18 @@ public class FileBrowser extends Fragment {
 
 		/*
 		 * OnTouchListener viblist=new OnTouchListener() {
-		 * 
+		 *
 		 * public boolean onTouch(View v, MotionEvent event) { if
 		 * (event.getActionMasked()==MotionEvent.ACTION_DOWN) vib.vibrate(50);
 		 * return false; } };
-		 * 
+		 *
 		 * findViewById(R.id.config).setOnTouchListener(viblist);
 		 * findViewById(R.id.about).setOnTouchListener(viblist);
 		 */
 
 		File home = new File(mPrefs.getString(Config.pref_home, home_directory));
 		if (!home.exists() || !home.isDirectory()) {
-			MainActivity.showToastMessage(getActivity(), 
+			MainActivity.showToastMessage(getActivity(),
 					getActivity().getString(R.string.config_home),
 					R.drawable.ic_notification, Toast.LENGTH_LONG);
 		}
@@ -219,9 +219,9 @@ public class FileBrowser extends Fragment {
 	}
 
 	private final class LocateGames extends AsyncTask<String, Integer, List<File>> {
-		
+
 		private int array;
-		
+
 		public LocateGames(int arrayType) {
 			this.array = arrayType;
 		}
@@ -239,7 +239,7 @@ public class FileBrowser extends Fragment {
 				filter[i] = new FilenameFilter() {
 
 					public boolean accept(File dir, String name) {
-						if (dir.getName().equals("obb") || dir.getName().equals("cache") 
+						if (dir.getName().equals("obb") || dir.getName().equals("cache")
 							|| dir.getName().startsWith(".") || name.startsWith(".")) {
 							return false;
 						} else if (array == R.array.flash && !name.startsWith("dc_")) {
@@ -281,7 +281,7 @@ public class FileBrowser extends Fragment {
 			}
 		}
 	}
-	
+
 	private void browseStorage(boolean images) {
 		if (images) {
 			navigate(new File(home_directory));
@@ -369,10 +369,10 @@ public class FileBrowser extends Fragment {
 
 	}
 
-	private void createListItem(LinearLayout list, final File game, final int index, final boolean isGame) {				
+	private void createListItem(LinearLayout list, final File game, final int index, final boolean isGame) {
 		final View childview = parentActivity.getLayoutInflater().inflate(
 				R.layout.app_list_item, null, false);
-		
+
 		XMLParser xmlParser = new XMLParser(game, index, mPrefs);
 		xmlParser.setViewParent(parentActivity, childview, mCallback);
 		orig_bg = childview.getBackground();
@@ -390,7 +390,7 @@ public class FileBrowser extends Fragment {
 							home_directory = game.getAbsolutePath().substring(0,
 									game.getAbsolutePath().lastIndexOf(File.separator)).replace("/data", "");
 							if (!DataDirectoryBIOS()) {
-								MainActivity.showToastMessage(getActivity(), 
+								MainActivity.showToastMessage(getActivity(),
 										getActivity().getString(R.string.config_data, home_directory),
 										R.drawable.ic_notification, Toast.LENGTH_LONG);
 							}
@@ -487,14 +487,14 @@ public class FileBrowser extends Fragment {
 									home_directory = heading.replace("/data", "");
 									mPrefs.edit().putString(Config.pref_home, home_directory).commit();
 									if (!DataDirectoryBIOS()) {
-										MainActivity.showToastMessage(getActivity(), 
+										MainActivity.showToastMessage(getActivity(),
 												getActivity().getString(R.string.config_data, home_directory),
 												R.drawable.ic_notification, Toast.LENGTH_LONG);
 									}
                                     mCallback.onFolderSelected(Uri.fromFile(new File(home_directory)));
 									JNIdc.config(home_directory);
 								}
-								
+
 							}
 						}
 					});
@@ -518,7 +518,7 @@ public class FileBrowser extends Fragment {
 		}
 		v.invalidate();
 	}
-	
+
 	private boolean DataDirectoryBIOS() {
 		File data_directory = new File(home_directory, "data");
 		if (!data_directory.exists() || !data_directory.isDirectory()) {

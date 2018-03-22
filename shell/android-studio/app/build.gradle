@@ -34,6 +34,7 @@ dependencies {
     compile 'com.android.support:support-v4:25.3.1'
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:design:25.3.1'
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     compile files('libs/bcprov-jdk16-146.jar')
     compile files('libs/com.bda.controller.jar')
     compile files('libs/commons-io-2.4.jar')

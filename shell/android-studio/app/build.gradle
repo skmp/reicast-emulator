@@ -10,6 +10,7 @@ android {
         targetSdkVersion 21
         versionCode="7"
         versionName="r7"
+        vectorDrawables.useSupportLibrary = true
         ndk {
             moduleName "dc"
             abiFilters 'armeabi-v7a', 'x86'

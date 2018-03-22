@@ -19,6 +19,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -174,8 +175,7 @@ public class MainActivity extends AppCompatActivity implements
 		setSupportActionBar(toolbar);
 
 		drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-		toggle = new android.support.v7.app.ActionBarDrawerToggle(
-				this, drawer, R.string.drawer_open, R.string.drawer_shut);
+		toggle = new android.support.v7.app.ActionBarDrawerToggle(MainActivity.this, drawer, toolbar, R.string.drawer_open, R.string.drawer_shut);
 		drawer.addDrawerListener(toggle);
 		toggle.syncState();
 
@@ -372,9 +372,6 @@ public class MainActivity extends AppCompatActivity implements
 				return true;
 			}
 
-		}
-		if (keyCode == KeyEvent.KEYCODE_MENU) {
-//			toggleDrawer(false);
 		}
 
 		return super.onKeyDown(keyCode, event);

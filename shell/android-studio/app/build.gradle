@@ -8,7 +8,8 @@ android {
         applicationId "com.reicast.emulator"
         minSdkVersion 17
         targetSdkVersion 21
-
+        vectorDrawables.useSupportLibrary = true
+        
         ndk {
             moduleName "dc"
                 abiFilters 'armeabi-v7a', 'x86'

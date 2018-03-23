@@ -6,4 +6,8 @@
 
     <integer name="num_cols">1</integer>
 
+
+    <dimen name="primary_text_material">16sp</dimen>
+    <dimen name="secondary_text_material">14sp</dimen>
+
 </resources>

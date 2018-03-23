@@ -1,28 +1,7 @@
 package com.reicast.emulator;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-
-import org.apache.commons.lang3.StringUtils;
-
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -48,6 +27,25 @@ import android.widget.Toast;
 import com.android.util.FileUtils;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.JNIdc;
+
+import org.apache.commons.lang3.StringUtils;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 
 public class FileBrowser extends Fragment {
 
@@ -371,7 +369,7 @@ public class FileBrowser extends Fragment {
 
 	private void createListItem(LinearLayout list, final File game, final int index, final boolean isGame) {
 		final View childview = parentActivity.getLayoutInflater().inflate(
-				R.layout.app_list_item, null, false);
+				R.layout.items_browser_fragment, null, false);
 
 		XMLParser xmlParser = new XMLParser(game, index, mPrefs);
 		xmlParser.setViewParent(parentActivity, childview, mCallback);
@@ -447,7 +445,7 @@ public class FileBrowser extends Fragment {
 			if (file != null && !file.isDirectory() && !file.getAbsolutePath().equals("/data"))
 				continue;
 			final View childview = parentActivity.getLayoutInflater().inflate(
-					R.layout.app_list_item, null, false);
+					R.layout.items_browser_fragment, null, false);
 
 			if (file == null) {
 				((TextView) childview.findViewById(R.id.item_name)).setText(R.string.folder_select);
@@ -457,8 +455,8 @@ public class FileBrowser extends Fragment {
 				((TextView) childview.findViewById(R.id.item_name)).setText(file.getName());
 
 			((ImageView) childview.findViewById(R.id.item_icon))
-					.setImageResource(file == null ? R.drawable.config
-							: file.isDirectory() ? R.drawable.open_folder
+					.setImageResource(file == null ? R.drawable.ic_settings
+							: file.isDirectory() ? R.drawable.ic_folder_black_24dp
 									: R.drawable.disk_unknown);
 
 			childview.setTag(file);

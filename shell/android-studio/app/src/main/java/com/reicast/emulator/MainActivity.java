@@ -19,7 +19,6 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -57,11 +56,11 @@ public class MainActivity extends AppCompatActivity implements
 
 	private boolean hasAndroidMarket = false;
 	private ActionBarDrawerToggle toggle;
-	DrawerLayout drawer;
+	private DrawerLayout drawer;
 	private Toolbar toolbar;
 	private UncaughtExceptionHandler mUEHandler;
-
 	Gamepad pad = new Gamepad();
+	private final String TAG = getClass().getName();
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -142,11 +141,10 @@ public class MainActivity extends AppCompatActivity implements
 			// However, if we're being restored from a previous state,
 			// then we don't need to do anything and should return or else
 			// we could end up with overlapping fragments.
-			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB_MR1) {
 				if (savedInstanceState != null) {
 					return;
 				}
-			}
+
 
 			// Create a new Fragment to be placed in the activity layout
 			FileBrowser firstFragment = new FileBrowser();
@@ -158,8 +156,7 @@ public class MainActivity extends AppCompatActivity implements
 			// specify if the desired path is for games or data
 			firstFragment.setArguments(args);
 			// In case this activity was started with special instructions from
-			// an
-			// Intent, pass the Intent's extras to the fragment as arguments
+			// an Intent, pass the Intent's extras to the fragment as arguments
 			// firstFragment.setArguments(getIntent().getExtras());
 
 			// Add the fragment to the 'fragment_container' FrameLayout
@@ -180,6 +177,8 @@ public class MainActivity extends AppCompatActivity implements
 		toggle.syncState();
 
 		NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+		if (!hasAndroidMarket)
+		navigationView.getMenu().findItem(R.id.rateme_menu).setVisible(false);
 		navigationView.setNavigationItemSelectedListener(this);
 	}
 
@@ -190,11 +189,6 @@ public class MainActivity extends AppCompatActivity implements
 
 	/**
 	 * Display a dialog to notify the user of prior crash
-	 *
-	 * @param string
-	 *            A generalized summary of the crash cause
-	 * @param bundle
-	 *            The savedInstanceState passed from onCreate
 	 */
 	private void displayLogOutput(final String error) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -347,7 +341,7 @@ public class MainActivity extends AppCompatActivity implements
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
-//		mDrawerToggle.onConfigurationChanged(newConfig);
+		toggle.onConfigurationChanged(newConfig);
 	}
 
 	@Override
@@ -376,6 +370,7 @@ public class MainActivity extends AppCompatActivity implements
 
 		return super.onKeyDown(keyCode, event);
 	}
+
 
 	private void launchMainFragment(Fragment fragment) {
 		fragment = new FileBrowser();

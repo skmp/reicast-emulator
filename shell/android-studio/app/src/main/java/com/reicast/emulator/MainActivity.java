@@ -176,13 +176,7 @@ public class MainActivity extends AppCompatActivity implements
 				this, drawer, toolbar, R.string.drawer_open, R.string.drawer_shut) {
 			@Override
 			public void onDrawerOpened(View drawerView) {
-				NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-				Menu nav_Menu = navigationView.getMenu();
-				if (!hasAndroidMarket) {
-					nav_Menu.findItem(R.id.rateme_menu).setVisible(false);
-				} else {
-					nav_Menu.findItem(R.id.rateme_menu).setVisible(true);
-				}
+
 			}
 			@Override
 			public void onDrawerClosed(View drawerView) {
@@ -193,6 +187,9 @@ public class MainActivity extends AppCompatActivity implements
 		toggle.syncState();
 
 		NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        if (!hasAndroidMarket) {
+            navigationView.getMenu().findItem(R.id.rateme_menu).setVisible(false);
+        }
 		navigationView.setNavigationItemSelectedListener(this);
 	}
 

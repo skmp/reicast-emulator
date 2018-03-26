@@ -35,7 +35,6 @@ import java.util.HashMap;
 
 import tv.ouya.console.api.OuyaController;
 
-@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class GL2JNIActivity extends Activity {
 	public GL2JNIView mView;
 	OnScreenMenu menu;

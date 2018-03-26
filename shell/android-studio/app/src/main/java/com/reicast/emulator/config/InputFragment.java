@@ -77,20 +77,14 @@ public class InputFragment extends Fragment {
 		Config.vibrationDuration = sharedPreferences.getInt(Config.pref_vibrationDuration, 20);
 		vib = (Vibrator) parentActivity.getSystemService(Context.VIBRATOR_SERVICE);
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			ImageView icon_a = (ImageView) getView().findViewById(
-					R.id.controller_icon_a);
-			icon_a.setAlpha(0.8f);
-			ImageView icon_b = (ImageView) getView().findViewById(
-					R.id.controller_icon_b);
-			icon_b.setAlpha(0.8f);
-			ImageView icon_c = (ImageView) getView().findViewById(
-					R.id.controller_icon_c);
-			icon_c.setAlpha(0.8f);
-			ImageView icon_d = (ImageView) getView().findViewById(
-					R.id.controller_icon_d);
-			icon_d.setAlpha(0.8f);
-		}
+		ImageView icon_a = (ImageView) getView().findViewById(R.id.controller_icon_a);
+		icon_a.setAlpha(0.8f);
+		ImageView icon_b = (ImageView) getView().findViewById(R.id.controller_icon_b);
+		icon_b.setAlpha(0.8f);
+		ImageView icon_c = (ImageView) getView().findViewById(R.id.controller_icon_c);
+		icon_c.setAlpha(0.8f);
+		ImageView icon_d = (ImageView) getView().findViewById(R.id.controller_icon_d);
+		icon_d.setAlpha(0.8f);
 
 		Button buttonLaunchEditor = (Button) getView().findViewById(
 				R.id.buttonLaunchEditor);

@@ -244,12 +244,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 			Toast.makeText(mContext, mContext.getString(R.string.platform),
 					Toast.LENGTH_SHORT).show();
 			UploadLogs mUploadLogs = new UploadLogs(mContext, currentTime);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-				mUploadLogs.executeOnExecutor(
-						AsyncTask.THREAD_POOL_EXECUTOR, response);
-			} else {
-				mUploadLogs.execute(response);
-			}
+			mUploadLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, response);
 		}
 	}
 }

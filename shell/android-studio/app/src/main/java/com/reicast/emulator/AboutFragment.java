@@ -97,7 +97,6 @@ public class AboutFragment extends Fragment {
 		slidingGithub = (SlidingDrawer) getView().findViewById(
 				R.id.slidingGithub);
 		slidingGithub.setOnDrawerOpenListener(new OnDrawerOpenListener() {
-			@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 			public void onDrawerOpened() {
 				new retrieveGitTask().execute(Config.git_api);
 			}

@@ -26,6 +26,9 @@ android {
             path 'src/main/jni/Android.mk'
         }
     }
+    lintOptions {
+        abortOnError false
+    }
 }
 
 afterEvaluate {

@@ -2,7 +2,7 @@
 
 #include "types.h"
 
-#if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64
+#if FEAT_SHREC == DYNAREC_JIT // && HOST_CPU == CPU_X64
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/modules/ccn.h"
 #include "hw/sh4/sh4_interrupts.h"
@@ -11,6 +11,7 @@
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/dyna/regalloc.h"
+//#include "arm_emitter/arm_emitter.h"
 #include "emitter/x86_emitter.h"
 #include "profiler/profiler.h"
 #include "oslib/oslib.h"

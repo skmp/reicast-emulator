@@ -52,6 +52,8 @@
 	NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:[self documents].path error:NULL];
 	NSPredicate *diskPredicate = [NSPredicate predicateWithFormat:@"self ENDSWITH '.chd' || self ENDSWITH '.gdi' || self ENDSWITH '.cdi' || self ENDSWITH '.CHD' || self ENDSWITH '.GDI' || self ENDSWITH '.CDI'"];
 	self.diskImages = [NSMutableArray arrayWithArray:[files filteredArrayUsingPredicate:diskPredicate]];
+    
+    NSLog(@"Put files in %@", [self documents].path);
 }
 
 - (void)didReceiveMemoryWarning

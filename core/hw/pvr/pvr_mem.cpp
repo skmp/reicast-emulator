@@ -244,7 +244,23 @@ void NOINLINE MemWrite32(void* dst, void* src)
 	memcpy((u64*)dst,(u64*)src,32);
 }
 
-#if HOST_CPU!=CPU_ARM
+#if HOST_CPU != CPU_ARM
+
+/*
+ .global CSYM(TAWriteSQ)
+ HIDDEN(TAWriteSQ)
+ @r0: addr
+ @r1: sq_both
+ CSYM(TAWriteSQ):
+ BIC     R3, R0, #0xFE000000        @clear unused bits
+ AND     R0, R0, #0x20            @SQ#, isolate
+ CMP     R3, #0x800000            @TA write?
+ ADD     R0, R1, R0                @SQ#, add to SQ ptr
+ BCC     CSYM(_Z13ta_vtx_data32Pv)    @TA write?
+ */
+
+
+
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
 {
 	u32 address_w=address&0x1FFFFFF;//correct ?

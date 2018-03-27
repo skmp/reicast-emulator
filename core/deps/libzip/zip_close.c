@@ -40,6 +40,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#if defined(TARGET_IPHONE_SIMULATOR) || defined(TARGET_IPHONE)
+#include <unistd.h>
+#endif
+
 #include "zipint.h"
 
 static int add_data(struct zip *, struct zip_source *, struct zip_dirent *,

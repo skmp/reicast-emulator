@@ -399,6 +399,9 @@ void recSh4_Reset(bool Manual)
 
 #if HOST_OS == OS_DARWIN
 #include <sys/mman.h>
+#import <sys/utsname.h>
+#include <unistd.h>
+#import <sys/syscall.h>
 #endif
 
 void recSh4_Init()
@@ -434,10 +437,28 @@ void recSh4_Init()
 #else
 	CodeCache = (u8*)(((unat)SH4_TCB+4095)& ~4095);
 #endif
-
+    
 #if HOST_OS == OS_DARWIN
+//    syscall(26, 0, 0, 0, 0);
     munmap(CodeCache, CODE_SIZE);
-    CodeCache = (u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
+
+    FILE *fd = tmpfile();//fopen(mktemp("test"), "rw"); //tmpfile(); //fopen(NSTemporaryDirectory(), "r");
+    fseek(fd, 0, SEEK_END);
+    int len = (int)ftell(fd);
+    fseek( fd, 0, SEEK_SET );
+    
+    int fileNumber = fileno(fd);
+    // Allow Code run
+//    syscall(26, 0, 0, 0, 0);
+    // Simulates a debugger. Makes it possible to use JIT (though only W^X)
+//    syscall(SYS_ptrace, 0 /*PTRACE_TRACEME*/, 0, 0, 0);
+    //     CodeCache = (u8*)mmap(NULL, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+//  MAP_ANON | MAP_PRIVATE, -1, 0
+    //     CodeCache = (u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
+    void *test = malloc(CODE_SIZE);// mmap(NULL, CODE_SIZE, PROT_READ, MAP_FIXED | MAP_PRIVATE, 0, 0);
+    bzero(test, CODE_SIZE);
+    CodeCache = (u8*)test;
+    CodeCache = (u8*)mmap(test, CODE_SIZE, PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, len, 0);
 #endif
 
 #if HOST_OS == OS_WINDOWS
@@ -446,6 +467,7 @@ void recSh4_Init()
 #elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
 	
 	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
+    syscall(26, 0, 0, 0, 0);
 
 	#if FEAT_SHREC == DYNAREC_JIT
 		if (mprotect(CodeCache, CODE_SIZE, PROT_READ|PROT_WRITE|PROT_EXEC))
@@ -455,8 +477,10 @@ void recSh4_Init()
 		}
 	#endif
 
-#if TARGET_IPHONE
-	memset((u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0),0xFF,CODE_SIZE);
+#if defined(TARGET_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
+//    syscall(SYS_ptrace, 0, 0, 0, 0);
+            memset((u8*)mmap(CodeCache, CODE_SIZE, PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0),0xFF,CODE_SIZE);
+//    memset((u8*)mmap(CodeCache, CODE_SIZE, PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0),0xFF,CODE_SIZE);
 #else
 	memset(CodeCache,0xFF,CODE_SIZE);
 #endif

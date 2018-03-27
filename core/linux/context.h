@@ -2,7 +2,7 @@
 
 
 struct rei_host_context_t {
-#if HOST_CPU != CPU_GENERIC
+#if HOST_CPU != CPU_GENERIC || defined(TARGET_IPHONE_SIMULATOR) || defined(TARGET_IPHONE)
 	unat pc;
 #endif
 

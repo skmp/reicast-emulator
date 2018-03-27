@@ -24,7 +24,7 @@
             android:layout_marginLeft="16dp"
             android:layout_gravity="center"
             android:tint="@color/ice_light"
-            app:srcCompat="@drawable/ic_folder_black_24dp" />
+            app:srcCompat="@drawable/game_selector" />
 
         <TextView
             android:id="@+id/item_name"

@@ -171,7 +171,11 @@ public class FileBrowser extends Fragment {
 			    in.close();
 			    out.close();
 			} else if (!file.exists()) {
-				file.createNewFile();
+				try {
+					file.createNewFile();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 				OutputStream fo = new FileOutputStream(file);
 				InputStream png = parentActivity.getAssets()
 						.open("buttons.png");

@@ -18,7 +18,7 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
-#if !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX)
+#if !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX) && !defined(TARGET_IPHONE_SIMULATOR)
   #include <sys/personality.h>
   #include <dlfcn.h>
 #endif
@@ -263,7 +263,7 @@ double os_GetSeconds()
 	return a.tv_sec-tvs_base+a.tv_usec/1000000.0;
 }
 
-#if TARGET_IPHONE
+#if TARGET_IPHONE && (HOST_CPU == CPU_ARM)
 void os_DebugBreak() {
     __asm__("trap");
 }
@@ -330,7 +330,7 @@ void common_linux_setup()
 	
 	settings.profile.run_counts=0;
 	
-	printf("Linux paging: %08X %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
+	printf("Linux paging: %08X %08X %08X\n",sysconf(_SC_PAGESIZE)-1,PAGE_SIZE,PAGE_MASK);
 	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
 }
 #endif

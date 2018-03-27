@@ -55,7 +55,7 @@ static void coreaudio_init()
     AudioComponent component;
     
     desc.componentType = kAudioUnitType_Output;
-#if !defined(TARGET_IPHONE)
+#if !defined(TARGET_IPHONE) && !defined(TARGET_IPHONE_SIMULATOR)
     desc.componentSubType = kAudioUnitSubType_DefaultOutput;
 #else
     desc.componentSubType = kAudioUnitSubType_RemoteIO;

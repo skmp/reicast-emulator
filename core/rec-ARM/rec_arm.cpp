@@ -333,202 +333,209 @@ arm_reg_alloc reg;
 u32 blockno=0;
 
 
-extern "C" void no_update();
-extern "C" void intc_sched();
-extern "C" void ngen_blockcheckfail();
+//extern "C" void no_update();
+//extern "C" void intc_sched();
+//extern "C" void ngen_blockcheckfail();
+//
+//
+//extern "C" void ngen_LinkBlock_Generic_stub();
+//extern "C" void ngen_LinkBlock_cond_Branch_stub();
+//extern "C" void ngen_LinkBlock_cond_Next_stub();
+//extern "C" void ngen_FailedToFindBlock_();
 
-
-extern "C" void ngen_LinkBlock_Generic_stub();
-extern "C" void ngen_LinkBlock_cond_Branch_stub();
-extern "C" void ngen_LinkBlock_cond_Next_stub();
-
-extern "C" void ngen_FailedToFindBlock_();
+#ifdef __LP64__
+void ngen_FailedToFindBlock_internalARM64() {
+    rdv_FailedToFindBlock(Sh4cntx.pc);
+}
+void(*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internalARM64;
+#else
 void (*ngen_FailedToFindBlock)()=&ngen_FailedToFindBlock_;  // in asm
+#endif
 
 #include <map>
 
 map<shilop,ConditionCode> ccmap;
 map<shilop,ConditionCode> ccnmap;
 
-u32 DynaRBI::Relink()
-{
-	verify(emit_ptr==0);
-	u8* code_start=(u8*)code+relink_offset;
-	emit_ptr=(u32*)code_start;
-
-	switch(BlockType)
-	{
-	case BET_Cond_0:
-	case BET_Cond_1:
-	{
-		//quick opt here:
-		//peek into reg alloc, store actuall sr_T register to relink_data
-		bool last_op_sets_flags=!has_jcond && oplist.size() > 0 && 
-			oplist[oplist.size()-1].rd._reg==reg_sr_T && ccmap.count(oplist[oplist.size()-1].op);
-
-		ConditionCode CC=CC_EQ;
-
-		if (last_op_sets_flags)
-		{
-			shilop op=oplist[oplist.size()-1].op;
-
-			verify(ccmap.count(op)>0);
-
-			if ((BlockType&1)==1)
-				CC=ccmap[op];
-			else
-				CC=ccnmap[op];
-		}
-		else
-		{
-			if (!has_jcond)
-			{
-				printf("SLOW COND PATH %d\n",oplist[oplist.size()-1].op);
-				LoadSh4Reg_mem(r4,reg_sr_T);
-			}
-
-			CMP(r4,(BlockType&1));
-		}
-
-		if (pBranchBlock)
-			JUMP((u32)pBranchBlock->code,CC);
-		else
-			CALL((u32)ngen_LinkBlock_cond_Branch_stub,CC);
-
-		if (pNextBlock)
-			JUMP((u32)pNextBlock->code);
-		else
-			CALL((u32)ngen_LinkBlock_cond_Next_stub);
-		break;
-	}
-
-
-	case BET_DynamicRet:
-	case BET_DynamicCall:
-	case BET_DynamicJump:
-    {
-#ifdef CALLSTACK
-#error offset broken
-		SUB(r2, r8, -FPCB_OFFSET);
-#if RAM_SIZE == 33554432
-		UBFX(r1, r4, 1, 24);
-#else
-		UBFX(r1, r4, 1, 23);
-#endif
-
-		if (BlockType==BET_DynamicRet)
-		{
-			LDR(r14,r2,r1,Offset,true,S_LSL,2);
-			BX(R14);    //BX LR (ret hint)
-		}
-		else if (BlockType==BET_DynamicCall)
-		{
-			LDR(r0,r2,r1,Offset,true,S_LSL,2);
-			BLX(r0);    //BLX r0 (call hint)
-		}
-		else
-		{
-			LDR(r15,r2,r1,Offset,true,S_LSL,2);
-		}
-#else
-		if (relink_data==0)
-		{
-#if 1
-			//this is faster
-			//why ? (Icache ?)
-			SUB(r2, r8, -FPCB_OFFSET);
-#if RAM_SIZE == 33554432
-			UBFX(r1, r4, 1, 24);
-#else
-			UBFX(r1, r4, 1, 23);
-#endif
-			LDR(r15,r2,r1,Offset,true,S_LSL,2);
-			
-#else
-			if (pBranchBlock)
-			{
-				MOV32(r1,pBranchBlock->addr);           //2
-				CMP(r4,r1);                             //1
-				JUMP((unat)pBranchBlock->code,CC_EQ);   //1
-				CALL((unat)ngen_LinkBlock_Generic_stub);//1
-			}
-			else
-			{
-				SUB(r2, r8, -FPCB_OFFSET);
-
-#if RAM_SIZE == 33554432
-				UBFX(r1, r4, 1, 24);
-#else
-				UBFX(r1, r4, 1, 23);
-#endif
-				NOP();NOP();                            //2
-				LDR(r15,r2,r1,Offset,true,S_LSL,2);     //1
-			}
-#endif
-		}
-		else
-		{
-			verify(pBranchBlock==0);
-			SUB(r2, r8, -FPCB_OFFSET);
-
-#if RAM_SIZE == 33554432
-			UBFX(r1, r4, 1, 24);
-#else
-			UBFX(r1, r4, 1, 23);
-#endif
-			LDR(r15,r2,r1,Offset,true,S_LSL,2);
-		}
-#endif
-		break;
-	}
-
-	case BET_StaticCall:
-	case BET_StaticJump:
-	{
-		if (pBranchBlock==0)
-			CALL((u32)ngen_LinkBlock_Generic_stub);
-		else
-		{
-#ifdef CALLSTACK
-			if (BlockType==BET_StaticCall)
-				CALL((u32)pBranchBlock->code);
-			else
-#endif
-				JUMP((u32)pBranchBlock->code);
-		}
-		break;
-	}
-
-	case BET_StaticIntr:
-	case BET_DynamicIntr:
-		{
-			if (BlockType==BET_StaticIntr)
-			{
-				MOV32(r4,NextBlock);
-			}
-			//else -> already in r4 djump !
-
-			StoreSh4Reg_mem(r4,reg_nextpc);
-
-			CALL((u32)UpdateINTC);
-			LoadSh4Reg_mem(r4,reg_nextpc);
-			JUMP((u32)no_update);
-			break;
-		}
-
-	default:
-		printf("Error, Relink() Block Type: %X\n", BlockType);
-		verify(false);
-		break;
-	}
-
-	CacheFlush(code_start,emit_ptr);
-
-	u32 sz=(u8*)emit_ptr-code_start;
-
-	emit_ptr=0;
-	return sz;
-}
+//u32 DynaRBI::Relink()
+//{
+//    verify(emit_ptr==0);
+//    u8* code_start=(u8*)code+relink_offset;
+//    emit_ptr=(u32*)code_start;
+//
+//    switch(BlockType)
+//    {
+//    case BET_Cond_0:
+//    case BET_Cond_1:
+//    {
+//        //quick opt here:
+//        //peek into reg alloc, store actuall sr_T register to relink_data
+//        bool last_op_sets_flags=!has_jcond && oplist.size() > 0 &&
+//            oplist[oplist.size()-1].rd._reg==reg_sr_T && ccmap.count(oplist[oplist.size()-1].op);
+//
+//        ConditionCode CC=CC_EQ;
+//
+//        if (last_op_sets_flags)
+//        {
+//            shilop op=oplist[oplist.size()-1].op;
+//
+//            verify(ccmap.count(op)>0);
+//
+//            if ((BlockType&1)==1)
+//                CC=ccmap[op];
+//            else
+//                CC=ccnmap[op];
+//        }
+//        else
+//        {
+//            if (!has_jcond)
+//            {
+//                printf("SLOW COND PATH %d\n",oplist[oplist.size()-1].op);
+//                LoadSh4Reg_mem(r4,reg_sr_T);
+//            }
+//
+//            CMP(r4,(BlockType&1));
+//        }
+//
+//        if (pBranchBlock)
+//            JUMP((unat)pBranchBlock->code,CC);
+//        else
+//            CALL((unat)ngen_LinkBlock_cond_Branch_stub,CC);
+//
+//        if (pNextBlock)
+//            JUMP((unat)pNextBlock->code);
+//        else
+//            CALL((unat)ngen_LinkBlock_cond_Next_stub);
+//        break;
+//    }
+//
+//
+//    case BET_DynamicRet:
+//    case BET_DynamicCall:
+//    case BET_DynamicJump:
+//    {
+//#ifdef CALLSTACK
+//#error offset broken
+//        SUB(r2, r8, -FPCB_OFFSET);
+//#if RAM_SIZE == 33554432
+//        UBFX(r1, r4, 1, 24);
+//#else
+//        UBFX(r1, r4, 1, 23);
+//#endif
+//
+//        if (BlockType==BET_DynamicRet)
+//        {
+//            LDR(r14,r2,r1,Offset,true,S_LSL,2);
+//            BX(R14);    //BX LR (ret hint)
+//        }
+//        else if (BlockType==BET_DynamicCall)
+//        {
+//            LDR(r0,r2,r1,Offset,true,S_LSL,2);
+//            BLX(r0);    //BLX r0 (call hint)
+//        }
+//        else
+//        {
+//            LDR(r15,r2,r1,Offset,true,S_LSL,2);
+//        }
+//#else
+//        if (relink_data==0)
+//        {
+//#if 1
+//            //this is faster
+//            //why ? (Icache ?)
+//            SUB(r2, r8, -FPCB_OFFSET);
+//#if RAM_SIZE == 33554432
+//            UBFX(r1, r4, 1, 24);
+//#else
+//            UBFX(r1, r4, 1, 23);
+//#endif
+//            LDR(r15,r2,r1,Offset,true,S_LSL,2);
+//
+//#else
+//            if (pBranchBlock)
+//            {
+//                MOV32(r1,pBranchBlock->addr);           //2
+//                CMP(r4,r1);                             //1
+//                JUMP((unat)pBranchBlock->code,CC_EQ);   //1
+//                CALL((unat)ngen_LinkBlock_Generic_stub);//1
+//            }
+//            else
+//            {
+//                SUB(r2, r8, -FPCB_OFFSET);
+//
+//#if RAM_SIZE == 33554432
+//                UBFX(r1, r4, 1, 24);
+//#else
+//                UBFX(r1, r4, 1, 23);
+//#endif
+//                NOP();NOP();                            //2
+//                LDR(r15,r2,r1,Offset,true,S_LSL,2);     //1
+//            }
+//#endif
+//        }
+//        else
+//        {
+//            verify(pBranchBlock==0);
+//            SUB(r2, r8, -FPCB_OFFSET);
+//
+//#if RAM_SIZE == 33554432
+//            UBFX(r1, r4, 1, 24);
+//#else
+//            UBFX(r1, r4, 1, 23);
+//#endif
+//            LDR(r15,r2,r1,Offset,true,S_LSL,2);
+//        }
+//#endif
+//        break;
+//    }
+//
+//    case BET_StaticCall:
+//    case BET_StaticJump:
+//    {
+//        if (pBranchBlock==0)
+//            CALL((unat)ngen_LinkBlock_Generic_stub);
+//        else
+//        {
+//#ifdef CALLSTACK
+//            if (BlockType==BET_StaticCall)
+//                CALL((unat)pBranchBlock->code);
+//            else
+//#endif
+//                JUMP((unat)pBranchBlock->code);
+//        }
+//        break;
+//    }
+//
+//    case BET_StaticIntr:
+//    case BET_DynamicIntr:
+//        {
+//            if (BlockType==BET_StaticIntr)
+//            {
+//                MOV32(r4,NextBlock);
+//            }
+//            //else -> already in r4 djump !
+//
+//            StoreSh4Reg_mem(r4,reg_nextpc);
+//
+//            CALL((unat)UpdateINTC);
+//            LoadSh4Reg_mem(r4,reg_nextpc);
+//            JUMP((unat)no_update);
+//            break;
+//        }
+//
+//    default:
+//        printf("Error, Relink() Block Type: %X\n", BlockType);
+//        verify(false);
+//        break;
+//    }
+//
+//    CacheFlush(code_start,emit_ptr);
+//
+//    u32 sz=(u8*)emit_ptr-code_start;
+//
+//    emit_ptr=0;
+//    return sz;
+//}
 
 void ngen_Unary(shil_opcode* op, UnaryOP unop)
 {
@@ -658,7 +665,7 @@ void ngen_CC_Call(shil_opcode* op,void* function)
 	{
 		if (CC_pars[i].type==CPT_ptr)
 		{
-			MOV32((eReg)rd, (u32)CC_pars[i].par->reg_ptr());
+			MOV32((eReg)rd, (unat)CC_pars[i].par->reg_ptr());
 		}
 		else
 		{
@@ -706,15 +713,15 @@ void ngen_CC_Call(shil_opcode* op,void* function)
 		rd++;
 	}
 	//printf("used reg r0 to r%d, %d params, calling %08X\n",rd-1,CC_pars.size(),function);
-	CALL((u32)function);
+	CALL((unat)function);
 }
 void ngen_CC_Finish(shil_opcode* op) 
 { 
 	CC_pars.clear(); 
 }
 
-void* _vmem_read_const(u32 addr,bool& ismem,u32 sz);
-void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz, bool rw);
+void* _vmem_read_const(u32 addr,bool& ismem,unat sz);
+void* _vmem_page_info(unat addr,bool& ismem,unat sz,unat& page_sz, bool rw);
 
 
 enum mem_op_type
@@ -830,18 +837,18 @@ union arm_mem_op
 {
 	struct
 	{
-		u32 Ra:4;
-		u32 pad0:8;
-		u32 Rt:4;
-		u32 Rn:4;
-		u32 pad1:2;
-		u32 D:1;
-		u32 pad3:1;
-		u32 pad4:4;
-		u32 cond:4;
+		unat Ra:4;
+		unat pad0:8;
+		unat Rt:4;
+		unat Rn:4;
+		unat pad1:2;
+		unat D:1;
+		unat pad3:1;
+		unat pad4:4;
+		unat cond:4;
 	};
 
-	u32 full;
+	unat full;
 };
 
 void vmem_slowpath(eReg raddr, eReg rt, eFSReg ft, eFDReg fd, mem_op_type optp, bool read)
@@ -861,7 +868,7 @@ void vmem_slowpath(eReg raddr, eReg rt, eFSReg ft, eFDReg fd, mem_op_type optp, 
 		die("BLAH");
 	}
 
-	u32 funct = 0;
+	unat funct = 0;
 
 	if (optp <= SZ_32I)
 		funct = _mem_hndl[read][optp][raddr];
@@ -879,17 +886,17 @@ void vmem_slowpath(eReg raddr, eReg rt, eFSReg ft, eFDReg fd, mem_op_type optp, 
 	}
 }
 
-u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
+unat* ngen_readm_fail_v2(unat* ptrv,unat* regs,unat fault_addr)
 {
 	arm_mem_op* ptr=(arm_mem_op*)ptrv;
 
 	verify(sizeof(*ptr)==4);
 
 	mem_op_type optp;
-	u32 read=0;
+	unat read=0;
 	s32 offs=-1;
 
-	u32 fop=ptr[0].full;
+	unat fop=ptr[0].full;
 
 	for (int i=0;op_table[i].mask;i++)
 	{
@@ -935,8 +942,8 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 	fd=(eFDReg)(ptr[offs].D*16 + ptr[offs].Rt);
 
 	//get some other relevant data
-	u32 sh4_addr=regs[raddr];
-	u32 fault_offs=fault_addr-regs[8];
+	unat sh4_addr=regs[raddr];
+	unat fault_offs=fault_addr-regs[8];
 	u8* sh4_ctr=(u8*)regs[8];
 	bool is_sq=(sh4_addr>>26)==0x38;
 
@@ -1012,7 +1019,7 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 			die("BLAH");
 		}
 
-		u32 funct=0;
+		unat funct=0;
 
 		if (offs==1)
 			funct=_mem_hndl[read][optp][raddr];
@@ -1034,7 +1041,7 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 	CacheFlush((void*)ptr, (void*)emit_ptr);
 	emit_ptr=0;
 
-	return (u32*)ptr;
+	return (unat*)ptr;
 }
 
 extern u8* virt_ram_base;
@@ -1101,7 +1108,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					case SZ_8:
 						{
 							verify(false);
-							MOV32(r0,(u32)ptr);
+							MOV32(r0,(unat)ptr);
 							LDRB(reg.mapg(op->rd),r0);
 							SXTB(reg.mapg(op->rd),reg.mapg(op->rd));
 						} 
@@ -1109,7 +1116,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 
 					case SZ_16:
 						{
-							LoadImmBase16(reg.mapg(op->rd),(u32)ptr,true);    // true for sx
+							LoadImmBase16(reg.mapg(op->rd),(unat)ptr,true);    // true for sx
 						} 
 						break;
 
@@ -1117,16 +1124,16 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 						{
 							verify(reg.IsAllocg(op->rd));
 							{
-								if (optimise && staging && !is_s8(*(u32*)ptr) && abs((int)op->rs1._imm-(int)block->addr)<=1024)
+								if (optimise && staging && !is_s8(*(unat*)ptr) && abs((int)op->rs1._imm-(int)block->addr)<=1024)
 								{
 									op->flags|=0x40000000;
 
-									MOV32(r0,(u32)ptr);
+									MOV32(r0,(unat)ptr);
 									LDR(reg.mapg(op->rd),r0);
-									MOV32(r1,*(u32*)ptr);
+									MOV32(r1,*(unat*)ptr);
 									CMP(reg.mapg(op->rd),r1);
 									//JUMP((unat)EMIT_GET_PTR()+24,CC_EQ);
-									MOV32(r1,(u32)&op->flags);
+									MOV32(r1,(unat)&op->flags);
 									MOV32(r2,~0x40000000);
 									LDR(r3,r1);
 									AND(r3,r3,r2,CC_NE);
@@ -1134,11 +1141,11 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 								}
 								else if (optimise && !staging && op->flags & 0x40000000)
 								{
-									MOV32(reg.mapg(op->rd),*(u32*)ptr);
+									MOV32(reg.mapg(op->rd),*(unat*)ptr);
 								}
 								else
 								{
-									MOV32(r0,(u32)ptr);
+									MOV32(r0,(unat)ptr);
 									LDR(reg.mapg(op->rd),r0);
 								}
 							}
@@ -1148,7 +1155,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					case SZ_32F:
 						{
 							verify(reg.IsAllocf(op->rd));
-							MOV32(r0,(u32)ptr);
+							MOV32(r0,(unat)ptr);
 							VLDR(reg.mapfs(op->rd),r0,0);
 
 						}
@@ -1157,7 +1164,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					case SZ_64F:
 						{
 							verify(false);
-							MOV32(r0,(u32)ptr);
+							MOV32(r0,(unat)ptr);
 							LDR(r1,r0,4);
 							LDR(r0,r0,0);
 						}
@@ -1170,12 +1177,12 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 
 					switch(optp)
 					{
-					case SZ_8: CALL((u32)ptr); SXTB(r0,r0); break;
+					case SZ_8: CALL((unat)ptr); SXTB(r0,r0); break;
 
-					case SZ_16: CALL((u32)ptr); SXTH(r0,r0); break;
+					case SZ_16: CALL((unat)ptr); SXTH(r0,r0); break;
 
 					case SZ_32I:
-					case SZ_32F: CALL((u32)ptr); break;
+					case SZ_32F: CALL((unat)ptr); break;
 
 					case SZ_64F:
 						die("SZ_64F not supported");
@@ -1354,7 +1361,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			verify(op->rd.is_reg() && op->rd._reg==reg_pc_dyn);
 			if (op->rs2.is_imm())
 			{
-				MOV32(r2, (u32)op->rs2._imm);
+				MOV32(r2, (unat)op->rs2._imm);
 				ADD(r4,reg.mapg(op->rs1),r2);
 			}
 			else //if (r4!=rs1.reg)
@@ -1399,7 +1406,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				}
 				else if (op->rs1.is_r32())
 				{
-					u32 type=0;
+					unat type=0;
 
 					if (reg.IsAllocf(op->rd))
 						type|=1;
@@ -1462,11 +1469,11 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			{
 				MOV32(r1,op->rs2._imm);
 				StoreSh4Reg_mem(r1,reg_nextpc);
-				//StoreImms(r3,r2,(u32)&next_pc,(u32)op->rs2._imm);
+				//StoreImms(r3,r2,(unat)&next_pc,(unat)op->rs2._imm);
 			}
 
 			MOV32(r0, op->rs3._imm);
-			CALL((u32)(OpPtr[op->rs3._imm]));
+			CALL((unat)(OpPtr[op->rs3._imm]));
 			break;
 		}
 
@@ -1577,7 +1584,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		case shop_sync_sr:
 		{
 			//must flush: SRS, SRT, r0-r7, r0b-r7b
-			CALL((u32)UpdateSR);
+			CALL((unat)UpdateSR);
 			break;
 		}
 
@@ -1610,7 +1617,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			if (op->rs2.is_imm())
 			{
 				if (!op->rs2.is_imm_u8())
-					MOV32(rs2,(u32)op->rs2._imm);
+					MOV32(rs2,(unat)op->rs2._imm);
 				else
 					is_imm=true;
 			}
@@ -1882,7 +1889,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				//r1: base ptr
 				MOVW(r1,((unat)sin_table)&0xFFFF);
 				UXTH(r0,reg.mapg(op->rs1));
-				MOVT(r1,((u32)sin_table)>>16);
+				MOVT(r1,((unat)sin_table)>>16);
 				
 				/*
 					LDRD(r0,r1,r0,lsl,3);
@@ -2090,133 +2097,138 @@ __default:
 }
 
 
-void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
-{
-	//printf("Compile: %08X, %d, %d\n",block->addr,staging,optimise);
-	block->code=(DynarecCodeEntryPtr)EMIT_GET_PTR();
-
-	//StoreImms(r0,r1,(u32)&last_run_block,(u32)code); //useful when code jumps to random locations ...
-	++blockno;
-
-	if (settings.profile.run_counts)
-	{
-		MOV32(r1,(u32)&block->runs);
-		LDR(r0,r1);
-		ADD(r0,r0,1);
-		STR(r0,r1);
-	}
-
-	//reg alloc
-	reg.DoAlloc(block,alloc_regs,alloc_fpu);
-
-	u8* blk_start=(u8*)EMIT_GET_PTR();
-
-	if (staging)
-	{
-		MOV32(r0,(u32)&block->staging_runs);
-		LDR(r1,r0);
-		SUB(r1,r1,1);
-		STR(r1,r0);
-	}
-	//pre-load the first reg alloc operations, for better efficiency ..
-	reg.OpBegin(&block->oplist[0],0);
-
-	//scheduler
-	if (force_checks)
-	{
-		MOV32(r0,block->addr);
-		u32* ptr=(u32*)GetMemPtr(block->addr,4);
-		MOV32(r2,(u32)ptr);
-		LDR(r2,r2,0);
-		MOV32(r1,*ptr);
-		CMP(r1,r2);
-
-		JUMP((u32)ngen_blockcheckfail, CC_NE);
-	}
-
-	u32 cyc=block->guest_cycles;
-	if (!is_i8r4(cyc))
-	{
-		cyc&=~3;
-	}
-
-#if HOST_OS == OS_DARWIN
-	SUB(r11,r11,cyc,true,CC_AL);
-#else
-	SUB(rfp_r9,rfp_r9,cyc,true,CC_AL);
-#endif
-	CALL((u32)intc_sched, CC_LE);
-
-	//compile the block's opcodes
-	shil_opcode* op;
-	for (size_t i=0;i<block->oplist.size();i++)
-	{
-		op=&block->oplist[i];
-		
-		op->host_offs=(u8*)EMIT_GET_PTR()-blk_start;
-
-		if (i!=0)
-			reg.OpBegin(op,i);
-
-		ngen_compile_opcode(block,op,staging,optimise);
-
-		reg.OpEnd(op);
-	}
-
-	/*
-
-	extern u32 ralst[4];
-
-	MOV32(r0,(u32)&ralst[0]);
-	
-	LDR(r1,r0,0);
-	ADD(r1,r1,reg.preload_gpr);
-	STR(r1,r0,0);
-
-	LDR(r1,r0,4);
-	ADD(r1,r1,reg.preload_fpu);
-	STR(r1,r0,4);
-
-	LDR(r1,r0,8);
-	ADD(r1,r1,reg.writeback_gpr);
-	STR(r1,r0,8);
-
-	LDR(r1,r0,12);
-	ADD(r1,r1,reg.writeback_fpu);
-	STR(r1,r0,12);
-	*/
-
-	/*
-		//try to early-lookup the blocks -- to avoid rewrites in case they exist ...
-		//this isn't enabled for now, as I'm not quite solid on the state of block referrals ..
-
-		block->pBranchBlock=bm_GetBlock(block->BranchBlock);
-		block->pNextBlock=bm_GetBlock(block->NextBlock);
-		if (block->pNextBlock) block->pNextBlock->AddRef(block);
-		if (block->pBranchBlock) block->pBranchBlock->AddRef(block);
-	*/
-
-	
-	//Relink written bytes must be added to the count !
-
-	block->relink_offset=(u8*)EMIT_GET_PTR()-(u8*)block->code;
-	block->relink_data=0;
-
-	emit_Skip(block->Relink());
-	u8* pEnd = (u8*)EMIT_GET_PTR();
-
-	// Clear the area we've written to for cache
-	CacheFlush((void*)block->code, pEnd);
-
-	//blk_start might not be the same, due to profiling counters ..
-	block->host_opcodes=(pEnd-blk_start)/4;
-
-	//host code size needs to cover the entire range of the block
-	block->host_code_size=(pEnd-(u8*)block->code);
-
-	void emit_WriteCodeCache();
-//	emit_WriteCodeCache();
-}
+//extern void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise);
+//void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
+//{
+//    //printf("Compile: %08X, %d, %d\n",block->addr,staging,optimise);
+//    block->code=(DynarecCodeEntryPtr)EMIT_GET_PTR();
+//
+//    //StoreImms(r0,r1,(unat)&last_run_block,(unat)code); //useful when code jumps to random locations ...
+//    ++blockno;
+//
+//    if (settings.profile.run_counts)
+//    {
+//        MOV32(r1,(unat)&block->runs);
+//        LDR(r0,r1);
+//        ADD(r0,r0,1);
+//        STR(r0,r1);
+//    }
+//
+//    //reg alloc
+//    reg.DoAlloc(block,alloc_regs,alloc_fpu);
+//
+//    u8* blk_start=(u8*)EMIT_GET_PTR();
+//
+//    if (staging)
+//    {
+//        MOV32(r0,(unat)&block->staging_runs);
+//        LDR(r1,r0);
+//        SUB(r1,r1,1);
+//        STR(r1,r0);
+//    }
+//    //pre-load the first reg alloc operations, for better efficiency ..
+//    reg.OpBegin(&block->oplist[0],0);
+//
+//    //scheduler
+//    if (force_checks)
+//    {
+//        MOV32(r0,block->addr);
+//        unat* ptr=(unat*)GetMemPtr(block->addr,4);
+//        MOV32(r2,(unat)ptr);
+//        LDR(r2,r2,0);
+//        MOV32(r1,*ptr);
+//        CMP(r1,r2);
+//
+//#ifdef __LP64__
+//        JUMP((unat)rdv_BlockCheckFail, CC_NE);
+//#else
+//        JUMP((unat)ngen_blockcheckfail, CC_NE);
+//#endif
+//    }
+//
+//    unat cyc=block->guest_cycles;
+//    if (!is_i8r4(cyc))
+//    {
+//        cyc&=~3;
+//    }
+//
+//#if HOST_OS == OS_DARWIN
+//    SUB(r11,r11,cyc,true,CC_AL);
+//#else
+//    SUB(rfp_r9,rfp_r9,cyc,true,CC_AL);
+//#endif
+//    CALL((unat)intc_sched, CC_LE);
+//
+//    //compile the block's opcodes
+//    shil_opcode* op;
+//    for (size_t i=0;i<block->oplist.size();i++)
+//    {
+//        op=&block->oplist[i];
+//        
+//        op->host_offs=(u8*)EMIT_GET_PTR()-blk_start;
+//
+//        if (i!=0)
+//            reg.OpBegin(op,i);
+//
+//        ngen_compile_opcode(block,op,staging,optimise);
+//
+//        reg.OpEnd(op);
+//    }
+//
+//    /*
+//
+//    extern unat ralst[4];
+//
+//    MOV32(r0,(unat)&ralst[0]);
+//    
+//    LDR(r1,r0,0);
+//    ADD(r1,r1,reg.preload_gpr);
+//    STR(r1,r0,0);
+//
+//    LDR(r1,r0,4);
+//    ADD(r1,r1,reg.preload_fpu);
+//    STR(r1,r0,4);
+//
+//    LDR(r1,r0,8);
+//    ADD(r1,r1,reg.writeback_gpr);
+//    STR(r1,r0,8);
+//
+//    LDR(r1,r0,12);
+//    ADD(r1,r1,reg.writeback_fpu);
+//    STR(r1,r0,12);
+//    */
+//
+//    /*
+//        //try to early-lookup the blocks -- to avoid rewrites in case they exist ...
+//        //this isn't enabled for now, as I'm not quite solid on the state of block referrals ..
+//
+//        block->pBranchBlock=bm_GetBlock(block->BranchBlock);
+//        block->pNextBlock=bm_GetBlock(block->NextBlock);
+//        if (block->pNextBlock) block->pNextBlock->AddRef(block);
+//        if (block->pBranchBlock) block->pBranchBlock->AddRef(block);
+//    */
+//
+//    
+//    //Relink written bytes must be added to the count !
+//
+//    block->relink_offset=(u8*)EMIT_GET_PTR()-(u8*)block->code;
+//    block->relink_data=0;
+//
+//    emit_Skip(block->Relink());
+//    u8* pEnd = (u8*)EMIT_GET_PTR();
+//
+//    // Clear the area we've written to for cache
+//    CacheFlush((void*)block->code, pEnd);
+//
+//    //blk_start might not be the same, due to profiling counters ..
+//    block->host_opcodes=(pEnd-blk_start)/4;
+//
+//    //host code size needs to cover the entire range of the block
+//    block->host_code_size=(pEnd-(u8*)block->code);
+//
+//    void emit_WriteCodeCache();
+////    emit_WriteCodeCache();
+//}
 
 void ngen_ResetBlocks()
 {
@@ -2262,7 +2274,7 @@ void ngen_init()
 				{
 					v=(unat)EMIT_GET_PTR();
 					MOV(r0,(eReg)(i));
-					JUMP((u32)fn);
+					JUMP((unat)fn);
 				}
 			}
 			else
@@ -2273,7 +2285,7 @@ void ngen_init()
 				{
 					v=(unat)EMIT_GET_PTR();
 					MOV(r0,(eReg)(i));
-					JUMP((u32)fn);
+					JUMP((unat)fn);
 				}
 			}
 

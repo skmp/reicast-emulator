@@ -91,11 +91,11 @@ typedef double f64;
 #endif
 
 typedef ptrdiff_t snat;
-typedef size_t unat;
+//typedef size_t unat;
 
-#ifdef X64
+//#ifdef X64
 typedef u64 unat;
-#endif
+//#endif
 
 typedef char wchar;
 

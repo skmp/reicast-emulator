@@ -78,9 +78,11 @@
 	#if defined(XBYAK64_GCC) || defined(XBYAK64_WIN)
 		#define XBYAK64
 	#else
-		#define XBYAK32
+//        #define XBYAK32
 	#endif
 #endif
+#define XBYAK64
+
 
 #if (__cplusplus >= 201103) || (_MSC_VER >= 1800)
 	#define XBYAK_VARIADIC_TEMPLATE

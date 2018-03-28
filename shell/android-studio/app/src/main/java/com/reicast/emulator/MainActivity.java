@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements
 		String prior_error = mPrefs.getString("prior_error", null);
 		if (prior_error != null) {
 			displayLogOutput(prior_error);
-			mPrefs.edit().remove("prior_error").commit();
+			mPrefs.edit().remove("prior_error").apply();
 		} else {
 			mUEHandler = new Thread.UncaughtExceptionHandler() {
 				public void uncaughtException(Thread t, Throwable error) {
@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements
 						for (StackTraceElement trace : error.getStackTrace()) {
 							output.append(trace.toString() + "\n");
 						}
-						mPrefs.edit().putString("prior_error", output.toString()).commit();
+						mPrefs.edit().putString("prior_error", output.toString()).apply();
 						error.printStackTrace();
 						android.os.Process.killProcess(android.os.Process.myPid());
 						System.exit(0);
@@ -161,8 +161,8 @@ public class MainActivity extends AppCompatActivity implements
 			// firstFragment.setArguments(getIntent().getExtras());
 
 			// Add the fragment to the 'fragment_container' FrameLayout
-			getSupportFragmentManager().beginTransaction()
-			.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER").commit();
+			getSupportFragmentManager().beginTransaction().replace(
+					R.id.fragment_container, firstFragment, "MAIN_BROWSER").commit();
 		}
 
 		menuHeading = (TextView) findViewById(R.id.menu_heading);
@@ -314,9 +314,8 @@ public class MainActivity extends AppCompatActivity implements
 		}
 
 		OptionsFragment optsFrag = new OptionsFragment();
-		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.fragment_container, optsFrag, "OPTIONS_FRAG")
-				.commit();
+		getSupportFragmentManager().beginTransaction().replace(
+				R.id.fragment_container, optsFrag, "OPTIONS_FRAG").commit();
 		return;
 	}
 

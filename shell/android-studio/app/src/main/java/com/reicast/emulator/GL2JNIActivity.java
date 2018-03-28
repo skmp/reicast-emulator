@@ -1,6 +1,5 @@
 package com.reicast.emulator;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -43,8 +42,7 @@ public class GL2JNIActivity extends Activity {
 	FpsPopup fpsPop;
 	MOGAInput moga = new MOGAInput();
 	private SharedPreferences prefs;
-	
-	private Config config;
+
 	private Gamepad pad = new Gamepad();
 
 	public static byte[] syms;
@@ -58,8 +56,8 @@ public class GL2JNIActivity extends Activity {
 					WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
 					WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 		}
-		config = new Config(GL2JNIActivity.this);
-		config.getConfigurationPrefs();
+		Emulator app = (Emulator)getApplicationContext();
+		app.getConfigurationPrefs(GL2JNIActivity.this);
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
 
 		pad.isXperiaPlay = pad.IsXperiaPlay();
@@ -191,14 +189,14 @@ public class GL2JNIActivity extends Activity {
 			pad.fullCompatibilityMode(prefs);
 		}
 
-		config.loadConfigurationPrefs();
+		app.loadConfigurationPrefs();
 
 		// When viewing a resource, pass its URI to the native code for opening
 		if (getIntent().getAction().equals("com.reicast.EMULATOR"))
 			fileName = Uri.decode(getIntent().getData().toString());
 
 		// Create the actual GLES view
-		mView = new GL2JNIView(GL2JNIActivity.this, config, fileName, false,
+		mView = new GL2JNIView(GL2JNIActivity.this, fileName, false,
 				prefs.getInt(Config.pref_renderdepth, 24), 0, false);
 		setContentView(mView);
 

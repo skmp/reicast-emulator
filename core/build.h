@@ -220,11 +220,11 @@
 #define FEAT_DSPREC DYNAREC_NONE
 #endif
 
-#if defined(TARGET_NO_JIT)
-#define FEAT_SHREC DYNAREC_CPP
-#define FEAT_AREC DYNAREC_NONE
-#define FEAT_DSPREC DYNAREC_NONE
-#endif
+//#if defined(TARGET_NO_JIT)
+//#define FEAT_SHREC DYNAREC_CPP
+//#define FEAT_AREC DYNAREC_NONE
+//#define FEAT_DSPREC DYNAREC_NONE
+//#endif
 
 
 #if defined(TARGET_NO_NIXPROF)

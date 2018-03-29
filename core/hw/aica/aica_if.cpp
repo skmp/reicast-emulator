@@ -221,6 +221,7 @@ void Write_SB_ADST(u32 addr, u32 data)
 			u32 src=SB_ADSTAR;
 			u32 dst=SB_ADSTAG;
 			u32 len=SB_ADLEN & 0x7FFFFFFF;
+			u32 total_bytes=0;
 
 			if ((SB_ADDIR&1)==1)
 			{
@@ -247,7 +248,7 @@ void Write_SB_ADST(u32 addr, u32 data)
 			SB_ADSTAR+=len;
 			SB_ADSTAG+=len;
 			total_bytes+=len;
-			SB_ADLEN   = 0x00000000;	    SB_ADLEN   = 0x00000000;
+			SB_ADLEN   = 0x00000000;
 			if (settings.aica.InterruptHack)
 				SB_ADST    = 1;
 			else
@@ -256,8 +257,7 @@ void Write_SB_ADST(u32 addr, u32 data)
 			aica_pending_dma=((total_bytes*200000000)/65536)+1;
  	 
 			if (!settings.aica.InterruptHack)
-				asic_RaiseInterruptWait(holly_SPU_DMA);
-			}
+                asic_RaiseInterrupt(holly_SPU_DMA);
 		}
 	}
 }

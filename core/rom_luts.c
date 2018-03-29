@@ -27,7 +27,7 @@ struct game_type
 
 static struct game_type lut_games[] = 
 {
-	{ "MK-51035  ",	-1,	-1,	 1,	-1,	1,		1 },	/* Capcom Vs SNK 2 */
+//	{ "MK-51035  ",	-1,	-1,	 1,	-1,	1,		1 },	/* Capcom Vs SNK 2 */
 	{ "T1213N    ",	-1,	-1,	 1,	-1,	1,		1 },	/* Street Fighter III -3rd Strike */
 	{ "T1210N    ",	 1,	-1, -1,	-1,	1,		1 },	/* Street Fighter III Double Impact */
 	{ "MK-51049  ",	-1,	 1, -1,	-1,	1,		1 },	/* Marvel Vs Capcom 2 */

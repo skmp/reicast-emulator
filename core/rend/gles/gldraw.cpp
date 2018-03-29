@@ -228,6 +228,7 @@ __forceinline
 
 	if (gp->isp.full!= cache.isp.full)
 	{
+		GLboolean flag;
 		cache.isp.full=gp->isp.full;
 
 		//set Z mode, only if required
@@ -236,7 +237,7 @@ __forceinline
 		
 		flag = !gp->isp.ZWriteDis;
 		if (SortingEnabled && settings.pvr.Emulation.AlphaSortMode == 0)
-			falg = GL_FALSE;
+			flag = GL_FALSE;
 
 		glDepthMask(flag);
 	}
@@ -1123,12 +1124,12 @@ void DrawStrips()
 		if (pvrrc.isAutoSort)
 			DrawSorted();
 		else
-			DrawList<TA_LIST_TRANSLUCENT, false>(pvrrc.global_param_tr);
+			DrawList<ListType_Translucent, false>(pvrrc.global_param_tr);
 	}
 	else if (settings.pvr.Emulation.AlphaSortMode == 1)
 	{
 		if (pvrrc.isAutoSort)
 			SortPParams();
-		DrawList<TA_LIST_TRANSLUCENT, true>(pvrrc.global_param_tr);
+		DrawList<ListType_Translucent, true>(pvrrc.global_param_tr);
 	}
 }

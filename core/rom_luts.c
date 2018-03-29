@@ -12,6 +12,8 @@
  * * Street Fighter Alpha 3 (would hang at startup screen otherwise
  */
 
+typedef float f32;
+
 struct game_type
 {
 	char product_number[11];

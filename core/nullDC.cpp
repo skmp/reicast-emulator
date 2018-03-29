@@ -16,6 +16,8 @@
 #include "webui/server.h"
 #include "hw/naomi/naomi_cart.h"
 
+#include "reios/reios.h"
+
 settings_t settings;
 
 /*
@@ -147,7 +149,6 @@ static void LoadSpecialSettingsCPU(void)
    sh4_cpu.Reset(false);
 }
 
-extern bool update_zmax;
 
 static void LoadSpecialSettings(void)
 {
@@ -186,7 +187,6 @@ static void LoadSpecialSettings(void)
          {
             printf("Applying zmax hack.\n");
             settings.pvr.Emulation.zMax = lut_games[i].zMax;
-            update_zmax = true;
          }
 
          break;

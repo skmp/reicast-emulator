@@ -1450,36 +1450,12 @@ bool RenderFrame()
 
 	//if (FrameCount&7) return;
 
-#if 0
 	//Setup the matrix
-   if (update_zmax || update_zmin)
-   {
-      char msg[512];
-      struct retro_message msg_obj = {0};
 
-      sprintf(msg, "MaxZ OLD: %.2f NEW: %.2f | MinZ OLD: %.2f NEW: %.2f\n", pvrrc.fZ_max, settings.pvr.Emulation.zMax,
-            pvrrc.fZ_min, settings.pvr.Emulation.zMin);
-
-      if (update_zmax)
-      {
-         pvrrc.fZ_max = settings.pvr.Emulation.zMax;
-         update_zmax = false;
-      }
-      if (update_zmin)
-      {
-         pvrrc.fZ_min = settings.pvr.Emulation.zMin;
-         update_zmin  = false;
-      }
-
-      msg_obj.msg    = msg;
-      msg_obj.frames = 180;
-
-      environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, (void*)&msg_obj);
-   }
-
-	float vtx_min_fZ = (settings.pvr.Emulation.zMin != 0.0) ? settings.pvr.Emulation.zMin : 0;
+	float vtx_min_fZ = 0.f; // pvrrc.fZ_min
+#if 0
+	float vtx_min_fZ = (settings.pvr.Emulation.zMin != 0.0) ? settings.pvr.Emulation.zMin : 0.f;
 #endif
-   float vtx_min_fZ = 0.f;
 	float vtx_max_fZ = (settings.pvr.Emulation.zMax != 1.0) ? settings.pvr.Emulation.zMax : pvrrc.fZ_max;
 
 	//sanitise the values, now with NaN detection (for omap)

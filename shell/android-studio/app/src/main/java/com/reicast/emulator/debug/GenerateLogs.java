@@ -243,8 +243,32 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 					Toast.LENGTH_SHORT).show();
 			Toast.makeText(mContext, mContext.getString(R.string.platform),
 					Toast.LENGTH_SHORT).show();
+
+			// Todo: "Open with..." dialog conflict
+//			showToastMessage(mContext.getString(R.string.log_saved),
+//					R.drawable.ic_notification,
+//					Snackbar.LENGTH_SHORT
+//			);
+//			showToastMessage(mContext.getString(R.string.platform),
+//					R.drawable.ic_notification,
+//					Snackbar.LENGTH_SHORT
+//			);
 			UploadLogs mUploadLogs = new UploadLogs(mContext, currentTime);
 			mUploadLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, response);
 		}
 	}
+
+//	private void showToastMessage(String message, int resource, int duration) {
+//
+//		ConstraintLayout layout = (ConstraintLayout)
+//				((Activity) mContext).findViewById(R.id.mainui_layout);
+//		Snackbar snackbar = Snackbar.make(layout, message, duration);
+//		View snackbarLayout = snackbar.getView();
+//		TextView textView = (TextView) snackbarLayout.findViewById(
+//				android.support.design.R.id.snackbar_text);
+//		textView.setCompoundDrawablesWithIntrinsicBounds(resource, 0, 0, 0);
+//		textView.setCompoundDrawablePadding(context.getResources()
+//				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
+//		snackbar.show();
+//	}
 }

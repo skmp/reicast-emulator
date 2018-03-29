@@ -4,6 +4,8 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.text.util.Linkify;
 import android.view.LayoutInflater;
@@ -15,7 +17,6 @@ import android.widget.ListView;
 import android.widget.SlidingDrawer;
 import android.widget.SlidingDrawer.OnDrawerOpenListener;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.debug.GitAdapter;
@@ -171,9 +172,10 @@ public class AboutFragment extends Fragment {
 			} catch (JSONException e) {
 				handler.post(new Runnable() {
 					public void run() {
-						MainActivity.showToastMessage(getActivity(),
-								getActivity().getString(R.string.git_broken),
-								R.drawable.ic_github, Toast.LENGTH_SHORT);
+						showToastMessage(getActivity().getString(R.string.git_broken),
+								R.drawable.ic_github,
+								Snackbar.LENGTH_SHORT
+						);
 						slidingGithub.close();
 					}
 				});
@@ -181,9 +183,10 @@ public class AboutFragment extends Fragment {
 			} catch (Exception e) {
 				handler.post(new Runnable() {
 					public void run() {
-						MainActivity.showToastMessage(getActivity(),
-								getActivity().getString(R.string.git_broken),
-								R.drawable.ic_github, Toast.LENGTH_SHORT);
+						showToastMessage(getActivity().getString(R.string.git_broken),
+								R.drawable.ic_github,
+								Snackbar.LENGTH_SHORT
+						);
 						slidingGithub.close();
 					}
 				});
@@ -232,5 +235,18 @@ public class AboutFragment extends Fragment {
 			}
 			return null;
 		}
+	}
+
+	private void showToastMessage(String message, int resource, int duration) {
+
+		ConstraintLayout layout = (ConstraintLayout) getActivity().findViewById(R.id.mainui_layout);
+		Snackbar snackbar = Snackbar.make(layout, message, duration);
+		View snackbarLayout = snackbar.getView();
+		TextView textView = (TextView) snackbarLayout.findViewById(
+				android.support.design.R.id.snackbar_text);
+		textView.setCompoundDrawablesWithIntrinsicBounds(resource, 0, 0, 0);
+		textView.setCompoundDrawablePadding(getResources()
+				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
+		snackbar.show();
 	}
 }

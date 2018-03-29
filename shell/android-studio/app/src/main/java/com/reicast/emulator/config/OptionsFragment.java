@@ -8,6 +8,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -25,12 +27,11 @@ import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import com.android.util.FileUtils;
 import com.reicast.emulator.Emulator;
 import com.reicast.emulator.FileBrowser;
-import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.R;
 import com.reicast.emulator.emu.GL2JNIView;
 import com.reicast.emulator.emu.JNIdc;
@@ -131,8 +132,10 @@ public class OptionsFragment extends Fragment {
 					home_directory = editBrowse.getText().toString();
 					if (home_directory.endsWith("/data")) {
 						home_directory.replace("/data", "");
-						Toast.makeText(getActivity(), R.string.data_folder,
-								Toast.LENGTH_SHORT).show();
+						showToastMessage(getActivity().getString(R.string.data_folder),
+								R.drawable.ic_notification,
+								Snackbar.LENGTH_SHORT
+						);
 					}
 					mPrefs.edit().putString(Config.pref_home, home_directory).apply();
 					JNIdc.config(home_directory);
@@ -649,5 +652,18 @@ public class OptionsFragment extends Fragment {
 			local.renameTo(flash);
 		}
 		mPrefs.edit().putString("localized", localized).apply();
+	}
+
+	private void showToastMessage(String message, int resource, int duration) {
+
+		ConstraintLayout layout = (ConstraintLayout) getActivity().findViewById(R.id.mainui_layout);
+		Snackbar snackbar = Snackbar.make(layout, message, duration);
+		View snackbarLayout = snackbar.getView();
+		TextView textView = (TextView) snackbarLayout.findViewById(
+				android.support.design.R.id.snackbar_text);
+		textView.setCompoundDrawablesWithIntrinsicBounds(resource, 0, 0, 0);
+		textView.setCompoundDrawablePadding(getResources()
+				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
+		snackbar.show();
 	}
 }

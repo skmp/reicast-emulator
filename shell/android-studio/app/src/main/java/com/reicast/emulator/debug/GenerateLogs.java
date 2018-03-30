@@ -1,8 +1,10 @@
 package com.reicast.emulator.debug;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.support.graphics.drawable.VectorDrawableCompat;
 import android.widget.Toast;
 
 import com.reicast.emulator.R;
@@ -245,28 +247,31 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 					Toast.LENGTH_SHORT).show();
 
 			// Todo: "Open with..." dialog conflict
-//			showToastMessage(mContext.getString(R.string.log_saved),
-//					R.drawable.ic_notification,
-//					Snackbar.LENGTH_SHORT
+//			showToastMessage(mContext.getString(R.string.log_saved), Snackbar.LENGTH_SHORT
 //			);
-//			showToastMessage(mContext.getString(R.string.platform),
-//					R.drawable.ic_notification,
-//					Snackbar.LENGTH_SHORT
+//			showToastMessage(mContext.getString(R.string.platform), Snackbar.LENGTH_SHORT
 //			);
 			UploadLogs mUploadLogs = new UploadLogs(mContext, currentTime);
 			mUploadLogs.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, response);
 		}
 	}
 
-//	private void showToastMessage(String message, int resource, int duration) {
-//
+//	private void showToastMessage(String message, int duration) {
 //		ConstraintLayout layout = (ConstraintLayout)
 //				((Activity) mContext).findViewById(R.id.mainui_layout);
 //		Snackbar snackbar = Snackbar.make(layout, message, duration);
 //		View snackbarLayout = snackbar.getView();
 //		TextView textView = (TextView) snackbarLayout.findViewById(
 //				android.support.design.R.id.snackbar_text);
-//		textView.setCompoundDrawablesWithIntrinsicBounds(resource, 0, 0, 0);
+//		Drawable drawable;
+//		if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+//			drawable = getResources().getDrawable(
+//					R.drawable.ic_send, getActivity().getTheme());
+//		} else {
+//			drawable = VectorDrawableCompat.create(getResources(),
+//					R.drawable.ic_send, getActivity().getTheme());
+//		}
+//		textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
 //		textView.setCompoundDrawablePadding(context.getResources()
 //				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
 //		snackbar.show();

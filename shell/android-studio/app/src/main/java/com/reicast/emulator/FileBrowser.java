@@ -7,12 +7,14 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
+import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -167,10 +169,7 @@ public class FileBrowser extends Fragment {
 
 		File home = new File(mPrefs.getString(Config.pref_home, home_directory));
 		if (!home.exists() || !home.isDirectory()) {
-			showToastMessage(getActivity().getString(R.string.config_home),
-					R.drawable.ic_notification,
-                    Snackbar.LENGTH_LONG
-            );
+			showToastMessage(getActivity().getString(R.string.config_home), Snackbar.LENGTH_LONG);
 		} else {
 			(new installGraphics()).execute();
 		}
@@ -400,9 +399,7 @@ public class FileBrowser extends Fragment {
 									game.getAbsolutePath().lastIndexOf(File.separator)).replace("/data", "");
 							if (!DataDirectoryBIOS()) {
 								showToastMessage(getActivity().getString(R.string.config_data, home_directory),
-										R.drawable.ic_notification,
-                                        Snackbar.LENGTH_LONG
-                                );
+                                        Snackbar.LENGTH_LONG);
 							}
 							mPrefs.edit().putString("home_directory", home_directory).apply();
                             mCallback.onFolderSelected(Uri.fromFile(new File(home_directory)));
@@ -496,7 +493,6 @@ public class FileBrowser extends Fragment {
 									mPrefs.edit().putString(Config.pref_home, home_directory).apply();
 									if (!DataDirectoryBIOS()) {
 										showToastMessage(getActivity().getString(R.string.config_data, home_directory),
-												R.drawable.ic_notification,
                                                 Snackbar.LENGTH_LONG
                                         );
 									}
@@ -550,16 +546,23 @@ public class FileBrowser extends Fragment {
 		}
 	}
 
-    private void showToastMessage(String message, int resource, int duration) {
-
-        ConstraintLayout layout = (ConstraintLayout) getActivity().findViewById(R.id.mainui_layout);
-        Snackbar snackbar = Snackbar.make(layout, message, duration);
-        View snackbarLayout = snackbar.getView();
-        TextView textView = (TextView) snackbarLayout.findViewById(
-                android.support.design.R.id.snackbar_text);
-        textView.setCompoundDrawablesWithIntrinsicBounds(resource, 0, 0, 0);
-        textView.setCompoundDrawablePadding(getResources()
-                .getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
-        snackbar.show();
-    }
+	private void showToastMessage(String message, int duration) {
+		ConstraintLayout layout = (ConstraintLayout) getActivity().findViewById(R.id.mainui_layout);
+		Snackbar snackbar = Snackbar.make(layout, message, duration);
+		View snackbarLayout = snackbar.getView();
+		TextView textView = (TextView) snackbarLayout.findViewById(
+				android.support.design.R.id.snackbar_text);
+		Drawable drawable;
+		if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+			drawable = getResources().getDrawable(
+					R.drawable.ic_subdirectory_arrow_right, getActivity().getTheme());
+		} else {
+			drawable = VectorDrawableCompat.create(getResources(),
+					R.drawable.ic_subdirectory_arrow_right, getActivity().getTheme());
+		}
+		textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
+		textView.setCompoundDrawablePadding(getResources()
+				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
+		snackbar.show();
+	}
 }

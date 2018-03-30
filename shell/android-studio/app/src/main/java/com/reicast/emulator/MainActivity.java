@@ -231,10 +231,7 @@ public class MainActivity extends AppCompatActivity implements
 
 	public void onGameSelected(Uri uri) {
 		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
-			showToastMessage(getString(R.string.unsupported),
-					R.drawable.ic_notification,
-					Snackbar.LENGTH_SHORT
-			);
+			showToastMessage(getString(R.string.unsupported), Snackbar.LENGTH_SHORT);
 		}
 		String msg = null;
 		if (!isBiosExisting(MainActivity.this))
@@ -290,9 +287,7 @@ public class MainActivity extends AppCompatActivity implements
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						showToastMessage(getString(R.string.require_bios),
-								R.drawable.ic_notification,
-								Snackbar.LENGTH_SHORT
-						);
+								Snackbar.LENGTH_SHORT);
 					}
 				});
 		builder.create();
@@ -578,14 +573,13 @@ public class MainActivity extends AppCompatActivity implements
 		return list.size() > 0;
 	}
 	
-	private void showToastMessage(String message, int resource, int duration) {
-
+	private void showToastMessage(String message, int duration) {
 		ConstraintLayout layout = (ConstraintLayout) findViewById(R.id.mainui_layout);
 		Snackbar snackbar = Snackbar.make(layout, message, duration);
 		View snackbarLayout = snackbar.getView();
 		TextView textView = (TextView) snackbarLayout.findViewById(
 				android.support.design.R.id.snackbar_text);
-		textView.setCompoundDrawablesWithIntrinsicBounds(resource, 0, 0, 0);
+		textView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_notification, 0, 0, 0);
 		textView.setCompoundDrawablePadding(getResources()
 				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
 		snackbar.show();

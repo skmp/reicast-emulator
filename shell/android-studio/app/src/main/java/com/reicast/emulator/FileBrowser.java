@@ -279,8 +279,8 @@ public class FileBrowser extends Fragment {
 		@Override
 		protected void onPostExecute(List<File> items) {
 			if (items != null && !items.isEmpty()) {
-				final LinearLayout list = (LinearLayout) getActivity().findViewById(R.id.game_list);
-				if (list != null) {
+				LinearLayout list = (LinearLayout) getActivity().findViewById(R.id.game_list);
+				if (list.getChildCount() > 0) {
 					list.removeAllViews();
 				}
 
@@ -434,7 +434,8 @@ public class FileBrowser extends Fragment {
 
 	void navigate(final File root_sd) {
 		LinearLayout v = (LinearLayout) getActivity().findViewById(R.id.game_list);
-		v.removeAllViews();
+		if (v.getChildCount() > 0)
+			v.removeAllViews();
 
 		ArrayList<File> list = new ArrayList<File>();
 

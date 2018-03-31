@@ -11,6 +11,7 @@ import android.support.design.widget.Snackbar;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
 import android.text.util.Linkify;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -238,8 +239,12 @@ public class AboutFragment extends Fragment {
 		ConstraintLayout layout = (ConstraintLayout) getActivity().findViewById(R.id.mainui_layout);
 		Snackbar snackbar = Snackbar.make(layout, message, duration);
 		View snackbarLayout = snackbar.getView();
+		snackbarLayout.setMinimumWidth(ConstraintLayout.LayoutParams.MATCH_PARENT);
 		TextView textView = (TextView) snackbarLayout.findViewById(
 				android.support.design.R.id.snackbar_text);
+		textView.setGravity(Gravity.CENTER_VERTICAL);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+			textView.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
 		Drawable drawable;
 		if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
 			drawable = getResources().getDrawable(

@@ -26,6 +26,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
@@ -601,13 +602,17 @@ public class MainActivity extends AppCompatActivity implements
 				intent, PackageManager.MATCH_DEFAULT_ONLY);
 		return list.size() > 0;
 	}
-	
+
 	private void showToastMessage(String message, int duration) {
 		ConstraintLayout layout = (ConstraintLayout) findViewById(R.id.mainui_layout);
 		Snackbar snackbar = Snackbar.make(layout, message, duration);
 		View snackbarLayout = snackbar.getView();
+		snackbarLayout.setMinimumWidth(ConstraintLayout.LayoutParams.MATCH_PARENT);
 		TextView textView = (TextView) snackbarLayout.findViewById(
 				android.support.design.R.id.snackbar_text);
+		textView.setGravity(Gravity.CENTER_VERTICAL);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+			textView.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
 		textView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_notification, 0, 0, 0);
 		textView.setCompoundDrawablePadding(getResources()
 				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));

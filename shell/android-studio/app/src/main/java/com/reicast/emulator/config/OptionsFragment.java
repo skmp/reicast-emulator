@@ -109,7 +109,7 @@ public class OptionsFragment extends Fragment {
 		
 		home_directory = mPrefs.getString(Config.pref_home, home_directory);
 		app = (Emulator) getActivity().getApplicationContext();
-		app.getConfigurationPrefs(getActivity());
+		app.getConfigurationPrefs(mPrefs);
 
 		// Generate the menu options and fill in existing settings
 		

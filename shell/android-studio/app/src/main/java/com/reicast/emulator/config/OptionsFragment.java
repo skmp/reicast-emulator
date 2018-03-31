@@ -59,14 +59,14 @@ public class OptionsFragment extends Fragment {
 
 	private SharedPreferences mPrefs;
 	private File sdcard = Environment.getExternalStorageDirectory();
-	private String home_directory = sdcard.getAbsolutePath().replace("emulated/0", "sdcard0");
-	private String game_directory = sdcard.getAbsolutePath().replace("emulated/0", "sdcard0");
+	private String home_directory = sdcard.getAbsolutePath();
+	private String game_directory = sdcard.getAbsolutePath();
 	
 	private String[] codes;
 
 	// Container Activity must implement this interface
 	public interface OnClickListener {
-		public void onMainBrowseSelected(String path_entry, boolean games);
+        void onMainBrowseSelected(boolean browse, String path_entry, boolean games, String query);
 	}
 
 	@Override
@@ -125,7 +125,7 @@ public class OptionsFragment extends Fragment {
 			public void onClick(View view) {
 				mPrefs.edit().remove(Config.pref_home).apply();
                 hideSoftKeyBoard();
-				mCallback.onMainBrowseSelected(home_directory, false);
+				mCallback.onMainBrowseSelected(false, home_directory, false, null);
 			}
 		});
 
@@ -197,7 +197,7 @@ public class OptionsFragment extends Fragment {
 					game_directory = editGames.getText().toString();
 				}
                 hideSoftKeyBoard();
-				mCallback.onMainBrowseSelected(game_directory, true);
+				mCallback.onMainBrowseSelected(false, game_directory, true, null);
 			}
 		});
 

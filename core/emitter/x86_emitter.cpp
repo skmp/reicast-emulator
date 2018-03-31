@@ -503,11 +503,11 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 			//special encoding
 			//encoded as [none*x + ESP]
 			//index ,scale [sib]
-			rv.modrm = make_modrm(0,ESP); //ESP means sib
+			rv.modrm = (u8)make_modrm(0,ESP); //ESP means sib
 			rv.flags|=1;
 
 
-			rv.sib=make_sib(0,ESP,base); //none*1+ESP
+			rv.sib = (u8)make_sib(0,ESP,base); //none*1+ESP
 
 			if ( disp.ptr_int!=0 )
 			{
@@ -518,7 +518,7 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 		{
 			//special encoding
 			//verify(false);
-			rv.modrm = make_modrm(0,base);
+			rv.modrm = (u8)make_modrm(0,base);
 			//uses [EBP+S8] , or [EBP+S32] forms
 			rv.modrm |= EncodeDisp(disp.ptr_int,&rv,3); //32 or 8 bit disp
 		}
@@ -526,13 +526,13 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 		{
 			//[disp32]
 			//special encoding , will use mode [EBP] (it means disp :p)
-			rv.modrm=make_modrm(0,EBP);
+			rv.modrm = (u8)make_modrm(0,EBP);
 			EncodeDisp(disp.ptr_int,&rv,2|4); //only 32b disp allowed , uses form 0
 		}
 		else
 		{
 			//[reg] , [reg+disp8/32]
-			rv.modrm = make_modrm(0,base);
+			rv.modrm = (u8)make_modrm(0,base);
 			if (disp.ptr_int!=0)
 			{
 				rv.modrm |= EncodeDisp(disp.ptr_int,&rv,3); //32 or 16 bit disp
@@ -542,7 +542,7 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 	else
 	{
 		//index ,scale [sib]
-		rv.modrm = make_modrm(0,ESP);//ESP means sib
+		rv.modrm = (u8)make_modrm(0,ESP);//ESP means sib
 		rv.flags|=1;
 
 		bool force_disp=false;

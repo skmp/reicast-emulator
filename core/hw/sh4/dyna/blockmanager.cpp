@@ -122,7 +122,7 @@ RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
 	}
 	else
 	{
-		printf("bm_GetBlock(%08X) failed ..\n",dynarec_code);
+		printf("bm_GetBlock(%8s) failed ..\n",dynarec_code);
 		return 0;
 	}
 }
@@ -149,7 +149,7 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 	all_blocks.push_back(blk);
 	if (blkmap.find(blk)!=blkmap.end())
 	{
-		printf("DUP: %08X %08X %08X %08X\n", (*blkmap.find(blk))->addr,(*blkmap.find(blk))->code,blk->addr,blk->code);
+		printf("DUP: %08X %08X %08X %08X\n", (*blkmap.find(blk))->addr,(*blkmap.find(blk))->code,blk->addr,(uint32_t)blk->code);
 		verify(false);
 	}
 	blkmap.insert(blk);
@@ -437,7 +437,7 @@ void bm_WriteBlockMap(const string& file)
 		printf("Writing block map !\n");
 		for (size_t i=0; i<all_blocks.size(); i++)
 		{
-			fprintf(f,"block: %d:%08X:%08X:%d:%d:%d\n",all_blocks[i]->BlockType,all_blocks[i]->addr,all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes);
+			fprintf(f,"block: %d:%08X:%08X:%d:%d:%d\n",all_blocks[i]->BlockType,all_blocks[i]->addr,(uint32_t)all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes);
 			for(size_t j=0;j<all_blocks[i]->oplist.size();j++)
 				fprintf(f,"\top: %d:%d:%s\n",j,all_blocks[i]->oplist[j].guest_offs,all_blocks[i]->oplist[j].dissasm().c_str());
 		}
@@ -510,7 +510,7 @@ void bm_PrintTopBlocks()
 		sel_hops+=all_blocks[i]->host_opcodes*all_blocks[i]->runs;
 	}
 
-	printf(" >-< %.2f%% covered in top 1% blocks\n",sel_hops/total_hops);
+	printf(" >-< %.2f%% covered in top 1%% blocks\n",sel_hops/total_hops);
 
 	size_t i;
 	for (i=all_blocks.size()/100;sel_hops/total_hops<50;i++)
@@ -619,17 +619,17 @@ void print_blocks()
 
 		if (f)
 		{
-			fprintf(f,"block: %08X\n",blk);
+			fprintf(f,"block: %08X\n",(uint32_t)blk);
 			fprintf(f,"addr: %08X\n",blk->addr);
 			fprintf(f,"hash: %s\n",blk->hash());
 			fprintf(f,"hash_rloc: %s\n",blk->hash(false,true));
-			fprintf(f,"code: %08X\n",blk->code);
+			fprintf(f,"code: %08X\n",(uint32_t)blk->code);
 			fprintf(f,"runs: %d\n",blk->runs);
 			fprintf(f,"BlockType: %d\n",blk->BlockType);
-			fprintf(f,"NextBlock: %08X\n",blk->NextBlock);
-			fprintf(f,"BranchBlock: %08X\n",blk->BranchBlock);
-			fprintf(f,"pNextBlock: %08X\n",blk->pNextBlock);
-			fprintf(f,"pBranchBlock: %08X\n",blk->pBranchBlock);
+			fprintf(f,"NextBlock: %08X\n",(uint32_t)blk->NextBlock);
+			fprintf(f,"BranchBlock: %08X\n",(uint32_t)blk->BranchBlock);
+			fprintf(f,"pNextBlock: %08X\n",(uint32_t)blk->pNextBlock);
+			fprintf(f,"pBranchBlock: %08X\n",(uint32_t)blk->pBranchBlock);
 			fprintf(f,"guest_cycles: %d\n",blk->guest_cycles);
 			fprintf(f,"guest_opcodes: %d\n",blk->guest_opcodes);
 			fprintf(f,"host_opcodes: %d\n",blk->host_opcodes);

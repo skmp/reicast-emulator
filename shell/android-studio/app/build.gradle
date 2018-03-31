@@ -58,9 +58,8 @@ dependencies {
     compile 'com.android.support:design:25.3.1'
     compile 'com.android.support.constraint:constraint-layout:1.1.0-beta6'
     compile 'org.bouncycastle:bcprov-jdk16:1.46'
-    compile 'commons-io:commons-io:+'
-    compile 'org.apache.commons:commons-lang3:+'
-    compile 'commons-logging:commons-logging:+'
+    compile 'commons-io:commons-io:2.6'
+    compile 'org.apache.commons:commons-lang3:3.7'
     compile ('com.googlecode.json-simple:json-simple:1.1.1') {
         exclude module: 'junit'
     }

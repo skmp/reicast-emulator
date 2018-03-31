@@ -603,6 +603,9 @@ struct RegisterStruct
 
 struct settings_t
 {
+	bool QueueRender;
+	bool PaletteUpdateHack;
+
 	struct {
 		bool UseReios;
 	} bios;
@@ -620,6 +623,7 @@ struct settings_t
 	struct
 	{
 		bool Enable;
+		unsigned Type;
 		bool idleskip;
 		bool unstable_opt;
 		bool disable_nvmem;
@@ -650,6 +654,7 @@ struct settings_t
 		u32 DSPEnabled;		//0 -> no, 1 -> yes
 		u32 NoBatch;
         u32 NoSound;        //0 ->sound, 1 -> no sound
+		bool InterruptHack;
 	} aica;
 
 	struct
@@ -682,6 +687,8 @@ struct settings_t
 			u32 ModVolMode;
 			u32 ZBufferMode;
 			u32 TexCacheMode;
+			f32 zMin;
+			f32 zMax;
 		} Emulation;
 
 		struct
@@ -700,6 +707,9 @@ struct settings_t
 		string HashLogFile;
 		string HashCheckFile;
 	} pvr;
+
+   unsigned UpdateMode;
+   unsigned UpdateModeForced;
 
 	struct {
 		bool SerialConsole;

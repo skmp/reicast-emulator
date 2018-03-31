@@ -16,6 +16,8 @@
 #include "webui/server.h"
 #include "hw/naomi/naomi_cart.h"
 
+#include "reios/reios.h"
+
 settings_t settings;
 
 /*
@@ -128,6 +130,70 @@ void* webui_th(void* p)
 cThread webui_thd(&webui_th,0);
 #endif
 
+#include "rom_luts.c"
+
+static void LoadSpecialSettingsCPU(void)
+{
+#if FEAT_SHREC != DYNAREC_NONE
+	if(settings.dynarec.Enable)
+	{
+		Get_Sh4Recompiler(&sh4_cpu);
+		printf("Using Recompiler\n");
+	}
+	else
+#endif
+	{
+		Get_Sh4Interpreter(&sh4_cpu);
+		printf("Using Interpreter\n");
+	}
+   sh4_cpu.Reset(false);
+}
+
+
+static void LoadSpecialSettings(void)
+{
+   unsigned i;
+
+   for (i = 0; i < sizeof(lut_games)/sizeof(lut_games[0]); ++i)
+   {
+      if (strstr(lut_games[i].product_number, reios_product_number))
+      {
+         if (lut_games[i].palette_hack != -1)
+            settings.PaletteUpdateHack    = lut_games[i].palette_hack;
+
+         if (lut_games[i].aica_interrupt_hack != -1)
+            settings.aica.InterruptHack   = lut_games[i].aica_interrupt_hack;
+
+         if (lut_games[i].dynarec_type != -1)
+         {
+            printf("Applying dynarec type hack.\n");
+            settings.dynarec.Type = lut_games[i].dynarec_type;
+            LoadSpecialSettingsCPU();
+         }
+
+         if (lut_games[i].alpha_sort_mode != -1)
+         {
+            printf("Applying alpha sort hack.\n");
+            settings.pvr.Emulation.AlphaSortMode = lut_games[i].alpha_sort_mode;
+         }
+
+         if (lut_games[i].updatemode_type != -1)
+         {
+            printf("Applying update mode type hack.\n");
+            settings.UpdateModeForced = 1;
+         }
+
+         if (lut_games[i].zMax != 1)
+         {
+            printf("Applying zmax hack.\n");
+            settings.pvr.Emulation.zMax = lut_games[i].zMax;
+         }
+
+         break;
+      }
+   }
+}
+
 int dc_init(int argc,wchar* argv[])
 {
 	setbuf(stdin,0);
@@ -173,20 +239,9 @@ int dc_init(int argc,wchar* argv[])
 			printf("Did not load bios, using reios\n");
 	}
 
-#if FEAT_SHREC != DYNAREC_NONE
-	if(settings.dynarec.Enable)
-	{
-		Get_Sh4Recompiler(&sh4_cpu);
-		printf("Using Recompiler\n");
-	}
-	else
-#endif
-	{
-		Get_Sh4Interpreter(&sh4_cpu);
-		printf("Using Interpreter\n");
-	}
-	
-  InitAudio();
+	LoadSpecialSettingsCPU();
+
+	InitAudio();
 
 	sh4_cpu.Init();
 	mem_Init();
@@ -204,9 +259,10 @@ int dc_init(int argc,wchar* argv[])
 	plugins_Reset(false);
 	mem_Reset(false);
 	
-
 	sh4_cpu.Reset(false);
-	
+
+	LoadSpecialSettings();
+
 	return rv;
 }
 
@@ -234,6 +290,7 @@ void LoadSettings()
 	settings.dynarec.idleskip		= cfgLoadInt("config","Dynarec.idleskip",1)!=0;
 	settings.dynarec.unstable_opt	= cfgLoadInt("config","Dynarec.unstable-opt",0);
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
+	settings.UpdateModeForced		= 0;
 	settings.dreamcast.cable		= cfgLoadInt("config","Dreamcast.Cable",3);
 	settings.dreamcast.RTC			= cfgLoadInt("config","Dreamcast.RTC",GetRTC_now());
 	settings.dreamcast.region		= cfgLoadInt("config","Dreamcast.Region",3);
@@ -248,6 +305,12 @@ void LoadSettings()
 	
 	settings.pvr.ta_skip			= cfgLoadInt("config","ta.skip",0);
 	settings.pvr.rend				= cfgLoadInt("config","pvr.rend",0);
+	
+	settings.QueueRender					= 0;
+	settings.PaletteUpdateHack				= 0;
+	settings.pvr.Emulation.AlphaSortMode	= 0;
+	settings.pvr.Emulation.zMin				= 0.f;
+	settings.pvr.Emulation.zMax				= 1.0f;
 
 	settings.pvr.MaxThreads			= cfgLoadInt("config", "pvr.MaxThreads", 3);
 	settings.pvr.SynchronousRendering			= cfgLoadInt("config", "pvr.SynchronousRendering", 0);

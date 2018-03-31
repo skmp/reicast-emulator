@@ -74,7 +74,7 @@ public class GL2JNINative extends NativeActivity {
 		RegisterNative(false);
 
 		Emulator app = (Emulator)getApplicationContext();
-		app.getConfigurationPrefs(GL2JNINative.this);
+		app.getConfigurationPrefs(prefs);
 		menu = new OnScreenMenu(GL2JNINative.this, prefs);
 
 		String fileName = null;

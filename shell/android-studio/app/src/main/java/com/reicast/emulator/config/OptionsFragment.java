@@ -117,8 +117,7 @@ public class OptionsFragment extends Fragment {
 		mSpnrThemes = (Spinner) getView().findViewById(R.id.pick_button_theme);
 		new LocateThemes().execute(home_directory + "/themes");
 
-		final EditText editBrowse = (EditText) getView().findViewById(
-				R.id.main_path);
+		final EditText editBrowse = (EditText) getView().findViewById(R.id.main_path);
 		editBrowse.setText(home_directory);
 
 		mainBrowse.setOnClickListener(new View.OnClickListener() {

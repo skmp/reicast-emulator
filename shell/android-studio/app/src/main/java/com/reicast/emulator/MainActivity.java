@@ -288,6 +288,7 @@ public class MainActivity extends AppCompatActivity implements
 		OptionsFragment optsFrag = new OptionsFragment();
 		getSupportFragmentManager().beginTransaction().replace(
 				R.id.fragment_container, optsFrag, "OPTIONS_FRAG").commit();
+		setTitle(R.string.settings);
 		return;
 	}
 

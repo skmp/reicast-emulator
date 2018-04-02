@@ -38,7 +38,11 @@ Disc* load_gdi(const char* file)
 
 	size_t len = strlen(path);
 
+#ifdef WIN32
 	while (len>2)
+#else
+	while (len>=0)
+#endif
 	{
 		if (path[len]=='\\' || path[len]=='/')
 			break;

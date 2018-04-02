@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
@@ -41,7 +42,6 @@ import com.reicast.emulator.periph.MOGAInput;
 
 public class InputFragment extends Fragment {
 
-	private Activity parentActivity;
 	private int listenForButton = 0;
 	private AlertDialog alertDialogSelectController;
 	private SharedPreferences sharedPreferences;
@@ -66,42 +66,38 @@ public class InputFragment extends Fragment {
 
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		parentActivity = getActivity();
-
-		moga.onCreate(parentActivity, pad);
+		moga.onCreate(getActivity(), pad);
 		moga.mListener.setPlayerNum(1);
 
 		sharedPreferences = PreferenceManager
-				.getDefaultSharedPreferences(parentActivity);
+				.getDefaultSharedPreferences(getActivity());
 
 		Config.vibrationDuration = sharedPreferences.getInt(Config.pref_vibrationDuration, 20);
-		vib = (Vibrator) parentActivity.getSystemService(Context.VIBRATOR_SERVICE);
+		vib = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			ImageView icon_a = (ImageView) getView().findViewById(
-					R.id.controller_icon_a);
-			icon_a.setAlpha(0.8f);
-			ImageView icon_b = (ImageView) getView().findViewById(
-					R.id.controller_icon_b);
-			icon_b.setAlpha(0.8f);
-			ImageView icon_c = (ImageView) getView().findViewById(
-					R.id.controller_icon_c);
-			icon_c.setAlpha(0.8f);
-			ImageView icon_d = (ImageView) getView().findViewById(
-					R.id.controller_icon_d);
-			icon_d.setAlpha(0.8f);
-		}
+		ImageView icon_a = (ImageView) getView().findViewById(R.id.controller_icon_a);
+		icon_a.setAlpha(0.8f);
+		ImageView icon_b = (ImageView) getView().findViewById(R.id.controller_icon_b);
+		icon_b.setAlpha(0.8f);
+		ImageView icon_c = (ImageView) getView().findViewById(R.id.controller_icon_c);
+		icon_c.setAlpha(0.8f);
+		ImageView icon_d = (ImageView) getView().findViewById(R.id.controller_icon_d);
+		icon_d.setAlpha(0.8f);
 
 		Button buttonLaunchEditor = (Button) getView().findViewById(
 				R.id.buttonLaunchEditor);
 		buttonLaunchEditor.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				Intent inte = new Intent(parentActivity, EditVJoyActivity.class);
+				Intent inte = new Intent(getActivity(), EditVJoyActivity.class);
 				startActivity(inte);
 			}
 		});
 
-		if (!MainActivity.isBiosExisting(parentActivity) || !MainActivity.isFlashExisting(parentActivity))
+		SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+		String home_directory = mPrefs.getString(Config.pref_home,
+				Environment.getExternalStorageDirectory().getAbsolutePath());
+
+		if (!MainActivity.isBiosExisting(home_directory) || !MainActivity.isFlashExisting(home_directory))
 			buttonLaunchEditor.setEnabled(false);
 
 		final TextView duration = (TextView) getView().findViewById(R.id.vibDuration_current);
@@ -128,7 +124,7 @@ public class InputFragment extends Fragment {
 
 		    public void onStopTrackingTouch(SeekBar seekBar) {
 			int progress = seekBar.getProgress() + 5;
-			sharedPreferences.edit().putInt(Config.pref_vibrationDuration, progress).commit();
+			sharedPreferences.edit().putInt(Config.pref_vibrationDuration, progress).apply();
 			Config.vibrationDuration = progress;
 			vib.vibrate(progress);
 		    }
@@ -138,7 +134,7 @@ public class InputFragment extends Fragment {
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
 				sharedPreferences.edit()
-						.putBoolean(Config.pref_touchvibe, isChecked).commit();
+						.putBoolean(Config.pref_touchvibe, isChecked).apply();
 				vibLay.setVisibility( isChecked ? View.VISIBLE : View.GONE );
 			}
 		};
@@ -164,9 +160,7 @@ public class InputFragment extends Fragment {
 					.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 						public void onCheckedChanged(CompoundButton buttonView,
 								boolean isChecked) {
-							sharedPreferences.edit()
-									.putBoolean(Config.pref_mic, isChecked)
-									.commit();
+							sharedPreferences.edit().putBoolean(Config.pref_mic, isChecked).apply();
 						}
 					});
 		} else {
@@ -261,7 +255,7 @@ public class InputFragment extends Fragment {
 
 		} else {
 
-			TableLayout input_devices = (TableLayout) parentActivity
+			TableLayout input_devices = (TableLayout) getActivity()
 					.findViewById(R.id.input_devices);
 			input_devices.setVisibility(View.GONE);
 
@@ -393,7 +387,7 @@ public class InputFragment extends Fragment {
 	private void selectController(int playerNum) {
 		listenForButton = playerNum;
 
-		AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity);
+		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 		builder.setTitle(R.string.select_controller_title);
 		builder.setMessage(getString(R.string.select_controller_message,
 				String.valueOf(listenForButton)));
@@ -436,7 +430,7 @@ public class InputFragment extends Fragment {
 				|| keyCode == KeyEvent.KEYCODE_VOLUME_UP
 				|| keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
 			return false;
-		if (!pad.IsXperiaPlay() && keyCode == KeyEvent.KEYCODE_BACK)
+		if (keyCode == KeyEvent.KEYCODE_BACK)
 			return false;
 
 		String descriptor = null;
@@ -468,7 +462,7 @@ public class InputFragment extends Fragment {
 				|| descriptor.equals(deviceDescriptorPlayer2)
 				|| descriptor.equals(deviceDescriptorPlayer3)
 				|| descriptor.equals(deviceDescriptorPlayer4)) {
-			Toast.makeText(parentActivity, R.string.controller_already_in_use,
+			Toast.makeText(getActivity(), R.string.controller_already_in_use,
 					Toast.LENGTH_SHORT).show();
 			return true;
 		}
@@ -477,20 +471,16 @@ public class InputFragment extends Fragment {
 		case 0:
 			return false;
 		case 1:
-			sharedPreferences.edit()
-					.putString(Gamepad.pref_player1, descriptor).commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player1, descriptor).apply();
 			break;
 		case 2:
-			sharedPreferences.edit()
-					.putString(Gamepad.pref_player2, descriptor).commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player2, descriptor).apply();
 			break;
 		case 3:
-			sharedPreferences.edit()
-					.putString(Gamepad.pref_player3, descriptor).commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player3, descriptor).apply();
 			break;
 		case 4:
-			sharedPreferences.edit()
-					.putString(Gamepad.pref_player4, descriptor).commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player4, descriptor).apply();
 			break;
 		}
 
@@ -506,20 +496,16 @@ public class InputFragment extends Fragment {
 	private void removeController(int playerNum) {
 		switch (playerNum) {
 		case 1:
-			sharedPreferences.edit().putString(Gamepad.pref_player1, null)
-					.commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player1, null).apply();
 			break;
 		case 2:
-			sharedPreferences.edit().putString(Gamepad.pref_player2, null)
-					.commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player2, null).apply();
 			break;
 		case 3:
-			sharedPreferences.edit().putString(Gamepad.pref_player3, null)
-					.commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player3, null).apply();
 			break;
 		case 4:
-			sharedPreferences.edit().putString(Gamepad.pref_player4, null)
-					.commit();
+			sharedPreferences.edit().putString(Gamepad.pref_player4, null).apply();
 			break;
 		}
 

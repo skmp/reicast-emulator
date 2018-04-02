@@ -56,7 +56,7 @@ static jobject		g_pActivity		= 0;
 static jmethodID	javaOnNDKTouch	= 0;
 static jmethodID	javaOnNDKKey	= 0;
 
-static bool isXperiaPlay;
+static bool hasTouchpad;
 
 /**
  * Our saved state data.
@@ -153,14 +153,14 @@ engine_handle_input( struct android_app* app, AInputEvent* event )
                 touchstate[nPointerId].y = AMotionEvent_getY( event, n );
             }
 
-            if( jni && g_pActivity && isXperiaPlay) {
+            if( jni && g_pActivity && hasTouchpad) {
 //                (*jni)->CallVoidMethod( jni, g_pActivity, javaOnNDKTouch, device, nSourceId, nRawAction, touchstate[nPointerId].x, touchstate[nPointerId].y, newTouch);
                 (*jni)->CallVoidMethod( jni, g_pActivity, javaOnNDKTouch, device, nSourceId, nRawAction, touchstate[nPointerId].x, touchstate[nPointerId].y);
             }
             newTouch = JNI_FALSE;
         }
 
-        if( isXperiaPlay ) {
+        if( hasTouchpad ) {
             return 1;
         } else {
             return 0;
@@ -213,9 +213,6 @@ android_main( struct android_app* state )
 {
     struct ENGINE engine;
 
-    // Make sure glue isn't stripped.
-    app_dummy();
-
     memset( &engine, 0, sizeof(engine) );
     state->userData	 = &engine;
     state->onAppCmd	 = engine_handle_cmd;
@@ -264,7 +261,7 @@ int
 RegisterNative( JNIEnv* env, jobject clazz, jboolean touchpad )
 {
 	g_pActivity = (jobject)(*env)->NewGlobalRef( env, clazz );
-    isXperiaPlay = (bool) touchpad;
+    hasTouchpad = (bool) touchpad;
 	return 0;
 }
 
@@ -296,14 +293,6 @@ jint EXPORT_XPLAY JNICALL JNI_OnLoad(JavaVM * vm, void * reserved)
 		LOGW( "%s - Failed to register native activity methods", __FUNCTION__ );
 		return -1;
 	}
-
-    char device_type[PROP_VALUE_MAX];
-    __system_property_get("ro.product.model", device_type);
-    if( isXperiaPlay ) {
-        LOGW( "%s touchpad enabled", device_type );
-    } else {
-        LOGW( "%s touchpad ignored", device_type );
-    }
 
 //    javaOnNDKTouch	= (*env)->GetMethodID( env, java_activity_class, "OnNativeMotion", "(IIIIIZ)Z");
     javaOnNDKTouch	= (*env)->GetMethodID( env, java_activity_class, "OnNativeMotion", "(IIIII)Z");

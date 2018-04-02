@@ -87,7 +87,7 @@
     <string name="moga_connect">MOGA verbunden!</string>
 
     <string name="about_text">reicast ist ein Dreamcast-Emulator</string>
-    <string name="revision_text">Version: %1$s</string>
+    <string name="revision_text">Version: %1$s [%2$s]</string>
     
     <string-array name="controllers">
         <item>Controller A</item>
@@ -104,9 +104,6 @@
     <string name="rateme">Bewerten</string>
     <string name="messages">Logdateien senden</string>
     <string name="cloud">Cloud-VMU</string>
-    
-    <string name="textOn">Ein</string>
-    <string name="textOff">Aus</string>
 
     <string name="cancel">Abbrechen</string>
     <string name="dismiss">Verwerfen</string>
@@ -118,10 +115,7 @@
     <string name="downloadWarning">ACHTUNG: Sie sind im Begriff Ihre VMUs von Ihrer Dropbox herunterzuladen. Beachten Sie bitte, dass dies ihren letzten Download ÜBERSCHREIBEN wird! Eine Sicherungkopie wird im VmuBackups angelegt.</string>
     <string name="uploadVMU">VMU hochladen</string>
     <string name="downloadVMU">VMU herunterladen</string>
-    
-    <string name="platform">Kopiere Logcat-Inhalte in die Zwischenablage\nBitte in den Fehlerbericht einfügen.</string>
-    <string name="log_saved">Logdatei ins \"Datenverzeichnis\" gespeichert.</string>
-    
+
     <!-- Onscreen Menu -->
     <string name="popup_button_back">Zurück</string>
     <string name="popup_button_disk">Disk wechseln</string>

@@ -1,31 +1,17 @@
 package com.reicast.emulator;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import android.annotation.TargetApi;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.Snackbar;
+import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
 import android.text.util.Linkify;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,10 +21,26 @@ import android.widget.ListView;
 import android.widget.SlidingDrawer;
 import android.widget.SlidingDrawer.OnDrawerOpenListener;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.debug.GitAdapter;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import javax.net.ssl.HttpsURLConnection;
 
 public class AboutFragment extends Fragment {
 
@@ -61,8 +63,7 @@ public class AboutFragment extends Fragment {
 		try {
 			InputStream file = getResources().getAssets().open("build");
 			if (file != null) {
-				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(file));
+				BufferedReader reader = new BufferedReader(new InputStreamReader(file));
 				buildId = reader.readLine();
 				file.close();
 			}
@@ -75,8 +76,7 @@ public class AboutFragment extends Fragment {
 					.getPackageInfo(getActivity().getPackageName(), 0).versionName;
 			int versionCode = getActivity().getPackageManager()
 					.getPackageInfo(getActivity().getPackageName(), 0).versionCode;
-			TextView version = (TextView) getView().findViewById(
-					R.id.revision_text);
+			TextView version = (TextView) getView().findViewById(R.id.revision_text);
 			String revision = getString(R.string.revision_text,
 					versionName, String.valueOf(versionCode));
 			if (!buildId.equals("")) {
@@ -97,7 +97,6 @@ public class AboutFragment extends Fragment {
 		slidingGithub = (SlidingDrawer) getView().findViewById(
 				R.id.slidingGithub);
 		slidingGithub.setOnDrawerOpenListener(new OnDrawerOpenListener() {
-			@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 			public void onDrawerOpened() {
 				new retrieveGitTask().execute(Config.git_api);
 			}
@@ -125,21 +124,15 @@ public class AboutFragment extends Fragment {
 					JSONObject commitArray = jsonObject.getJSONObject("commit");
 
 					String date = commitArray.getJSONObject("committer")
-							.getString("date").replace("T", " ")
-							.replace("Z", "");
-					String author = commitArray.getJSONObject("author")
-							.getString("name");
-					String committer = commitArray.getJSONObject("committer")
-							.getString("name");
+							.getString("date").replace("T", " ").replace("Z", "");
+					String author = commitArray.getJSONObject("author").getString("name");
+					String committer = commitArray.getJSONObject("committer").getString("name");
 
 					String avatar = null;
 					if (!jsonObject.getString("committer").equals("null")) {
-						avatar = jsonObject.getJSONObject("committer")
-								.getString("avatar_url");
-						committer = committer
-								+ " ("
-								+ jsonObject.getJSONObject("committer")
-								.getString("login") + ")";
+						avatar = jsonObject.getJSONObject("committer").getString("avatar_url");
+						committer = committer + " (" + jsonObject
+								.getJSONObject("committer").getString("login") + ")";
 						if (avatar.equals("null")) {
 							avatar = "https://github.com/apple-touch-icon-144.png";
 						}
@@ -147,28 +140,22 @@ public class AboutFragment extends Fragment {
 						avatar = "https://github.com/apple-touch-icon-144.png";
 					}
 					if (!jsonObject.getString("author").equals("null")) {
-						author = author
-								+ " ("
-								+ jsonObject.getJSONObject("author").getString(
-										"login") + ")";
+						author = author + " (" + jsonObject.getJSONObject(
+								"author").getString("login") + ")";
 					}
 					String sha = jsonObject.getString("sha");
-					String curl = jsonObject
-							.getString("url")
-							.replace("https://api.github.com/repos",
-									"https://github.com")
-									.replace("commits", "commit");
+					String curl = jsonObject.getString("url")
+							.replace("https://api.github.com/repos", "https://github.com")
+							.replace("commits", "commit");
 
 					String title = "No commit heading attached";
 					String message = "No commit message attached";
 
 					if (commitArray.getString("message").contains("\n\n")) {
 						String fullOutput = commitArray.getString("message");
-						title = fullOutput.substring(0,
-								fullOutput.indexOf("\n\n"));
+						title = fullOutput.substring(0, fullOutput.indexOf("\n\n"));
 						message = fullOutput.substring(
-								fullOutput.indexOf("\n\n") + 1,
-								fullOutput.length());
+								fullOutput.indexOf("\n\n") + 1, fullOutput.length());
 					} else {
 						title = commitArray.getString("message");
 					}
@@ -189,9 +176,7 @@ public class AboutFragment extends Fragment {
 			} catch (JSONException e) {
 				handler.post(new Runnable() {
 					public void run() {
-						MainActivity.showToastMessage(getActivity(),
-								getActivity().getString(R.string.git_broken),
-								R.drawable.ic_github, Toast.LENGTH_SHORT);
+						showToastMessage(getActivity().getString(R.string.git_broken), Snackbar.LENGTH_SHORT);
 						slidingGithub.close();
 					}
 				});
@@ -199,9 +184,7 @@ public class AboutFragment extends Fragment {
 			} catch (Exception e) {
 				handler.post(new Runnable() {
 					public void run() {
-						MainActivity.showToastMessage(getActivity(),
-								getActivity().getString(R.string.git_broken),
-								R.drawable.ic_github, Toast.LENGTH_SHORT);
+						showToastMessage(getActivity().getString(R.string.git_broken), Snackbar.LENGTH_SHORT);
 						slidingGithub.close();
 					}
 				});
@@ -232,32 +215,47 @@ public class AboutFragment extends Fragment {
 
 		}
 		
-		private JSONArray getContent(String urlString) 
-				throws IOException, JSONException {
-			StringBuilder builder = new StringBuilder();
-			HttpClient client = new DefaultHttpClient();
-			HttpGet httpGet = new HttpGet(urlString);
-			try {
-				HttpResponse response = client.execute(httpGet);
-				StatusLine statusLine = response.getStatusLine();
-				int statusCode = statusLine.getStatusCode();
-				if (statusCode == 200) {
-					HttpEntity entity = response.getEntity();
-					InputStream content = entity.getContent();
-					BufferedReader reader = new BufferedReader(
-							new InputStreamReader(content));
-					String line;
-					while ((line = reader.readLine()) != null) {
-						builder.append(line);
-					}
-				} else {
+		private JSONArray getContent(String urlString) throws IOException, JSONException {
+			HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
+			conn.setRequestMethod("GET");
+			conn.setDoInput(true);
+
+			int responseCode = conn.getResponseCode();
+			if (responseCode == HttpsURLConnection.HTTP_OK) {
+				InputStream is = new BufferedInputStream(conn.getInputStream());
+				ByteArrayOutputStream result = new ByteArrayOutputStream();
+				byte[] buffer = new byte[1024];
+				int length;
+				while ((length = is.read(buffer)) != -1) {
+					result.write(buffer, 0, length);
 				}
-			} catch (ClientProtocolException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
+				return new JSONArray(result.toString());
 			}
-			return new JSONArray(builder.toString());
+			return null;
 		}
+	}
+
+	private void showToastMessage(String message, int duration) {
+		ConstraintLayout layout = (ConstraintLayout) getActivity().findViewById(R.id.mainui_layout);
+		Snackbar snackbar = Snackbar.make(layout, message, duration);
+		View snackbarLayout = snackbar.getView();
+		snackbarLayout.setMinimumWidth(ConstraintLayout.LayoutParams.MATCH_PARENT);
+		TextView textView = (TextView) snackbarLayout.findViewById(
+				android.support.design.R.id.snackbar_text);
+		textView.setGravity(Gravity.CENTER_VERTICAL);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+			textView.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
+		Drawable drawable;
+		if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+			drawable = getResources().getDrawable(
+					R.drawable.ic_info_outline, getActivity().getTheme());
+		} else {
+			drawable = VectorDrawableCompat.create(getResources(),
+					R.drawable.ic_info_outline, getActivity().getTheme());
+		}
+		textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
+		textView.setCompoundDrawablePadding(getResources()
+				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
+		snackbar.show();
 	}
 }

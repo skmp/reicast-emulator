@@ -4,9 +4,9 @@
     
     <string name="menu_settings">Settings</string>
     
-    <string name="system_path">System Path (location of the data folder with dc_boot.bin/dc_flash.bin inside)</string>
+    <string name="system_path">System Path\n  (location of data folder with dc_boot.bin/dc_flash.bin inside)</string>
     <string name="browser_path">Default System Path</string>
-    <string name="games_path">Storage Path (location of *.gdi, *.chd or *.cdi images)</string>
+    <string name="games_path">Storage Path\n  (location of *.gdi, *.chd or *.cdi images)</string>
     <string name="button_theme">Onscreen Button Theme</string>
     <string name="bios_selection">Select a BIOS source</string>
 
@@ -55,6 +55,7 @@
     <string name="default_disk">Default Disk</string>
     
     <string name="games_listing">Game List</string>
+    <string name="search_hint">Game (ie. Crazy Taxi)</string>
     
     <string name="game_details">Game Info - %1$s</string>
     <string name="info_unavailable">Game Info Unavailable</string>
@@ -127,8 +128,7 @@
     <string name="uploadVMU">Upload VMU</string>
     <string name="downloadVMU">Download VMU</string>
     
-    <string name="platform">Copying logcat content to clipboard\nPlease paste in the issue report</string>
-    <string name="log_saved">Log saved to \"Files Dir\" path</string>
+    <string name="log_saved">Logcat saved and copied to clipboard\nPlease paste inside the Github issue</string>
     
     <!-- Onscreen Menu -->
     <string name="popup_button_back">Back</string>
@@ -148,4 +148,5 @@
     <string name="popup_button_frame_limit">Limit Framerate</string>
     <string name="popup_button_audio">Emu Sound</string>
     <string name="popup_button_turbo">Turbo</string>
+    <string name="textview">disk_loading</string>
 </resources>

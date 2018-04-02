@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/child_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical" >
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="2dp"
-        android:background="@drawable/list_item_border" />
+    android:orientation="vertical">
 
     <LinearLayout
         android:id="@+id/childview"
@@ -29,16 +25,23 @@
             android:layout_marginRight="2dp"
             android:layout_marginTop="2dp"
             android:scaleType="fitCenter"
-            android:src="@drawable/gdi" />
+            app:srcCompat="@drawable/ic_settings" />
 
         <TextView
             android:id="@+id/item_name"
             style="@android:style/TextAppearance.Medium"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="6dp"
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
             android:text="@string/disk_loading" />
     </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/list_item_border" />
 
 </LinearLayout>

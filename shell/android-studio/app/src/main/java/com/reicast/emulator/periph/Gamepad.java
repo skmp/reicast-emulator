@@ -1,9 +1,5 @@
 package com.reicast.emulator.periph;
 
-import java.util.HashMap;
-
-import tv.ouya.console.api.OuyaController;
-import tv.ouya.console.api.OuyaFacade;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -12,6 +8,11 @@ import android.content.res.Configuration;
 import android.os.Build;
 import android.util.SparseArray;
 import android.view.KeyEvent;
+
+import java.util.HashMap;
+
+import tv.ouya.console.api.OuyaController;
+import tv.ouya.console.api.OuyaFacade;
 
 public class Gamepad {
 
@@ -45,9 +46,6 @@ public class Gamepad {
 	public static final String controllers_sony = "Sony PLAYSTATION(R)3 Controller";
 	public static final String controllers_xbox = "Microsoft X-Box 360 pad";
 	public static final String controllers_shield = "NVIDIA Corporation NVIDIA Controller";
-	public static final String controllers_play = "keypad-zeus";
-	public static final String controllers_play_gp = "keypad-game-zeus";
-	public static final String controllers_play_tp = "synaptics_touchpad";
 	public static final String controllers_gamekey = "gamekeyboard";
 
 	public String[] portId = { "_A", "_B", "_C", "_D" };
@@ -69,7 +67,6 @@ public class Gamepad {
 	public SparseArray<Integer> playerNumX = new SparseArray<Integer>();
 	public int[] keypadZeus = new int[2];
 
-	public boolean isXperiaPlay;
 	public boolean isOuyaOrTV;
 //	public boolean isNvidiaShield;
 
@@ -91,24 +88,6 @@ public class Gamepad {
 				OuyaController.BUTTON_A,          key_CONT_B,
 				OuyaController.BUTTON_U,          key_CONT_X,
 				OuyaController.BUTTON_Y,          key_CONT_Y,
-
-				OuyaController.BUTTON_DPAD_UP,    key_CONT_DPAD_UP,
-				OuyaController.BUTTON_DPAD_DOWN,  key_CONT_DPAD_DOWN,
-				OuyaController.BUTTON_DPAD_LEFT,  key_CONT_DPAD_LEFT,
-				OuyaController.BUTTON_DPAD_RIGHT, key_CONT_DPAD_RIGHT,
-
-				getStartButtonCode(),             key_CONT_START,
-				getSelectButtonCode(),            getSelectButtonCode()
-				// Redundant, but verifies it is mapped properly
-		};
-	}
-
-	public int[] getXPlayController() {
-		return new int[] { 
-				KeyEvent.KEYCODE_DPAD_CENTER,    key_CONT_A,
-				KeyEvent.KEYCODE_BACK,           key_CONT_B,
-				OuyaController.BUTTON_U,         key_CONT_X,
-				OuyaController.BUTTON_Y,         key_CONT_Y,
 
 				OuyaController.BUTTON_DPAD_UP,    key_CONT_DPAD_UP,
 				OuyaController.BUTTON_DPAD_DOWN,  key_CONT_DPAD_DOWN,
@@ -170,15 +149,6 @@ public class Gamepad {
 				mPrefs.getInt(pref_button_start + id, getStartButtonCode()),            key_CONT_START,
 				mPrefs.getInt(pref_button_select + id, getSelectButtonCode()),          getSelectButtonCode()
 		};
-	}
-
-	public boolean IsXperiaPlay() {
-		return android.os.Build.MODEL.equals("R800a")
-				|| android.os.Build.MODEL.equals("R800i")
-				|| android.os.Build.MODEL.equals("R800x")
-				|| android.os.Build.MODEL.equals("R800at")
-				|| android.os.Build.MODEL.equals("SO-01D")
-				|| android.os.Build.MODEL.equals("zeus");
 	}
 
 	public boolean IsOuyaOrTV(Context context) {

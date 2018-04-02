@@ -1,7 +1,42 @@
 package com.reicast.emulator;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.Vibrator;
+import android.preference.PreferenceManager;
+import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.Snackbar;
+import android.support.graphics.drawable.VectorDrawableCompat;
+import android.support.v4.app.Fragment;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
+
+import com.android.util.FileUtils;
+import com.reicast.emulator.config.Config;
+import com.reicast.emulator.emu.JNIdc;
+
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -17,45 +52,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
-import org.apache.commons.lang3.StringUtils;
-
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.SharedPreferences;
-import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Environment;
-import android.os.Vibrator;
-import android.preference.PreferenceManager;
-import android.support.v4.app.Fragment;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.View.OnTouchListener;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import com.android.util.FileUtils;
-import com.reicast.emulator.config.Config;
-import com.reicast.emulator.emu.JNIdc;
-
 public class FileBrowser extends Fragment {
 
 	private Vibrator vib;
 	private Drawable orig_bg;
-	private Activity parentActivity;
 	private boolean ImgBrowse;
 	private boolean games;
+	private String searchQuery = null;
 	private OnItemSelectedListener mCallback;
 
 	private SharedPreferences mPrefs;
@@ -83,8 +86,10 @@ public class FileBrowser extends Fragment {
 					game_directory = b.getString("path_entry");
 				}
 			}
+			if (b.getString("search_params") != null) {
+				searchQuery = b.getString("search_params");
+			}
 		}
-
 	}
 	
 	public static HashSet<String> getExternalMounts() {
@@ -146,52 +151,14 @@ public class FileBrowser extends Fragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		return inflater.inflate(R.layout.activity_main, container, false);
+		return inflater.inflate(R.layout.browser_fragment, container, false);
 	}
 
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		// setContentView(R.layout.activity_main);
-		parentActivity = getActivity();
-		try {
-			File buttons = null;
-			String theme = mPrefs.getString(Config.pref_theme, null);
-			if (theme != null) {
-				buttons = new File(theme);
-			}
-			File file = new File(home_directory, "data/buttons.png");
-			if (buttons != null && buttons.exists()) {
-				InputStream in = new FileInputStream(buttons);
-			    OutputStream out = new FileOutputStream(file);
 
-			    // Transfer bytes from in to out
-			    byte[] buf = new byte[1024];
-			    int len;
-			    while ((len = in.read(buf)) > 0) {
-			        out.write(buf, 0, len);
-			    }
-			    in.close();
-			    out.close();
-			} else if (!file.exists()) {
-				file.createNewFile();
-				OutputStream fo = new FileOutputStream(file);
-				InputStream png = parentActivity.getAssets()
-						.open("buttons.png");
-
-				byte[] buffer = new byte[4096];
-				int len = 0;
-				while ((len = png.read(buffer)) != -1) {
-					fo.write(buffer, 0, len);
-				}
-				fo.close();
-				png.close();
-			}
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		}
-
-		vib = (Vibrator) parentActivity
-				.getSystemService(Context.VIBRATOR_SERVICE);
+		vib = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
 
 		/*
 		 * OnTouchListener viblist=new OnTouchListener() {
@@ -206,15 +173,59 @@ public class FileBrowser extends Fragment {
 
 		File home = new File(mPrefs.getString(Config.pref_home, home_directory));
 		if (!home.exists() || !home.isDirectory()) {
-			MainActivity.showToastMessage(getActivity(), 
-					getActivity().getString(R.string.config_home),
-					R.drawable.ic_notification, Toast.LENGTH_LONG);
+			showToastMessage(getActivity().getString(R.string.config_home), Snackbar.LENGTH_LONG);
+		} else {
+			(new installGraphics()).execute();
 		}
 
 		if (!ImgBrowse && !games) {
 			new LocateGames(R.array.flash).execute(home_directory);
 		} else {
 			new LocateGames(R.array.images).execute(game_directory);
+		}
+	}
+
+	private class installGraphics extends AsyncTask<String, Integer, String> {
+		@Override
+		protected String doInBackground(String... params) {
+			try {
+				File buttons = null;
+				String theme = mPrefs.getString(Config.pref_theme, null);
+				if (theme != null) {
+					buttons = new File(theme);
+				}
+				File file = new File(home_directory, "data/buttons.png");
+				if (buttons != null && buttons.exists()) {
+					InputStream in = new FileInputStream(buttons);
+					OutputStream out = new FileOutputStream(file);
+
+					// Transfer bytes from in to out
+					byte[] buf = new byte[1024];
+					int len;
+					while ((len = in.read(buf)) > 0) {
+						out.write(buf, 0, len);
+					}
+					in.close();
+					out.close();
+				} else if (!file.exists()) {
+					org.apache.commons.io.FileUtils.touch(file);
+					InputStream png = getActivity().getAssets().open("buttons.png");
+					OutputStream fo = new FileOutputStream(file);
+					byte[] buffer = new byte[4096];
+					int read;
+					while ((read = png.read(buffer)) != -1) {
+						fo.write(buffer, 0, read);
+					}
+					png.close();
+					fo.flush();
+					fo.close();
+				}
+			} catch (FileNotFoundException fnf) {
+				fnf.printStackTrace();
+			} catch (IOException ioe) {
+				ioe.printStackTrace();
+			}
+			return null;
 		}
 	}
 
@@ -231,7 +242,7 @@ public class FileBrowser extends Fragment {
 			File storage = new File(paths[0]);
 
 			// array of valid image file extensions
-			String[] mediaTypes = parentActivity.getResources().getStringArray(array);
+			String[] mediaTypes = getActivity().getResources().getStringArray(array);
 			FilenameFilter[] filter = new FilenameFilter[mediaTypes.length];
 
 			int i = 0;
@@ -244,9 +255,11 @@ public class FileBrowser extends Fragment {
 							return false;
 						} else if (array == R.array.flash && !name.startsWith("dc_")) {
 							return false;
-						} else {
+						} else if (searchQuery == null || name.toLowerCase(Locale.getDefault())
+								.contains(searchQuery.toLowerCase(Locale.getDefault())))
 							return StringUtils.endsWithIgnoreCase(name, "." + type);
-						}
+						else
+							return false;
 					}
 
 				};
@@ -265,12 +278,12 @@ public class FileBrowser extends Fragment {
 		@Override
 		protected void onPostExecute(List<File> items) {
 			if (items != null && !items.isEmpty()) {
-				final LinearLayout list = (LinearLayout) parentActivity.findViewById(R.id.game_list);
-				if (list != null) {
+				LinearLayout list = (LinearLayout) getActivity().findViewById(R.id.game_list);
+				if (list.getChildCount() > 0) {
 					list.removeAllViews();
 				}
 
-				String heading = parentActivity.getString(R.string.games_listing);
+				String heading = getActivity().getString(R.string.games_listing);
 				createListHeader(heading, list, array == R.array.images);
 				for (int i = 0; i < items.size(); i++) {
 					createListItem(list, items.get(i), i, array == R.array.images);
@@ -284,7 +297,8 @@ public class FileBrowser extends Fragment {
 	
 	private void browseStorage(boolean images) {
 		if (images) {
-			navigate(new File(home_directory));
+			(new navigate()).executeOnExecutor(
+					AsyncTask.THREAD_POOL_EXECUTOR, new File(home_directory));
 		} else {
 			if (game_directory.equals(sdcard.getAbsolutePath())) {
 				HashSet<String> extStorage = FileBrowser.getExternalMounts();
@@ -293,32 +307,21 @@ public class FileBrowser extends Fragment {
 						String sdCardPath = sd.next().replace("mnt/media_rw", "storage");
 						if (!sdCardPath.equals(sdcard.getAbsolutePath())) {
 							if (new File(sdCardPath).canRead()) {
-								navigate(new File(sdCardPath));
+								(new navigate()).execute(new File(sdCardPath));
 								return;
 							}
 						}
 					}
 				}
 			}
-			navigate(new File(game_directory));
-		}
-	}
-
-	private static final class DirSort implements Comparator<File> {
-
-		@Override
-		public int compare(File filea, File fileb) {
-
-			return ((filea.isFile() ? "a" : "b") + filea.getName().toLowerCase(
-					Locale.getDefault()))
-					.compareTo((fileb.isFile() ? "a" : "b")
-							+ fileb.getName().toLowerCase(Locale.getDefault()));
+			(new navigate()).executeOnExecutor(
+					AsyncTask.THREAD_POOL_EXECUTOR, new File(game_directory));
 		}
 	}
 
 	private void createListHeader(String header_text, View view, boolean hasBios) {
 		if (hasBios) {
-			final View childview = parentActivity.getLayoutInflater().inflate(
+			final View childview = getActivity().getLayoutInflater().inflate(
 					R.layout.bios_list_item, null, false);
 
 			((TextView) childview.findViewById(R.id.item_name))
@@ -357,8 +360,8 @@ public class FileBrowser extends Fragment {
 			((ViewGroup) view).addView(childview);
 		}
 
-		final View headerView = parentActivity.getLayoutInflater().inflate(
-				R.layout.head_list_item, null, false);
+		final View headerView = getActivity().getLayoutInflater().inflate(
+				R.layout.browser_fragment_header, null, false);
 		((ImageView) headerView.findViewById(R.id.item_icon))
 				.setImageResource(R.drawable.open_folder);
 		((TextView) headerView.findViewById(R.id.item_name))
@@ -370,11 +373,11 @@ public class FileBrowser extends Fragment {
 	}
 
 	private void createListItem(LinearLayout list, final File game, final int index, final boolean isGame) {				
-		final View childview = parentActivity.getLayoutInflater().inflate(
-				R.layout.app_list_item, null, false);
+		final View childview = getActivity().getLayoutInflater().inflate(
+				R.layout.browser_fragment_item, null, false);
 		
 		XMLParser xmlParser = new XMLParser(game, index, mPrefs);
-		xmlParser.setViewParent(parentActivity, childview, mCallback);
+		xmlParser.setViewParent(getActivity(), childview, mCallback);
 		orig_bg = childview.getBackground();
 
 		childview.findViewById(R.id.childview).setOnClickListener(
@@ -390,11 +393,10 @@ public class FileBrowser extends Fragment {
 							home_directory = game.getAbsolutePath().substring(0,
 									game.getAbsolutePath().lastIndexOf(File.separator)).replace("/data", "");
 							if (!DataDirectoryBIOS()) {
-								MainActivity.showToastMessage(getActivity(), 
-										getActivity().getString(R.string.config_data, home_directory),
-										R.drawable.ic_notification, Toast.LENGTH_LONG);
+								showToastMessage(getActivity().getString(R.string.config_data, home_directory),
+                                        Snackbar.LENGTH_LONG);
 							}
-							mPrefs.edit().putString("home_directory", home_directory).commit();
+							mPrefs.edit().putString(Config.pref_home, home_directory).apply();
                             mCallback.onFolderSelected(Uri.fromFile(new File(home_directory)));
 							JNIdc.config(home_directory);
 						}
@@ -416,107 +418,134 @@ public class FileBrowser extends Fragment {
 					}
 				});
 		list.addView(childview);
-		xmlParser.execute(game.getName());
+		xmlParser.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, game.getName());
 	}
 
-	void navigate(final File root_sd) {
-		LinearLayout v = (LinearLayout) parentActivity
-				.findViewById(R.id.game_list);
-		v.removeAllViews();
+	private final class navigate extends AsyncTask<File, Integer, List<File>> {
 
-		ArrayList<File> list = new ArrayList<File>();
+		private LinearLayout listView;
+		private String heading;
+		private File parent;
 
-		final String heading = root_sd.getAbsolutePath();
-		createListHeader(heading, v, false);
-
-		File flist[] = root_sd.listFiles();
-		File parent = root_sd.getParentFile();
-
-		list.add(null);
-
-		if (parent != null) {
-			list.add(parent);
+		private final class DirSort implements Comparator<File> {
+			@Override
+			public int compare(File filea, File fileb) {
+				return ((filea.isFile() ? "a" : "b") + filea.getName().toLowerCase(
+						Locale.getDefault()))
+						.compareTo((fileb.isFile() ? "a" : "b")
+								+ fileb.getName().toLowerCase(Locale.getDefault()));
+			}
 		}
 
-		if (flist != null) {
-			Arrays.sort(flist, new DirSort());
-			Collections.addAll(list, flist);
+		@Override
+		protected void onPreExecute() {
+			listView = (LinearLayout) getActivity().findViewById(R.id.game_list);
+			if (listView.getChildCount() > 0)
+				listView.removeAllViews();
 		}
 
-		for (final File file : list) {
-			if (file != null && !file.isDirectory() && !file.getAbsolutePath().equals("/data"))
-				continue;
-			final View childview = parentActivity.getLayoutInflater().inflate(
-					R.layout.app_list_item, null, false);
+		@Override
+		protected List<File> doInBackground(File... paths) {
+			heading = paths[0].getAbsolutePath();
 
-			if (file == null) {
-				((TextView) childview.findViewById(R.id.item_name)).setText(R.string.folder_select);
-			} else if (file == parent)
-				((TextView) childview.findViewById(R.id.item_name)).setText("..");
-			else
-				((TextView) childview.findViewById(R.id.item_name)).setText(file.getName());
+			ArrayList<File> list = new ArrayList<File>();
 
-			((ImageView) childview.findViewById(R.id.item_icon))
-					.setImageResource(file == null ? R.drawable.config
-							: file.isDirectory() ? R.drawable.open_folder
-									: R.drawable.disk_unknown);
+			File flist[] = paths[0].listFiles();
+			parent = paths[0].getParentFile();
 
-			childview.setTag(file);
+			list.add(null);
 
-			orig_bg = childview.getBackground();
+			if (parent != null) {
+				list.add(parent);
+			}
 
-			// vw.findViewById(R.id.childview).setBackgroundColor(0xFFFFFFFF);
+			if (flist != null) {
+				Arrays.sort(flist, new DirSort());
+				Collections.addAll(list, flist);
+			}
+			return list;
+		}
 
-			childview.findViewById(R.id.childview).setOnClickListener(
-					new OnClickListener() {
-						public void onClick(View view) {
-							if (file != null && file.isDirectory()) {
-								navigate(file);
-								ScrollView sv = (ScrollView) parentActivity
-										.findViewById(R.id.game_scroller);
-								sv.scrollTo(0, 0);
-								vib.vibrate(50);
-							} else if (view.getTag() == null) {
-								vib.vibrate(250);
+		@Override
+		protected void onPostExecute(List<File> list) {
+			if (list != null && !list.isEmpty()) {
+				createListHeader(heading, listView, false);
+				for (final File file : list) {
+					if (file != null && !file.isDirectory() && !file.getAbsolutePath().equals("/data"))
+						continue;
+					final View childview = getActivity().getLayoutInflater().inflate(
+							R.layout.browser_fragment_item, null, false);
 
-								if (games) {
-									game_directory = heading;
-									mPrefs.edit().putString(Config.pref_games, heading).commit();
-									mCallback.onFolderSelected(Uri.fromFile(new File(game_directory)));
-								} else {
-									home_directory = heading.replace("/data", "");
-									mPrefs.edit().putString(Config.pref_home, home_directory).commit();
-									if (!DataDirectoryBIOS()) {
-										MainActivity.showToastMessage(getActivity(), 
-												getActivity().getString(R.string.config_data, home_directory),
-												R.drawable.ic_notification, Toast.LENGTH_LONG);
+					if (file == null) {
+						((TextView) childview.findViewById(R.id.item_name)).setText(R.string.folder_select);
+					} else if (file == parent)
+						((TextView) childview.findViewById(R.id.item_name)).setText("..");
+					else
+						((TextView) childview.findViewById(R.id.item_name)).setText(file.getName());
+
+					((ImageView) childview.findViewById(R.id.item_icon)).setImageResource(file == null
+							? R.drawable.ic_settings: file.isDirectory()
+							? R.drawable.ic_folder_black_24dp : R.drawable.disk_unknown);;
+
+					childview.setTag(file);
+
+					orig_bg = childview.getBackground();
+
+					// vw.findViewById(R.id.childview).setBackgroundColor(0xFFFFFFFF);
+
+					childview.findViewById(R.id.childview).setOnClickListener(
+							new OnClickListener() {
+								public void onClick(View view) {
+									if (file != null && file.isDirectory()) {
+										(new navigate()).executeOnExecutor(
+												AsyncTask.THREAD_POOL_EXECUTOR, file);
+										ScrollView sv = (ScrollView) getActivity()
+												.findViewById(R.id.game_scroller);
+										sv.scrollTo(0, 0);
+										vib.vibrate(50);
+									} else if (view.getTag() == null) {
+										vib.vibrate(250);
+
+										if (games) {
+											game_directory = heading;
+											mPrefs.edit().putString(Config.pref_games, heading).apply();
+											mCallback.onFolderSelected(Uri.fromFile(new File(game_directory)));
+										} else {
+											home_directory = heading.replace("/data", "");
+											mPrefs.edit().putString(Config.pref_home, home_directory).apply();
+											if (!DataDirectoryBIOS()) {
+												showToastMessage(getActivity().getString(R.string.config_data, home_directory),
+														Snackbar.LENGTH_LONG
+												);
+											}
+											mCallback.onFolderSelected(Uri.fromFile(new File(home_directory)));
+											JNIdc.config(home_directory);
+										}
+
 									}
-                                    mCallback.onFolderSelected(Uri.fromFile(new File(home_directory)));
-									JNIdc.config(home_directory);
 								}
-								
-							}
-						}
-					});
+							});
 
-			childview.findViewById(R.id.childview).setOnTouchListener(
-					new OnTouchListener() {
-						@SuppressWarnings("deprecation")
-						public boolean onTouch(View view, MotionEvent event) {
-							if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-								view.setBackgroundColor(0xFF4F3FFF);
-							} else if (event.getActionMasked() == MotionEvent.ACTION_CANCEL
-									|| event.getActionMasked() == MotionEvent.ACTION_UP) {
-								view.setBackgroundDrawable(orig_bg);
-							}
+					childview.findViewById(R.id.childview).setOnTouchListener(
+							new OnTouchListener() {
+								@SuppressWarnings("deprecation")
+								public boolean onTouch(View view, MotionEvent event) {
+									if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+										view.setBackgroundColor(0xFF4F3FFF);
+									} else if (event.getActionMasked() == MotionEvent.ACTION_CANCEL
+											|| event.getActionMasked() == MotionEvent.ACTION_UP) {
+										view.setBackgroundDrawable(orig_bg);
+									}
 
-							return false;
+									return false;
 
-						}
-					});
-			v.addView(childview);
+								}
+							});
+					listView.addView(childview);
+				}
+				listView.invalidate();
+			}
 		}
-		v.invalidate();
 	}
 	
 	private boolean DataDirectoryBIOS() {
@@ -525,8 +554,10 @@ public class FileBrowser extends Fragment {
 			data_directory.mkdirs();
 			File bios = new File(home_directory, "dc_boot.bin");
 			boolean success = bios.renameTo(new File(home_directory, "data/dc_boot.bin"));
-			File flash = new File(home_directory, "dc_flash.bin");
-			success = flash.renameTo(new File(home_directory, "data/dc_flash.bin"));
+			if (success) {
+				File flash = new File(home_directory, "dc_flash.bin");
+				success = flash.renameTo(new File(home_directory, "data/dc_flash.bin"));
+			}
 			return success;
 		} else {
 			File bios = new File(home_directory, "data/dc_boot.bin");
@@ -537,5 +568,29 @@ public class FileBrowser extends Fragment {
 				return false;
 			}
 		}
+	}
+
+	private void showToastMessage(String message, int duration) {
+		ConstraintLayout layout = (ConstraintLayout) getActivity().findViewById(R.id.mainui_layout);
+		Snackbar snackbar = Snackbar.make(layout, message, duration);
+		View snackbarLayout = snackbar.getView();
+		snackbarLayout.setMinimumWidth(ConstraintLayout.LayoutParams.MATCH_PARENT);
+		TextView textView = (TextView) snackbarLayout.findViewById(
+				android.support.design.R.id.snackbar_text);
+		textView.setGravity(Gravity.CENTER_VERTICAL);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+			textView.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
+		Drawable drawable;
+		if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+			drawable = getResources().getDrawable(
+					R.drawable.ic_subdirectory_arrow_right, getActivity().getTheme());
+		} else {
+			drawable = VectorDrawableCompat.create(getResources(),
+					R.drawable.ic_subdirectory_arrow_right, getActivity().getTheme());
+		}
+		textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
+		textView.setCompoundDrawablePadding(getResources()
+				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
+		snackbar.show();
 	}
 }

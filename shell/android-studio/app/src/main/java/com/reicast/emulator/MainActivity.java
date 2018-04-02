@@ -1,10 +1,6 @@
 package com.reicast.emulator;
 
-import java.io.File;
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.List;
-
-import android.annotation.SuppressLint;
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -13,29 +9,30 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.util.DisplayMetrics;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
+import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.View.OnSystemUiVisibilityChangeListener;
-import android.view.View.OnTouchListener;
 import android.view.WindowManager;
-import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.config.InputFragment;
@@ -44,17 +41,16 @@ import com.reicast.emulator.debug.GenerateLogs;
 import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.periph.Gamepad;
 
-public class MainActivity extends FragmentActivity implements
-		FileBrowser.OnItemSelectedListener, OptionsFragment.OnClickListener {
-	
-	private DrawerLayout mDrawerLayout;
-	private ActionBarDrawerToggle mDrawerToggle;
+import java.io.File;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity implements
+		FileBrowser.OnItemSelectedListener, OptionsFragment.OnClickListener,
+		NavigationView.OnNavigationItemSelectedListener {
+	private static final int PERMISSION_REQUEST = 1001;
 
 	private SharedPreferences mPrefs;
-	private static File sdcard = Environment.getExternalStorageDirectory();
-	public static String home_directory = sdcard.getAbsolutePath();
-
-	private TextView menuHeading;
 	private boolean hasAndroidMarket = false;
 	
 	private UncaughtExceptionHandler mUEHandler;
@@ -64,7 +60,7 @@ public class MainActivity extends FragmentActivity implements
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.mainuilayout_fragment);
+		setContentView(R.layout.activity_main);
 		
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			getWindow().getDecorView().setOnSystemUiVisibilityChangeListener (new OnSystemUiVisibilityChangeListener() {
@@ -90,7 +86,7 @@ public class MainActivity extends FragmentActivity implements
 		String prior_error = mPrefs.getString("prior_error", null);
 		if (prior_error != null) {
 			displayLogOutput(prior_error);
-			mPrefs.edit().remove("prior_error").commit();
+			mPrefs.edit().remove("prior_error").apply();
 		} else {
 			mUEHandler = new Thread.UncaughtExceptionHandler() {
 				public void uncaughtException(Thread t, Throwable error) {
@@ -99,7 +95,7 @@ public class MainActivity extends FragmentActivity implements
 						for (StackTraceElement trace : error.getStackTrace()) {
 							output.append(trace.toString() + "\n");
 						}
-						mPrefs.edit().putString("prior_error", output.toString()).commit();
+						mPrefs.edit().putString("prior_error", output.toString()).apply();
 						error.printStackTrace();
 						android.os.Process.killProcess(android.os.Process.myPid());
 						System.exit(0);
@@ -109,18 +105,24 @@ public class MainActivity extends FragmentActivity implements
 			Thread.setDefaultUncaughtExceptionHandler(mUEHandler);
 		}
 
-		home_directory = mPrefs.getString("home_directory", home_directory);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			ActivityCompat.requestPermissions(MainActivity.this,
+					new String[] {
+							Manifest.permission.READ_EXTERNAL_STORAGE,
+							Manifest.permission.WRITE_EXTERNAL_STORAGE
+					},
+					PERMISSION_REQUEST);
+		}
 
 		Intent market = new Intent(Intent.ACTION_VIEW, Uri.parse("market://search?q=dummy"));
 		if (isCallable(market)) {
 			hasAndroidMarket = true;
 		}
-		
+
 		if (!getFilesDir().exists()) {
 			getFilesDir().mkdir();
 		}
-		JNIdc.config(home_directory);
-		
+
 		// When viewing a resource, pass its URI to the native code for opening
 		Intent intent = getIntent();
 		if (intent.getAction() != null) {
@@ -136,212 +138,51 @@ public class MainActivity extends FragmentActivity implements
 		// Check that the activity is using the layout version with
 		// the fragment_container FrameLayout
 		if (findViewById(R.id.fragment_container) != null) {
-
-			// However, if we're being restored from a previous state,
-			// then we don't need to do anything and should return or else
-			// we could end up with overlapping fragments.
-			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB_MR1) {
-				if (savedInstanceState != null) {
-					return;
-				}
-			}
-
-			// Create a new Fragment to be placed in the activity layout
-			FileBrowser firstFragment = new FileBrowser();
-			Bundle args = new Bundle();
-			args.putBoolean("ImgBrowse", true);
-			args.putString("browse_entry", null);
-			// specify a path for selecting folder options
-			args.putBoolean("games_entry", false);
-			// specify if the desired path is for games or data
-			firstFragment.setArguments(args);
-			// In case this activity was started with special instructions from
-			// an
-			// Intent, pass the Intent's extras to the fragment as arguments
-			// firstFragment.setArguments(getIntent().getExtras());
-
-			// Add the fragment to the 'fragment_container' FrameLayout
-			getSupportFragmentManager()
-			.beginTransaction()
-			.replace(R.id.fragment_container, firstFragment,
-					"MAIN_BROWSER").commit();
+            onMainBrowseSelected(true, null, false, null);
 		}
 
-		menuHeading = (TextView) findViewById(R.id.menu_heading);
-		
-		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-		mDrawerToggle = new ActionBarDrawerToggle(
-			MainActivity.this,      /* host Activity */
-			mDrawerLayout,			/* DrawerLayout object */
-			R.drawable.ic_drawer,	/* nav drawer icon to replace 'Up' caret */
-			R.string.drawer_open,	/* "open drawer" description */
-			R.string.drawer_shut	/* "close drawer" description */
-		) {
-			/** Called when a drawer has settled in a completely closed state. */
-			public void onDrawerClosed(View view) {
-				super.onDrawerClosed(view);
-			}
-			
-			/** Called when a drawer has settled in a completely open state. */
+		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+		setSupportActionBar(toolbar);
+
+		DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+		android.support.v7.app.ActionBarDrawerToggle toggle = new android.support.v7.app.ActionBarDrawerToggle(
+				this, drawer, toolbar, R.string.drawer_open, R.string.drawer_shut) {
+			@Override
 			public void onDrawerOpened(View drawerView) {
-				super.onDrawerOpened(drawerView);
-				findViewById(R.id.browser_menu).setOnClickListener(new OnClickListener() {
-					public void onClick(View view) {
-						FileBrowser browseFrag = (FileBrowser) getSupportFragmentManager()
-								.findFragmentByTag("MAIN_BROWSER");
-						if (browseFrag != null) {
-							if (browseFrag.isVisible()) {
-								return;
-							}
-						}
-						browseFrag = new FileBrowser();
-						Bundle args = new Bundle();
-						args.putBoolean("ImgBrowse", true);
-						args.putString("browse_entry", null);
-						// specify a path for selecting folder options
-						args.putBoolean("games_entry", false);
-						// specify if the desired path is for games or data
-						browseFrag.setArguments(args);
-						getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.fragment_container, browseFrag,
-								"MAIN_BROWSER").addToBackStack(null)
-								.commit();
-						setTitle(R.string.browser);
-						toggleDrawer(true);
-					}
 
-				});
-
-				findViewById(R.id.settings_menu).setOnClickListener(
-						new OnClickListener() {
-							public void onClick(View view) {
-								OptionsFragment optionsFrag = (OptionsFragment) getSupportFragmentManager()
-										.findFragmentByTag("OPTIONS_FRAG");
-								if (optionsFrag != null) {
-									if (optionsFrag.isVisible()) {
-										return;
-									}
-								}
-								optionsFrag = new OptionsFragment();
-								getSupportFragmentManager()
-								.beginTransaction()
-								.replace(R.id.fragment_container,
-										optionsFrag, "OPTIONS_FRAG")
-										.addToBackStack(null).commit();
-								setTitle(R.string.settings);
-								toggleDrawer(true);
-							}
-
-						});
-
-				findViewById(R.id.input_menu).setOnClickListener(new OnClickListener() {
-					public void onClick(View view) {
-						InputFragment inputFrag = (InputFragment) getSupportFragmentManager()
-								.findFragmentByTag("INPUT_FRAG");
-						if (inputFrag != null) {
-							if (inputFrag.isVisible()) {
-								return;
-							}
-						}
-						inputFrag = new InputFragment();
-						getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.fragment_container, inputFrag,
-								"INPUT_FRAG").addToBackStack(null).commit();
-						setTitle(R.string.input);
-						toggleDrawer(true);
-					}
-
-				});
-
-				findViewById(R.id.about_menu).setOnClickListener(new OnClickListener() {
-					public void onClick(View view) {
-						AboutFragment aboutFrag = (AboutFragment) getSupportFragmentManager()
-								.findFragmentByTag("ABOUT_FRAG");
-						if (aboutFrag != null) {
-							if (aboutFrag.isVisible()) {
-								return;
-							}
-						}
-						aboutFrag = new AboutFragment();
-						getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.fragment_container, aboutFrag,
-								"ABOUT_FRAG").addToBackStack(null).commit();
-						setTitle(R.string.about);
-						toggleDrawer(true);
-					}
-
-				});
-				
-				findViewById(R.id.cloud_menu).setOnClickListener(new OnClickListener() {
-					public void onClick(View view) {
-						CloudFragment cloudFrag = (CloudFragment) getSupportFragmentManager()
-								.findFragmentByTag("CLOUD_FRAG");
-						if (cloudFrag != null) {
-							if (cloudFrag.isVisible()) {
-								return;
-							}
-						}
-						cloudFrag = new CloudFragment();
-						getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.fragment_container,
-						cloudFrag, "CLOUD_FRAG")
-							.addToBackStack(null).commit();
-						setTitle(R.string.cloud);
-						toggleDrawer(true);
-					}
-
-				});
-
-				View rateMe = findViewById(R.id.rateme_menu);
-				if (!hasAndroidMarket) {
-					rateMe.setVisibility(View.GONE);
-				} else {
-					rateMe.setOnTouchListener(new OnTouchListener() {
-						public boolean onTouch(View v, MotionEvent event) {
-							if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-								// vib.vibrate(50);
-								startActivity(new Intent(Intent.ACTION_VIEW, Uri
-										.parse("market://details?id=" + getPackageName())));
-								//setTitle(R.string.rateme);
-								toggleDrawer(true);
-								return true;
-							} else
-								return false;
-						}
-					});
-				}
-				
-				findViewById(R.id.message_menu).setOnClickListener(new OnClickListener() {
-						public void onClick(View view) {
-							generateErrorLog();
-						}
-					});
-				}
-		};
-		
-		// Set the drawer toggle as the DrawerListener
-		mDrawerLayout.setDrawerListener(mDrawerToggle);
-
-		findViewById(R.id.header_list).setOnTouchListener(new OnTouchListener() {
-			public boolean onTouch(View v, MotionEvent event) {
-				if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-					toggleDrawer(false);
-					return true;
-				} else
-					return false;
 			}
-		});
-	}
-	
-	public void toggleDrawer(boolean close) {
-		if (mDrawerLayout.isDrawerOpen(Gravity.LEFT)) {
-			mDrawerLayout.closeDrawer(Gravity.LEFT);
-		} else if (!close) {
-			mDrawerLayout.openDrawer(Gravity.LEFT);
+			@Override
+			public void onDrawerClosed(View drawerView) {
+
+			}
+		};
+		drawer.setDrawerListener(toggle);
+		toggle.syncState();
+
+		NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        if (!hasAndroidMarket) {
+			navigationView.getMenu().findItem(R.id.rateme_menu).setEnabled(false);
+			navigationView.getMenu().findItem(R.id.rateme_menu).setVisible(false);
+        }
+		navigationView.setNavigationItemSelectedListener(this);
+
+		final SearchView searchView = (SearchView) findViewById(R.id.searchView);
+		if (searchView != null) {
+			searchView.setQueryHint(getString(R.string.search_hint));
+			searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+				@Override
+				public boolean onQueryTextSubmit(String query) {
+                    onMainBrowseSelected(true, mPrefs.getString(Config.pref_games,
+                            Environment.getExternalStorageDirectory().getAbsolutePath()),
+                            true, query);
+					searchView.onActionViewCollapsed();
+					return false;
+				}
+				@Override
+				public boolean onQueryTextChange(String s) {
+					return false;
+				}
+			});
 		}
 	}
 
@@ -352,10 +193,8 @@ public class MainActivity extends FragmentActivity implements
 	/**
 	 * Display a dialog to notify the user of prior crash
 	 * 
-	 * @param string
+	 * @param error
 	 *            A generalized summary of the crash cause
-	 * @param bundle
-	 *            The savedInstanceState passed from onCreate
 	 */
 	private void displayLogOutput(final String error) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -377,42 +216,41 @@ public class MainActivity extends FragmentActivity implements
 		builder.show();
 	}
 
-    public static boolean isBiosExisting(Context context) {
-        SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-        home_directory = mPrefs.getString("home_directory", home_directory);
-        File bios = new File(home_directory, "data/dc_boot.bin");
-        return bios.exists();
+    public static boolean isBiosExisting(String home_directory) {
+        return new File (home_directory, "data/dc_boot.bin").exists();
     }
 
-    public static boolean isFlashExisting(Context context) {
-        SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-        home_directory = mPrefs.getString("home_directory", home_directory);
-        File flash = new File(home_directory, "data/dc_flash.bin");
-        return flash.exists();
+    public static boolean isFlashExisting(String home_directory) {
+		return new File (home_directory, "data/dc_flash.bin").exists();
     }
 
 	public void onGameSelected(Uri uri) {
 		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
-			MainActivity.showToastMessage(MainActivity.this, getString(R.string.unsupported), R.drawable.ic_notification, Toast.LENGTH_SHORT);
+			showToastMessage(getString(R.string.unsupported), Snackbar.LENGTH_SHORT);
 		}
-		String msg = null;
-		if (!isBiosExisting(MainActivity.this))
-			msg = getString(R.string.missing_bios, home_directory);
-		else if (!isFlashExisting(MainActivity.this))
-			msg = getString(R.string.missing_flash, home_directory);
+		String home_directory = mPrefs.getString(Config.pref_home,
+				Environment.getExternalStorageDirectory().getAbsolutePath());
 
-		if (msg != null) {
-			launchBIOSdetection();
-		} else {
-			Config.nativeact = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getBoolean(Config.pref_nativeact, Config.nativeact);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && Config.nativeact) {
-				startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
-						GL2JNINative.class));
-			} else {
-				startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
-						GL2JNIActivity.class));
-			}
-		}
+        if (!isBiosExisting(home_directory)) {
+            launchBIOSdetection();
+            return;
+        }
+		if (!isFlashExisting(home_directory)) {
+            launchBIOSdetection();
+            return;
+        }
+
+		JNIdc.config(home_directory);
+
+        Emulator.nativeact = PreferenceManager.getDefaultSharedPreferences(
+                getApplicationContext()).getBoolean(Emulator.pref_nativeact, Emulator.nativeact);
+        if (Emulator.nativeact) {
+            startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
+                    GL2JNINative.class));
+        } else {
+            startActivity(new Intent("com.reicast.EMULATOR", uri, getApplicationContext(),
+                    GL2JNIActivity.class));
+        }
 	}
 	
 	private void launchBIOSdetection() {
@@ -421,39 +259,16 @@ public class MainActivity extends FragmentActivity implements
 		builder.setPositiveButton(R.string.browse,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						FileBrowser firstFragment = new FileBrowser();
-						Bundle args = new Bundle();
-						// args.putBoolean("ImgBrowse", false);
-						// specify ImgBrowse option. true = images,
-						// false = folders only
-						args.putString("browse_entry", sdcard.toString());
-						// specify a path for selecting folder
-						// options
-						args.putBoolean("games_entry", false);
-						// selecting a BIOS folder, so this is not
-						// games
-
-						firstFragment.setArguments(args);
-						// In case this activity was started with
-						// special instructions from
-						// an Intent, pass the Intent's extras to
-						// the fragment as arguments
-						// firstFragment.setArguments(getIntent().getExtras());
-
-						// Add the fragment to the
-						// 'fragment_container' FrameLayout
-						getSupportFragmentManager()
-						.beginTransaction()
-						.replace(R.id.fragment_container,
-								firstFragment,
-								"MAIN_BROWSER")
-								.addToBackStack(null).commit();
+                        onMainBrowseSelected(false,
+                                Environment.getExternalStorageDirectory().getAbsolutePath(),
+                                false, null);
 					}
 				});
 		builder.setNegativeButton(R.string.gdrive,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						Toast.makeText(MainActivity.this, R.string.require_bios, Toast.LENGTH_SHORT).show();
+						showToastMessage(getString(R.string.require_bios),
+								Snackbar.LENGTH_SHORT);
 					}
 				});
 		builder.create();
@@ -471,21 +286,35 @@ public class MainActivity extends FragmentActivity implements
 		}
 
 		OptionsFragment optsFrag = new OptionsFragment();
-		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.fragment_container, optsFrag, "OPTIONS_FRAG")
-				.commit();
+		getSupportFragmentManager().beginTransaction().replace(
+				R.id.fragment_container, optsFrag, "OPTIONS_FRAG").commit();
+		setTitle(R.string.settings);
 		return;
 	}
 
-	public void onMainBrowseSelected(String path_entry, boolean games) {
+    /**
+     * Launch the browser activity with specified parameters
+     *
+     * @param browse
+     *            Conditional for image files or folders
+     * @param path
+     *            The root path of the browser fragment
+     * @param games
+     *            Conditional for viewing games or BIOS
+     * @param query
+     *            Search parameters to limit list items
+     */
+	public void onMainBrowseSelected(boolean browse, String path, boolean games, String query) {
 		FileBrowser firstFragment = new FileBrowser();
 		Bundle args = new Bundle();
-		args.putBoolean("ImgBrowse", false);
+//		args.putBoolean("ImgBrowse", false);
+        args.putBoolean("ImgBrowse", browse);
 		// specify ImgBrowse option. true = images, false = folders only
-		args.putString("browse_entry", path_entry);
+		args.putString("browse_entry", path);
 		// specify a path for selecting folder options
 		args.putBoolean("games_entry", games);
 		// specify if the desired path is for games or data
+        args.putString("search_params", query);
 
 		firstFragment.setArguments(args);
 		// In case this activity was started with special instructions from
@@ -497,18 +326,12 @@ public class MainActivity extends FragmentActivity implements
 				.beginTransaction()
 				.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER")
 				.addToBackStack(null).commit();
-	}
-
-	@SuppressLint("NewApi")
-	@Override
-	public void setTitle(CharSequence title) {
-		menuHeading.setText(title);
+        setTitle(R.string.browser);
 	}
 
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
-		mDrawerToggle.onConfigurationChanged(newConfig);
 	}
 
 	@Override
@@ -525,33 +348,21 @@ public class MainActivity extends FragmentActivity implements
 				if (readyToQuit) {
 					MainActivity.this.finish();
 				} else {
-					launchMainFragment(fragment);
+					launchMainFragment();
 				}
 				return true;
 			} else {
-				launchMainFragment(fragment);
+				launchMainFragment();
 				return true;
 			}
 
-		}
-		if (keyCode == KeyEvent.KEYCODE_MENU) {
-			toggleDrawer(false);
 		}
 
 		return super.onKeyDown(keyCode, event);
 	}
 	
-	private void launchMainFragment(Fragment fragment) {
-		fragment = new FileBrowser();
-		Bundle args = new Bundle();
-		args.putBoolean("ImgBrowse", true);
-		args.putString("browse_entry", null);
-		args.putBoolean("games_entry", false);
-		fragment.setArguments(args);
-		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.fragment_container, fragment, "MAIN_BROWSER")
-				.addToBackStack(null).commit();
-		setTitle(R.string.browser);
+	private void launchMainFragment() {
+        onMainBrowseSelected(true, null, false, null);
 	}
 
 	@Override
@@ -601,9 +412,136 @@ public class MainActivity extends FragmentActivity implements
 	@Override
 	public void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
-		mDrawerToggle.syncState();
 	}
-	
+
+	@SuppressWarnings("StatementWithEmptyBody")
+	@Override
+	public boolean onNavigationItemSelected(MenuItem item) {
+		// Handle navigation view item clicks here.
+		DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+
+		switch (item.getItemId()) {
+
+			case R.id.browser_menu:
+				FileBrowser browseFrag = (FileBrowser) getSupportFragmentManager()
+						.findFragmentByTag("MAIN_BROWSER");
+				if (browseFrag != null) {
+					if (browseFrag.isVisible()) {
+						drawer.closeDrawer(GravityCompat.START);
+						return true;
+					}
+				}
+				browseFrag = new FileBrowser();
+				Bundle args = new Bundle();
+				args.putBoolean("ImgBrowse", true);
+				args.putString("browse_entry", null);
+				// specify a path for selecting folder options
+				args.putBoolean("games_entry", false);
+				// specify if the desired path is for games or data
+				browseFrag.setArguments(args);
+				getSupportFragmentManager()
+						.beginTransaction()
+						.replace(R.id.fragment_container, browseFrag,
+								"MAIN_BROWSER").addToBackStack(null)
+						.commit();
+				setTitle(R.string.browser);
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
+
+			case R.id.settings_menu:
+				OptionsFragment optionsFrag = (OptionsFragment) getSupportFragmentManager()
+						.findFragmentByTag("OPTIONS_FRAG");
+				if (optionsFrag != null) {
+					if (optionsFrag.isVisible()) {
+						drawer.closeDrawer(GravityCompat.START);
+						return true;
+					}
+				}
+				optionsFrag = new OptionsFragment();
+				getSupportFragmentManager()
+						.beginTransaction()
+						.replace(R.id.fragment_container,
+								optionsFrag, "OPTIONS_FRAG")
+						.addToBackStack(null).commit();
+				setTitle(R.string.settings);
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
+
+			case R.id.input_menu:
+				InputFragment inputFrag = (InputFragment) getSupportFragmentManager()
+						.findFragmentByTag("INPUT_FRAG");
+				if (inputFrag != null) {
+					if (inputFrag.isVisible()) {
+						drawer.closeDrawer(GravityCompat.START);
+						return true;
+					}
+				}
+				inputFrag = new InputFragment();
+				getSupportFragmentManager()
+						.beginTransaction()
+						.replace(R.id.fragment_container, inputFrag,
+								"INPUT_FRAG").addToBackStack(null).commit();
+				setTitle(R.string.input);
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
+
+			case R.id.about_menu:
+				AboutFragment aboutFrag = (AboutFragment) getSupportFragmentManager()
+						.findFragmentByTag("ABOUT_FRAG");
+				if (aboutFrag != null) {
+					if (aboutFrag.isVisible()) {
+						drawer.closeDrawer(GravityCompat.START);
+						return true;
+					}
+				}
+				aboutFrag = new AboutFragment();
+				getSupportFragmentManager()
+						.beginTransaction()
+						.replace(R.id.fragment_container, aboutFrag,
+								"ABOUT_FRAG").addToBackStack(null).commit();
+				setTitle(R.string.about);
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
+
+			case R.id.cloud_menu:
+				CloudFragment cloudFrag = (CloudFragment) getSupportFragmentManager()
+						.findFragmentByTag("CLOUD_FRAG");
+				if (cloudFrag != null) {
+					if (cloudFrag.isVisible()) {
+						drawer.closeDrawer(GravityCompat.START);
+						return true;
+					}
+				}
+				cloudFrag = new CloudFragment();
+				getSupportFragmentManager()
+						.beginTransaction()
+						.replace(R.id.fragment_container,
+								cloudFrag, "CLOUD_FRAG")
+						.addToBackStack(null).commit();
+				setTitle(R.string.cloud);
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
+
+			case R.id.rateme_menu:
+				// vib.vibrate(50);
+				startActivity(new Intent(Intent.ACTION_VIEW, Uri
+						.parse("market://details?id=" + getPackageName())));
+				//setTitle(R.string.rateme);
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
+
+			case R.id.message_menu:
+				generateErrorLog();
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
+
+			default:
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
+
+		}
+	}
+
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
@@ -622,29 +560,20 @@ public class MainActivity extends FragmentActivity implements
 				intent, PackageManager.MATCH_DEFAULT_ONLY);
 		return list.size() > 0;
 	}
-	
-	public static void showToastMessage(Context context, String message,
-			int resource, int duration) {
-		LayoutInflater inflater = (LayoutInflater) context
-				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View layout = inflater.inflate(R.layout.toast_layout, null);
 
-		ImageView image = (ImageView) layout.findViewById(R.id.image);
-		image.setImageResource(resource);
-
-		TextView text = (TextView) layout.findViewById(R.id.text);
-		text.setText(message);
-
-		DisplayMetrics metrics = new DisplayMetrics();
-		WindowManager winman = (WindowManager) context
-				.getSystemService(Context.WINDOW_SERVICE);
-		winman.getDefaultDisplay().getMetrics(metrics);
-
-		Toast toast = new Toast(context);
-		toast.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0,
-						(int) (72 * metrics.density + 0.5f));
-		toast.setDuration(duration);
-		toast.setView(layout);
-		toast.show();
+	private void showToastMessage(String message, int duration) {
+		ConstraintLayout layout = (ConstraintLayout) findViewById(R.id.mainui_layout);
+		Snackbar snackbar = Snackbar.make(layout, message, duration);
+		View snackbarLayout = snackbar.getView();
+		snackbarLayout.setMinimumWidth(ConstraintLayout.LayoutParams.MATCH_PARENT);
+		TextView textView = (TextView) snackbarLayout.findViewById(
+				android.support.design.R.id.snackbar_text);
+		textView.setGravity(Gravity.CENTER_VERTICAL);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+			textView.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
+		textView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_notification, 0, 0, 0);
+		textView.setCompoundDrawablePadding(getResources()
+				.getDimensionPixelOffset(R.dimen.snackbar_icon_padding));
+		snackbar.show();
 	}
 }

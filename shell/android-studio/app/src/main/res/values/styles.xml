@@ -1,8 +1,30 @@
 <resources>
 
-    <style name="AppTheme" parent="android:Theme.NoTitleBar.Fullscreen">
-        <item name="android:textAppearance">@style/TextAppearance</item>
+    <!-- Base application theme. -->
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorSecondary">@color/body_text_secondary</item>
+        <item name="android:textColorTertiary">@color/white</item>
+        <item name="android:windowBackground">@color/windowBackground</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
     </style>
+
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Dark" />
 
     <style name="TextAppearance" parent="@android:style/TextAppearance.Small">
         <item name="android:textColor">?android:attr/textColorPrimary</item>

@@ -1,8 +1,5 @@
 package com.reicast.emulator.debug;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -31,6 +28,9 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.reicast.emulator.R;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class GitAdapter extends BaseAdapter {
 
@@ -134,25 +134,17 @@ public class GitAdapter extends BaseAdapter {
 		builder.create().show();
 	}
 
-	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 	@SuppressLint("SetJavaScriptEnabled")
 	@SuppressWarnings("deprecation")
 	private WebView configureWebview(String url, Context context,
 			WebView mWebView) {
 		mWebView.getSettings().setSupportZoom(true);
 		mWebView.getSettings().setBuiltInZoomControls(true);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			mWebView.getSettings().setDisplayZoomControls(false);
-		}
+		mWebView.getSettings().setDisplayZoomControls(false);
 		mWebView.setInitialScale(1);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
-			mWebView.getSettings().setUseWideViewPort(true);
-		}
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR_MR1) {
-			mWebView.getSettings().setLoadWithOverviewMode(true);
-		}
+		mWebView.getSettings().setUseWideViewPort(true);
+		mWebView.getSettings().setLoadWithOverviewMode(true);
 		mWebView.getSettings().setJavaScriptEnabled(true);
-		mWebView.getSettings().setPluginState(PluginState.ON);
 		mWebView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
 		mWebView.clearHistory();
 		mWebView.clearFormData();

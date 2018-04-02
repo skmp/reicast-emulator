@@ -1,5 +1,17 @@
 package com.android.util;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.media.MediaScannerConnection;
+import android.media.MediaScannerConnection.OnScanCompletedListener;
+import android.net.Uri;
+import android.os.Environment;
+import android.preference.PreferenceManager;
+
+import com.reicast.emulator.MainActivity;
+import com.reicast.emulator.config.Config;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -17,14 +29,6 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import javax.microedition.khronos.opengles.GL10;
-
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.media.MediaScannerConnection;
-import android.media.MediaScannerConnection.OnScanCompletedListener;
-import android.net.Uri;
-
-import com.reicast.emulator.MainActivity;
 
 public class FileUtils {
 
@@ -83,7 +87,9 @@ public class FileUtils {
 	
 	public static void saveScreenshot(final Context c, int w, int h, GL10 gl){
 		try {
-			File dir = new File(MainActivity.home_directory);
+			SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(c);
+			File dir = new File(mPrefs.getString(Config.pref_home,
+					Environment.getExternalStorageDirectory().getAbsolutePath()));
 			SimpleDateFormat s = new SimpleDateFormat("yyyyMMddHHmmss");
 			String timestamp = s.format(new Date());
 			File f = new File(dir.getAbsolutePath(), timestamp+".jpeg");

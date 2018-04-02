@@ -1,10 +1,5 @@
 package com.reicast.emulator;
 
-import java.util.Arrays;
-import java.util.HashMap;
-
-import tv.ouya.console.api.OuyaController;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -21,7 +16,6 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 
 import com.reicast.emulator.config.Config;
@@ -35,7 +29,11 @@ import com.reicast.emulator.periph.Gamepad;
 import com.reicast.emulator.periph.MOGAInput;
 import com.reicast.emulator.periph.SipEmulator;
 
-@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
+import java.util.Arrays;
+import java.util.HashMap;
+
+import tv.ouya.console.api.OuyaController;
+
 public class GL2JNIActivity extends Activity {
 	public GL2JNIView mView;
 	OnScreenMenu menu;
@@ -44,8 +42,7 @@ public class GL2JNIActivity extends Activity {
 	FpsPopup fpsPop;
 	MOGAInput moga = new MOGAInput();
 	private SharedPreferences prefs;
-	
-	private Config config;
+
 	private Gamepad pad = new Gamepad();
 
 	public static byte[] syms;
@@ -59,11 +56,10 @@ public class GL2JNIActivity extends Activity {
 					WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
 					WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 		}
-		config = new Config(GL2JNIActivity.this);
-		config.getConfigurationPrefs();
+		Emulator app = (Emulator)getApplicationContext();
+		app.getConfigurationPrefs(prefs);
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
 
-		pad.isXperiaPlay = pad.IsXperiaPlay();
 		pad.isOuyaOrTV = pad.IsOuyaOrTV(GL2JNIActivity.this);
 //		pad.isNvidiaShield = pad.IsNvidiaShield();
 
@@ -171,9 +167,6 @@ public class GL2JNIActivity extends Activity {
 						} else if (InputDevice.getDevice(joy).getName()
 								.contains(Gamepad.controllers_shield)) {
 							pad.map[playerNum] = pad.getConsoleController();
-						} else if (InputDevice.getDevice(joy).getName()
-								.contains(Gamepad.controllers_play)) {
-							pad.map[playerNum] = pad.getXPlayController();
 						} else if (!pad.isActiveMoga[playerNum]) { // Ouya controller
 							pad.map[playerNum] = pad.getOUYAController();
 						}
@@ -192,14 +185,14 @@ public class GL2JNIActivity extends Activity {
 			pad.fullCompatibilityMode(prefs);
 		}
 
-		config.loadConfigurationPrefs();
+		app.loadConfigurationPrefs();
 
 		// When viewing a resource, pass its URI to the native code for opening
 		if (getIntent().getAction().equals("com.reicast.EMULATOR"))
 			fileName = Uri.decode(getIntent().getData().toString());
 
 		// Create the actual GLES view
-		mView = new GL2JNIView(GL2JNIActivity.this, config, fileName, false,
+		mView = new GL2JNIView(GL2JNIActivity.this, fileName, false,
 				prefs.getInt(Config.pref_renderdepth, 24), 0, false);
 		setContentView(mView);
 
@@ -216,7 +209,7 @@ public class GL2JNIActivity extends Activity {
 		if(prefs.getBoolean(Config.pref_vmu, false)){
 			//kind of a hack - if the user last had the vmu on screen
 			//inverse it and then "toggle"
-			prefs.edit().putBoolean(Config.pref_vmu, false).commit();
+			prefs.edit().putBoolean(Config.pref_vmu, false).apply();
 			//can only display a popup after onCreate
 			mView.post(new Runnable() {
 				public void run() {
@@ -458,7 +451,7 @@ public class GL2JNIActivity extends Activity {
 			//add back to popup menu
 			popUp.showVmu();
 		}
-		prefs.edit().putBoolean(Config.pref_vmu, showFloating).commit();
+		prefs.edit().putBoolean(Config.pref_vmu, showFloating).apply();
 	}
 	
 	public void displayConfig(PopupWindow popUpConfig) {
@@ -534,11 +527,7 @@ public class GL2JNIActivity extends Activity {
 			}
 		}
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
-			if (pad.isXperiaPlay) {
-				return true;
-			} else {
-				return showMenu();
-			}
+			return showMenu();
 		}
 		return super.onKeyDown(keyCode, event);
 	}

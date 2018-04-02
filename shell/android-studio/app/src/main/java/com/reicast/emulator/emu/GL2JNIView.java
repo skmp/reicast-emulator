@@ -1,13 +1,6 @@
 package com.reicast.emulator.emu;
 
 
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
-
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
@@ -20,6 +13,7 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
@@ -34,13 +28,19 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.android.util.FileUtils;
+import com.reicast.emulator.Emulator;
 import com.reicast.emulator.GL2JNIActivity;
 import com.reicast.emulator.GL2JNINative;
-import com.reicast.emulator.MainActivity;
-import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.periph.VJoy;
+
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
 
 
 /**
@@ -114,7 +114,7 @@ public class GL2JNIView extends GLSurfaceView
 	}
 
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-	public GL2JNIView(Context context, Config config, String newFileName,
+	public GL2JNIView(Context context, String newFileName,
 			boolean translucent, int depth, int stencil, boolean editVjoyMode) {
 		super(context);
 		this.context = context;
@@ -151,7 +151,10 @@ public class GL2JNIView extends GLSurfaceView
 
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-		ethd = new EmuThread(!Config.nosound);
+        JNIdc.config(prefs.getString(Config.pref_home,
+                Environment.getExternalStorageDirectory().getAbsolutePath()));
+
+		ethd = new EmuThread(!Emulator.nosound);
 
 		touchVibrationEnabled = prefs.getBoolean(Config.pref_touchvibe, true);
 		vibrationDuration = prefs.getInt(Config.pref_vibrationDuration, 20);
@@ -172,8 +175,6 @@ public class GL2JNIView extends GLSurfaceView
 			}
 		}
 
-//		config.loadConfigurationPrefs();
-
 		vjoy_d_custom = VJoy.readCustomVjoyValues(context);
 
 		scaleGestureDetector = new ScaleGestureDetector(context, new OscOnScaleGestureListener());
@@ -181,7 +182,7 @@ public class GL2JNIView extends GLSurfaceView
 		// This is the game we are going to run
 		fileName = newFileName;
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && Config.nativeact) {
+		if (Emulator.nativeact) {
 			if (GL2JNINative.syms != null)
 				JNIdc.data(1, GL2JNINative.syms);
 		} else {
@@ -687,7 +688,7 @@ public class GL2JNIView extends GLSurfaceView
 			handler.post(new Runnable() {
 				public void run() {
 					Log.d(context.getApplicationContext().getPackageName(), msg);
-					MainActivity.showToastMessage(context, msg, R.drawable.ic_notification, Toast.LENGTH_SHORT);
+					Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
 				}
 			});
 		}

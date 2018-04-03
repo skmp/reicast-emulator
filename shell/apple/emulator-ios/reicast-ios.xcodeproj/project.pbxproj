@@ -214,13 +214,14 @@
 		9C7A3B4318C806E00070BB5F /* profiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A8418C806E00070BB5F /* profiler.cpp */; };
 		9C7A3B4418C806E00070BB5F /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3A8618C806E00070BB5F /* README.md */; };
 		9C7A3B4818C806E00070BB5F /* gldraw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A8E18C806E00070BB5F /* gldraw.cpp */; };
-		9C7A3B4918C806E00070BB5F /* gles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A8F18C806E00070BB5F /* gles.cpp */; };
 		9C7A3B4A18C806E00070BB5F /* gltex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9118C806E00070BB5F /* gltex.cpp */; };
 		9C7A3B4C18C806E00070BB5F /* TexCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9518C806E00070BB5F /* TexCache.cpp */; };
 		9C7A3B4E18C806E00070BB5F /* stdclass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9918C806E00070BB5F /* stdclass.cpp */; };
 		9C7A3B5918C81A4F0070BB5F /* SWRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3B5818C81A4F0070BB5F /* SWRevealViewController.m */; };
 		9C7A3BC418C84EA10070BB5F /* MainStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BC318C84EA10070BB5F /* MainStoryboard.storyboard */; };
 		B3167F482074362E00A68303 /* rec_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652C81B6157FC00437F10 /* rec_arm.cpp */; };
+		B3167F4A20743BC600A68303 /* gles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A8F18C806E00070BB5F /* gles.cpp */; };
+		B3167F4C20743C4800A68303 /* libpthread.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = B3167F4B20743C4800A68303 /* libpthread.tbd */; };
 		B35D27DF2033EB7600F17D58 /* rec_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B35D27DE2033EB7600F17D58 /* rec_cpp.cpp */; };
 		EBDF37561BB96E1B001191B5 /* audiobackend_coreaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBDF37541BB96E1B001191B5 /* audiobackend_coreaudio.cpp */; };
 		EBDF375A1BB96ECD001191B5 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37591BB96ECD001191B5 /* AudioToolbox.framework */; };
@@ -601,6 +602,7 @@
 		9C7A3B5718C81A4F0070BB5F /* SWRevealViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SWRevealViewController.h; sourceTree = "<group>"; };
 		9C7A3B5818C81A4F0070BB5F /* SWRevealViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SWRevealViewController.m; sourceTree = "<group>"; };
 		9C7A3BC318C84EA10070BB5F /* MainStoryboard.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = MainStoryboard.storyboard; sourceTree = "<group>"; };
+		B3167F4B20743C4800A68303 /* libpthread.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libpthread.tbd; path = usr/lib/libpthread.tbd; sourceTree = SDKROOT; };
 		B3299B36207430A0001DF780 /* norend.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = norend.cpp; path = norend/norend.cpp; sourceTree = "<group>"; };
 		B3338F102034466900F5589E /* rec_x64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_x64.cpp; sourceTree = "<group>"; };
 		B35D27DE2033EB7600F17D58 /* rec_cpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_cpp.cpp; sourceTree = "<group>"; };
@@ -616,6 +618,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B3167F4C20743C4800A68303 /* libpthread.tbd in Frameworks */,
 				EBDF375A1BB96ECD001191B5 /* AudioToolbox.framework in Frameworks */,
 				87D92F4E1B7A1B5700D8FD9E /* GameController.framework in Frameworks */,
 				87C4AA561A4414070048DBF4 /* AssetsLibrary.framework in Frameworks */,
@@ -719,6 +722,7 @@
 		87078A8518A47FE90034C7A0 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				B3167F4B20743C4800A68303 /* libpthread.tbd */,
 				EBDF37591BB96ECD001191B5 /* AudioToolbox.framework */,
 				EBDF37571BB96E75001191B5 /* AudioUnit.framework */,
 				87D92F4D1B7A1B5700D8FD9E /* GameController.framework */,
@@ -1565,6 +1569,7 @@
 				849C0D661B072CF8008BAAA4 /* reios.cpp in Sources */,
 				9C7A3ABF18C806E00070BB5F /* zip_delete.c in Sources */,
 				9C7A3B0018C806E00070BB5F /* aica.cpp in Sources */,
+				B3167F4A20743BC600A68303 /* gles.cpp in Sources */,
 				9C7A3B3318C806E00070BB5F /* sh4_rom.cpp in Sources */,
 				9C7A3B1918C806E00070BB5F /* spg.cpp in Sources */,
 				9C7A3AE318C806E00070BB5F /* zip_source_buffer.c in Sources */,
@@ -1581,7 +1586,6 @@
 				9C7A3B3018C806E00070BB5F /* sh4_mem.cpp in Sources */,
 				9C7A3B2418C806E00070BB5F /* bsc.cpp in Sources */,
 				9C7A3AD318C806E00070BB5F /* zip_free.c in Sources */,
-				9C7A3B4918C806E00070BB5F /* gles.cpp in Sources */,
 				9C7A3ADD18C806E00070BB5F /* zip_rename.c in Sources */,
 				9C7A3ADB18C806E00070BB5F /* zip_new.c in Sources */,
 				9C7A3AD718C806E00070BB5F /* zip_get_name.c in Sources */,
@@ -1791,6 +1795,7 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PREPROCESSOR_DEFINITIONS = "";
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -1814,6 +1819,8 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEVELOPMENT_TEAM = V78REPMQFZ;
+				GCC_DYNAMIC_NO_PIC = YES;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "emulator/reicast-ios-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1854,6 +1861,7 @@
 					"TARGET_NO_REC=1",
 					"TARGET_NO_WEBUI=1",
 				);
+				GCC_UNROLL_LOOPS = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
@@ -1888,6 +1896,8 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEVELOPMENT_TEAM = V78REPMQFZ;
 				"EXCLUDED_SOURCE_FILE_NAMES[sdk=iphoneos*]" = "";
+				GCC_DYNAMIC_NO_PIC = YES;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "emulator/reicast-ios-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1899,11 +1909,11 @@
 				);
 				"GCC_PREPROCESSOR_DEFINITIONS[sdk=iphoneos*]" = (
 					"$(inherited)",
-					"GLES=1",
 					"TARGET_IPHONE=1",
 					"TARGET_NO_WEBUI=1",
 					"TARGET_NO_EXCEPTIONS=1",
 					TARGET_NO_REC,
+					RELEASE,
 				);
 				"GCC_PREPROCESSOR_DEFINITIONS[sdk=iphonesimulator*]" = (
 					"$(inherited)",
@@ -1912,6 +1922,7 @@
 					"TARGET_NO_WEBUI=1",
 					"TARGET_NO_EXCEPTIONS=1",
 				);
+				GCC_UNROLL_LOOPS = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
@@ -1932,7 +1943,12 @@
 					"-ffast-math",
 					"-ftree-vectorize",
 					"-fno-strict-aliasing",
+					"-frename-registers",
 					"-DGLES",
+					"-fno-rtti",
+					"-fpermissive",
+					"-fno-operator-names",
+					"-fsingle-precision-constant",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.reicast.$(PRODUCT_NAME:rfc1034identifier";
 				PRODUCT_NAME = "reicast-ios";

@@ -35,6 +35,39 @@ bool gles_init();
 extern "C" int reicast_main(int argc, char* argv[]);
 
 
+#include <mach/mach.h>
+#include <mach/mach_time.h>
+#include <pthread.h>
+
+void move_pthread_to_realtime_scheduling_class(pthread_t pthread)
+{
+	mach_timebase_info_data_t timebase_info;
+	mach_timebase_info(&timebase_info);
+
+	const uint64_t NANOS_PER_MSEC = 1000000ULL;
+	double clock2abs = ((double)timebase_info.denom / (double)timebase_info.numer) * NANOS_PER_MSEC;
+
+	thread_time_constraint_policy_data_t policy;
+	policy.period      = 0;
+	policy.computation = (uint32_t)(5 * clock2abs); // 5 ms of work
+	policy.constraint  = (uint32_t)(10 * clock2abs);
+	policy.preemptible = FALSE;
+
+	int kr = thread_policy_set(pthread_mach_thread_np(pthread_self()),
+							   THREAD_TIME_CONSTRAINT_POLICY,
+							   (thread_policy_t)&policy,
+							   THREAD_TIME_CONSTRAINT_POLICY_COUNT);
+	if (kr != KERN_SUCCESS) {
+		mach_error("thread_policy_set:", kr);
+		exit(1);
+	}
+}
+
+void MakeCurrentThreadRealTime()
+{
+	move_pthread_to_realtime_scheduling_class(pthread_self());
+}
+
 @implementation EmulatorViewController
 
 -(void)emuThread
@@ -57,6 +90,8 @@ extern "C" int reicast_main(int argc, char* argv[]);
 		strcat(Args[2],P);
 	}
 
+	MakeCurrentThreadRealTime();
+
 	reicast_main(Args[2]? 3:1,Args);
 }
 
@@ -66,7 +101,7 @@ extern "C" int reicast_main(int argc, char* argv[]);
 	
 	self.controllerView = [[PadViewController alloc] initWithNibName:@"PadViewController" bundle:nil];
     
-    self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+    self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3];
 
     if (!self.context) {
         NSLog(@"Failed to create ES context");
@@ -75,7 +110,8 @@ extern "C" int reicast_main(int argc, char* argv[]);
     self.emuView = (EmulatorView *)self.view;
     self.emuView.context = self.context;
     self.emuView.drawableDepthFormat = GLKViewDrawableDepthFormat24;
-	
+
+	[self setPreferredFramesPerSecond:50.0];
 	[self.controllerView setControlOutput:self.emuView];
     
     self.connectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidConnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
@@ -119,23 +155,23 @@ extern "C" int reicast_main(int argc, char* argv[]);
     }
 }
 
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-
-    if ([self isViewLoaded] && ([[self view] window] == nil)) {
-        self.view = nil;
-        
-        [self tearDownGL];
-        
-        if ([EAGLContext currentContext] == self.context) {
-            [EAGLContext setCurrentContext:nil];
-        }
-        self.context = nil;
-    }
-
-    // Dispose of any resources that can be recreated.
-}
+//- (void)didReceiveMemoryWarning
+//{
+//    [super didReceiveMemoryWarning];
+//
+//    if ([self isViewLoaded] && ([[self view] window] == nil)) {
+//        self.view = nil;
+//
+//        [self tearDownGL];
+//
+//        if ([EAGLContext currentContext] == self.context) {
+//            [EAGLContext setCurrentContext:nil];
+//        }
+//        self.context = nil;
+//    }
+//
+//    // Dispose of any resources that can be recreated.
+//}
 
 - (void)setupGL
 {

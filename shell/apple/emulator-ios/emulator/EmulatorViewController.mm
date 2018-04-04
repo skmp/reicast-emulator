@@ -260,8 +260,7 @@ void MakeCurrentThreadRealTime()
 				}
             }];
 
-			// Right shoulder for start
-			[self.gController.extendedGamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+			[self.gController.gamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
 					[self.emuView handleKeyDown:self.controllerView.img_rt];
 				} else {
@@ -269,18 +268,14 @@ void MakeCurrentThreadRealTime()
 				}
 			}];
 
-			[self.gController.extendedGamepad.leftThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
-				s8 v=(s8)(value*256) - 127; //-127 ... + 127 range
-
-				NSLog(@"Joy X: %i", v);
-				joyx[0] = v;
+			[self.gController.gamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					[self.emuView handleKeyDown:self.controllerView.img_lt];
+				} else {
+					[self.emuView handleKeyUp:self.controllerView.img_lt];
+				}
 			}];
-			[self.gController.extendedGamepad.leftThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
-				s8 v=(s8)(value*256) - 127; //-127 ... + 127 range
 
-				NSLog(@"Joy Y: %i", v);
-				joyy[0] = v;
-			}];
             //Add controller pause handler here
         }
         if (self.gController.extendedGamepad) {
@@ -313,7 +308,6 @@ void MakeCurrentThreadRealTime()
 				}
             }];
 
-			// Right shoulder for start
 			[self.gController.extendedGamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
 					[self.emuView handleKeyDown:self.controllerView.img_rt];
@@ -330,6 +324,7 @@ void MakeCurrentThreadRealTime()
 				}
 			}];
 
+			// Either trigger for start
 			[self.gController.extendedGamepad.rightTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
 					[self.emuView handleKeyDown:self.controllerView.img_start];
@@ -338,6 +333,13 @@ void MakeCurrentThreadRealTime()
 				}
 			}];
 
+			[self.gController.extendedGamepad.leftTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					[self.emuView handleKeyDown:self.controllerView.img_start];
+				} else {
+					[self.emuView handleKeyUp:self.controllerView.img_start];
+				}
+			}];
 
             [self.gController.extendedGamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue){
 				if (dpad.right.isPressed) {
@@ -361,6 +363,7 @@ void MakeCurrentThreadRealTime()
 					[self.emuView handleKeyUp:self.controllerView.img_dpad_d];
 				}
             }];
+
             [self.gController.extendedGamepad.leftThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
 				s8 v=(s8)(value*127); //-127 ... + 127 range
 

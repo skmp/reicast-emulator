@@ -64,8 +64,12 @@ extern "C" int reicast_main(int argc, wchar* argv[])
 {
     //if (argc==2)
     //ndcid=atoi(argv[1]);
-    
-    string homedir = [ [[[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] objectAtIndex:0] path] UTF8String];
+
+#if TARGET_OS_TV
+    string homedir = [ [[[[NSFileManager defaultManager] URLsForDirectory:NSCachesDirectory inDomains:NSUserDomainMask] objectAtIndex:0] path] UTF8String];
+#else
+	string homedir = [ [[[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] objectAtIndex:0] path] UTF8String];
+#endif
     set_user_config_dir(homedir);
     set_user_data_dir(homedir);
     

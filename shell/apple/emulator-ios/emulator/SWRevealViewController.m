@@ -106,12 +106,15 @@ static CGFloat statusBarAdjustment( UIView* view )
 {
     CGFloat adjustment = 0.0f;
     CGRect viewFrame = [view convertRect:view.bounds toView:nil];
+
+#if !TARGET_OS_TV
     CGRect statusBarFrame = [[UIApplication sharedApplication] statusBarFrame];
     
     if ( CGRectContainsRect(viewFrame, statusBarFrame) )
         adjustment = fminf(statusBarFrame.size.width, statusBarFrame.size.height);
 
-    return adjustment;
+#endif
+	return adjustment;
 }
 
 

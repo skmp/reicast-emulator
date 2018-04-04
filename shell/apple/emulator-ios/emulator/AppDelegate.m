@@ -8,15 +8,25 @@
 
 #import "AppDelegate.h"
 
+#if TARGET_OS_TV
+#import "PVWebServer.h"
+#endif
+
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+#if !TARGET_OS_TV
     if ([UIDevice currentDevice].systemVersion.floatValue >= 7.0f) // TODO: consider using the black variant for iOS 5.
         [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent];
     else
         [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault];
-    // Override point for customization after application launch.
+#else
+	// Start webdav for tvos, only way to get files on
+	[[PVWebServer sharedInstance] startWWWUploadServer];
+	[[PVWebServer sharedInstance] startWebDavServer];
+#endif
+	// Override point for customization after application launch.
     return YES;
 }
 							

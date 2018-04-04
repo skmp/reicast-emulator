@@ -140,7 +140,7 @@
                 <viewController storyboardIdentifier="emulatorView" wantsFullScreenLayout="YES" useStoryboardIdentifierAsRestorationIdentifier="YES" id="WRM-pR-XCP" customClass="EmulatorViewController" sceneMemberID="viewController">
                     <view key="view" multipleTouchEnabled="YES" contentMode="scaleToFill" id="JQE-db-ZiC" customClass="EmulatorView">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <accessibility key="accessibilityConfiguration">
                             <accessibilityTraits key="traits" notEnabled="YES"/>

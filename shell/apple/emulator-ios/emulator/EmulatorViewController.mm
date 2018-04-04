@@ -15,6 +15,12 @@
 #include "rend/TexCache.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
+#import <sys/kdebug_signpost.h>
+
+extern u16 kcode[4];
+extern u32 vks[4];
+extern s8 joyx[4],joyy[4];
+extern u8 rt[4],lt[4];
 
 @interface EmulatorViewController () {
 }
@@ -200,7 +206,7 @@ void MakeCurrentThreadRealTime()
 
 - (void)toggleHardwareController:(BOOL)useHardware {
     if (useHardware) {
-//		[self.controllerView hideController];
+		[self.controllerView hideController];
         self.gController = [GCController controllers][0];
         if (self.gController.gamepad) {
             [self.gController.gamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
@@ -232,27 +238,49 @@ void MakeCurrentThreadRealTime()
 				}
             }];
             [self.gController.gamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue){
-				if (xValue >= 0.1) {
+				if (dpad.right.isPressed) {
 					[self.emuView handleKeyDown:self.controllerView.img_dpad_r];
 				} else {
 					[self.emuView handleKeyUp:self.controllerView.img_dpad_r];
 				}
-				if (xValue <= -0.1) {
+				if (dpad.left.isPressed) {
 					[self.emuView handleKeyDown:self.controllerView.img_dpad_l];
 				} else {
 					[self.emuView handleKeyUp:self.controllerView.img_dpad_l];
 				}
-				if (yValue >= 0.1) {
+				if (dpad.up.isPressed) {
 					[self.emuView handleKeyDown:self.controllerView.img_dpad_u];
 				} else {
 					[self.emuView handleKeyUp:self.controllerView.img_dpad_u];
 				}
-				if (yValue <= -0.1) {
+				if (dpad.down.isPressed) {
 					[self.emuView handleKeyDown:self.controllerView.img_dpad_d];
 				} else {
 					[self.emuView handleKeyUp:self.controllerView.img_dpad_d];
 				}
             }];
+
+			// Right shoulder for start
+			[self.gController.extendedGamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					[self.emuView handleKeyDown:self.controllerView.img_rt];
+				} else {
+					[self.emuView handleKeyUp:self.controllerView.img_rt];
+				}
+			}];
+
+			[self.gController.extendedGamepad.leftThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
+				s8 v=(s8)(value*256) - 127; //-127 ... + 127 range
+
+				NSLog(@"Joy X: %i", v);
+				joyx[0] = v;
+			}];
+			[self.gController.extendedGamepad.leftThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
+				s8 v=(s8)(value*256) - 127; //-127 ... + 127 range
+
+				NSLog(@"Joy Y: %i", v);
+				joyy[0] = v;
+			}];
             //Add controller pause handler here
         }
         if (self.gController.extendedGamepad) {
@@ -285,6 +313,7 @@ void MakeCurrentThreadRealTime()
 				}
             }];
 
+			// Right shoulder for start
 			[self.gController.extendedGamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
 					[self.emuView handleKeyDown:self.controllerView.img_rt];
@@ -292,7 +321,6 @@ void MakeCurrentThreadRealTime()
 					[self.emuView handleKeyUp:self.controllerView.img_rt];
 				}
 			}];
-
 
 			[self.gController.extendedGamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
@@ -334,27 +362,36 @@ void MakeCurrentThreadRealTime()
 				}
             }];
             [self.gController.extendedGamepad.leftThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
-                
+				s8 v=(s8)(value*127); //-127 ... + 127 range
+
+				NSLog(@"Joy X: %i", v);
+				joyx[0] = v;
             }];
             [self.gController.extendedGamepad.leftThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
-                
+				s8 v=(s8)(value*127); //-127 ... + 127 range
+
+				NSLog(@"Joy Y: %i", v);
+				joyy[0] = v;
             }];
         }
     } else {
         self.gController = nil;
-//		[self.controllerView showController:self.view];
+		[self.controllerView showController:self.view];
     }
 }
 
+
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
-    screen_width = view.drawableWidth;
+    kdebug_signpost_start(10, 0, 0, 0, 0);
+	screen_width = view.drawableWidth;
     screen_height = view.drawableHeight;
 
     glClearColor(0.65f, 0.65f, 0.65f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     while(!rend_single_frame()) ;
+	kdebug_signpost_end(10, 0, 0, 0, 0);
 }
 
 

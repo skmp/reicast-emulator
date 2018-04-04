@@ -26,12 +26,12 @@
 
 - (void)showController:(UIView *)parentView
 {
-	[parentView addSubview:self.view];
+	self.view.hidden = NO;
 }
 
 - (void)hideController
 {
-	[self.view removeFromSuperview];
+	self.view.hidden = YES;
 }
 
 - (BOOL)isControllerVisible {

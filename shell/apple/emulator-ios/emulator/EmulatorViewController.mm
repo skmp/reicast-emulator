@@ -7,7 +7,10 @@
 //
 
 #import "EmulatorViewController.h"
-#import <OpenGLES/ES2/glext.h>
+
+#import <OpenGLES/ES3/gl.h>
+#import <OpenGLES/ES3/glext.h>
+#import <OpenGLES/EAGL.h>
 
 #include "types.h"
 #include "profiler/profiler.h"
@@ -109,6 +112,8 @@ void MakeCurrentThreadRealTime()
 
     self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3];
 
+	[self.context setMultiThreaded:YES];
+
     if (!self.context) {
         NSLog(@"Failed to create ES context");
     }
@@ -117,7 +122,7 @@ void MakeCurrentThreadRealTime()
     self.emuView.context = self.context;
     self.emuView.drawableDepthFormat = GLKViewDrawableDepthFormat24;
 
-	[self setPreferredFramesPerSecond:50.0];
+	[self setPreferredFramesPerSecond:59.95];
 	[self.controllerView setControlOutput:self.emuView];
     
     self.connectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidConnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {

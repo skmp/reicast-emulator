@@ -328,11 +328,11 @@ void common_linux_setup()
 
 	enable_runfast();
 	install_fault_handler();
-	signal(SIGINT, exit);
-	
+//	signal(SIGINT, exit);
+
 	settings.profile.run_counts=0;
 	
-	printf("Linux paging: %08X %08X %08X\n",sysconf(_SC_PAGESIZE)-1,PAGE_SIZE,PAGE_MASK);
-	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
+//	printf("Linux paging: %08X %08X %08X\n",sysconf(_SC_PAGESIZE)-1,PAGE_SIZE,PAGE_MASK);
+//	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
 }
 #endif

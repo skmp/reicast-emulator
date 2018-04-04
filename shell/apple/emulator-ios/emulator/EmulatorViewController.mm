@@ -371,7 +371,7 @@ void MakeCurrentThreadRealTime()
 				joyx[0] = v;
             }];
             [self.gController.extendedGamepad.leftThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
-				s8 v=(s8)(value*127); //-127 ... + 127 range
+				s8 v=(s8)(value*127 * - 1); //-127 ... + 127 range
 
 				NSLog(@"Joy Y: %i", v);
 				joyy[0] = v;
@@ -386,7 +386,7 @@ void MakeCurrentThreadRealTime()
 
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
-    kdebug_signpost_start(10, 0, 0, 0, 0);
+//    kdebug_signpost_start(10, 0, 0, 0, 0);
 	screen_width = view.drawableWidth;
     screen_height = view.drawableHeight;
 
@@ -394,7 +394,7 @@ void MakeCurrentThreadRealTime()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     while(!rend_single_frame()) ;
-	kdebug_signpost_end(10, 0, 0, 0, 0);
+//	kdebug_signpost_end(10, 0, 0, 0, 0);
 }
 
 

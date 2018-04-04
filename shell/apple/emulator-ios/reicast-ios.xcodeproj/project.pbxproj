@@ -219,6 +219,10 @@
 		9C7A3B4E18C806E00070BB5F /* stdclass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A9918C806E00070BB5F /* stdclass.cpp */; };
 		9C7A3B5918C81A4F0070BB5F /* SWRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3B5818C81A4F0070BB5F /* SWRevealViewController.m */; };
 		9C7A3BC418C84EA10070BB5F /* MainStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A3BC318C84EA10070BB5F /* MainStoryboard.storyboard */; };
+		B30B7966207480D6001290A1 /* decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A2918C806DF0070BB5F /* decoder.cpp */; };
+		B30B7967207480E1001290A1 /* shil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A3018C806DF0070BB5F /* shil.cpp */; };
+		B30B79682074810A001290A1 /* driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A2C18C806DF0070BB5F /* driver.cpp */; };
+		B30B796920748118001290A1 /* blockmanager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A2718C806DF0070BB5F /* blockmanager.cpp */; };
 		B3167F482074362E00A68303 /* rec_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652C81B6157FC00437F10 /* rec_arm.cpp */; };
 		B3167F4A20743BC600A68303 /* gles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A8F18C806E00070BB5F /* gles.cpp */; };
 		B3167F4C20743C4800A68303 /* libpthread.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = B3167F4B20743C4800A68303 /* libpthread.tbd */; };
@@ -1548,6 +1552,7 @@
 				9C7A3ADC18C806E00070BB5F /* zip_open.c in Sources */,
 				84967C9F1B8F492C005F1140 /* pngwtran.c in Sources */,
 				9C7A3B2718C806E00070BB5F /* dmac.cpp in Sources */,
+				B30B7966207480D6001290A1 /* decoder.cpp in Sources */,
 				9C7A3B3118C806E00070BB5F /* sh4_mmr.cpp in Sources */,
 				87C208DE1B7A4BFA00638BDD /* SettingsViewController.m in Sources */,
 				9C7A3AAA18C806E00070BB5F /* elf32.cpp in Sources */,
@@ -1564,6 +1569,7 @@
 				9C7A3B2F18C806E00070BB5F /* sh4_interrupts.cpp in Sources */,
 				9C7A3B1018C806E00070BB5F /* maple_devs.cpp in Sources */,
 				9C7A3AE718C806E00070BB5F /* zip_source_function.c in Sources */,
+				B30B79682074810A001290A1 /* driver.cpp in Sources */,
 				B3167F482074362E00A68303 /* rec_arm.cpp in Sources */,
 				9C7A3AE918C806E00070BB5F /* zip_stat.c in Sources */,
 				849C0D661B072CF8008BAAA4 /* reios.cpp in Sources */,
@@ -1591,6 +1597,7 @@
 				9C7A3AD718C806E00070BB5F /* zip_get_name.c in Sources */,
 				877652C61B6157BD00437F10 /* audiostream.cpp in Sources */,
 				877652C51B6157BD00437F10 /* audiobackend_pulseaudio.cpp in Sources */,
+				B30B7967207480E1001290A1 /* shil.cpp in Sources */,
 				9C7A3ABD18C806E00070BB5F /* zip_add_dir.c in Sources */,
 				87D92F541B7A1BB100D8FD9E /* iCadeReaderView.m in Sources */,
 				84967C941B8F492C005F1140 /* pngget.c in Sources */,
@@ -1719,6 +1726,7 @@
 				9C7A3B0A18C806E00070BB5F /* gdromv3.cpp in Sources */,
 				9C7A3B3418C806E00070BB5F /* sh4_sched.cpp in Sources */,
 				87C208DB1B7A4BFA00638BDD /* EmulatorViewController.mm in Sources */,
+				B30B796920748118001290A1 /* blockmanager.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1833,6 +1841,20 @@
 					"TARGET_NO_WEBUI=1",
 					"TARGET_NO_REC=1",
 				);
+				"GCC_PREPROCESSOR_DEFINITIONS[sdk=iphoneos*]" = (
+					"DEBUG=1",
+					"GLES=1",
+					"TARGET_IPHONE=1",
+					"TARGET_NO_WEBUI=1",
+					"TARGET_NO_REC=1",
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[sdk=iphonesimulator*]" = (
+					"DEBUG=1",
+					"GLES=1",
+					"TARGET_IPHONE_SIMULATOR=1",
+					"TARGET_NO_WEBUI=1",
+					"TARGET_NO_REC=1",
+				);
 				GCC_UNROLL_LOOPS = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1876,22 +1898,19 @@
 					"TARGET_NO_EXCEPTIONS=1",
 				);
 				"GCC_PREPROCESSOR_DEFINITIONS[sdk=iphoneos*]" = (
-					"$(inherited)",
 					"GLES=1",
-					"TARGET_SIMULATOR=1",
+					"TARGET_IPHONE=1",
 					"TARGET_NO_WEBUI=1",
 					"TARGET_NO_EXCEPTIONS=1",
 					TARGET_NO_REC,
 					RELEASE,
 				);
 				"GCC_PREPROCESSOR_DEFINITIONS[sdk=iphonesimulator*]" = (
-					"$(inherited)",
 					"GLES=1",
 					"TARGET_IPHONE_SIMULATOR=1",
 					"TARGET_NO_WEBUI=1",
 					"TARGET_NO_EXCEPTIONS=1",
 					TARGET_NO_REC,
-					RELEASE,
 				);
 				GCC_UNROLL_LOOPS = YES;
 				HEADER_SEARCH_PATHS = (
@@ -1909,8 +1928,8 @@
 				OTHER_CFLAGS = (
 					"$(inherited)",
 					"-mno-thumb",
+					"-mfpu=neon",
 					"-fno-operator-names",
-					"-fomit-frame-pointer",
 					"-fno-rtti",
 					"-ffast-math",
 					"-ftree-vectorize",
@@ -1920,7 +1939,25 @@
 					"-fpermissive",
 					"-fno-operator-names",
 					"-fsingle-precision-constant",
+				);
+				"OTHER_CFLAGS[sdk=iphoneos*]" = (
+					"$(inherited)",
+					"-fomit-frame-pointer",
+				);
+				"OTHER_CFLAGS[sdk=iphonesimulator*]" = (
+					"$(inherited)",
+					"-mno-thumb",
 					"-mfpu=neon",
+					"-fno-operator-names",
+					"-fno-rtti",
+					"-ffast-math",
+					"-ftree-vectorize",
+					"-fno-strict-aliasing",
+					"-frename-registers",
+					"-fno-rtti",
+					"-fpermissive",
+					"-fno-operator-names",
+					"-fsingle-precision-constant",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.reicast.$(PRODUCT_NAME:rfc1034identifier";
 				PRODUCT_NAME = "reicast-ios";

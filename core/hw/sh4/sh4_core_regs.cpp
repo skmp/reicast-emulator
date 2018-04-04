@@ -117,7 +117,7 @@ void SetFloatStatusReg()
 				: "=r"(raa)
 				: "r"(x), "r"(y)
 			);
-    #else
+    #elif defined(DEBUG)
         printf("SetFloatStatusReg: Unsupported platform\n");
     #endif
 #endif

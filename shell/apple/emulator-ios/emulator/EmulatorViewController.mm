@@ -260,7 +260,7 @@ void MakeCurrentThreadRealTime()
 			}
 		}
 #else
-		self.gController = [[GCController controllers] first];
+		self.gController = [GCController controllers].firstObject;
 #endif
 		// TODO: ADd multi player  using gController.playerIndex and iterate all controllers
 

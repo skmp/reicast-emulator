@@ -116,7 +116,10 @@ static void coreaudio_init()
 
 static u32 coreaudio_push(void* frame, u32 samples, bool wait)
 {
-	cb_write(frame, samples * 4);
+	while (samples_ptr != 0 && wait)
+		;
+
+		cb_write(frame, samples * sizeof(s32));
     /* Yeah, right */
 //    while (samples_ptr != 0 && wait) ;
 //

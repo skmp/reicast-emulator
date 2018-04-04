@@ -429,10 +429,12 @@ void _vmem_bm_reset() {
 			_vmem_bm_reset_nvmem();
 		#endif
 	}
-    
+
+#if FEAT_SHREC != DYNAREC_NONE
     if (!virt_ram_base || HOST_OS == OS_DARWIN) {
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
 	}
+#endif
 }
 
 #if !defined(TARGET_NO_NVMEM)

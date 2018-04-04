@@ -1920,6 +1920,7 @@
 					"-fpermissive",
 					"-fno-operator-names",
 					"-fsingle-precision-constant",
+					"-mfpu=neon",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.reicast.$(PRODUCT_NAME:rfc1034identifier";
 				PRODUCT_NAME = "reicast-ios";

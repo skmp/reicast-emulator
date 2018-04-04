@@ -802,23 +802,23 @@
 		9C7A393618C805F70070BB5F /* View Controller Subclasses */ = {
 			isa = PBXGroup;
 			children = (
-				87FA52E61B8CE18600CEFC32 /* PadViewController.h */,
-				87FA52E71B8CE18600CEFC32 /* PadViewController.m */,
-				87FA52E81B8CE18600CEFC32 /* PadViewController.xib */,
-				8794D9C11B88F3D600B1B3A3 /* DiskViewCell.h */,
-				8794D9C21B88F3D600B1B3A3 /* DiskViewCell.m */,
 				87C208C51B7A4BFA00638BDD /* AboutViewController.h */,
 				87C208C61B7A4BFA00638BDD /* AboutViewController.m */,
 				87C208C71B7A4BFA00638BDD /* BrowserTableViewController.h */,
 				87C208C81B7A4BFA00638BDD /* BrowserTableViewController.m */,
 				87C208C91B7A4BFA00638BDD /* CloudVMUViewController.h */,
 				87C208CA1B7A4BFA00638BDD /* CloudVMUViewController.m */,
+				8794D9C11B88F3D600B1B3A3 /* DiskViewCell.h */,
+				8794D9C21B88F3D600B1B3A3 /* DiskViewCell.m */,
 				87C208CB1B7A4BFA00638BDD /* EmulatorView.h */,
 				87C208CC1B7A4BFA00638BDD /* EmulatorView.mm */,
 				87C208CD1B7A4BFA00638BDD /* EmulatorViewController.h */,
 				87C208CE1B7A4BFA00638BDD /* EmulatorViewController.mm */,
 				87C208CF1B7A4BFA00638BDD /* InputViewController.h */,
 				87C208D01B7A4BFA00638BDD /* InputViewController.m */,
+				87FA52E61B8CE18600CEFC32 /* PadViewController.h */,
+				87FA52E71B8CE18600CEFC32 /* PadViewController.m */,
+				87FA52E81B8CE18600CEFC32 /* PadViewController.xib */,
 				87C208D11B7A4BFA00638BDD /* PathsViewController.h */,
 				87C208D21B7A4BFA00638BDD /* PathsViewController.m */,
 				87C208D31B7A4BFA00638BDD /* SettingsViewController.h */,
@@ -1819,47 +1819,17 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEVELOPMENT_TEAM = V78REPMQFZ;
-				GCC_DYNAMIC_NO_PIC = YES;
-				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				ENABLE_TESTABILITY = YES;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "emulator/reicast-ios-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"GLES=1",
+					"$(inherited)",
 					"DEBUG=1",
+					"GLES=1",
 					"TARGET_IPHONE=1",
-					"$(inherited)",
 					"TARGET_NO_WEBUI=1",
-				);
-				"GCC_PREPROCESSOR_DEFINITIONS[sdk=appletvos*]" = (
-					"GLES=1",
-					"DEBUG=1",
-					"TARGET_IPHONE=1",
-					"$(inherited)",
-					"TARGET_NO_WEBUI=1",
-				);
-				"GCC_PREPROCESSOR_DEFINITIONS[sdk=appletvsimulator*]" = (
-					"GLES=1",
-					"DEBUG=1",
-					"TARGET_IPHONE_SIMULATOR=1",
-					"$(inherited)",
-					"TARGET_NO_WEBUI=1",
-				);
-				"GCC_PREPROCESSOR_DEFINITIONS[sdk=iphoneos*]" = (
-					"$(inherited)",
-					"TARGET_NO_WEBUI=1",
-					"GLES=1",
-					"DEBUG=1",
-					"TARGET_IPHONE=1",
-					"TARGET_NO_EXCEPTIONS=1",
-					TARGET_NO_REC,
-				);
-				"GCC_PREPROCESSOR_DEFINITIONS[sdk=iphonesimulator*]" = (
-					"GLES=1",
-					"DEBUG=1",
-					"TARGET_IPHONE_SIMULATOR=1",
-					"TARGET_NO_EXCEPTIONS=1",
 					"TARGET_NO_REC=1",
-					"TARGET_NO_WEBUI=1",
 				);
 				GCC_UNROLL_LOOPS = YES;
 				HEADER_SEARCH_PATHS = (
@@ -1871,13 +1841,9 @@
 					../../../core/khronos/,
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/emulator/reicast-ios-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = (
-					"-mno-thumb",
-					"-fno-operator-names",
-					"-DTARGET_NO_REC",
-				);
+				OTHER_CFLAGS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.reicast.$(PRODUCT_NAME:rfc1034identifier";
 				PRODUCT_NAME = "reicast-ios";
 				PROVISIONING_PROFILE = "";
@@ -1895,8 +1861,6 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEVELOPMENT_TEAM = V78REPMQFZ;
-				"EXCLUDED_SOURCE_FILE_NAMES[sdk=iphoneos*]" = "";
-				GCC_DYNAMIC_NO_PIC = YES;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "emulator/reicast-ios-Prefix.pch";
@@ -1909,7 +1873,8 @@
 				);
 				"GCC_PREPROCESSOR_DEFINITIONS[sdk=iphoneos*]" = (
 					"$(inherited)",
-					"TARGET_IPHONE=1",
+					"GLES=1",
+					"TARGET_SIMULATOR=1",
 					"TARGET_NO_WEBUI=1",
 					"TARGET_NO_EXCEPTIONS=1",
 					TARGET_NO_REC,
@@ -1921,6 +1886,8 @@
 					"TARGET_IPHONE_SIMULATOR=1",
 					"TARGET_NO_WEBUI=1",
 					"TARGET_NO_EXCEPTIONS=1",
+					TARGET_NO_REC,
+					RELEASE,
 				);
 				GCC_UNROLL_LOOPS = YES;
 				HEADER_SEARCH_PATHS = (
@@ -1932,19 +1899,18 @@
 					../../../core/khronos/,
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/emulator/reicast-ios-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
+					"$(inherited)",
 					"-mno-thumb",
 					"-fno-operator-names",
 					"-fomit-frame-pointer",
 					"-fno-rtti",
-					"-DTARGET_NO_REC",
 					"-ffast-math",
 					"-ftree-vectorize",
 					"-fno-strict-aliasing",
 					"-frename-registers",
-					"-DGLES",
 					"-fno-rtti",
 					"-fpermissive",
 					"-fno-operator-names",

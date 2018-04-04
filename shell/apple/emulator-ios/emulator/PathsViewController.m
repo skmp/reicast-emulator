@@ -25,6 +25,9 @@
     }
     return self;
 }
+- (IBAction)refreshTapped:(id)sender {
+	[self updateDiskImages];
+}
 
 - (NSURL *)documents
 {
@@ -48,12 +51,17 @@
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     // self.navigationItem.rightBarButtonItem = self.editButtonItem;
 	
+	[self updateDiskImages];
+}
+
+- (void)updateDiskImages {
 	self.diskImages = [[NSMutableArray alloc] init];
 	NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:[self documents].path error:NULL];
 	NSPredicate *diskPredicate = [NSPredicate predicateWithFormat:@"self ENDSWITH '.chd' || self ENDSWITH '.gdi' || self ENDSWITH '.cdi' || self ENDSWITH '.CHD' || self ENDSWITH '.GDI' || self ENDSWITH '.CDI'"];
 	self.diskImages = [NSMutableArray arrayWithArray:[files filteredArrayUsingPredicate:diskPredicate]];
-    
-    NSLog(@"Put files in %@", [self documents].path);
+
+	NSLog(@"Put files in %@", [self documents].path);
+	[self.tableView reloadData];
 }
 
 - (void)didReceiveMemoryWarning

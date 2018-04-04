@@ -100,7 +100,7 @@ void MakeCurrentThreadRealTime()
     [super viewDidLoad];
 	
 	self.controllerView = [[PadViewController alloc] initWithNibName:@"PadViewController" bundle:nil];
-    
+
     self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3];
 
     if (!self.context) {
@@ -128,8 +128,14 @@ void MakeCurrentThreadRealTime()
     if ([[GCController controllers] count]) {
         [self toggleHardwareController:YES];
 	}
-	[self.controllerView showController:self.view];
-		
+
+	[self addChildViewController:self.controllerView];
+	self.controllerView.view.frame = self.view.bounds;
+	self.controllerView.view.translatesAutoresizingMaskIntoConstraints = YES;
+	self.controllerView.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleWidth;
+	[self.view addSubview:self.controllerView.view];
+	[self.controllerView didMoveToParentViewController:self];
+
     self.iCadeReader = [[iCadeReaderView alloc] init];
     [self.view addSubview:self.iCadeReader];
     self.iCadeReader.delegate = self;

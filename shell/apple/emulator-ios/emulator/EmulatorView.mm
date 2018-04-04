@@ -103,20 +103,20 @@ NSInteger start_button = 11;
 	}
 }
 
-- (void)handleKeyUp:(UIButton*)button
+- (void) handleKeyUp:(UIButton*)button
 {
 	PadViewController * controller = (PadViewController *)self.controllerView;
 	if (button == controller.img_dpad_l || button.tag == left_pad) {
-		kcode[0] |= ~(DC_DPAD_LEFT);
+		kcode[0] |= (DC_DPAD_LEFT);
 	}
 	if (button == controller.img_dpad_r || button.tag == right_pad) {
-		kcode[0] |= ~(DC_DPAD_RIGHT);
+		kcode[0] |= (DC_DPAD_RIGHT);
 	}
 	if (button == controller.img_dpad_u || button.tag == up_pad) {
-		kcode[0] |= ~(DC_DPAD_UP);
+		kcode[0] |= (DC_DPAD_UP);
 	}
 	if (button == controller.img_dpad_d || button.tag == down_pad) {
-		kcode[0] |= ~(DC_DPAD_DOWN);
+		kcode[0] |= (DC_DPAD_DOWN);
 	}
 	if (button == controller.img_abxy_a || button.tag == a_button) {
 		kcode[0] |= (DC_BTN_A);

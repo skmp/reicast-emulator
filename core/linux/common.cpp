@@ -43,10 +43,12 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
     context_from_segfault(&ctx, segfault_ctx);
 
 	unat pc = (unat)ctx.pc;
+
+#if FEAT_SHREC == DYNAREC_JIT
 	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE));
-	
 	printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n", pc, pc - (unat)sigill_handler, (unat)si->si_addr, dyna_cde);
-	
+#endif
+
 	printf("Entering infiniloop");
 
 	for (;;);
@@ -61,15 +63,15 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 
 	context_from_segfault(&ctx, segfault_ctx);
 
+	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
+		return;
+	#if FEAT_SHREC == DYNAREC_JIT
 	bool dyna_cde = ((unat)ctx.pc>(unat)CodeCache) && ((unat)ctx.pc<(unat)(CodeCache + CODE_SIZE));
 
 	//ucontext_t* ctx=(ucontext_t*)ctxr;
 	//printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,ctx->uc_mcontext.arm_pc,dyna_cde);
 
-	
-	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
-		return;
-	#if FEAT_SHREC == DYNAREC_JIT
+
 		#if HOST_CPU==CPU_ARM
 			else if (dyna_cde)
 			{
@@ -265,7 +267,7 @@ double os_GetSeconds()
 
 #if TARGET_IPHONE && (HOST_CPU == CPU_ARM)
 void os_DebugBreak() {
-    __asm__("trap");
+//    __asm__("trap");
 }
 #elif HOST_OS != OS_LINUX
 void os_DebugBreak()
@@ -276,7 +278,7 @@ void os_DebugBreak()
 
 void enable_runfast()
 {
-	#if HOST_CPU==CPU_ARM && !defined(ARMCC)
+	#if HOST_CPU==CPU_ARM && !defined(ARMCC) && !defined(TARGET_IPHONE)
 	static const unsigned int x = 0x04086060;
 	static const unsigned int y = 0x03000000;
 	int r;
@@ -294,7 +296,7 @@ void enable_runfast()
 }
 
 void linux_fix_personality() {
-        #if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_OS_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
+        #if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_IPHONE_SIMULATOR) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
           printf("Personality: %08X\n", personality(0xFFFFFFFF));
           personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
           printf("Updated personality: %08X\n", personality(0xFFFFFFFF));

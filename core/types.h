@@ -20,6 +20,8 @@
 	#undef fastcall
 	#define DYNACALL __attribute__((fastcall))
 	#endif
+#elif defined(TARGET_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
+	#define DYNACALL __vectorcall
 #else
 	#define DYNACALL
 #endif

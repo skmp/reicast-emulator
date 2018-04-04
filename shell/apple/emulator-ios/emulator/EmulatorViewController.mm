@@ -284,23 +284,50 @@ void MakeCurrentThreadRealTime()
 					[self.emuView handleKeyUp:self.controllerView.img_abxy_y];
 				}
             }];
+
+			[self.gController.extendedGamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					[self.emuView handleKeyDown:self.controllerView.img_rt];
+				} else {
+					[self.emuView handleKeyUp:self.controllerView.img_rt];
+				}
+			}];
+
+
+			[self.gController.extendedGamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					[self.emuView handleKeyDown:self.controllerView.img_lt];
+				} else {
+					[self.emuView handleKeyUp:self.controllerView.img_lt];
+				}
+			}];
+
+			[self.gController.extendedGamepad.rightTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					[self.emuView handleKeyDown:self.controllerView.img_start];
+				} else {
+					[self.emuView handleKeyUp:self.controllerView.img_start];
+				}
+			}];
+
+
             [self.gController.extendedGamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue){
-				if (xValue >= 0.1) {
+				if (dpad.right.isPressed) {
 					 [self.emuView handleKeyDown:self.controllerView.img_dpad_r];
 				} else {
 					[self.emuView handleKeyUp:self.controllerView.img_dpad_r];
 				}
-				if (xValue <= -0.1) {
+				if (dpad.left.isPressed) {
 					[self.emuView handleKeyDown:self.controllerView.img_dpad_l];
 				} else {
 					[self.emuView handleKeyUp:self.controllerView.img_dpad_l];
 				}
-				if (yValue >= 0.1) {
+				if (dpad.up.isPressed) {
 					[self.emuView handleKeyDown:self.controllerView.img_dpad_u];
 				} else {
 					[self.emuView handleKeyUp:self.controllerView.img_dpad_u];
 				}
-				if (yValue <= -0.1) {
+				if (dpad.down.isPressed) {
 					[self.emuView handleKeyDown:self.controllerView.img_dpad_d];
 				} else {
 					[self.emuView handleKeyUp:self.controllerView.img_dpad_d];

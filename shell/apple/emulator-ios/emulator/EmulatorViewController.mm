@@ -122,7 +122,9 @@ void MakeCurrentThreadRealTime()
     self.emuView.context = self.context;
     self.emuView.drawableDepthFormat = GLKViewDrawableDepthFormat24;
 
-	[self setPreferredFramesPerSecond:59.95];
+	// Set preferred refresh rate
+	[self setPreferredFramesPerSecond:60];
+
 	[self.controllerView setControlOutput:self.emuView];
     
     self.connectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidConnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {

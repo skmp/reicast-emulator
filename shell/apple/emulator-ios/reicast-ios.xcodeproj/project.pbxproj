@@ -2742,6 +2742,7 @@
 					"TARGET_IPHONE=1",
 					"TARGET_NO_WEBUI=1",
 					"TARGET_NO_REC=1",
+					__ARM_NEON__,
 				);
 				GCC_UNROLL_LOOPS = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
@@ -2772,6 +2773,7 @@
 					"-fno-operator-names",
 					"-fsingle-precision-constant",
 					"-fomit-frame-pointer",
+					"-mfloat-abi=hard",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.reicast.reicast-tvos";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -2822,6 +2824,7 @@
 					RELEASE,
 					TARGET_NO_WEBUI,
 					RELEASE,
+					__ARM_NEON__,
 				);
 				GCC_UNROLL_LOOPS = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
@@ -2852,6 +2855,7 @@
 					"-fno-operator-names",
 					"-fsingle-precision-constant",
 					"-fomit-frame-pointer",
+					"-mfloat-abi=hard",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.reicast.reicast-tvos";
 				PRODUCT_NAME = "$(TARGET_NAME)";

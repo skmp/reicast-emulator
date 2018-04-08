@@ -280,13 +280,11 @@ void* rend_thread(void* p)
 	return (0);
 }
 
-#if HOST_OS==OS_LINUX
 void rend_terminate()
 {
 	rend_en = false;
 	printf("rend_terminate called\n");
 }
-#endif
 
 #if !defined(TARGET_NO_THREADS)
 cThread rthd(rend_thread,0);

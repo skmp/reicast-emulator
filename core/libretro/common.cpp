@@ -340,7 +340,8 @@ static void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx)
 }
 #endif
 
-#if defined(__MACH__) || defined(__linux__) || defined(__HAIKU__)
+#if defined(__MACH__) || defined(__linux__) || defined(__HAIKU__) || \
+   defined(__FreeBSD__) || defined(__DragonFly__)
 //#define LOG_SIGHANDLER
 
 static void signal_handler(int sn, siginfo_t * si, void *segfault_ctx)

@@ -1,4 +1,4 @@
-reicast
+[]reicast
 ===========
 reicast is a multi-platform Sega Dreamcast emulator.
 

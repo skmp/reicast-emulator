@@ -19,6 +19,10 @@
 	#include <emscripten.h>
 #endif
 
+#if defined(SUPPORT_DISPMANX)
+	#include "linux-dist/dispmanx.h"
+#endif
+
 #if defined(SUPPORT_X11)
 	#include "linux-dist/x11.h"
 #endif
@@ -138,7 +142,9 @@ void SetupInput()
 				size_needed = snprintf(NULL, 0, EVDEV_MAPPING_CONFIG_KEY, port+1) + 1;
 				evdev_config_key = (char*)malloc(size_needed);
 				sprintf(evdev_config_key, EVDEV_MAPPING_CONFIG_KEY, port+1);
-				const char* mapping = (cfgExists("input", evdev_config_key) == 2 ? cfgLoadStr("input", evdev_config_key, "").c_str() : NULL);
+
+				string tmp;
+				const char* mapping = (cfgExists("input", evdev_config_key) == 2 ? (tmp = cfgLoadStr("input", evdev_config_key, "")).c_str() : NULL);
 				free(evdev_config_key);
 
 				input_evdev_init(&evdev_controllers[port], evdev_device, mapping);
@@ -235,6 +241,9 @@ void os_SetWindowText(const char * text)
 
 void os_CreateWindow()
 {
+	#if defined(SUPPORT_DISPMANX)
+		dispmanx_window_create();
+	#endif
 	#if defined(SUPPORT_X11)
 		x11_window_create();
 	#endif

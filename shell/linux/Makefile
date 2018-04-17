@@ -32,6 +32,15 @@ ifeq (,$(platform))
         platform = x86
     else ifeq ($(ARCH), $(filter $(ARCH), x86_64 AMD64))
         platform = x64
+    else ifneq (,$(findstring aarch64,$(ARCH)))
+        HARDWARE = $(shell grep Hardware /proc/cpuinfo)
+        ifneq (,$(findstring Vero4K,$(HARDWARE)))
+            platform = vero4k
+            FEATURES = $(shell grep Features /proc/cpuinfo)
+            ifneq (,$(findstring neon,$(FEATURES)))
+                platform += neon
+            endif
+        endif
     else ifneq (,$(findstring arm,$(ARCH)))
         HARDWARE = $(shell grep Hardware /proc/cpuinfo)
         ifneq (,$(findstring BCM2709,$(HARDWARE)))
@@ -43,6 +52,8 @@ ifeq (,$(platform))
         else ifneq (,$(findstring ODROIDC,$(HARDWARE)))
             platform = odroidc1
         else ifneq (,$(findstring ODROID-XU3,$(HARDWARE)))
+            platform = odroidxu3
+	else ifneq (,$(findstring ODROID-XU4,$(HARDWARE)))
             platform = odroidxu3
         else ifneq (,$(findstring ODROIDXU,$(HARDWARE)))
             platform = odroidxu
@@ -118,13 +129,28 @@ else ifneq (,$(findstring lincpp,$(platform)))
     CXXFLAGS += -fexceptions -std=gnu++11
 
 # Raspberry Pi 2
-else ifneq (,$(findstring rpi2,$(platform)))
-    MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=hard -funroll-loops
-    ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
+else ifneq (,$(findstring rpi,$(platform)))
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
-    INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads -I../linux-deps/include
-    LIBS += -L/opt/vc/lib/  -L../linux-deps/lib -lbcm_host
-    USE_GLES := 1
+    ifneq (,$(findstring rpi2,$(platform)))
+        MFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+        ASFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+    else ifneq (,$(findstring rpi3,$(platform)))
+        MFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+        ASFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+    endif
+    ifneq (,$(findstring mesa,$(platform)))
+        USE_SDL := 1
+        USE_GLES := 1
+    else
+        INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
+        LIBS += -L/opt/vc/lib/ -lbcm_host
+        LIBS += -lbrcmEGL -lbrcmGLESv2
+        CFLAGS += -D TARGET_VIDEOCORE
+        CXXFLAGS += -DGLES
+        USE_OMX := 1
+        USE_DISPMANX := 1
+    endif
+    undefine USE_X11
 
 # BeagleBone Black
 else ifneq (,$(findstring beagle,$(platform)))
@@ -182,6 +208,21 @@ else ifneq (,$(findstring gcwz,$(platform)))
     LIBS += -L../linux-deps/lib -L./enta_viv -lglapi
     GCWZ_PKG = reicast-gcwz.opk
     GCWZ_PKG_FILES = gcwz/default.gcw0.desktop gcwz/icon-32.png
+
+# Vero4K
+else ifneq (,$(findstring vero4k,$(platform)))
+    MFLAGS += -marm -march=armv8-a+crc -mtune=cortex-a53 -mfloat-abi=hard -funsafe-math-optimizations -funroll-loops
+    ASFLAGS += -mfloat-abi=hard
+    ifneq (,$(findstring neon,$(platform)))
+        MFLAGS += -mfpu=neon
+        ASFLAGS += -mfpu=neon
+    endif
+    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+    INCS += -I/opt/vero3/include/
+    LIBS += -L/opt/vero3/lib/ -lEGL -lGLESv2
+    USE_GLES := 1
+    USE_SDL := 1
+
 else
     $(error Unknown platform)
 endif
@@ -233,6 +274,11 @@ ifdef LTO_TEST
     LDFLAGS +=-flto -fwhole-program 
 endif
 
+ifdef USE_DISPMANX
+    CFLAGS += -D SUPPORT_DISPMANX
+    CXXFLAGS += -D SUPPORT_DISPMANX
+endif
+
 ifdef USE_X11
     CFLAGS += -D SUPPORT_X11
     CXXFLAGS += -D SUPPORT_X11 
@@ -245,6 +291,11 @@ endif
 
 ifdef USE_JOYSTICK
     CXXFLAGS += -D USE_JOYSTICK
+endif
+
+ifdef USE_OMX
+    CXXFLAGS += -D USE_OMX
+    LIBS += -lopenmaxil
 endif
 
 ifdef USE_ALSA

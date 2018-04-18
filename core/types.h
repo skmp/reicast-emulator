@@ -20,8 +20,10 @@
 	#undef fastcall
 	#define DYNACALL __attribute__((fastcall))
 	#endif
+	#define HAS_DYNACALL 1
 #else
 	#define DYNACALL
+	#define HAS_DYNACALL 0
 #endif
 
 #if BUILD_COMPILER==COMPILER_VC

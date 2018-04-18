@@ -1,6 +1,22 @@
 #include "common.h"
 #include <ctype.h>
+#include <algorithm>
 #include <sstream>
+
+static std::string dirname(std::string source)
+{
+	size_t pos_unix = source.find_last_of('/');
+	size_t pos_dos = source.find_last_of('\\');
+	size_t pos;
+
+	if((pos_unix != std::string::npos) && (pos_dos != std::string::npos))
+		pos = std::max(pos_unix, pos_dos) + 1;
+	else
+		pos = std::min(pos_unix, pos_dos) + 1;
+
+	source.erase(pos);
+	return source;
+}
 
 Disc* load_gdi(const char* file)
 {
@@ -31,21 +47,8 @@ Disc* load_gdi(const char* file)
 	gdi >> iso_tc;
 	printf("\nGDI : %d tracks\n",iso_tc);
 
-	// FIXME: Data loss if buffer is too small
-	char path[512];
-	strncpy(path, file, sizeof(path));
-	path[sizeof(path) - 1] = '\0';
+	string path_prefix = dirname(string(file));
 
-	size_t len = strlen(path);
-
-	while (len>2)
-	{
-		if (path[len]=='\\' || path[len]=='/')
-			break;
-		len--;
-	}
-	len++;
-	char* pathptr=&path[len];
 	u32 TRACK=0,FADS=0,CTRL=0,SSIZE=0;
 	s32 OFFSET=0;
 	for (u32 i=0;i<iso_tc;i++)
@@ -91,8 +94,8 @@ Disc* load_gdi(const char* file)
 
 		if (SSIZE!=0)
 		{
-			strcpy(pathptr, track_filename.c_str());
-			t.file = new RawTrackFile(core_fopen(path),OFFSET,t.StartFAD,SSIZE);	
+			string path = path_prefix + track_filename;
+			t.file = new RawTrackFile(core_fopen(path.c_str()),OFFSET,t.StartFAD,SSIZE);
 		}
 		disc->tracks.push_back(t);
 	}

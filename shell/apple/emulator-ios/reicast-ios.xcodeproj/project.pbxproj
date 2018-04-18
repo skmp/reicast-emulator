@@ -62,6 +62,8 @@
 		87C208DF1B7A4BFA00638BDD /* SideDrawerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87C208D61B7A4BFA00638BDD /* SideDrawerViewController.m */; };
 		87C4AA541A440BEB0048DBF4 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C4AA531A440BEB0048DBF4 /* libz.dylib */; };
 		87C4AA561A4414070048DBF4 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */; };
+		87CC75E02087C7FD00FF091D /* crt_fragment.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 87CC75DF2087C7FD00FF091D /* crt_fragment.glsl */; };
+		87CC75E32087C80800FF091D /* default_vertex.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 87CC75E22087C80800FF091D /* default_vertex.glsl */; };
 		87D92EA81B7839E600D8FD9E /* ios_main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 87D92EA71B7839E600D8FD9E /* ios_main.mm */; };
 		87D92F371B7A1B4800D8FD9E /* 210-octocat.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F211B7A1B4800D8FD9E /* 210-octocat.png */; };
 		87D92F381B7A1B4800D8FD9E /* 210-octocat@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F221B7A1B4800D8FD9E /* 210-octocat@2x.png */; };
@@ -222,8 +224,6 @@
 		B30B7967207480E1001290A1 /* shil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A3018C806DF0070BB5F /* shil.cpp */; };
 		B30B79682074810A001290A1 /* driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A2C18C806DF0070BB5F /* driver.cpp */; };
 		B30B796920748118001290A1 /* blockmanager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A2718C806DF0070BB5F /* blockmanager.cpp */; };
-		B30B796B2074C538001290A1 /* crt_fragment.glsl in Resources */ = {isa = PBXBuildFile; fileRef = B30B796A2074C538001290A1 /* crt_fragment.glsl */; };
-		B30B796D2074C580001290A1 /* default_vertex.glsl in Resources */ = {isa = PBXBuildFile; fileRef = B30B796C2074C580001290A1 /* default_vertex.glsl */; };
 		B30B797C2074D1C2001290A1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B30B797A2074D1C2001290A1 /* Main.storyboard */; };
 		B30B797E2074D1C4001290A1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B30B797D2074D1C4001290A1 /* Assets.xcassets */; };
 		B30B79852074D1F4001290A1 /* sb_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C7A3A0018C806DF0070BB5F /* sb_dma.cpp */; };
@@ -419,7 +419,6 @@
 		B30B7A4B2074D3D0001290A1 /* Start.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F351B7A1B4800D8FD9E /* Start.png */; };
 		B30B7A4C2074D3D0001290A1 /* reicast.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 9C7A393218C804A80070BB5F /* reicast.entitlements */; };
 		B30B7A4D2074D3D0001290A1 /* 210-twitterbird.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F231B7A1B4800D8FD9E /* 210-twitterbird.png */; };
-		B30B7A4E2074D3D0001290A1 /* default_vertex.glsl in Resources */ = {isa = PBXBuildFile; fileRef = B30B796C2074C580001290A1 /* default_vertex.glsl */; };
 		B30B7A4F2074D3D0001290A1 /* 210-twitterbird@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F241B7A1B4800D8FD9E /* 210-twitterbird@2x.png */; };
 		B30B7A502074D3D0001290A1 /* DPad.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F271B7A1B4800D8FD9E /* DPad.png */; };
 		B30B7A512074D3D0001290A1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 878B0CFB1B8BB5B400A8D1C5 /* Images.xcassets */; };
@@ -429,7 +428,6 @@
 		B30B7A552074D3D0001290A1 /* JoystickButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F2C1B7A1B4800D8FD9E /* JoystickButton@2x.png */; };
 		B30B7A562074D3D0001290A1 /* JoystickBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F291B7A1B4800D8FD9E /* JoystickBackground.png */; };
 		B30B7A572074D3D0001290A1 /* RTrigger@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F341B7A1B4800D8FD9E /* RTrigger@2x.png */; };
-		B30B7A582074D3D0001290A1 /* crt_fragment.glsl in Resources */ = {isa = PBXBuildFile; fileRef = B30B796A2074C538001290A1 /* crt_fragment.glsl */; };
 		B30B7A592074D3D0001290A1 /* Shader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 87078AA218A47FE90034C7A0 /* Shader.fsh */; };
 		B30B7A5B2074D3D0001290A1 /* 210-octocat@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F221B7A1B4800D8FD9E /* 210-octocat@2x.png */; };
 		B30B7A5C2074D3D0001290A1 /* LTrigger.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F2D1B7A1B4800D8FD9E /* LTrigger.png */; };
@@ -572,6 +570,8 @@
 		87C208D61B7A4BFA00638BDD /* SideDrawerViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SideDrawerViewController.m; path = emulator/SideDrawerViewController.m; sourceTree = "<group>"; };
 		87C4AA531A440BEB0048DBF4 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
+		87CC75DF2087C7FD00FF091D /* crt_fragment.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = crt_fragment.glsl; path = ../../crt_fragment.glsl; sourceTree = "<group>"; };
+		87CC75E22087C80800FF091D /* default_vertex.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = default_vertex.glsl; path = ../../default_vertex.glsl; sourceTree = "<group>"; };
 		87D776E41EF5623300E08B55 /* zlib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = zlib.xcodeproj; path = deps/zlib/zlib.xcodeproj; sourceTree = "<group>"; };
 		87D92EA71B7839E600D8FD9E /* ios_main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ios_main.mm; path = emulator/ios_main.mm; sourceTree = SOURCE_ROOT; };
 		87D92F211B7A1B4800D8FD9E /* 210-octocat.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "210-octocat.png"; path = "emulator/Images/210-octocat.png"; sourceTree = "<group>"; };
@@ -851,8 +851,6 @@
 		9C7A3B5718C81A4F0070BB5F /* SWRevealViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SWRevealViewController.h; sourceTree = "<group>"; };
 		9C7A3B5818C81A4F0070BB5F /* SWRevealViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SWRevealViewController.m; sourceTree = "<group>"; };
 		9C7A3BC318C84EA10070BB5F /* MainStoryboard.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = MainStoryboard.storyboard; sourceTree = "<group>"; };
-		B30B796A2074C538001290A1 /* crt_fragment.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = crt_fragment.glsl; path = "../../../../../../Provenance/Provenance-jmattiello/Provenance/shaders/crt/crt_fragment.glsl"; sourceTree = "<group>"; };
-		B30B796C2074C580001290A1 /* default_vertex.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = default_vertex.glsl; path = "../../../../../../Provenance/Provenance-jmattiello/Provenance/shaders/default/default_vertex.glsl"; sourceTree = "<group>"; };
 		B30B79722074D1C1001290A1 /* reicast-tvos.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "reicast-tvos.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B30B79742074D1C2001290A1 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		B30B79752074D1C2001290A1 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -1090,8 +1088,8 @@
 				9C7A393218C804A80070BB5F /* reicast.entitlements */,
 				87078AA218A47FE90034C7A0 /* Shader.fsh */,
 				87078AA418A47FE90034C7A0 /* Shader.vsh */,
-				B30B796C2074C580001290A1 /* default_vertex.glsl */,
-				B30B796A2074C538001290A1 /* crt_fragment.glsl */,
+				87CC75DF2087C7FD00FF091D /* crt_fragment.glsl */,
+				87CC75E22087C80800FF091D /* default_vertex.glsl */,
 				87D92F4F1B7A1BB100D8FD9E /* iCade-iOS */,
 				9C7A393618C805F70070BB5F /* View Controller Subclasses */,
 				9C7A393718C806060070BB5F /* Images */,
@@ -1929,7 +1927,7 @@
 				ORGANIZATIONNAME = reicast;
 				TargetAttributes = {
 					87078A8218A47FE90034C7A0 = {
-						DevelopmentTeam = QRT73U549N;
+						DevelopmentTeam = V78REPMQFZ;
 					};
 					B30B79712074D1C1001290A1 = {
 						CreatedOnToolsVersion = 9.3;
@@ -1970,10 +1968,10 @@
 			files = (
 				87D92F461B7A1B4800D8FD9E /* menuback@2x.png in Resources */,
 				87D92F491B7A1B4800D8FD9E /* RTrigger.png in Resources */,
+				87CC75E02087C7FD00FF091D /* crt_fragment.glsl in Resources */,
 				87D92F4B1B7A1B4800D8FD9E /* Start.png in Resources */,
 				9C7A393318C804A80070BB5F /* reicast.entitlements in Resources */,
 				87D92F391B7A1B4800D8FD9E /* 210-twitterbird.png in Resources */,
-				B30B796D2074C580001290A1 /* default_vertex.glsl in Resources */,
 				87D92F3A1B7A1B4800D8FD9E /* 210-twitterbird@2x.png in Resources */,
 				87D92F3D1B7A1B4800D8FD9E /* DPad.png in Resources */,
 				878B0CFC1B8BB5B400A8D1C5 /* Images.xcassets in Resources */,
@@ -1983,12 +1981,12 @@
 				87D92F421B7A1B4800D8FD9E /* JoystickButton@2x.png in Resources */,
 				87D92F3F1B7A1B4800D8FD9E /* JoystickBackground.png in Resources */,
 				87D92F4A1B7A1B4800D8FD9E /* RTrigger@2x.png in Resources */,
-				B30B796B2074C538001290A1 /* crt_fragment.glsl in Resources */,
 				87078AA318A47FE90034C7A0 /* Shader.fsh in Resources */,
 				9C7A3BC418C84EA10070BB5F /* MainStoryboard.storyboard in Resources */,
 				87D92F381B7A1B4800D8FD9E /* 210-octocat@2x.png in Resources */,
 				87D92F431B7A1B4800D8FD9E /* LTrigger.png in Resources */,
 				87D92F3E1B7A1B4800D8FD9E /* DPad@2x.png in Resources */,
+				87CC75E32087C80800FF091D /* default_vertex.glsl in Resources */,
 				9C7A3B4418C806E00070BB5F /* README.md in Resources */,
 				87D92F4C1B7A1B4800D8FD9E /* Start@2x.png in Resources */,
 				87D92F471B7A1B4800D8FD9E /* menuicon.png in Resources */,
@@ -2038,11 +2036,9 @@
 				B30B7A4A2074D3D0001290A1 /* RTrigger.png in Resources */,
 				B30B7A4F2074D3D0001290A1 /* 210-twitterbird@2x.png in Resources */,
 				B30B797E2074D1C4001290A1 /* Assets.xcassets in Resources */,
-				B30B7A4E2074D3D0001290A1 /* default_vertex.glsl in Resources */,
 				B30B797C2074D1C2001290A1 /* Main.storyboard in Resources */,
 				B30B7A4B2074D3D0001290A1 /* Start.png in Resources */,
 				B30B7A672074D3D0001290A1 /* disk_unknown.png in Resources */,
-				B30B7A582074D3D0001290A1 /* crt_fragment.glsl in Resources */,
 				B30B7A592074D3D0001290A1 /* Shader.fsh in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2489,7 +2485,8 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				COPY_PHASE_STRIP = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -2535,7 +2532,8 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				COPY_PHASE_STRIP = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

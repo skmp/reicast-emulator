@@ -1,9 +1,5 @@
 package com.reicast.emulator;
 
-import java.util.Arrays;
-import java.util.HashMap;
-
-import tv.ouya.console.api.OuyaController;
 import android.annotation.TargetApi;
 import android.app.NativeActivity;
 import android.content.SharedPreferences;
@@ -22,7 +18,6 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
@@ -36,6 +31,11 @@ import com.reicast.emulator.emu.OnScreenMenu.VmuPopup;
 import com.reicast.emulator.periph.Gamepad;
 import com.reicast.emulator.periph.MOGAInput;
 import com.reicast.emulator.periph.SipEmulator;
+
+import java.util.Arrays;
+import java.util.HashMap;
+
+import tv.ouya.console.api.OuyaController;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class GL2JNINative extends NativeActivity {
@@ -69,12 +69,11 @@ public class GL2JNINative extends NativeActivity {
 					WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 		}
 		getWindow().takeSurface(null);
-		
-		pad.isXperiaPlay = pad.IsXperiaPlay();
+
 		pad.isOuyaOrTV = pad.IsOuyaOrTV(GL2JNINative.this);
 //		isNvidiaShield = Gamepad.IsNvidiaShield();
 		
-		RegisterNative(pad.isXperiaPlay);
+		RegisterNative(false);
 		
 		config = new Config(GL2JNINative.this);
 		config.getConfigurationPrefs();
@@ -141,16 +140,6 @@ public class GL2JNINative extends NativeActivity {
 				Log.d("reicast",
 						"InputDevice Name: "
 								+ InputDevice.getDevice(joy).getName());
-				if (pad.isXperiaPlay) {
-					if (InputDevice.getDevice(joy).getName()
-							.contains(Gamepad.controllers_play_gp)) {
-						pad.keypadZeus[0] = joy;
-					}
-					if (InputDevice.getDevice(joy).getName()
-							.contains(Gamepad.controllers_play_tp)) {
-						pad.keypadZeus[1] = joy;
-					}
-				}
 				Log.d("reicast", "InputDevice Descriptor: " + descriptor);
 				pad.deviceId_deviceDescriptor.put(joy, descriptor);
 			}
@@ -178,16 +167,6 @@ public class GL2JNINative extends NativeActivity {
 								finish();
 							}
 						});
-					} else if (InputDevice.getDevice(joy).getName()
-							.contains(Gamepad.controllers_play) ) {
-						for (int keys : pad.keypadZeus) {
-							pad.playerNumX.put(keys, playerNum);
-						}
-						if (pad.custom[playerNum]) {
-							pad.setCustomMapping(id, playerNum, prefs);
-						} else {
-							pad.map[playerNum] = pad.getXPlayController();
-						}
 					} else if (!pad.compat[playerNum]) {
 						if (pad.custom[playerNum]) {
 							pad.setCustomMapping(id, playerNum, prefs);
@@ -514,11 +493,7 @@ public class GL2JNINative extends NativeActivity {
 			}
 		}
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
-			if (pad.isXperiaPlay) {
-				return true;
-			} else {
-				return showMenu();
-			}
+			return showMenu();
 		}
 		if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
 			return super.onKeyDown(keyCode, event);

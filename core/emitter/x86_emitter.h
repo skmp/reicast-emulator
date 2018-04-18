@@ -236,12 +236,13 @@ struct /*__declspec(dllexport)*/  x86_ptr_imm
 		this->ptr= reinterpret_cast<void*>(ptr);
 	}
 #endif
-
+#if HAS_DYNACALL
     template<typename Rv, typename ...Args>
     x86_ptr_imm(Rv(DYNACALL * ptr)(Args...))
     {
         this->ptr= reinterpret_cast<void*>(ptr);
     }
+#endif
 };
 
 enum x86_mrm_mod

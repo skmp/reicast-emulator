@@ -1,9 +1,5 @@
 package com.reicast.emulator;
 
-import java.util.Arrays;
-import java.util.HashMap;
-
-import tv.ouya.console.api.OuyaController;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -21,7 +17,6 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 
 import com.reicast.emulator.config.Config;
@@ -34,6 +29,11 @@ import com.reicast.emulator.emu.OnScreenMenu.VmuPopup;
 import com.reicast.emulator.periph.Gamepad;
 import com.reicast.emulator.periph.MOGAInput;
 import com.reicast.emulator.periph.SipEmulator;
+
+import java.util.Arrays;
+import java.util.HashMap;
+
+import tv.ouya.console.api.OuyaController;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 public class GL2JNIActivity extends Activity {
@@ -63,7 +63,6 @@ public class GL2JNIActivity extends Activity {
 		config.getConfigurationPrefs();
 		menu = new OnScreenMenu(GL2JNIActivity.this, prefs);
 
-		pad.isXperiaPlay = pad.IsXperiaPlay();
 		pad.isOuyaOrTV = pad.IsOuyaOrTV(GL2JNIActivity.this);
 //		pad.isNvidiaShield = pad.IsNvidiaShield();
 
@@ -171,9 +170,6 @@ public class GL2JNIActivity extends Activity {
 						} else if (InputDevice.getDevice(joy).getName()
 								.contains(Gamepad.controllers_shield)) {
 							pad.map[playerNum] = pad.getConsoleController();
-						} else if (InputDevice.getDevice(joy).getName()
-								.contains(Gamepad.controllers_play)) {
-							pad.map[playerNum] = pad.getXPlayController();
 						} else if (!pad.isActiveMoga[playerNum]) { // Ouya controller
 							pad.map[playerNum] = pad.getOUYAController();
 						}
@@ -534,11 +530,7 @@ public class GL2JNIActivity extends Activity {
 			}
 		}
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
-			if (pad.isXperiaPlay) {
-				return true;
-			} else {
-				return showMenu();
-			}
+			return showMenu();
 		}
 		return super.onKeyDown(keyCode, event);
 	}

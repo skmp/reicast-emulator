@@ -84,10 +84,9 @@ int numberOfControl = cfgLoadInt("players", "nb", 1);
 
 	for (int i = 0; i < numberOfControl; i++){
 		mcfg_Create(MDT_SegaController, i, 5);
+		mcfg_Create(MDT_SegaVMU, i, 0);
+		mcfg_Create(MDT_SegaVMU, i, 1);
 	}
-
-	mcfg_Create(MDT_SegaVMU,0,0);
-	mcfg_Create(MDT_SegaVMU,0,1);
 #else
 	mcfg_Create(MDT_NaomiJamma, 0, 5);
 #endif

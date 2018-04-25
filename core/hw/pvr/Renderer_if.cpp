@@ -3,7 +3,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
 
-#include "deps/zlib/zlib.h"
+#include <zlib.h>
 
 #include "deps/crypto/md5.h"
 

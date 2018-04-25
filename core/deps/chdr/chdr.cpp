@@ -41,7 +41,7 @@
 
 #include "deps/crypto/md5.h"
 #include "deps/crypto/sha1.h"
-#include "deps/zlib/zlib.h"
+#include <zlib.h>
 
 #include <time.h>
 #include <stddef.h>

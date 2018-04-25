@@ -8,9 +8,12 @@ RZDCY_SRC_DIR ?= $(call my-dir)
 
 RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
- hw/extdev/ hw/arm/ hw/naomi/ imgread/ linux/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
- deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/ 
+ hw/extdev/ hw/arm/ hw/naomi/ imgread/ linux/ ./ deps/coreio/ deps/chdr/ deps/crypto/ \
+ deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/
 
+ifndef FOR_LINUX
+	RZDCY_MODULES += deps/zlib/ deps/libpng/
+endif
 
 ifdef WEBUI
 	RZDCY_MODULES += webui/
@@ -70,7 +73,7 @@ endif
 RZDCY_FILES := $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.c))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.S))
-	
+
 ifdef FOR_PANDORA
 RZDCY_CFLAGS	:= \
 	$(CFLAGS) -c -O3 -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
@@ -97,6 +100,10 @@ RZDCY_CFLAGS	:= \
       RZDCY_CFLAGS += -DTARGET_LINUX_MIPS
 		endif
 	endif
+endif
+
+ifndef FOR_LINUX
+	RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/zlib/ -I$(RZDCY_SRC_DIR)/deps/libpng/
 endif
 
 ifdef NO_REC

@@ -3,6 +3,8 @@
 #include "rend/TexCache.h"
 #include "cfg/cfg.h"
 
+#include <png.h>
+
 #ifdef TARGET_PANDORA
 #include <unistd.h>
 #include <fcntl.h>
@@ -1869,9 +1871,6 @@ struct glesrend : Renderer
 		return gl_GetTexture(tsp, tcw);
 	}
 };
-
-
-#include "deps/libpng/png.h"
 
 FILE* pngfile;
 

@@ -376,6 +376,23 @@ void MakeCurrentThreadRealTime()
 //				NSLog(@"Joy Y: %i", v);
 //				joyy[0] = v;
 //			}];
+
+			[self.gController.extendedGamepad.leftTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					lt[0] &= ~(DC_AXIS_LT);
+				} else {
+					lt[0] |= (DC_AXIS_LT);
+				}
+			}];
+
+			[self.gController.extendedGamepad.rightTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					rt[0] &= ~(DC_AXIS_RT);
+				} else {
+					rt[0] |= (DC_AXIS_RT);
+				}
+			}];
+
 		}
         else if (self.gController.gamepad) {
             [self.gController.gamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
@@ -429,19 +446,35 @@ void MakeCurrentThreadRealTime()
 				}
             }];
 
-			[self.gController.gamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
-					[self.emuView handleKeyDown:self.controllerView.img_rt];
-				} else {
-					[self.emuView handleKeyUp:self.controllerView.img_rt];
-				}
-			}];
-
-			[self.gController.gamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+//			[self.gController.gamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+//				if (pressed && value >= 0.1) {
+//					[self.emuView handleKeyDown:self.controllerView.img_rt];
+//				} else {
+//					[self.emuView handleKeyUp:self.controllerView.img_rt];
+//				}
+//			}];
+//
+//			[self.gController.gamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+//				if (pressed && value >= 0.1) {
+//					[self.emuView handleKeyDown:self.controllerView.img_lt];
+//				} else {
+//					[self.emuView handleKeyUp:self.controllerView.img_lt];
+//				}
+//			}];
+			
+			[self.gController.extendedGamepad.leftTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
 					[self.emuView handleKeyDown:self.controllerView.img_lt];
 				} else {
 					[self.emuView handleKeyUp:self.controllerView.img_lt];
+				}
+			}];
+
+			[self.gController.extendedGamepad.rightTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					[self.emuView handleKeyDown:self.controllerView.img_rt];
+				} else {
+					[self.emuView handleKeyUp:self.controllerView.img_rt];
 				}
 			}];
 

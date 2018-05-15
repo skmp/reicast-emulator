@@ -265,6 +265,29 @@ void MakeCurrentThreadRealTime()
 		// TODO: ADd multi player  using gController.playerIndex and iterate all controllers
 
 		if (self.gController.extendedGamepad) {
+			[self.gController.extendedGamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue){
+				if (dpad.right.isPressed) {
+					kcode[0] &= ~(DC_DPAD_RIGHT);
+				} else {
+					kcode[0] |= (DC_DPAD_RIGHT);
+				}
+				if (dpad.left.isPressed) {
+					kcode[0] &= ~(DC_DPAD_LEFT);
+				} else {
+					kcode[0] |= (DC_DPAD_LEFT);
+				}
+				if (dpad.up.isPressed) {
+					kcode[0] &= ~(DC_DPAD_UP);
+				} else {
+					kcode[0] |= (DC_DPAD_UP);
+				}
+				if (dpad.down.isPressed) {
+					kcode[0] &= ~(DC_DPAD_DOWN);
+				} else {
+					kcode[0] |= (DC_DPAD_DOWN);
+				}
+			}];
+
 			[self.gController.extendedGamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
 					kcode[0] &= ~(DC_BTN_A);
@@ -293,61 +316,20 @@ void MakeCurrentThreadRealTime()
 					kcode[0] |= (DC_BTN_Y);
 				}
 			}];
-
-			[self.gController.extendedGamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
-					kcode[0] &= ~(DC_AXIS_RT);
-				} else {
-					kcode[0] |= (DC_AXIS_RT);
-				}
-			}];
-
+			
 			[self.gController.extendedGamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
-					kcode[0] &= ~(DC_AXIS_LT);
-				} else {
-					kcode[0] |= (DC_AXIS_LT);
-				}
+				lt[0] = pressed ? (int)(255 * value) : 0;
 			}];
-
-			// Either trigger for start
-			[self.gController.extendedGamepad.rightTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
-					kcode[0] &= ~(DC_BTN_START);
-				} else {
-					kcode[0] |= (DC_BTN_START);
-				}
+			[self.gController.extendedGamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				rt[0] = pressed ? (int)(255 * value) : 0;
 			}];
 
 			[self.gController.extendedGamepad.leftTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
-					kcode[0] &= ~(DC_BTN_START);
-				} else {
-					kcode[0] |= (DC_BTN_START);
-				}
+				lt[0] = pressed ? (int)(255 * value) : 0;
 			}];
 
-			[self.gController.extendedGamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue){
-				if (dpad.right.isPressed) {
-					kcode[0] &= ~(DC_DPAD_RIGHT);
-				} else {
-					kcode[0] |= (DC_DPAD_RIGHT);
-				}
-				if (dpad.left.isPressed) {
-					kcode[0] &= ~(DC_DPAD_LEFT);
-				} else {
-					kcode[0] |= (DC_DPAD_LEFT);
-				}
-				if (dpad.up.isPressed) {
-					kcode[0] &= ~(DC_DPAD_UP);
-				} else {
-					kcode[0] |= (DC_DPAD_UP);
-				}
-				if (dpad.down.isPressed) {
-					kcode[0] &= ~(DC_DPAD_DOWN);
-				} else {
-					kcode[0] |= (DC_DPAD_DOWN);
-				}
+			[self.gController.extendedGamepad.rightTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				rt[0] = pressed ? (int)(255 * value) : 0;
 			}];
 
 			[self.gController.extendedGamepad.leftThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
@@ -376,25 +358,31 @@ void MakeCurrentThreadRealTime()
 //				NSLog(@"Joy Y: %i", v);
 //				joyy[0] = v;
 //			}];
-
-			[self.gController.extendedGamepad.leftTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
-					lt[0] &= ~(DC_AXIS_LT);
-				} else {
-					lt[0] |= (DC_AXIS_LT);
-				}
-			}];
-
-			[self.gController.extendedGamepad.rightTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
-					rt[0] &= ~(DC_AXIS_RT);
-				} else {
-					rt[0] |= (DC_AXIS_RT);
-				}
-			}];
-
 		}
         else if (self.gController.gamepad) {
+			[self.gController.gamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue){
+				if (dpad.right.isPressed) {
+					[self.emuView handleKeyDown:self.controllerView.img_dpad_r];
+				} else {
+					[self.emuView handleKeyUp:self.controllerView.img_dpad_r];
+				}
+				if (dpad.left.isPressed) {
+					[self.emuView handleKeyDown:self.controllerView.img_dpad_l];
+				} else {
+					[self.emuView handleKeyUp:self.controllerView.img_dpad_l];
+				}
+				if (dpad.up.isPressed) {
+					[self.emuView handleKeyDown:self.controllerView.img_dpad_u];
+				} else {
+					[self.emuView handleKeyUp:self.controllerView.img_dpad_u];
+				}
+				if (dpad.down.isPressed) {
+					[self.emuView handleKeyDown:self.controllerView.img_dpad_d];
+				} else {
+					[self.emuView handleKeyUp:self.controllerView.img_dpad_d];
+				}
+            }];
+		
             [self.gController.gamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
 					[self.emuView handleKeyDown:self.controllerView.img_abxy_a];
@@ -423,44 +411,21 @@ void MakeCurrentThreadRealTime()
 					[self.emuView handleKeyUp:self.controllerView.img_abxy_y];
 				}
             }];
-            [self.gController.gamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue){
-				if (dpad.right.isPressed) {
-					[self.emuView handleKeyDown:self.controllerView.img_dpad_r];
+			
+			[self.gController.gamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					[self.emuView handleKeyDown:self.controllerView.img_lt];
 				} else {
-					[self.emuView handleKeyUp:self.controllerView.img_dpad_r];
+					[self.emuView handleKeyUp:self.controllerView.img_lt];
 				}
-				if (dpad.left.isPressed) {
-					[self.emuView handleKeyDown:self.controllerView.img_dpad_l];
+			}];
+			[self.gController.gamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+				if (pressed && value >= 0.1) {
+					[self.emuView handleKeyDown:self.controllerView.img_rt];
 				} else {
-					[self.emuView handleKeyUp:self.controllerView.img_dpad_l];
+					[self.emuView handleKeyUp:self.controllerView.img_rt];
 				}
-				if (dpad.up.isPressed) {
-					[self.emuView handleKeyDown:self.controllerView.img_dpad_u];
-				} else {
-					[self.emuView handleKeyUp:self.controllerView.img_dpad_u];
-				}
-				if (dpad.down.isPressed) {
-					[self.emuView handleKeyDown:self.controllerView.img_dpad_d];
-				} else {
-					[self.emuView handleKeyUp:self.controllerView.img_dpad_d];
-				}
-            }];
-
-//			[self.gController.gamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-//				if (pressed && value >= 0.1) {
-//					[self.emuView handleKeyDown:self.controllerView.img_rt];
-//				} else {
-//					[self.emuView handleKeyUp:self.controllerView.img_rt];
-//				}
-//			}];
-//
-//			[self.gController.gamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-//				if (pressed && value >= 0.1) {
-//					[self.emuView handleKeyDown:self.controllerView.img_lt];
-//				} else {
-//					[self.emuView handleKeyUp:self.controllerView.img_lt];
-//				}
-//			}];
+			}];
 			
 			[self.gController.extendedGamepad.leftTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
@@ -469,7 +434,6 @@ void MakeCurrentThreadRealTime()
 					[self.emuView handleKeyUp:self.controllerView.img_lt];
 				}
 			}];
-
 			[self.gController.extendedGamepad.rightTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
 					[self.emuView handleKeyDown:self.controllerView.img_rt];

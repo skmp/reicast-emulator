@@ -3,6 +3,7 @@
 
 extern audiobackend_t audiobackend_coreaudio;
 
+#if TARGET_OS_IPHONE
 //
 //  TPCircularBuffer.h
 //  Circular/Ring buffer implementation
@@ -170,4 +171,5 @@ extern "C" {
 }
 #endif
 
+#endif
 #endif

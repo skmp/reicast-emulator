@@ -38,17 +38,21 @@ OSStatus coreaudio_callback(void* ctx, AudioUnitRenderActionFlags* flags, const 
     u8* src = samples_temp;
 
     for (int i = 0; i < abl->mNumberBuffers; i++) {
+#if TARGET_OS_IPHONE
 		cb_read(abl->mBuffers[i].mData, abl->mBuffers[i].mDataByteSize);
-//
-//        memcpy(abl->mBuffers[i].mData, src, abl->mBuffers[i].mDataByteSize);
-//        src += abl->mBuffers[i].mDataByteSize;
+#else
+
+        memcpy(abl->mBuffers[i].mData, src, abl->mBuffers[i].mDataByteSize);
+        src += abl->mBuffers[i].mDataByteSize;
+#endif
     }
+#if !TARGET_OS_IPHONE
+    samples_ptr -= frames * 2 * 2;
 
-//    samples_ptr -= frames * 2 * 2;
+    if (samples_ptr < 0)
+        samples_ptr = 0;
 
-//    if (samples_ptr < 0)
-//        samples_ptr = 0;
-//
+#endif
     return noErr;
 }
 
@@ -61,7 +65,9 @@ static void coreaudio_init()
     AudioComponentDescription desc;
     AudioComponent component;
 
+#if TARGET_OS_IPHONE
 	TPCircularBufferInit(&buffer, 2048 * 16); // I dunno, 16 frames?
+#endif
     
     desc.componentType = kAudioUnitType_Output;
 #if !defined(TARGET_IPHONE) && !defined(TARGET_IPHONE_SIMULATOR)
@@ -118,16 +124,17 @@ static u32 coreaudio_push(void* frame, u32 samples, bool wait)
 {
 	while (samples_ptr != 0 && wait)
 		;
-
+#if TARGET_OS_IPHONE
 		cb_write(frame, samples * sizeof(s32));
+#else
     /* Yeah, right */
-//    while (samples_ptr != 0 && wait) ;
-//
-//    if (samples_ptr == 0) {
-//        memcpy(&samples_temp[samples_ptr], frame, samples * 4);
-//        samples_ptr += samples * 4;
-//    }
-//
+    while (samples_ptr != 0 && wait) ;
+
+    if (samples_ptr == 0) {
+        memcpy(&samples_temp[samples_ptr], frame, samples * 4);
+        samples_ptr += samples * 4;
+    }
+#endif
     return 1;
 }
 
@@ -144,7 +151,9 @@ static void coreaudio_term()
     err = AudioComponentInstanceDispose(audioUnit);
     verify(err == noErr);
 
+#if TARGET_OS_IPHONE
 	TPCircularBufferCleanup(&buffer);
+#endif
 }
 
 audiobackend_t audiobackend_coreaudio = {
@@ -156,6 +165,7 @@ audiobackend_t audiobackend_coreaudio = {
 };
 #endif
 
+#if TARGET_OS_IPHONE
 static uint16_t cb_write(const void *inBuffer, uint16_t maxLength)
 {
 	return TPCircularBufferProduceBytes(&buffer, inBuffer, maxLength);
@@ -184,7 +194,6 @@ static uint16_t cb_usedBytes()
 {
 	return buffer.length - buffer.fillCount;
 }
-
 
 //
 //  TPCircularBuffer.c
@@ -300,4 +309,5 @@ void TPCircularBufferClear(TPCircularBuffer *buffer) {
 		TPCircularBufferConsume(buffer, fillCount);
 	}
 }
+#endif
 

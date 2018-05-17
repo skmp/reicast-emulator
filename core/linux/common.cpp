@@ -194,7 +194,7 @@ void cResetEvent::Wait()//Wait for signal , then reset
 void VArray2::LockRegion(u32 offset,u32 size)
 {
 	#if !defined(TARGET_NO_EXCEPTIONS)
-  u32 inpage=offset & PAGE_MASK;
+	u32 inpage=offset & PAGE_MASK;
 	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ );
 	if (rv!=0)
 	{
@@ -202,7 +202,7 @@ void VArray2::LockRegion(u32 offset,u32 size)
 		die("mprotect  failed ..\n");
 	}
 
-	#else
+//	#else
 //		printf("VA2: LockRegion\n");
 	#endif
 }
@@ -245,7 +245,7 @@ void print_mem_addr()
 void VArray2::UnLockRegion(u32 offset,u32 size)
 {
 	#if !defined(TARGET_NO_EXCEPTIONS)
-  u32 inpage=offset & PAGE_MASK;
+	u32 inpage=offset & PAGE_MASK;
 	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ | PROT_WRITE);
 	if (rv!=0)
 	{
@@ -253,7 +253,7 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 		printf("mprotect(%8p,%08X,RW) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
 		die("mprotect  failed ..\n");
 	}
-	#else
+//	#else
 //		printf("VA2: UnLockRegion\n");
 	#endif
 }

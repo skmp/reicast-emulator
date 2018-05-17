@@ -73,7 +73,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 
 
 		#if HOST_CPU==CPU_ARM
-			else if (dyna_cde)
+			if (dyna_cde)
 			{
 				ctx.pc = (u32)ngen_readm_fail_v2((u32*)ctx.pc, ctx.r, (unat)si->si_addr);
 

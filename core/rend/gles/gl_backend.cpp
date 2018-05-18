@@ -587,7 +587,7 @@ const char* PixelPipelineShader =
 "\
 \
 #define cp_AlphaTest %d \n\
-#define pp_ClipTestMode %d.0 \n\
+#define pp_ClipTestMode %d \n\
 #define pp_UseAlpha %d \n\
 #define pp_Texture %d \n\
 #define pp_IgnoreTexA %d \n\
@@ -613,6 +613,19 @@ uniform sampler2D tex,fog_table; \n\
 } \n\
 void main() \n\
 { \n\
+	// Clip outside the box \n\
+	#if pp_ClipTestMode==1 \n\
+		if (gl_FragCoord.x < pp_ClipTest.x || gl_FragCoord.x > pp_ClipTest.z \n\
+				|| gl_FragCoord.y < pp_ClipTest.y || gl_FragCoord.y > pp_ClipTest.w) \n\
+			discard; \n\
+	#endif \n\
+	// Clip inside the box \n\
+	#if pp_ClipTestMode==-1 \n\
+		if (gl_FragCoord.x >= pp_ClipTest.x && gl_FragCoord.x <= pp_ClipTest.z \n\
+				&& gl_FragCoord.y >= pp_ClipTest.y && gl_FragCoord.y <= pp_ClipTest.w) \n\
+			discard; \n\
+	#endif \n\
+	\n\
    " LOWP " vec4 color=vtx_base; \n\
 	#if pp_UseAlpha==0 \n\
 		color.a=1.0; \n\
@@ -693,9 +706,9 @@ static s32 SetTileClip(u32 val, bool set)
 	if (clipmode<2)
 		clip_mode=0;    //always passes
 	else if (clipmode&1)
-		clip_mode=-1;   //render stuff inside the region
+		clip_mode=-1;   //render stuff outside the region
 	else
-		clip_mode=1;    //render stuff outside the region
+		clip_mode=1;    //render stuff inside the region
 
 	csx=(float)(val&63);
 	cex=(float)((val>>6)&63);
@@ -706,11 +719,21 @@ static s32 SetTileClip(u32 val, bool set)
 	csy=csy*32;
 	cey=cey*32 +32;
 
-	if (csx==0 && csy==0 && cex==640 && cey==480)
+	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
 		return 0;
 	
-	if (set)
+	if (set && clip_mode)
+   {
+    	csy = 480 - csy;
+		cey = 480 - cey;
+		float dc2s_scale_h = gles_screen_height / 480.0f;
+		float ds2s_offs_x = (gles_screen_width - dc2s_scale_h * 640) / 2;
+		csx = csx * dc2s_scale_h + ds2s_offs_x;
+		cex = cex * dc2s_scale_h + ds2s_offs_x;
+		csy = csy * dc2s_scale_h;
+		cey = cey * dc2s_scale_h;
 		glUniform4f(CurrentShader->pp_ClipTest,-csx,-csy,-cex,-cey);		
+   }
 
 	return clip_mode;
 }

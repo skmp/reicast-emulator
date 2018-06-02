@@ -6,7 +6,7 @@
     <dependencies>
         <deployment version="2304" identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
-        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="Safe area layout guides" minToolsVersion="8.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -284,6 +284,7 @@
     <resources>
         <image name="ABXYPad.png" width="120" height="120"/>
         <image name="DPad.png" width="120" height="120"/>
+        <image name="DPad2.png" width="120" height="120"/>
         <image name="JoystickBackground.png" width="120" height="120"/>
         <image name="JoystickButton.png" width="56" height="56"/>
         <image name="LTrigger.png" width="67" height="44"/>

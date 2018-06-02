@@ -37,6 +37,10 @@ NSInteger right_pad = 8;
 NSInteger left_trigger = 9;
 NSInteger right_trigger = 10;
 NSInteger start_button = 11;
+NSInteger up_stick = 12;
+NSInteger down_stick = 13;
+NSInteger left_stick = 14;
+NSInteger right_stick = 15;
 
 - (void)setControlInput:(PadViewController *)input
 {
@@ -81,6 +85,18 @@ NSInteger start_button = 11;
 	if (button == controller.img_start || button.tag == start_button) {
 		kcode[0] &= ~(DC_BTN_START);
 	}
+	if (button == controller.img_dpad_u || button.tag == up_stick) {
+       		 joyy[0] = (int)(127);
+        }
+    	if (button == controller.img_dpad_d || button.tag == down_stick) {
+       		 joyy[0] = (int)(-127);
+    	}
+    	if (button == controller.img_dpad_l || button.tag == left_stick) {
+       		 joyx[0] = (int)(-127);
+    	}
+    	if (button == controller.img_dpad_r || button.tag == right_stick) {
+        	joyx[0] = (int)(127);
+        }
 }
 
 - (void) handleKeyUp:(UIButton*)button
@@ -121,6 +137,18 @@ NSInteger start_button = 11;
 	if (button == controller.img_start || button.tag == start_button) {
 		kcode[0] |= (DC_BTN_START);
 	}
+		if (button == controller.img_dpad_u || button.tag == up_stick) {
+        	joyy[0] = (int)(0);
+        }
+    	if (button == controller.img_dpad_d || button.tag == down_stick) {
+       		 joyy[0] = (int)(0);
+    	}
+    	if (button == controller.img_dpad_l || button.tag == left_stick) {
+       		 joyx[0] = (int)(0);
+    	}
+    	if (button == controller.img_dpad_r || button.tag == right_stick) {
+       		 joyx[0] = (int)(0);
+        }
 }
 
 @end

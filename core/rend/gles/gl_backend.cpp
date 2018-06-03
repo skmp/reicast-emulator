@@ -615,14 +615,14 @@ void main() \n\
 { \n\
 	// Clip outside the box \n\
 	#if pp_ClipTestMode==1 \n\
-		if (gl_FragCoord.x < pp_ClipTest.x || gl_FragCoord.x > pp_ClipTest.z \n\
-				|| gl_FragCoord.y < pp_ClipTest.y || gl_FragCoord.y > pp_ClipTest.w) \n\
+		if (vtx_xyz.x < pp_ClipTest.x || vtx_xyz.x > pp_ClipTest.z \n\
+				|| vtx_xyz.y < pp_ClipTest.y || vtx_xyz.y > pp_ClipTest.w) \n\
 			discard; \n\
 	#endif \n\
 	// Clip inside the box \n\
 	#if pp_ClipTestMode==-1 \n\
-		if (gl_FragCoord.x >= pp_ClipTest.x && gl_FragCoord.x <= pp_ClipTest.z \n\
-				&& gl_FragCoord.y >= pp_ClipTest.y && gl_FragCoord.y <= pp_ClipTest.w) \n\
+		if (vtx_xyz.x >= pp_ClipTest.x && vtx_xyz.x <= pp_ClipTest.z \n\
+				&& vtx_xyz.y >= pp_ClipTest.y && vtx_xyz.y <= pp_ClipTest.w) \n\
 			discard; \n\
 	#endif \n\
 	\n\
@@ -722,18 +722,8 @@ static s32 SetTileClip(u32 val, bool set)
 	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
 		return 0;
 	
-	if (set && clip_mode)
-   {
-    	csy = 480 - csy;
-		cey = 480 - cey;
-		float dc2s_scale_h = gles_screen_height / 480.0f;
-		float ds2s_offs_x = (gles_screen_width - dc2s_scale_h * 640) / 2;
-		csx = csx * dc2s_scale_h + ds2s_offs_x;
-		cex = cex * dc2s_scale_h + ds2s_offs_x;
-		csy = csy * dc2s_scale_h;
-		cey = cey * dc2s_scale_h;
-		glUniform4f(CurrentShader->pp_ClipTest, csx, cey, cex, csy);		
-   }
+	if (set)
+		glUniform4f(CurrentShader->pp_ClipTest, csx, csy, cex, cey);		
 
 	return clip_mode;
 }

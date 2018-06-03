@@ -81,7 +81,6 @@ struct vbo_type
 vbo_type vbo;
 modvol_shader_type modvol_shader;
 PipelineShader program_table[768*2];
-static float fog_coefs[]={0,0};
 
 /*
 
@@ -1734,79 +1733,67 @@ static bool gl_create_resources(void)
 	return true;
 }
 
-/**
- * Compute the fog coefficients for all polygons using lookup-table fog. 
- */
-static void scene_compute_lut_fog(void)
+void tryfit(float* x,float* y)
 {
 	//y=B*ln(x)+A
-   double a,b;
-   unsigned i;
-   float xvals[128];
-   float yvals[128];
-	float maxdev = 0;
-	double sylnx = 0;
-   double sy    = 0;
-   double slnx  = 0;
-   double slnx2 = 0;
-	u32 cnt      = 0;
-   //Get the coefs for the fog curve
-   u8* fog_table=(u8*)FOG_TABLE;
-   for (int i=0;i<128;i++)
-   {
-      xvals[i]=powf(2.0f,i>>4)*(1+(i&15)/16.f);
-      yvals[i]=fog_table[i*4+1]/255.0f;
-   }
 
-	for (i=0;i<128;i++)
-	{
-      unsigned j;
-		int rep=1;
+	double sylnx=0,sy=0,slnx=0,slnx2=0;
 
-		/* Discard values clipped to 0 or 1 */
-		if (i<128 && yvals[i]==1 && yvals[i+1]==1)
-			continue;
-
-		if (i>0 && yvals[i]==0 && yvals[i-1]==0)
-			continue;
-
-		/* Add many samples for first and last value 
-       * (fog-in, fog-out -> important) */
-		if (i>0 && yvals[i]!=1 && yvals[i-1]==1)
-			rep = 10000;
-
-		if (i<128 && yvals[i]!=0 && yvals[i+1]==0)
-			rep = 10000;
-
-		for (j = 0; j < rep;j++)
-		{
-			sylnx       += yvals[i]*log((double)xvals[i]);
-			sy          += yvals[i];
-			slnx        += log((double)xvals[i]);
-			slnx2       += log((double)xvals[i])*log((double)xvals[i]);
-			cnt++;
-		}
-	}
-
-	b   = (cnt*sylnx-sy*slnx)/(cnt*slnx2-slnx*slnx);
-	a   = (sy-b*slnx)/(cnt);
-
-
-	//We use log2 and not ln on calculations	//B*log(x)+A
-	//log2(x)=log(x)/log(2)
-	//log(x)=log2(x)*log(2)
-	//B*log(2)*log(x)+A
-	b  *= logf(2.0);
+	u32 cnt=0;
 
 	for (int i=0;i<128;i++)
 	{
-		float diff=min(max(b*logf(xvals[i])/logf(2.0)+a,(double)0),(double)1)-yvals[i];
-		maxdev=max((float)fabs((float)diff),(float)maxdev);
-	}
-	fog_coefs[0]=a;
-	fog_coefs[1]=b;
+		int rep=1;
 
-	//printf("FOG TABLE Curve match: maxdev: %.02f cents\n",maxdev*100);
+		//discard values clipped to 0 or 1
+		if (i<127 && y[i]==1 && y[i+1]==1)
+			continue;
+
+		if (i>0 && y[i]==0 && y[i-1]==0)
+			continue;
+
+		//Add many samples for first and last value (fog-in, fog-out -> important)
+		if (i>0 && y[i]!=1 && y[i-1]==1)
+			rep=10000;
+
+		if (i<127 && y[i]!=0 && y[i+1]==0)
+			rep=10000;
+
+		for (int j=0;j<rep;j++)
+		{
+			cnt++;
+			const double lnx = log((double)x[i]);
+			sylnx += y[i] * lnx;
+			sy += y[i];
+			slnx += lnx;
+			slnx2 += lnx * lnx;
+		}
+	}
+
+	double a = 0, b = 0;
+	if (slnx != 0)
+	{
+		b=(cnt*sylnx-sy*slnx)/(cnt*slnx2-slnx*slnx);
+		a=(sy-b*slnx)/(cnt);
+
+
+		//We use log2 and not ln on calculations	//B*log(x)+A
+		//log2(x)=log(x)/log(2)
+		//log(x)=log2(x)*log(2)
+		//B*log(2)*log(x)+A
+		b*=logf(2.0);
+		/*
+		float maxdev=0;
+		for (int i=0;i<128;i++)
+		{
+			float diff=min(max(b*logf(x[i])/logf(2.0)+a,(double)0),(double)1)-y[i];
+			maxdev=max((float)fabs((float)diff),(float)maxdev);
+		}
+		printf("FOG TABLE Curve match: maxdev: %.02f cents\n",maxdev*100);
+		 */
+	}
+	ShaderUniforms.fog_coefs[0] = a;
+	ShaderUniforms.fog_coefs[1] = b;
 	//printf("%f\n",B*log(maxdev)/log(2.0)+A);
 }
 
@@ -2177,8 +2164,17 @@ static bool RenderFrame(void)
 	if (fog_needs_update)
 	{
 		fog_needs_update=false;
+      //Get the coefs for the fog curve
+		u8* fog_table=(u8*)FOG_TABLE;
+		float xvals[128];
+		float yvals[128];
+		for (int i=0;i<128;i++)
+		{
+			xvals[i]=powf(2.0f,i>>4)*(1+(i&15)/16.f);
+			yvals[i]=fog_table[i*4+1]/255.0f;
+		}
 
-		scene_compute_lut_fog();
+		tryfit(xvals,yvals);
 	}
 
 	glUseProgram(modvol_shader.program);

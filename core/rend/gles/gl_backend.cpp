@@ -1420,7 +1420,6 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 		{
          // Exclusion volume
 			/*
-				this is bugged. a lot.
 				I've only seen a single game use it, so i guess it doesn't matter ? (Zombie revenge)
 				(actually, i think there was also another, racing game)
 			*/
@@ -1434,7 +1433,7 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 
 			//if (1 == st) st = 1; else st = 0;
          glStencilFunc(GL_EQUAL, 1, 3);
-         glStencilOp(GL_ZERO, GL_KEEP, GL_KEEP);
+         glStencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
 		}
 	}
 }
@@ -1534,7 +1533,7 @@ static void DrawModVols(void)
 			u32 mod_base=0; //cur start triangle
 			u32 mod_last=0; //last merge
 
-			u32 cmv_count=(pvrrc.global_param_mvo.used()-1);
+			u32 cmv_count= (pvrrc.global_param_mvo.used()-1);
 			ISP_Modvol* params=pvrrc.global_param_mvo.head();
 
 			//ISP_Modvol
@@ -1545,8 +1544,10 @@ static void DrawModVols(void)
 				mod_base=ispc.id;
 				u32 sz=params[cmv+1].id-mod_base;
 
-				u32 mv_mode = ispc.DepthMode;
+            if (sz == 0)
+               continue;
 
+				u32 mv_mode = ispc.DepthMode;
 
 				if (mv_mode==0)	//normal trigs
 				{
@@ -1601,7 +1602,7 @@ static void DrawModVols(void)
 		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
 
 		//Draw and blend
-		glDrawArrays(GL_TRIANGLES,pvrrc.modtrig.used(),2);
+		//glDrawArrays(GL_TRIANGLES,pvrrc.modtrig.used(),2);
 
       glBindBuffer(GL_ARRAY_BUFFER, 0);
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

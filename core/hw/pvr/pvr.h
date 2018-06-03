@@ -454,6 +454,18 @@ union FPU_SHAD_SCALE_type
 	};
 	u32 full;
 };
+
+union TA_GLOB_TILE_CLIP_type
+{
+   struct
+   {
+      u32 tile_x_num	: 6;
+      u32 reserved 	: 10;
+      u32 tile_y_num  : 4;
+      u32 reserved2	: 12;
+   };
+   u32 full;
+};
  
 
 // TA REGS
@@ -563,7 +575,7 @@ union FPU_SHAD_SCALE_type
 #define TA_ISP_LIMIT      PvrReg(TA_ISP_LIMIT_addr,u32)      // RW Current ISP/TSP Parameter write address
 #define TA_NEXT_OPB       PvrReg(TA_NEXT_OPB_addr,u32)       // R  Global Tile clip control
 #define TA_ITP_CURRENT    PvrReg(TA_ITP_CURRENT_addr,u32)    // R  Current ISP/TSP Parameter write address
-#define TA_GLOB_TILE_CLIP PvrReg(TA_GLOB_TILE_CLIP_addr,u32) // RW Global Tile clip control
+#define TA_GLOB_TILE_CLIP PvrReg(TA_GLOB_TILE_CLIP_addr,TA_GLOB_TILE_CLIP_type) // RW Global Tile clip control
 #define TA_ALLOC_CTRL     PvrReg(TA_ALLOC_CTRL_addr,u32)     // RW Object list control
 #define TA_LIST_INIT      PvrReg(TA_LIST_INIT_addr,u32)      // RW TA initialization
 #define TA_YUV_TEX_BASE   PvrReg(TA_YUV_TEX_BASE_addr,u32)   // RW YUV422 texture write start address

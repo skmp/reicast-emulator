@@ -732,7 +732,7 @@ static s32 SetTileClip(u32 val, bool set)
 		cex = cex * dc2s_scale_h + ds2s_offs_x;
 		csy = csy * dc2s_scale_h;
 		cey = cey * dc2s_scale_h;
-		glUniform4f(CurrentShader->pp_ClipTest,-csx,-csy,-cex,-cey);		
+		glUniform4f(CurrentShader->pp_ClipTest, csx, cey, cex, csy);		
    }
 
 	return clip_mode;
@@ -954,8 +954,9 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
    {
       cache.program    = CurrentShader->program;
       glUseProgram(CurrentShader->program);
-      SetTileClip(gp->tileclip,true);
    }
+
+   SetTileClip(gp->tileclip,true);
 
    if (cache.stencil_modvol_on!=stencil)
    {

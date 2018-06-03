@@ -1378,6 +1378,7 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 
 		if (mv_mode==1)
 		{
+         // Inclusion volume
 			//res : old : final 
 			//0   : 0      : 00
 			//0   : 1      : 01
@@ -1400,21 +1401,23 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 		}
 		else
 		{
+         // Exclusion volume
 			/*
 				this is bugged. a lot.
 				I've only seen a single game use it, so i guess it doesn't matter ? (Zombie revenge)
 				(actually, i think there was also another, racing game)
 			*/
 
+         // The initial value for exclusion volumes is 1 so we need to invert the result before and'ing.
 			//res : old : final 
 			//0   : 0   : 00
-			//0   : 1   : 00
+			//0   : 1   : 01
 			//1   : 0   : 00
-			//1   : 1   : 01
+			//1   : 1   : 00
 
-			//if (2>st) st=1; else st=0;	//can't be done with a single pass
-         glStencilFunc(GL_GREATER, 1, 3);
-         glStencilOp(GL_ZERO, GL_KEEP, GL_REPLACE);
+			//if (1 == st) st = 1; else st = 0;
+         glStencilFunc(GL_EQUAL, 1, 3);
+         glStencilOp(GL_ZERO, GL_KEEP, GL_KEEP);
 		}
 	}
 }
@@ -1494,7 +1497,6 @@ static void DrawModVols(void)
 		*/
 
 		glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-		glDepthFunc(GL_GREATER);
 
 		if (settings.pvr.Emulation.ModVolMode == 2)
 		{
@@ -2232,6 +2234,7 @@ static bool RenderFrame(void)
    {
       glClearColor(0, 0, 0, 1.0f);
       glClearDepth(0.f);
+      glStencilMask(0xFF);
       glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
       doCleanFrame = false;
    }

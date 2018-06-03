@@ -2302,12 +2302,12 @@ static bool RenderFrame(void)
 	/*if (!GetAsyncKeyState(VK_F1))*/
 	DrawList<TA_LIST_OPAQUE, false>(pvrrc.global_param_op);
 
-	DrawModVols();
-
 	//Alpha tested
 	//setup alpha test state
 	/*if (!GetAsyncKeyState(VK_F2))*/
 	DrawList<TA_LIST_PUNCH_THROUGH, false>(pvrrc.global_param_pt);
+
+	DrawModVols();
 
 	//Alpha blended
 	//Setup blending

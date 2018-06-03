@@ -553,7 +553,6 @@ const char* VertexShaderSource =
 /* Vertex constants*/  \n\
 uniform " HIGHP " vec4      scale; \n\
 uniform " HIGHP " vec4      depth_scale; \n\
-uniform " HIGHP " float sp_FOG_DENSITY; \n\
 /* Vertex input */ \n\
 " attr " " HIGHP " vec4    in_pos; \n\
 " attr " " LOWP " vec4     in_base; \n\
@@ -563,15 +562,12 @@ uniform " HIGHP " float sp_FOG_DENSITY; \n\
 " vary " " LOWP " vec4 vtx_base; \n\
 " vary " " LOWP " vec4 vtx_offs; \n\
 " vary " " MEDIUMP " vec2 vtx_uv; \n\
-" vary " " HIGHP " vec3 vtx_xyz; \n\
 void main() \n\
 { \n\
 	vtx_base=in_base; \n\
 	vtx_offs=in_offs; \n\
 	vtx_uv=in_uv; \n\
 	vec4 vpos=in_pos; \n\
-	vtx_xyz.xy = vpos.xy;  \n\
-	vtx_xyz.z = vpos.z*sp_FOG_DENSITY;  \n\
 	vpos.w=1.0/vpos.z;  \n"
 #ifndef GLES
 	"\
@@ -610,16 +606,16 @@ uniform " LOWP " float cp_AlphaTestValue; \n\
 uniform " LOWP " vec4 pp_ClipTest; \n\
 uniform " LOWP " vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
 uniform " HIGHP " vec2 sp_LOG_FOG_COEFS; \n\
+uniform " HIGHP " float sp_FOG_DENSITY; \n\
 uniform sampler2D tex,fog_table; \n\
 /* Vertex input*/ \n\
 " vary " " LOWP " vec4 vtx_base; \n\
 " vary " " LOWP " vec4 vtx_offs; \n\
 " vary " " MEDIUMP " vec2 vtx_uv; \n\
-" vary " " HIGHP " vec3 vtx_xyz; \n\
-" LOWP " float fog_mode2(" HIGHP " float val) \n\
+" LOWP " float fog_mode2(" HIGHP " float w) \n\
 { \n\
-   " HIGHP " float fog_idx=clamp(val,0.0,127.99); \n\
-	return clamp(sp_LOG_FOG_COEFS.y*log2(fog_idx)+sp_LOG_FOG_COEFS.x,0.001,1.0); //the clamp is required due to yet another bug !\n\
+   " HIGHP " float fog_idx=clamp(w * sp_FOG_DENSITY, 0.0, 127.99); \n\
+	return clamp(sp_LOG_FOG_COEFS.y * log2(fog_idx) + sp_LOG_FOG_COEFS.x, 0.001, 1.0); //the clamp is required due to yet another bug !\n\
 } \n\
 void main() \n\
 { \n\
@@ -641,7 +637,7 @@ void main() \n\
 		color.a=1.0; \n\
 	#endif\n\
 	#if pp_FogCtrl==3 \n\
-		color=vec4(sp_FOG_COL_RAM.rgb,fog_mode2(vtx_xyz.z)); \n\
+		color=vec4(sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w)); \n\
 	#endif\n\
 	#if pp_Texture==1 \n\
 	{ \n\
@@ -687,7 +683,7 @@ void main() \n\
 	#endif\n\
 	#if pp_FogCtrl==0 \n\
 	{ \n\
-		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(vtx_xyz.z));  \n\
+		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
 	} \n\
 	#endif\n\
 	#if cp_AlphaTest == 1 \n\

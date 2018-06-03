@@ -691,8 +691,8 @@ void main() \n\
 	#endif  \n"
 #ifndef GLES
    "\
-	float w = gl_FragCoord.w * 100.0; \n\
-	gl_FragDepth = log2(1.0 + w) / 24.0; \n"
+	float w = gl_FragCoord.w * 100000.0; \n\
+	gl_FragDepth = log2(1.0 + w) / 34; \n"
 #endif
 	FRAGCOL "=color; \n\
 }";
@@ -705,8 +705,8 @@ void main() \n\
 { \n"
 #ifndef GLES
 	"\
-	float w = gl_FragCoord.w * 100.0; \n\
-	gl_FragDepth = log2(1.0 + w) / 24.0; \n"
+	float w = gl_FragCoord.w * 100000.0; \n\
+	gl_FragDepth = log2(1.0 + w) / 34; \n"
 #endif
 	FRAGCOL "=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
 }";
@@ -2247,7 +2247,7 @@ static bool RenderFrame(void)
    if (doCleanFrame)
    {
       glClearColor(0, 0, 0, 1.0f);
-      glClearDepth(0.f);
+      glDepthMask(GL_TRUE);
       glStencilMask(0xFF);
       glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
       doCleanFrame = false;

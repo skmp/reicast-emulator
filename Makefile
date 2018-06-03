@@ -372,8 +372,7 @@ else ifeq ($(platform), emscripten)
 else
 	EXT       ?= dll
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
-	SHARED := -shared -shared -static-libgcc -static-libstdc++ -Wl,--version-script=link.T
-	LDFLAGS += -lwinmm -lgdi32
+	LDFLAGS += -shared -static-libgcc -static-libstdc++ -Wl,--version-script=link.T -lwinmm -lgdi32
 	GL_LIB := -lopengl32
 	PLATFORM_EXT := win32
 	CC = gcc
@@ -440,6 +439,8 @@ ifeq ($(FORCE_GLES),1)
 else ifneq (,$(findstring gles,$(platform)))
 	GLES = 1
 	GL_LIB := -lGLESv2
+else ifeq ($(platform), win)
+	GL_LIB := -lopengl32
 else
 	GL_LIB := -lGL
 endif
@@ -557,12 +558,20 @@ LDFLAGS    += $(fpic)
 
 OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o) $(SOURCES_ASM:.S=.o)
 
+ifneq (,$(findstring msvc,$(platform)))
+	OBJOUT = -Fo
+	LINKOUT = -out:
+	LD = link.exe
+else
+	LD = $(CXX)
+endif
+
 all: $(TARGET)	
 $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
 else
-	$(CXX) $(MFLAGS) $(fpic) $(SHARED) $(LDFLAGS) $(OBJECTS) $(LIBS) $(GL_LIB) -o $@
+	$(LD) $(MFLAGS) $(fpic) $(SHARED) $(LDFLAGS) $(OBJECTS) $(GL_LIB) $(LIBS) -o $@
 endif
 
 %.o: %.cpp

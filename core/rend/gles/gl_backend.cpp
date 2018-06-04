@@ -15,6 +15,7 @@
 #include "gl_backend.h"
 #include "../rend.h"
 #include "../../libretro/libretro.h"
+#include "glcache.h"
 
 #include "../../hw/pvr/pvr.h"
 #include "../../hw/mem/_vmem.h"
@@ -30,6 +31,7 @@ extern retro_environment_t environ_cb;
 extern bool fog_needs_update;
 extern bool enable_rtt;
 bool KillTex=false;
+GLCache glcache;
 
 struct modvol_shader_type
 {
@@ -168,26 +170,12 @@ static u32 gcflip;
 static struct
 {
 	TSP tsp;
-	//TCW tcw;
-	PCW pcw;
-	ISP_TSP isp;
-	u32 clipmode;
-	//u32 texture_enabled;
-	u32 stencil_modvol_on;
-	u32 program;
 	GLuint texture;
 
 	void Reset(const PolyParam* gp)
 	{
-		program=~0;
 		texture=~0;
 		tsp.full = ~gp->tsp.full;
-		//tcw.full = ~gp->tcw.full;
-		pcw.full = ~gp->pcw.full;
-		isp.full = ~gp->isp.full;
-		clipmode=0xFFFFFFFF;
-//		texture_enabled=~gp->pcw.Texture;
-		stencil_modvol_on=false;
 	}
 } cache;
 
@@ -291,7 +279,7 @@ struct TextureCacheData
       texID      = 0;
 
 		if (isGL)
-			glGenTextures(1, &texID);
+			texID = glcache.GenTexture();
 		
 		/* Reset state info */
 		pData      = 0;
@@ -312,7 +300,7 @@ struct TextureCacheData
 		if (texID)
       {
          /* Bind texture to set modes */
-         glBindTexture(GL_TEXTURE_2D, texID);
+         glcache.BindTexture(GL_TEXTURE_2D, texID);
 
          /* Set texture repeat mode */
          SetRepeatMode(GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU); // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (tsp.ClampU ? GL_CLAMP_TO_EDGE : (tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
@@ -456,7 +444,7 @@ struct TextureCacheData
 
       if (texID)
       {
-         glBindTexture(GL_TEXTURE_2D, texID);
+         glcache.BindTexture(GL_TEXTURE_2D, texID);
          GLuint comps=textype==GL_UNSIGNED_SHORT_5_6_5?GL_RGB:GL_RGBA;
          glTexImage2D(GL_TEXTURE_2D, 0,comps , w, h, 0, comps, textype, temp_tex_buffer);
          if (tcw.MipMapped && settings.rend.UseMipmaps)
@@ -521,7 +509,7 @@ struct TextureCacheData
 #endif
 
 		if (texID)
-         glDeleteTextures(1, &texID);
+         glcache.DeleteTextures(1, &texID);
       texID = 0;
 		if (lock_block)
 			libCore_vramlock_Unlock_block(lock_block);
@@ -762,11 +750,11 @@ static s32 SetTileClip(u32 val, bool set)
 static void SetCull(u32 CulliMode)
 {
 	if (CullMode[CulliMode] == GL_NONE)
-		glDisable(GL_CULL_FACE);
+		glcache.Disable(GL_CULL_FACE);
 	else
 	{
-		glEnable(GL_CULL_FACE);
-		glCullFace(CullMode[CulliMode]); //GL_FRONT/GL_BACK, ...
+		glcache.Enable(GL_CULL_FACE);
+		glcache.CullFace(CullMode[CulliMode]); //GL_FRONT/GL_BACK, ...
 	}
 }
 
@@ -868,7 +856,7 @@ static GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentSh
 	glDeleteShader(vs);
 	glDeleteShader(ps);
 
-	glUseProgram(program);
+	glcache.UseProgram(program);
 
 	verify(glIsProgram(program));
 
@@ -951,39 +939,25 @@ static bool CompilePipelineShader(void *data)
 template <u32 Type, bool SortingEnabled>
 static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 {
-   //force everything to be shadowed
-   const u32 stencil = (gp->pcw.Shadow!=0)?0x80:0;
-
-   /* Has to preserve cache_TSP/ISP
-    * Can freely use cache TCW */
-
-   int prog_id   = GetProgramID(
-         (Type == TA_LIST_PUNCH_THROUGH) ? 1 : 0,
-         SetTileClip(gp->tileclip,false)+1,
-         gp->pcw.Texture,
-         gp->tsp.UseAlpha,
-         gp->tsp.IgnoreTexA,
-         gp->tsp.ShadInstr,
-         gp->pcw.Offset,
-         gp->tsp.FogCtrl);
-   CurrentShader = &program_table[prog_id];
+   CurrentShader = &program_table[
+									 GetProgramID(Type == TA_LIST_PUNCH_THROUGH ? 1 : 0,
+											 	  SetTileClip(gp->tileclip, false) + 1,
+												  gp->pcw.Texture,
+												  gp->tsp.UseAlpha,
+												  gp->tsp.IgnoreTexA,
+												  gp->tsp.ShadInstr,
+												  gp->pcw.Offset,
+												  gp->tsp.FogCtrl)];
 
    if (CurrentShader->program == -1)
       CompilePipelineShader(CurrentShader);
-
-   if (CurrentShader->program != cache.program)
-   {
-      cache.program    = CurrentShader->program;
-      glUseProgram(CurrentShader->program);
-   }
-
+   glcache.UseProgram(CurrentShader->program);
    SetTileClip(gp->tileclip,true);
 
-   if (cache.stencil_modvol_on!=stencil)
-   {
-      cache.stencil_modvol_on   = stencil;
-      glStencilFunc(GL_ALWAYS, stencil, stencil);
-   }
+   // This bit controls which pixels are affected
+   // by modvols
+   const u32 stencil = (gp->pcw.Shadow!=0)?0x80:0;
+   glcache.StencilFunc(GL_ALWAYS, stencil, stencil);
 
    bool texture_changed = false;
 
@@ -992,19 +966,23 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
       cache.texture=gp->texid;
       if (gp->texid != -1)
       {
-         glBindTexture(GL_TEXTURE_2D, gp->texid);
+         glcache.BindTexture(GL_TEXTURE_2D, gp->texid);
          texture_changed = true;
       }
    }
 
-   if (gp->tsp.full!=cache.tsp.full || texture_changed)
+   if (Type==TA_LIST_TRANSLUCENT)
+   {
+      glcache.Enable(GL_BLEND);
+      glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr], DstBlendGL[gp->tsp.DstInstr]);
+   }
+   else
+      glcache.Disable(GL_BLEND);
+
+   if (gp->tsp.full != cache.tsp.full || texture_changed)
    {
       cache.tsp=gp->tsp;
 
-      if (Type==TA_LIST_TRANSLUCENT)
-      {
-         glBlendFunc(SrcBlendGL[gp->tsp.SrcInstr], DstBlendGL[gp->tsp.DstInstr]);
-      }
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (gp->tsp.ClampU ? GL_CLAMP_TO_EDGE : (gp->tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (gp->tsp.ClampV ? GL_CLAMP_TO_EDGE : (gp->tsp.FlipV ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
 
@@ -1029,21 +1007,17 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
    //gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
    SetCull(gp->isp.CullMode ^ cflip ^ gcflip);
 
+   /* Set Z mode, only if required */
+   if (Type == TA_LIST_PUNCH_THROUGH || (Type == TA_LIST_TRANSLUCENT && SortingEnabled))
+      glcache.DepthFunc(GL_GEQUAL);
+   else
+      glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
 
-   if (gp->isp.full!= cache.isp.full)
-   {
-      GLboolean flag;
-      cache.isp.full = gp->isp.full;
 
-      /* Set Z mode, only if required */
-      if (!(Type == TA_LIST_PUNCH_THROUGH || (Type == TA_LIST_TRANSLUCENT && SortingEnabled)))
-         glDepthFunc(Zfunction[gp->isp.DepthMode]);
-
-      flag    = !gp->isp.ZWriteDis;
-      if (SortingEnabled && settings.pvr.Emulation.AlphaSortMode == 0)
-         flag = GL_FALSE;
-      glDepthMask(flag);
-   }
+   if (SortingEnabled && settings.pvr.Emulation.AlphaSortMode == 0)
+      glcache.DepthMask(GL_FALSE);
+   else
+      glcache.DepthMask(!gp->isp.ZWriteDis);
 }
 
 template <u32 Type, bool SortingEnabled>
@@ -1056,23 +1030,10 @@ static void DrawList(const List<PolyParam>& gply)
    if (count==0)
       return;
 
-   /* reset the cache state */
-   cache.Reset(params);
-
    /* set some 'global' modes for all primitives */
-
-   /* Z funct. can be fixed on these combinations, avoid setting it all the time */
-   if (Type == TA_LIST_PUNCH_THROUGH || (Type == TA_LIST_TRANSLUCENT && SortingEnabled))
-      glDepthFunc(Zfunction[6]);
-
-   glEnable(GL_STENCIL_TEST);
-   glStencilFunc(
-         GL_ALWAYS,
-         0,
-         0);
-   glStencilOp(GL_KEEP,
-         GL_KEEP,
-         GL_REPLACE);
+   glcache.Enable(GL_STENCIL_TEST);
+   glcache.StencilFunc(GL_ALWAYS,0,0);
+   glcache.StencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 
    while(count-->0)
    {
@@ -1142,7 +1103,10 @@ static void SortPParams(void)
       pp++;
    }
 
-   std::stable_sort(pvrrc.global_param_tr.head(),pvrrc.global_param_tr.head()+pvrrc.global_param_tr.used());
+   unsigned first = 0;
+   unsigned count = pvrrc.global_param_tr.used();
+   std::stable_sort(pvrrc.global_param_tr.head() + first,
+         pvrrc.global_param_tr.head() + first + count);
 }
 
 static inline float min3(float v0,float v1,float v2)
@@ -1322,29 +1286,24 @@ static void GenSorted(void)
 #endif
 
    /* Upload to GPU if needed, otherwise return */
-   if (!pidx_sort.size())
-      return;
-
-   /* Bind and upload sorted index buffer */
-   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
-   glBufferData(GL_ELEMENT_ARRAY_BUFFER,vidx_sort.size()*2,&vidx_sort[0],GL_STREAM_DRAW);
-   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+   if (pidx_sort.size())
+   {
+      /* Bind and upload sorted index buffer */
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
+      glBufferData(GL_ELEMENT_ARRAY_BUFFER,vidx_sort.size()*2,&vidx_sort[0],GL_STREAM_DRAW);
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+   }
 }
 
 static void DrawSorted(u32 count)
 {
    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
 
-   cache.Reset(pidx_sort[0].ppid);
-
    //set some 'global' modes for all primitives
 
-   //Z sorting is fixed for .. sorted stuff
-   glDepthFunc(Zfunction[6]);
-
-   glEnable(GL_STENCIL_TEST);
-   glStencilFunc(GL_ALWAYS, 0, 0);
-   glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+   glcache.Enable(GL_STENCIL_TEST);
+   glcache.StencilFunc(GL_ALWAYS, 0, 0);
+   glcache.StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
    for (u32 p=0; p<count; p++)
    {
@@ -1386,16 +1345,14 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 	if (mv_mode==0)	//normal trigs
 	{
 		//set states
-		glEnable(GL_DEPTH_TEST);
-
+		glcache.Enable(GL_DEPTH_TEST);
 		//write only bit 1
-      glStencilMask(2);
-
+      glcache.StencilMask(2);
       //no stencil testing
-      glStencilFunc(GL_ALWAYS, 0, 2);
-
+      glcache.StencilFunc(GL_ALWAYS, 0, 2);
 		//count the number of pixels in front of the Z buffer (and only keep the lower bit of the count)
-      glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
+      glcache.StencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
+
 		//Cull mode needs to be set
 		SetCull(ispc.CullMode);
 	}
@@ -1407,10 +1364,10 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 		//common states
 
 		//no depth test
-		glDisable(GL_DEPTH_TEST);
+		glcache.Disable(GL_DEPTH_TEST);
 
-		//write bits 1:0
-      glStencilMask(3);
+      //write bits 1:0
+      glcache.StencilMask(3);
 
 		if (mv_mode==1)
 		{
@@ -1421,11 +1378,10 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 			//1   : 0      : 01
 			//1   : 1      : 01
 			
-
 			//if (1<=st) st=1; else st=0;
-         glStencilFunc(GL_LEQUAL, 1, 3);
+         glcache.StencilFunc(GL_LEQUAL, 1, 3);
 
-         glStencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
+         glcache.StencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
 
 			/*
 			//if !=0 -> set to 10
@@ -1451,8 +1407,8 @@ static void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 			//1   : 1   : 00
 
 			//if (1 == st) st = 1; else st = 0;
-         glStencilFunc(GL_EQUAL, 1, 3);
-         glStencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
+         glcache.StencilFunc(GL_EQUAL, 1, 3);
+         glcache.StencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
 		}
 	}
 }
@@ -1497,14 +1453,14 @@ static void DrawModVols(void)
 	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
 	glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
 
-	glEnable(GL_BLEND);
-   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glcache.Enable(GL_BLEND);
+   glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glUseProgram(modvol_shader.program);
+	glcache.UseProgram(modvol_shader.program);
 	glUniform1f(modvol_shader.sp_ShaderColor,0.5f);
 
-   glDepthMask(GL_FALSE);
-	glDepthFunc(GL_GREATER);
+   glcache.DepthMask(GL_FALSE);
+	glcache.DepthFunc(GL_GREATER);
 
 	if(settings.pvr.Emulation.ModVolMode == 1)
 	{
@@ -1536,11 +1492,10 @@ static void DrawModVols(void)
 		if (settings.pvr.Emulation.ModVolMode == 2)
 		{
 			//simple single level stencil
-			glEnable(GL_STENCIL_TEST);
-         glStencilFunc(GL_ALWAYS, 0x1, 0x1);
-
-         glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
-         glStencilMask(0x1);
+			glcache.Enable(GL_STENCIL_TEST);
+         glcache.StencilFunc(GL_ALWAYS, 0x1, 0x1);
+         glcache.StencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
+         glcache.StencilMask(0x1);
 			SetCull(0);
 			glDrawArrays(GL_TRIANGLES,0,pvrrc.modtrig.used()*3);
 		}
@@ -1604,19 +1559,19 @@ static void DrawModVols(void)
 		glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 
 		//black out any stencil with '1'
-		glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glcache.Enable(GL_BLEND);
+      glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		
-		glEnable(GL_STENCIL_TEST);
+		glcache.Enable(GL_STENCIL_TEST);
       //only pixels that are Modvol enabled, and in area 1
-      glStencilFunc(GL_EQUAL, 0x81, 0x81);
+      glcache.StencilFunc(GL_EQUAL, 0x81, 0x81);
 		
 		//clear the stencil result bit
-      glStencilMask(0x3); /* write to LSB */
-      glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
+      glcache.StencilMask(0x3); /* write to LSB */
+      glcache.StencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
 
 		//don't do depth testing
-		glDisable(GL_DEPTH_TEST);
+		glcache.Disable(GL_DEPTH_TEST);
 
 		SetupMainVBO();
 		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
@@ -1626,10 +1581,7 @@ static void DrawModVols(void)
 	}
 
 	//restore states
-   glDepthMask(GL_TRUE);
-	glDisable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_STENCIL_TEST);
+   glcache.Enable(GL_DEPTH_TEST);
 }
 
 /*
@@ -1835,7 +1787,7 @@ static void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	if (rv.fbo)
       glDeleteFramebuffers(1,&rv.fbo);
 	if (rv.tex)
-      glDeleteTextures(1,&rv.tex);
+      glcache.DeleteTextures(1,&rv.tex);
 	if (rv.depthb)
       glDeleteRenderbuffers(1,&rv.depthb);
 
@@ -1867,8 +1819,8 @@ static void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	glRenderbufferStorage(RARCH_GL_RENDERBUFFER, RARCH_GL_DEPTH24_STENCIL8, fbw2, fbh2);
 
 	/* Create a texture for rendering to */
-	glGenTextures(1, &rv.tex);
-	glBindTexture(GL_TEXTURE_2D, rv.tex);
+	rv.tex = glcache.GenTexture();
+	glcache.BindTexture(GL_TEXTURE_2D, rv.tex);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw2, fbh2, 0, channels, fmt, 0);
 
@@ -1909,30 +1861,21 @@ static void DrawStrips(void)
 	//Draw the strips !
 
 	//initial state
-	glDisable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
+	glcache.Enable(GL_DEPTH_TEST);
 
 	//We use sampler 0
    glActiveTexture(GL_TEXTURE0);
 
 	//Opaque
-	//Nothing extra needs to be setup here
-	/*if (!GetAsyncKeyState(VK_F1))*/
 	DrawList<TA_LIST_OPAQUE, false>(pvrrc.global_param_op);
 
 	//Alpha tested
-	//setup alpha test state
-	/*if (!GetAsyncKeyState(VK_F2))*/
 	DrawList<TA_LIST_PUNCH_THROUGH, false>(pvrrc.global_param_pt);
 
+   // Modifier volumes
 	DrawModVols();
 
 	//Alpha blended
-	//Setup blending
-	glEnable(GL_BLEND);
-
-   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
    if (settings.pvr.Emulation.AlphaSortMode == 0)
    {
       u32 count = pidx_sort.size();
@@ -2062,7 +2005,7 @@ static void ReadRTTBuffer()
    //dumpRtTexture(fb_rtt.TexAddr, w, h);
 
    if (w > 1024 || h > 1024) {
-      glDeleteTextures(1, &fb_rtt.tex);
+      glcache.DeleteTextures(1, &fb_rtt.tex);
    }
    else
    {
@@ -2085,7 +2028,7 @@ static void ReadRTTBuffer()
 
       TextureCacheData *texture_data = getTextureCacheData(tsp, tcw);
       if (texture_data->texID != 0)
-         glDeleteTextures(1, &texture_data->texID);
+         glcache.DeleteTextures(1, &texture_data->texID);
       else {
          texture_data->Create(false);
          texture_data->lock_block = libCore_vramlock_Lock(texture_data->sa_tex, texture_data->sa + texture_data->size - 1, texture_data);
@@ -2243,7 +2186,7 @@ static bool RenderFrame(void)
 	dc_width  *= scale_x;
 	dc_height *= scale_y;
 
-   glUseProgram(modvol_shader.program);
+   glcache.UseProgram(modvol_shader.program);
 
 	/*
 
@@ -2345,7 +2288,7 @@ static bool RenderFrame(void)
 		if (s->program == -1)
 			continue;
 
-		glUseProgram(s->program);
+		glcache.UseProgram(s->program);
 
       set_shader_uniforms(&ShaderUniforms, s);
 	}
@@ -2394,14 +2337,16 @@ static bool RenderFrame(void)
       glViewport(0, 0, gles_screen_width, gles_screen_height);
    }
 
+   // Color is cleared by the bgp
    if (!is_rtt && settings.rend.WideScreen)
-      glClearColor(pvrrc.verts.head()->col[2]/255.0f,pvrrc.verts.head()->col[1]/255.0f,pvrrc.verts.head()->col[0]/255.0f,1.0f);
+      glcache.ClearColor(pvrrc.verts.head()->col[2]/255.0f,pvrrc.verts.head()->col[1]/255.0f,pvrrc.verts.head()->col[0]/255.0f,1.0f);
    else
-      glClearColor(0,0,0,1.0f);
+      glcache.ClearColor(0,0,0,1.0f);
 
-   glDepthMask(GL_TRUE);
-   glStencilMask(0xFF);
-   glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+   glcache.DepthMask(GL_TRUE);
+   glcache.StencilMask(0xFF);
+   glcache.Disable(GL_SCISSOR_TEST);
+   glClear(GL_COLOR_BUFFER_BIT);
 
 	if (UsingAutoSort())
 		GenSorted();
@@ -2438,7 +2383,7 @@ static bool RenderFrame(void)
 
    if (!is_rtt && settings.rend.WideScreen && pvrrc.fb_X_CLIP.min==0 && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) && (pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ) )
    {
-      glDisable(GL_SCISSOR_TEST);
+      glcache.Disable(GL_SCISSOR_TEST);
    }
    else
    {
@@ -2448,7 +2393,7 @@ static bool RenderFrame(void)
             (pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,
             (pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h
             );
-      glEnable(GL_SCISSOR_TEST);
+      glcache.Enable(GL_SCISSOR_TEST);
    }
 
 	//restore scale_x

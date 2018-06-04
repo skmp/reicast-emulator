@@ -985,27 +985,42 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
       glStencilFunc(GL_ALWAYS, stencil, stencil);
    }
 
+   bool texture_changed = false;
+
    if (gp->texid != cache.texture)
    {
       cache.texture=gp->texid;
       if (gp->texid != -1)
+      {
          glBindTexture(GL_TEXTURE_2D, gp->texid);
+         texture_changed = true;
+      }
    }
 
-   if (gp->tsp.full!=cache.tsp.full)
+   if (gp->tsp.full!=cache.tsp.full || texture_changed)
    {
       cache.tsp=gp->tsp;
 
       if (Type==TA_LIST_TRANSLUCENT)
       {
          glBlendFunc(SrcBlendGL[gp->tsp.SrcInstr], DstBlendGL[gp->tsp.DstInstr]);
+      }
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (gp->tsp.ClampU ? GL_CLAMP_TO_EDGE : (gp->tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (gp->tsp.ClampV ? GL_CLAMP_TO_EDGE : (gp->tsp.FlipV ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
 
-#ifdef WEIRD_SLOWNESS
-         //SGX seems to be super slow with discard enabled blended pixels
-         //can't cache this -- due to opengl shader api
-         bool clip_alpha_on_zero=gp->tsp.SrcInstr==4 && (gp->tsp.DstInstr==1 || gp->tsp.DstInstr==5);
-         glUniform1f(CurrentShader->cp_AlphaTestValue,clip_alpha_on_zero?(1/255.f):(-2.f));
-#endif
+      //set texture filter mode
+      if (gp->tsp.FilterMode == 0)
+      {
+         //disable filtering, mipmaps
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      }
+      else
+      {
+         //bilinear filtering
+			//PowerVR supports also trilinear via two passes, but we ignore that for now
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (gp->tcw.MipMapped && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       }
    }
 
@@ -1811,6 +1826,8 @@ static void vertex_buffer_unmap(void)
 map<u64,TextureCacheData> TexCache;
 typedef map<u64,TextureCacheData>::iterator TexCacheIter;
 
+TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw);
+
 static void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
 	FBT& rv=fb_rtt;
@@ -1828,6 +1845,9 @@ static void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
    int fbh2 = 2;
    while (fbh2 < fbh)
       fbh2 *= 2;
+   int fbw2 = 2;
+   while (fbw2 < fbw)
+      fbw2 *= 2;
 
 	/* Get the currently bound frame buffer object. On most platforms this just gives 0. */
 #if 0
@@ -1844,13 +1864,13 @@ static void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 		m_i32TexSize by m_i32TexSize.
 	*/
 
-	glRenderbufferStorage(RARCH_GL_RENDERBUFFER, RARCH_GL_DEPTH24_STENCIL8, fbw, fbh2);
+	glRenderbufferStorage(RARCH_GL_RENDERBUFFER, RARCH_GL_DEPTH24_STENCIL8, fbw2, fbh2);
 
 	/* Create a texture for rendering to */
 	glGenTextures(1, &rv.tex);
 	glBindTexture(GL_TEXTURE_2D, rv.tex);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw, fbh2, 0, channels, fmt, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw2, fbh2, 0, channels, fmt, 0);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -1952,79 +1972,128 @@ static void ReadRTTBuffer()
     }
 
    u32 size = w * h * 2;
-   u32 tex_addr = fb_rtt.TexAddr << 3;
+   const u8 fb_packmode = FB_W_CTRL.fb_packmode;
 
-   // Manually mark textures as dirty and remove all vram locks before calling glReadPixels
-   // (deadlock on rpi)
-   for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
+   if (settings.pvr.RenderToTextureBuffer)
    {
-      if (i->second.sa_tex <= tex_addr + size - 1 && i->second.sa + i->second.size - 1 >= tex_addr) {
-         i->second.dirty = FrameCount;
-         if (i->second.lock_block != NULL) {
-            libCore_vramlock_Unlock_block(i->second.lock_block);
-            i->second.lock_block = NULL;
-         }
-      }
-   }
-   VArray2_UnLockRegion(&vram, 0, 2 * vram.size);
+      u32 tex_addr = fb_rtt.TexAddr << 3;
 
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	u16 *src = temp_tex_buffer;
-	u16 *dst = (u16 *)&vram.data[fb_rtt.TexAddr << 3];
-
-   GLint color_fmt, color_type;
-	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
-	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &color_type);
-
-   if (FB_W_CTRL.fb_packmode == 1 && stride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5) {
-		// Can be read directly into vram
-		glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
-	}
-	else
-   {
-      u32 lines = h;
-      while (lines > 0) {
-         u8 *p = (u8 *)temp_tex_buffer;
-         u32 chunk_lines = min((u32)sizeof(temp_tex_buffer), w * lines * 4) / w / 4;
-         glReadPixels(0, h - lines, w, chunk_lines, GL_RGBA, GL_UNSIGNED_BYTE, p);
-
-         for (u32 l = 0; l < chunk_lines; l++) {
-            for (u32 c = 0; c < w; c++) {
-               switch(FB_W_CTRL.fb_packmode)
-               {
-                  case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
-                     *dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | ((FB_W_CTRL.fb_kval & 0x80) << 8);
-                     break;
-                  case 1: //0x1   565 RGB 16 bit
-                     *dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
-                     break;
-                  case 2: //0x2   4444 ARGB 16 bit
-                     *dst++ = (((p[0] >> 4) & 0xF) << 8) | (((p[1] >> 4) & 0xF) << 4) | ((p[2] >> 4) & 0xF) | (((p[3] >> 4) & 0xF) << 12);
-                     break;
-                  case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
-                     *dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] >= FB_W_CTRL.fb_alpha_threshold ? 0x8000 : 0);
-                     break;
-               }
-               p += 4;
+      // Manually mark textures as dirty and remove all vram locks before calling glReadPixels
+      // (deadlock on rpi)
+      for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
+      {
+         if (i->second.sa_tex <= tex_addr + size - 1 && i->second.sa + i->second.size - 1 >= tex_addr) {
+            i->second.dirty = FrameCount;
+            if (i->second.lock_block != NULL) {
+               libCore_vramlock_Unlock_block(i->second.lock_block);
+               i->second.lock_block = NULL;
             }
-            dst += (stride - w * 2) / 2;
          }
-         lines -= chunk_lines;
+      }
+      VArray2_UnLockRegion(&vram, 0, 2 * vram.size);
+
+
+      glPixelStorei(GL_PACK_ALIGNMENT, 1);
+      u16 *src = temp_tex_buffer;
+      u16 *dst = (u16 *)&vram.data[fb_rtt.TexAddr << 3];
+
+      GLint color_fmt, color_type;
+      glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
+      glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &color_type);
+
+      if (fb_packmode == 1 && stride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5) {
+         // Can be read directly into vram
+         glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
+      }
+      else
+      {
+         const u16 kval_bit = (FB_W_CTRL.fb_kval & 0x80) << 8;
+         const u8 fb_alpha_threshold = FB_W_CTRL.fb_alpha_threshold;
+
+         u32 lines = h;
+         while (lines > 0) {
+            u8 *p = (u8 *)temp_tex_buffer;
+            u32 chunk_lines = min((u32)sizeof(temp_tex_buffer), w * lines * 4) / w / 4;
+            glReadPixels(0, h - lines, w, chunk_lines, GL_RGBA, GL_UNSIGNED_BYTE, p);
+
+            for (u32 l = 0; l < chunk_lines; l++) {
+               for (u32 c = 0; c < w; c++) {
+                  switch(fb_packmode)
+                  {
+                     case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
+                        *dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | kval_bit;
+                        break;
+                     case 1: //0x1   565 RGB 16 bit
+                        *dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
+                        break;
+                     case 2: //0x2   4444 ARGB 16 bit
+                        *dst++ = (((p[0] >> 4) & 0xF) << 8) | (((p[1] >> 4) & 0xF) << 4) | ((p[2] >> 4) & 0xF) | (((p[3] >> 4) & 0xF) << 12);
+                        break;
+                     case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
+                        *dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] >= fb_alpha_threshold ? 0x8000 : 0);
+                        break;
+                  }
+                  p += 4;
+               }
+               dst += (stride - w * 2) / 2;
+            }
+            lines -= chunk_lines;
+         }
+      }
+
+      // Restore VRAM locks
+      for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
+      {
+         if (i->second.lock_block != NULL) {
+            VArray2_LockRegion(&vram, i->second.sa_tex, i->second.sa + i->second.size - i->second.sa_tex);
+
+            //TODO: Fix this for 32M wrap as well
+            if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
+               VArray2_LockRegion(&vram, i->second.sa_tex + VRAM_SIZE, i->second.sa + i->second.size - i->second.sa_tex);
+            }
+         }
       }
    }
-
-   // Restore VRAM locks
-   for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
+   else
    {
-      if (i->second.lock_block != NULL) {
-         VArray2_LockRegion(&vram, i->second.sa_tex, i->second.sa + i->second.size - i->second.sa_tex);
-
-         //TODO: Fix this for 32M wrap as well
-         if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-            VArray2_LockRegion(&vram, i->second.sa_tex + VRAM_SIZE, i->second.sa + i->second.size - i->second.sa_tex);
-         }
-      }
+      memset(&vram.data[fb_rtt.TexAddr << 3], '\0', size);
    }
+
+   //dumpRtTexture(fb_rtt.TexAddr, w, h);
+
+   if (w > 1024 || h > 1024) {
+      glDeleteTextures(1, &fb_rtt.tex);
+   }
+   else
+   {
+      TCW tcw = { { TexAddr : fb_rtt.TexAddr, Reserved : 0, StrideSel : 0, ScanOrder : 1 } };
+      switch (fb_packmode) {
+         case 0:
+         case 3:
+            tcw.PixelFmt = 0;
+            break;
+         case 1:
+            tcw.PixelFmt = 1;
+            break;
+         case 2:
+            tcw.PixelFmt = 2;
+            break;
+      }
+      TSP tsp = { 0 };
+      for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < w; tsp.TexU++);
+      for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < h; tsp.TexV++);
+
+      TextureCacheData *texture_data = getTextureCacheData(tsp, tcw);
+      if (texture_data->texID != 0)
+         glDeleteTextures(1, &texture_data->texID);
+      else {
+         texture_data->Create(false);
+         texture_data->lock_block = libCore_vramlock_Lock(texture_data->sa_tex, texture_data->sa + texture_data->size - 1, texture_data);
+      }
+      texture_data->texID = fb_rtt.tex;
+      texture_data->dirty = 0;
+   }
+   fb_rtt.tex = 0;
 
 	if (fb_rtt.fbo) { glDeleteFramebuffers(1,&fb_rtt.fbo); fb_rtt.fbo = 0; }
 	if (fb_rtt.tex) { glDeleteTextures(1,&fb_rtt.tex); fb_rtt.tex = 0; }
@@ -2403,39 +2472,104 @@ void rend_set_fb_scale(float x,float y)
 
 void co_dc_yield(void);
 
-static GLuint gl_GetTexture(TSP tsp, TCW tcw)
-{
-	/* Lookup texture */
-   TextureCacheData* tf = NULL;
-	u64 key         = ((u64)tcw.full<<32) | tsp.full;
+static int TexCacheLookups;
+static int TexCacheHits;
+static float LastTexCacheStats;
+
+// Only use TexU and TexV from TSP in the cache key
+const TSP TSPTextureCacheMask = { { TexV : 7, TexU : 7 } };
+const TCW TCWTextureCacheMask = { { TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 0, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1 } };
+
+TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
+	u64 key = ((u64)(tcw.full & TCWTextureCacheMask.full) << 32) | (tsp.full & TSPTextureCacheMask.full);
 
 	TexCacheIter tx = TexCache.find(key);
 
-	if (tx!=TexCache.end())
-		tf = &tx->second;
-	else
+	TextureCacheData* tf;
+	if (tx != TexCache.end())
 	{
-      /* create if not existing */
+		tf = &tx->second;
+	}
+	else //create if not existing
+	{
 		TextureCacheData tfc={0};
-		TexCache[key]=tfc;
+		TexCache[key] = tfc;
 
 		tx=TexCache.find(key);
 		tf=&tx->second;
 
-		tf->tsp=tsp;
-		tf->tcw=tcw;
-		tf->Create(true);
+		tf->tsp = tsp;
+		tf->tcw = tcw;
 	}
+
+	return tf;
+}
+
+static GLuint gl_GetTexture(TSP tsp, TCW tcw)
+{
+   TexCacheLookups++;
+
+	/* Lookup texture */
+   TextureCacheData* tf = getTextureCacheData(tsp, tcw);
+
+   if (tf->texID == 0)
+		tf->Create(true);
 
 	/* Update if needed */
 	if (tf->NeedsUpdate())
 		tf->Update();
+   else
+      TexCacheHits++;
 
 	/* Update state for opts/stuff */
 	tf->Lookups++;
 
-	/* Return texture */
+	/* Return gl texture */
 	return tf->texID;
+}
+
+text_info raw_GetTexture(TSP tsp, TCW tcw)
+{
+	text_info rv = { 0 };
+
+	//lookup texture
+	TextureCacheData* tf;
+	u64 key = ((u64)(tcw.full & TCWTextureCacheMask.full) << 32) | (tsp.full & TSPTextureCacheMask.full);
+
+	TexCacheIter tx = TexCache.find(key);
+
+	if (tx != TexCache.end())
+	{
+		tf = &tx->second;
+	}
+	else //create if not existing
+	{
+		TextureCacheData tfc = { 0 };
+		TexCache[key] = tfc;
+
+		tx = TexCache.find(key);
+		tf = &tx->second;
+
+		tf->tsp = tsp;
+		tf->tcw = tcw;
+		tf->Create(false);
+	}
+
+	//update if needed
+	if (tf->NeedsUpdate())
+		tf->Update();
+
+	//update state for opts/stuff
+	tf->Lookups++;
+
+	//return gl texture
+	rv.height = tf->h;
+	rv.width = tf->w;
+	rv.pdata = tf->pData;
+	rv.textype = tf->tex_type;
+	
+	
+	return rv;
 }
 
 static void CollectCleanup(void)

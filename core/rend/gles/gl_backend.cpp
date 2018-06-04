@@ -1527,6 +1527,7 @@ static void DrawModVols(void)
 		}
 		else if (settings.pvr.Emulation.ModVolMode == 3)
 		{
+         glEnable(GL_STENCIL_TEST);
 			//Full emulation
 			//the *out* mode is buggy
 
@@ -1603,9 +1604,6 @@ static void DrawModVols(void)
 
 		//Draw and blend
 		//glDrawArrays(GL_TRIANGLES,pvrrc.modtrig.used(),2);
-
-      glBindBuffer(GL_ARRAY_BUFFER, 0);
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
 	//restore states

@@ -9,7 +9,7 @@
 
 // TODO/FIXME - forward decls
 void rend_start_render(void);
-void pvr_reconfigure_spg(void);
+void CalculateSync(void);
 void YUV_init(void);
 
 extern bool pal_needs_update;
@@ -74,8 +74,7 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		addr == SPG_LOAD_addr)
 	{
 		PvrReg(addr,u32)=data;
-		//CalculateSync();
-      pvr_reconfigure_spg();
+		CalculateSync();
 		return;
 	}
 

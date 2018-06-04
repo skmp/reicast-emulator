@@ -227,10 +227,7 @@ void ta_vtx_ListCont(void)
 void ta_vtx_ListInit(void)
 {
 	SetCurrentTARC(TA_ISP_BASE);
-
-   /* Clear partial */
-   ta_tad.thd_old_data = ta_tad.thd_data;
-   ta_tad.thd_data     = ta_tad.thd_root;
+   ta_tad.ClearPartial();
 
 	ta_cur_state=TAS_NS;
 }

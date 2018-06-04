@@ -276,6 +276,14 @@ struct TextureCacheData
 	                            /* VQ quantizers table for VQ texture.
 	                             * A texture can't be both VQ and PAL (paletted) at the same time */
 
+   void SetRepeatMode(GLuint dir,u32 clamp,u32 mirror)
+	{
+		if (clamp)
+			glTexParameteri (GL_TEXTURE_2D, dir, GL_CLAMP_TO_EDGE);
+		else 
+			glTexParameteri (GL_TEXTURE_2D, dir, mirror?GL_MIRRORED_REPEAT : GL_REPEAT);
+	}
+
 	//Create GL texture from tsp/tcw
 	void Create(bool isGL)
 	{
@@ -306,15 +314,8 @@ struct TextureCacheData
          glBindTexture(GL_TEXTURE_2D, texID);
 
          /* Set texture repeat mode */
-         if (tsp.ClampU)
-            glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-         else 
-            glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT);
-
-         if (tsp.ClampV)
-            glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-         else 
-            glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, tsp.FlipV ? GL_MIRRORED_REPEAT : GL_REPEAT);
+         SetRepeatMode(GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU); // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (tsp.ClampU ? GL_CLAMP_TO_EDGE : (tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
+			SetRepeatMode(GL_TEXTURE_WRAP_T, tsp.ClampV, tsp.FlipV); // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (tsp.ClampV ? GL_CLAMP_TO_EDGE : (tsp.FlipV ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
 
 #ifdef HAVE_OPENGLES
          glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
@@ -340,16 +341,19 @@ struct TextureCacheData
       pal_table_rev = 0;
 
 		/* PAL texture */
-      switch (tex->bpp)
+      if (tex->bpp == 4)
       {
-         case 4:
-            pal_table_rev=&pal_rev_16[tcw.PalSelect];
-            indirect_color_ptr=tcw.PalSelect<<4;
-            break;
-         case 8:
-            pal_table_rev=&pal_rev_256[tcw.PalSelect>>4];
-            indirect_color_ptr=(tcw.PalSelect>>4)<<8;
-            break;
+         pal_table_rev=&pal_rev_16[tcw.PalSelect];
+         indirect_color_ptr=tcw.PalSelect<<4;
+      }
+      else if (tex->bpp == 8)
+      {
+         pal_table_rev=&pal_rev_256[tcw.PalSelect>>4];
+         indirect_color_ptr=(tcw.PalSelect>>4)<<8;
+      }
+      else
+      {
+         pal_table_rev=0;
       }
 
 		/* VQ table (if VQ texture) */
@@ -411,9 +415,7 @@ struct TextureCacheData
 
 	void Update(void)
    {
-      PixelBuffer pbt;
       GLuint textype;
-      u32 stride         = w;
 
       Updates++;                                   /* texture state tracking stuff */
       dirty              = 0;
@@ -430,8 +432,11 @@ struct TextureCacheData
       vq_codebook        = (u8*)&vram.data[indirect_color_ptr];  /* might be used if VQ texture */
 
       //texture conversion work
+      PixelBuffer pbt;
       pbt.p_buffer_start = pbt.p_current_line=temp_tex_buffer;
       pbt.pixels_per_line=w;
+
+      u32 stride         = w;
 
       if (tcw.StrideSel && tcw.ScanOrder && tex->PL) 
          stride = (TEXT_CONTROL&31)*32; //I think this needs +1 ?
@@ -455,22 +460,16 @@ struct TextureCacheData
          glTexImage2D(GL_TEXTURE_2D, 0,comps , w, h, 0, comps, textype, temp_tex_buffer);
          if (tcw.MipMapped && settings.rend.UseMipmaps)
             glGenerateMipmap(GL_TEXTURE_2D);
-         glBindTexture(GL_TEXTURE_2D, 0);
       }
       else
       {
-         switch (textype)
-         {
-            case GL_UNSIGNED_SHORT_5_6_5:
-               tex_type = 0;
-               break;
-            case GL_UNSIGNED_SHORT_5_5_5_1:
-               tex_type = 1;
-               break;
-            case GL_UNSIGNED_SHORT_4_4_4_4:
-               tex_type = 2;
-               break;
-         }
+#if FEAT_HAS_SOFTREND
+         if (textype == GL_UNSIGNED_SHORT_5_6_5)
+            tex_type = 0;
+         else if (textype == GL_UNSIGNED_SHORT_5_5_5_1)
+            tex_type = 1;
+         else if (textype == GL_UNSIGNED_SHORT_4_4_4_4)
+            tex_type = 2;
 
          if (pData)
          {
@@ -498,6 +497,7 @@ struct TextureCacheData
                data[3]   = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 0) % h * w]];
             }
          }
+#endif
       }
    }
 
@@ -509,6 +509,7 @@ struct TextureCacheData
 	
 	void Delete()
 	{
+#if FEAT_HAS_SOFTREND
       if (pData)
 #ifdef __SSE4_1__
          _mm_free(pData);
@@ -516,6 +517,8 @@ struct TextureCacheData
          memalign_free(pData);
 #endif
       pData = 0;
+#endif
+
 		if (texID)
          glDeleteTextures(1, &texID);
       texID = 0;

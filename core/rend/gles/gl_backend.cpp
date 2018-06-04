@@ -1801,10 +1801,6 @@ static void vertex_buffer_unmap(void)
    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-extern bool update_zmax;
-extern bool update_zmin;
-extern bool doCleanFrame;
-
 #ifdef MSB_FIRST
 #define INDEX_GET(a) (a^3)
 #else
@@ -1881,43 +1877,64 @@ static void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	verify(uStatus == RARCH_GL_FRAMEBUFFER_COMPLETE);
 }
 
+static void DrawStrips(void)
+{
+	SetupMainVBO();
+	//Draw the strips !
+
+	//initial state
+	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+
+	//We use sampler 0
+   glActiveTexture(GL_TEXTURE0);
+
+	//Opaque
+	//Nothing extra needs to be setup here
+	/*if (!GetAsyncKeyState(VK_F1))*/
+	DrawList<TA_LIST_OPAQUE, false>(pvrrc.global_param_op);
+
+	//Alpha tested
+	//setup alpha test state
+	/*if (!GetAsyncKeyState(VK_F2))*/
+	DrawList<TA_LIST_PUNCH_THROUGH, false>(pvrrc.global_param_pt);
+
+	DrawModVols();
+
+	//Alpha blended
+	//Setup blending
+	glEnable(GL_BLEND);
+
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+   if (settings.pvr.Emulation.AlphaSortMode == 0)
+   {
+      u32 count = pidx_sort.size();
+      //if any drawing commands, draw them
+      if (pvrrc.isAutoSort && count)
+         DrawSorted(count);
+      else
+         DrawList<TA_LIST_TRANSLUCENT, false>(pvrrc.global_param_tr);
+   }
+   else if (settings.pvr.Emulation.AlphaSortMode == 1)
+   {
+      if (pvrrc.isAutoSort)
+         SortPParams();
+      DrawList<TA_LIST_TRANSLUCENT, true>(pvrrc.global_param_tr);
+   }
+
+   vertex_buffer_unmap();
+}
+
 static bool RenderFrame(void)
 {
 	bool is_rtt=pvrrc.isRTT;
 
 	//if (FrameCount&7) return;
 
-#if 0
 	//Setup the matrix
-   if (update_zmax || update_zmin)
-   {
-      char msg[512];
-      struct retro_message msg_obj = {0};
-
-      sprintf(msg, "MaxZ OLD: %.2f NEW: %.2f | MinZ OLD: %.2f NEW: %.2f\n", pvrrc.fZ_max, settings.pvr.Emulation.zMax,
-            pvrrc.fZ_min, settings.pvr.Emulation.zMin);
-
-      if (update_zmax)
-      {
-         pvrrc.fZ_max = settings.pvr.Emulation.zMax;
-         update_zmax = false;
-      }
-      if (update_zmin)
-      {
-         pvrrc.fZ_min = settings.pvr.Emulation.zMin;
-         update_zmin  = false;
-      }
-
-      msg_obj.msg    = msg;
-      msg_obj.frames = 180;
-
-      environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, (void*)&msg_obj);
-   }
-
-	float vtx_min_fZ = (settings.pvr.Emulation.zMin != 0.0) ? settings.pvr.Emulation.zMin : 0;
-#endif
    float vtx_min_fZ = 0.f;
-	float vtx_max_fZ = (settings.pvr.Emulation.zMax != 1.0) ? settings.pvr.Emulation.zMax : pvrrc.fZ_max;
+	float vtx_max_fZ = pvrrc.fZ_max;
 
 	//sanitise the values, now with NaN detection (for omap)
 	//0x49800000 is 1024*1024. Using integer math to avoid issues w/ infs and nans
@@ -2004,8 +2021,6 @@ static bool RenderFrame(void)
 	if (!is_rtt)
 	{
 		gcflip=0;
-		dc_width=640;
-		dc_height=480;
 	}
 	else
 	{
@@ -2090,7 +2105,6 @@ static bool RenderFrame(void)
 	dc_width  *= scale_x;
 	dc_height *= scale_y;
 
-	glUseProgram(modvol_shader.program);
 
 	/*
 
@@ -2243,17 +2257,19 @@ static bool RenderFrame(void)
 		}
 		BindRTT(FB_W_SOF1&VRAM_MASK,FB_X_CLIP.max-FB_X_CLIP.min+1,FB_Y_CLIP.max-FB_Y_CLIP.min+1,channels,format);
 	}
-
-
-   glViewport(0, 0, gles_screen_width, gles_screen_height);
-   if (doCleanFrame)
+   else
    {
-      glClearColor(0, 0, 0, 1.0f);
-      glDepthMask(GL_TRUE);
-      glStencilMask(0xFF);
-      glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-      doCleanFrame = false;
+      glViewport(0, 0, gles_screen_width, gles_screen_height);
    }
+
+   if (!is_rtt && 0)
+      glClearColor(pvrrc.verts.head()->col[2]/255.0f,pvrrc.verts.head()->col[1]/255.0f,pvrrc.verts.head()->col[0]/255.0f,1.0f);
+   else
+      glClearColor(0,0,0,1.0f);
+
+   glDepthMask(GL_TRUE);
+   glStencilMask(0xFF);
+   glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
 	if (UsingAutoSort())
 		GenSorted();
@@ -2267,15 +2283,12 @@ static bool RenderFrame(void)
 	glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW);
 
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
-   glBindBuffer(GL_ARRAY_BUFFER, 0);
-   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	//Modvol VBO
 	if (pvrrc.modtrig.used())
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, vbo.modvols);
 		glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW);
-      glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
 	int offs_x=ds2s_offs_x+0.5f;
@@ -2291,63 +2304,25 @@ static bool RenderFrame(void)
    printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 #endif
 
-   glScissor(
-         offs_x + pvrrc.fb_X_CLIP.min / scale_x,
-         (pvrrc.fb_Y_CLIP.min / scale_y) * dc2s_scale_h,
-         (pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,
-         (pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h
-         );
-
-   glEnable(GL_SCISSOR_TEST);
+   if (!is_rtt && settings.rend.WideScreen && pvrrc.fb_X_CLIP.min==0 && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) && (pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ) )
+   {
+      glDisable(GL_SCISSOR_TEST);
+   }
+   else
+   {
+      glScissor(
+            offs_x + pvrrc.fb_X_CLIP.min / scale_x,
+            (pvrrc.fb_Y_CLIP.min / scale_y) * dc2s_scale_h,
+            (pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,
+            (pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h
+            );
+      glEnable(GL_SCISSOR_TEST);
+   }
 
 	//restore scale_x
 	scale_x /= scissoring_scale_x;
 
-	SetupMainVBO();
-	//Draw the strips !
-
-	//initial state
-	glDisable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
-
-	//We use sampler 0
-   glActiveTexture(GL_TEXTURE0);
-
-	//Opaque
-	//Nothing extra needs to be setup here
-	/*if (!GetAsyncKeyState(VK_F1))*/
-	DrawList<TA_LIST_OPAQUE, false>(pvrrc.global_param_op);
-
-	//Alpha tested
-	//setup alpha test state
-	/*if (!GetAsyncKeyState(VK_F2))*/
-	DrawList<TA_LIST_PUNCH_THROUGH, false>(pvrrc.global_param_pt);
-
-	DrawModVols();
-
-	//Alpha blended
-	//Setup blending
-	glEnable(GL_BLEND);
-
-   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-   if (settings.pvr.Emulation.AlphaSortMode == 0)
-   {
-      u32 count = pidx_sort.size();
-      //if any drawing commands, draw them
-      if (pvrrc.isAutoSort && count)
-         DrawSorted(count);
-      else
-         DrawList<TA_LIST_TRANSLUCENT, false>(pvrrc.global_param_tr);
-   }
-   else if (settings.pvr.Emulation.AlphaSortMode == 1)
-   {
-      if (pvrrc.isAutoSort)
-         SortPParams();
-      DrawList<TA_LIST_TRANSLUCENT, true>(pvrrc.global_param_tr);
-   }
-
-   vertex_buffer_unmap();
+   DrawStrips();
 
 	KillTex = false;
 

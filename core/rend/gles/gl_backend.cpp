@@ -167,18 +167,6 @@ static vector<SortTrigDrawParam>	pidx_sort;
 PipelineShader* CurrentShader;
 static u32 gcflip;
 
-static struct
-{
-	TSP tsp;
-	GLuint texture;
-
-	void Reset(const PolyParam* gp)
-	{
-		texture=~0;
-		tsp.full = ~gp->tsp.full;
-	}
-} cache;
-
 typedef void TexConvFP(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
 
 struct PvrTexInfo
@@ -265,14 +253,6 @@ struct TextureCacheData
 	                            /* VQ quantizers table for VQ texture.
 	                             * A texture can't be both VQ and PAL (paletted) at the same time */
 
-   void SetRepeatMode(GLuint dir,u32 clamp,u32 mirror)
-	{
-		if (clamp)
-			glTexParameteri (GL_TEXTURE_2D, dir, GL_CLAMP_TO_EDGE);
-		else 
-			glTexParameteri (GL_TEXTURE_2D, dir, mirror?GL_MIRRORED_REPEAT : GL_REPEAT);
-	}
-
 	//Create GL texture from tsp/tcw
 	void Create(bool isGL)
 	{
@@ -296,36 +276,6 @@ struct TextureCacheData
 		sa         = sa_tex;						                     /* data texture start address (modified for MIPs, as needed) */
 		w          = 8 << tsp.TexU;                              /* texture width */
 		h          = 8 << tsp.TexV;                              /* texture height */
-
-		if (texID)
-      {
-         /* Bind texture to set modes */
-         glcache.BindTexture(GL_TEXTURE_2D, texID);
-
-         /* Set texture repeat mode */
-         SetRepeatMode(GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU); // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (tsp.ClampU ? GL_CLAMP_TO_EDGE : (tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
-			SetRepeatMode(GL_TEXTURE_WRAP_T, tsp.ClampV, tsp.FlipV); // glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (tsp.ClampV ? GL_CLAMP_TO_EDGE : (tsp.FlipV ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
-
-#ifdef HAVE_OPENGLES
-         glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
-#endif
-
-         /* Set texture filter mode */
-         if (tsp.FilterMode == 0)
-         {
-            /* Disable filtering, mipmaps */
-            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-         }
-         else
-         {
-            /* Bilinear filtering */
-            /* PowerVR supports also trilinear via two passes, but we ignore that for now */
-            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,
-                  (tcw.MipMapped && settings.rend.UseMipmaps)?GL_LINEAR_MIPMAP_NEAREST:GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-         }
-      }
 
       pal_table_rev = 0;
 
@@ -936,6 +886,14 @@ static bool CompilePipelineShader(void *data)
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
+static void SetTextureRepeatMode(GLuint dir, u32 clamp, u32 mirror)
+{
+	if (clamp)
+		glcache.TexParameteri(GL_TEXTURE_2D, dir, GL_CLAMP_TO_EDGE);
+	else
+		glcache.TexParameteri(GL_TEXTURE_2D, dir, mirror ? GL_MIRRORED_REPEAT : GL_REPEAT);
+}
+
 template <u32 Type, bool SortingEnabled>
 static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 {
@@ -959,17 +917,24 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
    const u32 stencil = (gp->pcw.Shadow!=0)?0x80:0;
    glcache.StencilFunc(GL_ALWAYS, stencil, stencil);
 
-   bool texture_changed = false;
+   glcache.BindTexture(GL_TEXTURE_2D, gp->texid == -1 ? 0 : gp->texid);
+   SetTextureRepeatMode(GL_TEXTURE_WRAP_S, gp->tsp.ClampU, gp->tsp.FlipU);
+   SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
 
-   if (gp->texid != cache.texture)
-   {
-      cache.texture=gp->texid;
-      if (gp->texid != -1)
-      {
-         glcache.BindTexture(GL_TEXTURE_2D, gp->texid);
-         texture_changed = true;
-      }
-   }
+   //set texture filter mode
+	if (gp->tsp.FilterMode == 0)
+	{
+		//disable filtering, mipmaps
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+	else
+	{
+		//bilinear filtering
+		//PowerVR supports also trilinear via two passes, but we ignore that for now
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (gp->tcw.MipMapped && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
 
    if (Type==TA_LIST_TRANSLUCENT)
    {
@@ -978,29 +943,6 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
    }
    else
       glcache.Disable(GL_BLEND);
-
-   if (gp->tsp.full != cache.tsp.full || texture_changed)
-   {
-      cache.tsp=gp->tsp;
-
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (gp->tsp.ClampU ? GL_CLAMP_TO_EDGE : (gp->tsp.FlipU ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (gp->tsp.ClampV ? GL_CLAMP_TO_EDGE : (gp->tsp.FlipV ? GL_MIRRORED_REPEAT : GL_REPEAT))) ;
-
-      //set texture filter mode
-      if (gp->tsp.FilterMode == 0)
-      {
-         //disable filtering, mipmaps
-         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      }
-      else
-      {
-         //bilinear filtering
-			//PowerVR supports also trilinear via two passes, but we ignore that for now
-         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (gp->tcw.MipMapped && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
-         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      }
-   }
 
    //set cull mode !
    //cflip is required when exploding triangles for triangle sorting
@@ -1012,7 +954,6 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
       glcache.DepthFunc(GL_GEQUAL);
    else
       glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
-
 
    if (SortingEnabled && settings.pvr.Emulation.AlphaSortMode == 0)
       glcache.DepthMask(GL_FALSE);
@@ -1824,11 +1765,6 @@ static void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw2, fbh2, 0, channels, fmt, 0);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
 	/* Create the object that will allow us to render to the aforementioned texture */
 	glGenFramebuffers(1, &rv.fbo);
 	glBindFramebuffer(RARCH_GL_FRAMEBUFFER, rv.fbo);
@@ -2577,6 +2513,10 @@ struct glesrend : Renderer
 
       if (!gl_create_resources())
          return false;
+
+#ifdef GLES
+      glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
+#endif
 
       return true;
    }

@@ -441,6 +441,10 @@ else ifneq (,$(findstring gles,$(platform)))
 	GL_LIB := -lGLESv2
 else ifeq ($(platform), win)
 	GL_LIB := -lopengl32
+else ifneq (,$(findstring osx,$(platform)))
+	GL_LIB := -framework OpenGL
+else ifneq (,$(findstring ios,$(platform)))
+	GL_LIB := -framework OpenGLES
 else
 	GL_LIB := -lGL
 endif

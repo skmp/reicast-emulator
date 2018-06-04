@@ -2262,7 +2262,7 @@ static bool RenderFrame(void)
       glViewport(0, 0, gles_screen_width, gles_screen_height);
    }
 
-   if (!is_rtt && 0)
+   if (!is_rtt && settings.rend.WideScreen)
       glClearColor(pvrrc.verts.head()->col[2]/255.0f,pvrrc.verts.head()->col[1]/255.0f,pvrrc.verts.head()->col[0]/255.0f,1.0f);
    else
       glClearColor(0,0,0,1.0f);

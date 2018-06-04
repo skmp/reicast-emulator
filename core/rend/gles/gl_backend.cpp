@@ -1825,6 +1825,9 @@ static void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	rv.TexAddr=addy>>3;
 
 	/* Find the largest square POT texture that fits into the viewport */
+   int fbh2 = 2;
+   while (fbh2 < fbh)
+      fbh2 *= 2;
 
 	/* Get the currently bound frame buffer object. On most platforms this just gives 0. */
 #if 0
@@ -1841,13 +1844,13 @@ static void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 		m_i32TexSize by m_i32TexSize.
 	*/
 
-	glRenderbufferStorage(RARCH_GL_RENDERBUFFER, RARCH_GL_DEPTH24_STENCIL8, fbw, fbh);
+	glRenderbufferStorage(RARCH_GL_RENDERBUFFER, RARCH_GL_DEPTH24_STENCIL8, fbw, fbh2);
 
 	/* Create a texture for rendering to */
 	glGenTextures(1, &rv.tex);
 	glBindTexture(GL_TEXTURE_2D, rv.tex);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw, fbh, 0, channels, fmt, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw, fbh2, 0, channels, fmt, 0);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

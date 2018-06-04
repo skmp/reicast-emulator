@@ -237,9 +237,9 @@ else ifneq (,$(findstring ios,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro_ios.$(EXT)
 	DEFINES += -DIOS
 	GLES = 1
-	WITH_DYNAREC=arm
+	WITH_DYNAREC=
 	PLATFORM_EXT := unix
-	HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_ARM)
+	#HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_ARM)
 
 	PLATCFLAGS += -DHAVE_POSIX_MEMALIGN -DNO_ASM
 	PLATCFLAGS += -DIOS -marm

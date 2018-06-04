@@ -22,6 +22,14 @@
 #include "../../hw/pvr/tr.h"
 #include "../../hw/pvr/pixel_convert.h"
 
+#ifndef GL_IMPLEMENTATION_COLOR_READ_TYPE
+#define GL_IMPLEMENTATION_COLOR_READ_TYPE 0x8B9A
+#endif
+
+#ifndef GL_IMPLEMENTATION_COLOR_READ_FORMAT
+#define GL_IMPLEMENTATION_COLOR_READ_FORMAT 0x8B9B
+#endif
+
 #define VERTEX_POS_ARRAY      0
 #define VERTEX_COL_BASE_ARRAY 1
 #define VERTEX_COL_OFFS_ARRAY 2

@@ -17,6 +17,7 @@
 #include "../../libretro/libretro.h"
 
 #include "../../hw/pvr/pvr.h"
+#include "../../hw/mem/_vmem.h"
 #include "../../hw/pvr/tr.h"
 #include "../../hw/pvr/pixel_convert.h"
 
@@ -1875,6 +1876,8 @@ static void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	GLuint uStatus = glCheckFramebufferStatus(RARCH_GL_FRAMEBUFFER);
 
 	verify(uStatus == RARCH_GL_FRAMEBUFFER_COMPLETE);
+
+   glViewport(0, 0, fbw, fbh);		// TODO CLIP_X/Y min?
 }
 
 static void DrawStrips(void)
@@ -1924,6 +1927,106 @@ static void DrawStrips(void)
    }
 
    vertex_buffer_unmap();
+}
+
+static void ReadRTTBuffer()
+{
+	for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
+	{
+		if (i->second.sa_tex == fb_rtt.TexAddr << 3)
+			i->second.dirty = FrameCount;
+	}
+
+	u32 w = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
+	u32 h = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
+
+   u32 stride = FB_W_LINESTRIDE.stride * 8;
+	if (stride == 0)
+		stride = w * 2;
+	else if (w * 2 > stride) {
+    	// Happens for Virtua Tennis
+    	w = stride / 2;
+    }
+
+   u32 size = w * h * 2;
+   u32 tex_addr = fb_rtt.TexAddr << 3;
+
+   // Manually mark textures as dirty and remove all vram locks before calling glReadPixels
+   // (deadlock on rpi)
+   for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
+   {
+      if (i->second.sa_tex <= tex_addr + size - 1 && i->second.sa + i->second.size - 1 >= tex_addr) {
+         i->second.dirty = FrameCount;
+         if (i->second.lock_block != NULL) {
+            libCore_vramlock_Unlock_block(i->second.lock_block);
+            i->second.lock_block = NULL;
+         }
+      }
+   }
+   VArray2_UnLockRegion(&vram, 0, 2 * vram.size);
+
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	u16 *src = temp_tex_buffer;
+	u16 *dst = (u16 *)&vram.data[fb_rtt.TexAddr << 3];
+
+   GLint color_fmt, color_type;
+	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
+	glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &color_type);
+
+   if (FB_W_CTRL.fb_packmode == 1 && stride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5) {
+		// Can be read directly into vram
+		glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
+	}
+	else
+   {
+      u32 lines = h;
+      while (lines > 0) {
+         u8 *p = (u8 *)temp_tex_buffer;
+         u32 chunk_lines = min((u32)sizeof(temp_tex_buffer), w * lines * 4) / w / 4;
+         glReadPixels(0, h - lines, w, chunk_lines, GL_RGBA, GL_UNSIGNED_BYTE, p);
+
+         for (u32 l = 0; l < chunk_lines; l++) {
+            for (u32 c = 0; c < w; c++) {
+               switch(FB_W_CTRL.fb_packmode)
+               {
+                  case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
+                     *dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | ((FB_W_CTRL.fb_kval & 0x80) << 8);
+                     break;
+                  case 1: //0x1   565 RGB 16 bit
+                     *dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
+                     break;
+                  case 2: //0x2   4444 ARGB 16 bit
+                     *dst++ = (((p[0] >> 4) & 0xF) << 8) | (((p[1] >> 4) & 0xF) << 4) | ((p[2] >> 4) & 0xF) | (((p[3] >> 4) & 0xF) << 12);
+                     break;
+                  case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
+                     *dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] >= FB_W_CTRL.fb_alpha_threshold ? 0x8000 : 0);
+                     break;
+               }
+               p += 4;
+            }
+            dst += (stride - w * 2) / 2;
+         }
+         lines -= chunk_lines;
+      }
+   }
+
+   // Restore VRAM locks
+   for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
+   {
+      if (i->second.lock_block != NULL) {
+         VArray2_LockRegion(&vram, i->second.sa_tex, i->second.sa + i->second.size - i->second.sa_tex);
+
+         //TODO: Fix this for 32M wrap as well
+         if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
+            VArray2_LockRegion(&vram, i->second.sa_tex + VRAM_SIZE, i->second.sa + i->second.size - i->second.sa_tex);
+         }
+      }
+   }
+
+	if (fb_rtt.fbo) { glDeleteFramebuffers(1,&fb_rtt.fbo); fb_rtt.fbo = 0; }
+	if (fb_rtt.tex) { glDeleteTextures(1,&fb_rtt.tex); fb_rtt.tex = 0; }
+	if (fb_rtt.depthb) { glDeleteRenderbuffers(1,&fb_rtt.depthb); fb_rtt.depthb = 0; }
+	if (fb_rtt.stencilb) { glDeleteRenderbuffers(1,&fb_rtt.stencilb); fb_rtt.stencilb = 0; }
 }
 
 static bool RenderFrame(void)
@@ -2021,8 +2124,6 @@ static bool RenderFrame(void)
 	if (!is_rtt)
 	{
 		gcflip=0;
-		dc_width=640;
-		dc_height=480;
 	}
 	else
 	{
@@ -2031,13 +2132,11 @@ static bool RenderFrame(void)
 		//For some reason this produces wrong results
 		//so for now its hacked based like on the d3d code
 		/*
-		dc_width=FB_X_CLIP.max-FB_X_CLIP.min+1;
-		dc_height=FB_Y_CLIP.max-FB_Y_CLIP.min+1;
 		u32 pvr_stride=(FB_W_LINESTRIDE.stride)*8;
 		*/
 
-		dc_width=640;
-		dc_height=480;
+		dc_width  = FB_X_CLIP.max-FB_X_CLIP.min+1;
+		dc_height = FB_Y_CLIP.max-FB_Y_CLIP.min+1;
 	}
 
 	float scale_x=1, scale_y=1;
@@ -2068,41 +2167,6 @@ static bool RenderFrame(void)
     	 */
 		scale_x*=2;
 	}
-
-   if (is_rtt)
-   {
-      switch (gles_screen_width)
-      {
-         case 640:
-            scale_x = 1;
-            scale_y = 1;
-            break;
-         case 1280:
-            scale_x = 2;
-            scale_y = 2;
-            break;
-         case 1920:
-            scale_x = 3;
-            scale_y = 3;
-            break;
-         case 2560:
-            scale_x = 4;
-            scale_y = 4;
-            break;
-         case 3200:
-            scale_x = 5;
-            scale_y = 5;
-            break;
-         case 3840:
-            scale_x = 6;
-            scale_y = 6;
-            break;
-         case 4480:
-            scale_x = 7;
-            scale_y = 7;
-            break;
-      }
-   }
 
 	dc_width  *= scale_x;
 	dc_height *= scale_y;
@@ -2136,12 +2200,13 @@ static bool RenderFrame(void)
 	/*
 		Handle Dc to screen scaling
 	*/
-	float dc2s_scale_h = gles_screen_height/480.0f;
-	float ds2s_offs_x  = (gles_screen_width-dc2s_scale_h*640)/2;
+	float dc2s_scale_h = is_rtt ? (gles_screen_width / dc_width) : (gles_screen_height/480.0);
+	float ds2s_offs_x  = is_rtt ? 0 : ((gles_screen_width-dc2s_scale_h*640)/2);
 
 	//-1 -> too much to left
 	ShaderUniforms.scale_coefs[0]=2.0f/(gles_screen_width/dc2s_scale_h*scale_x);
-	ShaderUniforms.scale_coefs[1]=(is_rtt?2:-2)/dc_height;
+	ShaderUniforms.scale_coefs[1]= (is_rtt?2:-2) / dc_height;
+   // FIXME CT2 needs 480 here instead of dc_height=512
 	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(gles_screen_width);
 	ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
 
@@ -2151,7 +2216,7 @@ static bool RenderFrame(void)
 	ShaderUniforms.depth_coefs[2]=0;
 	ShaderUniforms.depth_coefs[3]=0;
 
-	//printf("scale: %f, %f, %f, %f\n",scale_coefs[0],scale_coefs[1],scale_coefs[2],scale_coefs[3]);
+	//printf("scale: %f, %f, %f, %f\n", ShaderUniforms.scale_coefs[0],scale_coefs[1], ShaderUniforms.scale_coefs[2], ShaderUniforms.scale_coefs[3]);
 
 
 	//VERT and RAM fog color constants
@@ -2231,7 +2296,7 @@ static bool RenderFrame(void)
 
 		case 2: //0x2   4444 ARGB 16 bit
 			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_5_5_5_1;
+			format=GL_UNSIGNED_SHORT_4_4_4_4;
 			break;
 
 		case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
@@ -2240,25 +2305,17 @@ static bool RenderFrame(void)
 			break;
 
 		case 4: //0x4   888 RGB 24 bit packed
-			channels=GL_RGB;
-			format=GL_UNSIGNED_SHORT_5_6_5;
-			break;
-
 		case 5: //0x5   0888 KRGB 32 bit    K is the value of fk_kval.
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_4_4_4_4;
-			break;
-
 		case 6: //0x6   8888 ARGB 32 bit
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_4_4_4_4;
-			break;
-
+         fprintf(stderr, "Unsupported render to texture format: %d\n", FB_W_CTRL.fb_packmode);
+         return false;
 		case 7: //7     invalid
 			die("7 is not valid");
 			break;
 		}
-		BindRTT(FB_W_SOF1&VRAM_MASK,FB_X_CLIP.max-FB_X_CLIP.min+1,FB_Y_CLIP.max-FB_Y_CLIP.min+1,channels,format);
+      //printf("RTT packmode=%d stride=%d - %d,%d -> %d,%d\n", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
+ 		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);	 		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
+		BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels,format);
 	}
    else
    {
@@ -2328,6 +2385,9 @@ static bool RenderFrame(void)
    DrawStrips();
 
 	KillTex = false;
+   
+   if (is_rtt)
+      ReadRTTBuffer();
 
 	return !is_rtt;
 }
@@ -2342,10 +2402,6 @@ void co_dc_yield(void);
 
 static GLuint gl_GetTexture(TSP tsp, TCW tcw)
 {
-
-	if (tcw.TexAddr == fb_rtt.TexAddr && fb_rtt.tex)
-		return fb_rtt.tex;
-
 	/* Lookup texture */
    TextureCacheData* tf = NULL;
 	u64 key         = ((u64)tcw.full<<32) | tsp.full;
@@ -2403,9 +2459,6 @@ static void CollectCleanup(void)
 
 bool ProcessFrame(TA_context* ctx)
 {
-   if (ctx->rend.isRTT)
-      return false;
-
 #ifndef TARGET_NO_THREADS
    slock_lock(ctx->rend_inuse);
 #endif

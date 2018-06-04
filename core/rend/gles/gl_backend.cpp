@@ -2021,6 +2021,8 @@ static bool RenderFrame(void)
 	if (!is_rtt)
 	{
 		gcflip=0;
+		dc_width=640;
+		dc_height=480;
 	}
 	else
 	{
@@ -2105,6 +2107,7 @@ static bool RenderFrame(void)
 	dc_width  *= scale_x;
 	dc_height *= scale_y;
 
+   glUseProgram(modvol_shader.program);
 
 	/*
 
@@ -2339,12 +2342,12 @@ void co_dc_yield(void);
 
 static GLuint gl_GetTexture(TSP tsp, TCW tcw)
 {
-	TextureCacheData* tf = NULL;
 
 	if (tcw.TexAddr == fb_rtt.TexAddr && fb_rtt.tex)
 		return fb_rtt.tex;
 
 	/* Lookup texture */
+   TextureCacheData* tf = NULL;
 	u64 key         = ((u64)tcw.full<<32) | tsp.full;
 
 	TexCacheIter tx = TexCache.find(key);
@@ -2398,6 +2401,31 @@ static void CollectCleanup(void)
    }
 }
 
+bool ProcessFrame(TA_context* ctx)
+{
+   if (ctx->rend.isRTT)
+      return false;
+
+#ifndef TARGET_NO_THREADS
+   slock_lock(ctx->rend_inuse);
+#endif
+   ctx->MarkRend();
+
+   if (KillTex)
+   {
+      void killtex();
+      killtex();
+      printf("Texture cache cleared\n");
+   }
+
+   if (!ta_parse_vdrc(ctx))
+      return false;
+
+   CollectCleanup();
+
+   return true;
+}
+
 struct glesrend : Renderer
 {
 	bool Init()
@@ -2416,27 +2444,7 @@ struct glesrend : Renderer
 
 	bool Process(TA_context* ctx)
    {
-      if (!enable_rtt && ctx->rend.isRTT)
-         return false;
-
-#ifndef TARGET_NO_THREADS
-      slock_lock(ctx->rend_inuse);
-#endif
-      ctx->MarkRend();
-
-      if (KillTex)
-      {
-         void killtex();
-         killtex();
-         printf("Texture cache cleared\n");
-      }
-
-      if (!ta_parse_vdrc(ctx))
-         return false;
-
-      CollectCleanup();
-
-      return true;
+      return ProcessFrame(ctx);
    }
 	bool Render()
    {

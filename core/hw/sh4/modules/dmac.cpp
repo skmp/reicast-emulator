@@ -8,7 +8,7 @@
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/holly/holly.h"
 #include "hw/sh4/sh4_mem.h"
-#include "hw/pvr/pvr.h"
+#include "hw/pvr/pvr_mem.h"
 #include "dmac.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "types.h"

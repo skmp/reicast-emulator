@@ -1,38 +1,17 @@
 #pragma once
-#include "types.h"
-
-
-//bleh stupid windoze header
-#include "types.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#define fverify verify
-
-#include "pvr_mem.h"
-#include "pvr_regs.h"
-#include "pvr_types.h"
-
-#include "ta.h"
-
-void libCore_vramlock_Free(void);
-void libCore_vramlock_Init(void);
-
-//Init/Term , global
-void pvr_sb_Init();
-void pvr_sb_Term();
-//Reset -> Reset - Initialise
-void pvr_sb_Reset(bool Manual);
+#include "drkPvr.h"
+#include "ta_ctx.h"
 
 extern u32 VertexCount;
 extern u32 FrameCount;
 
 bool rend_init(void);
 void rend_term(void);
-void rend_vblank(void);
 
+void rend_vblank(void);
+void rend_start_render(void);
 void rend_end_render(void);
+void rend_end_wait(void);
 
 void rend_set_fb_scale(float x,float y);
 void rend_resize(int width, int height);
@@ -45,7 +24,7 @@ u32
 #endif
 GetTexture(TSP tsp,TCW tcw);
 
-
+//////
 extern TA_context* _pvrrc;
 
 #define pvrrc (_pvrrc->rend)
@@ -72,3 +51,5 @@ extern Renderer* renderer;
 Renderer* rend_GLES2();
 Renderer* rend_norend();
 Renderer* rend_softrend();
+void libCore_vramlock_Free(void);
+void libCore_vramlock_Init(void);

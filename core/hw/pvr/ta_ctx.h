@@ -1,5 +1,6 @@
 #pragma once
 #include "ta.h"
+#include "pvr_regs.h"
 
 //Vertex storage types
 struct Vertex

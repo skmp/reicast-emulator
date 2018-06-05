@@ -18,7 +18,7 @@
 #include "../TexCache.h"
 #include "glcache.h"
 
-#include "../../hw/pvr/pvr.h"
+#include "../../hw/pvr/pvr_mem.h"
 #include "../../hw/mem/_vmem.h"
 
 /*

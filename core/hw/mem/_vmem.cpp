@@ -10,7 +10,7 @@
 #endif
 
 #include "_vmem.h"
-#include "hw/pvr/pvr.h"
+#include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_mem.h"
 
 #include "hw/aica/aica.h"

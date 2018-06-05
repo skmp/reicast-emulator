@@ -9,6 +9,7 @@
 #include "sh4_mmr.h"
 #include "modules/modules.h"
 #include "hw/pvr/pvr.h"
+#include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/mem/_vmem.h"
 #include "modules/mmu.h"

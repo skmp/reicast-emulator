@@ -35,6 +35,7 @@ SOURCES_CXX := \
 					$(CORE_DIR)/hw/pvr/ta.cpp \
 					$(CORE_DIR)/hw/pvr/ta_ctx.cpp \
 					$(CORE_DIR)/hw/pvr/tr.cpp \
+					$(CORE_DIR)/rend/TexCache.cpp \
 					\
 					$(CORE_DIR)/hw/sh4/sh4_mmr.cpp \
 					$(CORE_DIR)/hw/sh4/sh4_mem.cpp \

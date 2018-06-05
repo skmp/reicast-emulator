@@ -7,6 +7,8 @@
 #include "hw/mem/_vmem.h"
 #include "TexCache.h"
 
+#include <rthreads/rthreads.h>
+
 u8* vq_codebook;
 u32 palette_index;
 
@@ -264,4 +266,19 @@ void libCore_vramlock_Unlock_block_wb(vram_block* block)
 		//more work needed
 		free(block);
 	}
+}
+
+void libCore_vramlock_Free(void)
+{
+#ifndef TARGET_NO_THREADS
+   slock_free(vramlist_lock);
+   vramlist_lock = NULL;
+#endif
+}
+
+void libCore_vramlock_Init(void)
+{
+#ifndef TARGET_NO_THREADS
+   vramlist_lock = slock_new();
+#endif
 }

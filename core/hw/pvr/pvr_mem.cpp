@@ -61,102 +61,133 @@ void YUV_init(void)
 #define TA_YUV420_MACROBLOCK_SIZE 384
 #define TA_YUV422_MACROBLOCK_SIZE 512
 
-static void ta_yuv_process_block(u8* in_uv,u8* in_y, u8* out_uyvy)
+static INLINE u8 GetY420(int x, int y,u8* base)
 {
-   unsigned y, x;
-   u8* out_row0   = out_uyvy + 0;
-   u8* out_row1   = out_uyvy + YUV_x_size * 2;
+	//u32 base=0;
+	if (x > 7)
+	{
+		x -= 8;
+		base += 64;
+	}
 
-   /* reencode 8x8 subblock of YUV420 data as UYVY422 */
-   for (y = 0;y < 8;y += 2)
-   {
-      for (x = 0;x < 8;x += 2)
-      {
-         u8 u          = in_uv[0];
-         u8 v          = in_uv[64];
+	if (y > 7)
+	{
+		y -= 8;
+		base += 128;
+	}
+	
+	return base[x+y*8];
+}
 
-         out_row0[0]   = u;
-         out_row0[1]   = in_y[0];
-         out_row0[2]   = v;
-         out_row0[3]   = in_y[1];
+static INLINE u8 GetUV420(int x, int y,u8* base)
+{
+	int realx=x>>1;
+	int realy=y>>1;
 
-         out_row1[0]   = u;
-         out_row1[1]   = in_y[8+0];
-         out_row1[2]   = v;
-         out_row1[3]   = in_y[8+1];
+	return base[realx+realy*8];
+}
 
-         in_uv        += 1;
-         in_y         += 2;
+void YUV_Block8x8(u8* inuv,u8* iny, u8* out)
+{
+	u8* line_out_0=out+0;
+	u8* line_out_1=out+YUV_x_size*2;
 
-         out_row0     += 4;
-         out_row1     += 4;
-      }
-      in_y            += 8;
-      in_uv           += 4;
+	for (int y=0;y<8;y+=2)
+	{
+		for (int x=0;x<8;x+=2)
+		{
+			u8 u=inuv[0];
+			u8 v=inuv[64];
 
-      out_row0        += YUV_x_size*4-8*2;
-      out_row1        += YUV_x_size*4-8*2;
-   }
+			line_out_0[0]=u;
+			line_out_0[1]=iny[0];
+			line_out_0[2]=v;
+			line_out_0[3]=iny[1];
+
+			line_out_1[0]=u;
+			line_out_1[1]=iny[8+0];
+			line_out_1[2]=v;
+			line_out_1[3]=iny[8+1];
+
+			inuv+=1;
+			iny+=2;
+
+			line_out_0+=4;
+			line_out_1+=4;
+		}
+		iny+=8;
+		inuv+=4;
+
+		line_out_0+=YUV_x_size*4-8*2;
+		line_out_1+=YUV_x_size*4-8*2;
+	}
+}
+
+static INLINE void YUV_Block384(u8* in, u8* out)
+{
+	u8* inuv=in;
+	u8* iny=in+128;
+	u8* p_out=out;
+
+	YUV_Block8x8(inuv+ 0,iny+  0,p_out);                    //(0,0)
+	YUV_Block8x8(inuv+ 4,iny+64,p_out+8*2);                 //(8,0)
+	YUV_Block8x8(inuv+32,iny+128,p_out+YUV_x_size*8*2);     //(0,8)
+	YUV_Block8x8(inuv+36,iny+192,p_out+YUV_x_size*8*2+8*2); //(8,8)
 }
 
 static INLINE void YUV_ConvertMacroBlock(u8* datap)
 {
-   /* YUV420 data comes in as a series of 16x16 
-    * macroblocks that need to be converted into a single
-    * UYVY422 texture */
-   TA_YUV_TEX_CNT++;
+	//do shit
+	TA_YUV_TEX_CNT++;
 
-   u8 *in     = (u8*)datap;
-   u8 *out    = vram.data + YUV_dest;
-   u8* inuv   = in;
-   u8* iny    = in + 128;
-   u8* p_out  = out;
+	YUV_Block384((u8*)datap,vram.data + YUV_dest);
 
-   /* Process each 8x8 subblock individually */
-   ta_yuv_process_block(inuv+ 0,iny+  0,p_out);                    /* (0,0) */
-   ta_yuv_process_block(inuv+ 4,iny+64,p_out+8*2);                 /* (8,0) */
-   ta_yuv_process_block(inuv+32,iny+128,p_out+YUV_x_size*8*2);     /* (0,8) */
-   ta_yuv_process_block(inuv+36,iny+192,p_out+YUV_x_size*8*2+8*2); /* (8,8) */
+	YUV_dest+=32;
 
-   YUV_dest   += 32;
-   YUV_x_curr += 16;
+	YUV_x_curr+=16;
+	if (YUV_x_curr==YUV_x_size)
+	{
+		YUV_dest+=15*YUV_x_size*2;
+		YUV_x_curr=0;
+		YUV_y_curr+=16;
+		if (YUV_y_curr==YUV_y_size)
+		{
+			YUV_y_curr=0;
+		}
+	}
 
-   if (YUV_x_curr == YUV_x_size)
-   {
-      YUV_dest     += YUV_x_size * 2 * 15;
-      YUV_x_curr    = 0;
-      YUV_y_curr   += 16;
-
-      if (YUV_y_curr == YUV_y_size)
-         YUV_y_curr = 0;
-   }
-
-   /* reset state once all macroblocks have been preprocessed */
-   if (YUV_blockcount == TA_YUV_TEX_CNT)
-   {
-      YUV_init();
-
-      /* raise DMA end interrupt */
-      asic_RaiseInterruptWait(holly_YUV_DMA);
-   }
+	if (YUV_blockcount==TA_YUV_TEX_CNT)
+	{
+		YUV_init();
+		
+		asic_RaiseInterrupt(holly_YUV_DMA);
+	}
 }
 
 void YUV_data(u32* data , u32 count)
 {
-   if (YUV_blockcount==0)
-      YUV_init();
+	if (YUV_blockcount==0)
+	{
+		die("YUV_data : YUV decoder not inited , *WATCH*\n");
+		//wtf ? not inited
+		YUV_init();
+	}
 
-   u32 block_size=(TA_YUV_TEX_CTRL & (1<<24))==0 ?
-      TA_YUV420_MACROBLOCK_SIZE : TA_YUV422_MACROBLOCK_SIZE;
+	u32 block_size=(TA_YUV_TEX_CTRL & (1<<24))==0?384:512;
 
-   count *= 32;
+	verify(block_size==384); //no support for 512
 
-   while(count>=block_size)
-   {
-      YUV_ConvertMacroBlock((u8*)data); //convert block
-      data  += block_size>>2;
-      count -= block_size;
-   }
+	
+	count*=32;
+
+	while(count>=block_size)
+	{
+		YUV_ConvertMacroBlock((u8*)data); //convert block
+		data+=block_size>>2;
+		count-=block_size;
+	}
+
+	verify(count==0);
 }
 
 //Regs
@@ -274,4 +305,13 @@ u32 pvr_map32(u32 offset32)
    u32 rv                = offset32 + bank + lv;
 
    return rv;
+}
+
+f32 vrf(u32 addr)
+{
+	return *(f32*)&vram.data[pvr_map32(addr) & VRAM_MASK];
+}
+u32 vri(u32 addr)
+{
+	return *(u32*)&vram.data[pvr_map32(addr) & VRAM_MASK];
 }

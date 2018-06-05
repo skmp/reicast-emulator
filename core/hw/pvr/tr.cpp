@@ -9,9 +9,6 @@
 
 #define vdrc vd_rc
 
-#define vrf(addr) (*(f32*)&vram.data[pvr_map32((addr)) & VRAM_MASK])
-#define vri(addr) (*(u32*)&vram.data[pvr_map32((addr)) & VRAM_MASK])
-
 u32 tileclip_val=0;
 u8 f32_su8_tbl[65536];
 

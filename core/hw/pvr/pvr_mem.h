@@ -2,6 +2,8 @@
 #include "types.h"
 
 u32 pvr_map32(u32 offset32);
+f32 vrf(u32 addr);
+u32 vri(u32 addr);
 
 //vram 32-64b
 extern VArray2 vram;

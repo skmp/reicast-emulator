@@ -1044,10 +1044,9 @@ public:
       return 0;
 	}
 
-
-	void vdec_init(void)
-	{
-		vd_rc.Clear();
+   static void VDECInit()
+   {
+      vd_rc.Clear();
 
 		//allocate storage for BG poly
 		vd_rc.global_param_op.Append();
@@ -1059,6 +1058,11 @@ public:
 		idx[2]=vbase+2;
 		idx[3]=vbase+3;
 		vd_rc.verts.Append(4);
+   }
+
+	void vdec_init(void)
+	{
+      VDECInit();
 
 		TaCmd             = ta_main;
 		CurrentList       = LISTTYPE_NONE;

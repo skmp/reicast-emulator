@@ -22,6 +22,14 @@ u32 decoded_colors[3][65536];
 extern rend_context vd_rc;
 
 #define TACALL DYNACALL
+#define PLD(ptr,offs)
+#define TA_VTX 
+#define TA_SPR 
+#define TA_EOS 
+#define TA_PP 
+#define TA_SP 
+#define TA_EOL 
+#define TA_V64H
 
 //cache state vars
 u32 tileclip_val=0;
@@ -93,64 +101,6 @@ static INLINE f32 f16(u16 v)
 	return *(f32*)&z;
 }
 
-//input : address in the yyyyyxxxxx format
-//output : address in the xyxyxyxy format
-//U : x resolution , V : y resolution
-//twiddle works on 64b words
-
-//Color conversions
-#define tr_parse_color(col, base_color) \
-   col[2] = (u8)(base_color); \
-   col[1] = (u8)(base_color >> 8); \
-   col[0] = (u8)(base_color >> 16); \
-   col[3] = (u8)(base_color >> 24)
-
-#define tr_parse_offset_color(cv, offset_color) \
-   cv->vtx_spc[2] = (u8)(offset_color); \
-   cv->vtx_spc[1] = (u8)(offset_color >> 8); \
-   cv->vtx_spc[0] = (u8)(offset_color >> 16); \
-   cv->vtx_spc[3] = (u8)(offset_color >> 24)
-
-#define tr_parse_color_rgba(col, r, g, b, a) \
-   col[0] = float_to_satu8(r); \
-   col[1] = float_to_satu8(g); \
-   col[2] = float_to_satu8(b); \
-   col[3] = float_to_satu8(a)
-
-#define tr_parse_color_intensity(col, base_intensity, val) \
-   col[0] = val[0] * base_intensity / 256;  \
-   col[1] = val[1] * base_intensity / 256; \
-   col[2] = val[2] * base_intensity / 256; \
-   col[3] = val[3]
-
-#define tr_parse_offset_color_intensity(col, base_intensity) \
-   col[0] = FaceOffsColor[0] * base_intensity / 256;  \
-   col[1] = FaceOffsColor[1] * base_intensity / 256;  \
-   col[2] = FaceOffsColor[2] * base_intensity / 256;  \
-   col[3] = FaceOffsColor[3]
-
-/* Intensity handling */
-
-/* Notes:
- * Alpha doesn't get intensity
- * Intensity is clamped before the mul, 
- * as well as on face color to work the same as the hardware. [Fixes red dog] */
-
-#define append_sprite(indx) \
-   tr_parse_color(cv[indx].col,SFaceBaseColor); \
-   tr_parse_color(cv[indx].vtx_spc,SFaceOffsColor)
-
-#define append_sprite_yz(indx,set,st2) \
-   cv[indx].y=sv->y##set; \
-   cv[indx].z=sv->z##st2; \
-   update_fz(sv->z##st2);
-
-#define sprite_uv(indx,u_name,v_name) \
-   cv[indx].u = f16(sv->u_name);\
-   cv[indx].v = f16(sv->v_name);
-
-#define should_append_poly_param(pp) (CurrentPP->pcw.full!=pp->pcw.full || CurrentPP->tcw.full!=pp->tcw.full || CurrentPP->tsp.full!=pp->tsp.full || CurrentPP->isp.full!=pp->isp.full) 
-
 #define vdrc vd_rc
 
 //Splitter function (normally ta_dma_main , modified for split dma's)
@@ -159,6 +109,15 @@ template<u32 instance>
 class FifoSplitter
 {
 public:
+
+	static void ta_list_start(u32 new_list)
+	{
+		//verify(CurrentList==ListType_None);
+		//verify(ListIsFinished[new_list]==false);
+		//printf("Starting list %d\n",new_list);
+		CurrentList=new_list;
+		StartList(CurrentList);
+	}
 
 	static Ta_Dma* DYNACALL NullVertexData(Ta_Dma* data,Ta_Dma* data_end)
 	{
@@ -169,380 +128,113 @@ public:
 	//part : 0 fill all data , 1 fill upper 32B , 2 fill lower 32B
 	//Poly decoder , will be moved to pvr code
 	template <u32 poly_type,u32 part>
-	static __forceinline Ta_Dma* TACALL ta_handle_poly(Ta_Dma* data,Ta_Dma* data_end)
-   {
-      TA_VertexParam* vp=(TA_VertexParam*)data;
-      u32 rv=0;
+	__forceinline
+	static Ta_Dma* TACALL ta_handle_poly(Ta_Dma* data,Ta_Dma* data_end)
+	{
+		TA_VertexParam* vp=(TA_VertexParam*)data;
+		u32 rv=0;
 
-      if (part==2)
-         TaCmd=ta_main;
+		if (part==2)
+		{
+			TA_V64H;
+			TaCmd=ta_main;
+		}
 
-      switch (poly_type)
-      {
-         //32b , always in one pass :)
+		switch (poly_type)
+		{
+#define ver_32B_def(num) \
+case num : {\
+AppendPolyVertex##num(&vp->vtx##num);\
+rv=SZ32; TA_VTX; }\
+break;
 
-         /* (Non-Textured, Packed Color) */
-         case 0:
-            {
-               TA_Vertex0 *vtx = (TA_Vertex0*)&vp->vtx0;
-               Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
+			//32b , always in one pass :)
+			ver_32B_def(0);//(Non-Textured, Packed Color)
+			ver_32B_def(1);//(Non-Textured, Floating Color)
+			ver_32B_def(2);//(Non-Textured, Intensity)
+			ver_32B_def(3);//(Textured, Packed Color)
+			ver_32B_def(4);//(Textured, Packed Color, 16bit UV)
+			ver_32B_def(7);//(Textured, Intensity)
+			ver_32B_def(8);//(Textured, Intensity, 16bit UV)
+			ver_32B_def(9);//(Non-Textured, Packed Color, with Two Volumes)
+			ver_32B_def(10);//(Non-Textured, Intensity,	with Two Volumes)
 
-               tr_parse_color(cv->col, vtx->BaseCol);
-            }
-            rv=SZ32;
-            break;
+#undef ver_32B_def
 
-            /* (Non-Textured, Floating Color) */
-         case 1:
-            {
-               TA_Vertex1 *vtx = (TA_Vertex1*)&vp->vtx1;
-               Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
-
-               tr_parse_color_rgba(cv->col, vtx->BaseR,
-                     vtx->BaseG, vtx->BaseB, vtx->BaseA);
-            }
-            rv=SZ32;
-            break;
-
-            /* (Non-Textured, Intensity) */
-         case 2:
-            {
-               TA_Vertex2* vtx = (TA_Vertex2*)&vp->vtx2;
-               Vertex   * cv   = vert_cvt_base_((TA_Vertex0*)vtx);
-               u32    satint   = float_to_satu8(vtx->BaseInt);
-
-               tr_parse_color_intensity(cv->col, satint,
-                     FaceBaseColor);
-            }
-            rv=SZ32;
-            break;
-
-            /* (Textured, Packed Color) */
-         case 3:
-            {
-               TA_Vertex3 *vtx = (TA_Vertex3*)&vp->vtx3;
-               Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
-
-               tr_parse_color(cv->col, vtx->BaseCol);
-
-               tr_parse_offset_color(cv, vtx->OffsCol);
-
-               cv->u = (vtx->u);
-               cv->v = (vtx->v);
-            }
-            rv=SZ32;
-            break;
-
-            /* (Textured, Packed Color, 16bit UV) */
-         case 4:
-            {
-               TA_Vertex4 *vtx = (TA_Vertex4*)&vp->vtx4;
-               Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
-
-               tr_parse_color(cv->col, vtx->BaseCol);
-               tr_parse_offset_color(cv, vtx->OffsCol);
-
-               cv->u = f16(vtx->u);
-               cv->v = f16(vtx->v);
-            }
-            rv=SZ32;
-            break;
-
-            /* (Textured, Intensity) */
-         case 7:
-            {
-               TA_Vertex7 *vtx = (TA_Vertex7*)&vp->vtx7;
-               Vertex      *cv = vert_cvt_base_((TA_Vertex0*)vtx);
-               u32     satint0 = float_to_satu8(vtx->BaseInt);
-               u32     satint1 = float_to_satu8(vtx->OffsInt);
-
-               tr_parse_color_intensity(cv->col, satint0,
-                     FaceBaseColor);
-               tr_parse_offset_color_intensity(cv->vtx_spc, 
-                     satint1);
-
-               cv->u = (vtx->u);
-               cv->v = (vtx->v);
-            }
-            rv=SZ32;
-            break;
-
-            /* (Textured, Intensity, 16bit UV) */
-         case 8:
-            {
-               TA_Vertex8 *vtx = (TA_Vertex8*)&vp->vtx8;
-               Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
-               u32     satint0 = float_to_satu8(vtx->BaseInt);
-               u32     satint1 = float_to_satu8(vtx->OffsInt);
-
-               tr_parse_color_intensity(cv->col, satint0,
-                     FaceBaseColor);
-               tr_parse_offset_color_intensity(cv->vtx_spc, 
-                     satint1);
-
-               cv->u = f16(vtx->u);
-               cv->v = f16(vtx->v);
-            }
-            rv=SZ32;
-            break;
-
-            /* (Non-Textured, Packed Color, with Two Volumes) */
-         case 9:
-            {
-               TA_Vertex9 *vtx = (TA_Vertex9*)&vp->vtx9;
-               Vertex     *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
-
-               tr_parse_color(cv->col, vtx->BaseCol0);
-            }
-            rv=SZ32;
-            break;
-
-            /* (Non-Textured, Intensity, with Two Volumes) */
-         case 10:
-            {
-               TA_Vertex10 *vtx = (TA_Vertex10*)&vp->vtx10;
-               Vertex      *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
-               u32       satint = float_to_satu8(vtx->BaseInt0);
-
-               tr_parse_color_intensity(cv->col, satint,
-                     FaceBaseColor);
-            }
-            rv=SZ32;
-            break;
-
-            /* 64b , may be on 2 pass */
-
-            /* (Textured, Floating Color) */
-         case 5 :
-            /*process first half*/
-            if (part!=2)
-            {
-               rv+=SZ32;
-               {
-                  TA_Vertex5A *vtx = (TA_Vertex5A*)&vp->vtx5A;
-                  Vertex      *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
-
-                  //Colors are on B
-                  cv->u = (vtx->u);
-                  cv->v = (vtx->v);
-               }
-            }
-            {
-               TA_Vertex5B *vtx = NULL;
-               /*process second half*/
-               if (part==0)
-                  vtx = (TA_Vertex5B*)&vp->vtx5B;
-               else if (part == 2)
-                  vtx = (TA_Vertex5B*)data;
-
-               if (vtx)
-               {
-                  Vertex* cv=vdrc.verts.LastPtr();
-
-                  tr_parse_color_rgba(cv->col, vtx->BaseR,
-                        vtx->BaseG, vtx->BaseB, vtx->BaseA);
-                  tr_parse_color_rgba(cv->vtx_spc, vtx->OffsR,
-                        vtx->OffsG, vtx->OffsB, vtx->OffsA);
-                  rv+=SZ32;
-               }
-            }
-            break;
-
-            /* (Textured, Floating Color, 16bit UV) */
-         case 6 :
-            /*process first half*/
-            if (part!=2)
-            {
-               rv+=SZ32;
-               {
-                  TA_Vertex6A *vtx = (TA_Vertex6A*)&vp->vtx6A;
-                  Vertex      *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
-
-                  //Colors are on B
-
-                  cv->u = f16(vtx->u);
-                  cv->v = f16(vtx->v);
-               }
-            }
-
-            {
-               TA_Vertex6B *vtx = NULL;
-               /*process second half*/
-               if (part==0)
-                  vtx = (TA_Vertex6B*)&vp->vtx6B;
-               else if (part == 2)
-                  vtx = (TA_Vertex6B*)data;
-
-               if (vtx)
-               {
-                  Vertex* cv=vdrc.verts.LastPtr();
-
-                  tr_parse_color_rgba(cv->col, vtx->BaseR,
-                        vtx->BaseG, vtx->BaseB, vtx->BaseA);
-                  tr_parse_color_rgba(cv->vtx_spc, vtx->OffsR,
-                        vtx->OffsG, vtx->OffsB, vtx->OffsA);
-                  rv+=SZ32;
-               }
-            }
-            break;
-
-            /* (Textured, Packed Color, with Two Volumes) */
-         case 11 :
-            /*process first half*/
-            if (part!=2)
-            {
-               rv+=SZ32;
-               {
-                  TA_Vertex11A *vtx = (TA_Vertex11A*)&vp->vtx11A;
-                  Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
-
-                  tr_parse_color(cv->col, vtx->BaseCol0);
-                  tr_parse_offset_color(cv, vtx->OffsCol0);
-
-                  cv->u = (vtx->u0);
-                  cv->v = (vtx->v0);
-               }
-            }
-            /*process second half*/
-            if (part==0 || part == 2)
-               rv+=SZ32;
-            break;
-            /* (Textured, Packed Color, 16bit UV, with Two Volumes) */
-         case 12 :
-            /*process first half*/
-            if (part!=2)
-            {
-               TA_Vertex12A *vtx = (TA_Vertex12A*)&vp->vtx12A;
-               Vertex       *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
-
-               tr_parse_color(cv->col, vtx->BaseCol0);
-               tr_parse_offset_color(cv, vtx->OffsCol0);
+#define ver_64B_def(num) \
+case num : {\
+/*process first half*/\
+	if (part!=2)\
+	{\
+	TA_VTX;\
+	rv+=SZ32;\
+	AppendPolyVertex##num##A(&vp->vtx##num##A);\
+	}\
+	/*process second half*/\
+	if (part==0)\
+	{\
+	AppendPolyVertex##num##B(&vp->vtx##num##B);\
+	rv+=SZ32;\
+	}\
+	else if (part==2)\
+	{\
+	AppendPolyVertex##num##B((TA_Vertex##num##B*)data);\
+	rv+=SZ32;\
+	}\
+	}\
+	break;
 
 
-               cv->u = f16(vtx->u0);
-               cv->v = f16(vtx->v0);
+			//64b , may be on 2 pass
+			ver_64B_def(5);//(Textured, Floating Color)
+			ver_64B_def(6);//(Textured, Floating Color, 16bit UV)
+			ver_64B_def(11);//(Textured, Packed Color,	with Two Volumes)	
+			ver_64B_def(12);//(Textured, Packed Color, 16bit UV, with Two Volumes)
+			ver_64B_def(13);//(Textured, Intensity,	with Two Volumes)
+			ver_64B_def(14);//(Textured, Intensity, 16bit UV, with Two Volumes)
+#undef ver_64B_def
+		}
 
-               rv+=SZ32;
-            }
-            /*process second half*/
-            if (part==0 || part == 2)
-               rv+=SZ32;
-            break;
+		return data+rv;
+	};
 
-            /* (Textured, Intensity, with Two Volumes) */
-         case 13 :
-            /*process first half*/
-            if (part!=2)
-            {
-               TA_Vertex13A *vtx = (TA_Vertex13A*)&vp->vtx13A;
-               Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx);
-               u32 satint0=float_to_satu8(vtx->BaseInt0);
-               u32 satint1=float_to_satu8(vtx->OffsInt0);
-
-               tr_parse_color_intensity(cv->col, satint0,
-                     FaceBaseColor);
-
-               tr_parse_offset_color_intensity(cv->vtx_spc, 
-                     satint1);
-
-               cv->u = (vtx->u0);
-               cv->v = (vtx->v0);
-               rv+=SZ32;
-            }
-            /*process second half*/
-            if (part==0 || part == 2)
-               rv+=SZ32;
-            break;
-
-            /* (Textured, Intensity, 16bit UV, with Two Volumes) */
-         case 14 :
-            /*process first half*/
-            if (part!=2)
-            {
-               TA_Vertex14A *vtx = (TA_Vertex14A*)&vp->vtx14A;
-               Vertex       *cv  = vert_cvt_base_((TA_Vertex0*)vtx);
-               u32       satint0 = float_to_satu8(vtx->BaseInt0);
-               u32       satint1 = float_to_satu8(vtx->OffsInt0);
-
-               tr_parse_color_intensity(cv->col, satint0,
-                     FaceBaseColor);
-
-               tr_parse_offset_color_intensity(cv->vtx_spc, 
-                     satint1);
-
-               cv->u = f16(vtx->u0);
-               cv->v = f16(vtx->v0);
-               rv+=SZ32;
-            }
-            /*process second half*/
-            if (part==0 || part == 2)
-               rv+=SZ32;
-            break;
-      }
-
-      /* In the case of the Polygon type, the last struct
-       * vertex Parameter for an object must have "End of
-       * Strip" specified. If Vertex Parameters with the "End
-       * of Strip" specification were not input, but parameters
-       * other than Vertex Parameters were input, the polygon data
-       * in question is ignored and an interrupt signal is output. */
-      return data+rv;
-   }
-
-	/* Code Splitter/routers */
+	//Code Splitter/routers
 		
+	//helper function for dummy dma's.Handles 32B and then switches to ta_main for next data
+	static Ta_Dma* TACALL ta_dummy_32(Ta_Dma* data,Ta_Dma* data_end)
+	{
+		TaCmd=ta_main;
+		return data+SZ32;
+	}
 	static Ta_Dma* TACALL ta_modvolB_32(Ta_Dma* data,Ta_Dma* data_end)
 	{
-      if (CurrentList == ListType_Opaque_Modifier_Volume)
-      {
-         TA_ModVolB* mvv = (TA_ModVolB*)data;
-         lmr->y2=mvv->y2;
-         lmr->z2=mvv->z2;
-      }
+		AppendModVolVertexB((TA_ModVolB*)data);
 		TaCmd=ta_main;
 		return data+SZ32;
 	}
 		
 	static Ta_Dma* TACALL ta_mod_vol_data(Ta_Dma* data,Ta_Dma* data_end)
-   {
-      TA_VertexParam* vp=(TA_VertexParam*)data;
-
-      if (CurrentList == ListType_Opaque_Modifier_Volume)
-      {
-         TA_ModVolA* mvv = (TA_ModVolA*)&vp->mvolA;
-         lmr=vdrc.modtrig.Append();
-
-         lmr->x0=mvv->x0;
-         lmr->y0=mvv->y0;
-         lmr->z0=mvv->z0;
-
-         lmr->x1=mvv->x1;
-         lmr->y1=mvv->y1;
-         lmr->z1=mvv->z1;
-
-         lmr->x2=mvv->x2;
-      }
-
-      if (data==data_end)
-      {
-         //32B more needed , 32B done :)
-         TaCmd=ta_modvolB_32;
-         return data+SZ32;
-      }
-
-      //all 64B done
-      if (CurrentList == ListType_Opaque_Modifier_Volume)
-      {
-         TA_ModVolB* mvv = (TA_ModVolB*)&vp->mvolB;
-
-         lmr->y2=mvv->y2;
-         lmr->z2=mvv->z2;
-      }
-      return data+SZ64;
-   }
-
+	{
+		TA_VertexParam* vp=(TA_VertexParam*)data;
+		TA_VTX;
+		if (data==data_end)
+		{
+			AppendModVolVertexA(&vp->mvolA);
+			//32B more needed , 32B done :)
+			TaCmd=ta_modvolB_32;
+			return data+SZ32;
+		}
+		else
+		{
+			//all 64B done
+			AppendModVolVertexA(&vp->mvolA);
+			AppendModVolVertexB(&vp->mvolB);
+			return data+SZ64;
+		}
+	}
 	static Ta_Dma* TACALL ta_spriteB_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
+		TA_V64H;
 		//32B more needed , 32B done :)
 		TaCmd=ta_main;
 			
@@ -550,48 +242,65 @@ public:
 
 		return data+SZ32;
 	}
-
 	static Ta_Dma* TACALL ta_sprite_data(Ta_Dma* data,Ta_Dma* data_end)
-   {
-      TA_VertexParam* vp=(TA_VertexParam*)data;
-      //verify(data->pcw.ParaType == ParamType_Vertex_Parameter);
+	{
+		TA_SPR;
+		//verify(data->pcw.ParaType==ParamType_Vertex_Parameter);
+		if (data==data_end)
+		{
+			//32B more needed , 32B done :)
+			TaCmd=ta_spriteB_data;
 
-      AppendSpriteVertexA(&vp->spr1A);
+			TA_VertexParam* vp=(TA_VertexParam*)data;
 
-      if (data==data_end)
-      {
-         //32B more needed , 32B done :)
-         TaCmd=ta_spriteB_data;
-         return data+SZ32;
-      }
+			AppendSpriteVertexA(&vp->spr1A);
+			return data+SZ32;
+		}
+		else
+		{
+			TA_VertexParam* vp=(TA_VertexParam*)data;
 
-      AppendSpriteVertexB(&vp->spr1B);
+			AppendSpriteVertexA(&vp->spr1A);
+			AppendSpriteVertexB(&vp->spr1B);
 
-      //all 64B done
-      return data+SZ64;
-   }
+			//all 64B doneisimooooo la la la :*iiiiii  niarj
+			return data+SZ64;
+		}
+	}
 
 	template <u32 poly_type,u32 poly_size>
 	static Ta_Dma* TACALL ta_poly_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
-      bool has_full_data = false;
+					//If SZ64  && 32 bytes
+#define IS_FIST_HALF ((poly_size!=SZ32) && (data==data_end))
 
-      /*If SZ64  && 32 bytes */
-		if ((poly_size!=SZ32) && (data==data_end))
+					//If SZ32 && >=32 bytes
+					//If SZ64 && > 32 bytes
+#define HAS_FULL_DATA (poly_size==SZ32 ? (data<=data_end) : (data<data_end))
+
+#define ITER PLD(data,128); \
+ta_handle_poly<poly_type,0>(data,0); \
+if (data->pcw.EndOfStrip) \
+	goto strip_end; \
+data+=poly_size;
+
+		if (IS_FIST_HALF)
 			goto fist_half;
 
 		do
-      {
-         ta_handle_poly<poly_type,0>(data,0);
-         if (data->pcw.EndOfStrip)
-            goto strip_end;
-         data+=poly_size;
-         has_full_data = (poly_size==SZ32 ? (data<=data_end) : (data<data_end));
-      } while(has_full_data);
+		{
+			ITER
+		} while (HAS_FULL_DATA);
 			
-      //If SZ64  && 32 bytes
-		if ((poly_size!=SZ32) && (data==data_end))
-         goto fist_half;
+		if (IS_FIST_HALF)
+		{
+		fist_half:
+			ta_handle_poly<poly_type,1>(data,0);
+			if (data->pcw.EndOfStrip) EndPolyStrip();
+			TaCmd=ta_handle_poly<poly_type,2>;
+					
+			data+=SZ32;
+		}
 			
 		return data;
 
@@ -599,353 +308,184 @@ strip_end:
 		TaCmd=ta_main;
 		if (data->pcw.EndOfStrip)
 			EndPolyStrip();
+		TA_EOS;
 		return data+poly_size;
-
-fist_half:
-      ta_handle_poly<poly_type,1>(data,0);
-      if (data->pcw.EndOfStrip)
-         EndPolyStrip();
-      TaCmd=ta_handle_poly<poly_type,2>;
-
-      return data+SZ32;
 	}
 
+	static void TACALL AppendPolyParam2Full(void* vpp)
+	{
+		Ta_Dma* pp=(Ta_Dma*)vpp;
+
+		AppendPolyParam2A((TA_PolyParam2A*)&pp[0]);
+		AppendPolyParam2B((TA_PolyParam2B*)&pp[1]);
+	}
+
+	static void TACALL AppendPolyParam4Full(void* vpp)
+	{
+		Ta_Dma* pp=(Ta_Dma*)vpp;
+
+		AppendPolyParam4A((TA_PolyParam4A*)&pp[0]);
+		AppendPolyParam4B((TA_PolyParam4B*)&pp[1]);
+	}
 	//Second part of poly data
 	template <int t>
 	static Ta_Dma* TACALL ta_poly_B_32(Ta_Dma* data,Ta_Dma* data_end)
 	{
-      f32 r, g, b, a;
 		if (t==2)
-      {
-         TA_PolyParam2B* pp=(TA_PolyParam2B*)data;
-         r = pp->FaceColorR;
-         g = pp->FaceColorG;
-         b = pp->FaceColorB;
-         a = pp->FaceColorA;
-
-         tr_parse_color_rgba(FaceOffsColor, pp->FaceOffsetR,
-               pp->FaceOffsetG, pp->FaceOffsetB, pp->FaceOffsetA);
-      }
-      else
-      {
-         TA_PolyParam4B* pp=(TA_PolyParam4B*)data;
-         r = pp->FaceColor0R;
-         g = pp->FaceColor0G;
-         b = pp->FaceColor0B;
-         a = pp->FaceColor0A;
-      }
-
-      tr_parse_color_rgba(FaceBaseColor, r, g, b, a);
+			AppendPolyParam2B((TA_PolyParam2B*)data);
+		else
+			AppendPolyParam4B((TA_PolyParam4B*)data);
 	
 		TaCmd=ta_main;
 		return data+SZ32;
 	}
 
 public:
-
-   __forceinline
-		static void SetTileClip(u32 xmin,u32 ymin,u32 xmax,u32 ymax)
-	{
-		u32 rv=tileclip_val & 0xF0000000;
-		rv|=xmin; //6 bits
-		rv|=xmax<<6; //6 bits
-		rv|=ymin<<12; //5 bits
-		rv|=ymax<<17; //5 bits
-		tileclip_val=rv;
-	}
 	
+	//Group_En bit seems ignored, thanks p1pkin 
+#define group_EN() /*if (data->pcw.Group_En) */{ TileClipMode(data->pcw.User_Clip);}
 	static Ta_Dma* TACALL ta_main(Ta_Dma* data,Ta_Dma* data_end)
-   {
-      do
-      {
-         if ((data->pcw.ParaType == ParamType_Polygon_or_Modifier_Volume ||
-             (data->pcw.ParaType == ParamType_Sprite)))
-         {
-            /* Tile clip mode */
-#if 0
-            /* Group_En bit seems ignored, thanks p1pkin  */
-            if (data->pcw.Group_En)
-#endif
-               tileclip_val=(tileclip_val&(~0xF0000000)) | (data->pcw.User_Clip << 28);
+	{
+		do
+		{
+			PLD(data,128);
+			switch (data->pcw.ParaType)
+			{
+				//Control parameter
+				//32Bw3
+			case ParamType_End_Of_List:
+				{
 
+					if (CurrentList==ListType_None)
+					{
+						CurrentList=data->pcw.ListType;
+						//printf("End_Of_List : list error\n");
+					}
+					else
+					{
+						//end of list should be all 0's ...
+						EndList(CurrentList);//end a list olny if it was realy started
+					}
 
-            if (CurrentList==ListType_None)
-            {
-#if 0
-               printf("Starting list %d\n",new_list);
-#endif
+					//printf("End list %X\n",CurrentList);
+					ListIsFinished[CurrentList]=true;
+					CurrentList=ListType_None;
+					VertexDataFP=NullVertexData;
+					data+=SZ32;
+					TA_EOL;
+				}
+				break;
+				//32B
+			case ParamType_User_Tile_Clip:
+				{
 
-               switch (data->pcw.ListType)
-               {
-                  case ListType_Opaque:
-                     CurrentPPlist=&vdrc.global_param_op;
-                     break;
-                  case ListType_Punch_Through:
-                     CurrentPPlist=&vdrc.global_param_pt;
-                     break;
-                  case ListType_Translucent:
-                     CurrentPPlist=&vdrc.global_param_tr;
-                     break;
-               }
+					SetTileClip(data->data_32[3]&63,data->data_32[4]&31,data->data_32[5]&63,data->data_32[6]&31);
+					data+=SZ32;
+				}
+				break;
+				//32B
+			case ParamType_Object_List_Set:
+				{
 
-               CurrentList = data->pcw.ListType;
-               CurrentPP   = &nullPP;
-            }
-         }
+					die("ParamType_Object_List_Set");
+					// *cough* ignore it :p
+					data+=SZ32;
+				}
+				break;
 
-         switch (data->pcw.ParaType)
-         {
-            //Control parameter
-            //32Bw3
-            case ParamType_End_Of_List:
-               if (CurrentList==ListType_None)
-               {
-                  CurrentList=data->pcw.ListType;
-                  //printf("End_Of_List : list error\n");
-               }
-               else
-               {
-                  /* end of list should be all 0's ...
-                   * end a list only if it was really started */
-                  CurrentPP=&nullPP;
-                  CurrentPPlist=0;
-                  if (CurrentList == ListType_Opaque_Modifier_Volume)
-                  {
-                     ISP_Modvol p;
-                     p.id=vdrc.modtrig.used();
-                     *vdrc.global_param_mvo.Append()=p;
-                  }
-               }
+				//Global Parameter
+				//ModVolue :32B
+				//PolyType :32B/64B
+			case ParamType_Polygon_or_Modifier_Volume:
+				{
 
-               //printf("End list %X\n",CurrentList);
-               ListIsFinished[CurrentList] = true;
-               CurrentList                 = ListType_None;
-               VertexDataFP                = NullVertexData;
-               data+=SZ32;
-               break;
-               //32B
-            case ParamType_User_Tile_Clip:
-               {
-                  SetTileClip(data->data_32[3]&63,data->data_32[4]&31,data->data_32[5]&63,data->data_32[6]&31);
-                  data+=SZ32;
-               }
-               break;
-               //32B
-            case ParamType_Object_List_Set:
-               die("ParamType_Object_List_Set");
-               // *cough* ignore it :p
-               data+=SZ32;
-               break;
+					TA_PP;
+					group_EN();
+					//Yep , C++ IS lame & limited
+					#include "ta_const_df.h"
+					if (CurrentList==ListType_None)
+						ta_list_start(data->pcw.ListType);	//start a list ;)
 
-               //Global Parameter
-               //ModVolue :32B
-               //PolyType :32B/64B
-            case ParamType_Polygon_or_Modifier_Volume:
-               if (IsModVolList(CurrentList))
-               {
-                  if (CurrentList == ListType_Opaque_Modifier_Volume)
-                  {
-                     TA_ModVolParam *param = (TA_ModVolParam*)data;
-                     ISP_Modvol* p=vdrc.global_param_mvo.Append();
-                     p->full=param->isp.full;
-                     p->VolumeLast=param->pcw.Volume;
-                     p->id=vdrc.modtrig.used();
-                  }
-                  VertexDataFP=ta_mod_vol_data;
-                  data+=SZ32;
-               }
-               else
-               {
-                  static TaListFP* ta_poly_data_lut[15] = 
-                  {
-                     ta_poly_data<0,SZ32>,
-                     ta_poly_data<1,SZ32>,
-                     ta_poly_data<2,SZ32>,
-                     ta_poly_data<3,SZ32>,
-                     ta_poly_data<4,SZ32>,
-                     ta_poly_data<5,SZ64>,
-                     ta_poly_data<6,SZ64>,
-                     ta_poly_data<7,SZ32>,
-                     ta_poly_data<8,SZ32>,
-                     ta_poly_data<9,SZ32>,
-                     ta_poly_data<10,SZ32>,
-                     ta_poly_data<11,SZ64>,
-                     ta_poly_data<12,SZ64>,
-                     ta_poly_data<13,SZ64>,
-                     ta_poly_data<14,SZ64>,
-                  };
-                  bool append_poly_param = false;
-                  u32  append_data       = SZ32;
-                  u32 uid                = ta_type_lut[data->pcw.obj_ctrl];
-                  u32 psz                = uid>>30;
-                  u32 pdid               = (u8)(uid);
-                  u32 ppid               = (u8)(uid>>8);
+					if (IsModVolList(CurrentList))
+					{
+						//accept mod data
+						StartModVol((TA_ModVolParam*)data);
+						VertexDataFP=ta_mod_vol_data;
+						data+=SZ32;
+					}
+					else
+					{
 
-                  VertexDataFP           = ta_poly_data_lut[pdid];
+						u32 uid=ta_type_lut[data->pcw.obj_ctrl];
+						u32 psz=uid>>30;
+						u32 pdid=(u8)(uid);
+						u32 ppid=(u8)(uid>>8);
 
-                  if (data != data_end || psz==1)
-                  {
-                     //32/64b , full
+						VertexDataFP=ta_poly_data_lut[pdid];
+							
 
-                     //poly , 32B/64B
-                     switch (ppid)
-                     {
-                        case 0:
-                           {
-                              TA_PolyParam0* pp=(TA_PolyParam0*)data;
-                              if (should_append_poly_param(pp))
-                                 append_poly_param = true;
-                           }
-                           break;
-                        case 1:
-                           {
-                              TA_PolyParam1* pp=(TA_PolyParam1*)data;
+						if (data != data_end || psz==1)
+						{
 
-                              if (should_append_poly_param(pp))
-                                 append_poly_param = true;
+							//poly , 32B/64B
+							ta_poly_param_lut[ppid](data);
+							data+=psz;
+						}
+						else
+						{
 
-                              tr_parse_color_rgba(FaceBaseColor, pp->FaceColorR, pp->FaceColorG,
-                                    pp->FaceColorB, pp->FaceColorA);
-                           }
-                           break;
-                        case 2:
-                           {
-                              Ta_Dma* pp=(Ta_Dma*)data;
-                              TA_PolyParam2A* ppa=(TA_PolyParam2A*)&pp[0];
-                              TA_PolyParam2B* ppb=(TA_PolyParam2B*)&pp[1];
+							//AppendPolyParam64A((TA_PolyParamA*)data);
+							//64b , first part
+							ta_poly_param_a_lut[ppid](data);
+							//Handle next 32B ;)
+							TaCmd=ta_poly_param_b_lut[ppid];
+							data+=SZ32;
+						}
+					}
+				}
+				break;
+				//32B
+				//Sets Sprite info , and switches to ta_sprite_data function
+			case ParamType_Sprite:
+				{
 
-                              if (should_append_poly_param(ppa))
-                                 append_poly_param = true;
+					TA_SP;
+					group_EN();
+					if (CurrentList==ListType_None)
+						ta_list_start(data->pcw.ListType);	//start a list ;)
 
-                              tr_parse_color_rgba(FaceBaseColor, ppb->FaceColorR, ppb->FaceColorG,
-                                    ppb->FaceColorB, ppb->FaceColorA);
-                              tr_parse_color_rgba(FaceOffsColor, ppb->FaceOffsetR, ppb->FaceOffsetG,
-                                    ppb->FaceOffsetB, ppb->FaceOffsetA);
-                           }
-                           break;
-                        case 3:
-                           {
-                              TA_PolyParam3* pp=(TA_PolyParam3*)data;
-                              if (should_append_poly_param(pp))
-                                 append_poly_param = true;
-                           }
-                           break;
-                        case 4:
-                           {
-                              Ta_Dma* pp=(Ta_Dma*)data;
-                              TA_PolyParam4A* ppa=(TA_PolyParam4A*)&pp[0];
-                              TA_PolyParam4B* ppb=(TA_PolyParam4B*)&pp[1];
+					VertexDataFP=ta_sprite_data;
+					//printf("Sprite \n");
+					AppendSpriteParam((TA_SpriteParam*)data);
+					data+=SZ32;
+				}
+				break;
 
-                              if (should_append_poly_param(ppa))
-                                 append_poly_param = true;
+				//Variable size
+			case ParamType_Vertex_Parameter:
+				//log ("vtx");
+				{
 
-                              tr_parse_color_rgba(FaceBaseColor, ppb->FaceColor0R, ppb->FaceColor0G,
-                                    ppb->FaceColor0B, ppb->FaceColor0A);
-                           }
-                           break;
-                     }
+					//printf("VTX:0x%08X\n",VertexDataFP);
+					//verify(VertexDataFP!=NullVertexData);
+					data=VertexDataFP(data,data_end);
+				}
+				break;
 
-                     append_data = psz;
-                  }
-                  else
-                  {
-                     //64b , , second part
-                     static TaListFP* ta_poly_param_b_lut[5]=
-                     {
-                        (TaListFP*)0,
-                        (TaListFP*)0,
-                        ta_poly_B_32<2>,
-                        (TaListFP*)0,
-                        ta_poly_B_32<4>
-                     };
-                     bool append_poly_param = false;
-
-                     //AppendPolyParam64A((TA_PolyParamA*)data);
-                     //64b , first part
-                     switch (ppid)
-                     {
-                        case 2:
-                           {
-                              TA_PolyParam2A* pp=(TA_PolyParam2A*)data;
-
-                              if (should_append_poly_param(pp))
-                                 append_poly_param = true;
-                           }
-                           break;
-                        case 4:
-                           {
-                              TA_PolyParam4A* pp=(TA_PolyParam4A*)data;
-
-                              if (should_append_poly_param(pp))
-                                 append_poly_param = true;
-                           }
-                           break;
-                        default:
-                           break;
-                     }
-
-                     //Handle next 32B ;)
-                     TaCmd=ta_poly_param_b_lut[ppid];
-
-                     append_data = SZ32;
-                  }
-
-                  if (append_poly_param)
-                  {
-                     /* Polys  -- update code on sprites if that gets updated too -- */
-                     TA_PolyParam0 *npp  = (TA_PolyParam0*)data;
-                     PolyParam     *d_pp = CurrentPP;
-                     if (CurrentPP->count!=0)
-                     {
-                        d_pp=CurrentPPlist->Append(); 
-                        CurrentPP=d_pp;
-                     }
-                     d_pp->first=vdrc.idx.used(); 
-                     d_pp->count=0; 
-
-                     d_pp->isp=npp->isp; 
-                     d_pp->tsp=npp->tsp; 
-                     d_pp->tcw=npp->tcw;
-                     d_pp->pcw=npp->pcw; 
-                     d_pp->tileclip=tileclip_val;
-
-                     d_pp->texid = -1;
-
-                     if (d_pp->pcw.Texture)
-                        d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
-                  }
-
-                  data += append_data;
-               }
-               break;
-               //32B
-               //Sets Sprite info , and switches to ta_sprite_data function
-            case ParamType_Sprite:
-               VertexDataFP=ta_sprite_data;
-               //printf("Sprite \n");
-               AppendSpriteParam((TA_SpriteParam*)data);
-               data+=SZ32;
-               break;
-
-               //Variable size
-            case ParamType_Vertex_Parameter:
-               //printf("VTX:0x%08X\n",VertexDataFP);
-               //verify(VertexDataFP!=NullVertexData);
-               data=VertexDataFP(data,data_end);
-               break;
-
-               //not handled
-               //Assumed to be 32B
-            case 3:
-            case 6:
-               die("Unhandled parameter");
-               data+=SZ32;
-               break;
-         }
-      }while(data<=data_end);
-
-      return data;
-   }
+				//not handled
+				//Assumed to be 32B
+			case 3:
+			case 6:
+				{
+					die("Unhandled parameter");
+					data+=SZ32;
+				}
+				break;
+			}
+		}
+		while(data<=data_end);
+		return data;
+	}
 
 	//Fill in lookup table
 	FifoSplitter()
@@ -953,9 +493,9 @@ public:
 		for (int i=0;i<256;i++)
 		{
 			PCW pcw;
-			pcw.obj_ctrl = i;
-			u32 rv       = poly_data_type_id(pcw);
-			u32 type     = poly_header_type_size(pcw);
+			pcw.obj_ctrl=i;
+			u32 rv=	poly_data_type_id(pcw);
+			u32 type= poly_header_type_size(pcw);
 
 			if (type& 0x80)
 				rv|=(SZ64<<30);
@@ -969,44 +509,35 @@ public:
 	}
 	/*
 	Volume,Col_Type,Texture,Offset,Gouraud,16bit_UV
-
 	0   0   0   (0) x   invalid Polygon Type 0  Polygon Type 0
 	0   0   1   x   x   0       Polygon Type 0  Polygon Type 3
 	0   0   1   x   x   1       Polygon Type 0  Polygon Type 4
-
 	0   1   0   (0) x   invalid Polygon Type 0  Polygon Type 1
 	0   1   1   x   x   0       Polygon Type 0  Polygon Type 5
 	0   1   1   x   x   1       Polygon Type 0  Polygon Type 6
-
 	0   2   0   (0) x   invalid Polygon Type 1  Polygon Type 2
 	0   2   1   0   x   0       Polygon Type 1  Polygon Type 7
 	0   2   1   0   x   1       Polygon Type 1  Polygon Type 8
 	0   2   1   1   x   0       Polygon Type 2  Polygon Type 7
 	0   2   1   1   x   1       Polygon Type 2  Polygon Type 8
-
 	0   3   0   (0) x   invalid Polygon Type 0  Polygon Type 2
 	0   3   1   x   x   0       Polygon Type 0  Polygon Type 7
 	0   3   1   x   x   1       Polygon Type 0  Polygon Type 8
-
 	1   0   0   (0) x   invalid Polygon Type 3  Polygon Type 9
 	1   0   1   x   x   0       Polygon Type 3  Polygon Type 11
 	1   0   1   x   x   1       Polygon Type 3  Polygon Type 12
-
 	1   2   0   (0) x   invalid Polygon Type 4  Polygon Type 10
 	1   2   1   x   x   0       Polygon Type 4  Polygon Type 13
 	1   2   1   x   x   1       Polygon Type 4  Polygon Type 14
-
 	1   3   0   (0) x   invalid Polygon Type 3  Polygon Type 10
 	1   3   1   x   x   0       Polygon Type 3  Polygon Type 13
 	1   3   1   x   x   1       Polygon Type 3  Polygon Type 14
-
 	Sprites :
 	(0) (0) 0 (0) (0) invalid Sprite  Sprite Type 0
 	(0) (0) 1  x   (0) (1)     Sprite  Sprite Type 1
-
 	*/
 	//helpers 0-14
-   static u32 poly_data_type_id(PCW pcw)
+	static u32 poly_data_type_id(PCW pcw)
 	{
 		if (pcw.Texture)
 		{
@@ -1092,7 +623,7 @@ public:
 		}
 	}
 	//0-4 | 0x80
-   static u32 poly_header_type_size(PCW pcw)
+	static u32 poly_header_type_size(PCW pcw)
 	{
 		if (pcw.Volume == 0)
 		{
@@ -1144,35 +675,162 @@ public:
 		}
 	}
 
-   static void VDECInit()
-   {
-      vd_rc.Clear();
 
-		//allocate storage for BG poly
-		vd_rc.global_param_op.Append();
-		u16* idx=vd_rc.idx.Append(4);
-		int vbase=vd_rc.verts.used();
-
-		idx[0]=vbase+0;
-		idx[1]=vbase+1;
-		idx[2]=vbase+2;
-		idx[3]=vbase+3;
-		vd_rc.verts.Append(4);
-   }
-
-	void vdec_init(void)
+	void vdec_init()
 	{
-      VDECInit();
-
-		TaCmd             = ta_main;
-		CurrentList       = ListType_None;
-		ListIsFinished[0] = false;
-      ListIsFinished[1] = false;
-      ListIsFinished[2] = false;
-      ListIsFinished[3] = false;
-      ListIsFinished[4] = false;
+		VDECInit();
+		TaCmd=ta_main;
+		CurrentList = ListType_None;
+		ListIsFinished[0]=ListIsFinished[1]=ListIsFinished[2]=ListIsFinished[3]=ListIsFinished[4]=false;
 	}
 		
+	__forceinline
+		static void SetTileClip(u32 xmin,u32 ymin,u32 xmax,u32 ymax)
+	{
+		u32 rv=tileclip_val & 0xF0000000;
+		rv|=xmin; //6 bits
+		rv|=xmax<<6; //6 bits
+		rv|=ymin<<12; //5 bits
+		rv|=ymax<<17; //5 bits
+		tileclip_val=rv;
+	}
+
+	__forceinline
+		static void TileClipMode(u32 mode)
+	{
+		tileclip_val=(tileclip_val&(~0xF0000000)) | (mode<<28);
+	}
+
+	//list handling
+	__forceinline
+		static void StartList(u32 ListType)
+	{
+		if (ListType==ListType_Opaque)
+			CurrentPPlist=&vdrc.global_param_op;
+		else if (ListType==ListType_Punch_Through)
+			CurrentPPlist=&vdrc.global_param_pt;
+		else if (ListType==ListType_Translucent)
+			CurrentPPlist=&vdrc.global_param_tr;
+
+		CurrentPP=&nullPP;
+	}
+
+	__forceinline
+		static void EndList(u32 ListType)
+	{
+		CurrentPP=&nullPP;
+		CurrentPPlist=0;
+		if (ListType==ListType_Opaque_Modifier_Volume)
+		{
+			ISP_Modvol p;
+			p.id=vdrc.modtrig.used();
+			*vdrc.global_param_mvo.Append()=p;
+		}
+	}
+
+	/*
+	if (CurrentPP==0 || CurrentPP->pcw.full!=pp->pcw.full || \
+	CurrentPP->tcw.full!=pp->tcw.full || \
+	CurrentPP->tsp.full!=pp->tsp.full || \
+	CurrentPP->isp.full!=pp->isp.full	) \
+	*/
+	//Polys  -- update code on sprites if that gets updated too --
+	template<class T>
+	static void glob_param_bdc_(T* pp)
+	{
+		if (CurrentPP->pcw.full!=pp->pcw.full || 
+			CurrentPP->tcw.full!=pp->tcw.full || 
+			CurrentPP->tsp.full!=pp->tsp.full || 
+			CurrentPP->isp.full!=pp->isp.full	) 
+		{
+			PolyParam* d_pp=CurrentPP;
+			if (CurrentPP->count!=0)
+			{
+				d_pp=CurrentPPlist->Append(); 
+				CurrentPP=d_pp;
+			}
+			d_pp->first=vdrc.idx.used(); 
+			d_pp->count=0; 
+
+			d_pp->isp=pp->isp; 
+			d_pp->tsp=pp->tsp; 
+			d_pp->tcw=pp->tcw;
+			d_pp->pcw=pp->pcw; 
+			d_pp->tileclip=tileclip_val;
+
+			d_pp->texid = -1;
+
+			if (d_pp->pcw.Texture) {
+				d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
+			}
+		}
+	}
+
+	#define glob_param_bdc(pp) glob_param_bdc_( (TA_PolyParam0*)pp)
+
+	#define poly_float_color_(to,a,r,g,b) \
+		to[0] = float_to_satu8(r);	\
+		to[1] = float_to_satu8(g);	\
+		to[2] = float_to_satu8(b);	\
+		to[3] = float_to_satu8(a);
+
+
+	#define poly_float_color(to,src) \
+		poly_float_color_(to,pp->src##A,pp->src##R,pp->src##G,pp->src##B)
+
+	//poly param handling
+	__forceinline
+		static void TACALL AppendPolyParam0(void* vpp)
+	{
+		TA_PolyParam0* pp=(TA_PolyParam0*)vpp;
+
+		glob_param_bdc(pp);
+	}
+	__forceinline
+		static void TACALL AppendPolyParam1(void* vpp)
+	{
+		TA_PolyParam1* pp=(TA_PolyParam1*)vpp;
+
+		glob_param_bdc(pp);
+		poly_float_color(FaceBaseColor,FaceColor);
+	}
+	__forceinline
+		static void TACALL AppendPolyParam2A(void* vpp)
+	{
+		TA_PolyParam2A* pp=(TA_PolyParam2A*)vpp;
+
+		glob_param_bdc(pp);
+	}
+	__forceinline
+		static void TACALL AppendPolyParam2B(void* vpp)
+	{
+		TA_PolyParam2B* pp=(TA_PolyParam2B*)vpp;
+
+		poly_float_color(FaceBaseColor,FaceColor);
+		poly_float_color(FaceOffsColor,FaceOffset);
+	}
+	__forceinline
+		static void TACALL AppendPolyParam3(void* vpp)
+	{
+		TA_PolyParam3* pp=(TA_PolyParam3*)vpp;
+
+		glob_param_bdc(pp);
+	}
+	__forceinline
+		static void TACALL AppendPolyParam4A(void* vpp)
+	{
+		TA_PolyParam4A* pp=(TA_PolyParam4A*)vpp;
+
+		glob_param_bdc(pp);
+	}
+	__forceinline
+		static void TACALL AppendPolyParam4B(void* vpp)
+	{
+		TA_PolyParam4B* pp=(TA_PolyParam4B*)vpp;
+
+		poly_float_color(FaceBaseColor,FaceColor0);
+	}
+
 	//Poly Strip handling
 	//We unite Strips together by duplicating the [last,first].On odd sized strips
 	//a second [first] vert is needed to make sure Culling works fine :)
@@ -1199,6 +857,8 @@ public:
 		}
 #endif
 	}
+
+
 	
 	static inline void update_fz(float z)
 	{
@@ -1206,9 +866,10 @@ public:
 			vdrc.fZ_max=z;
 	}
 
-   /* Poly Vertex handlers
-    * Append vertex base */
-	static Vertex* vert_cvt_base_(TA_Vertex0* vtx)
+		//Poly Vertex handlers
+		//Append vertex base
+	template<class T>
+	static Vertex* vert_cvt_base_(T* vtx)
 	{
 		f32 invW=vtx->xyz[2];
 		*vdrc.idx.Append()=vdrc.verts.used();
@@ -1218,6 +879,272 @@ public:
 		cv->z=invW;
 		update_fz(invW);
 		return cv;
+	}
+
+	#define vert_cvt_base Vertex* cv=vert_cvt_base_((TA_Vertex0*)vtx)
+
+		//Resume vertex base (for B part)
+	#define vert_res_base \
+		Vertex* cv=vdrc.verts.LastPtr();
+
+		//uv 16/32
+	#define vert_uv_32(u_name,v_name) \
+		cv->u = (vtx->u_name);\
+		cv->v = (vtx->v_name);
+
+	#define vert_uv_16(u_name,v_name) \
+		cv->u = f16(vtx->u_name);\
+		cv->v = f16(vtx->v_name);
+
+		//Color conversions
+	#define vert_packed_color_(to,src) \
+		{ \
+		u32 t=src; \
+		to[2] = (u8)(t);t>>=8;\
+		to[1] = (u8)(t);t>>=8;\
+		to[0] = (u8)(t);t>>=8;\
+		to[3] = (u8)(t);      \
+		}
+
+	#define vert_float_color_(to,a,r,g,b) \
+		to[0] = float_to_satu8(r); \
+		to[1] = float_to_satu8(g); \
+		to[2] = float_to_satu8(b); \
+		to[3] = float_to_satu8(a);
+
+		//Macros to make thins easier ;)
+	#define vert_packed_color(to,src) \
+		vert_packed_color_(cv->to,vtx->src);
+
+	#define vert_float_color(to,src) \
+		vert_float_color_(cv->to,vtx->src##A,vtx->src##R,vtx->src##G,vtx->src##B)
+
+		//Intensity handling
+
+		//Notes:
+		//Alpha doesn't get intensity
+		//Intensity is clamped before the mul, as well as on face color to work the same as the hardware. [Fixes red dog]
+
+	#define vert_face_base_color(baseint) \
+		{ u32 satint=float_to_satu8(vtx->baseint); \
+		cv->col[0] = FaceBaseColor[0]*satint/256;  \
+		cv->col[1] = FaceBaseColor[1]*satint/256;  \
+		cv->col[2] = FaceBaseColor[2]*satint/256;  \
+		cv->col[3] = FaceBaseColor[3]; }
+
+	#define vert_face_offs_color(offsint) \
+		{ u32 satint=float_to_satu8(vtx->offsint); \
+		cv->vtx_spc[0] = FaceOffsColor[0]*satint/256;  \
+		cv->vtx_spc[1] = FaceOffsColor[1]*satint/256;  \
+		cv->vtx_spc[2] = FaceOffsColor[2]*satint/256;  \
+		cv->vtx_spc[3] = FaceOffsColor[3]; }
+
+	//vert_float_color_(cv->vtx_spc,FaceOffsColor[3],FaceOffsColor[0]*satint/256,FaceOffsColor[1]*satint/256,FaceOffsColor[2]*satint/256); }
+
+
+	//(Non-Textured, Packed Color)
+	__forceinline
+		static void AppendPolyVertex0(TA_Vertex0* vtx)
+	{
+		vert_cvt_base;
+
+		vert_packed_color(col,BaseCol);
+	}
+
+	//(Non-Textured, Floating Color)
+	__forceinline
+		static void AppendPolyVertex1(TA_Vertex1* vtx)
+	{
+		vert_cvt_base;
+
+		vert_float_color(col,Base);
+	}
+
+	//(Non-Textured, Intensity)
+	__forceinline
+		static void AppendPolyVertex2(TA_Vertex2* vtx)
+	{
+		vert_cvt_base;
+
+		vert_face_base_color(BaseInt);
+	}
+
+	//(Textured, Packed Color)
+	__forceinline
+		static void AppendPolyVertex3(TA_Vertex3* vtx)
+	{
+		vert_cvt_base;
+
+		vert_packed_color(col,BaseCol);
+		vert_packed_color(vtx_spc,OffsCol);
+
+		vert_uv_32(u,v);
+	}
+
+	//(Textured, Packed Color, 16bit UV)
+	__forceinline
+		static void AppendPolyVertex4(TA_Vertex4* vtx)
+	{
+		vert_cvt_base;
+
+		vert_packed_color(col,BaseCol);
+		vert_packed_color(vtx_spc,OffsCol);
+
+		vert_uv_16(u,v);
+	}
+
+	//(Textured, Floating Color)
+	__forceinline
+		static void AppendPolyVertex5A(TA_Vertex5A* vtx)
+	{
+		vert_cvt_base;
+
+		//Colors are on B
+
+		vert_uv_32(u,v);
+	}
+
+	__forceinline
+		static void AppendPolyVertex5B(TA_Vertex5B* vtx)
+	{
+		vert_res_base;
+
+		vert_float_color(col,Base);
+		vert_float_color(vtx_spc,Offs);
+	}
+
+	//(Textured, Floating Color, 16bit UV)
+	__forceinline
+		static void AppendPolyVertex6A(TA_Vertex6A* vtx)
+	{
+		vert_cvt_base;
+
+		//Colors are on B
+
+		vert_uv_16(u,v);
+	}
+	__forceinline
+		static void AppendPolyVertex6B(TA_Vertex6B* vtx)
+	{
+		vert_res_base;
+
+		vert_float_color(col,Base);
+		vert_float_color(vtx_spc,Offs);
+	}
+
+	//(Textured, Intensity)
+	__forceinline
+		static void AppendPolyVertex7(TA_Vertex7* vtx)
+	{
+		vert_cvt_base;
+
+		vert_face_base_color(BaseInt);
+		vert_face_offs_color(OffsInt);
+
+		vert_uv_32(u,v);
+	}
+
+	//(Textured, Intensity, 16bit UV)
+	__forceinline
+		static void AppendPolyVertex8(TA_Vertex8* vtx)
+	{
+		vert_cvt_base;
+
+		vert_face_base_color(BaseInt);
+		vert_face_offs_color(OffsInt);
+
+		vert_uv_16(u,v);
+
+	}
+
+	//(Non-Textured, Packed Color, with Two Volumes)
+	__forceinline
+		static void AppendPolyVertex9(TA_Vertex9* vtx)
+	{
+		vert_cvt_base;
+
+		vert_packed_color(col,BaseCol0);
+	}
+
+	//(Non-Textured, Intensity,	with Two Volumes)
+	__forceinline
+		static void AppendPolyVertex10(TA_Vertex10* vtx)
+	{
+		vert_cvt_base;
+
+		vert_face_base_color(BaseInt0);
+	}
+
+	//(Textured, Packed Color,	with Two Volumes)	
+	__forceinline
+		static void AppendPolyVertex11A(TA_Vertex11A* vtx)
+	{
+		vert_cvt_base;
+
+		vert_packed_color(col,BaseCol0);
+		vert_packed_color(vtx_spc,OffsCol0);
+
+		vert_uv_32(u0,v0);
+	}
+	__forceinline
+		static void AppendPolyVertex11B(TA_Vertex11B* vtx)
+	{
+		vert_res_base;
+
+	}
+
+	//(Textured, Packed Color, 16bit UV, with Two Volumes)
+	__forceinline
+		static void AppendPolyVertex12A(TA_Vertex12A* vtx)
+	{
+		vert_cvt_base;
+
+		vert_packed_color(col,BaseCol0);
+		vert_packed_color(vtx_spc,OffsCol0);
+
+		vert_uv_16(u0,v0);
+	}
+	__forceinline
+		static void AppendPolyVertex12B(TA_Vertex12B* vtx)
+	{
+		vert_res_base;
+
+	}
+
+	//(Textured, Intensity,	with Two Volumes)
+	__forceinline
+		static void AppendPolyVertex13A(TA_Vertex13A* vtx)
+	{
+		vert_cvt_base;
+
+		vert_face_base_color(BaseInt0);
+		vert_face_offs_color(OffsInt0);
+
+		vert_uv_32(u0,v0);
+	}
+	__forceinline
+		static void AppendPolyVertex13B(TA_Vertex13B* vtx)
+	{
+		vert_res_base;
+
+	}
+
+	//(Textured, Intensity, 16bit UV, with Two Volumes)
+	__forceinline
+		static void AppendPolyVertex14A(TA_Vertex14A* vtx)
+	{
+		vert_cvt_base;
+
+		vert_face_base_color(BaseInt0);
+		vert_face_offs_color(OffsInt0);
+
+		vert_uv_16(u0,v0);
+	}
+	__forceinline
+		static void AppendPolyVertex14B(TA_Vertex14B* vtx)
+	{
+		vert_res_base;
+
 	}
 
 	//Sprites
@@ -1250,6 +1177,20 @@ public:
 		SFaceOffsColor=spr->OffsCol;
 	}
 
+	#define append_sprite(indx) \
+		vert_packed_color_(cv[indx].col,SFaceBaseColor)\
+		vert_packed_color_(cv[indx].vtx_spc,SFaceOffsColor)
+		//cv[indx].base_int=1;\
+		//cv[indx].offset_int=1;
+
+	#define append_sprite_yz(indx,set,st2) \
+		cv[indx].y=sv->y##set; \
+		cv[indx].z=sv->z##st2; \
+		update_fz(sv->z##st2);
+
+	#define sprite_uv(indx,u_name,v_name) \
+		cv[indx].u = f16(sv->u_name);\
+		cv[indx].v = f16(sv->v_name);
 
 	//Sprite Vertex Handlers
 	__forceinline
@@ -1287,7 +1228,6 @@ public:
 
 		cv[1].x=sv->x2;
 	}
-
 	static void CaclulateSpritePlane(Vertex* base)
 	{
 		const Vertex& A=base[2];
@@ -1310,31 +1250,36 @@ public:
 
 		float k3 = (AC_x * AB_y - AC_y * AB_x);
 
-#if 0
 		if (k3 == 0)
 		{
-			/*throw new Exception("WTF?!"); */
+			//throw new Exception("WTF?!");
 		}
-#endif
 
 		float k2 = (AP_x * AB_y - AP_y * AB_x) / k3;
 
 		float k1 = 0;
 
 		if (AB_x == 0)
+		{
+			//if (AB_y == 0)
+			//	;
+			//    //throw new Exception("WTF?!");
+
 			k1 = (P_y - A_y - k2 * AC_y) / AB_y;
+		}
 		else
+		{
 			k1 = (P_x - A_x - k2 * AC_x) / AB_x;
+		}
 
 		P.z = A_z + k1 * AB_z + k2 * AC_z;
 		P.u = A_u + k1 * AB_u + k2 * AC_u;
 		P.v = A_v + k1 * AB_v + k2 * AC_v;
 	}
-
 	__forceinline
 		static void AppendSpriteVertexB(TA_Sprite1B* sv)
 	{
-		Vertex* cv=vdrc.verts.LastPtr();
+		vert_res_base;
 		cv-=3;
 
 		cv[1].y=sv->y2;
@@ -1354,6 +1299,15 @@ public:
 
 		update_fz(cv[0].z);
 
+		/*
+		if (CurrentPP->count)
+		{
+			Vertex* vert=vert_reappend;
+			vert[-1].x=vert[0].x;
+			vert[-1].y=vert[0].y;
+			vert[-1].z=vert[0].z;
+			CurrentPP->count+=2;
+		}*/
 #if STRIPS_AS_PPARAMS
 		if (CurrentPPlist==&vdrc.global_param_tr)
 		{
@@ -1363,18 +1317,68 @@ public:
 			d_pp->first=vdrc.idx.used(); 
 			d_pp->count=0;
 		}
-#else
-		if (CurrentPP->count)
-		{
-			Vertex* vert=vert_reappend;
-			vert[-1].x=vert[0].x;
-			vert[-1].y=vert[0].y;
-			vert[-1].z=vert[0].z;
-			CurrentPP->count+=2;
-		}
 #endif
 	}
+
+	//ModVolumes
+
+	//Mod Volume Vertex handlers
+	static void StartModVol(TA_ModVolParam* param)
+	{
+		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+			return;
+		ISP_Modvol* p=vdrc.global_param_mvo.Append();
+		p->full=param->isp.full;
+		p->VolumeLast=param->pcw.Volume;
+		p->id=vdrc.modtrig.used();
+	}
+	__forceinline
+		static void AppendModVolVertexA(TA_ModVolA* mvv)
+	{
+		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+			return;
+		lmr=vdrc.modtrig.Append();
+
+		lmr->x0=mvv->x0;
+		lmr->y0=mvv->y0;
+		lmr->z0=mvv->z0;
+		//update_fz(mvv->z0);
+
+		lmr->x1=mvv->x1;
+		lmr->y1=mvv->y1;
+		lmr->z1=mvv->z1;
+		//update_fz(mvv->z1);
+
+		lmr->x2=mvv->x2;
+	}
+
+	__forceinline
+		static void AppendModVolVertexB(TA_ModVolB* mvv)
+	{
+		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+			return;
+		lmr->y2=mvv->y2;
+		lmr->z2=mvv->z2;
+		//update_fz(mvv->z2);
+	}
+
+	static void VDECInit()
+	{
+		vd_rc.Clear();
+
+		//allocate storage for BG poly
+		vd_rc.global_param_op.Append();
+		u16* idx=vd_rc.idx.Append(4);
+		int vbase=vd_rc.verts.used();
+
+		idx[0]=vbase+0;
+		idx[1]=vbase+1;
+		idx[2]=vbase+2;
+		idx[3]=vbase+3;
+		vd_rc.verts.Append(4);
+	}
 };
+
 
 
 FifoSplitter<0> TAFifo0;
@@ -1464,8 +1468,7 @@ static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 
 	//Color
 	u32 col=vri(ptr);ptr+=4;
-
-   tr_parse_color(cv->col, col);
+   vert_packed_color_(cv->col,col);
 
 	if (isp.Offset)
 	{
@@ -1473,7 +1476,7 @@ static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 		u32 col=vri(ptr);
       ptr+=4;
 
-      tr_parse_offset_color(cv, col);
+      vert_packed_color_(cv->vtx_spc,col);
 	}
 }
 

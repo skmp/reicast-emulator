@@ -1,17 +1,14 @@
+/*
+	TA-VTX handling
+
+	Parsing of the TA stream and generation of vertex data !
+*/
+
 #include "../../types.h"
 #include "pvr.h"
 #include "tr.h"
 
-#define TACALL DYNACALL
-
-#define saturate01(x)       (((s32&)x)<0?0:(s32&)x>0x3f800000?1:x)
-#define float_to_satu8(val) f32_su8_tbl[((u32&)val)>>16]
-
-#define vdrc vd_rc
-
-u32 tileclip_val=0;
-u8 f32_su8_tbl[65536];
-
+// TODO/FIXME - should be moved later
 bool pal_needs_update=true;
 
 u32 _pal_rev_256[4]={0};
@@ -24,12 +21,30 @@ u32 decoded_colors[3][65536];
 
 extern rend_context vd_rc;
 
+#define TACALL DYNACALL
+
+//cache state vars
+u32 tileclip_val=0;
+
+u8 f32_su8_tbl[65536];
+#define float_to_satu8(val) f32_su8_tbl[((u32&)val)>>16]
+
 /*
-	TA-VTX handling
-
-	Parsing of the TA stream and generation of vertex data !
+	This uses just 1k of lookup, but does more calcs
+	The full 64k table will be much faster -- as only a small sub-part of it will be used anyway (the same 1k)
 */
+u8 float_to_satu8_2(float val)
+{
+	s32 vl=(s32&)val>>16;
+	u32 m1=(vl-0x3b80)>>31;	//1 if smaller 0x3b80 or negative
+	u32 m2=(vl-0x3f80)>>31;  //1 if smaller 0x3f80 or negative
+	u32 vo=vl-0x3b80;
+	vo &= (~m1>>22);
+	
+	return f32_su8_tbl[0x3b80+vo] | (~m2>>24);
+}
 
+#define saturate01(x)       (((s32&)x)<0?0:(s32&)x>0x3f800000?1:x)
 static u8 float_to_satu8_math(float val)
 {
 	return u8(saturate01(val)*255);
@@ -39,8 +54,9 @@ static u8 float_to_satu8_math(float val)
 static ModTriangle* lmr=0;
 static PolyParam nullPP;
 
-static PolyParam* CurrentPP=&nullPP;
-static List<PolyParam>* CurrentPPlist;
+
+PolyParam* CurrentPP=&nullPP;
+List<PolyParam>* CurrentPPlist;
 
 //TA state vars	
 DECL_ALIGN(4) static u8 FaceBaseColor[4];
@@ -55,12 +71,15 @@ extern u32 ta_type_lut[256];
 //as it seems, bit 1,2 are type, bit 0 is mod volume :p
 
 //misc ones
-#define LISTTYPE_NONE -1
+const u32 ListType_None=-1;
 
-#define SZ32 1
-#define SZ64 2
+const u32 SZ32=1;
+const u32 SZ64=2;
+
+#include "ta_structs.h"
 
 typedef Ta_Dma* DYNACALL TaListFP(Ta_Dma* data,Ta_Dma* data_end);
+typedef void TACALL TaPolyParamFP(void* ptr);
 
 TaListFP* TaCmd;
 	
@@ -73,6 +92,7 @@ static INLINE f32 f16(u16 v)
 	u32 z=v<<16;
 	return *(f32*)&z;
 }
+
 //input : address in the yyyyyxxxxx format
 //output : address in the xyxyxyxy format
 //U : x resolution , V : y resolution
@@ -130,6 +150,8 @@ static INLINE f32 f16(u16 v)
    cv[indx].v = f16(sv->v_name);
 
 #define should_append_poly_param(pp) (CurrentPP->pcw.full!=pp->pcw.full || CurrentPP->tcw.full!=pp->tcw.full || CurrentPP->tsp.full!=pp->tsp.full || CurrentPP->isp.full!=pp->isp.full) 
+
+#define vdrc vd_rc
 
 //Splitter function (normally ta_dma_main , modified for split dma's)
 
@@ -620,6 +642,17 @@ fist_half:
 	}
 
 public:
+
+   __forceinline
+		static void SetTileClip(u32 xmin,u32 ymin,u32 xmax,u32 ymax)
+	{
+		u32 rv=tileclip_val & 0xF0000000;
+		rv|=xmin; //6 bits
+		rv|=xmax<<6; //6 bits
+		rv|=ymin<<12; //5 bits
+		rv|=ymax<<17; //5 bits
+		tileclip_val=rv;
+	}
 	
 	static Ta_Dma* TACALL ta_main(Ta_Dma* data,Ta_Dma* data_end)
    {
@@ -636,7 +669,7 @@ public:
                tileclip_val=(tileclip_val&(~0xF0000000)) | (data->pcw.User_Clip << 28);
 
 
-            if (CurrentList== LISTTYPE_NONE)
+            if (CurrentList==ListType_None)
             {
 #if 0
                printf("Starting list %d\n",new_list);
@@ -665,7 +698,7 @@ public:
             //Control parameter
             //32Bw3
             case TA_PARAM_END_OF_LIST:
-               if (CurrentList == LISTTYPE_NONE)
+               if (CurrentList==ListType_None)
                {
                   CurrentList=data->pcw.ListType;
                   //printf("End_Of_List : list error\n");
@@ -686,25 +719,16 @@ public:
 
                //printf("End list %X\n",CurrentList);
                ListIsFinished[CurrentList] = true;
-               CurrentList                 = LISTTYPE_NONE;
+               CurrentList                 = ListType_None;
                VertexDataFP                = NullVertexData;
                data+=SZ32;
                break;
                //32B
             case TA_PARAM_USER_TILE_CLIP:
                {
-                  u32 xmin = data->data_32[3]&63;
-                  u32 ymin = data->data_32[4]&31;
-                  u32 xmax = data->data_32[5]&63;
-                  u32 ymax = data->data_32[6]&31;
-                  u32 rv=tileclip_val & 0xF0000000;
-                  rv|=xmin; //6 bits
-                  rv|=xmax<<6; //6 bits
-                  rv|=ymin<<12; //5 bits
-                  rv|=ymax<<17; //5 bits
-                  tileclip_val=rv;
+                  SetTileClip(data->data_32[3]&63,data->data_32[4]&31,data->data_32[5]&63,data->data_32[6]&31);
+                  data+=SZ32;
                }
-               data+=SZ32;
                break;
                //32B
             case TA_PARAM_OBJ_LIST_SET:
@@ -982,63 +1006,142 @@ public:
 
 	*/
 	//helpers 0-14
-	static u32 poly_data_type_id(PCW pcw)
+   static u32 poly_data_type_id(PCW pcw)
 	{
-      if (pcw.Volume)
-      {
-         if (pcw.Texture)
-         {
-            if (pcw.Col_Type == 0)
-               return pcw.UV_16bit ? 12 : 11;
-            if (pcw.Col_Type == 2 || pcw.Col_Type == 3)
-               return pcw.UV_16bit ? 14 : 13;
-         }
+		if (pcw.Texture)
+		{
+			//textured
+			if (pcw.Volume==0)
+			{	//single volume
+				if (pcw.Col_Type==0)
+				{
+					if (pcw.UV_16bit==0)
+						return 3;           //(Textured, Packed Color , 32b uv)
+					else
+						return 4;           //(Textured, Packed Color , 16b uv)
+				}
+				else if (pcw.Col_Type==1)
+				{
+					if (pcw.UV_16bit==0)
+						return 5;           //(Textured, Floating Color , 32b uv)
+					else
+						return 6;           //(Textured, Floating Color , 16b uv)
+				}
+				else
+				{
+					if (pcw.UV_16bit==0)
+						return 7;           //(Textured, Intensity , 32b uv)
+					else
+						return 8;           //(Textured, Intensity , 16b uv)
+				}
+			}
+			else
+			{
+				//two volumes
+				if (pcw.Col_Type==0)
+				{
+					if (pcw.UV_16bit==0)
+						return 11;          //(Textured, Packed Color, with Two Volumes)	
 
-         if (pcw.Col_Type == 0)
-            return 9;
-         if (pcw.Col_Type == 2 || pcw.Col_Type == 3)
-            return 10;
-      }
+					else
+						return 12;          //(Textured, Packed Color, 16bit UV, with Two Volumes)
 
-      if (pcw.Texture)
-      {
-         if (pcw.Col_Type == 0)
-            return pcw.UV_16bit ? 4 : 3;
-         if (pcw.Col_Type == 1)
-            return pcw.UV_16bit ? 6 : 5;
-         if (pcw.Col_Type == 2 || pcw.Col_Type == 3)
-            return pcw.UV_16bit ? 8 : 7;
-      }
+				}
+				else if (pcw.Col_Type==1)
+				{
+					//die ("invalid");
+					return 0xFFFFFFFF;
+				}
+				else
+				{
+					if (pcw.UV_16bit==0)
+						return 13;          //(Textured, Intensity, with Two Volumes)	
 
-      if (pcw.Col_Type == 1)
-         return 1;
-      if (pcw.Col_Type == 2 || pcw.Col_Type == 3)
-         return 2;
-
-      return 0;
+					else
+						return 14;          //(Textured, Intensity, 16bit UV, with Two Volumes)
+				}
+			}
+		}
+		else
+		{
+			//non textured
+			if (pcw.Volume==0)
+			{	//single volume
+				if (pcw.Col_Type==0)
+					return 0;               //(Non-Textured, Packed Color)
+				else if (pcw.Col_Type==1)
+					return 1;               //(Non-Textured, Floating Color)
+				else
+					return 2;               //(Non-Textured, Intensity)
+			}
+			else
+			{
+				//two volumes
+				if (pcw.Col_Type==0)
+					return 9;               //(Non-Textured, Packed Color, with Two Volumes)
+				else if (pcw.Col_Type==1)
+				{
+					//die ("invalid");
+					return 0xFFFFFFFF;
+				}
+				else
+				{
+					return 10;              //(Non-Textured, Intensity, with Two Volumes)
+				}
+			}
+		}
 	}
 	//0-4 | 0x80
-	static u32 poly_header_type_size(PCW pcw)
+   static u32 poly_header_type_size(PCW pcw)
 	{
-		if (pcw.Volume)
+		if (pcw.Volume == 0)
 		{
-         if (pcw.Col_Type == 0 || pcw.Col_Type == 3)
-               return 3 | 0;              //Polygon Type 3 -- SZ32
-         if (pcw.Col_Type == 2)
-               return 4 | 0x80;           //Polygon Type 4 -- SZ64
+			if ( pcw.Col_Type<2 ) //0,1
+			{
+				return 0  | 0;              //Polygon Type 0 -- SZ32
+			}
+			else if ( pcw.Col_Type == 2 )
+			{
+				if (pcw.Texture)
+				{
+					if (pcw.Offset)
+					{
+						return 2 | 0x80;    //Polygon Type 2 -- SZ64
+					}
+					else
+					{
+						return 1 | 0;       //Polygon Type 1 -- SZ32
+					}
+				}
+				else
+				{
+					return 1 | 0;           //Polygon Type 1 -- SZ32
+				}
+			}
+			else	//col_type ==3
+			{
+				return 0 | 0;               //Polygon Type 0 -- SZ32
+			}
 		}
-
-      if (pcw.Col_Type == 2)
-      {
-         if (pcw.Texture && !pcw.Offset)
-            return 1 | 0;               //Polygon Type 1 -- SZ32
-         if (pcw.Texture && pcw.Offset)
-            return 2 | 0x80;         //Polygon Type 2 -- SZ64
-         if (!pcw.Texture)
-            return 1;
-      }
-
-      return 0;
+		else
+		{
+			if ( pcw.Col_Type==0 ) //0
+			{
+				return 3 | 0;              //Polygon Type 3 -- SZ32
+			}
+			else if ( pcw.Col_Type==2 ) //2
+			{
+				return 4 | 0x80;           //Polygon Type 4 -- SZ64
+			}
+			else if ( pcw.Col_Type==3 ) //3
+			{
+				return 3 | 0;              //Polygon Type 3 -- SZ32
+			}
+			else
+			{
+				return 0xFFDDEEAA;//die ("data->pcw.Col_Type==1 && volume ==1");
+			}
+		}
 	}
 
    static void VDECInit()
@@ -1062,7 +1165,7 @@ public:
       VDECInit();
 
 		TaCmd             = ta_main;
-		CurrentList       = LISTTYPE_NONE;
+		CurrentList       = ListType_None;
 		ListIsFinished[0] = false;
       ListIsFinished[1] = false;
       ListIsFinished[2] = false;
@@ -1283,6 +1386,7 @@ int ta_parse_cnt = 0;
 */
 bool ta_parse_vdrc(TA_context* ctx)
 {
+   bool rv=false;
 	vd_ctx = ctx;
 	vd_rc  = vd_ctx->rend;
 
@@ -1299,6 +1403,8 @@ bool ta_parse_vdrc(TA_context* ctx)
 		{
 			ta_data =TaCmd(ta_data,ta_data_end);
 		}while(ta_data<=ta_data_end);
+
+      rv = true; //whatever
 	}
 
 	vd_ctx->rend = vd_rc;
@@ -1307,7 +1413,7 @@ bool ta_parse_vdrc(TA_context* ctx)
    slock_unlock(ctx->rend_inuse);
 #endif
 
-	return true;
+	return rv;
 }
 
 //decode a vertex in the native pvr format
@@ -1405,6 +1511,8 @@ void FillBGP(TA_context* ctx)
 	PolyParam* bgpp=ctx->rend.global_param_op.head();
 	Vertex* cv=ctx->rend.verts.head();
 
+   bool PSVM=FPU_SHAD_SCALE.intensity_shadow!=0; //double parameters for volumes
+
 	//Get the strip base
 	u32 strip_base=(param_base + ISP_BACKGND_T.tag_address*4);	//this is *not* VRAM_MASK on purpose.It fixes naomi bios and quite a few naomi games
 	//i have *no* idea why that happens, they manage to set the render target over there as well
@@ -1417,7 +1525,7 @@ void FillBGP(TA_context* ctx)
 	u32 strip_vert_num=ISP_BACKGND_T.tag_offset;
 
    /* double parameters for volumes */
-	if (FPU_SHAD_SCALE.intensity_shadow!=0 && ISP_BACKGND_T.shadow)
+	if (PSVM && ISP_BACKGND_T.shadow)
 	{
 		strip_vs+=ISP_BACKGND_T.skip;//2x the size needed :p
 	}

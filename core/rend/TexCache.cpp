@@ -5,6 +5,7 @@
 #include "hw/pvr/tr.h"
 #include "hw/pvr/pvr_regs.h"
 #include "hw/mem/_vmem.h"
+#include "TexCache.h"
 
 u8* vq_codebook;
 u32 palette_index;

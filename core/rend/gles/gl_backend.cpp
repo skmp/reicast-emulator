@@ -15,12 +15,12 @@
 #include "gl_backend.h"
 #include "../rend.h"
 #include "../../libretro/libretro.h"
+#include "../TexCache.h"
 #include "glcache.h"
 
 #include "../../hw/pvr/pvr.h"
 #include "../../hw/mem/_vmem.h"
 #include "../../hw/pvr/tr.h"
-#include "../../hw/pvr/pixel_convert.h"
 
 #ifndef GL_IMPLEMENTATION_COLOR_READ_TYPE
 #define GL_IMPLEMENTATION_COLOR_READ_TYPE 0x8B9A

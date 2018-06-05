@@ -101,40 +101,6 @@ int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 
 TA_context* _pvrrc;
 
-void libPvr_LockedBlockWrite (vram_block* block,u32 addr)
-{
-	rend_text_invl(block);
-}
-
-
-void libPvr_Reset(bool Manual)
-{
-   Regs_Reset(Manual);
-	CalculateSync();
-	//rend_reset(); //*TODO* wtf ?
-}
-
-
-s32 libPvr_Init(void)
-{
-   ta_ctx_init();
-   
-   spg_Init();
-
-   //failed
-	if (!rend_init())
-		return rv_error;
-
-	return rv_ok;
-}
-
-//called when exiting from sh4 thread , from the new thread context (for any thread specific de init) :P
-void libPvr_Term(void)
-{
-	rend_term();
-   ta_ctx_free();
-}
-
 //List functions
 //
 static void vramlock_list_remove(vram_block* block)

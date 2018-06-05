@@ -26,6 +26,7 @@ SOURCES_CXX := \
 					$(CORE_DIR)/hw/mem/_vmem.cpp \
 					\
 					$(CORE_DIR)/hw/pvr/pvr.cpp \
+					$(CORE_DIR)/hw/pvr/drkPvr.cpp \
 					$(CORE_DIR)/hw/pvr/pvr_mem.cpp \
 					$(CORE_DIR)/hw/pvr/pvr_regs.cpp \
 					$(CORE_DIR)/hw/pvr/pvr_sb_regs.cpp \

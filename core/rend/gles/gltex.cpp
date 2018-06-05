@@ -12,7 +12,7 @@
 #include <xmmintrin.h>
 #endif
 
-#include "gl_backend.h"
+#include "gles.h"
 #include "../rend.h"
 #include "../../libretro/libretro.h"
 #include "../TexCache.h"

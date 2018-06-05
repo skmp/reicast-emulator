@@ -1,5 +1,8 @@
 #pragma once
 #include "rend/rend.h"
+#include <glsm/glsm.h>
+#include <glsm/glsmsym.h>
+#include "glcache.h"
 
 #define VERTEX_POS_ARRAY      0
 #define VERTEX_COL_BASE_ARRAY 1
@@ -7,8 +10,9 @@
 #define VERTEX_UV_ARRAY       3
 
 //vertex types
-extern u32 gcflip;
 extern float scale_x, scale_y;
+
+void DrawStrips(void);
 
 struct PipelineShader
 {
@@ -38,6 +42,25 @@ struct text_info {
 	u32 textype; // 0 565, 1 1555, 2 4444
 };
 
+struct modvol_shader_type
+{
+   GLuint program;
+   GLuint scale;
+   GLuint depth_scale;
+   GLuint sp_ShaderColor;
+};
+
+struct vbo_type
+{
+   GLuint geometry;
+   GLuint modvols;
+   GLuint idxs;
+   GLuint idxs2;
+};
+
+extern vbo_type vbo;
+extern modvol_shader_type modvol_shader;
+extern PipelineShader program_table[768*2];
 text_info raw_GetTexture(TSP tsp, TCW tcw);
 void CollectCleanup();
 void DoCleanup();
@@ -48,5 +71,6 @@ void ReadRTTBuffer();
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl);
+void vertex_buffer_unmap(void);
 
 bool CompilePipelineShader(PipelineShader* s);

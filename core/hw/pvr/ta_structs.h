@@ -750,3 +750,21 @@ struct TA_VertexParam
 #pragma pack(pop)
 
 #define IsModVolList(list) (((list)&1)!=0)
+
+
+
+//Control Parameter
+const u32 ParamType_End_Of_List=0;
+const u32 ParamType_User_Tile_Clip=1;
+const u32 ParamType_Object_List_Set=2;
+
+//Global Parameter
+const u32 ParamType_Polygon_or_Modifier_Volume=4;
+const u32 ParamType_Sprite=5;
+
+//Vertex , Sprite or ModVolume Parameter
+const u32 ParamType_Vertex_Parameter=7;
+
+//Reserved
+const u32 ParamType_Reserved_1=3;
+const u32 ParamType_Reserved_2=6;

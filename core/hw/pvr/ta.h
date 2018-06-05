@@ -25,24 +25,6 @@ enum
 
 enum
 {
-   /* Control Parameter */
-   TA_PARAM_END_OF_LIST                     = 0,
-   TA_PARAM_USER_TILE_CLIP,
-   TA_PARAM_OBJ_LIST_SET,
-   /* Reserved */
-   TA_PARAM_RESERVED0,
-   /* Global Parameter */
-   TA_PARAM_POLY_OR_VOL,
-   TA_PARAM_SPRITE,
-   /* Reserved */
-   TA_PARAM_RESERVED1,
-   /* Vertex , Sprite or ModVolume Parameter */
-   TA_PARAM_VERTEX,
-   TA_NUM_PARAMS
-};
-
-enum
-{
    TA_PIXEL_1555 = 0,
    TA_PIXEL_565,
    TA_PIXEL_4444,

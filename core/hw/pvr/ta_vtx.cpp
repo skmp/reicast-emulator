@@ -554,7 +554,7 @@ public:
 	static Ta_Dma* TACALL ta_sprite_data(Ta_Dma* data,Ta_Dma* data_end)
    {
       TA_VertexParam* vp=(TA_VertexParam*)data;
-      //verify(data->pcw.ParaType == TA_PARAM_VERTEX);
+      //verify(data->pcw.ParaType == ParamType_Vertex_Parameter);
 
       AppendSpriteVertexA(&vp->spr1A);
 
@@ -658,8 +658,8 @@ public:
    {
       do
       {
-         if ((data->pcw.ParaType == TA_PARAM_POLY_OR_VOL ||
-             (data->pcw.ParaType == TA_PARAM_SPRITE)))
+         if ((data->pcw.ParaType == ParamType_Polygon_or_Modifier_Volume ||
+             (data->pcw.ParaType == ParamType_Sprite)))
          {
             /* Tile clip mode */
 #if 0
@@ -697,7 +697,7 @@ public:
          {
             //Control parameter
             //32Bw3
-            case TA_PARAM_END_OF_LIST:
+            case ParamType_End_Of_List:
                if (CurrentList==ListType_None)
                {
                   CurrentList=data->pcw.ListType;
@@ -724,14 +724,14 @@ public:
                data+=SZ32;
                break;
                //32B
-            case TA_PARAM_USER_TILE_CLIP:
+            case ParamType_User_Tile_Clip:
                {
                   SetTileClip(data->data_32[3]&63,data->data_32[4]&31,data->data_32[5]&63,data->data_32[6]&31);
                   data+=SZ32;
                }
                break;
                //32B
-            case TA_PARAM_OBJ_LIST_SET:
+            case ParamType_Object_List_Set:
                die("ParamType_Object_List_Set");
                // *cough* ignore it :p
                data+=SZ32;
@@ -740,7 +740,7 @@ public:
                //Global Parameter
                //ModVolue :32B
                //PolyType :32B/64B
-            case TA_PARAM_POLY_OR_VOL:
+            case ParamType_Polygon_or_Modifier_Volume:
                if (IsModVolList(CurrentList))
                {
                   if (CurrentList == TA_LIST_OPAQUE_MODVOL)
@@ -920,7 +920,7 @@ public:
                break;
                //32B
                //Sets Sprite info , and switches to ta_sprite_data function
-            case TA_PARAM_SPRITE:
+            case ParamType_Sprite:
                VertexDataFP=ta_sprite_data;
                //printf("Sprite \n");
                AppendSpriteParam((TA_SpriteParam*)data);
@@ -928,7 +928,7 @@ public:
                break;
 
                //Variable size
-            case TA_PARAM_VERTEX:
+            case ParamType_Vertex_Parameter:
                //printf("VTX:0x%08X\n",VertexDataFP);
                //verify(VertexDataFP!=NullVertexData);
                data=VertexDataFP(data,data_end);

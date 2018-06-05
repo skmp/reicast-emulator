@@ -1,5 +1,15 @@
 #include "pvr.h"
 
+u32 ta_type_lut[256];
+
+/*
+	Threaded TA Implementation
+
+	Main thread -> ta data -> stored	(tactx)
+
+	Render/TA thread -> ta data -> draw lists -> draw
+*/
+
 #include "hw/sh4/sh4_sched.h"
 
 #if HOST_CPU == CPU_X86
@@ -21,17 +31,6 @@ struct simd256_t
 };
 #endif
 
-u32 ta_type_lut[256];
-
-/*
-	Threaded TA Implementation
-
-	Main thread -> ta data -> stored	(tactx)
-
-	Render/TA thread -> ta data -> draw lists -> draw
-*/
-
-#define ta_cur_state  (ta_fsm[2048])
 
 /*
 	Partial TA parsing for in emu-side handling. Properly tracks 32/64 byte state, and
@@ -68,20 +67,12 @@ enum ta_state
 	TAS_MLV64_H    //mv list, 64 bit half
 };
 
-const HollyInterruptID ListEndInterrupt[5]=
-{
-	holly_OPAQUE,
-	holly_OPAQUEMOD,
-	holly_TRANS,
-	holly_TRANSMOD,
-	holly_PUNCHTHRU
-};
+/* state | PTEOS | OBJ -> next, proc*/
+
+#define ta_cur_state  (ta_fsm[2048])
 
 static u8 ta_fsm[2049];	//[2048] stores the current state
 static u32 ta_fsm_cl=7;
-
-/* state | PTEOS | OBJ -> next, proc*/
-
 
 static void fill_fsm(ta_state st, s8 pt, s8 obj, ta_state next, u32 proc=0, u32 sz64=0)
 {
@@ -197,6 +188,55 @@ static void fill_fsm(void)
 	fill_fsm(TAS_MLV64_H,-1,-1,TAS_MLV64); //64 MH -> expect M64
 }
 
+const HollyInterruptID ListEndInterrupt[5]=
+{
+	holly_OPAQUE,
+	holly_OPAQUEMOD,
+	holly_TRANS,
+	holly_TRANSMOD,
+	holly_PUNCHTHRU
+};
+
+NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
+{
+   Ta_Dma* dat=(Ta_Dma*)(ta_tad.thd_data-32);
+
+   u32 cmd = trans>>4;
+   trans&=7;
+   //printf("Process state transition: %d || %d -> %d \n",cmd,state_in,trans&0xF);
+
+   if (cmd != 8)
+   {
+      switch (dat->pcw.ParaType)
+      {
+         case TA_PARAM_END_OF_LIST:
+            if (ta_fsm_cl==7)
+               ta_fsm_cl=dat->pcw.ListType;
+            //printf("List %d ended\n",ta_fsm_cl);
+
+            asic_RaiseInterrupt( ListEndInterrupt[ta_fsm_cl]);
+            ta_fsm_cl=7;
+            trans=TAS_NS;
+            break;
+         case TA_PARAM_POLY_OR_VOL:
+         case TA_PARAM_SPRITE:
+            if (ta_fsm_cl==7)
+               ta_fsm_cl=dat->pcw.ListType;
+
+            trans=TAS_PLV32;
+            if (dat->pcw.ParaType == TA_PARAM_POLY_OR_VOL &&
+                  IsModVolList(ta_fsm_cl))
+               trans=TAS_MLV64;
+            break;
+         default:
+            break;
+      }
+   }
+
+   u32 state_in = (trans<<8) | (dat->pcw.ParaType<<5) | (dat->pcw.obj_ctrl>>2)%32;
+   ta_cur_state = (ta_state)(ta_fsm[state_in]&0xF);
+}
+
 static OnLoad ol_fillfsm(&fill_fsm);
 
 void ta_vtx_ListCont(void)
@@ -218,66 +258,35 @@ void ta_vtx_SoftReset(void)
 	ta_cur_state=TAS_NS;
 }
 
+INLINE void DYNACALL ta_thd_data32_i(void *data)
+{
+   simd256_t *dst = (simd256_t*)ta_tad.thd_data;
+   simd256_t *src = (simd256_t*)data; 
+
+   // First byte is PCW
+   PCW pcw        = *(PCW*)data;
+
+   /* Copy the TA data */
+   *dst = *src;
+
+   ta_tad.thd_data+=32;
+
+   /* Process TA state */
+   u32 state_in     = (ta_cur_state<<8) | (pcw.ParaType<<5) | (pcw.obj_ctrl>>2)%32;
+
+   u32 trans         = ta_fsm[state_in];
+   ta_cur_state     = (ta_state)trans;
+   bool must_handle = trans& 0xF0;
+
+   if (must_handle)
+      ta_handle_cmd(trans);
+}
+
 void ta_vtx_data(u32* data, u32 size)
 {
 	while(size>0)
    {
-      simd256_t *src = (simd256_t*)data; 
-      simd256_t *dst = (simd256_t*)ta_tad.thd_data;
-
-      PCW pcw        = *(PCW*)data;
-
-      /* Copy the TA data */
-      *dst = *src;
-
-      ta_tad.thd_data+=32;
-
-      /* Process TA state */
-      u32 state_in     = (ta_cur_state<<8) | (pcw.ParaType<<5) | (pcw.obj_ctrl>>2)%32;
-
-      u32 trans         = ta_fsm[state_in];
-      ta_cur_state     = (ta_state)trans;
-      bool must_handle = trans& 0xF0;
-
-      if (must_handle)
-      {
-         Ta_Dma* dat=(Ta_Dma*)(ta_tad.thd_data-32);
-
-         u32 cmd = trans>>4;
-         trans&=7;
-         //printf("Process state transition: %d || %d -> %d \n",cmd,state_in,trans&0xF);
-
-         if (cmd != 8)
-         {
-            switch (dat->pcw.ParaType)
-            {
-               case TA_PARAM_END_OF_LIST:
-                  if (ta_fsm_cl==7)
-                     ta_fsm_cl=dat->pcw.ListType;
-                  //printf("List %d ended\n",ta_fsm_cl);
-
-                  asic_RaiseInterrupt( ListEndInterrupt[ta_fsm_cl]);
-                  ta_fsm_cl=7;
-                  trans=TAS_NS;
-                  break;
-               case TA_PARAM_POLY_OR_VOL:
-               case TA_PARAM_SPRITE:
-                  if (ta_fsm_cl==7)
-                     ta_fsm_cl=dat->pcw.ListType;
-
-                  trans=TAS_PLV32;
-                  if (dat->pcw.ParaType == TA_PARAM_POLY_OR_VOL &&
-                        IsModVolList(ta_fsm_cl))
-                     trans=TAS_MLV64;
-                  break;
-               default:
-                  break;
-            }
-         }
-
-         u32 state_in = (trans<<8) | (dat->pcw.ParaType<<5) | (dat->pcw.obj_ctrl>>2)%32;
-         ta_cur_state = (ta_state)(ta_fsm[state_in]&0xF);
-      }
+      ta_thd_data32_i(data);
 
       data+=8;
       size--;

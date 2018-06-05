@@ -27,6 +27,62 @@ vector<vram_block*> VramLocks[VRAM_SIZE/PAGE_SIZE];
 //vram 32-64b
 VArray2 vram;
 
+/*
+
+	rendv3 ideas
+	- multiple backends
+	  - ESish
+	    - OpenGL ES2.0
+	    - OpenGL ES3.0
+	    - OpenGL 3.1
+	  - OpenGL 4.x
+	  - Direct3D 10+ ?
+	- correct memory ordering model
+	- resource pools
+	- threaded TA
+	- threaded rendering
+	- RTTs
+	- framebuffers
+	- overlays
+
+
+	PHASES
+	- TA submission (memops, dma)
+
+	- TA parsing (defered, rend thread)
+
+	- CORE render (in-order, defered, rend thread)
+
+
+	submission is done in-order
+	- Partial handling of TA values
+	- Gotchas with TA contexts
+
+	parsing is done on demand and out-of-order, and might be skipped
+	- output is only consumed by renderer
+
+	render is queued on RENDER_START, and won't stall the emulation or might be skipped
+	- VRAM integrity is an issue with out-of-order or delayed rendering.
+	- selective vram snapshots require TA parsing to complete in order with REND_START / REND_END
+
+
+	Complications
+	- For some apis (gles2, maybe gl31) texture allocation needs to happen on the gpu thread
+	- multiple versions of different time snapshots of the same texture are required
+	- TA parsing vs frameskip logic
+
+
+	Texture versioning and staging
+	 A memory copy of the texture can be used to temporary store the texture before upload to vram
+	 This can be moved to another thread
+	 If the api supports async resource creation, we don't need the extra copy
+	 Texcache lookups need to be versioned
+
+
+	rendv2x hacks
+	- Only a single pending render. Any renders while still pending are dropped (before parsing)
+	- wait and block for parse/texcache. Render is async
+*/
 
 u32 VertexCount=0;
 u32 FrameCount=1;
@@ -264,46 +320,45 @@ void libCore_vramlock_Unlock_block_wb(vram_block* block)
 	}
 }
 
-#if defined(TARGET_NO_THREADS)
-static bool rend_frame(TA_context* ctx, bool draw_osd)
-{
-   return renderer->Process(ctx) && renderer->Render();
-}
-
-void rend_end_render(void)
-{
-   if (pend_rend)
-      renderer->Present();
-}
-
-void rend_term(void) { }
-#else
-static bool rend_frame(TA_context* ctx, bool draw_osd)
-{
-   bool proc = renderer->Process(ctx);
-   
-   slock_lock(re.mutx);
-   re.state = true;
-   scond_signal(re.cond);
-   slock_unlock(re.mutx);
-
-   return proc && renderer->Render();
-}
-
 void rend_end_render(void)
 {
    if (pend_rend)
    {
+#if !defined(TARGET_NO_THREADS)
       slock_lock(re.mutx);
       if (!re.state)
          scond_wait( re.cond, re.mutx );
       re.state=false;
       slock_unlock(re.mutx);
+#else
+      renderer->Present();
+#endif
    }
+}
+
+static bool rend_frame(TA_context* ctx, bool draw_osd)
+{
+   bool proc = renderer->Process(ctx);
+
+#if !defined(TARGET_NO_THREADS)
+   if (!proc || !ctx->rend.isRTT)
+   {
+      // If rendering to texture, continue locking until the frame is rendered
+      slock_lock(re.mutx);
+      re.state = true;
+      scond_signal(re.cond);
+      slock_unlock(re.mutx);
+   }
+#endif
+   
+   bool do_swp = proc && renderer->Render();
+
+   return do_swp;
 }
 
 void rend_term(void)
 {
+#if !defined(TARGET_NO_THREADS)
    sthread_join(rthd);
    rthd = NULL;
 
@@ -315,8 +370,8 @@ void rend_term(void)
    rs.mutx = NULL;
    re.cond = NULL;
    rs.cond = NULL;
-}
 #endif
+}
 
 static bool rend_single_frame(void)
 {
@@ -349,106 +404,51 @@ void rend_start_render(void)
 
    SetREP(ctx);
 
-   if (!ctx)
-      return;
-
-   if (ctx->rend.Overrun)
+   if (ctx)
    {
-      ovrn++;
-      printf("WARNING: Rendering context is overrun (%d), aborting frame\n",ovrn);
-      tactx_Recycle(ctx);
-      return;
-   }
+      if (!ctx->rend.Overrun)
+      {
+         //printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
+         FillBGP(ctx);
 
-   //printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
-   FillBGP(ctx);
+         ctx->rend.isRTT      = (FB_W_SOF1& 0x1000000)!=0;
+         ctx->rend.isAutoSort = UsingAutoSort();
 
-   ctx->rend.isRTT      = (FB_W_SOF1& 0x1000000)!=0;
-   ctx->rend.isAutoSort = UsingAutoSort();
+         ctx->rend.fb_X_CLIP  = FB_X_CLIP;
+         ctx->rend.fb_Y_CLIP  = FB_Y_CLIP;
 
-   ctx->rend.fb_X_CLIP  = FB_X_CLIP;
-   ctx->rend.fb_Y_CLIP  = FB_Y_CLIP;
+         max_idx              = max(max_idx,  ctx->rend.idx.used());
+         max_vtx              = max(max_vtx,  ctx->rend.verts.used());
+         max_op               = max(max_op,   ctx->rend.global_param_op.used());
+         max_pt               = max(max_pt,   ctx->rend.global_param_pt.used());
+         max_tr               = max(max_tr,   ctx->rend.global_param_tr.used());
 
-   max_idx              = max(max_idx,  ctx->rend.idx.used());
-   max_vtx              = max(max_vtx,  ctx->rend.verts.used());
-   max_op               = max(max_op,   ctx->rend.global_param_op.used());
-   max_pt               = max(max_pt,   ctx->rend.global_param_pt.used());
-   max_tr               = max(max_tr,   ctx->rend.global_param_tr.used());
+         max_mvo              = max(max_mvo,  ctx->rend.global_param_mvo.used());
+         max_modt             = max(max_modt, ctx->rend.modtrig.used());
 
-   max_mvo              = max(max_mvo,  ctx->rend.global_param_mvo.used());
-   max_modt             = max(max_modt, ctx->rend.modtrig.used());
-
-   if (QueueRender(ctx) || !settings.QueueRender)
-   {
-      palette_update();
+         if (QueueRender(ctx) || !settings.QueueRender)
+         {
+            palette_update();
 #if !defined(TARGET_NO_THREADS)
-      slock_lock(rs.mutx);
-      rs.state=true;
-      scond_signal(rs.cond);
-      slock_unlock(rs.mutx);
+            slock_lock(rs.mutx);
+            rs.state=true;
+            scond_signal(rs.cond);
+            slock_unlock(rs.mutx);
 #else
-      rend_single_frame();
+            rend_single_frame();
 #endif
-      pend_rend = true;
+            pend_rend = true;
+         }
+      }
+      else
+      {
+         ovrn++;
+         printf("WARNING: Rendering context is overrun (%d), aborting frame\n",ovrn);
+         tactx_Recycle(ctx);
+      }
    }
 }
 
-/*
-
-	rendv3 ideas
-	- multiple backends
-	  - ESish
-	    - OpenGL ES2.0
-	    - OpenGL ES3.0
-	    - OpenGL 3.1
-	  - OpenGL 4.x
-	  - Direct3D 10+ ?
-	- correct memory ordering model
-	- resource pools
-	- threaded TA
-	- threaded rendering
-	- RTTs
-	- framebuffers
-	- overlays
-
-
-	PHASES
-	- TA submission (memops, dma)
-
-	- TA parsing (defered, rend thread)
-
-	- CORE render (in-order, defered, rend thread)
-
-
-	submission is done in-order
-	- Partial handling of TA values
-	- Gotchas with TA contexts
-
-	parsing is done on demand and out-of-order, and might be skipped
-	- output is only consumed by renderer
-
-	render is queued on RENDER_START, and won't stall the emulation or might be skipped
-	- VRAM integrity is an issue with out-of-order or delayed rendering.
-	- selective vram snapshots require TA parsing to complete in order with REND_START / REND_END
-
-
-	Complications
-	- For some apis (gles2, maybe gl31) texture allocation needs to happen on the gpu thread
-	- multiple versions of different time snapshots of the same texture are required
-	- TA parsing vs frameskip logic
-
-
-	Texture versioning and staging
-	 A memory copy of the texture can be used to temporary store the texture before upload to vram
-	 This can be moved to another thread
-	 If the api supports async resource creation, we don't need the extra copy
-	 Texcache lookups need to be versioned
-
-
-	rendv2x hacks
-	- Only a single pending render. Any renders while still pending are dropped (before parsing)
-	- wait and block for parse/texcache. Render is async
-*/
 
 static void *rend_thread(void* p)
 {
@@ -484,8 +484,6 @@ void rend_resize(int width, int height)
 {
 	renderer->Resize(width, height);
 }
-
-
 
 extern int screen_width;
 extern int screen_height;

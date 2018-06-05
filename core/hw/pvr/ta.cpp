@@ -377,7 +377,7 @@ void SetCurrentTARC(u32 addr)
 	}
 }
 
-static bool TryDecodeTARC(void)
+bool TryDecodeTARC(void)
 {
 	if (vd_ctx == 0)
 	{
@@ -397,14 +397,18 @@ static bool TryDecodeTARC(void)
    return false;
 }
 
-
-#ifdef TARGET_NO_THREADS
-static void VDecEnd(void)
+void VDecEnd(void)
 {
 	vd_ctx->rend = vd_rc;
+
+#ifndef TARGET_NO_THREADS
+   slock_unlock(vd_ctx->rend_inuse);
+#endif
+
 	vd_ctx = 0;
 }
 
+#ifdef TARGET_NO_THREADS
 bool QueueRender(TA_context* ctx)
 {
 	if (rqueue)
@@ -459,14 +463,6 @@ void tactx_Recycle(TA_context* poped_ctx)
    }
 }
 #else
-static void VDecEnd(void)
-{
-	vd_ctx->rend = vd_rc;
-
-   slock_unlock(vd_ctx->rend_inuse);
-
-	vd_ctx = 0;
-}
 
 bool QueueRender(TA_context* ctx)
 {

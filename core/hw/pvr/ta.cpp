@@ -2,8 +2,6 @@
 
 #include "hw/sh4/sh4_sched.h"
 
-extern u32 ta_type_lut[256];
-
 extern u32 FrameCount;
 
 TA_context* ta_ctx;

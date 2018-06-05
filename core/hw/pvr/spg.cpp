@@ -121,7 +121,7 @@ int spg_line_sched(int tag, int cycl, int jit)
 			/* Vblank counter */
 			vblk_cnt++;
 			asic_RaiseInterrupt(holly_HBLank); /* HBlank in */
-         os_DoEvents();
+         rend_vblank(); // notify for vblank
 		}
 	}
 

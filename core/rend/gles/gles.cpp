@@ -14,14 +14,6 @@
 #include "../../hw/pvr/pvr.h"
 #include "../../hw/mem/_vmem.h"
 
-#ifndef GL_IMPLEMENTATION_COLOR_READ_TYPE
-#define GL_IMPLEMENTATION_COLOR_READ_TYPE 0x8B9A
-#endif
-
-#ifndef GL_IMPLEMENTATION_COLOR_READ_FORMAT
-#define GL_IMPLEMENTATION_COLOR_READ_FORMAT 0x8B9B
-#endif
-
 // TODO/FIXME - forward declarations
 void GenSorted(void);
 

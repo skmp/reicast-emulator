@@ -493,7 +493,7 @@ public:
 		
 	static Ta_Dma* TACALL ta_modvolB_32(Ta_Dma* data,Ta_Dma* data_end)
 	{
-      if (CurrentList == TA_LIST_OPAQUE_MODVOL)
+      if (CurrentList == ListType_Opaque_Modifier_Volume)
       {
          TA_ModVolB* mvv = (TA_ModVolB*)data;
          lmr->y2=mvv->y2;
@@ -507,7 +507,7 @@ public:
    {
       TA_VertexParam* vp=(TA_VertexParam*)data;
 
-      if (CurrentList == TA_LIST_OPAQUE_MODVOL)
+      if (CurrentList == ListType_Opaque_Modifier_Volume)
       {
          TA_ModVolA* mvv = (TA_ModVolA*)&vp->mvolA;
          lmr=vdrc.modtrig.Append();
@@ -531,7 +531,7 @@ public:
       }
 
       //all 64B done
-      if (CurrentList == TA_LIST_OPAQUE_MODVOL)
+      if (CurrentList == ListType_Opaque_Modifier_Volume)
       {
          TA_ModVolB* mvv = (TA_ModVolB*)&vp->mvolB;
 
@@ -677,13 +677,13 @@ public:
 
                switch (data->pcw.ListType)
                {
-                  case TA_LIST_OPAQUE:
+                  case ListType_Opaque:
                      CurrentPPlist=&vdrc.global_param_op;
                      break;
-                  case TA_LIST_PUNCH_THROUGH:
+                  case ListType_Punch_Through:
                      CurrentPPlist=&vdrc.global_param_pt;
                      break;
-                  case TA_LIST_TRANSLUCENT:
+                  case ListType_Translucent:
                      CurrentPPlist=&vdrc.global_param_tr;
                      break;
                }
@@ -709,7 +709,7 @@ public:
                    * end a list only if it was really started */
                   CurrentPP=&nullPP;
                   CurrentPPlist=0;
-                  if (CurrentList == TA_LIST_OPAQUE_MODVOL)
+                  if (CurrentList == ListType_Opaque_Modifier_Volume)
                   {
                      ISP_Modvol p;
                      p.id=vdrc.modtrig.used();
@@ -743,7 +743,7 @@ public:
             case ParamType_Polygon_or_Modifier_Volume:
                if (IsModVolList(CurrentList))
                {
-                  if (CurrentList == TA_LIST_OPAQUE_MODVOL)
+                  if (CurrentList == ListType_Opaque_Modifier_Volume)
                   {
                      TA_ModVolParam *param = (TA_ModVolParam*)data;
                      ISP_Modvol* p=vdrc.global_param_mvo.Append();

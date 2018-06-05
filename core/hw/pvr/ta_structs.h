@@ -749,6 +749,11 @@ struct TA_VertexParam
 
 #pragma pack(pop)
 
+const u32 ListType_Opaque=0;
+const u32 ListType_Opaque_Modifier_Volume=1;
+const u32 ListType_Translucent =2;
+const u32 ListType_Translucent_Modifier_Volume=3;
+const u32 ListType_Punch_Through=4;
 #define IsModVolList(list) (((list)&1)!=0)
 
 

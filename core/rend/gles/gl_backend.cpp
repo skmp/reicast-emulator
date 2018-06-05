@@ -582,7 +582,7 @@ template <u32 Type, bool SortingEnabled>
 static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 {
    CurrentShader = &program_table[
-									 GetProgramID(Type == TA_LIST_PUNCH_THROUGH ? 1 : 0,
+									 GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
 											 	  SetTileClip(gp->tileclip, false) + 1,
 												  gp->pcw.Texture,
 												  gp->tsp.UseAlpha,
@@ -620,7 +620,7 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 
-   if (Type==TA_LIST_TRANSLUCENT)
+   if (Type== ListType_Translucent)
    {
       glcache.Enable(GL_BLEND);
       glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr], DstBlendGL[gp->tsp.DstInstr]);
@@ -634,7 +634,7 @@ static __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
    SetCull(gp->isp.CullMode ^ cflip ^ gcflip);
 
    /* Set Z mode, only if required */
-   if (Type == TA_LIST_PUNCH_THROUGH || (Type == TA_LIST_TRANSLUCENT && SortingEnabled))
+   if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
       glcache.DepthFunc(GL_GEQUAL);
    else
       glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
@@ -935,7 +935,7 @@ static void DrawSorted(u32 count)
       PolyParam* params = pidx_sort[p].ppid;
       if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
       {
-         SetGPState<TA_LIST_TRANSLUCENT, true>(params, 0);
+         SetGPState<ListType_Translucent, true>(params, 0);
          glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first));
       }
       params++;
@@ -1374,10 +1374,10 @@ static void DrawStrips(void)
    glActiveTexture(GL_TEXTURE0);
 
 	//Opaque
-	DrawList<TA_LIST_OPAQUE, false>(pvrrc.global_param_op);
+	DrawList<ListType_Opaque, false>(pvrrc.global_param_op);
 
 	//Alpha tested
-	DrawList<TA_LIST_PUNCH_THROUGH, false>(pvrrc.global_param_pt);
+	DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt);
 
    // Modifier volumes
 	DrawModVols();
@@ -1390,13 +1390,13 @@ static void DrawStrips(void)
       if (pvrrc.isAutoSort && count)
          DrawSorted(count);
       else
-         DrawList<TA_LIST_TRANSLUCENT, false>(pvrrc.global_param_tr);
+         DrawList<ListType_Translucent, false>(pvrrc.global_param_tr);
    }
    else if (settings.pvr.Emulation.AlphaSortMode == 1)
    {
       if (pvrrc.isAutoSort)
          SortPParams();
-      DrawList<TA_LIST_TRANSLUCENT, true>(pvrrc.global_param_tr);
+      DrawList<ListType_Translucent, true>(pvrrc.global_param_tr);
    }
 
    vertex_buffer_unmap();

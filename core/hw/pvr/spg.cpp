@@ -7,18 +7,7 @@
 #include "pvr.h"
 #include "ta.h"
 #include "hw/mem/_vmem.h"
-
-#include "ta.h"
-#include "tr.h"
-#include "hw/mem/_vmem.h"
-
-//TODO : move code later to a plugin
-//TODO : Fix registers arrays , they must be smaller now doe to the way SB registers are handled
-#include "hw/holly/holly.h"
-#include "hw/sh4/sh4_mmr.h"
-#include "hw/sh4/modules/dmac.h"
 #include "hw/sh4/sh4_sched.h"
-#include "hw/sh4/sh4_mem.h"
 
 u32 in_vblank=0;
 u32 clc_pvr_scanline;

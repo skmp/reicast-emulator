@@ -1,16 +1,12 @@
 #include "types.h"
 #include "pvr.h"
+#include "pvr_mem.h"
 #include "ta.h"
-#include "hw/mem/_vmem.h"
-
-#include "ta.h"
-#include "tr.h"
+#include "spg.h"
 #include "hw/mem/_vmem.h"
 
 // TODO/FIXME - forward decls
 void rend_start_render(void);
-void CalculateSync(void);
-void YUV_init(void);
 
 extern bool pal_needs_update;
 bool fog_needs_update=true;

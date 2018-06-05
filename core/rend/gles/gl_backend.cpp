@@ -1952,8 +1952,13 @@ static void ReadRTTBuffer()
 	if (fb_rtt.stencilb) { glDeleteRenderbuffers(1,&fb_rtt.stencilb); fb_rtt.stencilb = 0; }
 }
 
+void DoCleanup() {
+}
+
 static bool RenderFrame(void)
 {
+   DoCleanup();
+
 	bool is_rtt=pvrrc.isRTT;
 
 	//if (FrameCount&7) return;
@@ -2094,8 +2099,6 @@ static bool RenderFrame(void)
 	dc_width  *= scale_x;
 	dc_height *= scale_y;
 
-   glcache.UseProgram(modvol_shader.program);
-
 	/*
 
 	float vnear=0;
@@ -2199,7 +2202,7 @@ static bool RenderFrame(void)
 		{
 		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
 			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_5_5_5_1;
+			format=GL_UNSIGNED_BYTE;
 			break;
 
 		case 1: //0x1   565 RGB 16 bit
@@ -2209,12 +2212,12 @@ static bool RenderFrame(void)
 
 		case 2: //0x2   4444 ARGB 16 bit
 			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_4_4_4_4;
+			format=GL_UNSIGNED_BYTE;
 			break;
 
 		case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
 			channels=GL_RGBA;
-			format=GL_UNSIGNED_SHORT_5_5_5_1;
+			format=GL_UNSIGNED_BYTE;
 			break;
 
 		case 4: //0x4   888 RGB 24 bit packed
@@ -2235,16 +2238,23 @@ static bool RenderFrame(void)
       glViewport(0, 0, gles_screen_width, gles_screen_height);
    }
 
+   bool wide_screen_on = !is_rtt && settings.rend.WideScreen
+			&& pvrrc.fb_X_CLIP.min == 0
+			&& (pvrrc.fb_X_CLIP.max + 1) / scale_x == 640
+			&& pvrrc.fb_Y_CLIP.min == 0
+			&& (pvrrc.fb_Y_CLIP.max + 1) / scale_y == 480;
+
    // Color is cleared by the bgp
-   if (!is_rtt && settings.rend.WideScreen)
+   if (wide_screen_on)
       glcache.ClearColor(pvrrc.verts.head()->col[2]/255.0f,pvrrc.verts.head()->col[1]/255.0f,pvrrc.verts.head()->col[0]/255.0f,1.0f);
    else
       glcache.ClearColor(0,0,0,1.0f);
 
+   glcache.Disable(GL_SCISSOR_TEST);
+
    glcache.DepthMask(GL_TRUE);
    glcache.StencilMask(0xFF);
-   glcache.Disable(GL_SCISSOR_TEST);
-   glClear(GL_COLOR_BUFFER_BIT);
+   glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 	if (UsingAutoSort())
 		GenSorted();
@@ -2279,11 +2289,7 @@ static bool RenderFrame(void)
    printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 #endif
 
-   if (!is_rtt && settings.rend.WideScreen && pvrrc.fb_X_CLIP.min==0 && ((pvrrc.fb_X_CLIP.max+1)/scale_x==640) && (pvrrc.fb_Y_CLIP.min==0) && ((pvrrc.fb_Y_CLIP.max+1)/scale_y==480 ) )
-   {
-      glcache.Disable(GL_SCISSOR_TEST);
-   }
-   else
+   if (!wide_screen_on)
    {
       glScissor(
             offs_x + pvrrc.fb_X_CLIP.min / scale_x,

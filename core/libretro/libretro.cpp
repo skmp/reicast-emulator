@@ -153,15 +153,15 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_cable_type",
-         "Cable type; TV (VBS/Y+S/C)|TV (RGB)|VGA (RGB)",
+         "Cable type; TV (RGB)|TV (VBS/Y+S/C)|VGA (RGB)",
       },
       {
          "reicast_broadcast",
-         "Broadcast; 4|0|1|2|3",
+         "Broadcast; 2|3|0|1",
       },
       {
          "reicast_framerate",
-         "Framerate; normal|fullspeed",
+         "Framerate; fullspeed|normal",
       },
       {
          "reicast_region",

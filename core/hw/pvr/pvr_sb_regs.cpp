@@ -8,7 +8,6 @@
 #include "ta.h"
 #include "hw/mem/_vmem.h"
 
-#include "tr.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/modules/dmac.h"

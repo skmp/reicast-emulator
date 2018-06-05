@@ -6,7 +6,6 @@
 
 #include "../../types.h"
 #include "pvr.h"
-#include "tr.h"
 
 // TODO/FIXME - should be moved later
 bool pal_needs_update=true;

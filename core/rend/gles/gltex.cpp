@@ -20,7 +20,6 @@
 
 #include "../../hw/pvr/pvr.h"
 #include "../../hw/mem/_vmem.h"
-#include "../../hw/pvr/tr.h"
 
 /*
 Textures

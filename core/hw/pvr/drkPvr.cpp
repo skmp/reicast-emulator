@@ -15,10 +15,6 @@
 #include "ta.h"
 #include "hw/mem/_vmem.h"
 
-#include "ta.h"
-#include "tr.h"
-#include "hw/mem/_vmem.h"
-
 void libPvr_LockedBlockWrite (vram_block* block,u32 addr)
 {
 	rend_text_invl(block);

@@ -19,7 +19,6 @@
 
 #include "../../hw/pvr/pvr.h"
 #include "../../hw/mem/_vmem.h"
-#include "../../hw/pvr/tr.h"
 
 #ifndef GL_IMPLEMENTATION_COLOR_READ_TYPE
 #define GL_IMPLEMENTATION_COLOR_READ_TYPE 0x8B9A

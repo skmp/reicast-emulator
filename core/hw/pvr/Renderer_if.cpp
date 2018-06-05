@@ -1,7 +1,7 @@
 #include "types.h"
 #include "pvr.h"
 #include "spg.h"
-#include "tr.h"
+#include "../../rend/TexCache.h"
 
 /*
 

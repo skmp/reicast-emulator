@@ -268,13 +268,13 @@ void LoadSettings(void)
    settings.pvr.Emulation.zMin         = 0.f;
    settings.pvr.Emulation.zMax         = 1.0f;
 
-	settings.pvr.MaxThreads			      = 3;
-   settings.pvr.RenderToTextureBuffer  = 0;
-	settings.pvr.SynchronousRendering	= 0;
+	settings.pvr.MaxThreads			       = 3;
+   settings.rend.RenderToTextureBuffer  = 0;
+	settings.pvr.SynchronousRendering	 = 0;
 
-	settings.debug.SerialConsole        = 0;
+	settings.debug.SerialConsole         = 0;
 
-	settings.reios.ElfFile              = "";
+	settings.reios.ElfFile               = "";
 
 	settings.validate.OpenGlChecks      = 0;
 

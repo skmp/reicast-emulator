@@ -440,7 +440,7 @@ void ReadRTTBuffer(void)
    u32 size = w * h * 2;
    const u8 fb_packmode = FB_W_CTRL.fb_packmode;
 
-   if (settings.pvr.RenderToTextureBuffer)
+   if (settings.rend.RenderToTextureBuffer)
    {
       u32 tex_addr = fb_rtt.TexAddr << 3;
 

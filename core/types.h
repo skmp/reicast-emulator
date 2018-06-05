@@ -576,6 +576,7 @@ struct settings_t
 	{
 		bool UseMipmaps;
 		bool WideScreen;
+      bool RenderToTextureBuffer;
 	} rend;
 
 	struct
@@ -663,7 +664,6 @@ struct settings_t
 		
 		u32 MaxThreads;
 		u32 SynchronousRendering;
-      u32 RenderToTextureBuffer;
 	} pvr;
 
    unsigned UpdateMode;

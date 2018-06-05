@@ -220,7 +220,6 @@ static bool is_dupe = false;
 
 static void update_variables(void)
 {
-   static bool widescreen_set = false;
    struct retro_variable var = {
       .key = "reicast_internal_resolution",
    };
@@ -296,10 +295,12 @@ static void update_variables(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (!strcmp(var.value, "enabled"))
-         settings.rend.WideScreen = true;
+         settings.rend.WideScreen = 1;
       else
-         settings.rend.WideScreen = false;
+         settings.rend.WideScreen = 0;
    }
+   else
+      settings.rend.WideScreen = 0;
 
    var.key = "reicast_audio_buffer_size";
 

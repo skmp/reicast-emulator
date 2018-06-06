@@ -51,12 +51,13 @@ struct  tad_context
 	u8* thd_data;
 	u8* thd_root;
 	u8* thd_old_data;
-   vector<u8*> render_passes;
+   u8 *render_passes[10];
+   u32 render_pass_count;
 
    void Clear()
    {
       thd_old_data = thd_data = thd_root;
-      render_passes.clear();
+      render_pass_count = 0;
    }
 
    void ClearPartial()
@@ -67,7 +68,7 @@ struct  tad_context
 
    void Continue()
 	{
-		render_passes.push_back(thd_data);
+      render_passes[render_pass_count++] = thd_data;
 	}
 
    u8* End()
@@ -78,7 +79,7 @@ struct  tad_context
    void Reset(u8* ptr)
 	{
 		thd_data = thd_root = thd_old_data = ptr;
-      render_passes.clear();
+      render_pass_count = 0;
 	}
 };
 
@@ -166,12 +167,12 @@ struct TA_context
 
 	void MarkRend(u32 render_pass)
 	{
-      verify(render_pass <= tad.render_passes.size());
+      verify(render_pass <= tad.render_pass_count);
 
 		rend.proc_start = render_pass == 0 ? tad.thd_root :
          tad.render_passes[render_pass - 1];
-		rend.proc_end   = render_pass == tad.render_passes.size() ? 
-         tad.End() : tad.render_passes[render_pass];
+      rend.proc_end = render_pass == tad.render_pass_count ? tad.End() : 
+         tad.render_passes[render_pass];
 	}
 	void Alloc()
 	{

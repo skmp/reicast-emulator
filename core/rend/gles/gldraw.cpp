@@ -790,7 +790,6 @@ void DrawStrips(void)
    {
       const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
 
-
       //initial state
       glcache.Enable(GL_DEPTH_TEST);
 

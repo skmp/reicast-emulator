@@ -14,7 +14,9 @@
 #include "hw/naomi/naomi_cart.h"
 
 #include "reios/reios.h"
+#include <libretro.h>
 
+extern retro_log_printf_t         log_cb;
 settings_t settings;
 
 extern char game_dir[1024];
@@ -113,13 +115,13 @@ static void LoadSpecialSettingsCPU(void)
 	if(settings.dynarec.Enable)
 	{
 		Get_Sh4Recompiler(&sh4_cpu);
-		printf("Using Recompiler\n");
+		log_cb(RETRO_LOG_INFO, "Using Recompiler\n");
 	}
 	else
 #endif
 	{
 		Get_Sh4Interpreter(&sh4_cpu);
-		printf("Using Interpreter\n");
+		log_cb(RETRO_LOG_INFO, "Using Interpreter\n");
 	}
    sh4_cpu.Reset(false);
 }
@@ -130,37 +132,45 @@ static void LoadSpecialSettings(void)
 {
    unsigned i;
 
-   for (i = 0; i < sizeof(lut_games)/sizeof(lut_games[0]); ++i)
+   log_cb(RETRO_LOG_INFO, "[LUT]: Product number: %s.\n", reios_product_number);
+   for (i = 0; i < sizeof(lut_games)/sizeof(lut_games[0]); i++)
    {
       if (strstr(lut_games[i].product_number, reios_product_number))
       {
+         log_cb(RETRO_LOG_INFO, "[LUT]: Found game in LUT database..\n");
+
          if (lut_games[i].aica_interrupt_hack != -1)
             settings.aica.InterruptHack   = lut_games[i].aica_interrupt_hack;
 
          if (lut_games[i].dynarec_type != -1)
          {
-            printf("Applying dynarec type hack.\n");
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying dynarec type hack.\n");
             settings.dynarec.Type = lut_games[i].dynarec_type;
             LoadSpecialSettingsCPU();
          }
 
          if (lut_games[i].alpha_sort_mode != -1)
          {
-            printf("Applying alpha sort hack.\n");
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying alpha sort hack.\n");
             settings.pvr.Emulation.AlphaSortMode = lut_games[i].alpha_sort_mode;
          }
 
          if (lut_games[i].updatemode_type != -1)
          {
-            printf("Applying update mode type hack.\n");
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying update mode type hack.\n");
             settings.UpdateModeForced = 1;
          }
 
-         if (lut_games[i].zMax != 1)
+         if (lut_games[i].translucentPolygonDepthMask != -1)
          {
-            printf("Applying zmax hack.\n");
-            settings.pvr.Emulation.zMax = lut_games[i].zMax;
-            update_zmax = true;
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying translucent polygon depth mask hack.\n");
+            settings.rend.TranslucentPolygonDepthMask = lut_games[i].translucentPolygonDepthMask;
+         }
+
+         if (lut_games[i].rendertotexturebuffer != -1)
+         {
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying rendertotexture hack.\n");
+            settings.rend.RenderToTextureBuffer = lut_games[i].rendertotexturebuffer;
          }
 
          break;
@@ -178,7 +188,7 @@ int dc_init(int argc,wchar* argv[])
 
 	if (!_vmem_reserve())
 	{
-		printf("Failed to alloc mem\n");
+		log_cb(RETRO_LOG_INFO, "Failed to alloc mem\n");
 		return -1;
 	}
 
@@ -203,7 +213,7 @@ int dc_init(int argc,wchar* argv[])
 	{
       if (!LoadHle(new_system_dir))
 			return -3;
-      printf("Did not load bios, using reios\n");
+      log_cb(RETRO_LOG_WARN, "Did not load bios, using reios\n");
 	}
 
    LoadSpecialSettingsCPU();
@@ -224,7 +234,7 @@ int dc_init(int argc,wchar* argv[])
 
    const char* bootfile = reios_locate_ip();
    if (!bootfile || !reios_locate_bootfile("1ST_READ.BIN"))
-      printf("Failed to locate bootfile.\n");
+      log_cb(RETRO_LOG_ERROR, "Failed to locate bootfile.\n");
 
    LoadSpecialSettings();
 

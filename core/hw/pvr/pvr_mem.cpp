@@ -253,7 +253,7 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
 
    if (likely(address_w<0x800000))//TA poly
    {
-      ta_vtx_data((u32*)sq, 1);
+      ta_vtx_data32(sq);
    }
    else if(likely(address_w<0x1000000)) //Yuv Converter
    {

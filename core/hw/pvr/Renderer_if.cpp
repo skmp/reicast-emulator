@@ -115,6 +115,16 @@ bool rend_single_frame(void)
    while (!_pvrrc);
    bool do_swp = rend_frame(_pvrrc, true);
 
+#if !defined(TARGET_NO_THREADS)
+   if (_pvrrc->rend.isRTT)
+   {
+      slock_lock(re.mutx);
+      re.state = true;
+      scond_signal(re.cond);
+      slock_unlock(re.mutx);
+   }
+#endif
+
    //clear up & free data ..
    FinishRender(_pvrrc);
    _pvrrc=0;
@@ -169,6 +179,7 @@ void rend_resize(int width, int height)
 void rend_start_render(void)
 {
    pend_rend = false;
+   bool is_rtt=(FB_W_SOF1& 0x1000000)!=0;
    TA_context* ctx = tactx_Pop(CORE_CURRENT_CTX);
 
    SetREP(ctx);
@@ -180,7 +191,7 @@ void rend_start_render(void)
          //printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
          FillBGP(ctx);
 
-         ctx->rend.isRTT      = (FB_W_SOF1& 0x1000000)!=0;
+         ctx->rend.isRTT      = is_rtt;
          ctx->rend.isAutoSort = UsingAutoSort();
 
          ctx->rend.fb_X_CLIP  = FB_X_CLIP;

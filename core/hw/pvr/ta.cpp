@@ -10,7 +10,8 @@ u32 ta_type_lut[256];
 	Render/TA thread -> ta data -> draw lists -> draw
 */
 
-#include "hw/sh4/sh4_sched.h"
+#define SQWC(x)
+#define DMAWC(x)
 
 #if HOST_CPU == CPU_X86
 #include <xmmintrin.h>
@@ -71,8 +72,8 @@ enum ta_state
 
 #define ta_cur_state  (ta_fsm[2048])
 
-static u8 ta_fsm[2049];	//[2048] stores the current state
-static u32 ta_fsm_cl=7;
+u8 ta_fsm[2049];	//[2048] stores the current state
+u32 ta_fsm_cl=7;
 
 static void fill_fsm(ta_state st, s8 pt, s8 obj, ta_state next, u32 proc=0, u32 sz64=0)
 {
@@ -107,20 +108,24 @@ static void fill_fsm(void)
 		switch(i)
       {
          case ParamType_End_Of_List:
-            //End of list -> process it !
-            fill_fsm(TAS_NS,   ParamType_End_Of_List,-1,TAS_NS,1);
-            fill_fsm(TAS_PLV32,ParamType_End_Of_List,-1,TAS_NS,1);
-            fill_fsm(TAS_PLV64,ParamType_End_Of_List,-1,TAS_NS,1);
-            fill_fsm(TAS_MLV64,ParamType_End_Of_List,-1,TAS_NS,1);
+            {
+               //End of list -> process it !
+               fill_fsm(TAS_NS,   ParamType_End_Of_List,-1,TAS_NS,1);
+               fill_fsm(TAS_PLV32,ParamType_End_Of_List,-1,TAS_NS,1);
+               fill_fsm(TAS_PLV64,ParamType_End_Of_List,-1,TAS_NS,1);
+               fill_fsm(TAS_MLV64,ParamType_End_Of_List,-1,TAS_NS,1);
+            }
             break;
 
          case ParamType_User_Tile_Clip:
          case ParamType_Object_List_Set:
-            //32B commands, no state change
-            fill_fsm(TAS_NS,i,-1,TAS_NS);
-            fill_fsm(TAS_PLV32,i,-1,TAS_PLV32);
-            fill_fsm(TAS_PLV64,i,-1,TAS_PLV64);
-            fill_fsm(TAS_MLV64,i,-1,TAS_MLV64);
+            {
+               //32B commands, no state change
+               fill_fsm(TAS_NS,i,-1,TAS_NS);
+               fill_fsm(TAS_PLV32,i,-1,TAS_PLV32);
+               fill_fsm(TAS_PLV64,i,-1,TAS_PLV64);
+               fill_fsm(TAS_MLV64,i,-1,TAS_MLV64);
+            }
             break;
 
          case 3:
@@ -129,53 +134,59 @@ static void fill_fsm(void)
             break;
 
          case ParamType_Polygon_or_Modifier_Volume:
-            //right .. its complicated alirte
-
-            for (int k=0;k<32;k++)
             {
-               u32 uid=ta_type_lut[k*4];
-               u32 vt=uid & 0x7f;
+               //right .. its complicated alirte
 
-               bool v64 = vt == 5 || vt == 6 || vt == 11 || vt == 12 || vt == 13 || vt == 14;
-               bool p64 = uid >> 31;
+               for (int k=0;k<32;k++)
+               {
+                  u32 uid=ta_type_lut[k*4];
+                  u32 vt=uid & 0x7f;
 
-               ta_state nxt = p64 ? (v64 ? TAS_PLHV64 : TAS_PLHV32) :
-                  (v64 ? TAS_PLV64  : TAS_PLV32 ) ;
+                  bool v64 = vt == 5 || vt == 6 || vt == 11 || vt == 12 || vt == 13 || vt == 14;
+                  bool p64 = uid >> 31;
 
-               fill_fsm(TAS_PLV32,i,k,nxt,0,p64);
-               fill_fsm(TAS_PLV64,i,k,nxt,0,p64);
+                  ta_state nxt = p64 ? (v64 ? TAS_PLHV64 : TAS_PLHV32) :
+                     (v64 ? TAS_PLV64  : TAS_PLV32 ) ;
+
+                  fill_fsm(TAS_PLV32,i,k,nxt,0,p64);
+                  fill_fsm(TAS_PLV64,i,k,nxt,0,p64);
+               }
+
+
+               //32B command, no state change
+               fill_fsm(TAS_MLV64,i,-1,TAS_MLV64);
+
+               //process and start list
+               fill_fsm(TAS_NS,i,-1,TAS_NS,1);
             }
-
-
-            //32B command, no state change
-            fill_fsm(TAS_MLV64,i,-1,TAS_MLV64);
-
-            //process and start list
-            fill_fsm(TAS_NS,i,-1,TAS_NS,1);
             break;
 
          case ParamType_Sprite:
-            //SPR: 32B -> expect 64B data (PL*)
-            fill_fsm(TAS_PLV32,i,-1,TAS_PLV64);
-            fill_fsm(TAS_PLV64,i,-1,TAS_PLV64);
+            {
+               //SPR: 32B -> expect 64B data (PL*)
+               fill_fsm(TAS_PLV32,i,-1,TAS_PLV64);
+               fill_fsm(TAS_PLV64,i,-1,TAS_PLV64);
 
-            //invalid for ML
+               //invalid for ML
 
-            //process and start list
-            fill_fsm(TAS_NS,i,-1,TAS_NS,1);
+               //process and start list
+               fill_fsm(TAS_NS,i,-1,TAS_NS,1);
+            }
             break;
 
          case ParamType_Vertex_Parameter:
-            //VTX: 32 B -> Expect more of it
-            fill_fsm(TAS_PLV32,i,-1,TAS_PLV32,0,0);
+            {
+               //VTX: 32 B -> Expect more of it
+               fill_fsm(TAS_PLV32,i,-1,TAS_PLV32,0,0);
 
-            //VTX: 64 B -> Expect next 32B
-            fill_fsm(TAS_PLV64,i,-1,TAS_PLV64_H,0,1);
+               //VTX: 64 B -> Expect next 32B
+               fill_fsm(TAS_PLV64,i,-1,TAS_PLV64_H,0,1);
 
-            //MVO: 64B -> expect next 32B
-            fill_fsm(TAS_MLV64,i,-1,TAS_MLV64_H,0,1);
+               //MVO: 64B -> expect next 32B
+               fill_fsm(TAS_MLV64,i,-1,TAS_MLV64_H,0,1);
 
-            //invalid for NS
+               //invalid for NS
+            }
             break;
       }
 	}
@@ -207,34 +218,38 @@ NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 
    if (cmd != 8)
    {
-      switch (dat->pcw.ParaType)
+      if (dat->pcw.ParaType == ParamType_End_Of_List)
       {
-         case ParamType_End_Of_List:
-            if (ta_fsm_cl==7)
-               ta_fsm_cl=dat->pcw.ListType;
-            //printf("List %d ended\n",ta_fsm_cl);
+         if (ta_fsm_cl==7)
+            ta_fsm_cl=dat->pcw.ListType;
+         //printf("List %d ended\n",ta_fsm_cl);
+         asic_RaiseInterrupt( ListEndInterrupt[ta_fsm_cl]);
+         ta_fsm_cl=7;
+         trans=TAS_NS;
+      }
+      else if (dat->pcw.ParaType == ParamType_Polygon_or_Modifier_Volume)
+      {
+         if (ta_fsm_cl==7)
+            ta_fsm_cl=dat->pcw.ListType;
 
-            asic_RaiseInterrupt( ListEndInterrupt[ta_fsm_cl]);
-            ta_fsm_cl=7;
-            trans=TAS_NS;
-            break;
-         case ParamType_Polygon_or_Modifier_Volume:
-         case ParamType_Sprite:
-            if (ta_fsm_cl==7)
-               ta_fsm_cl=dat->pcw.ListType;
+         if (!IsModVolList(ta_fsm_cl))
+				trans=TAS_PLV32;
+			else
+				trans=TAS_MLV64;
+      }
+      else if (dat->pcw.ParaType == ParamType_Sprite)
+      {
+         if (ta_fsm_cl==7)
+				ta_fsm_cl=dat->pcw.ListType;
 
-            trans=TAS_PLV32;
-            if (dat->pcw.ParaType == ParamType_Polygon_or_Modifier_Volume &&
-                  IsModVolList(ta_fsm_cl))
-               trans=TAS_MLV64;
-            break;
-         default:
-            break;
+			verify(!IsModVolList(ta_fsm_cl));
+			trans=TAS_PLV32;
       }
    }
 
    u32 state_in = (trans<<8) | (dat->pcw.ParaType<<5) | (dat->pcw.obj_ctrl>>2)%32;
    ta_cur_state = (ta_state)(ta_fsm[state_in]&0xF);
+   verify(ta_cur_state<=7);
 }
 
 static OnLoad ol_fillfsm(&fill_fsm);
@@ -242,6 +257,9 @@ static OnLoad ol_fillfsm(&fill_fsm);
 void ta_vtx_ListCont(void)
 {
 	SetCurrentTARC(TA_ISP_BASE);
+#if 0
+   ta_tad.Continue();
+#endif
 
 	ta_cur_state=TAS_NS;
 }
@@ -282,13 +300,41 @@ INLINE void DYNACALL ta_thd_data32_i(void *data)
       ta_handle_cmd(trans);
 }
 
+void DYNACALL ta_vtx_data32(void* data)
+{
+	SQWC(1);
+	ta_thd_data32_i(data);
+}
+
 void ta_vtx_data(u32* data, u32 size)
 {
-	while(size>0)
-   {
-      ta_thd_data32_i(data);
+   DMAWC(size);
+	while(size>4)
+	{
+		ta_thd_data32_i(data);
 
-      data+=8;
-      size--;
-   }
+		data+=8;
+		size--;
+
+		ta_thd_data32_i(data);
+
+		data+=8;
+		size--;
+
+		ta_thd_data32_i(data);
+		data+=8;
+		size--;
+
+		ta_thd_data32_i(data);
+		data+=8;
+		size--;
+	}
+
+	while(size>0)
+	{
+		ta_thd_data32_i(data);
+
+		data+=8;
+		size--;
+	}
 }

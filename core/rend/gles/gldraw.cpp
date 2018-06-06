@@ -492,23 +492,32 @@ void GenSorted(void)
 
 void DrawSorted(u32 count)
 {
-   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
-
-   //set some 'global' modes for all primitives
-
-   glcache.Enable(GL_STENCIL_TEST);
-   glcache.StencilFunc(GL_ALWAYS, 0, 0);
-   glcache.StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
-   for (u32 p=0; p<count; p++)
+   //if any drawing commands, draw them
+	if (pidx_sort.size())
    {
-      PolyParam* params = pidx_sort[p].ppid;
-      if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
+
+      u32 count=pidx_sort.size();
+
       {
-         SetGPState<ListType_Translucent, true>(params, 0);
-         glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first));
+         //set some 'global' modes for all primitives
+
+         glcache.Enable(GL_STENCIL_TEST);
+         glcache.StencilFunc(GL_ALWAYS, 0, 0);
+         glcache.StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+         for (u32 p=0; p<count; p++)
+         {
+            PolyParam* params = pidx_sort[p].ppid;
+            if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
+            {
+               SetGPState<ListType_Translucent, true>(params, 0);
+               glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first));
+            }
+            params++;
+         }
+
       }
-      params++;
    }
 }
 

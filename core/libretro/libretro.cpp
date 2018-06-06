@@ -398,8 +398,6 @@ static void update_variables(void)
       else
          settings.rend.RenderToTextureBuffer = false;
    }
-   else
-      settings.rend.RenderToTextureBuffer = false;
 
    var.key = "reicast_enable_purupuru";
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)

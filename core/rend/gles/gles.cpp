@@ -860,7 +860,9 @@ static bool RenderFrame(void)
       glcache.ClearColor(0,0,0,1.0f);
 
    glcache.Disable(GL_SCISSOR_TEST);
-   glClear(GL_COLOR_BUFFER_BIT);
+   glClearDepth(0.f);
+   glStencilMask(0xFF);
+   glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//move vertex to gpu
 

@@ -270,8 +270,9 @@ void LoadSettings(void)
    settings.pvr.Emulation.zMax         = 1.0f;
 
 	settings.pvr.MaxThreads			       = 3;
-   settings.rend.RenderToTexture        = 1;
-   settings.rend.RenderToTextureBuffer  = 0;
+   settings.rend.TranslucentPolygonDepthMask = false;
+   settings.rend.RenderToTexture        = true;
+   settings.rend.RenderToTextureBuffer  = false;
 	settings.pvr.SynchronousRendering	 = 0;
 
 	settings.debug.SerialConsole         = 0;

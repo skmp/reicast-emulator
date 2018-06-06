@@ -1,0 +1,506 @@
+diff --git a/core/hw/pvr/ta.cpp b/core/hw/pvr/ta.cpp
+index df6f3567..7bfc63ba 100644
+--- a/core/hw/pvr/ta.cpp
++++ b/core/hw/pvr/ta.cpp
+@@ -242,6 +242,7 @@ static OnLoad ol_fillfsm(&fill_fsm);
+ void ta_vtx_ListCont(void)
+ {
+ 	SetCurrentTARC(TA_ISP_BASE);
++   ta_tad.Continue();
+ 
+ 	ta_cur_state=TAS_NS;
+ }
+diff --git a/core/hw/pvr/ta_ctx.h b/core/hw/pvr/ta_ctx.h
+index 018457ec..ea4f650b 100644
+--- a/core/hw/pvr/ta_ctx.h
++++ b/core/hw/pvr/ta_ctx.h
+@@ -45,10 +45,13 @@ struct  tad_context
+ 	u8* thd_data;
+ 	u8* thd_root;
+ 	u8* thd_old_data;
++   u8 *render_passes[10];
++   u32 render_pass_count;
+ 
+    void Clear()
+    {
+       thd_old_data = thd_data = thd_root;
++      render_pass_count = 0;
+    }
+ 
+    void ClearPartial()
+@@ -57,6 +60,13 @@ struct  tad_context
+ 		thd_data = thd_root;
+ 	}
+ 
++   void Continue()
++	{
++      render_passes[render_pass_count] = End();
++		if (render_pass_count < sizeof(render_passes) / sizeof(u8*) - 1)
++			render_pass_count++;
++	}
++
+    u8* End()
+    {
+       return thd_data == thd_root ? thd_old_data : thd_data;
+@@ -65,9 +75,17 @@ struct  tad_context
+    void Reset(u8* ptr)
+ 	{
+ 		thd_data = thd_root = thd_old_data = ptr;
++      render_pass_count = 0;
+ 	}
+ };
+ 
++struct RenderPass {
++	u32 op_count;
++	u32 mvo_count;
++	u32 pt_count;
++	u32 tr_count;
++};
++
+ struct rend_context
+ {
+ 	u8* proc_start;
+@@ -93,6 +111,7 @@ struct rend_context
+ 	List<PolyParam>   global_param_op;
+ 	List<PolyParam>   global_param_pt;
+ 	List<PolyParam>   global_param_tr;
++   List<RenderPass>  render_passes;
+ 
+ 	void Clear()
+ 	{
+@@ -103,6 +122,7 @@ struct rend_context
+ 		global_param_tr.Clear();
+ 		modtrig.Clear();
+ 		global_param_mvo.Clear();
++      render_passes.Clear();
+ 
+ 		Overrun=false;
+ 		fZ_min= 1000000.0f;
+@@ -141,11 +161,14 @@ struct TA_context
+ 			sa2:    idx: 36094, vtx: 24520, op: 1330, pt: 10, tr: 177, mvo: 39, modt: 360, ov: 0
+ 	*/
+ 
+-	void MarkRend()
++	void MarkRend(u32 render_pass)
+ 	{
+-		rend.proc_start = tad.thd_root;
+-		rend.proc_end   = tad.End();
++		rend.proc_start = render_pass == 0 ? tad.thd_root : 
++         tad.render_passes[render_pass - 1];
++		rend.proc_end   = render_pass == tad.render_pass_count ?
++         tad.End() : tad.render_passes[render_pass];
+ 	}
++
+ 	void Alloc()
+ 	{
+ #if !defined(TARGET_NO_THREADS)
+@@ -162,6 +185,8 @@ struct TA_context
+ 		rend.global_param_tr.Init(4096,&rend.Overrun);
+ 
+ 		rend.modtrig.Init(8192,&rend.Overrun);
++
++      rend.render_passes.Init(sizeof(RenderPass) * 10, &rend.Overrun);	// 10 render passes
+ 		
+ 		Reset();
+ 	}
+@@ -196,6 +221,7 @@ struct TA_context
+ 		rend.global_param_tr.Free();
+ 		rend.modtrig.Free();
+ 		rend.global_param_mvo.Free();
++      rend.render_passes.Free();
+ 	}
+ };
+ 
+diff --git a/core/hw/pvr/ta_vtx.cpp b/core/hw/pvr/ta_vtx.cpp
+index 59f74ed4..08e1d36f 100644
+--- a/core/hw/pvr/ta_vtx.cpp
++++ b/core/hw/pvr/ta_vtx.cpp
+@@ -1395,17 +1395,30 @@ bool ta_parse_vdrc(TA_context* ctx)
+ 
+ 	ta_parse_cnt++;
+ 
+-	if ((ta_parse_cnt %  ( settings.pvr.ta_skip + 1)) == 0)
++	if (ctx->rend.isRTT || (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)) == 0)
+ 	{
+ 		TAFifo0.vdec_init();
+-		
+-		Ta_Dma* ta_data=(Ta_Dma*)vd_rc.proc_start;
+-		Ta_Dma* ta_data_end=((Ta_Dma*)vd_rc.proc_end)-1;
+ 
+-		do
+-		{
+-			ta_data =TaCmd(ta_data,ta_data_end);
+-		}while(ta_data<=ta_data_end);
++      for (int pass = 0; pass <= ctx->tad.render_pass_count; pass++)
++      {
++         ctx->MarkRend(pass);
++         vd_rc.proc_start = ctx->rend.proc_start;
++			vd_rc.proc_end = ctx->rend.proc_end;
++
++         Ta_Dma* ta_data=(Ta_Dma*)vd_rc.proc_start;
++         Ta_Dma* ta_data_end=((Ta_Dma*)vd_rc.proc_end)-1;
++
++         do
++         {
++            ta_data =TaCmd(ta_data,ta_data_end);
++         }while(ta_data<=ta_data_end);
++
++         RenderPass *render_pass = vd_rc.render_passes.Append();
++         render_pass->op_count = vd_rc.global_param_op.used();
++         render_pass->mvo_count = vd_rc.global_param_mvo.used();
++         render_pass->pt_count = vd_rc.global_param_pt.used();
++         render_pass->tr_count = vd_rc.global_param_tr.used();
++      }
+ 
+       rv = true; //whatever
+ 	}
+diff --git a/core/rend/gles/gldraw.cpp b/core/rend/gles/gldraw.cpp
+index 531b9031..8d14cfd3 100644
+--- a/core/rend/gles/gldraw.cpp
++++ b/core/rend/gles/gldraw.cpp
+@@ -187,9 +187,16 @@ __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
+ 
+    /* Set Z mode, only if required */
+    if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
+-      glcache.DepthFunc(GL_GEQUAL);
++   {
++      if (gp->isp.DepthMode == 7) // Fixes V-Rally 2 menu but not sure about this one
++         glcache.DepthFunc(GL_ALWAYS);
++      else
++         glcache.DepthFunc(GL_GEQUAL);
++   }
+    else
++   {
+       glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
++   }
+ 
+    if (SortingEnabled && settings.pvr.Emulation.AlphaSortMode == 0)
+       glcache.DepthMask(GL_FALSE);
+@@ -198,10 +205,9 @@ __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
+ }
+ 
+ template <u32 Type, bool SortingEnabled>
+-void DrawList(const List<PolyParam>& gply)
++void DrawList(const List<PolyParam>& gply, int first, int count)
+ {
+-   PolyParam* params=gply.head();
+-   int count=gply.used();
++   PolyParam* params=&gply.head()[first];
+ 
+    /* We want at least 1 PParam */
+    if (count==0)
+@@ -243,20 +249,21 @@ bool operator<(const PolyParam &left, const PolyParam &right)
+ }
+ 
+ //Sort based on min-z of each strip
+-static void SortPParams(void)
++void SortPParams(int first, int count)
+ {
+    u16 *idx_base      = NULL;
+    Vertex *vtx_base   = NULL;
+    PolyParam *pp      = NULL;
+    PolyParam *pp_end  = NULL;
+ 
+-   if (pvrrc.verts.used()==0 || pvrrc.global_param_tr.used()<=1)
++   if (pvrrc.verts.used()==0 || count <=1)
+       return;
+ 
+    vtx_base          = pvrrc.verts.head();
+    idx_base          = pvrrc.idx.head();
+-   pp                = pvrrc.global_param_tr.head();
+-   pp_end            = pp + pvrrc.global_param_tr.used();
++
++   pp                = &pvrrc.global_param_tr.head()[first];
++   pp_end            = pp + count;
+ 
+    while(pp!=pp_end)
+    {
+@@ -280,8 +287,6 @@ static void SortPParams(void)
+       pp++;
+    }
+ 
+-   unsigned first = 0;
+-   unsigned count = pvrrc.global_param_tr.used();
+    std::stable_sort(pvrrc.global_param_tr.head() + first,
+          pvrrc.global_param_tr.head() + first + count);
+ }
+@@ -335,7 +340,7 @@ bool PP_EQ(PolyParam* pp0, PolyParam* pp1)
+ 
+ static vector<SortTrigDrawParam>	pidx_sort;
+ 
+-void GenSorted(void)
++void GenSorted(int first, int count)
+ {
+    static vector<IndexTrig> lst;
+    static vector<u16> vidx_sort;
+@@ -346,15 +351,15 @@ void GenSorted(void)
+ 
+    pidx_sort.clear();
+ 
+-   if (pvrrc.verts.used()==0 || pvrrc.global_param_tr.used()<=1)
++   if (pvrrc.verts.used()==0 || count <=1)
+       return;
+ 
+    Vertex* vtx_base=pvrrc.verts.head();
+    u16* idx_base=pvrrc.idx.head();
+ 
+-   PolyParam* pp_base=pvrrc.global_param_tr.head();
++   PolyParam* pp_base=&pvrrc.global_param_tr.head()[first];
+    PolyParam* pp=pp_base;
+-   PolyParam* pp_end= pp + pvrrc.global_param_tr.used();
++   PolyParam* pp_end= pp + count;
+ 
+    Vertex* vtx_arr=vtx_base+idx_base[pp->first];
+    vtx_sort_base=vtx_base;
+@@ -490,25 +495,50 @@ void GenSorted(void)
+    }
+ }
+ 
+-void DrawSorted(u32 count)
++void DrawSorted(bool multipass)
+ {
+-   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
++   //if any drawing commands, draw them
++	if (pidx_sort.size())
++   {
++      u32 count=pidx_sort.size();
+ 
+-   //set some 'global' modes for all primitives
++      {
++         //set some 'global' modes for all primitives
+ 
+-   glcache.Enable(GL_STENCIL_TEST);
+-   glcache.StencilFunc(GL_ALWAYS, 0, 0);
+-   glcache.StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
++         glcache.Enable(GL_STENCIL_TEST);
++         glcache.StencilFunc(GL_ALWAYS, 0, 0);
++         glcache.StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+ 
+-   for (u32 p=0; p<count; p++)
+-   {
+-      PolyParam* params = pidx_sort[p].ppid;
+-      if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
+-      {
+-         SetGPState<ListType_Translucent, true>(params, 0);
+-         glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first));
++         for (u32 p=0; p<count; p++)
++         {
++            PolyParam* params = pidx_sort[p].ppid;
++            if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
++            {
++               SetGPState<ListType_Translucent, true>(params, 0);
++               glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first));
++            }
++            params++;
++         }
++         if (multipass)
++         {
++            // Write to the depth buffer now. The next render pass might need it. (Cosmic Smash)
++            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
++            glcache.StencilMask(0);
++            for (u32 p = 0; p < count; p++)
++            {
++               PolyParam* params = pidx_sort[p].ppid;
++               if (pidx_sort[p].count > 2 && !params->isp.ZWriteDis) {
++                  SetGPState<ListType_Translucent,true>(params, 0);
++                  glcache.DepthMask(GL_TRUE);
++                  glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first));
++               }
++            }
++            glcache.StencilMask(0xFF);
++            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
++         }
+       }
+-      params++;
++      // Re-bind the previous index buffer for subsequent render passes
++      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
+    }
+ }
+ 
+@@ -627,14 +657,14 @@ void SetupMainVBO(void)
+ 	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
+ }
+ 
+-void DrawModVols(void)
++void DrawModVols(int first, int count)
+ {
+    /* A bit of explanation:
+      * In theory it works like this: generate a 1-bit stencil for each polygon
+      * volume, and then AND or OR it against the overall 1-bit tile stencil at 
+      * the end of the volume. */
+ 
+-	if (pvrrc.modtrig.used()==0 || settings.pvr.Emulation.ModVolMode == 0)
++	if (count ==0 || settings.pvr.Emulation.ModVolMode == 0)
+ 		return;
+ 
+ 	glBindBuffer(GL_ARRAY_BUFFER, vbo.modvols);
+@@ -660,7 +690,7 @@ void DrawModVols(void)
+ 	{
+ 		//simply draw the volumes -- for debugging
+ 		SetCull(0);
+-		glDrawArrays(GL_TRIANGLES,0,pvrrc.modtrig.used()*3);
++		glDrawArrays(GL_TRIANGLES,first, count * 3);
+ 		SetupMainVBO();
+ 	}
+ 	else
+@@ -691,7 +721,7 @@ void DrawModVols(void)
+          glcache.StencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
+          glcache.StencilMask(0x1);
+ 			SetCull(0);
+-			glDrawArrays(GL_TRIANGLES,0,pvrrc.modtrig.used()*3);
++			glDrawArrays(GL_TRIANGLES, first, count * 3);
+ 		}
+ 		else if (settings.pvr.Emulation.ModVolMode == 3)
+ 		{
+@@ -702,8 +732,8 @@ void DrawModVols(void)
+ 			u32 mod_base=0; //cur start triangle
+ 			u32 mod_last=0; //last merge
+ 
+-			u32 cmv_count= (pvrrc.global_param_mvo.used()-1);
+-			ISP_Modvol* params=pvrrc.global_param_mvo.head();
++			u32 cmv_count= count -1;
++			ISP_Modvol* params= &pvrrc.global_param_mvo.head()[first];
+ 
+ 			//ISP_Modvol
+ 			for (u32 cmv=0;cmv<cmv_count;cmv++)
+@@ -783,36 +813,57 @@ void DrawStrips(void)
+ 	SetupMainVBO();
+ 	//Draw the strips !
+ 
+-	//initial state
+-	glcache.Enable(GL_DEPTH_TEST);
+-
+ 	//We use sampler 0
+    glActiveTexture(GL_TEXTURE0);
+ 
+-	//Opaque
+-	DrawList<ListType_Opaque, false>(pvrrc.global_param_op);
++   RenderPass previous_pass = {0};
++   for (int render_pass = 0; render_pass < pvrrc.render_passes.used();
++         render_pass++)
++   {
++      const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+ 
+-	//Alpha tested
+-	DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt);
++      //initial state
++      glcache.Enable(GL_DEPTH_TEST);
++      glcache.DepthMask(GL_TRUE);
+ 
+-   // Modifier volumes
+-	DrawModVols();
++      //Opaque
++      DrawList<ListType_Opaque, false>(pvrrc.global_param_op,
++            previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
++
++      //Alpha tested
++      DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt,
++            previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
++
++      // Modifier volumes
++      DrawModVols(previous_pass.mvo_count, current_pass.mvo_count -
++            previous_pass.mvo_count);
+ 
+-	//Alpha blended
+-   if (settings.pvr.Emulation.AlphaSortMode == 0)
+-   {
+-      u32 count = pidx_sort.size();
+-      //if any drawing commands, draw them
+-      if (pvrrc.isAutoSort && count)
+-         DrawSorted(count);
+-      else
+-         DrawList<ListType_Translucent, false>(pvrrc.global_param_tr);
+-   }
+-   else if (settings.pvr.Emulation.AlphaSortMode == 1)
+-   {
+       if (pvrrc.isAutoSort)
+-         SortPParams();
+-      DrawList<ListType_Translucent, true>(pvrrc.global_param_tr);
++         GenSorted(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
++
++      //Alpha blended
++      if (settings.pvr.Emulation.AlphaSortMode == 0)
++      {
++         u32 count = pidx_sort.size();
++         //if any drawing commands, draw them
++         if (pvrrc.isAutoSort && count)
++            DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
++         else
++            DrawList<ListType_Translucent, false>(pvrrc.global_param_tr,
++                  previous_pass.tr_count, current_pass.tr_count -
++                  previous_pass.tr_count);
++      }
++      else if (settings.pvr.Emulation.AlphaSortMode == 1)
++      {
++         if (pvrrc.isAutoSort)
++            SortPParams(previous_pass.tr_count,
++                  current_pass.tr_count - previous_pass.tr_count);
++         DrawList<ListType_Translucent, true>(pvrrc.global_param_tr,
++               previous_pass.tr_count, current_pass.tr_count -
++               previous_pass.tr_count);
++      }
++
++      previous_pass = current_pass;
+    }
+ 
+    vertex_buffer_unmap();
+diff --git a/core/rend/gles/gles.cpp b/core/rend/gles/gles.cpp
+index b1d187c4..28d947d0 100644
+--- a/core/rend/gles/gles.cpp
++++ b/core/rend/gles/gles.cpp
+@@ -14,9 +14,6 @@
+ #include "../../hw/pvr/pvr.h"
+ #include "../../hw/mem/_vmem.h"
+ 
+-// TODO/FIXME - forward declarations
+-void GenSorted(void);
+-
+ extern retro_environment_t environ_cb;
+ extern bool fog_needs_update;
+ extern bool enable_rtt;
+@@ -865,12 +862,10 @@ static bool RenderFrame(void)
+ 
+    glcache.Disable(GL_SCISSOR_TEST);
+ 
+-   glcache.DepthMask(GL_TRUE);
+-   glcache.StencilMask(0xFF);
+-   glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+-
+-	if (UsingAutoSort())
+-		GenSorted();
++   glClearDepth(0.f);
++   glStencilMask(0xFF);
++   glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | 
++        GL_DEPTH_BUFFER_BIT);
+ 
+ 	//move vertex to gpu
+ 
+@@ -939,7 +934,6 @@ bool ProcessFrame(TA_context* ctx)
+ #ifndef TARGET_NO_THREADS
+    slock_lock(ctx->rend_inuse);
+ #endif
+-   ctx->MarkRend();
+ 
+    if (KillTex)
+    {
+diff --git a/core/rend/soft/softrend.cpp b/core/rend/soft/softrend.cpp
+index 7aeb5e4c..45c7035b 100644
+--- a/core/rend/soft/softrend.cpp
++++ b/core/rend/soft/softrend.cpp
+@@ -841,7 +841,6 @@ struct softrend : Renderer
+ 			return false;
+ 
+ 		ctx->rend_inuse.Lock();
+-		ctx->MarkRend();
+ 
+ 		if (!ta_parse_vdrc(ctx))
+ 			return false;
+@@ -883,7 +882,7 @@ struct softrend : Renderer
+ 			return false;
+ 
+ 		if (pvrrc.isAutoSort)
+-			SortPParams();
++			SortPParams(0, pvrrc.global_param_tr.used());
+ 
+ 		int tcount = omp_get_num_procs() - 1;
+ 		if (tcount == 0) tcount = 1;

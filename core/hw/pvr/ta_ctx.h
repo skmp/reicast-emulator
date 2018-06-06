@@ -68,7 +68,9 @@ struct  tad_context
 
    void Continue()
 	{
-      render_passes[render_pass_count++] = thd_data;
+      render_passes[render_pass_count] = End();
+		if (render_pass_count < sizeof(render_passes) / sizeof(u8*) - 1)
+			render_pass_count++;
 	}
 
    u8* End()

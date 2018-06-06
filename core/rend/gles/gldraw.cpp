@@ -198,10 +198,9 @@ __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 }
 
 template <u32 Type, bool SortingEnabled>
-void DrawList(const List<PolyParam>& gply)
+void DrawList(const List<PolyParam>& gply, int first, int count)
 {
    PolyParam* params=gply.head();
-   int count=gply.used();
 
    /* We want at least 1 PParam */
    if (count==0)
@@ -801,10 +800,10 @@ void DrawStrips(void)
    glActiveTexture(GL_TEXTURE0);
 
 	//Opaque
-	DrawList<ListType_Opaque, false>(pvrrc.global_param_op);
+	DrawList<ListType_Opaque, false>(pvrrc.global_param_op, 0, pvrrc.global_param_op.used());
 
 	//Alpha tested
-	DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt);
+	DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt, 0, pvrrc.global_param_pt.used());
 
    // Modifier volumes
 	DrawModVols(0, pvrrc.modtrig.used());
@@ -817,13 +816,13 @@ void DrawStrips(void)
       if (pvrrc.isAutoSort && count)
          DrawSorted(count);
       else
-         DrawList<ListType_Translucent, false>(pvrrc.global_param_tr);
+         DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, 0, pvrrc.global_param_tr.used());
    }
    else if (settings.pvr.Emulation.AlphaSortMode == 1)
    {
       if (pvrrc.isAutoSort)
          SortPParams(0, pvrrc.global_param_tr.used());
-      DrawList<ListType_Translucent, true>(pvrrc.global_param_tr);
+      DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, 0, pvrrc.global_param_tr.used() );
    }
 
    vertex_buffer_unmap();

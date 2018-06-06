@@ -79,13 +79,14 @@ static void recSh4_ClearCache(void)
 
 #if (FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64)
 extern int cycle_counter;
+unsigned int ngen_required = true;
 extern bool inside_loop;
 
 static void ngen_mainloop(void* v_cntx)
 {
 	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
 
-   while (inside_loop)
+   do
    {
       cycle_counter = SH4_TIMESLICE;
 
@@ -96,7 +97,12 @@ static void ngen_mainloop(void* v_cntx)
 
       if (UpdateSystem())
          rdv_DoInterrupts_pc(ctx->cntx.pc);
-   }
+   }while (inside_loop && ngen_required);
+}
+
+void ngen_terminate(void)
+{
+   ngen_required = false;
 }
 #endif
 

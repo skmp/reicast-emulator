@@ -206,12 +206,13 @@ void retro_init(void)
    environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &color_mode);
 }
 
+// TODO/FIXME - forward declarations
 void dc_term(void);
-
+void rend_terminate();
+void ngen_terminate();
 
 void retro_deinit(void)
 {
-   dc_term();
    first_run = true;
 }
 
@@ -593,6 +594,10 @@ void retro_unload_game(void)
    if (game_data)
       free(game_data);
    game_data = NULL;
+
+   rend_terminate();
+   ngen_terminate();
+   dc_term();
 }
 
 

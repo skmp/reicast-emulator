@@ -122,6 +122,8 @@ bool rend_single_frame(void)
    return do_swp;
 }
 
+int rend_en = true;
+
 void *rend_thread(void* p)
 {
 #if SET_AFNT
@@ -144,11 +146,13 @@ void *rend_thread(void* p)
    //we don't know if this is true, so let's not speculate here
    //renderer->Resize(640, 480);
 
-   for(;;)
+   while(rend_en)
    {
       if (rend_single_frame())
          renderer->Present();
    }
+
+   return 0;
 }
 
 #if !defined(TARGET_NO_THREADS)
@@ -283,6 +287,11 @@ void rend_term(void)
    re.cond = NULL;
    rs.cond = NULL;
 #endif
+}
+
+void rend_terminate(void)
+{
+   rend_en = false;
 }
 
 void rend_vblank()

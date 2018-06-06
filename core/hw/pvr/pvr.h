@@ -7,6 +7,7 @@ extern u32 FrameCount;
 
 bool rend_init(void);
 void rend_term(void);
+void rend_terminate(void);
 
 void rend_vblank(void);
 void rend_start_render(void);

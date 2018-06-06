@@ -2303,4 +2303,18 @@ void ngen_init_arm(void)
 
 }
 
+/* This is declared outside the #if so that any
+   the .s file will still build and run in an infinity
+   loop if ngen_terminate is not available */
+unsigned int ngen_required = true;
+
+#if HOST_OS==OS_LINUX
+
+void ngen_terminate(void)
+{
+	printf("ngen_terminate called\n");
+	ngen_required = false;
+}
+
+#endif
 #endif

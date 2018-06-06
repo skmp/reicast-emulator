@@ -157,7 +157,7 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_broadcast",
-         "Broadcast; 2|3|0|1",
+         "Broadcast; PAL_M|PAL_N|NTSC|PAL|Default",
       },
       {
          "reicast_framerate",
@@ -165,7 +165,7 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_region",
-         "Region; 3|0|1|2",
+         "Region; Default|Japan|USA|Europe",
       },
       {
          "reicast_precompile_shaders",
@@ -327,15 +327,15 @@ static void update_variables(void)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (!strcmp("0", var.value))
+      if (!strcmp("NTSC", var.value))
          settings.dreamcast.broadcast = 0;
-      else if (!strcmp("1", var.value))
+      else if (!strcmp("PAL", var.value))
          settings.dreamcast.broadcast = 1;
-      else if (!strcmp("2", var.value))
+      else if (!strcmp("PAL_M", var.value))
          settings.dreamcast.broadcast = 2;
-      else if (!strcmp("3", var.value))
+      else if (!strcmp("PAL_N", var.value))
          settings.dreamcast.broadcast = 3;
-      else if (!strcmp("4", var.value))
+      else if (!strcmp("Default", var.value))
          settings.dreamcast.broadcast = 4;
    }
    else
@@ -357,13 +357,13 @@ static void update_variables(void)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (!strcmp("0", var.value))
+      if (!strcmp("Japan", var.value))
          settings.dreamcast.region = 0;
-      else if (!strcmp("1", var.value))
+      else if (!strcmp("USA", var.value))
          settings.dreamcast.region = 1;
-      else if (!strcmp("2", var.value))
+      else if (!strcmp("Europe", var.value))
          settings.dreamcast.region = 2;
-      else if (!strcmp("3", var.value))
+      else if (!strcmp("Default", var.value))
          settings.dreamcast.region = 3;
    }
    else

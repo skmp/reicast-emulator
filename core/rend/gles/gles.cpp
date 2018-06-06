@@ -15,7 +15,7 @@
 #include "../../hw/mem/_vmem.h"
 
 // TODO/FIXME - forward declarations
-void GenSorted(void);
+void GenSorted(int first, int count);
 
 extern retro_environment_t environ_cb;
 extern bool fog_needs_update;
@@ -870,7 +870,7 @@ static bool RenderFrame(void)
    glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 	if (UsingAutoSort())
-		GenSorted();
+		GenSorted(0, pvrrc.global_param_tr.used());
 
 	//move vertex to gpu
 

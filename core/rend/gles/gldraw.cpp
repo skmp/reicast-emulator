@@ -243,20 +243,20 @@ bool operator<(const PolyParam &left, const PolyParam &right)
 }
 
 //Sort based on min-z of each strip
-static void SortPParams(void)
+void SortPParams(int first, int count)
 {
    u16 *idx_base      = NULL;
    Vertex *vtx_base   = NULL;
    PolyParam *pp      = NULL;
    PolyParam *pp_end  = NULL;
 
-   if (pvrrc.verts.used()==0 || pvrrc.global_param_tr.used()<=1)
+   if (pvrrc.verts.used()==0 || count <=1)
       return;
 
    vtx_base          = pvrrc.verts.head();
    idx_base          = pvrrc.idx.head();
    pp                = pvrrc.global_param_tr.head();
-   pp_end            = pp + pvrrc.global_param_tr.used();
+   pp_end            = pp + count;
 
    while(pp!=pp_end)
    {
@@ -280,8 +280,6 @@ static void SortPParams(void)
       pp++;
    }
 
-   unsigned first = 0;
-   unsigned count = pvrrc.global_param_tr.used();
    std::stable_sort(pvrrc.global_param_tr.head() + first,
          pvrrc.global_param_tr.head() + first + count);
 }
@@ -335,7 +333,7 @@ bool PP_EQ(PolyParam* pp0, PolyParam* pp1)
 
 static vector<SortTrigDrawParam>	pidx_sort;
 
-void GenSorted(void)
+void GenSorted(int first, int count)
 {
    static vector<IndexTrig> lst;
    static vector<u16> vidx_sort;
@@ -346,7 +344,7 @@ void GenSorted(void)
 
    pidx_sort.clear();
 
-   if (pvrrc.verts.used()==0 || pvrrc.global_param_tr.used()<=1)
+   if (pvrrc.verts.used()==0 || count <=1)
       return;
 
    Vertex* vtx_base=pvrrc.verts.head();
@@ -354,7 +352,7 @@ void GenSorted(void)
 
    PolyParam* pp_base=pvrrc.global_param_tr.head();
    PolyParam* pp=pp_base;
-   PolyParam* pp_end= pp + pvrrc.global_param_tr.used();
+   PolyParam* pp_end= pp + count;
 
    Vertex* vtx_arr=vtx_base+idx_base[pp->first];
    vtx_sort_base=vtx_base;
@@ -648,14 +646,14 @@ static void SetupModvolVBO(void)
 	glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
 }
 
-void DrawModVols(void)
+void DrawModVols(int first, int count)
 {
    /* A bit of explanation:
      * In theory it works like this: generate a 1-bit stencil for each polygon
      * volume, and then AND or OR it against the overall 1-bit tile stencil at 
      * the end of the volume. */
 
-	if (pvrrc.modtrig.used()==0 || settings.pvr.Emulation.ModVolMode == 0)
+	if (count == 0 || settings.pvr.Emulation.ModVolMode == 0)
 		return;
 
    SetupModvolVBO();
@@ -673,7 +671,7 @@ void DrawModVols(void)
 	{
 		//simply draw the volumes -- for debugging
 		SetCull(0);
-		glDrawArrays(GL_TRIANGLES,0,pvrrc.modtrig.used()*3);
+		glDrawArrays(GL_TRIANGLES, first, count * 3);
 		SetupMainVBO();
 	}
 	else
@@ -704,7 +702,7 @@ void DrawModVols(void)
          glcache.StencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
          glcache.StencilMask(0x1);
 			SetCull(0);
-			glDrawArrays(GL_TRIANGLES,0,pvrrc.modtrig.used()*3);
+			glDrawArrays(GL_TRIANGLES, first, count * 3);
 		}
 		else if (settings.pvr.Emulation.ModVolMode == 3)
 		{
@@ -784,7 +782,7 @@ void DrawModVols(void)
 		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
 
 		//Draw and blend
-		//glDrawArrays(GL_TRIANGLES,pvrrc.modtrig.used(),2);
+		//glDrawArrays(GL_TRIANGLES, count, 2);
 	}
 
 	//restore states
@@ -809,7 +807,7 @@ void DrawStrips(void)
 	DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt);
 
    // Modifier volumes
-	DrawModVols();
+	DrawModVols(0, pvrrc.modtrig.used());
 
 	//Alpha blended
    if (settings.pvr.Emulation.AlphaSortMode == 0)
@@ -824,7 +822,7 @@ void DrawStrips(void)
    else if (settings.pvr.Emulation.AlphaSortMode == 1)
    {
       if (pvrrc.isAutoSort)
-         SortPParams();
+         SortPParams(0, pvrrc.global_param_tr.used());
       DrawList<ListType_Translucent, true>(pvrrc.global_param_tr);
    }
 

@@ -264,15 +264,17 @@ void LoadSettings(void)
 	settings.pvr.ta_skip			   = 0;
 	settings.pvr.rend				   = 0;
    settings.QueueRender          = 0;
-   settings.pvr.Emulation.ModVol       = true;
    settings.pvr.Emulation.AlphaSortMode= 0;
    settings.pvr.Emulation.zMin         = 0.f;
    settings.pvr.Emulation.zMax         = 1.0f;
 
 	settings.pvr.MaxThreads			       = 3;
-   settings.rend.TranslucentPolygonDepthMask = false;
+#ifndef __LIBRETRO__
+   settings.pvr.Emulation.ModVol       = true;
    settings.rend.RenderToTexture        = true;
    settings.rend.RenderToTextureBuffer  = false;
+#endif
+   settings.rend.TranslucentPolygonDepthMask = false;
 	settings.pvr.SynchronousRendering	 = 0;
 
 	settings.debug.SerialConsole         = 0;

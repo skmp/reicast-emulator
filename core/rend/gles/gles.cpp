@@ -14,9 +14,6 @@
 #include "../../hw/pvr/pvr.h"
 #include "../../hw/mem/_vmem.h"
 
-// TODO/FIXME - forward declarations
-void GenSorted(int first, int count);
-
 extern retro_environment_t environ_cb;
 extern bool fog_needs_update;
 bool KillTex=false;
@@ -863,13 +860,7 @@ static bool RenderFrame(void)
       glcache.ClearColor(0,0,0,1.0f);
 
    glcache.Disable(GL_SCISSOR_TEST);
-
-   glcache.DepthMask(GL_TRUE);
-   glcache.StencilMask(0xFF);
-   glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-	if (UsingAutoSort())
-		GenSorted(0, pvrrc.global_param_tr.used());
+   glClear(GL_COLOR_BUFFER_BIT);
 
 	//move vertex to gpu
 
@@ -938,7 +929,6 @@ bool ProcessFrame(TA_context* ctx)
 #ifndef TARGET_NO_THREADS
    slock_lock(ctx->rend_inuse);
 #endif
-   ctx->MarkRend(0);
 
    if (KillTex)
    {

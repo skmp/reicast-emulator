@@ -166,6 +166,8 @@ struct TA_context
 
 	void MarkRend(u32 render_pass)
 	{
+      verify(render_pass <= tad.render_passes.size());
+
 		rend.proc_start = render_pass == 0 ? tad.thd_root :
          tad.render_passes[render_pass - 1];
 		rend.proc_end   = render_pass == tad.render_passes.size() ? 

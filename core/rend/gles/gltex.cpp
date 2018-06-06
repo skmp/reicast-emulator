@@ -354,6 +354,7 @@ struct FBT
 };
 
 FBT fb_rtt;
+static GLuint output_fbo;
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
@@ -377,9 +378,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
       fbw2 *= 2;
 
 	/* Get the currently bound frame buffer object. On most platforms this just gives 0. */
-#if 0
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_i32OriginalFbo);
-#endif
+   glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&output_fbo);
 
 	/* Generate and bind a render buffer which will become a depth buffer shared between our two FBOs */
 	glGenRenderbuffers(1, &rv.depthb);
@@ -473,6 +472,8 @@ void ReadRTTBuffer(void)
       GLint color_fmt, color_type;
       glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
       glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &color_type);
+
+      glcache.BindTexture(GL_TEXTURE_2D, fb_rtt.tex);
 
       if (fb_packmode == 1 && stride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5) {
          // Can be read directly into vram
@@ -569,9 +570,10 @@ void ReadRTTBuffer(void)
    fb_rtt.tex = 0;
 
 	if (fb_rtt.fbo) { glDeleteFramebuffers(1,&fb_rtt.fbo); fb_rtt.fbo = 0; }
-	if (fb_rtt.tex) { glDeleteTextures(1,&fb_rtt.tex); fb_rtt.tex = 0; }
 	if (fb_rtt.depthb) { glDeleteRenderbuffers(1,&fb_rtt.depthb); fb_rtt.depthb = 0; }
 	if (fb_rtt.stencilb) { glDeleteRenderbuffers(1,&fb_rtt.stencilb); fb_rtt.stencilb = 0; }
+
+   glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 }
 
 static int TexCacheLookups;

@@ -97,15 +97,23 @@ s32 SetTileClip(u32 val, bool set)
 	
 	if (set && clip_mode)
    {
-    	csy = 480 - csy;
-		cey = 480 - cey;
-		float dc2s_scale_h = gles_screen_height / 480.0f;
-		float ds2s_offs_x = (gles_screen_width - dc2s_scale_h * 640) / 2;
-		csx = csx * dc2s_scale_h + ds2s_offs_x;
-		cex = cex * dc2s_scale_h + ds2s_offs_x;
-		csy = csy * dc2s_scale_h;
-		cey = cey * dc2s_scale_h;
-		glUniform4f(CurrentShader->pp_ClipTest, csx, cey, cex, csy);		
+      if (!pvrrc.isRTT)
+      {
+         csx *= scale_x;
+         csy *= scale_y;
+         cex *= scale_x;
+         cey *= scale_y;
+         float t = cey;
+         cey = 480 - csy;
+         csy = 480 - t;
+         float dc2s_scale_h = gles_screen_height / 480.0f;
+         float ds2s_offs_x = (gles_screen_width - dc2s_scale_h * 640) / 2;
+         csx = csx * dc2s_scale_h + ds2s_offs_x;
+         cex = cex * dc2s_scale_h + ds2s_offs_x;
+         csy = csy * dc2s_scale_h;
+         cey = cey * dc2s_scale_h;
+      }
+		glUniform4f(CurrentShader->pp_ClipTest, csx, csy, cex, cey);		
    }
 
 	return clip_mode;

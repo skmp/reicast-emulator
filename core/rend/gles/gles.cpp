@@ -939,7 +939,7 @@ bool ProcessFrame(TA_context* ctx)
 #ifndef TARGET_NO_THREADS
    slock_lock(ctx->rend_inuse);
 #endif
-   ctx->MarkRend();
+   ctx->MarkRend(0);
 
    if (KillTex)
    {

@@ -841,7 +841,7 @@ struct softrend : Renderer
 			return false;
 
 		ctx->rend_inuse.Lock();
-		ctx->MarkRend();
+		ctx->MarkRend(0);
 
 		if (!ta_parse_vdrc(ctx))
 			return false;

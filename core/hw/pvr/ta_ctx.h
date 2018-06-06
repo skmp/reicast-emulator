@@ -158,10 +158,12 @@ struct TA_context
 			sa2:    idx: 36094, vtx: 24520, op: 1330, pt: 10, tr: 177, mvo: 39, modt: 360, ov: 0
 	*/
 
-	void MarkRend()
+	void MarkRend(u32 render_pass)
 	{
-		rend.proc_start = tad.thd_root;
-		rend.proc_end   = tad.End();
+		rend.proc_start = render_pass == 0 ? tad.thd_root :
+         tad.render_passes[render_pass - 1];
+		rend.proc_end   = render_pass == tad.render_passes.size() ? 
+         tad.End() : tad.render_passes[render_pass];
 	}
 	void Alloc()
 	{

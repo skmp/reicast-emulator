@@ -576,6 +576,7 @@ struct settings_t
 	{
 		bool UseMipmaps;
 		bool WideScreen;
+      bool RenderToTexture;
       bool RenderToTextureBuffer;
 	} rend;
 

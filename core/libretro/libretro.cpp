@@ -176,6 +176,10 @@ void retro_set_environment(retro_environment_t cb)
          "Enable RTT (Render To Texture); enabled|disabled", 
       },
       {
+         "reicast_enable_rttb",
+         "Enable RTT (Render To Texture) Buffer; disabled|enabled", 
+      },
+      {
          "reicast_enable_purupuru",
          "Purupuru Pack (restart); enabled|disabled"
       },
@@ -216,7 +220,6 @@ void retro_deinit(void)
    first_run = true;
 }
 
-bool enable_rtt     = true;
 static bool is_dupe = false;
 
 static void update_variables(void)
@@ -384,11 +387,23 @@ static void update_variables(void)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (!strcmp("disabled", var.value))
-         enable_rtt = false;
+      if (!strcmp("enabled", var.value))
+         settings.rend.RenderToTexture = true;
       else
-         enable_rtt = true;
+         settings.rend.RenderToTexture = false;
    }
+
+   var.key = "reicast_enable_rttb";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("enabled", var.value))
+         settings.rend.RenderToTextureBuffer = true;
+      else
+         settings.rend.RenderToTextureBuffer = false;
+   }
+   else
+      settings.rend.RenderToTextureBuffer = false;
 
    var.key = "reicast_enable_purupuru";
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)

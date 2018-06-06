@@ -264,7 +264,8 @@ void LoadSettings(void)
 	settings.pvr.ta_skip			   = 0;
 	settings.pvr.rend				   = 0;
    settings.QueueRender          = 0;
-   settings.pvr.Emulation.AlphaSortMode = 0;
+   settings.pvr.Emulation.ModVol       = true;
+   settings.pvr.Emulation.AlphaSortMode= 0;
    settings.pvr.Emulation.zMin         = 0.f;
    settings.pvr.Emulation.zMax         = 1.0f;
 

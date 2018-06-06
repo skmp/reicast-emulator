@@ -656,143 +656,123 @@ static void SetupModvolVBO(void)
 void DrawModVols(int first, int count)
 {
    /* A bit of explanation:
-     * In theory it works like this: generate a 1-bit stencil for each polygon
-     * volume, and then AND or OR it against the overall 1-bit tile stencil at 
-     * the end of the volume. */
+    * In theory it works like this: generate a 1-bit stencil for each polygon
+    * volume, and then AND or OR it against the overall 1-bit tile stencil at 
+    * the end of the volume. */
 
-	if (count == 0 || settings.pvr.Emulation.ModVolMode == 0)
-		return;
+   if (count == 0 || !settings.pvr.Emulation.ModVol)
+      return;
 
    SetupModvolVBO();
 
-	glcache.Enable(GL_BLEND);
+   glcache.Enable(GL_BLEND);
    glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glcache.UseProgram(modvol_shader.program);
-	glUniform1f(modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
+   glcache.UseProgram(modvol_shader.program);
+   glUniform1f(modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
 
    glcache.DepthMask(GL_FALSE);
-	glcache.DepthFunc(GL_GREATER);
+   glcache.DepthFunc(GL_GREATER);
 
-	if(settings.pvr.Emulation.ModVolMode == 1)
-	{
-		//simply draw the volumes -- for debugging
-		SetCull(0);
-		glDrawArrays(GL_TRIANGLES, first, count * 3);
-		SetupMainVBO();
-	}
-	else
-	{
-		/*
-		mode :
-		normal trig : flip
-		last *in*   : flip, merge*in* &clear from last merge
-		last *out*  : flip, merge*out* &clear from last merge
-		*/
+   /*
+mode :
+normal trig : flip
+last *in*   : flip, merge*in* &clear from last merge
+last *out*  : flip, merge*out* &clear from last merge
+*/
 
-		/*
+   /*
 
-			Do not write to color
-			Do not write to depth
+      Do not write to color
+      Do not write to depth
 
-			read from stencil bits 1:0
-			write to stencil bits 1:0
-		*/
+      read from stencil bits 1:0
+      write to stencil bits 1:0
+      */
 
-		glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+   glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
 
-		if (settings.pvr.Emulation.ModVolMode == 2)
-		{
-			//simple single level stencil
-			glcache.Enable(GL_STENCIL_TEST);
-         glcache.StencilFunc(GL_ALWAYS, 0x1, 0x1);
-         glcache.StencilOp(GL_KEEP, GL_KEEP, GL_INVERT);
-         glcache.StencilMask(0x1);
-			SetCull(0);
-			glDrawArrays(GL_TRIANGLES, first, count * 3);
-		}
-		else if (settings.pvr.Emulation.ModVolMode == 3)
-		{
-         glEnable(GL_STENCIL_TEST);
-			//Full emulation
-			//the *out* mode is buggy
+   {
+      glEnable(GL_STENCIL_TEST);
+      //Full emulation
+      //the *out* mode is buggy
 
-			u32 mod_base=0; //cur start triangle
-			u32 mod_last=0; //last merge
+      u32 mod_base=0; //cur start triangle
+      u32 mod_last=0; //last merge
 
-			u32 cmv_count= (pvrrc.global_param_mvo.used()-1);
-			ISP_Modvol* params=pvrrc.global_param_mvo.head();
+      u32 cmv_count= (pvrrc.global_param_mvo.used()-1);
+      ISP_Modvol* params=pvrrc.global_param_mvo.head();
 
-			//ISP_Modvol
-			for (u32 cmv=0;cmv<cmv_count;cmv++)
-			{
+      //ISP_Modvol
+      for (u32 cmv=0;cmv<cmv_count;cmv++)
+      {
 
-				ISP_Modvol ispc=params[cmv];
-				mod_base=ispc.id;
-				u32 sz=params[cmv+1].id-mod_base;
+         ISP_Modvol ispc=params[cmv];
+         mod_base=ispc.id;
+         u32 sz=params[cmv+1].id-mod_base;
 
-            if (sz == 0)
-               continue;
+         if (sz == 0)
+            continue;
 
-				u32 mv_mode = ispc.DepthMode;
+         u32 mv_mode = ispc.DepthMode;
 
-				if (mv_mode==0)	//normal trigs
-				{
-					SetMVS_Mode(0,ispc);
-					//Render em (counts intersections)
-					//verifyc(dev->DrawPrimitiveUP(D3DPT_TRIANGLELIST,sz,pvrrc.modtrig.data+mod_base,3*4));
-					glDrawArrays(GL_TRIANGLES,mod_base*3,sz*3);
-				}
-				else if (mv_mode<3)
-				{
-					while(sz)
-					{
-						//merge and clear all the prev. stencil bits
+         if (mv_mode==0)	//normal trigs
+         {
+            SetMVS_Mode(0,ispc);
+            //Render em (counts intersections)
+            //verifyc(dev->DrawPrimitiveUP(D3DPT_TRIANGLELIST,sz,pvrrc.modtrig.data+mod_base,3*4));
+            glDrawArrays(GL_TRIANGLES,mod_base*3,sz*3);
+         }
+         else if (mv_mode<3)
+         {
+            while(sz)
+            {
+               //merge and clear all the prev. stencil bits
 
-						//Count Intersections (last poly)
-						SetMVS_Mode(0,ispc);
-						glDrawArrays(GL_TRIANGLES,mod_base*3,3);
+               //Count Intersections (last poly)
+               SetMVS_Mode(0,ispc);
+               glDrawArrays(GL_TRIANGLES,mod_base*3,3);
 
-						//Sum the area
-						SetMVS_Mode(mv_mode,ispc);
-						glDrawArrays(GL_TRIANGLES,mod_last*3,(mod_base-mod_last+1)*3);
+               //Sum the area
+               SetMVS_Mode(mv_mode,ispc);
+               glDrawArrays(GL_TRIANGLES,mod_last*3,(mod_base-mod_last+1)*3);
 
-						//update pointers
-						mod_last=mod_base+1;
-						sz--;
-						mod_base++;
-					}
-				}
-			}
-		}
-		//disable culling
-		SetCull(0);
-		//enable color writes
-		glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+               //update pointers
+               mod_last=mod_base+1;
+               sz--;
+               mod_base++;
+            }
+         }
+      }
+   }
 
-		//black out any stencil with '1'
-		glcache.Enable(GL_BLEND);
-      glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		
-		glcache.Enable(GL_STENCIL_TEST);
-      //only pixels that are Modvol enabled, and in area 1
-      glcache.StencilFunc(GL_EQUAL, 0x81, 0x81);
-		
-		//clear the stencil result bit
-      glcache.StencilMask(0x3); /* write to LSB */
-      glcache.StencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
+   //disable culling
+   SetCull(0);
+   //enable color writes
+   glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 
-		//don't do depth testing
-		glcache.Disable(GL_DEPTH_TEST);
+   //black out any stencil with '1'
+   glcache.Enable(GL_BLEND);
+   glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		SetupMainVBO();
-		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
+   glcache.Enable(GL_STENCIL_TEST);
+   //only pixels that are Modvol enabled, and in area 1
+   glcache.StencilFunc(GL_EQUAL, 0x81, 0x81);
 
-		//Draw and blend
-		//glDrawArrays(GL_TRIANGLES, count, 2);
-	}
+   //clear the stencil result bit
+   glcache.StencilMask(0x3); /* write to LSB */
+   glcache.StencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
 
-	//restore states
+   //don't do depth testing
+   glcache.Disable(GL_DEPTH_TEST);
+
+   SetupMainVBO();
+   glDrawArrays(GL_TRIANGLE_STRIP,0,4);
+
+   //Draw and blend
+   //glDrawArrays(GL_TRIANGLES, count, 2);
+
+   //restore states
    glcache.Enable(GL_DEPTH_TEST);
 }
 

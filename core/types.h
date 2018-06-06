@@ -645,7 +645,7 @@ struct settings_t
 		{
 			u32 PaletteMode;
 			u32 AlphaSortMode;
-			u32 ModVolMode;
+			bool ModVol;
 			u32 ZBufferMode;
 			u32 TexCacheMode;
          f32 zMin;

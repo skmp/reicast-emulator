@@ -140,8 +140,8 @@ void retro_set_environment(retro_environment_t cb)
          "Mipmapping; enabled|disabled",
       },
       {
-         "reicast_volume_modifier_mode",
-         "Volume modifier mode; disabled|debug|on|full",
+         "reicast_volume_modifier_enable",
+         "Volume modifier; enabled|disabled",
       },
       {
          "reicast_widescreen_hack",
@@ -278,21 +278,17 @@ static void update_variables(void)
    else
       settings.rend.UseMipmaps		= 1;
 
-   var.key = "reicast_volume_modifier_mode";
+   var.key = "reicast_volume_modifier_enable";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (!strcmp(var.value, "disabled"))
-         settings.pvr.Emulation.ModVolMode		= 0;
-      else if (!strcmp(var.value, "debug"))
-         settings.pvr.Emulation.ModVolMode		= 1;
-      else if (!strcmp(var.value, "on"))
-         settings.pvr.Emulation.ModVolMode		= 2;
-      else if (!strcmp(var.value, "full"))
-         settings.pvr.Emulation.ModVolMode		= 3;
+         settings.pvr.Emulation.ModVol		= false;
+      else if (!strcmp(var.value, "enabled"))
+         settings.pvr.Emulation.ModVol		= true;
    }
    else
-      settings.rend.UseMipmaps		= 1;
+      settings.pvr.Emulation.ModVol		= true;
 
    var.key = "reicast_widescreen_hack";
 

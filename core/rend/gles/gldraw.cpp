@@ -798,7 +798,7 @@ void DrawStrips(void)
 #endif
       glcache.DepthMask(GL_TRUE);
       glcache.StencilMask(0xFF);
-      glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+      glClear(GL_DEPTH_BUFFER_BIT );
 
       //Opaque
       DrawList<ListType_Opaque, false>(pvrrc.global_param_op, 

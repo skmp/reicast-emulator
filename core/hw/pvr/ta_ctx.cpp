@@ -10,6 +10,32 @@ tad_context ta_tad;
 TA_context*  vd_ctx;
 rend_context vd_rc;
 
+// helper for 32 byte aligned memory allocation
+void* OS_aligned_malloc(size_t align, size_t size)
+{
+#ifdef __MINGW32__
+   return __mingw_aligned_malloc(size, align);
+#elif defined(_WIN32)
+   return _aligned_malloc(size, align);
+#else
+   void *p = NULL;
+   int ret = posix_memalign(&p, align, size);
+   return (ret == 0) ? p : 0;
+#endif
+}
+
+// helper for 32 byte aligned memory de-allocation
+void OS_aligned_free(void *ptr)
+{
+#ifdef __MINGW32__
+   __mingw_aligned_free(ptr);
+#elif defined(_MSC_VER)
+   _aligned_free(ptr);
+#else
+   free(ptr);
+#endif
+}
+
 void SetCurrentTARC(u32 addr)
 {
 	if (addr != TACTX_NONE)

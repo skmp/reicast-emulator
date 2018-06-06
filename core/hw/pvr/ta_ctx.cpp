@@ -43,6 +43,7 @@ void SetCurrentTARC(u32 addr)
 		if (ta_ctx)
 			SetCurrentTARC(TACTX_NONE);
 
+      verify(ta_ctx == 0);
 		//set new context
 		ta_ctx = tactx_Find(addr,true);
 
@@ -52,6 +53,7 @@ void SetCurrentTARC(u32 addr)
 	else
 	{
 		//Flush cache to context
+      verify(ta_ctx != 0);
 		ta_ctx->tad=ta_tad;
 		
 		//clear context
@@ -62,6 +64,8 @@ void SetCurrentTARC(u32 addr)
 
 bool TryDecodeTARC(void)
 {
+   verify(ta_ctx != 0);
+   
 	if (vd_ctx == 0)
 	{
 		vd_ctx = ta_ctx;
@@ -82,6 +86,8 @@ bool TryDecodeTARC(void)
 
 void VDecEnd(void)
 {
+   verify(vd_ctx != 0);
+
 	vd_ctx->rend = vd_rc;
 
 #ifndef TARGET_NO_THREADS
@@ -101,6 +107,8 @@ cResetEvent frame_finished;
 
 bool QueueRender(TA_context* ctx)
 {
+   verify(ctx != 0);
+
 	if (rqueue)
    {
 		tactx_Recycle(ctx);
@@ -119,6 +127,8 @@ bool QueueRender(TA_context* ctx)
 #if !defined(TARGET_NO_THREADS)
    slock_unlock(mtx_rqueue);
 #endif
+
+   verify(!old);
 
 	return true;
 }
@@ -154,6 +164,7 @@ bool rend_framePending(void)
 
 void FinishRender(TA_context* ctx)
 {
+   verify(rqueue == ctx);
 #if !defined(TARGET_NO_THREADS)
    slock_lock(mtx_rqueue);
 #endif
@@ -163,7 +174,6 @@ void FinishRender(TA_context* ctx)
 #endif
 
 	tactx_Recycle(ctx);
-
 #if !defined(TARGET_NO_THREADS)
    slock_lock(frame_finished.mutx);
    frame_finished.state = true;
@@ -187,25 +197,23 @@ TA_context* tactx_Alloc(void)
 #ifndef TARGET_NO_THREADS
    slock_lock(mtx_pool);
 #endif
-
 	if (ctx_pool.size())
 	{
 		rv = ctx_pool[ctx_pool.size()-1];
 		ctx_pool.pop_back();
 	}
-
 #ifndef TARGET_NO_THREADS
    slock_unlock(mtx_pool);
 #endif
 	
-	if (rv)
-      return rv;
+	if (!rv)
+   {
+      rv = new TA_context();
+      rv->Alloc();
+      printf("new tactx\n");
+   }
 
-   rv = new TA_context();
-   rv->Alloc();
-   printf("new tactx\n");
-
-	return rv;
+   return rv;
 }
 
 void tactx_Recycle(TA_context* poped_ctx)
@@ -230,39 +238,39 @@ void tactx_Recycle(TA_context* poped_ctx)
 
 TA_context* tactx_Find(u32 addr, bool allocnew)
 {
-   TA_context *rv = NULL;
    for (size_t i=0; i<ctx_list.size(); i++)
    {
       if (ctx_list[i]->Address==addr)
          return ctx_list[i];
    }
 
-   if (!allocnew)
-      return 0;
+   if (allocnew)
+   {
+      TA_context *rv = tactx_Alloc();
+      rv->Address=addr;
+      ctx_list.push_back(rv);
 
-   rv = tactx_Alloc();
-   rv->Address=addr;
-   ctx_list.push_back(rv);
+      return rv;
+   }
 
-   return rv;
+   return 0;
 }
 
 TA_context* tactx_Pop(u32 addr)
 {
 	for (size_t i=0; i<ctx_list.size(); i++)
    {
-      TA_context *rv = NULL;
-      if (ctx_list[i]->Address != addr)
-         continue;
+      if (ctx_list[i]->Address == addr)
+      {
+         TA_context *rv = ctx_list[i];
 
-      rv = ctx_list[i];
+         if (ta_ctx == rv)
+            SetCurrentTARC(TACTX_NONE);
 
-      if (ta_ctx == rv)
-         SetCurrentTARC(TACTX_NONE);
+         ctx_list.erase(ctx_list.begin() + i);
 
-      ctx_list.erase(ctx_list.begin() + i);
-
-      return rv;
+         return rv;
+      }
    }
 	return 0;
 }

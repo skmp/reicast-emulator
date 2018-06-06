@@ -486,7 +486,6 @@ void GenSorted(void)
       /* Bind and upload sorted index buffer */
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
       glBufferData(GL_ELEMENT_ARRAY_BUFFER,vidx_sort.size()*2,&vidx_sort[0],GL_STREAM_DRAW);
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
    }
 }
 
@@ -636,6 +635,19 @@ void SetupMainVBO(void)
 	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
 }
 
+static void SetupModvolVBO(void)
+{
+	glBindBuffer(GL_ARRAY_BUFFER, vbo.modvols);
+
+	//setup vertex buffers attrib pointers
+	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, (void*)0);
+
+	glDisableVertexAttribArray(VERTEX_UV_ARRAY);
+	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
+	glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
+}
+
 void DrawModVols(void)
 {
    /* A bit of explanation:
@@ -646,21 +658,13 @@ void DrawModVols(void)
 	if (pvrrc.modtrig.used()==0 || settings.pvr.Emulation.ModVolMode == 0)
 		return;
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo.modvols);
-
-	//setup vertex buffers attrib pointers
-	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
-	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, (void*)0);
-
-	glDisableVertexAttribArray(VERTEX_UV_ARRAY);
-	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
-	glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
+   SetupModvolVBO();
 
 	glcache.Enable(GL_BLEND);
    glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glcache.UseProgram(modvol_shader.program);
-	glUniform1f(modvol_shader.sp_ShaderColor,0.5f);
+	glUniform1f(modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
 
    glcache.DepthMask(GL_FALSE);
 	glcache.DepthFunc(GL_GREATER);

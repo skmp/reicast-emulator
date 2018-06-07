@@ -196,7 +196,7 @@ struct gl_cached_state
 };
 
 static GLint glsm_max_textures;
-static struct retro_hw_render_callback hw_render;
+struct retro_hw_render_callback hw_render;
 static struct gl_cached_state gl_state;
 
 /* GL wrapper-side */

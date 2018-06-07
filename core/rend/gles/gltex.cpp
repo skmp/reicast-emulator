@@ -49,6 +49,7 @@ Compression
 
 u16 temp_tex_buffer[1024*1024];
 extern u32 decoded_colors[3][65536];
+extern "C" struct retro_hw_render_callback hw_render;
 
 typedef void TexConvFP(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
 
@@ -354,7 +355,6 @@ struct FBT
 };
 
 FBT fb_rtt;
-static GLuint output_fbo;
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
@@ -378,7 +378,6 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
       fbw2 *= 2;
 
 	/* Get the currently bound frame buffer object. On most platforms this just gives 0. */
-   glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&output_fbo);
 
 	/* Generate and bind a render buffer which will become a depth buffer shared between our two FBOs */
 	glGenRenderbuffers(1, &rv.depthb);
@@ -573,7 +572,7 @@ void ReadRTTBuffer(void)
 	if (fb_rtt.depthb) { glDeleteRenderbuffers(1,&fb_rtt.depthb); fb_rtt.depthb = 0; }
 	if (fb_rtt.stencilb) { glDeleteRenderbuffers(1,&fb_rtt.stencilb); fb_rtt.stencilb = 0; }
 
-   glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+   glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
 }
 
 static int TexCacheLookups;

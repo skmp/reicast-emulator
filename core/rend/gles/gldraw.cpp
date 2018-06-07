@@ -818,10 +818,8 @@ void DrawStrips(void)
       //Alpha blended
       if (settings.pvr.Emulation.AlphaSortMode == 0)
       {
-         u32 count = pidx_sort.size();
-         //if any drawing commands, draw them
-         if (pvrrc.isAutoSort && count)
-            DrawSorted(count);
+         if (pvrrc.isAutoSort)
+            DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
          else
             DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
       }

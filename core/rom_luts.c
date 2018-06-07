@@ -32,5 +32,8 @@ static struct game_type lut_games[] =
    { "MK-5105950", -1, -1, -1, 1,  -1, -1  },                /* Shenmue */
    { "RDC-0057",   -1, -1, -1, -1,  1, -1  },                /* Cosmic Smash */
    { "HDR-0176  ",   -1, -1, -1, -1,  1, -1  },                /* Cosmic Smash */
+   { "T40205N   ",    -1, -1, -1, -1, -1,  1  },                /* Tony Hawk's Pro Skater 1 (USA) */
+   { "T13006N   ",    -1, -1, -1, -1, -1,  1  },                /* Tony Hawk's Pro Skater 2 (USA) */
    { "T13008D",    -1, -1, -1, -1, -1,  1  },                /* Tony Hawk's Pro Skater 2 */
+   { "T23002N   ", -1, -1, -1, -1, -1,  1  },                /* Star Wars Episode I: Jedi Power Battle (USA) */
 };

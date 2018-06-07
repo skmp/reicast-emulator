@@ -176,16 +176,28 @@ struct TA_context
       rend.proc_end = render_pass == tad.render_pass_count ? tad.End() : 
          tad.render_passes[render_pass];
 	}
-	void Alloc()
+	void Alloc(bool have_oit)
 	{
+      unsigned vert_size, idx_size;
 #if !defined(TARGET_NO_THREADS)
       thd_inuse  = slock_new();
       rend_inuse = slock_new();
 #endif
       tad.Reset((u8*)OS_aligned_malloc(32, 2*1024*1024));
 
-		rend.verts.InitBytes(4*1024*1024,&rend.Overrun, "verts"); //up to 4 mb of vtx data/frame = ~ 96k vtx/frame
-		rend.idx.Init(120*1024,&rend.Overrun, "idx");			//up to 120K indexes ( idx have stripification overhead )
+      if (have_oit)
+      {
+         idx_size  = 120   *1024; // up to 120K indices (idx have stripification overhead)
+         vert_size = 4*1024*1024; //up to 4 mb of vtx data/frame = ~ 96k vtx/frame
+      }
+      else
+      {
+         idx_size  = 60    *1024; // up to 60K indices (idx have stripification overhead)
+         vert_size =   1024*1024; //up to 1 mb of vtx data/frame = ~ 38k vtx/frame
+      }
+
+		rend.verts.InitBytes(vert_size,&rend.Overrun, "verts"); 
+		rend.idx.Init(idx_size,&rend.Overrun, "idx");
 		rend.global_param_op.Init(4096,&rend.Overrun, "global_param_op");
 		rend.global_param_pt.Init(4096,&rend.Overrun, "global_param_pt");
 		rend.global_param_mvo.Init(4096,&rend.Overrun, "global_param_mvo");

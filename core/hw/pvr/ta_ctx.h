@@ -184,16 +184,22 @@ struct TA_context
 #endif
       tad.Reset((u8*)OS_aligned_malloc(32, 2*1024*1024));
 
-		rend.verts.InitBytes(1024*1024,&rend.Overrun); //up to 1 mb of vtx data/frame = ~ 38k vtx/frame
-		rend.idx.Init(60*1024,&rend.Overrun);			//up to 60K indexes ( idx have stripification overhead )
-		rend.global_param_op.Init(4096,&rend.Overrun);
-		rend.global_param_pt.Init(4096,&rend.Overrun);
-		rend.global_param_mvo.Init(4096,&rend.Overrun);
-		rend.global_param_tr.Init(4096,&rend.Overrun);
+		rend.verts.InitBytes(1024*1024,&rend.Overrun, "verts"); //up to 1 mb of vtx data/frame = ~ 38k vtx/frame
+		rend.idx.Init(60*1024,&rend.Overrun, "idx");			//up to 60K indexes ( idx have stripification overhead )
+		rend.global_param_op.Init(4096,&rend.Overrun, "global_param_op");
+		rend.global_param_pt.Init(4096,&rend.Overrun, "global_param_pt");
+		rend.global_param_mvo.Init(4096,&rend.Overrun, "global_param_mvo");
+#if STRIPS_AS_PPARAMS
+      // That makes a lot of polyparams but this is required for proper sorting...
+		// Rez uses more than 8192 translucent polygons sometimes
+      rend.global_param_tr.Init(10240, &rend.Overrun, "global_param_tr");
+#else
+		rend.global_param_tr.Init(4096,&rend.Overrun, "global_param_tr");
+#endif
 
-		rend.modtrig.Init(8192,&rend.Overrun);
+		rend.modtrig.Init(8192,&rend.Overrun, "modtrig");
 
-      rend.render_passes.Init(sizeof(RenderPass) * 10, &rend.Overrun);	// 10 render passes
+      rend.render_passes.Init(sizeof(RenderPass) * 10, &rend.Overrun, "render_passes");	// 10 render passes
 		
 		Reset();
 	}

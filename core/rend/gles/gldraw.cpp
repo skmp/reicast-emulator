@@ -30,11 +30,11 @@ const static u32 Zfunction[]=
 	GL_GEQUAL,      //GL_GEQUAL,            //6 Greater Or Equal
 #else
    GL_GREATER,     //GL_LESS/*EQUAL*/,     //1 Less
-	GL_EQUAL,       //GL_EQUAL,             //2 Equal
-	GL_GEQUAL,      //GL_LEQUAL,            //3 Less Or Equal
-	GL_LESS,        //GL_GREATER/*EQUAL*/,  //4 Greater
-	GL_NOTEQUAL,    //GL_NOTEQUAL,          //5 Not Equal
-	GL_LEQUAL,      //GL_GEQUAL,            //6 Greater Or Equal
+   GL_EQUAL,       //GL_EQUAL,             //2 Equal
+   GL_GEQUAL,      //GL_LEQUAL,            //3 Less Or Equal
+   GL_LESS,        //GL_GREATER/*EQUAL*/,  //4 Greater
+   GL_NOTEQUAL,    //GL_NOTEQUAL,          //5 Not Equal
+   GL_LEQUAL,      //GL_GEQUAL,            //6 Greater Or Equal
 #endif
 	GL_ALWAYS,      //GL_ALWAYS,            //7 Always
 };
@@ -204,7 +204,7 @@ __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 
    /* Set Z mode, only if required */
    if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
-      glcache.DepthFunc(GL_GEQUAL);
+      glcache.DepthFunc(Zfunction[6]);
    else
       glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
 
@@ -681,7 +681,7 @@ void DrawModVols(int first, int count)
    glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
 
    glcache.DepthMask(GL_FALSE);
-   glcache.DepthFunc(GL_GREATER);
+   glcache.DepthFunc(Zfunction[4]);
 
    /*
 mode :

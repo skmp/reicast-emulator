@@ -18,6 +18,7 @@ extern retro_environment_t environ_cb;
 extern bool fog_needs_update;
 bool KillTex=false;
 GLCache glcache;
+gl_ctx gl;
 
 struct ShaderUniforms_t
 {
@@ -28,11 +29,28 @@ struct ShaderUniforms_t
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
 	float fog_coefs[2];
-} ShaderUniforms;
 
-vbo_type vbo;
-modvol_shader_type modvol_shader;
-PipelineShader program_table[768*2];
+   void Set(PipelineShader* s)
+   {
+      if (s->cp_AlphaTestValue!=-1)
+         glUniform1f(s->cp_AlphaTestValue, PT_ALPHA);
+
+      if (s->scale!=-1)
+         glUniform4fv( s->scale, 1, scale_coefs);
+
+      if (s->depth_scale!=-1)
+         glUniform4fv( s->depth_scale, 1, depth_coefs);
+
+      if (s->sp_FOG_DENSITY!=-1)
+         glUniform1f( s->sp_FOG_DENSITY, fog_den_float);
+
+      if (s->sp_FOG_COL_RAM!=-1)
+         glUniform3fv( s->sp_FOG_COL_RAM, 1, ps_FOG_COL_RAM);
+
+      if (s->sp_FOG_COL_VERT!=-1)
+         glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
+   }
+} ShaderUniforms;
 
 u32 gcflip;
 
@@ -336,26 +354,6 @@ static GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentSh
 	return program;
 }
 
-static void set_shader_uniforms(struct ShaderUniforms_t *uni, PipelineShader* s)
-{
-   if (s->cp_AlphaTestValue!=-1)
-      glUniform1f(s->cp_AlphaTestValue, uni->PT_ALPHA);
-
-   if (s->scale!=-1)
-      glUniform4fv( s->scale, 1, uni->scale_coefs);
-
-   if (s->depth_scale!=-1)
-      glUniform4fv( s->depth_scale, 1, uni->depth_coefs);
-
-   if (s->sp_FOG_DENSITY!=-1)
-      glUniform1f( s->sp_FOG_DENSITY, uni->fog_den_float);
-
-   if (s->sp_FOG_COL_RAM!=-1)
-      glUniform3fv( s->sp_FOG_COL_RAM, 1, uni->ps_FOG_COL_RAM);
-
-   if (s->sp_FOG_COL_VERT!=-1)
-      glUniform3fv( s->sp_FOG_COL_VERT, 1, uni->ps_FOG_COL_VERT);
-}
 
 bool CompilePipelineShader(PipelineShader *s)
 {
@@ -402,7 +400,7 @@ bool CompilePipelineShader(PipelineShader *s)
    if (gu != -1)
       glUniform1i(gu, 1);
 
-	set_shader_uniforms(&ShaderUniforms, s);
+   ShaderUniforms.Set(s);
 
 	return glIsProgram(s->program)==GL_TRUE;
 }
@@ -454,12 +452,12 @@ static bool gl_create_resources(void)
    u32 compile              = 0;
 
 	/* create VBOs */
-	glGenBuffers(1, &vbo.geometry);
-	glGenBuffers(1, &vbo.modvols);
-	glGenBuffers(1, &vbo.idxs);
-	glGenBuffers(1, &vbo.idxs2);
+	glGenBuffers(1, &gl.vbo.geometry);
+	glGenBuffers(1, &gl.vbo.modvols);
+	glGenBuffers(1, &gl.vbo.idxs);
+	glGenBuffers(1, &gl.vbo.idxs2);
 
-	memset(program_table,0,sizeof(program_table));
+	memset(gl.program_table,0,sizeof(gl.program_table));
 
    for(cp_AlphaTest = 0; cp_AlphaTest <= 1; cp_AlphaTest++)
 	{
@@ -485,7 +483,7 @@ static bool gl_create_resources(void)
                                  pp_IgnoreTexA,
                                  pp_ShadInstr,
                                  pp_Offset,pp_FogCtrl);
-									dshader                  = &program_table[prog_id];
+									dshader                  = &gl.program_table[prog_id];
 
 									dshader->cp_AlphaTest    = cp_AlphaTest;
 									dshader->pp_ClipTestMode = pp_ClipTestMode-1;
@@ -505,16 +503,16 @@ static bool gl_create_resources(void)
 		}
 	}
 
-	modvol_shader.program        = gl_CompileAndLink(VertexShaderSource,ModifierVolumeShader);
-	modvol_shader.scale          = glGetUniformLocation(modvol_shader.program, "scale");
-	modvol_shader.sp_ShaderColor = glGetUniformLocation(modvol_shader.program, "sp_ShaderColor");
-	modvol_shader.depth_scale    = glGetUniformLocation(modvol_shader.program, "depth_scale");
+	gl.modvol_shader.program        = gl_CompileAndLink(VertexShaderSource,ModifierVolumeShader);
+	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
+	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
+	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
 
    if (settings.pvr.Emulation.precompile_shaders)
    {
-      for (i=0;i<sizeof(program_table)/sizeof(program_table[0]);i++)
+      for (i=0;i<sizeof(gl.program_table)/sizeof(gl.program_table[0]);i++)
       {
-         if (!CompilePipelineShader(	&program_table[i] ))
+         if (!CompilePipelineShader(	&gl.program_table[i] ))
             return false;
       }
    }
@@ -782,25 +780,25 @@ static bool RenderFrame(void)
       UpdateFogTexture((u8 *)FOG_TABLE);
 	}
 
-	glUseProgram(modvol_shader.program);
+	glUseProgram(gl.modvol_shader.program);
 
-	glUniform4fv(modvol_shader.scale, 1, ShaderUniforms.scale_coefs);
-	glUniform4fv(modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
+	glUniform4fv(gl.modvol_shader.scale, 1, ShaderUniforms.scale_coefs);
+	glUniform4fv(gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
 
 
 	GLfloat td[4]={0.5,0,0,0};
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
-	for (u32 i=0;i<sizeof(program_table)/sizeof(program_table[0]);i++)
+	for (u32 i=0;i<sizeof(gl.program_table)/sizeof(gl.program_table[0]);i++)
 	{
-		PipelineShader* s=&program_table[i];
+		PipelineShader* s=&gl.program_table[i];
 		if (s->program == -1)
 			continue;
 
 		glcache.UseProgram(s->program);
 
-      set_shader_uniforms(&ShaderUniforms, s);
+      ShaderUniforms.Set(s);
 	}
 
 	//setup render target first
@@ -867,8 +865,8 @@ static bool RenderFrame(void)
 	//move vertex to gpu
 
 	//Main VBO
-	glBindBuffer(GL_ARRAY_BUFFER, vbo.geometry);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs);
+	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);
 
 	glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW);
 
@@ -877,7 +875,7 @@ static bool RenderFrame(void)
 	//Modvol VBO
 	if (pvrrc.modtrig.used())
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, vbo.modvols);
+		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols);
 		glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW);
 	}
 

@@ -35,7 +35,7 @@ public:
 	}
 
 	void CullFace(GLenum mode) {
-      if (func != _depth_func || _disable_cache) {
+      if (mode != _cull_face || _disable_cache) {
 			_cull_face = mode;
 			glCullFace(mode);
 		}
@@ -272,7 +272,11 @@ private:
 	GLuint _texture_ids[TEXTURE_ID_CACHE_SIZE];
 	GLuint _texture_cache_size;
    std::map<GLuint, TextureParameters> _texture_params;
+#ifdef HAVE_OIT
    bool _disable_cache = true;
+#else
+   bool _disable_cache = false;
+#endif
 };
 
 extern GLCache glcache;

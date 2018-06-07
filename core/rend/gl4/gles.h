@@ -47,7 +47,7 @@ struct gl_ctx
 
 	} modvol_shader;
 
-	PipelineShader pogram_table[768*2];
+	PipelineShader program_table[768*2];
 
 	struct
 	{
@@ -78,17 +78,7 @@ struct modvol_shader_type
    GLuint sp_ShaderColor;
 };
 
-struct vbo_type
-{
-   GLuint geometry;
-   GLuint modvols;
-   GLuint idxs;
-   GLuint idxs2;
-};
 
-extern vbo_type vbo;
-extern modvol_shader_type modvol_shader;
-extern PipelineShader program_table[768*2];
 text_info raw_GetTexture(TSP tsp, TCW tcw);
 void CollectCleanup();
 void DoCleanup();

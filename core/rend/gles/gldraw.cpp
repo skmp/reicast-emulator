@@ -21,12 +21,21 @@ const static u32 CullMode[]=
 const static u32 Zfunction[]=
 {
 	GL_NEVER,      //GL_NEVER,              //0 Never
+#ifndef INVERT_DEPTH_FUNC
 	GL_LESS,        //GL_LESS/*EQUAL*/,     //1 Less
 	GL_EQUAL,       //GL_EQUAL,             //2 Equal
 	GL_LEQUAL,      //GL_LEQUAL,            //3 Less Or Equal
 	GL_GREATER,     //GL_GREATER/*EQUAL*/,  //4 Greater
 	GL_NOTEQUAL,    //GL_NOTEQUAL,          //5 Not Equal
 	GL_GEQUAL,      //GL_GEQUAL,            //6 Greater Or Equal
+#else
+   GL_GREATER,     //GL_LESS/*EQUAL*/,     //1 Less
+	GL_EQUAL,       //GL_EQUAL,             //2 Equal
+	GL_GEQUAL,      //GL_LEQUAL,            //3 Less Or Equal
+	GL_LESS,        //GL_GREATER/*EQUAL*/,  //4 Greater
+	GL_NOTEQUAL,    //GL_NOTEQUAL,          //5 Not Equal
+	GL_LEQUAL,      //GL_GEQUAL,            //6 Greater Or Equal
+#endif
 	GL_ALWAYS,      //GL_ALWAYS,            //7 Always
 };
 

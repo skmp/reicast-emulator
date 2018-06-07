@@ -8,7 +8,7 @@ public:
 	GLCache() { Reset(); }
 
 	void BindTexture(GLenum target,  GLuint texture) {
-		if (target == GL_TEXTURE_2D && texture != _texture) {
+      if ((target == GL_TEXTURE_2D && texture != _texture && !_disable_cache) || _disable_cache) {
 			glBindTexture(target, texture);
 			_texture = texture;
 		}
@@ -17,7 +17,7 @@ public:
 	}
 
 	void BlendFunc(GLenum sfactor, GLenum dfactor) {
-		if (sfactor != _src_blend_factor || dfactor != _dst_blend_factor) {
+      if (sfactor != _src_blend_factor || dfactor != _dst_blend_factor || _disable_cache) {
 			_src_blend_factor = sfactor;
 			_dst_blend_factor = dfactor;
 			glBlendFunc(sfactor, dfactor);
@@ -25,7 +25,7 @@ public:
 	}
 
 	void ClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) {
-		if (red != _clear_r || green != _clear_g || blue != _clear_b || alpha != _clear_a) {
+      if (red != _clear_r || green != _clear_g || blue != _clear_b || alpha != _clear_a || _disable_cache) {
 			_clear_r = red;
 			_clear_g = green;
 			_clear_b = blue;
@@ -35,7 +35,7 @@ public:
 	}
 
 	void CullFace(GLenum mode) {
-		if (mode != _cull_face) {
+      if (mode != _cull_face || _disable_cache) {
 			_cull_face = mode;
 			glCullFace(mode);
 		}
@@ -59,7 +59,7 @@ public:
 	}
 
 	void DepthMask(GLboolean flag) {
-		if (flag != _depth_mask) {
+      if (flag != _depth_mask || _disable_cache) {
 			_depth_mask = flag;
 			glDepthMask(flag);
 		}
@@ -68,31 +68,31 @@ public:
 	void Enable(GLenum cap) {
 		switch (cap) {
 		case GL_BLEND:
-			if (_en_blend)
+			if (_en_blend && !_disable_cache)
 				return;
 			_en_blend = true;
          glEnable(GL_BLEND);
 			break;
 		case GL_CULL_FACE:
-			if (_en_cull_face)
+			if (_en_cull_face && !_disable_cache)
 				return;
 			_en_cull_face = true;
          glEnable(GL_CULL_FACE);
 			break;
 		case GL_DEPTH_TEST:
-			if (_en_depth_test)
+			if (_en_depth_test && !_disable_cache)
 				return;
 			_en_depth_test = true;
          glEnable(GL_DEPTH_TEST);
 			break;
 		case GL_SCISSOR_TEST:
-			if (_en_scissor_test)
+			if (_en_scissor_test && !_disable_cache)
 				return;
 			_en_scissor_test = true;
          glEnable(GL_SCISSOR_TEST);
 			break;
 		case GL_STENCIL_TEST:
-			if (_en_stencil_test)
+			if (_en_stencil_test && !_disable_cache)
 				return;
 			_en_stencil_test = true;
          glEnable(GL_STENCIL_TEST);
@@ -103,31 +103,31 @@ public:
 	void Disable(GLenum cap) {
 		switch (cap) {
 		case GL_BLEND:
-			if (!_en_blend)
+			if (!_en_blend && !_disable_cache)
 				return;
 			_en_blend = false;
          glDisable(GL_BLEND);
 			break;
 		case GL_CULL_FACE:
-			if (!_en_cull_face)
+			if (!_en_cull_face && !_disable_cache)
 				return;
 			_en_cull_face = false;
          glDisable(GL_CULL_FACE);
 			break;
 		case GL_DEPTH_TEST:
-			if (!_en_depth_test)
+			if (!_en_depth_test && !_disable_cache)
 				return;
 			_en_depth_test = false;
          glDisable(GL_DEPTH_TEST);
 			break;
 		case GL_SCISSOR_TEST:
-			if (!_en_scissor_test)
+			if (!_en_scissor_test && !_disable_cache)
 				return;
 			_en_scissor_test = false;
          glDisable(GL_SCISSOR_TEST);
 			break;
 		case GL_STENCIL_TEST:
-			if (!_en_stencil_test)
+			if (!_en_stencil_test && !_disable_cache)
 				return;
 			_en_stencil_test = false;
          glDisable(GL_STENCIL_TEST);
@@ -136,14 +136,14 @@ public:
 	}
 
 	void UseProgram(GLuint program) {
-		if (program != _program) {
+      if (program != _program || _disable_cache) {
 			_program = program;
 			glUseProgram(program);
 		}
 	}
 
 	void StencilFunc(GLenum func, GLint ref, GLuint mask) {
-		if (_stencil_func != func || _stencil_ref != ref || _stencil_fmask != mask) {
+      if (_stencil_func != func || _stencil_ref != ref || _stencil_fmask != mask || _disable_cache) {
 			_stencil_func = func;
 			_stencil_ref = ref;
 			_stencil_fmask = mask;
@@ -153,7 +153,7 @@ public:
 	}
 
 	void StencilOp(GLenum sfail, GLenum dpfail, GLenum dppass) {
-		if (_stencil_sfail != sfail ||_stencil_dpfail != dpfail || _stencil_dppass != dppass) {
+      if (_stencil_sfail != sfail ||_stencil_dpfail != dpfail || _stencil_dppass != dppass || _disable_cache) {
 			_stencil_sfail = sfail;
 			_stencil_dpfail = dpfail;
 			_stencil_dppass = dppass;
@@ -163,14 +163,14 @@ public:
 	}
 
 	void StencilMask(GLuint mask) {
-		if (_stencil_mask != mask) {
+      if (_stencil_mask != mask || _disable_cache) {
 			_stencil_mask = mask;
 			glStencilMask(mask);
 		}
 	}
 
 void TexParameteri(GLenum target,  GLenum pname,  GLint param) {
-		if (target == GL_TEXTURE_2D)
+      if (target == GL_TEXTURE_2D && !_disable_cache)
 		{
 			TextureParameters &cur_params = _texture_params[_texture];
 			switch (pname) {
@@ -272,6 +272,11 @@ private:
 	GLuint _texture_ids[TEXTURE_ID_CACHE_SIZE];
 	GLuint _texture_cache_size;
    std::map<GLuint, TextureParameters> _texture_params;
+#ifdef HAVE_OIT
+   bool _disable_cache = true;
+#else
+   bool _disable_cache = false;
+#endif
 };
 
 extern GLCache glcache;

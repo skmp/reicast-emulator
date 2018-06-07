@@ -207,7 +207,7 @@ void main() \n\
 #ifndef GLES
    "\
 	float w = gl_FragCoord.w * 100000.0; \n\
-	gl_FragDepth = log2(1.0 + w) / 34; \n"
+	gl_FragDepth = log2(1.0 + w) / 34.0; \n"
 #endif
 	FRAGCOL "=color; \n\
 }";

@@ -141,7 +141,7 @@ static void SetTextureRepeatMode(GLuint dir, u32 clamp, u32 mirror)
 template <u32 Type, bool SortingEnabled>
 __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 {
-   CurrentShader = &program_table[
+   CurrentShader = &gl.program_table[
 									 GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
 											 	  SetTileClip(gp->tileclip, false) + 1,
 												  gp->pcw.Texture,
@@ -489,7 +489,7 @@ void GenSorted(int first, int count)
    if (pidx_sort.size())
    {
       /* Bind and upload sorted index buffer */
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2);
       glBufferData(GL_ELEMENT_ARRAY_BUFFER,vidx_sort.size()*2,&vidx_sort[0],GL_STREAM_DRAW);
    }
 }
@@ -499,7 +499,7 @@ void DrawSorted(u32 count)
    //if any drawing commands, draw them
 	if (pidx_sort.size())
    {
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs2);
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2);
 
       u32 count=pidx_sort.size();
 
@@ -623,8 +623,8 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 
 void SetupMainVBO(void)
 {
-	glBindBuffer(GL_ARRAY_BUFFER, vbo.geometry);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.idxs);
+	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);
 
 	//setup vertex buffers attrib pointers
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
@@ -642,7 +642,7 @@ void SetupMainVBO(void)
 
 static void SetupModvolVBO(void)
 {
-	glBindBuffer(GL_ARRAY_BUFFER, vbo.modvols);
+	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols);
 
 	//setup vertex buffers attrib pointers
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
@@ -668,8 +668,8 @@ void DrawModVols(int first, int count)
    glcache.Enable(GL_BLEND);
    glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-   glcache.UseProgram(modvol_shader.program);
-   glUniform1f(modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
+   glcache.UseProgram(gl.modvol_shader.program);
+   glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
 
    glcache.DepthMask(GL_FALSE);
    glcache.DepthFunc(GL_GREATER);

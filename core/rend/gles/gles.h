@@ -34,6 +34,32 @@ struct PipelineShader
    u32 pp_FogCtrl;
 };
 
+
+
+struct gl_ctx
+{
+	struct
+	{
+		GLuint program;
+
+		GLuint scale,depth_scale;
+		GLuint sp_ShaderColor;
+
+	} modvol_shader;
+
+	PipelineShader program_table[768*2];
+
+	struct
+	{
+		GLuint geometry,modvols,idxs,idxs2;
+#ifndef GLES
+		GLuint vao;
+#endif
+	} vbo;
+
+	//GLuint matrix;
+};
+
 GLuint gl_GetTexture(TSP tsp,TCW tcw);
 struct text_info {
 	u16* pdata;
@@ -41,6 +67,8 @@ struct text_info {
 	u32 height;
 	u32 textype; // 0 565, 1 1555, 2 4444
 };
+
+extern gl_ctx gl;
 
 struct modvol_shader_type
 {
@@ -50,17 +78,7 @@ struct modvol_shader_type
    GLuint sp_ShaderColor;
 };
 
-struct vbo_type
-{
-   GLuint geometry;
-   GLuint modvols;
-   GLuint idxs;
-   GLuint idxs2;
-};
 
-extern vbo_type vbo;
-extern modvol_shader_type modvol_shader;
-extern PipelineShader program_table[768*2];
 text_info raw_GetTexture(TSP tsp, TCW tcw);
 void CollectCleanup();
 void DoCleanup();

@@ -49,7 +49,11 @@ void ta_vtx_data(u32* data, u32 size);
 
 bool ta_parse_vdrc(TA_context* ctx);
 
+#ifdef HAVE_OIT
+#define STRIPS_AS_PPARAMS 0
+#else
 #define STRIPS_AS_PPARAMS 1
+#endif
 
 #include "ta_ctx.h"
 

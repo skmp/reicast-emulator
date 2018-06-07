@@ -18,6 +18,7 @@ const static u32 CullMode[]=
 	GL_FRONT, //2   Cull if Negative    Cull if ( |det| < 0 ) or ( |det| < fpu_cull_val )
 	GL_BACK,  //3   Cull if Positive    Cull if ( |det| > 0 ) or ( |det| < fpu_cull_val )
 };
+#define INVERT_DEPTH_FUNC
 const static u32 Zfunction[]=
 {
 	GL_NEVER,      //GL_NEVER,              //0 Never
@@ -64,9 +65,6 @@ const static u32 SrcBlendGL[] =
 	GL_DST_ALPHA,
 	GL_ONE_MINUS_DST_ALPHA
 };
-
-extern int gles_screen_width;
-extern int gles_screen_height;
 
 PipelineShader* CurrentShader;
 extern u32 gcflip;
@@ -139,9 +137,9 @@ static void SetTextureRepeatMode(GLuint dir, u32 clamp, u32 mirror)
 }
 
 template <u32 Type, bool SortingEnabled>
-__forceinline void SetGPState(const PolyParam* gp, u32 cflip)
+__forceinline void SetGPState(const PolyParam* gp, bool weighted_average = false, u32 front_peeling = 0, u32 cflip=0)
 {
-   CurrentShader = &gl.program_table[
+   CurrentShader = gl.getShader(
 									 GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
 											 	  SetTileClip(gp->tileclip, false) + 1,
 												  gp->pcw.Texture,
@@ -149,11 +147,26 @@ __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 												  gp->tsp.IgnoreTexA,
 												  gp->tsp.ShadInstr,
 												  gp->pcw.Offset,
-												  gp->tsp.FogCtrl)];
+												  gp->tsp.FogCtrl,
+                                      weighted_average,
+                                      front_peeling));
 
-   if (CurrentShader->program == -1)
+   if (CurrentShader->program == -1) {
+      CurrentShader->cp_AlphaTest = Type == ListType_Punch_Through ? 1 : 0;
+		CurrentShader->pp_ClipTestMode = SetTileClip(gp->tileclip, false);
+		CurrentShader->pp_Texture = gp->pcw.Texture;
+		CurrentShader->pp_UseAlpha = gp->tsp.UseAlpha;
+		CurrentShader->pp_IgnoreTexA = gp->tsp.IgnoreTexA;
+		CurrentShader->pp_ShadInstr = gp->tsp.ShadInstr;
+		CurrentShader->pp_Offset = gp->pcw.Offset;
+		CurrentShader->pp_FogCtrl = gp->tsp.FogCtrl;
+		CurrentShader->pp_WeightedAverage = weighted_average;
+		CurrentShader->pp_FrontPeeling = front_peeling;
       CompilePipelineShader(CurrentShader);
+   }
    glcache.UseProgram(CurrentShader->program);
+   ShaderUniforms.Set(CurrentShader);
+
    SetTileClip(gp->tileclip,true);
 
    // This bit controls which pixels are affected
@@ -162,28 +175,33 @@ __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
    glcache.StencilFunc(GL_ALWAYS, stencil, stencil);
 
    glcache.BindTexture(GL_TEXTURE_2D, gp->texid == -1 ? 0 : gp->texid);
-   SetTextureRepeatMode(GL_TEXTURE_WRAP_S, gp->tsp.ClampU, gp->tsp.FlipU);
-   SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
 
-   //set texture filter mode
-	if (gp->tsp.FilterMode == 0)
-	{
-		//disable filtering, mipmaps
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	}
-	else
-	{
-		//bilinear filtering
-		//PowerVR supports also trilinear via two passes, but we ignore that for now
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (gp->tcw.MipMapped && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	}
+   if (gp->texid > 0)
+   {
+      SetTextureRepeatMode(GL_TEXTURE_WRAP_S, gp->tsp.ClampU, gp->tsp.FlipU);
+      SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
+
+      //set texture filter mode
+      
+      if (gp->tsp.FilterMode == 0)
+      {
+         //disable filtering, mipmaps
+         glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+         glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      }
+      else
+      {
+         //bilinear filtering
+         //PowerVR supports also trilinear via two passes, but we ignore that for now
+         glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (gp->tcw.MipMapped && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+         glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      }
+   }
 
    if (Type== ListType_Translucent)
    {
-      glcache.Enable(GL_BLEND);
-      glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr], DstBlendGL[gp->tsp.DstInstr]);
+      //glcache.Enable(GL_BLEND);
+      //glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr], DstBlendGL[gp->tsp.DstInstr]);
    }
    else
       glcache.Disable(GL_BLEND);
@@ -195,18 +213,34 @@ __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 
    /* Set Z mode, only if required */
    if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
-      glcache.DepthFunc(Zfunction[6]);
+   {
+      if (gp->isp.DepthMode == 7) {		// Fixes VR2 menu but not sure about this one
+         glcache.DepthFunc(GL_ALWAYS);
+      }
+      else
+      {
+         glcache.DepthFunc(Zfunction[6]); // Greater or equal
+         //			glcache.DepthFunc(GL_LESS);
+      }
+   }
    else
+   {
       glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
+   }
 
-   if (SortingEnabled && settings.pvr.Emulation.AlphaSortMode == 0)
+#if TRIG_SORT
+   if (SortingEnabled && !front_peeling)
       glcache.DepthMask(GL_FALSE);
    else
+#endif
+      if (!weighted_average)
       glcache.DepthMask(!gp->isp.ZWriteDis);
 }
 
 template <u32 Type, bool SortingEnabled>
-void DrawList(const List<PolyParam>& gply, int first, int count)
+void DrawList(const List<PolyParam>& gply, int first, int count, bool
+      weighted_average = false, u32 front_peeling = 0,
+      int srcBlendModeFilter = -1, int dstBlendModeFilter = -1)
 {
    PolyParam* params= &gply.head()[first];
 
@@ -223,7 +257,16 @@ void DrawList(const List<PolyParam>& gply, int first, int count)
    {
       if (params->count>2) /* this actually happens for some games. No idea why .. */
       {
-         SetGPState<Type,SortingEnabled>(params, 0);
+         if (Type == ListType_Translucent) {
+				if ((params->tsp.SrcInstr == 0 && params->tsp.DstInstr == 1)						// Nothing to do
+					|| (srcBlendModeFilter != -1 && params->tsp.SrcInstr != srcBlendModeFilter)		// src filter doesn't match
+					|| (dstBlendModeFilter != -1 && params->tsp.DstInstr != dstBlendModeFilter)) {	// dst filter doesn't match
+					params++;
+					continue;
+				}
+			}
+
+         SetGPState<Type,SortingEnabled>(params, weighted_average, front_peeling);
          glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_SHORT, (GLvoid*)(2*params->first));
       }
 
@@ -238,6 +281,20 @@ void DrawList(const List<PolyParam>& gply, int first, int count)
    glStencilOp(GL_KEEP,
          GL_KEEP,
          GL_KEEP);
+}
+
+void DrawListTranslucentAutoSorted(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0,
+		int srcBlendModeFilter = -1, int dstBlendModeFilter = -1)
+{
+	DrawList<ListType_Translucent, true>(gply, first, count, weighted_average, front_peeling, srcBlendModeFilter, dstBlendModeFilter);
+}
+void DrawListOpaque(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0)
+{
+	DrawList<ListType_Opaque, false>(gply, first, count, weighted_average, front_peeling);
+}
+void DrawListPunchThrough(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0)
+{
+	DrawList<ListType_Punch_Through, false>(gply, first, count, weighted_average, front_peeling);
 }
 
 bool operator<(const PolyParam &left, const PolyParam &right)
@@ -774,10 +831,20 @@ last *out*  : flip, merge*out* &clear from last merge
 
    //restore states
    glcache.Enable(GL_DEPTH_TEST);
+   glcache.DepthMask(GL_TRUE);
 }
+
+void InitDualPeeling();
+void RenderAverageColors();
+void RenderWeightedBlended();
+void RenderFrontToBackPeeling(int first, int count);
+void DualPeelingReshape(int w, int h);
 
 void DrawStrips(void)
 {
+   InitDualPeeling();
+	DualPeelingReshape(gles_screen_width, gles_screen_height);
+
 	SetupMainVBO();
 	//Draw the strips !
 
@@ -792,11 +859,11 @@ void DrawStrips(void)
 
       //initial state
       glcache.Enable(GL_DEPTH_TEST);
+      glcache.DepthMask(GL_TRUE);
 
 #if 0
       glClearDepth(0.f);
 #endif
-      glcache.DepthMask(GL_TRUE);
       glcache.StencilMask(0xFF);
       glClear(GL_DEPTH_BUFFER_BIT );
 
@@ -811,24 +878,27 @@ void DrawStrips(void)
       // Modifier volumes
       DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
-      if (UsingAutoSort())
-         GenSorted(previous_pass.tr_count,
-               current_pass.tr_count - previous_pass.tr_count);
-
       //Alpha blended
-      if (settings.pvr.Emulation.AlphaSortMode == 0)
       {
-         if (pvrrc.isAutoSort)
-            DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
-         else
-            DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-      }
-      else if (settings.pvr.Emulation.AlphaSortMode == 1)
-      {
-         if (pvrrc.isAutoSort)
-            SortPParams(previous_pass.tr_count,
-                  current_pass.tr_count - previous_pass.tr_count);
-         DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count );
+            //       if (hack_on)
+            //				RenderAverageColors();
+            //			else
+            RenderFrontToBackPeeling(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+         //RenderWeightedBlended();
+         //			if (pvrrc.isAutoSort)
+         //				GenSorted(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+         //
+         //#if TRIG_SORT
+         //			if (pvrrc.isAutoSort)
+         //				DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
+         //			else
+         //				DrawList<ListType_Translucent,false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+         //#else
+         //			if (pvrrc.isAutoSort)
+         //				SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+         //			DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+         //#endif
+         SetupMainVBO();
       }
 
       previous_pass = current_pass;

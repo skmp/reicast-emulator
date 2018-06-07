@@ -1,6 +1,7 @@
 DEBUG         := 0
 NO_REND       := 0
 HAVE_GL       := 1
+HAVE_OIT      := 0
 HAVE_CORE     := 0
 NO_THREADS    := 1
 NO_EXCEPTIONS := 0
@@ -548,6 +549,12 @@ ifeq ($(HAVE_GL), 1)
 		CXXFLAGS += -DHAVE_OPENGL
 		CFLAGS   += -DHAVE_OPENGL
 	endif
+endif
+
+ifeq ($(HAVE_OIT), 1)
+	RZDCY_CFLAGS += -DHAVE_OIT
+	CXXFLAGS += -DHAVE_OIT
+	CFLAGS   += -DHAVE_OIT
 endif
 
 ifeq ($(HAVE_CORE), 1)

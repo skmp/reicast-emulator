@@ -87,9 +87,16 @@ SOURCES_CXX += $(CORE_DIR)/rend/norend/norend.cpp
 endif
 
 ifeq ($(HAVE_GL), 1)
+ifeq ($(HAVE_OIT), 1)
+SOURCES_CXX += $(CORE_DIR)/rend/gl4/gles.cpp \
+					$(CORE_DIR)/rend/gl4/gldraw.cpp \
+					$(CORE_DIR)/rend/gl4/gltex.cpp \
+					$(CORE_DIR)/rend/gl4/render_tr.cpp
+else
 SOURCES_CXX += $(CORE_DIR)/rend/gles/gles.cpp \
 					$(CORE_DIR)/rend/gles/gldraw.cpp \
 					$(CORE_DIR)/rend/gles/gltex.cpp
+endif
 SOURCES_C   += $(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
 					$(LIBRETRO_COMM_DIR)/glsm/glsm.c
 ifeq ($(GLES), 1)

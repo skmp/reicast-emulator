@@ -157,4 +157,4 @@ extern GLuint stencilTexId;
 extern GLuint depthTexId;
 extern GLuint opaqueTexId;
 
-#define ABUFFER_SIZE 16
+#define ABUFFER_SIZE 32

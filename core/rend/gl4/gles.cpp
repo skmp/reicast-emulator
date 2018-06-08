@@ -249,10 +249,10 @@ void main() \n\
 		int abidx = int(imageAtomicAdd(abufferCounterImg, coords, uint(1))); \n\
 		if (abidx >= ABUFFER_SIZE) { \n\
          // Green pixels when overflow \n\
-		   vec4 blend_val = vec4(0.001, 8, float(pp_Number), 0); \n\
-         ivec3 coords3 = ivec3(coords, 0); \n\
-         imageStore(abufferImg, coords3, vec4(0, 1, 0, 1)); \n\
-         imageStore(abufferBlendingImg, coords3, blend_val); \n\
+		   //vec4 blend_val = vec4(0.001, 8, float(pp_Number), 0); \n\
+         //ivec3 coords3 = ivec3(coords, 0); \n\
+         //imageStore(abufferImg, coords3, vec4(0, 1, 0, 1)); \n\
+         //imageStore(abufferBlendingImg, coords3, blend_val); \n\
       } else { \n\
       vec4 blend_val = vec4(gl_FragDepth, float(blend_mode.x) * 8 + float(blend_mode.y), float(pp_Number), 0); \n\
 			ivec3 coords3 = ivec3(coords, abidx); \n\

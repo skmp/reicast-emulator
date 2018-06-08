@@ -323,7 +323,7 @@ void DrawList(const List<PolyParam>& gply, int first, int count, int pass)
             params++;
             continue;
          }
-         ShaderUniforms.poly_number = params - gply.head();
+         ShaderUniforms.poly_number = params - gply.head() + 1;
          SetGPState<Type,SortingEnabled>(params, pass);
 
          glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_SHORT, (GLvoid*)(2*params->first));

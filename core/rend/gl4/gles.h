@@ -29,6 +29,7 @@ struct PipelineShader
 	GLuint screen_size;
    GLuint blend_mode;
    GLuint pp_Number;
+   GLuint pp_Stencil;
 
    //
 	u32 cp_AlphaTest;
@@ -102,6 +103,7 @@ void ReadRTTBuffer();
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, int pass);
+void SetCull(u32 CulliMode);
 
 typedef struct _ShaderUniforms_t
 {
@@ -113,6 +115,7 @@ typedef struct _ShaderUniforms_t
 	float ps_FOG_COL_VERT[3];
    GLuint blend_mode[2];
    int poly_number;
+   u32 stencil;
 
    void Set(PipelineShader* s)
    {
@@ -144,6 +147,9 @@ typedef struct _ShaderUniforms_t
 
       if (s->pp_Number != -1)
 			glUniform1i(s->pp_Number, poly_number);
+
+      if (s->pp_Stencil != -1)
+			glUniform1ui(s->pp_Stencil, stencil);
    }
 } _ShaderUniforms;
 extern struct _ShaderUniforms_t ShaderUniforms;
@@ -159,5 +165,38 @@ extern GLuint stencilTexId;
 extern GLuint depthTexId;
 extern GLuint opaqueTexId;
 
-#define ABUFFER_SIZE 32
-#define ABUFFER_SIZE_STR "32"
+// Must match!
+// in bytes
+#define ABUFFER_SIZE 256*1024*1024
+#define ABUFFER_SIZE_STR "(256u * 1024u * 1024u)"
+
+#define SHADER_HEADER "#version 140 \n\
+#extension GL_EXT_shader_image_load_store : enable \n\
+#extension GL_ARB_shader_storage_buffer_object : enable \n\
+#extension GL_ARB_shader_atomic_counters : enable \n\
+#extension GL_ARB_shader_image_size : enable \n\
+#extension GL_ARB_shading_language_420pack : enable \n\
+\n\
+#define ABUFFER_SIZE " ABUFFER_SIZE_STR " \n\
+coherent uniform layout(size1x32, binding = 3) uimage2D abufferPointerImg; \n\
+struct Pixel { \n\
+	mediump vec4 color; \n\
+	mediump float depth; \n\
+	int seq_num; \n\
+	uint blend_stencil; \n\
+	uint next; \n\
+}; \n\
+#define EOL 0xFFFFFFFFu \n\
+layout (binding = 0) buffer PixelBuffer { \n\
+	Pixel pixels[]; \n\
+}; \n\
+layout(binding = 0, offset = 0) uniform atomic_uint buffer_index; \n\
+\n\
+void setFragDepth(void) \n\
+{ \n\
+	highp float w = 100000.0 * gl_FragCoord.w; \n\
+	gl_FragDepth = 1 - log2(1.0 + w) / 34; \n\
+} \n\
+"
+
+void SetupModvolVBO();

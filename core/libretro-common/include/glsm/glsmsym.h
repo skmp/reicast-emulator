@@ -33,6 +33,7 @@ RETRO_BEGIN_DECLS
 #define glTexCoord2f                rglTexCoord2f
 
 /* more forward-compatible GL subset symbols */
+#define glGetBufferSubData          rglGetBufferSubData
 #define glUniform2uiv               rglUniform2uiv
 #define glTextureView               rglTextureView
 #define glGetQueryObjectuiv         rglGetQueryObjectuiv
@@ -447,6 +448,10 @@ void rglFlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length
 GLenum rglClientWaitSync(void *sync, GLbitfield flags, uint64_t timeout);
 void rglDrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
 			       GLvoid *indices, GLint basevertex);
+void rglGetBufferSubData(	GLenum target,
+ 	GLintptr offset,
+ 	GLsizeiptr size,
+ 	GLvoid * data);
 
 RETRO_END_DECLS
 

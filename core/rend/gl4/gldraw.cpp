@@ -219,7 +219,6 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
 		ShaderUniforms.blend_mode[0] = gp->tsp.SrcInstr;
 		ShaderUniforms.blend_mode[1] = gp->tsp.DstInstr;
 	}
-   ShaderUniforms.Set(CurrentShader);
 
    SetTileClip(gp->tileclip,true);
 
@@ -227,6 +226,9 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
    // by modvols
    const u32 stencil = (gp->pcw.Shadow!=0)?0x80:0;
    glcache.StencilFunc(GL_ALWAYS, stencil, stencil);
+
+   ShaderUniforms.stencil = stencil;
+	ShaderUniforms.Set(CurrentShader);
 
    if (CurrentShader->pp_Texture)
    {
@@ -559,6 +561,7 @@ last *out*  : flip, merge*out* &clear from last merge
 
 void renderABuffer(bool sortFragments);
 void renderPass2(GLuint textureId, GLuint depthTexId);
+void DrawTranslucentModVols(int first, int count);
 
 void CreateGeometryTexture()
 {
@@ -685,6 +688,9 @@ void DrawStrips(void)
 
       //Alpha blended
          DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3);
+
+         //		glMemoryBarrier(GL_ALL_BARRIER_BITS);
+         //		DrawTranslucentModVols(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
 
          // FIXME Depth of translucent poly must be used for next render pass if any
          // FIXME Multipass in general...

@@ -259,6 +259,17 @@ void rglTexSubImage2D(
          width, height, format, type, pixels);
 }
 
+
+void rglGetBufferSubData(	GLenum target,
+ 	GLintptr offset,
+ 	GLsizeiptr size,
+ 	GLvoid * data)
+{
+#if defined(HAVE_OPENGL)
+   glGetBufferSubData(target, offset, size, data);
+#endif
+}
+
 /*
  *
  * Core in:

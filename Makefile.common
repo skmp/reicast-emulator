@@ -91,6 +91,7 @@ ifeq ($(HAVE_OIT), 1)
 SOURCES_CXX += $(CORE_DIR)/rend/gl4/gles.cpp \
 					$(CORE_DIR)/rend/gl4/gldraw.cpp \
 					$(CORE_DIR)/rend/gl4/gltex.cpp \
+					$(CORE_DIR)/rend/gl4/abuffer.cpp \
 					$(CORE_DIR)/rend/gl4/render_tr.cpp
 else
 SOURCES_CXX += $(CORE_DIR)/rend/gles/gles.cpp \

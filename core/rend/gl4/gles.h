@@ -25,6 +25,7 @@ struct PipelineShader
 	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
    GLuint shade_scale_factor;
 	GLuint screen_size;
+   GLuint blend_mode;
 
    //
 	u32 cp_AlphaTest;
@@ -115,6 +116,7 @@ typedef struct _ShaderUniforms_t
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
 	float fog_coefs[2];
+   GLuint blend_mode[2];
 
    void Set(PipelineShader* s)
    {
@@ -141,6 +143,8 @@ typedef struct _ShaderUniforms_t
 
 		if (s->shade_scale_factor != -1)
 			glUniform1f(s->shade_scale_factor, FPU_SHAD_SCALE.scale_factor / 256.f);
+      if (s->blend_mode != -1)
+			glUniform2uiv(s->blend_mode, 1, blend_mode);
    }
 } _ShaderUniforms;
 extern struct _ShaderUniforms_t ShaderUniforms;
@@ -158,3 +162,4 @@ void SetupMainVBO();
 extern "C" struct retro_hw_render_callback hw_render;
 
 extern GLuint stencilTexId;
+extern GLuint depthTexId;

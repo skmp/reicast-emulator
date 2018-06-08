@@ -33,6 +33,8 @@ RETRO_BEGIN_DECLS
 #define glTexCoord2f                rglTexCoord2f
 
 /* more forward-compatible GL subset symbols */
+#define glUniform2uiv               rglUniform2uiv
+#define glTextureView               rglTextureView
 #define glGetQueryObjectuiv         rglGetQueryObjectuiv
 #define glGenQueries                rglGenQueries
 #define glDeleteQueries             rglDeleteQueries
@@ -147,6 +149,7 @@ RETRO_BEGIN_DECLS
 #define glClear                     rglClear
 #define glPolygonMode               rglPolygonMode
 #define glLineWidth                 rglLineWidth
+#define glTexImage3D                rglTexImage3D
 #define glTexImage2DMultisample     rglTexImage2DMultisample
 #define glTexStorage2DMultisample   rglTexStorage2DMultisample
 #define glMemoryBarrier             rglMemoryBarrier
@@ -334,6 +337,17 @@ void rglVertexAttrib4f(GLuint name, GLfloat x, GLfloat y,
 void rglVertexAttrib4fv(GLuint name, GLfloat* v);
 void rglDeleteProgram(GLuint program);
 void rglDeleteBuffers(GLsizei n, const GLuint *buffers);
+void rglUniform2uiv(	GLint location,
+ 	GLsizei count,
+ 	const GLuint *value);
+void rglTextureView(	GLuint texture,
+ 	GLenum target,
+ 	GLuint origtexture,
+ 	GLenum internalformat,
+ 	GLuint minlevel,
+ 	GLuint numlevels,
+ 	GLuint minlayer,
+ 	GLuint numlayers);
 void rglGenQueries(	GLsizei n,
  	GLuint * ids);
 void rglDeleteQueries(	GLsizei n,
@@ -398,6 +412,16 @@ GLenum rglGetError(void);
 void rglClear(GLbitfield mask);
 void rglPolygonMode(GLenum face, GLenum mode);
 void rglLineWidth(GLfloat width);
+void rglTexImage3D(	GLenum target,
+ 	GLint level,
+ 	GLint internalFormat,
+ 	GLsizei width,
+ 	GLsizei height,
+ 	GLsizei depth,
+ 	GLint border,
+ 	GLenum format,
+ 	GLenum type,
+ 	const GLvoid * data);
 void rglTexImage2DMultisample( 	GLenum target,
   	GLsizei samples,
   	GLenum internalformat,

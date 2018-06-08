@@ -1,10 +1,6 @@
 #include "gles.h"
 #include "glcache.h"
 
-//#define GL_TEXTURE_RECTANGLE_ARB 0x84F5
-#define GL_RGB16F_ARB 0x881B
-#define GL_RGBA16F_ARB 0x881A
-
 static int g_imageWidth = 0;
 static int g_imageHeight = 0;
 static GLuint g_quadBuffer = 0;
@@ -229,7 +225,7 @@ GLuint g_frontDepthTexId[2];
 GLuint g_frontColorTexId[2];
 GLuint g_frontColorBlenderTexId;
 GLuint g_frontColorBlenderFboId;
-GLuint g_frontDepthInitTexId;
+//GLuint g_frontDepthInitTexId;
 GLuint g_samples_query;
 PipelineShader g_front_blend_shader;
 PipelineShader g_front_final_shader;
@@ -237,11 +233,12 @@ PipelineShader g_front_final_shader;
 const char *front_blend_fragment_source = "\
 #version 140 \n\
 out vec4 FragColor; \n\
-uniform sampler2DRect TempTex; \n\
+uniform sampler2D TempTex; \n\
+uniform lowp vec2 screen_size; \n\
  \n\
 void main(void) \n\
 { \n\
-	FragColor = texture2DRect(TempTex, gl_FragCoord.xy); \n\
+   FragColor = texture(TempTex, gl_FragCoord.xy / screen_size); \n\
 } \n\
 ";
 
@@ -249,11 +246,12 @@ void main(void) \n\
 const char *front_final_fragment_source = "\
 #version 140 \n\
 out vec4 FragColor; \n\
-uniform sampler2DRect ColorTex; \n\
+uniform sampler2D ColorTex; \n\
+uniform lowp vec2 screen_size; \n\
  \n\
 void main(void) \n\
 { \n\
-	vec4 frontColor = texture2DRect(ColorTex, gl_FragCoord.xy); \n\
+	vec4 frontColor = texture(ColorTex, gl_FragCoord.xy / screen_size); \n\
 //	if (frontColor.a >= 0.99) { \n\
 //		FragColor = vec4(0, 0, 0, 0); \n\
 //		return; \n\
@@ -271,53 +269,54 @@ void InitFrontPeelingRenderTargets()
 
 	for (int i = 0; i < 2; i++)
 	{
-		glcache.BindTexture(GL_TEXTURE_RECTANGLE, g_frontDepthTexId[i]);
-		glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH_COMPONENT,
-					 g_imageWidth, g_imageHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glcache.BindTexture(GL_TEXTURE_2D, g_frontDepthTexId[i]);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8,
+					 g_imageWidth, g_imageHeight, 0, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, NULL);
 
-		glcache.BindTexture(GL_TEXTURE_RECTANGLE, g_frontColorTexId[i]);
-		glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, g_imageWidth, g_imageHeight,
+		glcache.BindTexture(GL_TEXTURE_2D, g_frontColorTexId[i]);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, g_imageWidth, g_imageHeight,
 					 0, GL_RGBA, GL_FLOAT, 0);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, g_frontFboId[i]);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-								  GL_TEXTURE_RECTANGLE, g_frontDepthTexId[i], 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+								  GL_TEXTURE_2D, g_frontDepthTexId[i], 0);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-								  GL_TEXTURE_RECTANGLE, g_frontColorTexId[i], 0);
+								  GL_TEXTURE_2D, g_frontColorTexId[i], 0);
 	}
 
 	g_frontColorBlenderTexId = glcache.GenTexture();
-	glcache.BindTexture(GL_TEXTURE_RECTANGLE, g_frontColorBlenderTexId);
-	glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, g_imageWidth, g_imageHeight,
+	glcache.BindTexture(GL_TEXTURE_2D, g_frontColorBlenderTexId);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, g_imageWidth, g_imageHeight,
 				 0, GL_RGBA, GL_FLOAT, 0);
 
-	g_frontDepthInitTexId = glcache.GenTexture();
-	glcache.BindTexture(GL_TEXTURE_RECTANGLE, g_frontDepthInitTexId);
-	glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH_COMPONENT,
-				 g_imageWidth, g_imageHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	//g_frontDepthInitTexId = glcache.GenTexture();
+	//glcache.BindTexture(GL_TEXTURE_RECTANGLE, g_frontDepthInitTexId);
+	//glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	//glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	//glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	//glcache.TexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	//glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH_COMPONENT,
+				 //g_imageWidth, g_imageHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
 	glGenFramebuffers(1, &g_frontColorBlenderFboId);
 	glBindFramebuffer(GL_FRAMEBUFFER, g_frontColorBlenderFboId);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-							  GL_TEXTURE_RECTANGLE, g_frontDepthTexId[0], 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+							  GL_TEXTURE_2D, g_frontDepthTexId[0], 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-							  GL_TEXTURE_RECTANGLE, g_frontColorBlenderTexId, 0);
+							  GL_TEXTURE_2D, g_frontColorBlenderTexId, 0);
 
 	glGenQueries(1, &g_samples_query);
 }
@@ -329,16 +328,27 @@ void DeleteFrontPeelingRenderTargets()
 	glcache.DeleteTextures(2, g_frontDepthTexId);
 	glcache.DeleteTextures(2, g_frontColorTexId);
 	glcache.DeleteTextures(1, &g_frontColorBlenderTexId);
-	glcache.DeleteTextures(1, &g_frontDepthInitTexId);
+	//glcache.DeleteTextures(1, &g_frontDepthInitTexId);
 	glDeleteQueries(1, &g_samples_query);
 }
 
+extern GLuint geom_fbo;
 //--------------------------------------------------------------------------
 void RenderFrontToBackPeeling(int first, int count)
 {
 	// ---------------------------------------------------------------------
 	// 1. Initialize Min Depth Buffer
 	// ---------------------------------------------------------------------
+   glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
+	glBindTexture(GL_TEXTURE_2D, g_frontDepthTexId[0]);
+	// FIXME:
+	// GL_DEPTH_STENCIL is super slow
+	// GL_DEPTH32F_STENCIL8 is fast but doesn't seem to work (depth values are wrong?!?!?)
+	// GL_DEPTH24_STENCIL8 seems to work but is super slow
+	// GL_DEPTH_COMPONENT32F fails
+	// GL_FLOAT_32_UNSIGNED_INT_24_8_REV fails
+	glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, 0, 0, g_imageWidth, g_imageHeight, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, g_frontColorBlenderFboId);
 	glDrawBuffer(g_drawBuffers[0]);
@@ -346,11 +356,13 @@ void RenderFrontToBackPeeling(int first, int count)
 	glcache.DepthMask(true);
 	glcache.Enable(GL_DEPTH_TEST);
 
-	glClearDepth(1);
 	glcache.ClearColor(0, 0, 0, 1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   glClear(GL_COLOR_BUFFER_BIT /* | GL_DEPTH_BUFFER_BIT */);
 
 	glcache.Disable(GL_BLEND);
+
+   // Hack on
+	glClear(GL_DEPTH_BUFFER_BIT);
 	// TODO Hack to get the depth from OP and PT passes.
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
@@ -358,9 +370,8 @@ void RenderFrontToBackPeeling(int first, int count)
 	DrawListPunchThrough(pvrrc.global_param_pt, 0, pvrrc.global_param_pt.used(), false, 1);
 
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+   // Hack off
 
-	glBindTexture(GL_TEXTURE_RECTANGLE, g_frontDepthInitTexId);
-	glCopyTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH_COMPONENT, 0, 0, g_imageWidth, g_imageHeight, 0);
 
 	DrawListTranslucentAutoSorted(pvrrc.global_param_tr, first, count, false, 1, 4, 5);		// FIXME initial pass for other blend modes
 
@@ -378,15 +389,14 @@ else
 		int currId = layer % 2;
 		int prevId = 1 - currId;
 
+      glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
+		glBindTexture(GL_TEXTURE_2D, g_frontDepthTexId[currId]);
+		glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, 0, 0, g_imageWidth, g_imageHeight, 0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
 		glBindFramebuffer(GL_FRAMEBUFFER, g_frontFboId[currId]);
 		glDrawBuffer(g_drawBuffers[0]);
-
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-								  GL_TEXTURE_RECTANGLE, g_frontDepthInitTexId, 0);
-		glBindTexture(GL_TEXTURE_RECTANGLE, g_frontDepthTexId[currId]);
-		glCopyTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH_COMPONENT, 0, 0, g_imageWidth, g_imageHeight, 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-								  GL_TEXTURE_RECTANGLE, g_frontDepthTexId[currId], 0);
+      //		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, g_frontDepthTexId[currId], 0);
 
 		glcache.ClearColor(0, 0, 0, 0);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -394,7 +404,7 @@ else
 		glcache.Enable(GL_DEPTH_TEST);
 
 		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_RECTANGLE, g_frontDepthTexId[prevId]);		// DepthTex
+      glBindTexture(GL_TEXTURE_2D, g_frontDepthTexId[prevId]);		// DepthTex
 		glActiveTexture(GL_TEXTURE0);
 
 		glBeginQuery(GL_SAMPLES_PASSED, g_samples_query);
@@ -430,7 +440,7 @@ else
 		glcache.UseProgram(g_front_blend_shader.program);
 		ShaderUniforms.Set(&g_front_blend_shader);
 		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_RECTANGLE, g_frontColorTexId[currId]);		// TempTex
+      glBindTexture(GL_TEXTURE_2D, g_frontColorTexId[currId]);		// TempTex
 		glActiveTexture(GL_TEXTURE0);
 
 		// Blending shader
@@ -445,7 +455,7 @@ else
 	// 3. Final Pass
 	// ---------------------------------------------------------------------
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(RARCH_GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
 	glDrawBuffer(GL_BACK);
 	glcache.Disable(GL_DEPTH_TEST);
 
@@ -459,7 +469,7 @@ else
 	glcache.UseProgram(g_front_final_shader.program);
 	ShaderUniforms.Set(&g_front_final_shader);
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_RECTANGLE, g_frontColorBlenderTexId);			// ColorTex
+	glBindTexture(GL_TEXTURE_2D, g_frontColorBlenderTexId);			// ColorTex
 	glActiveTexture(GL_TEXTURE0);
 
 	// Final blending

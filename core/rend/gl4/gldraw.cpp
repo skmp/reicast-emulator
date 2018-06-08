@@ -77,8 +77,10 @@ const static u32 SrcBlendGL[] =
 
 PipelineShader* CurrentShader;
 extern u32 gcflip;
-GLuint fbo;
+GLuint geom_fbo;
 GLuint stencilTexId;
+//GLuint opaqueTexId;
+GLuint depthTexId;
 
 s32 SetTileClip(u32 val, bool set)
 {
@@ -148,34 +150,78 @@ static void SetTextureRepeatMode(GLuint dir, u32 clamp, u32 mirror)
 }
 
 template <u32 Type, bool SortingEnabled>
-__forceinline void SetGPState(const PolyParam* gp, bool weighted_average = false, u32 front_peeling = 0, u32 cflip=0)
+__forceinline void SetGPState(const PolyParam* gp, bool weighted_average = false, u32 front_peeling = 0, bool geometry_only = false, u32 cflip=0)
 {
-   CurrentShader = gl.getShader(
-									 GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
-											 	  SetTileClip(gp->tileclip, false) + 1,
-												  gp->pcw.Texture,
-												  gp->tsp.UseAlpha,
-												  gp->tsp.IgnoreTexA,
-												  gp->tsp.ShadInstr,
-												  gp->pcw.Offset,
-												  gp->tsp.FogCtrl,
-                                      weighted_average,
-                                      front_peeling));
+   s32 clipping = SetTileClip(gp->tileclip, false);
+   int shaderId;
 
-   if (CurrentShader->program == -1) {
-      CurrentShader->cp_AlphaTest = Type == ListType_Punch_Through ? 1 : 0;
-		CurrentShader->pp_ClipTestMode = SetTileClip(gp->tileclip, false);
-		CurrentShader->pp_Texture = gp->pcw.Texture;
-		CurrentShader->pp_UseAlpha = gp->tsp.UseAlpha;
-		CurrentShader->pp_IgnoreTexA = gp->tsp.IgnoreTexA;
-		CurrentShader->pp_ShadInstr = gp->tsp.ShadInstr;
-		CurrentShader->pp_Offset = gp->pcw.Offset;
-		CurrentShader->pp_FogCtrl = gp->tsp.FogCtrl;
-		CurrentShader->pp_WeightedAverage = weighted_average;
-		CurrentShader->pp_FrontPeeling = front_peeling;
-      CompilePipelineShader(CurrentShader);
+   if (geometry_only)
+	{
+		shaderId = GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
+				clipping + 1,
+				Type == ListType_Punch_Through ? gp->pcw.Texture : 0,
+				0,
+				gp->tsp.IgnoreTexA,
+				0,
+				0,
+				2,
+				false,
+				1);		// FIXME Hack: using front peeling to avoid writing to 3D array
+		CurrentShader = gl.getShader(shaderId);
+		if (CurrentShader->program == -1) {
+			CurrentShader->cp_AlphaTest = Type == ListType_Punch_Through ? 1 : 0;
+			CurrentShader->pp_ClipTestMode = clipping;
+			CurrentShader->pp_Texture = Type == ListType_Punch_Through ? gp->pcw.Texture : 0;
+			CurrentShader->pp_UseAlpha = 0;
+			CurrentShader->pp_IgnoreTexA = gp->tsp.IgnoreTexA;
+			CurrentShader->pp_ShadInstr = 0;
+			CurrentShader->pp_Offset = 0;
+			CurrentShader->pp_FogCtrl = 2;
+			CurrentShader->pp_WeightedAverage = false;
+			CurrentShader->pp_FrontPeeling = 1;
+			CompilePipelineShader(CurrentShader);
+		}
+	}
+	else
+   {
+      CurrentShader = gl.getShader(
+            GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
+               SetTileClip(gp->tileclip, false) + 1,
+               gp->pcw.Texture,
+               gp->tsp.UseAlpha,
+               gp->tsp.IgnoreTexA,
+               gp->tsp.ShadInstr,
+               gp->pcw.Offset,
+               gp->tsp.FogCtrl,
+               weighted_average,
+               front_peeling));
+
+      if (CurrentShader->program == -1) {
+         CurrentShader->cp_AlphaTest = Type == ListType_Punch_Through ? 1 : 0;
+         CurrentShader->pp_ClipTestMode = SetTileClip(gp->tileclip, false);
+         CurrentShader->pp_Texture = gp->pcw.Texture;
+         CurrentShader->pp_UseAlpha = gp->tsp.UseAlpha;
+         CurrentShader->pp_IgnoreTexA = gp->tsp.IgnoreTexA;
+         CurrentShader->pp_ShadInstr = gp->tsp.ShadInstr;
+         CurrentShader->pp_Offset = gp->pcw.Offset;
+         CurrentShader->pp_FogCtrl = gp->tsp.FogCtrl;
+         CurrentShader->pp_WeightedAverage = weighted_average;
+         CurrentShader->pp_FrontPeeling = front_peeling;
+         CompilePipelineShader(CurrentShader);
+      }
    }
+
    glcache.UseProgram(CurrentShader->program);
+   if (Type == ListType_Opaque || Type == ListType_Punch_Through)	// TODO Can PT have a non-zero and non-one alpha?
+	{
+		ShaderUniforms.blend_mode[0] = 1;
+		ShaderUniforms.blend_mode[1] = 0;
+	}
+	else
+	{
+		ShaderUniforms.blend_mode[0] = gp->tsp.SrcInstr;
+		ShaderUniforms.blend_mode[1] = gp->tsp.DstInstr;
+	}
    ShaderUniforms.Set(CurrentShader);
 
    SetTileClip(gp->tileclip,true);
@@ -239,11 +285,11 @@ __forceinline void SetGPState(const PolyParam* gp, bool weighted_average = false
       glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
    }
 
-#if TRIG_SORT
-   if (SortingEnabled && !front_peeling)
+//#if TRIG_SORT
+   if (Type == ListType_Translucent)
       glcache.DepthMask(GL_FALSE);
    else
-#endif
+//#endif
       if (!weighted_average)
       glcache.DepthMask(!gp->isp.ZWriteDis);
 }
@@ -251,7 +297,8 @@ __forceinline void SetGPState(const PolyParam* gp, bool weighted_average = false
 template <u32 Type, bool SortingEnabled>
 void DrawList(const List<PolyParam>& gply, int first, int count, bool
       weighted_average = false, u32 front_peeling = 0,
-      int srcBlendModeFilter = -1, int dstBlendModeFilter = -1)
+      int srcBlendModeFilter = -1, int dstBlendModeFilter = -1,
+      bool geometry_only = false)
 {
    PolyParam* params= &gply.head()[first];
 
@@ -277,7 +324,7 @@ void DrawList(const List<PolyParam>& gply, int first, int count, bool
 				}
 			}
 
-         SetGPState<Type,SortingEnabled>(params, weighted_average, front_peeling);
+         SetGPState<Type,SortingEnabled>(params, weighted_average, front_peeling, geometry_only);
          glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_SHORT, (GLvoid*)(2*params->first));
       }
 
@@ -306,6 +353,12 @@ void DrawListOpaque(const List<PolyParam>& gply, int first, int count, bool weig
 void DrawListPunchThrough(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0)
 {
 	DrawList<ListType_Punch_Through, false>(gply, first, count, weighted_average, front_peeling);
+}
+
+template <u32 Type>
+void DrawListGeometry(const List<PolyParam>& gply, int first, int count)
+{
+	DrawList<Type, false>(gply, first, count, false, 0, -1, -1, true);
 }
 
 bool operator<(const PolyParam &left, const PolyParam &right)
@@ -854,24 +907,49 @@ void RenderAverageColors();
 void RenderWeightedBlended();
 void RenderFrontToBackPeeling(int first, int count);
 void DualPeelingReshape(int w, int h);
+void renderABuffer();
+
+void CreateGeometryTexture()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
+
+	stencilTexId = glcache.GenTexture();
+	glcache.BindTexture(GL_TEXTURE_2D, stencilTexId);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);		// OpenGL >= 4.3
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	// Using glTexStorage2D instead of glTexImage2D to satisfy requirement GL_TEXTURE_IMMUTABLE_FORMAT=true, needed for glTextureView below
+	glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH32F_STENCIL8, screen_width, screen_height);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0);
+
+//	opaqueTexId = glcache.GenTexture();
+//	glcache.BindTexture(GL_TEXTURE_2D, opaqueTexId);
+//	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width, screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+//	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, opaqueTexId, 0);
+	depthTexId = glcache.GenTexture();
+	glTextureView(depthTexId, GL_TEXTURE_2D, stencilTexId, GL_DEPTH32F_STENCIL8, 0, 1, 0, 1);
+	glcache.BindTexture(GL_TEXTURE_2D, depthTexId);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+}
 
 void DrawStrips(void)
 {
-   if (fbo == 0)
+   if (geom_fbo == 0)
    {
-      glGenFramebuffers(1, &fbo);
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);		// Bind framebuffer 0 to use the system fb
+      glGenFramebuffers(1, &geom_fbo);
+      CreateGeometryTexture();
 
-		stencilTexId = glcache.GenTexture();
-		glcache.BindTexture(GL_TEXTURE_2D, stencilTexId);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, screen_width, screen_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0);
-
-//		GLuint colortexid = glcache.GenTexture();
-//		glcache.BindTexture(GL_TEXTURE_2D, colortexid);
-//
-//		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width, screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-//		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colortexid, 0);
+      // Color buffer. Not normally needed
+		//stencilTexId = glcache.GenTexture();
+		//glcache.BindTexture(GL_TEXTURE_2D, stencilTexId);
+      
+      //
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, screen_width, screen_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0);
 
 		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
@@ -879,13 +957,10 @@ void DrawStrips(void)
    }
    else
    {
-      glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+      glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
 		if (stencilTexId == 0)
 		{
-			stencilTexId = glcache.GenTexture();
-			glcache.BindTexture(GL_TEXTURE_2D, stencilTexId);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, screen_width, screen_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0);
+         CreateGeometryTexture();
 		}
 		glcache.Disable(GL_SCISSOR_TEST);
 		glcache.DepthMask(GL_TRUE);
@@ -913,42 +988,49 @@ void DrawStrips(void)
       glcache.DepthMask(GL_TRUE);
 
       // Do a first pass on the depth+stencil buffer
-      glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+      glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
 
       glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-      //Opaque
-      DrawList<ListType_Opaque, false>(pvrrc.global_param_op, 
-            previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
-
-      //Alpha tested
-      DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt,
-            previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
+      DrawListGeometry<ListType_Opaque>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
+      DrawListGeometry<ListType_Punch_Through>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
       // Modifier volumes
       DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
       glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
 
-		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		//glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
       // Bind stencil buffer for the fragment shader (shadowing)
       glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, stencilTexId);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      glActiveTexture(GL_TEXTURE0);
 
-		//Opaque
-		DrawList<ListType_Opaque,false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
+      // Bind depth texture for manual depth testing in fragment shader
+      glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, depthTexId);
+		glActiveTexture(GL_TEXTURE0);
+
+      //Opaque
+ 		DrawList<ListType_Opaque,false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
+ 	 
+ 		//Alpha tested
+ 		DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
+
+      glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glActiveTexture(GL_TEXTURE0);
 
       //Alpha blended
       {
-            //       if (hack_on)
-            //				RenderAverageColors();
-            //			else
-            RenderFrontToBackPeeling(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+         DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+
+         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+         renderABuffer();
+         //       if (hack_on)
+         //				RenderAverageColors();
+         //			else
+         //RenderFrontToBackPeeling(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
          //RenderWeightedBlended();
          //			if (pvrrc.isAutoSort)
          //				GenSorted(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);

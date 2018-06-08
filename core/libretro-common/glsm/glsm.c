@@ -1752,6 +1752,23 @@ void rglTexImage2DMultisample( 	GLenum target,
 #endif
 }
 
+
+void rglTexImage3D(	GLenum target,
+ 	GLint level,
+ 	GLint internalFormat,
+ 	GLsizei width,
+ 	GLsizei height,
+ 	GLsizei depth,
+ 	GLint border,
+ 	GLenum format,
+ 	GLenum type,
+ 	const GLvoid * data)
+{
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
+   glTexImage3D(target, level, internalFormat, width, height, depth, border, format, type, data);
+#endif
+}
+
 /*
  *
  * Core in:
@@ -1934,6 +1951,40 @@ void rglWaitSync(void *sync, GLbitfield flags, uint64_t timeout)
 void rglBufferStorage(GLenum target, GLsizeiptr size, const GLvoid *data, GLbitfield flags) {
 #if defined(HAVE_OPENGL)
   glBufferStorage(target, size, data, flags);
+#endif
+}
+
+/*
+ *
+ * Core in:
+ * OpenGL    : 3.0
+ * OpenGLES  : ?.?
+ */
+
+void rglUniform2uiv(	GLint location,
+ 	GLsizei count,
+ 	const GLuint *value)
+{
+   glUniform2uiv(location, count, value);
+}
+
+/*
+ *
+ * Core in:
+ * OpenGL    : 4.3
+ * OpenGLES  : ?.?
+ */
+void rglTextureView(	GLuint texture,
+ 	GLenum target,
+ 	GLuint origtexture,
+ 	GLenum internalformat,
+ 	GLuint minlevel,
+ 	GLuint numlevels,
+ 	GLuint minlayer,
+ 	GLuint numlayers)
+{
+#if defined(HAVE_OPENGL)
+   glTextureView(texture, target, origtexture, internalformat, minlevel, numlevels, minlayer, numlayers);
 #endif
 }
 

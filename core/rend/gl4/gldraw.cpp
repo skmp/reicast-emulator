@@ -693,7 +693,7 @@ void DrawStrips(void)
    //
    // PASS 4: Render a-buffers to screen
    //
-   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+   glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	renderABuffer(pvrrc.isAutoSort);

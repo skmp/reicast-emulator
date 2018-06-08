@@ -928,7 +928,7 @@ void DrawStrips(void)
       // Modifier volumes
       DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
-      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+      glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
 
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 

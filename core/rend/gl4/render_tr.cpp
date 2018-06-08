@@ -1,8 +1,6 @@
 #include "gles.h"
 #include "glcache.h"
 
-extern "C" struct retro_hw_render_callback hw_render;
-
 //#define GL_TEXTURE_RECTANGLE_ARB 0x84F5
 #define GL_RGB16F_ARB 0x881B
 #define GL_RGBA16F_ARB 0x881A

@@ -155,4 +155,6 @@ void DrawListOpaque(const List<PolyParam>& gply, int first, int count, bool weig
 void DrawListPunchThrough(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0);
 void SetupMainVBO();
 
+extern "C" struct retro_hw_render_callback hw_render;
+
 extern GLuint stencilTexId;

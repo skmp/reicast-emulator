@@ -155,14 +155,12 @@ void main() \n\
 	gl_FragDepth = 1.0 - log2(1.0 + w) / 34.0; \n"
 #endif
 "\
-   " HIGHP " vec4 color=vtx_base; \n\
-   ivec2 coords; \n\
    #if PASS == 3 \n\
 		// Manual depth testing \n\
 		highp float frontDepth = texture(DepthTex, gl_FragCoord.xy / screen_size).r; \n\
 		// FIXME this causes dots to appear. Loss of precision? \n\
       if (gl_FragDepth > frontDepth) \n\
-		//	discard; \n\
+			discard; \n\
 	#endif \n\
 	// Clip outside the box \n\
 	#if pp_ClipTestMode==1 \n\
@@ -177,6 +175,7 @@ void main() \n\
 			discard; \n\
 	#endif \n\
 	\n\
+   " HIGHP "vec4 color=vtx_base; \n\
 	#if pp_UseAlpha==0 \n\
 		color.a=1.0; \n\
 	#endif\n\
@@ -245,7 +244,7 @@ void main() \n\
 	#if PASS == 1 \n"
       FRAGCOL " = color; \n\
    #elif PASS > 1 \n\
-      coords = ivec2(gl_FragCoord.xy); \n\
+      " HIGHP "ivec2 coords = ivec2(gl_FragCoord.xy); \n\
 		int abidx = int(imageAtomicAdd(abufferCounterImg, coords, uint(1))); \n\
 		if (abidx >= ABUFFER_SIZE) { \n\
          // Green pixels when overflow \n\
@@ -430,10 +429,12 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
 	{
 		s->sp_FOG_COL_RAM=-1;
 	}
+#if 0
    // Setup texture 1 as the fog table
    gu = glGetUniformLocation(s->program, "fog_table");
    if (gu != -1)
       glUniform1i(gu, 1);
+#endif
 
    s->screen_size = glGetUniformLocation(s->program, "screen_size");
 	s->shade_scale_factor = glGetUniformLocation(s->program, "shade_scale_factor");
@@ -443,7 +444,7 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
    // Use texture 1 for depth texture
 	gu = glGetUniformLocation(s->program, "DepthTex");
 	if (gu != -1)
-		glUniform1i(gu, 2);
+		glUniform1i(gu, 1);
 
    // Shadow stencil for OP/PT rendering pass
    gu = glGetUniformLocation(s->program, "shadow_stencil");

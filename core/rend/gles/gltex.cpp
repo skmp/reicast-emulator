@@ -572,7 +572,7 @@ void ReadRTTBuffer(void)
 	if (fb_rtt.depthb) { glDeleteRenderbuffers(1,&fb_rtt.depthb); fb_rtt.depthb = 0; }
 	if (fb_rtt.stencilb) { glDeleteRenderbuffers(1,&fb_rtt.stencilb); fb_rtt.stencilb = 0; }
 
-   glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
+   glBindFramebuffer(RARCH_GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
 }
 
 static int TexCacheLookups;

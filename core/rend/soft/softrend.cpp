@@ -19,6 +19,7 @@
 #include <smmintrin.h>
 #endif
 #include <cmath>
+#include <algorithm>
 
 #include "rend/gles/gles.h"
 
@@ -42,6 +43,53 @@ union m128i
 	uint32_t m128i_u32[4];
 };
 #endif
+
+bool operator<(const PolyParam &left, const PolyParam &right)
+{
+/* put any condition you want to sort on here */
+	return left.zvZ<right.zvZ;
+	//return left.zMin<right.zMax;
+}
+
+//Sort based on min-z of each strip
+void SortPParams(int first, int count)
+{
+	if (pvrrc.verts.used() == 0 || count <= 1)
+		return;
+
+	Vertex* vtx_base=pvrrc.verts.head();
+	u16* idx_base=pvrrc.idx.head();
+
+	PolyParam* pp = &pvrrc.global_param_tr.head()[first];
+	PolyParam* pp_end = pp + count;
+
+	while(pp!=pp_end)
+	{
+		if (pp->count<2)
+		{
+			pp->zvZ=0;
+		}
+		else
+		{
+			u16* idx=idx_base+pp->first;
+
+			Vertex* vtx=vtx_base+idx[0];
+			Vertex* vtx_end=vtx_base + idx[pp->count-1]+1;
+
+			u32 zv=0xFFFFFFFF;
+			while(vtx!=vtx_end)
+			{
+				zv=min(zv,(u32&)vtx->z);
+				vtx++;
+			}
+
+			pp->zvZ=(f32&)zv;
+		}
+		pp++;
+	}
+
+	std::stable_sort(pvrrc.global_param_tr.head() + first, pvrrc.global_param_tr.head() + first + count);
+}
 
 static __m128 _mm_load_scaled_float(float v, float s)
 {

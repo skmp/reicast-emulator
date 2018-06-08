@@ -26,18 +26,13 @@ struct PipelineShader
    GLuint shade_scale_factor;
 	GLuint screen_size;
    GLuint blend_mode;
+   GLuint pp_Number;
 
    //
 	u32 cp_AlphaTest;
    s32 pp_ClipTestMode;
-	u32 pp_Texture;
-   u32 pp_UseAlpha;
-   u32 pp_IgnoreTexA;
-   u32 pp_ShadInstr;
-   u32 pp_Offset;
-   u32 pp_FogCtrl;
-   bool pp_WeightedAverage;
-	u32 pp_FrontPeeling;
+   u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
+   int pass;
 };
 
 
@@ -49,7 +44,6 @@ struct gl_ctx
 		GLuint program;
 
 		GLuint scale,depth_scale;
-		GLuint sp_ShaderColor;
 
 	} modvol_shader;
 
@@ -105,7 +99,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool pp_WeightedAverage, u32 pp_FrontPeeling);
+							u32 pp_FogCtrl, int pass);
 
 typedef struct _ShaderUniforms_t
 {
@@ -116,6 +110,7 @@ typedef struct _ShaderUniforms_t
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
    GLuint blend_mode[2];
+   int poly_number;
 
    void Set(PipelineShader* s)
    {
@@ -144,6 +139,9 @@ typedef struct _ShaderUniforms_t
 			glUniform1f(s->shade_scale_factor, FPU_SHAD_SCALE.scale_factor / 256.f);
       if (s->blend_mode != -1)
 			glUniform2uiv(s->blend_mode, 1, blend_mode);
+
+      if (s->pp_Number != -1)
+			glUniform1i(s->pp_Number, poly_number);
    }
 } _ShaderUniforms;
 extern struct _ShaderUniforms_t ShaderUniforms;
@@ -153,12 +151,10 @@ bool CompilePipelineShader(PipelineShader* s, const char *source = PixelPipeline
 
 void vertex_buffer_unmap(void);
 
-void DrawListTranslucentAutoSorted(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0, int srcBlendModeFilter = -1, int dstBlendModeFilter = -1);
-void DrawListOpaque(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0);
-void DrawListPunchThrough(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0);
-void SetupMainVBO();
-
 extern "C" struct retro_hw_render_callback hw_render;
 
 extern GLuint stencilTexId;
 extern GLuint depthTexId;
+extern GLuint opaqueTexId;
+
+#define ABUFFER_SIZE 16

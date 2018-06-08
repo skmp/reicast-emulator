@@ -7,13 +7,14 @@
 #include "gles.h"
 #include "glcache.h"
 
-#define ABUFFER_SIZE 32
-
 GLuint abufferTexID = 0;
 GLuint abufferBlendingTexID = 0;
 GLuint abufferCounterTexID = 0;
 PipelineShader g_abuffer_final_shader;
 PipelineShader g_abuffer_clear_shader;
+PipelineShader g_abuffer_pass2_shader;
+static GLuint g_quadBuffer = 0;
+static GLuint g_quadVertexArray = 0;
 
 static int g_imageWidth = 0;
 static int g_imageHeight = 0;
@@ -23,22 +24,23 @@ extern void DrawQuad();
 static const char *final_shader_source = "\
 #version 140 \n\
 #extension GL_EXT_shader_image_load_store : enable \n\
-#define ABUFFER_SIZE 32 \n\
+#define ABUFFER_SIZE %d \n\
 out vec4 FragColor; \n\
 uniform layout(size1x32) uimage2D abufferCounterImg; \n\
 uniform layout(size4x32) image2DArray abufferImg; \n\
 uniform layout(size2x32) image2DArray abufferBlendingImg; \n\
 uniform lowp vec2 screen_size; \n\
+uniform int sortFragments; \n\
  \n\
 vec4 colorList[ABUFFER_SIZE]; \n\
 vec4 depthBlendList[ABUFFER_SIZE]; \n\
  \n\
-int resolveClosest(ivec2 coords, int abNumFrag) { \n\
+int resolveClosest(ivec2 coords, int num_frag) { \n\
  \n\
 	// Search smallest z \n\
 	float minZ = 1000000.0f; \n\
 	int minIdx; \n\
-	for (int i = 0; i < abNumFrag; i++) { \n\
+	for (int i = 0; i < num_frag; i++) { \n\
 		vec4 val = imageLoad(abufferBlendingImg, ivec3(coords, i)); \n\
 		if (val.x < minZ) { \n\
 			minZ = val.x; \n\
@@ -51,9 +53,9 @@ int resolveClosest(ivec2 coords, int abNumFrag) { \n\
 } \n\
  \n\
  \n\
-int findOpaque(ivec2 coords, int abNumFrag) { \n\
+int findOpaque(ivec2 coords, int num_frag) { \n\
  \n\
-	for (int i = 0; i < abNumFrag; i++) { \n\
+	for (int i = 0; i < num_frag; i++) { \n\
 		vec4 val = imageLoad(abufferBlendingImg, ivec3(coords, i)); \n\
 		if (round(val.y) == 8) { \n\
 			return i; \n\
@@ -63,9 +65,9 @@ int findOpaque(ivec2 coords, int abNumFrag) { \n\
 	return 0; \n\
 } \n\
  \n\
-void fillFragmentArray(ivec2 coords, int abNumFrag) { \n\
+void fillFragmentArray(ivec2 coords, int num_frag) { \n\
 	// Load fragments into a local memory array for sorting \n\
-	for (int i = 0; i < abNumFrag; i++) { \n\
+	for (int i = 0; i < num_frag; i++) { \n\
 		colorList[i] = imageLoad(abufferImg, ivec3(coords, i)); \n\
 		depthBlendList[i] = imageLoad(abufferBlendingImg, ivec3(coords, i)); \n\
 	} \n\
@@ -73,43 +75,133 @@ void fillFragmentArray(ivec2 coords, int abNumFrag) { \n\
  \n\
 // Bubble sort used to sort fragments \n\
 void bubbleSort(int array_size) { \n\
-  for (int i = (array_size - 2); i >= 0; --i) { \n\
-    for (int j = 0; j <= i; ++j) { \n\
-      if (depthBlendList[j].x > depthBlendList[j+1].x) { \n\
-		vec4 temp = depthBlendList[j + 1]; \n\
-		depthBlendList[j + 1] = depthBlendList[j]; \n\
-		depthBlendList[j] = temp; \n\
-		temp = colorList[j + 1]; \n\
-		colorList[j + 1] = colorList[j]; \n\
-		colorList[j] = temp; \n\
-      } \n\
-    } \n\
-  } \n\
+	for (int i = array_size - 2; i >= 0; i--) { \n\
+		for (int j = 0; j <= i; j++) { \n\
+// depth only			if (depthBlendList[j].x < depthBlendList[j + 1].x) { \n\
+			if (depthBlendList[j].x < depthBlendList[j + 1].x || (depthBlendList[j].x == depthBlendList[j + 1].x && depthBlendList[j].z > depthBlendList[j + 1].z)) { \n\
+//			if (depthBlendList[j].z > depthBlendList[j + 1].z) { \n\
+				vec4 depthBlend = depthBlendList[j + 1]; \n\
+				depthBlendList[j + 1] = depthBlendList[j]; \n\
+				depthBlendList[j] = depthBlend; \n\
+				vec4 color = colorList[j + 1]; \n\
+				colorList[j + 1] = colorList[j]; \n\
+				colorList[j] = color; \n\
+			} \n\
+		} \n\
+	} \n\
 } \n\
  \n\
-// Blend fragments back-to-front \n\
-vec4 resolveAlphaBlend(ivec2 coords, int abNumFrag){ \n\
+ \n\
+// Insertion sort used to sort fragments \n\
+void insertionSort(int array_size) { \n\
+	for (int i = 1; i < array_size; i++) { \n\
+		vec4 aDepth = depthBlendList[i]; \n\
+		vec4 aColor = colorList[i]; \n\
+		int j = i - 1; \n\
+//		for (; j >= 0 && depthBlendList[j].z < aDepth.z; j--) { \n\
+		for (; j >= 0 && (depthBlendList[j].x < aDepth.x || (depthBlendList[j].x == aDepth.x && depthBlendList[j].z > aDepth.z)); j--) { \n\
+			depthBlendList[j + 1] = depthBlendList[j]; \n\
+			colorList[j + 1] = colorList[j]; \n\
+		} \n\
+		depthBlendList[j + 1] = aDepth; \n\
+		colorList[j + 1] = aColor; \n\
+	} \n\
+} \n\
+ \n\
+vec4 returnNthLayer(ivec2 coords, int num_frag, int layer) { \n\
 	 \n\
 	// Copy fragments in local array \n\
-	fillFragmentArray(coords, abNumFrag); \n\
+	fillFragmentArray(coords, num_frag); \n\
 	 \n\
 	// Sort fragments in local memory array \n\
-	bubbleSort(abNumFrag); \n\
+	if (sortFragments != 0) \n\
+		bubbleSort(num_frag); \n\
 	 \n\
-	vec4 finalColor = colorList[abNumFrag - 1]; \n\
-	for (int i = abNumFrag - 2; i >= 0; i--) { \n\
-		vec4 col = colorList[i]; \n\
+	return vec4(colorList[min(layer, num_frag - 1)].rgb, 1); \n\
+} \n\
+ \n\
+ \n\
+// Blend fragments back-to-front \n\
+vec4 resolveAlphaBlend(ivec2 coords, int num_frag){ \n\
+	 \n\
+	// Copy fragments in local array \n\
+	fillFragmentArray(coords, num_frag); \n\
+	 \n\
+	// Sort fragments in local memory array \n\
+   if (sortFragments != 0) \n\
+		bubbleSort(num_frag); \n\
+	else if (num_frag > 1) \n\
+	{ \n\
+		// FIXME This is wrong \n\
+		vec4 depthBlend = depthBlendList[0]; \n\
+		depthBlendList[0] = depthBlendList[num_frag - 1]; \n\
+		depthBlendList[num_frag - 1] = depthBlend; \n\
+		vec4 color = colorList[0]; \n\
+		colorList[0] = colorList[num_frag - 1]; \n\
+		colorList[num_frag - 1] = color; \n\
+	} \n\
+	 \n\
+	vec4 finalColor = colorList[0]; \n\
+   for (int i = 1; i < num_frag; i++) { \n\
+      vec4 srcColor = colorList[i]; \n\
+      float srcAlpha = srcColor.a; \n\
+		float dstAlpha = finalColor.a; \n\
 		 \n\
 		int srcBlend = int(depthBlendList[i].y) / 8; \n\
+      switch (srcBlend) \n\
+		{ \n\
+			case 0: // zero \n\
+				srcColor = vec4(0); \n\
+				break; \n\
+			case 1: // one \n\
+				break; \n\
+			case 2: // other color \n\
+				srcColor *= finalColor; \n\
+				break; \n\
+			case 3: // inverse other color \n\
+				srcColor *= vec4(1) - finalColor; \n\
+				break; \n\
+			case 4: // src alpha \n\
+				srcColor *= srcAlpha; \n\
+				break; \n\
+			case 5: // inverse src alpha \n\
+				srcColor *= 1 - srcAlpha; \n\
+				break; \n\
+			case 6: // dst alpha \n\
+				srcColor *= dstAlpha; \n\
+				break; \n\
+			case 7: // inverse dst alpha \n\
+				srcColor *= 1 - dstAlpha; \n\
+				break; \n\
+		} \n\
 		int dstBlend = int(depthBlendList[i].y) % 8; \n\
-		if (srcBlend == 1 && dstBlend == 0) \n\
-			finalColor = col; \n\
-		else if (srcBlend == 4 && dstBlend == 5) \n\
-			finalColor = finalColor * (1 - col.a) + col * (col.a); \n\
-		else if (srcBlend == 4 && dstBlend == 1) \n\
-			finalColor = finalColor + col * (col.a); \n\
-		else if (srcBlend == 1 && dstBlend == 1) \n\
-			finalColor = finalColor + col; \n\
+      switch (dstBlend) \n\
+		{ \n\
+			case 0: // zero \n\
+				finalColor = vec4(0); \n\
+				break; \n\
+			case 1: // one \n\
+				break; \n\
+			case 2: // other color \n\
+				finalColor *= colorList[i]; \n\
+				break; \n\
+			case 3: // inverse other color \n\
+				finalColor *= vec4(1) - colorList[i]; \n\
+				break; \n\
+			case 4: // src alpha \n\
+				finalColor *= srcAlpha; \n\
+				break; \n\
+			case 5: // inverse src alpha \n\
+				finalColor *= 1 - srcAlpha; \n\
+				break; \n\
+			case 6: // dst alpha \n\
+				finalColor *= dstAlpha; \n\
+				break; \n\
+			case 7: // inverse dst alpha \n\
+				finalColor *= 1 - dstAlpha; \n\
+				break; \n\
+		} \n\
+		finalColor = clamp(finalColor + srcColor, 0, 1); \n\
 	} \n\
 	finalColor.a = 1; \n\
 	return finalColor; \n\
@@ -119,19 +211,22 @@ vec4 resolveAlphaBlend(ivec2 coords, int abNumFrag){ \n\
 void main(void) \n\
 { \n\
 	ivec2 coords = ivec2(gl_FragCoord.xy); \n\
-	int abNumFrag = int(imageLoad(abufferCounterImg, coords).r); \n\
+	int num_frag = int(imageLoad(abufferCounterImg, coords).r); \n\
 	// Crash without this (WTF ?) \n\
-	if (abNumFrag < 0) \n\
-		abNumFrag = 0; \n\
-	if (abNumFrag > ABUFFER_SIZE) \n\
-		abNumFrag = ABUFFER_SIZE; \n\
-	if (abNumFrag > 0) { \n\
+	if (num_frag < 0) \n\
+		num_frag = 0; \n\
+	if (num_frag > ABUFFER_SIZE) \n\
+		num_frag = ABUFFER_SIZE; \n\
+	if (num_frag > 0) { \n\
 		// Compute and output final color for the frame buffer \n\
 		//If we only want the closest fragment \n\
-		//int minIdx = resolveClosest(coords, abNumFrag); \n\
-		//FragColor = vec4(float(abNumFrag) / ABUFFER_SIZE, 0, 0, 1); \n\
-		//FragColor = imageLoad(abufferImg, ivec3(coords, 0)); \n\
-		FragColor = resolveAlphaBlend(coords, abNumFrag); \n\
+      //int minIdx = resolveClosest(coords, num_frag); \n\
+      //FragColor = imageLoad(abufferImg, ivec3(coords, minIdx)); \n\
+      // Visualize the number of layers in use \n\
+      //FragColor = vec4(float(num_frag) / ABUFFER_SIZE, 0, 0, 1); \n\
+      //FragColor = imageLoad(abufferImg, ivec3(coords, 0)); \n\
+      //FragColor = returnNthLayer(coords, num_frag, 1); \n\
+		FragColor = resolveAlphaBlend(coords, num_frag); \n\
 	} \n\
 	else \n\
 		// If no fragment, write nothing \n\
@@ -159,6 +254,35 @@ void main(void) \n\
 	//imageStore(abufferImg, ivec3(coords, 0), vec4(0)); \n\
 	// Reset depth \n\
 	//imageStore(abufferBlendingImg, ivec3(coords, 0), vec4(0)); \n\
+ \n\
+	// Discard fragment so nothing is writen to the framebuffer \n\
+	discard; \n\
+} \n\
+";
+
+// Renders the opaque and pt rendered texture into a-buffers
+static const char *pass2_shader_source = "\
+#version 140 \n\
+#extension GL_EXT_shader_image_load_store : enable \n\
+coherent uniform layout(size1x32) uimage2D abufferCounterImg; \n\
+coherent uniform layout(size4x32) image2DArray abufferImg; \n\
+coherent uniform layout(size2x32) image2DArray abufferBlendingImg; \n\
+uniform lowp vec2 screen_size; \n\
+uniform sampler2D DepthTex; \n\
+uniform sampler2D tex; \n\
+ \n\
+void main(void) \n\
+{ \n\
+	ivec2 coords = ivec2(gl_FragCoord.xy); \n\
+ \n\
+	int abidx = int(imageAtomicAdd(abufferCounterImg, coords, uint(1))); \n\
+	ivec3 coords3 = ivec3(coords, abidx); \n\
+ \n\
+	highp float depth = texture(DepthTex, gl_FragCoord.xy / screen_size).r; \n\
+	vec4 blend_val = vec4(depth, 8, 0, 0); \n\
+	imageStore(abufferBlendingImg, coords3, blend_val); \n\
+	vec4 color = texture(tex, gl_FragCoord.xy / screen_size); \n\
+	imageStore(abufferImg, coords3, color); \n\
  \n\
 	// Discard fragment so nothing is writen to the framebuffer \n\
 	discard; \n\
@@ -203,9 +327,18 @@ void initABuffer()
 	glBindImageTexture(5, abufferBlendingTexID, 0, true, 0,  GL_READ_WRITE, GL_RG32F);
 
 	if (g_abuffer_final_shader.program == 0)
-		CompilePipelineShader(&g_abuffer_final_shader, final_shader_source);
+   {
+      char source[8192];
+		sprintf(source, final_shader_source, ABUFFER_SIZE);
+		CompilePipelineShader(&g_abuffer_final_shader, source);
+   }
 	if (g_abuffer_clear_shader.program == 0)
 		CompilePipelineShader(&g_abuffer_clear_shader, clear_shader_source);
+   if (g_abuffer_pass2_shader.program == 0)
+		CompilePipelineShader(&g_abuffer_pass2_shader, pass2_shader_source);
+
+	glGenVertexArrays(1, &g_quadVertexArray);
+	glGenBuffers(1, &g_quadBuffer);
 }
 
 void reshapeABuffer(int w, int h)
@@ -222,7 +355,63 @@ void reshapeABuffer(int w, int h)
 	}
 }
 
-void renderABuffer() {
+void DrawQuad()
+{
+	glBindVertexArray(g_quadVertexArray);
+
+	struct Vertex vertices[] = {
+			{ 0, screen_height, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
+			{ 0, 0, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
+			{ screen_width, screen_height, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
+			{ screen_width, 0, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+	};
+	GLushort indices[] = { 0, 1, 2, 1, 3 };
+
+	glBindBuffer(GL_ARRAY_BUFFER, g_quadBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x));
+
+	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
+	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col));
+
+	glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
+	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,vtx_spc));
+
+	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
+	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
+
+	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, indices);
+}
+
+void renderPass2(GLuint textureId, GLuint depthTexId)
+{
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, textureId);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, depthTexId);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, abufferTexID);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, abufferCounterTexID);
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, abufferBlendingTexID);
+	glActiveTexture(GL_TEXTURE0);
+
+	glcache.UseProgram(g_abuffer_pass2_shader.program);
+	ShaderUniforms.Set(&g_abuffer_pass2_shader);
+
+	glcache.Disable(GL_BLEND);
+	glcache.Disable(GL_DEPTH_TEST);
+	glcache.Disable(GL_CULL_FACE);
+glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	DrawQuad();
+glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+}
+
+void renderABuffer(bool sortFragments) {
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, abufferTexID);
 	glActiveTexture(GL_TEXTURE4);
@@ -232,12 +421,16 @@ void renderABuffer() {
 
 	glcache.UseProgram(g_abuffer_final_shader.program);
 	ShaderUniforms.Set(&g_abuffer_final_shader);
+   GLint gu = glGetUniformLocation(g_abuffer_final_shader.program, "sortFragments");
+	glUniform1i(gu, (int)sortFragments);
 
 	glcache.Disable(GL_BLEND);
 	glcache.Disable(GL_DEPTH_TEST);
+   glcache.Disable(GL_CULL_FACE);
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	DrawQuad();
 
+   glActiveTexture(GL_TEXTURE0);
 
 	glcache.UseProgram(g_abuffer_clear_shader.program);
 	ShaderUniforms.Set(&g_abuffer_clear_shader);

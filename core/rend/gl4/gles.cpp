@@ -92,7 +92,6 @@ const char* PixelPipelineShader =
       "#version 420 \n"
 #endif
 "\
-\
 #define cp_AlphaTest %d \n\
 #define pp_ClipTestMode %d \n\
 #define pp_UseAlpha %d \n\
@@ -101,17 +100,10 @@ const char* PixelPipelineShader =
 #define pp_ShadInstr %d \n\
 #define pp_Offset %d \n\
 #define pp_FogCtrl %d \n\
-#define pp_WeightedAverage %d \n\
-#define pp_FrontPeeling %d \n\
-#if pp_WeightedAverage == 1 \n\
-#extension GL_ARB_draw_buffers : require \n\
-#endif \n\
-#if pp_FrontPeeling != 1 // FIXME \n\
-uniform sampler2D DepthTex; \n\
-#endif \n"
+#define PASS %d \n"
 #ifndef GLES
 	"\
-	#if pp_WeightedAverage == 0 \n\
+   #if PASS <= 1 \n\
 	out vec4 FragColor; \n\
 	#endif \n"
 #endif
@@ -126,15 +118,21 @@ uniform " HIGHP " float shade_scale_factor; \n\
 uniform " LOWP  " vec2 screen_size; \n\
 uniform sampler2D tex; \n\
 layout(binding = 5) uniform sampler2D fog_table; \n\
-#if pp_WeightedAverage == 0 && pp_FrontPeeling == 0 \n\
+uniform int pp_Number; \n\
+#if PASS == 1 \n\
 	uniform usampler2D shadow_stencil; \n\
 #endif \n\
-#extension GL_EXT_shader_image_load_store : enable \n\
-#define ABUFFER_SIZE 32 \n\
-uniform uvec2 blend_mode; \n\
-coherent uniform layout(size1x32) uimage2D abufferCounterImg; \n\
-coherent uniform layout(size4x32) image2DArray abufferImg; \n\
-coherent uniform layout(size2x32) image2DArray abufferBlendingImg; \n\
+#if PASS == 3 \n\
+   uniform sampler2D DepthTex; \n\
+#endif \n\
+#if PASS > 1 \n\
+   #extension GL_EXT_shader_image_load_store : enable \n\
+   #define ABUFFER_SIZE 32 \n\
+   uniform uvec2 blend_mode; \n\
+   coherent uniform layout(size1x32) uimage2D abufferCounterImg; \n\
+   coherent uniform layout(size4x32) image2DArray abufferImg; \n\
+   coherent uniform layout(size2x32) image2DArray abufferBlendingImg; \n\
+#endif \n\
 /* Vertex input*/ \n\
 " vary " " LOWP " vec4 vtx_base; \n\
 " vary " " LOWP " vec4 vtx_offs; \n\
@@ -157,19 +155,12 @@ void main() \n\
 	gl_FragDepth = 1.0 - log2(1.0 + w) / 34.0; \n"
 #endif
 "\
-   #if pp_FrontPeeling != 1 // FIXME \n\
+   #if PASS == 3 \n\
 		// Manual depth testing \n\
 		highp float frontDepth = texture(DepthTex, gl_FragCoord.xy / screen_size).r; \n\
 		// FIXME this causes dots to appear. Loss of precision? \n\
-		//if (gl_FragDepth > frontDepth - 1e-8) // FIXME the TA depth test is ignored \n\
+      if (gl_FragDepth > frontDepth) \n\
 		//	discard; \n\
-	#endif \n\
-	#if pp_FrontPeeling == 2 \n\
-		// Bit-exact comparison between FP32 z-buffer and fragment depth \n\
-		highp float frontDepth = texture(DepthTex, gl_FragCoord.xy / screen_size).r; \n\
-		if (gl_FragDepth <= frontDepth) { \n\
-			discard; \n\
-		} \n\
 	#endif \n\
 	// Clip outside the box \n\
 	#if pp_ClipTestMode==1 \n\
@@ -233,7 +224,7 @@ void main() \n\
 		#endif\n\
 	} \n\
 	#endif\n\
-   #if pp_WeightedAverage == 0 && pp_FrontPeeling == 0 \n\
+   #if PASS == 1 \n\
       //uvec4 stencil = texture(shadow_stencil, vec2(gl_FragCoord.x / 1280, gl_FragCoord.y / 960)); \n\
       uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / screen_size); \n\
 	   if (stencil.r == uint(0x81)) \n\
@@ -248,37 +239,32 @@ void main() \n\
       color.a=1.0; \n\
 	#endif  \n\
    \n\
+   //color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0); \n\
 	\n\
-	#if pp_WeightedAverage == 1 \n\
-		// Average colors \n\
-		gl_FragData[0] = vec4(color.rgb * color.a, color.a); \n\
-		gl_FragData[1] = vec4(1.0); \n\
-		// Weighted Blended \n\
-//		float viewDepth = abs(1.0 / gl_FragCoord.w); \n\
-//		float linearDepth = viewDepth * 4.5; // uDepthScale \n\
-//		float weight = clamp(0.03 / (1e-5 + pow(linearDepth/10, 3.0)), 1e-2, 3e3); \n\
-//		gl_FragData[0] = vec4(color.rgb * color.a, color.a) * weight; \n\
-//		gl_FragData[1] = vec4(color.a); \n\
-	#elif pp_FrontPeeling == 1 \n"
-		FRAGCOL " = vec4(color.rgb * color.a, 1.0 - color.a); \n\
-	#elif pp_FrontPeeling == 2 \n"
-		FRAGCOL " = vec4(color.rgb * color.a, color.a); \n\
-	#else  \n"
-"		ivec2 coords = ivec2(gl_FragCoord.xy); \n\
+	#if PASS == 1 \n"
+      FRAGCOL " = color; \n\
+   #elif PASS > 1 \n\
+      ivec2 coords = ivec2(gl_FragCoord.xy); \n\
 		int abidx = int(imageAtomicAdd(abufferCounterImg, coords, uint(1))); \n\
-		if (abidx >= ABUFFER_SIZE) \n\
-			discard; \n\
-		vec4 blend_val = vec4(gl_FragDepth, float(blend_mode.x) * 8 + float(blend_mode.y), 0, 0); \n\
-		ivec3 coords3 = ivec3(coords, abidx); \n\
-		imageStore(abufferImg, coords3, color); \n\
-		imageStore(abufferBlendingImg, coords3, blend_val); \n\
+		if (abidx >= ABUFFER_SIZE) { \n\
+         // Green pixels when overflow \n\
+		   vec4 blend_val = vec4(0.001, 8, float(pp_Number), 0); \n\
+         ivec3 coords3 = ivec3(coords, 0); \n\
+         imageStore(abufferImg, coords3, vec4(0, 1, 0, 1)); \n\
+         imageStore(abufferBlendingImg, coords3, blend_val); \n\
+      } else { \n\
+      vec4 blend_val = vec4(gl_FragDepth, float(blend_mode.x) * 8 + float(blend_mode.y), float(pp_Number), 0); \n\
+			ivec3 coords3 = ivec3(coords, abidx); \n\
+			imageStore(abufferImg, coords3, color); \n\
+			imageStore(abufferBlendingImg, coords3, blend_val); \n\
+		} \n\
+      discard; \n\
 		\n\
 	#endif \n\
 }";
 
 const char* ModifierVolumeShader =
 " \
-uniform " LOWP " float sp_ShaderColor; \n\
 /* Vertex input*/ \n\
 void main() \n\
 { \n"
@@ -287,7 +273,7 @@ void main() \n\
 	float w = 100000.0 * gl_FragCoord.w; \n\
 	gl_FragDepth = 1.0 - log2(1.0 + w) / 34.0; \n"
 #endif
-	FRAGCOL "=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
+   "\
 }";
 
 
@@ -303,9 +289,7 @@ int GetProgramID(
       u32 pp_IgnoreTexA,
       u32 pp_ShadInstr,
       u32 pp_Offset,
-      u32 pp_FogCtrl,
-      bool pp_WeightedAverage,
-      u32 pp_FrontPeeling)
+      u32 pp_FogCtrl, int pass)
 {
 	u32 rv=0;
 
@@ -317,8 +301,7 @@ int GetProgramID(
 	rv<<=2; rv|=pp_ShadInstr;
 	rv<<=1; rv|=pp_Offset;
 	rv<<=2; rv|=pp_FogCtrl;
-   rv <<= 1; rv |= pp_WeightedAverage;
-	rv <<= 2; rv |= pp_FrontPeeling;
+   rv <<= 2; rv |= pass;
 
 	return rv;
 }
@@ -411,7 +394,7 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
 
 	sprintf(pshader, source,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, (int)s->pp_WeightedAverage, s->pp_FrontPeeling);
+                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pass, ABUFFER_SIZE);
 
 	s->program            = gl_CompileAndLink(VertexShaderSource,pshader);
 
@@ -455,7 +438,7 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
 
    ShaderUniforms.Set(s);
 
-   // Depth peeling: use texture 1 for depth texture
+   // Use texture 1 for depth texture
 	gu = glGetUniformLocation(s->program, "DepthTex");
 	if (gu != -1)
 		glUniform1i(gu, 2);
@@ -477,6 +460,7 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
 		glUniform1i(gu, 5);		// GL_TEXTURE5
 
 	s->blend_mode = glGetUniformLocation(s->program, "blend_mode");
+   s->pp_Number = glGetUniformLocation(s->program, "pp_Number");
 
 	return glIsProgram(s->program)==GL_TRUE;
 }
@@ -583,7 +567,6 @@ static bool gl_create_resources(void)
 
 	gl.modvol_shader.program        = gl_CompileAndLink(VertexShaderSource,ModifierVolumeShader);
 	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
-	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
 
 //define PRECOMPILE_SHADERS
@@ -1064,6 +1047,16 @@ struct glesrend : Renderer
 		{
 			glcache.DeleteTextures(1, &stencilTexId);
 			stencilTexId = 0;
+		}
+      if (depthTexId != 0)
+		{
+			glcache.DeleteTextures(1, &depthTexId);
+			depthTexId = 0;
+		}
+		if (opaqueTexId != 0)
+		{
+			glcache.DeleteTextures(1, &opaqueTexId);
+			opaqueTexId = 0;
 		}
       reshapeABuffer(w, h);
 	}

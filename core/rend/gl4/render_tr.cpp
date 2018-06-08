@@ -1,6 +1,8 @@
 #include "gles.h"
 #include "glcache.h"
 
+extern "C" struct retro_hw_render_callback hw_render;
+
 //#define GL_TEXTURE_RECTANGLE_ARB 0x84F5
 #define GL_RGB16F_ARB 0x881B
 #define GL_RGBA16F_ARB 0x881A
@@ -153,7 +155,7 @@ void RenderAverageColors()
 	// 2. Approximate Blending
 	// ---------------------------------------------------------------------
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+   glBindFramebuffer(RARCH_GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
 
 	glcache.Enable(GL_BLEND);
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -164,7 +166,7 @@ void RenderAverageColors()
 	glActiveTexture(GL_TEXTURE0);
 	glcache.BindTexture(GL_TEXTURE_RECTANGLE, g_accumulationTexId[0]);
 	glUniform1i(glGetUniformLocation(g_wavg_final_shader.program, "ColorTex0"), 0);
-	glActiveTexture(GL_TEXTURE1);
+	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_RECTANGLE, g_accumulationTexId[1]);
 	glUniform1i(glGetUniformLocation(g_wavg_final_shader.program, "ColorTex1"), 1);
 	glActiveTexture(GL_TEXTURE0);
@@ -201,7 +203,7 @@ void RenderWeightedBlended()
 	// 2. Approximate Blending
 	// ---------------------------------------------------------------------
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(RARCH_GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
 
 	glcache.Enable(GL_BLEND);
 	glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
@@ -211,7 +213,7 @@ void RenderWeightedBlended()
 	glActiveTexture(GL_TEXTURE0);
 	glcache.BindTexture(GL_TEXTURE_RECTANGLE, g_accumulationTexId[0]);
 	glUniform1i(glGetUniformLocation(g_wavg_final_shader.program, "ColorTex0"), 0);
-	glActiveTexture(GL_TEXTURE1);
+	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_RECTANGLE, g_accumulationTexId[1]);
 	glUniform1i(glGetUniformLocation(g_wavg_final_shader.program, "ColorTex1"), 1);
 	glActiveTexture(GL_TEXTURE0);
@@ -223,7 +225,7 @@ void RenderWeightedBlended()
 // Front depth peeling
 //
 static float g_opacity = 0.6;
-static int g_numPasses = 4;		// SoA opening sequence needs at least 12 passes!!!
+static int g_numPasses = 20;		// SoA opening sequence needs at least 12 passes!!!
 GLuint g_frontFboId[2];
 GLuint g_frontDepthTexId[2];
 GLuint g_frontColorTexId[2];
@@ -393,7 +395,7 @@ else
 
 		glcache.Enable(GL_DEPTH_TEST);
 
-		glActiveTexture(GL_TEXTURE1);
+		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_RECTANGLE, g_frontDepthTexId[prevId]);		// DepthTex
 		glActiveTexture(GL_TEXTURE0);
 
@@ -429,7 +431,7 @@ else
 
 		glcache.UseProgram(g_front_blend_shader.program);
 		ShaderUniforms.Set(&g_front_blend_shader);
-		glActiveTexture(GL_TEXTURE1);
+		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_RECTANGLE, g_frontColorTexId[currId]);		// TempTex
 		glActiveTexture(GL_TEXTURE0);
 
@@ -458,7 +460,7 @@ else
 
 	glcache.UseProgram(g_front_final_shader.program);
 	ShaderUniforms.Set(&g_front_final_shader);
-	glActiveTexture(GL_TEXTURE1);
+	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_RECTANGLE, g_frontColorBlenderTexId);			// ColorTex
 	glActiveTexture(GL_TEXTURE0);
 
@@ -481,17 +483,17 @@ void InitDualPeeling()
 	// Allocate render targets first
 	InitFrontPeelingRenderTargets();
 	InitAccumulationRenderTargets();
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(RARCH_GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
 
 	// Build shaders
 
 	CompilePipelineShader(&g_wavg_final_shader, wavg_final_fragment);
 
 	CompilePipelineShader(&g_front_blend_shader, front_blend_fragment_source);
-	glUniform1i(glGetUniformLocation(g_front_blend_shader.program, "TempTex"), 1);
+	glUniform1i(glGetUniformLocation(g_front_blend_shader.program, "TempTex"), 2);
 
 	CompilePipelineShader(&g_front_final_shader, front_final_fragment_source);
-	glUniform1i(glGetUniformLocation(g_front_final_shader.program, "ColorTex"), 1);
+	glUniform1i(glGetUniformLocation(g_front_final_shader.program, "ColorTex"), 2);
 }
 
 void DualPeelingReshape(int w, int h)

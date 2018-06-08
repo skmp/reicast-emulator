@@ -142,7 +142,7 @@ void main() \n\
 #ifndef GLES
 	"\
 	highp float w = 100000.0 * gl_FragCoord.w; \n\
-	gl_FragDepth = 1 - log2(1.0 + w) / 34; \n"
+	gl_FragDepth = 1.0 - log2(1.0 + w) / 34.0; \n"
 #endif
 "\
 	#if pp_FrontPeeling == 2 \n\
@@ -252,7 +252,7 @@ void main() \n\
 #ifndef GLES
 	"\
 	float w = 100000.0 * gl_FragCoord.w; \n\
-	gl_FragDepth = 1 - log2(1.0 + w) / 34.0; \n"
+	gl_FragDepth = 1.0 - log2(1.0 + w) / 34.0; \n"
 #endif
 	FRAGCOL "=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
 }";
@@ -422,13 +422,13 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
    // Depth peeling: use texture 1 for depth texture
 	gu = glGetUniformLocation(s->program, "DepthTex");
 	if (gu != -1)
-		glUniform1i(gu, 1);
+		glUniform1i(gu, 2);
 	else
 	{
 		// Shadow stencil for OP/PT rendering pass
 		gu = glGetUniformLocation(s->program, "shadow_stencil");
 		if (gu != -1)
-			glUniform1i(gu, 1);
+			glUniform1i(gu, 2);
 	}
 
 	return glIsProgram(s->program)==GL_TRUE;
@@ -893,7 +893,7 @@ static bool RenderFrame(void)
       glcache.ClearColor(0,0,0,1.0f);
 
    glcache.Disable(GL_SCISSOR_TEST);
-   glClearDepth(0.f);
+   glClearDepth(1.f);
    glStencilMask(0xFF);
    glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

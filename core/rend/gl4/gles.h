@@ -10,6 +10,8 @@
 #define VERTEX_COL_OFFS_ARRAY 2
 #define VERTEX_UV_ARRAY       3
 
+#define glCheck()
+
 //vertex types
 extern float scale_x, scale_y;
 
@@ -158,3 +160,4 @@ extern GLuint depthTexId;
 extern GLuint opaqueTexId;
 
 #define ABUFFER_SIZE 32
+#define ABUFFER_SIZE_STR "32"

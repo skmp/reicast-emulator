@@ -127,7 +127,7 @@ uniform int pp_Number; \n\
 #endif \n\
 #if PASS > 1 \n\
    #extension GL_EXT_shader_image_load_store : enable \n\
-   #define ABUFFER_SIZE 32 \n\
+   #define ABUFFER_SIZE " ABUFFER_SIZE_STR " \n\
    uniform uvec2 blend_mode; \n\
    coherent uniform layout(size1x32) uimage2D abufferCounterImg; \n\
    coherent uniform layout(size4x32) image2DArray abufferImg; \n\
@@ -395,7 +395,8 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
 
 	sprintf(pshader, source,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pass, ABUFFER_SIZE);
+                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pass);
+
 
 	s->program            = gl_CompileAndLink(VertexShaderSource,pshader);
 

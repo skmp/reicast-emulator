@@ -23,7 +23,7 @@ static int g_imageHeight = 0;
 static const char *final_shader_source = "\
 #version 140 \n\
 #extension GL_EXT_shader_image_load_store : enable \n\
-#define ABUFFER_SIZE %d \n\
+#define ABUFFER_SIZE " ABUFFER_SIZE_STR " \n\
 #define DEPTH_SORTED %d \n\
 out vec4 FragColor; \n\
 uniform layout(size1x32) uimage2D abufferCounterImg; \n\
@@ -276,6 +276,36 @@ void main(void) \n\
 } \n\
 ";
 
+static const char *tr_modvol_shader_source = "\
+#version 140 \n\
+#extension GL_EXT_shader_image_load_store : enable \n\
+coherent uniform layout(size1x32) uimage2D abufferCounterImg; \n\
+coherent uniform layout(size4x32) image2DArray abufferBlendingImg; \n\
+uniform lowp vec2 screen_size; \n\
+uniform sampler2D DepthTex; \n\
+ \n\
+void main(void) \n\
+{ \n\
+	ivec2 coords = ivec2(gl_FragCoord.xy); \n\
+ \n\
+	int num_frag = int(imageLoad(abufferCounterImg, coords).r); \n\
+ \n\
+	highp float w = 100000.0 * gl_FragCoord.w; \n\
+	highp float depth = 1 - log2(1.0 + w) / 34; \n\
+	for (int i = 0; i < num_frag; i++) \n\
+	{ \n\
+		vec4 pixel_info = imageLoad(abufferBlendingImg, ivec3(coords, i)); \n\
+		highp float pixel_depth = info.x; \n\
+		if (depth > pixel_depth) \n\
+			continue; \n\
+		// FIXME Need int or uint pixel format, not vec4 \n\
+		imageAtomicXor(abufferBlendingImg, ivec3(coords, i), 1); \n\
+	} \n\
+ \n\
+	discard; \n\
+} \n\
+";
+
 void initABuffer()
 {
 	g_imageWidth = screen_width;
@@ -283,12 +313,13 @@ void initABuffer()
 
 	if (abufferTexID == 0)
 		abufferTexID = glcache.GenTexture();
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, abufferTexID);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA32F, g_imageWidth, g_imageHeight, ABUFFER_SIZE, 0,  GL_RGBA, GL_FLOAT, 0);
+	glActiveTexture(GL_TEXTURE3); glCheck();
+	glBindTexture(GL_TEXTURE_2D_ARRAY, abufferTexID); glCheck();
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST); glCheck();
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST); glCheck();
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA32F, g_imageWidth, g_imageHeight, ABUFFER_SIZE, 0,  GL_RGBA, GL_FLOAT, 0); glCheck();
 	glBindImageTexture(3, abufferTexID, 0, true, 0,  GL_READ_WRITE, GL_RGBA32F);
+	glCheck();
 
 	if (abufferCounterTexID == 0)
 		abufferCounterTexID = glcache.GenTexture();
@@ -303,6 +334,7 @@ void initABuffer()
 	//Uses GL_R32F instead of GL_R32I that is not working in R257.15
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, g_imageWidth, g_imageHeight, 0,  GL_RED, GL_FLOAT, 0);
 	glBindImageTexture(4, abufferCounterTexID, 0, false, 0,  GL_READ_WRITE, GL_R32UI);
+	glCheck();
 
 	if (abufferBlendingTexID == 0)
 		abufferBlendingTexID = glcache.GenTexture();
@@ -316,13 +348,13 @@ void initABuffer()
 	if (g_abuffer_final_shader.program == 0)
 	{
 		char source[8192];
-		sprintf(source, final_shader_source, ABUFFER_SIZE, 1);
+		sprintf(source, final_shader_source, 1);
 		CompilePipelineShader(&g_abuffer_final_shader, source);
 	}
 	if (g_abuffer_final_nosort_shader.program == 0)
 	{
 		char source[8192];
-		sprintf(source, final_shader_source, ABUFFER_SIZE, 0);
+		sprintf(source, final_shader_source, 0);
 		CompilePipelineShader(&g_abuffer_final_nosort_shader, source);
 	}
 	if (g_abuffer_clear_shader.program == 0)
@@ -332,6 +364,8 @@ void initABuffer()
 
 	glGenVertexArrays(1, &g_quadVertexArray);
 	glGenBuffers(1, &g_quadBuffer);
+
+	glCheck();
 }
 
 void reshapeABuffer(int w, int h)
@@ -361,23 +395,23 @@ void DrawQuad()
 	};
 	GLushort indices[] = { 0, 1, 2, 1, 3 };
 
-	glBindBuffer(GL_ARRAY_BUFFER, g_quadBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, g_quadBuffer); glCheck();
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW); glCheck();
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); glCheck();
 
-	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
-	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x));
+	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x)); glCheck();
 
-	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
-	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col));
+	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY); glCheck();
+	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col)); glCheck();
 
-	glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
-	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,vtx_spc));
+	glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY); glCheck();
+	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,vtx_spc)); glCheck();
 
-	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
-	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
+	glEnableVertexAttribArray(VERTEX_UV_ARRAY); glCheck();
+	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u)); glCheck();
 
-	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, indices);
+	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, indices); glCheck();
 }
 
 void renderPass2(GLuint textureId, GLuint depthTexId)
@@ -409,10 +443,13 @@ void renderABuffer(bool sortFragments)
 {
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, abufferTexID);
+	glCheck();
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, abufferCounterTexID);
+	glCheck();
 	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, abufferBlendingTexID);
+	glCheck();
 
 	glcache.UseProgram(sortFragments ? g_abuffer_final_shader.program : g_abuffer_final_nosort_shader.program);
 	ShaderUniforms.Set(&g_abuffer_final_shader);
@@ -423,6 +460,8 @@ void renderABuffer(bool sortFragments)
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	DrawQuad();
 
+	glCheck();
+
 	glcache.UseProgram(g_abuffer_clear_shader.program);
 	ShaderUniforms.Set(&g_abuffer_clear_shader);
 
@@ -430,4 +469,5 @@ void renderABuffer(bool sortFragments)
 	DrawQuad();
 
 	glActiveTexture(GL_TEXTURE0);
+	glCheck();
 }

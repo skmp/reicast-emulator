@@ -90,6 +90,9 @@ struct RenderPass {
 	u32 mvo_count;
 	u32 pt_count;
 	u32 tr_count;
+#ifdef HAVE_OIT
+   u32 mvo_tr_count;
+#endif
 };
 
 struct rend_context
@@ -113,6 +116,9 @@ struct rend_context
 	List<u16>         idx;
 	List<ModTriangle> modtrig;
 	List<ISP_Modvol>  global_param_mvo;
+#ifdef HAVE_OIT
+   List<ISP_Modvol>  global_param_mvo_tr;
+#endif
 
 	List<PolyParam>   global_param_op;
 	List<PolyParam>   global_param_pt;
@@ -128,6 +134,9 @@ struct rend_context
 		global_param_tr.Clear();
 		modtrig.Clear();
 		global_param_mvo.Clear();
+#ifdef HAVE_OIT
+      global_param_mvo_tr.Clear();
+#endif
       render_passes.Clear();
 
 		Overrun=false;
@@ -178,7 +187,7 @@ struct TA_context
 	}
 	void Alloc(bool have_oit)
 	{
-      unsigned vert_size, idx_size;
+      unsigned vert_size, idx_size, modtrig_size;
 #if !defined(TARGET_NO_THREADS)
       thd_inuse  = slock_new();
       rend_inuse = slock_new();
@@ -189,11 +198,13 @@ struct TA_context
       {
          idx_size  = 120   *1024; // up to 120K indices (idx have stripification overhead)
          vert_size = 4*1024*1024; //up to 4 mb of vtx data/frame = ~ 96k vtx/frame
+         modtrig_size = 16384;
       }
       else
       {
          idx_size  = 60    *1024; // up to 60K indices (idx have stripification overhead)
          vert_size =   1024*1024; //up to 1 mb of vtx data/frame = ~ 38k vtx/frame
+         modtrig_size = 8192;
       }
 
 		rend.verts.InitBytes(vert_size,&rend.Overrun, "verts"); 
@@ -201,6 +212,9 @@ struct TA_context
 		rend.global_param_op.Init(4096,&rend.Overrun, "global_param_op");
 		rend.global_param_pt.Init(4096,&rend.Overrun, "global_param_pt");
 		rend.global_param_mvo.Init(4096,&rend.Overrun, "global_param_mvo");
+#ifdef HAVE_OIT
+      rend.global_param_mvo_tr.Init(4096,&rend.Overrun, "global_param_mvo_tr");
+#endif
 #if STRIPS_AS_PPARAMS
       // That makes a lot of polyparams but this is required for proper sorting...
 		// Rez uses more than 8192 translucent polygons sometimes
@@ -209,7 +223,7 @@ struct TA_context
 		rend.global_param_tr.Init(4096,&rend.Overrun, "global_param_tr");
 #endif
 
-		rend.modtrig.Init(8192,&rend.Overrun, "modtrig");
+		rend.modtrig.Init(modtrig_size,&rend.Overrun, "modtrig");
 
       rend.render_passes.Init(sizeof(RenderPass) * 10, &rend.Overrun, "render_passes");	// 10 render passes
 		
@@ -246,6 +260,9 @@ struct TA_context
 		rend.global_param_tr.Free();
 		rend.modtrig.Free();
 		rend.global_param_mvo.Free();
+#ifdef HAVE_OIT
+      rend.global_param_mvo_tr.Free();
+#endif
       rend.render_passes.Free();
 	}
 };

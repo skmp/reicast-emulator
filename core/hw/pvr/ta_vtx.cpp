@@ -725,6 +725,14 @@ public:
 			p.id=vdrc.modtrig.used();
 			*vdrc.global_param_mvo.Append()=p;
 		}
+#ifdef HAVE_OIT
+      else if (ListType == ListType_Translucent_Modifier_Volume)
+		{
+			ISP_Modvol p;
+			p.id = vdrc.modtrig.used();
+			*vdrc.global_param_mvo_tr.Append()=p;
+		}
+#endif
 	}
 
 	/*
@@ -1324,9 +1332,16 @@ public:
 	//Mod Volume Vertex handlers
 	static void StartModVol(TA_ModVolParam* param)
 	{
-		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+      ISP_Modvol* p= NULL;
+		if (CurrentList == ListType_Opaque_Modifier_Volume)
+         p = vdrc.global_param_mvo.Append();
+#ifdef HAVE_OIT
+      else if (CurrentList == ListType_Translucent_Modifier_Volume)
+			p = vdrc.global_param_mvo_tr.Append();
+#endif
+      else
 			return;
-		ISP_Modvol* p=vdrc.global_param_mvo.Append();
+
 		p->full=param->isp.full;
 		p->VolumeLast=param->pcw.Volume;
 		p->id=vdrc.modtrig.used();
@@ -1334,7 +1349,11 @@ public:
 	__forceinline
 		static void AppendModVolVertexA(TA_ModVolA* mvv)
 	{
+#ifdef HAVE_OIT
+      if (CurrentList != ListType_Opaque_Modifier_Volume && CurrentList != ListType_Translucent_Modifier_Volume)
+#else
 		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+#endif
 			return;
 		lmr=vdrc.modtrig.Append();
 
@@ -1354,7 +1373,11 @@ public:
 	__forceinline
 		static void AppendModVolVertexB(TA_ModVolB* mvv)
 	{
+#ifdef HAVE_OIT
+      if (CurrentList != ListType_Opaque_Modifier_Volume && CurrentList != ListType_Translucent_Modifier_Volume)
+#else
 		if (CurrentList!=ListType_Opaque_Modifier_Volume)
+#endif
 			return;
 		lmr->y2=mvv->y2;
 		lmr->z2=mvv->z2;
@@ -1418,15 +1441,25 @@ bool ta_parse_vdrc(TA_context* ctx)
 			render_pass->mvo_count = vd_rc.global_param_mvo.used();
 			render_pass->pt_count = vd_rc.global_param_pt.used();
 			render_pass->tr_count = vd_rc.global_param_tr.used();
+#ifdef HAVE_OIT
+         render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
+#endif
       }
 
       rv = true; //whatever
 	}
+#ifdef HAVE_OIT
+   bool overrun = ctx->rend.Overrun;
+#endif
 
 	vd_ctx->rend = vd_rc;
 	vd_ctx = 0;
 #if !defined(TARGET_NO_THREADS)
    slock_unlock(ctx->rend_inuse);
+#endif
+
+#ifdef HAVE_OIT
+   ctx->rend.Overrun = overrun;
 #endif
 
 	return rv;

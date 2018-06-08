@@ -89,7 +89,7 @@ void main() \n\
 
 const char* PixelPipelineShader =
 #ifndef HAVE_OPENGLES
-      "#version 140 \n"
+      "#version 420 \n"
 #endif
 "\
 \
@@ -124,7 +124,7 @@ uniform " LOWP " vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
 uniform " HIGHP " float sp_FOG_DENSITY; \n\
 uniform " HIGHP " float shade_scale_factor; \n\
 uniform " LOWP  " vec2 screen_size; \n\
-uniform sampler2D tex,fog_table; \n\
+layout(binding = 5) uniform sampler2D fog_table; \n\
 #if pp_WeightedAverage == 0 && pp_FrontPeeling == 0 \n\
 	uniform usampler2D shadow_stencil; \n\
 #endif \n\
@@ -141,10 +141,10 @@ coherent uniform layout(size2x32) image2DArray abufferBlendingImg; \n\
 " vary " " MEDIUMP " float vtx_z; \n\
 " LOWP " float fog_mode2(" HIGHP " float w) \n\
 { \n\
-   " HIGHP " float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\
-   float exp         = floor(log2(z)); \n\
-   " HIGHP " float m = z * 16.0 / pow(2.0, exp) - 16.0; \n\
-   float idx         = floor(m) + exp * 16.0 + 0.5; \n\
+   " HIGHP " float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\ 
+   uint i = uint(floor(log2(z))); \n\
+   " HIGHP " float m = z * 16.0 / pow(2.0, i) - 16.0; \n\
+   float idx         = floor(m) + i * 16.0 + 0.5; \n\
    vec4 fog_coef = " TEXLOOKUP "(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0)); \n\
    return fog_coef.a; \n\
 } \n\
@@ -602,7 +602,7 @@ static bool gl_create_resources(void)
 
 void UpdateFogTexture(u8 *fog_table)
 {
-	glActiveTexture(GL_TEXTURE1);
+	glActiveTexture(GL_TEXTURE5);
 	if (fogTextureId == 0)
 	{
 		fogTextureId = glcache.GenTexture();

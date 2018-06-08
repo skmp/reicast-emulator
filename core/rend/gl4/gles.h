@@ -115,7 +115,6 @@ typedef struct _ShaderUniforms_t
 	float fog_den_float;
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
-	float fog_coefs[2];
    GLuint blend_mode[2];
 
    void Set(PipelineShader* s)

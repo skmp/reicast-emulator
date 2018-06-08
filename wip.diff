@@ -1,0 +1,302 @@
+diff --git a/core/libretro/libretro.cpp b/core/libretro/libretro.cpp
+index 6052ff41..d85b100d 100644
+--- a/core/libretro/libretro.cpp
++++ b/core/libretro/libretro.cpp
+@@ -14,8 +14,8 @@
+ 
+ #include "libretro.h"
+ 
+-int screen_width  = 640;
+-int screen_height = 480;
++extern int screen_width;
++extern int screen_height;
+ bool boot_to_bios;
+ 
+ u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
+diff --git a/core/rend/gles/gldraw.cpp b/core/rend/gles/gldraw.cpp
+index 4e9e1c50..ec681233 100644
+--- a/core/rend/gles/gldraw.cpp
++++ b/core/rend/gles/gldraw.cpp
+@@ -79,6 +79,8 @@ extern int screen_height;
+ 
+ PipelineShader* CurrentShader;
+ extern u32 gcflip;
++GLuint fbo;
++GLuint stencilTexId;
+ 
+ s32 SetTileClip(u32 val, bool set)
+ {
+@@ -163,6 +165,21 @@ __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
+    if (CurrentShader->program == -1)
+       CompilePipelineShader(CurrentShader);
+    glcache.UseProgram(CurrentShader->program);
++
++   if (Type == ListType_Opaque)
++	{
++		// FIXME Must be done for drawing pass only and only for opaque (and pt?)
++		glActiveTexture(GL_TEXTURE1);
++		glcache.BindTexture(GL_TEXTURE_2D, stencilTexId);
++		GLint uniform = glGetUniformLocation(CurrentShader->program, "shadow_stencil");
++		if (uniform != -1)
++		{
++			glUniform1i(uniform, 1);
++		}
++		glActiveTexture(GL_TEXTURE0);
++	}
++
++
+    SetTileClip(gp->tileclip,true);
+ 
+    // This bit controls which pixels are affected
+@@ -674,8 +691,10 @@ void DrawModVols(int first, int count)
+ 
+    SetupModvolVBO();
+ 
++#if 0
+    glcache.Enable(GL_BLEND);
+    glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
++#endif
+ 
+    glcache.UseProgram(gl.modvol_shader.program);
+    glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
+@@ -755,6 +774,7 @@ last *out*  : flip, merge*out* &clear from last merge
+       }
+    }
+ 
++#if 0
+    //disable culling
+    SetCull(0);
+    //enable color writes
+@@ -774,23 +794,59 @@ last *out*  : flip, merge*out* &clear from last merge
+ 
+    //don't do depth testing
+    glcache.Disable(GL_DEPTH_TEST);
++#endif
+ 
+    SetupMainVBO();
+-   glDrawArrays(GL_TRIANGLE_STRIP,0,4);
++   //glDrawArrays(GL_TRIANGLE_STRIP,0,4);
+ 
+    //Draw and blend
+    //glDrawArrays(GL_TRIANGLES, count, 2);
+ 
+    //restore states
+-   glcache.Enable(GL_DEPTH_TEST);
++   //glcache.Enable(GL_DEPTH_TEST);
+ }
+ 
+ void DrawStrips(void)
+ {
++   if (fbo == 0)
++   {
++      glGenFramebuffers(1, &fbo);
++      glBindFramebuffer(GL_FRAMEBUFFER, fbo);		// Bind framebuffer 0 to use the system fb
++
++      stencilTexId = glcache.GenTexture();
++      glcache.BindTexture(GL_TEXTURE_2D, stencilTexId);
++      glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, screen_width, screen_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
++      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0);
++
++      //		GLuint colortexid = glcache.GenTexture();
++      //		glcache.BindTexture(GL_TEXTURE_2D, colortexid);
++      //
++      //		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width, screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
++      //		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colortexid, 0);
++
++      GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
++
++      verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
++   }
++   else
++   {
++      glBindFramebuffer(GL_FRAMEBUFFER, fbo);
++      if (stencilTexId == 0)
++      {
++         stencilTexId = glcache.GenTexture();
++         glcache.BindTexture(GL_TEXTURE_2D, stencilTexId);
++         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, screen_width, screen_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
++         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0);
++      }
++      glcache.Disable(GL_SCISSOR_TEST);
++      glcache.DepthMask(GL_TRUE);
++      glStencilMask(0xFF);
++      glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
++   }
++
+ 	SetupMainVBO();
+ 	//Draw the strips !
+ 
+-
+ 	//We use sampler 0
+    glActiveTexture(GL_TEXTURE0);
+ 
+@@ -801,25 +857,33 @@ void DrawStrips(void)
+ 
+       //initial state
+       glcache.Enable(GL_DEPTH_TEST);
+-
+-#if 0
+-      glClearDepth(0.f);
+-#endif
+       glcache.DepthMask(GL_TRUE);
+-      glcache.StencilMask(0xFF);
+-      glClear(GL_DEPTH_BUFFER_BIT );
+ 
+-      //Opaque
++      // Do a first pass on the depth+stencil buffer
++      glBindFramebuffer(GL_FRAMEBUFFER, fbo);
++      glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
++
+       DrawList<ListType_Opaque, false>(pvrrc.global_param_op, 
+             previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
+ 
+-      //Alpha tested
+-      DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt,
+-            previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
+-
+       // Modifier volumes
+       DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
+ 
++      glBindFramebuffer(GL_FRAMEBUFFER, 0);
++		glcache.BindTexture(GL_TEXTURE_2D, stencilTexId);
++		glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
++		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
++		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
++
++		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
++
++		//Opaque
++		DrawList<ListType_Opaque,false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
++
++      //Alpha tested
++      DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
++
++
+       if (UsingAutoSort())
+          GenSorted(previous_pass.tr_count,
+                current_pass.tr_count - previous_pass.tr_count);
+diff --git a/core/rend/gles/gles.cpp b/core/rend/gles/gles.cpp
+index 2b8f8135..61c97c97 100644
+--- a/core/rend/gles/gles.cpp
++++ b/core/rend/gles/gles.cpp
+@@ -49,6 +49,12 @@ struct ShaderUniforms_t
+ 
+       if (s->sp_FOG_COL_VERT!=-1)
+          glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
++
++      if (s->screen_size != -1)
++			glUniform2f(s->screen_size, (float)screen_width, (float)screen_height);
++
++		if (s->shade_scale_factor != -1)
++			glUniform1f(s->shade_scale_factor, FPU_SHAD_SCALE.scale_factor / 256.f);
+    }
+ } ShaderUniforms;
+ 
+@@ -77,7 +83,7 @@ float scale_x, scale_y;
+ //pretty much 1:1 copy of the d3d ones for now
+ const char* VertexShaderSource =
+ #ifndef HAVE_OPENGLES
+-   "#version 120 \n"
++   "#version 140 \n"
+ #endif
+ "\
+ /* Vertex constants*/  \n\
+@@ -118,7 +124,7 @@ void main() \n\
+ 
+ const char* PixelPipelineShader =
+ #ifndef HAVE_OPENGLES
+-      "#version 120 \n"
++      "#version 140 \n"
+ #endif
+ "\
+ \
+@@ -136,7 +142,10 @@ uniform " LOWP " float cp_AlphaTestValue; \n\
+ uniform " LOWP " vec4 pp_ClipTest; \n\
+ uniform " LOWP " vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
+ uniform " HIGHP " float sp_FOG_DENSITY; \n\
++uniform " HIGHP " float shade_scale_factor; \n\
++uniform " HIGHP " vec2 screen_size; \n\
+ uniform sampler2D tex,fog_table; \n\
++uniform usampler2D shadow_stencil; \n\
+ /* Vertex input*/ \n\
+ " vary " " LOWP " vec4 vtx_base; \n\
+ " vary " " LOWP " vec4 vtx_offs; \n\
+@@ -214,6 +223,10 @@ void main() \n\
+ 		#endif\n\
+ 	} \n\
+ 	#endif\n\
++	//uvec4 stencil = texture(shadow_stencil, vec2(gl_FragCoord.x / 1280, gl_FragCoord.y / 960)); \n\
++	uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / screen_size); \n\
++	if (stencil.r == uint(0x81)) \n\
++		color.rgb *= shade_scale_factor; \n\
+ 	#if pp_FogCtrl==0 \n\
+ 	{ \n\
+ 		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
+@@ -400,6 +413,8 @@ bool CompilePipelineShader(PipelineShader *s)
+    if (gu != -1)
+       glUniform1i(gu, 1);
+ 
++   s->screen_size = glGetUniformLocation(s->program, "screen_size");
++	s->shade_scale_factor = glGetUniformLocation(s->program, "shade_scale_factor");
+    ShaderUniforms.Set(s);
+ 
+ 	return glIsProgram(s->program)==GL_TRUE;
+@@ -563,6 +578,12 @@ void DoCleanup() {
+ 
+ static bool RenderFrame(void)
+ {
++   static int old_screen_width, old_screen_height;
++	if (screen_width != old_screen_width || screen_height != old_screen_height) {
++		rend_resize(screen_width, screen_height);
++		old_screen_width = screen_width;
++		old_screen_height = screen_height;
++	}
+    DoCleanup();
+ 
+ 	bool is_rtt=pvrrc.isRTT;
+@@ -962,7 +983,17 @@ struct glesrend : Renderer
+ 
+       return true;
+    }
+-	void Resize(int w, int h) { screen_width=w; screen_height=h; }
++   void Resize(int w, int h)
++	{
++		// FIXME Not called :(
++		screen_width=w;
++		screen_height=h;
++		if (stencilTexId != 0)
++		{
++			glcache.DeleteTextures(1, &stencilTexId);
++			stencilTexId = 0;
++		}
++	}
+ 	void Term() { libCore_vramlock_Free(); }
+ 
+ 	bool Process(TA_context* ctx)
+diff --git a/core/rend/gles/gles.h b/core/rend/gles/gles.h
+index ff99d068..8defe537 100644
+--- a/core/rend/gles/gles.h
++++ b/core/rend/gles/gles.h
+@@ -11,6 +11,7 @@
+ 
+ //vertex types
+ extern float scale_x, scale_y;
++extern int screen_width, screen_height;
+ 
+ void DrawStrips(void);
+ 
+@@ -24,6 +25,8 @@ struct PipelineShader
+ 	GLuint sp_FOG_COL_RAM;
+    GLuint sp_FOG_COL_VERT;
+    GLuint sp_FOG_DENSITY;
++   GLuint shade_scale_factor;
++	GLuint screen_size;
+ 	u32 cp_AlphaTest;
+    s32 pp_ClipTestMode;
+ 	u32 pp_Texture;
+@@ -92,3 +95,5 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
+ void vertex_buffer_unmap(void);
+ 
+ bool CompilePipelineShader(PipelineShader* s);
++
++extern GLuint stencilTexId;

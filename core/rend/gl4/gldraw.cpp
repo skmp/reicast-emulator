@@ -192,7 +192,7 @@ __forceinline void SetGPState(const PolyParam* gp, bool weighted_average = false
                gp->tsp.IgnoreTexA,
                gp->tsp.ShadInstr,
                gp->pcw.Offset,
-               gp->tsp.FogCtrl,
+               /*gp->tsp.FogCtrl*/2,
                weighted_average,
                front_peeling));
 
@@ -204,7 +204,7 @@ __forceinline void SetGPState(const PolyParam* gp, bool weighted_average = false
          CurrentShader->pp_IgnoreTexA = gp->tsp.IgnoreTexA;
          CurrentShader->pp_ShadInstr = gp->tsp.ShadInstr;
          CurrentShader->pp_Offset = gp->pcw.Offset;
-         CurrentShader->pp_FogCtrl = gp->tsp.FogCtrl;
+         CurrentShader->pp_FogCtrl = /*gp->tsp.FogCtrl*/2;
          CurrentShader->pp_WeightedAverage = weighted_average;
          CurrentShader->pp_FrontPeeling = front_peeling;
          CompilePipelineShader(CurrentShader);

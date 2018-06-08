@@ -77,6 +77,8 @@ const static u32 SrcBlendGL[] =
 
 PipelineShader* CurrentShader;
 extern u32 gcflip;
+GLuint fbo;
+GLuint stencilTexId;
 
 s32 SetTileClip(u32 val, bool set)
 {
@@ -731,8 +733,10 @@ void DrawModVols(int first, int count)
 
    SetupModvolVBO();
 
+#if 0
    glcache.Enable(GL_BLEND);
    glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+#endif
 
    glcache.UseProgram(gl.modvol_shader.program);
    glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
@@ -812,6 +816,7 @@ last *out*  : flip, merge*out* &clear from last merge
       }
    }
 
+#if 0
    //disable culling
    SetCull(0);
    //enable color writes
@@ -831,16 +836,17 @@ last *out*  : flip, merge*out* &clear from last merge
 
    //don't do depth testing
    glcache.Disable(GL_DEPTH_TEST);
+#endif
 
    SetupMainVBO();
-   glDrawArrays(GL_TRIANGLE_STRIP,0,4);
+   //glDrawArrays(GL_TRIANGLE_STRIP,0,4);
 
    //Draw and blend
    //glDrawArrays(GL_TRIANGLES, count, 2);
 
    //restore states
-   glcache.Enable(GL_DEPTH_TEST);
-   glcache.DepthMask(GL_TRUE);
+   //glcache.Enable(GL_DEPTH_TEST);
+   //glcache.DepthMask(GL_TRUE);
 }
 
 void InitDualPeeling();
@@ -851,6 +857,42 @@ void DualPeelingReshape(int w, int h);
 
 void DrawStrips(void)
 {
+   if (fbo == 0)
+   {
+      glGenFramebuffers(1, &fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);		// Bind framebuffer 0 to use the system fb
+
+		stencilTexId = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, stencilTexId);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, screen_width, screen_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0);
+
+//		GLuint colortexid = glcache.GenTexture();
+//		glcache.BindTexture(GL_TEXTURE_2D, colortexid);
+//
+//		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width, screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+//		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colortexid, 0);
+
+		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+		verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
+   }
+   else
+   {
+      glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		if (stencilTexId == 0)
+		{
+			stencilTexId = glcache.GenTexture();
+			glcache.BindTexture(GL_TEXTURE_2D, stencilTexId);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, screen_width, screen_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0);
+		}
+		glcache.Disable(GL_SCISSOR_TEST);
+		glcache.DepthMask(GL_TRUE);
+		glStencilMask(0xFF);
+		glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   }
+
    InitDualPeeling();
 	DualPeelingReshape(screen_width, screen_height);
 
@@ -870,11 +912,10 @@ void DrawStrips(void)
       glcache.Enable(GL_DEPTH_TEST);
       glcache.DepthMask(GL_TRUE);
 
-#if 0
-      glClearDepth(0.f);
-#endif
-      glcache.StencilMask(0xFF);
-      glClear(GL_DEPTH_BUFFER_BIT );
+      // Do a first pass on the depth+stencil buffer
+      glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+      glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
       //Opaque
       DrawList<ListType_Opaque, false>(pvrrc.global_param_op, 
@@ -886,6 +927,21 @@ void DrawStrips(void)
 
       // Modifier volumes
       DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
+
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+      // Bind stencil buffer for the fragment shader (shadowing)
+      glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, stencilTexId);
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glActiveTexture(GL_TEXTURE0);
+
+		//Opaque
+		DrawList<ListType_Opaque,false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
 
       //Alpha blended
       {

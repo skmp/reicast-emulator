@@ -46,7 +46,7 @@ float scale_x, scale_y;
 //pretty much 1:1 copy of the d3d ones for now
 const char* VertexShaderSource =
 #ifndef HAVE_OPENGLES
-   "#version 120 \n"
+   "#version 140 \n"
 #endif
 "\
 /* Vertex constants*/  \n\
@@ -122,7 +122,10 @@ uniform " LOWP " float cp_AlphaTestValue; \n\
 uniform " LOWP " vec4 pp_ClipTest; \n\
 uniform " LOWP " vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
 uniform " HIGHP " float sp_FOG_DENSITY; \n\
+uniform " HIGHP " float shade_scale_factor; \n\
+uniform " HIGHP " vec2 screen_size; \n\
 uniform sampler2D tex,fog_table; \n\
+uniform usampler2D shadow_stencil; \n\
 /* Vertex input*/ \n\
 " vary " " LOWP " vec4 vtx_base; \n\
 " vary " " LOWP " vec4 vtx_offs; \n\
@@ -214,6 +217,10 @@ void main() \n\
 		#endif\n\
 	} \n\
 	#endif\n\
+//uvec4 stencil = texture(shadow_stencil, vec2(gl_FragCoord.x / 1280, gl_FragCoord.y / 960)); \n\
+	uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / screen_size); \n\
+	if (stencil.r == uint(0x81)) \n\
+		color.rgb *= shade_scale_factor; \n\
 	#if pp_FogCtrl==0 // LUT \n\
 	{ \n\
 		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
@@ -417,6 +424,9 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
    if (gu != -1)
       glUniform1i(gu, 1);
 
+   s->screen_size = glGetUniformLocation(s->program, "screen_size");
+	s->shade_scale_factor = glGetUniformLocation(s->program, "shade_scale_factor");
+
    ShaderUniforms.Set(s);
 
    // Depth peeling: use texture 1 for depth texture
@@ -597,6 +607,12 @@ void DoCleanup() {
 
 static bool RenderFrame(void)
 {
+   static int old_screen_width, old_screen_height;
+	if (screen_width != old_screen_width || screen_height != old_screen_height) {
+		rend_resize(screen_width, screen_height);
+		old_screen_width = screen_width;
+		old_screen_height = screen_height;
+	}
    DoCleanup();
 
 	bool is_rtt=pvrrc.isRTT;
@@ -997,7 +1013,17 @@ struct glesrend : Renderer
 
       return true;
    }
-	void Resize(int w, int h) { screen_width=w; screen_height=h; }
+   void Resize(int w, int h)
+	{
+		// FIXME Not called :(
+		screen_width=w;
+		screen_height=h;
+		if (stencilTexId != 0)
+		{
+			glcache.DeleteTextures(1, &stencilTexId);
+			stencilTexId = 0;
+		}
+	}
 	void Term() { libCore_vramlock_Free(); }
 
 	bool Process(TA_context* ctx)

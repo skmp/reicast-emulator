@@ -22,9 +22,11 @@ struct PipelineShader
    GLuint depth_scale;
 	GLuint pp_ClipTest;
    GLuint cp_AlphaTestValue;
-	GLuint sp_FOG_COL_RAM;
-   GLuint sp_FOG_COL_VERT;
-   GLuint sp_FOG_DENSITY;
+	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
+   GLuint shade_scale_factor;
+	GLuint screen_size;
+
+   //
 	u32 cp_AlphaTest;
    s32 pp_ClipTestMode;
 	u32 pp_Texture;
@@ -133,6 +135,12 @@ typedef struct _ShaderUniforms_t
 
       if (s->sp_FOG_COL_VERT!=-1)
          glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
+
+      if (s->screen_size != -1)
+			glUniform2f(s->screen_size, (float)screen_width, (float)screen_height);
+
+		if (s->shade_scale_factor != -1)
+			glUniform1f(s->shade_scale_factor, FPU_SHAD_SCALE.scale_factor / 256.f);
    }
 } _ShaderUniforms;
 extern struct _ShaderUniforms_t ShaderUniforms;
@@ -146,3 +154,5 @@ void DrawListTranslucentAutoSorted(const List<PolyParam>& gply, int first, int c
 void DrawListOpaque(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0);
 void DrawListPunchThrough(const List<PolyParam>& gply, int first, int count, bool weighted_average = false, u32 front_peeling = 0);
 void SetupMainVBO();
+
+extern GLuint stencilTexId;

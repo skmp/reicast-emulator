@@ -498,7 +498,7 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
    // A-buffers
    //gu = glGetUniformLocation(s->program, "abufferPointerImg");
    //if (gu != -1)
-		glUniform1i(gu, 3);		// GL_TEXTURE3
+		//glUniform1i(gu, 3);		// GL_TEXTURE3
 
 	s->blend_mode = glGetUniformLocation(s->program, "blend_mode");
    s->pp_Number = glGetUniformLocation(s->program, "pp_Number");

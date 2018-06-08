@@ -1,4 +1,4 @@
-/* Copyright (C) 2010-2016 The RetroArch team
+/* Copyright (C) 2010-2018 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this libretro SDK code part (glsm).
@@ -1908,6 +1908,10 @@ void rglFlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length
 #endif
 }
 
+#ifndef GL_WAIT_FAILED
+#define GL_WAIT_FAILED                                   0x911D
+#endif
+
 /*
  *
  * Core in:
@@ -1918,6 +1922,8 @@ GLenum rglClientWaitSync(void *sync, GLbitfield flags, uint64_t timeout)
 {
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
   return glClientWaitSync((GLsync)sync, flags, (GLuint64)timeout);
+#else
+  return GL_WAIT_FAILED;
 #endif
 }
 
@@ -2201,7 +2207,7 @@ static bool glsm_state_ctx_init(void *data)
 #ifdef CORE
    hw_render.context_type       = RETRO_HW_CONTEXT_OPENGL_CORE;
    hw_render.version_major      = 3;
-   hw_render.version_minor      = 1;
+   hw_render.version_minor      = 3;
 #else
    hw_render.context_type       = RETRO_HW_CONTEXT_OPENGL;
 #endif
@@ -2211,7 +2217,7 @@ static bool glsm_state_ctx_init(void *data)
    hw_render.stencil            = params->stencil;
    hw_render.depth              = true;
    hw_render.bottom_left_origin = true;
-   hw_render.cache_context      = true;
+   hw_render.cache_context      = false;
 
    if (!params->environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
       return false;

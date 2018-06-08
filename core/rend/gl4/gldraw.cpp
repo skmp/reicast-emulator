@@ -104,8 +104,8 @@ s32 SetTileClip(u32 val, bool set)
          float t = cey;
          cey = 480 - csy;
          csy = 480 - t;
-         float dc2s_scale_h = gles_screen_height / 480.0f;
-         float ds2s_offs_x = (gles_screen_width - dc2s_scale_h * 640) / 2;
+         float dc2s_scale_h = screen_height / 480.0f;
+         float ds2s_offs_x = (screen_width - dc2s_scale_h * 640) / 2;
          csx = csx * dc2s_scale_h + ds2s_offs_x;
          cex = cex * dc2s_scale_h + ds2s_offs_x;
          csy = csy * dc2s_scale_h;
@@ -843,7 +843,7 @@ void DualPeelingReshape(int w, int h);
 void DrawStrips(void)
 {
    InitDualPeeling();
-	DualPeelingReshape(gles_screen_width, gles_screen_height);
+	DualPeelingReshape(screen_width, screen_height);
 
 	SetupMainVBO();
 	//Draw the strips !

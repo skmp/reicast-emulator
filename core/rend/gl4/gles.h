@@ -95,8 +95,8 @@ void CollectCleanup();
 void DoCleanup();
 void SortPParams(int first, int count);
 
-extern int gles_screen_width;
-extern int gles_screen_height;
+extern int screen_width;
+extern int screen_height;
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();

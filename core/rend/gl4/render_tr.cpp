@@ -101,10 +101,10 @@ void DrawQuad()
 	glBindVertexArray(g_quadVertexArray);
 
 	struct Vertex vertices[] = {
-			{ 0, gles_screen_height, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
+			{ 0, screen_height, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
 			{ 0, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-			{ gles_screen_width, gles_screen_height, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-			{ gles_screen_width, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+			{ screen_width, screen_height, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
+			{ screen_width, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
 	};
 	GLushort indices[] = { 0, 1, 2, 1, 3 };
 
@@ -472,8 +472,8 @@ void InitDualPeeling()
 	if (g_accumulationTexId[0] != 0 || g_frontFboId[0] != 0)
 		return;
 
-	g_imageWidth = gles_screen_width;
-	g_imageHeight = gles_screen_height;
+	g_imageWidth = screen_width;
+	g_imageHeight = screen_height;
 
 	glGenVertexArrays(1, &g_quadVertexArray);
 	glGenBuffers(1, &g_quadBuffer);

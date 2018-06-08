@@ -258,8 +258,8 @@ void main() \n\
 }";
 
 
-int gles_screen_width  = 640;
-int gles_screen_height = 480;
+int screen_width  = 640;
+int screen_height = 480;
 GLuint fogTextureId;
 
 int GetProgramID(
@@ -767,14 +767,14 @@ static bool RenderFrame(void)
 	/*
 		Handle Dc to screen scaling
 	*/
-	float dc2s_scale_h = is_rtt ? (gles_screen_width / dc_width) : (gles_screen_height/480.0);
-	float ds2s_offs_x  = is_rtt ? 0 : ((gles_screen_width-dc2s_scale_h*640)/2);
+	float dc2s_scale_h = is_rtt ? (screen_width / dc_width) : (screen_height/480.0);
+	float ds2s_offs_x  = is_rtt ? 0 : ((screen_width-dc2s_scale_h*640)/2);
 
 	//-1 -> too much to left
-	ShaderUniforms.scale_coefs[0]=2.0f/(gles_screen_width/dc2s_scale_h*scale_x);
+	ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h*scale_x);
 	ShaderUniforms.scale_coefs[1]= (is_rtt?2:-2) / dc_height;
    // FIXME CT2 needs 480 here instead of dc_height=512
-	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(gles_screen_width);
+	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
 	ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
 
 
@@ -877,7 +877,7 @@ static bool RenderFrame(void)
 	}
    else
    {
-      glViewport(0, 0, gles_screen_width, gles_screen_height);
+      glViewport(0, 0, screen_width, screen_height);
    }
 
    bool wide_screen_on = !is_rtt && settings.rend.WideScreen
@@ -922,7 +922,7 @@ static bool RenderFrame(void)
 
 #if 0
    //handy to debug really stupid render-not-working issues ...
-   printf("SS: %dx%d\n", gles_screen_width, gles_screen_height);
+   printf("SS: %dx%d\n", screen_width, screen_height);
    printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
    printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 #endif
@@ -997,7 +997,7 @@ struct glesrend : Renderer
 
       return true;
    }
-	void Resize(int w, int h) { gles_screen_width=w; gles_screen_height=h; }
+	void Resize(int w, int h) { screen_width=w; screen_height=h; }
 	void Term() { libCore_vramlock_Free(); }
 
 	bool Process(TA_context* ctx)

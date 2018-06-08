@@ -33,6 +33,11 @@ RETRO_BEGIN_DECLS
 #define glTexCoord2f                rglTexCoord2f
 
 /* more forward-compatible GL subset symbols */
+#define glGetQueryObjectuiv         rglGetQueryObjectuiv
+#define glGenQueries                rglGenQueries
+#define glDeleteQueries             rglDeleteQueries
+#define glBeginQuery                rglBeginQuery
+#define glEndQuery                  rglEndQuery
 #define glBlitFramebuffer           rglBlitFramebuffer
 #define glVertexAttrib4f            rglVertexAttrib4f
 #define glVertexAttrib4fv           rglVertexAttrib4fv
@@ -329,6 +334,16 @@ void rglVertexAttrib4f(GLuint name, GLfloat x, GLfloat y,
 void rglVertexAttrib4fv(GLuint name, GLfloat* v);
 void rglDeleteProgram(GLuint program);
 void rglDeleteBuffers(GLsizei n, const GLuint *buffers);
+void rglGenQueries(	GLsizei n,
+ 	GLuint * ids);
+void rglDeleteQueries(	GLsizei n,
+ 	const GLuint * ids);
+void rglBeginQuery(	GLenum target,
+ 	GLuint id);
+void rglEndQuery(	GLenum target);
+void rglGetQueryObjectuiv(	GLuint id,
+ 	GLenum pname,
+ 	GLuint * params);
 void rglBlitFramebuffer(
       GLint srcX0, GLint srcY0,
       GLint srcX1, GLint srcY1,

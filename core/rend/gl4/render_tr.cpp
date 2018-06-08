@@ -367,7 +367,7 @@ void RenderFrontToBackPeeling(int first, int count)
 	// ---------------------------------------------------------------------
 	// 2. Depth Peeling + Blending
 	// ---------------------------------------------------------------------
-extern bool hack_on;
+bool hack_on;
 if (hack_on)
 	g_numPasses = 4;
 else

@@ -854,6 +854,47 @@ void rglGetActiveUniform(GLuint program, GLuint index, GLsizei bufsize,
    glGetActiveUniform(program, index, bufsize, length, size, type, name);
 }
 
+void rglGenQueries(	GLsizei n,
+ 	GLuint * ids)
+{
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
+   glGenQueries(n, ids);
+#endif
+}
+
+void rglGetQueryObjectuiv(	GLuint id,
+ 	GLenum pname,
+ 	GLuint * params)
+{
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
+   glGetQueryObjectuiv(id, pname, params);
+#endif
+}
+
+void rglDeleteQueries(	GLsizei n,
+ 	const GLuint * ids)
+{
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
+   glDeleteQueries(n, ids);
+#endif
+}
+
+void rglBeginQuery(	GLenum target,
+ 	GLuint id)
+{
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
+   glBeginQuery(target, id);
+#endif
+}
+
+void rglEndQuery(	GLenum target)
+{
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
+   glEndQuery(target);
+#endif
+}
+
+
 /*
  * Category: UBO
  *

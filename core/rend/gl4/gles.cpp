@@ -20,6 +20,7 @@ bool KillTex=false;
 GLCache glcache;
 gl_ctx gl;
 
+_ShaderUniforms_t ShaderUniforms;
 u32 gcflip;
 
 float fb_scale_x = 0.0f;

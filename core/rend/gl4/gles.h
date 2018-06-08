@@ -104,7 +104,7 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_WeightedAverage, u32 pp_FrontPeeling);
 
-struct ShaderUniforms_t
+typedef struct _ShaderUniforms_t
 {
 	float PT_ALPHA;
 	float scale_coefs[4];
@@ -134,8 +134,8 @@ struct ShaderUniforms_t
       if (s->sp_FOG_COL_VERT!=-1)
          glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
    }
-} ShaderUniforms;
-extern ShaderUniforms_t ShaderUniforms;
+} _ShaderUniforms;
+extern struct _ShaderUniforms_t ShaderUniforms;
 
 extern const char *PixelPipelineShader;
 bool CompilePipelineShader(PipelineShader* s, const char *source = PixelPipelineShader);

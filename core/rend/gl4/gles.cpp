@@ -155,6 +155,8 @@ void main() \n\
 	gl_FragDepth = 1.0 - log2(1.0 + w) / 34.0; \n"
 #endif
 "\
+   " HIGHP " vec4 color=vtx_base; \n\
+   ivec2 coords; \n\
    #if PASS == 3 \n\
 		// Manual depth testing \n\
 		highp float frontDepth = texture(DepthTex, gl_FragCoord.xy / screen_size).r; \n\
@@ -175,7 +177,6 @@ void main() \n\
 			discard; \n\
 	#endif \n\
 	\n\
-   " HIGHP " vec4 color=vtx_base; \n\
 	#if pp_UseAlpha==0 \n\
 		color.a=1.0; \n\
 	#endif\n\
@@ -244,7 +245,7 @@ void main() \n\
 	#if PASS == 1 \n"
       FRAGCOL " = color; \n\
    #elif PASS > 1 \n\
-      ivec2 coords = ivec2(gl_FragCoord.xy); \n\
+      coords = ivec2(gl_FragCoord.xy); \n\
 		int abidx = int(imageAtomicAdd(abufferCounterImg, coords, uint(1))); \n\
 		if (abidx >= ABUFFER_SIZE) { \n\
          // Green pixels when overflow \n\

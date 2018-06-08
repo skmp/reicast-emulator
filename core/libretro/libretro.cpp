@@ -14,8 +14,8 @@
 
 #include "libretro.h"
 
-int screen_width  = 640;
-int screen_height = 480;
+extern int screen_width;
+extern int screen_height;
 bool boot_to_bios;
 
 u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
@@ -193,6 +193,8 @@ void retro_set_environment(retro_environment_t cb)
 // Now comes the interesting stuff
 void retro_init(void)
 {
+   screen_width  = 640;
+   screen_height = 480;
    // Logging
    struct retro_log_callback log;
    if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))

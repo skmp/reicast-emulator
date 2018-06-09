@@ -33,6 +33,9 @@ RETRO_BEGIN_DECLS
 #define glTexCoord2f                rglTexCoord2f
 
 /* more forward-compatible GL subset symbols */
+#define glGenSamplers               rglGenSamplers
+#define glBindSampler               rglBindSampler
+#define glSamplerParameteri         rglSamplerParameteri
 #define glGetBufferSubData          rglGetBufferSubData
 #define glUniform2uiv               rglUniform2uiv
 #define glTextureView               rglTextureView
@@ -452,6 +455,13 @@ void rglGetBufferSubData(	GLenum target,
  	GLintptr offset,
  	GLsizeiptr size,
  	GLvoid * data);
+void rglSamplerParameteri(	GLuint sampler,
+ 	GLenum pname,
+ 	GLint param);
+void rglBindSampler(	GLuint unit,
+ 	GLuint sampler);
+void rglGenSamplers(	GLsizei n,
+ 	GLuint *samplers);
 
 RETRO_END_DECLS
 

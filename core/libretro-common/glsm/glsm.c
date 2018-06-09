@@ -219,6 +219,37 @@ GLenum rglGetError(void)
 /*
  *
  * Core in:
+ * OpenGL    : 3.2
+ * OpenGLES  : 3.0
+ */
+void rglSamplerParameteri(	GLuint sampler,
+ 	GLenum pname,
+ 	GLint param)
+{
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
+   glSamplerParameteri(sampler, pname, param);
+#endif
+}
+
+void rglGenSamplers(	GLsizei n,
+ 	GLuint *samplers)
+{
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
+   glGenSamplers(n, samplers);
+#endif
+}
+
+void rglBindSampler(	GLuint unit,
+ 	GLuint sampler)
+{
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
+   glBindSampler(unit, sampler);
+#endif
+}
+
+/*
+ *
+ * Core in:
  * OpenGL    : 1.0
  */
 void rglClear(GLbitfield mask)

@@ -246,13 +246,13 @@ void initABuffer()
 
 	if (pixels_pointers == 0)
 		pixels_pointers = glcache.GenTexture();
-	glActiveTexture(GL_TEXTURE3);
+	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, pixels_pointers);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	//Uses GL_R32F instead of GL_R32I that is not working in R257.15
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, g_imageWidth, g_imageHeight, 0, GL_RED, GL_FLOAT, 0);
-	glBindImageTexture(3, pixels_pointers, 0, false, 0,  GL_READ_WRITE, GL_R32UI);
+	glBindImageTexture(4, pixels_pointers, 0, false, 0,  GL_READ_WRITE, GL_R32UI);
 	glCheck();
 
 	if (pixels_buffer == 0 )
@@ -358,18 +358,19 @@ void DrawQuad()
 	glEnableVertexAttribArray(VERTEX_UV_ARRAY); glCheck();
 	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u)); glCheck();
 
+	glDisableVertexAttribArray(VERTEX_UV1_ARRAY);
+	glDisableVertexAttribArray(VERTEX_COL_OFFS1_ARRAY);
+	glDisableVertexAttribArray(VERTEX_COL_BASE1_ARRAY);
+
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, indices); glCheck();
 }
 
 void renderPass2(GLuint textureId, GLuint depthTexId)
 {
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, depthTexId);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, textureId);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, depthTexId);
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, pixels_pointers);
-	glActiveTexture(GL_TEXTURE0);
 
 	glcache.UseProgram(g_abuffer_pass2_shader.program);
 	ShaderUniforms.Set(&g_abuffer_pass2_shader);
@@ -388,12 +389,10 @@ void DrawTranslucentModVols(int first, int count)
 	printf("Drawing %d translucent modvols %d triangles\n", count, pvrrc.modtrig.used());
 	SetupModvolVBO();
 
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, pixels_pointers);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -464,10 +463,6 @@ void DrawTranslucentModVols(int first, int count)
 
 void renderABuffer(bool sortFragments)
 {
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, pixels_pointers);
-	glCheck();
-
 	glcache.UseProgram(sortFragments ? g_abuffer_final_shader.program : g_abuffer_final_nosort_shader.program);
 	ShaderUniforms.Set(&g_abuffer_final_shader);
 

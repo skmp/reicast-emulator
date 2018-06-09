@@ -79,6 +79,7 @@ GLuint geom_fbo;
 GLuint stencilTexId;
 GLuint opaqueTexId;
 GLuint depthTexId;
+GLuint texSamplers[2];
 
 s32 SetTileClip(u32 val, bool set)
 {
@@ -139,12 +140,12 @@ void SetCull(u32 CulliMode)
 	}
 }
 
-static void SetTextureRepeatMode(GLuint dir, u32 clamp, u32 mirror)
+static void SetTextureRepeatMode(int index, GLuint dir, u32 clamp, u32 mirror)
 {
 	if (clamp)
-		glcache.TexParameteri(GL_TEXTURE_2D, dir, GL_CLAMP_TO_EDGE);
+      glSamplerParameteri(texSamplers[index], dir, GL_CLAMP_TO_EDGE);
 	else
-		glcache.TexParameteri(GL_TEXTURE_2D, dir, mirror ? GL_MIRRORED_REPEAT : GL_REPEAT);
+      glSamplerParameteri(texSamplers[index], dir, mirror ? GL_MIRRORED_REPEAT : GL_REPEAT);
 }
 
 template <u32 Type, bool SortingEnabled>
@@ -163,6 +164,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
 				0,
 				0,
 				2,
+            false, // TODO Can PT have two different textures for area 0 and 1 ??
 				pass);
 
 		CurrentShader = gl.getShader(shaderId);
@@ -175,6 +177,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
 			CurrentShader->pp_ShadInstr = 0;
 			CurrentShader->pp_Offset = 0;
 			CurrentShader->pp_FogCtrl = 2;
+         CurrentShader->pp_TwoVolumes = false;
          CurrentShader->pass = pass;
 
 			CompilePipelineShader(CurrentShader);
@@ -189,7 +192,8 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
                gp->tsp.IgnoreTexA,
                gp->tsp.ShadInstr,
                gp->pcw.Offset,
-               /*gp->tsp.FogCtrl*/2,
+               gp->tsp.FogCtrl,
+               gp->tsp1.full != -1,
                pass);
       CurrentShader = gl.getShader(shaderId);
 
@@ -201,7 +205,8 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
          CurrentShader->pp_IgnoreTexA = gp->tsp.IgnoreTexA;
          CurrentShader->pp_ShadInstr = gp->tsp.ShadInstr;
          CurrentShader->pp_Offset = gp->pcw.Offset;
-         CurrentShader->pp_FogCtrl = /*gp->tsp.FogCtrl*/2;
+         CurrentShader->pp_FogCtrl = gp->tsp.FogCtrl;
+         CurrentShader->pp_TwoVolumes = gp->tsp1.full != -1;
          CurrentShader->pass       = pass;
 
          CompilePipelineShader(CurrentShader);
@@ -209,15 +214,18 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
    }
 
    glcache.UseProgram(CurrentShader->program);
+  
+	ShaderUniforms.tsp0 = gp->tsp;
+	ShaderUniforms.tsp1 = gp->tsp1;
+	ShaderUniforms.tcw0 = gp->tcw;
+	ShaderUniforms.tcw1 = gp->tcw1;
+
    if (Type == ListType_Opaque || Type == ListType_Punch_Through)	// TODO Can PT have a >0 and <1 alpha?
 	{
-		ShaderUniforms.blend_mode[0] = 1;
-		ShaderUniforms.blend_mode[1] = 0;
-	}
-	else
-	{
-		ShaderUniforms.blend_mode[0] = gp->tsp.SrcInstr;
-		ShaderUniforms.blend_mode[1] = gp->tsp.DstInstr;
+      ShaderUniforms.tsp0.SrcInstr = 1;
+      ShaderUniforms.tsp0.DstInstr = 0;
+      ShaderUniforms.tsp1.SrcInstr = 1;
+      ShaderUniforms.tsp1.DstInstr = 0;
 	}
 
    SetTileClip(gp->tileclip,true);
@@ -232,29 +240,39 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
 
    if (CurrentShader->pp_Texture)
    {
-      glcache.BindTexture(GL_TEXTURE_2D, gp->texid == -1 ? 0 : gp->texid);
+      for (int i = 0; i < 2; i++)
+		{
+			glActiveTexture(GL_TEXTURE0 + i);
+			GLuint texid = i == 0 ? gp->texid : gp->texid1;
 
-      if (gp->texid > 0)
-      {
-         SetTextureRepeatMode(GL_TEXTURE_WRAP_S, gp->tsp.ClampU, gp->tsp.FlipU);
-         SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
+			glBindTexture(GL_TEXTURE_2D, texid == -1 ? 0 : texid);
 
-         //set texture filter mode
+			if (texid != -1)
+			{
+				TSP tsp = i == 0 ? gp->tsp : gp->tsp1;
+				TCW tcw = i == 0 ? gp->tcw : gp->tcw1;
 
-         if (gp->tsp.FilterMode == 0)
-         {
-            //disable filtering, mipmaps
-            glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-         }
-         else
-         {
-            //bilinear filtering
-            //PowerVR supports also trilinear via two passes, but we ignore that for now
-            glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (gp->tcw.MipMapped && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
-            glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-         }
-      }
+				glBindSampler(i, texSamplers[i]);
+				SetTextureRepeatMode(i, GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU);
+				SetTextureRepeatMode(i, GL_TEXTURE_WRAP_T, tsp.ClampV, tsp.FlipV);
+
+				//set texture filter mode
+				if (tsp.FilterMode == 0)
+				{
+					//disable filtering, mipmaps
+					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+				}
+				else
+				{
+					//bilinear filtering
+					//PowerVR supports also trilinear via two passes, but we ignore that for now
+					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, (tcw.MipMapped && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				}
+			}
+		}
+		glActiveTexture(GL_TEXTURE0);
    }
 
    if (Type== ListType_Translucent && !SortingEnabled)
@@ -448,6 +466,15 @@ void SetupMainVBO(void)
 
 	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
 	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
+  
+	glEnableVertexAttribArray(VERTEX_COL_BASE1_ARRAY); glCheck();
+	glVertexAttribPointer(VERTEX_COL_BASE1_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, col1)); glCheck();
+
+	glEnableVertexAttribArray(VERTEX_COL_OFFS1_ARRAY); glCheck();
+	glVertexAttribPointer(VERTEX_COL_OFFS1_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, spc1)); glCheck();
+
+	glEnableVertexAttribArray(VERTEX_UV1_ARRAY); glCheck();
+	glVertexAttribPointer(VERTEX_UV1_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u1)); glCheck();
 }
 
 static void SetupModvolVBO(void)
@@ -461,6 +488,9 @@ static void SetupModvolVBO(void)
 	glDisableVertexAttribArray(VERTEX_UV_ARRAY);
 	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
 	glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
+   glDisableVertexAttribArray(VERTEX_UV1_ARRAY);
+	glDisableVertexAttribArray(VERTEX_COL_OFFS1_ARRAY);
+	glDisableVertexAttribArray(VERTEX_COL_BASE1_ARRAY);
 }
 
 void DrawModVols(int first, int count)
@@ -619,7 +649,8 @@ void DrawStrips(void)
 		glStencilMask(0xFF);
 		glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
    }
-
+   if (texSamplers[0] == 0)
+		glGenSamplers(2, texSamplers);
 
 
 	SetupMainVBO();
@@ -657,7 +688,7 @@ void DrawStrips(void)
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
       // Bind stencil buffer for the fragment shader (shadowing)
-      glActiveTexture(GL_TEXTURE2);
+      glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, stencilTexId);
 
 		glActiveTexture(GL_TEXTURE0);
@@ -674,7 +705,7 @@ void DrawStrips(void)
       // PASS 2: Render opaque and PT texture to a-buffers along with depth
       //
       // Unbind stencil
-      glActiveTexture(GL_TEXTURE2);
+      glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE0);
 
@@ -688,7 +719,7 @@ void DrawStrips(void)
       SetupMainVBO();
       glcache.Disable(GL_DEPTH_TEST);
 
-		glActiveTexture(GL_TEXTURE1);
+		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, depthTexId);
 		glActiveTexture(GL_TEXTURE0);
 
@@ -715,6 +746,7 @@ void DrawStrips(void)
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
    glActiveTexture(GL_TEXTURE0);
+   glBindSampler(0, 0);
 	glBindTexture(GL_TEXTURE_2D, opaqueTexId);
 
 	renderABuffer(pvrrc.isAutoSort);

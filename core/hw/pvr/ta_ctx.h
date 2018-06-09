@@ -17,6 +17,14 @@ struct Vertex
 	u8 vtx_spc[4];
 
 	float u,v;
+
+#ifdef HAVE_OIT
+   // Two volumes format
+	u8 col1[4];
+	u8 spc1[4];
+
+	float u1,v1;
+#endif
 };
 
 struct PolyParam
@@ -33,6 +41,11 @@ struct PolyParam
 	float zvZ;
 	u32 tileclip;
 	//float zMin,zMax;
+#ifdef HAVE_OIT
+   TSP tsp1;
+	TCW tcw1;
+	u32 texid1;
+#endif
 };
 
 struct ModParam

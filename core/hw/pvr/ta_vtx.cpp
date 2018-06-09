@@ -68,6 +68,10 @@ List<PolyParam>* CurrentPPlist;
 //TA state vars	
 DECL_ALIGN(4) static u8 FaceBaseColor[4];
 DECL_ALIGN(4) static u8 FaceOffsColor[4];
+#ifdef HAVE_OIT
+DECL_ALIGN(4) static u8 FaceBaseColor1[4];
+DECL_ALIGN(4) static u8 FaceOffsColor1[4];
+#endif
 DECL_ALIGN(4) static u32 SFaceBaseColor;
 DECL_ALIGN(4) static u32 SFaceOffsColor;
 
@@ -770,6 +774,11 @@ public:
 			if (d_pp->pcw.Texture) {
 				d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
 			}
+#ifdef HAVE_OIT
+         d_pp->tsp1.full = -1;
+			d_pp->tcw1.full = -1;
+			d_pp->texid1 = -1;
+#endif
 		}
 	}
 
@@ -822,6 +831,13 @@ public:
 		TA_PolyParam3* pp=(TA_PolyParam3*)vpp;
 
 		glob_param_bdc(pp);
+
+#ifdef HAVE_OIT
+      CurrentPP->tsp1.full = pp->tsp1.full;
+		CurrentPP->tcw1.full = pp->tcw1.full;
+		if (pp->pcw.Texture)
+			CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
+#endif
 	}
 	__forceinline
 		static void TACALL AppendPolyParam4A(void* vpp)
@@ -829,6 +845,13 @@ public:
 		TA_PolyParam4A* pp=(TA_PolyParam4A*)vpp;
 
 		glob_param_bdc(pp);
+
+#ifdef HAVE_OIT
+      CurrentPP->tsp1.full = pp->tsp1.full;
+		CurrentPP->tcw1.full = pp->tcw1.full;
+		if (pp->pcw.Texture)
+			CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
+#endif
 	}
 	__forceinline
 		static void TACALL AppendPolyParam4B(void* vpp)
@@ -836,6 +859,9 @@ public:
 		TA_PolyParam4B* pp=(TA_PolyParam4B*)vpp;
 
 		poly_float_color(FaceBaseColor,FaceColor0);
+#ifdef HAVE_OIT
+      poly_float_color(FaceBaseColor1, FaceColor1);
+#endif
 	}
 
 	//Poly Strip handling
@@ -903,6 +929,14 @@ public:
 		cv->u = f16(vtx->u_name);\
 		cv->v = f16(vtx->v_name);
 
+   #define vert_uv1_32(u_name,v_name) \
+		cv->u1 = (vtx->u_name);\
+		cv->v1 = (vtx->v_name);
+
+	#define vert_uv1_16(u_name,v_name) \
+		cv->u1 = f16(vtx->u_name);\
+		cv->v1 = f16(vtx->v_name);
+
 		//Color conversions
 	#define vert_packed_color_(to,src) \
 		{ \
@@ -912,6 +946,20 @@ public:
 		to[0] = (u8)(t);t>>=8;\
 		to[3] = (u8)(t);      \
 		}
+
+   #define vert_face_base_color1(baseint) \
+		{ u32 satint=float_to_satu8(vtx->baseint); \
+		cv->col1[0] = FaceBaseColor1[0]*satint/256;  \
+		cv->col1[1] = FaceBaseColor1[1]*satint/256;  \
+		cv->col1[2] = FaceBaseColor1[2]*satint/256;  \
+		cv->col1[3] = FaceBaseColor1[3]; }
+
+	#define vert_face_offs_color1(offsint) \
+		{ u32 satint=float_to_satu8(vtx->offsint); \
+		cv->spc1[0] = FaceOffsColor1[0]*satint/256;  \
+		cv->spc1[1] = FaceOffsColor1[1]*satint/256;  \
+		cv->spc1[2] = FaceOffsColor1[2]*satint/256;  \
+		cv->spc1[3] = FaceOffsColor1[3]; }
 
 	#define vert_float_color_(to,a,r,g,b) \
 		to[0] = float_to_satu8(r); \
@@ -1071,6 +1119,9 @@ public:
 		vert_cvt_base;
 
 		vert_packed_color(col,BaseCol0);
+#ifdef HAVE_OIT
+      vert_packed_color(col1, BaseCol1);
+#endif
 	}
 
 	//(Non-Textured, Intensity,	with Two Volumes)
@@ -1080,6 +1131,9 @@ public:
 		vert_cvt_base;
 
 		vert_face_base_color(BaseInt0);
+#ifdef HAVE_OIT
+      vert_face_base_color1(BaseInt1);
+#endif
 	}
 
 	//(Textured, Packed Color,	with Two Volumes)	
@@ -1098,6 +1152,12 @@ public:
 	{
 		vert_res_base;
 
+#ifdef HAVE_OIT
+      vert_packed_color(col1, BaseCol1);
+		vert_packed_color(spc1, OffsCol1);
+
+		vert_uv1_32(u1, v1);
+#endif
 	}
 
 	//(Textured, Packed Color, 16bit UV, with Two Volumes)
@@ -1116,6 +1176,12 @@ public:
 	{
 		vert_res_base;
 
+#ifdef HAVE_OIT
+      vert_packed_color(col1, BaseCol1);
+		vert_packed_color(spc1, OffsCol1);
+
+		vert_uv1_16(u1, v1);
+#endif
 	}
 
 	//(Textured, Intensity,	with Two Volumes)
@@ -1134,6 +1200,12 @@ public:
 	{
 		vert_res_base;
 
+#ifdef HAVE_OIT
+      vert_face_base_color1(BaseInt1);
+		vert_face_offs_color1(OffsInt1);
+
+		vert_uv1_32(u1,v1);
+#endif
 	}
 
 	//(Textured, Intensity, 16bit UV, with Two Volumes)
@@ -1152,6 +1224,12 @@ public:
 	{
 		vert_res_base;
 
+#ifdef HAVE_OIT
+      vert_face_base_color1(BaseInt1);
+		vert_face_offs_color1(OffsInt1);
+
+		vert_uv1_16(u1, v1);
+#endif
 	}
 
 	//Sprites
@@ -1179,6 +1257,11 @@ public:
 		if (d_pp->pcw.Texture) {
 			d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
 		}
+#ifdef HAVE_OIT
+      d_pp->tcw1.full = -1;
+		d_pp->tsp1.full = -1;
+		d_pp->texid1 = -1;
+#endif
 
 		SFaceBaseColor=spr->BaseCol;
 		SFaceOffsColor=spr->OffsCol;
@@ -1587,6 +1670,11 @@ void FillBGP(TA_context* ctx)
 	bgpp->isp.full=vri(strip_base);
 	bgpp->tsp.full=vri(strip_base+4);
 	bgpp->tcw.full=vri(strip_base+8);
+#ifdef HAVE_OIT
+   bgpp->tcw1.full = -1;
+	bgpp->tsp1.full = -1;
+	bgpp->texid1 = -1;
+#endif
 	bgpp->count=4;
 	bgpp->first=0;
 	bgpp->tileclip=0;//disabled ! HA ~

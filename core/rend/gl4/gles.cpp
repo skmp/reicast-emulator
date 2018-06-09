@@ -145,6 +145,7 @@ uniform int pp_Number; \n\
 uniform usampler2D shadow_stencil; \n\
 uniform sampler2D DepthTex; \n\
 uniform uint pp_Stencil; \n\
+uniform int pp_DepthFunc; \n\
 \n\
 uniform uvec2 blend_mode[2]; \n\
 #if pp_TwoVolumes == 1 \n\
@@ -173,10 +174,13 @@ void main() \n\
    \n\
    #if PASS == 3 \n\
 		// Manual depth testing \n\
-		highp float frontDepth = texture(DepthTex, gl_FragCoord.xy / screen_size).r; \n\
-		// FIXME this causes dots to appear. Loss of precision? \n\
-      if (gl_FragDepth > frontDepth) \n\
-			discard; \n\
+      // Depth func Always seems to be needed ? \n\
+      if (pp_DepthFunc != 7) // TODO Use a #def \n\
+      { \n\
+         highp float frontDepth = texture(DepthTex, gl_FragCoord.xy / screen_size).r; \n\
+         if (gl_FragDepth > frontDepth) \n\
+            discard; \n\
+      } \n\
 	#endif \n\
 	// Clip outside the box \n\
 	#if pp_ClipTestMode==1 \n\
@@ -556,6 +560,7 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
 
    s->pp_Number = glGetUniformLocation(s->program, "pp_Number");
    s->pp_Stencil = glGetUniformLocation(s->program, "pp_Stencil");
+   s->pp_DepthFunc = glGetUniformLocation(s->program, "pp_DepthFunc");
 
    s->blend_mode = glGetUniformLocation(s->program, "blend_mode");
    s->use_alpha = glGetUniformLocation(s->program, "use_alpha");

@@ -32,6 +32,7 @@ struct PipelineShader
 	GLuint screen_size;
    GLuint pp_Number;
    GLuint pp_Stencil;
+   GLuint pp_DepthFunc;
    GLuint blend_mode;
    GLuint use_alpha;
    GLuint ignore_tex_alpha;
@@ -128,6 +129,7 @@ typedef struct _ShaderUniforms_t
 	TSP tsp1;
 	TCW tcw0;
 	TCW tcw1;
+   int depth_func;
 
    void setUniformArray(GLuint location, int v0, int v1)
 	{
@@ -185,6 +187,9 @@ typedef struct _ShaderUniforms_t
 
       if (s->pp_Stencil != -1)
 			glUniform1ui(s->pp_Stencil, stencil);
+
+      if (s->pp_DepthFunc != -1)
+			glUniform1i(s->pp_DepthFunc, depth_func);
    }
 } _ShaderUniforms;
 extern struct _ShaderUniforms_t ShaderUniforms;

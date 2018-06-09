@@ -379,7 +379,6 @@ void DrawTranslucentModVols(int first, int count)
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	glcache.Disable(GL_BLEND);
 	glcache.Disable(GL_DEPTH_TEST);
 	glcache.Disable(GL_STENCIL_TEST);
 
@@ -395,7 +394,7 @@ void DrawTranslucentModVols(int first, int count)
 	u32 cmv_count = count - 1;
 	ISP_Modvol* params = &pvrrc.global_param_mvo_tr.head()[first];
 
-	glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
 	//ISP_Modvol
 	for (u32 cmv = 0; cmv < cmv_count; cmv++)
@@ -415,35 +414,21 @@ void DrawTranslucentModVols(int first, int count)
 
 		verify(mod_base > 0 && mod_base + sz <= pvrrc.modtrig.used());
 
-		if (mv_mode == 0)	//normal trigs
+		glcache.UseProgram(g_abuffer_tr_modvol_shader.program);
+		SetCull(ispc.CullMode); glCheck();
+		glDrawArrays(GL_TRIANGLES, mod_base * 3, sz * 3); glCheck();
+
+		if (mv_mode == 1 || mv_mode == 2)
 		{
-			glcache.UseProgram(g_abuffer_tr_modvol_shader.program); glCheck();
-			SetCull(ispc.CullMode); glCheck();
-			glDrawArrays(GL_TRIANGLES, mod_base * 3, sz * 3); glCheck();
-		}
-		else if (mv_mode < 3)
-		{
-			while(sz)
-			{
-				//merge and clear all the prev. stencil bits
+			//Sum the area
+			glcache.UseProgram(g_abuffer_tr_modvol_final_shader.program);
+			glUniform1i(volume_mode_uniform, mv_mode);
+			glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+			DrawQuad();
+			SetupModvolVBO();
 
-				//Count Intersections (last poly)
-				glcache.UseProgram(g_abuffer_tr_modvol_shader.program); glCheck();
-				SetCull(ispc.CullMode); glCheck();
-				glDrawArrays(GL_TRIANGLES, mod_base * 3, 3); glCheck();
-
-				//Sum the area
-				glcache.UseProgram(g_abuffer_tr_modvol_final_shader.program); glCheck();
-				glUniform1i(volume_mode_uniform, mv_mode);
-				glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
-				DrawQuad();
-				SetupModvolVBO();
-
-				//update pointers
-				mod_last = mod_base + 1;
-				sz--;
-				mod_base++;
-			}
+			//update pointers
+			mod_last = mod_base + 1;
 		}
 	}
 }
@@ -453,18 +438,15 @@ void renderABuffer(bool sortFragments)
 	glcache.UseProgram(sortFragments ? g_abuffer_final_shader.program : g_abuffer_final_nosort_shader.program);
 	ShaderUniforms.Set(&g_abuffer_final_shader);
 
-	glcache.Disable(GL_BLEND);
 	glcache.Disable(GL_DEPTH_TEST);
 	glcache.Disable(GL_CULL_FACE);
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 	DrawQuad();
 
 	glCheck();
 
 	glcache.UseProgram(g_abuffer_clear_shader.program);
 	ShaderUniforms.Set(&g_abuffer_clear_shader);
-
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
 
 //	GLuint size = 0;
 //	glGetBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, 4, &size);
@@ -479,5 +461,7 @@ void renderABuffer(bool sortFragments)
  	glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0 , sizeof(GLuint), &zero);
 
 	glActiveTexture(GL_TEXTURE0);
+
+	glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	glCheck();
 }

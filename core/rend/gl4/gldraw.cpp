@@ -661,6 +661,28 @@ void DrawStrips(void)
    {
       const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
 
+       // Check if we can skip this pass in case nothing is drawn (Cosmic Smash)
+		bool skip = true;
+		for (int j = previous_pass.op_count; skip && j < current_pass.op_count; j++)
+		{
+			if (pvrrc.global_param_op.head()[j].count > 2)
+				skip = false;
+		}
+		for (int j = previous_pass.pt_count; skip && j < current_pass.pt_count; j++)
+		{
+			if (pvrrc.global_param_pt.head()[j].count > 2)
+				skip = false;
+		}
+		for (int j = previous_pass.tr_count; skip && j < current_pass.tr_count; j++)
+		{
+			if (pvrrc.global_param_tr.head()[j].count > 2)
+				skip = false;
+		}
+		if (skip)
+		{
+			previous_pass = current_pass;
+			continue;
+		}
 
       //
       // PASS 1: Geometry pass to update the stencil

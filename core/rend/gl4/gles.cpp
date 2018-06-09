@@ -483,8 +483,6 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
    s->screen_size = glGetUniformLocation(s->program, "screen_size");
 	s->shade_scale_factor = glGetUniformLocation(s->program, "shade_scale_factor");
 
-   ShaderUniforms.Set(s);
-
    // Use texture 1 for depth texture
 	gu = glGetUniformLocation(s->program, "DepthTex");
 	if (gu != -1)

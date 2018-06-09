@@ -205,14 +205,8 @@ extern GLuint stencilTexId;
 extern GLuint depthTexId;
 extern GLuint opaqueTexId;
 
-// Must match!
-// in bytes
-#define ABUFFER_SIZE 256*1024*1024
-#define ABUFFER_SIZE_STR "(256u * 1024u * 1024u)"
-
 #define SHADER_HEADER "#version 430 \n\
 \n\
-#define ABUFFER_SIZE " ABUFFER_SIZE_STR " \n\
 coherent uniform layout(size1x32, binding = 4) uimage2D abufferPointerImg; \n\
 struct Pixel { \n\
 	mediump vec4 color; \n\

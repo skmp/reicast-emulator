@@ -33,6 +33,7 @@ RETRO_BEGIN_DECLS
 #define glTexCoord2f                rglTexCoord2f
 
 /* more forward-compatible GL subset symbols */
+#define glGetInteger64v             rglGetInteger64v
 #define glGenSamplers               rglGenSamplers
 #define glBindSampler               rglBindSampler
 #define glSamplerParameteri         rglSamplerParameteri
@@ -462,6 +463,8 @@ void rglBindSampler(	GLuint unit,
  	GLuint sampler);
 void rglGenSamplers(	GLsizei n,
  	GLuint *samplers);
+void rglGetInteger64v(	GLenum pname,
+ 	GLint64 * data);
 
 RETRO_END_DECLS
 

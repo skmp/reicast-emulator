@@ -356,7 +356,7 @@ void main() \n\
 		{ \n\
 			ivec2 coords = ivec2(gl_FragCoord.xy); \n\
 			uint idx = atomicCounterIncrement(buffer_index); \n\
-			if ((idx + 1u) * 32u - 1u >= ABUFFER_SIZE) { \n\
+         if (idx >= pixels.length()) { \n\
 				discard; \n\
 				return; \n\
 			} \n\

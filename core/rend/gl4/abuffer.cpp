@@ -4,7 +4,6 @@
  *  Created on: May 26, 2018
  *      Author: raph
  */
-#include "gles.h"
 #include "glcache.h"
 
 GLuint pixels_buffer;
@@ -27,6 +26,10 @@ static int g_imageHeight = 0;
 static const char *final_shader_source = SHADER_HEADER "\
 #define DEPTH_SORTED %d \n\
 #define MAX_PIXELS_PER_FRAGMENT " MAX_PIXELS_PER_FRAGMENT " \n\
+ \n\
+layout(binding = 0) uniform sampler2D tex; \n\
+uniform lowp vec2 screen_size; \n\
+ \n\
 out vec4 FragColor; \n\
  \n\
 Pixel pixel_list[MAX_PIXELS_PER_FRAGMENT]; \n\
@@ -84,14 +87,12 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 	 \n\
 	// Copy fragments in local array \n\
 	int num_frag = fillFragmentArray(coords); \n\
-	if (num_frag == 0) \n\
-		discard; \n\
 	 \n\
 	// Sort fragments in local memory array \n\
 	bubbleSort(num_frag); \n\
 	 \n\
-	vec4 finalColor = pixel_list[0].color; \n\
-	for (int i = 1; i < num_frag; i++) { \n\
+	vec4 finalColor = texture(tex, gl_FragCoord.xy / screen_size); \n\
+	for (int i = 0; i < num_frag; i++) { \n\
 		vec4 srcColor = pixel_list[i].color; \n\
 		float srcAlpha = srcColor.a; \n\
 		float dstAlpha = finalColor.a; \n\
@@ -192,10 +193,8 @@ void main(void) \n\
 	ivec2 coords = ivec2(gl_FragCoord.xy); \n\
  \n\
 	uint idx = atomicCounterIncrement(buffer_index); \n\
-	if ((idx + 1u) * 32u - 1u >= ABUFFER_SIZE) { \n\
+	if ((idx + 1u) * 32u - 1u >= ABUFFER_SIZE) \n\
 		discard; \n\
-		return; \n\
-	} \n\
 	Pixel pixel; \n\
 	pixel.color = texture(tex, gl_FragCoord.xy / screen_size); \n\
 	pixel.depth = texture(DepthTex, gl_FragCoord.xy / screen_size).r; \n\
@@ -220,11 +219,13 @@ void main(void) \n\
 	if (all(greaterThanEqual(coords, ivec2(0))) && all(lessThan(coords, imageSize(abufferPointerImg)))) { \n\
 		 \n\
 		uint idx = imageLoad(abufferPointerImg, coords).x; \n\
+		if ((idx + 1u) * 32u - 1u >= ABUFFER_SIZE) \n\
+			discard; \n\
 		while (idx != EOL) { \n\
 			if (pixels[idx].seq_num > 0) { \n\
 #if LAST_PASS == 0 \n\
-				if (gl_FragDepth <= pixels[idx].depth) \n\
-					atomicXor(pixels[idx].blend_stencil, 2u); \n\
+//				if (gl_FragDepth <= pixels[idx].depth) \n\
+//					atomicXor(pixels[idx].blend_stencil, 2u); \n\
 #else \n\
 				if (mod(pixels[idx].blend_stencil, 256u) != 0u) \n\
 					pixels[idx].color.a = 1.0; // FIXME \n\
@@ -307,8 +308,10 @@ void initABuffer()
 		CompilePipelineShader(&g_abuffer_tr_modvol_final_shader, source);
 	}
 
-	glGenVertexArrays(1, &g_quadVertexArray);
-	glGenBuffers(1, &g_quadBuffer);
+	if (g_quadVertexArray == 0)
+		glGenVertexArrays(1, &g_quadVertexArray);
+	if (g_quadBuffer == 0)
+		glGenBuffers(1, &g_quadBuffer);
 
 	glCheck();
 
@@ -392,12 +395,7 @@ void DrawTranslucentModVols(int first, int count)
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, pixels_pointers);
 	glActiveTexture(GL_TEXTURE0);
-
-	// Why do I need to rebind?
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, pixels_buffer);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, pixels_buffer);
-	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomic_buffer);
-	glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, atomic_buffer);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glcache.Disable(GL_BLEND);
 	glcache.Disable(GL_DEPTH_TEST);
@@ -486,11 +484,11 @@ void renderABuffer(bool sortFragments)
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT|GL_BUFFER_UPDATE_BARRIER_BIT);
 
-	GLuint size = 0;
-	glGetBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, 4, &size);
-	//printf("ABUFFER %d pixels used\n", size);
-	if ((size + 1) * 32 - 1 >= ABUFFER_SIZE)
-		printf("ABUFFER OVERRUN %d pixels\n", size);
+//	GLuint size = 0;
+//	glGetBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, 4, &size);
+//	printf("ABUFFER %d pixels used\n", size);
+//	if ((size + 1) * 32 - 1 >= ABUFFER_SIZE)
+//		printf("ABUFFER OVERRUN %d pixels\n", size);
 
 	DrawQuad();
 

@@ -969,9 +969,8 @@ static bool RenderFrame(void)
       glcache.ClearColor(0,0,0,1.0f);
 
    glcache.Disable(GL_SCISSOR_TEST);
-   glClearDepth(1.f);
-   glStencilMask(0xFF);
-   glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+   glClear(GL_COLOR_BUFFER_BIT); glCheck();
 
 	//move vertex to gpu
 
@@ -1061,6 +1060,54 @@ bool ProcessFrame(TA_context* ctx)
 
 extern void initABuffer();
 
+void gl_DebugOutput(GLenum source,
+                            GLenum type,
+                            GLuint id,
+                            GLenum severity,
+                            GLsizei length,
+                            const GLchar *message,
+                            void *userParam)
+{
+    // ignore non-significant error/warning codes
+    if(id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
+
+    printf("OpenGL Debug message (%d): %s\n", id, message);
+
+    switch (source)
+    {
+        case GL_DEBUG_SOURCE_API:             printf("Source: API"); break;
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   printf("Source: Window System"); break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER: printf("Source: Shader Compiler"); break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY:     printf("Source: Third Party"); break;
+        case GL_DEBUG_SOURCE_APPLICATION:     printf("Source: Application"); break;
+        case GL_DEBUG_SOURCE_OTHER:           printf("Source: Other"); break;
+    }
+    printf(" ");
+
+    switch (type)
+    {
+        case GL_DEBUG_TYPE_ERROR:               printf("Type: Error"); break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: printf("Type: Deprecated Behaviour"); break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  printf("Type: Undefined Behaviour"); break;
+        case GL_DEBUG_TYPE_PORTABILITY:         printf("Type: Portability"); break;
+        case GL_DEBUG_TYPE_PERFORMANCE:         printf("Type: Performance"); break;
+        case GL_DEBUG_TYPE_MARKER:              printf("Type: Marker"); break;
+        case GL_DEBUG_TYPE_PUSH_GROUP:          printf("Type: Push Group"); break;
+        case GL_DEBUG_TYPE_POP_GROUP:           printf("Type: Pop Group"); break;
+        case GL_DEBUG_TYPE_OTHER:               printf("Type: Other"); break;
+    }
+    printf(" ");
+
+    switch (severity)
+    {
+        case GL_DEBUG_SEVERITY_HIGH:         printf("Severity: high"); break;
+        case GL_DEBUG_SEVERITY_MEDIUM:       printf("Severity: medium"); break;
+        case GL_DEBUG_SEVERITY_LOW:          printf("Severity: low"); break;
+        case GL_DEBUG_SEVERITY_NOTIFICATION: printf("Severity: notification"); break;
+    };
+    printf("\n");
+}
+
 void reshapeABuffer(int w, int h);
 
 struct glesrend : Renderer
@@ -1073,6 +1120,11 @@ struct glesrend : Renderer
 
       if (!gl_create_resources())
          return false;
+
+      //    glEnable(GL_DEBUG_OUTPUT);
+//    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+//    glDebugMessageCallback(gl_DebugOutput, NULL);
+//    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 
 #ifdef GLES
       glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);

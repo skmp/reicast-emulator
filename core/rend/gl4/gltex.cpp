@@ -349,7 +349,6 @@ TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw);
 struct FBT
 {
 	u32 TexAddr;
-	GLuint depthb,stencilb;
 	GLuint tex;
 	GLuint fbo;
 };
@@ -364,8 +363,6 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
       glDeleteFramebuffers(1,&rv.fbo);
 	if (rv.tex)
       glcache.DeleteTextures(1,&rv.tex);
-	if (rv.depthb)
-      glDeleteRenderbuffers(1,&rv.depthb);
 
 	rv.TexAddr=addy>>3;
 
@@ -379,18 +376,6 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	/* Get the currently bound frame buffer object. On most platforms this just gives 0. */
 
-	/* Generate and bind a render buffer which will become a depth buffer shared between our two FBOs */
-	glGenRenderbuffers(1, &rv.depthb);
-	glBindRenderbuffer(RARCH_GL_RENDERBUFFER, rv.depthb);
-
-	/*
-		Currently it is unknown to GL that we want our new render buffer to be a depth buffer.
-		glRenderbufferStorage will fix this and in this case will allocate a depth buffer
-		m_i32TexSize by m_i32TexSize.
-	*/
-
-	glRenderbufferStorage(RARCH_GL_RENDERBUFFER, RARCH_GL_DEPTH24_STENCIL8, fbw2, fbh2);
-
 	/* Create a texture for rendering to */
 	rv.tex = glcache.GenTexture();
 	glcache.BindTexture(GL_TEXTURE_2D, rv.tex);
@@ -403,17 +388,6 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 
 	/* Attach the texture to the FBO */
 	glFramebufferTexture2D(RARCH_GL_FRAMEBUFFER, RARCH_GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rv.tex, 0);
-
-	// Attach the depth buffer we created earlier to our FBO.
-#if defined(HAVE_OPENGLES2) || defined(HAVE_OPENGLES1) || defined(OSX_PPC)
-	glFramebufferRenderbuffer(RARCH_GL_FRAMEBUFFER, RARCH_GL_DEPTH_ATTACHMENT,
-         RARCH_GL_RENDERBUFFER, rv.depthb);
-   glFramebufferRenderbuffer(RARCH_GL_FRAMEBUFFER, RARCH_GL_STENCIL_ATTACHMENT,
-         RARCH_GL_RENDERBUFFER, rv.depthb);
-#else
-   glFramebufferRenderbuffer(RARCH_GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
-         RARCH_GL_RENDERBUFFER, rv.depthb);
-#endif
 
 	/* Check that our FBO creation was successful */
 	GLuint uStatus = glCheckFramebufferStatus(RARCH_GL_FRAMEBUFFER);
@@ -568,9 +542,11 @@ void ReadRTTBuffer(void)
    }
    fb_rtt.tex = 0;
 
-	if (fb_rtt.fbo) { glDeleteFramebuffers(1,&fb_rtt.fbo); fb_rtt.fbo = 0; }
-	if (fb_rtt.depthb) { glDeleteRenderbuffers(1,&fb_rtt.depthb); fb_rtt.depthb = 0; }
-	if (fb_rtt.stencilb) { glDeleteRenderbuffers(1,&fb_rtt.stencilb); fb_rtt.stencilb = 0; }
+	if (fb_rtt.fbo)
+   {
+      glDeleteFramebuffers(1,&fb_rtt.fbo);
+      fb_rtt.fbo = 0;
+   }
 
    glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
 }

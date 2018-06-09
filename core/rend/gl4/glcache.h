@@ -1,5 +1,6 @@
 #pragma once
 #include <map>
+#include "gles.h"
 
 #define TEXTURE_ID_CACHE_SIZE 32
 

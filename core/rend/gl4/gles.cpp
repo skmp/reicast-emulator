@@ -26,6 +26,7 @@ u32 gcflip;
 float fb_scale_x = 0.0f;
 float fb_scale_y = 0.0f;
 float scale_x, scale_y;
+int viewport_width, viewport_height;
 
 #define attr "attribute"
 #define vary "varying"
@@ -124,7 +125,7 @@ const char* PixelPipelineShader = SHADER_HEADER
 #define DST_ALPHA			6u \n\
 #define INVERSE_DST_ALPHA	7u \n\
  \n\
-#if pp_TwoVolumes == 1 // FIXME This is not needed for pass 3 (TR) and causes issues? Fix it Felix!\n\
+#if pp_TwoVolumes == 1 \n\
 #define IF(x) if (x) \n\
 #else \n\
 #define IF(x) \n\
@@ -138,7 +139,6 @@ uniform " LOWP " vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
 uniform " HIGHP " vec2 sp_LOG_FOG_COEFS; \n\
 uniform " HIGHP " float sp_FOG_DENSITY; \n\
 uniform " HIGHP " float shade_scale_factor; \n\
-uniform " LOWP  " vec2 screen_size; \n\
 uniform sampler2D tex0, tex1; \n\
 uniform sampler2D fog_table; \n\
 uniform int pp_Number; \n\
@@ -177,7 +177,7 @@ void main() \n\
       // Depth func Always seems to be needed ? \n\
       if (pp_DepthFunc != 7) // TODO Use a #def \n\
       { \n\
-         highp float frontDepth = texture(DepthTex, gl_FragCoord.xy / screen_size).r; \n\
+         highp float frontDepth = texture(DepthTex, gl_FragCoord.xy / textureSize(DepthTex, 0)).r; \n\
          if (gl_FragDepth > frontDepth) \n\
             discard; \n\
       } \n\
@@ -207,7 +207,7 @@ void main() \n\
       int cur_shading_instr = shading_instr[0]; \n\
       int cur_fog_control = fog_control[0]; \n\
 		#if PASS == 1 \n\
-			uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / screen_size); \n\
+			uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / textureSize(shadow_stencil, 0)); \n\
 			if (stencil.r == 0x81u) { \n\
 				color = vtx_base1; \n\
 				offset = vtx_offs1; \n\
@@ -280,7 +280,7 @@ void main() \n\
 	} \n\
 	#endif\n\
    #if PASS == 1 && pp_TwoVolumes == 0 \n\
-      uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / screen_size); \n\
+      uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / textureSize(shadow_stencil, 0)); \n\
 	   if (stencil.r == 0x81u) \n\
 			color.rgb *= shade_scale_factor; \n\
 	#endif\n\
@@ -300,74 +300,73 @@ void main() \n\
       FRAGCOL " = color; \n\
    #elif PASS > 1 \n\
       // Discard as many pixels as possible \n\
-		bool ignore = false; \n\
       switch (cur_blend_mode.y) // DST \n\
 		{ \n\
 		case ONE: \n\
-         switch (cur_blend_mode.x) \n\
+         switch (cur_blend_mode.x) // SRC \n\
 			{ \n\
 				case ZERO: \n\
-					ignore = true; \n\
-					break; \n\
+               discard; \n\
 				case ONE: \n\
 				case OTHER_COLOR: \n\
 				case INVERSE_OTHER_COLOR: \n\
-					ignore = color.r == 0.0 && color.g == 0.0 && color.b == 0.0 && color.a == 0.0; \n\
+               if (color == vec4(0, 0, 0, 0)) \n\
+                  discard; \n\
 					break; \n\
 				case SRC_ALPHA: \n\
-					ignore = (color.r == 0.0 && color.g == 0.0 && color.b == 0.0) || color.a == 0.0; \n\
-					break; \n\
+               if (color.rgb == vec3(0, 0, 0) || color.a == 0) \n\
+                  discard; \n\
+               break; \n\
 				case INVERSE_SRC_ALPHA: \n\
-					ignore = (color.r == 0.0 && color.g == 0.0 && color.b == 0.0) || color.a == 1.0; \n\
+               if (color.rgb == vec3(0, 0, 0) || color.a == 1) \n\
+                  discard; \n\
 					break; \n\
 			} \n\
 			break; \n\
 		case OTHER_COLOR: \n\
-         if (cur_blend_mode.x == ZERO && color.r == 1.0 && color.g == 1.0 && color.b == 1.0 && color.a == 1.0) \n\
-				ignore = true; \n\
+         if (cur_blend_mode.x == ZERO && color == vec4(1, 1, 1, 1)) \n\
+            discard; \n\
 			break; \n\
 		case INVERSE_OTHER_COLOR: \n\
-         if (cur_blend_mode.x <= SRC_ALPHA && color.r == 0.0 && color.g == 0.0 && color.b == 0.0 && color.a == 0.0) \n\
-				ignore = true; \n\
+         if (cur_blend_mode.x <= SRC_ALPHA && color == vec4(0, 0, 0, 0)) \n\
+            discard; \n\
 			break; \n\
 		case SRC_ALPHA: \n\
-         if ((cur_blend_mode.x == ZERO || cur_blend_mode.x == INVERSE_SRC_ALPHA) && color.a == 1.0) \n\
-				ignore = true; \n\
+         if ((cur_blend_mode.x == ZERO || cur_blend_mode.x == INVERSE_SRC_ALPHA) && color.a == 1) \n\
+            discard; \n\
 			break; \n\
 		case INVERSE_SRC_ALPHA: \n\
          switch (cur_blend_mode.x) // SRC \n\
 			{ \n\
 				case ZERO: \n\
 				case SRC_ALPHA: \n\
-					ignore = color.a == 0.0; \n\
+               if (color.a == 0) \n\
+                  discard; \n\
 					break; \n\
 				case ONE: \n\
 				case OTHER_COLOR: \n\
 				case INVERSE_OTHER_COLOR: \n\
-					ignore = color.r == 0.0 && color.g == 0.0 && color.b == 0.0 && color.a == 0.0; \n\
+               if (color == vec4(0, 0, 0, 0)) \n\
+                  discard; \n\
 					break; \n\
 			} \n\
 			break; \n\
 		} \n\
 		\n\
-		\n\
-		\n\
-		if (!ignore) \n\
-		{ \n\
-			ivec2 coords = ivec2(gl_FragCoord.xy); \n\
-			uint idx = atomicCounterIncrement(buffer_index); \n\
-         if (idx >= pixels.length()) { \n\
-				discard; \n\
-				return; \n\
-			} \n\
-			Pixel pixel; \n\
-			pixel.color = color; \n\
-			pixel.depth = gl_FragDepth; \n\
-			pixel.seq_num = pp_Number; \n\
-         pixel.blend_stencil = (cur_blend_mode.x * 8u + cur_blend_mode.y) * 256u + pp_Stencil; \n\
-			pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx); \n\
-			pixels[idx] = pixel; \n\
+      ivec2 coords = ivec2(gl_FragCoord.xy); \n\
+      uint idx =  getNextPixelIndex(); \n\
+      if (idx >= pixels.length()) { \n\
+         discard; \n\
+         return; \n\
 		} \n\
+      Pixel pixel; \n\
+      pixel.color = color; \n\
+      pixel.depth = gl_FragDepth; \n\
+      pixel.seq_num = pp_Number; \n\
+      pixel.blend_stencil = (cur_blend_mode.x * 8u + cur_blend_mode.y) * 256u + pp_Stencil; \n\
+      pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx); \n\
+      pixels[idx] = pixel; \n\
+      \n\
       discard; \n\
 		\n\
 	#endif \n\
@@ -500,7 +499,7 @@ static GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentSh
 
 bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipelineShader */)
 {
-	char pshader[8192];
+	char pshader[16384];
 
 	sprintf(pshader, source,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
@@ -545,7 +544,6 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
 		s->sp_FOG_COL_RAM=-1;
       s->sp_LOG_FOG_COEFS=-1;
 	}
-   s->screen_size = glGetUniformLocation(s->program, "screen_size");
 	s->shade_scale_factor = glGetUniformLocation(s->program, "shade_scale_factor");
 
    // Use texture 1 for depth texture
@@ -1013,6 +1011,8 @@ static bool RenderFrame(void)
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
+   GLuint output_fbo;
+
 	//setup render target first
 	if (is_rtt)
 	{
@@ -1050,11 +1050,16 @@ static bool RenderFrame(void)
 		}
       //printf("RTT packmode=%d stride=%d - %d,%d -> %d,%d\n", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
  		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);	 		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
-		BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels,format);
+      output_fbo = BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels, format);
+		viewport_width = dc_width;
+		viewport_height = dc_height;
 	}
    else
    {
       glViewport(0, 0, screen_width, screen_height);
+      viewport_width = screen_width;
+		viewport_height = screen_height;
+      output_fbo = hw_render.get_current_framebuffer();
    }
 
    bool wide_screen_on = !is_rtt && settings.rend.WideScreen
@@ -1117,7 +1122,7 @@ static bool RenderFrame(void)
 	//restore scale_x
 	scale_x /= scissoring_scale_x;
 
-   DrawStrips();
+   DrawStrips(output_fbo);
 
 	KillTex = false;
    
@@ -1255,6 +1260,11 @@ struct glesrend : Renderer
 		{
 			glcache.DeleteTextures(1, &opaqueTexId);
 			opaqueTexId = 0;
+		}
+      if (depthSaveTexId != 0)
+		{
+			glcache.DeleteTextures(1, &depthSaveTexId);
+			depthSaveTexId = 0;
 		}
       reshapeABuffer(w, h);
 	}

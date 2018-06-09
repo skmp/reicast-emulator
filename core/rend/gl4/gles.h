@@ -17,8 +17,9 @@
 
 //vertex types
 extern float scale_x, scale_y;
+extern int viewport_width, viewport_height;
 
-void DrawStrips(void);
+void DrawStrips(GLuint output_fbo);
 
 struct PipelineShader
 {
@@ -29,7 +30,6 @@ struct PipelineShader
    GLuint cp_AlphaTestValue;
    GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY,sp_LOG_FOG_COEFS;
    GLuint shade_scale_factor;
-	GLuint screen_size;
    GLuint pp_Number;
    GLuint pp_Stencil;
    GLuint pp_DepthFunc;
@@ -107,7 +107,7 @@ void SortPParams(int first, int count);
 extern int screen_width;
 extern int screen_height;
 
-void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
+GLuint BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
@@ -160,9 +160,6 @@ typedef struct _ShaderUniforms_t
       if (s->sp_LOG_FOG_COEFS!=-1)
 			glUniform2fv(s->sp_LOG_FOG_COEFS,1, fog_coefs);
 
-      if (s->screen_size != -1)
-			glUniform2f(s->screen_size, (float)screen_width, (float)screen_height);
-
 		if (s->shade_scale_factor != -1)
 			glUniform1f(s->shade_scale_factor, FPU_SHAD_SCALE.scale_factor / 256.f);
       if (s->blend_mode != -1) {
@@ -204,10 +201,11 @@ extern "C" struct retro_hw_render_callback hw_render;
 extern GLuint stencilTexId;
 extern GLuint depthTexId;
 extern GLuint opaqueTexId;
+extern GLuint depthSaveTexId;
 
 #define SHADER_HEADER "#version 430 \n\
 \n\
-coherent uniform layout(size1x32, binding = 4) uimage2D abufferPointerImg; \n\
+layout(size1x32, binding = 4) uniform coherent restrict uimage2D abufferPointerImg; \n\
 struct Pixel { \n\
 	mediump vec4 color; \n\
 	mediump float depth; \n\
@@ -216,10 +214,15 @@ struct Pixel { \n\
 	uint next; \n\
 }; \n\
 #define EOL 0xFFFFFFFFu \n\
-layout (binding = 0, std430) buffer PixelBuffer { \n\
+layout (binding = 0, std430) coherent restrict buffer PixelBuffer { \n\
 	Pixel pixels[]; \n\
 }; \n\
 layout(binding = 0, offset = 0) uniform atomic_uint buffer_index; \n\
+\n\
+uint getNextPixelIndex() \n\
+{ \n\
+	return atomicCounterIncrement(buffer_index); \n\
+} \n\
 \n\
 void setFragDepth(void) \n\
 { \n\

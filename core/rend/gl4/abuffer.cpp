@@ -30,7 +30,6 @@ static const char *final_shader_source = SHADER_HEADER "\
 #define MAX_PIXELS_PER_FRAGMENT " MAX_PIXELS_PER_FRAGMENT " \n\
  \n\
 layout(binding = 0) uniform sampler2D tex; \n\
-uniform lowp vec2 screen_size; \n\
 uniform highp float shade_scale_factor; \n\
  \n\
 out vec4 FragColor; \n\
@@ -94,7 +93,7 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 	// Sort fragments in local memory array \n\
 	bubbleSort(num_frag); \n\
 	 \n\
-	vec4 finalColor = texture(tex, gl_FragCoord.xy / screen_size); \n\
+	vec4 finalColor = texture(tex, gl_FragCoord.xy / textureSize(tex, 0)); \n\
 	for (int i = 0; i < num_frag; i++) { \n\
 		vec4 srcColor = pixel_list[i].color; \n\
 		if ((pixel_list[i].blend_stencil & 0x81u) == 0x81u) \n\
@@ -191,6 +190,7 @@ void main(void) \n\
 
 static const char *tr_modvol_shader_source = SHADER_HEADER "\
 #define LAST_PASS %d \n\
+#define MAX_PIXELS_PER_FRAGMENT " MAX_PIXELS_PER_FRAGMENT " \n\
 uniform int volume_mode; \n\
 void main(void) \n\
 { \n\
@@ -213,26 +213,25 @@ void main(void) \n\
 				if (gl_FragDepth <= pixels[idx].depth) \n\
 					atomicXor(pixels[idx].blend_stencil, 2u); \n\
 #else \n\
+				uint prev_val; \n\
 				switch (volume_mode) \n\
 				{ \n\
 				case 1: // Inclusion volume \n\
-					if ((stencil & 2u) == 2u) \n\
-						pixels[idx].blend_stencil = bitfieldInsert(stencil, 1u, 0, 2); \n\
-					else \n\
-						pixels[idx].blend_stencil = bitfieldInsert(stencil, 0u, 1, 1); \n\
+					prev_val = atomicAnd(pixels[idx].blend_stencil, 0xFFFFFFFDu); \n\
+					if ((prev_val & 3u) == 2u) \n\
+						pixels[idx].blend_stencil = bitfieldInsert(stencil, 1u, 0, 1); \n\
 					break; \n\
 				case 2: // Exclusion volume \n\
-					if ((stencil & 3u) == 1u) \n\
-						pixels[idx].blend_stencil = bitfieldInsert(stencil, 1u, 0, 2); \n\
-					else \n\
-						pixels[idx].blend_stencil = bitfieldInsert(stencil, 0u, 0, 2); \n\
+					prev_val = atomicAnd(pixels[idx].blend_stencil, 0xFFFFFFFCu); \n\
+					if ((prev_val & 3u) == 1u) \n\
+						pixels[idx].blend_stencil = bitfieldInsert(stencil, 1u, 0, 1); \n\
 					break; \n\
 				} \n\
 #endif \n\
 			} \n\
 			idx = pixels[idx].next; \n\
-			list_len++; // FIXME Why do I need this? Linked list corruption? \n\
-			if (list_len >= 32) \n\
+			list_len++; \n\
+			if (list_len >= MAX_PIXELS_PER_FRAGMENT) \n\
 				break; \n\
 		} \n\
 	} \n\
@@ -246,16 +245,19 @@ void initABuffer()
 	g_imageWidth = screen_width;
 	g_imageHeight = screen_height;
 
-	if (pixels_pointers == 0)
-		pixels_pointers = glcache.GenTexture();
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, pixels_pointers);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	//Uses GL_R32F instead of GL_R32I that is not working in R257.15
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, g_imageWidth, g_imageHeight, 0, GL_RED, GL_FLOAT, 0);
-	glBindImageTexture(4, pixels_pointers, 0, false, 0,  GL_READ_WRITE, GL_R32UI);
-	glCheck();
+	if (g_imageWidth > 0 && g_imageHeight > 0)
+	{
+		if (pixels_pointers == 0)
+			pixels_pointers = glcache.GenTexture();
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, pixels_pointers);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		//Uses GL_R32F instead of GL_R32I that is not working in R257.15
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, g_imageWidth, g_imageHeight, 0, GL_RED, GL_FLOAT, 0);
+		glBindImageTexture(4, pixels_pointers, 0, false, 0,  GL_READ_WRITE, GL_R32UI);
+		glCheck();
+	}
 
 	if (pixels_buffer == 0 )
 	{
@@ -275,21 +277,22 @@ void initABuffer()
 		glGenBuffers(1, &atomic_buffer);
 		// Bind it
 		glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomic_buffer);
-		// Declare storage
-		glBufferData(GL_ATOMIC_COUNTER_BUFFER, 4, NULL, GL_DYNAMIC_COPY);
+		// Declare storage. Using GL_DYNAMIC_READ instead of GL_DYNAMIC_COPY as the latter makes
+		// reading the counter after each frame very slow.
+		glBufferData(GL_ATOMIC_COUNTER_BUFFER, 4, NULL, GL_DYNAMIC_READ);
 		glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, atomic_buffer);
 		glCheck();
 	}
 
 	if (g_abuffer_final_shader.program == 0)
 	{
-		char source[8192];
+		char source[16384];
 		sprintf(source, final_shader_source, 1);
 		CompilePipelineShader(&g_abuffer_final_shader, source);
 	}
 	if (g_abuffer_final_nosort_shader.program == 0)
 	{
-		char source[8192];
+		char source[16384];
 		sprintf(source, final_shader_source, 0);
 		CompilePipelineShader(&g_abuffer_final_nosort_shader, source);
 	}
@@ -297,13 +300,13 @@ void initABuffer()
 		CompilePipelineShader(&g_abuffer_clear_shader, clear_shader_source);
 	if (g_abuffer_tr_modvol_shader.program == 0)
 	{
-		char source[8192];
+		char source[16384];
 		sprintf(source, tr_modvol_shader_source, 0);
 		CompilePipelineShader(&g_abuffer_tr_modvol_shader, source);
 	}
 	if (g_abuffer_tr_modvol_final_shader.program == 0)
 	{
-		char source[8192];
+		char source[16384];
 		sprintf(source, tr_modvol_shader_source, 1);
 		CompilePipelineShader(&g_abuffer_tr_modvol_final_shader, source);
 		volume_mode_uniform = glGetUniformLocation(g_abuffer_tr_modvol_final_shader.program, "volume_mode");
@@ -321,25 +324,26 @@ void initABuffer()
 void reshapeABuffer(int w, int h)
 {
 	if (w != g_imageWidth || h != g_imageHeight) {
-		glcache.DeleteTextures(1, &pixels_pointers);
-		pixels_pointers = 0;
-
-		// FIXME We might need to resize the pixels_buffer accordingly
+		if (pixels_pointers != 0)
+		{
+			glcache.DeleteTextures(1, &pixels_pointers);
+			pixels_pointers = 0;
+		}
 
 		initABuffer();
 	}
 }
 
-
-void DrawQuad()
+void DrawQuad(int width, int height)
 {
 	glBindVertexArray(g_quadVertexArray);
 
+	float xmin = (ShaderUniforms.scale_coefs[2] - 1) * screen_width / 2;
 	struct Vertex vertices[] = {
-			{ 0, screen_height, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
-			{ 0, 0, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-			{ screen_width, screen_height, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-			{ screen_width, 0, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+			{ xmin, height, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
+			{ xmin, 0, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
+			{ width, height, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
+			{ width, 0, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
 	};
 	GLushort indices[] = { 0, 1, 2, 1, 3 };
 
@@ -418,6 +422,8 @@ void DrawTranslucentModVols(int first, int count)
 
 		glcache.UseProgram(g_abuffer_tr_modvol_shader.program);
 		SetCull(ispc.CullMode); glCheck();
+
+		glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
 		glDrawArrays(GL_TRIANGLES, mod_base * 3, sz * 3); glCheck();
 
 		if (mv_mode == 1 || mv_mode == 2)
@@ -425,8 +431,9 @@ void DrawTranslucentModVols(int first, int count)
 			//Sum the area
 			glcache.UseProgram(g_abuffer_tr_modvol_final_shader.program);
 			glUniform1i(volume_mode_uniform, mv_mode);
+
 			glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
-			DrawQuad();
+			DrawQuad(viewport_width, viewport_height);
 			SetupModvolVBO();
 
 			//update pointers
@@ -443,7 +450,8 @@ void renderABuffer(bool sortFragments)
 	glcache.Disable(GL_DEPTH_TEST);
 	glcache.Disable(GL_CULL_FACE);
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
-	DrawQuad();
+
+	DrawQuad(viewport_width, viewport_height);
 
 	glCheck();
 
@@ -471,7 +479,11 @@ void renderABuffer(bool sortFragments)
 			glCheck();
 		}
 	}
-	DrawQuad();
+
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	DrawQuad(viewport_width, viewport_height);
+
+	glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT);
 
 	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomic_buffer);
 	GLuint zero = 0;
@@ -479,6 +491,5 @@ void renderABuffer(bool sortFragments)
 
 	glActiveTexture(GL_TEXTURE0);
 
-	glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	glCheck();
 }

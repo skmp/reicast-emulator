@@ -12,9 +12,9 @@ GLuint atomic_buffer;
 PipelineShader g_abuffer_final_shader;
 PipelineShader g_abuffer_final_nosort_shader;
 PipelineShader g_abuffer_clear_shader;
-PipelineShader g_abuffer_pass2_shader;
 PipelineShader g_abuffer_tr_modvol_shader;
 PipelineShader g_abuffer_tr_modvol_final_shader;
+static GLuint volume_mode_uniform;
 static GLuint g_quadBuffer = 0;
 static GLuint g_quadVertexArray = 0;
 
@@ -29,6 +29,7 @@ static const char *final_shader_source = SHADER_HEADER "\
  \n\
 layout(binding = 0) uniform sampler2D tex; \n\
 uniform lowp vec2 screen_size; \n\
+uniform highp float shade_scale_factor; \n\
  \n\
 out vec4 FragColor; \n\
  \n\
@@ -94,34 +95,38 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 	vec4 finalColor = texture(tex, gl_FragCoord.xy / screen_size); \n\
 	for (int i = 0; i < num_frag; i++) { \n\
 		vec4 srcColor = pixel_list[i].color; \n\
+		if ((pixel_list[i].blend_stencil & 0x81u) == 0x81u) \n\
+			srcColor.rgb *= shade_scale_factor; \n\
 		float srcAlpha = srcColor.a; \n\
 		float dstAlpha = finalColor.a; \n\
+		vec4 srcCoef; \n\
 		 \n\
 		int srcBlend = int(pixel_list[i].blend_stencil) / 256 / 8; \n\
 		switch (srcBlend) \n\
 		{ \n\
 			case 0: // zero \n\
-				srcColor = vec4(0); \n\
+				srcCoef = vec4(0); \n\
 				break; \n\
 			case 1: // one \n\
+				srcCoef = vec4(1); \n\
 				break; \n\
 			case 2: // other color \n\
-				srcColor *= finalColor; \n\
+				srcCoef = finalColor; \n\
 				break; \n\
 			case 3: // inverse other color \n\
-				srcColor *= vec4(1) - finalColor; \n\
+				srcCoef = vec4(1) - finalColor; \n\
 				break; \n\
 			case 4: // src alpha \n\
-				srcColor *= srcAlpha; \n\
+				srcCoef = vec4(srcAlpha); \n\
 				break; \n\
 			case 5: // inverse src alpha \n\
-				srcColor *= 1 - srcAlpha; \n\
+				srcCoef = vec4(1 - srcAlpha); \n\
 				break; \n\
 			case 6: // dst alpha \n\
-				srcColor *= dstAlpha; \n\
+				srcCoef = vec4(dstAlpha); \n\
 				break; \n\
 			case 7: // inverse dst alpha \n\
-				srcColor *= 1 - dstAlpha; \n\
+				srcCoef = vec4(1 - dstAlpha); \n\
 				break; \n\
 		} \n\
 		int dstBlend = (int(pixel_list[i].blend_stencil) / 256) % 8; \n\
@@ -133,10 +138,10 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 			case 1: // one \n\
 				break; \n\
 			case 2: // other color \n\
-				finalColor *= pixel_list[i].color; \n\
+				finalColor *= srcColor; \n\
 				break; \n\
 			case 3: // inverse other color \n\
-				finalColor *= vec4(1) - pixel_list[i].color; \n\
+				finalColor *= vec4(1) - srcColor; \n\
 				break; \n\
 			case 4: // src alpha \n\
 				finalColor *= srcAlpha; \n\
@@ -151,7 +156,7 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 				finalColor *= 1 - dstAlpha; \n\
 				break; \n\
 		} \n\
-		finalColor = clamp(finalColor + srcColor, 0, 1); \n\
+		finalColor = clamp(finalColor + srcColor * srcCoef, 0, 1); \n\
 	} \n\
 	 \n\
 	return finalColor; \n\
@@ -182,56 +187,51 @@ void main(void) \n\
 } \n\
 ";
 
-// Renders the opaque and pt rendered texture into a-buffers
-static const char *pass2_shader_source = SHADER_HEADER "\
-uniform lowp vec2 screen_size; \n\
-uniform sampler2D DepthTex; \n\
-uniform sampler2D tex; \n\
- \n\
-void main(void) \n\
-{ \n\
-	ivec2 coords = ivec2(gl_FragCoord.xy); \n\
- \n\
-	uint idx = atomicCounterIncrement(buffer_index); \n\
-	if ((idx + 1u) * 32u - 1u >= ABUFFER_SIZE) \n\
-		discard; \n\
-	Pixel pixel; \n\
-	pixel.color = texture(tex, gl_FragCoord.xy / screen_size); \n\
-	pixel.depth = texture(DepthTex, gl_FragCoord.xy / screen_size).r; \n\
-	pixel.seq_num = 0; \n\
-	pixel.blend_stencil = 0x800u; \n\
-	pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx); \n\
-	pixels[idx] = pixel; \n\
- \n\
-	// Discard fragment so nothing is written to the framebuffer \n\
-	discard; \n\
-} \n\
-";
-
 static const char *tr_modvol_shader_source = SHADER_HEADER "\
 #define LAST_PASS %d \n\
+uniform int volume_mode; \n\
 void main(void) \n\
 { \n\
 #if LAST_PASS == 0 \n\
 	setFragDepth(); \n\
 #endif \n\
 	ivec2 coords = ivec2(gl_FragCoord.xy); \n\
-	if (all(greaterThanEqual(coords, ivec2(0))) && all(lessThan(coords, imageSize(abufferPointerImg)))) { \n\
+	if (all(greaterThanEqual(coords, ivec2(0))) && all(lessThan(coords, imageSize(abufferPointerImg)))) \n\
+	{ \n\
 		 \n\
 		uint idx = imageLoad(abufferPointerImg, coords).x; \n\
 		if ((idx + 1u) * 32u - 1u >= ABUFFER_SIZE) \n\
 			discard; \n\
+		int list_len = 0; \n\
 		while (idx != EOL) { \n\
-			if (pixels[idx].seq_num > 0) { \n\
+			uint stencil = pixels[idx].blend_stencil; \n\
+			if ((stencil & 0x80u) == 0x80u) \n\
+			{ \n\
 #if LAST_PASS == 0 \n\
-//				if (gl_FragDepth <= pixels[idx].depth) \n\
-//					atomicXor(pixels[idx].blend_stencil, 2u); \n\
+				if (gl_FragDepth <= pixels[idx].depth) \n\
+					atomicXor(pixels[idx].blend_stencil, 2u); \n\
 #else \n\
-				if (mod(pixels[idx].blend_stencil, 256u) != 0u) \n\
-					pixels[idx].color.a = 1.0; // FIXME \n\
+				switch (volume_mode) \n\
+				{ \n\
+				case 1: // Inclusion volume \n\
+					if ((stencil & 2u) == 2u) \n\
+						pixels[idx].blend_stencil = bitfieldInsert(stencil, 1u, 0, 2); \n\
+					else \n\
+						pixels[idx].blend_stencil = bitfieldInsert(stencil, 0u, 1, 1); \n\
+					break; \n\
+				case 2: // Exclusion volume \n\
+					if ((stencil & 3u) == 1u) \n\
+						pixels[idx].blend_stencil = bitfieldInsert(stencil, 1u, 0, 2); \n\
+					else \n\
+						pixels[idx].blend_stencil = bitfieldInsert(stencil, 0u, 0, 2); \n\
+					break; \n\
+				} \n\
 #endif \n\
 			} \n\
 			idx = pixels[idx].next; \n\
+			list_len++; // FIXME Why do I need this? Linked list corruption? \n\
+			if (list_len >= 32) \n\
+				break; \n\
 		} \n\
 	} \n\
 	 \n\
@@ -293,8 +293,6 @@ void initABuffer()
 	}
 	if (g_abuffer_clear_shader.program == 0)
 		CompilePipelineShader(&g_abuffer_clear_shader, clear_shader_source);
-	if (g_abuffer_pass2_shader.program == 0)
-		CompilePipelineShader(&g_abuffer_pass2_shader, pass2_shader_source);
 	if (g_abuffer_tr_modvol_shader.program == 0)
 	{
 		char source[8192];
@@ -306,6 +304,7 @@ void initABuffer()
 		char source[8192];
 		sprintf(source, tr_modvol_shader_source, 1);
 		CompilePipelineShader(&g_abuffer_tr_modvol_final_shader, source);
+		volume_mode_uniform = glGetUniformLocation(g_abuffer_tr_modvol_final_shader.program, "volume_mode");
 	}
 
 	if (g_quadVertexArray == 0)
@@ -365,33 +364,17 @@ void DrawQuad()
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, indices); glCheck();
 }
 
-void renderPass2(GLuint textureId, GLuint depthTexId)
-{
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, depthTexId);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, textureId);
-
-	glcache.UseProgram(g_abuffer_pass2_shader.program);
-	ShaderUniforms.Set(&g_abuffer_pass2_shader);
-
-	glcache.Disable(GL_BLEND);
-	glcache.Disable(GL_DEPTH_TEST);
-	glcache.Disable(GL_CULL_FACE);
-
-	DrawQuad();
-}
-
 void DrawTranslucentModVols(int first, int count)
 {
 	if (count == 0 || pvrrc.modtrig.used() == 0)
 		return;
-	printf("Drawing %d translucent modvols %d triangles\n", count, pvrrc.modtrig.used());
 	SetupModvolVBO();
 
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -412,8 +395,10 @@ void DrawTranslucentModVols(int first, int count)
 	u32 cmv_count = count - 1;
 	ISP_Modvol* params = &pvrrc.global_param_mvo_tr.head()[first];
 
+	glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+
 	//ISP_Modvol
-	for (u32 cmv = 0; cmv < 3 /* FIXME cmv_count */; cmv++)
+	for (u32 cmv = 0; cmv < cmv_count; cmv++)
 	{
 
 		ISP_Modvol ispc = params[cmv];
@@ -449,8 +434,10 @@ void DrawTranslucentModVols(int first, int count)
 
 				//Sum the area
 				glcache.UseProgram(g_abuffer_tr_modvol_final_shader.program); glCheck();
-
-				glDrawArrays(GL_TRIANGLES, mod_last * 3, (mod_base - mod_last + 1) * 3); glCheck();
+				glUniform1i(volume_mode_uniform, mv_mode);
+				glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+				DrawQuad();
+				SetupModvolVBO();
 
 				//update pointers
 				mod_last = mod_base + 1;

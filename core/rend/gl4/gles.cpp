@@ -144,20 +144,14 @@ uniform sampler2D fog_table; \n\
 uniform int pp_Number; \n\
 uniform usampler2D shadow_stencil; \n\
 uniform sampler2D DepthTex; \n\
-uniform uvec2 blend_mode; \n\
 uniform uint pp_Stencil; \n\
 \n\
-uniform uvec2 blend_mode0; \n\
+uniform uvec2 blend_mode[2]; \n\
 #if pp_TwoVolumes == 1 \n\
-uniform bool use_alpha0; \n\
-uniform bool ignore_tex_alpha0; \n\
-uniform int shading_instr0; \n\
-uniform int fog_control0; \n\
-uniform uvec2 blend_mode1; \n\
-uniform bool use_alpha1; \n\
-uniform bool ignore_tex_alpha1; \n\
-uniform int shading_instr1; \n\
-uniform int fog_control1; \n\
+uniform bool use_alpha[2]; \n\
+uniform bool ignore_tex_alpha[2]; \n\
+uniform int shading_instr[2]; \n\
+uniform int fog_control[2]; \n\
 #endif \n\
  \n\
 /* Vertex input*/ \n\
@@ -201,13 +195,13 @@ void main() \n\
    " LOWP "vec4 offset = vtx_offs; \n\
    mediump vec2 uv = vtx_uv; \n\
    bool area1 = false; \n\
-	uvec2 blend_mode = blend_mode0; \n\
+   uvec2 cur_blend_mode = blend_mode[0]; \n\
 	\n\
 	#if pp_TwoVolumes == 1 \n\
-		bool use_alpha = use_alpha0; \n\
-		bool ignore_tex_alpha = ignore_tex_alpha0; \n\
-		int shading_instr = shading_instr0; \n\
-		int fog_control = fog_control0; \n\
+      bool cur_use_alpha = use_alpha[0]; \n\
+      bool cur_ignore_tex_alpha = ignore_tex_alpha[0]; \n\
+      int cur_shading_instr = shading_instr[0]; \n\
+      int cur_fog_control = fog_control[0]; \n\
 		#if PASS == 1 \n\
 			uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / screen_size); \n\
 			if (stencil.r == 0x81u) { \n\
@@ -215,21 +209,21 @@ void main() \n\
 				offset = vtx_offs1; \n\
 				uv = vtx_uv1; \n\
 				area1 = true; \n\
-				blend_mode = blend_mode1; \n\
-				use_alpha = use_alpha1; \n\
-				ignore_tex_alpha = ignore_tex_alpha1; \n\
-				shading_instr = shading_instr1; \n\
-				fog_control = fog_control1; \n\
+            cur_blend_mode = blend_mode[1]; \n\
+            cur_use_alpha = use_alpha[1]; \n\
+            cur_ignore_tex_alpha = ignore_tex_alpha[1]; \n\
+            cur_shading_instr = shading_instr[1]; \n\
+            cur_fog_control = fog_control[1]; \n\
 			} \n\
 		#endif\n\
 	#endif\n\
 	\n\
 	#if pp_UseAlpha==0 || pp_TwoVolumes == 1 \n\
-		IF(!use_alpha) \n\
+      IF(!cur_use_alpha) \n\
 			color.a=1.0; \n\
 	#endif\n\
    #if pp_FogCtrl==3 || pp_TwoVolumes == 1 // LUT Mode 2 \n\
-      IF(fog_control == 3) \n\
+      IF(cur_fog_control == 3) \n\
          color=vec4(sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w)); \n\
 	#endif\n\
 	#if pp_Texture==1 \n\
@@ -237,7 +231,7 @@ void main() \n\
       " LOWP " vec4 texcol=" TEXLOOKUP "(area1 ? tex1 : tex0, uv); \n\
 		\n\
       #if pp_IgnoreTexA==1 || pp_TwoVolumes == 1 \n\
-         IF(ignore_tex_alpha) \n\
+         IF(cur_ignore_tex_alpha) \n\
             texcol.a=1.0;	 \n\
 		#endif\n\
 		\n\
@@ -245,26 +239,26 @@ void main() \n\
          if (cp_AlphaTestValue>texcol.a) discard;\n\
       #endif \n\
       #if pp_ShadInstr==0 || pp_TwoVolumes == 1 // DECAL \n\
-      IF(shading_instr == 0) \n\
+      IF(cur_shading_instr == 0) \n\
 		{ \n\
          color=texcol; \n\
 		} \n\
 		#endif\n\
       #if pp_ShadInstr==1 || pp_TwoVolumes == 1 // MODULATE \n\
-      IF(shading_instr == 1) \n\
+      IF(cur_shading_instr == 1) \n\
 		{ \n\
 			color.rgb*=texcol.rgb; \n\
 			color.a=texcol.a; \n\
 		} \n\
 		#endif\n\
       #if pp_ShadInstr==2 || pp_TwoVolumes == 1 // DECAL ALPHA \n\
-      IF(shading_instr == 2) \n\
+      IF(cur_shading_instr == 2) \n\
 		{ \n\
 			color.rgb=mix(color.rgb,texcol.rgb,texcol.a); \n\
 		} \n\
 		#endif\n\
       #if  pp_ShadInstr==3 || pp_TwoVolumes == 1 // MODULATE ALPHA \n\
-      IF(shading_instr == 3) \n\
+      IF(cur_shading_instr == 3) \n\
 		{ \n\
 			color*=texcol; \n\
 		} \n\
@@ -274,7 +268,7 @@ void main() \n\
 		{ \n\
          color.rgb += offset.rgb; \n\
          #if pp_FogCtrl == 1 || pp_TwoVolumes == 1  // Per vertex \n\
-            IF(fog_control == 1) \n\
+            IF(cur_fog_control == 1) \n\
                color.rgb=mix(color.rgb, sp_FOG_COL_VERT.rgb, offset.a); \n\
             #endif\n\
 		} \n\
@@ -287,7 +281,7 @@ void main() \n\
 			color.rgb *= shade_scale_factor; \n\
 	#endif\n\
    #if pp_FogCtrl==0 || pp_TwoVolumes == 1 // LUT \n\
-	IF(fog_control == 0) \n\
+   IF(cur_fog_control == 0) \n\
 	{ \n\
 		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
 	} \n\
@@ -303,10 +297,10 @@ void main() \n\
    #elif PASS > 1 \n\
       // Discard as many pixels as possible \n\
 		bool ignore = false; \n\
-		switch (blend_mode.y) // DST \n\
+      switch (cur_blend_mode.y) // DST \n\
 		{ \n\
 		case ONE: \n\
-			switch (blend_mode.x) \n\
+         switch (cur_blend_mode.x) \n\
 			{ \n\
 				case ZERO: \n\
 					ignore = true; \n\
@@ -325,19 +319,19 @@ void main() \n\
 			} \n\
 			break; \n\
 		case OTHER_COLOR: \n\
-			if (blend_mode.x == ZERO && color.r == 1.0 && color.g == 1.0 && color.b == 1.0 && color.a == 1.0) \n\
+         if (cur_blend_mode.x == ZERO && color.r == 1.0 && color.g == 1.0 && color.b == 1.0 && color.a == 1.0) \n\
 				ignore = true; \n\
 			break; \n\
 		case INVERSE_OTHER_COLOR: \n\
-			if (blend_mode.x <= SRC_ALPHA && color.r == 0.0 && color.g == 0.0 && color.b == 0.0 && color.a == 0.0) \n\
+         if (cur_blend_mode.x <= SRC_ALPHA && color.r == 0.0 && color.g == 0.0 && color.b == 0.0 && color.a == 0.0) \n\
 				ignore = true; \n\
 			break; \n\
 		case SRC_ALPHA: \n\
-			if ((blend_mode.x == ZERO || blend_mode.x == INVERSE_SRC_ALPHA) && color.a == 1.0) \n\
+         if ((cur_blend_mode.x == ZERO || cur_blend_mode.x == INVERSE_SRC_ALPHA) && color.a == 1.0) \n\
 				ignore = true; \n\
 			break; \n\
 		case INVERSE_SRC_ALPHA: \n\
-			switch (blend_mode.x) // SRC \n\
+         switch (cur_blend_mode.x) // SRC \n\
 			{ \n\
 				case ZERO: \n\
 				case SRC_ALPHA: \n\
@@ -366,7 +360,7 @@ void main() \n\
 			pixel.color = color; \n\
 			pixel.depth = gl_FragDepth; \n\
 			pixel.seq_num = pp_Number; \n\
-			pixel.blend_stencil = (blend_mode.x * 8u + blend_mode.y) * 256u + pp_Stencil; \n\
+         pixel.blend_stencil = (cur_blend_mode.x * 8u + cur_blend_mode.y) * 256u + pp_Stencil; \n\
 			pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx); \n\
 			pixels[idx] = pixel; \n\
 		} \n\
@@ -563,16 +557,11 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
    s->pp_Number = glGetUniformLocation(s->program, "pp_Number");
    s->pp_Stencil = glGetUniformLocation(s->program, "pp_Stencil");
 
-   s->blend_mode0 = glGetUniformLocation(s->program, "blend_mode0");
-	s->blend_mode1 = glGetUniformLocation(s->program, "blend_mode1");
-	s->use_alpha0 = glGetUniformLocation(s->program, "use_alpha0");
-	s->use_alpha1 = glGetUniformLocation(s->program, "use_alpha1");
-	s->ignore_tex_alpha0 = glGetUniformLocation(s->program, "ignore_tex_alpha0");
-	s->ignore_tex_alpha1 = glGetUniformLocation(s->program, "ignore_tex_alpha1");
-	s->shading_instr0 = glGetUniformLocation(s->program, "shading_instr0");
-	s->shading_instr1 = glGetUniformLocation(s->program, "shading_instr1");
-	s->fog_control0 = glGetUniformLocation(s->program, "fog_control0");
-	s->fog_control1 = glGetUniformLocation(s->program, "fog_control1");
+   s->blend_mode = glGetUniformLocation(s->program, "blend_mode");
+   s->use_alpha = glGetUniformLocation(s->program, "use_alpha");
+   s->ignore_tex_alpha = glGetUniformLocation(s->program, "ignore_tex_alpha");
+   s->shading_instr = glGetUniformLocation(s->program, "shading_instr");
+   s->fog_control = glGetUniformLocation(s->program, "fog_control");
 
 	return glIsProgram(s->program)==GL_TRUE;
 }
@@ -1177,6 +1166,9 @@ void gl_DebugOutput(GLenum source,
 {
     // ignore non-significant error/warning codes
     if(id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
+    if (id == 131186)
+    	// Warning when fetching the atomic_uint pixel count
+    	return;
 
     printf("OpenGL Debug message (%d): %s\n", id, message);
 

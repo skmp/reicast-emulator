@@ -30,14 +30,13 @@ struct PipelineShader
    GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY,sp_LOG_FOG_COEFS;
    GLuint shade_scale_factor;
 	GLuint screen_size;
-   GLuint blend_mode;
    GLuint pp_Number;
    GLuint pp_Stencil;
-   GLuint blend_mode0, blend_mode1;
-	GLuint use_alpha0, use_alpha1;
-	GLuint ignore_tex_alpha0, ignore_tex_alpha1;
-	GLuint shading_instr0, shading_instr1;
-	GLuint fog_control0, fog_control1;
+   GLuint blend_mode;
+   GLuint use_alpha;
+   GLuint ignore_tex_alpha;
+   GLuint shading_instr;
+   GLuint fog_control;
 
    //
 	u32 cp_AlphaTest;
@@ -130,6 +129,12 @@ typedef struct _ShaderUniforms_t
 	TCW tcw0;
 	TCW tcw1;
 
+   void setUniformArray(GLuint location, int v0, int v1)
+	{
+		int array[] = { v0, v1 };
+		glUniform1iv(location, 2, array);
+	}
+
    void Set(PipelineShader* s)
    {
       if (s->cp_AlphaTestValue!=-1)
@@ -158,34 +163,22 @@ typedef struct _ShaderUniforms_t
 
 		if (s->shade_scale_factor != -1)
 			glUniform1f(s->shade_scale_factor, FPU_SHAD_SCALE.scale_factor / 256.f);
-      if (s->blend_mode0 != -1) {
-			u32 blend_mode[2] = { tsp0.SrcInstr, tsp0.DstInstr };
-			glUniform2uiv(s->blend_mode0, 1, blend_mode);
-		}
-		if (s->blend_mode1 != -1) {
-			u32 blend_mode[2] = { tsp1.SrcInstr, tsp1.DstInstr };
-			glUniform2uiv(s->blend_mode1, 1, blend_mode);
+      if (s->blend_mode != -1) {
+         u32 blend_mode[] = { tsp0.SrcInstr, tsp0.DstInstr, tsp1.SrcInstr, tsp1.DstInstr };
+         glUniform2uiv(s->blend_mode, 2, blend_mode);
 		}
 
-		if (s->use_alpha0 != -1)
-			glUniform1i(s->use_alpha0, tsp0.UseAlpha);
-		if (s->use_alpha1 != -1)
-			glUniform1i(s->use_alpha1, tsp1.UseAlpha);
+      if (s->use_alpha != -1)
+         setUniformArray(s->use_alpha, tsp0.UseAlpha, tsp1.UseAlpha);
 
-		if (s->ignore_tex_alpha0 != -1)
-			glUniform1i(s->ignore_tex_alpha0, tsp0.IgnoreTexA);
-		if (s->ignore_tex_alpha1 != -1)
-			glUniform1i(s->ignore_tex_alpha1, tsp1.IgnoreTexA);
+		if (s->ignore_tex_alpha != -1)
+         setUniformArray(s->ignore_tex_alpha, tsp0.IgnoreTexA, tsp1.IgnoreTexA);
 
-		if (s->shading_instr0 != -1)
-			glUniform1i(s->shading_instr0, tsp0.ShadInstr);
-		if (s->shading_instr1 != -1)
-			glUniform1i(s->shading_instr1, tsp1.ShadInstr);
+      if (s->shading_instr != -1)
+         setUniformArray(s->shading_instr, tsp0.ShadInstr, tsp1.ShadInstr);
 
-		if (s->fog_control0 != -1)
-			glUniform1i(s->fog_control0, tsp0.FogCtrl);
-		if (s->fog_control1 != -1)
-			glUniform1i(s->fog_control1, tsp1.FogCtrl);
+      if (s->fog_control != -1)
+         setUniformArray(s->fog_control, tsp0.FogCtrl, tsp1.FogCtrl);
 
       if (s->pp_Number != -1)
 			glUniform1i(s->pp_Number, poly_number);
@@ -212,12 +205,7 @@ extern GLuint opaqueTexId;
 #define ABUFFER_SIZE 256*1024*1024
 #define ABUFFER_SIZE_STR "(256u * 1024u * 1024u)"
 
-#define SHADER_HEADER "#version 140 \n\
-#extension GL_EXT_shader_image_load_store : enable \n\
-#extension GL_ARB_shader_storage_buffer_object : enable \n\
-#extension GL_ARB_shader_atomic_counters : enable \n\
-#extension GL_ARB_shader_image_size : enable \n\
-#extension GL_ARB_shading_language_420pack : enable \n\
+#define SHADER_HEADER "#version 430 \n\
 \n\
 #define ABUFFER_SIZE " ABUFFER_SIZE_STR " \n\
 coherent uniform layout(size1x32, binding = 4) uimage2D abufferPointerImg; \n\

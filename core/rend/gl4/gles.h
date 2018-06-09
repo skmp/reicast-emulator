@@ -226,7 +226,7 @@ uint getNextPixelIndex() \n\
 void setFragDepth(void) \n\
 { \n\
 	highp float w = 100000.0 * gl_FragCoord.w; \n\
-	gl_FragDepth = 1 - log2(1.0 + w) / 34; \n\
+   gl_FragDepth = 1.0 - log2(1.0 + w) / 34.0; \n\
 } \n\
 "
 

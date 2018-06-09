@@ -240,6 +240,8 @@ void main(void) \n\
 } \n\
 ";
 
+void DrawQuad();
+
 void initABuffer()
 {
 	g_imageWidth = screen_width;
@@ -320,6 +322,14 @@ void initABuffer()
 
 	glCheck();
 
+	// Clear A-buffer pointers
+	glcache.UseProgram(g_abuffer_clear_shader.program);
+	ShaderUniforms.Set(&g_abuffer_clear_shader);
+
+	DrawQuad();
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+	glCheck();
 }
 
 void reshapeABuffer(int w, int h)

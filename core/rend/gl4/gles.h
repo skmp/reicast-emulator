@@ -27,7 +27,7 @@ struct PipelineShader
    GLuint depth_scale;
 	GLuint pp_ClipTest;
    GLuint cp_AlphaTestValue;
-   GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY,sp_LOG_FOG_COEFS;
+   GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
    GLuint shade_scale_factor;
    GLuint pp_Number;
    GLuint pp_Stencil;
@@ -121,7 +121,6 @@ typedef struct _ShaderUniforms_t
 	float fog_den_float;
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
-   float fog_coefs[2];
    int poly_number;
    u32 stencil;
    TSP tsp0;
@@ -155,9 +154,6 @@ typedef struct _ShaderUniforms_t
 
       if (s->sp_FOG_COL_VERT!=-1)
          glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
-
-      if (s->sp_LOG_FOG_COEFS!=-1)
-			glUniform2fv(s->sp_LOG_FOG_COEFS,1, fog_coefs);
 
 		if (s->shade_scale_factor != -1)
 			glUniform1f(s->shade_scale_factor, FPU_SHAD_SCALE.scale_factor / 256.f);

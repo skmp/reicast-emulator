@@ -12,7 +12,11 @@ HAVE_GENERIC_JIT   := 1
 FORCE_GLES    := 0
 STATIC_LINKING:= 0
 
+ifeq ($(HAVE_OIT), 1)
+TARGET_NAME   := reicast_oit
+else
 TARGET_NAME   := reicast
+endif
 
 CXX      = ${CC_PREFIX}g++
 CC       = ${CC_PREFIX}gcc
@@ -87,7 +91,7 @@ ifeq ($(NAOMI),1)
 	RZDCY_CFLAGS += -DTARGET_NAOMI
 
 	DC_PLATFORM=naomi
-	TARGET_NAME   := reicast_naomi
+	TARGET_NAME   := $(TARGET_NAME)_naomi
 else
 	DC_PLATFORM=dreamcast
 endif

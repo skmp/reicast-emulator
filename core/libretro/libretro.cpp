@@ -663,7 +663,11 @@ const char* retro_get_system_directory(void)
 
 void retro_get_system_info(struct retro_system_info *info)
 {
+#ifdef HAVE_OIT
+   info->library_name = "Reicast OIT";
+#else
    info->library_name = "Reicast";
+#endif
    info->library_version = "0.1";
    info->valid_extensions = "cdi|gdi|chd|cue";
    info->need_fullpath = true;

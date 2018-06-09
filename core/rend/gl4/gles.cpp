@@ -26,7 +26,6 @@ u32 gcflip;
 float fb_scale_x = 0.0f;
 float fb_scale_y = 0.0f;
 float scale_x, scale_y;
-int viewport_width, viewport_height;
 
 #define attr "attribute"
 #define vary "varying"
@@ -1051,14 +1050,10 @@ static bool RenderFrame(void)
       //printf("RTT packmode=%d stride=%d - %d,%d -> %d,%d\n", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
  		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);	 		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
       output_fbo = BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels, format);
-		viewport_width = dc_width;
-		viewport_height = dc_height;
 	}
    else
    {
       glViewport(0, 0, screen_width, screen_height);
-      viewport_width = screen_width;
-		viewport_height = screen_height;
       output_fbo = hw_render.get_current_framebuffer();
    }
 

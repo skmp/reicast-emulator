@@ -17,7 +17,6 @@
 
 //vertex types
 extern float scale_x, scale_y;
-extern int viewport_width, viewport_height;
 
 void DrawStrips(GLuint output_fbo);
 

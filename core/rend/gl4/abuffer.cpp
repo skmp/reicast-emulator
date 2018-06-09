@@ -334,16 +334,25 @@ void reshapeABuffer(int w, int h)
 	}
 }
 
-void DrawQuad(int width, int height)
+void DrawQuad()
 {
 	glBindVertexArray(g_quadVertexArray);
 
-	float xmin = (ShaderUniforms.scale_coefs[2] - 1) * screen_width / 2;
+	float xmin = (ShaderUniforms.scale_coefs[2] - 1) / ShaderUniforms.scale_coefs[0];
+	float xmax = (ShaderUniforms.scale_coefs[2] + 1) / ShaderUniforms.scale_coefs[0];
+	float ymin = (ShaderUniforms.scale_coefs[3] - 1) / ShaderUniforms.scale_coefs[1];
+	float ymax = (ShaderUniforms.scale_coefs[3] + 1) / ShaderUniforms.scale_coefs[1];
+	if (ymin > ymax)
+	{
+		float t = ymin;
+		ymin = ymax;
+		ymax = t;
+	}
 	struct Vertex vertices[] = {
-			{ xmin, height, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
-			{ xmin, 0, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-			{ width, height, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-			{ width, 0, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+			{ xmin, ymax, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
+			{ xmin, ymin, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
+			{ xmax, ymax, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
+			{ xmax, ymin, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
 	};
 	GLushort indices[] = { 0, 1, 2, 1, 3 };
 
@@ -433,7 +442,7 @@ void DrawTranslucentModVols(int first, int count)
 			glUniform1i(volume_mode_uniform, mv_mode);
 
 			glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
-			DrawQuad(viewport_width, viewport_height);
+			DrawQuad();
 			SetupModvolVBO();
 
 			//update pointers
@@ -451,7 +460,7 @@ void renderABuffer(bool sortFragments)
 	glcache.Disable(GL_CULL_FACE);
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
-	DrawQuad(viewport_width, viewport_height);
+	DrawQuad();
 
 	glCheck();
 
@@ -481,7 +490,7 @@ void renderABuffer(bool sortFragments)
 	}
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-	DrawQuad(viewport_width, viewport_height);
+	DrawQuad();
 
 	glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT);
 

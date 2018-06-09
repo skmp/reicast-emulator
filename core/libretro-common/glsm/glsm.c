@@ -31,6 +31,11 @@
 #define GL_SAMPLE_MASK                    0x8E51
 #endif
 
+#if 0
+extern retro_log_printf_t log_cb;
+#define GLSM_DEBUG
+#endif
+
 struct gl_cached_state
 {
    struct
@@ -218,6 +223,9 @@ GLenum rglGetError(void)
  */
 void rglClear(GLbitfield mask)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glClear.\n");
+#endif
    glClear(mask);
 }
 
@@ -228,6 +236,9 @@ void rglClear(GLbitfield mask)
  */
 void rglValidateProgram(GLuint program)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glValidateProgram.\n");
+#endif
    glValidateProgram(program);
 }
 
@@ -239,6 +250,9 @@ void rglValidateProgram(GLuint program)
  */
 void rglPolygonMode(GLenum face, GLenum mode)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glPolygonMode.\n");
+#endif
 #ifndef HAVE_OPENGLES
    glPolygonMode(face, mode);
 #endif
@@ -255,6 +269,9 @@ void rglTexSubImage2D(
   	GLenum type,
   	const GLvoid * pixels)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glTexSubImage2D.\n");
+#endif
    glTexSubImage2D(target, level, xoffset, yoffset,
          width, height, format, type, pixels);
 }
@@ -265,6 +282,9 @@ void rglGetBufferSubData(	GLenum target,
  	GLsizeiptr size,
  	GLvoid * data)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetBufferSubData.\n");
+#endif
 #if defined(HAVE_OPENGL)
    glGetBufferSubData(target, offset, size, data);
 #endif
@@ -277,6 +297,9 @@ void rglGetBufferSubData(	GLenum target,
  */
 void rglLineWidth(GLfloat width)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glLineWidth.\n");
+#endif
    glLineWidth(width);
 }
 
@@ -294,6 +317,9 @@ void rglBlitFramebuffer(
       GLint dstX1, GLint dstY1,
       GLbitfield mask, GLenum filter)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBlitFramebuffer.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1,
          dstX0, dstY0, dstX1, dstY1,
@@ -308,6 +334,9 @@ void rglBlitFramebuffer(
  */
 void rglReadBuffer(GLenum mode)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glReadBuffer.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glReadBuffer(mode);
    gl_state.readbuffer.mode = mode;
@@ -321,6 +350,9 @@ void rglReadBuffer(GLenum mode)
  */
 void rglClearDepth(GLdouble depth)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glClearDepth.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
 #ifdef HAVE_OPENGLES
    glClearDepthf(depth);
@@ -338,6 +370,9 @@ void rglClearDepth(GLdouble depth)
  */
 void rglPixelStorei(GLenum pname, GLint param)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glPixelStorei.\n");
+#endif
    glPixelStorei(pname, param);
    gl_state.pixelstore_i.pname = pname;
    gl_state.pixelstore_i.param = param;
@@ -350,6 +385,9 @@ void rglPixelStorei(GLenum pname, GLint param)
  */
 void rglDepthRange(GLclampd zNear, GLclampd zFar)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDepthRange.\n");
+#endif
 #ifdef HAVE_OPENGLES
    glDepthRangef(zNear, zFar);
 #else
@@ -367,6 +405,9 @@ void rglDepthRange(GLclampd zNear, GLclampd zFar)
  */
 void rglFrontFace(GLenum mode)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glFrontFace.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glFrontFace(mode);
    gl_state.frontface.used = true;
@@ -380,6 +421,9 @@ void rglFrontFace(GLenum mode)
  */
 void rglDepthFunc(GLenum func)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDepthFunc.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    gl_state.depthfunc.used = true;
    gl_state.depthfunc.func = func;
@@ -394,6 +438,9 @@ void rglDepthFunc(GLenum func)
 void rglColorMask(GLboolean red, GLboolean green,
       GLboolean blue, GLboolean alpha)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glColorMask.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glColorMask(red, green, blue, alpha);
    gl_state.colormask.red   = red;
@@ -410,6 +457,9 @@ void rglColorMask(GLboolean red, GLboolean green,
  */
 void rglCullFace(GLenum mode)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glCullFace.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glCullFace(mode);
    gl_state.cullface.used = true;
@@ -423,6 +473,9 @@ void rglCullFace(GLenum mode)
  */
 void rglStencilOp(GLenum sfail, GLenum dpfail, GLenum dppass)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glStencilOp.\n");
+#endif
    glStencilOp(sfail, dpfail, dppass);
    gl_state.stencilop.used   = true;
    gl_state.stencilop.sfail  = sfail;
@@ -437,6 +490,9 @@ void rglStencilOp(GLenum sfail, GLenum dpfail, GLenum dppass)
  */
 void rglStencilFunc(GLenum func, GLint ref, GLuint mask)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glStencilFunc.\n");
+#endif
    glStencilFunc(func, ref, mask);
    gl_state.stencilfunc.used = true;
    gl_state.stencilfunc.func = func;
@@ -451,6 +507,9 @@ void rglStencilFunc(GLenum func, GLint ref, GLuint mask)
  */
 GLboolean rglIsEnabled(GLenum cap)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glIsEnabled.\n");
+#endif
    return gl_state.cap_state[cap] ? GL_TRUE : GL_FALSE;
 }
 
@@ -462,6 +521,9 @@ GLboolean rglIsEnabled(GLenum cap)
 void rglClearColor(GLclampf red, GLclampf green,
       GLclampf blue, GLclampf alpha)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glClearColor.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glClearColor(red, green, blue, alpha);
    gl_state.clear_color.r = red;
@@ -477,6 +539,9 @@ void rglClearColor(GLclampf red, GLclampf green,
  */
 void rglScissor(GLint x, GLint y, GLsizei width, GLsizei height)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glScissor.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glScissor(x, y, width, height);
    gl_state.scissor.used = true;
@@ -493,6 +558,9 @@ void rglScissor(GLint x, GLint y, GLsizei width, GLsizei height)
  */
 void rglViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glViewport.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glViewport(x, y, width, height);
    gl_state.viewport.x = x;
@@ -503,6 +571,9 @@ void rglViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 
 void rglBlendFunc(GLenum sfactor, GLenum dfactor)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBlendFunc.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    gl_state.blendfunc.used    = true;
    gl_state.blendfunc.sfactor = sfactor;
@@ -518,6 +589,9 @@ void rglBlendFunc(GLenum sfactor, GLenum dfactor)
  */
 void rglBlendFuncSeparate(GLenum sfactor, GLenum dfactor)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBlendFuncSeparate.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    gl_state.blendfunc_separate.used     = true;
    gl_state.blendfunc_separate.srcRGB   = sfactor;
@@ -535,6 +609,9 @@ void rglBlendFuncSeparate(GLenum sfactor, GLenum dfactor)
  */
 void rglActiveTexture(GLenum texture)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glActiveTexture.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glActiveTexture(texture);
    gl_state.active_texture = texture - GL_TEXTURE0;
@@ -547,6 +624,9 @@ void rglActiveTexture(GLenum texture)
  */
 void rglBindTexture(GLenum target, GLuint texture)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBindTexture.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glBindTexture(target, texture);
    gl_state.bind_textures.ids[gl_state.active_texture] = texture;
@@ -559,6 +639,9 @@ void rglBindTexture(GLenum target, GLuint texture)
  */
 void rglDisable(GLenum cap)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDisable.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glDisable(gl_state.cap_translate[cap]);
    gl_state.cap_state[cap] = 0;
@@ -571,6 +654,9 @@ void rglDisable(GLenum cap)
  */
 void rglEnable(GLenum cap)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glEnable.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glEnable(gl_state.cap_translate[cap]);
    gl_state.cap_state[cap] = 1;
@@ -584,6 +670,9 @@ void rglEnable(GLenum cap)
  */
 void rglUseProgram(GLuint program)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUseProgram.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    gl_state.program = program;
    glUseProgram(program);
@@ -596,6 +685,9 @@ void rglUseProgram(GLuint program)
  */
 void rglDepthMask(GLboolean flag)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDepthMask.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glDepthMask(flag);
    gl_state.depthmask.used = true;
@@ -609,6 +701,9 @@ void rglDepthMask(GLboolean flag)
  */
 void rglStencilMask(GLenum mask)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glStencilMask.\n");
+#endif
    glStencilMask(mask);
    gl_state.stencilmask.used = true;
    gl_state.stencilmask.mask = mask;
@@ -622,6 +717,9 @@ void rglStencilMask(GLenum mask)
 void rglBufferData(GLenum target, GLsizeiptr size,
       const GLvoid *data, GLenum usage)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBufferData.\n");
+#endif
    glBufferData(target, size, data, usage);
 }
 
@@ -633,6 +731,9 @@ void rglBufferData(GLenum target, GLsizeiptr size,
 void rglBufferSubData(GLenum target, GLintptr offset,
       GLsizeiptr size, const GLvoid *data)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBufferSubData.\n");
+#endif
    glBufferSubData(target, offset, size, data);
 }
 
@@ -643,6 +744,9 @@ void rglBufferSubData(GLenum target, GLintptr offset,
  */
 void rglBindBuffer(GLenum target, GLuint buffer)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBindBuffer.\n");
+#endif
    if (target == GL_ARRAY_BUFFER)
       gl_state.array_buffer = buffer;
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
@@ -657,6 +761,9 @@ void rglBindBuffer(GLenum target, GLuint buffer)
  */
 void rglLinkProgram(GLuint program)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glLinkProgram.\n");
+#endif
    glLinkProgram(program);
 }
 
@@ -670,6 +777,9 @@ void rglLinkProgram(GLuint program)
 void rglFramebufferTexture2D(GLenum target, GLenum attachment,
       GLenum textarget, GLuint texture, GLint level)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glFramebufferTexture2D.\n");
+#endif
    glFramebufferTexture2D(target, attachment, textarget, texture, level);
 }
 
@@ -683,6 +793,9 @@ void rglFramebufferTexture2D(GLenum target, GLenum attachment,
 void rglFramebufferTexture(GLenum target, GLenum attachment,
   	GLuint texture, GLint level)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glFramebufferTexture.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES_3_2)
    glFramebufferTexture(target, attachment, texture, level);
 #endif
@@ -695,6 +808,9 @@ void rglFramebufferTexture(GLenum target, GLenum attachment,
  */
 void rglDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDrawArrays.\n");
+#endif
    glDrawArrays(mode, first, count);
 }
 
@@ -706,6 +822,9 @@ void rglDrawArrays(GLenum mode, GLint first, GLsizei count)
 void rglDrawElements(GLenum mode, GLsizei count, GLenum type,
                            const GLvoid * indices)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDrawElements.\n");
+#endif
    glDrawElements(mode, count, type, indices);
 }
 
@@ -713,6 +832,9 @@ void rglCompressedTexImage2D(GLenum target, GLint level,
       GLenum internalformat, GLsizei width, GLsizei height,
       GLint border, GLsizei imageSize, const GLvoid *data)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glCompressedTexImage2D.\n");
+#endif
    glCompressedTexImage2D(target, level, internalformat, 
          width, height, border, imageSize, data);
 }
@@ -720,11 +842,17 @@ void rglCompressedTexImage2D(GLenum target, GLint level,
 
 void rglDeleteFramebuffers(GLsizei n, const GLuint *framebuffers)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDeleteFramebuffers.\n");
+#endif
    glDeleteFramebuffers(n, framebuffers);
 }
 
 void rglDeleteTextures(GLsizei n, const GLuint *textures)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDeleteTextures.\n");
+#endif
    glDeleteTextures(n, textures);
 }
 
@@ -736,6 +864,9 @@ void rglDeleteTextures(GLsizei n, const GLuint *textures)
 void rglRenderbufferStorage(GLenum target, GLenum internalFormat,
       GLsizei width, GLsizei height)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glRenderbufferStorage.\n");
+#endif
    glRenderbufferStorage(target, internalFormat, width, height);
 }
 
@@ -748,6 +879,9 @@ void rglRenderbufferStorage(GLenum target, GLenum internalFormat,
  */
 void rglBindRenderbuffer(GLenum target, GLuint renderbuffer)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBindRenderbuffer.\n");
+#endif
    glBindRenderbuffer(target, renderbuffer);
 }
 
@@ -759,6 +893,9 @@ void rglBindRenderbuffer(GLenum target, GLuint renderbuffer)
  */
 void rglDeleteRenderbuffers(GLsizei n, GLuint *renderbuffers)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDeleteRenderbuffers.\n");
+#endif
    glDeleteRenderbuffers(n, renderbuffers);
 }
 
@@ -771,6 +908,9 @@ void rglDeleteRenderbuffers(GLsizei n, GLuint *renderbuffers)
  */
 void rglGenRenderbuffers(GLsizei n, GLuint *renderbuffers)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGenRenderbuffers.\n");
+#endif
    glGenRenderbuffers(n, renderbuffers);
 }
 
@@ -783,6 +923,9 @@ void rglGenRenderbuffers(GLsizei n, GLuint *renderbuffers)
  */
 void rglGenerateMipmap(GLenum target)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGenerateMipmap.\n");
+#endif
    glGenerateMipmap(target);
 }
 
@@ -794,6 +937,9 @@ void rglGenerateMipmap(GLenum target)
  */
 GLenum rglCheckFramebufferStatus(GLenum target)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glCheckFramebufferStatus.\n");
+#endif
    return glCheckFramebufferStatus(target);
 }
 
@@ -807,6 +953,9 @@ GLenum rglCheckFramebufferStatus(GLenum target)
 void rglFramebufferRenderbuffer(GLenum target, GLenum attachment,
       GLenum renderbuffertarget, GLuint renderbuffer)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glFramebufferRenderbuffer.\n");
+#endif
    glFramebufferRenderbuffer(target, attachment, renderbuffertarget, renderbuffer);
 }
 
@@ -819,6 +968,9 @@ void rglFramebufferRenderbuffer(GLenum target, GLenum attachment,
 void rglBindFragDataLocation(GLuint program, GLuint colorNumber,
                                    const char * name)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBindFragDataLocation.\n");
+#endif
 #if !defined(HAVE_OPENGLES2)
    glBindFragDataLocation(program, colorNumber, name);
 #endif
@@ -833,6 +985,9 @@ void rglBindFragDataLocation(GLuint program, GLuint colorNumber,
  */
 void rglGetProgramiv(GLuint shader, GLenum pname, GLint *params)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetProgramiv.\n");
+#endif
    glGetProgramiv(shader, pname, params);
 }
 
@@ -847,6 +1002,9 @@ void rglProgramParameteri( 	GLuint program,
   	GLenum pname,
   	GLint value)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glProgramParameteri.\n");
+#endif
 #if !defined(HAVE_OPENGLES) || defined(HAVE_OPENGLES) && (defined(HAVE_OPENGLES3) || defined(HAVE_OPENGLES_3_1))
    glProgramParameteri(program, pname, value);
 #else
@@ -862,12 +1020,18 @@ void rglProgramParameteri( 	GLuint program,
 void rglGetActiveUniform(GLuint program, GLuint index, GLsizei bufsize,
       GLsizei *length, GLint *size, GLenum *type, GLchar *name)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetActiveUniform.\n");
+#endif
    glGetActiveUniform(program, index, bufsize, length, size, type, name);
 }
 
 void rglGenQueries(	GLsizei n,
  	GLuint * ids)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGenQueries.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glGenQueries(n, ids);
 #endif
@@ -877,6 +1041,9 @@ void rglGetQueryObjectuiv(	GLuint id,
  	GLenum pname,
  	GLuint * params)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetQueryObjectuiv.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glGetQueryObjectuiv(id, pname, params);
 #endif
@@ -885,6 +1052,9 @@ void rglGetQueryObjectuiv(	GLuint id,
 void rglDeleteQueries(	GLsizei n,
  	const GLuint * ids)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDeleteQueries.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glDeleteQueries(n, ids);
 #endif
@@ -893,6 +1063,9 @@ void rglDeleteQueries(	GLsizei n,
 void rglBeginQuery(	GLenum target,
  	GLuint id)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBeginQuery.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glBeginQuery(target, id);
 #endif
@@ -900,6 +1073,9 @@ void rglBeginQuery(	GLenum target,
 
 void rglEndQuery(	GLenum target)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glEndQuery.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glEndQuery(target);
 #endif
@@ -919,6 +1095,9 @@ void rglGetActiveUniformBlockiv(GLuint program,
   	GLenum pname,
   	GLint *params)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetActiveUniformBlockiv.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glGetActiveUniformBlockiv(program, uniformBlockIndex,
          pname, params);
@@ -939,6 +1118,9 @@ void rglGetActiveUniformsiv( 	GLuint program,
   	GLenum pname,
   	GLint *params)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetActiveUniformsiv.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glGetActiveUniformsiv(program, uniformCount,
          uniformIndices, pname, params);
@@ -958,6 +1140,9 @@ void rglGetUniformIndices(GLuint program,
   	const GLchar **uniformNames,
   	GLuint *uniformIndices)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetUniformIndices.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glGetUniformIndices(program, uniformCount,
          uniformNames, uniformIndices);
@@ -977,6 +1162,9 @@ void rglBindBufferBase( 	GLenum target,
   	GLuint index,
   	GLuint buffer)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBindBufferBase.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glBindBufferBase(target, index, buffer);
 #else
@@ -995,6 +1183,9 @@ void rglBindBufferBase( 	GLenum target,
 GLuint rglGetUniformBlockIndex( 	GLuint program,
   	const GLchar *uniformBlockName)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetUniformBlockIndex.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    return glGetUniformBlockIndex(program, uniformBlockName);
 #else
@@ -1014,6 +1205,9 @@ void rglUniformBlockBinding( 	GLuint program,
   	GLuint uniformBlockIndex,
   	GLuint uniformBlockBinding)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniformBlockBinding.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glUniformBlockBinding(program, uniformBlockIndex,
          uniformBlockBinding);
@@ -1030,6 +1224,9 @@ void rglUniformBlockBinding( 	GLuint program,
  */
 void rglUniform1ui(GLint location, GLuint v)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform1ui.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glUniform1ui(location ,v);
 #endif
@@ -1043,6 +1240,9 @@ void rglUniform1ui(GLint location, GLuint v)
  */
 void rglUniform2ui(GLint location, GLuint v0, GLuint v1)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform2ui.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glUniform2ui(location, v0, v1);
 #endif
@@ -1056,6 +1256,9 @@ void rglUniform2ui(GLint location, GLuint v0, GLuint v1)
  */
 void rglUniform3ui(GLint location, GLuint v0, GLuint v1, GLuint v2)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform3ui.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glUniform3ui(location, v0, v1, v2);
 #endif
@@ -1069,6 +1272,9 @@ void rglUniform3ui(GLint location, GLuint v0, GLuint v1, GLuint v2)
  */
 void rglUniform4ui(GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform4ui.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glUniform4ui(location, v0, v1, v2, v3);
 #endif
@@ -1082,6 +1288,9 @@ void rglUniform4ui(GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3)
 void rglUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose,
       const GLfloat *value)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniformMatrix4fv.\n");
+#endif
    glUniformMatrix4fv(location, count, transpose, value);
 }
 
@@ -1093,6 +1302,9 @@ void rglUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose,
  */
 void rglDetachShader(GLuint program, GLuint shader)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDetachShader.\n");
+#endif
    glDetachShader(program, shader);
 }
 
@@ -1104,6 +1316,9 @@ void rglDetachShader(GLuint program, GLuint shader)
  */
 void rglGetShaderiv(GLuint shader, GLenum pname, GLint *params)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetShaderiv.\n");
+#endif
    glGetShaderiv(shader, pname, params);
 }
 
@@ -1115,6 +1330,9 @@ void rglGetShaderiv(GLuint shader, GLenum pname, GLint *params)
  */
 void rglAttachShader(GLuint program, GLuint shader)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glAttachShader.\n");
+#endif
    glAttachShader(program, shader);
 }
 
@@ -1125,6 +1343,9 @@ void rglAttachShader(GLuint program, GLuint shader)
  */
 GLint rglGetAttribLocation(GLuint program, const GLchar *name)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetAttribLocation.\n");
+#endif
    return glGetAttribLocation(program, name);
 }
 
@@ -1137,6 +1358,9 @@ GLint rglGetAttribLocation(GLuint program, const GLchar *name)
 void rglShaderSource(GLuint shader, GLsizei count,
       const GLchar **string, const GLint *length)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glShaderSource.\n");
+#endif
    return glShaderSource(shader, count, string, length);
 }
 
@@ -1148,6 +1372,9 @@ void rglShaderSource(GLuint shader, GLsizei count,
  */
 void rglCompileShader(GLuint shader)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glCompileShader.\n");
+#endif
    glCompileShader(shader);
 }
 
@@ -1159,6 +1386,9 @@ void rglCompileShader(GLuint shader)
  */
 GLuint rglCreateProgram(void)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glCreateProgram.\n");
+#endif
    return glCreateProgram();
 }
 
@@ -1169,6 +1399,9 @@ GLuint rglCreateProgram(void)
  */
 void rglGenTextures(GLsizei n, GLuint *textures)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGenTextures.\n");
+#endif
    glGenTextures(n, textures);
 }
 
@@ -1180,6 +1413,9 @@ void rglGenTextures(GLsizei n, GLuint *textures)
 void rglGetShaderInfoLog(GLuint shader, GLsizei maxLength,
       GLsizei *length, GLchar *infoLog)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetShaderInfoLog.\n");
+#endif
    glGetShaderInfoLog(shader, maxLength, length, infoLog);
 }
 
@@ -1191,6 +1427,9 @@ void rglGetShaderInfoLog(GLuint shader, GLsizei maxLength,
 void rglGetProgramInfoLog(GLuint shader, GLsizei maxLength,
       GLsizei *length, GLchar *infoLog)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetProgramInfoLog.\n");
+#endif
    glGetProgramInfoLog(shader, maxLength, length, infoLog);
 }
 
@@ -1201,6 +1440,9 @@ void rglGetProgramInfoLog(GLuint shader, GLsizei maxLength,
  */
 GLboolean rglIsProgram(GLuint program)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glIsProgram.\n");
+#endif
    return glIsProgram(program);
 }
 
@@ -1208,6 +1450,9 @@ GLboolean rglIsProgram(GLuint program)
 void rglTexCoord2f(GLfloat s, GLfloat t)
 {
 #ifdef HAVE_LEGACY_GL
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glTexCoord2f.\n");
+#endif
    glTexCoord2f(s, t);
 #endif
 }
@@ -1221,6 +1466,9 @@ void rglTexCoord2f(GLfloat s, GLfloat t)
  */
 void rglDisableVertexAttribArray(GLuint index)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDisableVertexAttribArray.\n");
+#endif
    gl_state.vertex_attrib_pointer.enabled[index] = 0;
    glDisableVertexAttribArray(index);
 }
@@ -1233,6 +1481,9 @@ void rglDisableVertexAttribArray(GLuint index)
  */
 void rglEnableVertexAttribArray(GLuint index)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glEnableVertexAttribArray.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    gl_state.vertex_attrib_pointer.enabled[index] = 1;
    glEnableVertexAttribArray(index);
@@ -1251,6 +1502,9 @@ void rglVertexAttribIPointer(
       GLsizei stride,
       const GLvoid * pointer)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glVertexAttribIPointer.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glVertexAttribIPointer(index, size, type, stride, pointer);
 #endif
@@ -1263,6 +1517,9 @@ void rglVertexAttribLPointer(
       GLsizei stride,
       const GLvoid * pointer)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glVertexAttribLPointer.\n");
+#endif
 #if defined(HAVE_OPENGL)
    glVertexAttribLPointer(index, size, type, stride, pointer);
 #endif
@@ -1278,6 +1535,9 @@ void rglVertexAttribPointer(GLuint name, GLint size,
       GLenum type, GLboolean normalized, GLsizei stride,
       const GLvoid* pointer)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glVertexAttribPointer.\n");
+#endif
    gl_state.attrib_pointer.used[name] = 1;
    gl_state.attrib_pointer.size[name] = size;
    gl_state.attrib_pointer.type[name] = type;
@@ -1296,6 +1556,9 @@ void rglVertexAttribPointer(GLuint name, GLint size,
  */
 void rglBindAttribLocation(GLuint program, GLuint index, const GLchar *name)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBindAttribLocation.\n");
+#endif
    glBindAttribLocation(program, index, name);
 }
 
@@ -1307,7 +1570,10 @@ void rglBindAttribLocation(GLuint program, GLuint index, const GLchar *name)
 void rglVertexAttrib4f(GLuint name, GLfloat x, GLfloat y,
       GLfloat z, GLfloat w)
 {
-    glVertexAttrib4f(name, x, y, z, w);
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glVertexAttrib4f.\n");
+#endif
+   glVertexAttrib4f(name, x, y, z, w);
 }
 
 /*
@@ -1317,7 +1583,10 @@ void rglVertexAttrib4f(GLuint name, GLfloat x, GLfloat y,
  */
 void rglVertexAttrib4fv(GLuint name, GLfloat* v)
 {
-    glVertexAttrib4fv(name, v);
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glVertexAttrib4fv.\n");
+#endif
+   glVertexAttrib4fv(name, v);
 }
 
 /*
@@ -1328,6 +1597,9 @@ void rglVertexAttrib4fv(GLuint name, GLfloat* v)
  */
 GLuint rglCreateShader(GLenum shaderType)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glCreateShader.\n");
+#endif
    return glCreateShader(shaderType);
 }
 
@@ -1339,6 +1611,9 @@ GLuint rglCreateShader(GLenum shaderType)
  */
 void rglDeleteProgram(GLuint program)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDeleteProgram.\n");
+#endif
    glDeleteProgram(program);
 }
 
@@ -1350,6 +1625,9 @@ void rglDeleteProgram(GLuint program)
  */
 void rglDeleteShader(GLuint shader)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDeleteShader.\n");
+#endif
    glDeleteShader(shader);
 }
 
@@ -1361,6 +1639,9 @@ void rglDeleteShader(GLuint shader)
  */
 GLint rglGetUniformLocation(GLuint program, const GLchar *name)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetUniformLocation.\n");
+#endif
    return glGetUniformLocation(program, name);
 }
 
@@ -1372,6 +1653,9 @@ GLint rglGetUniformLocation(GLuint program, const GLchar *name)
  */
 void rglDeleteBuffers(GLsizei n, const GLuint *buffers)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDeleteBuffers.\n");
+#endif
    glDeleteBuffers(n, buffers);
 }
 
@@ -1383,6 +1667,9 @@ void rglDeleteBuffers(GLsizei n, const GLuint *buffers)
  */
 void rglGenBuffers(GLsizei n, GLuint *buffers)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGenBuffers.\n");
+#endif
    glGenBuffers(n, buffers);
 }
 
@@ -1394,6 +1681,9 @@ void rglGenBuffers(GLsizei n, GLuint *buffers)
  */
 void rglUniform1f(GLint location, GLfloat v0)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform1f.\n");
+#endif
    glUniform1f(location, v0);
 }
 
@@ -1405,6 +1695,9 @@ void rglUniform1f(GLint location, GLfloat v0)
  */
 void rglUniform1fv(GLint location,  GLsizei count,  const GLfloat *value)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform1fv.\n");
+#endif
    glUniform1fv(location, count, value);
 }
 
@@ -1416,6 +1709,9 @@ void rglUniform1fv(GLint location,  GLsizei count,  const GLfloat *value)
  */
 void rglUniform1iv(GLint location,  GLsizei count,  const GLint *value)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform1iv.\n");
+#endif
    glUniform1iv(location, count, value);
 }
 
@@ -1423,6 +1719,9 @@ void rglClearBufferfv( 	GLenum buffer,
   	GLint drawBuffer,
   	const GLfloat * value)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glClearBufferfv.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES_3)
    glClearBufferfv(buffer, drawBuffer, value);
 #endif
@@ -1430,6 +1729,9 @@ void rglClearBufferfv( 	GLenum buffer,
 
 void rglTexBuffer(GLenum target, GLenum internalFormat, GLuint buffer)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glTexBuffer.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES_3_2)
    glTexBuffer(target, internalFormat, buffer);
 #endif
@@ -1443,6 +1745,9 @@ void rglTexBuffer(GLenum target, GLenum internalFormat, GLuint buffer)
  */
 const GLubyte* rglGetStringi(GLenum name, GLuint index)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetString.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES_3)
    return glGetStringi(name, index);
 #else
@@ -1455,6 +1760,9 @@ void rglClearBufferfi( 	GLenum buffer,
   	GLfloat depth,
   	GLint stencil)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glClearBufferfi.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES_3)
    glClearBufferfi(buffer, drawBuffer, depth, stencil);
 #endif
@@ -1472,6 +1780,9 @@ void rglRenderbufferStorageMultisample( 	GLenum target,
   	GLsizei width,
   	GLsizei height)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glRenderbufferStorageMultisample.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES_3)
    glRenderbufferStorageMultisample(target, samples, internalformat, width, height);
 #endif
@@ -1485,6 +1796,9 @@ void rglRenderbufferStorageMultisample( 	GLenum target,
  */
 void rglUniform1i(GLint location, GLint v0)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform1i.\n");
+#endif
    glUniform1i(location, v0);
 }
 
@@ -1496,6 +1810,9 @@ void rglUniform1i(GLint location, GLint v0)
  */
 void rglUniform2f(GLint location, GLfloat v0, GLfloat v1)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform2f.\n");
+#endif
    glUniform2f(location, v0, v1);
 }
 
@@ -1507,6 +1824,9 @@ void rglUniform2f(GLint location, GLfloat v0, GLfloat v1)
  */
 void rglUniform2i(GLint location, GLint v0, GLint v1)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform2i.\n");
+#endif
    glUniform2i(location, v0, v1);
 }
 
@@ -1518,6 +1838,9 @@ void rglUniform2i(GLint location, GLint v0, GLint v1)
  */
 void rglUniform2fv(GLint location, GLsizei count, const GLfloat *value)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform2fv.\n");
+#endif
    glUniform2fv(location, count, value);
 }
 
@@ -1529,6 +1852,9 @@ void rglUniform2fv(GLint location, GLsizei count, const GLfloat *value)
  */
 void rglUniform3f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform3f.\n");
+#endif
    glUniform3f(location, v0, v1, v2);
 }
 
@@ -1540,6 +1866,9 @@ void rglUniform3f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
  */
 void rglUniform3fv(GLint location, GLsizei count, const GLfloat *value)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform3fv.\n");
+#endif
    glUniform3fv(location, count, value);
 }
 
@@ -1551,6 +1880,9 @@ void rglUniform3fv(GLint location, GLsizei count, const GLfloat *value)
  */
 void rglUniform4i(GLint location, GLint v0, GLint v1, GLint v2, GLint v3)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform4i.\n");
+#endif
    glUniform4i(location, v0, v1, v2, v3);
 }
 
@@ -1562,6 +1894,9 @@ void rglUniform4i(GLint location, GLint v0, GLint v1, GLint v2, GLint v3)
  */
 void rglUniform4f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform4f.\n");
+#endif
    glUniform4f(location, v0, v1, v2, v3);
 }
 
@@ -1573,6 +1908,9 @@ void rglUniform4f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3
  */
 void rglUniform4fv(GLint location, GLsizei count, const GLfloat *value)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform4fv.\n");
+#endif
    glUniform4fv(location, count, value);
 }
 
@@ -1584,6 +1922,9 @@ void rglUniform4fv(GLint location, GLsizei count, const GLfloat *value)
  */
 void rglPolygonOffset(GLfloat factor, GLfloat units)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glPolygonOffset.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glPolygonOffset(factor, units);
    gl_state.polygonoffset.used   = true;
@@ -1599,6 +1940,9 @@ void rglPolygonOffset(GLfloat factor, GLfloat units)
  */
 void rglGenFramebuffers(GLsizei n, GLuint *ids)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGenFramebuffers.\n");
+#endif
    glGenFramebuffers(n, ids);
 }
 
@@ -1610,6 +1954,9 @@ void rglGenFramebuffers(GLsizei n, GLuint *ids)
  */
 void rglBindFramebuffer(GLenum target, GLuint framebuffer)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBindFramebuffer.\n");
+#endif
    glsm_ctl(GLSM_CTL_IMM_VBO_DRAW, NULL);
    glBindFramebuffer(target, framebuffer);
    gl_state.framebuf = framebuffer;
@@ -1624,6 +1971,9 @@ void rglBindFramebuffer(GLenum target, GLuint framebuffer)
  */
 void rglDrawBuffers(GLsizei n, const GLenum *bufs)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDrawBuffers.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glDrawBuffers(n, bufs);
 #endif
@@ -1641,6 +1991,9 @@ void *rglMapBufferRange( 	GLenum target,
   	GLsizeiptr length,
   	GLbitfield access)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glMapBufferRange.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    return glMapBufferRange(target, offset, length, access);
 #else
@@ -1659,6 +2012,9 @@ void rglTexStorage2DMultisample(GLenum target, GLsizei samples,
       GLenum internalformat, GLsizei width, GLsizei height,
       GLboolean fixedsamplelocations)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glTexStorage2DMultisample.\n");
+#endif
 #if defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES_3_1)
    glTexStorage2DMultisample(target, samples, internalformat,
          width, height, fixedsamplelocations);
@@ -1673,6 +2029,9 @@ void rglTexStorage2DMultisample(GLenum target, GLsizei samples,
 void rglTexStorage2D(GLenum target, GLsizei levels, GLenum internalFormat,
       GLsizei width, GLsizei height)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glTexStorage2D.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glTexStorage2D(target, levels, internalFormat, width, height);
 #endif
@@ -1686,6 +2045,9 @@ void rglTexStorage2D(GLenum target, GLsizei levels, GLenum internalFormat,
  */
 void rglMemoryBarrier( 	GLbitfield barriers)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glMemoryBarrier.\n");
+#endif
 #if !defined(HAVE_OPENGLES) || defined(HAVE_OPENGLES3) && defined(HAVE_OPENGLES_3_1)
    glMemoryBarrier(barriers);
 #else
@@ -1707,6 +2069,9 @@ void rglBindImageTexture( 	GLuint unit,
   	GLenum access,
   	GLenum format)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBindImageTexture.\n");
+#endif
 #if !defined(HAVE_OPENGLES) || defined(HAVE_OPENGLES3) && defined(HAVE_OPENGLES_3_1)
    glBindImageTexture(unit, texture, level, layered, layer, access, format);
 #else
@@ -1726,6 +2091,9 @@ void rglGetProgramBinary( 	GLuint program,
   	GLenum *binaryFormat,
   	void *binary)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetProgramBinary.\n");
+#endif
 #if !defined(HAVE_OPENGLES) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glGetProgramBinary(program, bufsize, length, binaryFormat, binary);
 #else
@@ -1744,6 +2112,9 @@ void rglProgramBinary(GLuint program,
   	const void *binary,
   	GLsizei length)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glProgramBinary.\n");
+#endif
 #if !defined(HAVE_OPENGLES) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES_3_1)
    glProgramBinary(program, binaryFormat, binary, length);
 #else
@@ -1758,6 +2129,9 @@ void rglTexImage2DMultisample( 	GLenum target,
   	GLsizei height,
   	GLboolean fixedsamplelocations)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glTexImage2DMultisample.\n");
+#endif
 #ifndef HAVE_OPENGLES
    glTexImage2DMultisample(target, samples, internalformat, width, height, fixedsamplelocations);
 #endif
@@ -1775,6 +2149,9 @@ void rglTexImage3D(	GLenum target,
  	GLenum type,
  	const GLvoid * data)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glTexImage3D.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glTexImage3D(target, level, internalFormat, width, height, depth, border, format, type, data);
 #endif
@@ -1787,6 +2164,9 @@ void rglTexImage3D(	GLenum target,
  */
 void * rglMapBuffer(	GLenum target, GLenum access)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glMapBuffer.\n");
+#endif
 #if defined(HAVE_OPENGLES)
    return glMapBufferOES(target, access);
 #else
@@ -1801,6 +2181,9 @@ void * rglMapBuffer(	GLenum target, GLenum access)
  */
 GLboolean rglUnmapBuffer( 	GLenum target)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUnmapBuffer.\n");
+#endif
 #if defined(HAVE_OPENGLES)
    return glUnmapBufferOES(target);
 #else
@@ -1810,11 +2193,17 @@ GLboolean rglUnmapBuffer( 	GLenum target)
 
 void rglBlendEquation(GLenum mode)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBlendEquation.\n");
+#endif
    glBlendEquation(mode);
 }
 
 void rglBlendColor(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBlendColor.\n");
+#endif
    glBlendColor(red, green, blue, alpha);
 }
 
@@ -1826,6 +2215,9 @@ void rglBlendColor(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
  */
 void rglBlendEquationSeparate(GLenum modeRGB, GLenum modeAlpha)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBlendEquationSeparate.\n");
+#endif
    glBlendEquationSeparate(modeRGB, modeAlpha);
 }
 
@@ -1851,6 +2243,9 @@ void rglCopyImageSubData( 	GLuint srcName,
   	GLsizei srcHeight,
   	GLsizei srcDepth)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glCopyImageSubData.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES_3_2)
    glCopyImageSubData(srcName,
          srcTarget,
@@ -1879,6 +2274,9 @@ void rglCopyImageSubData( 	GLuint srcName,
  */
 void rglBindVertexArray(GLuint array)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBindVertexArray.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glBindVertexArray(array);
 #endif
@@ -1893,6 +2291,9 @@ void rglBindVertexArray(GLuint array)
  */
 void rglGenVertexArrays(GLsizei n, GLuint *arrays)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGenVertexArrays.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glGenVertexArrays(n, arrays);
 #endif
@@ -1907,6 +2308,9 @@ void rglGenVertexArrays(GLsizei n, GLuint *arrays)
  */
 void rglDeleteVertexArrays(GLsizei n, const GLuint *arrays)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDeleteVertexArrays.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glDeleteVertexArrays(n, arrays);
 #endif
@@ -1920,6 +2324,9 @@ void rglDeleteVertexArrays(GLsizei n, const GLuint *arrays)
  */
 void *rglFenceSync(GLenum condition, GLbitfield flags)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glFenceSync.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    return (GLsync)glFenceSync(condition, flags);
 #else
@@ -1935,6 +2342,9 @@ void *rglFenceSync(GLenum condition, GLbitfield flags)
  */
 void rglDeleteSync(void * sync)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDeleteSync.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
   glDeleteSync((GLsync)sync);
 #endif
@@ -1948,6 +2358,9 @@ void rglDeleteSync(void * sync)
  */
 void rglWaitSync(void *sync, GLbitfield flags, uint64_t timeout)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glWaitSync.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glWaitSync((GLsync)sync, flags, (GLuint64)timeout);
 #endif
@@ -1959,9 +2372,13 @@ void rglWaitSync(void *sync, GLbitfield flags, uint64_t timeout)
  * OpenGL    : 4.4
  * OpenGLES  : Not available
  */
-void rglBufferStorage(GLenum target, GLsizeiptr size, const GLvoid *data, GLbitfield flags) {
+void rglBufferStorage(GLenum target, GLsizeiptr size, const GLvoid *data, GLbitfield flags)
+{
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glBufferStorage.\n");
+#endif
 #if defined(HAVE_OPENGL)
-  glBufferStorage(target, size, data, flags);
+   glBufferStorage(target, size, data, flags);
 #endif
 }
 
@@ -1976,6 +2393,9 @@ void rglUniform2uiv(	GLint location,
  	GLsizei count,
  	const GLuint *value)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform2uiv.\n");
+#endif
    glUniform2uiv(location, count, value);
 }
 
@@ -1994,6 +2414,9 @@ void rglTextureView(	GLuint texture,
  	GLuint minlayer,
  	GLuint numlayers)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glTextureView.\n");
+#endif
 #if defined(HAVE_OPENGL)
    glTextureView(texture, target, origtexture, internalformat, minlevel, numlevels, minlayer, numlayers);
 #endif
@@ -2005,7 +2428,11 @@ void rglTextureView(	GLuint texture,
  * OpenGL    : 3.0
  * OpenGLES  : 3.0
  */
-void rglFlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length) {
+void rglFlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length)
+{
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glFlushMappedBufferRange.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
   glFlushMappedBufferRange(target, offset, length);
 #endif
@@ -2023,6 +2450,9 @@ void rglFlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length
  */
 GLenum rglClientWaitSync(void *sync, GLbitfield flags, uint64_t timeout)
 {
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glClientWaitSync.\n");
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
   return glClientWaitSync((GLsync)sync, flags, (GLuint64)timeout);
 #else
@@ -2037,9 +2467,13 @@ GLenum rglClientWaitSync(void *sync, GLbitfield flags, uint64_t timeout)
  * OpenGLES  : Not available
  */
 void rglDrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
-			       GLvoid *indices, GLint basevertex) {
+			       GLvoid *indices, GLint basevertex)
+{
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glDrawElementsBaseVertex.\n");
+#endif
 #if defined(HAVE_OPENGL)
-  glDrawElementsBaseVertex(mode, count, type, indices, basevertex);
+   glDrawElementsBaseVertex(mode, count, type, indices, basevertex);
 #endif
 }
 

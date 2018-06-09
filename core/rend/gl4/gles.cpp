@@ -163,8 +163,9 @@ uniform int fog_control[2]; \n\
 " vary " " MEDIUMP " float vtx_z; \n\
 " LOWP " float fog_mode2(" HIGHP " float w) \n\
 { \n\
-   uint i = clamp(uint(floor(log2(w * sp_FOG_DENSITY))), 0u, 7u); \n\
-   " HIGHP " float m = w * sp_FOG_DENSITY * 16.0 / pow(2, i) - 16.0; \n\ 
+   " HIGHP " float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\ 
+   uint i = uint(floor(log2(z))); \n\
+   " HIGHP " float m = z * 16 / pow(2, i) - 16; \n\
    float idx = floor(m) + i * 16 + 0.5; \n\
    vec4 fog_coef = texture(fog_table, vec2(idx / 128, 0.75 - (m - floor(m)) / 2)); \n\
    return fog_coef.a; \n\

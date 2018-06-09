@@ -21,7 +21,7 @@ static GLuint g_quadVertexArray = 0;
 static int g_imageWidth = 0;
 static int g_imageHeight = 0;
 
-GLuint pixel_buffer_size = 64 * 1024 * 1024;	// Initial size 64 MB
+GLuint pixel_buffer_size = 512 * 1024 * 1024;	// Initial size 64 MB
 
 #define MAX_PIXELS_PER_FRAGMENT "32"
 
@@ -277,10 +277,11 @@ void initABuffer()
 		glGenBuffers(1, &atomic_buffer);
 		// Bind it
 		glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomic_buffer);
-		// Declare storage. Using GL_DYNAMIC_READ instead of GL_DYNAMIC_COPY as the latter makes
-		// reading the counter after each frame very slow.
-		glBufferData(GL_ATOMIC_COUNTER_BUFFER, 4, NULL, GL_DYNAMIC_READ);
+		// Declare storage
+		glBufferData(GL_ATOMIC_COUNTER_BUFFER, 4, NULL, GL_DYNAMIC_COPY);
 		glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, atomic_buffer);
+		GLint zero = 0;
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GLint), &zero);
 		glCheck();
 	}
 
@@ -349,10 +350,10 @@ void DrawQuad()
 		ymax = t;
 	}
 	struct Vertex vertices[] = {
-			{ xmin, ymax, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
-			{ xmin, ymin, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-			{ xmax, ymax, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-			{ xmax, ymin, 0.001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+			{ xmin, ymax, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
+			{ xmin, ymin, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
+			{ xmax, ymax, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
+			{ xmax, ymin, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
 	};
 	GLushort indices[] = { 0, 1, 2, 1, 3 };
 
@@ -451,8 +452,38 @@ void DrawTranslucentModVols(int first, int count)
 	}
 }
 
+void checkOverflowAndReset()
+{
+	// Using atomic counter
+	GLuint max_pixel_index = 0;
+//	glGetBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &max_pixel_index);
+////	printf("ABUFFER %d pixels used\n", max_pixel_index);
+//	if ((max_pixel_index + 1) * 32 - 1 >= pixel_buffer_size)
+//	{
+//		GLint64 size;
+//		glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &size);
+//		if (pixel_buffer_size == size)
+//			printf("A-buffer overflow: %d pixels. Buffer size already maxed out\n", max_pixel_index);
+//		else
+//		{
+//			pixel_buffer_size = (GLuint)min(2 * (GLint64)pixel_buffer_size, size);
+//
+//			printf("A-buffer overflow: %d pixels. Resizing buffer to %d MB\n", max_pixel_index, pixel_buffer_size / 1024 / 1024);
+//
+//			glBindBuffer(GL_SHADER_STORAGE_BUFFER, pixels_buffer);
+//			glBufferData(GL_SHADER_STORAGE_BUFFER, pixel_buffer_size, NULL, GL_DYNAMIC_COPY);
+//			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, pixels_buffer);
+//			glCheck();
+//		}
+//	}
+	// Reset counter
+	max_pixel_index = 0;
+ 	glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0 , sizeof(GLuint), &max_pixel_index);
+}
+
 void renderABuffer(bool sortFragments)
 {
+	// Render to output FBO
 	glcache.UseProgram(sortFragments ? g_abuffer_final_shader.program : g_abuffer_final_nosort_shader.program);
 	ShaderUniforms.Set(&g_abuffer_final_shader);
 
@@ -464,39 +495,12 @@ void renderABuffer(bool sortFragments)
 
 	glCheck();
 
+	// Clear A-buffer pointers
 	glcache.UseProgram(g_abuffer_clear_shader.program);
 	ShaderUniforms.Set(&g_abuffer_clear_shader);
 
-	GLuint max_pixel_index = 0;
-	glGetBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, 4, &max_pixel_index);
-//	printf("ABUFFER %d pixels used\n", max_pixel_index);
-	if ((max_pixel_index + 1) * 32 - 1 >= pixel_buffer_size)
-	{
-		GLint64 size;
-		glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &size);
-		if (pixel_buffer_size == size)
-			printf("A-buffer overflow: %d pixels. Buffer size already maxed out\n", max_pixel_index);
-		else
-		{
-			pixel_buffer_size = (GLuint)min(2 * (GLint64)pixel_buffer_size, size);
-
-			printf("A-buffer overflow: %d pixels. Resizing buffer to %d MB\n", max_pixel_index, pixel_buffer_size / 1024 / 1024);
-
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, pixels_buffer);
-			glBufferData(GL_SHADER_STORAGE_BUFFER, pixel_buffer_size, NULL, GL_DYNAMIC_COPY);
-			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, pixels_buffer);
-			glCheck();
-		}
-	}
-
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	DrawQuad();
-
-	glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT);
-
-	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomic_buffer);
-	GLuint zero = 0;
- 	glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0 , sizeof(GLuint), &zero);
 
 	glActiveTexture(GL_TEXTURE0);
 

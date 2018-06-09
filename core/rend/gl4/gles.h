@@ -216,7 +216,11 @@ layout(binding = 0, offset = 0) uniform atomic_uint buffer_index; \n\
 \n\
 uint getNextPixelIndex() \n\
 { \n\
-	return atomicCounterIncrement(buffer_index); \n\
+   uint index = atomicCounterIncrement(buffer_index); \n\
+   if (index >= pixels.length()) \n\
+      discard; \n\
+    \n\
+   return index; \n\
 } \n\
 \n\
 void setFragDepth(void) \n\

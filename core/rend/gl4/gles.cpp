@@ -356,10 +356,6 @@ void main() \n\
 		\n\
       ivec2 coords = ivec2(gl_FragCoord.xy); \n\
       uint idx =  getNextPixelIndex(); \n\
-      if (idx >= pixels.length()) { \n\
-         discard; \n\
-         return; \n\
-		} \n\
       Pixel pixel; \n\
       pixel.color = color; \n\
       pixel.depth = gl_FragDepth; \n\
@@ -874,6 +870,7 @@ static bool RenderFrame(void)
     	 * instead we want to render to the unscaled resolution and downsample
     	 * only if/when required.
     	 */
+      scissoring_scale_x /= 2;
 		scale_x*=2;
 	}
 

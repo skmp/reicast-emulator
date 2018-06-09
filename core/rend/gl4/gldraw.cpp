@@ -580,6 +580,7 @@ last *out*  : flip, merge*out* &clear from last merge
 
 void renderABuffer(bool sortFragments);
 void DrawTranslucentModVols(int first, int count);
+void checkOverflowAndReset();
 
 GLuint CreateColorFBOTexture()
 {
@@ -618,6 +619,7 @@ void CreateTextures()
 
 void DrawStrips(GLuint output_fbo)
 {
+   checkOverflowAndReset();
 
    if (geom_fbo == 0)
    {

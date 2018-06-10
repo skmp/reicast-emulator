@@ -465,12 +465,20 @@ ifeq ($(DEBUG),1)
 	LDFLAGS        += -g
 	CFLAGS         += -g
 else
+ifneq (,$(findstring msvc,$(platform)))
 	OPTFLAGS       := -O2
+else
+	OPTFLAGS       := -O3
+endif
 	RZDCY_CFLAGS   += -DNDEBUG
 	RZDCY_CXXFLAGS += -DNDEBUG
 	CFLAGS         += -DNDEBUG
 	CXXFLAGS       += -DNDEBUG
 	LDFLAGS        += -DNDEBUG
+   RZDCY_CFLAGS += -flto
+   RZDCY_CXXFLAGS += -flto
+   CFLAGS += -flto
+   CXXFLAGS += -flto
 endif
 
 RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -DRELEASE -ffast-math -fomit-frame-pointer -D__LIBRETRO__

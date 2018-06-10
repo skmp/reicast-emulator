@@ -252,11 +252,7 @@ void dc_term(void)
 	plugins_Term();
 	_vmem_release();
 
-#ifdef _WIN32
-	SaveRomFiles(get_writable_data_path("data\\"));
-#else
-	SaveRomFiles(get_writable_data_path("data/"));
-#endif
+	SaveRomFiles(get_writable_data_path(""));
 }
 
 void LoadSettings(void)

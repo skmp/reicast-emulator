@@ -778,52 +778,6 @@ void os_CreateWindow()
    // Nothing to do here
 }
 
-static void get_analog_axis( retro_input_state_t input_state_cb,
-                      int player_index,
-                      int stick,
-                      int axis,
-                      int* p_analog )
-{
-   int analog;
-
-   analog = input_state_cb( player_index, RETRO_DEVICE_ANALOG, stick, axis );
-
-   // Analog stick deadzone
-   if ( astick_deadzone > 0 )
-   {
-      static const int ASTICK_MAX = 0x7F;
-      const float scale = ((float)ASTICK_MAX/(float)(ASTICK_MAX - astick_deadzone));
-
-      if ( analog < -astick_deadzone )
-      {
-         // Re-scale analog stick range
-         float scaled = (-analog - astick_deadzone)*scale;
-
-         analog = (int)round(-scaled);
-         if (analog < -127) {
-            analog = -127;
-         }
-      }
-      else if ( analog > astick_deadzone )
-      {
-         // Re-scale analog stick range
-         float scaled = (analog - astick_deadzone)*scale;
-
-         analog = (int)round(scaled);
-         if (analog > +127) {
-            analog = +127;
-         }
-      }
-      else
-      {
-         analog = 0;
-      }
-   }
-
-   // output
-   *p_analog = analog;
-}
-
 static void get_analog_stick( retro_input_state_t input_state_cb,
                        int player_index,
                        int stick,

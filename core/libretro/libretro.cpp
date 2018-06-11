@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstdarg>
+#include <math.h>
 #include "types.h"
 
 #include <sys/stat.h>
@@ -18,6 +19,9 @@ extern int screen_width;
 extern int screen_height;
 bool boot_to_bios;
 
+static int astick_deadzone = 0;
+static int trigger_deadzone = 0;
+
 u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
 u8 rt[4] = {0, 0, 0, 0};
 u8 lt[4] = {0, 0, 0, 0};
@@ -31,27 +35,27 @@ static bool first_run = true;
 
 enum DreamcastController
 {
-	DC_BTN_C       = 1,
-	DC_BTN_B       = 1<<1,
-	DC_BTN_A       = 1<<2,
-	DC_BTN_START   = 1<<3,
-	DC_DPAD_UP     = 1<<4,
-	DC_DPAD_DOWN   = 1<<5,
-	DC_DPAD_LEFT   = 1<<6,
-	DC_DPAD_RIGHT  = 1<<7,
-	DC_BTN_Z       = 1<<8,
-	DC_BTN_Y       = 1<<9,
-	DC_BTN_X       = 1<<10,
-	DC_BTN_D       = 1<<11,
-	DC_DPAD2_UP    = 1<<12,
-	DC_DPAD2_DOWN  = 1<<13,
-	DC_DPAD2_LEFT  = 1<<14,
-	DC_DPAD2_RIGHT = 1<<15,
+   DC_BTN_C       = 1,
+   DC_BTN_B       = 1<<1,
+   DC_BTN_A       = 1<<2,
+   DC_BTN_START   = 1<<3,
+   DC_DPAD_UP     = 1<<4,
+   DC_DPAD_DOWN   = 1<<5,
+   DC_DPAD_LEFT   = 1<<6,
+   DC_DPAD_RIGHT  = 1<<7,
+   DC_BTN_Z       = 1<<8,
+   DC_BTN_Y       = 1<<9,
+   DC_BTN_X       = 1<<10,
+   DC_BTN_D       = 1<<11,
+   DC_DPAD2_UP    = 1<<12,
+   DC_DPAD2_DOWN  = 1<<13,
+   DC_DPAD2_LEFT  = 1<<14,
+   DC_DPAD2_RIGHT = 1<<15,
 
-	DC_AXIS_LT = 0X10000,
-	DC_AXIS_RT = 0X10001,
-	DC_AXIS_X  = 0X20000,
-	DC_AXIS_Y  = 0X20001,
+   DC_AXIS_LT = 0X10000,
+   DC_AXIS_RT = 0X10001,
+   DC_AXIS_X  = 0X20000,
+   DC_AXIS_Y  = 0X20001,
 };
 
 struct retro_perf_callback perf_cb;
@@ -106,6 +110,18 @@ void retro_set_input_poll(retro_input_poll_t cb)
 void retro_set_input_state(retro_input_state_t cb)
 {
    input_cb = cb;
+}
+
+static void input_set_deadzone_stick( int percent )
+{
+   if ( percent >= 0 && percent <= 100 )
+      astick_deadzone = (int)( percent * 0.01f * 0x8000);
+}
+
+static void input_set_deadzone_trigger( int percent )
+{
+   if ( percent >= 0 && percent <= 100 )
+      trigger_deadzone = (int)( percent * 0.01f * 0x8000);
 }
 
 void retro_set_environment(retro_environment_t cb)
@@ -168,16 +184,24 @@ void retro_set_environment(retro_environment_t cb)
          "Region; Default|Japan|USA|Europe",
       },
       {
+         "reicast_analog_stick_deadzone",
+         "Analog Stick Deadzone; 15%|20%|25%|30%|0%|5%|10%"
+      },
+      {
+         "reicast_trigger_deadzone",
+         "Trigger Deadzone; 0%|5%|10%|15%|20%|25%|30%"
+      },
+      {
          "reicast_precompile_shaders",
          "Precompile shaders; disabled|enabled",
       },
       {
          "reicast_enable_rtt",
-         "Enable RTT (Render To Texture); enabled|disabled", 
+         "Enable RTT (Render To Texture); enabled|disabled",
       },
       {
          "reicast_enable_rttb",
-         "Enable RTT (Render To Texture) Buffer; disabled|enabled", 
+         "Enable RTT (Render To Texture) Buffer; disabled|enabled",
       },
       {
          "reicast_enable_purupuru",
@@ -235,7 +259,7 @@ static void update_variables(void)
       char *pch;
       char str[100];
       snprintf(str, sizeof(str), "%s", var.value);
-      
+
       pch = strtok(str, "x");
       if (pch)
          screen_width = strtoul(pch, NULL, 0);
@@ -273,24 +297,24 @@ static void update_variables(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (!strcmp(var.value, "enabled"))
-         settings.rend.UseMipmaps		= 1;
+         settings.rend.UseMipmaps      = 1;
       else if (!strcmp(var.value, "disabled"))
-         settings.rend.UseMipmaps		= 0;
+         settings.rend.UseMipmaps      = 0;
    }
    else
-      settings.rend.UseMipmaps		= 1;
+      settings.rend.UseMipmaps      = 1;
 
    var.key = "reicast_volume_modifier_enable";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (!strcmp(var.value, "disabled"))
-         settings.pvr.Emulation.ModVol		= false;
+         settings.pvr.Emulation.ModVol      = false;
       else if (!strcmp(var.value, "enabled"))
-         settings.pvr.Emulation.ModVol		= true;
+         settings.pvr.Emulation.ModVol      = true;
    }
    else
-      settings.pvr.Emulation.ModVol		= true;
+      settings.pvr.Emulation.ModVol      = true;
 
    var.key = "reicast_widescreen_hack";
 
@@ -408,6 +432,18 @@ static void update_variables(void)
    var.key = "reicast_enable_purupuru";
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
       enable_purupuru = (strcmp("enabled", var.value) == 0);
+
+   var.key = "reicast_analog_stick_deadzone";
+   var.value = NULL;
+
+   if ( environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value )
+      input_set_deadzone_stick( atoi( var.value ) );
+
+   var.key = "reicast_trigger_deadzone";
+   var.value = NULL;
+
+   if ( environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value )
+      input_set_deadzone_trigger( atoi( var.value ) );
 }
 
 void retro_run (void)
@@ -678,7 +714,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    /*                        00=VGA    01=NTSC   10=PAL,   11=illegal/undocumented */
    const int spg_clks[4] = { 26944080, 13458568, 13462800, 26944080 };
-	u32 pixel_clock= spg_clks[(SPG_CONTROL.full >> 6) & 3];
+   u32 pixel_clock= spg_clks[(SPG_CONTROL.full >> 6) & 3];
 
    info->geometry.base_width   = screen_width;
    info->geometry.base_height  = screen_height;
@@ -750,13 +786,168 @@ void os_CreateWindow()
    // Nothing to do here
 }
 
-bool update_zmax;
-bool update_zmin;
+static void get_analog_axis( retro_input_state_t input_state_cb,
+                      int player_index,
+                      int stick,
+                      int axis,
+                      int* p_analog )
+{
+   int analog;
+
+   analog = input_state_cb( player_index, RETRO_DEVICE_ANALOG, stick, axis );
+
+   // Analog stick deadzone
+   if ( astick_deadzone > 0 )
+   {
+      static const int ASTICK_MAX = 0x7F;
+      const float scale = ((float)ASTICK_MAX/(float)(ASTICK_MAX - astick_deadzone));
+
+      if ( analog < -astick_deadzone )
+      {
+         // Re-scale analog stick range
+         float scaled = (-analog - astick_deadzone)*scale;
+
+         analog = (int)round(-scaled);
+         if (analog < -127) {
+            analog = -127;
+         }
+      }
+      else if ( analog > astick_deadzone )
+      {
+         // Re-scale analog stick range
+         float scaled = (analog - astick_deadzone)*scale;
+
+         analog = (int)round(scaled);
+         if (analog > +127) {
+            analog = +127;
+         }
+      }
+      else
+      {
+         analog = 0;
+      }
+   }
+
+   // output
+   *p_analog = analog;
+}
+
+static void get_analog_stick( retro_input_state_t input_state_cb,
+                       int player_index,
+                       int stick,
+                       s8* p_analog_x,
+                       s8* p_analog_y )
+{
+   int analog_x, analog_y;
+   analog_x = input_state_cb( player_index, RETRO_DEVICE_ANALOG, stick, RETRO_DEVICE_ID_ANALOG_X );
+   analog_y = input_state_cb( player_index, RETRO_DEVICE_ANALOG, stick, RETRO_DEVICE_ID_ANALOG_Y );
+
+   // Analog stick deadzone (borrowed code from parallel-n64 core)
+   if ( astick_deadzone > 0 )
+   {
+      static const int ASTICK_MAX = 0x8000;
+
+      // Convert cartesian coordinate analog stick to polar coordinates
+      double radius = sqrt(analog_x * analog_x + analog_y * analog_y);
+      double angle = atan2(analog_y, analog_x);
+
+      if (radius > astick_deadzone)
+      {
+         // Re-scale analog stick range to negate deadzone (makes slow movements possible)
+         radius = (radius - astick_deadzone)*((float)ASTICK_MAX/(ASTICK_MAX - astick_deadzone));
+
+         // Convert back to cartesian coordinates
+         analog_x = (int)round(radius * cos(angle));
+         analog_y = (int)round(radius * sin(angle));
+
+         // Clamp to correct range
+         if (analog_x > +32767) analog_x = +32767;
+         if (analog_x < -32767) analog_x = -32767;
+         if (analog_y > +32767) analog_y = +32767;
+         if (analog_y < -32767) analog_y = -32767;
+      }
+      else
+      {
+         analog_x = 0;
+         analog_y = 0;
+      }
+   }
+
+   // output
+   *p_analog_x = (s8)(analog_x >> 8);
+   *p_analog_y = (s8)(analog_y >> 8);
+}
+
+static uint16_t apply_trigger_deadzone( uint16_t input )
+{
+   if ( trigger_deadzone > 0 )
+   {
+      static const int TRIGGER_MAX = 0x8000;
+      const float scale = ((float)TRIGGER_MAX/(float)(TRIGGER_MAX - trigger_deadzone));
+
+      if ( input > trigger_deadzone )
+      {
+         // Re-scale analog range
+         float scaled = (input - trigger_deadzone)*scale;
+
+         input = (int)round(scaled);
+         if (input > +32767) {
+            input = +32767;
+         }
+      }
+      else
+      {
+         input = 0;
+      }
+   }
+
+   return input;
+}
+
+static uint16_t get_analog_trigger( retro_input_state_t input_state_cb,
+                           int player_index,
+                           int id )
+{
+   uint16_t trigger;
+
+   // NOTE: Analog triggers were added Nov 2017. Not all front-ends support this
+   // feature (or pre-date it) so we need to handle this in a graceful way.
+
+   // First, try and get an analog value using the new libretro API constant
+   trigger = input_state_cb( player_index,
+                       RETRO_DEVICE_ANALOG,
+                       RETRO_DEVICE_INDEX_ANALOG_BUTTON,
+                       id );
+
+   if ( trigger == 0 )
+   {
+      // If we got exactly zero, we're either not pressing the button, or the front-end
+      // is not reporting analog values. We need to do a second check using the classic
+      // digital API method, to at least get some response - better than nothing.
+
+      // NOTE: If we're really just not holding the trigger, we're still going to get zero.
+
+      trigger = input_state_cb( player_index,
+                          RETRO_DEVICE_JOYPAD,
+                          0,
+                          id ) ? 0x7FFF : 0;
+   }
+   else
+   {
+      // We got something, which means the front-end can handle analog buttons.
+      // So we apply a deadzone to the input and use it.
+
+      trigger = apply_trigger_deadzone( trigger );
+   }
+
+   return trigger;
+}
 
 void UpdateInputState(u32 port)
 {
    int id;
-   static const uint16_t joymap[] = {
+   static const uint16_t joymap[] =
+   {
       /* JOYPAD_B      */ DC_BTN_A,
       /* JOYPAD_Y      */ DC_BTN_X,
       /* JOYPAD_SELECT */ 0,
@@ -767,102 +958,33 @@ void UpdateInputState(u32 port)
       /* JOYPAD_RIGHT  */ DC_DPAD_RIGHT,
       /* JOYPAD_A      */ DC_BTN_B,
       /* JOYPAD_X      */ DC_BTN_Y,
-      /* JOYPAD_L      */ 0, /* full L */
-      /* JOYPAD_R      */ 0, /* full R */
-      /* JOYPAD_L2     */ 0, /* half L */
-      /* JOYPAD_R2     */ 0, /* half R */
-      /* JOYPAD_L3     */ 0,
-      /* JOYPAD_R3     */ 0,
    };
 
+   //
+   // -- buttons
 
-   rt[port] = 0;
-   lt[port] = 0;
-
-   for (id = RETRO_DEVICE_ID_JOYPAD_B; id < RETRO_DEVICE_ID_JOYPAD_R3+1; ++id)
+   for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_X; ++id)
    {
       uint16_t dc_key = joymap[id];
       bool is_down = input_cb(port, RETRO_DEVICE_JOYPAD, 0, id);
 
-      switch (id)
-      {
-         case RETRO_DEVICE_ID_JOYPAD_L2:
-            lt[port] |= 0x7f * is_down;
-            break;
-         case RETRO_DEVICE_ID_JOYPAD_R2:
-            rt[port] |= 0x7f * is_down;
-            break;
-         case RETRO_DEVICE_ID_JOYPAD_L:
-            lt[port] |= 0xff * is_down;
-            break;
-         case RETRO_DEVICE_ID_JOYPAD_R:
-            rt[port] |= 0xff * is_down;
-            break;
-         default:
-            if (is_down)
-               kcode[port] &= ~dc_key;
-            else
-               kcode[port] |= dc_key;
-
-      }
+      if ( is_down )
+         kcode[port] &= ~dc_key;
+      else
+         kcode[port] |= dc_key;
    }
 
-#if 0
-   {
-      static f32 InitialzMax = -999.0f;
-      static f32 InitialzMin = -999.0f;
-      int16_t rstick_x = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X) / 256;
-      int16_t rstick_y = input_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y) / 256;
+   //
+   // -- analog stick
 
-      if (InitialzMax == -999.0f)
-         InitialzMax = settings.pvr.Emulation.zMax;
-      if (InitialzMin == -999.0f)
-         InitialzMin = settings.pvr.Emulation.zMin;
-     
-      if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3))
-      {
-         if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2))
-            settings.pvr.Emulation.zMax = 1.0;
-         else
-            settings.pvr.Emulation.zMax = InitialzMax;
-         update_zmax = true;
-      }
+   get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[port]), &(joyy[port]) );
 
-      if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3))
-      {
-         if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2))
-            settings.pvr.Emulation.zMin = 0.0;
-         else
-            settings.pvr.Emulation.zMin = InitialzMin;
-         update_zmin = true;
-      }
 
-      if (rstick_y <= -16 && rstick_y >= -0x8000)
-      {
-         settings.pvr.Emulation.zMin -= 0.1f;
-         update_zmin = true;
-      }
-      if (rstick_y >= 16 && rstick_y <= 0x7fff)
-      {
-         settings.pvr.Emulation.zMin += 0.1f;
-         update_zmin = true;
-      }
+   //
+   // -- triggers
 
-      if (rstick_x <= -16 && rstick_x >= -0x8000)
-      {
-         settings.pvr.Emulation.zMax -= 0.1f;
-         update_zmax = true;
-      }
-      if (rstick_x >= 16 && rstick_x <= 0x7fff)
-      {
-         settings.pvr.Emulation.zMax += 0.1f;
-         update_zmax = true;
-      }
-   }
-#endif
-
-   joyx[port] = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X) / 256;
-   joyy[port] = input_cb(port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y) / 256;
+   lt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2 ) / 128;
+   rt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2 ) / 128;
 }
 
 void UpdateVibration(u32 port, u32 value)

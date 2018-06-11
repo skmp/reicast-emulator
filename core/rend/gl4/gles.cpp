@@ -27,10 +27,17 @@ float fb_scale_x = 0.0f;
 float fb_scale_y = 0.0f;
 float scale_x, scale_y;
 
-#define attr "attribute"
-#define vary "varying"
+#ifndef HAVE_OPENGLES
+#define attr "in"
+#define vary "out"
 #define FRAGCOL "FragColor"
 #define TEXLOOKUP "texture"
+#else
+#define attr "attribute"
+#define vary "varying"
+#define FRAGCOL "gl_FragColor"
+#define TEXLOOKUP "texture2D"
+#endif
 
 #ifdef HAVE_OPENGLES
 #define HIGHP "highp"
@@ -95,6 +102,13 @@ void main() \n\
 	vpos.xy*=vpos.w;  \n\
 	gl_Position = vpos; \n\
 }";
+
+#undef vary
+#ifndef HAVE_OPENGLES
+#define vary "in"
+#else
+#define vary "varying"
+#endif
 
 const char* PixelPipelineShader = SHADER_HEADER
 "\

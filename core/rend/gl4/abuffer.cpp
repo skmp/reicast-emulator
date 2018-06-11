@@ -438,7 +438,8 @@ void DrawTranslucentModVols(int first, int count)
 
 		u32 mv_mode = ispc.DepthMode;
 
-		verify(mod_base > 0 && mod_base + sz <= pvrrc.modtrig.used());
+		// crashes Tokyo Xtreme Racer 2 loading
+		// verify(mod_base > 0 && mod_base + sz <= pvrrc.modtrig.used());
 
 		glcache.UseProgram(g_abuffer_tr_modvol_shader.program);
 		SetCull(ispc.CullMode); glCheck();

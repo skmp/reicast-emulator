@@ -29,8 +29,8 @@ float scale_x, scale_y;
 
 #define attr "attribute"
 #define vary "varying"
-#define FRAGCOL "gl_FragColor"
-#define TEXLOOKUP "texture2D"
+#define FRAGCOL "FragColor"
+#define TEXLOOKUP "texture"
 
 #ifdef HAVE_OPENGLES
 #define HIGHP "highp"

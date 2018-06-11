@@ -21,6 +21,7 @@ bool boot_to_bios;
 
 static int astick_deadzone = 0;
 static int trigger_deadzone = 0;
+static bool digital_triggers = false;
 
 u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
 u8 rt[4] = {0, 0, 0, 0};
@@ -190,6 +191,10 @@ void retro_set_environment(retro_environment_t cb)
       {
          "reicast_trigger_deadzone",
          "Trigger Deadzone; 0%|5%|10%|15%|20%|25%|30%"
+      },
+      {
+         "reicast_digital_triggers",
+         "Digital Triggers; disabled|enabled",
       },
       {
          "reicast_precompile_shaders",
@@ -444,6 +449,18 @@ static void update_variables(void)
 
    if ( environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value )
       input_set_deadzone_trigger( atoi( var.value ) );
+
+   var.key = "reicast_digital_triggers";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("enabled", var.value))
+         digital_triggers = true;
+      else
+         digital_triggers = false;
+   }
+   else
+      digital_triggers = false;
 }
 
 void retro_run (void)
@@ -906,6 +923,7 @@ void UpdateInputState(u32 port)
       /* JOYPAD_X      */ DC_BTN_Y,
    };
 
+
    //
    // -- buttons
 
@@ -929,8 +947,29 @@ void UpdateInputState(u32 port)
    //
    // -- triggers
 
-   lt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2 ) / 128;
-   rt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2 ) / 128;
+   if ( digital_triggers )
+   {
+      // -- digital left trigger
+      if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L) )
+         lt[port]=0xFF;
+      else if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2) )
+         lt[port]=0x7F;
+      else
+         lt[port]=0;
+      // -- digital right trigger
+      if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R) )
+         rt[port]=0xFF;
+      else if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2) )
+         rt[port]=0x7F;
+      else
+         rt[port]=0;
+   }
+   else
+   {
+	   // -- analog triggers
+	   lt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2 ) / 128;
+	   rt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2 ) / 128;
+   }
 }
 
 void UpdateVibration(u32 port, u32 value)

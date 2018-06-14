@@ -1093,6 +1093,7 @@ _end:
 
 	verify(blk->oplist.size() <= BLOCK_MAX_SH_OPS_HARD);
 	
+#if 0
 #ifdef _WIN32
    switch(rbi->addr)
    {
@@ -1104,6 +1105,7 @@ _end:
          printf("HASH: %08X reloc %s\n",blk->addr,blk->hash(false,true));
          break;
    }
+#endif
 #endif
 
 	//cycle tricks

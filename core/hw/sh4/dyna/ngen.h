@@ -92,13 +92,8 @@ void ngen_ResetBlocks();
 //Value to be returned when the block manager failed to find a block,
 //should call rdv_FailedToFindBlock and then jump to the return value
 extern void (*ngen_FailedToFindBlock)();
-
-#if (FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64)
-#else
 //the dynarec mainloop
 void ngen_mainloop(void* cntx);
-#endif
-
 //ngen features
 struct ngen_features
 {

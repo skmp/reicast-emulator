@@ -57,6 +57,7 @@ void* emit_GetCCPtr(void)
       return (void*)emit_ptr;
    return (void*)&CodeCache[LastAddr];
 }
+void emit_WriteCodeCache() {}
 
 void emit_SetBaseAddr(void)
 {
@@ -76,35 +77,6 @@ static void recSh4_ClearCache(void)
 
 	printf("recSh4:Dynarec Cache clear at %08X\n",curr_pc);
 }
-
-#if (FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64)
-extern int cycle_counter;
-unsigned int ngen_required = true;
-extern bool inside_loop;
-
-static void ngen_mainloop(void* v_cntx)
-{
-	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
-
-   do
-   {
-      cycle_counter = SH4_TIMESLICE;
-
-      do {
-         DynarecCodeEntryPtr rcb = (DynarecCodeEntryPtr)FPCA(ctx->cntx.pc);
-         rcb();
-      } while (cycle_counter > 0);
-
-      if (UpdateSystem())
-         rdv_DoInterrupts_pc(ctx->cntx.pc);
-   }while (inside_loop && ngen_required);
-}
-
-void ngen_terminate(void)
-{
-   ngen_required = false;
-}
-#endif
 
 static void recSh4_Run(void)
 {

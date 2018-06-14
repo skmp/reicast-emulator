@@ -13,6 +13,31 @@
 #include "hw/sh4/dyna/regalloc.h"
 
 extern int cycle_counter;
+unsigned int ngen_required = true;
+extern bool inside_loop;
+
+void ngen_mainloop(void* v_cntx)
+{
+	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
+
+   do
+   {
+      cycle_counter = SH4_TIMESLICE;
+
+      do {
+         DynarecCodeEntryPtr rcb = (DynarecCodeEntryPtr)FPCA(ctx->cntx.pc);
+         rcb();
+      } while (cycle_counter > 0);
+
+      if (UpdateSystem())
+         rdv_DoInterrupts_pc(ctx->cntx.pc);
+   }while (inside_loop && ngen_required);
+}
+
+void ngen_terminate(void)
+{
+   ngen_required = false;
+}
 
 class BlockCompilerx64 : public Xbyak::CodeGenerator{
 public:

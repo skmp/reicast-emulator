@@ -228,16 +228,10 @@ DynarecCodeEntryPtr rdv_CompilePC(void)
 
 		bm_AddBlock(rbi);
 
-      switch (rbi->BlockType)
-      {
-         case BET_Cond_0:
-         case BET_Cond_1:
-            pc=rbi->NextBlock;
-            break;
-         default:
-            pc=0;
-            break;
-      }
+      if (rbi->BlockType==BET_Cond_0 || rbi->BlockType==BET_Cond_1)
+			pc=rbi->NextBlock;
+		else
+			pc=0;
 	} while(false && pc);
 
 	return rv->code;
@@ -296,7 +290,7 @@ DynarecCodeEntryPtr rdv_FindOrCompile(void)
 
 void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 {
-	RuntimeBlockInfo* rbi=bm_GetBlock2(code);
+	RuntimeBlockInfo* rbi=bm_GetBlock(code);
 
 	if (!rbi)
 	{
@@ -308,64 +302,63 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 
 	u32 bcls=BET_GET_CLS(rbi->BlockType);
 
-   switch (bcls)
-   {
-      case BET_CLS_Static:
-         next_pc = rbi->BranchBlock;
-         break;
-      case BET_CLS_Dynamic:
-         next_pc = dpc;
-         break;
-      case BET_CLS_COND:
-         if (dpc)
-            next_pc=rbi->BranchBlock;
-         else
-            next_pc=rbi->NextBlock;
-         break;
-   }
+	if (bcls==BET_CLS_Static)
+	{
+		next_pc=rbi->BranchBlock;
+	}
+	else if (bcls==BET_CLS_Dynamic)
+	{
+		next_pc=dpc;
+	}
+	else if (bcls==BET_CLS_COND)
+	{
+		if (dpc)
+			next_pc=rbi->BranchBlock;
+		else
+			next_pc=rbi->NextBlock;
+	}
 
 	DynarecCodeEntryPtr rv=rdv_FindOrCompile();
 
-	if (bm_GetBlock2(code) != rbi)
-   {
-      printf(" .. null RBI: %08X -- unlinked stale block\n",next_pc);
-      return (void*)rv;
-   }
+	bool do_link=bm_GetBlock(code)==rbi;
 
-   switch (bcls)
-   {
-      case BET_CLS_Dynamic:
-         verify(rbi->relink_data==0 || rbi->pBranchBlock==0);
+	if (do_link)
+	{
+		if (bcls==BET_CLS_Dynamic)
+		{
+			verify(rbi->relink_data==0 || rbi->pBranchBlock==0);
 
-         if (rbi->pBranchBlock!=0)
-         {
-            rbi->pBranchBlock->RemRef(rbi);
-            rbi->pBranchBlock=0;
-            rbi->relink_data=1;
-         }
-         else if (rbi->relink_data==0)
-         {
-            rbi->pBranchBlock=bm_GetBlock(next_pc);
-            rbi->pBranchBlock->AddRef(rbi);
-         }
-         break;
-      default:
-         {
-            RuntimeBlockInfo* nxt=bm_GetBlock(next_pc);
+			if (rbi->pBranchBlock!=0)
+			{
+				rbi->pBranchBlock->RemRef(rbi);
+				rbi->pBranchBlock=0;
+				rbi->relink_data=1;
+			}
+			else if (rbi->relink_data==0)
+			{
+				rbi->pBranchBlock=bm_GetBlock(next_pc);
+				rbi->pBranchBlock->AddRef(rbi);
+			}
+		}
+		else
+		{
+			RuntimeBlockInfo* nxt=bm_GetBlock(next_pc);
 
-            if (rbi->BranchBlock==next_pc)
-               rbi->pBranchBlock=nxt;
-            if (rbi->NextBlock==next_pc)
-               rbi->pNextBlock=nxt;
+			if (rbi->BranchBlock==next_pc)
+				rbi->pBranchBlock=nxt;
+			if (rbi->NextBlock==next_pc)
+				rbi->pNextBlock=nxt;
 
-            nxt->AddRef(rbi);
-         }
-         break;
-   }
-
-   u32 ncs=rbi->relink_offset+rbi->Relink();
-   verify(rbi->host_code_size>=ncs);
-   rbi->host_code_size=ncs;
+			nxt->AddRef(rbi);
+		}
+		u32 ncs=rbi->relink_offset+rbi->Relink();
+		verify(rbi->host_code_size>=ncs);
+		rbi->host_code_size=ncs;
+	}
+	else
+	{
+		printf(" .. null RBI: %08X -- unlinked stale block\n",next_pc);
+	}
 	
 	return (void*)rv;
 }

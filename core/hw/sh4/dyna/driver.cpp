@@ -259,7 +259,7 @@ u32 DYNACALL rdv_DoInterrupts_pc(u32 pc)
 void bm_Rebuild();
 u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 {
-   RuntimeBlockInfo* rbi = bm_GetBlock(block_cpde);
+   RuntimeBlockInfo* rbi = bm_GetBlock2(block_cpde);
 	return rdv_DoInterrupts_pc(rbi->addr);
 }
 
@@ -290,7 +290,7 @@ DynarecCodeEntryPtr rdv_FindOrCompile(void)
 
 void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 {
-	RuntimeBlockInfo* rbi=bm_GetBlock((void*)code);
+	RuntimeBlockInfo* rbi=bm_GetBlock2((void*)code);
 
 	if (!rbi)
 	{
@@ -320,7 +320,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 
 	DynarecCodeEntryPtr rv=rdv_FindOrCompile();
 
-	bool do_link=bm_GetBlock((void*)code)==rbi;
+	bool do_link=bm_GetBlock2((void*)code)==rbi;
 
 	if (do_link)
 	{

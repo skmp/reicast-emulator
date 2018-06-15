@@ -330,6 +330,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 
                u32 va=t.VPN<<10;
 
+#ifndef NO_MMU
                if (settings.MMUEnabled)
                {
                   for (int i=0;i<64;i++)
@@ -352,7 +353,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
                      }
                   }
                }
-
+#endif
             }
             else
             {

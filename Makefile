@@ -465,6 +465,11 @@ RZDCY_CFLAGS += $(HOST_CPU_FLAGS)
 
 include Makefile.common
 
+RZDCY_CFLAGS   += $(CORE_DEFINES)
+RZDCY_CXXFLAGS += $(CORE_DEFINES)
+CFLAGS         += $(CORE_DEFINES)
+CXXFLAGS       += $(CORE_DEFINES)
+
 ifeq ($(DEBUG),1)
 	OPTFLAGS       := -O0
 	LDFLAGS        += -g

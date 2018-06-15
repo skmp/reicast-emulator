@@ -275,7 +275,7 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
 void pvr_Reset(bool Manual)
 {
    if (!Manual)
-      VArray2_Zero(&vram);
+      vram.Zero();
 }
 
 #define VRAM_BANK_BIT 0x400000

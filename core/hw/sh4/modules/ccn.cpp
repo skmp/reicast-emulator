@@ -37,9 +37,7 @@ void CCN_QACR_write(u32 addr, u32 value)
 		case 4:
 			do_sqw_nommu=(sqw_fp*)&TAWriteSQ;
 			break;
-		default:
-         do_sqw_nommu=&do_sqw_nommu_full;
-         break;
+		default: do_sqw_nommu=&do_sqw_nommu_full;
 	}
 }
 
@@ -54,7 +52,9 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 	}
 	
 	if (temp.TI)
+	{
 		temp.TI=0;
+	}
 	CCN_MMUCR=temp;
 }
 void CCN_CCR_write(u32 addr, u32 value)

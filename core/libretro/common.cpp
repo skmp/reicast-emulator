@@ -471,31 +471,25 @@ static void enable_runfast(void)
 #endif
 }
 
-void VArray2_Zero(VArray2 *varr)
-{
-   VArray2_UnLockRegion(varr, 0, varr->size);
-   memset(varr->data, 0, varr->size);
-}
-
-void VArray2_LockRegion(VArray2 *varr, u32 offset,u32 size)
+void VArray2::LockRegion(u32 offset,u32 size)
 {
 #ifdef _WIN32
-   protect_pages(((u8*)varr->data)+offset, size, ACC_READONLY);
+   protect_pages(((u8*)data)+offset, size, ACC_READONLY);
 #elif !defined(TARGET_NO_EXCEPTIONS)
    u32 inpage=offset & PAGE_MASK;
-   if (!protect_pages(varr->data + offset - inpage, size + inpage, ACC_READONLY))
+   if (!protect_pages(data + offset - inpage, size + inpage, ACC_READONLY))
       die("protect_pages  failed ..\n");
 #endif
 }
 
-void VArray2_UnLockRegion(VArray2 *varr, u32 offset,u32 size)
+void VArray2::UnLockRegion(u32 offset,u32 size)
 {
 #ifdef _WIN32
-   protect_pages(((u8*)varr->data)+offset, size, ACC_READWRITE);
+   protect_pages(((u8*)data)+offset, size, ACC_READWRITE);
 #elif !defined(TARGET_NO_EXCEPTIONS)
    u32 inpage=offset & PAGE_MASK;
 
-   if (!protect_pages(varr->data + offset - inpage, size + inpage, ACC_READWRITE))
+   if (!protect_pages(data + offset - inpage, size + inpage, ACC_READWRITE))
    {
       print_mem_addr();
       die("protect_pages  failed ..\n");

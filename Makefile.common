@@ -6,6 +6,8 @@ INCFLAGS    := -I$(CORE_DIR)/libretro \
 					-I$(DEPS_DIR) \
 					-I$(LIBRETRO_COMM_DIR)/include 
 
+CORE_DEFINES := -DNO_MMU
+
 SOURCES_C   :=
 SOURCES_CXX := \
 					$(CORE_DIR)/hw/arm7/arm7.cpp \

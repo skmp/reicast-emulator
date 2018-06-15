@@ -24,12 +24,27 @@ public:
 	T* data;
 	u32 Size;
 
-	Array(u32 size,bool bZero)
+	Array(T* Source,u32 ellements)
+	{
+		//initialise array
+		data=Source;
+		Size=ellements;
+	}
+
+	Array(u32 ellements)
 	{
 		//initialise array
 		data=0;
-		Resize(size, bZero);
-		Size = size;
+		Resize(ellements,false);
+		Size=ellements;
+	}
+
+	Array(u32 ellements,bool zero)
+	{
+		//initialise array
+		data=0;
+		Resize(ellements,zero);
+		Size=ellements;
 	}
 
 	Array()
@@ -42,7 +57,20 @@ public:
 	~Array()
 	{
 		if  (data)
+		{
+			#ifdef MEM_ALLOC_TRACE
+			printf("WARNING : DESTRUCTOR WITH NON FREED ARRAY [arrayid:%d]\n",id);
+			#endif
 			Free();
+		}
+	}
+
+	void SetPtr(T* Source,u32 ellements)
+	{
+		//initialise array
+		Free();
+		data=Source;
+		Size=ellements;
 	}
 
 	T* Resize(u32 size,bool bZero)
@@ -50,7 +78,13 @@ public:
 		if (size==0)
 		{
 			if (data)
+			{
+				#ifdef MEM_ALLOC_TRACE
+				printf("Freeing data -> resize to zero[Array:%d]\n",id);
+				#endif
 				Free();
+			}
+
 		}
 		
 		if (!data)
@@ -68,13 +102,20 @@ public:
 				{
 					u8*p =(u8*)&data[i];
 					for (size_t j=0;j<sizeof(T);j++)
+					{
 						p[j]=0;
+					}
 				}
 			}
 		}
 		Size=size;
 
 		return data;
+	}
+
+	void Zero()
+	{
+		memset(data,0,sizeof(T)*Size);
 	}
 
 	void Free()
@@ -86,6 +127,31 @@ public:
 
 			data = NULL;
 		}
+	}
+
+
+	INLINE T& operator [](const u32 i)
+	{
+#ifdef MEM_BOUND_CHECK
+		if (i>=Size)
+		{
+			printf("Error: Array %d , index out of range (%d>%d)\n",id,i,Size-1);
+			MEM_DO_BREAK;
+		}
+#endif
+		return data[i];
+	}
+
+	INLINE T& operator [](const s32 i)
+	{
+#ifdef MEM_BOUND_CHECK
+		if (!(i>=0 && i<(s32)Size))
+		{
+			printf("Error: Array %d , index out of range (%d > %d)\n",id,i,Size-1);
+			MEM_DO_BREAK;
+		}
+#endif
+		return data[i];
 	}
 };
 
@@ -109,15 +175,35 @@ void add_system_data_dir(const string& dir);
 //subpath format: /data/fsca-table.bit
 string get_writable_data_path(const string& filename);
 
-struct VArray2
+class VArray2
 {
+public:
+
 	u8* data;
 	u32 size;
-};
+	//void Init(void* data,u32 sz);
+	//void Term();
+	void LockRegion(u32 offset,u32 size);
+	void UnLockRegion(u32 offset,u32 size);
 
-void VArray2_LockRegion(VArray2 *varray2, u32 offset, u32 size);
-void VArray2_UnLockRegion(VArray2 *varray2, u32 offset, u32 size);
-void VArray2_Zero(VArray2 *varray2);
+	void Zero()
+	{
+		UnLockRegion(0,size);
+		memset(data,0,size);
+	}
+
+	INLINE u8& operator [](const u32 i)
+    {
+#ifdef MEM_BOUND_CHECK
+        if (i>=size)
+		{
+			printf("Error: VArray2 , index out of range (%d>%d)\n",i,size-1);
+			MEM_DO_BREAK;
+		}
+#endif
+		return data[i];
+    }
+};
 
 int ExeptionHandler(u32 dwCode, void* pExceptionPointers);
 int msgboxf(const wchar* text,unsigned int type,...);

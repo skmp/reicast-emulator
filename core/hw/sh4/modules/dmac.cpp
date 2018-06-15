@@ -6,11 +6,12 @@
 */
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
-#include "hw/holly/holly.h"
+#include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/pvr/pvr_mem.h"
 #include "dmac.h"
 #include "hw/sh4/sh4_interrupts.h"
+#include "hw/holly/holly_intc.h"
 #include "types.h"
 
 /*
@@ -23,15 +24,15 @@ DMAC_DMAOR_type DMAC_DMAOR;
 
 */
 
-void DMAC_Ch2St(void)
+void DMAC_Ch2St()
 {
-	u32 chcr   = DMAC_CHCR(2).full;
-	u32 dmaor  = DMAC_DMAOR.full;
+	u32 chcr = DMAC_CHCR(2).full;
+	u32 dmaor = DMAC_DMAOR.full;
 	u32 dmatcr = DMAC_DMATCR(2);
 
-	u32 src    = DMAC_SAR(2);
-	u32 dst    = SB_C2DSTAT;
-	u32 len    = SB_C2DLEN ;
+	u32 src = DMAC_SAR(2);
+	u32 dst = SB_C2DSTAT;
+	u32 len = SB_C2DLEN ;
 
 	if(0x8201 != (dmaor &DMAOR_MASK))
 	{
@@ -63,6 +64,7 @@ void DMAC_Ch2St(void)
 				TAWrite(dst,sys_buf,(new_len/32));
 				len-=new_len;
 				src+=new_len;
+				//dst+=new_len;
 			}
 			else
 			{
@@ -72,6 +74,7 @@ void DMAC_Ch2St(void)
 				break;
 			}
 		}
+		//libPvr_TADma(dst,sys_buf,(len/32));
 	}
 	// If SB_C2DSTAT reg is inrange from 0x11000000 to 0x11FFFFE0,	 set 1 in SB_LMMODE0 reg.
 	else if((dst >= 0x11000000) && (dst <= 0x11FFFFE0))
@@ -79,11 +82,14 @@ void DMAC_Ch2St(void)
 		//printf(">>\tDMAC: TEX LNMODE0 Ch2 DMA SRC=%X DST=%X LEN=%X | LN(%X::%X)\n", src, dst, len, *pSB_LMMODE0, *pSB_LMMODE1 );
 
 		dst=(dst&0xFFFFFF) |0xa4000000;
+		/*WriteMemBlock_nommu_ptr(dst,(u32*)GetMemPtr(src,len),len);
+		src+=len;*/
 		u32 p_addr=src & RAM_MASK;
 		while(len)
 		{
 			if ((p_addr+len)>RAM_SIZE)
 			{
+				//u32 *sys_buf=(u32 *)GetMemPtr(src,len);//(&mem_b[src&RAM_MASK]);
 				u32 new_len=RAM_SIZE-p_addr;
 				WriteMemBlock_nommu_dma(dst,src,new_len);
 				len-=new_len;
@@ -92,17 +98,23 @@ void DMAC_Ch2St(void)
 			}
 			else
 			{
+				//u32 *sys_buf=(u32 *)GetMemPtr(src,len);//(&mem_b[src&RAM_MASK]);
+				//WriteMemBlock_nommu_ptr(dst,sys_buf,len);
 				WriteMemBlock_nommu_dma(dst,src,len);
 				src+=len;
 				break;
 			}
 		}
+	//	*pSB_LMMODE0 = 1;           // this prob was done by system already
+	//	WriteMem(SB_LMMODE1, 0, 4); // should this be done ?
 	}
 	// If SB_C2DSTAT reg is in range from 0x13000000 to 0x13FFFFE0, set 1 in SB_LMMODE1 reg.
 	else if((dst >= 0x13000000) && (dst <= 0x13FFFFE0))
 	{
 		die(".\tPVR DList DMA LNMODE1\n\n");
 		src+=len;
+	//	*pSB_LMMODE1 = 1;           // this prob was done by system already
+	//	WriteMem(SB_LMMODE0, 0, 4); // should this be done ?
 	}
 	else 
 	{ 
@@ -110,46 +122,61 @@ void DMAC_Ch2St(void)
 		src+=len;
 	}
 
+
 	// Setup some of the regs so it thinks we've finished DMA
 
-	DMAC_SAR(2)        = (src);
+	DMAC_SAR(2) = (src);
 	DMAC_CHCR(2).full &= 0xFFFFFFFE;
-	DMAC_DMATCR(2)     = 0x00000000;
+	DMAC_DMATCR(2) = 0x00000000;
 
-	SB_C2DST           = 0x00000000;
-	SB_C2DLEN          = 0x00000000;
-	SB_C2DSTAT         = (src );
+	SB_C2DST = 0x00000000;
+	SB_C2DLEN = 0x00000000;
+	SB_C2DSTAT = (src );
 
 	// The DMA end interrupt flag (SB_ISTNRM - bit 19: DTDE2INT) is set to "1."
 	//-> fixed , holly_PVR_DMA is for different use now (fixed the interrupts enum too)
-	asic_RaiseInterruptWait(holly_CH2_DMA);
+	asic_RaiseInterrupt(holly_CH2_DMA);
 }
 
 //on demand data transfer
 //ch0/on demand data transfer request
-static void dmac_ddt_ch0_ddt(u32 src,u32 dst,u32 count)
+void dmac_ddt_ch0_ddt(u32 src,u32 dst,u32 count)
 {
 	
 }
 
 //ch2/direct data transfer request
-static void dmac_ddt_ch2_direct(u32 dst,u32 count)
+void dmac_ddt_ch2_direct(u32 dst,u32 count)
 {
 }
 
 //transfer 22kb chunks (or less) [704 x 32] (22528)
-static void UpdateDMA(void)
+void UpdateDMA()
 {
+	/*if (DMAC_DMAOR.AE==1 || DMAC_DMAOR.DME==0)
+		return;//DMA disabled
+
+	//DMAC _must_ be on DDT mode
+	verify(DMAC_DMAOR.DDT==1);
+
+	for (int ch=0;ch<4;ch++)
+	{
+		if (DMAC_CHCR[ch].DE==1 && DMAC_CHCR[ch].TE==0)
+		{
+			verify(DMAC_CHCR[ch].RS<0x8);
+			verify(DMAC_CHCR[ch].RS<0x4);
+		}
+	}*/
 }
 
 template<u32 ch>
-static void WriteCHCR(u32 addr, u32 data)
+void WriteCHCR(u32 addr, u32 data)
 {
 	DMAC_CHCR(ch).full=data;
 	//printf("Write to CHCR%d = 0x%X\n",ch,data);
 }
 
-static void WriteDMAOR(u32 addr, u32 data)
+void WriteDMAOR(u32 addr, u32 data)
 {
 	DMAC_DMAOR.full=data;
 	//printf("Write to DMAOR = 0x%X\n",data);
@@ -236,7 +263,6 @@ void dmac_reset()
 	DMAC_CHCR(3).full = 0x0;
 	DMAC_DMAOR.full = 0x0;
 }
-
-void dmac_term(void)
+void dmac_term()
 {
 }

@@ -391,7 +391,7 @@ void aica_Init(void)
 void aica_Reset(bool Manual)
 {
 	if (!Manual)
-		VArray2_Zero(&aica_ram);
+      aica_ram.Zero();
 }
 
 void aica_Term(void)
@@ -2070,7 +2070,7 @@ void init_mem(void)
 {
 	memset(aica_reg,0,sizeof(aica_reg));
 	aica_ram.data[ARAM_SIZE-1]=1;
-	VArray2_Zero(&aica_ram);
+   aica_ram.Zero();
 }
 
 //kill mem map & free used mem ;)

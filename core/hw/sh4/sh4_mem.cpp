@@ -5,109 +5,40 @@
 #include "types.h"
 
 #include "sh4_mem.h"
-#include "hw/holly/holly.h"
+#include "hw/holly/sb_mem.h"
 #include "sh4_mmr.h"
 #include "modules/modules.h"
-#include "hw/pvr/pvr.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_core.h"
+//#include "hw/sh4/rec_v1/blockmanager.h"
 #include "hw/mem/_vmem.h"
 #include "modules/mmu.h"
 
+
+
 //main system mem
 VArray2 mem_b;
-
-u8 DYNACALL ReadMem8(u32 Address)
-{
-   if (settings.MMUEnabled)
-      return mmu_ReadMem8(Address);
-   return _vmem_ReadMem8(Address);
-}
-
-u16 DYNACALL ReadMem16(u32 Address)
-{
-   if (settings.MMUEnabled)
-      return mmu_ReadMem16(Address);
-   return _vmem_ReadMem16(Address);
-}
-
-u32 DYNACALL ReadMem32(u32 Address)
-{
-   if (settings.MMUEnabled)
-      return mmu_ReadMem32(Address);
-   return _vmem_ReadMem32(Address);
-}
-
-u64 DYNACALL ReadMem64(u32 Address)
-{
-   if (settings.MMUEnabled)
-      return mmu_ReadMem64(Address);
-   return _vmem_ReadMem64(Address);
-}
-
-u16 DYNACALL IReadMem16(u32 Address)
-{
-   return ReadMem16(Address);
-}
-
 
 u8 DYNACALL ReadMem8_i(u32 addr);
 u16 DYNACALL ReadMem16_i(u32 addr);
 u32 DYNACALL ReadMem32_i(u32 addr);
 
-void DYNACALL WriteMem8(u32 addr,u8 data)
-{
-   if (settings.MMUEnabled)
-      mmu_WriteMem8(addr, data);
-   else
-      _vmem_WriteMem8(addr, data);
-}
-
-void DYNACALL WriteMem16(u32 addr,u16 data)
-{
-   if (settings.MMUEnabled)
-      mmu_WriteMem16(addr, data);
-   else
-      _vmem_WriteMem16(addr, data);
-}
-
-void DYNACALL WriteMem32(u32 addr,u32 data)
-{
-   if (settings.MMUEnabled)
-      mmu_WriteMem32(addr, data);
-   else
-      _vmem_WriteMem32(addr, data);
-}
-
-void DYNACALL WriteMem64(u32 addr,u64 data)
-{
-   if (settings.MMUEnabled)
-      mmu_WriteMem64(addr, data);
-   else
-      _vmem_WriteMem64(addr, data);
-}
-
 void DYNACALL WriteMem8_i(u32 addr,u8 data);
 void DYNACALL WriteMem16_i(u32 addr,u16 data);
 void DYNACALL WriteMem32_i(u32 addr,u32 data);
 
-void _vmem_init(void);
-void _vmem_reset(void);
-void _vmem_term(void);
+void _vmem_init();
+void _vmem_reset();
+void _vmem_term();
 
-//MEM MAPPING
+//MEM MAPPINNGG
 
 //AREA 1
 _vmem_handler area1_32b;
-void map_area1_init(void)
+void map_area1_init()
 {
-	area1_32b = _vmem_register_handler(
-         pvr_read_area1_8,
-         pvr_read_area1_16,
-         pvr_read_area1_32,
-         pvr_write_area1_8,
-         pvr_write_area1_16,
-         pvr_write_area1_32);
+	area1_32b = _vmem_register_handler(pvr_read_area1_8,pvr_read_area1_16,pvr_read_area1_32,
+									pvr_write_area1_8,pvr_write_area1_16,pvr_write_area1_32);
 }
 
 void map_area1(u32 base)
@@ -126,7 +57,7 @@ void map_area1(u32 base)
 }
 
 //AREA 2
-void map_area2_init(void)
+void map_area2_init()
 {
 	//nothing to map :p
 }
@@ -138,7 +69,7 @@ void map_area2(u32 base)
 
 
 //AREA 3
-void map_area3_init(void)
+void map_area3_init()
 {
 }
 
@@ -149,7 +80,7 @@ void map_area3(u32 base)
 }
 
 //AREA 4
-void map_area4_init(void)
+void map_area4_init()
 {
 	
 }
@@ -179,7 +110,7 @@ void DYNACALL WriteMem_extdev_T(u32 addr,T data)
 }
 
 _vmem_handler area5_handler;
-void map_area5_init(void)
+void map_area5_init()
 {
 	area5_handler = _vmem_register_handler_Template(ReadMem_extdev_T,WriteMem_extdev_T);
 }
@@ -188,7 +119,8 @@ void map_area5(u32 base)
 {
 	//map whole region to plugin handler :)
 	_vmem_map_handler(area5_handler,base|0x14,base|0x17);
-} 
+}
+
 //AREA 6	--	Unassigned 
 void map_area6_init()
 {
@@ -201,7 +133,7 @@ void map_area6(u32 base)
 
 
 //set vmem to default values
-void mem_map_default(void)
+void mem_map_default()
 {
 	//vmem - init/reset :)
 	_vmem_init();
@@ -258,7 +190,7 @@ void mem_map_default(void)
 	//map p4 region :)
 	map_p4();
 }
-void mem_Init(void)
+void mem_Init()
 {
 	//Allocate mem for memory/bios/flash
 	//mem_b.Init(&sh4_reserved_mem[0x0C000000],RAM_SIZE);
@@ -275,7 +207,7 @@ void mem_Reset(bool Manual)
 	if (!Manual)
 	{
 		//fill mem w/ 0's
-		VArray2_Zero(&mem_b);
+		mem_b.Zero();
 	}
 
 	//Reset registers
@@ -284,18 +216,14 @@ void mem_Reset(bool Manual)
 	MMU_reset();
 }
 
-void mem_Term(void)
+void mem_Term()
 {
 	MMU_term();
 	sh4_mmr_term();
 	sh4_area0_Term();
 
 	//write back Flash/SRAM
-#ifdef _WIN32
-	SaveRomFiles(get_writable_data_path("data\\"));
-#else
-	SaveRomFiles(get_writable_data_path("data/"));
-#endif
+	SaveRomFiles(get_writable_data_path("/data/"));
 	
 	//mem_b.Term(); // handled by vmem
 
@@ -311,13 +239,19 @@ void WriteMemBlock_nommu_dma(u32 dst,u32 src,u32 size)
 	void* src_ptr=_vmem_get_ptr2(src,src_msk);
 
 	if (dst_ptr && src_ptr)
+	{
 		memcpy((u8*)dst_ptr+(dst&dst_msk),(u8*)src_ptr+(src&src_msk),size);
+	}
 	else if (src_ptr)
+	{
 		WriteMemBlock_nommu_ptr(dst,(u32*)((u8*)src_ptr+(src&src_msk)),size);
+	}
 	else
 	{
 		for (u32 i=0;i<size;i+=4)
+		{
 			WriteMem32_nommu(dst+i,ReadMem32_nommu(src+i));
+		}
 	}
 }
 void WriteMemBlock_nommu_ptr(u32 dst,u32* src,u32 size)
@@ -335,7 +269,9 @@ void WriteMemBlock_nommu_ptr(u32 dst,u32* src,u32 size)
 	else
 	{
 		for (u32 i=0;i<size;i+=4)
+		{
 			WriteMem32_nommu(dst+i,src[i>>2]);
+		}
 	}
 }
 
@@ -352,15 +288,17 @@ void WriteMemBlock_nommu_sq(u32 dst,u32* src)
 	else
 	{
 		for (u32 i=0;i<32;i+=4)
+		{
 			WriteMem32_nommu(dst+i,src[i>>2]);
+		}
 	}
 }
 
-
 void WriteMemBlock_ptr(u32 addr,u32* data,u32 size)
 {
-   if (settings.MMUEnabled)
-      die("failed\n");
+#ifndef NO_MMU
+	die("failed\n");
+#endif
 	WriteMemBlock_nommu_ptr(addr,data,size);
 }
 
@@ -369,24 +307,22 @@ void WriteMemBlock_ptr(u32 addr,u32* data,u32 size)
 u8* GetMemPtr(u32 Addr,u32 size)
 {
 	verify((((Addr>>29) &0x7)!=7));
-
 	switch ((Addr>>26)&0x7)
-   {
-      case 3:
-         return &mem_b.data[Addr & RAM_MASK];
-      case 0:
-      case 1:
-      case 2:
-      case 4:
-      case 5:
-      case 6:
-      case 7:
-      default:
-         printf("Get MemPtr unsupported area : addr=0x%X\n",Addr);
-         break;
-   }
-
-   return 0;
+	{
+		case 3:
+		return &mem_b[Addr & RAM_MASK];
+		
+		case 0:
+		case 1:
+		case 2:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+		default:
+			printf("Get MemPtr unsupported area : addr=0x%X\n",Addr);
+			return 0;
+	}
 }
 
 //Get information about an area , eg ram /size /anything
@@ -401,7 +337,9 @@ bool IsOnRam(u32 addr)
 	if (((addr>>26)&0x7)==3)
 	{
 		if ((((addr>>29) &0x7)!=7) && (((addr>>29) &0x7)!=3))
+		{
 			return true;
+		}
 	}
 
 	return false;

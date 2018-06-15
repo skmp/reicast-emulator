@@ -9,9 +9,8 @@
 #include "hw/sh4/sh4_mmr.h"
 
 
-#define TMU_UNDERFLOW 0x0100
-#define TMU_UNIE      0x0020
-
+#define tmu_underflow 0x0100
+#define tmu_UNIE      0x0020
 /*
 u32 tmu_prescaler[3];
 u32 tmu_prescaler_shift[3];
@@ -29,20 +28,67 @@ u32 old_mode[3] = {0xFFFF,0xFFFF,0xFFFF};
 const InterruptID tmu_intID[3]={sh4_TMU0_TUNI0,sh4_TMU1_TUNI1,sh4_TMU2_TUNI2};
 int tmu_sched[3];
 
+#if 0
+//Accurate counts for the channel ch
+template<u32 ch>
+void UpdateTMU_chan(u32 clc)
+{
+	//if channel is on
+	//if ((TMU_TSTR & tmu_ch_bit[ch])!=0)
+	//{
+		//count :D
+		tmu_prescaler[ch]+=clc;
+		u32 steps=tmu_prescaler[ch]>>tmu_prescaler_shift[ch];
+		
+		//remove the full steps from the prescaler counter
+		tmu_prescaler[ch]&=tmu_prescaler_mask[ch];
+
+		if (unlikely(steps>TMU_TCNT(ch)))
+		{
+			//remove the 'extra' steps to overflow
+			steps-=TMU_TCNT(ch);
+			//refill the counter
+			TMU_TCNT(ch) = TMU_TCOR(ch);
+			//raise the interrupt
+			TMU_TCR(ch) |= tmu_underflow;
+			InterruptPend(tmu_intID[ch],1);
+			
+			//remove the full underflows (possible because we only check every 448 cycles)
+			//this can be done with a div, but its very very very rare so this is probably faster
+			//THIS can probably be replaced with a verify check on counter setup (haven't seen any game do this)
+			while(steps>TMU_TCOR(ch))
+				steps-=TMU_TCOR(ch);
+
+			//steps now has the partial steps needed for update, guaranteed it won't cause an overflow
+		}
+		//count down
+		TMU_TCNT(ch)-=steps;
+	//}
+}
+
+template<u32 chans>
+void UpdateTMU_i(u32 Cycles)
+{
+	if (chans & 1) UpdateTMU_chan<0>(Cycles);
+	if (chans & 2) UpdateTMU_chan<1>(Cycles);
+	if (chans & 4) UpdateTMU_chan<2>(Cycles);
+}
+#endif
+
 u32 tmu_ch_base[3];
 u64 tmu_ch_base64[3];
 
-static u32 read_TMU_TCNTch(u32 ch)
+u32 read_TMU_TCNTch(u32 ch)
 {
 	return tmu_ch_base[ch] - ((sh4_sched_now64() >> tmu_shift[ch])&tmu_mask[ch]);
 }
 
-static s64 read_TMU_TCNTch64(u32 ch)
+s64 read_TMU_TCNTch64(u32 ch)
 {
 	return tmu_ch_base64[ch] - ((sh4_sched_now64() >> tmu_shift[ch])&tmu_mask64[ch]);
 }
 
-static void sched_chan_tick(int ch)
+void sched_chan_tick(int ch)
 {
 	//schedule next interrupt
 	//return TMU_TCOR(ch) << tmu_shift[ch];
@@ -64,31 +110,31 @@ static void sched_chan_tick(int ch)
 	//sched_tmu_cb
 }
 
-static void write_TMU_TCNTch(u32 ch, u32 data)
+void write_TMU_TCNTch(u32 ch, u32 data)
 {
 	//u32 TCNT=read_TMU_TCNTch(ch);
-	tmu_ch_base[ch]   = data + ((sh4_sched_now64() >> tmu_shift[ch]) & tmu_mask[ch]);
-	tmu_ch_base64[ch] = data + ((sh4_sched_now64() >> tmu_shift[ch]) & tmu_mask64[ch]);
+	tmu_ch_base[ch]=data+((sh4_sched_now64()>>tmu_shift[ch])&tmu_mask[ch]);
+	tmu_ch_base64[ch] = data + ((sh4_sched_now64() >> tmu_shift[ch])&tmu_mask64[ch]);
 
 	sched_chan_tick(ch);
 }
 
 template<u32 ch>
-static u32 read_TMU_TCNT(u32 addr)
+u32 read_TMU_TCNT(u32 addr)
 {
 	return read_TMU_TCNTch(ch);
 }
 
 template<u32 ch>
-static void write_TMU_TCNT(u32 addr, u32 data)
+void write_TMU_TCNT(u32 addr, u32 data)
 {
 	write_TMU_TCNTch(ch,data);
 }
 
-static void turn_on_off_ch(u32 ch, bool on)
+void turn_on_off_ch(u32 ch, bool on)
 {
-	u32 TCNT       = read_TMU_TCNTch(ch);
-	tmu_mask[ch]   = on ? 0xFFFFFFFF         : 0x00000000;
+	u32 TCNT=read_TMU_TCNTch(ch);
+	tmu_mask[ch]=on?0xFFFFFFFF:0x00000000;
 	tmu_mask64[ch] = on ? 0xFFFFFFFFFFFFFFFF : 0x0000000000000000;
 	write_TMU_TCNTch(ch,TCNT);
 
@@ -96,15 +142,15 @@ static void turn_on_off_ch(u32 ch, bool on)
 }
 
 //Update internal counter registers
-static void UpdateTMUCounts(u32 reg)
+void UpdateTMUCounts(u32 reg)
 {
-	InterruptPend(tmu_intID[reg],TMU_TCR(reg) & TMU_UNDERFLOW);
-	InterruptMask(tmu_intID[reg],TMU_TCR(reg) & TMU_UNIE);
+	InterruptPend(tmu_intID[reg],TMU_TCR(reg) & tmu_underflow);
+	InterruptMask(tmu_intID[reg],TMU_TCR(reg) & tmu_UNIE);
 
 	if (old_mode[reg]==(TMU_TCR(reg) & 0x7))
 		return;
-
-   old_mode[reg]=(TMU_TCR(reg) & 0x7);
+	else
+		old_mode[reg]=(TMU_TCR(reg) & 0x7);
 
 	u32 TCNT=read_TMU_TCNTch(reg);
 	switch(TMU_TCR(reg) & 0x7)
@@ -148,66 +194,71 @@ static void UpdateTMUCounts(u32 reg)
 
 //Write to status registers
 template<int ch>
-static void TMU_TCR_write(u32 addr, u32 data)
+void TMU_TCR_write(u32 addr, u32 data)
 {
 	TMU_TCR(ch)=(u16)data;
 	UpdateTMUCounts(ch);
 }
 
 //Chan 2 not used functions
-static u32 TMU_TCPR2_read(u32 addr)
+u32 TMU_TCPR2_read(u32 addr)
 {
 	EMUERROR("Read from TMU_TCPR2 - this register should be not used on Dreamcast according to docs");
 	return 0;
 }
 
-static void TMU_TCPR2_write(u32 addr, u32 data)
+void TMU_TCPR2_write(u32 addr, u32 data)
 {
 	EMUERROR2("Write to TMU_TCPR2 - this register should be not used on Dreamcast according to docs, data=%d",data);
 }
 
-static void write_TMU_TSTR(u32 addr, u32 data)
+void write_TMU_TSTR(u32 addr, u32 data)
 {
-   unsigned i;
 	TMU_TSTR=data;
+	//?
 
-	for (i = 0;i < 3; i++)
+	for (int i=0;i<3;i++)
 		turn_on_off_ch(i,data&(1<<i));
 }
 
-static int sched_tmu_cb(int ch, int sch_cycl, int jitter)
+int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 {
-   if (tmu_mask[ch])
-   {
-      u32 tcnt    = read_TMU_TCNTch(ch);
-      s64 tcnt64  = (s64)read_TMU_TCNTch64(ch);
-      u32 tcor    = TMU_TCOR(ch);
-      u32 cycles  = tcor << tmu_shift[ch];
-      u32 data    = tcnt;
+	if (tmu_mask[ch]) {
+		
+		u32 tcnt = read_TMU_TCNTch(ch);
+		
+		s64 tcnt64 = (s64)read_TMU_TCNTch64(ch);
 
-      /* 64 bit maths to differentiate big values from overflows */
-      if (tcnt64 <= jitter)
-      {
-         /* raise interrupt, timer counted down */
-         TMU_TCR(ch) |= TMU_UNDERFLOW;
-         InterruptPend(tmu_intID[ch], 1);
+		u32 tcor = TMU_TCOR(ch);
 
-#if 0
-         printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
-#endif
+		u32 cycles = tcor << tmu_shift[ch];
 
-         data += tcor;
-      }
+		//64 bit maths to differentiate big values from overflows
+		if (tcnt64 <= jitter) {
+			//raise interrupt, timer counted down
+			TMU_TCR(ch) |= tmu_underflow;
+			InterruptPend(tmu_intID[ch], 1);
+			
+			//printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
 
-      /* schedule next trigger by writing the TCNT register */
-      write_TMU_TCNTch(ch, data);
-   }
+			//schedule next trigger by writing the TCNT register
+			write_TMU_TCNTch(ch, tcor + tcnt);
+		}
+		else {
+			
+			//schedule next trigger by writing the TCNT register
+			write_TMU_TCNTch(ch, tcnt);
+		}
 
-   return 0;
+		return 0;	//has already been scheduled by TCNT write
+	}
+	else {
+		return 0;	//this channel is disabled, no need to schedule next event
+	}
 }
 
 //Init/Res/Term
-void tmu_init(void)
+void tmu_init()
 {
 	//TMU TOCR 0xFFD80000 0x1FD80000 8 0x00 0x00 Held Held Pclk
 	sh4_rio_reg(TMU,TMU_TOCR_addr,RIO_DATA,8);
@@ -252,10 +303,8 @@ void tmu_init(void)
 }
 
 
-void tmu_reset(void)
+void tmu_reset()
 {
-   unsigned i;
-
 	TMU_TOCR=TMU_TSTR=0;
 	TMU_TCOR(0) = TMU_TCOR(1) = TMU_TCOR(2) = 0xffffffff;
 //	TMU_TCNT(0) = TMU_TCNT(1) = TMU_TCNT(2) = 0xffffffff;
@@ -267,10 +316,10 @@ void tmu_reset(void)
 
 	write_TMU_TSTR(0,0);
 
-	for (i=0;i<3;i++)
+	for (int i=0;i<3;i++)
 		write_TMU_TCNTch(i,0xffffffff);
 }
 
-void tmu_term(void)
+void tmu_term()
 {
 }

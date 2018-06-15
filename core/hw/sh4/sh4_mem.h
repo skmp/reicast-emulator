@@ -7,21 +7,39 @@ extern VArray2 mem_b;
 #include "hw/mem/_vmem.h"
 #include "modules/mmu.h"
 
-u8 DYNACALL ReadMem8(u32 Address);
-u16 DYNACALL ReadMem16(u32 Address);
-u16 DYNACALL IReadMem16(u32 Address);
-u32 DYNACALL ReadMem32(u32 Address);
-u64 DYNACALL ReadMem64(u32 Address);
+#ifdef NO_MMU
+#define ReadMem8 _vmem_ReadMem8
+#define ReadMem16 _vmem_ReadMem16
+#define IReadMem16 ReadMem16
+#define ReadMem32 _vmem_ReadMem32
+#define ReadMem64 _vmem_ReadMem64
+//#define ReadMem64(addr,reg) {  ((u32*)reg)[0]=_vmem_ReadMem32(addr);((u32*)reg)[1]=_vmem_ReadMem32((addr)+4); }
 
-void DYNACALL WriteMem8(u32 addr,u8 data);
-void DYNACALL WriteMem16(u32 addr,u16 data);
-void DYNACALL WriteMem32(u32 addr,u32 data);
-void DYNACALL WriteMem64(u32 addr,u64 data);
+#define WriteMem8 _vmem_WriteMem8
+#define WriteMem16 _vmem_WriteMem16
+#define WriteMem32 _vmem_WriteMem32
+#define WriteMem64 _vmem_WriteMem64
+//#define WriteMem64(addr,reg) {  _vmem_WriteMem32(addr,((u32*)reg)[0]);_vmem_WriteMem32((addr)+4, ((u32*)reg)[1]); }
+#else
+#include "modules/mmu.h"
+#define ReadMem8 mmu_ReadMem8
+#define ReadMem16 mmu_ReadMem16
+#define IReadMem16 mmu_IReadMem16
+#define ReadMem32 mmu_ReadMem32
+#define ReadMem64 mmu_ReadMem64
+
+#define WriteMem8 mmu_WriteMem8
+#define WriteMem16 mmu_WriteMem16
+#define WriteMem32 mmu_WriteMem32
+#define WriteMem64 mmu_WriteMem64
+#endif
+
 
 #define ReadMem8_nommu _vmem_ReadMem8
 #define ReadMem16_nommu _vmem_ReadMem16
 #define IReadMem16_nommu _vmem_IReadMem16
 #define ReadMem32_nommu _vmem_ReadMem32
+
 
 #define WriteMem8_nommu _vmem_WriteMem8
 #define WriteMem16_nommu _vmem_WriteMem16

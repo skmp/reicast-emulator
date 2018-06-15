@@ -134,58 +134,99 @@ void UpdateFPSCR(void)
 u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 {
    if ((reg>=reg_r0) && (reg<=reg_r15))
-      return &r[reg-reg_r0];
-   else if ((reg>=reg_r0_Bank) && (reg<=reg_r7_Bank))
-      return &r_bank[reg-reg_r0_Bank];
-   else if ((reg>=reg_fr_0) && (reg<=reg_fr_15))
-      return &fr_hex[reg-reg_fr_0];
-   else if ((reg>=reg_xf_0) && (reg<=reg_xf_15))
-      return &xf_hex[reg-reg_xf_0];
+	{
+		return &r[reg-reg_r0];
+	}
+	else if ((reg>=reg_r0_Bank) && (reg<=reg_r7_Bank))
+	{
+		return &r_bank[reg-reg_r0_Bank];
+	}
+	else if ((reg>=reg_fr_0) && (reg<=reg_fr_15))
+	{
+		return &fr_hex[reg-reg_fr_0];
+	}
+	else if ((reg>=reg_xf_0) && (reg<=reg_xf_15))
+	{
+		return &xf_hex[reg-reg_xf_0];
+	}
+	else
+	{
+		switch(reg)
+		{
+		case reg_gbr :
+			return &gbr;
+			break;
+		case reg_vbr :
+			return &vbr;
+			break;
 
-   switch(reg)
-   {
-      case reg_gbr :
-         return &gbr;
-      case reg_vbr :
-         return &vbr;
-      case reg_ssr :
-         return &ssr;
-      case reg_spc :
-         return &spc;
-      case reg_sgr :
-         return &sgr;
-      case reg_dbr :
-         return &dbr;
-      case reg_mach :
-         return &mac.h;
-      case reg_macl :
-         return &mac.l;
-      case reg_pr :
-         return &pr;
-      case reg_fpul :
-         return &fpul;
-      case reg_nextpc :
-         return &next_pc;
-      case reg_old_sr_status :
-         return &old_sr.status;
-      case reg_sr_status :
-         return &sr.status;
-      case reg_sr_T :
-         return &sr.T;
-      case reg_old_fpscr :
-         return &old_fpscr.full;
-      case reg_fpscr :
-         return &fpscr.full;
-      case reg_pc_dyn:
-         return &Sh4cntx.jdyn;
+		case reg_ssr :
+			return &ssr;
+			break;
 
-      default:
-         EMUERROR2("Unknown register ID %d",reg);
-         die("Invalid reg");
-         break;
-   }
+		case reg_spc :
+			return &spc;
+			break;
 
-   return 0;
+		case reg_sgr :
+			return &sgr;
+			break;
+
+		case reg_dbr :
+			return &dbr;
+			break;
+
+		case reg_mach :
+			return &mac.h;
+			break;
+
+		case reg_macl :
+			return &mac.l;
+			break;
+
+		case reg_pr :
+			return &pr;
+			break;
+
+		case reg_fpul :
+			return &fpul;
+			break;
+
+
+		case reg_nextpc :
+			return &next_pc;
+			break;
+
+		case reg_old_sr_status :
+			return &old_sr.status;
+			break;
+
+		case reg_sr_status :
+			return &sr.status;
+			break;
+
+		case reg_sr_T :
+			return &sr.T;
+			break;
+
+		case reg_old_fpscr :
+			return &old_fpscr.full;
+			break;
+
+		case reg_fpscr :
+			return &fpscr.full;
+			break;
+
+		case reg_pc_dyn:
+			return &Sh4cntx.jdyn;
+
+		default:
+			EMUERROR2("Unknown register ID %d",reg);
+			die("Invalid reg");
+			return 0;
+			break;
+		}
+	}
 }
 
 u32 Sh4Context::offset(u32 sh4_reg)

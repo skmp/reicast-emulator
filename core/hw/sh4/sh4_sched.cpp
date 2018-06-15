@@ -37,9 +37,9 @@ int sh4_sched_next_id=-1;
 
 u32 sh4_sched_remaining(int id, u32 reference)
 {
-	if (list[id].end == -1)
-      return -1;
-   return list[id].end - reference;
+	if (list[id].end != -1)
+      return list[id].end - reference;
+   return -1;
 }
 
 u32 sh4_sched_remaining(int id)
@@ -64,7 +64,10 @@ void sh4_sched_ffts(void)
 	sh4_sched_ffb-=Sh4cntx.sh4_sched_next;
 
 	sh4_sched_next_id=slot;
-   Sh4cntx.sh4_sched_next= (slot == -1) ? SH4_MAIN_CLOCK : diff;
+   if (slot!=-1)
+      Sh4cntx.sh4_sched_next=diff;
+   else
+      Sh4cntx.sh4_sched_next=SH4_MAIN_CLOCK;
 
 	sh4_sched_ffb+=Sh4cntx.sh4_sched_next;
 }

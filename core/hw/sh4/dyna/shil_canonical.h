@@ -263,7 +263,7 @@ shil_opc_end()
 
 //shop_neg
 shil_opc(neg)
-UN_OP_I((u32)-(s32))
+UN_OP_I(-)
 shil_opc_end()
 
 //shop_shl,
@@ -677,7 +677,7 @@ shil_opc(cvt_f2i_t)
 shil_canonical
 (
 u32,f1,(f32 f1),
-if (f1 > 0x7FFFFFBF)
+	if (f1 > 0x7FFFFFBF)
 		f1 = 0x7FFFFFBF;
 	return (s32)f1;
 )

@@ -10,7 +10,8 @@
 #include "hw/sh4/modules/dmac.h"
 #include "hw/sh4/sh4_core.h"
 
-#include "hw/holly/holly.h"
+#include "hw/holly/holly_intc.h"
+#include "hw/holly/sb.h"
 
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_sched.h"

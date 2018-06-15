@@ -12,6 +12,8 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/modules/dmac.h"
 
+#include "hw/holly/sb.h"
+
 void RegWrite_SB_C2DST(u32 addr, u32 data)
 {
 	if(data & 1)

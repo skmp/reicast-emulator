@@ -16,6 +16,7 @@ SOURCES_CXX := \
 					$(CORE_DIR)/hw/aica/aica.cpp \
 					\
 					$(CORE_DIR)/hw/holly/holly.cpp \
+					$(CORE_DIR)/hw/holly/holly_intc.cpp \
 					\
 					$(CORE_DIR)/hw/gdrom/gdrom_response.cpp \
 					$(CORE_DIR)/hw/gdrom/gdromv3.cpp \

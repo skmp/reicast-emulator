@@ -474,7 +474,7 @@ static void Write_SB_ADST(u32 addr, u32 data)
          aica_pending_dma=((total_bytes*200000000)/65536)+1;
 
          if (!settings.aica.InterruptHack)
-            asic_RaiseInterruptWait(holly_SPU_DMA);
+            asic_RaiseInterrupt(holly_SPU_DMA);
       }
    }
 
@@ -528,7 +528,7 @@ void Write_SB_E1ST(u32 addr, u32 data)
          SB_E1ST = 0x00000000;//dma done
          SB_E1LEN = 0x00000000;
 
-         asic_RaiseInterruptWait(holly_EXT_DMA1);
+         asic_RaiseInterrupt(holly_EXT_DMA1);
       }
    }
 }

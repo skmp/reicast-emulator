@@ -259,7 +259,7 @@ u32 DYNACALL rdv_DoInterrupts_pc(u32 pc)
 void bm_Rebuild();
 u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 {
-	RuntimeBlockInfo* rbi = bm_GetBlock2(block_cpde);
+   RuntimeBlockInfo* rbi = bm_GetBlock(block_cpde);
 	return rdv_DoInterrupts_pc(rbi->addr);
 }
 

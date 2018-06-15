@@ -290,7 +290,7 @@ DynarecCodeEntryPtr rdv_FindOrCompile(void)
 
 void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 {
-	RuntimeBlockInfo* rbi=bm_GetBlock(code);
+	RuntimeBlockInfo* rbi=bm_GetBlock((void*)code);
 
 	if (!rbi)
 	{
@@ -320,7 +320,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 
 	DynarecCodeEntryPtr rv=rdv_FindOrCompile();
 
-	bool do_link=bm_GetBlock(code)==rbi;
+	bool do_link=bm_GetBlock((void*)code)==rbi;
 
 	if (do_link)
 	{

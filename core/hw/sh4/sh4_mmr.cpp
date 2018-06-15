@@ -50,24 +50,24 @@ void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegR
 
 	arr.data[idx].flags = flags | REG_ACCESS_32;
 
-   switch (flags)
+   if (flags == RIO_NO_ACCESS)
    {
-      case RIO_NO_ACCESS:
-         arr.data[idx].readFunctionAddr=&sh4io_read_noacc;
-         arr.data[idx].writeFunctionAddr=&sh4io_write_noacc;
-         break;
-      case RIO_CONST:
-         arr.data[idx].writeFunctionAddr=&sh4io_write_const;
-         break;
-      default:
-         arr.data[idx].data32=0;
+      arr.data[idx].readFunctionAddr=&sh4io_read_noacc;
+      arr.data[idx].writeFunctionAddr=&sh4io_write_noacc;
+   }
+   else if (flags == RIO_CONST)
+   {
+      arr.data[idx].writeFunctionAddr=&sh4io_write_const;
+   }
+   else
+   {
+      arr.data[idx].data32=0;
 
-         if (flags & REG_RF)
-            arr.data[idx].readFunctionAddr=rf;
+      if (flags & REG_RF)
+         arr.data[idx].readFunctionAddr=rf;
 
-         if (flags & REG_WF)
-            arr.data[idx].writeFunctionAddr=wf==0?&sh4io_write_noacc:wf;
-         break;
+      if (flags & REG_WF)
+         arr.data[idx].writeFunctionAddr=wf==0?&sh4io_write_noacc:wf;
    }
 }
 
@@ -75,49 +75,102 @@ template<u32 sz>
 u32 sh4_rio_read(Array<RegisterStruct>& sb_regs, u32 addr)
 {	
    u32 offset = addr&255;
+#ifdef TRACE
+	if (offset & 3/*(size-1)*/) //4 is min align size
+	{
+		EMUERROR("Unalinged System Bus register read");
+	}
+#endif
 
    offset>>=2;
 
-   if ((sb_regs.data[offset].flags & REG_RF) )
-      return sb_regs.data[offset].readFunctionAddr(addr);
-
-   switch (sz)
-   {
-      case 4:
-         return  sb_regs.data[offset].data32;
-      case 2:
-         return  sb_regs.data[offset].data16;
-      default:
-         break;
-   }
-
-   return  sb_regs.data[offset].data8;
+#ifdef TRACE
+	if (sb_regs[offset].flags & sz)
+	{
+#endif
+      if (!(sb_regs.data[offset].flags & REG_RF) )
+		{
+			if (sz==4)
+				return  sb_regs.data[offset].data32;
+			else if (sz==2)
+				return  sb_regs.data[offset].data16;
+			else 
+				return  sb_regs.data[offset].data8;
+		}
+		else
+		{
+			return sb_regs.data[offset].readFunctionAddr(addr);
+		}
+#ifdef TRACE
+	}
+	else
+	{
+		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
+			EMUERROR("ERROR [wrong size read on register]");
+	}
+#endif
+//	if ((sb_regs[offset].flags& REG_NOT_IMPL))
+//		EMUERROR2("Read from System Control Regs , not  implemented , addr=%x",addr);
+	return 0;
 }
 
 template<u32 sz>
 void sh4_rio_write(Array<RegisterStruct>& sb_regs, u32 addr, u32 data)
 {
-   u32 offset = addr&255;
-   offset>>=2;
-   if ((sb_regs.data[offset].flags & REG_WF) )
-   {
-      //printf("RSW: %08X\n",addr);
-      sb_regs.data[offset].writeFunctionAddr(addr,data);
-      return;
-   }
-
-   switch (sz)
-   {
-      case 4:
-         sb_regs.data[offset].data32=data;
-         break;
-      case 2:
-         sb_regs.data[offset].data16=(u16)data;
-         break;
-      default:
-         sb_regs.data[offset].data8=(u8)data;
-         break;
-   }
+	u32 offset = addr&255;
+#ifdef TRACE
+	if (offset & 3/*(size-1)*/) //4 is min align size
+	{
+		EMUERROR("Unaligned System bus register write");
+	}
+#endif
+offset>>=2;
+#ifdef TRACE
+	if (sb_regs[offset].flags & sz)
+	{
+#endif
+		if (!(sb_regs.data[offset].flags & REG_WF) )
+		{
+			if (sz==4)
+				sb_regs.data[offset].data32=data;
+			else if (sz==2)
+				sb_regs.data[offset].data16=(u16)data;
+			else
+				sb_regs.data[offset].data8=(u8)data;
+			return;
+		}
+		else
+		{
+			//printf("RSW: %08X\n",addr);
+			sb_regs.data[offset].writeFunctionAddr(addr,data);
+			/*
+			if (sb_regs[offset].flags & REG_CONST)
+				EMUERROR("Error [Write to read only register , const]");
+			else
+			{
+				if ()
+				{
+					sb_regs[offset].writeFunction(data);
+					return;
+				}
+				else
+				{
+					if (!(sb_regs[offset].flags& REG_NOT_IMPL))
+						EMUERROR("ERROR [Write to read only register]");
+				}
+			}*/
+			return;
+		}
+#ifdef TRACE
+	}
+	else
+	{
+		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
+			EMUERROR4("ERROR: Wrong size write on register - offset=%x, data=%x, size=%d",offset,data,sz);
+	}
+	if ((sb_regs[offset].flags& REG_NOT_IMPL))
+		EMUERROR3("Write to System Control Regs, not implemented - addr=%x, data=%x",addr,data);
+#endif
 }
 
 //Region P4

@@ -105,6 +105,9 @@ enum page_access
    ACC_READWRITEEXEC
 };
 
+typedef float f32;
+typedef double f64;
+
 //intc function pointer and enums
 enum HollyInterruptType
 {

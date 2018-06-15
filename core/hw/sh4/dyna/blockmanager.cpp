@@ -11,11 +11,20 @@
 #include "../sh4_opcode_list.h"
 #include "../sh4_core.h"
 #include "../sh4_if.h"
-#include "hw/pvr/pvr.h"
+#include "hw/pvr/pvr_mem.h"
+//#include "hw/aica/aica_if.h"
 #include "hw/aica/aica.h"
+//#include "../dmac.h"
 #include "hw/gdrom/gdrom_if.h"
+//#include "../intc.h"
+//#include "../tmu.h"
 #include "hw/sh4/sh4_mem.h"
 
+
+#if HOST_OS==OS_LINUX && defined(DYNA_OPROF)
+#include <opagent.h>
+op_agent_t          oprofHandle;
+#endif
 
 #if FEAT_SHREC != DYNAREC_NONE
 
@@ -33,36 +42,44 @@ struct BlockMapCMP
 {
 	static bool is_code(RuntimeBlockInfo* blk)
 	{
-		if ((size_t)((u8*)blk-CodeCache)<CODE_SIZE)
+		if ((unat)((u8*)blk-CodeCache)<CODE_SIZE)
 			return true;
-      return false;
+		else
+			return false;
 	}
 
-	static size_t get_blkstart(RuntimeBlockInfo* blk)
+	static unat get_blkstart(RuntimeBlockInfo* blk)
 	{
 		if (is_code(blk)) 
-			return (size_t)blk; 
-      return (size_t)blk->code;
+			return (unat)blk; 
+		else 
+			return (unat)blk->code;
 	}
 
-	static size_t get_blkend(RuntimeBlockInfo* blk)
+	static unat get_blkend(RuntimeBlockInfo* blk)
 	{
 		if (is_code(blk)) 
-			return (size_t)blk; 
-      return (size_t)blk->code+blk->host_code_size-1;
+			return (unat)blk; 
+		else 
+			return (unat)blk->code+blk->host_code_size-1;
 	}
 
 	//return true if blkl > blkr
 	bool operator()(RuntimeBlockInfo* blkl, RuntimeBlockInfo* blkr) const
 	{
 		if (!is_code(blkl) && !is_code(blkr))
-			return (size_t)blkl->code < (size_t)blkr->code;
+			return (unat)blkl->code<(unat)blkr->code;
 
-		size_t blkr_start=get_blkstart(blkr),blkl_end=get_blkend(blkl);
+		unat blkr_start=get_blkstart(blkr),blkl_end=get_blkend(blkl);
 
 		if (blkl_end<blkr_start)
+		{
 			return true;
-      return false;
+		}
+		else
+		{
+			return false;
+		}
 	}
 };
 
@@ -70,17 +87,33 @@ typedef std::set<RuntimeBlockInfo*,BlockMapCMP> blkmap_t;
 blkmap_t blkmap;
 u32 bm_gc_luc,bm_gcf_luc;
 
-bool BM_LockedWrite(u8* address);
-
 
 #define FPCA(x) ((DynarecCodeEntryPtr&)sh4rcb.fpcb[(x>>1)&FPCB_MASK])
 
 DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
-	return (DynarecCodeEntryPtr)FPCA(addr);
+	//rdv_FailedToFindBlock_pc=addr;
+	DynarecCodeEntryPtr rv=(DynarecCodeEntryPtr)FPCA(addr);
+
+	return (DynarecCodeEntryPtr)rv;
 }
 
-RuntimeBlockInfo* bm_GetBlock2(void* dynarec_code)
+DynarecCodeEntryPtr DYNACALL bm_GetCode2(u32 addr)
+{
+	return (DynarecCodeEntryPtr)bm_GetCode(addr);
+}
+
+RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr)
+{
+	DynarecCodeEntryPtr cde=bm_GetCode(addr);
+
+	if (cde==ngen_FailedToFindBlock)
+		return 0;
+	else
+		return bm_GetBlock((void*)cde);
+}
+
+RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
 {
 	blkmap_t::iterator iter=blkmap.find((RuntimeBlockInfo*)dynarec_code);
 	if (iter!=blkmap.end())
@@ -88,21 +121,12 @@ RuntimeBlockInfo* bm_GetBlock2(void* dynarec_code)
 		verify((*iter)->contains_code((u8*)dynarec_code));
 		return *iter;
 	}
-
-   printf("bm_GetBlock(%08X) failed ..\n",dynarec_code);
-   return 0;
-}
-
-
-RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr)
-{
-	DynarecCodeEntryPtr cde= (DynarecCodeEntryPtr)FPCA(addr);
-
-	if (cde==ngen_FailedToFindBlock)
+	else
+	{
+		printf("bm_GetBlock(%08X) failed ..\n",dynarec_code);
 		return 0;
-   return bm_GetBlock2((void*)cde);
+	}
 }
-
 
 RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code)
 {
@@ -117,6 +141,12 @@ RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code)
 
 void bm_AddBlock(RuntimeBlockInfo* blk)
 {
+	/*
+	if (IsOnRam(blk->addr) && PageIsConst(blk->addr))
+	{
+		blocks_page[(blk->addr&RAM_MASK)/PAGE_SIZE].push_back(blk);
+	}
+	*/
 	all_blocks.push_back(blk);
 	if (blkmap.find(blk)!=blkmap.end())
 	{
@@ -126,8 +156,23 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 	blkmap.insert(blk);
 
 
-   verify((void*)(DynarecCodeEntryPtr)FPCA(blk->addr)==(void*)ngen_FailedToFindBlock);
+	verify((void*)bm_GetCode(blk->addr)==(void*)ngen_FailedToFindBlock);
 	FPCA(blk->addr)=blk->code;
+
+#ifdef DYNA_OPROF
+	if (oprofHandle)
+	{
+		char fname[512];
+
+		sprintf(fname,"sh4:%08X,c:%d,s:%d,h:%d",blk->addr,blk->guest_cycles,blk->guest_opcodes,blk->host_opcodes);
+
+		if (op_write_native_code(oprofHandle, fname, (uint64_t)blk->code, (void*)blk->code, blk->host_code_size) != 0) 
+		{
+			printf("op_write_native_code error\n");
+		}
+	}
+#endif
+
 }
 
 u32 PAGE_STATE[RAM_SIZE/32];
@@ -138,7 +183,9 @@ bool PageIsConst(u32 addr)
 	{
 		addr&=RAM_MASK;
 		if (addr>0x0010100)
+		{
 			return PAGE_STATE[addr/32]&(1<<addr);
+		}
 	}
 
 	return false;
@@ -154,56 +201,52 @@ bool UDgreaterLOC ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
 	return elem1->addr < elem2->addr;
 }
 
-static u32 FindPath(RuntimeBlockInfo* rbi, u32 sa,s32 mc,u32& plc)
+u32 FindPath(RuntimeBlockInfo* rbi, u32 sa,s32 mc,u32& plc)
 {
-   u32 ret = 0;
 	if (mc < 0 || rbi==0)
 		return 0;
 
-   ret = rbi->guest_cycles;
 	plc++;
-
-   switch (rbi->BlockType)
-   {
-      case BET_Cond_0:
-      case BET_Cond_1:
-         {
-            u32 plc1=plc,plc2=plc,v1=0,v2=0;
-            if (rbi->BranchBlock>sa)
-               v1=FindPath(bm_GetBlock(rbi->BranchBlock),rbi->addr,mc-rbi->guest_cycles,plc1);
-            v2=FindPath(bm_GetBlock(rbi->NextBlock),rbi->addr,mc-rbi->guest_cycles,plc2);
-
-            if (plc1>plc2)
-            {
-               plc=plc1;
-               ret += v1;
-               break;
-            }
-
-            plc=plc2;
-            ret += v2;
-         }
-         break;
-      case BET_StaticJump:
-         if (rbi->BranchBlock>sa)
-            return rbi->guest_cycles+FindPath(bm_GetBlock(rbi->BranchBlock),rbi->addr,mc-rbi->guest_cycles,plc);
-         break;
-      default:
-#ifndef NDEBUG
-         if (plc!=1)
-            printf("Chain lost due to %d\n",rbi->BlockType);
-         else
-            printf("Chain fail due to %d\n",rbi->BlockType);
-#endif
-         break;
-   }
-
-   return ret;
+	if (rbi->BlockType==BET_Cond_0 || rbi->BlockType==BET_Cond_1)
+	{
+		u32 plc1=plc,plc2=plc,v1=0,v2=0;
+		if (rbi->BranchBlock>sa)
+		{
+			v1=FindPath(bm_GetBlock(rbi->BranchBlock),rbi->addr,mc-rbi->guest_cycles,plc1);
+		}
+		v2=FindPath(bm_GetBlock(rbi->NextBlock),rbi->addr,mc-rbi->guest_cycles,plc2);
+		if (plc1>plc2)
+		{
+			plc=plc1;
+			return rbi->guest_cycles+v1;
+		}
+		else
+		{
+			plc=plc2;
+			return rbi->guest_cycles+v2;
+		}
+		
+	}
+	else if (rbi->BlockType==BET_StaticJump)
+	{
+		if (rbi->BranchBlock>sa)
+			return rbi->guest_cycles+FindPath(bm_GetBlock(rbi->BranchBlock),rbi->addr,mc-rbi->guest_cycles,plc);
+		else
+		{
+			return rbi->guest_cycles;
+		}
+	}
+	else
+	{
+		if (plc!=1)
+			printf("Chain lost due to %d\n",rbi->BlockType);
+		else
+			printf("Chain fail due to %d\n",rbi->BlockType);
+		return rbi->guest_cycles;
+	}
 }
-
 u32 total_saved;
-
-static void FindPath(u32 start)
+void FindPath(u32 start)
 {
 	RuntimeBlockInfo* rbi=bm_GetBlock(start);
 
@@ -212,33 +255,80 @@ static void FindPath(u32 start)
 
 	u32 plen=0;
 	u32 pclc=FindPath(rbi,start,SH4_TIMESLICE,plen);
-#ifndef NDEBUG
 	if (plen>1)
 	{
 		total_saved+=(plen-1)*2*rbi->runs;
+#ifndef NDEBUG
 		printf("%08X: %d, %d, %.2f, %.2f\n",start,pclc,plen,pclc/(float)plen,plen*2*rbi->runs/1000.f);
-	}
 #endif
+	}
 	rbi->runs=0;
 }
 
 #include <map>
 u32 rebuild_counter=20;
-
-void bm_Periodical_1s(void)
+void bm_Periodical_1s()
 {
 	for (u32 i=0;i<del_blocks.size();i++)
 		delete del_blocks[i];
 
 	del_blocks.clear();
 
-	if (rebuild_counter>0)
-      rebuild_counter--;
+	if (rebuild_counter>0) rebuild_counter--;
+#if HOST_OS==OS_WINDOWS && 0
+	std::sort(all_blocks.begin(),all_blocks.end(),UDgreaterX);
+
+	map<u32,u32> vmap;
+	map<u32,u32> calls;
+
+	u32 total_runs=0;
+	for(int i=0;i<all_blocks.size();i++)
+	{
+		RuntimeBlockInfo* rbi=all_blocks[i];
+		total_runs+=rbi->runs;
+		if (rbi->BranchBlock!=-1 && rbi->BranchBlock < rbi->addr)
+		{
+			if (rbi->BlockType==BET_Cond_0 || rbi->BlockType==BET_Cond_1 || rbi->BlockType==BET_StaticJump)
+			{
+				RuntimeBlockInfo* bbi=bm_GetBlock(all_blocks[i]->BranchBlock);
+				if (bbi && bbi->runs)
+				{
+					vmap[all_blocks[i]->BranchBlock]=bbi->runs;
+				}
+			}
+
+			if (rbi->BlockType==BET_StaticCall)
+			{
+				RuntimeBlockInfo* bbi=bm_GetBlock(all_blocks[i]->BranchBlock);
+				if (bbi && bbi->runs)
+				{
+					calls[all_blocks[i]->BranchBlock]+=rbi->runs;
+				}
+			}
+		}
+		verify(rbi->NextBlock>rbi->addr);
+	}
+
+	map<u32,u32>::iterator iter=vmap.begin();
+
+	total_saved=0;
+	u32 total_l_runs=0;
+	while(iter!=vmap.end())
+	{
+		FindPath(iter->first);
+		total_l_runs+=iter->second;
+		iter++;
+	}
+
+	for(int i=0;i<all_blocks.size();i++)
+		all_blocks[i]->runs=0;
+
+	printf("Total Saved: %.2f || Total Loop Runs: %.2f  || Total Runs: %.2f\n",total_saved/1000.f,total_l_runs/1000.f,total_runs/1000.f);
+#endif
 }
 
 void constprop(RuntimeBlockInfo* blk);
-
-void bm_Rebuild(void)
+void bm_Rebuild()
 {
 	return;
 
@@ -253,21 +343,24 @@ void bm_Rebuild(void)
 	{
 		bool do_opts=((all_blocks[i]->addr&0x3FFFFFFF)>0x0C010100);
 
-#if 0
 		if (all_blocks[i]->staging_runs<0 && do_opts)
 		{
+//#if HOST_OS==OS_WINDOWS
+			//constprop(all_blocks[i]);
+//#endif
 		}
-#endif
 		ngen_Compile(all_blocks[i],false,false,all_blocks[i]->staging_runs>0,do_opts);
 
 		blkmap.insert(all_blocks[i]);
-		verify(bm_GetBlock2((RuntimeBlockInfo*)all_blocks[i]->code)==all_blocks[i]);
+		verify(bm_GetBlock((RuntimeBlockInfo*)all_blocks[i]->code)==all_blocks[i]);
 
 		FPCA(all_blocks[i]->addr)=all_blocks[i]->code;
 	}
 
 	for(size_t i=0; i<all_blocks.size(); i++)
+	{
 		all_blocks[i]->Relink();
+	}
 
 	rebuild_counter=30;
 }
@@ -275,14 +368,18 @@ void bm_Rebuild(void)
 void bm_vmem_pagefill(void** ptr,u32 PAGE_SZ)
 {
 	for (size_t i=0; i<PAGE_SZ/sizeof(ptr[0]); i++)
+	{
 		ptr[i]=(void*)ngen_FailedToFindBlock;
+	}
 }
 
-void bm_Reset(void)
+void bm_Reset()
 {
 	ngen_ResetBlocks();
 	for (u32 i=0; i<BLOCKS_IN_PAGE_LIST_COUNT; i++)
+	{
 		blocks_page[i].clear();
+	}
 
 	_vmem_bm_reset();
 
@@ -298,14 +395,41 @@ void bm_Reset(void)
 
 	all_blocks.clear();
 	blkmap.clear();
+
+#ifdef DYNA_OPROF
+	if (oprofHandle)
+	{
+		for (int i=0;i<del_blocks.size();i++)
+		{
+			if (op_unload_native_code(oprofHandle, (uint64_t)del_blocks[i]->code) != 0)
+			{
+				printf("op_unload_native_code error\n");
+			}
+		}
+	}
+#endif
 }
 
-void bm_Init(void)
+
+void bm_Init()
 {
+
+#ifdef DYNA_OPROF
+	oprofHandle=op_open_agent();
+	if (oprofHandle==0)
+		printf("bm: Failed to open oprofile\n");
+	else
+		printf("bm: Oprofile integration enabled !\n");
+#endif
 }
 
-void bm_Term(void)
+void bm_Term()
 {
+#ifdef DYNA_OPROF
+	if (oprofHandle) op_close_agent(oprofHandle);
+	
+	oprofHandle=0;
+#endif
 }
 
 void bm_WriteBlockMap(const string& file)
@@ -325,24 +449,24 @@ void bm_WriteBlockMap(const string& file)
 	}
 }
 
-static u32 GetLookup(RuntimeBlockInfo* elem)
+u32 GetLookup(RuntimeBlockInfo* elem)
 {
 	return elem->lookups;
 }
 
-static bool UDgreater ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
+bool UDgreater ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
 {
 	return elem1->runs > elem2->runs;
 }
 
-static bool UDgreater2 ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
+bool UDgreater2 ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
 {
 	return elem1->runs*elem1->host_opcodes > elem2->runs*elem2->host_opcodes;
 }
 
-static bool UDgreater3 ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
+bool UDgreater3 ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
 {
-   return elem1->runs*elem1->host_opcodes/elem1->guest_cycles > elem2->runs*elem2->host_opcodes/elem2->guest_cycles;
+	return elem1->runs*elem1->host_opcodes/elem1->guest_cycles > elem2->runs*elem2->host_opcodes/elem2->guest_cycles;
 }
 
 void sh4_jitsym(FILE* out)
@@ -353,7 +477,7 @@ void sh4_jitsym(FILE* out)
 	}
 }
 
-static void bm_PrintTopBlocks(void)
+void bm_PrintTopBlocks()
 {
 	double total_lups=0;
 	double total_runs=0;
@@ -409,7 +533,7 @@ static void bm_PrintTopBlocks(void)
 
 }
 
-static void bm_Sort(void)
+void bm_Sort()
 {
 	printf("!!!!!!!!!!!!!!!!!!! BLK REPORT !!!!!!!!!!!!!!!!!!!!n");
 
@@ -432,7 +556,9 @@ static void bm_Sort(void)
 	printf("^^^^^^^^^^^^^^^^^^^ END REPORT ^^^^^^^^^^^^^^^^^^^\n");
 
 	for (size_t i=0;i<all_blocks.size();i++)
+	{
 		all_blocks[i]->runs=0;
+	}
 }
 
 
@@ -476,13 +602,14 @@ void fprint_hex(FILE* d,const char* init,u8* ptr, u32& ofs, u32 limit)
 	fputs("\n",d);
 }
 
-void print_blocks(void)
+#ifndef NDEBUG
+void print_blocks()
 {
 	FILE* f=0;
 
 	if (print_stats)
 	{
-		f=fopen(get_writable_data_path("blkmap.lst").c_str(),"w");
+		f=fopen(get_writable_data_path("/blkmap.lst").c_str(),"w");
 		print_stats=0;
 
 		printf("Writing blocks to %p\n",f);
@@ -529,7 +656,7 @@ void print_blocks(void)
 					u16 op=ReadMem16(rpc);
 
 					char temp[128];
-					OPCODE_DISASM(OpDesc[op]->diss, temp,rpc,op);
+					OpDesc[op]->Dissasemble(temp,rpc,op);
 
 					fprintf(f,"//g:%s\n",temp);
 				}
@@ -548,5 +675,6 @@ void print_blocks(void)
 
 	if (f) fclose(f);
 }
+#endif
 #endif
 

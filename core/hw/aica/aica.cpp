@@ -34,7 +34,7 @@ u32 rtc_EN=0;
 
 //Interrupts
 //arm side
-static u32 GetL(u32 which)
+u32 GetL(u32 which)
 {
    if (which > 7)
       which = 7; //higher bits share bit 7
@@ -53,8 +53,7 @@ static u32 GetL(u32 which)
 
    return rv;
 }
-
-static void update_arm_interrupts(void)
+void update_arm_interrupts(void)
 {
    u32 p_ints=SCIEB->full & SCIPD->full;
 
@@ -79,7 +78,7 @@ static void update_arm_interrupts(void)
 }
 
 //sh4 side
-static void UpdateSh4Ints(void)
+void UpdateSh4Ints(void)
 {
    u32 p_ints = MCIEB->full & MCIPD->full;
    if (p_ints)
@@ -430,48 +429,55 @@ static void Write_SB_ADST(u32 addr, u32 data)
    //0x005F7814	SB_ADEN	RW	AICA:G2-DMA enable 
    //0x005F7818	SB_ADST	RW	AICA:G2-DMA start 
    //0x005F781C	SB_ADSUSP	RW	AICA:G2-DMA suspend 
-   u32 src, dst, len;
-   bool check = (data & 1) && (SB_ADEN & 1);
-
-   if (!check)
-      return;
-
-   src=SB_ADSTAR;
-   dst=SB_ADSTAG;
-   len=SB_ADLEN & 0x7FFFFFFF;
-
-   u32 total_bytes=0;
-
-   if ((SB_ADDIR&1)==1)
+   if (data&1)
    {
-      //swap direction
-      u32 tmp=src;
-      src=dst;
-      dst=tmp;
+      if (SB_ADEN&1)
+      {
+         u32 src=SB_ADSTAR;
+         u32 dst=SB_ADSTAG;
+         u32 len=SB_ADLEN & 0x7FFFFFFF;
+
+         u32 total_bytes=0;
+
+         if ((SB_ADDIR&1)==1)
+         {
+            //swap direction
+            u32 tmp=src;
+            src=dst;
+            dst=tmp;
 #ifndef NDEBUG
-      printf("**AICA DMA : SB_ADDIR==1: Not sure this works, please report if broken/missing sound or crash\n**");
+            printf("**AICA DMA : SB_ADDIR==1: Not sure this works, please report if broken/missing sound or crash\n**");
 #endif
+         }
+
+         WriteMemBlock_nommu_dma(dst,src,len);
+         /*
+			for (u32 i=0;i<len;i+=4)
+			{
+				u32 data=ReadMem32_nommu(src+i);
+				WriteMem32_nommu(dst+i,data);
+			}
+			*/
+         if (SB_ADLEN & 0x80000000)
+            SB_ADEN=1;//
+         else
+            SB_ADEN=0;//
+
+         SB_ADSTAR += len;
+         SB_ADSTAG += len;
+         total_bytes+=len;
+         SB_ADST    = 0x00000000;//dma done
+         SB_ADLEN   = 0x00000000;
+         if (settings.aica.InterruptHack)
+            SB_ADST    = 1;
+
+         aica_pending_dma=((total_bytes*200000000)/65536)+1;
+
+         if (!settings.aica.InterruptHack)
+            asic_RaiseInterruptWait(holly_SPU_DMA);
+      }
    }
 
-   WriteMemBlock_nommu_dma(dst,src,len);
-   SB_ADEN    = 0;
-
-   if (SB_ADLEN & 0x80000000)
-      SB_ADEN = 1;
-
-   SB_ADSTAR += len;
-   SB_ADSTAG += len;
-   total_bytes+=len;
-   SB_ADLEN   = 0x00000000;
-   if (settings.aica.InterruptHack)
-      SB_ADST    = 1;
-   else
-      SB_ADST    = 0x00000000;//dma done
-
-   aica_pending_dma=((total_bytes*200000000)/65536)+1;
-
-   if (!settings.aica.InterruptHack)
-      asic_RaiseInterruptWait(holly_SPU_DMA);
 }
 
 void Write_SB_E1ST(u32 addr, u32 data)
@@ -484,35 +490,47 @@ void Write_SB_E1ST(u32 addr, u32 data)
    //0x005F7814	SB_ADEN	RW	AICA:G2-DMA enable 
    //0x005F7818	SB_ADST	RW	AICA:G2-DMA start 
    //0x005F781C	SB_ADSUSP	RW	AICA:G2-DMA suspend 
-   u32 src, dst, len;
-   bool check = (data & 1) && (SB_E1EN & 1);
 
-   src=SB_E1STAR;
-   dst=SB_E1STAG;
-   len=SB_E1LEN & 0x7FFFFFFF;
-
-   if (SB_E1DIR==1)
+   if (data&1)
    {
-      u32 t=src;
-      src=dst;
-      dst=t;
-      printf("G2-EXT1 DMA : SB_E1DIR==1 DMA Read to 0x%X from 0x%X %d bytes\n",dst,src,len);
+      if (SB_E1EN&1)
+      {
+         u32 src=SB_E1STAR;
+         u32 dst=SB_E1STAG;
+         u32 len=SB_E1LEN & 0x7FFFFFFF;
+
+         if (SB_E1DIR==1)
+         {
+            u32 t=src;
+            src=dst;
+            dst=t;
+            printf("G2-EXT1 DMA : SB_E1DIR==1 DMA Read to 0x%X from 0x%X %d bytes\n",dst,src,len);
+         }
+         else
+            printf("G2-EXT1 DMA : SB_E1DIR==0:DMA Write to 0x%X from 0x%X %d bytes\n",dst,src,len);
+
+         WriteMemBlock_nommu_dma(dst,src,len);
+
+         /*
+            for (u32 i=0;i<len;i+=4)
+            {
+            u32 data=ReadMem32_nommu(src+i);
+            WriteMem32_nommu(dst+i,data);
+            }*/
+
+         if (SB_E1LEN & 0x80000000)
+            SB_E1EN=1;//
+         else
+            SB_E1EN=0;//
+
+         SB_E1STAR+=len;
+         SB_E1STAG+=len;
+         SB_E1ST = 0x00000000;//dma done
+         SB_E1LEN = 0x00000000;
+
+         asic_RaiseInterruptWait(holly_EXT_DMA1);
+      }
    }
-   else
-      printf("G2-EXT1 DMA : SB_E1DIR==0:DMA Write to 0x%X from 0x%X %d bytes\n",dst,src,len);
-
-   WriteMemBlock_nommu_dma(dst,src,len);
-   SB_E1EN=0;
-
-   if (SB_E1LEN & 0x80000000)
-      SB_E1EN=1;
-
-   SB_E1STAR+=len;
-   SB_E1STAG+=len;
-   SB_E1ST = 0x00000000;//dma done
-   SB_E1LEN = 0x00000000;
-
-   asic_RaiseInterruptWait(holly_EXT_DMA1);
 }
 
 void aica_sb_Init(void)

@@ -83,6 +83,9 @@ typedef uint64_t u64;
 
 typedef float f32;
 
+typedef ptrdiff_t snat;
+typedef size_t unat;
+
 #ifdef _M_X64
 #undef X86
 #define X64

@@ -84,7 +84,7 @@ extern "C" {
 
 DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr);
 
-RuntimeBlockInfo* bm_GetBlock(void* dynarec_code);
+RuntimeBlockInfo* bm_GetBlock2(void* dynarec_code);
 RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code);
 RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr);
 

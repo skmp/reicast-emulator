@@ -110,10 +110,10 @@ RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr)
 	if (cde==ngen_FailedToFindBlock)
 		return 0;
 	else
-		return bm_GetBlock((void*)cde);
+		return bm_GetBlock2((void*)cde);
 }
 
-RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
+RuntimeBlockInfo* bm_GetBlock2(void* dynarec_code)
 {
 	blkmap_t::iterator iter=blkmap.find((RuntimeBlockInfo*)dynarec_code);
 	if (iter!=blkmap.end())

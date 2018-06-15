@@ -8,7 +8,6 @@
 #include "types.h"
 
 
-#include "hw/pvr/pvr.h"
 #include "hw/pvr/pvr_mem.h"
 #include "../sh4_interpreter.h"
 #include "hw/sh4/sh4_mem.h"
@@ -18,6 +17,13 @@
 #include "../sh4_interrupts.h"
 #include "../modules/tmu.h"
 #include "hw/gdrom/gdrom_if.h"
+
+#include "hw/sh4/sh4_opcode.h"
+
+void dofoo(sh4_opcode op)
+{
+	r[op.n()]=gbr;
+}
 
 #define GetN(str) ((str>>8) & 0xf)
 #define GetM(str) ((str>>4) & 0xf)
@@ -946,7 +952,6 @@ u32 branch_target_s8(u32 op)
 {
 	return GetSImm8(op)*2 + 2 + next_pc;
 }
-
 // bf <bdisp8>
 sh4op(i1000_1011_iiii_iiii)
 {
@@ -1828,7 +1833,7 @@ sh4op(i0110_nnnn_mmmm_1011)
 {//ToDo : Check This [26/4/05]
 	u32 n = GetN(op);
 	u32 m = GetM(op);
-   r[n] = (u32)-(s32)r[m];
+	r[n] = -r[m];
 }
 
 //not <REG_M>,<REG_N>
@@ -2204,13 +2209,12 @@ sh4op(i0100_nnnn_0000_1110)
 //Not implt
 sh4op(iNotImplemented)
 {
-   if (settings.MMUEnabled)
-      cpu_iNimp(op, "Unknown opcode");
-   else
-   {
-      printf("iNimp %04X\n", op);
-      SH4ThrownException ex = { next_pc - 2, 0x180, 0x100 };
-      throw ex;
-   }
+#ifndef NO_MMU
+	printf("iNimp %04X\n", op);
+	SH4ThrownException ex = { next_pc - 2, 0x180, 0x100 };
+	throw ex;
+#else
+	cpu_iNimp(op, "Unknown opcode");
+#endif
+	
 }
-

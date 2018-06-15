@@ -47,7 +47,6 @@
 
 
 #define CODE_SIZE   (16*1024*1024)
-#define FPCA(x) ((DynarecCodeEntryPtr&)sh4rcb.fpcb[(x>>1)&FPCB_MASK])
 
 //alternative emit ptr, set to 0 to use the main buffer
 extern u32* emit_ptr;

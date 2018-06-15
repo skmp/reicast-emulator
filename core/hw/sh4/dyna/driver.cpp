@@ -272,7 +272,7 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc)
 
 DynarecCodeEntryPtr rdv_FindCode(void)
 {
-	DynarecCodeEntryPtr rv= (DynarecCodeEntryPtr)FPCA(next_pc);
+   DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
 	if (rv==ngen_FailedToFindBlock)
 		return 0;
 	
@@ -281,7 +281,7 @@ DynarecCodeEntryPtr rdv_FindCode(void)
 
 DynarecCodeEntryPtr rdv_FindOrCompile(void)
 {
-	DynarecCodeEntryPtr rv= (DynarecCodeEntryPtr)FPCA(next_pc);
+	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
 	if (rv==ngen_FailedToFindBlock)
 		rv=rdv_CompilePC();
 	

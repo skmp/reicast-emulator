@@ -71,6 +71,10 @@ blkmap_t blkmap;
 u32 bm_gc_luc,bm_gcf_luc;
 
 bool BM_LockedWrite(u8* address);
+
+
+#define FPCA(x) ((DynarecCodeEntryPtr&)sh4rcb.fpcb[(x>>1)&FPCB_MASK])
+
 DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
 	return (DynarecCodeEntryPtr)FPCA(addr);

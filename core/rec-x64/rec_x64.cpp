@@ -23,14 +23,14 @@ void ngen_mainloop(void* v_cntx)
    do
    {
       cycle_counter = SH4_TIMESLICE;
-
       do {
-         DynarecCodeEntryPtr rcb = (DynarecCodeEntryPtr)FPCA(ctx->cntx.pc);
+         DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);
          rcb();
       } while (cycle_counter > 0);
 
-      if (UpdateSystem())
+      if (UpdateSystem()) {
          rdv_DoInterrupts_pc(ctx->cntx.pc);
+      }
    }while (inside_loop && ngen_required);
 }
 

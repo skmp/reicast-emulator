@@ -31,37 +31,6 @@ void ngen_init(void)
 }
 
 #if !(FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86)
-
-struct DynaRBI : RuntimeBlockInfo
-{
-   /* NOTE/TODO - this was virtual u32 Relink();
-    * for rec_arm.cpp - check this in case of
-    * errors */
-   virtual u32 Relink()
-   {
-      return 0;
-   }
-
-   virtual void Relocate(void* dst) {
-   }
-};
-
-RuntimeBlockInfo* ngen_AllocateBlock(void)
-{
-   return new DynaRBI();
-}
-
-
-extern "C" {
-
-void ngen_FailedToFindBlock_internal(void)
-{
-	rdv_FailedToFindBlock(Sh4cntx.pc);
-}
-
-};
-
-void(*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
 #endif
 
 void ngen_GetFeatures(ngen_features* dst)
@@ -77,8 +46,6 @@ void ngen_ResetBlocks(void)
    printf("@@\tngen_ResetBlocks()\n");
 	idxnxx = 0;
 }
-
-void *compiler_data;
 
 void ngen_CC_Param(shil_opcode* op, shil_param* par, CanonicalParamType tp)
 {
@@ -235,11 +202,4 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 #endif
          break;
    }
-}
-
-
-
-u32* GetRegPtr(u32 reg)
-{
-	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
 }

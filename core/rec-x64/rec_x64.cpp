@@ -12,9 +12,32 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/dyna/regalloc.h"
 
+struct DynaRBI : RuntimeBlockInfo
+{
+   virtual u32 Relink() {
+      //verify(false);
+      return 0;
+   }
+
+   virtual void Relocate(void* dst) {
+      verify(false);
+   }
+};
+
 extern int cycle_counter;
 unsigned int ngen_required = true;
 extern bool inside_loop;
+
+extern "C" {
+
+void ngen_FailedToFindBlock_internal(void)
+{
+	rdv_FailedToFindBlock(Sh4cntx.pc);
+}
+
+};
+
+void(*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
 
 void ngen_mainloop(void* v_cntx)
 {
@@ -37,6 +60,16 @@ void ngen_mainloop(void* v_cntx)
 void ngen_terminate(void)
 {
    ngen_required = false;
+}
+
+RuntimeBlockInfo* ngen_AllocateBlock(void)
+{
+   return new DynaRBI();
+}
+
+u32* GetRegPtr(u32 reg)
+{
+	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
 }
 
 class BlockCompilerx64 : public Xbyak::CodeGenerator{
@@ -76,27 +109,42 @@ public:
 	}
 
 #define sh_to_reg(prm, op, rd) \
-			if (prm.is_imm())			\
-				op(rd, prm._imm);	\
-			else if (prm.is_reg()) \
-         {							\
-				mov(rax, (size_t)prm.reg_ptr());	\
-				op(rd, dword[rax]);				\
-			}
+         do {                          \
+			   if (prm.is_imm()) {			\
+				   op(rd, prm._imm);	      \
+            }                          \
+			   else if (prm.is_reg())     \
+            {							      \
+				   mov(rax, (size_t)prm.reg_ptr());	\
+				   op(rd, dword[rax]);				\
+			   }                          \
+            else { \
+               verify(prm.is_null()); \
+            } \
+         } while (0)
 
 #define sh_to_reg_noimm(prm, op, rd) \
+   do {                                         \
 			if (prm.is_reg()) {							\
 				mov(rax, (size_t)prm.reg_ptr());	\
 				op(rd, dword[rax]);				\
-				}
+				}                             \
+               else { \
+                  verify(prm.is_null()); \
+               } \
+   } while (0)
 
 #define reg_to_sh(prm, rs) \
+   do { \
    mov(rax, (size_t)prm.reg_ptr()); \
-   mov(dword[rax], rs)
+   mov(dword[rax], rs); \
+   } while (0)
 
 #define reg_to_sh_ss(prm, rs) \
+   do { \
    mov(rax, (size_t)prm.reg_ptr()); \
-   movss(dword[rax], rs)
+   movss(dword[rax], rs); \
+   } while (0)
 
 	void compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
    {
@@ -126,25 +174,39 @@ public:
 
             case shop_jcond:
             case shop_jdyn:
-               mov(rax, (size_t)op.rs1.reg_ptr());
+               {
+                  mov(rax, (size_t)op.rs1.reg_ptr());
 
-               mov(ecx, dword[rax]);
+                  mov(ecx, dword[rax]);
 
-               if (op.rs2.is_imm())
-                  add(ecx, op.rs2._imm);
+                  if (op.rs2.is_imm()) {
+                     add(ecx, op.rs2._imm);
+                  }
 
-               mov(rdx, (size_t)op.rd.reg_ptr());
-               mov(dword[rdx], ecx);
+                  mov(rdx, (size_t)op.rd.reg_ptr());
+                  mov(dword[rdx], ecx);
+               }
                break;
 
             case shop_mov32:
-               sh_to_reg(op.rs1, mov, ecx);
-               reg_to_sh(op.rd, ecx);
+               {
+                  verify(op.rd.is_reg());
+
+                  verify(op.rs1.is_reg() || op.rs1.is_imm());
+
+                  sh_to_reg(op.rs1, mov, ecx);
+
+                  reg_to_sh(op.rd, ecx);
+               }
                break;
 
             case shop_mov64:
-               sh_to_reg(op.rs1, mov, rcx);
-               reg_to_sh(op.rd, rcx);
+               {
+                  verify(op.rd.is_reg());
+                  verify(op.rs1.is_reg() || op.rs1.is_imm());
+                  sh_to_reg(op.rs1, mov, rcx);
+                  reg_to_sh(op.rd, rcx);
+               }
                break;
 
             case shop_readm:
@@ -154,36 +216,30 @@ public:
 
                   u32 size = op.flags & 0x7f;
 
-                  switch (size)
-                  {
-                     case 1:
-                        call((void*)ReadMem8);
-                        movsx(rcx, al);
-
-                        reg_to_sh(op.rd, ecx);
-                        break;
-                     case 2:
-                        call((void*)ReadMem16);
-                        movsx(rcx, ax);
-
-                        reg_to_sh(op.rd, ecx);
-                        break;
-                     case 4:
-                        call((void*)ReadMem32);
-                        mov(rcx, rax);
-
-                        reg_to_sh(op.rd, ecx);
-                        break;
-                     case 8:
-                        call((void*)ReadMem64);
-                        mov(rcx, rax);
-
-                        reg_to_sh(op.rd, rcx);
-                        break;
-                     default:
-                        die("1..8 bytes");
-                        break;
+                  if (size == 1) {
+                     call((void*)ReadMem8);
+                     movsx(rcx, al);
                   }
+                  else if (size == 2) {
+                     call((void*)ReadMem16);
+                     movsx(rcx, ax);
+                  }
+                  else if (size == 4) {
+                     call((void*)ReadMem32);
+                     mov(rcx, rax);
+                  }
+                  else if (size == 8) {
+                     call((void*)ReadMem64);
+                     mov(rcx, rax);
+                  }
+                  else {
+                     die("1..8 bytes");
+                  }
+
+                  if (size != 8)
+                     reg_to_sh(op.rd, ecx);
+                  else
+                     reg_to_sh(op.rd, rcx);
                }
                break;
 
@@ -193,27 +249,21 @@ public:
                   sh_to_reg(op.rs1, mov, call_regs[0]);
                   sh_to_reg(op.rs3, add, call_regs[0]);
 
-                  switch (size)
-                  {
-                     case 1:
-                        sh_to_reg(op.rs2, mov, call_regs[1]);
-                        call((void*)WriteMem8);
-                        break;
-                     case 2:
-                        sh_to_reg(op.rs2, mov, call_regs[1]);
-                        call((void*)WriteMem16);
-                        break;
-                     case 4:
-                        sh_to_reg(op.rs2, mov, call_regs[1]);
-                        call((void*)WriteMem32);
-                        break;
-                     case 8:
-                        sh_to_reg(op.rs2, mov, call_regs64[1]);
-                        call((void*)WriteMem64);
-                        break;
-                     default:
-                        die("1..8 bytes");
-                        break;
+                  if (size != 8)
+                     sh_to_reg(op.rs2, mov, call_regs[1]);
+                  else
+                     sh_to_reg(op.rs2, mov, call_regs64[1]);
+
+                  if (size == 1)
+                     call((void*)WriteMem8);
+                  else if (size == 2)
+                     call((void*)WriteMem16);
+                  else if (size == 4)
+                     call((void*)WriteMem32);
+                  else if (size == 8)
+                     call((void*)WriteMem64);
+                  else {
+                     die("1..8 bytes");
                   }
                }
                break;
@@ -349,6 +399,7 @@ public:
 
 		for (int i = CC_pars.size(); i-- > 0;)
 		{
+         verify(xmmused < 4 && regused < 4);
 			shil_param& prm = *CC_pars[i].prm;
 			switch (CC_pars[i].type)
          {
@@ -364,6 +415,8 @@ public:
 
                //push the ptr itself
             case CPT_ptr:
+               verify(prm.is_reg());
+
                mov(call_regs64[regused++], (size_t)prm.reg_ptr());
 
                //die("FAIL");
@@ -376,11 +429,15 @@ public:
 
 };
 
+BlockCompilerx64 *compilerx64_data;
+
 void ngen_Compile_x64(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
 {
-	compiler_data = static_cast<void*>(new BlockCompilerx64());
+   verify(emit_FreeSpace() >= 16 * 1024);
 
-   BlockCompilerx64 *compiler = (BlockCompilerx64*)compiler_data;
+	compilerx64_data = new BlockCompilerx64();
+
+   BlockCompilerx64 *compiler = compilerx64_data;
 	
 	compiler->compile(block, force_checks, reset, staging, optimise);
 
@@ -389,19 +446,19 @@ void ngen_Compile_x64(RuntimeBlockInfo* block, bool force_checks, bool reset, bo
 
 void ngen_CC_Call_x64(shil_opcode*op, void* function)
 {
-   BlockCompilerx64 *compiler = (BlockCompilerx64*)compiler_data;
+   BlockCompilerx64 *compiler = compilerx64_data;
 	compiler->ngen_CC_Call(op, function);
 }
 
 void ngen_CC_Param_x64(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 {
-   BlockCompilerx64 *compiler = (BlockCompilerx64*)compiler_data;
+   BlockCompilerx64 *compiler = compilerx64_data;
    compiler->ngen_CC_param(*op, *par, tp);
 }
 
 void ngen_CC_Start_x64(shil_opcode* op)
 {
-   BlockCompilerx64 *compiler = (BlockCompilerx64*)compiler_data;
+   BlockCompilerx64 *compiler = compilerx64_data;
    compiler->ngen_CC_Start(op);
 }
 

@@ -121,8 +121,6 @@ void ngen_CC_Finish(shil_opcode* op);
 
 RuntimeBlockInfo* ngen_AllocateBlock();
 
-extern void *compiler_data;
-
 #ifdef __cplusplus
 }
 #endif

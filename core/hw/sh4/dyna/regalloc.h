@@ -220,7 +220,10 @@ struct RegAlloc
 			}
 			return rv;
 		}
-      return false;
+		else
+		{
+			return false;
+		}
 	}
 
 	bool IsAllocg(Sh4RegType reg)
@@ -241,7 +244,10 @@ struct RegAlloc
 			verify(prm.count()==1);
 			return IsAllocg(prm._reg);
 		}
-      return false;
+		else
+		{
+			return false;
+		}
 	}
 
 	bool IsAllocf(Sh4RegType reg)
@@ -269,7 +275,8 @@ struct RegAlloc
 			verify(prm.count()==1);
 			return IsAllocf(prm._reg);
 		}
-      return false;
+		else
+			return false;
 	}
 
 	nreg_t mapg(Sh4RegType reg)
@@ -333,9 +340,11 @@ struct RegAlloc
 			verify(prm.count()==1);
 			return mapf(prm._reg);
 		}
-
-      die("map must return value\n");
-      return (nregf_t)-1;
+		else
+		{
+			die("map must return value\n");
+			return (nregf_t)-1;
+		}
 	}
 
 	nregf_t mapfv(const shil_param& prm,u32 i)
@@ -346,9 +355,11 @@ struct RegAlloc
 		{
 			return mapf((Sh4RegType)(prm._reg+i));
 		}
-
-      die("map must return value\n");
-      return (nregf_t)-1;
+		else
+		{
+			die("map must return value\n");
+			return (nregf_t)-1;
+		}
 	}
 	
 
@@ -644,6 +655,17 @@ struct RegAlloc
 					}
 					++iter;
 				}
+			
+				/*
+				for (int sid=0;sid<sh4_reg_count;sid++)
+				{
+					if (spans[sid]) 
+					{
+						spans[sid]->Flush();
+						spans[sid]=0;
+					}
+				}
+				*/
 			}
 
 		}
@@ -685,7 +707,20 @@ struct RegAlloc
 			}
 
 			SplitSpans(cc_g,reg_cc_max_g,false,opid);
+
 			SplitSpans(cc_f,reg_cc_max_f,true,opid);
+
+			if (false)
+			{
+				printf("After reduction ..\n");
+				for (u32 sid=0;sid<all_spans.size();sid++)
+				{
+					RegSpan* spn=all_spans[sid];
+
+					if (spn->contains(opid))
+						printf("\t[%c]span: %d (r%d), [%d:%d],n: %d, p: %d\n",spn->cacc(opid)?'x':' ',sid,all_spans[sid]->regstart,all_spans[sid]->start,all_spans[sid]->end,all_spans[sid]->nacc(opid),all_spans[sid]->pacc(opid));
+				}
+			}
 		}
 
 		//Allocate the registers to the spans !

@@ -196,10 +196,7 @@ void rend_start_render(void)
          {
             palette_update();
 #if !defined(TARGET_NO_THREADS)
-            slock_lock(rs.mutx);
-            rs.state=true;
-            scond_signal(rs.cond);
-            slock_unlock(rs.mutx);
+            rs.Set();
 #else
             rend_single_frame();
 #endif

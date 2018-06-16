@@ -152,7 +152,7 @@ void *rend_thread(void* p)
 }
 
 #if !defined(TARGET_NO_THREADS)
-sthread_t *rthd;
+cThread rthd(rend_thread,0);
 #endif
 
 bool pend_rend = false;
@@ -233,7 +233,7 @@ bool rend_init(void)
 #endif
 
 #if !defined(TARGET_NO_THREADS)
-   rthd = (sthread_t*)sthread_create(rend_thread, 0);
+   rthd.Start();
 #else
    if (!renderer->Init()) die("rend->init() failed\n");
 
@@ -259,10 +259,6 @@ bool rend_init(void)
 
 void rend_term(void)
 {
-#if !defined(TARGET_NO_THREADS)
-   sthread_join(rthd);
-   rthd = NULL;
-#endif
 }
 
 void rend_terminate(void)

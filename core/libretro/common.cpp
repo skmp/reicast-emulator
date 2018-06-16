@@ -471,7 +471,29 @@ static void enable_runfast(void)
 #endif
 }
 
-//cResetEvent Calss
+#if !defined(TARGET_NO_THREADS)
+
+//Thread class
+cThread::cThread(ThreadEntryFP* function,void* prm)
+{
+	Entry=function;
+	param=prm;
+}
+
+void cThread::Start()
+{
+   hThread = sthread_create(Entry, 0);
+}
+
+void cThread::WaitToEnd()
+{
+   sthread_join(hThread);
+}
+
+//End thread class
+#endif
+
+//cResetEvent Class
 cResetEvent::cResetEvent(bool State,bool Auto)
 {
 	//sem_init((sem_t*)hEvent, 0, State?1:0);

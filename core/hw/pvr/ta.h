@@ -3,10 +3,6 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_if.h"
 
-#ifndef TARGET_NO_THREADS
-#include <rthreads/rthreads.h>
-#endif
-
 #include "ta_structs.h"
 
 enum

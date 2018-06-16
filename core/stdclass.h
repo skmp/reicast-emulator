@@ -156,6 +156,24 @@ public:
 };
 
 //Threads
+#if !defined(HOST_NO_THREADS)
+typedef  void* ThreadEntryFP(void* param);
+
+typedef void* THREADHANDLE;
+
+class cThread
+{
+private:
+	ThreadEntryFP* Entry;
+	void* param;
+public :
+	sthread_t *hThread;
+	cThread(ThreadEntryFP* function,void* param);
+	
+	void Start();
+	void WaitToEnd();
+};
+#endif
 
 //Wait Events
 class cResetEvent

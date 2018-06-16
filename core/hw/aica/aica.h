@@ -309,8 +309,8 @@ void AICA_Term();
 
 extern u32 VREG;
 extern VArray2 aica_ram;
-u32 aica_rtc_reg_read(u32 addr,u32 sz);
-void aica_rtc_reg_write(u32 addr,u32 data,u32 sz);
+u32 ReadMem_aica_rtc(u32 addr,u32 sz);
+void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz);
 u32 ReadMem_aica_reg(u32 addr,u32 sz);
 void WriteMem_aica_reg(u32 addr,u32 data,u32 sz);
 
@@ -341,6 +341,12 @@ extern u8 aica_reg[0x8000];
 
 void AICA_Sample();
 void AICA_Sample32();
+
+//u32 ReadAicaReg(u32 reg);
+void WriteAicaReg8(u32 reg,u32 data);
+
+template<u32 sz>
+void WriteAicaReg(u32 reg,u32 data);
 
 void sgc_Init();
 void sgc_Term();

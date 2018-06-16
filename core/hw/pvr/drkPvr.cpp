@@ -10,11 +10,11 @@
 */
 
 #include "drkPvr.h"
-#include "types.h"
-#include "pvr.h"
-#include "spg.h"
 #include "ta.h"
-#include "hw/mem/_vmem.h"
+#include "spg.h"
+#include "pvr_regs.h"
+#include "pvr_mem.h"
+#include "Renderer_if.h"
 
 void libPvr_LockedBlockWrite (vram_block* block,u32 addr)
 {

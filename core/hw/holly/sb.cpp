@@ -9,9 +9,7 @@
 
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_interrupts.h"
-#include "hw/pvr/pvr.h"
 #include "hw/pvr/pvr_sb_regs.h"
-#include "hw/pvr/pvr_mem.h"
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/maple/maple_if.h"
 #include "hw/aica/aica.h"

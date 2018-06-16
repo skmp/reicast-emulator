@@ -11,7 +11,7 @@
 #include "../../libretro/libretro.h"
 #include "../TexCache.h"
 
-#include "../../hw/pvr/pvr.h"
+#include "../../hw/pvr/pvr_mem.h"
 #include "../../hw/mem/_vmem.h"
 
 extern retro_environment_t environ_cb;

@@ -1,4 +1,5 @@
-#include "pvr.h"
+#include "ta.h"
+#include "ta_ctx.h"
 
 u32 ta_type_lut[256];
 

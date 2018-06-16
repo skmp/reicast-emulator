@@ -1,7 +1,7 @@
-#include "types.h"
-#include "pvr.h"
-#include "spg.h"
-#include "../../rend/TexCache.h"
+#include "Renderer_if.h"
+#include "ta.h"
+#include "hw/pvr/pvr_mem.h"
+#include "rend/TexCache.h"
 
 /*
 

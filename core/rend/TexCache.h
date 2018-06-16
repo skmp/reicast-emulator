@@ -1,4 +1,5 @@
 #pragma once
+#include "../types.h"
 
 extern u8* vq_codebook;
 extern u32 palette_index;
@@ -20,6 +21,8 @@ struct PixelBuffer
 	u32 pixels_per_line;
 };
 
+void libCore_vramlock_Free(void);
+void libCore_vramlock_Init(void);
 void palette_update(void);
 
 #define clamp(minv,maxv,x) min(maxv,max(minv,x))

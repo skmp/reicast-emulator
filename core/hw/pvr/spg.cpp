@@ -3,10 +3,10 @@
 //
 //
 
-#include "types.h"
-#include "pvr.h"
-#include "ta.h"
-#include "hw/mem/_vmem.h"
+#include "spg.h"
+#include "Renderer_if.h"
+#include "pvr_regs.h"
+#include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_sched.h"
 
 u32 in_vblank=0;

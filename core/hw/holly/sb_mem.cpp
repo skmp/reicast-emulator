@@ -1,19 +1,18 @@
 #include "types.h"
-#include "holly_intc.h"
-#include "sb.h"
-
 #include "hw/sh4/sh4_mem.h"
-#include "hw/sh4/sh4_interrupts.h"
-#include "hw/pvr/pvr.h"
-#include "hw/pvr/pvr_sb_regs.h"
+
+#include "sb_mem.h"
+#include "sb.h"
+#include "hw/pvr/pvr_regs.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/gdrom/gdrom_if.h"
-#include "hw/maple/maple_if.h"
 #include "hw/aica/aica.h"
+//#include "hw/aica/aica_if.h"
+#include "hw/naomi/naomi.h"
 
 #include "hw/flashrom/flashrom.h"
 #include "reios/reios.h"
-#include "hw/naomi/naomi.h"
+
 
 static HollyInterruptID dmatmp1;
 static HollyInterruptID dmatmp2;

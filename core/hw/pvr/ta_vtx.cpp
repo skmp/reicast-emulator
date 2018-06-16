@@ -4,8 +4,10 @@
 	Parsing of the TA stream and generation of vertex data !
 */
 
-#include "pvr.h"
+#include "ta.h"
+#include "ta_ctx.h"
 #include "pvr_mem.h"
+#include "Renderer_if.h"
 
 // TODO/FIXME - should be moved later
 bool pal_needs_update=true;

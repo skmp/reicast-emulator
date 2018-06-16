@@ -6,8 +6,6 @@
 #include <sys/stat.h>
 #include <retro_stat.h>
 
-#include "../hw/pvr/pvr.h"
-
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 #include <glsm/glsm.h>
 #endif

@@ -1,9 +1,5 @@
 #pragma once
-#include "pvr.h"
-#include "ta.h"
-
-#include "helper_classes.h"
-
+#include "drkPvr.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_if.h"
 

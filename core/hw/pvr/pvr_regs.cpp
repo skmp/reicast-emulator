@@ -1,9 +1,8 @@
-#include "types.h"
-#include "pvr.h"
+#include "pvr_regs.h"
 #include "pvr_mem.h"
+#include "Renderer_if.h"
 #include "ta.h"
 #include "spg.h"
-#include "hw/mem/_vmem.h"
 
 // TODO/FIXME - forward decls
 void rend_start_render(void);

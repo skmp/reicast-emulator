@@ -1,10 +1,7 @@
-#include "types.h"
-#include "hw/pvr/pvr.h"
-#include "hw/pvr/spg.h"
-#include "hw/pvr/ta.h"
-#include "hw/pvr/pvr_regs.h"
-#include "hw/mem/_vmem.h"
 #include "TexCache.h"
+#include "hw/pvr/pvr_regs.h"
+#include "hw/pvr/ta.h"
+#include "hw/mem/_vmem.h"
 
 #include <rthreads/rthreads.h>
 

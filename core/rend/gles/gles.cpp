@@ -7,11 +7,11 @@
 #endif
 
 #include "gles.h"
-#include "../rend.h"
+#include "rend/rend.h"
 #include "../../libretro/libretro.h"
 #include "../TexCache.h"
 
-#include "../../hw/pvr/pvr.h"
+#include "hw/pvr/Renderer_if.h"
 #include "../../hw/mem/_vmem.h"
 
 extern retro_environment_t environ_cb;

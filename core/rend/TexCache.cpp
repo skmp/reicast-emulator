@@ -3,8 +3,6 @@
 #include "hw/pvr/ta.h"
 #include "hw/mem/_vmem.h"
 
-#include <rthreads/rthreads.h>
-
 u8* vq_codebook;
 u32 palette_index;
 

@@ -13,6 +13,7 @@
 
 #include "libretro.h"
 
+u32 fskip;
 extern int screen_width;
 extern int screen_height;
 bool boot_to_bios;

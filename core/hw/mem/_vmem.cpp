@@ -38,23 +38,25 @@ void* _vmem_MemInfo_ptr[0x100];
 
 void _vmem_get_ptrs(u32 sz,bool write,void*** vmap,void*** func)
 {
-   *vmap=_vmem_MemInfo_ptr;
-   switch(sz)
-   {
-      case 1:
-         *func=write?(void**)_vmem_WF8:(void**)_vmem_RF8;
-         break;
-      case 2:
-         *func=write?(void**)_vmem_WF16:(void**)_vmem_RF16;
-         break;
-      case 4:
-      case 8:
-         *func=write?(void**)_vmem_WF32:(void**)_vmem_RF32;
-         break;
-      default:
-         die("invalid size");
-         break;
-   }
+	*vmap=_vmem_MemInfo_ptr;
+	switch(sz)
+	{
+	case 1:
+		*func=write?(void**)_vmem_WF8:(void**)_vmem_RF8;
+		return;
+
+	case 2:
+		*func=write?(void**)_vmem_WF16:(void**)_vmem_RF16;
+		return;
+
+	case 4:
+	case 8:
+		*func=write?(void**)_vmem_WF32:(void**)_vmem_RF32;
+		return;
+
+	default:
+		die("invalid size");
+	}
 }
 
 void* _vmem_get_ptr2(u32 addr,u32& mask)
@@ -72,233 +74,137 @@ void* _vmem_get_ptr2(u32 addr,u32& mask)
 
 void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 {
-   u32   page=addr>>24;
-   size_t  iirf=(size_t)_vmem_MemInfo_ptr[page];
-   void* ptr=(void*)(iirf&~HANDLER_MAX);
+	u32   page=addr>>24;
+	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
+	void* ptr=(void*)(iirf&~HANDLER_MAX);
 
-   if (ptr==0)
-   {
-      ismem=false;
-      const size_t id=iirf;
+	if (ptr==0)
+	{
+		ismem=false;
+		const unat id=iirf;
+		if (sz==1)
+		{
+			return (void*)_vmem_RF8[id/4];
+		}
+		else if (sz==2)
+		{
+			return (void*)_vmem_RF16[id/4];
+		}
+		else if (sz==4)
+		{
+			return (void*)_vmem_RF32[id/4];
+		}
+		else
+		{
+			die("Invalid size");
+		}
+	}
+	else
+	{
+		ismem=true;
+		addr<<=iirf;
+		addr>>=iirf;
 
-      switch (sz)
-      {
-         case 1:
-            return (void*)_vmem_RF8[id/4];
-         case 2:
-            return (void*)_vmem_RF16[id/4];
-         case 4:
-            return (void*)_vmem_RF32[id/4];
-         default:
-            die("Invalid memory size");
-            break;
-      }
+		return &(((u8*)ptr)[addr]);
+	}
+	die("Invalid memory size");
 
-      return 0;
-   }
-
-   ismem=true;
-   addr<<=iirf;
-   addr>>=iirf;
-
-   return &(((u8*)ptr)[addr]);
+	return 0;
 }
 
 void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
 {
-   u32   page=addr>>24;
-   size_t  iirf=(size_t)_vmem_MemInfo_ptr[page];
-   void* ptr=(void*)(iirf&~HANDLER_MAX);
-
-   if (ptr==0)
-   {
-      ismem=false;
-      const size_t id=iirf;
-      page_sz=24;
-      switch (sz)
-      {
-         case 1:
-            return rw?(void*)_vmem_RF8[id/4]:(void*)_vmem_WF8[id/4];
-         case 2:
-            return rw?(void*)_vmem_RF16[id/4]:(void*)_vmem_WF16[id/4];
-         case 4:
-            return rw?(void*)_vmem_RF32[id/4]:(void*)_vmem_WF32[id/4];
-         default:
-            die("Invalid memory size");
-            return 0;
-      }
-   }
-
-   ismem=true;
-
-   page_sz=32-(iirf&0x1F);
-
-   return ptr;
-}
-
-
-//ReadMem/WriteMem functions
-//ReadMem
-u32 DYNACALL _vmem_ReadMem8SX32(u32 addr)
-{
-	u32   page=addr>>24;	//1 op, shift/extract
-	size_t  iirf=(size_t)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
-	void* ptr=(void*)(iirf&~HANDLER_MAX);     //2 ops, and // 1 op insert
-   const u32 id=iirf;
-
-	if (likely(ptr!=0))
-	{
-		addr<<=iirf;
-		addr>>=iirf;
-
-		s8 data=(*((s8*)&(((u8*)ptr)[addr])));
-		return data;
-	}
-
-   return (s32)(s8)_vmem_RF8[id/4](addr);
-}
-
-u32 DYNACALL _vmem_ReadMem16SX32(u32 addr)
-{
-	u32   page=addr>>24;	//1 op, shift/extract
-	size_t  iirf=(size_t)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
-	void* ptr=(void*)(iirf&~HANDLER_MAX);     //2 ops, and // 1 op insert
-   const u32 id=iirf;
-
-	if (likely(ptr!=0))
-	{
-		addr<<=iirf;
-		addr>>=iirf;
-
-		s16 data=(*((s16*)&(((u8*)ptr)[addr])));
-		return data;
-	}
-
-   return (s32)(s16)_vmem_RF16[id/4](addr);
-}
-
-u8 DYNACALL _vmem_ReadMem8(u32 addr)
-{
-	u32   page=addr>>24;	//1 op, shift/extract
-	size_t  iirf=(size_t)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
-	void* ptr=(void*)(iirf&~HANDLER_MAX);     //2 ops, and // 1 op insert
-   const u32 id=iirf;
-
-	if (likely(ptr!=0))
-	{
-		addr<<=iirf;
-		addr>>=iirf;
-
-		return (*((u8*)&(((u8*)ptr)[addr])));
-	}
-
-   return (u8)_vmem_RF8[id/4](addr);
-}
-
-u16 DYNACALL _vmem_ReadMem16(u32 addr)
-{
-	u32   page=addr>>24;	//1 op, shift/extract
-	size_t  iirf=(size_t)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
-	void* ptr=(void*)(iirf&~HANDLER_MAX);     //2 ops, and // 1 op insert
-   const u32 id=iirf;
-
-	if (likely(ptr!=0))
-	{
-		addr<<=iirf;
-		addr>>=iirf;
-
-		return (*((u16*)&(((u8*)ptr)[addr])));
-	}
-
-   return (u16)_vmem_RF16[id/4](addr);
-}
-
-u32 DYNACALL _vmem_ReadMem32(u32 addr)
-{
-	u32   page=addr>>24;	//1 op, shift/extract
-	size_t  iirf=(size_t)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
-	void* ptr=(void*)(iirf&~HANDLER_MAX);     //2 ops, and // 1 op insert
-   const u32 id=iirf;
-
-	if (likely(ptr!=0))
-	{
-		addr<<=iirf;
-		addr>>=iirf;
-
-		return (*((u32*)&(((u8*)ptr)[addr])));
-	}
-
-   return _vmem_RF32[id/4](addr);
-}
-
-u64 DYNACALL _vmem_ReadMem64(u32 addr)
-{
-   u32   page=addr>>24;	//1 op, shift/extract
-   size_t  iirf=(size_t)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
-   void* ptr=(void*)(iirf&~HANDLER_MAX);     //2 ops, and // 1 op insert
-   const u32 id=iirf;
-
-   if (likely(ptr!=0))
-   {
-      addr<<=iirf;
-      addr>>=iirf;
-
-      return (*((u64*)&(((u8*)ptr)[addr])));
-   }
-
-   {
-      u64 rv=_vmem_RF32[id/4](addr);
-      rv|=(u64)((u64)_vmem_RF32[id/4](addr+4)<<32);
-
-      return rv;
-   }
-}
-
-//WriteMem
-void DYNACALL _vmem_WriteMem8(u32 addr,u8 data)
-{
-	u32 page=addr>>24;
-	size_t  iirf=(size_t)_vmem_MemInfo_ptr[page];
+	u32   page=addr>>24;
+	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
 	void* ptr=(void*)(iirf&~HANDLER_MAX);
-
-	if (likely(ptr!=0))
+	
+	if (ptr==0)
 	{
-		addr<<=iirf;
-		addr>>=iirf;
-
-		*((u8*)&(((u8*)ptr)[addr]))=data;
+		ismem=false;
+		const unat id=iirf;
+		page_sz=24;
+		if (sz==1)
+		{
+			return rw?(void*)_vmem_RF8[id/4]:(void*)_vmem_WF8[id/4];
+		}
+		else if (sz==2)
+		{
+			return rw?(void*)_vmem_RF16[id/4]:(void*)_vmem_WF16[id/4];
+		}
+		else if (sz==4)
+		{
+			return rw?(void*)_vmem_RF32[id/4]:(void*)_vmem_WF32[id/4];
+		}
+		else
+		{
+			die("Invalid size");
+		}
 	}
 	else
-   {
-      const u32 id=iirf;
-      _vmem_WF8[id/4](addr,data);
-   }
+	{
+		ismem=true;
+
+		page_sz=32-(iirf&0x1F);
+
+		return ptr;
+	}
+	die("Invalid memory size");
+
+	return 0;
 }
 
-void DYNACALL _vmem_WriteMem16(u32 addr,u16 data)
+template<typename T,typename Trv>
+INLINE Trv DYNACALL _vmem_readt(u32 addr)
 {
-	u32 page=addr>>24;
-	size_t  iirf=(size_t)_vmem_MemInfo_ptr[page];
-	void* ptr=(void*)(iirf&~HANDLER_MAX);
+	const u32 sz=sizeof(T);
+
+	u32   page=addr>>24;	//1 op, shift/extract
+	unat  iirf=(unat)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
+	void* ptr=(void*)(iirf&~HANDLER_MAX);     //2 ops, and // 1 op insert
 
 	if (likely(ptr!=0))
 	{
 		addr<<=iirf;
 		addr>>=iirf;
 
-		*((u16*)&(((u8*)ptr)[addr]))=data;
+		T data=(*((T*)&(((u8*)ptr)[addr])));
+		return data;
 	}
 	else
 	{
 		const u32 id=iirf;
-      _vmem_WF16[id/4](addr,data);
+		if (sz==1)
+		{
+			return (T)_vmem_RF8[id/4](addr);
+		}
+		else if (sz==2)
+		{
+			return (T)_vmem_RF16[id/4](addr);
+		}
+		else if (sz==4)
+		{
+			return _vmem_RF32[id/4](addr);
+		}
+		else if (sz==8)
+		{
+			T rv=_vmem_RF32[id/4](addr);
+			rv|=(T)((u64)_vmem_RF32[id/4](addr+4)<<32);
+			
+			return rv;
+		}
+		else
+		{
+			die("Invalid size");
+		}
 	}
 }
-
-void DYNACALL _vmem_WriteMem32(u32 addr,u32 data)
+template<typename T>
+INLINE void DYNACALL _vmem_writet(u32 addr,T data)
 {
+	const u32 sz=sizeof(T);
+
 	u32 page=addr>>24;
-	size_t  iirf=(size_t)_vmem_MemInfo_ptr[page];
+	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
 	void* ptr=(void*)(iirf&~HANDLER_MAX);
 
 	if (likely(ptr!=0))
@@ -306,35 +212,50 @@ void DYNACALL _vmem_WriteMem32(u32 addr,u32 data)
 		addr<<=iirf;
 		addr>>=iirf;
 
-		*((u32*)&(((u8*)ptr)[addr]))=data;
+		*((T*)&(((u8*)ptr)[addr]))=data;
 	}
 	else
-   {
-      const u32 id=iirf;
-      _vmem_WF32[id/4](addr,data);
-   }
-}
-
-void DYNACALL _vmem_WriteMem64(u32 addr, u64 data)
-{
-	u32 page=addr>>24;
-	size_t  iirf=(size_t)_vmem_MemInfo_ptr[page];
-	void* ptr=(void*)(iirf&~HANDLER_MAX);
-
-	if (likely(ptr!=0))
 	{
-		addr<<=iirf;
-		addr>>=iirf;
-
-		*((u64*)&(((u8*)ptr)[addr]))=data;
+		const u32 id=iirf;
+		if (sz==1)
+		{
+			 _vmem_WF8[id/4](addr,data);
+		}
+		else if (sz==2)
+		{
+			 _vmem_WF16[id/4](addr,data);
+		}
+		else if (sz==4)
+		{
+			 _vmem_WF32[id/4](addr,data);
+		}
+		else if (sz==8)
+		{
+			_vmem_WF32[id/4](addr,(u32)data);
+			_vmem_WF32[id/4](addr+4,(u32)((u64)data>>32));
+		}
+		else
+		{
+			die("Invalid size");
+		}
 	}
-	else
-   {
-      const u32 id=iirf;
-      _vmem_WF32[id/4](addr,(u32)data);
-      _vmem_WF32[id/4](addr+4,(u32)((u64)data>>32));
-   }
 }
+
+//ReadMem/WriteMem functions
+//ReadMem
+u32 DYNACALL _vmem_ReadMem8SX32(u32 Address) { return _vmem_readt<s8,s32>(Address); }
+u32 DYNACALL _vmem_ReadMem16SX32(u32 Address) { return _vmem_readt<s16,s32>(Address); }
+
+u8 DYNACALL _vmem_ReadMem8(u32 Address) { return _vmem_readt<u8,u8>(Address); }
+u16 DYNACALL _vmem_ReadMem16(u32 Address) { return _vmem_readt<u16,u16>(Address); }
+u32 DYNACALL _vmem_ReadMem32(u32 Address) { return _vmem_readt<u32,u32>(Address); }
+u64 DYNACALL _vmem_ReadMem64(u32 Address) { return _vmem_readt<u64,u64>(Address); }
+
+//WriteMem
+void DYNACALL _vmem_WriteMem8(u32 Address,u8 data) { _vmem_writet<u8>(Address,data); }
+void DYNACALL _vmem_WriteMem16(u32 Address,u16 data) { _vmem_writet<u16>(Address,data); }
+void DYNACALL _vmem_WriteMem32(u32 Address,u32 data) { _vmem_writet<u32>(Address,data); }
+void DYNACALL _vmem_WriteMem64(u32 Address,u64 data) { _vmem_writet<u64>(Address,data); }
 
 //0xDEADC0D3 or 0
 //#define MEM_LOG_SPAM
@@ -427,7 +348,9 @@ void _vmem_map_handler(_vmem_handler Handler,u32 start,u32 end)
 	verify(end<0x100);
 	verify(start<=end);
 	for (u32 i=start;i<=end;i++)
+   {
 		_vmem_MemInfo_ptr[i]=((u8*)0)+(0x00000000 + Handler*4);
+   }
 }
 
 //map a memory block to a mem region
@@ -495,6 +418,9 @@ void _vmem_term()
 
 }
 
+#include "hw/pvr/pvr_mem.h"
+#include "hw/sh4/sh4_mem.h"
+
 u8* virt_ram_base;
 
 static void* malloc_pages(size_t size)
@@ -527,8 +453,9 @@ void _vmem_bm_reset_nvmem(void);
 void _vmem_bm_reset(void)
 {
 #if !defined(TARGET_NO_NVMEM)
-	if (virt_ram_base)
+	if (virt_ram_base) {
       _vmem_bm_reset_nvmem();
+   }
 #endif
     
    if (!virt_ram_base)

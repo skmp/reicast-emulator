@@ -1539,9 +1539,7 @@ bool ta_parse_vdrc(TA_context* ctx)
 
 	vd_ctx->rend = vd_rc;
 	vd_ctx = 0;
-#if !defined(TARGET_NO_THREADS)
-   slock_unlock(ctx->rend_inuse);
-#endif
+   ctx->rend_inuse.Unlock();
 
 #ifdef HAVE_OIT
    ctx->rend.Overrun = overrun;

@@ -143,9 +143,7 @@ added_it:
 	}
 }
  
-#ifndef TARGET_NO_THREADS
-slock_t *vramlist_lock;
-#endif
+cMutex vramlist_lock;
 
 //simple IsInRange test
 static INLINE bool IsInRange(vram_block* block,u32 offset)
@@ -176,9 +174,7 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,
 	block->userdata=userdata;
 	block->type=64;
 
-#ifndef TARGET_NO_THREADS
-   slock_lock(vramlist_lock);
-#endif
+   vramlist_lock.Lock();
 
    vram.LockRegion(block->start,block->len);
 
@@ -188,9 +184,7 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,
 
    vramlock_list_add(block);
 
-#ifndef TARGET_NO_THREADS
-   slock_unlock(vramlist_lock);
-#endif
+   vramlist_lock.Unlock();
 
 	return block;
 }
@@ -205,9 +199,7 @@ bool VramLockedWrite(u8* address)
       size_t addr_hash = offset/PAGE_SIZE;
       vector<vram_block*>* list=&VramLocks[addr_hash];
 
-#ifndef TARGET_NO_THREADS
-      slock_lock(vramlist_lock);
-#endif
+      vramlist_lock.Lock();
 
       for (size_t i=0;i<list->size();i++)
       {
@@ -231,9 +223,7 @@ bool VramLockedWrite(u8* address)
       if (_nvmem_enabled() && VRAM_SIZE == 0x800000)
          vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
 
-#ifndef TARGET_NO_THREADS
-      slock_unlock(vramlist_lock);
-#endif
+      vramlist_lock.Unlock();
 
       return true;
    }
@@ -245,13 +235,9 @@ bool VramLockedWrite(u8* address)
 //also frees the handle
 void libCore_vramlock_Unlock_block(vram_block* block)
 {
-#ifndef TARGET_NO_THREADS
-	slock_lock(vramlist_lock);
-#endif
+   vramlist_lock.Lock();
 	libCore_vramlock_Unlock_block_wb(block);
-#ifndef TARGET_NO_THREADS
-	slock_unlock(vramlist_lock);
-#endif
+   vramlist_lock.Unlock();
 }
 
 void libCore_vramlock_Unlock_block_wb(vram_block* block)
@@ -262,19 +248,4 @@ void libCore_vramlock_Unlock_block_wb(vram_block* block)
 		//more work needed
 		free(block);
 	}
-}
-
-void libCore_vramlock_Free(void)
-{
-#ifndef TARGET_NO_THREADS
-   slock_free(vramlist_lock);
-   vramlist_lock = NULL;
-#endif
-}
-
-void libCore_vramlock_Init(void)
-{
-#ifndef TARGET_NO_THREADS
-   vramlist_lock = slock_new();
-#endif
 }

@@ -158,12 +158,56 @@ public:
 //Threads
 
 //Wait Events
-struct cResetEvent
+class cResetEvent
 {
+#ifndef TARGET_NO_THREADS
    slock_t *mutx;
    scond_t *cond;
+#endif
 
+public :
    bool state;
+	cResetEvent(bool State,bool Auto);
+	~cResetEvent();
+	void Set();		//Set state to signaled
+	void Reset();	//Set state to non signaled
+	void Wait(u32 msec);//Wait for signal , then reset[if auto]
+	void Wait();	//Wait for signal , then reset[if auto]
+};
+
+class cMutex
+{
+private:
+#ifndef TARGET_NO_THREADS
+   slock_t *mutx;
+#endif
+
+public :
+	bool state;
+	cMutex()
+	{
+#ifndef TARGET_NO_THREADS
+      mutx = slock_new();
+#endif
+	}
+	~cMutex()
+	{
+#ifndef TARGET_NO_THREADS
+      slock_free(mutx);
+#endif
+	}
+	void Lock()
+	{
+#ifndef TARGET_NO_THREADS
+      slock_lock(mutx);
+#endif
+	}
+	void Unlock()
+	{
+#ifndef TARGET_NO_THREADS
+      slock_lock(mutx);
+#endif
+	}
 };
 
 //Set the path !

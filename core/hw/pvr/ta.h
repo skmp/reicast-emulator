@@ -48,6 +48,3 @@ bool ta_parse_vdrc(TA_context* ctx);
 #define STRIPS_AS_PPARAMS 1
 
 #include "ta_ctx.h"
-
-void ta_ctx_init(void);
-void ta_ctx_free(void);

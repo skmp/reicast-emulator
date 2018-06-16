@@ -949,8 +949,6 @@ struct glesrend : Renderer
 {
 	bool Init()
    {
-      libCore_vramlock_Init();
-
       glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
 
       if (!gl_create_resources())
@@ -963,7 +961,7 @@ struct glesrend : Renderer
       return true;
    }
 	void Resize(int w, int h) { screen_width=w; screen_height=h; }
-	void Term() { libCore_vramlock_Free(); }
+	void Term() { }
 
 	bool Process(TA_context* ctx)
    {

@@ -21,8 +21,6 @@ struct PixelBuffer
 	u32 pixels_per_line;
 };
 
-void libCore_vramlock_Free(void);
-void libCore_vramlock_Init(void);
 void palette_update(void);
 
 #define clamp(minv,maxv,x) min(maxv,max(minv,x))

@@ -1183,8 +1183,6 @@ struct glesrend : Renderer
 {
 	bool Init()
    {
-      libCore_vramlock_Init();
-
       glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
 
       if (!gl_create_resources())
@@ -1228,7 +1226,7 @@ struct glesrend : Renderer
 		}
       reshapeABuffer(w, h);
 	}
-	void Term() { libCore_vramlock_Free(); }
+	void Term() { }
 
 	bool Process(TA_context* ctx)
    {

@@ -69,8 +69,8 @@ u32 FrameCount=1;
 Renderer* renderer;
 
 #if !defined(TARGET_NO_THREADS)
-cResetEvent rs;
-cResetEvent re;
+cResetEvent rs(false,true);
+cResetEvent re(false,true);
 #endif
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
@@ -84,13 +84,8 @@ bool rend_frame(TA_context* ctx, bool draw_osd)
 
 #if !defined(TARGET_NO_THREADS)
    if (!proc || !ctx->rend.isRTT)
-   {
       // If rendering to texture, continue locking until the frame is rendered
-      slock_lock(re.mutx);
-      re.state = true;
-      scond_signal(re.cond);
-      slock_unlock(re.mutx);
-   }
+      re.Set();
 #endif
    
    bool do_swp = proc && renderer->Render();
@@ -104,11 +99,7 @@ bool rend_single_frame(void)
    do
    {
 #if !defined(TARGET_NO_THREADS)
-      slock_lock(rs.mutx);
-      if (!rs.state)
-         scond_wait( rs.cond, rs.mutx );
-      rs.state=false;
-      slock_unlock(rs.mutx);
+      rs.Wait();
 #endif
       _pvrrc = DequeueRender();
    }
@@ -117,12 +108,7 @@ bool rend_single_frame(void)
 
 #if !defined(TARGET_NO_THREADS)
    if (_pvrrc->rend.isRTT)
-   {
-      slock_lock(re.mutx);
-      re.state = true;
-      scond_signal(re.cond);
-      slock_unlock(re.mutx);
-   }
+      re.Set();
 #endif
 
    //clear up & free data ..
@@ -234,11 +220,7 @@ void rend_end_render(void)
    if (pend_rend)
    {
 #if !defined(TARGET_NO_THREADS)
-      slock_lock(re.mutx);
-      if (!re.state)
-         scond_wait( re.cond, re.mutx );
-      re.state=false;
-      slock_unlock(re.mutx);
+      re.Wait();
 #else
       renderer->Present();
 #endif
@@ -255,11 +237,6 @@ bool rend_init(void)
 
 #if !defined(TARGET_NO_THREADS)
    rthd = (sthread_t*)sthread_create(rend_thread, 0);
-
-   rs.mutx = slock_new();
-   rs.cond = scond_new();
-   re.mutx = slock_new();
-   re.cond = scond_new();
 #else
    if (!renderer->Init()) die("rend->init() failed\n");
 
@@ -288,15 +265,6 @@ void rend_term(void)
 #if !defined(TARGET_NO_THREADS)
    sthread_join(rthd);
    rthd = NULL;
-
-   slock_free(re.mutx);
-   slock_free(rs.mutx);
-   scond_free(re.cond);
-   scond_free(rs.cond);
-   re.mutx = NULL;
-   rs.mutx = NULL;
-   re.cond = NULL;
-   rs.cond = NULL;
 #endif
 }
 

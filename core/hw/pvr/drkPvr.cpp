@@ -43,8 +43,6 @@ s32 libPvr_Init(void)
 		return rv_error;
    }
 
-   ta_ctx_init();
-
 	return rv_ok;
 }
 
@@ -53,5 +51,4 @@ void libPvr_Term(void)
 {
 	rend_term();
    spg_Term();
-   ta_ctx_free();
 }

@@ -471,6 +471,64 @@ static void enable_runfast(void)
 #endif
 }
 
+//cResetEvent Calss
+cResetEvent::cResetEvent(bool State,bool Auto)
+{
+	//sem_init((sem_t*)hEvent, 0, State?1:0);
+	verify(State==false&&Auto==true);
+#if !defined(TARGET_NO_THREADS)
+   mutx = slock_new();
+   cond = scond_new();
+#endif
+}
+
+cResetEvent::~cResetEvent()
+{
+#if !defined(TARGET_NO_THREADS)
+   slock_free(mutx);
+   scond_free(cond);
+#endif
+}
+void cResetEvent::Set()//Signal
+{
+#if !defined(TARGET_NO_THREADS)
+	slock_lock(mutx );
+#endif
+	state=true;
+#if !defined(TARGET_NO_THREADS)
+   scond_signal(cond);
+	slock_unlock(mutx );
+#endif
+}
+void cResetEvent::Reset()//reset
+{
+#if !defined(TARGET_NO_THREADS)
+	slock_lock(mutx );
+#endif
+	state=false;
+#if !defined(TARGET_NO_THREADS)
+	slock_unlock(mutx );
+#endif
+}
+void cResetEvent::Wait(u32 msec)//Wait for signal , then reset
+{
+	verify(false);
+}
+void cResetEvent::Wait()//Wait for signal , then reset
+{
+#if !defined(TARGET_NO_THREADS)
+	slock_lock(mutx);
+	if (!state)
+      scond_wait(cond, mutx);
+#endif
+	state=false;
+#if !defined(TARGET_NO_THREADS)
+   slock_unlock(mutx);
+#endif
+}
+
+//End AutoResetEvent
+
 void VArray2::LockRegion(u32 offset,u32 size)
 {
 #ifdef _WIN32

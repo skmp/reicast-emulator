@@ -164,10 +164,8 @@ struct TA_context
 	u32 Address;
 	u32 LastUsed;
 
-#if !defined(TARGET_NO_THREADS)
-	slock_t *thd_inuse;
-	slock_t *rend_inuse;
-#endif
+	cMutex thd_inuse;
+	cMutex rend_inuse;
 
 	tad_context tad;
 	rend_context rend;
@@ -201,10 +199,6 @@ struct TA_context
 	void Alloc(bool have_oit)
 	{
       unsigned vert_size, idx_size, modtrig_size;
-#if !defined(TARGET_NO_THREADS)
-      thd_inuse  = slock_new();
-      rend_inuse = slock_new();
-#endif
       tad.Reset((u8*)OS_aligned_malloc(32, 2*1024*1024));
 
       if (have_oit)
@@ -246,25 +240,14 @@ struct TA_context
 	void Reset()
 	{
       tad.Clear();
-
-#if !defined(TARGET_NO_THREADS)
-      slock_lock(rend_inuse);
-#endif
+      rend_inuse.Lock();
 		rend.Clear();
 		rend.proc_end = rend.proc_start = tad.thd_root;
-#if !defined(TARGET_NO_THREADS)
-      slock_unlock(rend_inuse);
-#endif
+      rend_inuse.Unlock();
 	}
 
 	void Free()
 	{
-#if !defined(TARGET_NO_THREADS)
-      slock_free(thd_inuse);
-      slock_free(rend_inuse);
-      thd_inuse  = NULL;
-      rend_inuse = NULL;
-#endif
       OS_aligned_free(tad.thd_root);
 		rend.verts.Free();
 		rend.idx.Free();

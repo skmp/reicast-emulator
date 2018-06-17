@@ -1,0 +1,425 @@
+diff --git a/core/hw/pvr/Renderer_if.cpp b/core/hw/pvr/Renderer_if.cpp
+index b3e8b2d9..a9d9b308 100644
+--- a/core/hw/pvr/Renderer_if.cpp
++++ b/core/hw/pvr/Renderer_if.cpp
+@@ -75,16 +75,22 @@ cResetEvent re(false,true);
+ 
+ int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
+ 
++static bool render_called = false;
++bool fb_dirty;
++bool render_framebuffer;
++u32 fb_watch_addr_start;
++u32 fb_watch_addr_end;
++
+ TA_context* _pvrrc;
+ void SetREP(TA_context* cntx);
+ 
+ bool rend_frame(TA_context* ctx, bool draw_osd)
+ {
+-   bool proc = renderer->Process(ctx);
++   bool proc = ctx == NULL || renderer->Process(ctx);
+ 
+ #if !defined(TARGET_NO_THREADS)
+-   if (!proc || !ctx->rend.isRTT)
+-      // If rendering to texture, continue locking until the frame is rendered
++   if (!proc || (ctx && !ctx->rend.isRTT))
++      // If rendering to texture, continue locking until the frame is rendered. Otherwise the next frame might be skipped if rendering too early.
+       re.Set();
+ #endif
+    
+@@ -103,17 +109,28 @@ bool rend_single_frame(void)
+ #endif
+       _pvrrc = DequeueRender();
+    }
+-   while (!_pvrrc);
++   while (!_pvrrc && !render_framebuffer);
+    bool do_swp = rend_frame(_pvrrc, true);
+ 
++   //clear up & free data ..
++   if (_pvrrc)
++   {
+ #if !defined(TARGET_NO_THREADS)
+-   if (_pvrrc->rend.isRTT)
+-      re.Set();
++      if (_pvrrc->rend.isRTT)
++			re.Set();
+ #endif
+-
+-   //clear up & free data ..
+-   FinishRender(_pvrrc);
+-   _pvrrc=0;
++		FinishRender(_pvrrc);
++		_pvrrc=0;
++   }
++   else
++   {
++      // Direct FB
++#if !defined(TARGET_NO_THREADS)
++		re.Set();
++#endif
++		FinishRender(NULL);
++   }
++   fb_dirty = false;
+ 
+    return do_swp;
+ }
+@@ -164,6 +181,14 @@ void rend_resize(int width, int height)
+ 
+ void rend_start_render(void)
+ {
++   render_called = true;
++	if (!(FB_W_SOF1 & 0x1000000)) {
++		fb_watch_addr_start = FB_W_SOF1;
++		u32 fb_size = (FB_R_SIZE.fb_y_size + 1)
++						* (FB_R_SIZE.fb_x_size + FB_R_SIZE.fb_modulus) / 4 - 1;
++		fb_watch_addr_end = FB_W_SOF1 + fb_size - 1;
++	}
++
+    pend_rend = false;
+    bool is_rtt=(FB_W_SOF1& 0x1000000)!=0;
+    TA_context* ctx = tactx_Pop(CORE_CURRENT_CTX);
+@@ -268,5 +293,16 @@ void rend_terminate(void)
+ 
+ void rend_vblank()
+ {
++   if ((!render_called || fb_dirty) && FB_R_CTRL.fb_enable /*&& (!SPG_CONTROL.interlace || SPG_STATUS.fieldnum == 0)*/) {
++		render_framebuffer = true;
++#if !defined(TARGET_NO_THREADS)
++		rs.Set();
++#endif
++	}
++	else {
++		render_framebuffer = false;
++		fb_dirty = false;
++	}
++	render_called = false;
+    os_DoEvents();
+ }
+diff --git a/core/hw/pvr/pvr_mem.cpp b/core/hw/pvr/pvr_mem.cpp
+index cfe8013e..79d56194 100644
+--- a/core/hw/pvr/pvr_mem.cpp
++++ b/core/hw/pvr/pvr_mem.cpp
+@@ -210,11 +210,21 @@ void DYNACALL pvr_write_area1_8(u32 addr,u8 data)
+ 
+ void DYNACALL pvr_write_area1_16(u32 addr,u16 data)
+ {
++   u32 maddr = addr & VRAM_MASK;
++	if (!fb_dirty && maddr <= fb_watch_addr_end && maddr + 1 >= fb_watch_addr_start) {
++		fb_dirty = true;
++		//printf("framebuffer write detected\n");
++	}
+    *(u16*)&vram.data[pvr_map32(addr) & VRAM_MASK]=data;
+ }
+ 
+ void DYNACALL pvr_write_area1_32(u32 addr,u32 data)
+ {
++   u32 maddr = addr & VRAM_MASK;
++	if (!fb_dirty && maddr <= fb_watch_addr_end && maddr + 3 >= fb_watch_addr_start) {
++		fb_dirty = true;
++		//printf("FRAMEBUFFER WRITE DETECTED\n");
++	}
+    *(u32*)&vram.data[pvr_map32(addr) & VRAM_MASK] = data;
+ }
+ 
+diff --git a/core/hw/pvr/pvr_mem.h b/core/hw/pvr/pvr_mem.h
+index 916e27c9..87324c1e 100644
+--- a/core/hw/pvr/pvr_mem.h
++++ b/core/hw/pvr/pvr_mem.h
+@@ -33,3 +33,7 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
+ void YUV_init();
+ //registers 
+ #define PVR_BASE 0x005F8000
++
++extern u32 fb_watch_addr_start;
++extern u32 fb_watch_addr_end;
++extern bool fb_dirty;
+diff --git a/core/hw/pvr/ta_ctx.cpp b/core/hw/pvr/ta_ctx.cpp
+index 94648cda..3ef2b90c 100644
+--- a/core/hw/pvr/ta_ctx.cpp
++++ b/core/hw/pvr/ta_ctx.cpp
+@@ -154,12 +154,15 @@ bool rend_framePending(void)
+ 
+ void FinishRender(TA_context* ctx)
+ {
+-   verify(rqueue == ctx);
+-   mtx_rqueue.Lock();
+-	rqueue = 0;
+-   mtx_rqueue.Unlock();
++   if (ctx)
++   {
++      verify(rqueue == ctx);
++      mtx_rqueue.Lock();
++      rqueue = 0;
++      mtx_rqueue.Unlock();
+ 
+-	tactx_Recycle(ctx);
++      tactx_Recycle(ctx);
++   }
+    frame_finished.Set();
+ }
+ 
+diff --git a/core/rend/gles/gles.cpp b/core/rend/gles/gles.cpp
+index c703c113..292c1a07 100644
+--- a/core/rend/gles/gles.cpp
++++ b/core/rend/gles/gles.cpp
+@@ -567,13 +567,13 @@ static bool RenderFrame(void)
+ {
+    DoCleanup();
+ 
+-	bool is_rtt=pvrrc.isRTT;
++   bool is_rtt = _pvrrc ? pvrrc.isRTT : false;
+ 
+ 	//if (FrameCount&7) return;
+ 
+ 	//Setup the matrix
+    float vtx_min_fZ = 0.f;
+-	float vtx_max_fZ = pvrrc.fZ_max;
++   float vtx_max_fZ= pvrrc.fZ_max;
+ 
+ 	//sanitise the values, now with NaN detection (for omap)
+ 	//0x49800000 is 1024*1024. Using integer math to avoid issues w/ infs and nans
+@@ -657,7 +657,12 @@ static bool RenderFrame(void)
+ 	float dc_width=640;
+ 	float dc_height=480;
+ 
+-	if (!is_rtt)
++   if (_pvrrc == NULL)
++	{
++		gcflip = 0;
++		renderFrameBuffer(dc_width, dc_height);
++	}
++   else if (!is_rtt)
+ 	{
+ 		gcflip=0;
+ 	}
+@@ -869,49 +874,56 @@ static bool RenderFrame(void)
+ 
+ 	//move vertex to gpu
+ 
+-	//Main VBO
+-	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry);
+-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);
++   if (_pvrrc)
++   {
++      //Main VBO
++      glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry);
++      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);
+ 
+-	glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW);
++      glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW);
+ 
+-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
++      glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
+ 
+-	//Modvol VBO
+-	if (pvrrc.modtrig.used())
+-	{
+-		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols);
+-		glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW);
+-	}
++      //Modvol VBO
++      if (pvrrc.modtrig.used())
++      {
++         glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols);
++         glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW);
++      }
+ 
+-	int offs_x=ds2s_offs_x+0.5f;
+-	//this needs to be scaled
++      int offs_x=ds2s_offs_x+0.5f;
++      //this needs to be scaled
+ 
+-	//not all scaling affects pixel operations, scale to adjust for that
+-	scale_x *= scissoring_scale_x;
++      //not all scaling affects pixel operations, scale to adjust for that
++      scale_x *= scissoring_scale_x;
+ 
+ #if 0
+-   //handy to debug really stupid render-not-working issues ...
+-   printf("SS: %dx%d\n", screen_width, screen_height);
+-   printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
+-   printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
++      //handy to debug really stupid render-not-working issues ...
++      printf("SS: %dx%d\n", screen_width, screen_height);
++      printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
++      printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
+ #endif
+ 
+-   if (!wide_screen_on)
+-   {
+-      glScissor(
+-            offs_x + pvrrc.fb_X_CLIP.min / scale_x,
+-            (pvrrc.fb_Y_CLIP.min / scale_y) * dc2s_scale_h,
+-            (pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,
+-            (pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h
+-            );
+-      glcache.Enable(GL_SCISSOR_TEST);
+-   }
++      if (!wide_screen_on)
++      {
++         glScissor(
++               offs_x + pvrrc.fb_X_CLIP.min / scale_x,
++               (pvrrc.fb_Y_CLIP.min / scale_y) * dc2s_scale_h,
++               (pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,
++               (pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h
++               );
++         glcache.Enable(GL_SCISSOR_TEST);
++      }
+ 
+-	//restore scale_x
+-	scale_x /= scissoring_scale_x;
++      //restore scale_x
++      scale_x /= scissoring_scale_x;
+ 
+-   DrawStrips();
++      DrawStrips();
++   }
++   else
++   {
++      drawFrameBuffer(dc_width, dc_height);
++   }
+ 
+ 	KillTex = false;
+    
+diff --git a/core/rend/gles/gles.h b/core/rend/gles/gles.h
+index ff99d068..66051765 100644
+--- a/core/rend/gles/gles.h
++++ b/core/rend/gles/gles.h
+@@ -9,6 +9,8 @@
+ #define VERTEX_COL_OFFS_ARRAY 2
+ #define VERTEX_UV_ARRAY       3
+ 
++#define glCheck()
++
+ //vertex types
+ extern float scale_x, scale_y;
+ 
+@@ -92,3 +94,6 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
+ void vertex_buffer_unmap(void);
+ 
+ bool CompilePipelineShader(PipelineShader* s);
++
++void renderFrameBuffer(float &width, float &height);
++void drawFrameBuffer(float w, float h);
+diff --git a/core/rend/gles/gltex.cpp b/core/rend/gles/gltex.cpp
+index 293b5366..d89119de 100644
+--- a/core/rend/gles/gltex.cpp
++++ b/core/rend/gles/gltex.cpp
+@@ -719,3 +719,116 @@ void rend_text_invl(vram_block* bl)
+ 
+ 	libCore_vramlock_Unlock_block_wb(bl);
+ }
++
++static GLuint fbTextureId;
++
++void renderFrameBuffer(float &width, float &height) {
++
++	width = (FB_R_SIZE.fb_x_size + 1) << 1;
++	height = FB_R_SIZE.fb_y_size + 1;
++	if (SPG_CONTROL.interlace)
++		height *= 2;
++	int modulus = (FB_R_SIZE.fb_modulus - 1) << 1;
++
++	int bpp = FB_R_CTRL.fb_depth == 3 ? 4 : 2;	// FIXME other formats
++	if (bpp == 4) {
++		width /= 2;
++		modulus /= 2;
++	}
++
++	if (fbTextureId == 0)
++		fbTextureId = glcache.GenTexture();
++
++	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
++
++	//set texture repeat mode
++	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
++	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
++	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
++	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
++
++	u8 *dst = (u8*)temp_tex_buffer;
++	for (int y = 0; y < height; y++) {
++		for (int bank = 0; bank < SPG_CONTROL.interlace; bank++) {
++			int bufline = y;
++			if (SPG_CONTROL.interlace)
++				bufline /= 2;
++			u32 bank_addr = bank ? FB_R_SOF2 : FB_R_SOF1;
++			for (int i = 0; i < width; i++) {
++				if (bpp == 2) {
++					u16 src = pvr_read_area1_16(bank_addr + (i + bufline * (width + modulus)) * bpp);
++					*dst++ = ((src >> 11) & 0x1F) << 3;
++					*dst++ = ((src >> 5) & 0x3F) << 2;
++					*dst++ = ((src >> 0) & 0x1F) << 3;
++				}
++				else
++				{
++					u32 src = pvr_read_area1_32(bank_addr + (i + bufline * (width + modulus)) * bpp);
++					*dst++ = (src >> 16) & 0xFF;
++					*dst++ = (src >> 8) & 0xFF;
++					*dst++ = src & 0xFF;
++				}
++			}
++		}
++	}
++	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, temp_tex_buffer); glCheck();
++
++	printf("FB_R_SOF1=%x FB_R_SOF1[0]=%x FB_R_SOF2=%x FB_R_SOF2[0]=%x FB_R_CTRL.fb_depth=%d FB_R_SIZE=%f x %f %% %d%c fb_strip_buf_en=%d\n",
++		FB_R_SOF1, vri(FB_R_SOF1), FB_R_SOF2, vri(FB_R_SOF2), FB_R_CTRL.fb_depth, width, height, modulus, SPG_CONTROL.interlace ? 'i' : ' ',
++		FB_R_CTRL.fb_strip_buf_en);
++}
++
++void drawFrameBuffer(float w, float h) {
++	printf("drawFrameBuffer(%f,%f)\n", w, h);
++
++	struct Vertex vertices[] = {
++			{ 0, h, 0.0001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
++			{ 0, 0, 0.0001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
++			{ w, h, 0.0001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
++			{ w, 0, 0.0001, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
++	};
++	GLushort indices[] = { 0, 1, 2, 1, 3 };
++
++	glcache.ClearColor(0, 0.5, 1, 1);
++	glClear(GL_COLOR_BUFFER_BIT);
++	glcache.Disable(GL_SCISSOR_TEST);
++	glcache.Disable(GL_DEPTH_TEST);
++
++	PipelineShader *shader = &gl.program_table[GetProgramID(0, 1, 1, 0, 1, 0, 0, 0)];
++//	PipelineShader *shader = &gl.pogram_table[GetProgramID(0, 1, 0, 0, 1, 0, 0, 0)]; // no texture
++	if (shader->program == -1)
++		CompilePipelineShader(shader);
++	glcache.UseProgram(shader->program); glCheck();
++
++	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
++
++	//GLuint hGeometry, hIndices;
++	//glGenBuffers(1, &hGeometry); glCheck();
++	//glGenBuffers(1, &hIndices);
++
++	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
++	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, hIndices); glCheck();
++
++	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW); glCheck();
++	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW); glCheck();
++	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); glCheck();
++
++	//setup vertex buffers attrib pointers
++	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
++	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x)); glCheck();
++
++	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY); glCheck();
++	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, col)); glCheck();
++
++	glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY); glCheck();
++	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, vtx_spc)); glCheck();
++
++	glEnableVertexAttribArray(VERTEX_UV_ARRAY); glCheck();
++	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u)); glCheck();
++
++	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, indices); glCheck();
++	//glDrawArrays(GL_TRIANGLE_STRIP, 0, 3); glCheck();
++
++	//glcache.DeleteTextures(1, &fbTextureId);
++	//fbTextureId = 0;
++}

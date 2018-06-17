@@ -22,7 +22,6 @@
 #include "../dyna/blockmanager.h"
 #include "../sh4_sched.h"
 
-#include <time.h>
 #include <float.h>
 
 #define SH4_TIMESLICE (448)

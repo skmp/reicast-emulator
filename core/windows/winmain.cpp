@@ -705,20 +705,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 	return 0;
 }
 
-
-	
-LARGE_INTEGER qpf;
-double  qpfd;
 //Helper functions
-double os_GetSeconds()
-{
-	static bool initme = (QueryPerformanceFrequency(&qpf), qpfd=1/(double)qpf.QuadPart);
-	LARGE_INTEGER time_now;
-
-	QueryPerformanceCounter(&time_now);
-	return time_now.QuadPart*qpfd;
-}
-
 void os_DebugBreak()
 {
 	__debugbreak();

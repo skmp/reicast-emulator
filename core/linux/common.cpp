@@ -17,7 +17,6 @@
 #include <signal.h>
 #include <sys/param.h>
 #include <sys/mman.h>
-#include <sys/time.h>
 #if !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX)
   #include <sys/personality.h>
   #include <dlfcn.h>
@@ -254,13 +253,6 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 	#else
 		printf("VA2: UnLockRegion\n");
 	#endif
-}
-double os_GetSeconds()
-{
-	timeval a;
-	gettimeofday (&a,0);
-	static u64 tvs_base=a.tv_sec;
-	return a.tv_sec-tvs_base+a.tv_usec/1000000.0;
 }
 
 #if TARGET_IPHONE

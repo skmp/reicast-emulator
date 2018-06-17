@@ -1,7 +1,9 @@
 #include <string.h>
-#include <vector>
 #include <sys/stat.h>
 #include "types.h"
+
+#include <chrono>
+#include <vector>
 
 #if BUILD_COMPILER==COMPILER_VC
 	#include <io.h>
@@ -101,6 +103,15 @@ string get_readonly_data_path(const string& filename)
 	return user_filepath;
 }
 
+double os_GetSeconds()
+{
+    static auto time_base = std::chrono::high_resolution_clock::now();
+
+    auto time_now = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = time_now - time_base;
+
+    return diff.count();
+}
 
 #if 0
 //File Enumeration

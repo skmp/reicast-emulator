@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2015 The RetroArch team
+/* Copyright  (C) 2010-2018 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (gx_pthread.h).
@@ -60,12 +60,6 @@
 #define OSInitCond(cond) LWP_CondInit(cond)
 #endif
 
-#if 0
-#ifndef OSSignalCond
-#define OSSignalCond(cond) LWP_ThreadSignal(cond)
-#endif
-#endif
-
 #ifndef OSWaitCond
 #define OSWaitCond(cond, mutex) LWP_CondWait(cond, mutex)
 #endif
@@ -80,10 +74,6 @@
 
 #ifndef OSJoinThread
 #define OSJoinThread(thread, val) LWP_JoinThread(thread, val)
-#endif
-
-#ifndef OSSignalCond
-#define OSSignalCond(thread) LWP_CondSignal(thread)
 #endif
 
 #ifndef OSCreateThread
@@ -105,6 +95,12 @@ static INLINE int pthread_create(pthread_t *thread,
    *thread = 0;
    return OSCreateThread(thread, start_routine, 0 /* unused */, arg,
          0, STACKSIZE, 64, 0 /* unused */);
+}
+
+static INLINE pthread_t pthread_self(void)
+{
+   /* zero 20-mar-2016: untested */
+   return LWP_GetSelf();
 }
 
 static INLINE int pthread_mutex_init(pthread_mutex_t *mutex,
@@ -171,8 +167,7 @@ static INLINE int pthread_cond_init(pthread_cond_t *cond,
 
 static INLINE int pthread_cond_signal(pthread_cond_t *cond)
 {
-   OSSignalCond(*cond);
-   return 0;
+   return LWP_CondSignal(*cond);
 }
 
 static INLINE int pthread_cond_broadcast(pthread_cond_t *cond)
@@ -184,5 +179,7 @@ static INLINE int pthread_cond_destroy(pthread_cond_t *cond)
 {
    return LWP_CondDestroy(*cond);
 }
+
+extern int pthread_equal(pthread_t t1, pthread_t t2);
 
 #endif

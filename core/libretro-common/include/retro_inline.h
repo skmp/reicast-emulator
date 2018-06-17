@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2015 The RetroArch team
+/* Copyright  (C) 2010-2018 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (retro_inline.h).
@@ -25,8 +25,8 @@
 
 #ifndef INLINE
 
-#if !defined(__cplusplus) && defined(_WIN32)
-#define INLINE _inline
+#if defined(_WIN32) || defined(__INTEL_COMPILER)
+#define INLINE __inline
 #elif defined(__STDC_VERSION__) && __STDC_VERSION__>=199901L
 #define INLINE inline
 #elif defined(__GNUC__)

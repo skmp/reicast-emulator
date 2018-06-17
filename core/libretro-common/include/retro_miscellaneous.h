@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2015 The RetroArch team
+/* Copyright  (C) 2010-2018 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (retro_miscellaneous.h).
@@ -23,29 +23,24 @@
 #ifndef __RARCH_MISCELLANEOUS_H
 #define __RARCH_MISCELLANEOUS_H
 
-#include <stdint.h>
+#define RARCH_MAX_SUBSYSTEMS 10
+#define RARCH_MAX_SUBSYSTEM_ROMS 10
 
-#if defined(__CELLOS_LV2__) && !defined(__PSL1GHT__)
-#include <sys/timer.h>
-#elif defined(XENON)
-#include <time/time.h>
-#elif defined(GEKKO) || defined(__PSL1GHT__) || defined(__QNX__)
-#include <unistd.h>
-#elif defined(PSP)
-#include <pspthreadman.h> 
-#elif defined(VITA)
-#include <psp2/kernel/threadmgr.h>
-#elif defined(_3DS)
-#include <3ds.h>
-#else
-#include <time.h>
-#endif
+#include <stdint.h>
+#include <boolean.h>
+#include <retro_inline.h>
 
 #if defined(_WIN32) && !defined(_XBOX)
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 #elif defined(_WIN32) && defined(_XBOX)
 #include <Xtl.h>
+#endif
+
+#if defined(__CELLOS_LV2__)
+#include <sys/fs_external.h>
 #endif
 
 #include <limits.h>
@@ -53,111 +48,111 @@
 #ifdef _MSC_VER
 #include <compat/msvc.h>
 #endif
-#include <retro_inline.h>
+
+static INLINE void bits_or_bits(uint32_t *a, uint32_t *b, uint32_t count)
+{
+   uint32_t i;
+   for (i = 0; i < count;i++)
+      a[i] |= b[i];
+}
+
+static INLINE void bits_clear_bits(uint32_t *a, uint32_t *b, uint32_t count)
+{
+   uint32_t i;
+   for (i = 0; i < count;i++)
+      a[i] &= ~b[i];
+}
+
+static INLINE bool bits_any_set(uint32_t* ptr, uint32_t count)
+{
+   uint32_t i;
+   for (i = 0; i < count; i++)
+   {
+      if (ptr[i] != 0)
+         return true;
+   }
+   return false;
+}
 
 #ifndef PATH_MAX_LENGTH
+#if defined(__CELLOS_LV2__)
+#define PATH_MAX_LENGTH CELL_FS_MAX_FS_PATH_LENGTH
+#elif defined(_XBOX1) || defined(_3DS) || defined(PSP) || defined(GEKKO)|| defined(WIIU)
+#define PATH_MAX_LENGTH 512
+#else
 #define PATH_MAX_LENGTH 4096
 #endif
-
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
-#define RARCH_SCALE_BASE 256
-
-/**
- * retro_sleep:
- * @msec         : amount in milliseconds to sleep
- *
- * Sleeps for a specified amount of milliseconds (@msec).
- **/
-static INLINE void retro_sleep(unsigned msec)
-{
-#if defined(__CELLOS_LV2__) && !defined(__PSL1GHT__)
-   sys_timer_usleep(1000 * msec);
-#elif defined(PSP) || defined(VITA)
-   sceKernelDelayThread(1000 * msec);
-#elif defined(_3DS)
-   svcSleepThread(1000000 * (s64)msec);
-#elif defined(_WIN32)
-   Sleep(msec);
-#elif defined(XENON)
-   udelay(1000 * msec);
-#elif defined(GEKKO) || defined(__PSL1GHT__) || defined(__QNX__)
-   usleep(1000 * msec);
-#else
-   struct timespec tv = {0};
-   tv.tv_sec = msec / 1000;
-   tv.tv_nsec = (msec % 1000) * 1000000;
-   nanosleep(&tv, NULL);
 #endif
-}
 
-/**
- * next_pow2:
- * @v         : initial value
- *
- * Get next power of 2 value based on  initial value.
- *
- * Returns: next power of 2 value (derived from @v).
- **/
-static INLINE uint32_t next_pow2(uint32_t v)
-{
-   v--;
-   v |= v >> 1;
-   v |= v >> 2;
-   v |= v >> 4;
-   v |= v >> 8;
-   v |= v >> 16;
-   v++;
-   return v;
-}
+#ifndef MAX
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
 
-/**
- * prev_pow2:
- * @v         : initial value
- *
- * Get previous power of 2 value based on initial value.
- *
- * Returns: previous power of 2 value (derived from @v).
- **/
-static INLINE uint32_t prev_pow2(uint32_t v)
-{
-   v |= v >> 1;
-   v |= v >> 2;
-   v |= v >> 4;
-   v |= v >> 8;
-   v |= v >> 16;
-   return v - (v >> 1);
-}
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
 
-/* Helper macros and struct to keep track of many booleans.
- * To check for multiple bits, use &&, not &.
- * For OR, | can be used. */
-typedef struct
-{
-   uint32_t data[8];
-} rarch_bits_t;
+#define ARRAY_SIZE(a)              (sizeof(a) / sizeof((a)[0]))
+
+#define BITS_GET_ELEM(a, i)        ((a).data[i])
+#define BITS_GET_ELEM_PTR(a, i)    ((a)->data[i])
 
 #define BIT_SET(a, bit)   ((a)[(bit) >> 3] |=  (1 << ((bit) & 7)))
 #define BIT_CLEAR(a, bit) ((a)[(bit) >> 3] &= ~(1 << ((bit) & 7)))
-#define BIT_GET(a, bit)   ((a)[(bit) >> 3] &   (1 << ((bit) & 7)))
+#define BIT_GET(a, bit)   (((a)[(bit) >> 3] >> ((bit) & 7)) & 1)
 
 #define BIT16_SET(a, bit)    ((a) |=  (1 << ((bit) & 15)))
 #define BIT16_CLEAR(a, bit)  ((a) &= ~(1 << ((bit) & 15)))
-#define BIT16_GET(a, bit) (!!((a) &   (1 << ((bit) & 15))))
+#define BIT16_GET(a, bit)    (((a) >> ((bit) & 15)) & 1)
 #define BIT16_CLEAR_ALL(a)   ((a) = 0)
 
 #define BIT32_SET(a, bit)    ((a) |=  (1 << ((bit) & 31)))
 #define BIT32_CLEAR(a, bit)  ((a) &= ~(1 << ((bit) & 31)))
-#define BIT32_GET(a, bit) (!!((a) &   (1 << ((bit) & 31))))
+#define BIT32_GET(a, bit)    (((a) >> ((bit) & 31)) & 1)
 #define BIT32_CLEAR_ALL(a)   ((a) = 0)
 
 #define BIT64_SET(a, bit)    ((a) |=  (UINT64_C(1) << ((bit) & 63)))
 #define BIT64_CLEAR(a, bit)  ((a) &= ~(UINT64_C(1) << ((bit) & 63)))
-#define BIT64_GET(a, bit) (!!((a) &   (UINT64_C(1) << ((bit) & 63))))
+#define BIT64_GET(a, bit)    (((a) >> ((bit) & 63)) & 1)
 #define BIT64_CLEAR_ALL(a)   ((a) = 0)
 
-#define BIT128_SET(a, bit)   ((a).data[(bit) >> 5] |=  (1 << ((bit) & 31))
+#define BIT128_SET(a, bit)   ((a).data[(bit) >> 5] |=  (1 << ((bit) & 31)))
 #define BIT128_CLEAR(a, bit) ((a).data[(bit) >> 5] &= ~(1 << ((bit) & 31)))
-#define BIT128_GET(a, bit)   ((a).data[(bit) >> 5] &   (1 << ((bit) & 31)))
-#define BIT128_CLEAR_ALL(a)  memset(&(a), 0, sizeof(a));
+#define BIT128_GET(a, bit)   (((a).data[(bit) >> 5] >> ((bit) & 31)) & 1)
+#define BIT128_CLEAR_ALL(a)  memset(&(a), 0, sizeof(a))
+
+#define BIT128_SET_PTR(a, bit)   BIT128_SET(*a, bit)
+#define BIT128_CLEAR_PTR(a, bit) BIT128_CLEAR(*a, bit)
+#define BIT128_GET_PTR(a, bit)   BIT128_GET(*a, bit)
+#define BIT128_CLEAR_ALL_PTR(a)  BIT128_CLEAR_ALL(*a)
+
+#define BIT256_SET(a, bit)       BIT128_SET(a, bit)
+#define BIT256_CLEAR(a, bit)     BIT128_CLEAR(a, bit)
+#define BIT256_GET(a, bit)       BIT128_GET(a, bit)
+#define BIT256_CLEAR_ALL(a)      BIT128_CLEAR_ALL(a)
+
+#define BIT256_SET_PTR(a, bit)   BIT256_SET(*a, bit)
+#define BIT256_CLEAR_PTR(a, bit) BIT256_CLEAR(*a, bit)
+#define BIT256_GET_PTR(a, bit)   BIT256_GET(*a, bit)
+#define BIT256_CLEAR_ALL_PTR(a)  BIT256_CLEAR_ALL(*a)
+
+#define BITS_COPY16_PTR(a,bits) \
+{ \
+   BIT128_CLEAR_ALL_PTR(a); \
+   BITS_GET_ELEM_PTR(a, 0) = (bits) & 0xffff; \
+}
+
+#define BITS_COPY32_PTR(a,bits) \
+{ \
+   BIT128_CLEAR_ALL_PTR(a); \
+   BITS_GET_ELEM_PTR(a, 0) = (bits); \
+}
+
+/* Helper macros and struct to keep track of many booleans. */
+/* This struct has 256 bits. */
+typedef struct
+{
+   uint32_t data[8];
+} retro_bits_t;
 
 #endif

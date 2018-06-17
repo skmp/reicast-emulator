@@ -1506,12 +1506,17 @@ bool ta_parse_vdrc(TA_context* ctx)
 	if (ctx->rend.isRTT || 0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
 	{
 		TAFifo0.vdec_init();
+      unsigned count = settings.rend.Multipass ? ctx->tad.render_pass_count : 1;
 
       for (int pass = 0; pass <= ctx->tad.render_pass_count; pass++)
       {
-         ctx->MarkRend(pass);
-         vd_rc.proc_start = ctx->rend.proc_start;
-			vd_rc.proc_end = ctx->rend.proc_end;
+         if (settings.rend.Multipass)
+         {
+            ctx->MarkRend(pass);
+
+            vd_rc.proc_start = ctx->rend.proc_start;
+            vd_rc.proc_end = ctx->rend.proc_end;
+         }
 
          Ta_Dma* ta_data=(Ta_Dma*)vd_rc.proc_start;
          Ta_Dma* ta_data_end=((Ta_Dma*)vd_rc.proc_end)-1;
@@ -1521,14 +1526,17 @@ bool ta_parse_vdrc(TA_context* ctx)
             ta_data =TaCmd(ta_data,ta_data_end);
          }while(ta_data<=ta_data_end);
 
-         RenderPass *render_pass = vd_rc.render_passes.Append();
-			render_pass->op_count = vd_rc.global_param_op.used();
-			render_pass->mvo_count = vd_rc.global_param_mvo.used();
-			render_pass->pt_count = vd_rc.global_param_pt.used();
-			render_pass->tr_count = vd_rc.global_param_tr.used();
+         if (settings.rend.Multipass)
+         {
+            RenderPass *render_pass = vd_rc.render_passes.Append();
+            render_pass->op_count = vd_rc.global_param_op.used();
+            render_pass->mvo_count = vd_rc.global_param_mvo.used();
+            render_pass->pt_count = vd_rc.global_param_pt.used();
+            render_pass->tr_count = vd_rc.global_param_tr.used();
 #ifdef HAVE_OIT
-         render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
+            render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
 #endif
+         }
       }
 
       rv = true; //whatever

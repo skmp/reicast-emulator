@@ -155,6 +155,12 @@ void retro_set_environment(retro_environment_t cb)
          "reicast_mipmapping",
          "Mipmapping; enabled|disabled",
       },
+#ifndef HAVE_OIT
+      {
+         "reicast_multipass",
+         "Multipass support (restart); disabled|enabled",
+      },
+#endif
       {
          "reicast_volume_modifier_enable",
          "Volume modifier; enabled|disabled",
@@ -252,7 +258,7 @@ void retro_deinit(void)
 
 static bool is_dupe = false;
 
-static void update_variables(void)
+static void update_variables(bool first_startup)
 {
    struct retro_variable var = {
       .key = "reicast_internal_resolution",
@@ -307,6 +313,23 @@ static void update_variables(void)
    }
    else
       settings.rend.UseMipmaps      = 1;
+
+#ifndef HAVE_OIT
+   if (first_startup)
+   {
+      var.key = "reicast_multipass";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "enabled"))
+            settings.rend.Multipass      = true;
+         else if (!strcmp(var.value, "disabled"))
+            settings.rend.Multipass      = false;
+      }
+      else
+         settings.rend.Multipass         = false;
+   }
+#endif
 
    var.key = "reicast_volume_modifier_enable";
 
@@ -466,7 +489,7 @@ void retro_run (void)
 {
    bool updated = false;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
-      update_variables();
+      update_variables(false);
 
    if (first_run)
    {
@@ -490,7 +513,7 @@ void retro_reset (void)
    dc_term();
    first_run = true;
    settings.dreamcast.cable = 3;
-   update_variables();
+   update_variables(false);
 }
 
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
@@ -606,7 +629,7 @@ bool retro_load_game(const struct retro_game_info *game)
    snprintf(game_dir_no_slash, sizeof(game_dir_no_slash), "%s%cdc", dir, slash);
 
    settings.dreamcast.cable = 3;
-   update_variables();
+   update_variables(true);
 
    if (game->path[0] == '\0')
       boot_to_bios = true;

@@ -14,6 +14,8 @@
 #include "hw/pvr/Renderer_if.h"
 #include "../../hw/mem/_vmem.h"
 
+void GenSorted(int first, int count);
+
 extern retro_environment_t environ_cb;
 extern bool fog_needs_update;
 bool KillTex=false;
@@ -862,6 +864,9 @@ static bool RenderFrame(void)
    glStencilMask(0xFF);
    glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+   if (!settings.rend.Multipass && UsingAutoSort())
+      GenSorted(0, pvrrc.global_param_tr.used());
+
 	//move vertex to gpu
 
 	//Main VBO
@@ -927,6 +932,8 @@ void co_dc_yield(void);
 bool ProcessFrame(TA_context* ctx)
 {
    ctx->rend_inuse.Lock();
+   if (!settings.rend.Multipass)
+      ctx->MarkRend(0);
 
    if (KillTex)
    {

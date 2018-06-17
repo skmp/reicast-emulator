@@ -314,9 +314,11 @@ static void update_variables(bool first_startup)
    else
       settings.rend.UseMipmaps      = 1;
 
-#ifndef HAVE_OIT
    if (first_startup)
    {
+#ifdef HAVE_OIT
+      settings.rend.Multipass            = true;
+#else
       var.key = "reicast_multipass";
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -328,8 +330,8 @@ static void update_variables(bool first_startup)
       }
       else
          settings.rend.Multipass         = false;
-   }
 #endif
+   }
 
    var.key = "reicast_volume_modifier_enable";
 

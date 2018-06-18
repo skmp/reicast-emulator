@@ -29,7 +29,9 @@ void RegWriteInfo(shil_opcode* ops, shil_param p,size_t ord)
 		{
 			if (RegisterWrite[p._reg+i]>=RegisterRead[p._reg+i] && RegisterWrite[p._reg+i]!=0xFFFFFFFF)	//if last read was before last write, and there was a last write
 			{
+#ifndef NDEBUG
 				printf("DEAD OPCODE %d %d!\n",RegisterWrite[p._reg+i],ord);
+#endif
 				ops[RegisterWrite[p._reg+i]].Flow=1; //the last write was unused
 			}
 			RegisterWrite[p._reg+i]=ord;
@@ -110,12 +112,16 @@ void sq_pref(RuntimeBlockInfo* blk, int i, Sh4RegType rt, bool mark)
 	{
 		blk->oplist[i].flags =0x1337;
 		sq_pref(blk,i,rt,true);
+#ifndef NDEBUG
 		printf("SQW-WM match %d !\n",data);
+#endif
 	}
+#ifndef NDEBUG
 	else if (data)
 	{
 		printf("SQW-WM FAIL %d !\n",data);
 	}
+#endif
 }
 
 void sq_pref(RuntimeBlockInfo* blk)
@@ -185,12 +191,16 @@ void rdgrp(RuntimeBlockInfo* blk)
 					blk->oplist[started].Flow=(rdc-1)*2 - (pend_add?1:0);
 					blk->oplist[started+1].rs2._imm=addv;
 
+#ifndef NDEBUG
 					printf("Read Combination %d %d!\n",rdc,addv);
+#endif
 				}
+#ifndef NDEBUG
 				else if (rdc!=1)
 				{
 					printf("Read Combination failed %d %d %d\n",rdc,rdc*stride*4,addv);
 				}
+#endif
 				started=-1;
 			}
 		}
@@ -270,12 +280,16 @@ void wtgrp(RuntimeBlockInfo* blk)
 					blk->oplist[started].Flow=(rdc-1)*2 - (pend_add?1:0);
 					blk->oplist[started+1].rs2._imm=addv;
 
+#ifndef NDEBUG
 					printf("Write Combination %d %d!\n",rdc,addv);
+#endif
 				}
+#ifndef NDEBUG
 				else if (rdc!=1)
 				{
 					printf("Write Combination failed fr%d,%d, %d %d %d\n",regd,mask,rdc,rdc*stride*4,addv);
 				}
+#endif
 				i=started;
 				started=-1;
 			}
@@ -361,6 +375,7 @@ void rw_related(RuntimeBlockInfo* blk)
 
 	}
 
+#ifndef NDEBUG
 	if (memtotal)
 	{
 		u32 lookups=memtotal-total;
@@ -371,6 +386,7 @@ void rw_related(RuntimeBlockInfo* blk)
 	{
 		//printf("rw_related total: none\n");
 	}
+#endif
 
 	blk->memops=memtotal;
 	blk->linkedmemops=total;
@@ -404,7 +420,9 @@ void constprop(RuntimeBlockInfo* blk)
 				{
 					//convert em to mov/shl/shr
 
+#ifndef NDEBUG
 					printf("sh*d -> s*l !\n");
+#endif
 					s32 v=op->rs2._imm;
 
 					if (v>=0)
@@ -458,7 +476,9 @@ void constprop(RuntimeBlockInfo* blk)
 					op->rs1._imm+=op->rs3._imm;
 					op->rs3.type=FMT_NULL;
 				}
+#ifndef NDEBUG
 				printf("%s promotion: %08X\n",shop_readm==op->op?"shop_readm":"shop_writem",op->rs1._imm);
+#endif
 			}
 			else if (op->op==shop_jdyn)
 			{
@@ -471,13 +491,17 @@ void constprop(RuntimeBlockInfo* blk)
 					blk->BlockType=blk->BlockType==BET_DynamicJump?BET_StaticJump:BET_StaticCall;
 					blk->oplist.erase(blk->oplist.begin()+i);
 					i--;
+#ifndef NDEBUG
 					printf("SBP: %08X -> %08X!\n",blk->addr,blk->BranchBlock);
+#endif
 					continue;
 				}
+#ifndef NDEBUG
 				else
 				{
 					printf("SBP: failed :(\n");
 				}
+#endif
 			}
 			else if (op->op==shop_mov32)
 			{
@@ -493,7 +517,9 @@ void constprop(RuntimeBlockInfo* blk)
 						(rv[op->rs1._reg]+op->rs2._imm):
 						(rv[op->rs1._reg]-op->rs2._imm);
 					op->rs2.type=0;
+#ifndef NDEBUG
 					printf("%s -> mov32!\n",op->op==shop_add?"shop_add":"shop_sub");
+#endif
 					op->op=shop_mov32;
 				}
 				
@@ -503,7 +529,9 @@ void constprop(RuntimeBlockInfo* blk)
 					op->rs1=op->rs2;
 					op->rs2.type=1;
 					op->rs2._imm=immy;
+#ifndef NDEBUG
 					printf("%s -> imm prm (%08X)!\n",op->op==shop_add?"shop_add":"shop_sub",immy);
+#endif
 				}
 			}
 			else
@@ -531,7 +559,9 @@ void constprop(RuntimeBlockInfo* blk)
 			{
 				isi[op->rd._reg]=true;
 				rv[op->rd._reg]= ReadMem32(op->rs1._imm);
+#ifndef NDEBUG
 				printf("IMM MOVE: %08X -> %08X\n",op->rs1._imm,rv[op->rd._reg]);
+#endif
 
 				op->op=shop_mov32;
 				op->rs1._imm=rv[op->rd._reg];
@@ -622,8 +652,10 @@ void read_v4m3z1(RuntimeBlockInfo* blk)
 			{
 				if (b)
 					st_sta--;
+#ifndef NDEBUG
 				if (a)
 					printf("NOT B\b");
+#endif
 				u32 start=st_sta;
 								
 				for (int j=0;j<5;j++)
@@ -738,10 +770,12 @@ void enswap(RuntimeBlockInfo* blk)
 				op->Flow=1;
 				continue;
 			}
+#ifndef NDEBUG
 			else
 			{
 				printf("bswap -- wrong regs\n");
 			}
+#endif
 		}
 
 		if (state==1 && op->op==shop_ror && op->rs2.is_imm() && op->rs2._imm==16 && 
@@ -753,14 +787,17 @@ void enswap(RuntimeBlockInfo* blk)
 				op->Flow=1;
 				continue;
 			}
+#ifndef NDEBUG
 			else
 			{
 				printf("bswap -- wrong regs\n");
 			}
+#endif
 		}
 
 		if (state==2 && op->op==shop_swaplb && op->rs1._reg==r)
 		{
+#ifndef NDEBUG
 			if (op->rd._reg!=r)
 			{
 				printf("oops?\n");
@@ -769,6 +806,7 @@ void enswap(RuntimeBlockInfo* blk)
 			{
 				printf("SWAPM!\n");
 			}
+#endif
 			op->Flow=1;
 			state=0;
 		}

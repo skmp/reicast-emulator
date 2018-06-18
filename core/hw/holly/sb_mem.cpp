@@ -173,7 +173,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 		else if (likely((addr>= 0x005F8000) && (addr<=0x005F9FFF))) //	:TA / PVR Core Reg.
 		{
 			//EMUERROR2("Read from area0_32 not implemented [TA / PVR Core Reg], addr=%x",addr);
-			verify(sz==4);
+			//verify(sz==4); //HOTD2 fails this check
 			return (T)PvrReg(addr, u32);
 		}
 	}

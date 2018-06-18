@@ -43,7 +43,9 @@ int idxnxx = 0;
 
 void ngen_ResetBlocks(void)
 {
+#ifndef NDEBUG
    printf("@@\tngen_ResetBlocks()\n");
+#endif
 	idxnxx = 0;
 }
 

@@ -136,12 +136,16 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 		if (addr==0x2C01)
 		{
 			VREG=data;
+#ifndef NDEBUG
          printf("VREG = %02X\n",VREG);
+#endif
 		}
 		else if (addr==0x2C00)
 		{
 			ARMRST=data;
+#ifndef NDEBUG
          printf("ARMRST = %02X\n",ARMRST);
+#endif
 			ArmSetRST();
 		}
 		else
@@ -155,7 +159,9 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 		{
 			VREG=(data>>8)&0xFF;
 			ARMRST=data&0xFF;
+#ifndef NDEBUG
          printf("VREG = %02X ARMRST %02X\n",VREG,ARMRST);
+#endif
 			ArmSetRST();
 		}
 		else
@@ -268,10 +274,14 @@ void Write_SB_E1ST(u32 addr, u32 data)
             u32 t=src;
             src=dst;
             dst=t;
+#ifndef NDEBUG
             printf("G2-EXT1 DMA : SB_E1DIR==1 DMA Read to 0x%X from 0x%X %d bytes\n",dst,src,len);
+#endif
          }
+#ifndef NDEBUG
          else
             printf("G2-EXT1 DMA : SB_E1DIR==0:DMA Write to 0x%X from 0x%X %d bytes\n",dst,src,len);
+#endif
 
          WriteMemBlock_nommu_dma(dst,src,len);
 

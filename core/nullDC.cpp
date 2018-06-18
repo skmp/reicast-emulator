@@ -274,6 +274,9 @@ void LoadSettings(void)
    settings.pvr.Emulation.zMin         = 0.f;
    settings.pvr.Emulation.zMax         = 1.0f;
 
+#if !defined(NO_MMU)
+   settings.MMUEnabled                  = true;
+#endif
 	settings.pvr.MaxThreads			       = 3;
 #ifndef __LIBRETRO__
    settings.pvr.Emulation.ModVol       = true;

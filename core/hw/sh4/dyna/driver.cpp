@@ -74,7 +74,9 @@ static void recSh4_ClearCache(void)
 	LastAddr=LastAddr_min;
 	bm_Reset();
 
+#ifndef NDEBUG
 	printf("recSh4:Dynarec Cache clear at %08X\n",curr_pc);
+#endif
 }
 
 static void recSh4_Run(void)
@@ -293,7 +295,9 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 
 	if (!rbi)
 	{
+#ifndef NDEBUG
 		printf("Stale block ..");
+#endif
 		rbi=bm_GetStaleBlock(code);
 	}
 	
@@ -354,10 +358,12 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 		verify(rbi->host_code_size>=ncs);
 		rbi->host_code_size=ncs;
 	}
+#ifndef NDEBUG
 	else
 	{
 		printf(" .. null RBI: %08X -- unlinked stale block\n",next_pc);
 	}
+#endif
 	
 	return (void*)rv;
 }

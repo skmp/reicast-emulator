@@ -66,7 +66,9 @@ void CCN_CCR_write(u32 addr, u32 value)
 	//what is 0xAC13DBF8 from ?
 	if (temp.ICI && curr_pc!=0xAC13DBF8)
 	{
+#ifndef NDEBUG
 		printf("Sh4: i-cache invalidation %08X\n",curr_pc);
+#endif
 		sh4_cpu.ResetCache();
 	}
 

@@ -152,6 +152,10 @@ void retro_set_environment(retro_environment_t cb)
          "Internal resolution (restart); 640x480|1280x960|1920x1440|2560x1920|3200x2400|3840x2880|4480x3360|5120x3840|5760x4320|6400x4800|7040x5280|7680x5760|8320x6240|8960x6720|9600x7200|10240x7680|10880x8160|11520x8640|12160x9120|12800x9600",
       },
       {
+         "reicast_gdrom_fast_loading",
+         "GDROM Fast Loading (inaccurate); disabled|enabled",
+      },
+      {
          "reicast_mipmapping",
          "Mipmapping; enabled|disabled",
       },
@@ -257,6 +261,7 @@ void retro_deinit(void)
 }
 
 static bool is_dupe = false;
+extern int GDROM_TICK;
 
 static void update_variables(bool first_startup)
 {
@@ -301,6 +306,18 @@ static void update_variables(bool first_startup)
    }
    else
       boot_to_bios = false;
+
+   var.key = "reicast_gdrom_fast_loading";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "enabled"))
+         GDROM_TICK      = 0001000;
+      else if (!strcmp(var.value, "disabled"))
+         GDROM_TICK      = 1500000;
+   }
+   else
+      GDROM_TICK      = 1500000;
 
    var.key = "reicast_mipmapping";
 

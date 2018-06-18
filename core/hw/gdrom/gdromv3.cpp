@@ -1069,7 +1069,7 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 	}
 }
 
-const int GDROM_TICK=1500000;
+int GDROM_TICK=1500000;
 
 //is this needed ?
 int GDRomschd(int i, int c, int j)

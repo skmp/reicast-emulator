@@ -47,39 +47,6 @@ int UpdateSystem_INTC(void)
 	return UpdateINTC();
 }
 
-static inline void Sh4_int_Run_execInternal(s32 *l)
-{
-   do
-   {
-      u32 addr = next_pc;
-      next_pc += 2;
-      u32 op = ReadMem16(addr);
-
-      OpPtr[op](op);
-      *l -= CPU_RATIO;
-   } while (*l > 0);
-   *l += SH4_TIMESLICE;
-   UpdateSystem_INTC();
-}
-
-static inline void Sh4_int_Run_exec(s32 *l)
-{
-   if (settings.MMUEnabled)
-   {
-      try
-      {
-         Sh4_int_Run_execInternal(l);
-      }
-      catch (SH4ThrownException ex)
-      {
-         Do_Exception(ex.epc, ex.expEvn, ex.callVect);
-         *l -= CPU_RATIO * 5;
-      }
-   }
-   else
-      Sh4_int_Run_execInternal(l);
-}
-
 void Sh4_int_Stop(void)
 {
 	if (sh4_int_bCpuRun)
@@ -92,8 +59,50 @@ void Sh4_int_Run(void)
 
 	s32 l=SH4_TIMESLICE;
 
-	for (int i=0; i<10000; i++)
-      Sh4_int_Run_exec(&l);
+#if !defined(NO_MMU)
+   if (settings.MMUEnabled)
+   {
+      for (int i=0; i<10000; i++)
+      {
+         try
+         {
+            do
+            {
+               u32 addr = next_pc;
+               next_pc += 2;
+               u32 op = ReadMem16(addr);
+
+               OpPtr[op](op);
+               l -= CPU_RATIO;
+            } while (l > 0);
+            l += SH4_TIMESLICE;
+            UpdateSystem_INTC();
+         }
+         catch (SH4ThrownException ex)
+         {
+            Do_Exception(ex.epc, ex.expEvn, ex.callVect);
+            l -= CPU_RATIO * 5;
+         }
+      }
+   }
+   else
+#endif
+   {
+      for (int i=0; i<10000; i++)
+      {
+         do
+         {
+            u32 addr = next_pc;
+            next_pc += 2;
+            u32 op = ReadMem16(addr);
+
+            OpPtr[op](op);
+            l -= CPU_RATIO;
+         } while (l > 0);
+         l += SH4_TIMESLICE;
+         UpdateSystem_INTC();
+      }
+   }
 }
 
 
@@ -147,22 +156,18 @@ bool Sh4_int_IsCpuRunning(void)
 	return sh4_int_bCpuRun;
 }
 
-static void ExecuteDelayslotInternal(void)
-{
-   u32 addr = next_pc;
-   next_pc += 2;
-   u32 op = ReadMem16(addr);
-   if (op != 0)
-      ExecuteOpcode(op);
-}
-
 //TODO : Check for valid delayslot instruction
 void ExecuteDelayslot(void)
 {
+#if !defined(NO_MMU)
    if (settings.MMUEnabled)
    {
       try {
-         ExecuteDelayslotInternal();
+         u32 addr = next_pc;
+         next_pc += 2;
+         u32 op = IReadMem16(addr);
+         if (op != 0)
+            ExecuteOpcode(op);
       }
       catch (SH4ThrownException ex)
       {
@@ -172,13 +177,21 @@ void ExecuteDelayslot(void)
       }
    }
    else
-      ExecuteDelayslotInternal();
+#endif
+   {
+      u32 addr = next_pc;
+      next_pc += 2;
+      u32 op = IReadMem16(addr);
+      if (op != 0)
+         ExecuteOpcode(op);
+   }
 }
 
 void ExecuteDelayslot_RTE(void)
 {
 	u32 oldsr = sr.GetFull();
 
+#if !defined(NO_MMU)
    if (settings.MMUEnabled)
    {
       try {
@@ -191,6 +204,7 @@ void ExecuteDelayslot_RTE(void)
       }
    }
    else
+#endif
    {
       sr.SetFull(ssr);
       ExecuteDelayslot();

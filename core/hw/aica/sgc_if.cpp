@@ -326,7 +326,14 @@ struct ChannelEx
 	{
 		s32 val;
 		__forceinline s32 GetValue() { return val>>AEG_STEP_BITS;}
-		void SetValue(u32 aegb) { val=aegb<<AEG_STEP_BITS; }
+      __forceinline _EG_state GetState() const { return state; }
+		__forceinline u32 GetAttackRate() const { return AttackRate; }
+		__forceinline u32 GetDecay1Rate() const { return Decay1Rate; }
+		__forceinline u32 GetDecay2Rate() const { return Decay2Rate; }
+		__forceinline u32 GetReleaseRate() const { return ReleaseRate; }
+		__forceinline u32 GetDecayValue() const { return Decay2Value; }
+
+		__forceinline void SetValue(u32 aegb) { val=aegb<<AEG_STEP_BITS; }
 
 		_EG_state state;
 
@@ -388,45 +395,76 @@ struct ChannelEx
 
 		return rv;
 	}
-	__forceinline bool Step(int32_t& oLeft, int32_t& oRight, int32_t& oDsp)
-	{
-		if (!enabled)
-		{
-			oLeft=oRight=oDsp=0;
-			return false;
-		}
-		else
-		{
-			int32_t sample=InterpolateSample();
+	__forceinline bool Step(int32_t& oLeft, int32_t& oRight, int32_t& oDsp, int32_t mixl, int32_t mixr)
+   {
+      if (!enabled)
+      {
+         oLeft=oRight=oDsp=0;
+         return false;
+      }
 
-			//Volume & Mixer processing
-			//All attenuations are added together then applied and mixed :)
-			
-			//offset is up to 511
-			//*Att is up to 511
-			//logtable handles up to 1024, anything >=255 is mute
+      int32_t sample=InterpolateSample();
 
-			u32 ofsatt=lfo.alfo+(AEG.GetValue()>>2);
-			
-			s32* logtable=ofsatt+tl_lut;
+      //Volume & Mixer processing
+      //All attenuations are added together then applied and mixed :)
+      u32 ofsatt=lfo.alfo+(AEG.GetValue()>>2);
+      ofsatt=MIN(ofsatt,255);//make sure it never gets more 255 -- it can happen with some alfo/aeg combinations
 
-			oLeft=FPMul(sample,logtable[VolMix.DLAtt],15);
-			oRight=FPMul(sample,logtable[VolMix.DRAtt],15);
-			oDsp=FPMul(sample,logtable[VolMix.DSPAtt],15);
+      u32 const max_att=((16<<4)-1)-ofsatt;
 
-			StepAEG(this);
-			StepFEG(this);
-			StepStream(this);
-			lfo.Step(this);
-			return true;
-		}
-	}
+      s32* logtable=ofsatt+tl_lut;
+
+      u32 dl = MIN(VolMix.DLAtt,max_att);
+      u32 dr = MIN(VolMix.DRAtt,max_att);
+      u32 ds = MIN(VolMix.DSPAtt,max_att);
+
+      oLeft=FPMul(sample,logtable[dl],15);
+      oRight=FPMul(sample,logtable[dr],15);
+      oDsp=FPMul(sample,logtable[ds],15);
+
+      if (settings.aica.EGHack)
+      {
+         if( (s64)(this->ccd->DL + mixl + mixr + *VolMix.DSPOut) == 0)
+         {
+            switch(this->AEG.GetState())
+            {
+               case EG_Decay1:
+                  {
+                     if(this->AEG.GetAttackRate() > this->AEG.GetDecay1Rate())
+                     {
+                        //printf("Promote 1\n");
+                        this->SetAegState(EG_Attack);
+                     }
+
+                     break;
+                  }
+
+               case EG_Decay2:
+                  {
+                     if(this->AEG.GetAttackRate() > this->AEG.GetDecay2Rate())
+                     {
+                        //printf("Promote 2\n");
+                        this->SetAegState(EG_Attack);
+                     }
+
+                     break;
+                  }
+            }
+         }
+      }
+
+      StepAEG(this);
+      StepFEG(this);
+      StepStream(this);
+      lfo.Step(this);
+      return true;
+   }
 
 	__forceinline void Step(int32_t& mixl, int32_t& mixr)
 	{
 		int32_t oLeft,oRight,oDsp;
 
-		Step(oLeft,oRight,oDsp);
+		Step(oLeft,oRight,oDsp, mixl, mixr);
 
 		*VolMix.DSPOut+=oDsp;
 		mixl+=oLeft;
@@ -1167,7 +1205,8 @@ void AICA_Sample32(void)
 		{
 			int32_t oLeft,oRight,oDsp;
 			//stop working on this channel if its turned off ...
-			if (!Chans[ch].Step(oLeft, oRight, oDsp))
+			if (!Chans[ch].Step(oLeft, oRight, oDsp, mxlr[i*2+0],
+                  mxlr[i*2+1]))
 				break;
 
 			sg++;

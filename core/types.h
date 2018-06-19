@@ -629,6 +629,7 @@ struct settings_t
       u32 NoSound;        //0 ->sound, 1 -> no sound
       bool InterruptHack;
       bool AegStepHack;
+      bool EGHack;
    } aica;
 
 	struct

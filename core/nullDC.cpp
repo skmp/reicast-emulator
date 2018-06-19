@@ -107,7 +107,7 @@ void plugins_Reset(bool Manual)
 	//libExtDevice_Reset(Manual);
 }
 
-#include "rom_luts.c"
+#include "rom_luts.h"
 
 static void LoadSpecialSettingsCPU(void)
 {
@@ -171,6 +171,12 @@ static void LoadSpecialSettings(void)
          {
             log_cb(RETRO_LOG_INFO, "[Hack]: Applying rendertotexture hack.\n");
             settings.rend.RenderToTextureBuffer = lut_games[i].rendertotexturebuffer;
+         }
+
+         if (lut_games[i].eg_hack != -1)
+         {
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying EG hack.\n");
+            settings.aica.EGHack = lut_games[i].eg_hack;
          }
 
          break;
@@ -266,6 +272,7 @@ void LoadSettings(void)
 	settings.aica.LimitFPS			= 0;
 	settings.aica.NoBatch			= 0;
    settings.aica.NoSound			= 0;
+   settings.aica.EGHack          = 0;
 	settings.pvr.subdivide_transp	= 0;
 	settings.pvr.ta_skip			   = 0;
 	settings.pvr.rend				   = 0;

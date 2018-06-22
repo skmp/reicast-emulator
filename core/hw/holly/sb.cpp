@@ -14,7 +14,6 @@
 #include "hw/maple/maple_if.h"
 #include "hw/aica/aica.h"
 
-#include "hw/flashrom/flashrom.h"
 #include "reios/reios.h"
 #include "hw/naomi/naomi.h"
 

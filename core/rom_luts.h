@@ -66,7 +66,6 @@ static struct game_type lut_games[] =
 
    /* Alpha sort mode */
    { "MK-5100050", -1, -1, -1,  1, -1, -1,  -1  },                /* Sonic Adventure */
-   { "MK-5105950", -1, -1, -1,  1, -1, -1,  -1  },                /* Shenmue */
 
    /* Translucent Polygon Depth Mask */
    { "RDC-0057",   -1, -1, -1, -1,  1, -1,  -1  },                /* Cosmic Smash */

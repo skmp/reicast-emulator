@@ -1124,8 +1124,11 @@ struct maple_naomi_jamma : maple_sega_controller
 					static unsigned short coin1 = 0x0000;
 					static unsigned short coin2 = 0x0000;
 					unsigned char Key[256] = { 0 };
+
+#if 0
 #ifdef _WIN32
                GetKeyboardState(Key);
+#endif
 #endif
 					if (keycode&NAOMI_SERVICE_KEY_1)			//Service ?
 						glbl |= 0x80;

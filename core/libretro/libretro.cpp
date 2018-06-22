@@ -58,6 +58,29 @@ enum DreamcastController
    DC_AXIS_Y  = 0X20001,
 };
 
+enum NAOMI_KEYS
+{
+	NAOMI_SERVICE_KEY_1 = 1 << 0,
+	NAOMI_TEST_KEY_1 = 1 << 1,
+	NAOMI_SERVICE_KEY_2 = 1 << 2,
+	NAOMI_TEST_KEY_2 = 1 << 3,
+
+	NAOMI_START_KEY = 1 << 4,
+
+	NAOMI_UP_KEY = 1 << 5,
+	NAOMI_DOWN_KEY = 1 << 6,
+	NAOMI_LEFT_KEY = 1 << 7,
+	NAOMI_RIGHT_KEY = 1 << 8,
+
+	NAOMI_BTN0_KEY = 1 << 9,
+	NAOMI_BTN1_KEY = 1 << 10,
+	NAOMI_BTN2_KEY = 1 << 11,
+	NAOMI_BTN3_KEY = 1 << 12,
+	NAOMI_BTN4_KEY = 1 << 13,
+	NAOMI_BTN5_KEY = 1 << 14,
+	NAOMI_COIN_KEY = 1 << 15,
+};
+
 struct retro_perf_callback perf_cb;
 retro_get_cpu_features_t perf_get_cpu_features_cb = NULL;
 
@@ -950,8 +973,52 @@ static uint16_t get_analog_trigger( retro_input_state_t input_state_cb,
    return trigger;
 }
 
+static void UpdateInputStateNaomi(u32 port)
+{
+   int id;
+   static const uint16_t joymap[] =
+   {
+      /* JOYPAD_B      */ NAOMI_BTN2_KEY, /* BTN3 */
+      /* JOYPAD_Y      */ NAOMI_BTN0_KEY, /* BTN1 */
+      /* JOYPAD_SELECT */ NAOMI_COIN_KEY,
+      /* JOYPAD_START  */ NAOMI_START_KEY,
+      /* JOYPAD_UP     */ NAOMI_UP_KEY,
+      /* JOYPAD_DOWN   */ NAOMI_DOWN_KEY,
+      /* JOYPAD_LEFT   */ NAOMI_LEFT_KEY,
+      /* JOYPAD_RIGHT  */ NAOMI_RIGHT_KEY,
+      /* JOYPAD_A      */ NAOMI_BTN3_KEY, /* BTN4 */
+      /* JOYPAD_X      */ NAOMI_BTN1_KEY, /* BTN2 */
+   };
+
+   //
+   // -- buttons
+
+   for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_X; ++id)
+   {
+      uint16_t dc_key = joymap[id];
+      bool is_down = input_cb(port, RETRO_DEVICE_JOYPAD, 0, id);
+
+      if ( is_down )
+         kcode[port] &= ~dc_key;
+      else
+         kcode[port] |= dc_key;
+   }
+}
+
 void UpdateInputState(u32 port)
 {
+#if DC_PLATFORM == DC_PLATFORM_NAOMI
+   bool is_naomi = true;
+#else
+   bool is_naomi = false;
+#endif
+  
+   if (is_naomi)
+   {
+      UpdateInputStateNaomi(port);
+      return;
+   }
+
    int id;
    static const uint16_t joymap[] =
    {
@@ -966,7 +1033,6 @@ void UpdateInputState(u32 port)
       /* JOYPAD_A      */ DC_BTN_B,
       /* JOYPAD_X      */ DC_BTN_Y,
    };
-
 
    //
    // -- buttons

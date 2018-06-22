@@ -4,8 +4,16 @@ u8* RomPtr;
 u32 RomSize;
 
 #ifdef _WIN32
+#include <windows.h>
 typedef HANDLE fd_t;
 #define INVALID_FD INVALID_HANDLE_VALUE
+#ifndef FILE_READ_ACCESS
+#define FILE_READ_ACCESS        0x0001
+#endif
+
+#ifndef FILE_WRITE_ACCESS
+#define FILE_WRITE_ACCESS       0x0002
+#endif
 #else
 typedef int fd_t;
 #define INVALID_FD -1

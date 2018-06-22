@@ -27,11 +27,11 @@ static HollyInterruptID OldDmaId;
 
 RomChip sys_rom(BIOS_SIZE);
 
-#ifdef FLASH_SIZE
+#if (DC_PLATFORM==DC_PLATFORM_DREAMCAST) || (DC_PLATFORM==DC_PLATFORM_DEV_UNIT) || (DC_PLATFORM==DC_PLATFORM_ATOMISWAVE)
 DCFlashChip sys_nvmem(FLASH_SIZE);
 #endif
 
-#ifdef BBSRAM_SIZE
+#if  (DC_PLATFORM==DC_PLATFORM_NAOMI) || (DC_PLATFORM==DC_PLATFORM_NAOMI2)
 SRamChip sys_nvmem(BBSRAM_SIZE);
 #endif
 

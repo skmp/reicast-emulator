@@ -209,10 +209,10 @@ struct vram_block
 	
 	//DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
 	#define RAM_SIZE (16*1024*1024)
-	#define VRAM_SIZE (8*1024*1024)
-	#define ARAM_SIZE (2*1024*1024)
-	#define BIOS_SIZE (2*1024*1024)
-	#define FLASH_SIZE (128*1024)
+	const unsigned VRAM_SIZE = (8*1024*1024);
+	const unsigned ARAM_SIZE = (2*1024*1024);
+	const unsigned BIOS_SIZE = (2*1024*1024);
+	const unsigned FLASH_SIZE = (128*1024);
 
 	#define ROM_PREFIX "dc_"
 	#define ROM_NAMES
@@ -224,10 +224,10 @@ struct vram_block
 
 	//Devkit : 32 mb ram, 8? mb vram, 2? mb aram, 2? mb bios, ? flash
 	#define RAM_SIZE (32*1024*1024)
-	#define VRAM_SIZE (8*1024*1024)
-	#define ARAM_SIZE (2*1024*1024)
-	#define BIOS_SIZE (2*1024*1024)
-	#define FLASH_SIZE (128*1024)
+	const unsigned VRAM_SIZE = (8*1024*1024);
+	const unsigned ARAM_SIZE = (2*1024*1024);
+	const unsigned BIOS_SIZE = (2*1024*1024);
+	const unsigned FLASH_SIZE = (128*1024);
 
 	#define ROM_PREFIX "hkt_"
 	#define ROM_NAMES
@@ -237,10 +237,10 @@ struct vram_block
 
 	//Naomi : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
 	#define RAM_SIZE (32*1024*1024)
-	#define VRAM_SIZE (16*1024*1024)
-	#define ARAM_SIZE (8*1024*1024)
-	#define BIOS_SIZE (2*1024*1024)
-	#define BBSRAM_SIZE (8*1024)
+	const unsigned VRAM_SIZE   = (16*1024*1024);
+	const unsigned ARAM_SIZE   = (8*1024*1024);
+	const unsigned BIOS_SIZE   = (2*1024*1024);
+	const unsigned BBSRAM_SIZE = (8*1024);
 
 	#define ROM_PREFIX "naomi_"
 	#define ROM_NAMES ";epr-21576d.bin"
@@ -250,10 +250,10 @@ struct vram_block
 
 	//Naomi2 : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
 	#define RAM_SIZE (32*1024*1024)
-	#define VRAM_SIZE (16*1024*1024)
-	#define ARAM_SIZE (8*1024*1024)
-	#define BIOS_SIZE (2*1024*1024)	
-	#define BBSRAM_SIZE (8*1024)
+	const unsigned VRAM_SIZE   = (16*1024*1024);
+	const unsigned ARAM_SIZE   = (8*1024*1024);
+	const unsigned BIOS_SIZE   = (2*1024*1024);
+	const unsigned BBSRAM_SIZE = (8*1024);
 
 	#define ROM_PREFIX "n2_"
 	#define ROM_NAMES
@@ -265,10 +265,10 @@ struct vram_block
 
 	//Atomiswave : 16(?) mb ram, 16 mb vram, 8 mb aram, 64kb bios, 64k flash
 	#define RAM_SIZE (16*1024*1024)
-	#define VRAM_SIZE (16*1024*1024)
-	#define ARAM_SIZE (8*1024*1024)
-	#define BIOS_SIZE (64*1024)
-	#define FLASH_SIZE (64*1024)
+	const unsigned VRAM_SIZE  = (16*1024*1024);
+	const unsigned ARAM_SIZE  = (8*1024*1024);
+	const unsigned BIOS_SIZE  = (64*1024);
+	const unsigned FLASH_SIZE = (64*1024);
 
 	#define ROM_PREFIX "aw_"
 	#define ROM_NAMES ";bios.ic23_l"
@@ -278,18 +278,9 @@ struct vram_block
 	#error invalid build config
 #endif
 
-#define RAM_MASK	(RAM_SIZE-1)
-#define VRAM_MASK	(VRAM_SIZE-1)
-#define ARAM_MASK	(ARAM_SIZE-1)
-#define BIOS_MASK	(BIOS_SIZE-1)
-
-#ifdef FLASH_SIZE
-#define FLASH_MASK	(FLASH_SIZE-1)
-#endif
-
-#ifdef BBSRAM_SIZE
-#define BBSRAM_MASK	(BBSRAM_SIZE-1)
-#endif
+const unsigned RAM_MASK  =	(RAM_SIZE-1);
+const unsigned VRAM_MASK =	(VRAM_SIZE-1);
+const unsigned ARAM_MASK =	(ARAM_SIZE-1);
 
 #define GD_CLOCK 33868800				//GDROM XTAL -- 768fs
 

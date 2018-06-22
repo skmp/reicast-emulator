@@ -758,7 +758,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #define GIT_VERSION ""
 #endif
    info->library_version = "0.1" GIT_VERSION;
-   info->valid_extensions = "cdi|gdi|chd|cue";
+   info->valid_extensions = "chd|cdi|iso|elf|bin|cue|gdi|lst";
    info->need_fullpath = true;
    info->block_extract = false;
 }

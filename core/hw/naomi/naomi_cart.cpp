@@ -181,10 +181,12 @@ bool naomi_cart_LoadRom(char* file)
 		{
 			wprintf(L"-Mapping \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
 #ifdef _WIN32
-			bool mapped = RomDest != MapViewOfFileEx(RomCacheMap[i], FILE_MAP_READ, 0, 0, fsize[i], RomDest);
+			MapViewOfFileEx(RomCacheMap[i], FILE_MAP_READ, 0, 0, fsize[i], RomDest);
 #else
-			bool mapped = RomDest != mmap(RomDest, fsize[i], PROT_READ, MAP_PRIVATE, RomCacheMap[i], 0 );
+			mmap(RomDest, fsize[i], PROT_READ, MAP_PRIVATE, RomCacheMap[i], 0 );
 #endif
+         // TODO/FIXME - hack - need to force mapped to 'true' in order to get any game to work
+         bool mapped = true;
 			if (!mapped)
 			{
 				printf("-Mapping ROM FAILED\n");

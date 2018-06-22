@@ -979,6 +979,8 @@ void printState(u32 cmd, u32* buffer_in, u32 buffer_in_len)
 	}
 }
 
+extern u16 kcode[4];
+
 /*
 Sega Dreamcast Controller
 No error checking of any kind, but works just fine
@@ -1012,7 +1014,6 @@ struct maple_naomi_jamma : maple_sega_controller
 
 				buffer_out[0] = 0xffffffff;
 				buffer_out[1] = 0xffffffff;
-            extern u16 kcode[4];
 				u32 keycode = ~kcode[0];
 				u32 keycode2 = ~kcode[1];
 

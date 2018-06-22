@@ -74,14 +74,30 @@ bool LoadHle(const string& root) {
 #if (DC_PLATFORM == DC_PLATFORM_DREAMCAST) || (DC_PLATFORM == DC_PLATFORM_DEV_UNIT) || (DC_PLATFORM == DC_PLATFORM_NAOMI) || (DC_PLATFORM == DC_PLATFORM_NAOMI2)
 
 u32 ReadBios(u32 addr,u32 sz) { return sys_rom.Read(addr,sz); }
-void WriteBios(u32 addr,u32 data,u32 sz) { EMUERROR4("Write to [Boot ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz); }
+void WriteBios(u32 addr,u32 data,u32 sz)
+{
+#ifndef NDEBUG
+   EMUERROR4("Write to [Boot ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz);
+#endif
+}
 
 u32 ReadFlash(u32 addr,u32 sz) { return sys_nvmem.Read(addr,sz); }
 void WriteFlash(u32 addr,u32 data,u32 sz) { sys_nvmem.Write(addr,data,sz); }
 
 #elif (DC_PLATFORM == DC_PLATFORM_ATOMISWAVE)
-	u32 ReadFlash(u32 addr,u32 sz) { EMUERROR3("Read from [Flash ROM] is not possible, addr=%x,size=%d",addr,sz); return 0; }
-	void WriteFlash(u32 addr,u32 data,u32 sz) { EMUERROR4("Write to [Flash ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz); }
+	u32 ReadFlash(u32 addr,u32 sz)
+{
+#ifndef NDEBUG
+   EMUERROR3("Read from [Flash ROM] is not possible, addr=%x,size=%d",addr,sz);
+#endif
+   return 0;
+}
+	void WriteFlash(u32 addr,u32 data,u32 sz)
+{
+#ifndef NDEBUG
+   EMUERROR4("Write to [Flash ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz);
+#endif
+}
 
 	u32 ReadBios(u32 addr,u32 sz)
 	{
@@ -99,7 +115,9 @@ void WriteFlash(u32 addr,u32 data,u32 sz) { sys_nvmem.Write(addr,data,sz); }
 	{
 		if (!(addr&0x10000)) //upper 64 kb is flashrom
 		{
+#ifndef NDEBUG
 			EMUERROR4("Write to  [Boot ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz);
+#endif
 		}
 		else
 		{
@@ -154,7 +172,9 @@ T DYNACALL ReadMem_area0(u32 addr)
 	{
 		if ( /*&& (addr>= 0x00400000)*/ (addr<= 0x005F67FF)) // :Unassigned
 		{
+#ifndef NDEBUG
 			EMUERROR2("Read from area0_32 not implemented [Unassigned], addr=%x",addr);
+#endif
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{

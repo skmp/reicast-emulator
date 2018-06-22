@@ -32,6 +32,7 @@ bool naomi_cart_LoadRom(char* file)
 {
 
 	printf("\nnullDC-Naomi rom loader v1.2\n");
+	printf("\File: %s\n", file);
 
 	size_t folder_pos = strlen(file) - 1;
 	while (folder_pos>1 && (file[folder_pos] != '\\' && file[folder_pos] != '/'))

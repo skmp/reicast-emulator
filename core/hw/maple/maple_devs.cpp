@@ -1012,8 +1012,9 @@ struct maple_naomi_jamma : maple_sega_controller
 
 				buffer_out[0] = 0xffffffff;
 				buffer_out[1] = 0xffffffff;
-				u32 keycode = ~pjs.kcode;
-				u32 keycode2 = ~pjs.kcode;
+            extern u16 kcode[4];
+				u32 keycode = ~kcode[0];
+				u32 keycode2 = ~kcode[1];
 
 				if (keycode&NAOMI_SERVICE_KEY_2)		//Service
 					buffer_out[0] &= ~(1 << 0x1b);

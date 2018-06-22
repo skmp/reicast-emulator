@@ -976,9 +976,10 @@ static uint16_t get_analog_trigger( retro_input_state_t input_state_cb,
 static void UpdateInputStateNaomi(u32 port)
 {
    int id;
+
    static const uint16_t joymap[] =
    {
-      /* JOYPAD_B      */ NAOMI_BTN2_KEY, /* BTN3 */
+      /* JOYPAD_B      */ NAOMI_BTN3_KEY, /* BTN4 */
       /* JOYPAD_Y      */ NAOMI_BTN0_KEY, /* BTN1 */
       /* JOYPAD_SELECT */ NAOMI_COIN_KEY,
       /* JOYPAD_START  */ NAOMI_START_KEY,
@@ -986,14 +987,20 @@ static void UpdateInputStateNaomi(u32 port)
       /* JOYPAD_DOWN   */ NAOMI_DOWN_KEY,
       /* JOYPAD_LEFT   */ NAOMI_LEFT_KEY,
       /* JOYPAD_RIGHT  */ NAOMI_RIGHT_KEY,
-      /* JOYPAD_A      */ NAOMI_BTN3_KEY, /* BTN4 */
+      /* JOYPAD_A      */ NAOMI_BTN4_KEY, /* BTN5 */
       /* JOYPAD_X      */ NAOMI_BTN1_KEY, /* BTN2 */
+      /* JOYPAD_L      */ NAOMI_BTN2_KEY, /* BTN3 */
+      /* JOYPAD_R      */ NAOMI_BTN5_KEY, /* BTN6 */
+      /* JOYPAD_L2     */ NAOMI_SERVICE_KEY_1,
+      /* JOYPAD_R2     */ NAOMI_TEST_KEY_1,
+      /* JOYPAD_L3     */ NAOMI_SERVICE_KEY_2,
+      /* JOYPAD_R3     */ NAOMI_TEST_KEY_2,
    };
 
    //
    // -- buttons
 
-   for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_X; ++id)
+   for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_R3; ++id)
    {
       uint16_t dc_key = joymap[id];
       bool is_down = input_cb(port, RETRO_DEVICE_JOYPAD, 0, id);
@@ -1003,6 +1010,11 @@ static void UpdateInputStateNaomi(u32 port)
       else
          kcode[port] |= dc_key;
    }
+
+   //
+   // -- analog stick
+
+   get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[port]), &(joyy[port]) );
 }
 
 void UpdateInputState(u32 port)

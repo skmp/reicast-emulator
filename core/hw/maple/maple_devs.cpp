@@ -193,14 +193,24 @@ struct maple_sega_controller: maple_base
 			{
 				PlainJoystickState pjs;
 				config->GetInput(&pjs);
+
 				//caps
 				//4
 				w32(MFID_0_Input);
 
 				//state data
 				//2 key code
-				w16(pjs.kcode);
+#if DC_PLATFORM == DC_PLATFORM_NAOMI
+            /* TODO/FIXME - look at nullDC original code for inspiration on what we should do here - we need to change this bit to allow for 2-player input */
 
+            w16(pjs.kcode);
+#else
+				w16(pjs.kcode);
+#endif
+
+#if DC_PLATFORM == DC_PLATFORM_NAOMI
+            /* TODO/FIXME - look at nullDC original code for inspiration on what to do here - we need to change this code to allow for trigger and analog stick control */
+#endif
 				//triggers
 				//1 R
 				w8(pjs.trigger[PJTI_R]);

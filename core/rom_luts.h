@@ -50,6 +50,7 @@ static struct game_type lut_games[] =
    { "T47801M   ", -1, -1, -1, -1, -1, -1,   1  },                /* Chaos Field (Japan) */
    { "T23202M   ", -1, -1, -1, -1, -1, -1,   1  },                /* Death Crimson OX (Japan) */
    { "T2401N    ", -1, -1, -1, -1, -1, -1,   1  },                /* Death Crimson OX (USA) */
+   { "T44306N   ", -1, -1, -1, -1, -1, -1,   1  },                /* Fatal Fury: Mark of the Wolves (USA) */
    { "T3108M    ", -1, -1, -1, -1, -1, -1,   1  },                /* Garou: Mark of the Wolves (Japan) */
    { "HDR-0078  ", -1, -1, -1, -1, -1, -1,   1  },                /* Jet Set Radio (Japan) */
    { "MK-51058  ", -1, -1, -1, -1, -1, -1,   1  },                /* Jet Grind Radio (USA) */

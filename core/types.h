@@ -210,7 +210,6 @@ struct vram_block
 	//DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
 	#define ROM_PREFIX "dc_"
 	#define ROM_NAMES
-	#define NVR_OPTIONAL 0
 
 #elif  (DC_PLATFORM==DC_PLATFORM_DEV_UNIT)
 	
@@ -220,7 +219,6 @@ struct vram_block
 
 	#define ROM_PREFIX "hkt_"
 	#define ROM_NAMES
-	#define NVR_OPTIONAL 0
 
 #elif  (DC_PLATFORM==DC_PLATFORM_NAOMI)
 
@@ -228,7 +226,6 @@ struct vram_block
 
 	#define ROM_PREFIX "naomi_"
 	#define ROM_NAMES ";epr-21576d.bin"
-	#define NVR_OPTIONAL 1
 
 #elif  (DC_PLATFORM==DC_PLATFORM_NAOMI2)
 
@@ -236,7 +233,6 @@ struct vram_block
 
 	#define ROM_PREFIX "n2_"
 	#define ROM_NAMES
-	#define NVR_OPTIONAL 1
 
 #elif  (DC_PLATFORM==DC_PLATFORM_ATOMISWAVE)
 	
@@ -245,7 +241,6 @@ struct vram_block
 	//Atomiswave : 16(?) mb ram, 16 mb vram, 8 mb aram, 64kb bios, 64k flash
 	#define ROM_PREFIX "aw_"
 	#define ROM_NAMES ";bios.ic23_l"
-	#define NVR_OPTIONAL 1
 
 #else
 	#error invalid build config

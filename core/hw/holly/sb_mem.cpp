@@ -46,6 +46,22 @@ static bool nvmem_load(const string& root,
    return false;
 }
 
+static bool nvr_is_optional(void)
+{
+   switch (settings.System)
+   {
+      case DC_PLATFORM_ATOMISWAVE:
+      case DC_PLATFORM_NAOMI:
+      case DC_PLATFORM_NAOMI2:
+         return true;
+      case DC_PLATFORM_DREAMCAST:
+      case DC_PLATFORM_DEV_UNIT:
+         break;
+   }
+
+   return false;
+}
+
 bool LoadRomFiles(const string& root)
 {
 	if (!sys_rom.Load(root, ROM_PREFIX, "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin" ROM_NAMES, "bootrom"))
@@ -55,7 +71,7 @@ bool LoadRomFiles(const string& root)
 	}
    if (!nvmem_load(root, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram"))
 	{
-		if (NVR_OPTIONAL)
+		if (nvr_is_optional())
 		{
 			printf("flash/nvmem is missing, will create new file...");
 		}

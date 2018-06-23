@@ -24,6 +24,18 @@ struct game_type
    int eg_hack;                     /* -1, make no decision */
 };
 
+struct game_type_naomi
+{
+   char product_number[128];
+   int updatemode_type;     /* -1, make no decision, 0 = update mode normal, 1 = update mode fullspeed */
+   int dynarec_type;        /* -1, make no decision, 0 = dynamic recompiler, 1 = generic_recompiler */
+   int aica_interrupt_hack; /* -1, make no decision, 0 = normal, 1 = enable hack */
+   int alpha_sort_mode;     /* -1, make no decision */
+   int translucentPolygonDepthMask; /* -1, make no decision */
+   int rendertotexturebuffer;       /* -1, make no decision */
+   int eg_hack;                     /* -1, make no decision */
+};
+
 static struct game_type lut_games[] = 
 {
    /* Update mode fullspeed */
@@ -76,4 +88,11 @@ static struct game_type lut_games[] =
    { "T13006N   ", -1, -1, -1, -1, -1,  1,  -1  },                /* Tony Hawk's Pro Skater 2 (USA) */
    { "T13008D",    -1, -1, -1, -1, -1,  1,  -1  },                /* Tony Hawk's Pro Skater 2 (USA) */
    { "T23002N   ", -1, -1, -1, -1, -1,  1,  -1  },                /* Star Wars Episode I: Jedi Power Battle (USA) */
+};
+
+static struct game_type_naomi lut_games_naomi[] = 
+{
+   /* Update mode fullspeed */
+   /* AICA Interrupt Hack */
+   { "Street Fighter Zero 3 Upper", -1, -1,  1, -1, -1, -1,  -1  },                /* Street Fighter Alpha 3 */
 };

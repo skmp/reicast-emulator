@@ -705,7 +705,7 @@ static inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
 extern sh4_if				  sh4_cpu;
 
 //sh4 thread
-s32 plugins_Init(void);
+s32 plugins_Init(char *s, size_t len);
 void plugins_Term(void);
 void plugins_Reset(bool Manual);
 

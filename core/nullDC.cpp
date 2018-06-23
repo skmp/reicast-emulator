@@ -56,7 +56,7 @@ int GetFile(char *szFileName, char *szParse=0,u32 flags=0)
 }
 
 
-s32 plugins_Init(void)
+s32 plugins_Init(char *s, size_t len)
 {
    if (s32 rv = libPvr_Init())
       return rv;
@@ -64,7 +64,7 @@ s32 plugins_Init(void)
    if (s32 rv = libGDR_Init())
       return rv;
 #if DC_PLATFORM == DC_PLATFORM_NAOMI
-   if (!naomi_cart_SelectFile())
+   if (!naomi_cart_SelectFile(s, len))
       return rv_serror;
 #endif
 
@@ -184,8 +184,68 @@ static void LoadSpecialSettings(void)
    }
 }
 
+static void LoadSpecialSettingsNaomi(const char *name)
+{
+   unsigned i;
+
+   log_cb(RETRO_LOG_INFO, "[LUT]: Naomi ROM name is: %s.\n", name);
+   for (i = 0; i < sizeof(lut_games_naomi)/sizeof(lut_games_naomi[0]); i++)
+   {
+      if (strstr(lut_games_naomi[i].product_number, reios_product_number))
+      {
+         log_cb(RETRO_LOG_INFO, "[LUT]: Found game in LUT database..\n");
+
+         if (lut_games_naomi[i].aica_interrupt_hack != -1)
+            settings.aica.InterruptHack   = lut_games_naomi[i].aica_interrupt_hack;
+
+         if (lut_games_naomi[i].dynarec_type != -1)
+         {
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying dynarec type hack.\n");
+            settings.dynarec.Type = lut_games_naomi[i].dynarec_type;
+            LoadSpecialSettingsCPU();
+         }
+
+         if (lut_games_naomi[i].alpha_sort_mode != -1)
+         {
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying alpha sort hack.\n");
+            settings.pvr.Emulation.AlphaSortMode = lut_games_naomi[i].alpha_sort_mode;
+         }
+
+         if (lut_games_naomi[i].updatemode_type != -1)
+         {
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying update mode type hack.\n");
+            settings.UpdateModeForced = 1;
+         }
+
+         if (lut_games_naomi[i].translucentPolygonDepthMask != -1)
+         {
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying translucent polygon depth mask hack.\n");
+            settings.rend.TranslucentPolygonDepthMask = lut_games_naomi[i].translucentPolygonDepthMask;
+         }
+
+         if (lut_games_naomi[i].rendertotexturebuffer != -1)
+         {
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying rendertotexture hack.\n");
+            settings.rend.RenderToTextureBuffer = lut_games_naomi[i].rendertotexturebuffer;
+         }
+
+         if (lut_games_naomi[i].eg_hack != -1)
+         {
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying EG hack.\n");
+            settings.aica.EGHack = lut_games_naomi[i].eg_hack;
+         }
+
+         break;
+      }
+   }
+}
+
 int dc_init(int argc,wchar* argv[])
 {
+   char name[128];
+
+   name[0] = '\0';
+
 	setbuf(stdin,0);
 	setbuf(stdout,0);
 	setbuf(stderr,0);
@@ -227,7 +287,7 @@ int dc_init(int argc,wchar* argv[])
 	sh4_cpu.Init();
 	mem_Init();
 
-	plugins_Init();
+	plugins_Init(name, sizeof(name));
 	
 	mem_map_default();
 
@@ -243,6 +303,9 @@ int dc_init(int argc,wchar* argv[])
       log_cb(RETRO_LOG_ERROR, "Failed to locate bootfile.\n");
 
    LoadSpecialSettings();
+#if DC_PLATFORM == DC_PLATFORM_NAOMI
+   LoadSpecialSettingsNaomi(name);
+#endif
 
 	return rv;
 }

@@ -28,7 +28,7 @@ u32		RomCacheMapCount;
 
 char SelectedFile[512];
 
-bool naomi_cart_LoadRom(char* file)
+bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 {
 
 	printf("\nnullDC-Naomi rom loader v1.2\n");
@@ -67,6 +67,9 @@ bool naomi_cart_LoadRom(char* file)
 		fclose(fl);
 		return false;
 	}
+
+   strcpy(SelectedFile, line);
+   strcpy(s, line);
 
 	vector<string> files;
 	vector<u32> fstart;
@@ -205,9 +208,9 @@ bool naomi_cart_LoadRom(char* file)
 
 extern char *game_data;
 
-bool naomi_cart_SelectFile(void)
+bool naomi_cart_SelectFile(char *s, size_t len)
 {
-	if (!naomi_cart_LoadRom(game_data))
+	if (!naomi_cart_LoadRom(game_data, s, len))
       return false;
 
 	printf("EEPROM file : %s.eeprom\n", SelectedFile);

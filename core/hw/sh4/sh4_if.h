@@ -378,7 +378,8 @@ typedef void DYNACALL TaListVoidFP(void* data);
 #define FPCB_OFFSET (-(FPCB_SIZE*sizeof(void*) + FPCB_PAD)) 
 struct Sh4RCB
 {
-	void* fpcb[FPCB_SIZE];
+   /* Naomi edit - allow for max possible RAM_SIZE here */
+	void* fpcb[((32*1024*1024)/*RAM_SIZE*//2)];
 	u64 _pad[(FPCB_PAD-sizeof(Sh4Context)-64-sizeof(void*)*2)/8];
 	TaListVoidFP* tacmd_voud; //*TODO* remove (not used)
 	sqw_fp* do_sqw_nommu;

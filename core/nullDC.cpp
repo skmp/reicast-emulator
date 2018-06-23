@@ -16,8 +16,10 @@
 #include "reios/reios.h"
 #include <libretro.h>
 
+unsigned RAM_SIZE;
 unsigned ARAM_SIZE;
 unsigned VRAM_SIZE;
+unsigned RAM_MASK;
 unsigned ARAM_MASK;
 unsigned VRAM_MASK;
 
@@ -250,27 +252,33 @@ void dc_prepare_system(void)
    switch (settings.System)
    {
       case DC_PLATFORM_DREAMCAST:
+         RAM_SIZE          = (16*1024*1024);
          ARAM_SIZE         = (2*1024*1024);
          VRAM_SIZE         = (8*1024*1024);
          break;
       case DC_PLATFORM_DEV_UNIT:
+         RAM_SIZE          = (32*1024*1024);
          ARAM_SIZE         = (2*1024*1024);
          VRAM_SIZE         = (8*1024*1024);
          break;
       case DC_PLATFORM_NAOMI:
+         RAM_SIZE          = (32*1024*1024);
          ARAM_SIZE         = (8*1024*1024);
          VRAM_SIZE         = (16*1024*1024);
          break;
       case DC_PLATFORM_NAOMI2:
+         RAM_SIZE          = (32*1024*1024);
          ARAM_SIZE         = (8*1024*1024);
          VRAM_SIZE         = (16*1024*1024);
          break;
       case DC_PLATFORM_ATOMISWAVE:
+         RAM_SIZE          = (16*1024*1024);
          ARAM_SIZE         = (8*1024*1024);
          VRAM_SIZE         = (16*1024*1024);
          break;
    }
 
+   RAM_MASK         = (RAM_SIZE-1);
    ARAM_MASK        = (ARAM_SIZE-1);
    VRAM_MASK        = (VRAM_SIZE-1);
 }

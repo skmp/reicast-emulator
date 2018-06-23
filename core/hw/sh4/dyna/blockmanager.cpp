@@ -32,7 +32,8 @@ op_agent_t          oprofHandle;
 typedef vector<RuntimeBlockInfo*> bm_List;
 
 #define BLOCKS_IN_PAGE_LIST_COUNT (RAM_SIZE/4096)
-bm_List blocks_page[BLOCKS_IN_PAGE_LIST_COUNT];
+/* Naomi edit - allow for max possible size */
+bm_List blocks_page[/*BLOCKS_IN_PAGE_LIST_COUNT*/(32*1024*1024)/4096];
 
 bm_List all_blocks;
 bm_List del_blocks;
@@ -175,7 +176,8 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 
 }
 
-u32 PAGE_STATE[RAM_SIZE/32];
+/* Naomi edit - allow for max possible size */
+u32 PAGE_STATE[(32*1024*1024)/*RAM_SIZE*//32];
 
 bool PageIsConst(u32 addr)
 {

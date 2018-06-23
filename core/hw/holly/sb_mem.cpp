@@ -25,7 +25,7 @@ static HollyInterruptID OldDmaId;
 	Routing is mostly handled here, as well as flash/SRAM emulation
 */
 
-RomChip sys_rom(BIOS_SIZE);
+RomChip sys_rom;
 
 #if (DC_PLATFORM==DC_PLATFORM_DREAMCAST) || (DC_PLATFORM==DC_PLATFORM_DEV_UNIT) || (DC_PLATFORM==DC_PLATFORM_ATOMISWAVE)
 DCFlashChip sys_nvmem(FLASH_SIZE);

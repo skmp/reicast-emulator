@@ -7,6 +7,7 @@
 #include "stdclass.h"
 
 #include "types.h"
+#include "hw/flashrom/flashrom.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/arm7/arm7.h"
@@ -16,6 +17,8 @@
 #include "reios/reios.h"
 #include <libretro.h>
 
+extern RomChip sys_rom;
+unsigned BIOS_SIZE;
 unsigned RAM_SIZE;
 unsigned ARAM_SIZE;
 unsigned VRAM_SIZE;
@@ -252,32 +255,38 @@ void dc_prepare_system(void)
    switch (settings.System)
    {
       case DC_PLATFORM_DREAMCAST:
+         BIOS_SIZE         = (2*1024*1024);
          RAM_SIZE          = (16*1024*1024);
          ARAM_SIZE         = (2*1024*1024);
          VRAM_SIZE         = (8*1024*1024);
          break;
       case DC_PLATFORM_DEV_UNIT:
+         BIOS_SIZE         = (2*1024*1024);
          RAM_SIZE          = (32*1024*1024);
          ARAM_SIZE         = (2*1024*1024);
          VRAM_SIZE         = (8*1024*1024);
          break;
       case DC_PLATFORM_NAOMI:
+         BIOS_SIZE         = (2*1024*1024);
          RAM_SIZE          = (32*1024*1024);
          ARAM_SIZE         = (8*1024*1024);
          VRAM_SIZE         = (16*1024*1024);
          break;
       case DC_PLATFORM_NAOMI2:
+         BIOS_SIZE         = (2*1024*1024);
          RAM_SIZE          = (32*1024*1024);
          ARAM_SIZE         = (8*1024*1024);
          VRAM_SIZE         = (16*1024*1024);
          break;
       case DC_PLATFORM_ATOMISWAVE:
+         BIOS_SIZE         = (64*1024);
          RAM_SIZE          = (16*1024*1024);
          ARAM_SIZE         = (8*1024*1024);
          VRAM_SIZE         = (16*1024*1024);
          break;
    }
 
+   sys_rom.Allocate(BIOS_SIZE);
    RAM_MASK         = (RAM_SIZE-1);
    ARAM_MASK        = (ARAM_SIZE-1);
    VRAM_MASK        = (VRAM_SIZE-1);

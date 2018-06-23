@@ -208,7 +208,6 @@ struct vram_block
 	#define BUILD_DREAMCAST 1
 	
 	//DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
-	const unsigned BIOS_SIZE  = (2*1024*1024);
 	const unsigned FLASH_SIZE = (128*1024);
 
 	#define ROM_PREFIX "dc_"
@@ -220,7 +219,6 @@ struct vram_block
 	#define BUILD_DEV_UNIT 1
 
 	//Devkit : 32 mb ram, 8? mb vram, 2? mb aram, 2? mb bios, ? flash
-	const unsigned BIOS_SIZE  = (2*1024*1024);
 	const unsigned FLASH_SIZE = (128*1024);
 
 	#define ROM_PREFIX "hkt_"
@@ -230,7 +228,6 @@ struct vram_block
 #elif  (DC_PLATFORM==DC_PLATFORM_NAOMI)
 
 	//Naomi : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
-	const unsigned BIOS_SIZE   = (2*1024*1024);
 	const unsigned BBSRAM_SIZE = (8*1024);
 
 	#define ROM_PREFIX "naomi_"
@@ -240,7 +237,6 @@ struct vram_block
 #elif  (DC_PLATFORM==DC_PLATFORM_NAOMI2)
 
 	//Naomi2 : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
-	const unsigned BIOS_SIZE   = (2*1024*1024);
 	const unsigned BBSRAM_SIZE = (8*1024);
 
 	#define ROM_PREFIX "n2_"
@@ -252,7 +248,6 @@ struct vram_block
 	#define BUILD_ATOMISWAVE 1
 
 	//Atomiswave : 16(?) mb ram, 16 mb vram, 8 mb aram, 64kb bios, 64k flash
-	const unsigned BIOS_SIZE  = (64*1024);
 	const unsigned FLASH_SIZE = (64*1024);
 
 	#define ROM_PREFIX "aw_"
@@ -263,6 +258,7 @@ struct vram_block
 	#error invalid build config
 #endif
 
+extern unsigned BIOS_SIZE;
 extern unsigned RAM_SIZE;
 extern unsigned RAM_MASK;
 extern unsigned VRAM_SIZE;

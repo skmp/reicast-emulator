@@ -11,13 +11,19 @@ struct MemChip
 	u32 size;
 	u32 mask;
 
+   MemChip() {}
 	MemChip(u32 size)
 	{
-		this->data=new u8[size];
-		this->size=size;
-		this->mask=size-1;//must be power of 2
+      Allocate(size);
 	}
 	~MemChip() { delete[] data; }
+
+   virtual void Allocate(u32 size)
+   {
+      this->data=new u8[size];
+      this->size=size;
+      this->mask=size-1;//must be power of 2
+   }
 
 	virtual u8 Read8(u32 addr)
 	{
@@ -105,6 +111,7 @@ struct MemChip
 };
 struct RomChip : MemChip
 {
+   RomChip() : MemChip() {}
 	RomChip(u32 sz) : MemChip(sz) {}
 	void Reset()
 	{

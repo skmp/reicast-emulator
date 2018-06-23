@@ -64,12 +64,12 @@ struct MemChip
 		}
 	}
 
-	bool Load(const string& root,const string& prefix,const string& names_ro,const string& title)
+	bool Load(const string& root,const char *prefix,const char *names_ro,const char *title)
 	{
 		wchar base[512];
 		wchar temp[512];
 		wchar names[512];
-		strcpy(names,names_ro.c_str());
+		strcpy(names,names_ro);
 		sprintf(base,"%s",root.c_str());
 
 		wchar* curr=names;
@@ -80,7 +80,7 @@ struct MemChip
 			if(next) *next=0;
 			if (curr[0]=='%')
 			{
-				sprintf(temp,"%s%s%s",base,prefix.c_str(),curr+1);
+				sprintf(temp,"%s%s%s",base,prefix,curr+1);
 			}
 			else
 			{
@@ -91,7 +91,7 @@ struct MemChip
 
 			if (Load(temp))
 			{
-				printf("Loaded %s as %s\n\n",temp,title.c_str());
+				printf("Loaded %s as %s\n\n",temp,title);
 				return true;
 			}
 		} while(next);
@@ -181,12 +181,13 @@ struct DCFlashChip : MemChip // I think its Micronix :p
 	{
 		u32 rv=MemChip::Read8(addr);
 
-		#if DC_PLATFORM==DC_PLATFORM_DREAMCAST
-			if ((addr==0x1A002 || addr==0x1A0A2) && settings.dreamcast.region<=2)
-				return '0' + settings.dreamcast.region;
-			else if ((addr==0x1A004 || addr==0x1A0A4) && settings.dreamcast.broadcast<=3)
-				return '0' + settings.dreamcast.broadcast;
-		#endif
+      if (settings.System == DC_PLATFORM_DREAMCAST)
+      {
+         if ((addr==0x1A002 || addr==0x1A0A2) && settings.dreamcast.region<=2)
+            return '0' + settings.dreamcast.region;
+         else if ((addr==0x1A004 || addr==0x1A0A4) && settings.dreamcast.broadcast<=3)
+            return '0' + settings.dreamcast.broadcast;
+      }
 
 		return rv;
 	}

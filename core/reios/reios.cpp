@@ -642,7 +642,7 @@ static void reios_boot(void)
 	}
 	else
    {
-		if (DC_PLATFORM == DC_PLATFORM_DREAMCAST)
+		if (settings.System == DC_PLATFORM_DREAMCAST)
       {
          if (!bootfile_inited)
             msgboxf("Failed to locate bootfile", MBX_ICONERROR);
@@ -650,7 +650,7 @@ static void reios_boot(void)
       }
 		else
       {
-         verify(DC_PLATFORM == DC_PLATFORM_NAOMI);
+         verify(settings.System == DC_PLATFORM_NAOMI);
 
          u32* sz = (u32*)naomi_cart_GetPtr(0x368, 4);
          if (!sz) {

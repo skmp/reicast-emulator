@@ -75,22 +75,23 @@ void mcfg_Create(MapleDeviceType type,u32 bus,u32 port)
 
 void mcfg_CreateDevices()
 {
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-   int bus;
-   for (bus = 0; bus < 4; ++bus)
+   if (settings.System == DC_PLATFORM_DREAMCAST)
    {
-      mcfg_Create(MDT_SegaController,bus,5);
+      int bus;
+      for (bus = 0; bus < 4; ++bus)
+      {
+         mcfg_Create(MDT_SegaController,bus,5);
 
-      mcfg_Create(MDT_SegaVMU,bus,0);
+         mcfg_Create(MDT_SegaVMU,bus,0);
 
-      if (enable_purupuru)
-         mcfg_Create(MDT_PurupuruPack,bus,1);
-      else
-         mcfg_Create(MDT_SegaVMU,bus,1);
+         if (enable_purupuru)
+            mcfg_Create(MDT_PurupuruPack,bus,1);
+         else
+            mcfg_Create(MDT_SegaVMU,bus,1);
+      }
    }
-#else
-	mcfg_Create(MDT_NaomiJamma, 0, 5);
-#endif
+   else
+      mcfg_Create(MDT_NaomiJamma, 0, 5);
 }
 
 void mcfg_DestroyDevices()

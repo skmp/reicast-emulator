@@ -202,44 +202,6 @@ struct vram_block
 	void* userdata;
 };
 
-
-#if (DC_PLATFORM==DC_PLATFORM_DREAMCAST)
-
-	//DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
-	#define ROM_PREFIX "dc_"
-	#define ROM_NAMES
-
-#elif  (DC_PLATFORM==DC_PLATFORM_DEV_UNIT)
-	
-	//Devkit : 32 mb ram, 8? mb vram, 2? mb aram, 2? mb bios, ? flash
-
-	#define ROM_PREFIX "hkt_"
-	#define ROM_NAMES
-
-#elif  (DC_PLATFORM==DC_PLATFORM_NAOMI)
-
-	//Naomi : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
-
-	#define ROM_PREFIX "naomi_"
-	#define ROM_NAMES ";epr-21576d.bin"
-
-#elif  (DC_PLATFORM==DC_PLATFORM_NAOMI2)
-
-	//Naomi2 : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
-
-	#define ROM_PREFIX "n2_"
-	#define ROM_NAMES
-
-#elif  (DC_PLATFORM==DC_PLATFORM_ATOMISWAVE)
-	
-	//Atomiswave : 16(?) mb ram, 16 mb vram, 8 mb aram, 64kb bios, 64k flash
-	#define ROM_PREFIX "aw_"
-	#define ROM_NAMES ";bios.ic23_l"
-
-#else
-	#error invalid build config
-#endif
-
 extern unsigned FLASH_SIZE;
 extern unsigned BBSRAM_SIZE;
 extern unsigned BIOS_SIZE;

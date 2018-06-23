@@ -29,18 +29,54 @@ RomChip sys_rom;
 SRamChip sys_nvmem_sram;
 DCFlashChip sys_nvmem_flash;
 
+static const char *get_rom_prefix(void)
+{
+   switch (settings.System)
+   {
+      case DC_PLATFORM_DREAMCAST:
+         return "dc_";
+      case DC_PLATFORM_DEV_UNIT:
+         return "hkt_";
+      case DC_PLATFORM_NAOMI:
+         return "naomi_";
+      case DC_PLATFORM_NAOMI2:
+         return "n2_";
+      case DC_PLATFORM_ATOMISWAVE:
+         return "aw_";
+   }
+   return "";
+}
+
+static const char *get_rom_names(void)
+{
+   switch (settings.System)
+   {
+      case DC_PLATFORM_DREAMCAST:
+      case DC_PLATFORM_DEV_UNIT:
+         return "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin";
+      case DC_PLATFORM_NAOMI:
+         return "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin;epr-21576d.bin";
+      case DC_PLATFORM_NAOMI2:
+         return "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin";
+      case DC_PLATFORM_ATOMISWAVE:
+         return "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin;bios.ic23_l";
+   }
+
+   return NULL; 
+}
+
 static bool nvmem_load(const string& root,
-      const string& s1, const string& s2)
+      const string& s1, const char *s2)
 {
    switch (settings.System)
    {
       case DC_PLATFORM_DREAMCAST:
       case DC_PLATFORM_DEV_UNIT:
       case DC_PLATFORM_ATOMISWAVE:
-         return sys_nvmem_flash.Load(root, ROM_PREFIX, s1, s2);
+         return sys_nvmem_flash.Load(root, get_rom_prefix(), s1.c_str(), s2);
       case DC_PLATFORM_NAOMI:
       case DC_PLATFORM_NAOMI2:
-         return sys_nvmem_sram.Load(root, ROM_PREFIX, s1, s2);
+         return sys_nvmem_sram.Load(root, get_rom_prefix(), s1.c_str(), s2);
    }
 
    return false;
@@ -62,9 +98,10 @@ static bool nvr_is_optional(void)
    return false;
 }
 
+
 bool LoadRomFiles(const string& root)
 {
-	if (!sys_rom.Load(root, ROM_PREFIX, "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin" ROM_NAMES, "bootrom"))
+	if (!sys_rom.Load(root, get_rom_prefix(), get_rom_names(), "bootrom"))
 	{
 		msgboxf("Unable to find bios in \n%s\nExiting...", MBX_ICONERROR, root.c_str());
 		return false;
@@ -92,11 +129,11 @@ void SaveRomFiles(const string& root)
       case DC_PLATFORM_DREAMCAST:
       case DC_PLATFORM_DEV_UNIT:
       case DC_PLATFORM_ATOMISWAVE:
-         sys_nvmem_flash.Save(root, ROM_PREFIX, "nvmem.bin", "nvmem");
+         sys_nvmem_flash.Save(root, get_rom_prefix(), "nvmem.bin", "nvmem");
          break;
       case DC_PLATFORM_NAOMI:
       case DC_PLATFORM_NAOMI2:
-         sys_nvmem_sram.Save(root, ROM_PREFIX, "nvmem.bin", "nvmem");
+         sys_nvmem_sram.Save(root, get_rom_prefix(), "nvmem.bin", "nvmem");
          break;
    }
 }
@@ -257,11 +294,9 @@ T DYNACALL ReadMem_area0(u32 addr)
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
 			//EMUERROR3("Read from area0_32 not implemented [GD-ROM], addr=%x,size=%d",addr,sz);
-	#if DC_PLATFORM == DC_PLATFORM_NAOMI
-			return (T)ReadMem_naomi(addr,sz);
-	#else
-			return (T)ReadMem_gdrom(addr,sz);
-	#endif
+         if (settings.System == DC_PLATFORM_NAOMI)
+            return (T)ReadMem_naomi(addr,sz);
+         return (T)ReadMem_gdrom(addr,sz);
 		}
 		else if (likely((addr>= 0x005F6800) && (addr<=0x005F7CFF))) //	/*:PVR i/f Control Reg.*/ -> ALL SB registers now
 		{
@@ -352,11 +387,11 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
 			//EMUERROR4("Write to area0_32 not implemented [GD-ROM], addr=%x,data=%x,size=%d",addr,data,sz);
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-			WriteMem_naomi(addr,data,sz);
-#else
-			WriteMem_gdrom(addr,data,sz);
-#endif
+         if   (settings.System == DC_PLATFORM_NAOMI ||
+               settings.System == DC_PLATFORM_ATOMISWAVE)
+            WriteMem_naomi(addr,data,sz);
+         else
+            WriteMem_gdrom(addr,data,sz);
 		}
 		else if ( likely((addr>= 0x005F6800) && (addr<=0x005F7CFF)) ) // /*:PVR i/f Control Reg.*/ -> ALL SB registers
 		{

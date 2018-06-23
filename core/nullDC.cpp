@@ -77,10 +77,11 @@ s32 plugins_Init(char *s, size_t len)
 
    if (s32 rv = libGDR_Init())
       return rv;
-#if DC_PLATFORM == DC_PLATFORM_NAOMI
-   if (!naomi_cart_SelectFile(s, len))
-      return rv_serror;
-#endif
+   if (settings.System == DC_PLATFORM_NAOMI)
+   {
+      if (!naomi_cart_SelectFile(s, len))
+         return rv_serror;
+   }
 
    if (s32 rv = libAICA_Init())
       return rv;
@@ -261,6 +262,7 @@ void dc_prepare_system(void)
    switch (settings.System)
    {
       case DC_PLATFORM_DREAMCAST:
+         //DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
          FLASH_SIZE        = (128*1024);
          BIOS_SIZE         = (2*1024*1024);
          RAM_SIZE          = (16*1024*1024);
@@ -269,6 +271,7 @@ void dc_prepare_system(void)
          sys_nvmem_flash.Allocate(FLASH_SIZE);
          break;
       case DC_PLATFORM_DEV_UNIT:
+         //Devkit : 32 mb ram, 8? mb vram, 2? mb aram, 2? mb bios, ? flash
          FLASH_SIZE        = (128*1024);
          BIOS_SIZE         = (2*1024*1024);
          RAM_SIZE          = (32*1024*1024);
@@ -277,6 +280,7 @@ void dc_prepare_system(void)
          sys_nvmem_flash.Allocate(FLASH_SIZE);
          break;
       case DC_PLATFORM_NAOMI:
+         //Naomi : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
          BIOS_SIZE         = (2*1024*1024);
          RAM_SIZE          = (32*1024*1024);
          ARAM_SIZE         = (8*1024*1024);
@@ -284,6 +288,7 @@ void dc_prepare_system(void)
          sys_nvmem_sram.Allocate(BBSRAM_SIZE);
          break;
       case DC_PLATFORM_NAOMI2:
+         //Naomi2 : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
          BIOS_SIZE         = (2*1024*1024);
          RAM_SIZE          = (32*1024*1024);
          ARAM_SIZE         = (8*1024*1024);
@@ -291,6 +296,7 @@ void dc_prepare_system(void)
          sys_nvmem_sram.Allocate(BBSRAM_SIZE);
          break;
       case DC_PLATFORM_ATOMISWAVE:
+         //Atomiswave : 16(?) mb ram, 16 mb vram, 8 mb aram, 64kb bios, 64k flash
          FLASH_SIZE        = (64*1024);
          BIOS_SIZE         = (64*1024);
          RAM_SIZE          = (16*1024*1024);
@@ -368,10 +374,15 @@ int dc_init(int argc,wchar* argv[])
    if (!bootfile || !reios_locate_bootfile("1ST_READ.BIN"))
       log_cb(RETRO_LOG_ERROR, "Failed to locate bootfile.\n");
 
-   LoadSpecialSettings();
-#if DC_PLATFORM == DC_PLATFORM_NAOMI
-   LoadSpecialSettingsNaomi(name);
-#endif
+   switch (settings.System)
+   {
+      case DC_PLATFORM_DREAMCAST:
+         LoadSpecialSettings();
+         break;
+      case DC_PLATFORM_NAOMI:
+         LoadSpecialSettingsNaomi(name);
+         break;
+   }
 
 	return rv;
 }

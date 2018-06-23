@@ -769,11 +769,10 @@ void sb_Init(void)
 
 	asic_reg_Init();
 
-#if DC_PLATFORM!=DC_PLATFORM_NAOMI
-	gdrom_reg_Init();
-#else
-	naomi_reg_Init();
-#endif
+   if (settings.System == DC_PLATFORM_NAOMI)
+      naomi_reg_Init();
+   else
+      gdrom_reg_Init();
 
 	pvr_sb_Init();
 	maple_Init();
@@ -783,11 +782,10 @@ void sb_Init(void)
 void sb_Reset(bool Manual)
 {
 	asic_reg_Reset(Manual);
-#if DC_PLATFORM!=DC_PLATFORM_NAOMI
-	gdrom_reg_Reset(Manual);
-#else
-	naomi_reg_Reset(Manual);
-#endif
+   if (settings.System == DC_PLATFORM_NAOMI)
+      naomi_reg_Reset(Manual);
+   else
+      gdrom_reg_Reset(Manual);
 	pvr_sb_Reset(Manual);
 	maple_Reset(Manual);
 	aica_sb_Reset(Manual);
@@ -798,10 +796,9 @@ void sb_Term(void)
 	aica_sb_Term();
 	maple_Term();
 	pvr_sb_Term();
-#if DC_PLATFORM!=DC_PLATFORM_NAOMI
-	gdrom_reg_Term();
-#else
-	naomi_reg_Term();
-#endif
+   if (settings.System == DC_PLATFORM_NAOMI)
+      naomi_reg_Term();
+   else
+      gdrom_reg_Term();
 	asic_reg_Term();
 }

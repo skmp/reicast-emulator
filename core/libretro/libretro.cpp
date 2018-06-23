@@ -13,6 +13,12 @@
 
 #include "libretro.h"
 
+#if defined(_XBOX) || defined(_WIN32)
+char slash = '\\';
+#else
+char slash = '/';
+#endif
+
 u32 fskip;
 extern int screen_width;
 extern int screen_height;
@@ -100,6 +106,7 @@ static int co_argc;
 static wchar** co_argv;
 
 char *game_data;
+char g_base_name[128];
 char game_dir[1024];
 char game_dir_no_slash[1024];
 
@@ -169,6 +176,10 @@ void retro_set_environment(retro_environment_t cb)
       {
          "reicast_boot_to_bios",
          "Boot to BIOS (restart); disabled|enabled",
+      },
+      {
+         "reicast_system",
+         "System type (restart); auto|dreamcast|naomi",
       },
       {
          "reicast_internal_resolution",
@@ -308,6 +319,7 @@ static void update_variables(bool first_startup)
       fprintf(stderr, "[reicast]: Got size: %u x %u.\n", screen_width, screen_height);
    }
 
+
    var.key = "reicast_cpu_mode";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -371,6 +383,20 @@ static void update_variables(bool first_startup)
       else
          settings.rend.Multipass         = false;
 #endif
+
+      var.key = "reicast_system";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "auto"))
+            settings.System = DC_PLATFORM_DREAMCAST;
+         else if (!strcmp(var.value, "dreamcast"))
+            settings.System = DC_PLATFORM_DREAMCAST;
+         else if (!strcmp(var.value, "naomi"))
+            settings.System = DC_PLATFORM_NAOMI;
+      }
+      else
+         settings.System = DC_PLATFORM_DREAMCAST;
    }
 
    var.key = "reicast_volume_modifier_enable";
@@ -588,6 +614,19 @@ static void extract_directory(char *buf, const char *path, size_t size)
 
 extern void dc_prepare_system(void);
 
+static void extract_basename(char *buf, const char *path, size_t size)
+{
+   const char *base = strrchr(path, slash);
+   if (!base)
+      base = path;
+
+   if (*base == slash)
+      base++;
+
+   strncpy(buf, base, size - 1);
+   buf[size - 1] = '\0';
+}
+
 // Loading/unloading games
 bool retro_load_game(const struct retro_game_info *game)
 {
@@ -659,6 +698,7 @@ bool retro_load_game(const struct retro_game_info *game)
       { 0 },
    };
 
+   extract_basename(g_base_name, game->path, sizeof(g_base_name));
    extract_directory(game_dir, game->path, sizeof(game_dir));
 
    environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
@@ -674,6 +714,18 @@ bool retro_load_game(const struct retro_game_info *game)
 
    settings.dreamcast.cable = 3;
    update_variables(true);
+
+   {
+      /* Check for extension .lst. If found, we will set the system type
+       * automatically to Naomi. */
+      char *ext = strrchr(g_base_name, '.');
+      if (ext)
+      {
+         log_cb(RETRO_LOG_INFO, "File extension is: %s\n", ext);
+         if (!strcmp(".lst", ext))
+            settings.System = DC_PLATFORM_NAOMI;
+      }
+   }
 
    if (game->path[0] == '\0')
       boot_to_bios = true;
@@ -706,11 +758,6 @@ bool retro_load_game(const struct retro_game_info *game)
       return false;
 #endif
 
-#if DC_PLATFORM == DC_PLATFORM_NAOMI
-   settings.System = DC_PLATFORM_NAOMI;
-#else
-   settings.System = DC_PLATFORM_DREAMCAST;
-#endif
 
    dc_prepare_system();
 
@@ -1028,13 +1075,7 @@ static void UpdateInputStateNaomi(u32 port)
 
 void UpdateInputState(u32 port)
 {
-#if DC_PLATFORM == DC_PLATFORM_NAOMI
-   bool is_naomi = true;
-#else
-   bool is_naomi = false;
-#endif
-  
-   if (is_naomi)
+   if (settings.System == DC_PLATFORM_NAOMI)
    {
       UpdateInputStateNaomi(port);
       return;

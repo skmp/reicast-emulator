@@ -17,7 +17,9 @@
 #include <libretro.h>
 
 unsigned ARAM_SIZE;
+unsigned VRAM_SIZE;
 unsigned ARAM_MASK;
+unsigned VRAM_MASK;
 
 extern retro_log_printf_t         log_cb;
 settings_t settings;
@@ -249,22 +251,28 @@ void dc_prepare_system(void)
    {
       case DC_PLATFORM_DREAMCAST:
          ARAM_SIZE         = (2*1024*1024);
+         VRAM_SIZE         = (8*1024*1024);
          break;
       case DC_PLATFORM_DEV_UNIT:
          ARAM_SIZE         = (2*1024*1024);
+         VRAM_SIZE         = (8*1024*1024);
          break;
       case DC_PLATFORM_NAOMI:
          ARAM_SIZE         = (8*1024*1024);
+         VRAM_SIZE         = (16*1024*1024);
          break;
       case DC_PLATFORM_NAOMI2:
          ARAM_SIZE         = (8*1024*1024);
+         VRAM_SIZE         = (16*1024*1024);
          break;
       case DC_PLATFORM_ATOMISWAVE:
-         ARAM_SIZE        = (8*1024*1024);
+         ARAM_SIZE         = (8*1024*1024);
+         VRAM_SIZE         = (16*1024*1024);
          break;
    }
 
    ARAM_MASK        = (ARAM_SIZE-1);
+   VRAM_MASK        = (VRAM_SIZE-1);
 }
 
 int dc_init(int argc,wchar* argv[])

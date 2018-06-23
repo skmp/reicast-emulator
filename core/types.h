@@ -209,7 +209,6 @@ struct vram_block
 	
 	//DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
 	const unsigned RAM_SIZE   = (16*1024*1024);
-	const unsigned VRAM_SIZE  = (8*1024*1024);
 	const unsigned BIOS_SIZE  = (2*1024*1024);
 	const unsigned FLASH_SIZE = (128*1024);
 
@@ -223,7 +222,6 @@ struct vram_block
 
 	//Devkit : 32 mb ram, 8? mb vram, 2? mb aram, 2? mb bios, ? flash
 	const unsigned RAM_SIZE   = (32*1024*1024);
-	const unsigned VRAM_SIZE  = (8*1024*1024);
 	const unsigned BIOS_SIZE  = (2*1024*1024);
 	const unsigned FLASH_SIZE = (128*1024);
 
@@ -235,7 +233,6 @@ struct vram_block
 
 	//Naomi : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
 	const unsigned RAM_SIZE    = (32*1024*1024);
-	const unsigned VRAM_SIZE   = (16*1024*1024);
 	const unsigned BIOS_SIZE   = (2*1024*1024);
 	const unsigned BBSRAM_SIZE = (8*1024);
 
@@ -247,7 +244,6 @@ struct vram_block
 
 	//Naomi2 : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
 	const unsigned RAM_SIZE    = (32*1024*1024);
-	const unsigned VRAM_SIZE   = (16*1024*1024);
 	const unsigned BIOS_SIZE   = (2*1024*1024);
 	const unsigned BBSRAM_SIZE = (8*1024);
 
@@ -261,7 +257,6 @@ struct vram_block
 
 	//Atomiswave : 16(?) mb ram, 16 mb vram, 8 mb aram, 64kb bios, 64k flash
 	const unsigned RAM_SIZE   = (16*1024*1024);
-	const unsigned VRAM_SIZE  = (16*1024*1024);
 	const unsigned BIOS_SIZE  = (64*1024);
 	const unsigned FLASH_SIZE = (64*1024);
 
@@ -274,8 +269,9 @@ struct vram_block
 #endif
 
 const unsigned RAM_MASK  =	(RAM_SIZE-1);
-const unsigned VRAM_MASK =	(VRAM_SIZE-1);
+extern unsigned VRAM_SIZE;
 extern unsigned ARAM_SIZE;
+extern unsigned VRAM_MASK;
 extern unsigned ARAM_MASK;
 
 #define GD_CLOCK 33868800				//GDROM XTAL -- 768fs

@@ -95,7 +95,8 @@ void palette_update(void)
 
 using namespace std;
 
-vector<vram_block*> VramLocks[VRAM_SIZE/PAGE_SIZE];
+/* Naomi edit - allow for max possible VRAM_SIZE here */
+vector<vram_block*> VramLocks[/*VRAM_SIZE*/(16*1024*1024)/PAGE_SIZE];
 //vram 32-64b
 VArray2 vram;
 

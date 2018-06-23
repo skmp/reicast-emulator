@@ -706,7 +706,11 @@ bool retro_load_game(const struct retro_game_info *game)
       return false;
 #endif
 
+#if DC_PLATFORM == DC_PLATFORM_NAOMI
+   settings.System = DC_PLATFORM_NAOMI;
+#else
    settings.System = DC_PLATFORM_DREAMCAST;
+#endif
 
    dc_prepare_system();
 

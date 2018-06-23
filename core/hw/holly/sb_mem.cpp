@@ -26,14 +26,25 @@ static HollyInterruptID OldDmaId;
 */
 
 RomChip sys_rom;
+SRamChip sys_nvmem_sram;
+DCFlashChip sys_nvmem_flash;
 
-#if (DC_PLATFORM==DC_PLATFORM_DREAMCAST) || (DC_PLATFORM==DC_PLATFORM_DEV_UNIT) || (DC_PLATFORM==DC_PLATFORM_ATOMISWAVE)
-DCFlashChip sys_nvmem(FLASH_SIZE);
-#endif
+static bool nvmem_load(const string& root,
+      const string& s1, const string& s2)
+{
+   switch (settings.System)
+   {
+      case DC_PLATFORM_DREAMCAST:
+      case DC_PLATFORM_DEV_UNIT:
+      case DC_PLATFORM_ATOMISWAVE:
+         return sys_nvmem_flash.Load(root, ROM_PREFIX, s1, s2);
+      case DC_PLATFORM_NAOMI:
+      case DC_PLATFORM_NAOMI2:
+         return sys_nvmem_sram.Load(root, ROM_PREFIX, s1, s2);
+   }
 
-#if  (DC_PLATFORM==DC_PLATFORM_NAOMI) || (DC_PLATFORM==DC_PLATFORM_NAOMI2)
-SRamChip sys_nvmem(BBSRAM_SIZE);
-#endif
+   return false;
+}
 
 bool LoadRomFiles(const string& root)
 {
@@ -42,7 +53,7 @@ bool LoadRomFiles(const string& root)
 		msgboxf("Unable to find bios in \n%s\nExiting...", MBX_ICONERROR, root.c_str());
 		return false;
 	}
-	if (!sys_nvmem.Load(root, ROM_PREFIX, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram"))
+   if (!nvmem_load(root, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram"))
 	{
 		if (NVR_OPTIONAL)
 		{
@@ -60,74 +71,125 @@ bool LoadRomFiles(const string& root)
 
 void SaveRomFiles(const string& root)
 {
-	sys_nvmem.Save(root, ROM_PREFIX, "nvmem.bin", "nvmem");
+   switch (settings.System)
+   {
+      case DC_PLATFORM_DREAMCAST:
+      case DC_PLATFORM_DEV_UNIT:
+      case DC_PLATFORM_ATOMISWAVE:
+         sys_nvmem_flash.Save(root, ROM_PREFIX, "nvmem.bin", "nvmem");
+         break;
+      case DC_PLATFORM_NAOMI:
+      case DC_PLATFORM_NAOMI2:
+         sys_nvmem_sram.Save(root, ROM_PREFIX, "nvmem.bin", "nvmem");
+         break;
+   }
+}
+
+u8 *get_nvmem_data(void)
+{
+   switch (settings.System)
+   {
+      case DC_PLATFORM_DREAMCAST:
+      case DC_PLATFORM_DEV_UNIT:
+      case DC_PLATFORM_ATOMISWAVE:
+         return sys_nvmem_flash.data;
+      case DC_PLATFORM_NAOMI:
+      case DC_PLATFORM_NAOMI2:
+         return sys_nvmem_sram.data;
+   }
+
+   return NULL;
 }
 
 bool LoadHle(const string& root) {
-	if (!sys_nvmem.Load(root, ROM_PREFIX, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram")) {
+	if (!nvmem_load(root, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram")) {
 		printf("No nvmem loaded\n");
 	}
 
-	return reios_init(sys_rom.data, sys_nvmem.data);
+	return reios_init(sys_rom.data, get_nvmem_data());
 }
 
-#if (DC_PLATFORM == DC_PLATFORM_DREAMCAST) || (DC_PLATFORM == DC_PLATFORM_DEV_UNIT) || (DC_PLATFORM == DC_PLATFORM_NAOMI) || (DC_PLATFORM == DC_PLATFORM_NAOMI2)
-
-u32 ReadBios(u32 addr,u32 sz) { return sys_rom.Read(addr,sz); }
-void WriteBios(u32 addr,u32 data,u32 sz)
+u32 ReadFlash(u32 addr,u32 sz)
 {
+   switch (settings.System)
+   {
+      case DC_PLATFORM_DREAMCAST:
+      case DC_PLATFORM_DEV_UNIT:
+         return sys_nvmem_flash.Read(addr,sz);
+      case DC_PLATFORM_NAOMI:
+      case DC_PLATFORM_NAOMI2:
+         return sys_nvmem_sram.Read(addr,sz);
+      case DC_PLATFORM_ATOMISWAVE:
 #ifndef NDEBUG
-   EMUERROR4("Write to [Boot ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz);
+         EMUERROR3("Read from [Flash ROM] is not possible, addr=%x,size=%d",addr,sz);
 #endif
-}
+         break;
+   }
 
-u32 ReadFlash(u32 addr,u32 sz) { return sys_nvmem.Read(addr,sz); }
-void WriteFlash(u32 addr,u32 data,u32 sz) { sys_nvmem.Write(addr,data,sz); }
-
-#elif (DC_PLATFORM == DC_PLATFORM_ATOMISWAVE)
-	u32 ReadFlash(u32 addr,u32 sz)
-{
-#ifndef NDEBUG
-   EMUERROR3("Read from [Flash ROM] is not possible, addr=%x,size=%d",addr,sz);
-#endif
    return 0;
 }
-	void WriteFlash(u32 addr,u32 data,u32 sz)
+
+void WriteFlash(u32 addr,u32 data,u32 sz)
 {
+   switch (settings.System)
+   {
+      case DC_PLATFORM_DREAMCAST:
+      case DC_PLATFORM_DEV_UNIT:
+         sys_nvmem_flash.Write(addr,data,sz);
+         break;
+      case DC_PLATFORM_NAOMI:
+      case DC_PLATFORM_NAOMI2:
+         sys_nvmem_sram.Write(addr,data,sz);
+         break;
+      case DC_PLATFORM_ATOMISWAVE:
 #ifndef NDEBUG
-   EMUERROR4("Write to [Flash ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz);
+         EMUERROR4("Write to [Flash ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz);
 #endif
+         break;
+   }
 }
 
-	u32 ReadBios(u32 addr,u32 sz)
-	{
-		if (!(addr&0x10000)) //upper 64 kb is flashrom
-		{
-			return sys_rom.Read(addr,sz);
-		}
-		else
-		{
-			return sys_nvmem.Read(addr,sz);
-		}
-	}
+u32 ReadBios(u32 addr,u32 sz)
+{
+   switch (settings.System)
+   {
+      case DC_PLATFORM_DREAMCAST:
+      case DC_PLATFORM_DEV_UNIT:
+      case DC_PLATFORM_NAOMI:
+      case DC_PLATFORM_NAOMI2:
+         return sys_rom.Read(addr,sz);
+      case DC_PLATFORM_ATOMISWAVE:
+         if (!(addr&0x10000)) //upper 64 kb is flashrom
+            return sys_rom.Read(addr,sz);
+         return ReadFlash(addr,sz);
+   }
+   return 0;
+}
 
-	void WriteBios(u32 addr,u32 data,u32 sz)
-	{
-		if (!(addr&0x10000)) //upper 64 kb is flashrom
-		{
+void WriteBios(u32 addr,u32 data,u32 sz)
+{
+   switch (settings.System)
+   {
+      case DC_PLATFORM_DREAMCAST:
+      case DC_PLATFORM_DEV_UNIT:
+      case DC_PLATFORM_NAOMI:
+      case DC_PLATFORM_NAOMI2:
 #ifndef NDEBUG
-			EMUERROR4("Write to  [Boot ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz);
+         EMUERROR4("Write to [Boot ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz);
 #endif
-		}
-		else
-		{
-			sys_nvmem.Write(addr,data,sz);
-		}
-	}
-
-#else
-#error unknown flash
+         break;
+      case DC_PLATFORM_ATOMISWAVE:
+         if (!(addr&0x10000)) //upper 64 kb is flashrom
+         {
+#ifndef NDEBUG
+            EMUERROR4("Write to  [Boot ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz);
 #endif
+         }
+         else
+            WriteFlash(addr,data,sz);
+         break;
+   }
+}
 
 //Area 0 mem map
 //0x00000000- 0x001FFFFF	:MPX	System/Boot ROM

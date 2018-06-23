@@ -208,8 +208,6 @@ struct vram_block
 	#define BUILD_DREAMCAST 1
 	
 	//DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
-	const unsigned FLASH_SIZE = (128*1024);
-
 	#define ROM_PREFIX "dc_"
 	#define ROM_NAMES
 	#define NVR_OPTIONAL 0
@@ -219,7 +217,6 @@ struct vram_block
 	#define BUILD_DEV_UNIT 1
 
 	//Devkit : 32 mb ram, 8? mb vram, 2? mb aram, 2? mb bios, ? flash
-	const unsigned FLASH_SIZE = (128*1024);
 
 	#define ROM_PREFIX "hkt_"
 	#define ROM_NAMES
@@ -228,7 +225,6 @@ struct vram_block
 #elif  (DC_PLATFORM==DC_PLATFORM_NAOMI)
 
 	//Naomi : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
-	const unsigned BBSRAM_SIZE = (8*1024);
 
 	#define ROM_PREFIX "naomi_"
 	#define ROM_NAMES ";epr-21576d.bin"
@@ -237,7 +233,6 @@ struct vram_block
 #elif  (DC_PLATFORM==DC_PLATFORM_NAOMI2)
 
 	//Naomi2 : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
-	const unsigned BBSRAM_SIZE = (8*1024);
 
 	#define ROM_PREFIX "n2_"
 	#define ROM_NAMES
@@ -248,8 +243,6 @@ struct vram_block
 	#define BUILD_ATOMISWAVE 1
 
 	//Atomiswave : 16(?) mb ram, 16 mb vram, 8 mb aram, 64kb bios, 64k flash
-	const unsigned FLASH_SIZE = (64*1024);
-
 	#define ROM_PREFIX "aw_"
 	#define ROM_NAMES ";bios.ic23_l"
 	#define NVR_OPTIONAL 1
@@ -258,6 +251,8 @@ struct vram_block
 	#error invalid build config
 #endif
 
+extern unsigned FLASH_SIZE;
+extern unsigned BBSRAM_SIZE;
 extern unsigned BIOS_SIZE;
 extern unsigned RAM_SIZE;
 extern unsigned RAM_MASK;

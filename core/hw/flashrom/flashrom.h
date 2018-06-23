@@ -124,6 +124,7 @@ struct RomChip : MemChip
 };
 struct SRamChip : MemChip
 {
+   SRamChip() : MemChip() {}
 	SRamChip(u32 sz) : MemChip(sz) {}
 
 	void Reset()
@@ -151,6 +152,7 @@ struct SRamChip : MemChip
 };
 struct DCFlashChip : MemChip // I think its Micronix :p
 {
+   DCFlashChip() : MemChip() { }
 	DCFlashChip(u32 sz): MemChip(sz) { }
 
 	enum FlashState

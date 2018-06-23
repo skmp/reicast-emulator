@@ -18,6 +18,10 @@
 #include <libretro.h>
 
 extern RomChip sys_rom;
+extern SRamChip sys_nvmem_sram;
+extern DCFlashChip sys_nvmem_flash;
+unsigned FLASH_SIZE;
+unsigned BBSRAM_SIZE;
 unsigned BIOS_SIZE;
 unsigned RAM_SIZE;
 unsigned ARAM_SIZE;
@@ -252,37 +256,47 @@ static void LoadSpecialSettingsNaomi(const char *name)
 
 void dc_prepare_system(void)
 {
+   BBSRAM_SIZE             = (8*1024);
+
    switch (settings.System)
    {
       case DC_PLATFORM_DREAMCAST:
+         FLASH_SIZE        = (128*1024);
          BIOS_SIZE         = (2*1024*1024);
          RAM_SIZE          = (16*1024*1024);
          ARAM_SIZE         = (2*1024*1024);
          VRAM_SIZE         = (8*1024*1024);
+         sys_nvmem_flash.Allocate(FLASH_SIZE);
          break;
       case DC_PLATFORM_DEV_UNIT:
+         FLASH_SIZE        = (128*1024);
          BIOS_SIZE         = (2*1024*1024);
          RAM_SIZE          = (32*1024*1024);
          ARAM_SIZE         = (2*1024*1024);
          VRAM_SIZE         = (8*1024*1024);
+         sys_nvmem_flash.Allocate(FLASH_SIZE);
          break;
       case DC_PLATFORM_NAOMI:
          BIOS_SIZE         = (2*1024*1024);
          RAM_SIZE          = (32*1024*1024);
          ARAM_SIZE         = (8*1024*1024);
          VRAM_SIZE         = (16*1024*1024);
+         sys_nvmem_sram.Allocate(BBSRAM_SIZE);
          break;
       case DC_PLATFORM_NAOMI2:
          BIOS_SIZE         = (2*1024*1024);
          RAM_SIZE          = (32*1024*1024);
          ARAM_SIZE         = (8*1024*1024);
          VRAM_SIZE         = (16*1024*1024);
+         sys_nvmem_sram.Allocate(BBSRAM_SIZE);
          break;
       case DC_PLATFORM_ATOMISWAVE:
+         FLASH_SIZE        = (64*1024);
          BIOS_SIZE         = (64*1024);
          RAM_SIZE          = (16*1024*1024);
          ARAM_SIZE         = (8*1024*1024);
          VRAM_SIZE         = (16*1024*1024);
+         sys_nvmem_flash.Allocate(FLASH_SIZE);
          break;
    }
 

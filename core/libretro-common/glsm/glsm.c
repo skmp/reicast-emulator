@@ -222,11 +222,10 @@ GLenum rglGetError(void)
  * OpenGL    : 3.2
  * OpenGLES  : 3.0
  */
-void rglGetInteger64v(	GLenum pname,
- 	GLint64 * data)
+void rglGetInteger64v(	GLenum pname, int64_t *data)
 {
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
-   glGetInteger64v(pname, data);
+   glGetInteger64v(pname, (GLint64*)data);
 #endif
 }
 

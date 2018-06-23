@@ -464,7 +464,7 @@ void rglBindSampler(	GLuint unit,
 void rglGenSamplers(	GLsizei n,
  	GLuint *samplers);
 void rglGetInteger64v(	GLenum pname,
- 	GLint64 * data);
+ 	int64_t * data);
 
 RETRO_END_DECLS
 

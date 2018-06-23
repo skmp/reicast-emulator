@@ -208,7 +208,7 @@ struct vram_block
 	#define BUILD_DREAMCAST 1
 	
 	//DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
-	#define RAM_SIZE (16*1024*1024)
+	const unsigned RAM_SIZE  = (16*1024*1024);
 	const unsigned VRAM_SIZE = (8*1024*1024);
 	const unsigned ARAM_SIZE = (2*1024*1024);
 	const unsigned BIOS_SIZE = (2*1024*1024);
@@ -223,7 +223,7 @@ struct vram_block
 	#define BUILD_DEV_UNIT 1
 
 	//Devkit : 32 mb ram, 8? mb vram, 2? mb aram, 2? mb bios, ? flash
-	#define RAM_SIZE (32*1024*1024)
+	const unsigned RAM_SIZE  = (32*1024*1024);
 	const unsigned VRAM_SIZE = (8*1024*1024);
 	const unsigned ARAM_SIZE = (2*1024*1024);
 	const unsigned BIOS_SIZE = (2*1024*1024);
@@ -236,7 +236,7 @@ struct vram_block
 #elif  (DC_PLATFORM==DC_PLATFORM_NAOMI)
 
 	//Naomi : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
-	#define RAM_SIZE (32*1024*1024)
+	const unsigned RAM_SIZE    = (32*1024*1024);
 	const unsigned VRAM_SIZE   = (16*1024*1024);
 	const unsigned ARAM_SIZE   = (8*1024*1024);
 	const unsigned BIOS_SIZE   = (2*1024*1024);
@@ -249,7 +249,7 @@ struct vram_block
 #elif  (DC_PLATFORM==DC_PLATFORM_NAOMI2)
 
 	//Naomi2 : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
-	#define RAM_SIZE (32*1024*1024)
+	const unsigned RAM_SIZE    = (32*1024*1024);
 	const unsigned VRAM_SIZE   = (16*1024*1024);
 	const unsigned ARAM_SIZE   = (8*1024*1024);
 	const unsigned BIOS_SIZE   = (2*1024*1024);
@@ -264,7 +264,7 @@ struct vram_block
 	#define BUILD_ATOMISWAVE 1
 
 	//Atomiswave : 16(?) mb ram, 16 mb vram, 8 mb aram, 64kb bios, 64k flash
-	#define RAM_SIZE (16*1024*1024)
+	const unsigned RAM_SIZE   = (16*1024*1024);
 	const unsigned VRAM_SIZE  = (16*1024*1024);
 	const unsigned ARAM_SIZE  = (8*1024*1024);
 	const unsigned BIOS_SIZE  = (64*1024);

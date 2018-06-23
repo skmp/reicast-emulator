@@ -6952,4 +6952,5 @@ template void arm_WriteReg<1>(u32 adr,u8 data);
 template void arm_WriteReg<2>(u32 adr,u16 data);
 template void arm_WriteReg<4>(u32 adr,u32 data);
 
-void* EntryPoints[ARAM_SIZE/4];
+/* Naomi edit - allow for max possible ARAM_SIZE here */
+void* EntryPoints[(8*1024*1024) /4];

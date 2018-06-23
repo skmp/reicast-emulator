@@ -586,6 +586,8 @@ static void extract_directory(char *buf, const char *path, size_t size)
       buf[0] = '\0';
 }
 
+extern void dc_prepare_system(void);
+
 // Loading/unloading games
 bool retro_load_game(const struct retro_game_info *game)
 {
@@ -704,6 +706,9 @@ bool retro_load_game(const struct retro_game_info *game)
       return false;
 #endif
 
+   settings.System = DC_PLATFORM_DREAMCAST;
+
+   dc_prepare_system();
 
    return true;
 }

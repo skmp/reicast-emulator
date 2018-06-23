@@ -205,16 +205,12 @@ struct vram_block
 
 #if (DC_PLATFORM==DC_PLATFORM_DREAMCAST)
 
-	#define BUILD_DREAMCAST 1
-	
 	//DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
 	#define ROM_PREFIX "dc_"
 	#define ROM_NAMES
 
 #elif  (DC_PLATFORM==DC_PLATFORM_DEV_UNIT)
 	
-	#define BUILD_DEV_UNIT 1
-
 	//Devkit : 32 mb ram, 8? mb vram, 2? mb aram, 2? mb bios, ? flash
 
 	#define ROM_PREFIX "hkt_"
@@ -236,8 +232,6 @@ struct vram_block
 
 #elif  (DC_PLATFORM==DC_PLATFORM_ATOMISWAVE)
 	
-	#define BUILD_ATOMISWAVE 1
-
 	//Atomiswave : 16(?) mb ram, 16 mb vram, 8 mb aram, 64kb bios, 64k flash
 	#define ROM_PREFIX "aw_"
 	#define ROM_NAMES ";bios.ic23_l"

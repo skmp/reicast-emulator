@@ -167,11 +167,10 @@ bool InitDrive(u32 fileflags)
 
 	wchar fn[512];
 	strcpy(fn,settings.imgread.LastImage);
-#ifdef BUILD_DREAMCAST
-	int gfrv=GetFile(fn,0,fileflags);
-#else
-	int gfrv=0;
-#endif
+   int gfrv = 0;
+   if (settings.System == DC_PLATFORM_DREAMCAST)
+      gfrv=GetFile(fn,0,fileflags);
+
    switch (gfrv)
    {
       case 0:
@@ -216,11 +215,9 @@ bool DiscSwap(u32 fileflags)
 
 	wchar fn[512];
 	strcpy(fn,settings.imgread.LastImage);
-#ifdef BUILD_DREAMCAST
-	int gfrv=GetFile(fn,0,fileflags);
-#else
-	int gfrv=0;
-#endif
+   int gfrv = 0;
+   if (settings.System == DC_PLATFORM_DREAMCAST)
+      gfrv=GetFile(fn,0,fileflags);
 	if (gfrv == 0)
 	{
 		NullDriveDiscType=Open;

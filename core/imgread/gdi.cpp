@@ -93,11 +93,11 @@ Disc* load_gdi(const char* file)
 	
 	string basepath = OS_dirname(file);
 
-	u32 TRACK=0,FADS=0,CTRL=0,SSIZE=0;
-	s32 OFFSET=0;
 	for (u32 i=0;i<iso_tc;i++)
 	{
-		string track_filename;
+		string track_filename = {};
+		u32 TRACK=0,FADS=0,CTRL=0,SSIZE=0;
+		s32 OFFSET=0;
 
 		//TRACK FADS CTRL SSIZE file OFFSET
 		gdi >> TRACK;
@@ -105,7 +105,7 @@ Disc* load_gdi(const char* file)
 		gdi >> CTRL;
 		gdi >> SSIZE;
 
-		char last;
+		char last = {};
 
 		do {
 			gdi >> last;
@@ -126,7 +126,7 @@ Disc* load_gdi(const char* file)
 			track_filename = last + track_filename;
 		}
 
-		gdi >> OFFSET;
+		gdi >> std::skipws >> OFFSET;
 		
 		printf("file[%d] \"%s\": FAD:%d, CTRL:%d, SSIZE:%d, OFFSET:%d\n", TRACK, track_filename.c_str(), FADS, CTRL, SSIZE, OFFSET);
 

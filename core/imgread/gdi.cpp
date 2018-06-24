@@ -93,11 +93,11 @@ Disc* load_gdi(const char* file)
 	
 	string basepath = OS_dirname(file);
 
-	u32 TRACK=0,FADS=0,CTRL=0,SSIZE=0;
-	s32 OFFSET=0;
 	for (u32 i=0;i<iso_tc;i++)
 	{
-		string track_filename;
+		string track_filename = {};
+		u32 TRACK=0,FADS=0,CTRL=0,SSIZE=0;
+		s32 OFFSET=0;
 
 		//TRACK FADS CTRL SSIZE file OFFSET
 		gdi >> TRACK;

@@ -126,7 +126,7 @@ Disc* load_gdi(const char* file)
 			track_filename = last + track_filename;
 		}
 
-		gdi >> OFFSET;
+		gdi >> std::skipws >> OFFSET;
 		
 		printf("file[%d] \"%s\": FAD:%d, CTRL:%d, SSIZE:%d, OFFSET:%d\n", TRACK, track_filename.c_str(), FADS, CTRL, SSIZE, OFFSET);
 

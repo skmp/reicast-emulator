@@ -205,7 +205,7 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_widescreen_hack",
-         "Widescreen hack; disabled|enabled",
+         "Widescreen hack (restart); disabled|enabled",
       },
       {
          "reicast_audio_buffer_size",
@@ -852,7 +852,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->geometry.base_height  = screen_height;
    info->geometry.max_width    = screen_width;
    info->geometry.max_height   = screen_height;
-   info->geometry.aspect_ratio = 4.0 / 3.0;
+   info->geometry.aspect_ratio = settings.rend.WideScreen ? (16.0 / 9.0) : (4.0 / 3.0);
 
    switch (pixel_clock)
    {

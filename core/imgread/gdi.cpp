@@ -105,7 +105,7 @@ Disc* load_gdi(const char* file)
 		gdi >> CTRL;
 		gdi >> SSIZE;
 
-		char last;
+		char last = {};
 
 		do {
 			gdi >> last;

@@ -389,11 +389,15 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
          break;
 
       default:
+#ifndef NDEBUG
          printf("Unhandled p4 Write [Reserved] 0x%x\n",addr);
+#endif
          break;
    }
 
+#ifndef NDEBUG
    EMUERROR3("Write to P4 not implemented - addr=%x, data=%x",addr,data);
+#endif
 }
 
 

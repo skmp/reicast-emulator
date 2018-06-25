@@ -181,6 +181,12 @@ void retro_set_environment(retro_environment_t cb)
          "reicast_system",
          "System type (restart); auto|dreamcast|naomi",
       },
+#ifdef HAVE_OIT
+      {
+         "reicast_oit_abuffer_size",
+         "Accumulation pixel buffer size (restart); 512MB|1GB|2GB",
+      },
+#endif
       {
          "reicast_internal_resolution",
          "Internal resolution (restart); 640x480|1280x960|1920x1440|2560x1920|3200x2400|3840x2880|4480x3360|5120x3840|5760x4320|6400x4800|7040x5280|7680x5760|8320x6240|8960x6720|9600x7200|10240x7680|10880x8160|11520x8640|12160x9120|12800x9600",
@@ -397,6 +403,26 @@ static void update_variables(bool first_startup)
       }
       else
          settings.System = DC_PLATFORM_DREAMCAST;
+
+#ifdef HAVE_OIT
+      extern GLuint pixel_buffer_size;
+      var.key = "reicast_oit_abuffer_size";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      {
+         if (!strcmp(var.value, "512MB"))
+            pixel_buffer_size = 0x20000000;
+         else if (!strcmp(var.value, "1GB"))
+            pixel_buffer_size = 0x40000000;
+         else if (!strcmp(var.value, "2GB"))
+            pixel_buffer_size = 0x80000000;
+         else
+            pixel_buffer_size = 0x20000000;
+      }
+      else
+         pixel_buffer_size = 0x20000000;
+
+#endif
    }
 
    var.key = "reicast_volume_modifier_enable";

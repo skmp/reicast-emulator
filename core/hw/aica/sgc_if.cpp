@@ -52,17 +52,20 @@ const char* stream_names[]=
 	"3: 4-bit ADPCM long stream"
 };
 
+#define ICLIP16(x) (x<-32768)?-32768:((x>32767)?32767:x)
+
+#define ADPCMSHIFT 8
+static constexpr int ADFIX(float f) { return int(f * float(1 << ADPCMSHIFT)); }
+
 //x.8 format
-const s32 adpcm_qs[8] = 
-{
-	0x0e6, 0x0e6, 0x0e6, 0x0e6, 0x133, 0x199, 0x200, 0x266,
-};
+const s32 TableQuant[8] = {ADFIX(0.8984375),ADFIX(0.8984375),ADFIX(0.8984375),ADFIX(0.8984375),ADFIX(1.19921875),ADFIX(1.59765625),ADFIX(2.0),ADFIX(2.3984375)};
 //x.3 format
-const s32 adpcm_scale[16] = 
+const s32 quant_mul[16] = 
 {
 	1,3,5,7,9,11,13,15,
 	-1,-3,-5,-7,-9,-11,-13,-15,
 };
+
 
 void AICA_Sample();
 
@@ -752,20 +755,18 @@ struct ChannelEx
 	} 
 };
 
-static __forceinline int32_t DecodeADPCM(u32 sample,s32 prev,s32& quant)
+static __forceinline int32_t DecodeADPCM(u32 Delta,s32 PrevSignal,s32& PrevQuant)
 {
-   s32 sign=1-2*(sample/8);
+   int x = (PrevQuant * quant_mul[Delta & 7]) / 8;
+   if (x > 0x7fff) x = 0x7fff;
+   if (Delta & 8)  x = -x;
+   x += PrevSignal;
 
-   u32 data=sample&7;
+   PrevSignal=ICLIP16(x);
+   PrevQuant=(PrevQuant*TableQuant[Delta&7])>>ADPCMSHIFT;
+   PrevQuant=(PrevQuant<0x7f)?0x7f:((PrevQuant>0x6000)?0x6000:PrevQuant);
 
-   /*(1 - 2 * L4) * (L3 + L2/2 +L1/4 + 1/8) * quantized width (¿¿n) + decode value (Xn - 1) */
-   int32_t rv = prev + sign*((quant*adpcm_scale[data])>>3);
-
-   quant = (quant * adpcm_qs[data])>>8;
-
-   clip(quant,127,24576);
-   clip16(rv);
-   return rv;
+   return PrevSignal;
 }
 
 template<s32 PCMS,bool last>

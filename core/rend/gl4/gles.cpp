@@ -121,6 +121,7 @@ const char* PixelPipelineShader = SHADER_HEADER
 #define pp_Offset %d \n\
 #define pp_FogCtrl %d \n\
 #define pp_TwoVolumes %d \n\
+#define pp_DepthFunc %d \n\
 #define PASS %d \n"
 #ifndef GLES
 	"\
@@ -129,15 +130,6 @@ const char* PixelPipelineShader = SHADER_HEADER
 	#endif \n"
 #endif
 "\
-#define ZERO				0u \n\
-#define ONE					1u \n\
-#define OTHER_COLOR			2u \n\
-#define INVERSE_OTHER_COLOR	3u \n\
-#define SRC_ALPHA			4u \n\
-#define INVERSE_SRC_ALPHA	5u \n\
-#define DST_ALPHA			6u \n\
-#define INVERSE_DST_ALPHA	7u \n\
- \n\
 #if pp_TwoVolumes == 1 \n\
 #define IF(x) if (x) \n\
 #else \n\
@@ -157,9 +149,9 @@ uniform int pp_Number; \n\
 uniform usampler2D shadow_stencil; \n\
 uniform sampler2D DepthTex; \n\
 uniform uint pp_Stencil; \n\
-uniform int pp_DepthFunc; \n\
+uniform bool depth_mask; \n\
 \n\
-uniform uvec2 blend_mode[2]; \n\
+uniform ivec2 blend_mode[2]; \n\
 #if pp_TwoVolumes == 1 \n\
 uniform bool use_alpha[2]; \n\
 uniform bool ignore_tex_alpha[2]; \n\
@@ -189,15 +181,31 @@ void main() \n\
    setFragDepth(); \n\
    \n\
    #if PASS == 3 \n\
-		// Manual depth testing \n\
-      // Depth func Always seems to be needed ? \n\
-      if (pp_DepthFunc != 7) // TODO Use a #def \n\
-      { \n\
-         highp float frontDepth = texture(DepthTex, gl_FragCoord.xy / textureSize(DepthTex, 0)).r; \n\
-         if (gl_FragDepth > frontDepth) \n\
-            discard; \n\
-      } \n\
+   // Manual depth testing \n\
+		highp float frontDepth = texture(DepthTex, gl_FragCoord.xy / textureSize(DepthTex, 0)).r; \n\
+		#if pp_DepthFunc == 0		// Never \n\
+			discard; \n\
+		#elif pp_DepthFunc == 1		// Greater \n\
+			if (gl_FragDepth <= frontDepth) \n\
+				discard; \n\
+		#elif pp_DepthFunc == 2		// Equal \n\
+			if (gl_FragDepth != frontDepth) \n\
+				discard; \n\
+		#elif pp_DepthFunc == 3		// Greater or equal \n\
+			if (gl_FragDepth < frontDepth) \n\
+				discard; \n\
+		#elif pp_DepthFunc == 4		// Less \n\
+			if (gl_FragDepth >= frontDepth) \n\
+				discard; \n\
+		#elif pp_DepthFunc == 5		// Not equal \n\
+			if (gl_FragDepth == frontDepth) \n\
+				discard; \n\
+		#elif pp_DepthFunc == 6		// Less or equal \n\
+			if (gl_FragDepth > frontDepth) \n\
+				discard; \n\
+		#endif \n\
 	#endif \n\
+   \n\
 	// Clip outside the box \n\
 	#if pp_ClipTestMode==1 \n\
 		if (gl_FragCoord.x < pp_ClipTest.x || gl_FragCoord.x > pp_ClipTest.z \n\
@@ -215,7 +223,7 @@ void main() \n\
    " LOWP "vec4 offset = vtx_offs; \n\
    mediump vec2 uv = vtx_uv; \n\
    bool area1 = false; \n\
-   uvec2 cur_blend_mode = blend_mode[0]; \n\
+   ivec2 cur_blend_mode = blend_mode[0]; \n\
 	\n\
 	#if pp_TwoVolumes == 1 \n\
       bool cur_use_alpha = use_alpha[0]; \n\
@@ -326,29 +334,29 @@ void main() \n\
 				case ONE: \n\
 				case OTHER_COLOR: \n\
 				case INVERSE_OTHER_COLOR: \n\
-               if (color == vec4(0, 0, 0, 0)) \n\
+               if (color == vec4(0.0)) \n\
                   discard; \n\
 					break; \n\
 				case SRC_ALPHA: \n\
-               if (color.rgb == vec3(0, 0, 0) || color.a == 0) \n\
+               if (color.rgb == vec3(0.0) || color.a == 0) \n\
                   discard; \n\
                break; \n\
 				case INVERSE_SRC_ALPHA: \n\
-               if (color.rgb == vec3(0, 0, 0) || color.a == 1) \n\
+               if (color.rgb == vec3(0.0) || color.a == 1) \n\
                   discard; \n\
 					break; \n\
 			} \n\
 			break; \n\
 		case OTHER_COLOR: \n\
-         if (cur_blend_mode.x == ZERO && color == vec4(1, 1, 1, 1)) \n\
+         if (cur_blend_mode.x == ZERO && color == vec4(1.0)) \n\
             discard; \n\
 			break; \n\
 		case INVERSE_OTHER_COLOR: \n\
-         if (cur_blend_mode.x <= SRC_ALPHA && color == vec4(0, 0, 0, 0)) \n\
+         if (cur_blend_mode.x <= SRC_ALPHA && color == vec4(0.0)) \n\
             discard; \n\
 			break; \n\
 		case SRC_ALPHA: \n\
-         if ((cur_blend_mode.x == ZERO || cur_blend_mode.x == INVERSE_SRC_ALPHA) && color.a == 1) \n\
+         if ((cur_blend_mode.x == ZERO || cur_blend_mode.x == INVERSE_SRC_ALPHA) && color.a == 1.0) \n\
             discard; \n\
 			break; \n\
 		case INVERSE_SRC_ALPHA: \n\
@@ -356,13 +364,13 @@ void main() \n\
 			{ \n\
 				case ZERO: \n\
 				case SRC_ALPHA: \n\
-               if (color.a == 0) \n\
+               if (color.a == 0.0) \n\
                   discard; \n\
 					break; \n\
 				case ONE: \n\
 				case OTHER_COLOR: \n\
 				case INVERSE_OTHER_COLOR: \n\
-               if (color == vec4(0, 0, 0, 0)) \n\
+               if (color == vec4(0.0)) \n\
                   discard; \n\
 					break; \n\
 			} \n\
@@ -375,7 +383,7 @@ void main() \n\
       pixel.color = color; \n\
       pixel.depth = gl_FragDepth; \n\
       pixel.seq_num = pp_Number; \n\
-      pixel.blend_stencil = (cur_blend_mode.x * 8u + cur_blend_mode.y) * 256u + pp_Stencil; \n\
+      pixel.blend_stencil = uint(depth_mask << 19) + uint(pp_DepthFunc << 16) + uint(((cur_blend_mode.x << 3) + cur_blend_mode.y) << 8) + pp_Stencil; \n\
       pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx); \n\
       pixels[idx] = pixel; \n\
       \n\
@@ -406,7 +414,7 @@ int GetProgramID(
       u32 pp_IgnoreTexA,
       u32 pp_ShadInstr,
       u32 pp_Offset,
-      u32 pp_FogCtrl, bool pp_TwoVolumes, int pass)
+      u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, int pass)
 {
 	u32 rv=0;
 
@@ -419,6 +427,7 @@ int GetProgramID(
 	rv<<=1; rv|=pp_Offset;
 	rv<<=2; rv|=pp_FogCtrl;
    rv <<= 1; rv |= (int)pp_TwoVolumes;
+   rv <<= 3; rv |= pp_DepthFunc;
    rv <<= 2; rv |= pass;
 
 	return rv;
@@ -515,7 +524,7 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
 
 	sprintf(pshader, source,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_TwoVolumes, s->pass);
+                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_TwoVolumes, s->pp_DepthFunc, s->pass);
 
 
 	s->program            = gl_CompileAndLink(VertexShaderSource,pshader);
@@ -575,6 +584,7 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
    s->ignore_tex_alpha = glGetUniformLocation(s->program, "ignore_tex_alpha");
    s->shading_instr = glGetUniformLocation(s->program, "shading_instr");
    s->fog_control = glGetUniformLocation(s->program, "fog_control");
+   s->depth_mask = glGetUniformLocation(s->program, "depth_mask");
 
 	return glIsProgram(s->program)==GL_TRUE;
 }

@@ -28,12 +28,12 @@ const static u32 Zfunction[]=
 	GL_NOTEQUAL,    //GL_NOTEQUAL,          //5 Not Equal
 	GL_GEQUAL,      //GL_GEQUAL,            //6 Greater Or Equal
 #else
-    GL_GREATER,        //GL_LESS/*EQUAL*/,     //1 Less
-    GL_EQUAL,       //GL_EQUAL,             //2 Equal
-    GL_GEQUAL,      //GL_LEQUAL,            //3 Less Or Equal
-    GL_LESS,     //GL_GREATER/*EQUAL*/,  //4 Greater
-    GL_NOTEQUAL,    //GL_NOTEQUAL,          //5 Not Equal
-    GL_LEQUAL,      //GL_GEQUAL,            //6 Greater Or Equal
+    GL_GREATER,                            //1 Less
+    GL_EQUAL,                              //2 Equal
+    GL_GEQUAL,                             //3 Less Or Equal
+    GL_LESS,                               //4 Greater
+    GL_NOTEQUAL,                           //5 Not Equal
+    GL_LEQUAL,                             //6 Greater Or Equal
 #endif
 	GL_ALWAYS,      //GL_ALWAYS,            //7 Always
 };
@@ -41,8 +41,8 @@ const static u32 Zfunction[]=
 /*
 0   Zero                  (0, 0, 0, 0)
 1   One                   (1, 1, 1, 1)
-2   Dither Color          (OR, OG, OB, OA) 
-3   Inverse Dither Color  (1-OR, 1-OG, 1-OB, 1-OA)
+2   Other Color           (OR, OG, OB, OA) 
+3   Inverse Other Color   (1-OR, 1-OG, 1-OB, 1-OA)
 4   SRC Alpha             (SA, SA, SA, SA)
 5   Inverse SRC Alpha     (1-SA, 1-SA, 1-SA, 1-SA)
 6   DST Alpha             (DA, DA, DA, DA)
@@ -167,6 +167,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
 				0,
 				2,
             false, // TODO Can PT have two different textures for area 0 and 1 ??
+            0,
 				pass);
 
 		CurrentShader = gl.getShader(shaderId);
@@ -180,6 +181,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
 			CurrentShader->pp_Offset = 0;
 			CurrentShader->pp_FogCtrl = 2;
          CurrentShader->pp_TwoVolumes = false;
+         CurrentShader->pp_DepthFunc = 0;
          CurrentShader->pass = pass;
 
 			CompilePipelineShader(CurrentShader);
@@ -190,6 +192,17 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
       // Two volumes mode only supported for OP and PT
 		bool two_volumes_mode = (gp->tsp1.full != -1) && Type != ListType_Translucent;
 
+      int depth_func = 0;
+		if (Type == ListType_Translucent)
+		{
+			// TR in autosort mode ignores specified depth func and defaults to GL_LEQUAL, except for GL_ALWAYS.
+			if (SortingEnabled && gp->isp.DepthMode != 7 && gp->isp.DepthMode != 6)
+				depth_func = 6;
+			else
+				depth_func = gp->isp.DepthMode;
+		}
+
+
       shaderId = GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
                SetTileClip(gp->tileclip, false) + 1,
                gp->pcw.Texture,
@@ -199,6 +212,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
                gp->pcw.Offset,
                gp->tsp.FogCtrl,
                two_volumes_mode,
+               depth_func,
                pass);
       CurrentShader = gl.getShader(shaderId);
 
@@ -212,6 +226,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
          CurrentShader->pp_Offset = gp->pcw.Offset;
          CurrentShader->pp_FogCtrl = gp->tsp.FogCtrl;
          CurrentShader->pp_TwoVolumes = two_volumes_mode;
+         CurrentShader->pp_DepthFunc = depth_func;
          CurrentShader->pass       = pass;
 
          CompilePipelineShader(CurrentShader);
@@ -241,7 +256,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
    glcache.StencilFunc(GL_ALWAYS, stencil, stencil);
 
    ShaderUniforms.stencil = stencil;
-   ShaderUniforms.depth_func = gp->isp.DepthMode;
+   ShaderUniforms.depth_mask = gp->isp.ZWriteDis == 0;
 	ShaderUniforms.Set(CurrentShader);
 
    if (CurrentShader->pp_Texture)

@@ -94,70 +94,110 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 	bubbleSort(num_frag); \n\
 	 \n\
 	vec4 finalColor = texture(tex, gl_FragCoord.xy / textureSize(tex, 0)); \n\
+	float depth = 1.0; \n\
 	for (int i = 0; i < num_frag; i++) { \n\
+#if DEPTH_SORTED != 1 \n\
+		float frag_depth = pixel_list[i].depth; \n\
+		switch ((int(pixel_list[i].blend_stencil) >> 16) & 7) \n\
+		{ \n\
+		case 0:		// Never \n\
+			continue; \n\
+		case 1:		// Greater \n\
+			if (frag_depth <= depth) \n\
+				continue; \n\
+			break; \n\
+		case 2:		// Equal \n\
+			if (frag_depth != depth) \n\
+				continue; \n\
+			break; \n\
+		case 3:		// Greater or equal \n\
+			if (frag_depth < depth) \n\
+				continue; \n\
+			break; \n\
+		case 4:		// Less \n\
+			if (frag_depth >= depth) \n\
+				continue; \n\
+			break; \n\
+		case 5:		// Not equal \n\
+			if (frag_depth == depth) \n\
+				continue; \n\
+			break; \n\
+		case 6:		// Less or equal \n\
+			if (frag_depth > depth) \n\
+				continue; \n\
+			break; \n\
+		case 7:		// Always \n\
+			break; \n\
+		} \n\
+		bool depth_mask = ((int(pixel_list[i].blend_stencil) >> 19) & 1) == 1; \n\
+		if (depth_mask) \n\
+			depth = frag_depth; \n\
+#endif \n\
 		vec4 srcColor = pixel_list[i].color; \n\
 		if ((pixel_list[i].blend_stencil & 0x81u) == 0x81u) \n\
 			srcColor.rgb *= shade_scale_factor; \n\
 		float srcAlpha = srcColor.a; \n\
 		float dstAlpha = finalColor.a; \n\
 		vec4 srcCoef; \n\
+		vec4 dstCoef; \n\
 		 \n\
-		int srcBlend = int(pixel_list[i].blend_stencil) / 256 / 8; \n\
+		int srcBlend = (int(pixel_list[i].blend_stencil) >> 11) & 7; \n\
 		switch (srcBlend) \n\
 		{ \n\
-			case 0: // zero \n\
-				srcCoef = vec4(0); \n\
+			case ZERO: \n\
+				srcCoef = vec4(0.0); \n\
 				break; \n\
-			case 1: // one \n\
-				srcCoef = vec4(1); \n\
+			case ONE: \n\
+				srcCoef = vec4(1.0); \n\
 				break; \n\
-			case 2: // other color \n\
+			case OTHER_COLOR: \n\
 				srcCoef = finalColor; \n\
 				break; \n\
-			case 3: // inverse other color \n\
-				srcCoef = vec4(1) - finalColor; \n\
+			case INVERSE_OTHER_COLOR: \n\
+				srcCoef = vec4(1.0) - finalColor; \n\
 				break; \n\
-			case 4: // src alpha \n\
+			case SRC_ALPHA: \n\
 				srcCoef = vec4(srcAlpha); \n\
 				break; \n\
-			case 5: // inverse src alpha \n\
-				srcCoef = vec4(1 - srcAlpha); \n\
+			case INVERSE_SRC_ALPHA: \n\
+				srcCoef = vec4(1.0 - srcAlpha); \n\
 				break; \n\
-			case 6: // dst alpha \n\
+			case DST_ALPHA: \n\
 				srcCoef = vec4(dstAlpha); \n\
 				break; \n\
-			case 7: // inverse dst alpha \n\
-				srcCoef = vec4(1 - dstAlpha); \n\
+			case INVERSE_DST_ALPHA: \n\
+				srcCoef = vec4(1.0 - dstAlpha); \n\
 				break; \n\
 		} \n\
-		int dstBlend = (int(pixel_list[i].blend_stencil) / 256) % 8; \n\
+		int dstBlend = (int(pixel_list[i].blend_stencil) >> 8) & 7; \n\
 		switch (dstBlend) \n\
 		{ \n\
-			case 0: // zero \n\
-				finalColor = vec4(0); \n\
+			case ZERO: \n\
+				dstCoef = vec4(0.0); \n\
 				break; \n\
-			case 1: // one \n\
+			case ONE: \n\
+				dstCoef = vec4(1.0); \n\
 				break; \n\
-			case 2: // other color \n\
-				finalColor *= srcColor; \n\
+			case OTHER_COLOR: \n\
+				dstCoef = srcColor; \n\
 				break; \n\
-			case 3: // inverse other color \n\
-				finalColor *= vec4(1) - srcColor; \n\
+			case INVERSE_OTHER_COLOR: \n\
+				dstCoef = vec4(1.0) - srcColor; \n\
 				break; \n\
-			case 4: // src alpha \n\
-				finalColor *= srcAlpha; \n\
+			case SRC_ALPHA: \n\
+				dstCoef = vec4(srcAlpha); \n\
 				break; \n\
-			case 5: // inverse src alpha \n\
-				finalColor *= 1 - srcAlpha; \n\
+			case INVERSE_SRC_ALPHA: \n\
+				dstCoef = vec4(1.0 - srcAlpha); \n\
 				break; \n\
-			case 6: // dst alpha \n\
-				finalColor *= dstAlpha; \n\
+			case DST_ALPHA: \n\
+				dstCoef = vec4(dstAlpha); \n\
 				break; \n\
-			case 7: // inverse dst alpha \n\
-				finalColor *= 1 - dstAlpha; \n\
+			case INVERSE_DST_ALPHA: \n\
+				dstCoef = vec4(1.0 - dstAlpha); \n\
 				break; \n\
 		} \n\
-		finalColor = clamp(finalColor + srcColor * srcCoef, 0, 1); \n\
+		finalColor = clamp(finalColor * dstCoef + srcColor * srcCoef, 0.0, 1.0); \n\
 	} \n\
 	 \n\
 	return finalColor; \n\
@@ -438,8 +478,8 @@ void DrawTranslucentModVols(int first, int count)
 
 		u32 mv_mode = ispc.DepthMode;
 
-		// crashes Tokyo Xtreme Racer 2 loading
-		// verify(mod_base > 0 && mod_base + sz <= pvrrc.modtrig.used());
+      // crashes Tokyo Xtreme Racer 2 loading
+		//verify(mod_base > 0 && mod_base + sz <= pvrrc.modtrig.used());
 
 		glcache.UseProgram(g_abuffer_tr_modvol_shader.program);
 		SetCull(ispc.CullMode); glCheck();

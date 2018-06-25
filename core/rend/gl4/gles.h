@@ -31,17 +31,18 @@ struct PipelineShader
    GLuint shade_scale_factor;
    GLuint pp_Number;
    GLuint pp_Stencil;
-   GLuint pp_DepthFunc;
    GLuint blend_mode;
    GLuint use_alpha;
    GLuint ignore_tex_alpha;
    GLuint shading_instr;
    GLuint fog_control;
+   GLuint depth_mask;
 
    //
 	u32 cp_AlphaTest;
    s32 pp_ClipTestMode;
    u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
+   u32 pp_DepthFunc;
    int pass;
    bool pp_TwoVolumes;
 };
@@ -110,7 +111,7 @@ GLuint BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool two_volumes, int pass);
+							u32 pp_FogCtrl, bool two_volumes, u32 pp_DepthFunc, int pass);
 void SetCull(u32 CulliMode);
 
 typedef struct _ShaderUniforms_t
@@ -127,7 +128,7 @@ typedef struct _ShaderUniforms_t
 	TSP tsp1;
 	TCW tcw0;
 	TCW tcw1;
-   int depth_func;
+   bool depth_mask;
 
    void setUniformArray(GLuint location, int v0, int v1)
 	{
@@ -159,7 +160,7 @@ typedef struct _ShaderUniforms_t
 			glUniform1f(s->shade_scale_factor, FPU_SHAD_SCALE.scale_factor / 256.f);
       if (s->blend_mode != -1) {
          u32 blend_mode[] = { tsp0.SrcInstr, tsp0.DstInstr, tsp1.SrcInstr, tsp1.DstInstr };
-         glUniform2uiv(s->blend_mode, 2, blend_mode);
+         glUniform2iv(s->blend_mode, 2, (GLint *)blend_mode);
 		}
 
       if (s->use_alpha != -1)
@@ -180,8 +181,8 @@ typedef struct _ShaderUniforms_t
       if (s->pp_Stencil != -1)
 			glUniform1ui(s->pp_Stencil, stencil);
 
-      if (s->pp_DepthFunc != -1)
-			glUniform1i(s->pp_DepthFunc, depth_func);
+      if (s->depth_mask != -1)
+         glUniform1i(s->depth_mask, depth_mask);
    }
 } _ShaderUniforms;
 extern struct _ShaderUniforms_t ShaderUniforms;
@@ -214,6 +215,15 @@ layout (binding = 0, std430) coherent restrict buffer PixelBuffer { \n\
 }; \n\
 layout(binding = 0, offset = 0) uniform atomic_uint buffer_index; \n\
 \n\
+#define ZERO				0 \n\
+#define ONE					1 \n\
+#define OTHER_COLOR			2 \n\
+#define INVERSE_OTHER_COLOR	3 \n\
+#define SRC_ALPHA			4 \n\
+#define INVERSE_SRC_ALPHA	5 \n\
+#define DST_ALPHA			6 \n\
+#define INVERSE_DST_ALPHA	7 \n\
+ \n\
 uint getNextPixelIndex() \n\
 { \n\
    uint index = atomicCounterIncrement(buffer_index); \n\

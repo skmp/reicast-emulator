@@ -2429,6 +2429,23 @@ void rglBufferStorage(GLenum target, GLsizeiptr size, const GLvoid *data, GLbitf
 /*
  *
  * Core in:
+ * OpenGL    : 2.0
+ * OpenGLES  : 2.0
+ */
+
+void rglUniform2iv(	GLint location,
+ 	GLsizei count,
+ 	const GLint *value)
+{
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glUniform2iv.\n");
+#endif
+   glUniform2iv(location, count, value);
+}
+
+/*
+ *
+ * Core in:
  * OpenGL    : 3.0
  * OpenGLES  : ?.?
  */

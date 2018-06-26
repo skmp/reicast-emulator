@@ -12,16 +12,14 @@ GLuint atomic_buffer;
 PipelineShader g_abuffer_final_shader;
 PipelineShader g_abuffer_final_nosort_shader;
 PipelineShader g_abuffer_clear_shader;
-PipelineShader g_abuffer_tr_modvol_shader;
-PipelineShader g_abuffer_tr_modvol_final_shader;
-static GLuint volume_mode_uniform;
+PipelineShader g_abuffer_tr_modvol_shaders[ModeCount];
 static GLuint g_quadBuffer = 0;
 static GLuint g_quadVertexArray = 0;
 
 static int g_imageWidth = 0;
 static int g_imageHeight = 0;
 
-GLuint pixel_buffer_size = 512 * 1024 * 1024;	// Initial size 64 MB
+GLuint pixel_buffer_size = 512 * 1024 * 1024;	// Initial size 512 MB
 
 #define MAX_PIXELS_PER_FRAGMENT "32"
 
@@ -229,12 +227,16 @@ void main(void) \n\
 ";
 
 static const char *tr_modvol_shader_source = SHADER_HEADER "\
-#define LAST_PASS %d \n\
+#define MV_MODE %d \n\
 #define MAX_PIXELS_PER_FRAGMENT " MAX_PIXELS_PER_FRAGMENT " \n\
-uniform int volume_mode; \n\
+// Must match ModifierVolumeMode enum values \n\
+#define MV_XOR		 0 \n\
+#define MV_OR		 1 \n\
+#define MV_INCLUSION 2 \n\
+#define MV_EXCLUSION 3 \n\
 void main(void) \n\
 { \n\
-#if LAST_PASS == 0 \n\
+#if MV_MODE == MV_XOR || MV_MODE == MV_OR \n\
 	setFragDepth(); \n\
 #endif \n\
 	ivec2 coords = ivec2(gl_FragCoord.xy); \n\
@@ -249,24 +251,20 @@ void main(void) \n\
 			uint stencil = pixels[idx].blend_stencil; \n\
 			if ((stencil & 0x80u) == 0x80u) \n\
 			{ \n\
-#if LAST_PASS == 0 \n\
+#if MV_MODE == MV_XOR \n\
 				if (gl_FragDepth <= pixels[idx].depth) \n\
 					atomicXor(pixels[idx].blend_stencil, 2u); \n\
-#else \n\
-				uint prev_val; \n\
-				switch (volume_mode) \n\
-				{ \n\
-				case 1: // Inclusion volume \n\
-					prev_val = atomicAnd(pixels[idx].blend_stencil, 0xFFFFFFFDu); \n\
-					if ((prev_val & 3u) == 2u) \n\
-						pixels[idx].blend_stencil = bitfieldInsert(stencil, 1u, 0, 1); \n\
-					break; \n\
-				case 2: // Exclusion volume \n\
-					prev_val = atomicAnd(pixels[idx].blend_stencil, 0xFFFFFFFCu); \n\
-					if ((prev_val & 3u) == 1u) \n\
-						pixels[idx].blend_stencil = bitfieldInsert(stencil, 1u, 0, 1); \n\
-					break; \n\
-				} \n\
+#elif MV_MODE == MV_OR \n\
+				if (gl_FragDepth <= pixels[idx].depth) \n\
+					atomicOr(pixels[idx].blend_stencil, 2u); \n\
+#elif MV_MODE == MV_INCLUSION \n\
+				uint prev_val = atomicAnd(pixels[idx].blend_stencil, 0xFFFFFFFDu); \n\
+				if ((prev_val & 3u) == 2u) \n\
+					pixels[idx].blend_stencil = bitfieldInsert(stencil, 1u, 0, 1); \n\
+#elif MV_MODE == MV_EXCLUSION \n\
+				uint prev_val = atomicAnd(pixels[idx].blend_stencil, 0xFFFFFFFCu); \n\
+				if ((prev_val & 3u) == 1u) \n\
+					pixels[idx].blend_stencil = bitfieldInsert(stencil, 1u, 0, 1); \n\
 #endif \n\
 			} \n\
 			idx = pixels[idx].next; \n\
@@ -341,18 +339,14 @@ void initABuffer()
 	}
 	if (g_abuffer_clear_shader.program == 0)
 		CompilePipelineShader(&g_abuffer_clear_shader, clear_shader_source);
-	if (g_abuffer_tr_modvol_shader.program == 0)
+	if (g_abuffer_tr_modvol_shaders[0].program == 0)
 	{
 		char source[16384];
-		sprintf(source, tr_modvol_shader_source, 0);
-		CompilePipelineShader(&g_abuffer_tr_modvol_shader, source);
-	}
-	if (g_abuffer_tr_modvol_final_shader.program == 0)
-	{
-		char source[16384];
-		sprintf(source, tr_modvol_shader_source, 1);
-		CompilePipelineShader(&g_abuffer_tr_modvol_final_shader, source);
-		volume_mode_uniform = glGetUniformLocation(g_abuffer_tr_modvol_final_shader.program, "volume_mode");
+		for (int mode = 0; mode < ModeCount; mode++)
+		{
+			sprintf(source, tr_modvol_shader_source, mode);
+			CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], source);
+		}
 	}
 
 	if (g_quadVertexArray == 0)
@@ -448,57 +442,47 @@ void DrawTranslucentModVols(int first, int count)
 	glcache.Disable(GL_DEPTH_TEST);
 	glcache.Disable(GL_STENCIL_TEST);
 
-	glcache.UseProgram(g_abuffer_tr_modvol_final_shader.program);
-	ShaderUniforms.Set(&g_abuffer_tr_modvol_final_shader);
-	glcache.UseProgram(g_abuffer_tr_modvol_shader.program);
-	ShaderUniforms.Set(&g_abuffer_tr_modvol_shader);
 	glCheck();
 
-	u32 mod_base = 0; //cur start triangle
-	u32 mod_last = 0; //last merge
-
-	u32 cmv_count = count - 1;
-	ISP_Modvol* params = &pvrrc.global_param_mvo_tr.head()[first];
+	ModifierVolumeParam* params = &pvrrc.global_param_mvo_tr.head()[first];
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
-	//ISP_Modvol
-	for (u32 cmv = 0; cmv < cmv_count; cmv++)
+	for (u32 cmv = 0; cmv < count; cmv++)
 	{
+		ModifierVolumeParam& param = params[cmv];
 
-		ISP_Modvol ispc = params[cmv];
-		mod_base = ispc.id;
-		if (mod_last == 0)
-			// FIXME Will this work if no OP modvols are drawn?
-			mod_last = mod_base;
-
-		u32 sz = params[cmv + 1].id - mod_base;
-		if (sz == 0)
+		if (param.count == 0)
 			continue;
 
-		u32 mv_mode = ispc.DepthMode;
+		u32 mv_mode = param.isp.DepthMode;
 
-      // crashes Tokyo Xtreme Racer 2 loading
-		//verify(mod_base > 0 && mod_base + sz <= pvrrc.modtrig.used());
+		verify(param.first >= 0 && param.first + param.count <= pvrrc.modtrig.used());
 
-		glcache.UseProgram(g_abuffer_tr_modvol_shader.program);
-		SetCull(ispc.CullMode); glCheck();
+		PipelineShader *shader;
+		if (!param.isp.VolumeLast && mv_mode > 0)
+			shader = &g_abuffer_tr_modvol_shaders[Or];	// OR'ing (open volume or quad)
+		else
+			shader = &g_abuffer_tr_modvol_shaders[Xor];	// XOR'ing (closed volume)
+		glcache.UseProgram(shader->program);
+		ShaderUniforms.Set(shader);
+
+		SetCull(param.isp.CullMode); glCheck();
 
 		glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
-		glDrawArrays(GL_TRIANGLES, mod_base * 3, sz * 3); glCheck();
+
+		glDrawArrays(GL_TRIANGLES, param.first * 3, param.count * 3); glCheck();
 
 		if (mv_mode == 1 || mv_mode == 2)
 		{
 			//Sum the area
-			glcache.UseProgram(g_abuffer_tr_modvol_final_shader.program);
-			glUniform1i(volume_mode_uniform, mv_mode);
+			shader = &g_abuffer_tr_modvol_shaders[mv_mode == 1 ? Inclusion : Exclusion];
+			glcache.UseProgram(shader->program);
+			ShaderUniforms.Set(shader);
 
 			glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
 			DrawQuad();
 			SetupModvolVBO();
-
-			//update pointers
-			mod_last = mod_base + 1;
 		}
 	}
 }

@@ -92,3 +92,4 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 void vertex_buffer_unmap(void);
 
 bool CompilePipelineShader(PipelineShader* s);
+enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };

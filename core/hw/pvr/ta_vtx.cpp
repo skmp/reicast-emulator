@@ -725,20 +725,8 @@ public:
 	{
 		CurrentPP=&nullPP;
 		CurrentPPlist=0;
-		if (ListType==ListType_Opaque_Modifier_Volume)
-		{
-			ISP_Modvol p;
-			p.id=vdrc.modtrig.used();
-			*vdrc.global_param_mvo.Append()=p;
-		}
-#ifdef HAVE_OIT
-      else if (ListType == ListType_Translucent_Modifier_Volume)
-		{
-			ISP_Modvol p;
-			p.id = vdrc.modtrig.used();
-			*vdrc.global_param_mvo_tr.Append()=p;
-		}
-#endif
+      if (ListType == ListType_Opaque_Modifier_Volume)
+         EndModVol();
 	}
 
 	/*
@@ -1412,12 +1400,32 @@ public:
 #endif
 	}
 
-	//ModVolumes
+   // Modifier Volumes Vertex handlers
+   
+   static void EndModVol()
+	{
+		List<ModifierVolumeParam> *list = NULL;
+		if (CurrentList == ListType_Opaque_Modifier_Volume)
+			list = &vdrc.global_param_mvo;
+#ifdef HAVE_OIT
+		else if (CurrentList == ListType_Translucent_Modifier_Volume)
+			list = &vdrc.global_param_mvo_tr;
+#endif
+		else
+			return;
+		if (list->used() > 0)
+		{
+			ModifierVolumeParam *p = &(list->head()[list->used() - 1]);
+			p->count = vdrc.modtrig.used() - p->first;
+		}
+	}
 
 	//Mod Volume Vertex handlers
 	static void StartModVol(TA_ModVolParam* param)
 	{
-      ISP_Modvol* p= NULL;
+      EndModVol();
+
+      ModifierVolumeParam *p = NULL;
 		if (CurrentList == ListType_Opaque_Modifier_Volume)
          p = vdrc.global_param_mvo.Append();
 #ifdef HAVE_OIT
@@ -1426,10 +1434,9 @@ public:
 #endif
       else
 			return;
-
-		p->full=param->isp.full;
-		p->VolumeLast=param->pcw.Volume;
-		p->id=vdrc.modtrig.used();
+      p->isp.full = param->isp.full;
+      p->isp.VolumeLast = param->pcw.Volume != 0;
+      p->first = vdrc.modtrig.used();
 	}
 	__forceinline
 		static void AppendModVolVertexA(TA_ModVolA* mvv)

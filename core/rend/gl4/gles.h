@@ -241,3 +241,4 @@ void setFragDepth(void) \n\
 "
 
 void SetupModvolVBO();
+enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };

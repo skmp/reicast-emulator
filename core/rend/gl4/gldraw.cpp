@@ -380,7 +380,7 @@ void DrawList(const List<PolyParam>& gply, int first, int count, int pass)
 	10 -> 00
 	11 -> 01
 */
-void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
+void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 {
    if (mv_mode == Xor)
 	{
@@ -530,6 +530,8 @@ void DrawModVols(int first, int count)
 
       ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
 
+      int mod_base = -1;
+
       for (u32 cmv = 0; cmv < count; cmv++)
       {
          ModifierVolumeParam& param = params[cmv];
@@ -538,6 +540,9 @@ void DrawModVols(int first, int count)
             continue;
 
          u32 mv_mode = param.isp.DepthMode;
+
+         if (mod_base == -1)
+				mod_base = param.first;
 
          if (!param.isp.VolumeLast && mv_mode > 0)
             SetMVS_Mode(Or, param.isp);		// OR'ing (open volume or quad)
@@ -551,11 +556,8 @@ void DrawModVols(int first, int count)
             // Sum the area
             SetMVS_Mode(mv_mode == 1 ? Inclusion : Exclusion, param.isp);
 
-            // Use the background poly as a quad to do the sum up
-            SetupMainVBO();
-
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            SetupModvolVBO();
+            glDrawArrays(GL_TRIANGLES, mod_base * 3, (param.first + param.count - mod_base) * 3);
+            mod_base = -1;
          }
       }
 

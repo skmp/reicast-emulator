@@ -889,8 +889,6 @@ struct softrend : Renderer
 			return false;
 
 		ctx->rend_inuse.Lock();
-      if (!settings.rend.Multipass)
-         ctx->MarkRend(0);
 
 		if (!ta_parse_vdrc(ctx))
 			return false;

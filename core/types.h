@@ -512,7 +512,6 @@ struct settings_t
       bool RenderToTexture;
       bool RenderToTextureBuffer;
       bool TranslucentPolygonDepthMask;
-      bool Multipass;
 	} rend;
 
 	struct

@@ -199,12 +199,6 @@ void retro_set_environment(retro_environment_t cb)
          "reicast_mipmapping",
          "Mipmapping; enabled|disabled",
       },
-#ifndef HAVE_OIT
-      {
-         "reicast_multipass",
-         "Multipass support (restart); disabled|enabled",
-      },
-#endif
       {
          "reicast_volume_modifier_enable",
          "Volume modifier; enabled|disabled",
@@ -374,22 +368,6 @@ static void update_variables(bool first_startup)
 
    if (first_startup)
    {
-#ifdef HAVE_OIT
-      settings.rend.Multipass            = true;
-#else
-      var.key = "reicast_multipass";
-
-      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-      {
-         if (!strcmp(var.value, "enabled"))
-            settings.rend.Multipass      = true;
-         else if (!strcmp(var.value, "disabled"))
-            settings.rend.Multipass      = false;
-      }
-      else
-         settings.rend.Multipass         = false;
-#endif
-
       var.key = "reicast_system";
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)

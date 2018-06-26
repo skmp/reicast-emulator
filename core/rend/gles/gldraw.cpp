@@ -751,98 +751,59 @@ void DrawModVols(int first, int count)
 
 void DrawStrips(void)
 {
-	SetupMainVBO();
-	//Draw the strips !
+   SetupMainVBO();
+   //Draw the strips !
 
-	//We use sampler 0
+   //We use sampler 0
    glActiveTexture(GL_TEXTURE0);
 
-   if (settings.rend.Multipass)
+   RenderPass previous_pass = {0};
+   for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
    {
-      RenderPass previous_pass = {0};
-      for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
-      {
-         const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+      const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
 
-         //initial state
-         glcache.Enable(GL_DEPTH_TEST);
+      //initial state
+      glcache.Enable(GL_DEPTH_TEST);
 
 #if 0
-         glClearDepth(0.f);
+      glClearDepth(0.f);
 #endif
-         glcache.DepthMask(GL_TRUE);
-         glcache.StencilMask(0xFF);
-         glClear(GL_DEPTH_BUFFER_BIT );
+      glcache.DepthMask(GL_TRUE);
+      glcache.StencilMask(0xFF);
+      glClear(GL_DEPTH_BUFFER_BIT );
 
-         //Opaque
-         DrawList<ListType_Opaque, false>(pvrrc.global_param_op, 
-               previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
+      //Opaque
+      DrawList<ListType_Opaque, false>(pvrrc.global_param_op, 
+            previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
 
-         //Alpha tested
-         DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt,
-               previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
+      //Alpha tested
+      DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt,
+            previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
-         // Modifier volumes
-         DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
+      // Modifier volumes
+      DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
-         if (UsingAutoSort())
-            GenSorted(previous_pass.tr_count,
-                  current_pass.tr_count - previous_pass.tr_count);
+      if (UsingAutoSort())
+         GenSorted(previous_pass.tr_count,
+               current_pass.tr_count - previous_pass.tr_count);
 
-         //Alpha blended
-         if (settings.pvr.Emulation.AlphaSortMode == 0)
-         {
-            if (pvrrc.isAutoSort)
-               DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
-            else
-               DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-         }
-         else if (settings.pvr.Emulation.AlphaSortMode == 1)
-         {
-            if (pvrrc.isAutoSort)
-               SortPParams(previous_pass.tr_count,
-                     current_pass.tr_count - previous_pass.tr_count);
-            DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count );
-         }
-
-         previous_pass = current_pass;
+      //Alpha blended
+      if (settings.pvr.Emulation.AlphaSortMode == 0)
+      {
+         if (pvrrc.isAutoSort)
+            DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
+         else
+            DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
       }
-   }
-   else
-   {
-         //initial state
-         glcache.Enable(GL_DEPTH_TEST);
+      else if (settings.pvr.Emulation.AlphaSortMode == 1)
+      {
+         if (pvrrc.isAutoSort)
+            SortPParams(previous_pass.tr_count,
+                  current_pass.tr_count - previous_pass.tr_count);
+         DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count );
+      }
 
-         //Opaque
-         DrawList<ListType_Opaque, false>(pvrrc.global_param_op, 
-               0, pvrrc.global_param_op.used());
-
-         //Alpha tested
-         DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt,
-               0, pvrrc.global_param_pt.used());
-
-         // Modifier volumes
-         DrawModVols(0, pvrrc.global_param_mvo.used());
-
-         //Alpha blended
-         if (settings.pvr.Emulation.AlphaSortMode == 0)
-         {
-            u32 count = pidx_sort.size();
-
-            // if any drawing commands, draw them
-            if (pvrrc.isAutoSort && count)
-               DrawSorted(count);
-            else
-               DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, 0, pvrrc.global_param_tr.used());
-         }
-         else if (settings.pvr.Emulation.AlphaSortMode == 1)
-         {
-            if (pvrrc.isAutoSort)
-               SortPParams(0,
-                     pvrrc.global_param_tr.used());
-
-            DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, 0, pvrrc.global_param_tr.used());
-         }
+      previous_pass = current_pass;
    }
 
    vertex_buffer_unmap();

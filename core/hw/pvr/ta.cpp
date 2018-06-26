@@ -258,8 +258,7 @@ static OnLoad ol_fillfsm(&fill_fsm);
 void ta_vtx_ListCont(void)
 {
 	SetCurrentTARC(TA_ISP_BASE);
-   if (settings.rend.Multipass)
-      ta_tad.Continue();
+   ta_tad.Continue();
 
 	ta_cur_state=TAS_NS;
 }

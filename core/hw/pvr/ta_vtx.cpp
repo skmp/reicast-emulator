@@ -725,7 +725,11 @@ public:
 	{
 		CurrentPP=&nullPP;
 		CurrentPPlist=0;
-      if (ListType == ListType_Opaque_Modifier_Volume)
+      if ( ListType == ListType_Opaque_Modifier_Volume
+#ifdef HAVE_OIT
+            || ListType == ListType_Translucent_Modifier_Volume
+#endif
+         )
          EndModVol();
 	}
 

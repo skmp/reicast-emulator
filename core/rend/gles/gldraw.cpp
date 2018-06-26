@@ -238,15 +238,6 @@ void DrawList(const List<PolyParam>& gply, int first, int count)
 
       params++;
    }
-
-   glDisable(GL_STENCIL_TEST);
-   glStencilFunc(
-         GL_ALWAYS,
-         0,
-         1);
-   glStencilOp(GL_KEEP,
-         GL_KEEP,
-         GL_KEEP);
 }
 
 bool operator<(const PolyParam &left, const PolyParam &right)
@@ -695,7 +686,7 @@ void DrawModVols(int first, int count)
    {
       //Full emulation
       //
-      glEnable(GL_STENCIL_TEST);
+      glcache.Enable(GL_STENCIL_TEST);
       glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
       ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
@@ -831,7 +822,7 @@ void DrawStrips(void)
                0, pvrrc.global_param_pt.used());
 
          // Modifier volumes
-         DrawModVols(0, pvrrc.modtrig.used());
+         DrawModVols(0, pvrrc.global_param_mvo.used());
 
          //Alpha blended
          if (settings.pvr.Emulation.AlphaSortMode == 0)

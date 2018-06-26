@@ -695,6 +695,7 @@ void DrawModVols(int first, int count)
    {
       //Full emulation
       //
+      glEnable(GL_STENCIL_TEST);
       glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
       ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];

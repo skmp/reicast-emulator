@@ -828,11 +828,7 @@ void DrawStrips(GLuint output_fbo)
    //
    // PASS 4: Render a-buffers to screen
    //
-#if 0
-   glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
-#else
    glBindFramebuffer(GL_FRAMEBUFFER, output_fbo); glCheck();
-#endif
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
    glActiveTexture(GL_TEXTURE0);

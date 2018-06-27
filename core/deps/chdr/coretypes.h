@@ -1,4 +1,3 @@
-#include <retro_miscellaneous.h>
 #include "types.h"
 
 typedef u64 UINT64;
@@ -10,7 +9,3 @@ typedef s64 INT64;
 typedef s32 INT32;
 typedef s16 INT16;
 typedef s8 INT8;
-
-#ifndef INLINE
-#define INLINE inline
-#endif

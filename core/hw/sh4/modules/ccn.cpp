@@ -47,10 +47,12 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 	temp.reg_data=value;
 
 #ifdef NO_MMU
+#ifndef NDEBUG
 	if ((temp.AT!=CCN_MMUCR.AT) && (temp.AT==1))
 	{
 		printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
 	}
+#endif
 #endif
 	
 	if (temp.TI)

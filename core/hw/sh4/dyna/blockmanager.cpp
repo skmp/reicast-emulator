@@ -604,6 +604,8 @@ void fprint_hex(FILE* d,const char* init,u8* ptr, u32& ofs, u32 limit)
 	fputs("\n",d);
 }
 
+#if 0
+// TODO/FIXME - might have to get this back to work later
 #ifndef NDEBUG
 void print_blocks()
 {
@@ -678,5 +680,7 @@ void print_blocks()
 	if (f) fclose(f);
 }
 #endif
+#endif
+
 #endif
 

@@ -420,6 +420,10 @@ ifeq ($(ARM_FLOAT_ABI_HARD),1)
 	CFLAGS += -DARM_HARDFP
 endif
 
+ifeq ($(DEBUG),1)
+	HAVE_GENERIC_JIT   = 0
+endif
+
 ifeq ($(HAVE_GENERIC_JIT),1)
 	CFLAGS       += -DTARGET_NO_JIT
 	CXXFLAGS     += -DTARGET_NO_JIT

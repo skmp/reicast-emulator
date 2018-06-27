@@ -653,8 +653,9 @@ T DYNACALL ReadMem_area7(u32 addr)
 		break;
 	}
 
-
-	//EMUERROR2("Unknown Read from Area7 - addr=%x",addr);
+#ifndef NDEBUG
+	EMUERROR2("Unknown Read from Area7 - addr=%x",addr);
+#endif
 	return 0;
 }
 

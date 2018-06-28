@@ -395,7 +395,9 @@ static void recSh4_Init(void)
 	bm_Init();
 	bm_Reset();
 
+#if 0
 	verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
+#endif
 
 	verify(rcb_noffs(p_sh4rcb->sq_buffer) == -512);
 

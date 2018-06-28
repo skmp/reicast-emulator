@@ -7,7 +7,6 @@ NO_THREADS    := 1
 NO_EXCEPTIONS := 0
 NO_NVMEM      := 0
 NO_VERIFY     := 1
-NAOMI         := 0
 HAVE_GENERIC_JIT   := 1
 FORCE_GLES    := 0
 STATIC_LINKING:= 0
@@ -83,23 +82,13 @@ endif
 CORE_DIR := core
 
 DYNAREC_USED = 0
+CORE_DEFINES   := -D__LIBRETRO__
 
 ifeq ($(NO_VERIFY),1)
-	CFLAGS       += -DNO_VERIFY
-	CXXFLAGS     += -DNO_VERIFY
-	RZDCY_CFLAGS += -DNO_VERIFY
+	CORE_DEFINES += -DNO_VERIFY
 endif
 
-ifeq ($(NAOMI),1)
-	CFLAGS       += -DTARGET_NAOMI
-	CXXFLAGS     += -DTARGET_NAOMI
-	RZDCY_CFLAGS += -DTARGET_NAOMI
-
-	DC_PLATFORM=naomi
-	TARGET_NAME   := $(TARGET_NAME)_naomi
-else
-	DC_PLATFORM=dreamcast
-endif
+DC_PLATFORM=dreamcast
 
 HOST_CPU_X86=0x20000001
 HOST_CPU_ARM=0x20000002
@@ -408,8 +397,7 @@ ifeq ($(STATIC_LINKING),1)
 endif
 
 ifeq ($(SINGLE_PREC_FLAGS),1)
-	CFLAGS += -fsingle-precision-constant
-	RZDCY_CFLAGS += -fsingle-precision-constant
+	CORE_DEFINES += -fsingle-precision-constant
 endif
 
 ifeq ($(ARMV7A_FLAGS),1)
@@ -432,9 +420,7 @@ ifeq ($(DEBUG),1)
 endif
 
 ifeq ($(HAVE_GENERIC_JIT),1)
-	CFLAGS       += -DTARGET_NO_JIT
-	CXXFLAGS     += -DTARGET_NO_JIT
-	RZDCY_CFLAGS += -DTARGET_NO_JIT
+	CORE_DEFINES += -DTARGET_NO_JIT
 	CXXFLAGS     += -std=c++11
 endif
 
@@ -476,11 +462,6 @@ RZDCY_CFLAGS += $(HOST_CPU_FLAGS)
 
 include Makefile.common
 
-RZDCY_CFLAGS   += $(CORE_DEFINES)
-RZDCY_CXXFLAGS += $(CORE_DEFINES)
-CFLAGS         += $(CORE_DEFINES)
-CXXFLAGS       += $(CORE_DEFINES)
-
 ifeq ($(DEBUG),1)
 	OPTFLAGS       := -O0
 	LDFLAGS        += -g
@@ -491,19 +472,12 @@ ifneq (,$(findstring msvc,$(platform)))
 else
 	OPTFLAGS       := -O3
 endif
-	RZDCY_CFLAGS   += -DNDEBUG
-	RZDCY_CXXFLAGS += -DNDEBUG
-	CFLAGS         += -DNDEBUG
-	CXXFLAGS       += -DNDEBUG
+	CORE_DEFINES   += -DNDEBUG -flto
 	LDFLAGS        += -DNDEBUG
-   RZDCY_CFLAGS += -flto
-   RZDCY_CXXFLAGS += -flto
-   CFLAGS += -flto
-   CXXFLAGS += -flto
 endif
 
-RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -DRELEASE -frename-registers -ffast-math -ftree-vectorize -fomit-frame-pointer -D__LIBRETRO__
-CFLAGS         += -D__LIBRETRO__
+CORE_DEFINES      += -DRELEASE -D__LIBRETRO__
+RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -frename-registers -ffast-math -ftree-vectorize -fomit-frame-pointer 
 
 ifeq ($(WITH_DYNAREC), arm)
 	RZDCY_CFLAGS += -march=armv7-a -mcpu=cortex-a9 -mfpu=vfpv3-d16
@@ -513,38 +487,55 @@ else
 endif
 
 ifeq ($(NO_THREADS),1)
-	RZDCY_CFLAGS += -DTARGET_NO_THREADS
-	CFLAGS       += -DTARGET_NO_THREADS
-	CXXFLAGS     += -DTARGET_NO_THREADS
+	CORE_DEFINES += -DTARGET_NO_THREADS
 else
 	LIBS         += -lpthread
 endif
 
 ifeq ($(NO_REC),1)
-	RZDCY_CFLAGS += -DTARGET_NO_REC
+	CORE_DEFINES += -DTARGET_NO_REC
 endif
 
 ifeq ($(NO_REND),1)
-	RZDCY_CFLAGS += -DNO_REND=1
-	CFLAGS       += -DNO_REND
-	CXXFLAGS     += -DNO_REND
+	CORE_DEFINES += -DNO_REND=1
 endif
 
 ifeq ($(NO_EXCEPTIONS),1)
-	RZDCY_CFLAGS += -DTARGET_NO_EXCEPTIONS=1
-	CFLAGS       += -DTARGET_NO_EXCEPTIONS
-	CXXFLAGS     += -DTARGET_NO_EXCEPTIONS
+	CORE_DEFINES += -DTARGET_NO_EXCEPTIONS=1
 endif
 
 ifeq ($(NO_NVMEM),1)
-	RZDCY_CFLAGS += -DTARGET_NO_NVMEM=1
-	CFLAGS       += -DTARGET_NO_NVMEM
-	CXXFLAGS     += -DTARGET_NO_NVMEM
+	CORE_DEFINES += -DTARGET_NO_NVMEM=1
 endif
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fexceptions -fno-rtti -std=gnu++11
 
-CFLAGS   += $(OPTFLAGS) -D RELEASE -c
+ifeq (,$(findstring msvc,$(platform)))
+CORE_DEFINES   += -funroll-loops
+endif
+
+ifeq ($(HAVE_OIT), 1)
+CORE_DEFINES += -DHAVE_OIT
+endif
+
+ifeq ($(HAVE_GL), 1)
+	ifeq ($(GLES),1)
+		CORE_DEFINES += -DHAVE_OPENGLES -DHAVE_OPENGLES2
+	else
+		CORE_DEFINES += -DHAVE_OPENGL
+	endif
+endif
+
+ifeq ($(HAVE_CORE), 1)
+	CORE_DEFINES += -DCORE
+endif
+
+RZDCY_CFLAGS   += $(CORE_DEFINES)
+RZDCY_CXXFLAGS += $(CORE_DEFINES)
+CFLAGS         += $(CORE_DEFINES)
+CXXFLAGS       += $(CORE_DEFINES)
+
+CFLAGS   += $(OPTFLAGS) -c
 CFLAGS   += -fno-strict-aliasing -ffast-math
 CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
 LIBS     += -lm 
@@ -570,30 +561,6 @@ endif
 ifeq ($(LTO_TEST),1)
 	CFLAGS += -flto -fwhole-program 
 	LDFLAGS +=-flto -fwhole-program 
-endif
-
-ifeq ($(HAVE_GL), 1)
-	ifeq ($(GLES),1)
-		RZDCY_CFLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES2
-		CXXFLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES2
-		CFLAGS   += -DHAVE_OPENGLES -DHAVE_OPENGLES2
-	else
-		RZDCY_CFLAGS += -DHAVE_OPENGL
-		CXXFLAGS += -DHAVE_OPENGL
-		CFLAGS   += -DHAVE_OPENGL
-	endif
-endif
-
-ifeq ($(HAVE_OIT), 1)
-	RZDCY_CFLAGS += -DHAVE_OIT
-	CXXFLAGS += -DHAVE_OIT
-	CFLAGS   += -DHAVE_OIT
-endif
-
-ifeq ($(HAVE_CORE), 1)
-	RZDCY_CFLAGS += -DCORE
-	CXXFLAGS += -DCORE
-	CFLAGS   += -DCORE
 endif
 
 CFLAGS     += $(fpic)

@@ -623,6 +623,15 @@ Tile clip
 
 */
 
+static void gl_term(void)
+{
+   glDeleteProgram(gl.modvol_shader.program);
+	glDeleteBuffers(1, &gl.vbo.geometry);
+	glDeleteBuffers(1, &gl.vbo.modvols);
+	glDeleteBuffers(1, &gl.vbo.idxs);
+	glDeleteBuffers(1, &gl.vbo.idxs2);
+}
+
 static bool gl_create_resources(void)
 {
    u32 i;
@@ -641,71 +650,9 @@ static bool gl_create_resources(void)
 	glGenBuffers(1, &gl.vbo.idxs);
 	glGenBuffers(1, &gl.vbo.idxs2);
 
-#if 0
-	memset(gl.program_table,0,sizeof(gl.program_table));
-	PipelineShader* dshader  = 0;
-   u32 compile              = 0;
-
-   for(cp_AlphaTest = 0; cp_AlphaTest <= 1; cp_AlphaTest++)
-	{
-      for (pp_ClipTestMode = 0; pp_ClipTestMode <= 2; pp_ClipTestMode++)
-		{
-			for (pp_UseAlpha = 0; pp_UseAlpha <= 1; pp_UseAlpha++)
-			{
-				for (pp_Texture = 0; pp_Texture <= 1; pp_Texture++)
-				{
-					for (pp_FogCtrl = 0; pp_FogCtrl <= 3; pp_FogCtrl++)
-					{
-						for (pp_IgnoreTexA = 0; pp_IgnoreTexA <= 1; pp_IgnoreTexA++)
-						{
-							for (pp_ShadInstr = 0; pp_ShadInstr <= 3; pp_ShadInstr++)
-							{
-								for (pp_Offset = 0; pp_Offset <= 1; pp_Offset++)
-								{
-                           int prog_id              = GetProgramID(
-                                 cp_AlphaTest,
-                                 pp_ClipTestMode,
-                                 pp_Texture,
-                                 pp_UseAlpha,
-                                 pp_IgnoreTexA,
-                                 pp_ShadInstr,
-                                 pp_Offset,pp_FogCtrl);
-									dshader                  = &gl.program_table[prog_id];
-
-									dshader->cp_AlphaTest    = cp_AlphaTest;
-									dshader->pp_ClipTestMode = pp_ClipTestMode-1;
-									dshader->pp_Texture      = pp_Texture;
-									dshader->pp_UseAlpha     = pp_UseAlpha;
-									dshader->pp_IgnoreTexA   = pp_IgnoreTexA;
-									dshader->pp_ShadInstr    = pp_ShadInstr;
-									dshader->pp_Offset       = pp_Offset;
-									dshader->pp_FogCtrl      = pp_FogCtrl;
-									dshader->program         = -1;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-#endif
-
 	gl.modvol_shader.program        = gl_CompileAndLink(VertexShaderSource,ModifierVolumeShader);
 	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
 	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
-
-//define PRECOMPILE_SHADERS
-#ifdef PRECOMPILE_SHADERS
-   if (settings.pvr.Emulation.precompile_shaders)
-   {
-      for (i=0;i<sizeof(gl.program_table)/sizeof(gl.program_table[0]);i++)
-      {
-         if (!CompilePipelineShader(	&gl.program_table[i] ))
-            return false;
-      }
-   }
-#endif
 
 	return true;
 }
@@ -1236,7 +1183,39 @@ struct glesrend : Renderer
 		}
       reshapeABuffer(w, h);
 	}
-	void Term() { }
+	void Term()
+   {
+		if (stencilTexId != 0)
+		{
+			glcache.DeleteTextures(1, &stencilTexId);
+			stencilTexId = 0;
+		}
+      if (depthTexId != 0)
+		{
+			glcache.DeleteTextures(1, &depthTexId);
+			depthTexId = 0;
+		}
+		if (opaqueTexId != 0)
+		{
+			glcache.DeleteTextures(1, &opaqueTexId);
+			opaqueTexId = 0;
+		}
+      if (depthSaveTexId != 0)
+		{
+			glcache.DeleteTextures(1, &depthSaveTexId);
+			depthSaveTexId = 0;
+		}
+      if (KillTex)
+      {
+         void killtex();
+         killtex();
+         printf("Texture cache cleared\n");
+      }
+
+      CollectCleanup();
+
+      gl_term();
+   }
 
 	bool Process(TA_context* ctx)
    {

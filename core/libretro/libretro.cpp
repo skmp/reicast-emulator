@@ -239,10 +239,12 @@ void retro_set_environment(retro_environment_t cb)
          "reicast_digital_triggers",
          "Digital Triggers; disabled|enabled",
       },
+#ifndef HAVE_OIT
       {
          "reicast_precompile_shaders",
          "Precompile shaders; disabled|enabled",
       },
+#endif
       {
          "reicast_enable_rtt",
          "Enable RTT (Render To Texture); enabled|disabled",
@@ -494,6 +496,7 @@ static void update_variables(bool first_startup)
    else
          settings.dreamcast.region = 3;
 
+#ifndef HAVE_OIT
    var.key = "reicast_precompile_shaders";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -503,6 +506,7 @@ static void update_variables(bool first_startup)
       else
          settings.pvr.Emulation.precompile_shaders = true;
    }
+#endif
 
    var.key = "reicast_enable_rtt";
 

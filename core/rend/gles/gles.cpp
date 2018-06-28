@@ -439,6 +439,17 @@ Tile clip
 
 */
 
+static void gl_term(void)
+{
+   glDeleteProgram(gl.modvol_shader.program);
+	glDeleteBuffers(1, &gl.vbo.geometry);
+	glDeleteBuffers(1, &gl.vbo.modvols);
+	glDeleteBuffers(1, &gl.vbo.idxs);
+	glDeleteBuffers(1, &gl.vbo.idxs2);
+
+	memset(gl.program_table,0,sizeof(gl.program_table));
+}
+
 static bool gl_create_resources(void)
 {
    u32 i;
@@ -961,7 +972,19 @@ struct glesrend : Renderer
       return true;
    }
 	void Resize(int w, int h) { screen_width=w; screen_height=h; }
-	void Term() { }
+	void Term()
+   {
+      if (KillTex)
+      {
+         void killtex();
+         killtex();
+         printf("Texture cache cleared\n");
+      }
+
+      CollectCleanup();
+
+      gl_term();
+   }
 
 	bool Process(TA_context* ctx)
    {

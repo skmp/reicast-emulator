@@ -350,6 +350,7 @@ using namespace std;
 #endif
 
 
+#ifndef INLINE
 #if DEBUG
 //force
 #define INLINE
@@ -360,6 +361,7 @@ using namespace std;
 #define INLINE __forceinline
 //sugest
 #define SINLINE __inline
+#endif
 #endif
 
 //no inline -- fixme

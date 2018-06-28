@@ -203,6 +203,8 @@ void main() \n\
 		#elif pp_DepthFunc == 6		// Less or equal \n\
 			if (gl_FragDepth > frontDepth) \n\
 				discard; \n\
+      #elif pp_DepthFunc == 7		// Always \n\
+			gl_FragDepth = 0; // Set depth to 0 so that it's drawn in front of everything else \n\
 		#endif \n\
 	#endif \n\
    \n\

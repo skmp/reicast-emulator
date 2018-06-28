@@ -126,9 +126,16 @@ endif
 	fpic = -fPIC
 
 	ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
-		CFLAGS += -D TARGET_NO_AREC
+		CFLAGS += -DTARGET_LINUX_x64 -D TARGET_NO_AREC
+		SINGLE_PREC_FLAGS=1
+		CXXFLAGS += -fexceptions
 	else ifeq ($(WITH_DYNAREC), x86)
-		CFLAGS += -D TARGET_NO_AREC
+		CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC
+		SINGLE_PREC_FLAGS=1
+    		CXXFLAGS += -fno-exceptions
+		MFLAGS += -m32
+    		ASFLAGS += --32
+    		LDFLAGS += -m32
 	endif
 
 	PLATFORM_EXT := unix
@@ -421,7 +428,7 @@ ifeq ($(ARM_FLOAT_ABI_HARD),1)
 endif
 
 ifeq ($(DEBUG),1)
-	HAVE_GENERIC_JIT   = 0
+	HAVE_GENERIC_JIT = 0
 endif
 
 ifeq ($(HAVE_GENERIC_JIT),1)
@@ -495,7 +502,7 @@ endif
    CXXFLAGS += -flto
 endif
 
-RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -DRELEASE -ffast-math -fomit-frame-pointer -D__LIBRETRO__
+RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -DRELEASE -frename-registers -ffast-math -ftree-vectorize -fomit-frame-pointer -D__LIBRETRO__
 CFLAGS         += -D__LIBRETRO__
 
 ifeq ($(WITH_DYNAREC), arm)
@@ -622,3 +629,4 @@ endif
 
 clean:
 	rm -f $(OBJECTS) $(TARGET)
+

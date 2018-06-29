@@ -5,8 +5,6 @@
  * update mode type -
  * * Street Fighter III Double Impact (would run at choppy framerate otherwise)
  *
- * dynarec_type -
- * * Marvel Vs Capcom 2 (would hang at beginning of second stage if not set to generic_recompiler)
  *
  * aica_interrupt_hack -
  * * Street Fighter Alpha 3 (would hang at startup screen otherwise
@@ -42,7 +40,6 @@ static struct game_type lut_games[] =
    { "T1210N    ",  1, -1, -1, -1, -1, -1,  -1  },                /* Street Fighter III Double Impact */
 
    /* Fallback to generic recompiler */
-   { "MK-51049  ", -1,  1, -1, -1, -1, -1,  -1  },                /* Marvel Vs Capcom 2 */
 
    /* EG Hack */
    { "T46703M   ", -1, -1, -1, -1, -1, -1,   1  },                /* Border Down (Japan) */

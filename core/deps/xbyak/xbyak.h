@@ -105,7 +105,7 @@ namespace Xbyak {
 
 enum {
 	DEFAULT_MAX_CODE_SIZE = 4096,
-	VERSION = 0x5631 /* 0xABCD = A.BC(D) */
+	VERSION = 0x5650 /* 0xABCD = A.BC(D) */
 };
 
 #ifndef MIE_INTEGER_TYPE_DEFINED
@@ -289,6 +289,9 @@ inline bool IsInInt32(uint64 x) { return ~uint64(0x7fffffffu) <= x || x <= 0x7FF
 
 inline uint32 VerifyInInt32(uint64 x)
 {
+#ifdef XBYAK64
+	if (!IsInInt32(x)) throw Error(ERR_OFFSET_IS_TOO_BIG);
+#endif
 	return static_cast<uint32>(x);
 }
 
@@ -1809,15 +1812,20 @@ private:
 	}
 	void opPushPop(const Operand& op, int code, int ext, int alt)
 	{
-		if (op.isREG()) {
-			if (op.isBit(16)) db(0x66);
-			if (op.getReg().getIdx() >= 8) db(0x41);
-			db(alt | (op.getIdx() & 7));
-		} else if (op.isMEM()) {
-			opModM(op.getAddress(), Reg(ext, Operand::REG, op.getBit()), code);
-		} else {
-			throw Error(ERR_BAD_COMBINATION);
+		int bit = op.getBit();
+		if (bit == 16 || bit == BIT) {
+			if (bit == 16) db(0x66);
+			if (op.isREG()) {
+				if (op.getReg().getIdx() >= 8) db(0x41);
+				db(alt | (op.getIdx() & 7));
+				return;
+			}
+			if (op.isMEM()) {
+				opModM(op.getAddress(), Reg(ext, Operand::REG, 32), code);
+				return;
+			}
 		}
+		throw Error(ERR_BAD_COMBINATION);
 	}
 	void verifyMemHasSize(const Operand& op) const
 	{

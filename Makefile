@@ -415,14 +415,6 @@ ifeq ($(ARM_FLOAT_ABI_HARD),1)
 	CFLAGS += -DARM_HARDFP
 endif
 
-ifeq ($(DEBUG),1)
-	HAVE_GENERIC_JIT = 0
-endif
-
-ifeq ($(HAVE_GENERIC_JIT),1)
-	CORE_DEFINES += -DTARGET_NO_JIT
-	CXXFLAGS     += -std=c++11
-endif
 
 ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
 	HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_X64)
@@ -528,6 +520,15 @@ endif
 
 ifeq ($(HAVE_CORE), 1)
 	CORE_DEFINES += -DCORE
+endif
+
+ifeq ($(DEBUG), 1)
+	HAVE_GENERIC_JIT = 0
+endif
+
+ifeq ($(HAVE_GENERIC_JIT), 1)
+	CORE_DEFINES += -DTARGET_NO_JIT
+	CXXFLAGS     += -std=c++11
 endif
 
 RZDCY_CFLAGS   += $(CORE_DEFINES)

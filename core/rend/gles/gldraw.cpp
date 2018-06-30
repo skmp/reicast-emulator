@@ -204,9 +204,13 @@ __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 
    /* Set Z mode, only if required */
    if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
-      glcache.DepthFunc(Zfunction[6]);
+   {
+      glcache.DepthFunc(GL_GEQUAL);
+   }
    else
+   {
       glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
+   }
 
    if (SortingEnabled && settings.pvr.Emulation.AlphaSortMode == 0)
       glcache.DepthMask(GL_FALSE);
@@ -783,21 +787,21 @@ void DrawStrips(void)
       // Modifier volumes
       DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
-      if (UsingAutoSort())
+      if (current_pass.autosort)
          GenSorted(previous_pass.tr_count,
                current_pass.tr_count - previous_pass.tr_count);
 
       //Alpha blended
       if (settings.pvr.Emulation.AlphaSortMode == 0)
       {
-         if (pvrrc.isAutoSort)
+         if (current_pass.autosort)
             DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
          else
             DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
       }
       else if (settings.pvr.Emulation.AlphaSortMode == 1)
       {
-         if (pvrrc.isAutoSort)
+         if (current_pass.autosort)
             SortPParams(previous_pass.tr_count,
                   current_pass.tr_count - previous_pass.tr_count);
          DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count );

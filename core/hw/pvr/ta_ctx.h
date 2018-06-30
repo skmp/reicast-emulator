@@ -100,6 +100,8 @@ struct  tad_context
 };
 
 struct RenderPass {
+   bool autosort;
+	bool z_clear;
 	u32 op_count;
 	u32 mvo_count;
 	u32 pt_count;
@@ -119,7 +121,6 @@ struct rend_context
 
 	bool Overrun;
 	bool isRTT;
-	bool isAutoSort;
 
 	double early;
 
@@ -293,4 +294,4 @@ void VDecEnd();
 
 //must be moved to proper header
 void FillBGP(TA_context* ctx);
-bool UsingAutoSort(void);
+bool UsingAutoSort(int pass_number);

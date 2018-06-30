@@ -178,7 +178,6 @@ void rend_start_render(void)
          FillBGP(ctx);
 
          ctx->rend.isRTT      = is_rtt;
-         ctx->rend.isAutoSort = UsingAutoSort();
 
          ctx->rend.fb_X_CLIP  = FB_X_CLIP;
          ctx->rend.fb_Y_CLIP  = FB_Y_CLIP;

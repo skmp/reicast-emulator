@@ -304,14 +304,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
    /* Set Z mode, only if required */
    if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
    {
-      if (gp->isp.DepthMode == 7) {		// Fixes VR2 menu but not sure about this one
-         glcache.DepthFunc(GL_ALWAYS);
-      }
-      else
-      {
-         glcache.DepthFunc(Zfunction[6]); // Greater or equal
-         //			glcache.DepthFunc(GL_LESS);
-      }
+      glcache.DepthFunc(Zfunction[6]);	// Greater or equal
    }
    else
    {
@@ -805,7 +798,7 @@ void DrawStrips(GLuint output_fbo)
 				glBindSampler(0, 0);
 				glBindTexture(GL_TEXTURE_2D, opaqueTexId);
 
-				renderABuffer(pvrrc.isAutoSort);
+				renderABuffer(current_pass.autosort);
 				SetupMainVBO();
 
 				glcache.DeleteTextures(1, &opaqueTexId);
@@ -835,7 +828,7 @@ void DrawStrips(GLuint output_fbo)
    glBindSampler(0, 0);
 	glBindTexture(GL_TEXTURE_2D, opaqueTexId);
 
-	renderABuffer(pvrrc.isAutoSort);
+	renderABuffer(previous_pass.autosort);
    SetupMainVBO();
    
    vertex_buffer_unmap();

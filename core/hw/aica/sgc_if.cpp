@@ -755,6 +755,9 @@ struct ChannelEx
 	} 
 };
 
+// DecodeADPCM Implementation from MAME - 
+// license:BSD-3-Clause
+
 static __forceinline int32_t DecodeADPCM(u32 Delta,s32 PrevSignal,s32& PrevQuant)
 {
    int x = (PrevQuant * quant_mul[Delta & 7]) / 8;

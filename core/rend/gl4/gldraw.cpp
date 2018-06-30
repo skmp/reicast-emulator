@@ -768,7 +768,10 @@ void DrawStrips(GLuint output_fbo)
 			glActiveTexture(GL_TEXTURE0);
 
 			//Alpha blended
-			DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3); // 3 because pass 2 is no more
+         if (current_pass.autosort)
+				DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3); // 3 because pass 2 is no more
+			else
+				DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3); // 3 because pass 2 is no more
 			glCheck();
 
 			// Translucent modifier volumes
@@ -785,7 +788,10 @@ void DrawStrips(GLuint output_fbo)
 				glActiveTexture(GL_TEXTURE0);
 
 				glcache.Enable(GL_DEPTH_TEST);
-				DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
+            if (current_pass.autosort)
+					DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
+				else
+					DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
 
 				//
 				// PASS 3c: Render a-buffer to temporary texture
@@ -827,7 +833,6 @@ void DrawStrips(GLuint output_fbo)
    glActiveTexture(GL_TEXTURE0);
    glBindSampler(0, 0);
 	glBindTexture(GL_TEXTURE_2D, opaqueTexId);
-
 	renderABuffer(previous_pass.autosort);
    SetupMainVBO();
    

@@ -377,6 +377,7 @@ else ifeq ($(platform), emscripten)
 # Windows
 else
 	EXT       ?= dll
+	HAVE_GENERIC_JIT   = 0
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	LDFLAGS += -shared -static-libgcc -static-libstdc++ -Wl,--version-script=link.T -lwinmm -lgdi32
 	GL_LIB := -lopengl32

@@ -52,12 +52,12 @@ void bubbleSort(int array_size) { \n\
 #if DEPTH_SORTED == 1 \n\
 			// depth then poly number \n\
 			if (pixel_list[j].depth < pixel_list[j + 1].depth \n\
-				|| (pixel_list[j].depth == pixel_list[j + 1].depth && pixel_list[j].seq_num > pixel_list[j + 1].seq_num)) { \n\
+				|| (pixel_list[j].depth == pixel_list[j + 1].depth && getPolyNumber(pixel_list[j]) > getPolyNumber(pixel_list[j + 1]))) { \n\
 #else \n\
 			// poly number only \n\
-			if (pixel_list[j].seq_num > pixel_list[j + 1].seq_num) { \n\
+			if (getPolyNumber(pixel_list[j]) > getPolyNumber(pixel_list[j + 1])) { \n\
 #endif \n\
-				Pixel p = pixel_list[j + 1]; \n\
+				const Pixel p = pixel_list[j + 1]; \n\
 				pixel_list[j + 1] = pixel_list[j]; \n\
 				pixel_list[j] = p; \n\
 			} \n\
@@ -69,12 +69,13 @@ void bubbleSort(int array_size) { \n\
 // Insertion sort used to sort fragments \n\
 void insertionSort(int array_size) { \n\
 	for (int i = 1; i < array_size; i++) { \n\
-		Pixel p = pixel_list[i]; \n\
+		const Pixel p = pixel_list[i]; \n\
 		int j = i - 1; \n\
 #if DEPTH_SORTED == 1 \n\
-		for (; j >= 0 && (pixel_list[j].depth < p.depth || (pixel_list[j].depth == p.depth && pixel_list[j].seq_num > p.seq_num)); j--) { \n\
+		for (; j >= 0 && (pixel_list[j].depth < p.depth || (pixel_list[j].depth == p.depth && getPolyNumber(pixel_list[j]) > getPolyNumber(p))); j--) { \n\
 #else \n\
-		for (; j >= 0 && pixel_list[j].seq_num > p.seq_num; j--) { \n\
+		for (; j >= 0 && getPolyNumber(pixel_list[j]) > getPolyNumber(p); j--) { \n\
+ \n\
 #endif \n\
 			pixel_list[j + 1] = pixel_list[j]; \n\
 		} \n\
@@ -92,11 +93,14 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 	bubbleSort(num_frag); \n\
 	 \n\
 	vec4 finalColor = texture(tex, gl_FragCoord.xy / textureSize(tex, 0)); \n\
+	vec4 secondaryBuffer = vec4(0.0); // Secondary accumulation buffer \n\
 	float depth = 1.0; \n\
 	for (int i = 0; i < num_frag; i++) { \n\
+		const Pixel pixel = pixel_list[i]; \n\
+		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)]; \n\
 #if DEPTH_SORTED != 1 \n\
-		float frag_depth = pixel_list[i].depth; \n\
-		switch ((int(pixel_list[i].blend_stencil) >> 16) & 7) \n\
+		const float frag_depth = pixel.depth; \n\
+		switch (getDepthFunc(pp)) \n\
 		{ \n\
 		case 0:		// Never \n\
 			continue; \n\
@@ -127,19 +131,32 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 		case 7:		// Always \n\
 			break; \n\
 		} \n\
-		bool depth_mask = ((int(pixel_list[i].blend_stencil) >> 19) & 1) == 1; \n\
-		if (depth_mask) \n\
+		if (getDepthMask(pp)) \n\
 			depth = frag_depth; \n\
 #endif \n\
-		vec4 srcColor = pixel_list[i].color; \n\
-		if ((pixel_list[i].blend_stencil & 0x81u) == 0x81u) \n\
-			srcColor.rgb *= shade_scale_factor; \n\
-		float srcAlpha = srcColor.a; \n\
-		float dstAlpha = finalColor.a; \n\
+		bool area1 = false; \n\
+		bool shadowed = false; \n\
+		if (getShadowEnable(pp) && isShadowed(pixel)) \n\
+		{ \n\
+			if (isTwoVolumes(pp)) \n\
+				area1 = true; \n\
+			else \n\
+				shadowed = true; \n\
+		} \n\
+		vec4 srcColor; \n\
+		if (getSrcSelect(pp, area1)) \n\
+			srcColor = secondaryBuffer; \n\
+		else \n\
+		{ \n\
+			srcColor = pixel.color; \n\
+			if (shadowed) \n\
+				srcColor.rgb *= shade_scale_factor; \n\
+		} \n\
+		vec4 dstColor = getDstSelect(pp, area1) ? secondaryBuffer : finalColor; \n\
 		vec4 srcCoef; \n\
 		vec4 dstCoef; \n\
 		 \n\
-		int srcBlend = (int(pixel_list[i].blend_stencil) >> 11) & 7; \n\
+		int srcBlend = getSrcBlendFunc(pp, area1); \n\
 		switch (srcBlend) \n\
 		{ \n\
 			case ZERO: \n\
@@ -152,22 +169,22 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 				srcCoef = finalColor; \n\
 				break; \n\
 			case INVERSE_OTHER_COLOR: \n\
-				srcCoef = vec4(1.0) - finalColor; \n\
+				srcCoef = vec4(1.0) - dstColor; \n\
 				break; \n\
 			case SRC_ALPHA: \n\
-				srcCoef = vec4(srcAlpha); \n\
+				srcCoef = vec4(srcColor.a); \n\
 				break; \n\
 			case INVERSE_SRC_ALPHA: \n\
-				srcCoef = vec4(1.0 - srcAlpha); \n\
+				srcCoef = vec4(1.0 - srcColor.a); \n\
 				break; \n\
 			case DST_ALPHA: \n\
-				srcCoef = vec4(dstAlpha); \n\
+				srcCoef = vec4(dstColor.a); \n\
 				break; \n\
 			case INVERSE_DST_ALPHA: \n\
-				srcCoef = vec4(1.0 - dstAlpha); \n\
+				srcCoef = vec4(1.0 - dstColor.a); \n\
 				break; \n\
 		} \n\
-		int dstBlend = (int(pixel_list[i].blend_stencil) >> 8) & 7; \n\
+		int dstBlend = getDstBlendFunc(pp, area1);  \n\
 		switch (dstBlend) \n\
 		{ \n\
 			case ZERO: \n\
@@ -183,19 +200,23 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 				dstCoef = vec4(1.0) - srcColor; \n\
 				break; \n\
 			case SRC_ALPHA: \n\
-				dstCoef = vec4(srcAlpha); \n\
+				dstCoef = vec4(srcColor.a); \n\
 				break; \n\
 			case INVERSE_SRC_ALPHA: \n\
-				dstCoef = vec4(1.0 - srcAlpha); \n\
+				dstCoef = vec4(1.0 - srcColor.a); \n\
 				break; \n\
 			case DST_ALPHA: \n\
-				dstCoef = vec4(dstAlpha); \n\
+				dstCoef = vec4(dstColor.a); \n\
 				break; \n\
 			case INVERSE_DST_ALPHA: \n\
-				dstCoef = vec4(1.0 - dstAlpha); \n\
+				dstCoef = vec4(1.0 - dstColor.a); \n\
 				break; \n\
 		} \n\
-		finalColor = clamp(finalColor * dstCoef + srcColor * srcCoef, 0.0, 1.0); \n\
+		const vec4 result = clamp(dstColor * dstCoef + srcColor * srcCoef, 0.0, 1.0); \n\
+		if (getDstSelect(pp, area1)) \n\
+			secondaryBuffer = result; \n\
+		else \n\
+			finalColor = result; \n\
 	} \n\
 	 \n\
 	return finalColor; \n\
@@ -248,23 +269,24 @@ void main(void) \n\
 			discard; \n\
 		int list_len = 0; \n\
 		while (idx != EOL) { \n\
-			uint stencil = pixels[idx].blend_stencil; \n\
-			if ((stencil & 0x80u) == 0x80u) \n\
+         const Pixel pix = pixels[idx]; \n\
+			const PolyParam pp = tr_poly_params[getPolyNumber(pix)]; \n\
+			if (getShadowEnable(pp)) \n\
 			{ \n\
 #if MV_MODE == MV_XOR \n\
 				if (gl_FragDepth <= pixels[idx].depth) \n\
-					atomicXor(pixels[idx].blend_stencil, 2u); \n\
+					atomicXor(pixels[idx].seq_num, 0x40000000); \n\
 #elif MV_MODE == MV_OR \n\
 				if (gl_FragDepth <= pixels[idx].depth) \n\
-					atomicOr(pixels[idx].blend_stencil, 2u); \n\
+					atomicOr(pixels[idx].seq_num, 0x40000000); \n\
 #elif MV_MODE == MV_INCLUSION \n\
-				uint prev_val = atomicAnd(pixels[idx].blend_stencil, 0xFFFFFFFDu); \n\
-				if ((prev_val & 3u) == 2u) \n\
-					pixels[idx].blend_stencil = bitfieldInsert(stencil, 1u, 0, 1); \n\
+				uint prev_val = atomicAnd(pixels[idx].seq_num, 0xBFFFFFFF); \n\
+				if ((prev_val & 0xC0000000) == 0x40000000) \n\
+					pixels[idx].seq_num = bitfieldInsert(pixels[idx].seq_num, 1, 31, 1); \n\
 #elif MV_MODE == MV_EXCLUSION \n\
-				uint prev_val = atomicAnd(pixels[idx].blend_stencil, 0xFFFFFFFCu); \n\
-				if ((prev_val & 3u) == 1u) \n\
-					pixels[idx].blend_stencil = bitfieldInsert(stencil, 1u, 0, 1); \n\
+				uint prev_val = atomicAnd(pixels[idx].seq_num, 0x3FFFFFFF); \n\
+				if ((prev_val & 0xC0000000) == 0x80000000) \n\
+					pixels[idx].seq_num = bitfieldInsert(pixels[idx].seq_num, 1, 31, 1); \n\
 #endif \n\
 			} \n\
 			idx = pixels[idx].next; \n\

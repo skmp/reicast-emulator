@@ -385,7 +385,6 @@ void main() \n\
       pixel.color = color; \n\
       pixel.depth = gl_FragDepth; \n\
       pixel.seq_num = pp_Number; \n\
-      pixel.blend_stencil = uint(depth_mask << 19) + uint(pp_DepthFunc << 16) + uint(((cur_blend_mode.x << 3) + cur_blend_mode.y) << 8) + pp_Stencil; \n\
       pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx); \n\
       pixels[idx] = pixel; \n\
       \n\
@@ -653,6 +652,14 @@ static bool gl_create_resources(void)
 	gl.modvol_shader.program        = gl_CompileAndLink(VertexShaderSource,ModifierVolumeShader);
 	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
 	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
+
+   // Create the buffer for Translucent poly params
+	glGenBuffers(1, &gl.vbo.tr_poly_params);
+	// Bind it
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl.vbo.tr_poly_params);
+	// Declare storage
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, gl.vbo.tr_poly_params);
+	glCheck();
 
 	return true;
 }
@@ -1013,6 +1020,11 @@ static bool RenderFrame(void)
 		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols);
 		glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW);
 	}
+
+   // TR PolyParam data
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl.vbo.tr_poly_params);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.used(), pvrrc.global_param_tr.head(), GL_STATIC_DRAW);
+	glCheck();
 
 	int offs_x=ds2s_offs_x+0.5f;
 	//this needs to be scaled

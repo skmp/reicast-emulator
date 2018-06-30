@@ -864,7 +864,30 @@ public:
 	__forceinline
 		static void EndPolyStrip()
 	{
-		CurrentPP->count=vdrc.idx.used() - CurrentPP->first;
+      CurrentPP->count=vdrc.idx.used() - CurrentPP->first;
+
+#ifdef HAVE_OIT
+#if STRIPS_AS_PPARAMS
+      if (CurrentPPlist==&vdrc.global_param_tr)
+      {
+         PolyParam* d_pp =CurrentPPlist->Append(); 
+         *d_pp=*CurrentPP;
+         CurrentPP=d_pp;
+         d_pp->first=vdrc.idx.used(); 
+         d_pp->count=0; 
+      }
+      else
+#endif
+      {
+         int vbase=vdrc.verts.used();
+
+         *vdrc.idx.Append()=vbase-1;
+         *vdrc.idx.Append()=vbase;
+         
+         if (CurrentPP->count&1)
+            *vdrc.idx.Append()=vbase;
+      }
+#else
 
 		int vbase=vdrc.verts.used();
 
@@ -882,6 +905,7 @@ public:
 			d_pp->first=vdrc.idx.used(); 
 			d_pp->count=0; 
 		}
+#endif
 #endif
 	}
 

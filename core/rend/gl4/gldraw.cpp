@@ -195,9 +195,8 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
       int depth_func = 0;
 		if (Type == ListType_Translucent)
 		{
-			// TR in autosort mode ignores specified depth func and defaults to GL_LEQUAL, except for GL_ALWAYS.
-			if (SortingEnabled && gp->isp.DepthMode != 7 && gp->isp.DepthMode != 6)
-				depth_func = 6;
+			if (SortingEnabled)
+				depth_func = 6; //GEQUAL
 			else
 				depth_func = gp->isp.DepthMode;
 		}

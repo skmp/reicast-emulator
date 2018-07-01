@@ -178,7 +178,7 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 			bool mapped = RomDest == (u8*)mmap(RomDest, RomSize, PROT_NONE, MAP_PRIVATE, 0, 0);
 #endif
 
-			verify(mapped);
+			//verify(mapped);
 		}
 		else
 		{

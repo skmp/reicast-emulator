@@ -201,7 +201,7 @@ struct TA_context
 	void Alloc(bool have_oit)
 	{
       unsigned vert_size, idx_size, modtrig_size;
-      tad.Reset((u8*)OS_aligned_malloc(32, 2*1024*1024));
+      tad.Reset((u8*)OS_aligned_malloc(32, 8*1024*1024));
 
       if (have_oit)
       {

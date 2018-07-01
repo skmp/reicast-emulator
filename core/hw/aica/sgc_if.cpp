@@ -55,7 +55,7 @@ const char* stream_names[]=
 #define ICLIP16(x) (x<-32768)?-32768:((x>32767)?32767:x)
 
 #define ADPCMSHIFT 8
-static constexpr int ADFIX(float f) { return int(f * float(1 << ADPCMSHIFT)); }
+static int ADFIX(float f) { return int(f * float(1 << ADPCMSHIFT)); }
 
 //x.8 format
 const s32 TableQuant[8] = {ADFIX(0.8984375),ADFIX(0.8984375),ADFIX(0.8984375),ADFIX(0.8984375),ADFIX(1.19921875),ADFIX(1.59765625),ADFIX(2.0),ADFIX(2.3984375)};

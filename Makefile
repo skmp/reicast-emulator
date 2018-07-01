@@ -231,6 +231,8 @@ else ifneq (,$(findstring osx,$(platform)))
 	# Target Dynarec
 	ifeq ($(ARCH), $(filter $(ARCH), ppc))
 		WITH_DYNAREC =
+        else
+                HAVE_GENERIC_JIT   = 0
 	endif
 
 # iOS

@@ -301,9 +301,21 @@ extern int GDROM_TICK;
 
 static void update_variables(bool first_startup)
 {
-   struct retro_variable var = {
-      .key = "reicast_internal_resolution",
-   };
+   struct retro_variable var;
+
+   var.key = "reicast_widescreen_hack";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "enabled"))
+         settings.rend.WideScreen = 1;
+      else
+         settings.rend.WideScreen = 0;
+   }
+   else
+      settings.rend.WideScreen = 0;
+
+   var.key = "reicast_internal_resolution";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -317,6 +329,22 @@ static void update_variables(bool first_startup)
       pch = strtok(NULL, "x");
       if (pch)
          screen_height = strtoul(pch, NULL, 0);
+
+      if (settings.rend.WideScreen)
+      {
+         if (!strcmp(var.value, "640x480"))
+         {
+            screen_width  = 854;
+         }
+         else if (!strcmp(var.value, "1280x960"))
+         {
+            screen_width  = 1536;
+         }
+         else if (!strcmp(var.value, "1920x1440"))
+            screen_height = 1200;
+         else if (!strcmp(var.value, "2560x1920"))
+            screen_width = 3200;
+      }
 
       fprintf(stderr, "[reicast]: Got size: %u x %u.\n", screen_width, screen_height);
    }
@@ -417,17 +445,6 @@ static void update_variables(bool first_startup)
    else
       settings.pvr.Emulation.ModVol      = true;
 
-   var.key = "reicast_widescreen_hack";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (!strcmp(var.value, "enabled"))
-         settings.rend.WideScreen = 1;
-      else
-         settings.rend.WideScreen = 0;
-   }
-   else
-      settings.rend.WideScreen = 0;
 
    var.key = "reicast_audio_buffer_size";
 

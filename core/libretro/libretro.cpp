@@ -27,6 +27,7 @@ bool boot_to_bios;
 static int astick_deadzone = 0;
 static int trigger_deadzone = 0;
 static bool digital_triggers = false;
+static bool allow_service_buttons = false;
 
 u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
 u8 rt[4] = {0, 0, 0, 0};
@@ -256,6 +257,10 @@ void retro_set_environment(retro_environment_t cb)
       {
          "reicast_enable_purupuru",
          "Purupuru Pack (restart); enabled|disabled"
+      },
+      {
+         "reicast_allow_service_buttons",
+         "Allow Naomi service buttons; disabled|enabled"
       },
       { NULL, NULL },
    };
@@ -576,6 +581,18 @@ static void update_variables(bool first_startup)
    }
    else
       digital_triggers = false;
+
+   var.key = "reicast_allow_service_buttons";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("enabled", var.value))
+         allow_service_buttons = true;
+      else
+         allow_service_buttons = false;
+   }
+   else
+      allow_service_buttons = false;
 }
 
 void retro_run (void)
@@ -1106,6 +1123,7 @@ static uint16_t get_analog_trigger( retro_input_state_t input_state_cb,
 static void UpdateInputStateNaomi(u32 port)
 {
    int id;
+   int max_id;
 
    static const uint16_t joymap[] =
    {
@@ -1130,7 +1148,9 @@ static void UpdateInputStateNaomi(u32 port)
    //
    // -- buttons
 
-   for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_R3; ++id)
+   max_id = (allow_service_buttons ? RETRO_DEVICE_ID_JOYPAD_R3 : RETRO_DEVICE_ID_JOYPAD_R);
+
+   for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= max_id; ++id)
    {
       uint16_t dc_key = joymap[id];
       bool is_down = input_cb(port, RETRO_DEVICE_JOYPAD, 0, id);

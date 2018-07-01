@@ -168,6 +168,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
 				2,
             false, // TODO Can PT have two different textures for area 0 and 1 ??
             0,
+            false,
 				pass);
 
 		CurrentShader = gl.getShader(shaderId);
@@ -182,6 +183,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
 			CurrentShader->pp_FogCtrl = 2;
          CurrentShader->pp_TwoVolumes = false;
          CurrentShader->pp_DepthFunc = 0;
+         CurrentShader->pp_Gouraud = false;
          CurrentShader->pass = pass;
 
 			CompilePipelineShader(CurrentShader);
@@ -212,6 +214,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
                gp->tsp.FogCtrl,
                two_volumes_mode,
                depth_func,
+               gp->pcw.Gouraud,
                pass);
       CurrentShader = gl.getShader(shaderId);
 
@@ -226,6 +229,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
          CurrentShader->pp_FogCtrl = gp->tsp.FogCtrl;
          CurrentShader->pp_TwoVolumes = two_volumes_mode;
          CurrentShader->pp_DepthFunc = depth_func;
+         CurrentShader->pp_Gouraud = gp->pcw.Gouraud;
          CurrentShader->pass       = pass;
 
          CompilePipelineShader(CurrentShader);
@@ -637,6 +641,7 @@ void DrawStrips(GLuint output_fbo)
 	//We use sampler 0
    glActiveTexture(GL_TEXTURE0);
    glcache.Disable(GL_BLEND);
+   glProvokingVertex(GL_LAST_VERTEX_CONVENTION);
 
    RenderPass previous_pass = {0};
    int render_pass_count = pvrrc.render_passes.used();
@@ -648,8 +653,8 @@ void DrawStrips(GLuint output_fbo)
 
 
               // Check if we can skip this pass, in part or completely, in case nothing is drawn (Cosmic Smash)
-		bool skip_op_pt = false; // true;
-		bool skip_tr = false; // true;
+		bool skip_op_pt = true;
+		bool skip_tr = true;
 		for (int j = previous_pass.op_count; skip_op_pt && j < current_pass.op_count; j++)
 		{
 			if (pvrrc.global_param_op.head()[j].count > 2)

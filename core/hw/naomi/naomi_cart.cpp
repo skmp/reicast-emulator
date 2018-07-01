@@ -230,8 +230,8 @@ void* naomi_cart_GetPtr(u32 offset, u32 size) {
 
 	offset &= 0x0FFFffff;
 
-	verify(offset < RomSize);
-	verify((offset + size) < RomSize);
+	//verify(offset < RomSize);
+	//verify((offset + size) < RomSize);
 
 	return &RomPtr[offset];
 }

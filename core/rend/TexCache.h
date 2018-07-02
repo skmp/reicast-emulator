@@ -128,10 +128,10 @@ pixelcvt_next(convYUV_PL,4,1)
 pixelcvt_next(convBMP_PL,4,1)
 {
 	u16* p_in=(u16*)data;
-   pb->p_current_pixel[0] = ARGB8888(p_in[0]);
-   pb->p_current_pixel[1] = ARGB8888(p_in[1]);
-   pb->p_current_pixel[2] = ARGB8888(p_in[2]);
-   pb->p_current_pixel[3] = ARGB8888(p_in[3]);
+   pb->p_current_pixel[0] = ARGB4444(p_in[0]);
+   pb->p_current_pixel[1] = ARGB4444(p_in[1]);
+   pb->p_current_pixel[2] = ARGB4444(p_in[2]);
+   pb->p_current_pixel[3] = ARGB4444(p_in[3]);
 }
 
 pixelcvt_end;
@@ -192,10 +192,10 @@ pixelcvt_next(convYUV_TW,2,2)
 pixelcvt_next(convBMP_TW,2,2)
 {
 	u16* p_in=(u16*)data;
-   pb->p_current_pixel[0]                  =ARGB8888(p_in[0]);
-   pb->p_current_pixel[1*pb->pixels_per_line]  =ARGB8888(p_in[1]);
-   pb->p_current_pixel[1]                  =ARGB8888(p_in[2]);
-   pb->p_current_pixel[1*pb->pixels_per_line+1]=ARGB8888(p_in[3]);
+   pb->p_current_pixel[0]                      =ARGB4444(p_in[0]);
+   pb->p_current_pixel[1*pb->pixels_per_line]  =ARGB4444(p_in[1]);
+   pb->p_current_pixel[1]                      =ARGB4444(p_in[2]);
+   pb->p_current_pixel[1*pb->pixels_per_line+1]=ARGB4444(p_in[3]);
 }
 
 pixelcvt_end;

@@ -169,6 +169,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
             false, // TODO Can PT have two different textures for area 0 and 1 ??
             0,
             false,
+            false,
 				pass);
 
 		CurrentShader = gl.getShader(shaderId);
@@ -215,6 +216,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
                two_volumes_mode,
                depth_func,
                gp->pcw.Gouraud,
+               gp->tcw.PixelFmt == 4,
                pass);
       CurrentShader = gl.getShader(shaderId);
 
@@ -230,6 +232,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
          CurrentShader->pp_TwoVolumes = two_volumes_mode;
          CurrentShader->pp_DepthFunc = depth_func;
          CurrentShader->pp_Gouraud = gp->pcw.Gouraud;
+         CurrentShader->pp_BumpMap = gp->tcw.PixelFmt == 4;
          CurrentShader->pass       = pass;
 
          CompilePipelineShader(CurrentShader);

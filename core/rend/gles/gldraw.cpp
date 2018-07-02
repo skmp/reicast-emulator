@@ -504,7 +504,6 @@ void DrawSorted(u32 count)
 	if (pidx_sort.size())
    {
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2);
-
       u32 count=pidx_sort.size();
 
       {
@@ -524,6 +523,37 @@ void DrawSorted(u32 count)
             }
             params++;
          }
+
+         if (settings.rend.TranslucentPolygonDepthMask)
+			{
+				// Write to the depth buffer now. The next render pass might need it. (Cosmic Smash)
+				glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+				glcache.Disable(GL_BLEND);
+
+				glcache.StencilMask(0);
+
+				// We use the modifier volumes shader because it's fast. We don't need textures, etc.
+				glcache.UseProgram(gl.modvol_shader.program);
+				glUniform1f(gl.modvol_shader.sp_ShaderColor, 1.f);
+
+				glcache.DepthFunc(GL_GEQUAL);
+				glcache.DepthMask(GL_TRUE);
+
+				for (u32 p = 0; p < count; p++)
+				{
+					PolyParam* params = pidx_sort[p].ppid;
+					if (pidx_sort[p].count > 2 && !params->isp.ZWriteDis) {
+						// FIXME no clipping in modvol shader
+						//SetTileClip(gp->tileclip,true);
+
+						SetCull(params->isp.CullMode ^ gcflip);
+
+						glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2 * pidx_sort[p].first));
+					}
+				}
+				glcache.StencilMask(0xFF);
+				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+			}
 
       }
    }

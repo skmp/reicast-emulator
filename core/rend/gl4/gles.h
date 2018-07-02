@@ -30,13 +30,11 @@ struct PipelineShader
    GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
    GLuint shade_scale_factor;
    GLuint pp_Number;
-   GLuint pp_Stencil;
    GLuint blend_mode;
    GLuint use_alpha;
    GLuint ignore_tex_alpha;
    GLuint shading_instr;
    GLuint fog_control;
-   GLuint depth_mask;
 
    //
 	u32 cp_AlphaTest;
@@ -125,12 +123,10 @@ typedef struct _ShaderUniforms_t
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
    int poly_number;
-   u32 stencil;
    TSP tsp0;
 	TSP tsp1;
 	TCW tcw0;
 	TCW tcw1;
-   bool depth_mask;
 
    void setUniformArray(GLuint location, int v0, int v1)
 	{
@@ -179,12 +175,6 @@ typedef struct _ShaderUniforms_t
 
       if (s->pp_Number != -1)
 			glUniform1i(s->pp_Number, poly_number);
-
-      if (s->pp_Stencil != -1)
-			glUniform1ui(s->pp_Stencil, stencil);
-
-      if (s->depth_mask != -1)
-         glUniform1i(s->depth_mask, depth_mask);
    }
 } _ShaderUniforms;
 extern struct _ShaderUniforms_t ShaderUniforms;

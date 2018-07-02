@@ -250,6 +250,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
       ShaderUniforms.tsp1.SrcInstr = 1;
       ShaderUniforms.tsp1.DstInstr = 0;
 	}
+   ShaderUniforms.Set(CurrentShader);
 
    SetTileClip(gp->tileclip,true);
 
@@ -257,10 +258,6 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
    // by modvols
    const u32 stencil = (gp->pcw.Shadow!=0)?0x80:0;
    glcache.StencilFunc(GL_ALWAYS, stencil, stencil);
-
-   ShaderUniforms.stencil = stencil;
-   ShaderUniforms.depth_mask = gp->isp.ZWriteDis == 0;
-	ShaderUniforms.Set(CurrentShader);
 
    if (CurrentShader->pp_Texture)
    {

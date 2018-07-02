@@ -30,7 +30,7 @@ float scale_x, scale_y;
 #ifndef HAVE_OPENGLES
 #define attr "in"
 #define vary "out"
-#define FRAGCOL "FragColor"
+#define FRAGCOL "FragmentColor"
 #define TEXLOOKUP "texture"
 #else
 #define attr "attribute"
@@ -136,7 +136,7 @@ const char* PixelPipelineShader = SHADER_HEADER
 #ifndef GLES
 	"\
    #if PASS <= 1 \n\
-	out vec4 FragColor; \n\
+	out vec4 " FRAGCOL "; \n\
 	#endif \n"
 #endif
 "\
@@ -504,7 +504,7 @@ static GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentSh
 	glBindAttribLocation(program, VERTEX_UV1_ARRAY,       "in_uv1");
 
 #ifndef HAVE_OPENGLES
-	glBindFragDataLocation(program, 0, "FragColor");
+	glBindFragDataLocation(program, 0, FRAGCOL);
 #endif
 
 	glLinkProgram(program);

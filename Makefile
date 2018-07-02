@@ -85,7 +85,7 @@ DYNAREC_USED = 0
 CORE_DEFINES   := -D__LIBRETRO__
 
 ifeq ($(NO_VERIFY),1)
-	CORE_DEFINES += -DNO_VERIFY
+CORE_DEFINES += -DNO_VERIFY
 endif
 
 DC_PLATFORM=dreamcast
@@ -469,9 +469,10 @@ else
 endif
 	CORE_DEFINES   += -DNDEBUG -flto
 	LDFLAGS        += -DNDEBUG
+
+	CORE_DEFINES      += -DRELEASE
 endif
 
-CORE_DEFINES      += -DRELEASE -D__LIBRETRO__
 RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -frename-registers -ffast-math -ftree-vectorize -fomit-frame-pointer 
 
 ifeq ($(WITH_DYNAREC), arm)

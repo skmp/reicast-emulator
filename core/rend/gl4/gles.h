@@ -193,7 +193,7 @@ extern GLuint depthSaveTexId;
 
 #define SHADER_HEADER "#version 430 \n\
 \n\
-layout(size1x32, binding = 4) uniform coherent restrict uimage2D abufferPointerImg; \n\
+layout(r32ui, binding = 4) uniform coherent restrict uimage2D abufferPointerImg; \n\
 struct Pixel { \n\
 	mediump vec4 color; \n\
 	mediump float depth; \n\

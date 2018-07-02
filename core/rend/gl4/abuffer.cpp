@@ -315,8 +315,7 @@ void initABuffer()
 		glBindTexture(GL_TEXTURE_2D, pixels_pointers);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		//Uses GL_R32F instead of GL_R32I that is not working in R257.15
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, g_imageWidth, g_imageHeight, 0, GL_RED, GL_FLOAT, 0);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, g_imageWidth, g_imageHeight, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, 0);
 		glBindImageTexture(4, pixels_pointers, 0, false, 0,  GL_READ_WRITE, GL_R32UI);
 		glCheck();
 	}

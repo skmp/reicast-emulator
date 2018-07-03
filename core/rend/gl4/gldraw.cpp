@@ -763,7 +763,6 @@ void DrawStrips(GLuint output_fbo)
 			//
 			// PASS 3: Render TR to a-buffers
 			//
-			SetupMainVBO();
 			glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 			glcache.Disable(GL_DEPTH_TEST);
 

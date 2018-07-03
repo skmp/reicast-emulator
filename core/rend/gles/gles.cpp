@@ -191,7 +191,9 @@ const char* PixelPipelineShader =
 "\
 #define INTERPOLATION \n"
 #endif
-"/* Shader program params*/ \n\
+"#define pp_BumpMap %d \n\
+#define PI 3.1415926 \n\
+/* Shader program params*/ \n\
 /* gles has no alpha test stage, so its emulated on the shader */ \n\
 uniform lowp float cp_AlphaTestValue; \n\
 uniform lowp vec4 pp_ClipTest; \n\
@@ -235,20 +237,22 @@ void main() \n\
 	#endif\n\
 	#if pp_Texture==1 \n\
 	{ \n\
-      " LOWP " vec4 texcol=" TEXLOOKUP "(tex,vtx_uv); \n\
-		\n\
-		#if pp_IgnoreTexA==1 \n\
-			texcol.a=1.0;	 \n\
-		#endif\n\
-		\n\
-      #if cp_AlphaTest == 1 \n\
-         if (cp_AlphaTestValue>texcol.a) discard;\n\
-      #endif \n\
-		#if pp_ShadInstr==0 \n\
-		{ \n\
-         color=texcol; \n\
-		} \n\
-		#endif\n\
+      lowp vec4 texcol=" TEXLOOKUP "(tex, vtx_uv); \n\
+		 \n\
+		#if pp_BumpMap == 1 \n\
+			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0; \n\
+			float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0; \n\
+			texcol.a = clamp(vtx_offs.a + vtx_offs.r * sin(s) + vtx_offs.g * cos(s) * cos(r - 2.0 * PI * vtx_offs.b), 0.0, 1.0); \n\
+			texcol.rgb = vec3(1.0, 1.0, 1.0);	 \n\
+		#else\n\
+			#if pp_IgnoreTexA==1 \n\
+				texcol.a=1.0;	 \n\
+			#endif\n\
+			\n\
+			#if cp_AlphaTest == 1 \n\
+				if (cp_AlphaTestValue>texcol.a) discard;\n\
+			#endif  \n\
+		#endif \n\
 		#if pp_ShadInstr==1 \n\
 		{ \n\
 			color.rgb*=texcol.rgb; \n\
@@ -266,7 +270,7 @@ void main() \n\
 		} \n\
 		#endif\n\
 		\n\
-		#if pp_Offset==1 \n\
+		#if pp_Offset==1 && pp_BumpMap == 0 \n\
 		{ \n\
 			color.rgb+=vtx_offs.rgb; \n\
 			if (pp_FogCtrl==1) \n\
@@ -324,7 +328,7 @@ int GetProgramID(
       u32 pp_IgnoreTexA,
       u32 pp_ShadInstr,
       u32 pp_Offset,
-      u32 pp_FogCtrl, bool pp_Gouraud)
+      u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap)
 {
 	u32 rv=0;
 
@@ -336,9 +340,8 @@ int GetProgramID(
 	rv<<=2; rv|=pp_ShadInstr;
 	rv<<=1; rv|=pp_Offset;
 	rv<<=2; rv|=pp_FogCtrl;
-#ifdef HAVE_GL3
    rv<<=1; rv|=pp_Gouraud;
-#endif
+   rv<<=1; rv|=pp_BumpMap;
 
 	return rv;
 }
@@ -435,7 +438,7 @@ bool CompilePipelineShader(PipelineShader *s)
 
 	sprintf(pshader,PixelPipelineShader,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
-                 s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud);
+                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap);
 
 	s->program            = gl_CompileAndLink(vshader, pshader);
 
@@ -538,6 +541,7 @@ static bool gl_create_resources(void)
    u32 pp_Offset;
    u32 pp_ShadInstr;
    u32 pp_Gouraud;
+   u32 pp_BumpMap;
 	PipelineShader* dshader  = 0;
    u32 compile              = 0;
 
@@ -571,34 +575,35 @@ static bool gl_create_resources(void)
 							for (pp_ShadInstr = 0; pp_ShadInstr <= 3; pp_ShadInstr++)
 							{
 								for (pp_Offset = 0; pp_Offset <= 1; pp_Offset++)
-								{
-#ifdef HAVE_GL3
-								for (pp_Gouraud = 0; pp_Gouraud <= 1; pp_Gouraud++)
                         {
-#endif
-									dshader                  = &gl.program_table[GetProgramID(
-                                 cp_AlphaTest,
-                                 pp_ClipTestMode,
-                                 pp_Texture,
-                                 pp_UseAlpha,
-                                 pp_IgnoreTexA,
-                                 pp_ShadInstr,
-                                 pp_Offset,pp_FogCtrl,(bool)pp_Gouraud)];
+                           for (pp_Gouraud = 0; pp_Gouraud <= 1; pp_Gouraud++)
+                           {
+                              for (pp_BumpMap = 0; pp_BumpMap <= 1; pp_BumpMap++)
+                              {
+                                 dshader                  = &gl.program_table[GetProgramID(
+                                       cp_AlphaTest,
+                                       pp_ClipTestMode,
+                                       pp_Texture,
+                                       pp_UseAlpha,
+                                       pp_IgnoreTexA,
+                                       pp_ShadInstr,
+                                       pp_Offset,pp_FogCtrl,(bool)pp_Gouraud,
+                                       (bool)pp_BumpMap)];
 
-									dshader->cp_AlphaTest    = cp_AlphaTest;
-									dshader->pp_ClipTestMode = pp_ClipTestMode-1;
-									dshader->pp_Texture      = pp_Texture;
-									dshader->pp_UseAlpha     = pp_UseAlpha;
-									dshader->pp_IgnoreTexA   = pp_IgnoreTexA;
-									dshader->pp_ShadInstr    = pp_ShadInstr;
-									dshader->pp_Offset       = pp_Offset;
-									dshader->pp_FogCtrl      = pp_FogCtrl;
-                           dshader->pp_Gouraud      = pp_Gouraud;
-									dshader->program         = -1;
-#ifdef HAVE_GL3
+                                 dshader->cp_AlphaTest    = cp_AlphaTest;
+                                 dshader->pp_ClipTestMode = pp_ClipTestMode-1;
+                                 dshader->pp_Texture      = pp_Texture;
+                                 dshader->pp_UseAlpha     = pp_UseAlpha;
+                                 dshader->pp_IgnoreTexA   = pp_IgnoreTexA;
+                                 dshader->pp_ShadInstr    = pp_ShadInstr;
+                                 dshader->pp_Offset       = pp_Offset;
+                                 dshader->pp_FogCtrl      = pp_FogCtrl;
+                                 dshader->pp_Gouraud      = pp_Gouraud;
+                                 dshader->pp_BumpMap      = pp_BumpMap;
+                                 dshader->program         = -1;
+                              }
+                           }
                         }
-#endif
-								}
 							}
 						}
 					}

@@ -27,7 +27,7 @@ struct PipelineShader
    //
    u32 cp_AlphaTest; s32 pp_ClipTestMode;
  	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
-   bool pp_Gouraud;
+   bool pp_Gouraud, pp_BumpMap;
 };
 
 
@@ -43,7 +43,7 @@ struct gl_ctx
 
 	} modvol_shader;
 
-	PipelineShader program_table[3072];
+	PipelineShader program_table[6144];
 
 	struct
 	{
@@ -84,7 +84,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool pp_Gouraud);
+							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap);
 void vertex_buffer_unmap(void);
 
 bool CompilePipelineShader(PipelineShader* s);

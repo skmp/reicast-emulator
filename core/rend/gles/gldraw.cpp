@@ -159,7 +159,8 @@ __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 												  gp->tsp.ShadInstr,
 												  gp->pcw.Offset,
 												  gp->tsp.FogCtrl,
-                                      gp->pcw.Gouraud)];
+                                      gp->pcw.Gouraud,
+                                      gp->tcw.PixelFmt == 4)];
 
    if (CurrentShader->program == -1)
       CompilePipelineShader(CurrentShader);

@@ -1765,7 +1765,7 @@ sh4op(i0011_nnnn_mmmm_1010)
 //subv <REG_M>,<REG_N>
 sh4op(i0011_nnnn_mmmm_1011)
 {
-	printf("WARN: subv <REG_M>,<REG_N> used, %04X\n",op);
+	//printf("WARN: subv <REG_M>,<REG_N> used, %04X\n",op);
 	//Retail game "Twinkle Star Sprites" "uses" this opcode.
 	//iNimp(op, "subv <REG_M>,<REG_N>");
 	u32 n = GetN(op);

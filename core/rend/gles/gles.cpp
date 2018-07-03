@@ -60,10 +60,13 @@ float fb_scale_x = 0.0f;
 float fb_scale_y = 0.0f;
 float scale_x, scale_y;
 
+#if !defined(GLES) && defined(HAVE_GL3)
+#define attr "in"
+#define vary "out"
+#else
 #define attr "attribute"
 #define vary "varying"
-#define FRAGCOL "gl_FragColor"
-#define TEXLOOKUP "texture2D"
+#endif
 
 #ifdef HAVE_OPENGLES
 #define HIGHP "highp"
@@ -78,8 +81,31 @@ float scale_x, scale_y;
 //Fragment and vertex shaders code
 //pretty much 1:1 copy of the d3d ones for now
 const char* VertexShaderSource =
-#ifndef HAVE_OPENGLES
+#if !defined(HAVE_OPENGLES)
+#if defined(HAVE_GL3)
+   "#version 140 \n"
+#else
    "#version 120 \n"
+#endif
+#endif
+#ifndef GLES
+#if defined(HAVE_GL3)
+"\
+#define pp_Gouraud %d \n\
+ \n"
+"\
+#if pp_Gouraud == 0 \n\
+#define INTERPOLATION flat \n\
+#else \n\
+#define INTERPOLATION smooth \n\
+#endif \n"
+#else
+"\
+#define INTERPOLATION \n"
+#endif
+#else
+"\
+#define INTERPOLATION \n"
 #endif
 "\
 /* Vertex constants*/  \n\
@@ -91,9 +117,9 @@ uniform " HIGHP " vec4      depth_scale; \n\
 " attr " " LOWP " vec4     in_offs; \n\
 " attr " " MEDIUMP " vec2  in_uv; \n\
 /* output */ \n\
-" vary " " LOWP " vec4 vtx_base; \n\
-" vary " " LOWP " vec4 vtx_offs; \n\
-" vary " " MEDIUMP " vec2 vtx_uv; \n\
+INTERPOLATION " vary " lowp vec4 vtx_base; \n\
+INTERPOLATION " vary " lowp vec4 vtx_offs; \n\
+              " vary " mediump vec2 vtx_uv; \n\
 void main() \n\
 { \n\
 	vtx_base=in_base; \n\
@@ -118,9 +144,24 @@ void main() \n\
 	gl_Position = vpos; \n\
 }";
 
+#if !defined(GLES) && defined(HAVE_GL3)
+#define FRAGCOL "FragColor"
+#define TEXLOOKUP "texture"
+#undef vary
+#define vary "in"
+#else
+#define FRAGCOL "gl_FragColor"
+#define TEXLOOKUP "texture2D"
+#endif
+
 const char* PixelPipelineShader =
 #ifndef HAVE_OPENGLES
+#if defined(HAVE_GL3)
+      "#version 140 \n"
+      "out vec4 FragColor; \n"
+#else
       "#version 120 \n"
+#endif
 #endif
 "\
 \
@@ -131,18 +172,36 @@ const char* PixelPipelineShader =
 #define pp_IgnoreTexA %d \n\
 #define pp_ShadInstr %d \n\
 #define pp_Offset %d \n\
-#define pp_FogCtrl %d \n\
-/* Shader program params*/ \n\
+#define pp_FogCtrl %d \n\ "
+#if defined(HAVE_GL3)
+"#define pp_Gouraud %d \n\
+ \n"
+#ifndef GLES
+"\
+#if pp_Gouraud == 0 \n\
+#define INTERPOLATION flat \n\
+#else \n\
+#define INTERPOLATION smooth \n\
+#endif \n"
+#else
+"\
+#define INTERPOLATION \n"
+#endif
+#else
+"\
+#define INTERPOLATION \n"
+#endif
+"/* Shader program params*/ \n\
 /* gles has no alpha test stage, so its emulated on the shader */ \n\
-uniform " LOWP " float cp_AlphaTestValue; \n\
-uniform " LOWP " vec4 pp_ClipTest; \n\
-uniform " LOWP " vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
-uniform " HIGHP " float sp_FOG_DENSITY; \n\
+uniform lowp float cp_AlphaTestValue; \n\
+uniform lowp vec4 pp_ClipTest; \n\
+uniform lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
+uniform highp float sp_FOG_DENSITY; \n\
 uniform sampler2D tex,fog_table; \n\
 /* Vertex input*/ \n\
-" vary " " LOWP " vec4 vtx_base; \n\
-" vary " " LOWP " vec4 vtx_offs; \n\
-" vary " " MEDIUMP " vec2 vtx_uv; \n\
+INTERPOLATION " vary " lowp vec4 vtx_base; \n\
+INTERPOLATION " vary " lowp vec4 vtx_offs; \n\
+" vary " mediump vec2 vtx_uv; \n\
 " LOWP " float fog_mode2(" HIGHP " float w) \n\
 { \n\
    " HIGHP " float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\
@@ -167,7 +226,7 @@ void main() \n\
 			discard; \n\
 	#endif \n\
 	\n\
-   " LOWP " vec4 color=vtx_base; \n\
+   lowp vec4 color=vtx_base; \n\
 	#if pp_UseAlpha==0 \n\
 		color.a=1.0; \n\
 	#endif\n\
@@ -233,6 +292,12 @@ void main() \n\
 }";
 
 const char* ModifierVolumeShader =
+#ifndef GLES
+#if defined(HAVE_GL3)
+      "#version 140 \n"
+      "out vec4 FragColor; \n"
+#endif
+#endif
 " \
 uniform " LOWP " float sp_ShaderColor; \n\
 /* Vertex input*/ \n\
@@ -259,7 +324,7 @@ int GetProgramID(
       u32 pp_IgnoreTexA,
       u32 pp_ShadInstr,
       u32 pp_Offset,
-      u32 pp_FogCtrl)
+      u32 pp_FogCtrl, bool pp_Gouraud)
 {
 	u32 rv=0;
 
@@ -271,6 +336,9 @@ int GetProgramID(
 	rv<<=2; rv|=pp_ShadInstr;
 	rv<<=1; rv|=pp_Offset;
 	rv<<=2; rv|=pp_FogCtrl;
+#ifdef HAVE_GL3
+   rv<<=1; rv|=pp_Gouraud;
+#endif
 
 	return rv;
 }
@@ -359,13 +427,17 @@ static GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentSh
 
 bool CompilePipelineShader(PipelineShader *s)
 {
+   char vshader[8192];
+
+	sprintf(vshader, VertexShaderSource, s->pp_Gouraud);
+
 	char pshader[8192];
 
 	sprintf(pshader,PixelPipelineShader,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl);
+                 s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud);
 
-	s->program            = gl_CompileAndLink(VertexShaderSource,pshader);
+	s->program            = gl_CompileAndLink(vshader, pshader);
 
 
 	//setup texture 0 as the input for the shader
@@ -465,6 +537,7 @@ static bool gl_create_resources(void)
    u32 pp_IgnoreTexA;
    u32 pp_Offset;
    u32 pp_ShadInstr;
+   u32 pp_Gouraud;
 	PipelineShader* dshader  = 0;
    u32 compile              = 0;
 
@@ -499,15 +572,18 @@ static bool gl_create_resources(void)
 							{
 								for (pp_Offset = 0; pp_Offset <= 1; pp_Offset++)
 								{
-                           int prog_id              = GetProgramID(
+#ifdef HAVE_GL3
+								for (pp_Gouraud = 0; pp_Gouraud <= 1; pp_Gouraud++)
+                        {
+#endif
+									dshader                  = &gl.program_table[GetProgramID(
                                  cp_AlphaTest,
                                  pp_ClipTestMode,
                                  pp_Texture,
                                  pp_UseAlpha,
                                  pp_IgnoreTexA,
                                  pp_ShadInstr,
-                                 pp_Offset,pp_FogCtrl);
-									dshader                  = &gl.program_table[prog_id];
+                                 pp_Offset,pp_FogCtrl,(bool)pp_Gouraud)];
 
 									dshader->cp_AlphaTest    = cp_AlphaTest;
 									dshader->pp_ClipTestMode = pp_ClipTestMode-1;
@@ -517,7 +593,11 @@ static bool gl_create_resources(void)
 									dshader->pp_ShadInstr    = pp_ShadInstr;
 									dshader->pp_Offset       = pp_Offset;
 									dshader->pp_FogCtrl      = pp_FogCtrl;
+                           dshader->pp_Gouraud      = pp_Gouraud;
 									dshader->program         = -1;
+#ifdef HAVE_GL3
+                        }
+#endif
 								}
 							}
 						}
@@ -527,7 +607,10 @@ static bool gl_create_resources(void)
 		}
 	}
 
-	gl.modvol_shader.program        = gl_CompileAndLink(VertexShaderSource,ModifierVolumeShader);
+   char vshader[8192];
+	sprintf(vshader, VertexShaderSource, 1);
+
+   gl.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
 	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");

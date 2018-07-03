@@ -1059,7 +1059,7 @@ bool ProcessFrame(TA_context* ctx)
    return true;
 }
 
-struct gl3rend : Renderer
+struct glesrend : Renderer
 {
 	bool Init()
    {
@@ -1110,4 +1110,4 @@ struct gl3rend : Renderer
 	}
 };
 
-Renderer* rend_GL3() { return new gl3rend(); }
+Renderer* rend_GLES2() { return new glesrend(); }

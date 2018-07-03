@@ -100,16 +100,10 @@ SOURCES_CXX += $(CORE_DIR)/rend/gl4/gles.cpp \
 					$(CORE_DIR)/rend/gl4/gldraw.cpp \
 					$(CORE_DIR)/rend/gl4/gltex.cpp \
 					$(CORE_DIR)/rend/gl4/abuffer.cpp
-endif
-ifeq ($(HAVE_GL3), 1)
-SOURCES_CXX += $(CORE_DIR)/rend/gl3/gles.cpp \
-					$(CORE_DIR)/rend/gl3/gldraw.cpp \
-					$(CORE_DIR)/rend/gl3/gltex.cpp
-endif
-ifeq ($(HAVE_GLES2), 1)
-SOURCES_CXX += $(CORE_DIR)/rend/gles2/gles.cpp \
-					$(CORE_DIR)/rend/gles2/gldraw.cpp \
-					$(CORE_DIR)/rend/gles2/gltex.cpp
+else
+SOURCES_CXX += $(CORE_DIR)/rend/gles/gles.cpp \
+					$(CORE_DIR)/rend/gles/gldraw.cpp \
+					$(CORE_DIR)/rend/gles/gltex.cpp
 endif
 SOURCES_C   += $(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
 					$(LIBRETRO_COMM_DIR)/glsm/glsm.c

@@ -117,9 +117,9 @@ uniform " HIGHP " vec4      depth_scale; \n\
 " attr " " LOWP " vec4     in_offs; \n\
 " attr " " MEDIUMP " vec2  in_uv; \n\
 /* output */ \n\
-INTERPOLATION " vary " lowp vec4 vtx_base; \n\
-INTERPOLATION " vary " lowp vec4 vtx_offs; \n\
-              " vary " mediump vec2 vtx_uv; \n\
+INTERPOLATION " vary " " LOWP " vec4 vtx_base; \n\
+INTERPOLATION " vary " " LOWP " vec4 vtx_offs; \n\
+              " vary " " MEDIUMP "vec2 vtx_uv; \n\
 void main() \n\
 { \n\
 	vtx_base=in_base; \n\
@@ -195,15 +195,15 @@ const char* PixelPipelineShader =
 #define PI 3.1415926 \n\
 /* Shader program params*/ \n\
 /* gles has no alpha test stage, so its emulated on the shader */ \n\
-uniform lowp float cp_AlphaTestValue; \n\
-uniform lowp vec4 pp_ClipTest; \n\
-uniform lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
-uniform highp float sp_FOG_DENSITY; \n\
+uniform " LOWP " float cp_AlphaTestValue; \n\
+uniform " LOWP " vec4 pp_ClipTest; \n\
+uniform " LOWP " vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
+uniform " HIGHP " float sp_FOG_DENSITY; \n\
 uniform sampler2D tex,fog_table; \n\
 /* Vertex input*/ \n\
-INTERPOLATION " vary " lowp vec4 vtx_base; \n\
-INTERPOLATION " vary " lowp vec4 vtx_offs; \n\
-" vary " mediump vec2 vtx_uv; \n\
+INTERPOLATION " vary LOWP " vec4 vtx_base; \n\
+INTERPOLATION " vary LOWP " vec4 vtx_offs; \n\
+" vary " " MEDIUMP " vec2 vtx_uv; \n\
 " LOWP " float fog_mode2(" HIGHP " float w) \n\
 { \n\
    " HIGHP " float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\
@@ -228,7 +228,7 @@ void main() \n\
 			discard; \n\
 	#endif \n\
 	\n\
-   lowp vec4 color=vtx_base; \n\
+   " LOWP " vec4 color=vtx_base; \n\
 	#if pp_UseAlpha==0 \n\
 		color.a=1.0; \n\
 	#endif\n\

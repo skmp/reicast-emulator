@@ -447,6 +447,10 @@ static void gl_term(void)
 	glDeleteBuffers(1, &gl.vbo.idxs);
 	glDeleteBuffers(1, &gl.vbo.idxs2);
 
+#if !defined(GLES) && defined(HAVE_GL3)
+   glDeleteVertexArrays(1, &gl.vbo.vao);
+#endif
+
 	memset(gl.program_table,0,sizeof(gl.program_table));
 }
 
@@ -463,6 +467,13 @@ static bool gl_create_resources(void)
    u32 pp_ShadInstr;
 	PipelineShader* dshader  = 0;
    u32 compile              = 0;
+
+#if !defined(GLES) && defined(HAVE_GL3)
+	//create vao
+	//This is really not "proper", vaos are supposed to be defined once
+	//i keep updating the same one to make the es2 code work in 3.1 context
+	glGenVertexArrays(1, &gl.vbo.vao);
+#endif
 
 	/* create VBOs */
 	glGenBuffers(1, &gl.vbo.geometry);

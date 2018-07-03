@@ -8,6 +8,7 @@ NO_EXCEPTIONS := 0
 NO_NVMEM      := 0
 NO_VERIFY     := 1
 HAVE_GENERIC_JIT   := 1
+HAVE_GL3      := 0
 FORCE_GLES    := 0
 STATIC_LINKING:= 0
 
@@ -111,7 +112,9 @@ ifneq (,$(findstring Haiku,$(shell uname -s)))
 else
 	LIBS += -lrt
 endif
-
+ifneq ($(HAVE_OIT), 1)
+	HAVE_GL3 = 1
+endif
 	fpic = -fPIC
 
 	ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
@@ -378,6 +381,9 @@ else ifeq ($(platform), emscripten)
 
 # Windows
 else
+ifneq ($(HAVE_OIT), 1)
+	HAVE_GL3 = 1
+endif
 	EXT       ?= dll
 	HAVE_GENERIC_JIT   = 0
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
@@ -417,7 +423,6 @@ ifeq ($(ARM_FLOAT_ABI_HARD),1)
 	ASFLAGS += -mfloat-abi=hard
 	CFLAGS += -DARM_HARDFP
 endif
-
 
 ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
 	HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_X64)
@@ -473,6 +478,15 @@ endif
 	CORE_DEFINES      += -DRELEASE
 endif
 
+ifeq ($(HAVE_GL3), 1)
+	HAVE_CORE = 1
+	CORE_DEFINES += -DHAVE_GL3
+endif
+
+ifeq ($(HAVE_CORE), 1)
+	CORE_DEFINES += -DCORE
+endif
+
 RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -frename-registers -ffast-math -ftree-vectorize -fomit-frame-pointer 
 
 ifeq ($(WITH_DYNAREC), arm)
@@ -511,7 +525,7 @@ CORE_DEFINES   += -funroll-loops
 endif
 
 ifeq ($(HAVE_OIT), 1)
-CORE_DEFINES += -DHAVE_OIT
+CORE_DEFINES += -DHAVE_OIT -DHAVE_GL4
 endif
 
 ifeq ($(HAVE_GL), 1)
@@ -520,10 +534,6 @@ ifeq ($(HAVE_GL), 1)
 	else
 		CORE_DEFINES += -DHAVE_OPENGL
 	endif
-endif
-
-ifeq ($(HAVE_CORE), 1)
-	CORE_DEFINES += -DCORE
 endif
 
 ifeq ($(DEBUG), 1)

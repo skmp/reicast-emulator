@@ -280,6 +280,12 @@ void ta_vtx_SoftReset(void)
 
 INLINE void DYNACALL ta_thd_data32_i(void *data)
 {
+   if (ta_ctx == NULL)
+	{
+		printf("Warning: data sent to TA prior to ListInit. Ignored\n");
+		return;
+	}
+
    simd256_t *dst = (simd256_t*)ta_tad.thd_data;
    simd256_t *src = (simd256_t*)data; 
 

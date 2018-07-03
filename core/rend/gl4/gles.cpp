@@ -27,34 +27,19 @@ float fb_scale_x = 0.0f;
 float fb_scale_y = 0.0f;
 float scale_x, scale_y;
 
-#ifndef HAVE_OPENGLES
 #define attr "in"
 #define vary "out"
 #define FRAGCOL "FragmentColor"
 #define TEXLOOKUP "texture"
-#else
-#define attr "attribute"
-#define vary "varying"
-#define FRAGCOL "gl_FragColor"
-#define TEXLOOKUP "texture2D"
-#endif
 
-#ifdef HAVE_OPENGLES
-#define HIGHP "highp"
-#define MEDIUMP "mediump"
-#define LOWP "lowp"
-#else
 #define HIGHP
 #define MEDIUMP
 #define LOWP
-#endif
 
 //Fragment and vertex shaders code
 //pretty much 1:1 copy of the d3d ones for now
 const char* VertexShaderSource =
-#ifndef HAVE_OPENGLES
-   "#version 140 \n"
-#endif
+"#version 140 \n"
 "\
 #define pp_Gouraud %d \n\
  \n\
@@ -92,17 +77,12 @@ void main() \n\
 	vtx_uv1 = in_uv1; \n\
 	vec4 vpos=in_pos; \n\
 	vpos.w=1.0/vpos.z;  \n"
-#ifndef GLES
 	"\
    if (vpos.w < 0.0) { \n\
       gl_Position = vec4(0.0, 0.0, 0.0, vpos.w); \n\
          return; \n\
    } \n\
    vpos.z = vpos.w; \n"
-#else
-	"\
-   vpos.z=depth_scale.x+depth_scale.y*vpos.w;  \n"
-#endif
    "\
 	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
 	vpos.xy*=vpos.w;  \n\
@@ -110,11 +90,7 @@ void main() \n\
 }";
 
 #undef vary
-#ifndef HAVE_OPENGLES
 #define vary "in"
-#else
-#define vary "varying"
-#endif
 
 const char* PixelPipelineShader = SHADER_HEADER
 "\
@@ -133,12 +109,10 @@ const char* PixelPipelineShader = SHADER_HEADER
 #define PASS %d \n\
 #define PI 3.1415926 \n\
  \n"
-#ifndef GLES
 	"\
    #if PASS <= 1 \n\
 	out vec4 " FRAGCOL "; \n\
 	#endif \n"
-#endif
 "\
 #if pp_TwoVolumes == 1 \n\
 #define IF(x) if (x) \n\
@@ -503,9 +477,7 @@ static GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentSh
 	glBindAttribLocation(program, VERTEX_COL_OFFS1_ARRAY, "in_offs1");
 	glBindAttribLocation(program, VERTEX_UV1_ARRAY,       "in_uv1");
 
-#ifndef HAVE_OPENGLES
 	glBindFragDataLocation(program, 0, FRAGCOL);
-#endif
 
 	glLinkProgram(program);
 	glGetProgramiv(program, GL_LINK_STATUS, &result);
@@ -1186,9 +1158,6 @@ struct gl4rend : Renderer
 //    glDebugMessageCallback(gl_DebugOutput, NULL);
 //    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 
-#ifdef GLES
-      glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
-#endif
       initABuffer();
 
       return true;

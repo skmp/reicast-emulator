@@ -1172,7 +1172,7 @@ void gl_DebugOutput(GLenum source,
 
 void reshapeABuffer(int w, int h);
 
-struct glesrend : Renderer
+struct gl4rend : Renderer
 {
 	bool Init()
    {
@@ -1274,4 +1274,4 @@ struct glesrend : Renderer
 	}
 };
 
-Renderer* rend_GLES2() { return new glesrend(); }
+Renderer* rend_GL4() { return new gl4rend(); }

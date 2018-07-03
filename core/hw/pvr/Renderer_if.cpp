@@ -227,6 +227,10 @@ bool rend_init(void)
 {
 #ifdef NO_REND
 	renderer	 = rend_norend();
+#elif defined(HAVE_GL4)
+	renderer = rend_GL4();
+#elif defined(HAVE_GL3)
+	renderer = rend_GL3();
 #else
 	renderer = rend_GLES2();
 #endif

@@ -48,6 +48,11 @@ struct MapleConfigMap : IMapleConfigMap
       UpdateVibration(dev->bus_id, value);
    }
 
+   u32 getBusId()
+   {
+      return this->dev->bus_id;
+   }
+
 	void GetInput(PlainJoystickState* pjs)
 	{
 		UpdateInputState(dev->bus_id);
@@ -93,6 +98,7 @@ void mcfg_CreateDevices()
    else
    {
       mcfg_Create(MDT_NaomiJamma, 0, 5);
+      mcfg_Create(MDT_NaomiJamma, 1, 5);
    }
 }
 

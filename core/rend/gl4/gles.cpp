@@ -138,6 +138,7 @@ layout(binding = 5) uniform sampler2D fog_table; \n\
 uniform int pp_Number; \n\
 uniform usampler2D shadow_stencil; \n\
 uniform sampler2D DepthTex; \n\
+uniform lowp float trilinear_alpha; \n\
 \n\
 uniform ivec2 blend_mode[2]; \n\
 #if pp_TwoVolumes == 1 \n\
@@ -308,6 +309,8 @@ void main() \n\
 		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
 	} \n\
 	#endif\n\
+   color *= trilinear_alpha; \n\
+	 \n\
 	#if cp_AlphaTest == 1 \n\
       color.a=1.0; \n\
 	#endif  \n\
@@ -565,6 +568,8 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
 	gu = glGetUniformLocation(s->program, "DepthTex");
 	if (gu != -1)
 		glUniform1i(gu, 2);     // GL_TEXTURE2
+
+   s->trilinear_alpha = glGetUniformLocation(s->program, "trilinear_alpha");
 
    // Shadow stencil for OP/PT rendering pass
    gu = glGetUniformLocation(s->program, "shadow_stencil");

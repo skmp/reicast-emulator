@@ -22,37 +22,7 @@ bool KillTex=false;
 GLCache glcache;
 gl_ctx gl;
 
-struct ShaderUniforms_t
-{
-	float PT_ALPHA;
-	float scale_coefs[4];
-	float depth_coefs[4];
-	float fog_den_float;
-	float ps_FOG_COL_RAM[3];
-	float ps_FOG_COL_VERT[3];
-	float fog_coefs[2];
-
-   void Set(PipelineShader* s)
-   {
-      if (s->cp_AlphaTestValue!=-1)
-         glUniform1f(s->cp_AlphaTestValue, PT_ALPHA);
-
-      if (s->scale!=-1)
-         glUniform4fv( s->scale, 1, scale_coefs);
-
-      if (s->depth_scale!=-1)
-         glUniform4fv( s->depth_scale, 1, depth_coefs);
-
-      if (s->sp_FOG_DENSITY!=-1)
-         glUniform1f( s->sp_FOG_DENSITY, fog_den_float);
-
-      if (s->sp_FOG_COL_RAM!=-1)
-         glUniform3fv( s->sp_FOG_COL_RAM, 1, ps_FOG_COL_RAM);
-
-      if (s->sp_FOG_COL_VERT!=-1)
-         glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
-   }
-} ShaderUniforms;
+struct ShaderUniforms_t ShaderUniforms;
 
 u32 gcflip;
 
@@ -200,6 +170,7 @@ uniform " LOWP " vec4 pp_ClipTest; \n\
 uniform " LOWP " vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
 uniform " HIGHP " float sp_FOG_DENSITY; \n\
 uniform sampler2D tex,fog_table; \n\
+uniform lowp float trilinear_alpha; \n\
 /* Vertex input*/ \n\
 INTERPOLATION " vary LOWP " vec4 vtx_base; \n\
 INTERPOLATION " vary LOWP " vec4 vtx_offs; \n\
@@ -248,6 +219,7 @@ void main() \n\
 			#if pp_IgnoreTexA==1 \n\
 				texcol.a=1.0;	 \n\
 			#endif\n\
+         color *= trilinear_alpha; \n\
 			\n\
 			#if cp_AlphaTest == 1 \n\
 				if (cp_AlphaTestValue>texcol.a) discard;\n\
@@ -476,6 +448,7 @@ bool CompilePipelineShader(PipelineShader *s)
    gu = glGetUniformLocation(s->program, "fog_table");
    if (gu != -1)
       glUniform1i(gu, 1);
+   s->trilinear_alpha = glGetUniformLocation(s->program, "trilinear_alpha");
 
    ShaderUniforms.Set(s);
 
@@ -891,6 +864,7 @@ static bool RenderFrame(void)
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
+#if 0
 	for (u32 i=0;i<sizeof(gl.program_table)/sizeof(gl.program_table[0]);i++)
 	{
 		PipelineShader* s=&gl.program_table[i];
@@ -901,6 +875,7 @@ static bool RenderFrame(void)
 
       ShaderUniforms.Set(s);
 	}
+#endif
 
 	//setup render target first
 	if (is_rtt)

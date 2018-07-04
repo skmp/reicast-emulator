@@ -35,6 +35,7 @@ struct PipelineShader
    GLuint ignore_tex_alpha;
    GLuint shading_instr;
    GLuint fog_control;
+   GLuint trilinear_alpha;
 
    //
 	u32 cp_AlphaTest;
@@ -115,69 +116,6 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_FogCtrl, bool two_volumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, int pass);
 void SetCull(u32 CulliMode);
 
-typedef struct _ShaderUniforms_t
-{
-	float PT_ALPHA;
-	float scale_coefs[4];
-	float depth_coefs[4];
-	float fog_den_float;
-	float ps_FOG_COL_RAM[3];
-	float ps_FOG_COL_VERT[3];
-   int poly_number;
-   TSP tsp0;
-	TSP tsp1;
-	TCW tcw0;
-	TCW tcw1;
-
-   void setUniformArray(GLuint location, int v0, int v1)
-	{
-		int array[] = { v0, v1 };
-		glUniform1iv(location, 2, array);
-	}
-
-   void Set(PipelineShader* s)
-   {
-      if (s->cp_AlphaTestValue!=-1)
-         glUniform1f(s->cp_AlphaTestValue, PT_ALPHA);
-
-      if (s->scale!=-1)
-         glUniform4fv( s->scale, 1, scale_coefs);
-
-      if (s->depth_scale!=-1)
-         glUniform4fv( s->depth_scale, 1, depth_coefs);
-
-      if (s->sp_FOG_DENSITY!=-1)
-         glUniform1f( s->sp_FOG_DENSITY, fog_den_float);
-
-      if (s->sp_FOG_COL_RAM!=-1)
-         glUniform3fv( s->sp_FOG_COL_RAM, 1, ps_FOG_COL_RAM);
-
-      if (s->sp_FOG_COL_VERT!=-1)
-         glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
-
-		if (s->shade_scale_factor != -1)
-			glUniform1f(s->shade_scale_factor, FPU_SHAD_SCALE.scale_factor / 256.f);
-      if (s->blend_mode != -1) {
-         u32 blend_mode[] = { tsp0.SrcInstr, tsp0.DstInstr, tsp1.SrcInstr, tsp1.DstInstr };
-         glUniform2iv(s->blend_mode, 2, (GLint *)blend_mode);
-		}
-
-      if (s->use_alpha != -1)
-         setUniformArray(s->use_alpha, tsp0.UseAlpha, tsp1.UseAlpha);
-
-		if (s->ignore_tex_alpha != -1)
-         setUniformArray(s->ignore_tex_alpha, tsp0.IgnoreTexA, tsp1.IgnoreTexA);
-
-      if (s->shading_instr != -1)
-         setUniformArray(s->shading_instr, tsp0.ShadInstr, tsp1.ShadInstr);
-
-      if (s->fog_control != -1)
-         setUniformArray(s->fog_control, tsp0.FogCtrl, tsp1.FogCtrl);
-
-      if (s->pp_Number != -1)
-			glUniform1i(s->pp_Number, poly_number);
-   }
-} _ShaderUniforms;
 extern struct _ShaderUniforms_t ShaderUniforms;
 
 extern const char *PixelPipelineShader;
@@ -322,3 +260,72 @@ bool isTwoVolumes(const PolyParam pp) \n\
 
 void SetupModvolVBO();
 enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
+
+typedef struct _ShaderUniforms_t
+{
+	float PT_ALPHA;
+	float scale_coefs[4];
+	float depth_coefs[4];
+	float fog_den_float;
+	float ps_FOG_COL_RAM[3];
+	float ps_FOG_COL_VERT[3];
+   int poly_number;
+   float trilinear_alpha;
+   TSP tsp0;
+	TSP tsp1;
+	TCW tcw0;
+	TCW tcw1;
+
+	void setUniformArray(GLuint location, int v0, int v1)
+	{
+		int array[] = { v0, v1 };
+		glUniform1iv(location, 2, array);
+	}
+
+   void Set(PipelineShader* s)
+   {
+      if (s->cp_AlphaTestValue!=-1)
+         glUniform1f(s->cp_AlphaTestValue, PT_ALPHA);
+
+      if (s->scale!=-1)
+         glUniform4fv( s->scale, 1, scale_coefs);
+
+      if (s->depth_scale!=-1)
+         glUniform4fv( s->depth_scale, 1, depth_coefs);
+
+      if (s->sp_FOG_DENSITY!=-1)
+         glUniform1f( s->sp_FOG_DENSITY, fog_den_float);
+
+      if (s->sp_FOG_COL_RAM!=-1)
+         glUniform3fv( s->sp_FOG_COL_RAM, 1, ps_FOG_COL_RAM);
+
+      if (s->sp_FOG_COL_VERT!=-1)
+         glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
+
+      if (s->shade_scale_factor != -1)
+			glUniform1f(s->shade_scale_factor, FPU_SHAD_SCALE.scale_factor / 256.f);
+
+		if (s->blend_mode != -1) {
+			u32 blend_mode[] = { tsp0.SrcInstr, tsp0.DstInstr, tsp1.SrcInstr, tsp1.DstInstr };
+			glUniform2iv(s->blend_mode, 2, (GLint *)blend_mode);
+		}
+
+		if (s->use_alpha != -1)
+			setUniformArray(s->use_alpha, tsp0.UseAlpha, tsp1.UseAlpha);
+
+		if (s->ignore_tex_alpha != -1)
+			setUniformArray(s->ignore_tex_alpha, tsp0.IgnoreTexA, tsp1.IgnoreTexA);
+
+		if (s->shading_instr != -1)
+			setUniformArray(s->shading_instr, tsp0.ShadInstr, tsp1.ShadInstr);
+
+		if (s->fog_control != -1)
+			setUniformArray(s->fog_control, tsp0.FogCtrl, tsp1.FogCtrl);
+
+		if (s->pp_Number != -1)
+			glUniform1i(s->pp_Number, poly_number);
+
+      if (s->trilinear_alpha != -1)
+			glUniform1f(s->trilinear_alpha, trilinear_alpha);
+   }
+} _ShaderUniforms;

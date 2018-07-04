@@ -85,7 +85,9 @@ GLuint depthSaveTexId;
 
 s32 SetTileClip(u32 val, bool set)
 {
-	float csx=0,csy=0,cex=0,cey=0;
+   if (!settings.rend.Clipping)
+		return 0;
+
 	u32 clipmode=val>>28;
 	s32 clip_mode;
 	if (clipmode<2)
@@ -94,6 +96,8 @@ s32 SetTileClip(u32 val, bool set)
 		clip_mode=-1;   //render stuff outside the region
 	else
 		clip_mode=1;    //render stuff inside the region
+
+	float csx=0,csy=0,cex=0,cey=0;
 
 	csx=(float)(val&63);
 	cex=(float)((val>>6)&63);
@@ -153,6 +157,16 @@ static void SetTextureRepeatMode(int index, GLuint dir, u32 clamp, u32 mirror)
 template <u32 Type, bool SortingEnabled>
 __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
 {
+   if (gp->pcw.Texture && gp->tsp.FilterMode > 1)
+	{
+		ShaderUniforms.trilinear_alpha = 0.25 * (gp->tsp.MipMapD & 0x3);
+		if (gp->tsp.FilterMode == 2)
+			// Trilinear pass A
+			ShaderUniforms.trilinear_alpha = 1.0 - ShaderUniforms.trilinear_alpha;
+	}
+	else
+		ShaderUniforms.trilinear_alpha = 1.0;
+
    s32 clipping = SetTileClip(gp->tileclip, false);
    int shaderId;
 
@@ -716,7 +730,8 @@ void DrawStrips(GLuint output_fbo)
 			DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count, 0);
 
 			// Modifier volumes
-			DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
+         if (settings.rend.ModifierVolumes)
+            DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
 			//
 			// PASS 2: Render OP and PT to fbo
@@ -778,7 +793,8 @@ void DrawStrips(GLuint output_fbo)
 			glCheck();
 
 			// Translucent modifier volumes
-			DrawTranslucentModVols(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
+         if (settings.rend.ModifierVolumes)
+            DrawTranslucentModVols(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
 
 			if (render_pass < render_pass_count - 1)
 			{

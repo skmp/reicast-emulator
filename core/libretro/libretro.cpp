@@ -1120,7 +1120,7 @@ static uint16_t get_analog_trigger( retro_input_state_t input_state_cb,
    return trigger;
 }
 
-static void UpdateInputStateNaomi(u32 port)
+static void UpdateInputStateNaomi()
 {
    int id;
    int max_id;
@@ -1153,25 +1153,32 @@ static void UpdateInputStateNaomi(u32 port)
    for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= max_id; ++id)
    {
       uint16_t dc_key = joymap[id];
-      bool is_down = input_cb(port, RETRO_DEVICE_JOYPAD, 0, id);
+      bool is_down_p1 = input_cb(0, RETRO_DEVICE_JOYPAD, 0, id);
+      bool is_down_p2 = input_cb(1, RETRO_DEVICE_JOYPAD, 0, id);
 
-      if ( is_down )
-         kcode[port] &= ~dc_key;
+      if ( is_down_p1 )
+         kcode[0] &= ~dc_key;
       else
-         kcode[port] |= dc_key;
+         kcode[0] |= dc_key;
+
+      if ( is_down_p2 )
+         kcode[1] &= ~dc_key;
+      else
+         kcode[1] |= dc_key;
    }
 
    //
    // -- analog stick
 
-   get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[port]), &(joyy[port]) );
+   get_analog_stick( input_cb, 0, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[0]), &(joyy[0]) );
+   get_analog_stick( input_cb, 1, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[1]), &(joyy[1]) );
 }
 
 void UpdateInputState(u32 port)
 {
    if (settings.System == DC_PLATFORM_NAOMI)
    {
-      UpdateInputStateNaomi(port);
+      UpdateInputStateNaomi();
       return;
    }
 

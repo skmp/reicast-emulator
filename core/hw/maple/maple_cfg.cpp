@@ -93,7 +93,6 @@ void mcfg_CreateDevices()
    else
    {
       mcfg_Create(MDT_NaomiJamma, 0, 5);
-      mcfg_Create(MDT_NaomiJamma, 1, 5);
    }
 }
 

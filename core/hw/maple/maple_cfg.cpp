@@ -48,6 +48,11 @@ struct MapleConfigMap : IMapleConfigMap
       UpdateVibration(dev->bus_id, value);
    }
 
+   u32 getBusId()
+   {
+      return this->dev->bus_id;
+   }
+
 	void GetInput(PlainJoystickState* pjs)
 	{
 		UpdateInputState(dev->bus_id);

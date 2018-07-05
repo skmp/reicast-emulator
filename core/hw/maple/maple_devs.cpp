@@ -1104,11 +1104,11 @@ struct maple_naomi_jamma : maple_sega_controller
 						buffer_out_b[0x8 + 0x9 + 0x3] = 0x0;
 						buffer_out_b[0x8 + 0x9 + 0x9] = 0x1;
 #define ADDFEAT(Feature,Count1,Count2,Count3)	*FeatPtr++=Feature; *FeatPtr++=Count1; *FeatPtr++=Count2; *FeatPtr++=Count3;
-						ADDFEAT(1, 2, 13, 0);	//Feat 1=Digital Inputs.  2 Players. 10 bits
-						ADDFEAT(2, 2, 0, 0);	//Feat 2=Coin inputs. 2 Inputs
-						ADDFEAT(3, 8, 16, 0);	//Feat 3=Analog. 2 Chans
-
-						ADDFEAT(12, 6, 0, 0);	//End of list
+						// Following values copied from MAME (src/mame/machine/jvs13551.cpp)
+						ADDFEAT(0x01, 2, 13, 0);	//Feat 1=Digital Inputs.  2 Players. 13 bits
+						ADDFEAT(0x02, 2, 0, 0);		//Feat 2=Coin inputs. 2 Inputs
+						ADDFEAT(0x03, 8, 16, 0);	//Feat 3=Analog. 8 Chans
+						ADDFEAT(0x12, 6, 0, 0);		//Feat 4=Driver out. 6 Chans
 					}
 					break;
 

@@ -981,6 +981,7 @@ void printState(u32 cmd, u32* buffer_in, u32 buffer_in_len)
 }
 
 extern u16 kcode[4];
+extern s8 joyx[4],joyy[4];
 
 /*
 Sega Dreamcast Controller
@@ -1103,11 +1104,11 @@ struct maple_naomi_jamma : maple_sega_controller
 						buffer_out_b[0x8 + 0x9 + 0x3] = 0x0;
 						buffer_out_b[0x8 + 0x9 + 0x9] = 0x1;
 #define ADDFEAT(Feature,Count1,Count2,Count3)	*FeatPtr++=Feature; *FeatPtr++=Count1; *FeatPtr++=Count2; *FeatPtr++=Count3;
-						ADDFEAT(1, 2, 12, 0);	//Feat 1=Digital Inputs.  2 Players. 10 bits
+						ADDFEAT(1, 2, 13, 0);	//Feat 1=Digital Inputs.  2 Players. 10 bits
 						ADDFEAT(2, 2, 0, 0);	//Feat 2=Coin inputs. 2 Inputs
-						ADDFEAT(3, 2, 0, 0);	//Feat 3=Analog. 2 Chans
+						ADDFEAT(3, 8, 16, 0);	//Feat 3=Analog. 2 Chans
 
-						ADDFEAT(0, 0, 0, 0);	//End of list
+						ADDFEAT(12, 6, 0, 0);	//End of list
 					}
 					break;
 
@@ -1124,10 +1125,19 @@ struct maple_naomi_jamma : maple_sega_controller
 					unsigned char p1_2 = 0x00;
 					unsigned char p2_1 = 0x00;
 					unsigned char p2_2 = 0x00;
+					unsigned short analog_p1_x = 0x8000;
+					unsigned short analog_p1_y = 0x8000;
+					unsigned short analog_p2_x = 0x8000;
+					unsigned short analog_p2_y = 0x8000;
 					static unsigned char LastKey[256];
 					static unsigned short coin1 = 0x0000;
 					static unsigned short coin2 = 0x0000;
 					unsigned char Key[256] = { 0 };
+
+					analog_p1_x = (joyx[bus_id*2+0]*256)+32768;
+					analog_p1_y = (joyy[bus_id*2+0]*256)+32768;
+					analog_p2_x = (joyx[bus_id*2+1]*256)+32768;
+					analog_p2_y = (joyy[bus_id*2+1]*256)+32768;
 
 #if 0
 #ifdef _WIN32
@@ -1219,14 +1229,14 @@ struct maple_naomi_jamma : maple_sega_controller
 					buffer_out_b[8 + 0x12 + 9] = coin2 >> 8;
 					buffer_out_b[8 + 0x12 + 10] = coin2 & 0xff;
 					buffer_out_b[8 + 0x12 + 11] = 1;
-					buffer_out_b[8 + 0x12 + 12] = 0x00;
-					buffer_out_b[8 + 0x12 + 13] = 0x00;
-					buffer_out_b[8 + 0x12 + 14] = 0x00;
-					buffer_out_b[8 + 0x12 + 15] = 0x00;
-					buffer_out_b[8 + 0x12 + 16] = 0x00;
-					buffer_out_b[8 + 0x12 + 17] = 0x00;
-					buffer_out_b[8 + 0x12 + 18] = 0x00;
-					buffer_out_b[8 + 0x12 + 19] = 0x00;
+					buffer_out_b[8 + 0x12 + 12] = analog_p1_y >> 8;
+					buffer_out_b[8 + 0x12 + 13] = analog_p1_y;
+					buffer_out_b[8 + 0x12 + 14] = analog_p1_x >> 8;
+					buffer_out_b[8 + 0x12 + 15] = analog_p1_x;
+					buffer_out_b[8 + 0x12 + 16] = analog_p2_y >> 8;
+					buffer_out_b[8 + 0x12 + 17] = analog_p2_y;
+					buffer_out_b[8 + 0x12 + 18] = analog_p2_x >> 8;
+					buffer_out_b[8 + 0x12 + 19] = analog_p2_x;
 					buffer_out_b[8 + 0x12 + 20] = 0x00;
 
 					memcpy(LastKey, Key, sizeof(Key));

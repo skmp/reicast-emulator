@@ -562,7 +562,9 @@ void WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 		return;
 
 	case NAOMI_ROM_DATA_addr&255:
+#ifndef NDEBUG
 		printf("naomi WriteMem:Write to rom ? sure ? no , i dont think so %%) %X <= %X, %d\n", Addr, data, sz);
+#endif
 		return;
 
 	case NAOMI_DMA_OFFSETH_addr&255:

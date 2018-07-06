@@ -75,7 +75,6 @@ void insertionSort(int array_size) { \n\
 		for (; j >= 0 && (pixel_list[j].depth < p.depth || (pixel_list[j].depth == p.depth && getPolyNumber(pixel_list[j]) > getPolyNumber(p))); j--) { \n\
 #else \n\
 		for (; j >= 0 && getPolyNumber(pixel_list[j]) > getPolyNumber(p); j--) { \n\
- \n\
 #endif \n\
 			pixel_list[j + 1] = pixel_list[j]; \n\
 		} \n\
@@ -95,7 +94,9 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 	vec4 finalColor = texture(tex, gl_FragCoord.xy / textureSize(tex, 0)); \n\
 	vec4 secondaryBuffer = vec4(0.0); // Secondary accumulation buffer \n\
 	float depth = 1.0; \n\
-	for (int i = 0; i < num_frag; i++) { \n\
+	 \n\
+	for (int i = 0; i < num_frag; i++) \n\
+	{ \n\
 		const Pixel pixel = pixel_list[i]; \n\
 		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)]; \n\
 #if DEPTH_SORTED != 1 \n\
@@ -131,6 +132,7 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 		case 7:		// Always \n\
 			break; \n\
 		} \n\
+		 \n\
 		if (getDepthMask(pp)) \n\
 			depth = frag_depth; \n\
 #endif \n\
@@ -184,7 +186,7 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 				srcCoef = vec4(1.0 - dstColor.a); \n\
 				break; \n\
 		} \n\
-		int dstBlend = getDstBlendFunc(pp, area1);  \n\
+		int dstBlend = getDstBlendFunc(pp, area1); \n\
 		switch (dstBlend) \n\
 		{ \n\
 			case ZERO: \n\
@@ -250,50 +252,48 @@ void main(void) \n\
 static const char *tr_modvol_shader_source = SHADER_HEADER "\
 #define MV_MODE %d \n\
 #define MAX_PIXELS_PER_FRAGMENT " MAX_PIXELS_PER_FRAGMENT " \n\
+ \n\
 // Must match ModifierVolumeMode enum values \n\
 #define MV_XOR		 0 \n\
 #define MV_OR		 1 \n\
 #define MV_INCLUSION 2 \n\
 #define MV_EXCLUSION 3 \n\
+ \n\
 void main(void) \n\
 { \n\
 #if MV_MODE == MV_XOR || MV_MODE == MV_OR \n\
 	setFragDepth(); \n\
 #endif \n\
 	ivec2 coords = ivec2(gl_FragCoord.xy); \n\
-	if (all(greaterThanEqual(coords, ivec2(0))) && all(lessThan(coords, imageSize(abufferPointerImg)))) \n\
+	 \n\
+	uint idx = imageLoad(abufferPointerImg, coords).x; \n\
+	int list_len = 0; \n\
+	while (idx != EOL) \n\
 	{ \n\
-		 \n\
-		uint idx = imageLoad(abufferPointerImg, coords).x; \n\
-		if (idx >= pixels.length()) // FIXME Shouldn't be necessary \n\
-			discard; \n\
-		int list_len = 0; \n\
-		while (idx != EOL) { \n\
-         const Pixel pix = pixels[idx]; \n\
-			const PolyParam pp = tr_poly_params[getPolyNumber(pix)]; \n\
-			if (getShadowEnable(pp)) \n\
-			{ \n\
+		const Pixel pixel = pixels[idx]; \n\
+		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)]; \n\
+		if (getShadowEnable(pp)) \n\
+		{ \n\
 #if MV_MODE == MV_XOR \n\
-				if (gl_FragDepth <= pixels[idx].depth) \n\
-					atomicXor(pixels[idx].seq_num, 0x40000000); \n\
+			if (gl_FragDepth <= pixels[idx].depth) \n\
+				atomicXor(pixels[idx].seq_num, 0x40000000); \n\
 #elif MV_MODE == MV_OR \n\
-				if (gl_FragDepth <= pixels[idx].depth) \n\
-					atomicOr(pixels[idx].seq_num, 0x40000000); \n\
+			if (gl_FragDepth <= pixels[idx].depth) \n\
+				atomicOr(pixels[idx].seq_num, 0x40000000); \n\
 #elif MV_MODE == MV_INCLUSION \n\
-				uint prev_val = atomicAnd(pixels[idx].seq_num, 0xBFFFFFFF); \n\
-				if ((prev_val & 0xC0000000) == 0x40000000) \n\
-					pixels[idx].seq_num = bitfieldInsert(pixels[idx].seq_num, 1, 31, 1); \n\
+			int prev_val = atomicAnd(pixels[idx].seq_num, 0xBFFFFFFF); \n\
+			if ((prev_val & 0xC0000000) == 0x40000000) \n\
+				pixels[idx].seq_num = bitfieldInsert(pixels[idx].seq_num, 1, 31, 1); \n\
 #elif MV_MODE == MV_EXCLUSION \n\
-				uint prev_val = atomicAnd(pixels[idx].seq_num, 0x3FFFFFFF); \n\
-				if ((prev_val & 0xC0000000) == 0x80000000) \n\
-					pixels[idx].seq_num = bitfieldInsert(pixels[idx].seq_num, 1, 31, 1); \n\
+			int prev_val = atomicAnd(pixels[idx].seq_num, 0x3FFFFFFF); \n\
+			if ((prev_val & 0xC0000000) == 0x80000000) \n\
+				pixels[idx].seq_num = bitfieldInsert(pixels[idx].seq_num, 1, 31, 1); \n\
 #endif \n\
-			} \n\
-			idx = pixels[idx].next; \n\
-			list_len++; \n\
-			if (list_len >= MAX_PIXELS_PER_FRAGMENT) \n\
-				break; \n\
 		} \n\
+		idx = pixels[idx].next; \n\
+		list_len++; \n\
+		if (list_len >= MAX_PIXELS_PER_FRAGMENT) \n\
+			break; \n\
 	} \n\
 	 \n\
 	discard; \n\
@@ -315,7 +315,7 @@ void initABuffer()
 		glBindTexture(GL_TEXTURE_2D, pixels_pointers);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, g_imageWidth, g_imageHeight, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, g_imageWidth, g_imageHeight, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, 0);
 		glBindImageTexture(4, pixels_pointers, 0, false, 0,  GL_READ_WRITE, GL_R32UI);
 		glCheck();
 	}
@@ -469,6 +469,8 @@ void DrawTranslucentModVols(int first, int count)
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
+	int mod_base = -1;
+
 	for (u32 cmv = 0; cmv < count; cmv++)
 	{
 		ModifierVolumeParam& param = params[cmv];
@@ -479,6 +481,9 @@ void DrawTranslucentModVols(int first, int count)
 		u32 mv_mode = param.isp.DepthMode;
 
 		verify(param.first >= 0 && param.first + param.count <= pvrrc.modtrig.used());
+
+		if (mod_base == -1)
+			mod_base = param.first;
 
 		PipelineShader *shader;
 		if (!param.isp.VolumeLast && mv_mode > 0)
@@ -502,7 +507,8 @@ void DrawTranslucentModVols(int first, int count)
 			ShaderUniforms.Set(shader);
 
 			glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
-         glDrawArrays(GL_TRIANGLES, param.first * 3, param.count * 3); glCheck();
+			glDrawArrays(GL_TRIANGLES, mod_base * 3, (param.first + param.count - mod_base) * 3); glCheck();
+			mod_base = -1;
 		}
 	}
 }

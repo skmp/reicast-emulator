@@ -525,6 +525,7 @@ struct settings_t
 		bool idleskip;
 		bool unstable_opt;
 		bool disable_nvmem;
+      bool DisableDivMatching;
 	} dynarec;
 	
 	struct

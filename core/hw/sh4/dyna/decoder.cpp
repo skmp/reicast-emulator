@@ -699,6 +699,9 @@ static u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &r
 
 static bool MatchDiv32u(u32 op,u32 pc)
 {
+   if (settings.dynarec.DisableDivMatching)
+		return false;
+
 	div_som_reg1=NoReg;
 	div_som_reg2=NoReg;
 	div_som_reg3=NoReg;
@@ -714,6 +717,9 @@ static bool MatchDiv32u(u32 op,u32 pc)
 
 static bool MatchDiv32s(u32 op,u32 pc)
 {
+   if (settings.dynarec.DisableDivMatching)
+		return false;
+
    u32 n = GetN(op);
    u32 m = GetM(op);
 

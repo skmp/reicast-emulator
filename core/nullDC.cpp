@@ -194,6 +194,12 @@ static void LoadSpecialSettings(void)
             settings.aica.EGHack = lut_games[i].eg_hack;
          }
 
+         if (lut_games[i].disable_div != -1)
+         {
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying Disable DIV hack.\n");
+            settings.dynarec.DisableDivMatching = lut_games[i].disable_div;
+         }
+
          break;
       }
    }
@@ -406,6 +412,7 @@ void LoadSettings(void)
 	settings.dynarec.Enable			= 1;
 	settings.dynarec.idleskip		= 1;
 	settings.dynarec.unstable_opt	= 0; 
+   settings.dynarec.DisableDivMatching       = 0;
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
    settings.UpdateModeForced     = 0;
 	settings.dreamcast.RTC			= GetRTC_now();

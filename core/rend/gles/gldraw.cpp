@@ -360,6 +360,13 @@ bool PP_EQ(PolyParam* pp0, PolyParam* pp1)
 
 static vector<SortTrigDrawParam>	pidx_sort;
 
+void fill_id(u16* d, Vertex* v0, Vertex* v1, Vertex* v2,  Vertex* vb)
+{
+	d[0]=v0-vb;
+	d[1]=v1-vb;
+	d[2]=v2-vb;
+}
+
 void GenSorted(int first, int count)
 {
    static vector<IndexTrig> lst;
@@ -418,28 +425,105 @@ void GenSorted(int first, int count)
 
       while(vtx != vtx_end)
       {
-         Vertex *v0   = &vtx[0];
-         Vertex *v1   = &vtx[1];
-         Vertex *v2   = &vtx[2];
+         Vertex* v0, * v1, * v2, * v3, * v4, * v5;
 
          if (flip)
          {
-            v0=&vtx[2];
+            v0=&vtx[1];
+            v1=&vtx[0];
+            v2=&vtx[2];
+         }
+         else
+         {
+            v0=&vtx[0];
             v1=&vtx[1];
-            v2=&vtx[0];
+            v2=&vtx[2];
          }
 
-         u16* d =lst[pfsti].id;
-         Vertex *vb = vtx_base;
-         d[0]=v0-vb;
-         d[1]=v1-vb;
-         d[2]=v2-vb;
+#if 0
+         if (settings.pvr.subdivide_transp)
+         {
+            u32 tess_x=(max3(v0->x,v1->x,v2->x)-min3(v0->x,v1->x,v2->x))/32;
+            u32 tess_y=(max3(v0->y,v1->y,v2->y)-min3(v0->y,v1->y,v2->y))/32;
 
-         lst[pfsti].pid= ppid ;
-         lst[pfsti].z = pp->isp.DepthMode == 7 ? 10000000.0 : minZ(vtx_base,lst[pfsti].id);
-         pfsti++;
+            if (tess_x==1) tess_x=0;
+            if (tess_y==1) tess_y=0;
+
+            //bool tess=(maxZ(v0,v1,v2)/minZ(v0,v1,v2))>=1.2;
+
+            if (tess_x + tess_y)
+            {
+               v3=pvrrc.verts.Append(3);
+               v4=v3+1;
+               v5=v4+1;
+
+               //xyz
+               for (int i=0;i<3;i++)
+               {
+                  ((float*)&v3->x)[i]=((float*)&v0->x)[i]*0.5f+((float*)&v2->x)[i]*0.5f;
+                  ((float*)&v4->x)[i]=((float*)&v0->x)[i]*0.5f+((float*)&v1->x)[i]*0.5f;
+                  ((float*)&v5->x)[i]=((float*)&v1->x)[i]*0.5f+((float*)&v2->x)[i]*0.5f;
+               }
+
+               //*TODO* Make it perspective correct
+
+               //uv
+               for (int i=0;i<2;i++)
+               {
+                  ((float*)&v3->u)[i]=((float*)&v0->u)[i]*0.5f+((float*)&v2->u)[i]*0.5f;
+                  ((float*)&v4->u)[i]=((float*)&v0->u)[i]*0.5f+((float*)&v1->u)[i]*0.5f;
+                  ((float*)&v5->u)[i]=((float*)&v1->u)[i]*0.5f+((float*)&v2->u)[i]*0.5f;
+               }
+
+               //color
+               for (int i=0;i<4;i++)
+               {
+                  v3->col[i]=v0->col[i]/2+v2->col[i]/2;
+                  v4->col[i]=v0->col[i]/2+v1->col[i]/2;
+                  v5->col[i]=v1->col[i]/2+v2->col[i]/2;
+               }
+
+               fill_id(lst[pfsti].id,v0,v3,v4,vtx_base);
+               lst[pfsti].pid= ppid ;
+               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
+               pfsti++;
+
+               fill_id(lst[pfsti].id,v2,v3,v5,vtx_base);
+               lst[pfsti].pid= ppid ;
+               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
+               pfsti++;
+
+               fill_id(lst[pfsti].id,v3,v4,v5,vtx_base);
+               lst[pfsti].pid= ppid ;
+               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
+               pfsti++;
+
+               fill_id(lst[pfsti].id,v5,v4,v1,vtx_base);
+               lst[pfsti].pid= ppid ;
+               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
+               pfsti++;
+
+               tess_gen+=3;
+            }
+            else
+            {
+               fill_id(lst[pfsti].id,v0,v1,v2,vtx_base);
+               lst[pfsti].pid= ppid ;
+               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
+               pfsti++;
+            }
+         }
+         else
+#endif
+         {
+            fill_id(lst[pfsti].id,v0,v1,v2,vtx_base);
+            lst[pfsti].pid= ppid ;
+            lst[pfsti].z = pp->isp.DepthMode == 7 ? 10000000.0 : minZ(vtx_base,lst[pfsti].id);
+            pfsti++;
+         }
 
          flip ^= 1;
+
          vtx++;
       }
       pp++;

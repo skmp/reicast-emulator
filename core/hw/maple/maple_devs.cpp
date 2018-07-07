@@ -1112,6 +1112,10 @@ struct maple_naomi_jamma : maple_sega_controller
 					}
 					break;
 
+					//Coin counters
+					case 0x21:
+						break;
+
 					default:
 						printf("unknown CAP %X\n", State.Cmd);
 						return 0;

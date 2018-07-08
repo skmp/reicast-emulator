@@ -2,10 +2,10 @@
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 extern "C" {
-#include "deps/libpng/png.h"
+#include <png.h>
 }
 #include "types.h"
-#include "deps/libzip/zip.h"
+#include <zip.h>
 
 #define TEXTURE_LOAD_ERROR 0
 

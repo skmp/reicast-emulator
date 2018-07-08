@@ -1,9 +1,5 @@
-
-#if USE_SHARED_ZLIB
 #include <zlib.h>
-#else
-#include "deps/zlib/zlib.h"
-#endif
+
 
 #define DEFLATE_FRAME_COMPRESSION_LEVEL_SERVER 1
 #define DEFLATE_FRAME_COMPRESSION_LEVEL_CLIENT Z_DEFAULT_COMPRESSION

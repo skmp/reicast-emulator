@@ -13,11 +13,7 @@
 #define LOGI printf
 #endif
 
-#if USE_SHARED_ZLIB
 #include <zlib.h>
-#else
-#include "deps/zlib/zlib.h"
-#endif
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
 const char* maple_sega_vmu_name = "Visual Memory";

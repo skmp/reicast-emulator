@@ -42,11 +42,7 @@
 #include "deps/crypto/md5.h"
 #include "deps/crypto/sha1.h"
 
-#if USE_SHARED_ZLIB
 #include <zlib.h>
-#else
-#include "deps/zlib/zlib.h"
-#endif
 
 #include <time.h>
 #include <stddef.h>

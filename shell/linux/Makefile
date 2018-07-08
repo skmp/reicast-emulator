@@ -322,6 +322,23 @@ ifdef HAS_SOFTREND
 endif
 
 # these are also handled on core.mk, but ignored here
+ifdef USE_SHARED_ZLIB
+	LIBS += -lz
+else
+    INCS += -I$(RZDCY_SRC_DIR)/deps/zlib/
+endif
+
+ifdef USE_SHARED_LIBPNG
+	LIBS += -lpng
+else
+    INCS += -I$(RZDCY_SRC_DIR)/deps/libpng/
+endif
+
+ifdef USE_SHARED_LIBWEBSOCKETS
+	LIBS += -lwebsockets
+else
+    INCS += -I$(RZDCY_SRC_DIR)/deps/libwebsocket/
+endif
 
 ifdef USE_SHARED_ZLIB
 	CXXFLAGS += -D USE_SHARED_ZLIB

@@ -27,11 +27,9 @@
    /* We must ensure that zlib uses 'const' in declarations. */
 #  define ZLIB_CONST
 #endif
-#if USE_SHARED_ZLIB
+
 #include <zlib.h>
-#else
-#include "../zlib/zlib.h"
-#endif
+
 #ifdef const
    /* zlib.h sometimes #defines const to nothing, undo this. */
 #  undef const

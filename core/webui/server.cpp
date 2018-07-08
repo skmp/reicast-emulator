@@ -41,11 +41,7 @@
 #include <unistd.h>
 #endif
 
-#if USE_SHARED_LIBWEBSOCKETS
 #include <libwebsockets.h>
-#else
-#include "deps/libwebsocket/libwebsockets.h"
-#endif
 
 #include "oslib/oslib.h"
 

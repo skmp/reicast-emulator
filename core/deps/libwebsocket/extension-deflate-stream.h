@@ -1,9 +1,5 @@
 
-#if USE_SHARED_ZLIB
 #include <zlib.h>
-#else
-#include "deps/zlib/zlib.h"
-#endif
 
 #define DEFLATE_STREAM_CHUNK 128
 #define DEFLATE_STREAM_COMPRESSION_LEVEL 1

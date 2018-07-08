@@ -121,13 +121,15 @@ endif
 		CFLAGS += -DTARGET_LINUX_x64 -D TARGET_NO_AREC
 		SINGLE_PREC_FLAGS=1
 		CXXFLAGS += -fexceptions
+		HAVE_GENERIC_JIT   = 0
 	else ifeq ($(WITH_DYNAREC), x86)
 		CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC
 		SINGLE_PREC_FLAGS=1
-    		CXXFLAGS += -fno-exceptions
+		CXXFLAGS += -fno-exceptions
 		MFLAGS += -m32
-    		ASFLAGS += --32
-    		LDFLAGS += -m32
+		ASFLAGS += --32
+		LDFLAGS += -m32
+		HAVE_GENERIC_JIT   = 0
 	endif
 
 	PLATFORM_EXT := unix

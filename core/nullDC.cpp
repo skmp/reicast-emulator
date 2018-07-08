@@ -263,7 +263,7 @@ static void LoadSpecialSettingsNaomi(const char *name)
 
 void dc_prepare_system(void)
 {
-   BBSRAM_SIZE             = (8*1024);
+   BBSRAM_SIZE             = (64*1024);
 
    switch (settings.System)
    {

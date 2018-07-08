@@ -90,7 +90,7 @@ static struct game_type lut_games[] =
    { "T23002N   ", -1, -1, -1, -1, -1,  1,  -1, -1  },                /* Star Wars Episode I: Jedi Power Battle (USA) */
 
    /* Disable DIV matching */
-   { "T30701D   ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Pro Pinball Trilogy */
+   { "T30701D50 ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Pro Pinball Trilogy */
 };
 
 static struct game_type_naomi lut_games_naomi[] = 

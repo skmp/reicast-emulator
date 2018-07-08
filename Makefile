@@ -226,7 +226,7 @@ else ifneq (,$(findstring osx,$(platform)))
 	LDFLAGS += -stdlib=libc++
 	fpic = -fPIC
 	CFLAGS += -D TARGET_NO_AREC
-
+	SINGLE_PREC_FLAGS=1
 	PLATCFLAGS += -D__MACOSX__ -DOSX
 	GL_LIB := -framework OpenGL
 	PLATFORM_EXT := unix
@@ -390,6 +390,7 @@ endif
 	LDFLAGS += -shared -static-libgcc -static-libstdc++ -Wl,--version-script=link.T -lwinmm -lgdi32
 	GL_LIB := -lopengl32
 	PLATFORM_EXT := win32
+	SINGLE_PREC_FLAGS=1
 	CC = gcc
 	CXX = g++
 ifeq ($(WITH_DYNAREC), x86)
@@ -406,7 +407,7 @@ ifeq ($(STATIC_LINKING),1)
 endif
 
 ifeq ($(SINGLE_PREC_FLAGS),1)
-	CORE_DEFINES += -fsingle-precision-constant
+	CORE_DEFINES += -fsingle-precision-constant -fno-builtin-sqrtf
 endif
 
 ifeq ($(ARMV7A_FLAGS),1)

@@ -182,14 +182,14 @@ struct TextureCacheData
       /* Convert a PVR texture into OpenGL */
 		switch (tcw.PixelFmt)
       {
-         case TA_PIXEL_1555:     /* ARGB1555  - value: 1 bit; RGB values: 5 bits each */
-         case TA_PIXEL_RESERVED: /* RESERVED1 - Regarded as 1555 */
-         case TA_PIXEL_565:      /* RGB565    - R value: 5 bits; G value: 6 bits; B value: 5 bits */
-         case TA_PIXEL_4444:     /* ARGB4444  - value: 4 bits; RGB values: 4 bits each */
-         case TA_PIXEL_YUV422:   /* YUV422    - 32 bits per 2 pixels; YUYV values: 8 bits each */
-         case TA_PIXEL_BUMPMAP:  /* BUMPMAP   - 16 bits/pixel; S value: 8 bits; R value: 8 bits */
-         case TA_PIXEL_4BPP:     /* 4BPP      - Palette texture with 4 bits/pixel */
-         case TA_PIXEL_8BPP:     /* 8BPP      - Palette texture with 8 bits/pixel */
+         case 0:     /* ARGB1555  - value: 1 bit; RGB values: 5 bits each */
+         case 7: /* RESERVED1 - Regarded as 1555 */
+         case 1:      /* RGB565    - R value: 5 bits; G value: 6 bits; B value: 5 bits */
+         case 2:     /* ARGB4444  - value: 4 bits; RGB values: 4 bits each */
+         case 3:   /* YUV422    - 32 bits per 2 pixels; YUYV values: 8 bits each */
+         case 4:  /* BUMPMAP   - 16 bits/pixel; S value: 8 bits; R value: 8 bits */
+         case 5:     /* 4BPP      - Palette texture with 4 bits/pixel */
+         case 6:     /* 8BPP      - Palette texture with 8 bits/pixel */
             if (tcw.ScanOrder && (tex->PL || tex->PL32))
             {
                //Texture is stored 'planar' in memory, no deswizzle is needed

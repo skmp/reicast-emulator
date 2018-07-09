@@ -68,7 +68,7 @@ void palette_update(void);
 
 // Unpack to 32-bit word
 
-#define ARGB8888( word ) ( (((word>>4)&0xF)<<4) | (((word>>12)&0xF)<<8) | (((word>>20)&0xF)<<12) | (((word>>28)&0xF)<<0) )
+#define ARGB8888( word ) ( ((word >> 24) & 0xFF) | (((word >> 16) & 0xFF) << 24) | (((word >> 8) & 0xFF) << 16) | ((word & 0xFF) << 8) )
 
 template<class PixelPacker>
 __forceinline u32 YUV422(s32 Y,s32 Yu,s32 Yv)

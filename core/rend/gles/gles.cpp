@@ -18,7 +18,7 @@ void GenSorted(int first, int count);
 
 extern retro_environment_t environ_cb;
 extern bool fog_needs_update;
-bool KillTex=false;
+extern bool KillTex;
 GLCache glcache;
 gl_ctx gl;
 

@@ -5,6 +5,7 @@
 
 u8* vq_codebook;
 u32 palette_index;
+bool KillTex=false;
 
 u32 detwiddle[2][8][1024];
 //input : address in the yyyyyxxxxx format
@@ -67,30 +68,38 @@ void palette_update(void)
    memcpy(pal_rev_256,_pal_rev_256,sizeof(pal_rev_256));
    memcpy(pal_rev_16,_pal_rev_16,sizeof(pal_rev_16));
 
+#define PixelPacker pp_dx
    pal_needs_update=false;
    switch(PAL_RAM_CTRL&3)
    {
-      case TA_PAL_ARGB1555:
+      case 0:
          for (int i=0;i<1024;i++)
+         {
             palette_ram[i]=ARGB1555(PALETTE_RAM[i]);
+         }
          break;
 
-      case TA_PAL_RGB565:
+      case 1:
          for (int i=0;i<1024;i++)
+         {
             palette_ram[i]=ARGB565(PALETTE_RAM[i]);
+         }
          break;
 
-      case TA_PAL_ARGB4444:
+      case 2:
          for (int i=0;i<1024;i++)
+         {
             palette_ram[i]=ARGB4444(PALETTE_RAM[i]);
+         }
          break;
 
-      case TA_PAL_ARGB8888:
+      case 3:
          for (int i=0;i<1024;i++)
+         {
             palette_ram[i]=ARGB8888(PALETTE_RAM[i]);
+         }
          break;
    }
-
 }
 
 using namespace std;
@@ -113,7 +122,9 @@ void vramlock_list_remove(vram_block* block)
 		for (size_t j=0;j<list->size();j++)
 		{
 			if ((*list)[j]==block)
+         {
 				(*list)[j]=0;
+         }
 		}
 	}
 }
@@ -173,17 +184,20 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,
 	block->userdata=userdata;
 	block->type=64;
 
-   vramlist_lock.Lock();
+   {
+      vramlist_lock.Lock();
 
-   vram.LockRegion(block->start,block->len);
+      vram.LockRegion(block->start,block->len);
 
-   //TODO: Fix this for 32M wrap as well
-   if (_nvmem_enabled() && VRAM_SIZE == 0x800000)
-      vram.LockRegion(block->start + VRAM_SIZE, block->len);
+      //TODO: Fix this for 32M wrap as well
+      if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
+         vram.LockRegion(block->start + VRAM_SIZE, block->len);
+      }
 
-   vramlock_list_add(block);
+      vramlock_list_add(block);
 
-   vramlist_lock.Unlock();
+      vramlist_lock.Unlock();
+   }
 
 	return block;
 }
@@ -198,36 +212,39 @@ bool VramLockedWrite(u8* address)
       size_t addr_hash = offset/PAGE_SIZE;
       vector<vram_block*>* list=&VramLocks[addr_hash];
 
-      vramlist_lock.Lock();
-
-      for (size_t i=0;i<list->size();i++)
       {
-         if ((*list)[i])
-         {
-            libPvr_LockedBlockWrite((*list)[i],(u32)offset);
+         vramlist_lock.Lock();
 
+         for (size_t i=0;i<list->size();i++)
+         {
             if ((*list)[i])
             {
-               msgboxf("Error : pvr is supposed to remove lock",MBX_OK);
-               dbgbreak;
+               libPvr_LockedBlockWrite((*list)[i],(u32)offset);
+
+               if ((*list)[i])
+               {
+                  msgboxf("Error : pvr is supposed to remove lock",MBX_OK);
+                  dbgbreak;
+               }
+
             }
-
          }
+         list->clear();
+
+         vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)),PAGE_SIZE);
+
+         //TODO: Fix this for 32M wrap as well
+         if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
+            vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
+         }
+
+         vramlist_lock.Unlock();
       }
-      list->clear();
-
-      vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)),PAGE_SIZE);
-
-      //TODO: Fix this for 32M wrap as well
-      if (_nvmem_enabled() && VRAM_SIZE == 0x800000)
-         vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
-
-      vramlist_lock.Unlock();
 
       return true;
    }
-
-   return false;
+   else
+      return false;
 }
 
 //unlocks mem
@@ -241,7 +258,9 @@ void libCore_vramlock_Unlock_block(vram_block* block)
 
 void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {
-	if (block->end <= VRAM_SIZE)
+   if (block->end>VRAM_SIZE)
+		msgboxf("Error : block end is after vram , skipping unlock",MBX_OK);
+   else
 	{
 		vramlock_list_remove(block);
 		//more work needed

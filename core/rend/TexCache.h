@@ -36,6 +36,22 @@ struct PixelBuffer
  	{
  		p_current_pixel[y*pixels_per_line+x]=value;
  	}
+
+   __forceinline void rmovex(u32 value)
+	{
+		p_current_pixel+=value;
+	}
+	__forceinline void rmovey(u32 value)
+	{
+		p_current_line+=pixels_per_line*value;
+		p_current_pixel=p_current_line;
+	}
+	__forceinline void amove(u32 x_m,u32 y_m)
+	{
+		//p_current_pixel=p_buffer_start;
+		p_current_line=p_buffer_start+pixels_per_line*y_m;
+		p_current_pixel=p_current_line + x_m;
+	}
 };
 
 void palette_update(void);
@@ -45,7 +61,6 @@ void palette_update(void);
 // Unpack to 16-bit word
 
 #define ARGB1555( word )	( ((word>>15)&1) | (((word>>10) & 0x1F)<<11)  | (((word>>5) & 0x1F)<<6)  | (((word>>0) & 0x1F)<<1) )
-//unpack_5_to_8[(word>>5) & 0x1F],unpack_5_to_8[word&0x1F])
 
 #define ARGB565( word )	( (((word>>0)&0x1F)<<0) | (((word>>5)&0x3F)<<5) | (((word>>11)&0x1F)<<11) )
 	
@@ -55,7 +70,7 @@ void palette_update(void);
 
 #define ARGB8888( word ) ( (((word>>4)&0xF)<<4) | (((word>>12)&0xF)<<8) | (((word>>20)&0xF)<<12) | (((word>>28)&0xF)<<0) )
 
-
+template<class PixelPacker>
 __forceinline u32 YUV422(s32 Y,s32 Yu,s32 Yv)
 {
 	Yu-=128;
@@ -65,11 +80,11 @@ __forceinline u32 YUV422(s32 Y,s32 Yu,s32 Yv)
 	//s32 G = (76283*(Y - 16) - 53281 *(Yv - 128) - 25624*(Yu - 128))>>16;
 	//s32 R = (76283*(Y - 16) + 104595*(Yv - 128))>>16;
 	
-	s32 R = clamp(0, 255, Y + Yv*11/8);            // Y + (Yv-128) * (11/8) ?
-	s32 G = clamp(0, 255, Y - (Yu*11 + Yv*22)/32); // Y - (Yu-128) * (11/8) * 0.25 - (Yv-128) * (11/8) * 0.5 ?
-	s32 B = clamp(0, 255, Y + Yu*110/64);          // Y + (Yu-128) * (11/8) * 1.25 ?
+	s32 R = Y + Yv*11/8;            // Y + (Yv-128) * (11/8) ?
+	s32 G = Y - (Yu*11 + Yv*22)/32; // Y - (Yu-128) * (11/8) * 0.25 - (Yv-128) * (11/8) * 0.5 ?
+	s32 B = Y + Yu*110/64;          // Y + (Yu-128) * (11/8) * 1.25 ?
 
-   return ((R >> 3) << 11) | ((G >> 2) << 5) | ((B >> 3) << 0);
+	return PixelPacker::packRGB(clamp(0,255,R),clamp(0,255,G),clamp(0,255,B));
 }
 
 #define twop(x,y,bcx,bcy) (detwiddle[0][bcy][x]+detwiddle[1][bcx][y])
@@ -119,37 +134,48 @@ struct name \
 //Non twiddled
 pixelcvt_start(conv565_PL,4,1)
 {
-	/* convert 4x1 */
+   //convert 4x1
 	u16* p_in=(u16*)data;
-   pb->p_current_pixel[0] = ARGB565(p_in[0]); /* 0,0 */
-   pb->p_current_pixel[1] = ARGB565(p_in[1]); /* 1,0 */
-   pb->p_current_pixel[2] = ARGB565(p_in[2]); /* 2,0 */
-   pb->p_current_pixel[3] = ARGB565(p_in[3]); /* 3,0 */
+	//0,0
+	pb->prel(0,ARGB565(p_in[0]));
+	//1,0
+	pb->prel(1,ARGB565(p_in[1]));
+	//2,0
+	pb->prel(2,ARGB565(p_in[2]));
+	//3,0
+	pb->prel(3,ARGB565(p_in[3]));
 }
 
 pixelcvt_next(conv1555_PL,4,1)
 {
-	/* convert 4x1 */
+   //convert 4x1
 	u16* p_in=(u16*)data;
-   pb->p_current_pixel[0] = ARGB1555(p_in[0]); /* 0,0 */
-   pb->p_current_pixel[1] = ARGB1555(p_in[1]); /* 1,0 */
-   pb->p_current_pixel[2] = ARGB1555(p_in[2]); /* 2,0 */
-   pb->p_current_pixel[3] = ARGB1555(p_in[3]); /* 3,0 */
+	//0,0
+	pb->prel(0,ARGB1555(p_in[0]));
+	//1,0
+	pb->prel(1,ARGB1555(p_in[1]));
+	//2,0
+	pb->prel(2,ARGB1555(p_in[2]));
+	//3,0
+	pb->prel(3,ARGB1555(p_in[3]));
 }
 
 pixelcvt_next(conv4444_PL,4,1)
 {
-	/* convert 4x1 */
+   //convert 4x1
 	u16* p_in=(u16*)data;
-	pb->p_current_pixel[0] = ARGB4444(p_in[0]); /* 0,0 */
-	pb->p_current_pixel[1] = ARGB4444(p_in[1]); /* 1,0 */
-	pb->p_current_pixel[2] = ARGB4444(p_in[2]); /* 2,0 */
-	pb->p_current_pixel[3] = ARGB4444(p_in[3]); /* 3,0 */
+	//0,0
+	pb->prel(0,ARGB4444(p_in[0]));
+	//1,0
+	pb->prel(1,ARGB4444(p_in[1]));
+	//2,0
+	pb->prel(2,ARGB4444(p_in[2]));
+	//3,0
+	pb->prel(3,ARGB4444(p_in[3]));
 }
-
 pixelcvt_next(convBMP_PL,4,1)
 {
-	u16* p_in=(u16*)data;
+   u16* p_in=(u16*)data;
 	pb->prel(0,ARGB4444(p_in[0]));
 	pb->prel(1,ARGB4444(p_in[1]));
 	pb->prel(2,ARGB4444(p_in[2]));
@@ -159,16 +185,19 @@ pixelcvt_end;
 
 pixelcvt32_start(convYUV_PL,4,1)
 {
-	/* convert 4x1 4444 to 4x1 8888 */
+   //convert 4x1 4444 to 4x1 8888
 	u32* p_in=(u32*)data;
+
 
 	s32 Y0 = (p_in[0]>>8) &255; //
 	s32 Yu = (p_in[0]>>0) &255; //p_in[0]
 	s32 Y1 = (p_in[0]>>24) &255; //p_in[3]
 	s32 Yv = (p_in[0]>>16) &255; //p_in[2]
 
-   pb->p_current_pixel[0] = YUV422(Y0,Yu,Yv); /* 0,0 */
-   pb->p_current_pixel[1] = YUV422(Y1,Yu,Yv); /* 1,0 */
+	//0,0
+	pb->prel(0,YUV422<PixelPacker>(Y0,Yu,Yv));
+	//1,0
+	pb->prel(1,YUV422<PixelPacker>(Y1,Yu,Yv));
 
 	//next 4 bytes
 	p_in+=1;
@@ -178,43 +207,57 @@ pixelcvt32_start(convYUV_PL,4,1)
 	Y1 = (p_in[0]>>24) &255; //p_in[3]
 	Yv = (p_in[0]>>16) &255; //p_in[2]
 
-   pb->p_current_pixel[2] = YUV422(Y0,Yu,Yv); /* 0,0 */
-   pb->p_current_pixel[3] = YUV422(Y1,Yu,Yv); /* 1,0 */
+	//0,0
+	pb->prel(2,YUV422<PixelPacker>(Y0,Yu,Yv));
+	//1,0
+	pb->prel(3,YUV422<PixelPacker>(Y1,Yu,Yv));
 }
 pixelcvt_end;
 
 //twiddled 
 pixelcvt_start(conv565_TW,2,2)
 {
-	/*convert 4x1 565 to 4x1 8888 */
+   //convert 4x1 565 to 4x1 8888
 	u16* p_in=(u16*)data;
-   pb->p_current_pixel[0]                       = ARGB565(p_in[0]); /* 0,0 */
-   pb->p_current_pixel[1*pb->pixels_per_line]   = ARGB565(p_in[1]); /* 0,1 */
-   pb->p_current_pixel[1]                       = ARGB565(p_in[2]); /* 1,0 */
-   pb->p_current_pixel[1*pb->pixels_per_line+1] = ARGB565(p_in[3]); /* 1,1 */
+	//0,0
+	pb->prel(0,0,ARGB565(p_in[0]));
+	//0,1
+	pb->prel(0,1,ARGB565(p_in[1]));
+	//1,0
+	pb->prel(1,0,ARGB565(p_in[2]));
+	//1,1
+	pb->prel(1,1,ARGB565(p_in[3]));
 }
 pixelcvt_next(conv1555_TW,2,2)
 {
-	/* convert 4x1 565 to 4x1 8888 */
+   //convert 4x1 565 to 4x1 8888
 	u16* p_in=(u16*)data;
-   pb->p_current_pixel[0]                       = ARGB1555(p_in[0]); /* 0,0 */
-   pb->p_current_pixel[1*pb->pixels_per_line]   = ARGB1555(p_in[1]); /* 0,1 */
-   pb->p_current_pixel[1]                       = ARGB1555(p_in[2]); /* 1,0 */
-   pb->p_current_pixel[1*pb->pixels_per_line+1] = ARGB1555(p_in[3]); /* 1,1 */
+	//0,0
+	pb->prel(0,0,ARGB1555(p_in[0]));
+	//0,1
+	pb->prel(0,1,ARGB1555(p_in[1]));
+	//1,0
+	pb->prel(1,0,ARGB1555(p_in[2]));
+	//1,1
+	pb->prel(1,1,ARGB1555(p_in[3]));
 }
 pixelcvt_next(conv4444_TW,2,2)
 {
-	/* convert 4x1 565 to 4x1 8888 */
+   //convert 4x1 565 to 4x1 8888
 	u16* p_in=(u16*)data;
-   pb->p_current_pixel[0]                       = ARGB4444(p_in[0]); /* 0,0 */
-   pb->p_current_pixel[1*pb->pixels_per_line]   = ARGB4444(p_in[1]); /* 0,1 */
-   pb->p_current_pixel[1]                       = ARGB4444(p_in[2]); /* 1,0 */
-   pb->p_current_pixel[1*pb->pixels_per_line+1] = ARGB4444(p_in[3]); /* 1,1 */
+	//0,0
+	pb->prel(0,0,ARGB4444(p_in[0]));
+	//0,1
+	pb->prel(0,1,ARGB4444(p_in[1]));
+	//1,0
+	pb->prel(1,0,ARGB4444(p_in[2]));
+	//1,1
+	pb->prel(1,1,ARGB4444(p_in[3]));
 }
 
 pixelcvt_next(convBMP_TW,2,2)
 {
-	u16* p_in=(u16*)data;
+   u16* p_in=(u16*)data;
 	pb->prel(0,0,ARGB4444(p_in[0]));
 	pb->prel(0,1,ARGB4444(p_in[1]));
 	pb->prel(1,0,ARGB4444(p_in[2]));
@@ -224,16 +267,19 @@ pixelcvt_end;
 
 pixelcvt32_start(convYUV_TW,2,2)
 {
-	//convert 4x1 4444 to 4x1 8888
+   //convert 4x1 4444 to 4x1 8888
 	u16* p_in=(u16*)data;
+
 
 	s32 Y0 = (p_in[0]>>8) &255; //
 	s32 Yu = (p_in[0]>>0) &255; //p_in[0]
 	s32 Y1 = (p_in[2]>>8) &255; //p_in[3]
 	s32 Yv = (p_in[2]>>0) &255; //p_in[2]
 
-   pb->p_current_pixel[0]= YUV422(Y0,Yu,Yv); /* 0,0 */
-   pb->p_current_pixel[1]=YUV422(Y1,Yu,Yv);  /* 1,0 */
+	//0,0
+	pb->prel(0,0,YUV422<PixelPacker>(Y0,Yu,Yv));
+	//1,0
+	pb->prel(1,0,YUV422<PixelPacker>(Y1,Yu,Yv));
 
 	//next 4 bytes
 	//p_in+=2;
@@ -243,68 +289,54 @@ pixelcvt32_start(convYUV_TW,2,2)
 	Y1 = (p_in[3]>>8) &255; //p_in[3]
 	Yv = (p_in[3]>>0) &255; //p_in[2]
 
-   pb->p_current_pixel[1*pb->pixels_per_line]=YUV422(Y0,Yu,Yv);   /* 0,1 */
-   pb->p_current_pixel[1*pb->pixels_per_line+1]=YUV422(Y1,Yu,Yv); /* 1,1 */
+	//0,1
+	pb->prel(0,1,YUV422<PixelPacker>(Y0,Yu,Yv));
+	//1,1
+	pb->prel(1,1,YUV422<PixelPacker>(Y1,Yu,Yv));
 }
 pixelcvt_end;
 
 pixelcvt_size_start(convPAL4_TW,4,4)
 {
-	u8* p_in=(u8*)data;
+   	u8* p_in=(u8*)data;
 	u32* pal=&palette_ram[palette_index];
 
-   pb->p_current_pixel[0]=pal[p_in[0]&0xF];
-   pb->p_current_pixel[1*pb->pixels_per_line]=pal[(p_in[0]>>4)&0xF];
-   p_in++;
-   pb->p_current_pixel[1]=pal[p_in[0]&0xF];
-   pb->p_current_pixel[1*pb->pixels_per_line+1]=pal[(p_in[0]>>4)&0xF];
-   p_in++;
+	pb->prel(0,0,pal[p_in[0]&0xF]);
+	pb->prel(0,1,pal[(p_in[0]>>4)&0xF]);p_in++;
+	pb->prel(1,0,pal[p_in[0]&0xF]);
+	pb->prel(1,1,pal[(p_in[0]>>4)&0xF]);p_in++;
 
-   pb->p_current_pixel[2*pb->pixels_per_line]=pal[p_in[0]&0xF];
-   pb->p_current_pixel[3*pb->pixels_per_line]=pal[(p_in[0]>>4)&0xF];
-   p_in++;
-   pb->p_current_pixel[2*pb->pixels_per_line+1]=pal[p_in[0]&0xF];
-   pb->p_current_pixel[3*pb->pixels_per_line+1]=pal[(p_in[0]>>4)&0xF];
-   p_in++;
+	pb->prel(0,2,pal[p_in[0]&0xF]);
+	pb->prel(0,3,pal[(p_in[0]>>4)&0xF]);p_in++;
+	pb->prel(1,2,pal[p_in[0]&0xF]);
+	pb->prel(1,3,pal[(p_in[0]>>4)&0xF]);p_in++;
 
-   pb->p_current_pixel[2]=pal[p_in[0]&0xF];
-   pb->p_current_pixel[1*pb->pixels_per_line+2]=pal[(p_in[0]>>4)&0xF];
-   p_in++;
-   pb->p_current_pixel[3]=pal[p_in[0]&0xF];
-   pb->p_current_pixel[1*pb->pixels_per_line+3]=pal[(p_in[0]>>4)&0xF];
-   p_in++;
+	pb->prel(2,0,pal[p_in[0]&0xF]);
+	pb->prel(2,1,pal[(p_in[0]>>4)&0xF]);p_in++;
+	pb->prel(3,0,pal[p_in[0]&0xF]);
+	pb->prel(3,1,pal[(p_in[0]>>4)&0xF]);p_in++;
 
-   pb->p_current_pixel[2*pb->pixels_per_line+2]=pal[p_in[0]&0xF];
-   pb->p_current_pixel[3*pb->pixels_per_line+2]=pal[(p_in[0]>>4)&0xF];
-   p_in++;
-   pb->p_current_pixel[2*pb->pixels_per_line+3]=pal[p_in[0]&0xF];
-   pb->p_current_pixel[3*pb->pixels_per_line+3]=pal[(p_in[0]>>4)&0xF];
-   p_in++;
+	pb->prel(2,2,pal[p_in[0]&0xF]);
+	pb->prel(2,3,pal[(p_in[0]>>4)&0xF]);p_in++;
+	pb->prel(3,2,pal[p_in[0]&0xF]);
+	pb->prel(3,3,pal[(p_in[0]>>4)&0xF]);p_in++;
 }
 pixelcvt_end;
 
 pixelcvt_size_start(convPAL8_TW,2,4)
 {
-	u8* p_in=(u8*)data;
+   u8* p_in=(u8*)data;
 	u32* pal=&palette_ram[palette_index];
 
-   pb->p_current_pixel[0]=pal[p_in[0]];
-   p_in++;
-   pb->p_current_pixel[1*pb->pixels_per_line]=pal[p_in[0]];
-   p_in++;
-   pb->p_current_pixel[1]=pal[p_in[0]];
-   p_in++;
-   pb->p_current_pixel[1*pb->pixels_per_line+1]=pal[p_in[0]];
-   p_in++;
+	pb->prel(0,0,pal[p_in[0]]);p_in++;
+	pb->prel(0,1,pal[p_in[0]]);p_in++;
+	pb->prel(1,0,pal[p_in[0]]);p_in++;
+	pb->prel(1,1,pal[p_in[0]]);p_in++;
 
-   pb->p_current_pixel[2*pb->pixels_per_line]=pal[p_in[0]];
-   p_in++;
-   pb->p_current_pixel[3*pb->pixels_per_line]=pal[p_in[0]];
-   p_in++;
-   pb->p_current_pixel[2*pb->pixels_per_line+1]=pal[p_in[0]];
-   p_in++;
-   pb->p_current_pixel[3*pb->pixels_per_line+1]=pal[p_in[0]];
-   p_in++;
+	pb->prel(0,2,pal[p_in[0]]);p_in++;
+	pb->prel(0,3,pal[p_in[0]]);p_in++;
+	pb->prel(1,2,pal[p_in[0]]);p_in++;
+	pb->prel(1,3,pal[p_in[0]]);p_in++;
 }
 pixelcvt_end;
 
@@ -312,9 +344,9 @@ pixelcvt_end;
 template<class PixelConvertor, class pixel_type>
 void texture_PL(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 {
-   pb->p_current_line  = pb->p_buffer_start;
-   pb->p_current_pixel = pb->p_current_line;
+   pb->amove(0,0);
 
+	Height/=PixelConvertor::ypp;
 	Width/=PixelConvertor::xpp;
 
 	for (u32 y=0;y<Height;y++)
@@ -325,75 +357,61 @@ void texture_PL(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 			PixelConvertor::Convert(pb,p);
 			p_in+=8;
 
-         pb->p_current_pixel += PixelConvertor::xpp;
+			pb->rmovex(PixelConvertor::xpp);
 		}
-      pb->p_current_line += pb->pixels_per_line;
-		pb->p_current_pixel = pb->p_current_line;
+		pb->rmovey(PixelConvertor::ypp);
 	}
 }
 
 template<class PixelConvertor, class pixel_type>
 void texture_TW(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 {
-   u32 bcx, bcy;
-	unsigned long bcx_,bcy_;
-	const u32 divider=PixelConvertor::xpp*PixelConvertor::ypp;
+   pb->amove(0,0);
 
-   pb->p_current_line  = pb->p_buffer_start;
-   pb->p_current_pixel = pb->p_current_line;
+   const u32 divider=PixelConvertor::xpp*PixelConvertor::ypp;
 
-	bcx_=bitscanrev(Width);
-	bcy_=bitscanrev(Height);
-	bcx=bcx_-3;
-	bcy=bcy_-3;
+   unsigned long bcx_,bcy_;
+   bcx_=bitscanrev(Width);
+   bcy_=bitscanrev(Height);
+   const u32 bcx=bcx_-3;
+   const u32 bcy=bcy_-3;
 
-	for (u32 y=0;y<Height;y+=PixelConvertor::ypp)
-	{
-		for (u32 x=0;x<Width;x+=PixelConvertor::xpp)
-		{
-			u8* p = &p_in[(twop(x,y,bcx,bcy)/divider)<<3];
-			PixelConvertor::Convert(pb,p);
+   for (u32 y=0;y<Height;y+=PixelConvertor::ypp)
+   {
+      for (u32 x=0;x<Width;x+=PixelConvertor::xpp)
+      {
+         u8* p = &p_in[(twop(x,y,bcx,bcy)/divider)<<3];
+         PixelConvertor::Convert(pb,p);
 
-         pb->p_current_pixel += PixelConvertor::xpp;
-		}
-
-      pb->p_current_line += pb->pixels_per_line * PixelConvertor::ypp;
-		pb->p_current_pixel = pb->p_current_line;
-	}
+         pb->rmovex(PixelConvertor::xpp);
+      }
+      pb->rmovey(PixelConvertor::ypp);
+   }
 }
 
 template<class PixelConvertor, class pixel_type>
 void texture_VQ(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 {
-   u32 bcx, bcy;
-   unsigned long bcx_,bcy_;
+   p_in+=256*4*2;
+	pb->amove(0,0);
+
 	const u32 divider=PixelConvertor::xpp*PixelConvertor::ypp;
-	p_in+=256*4*2;
-
-   pb->p_current_line  = pb->p_buffer_start;
-   pb->p_current_pixel = pb->p_current_line;
-
-	bcx_= bitscanrev(Width);
-	bcy_= bitscanrev(Height);
-	bcx = bcx_-3;
-	bcy = bcy_-3;
+	unsigned long bcx_,bcy_;
+	bcx_=bitscanrev(Width);
+	bcy_=bitscanrev(Height);
+	const u32 bcx=bcx_-3;
+	const u32 bcy=bcy_-3;
 
 	for (u32 y=0;y<Height;y+=PixelConvertor::ypp)
 	{
 		for (u32 x=0;x<Width;x+=PixelConvertor::xpp)
 		{
-#ifdef MSB_FIRST
-			u8 p = p_in[(twop(x,y,bcx,bcy)/divider)^3];
-#else
-			u8 p = p_in[(twop(x,y,bcx,bcy)/divider)];
-#endif
+			u8 p = p_in[twop(x,y,bcx,bcy)/divider];
 			PixelConvertor::Convert(pb,&vq_codebook[p*8]);
 
-         pb->p_current_pixel += PixelConvertor::xpp;
+			pb->rmovex(PixelConvertor::xpp);
 		}
-
-      pb->p_current_line += pb->pixels_per_line * PixelConvertor::ypp;
-		pb->p_current_pixel = pb->p_current_line;
+		pb->rmovey(PixelConvertor::ypp);
 	}
 }
 
@@ -451,3 +469,15 @@ template void texture_VQ<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,
 #define texBMP_VQ texture_VQ<convBMP_TW<pp_565>, u16>
  
 #define Is_64_Bit(addr) ((addr &0x1000000)==0)
+
+//vram_block, vramLockCBFP on plugin headers
+
+
+u32 vramlock_ConvAddrtoOffset64(u32 Address);
+u32 vramlock_ConvOffset32toOffset64(u32 offset32);
+
+void vramlock_Unlock_block(vram_block* block);
+vram_block* vramlock_Lock_32(u32 start_offset32,u32 end_offset32,void* userdata);
+vram_block* vramlock_Lock_64(u32 start_offset64,u32 end_offset64,void* userdata);
+
+void vram_LockedWrite(u32 offset64);

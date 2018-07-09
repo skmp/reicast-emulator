@@ -22,6 +22,8 @@ char slash = '/';
 u32 fskip;
 extern int screen_width;
 extern int screen_height;
+char save_dir[PATH_MAX];
+char eeprom_file[PATH_MAX];
 bool boot_to_bios;
 
 static int astick_deadzone = 0;
@@ -887,6 +889,24 @@ bool retro_load_game(const struct retro_game_info *game)
       return false;
 #endif
 
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir) {
+      char g_save_dir[PATH_MAX];
+      strncpy(g_save_dir, dir, sizeof(g_save_dir));
+      snprintf(save_dir, sizeof(save_dir), "%sreicast%c", g_save_dir, slash);
+      printf("Creating dir: %s\n", save_dir);
+      struct stat buf;
+      if (stat(save_dir, &buf) < 0)
+      {
+         mkdir_norecurse(save_dir);
+      }
+      log_cb(RETRO_LOG_INFO, "Setting save dir to %s\n", save_dir);
+   } else {
+      // ... otherwise use rom directory
+      strncpy(save_dir, game_dir, sizeof(save_dir));
+      log_cb(RETRO_LOG_ERROR, "Save dir not defined => use roms dir %s\n", save_dir);
+   }
+
+   snprintf(eeprom_file, sizeof(eeprom_file), "%s%s.eeprom", save_dir, g_base_name);
 
    dc_prepare_system();
 

@@ -1305,38 +1305,26 @@ struct maple_naomi_jamma : maple_sega_controller
 				//printState(Command,buffer_in,buffer_in_len);
 				memcpy(EEPROM + address, buffer_in_b + 4, size);
 
-#ifdef SAVE_EPPROM
-				wchar eeprom_file[512];
-				host.ConfigLoadStr(L"emu", L"gamefile", eeprom_file, L"");
-				wcscat(eeprom_file, L".eeprom");
-				FILE* f = _wfopen(eeprom_file, L"wb");
+				FILE* f = fopen(eeprom_file, "wb");
 				if (f)
 				{
 					fwrite(EEPROM, 1, 0x80, f);
 					fclose(f);
-					wprintf(L"SAVED EEPROM to %s\n", eeprom_file);
 				}
-#endif
 			}
 			return (7);
 			case 0x3:	//EEPROM read
 			{
-#ifdef SAVE_EPPROM
 				if (!EEPROM_loaded)
 				{
 					EEPROM_loaded = true;
-					wchar eeprom_file[512];
-					host.ConfigLoadStr(L"emu", L"gamefile", eeprom_file, L"");
-					wcscat(eeprom_file, L".eeprom");
-					FILE* f = _wfopen(eeprom_file, L"rb");
+					FILE* f = fopen(eeprom_file, "rb");
 					if (f)
 					{
 						fread(EEPROM, 1, 0x80, f);
 						fclose(f);
-						wprintf(L"LOADED EEPROM from %s\n", eeprom_file);
 					}
 				}
-#endif
 				//printf("EEprom READ ?\n");
 				int address = buffer_in_b[1];
 				//printState(Command,buffer_in,buffer_in_len);

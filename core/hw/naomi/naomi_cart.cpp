@@ -26,13 +26,10 @@ typedef int fd_t;
 fd_t*	RomCacheMap;
 u32		RomCacheMapCount;
 
-char SelectedFile[512];
-
 bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 {
-
-	printf("\nnullDC-Naomi rom loader v1.2\n");
-	printf("\File: %s\n", file);
+	printf("nullDC-Naomi rom loader v1.2\n");
+	printf("File: %s\n", file);
 
 	size_t folder_pos = strlen(file) - 1;
 	while (folder_pos>1 && (file[folder_pos] != '\\' && file[folder_pos] != '/'))
@@ -55,11 +52,19 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 
 	char* eon = strstr(line, "\n");
 	if (!eon)
-		printf("+Loading naomi rom that has no name\n", line);
+	{
+		printf("+Parsing was unsuccessful, there is something wrong with your lst file\n");
+		fclose(fl);
+		return false;
+	}
 	else
+	{
 		*eon = 0;
+	}
 
 	printf("+Loading naomi rom : %s\n", line);
+
+	strcpy(s, line);
 
 	line = fgets(t, 512, fl);
 	if (!line)
@@ -67,9 +72,6 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 		fclose(fl);
 		return false;
 	}
-
-   strcpy(SelectedFile, line);
-   strcpy(s, line);
 
 	vector<string> files;
 	vector<u32> fstart;
@@ -92,7 +94,7 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 	}
 	fclose(fl);
 
-	printf("+%d romfiles, %.2f MB set size, %.2f MB set address space\n", files.size(), setsize / 1024.f / 1024.f, RomSize / 1024.f / 1024.f);
+	printf("+%lu romfiles, %.2f MB set size, %.2f MB set address space\n", files.size(), setsize / 1024.f / 1024.f, RomSize / 1024.f / 1024.f);
 
 	if (RomCacheMap)
 	{
@@ -132,9 +134,9 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 			continue;
 		}
 #ifdef _WIN32
-      RomCache = CreateFile(t, FILE_READ_ACCESS, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+		RomCache = CreateFile(t, FILE_READ_ACCESS, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 #else
-      RomCache = open(t, O_RDONLY);
+		RomCache = open(t, O_RDONLY);
 #endif
 		if (RomCache == INVALID_FD)
 		{
@@ -144,10 +146,10 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 		}
 
 #ifdef _WIN32
-      RomCacheMap[i] = CreateFileMapping(RomCache, 0, PAGE_READONLY, 0, fsize[i], 0);
-      verify(CloseHandle(RomCache));
+		RomCacheMap[i] = CreateFileMapping(RomCache, 0, PAGE_READONLY, 0, fsize[i], 0);
+		verify(CloseHandle(RomCache));
 #else
-      RomCacheMap[i] = RomCache;
+		RomCacheMap[i] = RomCache;
 #endif
 
 		verify(RomCacheMap[i] != INVALID_FD);
@@ -207,13 +209,14 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 }
 
 extern char *game_data;
+extern char eeprom_file[PATH_MAX];
 
 bool naomi_cart_SelectFile(char *s, size_t len)
 {
 	if (!naomi_cart_LoadRom(game_data, s, len))
-      return false;
+		return false;
 
-	printf("EEPROM file : %s.eeprom\n", SelectedFile);
+	printf("EEPROM file : %s\n", eeprom_file);
 
 	return true;
 }

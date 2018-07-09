@@ -212,7 +212,7 @@ static void LoadSpecialSettingsNaomi(const char *name)
    log_cb(RETRO_LOG_INFO, "[LUT]: Naomi ROM name is: %s.\n", name);
    for (i = 0; i < sizeof(lut_games_naomi)/sizeof(lut_games_naomi[0]); i++)
    {
-      if (strstr(lut_games_naomi[i].product_number, reios_product_number))
+      if (strstr(lut_games_naomi[i].product_number, name))
       {
          log_cb(RETRO_LOG_INFO, "[LUT]: Found game in LUT database..\n");
 

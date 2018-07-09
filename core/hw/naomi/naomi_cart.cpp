@@ -61,6 +61,8 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 	{
 		*eon = 0;
 	}
+	eon = strstr(line, "\r");
+	*eon = 0;
 
 	printf("+Loading naomi rom : %s\n", line);
 

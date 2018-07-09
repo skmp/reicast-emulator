@@ -982,6 +982,7 @@ void printState(u32 cmd, u32* buffer_in, u32 buffer_in_len)
 
 extern u16 kcode[4];
 extern s8 joyx[4],joyy[4];
+extern char eeprom_file[PATH_MAX];
 
 /*
 Sega Dreamcast Controller

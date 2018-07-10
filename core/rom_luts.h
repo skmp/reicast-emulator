@@ -98,4 +98,7 @@ static struct game_type_naomi lut_games_naomi[] =
    /* Update mode fullspeed */
    /* AICA Interrupt Hack */
    { "Street Fighter Zero 3 Upper", -1, -1,  1, -1, -1, -1,  -1, -1  },                /* Street Fighter Alpha 3 */
+
+   /* EG Hack */
+   { "Metal Slug 6"               , -1, -1, -1, -1, -1, -1,   1, -1  },                /* Metal Slug 6 */
 };

@@ -613,7 +613,9 @@ void gd_process_spi_cmd()
 		//seems like a non data command :)
 	case 0x70:
 		printf_spicmd("SPI : unknown ? [0x70]\n");
+#ifndef NDEBUG
 		printf("SPI : unknown ? [0x70]\n");
+#endif
 		/*GDStatus.full=0x50; //FIXME
 		RaiseInterrupt(holly_GDROM_CMD);*/
 
@@ -629,7 +631,9 @@ void gd_process_spi_cmd()
 	case 0x71:
 		{
 			printf_spicmd("SPI : unknown ? [0x71]\n");
+#ifndef NDEBUG
 			printf("SPI : unknown ? [0x71]\n");
+#endif
 			extern u32 reply_71_sz;
 
 			gd_spi_pio_end((u8*)&reply_71[0],reply_71_sz);//uCount
@@ -1174,7 +1178,7 @@ void GDROM_DmaStart(u32 addr, u32 data)
 	{
 		SB_GDSTARD=SB_GDSTAR;
 		SB_GDLEND=0;
-		//printf("Streamed GDMA start\n");
+      //printf("GDROM-DMA start addr %08X len %d\n", SB_GDSTAR, SB_GDLEN);
 		GDRomschd(0,0,0);
 		sh4_sched_request(gdrom_sched,GDROM_TICK);
 	}

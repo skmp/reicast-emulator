@@ -36,6 +36,8 @@ float scale_x, scale_y;
 #else
 #define attr "attribute"
 #define vary "varying"
+#define FRAGCOL "gl_FragColor"
+#define TEXLOOKUP "texture2D"
 #endif
 
 #ifdef HAVE_OPENGLES
@@ -170,7 +172,7 @@ uniform " LOWP " vec4 pp_ClipTest; \n\
 uniform " LOWP " vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
 uniform " HIGHP " float sp_FOG_DENSITY; \n\
 uniform sampler2D tex,fog_table; \n\
-uniform lowp float trilinear_alpha; \n\
+uniform " LOWP " float trilinear_alpha; \n\
 /* Vertex input*/ \n\
 INTERPOLATION " vary LOWP " vec4 vtx_base; \n\
 INTERPOLATION " vary LOWP " vec4 vtx_offs; \n\
@@ -208,7 +210,7 @@ void main() \n\
 	#endif\n\
 	#if pp_Texture==1 \n\
 	{ \n\
-      lowp vec4 texcol=" TEXLOOKUP "(tex, vtx_uv); \n\
+      " LOWP " vec4 texcol=" TEXLOOKUP "(tex, vtx_uv); \n\
 		 \n\
 		#if pp_BumpMap == 1 \n\
 			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0; \n\

@@ -1017,14 +1017,15 @@ struct maple_naomi_jamma : maple_sega_controller
 
 				buffer_out[0] = 0xffffffff;
 				buffer_out[1] = 0xffffffff;
-				bus_id = config->getBusId();
-				u32 keycode = ~kcode[bus_id*2+0];
-				u32 keycode2 = ~kcode[bus_id*2+1];
+				u32 keycode1 = ~kcode[0];
+				u32 keycode2 = ~kcode[1];
+				u32 keycode3 = ~kcode[2];
+				u32 keycode4 = ~kcode[3];
 
-				if (keycode&NAOMI_SERVICE_KEY_2)		//Service
+				if (keycode1&NAOMI_SERVICE_KEY_2)		//Service
 					buffer_out[0] &= ~(1 << 0x1b);
 
-				if (keycode&NAOMI_TEST_KEY_2)		//Test
+				if (keycode1&NAOMI_TEST_KEY_2)		//Test
 					buffer_out[0] &= ~(1 << 0x1a);
 
 				if (State.Mode == 0 && subcode != 0x33)	//Get Caps
@@ -1105,11 +1106,25 @@ struct maple_naomi_jamma : maple_sega_controller
 						buffer_out_b[0x8 + 0x9 + 0x3] = 0x0;
 						buffer_out_b[0x8 + 0x9 + 0x9] = 0x1;
 #define ADDFEAT(Feature,Count1,Count2,Count3)	*FeatPtr++=Feature; *FeatPtr++=Count1; *FeatPtr++=Count2; *FeatPtr++=Count3;
-						// Following values copied from MAME (src/mame/machine/jvs13551.cpp)
-						ADDFEAT(0x01, 2, 13, 0);	//Feat 1=Digital Inputs.  2 Players. 13 bits
-						ADDFEAT(0x02, 2, 0, 0);		//Feat 2=Coin inputs. 2 Inputs
-						ADDFEAT(0x03, 8, 16, 0);	//Feat 3=Analog. 8 Chans
-						ADDFEAT(0x12, 6, 0, 0);		//Feat 4=Driver out. 6 Chans
+						if(settings.mapping.JammaSetup)
+						{
+							// 4 players with no analog stick setup
+							if(settings.mapping.JammaSetup == 1)
+							{
+								ADDFEAT(0x01, 4, 13, 0);	//Feat 1=Digital Inputs.  4 Players. 13 bits
+								ADDFEAT(0x02, 4, 0, 0);		//Feat 2=Coin inputs. 4 Inputs
+								ADDFEAT(0x03, 0, 0, 0);		//Feat 3=Analog. 0 Chans
+								ADDFEAT(0x12, 6, 0, 0);		//Feat 4=Driver out. 6 Chans
+							}
+						}
+						else
+						{
+							// 2 players with analog sticks
+							ADDFEAT(0x01, 2, 13, 0);	//Feat 1=Digital Inputs.  2 Players. 13 bits
+							ADDFEAT(0x02, 2, 0, 0);		//Feat 2=Coin inputs. 2 Inputs
+							ADDFEAT(0x03, 4, 8, 0);		//Feat 3=Analog. 4 Chans
+							ADDFEAT(0x12, 6, 0, 0);		//Feat 4=Driver out. 6 Chans
+						}
 					}
 					break;
 
@@ -1130,6 +1145,10 @@ struct maple_naomi_jamma : maple_sega_controller
 					unsigned char p1_2 = 0x00;
 					unsigned char p2_1 = 0x00;
 					unsigned char p2_2 = 0x00;
+					unsigned char p3_1 = 0x00;
+					unsigned char p3_2 = 0x00;
+					unsigned char p4_1 = 0x00;
+					unsigned char p4_2 = 0x00;
 					unsigned short analog_p1_x = 0x8000;
 					unsigned short analog_p1_y = 0x8000;
 					unsigned short analog_p2_x = 0x8000;
@@ -1137,6 +1156,8 @@ struct maple_naomi_jamma : maple_sega_controller
 					static unsigned char LastKey[256];
 					static unsigned short coin1 = 0x0000;
 					static unsigned short coin2 = 0x0000;
+					static unsigned short coin3 = 0x0000;
+					static unsigned short coin4 = 0x0000;
 					unsigned char Key[256] = { 0 };
 
 					analog_p1_x = (joyx[bus_id*2+0]*256)+32768;
@@ -1149,31 +1170,31 @@ struct maple_naomi_jamma : maple_sega_controller
                GetKeyboardState(Key);
 #endif
 #endif
-					if (keycode&NAOMI_SERVICE_KEY_1)			//Service ?
+					if (keycode1&NAOMI_SERVICE_KEY_1)			//Service ?
 						glbl |= 0x80;
-					if (keycode&NAOMI_TEST_KEY_1)			//Test
+					if (keycode1&NAOMI_TEST_KEY_1)			//Test
 						p1_1 |= 0x40;
-					if (keycode&NAOMI_START_KEY)			//start ?
+					if (keycode1&NAOMI_START_KEY)			//start ?
 						p1_1 |= 0x80;
-					if (keycode&NAOMI_UP_KEY)			//up
+					if (keycode1&NAOMI_UP_KEY)			//up
 						p1_1 |= 0x20;
-					if (keycode&NAOMI_DOWN_KEY)		//down
+					if (keycode1&NAOMI_DOWN_KEY)		//down
 						p1_1 |= 0x10;
-					if (keycode&NAOMI_LEFT_KEY)		//left
+					if (keycode1&NAOMI_LEFT_KEY)		//left
 						p1_1 |= 0x08;
-					if (keycode&NAOMI_RIGHT_KEY)		//right
+					if (keycode1&NAOMI_RIGHT_KEY)		//right
 						p1_1 |= 0x04;
-					if (keycode&NAOMI_BTN0_KEY)			//btn1
+					if (keycode1&NAOMI_BTN0_KEY)			//btn1
 						p1_1 |= 0x02;
-					if (keycode&NAOMI_BTN1_KEY)			//btn2
+					if (keycode1&NAOMI_BTN1_KEY)			//btn2
 						p1_1 |= 0x01;
-					if (keycode&NAOMI_BTN2_KEY)			//btn3
+					if (keycode1&NAOMI_BTN2_KEY)			//btn3
 						p1_2 |= 0x80;
-					if (keycode&NAOMI_BTN3_KEY)			//btn4
+					if (keycode1&NAOMI_BTN3_KEY)			//btn4
 						p1_2 |= 0x40;
-					if (keycode&NAOMI_BTN4_KEY)			//btn5
+					if (keycode1&NAOMI_BTN4_KEY)			//btn5
 						p1_2 |= 0x20;
-					if (keycode&NAOMI_BTN5_KEY)			//btn6
+					if (keycode1&NAOMI_BTN5_KEY)			//btn6
 						p1_2 |= 0x10;
 
 					if (keycode2&NAOMI_TEST_KEY_1)			//Test
@@ -1201,16 +1222,76 @@ struct maple_naomi_jamma : maple_sega_controller
 					if (keycode2&NAOMI_BTN5_KEY)			//btn6
 						p2_2 |= 0x10;
 
-					static bool old_coin = false;
-					static bool old_coin2 = false;
+					if (keycode3&NAOMI_TEST_KEY_1)			//Test
+						p3_1 |= 0x40;
+					if (keycode3&NAOMI_START_KEY)			//start ?
+						p3_1 |= 0x80;
+					if (keycode3&NAOMI_UP_KEY)			//up
+						p3_1 |= 0x20;
+					if (keycode3&NAOMI_DOWN_KEY)		//down
+						p3_1 |= 0x10;
+					if (keycode3&NAOMI_LEFT_KEY)		//left
+						p3_1 |= 0x08;
+					if (keycode3&NAOMI_RIGHT_KEY)		//right
+						p3_1 |= 0x04;
+					if (keycode3&NAOMI_BTN0_KEY)			//btn1
+						p3_1 |= 0x02;
+					if (keycode3&NAOMI_BTN1_KEY)			//btn2
+						p3_1 |= 0x01;
+					if (keycode3&NAOMI_BTN2_KEY)			//btn3
+						p3_2 |= 0x80;
+					if (keycode3&NAOMI_BTN3_KEY)			//btn4
+						p3_2 |= 0x40;
+					if (keycode3&NAOMI_BTN4_KEY)			//btn5
+						p3_2 |= 0x20;
+					if (keycode3&NAOMI_BTN5_KEY)			//btn6
+						p3_2 |= 0x10;
 
-					if ((old_coin == false) && (keycode&NAOMI_COIN_KEY))
+					if (keycode4&NAOMI_TEST_KEY_1)			//Test
+						p4_1 |= 0x40;
+					if (keycode4&NAOMI_START_KEY)			//start ?
+						p4_1 |= 0x80;
+					if (keycode4&NAOMI_UP_KEY)			//up
+						p4_1 |= 0x20;
+					if (keycode4&NAOMI_DOWN_KEY)		//down
+						p4_1 |= 0x10;
+					if (keycode4&NAOMI_LEFT_KEY)		//left
+						p4_1 |= 0x08;
+					if (keycode4&NAOMI_RIGHT_KEY)		//right
+						p4_1 |= 0x04;
+					if (keycode4&NAOMI_BTN0_KEY)			//btn1
+						p4_1 |= 0x02;
+					if (keycode4&NAOMI_BTN1_KEY)			//btn2
+						p4_1 |= 0x01;
+					if (keycode4&NAOMI_BTN2_KEY)			//btn3
+						p4_2 |= 0x80;
+					if (keycode4&NAOMI_BTN3_KEY)			//btn4
+						p4_2 |= 0x40;
+					if (keycode4&NAOMI_BTN4_KEY)			//btn5
+						p4_2 |= 0x20;
+					if (keycode4&NAOMI_BTN5_KEY)			//btn6
+						p4_2 |= 0x10;
+
+					static bool old_coin1 = false;
+					static bool old_coin2 = false;
+					static bool old_coin3 = false;
+					static bool old_coin4 = false;
+
+					if ((old_coin1 == false) && (keycode1&NAOMI_COIN_KEY))
 						coin1++;
-					old_coin = (keycode&NAOMI_COIN_KEY) ? true : false;
+					old_coin1 = (keycode1&NAOMI_COIN_KEY) ? true : false;
 
 					if ((old_coin2 == false) && (keycode2&NAOMI_COIN_KEY))
 						coin2++;
 					old_coin2 = (keycode2&NAOMI_COIN_KEY) ? true : false;
+
+					if ((old_coin3 == false) && (keycode3&NAOMI_COIN_KEY))
+						coin3++;
+					old_coin3 = (keycode3&NAOMI_COIN_KEY) ? true : false;
+
+					if ((old_coin4 == false) && (keycode4&NAOMI_COIN_KEY))
+						coin4++;
+					old_coin4 = (keycode4&NAOMI_COIN_KEY) ? true : false;
 
 					buffer_out_b[0x11 + 0] = 0x00;
 					buffer_out_b[0x11 + 1] = 0x8E;	//Valid data check
@@ -1224,25 +1305,55 @@ struct maple_naomi_jamma : maple_sega_controller
 
 					buffer_out_b[8 + 0x12 + 0] = 1;
 					buffer_out_b[8 + 0x12 + 1] = glbl;
-					buffer_out_b[8 + 0x12 + 2] = p1_1;
-					buffer_out_b[8 + 0x12 + 3] = p1_2;
-					buffer_out_b[8 + 0x12 + 4] = p2_1;
-					buffer_out_b[8 + 0x12 + 5] = p2_2;
-					buffer_out_b[8 + 0x12 + 6] = 1;
-					buffer_out_b[8 + 0x12 + 7] = coin1 >> 8;
-					buffer_out_b[8 + 0x12 + 8] = coin1 & 0xff;
-					buffer_out_b[8 + 0x12 + 9] = coin2 >> 8;
-					buffer_out_b[8 + 0x12 + 10] = coin2 & 0xff;
-					buffer_out_b[8 + 0x12 + 11] = 1;
-					buffer_out_b[8 + 0x12 + 12] = analog_p1_y >> 8;
-					buffer_out_b[8 + 0x12 + 13] = analog_p1_y;
-					buffer_out_b[8 + 0x12 + 14] = analog_p1_x >> 8;
-					buffer_out_b[8 + 0x12 + 15] = analog_p1_x;
-					buffer_out_b[8 + 0x12 + 16] = analog_p2_y >> 8;
-					buffer_out_b[8 + 0x12 + 17] = analog_p2_y;
-					buffer_out_b[8 + 0x12 + 18] = analog_p2_x >> 8;
-					buffer_out_b[8 + 0x12 + 19] = analog_p2_x;
-					buffer_out_b[8 + 0x12 + 20] = 0x00;
+					if(settings.mapping.JammaSetup)
+					{
+						// 4 players with no analog stick setup
+						if(settings.mapping.JammaSetup == 1)
+						{
+							buffer_out_b[8 + 0x12 + 2] = p1_1;
+							buffer_out_b[8 + 0x12 + 3] = p1_2;
+							buffer_out_b[8 + 0x12 + 4] = p2_1;
+							buffer_out_b[8 + 0x12 + 5] = p2_2;
+							buffer_out_b[8 + 0x12 + 6] = p3_1;
+							buffer_out_b[8 + 0x12 + 7] = p3_2;
+							buffer_out_b[8 + 0x12 + 8] = p4_1;
+							buffer_out_b[8 + 0x12 + 9] = p4_2;
+							buffer_out_b[8 + 0x12 + 10] = 1;
+							buffer_out_b[8 + 0x12 + 11] = coin1 >> 8;
+							buffer_out_b[8 + 0x12 + 12] = coin1 & 0xff;
+							buffer_out_b[8 + 0x12 + 13] = coin2 >> 8;
+							buffer_out_b[8 + 0x12 + 14] = coin2 & 0xff;
+							buffer_out_b[8 + 0x12 + 15] = coin3 >> 8;
+							buffer_out_b[8 + 0x12 + 16] = coin3 & 0xff;
+							buffer_out_b[8 + 0x12 + 17] = coin4 >> 8;
+							buffer_out_b[8 + 0x12 + 18] = coin4 & 0xff;
+							buffer_out_b[8 + 0x12 + 19] = 1;
+							buffer_out_b[8 + 0x12 + 20] = 0x00;
+						}
+					}
+					else
+					{
+						// 2 players with analog sticks
+						buffer_out_b[8 + 0x12 + 2] = p1_1;
+						buffer_out_b[8 + 0x12 + 3] = p1_2;
+						buffer_out_b[8 + 0x12 + 4] = p2_1;
+						buffer_out_b[8 + 0x12 + 5] = p2_2;
+						buffer_out_b[8 + 0x12 + 6] = 1;
+						buffer_out_b[8 + 0x12 + 7] = coin1 >> 8;
+						buffer_out_b[8 + 0x12 + 8] = coin1 & 0xff;
+						buffer_out_b[8 + 0x12 + 9] = coin2 >> 8;
+						buffer_out_b[8 + 0x12 + 10] = coin2 & 0xff;
+						buffer_out_b[8 + 0x12 + 11] = 1;
+						buffer_out_b[8 + 0x12 + 12] = analog_p1_y >> 8;
+						buffer_out_b[8 + 0x12 + 13] = analog_p1_y;
+						buffer_out_b[8 + 0x12 + 14] = analog_p1_x >> 8;
+						buffer_out_b[8 + 0x12 + 15] = analog_p1_x;
+						buffer_out_b[8 + 0x12 + 16] = analog_p2_y >> 8;
+						buffer_out_b[8 + 0x12 + 17] = analog_p2_y;
+						buffer_out_b[8 + 0x12 + 18] = analog_p2_x >> 8;
+						buffer_out_b[8 + 0x12 + 19] = analog_p2_x;
+						buffer_out_b[8 + 0x12 + 20] = 0x00;
+					}
 
 					memcpy(LastKey, Key, sizeof(Key));
 

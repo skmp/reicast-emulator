@@ -34,6 +34,7 @@ struct game_type_naomi
    int rendertotexturebuffer;       /* -1, make no decision */
    int eg_hack;                     /* -1, make no decision */
    int disable_div;                 /* -1, make no decision */
+   int jamma_setup;                 /* -1, make no decision */
 };
 
 static struct game_type lut_games[] = 
@@ -97,8 +98,11 @@ static struct game_type_naomi lut_games_naomi[] =
 {
    /* Update mode fullspeed */
    /* AICA Interrupt Hack */
-   { "Street Fighter Zero 3 Upper", -1, -1,  1, -1, -1, -1,  -1, -1  },                /* Street Fighter Alpha 3 */
+   { "Street Fighter Zero 3 Upper", -1, -1,  1, -1, -1, -1,  -1, -1, -1  },                /* Street Fighter Alpha 3 */
 
    /* EG Hack */
-   { "Metal Slug 6"               , -1, -1, -1, -1, -1, -1,   1, -1  },                /* Metal Slug 6 */
+   { "Metal Slug 6"               , -1, -1, -1, -1, -1, -1,   1, -1, -1  },                /* Metal Slug 6 */
+
+   /* Alternate Jamma I/O Setup */
+   { "Power Stone 2"              , -1, -1, -1, -1, -1, -1,  -1, -1,  1  },                /* Power Stone 2 (4 players, also need to be set in service menu) */
 };

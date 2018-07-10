@@ -256,6 +256,12 @@ static void LoadSpecialSettingsNaomi(const char *name)
             settings.aica.EGHack = lut_games_naomi[i].eg_hack;
          }
 
+         if (lut_games_naomi[i].jamma_setup != -1)
+         {
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying alternate Jamma I/O board setup.\n");
+            settings.mapping.JammaSetup = lut_games_naomi[i].jamma_setup;
+         }
+
          break;
       }
    }

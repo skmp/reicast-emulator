@@ -617,6 +617,10 @@ struct settings_t
 	struct {
 		bool OpenGlChecks;
 	} validate;
+
+	struct {
+		int JammaSetup;
+	} mapping;
 };
 
 extern settings_t settings;

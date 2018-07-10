@@ -60,11 +60,11 @@ const char* VertexShaderSource =
    "#version 120 \n"
 #endif
 #endif
-#ifndef GLES
-#if defined(HAVE_GL3)
 "\
 #define pp_Gouraud %d \n\
  \n"
+#ifndef GLES
+#if defined(HAVE_GL3)
 "\
 #if pp_Gouraud == 0 \n\
 #define INTERPOLATION flat \n\
@@ -144,10 +144,10 @@ const char* PixelPipelineShader =
 #define pp_IgnoreTexA %d \n\
 #define pp_ShadInstr %d \n\
 #define pp_Offset %d \n\
-#define pp_FogCtrl %d \n\ "
-#if defined(HAVE_GL3)
-"#define pp_Gouraud %d \n\
+#define pp_FogCtrl %d \n\
+#define pp_Gouraud %d \n\
  \n"
+#if defined(HAVE_GL3)
 #ifndef GLES
 "\
 #if pp_Gouraud == 0 \n\

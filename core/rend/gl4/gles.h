@@ -186,44 +186,54 @@ layout (binding = 1, std430) buffer TrPolyParamBuffer { \n\
 	PolyParam tr_poly_params[]; \n\
 }; \n\
  \n\
+#define GET_TSP_FOR_AREA int tsp; if (area1) tsp = pp.tsp1; else tsp = pp.tsp; \n\
+ \n\
 int getSrcBlendFunc(const PolyParam pp, bool area1) \n\
 { \n\
-	return ((area1 ? pp.tsp1 : pp.tsp) >> 29) & 7; \n\
+   GET_TSP_FOR_AREA \n\
+   return (tsp >> 29) & 7; \n\
 } \n\
 \n\
 int getDstBlendFunc(const PolyParam pp, bool area1) \n\
 { \n\
-	return ((area1 ? pp.tsp1 : pp.tsp) >> 26) & 7; \n\
+   GET_TSP_FOR_AREA \n\
+   return (tsp >> 26) & 7; \n\
 } \n\
 \n\
 bool getSrcSelect(const PolyParam pp, bool area1) \n\
 { \n\
-	return (((area1 ? pp.tsp1 : pp.tsp) >> 25) & 1) != 0; \n\
+   GET_TSP_FOR_AREA \n\
+   return ((tsp >> 25) & 1) != 0; \n\
 } \n\
 \n\
 bool getDstSelect(const PolyParam pp, bool area1) \n\
 { \n\
-	return (((area1 ? pp.tsp1 : pp.tsp) >> 24) & 1) != 0; \n\
+   GET_TSP_FOR_AREA \n\
+   return ((tsp >> 24) & 1) != 0; \n\
 } \n\
 \n\
 int getFogControl(const PolyParam pp, bool area1) \n\
 { \n\
-	return ((area1 ? pp.tsp1 : pp.tsp) >> 22) & 3; \n\
+   GET_TSP_FOR_AREA \n\
+   return (tsp >> 22) & 3; \n\
 } \n\
 \n\
 bool getUseAlpha(const PolyParam pp, bool area1) \n\
 { \n\
-	return (((area1 ? pp.tsp1 : pp.tsp) >> 20) & 1) != 0; \n\
+   GET_TSP_FOR_AREA \n\
+   return ((tsp >> 20) & 1) != 0; \n\
 } \n\
 \n\
 bool getIgnoreTexAlpha(const PolyParam pp, bool area1) \n\
 { \n\
-	return (((area1 ? pp.tsp1 : pp.tsp) >> 19) & 1) != 0; \n\
+   GET_TSP_FOR_AREA \n\
+   return ((tsp >> 19) & 1) != 0; \n\
 } \n\
 \n\
 int getShadingInstruction(const PolyParam pp, bool area1) \n\
 { \n\
-	return ((area1 ? pp.tsp1 : pp.tsp) >> 6) & 3; \n\
+   GET_TSP_FOR_AREA \n\
+   return (tsp >> 6) & 3; \n\
 } \n\
 \n\
 int getDepthFunc(const PolyParam pp) \n\

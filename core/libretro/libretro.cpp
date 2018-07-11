@@ -685,6 +685,10 @@ bool retro_load_game(const struct retro_game_info *game)
    extract_basename(g_base_name, game->path, sizeof(g_base_name));
    extract_directory(game_dir, game->path, sizeof(game_dir));
 
+   // Storing rom dir for later use
+   char g_roms_dir[PATH_MAX];
+   snprintf(g_roms_dir, sizeof(g_roms_dir), "%s%c", game_dir, slash);
+
    if (environ_cb(RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE, &rumble) && log_cb)
         log_cb(RETRO_LOG_INFO, "Rumble interface supported!\n");
 
@@ -889,24 +893,27 @@ bool retro_load_game(const struct retro_game_info *game)
       return false;
 #endif
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir) {
-      char g_save_dir[PATH_MAX];
-      strncpy(g_save_dir, dir, sizeof(g_save_dir));
-      snprintf(save_dir, sizeof(save_dir), "%sreicast%c", g_save_dir, slash);
-      printf("Creating dir: %s\n", save_dir);
-      struct stat buf;
-      if (stat(save_dir, &buf) < 0)
-      {
-         mkdir_norecurse(save_dir);
+   if (settings.System == DC_PLATFORM_NAOMI)
+   {
+      if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir) {
+         char g_save_dir[PATH_MAX];
+         strncpy(g_save_dir, dir, sizeof(g_save_dir));
+         if(strcmp(g_save_dir,g_roms_dir) != 0)
+            snprintf(save_dir, sizeof(save_dir), "%sreicast%c", g_save_dir, slash);
+         else
+            strncpy(save_dir, g_roms_dir, sizeof(save_dir));
+         struct stat buf;
+         if (stat(save_dir, &buf) < 0)
+         {
+            log_cb(RETRO_LOG_INFO, "Creating dir: %s\n", save_dir);
+            mkdir_norecurse(save_dir);
+         }
+      } else {
+         strncpy(save_dir, g_roms_dir, sizeof(save_dir));
       }
       log_cb(RETRO_LOG_INFO, "Setting save dir to %s\n", save_dir);
-   } else {
-      // ... otherwise use rom directory
-      strncpy(save_dir, game_dir, sizeof(save_dir));
-      log_cb(RETRO_LOG_ERROR, "Save dir not defined => use roms dir %s\n", save_dir);
+      snprintf(eeprom_file, sizeof(eeprom_file), "%s%s.eeprom", save_dir, g_base_name);
    }
-
-   snprintf(eeprom_file, sizeof(eeprom_file), "%s%s.eeprom", save_dir, g_base_name);
 
    dc_prepare_system();
 

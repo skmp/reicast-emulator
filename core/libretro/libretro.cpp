@@ -900,7 +900,7 @@ bool retro_load_game(const struct retro_game_info *game)
          char g_save_dir[PATH_MAX];
          strncpy(g_save_dir, dir, sizeof(g_save_dir));
          if(strcmp(g_save_dir,g_roms_dir) != 0)
-            snprintf(save_dir, sizeof(save_dir), "%sreicast%c", g_save_dir, slash);
+            snprintf(save_dir, sizeof(save_dir), "%s%creicast%c", g_save_dir, slash, slash);
          else
             strncpy(save_dir, g_roms_dir, sizeof(save_dir));
          struct stat buf;

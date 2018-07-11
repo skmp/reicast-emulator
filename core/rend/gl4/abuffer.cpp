@@ -32,64 +32,42 @@ uniform highp float shade_scale_factor; \n\
  \n\
 out vec4 FragColor; \n\
  \n\
-Pixel pixel_list[MAX_PIXELS_PER_FRAGMENT]; \n\
+uint pixel_list[MAX_PIXELS_PER_FRAGMENT]; \n\
  \n\
-int fillFragmentArray(ivec2 coords) { \n\
+ \n\
+int fillAndSortFragmentArray(ivec2 coords) \n\
+{ \n\
 	// Load fragments into a local memory array for sorting \n\
 	uint idx = imageLoad(abufferPointerImg, coords).x; \n\
-	int i = 0; \n\
-	for (; idx != EOL && i < MAX_PIXELS_PER_FRAGMENT; i++) { \n\
-		pixel_list[i] = pixels[idx]; \n\
-		idx = pixel_list[i].next; \n\
-	} \n\
-	return i; \n\
-} \n\
- \n\
-// Bubble sort used to sort fragments \n\
-void bubbleSort(int array_size) { \n\
-	for (int i = array_size - 2; i >= 0; i--) { \n\
-		for (int j = 0; j <= i; j++) { \n\
+	int count = 0; \n\
+	for (; idx != EOL && count < MAX_PIXELS_PER_FRAGMENT; count++) \n\
+	{ \n\
+		const Pixel p = pixels[idx]; \n\
+		int j = count - 1; \n\
+		Pixel jp = pixels[pixel_list[j]]; \n\
 #if DEPTH_SORTED == 1 \n\
-			// depth then poly number \n\
-			if (pixel_list[j].depth < pixel_list[j + 1].depth \n\
-				|| (pixel_list[j].depth == pixel_list[j + 1].depth && getPolyNumber(pixel_list[j]) > getPolyNumber(pixel_list[j + 1]))) { \n\
+		while (j >= 0 \n\
+			   && (jp.depth < p.depth \n\
+				   || (jp.depth == p.depth && getPolyNumber(jp) > getPolyNumber(p)))) \n\
 #else \n\
-			// poly number only \n\
-			if (getPolyNumber(pixel_list[j]) > getPolyNumber(pixel_list[j + 1])) { \n\
+		while (j >= 0 && getPolyNumber(jp) > getPolyNumber(p)) \n\
 #endif \n\
-				const Pixel p = pixel_list[j + 1]; \n\
-				pixel_list[j + 1] = pixel_list[j]; \n\
-				pixel_list[j] = p; \n\
-			} \n\
-		} \n\
-	} \n\
-} \n\
- \n\
- \n\
-// Insertion sort used to sort fragments \n\
-void insertionSort(int array_size) { \n\
-	for (int i = 1; i < array_size; i++) { \n\
-		const Pixel p = pixel_list[i]; \n\
-		int j = i - 1; \n\
-#if DEPTH_SORTED == 1 \n\
-		for (; j >= 0 && (pixel_list[j].depth < p.depth || (pixel_list[j].depth == p.depth && getPolyNumber(pixel_list[j]) > getPolyNumber(p))); j--) { \n\
-#else \n\
-		for (; j >= 0 && getPolyNumber(pixel_list[j]) > getPolyNumber(p); j--) { \n\
-#endif \n\
+		{ \n\
 			pixel_list[j + 1] = pixel_list[j]; \n\
+			j--; \n\
+			jp = pixels[pixel_list[j]]; \n\
 		} \n\
-		pixel_list[j + 1] = p; \n\
+		pixel_list[j + 1] = idx; \n\
+		idx = p.next; \n\
 	} \n\
+	return count; \n\
 } \n\
  \n\
 // Blend fragments back-to-front \n\
 vec4 resolveAlphaBlend(ivec2 coords) { \n\
 	 \n\
-	// Copy fragments in local array \n\
-	int num_frag = fillFragmentArray(coords); \n\
-	 \n\
-	// Sort fragments in local memory array \n\
-	bubbleSort(num_frag); \n\
+	// Copy and sort fragments into a local array \n\
+	int num_frag = fillAndSortFragmentArray(coords); \n\
 	 \n\
 	vec4 finalColor = texture(tex, gl_FragCoord.xy / textureSize(tex, 0)); \n\
 	vec4 secondaryBuffer = vec4(0.0); // Secondary accumulation buffer \n\
@@ -97,7 +75,7 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 	 \n\
 	for (int i = 0; i < num_frag; i++) \n\
 	{ \n\
-		const Pixel pixel = pixel_list[i]; \n\
+		const Pixel pixel = pixels[pixel_list[i]]; \n\
 		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)]; \n\
 #if DEPTH_SORTED != 1 \n\
 		const float frag_depth = pixel.depth; \n\
@@ -138,7 +116,7 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 #endif \n\
 		bool area1 = false; \n\
 		bool shadowed = false; \n\
-		if (getShadowEnable(pp) && isShadowed(pixel)) \n\
+		if (isShadowed(pixel)) \n\
 		{ \n\
 			if (isTwoVolumes(pp)) \n\
 				area1 = true; \n\
@@ -268,32 +246,30 @@ void main(void) \n\
 	 \n\
 	uint idx = imageLoad(abufferPointerImg, coords).x; \n\
 	int list_len = 0; \n\
-	while (idx != EOL) \n\
+	while (idx != EOL && list_len < MAX_PIXELS_PER_FRAGMENT) \n\
 	{ \n\
 		const Pixel pixel = pixels[idx]; \n\
 		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)]; \n\
 		if (getShadowEnable(pp)) \n\
 		{ \n\
 #if MV_MODE == MV_XOR \n\
-			if (gl_FragDepth <= pixels[idx].depth) \n\
-				atomicXor(pixels[idx].seq_num, 0x40000000); \n\
+			if (gl_FragDepth <= pixel.depth) \n\
+				atomicXor(pixels[idx].seq_num, SHADOW_STENCIL); \n\
 #elif MV_MODE == MV_OR \n\
-			if (gl_FragDepth <= pixels[idx].depth) \n\
-				atomicOr(pixels[idx].seq_num, 0x40000000); \n\
+			if (gl_FragDepth <= pixel.depth) \n\
+				atomicOr(pixels[idx].seq_num, SHADOW_STENCIL); \n\
 #elif MV_MODE == MV_INCLUSION \n\
-			int prev_val = atomicAnd(pixels[idx].seq_num, 0xBFFFFFFF); \n\
-			if ((prev_val & 0xC0000000) == 0x40000000) \n\
-				pixels[idx].seq_num = bitfieldInsert(pixels[idx].seq_num, 1, 31, 1); \n\
+			int prev_val = atomicAnd(pixels[idx].seq_num, ~(SHADOW_STENCIL)); \n\
+			if ((prev_val & (SHADOW_STENCIL|SHADOW_ACC)) == SHADOW_STENCIL) \n\
+				pixels[idx].seq_num = bitfieldInsert(pixel.seq_num, 1, 31, 1); \n\
 #elif MV_MODE == MV_EXCLUSION \n\
-			int prev_val = atomicAnd(pixels[idx].seq_num, 0x3FFFFFFF); \n\
-			if ((prev_val & 0xC0000000) == 0x80000000) \n\
-				pixels[idx].seq_num = bitfieldInsert(pixels[idx].seq_num, 1, 31, 1); \n\
+			int prev_val = atomicAnd(pixels[idx].seq_num, ~(SHADOW_STENCIL|SHADOW_ACC)); \n\
+			if ((prev_val & (SHADOW_STENCIL|SHADOW_ACC)) == SHADOW_ACC) \n\
+				pixels[idx].seq_num = bitfieldInsert(pixel.seq_num, 1, 31, 1); \n\
 #endif \n\
 		} \n\
-		idx = pixels[idx].next; \n\
+		idx = pixel.next; \n\
 		list_len++; \n\
-		if (list_len >= MAX_PIXELS_PER_FRAGMENT) \n\
-			break; \n\
 	} \n\
 	 \n\
 	discard; \n\

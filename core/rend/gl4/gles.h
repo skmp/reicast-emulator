@@ -134,8 +134,8 @@ extern GLuint depthSaveTexId;
 \n\
 layout(r32ui, binding = 4) uniform coherent restrict uimage2D abufferPointerImg; \n\
 struct Pixel { \n\
-	mediump vec4 color; \n\
-	mediump float depth; \n\
+	highp vec4 color; \n\
+	highp float depth; \n\
 	int seq_num; \n\
 	uint next; \n\
 }; \n\
@@ -246,9 +246,12 @@ int getPolyNumber(const Pixel pixel) \n\
 	return pixel.seq_num & 0x3FFFFFFF; \n\
 } \n\
 \n\
+#define SHADOW_STENCIL 0x40000000 \n\
+#define SHADOW_ACC	   0x80000000 \n\
+\n\
 bool isShadowed(const Pixel pixel) \n\
 { \n\
-	return (pixel.seq_num & 0x80000000) == 0x80000000; \n\
+   return (pixel.seq_num & SHADOW_ACC) == SHADOW_ACC; \n\
 } \n\
 \n\
 bool isTwoVolumes(const PolyParam pp) \n\

@@ -335,11 +335,11 @@ void main() \n\
                   discard; \n\
 					break; \n\
 				case SRC_ALPHA: \n\
-               if (color.rgb == vec3(0.0) || color.a == 0) \n\
+               if (color.a == 0.0 || color.rgb == vec3(0.0)) \n\
                   discard; \n\
                break; \n\
 				case INVERSE_SRC_ALPHA: \n\
-               if (color.rgb == vec3(0.0) || color.a == 1) \n\
+               if (color.a == 1.0 || color.rgb == vec3(0.0)) \n\
                   discard; \n\
 					break; \n\
 			} \n\
@@ -1099,7 +1099,7 @@ bool ProcessFrame(TA_context* ctx)
    CollectCleanup();
 
    if (ctx->rend.Overrun)
-		printf("TA context overrun\n");
+		printf("ERROR: TA context overrun\n");
 
 	return !ctx->rend.Overrun;
 }

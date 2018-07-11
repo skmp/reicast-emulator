@@ -452,6 +452,7 @@ static GLuint gl_CompileShader(const char* shader,GLuint type)
 
 		glGetShaderInfoLog(rv, compile_log_len, &compile_log_len, compile_log);
 		printf("Shader: %s \n%s\n",result?"compiled!":"failed to compile",compile_log);
+      printf("Failed shader source: %s\n", shader);
 
 		free(compile_log);
 	}

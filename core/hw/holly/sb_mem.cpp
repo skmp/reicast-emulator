@@ -29,6 +29,8 @@ RomChip sys_rom;
 SRamChip sys_nvmem_sram;
 DCFlashChip sys_nvmem_flash;
 
+extern char nvmem_file[PATH_MAX];
+
 static const char *get_rom_prefix(void)
 {
    switch (settings.System)
@@ -76,7 +78,7 @@ static bool nvmem_load(const string& root,
          return sys_nvmem_flash.Load(root, get_rom_prefix(), s1.c_str(), s2);
       case DC_PLATFORM_NAOMI:
       case DC_PLATFORM_NAOMI2:
-         return sys_nvmem_sram.Load(root, get_rom_prefix(), s1.c_str(), s2);
+         return sys_nvmem_sram.Load(nvmem_file);
    }
 
    return false;
@@ -133,7 +135,7 @@ void SaveRomFiles(const string& root)
          break;
       case DC_PLATFORM_NAOMI:
       case DC_PLATFORM_NAOMI2:
-         sys_nvmem_sram.Save(root, get_rom_prefix(), "nvmem.bin", "nvmem");
+         sys_nvmem_sram.Save(nvmem_file);
          break;
    }
 }

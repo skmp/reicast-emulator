@@ -24,6 +24,7 @@ extern int screen_width;
 extern int screen_height;
 char save_dir[PATH_MAX];
 char eeprom_file[PATH_MAX];
+char nvmem_file[PATH_MAX];
 bool boot_to_bios;
 
 static int astick_deadzone = 0;
@@ -913,6 +914,7 @@ bool retro_load_game(const struct retro_game_info *game)
       }
       log_cb(RETRO_LOG_INFO, "Setting save dir to %s\n", save_dir);
       snprintf(eeprom_file, sizeof(eeprom_file), "%s%s.eeprom", save_dir, g_base_name);
+      snprintf(nvmem_file, sizeof(nvmem_file), "%s%s.nvmem", save_dir, g_base_name);
    }
 
    dc_prepare_system();

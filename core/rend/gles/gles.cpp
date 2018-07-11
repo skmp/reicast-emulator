@@ -55,7 +55,7 @@ float scale_x, scale_y;
 const char* VertexShaderSource =
 #if !defined(HAVE_OPENGLES)
 #if defined(HAVE_GL3)
-   "#version 140 \n"
+   "#version 130 \n"
 #else
    "#version 120 \n"
 #endif
@@ -129,7 +129,7 @@ void main() \n\
 const char* PixelPipelineShader =
 #ifndef HAVE_OPENGLES
 #if defined(HAVE_GL3)
-      "#version 140 \n"
+      "#version 130 \n"
       "out vec4 FragColor; \n"
 #else
       "#version 120 \n"
@@ -272,7 +272,7 @@ void main() \n\
 const char* ModifierVolumeShader =
 #ifndef GLES
 #if defined(HAVE_GL3)
-      "#version 140 \n"
+      "#version 130 \n"
       "out vec4 FragColor; \n"
 #endif
 #endif

@@ -1108,23 +1108,22 @@ struct maple_naomi_jamma : maple_sega_controller
 #define ADDFEAT(Feature,Count1,Count2,Count3)	*FeatPtr++=Feature; *FeatPtr++=Count1; *FeatPtr++=Count2; *FeatPtr++=Count3;
 						if(settings.mapping.JammaSetup)
 						{
-							// 4 players with no analog stick setup
+							// 4 players with no axis
 							if(settings.mapping.JammaSetup == 1)
 							{
-								ADDFEAT(0x01, 4, 13, 0);	//Feat 1=Digital Inputs.  4 Players. 13 bits
-								ADDFEAT(0x02, 4, 0, 0);		//Feat 2=Coin inputs. 4 Inputs
-								ADDFEAT(0x03, 0, 0, 0);		//Feat 3=Analog. 0 Chans
-								ADDFEAT(0x12, 6, 0, 0);		//Feat 4=Driver out. 6 Chans
+								ADDFEAT(1, 4, 12, 0);		//Feat 1=Digital Inputs.  4 Players. 12 bits
+								ADDFEAT(2, 4, 0, 0);		//Feat 2=Coin inputs. 4 Inputs
+								ADDFEAT(3, 0, 0, 0);		//Feat 3=Analog. 0 Chans
 							}
 						}
 						else
 						{
-							// 2 players with analog sticks
-							ADDFEAT(0x01, 2, 13, 0);	//Feat 1=Digital Inputs.  2 Players. 13 bits
-							ADDFEAT(0x02, 2, 0, 0);		//Feat 2=Coin inputs. 2 Inputs
-							ADDFEAT(0x03, 4, 8, 0);		//Feat 3=Analog. 4 Chans
-							ADDFEAT(0x12, 6, 0, 0);		//Feat 4=Driver out. 6 Chans
+							// 2 players with 2 axis each
+							ADDFEAT(1, 2, 12, 0);		//Feat 1=Digital Inputs.  2 Players. 12 bits
+							ADDFEAT(2, 2, 0, 0);		//Feat 2=Coin inputs. 2 Inputs
+							ADDFEAT(3, 4, 0, 0);		//Feat 3=Analog. 4 Chans
 						}
+						ADDFEAT(0, 0, 0, 0);		//End of list
 					}
 					break;
 

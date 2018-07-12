@@ -166,25 +166,49 @@ bool ConfigFile::get_bool(string section_name, string entry_name, bool default_v
 
 void ConfigFile::set(string section_name, string entry_name, string value, bool is_virtual)
 {
-	ConfigSection* section = this->get_section(section_name, is_virtual);
+	bool local_virtual;
+
+	#ifdef NO_VIRTUAL_CFG
+		local_virtual = false;
+	#else
+		local_virtual = is_virtual;
+	#endif
+
+	ConfigSection* section = this->get_section(section_name, local_virtual);
 	if(section == NULL)
 	{
-		section = this->add_section(section_name, is_virtual);
+		section = this->add_section(section_name, local_virtual);
 	}
 	section->set(entry_name, value);
 };
 
 void ConfigFile::set_int(string section_name, string entry_name, int value, bool is_virtual)
 {
+	bool local_virtual;
+
+	#ifdef NO_VIRTUAL_CFG
+		local_virtual = false;
+	#else
+		local_virtual = is_virtual;
+	#endif
+
 	std::stringstream str_value;
 	str_value << value;
-	this->set(section_name, entry_name, str_value.str(), is_virtual);
+	this->set(section_name, entry_name, str_value.str(), local_virtual);
 }
 
 void ConfigFile::set_bool(string section_name, string entry_name, bool value, bool is_virtual)
 {
+	bool local_virtual;
+
+	#ifdef NO_VIRTUAL_CFG
+		local_virtual = false;
+	#else
+		local_virtual = is_virtual;
+	#endif
+
 	string str_value = (value ? "yes" : "no");
-	this->set(section_name, entry_name, str_value, is_virtual);
+	this->set(section_name, entry_name, str_value, local_virtual);
 }
 
 void ConfigFile::parse(FILE* file)

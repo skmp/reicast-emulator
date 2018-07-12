@@ -30,7 +30,7 @@ float scale_x, scale_y;
 //Fragment and vertex shaders code
 //
 const char* VertexShaderSource =
-"#version 140 \n"
+"#version 130 \n"
 "\
 #define pp_Gouraud %d \n\
  \n\

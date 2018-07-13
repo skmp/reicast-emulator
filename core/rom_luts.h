@@ -50,7 +50,7 @@ static struct game_type lut_games[] =
    { "T47801M   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Chaos Field (Japan) */
    { "T23202M   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Death Crimson OX (Japan) */
    { "T2401N    ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Death Crimson OX (USA) */
-   { "T1223M    ", -1, -1, -1, -1, -1, -1,  	1, -1  },              	/* Eldorado Gate Vol. 1 (Japan) */
+   { "T1223M    ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Eldorado Gate Vol. 1 (Japan) */
    { "T44306N   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Fatal Fury: Mark of the Wolves (USA) */
    { "T3108M    ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Garou: Mark of the Wolves (Japan) */
    { "HDR-0078  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Jet Set Radio (Japan) */
@@ -93,18 +93,19 @@ static struct game_type lut_games[] =
 
    /* Disable DIV matching */
    { "T30701D50 ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Pro Pinball Trilogy */
-   { "T15112N   ", -1, -1, -1, -1, -1,  -1,  -1, 1  },               /* Demolition Racer */
+   { "T15112N   ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Demolition Racer */
 };
 
 static struct game_type_naomi lut_games_naomi[] = 
 {
    /* Update mode fullspeed */
    /* AICA Interrupt Hack */
-   { "Street Fighter Zero 3 Upper", -1, -1,  1, -1, -1, -1,  -1, -1, -1  },                /* Street Fighter Alpha 3 */
+   { "Street Fighter Zero 3 Upper"           , -1, -1,  1, -1, -1, -1,  -1, -1, -1  },                /* Street Fighter Alpha 3 */
+   { "Fist of the North Star - Hokuto no Ken", -1, -1,  1, -1, -1, -1,  -1, -1, -1  },                /* Fist of the North Star - Hokuto no Ken */
 
    /* EG Hack */
-   { "Metal Slug 6"               , -1, -1, -1, -1, -1, -1,   1, -1, -1  },                /* Metal Slug 6 */
+   { "Metal Slug 6"                          , -1, -1, -1, -1, -1, -1,   1, -1, -1  },                /* Metal Slug 6 */
 
    /* Alternate Jamma I/O Setup */
-   { "Power Stone 2"              , -1, -1, -1, -1, -1, -1,  -1, -1,  1  },                /* Power Stone 2 (4 players, also need to be set in service menu) */
+   { "Power Stone 2"                         , -1, -1, -1, -1, -1, -1,  -1, -1,  1  },                /* Power Stone 2 (4 players, also need to be set in service menu) */
 };

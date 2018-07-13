@@ -121,6 +121,7 @@ endif
 		CFLAGS += -DTARGET_LINUX_x64 -D TARGET_NO_AREC
 		SINGLE_PREC_FLAGS=1
 		CXXFLAGS += -fexceptions
+		HAVE_GENERIC_JIT   = 0
 	else ifeq ($(WITH_DYNAREC), x86)
 		CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC
 		SINGLE_PREC_FLAGS=1
@@ -128,6 +129,7 @@ endif
 		MFLAGS += -m32
 		ASFLAGS += --32
 		LDFLAGS += -m32
+		HAVE_GENERIC_JIT   = 0
 	endif
 
 	PLATFORM_EXT := unix
@@ -234,6 +236,8 @@ else ifneq (,$(findstring osx,$(platform)))
 	# Target Dynarec
 	ifeq ($(ARCH), $(filter $(ARCH), ppc))
 		WITH_DYNAREC =
+        else
+                HAVE_GENERIC_JIT   = 0
 	endif
 
 # iOS
@@ -383,6 +387,7 @@ ifneq ($(HAVE_OIT), 1)
 	HAVE_GL3 = 1
 endif
 	EXT       ?= dll
+	HAVE_GENERIC_JIT   = 0
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	LDFLAGS += -shared -static-libgcc -static-libstdc++ -Wl,--version-script=link.T -lwinmm -lgdi32
 	GL_LIB := -lopengl32

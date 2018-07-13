@@ -92,6 +92,8 @@ static struct game_type lut_games[] =
    { "T23002N   ", -1, -1, -1, -1, -1,  1,  -1, -1  },                /* Star Wars Episode I: Jedi Power Battle (USA) */
 
    /* Disable DIV matching */
+   { "T23001D   ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /*  Star Wars - Episode I - Racer (United Kingdom) */
+   { "T23001N   ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /*  Star Wars - Episode I - Racer (USA) */
    { "T30701D50 ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Pro Pinball Trilogy */
    { "T15112N   ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Demolition Racer */
 };

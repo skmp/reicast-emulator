@@ -71,12 +71,10 @@ NSInteger start_button = 11;
 		kcode[0] &= ~(DC_BTN_Y);
 	}
 	if (button == controller.img_lt || button.tag == left_trigger) {
-//		lt[0] &= ~(DC_AXIS_LT);
-		lt[0] = (int)(255);
+		lt[0] = (255);
 	}
 	if (button == controller.img_rt || button.tag == right_trigger) {
-//		rt[0] &= ~(DC_AXIS_RT);
-		rt[0] = (int)(255);
+		rt[0] = (255);
 	}
 	if (button == controller.img_start || button.tag == start_button) {
 		kcode[0] &= ~(DC_BTN_START);
@@ -111,12 +109,10 @@ NSInteger start_button = 11;
 		kcode[0] |= (DC_BTN_Y);
 	}
 	if (button == controller.img_lt || button.tag == left_trigger) {
-//		lt[0] |= (DC_AXIS_LT);
-		lt[0] = (int)(0);
+		lt[0] = (0);
 	}
 	if (button == controller.img_rt || button.tag == right_trigger) {
-//		rt[0] |= (DC_AXIS_RT);
-		rt[0] = (int)(0);
+		rt[0] = (0);
 	}
 	if (button == controller.img_start || button.tag == start_button) {
 		kcode[0] |= (DC_BTN_START);

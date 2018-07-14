@@ -486,9 +486,6 @@ ifeq ($(HAVE_GL3), 1)
 	CORE_DEFINES += -DHAVE_GL3
 endif
 
-ifeq ($(HAVE_CORE), 1)
-	CORE_DEFINES += -DCORE
-endif
 
 RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -frename-registers -ffast-math -ftree-vectorize -fomit-frame-pointer 
 
@@ -528,7 +525,12 @@ CORE_DEFINES   += -funroll-loops
 endif
 
 ifeq ($(HAVE_OIT), 1)
+HAVE_CORE = 1
 CORE_DEFINES += -DHAVE_OIT -DHAVE_GL4
+endif
+
+ifeq ($(HAVE_CORE), 1)
+	CORE_DEFINES += -DCORE
 endif
 
 ifeq ($(HAVE_GL), 1)

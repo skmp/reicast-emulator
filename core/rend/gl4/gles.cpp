@@ -27,6 +27,9 @@ float fb_scale_x = 0.0f;
 float fb_scale_y = 0.0f;
 float scale_x, scale_y;
 
+#define FOG_CHANNEL "r"
+#define FOG_IMG_TYPE GL_RED
+
 //Fragment and vertex shaders code
 //
 const char* VertexShaderSource =
@@ -150,7 +153,7 @@ lowp float fog_mode2(highp float w) \n\
    highp float m = z * 16 / pow(2, i) - 16; \n\
    float idx = floor(m) + i * 16 + 0.5; \n\
    vec4 fog_coef = texture(fog_table, vec2(idx / 128, 0.75 - (m - floor(m)) / 2)); \n\
-   return fog_coef.a; \n\
+   return fog_coef." FOG_CHANNEL "; \n\
 } \n\
 void main() \n\
 { \n\
@@ -693,7 +696,8 @@ void UpdateFogTexture(u8 *fog_table)
 		temp_tex_buffer[i] = fog_table[i * 4];
 		temp_tex_buffer[i + 128] = fog_table[i * 4 + 1];
 	}
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 128, 2, 0, GL_ALPHA, GL_UNSIGNED_BYTE, temp_tex_buffer);
+   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, FOG_IMG_TYPE, 128, 2, 0, FOG_IMG_TYPE, GL_UNSIGNED_BYTE, temp_tex_buffer);
 	glCheck();
 
 	glActiveTexture(GL_TEXTURE0);

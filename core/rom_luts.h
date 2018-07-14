@@ -106,7 +106,8 @@ static struct game_type_naomi lut_games_naomi[] =
    { "Fist of the North Star - Hokuto no Ken", -1, -1,  1, -1, -1, -1,  -1, -1, -1  },                /* Fist of the North Star - Hokuto no Ken */
 
    /* EG Hack */
-   { "Metal Slug 6"                          , -1, -1, -1, -1, -1, -1,   1, -1, -1  },                /* Metal Slug 6 */
+   /* Metal Slug 6 also needs Div S matching disabled */
+   { "Metal Slug 6"                          , -1, -1, -1, -1, -1, -1,   1, -1,  1  },                /* Metal Slug 6 */
 
    /* Alternate Jamma I/O Setup */
    { "Power Stone 2"                         , -1, -1, -1, -1, -1, -1,  -1, -1,  1  },                /* Power Stone 2 (4 players, also need to be set in service menu) */

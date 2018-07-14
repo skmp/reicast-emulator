@@ -106,8 +106,16 @@ static struct game_type_naomi lut_games_naomi[] =
    { "Fist of the North Star - Hokuto no Ken", -1, -1,  1, -1, -1, -1,  -1, -1, -1  },                /* Fist of the North Star - Hokuto no Ken */
 
    /* EG Hack */
-   /* Metal Slug 6 also needs Div S matching disabled */
+   /* Also needs Div S matching disabled */
    { "Metal Slug 6"                          , -1, -1, -1, -1, -1, -1,   1,  1, -1  },                /* Metal Slug 6 */
+   { "Melty Blood Act Cadenza"               , -1, -1, -1, -1, -1, -1,   1,  1, -1  },                /* Melty Blood Act Cadenza */
+
+   /* EG Hack only */
+   /* Also needs translucent polygon depth mask hack */
+   { "Melty Blood Act Cadenza Version B"     , -1, -1, -1, -1,  1, -1,   1,  -1, -1  },               /* Melty Blood Act Cadenza Version B */
+
+   /* EG Hack only */
+   { "Melty Blood Act Cadenza Version B2"    , -1, -1, -1, -1, -1, -1,   1, -1, -1  },                /* Melty Blood Act Cadenza Version B2 */
 
    /* Alternate Jamma I/O Setup */
    { "Power Stone 2"                         , -1, -1, -1, -1, -1, -1,  -1, -1,  1  },                /* Power Stone 2 (4 players, also need to be set in service menu) */

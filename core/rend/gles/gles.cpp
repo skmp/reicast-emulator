@@ -225,6 +225,11 @@ void main() \n\
 				if (cp_AlphaTestValue>texcol.a) discard;\n\
 			#endif  \n\
 		#endif \n\
+      #if pp_ShadInstr==0 \n\
+      { \n\
+         color=texcol; \n\
+      } \n\
+      #endif\n\
 		#if pp_ShadInstr==1 \n\
 		{ \n\
 			color.rgb*=texcol.rgb; \n\

@@ -155,7 +155,10 @@ static void LoadSpecialSettings(void)
          log_cb(RETRO_LOG_INFO, "[LUT]: Found game in LUT database..\n");
 
          if (lut_games[i].aica_interrupt_hack != -1)
+         {
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying AICA interrupt hack.\n");
             settings.aica.InterruptHack   = lut_games[i].aica_interrupt_hack;
+         }
 
          if (lut_games[i].dynarec_type != -1)
          {

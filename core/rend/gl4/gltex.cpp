@@ -419,6 +419,13 @@ GLuint BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
    while (fbw2 < fbw)
       fbw2 *= 2;
 
+   if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+	{
+		fbw *= settings.rend.RenderToTextureUpscale;
+		fbh *= settings.rend.RenderToTextureUpscale;
+		fbw2 *= settings.rend.RenderToTextureUpscale;
+		fbh2 *= settings.rend.RenderToTextureUpscale;
+	}
 	/* Get the currently bound frame buffer object. On most platforms this just gives 0. */
 
 	/* Create a texture for rendering to */

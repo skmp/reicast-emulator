@@ -513,6 +513,7 @@ struct settings_t
 		bool WideScreen;
       bool RenderToTexture;
       bool RenderToTextureBuffer;
+      int RenderToTextureUpscale;
       bool TranslucentPolygonDepthMask;
       bool ModifierVolumes;
 		bool Clipping;

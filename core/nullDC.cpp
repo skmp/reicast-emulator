@@ -452,6 +452,7 @@ void LoadSettings(void)
    settings.rend.RenderToTexture        = true;
    settings.rend.RenderToTextureBuffer  = false;
 #endif
+   settings.rend.RenderToTextureUpscale = 1;
    settings.rend.Clipping               = true;
    settings.rend.ModifierVolumes        = true;
    settings.rend.TranslucentPolygonDepthMask = false;

@@ -13,6 +13,10 @@
 #define VERTEX_COL_OFFS1_ARRAY 5
 #define VERTEX_UV1_ARRAY 6
 
+#ifndef GL_UNSIGNED_INT_8_8_8_8
+#define GL_UNSIGNED_INT_8_8_8_8 0x8035
+#endif
+
 #define glCheck()
 
 //vertex types

@@ -409,7 +409,7 @@ ifeq ($(STATIC_LINKING),1)
 endif
 
 ifeq ($(SINGLE_PREC_FLAGS),1)
-	CORE_DEFINES += -fsingle-precision-constant -fno-builtin-sqrtf
+	CORE_DEFINES += -fno-builtin-sqrtf
 endif
 
 ifeq ($(ARMV7A_FLAGS),1)

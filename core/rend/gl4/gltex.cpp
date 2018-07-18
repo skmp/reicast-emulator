@@ -151,7 +151,7 @@ struct TextureCacheData
 		lock_block = 0;
 
 		/* Decode info from TSP/TCW into the texture struct */
-		tex        = &format[tcw.PixelFmt==7?0:tcw.PixelFmt];		/* texture format table entry */
+		tex        = &format[tcw.PixelFmt == PixelReserved ? Pixel1555 : tcw.PixelFmt];		/* texture format table entry */
 
 		sa_tex     = (tcw.TexAddr<<3) & VRAM_MASK;               /* texture start address */
 		sa         = sa_tex;						                     /* data texture start address (modified for MIPs, as needed) */
@@ -185,14 +185,14 @@ struct TextureCacheData
       /* Convert a PVR texture into OpenGL */
 		switch (tcw.PixelFmt)
       {
-         case 0:     /* ARGB1555  - value: 1 bit; RGB values: 5 bits each */
-         case 7: /* RESERVED1 - Regarded as 1555 */
-         case 1:      /* 565    - R value: 5 bits; G value: 6 bits; B value: 5 bits */
-         case 2:     /* 4444  - value: 4 bits; RGB values: 4 bits each */
-         case 3:     /* YUV422    - 32 bits per 2 pixels; YUYV values: 8 bits each */
-         case 4:  /* BUMPMAP   - 16 bits/pixel; S value: 8 bits; R value: 8 bits */
-         case 5:     /* 4BPP      - Palette texture with 4 bits/pixel */
-         case 6:     /* 8BPP      - Palette texture with 8 bits/pixel */
+         case Pixel1555:     /* ARGB1555  - value: 1 bit; RGB values: 5 bits each */
+         case PixelReserved: /* RESERVED1 - Regarded as 1555 */
+         case Pixel565:      /* 565    - R value: 5 bits; G value: 6 bits; B value: 5 bits */
+         case Pixel4444:     /* 4444  - value: 4 bits; RGB values: 4 bits each */
+         case PixelYUV:     /* YUV422    - 32 bits per 2 pixels; YUYV values: 8 bits each */
+         case PixelBumpMap:  /* BUMPMAP   - 16 bits/pixel; S value: 8 bits; R value: 8 bits */
+         case PixelPal4:     /* 4BPP      - Palette texture with 4 bits/pixel */
+         case PixelPal8:     /* 8BPP      - Palette texture with 8 bits/pixel */
             if (tcw.ScanOrder && (tex->PL || tex->PL32))
             {
                //Texture is stored 'planar' in memory, no deswizzle is needed
@@ -631,7 +631,7 @@ const TCW TCWTextureCacheMask = { { TexAddr : 0x1FFFFF, Reserved : 0, StrideSel 
 TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
    u64 key = tsp.full & TSPTextureCacheMask.full;
 
-   if (tcw.PixelFmt == 5 || tcw.PixelFmt == 6)
+   if (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
 		// Paletted textures have a palette selection that must be part of the key
 		key |= (u64)tcw.full << 32;
 	else

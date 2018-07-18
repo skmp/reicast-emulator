@@ -321,12 +321,12 @@
 		}
 	}
 
-	bool input_evdev_handle(EvdevController* controller, u32 port)
+	void input_evdev_handle(EvdevController* controller, u32 port)
 	{
 		#define SET_FLAG(field, mask, expr) field =((expr) ? (field & ~mask) : (field | mask))
 		if (controller->fd < 0 || controller->mapping == NULL)
 		{
-			return false;
+			return;
 		}
 
 		input_event ie;

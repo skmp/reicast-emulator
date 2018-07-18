@@ -72,5 +72,5 @@ struct EvdevController
 #define EVDEV_DEFAULT_DEVICE_ID(port) (port == 1 ? EVDEV_DEFAULT_DEVICE_ID_1 : -1)
 
 extern int input_evdev_init(EvdevController* controller, const char* device, const char* mapping_fname);
-extern bool input_evdev_handle(EvdevController* controller, u32 port);
+extern void input_evdev_handle(EvdevController* controller, u32 port);
 extern void input_evdev_rumble(EvdevController* controller, u16 pow_strong, u16 pow_weak);

@@ -100,17 +100,14 @@ void palette_update(void);
 	
 #define ARGB4444( word ) ( (((word>>0)&0xF)<<4) | (((word>>4)&0xF)<<8) | (((word>>8)&0xF)<<12) | (((word>>12)&0xF)<<0) )
 
-#define ARGB8888( word ) ( (((word>>4)&0xF)<<4) | (((word>>12)&0xF)<<8) | (((word>>20)&0xF)<<12) | (((word>>28)&0xF)<<0) )
-
-
-// Unpack to 32-bit word
-
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && defined(GLES)
 // GLES doesn't have the native ordering 8888 so we need to put bytes in the RGBA memory order.
 #define ARGB8888( word ) ( ((word >> 0) & 0xFF000000) | (((word >> 16) & 0xFF) << 0) | (((word >> 8) & 0xFF) << 8) | ((word & 0xFF) << 16) )
 #else
 #define ARGB8888( word ) ( ((word >> 24) & 0xFF) | (((word >> 16) & 0xFF) << 24) | (((word >> 8) & 0xFF) << 16) | ((word & 0xFF) << 8) )
 #endif
+
+// Unpack to 32-bit word
 
 #define ARGB1555_32( word )	( ((word & 0x8000) ? 0xFF : 0) | (((word>>10) & 0x1F)<<27)  | (((word>>5) & 0x1F)<<19)  | (((word>>0) & 0x1F)<<11) )
 

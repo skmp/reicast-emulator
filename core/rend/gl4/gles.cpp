@@ -1177,6 +1177,16 @@ struct gl4rend : Renderer
 
       initABuffer();
 
+#ifdef HAVE_TEXUPSCALE
+      if (settings.rend.TextureUpscale > 1)
+      {
+         // Trick to preload the tables used by xBRZ
+         u32 src[] { 0x11111111, 0x22222222, 0x33333333, 0x44444444 };
+         u32 dst[16];
+         UpscalexBRZ(2, src, dst, 2, 2, false);
+      }
+#endif
+
       return true;
    }
    void Resize(int w, int h)

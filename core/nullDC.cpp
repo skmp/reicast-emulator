@@ -455,8 +455,8 @@ void LoadSettings(void)
    settings.rend.RenderToTextureUpscale = 1;
    settings.rend.Clipping               = true;
 
-   settings.rend.TextureUpscale	       = 4;
-	settings.rend.MaxFilteredTextureSize = 1024;
+   settings.rend.TextureUpscale	       = 1;
+	settings.rend.MaxFilteredTextureSize = 256;
 
    settings.rend.ModifierVolumes        = true;
    settings.rend.TranslucentPolygonDepthMask = false;

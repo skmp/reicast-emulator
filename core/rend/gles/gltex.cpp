@@ -69,14 +69,14 @@ struct PvrTexInfo
 PvrTexInfo format[8]=
 {
    // name     bpp GL format				   Planar		Twiddled	 VQ				Planar(32b)    Twiddled(32b)  VQ (32b)
-	{"1555", 	16,	GL_UNSIGNED_SHORT_5_5_5_1, &tex1555_PL,	&tex1555_TW, &tex1555_VQ,	NULL },											//1555
-	{"565", 	16, GL_UNSIGNED_SHORT_5_6_5,   &tex565_PL,	&tex565_TW,  &tex565_VQ, 	NULL },											//565
-	{"4444", 	16, GL_UNSIGNED_SHORT_4_4_4_4, &tex4444_PL,	&tex4444_TW, &tex4444_VQ, 	NULL },											//4444
-	{"yuv", 	16, GL_UNSIGNED_INT_8_8_8_8,   NULL, 		NULL, 		 NULL,			&texYUV422_PL, &texYUV422_TW, &texYUV422_VQ },	//yuv
-	{"bumpmap", 16, GL_UNSIGNED_SHORT_4_4_4_4, &texBMP_PL,	&texBMP_TW,	 &texBMP_VQ, 	NULL},											//bump map
-	{"pal4", 	4,	0,						   0,			&texPAL4_TW, 0, 			NULL, 		   &texPAL4_TW32, NULL },			//pal4
-	{"pal8", 	8,	0,						   0,			&texPAL8_TW, 0, 			NULL, 		   &texPAL8_TW32, NULL },			//pal8
-	{"ns/1555", 0},																														//ns, 1555
+   {"1555", 	16,	GL_UNSIGNED_SHORT_5_5_5_1, tex1555_PL,	tex1555_TW,  tex1555_VQ,	tex1555_PL32,  tex1555_TW32,  tex1555_VQ32 },	//1555
+	{"565", 	16, GL_UNSIGNED_SHORT_5_6_5,   tex565_PL,	tex565_TW,   tex565_VQ, 	tex565_PL32,   tex565_TW32,   tex565_VQ32 },	//565
+	{"4444", 	16, GL_UNSIGNED_SHORT_4_4_4_4, tex4444_PL,	tex4444_TW,  tex4444_VQ, 	tex4444_PL32,  tex4444_TW32,  tex4444_VQ32 },	//4444
+	{"yuv", 	16, GL_UNSIGNED_INT_8_8_8_8,   NULL, 		NULL, 		 NULL,			texYUV422_PL,  texYUV422_TW,  texYUV422_VQ },	//yuv
+	{"bumpmap", 16, GL_UNSIGNED_SHORT_4_4_4_4, texBMP_PL,	texBMP_TW,	 texBMP_VQ, 	NULL},											//bump map
+	{"pal4", 	4,	0,						   0,			texPAL4_TW,  0, 			NULL, 		   texPAL4_TW32,  NULL },			//pal4
+	{"pal8", 	8,	0,						   0,			texPAL8_TW,  0, 			NULL, 		   texPAL8_TW32,  NULL },			//pal8
+	{"ns/1555", 0},
 };
 
 const u32 MipPoint[8] =
@@ -238,7 +238,6 @@ struct TextureCacheData
          default:
             printf("Unhandled texture %d\n",tcw.PixelFmt);
             size=w*h*2;
-            memset(temp_tex_buffer,0xFFFFFFFF,size);
             texconv = NULL;
             texconv32 = NULL;
             break;
@@ -253,11 +252,14 @@ struct TextureCacheData
       dirty              = 0;
       textype            = tex->type;
 
+      bool has_alpha = false;
       if (pal_table_rev) 
       {
          textype         = PAL_TYPE[PAL_RAM_CTRL&3];
          pal_local_rev   = *pal_table_rev;             /* make sure to update the local rev, 
                                                       so it won't have to redo the texture */
+         if (textype == GL_UNSIGNED_INT_8_8_8_8)
+				has_alpha = true;
       }
 
       palette_index      = indirect_color_ptr;              /* might be used if paletted texture */
@@ -270,40 +272,84 @@ struct TextureCacheData
       if (tcw.StrideSel && tcw.ScanOrder && (tex->PL || tex->PL32))
          stride = (TEXT_CONTROL&31)*32; //I think this needs +1 ?
 
-      // For paletted formats, we have the choice of conversion type (16 or 32).
-		// Use the one that fits the palette entry size.
-		if (texconv32 != NULL && (pal_table_rev == NULL || textype == GL_UNSIGNED_INT_8_8_8_8))
+      //PrintTextureName();
+      if (sa_tex > VRAM_SIZE || size == 0 || sa + size > VRAM_SIZE)
 		{
-			PixelBuffer<u32> pbt;
-         pbt.p_buffer_start = pbt.p_current_line = pbt.p_current_pixel = (u32*)temp_tex_buffer;
-			pbt.pixels_per_line = w;
-
-			texconv32(&pbt, (u8*)&vram[sa], stride, h);
+         printf("Warning: invalid texture. Address %08X %08X size %d\n", sa_tex, sa, size);
+			return;
 		}
-      else if(texconv)
-      {
-         PixelBuffer<u16> pbt;
-         pbt.p_buffer_start = pbt.p_current_line = pbt.p_current_pixel = temp_tex_buffer;
-			pbt.pixels_per_line = w;
 
-         texconv(&pbt,(u8*)&vram.data[sa], stride, h);
+      void *temp_tex_buffer = NULL;
+		u32 upscaled_w = w;
+		u32 upscaled_h = h;
+
+		PixelBuffer<u16> pb16;
+		PixelBuffer<u32> pb32;
+
+		// Figure out if we really need to use a 32-bit pixel buffer
+		if ((settings.rend.TextureUpscale <= 1
+				|| w * h > settings.rend.MaxFilteredTextureSize
+					* settings.rend.MaxFilteredTextureSize		// Don't process textures that are too big
+				|| tcw.PixelFmt == PixelYUV)					// Don't process YUV textures
+			&& (pal_table_rev == NULL || textype != GL_UNSIGNED_INT_8_8_8_8)
+			&& texconv != NULL)
+			texconv32 = NULL;
+		// TODO avoid upscaling/depost. textures that change too often
+
+      if(texconv32)
+      {
+         // Force the texture type since that's the only 32-bit one we know
+			textype = GL_UNSIGNED_INT_8_8_8_8;
+
+			pb32.init(w, h);
+
+			texconv32(&pb32, (u8*)&vram[sa], stride, h);
+
+#ifdef DEPOSTERIZE
+			{
+				// Deposterization
+				PixelBuffer<u32> tmp_buf;
+				tmp_buf.init(w, h);
+
+				DePosterize(pb32.data(), tmp_buf.data(), w, h);
+				pb32.steal_data(tmp_buf);
+			}
+#endif
+
+#ifdef HAVE_TEXUPSCALE
+			// xBRZ scaling
+			if (settings.rend.TextureUpscale > 1)
+			{
+				PixelBuffer<u32> tmp_buf;
+				tmp_buf.init(w * settings.rend.TextureUpscale, h * settings.rend.TextureUpscale);
+
+				if (tcw.PixelFmt == Pixel1555 || tcw.PixelFmt == Pixel4444)
+					// Alpha channel formats. Palettes with alpha are already handled
+					has_alpha = true;
+				UpscalexBRZ(settings.rend.TextureUpscale, pb32.data(), tmp_buf.data(), w, h, has_alpha);
+				pb32.steal_data(tmp_buf);
+				upscaled_w *= settings.rend.TextureUpscale;
+				upscaled_h *= settings.rend.TextureUpscale;
+			}
+#endif
+			temp_tex_buffer = pb32.data();
+      }
+      else if (texconv != NULL)
+      {
+         pb16.init(w, h);
+
+         texconv(&pb16,(u8*)&vram[sa],stride,h);
+			temp_tex_buffer = pb16.data();
       }
       else
       {
          /* fill it in with a temporary color. */
          printf("UNHANDLED TEXTURE\n");
-         memset(temp_tex_buffer, 0x80, w * h * 2);
+         pb16.init(w, h);
+			memset(pb16.data(), 0x80, w * h * 2);
+			temp_tex_buffer = pb16.data();
       }
 
-      //PrintTextureName();
-
-      if (sa_tex > VRAM_SIZE || size == 0 || sa + size > VRAM_SIZE)
-		{
-#ifndef NDEBUG
-			printf("Warning: invalid texture. Address %08X %08X size %d\n", sa_tex, sa, size);
-#endif
-			return;
-		}
       /* lock the texture to detect changes in it. */
       lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
 
@@ -313,13 +359,13 @@ struct TextureCacheData
          GLuint comps=textype==GL_UNSIGNED_SHORT_5_6_5?GL_RGB:GL_RGBA;
 #ifdef GLES
 			GLuint actual_textype = textype == GL_UNSIGNED_INT_8_8_8_8 ? GL_UNSIGNED_BYTE : textype;
-			glTexImage2D(GL_TEXTURE_2D, 0, comps, w, h, 0, comps, actual_textype,
-					temp_tex_buffer);
+         glTexImage2D(GL_TEXTURE_2D, 0,comps , upscaled_w, upscaled_h, 0, comps, actual_textype, temp_tex_buffer);
 #else
-			glTexImage2D(GL_TEXTURE_2D, 0, comps, w, h, 0, comps, textype, temp_tex_buffer);
+         glTexImage2D(GL_TEXTURE_2D, 0,comps , upscaled_w, upscaled_h, 0, comps, textype, temp_tex_buffer);
 #endif
          if (tcw.MipMapped && settings.rend.UseMipmaps)
             glGenerateMipmap(GL_TEXTURE_2D);
+         //dumpTexture(texID, w, h, textype, temp_tex_buffer);
       }
       else
       {
@@ -331,6 +377,7 @@ struct TextureCacheData
          else if (textype == GL_UNSIGNED_SHORT_4_4_4_4)
             tex_type = 2;
 
+         u16 *tex_data = (u16 *)temp_tex_buffer;
          if (pData)
          {
 #ifdef __SSE4_1__
@@ -351,10 +398,10 @@ struct TextureCacheData
             {
                u32* data = (u32*)&pData[(x + y*w) * 8];
 
-               data[0]   = decoded_colors[tex_type][temp_tex_buffer[(x + 1) % w + (y + 1) % h * w]];
-               data[1]   = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 1) % h * w]];
-               data[2]   = decoded_colors[tex_type][temp_tex_buffer[(x + 1) % w + (y + 0) % h * w]];
-               data[3]   = decoded_colors[tex_type][temp_tex_buffer[(x + 0) % w + (y + 0) % h * w]];
+               data[0]   = decoded_colors[tex_type][tex_data[(x + 1) % w + (y + 1) % h * w]];
+               data[1]   = decoded_colors[tex_type][tex_data[(x + 0) % w + (y + 1) % h * w]];
+               data[2]   = decoded_colors[tex_type][tex_data[(x + 1) % w + (y + 0) % h * w]];
+               data[3]   = decoded_colors[tex_type][tex_data[(x + 0) % w + (y + 0) % h * w]];
             }
          }
 #endif
@@ -479,159 +526,146 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
    glViewport(0, 0, fbw, fbh);		// TODO CLIP_X/Y min?
 }
 
-void ReadRTTBuffer(void)
-{
-	for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
-	{
-		if (i->second.sa_tex == fb_rtt.TexAddr << 3)
-			i->second.dirty = FrameCount;
-	}
-
+void ReadRTTBuffer() {
 	u32 w = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
 	u32 h = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 
-   u32 stride = FB_W_LINESTRIDE.stride * 8;
+	u32 stride = FB_W_LINESTRIDE.stride * 8;
 	if (stride == 0)
 		stride = w * 2;
 	else if (w * 2 > stride) {
     	// Happens for Virtua Tennis
     	w = stride / 2;
     }
+	u32 size = w * h * 2;
 
-   u32 size = w * h * 2;
-   const u8 fb_packmode = FB_W_CTRL.fb_packmode;
+	const u8 fb_packmode = FB_W_CTRL.fb_packmode;
 
-   if (settings.rend.RenderToTextureBuffer)
-   {
-      u32 tex_addr = fb_rtt.TexAddr << 3;
+	if (settings.rend.RenderToTextureBuffer)
+	{
+		u32 tex_addr = fb_rtt.TexAddr << 3;
 
-      // Manually mark textures as dirty and remove all vram locks before calling glReadPixels
-      // (deadlock on rpi)
-      for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
-      {
-         if (i->second.sa_tex <= tex_addr + size - 1 && i->second.sa + i->second.size - 1 >= tex_addr) {
-            i->second.dirty = FrameCount;
-            if (i->second.lock_block != NULL) {
-               libCore_vramlock_Unlock_block(i->second.lock_block);
-               i->second.lock_block = NULL;
-            }
-         }
-      }
-      vram.UnLockRegion(0, 2 * vram.size);
+		// Manually mark textures as dirty and remove all vram locks before calling glReadPixels
+		// (deadlock on rpi)
+		for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
+		{
+			if (i->second.sa_tex <= tex_addr + size - 1 && i->second.sa + i->second.size - 1 >= tex_addr) {
+				i->second.dirty = FrameCount;
+				if (i->second.lock_block != NULL) {
+					libCore_vramlock_Unlock_block(i->second.lock_block);
+					i->second.lock_block = NULL;
+				}
+			}
+		}
+		vram.UnLockRegion(0, 2 * vram.size);
 
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
+		u16 *dst = (u16 *)&vram[tex_addr];
 
-      glPixelStorei(GL_PACK_ALIGNMENT, 1);
-      u16 *src = temp_tex_buffer;
-      u16 *dst = (u16 *)&vram.data[tex_addr];
+		GLint color_fmt, color_type;
+		glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
+		glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &color_type);
 
-      GLint color_fmt, color_type;
-      glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
-      glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &color_type);
+		if (fb_packmode == 1 && stride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5) {
+			// Can be read directly into vram
+			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
+		}
+		else
+		{
+			PixelBuffer<u32> tmp_buf;
+			tmp_buf.init(w, h);
 
-      glcache.BindTexture(GL_TEXTURE_2D, fb_rtt.tex);
-
-      if (fb_packmode == 1 && stride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5) {
-         // Can be read directly into vram
-         glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
-      }
-      else
-      {
-         const u16 kval_bit = (FB_W_CTRL.fb_kval & 0x80) << 8;
+			const u16 kval_bit = (FB_W_CTRL.fb_kval & 0x80) << 8;
 			const u8 fb_alpha_threshold = FB_W_CTRL.fb_alpha_threshold;
 
-			u32 lines = h;
-			while (lines > 0) {
-				u8 *p = (u8 *)temp_tex_buffer;
-				u32 chunk_lines = min((u32)sizeof(temp_tex_buffer), w * lines * 4) / w / 4;
-				glReadPixels(0, h - lines, w, chunk_lines, GL_RGBA, GL_UNSIGNED_BYTE, p);
+			u8 *p = (u8 *)tmp_buf.data();
+			glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
-				for (u32 l = 0; l < chunk_lines; l++) {
-					switch(fb_packmode)
-					{
-					case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
-						for (u32 c = 0; c < w; c++) {
-							*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | kval_bit;
-							p += 4;
-						}
-						break;
-					case 1: //0x1   565 RGB 16 bit
-						for (u32 c = 0; c < w; c++) {
-							*dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
-							p += 4;
-						}
-						break;
-					case 2: //0x2   4444 ARGB 16 bit
-						for (u32 c = 0; c < w; c++) {
-							*dst++ = (((p[0] >> 4) & 0xF) << 8) | (((p[1] >> 4) & 0xF) << 4) | ((p[2] >> 4) & 0xF) | (((p[3] >> 4) & 0xF) << 12);
-							p += 4;
-						}
-						break;
-					case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
-						for (u32 c = 0; c < w; c++) {
-							*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] >= fb_alpha_threshold ? 0x8000 : 0);
-							p += 4;
-						}
-						break;
+			for (u32 l = 0; l < h; l++) {
+				switch(fb_packmode)
+				{
+				case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
+					for (u32 c = 0; c < w; c++) {
+						*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | kval_bit;
+						p += 4;
 					}
-					dst += (stride - w * 2) / 2;
+					break;
+				case 1: //0x1   565 RGB 16 bit
+					for (u32 c = 0; c < w; c++) {
+						*dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
+						p += 4;
+					}
+					break;
+				case 2: //0x2   4444 ARGB 16 bit
+					for (u32 c = 0; c < w; c++) {
+						*dst++ = (((p[0] >> 4) & 0xF) << 8) | (((p[1] >> 4) & 0xF) << 4) | ((p[2] >> 4) & 0xF) | (((p[3] >> 4) & 0xF) << 12);
+						p += 4;
+					}
+					break;
+				case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
+					for (u32 c = 0; c < w; c++) {
+						*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] >= fb_alpha_threshold ? 0x8000 : 0);
+						p += 4;
+					}
+					break;
 				}
-				lines -= chunk_lines;
+				dst += (stride - w * 2) / 2;
 			}
-      }
+		}
 
-      // Restore VRAM locks
-      for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
-      {
-         if (i->second.lock_block != NULL) {
-            vram.LockRegion(i->second.sa_tex, i->second.sa + i->second.size - i->second.sa_tex);
+		// Restore VRAM locks
+		for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
+		{
+				if (i->second.lock_block != NULL) {
+						vram.LockRegion(i->second.sa_tex, i->second.sa + i->second.size - i->second.sa_tex);
 
-            //TODO: Fix this for 32M wrap as well
-            if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-               vram.LockRegion(i->second.sa_tex + VRAM_SIZE, i->second.sa + i->second.size - i->second.sa_tex);
-            }
-         }
-      }
-   }
-   else
-   {
-      //memset(&vram.data[fb_rtt.TexAddr << 3], '\0', size);
-   }
+						//TODO: Fix this for 32M wrap as well
+						if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
+								vram.LockRegion(i->second.sa_tex + VRAM_SIZE, i->second.sa + i->second.size - i->second.sa_tex);
+						}
+				}
+		}
+	}
+	else
+	{
+		//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
+	}
 
-   //dumpRtTexture(fb_rtt.TexAddr, w, h);
+    //dumpRtTexture(fb_rtt.TexAddr, w, h);
+    
+    if (w > 1024 || h > 1024) {
+    	glcache.DeleteTextures(1, &fb_rtt.tex);
+    }
+    else
+    {
+    	TCW tcw = { { TexAddr : fb_rtt.TexAddr, Reserved : 0, StrideSel : 0, ScanOrder : 1 } };
+    	switch (fb_packmode) {
+    	case 0:
+    	case 3:
+    		tcw.PixelFmt = Pixel1555;
+    		break;
+    	case 1:
+    		tcw.PixelFmt = Pixel565;
+    		break;
+    	case 2:
+    		tcw.PixelFmt = Pixel4444;
+    		break;
+    	}
+    	TSP tsp = { 0 };
+    	for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < w; tsp.TexU++);
+    	for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < h; tsp.TexV++);
 
-   if (w > 1024 || h > 1024) {
-      glcache.DeleteTextures(1, &fb_rtt.tex);
-   }
-   else
-   {
-      TCW tcw = { { TexAddr : fb_rtt.TexAddr, Reserved : 0, StrideSel : 0, ScanOrder : 1 } };
-      switch (fb_packmode) {
-         case 0:
-         case 3:
-            tcw.PixelFmt = Pixel1555;
-            break;
-         case 1:
-            tcw.PixelFmt = Pixel565;
-            break;
-         case 2:
-            tcw.PixelFmt = Pixel4444;
-            break;
-      }
-      TSP tsp = { 0 };
-      for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < w; tsp.TexU++);
-      for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < h; tsp.TexV++);
-
-      TextureCacheData *texture_data = getTextureCacheData(tsp, tcw);
-      if (texture_data->texID != 0)
-         glcache.DeleteTextures(1, &texture_data->texID);
-      else {
-         texture_data->Create(false);
-         texture_data->lock_block = libCore_vramlock_Lock(texture_data->sa_tex, texture_data->sa + texture_data->size - 1, texture_data);
-      }
-      texture_data->texID = fb_rtt.tex;
-      texture_data->dirty = 0;
-   }
-   fb_rtt.tex = 0;
+    	TextureCacheData *texture_data = getTextureCacheData(tsp, tcw);
+    	if (texture_data->texID != 0)
+    		glcache.DeleteTextures(1, &texture_data->texID);
+    	else {
+    		texture_data->Create(false);
+    		texture_data->lock_block = libCore_vramlock_Lock(texture_data->sa_tex, texture_data->sa + texture_data->size - 1, texture_data);
+    	}
+    	texture_data->texID = fb_rtt.tex;
+    	texture_data->dirty = 0;
+    }
+    fb_rtt.tex = 0;
 
 	if (fb_rtt.fbo) { glDeleteFramebuffers(1,&fb_rtt.fbo); fb_rtt.fbo = 0; }
 	if (fb_rtt.depthb) { glDeleteRenderbuffers(1,&fb_rtt.depthb); fb_rtt.depthb = 0; }

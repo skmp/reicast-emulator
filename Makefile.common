@@ -175,6 +175,10 @@ else
 SOURCES_C += $(LIBRETRO_COMM_DIR)/rthreads/rthreads.c
 endif
 
+ifeq ($(HAVE_TEXUPSCALE),1)
+SOURCES_CXX += $(DEPS_DIR)/xbrz/xbrz.cpp
+endif
+
 SOURCES_C +=   $(DEPS_DIR)/zlib/deflate.c \
 					$(DEPS_DIR)/zlib/gzlib.c \
 					$(DEPS_DIR)/zlib/uncompr.c \

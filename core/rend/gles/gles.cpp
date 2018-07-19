@@ -938,6 +938,16 @@ struct glesrend : Renderer
       glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
 #endif
 
+#ifdef HAVE_TEXUPSCALE
+      if (settings.rend.TextureUpscale > 1)
+      {
+         // Trick to preload the tables used by xBRZ
+         u32 src[] { 0x11111111, 0x22222222, 0x33333333, 0x44444444 };
+         u32 dst[16];
+         UpscalexBRZ(2, src, dst, 2, 2, false);
+      }
+#endif
+
       return true;
    }
 	void Resize(int w, int h) { screen_width=w; screen_height=h; }

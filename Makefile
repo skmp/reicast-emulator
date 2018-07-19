@@ -11,6 +11,7 @@ HAVE_GENERIC_JIT   := 1
 HAVE_GL3      := 0
 FORCE_GLES    := 0
 STATIC_LINKING:= 0
+HAVE_TEXUPSCALE := 1
 
 ifeq ($(HAVE_OIT), 1)
 TARGET_NAME   := reicast_oit
@@ -531,6 +532,10 @@ endif
 
 ifeq ($(HAVE_CORE), 1)
 	CORE_DEFINES += -DCORE
+endif
+
+ifeq ($(HAVE_TEXUPSCALE), 1)
+	CORE_DEFINES += -DHAVE_TEXUPSCALE
 endif
 
 ifeq ($(HAVE_GL), 1)

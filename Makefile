@@ -536,6 +536,7 @@ endif
 
 ifeq ($(HAVE_TEXUPSCALE), 1)
 	CORE_DEFINES += -DHAVE_TEXUPSCALE
+	NEED_CXX11=1
 endif
 
 ifeq ($(HAVE_GL), 1)
@@ -552,6 +553,10 @@ endif
 
 ifeq ($(HAVE_GENERIC_JIT), 1)
 	CORE_DEFINES += -DTARGET_NO_JIT
+	NEED_CXX11=1
+endif
+
+ifeq ($(NEED_CXX11), 1)
 	CXXFLAGS     += -std=c++11
 endif
 

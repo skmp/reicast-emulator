@@ -45,7 +45,6 @@ Compression
 	look into it, but afaik PVRC is not realtime doable
 */
 
-u16 temp_tex_buffer[4 * 1024 * 1024];	// Maximum texture size: RGBA_8888 x 1024 x 1024
 extern u32 decoded_colors[3][65536];
 extern "C" struct retro_hw_render_callback hw_render;
 

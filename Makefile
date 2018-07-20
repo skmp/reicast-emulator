@@ -500,7 +500,7 @@ endif
 ifeq ($(NO_THREADS),1)
 	CORE_DEFINES += -DTARGET_NO_THREADS
 else
-	LIBS         += -lpthread
+	NEED_PTHREAD=1
 endif
 
 ifeq ($(NO_REC),1)
@@ -537,6 +537,11 @@ endif
 ifeq ($(HAVE_TEXUPSCALE), 1)
 	CORE_DEFINES += -DHAVE_TEXUPSCALE
 	NEED_CXX11=1
+	NEED_PTHREAD=1
+endif
+
+ifeq ($(NEED_PTHREAD), 1)
+	LIBS         += -lpthread
 endif
 
 ifeq ($(HAVE_GL), 1)

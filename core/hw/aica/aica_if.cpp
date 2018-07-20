@@ -1,6 +1,8 @@
 #include <time.h>
 #include <math.h>
 
+#include <libretro.h>
+
 #include "aica.h"
 #include "sgc_if.h"
 #include "dsp.h"
@@ -11,7 +13,6 @@
 #include "hw/holly/sb.h"
 #include "hw/arm7/arm7.h"
 
-#include "../libretro/libretro.h"
 
 VArray2 aica_ram;
 u32 VREG;//video reg =P

@@ -6,9 +6,10 @@
 #include <xmmintrin.h>
 #endif
 
+#include <libretro.h>
+
 #include "gles.h"
 #include "../rend.h"
-#include "../../libretro/libretro.h"
 #include "../TexCache.h"
 
 #include "../../hw/pvr/pvr_mem.h"

@@ -6,12 +6,12 @@
 #include <sys/stat.h>
 #include <retro_stat.h>
 
+#include <libretro.h>
+
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 #include <glsm/glsm.h>
 #endif
 #include "../rend/rend.h"
-
-#include "libretro.h"
 
 #if defined(_XBOX) || defined(_WIN32)
 char slash = '\\';

@@ -2,6 +2,8 @@
 #include <time.h>
 #include <math.h>
 
+#include <libretro.h>
+
 #include "aica.h"
 #include "dsp.h"
 #include "types.h"
@@ -10,8 +12,6 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
 #include "hw/arm7/arm7.h"
-
-#include "../libretro/libretro.h"
 
 //Sound generation, mixin, and channel regs emulation
 //x.15

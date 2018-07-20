@@ -1,6 +1,8 @@
 #include <time.h>
 #include <math.h>
 
+#include <libretro.h>
+
 #include "aica.h"
 #include "dsp.h"
 #include "types.h"
@@ -9,8 +11,6 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
 #include "hw/arm7/arm7.h"
-
-#include "../libretro/libretro.h"
 
 #define SH4_IRQ_BIT (1<<(holly_SPU_IRQ&255))
 

@@ -105,8 +105,10 @@ do_iter:
 	pop ecx
 	call _rdv_DoInterrupts
 	mov ecx,eax
-#	cmp byte ptr [sh4_int_bCpuRun],0
-#	jz cleanup
+   mov edx,[p_sh4rcb];
+   add edx,[cpurun_offset];
+   cmp dword ptr [edx],0;
+   jz cleanup;
 	jmp no_update
 
 cleanup:

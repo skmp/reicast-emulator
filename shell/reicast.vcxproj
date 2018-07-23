@@ -159,6 +159,7 @@
     <ClCompile Include="..\core\oslib\audiobackend_directsound.cpp" />
     <ClCompile Include="..\core\oslib\audiostream.cpp" />
     <ClCompile Include="..\core\profiler\profiler.cpp" />
+    <ClCompile Include="..\core\rec-common\rec_common_helper.cpp" />
     <ClCompile Include="..\core\rec-ARM\rec_arm.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>

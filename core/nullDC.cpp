@@ -143,15 +143,24 @@ int dc_init(int argc,wchar* argv[])
 	webui_thd.Start();
 #endif
 
-	if(ParseCommandLine(argc,argv))
-	{
-		return 69;
-	}
 	if(!cfgOpen())
 	{
 		msgboxf("Unable to open config file",MBX_ICONERROR);
 		return -4;
 	}
+
+	// Command line parsing moved after cfgopen as it allows
+	// the command line to make changes to the "settings" after
+	// they have been read. This helps with the NO_VIRTUAL_CFG
+	// option.
+	// After the command line has been parsed the settings are
+	// loaded using LoadSettings().
+
+	if(ParseCommandLine(argc,argv))
+        {
+		return 69;
+	}
+
 	LoadSettings();
 #ifndef _ANDROID
 	os_CreateWindow();

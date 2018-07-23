@@ -26,19 +26,19 @@ ifndef NO_REC
 endif
 
 ifndef NOT_ARM
-    RZDCY_MODULES += rec-ARM/
+    RZDCY_MODULES += rec-ARM/ rec-common/
 endif
 
 ifdef X86_REC
-    RZDCY_MODULES += rec-x86/ emitter/
+    RZDCY_MODULES += rec-x86/ emitter/ rec-common/
 endif
 
 ifdef X64_REC
-    RZDCY_MODULES += rec-x64/
+    RZDCY_MODULES += rec-x64/ rec-common/
 endif
 
 ifdef CPP_REC
-    RZDCY_MODULES += rec-cpp/
+    RZDCY_MODULES += rec-cpp/ rec-common/
 endif
 
 ifndef NO_REND

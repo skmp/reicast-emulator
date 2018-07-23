@@ -116,7 +116,14 @@ intc_sched_offs:
 	jnz do_iter
 	ret
 
+.globl ngen_required
+
 do_iter:
+
+	mov eax, ngen_required  # load eax with the address of c variable ngen_required
+	cmp eax,0               # compare eax with numerical value 0
+	je cleanup              # if compare is true jump to cleanup label and exit thread
+
 	pop ecx
 	call rdv_DoInterrupts
 	mov ecx,eax
@@ -134,6 +141,7 @@ cleanup:
 	pop esi
 	pop esi
 	pop esi
+	pop esi             # This additional pop is required otherwise a segfault occurs??
 
 	ret
 

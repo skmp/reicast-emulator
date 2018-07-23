@@ -59,6 +59,8 @@ naked void ngen_FailedToFindBlock_()
 	}
 }
 
+extern unsigned int ngen_required;
+
 void (*ngen_FailedToFindBlock)()=&ngen_FailedToFindBlock_;
 naked void ngen_mainloop(void* cntx)
 {
@@ -89,7 +91,11 @@ intc_sched_offs:
 		jnz do_iter;
 		ret;
 
-do_iter:
+	do_iter:
+		mov eax, ngen_required  // load eax with the address of c variable ngen_required
+		cmp eax, 0              // compare eax with numerical value 0
+		je cleanup              // if compare is true jump to cleanup label and exit thread
+
 		pop ecx;
 		call rdv_DoInterrupts;
 		mov ecx,eax;
@@ -102,6 +108,9 @@ cleanup:
 		pop ebp;
 		pop edi;
 		pop esi;
+
+		// quick hack to maintain 16 - byte alignment
+		pop esi     // This additional pop is required otherwise a segfault occurs ? ?    
 
 		ret;
 	}

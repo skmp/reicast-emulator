@@ -252,7 +252,7 @@ void retro_set_environment(retro_environment_t cb)
 #ifdef HAVE_TEXUPSCALE
       {
          "reicast_texupscale",
-         "Texture upscaling (xBRZ); off|2x|4x|8x",
+         "Texture upscaling (xBRZ); off|2x|4x|6x",
       },
       {
          "reicast_texupscale_max_filtered_texture_size",
@@ -549,16 +549,16 @@ static void update_variables(bool first_startup)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (!strcmp("off", var.value))
-         settings.rend.RenderToTextureUpscale = 1;
+         settings.rend.TextureUpscale = 1;
       else if (!strcmp("2x", var.value))
-         settings.rend.RenderToTextureUpscale = 2;
+         settings.rend.TextureUpscale = 2;
       else if (!strcmp("4x", var.value))
-         settings.rend.RenderToTextureUpscale = 4;
-      else if (!strcmp("8x", var.value))
-         settings.rend.RenderToTextureUpscale = 8;
+         settings.rend.TextureUpscale = 4;
+      else if (!strcmp("6x", var.value))
+         settings.rend.TextureUpscale = 6;
    }
-   else
-      settings.rend.RenderToTextureUpscale = 1;
+   else if (first_startup)
+      settings.rend.TextureUpscale = 1;
 
    var.key = "reicast_texupscale_max_filtered_texture_size";
 

@@ -449,12 +449,11 @@ void LoadSettings(void)
 	settings.pvr.MaxThreads			       = 3;
 #ifndef __LIBRETRO__
    settings.pvr.Emulation.ModVol       = true;
-   settings.rend.RenderToTexture        = true;
    settings.rend.RenderToTextureBuffer  = false;
-   settings.rend.TextureUpscale	       = 1;
 	settings.rend.MaxFilteredTextureSize = 256;
 #endif
    settings.rend.RenderToTextureUpscale = 1;
+   settings.rend.RenderToTexture        = true;
    settings.rend.Clipping               = true;
 
 

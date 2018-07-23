@@ -933,6 +933,10 @@ void retro_unload_game(void)
       free(game_data);
    game_data = NULL;
 
+   void shutdown_thread_pool();
+   printf("Shutting down thread pool...\n");
+   shutdown_thread_pool();
+   printf("...Done\n");
    rend_terminate();
    ngen_terminate();
    dc_term();

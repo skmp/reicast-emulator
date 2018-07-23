@@ -402,4 +402,9 @@ void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool
 					std::placeholders::_1, std::placeholders::_2), 0, height, width);
 //	xbrz::scale(factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB, xbrz_cfg);
 }
+
+void shutdown_thread_pool()
+{
+       ThreadPool.stop();
+}
 #endif

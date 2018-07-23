@@ -249,6 +249,16 @@ void retro_set_environment(retro_environment_t cb)
          "Precompile shaders; disabled|enabled",
       },
 #endif
+#ifdef HAVE_TEXUPSCALE
+      {
+         "reicast_texupscale",
+         "Texture upscaling (xBRZ); off|2x|4x|8x",
+      },
+      {
+         "reicast_texupscale_max_filtered_texture_size",
+         "Texture upscaling max filtered size; 256|512|1024",
+      },
+#endif
       {
          "reicast_enable_rtt",
          "Enable RTT (Render To Texture); enabled|disabled",
@@ -531,6 +541,38 @@ static void update_variables(bool first_startup)
       else
          settings.pvr.Emulation.precompile_shaders = true;
    }
+#endif
+
+#ifdef HAVE_TEXUPSCALE
+   var.key = "reicast_texupscale";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("off", var.value))
+         settings.rend.RenderToTextureUpscale = 1;
+      else if (!strcmp("2x", var.value))
+         settings.rend.RenderToTextureUpscale = 2;
+      else if (!strcmp("4x", var.value))
+         settings.rend.RenderToTextureUpscale = 4;
+      else if (!strcmp("8x", var.value))
+         settings.rend.RenderToTextureUpscale = 8;
+   }
+   else
+      settings.rend.RenderToTextureUpscale = 1;
+
+   var.key = "reicast_texupscale_max_filtered_texture_size";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("256", var.value))
+         settings.rend.MaxFilteredTextureSize = 256;
+      else if (!strcmp("512", var.value))
+         settings.rend.MaxFilteredTextureSize = 512;
+      else if (!strcmp("1024", var.value))
+         settings.rend.MaxFilteredTextureSize = 1024;
+   }
+   else
+      settings.rend.MaxFilteredTextureSize = 256;
 #endif
 
    var.key = "reicast_enable_rtt";

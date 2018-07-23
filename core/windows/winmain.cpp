@@ -196,6 +196,9 @@ u8 rt[4],lt[4];
 #define key_CONT_DPAD2_DOWN   (1 << 13)
 #define key_CONT_DPAD2_LEFT   (1 << 14)
 #define key_CONT_DPAD2_RIGHT  (1 << 15)
+
+void start_shutdown(void);
+
 void UpdateInputState(u32 port)
 	{
 		//joyx[port]=pad.Lx;
@@ -247,6 +250,8 @@ void UpdateInputState(u32 port)
 
 		if (GetAsyncKeyState(VK_F10))
 			DiscSwap();
+		if (GetAsyncKeyState(VK_ESCAPE))
+		    start_shutdown();
 	}
 
 void UpdateController(u32 port)
@@ -327,9 +332,11 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		// Handles the close message when a user clicks the quit icon of the window
 	case WM_CLOSE:
+	{
+		start_shutdown();
 		PostQuitMessage(0);
 		return 1;
-
+	}
 	default:
 		break;
 	}
@@ -830,3 +837,13 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }
+
+void rend_terminate();
+void ngen_terminate();
+
+void start_shutdown(void)
+{
+	printf("start_shutdown called\n");
+	rend_terminate();
+	ngen_terminate();
+}

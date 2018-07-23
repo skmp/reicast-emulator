@@ -75,7 +75,7 @@ void mcfg_Create(MapleDeviceType type,u32 bus,u32 port)
 
 void mcfg_CreateDevices()
 {
-int numberOfControl = cfgLoadInt("players", "nb", 1);
+	int numberOfControl = cfgLoadInt("players", "nb", 1);
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	if (numberOfControl <= 0)
 		numberOfControl = 1;

@@ -98,7 +98,10 @@ void main() \n\
 	vtx_offs=in_offs; \n\
 	vtx_uv=in_uv; \n\
 	vec4 vpos=in_pos; \n\
-	vpos.w=1.0/vpos.z;  \n"
+   if (isinf(vpos.z)) \n\
+		vpos.w = 1.18e-38; \n\
+	else \n\
+		vpos.w = 1.0 / vpos.z; \n"
 	"\
    if (vpos.w < 0.0) { \n\
       gl_Position = vec4(0.0, 0.0, 0.0, vpos.w); \n\

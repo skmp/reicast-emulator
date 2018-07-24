@@ -140,7 +140,7 @@ layout(r32ui, binding = 4) uniform coherent restrict uimage2D abufferPointerImg;
 struct Pixel { \n\
 	highp vec4 color; \n\
 	highp float depth; \n\
-	int seq_num; \n\
+	uint seq_num; \n\
 	uint next; \n\
 }; \n\
 #define EOL 0xFFFFFFFFu \n\
@@ -255,13 +255,13 @@ bool getShadowEnable(const PolyParam pp) \n\
 	return ((pp.pcw >> 7) & 1) != 0; \n\
 } \n\
 \n\
-int getPolyNumber(const Pixel pixel) \n\
+uint getPolyNumber(const Pixel pixel) \n\
 { \n\
-	return pixel.seq_num & 0x3FFFFFFF; \n\
+   return pixel.seq_num & 0x3FFFFFFFu; \n\
 } \n\
 \n\
-#define SHADOW_STENCIL 0x40000000 \n\
-#define SHADOW_ACC	   0x80000000 \n\
+#define SHADOW_STENCIL 0x40000000u \n\
+#define SHADOW_ACC	   0x80000000u \n\
 \n\
 bool isShadowed(const Pixel pixel) \n\
 { \n\
@@ -270,7 +270,7 @@ bool isShadowed(const Pixel pixel) \n\
 \n\
 bool isTwoVolumes(const PolyParam pp) \n\
 { \n\
-	return pp.tsp1 != 0xFFFFFFFF || pp.tcw1 != 0xFFFFFFFF; \n\
+   return pp.tsp1 != -1 || pp.tcw1 != -1; \n\
 } \n\
  \n\
 "

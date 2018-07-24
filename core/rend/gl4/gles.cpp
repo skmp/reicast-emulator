@@ -374,7 +374,7 @@ void main() \n\
       Pixel pixel; \n\
       pixel.color = color; \n\
       pixel.depth = gl_FragDepth; \n\
-      pixel.seq_num = pp_Number; \n\
+      pixel.seq_num = uint(pp_Number); \n\
       pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx); \n\
       pixels[idx] = pixel; \n\
       \n\

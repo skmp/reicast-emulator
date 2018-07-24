@@ -259,13 +259,13 @@ void main(void) \n\
 			if (gl_FragDepth <= pixel.depth) \n\
 				atomicOr(pixels[idx].seq_num, SHADOW_STENCIL); \n\
 #elif MV_MODE == MV_INCLUSION \n\
-			int prev_val = atomicAnd(pixels[idx].seq_num, ~(SHADOW_STENCIL)); \n\
+			uint prev_val = atomicAnd(pixels[idx].seq_num, ~(SHADOW_STENCIL)); \n\
 			if ((prev_val & (SHADOW_STENCIL|SHADOW_ACC)) == SHADOW_STENCIL) \n\
-				pixels[idx].seq_num = bitfieldInsert(pixel.seq_num, 1, 31, 1); \n\
+				pixels[idx].seq_num = bitfieldInsert(pixel.seq_num, 1u, 31, 1); \n\
 #elif MV_MODE == MV_EXCLUSION \n\
-			int prev_val = atomicAnd(pixels[idx].seq_num, ~(SHADOW_STENCIL|SHADOW_ACC)); \n\
+			uint prev_val = atomicAnd(pixels[idx].seq_num, ~(SHADOW_STENCIL|SHADOW_ACC)); \n\
 			if ((prev_val & (SHADOW_STENCIL|SHADOW_ACC)) == SHADOW_ACC) \n\
-				pixels[idx].seq_num = bitfieldInsert(pixel.seq_num, 1, 31, 1); \n\
+				pixels[idx].seq_num = bitfieldInsert(pixel.seq_num, 1u, 31, 1); \n\
 #endif \n\
 		} \n\
 		idx = pixel.next; \n\

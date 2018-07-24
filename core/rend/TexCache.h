@@ -35,6 +35,7 @@ public:
 
    void init(u32 width, u32 height)
    {
+      deinit();
       p_buffer_start = p_current_line = p_current_pixel = (pixel_type *)malloc(width * height * sizeof(pixel_type));
 		this->pixels_per_line = width;
    }

@@ -290,16 +290,17 @@ struct TextureCacheData
 		PixelBuffer<u32> pb32;
 
 		// Figure out if we really need to use a 32-bit pixel buffer
+      bool need_32bit_buffer = true;
 		if ((settings.rend.TextureUpscale <= 1
 				|| w * h > settings.rend.MaxFilteredTextureSize
 					* settings.rend.MaxFilteredTextureSize		// Don't process textures that are too big
 				|| tcw.PixelFmt == PixelYUV)					// Don't process YUV textures
 			&& (pal_table_rev == NULL || textype != GL_UNSIGNED_INT_8_8_8_8)
 			&& texconv != NULL)
-			texconv32 = NULL;
+         need_32bit_buffer = false;
 		// TODO avoid upscaling/depost. textures that change too often
 
-		if (texconv32 != NULL)
+      if (texconv32 != NULL && need_32bit_buffer)
 		{
 			// Force the texture type since that's the only 32-bit one we know
 			textype = GL_UNSIGNED_INT_8_8_8_8;

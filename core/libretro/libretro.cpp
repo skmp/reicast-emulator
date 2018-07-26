@@ -268,6 +268,10 @@ void retro_set_environment(retro_environment_t cb)
          "Enable RTT (Render To Texture) Buffer; disabled|enabled",
       },
       {
+         "reicast_render_to_texture_upscaling",
+         "Render To Texture Upscaling; 1x|2x|3x|4x",
+      },
+      {
          "reicast_enable_purupuru",
          "Purupuru Pack (restart); enabled|disabled"
       },
@@ -598,6 +602,21 @@ static void update_variables(bool first_startup)
    }
    else
       settings.rend.RenderToTextureBuffer = false;
+
+   var.key = "reicast_render_to_texture_upscaling";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      char *pch;
+      char str[100];
+      sprintf(str, "%s", var.value);
+
+      pch = strtok(str, "x");
+      if (pch)
+         settings.rend.RenderToTextureUpscale = strtoul(pch, NULL, 0);
+   }
+   else if (first_startup)
+      settings.rend.RenderToTextureUpscale = 1;
 
    var.key = "reicast_enable_purupuru";
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)

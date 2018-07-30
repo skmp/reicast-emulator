@@ -725,8 +725,7 @@ struct ChannelEx
 		case 0x18://FNS
 		case 0x19://FNS,OCT
 			UpdatePitch();
-         /* TODO/FIXME - crashes with Reicast OIT on startup (windows) if I uncomment this */
-			//UpdateAEG();
+			UpdateAEG();
 			break;
 
 		case 0x1C://ALFOS,ALFOWS,PLFOS

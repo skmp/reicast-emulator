@@ -653,7 +653,7 @@ static void update_variables(bool first_startup)
          settings.aica.NoBatch    = 0;
       }
    }
-   else
+   else if (first_run)
    {
       settings.aica.DSPEnabled = true;
       settings.aica.NoBatch    = 1;

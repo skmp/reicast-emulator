@@ -425,37 +425,6 @@ struct ChannelEx
       oRight=FPMul(sample,logtable[dr],15);
       oDsp=FPMul(sample,logtable[ds],15);
 
-      if (settings.aica.EGHack)
-      {
-         if( (s64)(this->ccd->DL + mixl + mixr + *VolMix.DSPOut) == 0)
-         {
-            switch(this->AEG.GetState())
-            {
-               case EG_Decay1:
-                  {
-                     if(this->AEG.GetAttackRate() > this->AEG.GetDecay1Rate())
-                     {
-                        //printf("Promote 1\n");
-                        this->SetAegState(EG_Attack);
-                     }
-
-                     break;
-                  }
-
-               case EG_Decay2:
-                  {
-                     if(this->AEG.GetAttackRate() > this->AEG.GetDecay2Rate())
-                     {
-                        //printf("Promote 2\n");
-                        this->SetAegState(EG_Attack);
-                     }
-
-                     break;
-                  }
-            }
-         }
-      }
-
       StepAEG(this);
       StepFEG(this);
       StepStream(this);
@@ -708,6 +677,7 @@ struct ChannelEx
 		case 0x18://FNS
 		case 0x19://FNS,OCT
 			UpdatePitch();
+         UpdateAEG();
 			break;
 
 		case 0x1C://ALFOS,ALFOWS,PLFOS
@@ -969,12 +939,7 @@ static void AegStep(ChannelEx* ch)
          ch->AEG.val+=ch->AEG.Decay1Rate;
          if (((u32)ch->AEG.GetValue())>=ch->AEG.Decay2Value)
          {
-            // No transition to Decay 2 when DL is zero.
-            if (settings.aica.AegStepHack && ch->ccd->DL == 0)
-               ch->SetAegState(EG_Attack);
-            else
-               ch->SetAegState(EG_Decay2);
-
+            ch->SetAegState(EG_Decay2);
          }
          break;
       case EG_Decay2:

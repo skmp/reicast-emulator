@@ -44,37 +44,6 @@ static struct game_type lut_games[] =
 
    /* Fallback to generic recompiler */
 
-   /* EG Hack */
-   { "T46703M   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Border Down (Japan) */
-   { "MK-51065  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Bomberman Online (USA) */
-   { "T47801M   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Chaos Field (Japan) */
-   { "T23202M   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Death Crimson OX (Japan) */
-   { "T2401N    ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Death Crimson OX (USA) */
-   { "T1223M    ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Eldorado Gate Vol. 1 (Japan) */
-   { "T44306N   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Fatal Fury: Mark of the Wolves (USA) */
-   { "T3108M    ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Garou: Mark of the Wolves (Japan) */
-   { "HDR-0078  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Jet Set Radio (Japan) */
-   { "MK-51058  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Jet Grind Radio (USA) */
-   { "MK-5105850", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Jet Set Radio (Europe) */
-   { "HDR-0079  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Napple Tale (Japan) */
-   { "MK-5110050", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Phantasy Star Online (Europe) */
-   { "HDR-0129  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Phantasy Star Online (Japan) */
-   { "MK-51100  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Phantasy Star Online (USA) */
-   { "MK-5119350", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Phantasy Star Online Ver. 2 (Europe) */
-   { "HDR-0163  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Phantasy Star Online Ver. 2 (Japan) */
-   { "MK-51193  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Phantasy Star Online Ver. 2 (USA) */
-   { "T9907M    ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Psyvariar 2 (Japan) */
-   { "HDR-0216  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Puyo Puyo Fever (Japan) */
-   { "T47802M   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Radirgy (Japan) */
-   { "HDR-0151  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Segagaga (Japan) */
-   { "HDR-0125  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Sonic Shuffle (Japan) */
-   { "MK-5106050", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Sonic Shuffle (Europe) */
-   { "MK-51060  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Sonic Shuffle (USA) */
-   { "T29102M   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Trigger Heart Exelica (Japan) */
-   { "T45101M   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* WWF Royal Rumble (Japan) */
-   { "T10003D 50", -1, -1, -1, -1, -1, -1,   1, -1  },                /* WWF Royal Rumble (Europe) */
-   { "T10005N   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* WWF Royal Rumble (USA) */
-
    /* AICA Interrupt Hack */
    { "T1203N    ", -1, -1,  1, -1, -1, -1,  -1, -1  },                /* Street Fighter Alpha 3 */
 
@@ -105,17 +74,12 @@ static struct game_type_naomi lut_games_naomi[] =
    { "Street Fighter Zero 3 Upper"           , -1, -1,  1, -1, -1, -1,  -1, -1, -1  },                /* Street Fighter Alpha 3 */
    { "Fist of the North Star - Hokuto no Ken", -1, -1,  1, -1, -1, -1,  -1, -1, -1  },                /* Fist of the North Star - Hokuto no Ken */
 
-   /* EG Hack */
-   /* Also needs Div S matching disabled */
-   { "Metal Slug 6"                          , -1, -1, -1, -1, -1, -1,   1,  1, -1  },                /* Metal Slug 6 */
-   { "Melty Blood Act Cadenza"               , -1, -1, -1, -1, -1, -1,   1,  1, -1  },                /* Melty Blood Act Cadenza */
+   /* Div S matching disabled */
+   { "Metal Slug 6"                          , -1, -1, -1, -1, -1, -1,   -1,  1, -1  },                /* Metal Slug 6 */
+   { "Melty Blood Act Cadenza"               , -1, -1, -1, -1, -1, -1,   -1,  1, -1  },                /* Melty Blood Act Cadenza */
 
-   /* EG Hack only */
-   /* Also needs translucent polygon depth mask hack */
-   { "Melty Blood Act Cadenza Version B"     , -1, -1, -1, -1,  1, -1,   1,  -1, -1  },               /* Melty Blood Act Cadenza Version B */
-
-   /* EG Hack only */
-   { "Melty Blood Act Cadenza Version B2"    , -1, -1, -1, -1, -1, -1,   1, -1, -1  },                /* Melty Blood Act Cadenza Version B2 */
+   /* Translucent polygon depth mask hack */
+   { "Melty Blood Act Cadenza Version B"     , -1, -1, -1, -1,  1, -1,   -1,  -1, -1  },               /* Melty Blood Act Cadenza Version B */
 
    /* Alternate Jamma I/O Setup */
    { "Power Stone 2"                         , -1, -1, -1, -1, -1, -1,  -1, -1,  1  },                /* Power Stone 2 (4 players, also need to be set in service menu) */

@@ -1,18 +1,18 @@
+/*
+	aica interface
+		Handles RTC, Display mode reg && arm reset reg !
+	arm7 is handled on a separate arm plugin now
+*/
+
+#include "aica_if.h"
+#include "hw/sh4/sh4_mem.h"
+#include "hw/holly/sb.h"
+#include "types.h"
+#include "sgc_if.h"
+#include "hw/holly/holly_intc.h"
+
 #include <time.h>
 #include <math.h>
-
-#include <libretro.h>
-
-#include "aica.h"
-#include "sgc_if.h"
-#include "dsp.h"
-#include "types.h"
-
-#include "hw/sh4/sh4_mem.h"
-#include "hw/holly/holly_intc.h"
-#include "hw/holly/sb.h"
-#include "hw/arm7/arm7.h"
-
 
 VArray2 aica_ram;
 u32 VREG;//video reg =P
@@ -47,6 +47,7 @@ u32 GetRTC_now(void)
 	u32 RTC=0x5bfc8900 + (u32)rawtime;// add delta to known dc time
 	return RTC;
 }
+
 u32 ReadMem_aica_rtc(u32 addr,u32 sz)
 {
 	//settings.dreamcast.RTC=GetRTC_now();

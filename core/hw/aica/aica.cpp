@@ -7,8 +7,6 @@
 
 #define SH4_IRQ_BIT (1<<(holly_SPU_IRQ&255))
 
-#undef FAR
-
 CommonData_struct* CommonData;
 DSPData_struct* DSPData;
 InterruptInfo* MCIEB;

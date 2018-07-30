@@ -13,6 +13,7 @@ SOURCES_CXX := \
 					$(CORE_DIR)/hw/arm7/arm7.cpp \
 					\
 					$(CORE_DIR)/hw/aica/dsp.cpp \
+					$(CORE_DIR)/hw/aica/dsp_interp.cpp \
 					$(CORE_DIR)/hw/aica/aica.cpp \
 					$(CORE_DIR)/hw/aica/aica_if.cpp \
 					$(CORE_DIR)/hw/aica/aica_mem.cpp \

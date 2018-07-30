@@ -20,58 +20,15 @@
 
 DECL_ALIGN(4096) dsp_t dsp;
 
-#if HOST_CPU == CPU_X86 && FEAT_DSPREC == DYNAREC_JIT
-#include "emitter/x86_emitter.h"
-
-const bool SUPPORT_NOFL=false;
-
-
-#define assert verify
-
-#pragma warning(disable:4311)
-
-struct _INST
-{
-	unsigned int TRA;
-	unsigned int TWT;
-	unsigned int TWA;
-	
-	unsigned int XSEL;
-	unsigned int YSEL;
-	unsigned int IRA;
-	unsigned int IWT;
-	unsigned int IWA;
-
-	unsigned int EWT;
-	unsigned int EWA;
-	unsigned int ADRL;
-	unsigned int FRCL;
-	unsigned int SHIFT;
-	unsigned int YRL;
-	unsigned int NEGB;
-	unsigned int ZERO;
-	unsigned int BSEL;
-
-	unsigned int NOFL;  //MRQ set
-	unsigned int TABLE; //MRQ set
-	unsigned int MWT;   //MRQ set
-	unsigned int MRD;   //MRQ set
-	unsigned int MASA;  //MRQ set
-	unsigned int ADREB; //MRQ set
-	unsigned int NXADR; //MRQ set
-};
-
-
-#define DYNBUF  0x10000
-
 //float format is ?
-static u16 DYNACALL PACK(s32 val)
+u16 DYNACALL PACK(s32 val)
 {
-	int k;
-	int sign = (val >> 23) & 0x1;
-	u32 temp = (val ^ (val << 1)) & 0xFFFFFF;
-	int exponent = 0;
+	u32 temp;
+	int sign,exponent,k;
 
+	sign = (val >> 23) & 0x1;
+	temp = (val ^ (val << 1)) & 0xFFFFFF;
+	exponent = 0;
 	for (k=0; k<12; k++)
 	{
 		if (temp & 0x800000)
@@ -90,13 +47,15 @@ static u16 DYNACALL PACK(s32 val)
 	return (u16)val;
 }
 
-static s32 DYNACALL UNPACK(u16 val)
+s32 DYNACALL UNPACK(u16 val)
 {
-	int sign     = (val >> 15) & 0x1;
-	int exponent = (val >> 11) & 0xF;
-	int mantissa = val & 0x7FF;
-	s32 uval     = mantissa << 11;
+	int sign,exponent,mantissa;
+	s32 uval;
 
+	sign = (val >> 15) & 0x1;
+	exponent = (val >> 11) & 0xF;
+	mantissa = val & 0x7FF;
+	uval = mantissa << 11;
 	if (exponent > 11)
 		exponent = 11;
 	else
@@ -109,7 +68,80 @@ static s32 DYNACALL UNPACK(u16 val)
 	return uval;
 }
 
-void dsp_init(void)
+#if HOST_CPU == CPU_X86 && FEAT_DSPREC == DYNAREC_JIT
+#include "emitter/x86_emitter.h"
+
+const bool SUPPORT_NOFL=false;
+
+
+#define assert verify
+
+#pragma warning(disable:4311)
+
+#define DYNBUF  0x10000
+/*
+//#define USEFLOATPACK
+//pack s24 to s1e4s11
+naked u16 packasm(s32 val)
+{
+	__asm
+	{
+		mov edx,ecx;        //eax will be sign
+		and edx,0x80000;    //get the sign
+		
+		jz poz;
+		neg ecx;
+
+		poz:
+		bsr eax,ecx;
+		jz _zero;
+
+		//24 -> 11
+		//13 -> 0
+		//12..0 -> 0
+		sub eax,11;
+		cmovs eax,0;    //if <0 -> 0
+
+		shr ecx,eax;    //shift out mantissa as needed (yeah i know, no rounding here and all .. )
+
+		shr eax,12;     //[14:12] is exp
+		or edx,ecx;     //merge [15] | [11:0]
+		or eax,edx;     //merge [14:12] | ([15] | [11:0]), result on eax
+		ret;
+
+_zero:
+		xor eax,eax;
+		ret;
+	}
+}
+//ONLY lower 16 bits are valid, rest are ignored but do movzx to avoid partial stalls :)
+naked s32 unpackasm(u32 val)
+{
+	__asm
+	{
+		mov eax,ecx;        //get mantissa bits
+		and ecx,0x7FF;      //
+		
+		shl eax,11;         //get shift factor (shift)
+		mov edx,eax;        //keep a copy for the sign
+		and eax,0xF;        //get shift factor (mask)
+
+		shl ecx,eax;        //shift mantissa to normal position
+
+		test edx,0x10;      //signed ?
+		jnz _negme;
+		
+		ret;    //nop, return as is
+
+_negme:
+		//yep, negate and return
+		neg eax;
+		ret;
+
+	}
+}*/
+
+void dsp_init()
 {
 	memset(&dsp,0,sizeof(dsp));
 	memset(DSPData,0,sizeof(*DSPData));
@@ -120,11 +152,9 @@ void dsp_init(void)
 	dsp.regs.MDEC_CT=1;
 
 
-	os_MakeExecutable(dsp.DynCode,sizeof(dsp.DynCode));
+	//os_MakeExecutable(dsp.DynCode,sizeof(dsp.DynCode));
 }
-
-void dsp_recompile(void);
-
+void dsp_recompile();
 void DecodeInst(u32 *IPtr,_INST *i)
 {
 	i->TRA=(IPtr[0]>>9)&0x7F;
@@ -163,13 +193,11 @@ void* dyna_realloc(void*ptr,u32 oldsize,u32 newsize)
 {
 	return dsp.DynCode;
 }
-
-void _dsp_debug_step_start(void)
+void _dsp_debug_step_start()
 {
 	memset(&dsp.regs_init,0,sizeof(dsp.regs_init));
 }
-
-void _dsp_debug_step_end(void)
+void _dsp_debug_step_end()
 {
 	verify(dsp.regs_init.MAD_OUT);
 	verify(dsp.regs_init.MEM_ADDR);
@@ -189,8 +217,8 @@ void _dsp_debug_step_end(void)
 	verify(dsp.regs_init.TEMPS);
 	verify(dsp.regs_init.EFREG);
 }
-#define nwtn(x) verify(!dsp.regs_init.##x)
-#define wtn(x) nwtn(x);dsp.regs_init.##x=true;
+#define nwtn(x) verify(!dsp.regs_init.x)
+#define wtn(x) nwtn(x);dsp.regs_init.x=true;
 
 //sign extend to 32 bits
 void dsp_rec_se(x86_block& x86e,x86_gpr_reg reg,u32 src_sz,u32 dst_sz=0xFF)
@@ -746,10 +774,12 @@ void dsp_recompile()
 	x86e.Generate();
 }
 
+
+
 void dsp_print_mame();
 void dsp_step_mame();
 void dsp_emu_grandia();
-void dsp_step(void)
+void dsp_step()
 {
 	//clear output reg
 	memset(DSPData->EFREG,0,sizeof(DSPData->EFREG));
@@ -799,10 +829,4 @@ void dsp_readmem(u32 addr)
 {
 	//nothing ? :p
 }
-#else
-
-void dsp_init() { }
-void dsp_term() { }
-void dsp_step() { }
-void dsp_writenmem(u32 addr) { }
 #endif

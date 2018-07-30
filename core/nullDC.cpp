@@ -432,7 +432,6 @@ void LoadSettings(void)
    settings.UpdateModeForced     = 0;
 	settings.dreamcast.RTC			= GetRTC_now();
 	settings.aica.LimitFPS			= 0;
-	settings.aica.NoBatch			= 0;
    settings.aica.NoSound			= 0;
    settings.aica.EGHack          = 0;
 	settings.pvr.subdivide_transp	= 0;

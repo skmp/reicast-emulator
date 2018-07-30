@@ -243,6 +243,10 @@ void retro_set_environment(retro_environment_t cb)
          "reicast_digital_triggers",
          "Digital Triggers; disabled|enabled",
       },
+      {
+         "reicast_enable_dsp",
+         "Enable DSP; enabled|disabled",
+      },
 #ifndef HAVE_OIT
       {
          "reicast_precompile_shaders",
@@ -269,7 +273,7 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_render_to_texture_upscaling",
-         "Render To Texture Upscaling; 1x|2x|3x|4x",
+         "Render To Texture Upscaling; 1x|2x|3x|4x|8x",
       },
       {
          "reicast_enable_purupuru",
@@ -633,6 +637,27 @@ static void update_variables(bool first_startup)
 
    if ( environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value )
       input_set_deadzone_trigger( atoi( var.value ) );
+
+   var.key = "reicast_enable_dsp";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("enabled", var.value))
+      {
+         settings.aica.DSPEnabled = true;
+         settings.aica.NoBatch    = 1;
+      }
+      else
+      {
+         settings.aica.DSPEnabled = false;
+         settings.aica.NoBatch    = 0;
+      }
+   }
+   else
+   {
+      settings.aica.DSPEnabled = true;
+      settings.aica.NoBatch    = 1;
+   }
 
    var.key = "reicast_digital_triggers";
 

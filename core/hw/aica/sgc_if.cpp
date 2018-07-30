@@ -1319,6 +1319,14 @@ void AICA_Sample(void)
 	{
 		VOLPAN(EXTS0L,dsp_out_vol[16].EFSDL,dsp_out_vol[16].EFPAN,mixl,mixr);
 		VOLPAN(EXTS0R,dsp_out_vol[17].EFSDL,dsp_out_vol[17].EFPAN,mixl,mixr);
+
+      DSPData->EXTS[0] = EXTS0L;
+		DSPData->EXTS[1] = EXTS0R;
+	}
+   else
+	{
+		DSPData->EXTS[0] = 0;
+		DSPData->EXTS[1] = 0;
 	}
 	if (settings.aica.DSPEnabled)
 	{

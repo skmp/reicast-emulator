@@ -433,33 +433,6 @@ struct ChannelEx
 			clip_verify(sample*oRight>=0);
 			clip_verify(sample*oDsp>=0);
 
-			if (settings.aica.EGHack)
-			{
-				if ((s64)(this->ccd->DL + mixl + mixr + *VolMix.DSPOut) == 0)
-				{
-					switch(this->AEG.state)
-					{
-					case EG_Decay1:
-						if(this->AEG.AttackRate > this->AEG.Decay1Rate)
-						{
-							//printf("Promote 1\n");
-							this->SetAegState(EG_Attack);
-						}
-
-						break;
-
-					case EG_Decay2:
-						if(this->AEG.AttackRate > this->AEG.Decay2Rate)
-						{
-							//printf("Promote 2\n");
-							this->SetAegState(EG_Attack);
-						}
-
-						break;
-					}
-				}
-			}
-
 			StepAEG(this);
 			StepFEG(this);
 			StepStream(this);

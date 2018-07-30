@@ -191,12 +191,6 @@ static void LoadSpecialSettings(void)
             settings.rend.RenderToTextureBuffer = lut_games[i].rendertotexturebuffer;
          }
 
-         if (lut_games[i].eg_hack != -1)
-         {
-            log_cb(RETRO_LOG_INFO, "[Hack]: Applying EG hack.\n");
-            settings.aica.EGHack = lut_games[i].eg_hack;
-         }
-
          if (lut_games[i].disable_div != -1)
          {
             log_cb(RETRO_LOG_INFO, "[Hack]: Applying Disable DIV hack.\n");
@@ -251,12 +245,6 @@ static void LoadSpecialSettingsNaomi(const char *name)
          {
             log_cb(RETRO_LOG_INFO, "[Hack]: Applying rendertotexture hack.\n");
             settings.rend.RenderToTextureBuffer = lut_games_naomi[i].rendertotexturebuffer;
-         }
-
-         if (lut_games_naomi[i].eg_hack != -1)
-         {
-            log_cb(RETRO_LOG_INFO, "[Hack]: Applying EG hack.\n");
-            settings.aica.EGHack = lut_games_naomi[i].eg_hack;
          }
 
          if (lut_games_naomi[i].disable_div != -1)
@@ -433,7 +421,6 @@ void LoadSettings(void)
 	settings.dreamcast.RTC			= GetRTC_now();
 	settings.aica.LimitFPS			= 0;
    settings.aica.NoSound			= 0;
-   settings.aica.EGHack          = 0;
 	settings.pvr.subdivide_transp	= 0;
 	settings.pvr.ta_skip			   = 0;
 	settings.pvr.rend				   = 0;

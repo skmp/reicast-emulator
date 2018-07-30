@@ -166,6 +166,7 @@ SOURCES_ASM += $(CORE_DIR)/rec-ARM/ngen_arm.S
 endif
 
 SOURCES_CXX += $(CORE_DIR)/libretro/libretro.cpp \
+					$(CORE_DIR)/libretro/audiostream.cpp \
 					$(CORE_DIR)/libretro/common.cpp
 
 SOURCES_C +=   $(LIBRETRO_COMM_DIR)/memmap/memalign.c \

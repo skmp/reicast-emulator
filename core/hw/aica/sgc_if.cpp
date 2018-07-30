@@ -6,7 +6,7 @@
 #include <math.h>
 #include "types.h"
 
-#include <libretro.h>
+void WriteSample(s16 r, s16 l);
 
 //Sound generation, mixin, and channel regs emulation
 //x.15
@@ -1156,36 +1156,11 @@ void WriteCommonReg8(u32 reg,u32 data)
 }
 
 #define CDDA_SIZE    (2352/2)
-#define SAMPLE_COUNT 512
 
 static s16 cdda_sector[CDDA_SIZE] = {0};
 static u32 cdda_index             = CDDA_SIZE<<1;
 
 static int32_t mxlr[64];
-
-struct SoundFrame
-{
-   s16 l;
-   s16 r;
-};
-
-extern retro_audio_sample_batch_t audio_batch_cb;
-
-static void WriteSample(s16 r, s16 l)
-{
-   static SoundFrame RingBuffer[SAMPLE_COUNT];
-   static const u32 RingBufferByteSize = sizeof(RingBuffer);
-   static const u32 RingBufferSampleCount = SAMPLE_COUNT;
-   static volatile u32 WritePtr;  //last written sample
-   static volatile u32 ReadPtr;   //next sample to read
-	const u32 ptr = (WritePtr+1)%RingBufferSampleCount;
-	RingBuffer[ptr].r=r;
-	RingBuffer[ptr].l=l;
-	WritePtr=ptr;
-
-	if (WritePtr==(SAMPLE_COUNT-1))
-      audio_batch_cb((const int16_t*)RingBuffer, SAMPLE_COUNT);
-}
 
 //no DSP for now in this version
 void AICA_Sample32(void)

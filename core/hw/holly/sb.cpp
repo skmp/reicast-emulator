@@ -5,16 +5,13 @@
 
 #include "types.h"
 #include "sb.h"
-#include "holly_intc.h"
 
-#include "hw/sh4/sh4_mem.h"
-#include "hw/sh4/sh4_interrupts.h"
+#include "holly_intc.h"
 #include "hw/pvr/pvr_sb_regs.h"
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/maple/maple_if.h"
-#include "hw/aica/aica.h"
+#include "hw/aica/aica_if.h"
 
-#include "reios/reios.h"
 #include "hw/naomi/naomi.h"
 
 Array<RegisterStruct> sb_regs(0x540, false);

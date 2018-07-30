@@ -6,6 +6,7 @@
 //
 #include "dsp.h"
 #include "aica.h"
+#include "aica_if.h"
 
 #if HOST_CPU != CPU_X86 || FEAT_DSPREC != DYNAREC_JIT
 

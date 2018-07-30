@@ -1,17 +1,10 @@
 #include <time.h>
 #include <math.h>
 
-#include <libretro.h>
-
 #include "aica.h"
-#include "sgc_if.h"
 #include "dsp.h"
-#include "types.h"
-
-#include "hw/sh4/sh4_mem.h"
-#include "hw/holly/holly_intc.h"
-#include "hw/holly/sb.h"
-#include "hw/arm7/arm7.h"
+#include "sgc_if.h"
+#include "aica_if.h"
 
 u8 aica_reg[0x8000];
 

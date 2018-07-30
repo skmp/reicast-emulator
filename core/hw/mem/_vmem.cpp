@@ -10,10 +10,7 @@
 #endif
 
 #include "_vmem.h"
-#include "hw/pvr/pvr_mem.h"
-#include "hw/sh4/sh4_mem.h"
-
-#include "hw/aica/aica.h"
+#include "hw/aica/aica_if.h"
 #include "hw/sh4/dyna/blockmanager.h"
 
 #define HANDLER_MAX 0x1F

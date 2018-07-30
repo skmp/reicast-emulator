@@ -20,6 +20,7 @@
 #include "arm7.h"
 #include "types.h"
 
+#include "hw/aica/aica_if.h"
 #include "hw/sh4/sh4_core.h"
 
 #define update_armintc() arm_Reg[INTR_PEND].I=e68k_out && armFiqEnable

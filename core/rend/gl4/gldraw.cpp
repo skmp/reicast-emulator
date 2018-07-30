@@ -112,7 +112,6 @@ s32 SetTileClip(u32 val, bool set)
 		return 0;
 	
 	if (set && clip_mode) {
-   {
       csx /= scale_x;
       csy /= scale_y;
       cex /= scale_x;

@@ -17,7 +17,7 @@ u32 palette16_ram[1024];
 u32 palette32_ram[1024];
 
 #ifdef HAVE_TEXUPSCALE
-ctpl::thread_pool ThreadPool;
+ctpl::thread_pool ThreadPool(1);
 #endif
 
 u32 detwiddle[2][8][1024];
@@ -352,8 +352,9 @@ static void deposterizeV(u32* data, u32* out, int w, int h, int l, int u) {
 
 void parallelize(const std::function<void(int,int)> &func, int start, int end, int width /* = 0 */)
 {
-	if (ThreadPool.size() == 0)
-		ThreadPool.resize(max(1, (int)settings.pvr.MaxThreads));
+   int max_threads = max(1, (int)settings.pvr.MaxThreads);
+   if (ThreadPool.size() != max_threads)
+      ThreadPool.resize(max_threads);
 
 	static const int CHUNK = 8;	// 32x32 best if not parall'ed (chunk >= 32)
 									//			 8: 0.0481391 ms

@@ -11,7 +11,7 @@ HAVE_GENERIC_JIT   := 1
 HAVE_GL3      := 0
 FORCE_GLES    := 0
 STATIC_LINKING:= 0
-HAVE_TEXUPSCALE := 0
+HAVE_TEXUPSCALE := 1
 
 ifeq ($(HAVE_OIT), 1)
 TARGET_NAME   := reicast_oit
@@ -26,6 +26,7 @@ CC_AS    = ${CC_PREFIX}as
 MFLAGS   := 
 ASFLAGS  := 
 LDFLAGS  :=
+LDFLAGS_END :=
 INCFLAGS :=
 LIBS     :=
 CFLAGS   := 
@@ -536,6 +537,9 @@ endif
 
 ifeq ($(HAVE_TEXUPSCALE), 1)
 	CORE_DEFINES += -DHAVE_TEXUPSCALE
+	CXXFLAGS += -fopenmp
+	LDFAGS += -fopenmp
+	LDFLAGS_END += -Wl,-Bstatic -lgmp -Wl,-Bstatic -lgomp 
 	NEED_CXX11=1
 	NEED_PTHREAD=1
 endif
@@ -600,7 +604,7 @@ endif
 
 CFLAGS     += $(fpic)
 CXXFLAGS   += $(fpic)
-LDFLAGS    += $(fpic)
+$(LDFLAGS_END) LDFLAGS    += $(fpic)
 
 OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o) $(SOURCES_ASM:.S=.o)
 
@@ -617,7 +621,7 @@ $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
 else
-	$(LD) $(MFLAGS) $(fpic) $(SHARED) $(LDFLAGS) $(OBJECTS) $(GL_LIB) $(LIBS) -o $@
+	$(LD) $(MFLAGS) $(fpic) $(SHARED) $(LDFLAGS) $(OBJECTS) $(LDFLAGS_END) $(GL_LIB) $(LIBS) -o $@
 endif
 
 %.o: %.cpp

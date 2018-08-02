@@ -537,7 +537,7 @@ endif
 ifeq ($(HAVE_TEXUPSCALE), 1)
 	CORE_DEFINES += -DHAVE_TEXUPSCALE
 	CXXFLAGS += -fopenmp
-	LDFAGS += -fopenmp
+	LDFLAGS += -fopenmp
 ifeq ($(platform), win)
 	LDFLAGS_END += -Wl,-Bstatic -lgmp -Wl,-Bstatic -lgomp 
 endif

@@ -154,12 +154,6 @@ static void LoadSpecialSettings(void)
       {
          log_cb(RETRO_LOG_INFO, "[LUT]: Found game in LUT database..\n");
 
-         if (lut_games[i].aica_interrupt_hack != -1)
-         {
-            log_cb(RETRO_LOG_INFO, "[Hack]: Applying AICA interrupt hack.\n");
-            settings.aica.InterruptHack   = lut_games[i].aica_interrupt_hack;
-         }
-
          if (lut_games[i].dynarec_type != -1)
          {
             log_cb(RETRO_LOG_INFO, "[Hack]: Applying dynarec type hack.\n");
@@ -212,9 +206,6 @@ static void LoadSpecialSettingsNaomi(const char *name)
       if (strstr(lut_games_naomi[i].product_number, name))
       {
          log_cb(RETRO_LOG_INFO, "[LUT]: Found game in LUT database..\n");
-
-         if (lut_games_naomi[i].aica_interrupt_hack != -1)
-            settings.aica.InterruptHack   = lut_games_naomi[i].aica_interrupt_hack;
 
          if (lut_games_naomi[i].dynarec_type != -1)
          {

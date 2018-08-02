@@ -75,9 +75,6 @@ static struct game_type lut_games[] =
    { "T10003D 50", -1, -1, -1, -1, -1, -1,   1, -1  },                /* WWF Royal Rumble (Europe) */
    { "T10005N   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* WWF Royal Rumble (USA) */
 
-   /* AICA Interrupt Hack */
-   { "T1203N    ", -1, -1,  1, -1, -1, -1,  -1, -1  },                /* Street Fighter Alpha 3 */
-
    /* Alpha sort mode */
    { "MK-5100050", -1, -1, -1,  1, -1, -1,  -1, -1  },                /* Sonic Adventure */
 
@@ -100,11 +97,6 @@ static struct game_type lut_games[] =
 
 static struct game_type_naomi lut_games_naomi[] = 
 {
-   /* Update mode fullspeed */
-   /* AICA Interrupt Hack */
-   { "Street Fighter Zero 3 Upper"           , -1, -1,  1, -1, -1, -1,  -1, -1, -1  },                /* Street Fighter Alpha 3 */
-   { "Fist of the North Star - Hokuto no Ken", -1, -1,  1, -1, -1, -1,  -1, -1, -1  },                /* Fist of the North Star - Hokuto no Ken */
-
    /* EG Hack */
    /* Also needs Div S matching disabled */
    { "Metal Slug 6"                          , -1, -1, -1, -1, -1, -1,   1,  1, -1  },                /* Metal Slug 6 */

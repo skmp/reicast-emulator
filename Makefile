@@ -603,7 +603,7 @@ endif
 
 CFLAGS     += $(fpic)
 CXXFLAGS   += $(fpic)
-$(LDFLAGS_END) LDFLAGS    += $(fpic)
+LDFLAGS    += $(fpic)
 
 OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o) $(SOURCES_ASM:.S=.o)
 

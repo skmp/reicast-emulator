@@ -642,11 +642,9 @@ void DrawStrips(GLuint output_fbo)
    if (texSamplers[0] == 0)
 		glGenSamplers(2, texSamplers);
 
-   glcache.ClearColor(0, 0, 0, 0);
-   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
    glcache.DepthMask(GL_TRUE);
    glStencilMask(0xFF);
-   glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
+   glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 
 	SetupMainVBO();
 	//Draw the strips !

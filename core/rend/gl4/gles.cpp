@@ -993,8 +993,6 @@ static bool RenderFrame(void)
    // Color is cleared by the background plane
 
    glcache.Disable(GL_SCISSOR_TEST);
-   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-   glClear(GL_COLOR_BUFFER_BIT); glCheck();
 
 	//move vertex to gpu
 

@@ -320,6 +320,7 @@ struct TextureCacheData
 			}
 #endif
 
+#ifdef HAVE_TEXUPSCALE
 			// xBRZ scaling
 			if (settings.rend.TextureUpscale > 1)
 			{
@@ -334,6 +335,7 @@ struct TextureCacheData
 				upscaled_w *= settings.rend.TextureUpscale;
 				upscaled_h *= settings.rend.TextureUpscale;
 			}
+#endif
 			temp_tex_buffer = pb32.data();
  		}
 		else if (texconv != NULL)

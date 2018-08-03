@@ -16,9 +16,6 @@ def getVersionName = { ->
 }
 
 android {
-    defaultPublishConfig 'release'
-    publishNonDefault true
-
     compileSdkVersion 25
     buildToolsVersion "27.0.3"
 
@@ -49,21 +46,18 @@ android {
 
 
     buildTypes {
-        all {
-            resValue "string", "app_name", "Reicast"
-        }
-
         debug {
             if (System.getenv("TRAVIS_JOB_ID")) {
                 resValue "string", "app_name", "Reicast CI-" + getVersionName()
-                android.defaultConfig.applicationId = "com.reicast.emulator.ci_" + getVersionName().replaceAll('-', '_')
+                applicationIdSuffix ".ci_" + getVersionName().replaceAll('-', '_')
             } else {
                 resValue "string", "app_name", "Reicast DBG-" + getVersionName()
-                android.defaultConfig.applicationId = "com.reicast.emulator.dbg";
+                applicationIdSuffix ".dbg"
             }
         }
 
         release {
+            resValue "string", "app_name", "Reicast"
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
             signingConfig signingConfigs.release

@@ -18,13 +18,11 @@ struct Vertex
 
 	float u,v;
 
-#ifdef HAVE_OIT
    // Two volumes format
 	u8 col1[4];
 	u8 spc1[4];
 
 	float u1,v1;
-#endif
 };
 
 struct PolyParam
@@ -41,11 +39,9 @@ struct PolyParam
 	float zvZ;
 	u32 tileclip;
 	//float zMin,zMax;
-#ifdef HAVE_OIT
    TSP tsp1;
 	TCW tcw1;
 	u32 texid1;
-#endif
 };
 
 struct ModifierVolumeParam
@@ -106,9 +102,7 @@ struct RenderPass {
 	u32 mvo_count;
 	u32 pt_count;
 	u32 tr_count;
-#ifdef HAVE_OIT
    u32 mvo_tr_count;
-#endif
 };
 
 struct rend_context
@@ -131,9 +125,7 @@ struct rend_context
 	List<u16>         idx;
 	List<ModTriangle> modtrig;
 	List<ModifierVolumeParam>  global_param_mvo;
-#ifdef HAVE_OIT
    List<ModifierVolumeParam>  global_param_mvo_tr;
-#endif
 
 	List<PolyParam>   global_param_op;
 	List<PolyParam>   global_param_pt;
@@ -149,9 +141,7 @@ struct rend_context
 		global_param_tr.Clear();
 		modtrig.Clear();
 		global_param_mvo.Clear();
-#ifdef HAVE_OIT
       global_param_mvo_tr.Clear();
-#endif
       render_passes.Clear();
 
 		Overrun=false;
@@ -200,36 +190,28 @@ struct TA_context
 	}
 	void Alloc(bool have_oit)
 	{
-      unsigned vert_size, idx_size, modtrig_size;
+      unsigned modtrig_size = 8192;
+      unsigned    vert_size = 2*1024*1024; //up to 2 mb of vtx data/frame = ~ 38k vtx/frame
       tad.Reset((u8*)OS_aligned_malloc(32, 8*1024*1024));
 
       if (have_oit)
       {
-         idx_size  = 120   *1024; // up to 120K indices (idx have stripification overhead)
-         vert_size = 4*1024*1024; //up to 4 mb of vtx data/frame = ~ 96k vtx/frame
-         modtrig_size = 16384;
-      }
-      else
-      {
-         idx_size  = 60    *1024; // up to 60K indices (idx have stripification overhead)
-         vert_size =   1024*1024; //up to 1 mb of vtx data/frame = ~ 38k vtx/frame
-         modtrig_size = 8192;
+         vert_size    *= 2; //up to 4 mb of vtx data/frame = ~ 96k vtx/frame
+         modtrig_size *= 2;
       }
 
 		rend.verts.InitBytes(vert_size,&rend.Overrun, "verts"); 
-		rend.idx.Init(idx_size,&rend.Overrun, "idx");
+		rend.idx.Init(120*1024,&rend.Overrun, "idx"); // up to 120K indices (idx have stripification overhead)
 		rend.global_param_op.Init(4096,&rend.Overrun, "global_param_op");
 		rend.global_param_pt.Init(4096,&rend.Overrun, "global_param_pt");
 		rend.global_param_mvo.Init(4096,&rend.Overrun, "global_param_mvo");
-#ifdef HAVE_OIT
       rend.global_param_mvo_tr.Init(4096,&rend.Overrun, "global_param_mvo_tr");
-#endif
 #if STRIPS_AS_PPARAMS
       // That makes a lot of polyparams but this is required for proper sorting...
 		// Rez uses more than 8192 translucent polygons sometimes
       rend.global_param_tr.Init(10240, &rend.Overrun, "global_param_tr");
 #else
-		rend.global_param_tr.Init(4096,&rend.Overrun, "global_param_tr");
+		rend.global_param_tr.Init(8192,&rend.Overrun, "global_param_tr");
 #endif
 
 		rend.modtrig.Init(modtrig_size,&rend.Overrun, "modtrig");
@@ -258,9 +240,7 @@ struct TA_context
 		rend.global_param_tr.Free();
 		rend.modtrig.Free();
 		rend.global_param_mvo.Free();
-#ifdef HAVE_OIT
       rend.global_param_mvo_tr.Free();
-#endif
       rend.render_passes.Free();
 	}
 };

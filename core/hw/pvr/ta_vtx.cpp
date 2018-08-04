@@ -1573,17 +1573,14 @@ bool ta_parse_vdrc(TA_context* ctx)
 
       rv = true; //whatever
 	}
-#ifdef HAVE_OIT
+
    bool overrun = ctx->rend.Overrun;
-#endif
 
 	vd_ctx->rend = vd_rc;
 	vd_ctx = 0;
    ctx->rend_inuse.Unlock();
 
-#ifdef HAVE_OIT
    ctx->rend.Overrun = overrun;
-#endif
 
 	return rv;
 }

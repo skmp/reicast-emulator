@@ -12,6 +12,7 @@ HAVE_GL3      := 0
 FORCE_GLES    := 0
 STATIC_LINKING:= 0
 HAVE_TEXUPSCALE := 1
+HAVE_OPENMP   := 1
 
 ifeq ($(HAVE_OIT), 1)
 TARGET_NAME   := reicast_oit
@@ -240,6 +241,7 @@ else ifneq (,$(findstring osx,$(platform)))
         else
                 HAVE_GENERIC_JIT   = 0
 	endif
+	HAVE_OPENMP=0
 
 # iOS
 else ifneq (,$(findstring ios,$(platform)))
@@ -278,6 +280,7 @@ else ifneq (,$(findstring ios,$(platform)))
 		CXX += -miphoneos-version-min=5.0
 		PLATCFLAGS += -miphoneos-version-min=5.0
 	endif
+	HAVE_OPENMP=0
 
 # Theos iOS
 else ifneq (,$(findstring theos_ios,$(platform)))
@@ -536,8 +539,11 @@ endif
 
 ifeq ($(HAVE_TEXUPSCALE), 1)
 	CORE_DEFINES += -DHAVE_TEXUPSCALE
+ifeq ($(HAVE_OPENMP), 1)
+	CFLAGS += -fopenmp
 	CXXFLAGS += -fopenmp
 	LDFLAGS += -fopenmp
+endif
 ifeq ($(platform), win)
 	LDFLAGS_END += -Wl,-Bstatic -lgmp -Wl,-Bstatic -lgomp 
 endif

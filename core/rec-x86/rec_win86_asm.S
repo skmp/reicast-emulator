@@ -105,7 +105,7 @@ do_iter:
 	pop ecx
 	call _rdv_DoInterrupts
 	mov ecx,eax
-   mov edx,[p_sh4rcb];
+   mov edx,[_p_sh4rcb];
    add edx,[cpurun_offset];
    cmp dword ptr [edx],0;
    jz cleanup;

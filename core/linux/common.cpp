@@ -72,35 +72,36 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	//printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,ctx->uc_mcontext.arm_pc,dyna_cde);
 
 
-		#if HOST_CPU==CPU_ARM
-			else if (dyna_cde)
-			{
-				ctx.pc = (u32)ngen_readm_fail_v2((u32*)ctx.pc, ctx.r, (unat)si->si_addr);
+	#if HOST_CPU==CPU_ARM
+	if (dyna_cde) {
+		ctx.pc = (u32)ngen_readm_fail_v2((u32*)ctx.pc, ctx.r, (unat)si->si_addr);
 
-				context_to_segfault(&ctx, segfault_ctx);
-			}
-		#elif HOST_CPU==CPU_X86
-			else if (ngen_Rewrite((unat&)ctx.pc, *(unat*)ctx.esp, ctx.eax))
-			{
-				//remove the call from call stack
-				ctx.esp += 4;
-				//restore the addr from eax to ecx so it's valid again
-				ctx.ecx = ctx.eax;
+		context_to_segfault(&ctx, segfault_ctx);
+	} else
+	#elif HOST_CPU==CPU_X86
+	if (ngen_Rewrite((unat&)ctx.pc, *(unat*)ctx.esp, ctx.eax)) {
+		//remove the call from call stack
+		ctx.esp += 4;
+		//restore the addr from eax to ecx so it's valid again
+		ctx.ecx = ctx.eax;
 
-				context_to_segfault(&ctx, segfault_ctx);
-			}
-		#elif HOST_CPU == CPU_X64
-			//x64 has no rewrite support
-		#else
-			#error JIT: Not supported arch
-		#endif
+		context_to_segfault(&ctx, segfault_ctx);
+	} else
+	#elif HOST_CPU == CPU_X64
+	//x64 has no rewrite support
+	#else
+	#error JIT: Not supported arch
 	#endif
-	else
+	#endif
+	#if HOST_CPU==CPU_ARM || HOST_CPU==CPU_X86
 	{
+	#endif
 		printf("SIGSEGV @ %p (fault_handler+0x%p) ... %p -> was not in vram\n", ctx.pc, ctx.pc - (unat)fault_handler, si->si_addr);
 		die("segfault");
 		signal(SIGSEGV, SIG_DFL);
+	#if HOST_CPU==CPU_ARM || HOST_CPU==CPU_X86
 	}
+	#endif
 }
 #endif
 

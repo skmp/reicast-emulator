@@ -103,6 +103,7 @@ void Sh4_int_Run(void)
          UpdateSystem_INTC();
       }
    }
+   sh4_int_bCpuRun=false;
 }
 
 

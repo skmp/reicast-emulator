@@ -25,8 +25,6 @@ struct DynaRBI : RuntimeBlockInfo
 };
 
 extern int cycle_counter;
-unsigned int ngen_required = true;
-extern bool inside_loop;
 
 extern "C" {
 
@@ -54,12 +52,7 @@ void ngen_mainloop(void* v_cntx)
       if (UpdateSystem()) {
          rdv_DoInterrupts_pc(ctx->cntx.pc);
       }
-   }while (inside_loop && ngen_required);
-}
-
-void ngen_terminate(void)
-{
-   ngen_required = false;
+   }while (sh4_int_bCpuRun);
 }
 
 RuntimeBlockInfo* ngen_AllocateBlock(void)

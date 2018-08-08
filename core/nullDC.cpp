@@ -401,6 +401,11 @@ void dc_term(void)
 	SaveRomFiles(get_writable_data_path(""));
 }
 
+void dc_stop()
+{
+	sh4_cpu.Stop();
+}
+
 void LoadSettings(void)
 {
 	settings.dynarec.Enable			= 1;

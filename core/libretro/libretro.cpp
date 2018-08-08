@@ -40,7 +40,6 @@ s8 joyx[4], joyy[4];
 
 bool enable_purupuru = true;
 
-bool inside_loop     = true;
 static bool first_run = true;
 
 enum DreamcastController
@@ -105,6 +104,9 @@ static retro_rumble_interface rumble;
 
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
+void dc_term(void);
+void rend_terminate();
+void dc_stop();
 
 static int co_argc;
 static wchar** co_argv;
@@ -118,7 +120,7 @@ void co_dc_yield(void)
 {
    if (settings.UpdateMode || settings.UpdateModeForced)
       return;
-   inside_loop = false;
+   dc_stop();
 }
 
 void retro_set_video_refresh(retro_video_refresh_t cb)
@@ -311,11 +313,6 @@ void retro_init(void)
    unsigned color_mode = RETRO_PIXEL_FORMAT_XRGB8888;
    environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &color_mode);
 }
-
-// TODO/FIXME - forward declarations
-void dc_term(void);
-void rend_terminate();
-void ngen_terminate();
 
 void retro_deinit(void)
 {
@@ -703,7 +700,6 @@ void retro_run (void)
    video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
 #endif
    is_dupe     = true;
-   inside_loop = true;
 }
 
 void retro_reset (void)
@@ -1026,7 +1022,7 @@ void retro_unload_game(void)
 #endif
    printf("...Done\n");
    rend_terminate();
-   ngen_terminate();
+   dc_stop();
    dc_term();
 }
 
@@ -1158,8 +1154,8 @@ void os_DoEvents(void)
 
    if (settings.UpdateMode || settings.UpdateModeForced)
    {
-      inside_loop = false;
       rend_end_render();
+      dc_stop();
    }
 }
 

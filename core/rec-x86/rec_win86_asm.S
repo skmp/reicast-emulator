@@ -80,7 +80,7 @@ _ngen_mainloop:
 	push ebp
 	push ebx
 
-	mov ecx,0xA0000000
+        mov ecx,[eax-184]       # PC - was 0xA0000000
 	mov dword ptr _cycle_counter, 448 #SH4_TIMESLICE
 
 	mov dword ptr _loop_no_update,offset no_update

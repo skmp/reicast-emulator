@@ -236,6 +236,11 @@ void DYNACALL PrintBlock(u32 pc)
 	printf("\n");
 }
 
+u32* GetRegPtr(u32 reg)
+{
+	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
+}
+
 u32 cvld;
 u32 rdmt[6];
 extern int mips_counter;

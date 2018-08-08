@@ -77,11 +77,6 @@ struct CachedBlockInfo: RuntimeBlockInfo_Core
 
 void bm_WriteBlockMap(const string& file);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr);
 
 RuntimeBlockInfo* bm_GetBlock2(void* dynarec_code);
@@ -97,7 +92,3 @@ void bm_Init();
 void bm_Term();
 
 void bm_vmem_pagefill(void** ptr,u32 PAGE_SZ);
-
-#ifdef __cplusplus
-}
-#endif

@@ -543,6 +543,9 @@ ifeq ($(HAVE_OPENMP), 1)
 	CFLAGS += -fopenmp
 	CXXFLAGS += -fopenmp
 	LDFLAGS += -fopenmp
+else
+	CFLAGS += -DTARGET_NO_OPENMP
+	CXXFLAGS += -DTARGET_NO_OPENMP
 endif
 ifeq ($(platform), win)
 	LDFLAGS_END += -Wl,-Bstatic -lgmp -Wl,-Bstatic -lgomp 

@@ -9,7 +9,7 @@
 .globl _cycle_counter
 .globl _loop_no_update
 .globl _intc_sched
-.globl __Z10bm_GetCodej
+.globl _bm_GetCode
 .globl _UpdateSystem
 .globl _rdv_DoInterrupts
 .globl _rdv_BlockCheckFail
@@ -91,7 +91,7 @@ _ngen_mainloop:
 #	next_pc _MUST_ be on ecx
 no_update:
 	mov esi,ecx
-   call __Z10bm_GetCodej #bm_GetCode
+   call _bm_GetCode #bm_GetCode
 	jmp eax
 
 intc_sched_offs:

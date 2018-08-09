@@ -77,7 +77,7 @@ struct CachedBlockInfo: RuntimeBlockInfo_Core
 
 void bm_WriteBlockMap(const string& file);
 
-DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr);
+extern "C" DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr);
 
 RuntimeBlockInfo* bm_GetBlock2(void* dynarec_code);
 RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code);

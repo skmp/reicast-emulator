@@ -160,8 +160,11 @@
 		ConfigFile mf;
 		mf.parse(fd);
 
+		string name = mf.get("emulator", "mapping_name", "<Unknown>");
+		char * cstr = new char[name.length()+1];
+  		strcpy (cstr, name.c_str());
 		EvdevControllerMapping mapping = {
-			mf.get("emulator", "mapping_name", "<Unknown>").c_str(),
+			cstr,
 			load_keycode(&mf, "dreamcast", "btn_a"),
 			load_keycode(&mf, "dreamcast", "btn_b"),
 			load_keycode(&mf, "dreamcast", "btn_c"),
@@ -194,6 +197,7 @@
 			mf.get_bool("compat", "axis_trigger_left_inverted", false),
 			mf.get_bool("compat", "axis_trigger_right_inverted", false)
 		};
+
 		return mapping;
 	}
 

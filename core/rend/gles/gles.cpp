@@ -15,6 +15,15 @@
 #include "hw/pvr/Renderer_if.h"
 #include "../../hw/mem/_vmem.h"
 
+#if defined(HAVE_OPENGLES2)
+#ifndef GL_RED
+#define GL_RED                            0x1903
+#endif
+#ifndef GL_MAJOR_VERSION
+#define GL_MAJOR_VERSION                  0x821B
+#endif
+#endif
+
 void GenSorted(int first, int count);
 
 extern retro_environment_t environ_cb;
@@ -124,12 +133,10 @@ void main() \n\
 #undef vary
 #define vary "in"
 #define FOG_CHANNEL "r"
-#define FOG_IMG_TYPE GL_RED
 #else
 #define FRAGCOL "gl_FragColor"
 #define TEXLOOKUP "texture2D"
 #define FOG_CHANNEL "a"
-#define FOG_IMG_TYPE GL_ALPHA
 #endif
 
 const char* PixelPipelineShader =
@@ -329,6 +336,29 @@ int GetProgramID(
    rv<<=1; rv|=pp_BumpMap;
 
 	return rv;
+}
+
+void findGLVersion()
+{
+#if defined(HAVE_OPENGLES) || defined(HAVE_OPENGLES2)
+   gl.is_gles          = true;
+#if defined(HAVE_OPENGLES3)
+   gl.gl_version          = "GLES3";
+   gl.glsl_version_header = "#version 300 es";
+#else
+   gl.gl_version          = "GLES2";
+   gl.glsl_version_header = "";
+#endif
+#else
+   gl.is_gles             = false;
+   gl.gl_version          = "GL";
+   gl.glsl_version_header = "#version 140";
+#endif
+#if !defined(GLES) && defined(HAVE_GL3)
+   gl.fog_image_format = GL_RED;
+#else
+   gl.fog_image_format = GL_ALPHA;
+#endif
 }
 
 static GLuint gl_CompileShader(const char* shader,GLuint type)
@@ -586,6 +616,8 @@ static bool gl_create_resources(void)
 		}
 	}
 
+   findGLVersion();
+
    char vshader[8192];
 	sprintf(vshader, VertexShaderSource, 1);
 
@@ -627,7 +659,7 @@ void UpdateFogTexture(u8 *fog_table)
 		temp_tex_buffer[i + 128] = fog_table[i * 4 + 1];
 	}
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexImage2D(GL_TEXTURE_2D, 0, FOG_IMG_TYPE, 128, 2, 0, FOG_IMG_TYPE, GL_UNSIGNED_BYTE, temp_tex_buffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, gl.fog_image_format, 128, 2, 0, gl.fog_image_format, GL_UNSIGNED_BYTE, temp_tex_buffer);
 
 	glActiveTexture(GL_TEXTURE0);
 }

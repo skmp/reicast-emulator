@@ -7,6 +7,7 @@ NO_THREADS    := 1
 NO_EXCEPTIONS := 0
 NO_NVMEM      := 0
 NO_VERIFY     := 1
+HAVE_LTCG     := 1
 HAVE_GENERIC_JIT   := 1
 HAVE_GL3      := 0
 FORCE_GLES    := 0
@@ -469,6 +470,10 @@ RZDCY_CFLAGS += $(HOST_CPU_FLAGS)
 
 include Makefile.common
 
+ifeq ($(WITH_DYNAREC), x86)
+	HAVE_LTCG = 0
+endif
+
 ifeq ($(DEBUG),1)
 	OPTFLAGS       := -O0
 	LDFLAGS        += -g
@@ -479,11 +484,16 @@ ifneq (,$(findstring msvc,$(platform)))
 else
 	OPTFLAGS       := -O3
 endif
-	CORE_DEFINES   += -DNDEBUG -flto
+	CORE_DEFINES   += -DNDEBUG
 	LDFLAGS        += -DNDEBUG
 
+
+ifeq ($(HAVE_LTCG), 1)
+	CORE_DEFINES   += -flto
+endif
 	CORE_DEFINES      += -DRELEASE
 endif
+
 
 ifeq ($(HAVE_GL3), 1)
 	HAVE_CORE = 1

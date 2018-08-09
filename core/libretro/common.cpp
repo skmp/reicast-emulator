@@ -685,7 +685,7 @@ void common_libretro_setup(void)
    // setup_seh();
    AddVectoredExceptionHandler(1, ExceptionHandler);
 #endif
-   SetUnhandledExceptionFilter(0);
+   SetUnhandledExceptionFilter(&ExceptionHandler);
 #else
    exception_handler_install_platform();
    signal(SIGINT, exit);

@@ -127,7 +127,7 @@ endif
 		CXXFLAGS += -fexceptions
 		HAVE_GENERIC_JIT   = 0
 	else ifeq ($(WITH_DYNAREC), x86)
-		CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC
+		CFLAGS += -m32 -D TARGET_LINUX_x86
 		SINGLE_PREC_FLAGS=1
 		CXXFLAGS += -fno-exceptions
 		MFLAGS += -m32
@@ -403,9 +403,10 @@ endif
 	CXX = g++
 ifeq ($(WITH_DYNAREC), x86)
 	LDFLAGS += -m32
-	CFLAGS += -D TARGET_NO_AREC -m32
-endif
+	CFLAGS += -m32
+else
 	CFLAGS += -D TARGET_NO_AREC
+endif
 
 endif
 

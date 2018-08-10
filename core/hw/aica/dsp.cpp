@@ -69,7 +69,7 @@ s32 DYNACALL UNPACK(u16 val)
 }
 
 #if HOST_CPU == CPU_X86 && FEAT_DSPREC == DYNAREC_JIT
-#include "emitter/x86_emitter.h"
+#include "../../rec-x86/x86_emitter.h"
 
 const bool SUPPORT_NOFL=false;
 
@@ -219,6 +219,9 @@ void _dsp_debug_step_end()
 }
 #define nwtn(x) verify(!dsp.regs_init.x)
 #define wtn(x) nwtn(x);dsp.regs_init.x=true;
+
+#include "aica_if.h"
+#include "aica_mem.h"
 
 //sign extend to 32 bits
 void dsp_rec_se(x86_block& x86e,x86_gpr_reg reg,u32 src_sz,u32 dst_sz=0xFF)

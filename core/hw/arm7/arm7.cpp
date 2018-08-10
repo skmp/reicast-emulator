@@ -742,13 +742,13 @@ u8* icPtr;
 u8* ICache;
 
 const u32 ICacheSize=1024*1024;
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 u8 ARM7_TCB[ICacheSize+4096];
 #elif defined(__linux__)
 
 u8 ARM7_TCB[ICacheSize+4096] __attribute__((section(".text")));
 
-#elif HOST_OS==OS_DARWIN
+#elif defined(__MACH__)
 u8 ARM7_TCB[ICacheSize+4096] __attribute__((section("__TEXT, .text")));
 #else
 #error ARM7_TCB ALLOC
@@ -2143,16 +2143,16 @@ void armt_init()
 	//align to next page ..
 	ICache = (u8*)(((unat)ARM7_TCB+4095)& ~4095);
 
-	#if HOST_OS==OS_DARWIN
+	#ifdef __MACH__
 		//Can't just mprotect on iOS
 		munmap(ICache, ICacheSize);
 		ICache = (u8*)mmap(ICache, ICacheSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
 	#endif
 
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 	DWORD old;
 	VirtualProtect(ICache,ICacheSize,PAGE_EXECUTE_READWRITE,&old);
-#elif defined(__linux__) || HOST_OS == OS_DARWIN
+#elif defined(__linux__) || defined(__MACH__)
 
 	printf("\n\t ARM7_TCB addr: %p | from: %p | addr here: %p\n", ICache, ARM7_TCB, armt_init);
 

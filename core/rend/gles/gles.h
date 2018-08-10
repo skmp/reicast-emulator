@@ -113,6 +113,9 @@ extern struct ShaderUniforms_t
 		if (s->scale!=-1)
 			glUniform4fv( s->scale, 1, scale_coefs);
 
+		if (s->depth_scale!=-1)
+			glUniform4fv( s->depth_scale, 1, depth_coefs);
+
 		if (s->sp_FOG_DENSITY!=-1)
 			glUniform1f( s->sp_FOG_DENSITY,fog_den_float);
 

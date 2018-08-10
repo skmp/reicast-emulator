@@ -40,88 +40,68 @@ float fb_scale_x = 0.0f;
 float fb_scale_y = 0.0f;
 float scale_x, scale_y;
 
-#if !defined(GLES) && defined(HAVE_GL3)
-#define attr "in"
-#define vary "out"
-#else
-#define attr "attribute"
-#define vary "varying"
-#define FRAGCOL "gl_FragColor"
-#define TEXLOOKUP "texture2D"
-#endif
-
-#ifdef HAVE_OPENGLES
-#define HIGHP "highp"
-#define MEDIUMP "mediump"
-#define LOWP "lowp"
-#else
-#define HIGHP
-#define MEDIUMP
-#define LOWP
-#endif
-
 //Fragment and vertex shaders code
 //pretty much 1:1 copy of the d3d ones for now
 const char* VertexShaderSource =
-#if !defined(HAVE_OPENGLES)
-#if defined(HAVE_GL3)
-   "#version 130 \n"
-#else
-   "#version 120 \n"
-#endif
-#endif
 "\
+%s \n\
+#define TARGET_GL %s \n\
 #define pp_Gouraud %d \n\
- \n"
-#ifndef GLES
-#if defined(HAVE_GL3)
-"\
+ \n\
+#define GLES2 0 \n\
+#define GLES3 1 \n\
+#define GL 2 \n\
+#define GL3 3 \n\
+ \n\
+#if TARGET_GL == GLES2 \n\
+#define in attribute \n\
+#define out varying \n\
+#endif \n\
+ \n\
+ \n\
+#if TARGET_GL == GL3 \n\
 #if pp_Gouraud == 0 \n\
 #define INTERPOLATION flat \n\
 #else \n\
 #define INTERPOLATION smooth \n\
-#endif \n"
-#else
-"\
-#define INTERPOLATION \n"
-#endif
-#else
-"\
-#define INTERPOLATION \n"
-#endif
-"\
+#endif \n\
+#else \n\
+#define INTERPOLATION \n\
+#endif \n\
+\n\
 /* Vertex constants*/  \n\
-uniform " HIGHP " vec4      scale; \n\
+uniform highp vec4      scale; \n\
+uniform highp vec4      depth_scale; \n\
 /* Vertex input */ \n\
-" attr " " HIGHP " vec4    in_pos; \n\
-" attr " " LOWP " vec4     in_base; \n\
-" attr " " LOWP " vec4     in_offs; \n\
-" attr " " MEDIUMP " vec2  in_uv; \n\
+in highp vec4    in_pos; \n\
+in lowp  vec4     in_base; \n\
+in lowp vec4     in_offs; \n\
+in mediump vec2  in_uv; \n\
 /* output */ \n\
-INTERPOLATION " vary " " LOWP " vec4 vtx_base; \n\
-INTERPOLATION " vary " " LOWP " vec4 vtx_offs; \n\
-              " vary " " MEDIUMP "vec2 vtx_uv; \n\
+INTERPOLATION out lowp vec4 vtx_base; \n\
+INTERPOLATION out lowp vec4 vtx_offs; \n\
+              out mediump vec2 vtx_uv; \n\
 void main() \n\
 { \n\
 	vtx_base=in_base; \n\
 	vtx_offs=in_offs; \n\
 	vtx_uv=in_uv; \n\
-	vec4 vpos=in_pos; \n"
-#ifndef GLES
-   "\
+	vec4 vpos=in_pos; \n\
+#if TARGET_GL != GLES2 \n\
    if (isinf(vpos.z)) \n\
 		vpos.w = 1.18e-38; \n\
-	else \n"
-#endif
-   "\
-		vpos.w = 1.0 / vpos.z; \n"
-	"\
+	else \n\
+#endif \n\
+		vpos.w = 1.0 / vpos.z; \n\
+#if TARGET_GL != GLES2 \n\
    if (vpos.w < 0.0) { \n\
       gl_Position = vec4(0.0, 0.0, 0.0, vpos.w); \n\
          return; \n\
    } \n\
-   vpos.z = vpos.w; \n"
-   "\
+   vpos.z = vpos.w; \n\
+#else \n\
+   vpos.z=depth_scale.x+depth_scale.y*vpos.w;  \n\
+#endif \n\
 	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
 	vpos.xy*=vpos.w;  \n\
 	gl_Position = vpos; \n\
@@ -140,16 +120,10 @@ void main() \n\
 #endif
 
 const char* PixelPipelineShader =
-#ifndef HAVE_OPENGLES
-#if defined(HAVE_GL3)
-      "#version 130 \n"
-      "out vec4 FragColor; \n"
-#else
-      "#version 120 \n"
-#endif
-#endif
 "\
-\
+%s \n\
+#define TARGET_GL %s \n\
+\n\
 #define cp_AlphaTest %d \n\
 #define pp_ClipTestMode %d \n\
 #define pp_UseAlpha %d \n\
@@ -159,45 +133,63 @@ const char* PixelPipelineShader =
 #define pp_Offset %d \n\
 #define pp_FogCtrl %d \n\
 #define pp_Gouraud %d \n\
- \n"
-#if defined(HAVE_GL3)
-#ifndef GLES
-"\
+#define pp_BumpMap %d \n\
+#define PI 3.1415926 \n\
+\n\
+#define GLES2 0 \n\
+#define GLES3 1 \n\
+#define GL 2 \n\
+#define GL3 3 \n\
+ \n\
+#if TARGET_GL == GLES3 \n\
+out highp vec4 FragColor; \n\
+#define gl_FragColor FragColor \n\
+#define FOG_CHANNEL a \n\
+#elif TARGET_GL == GL \n\
+out highp vec4 FragColor; \n\
+#define gl_FragColor FragColor \n\
+#define FOG_CHANNEL r \n\
+#elif TARGET_GL == GL3 \n\
+out highp vec4 FragColor; \n\
+#define gl_FragColor FragColor \n\
+#define FOG_CHANNEL r \n\
+#else \n\
+#define in varying \n\
+#define texture texture2D \n\
+#define FOG_CHANNEL a \n\
+#endif \n\
+ \n\
+ \n\
+#if TARGET_GL == GL3 \n\
 #if pp_Gouraud == 0 \n\
 #define INTERPOLATION flat \n\
 #else \n\
 #define INTERPOLATION smooth \n\
-#endif \n"
-#else
-"\
-#define INTERPOLATION \n"
-#endif
-#else
-"\
-#define INTERPOLATION \n"
-#endif
-"#define pp_BumpMap %d \n\
-#define PI 3.1415926 \n\
+#endif \n\
+#else \n\
+#define INTERPOLATION \n\
+#endif \n\
+\n\
 /* Shader program params*/ \n\
 /* gles has no alpha test stage, so its emulated on the shader */ \n\
-uniform " LOWP " float cp_AlphaTestValue; \n\
-uniform " LOWP " vec4 pp_ClipTest; \n\
-uniform " LOWP " vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
-uniform " HIGHP " float sp_FOG_DENSITY; \n\
+uniform lowp float cp_AlphaTestValue; \n\
+uniform lowp vec4 pp_ClipTest; \n\
+uniform lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
+uniform highp float sp_FOG_DENSITY; \n\
 uniform sampler2D tex,fog_table; \n\
-uniform " LOWP " float trilinear_alpha; \n\
+uniform lowp float trilinear_alpha; \n\
 /* Vertex input*/ \n\
-INTERPOLATION " vary LOWP " vec4 vtx_base; \n\
-INTERPOLATION " vary LOWP " vec4 vtx_offs; \n\
-" vary " " MEDIUMP " vec2 vtx_uv; \n\
-" LOWP " float fog_mode2(" HIGHP " float w) \n\
+INTERPOLATION in lowp vec4 vtx_base; \n\
+INTERPOLATION in lowp vec4 vtx_offs; \n\
+in mediump vec2 vtx_uv; \n\
+lowp float fog_mode2(highp float w) \n\
 { \n\
-   " HIGHP " float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\
-   float exp         = floor(log2(z)); \n\
-   " HIGHP " float m = z * 16.0 / pow(2.0, exp) - 16.0; \n\
-   float idx         = floor(m) + exp * 16.0 + 0.5; \n\
-   vec4 fog_coef = " TEXLOOKUP "(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0)); \n\
-   return fog_coef." FOG_CHANNEL "; \n\
+   highp float z   = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\
+   highp float exp = floor(log2(z)); \n\
+   highp float m = z * 16.0 / pow(2.0, exp) - 16.0; \n\
+   lowp float idx = floor(m) + exp * 16.0 + 0.5; \n\
+   highp vec4 fog_coef = texture(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0)); \n\
+   return fog_coef.FOG_CHANNEL; \n\
 } \n\
 void main() \n\
 { \n\
@@ -214,7 +206,7 @@ void main() \n\
 			discard; \n\
 	#endif \n\
 	\n\
-   " LOWP " vec4 color=vtx_base; \n\
+   lowp vec4 color=vtx_base; \n\
 	#if pp_UseAlpha==0 \n\
 		color.a=1.0; \n\
 	#endif\n\
@@ -223,7 +215,7 @@ void main() \n\
 	#endif\n\
 	#if pp_Texture==1 \n\
 	{ \n\
-      " LOWP " vec4 texcol=" TEXLOOKUP "(tex, vtx_uv); \n\
+      lowp vec4 texcol=texture(tex, vtx_uv); \n\
 		 \n\
 		#if pp_BumpMap == 1 \n\
 			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0; \n\
@@ -278,33 +270,38 @@ void main() \n\
 	#endif\n\
 	#if cp_AlphaTest == 1 \n\
       color.a=1.0; \n\
-	#endif  \n"
-#ifndef GLES
-   "\
+	#endif  \n\
+   //color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);\n\
+#if TARGET_GL != GLES2 \n\
 	float w = gl_FragCoord.w * 100000.0; \n\
-	gl_FragDepth = log2(1.0 + w) / 34.0; \n"
-#endif
-	FRAGCOL "=color; \n\
+	gl_FragDepth = log2(1.0 + w) / 34.0; \n\
+#endif \n\
+   gl_FragColor =color; \n\
 }";
 
 const char* ModifierVolumeShader =
-#ifndef GLES
-#if defined(HAVE_GL3)
-      "#version 130 \n"
-      "out vec4 FragColor; \n"
-#endif
-#endif
-" \
-uniform " LOWP " float sp_ShaderColor; \n\
+"\
+%s \n\
+#define TARGET_GL %s \n\
+ \n\
+#define GLES2 0 \n\
+#define GLES3 1 \n\
+#define GL 2 \n\
+ \n\
+#if TARGET_GL != GLES2 \n\
+out highp vec4 FragColor; \n\
+#define gl_FragColor FragColor \n\
+#endif \n\
+ \n\
+uniform lowp float sp_ShaderColor; \n\
 /* Vertex input*/ \n\
 void main() \n\
-{ \n"
-#ifndef GLES
-	"\
+{ \n\
+#if TARGET_GL != GLES2 \n\
 	float w = gl_FragCoord.w * 100000.0; \n\
-	gl_FragDepth = log2(1.0 + w) / 34.0; \n"
-#endif
-	FRAGCOL "=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
+   gl_FragDepth = log2(1.0 + w) / 34.0; \n\
+#endif \n\
+   gl_FragColor=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
 }";
 
 
@@ -352,6 +349,9 @@ void findGLVersion()
 #else
    gl.is_gles             = false;
    gl.gl_version          = "GL";
+#if defined(HAVE_GL3)
+   gl.gl_version          = "GL3";
+#endif
    gl.glsl_version_header = "#version 140";
 #endif
 #if !defined(GLES) && defined(HAVE_GL3)
@@ -447,11 +447,11 @@ bool CompilePipelineShader(PipelineShader *s)
 {
    char vshader[8192];
 
-	sprintf(vshader, VertexShaderSource, s->pp_Gouraud);
+   sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, s->pp_Gouraud);
 
 	char pshader[8192];
 
-	sprintf(pshader,PixelPipelineShader,
+   sprintf(pshader,PixelPipelineShader, gl.glsl_version_header, gl.gl_version,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
                 s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap);
 
@@ -619,9 +619,11 @@ static bool gl_create_resources(void)
    findGLVersion();
 
    char vshader[8192];
-	sprintf(vshader, VertexShaderSource, 1);
+   sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, 1);
+   char fshader[8192];
+	sprintf(fshader, ModifierVolumeShader, gl.glsl_version_header, gl.gl_version);
 
-   gl.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
+   gl.modvol_shader.program=gl_CompileAndLink(vshader, fshader);
 	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 

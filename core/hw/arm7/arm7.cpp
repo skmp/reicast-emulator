@@ -1516,186 +1516,17 @@ bool intState = false;
 bool stopState = false;
 bool holdState = false;
 
+void CPUSwitchMode(int mode, bool saveState, bool breakLoop=true);
+extern "C" void CPUFiq();
+void CPUUpdateCPSR();
+void CPUUpdateFlags();
+void CPUSoftwareInterrupt(int comment);
+void CPUUndefinedException();
+
+
 extern "C" void CPUFiq();
 
-static void CPUUpdateCPSR(void)
-{
-	reg_pair CPSR;
-
-	CPSR.I = reg[RN_CPSR].I & 0x40;
-
-	/*
-	if(N_FLAG)
-		CPSR |= 0x80000000;
-	if(Z_FLAG)
-		CPSR |= 0x40000000;
-	if(C_FLAG)
-		CPSR |= 0x20000000;
-	if(V_FLAG)
-		CPSR |= 0x10000000;
-	if(!armState)
-		CPSR |= 0x00000020;
-	*/
-
-	CPSR.PSR.NZCV=reg[RN_PSR_FLAGS].FLG.NZCV;
-
-
-	if (!armFiqEnable)
-		CPSR.I |= 0x40;
-	if(!armIrqEnable)
-		CPSR.I |= 0x80;
-
-	CPSR.PSR.M=armMode;
-
-	reg[16].I = CPSR.I;
-}
-
-static void CPUUpdateFlags(void)
-{
-	u32 CPSR = reg[16].I;
-
-	reg[RN_PSR_FLAGS].FLG.NZCV=reg[16].PSR.NZCV;
-
-	/*
-	N_FLAG = (CPSR & 0x80000000) ? true: false;
-	Z_FLAG = (CPSR & 0x40000000) ? true: false;
-	C_FLAG = (CPSR & 0x20000000) ? true: false;
-	V_FLAG = (CPSR & 0x10000000) ? true: false;
-	*/
-	//armState = (CPSR & 0x20) ? false : true;
-	armIrqEnable = (CPSR & 0x80) ? false : true;
-	armFiqEnable = (CPSR & 0x40) ? false : true;
-	update_armintc();
-}
-
-static void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
-{
-	CPUUpdateCPSR();
-
-	switch(armMode)
-	{
-	case 0x10:
-	case 0x1F:
-		reg[R13_USR].I = reg[13].I;
-		reg[R14_USR].I = reg[14].I;
-		reg[17].I = reg[16].I;
-		break;
-	case 0x11:
-		CPUSwap(&reg[R8_FIQ].I, &reg[8].I);
-		CPUSwap(&reg[R9_FIQ].I, &reg[9].I);
-		CPUSwap(&reg[R10_FIQ].I, &reg[10].I);
-		CPUSwap(&reg[R11_FIQ].I, &reg[11].I);
-		CPUSwap(&reg[R12_FIQ].I, &reg[12].I);
-		reg[R13_FIQ].I = reg[13].I;
-		reg[R14_FIQ].I = reg[14].I;
-		reg[SPSR_FIQ].I = reg[17].I;
-		break;
-	case 0x12:
-		reg[R13_IRQ].I  = reg[13].I;
-		reg[R14_IRQ].I  = reg[14].I;
-		reg[SPSR_IRQ].I =  reg[17].I;
-		break;
-	case 0x13:
-		reg[R13_SVC].I  = reg[13].I;
-		reg[R14_SVC].I  = reg[14].I;
-		reg[SPSR_SVC].I =  reg[17].I;
-		break;
-	case 0x17:
-		reg[R13_ABT].I  = reg[13].I;
-		reg[R14_ABT].I  = reg[14].I;
-		reg[SPSR_ABT].I =  reg[17].I;
-		break;
-	case 0x1b:
-		reg[R13_UND].I  = reg[13].I;
-		reg[R14_UND].I  = reg[14].I;
-		reg[SPSR_UND].I =  reg[17].I;
-		break;
-	}
-
-	u32 CPSR = reg[16].I;
-	u32 SPSR = reg[17].I;
-
-	switch(mode)
-	{
-	case 0x10:
-	case 0x1F:
-		reg[13].I = reg[R13_USR].I;
-		reg[14].I = reg[R14_USR].I;
-		reg[16].I = SPSR;
-		break;
-	case 0x11:
-		CPUSwap(&reg[8].I, &reg[R8_FIQ].I);
-		CPUSwap(&reg[9].I, &reg[R9_FIQ].I);
-		CPUSwap(&reg[10].I, &reg[R10_FIQ].I);
-		CPUSwap(&reg[11].I, &reg[R11_FIQ].I);
-		CPUSwap(&reg[12].I, &reg[R12_FIQ].I);
-		reg[13].I = reg[R13_FIQ].I;
-		reg[14].I = reg[R14_FIQ].I;
-		if(saveState)
-			reg[17].I = CPSR;
-		else
-			reg[17].I = reg[SPSR_FIQ].I;
-		break;
-	case 0x12:
-		reg[13].I = reg[R13_IRQ].I;
-		reg[14].I = reg[R14_IRQ].I;
-		reg[16].I = SPSR;
-		if(saveState)
-			reg[17].I = CPSR;
-		else
-			reg[17].I = reg[SPSR_IRQ].I;
-		break;
-	case 0x13:
-		reg[13].I = reg[R13_SVC].I;
-		reg[14].I = reg[R14_SVC].I;
-		reg[16].I = SPSR;
-		if(saveState)
-			reg[17].I = CPSR;
-		else
-			reg[17].I = reg[SPSR_SVC].I;
-		break;
-	case 0x17:
-		reg[13].I = reg[R13_ABT].I;
-		reg[14].I = reg[R14_ABT].I;
-		reg[16].I = SPSR;
-		if(saveState)
-			reg[17].I = CPSR;
-		else
-			reg[17].I = reg[SPSR_ABT].I;
-		break;
-	case 0x1b:
-		reg[13].I = reg[R13_UND].I;
-		reg[14].I = reg[R14_UND].I;
-		reg[16].I = SPSR;
-		if(saveState)
-			reg[17].I = CPSR;
-		else
-			reg[17].I = reg[SPSR_UND].I;
-		break;
-	default:
-		printf("Unsupported ARM mode %02x\n", mode);
-		die("Arm error..");
-		break;
-	}
-	armMode = mode;
-	CPUUpdateFlags();
-	CPUUpdateCPSR();
-}
-
-static void CPUSoftwareInterrupt(int comment)
-{
-	u32 PC = reg[R15_ARM_NEXT].I+4;
-	//bool savedArmState = armState;
-	CPUSwitchMode(0x13, true, false);
-	reg[14].I = PC;
-//	reg[15].I = 0x08;
-
-	armIrqEnable = false;
-	armNextPC = 0x08;
-//	reg[15].I += 4;
-}
-
-static void CPUUndefinedException(void)
+void CPUUndefinedException(void)
 {
 	printf("arm7: CPUUndefinedException(). SOMETHING WENT WRONG\n");
 	u32 PC = reg[R15_ARM_NEXT].I+4;
@@ -1707,15 +1538,18 @@ static void CPUUndefinedException(void)
 //	reg[15].I += 4;
 }
 
-
 void arm_Run_(u32 CycleCount)
 {
-	u32 clockTicks=0;
+   if (!Arm7Enabled)
+      return;
 
+	u32 clockTicks=0;
 	while (clockTicks<CycleCount)
    {
       if (reg[INTR_PEND].I)
+      {
          CPUFiq();
+      }
 
       reg[15].I = armNextPC + 8;
 
@@ -6792,6 +6626,7 @@ void armt_init(void);
 
 void arm_Init(void)
 {
+   //CreateTables();
 	arm_Reset();
 
 	for (int i = 0; i < 256; i++)
@@ -6804,6 +6639,184 @@ void arm_Init(void)
 		cpuBitsSet[i] = count;
 	}
 }
+
+void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
+{
+	CPUUpdateCPSR();
+
+	switch(armMode)
+	{
+	case 0x10:
+	case 0x1F:
+		reg[R13_USR].I = reg[13].I;
+		reg[R14_USR].I = reg[14].I;
+		reg[17].I = reg[16].I;
+		break;
+	case 0x11:
+		CPUSwap(&reg[R8_FIQ].I, &reg[8].I);
+		CPUSwap(&reg[R9_FIQ].I, &reg[9].I);
+		CPUSwap(&reg[R10_FIQ].I, &reg[10].I);
+		CPUSwap(&reg[R11_FIQ].I, &reg[11].I);
+		CPUSwap(&reg[R12_FIQ].I, &reg[12].I);
+		reg[R13_FIQ].I = reg[13].I;
+		reg[R14_FIQ].I = reg[14].I;
+		reg[SPSR_FIQ].I = reg[17].I;
+		break;
+	case 0x12:
+		reg[R13_IRQ].I  = reg[13].I;
+		reg[R14_IRQ].I  = reg[14].I;
+		reg[SPSR_IRQ].I =  reg[17].I;
+		break;
+	case 0x13:
+		reg[R13_SVC].I  = reg[13].I;
+		reg[R14_SVC].I  = reg[14].I;
+		reg[SPSR_SVC].I =  reg[17].I;
+		break;
+	case 0x17:
+		reg[R13_ABT].I  = reg[13].I;
+		reg[R14_ABT].I  = reg[14].I;
+		reg[SPSR_ABT].I =  reg[17].I;
+		break;
+	case 0x1b:
+		reg[R13_UND].I  = reg[13].I;
+		reg[R14_UND].I  = reg[14].I;
+		reg[SPSR_UND].I =  reg[17].I;
+		break;
+	}
+
+	u32 CPSR = reg[16].I;
+	u32 SPSR = reg[17].I;
+
+	switch(mode)
+	{
+	case 0x10:
+	case 0x1F:
+		reg[13].I = reg[R13_USR].I;
+		reg[14].I = reg[R14_USR].I;
+		reg[16].I = SPSR;
+		break;
+	case 0x11:
+		CPUSwap(&reg[8].I, &reg[R8_FIQ].I);
+		CPUSwap(&reg[9].I, &reg[R9_FIQ].I);
+		CPUSwap(&reg[10].I, &reg[R10_FIQ].I);
+		CPUSwap(&reg[11].I, &reg[R11_FIQ].I);
+		CPUSwap(&reg[12].I, &reg[R12_FIQ].I);
+		reg[13].I = reg[R13_FIQ].I;
+		reg[14].I = reg[R14_FIQ].I;
+		if(saveState)
+			reg[17].I = CPSR;
+		else
+			reg[17].I = reg[SPSR_FIQ].I;
+		break;
+	case 0x12:
+		reg[13].I = reg[R13_IRQ].I;
+		reg[14].I = reg[R14_IRQ].I;
+		reg[16].I = SPSR;
+		if(saveState)
+			reg[17].I = CPSR;
+		else
+			reg[17].I = reg[SPSR_IRQ].I;
+		break;
+	case 0x13:
+		reg[13].I = reg[R13_SVC].I;
+		reg[14].I = reg[R14_SVC].I;
+		reg[16].I = SPSR;
+		if(saveState)
+			reg[17].I = CPSR;
+		else
+			reg[17].I = reg[SPSR_SVC].I;
+		break;
+	case 0x17:
+		reg[13].I = reg[R13_ABT].I;
+		reg[14].I = reg[R14_ABT].I;
+		reg[16].I = SPSR;
+		if(saveState)
+			reg[17].I = CPSR;
+		else
+			reg[17].I = reg[SPSR_ABT].I;
+		break;
+	case 0x1b:
+		reg[13].I = reg[R13_UND].I;
+		reg[14].I = reg[R14_UND].I;
+		reg[16].I = SPSR;
+		if(saveState)
+			reg[17].I = CPSR;
+		else
+			reg[17].I = reg[SPSR_UND].I;
+		break;
+	default:
+		printf("Unsupported ARM mode %02x\n", mode);
+		die("Arm error..");
+		break;
+	}
+	armMode = mode;
+	CPUUpdateFlags();
+	CPUUpdateCPSR();
+}
+
+void CPUUpdateCPSR(void)
+{
+	reg_pair CPSR;
+
+	CPSR.I = reg[RN_CPSR].I & 0x40;
+
+	/*
+	if(N_FLAG)
+		CPSR |= 0x80000000;
+	if(Z_FLAG)
+		CPSR |= 0x40000000;
+	if(C_FLAG)
+		CPSR |= 0x20000000;
+	if(V_FLAG)
+		CPSR |= 0x10000000;
+	if(!armState)
+		CPSR |= 0x00000020;
+	*/
+
+	CPSR.PSR.NZCV=reg[RN_PSR_FLAGS].FLG.NZCV;
+
+
+	if (!armFiqEnable)
+		CPSR.I |= 0x40;
+	if(!armIrqEnable)
+		CPSR.I |= 0x80;
+
+	CPSR.PSR.M=armMode;
+
+	reg[16].I = CPSR.I;
+}
+
+void CPUUpdateFlags(void)
+{
+	u32 CPSR = reg[16].I;
+
+	reg[RN_PSR_FLAGS].FLG.NZCV=reg[16].PSR.NZCV;
+
+	/*
+	N_FLAG = (CPSR & 0x80000000) ? true: false;
+	Z_FLAG = (CPSR & 0x40000000) ? true: false;
+	C_FLAG = (CPSR & 0x20000000) ? true: false;
+	V_FLAG = (CPSR & 0x10000000) ? true: false;
+	*/
+	//armState = (CPSR & 0x20) ? false : true;
+	armIrqEnable = (CPSR & 0x80) ? false : true;
+	armFiqEnable = (CPSR & 0x40) ? false : true;
+	update_armintc();
+}
+
+void CPUSoftwareInterrupt(int comment)
+{
+	u32 PC = reg[R15_ARM_NEXT].I+4;
+	//bool savedArmState = armState;
+	CPUSwitchMode(0x13, true, false);
+	reg[14].I = PC;
+//	reg[15].I = 0x08;
+
+	armIrqEnable = false;
+	armNextPC = 0x08;
+//	reg[15].I += 4;
+}
+
 
 static void FlushCache(void);
 
@@ -6857,7 +6870,9 @@ void CPUInterrupt()
 
 */
 
-extern "C" NOINLINE void CPUFiq(void)
+extern "C"
+NOINLINE
+void CPUFiq(void)
 {
    u32 PC = reg[R15_ARM_NEXT].I+4;
    //bool savedState = armState;
@@ -6884,6 +6899,9 @@ extern "C" NOINLINE void CPUFiq(void)
 	The output of the sci* bits is input to the e68k , and the output of e68k is inputed into the FIQ
 	pin on arm7
 */
+#include "hw/sh4/sh4_core.h"
+
+
 void arm_SetEnabled(bool enabled)
 {
 	if(!Arm7Enabled && enabled)

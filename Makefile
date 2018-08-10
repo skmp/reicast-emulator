@@ -7,7 +7,7 @@ NO_THREADS    := 1
 NO_EXCEPTIONS := 0
 NO_NVMEM      := 0
 NO_VERIFY     := 1
-HAVE_LTCG     := 1
+HAVE_LTCG     := 0
 HAVE_GENERIC_JIT   := 1
 HAVE_GL3      := 0
 FORCE_GLES    := 0
@@ -152,6 +152,7 @@ else ifneq (,$(findstring rpi,$(platform)))
 		GLES = 1
 		GL_LIB := -L/opt/vc/lib -lbrcmGLESv2
 		INCFLAGS += -I/opt/vc/include
+		CFLAGS += -DTARGET_NO_STENCIL
 	else
 		FORCE_GLES = 1
 	endif
@@ -460,7 +461,7 @@ else ifneq (,$(findstring osx,$(platform)))
 	GL_LIB := -framework OpenGL
 else ifneq (,$(findstring ios,$(platform)))
 	GL_LIB := -framework OpenGLES
-else
+else ifeq ($(GL_LIB),)
 	GL_LIB := -lGL
 endif
 
@@ -570,7 +571,7 @@ endif
 
 ifeq ($(HAVE_GL), 1)
 	ifeq ($(GLES),1)
-		CORE_DEFINES += -DHAVE_OPENGLES -DHAVE_OPENGLES2 -DHAVE_GLES2
+		CORE_DEFINES += -DHAVE_OPENGLES -DHAVE_OPENGLES2
 	else
 		CORE_DEFINES += -DHAVE_OPENGL
 	endif

@@ -21,7 +21,7 @@ void DrawStrips(void);
 struct PipelineShader
 {
 	GLuint program;
-   GLuint scale;
+   GLuint scale,depth_scale;
    GLuint pp_ClipTest,cp_AlphaTestValue;
  	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
    GLuint trilinear_alpha;
@@ -39,7 +39,7 @@ struct gl_ctx
 	{
 		GLuint program;
 
-		GLuint scale;
+		GLuint scale,depth_scale;
 		GLuint sp_ShaderColor;
 
 	} modvol_shader;
@@ -99,6 +99,7 @@ extern struct ShaderUniforms_t
 {
 	float PT_ALPHA;
 	float scale_coefs[4];
+	float depth_coefs[4];
 	float fog_den_float;
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];

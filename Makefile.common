@@ -1,7 +1,7 @@
 DEPS_DIR          = $(CORE_DIR)/deps
 LIBRETRO_COMM_DIR = $(CORE_DIR)/libretro-common
 
-INCFLAGS    := -I$(CORE_DIR)/libretro \
+INCFLAGS    += -I$(CORE_DIR)/libretro \
 					-I$(CORE_DIR) \
 					-I$(DEPS_DIR) \
 					-I$(LIBRETRO_COMM_DIR)/include 
@@ -10,8 +10,10 @@ CORE_DEFINES += -DNO_MMU
 
 SOURCES_C   :=
 SOURCES_CXX := \
-					$(CORE_DIR)/hw/arm7/arm7.cpp \
 					$(CORE_DIR)/hw/arm7/arm_mem.cpp \
+					$(CORE_DIR)/hw/arm7/arm7.cpp \
+					$(CORE_DIR)/hw/arm7/vbaARM.cpp \
+					$(CORE_DIR)/hw/arm7/virt_arm.cpp \
 					\
 					$(CORE_DIR)/hw/aica/dsp.cpp \
 					$(CORE_DIR)/hw/aica/dsp_interp.cpp \

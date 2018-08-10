@@ -371,7 +371,8 @@ void DYNACALL do_sqw_nommu_full(u32 dst, u8* sqb);
 typedef void DYNACALL sqw_fp(u32 dst,u8* sqb);
 typedef void DYNACALL TaListVoidFP(void* data);
 
-#define FPCB_SIZE (RAM_SIZE/2)
+// Naomi edit: was RAM_SIZE/2
+#define FPCB_SIZE (32*1024*1024/2)
 #define FPCB_MASK (FPCB_SIZE -1)
 //#defeine FPCB_PAD 0x40000
 #define FPCB_PAD 0x100000

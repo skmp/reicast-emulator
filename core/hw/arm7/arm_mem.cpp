@@ -10,11 +10,11 @@
 bool aica_interr=false;
 u32 aica_reg_L=0;
 //Set to true when the out of the intc is 1
-bool e68k_out  = false;
-u32 e68k_reg_L = 0;
-u32 e68k_reg_M = 0; //constant ?
+bool e68k_out = false;
+u32 e68k_reg_L;
+u32 e68k_reg_M=0; //constant ?
 
-void update_e68k(void)
+void update_e68k()
 {
 	if (!e68k_out && aica_interr)
 	{
@@ -35,7 +35,7 @@ void libARM_InterruptChange(u32 bits,u32 L)
 	update_e68k();
 }
 
-void e68k_AcceptInterrupt(void)
+void e68k_AcceptInterrupt()
 {
 	e68k_out=false;
 	update_e68k();
@@ -47,45 +47,37 @@ template <u32 sz,class T>
 T arm_ReadReg(u32 addr)
 {
 	addr&=0x7FFF;
-
-   switch (addr)
-   {
-      case REG_L:
-         return e68k_reg_L;
-      case REG_M:
-         return e68k_reg_M;	//shouldn't really happen
-      default:
-         break;
-   }
-
-   return libAICA_ReadReg(addr,sz);
-}
-
+	if (addr==REG_L)
+		return e68k_reg_L;
+	else if(addr==REG_M)
+		return e68k_reg_M;	//shouldn't really happen
+	else
+		return libAICA_ReadReg(addr,sz);
+}		
 template <u32 sz,class T>
 void arm_WriteReg(u32 addr,T data)
 {
 	addr &= 0x7FFF;
-
-   switch (addr)
-   {
-      case REG_L:
-         return; // Shouldn't really happen (read only)
-      case REG_M:
-         //accept interrupts
-         if (data & 1)
-            e68k_AcceptInterrupt();
-         break;
-      default:
-         break;
-   }
-
-   return libAICA_WriteReg(addr, data, sz);
+	if (addr == REG_L)
+	{
+		return; // Shouldn't really happen (read only)
+	}
+	else if (addr == REG_M)
+	{
+		//accept interrupts
+		if (data & 1)
+			e68k_AcceptInterrupt();
+	}
+	else
+	{
+		return libAICA_WriteReg(addr, data, sz);
+	}
 }
 
-//00000000~007FFFFF @DRAM_AREA*
-//00800000~008027FF @CHANNEL_DATA
-//00802800~00802FFF @COMMON_DATA
-//00803000~00807FFF @DSP_DATA
+//00000000~007FFFFF @DRAM_AREA* 
+//00800000~008027FF @CHANNEL_DATA 
+//00802800~00802FFF @COMMON_DATA 
+//00803000~00807FFF @DSP_DATA 
 
 template u8 arm_ReadReg<1,u8>(u32 adr);
 template u16 arm_ReadReg<2,u16>(u32 adr);

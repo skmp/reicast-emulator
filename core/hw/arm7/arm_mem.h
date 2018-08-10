@@ -7,128 +7,64 @@ T arm_ReadReg(u32 addr);
 template <u32 sz,class T>
 void arm_WriteReg(u32 addr,T data);
 
-/* TODO/FIXME - might need to cleanup */
-//Set to true when the out of the intc is 1
-extern bool e68k_out;
-extern u32 e68k_reg_L;
-extern u32 e68k_reg_M;
-
-static INLINE u8 DYNACALL ReadMemArm1(u32 addr)
-{
-	addr&=0x00FFFFFF;
-	if (addr<0x800000)
-		return *(u8*)&aica_ram.data[addr&(ARAM_MASK)];
-
-	addr&=0x7FFF;
-
-   switch (addr)
-   {
-      case REG_L:
-         return e68k_reg_L;
-      case REG_M:
-         return e68k_reg_M;	//shouldn't really happen
-      default:
-         break;
-   }
-
-   return libAICA_ReadReg(addr,1);
-}
-
-static INLINE u16 DYNACALL ReadMemArm2(u32 addr)
-{
-	addr&=0x00FFFFFF;
-	if (addr<0x800000)
-		return *(u16*)&aica_ram.data[addr&(ARAM_MASK-(1))];
-
-	addr&=0x7FFF;
-
-   switch (addr)
-   {
-      case REG_L:
-         return e68k_reg_L;
-      case REG_M:
-         return e68k_reg_M;	//shouldn't really happen
-      default:
-         break;
-   }
-
-   return libAICA_ReadReg(addr,2);
-}
-
-static INLINE u32 DYNACALL ReadMemArm4(u32 addr)
+template<int sz,typename T>
+static inline T DYNACALL ReadMemArm(u32 addr)
 {
 	addr&=0x00FFFFFF;
 	if (addr<0x800000)
 	{
-		u32 rv=*(u32*)&aica_ram.data[addr&(ARAM_MASK-(3))];
-
-		if (unlikely(addr&3))
+		T rv=*(T*)&aica_ram[addr&(ARAM_MASK-(sz-1))];
+		
+		if (unlikely(sz==4 && addr&3))
 		{
 			u32 sf=(addr&3)*8;
 			return (rv>>sf) | (rv<<(32-sf));
 		}
-      return rv;
+		else
+			return rv;
 	}
-
-	addr&=0x7FFF;
-
-   switch (addr)
-   {
-      case REG_L:
-         return e68k_reg_L;
-      case REG_M:
-         return e68k_reg_M;	//shouldn't really happen
-      default:
-         break;
-   }
-
-   return libAICA_ReadReg(addr,4);
+	else
+	{
+		return arm_ReadReg<sz,T>(addr);
+	}
 }
 
-static INLINE void DYNACALL WriteMemArm1(u32 addr,u8 data)
+template<int sz,typename T>
+static inline void DYNACALL WriteMemArm(u32 addr,T data)
 {
 	addr&=0x00FFFFFF;
 	if (addr<0x800000)
-   {
-		*(u8*)&aica_ram.data[addr&(ARAM_MASK)]=data;
-      return;
-   }
-
-   arm_WriteReg<1,u8>(addr,data);
+	{
+		*(T*)&aica_ram[addr&(ARAM_MASK-(sz-1))]=data;
+	}
+	else
+	{
+		arm_WriteReg<sz,T>(addr,data);
+	}
 }
 
-static INLINE void DYNACALL WriteMemArm2(u32 addr,u16 data)
-{
-	addr&=0x00FFFFFF;
-	if (addr<0x800000)
-   {
-		*(u16*)&aica_ram.data[addr&(ARAM_MASK-(1))]=data;
-      return;
-   }
+#define arm_ReadMem8 ReadMemArm<1,u8>
+#define arm_ReadMem16 ReadMemArm<2,u16>
+#define arm_ReadMem32 ReadMemArm<4,u32>
 
-   arm_WriteReg<2,u16>(addr,data);
-}
+#define arm_WriteMem8 WriteMemArm<1,u8>
+#define arm_WriteMem16 WriteMemArm<2,u16>
+#define arm_WriteMem32 WriteMemArm<4,u32>
 
-static INLINE void DYNACALL WriteMemArm4(u32 addr,u32 data)
-{
-	addr&=0x00FFFFFF;
-	if (addr<0x800000)
-   {
-		*(u32*)&aica_ram.data[addr&(ARAM_MASK-(3))]=data;
-      return;
-   }
+u32 sh4_ReadMem_reg(u32 addr,u32 size);
+void sh4_WriteMem_reg(u32 addr,u32 data,u32 size);
 
-   arm_WriteReg<4,u32>(addr,data);
-}
+void init_mem();
+void term_mem();
 
-#define arm_ReadMem8 ReadMemArm1
-#define arm_ReadMem16 ReadMemArm2
-#define arm_ReadMem32 ReadMemArm4
+#define aica_reg_16 ((u16*)aica_reg)
 
-#define arm_WriteMem8 WriteMemArm1
-#define arm_WriteMem16 WriteMemArm2
-#define arm_WriteMem32 WriteMemArm4
+#define AICA_RAM_SIZE (ARAM_SIZE)
+#define AICA_RAM_MASK (ARAM_MASK)
+
+#define AICA_MEMMAP_RAM_SIZE (8*1024*1024)				//this is the max for the map, the actual ram size is AICA_RAM_SIZE
+#define AICA_MEMMAP_RAM_MASK (AICA_MEMMAP_RAM_SIZE-1)
 
 extern bool e68k_out;
 
-#define update_armintc() arm_Reg[INTR_PEND].I=e68k_out && armFiqEnable
+void update_armintc();

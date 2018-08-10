@@ -465,7 +465,7 @@ bool CompilePipelineShader(PipelineShader *s)
 
 	//get the uniform locations
 	s->scale	             = glGetUniformLocation(s->program, "scale");
-
+	s->depth_scale      = glGetUniformLocation(s->program, "depth_scale");
 
 	s->pp_ClipTest        = glGetUniformLocation(s->program, "pp_ClipTest");
 
@@ -625,6 +625,7 @@ static bool gl_create_resources(void)
 
    gl.modvol_shader.program=gl_CompileAndLink(vshader, fshader);
 	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
+	gl.modvol_shader.depth_scale          = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 
    if (settings.pvr.Emulation.precompile_shaders)
@@ -689,6 +690,19 @@ static bool RenderFrame(void)
 
 	//if (FrameCount&7) return;
 
+	float vtx_min_fZ=0.f;   //pvrrc.fZ_min;
+	float vtx_max_fZ=pvrrc.fZ_max;
+
+	//sanitise the values, now with NaN detection (for omap)
+	//0x49800000 is 1024*1024. Using integer math to avoid issues w/ infs and nans
+	if ((s32&)vtx_max_fZ<0 || (u32&)vtx_max_fZ>0x49800000)
+		vtx_max_fZ=10*1024;
+
+
+	//add some extra range to avoid clipping border cases
+	vtx_min_fZ*=0.98f;
+	vtx_max_fZ*=1.001f;
+
 	//these should be adjusted based on the current PVR scaling etc params
 	float dc_width=640;
 	float dc_height=480;
@@ -752,6 +766,11 @@ static bool RenderFrame(void)
 	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
 	ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
 
+	ShaderUniforms.depth_coefs[0]=2/(vtx_max_fZ-vtx_min_fZ);
+	ShaderUniforms.depth_coefs[1]=-vtx_min_fZ-1;
+	ShaderUniforms.depth_coefs[2]=0;
+	ShaderUniforms.depth_coefs[3]=0;
+
 	//printf("scale: %f, %f, %f, %f\n", ShaderUniforms.scale_coefs[0],scale_coefs[1], ShaderUniforms.scale_coefs[2], ShaderUniforms.scale_coefs[3]);
 
 
@@ -786,6 +805,7 @@ static bool RenderFrame(void)
 	glUseProgram(gl.modvol_shader.program);
 
 	glUniform4fv(gl.modvol_shader.scale, 1, ShaderUniforms.scale_coefs);
+	glUniform4fv(gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
 
 	GLfloat td[4]={0.5,0,0,0};
 

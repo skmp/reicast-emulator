@@ -18,12 +18,11 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "arm7.h"
+#include "arm_mem.h"
 #include "types.h"
 
 #include "hw/aica/aica_if.h"
 #include "hw/sh4/sh4_core.h"
-
-#define update_armintc() arm_Reg[INTR_PEND].I=e68k_out && armFiqEnable
 
 #define OP_AND reg[dest].I = reg[(opcode>>16)&15].I & value;
 
@@ -1293,171 +1292,6 @@
       }\
     }\
     break;
-
-//Set to true when aica interrupt is pending
-bool aica_interr=false;
-u32 aica_reg_L=0;
-//Set to true when the out of the intc is 1
-static bool e68k_out  = false;
-static u32 e68k_reg_L = 0;
-static u32 e68k_reg_M = 0; //constant ?
-
-static INLINE u8 DYNACALL ReadMemArm1(u32 addr)
-{
-	addr&=0x00FFFFFF;
-	if (addr<0x800000)
-		return *(u8*)&aica_ram.data[addr&(ARAM_MASK)];
-
-	addr&=0x7FFF;
-
-   switch (addr)
-   {
-      case REG_L:
-         return e68k_reg_L;
-      case REG_M:
-         return e68k_reg_M;	//shouldn't really happen
-      default:
-         break;
-   }
-
-   return libAICA_ReadReg(addr,1);
-}
-
-static INLINE u16 DYNACALL ReadMemArm2(u32 addr)
-{
-	addr&=0x00FFFFFF;
-	if (addr<0x800000)
-		return *(u16*)&aica_ram.data[addr&(ARAM_MASK-(1))];
-
-	addr&=0x7FFF;
-
-   switch (addr)
-   {
-      case REG_L:
-         return e68k_reg_L;
-      case REG_M:
-         return e68k_reg_M;	//shouldn't really happen
-      default:
-         break;
-   }
-
-   return libAICA_ReadReg(addr,2);
-}
-
-static INLINE u32 DYNACALL ReadMemArm4(u32 addr)
-{
-	addr&=0x00FFFFFF;
-	if (addr<0x800000)
-	{
-		u32 rv=*(u32*)&aica_ram.data[addr&(ARAM_MASK-(3))];
-
-		if (unlikely(addr&3))
-		{
-			u32 sf=(addr&3)*8;
-			return (rv>>sf) | (rv<<(32-sf));
-		}
-      return rv;
-	}
-
-	addr&=0x7FFF;
-
-   switch (addr)
-   {
-      case REG_L:
-         return e68k_reg_L;
-      case REG_M:
-         return e68k_reg_M;	//shouldn't really happen
-      default:
-         break;
-   }
-
-   return libAICA_ReadReg(addr,4);
-}
-
-static void update_e68k(void)
-{
-	if (!e68k_out && aica_interr)
-	{
-		//Set the pending signal
-		//Is L register held here too ?
-		e68k_out=1;
-		e68k_reg_L=aica_reg_L;
-
-		update_armintc();
-	}
-}
-
-static void e68k_AcceptInterrupt(void)
-{
-	e68k_out=false;
-	update_e68k();
-	update_armintc();
-}
-
-template <u32 sz,class T>
-static void arm_WriteReg(u32 addr,T data)
-{
-	addr &= 0x7FFF;
-
-   switch (addr)
-   {
-      case REG_L:
-         return; // Shouldn't really happen (read only)
-      case REG_M:
-         //accept interrupts
-         if (data & 1)
-            e68k_AcceptInterrupt();
-         break;
-      default:
-         break;
-   }
-
-   return libAICA_WriteReg(addr, data, sz);
-}
-
-static INLINE void DYNACALL WriteMemArm1(u32 addr,u8 data)
-{
-	addr&=0x00FFFFFF;
-	if (addr<0x800000)
-   {
-		*(u8*)&aica_ram.data[addr&(ARAM_MASK)]=data;
-      return;
-   }
-
-   arm_WriteReg<1,u8>(addr,data);
-}
-
-static INLINE void DYNACALL WriteMemArm2(u32 addr,u16 data)
-{
-	addr&=0x00FFFFFF;
-	if (addr<0x800000)
-   {
-		*(u16*)&aica_ram.data[addr&(ARAM_MASK-(1))]=data;
-      return;
-   }
-
-   arm_WriteReg<2,u16>(addr,data);
-}
-
-static INLINE void DYNACALL WriteMemArm4(u32 addr,u32 data)
-{
-	addr&=0x00FFFFFF;
-	if (addr<0x800000)
-   {
-		*(u32*)&aica_ram.data[addr&(ARAM_MASK-(3))]=data;
-      return;
-   }
-
-   arm_WriteReg<4,u32>(addr,data);
-}
-
-#define arm_ReadMem8 ReadMemArm1
-#define arm_ReadMem16 ReadMemArm2
-#define arm_ReadMem32 ReadMemArm4
-
-#define arm_WriteMem8 WriteMemArm1
-#define arm_WriteMem16 WriteMemArm2
-#define arm_WriteMem32 WriteMemArm4
 
 //#define CPUReadHalfWordQuick(addr) arm_ReadMem16(addr & 0x7FFFFF)
 #define CPUReadMemoryQuick(addr) (*(u32*)&aica_ram.data[addr&ARAM_MASK])
@@ -6929,47 +6763,6 @@ void arm_Run(u32 CycleCount)
          libAICA_TimeStep();
    }
 }
-
-void libARM_InterruptChange(u32 bits,u32 L)
-{
-	aica_interr=bits!=0;
-	if (aica_interr)
-		aica_reg_L=L;
-	update_e68k();
-}
-
-
-//Reg reads from arm side ..
-template <u32 sz,class T>
-static T arm_ReadReg(u32 addr)
-{
-	addr&=0x7FFF;
-
-   switch (addr)
-   {
-      case REG_L:
-         return e68k_reg_L;
-      case REG_M:
-         return e68k_reg_M;	//shouldn't really happen
-      default:
-         break;
-   }
-
-   return libAICA_ReadReg(addr,sz);
-}
-
-//00000000~007FFFFF @DRAM_AREA*
-//00800000~008027FF @CHANNEL_DATA
-//00802800~00802FFF @COMMON_DATA
-//00803000~00807FFF @DSP_DATA
-
-template u8 arm_ReadReg<1,u8>(u32 adr);
-template u16 arm_ReadReg<2,u16>(u32 adr);
-template u32 arm_ReadReg<4,u32>(u32 adr);
-
-template void arm_WriteReg<1>(u32 adr,u8 data);
-template void arm_WriteReg<2>(u32 adr,u16 data);
-template void arm_WriteReg<4>(u32 adr,u32 data);
 
 /* Naomi edit - allow for max possible ARAM_SIZE here */
 void* EntryPoints[(8*1024*1024) /4];

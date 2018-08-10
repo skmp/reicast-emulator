@@ -153,6 +153,8 @@ ADD.SP.REG	0x008D0000
 			for (int i=0;i<=30;i+=2)
 			{
 				u32 immv=(imm32<<i) | (imm32>>(32-i));
+				if (i == 0)
+					immv = imm32;
 				if (immv<256)
 				{
 					return ((i/2)<<8) | immv;

@@ -195,6 +195,11 @@ typedef void BinaryOP       (eReg Rd, eReg Rn, eReg Rm,       ConditionCode CC);
 typedef void BinaryOPImm    (eReg Rd, eReg Rn, s32 sImm8,     ConditionCode CC);
 typedef void UnaryOP        (eReg Rd, eReg Rs);
 
+u32* GetRegPtr(u32 reg)
+{
+	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
+}
+
 // you pick reg, loads Base with reg addr, no reg. mapping yet !
 void LoadSh4Reg_mem(eReg Rt, u32 Sh4_Reg, eCC CC=CC_AL)
 {
@@ -333,6 +338,9 @@ extern "C" void ngen_LinkBlock_Generic_stub();
 extern "C" void ngen_LinkBlock_cond_Branch_stub();
 extern "C" void ngen_LinkBlock_cond_Next_stub();
 
+extern "C" void ngen_FailedToFindBlock_();
+void (*ngen_FailedToFindBlock)()=&ngen_FailedToFindBlock_;  // in asm
+
 #include <map>
 
 map<shilop,ConditionCode> ccmap;
@@ -398,11 +406,7 @@ u32 DynaRBI::Relink()
 #ifdef CALLSTACK
 #error offset broken
 		SUB(r2, r8, -FPCB_OFFSET);
-#if RAM_SIZE == 33554432
 		UBFX(r1, r4, 1, 24);
-#else
-		UBFX(r1, r4, 1, 23);
-#endif
 
 		if (BlockType==BET_DynamicRet)
 		{
@@ -425,11 +429,7 @@ u32 DynaRBI::Relink()
 			//this is faster
 			//why ? (Icache ?)
 			SUB(r2, r8, -FPCB_OFFSET);
-#if RAM_SIZE == 33554432
 			UBFX(r1, r4, 1, 24);
-#else
-			UBFX(r1, r4, 1, 23);
-#endif
 			LDR(r15,r2,r1,Offset,true,S_LSL,2);
 			
 #else
@@ -444,11 +444,7 @@ u32 DynaRBI::Relink()
 			{
 				SUB(r2, r8, -FPCB_OFFSET);
 
-#if RAM_SIZE == 33554432
 				UBFX(r1, r4, 1, 24);
-#else
-				UBFX(r1, r4, 1, 23);
-#endif
 				NOP();NOP();                            //2
 				LDR(r15,r2,r1,Offset,true,S_LSL,2);     //1
 			}
@@ -459,11 +455,7 @@ u32 DynaRBI::Relink()
 			verify(pBranchBlock==0);
 			SUB(r2, r8, -FPCB_OFFSET);
 
-#if RAM_SIZE == 33554432
 			UBFX(r1, r4, 1, 24);
-#else
-			UBFX(r1, r4, 1, 23);
-#endif
 			LDR(r15,r2,r1,Offset,true,S_LSL,2);
 		}
 #endif
@@ -1600,7 +1592,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 
 			if (op->rs2.is_imm())
 			{
-				if (!op->rs2.is_imm_u8())
+				if (!is_i8r4(op->rs2._imm))
 					MOV32(rs2,(u32)op->rs2._imm);
 				else
 					is_imm=true;
@@ -2302,4 +2294,10 @@ void ngen_init_arm(void)
 	//ccmap[shop_fsetgt]=CC_GT;
 
 }
+
+RuntimeBlockInfo* ngen_AllocateBlock()
+{
+	return new DynaRBI();
+};
+
 #endif

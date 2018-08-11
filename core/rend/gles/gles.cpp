@@ -15,13 +15,11 @@
 #include "hw/pvr/Renderer_if.h"
 #include "../../hw/mem/_vmem.h"
 
-#if defined(HAVE_OPENGLES2)
 #ifndef GL_RED
 #define GL_RED                            0x1903
 #endif
 #ifndef GL_MAJOR_VERSION
 #define GL_MAJOR_VERSION                  0x821B
-#endif
 #endif
 
 void GenSorted(int first, int count);
@@ -50,16 +48,21 @@ const char* VertexShaderSource =
  \n\
 #define GLES2 0 \n\
 #define GLES3 1 \n\
-#define GL 2 \n\
+#define GL2 2 \n\
 #define GL3 3 \n\
  \n\
-#if TARGET_GL == GLES2 \n\
+#if TARGET_GL == GL2 \n\
+#define highp \n\
+#define lowp \n\
+#define mediump \n\
+#endif \n\
+#if TARGET_GL == GLES2 || TARGET_GL == GL2 \n\
 #define in attribute \n\
 #define out varying \n\
 #endif \n\
  \n\
  \n\
-#if TARGET_GL == GL3 \n\
+#if TARGET_GL == GL3 || TARGET_GL == GLES3 \n\
 #if pp_Gouraud == 0 \n\
 #define INTERPOLATION flat \n\
 #else \n\
@@ -87,7 +90,7 @@ void main() \n\
 	vtx_offs=in_offs; \n\
 	vtx_uv=in_uv; \n\
 	vec4 vpos=in_pos; \n\
-#if TARGET_GL == GL3 \n\
+#if TARGET_GL != GLES2 && TARGET_GL != GL2 \n\
    if (isinf(vpos.z)) \n\
 		vpos.w = 1.18e-38; \n\
 	else \n\
@@ -106,18 +109,6 @@ void main() \n\
 	vpos.xy*=vpos.w;  \n\
 	gl_Position = vpos; \n\
 }";
-
-#if !defined(GLES) && defined(HAVE_GL3)
-#define FRAGCOL "FragColor"
-#define TEXLOOKUP "texture"
-#undef vary
-#define vary "in"
-#define FOG_CHANNEL "r"
-#else
-#define FRAGCOL "gl_FragColor"
-#define TEXLOOKUP "texture2D"
-#define FOG_CHANNEL "a"
-#endif
 
 const char* PixelPipelineShader =
 "\
@@ -138,17 +129,18 @@ const char* PixelPipelineShader =
 \n\
 #define GLES2 0 \n\
 #define GLES3 1 \n\
-#define GL 2 \n\
+#define GL2 2 \n\
 #define GL3 3 \n\
  \n\
+#if TARGET_GL == GL2 \n\
+#define highp \n\
+#define lowp \n\
+#define mediump \n\
+#endif \n\
 #if TARGET_GL == GLES3 \n\
 out highp vec4 FragColor; \n\
 #define gl_FragColor FragColor \n\
 #define FOG_CHANNEL a \n\
-#elif TARGET_GL == GL \n\
-out highp vec4 FragColor; \n\
-#define gl_FragColor FragColor \n\
-#define FOG_CHANNEL r \n\
 #elif TARGET_GL == GL3 \n\
 out highp vec4 FragColor; \n\
 #define gl_FragColor FragColor \n\
@@ -160,7 +152,7 @@ out highp vec4 FragColor; \n\
 #endif \n\
  \n\
  \n\
-#if TARGET_GL == GL3 \n\
+#if TARGET_GL == GL3 || TARGET_GL == GLES3 \n\
 #if pp_Gouraud == 0 \n\
 #define INTERPOLATION flat \n\
 #else \n\
@@ -286,9 +278,15 @@ const char* ModifierVolumeShader =
  \n\
 #define GLES2 0 \n\
 #define GLES3 1 \n\
-#define GL 2 \n\
+#define GL2 2 \n\
+#define GL3 3 \n\
  \n\
-#if TARGET_GL != GLES2 \n\
+#if TARGET_GL == GL2 \n\
+#define highp \n\
+#define lowp \n\
+#define mediump \n\
+#endif \n\
+#if TARGET_GL != GLES2 && TARGET_GL != GL2 \n\
 out highp vec4 FragColor; \n\
 #define gl_FragColor FragColor \n\
 #endif \n\
@@ -337,28 +335,44 @@ int GetProgramID(
 
 void findGLVersion()
 {
-#if defined(HAVE_OPENGLES) || defined(HAVE_OPENGLES2)
-   gl.is_gles          = true;
-#if defined(HAVE_OPENGLES3)
-   gl.gl_version          = "GLES3";
-   gl.glsl_version_header = "#version 300 es";
-#else
-   gl.gl_version          = "GLES2";
-   gl.glsl_version_header = "";
-#endif
-#else
-   gl.is_gles             = false;
-   gl.gl_version          = "GL";
-#if defined(HAVE_GL3)
-   gl.gl_version          = "GL3";
-#endif
-   gl.glsl_version_header = "#version 140";
-#endif
-#if !defined(GLES) && defined(HAVE_GL3)
-   gl.fog_image_format = GL_RED;
-#else
-   gl.fog_image_format = GL_ALPHA;
-#endif
+   while (true)
+      if (glGetError() == GL_NO_ERROR)
+         break;
+   glGetIntegerv(GL_MAJOR_VERSION, &gl.gl_major);
+   if (glGetError() == GL_INVALID_ENUM)
+      gl.gl_major = 2;
+   const char *version = (const char *)glGetString(GL_VERSION);
+   if (!strncmp(version, "OpenGL ES", 9))
+   {
+      gl.is_gles = true;
+      if (gl.gl_major >= 3)
+      {
+         gl.gl_version = "GLES3";
+         gl.glsl_version_header = "#version 300 es";
+      }
+      else
+      {
+         gl.gl_version = "GLES2";
+         gl.glsl_version_header = "";
+      }
+      gl.fog_image_format = GL_ALPHA;
+   }
+   else
+   {
+      gl.is_gles = false;
+      if (gl.gl_major >= 3)
+      {
+         gl.gl_version = "GL3";
+         gl.glsl_version_header = "#version 140";
+         gl.fog_image_format = GL_RED;
+      }
+      else
+      {
+         gl.gl_version = "GL2";
+         gl.glsl_version_header = "";
+         gl.fog_image_format = GL_ALPHA;
+      }
+   }
 }
 
 static GLuint gl_CompileShader(const char* shader,GLuint type)
@@ -427,6 +441,7 @@ static GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentSh
 
 		glGetProgramInfoLog(program, compile_log_len, &compile_log_len, compile_log);
 		printf("Shader linking: %s \n (%d bytes), - %s -\n",result?"linked":"failed to link", compile_log_len,compile_log);
+		printf("VERTEX:\n%s\nFRAGMENT:\n%s\n", VertexShader, FragmentShader);
 
 		free(compile_log);
 		die("shader compile fail\n");

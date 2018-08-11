@@ -675,7 +675,7 @@ bool BM_LockedWrite(u8* address)
 #if FEAT_SHREC != DYNAREC_NONE
 	u32 addr=address-(u8*)p_sh4rcb->fpcb;
 
-	address=(u8*)p_sh4rcb->fpcb+ (addr&~PAGE_MASK);
+	address=(u8*)p_sh4rcb->fpcb+ (addr&~SH4_PAGE_MASK);
 
 	if (addr<sizeof(p_sh4rcb->fpcb))
 	{

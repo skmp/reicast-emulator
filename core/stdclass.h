@@ -8,12 +8,11 @@
 
 #ifdef _ANDROID
 #include <sys/mman.h>
-#undef PAGE_MASK
-#define PAGE_MASK (PAGE_SIZE-1)
 #else
 #define PAGE_SIZE 4096
-#define PAGE_MASK (PAGE_SIZE-1)
 #endif
+
+#define SH4_PAGE_MASK (PAGE_SIZE-1)
 
 //Commonly used classes across the project
 //Simple Array class for helping me out ;P

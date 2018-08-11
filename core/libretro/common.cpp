@@ -556,7 +556,7 @@ void VArray2::LockRegion(u32 offset,u32 size)
 #ifdef _WIN32
    protect_pages(((u8*)data)+offset, size, ACC_READONLY);
 #elif !defined(TARGET_NO_EXCEPTIONS)
-   u32 inpage=offset & PAGE_MASK;
+   u32 inpage=offset & SH4_PAGE_MASK;
    if (!protect_pages(data + offset - inpage, size + inpage, ACC_READONLY))
       die("protect_pages  failed ..\n");
 #endif
@@ -567,7 +567,7 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 #ifdef _WIN32
    protect_pages(((u8*)data)+offset, size, ACC_READWRITE);
 #elif !defined(TARGET_NO_EXCEPTIONS)
-   u32 inpage=offset & PAGE_MASK;
+   u32 inpage=offset & SH4_PAGE_MASK;
 
    if (!protect_pages(data + offset - inpage, size + inpage, ACC_READWRITE))
    {
@@ -692,7 +692,7 @@ void common_libretro_setup(void)
 #endif
 
 #if defined(__MACH__) || defined(__linux__)
-   printf("Linux paging: %08X %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
-   verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
+   printf("Linux paging: %08X %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,SH4_PAGE_MASK);
+   verify(SH4_PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
 #endif
 }

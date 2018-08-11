@@ -1,8 +1,8 @@
-DEPS_DIR          = $(CORE_DIR)/deps
-LIBRETRO_COMM_DIR = $(CORE_DIR)/libretro-common
+DEPS_DIR          = $(CORE_DIR)/core/deps
+LIBRETRO_COMM_DIR = $(CORE_DIR)/core/libretro-common
 
-INCFLAGS    += -I$(CORE_DIR)/libretro \
-					-I$(CORE_DIR) \
+INCFLAGS    += -I$(CORE_DIR)/core/libretro \
+					-I$(CORE_DIR)/core/ \
 					-I$(DEPS_DIR) \
 					-I$(LIBRETRO_COMM_DIR)/include 
 
@@ -10,71 +10,71 @@ CORE_DEFINES += -DNO_MMU
 
 SOURCES_C   :=
 SOURCES_CXX := \
-					$(CORE_DIR)/hw/arm7/arm_mem.cpp \
-					$(CORE_DIR)/hw/arm7/arm7.cpp \
-					$(CORE_DIR)/hw/arm7/vbaARM.cpp \
-					$(CORE_DIR)/hw/arm7/virt_arm.cpp \
+					$(CORE_DIR)/core/hw/arm7/arm_mem.cpp \
+					$(CORE_DIR)/core/hw/arm7/arm7.cpp \
+					$(CORE_DIR)/core/hw/arm7/vbaARM.cpp \
+					$(CORE_DIR)/core/hw/arm7/virt_arm.cpp \
 					\
-					$(CORE_DIR)/hw/aica/dsp.cpp \
-					$(CORE_DIR)/hw/aica/dsp_interp.cpp \
-					$(CORE_DIR)/hw/aica/aica.cpp \
-					$(CORE_DIR)/hw/aica/aica_if.cpp \
-					$(CORE_DIR)/hw/aica/aica_mem.cpp \
-					$(CORE_DIR)/hw/aica/sgc_if.cpp \
+					$(CORE_DIR)/core/hw/aica/dsp.cpp \
+					$(CORE_DIR)/core/hw/aica/dsp_interp.cpp \
+					$(CORE_DIR)/core/hw/aica/aica.cpp \
+					$(CORE_DIR)/core/hw/aica/aica_if.cpp \
+					$(CORE_DIR)/core/hw/aica/aica_mem.cpp \
+					$(CORE_DIR)/core/hw/aica/sgc_if.cpp \
 					\
-					$(CORE_DIR)/hw/holly/holly_intc.cpp \
-					$(CORE_DIR)/hw/holly/sb.cpp \
-					$(CORE_DIR)/hw/holly/sb_mem.cpp \
+					$(CORE_DIR)/core/hw/holly/holly_intc.cpp \
+					$(CORE_DIR)/core/hw/holly/sb.cpp \
+					$(CORE_DIR)/core/hw/holly/sb_mem.cpp \
 					\
-					$(CORE_DIR)/hw/gdrom/gdrom_response.cpp \
-					$(CORE_DIR)/hw/gdrom/gdromv3.cpp \
+					$(CORE_DIR)/core/hw/gdrom/gdrom_response.cpp \
+					$(CORE_DIR)/core/hw/gdrom/gdromv3.cpp \
 					\
-					$(CORE_DIR)/hw/maple/maple_helper.cpp \
-					$(CORE_DIR)/hw/maple/maple_devs.cpp \
-					$(CORE_DIR)/hw/maple/maple_if.cpp \
-					$(CORE_DIR)/hw/maple/maple_cfg.cpp \
+					$(CORE_DIR)/core/hw/maple/maple_helper.cpp \
+					$(CORE_DIR)/core/hw/maple/maple_devs.cpp \
+					$(CORE_DIR)/core/hw/maple/maple_if.cpp \
+					$(CORE_DIR)/core/hw/maple/maple_cfg.cpp \
 					\
-					$(CORE_DIR)/hw/mem/_vmem.cpp \
+					$(CORE_DIR)/core/hw/mem/_vmem.cpp \
 					\
-					$(CORE_DIR)/hw/pvr/drkPvr.cpp \
-					$(CORE_DIR)/hw/pvr/Renderer_if.cpp \
-					$(CORE_DIR)/hw/pvr/pvr_mem.cpp \
-					$(CORE_DIR)/hw/pvr/pvr_regs.cpp \
-					$(CORE_DIR)/hw/pvr/pvr_sb_regs.cpp \
-					$(CORE_DIR)/hw/pvr/spg.cpp \
-					$(CORE_DIR)/hw/pvr/ta.cpp \
-					$(CORE_DIR)/hw/pvr/ta_ctx.cpp \
-					$(CORE_DIR)/hw/pvr/ta_vtx.cpp \
-					$(CORE_DIR)/rend/TexCache.cpp \
+					$(CORE_DIR)/core/hw/pvr/drkPvr.cpp \
+					$(CORE_DIR)/core/hw/pvr/Renderer_if.cpp \
+					$(CORE_DIR)/core/hw/pvr/pvr_mem.cpp \
+					$(CORE_DIR)/core/hw/pvr/pvr_regs.cpp \
+					$(CORE_DIR)/core/hw/pvr/pvr_sb_regs.cpp \
+					$(CORE_DIR)/core/hw/pvr/spg.cpp \
+					$(CORE_DIR)/core/hw/pvr/ta.cpp \
+					$(CORE_DIR)/core/hw/pvr/ta_ctx.cpp \
+					$(CORE_DIR)/core/hw/pvr/ta_vtx.cpp \
+					$(CORE_DIR)/core/rend/TexCache.cpp \
 					\
-					$(CORE_DIR)/hw/sh4/sh4_mmr.cpp \
-					$(CORE_DIR)/hw/sh4/sh4_mem.cpp \
-					$(CORE_DIR)/hw/sh4/sh4_interrupts.cpp \
-					$(CORE_DIR)/hw/sh4/sh4_rom.cpp \
-					$(CORE_DIR)/hw/sh4/sh4_core_regs.cpp \
-					$(CORE_DIR)/hw/sh4/sh4_sched.cpp \
-					$(CORE_DIR)/hw/sh4/sh4_opcode_list.cpp \
-					$(CORE_DIR)/hw/sh4/interpr/sh4_interpreter.cpp \
-					$(CORE_DIR)/hw/sh4/interpr/sh4_fpu.cpp \
-					$(CORE_DIR)/hw/sh4/interpr/sh4_opcodes.cpp \
-					$(CORE_DIR)/hw/sh4/modules/serial.cpp \
-					$(CORE_DIR)/hw/sh4/modules/rtc.cpp  \
-					$(CORE_DIR)/hw/sh4/modules/bsc.cpp \
-					$(CORE_DIR)/hw/sh4/modules/tmu.cpp \
-					$(CORE_DIR)/hw/sh4/modules/ccn.cpp \
-					$(CORE_DIR)/hw/sh4/modules/intc.cpp \
-					$(CORE_DIR)/hw/sh4/modules/ubc.cpp \
-					$(CORE_DIR)/hw/sh4/modules/cpg.cpp \
-					$(CORE_DIR)/hw/sh4/modules/dmac.cpp \
-					$(CORE_DIR)/hw/sh4/modules/mmu.cpp \
-					$(CORE_DIR)/imgread/ImgReader.cpp \
-					$(CORE_DIR)/imgread/cdi.cpp \
-					$(CORE_DIR)/imgread/chd.cpp \
-					$(CORE_DIR)/imgread/common.cpp \
-					$(CORE_DIR)/imgread/gdi.cpp \
+					$(CORE_DIR)/core/hw/sh4/sh4_mmr.cpp \
+					$(CORE_DIR)/core/hw/sh4/sh4_mem.cpp \
+					$(CORE_DIR)/core/hw/sh4/sh4_interrupts.cpp \
+					$(CORE_DIR)/core/hw/sh4/sh4_rom.cpp \
+					$(CORE_DIR)/core/hw/sh4/sh4_core_regs.cpp \
+					$(CORE_DIR)/core/hw/sh4/sh4_sched.cpp \
+					$(CORE_DIR)/core/hw/sh4/sh4_opcode_list.cpp \
+					$(CORE_DIR)/core/hw/sh4/interpr/sh4_interpreter.cpp \
+					$(CORE_DIR)/core/hw/sh4/interpr/sh4_fpu.cpp \
+					$(CORE_DIR)/core/hw/sh4/interpr/sh4_opcodes.cpp \
+					$(CORE_DIR)/core/hw/sh4/modules/serial.cpp \
+					$(CORE_DIR)/core/hw/sh4/modules/rtc.cpp  \
+					$(CORE_DIR)/core/hw/sh4/modules/bsc.cpp \
+					$(CORE_DIR)/core/hw/sh4/modules/tmu.cpp \
+					$(CORE_DIR)/core/hw/sh4/modules/ccn.cpp \
+					$(CORE_DIR)/core/hw/sh4/modules/intc.cpp \
+					$(CORE_DIR)/core/hw/sh4/modules/ubc.cpp \
+					$(CORE_DIR)/core/hw/sh4/modules/cpg.cpp \
+					$(CORE_DIR)/core/hw/sh4/modules/dmac.cpp \
+					$(CORE_DIR)/core/hw/sh4/modules/mmu.cpp \
+					$(CORE_DIR)/core/imgread/ImgReader.cpp \
+					$(CORE_DIR)/core/imgread/cdi.cpp \
+					$(CORE_DIR)/core/imgread/chd.cpp \
+					$(CORE_DIR)/core/imgread/common.cpp \
+					$(CORE_DIR)/core/imgread/gdi.cpp \
 					\
-					$(CORE_DIR)/nullDC.cpp \
-					$(CORE_DIR)/stdclass.cpp \
+					$(CORE_DIR)/core/nullDC.cpp \
+					$(CORE_DIR)/core/stdclass.cpp \
 					\
 					$(DEPS_DIR)/coreio/coreio.cpp \
 					$(DEPS_DIR)/chdr/chdr.cpp \
@@ -87,27 +87,27 @@ SOURCES_CXX := \
 					$(DEPS_DIR)/chdpsr/cdipsr.cpp \
 					\
 					\
-					$(CORE_DIR)/reios/reios_elf.cpp \
-					$(CORE_DIR)/reios/reios.cpp \
-					$(CORE_DIR)/reios/gdrom_hle.cpp \
-					$(CORE_DIR)/reios/descrambl.cpp
+					$(CORE_DIR)/core/reios/reios_elf.cpp \
+					$(CORE_DIR)/core/reios/reios.cpp \
+					$(CORE_DIR)/core/reios/gdrom_hle.cpp \
+					$(CORE_DIR)/core/reios/descrambl.cpp
 SOURCES_ASM :=
 
 ifeq ($(NO_REND), 1)
-SOURCES_CXX += $(CORE_DIR)/rend/norend/norend.cpp
+SOURCES_CXX += $(CORE_DIR)/core/rend/norend/norend.cpp
 endif
 
 ifeq ($(HAVE_GL), 1)
 
 ifeq ($(HAVE_OIT), 1)
-SOURCES_CXX += $(CORE_DIR)/rend/gl4/gles.cpp \
-					$(CORE_DIR)/rend/gl4/gldraw.cpp \
-					$(CORE_DIR)/rend/gl4/gltex.cpp \
-					$(CORE_DIR)/rend/gl4/abuffer.cpp
+SOURCES_CXX += $(CORE_DIR)/core/rend/gl4/gles.cpp \
+					$(CORE_DIR)/core/rend/gl4/gldraw.cpp \
+					$(CORE_DIR)/core/rend/gl4/gltex.cpp \
+					$(CORE_DIR)/core/rend/gl4/abuffer.cpp
 else
-SOURCES_CXX += $(CORE_DIR)/rend/gles/gles.cpp \
-					$(CORE_DIR)/rend/gles/gldraw.cpp \
-					$(CORE_DIR)/rend/gles/gltex.cpp
+SOURCES_CXX += $(CORE_DIR)/core/rend/gles/gles.cpp \
+					$(CORE_DIR)/core/rend/gles/gldraw.cpp \
+					$(CORE_DIR)/core/rend/gles/gltex.cpp
 endif
 SOURCES_C   += $(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
 					$(LIBRETRO_COMM_DIR)/glsm/glsm.c
@@ -118,59 +118,59 @@ else
 endif
 endif
 
-SOURCES_CXX += $(CORE_DIR)/hw/naomi/naomi.cpp \
-					$(CORE_DIR)/hw/naomi/naomi_cart.cpp 
+SOURCES_CXX += $(CORE_DIR)/core/hw/naomi/naomi.cpp \
+					$(CORE_DIR)/core/hw/naomi/naomi_cart.cpp 
 
 
 ifeq ($(HAVE_GENERIC_JIT), 1)
 DYNAREC_USED = 1
-SOURCES_CXX += $(CORE_DIR)/rec-cpp/rec_cpp.cpp
+SOURCES_CXX += $(CORE_DIR)/core/rec-cpp/rec_cpp.cpp
 endif
 
 # Recompiler (x64)
 
 ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
 DYNAREC_USED = 1
-SOURCES_CXX += $(CORE_DIR)/rec-x64/rec_x64.cpp 
+SOURCES_CXX += $(CORE_DIR)/core/rec-x64/rec_x64.cpp 
 # Recompiler (x86 32bit)
 #
 else ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), i386 i686 x86))
 DYNAREC_USED = 1
 ifeq ($(platform), unix)
-SOURCES_ASM += $(CORE_DIR)/rec-x86/rec_lin86_asm.S
+SOURCES_ASM += $(CORE_DIR)/core/rec-x86/rec_lin86_asm.S
 else
-SOURCES_ASM += $(CORE_DIR)/rec-x86/rec_win86_asm.S
+SOURCES_ASM += $(CORE_DIR)/core/rec-x86/rec_win86_asm.S
 endif
-SOURCES_CXX += $(CORE_DIR)/rec-x86/rec_x86_asm.cpp \
-					$(CORE_DIR)/rec-x86/rec_x86_driver.cpp \
-					$(CORE_DIR)/rec-x86/rec_x86_il.cpp \
-					$(CORE_DIR)/rec-x86/x86_emitter.cpp
+SOURCES_CXX += $(CORE_DIR)/core/rec-x86/rec_x86_asm.cpp \
+					$(CORE_DIR)/core/rec-x86/rec_x86_driver.cpp \
+					$(CORE_DIR)/core/rec-x86/rec_x86_il.cpp \
+					$(CORE_DIR)/core/rec-x86/x86_emitter.cpp
 endif
 
 
 # Recompiler (ARM)
 ifeq ($(WITH_DYNAREC), arm)
 DYNAREC_USED = 1
-SOURCES_CXX += $(CORE_DIR)/rec-ARM/rec_arm.cpp
+SOURCES_CXX += $(CORE_DIR)/core/rec-ARM/rec_arm.cpp
 endif
 
 ifeq ($(DYNAREC_USED),1)
-SOURCES_CXX += $(CORE_DIR)/rec.cpp
+SOURCES_CXX += $(CORE_DIR)/core/rec.cpp
 # Dynarec
-SOURCES_CXX += $(CORE_DIR)/hw/sh4/dyna/decoder.cpp \
-					$(CORE_DIR)/hw/sh4/dyna/driver.cpp \
-					$(CORE_DIR)/hw/sh4/dyna/blockmanager.cpp \
-					$(CORE_DIR)/hw/sh4/dyna/shil.cpp 
+SOURCES_CXX += $(CORE_DIR)/core/hw/sh4/dyna/decoder.cpp \
+					$(CORE_DIR)/core/hw/sh4/dyna/driver.cpp \
+					$(CORE_DIR)/core/hw/sh4/dyna/blockmanager.cpp \
+					$(CORE_DIR)/core/hw/sh4/dyna/shil.cpp 
 
 endif
 
 ifneq (,$(findstring arm, $(ARCH)))
-SOURCES_ASM += $(CORE_DIR)/rec-ARM/ngen_arm.S
+SOURCES_ASM += $(CORE_DIR)/core/rec-ARM/ngen_arm.S
 endif
 
-SOURCES_CXX += $(CORE_DIR)/libretro/libretro.cpp \
-					$(CORE_DIR)/libretro/audiostream.cpp \
-					$(CORE_DIR)/libretro/common.cpp
+SOURCES_CXX += $(CORE_DIR)/core/libretro/libretro.cpp \
+					$(CORE_DIR)/core/libretro/audiostream.cpp \
+					$(CORE_DIR)/core/libretro/common.cpp
 
 SOURCES_C +=   $(LIBRETRO_COMM_DIR)/memmap/memalign.c \
 					$(LIBRETRO_COMM_DIR)/file/retro_stat.c

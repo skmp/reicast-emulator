@@ -84,7 +84,7 @@ else ifneq ($(findstring MINGW,$(shell uname -a)),)
 	system_platform = win
 endif
 
-CORE_DIR := core
+CORE_DIR := .
 
 DYNAREC_USED = 0
 CORE_DEFINES   := -D__LIBRETRO__

@@ -240,7 +240,9 @@ void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 		break;
 	}
 
+#ifndef NDEBUG
 	__debugbreak();
+#endif
 }
 
 bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data)

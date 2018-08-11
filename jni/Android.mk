@@ -24,6 +24,7 @@ HOST_CPU_X64=0x20000004
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
   WITH_DYNAREC := arm64
+  HAVE_GENERIC_JIT :=1
 else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
   WITH_DYNAREC := arm
   HAVE_NEON := 1

@@ -32,7 +32,7 @@ endif
 
 include $(ROOT_DIR)/Makefile.common
 
-COREFLAGS := -ffast-math -D__LIBRETRO__ -DINLINE="inline" -DANDROID -DHAVE_OPENGLES $(GLFLAGS) $(INCFLAGS) $(DYNAFLAGS)
+COREFLAGS := -ffast-math -D__LIBRETRO__ -DINLINE="inline" -DANDROID -DHAVE_OPENGLES -DHAVE_OPENGLES2 $(GLFLAGS) $(INCFLAGS) $(DYNAFLAGS)
 
 GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")

@@ -1325,7 +1325,7 @@ u32 nfb,ffb,bfb,mfb;
  * We don't care for speed here ...
 */
 
-#include "emitter/x86_emitter.h"
+#include "../../rec-x86/x86_emitter.h"
 #include "virt_arm.h"
 
 static x86_block* x86e;

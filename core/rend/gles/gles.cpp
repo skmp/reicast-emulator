@@ -265,7 +265,7 @@ void main() \n\
 	#endif  \n\
    //color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);\n\
 #if TARGET_GL != GLES2 \n\
-	float w = gl_FragCoord.w * 100000.0; \n\
+	highp float w = gl_FragCoord.w * 100000.0; \n\
 	gl_FragDepth = log2(1.0 + w) / 34.0; \n\
 #endif \n\
    gl_FragColor =color; \n\
@@ -296,7 +296,7 @@ uniform lowp float sp_ShaderColor; \n\
 void main() \n\
 { \n\
 #if TARGET_GL != GLES2 \n\
-	float w = gl_FragCoord.w * 100000.0; \n\
+   highp float w = gl_FragCoord.w * 100000.0; \n\
    gl_FragDepth = log2(1.0 + w) / 34.0; \n\
 #endif \n\
    gl_FragColor=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\

@@ -17,6 +17,11 @@ WITH_DYNAREC  :=
 HAVE_OPENGL   := 1
 GLES          := 1
 
+HOST_CPU_X86=0x20000001
+HOST_CPU_ARM=0x20000002
+HOST_CPU_MIPS=0x20000003
+HOST_CPU_X64=0x20000004
+
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
   WITH_DYNAREC := arm64
 else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
@@ -33,6 +38,22 @@ endif
 include $(ROOT_DIR)/Makefile.common
 
 COREFLAGS := -ffast-math -D__LIBRETRO__ -DINLINE="inline" -DANDROID -DHAVE_OPENGLES -DHAVE_OPENGLES2 $(GLFLAGS) $(INCFLAGS) $(DYNAFLAGS)
+
+ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
+	COREFLAGS += -DHOST_CPU=$(HOST_CPU_X64)
+endif
+
+ifeq ($(WITH_DYNAREC), x86)
+	COREFLAGS += -DHOST_CPU=$(HOST_CPU_X86)
+endif
+
+ifeq ($(WITH_DYNAREC), arm)
+	COREFLAGS += -DHOST_CPU=$(HOST_CPU_ARM)
+endif
+
+ifeq ($(WITH_DYNAREC), mips)
+	COREFLAGS += -DHOST_CPU=$(HOST_CPU_MIPS)
+endif
 
 GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")

@@ -516,7 +516,7 @@ static void* _nvmem_alloc_mem(void)
 #define MAP_NOSYNC       0 //missing from linux :/ -- could be the cause of android slowness ?
 #endif
 
-#ifdef _ANDROID
+#ifdef ANDROID
 #include <linux/ashmem.h>
 
 #ifndef ASHMEM_DEVICE

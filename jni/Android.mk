@@ -16,8 +16,6 @@ WITH_DYNAREC  :=
 
 HAVE_OPENGL   := 1
 GLES          := 1
-HAVE_PARALLEL := 1
-HAVE_THR_AL   := 1
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
   WITH_DYNAREC := arm64
@@ -34,7 +32,7 @@ endif
 
 include $(ROOT_DIR)/Makefile.common
 
-COREFLAGS := -ffast-math -DM64P_CORE_PROTOTYPES -D_ENDUSER_RELEASE -DM64P_PLUGIN_API -D__LIBRETRO__ -DINLINE="inline" -DANDROID $(GLFLAGS) $(INCFLAGS) $(DYNAFLAGS)
+COREFLAGS := -ffast-math -D__LIBRETRO__ -DINLINE="inline" -DANDROID $(GLFLAGS) $(INCFLAGS) $(DYNAFLAGS)
 
 GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")

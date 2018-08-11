@@ -1,5 +1,6 @@
 LOCAL_PATH := $(call my-dir)
 
+CORE_DIR      := $(LOCAL_PATH)/..
 ROOT_DIR      := $(LOCAL_PATH)/..
 LIBRETRO_DIR  := $(ROOT_DIR)/libretro
 

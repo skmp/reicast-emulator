@@ -22,6 +22,11 @@
 extern int mips_counter;
 extern int cycle_counter;
 
+void ngen_blockcheckfail_CC(u32 pc) {
+	printf("REC CPP: SMC invalidation at %08X\n", pc);
+	rdv_BlockCheckFail(pc);
+}
+
 class opcodeExec {
 	public:
 	virtual void execute() = 0;
@@ -745,6 +750,44 @@ struct opcode_blockend : public opcodeExec {
 	}
 };
 
+template <int sz>
+struct opcode_check_block : public opcodeExec {
+	RuntimeBlockInfo* block;
+	vector<u8> code;
+	void* ptr;
+
+	opcodeExec* setup(RuntimeBlockInfo* block) {
+		this->block = block;
+		ptr = GetMemPtr(block->addr, 4);
+      code.resize(sz == -1 ? block->sh4_code_size : sz);
+		memcpy(&code[0], ptr, sz == -1 ? block->sh4_code_size : sz);
+
+		return this;
+	}
+
+	void execute() {
+      switch (sz)
+		{
+		case 4:
+			if (*(u32 *)ptr != *(u32 *)&code[0])
+				ngen_blockcheckfail_CC(block->addr);
+			break;
+		case 6:
+			if (*(u32 *)ptr != *(u32 *)&code[0] || *((u16 *)ptr + 2) != *((u16 *)&code[0] + 2))
+				ngen_blockcheckfail_CC(block->addr);
+			break;
+		case 8:
+			if (*(u32 *)ptr != *(u32 *)&code[0] || *((u32 *)ptr + 1) != *((u32 *)&code[0] + 1))
+				ngen_blockcheckfail_CC(block->addr);
+			break;
+		default:
+			if (memcmp(ptr, &code[0], block->sh4_code_size) != 0)
+				ngen_blockcheckfail_CC(block->addr);
+			break;
+		}
+	}
+};
+
 #if !defined(_DEBUG)
 	#define DREP_1(x, phrase) if (x < cnt) ops[x]->execute(); else return;
 	#define DREP_2(x, phrase) DREP_1(x, phrase) DREP_1(x+1, phrase)
@@ -1092,8 +1135,8 @@ public:
 	opcodeExec** ptrsg;
 	void compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise) {
 		
-		//we need an extra one for the end opcode
-		auto ptrs = fnnCtor_forreal(block->oplist.size() + 1)(block->guest_cycles);
+      //we need an extra one for the end opcode and optionally one more for block check
+      auto ptrs = fnnCtor_forreal(block->oplist.size() + 1 + (force_checks ? 1 : 0))(block->guest_cycles);
 
 		ptrsg = ptrs.ptrs;
 
@@ -1102,13 +1145,34 @@ public:
 
 		block->code = getndpn_forreal(idxnxx++);
 
-		if (getndpn_forreal(idxnxx) == 0)
+		if (getndpn_forreal(idxnxx) == 0) {
 			emit_Skip(emit_FreeSpace()-16);
+      }
 
-		for (size_t i = 0; i < block->oplist.size(); i++)
-      {
+      size_t i = 0;
+		if (force_checks)
+		{
+         opcodeExec* op;
+			switch (block->sh4_code_size)
+			{
+			case 4:
+				op = (new opcode_check_block<4>())->setup(block);
+				break;
+			case 6:
+				op = (new opcode_check_block<6>())->setup(block);
+				break;
+			case 8:
+				op = (new opcode_check_block<8>())->setup(block);
+				break;
+			default:
+				op = (new opcode_check_block<-1>())->setup(block);
+				break;
+			}
+			ptrs.ptrs[i++] = op;
+		}
+		for (size_t opnum = 0; opnum < block->oplist.size(); opnum++, i++) {
 			opcode_index = i;
-			shil_opcode& op = block->oplist[i];
+         shil_opcode& op = block->oplist[opnum];
 			switch (op.op) {
 
 			case shop_ifb:
@@ -1568,7 +1632,7 @@ public:
 				CASEWS(BET_Cond_1);
 			}
 
-			ptrs.ptrs[block->oplist.size()] = op;
+         ptrs.ptrs[i] = op;
 		}
 
 	}

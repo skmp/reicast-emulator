@@ -16,6 +16,7 @@ _arm_compilecode:
 
 ###########################################
 #define R15_ARM_NEXT 46
+#define INTR_PEND 47
 #define CYCL_CNT 48
 
 .globl _arm_mainloop

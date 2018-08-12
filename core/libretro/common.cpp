@@ -384,7 +384,8 @@ printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n", ctx.pc, dyna_cde);
 #elif HOST_CPU == CPU_X64
    //x64 has no rewrite support
 #else
-#error JIT: Not supported arch
+   /* TODO/FIXME - ARMv8 (Aarch64) will end up here, just comment out error for now */
+//#error JIT: Not supported arch
 #endif
 #endif
    else

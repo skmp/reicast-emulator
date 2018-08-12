@@ -363,13 +363,13 @@ void findGLVersion()
       if (gl.gl_major >= 3)
       {
          gl.gl_version = "GL3";
-         gl.glsl_version_header = "#version 140";
+         gl.glsl_version_header = "#version 130";
          gl.fog_image_format = GL_RED;
       }
       else
       {
          gl.gl_version = "GL2";
-         gl.glsl_version_header = "";
+         gl.glsl_version_header = "#version 120";
          gl.fog_image_format = GL_ALPHA;
       }
    }

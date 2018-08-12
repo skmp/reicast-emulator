@@ -299,7 +299,8 @@ static void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, boo
 #elif HOST_CPU == CPU_GENERIC
    //nothing!
 #else
-#error Unsupported HOST_CPU
+   /* TODO/FIXME - ARMv8 (Aarch64) will end up here, just comment out error for now */
+//#error Unsupported HOST_CPU
 #endif
 #endif
 }

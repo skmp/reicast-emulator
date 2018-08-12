@@ -40,6 +40,10 @@ include $(ROOT_DIR)/Makefile.common
 
 COREFLAGS := -ffast-math -D__LIBRETRO__ -DINLINE="inline" -DANDROID -DHAVE_OPENGLES -DHAVE_OPENGLES2 -DTARGET_NO_THREADS $(GLFLAGS) $(INCFLAGS) $(DYNAFLAGS)
 
+ifeq ($(TARGET_ARCH_ABI),x86_64)
+COREFLAGS += -fno-operator-names
+endif
+
 ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
 	COREFLAGS += -DHOST_CPU=$(HOST_CPU_X64)
 endif

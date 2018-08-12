@@ -1460,6 +1460,7 @@ void armv_prof(OpType opt,u32 op,u32 flags)
 	}
 }
 
+#ifndef _WIN32
 naked void DYNACALL arm_compilecode()
 {
 	__asm
@@ -1511,6 +1512,8 @@ naked void arm_exit()
 		ret
 	}
 }
+#endif
+
 #elif	(HOST_CPU == CPU_ARM)
 
 /*

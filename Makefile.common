@@ -139,7 +139,8 @@ DYNAREC_USED = 1
 ifeq ($(platform), unix)
 SOURCES_ASM += $(CORE_DIR)/core/rec-x86/rec_lin86_asm.S
 else
-SOURCES_ASM += $(CORE_DIR)/core/rec-x86/rec_win86_asm.S
+SOURCES_ASM += $(CORE_DIR)/core/rec-x86/rec_win86_asm.S \
+					$(CORE_DIR)/core/hw/arm7/arm7_win86_asm.S
 endif
 SOURCES_CXX += $(CORE_DIR)/core/rec-x86/rec_x86_asm.cpp \
 					$(CORE_DIR)/core/rec-x86/rec_x86_driver.cpp \

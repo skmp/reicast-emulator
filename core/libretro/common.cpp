@@ -483,7 +483,7 @@ cThread::cThread(ThreadEntryFP* function,void* prm)
 
 void cThread::Start()
 {
-   hThread = sthread_create(Entry, 0);
+   hThread = sthread_create((void (*)(void *))Entry, 0);
 }
 
 void cThread::WaitToEnd()
@@ -533,9 +533,19 @@ void cResetEvent::Reset()//reset
 	slock_unlock(mutx );
 #endif
 }
-void cResetEvent::Wait(u32 msec)//Wait for signal , then reset
+bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
 {
-	verify(false);
+	bool ret = state;
+#if !defined(TARGET_NO_THREADS)
+	slock_lock(mutx);
+	if (!state)
+		ret = scond_wait_timeout(cond, mutx, (int64_t)msec * 1000);
+#endif
+	state = false;
+#if !defined(TARGET_NO_THREADS)
+   slock_unlock(mutx);
+#endif
+	return ret;
 }
 void cResetEvent::Wait()//Wait for signal , then reset
 {

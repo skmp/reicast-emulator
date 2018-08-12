@@ -108,6 +108,9 @@ void dc_run();
 void dc_term(void);
 void rend_terminate();
 void dc_stop();
+extern Renderer* renderer;
+bool rend_single_frame();
+static void *emu_thread_func(void *);
 
 static int co_argc;
 static wchar** co_argv;
@@ -116,12 +119,32 @@ char *game_data;
 char g_base_name[128];
 char game_dir[1024];
 char game_dir_no_slash[1024];
+#if !defined(TARGET_NO_THREADS)
+static cThread emu_thread(&emu_thread_func, 0);
+#endif
+static bool emu_inited = false;
+
+static void *emu_thread_func(void *)
+{
+    char* argv[] = { "reicast" };
+    
+    dc_init(1, argv);
+    
+    emu_inited = true;
+    dc_run();
+
+    dc_term();
+
+    return NULL;
+}
 
 void co_dc_yield(void)
 {
+#if defined(TARGET_NO_THREADS)
    if (settings.UpdateMode || settings.UpdateModeForced)
       return;
    dc_stop();
+#endif
 }
 
 void retro_set_video_refresh(retro_video_refresh_t cb)
@@ -681,13 +704,32 @@ static void update_variables(bool first_startup)
    else
       allow_service_buttons = false;
 }
-
+bool renderer_inited = false;
 void retro_run (void)
 {
    bool updated = false;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       update_variables(false);
 
+#if !defined(TARGET_NO_THREADS)
+   if (first_run)
+   {
+      emu_thread.Start();
+      first_run = false;
+   }
+   if (!emu_inited)
+      return;
+
+   glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
+   if (!renderer_inited)
+   {
+      renderer->Init();
+      renderer_inited = true;
+   }
+   is_dupe = !rend_single_frame();
+   glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
+    
+#else
    if (first_run)
    {
       dc_init(co_argc,co_argv);
@@ -697,14 +739,18 @@ void retro_run (void)
    }
 
    dc_run();
+#endif
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
    video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
 #endif
+#if defined(TARGET_NO_THREADS)
    is_dupe     = true;
+#endif
 }
 
 void retro_reset (void)
 {
+die("retro_reset");
    //TODO
    dc_term();
    first_run = true;
@@ -1021,15 +1067,16 @@ void retro_unload_game(void)
       free(game_data);
    game_data = NULL;
 
-#ifdef HAVE_TEXUPSCALE
-   void shutdown_thread_pool();
-   printf("Shutting down thread pool...\n");
-   shutdown_thread_pool();
-#endif
-   printf("...Done\n");
-   rend_terminate();
    dc_stop();
+#if !defined(TARGET_NO_THREADS)
+   void rend_cancel_emu_wait();
+   rend_cancel_emu_wait();
+   printf("Waiting for emu thread...\n");
+   emu_thread.WaitToEnd();
+   printf("...Done\n");
+#else
    dc_term();
+#endif
 }
 
 
@@ -1159,6 +1206,7 @@ unsigned retro_api_version(void)
 //Reicast stuff
 void os_DoEvents(void)
 {
+#if defined(TARGET_NO_THREADS)
    is_dupe = false;
    poll_cb();
 
@@ -1167,6 +1215,7 @@ void os_DoEvents(void)
       rend_end_render();
       dc_stop();
    }
+#endif
 }
 
 void os_CreateWindow()

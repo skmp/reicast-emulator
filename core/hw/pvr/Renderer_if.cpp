@@ -99,7 +99,8 @@ bool rend_single_frame(void)
    do
    {
 #if !defined(TARGET_NO_THREADS)
-      rs.Wait();
+      if (!rs.Wait(20))
+         return false;
 #endif
       _pvrrc = DequeueRender();
    }
@@ -223,6 +224,13 @@ void rend_end_render(void)
    }
 }
 
+void rend_cancel_emu_wait()
+{
+#if !defined(TARGET_NO_THREADS)
+    re.Set();
+#endif
+}
+
 bool rend_init(void)
 {
 #ifdef NO_REND
@@ -234,7 +242,9 @@ bool rend_init(void)
 #endif
 
 #if !defined(TARGET_NO_THREADS)
+#if !defined(__LIBRETRO__)
    rthd.Start();
+#endif
 #else
    if (!renderer->Init()) die("rend->init() failed\n");
 

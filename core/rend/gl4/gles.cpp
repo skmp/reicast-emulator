@@ -1244,17 +1244,22 @@ struct gl4rend : Renderer
 
 	bool Process(TA_context* ctx)
    {
+#if defined(TARGET_NO_THREADS)
+       glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
+#endif
       return ProcessFrame(ctx);
    }
 	bool Render()
    {
-      glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
-      return RenderFrame();
+      bool ret = RenderFrame();
+#if defined(TARGET_NO_THREADS)
+       glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
+#endif
+      return ret;
    }
 
 	void Present()
    {
-      glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
       co_dc_yield();
    }
 

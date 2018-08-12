@@ -12,6 +12,7 @@
 #include <glsm/glsm.h>
 #endif
 #include "../rend/rend.h"
+#include "../hw/sh4/sh4_mem.h"
 
 #if defined(_XBOX) || defined(_WIN32)
 char slash = '\\';
@@ -1035,11 +1036,15 @@ void retro_unload_game(void)
 // Memory/Serialization
 void *retro_get_memory_data(unsigned type)
 {
+   if ( type == RETRO_MEMORY_SYSTEM_RAM )
+      return mem_b.data;
    return 0; //TODO
 }
 
 size_t retro_get_memory_size(unsigned type)
 {
+   if ( type == RETRO_MEMORY_SYSTEM_RAM )
+      return mem_b.size;
    return 0; //TODO
 }
 

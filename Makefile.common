@@ -165,7 +165,7 @@ SOURCES_CXX += $(CORE_DIR)/core/hw/sh4/dyna/decoder.cpp \
 
 endif
 
-ifneq (,$(findstring arm, $(ARCH)))
+ifeq ($(WITH_DYNAREC), arm)
 SOURCES_ASM += $(CORE_DIR)/core/rec-ARM/ngen_arm.S
 endif
 

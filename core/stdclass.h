@@ -200,7 +200,6 @@ private:
 #endif
 
 public :
-	bool state;
 	cMutex()
 	{
 #ifndef TARGET_NO_THREADS

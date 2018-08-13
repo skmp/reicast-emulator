@@ -74,6 +74,7 @@ cResetEvent re(false,true);
 #endif
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
+bool pend_rend = false;
 
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
@@ -83,9 +84,7 @@ bool rend_frame(TA_context* ctx, bool draw_osd)
    bool proc = renderer->Process(ctx);
 
 #if !defined(TARGET_NO_THREADS)
-   if (!proc || !ctx->rend.isRTT)
-      // If rendering to texture, continue locking until the frame is rendered
-      re.Set();
+   re.Set();
 #endif
    
    bool do_swp = proc && renderer->Render();
@@ -99,18 +98,13 @@ bool rend_single_frame(void)
    do
    {
 #if !defined(TARGET_NO_THREADS)
-      if (!rs.Wait(20))
+      if (!pend_rend && !rs.Wait(20))
          return false;
 #endif
       _pvrrc = DequeueRender();
    }
    while (!_pvrrc);
    bool do_swp = rend_frame(_pvrrc, true);
-
-#if !defined(TARGET_NO_THREADS)
-   if (_pvrrc->rend.isRTT)
-      re.Set();
-#endif
 
    //clear up & free data ..
    FinishRender(_pvrrc);
@@ -156,8 +150,6 @@ void *rend_thread(void* p)
 cThread rthd(rend_thread,0);
 #endif
 
-bool pend_rend = false;
-
 void rend_resize(int width, int height)
 {
 	renderer->Resize(width, height);
@@ -192,7 +184,7 @@ void rend_start_render(void)
          max_mvo              = max(max_mvo,  ctx->rend.global_param_mvo.used());
          max_modt             = max(max_modt, ctx->rend.modtrig.used());
 
-         if (QueueRender(ctx) || !settings.QueueRender)
+         if (QueueRender(ctx))
          {
             palette_update();
 #if !defined(TARGET_NO_THREADS)

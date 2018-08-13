@@ -420,7 +420,6 @@ void LoadSettings(void)
 	settings.pvr.subdivide_transp	= 0;
 	settings.pvr.ta_skip			   = 0;
 	settings.pvr.rend				   = 0;
-   settings.QueueRender          = 0;
    settings.pvr.Emulation.AlphaSortMode= 0;
    settings.pvr.Emulation.zMin         = 0.f;
    settings.pvr.Emulation.zMax         = 1.0f;

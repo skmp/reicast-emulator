@@ -496,7 +496,6 @@ struct RegisterStruct
 struct settings_t
 {
    unsigned System;
-   bool QueueRender;
    bool MMUEnabled;
 
 	struct {

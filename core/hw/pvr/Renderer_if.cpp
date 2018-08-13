@@ -74,6 +74,7 @@ cResetEvent re(false,true);
 #endif
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
+bool pend_rend = false;
 
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
@@ -83,8 +84,7 @@ bool rend_frame(TA_context* ctx, bool draw_osd)
    bool proc = renderer->Process(ctx);
 
 #if !defined(TARGET_NO_THREADS)
-   if (!proc || !ctx->rend.isRTT)
-      // If rendering to texture, continue locking until the frame is rendered
+   if (settings.rend.ThreadedRendering)
       re.Set();
 #endif
    
@@ -99,17 +99,13 @@ bool rend_single_frame(void)
    do
    {
 #if !defined(TARGET_NO_THREADS)
-      rs.Wait();
+      if (settings.rend.ThreadedRendering && !rs.Wait(100))
+         return false;
 #endif
       _pvrrc = DequeueRender();
    }
    while (!_pvrrc);
    bool do_swp = rend_frame(_pvrrc, true);
-
-#if !defined(TARGET_NO_THREADS)
-   if (_pvrrc->rend.isRTT)
-      re.Set();
-#endif
 
    //clear up & free data ..
    FinishRender(_pvrrc);
@@ -155,8 +151,6 @@ void *rend_thread(void* p)
 cThread rthd(rend_thread,0);
 #endif
 
-bool pend_rend = false;
-
 void rend_resize(int width, int height)
 {
 	renderer->Resize(width, height);
@@ -191,14 +185,15 @@ void rend_start_render(void)
          max_mvo              = max(max_mvo,  ctx->rend.global_param_mvo.used());
          max_modt             = max(max_modt, ctx->rend.modtrig.used());
 
-         if (QueueRender(ctx) || !settings.QueueRender)
+         if (QueueRender(ctx))
          {
             palette_update();
 #if !defined(TARGET_NO_THREADS)
-            rs.Set();
-#else
-            rend_single_frame();
+            if (settings.rend.ThreadedRendering)
+            	rs.Set();
+            else
 #endif
+            	rend_single_frame();
             pend_rend = true;
          }
       }
@@ -216,11 +211,20 @@ void rend_end_render(void)
    if (pend_rend)
    {
 #if !defined(TARGET_NO_THREADS)
-      re.Wait();
-#else
-      renderer->Present();
+	   if (settings.rend.ThreadedRendering)
+		   re.Wait();
+	   else
 #endif
+           renderer->Present();
    }
+}
+
+void rend_cancel_emu_wait()
+{
+#if !defined(TARGET_NO_THREADS)
+	if (settings.rend.ThreadedRendering)
+		re.Set();
+#endif
 }
 
 bool rend_init(void)
@@ -234,12 +238,14 @@ bool rend_init(void)
 #endif
 
 #if !defined(TARGET_NO_THREADS)
-   rthd.Start();
-#else
-   if (!renderer->Init()) die("rend->init() failed\n");
-
-   renderer->Resize(screen_width, screen_height);
+	if (!settings.rend.ThreadedRendering)
 #endif
+	{
+		if (!renderer->Init())
+			die("rend->init() failed\n");
+
+		renderer->Resize(screen_width, screen_height);
+	}
 
 #if SET_AFNT
 	cpu_set_t mask;

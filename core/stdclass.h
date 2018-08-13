@@ -188,7 +188,7 @@ public :
 	~cResetEvent();
 	void Set();		//Set state to signaled
 	void Reset();	//Set state to non signaled
-	void Wait(u32 msec);//Wait for signal , then reset[if auto]
+	bool Wait(u32 msec);//Wait for signal , then reset[if auto]. Returns false if timeout expired, true otherwise
 	void Wait();	//Wait for signal , then reset[if auto]
 };
 
@@ -200,7 +200,6 @@ private:
 #endif
 
 public :
-	bool state;
 	cMutex()
 	{
 #ifndef TARGET_NO_THREADS
@@ -222,7 +221,7 @@ public :
 	void Unlock()
 	{
 #ifndef TARGET_NO_THREADS
-      slock_lock(mutx);
+      slock_unlock(mutx);
 #endif
 	}
 };

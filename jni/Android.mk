@@ -14,6 +14,7 @@ DYNAFLAGS     :=
 HAVE_NEON     := 0
 WITH_DYNAREC  :=
 
+HAVE_GL       := 1
 HAVE_OPENGL   := 1
 GLES          := 1
 

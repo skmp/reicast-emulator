@@ -1309,7 +1309,7 @@ u32 nfb,ffb,bfb,mfb;
 
 
 
-#if (HOST_CPU == CPU_X86)
+#if (HOST_CPU == CPU_X86) && FEAT_AREC != DYNAREC_NONE
 
 /* X86 backend
  * Uses a mix of

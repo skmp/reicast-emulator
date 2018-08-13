@@ -1244,17 +1244,19 @@ struct gl4rend : Renderer
 
 	bool Process(TA_context* ctx)
    {
-#if defined(TARGET_NO_THREADS)
-       glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
+#if !defined(TARGET_NO_THREADS)
+      if (!settings.rend.ThreadedRendering)
 #endif
+         glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
       return ProcessFrame(ctx);
    }
 	bool Render()
    {
       bool ret = RenderFrame();
-#if defined(TARGET_NO_THREADS)
-       glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
+#if !defined(TARGET_NO_THREADS)
+      if (!settings.rend.ThreadedRendering)
 #endif
+    	  glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
       return ret;
    }
 

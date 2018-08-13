@@ -84,7 +84,8 @@ bool rend_frame(TA_context* ctx, bool draw_osd)
    bool proc = renderer->Process(ctx);
 
 #if !defined(TARGET_NO_THREADS)
-   re.Set();
+   if (settings.rend.ThreadedRendering)
+      re.Set();
 #endif
    
    bool do_swp = proc && renderer->Render();
@@ -98,7 +99,7 @@ bool rend_single_frame(void)
    do
    {
 #if !defined(TARGET_NO_THREADS)
-      if (!pend_rend && !rs.Wait(20))
+      if (settings.rend.ThreadedRendering && !rs.Wait(100))
          return false;
 #endif
       _pvrrc = DequeueRender();
@@ -188,10 +189,11 @@ void rend_start_render(void)
          {
             palette_update();
 #if !defined(TARGET_NO_THREADS)
-            rs.Set();
-#else
-            rend_single_frame();
+            if (settings.rend.ThreadedRendering)
+            	rs.Set();
+            else
 #endif
+            	rend_single_frame();
             pend_rend = true;
          }
       }
@@ -209,17 +211,19 @@ void rend_end_render(void)
    if (pend_rend)
    {
 #if !defined(TARGET_NO_THREADS)
-      re.Wait();
-#else
-      renderer->Present();
+	   if (settings.rend.ThreadedRendering)
+		   re.Wait();
+	   else
 #endif
+           renderer->Present();
    }
 }
 
 void rend_cancel_emu_wait()
 {
 #if !defined(TARGET_NO_THREADS)
-    re.Set();
+	if (settings.rend.ThreadedRendering)
+		re.Set();
 #endif
 }
 
@@ -234,14 +238,14 @@ bool rend_init(void)
 #endif
 
 #if !defined(TARGET_NO_THREADS)
-#if !defined(__LIBRETRO__)
-   rthd.Start();
+	if (!settings.rend.ThreadedRendering)
 #endif
-#else
-   if (!renderer->Init()) die("rend->init() failed\n");
+	{
+		if (!renderer->Init())
+			die("rend->init() failed\n");
 
-   renderer->Resize(screen_width, screen_height);
-#endif
+		renderer->Resize(screen_width, screen_height);
+	}
 
 #if SET_AFNT
 	cpu_set_t mask;

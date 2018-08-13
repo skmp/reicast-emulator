@@ -106,10 +106,10 @@ static retro_rumble_interface rumble;
 int dc_init(int argc,wchar* argv[]);
 void dc_run();
 void dc_term(void);
-void rend_terminate();
 void dc_stop();
 extern Renderer* renderer;
 bool rend_single_frame();
+void rend_cancel_emu_wait();
 static void *emu_thread_func(void *);
 
 static int co_argc;
@@ -140,11 +140,14 @@ static void *emu_thread_func(void *)
 
 void co_dc_yield(void)
 {
-#if defined(TARGET_NO_THREADS)
-   if (settings.UpdateMode || settings.UpdateModeForced)
-      return;
-   dc_stop();
+#if !defined(TARGET_NO_THREADS)
+    if (!settings.rend.ThreadedRendering)
 #endif
+    {
+    	if (settings.UpdateMode || settings.UpdateModeForced)
+    		return;
+    	dc_stop();
+    }
 }
 
 void retro_set_video_refresh(retro_video_refresh_t cb)
@@ -301,6 +304,12 @@ void retro_set_environment(retro_environment_t cb)
          "reicast_render_to_texture_upscaling",
          "Render To Texture Upscaling; 1x|2x|3x|4x|8x",
       },
+#if !defined(TARGET_NO_THREADS)
+      {
+         "reicast_threaded_rendering",
+         "Threaded rendering (restart); disabled|enabled",
+      },
+#endif
       {
          "reicast_enable_purupuru",
          "Purupuru Pack (restart); enabled|disabled"
@@ -643,6 +652,23 @@ static void update_variables(bool first_startup)
    else if (first_startup)
       settings.rend.RenderToTextureUpscale = 1;
 
+#if !defined(TARGET_NO_THREADS)
+   if (first_startup)
+   {
+	   var.key = "reicast_threaded_rendering";
+
+	   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+	   {
+		   if (!strcmp("enabled", var.value))
+			   settings.rend.ThreadedRendering = true;
+		   else
+			   settings.rend.ThreadedRendering = false;
+	   }
+	   else
+		   settings.rend.ThreadedRendering = false;
+   }
+#endif
+
    var.key = "reicast_enable_purupuru";
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
       enable_purupuru = (strcmp("enabled", var.value) == 0);
@@ -712,47 +738,65 @@ void retro_run (void)
       update_variables(false);
 
 #if !defined(TARGET_NO_THREADS)
-   if (first_run)
+   if (settings.rend.ThreadedRendering)
    {
-      emu_thread.Start();
-      first_run = false;
-   }
-   if (!emu_inited)
-      return;
+	   // On the first call, we start the emulator thread
+	   if (first_run)
+	   {
+		   emu_thread.Start();
+		   first_run = false;
+	   }
+	   // Then we wait until the emulator has initialized
+	   if (!emu_inited)
+		   return;
 
-   glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
-   if (!renderer_inited)
-   {
-      renderer->Init();
-      renderer_inited = true;
-   }
-   is_dupe = !rend_single_frame();
-   glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
-    
-#else
-   if (first_run)
-   {
-      dc_init(co_argc,co_argv);
-      dc_run();
-      first_run = false;
-      return;
-   }
+	   glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
 
-   dc_run();
+	   // We can now initialize the renderer
+	   if (!renderer_inited)
+	   {
+		   renderer->Init();
+		   renderer_inited = true;
+	   }
+	   /// And start rendering
+	   is_dupe = !rend_single_frame();
+
+	   glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
+
+	   poll_cb();
+   }
+   else
 #endif
+   {
+	   if (first_run)
+	   {
+		   dc_init(co_argc,co_argv);
+		   dc_run();
+		   first_run = false;
+		   return;
+	   }
+	   dc_run();
+   }
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
    video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
 #endif
-#if defined(TARGET_NO_THREADS)
-   is_dupe     = true;
+#if !defined(TARGET_NO_THREADS)
+   if (!settings.rend.ThreadedRendering)
 #endif
+	   is_dupe = true;
 }
 
 void retro_reset (void)
 {
-die("retro_reset");
-   //TODO
-   dc_term();
+#if !defined(TARGET_NO_THREADS)
+   if (settings.rend.ThreadedRendering)
+   {
+	   dc_stop();
+	   emu_inited = false;
+   }
+   else
+#endif
+	   dc_term();
    first_run = true;
    settings.dreamcast.cable = 3;
    update_variables(false);
@@ -1069,14 +1113,16 @@ void retro_unload_game(void)
 
    dc_stop();
 #if !defined(TARGET_NO_THREADS)
-   void rend_cancel_emu_wait();
-   rend_cancel_emu_wait();
-   printf("Waiting for emu thread...\n");
-   emu_thread.WaitToEnd();
-   printf("...Done\n");
-#else
-   dc_term();
+   if (settings.rend.ThreadedRendering)
+   {
+	   rend_cancel_emu_wait();
+	   printf("Waiting for emu thread...\n");
+	   emu_thread.WaitToEnd();
+	   printf("...Done\n");
+   }
+   else
 #endif
+	   dc_term();
 }
 
 
@@ -1206,16 +1252,19 @@ unsigned retro_api_version(void)
 //Reicast stuff
 void os_DoEvents(void)
 {
-#if defined(TARGET_NO_THREADS)
-   is_dupe = false;
-   poll_cb();
-
-   if (settings.UpdateMode || settings.UpdateModeForced)
-   {
-      rend_end_render();
-      dc_stop();
-   }
+#if !defined(TARGET_NO_THREADS)
+	if (!settings.rend.ThreadedRendering)
 #endif
+	{
+		is_dupe = false;
+		poll_cb();
+
+		if (settings.UpdateMode || settings.UpdateModeForced)
+		{
+			rend_end_render();
+			dc_stop();
+		}
+	}
 }
 
 void os_CreateWindow()
@@ -1508,5 +1557,6 @@ int push_vmu_screen(u8* buffer) { return 0; }
 void os_DebugBreak(void)
 {
    printf("DEBUGBREAK!\n");
-   exit(-1);
+   //exit(-1);
+   __builtin_trap();
 }

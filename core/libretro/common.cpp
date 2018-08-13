@@ -535,12 +535,12 @@ void cResetEvent::Reset()//reset
 }
 bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
 {
-	bool ret = state;
 #if !defined(TARGET_NO_THREADS)
 	slock_lock(mutx);
 	if (!state)
-		ret = scond_wait_timeout(cond, mutx, (int64_t)msec * 1000);
+		scond_wait_timeout(cond, mutx, (int64_t)msec * 1000);
 #endif
+	bool ret = state;
 	state = false;
 #if !defined(TARGET_NO_THREADS)
    slock_unlock(mutx);

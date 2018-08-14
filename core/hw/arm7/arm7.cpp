@@ -847,7 +847,7 @@ template<u32 I>
 void DYNACALL DoLDM(u32 addr, u32 mask)
 {
 
-#if HOST_CPU==CPU_X86
+#if HOST_CPU==CPU_X86 && FEAT_AREC != DYNAREC_NONE
 	addr=virt_arm_reg(0);
 	mask=virt_arm_reg(1);
 #endif
@@ -1647,7 +1647,7 @@ void arm_Run(u32 CycleCount)
 		//lookup code at armNextPC, run a block & remove its cycles from the timeslice
 		clktks-=EntryPoints[(armNextPC & ARAM_MASK)/4]();
 		
-		#if HOST_CPU==CPU_X86
+#if HOST_CPU==CPU_X86 && FEAT_AREC != DYNAREC_NONE
 			verify(armNextPC<=ARAM_MASK);
 		#endif
 	} while(clktks>0);
@@ -1692,7 +1692,7 @@ void MemOperand2(eReg dst,bool I, bool U,u32 offs, u32 opcd)
 template<u32 Pd>
 void DYNACALL MSR_do(u32 v)
 {
-#if HOST_CPU==CPU_X86
+#if HOST_CPU==CPU_X86 && FEAT_AREC != DYNAREC_NONE
 	v=virt_arm_reg(r0);
 #endif
 	if (Pd)
@@ -1751,7 +1751,7 @@ extern "C" void CompileCode()
 		//Read opcode ...
 		u32 opcd=CPUReadMemoryQuick(pc);
 
-#if HOST_CPU==CPU_X86
+#if HOST_CPU==CPU_X86 && FEAT_AREC != DYNAREC_NONE
 		//Sanity check: Stale cache
 		armv_check_cache(opcd,pc);
 #endif
@@ -1774,13 +1774,13 @@ extern "C" void CompileCode()
 					armv_imm_to_reg(15,pc+8);
 
 				else*/
-					#if HOST_CPU==CPU_X86
+#if HOST_CPU==CPU_X86 && FEAT_AREC != DYNAREC_NONE
 					armv_imm_to_reg(15,rand());
 #endif
 
 				VirtualizeOpcode(opcd,op_flags,pc);
 
-#if HOST_CPU==CPU_X86
+#if HOST_CPU==CPU_X86 && FEAT_AREC != DYNAREC_NONE
 				armv_imm_to_reg(15,rand());
 #endif
 			}
@@ -2032,14 +2032,14 @@ extern "C" void CompileCode()
 				if (op_flags & OP_SETS_PC)
 					armv_imm_to_reg(R15_ARM_NEXT,pc+4);
 
-				#if HOST_CPU==CPU_X86
+#if HOST_CPU==CPU_X86 && FEAT_AREC != DYNAREC_NONE
 					if ( !(op_flags & OP_SETS_PC) )
 						armv_imm_to_reg(R15_ARM_NEXT,pc+4);
 				#endif
 
 				armv_intpr(opcd);
 
-#if HOST_CPU==CPU_X86
+#if HOST_CPU==CPU_X86 && FEAT_AREC != DYNAREC_NONE
 				if ( !(op_flags & OP_SETS_PC) )
 				{
 					//Sanity check: next pc
@@ -2060,7 +2060,7 @@ extern "C" void CompileCode()
 		//Lets say each opcode takes 9 cycles for now ..
 		Cycles+=9;
 
-#if HOST_CPU==CPU_X86
+#if HOST_CPU==CPU_X86 && FEAT_AREC != DYNAREC_NONE
 		armv_imm_to_reg(15,0xF87641FF);
 
 		armv_prof(opt,opcd,op_flags);

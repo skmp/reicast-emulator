@@ -31,9 +31,7 @@ else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
   WITH_DYNAREC := arm
   HAVE_NEON := 1
 else ifeq ($(TARGET_ARCH_ABI),x86)
-  # X86 dynarec isn't position independent, so it will not run on api 23+
-  # This core uses vulkan which is api 24+, so dynarec cannot be used
-  WITH_DYNAREC := bogus
+  WITH_DYNAREC := x86
 else ifeq ($(TARGET_ARCH_ABI),x86_64)
   WITH_DYNAREC := x86_64
 endif
@@ -84,6 +82,6 @@ LOCAL_ARM_MODE     := arm
 
 ifeq ($(NO_THREADS),1)
 else
-LOCAL_LDLIBS       += -lpthread
+#LOCAL_LDLIBS       += -lpthread
 endif
 include $(BUILD_SHARED_LIBRARY)

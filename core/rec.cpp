@@ -205,3 +205,8 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
          break;
    }
 }
+
+u32* GetRegPtr(u32 reg)
+{
+	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
+}

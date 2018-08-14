@@ -60,11 +60,6 @@ RuntimeBlockInfo* ngen_AllocateBlock(void)
    return new DynaRBI();
 }
 
-u32* GetRegPtr(u32 reg)
-{
-	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
-}
-
 void ngen_blockcheckfail(u32 pc) {
 	printf("X64 JIT: SMC invalidation at %08X\n", pc);
 	rdv_BlockCheckFail(pc);

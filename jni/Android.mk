@@ -11,6 +11,7 @@ INCFLAGS      :=
 CFLAGS        :=
 CXXFLAGS      :=
 DYNAFLAGS     :=
+NO_THREADS    := 0
 HAVE_NEON     := 0
 WITH_DYNAREC  :=
 
@@ -39,7 +40,11 @@ endif
 
 include $(ROOT_DIR)/Makefile.common
 
-COREFLAGS := -ffast-math -D__LIBRETRO__ -DINLINE="inline" -DANDROID -DHAVE_OPENGLES -DHAVE_OPENGLES2 -DTARGET_NO_THREADS $(GLFLAGS) $(INCFLAGS) $(DYNAFLAGS)
+COREFLAGS := -ffast-math -D__LIBRETRO__ -DINLINE="inline" -DANDROID -DHAVE_OPENGLES -DHAVE_OPENGLES2 $(GLFLAGS) $(INCFLAGS) $(DYNAFLAGS)
+
+ifeq ($(NO_THREADS),1)
+COREFLAGS += -DTARGET_NO_THREADS
+endif
 
 ifeq ($(TARGET_ARCH_ABI),x86_64)
 COREFLAGS += -fno-operator-names
@@ -76,4 +81,9 @@ LOCAL_LDLIBS       := -lGLESv2
 LOCAL_CPP_FEATURES := exceptions
 LOCAL_ARM_NEON     := true
 LOCAL_ARM_MODE     := arm
+
+ifeq ($(NO_THREADS),1)
+else
+LOCAL_LDLIBS       += -lpthread
+endif
 include $(BUILD_SHARED_LIBRARY)

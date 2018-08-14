@@ -44,6 +44,10 @@ ifeq ($(NO_THREADS),1)
 COREFLAGS += -DTARGET_NO_THREADS
 endif
 
+ifeq ($(HAVE_GENERIC_JIT),1)
+COREFLAGS += -DTARGET_NO_JIT
+endif
+
 ifeq ($(TARGET_ARCH_ABI),x86_64)
 COREFLAGS += -fno-operator-names
 endif

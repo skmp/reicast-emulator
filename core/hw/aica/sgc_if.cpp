@@ -1120,7 +1120,7 @@ void sgc_Init()
 
 void sgc_Term()
 {
-	
+   dsp_term();
 }
 
 void WriteChannelReg8(u32 channel,u32 reg)

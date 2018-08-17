@@ -93,6 +93,7 @@ static struct game_type lut_games[] =
    { "T23001N   ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /*  Star Wars - Episode I - Racer (USA) */
    { "T30701D50 ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Pro Pinball Trilogy */
    { "T15112N   ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Demolition Racer */
+   { "T7012D    ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Record of Lodoss War (EU) */
    { "T40218N   ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Record of Lodoss War (USA) */
 };
 

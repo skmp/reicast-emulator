@@ -675,8 +675,8 @@ struct settings_t
 	{
 		bool PatchRegion;
 		bool LoadDefaultImage;
-		char DefaultImage[512];
-		char LastImage[512];
+		std::string DefaultImage;
+		std::string LastImage;
 	} imgread;
 
 	struct

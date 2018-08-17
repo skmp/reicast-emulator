@@ -761,6 +761,7 @@ static bool RenderFrame(void)
 
       if (SCALER_CTL.hscale)
       {
+         scissoring_scale_x /= 2;
          scale_x*=2;
       }
    }

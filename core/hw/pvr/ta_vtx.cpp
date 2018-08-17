@@ -1283,6 +1283,8 @@ public:
 
 		SFaceBaseColor=spr->BaseCol;
 		SFaceOffsColor=spr->OffsCol;
+
+      d_pp->isp.CullMode ^= 1;
 	}
 
 	#define append_sprite(indx) \

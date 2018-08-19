@@ -225,6 +225,15 @@ void retro_set_environment(retro_environment_t cb)
          "Internal resolution (restart); 640x480|320x240|1280x960|1920x1440|2560x1920|3200x2400|3840x2880|4480x3360|5120x3840|5760x4320|6400x4800|7040x5280|7680x5760|8320x6240|8960x6720|9600x7200|10240x7680|10880x8160|11520x8640|12160x9120|12800x9600",
       },
       {
+#ifdef HAVE_OIT
+         "reicast_oit_alpha_sorting",
+         "Alpha sorting; per-pixel (accurate)",
+#else
+         "reicast_alpha_sorting",
+         "Alpha sorting; per-triangle (normal)|per-strip (fast, least accurate)",
+#endif
+      },
+      {
          "reicast_gdrom_fast_loading",
          "GDROM Fast Loading (inaccurate); disabled|enabled",
       },
@@ -439,6 +448,25 @@ static void update_variables(bool first_startup)
    }
    else
       GDROM_TICK      = 1500000;
+
+#ifdef HAVE_OIT
+   var.key = "reicast_oit_alpha_sorting";
+#else
+   var.key = "reicast_alpha_sorting";
+#endif
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "per-strip (fast, least accurate)"))
+         settings.pvr.Emulation.AlphaSortMode = 1;
+      else if (!strcmp(var.value, "per-triangle (normal)"))
+         settings.pvr.Emulation.AlphaSortMode = 0;
+      else if (!strcmp(var.value, "per-pixel (accurate)"))
+         settings.pvr.Emulation.AlphaSortMode = 0; /* value not used for OIT */
+   }
+   else
+      settings.pvr.Emulation.AlphaSortMode = 0;
+
 
    var.key = "reicast_mipmapping";
 

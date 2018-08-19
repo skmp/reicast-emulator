@@ -18,7 +18,7 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
-#if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX)
+#if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX) && !defined(TARGET_IPHONE_SIMULATOR)
   #include <sys/personality.h>
   #include <dlfcn.h>
 #endif
@@ -43,10 +43,12 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
     context_from_segfault(&ctx, segfault_ctx);
 
 	unat pc = (unat)ctx.pc;
+
+#if FEAT_SHREC == DYNAREC_JIT
 	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE));
-	
 	printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n", pc, pc - (unat)sigill_handler, (unat)si->si_addr, dyna_cde);
-	
+#endif
+
 	printf("Entering infiniloop");
 
 	for (;;);
@@ -61,44 +63,45 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 
 	context_from_segfault(&ctx, segfault_ctx);
 
+	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
+		return;
+	#if FEAT_SHREC == DYNAREC_JIT
 	bool dyna_cde = ((unat)ctx.pc>(unat)CodeCache) && ((unat)ctx.pc<(unat)(CodeCache + CODE_SIZE));
 
 	//ucontext_t* ctx=(ucontext_t*)ctxr;
 	//printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,ctx->uc_mcontext.arm_pc,dyna_cde);
 
-	
-	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
-		return;
-	#if FEAT_SHREC == DYNAREC_JIT
-		#if HOST_CPU==CPU_ARM
-			else if (dyna_cde)
-			{
-				ctx.pc = (u32)ngen_readm_fail_v2((u32*)ctx.pc, ctx.r, (unat)si->si_addr);
 
-				context_to_segfault(&ctx, segfault_ctx);
-			}
-		#elif HOST_CPU==CPU_X86
-			else if (ngen_Rewrite((unat&)ctx.pc, *(unat*)ctx.esp, ctx.eax))
-			{
-				//remove the call from call stack
-				ctx.esp += 4;
-				//restore the addr from eax to ecx so it's valid again
-				ctx.ecx = ctx.eax;
+	#if HOST_CPU==CPU_ARM
+	if (dyna_cde) {
+		ctx.pc = (u32)ngen_readm_fail_v2((u32*)ctx.pc, ctx.r, (unat)si->si_addr);
 
-				context_to_segfault(&ctx, segfault_ctx);
-			}
-		#elif HOST_CPU == CPU_X64
-			//x64 has no rewrite support
-		#else
-			#error JIT: Not supported arch
-		#endif
+		context_to_segfault(&ctx, segfault_ctx);
+	} else
+	#elif HOST_CPU==CPU_X86
+	if (ngen_Rewrite((unat&)ctx.pc, *(unat*)ctx.esp, ctx.eax)) {
+		//remove the call from call stack
+		ctx.esp += 4;
+		//restore the addr from eax to ecx so it's valid again
+		ctx.ecx = ctx.eax;
+
+		context_to_segfault(&ctx, segfault_ctx);
+	} else
+	#elif HOST_CPU == CPU_X64
+	//x64 has no rewrite support
+	#else
+	#error JIT: Not supported arch
 	#endif
-	else
+	#endif
+	#if HOST_CPU==CPU_ARM || HOST_CPU==CPU_X86
 	{
+	#endif
 		printf("SIGSEGV @ %p (fault_handler+0x%p) ... %p -> was not in vram\n", ctx.pc, ctx.pc - (unat)fault_handler, si->si_addr);
 		die("segfault");
 		signal(SIGSEGV, SIG_DFL);
+	#if HOST_CPU==CPU_ARM || HOST_CPU==CPU_X86
 	}
+	#endif
 }
 #endif
 
@@ -192,7 +195,7 @@ void cResetEvent::Wait()//Wait for signal , then reset
 void VArray2::LockRegion(u32 offset,u32 size)
 {
 	#if !defined(TARGET_NO_EXCEPTIONS)
-  u32 inpage=offset & PAGE_MASK;
+	u32 inpage=offset & PAGE_MASK;
 	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ );
 	if (rv!=0)
 	{
@@ -200,8 +203,8 @@ void VArray2::LockRegion(u32 offset,u32 size)
 		die("mprotect  failed ..\n");
 	}
 
-	#else
-		printf("VA2: LockRegion\n");
+//	#else
+//		printf("VA2: LockRegion\n");
 	#endif
 }
 
@@ -243,7 +246,7 @@ void print_mem_addr()
 void VArray2::UnLockRegion(u32 offset,u32 size)
 {
 	#if !defined(TARGET_NO_EXCEPTIONS)
-  u32 inpage=offset & PAGE_MASK;
+	u32 inpage=offset & PAGE_MASK;
 	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ | PROT_WRITE);
 	if (rv!=0)
 	{
@@ -251,8 +254,8 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 		printf("mprotect(%8p,%08X,RW) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
 		die("mprotect  failed ..\n");
 	}
-	#else
-		printf("VA2: UnLockRegion\n");
+//	#else
+//		printf("VA2: UnLockRegion\n");
 	#endif
 }
 double os_GetSeconds()
@@ -263,9 +266,9 @@ double os_GetSeconds()
 	return a.tv_sec-tvs_base+a.tv_usec/1000000.0;
 }
 
-#if TARGET_IPHONE
+#if TARGET_IPHONE && (HOST_CPU == CPU_ARM)
 void os_DebugBreak() {
-    __asm__("trap");
+//    __asm__("trap");
 }
 #elif HOST_OS != OS_LINUX
 void os_DebugBreak()
@@ -276,7 +279,7 @@ void os_DebugBreak()
 
 void enable_runfast()
 {
-	#if HOST_CPU==CPU_ARM && !defined(ARMCC)
+	#if HOST_CPU==CPU_ARM && !defined(ARMCC) && !defined(TARGET_IPHONE)
 	static const unsigned int x = 0x04086060;
 	static const unsigned int y = 0x03000000;
 	int r;
@@ -294,7 +297,7 @@ void enable_runfast()
 }
 
 void linux_fix_personality() {
-        #if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_OS_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
+        #if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_IPHONE_SIMULATOR) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
           printf("Personality: %08X\n", personality(0xFFFFFFFF));
           personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
           printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
@@ -326,11 +329,11 @@ void common_linux_setup()
 
 	enable_runfast();
 	install_fault_handler();
-	signal(SIGINT, exit);
-	
+//	signal(SIGINT, exit);
+
 	settings.profile.run_counts=0;
 	
-	printf("Linux paging: %08X %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
-	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
+//	printf("Linux paging: %08X %08X %08X\n",sysconf(_SC_PAGESIZE)-1,PAGE_SIZE,PAGE_MASK);
+//	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
 }
 #endif

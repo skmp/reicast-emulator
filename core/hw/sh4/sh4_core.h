@@ -94,9 +94,11 @@ static INLINE void SetXD(u32 n,f64 val)
 	xf[(n<<1) | 1]=t.sgl[0];
 	xf[(n<<1) | 0]=t.sgl[1];
 }
+
 //needs to be removed
 u32* Sh4_int_GetRegisterPtr(Sh4RegType reg);
-//needs to be made portable
+
+ //needs to be made portable
 void SetFloatStatusReg();
 
 
@@ -108,3 +110,4 @@ struct SH4ThrownException {
 	u32 expEvn;
 	u32 callVect;
 };
+

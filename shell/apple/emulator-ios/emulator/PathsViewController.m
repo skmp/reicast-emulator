@@ -25,10 +25,18 @@
     }
     return self;
 }
+- (IBAction)refreshTapped:(id)sender {
+	[self updateDiskImages];
+}
 
 - (NSURL *)documents
 {
-	return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+#if TARGET_OS_TV
+//	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+	return [[[NSFileManager defaultManager] URLsForDirectory:NSCachesDirectory inDomains:NSUserDomainMask] firstObject];
+#else
+	return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] firstObject];
+#endif
 }
 
 - (void)viewDidLoad
@@ -48,10 +56,17 @@
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     // self.navigationItem.rightBarButtonItem = self.editButtonItem;
 	
+	[self updateDiskImages];
+}
+
+- (void)updateDiskImages {
 	self.diskImages = [[NSMutableArray alloc] init];
 	NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:[self documents].path error:NULL];
 	NSPredicate *diskPredicate = [NSPredicate predicateWithFormat:@"self ENDSWITH '.chd' || self ENDSWITH '.gdi' || self ENDSWITH '.cdi' || self ENDSWITH '.CHD' || self ENDSWITH '.GDI' || self ENDSWITH '.CDI'"];
 	self.diskImages = [NSMutableArray arrayWithArray:[files filteredArrayUsingPredicate:diskPredicate]];
+
+	NSLog(@"Put files in %@", [self documents].path);
+	[self.tableView reloadData];
 }
 
 - (void)didReceiveMemoryWarning

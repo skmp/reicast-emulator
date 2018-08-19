@@ -20,6 +20,8 @@
 	#undef fastcall
 	#define DYNACALL __attribute__((fastcall))
 	#endif
+#elif defined(TARGET_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
+	#define DYNACALL __vectorcall
 #else
 	#define DYNACALL
 #endif
@@ -91,11 +93,11 @@ typedef double f64;
 #endif
 
 typedef ptrdiff_t snat;
-typedef size_t unat;
+//typedef size_t unat;
 
-#ifdef X64
+//#ifdef X64
 typedef u64 unat;
-#endif
+//#endif
 
 typedef char wchar;
 

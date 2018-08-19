@@ -1,4 +1,4 @@
-﻿#include "arm7.h"
+#include "arm7.h"
 #include "arm_mem.h"
 
 
@@ -2162,7 +2162,7 @@ void armt_init()
 		verify(false);
 	}
 
-#if TARGET_IPHONE
+#if defined(TARGET_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
 	memset((u8*)mmap(ICache, ICacheSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0),0xFF,ICacheSize);
 #else
 	memset(ICache,0xFF,ICacheSize);

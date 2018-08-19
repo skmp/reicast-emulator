@@ -195,7 +195,14 @@
 	#define HOST_CPU CPU_GENERIC
 #elif defined(TARGET_IPHONE)
     #define HOST_OS OS_DARWIN
-    #define HOST_CPU CPU_ARM
+//    #ifdef __LP64__
+        #define HOST_CPU CPU_GENERIC
+//    #else
+//        #define HOST_CPU CPU_ARM
+//    #endif
+#elif defined(TARGET_IPHONE_SIMULATOR)
+    #define HOST_OS OS_DARWIN
+    #define HOST_CPU CPU_GENERIC
 #elif defined(TARGET_OSX)
     #define HOST_OS OS_DARWIN
     #define HOST_CPU CPU_GENERIC

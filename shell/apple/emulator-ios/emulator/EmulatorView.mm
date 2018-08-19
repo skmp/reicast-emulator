@@ -16,28 +16,6 @@ extern u32 vks[4];
 extern s8 joyx[4],joyy[4];
 extern u8 rt[4],lt[4];
 
-#define DC_BTN_C		(1)
-#define DC_BTN_B		(1<<1)
-#define DC_BTN_A		(1<<2)
-#define DC_BTN_START	(1<<3)
-#define DC_DPAD_UP		(1<<4)
-#define DC_DPAD_DOWN	(1<<5)
-#define DC_DPAD_LEFT	(1<<6)
-#define DC_DPAD_RIGHT	(1<<7)
-#define DC_BTN_Z		(1<<8)
-#define DC_BTN_Y		(1<<9)
-#define DC_BTN_X		(1<<10)
-#define DC_BTN_D		(1<<11)
-#define DC_DPAD2_UP		(1<<12)
-#define DC_DPAD2_DOWN	(1<<13)
-#define DC_DPAD2_LEFT	(1<<14)
-#define DC_DPAD2_RIGHT	(1<<15)
-
-#define DC_AXIS_LT		(0X10000)
-#define DC_AXIS_RT		(0X10001)
-#define DC_AXIS_X		(0X20000)
-#define DC_AXIS_Y		(0X20001)
-
 @implementation EmulatorView
 
 /*
@@ -103,20 +81,20 @@ NSInteger start_button = 11;
 	}
 }
 
-- (void)handleKeyUp:(UIButton*)button
+- (void) handleKeyUp:(UIButton*)button
 {
 	PadViewController * controller = (PadViewController *)self.controllerView;
 	if (button == controller.img_dpad_l || button.tag == left_pad) {
-		kcode[0] |= ~(DC_DPAD_LEFT);
+		kcode[0] |= (DC_DPAD_LEFT);
 	}
 	if (button == controller.img_dpad_r || button.tag == right_pad) {
-		kcode[0] |= ~(DC_DPAD_RIGHT);
+		kcode[0] |= (DC_DPAD_RIGHT);
 	}
 	if (button == controller.img_dpad_u || button.tag == up_pad) {
-		kcode[0] |= ~(DC_DPAD_UP);
+		kcode[0] |= (DC_DPAD_UP);
 	}
 	if (button == controller.img_dpad_d || button.tag == down_pad) {
-		kcode[0] |= ~(DC_DPAD_DOWN);
+		kcode[0] |= (DC_DPAD_DOWN);
 	}
 	if (button == controller.img_abxy_a || button.tag == a_button) {
 		kcode[0] |= (DC_BTN_A);

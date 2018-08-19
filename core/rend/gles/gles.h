@@ -3,10 +3,10 @@
 
 
 #ifdef GLES
-#if defined(TARGET_IPHONE) //apple-specific ogles2 headers
+#if defined(TARGET_IPHONE) || defined(TARGET_IPHONE_SIMULATOR) //apple-specific ogles2 headers
 //#include <APPLE/egl.h>
-#include <OpenGLES/ES2/gl.h>
-#include <OpenGLES/ES2/glext.h>
+#include <OpenGLES/ES3/gl.h>
+#include <OpenGLES/ES3/glext.h>
 #else
 #if !defined(TARGET_NACL32)
 #include <EGL/egl.h>

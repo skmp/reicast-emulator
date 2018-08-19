@@ -945,7 +945,7 @@ void CalcPlfo(ChannelEx* ch)
 		rv=(ch->lfo.state>>3)^(ch->lfo.state<<3)^(ch->lfo.state&0xE3);
 		break;
 	}
-	ch->lfo.alfo=rv>>ch->lfo.plfo_shft;
+	ch->lfo.plfo=rv>>ch->lfo.plfo_shft;
 }
 
 template<u32 state>

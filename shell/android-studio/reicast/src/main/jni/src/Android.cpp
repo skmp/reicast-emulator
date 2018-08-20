@@ -11,7 +11,7 @@
 #include <GLES2/gl2ext.h>
 
 #include "types.h"
-#include "maple_cfg.h"
+#include "hw/maple/maple_cfg.h"
 #include "profiler/profiler.h"
 #include "cfg/cfg.h"
 #include "rend/TexCache.h"

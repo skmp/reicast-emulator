@@ -39,7 +39,7 @@ settings_t settings;
 #include <windows.h>
 #endif
 
-int GetFile(char *szFileName, char *szParse=0,u32 flags=0) 
+int GetFile(char *szFileName, char *szParse=0, u32 flags=0)
 {
 	cfgLoadStr("config","image",szFileName,"null");
 	if (strcmp(szFileName,"null")==0)
@@ -67,7 +67,7 @@ int GetFile(char *szFileName, char *szParse=0,u32 flags=0)
 	#endif
 	}
 
-	return 1; 
+	return 1;
 }
 
 
@@ -86,10 +86,10 @@ s32 plugins_Init()
 
 	if (s32 rv = libAICA_Init())
 		return rv;
-	
+
 	if (s32 rv = libARM_Init())
 		return rv;
-	
+
 	//if (s32 rv = libExtDevice_Init())
 	//	return rv;
 
@@ -164,7 +164,7 @@ int dc_init(int argc,wchar* argv[])
 #else
     #define DATA_PATH "/"
 #endif
-    
+
 	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
 	{
 		if (!LoadHle(get_readonly_data_path(DATA_PATH)))
@@ -185,28 +185,27 @@ int dc_init(int argc,wchar* argv[])
 		Get_Sh4Interpreter(&sh4_cpu);
 		printf("Using Interpreter\n");
 	}
-	
-  InitAudio();
+
+	InitAudio();
 
 	sh4_cpu.Init();
 	mem_Init();
 
 	plugins_Init();
-	
+
 	mem_map_default();
 
-#ifndef _ANDROID
-	mcfg_CreateDevices();
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+	os_SetupInput();
 #else
-    mcfg_CreateDevices();
+	mcfg_CreateNAOMIJamma();
 #endif
 
 	plugins_Reset(false);
 	mem_Reset(false);
-	
 
 	sh4_cpu.Reset(false);
-	
+
 	return rv;
 }
 
@@ -225,7 +224,7 @@ void dc_term()
 	SaveSettings();
 #endif
 	SaveRomFiles(get_writable_data_path("/data/"));
-    
+
     TermAudio();
 }
 
@@ -259,9 +258,9 @@ void LoadSettings()
 	settings.rend.WideScreen		= cfgLoadInt("config","rend.WideScreen",0);
 	settings.rend.ModifierVolumes	= cfgLoadInt("config","rend.ModifierVolumes",1);
 	settings.rend.Clipping			= cfgLoadInt("config","rend.Clipping",1);
-	
+
 	settings.pvr.subdivide_transp	= cfgLoadInt("config","pvr.Subdivide",0);
-	
+
 	settings.pvr.ta_skip			= cfgLoadInt("config","ta.skip",0);
 	settings.pvr.rend				= cfgLoadInt("config","pvr.rend",0);
 

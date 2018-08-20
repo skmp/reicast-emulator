@@ -917,24 +917,28 @@ void DrawStrips(void)
       // Modifier volumes
       DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
-      if (current_pass.autosort)
-         GenSorted(previous_pass.tr_count,
-               current_pass.tr_count - previous_pass.tr_count);
-
       //Alpha blended
       if (settings.pvr.Emulation.AlphaSortMode == 0)
       {
          if (current_pass.autosort)
+         {
+            GenSorted(previous_pass.tr_count,
+                       current_pass.tr_count - previous_pass.tr_count);
             DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
+         }
          else
             DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
       }
       else if (settings.pvr.Emulation.AlphaSortMode == 1)
       {
          if (current_pass.autosort)
+         {
             SortPParams(previous_pass.tr_count,
                   current_pass.tr_count - previous_pass.tr_count);
-         DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count );
+            DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count );
+         }
+         else
+             DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
       }
 
       previous_pass = current_pass;

@@ -442,7 +442,7 @@ int main(int argc, wchar* argv[])
 
 
 	if(ParseCommandLine(argc,argv)) {
-		return 69;
+		return rv_cli_finish;
 	}
 
 	/* Set directories */

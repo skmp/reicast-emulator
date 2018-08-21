@@ -1,12 +1,48 @@
 version: git-{branch}-{build}
-configuration: Debug
+configuration: Debug-v120
+
+
+image:
+  - Visual Studio 2013
+  - Visual Studio 2015
+  - Visual Studio 2017
+
 platform:
-- x86
-- x64
+  - x86
+  - x64
+
 build:
   project: shell/reicast.sln
   parallel: true
   verbosity: minimal
+
+configuration:
+  - Debug-v120
+  - Debug-v140
+  - Debug-v141
+  - Release-v120
+  - Release-v140
+  - Release-v141
+
+matrix:
+  exclude:
+    - configuration: Debug-v120
+      image: Visual Studio 2015
+      image: Visual Studio 2017
+    - configuration: Release-v120
+      image: Visual Studio 2015
+      image: Visual Studio 2017
+    - configuration: Debug-v140
+      image: Visual Studio 2013
+    - configuration: Release-v140
+      image: Visual Studio 2013
+    - configuration: Debug-v141
+      image: Visual Studio 2013
+      image: Visual Studio 2015
+    - configuration: Release-v141
+      image: Visual Studio 2013
+      image: Visual Studio 2015
+
 
 after_build:
   - cmd: mkdir artifacts

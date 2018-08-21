@@ -3,13 +3,14 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <android/log.h>  
+#include <android/log.h>
 #include <unistd.h>
 
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 
 #include "types.h"
+#include "hw/maple/maple_cfg.h"
 #include "profiler/profiler.h"
 #include "rend/TexCache.h"
 #include "hw/maple/maple_devs.h"
@@ -36,7 +37,7 @@ extern "C"
   //JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_play(JNIEnv *env,jobject obj,jshortArray result,jint size);
 
   JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_initControllers(JNIEnv *env, jobject obj, jbooleanArray controllers)  __attribute__((visibility("default")));
-  
+
   JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
   JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj, jstring newdisk)  __attribute__((visibility("default")));
   JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vmuSwap(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
@@ -221,13 +222,6 @@ static void *ThreadHandler(void *UserData)
     strcat(Args[2],P);
   }
 
-  // Add additonal controllers
-  for (int i = 0; i < 3; i++)
-  {
-    if (add_controllers[i])
-      mcfg_Create(MDT_SegaController,i+1,5);
-  }
-
   // Run nullDC emulator
   dc_init(Args[2]? 3:1,Args);
     return 0;
@@ -245,22 +239,35 @@ void UpdateInputState(u32 Port)
 
 void UpdateVibration(u32 port, u32 value)
 {
-	
+
 }
 
-void *libPvr_GetRenderTarget() 
+void *libPvr_GetRenderTarget()
 {
-  // No X11 window in Android 
+  // No X11 window in Android
   return(0);
 }
 
-void *libPvr_GetRenderSurface() 
-{ 
-  // No X11 display in Android 
+void *libPvr_GetRenderSurface()
+{
+  // No X11 display in Android
   return(0);
 }
 
 void common_linux_setup();
+
+void os_SetupInput()
+{
+	// Create first controller
+	mcfg_CreateController(0, MDT_SegaVMU, MDT_SegaVMU);
+
+	// Add additonal controllers
+	for (int i = 0; i < 3; i++)
+	{
+		if (add_controllers[i])
+			mcfg_CreateController(i+1, MDT_None, MDT_None);
+	}
+}
 
 void os_SetWindowText(char const *Text)
 {
@@ -296,7 +303,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobj
 
   // Set configuration
   settings.profile.run_counts = 0;
-  
+
 
 /*
   // Start native thread
@@ -343,13 +350,13 @@ void reios_info(JNIEnv *env) {
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject emu_thread)
 {
-	install_prof_handler(0);
+    install_prof_handler(0);
 
-	jenv=env;
-	emu=emu_thread;
+    jenv=env;
+    emu=emu_thread;
 
-	jsamples=env->NewShortArray(SAMPLE_COUNT*2);
-	writemid=env->GetMethodID(env->GetObjectClass(emu),"WriteBuffer","([SI)I");
+    jsamples=env->NewShortArray(SAMPLE_COUNT*2);
+    writemid=env->GetMethodID(env->GetObjectClass(emu),"WriteBuffer","([SI)I");
     coreMessageMid=env->GetMethodID(env->GetObjectClass(emu),"coreMessage","([B)V");
     dieMid=env->GetMethodID(env->GetObjectClass(emu),"Die","()V");
 
@@ -380,7 +387,7 @@ int msgboxf(const wchar* Text,unsigned int Type,...)
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)
 {
 	sipemu = env->NewGlobalRef(sip);
-	getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","()[B");	
+	getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","()[B");
 	delete MapleDevices[0][1];
 	mcfg_Create(MDT_Microphone,0,1);
 }
@@ -484,7 +491,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_kcode(JNIEnv * env, j
 
 	for(int i = 0; i < 4; i++)
 	{
-		kcode[i] = k_code_body[i];	
+		kcode[i] = k_code_body[i];
 		lt[i] = l_t_body[i];
 		rt[i] = r_t_body[i];
 		joyx[i] = jx_body[i];
@@ -499,7 +506,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_kcode(JNIEnv * env, j
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinit(JNIEnv * env, jobject obj, jint w,jint h)
-{             
+{
   screen_width  = w;
   screen_height = h;
 

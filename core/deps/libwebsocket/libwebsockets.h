@@ -24,7 +24,6 @@
 
 #ifdef __cplusplus
 extern "C" {
-#include <cstddef>
 #endif
 	
 #ifdef CMAKE_BUILD

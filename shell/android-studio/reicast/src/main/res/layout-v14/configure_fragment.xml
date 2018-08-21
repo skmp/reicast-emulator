@@ -278,6 +278,34 @@
                 android:gravity="center_vertical" >
 
                 <TextView
+                    android:id="@+id/safemode_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:ems="10"
+                    android:gravity="center_vertical|left"
+                    android:text="@string/select_safemode" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:orientation="vertical" >
+
+                    <Switch
+                        android:id="@+id/dynarec_safemode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:focusable="true" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical" >
+
+                <TextView
                     android:id="@+id/mipmaps_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -495,7 +523,7 @@
                     <Spinner
                         android:id="@+id/depth_spinner"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="0dp"
                         android:layout_weight="1"
                         android:ems="10" />
                 </LinearLayout>
@@ -571,7 +599,7 @@
                     <Spinner
                         android:id="@+id/cable_spinner"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="0dp"
                         android:layout_weight="1"
                         android:ems="10" />
                 </LinearLayout>
@@ -600,7 +628,7 @@
                     <Spinner
                         android:id="@+id/region_spinner"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="0dp"
                         android:layout_weight="1"
                         android:ems="10" />
                 </LinearLayout>
@@ -629,7 +657,7 @@
                     <Spinner
                         android:id="@+id/broadcast_spinner"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="0dp"
                         android:layout_weight="1"
                         android:ems="10" />
                 </LinearLayout>
@@ -797,7 +825,7 @@
                     android:orientation="vertical" >
 
                     <Button
-                        android:id="@+id/reset_emu_settings"
+                        android:id="@+id/reset_emu_btn"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/reset_emu" />

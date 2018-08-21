@@ -18,8 +18,6 @@ import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -35,6 +33,7 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.reicast.emulator.config.Config;
+import com.reicast.emulator.config.PGConfigFragment;
 import com.reicast.emulator.config.InputFragment;
 import com.reicast.emulator.config.OptionsFragment;
 import com.reicast.emulator.debug.GenerateLogs;
@@ -225,19 +224,18 @@ public class MainActivity extends AppCompatActivity implements
 	}
 
 	public void onGameSelected(Uri uri) {
-		if (Config.readOutput("uname -a").equals(getString(R.string.error_kernel))) {
-			showToastMessage(getString(R.string.unsupported), Snackbar.LENGTH_SHORT);
-		}
 		String home_directory = mPrefs.getString(Config.pref_home,
 				Environment.getExternalStorageDirectory().getAbsolutePath());
 
-		if (!isBiosExisting(home_directory)) {
-			launchBIOSdetection();
-			return;
-		}
-		if (!isFlashExisting(home_directory)) {
-			launchBIOSdetection();
-			return;
+		if (!mPrefs.getBoolean(Emulator.pref_usereios, false)) {
+			if (!isBiosExisting(home_directory)) {
+				launchBIOSdetection();
+				return;
+			}
+			if (!isFlashExisting(home_directory)) {
+				launchBIOSdetection();
+				return;
+			}
 		}
 
 		JNIdc.config(home_directory);
@@ -365,50 +363,19 @@ public class MainActivity extends AppCompatActivity implements
 		onMainBrowseSelected(true, null, false, null);
 	}
 
-	public void onSettingsReload(Fragment options) {
-		getSupportFragmentManager().beginTransaction().remove(options).commit();
-		OptionsFragment optionsFrag = new OptionsFragment();
-		getSupportFragmentManager()
-				.beginTransaction()
-				.replace(R.id.fragment_container, optionsFrag, "OPTIONS_FRAG")
-				.addToBackStack(null).commit();
-    }
-
 	@Override
 	protected void onPause() {
 		super.onPause();
-		InputFragment fragment = (InputFragment) getSupportFragmentManager()
-				.findFragmentByTag("INPUT_FRAG");
-		if (fragment != null && fragment.isVisible()) {
-			if (fragment.moga != null) {
-				fragment.moga.onPause();
-			}
-		}
 	}
 
 	@Override
 	protected void onDestroy() {
-		InputFragment fragment = (InputFragment) getSupportFragmentManager()
-				.findFragmentByTag("INPUT_FRAG");
-		if (fragment != null && fragment.isVisible()) {
-			if (fragment.moga != null) {
-				fragment.moga.onDestroy();
-			}
-		}
 		super.onDestroy();
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		InputFragment fragment = (InputFragment) getSupportFragmentManager()
-				.findFragmentByTag("INPUT_FRAG");
-		if (fragment != null && fragment.isVisible()) {
-			if (fragment.moga != null) {
-				fragment.moga.onResume();
-			}
-		}
-
 		CloudFragment cloudfragment = (CloudFragment) getSupportFragmentManager()
 				.findFragmentByTag("CLOUD_FRAG");
 		if (cloudfragment != null && cloudfragment.isVisible()) {
@@ -469,6 +436,24 @@ public class MainActivity extends AppCompatActivity implements
 						.replace(R.id.fragment_container, optionsFrag, "OPTIONS_FRAG")
 						.addToBackStack(null).commit();
 				setTitle(R.string.settings);
+				drawer.closeDrawer(GravityCompat.START);
+				return true;
+
+			case R.id.pgconfig_menu:
+				PGConfigFragment pgconfigFrag = (PGConfigFragment) getSupportFragmentManager()
+						.findFragmentByTag("PGCONFIG_FRAG");
+				if (pgconfigFrag != null) {
+					if (pgconfigFrag.isVisible()) {
+						drawer.closeDrawer(GravityCompat.START);
+						return true;
+					}
+				}
+				pgconfigFrag = new PGConfigFragment();
+				getSupportFragmentManager()
+						.beginTransaction()
+						.replace(R.id.fragment_container, pgconfigFrag, "PGCONFIG_FRAG")
+						.addToBackStack(null).commit();
+				setTitle(R.string.pgconfig);
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
 

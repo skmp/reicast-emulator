@@ -1,26 +1,19 @@
 package com.reicast.emulator;
 
-import android.annotation.TargetApi;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.app.Fragment;
-import android.text.util.Linkify;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
-import android.widget.SlidingDrawer;
-import android.widget.SlidingDrawer.OnDrawerOpenListener;
 import android.widget.TextView;
 
 import com.reicast.emulator.config.Config;
@@ -44,10 +37,6 @@ import javax.net.ssl.HttpsURLConnection;
 public class AboutFragment extends Fragment {
 
 	String buildId = "";
-	SlidingDrawer slidingGithub;
-	private ListView list;
-	private GitAdapter adapter;
-	private Handler handler;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -60,51 +49,23 @@ public class AboutFragment extends Fragment {
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 
 		try {
-			InputStream file = getResources().getAssets().open("build");
-			if (file != null) {
-				BufferedReader reader = new BufferedReader(new InputStreamReader(file));
-				buildId = reader.readLine();
-				file.close();
-			}
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		}
-
-		try {
 			String versionName = getActivity().getPackageManager()
 					.getPackageInfo(getActivity().getPackageName(), 0).versionName;
 			int versionCode = getActivity().getPackageManager()
 					.getPackageInfo(getActivity().getPackageName(), 0).versionCode;
 			TextView version = (TextView) getView().findViewById(R.id.revision_text);
-			String revision = getString(R.string.revision_text,
-					versionName, String.valueOf(versionCode));
-			if (!buildId.equals("")) {
-				revision = getActivity().getString(R.string.revision_text,
-						versionName, buildId.substring(0,7));
-			}
-			version.setText(revision);
+			version.setText(getString(R.string.revision_text,
+					versionName, String.valueOf(versionCode)));
+			int start = versionName.lastIndexOf("-");
+			buildId = versionName.substring(start + 2, start + 9);
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 		}
 
-		TextView website = (TextView) getView().findViewById(
-				R.id.site_text);
-		Linkify.addLinks(website, Linkify.ALL);
-
-		handler = new Handler();
-
-		slidingGithub = (SlidingDrawer) getView().findViewById(
-				R.id.slidingGithub);
-		slidingGithub.setOnDrawerOpenListener(new OnDrawerOpenListener() {
-			@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-			public void onDrawerOpened() {
-				new retrieveGitTask().execute(Config.git_api);
-			}
-		});
-
+		new retrieveGitTask().execute(Config.git_api);
 	}
 
-	public class retrieveGitTask extends
+	private class retrieveGitTask extends
 			AsyncTask<String, Integer, ArrayList<HashMap<String, String>>> {
 
 		@Override
@@ -174,23 +135,10 @@ public class AboutFragment extends Fragment {
 				}
 
 			} catch (JSONException e) {
-				handler.post(new Runnable() {
-					public void run() {
-						showToastMessage(getActivity().getString(R.string.git_broken), Snackbar.LENGTH_SHORT);
-						slidingGithub.close();
-					}
-				});
 				e.printStackTrace();
 			} catch (Exception e) {
-				handler.post(new Runnable() {
-					public void run() {
-						showToastMessage(getActivity().getString(R.string.git_broken), Snackbar.LENGTH_SHORT);
-						slidingGithub.close();
-					}
-				});
 				e.printStackTrace();
 			}
-
 			return commitList;
 		}
 
@@ -198,19 +146,14 @@ public class AboutFragment extends Fragment {
 		protected void onPostExecute(
 				ArrayList<HashMap<String, String>> commitList) {
 			if (commitList != null && commitList.size() > 0) {
-				list = (ListView) getView().findViewById(R.id.list);
+				ListView list = (ListView) getView().findViewById(R.id.list);
 				list.setSelector(R.drawable.list_selector);
 				list.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-				adapter = new GitAdapter(getActivity(), commitList);
+				GitAdapter adapter = new GitAdapter(getActivity(), commitList);
 				// Set adapter as specified collection
 				list.setAdapter(adapter);
-
-				list.setOnItemClickListener(new OnItemClickListener() {
-					public void onItemClick(AdapterView<?> parent, View view,
-											int position, long id) {
-						slidingGithub.open();
-					}
-				});
+			} else {
+				showToastMessage(getActivity().getString(R.string.git_broken), Snackbar.LENGTH_SHORT);
 			}
 
 		}

@@ -28,7 +28,6 @@ import com.reicast.emulator.emu.OnScreenMenu.FpsPopup;
 import com.reicast.emulator.emu.OnScreenMenu.MainPopup;
 import com.reicast.emulator.emu.OnScreenMenu.VmuPopup;
 import com.reicast.emulator.periph.Gamepad;
-import com.reicast.emulator.periph.MOGAInput;
 import com.reicast.emulator.periph.SipEmulator;
 
 import java.util.Arrays;
@@ -42,7 +41,6 @@ public class GL2JNINative extends NativeActivity {
 	public MainPopup popUp;
 	VmuPopup vmuPop;
 	FpsPopup fpsPop;
-	MOGAInput moga = new MOGAInput();
 	private SharedPreferences prefs;
 
 	private Gamepad pad = new Gamepad();
@@ -66,7 +64,7 @@ public class GL2JNINative extends NativeActivity {
 		}
 		getWindow().takeSurface(null);
 
-		pad.isOuyaOrTV = pad.IsOuyaOrTV(GL2JNINative.this);
+		pad.isOuyaOrTV = pad.IsOuyaOrTV(GL2JNINative.this, false);
 //		isNvidiaShield = Gamepad.IsNvidiaShield();
 
 		RegisterNative(false);
@@ -74,13 +72,6 @@ public class GL2JNINative extends NativeActivity {
 		Emulator app = (Emulator)getApplicationContext();
 		app.getConfigurationPrefs(prefs);
 		menu = new OnScreenMenu(GL2JNINative.this, prefs);
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-			pad.compat[0] = true;
-			pad.compat[1] = true;
-			pad.compat[2] = true;
-			pad.compat[3] = true;
-		}
 
 		String fileName = null;
 
@@ -98,9 +89,6 @@ public class GL2JNINative extends NativeActivity {
 		pad.deviceDescriptor_PlayerNum.put(
 				prefs.getString(Gamepad.pref_player4, null), 3);
 		pad.deviceDescriptor_PlayerNum.remove(null);
-
-		moga.onCreate(this, pad);
-		moga.mListener.setPlayerNum(1);
 
 		boolean controllerTwoConnected = false;
 		boolean controllerThreeConnected = false;
@@ -173,7 +161,10 @@ public class GL2JNINative extends NativeActivity {
 					} else if (InputDevice.getDevice(joy).getName()
 							.contains(Gamepad.controllers_shield)) {
 						pad.map[playerNum] = pad.getConsoleController();
-					} else if (!pad.isActiveMoga[playerNum]) { // Ouya controller
+					} else if (InputDevice.getDevice(joy).getName()
+							.startsWith(Gamepad.controllers_moga)) {
+						pad.map[playerNum] = pad.getMogaController();
+					} else { // Ouya controller
 						pad.map[playerNum] = pad.getOUYAController();
 					}
 				} else{
@@ -193,7 +184,7 @@ public class GL2JNINative extends NativeActivity {
 			fileName = Uri.decode(getIntent().getData().toString());
 
 		// Create the actual GLES view
-		mView = new GL2JNIView(getApplication(), fileName, false,
+		mView = new GL2JNIView(GL2JNINative.this, fileName, false,
 				prefs.getInt(Config.pref_renderdepth, 24), 0, false);
 		setContentView(mView);
 
@@ -230,33 +221,6 @@ public class GL2JNINative extends NativeActivity {
 		}
 	}
 
-	public boolean simulatedTouchEvent(int playerNum, float L2, float R2) {
-		GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-		GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-		mView.pushInput();
-		return true;
-	}
-
-	public void displayPopUp(PopupWindow popUp) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
-		} else {
-			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-		}
-		popUp.update(LayoutParams.WRAP_CONTENT,
-				LayoutParams.WRAP_CONTENT);
-	}
-
-	public void displayDebug(PopupWindow popUpDebug) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
-		} else {
-			popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
-		}
-		popUpDebug.update(LayoutParams.WRAP_CONTENT,
-				LayoutParams.WRAP_CONTENT);
-	}
-
 	public void displayFPS() {
 		fpsPop.showAtLocation(mView, Gravity.TOP | Gravity.LEFT, 20, 20);
 		fpsPop.update(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
@@ -284,6 +248,20 @@ public class GL2JNINative extends NativeActivity {
 		prefs.edit().putBoolean(Config.pref_vmu, showFloating).apply();
 	}
 
+	public void screenGrab() {
+		mView.screenGrab();
+	}
+
+	public void displayPopUp(PopupWindow popUp) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
+		} else {
+			popUp.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		}
+		popUp.update(LayoutParams.WRAP_CONTENT,
+				LayoutParams.WRAP_CONTENT);
+	}
+
 	public void displayConfig(PopupWindow popUpConfig) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			popUpConfig.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
@@ -294,63 +272,89 @@ public class GL2JNINative extends NativeActivity {
 				LayoutParams.WRAP_CONTENT);
 	}
 
-	public boolean motionEventHandler(Integer playerNum, com.bda.controller.MotionEvent event) {
-		if (playerNum == null || playerNum == -1)
-			return false;
+	public void displayDebug(PopupWindow popUpDebug) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 60);
+		} else {
+			popUpDebug.showAtLocation(mView, Gravity.BOTTOM, 0, 0);
+		}
+		popUpDebug.update(LayoutParams.WRAP_CONTENT,
+				LayoutParams.WRAP_CONTENT);
+	}
 
-		if (!pad.compat[playerNum]) {
-
-			// do other things with joystick
-			float LS_X = event.getAxisValue(OuyaController.AXIS_LS_X);
-			float LS_Y = event.getAxisValue(OuyaController.AXIS_LS_Y);
-			float RS_X = event.getAxisValue(OuyaController.AXIS_RS_X);
-			float RS_Y = event.getAxisValue(OuyaController.AXIS_RS_Y);
-			float L2 = event.getAxisValue(OuyaController.AXIS_L2);
-			float R2 = event.getAxisValue(OuyaController.AXIS_R2);
-
-			if (!pad.joystick[playerNum]) {
-				pad.previousLS_X[playerNum] = pad.globalLS_X[playerNum];
-				pad.previousLS_Y[playerNum] = pad.globalLS_Y[playerNum];
-				pad.globalLS_X[playerNum] = LS_X;
-				pad.globalLS_Y[playerNum] = LS_Y;
-			}
-
-			GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
-			GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
-
-			GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-			GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-
-			if (prefs.getBoolean(Gamepad.pref_js_rbuttons + pad.portId[playerNum], true)) {
-				if (RS_Y > 0.25) {
-					handle_key(playerNum, pad.map[playerNum][0]/* A */, true);
-					pad.wasKeyStick[playerNum] = true;
-				} else if (RS_Y < 0.25) {
-					handle_key(playerNum, pad.map[playerNum][1]/* B */, true);
-					pad.wasKeyStick[playerNum] = true;
-				} else if (pad.wasKeyStick[playerNum]){
-					handle_key(playerNum, pad.map[playerNum][0], false);
-					handle_key(playerNum, pad.map[playerNum][1], false);
-					pad.wasKeyStick[playerNum] = false;
+	private boolean showMenu() {
+		if (popUp != null) {
+			if (!menu.dismissPopUps()) {
+				if (!popUp.isShowing()) {
+					displayPopUp(popUp);
+				} else {
+					popUp.dismiss();
 				}
 			} else {
-				if (RS_Y > 0.25) {
-					GL2JNIView.rt[playerNum] = (int) (RS_Y * 255);
-					GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-				} else if (RS_Y < 0.25) {
-					GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-					GL2JNIView.lt[playerNum] = (int) (-(RS_Y) * 255);
-				}
+				popUp.dismiss();
 			}
-
 		}
+		return true;
+	}
+
+	float getAxisValues(MotionEvent event, int axis, int historyPos) {
+		return historyPos < 0 ? event.getAxisValue(axis) :
+				event.getHistoricalAxisValue(axis, historyPos);
+	}
+
+	private void processJoystickInput(MotionEvent event, Integer playerNum, int historyPos) {
+		float LS_X = getAxisValues(event, MotionEvent.AXIS_X, historyPos);
+		float LS_Y = getAxisValues(event, MotionEvent.AXIS_Y, historyPos);
+		float RS_X = getAxisValues(event, MotionEvent.AXIS_RX, historyPos);
+		float RS_Y = getAxisValues(event, MotionEvent.AXIS_RY, historyPos);
+		float L2 = getAxisValues(event, MotionEvent.AXIS_LTRIGGER, historyPos);
+		float R2 = getAxisValues(event, MotionEvent.AXIS_RTRIGGER, historyPos);
+
+		if (pad.IsOuyaOrTV(GL2JNINative.this, true)) {
+			LS_X = getAxisValues(event, OuyaController.AXIS_LS_X, historyPos);
+			LS_Y = getAxisValues(event, OuyaController.AXIS_LS_Y, historyPos);
+			RS_X = getAxisValues(event, OuyaController.AXIS_RS_X, historyPos);
+			RS_Y = getAxisValues(event, OuyaController.AXIS_RS_Y, historyPos);
+			L2 = getAxisValues(event, OuyaController.AXIS_L2, historyPos);
+			R2 = getAxisValues(event, OuyaController.AXIS_R2, historyPos);
+		}
+
+		if (!pad.joystick[playerNum]) {
+			pad.previousLS_X[playerNum] = pad.globalLS_X[playerNum];
+			pad.previousLS_Y[playerNum] = pad.globalLS_Y[playerNum];
+			pad.globalLS_X[playerNum] = LS_X;
+			pad.globalLS_Y[playerNum] = LS_Y;
+		}
+
+		GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
+		GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
+
+		GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+		GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+
+		if (prefs.getBoolean(Gamepad.pref_js_rbuttons + pad.portId[playerNum], true)) {
+			if (RS_Y > 0.25) {
+				handle_key(playerNum, pad.map[playerNum][0]/* A */, true);
+				pad.wasKeyStick[playerNum] = true;
+			} else if (RS_Y < 0.25) {
+				handle_key(playerNum, pad.map[playerNum][1]/* B */, true);
+				pad.wasKeyStick[playerNum] = true;
+			} else if (pad.wasKeyStick[playerNum]){
+				handle_key(playerNum, pad.map[playerNum][0], false);
+				handle_key(playerNum, pad.map[playerNum][1], false);
+				pad.wasKeyStick[playerNum] = false;
+			}
+		} else if (L2 == 0 && R2 ==0) {
+			if (RS_Y > 0.25) {
+				GL2JNIView.rt[playerNum] = (int) (RS_Y * 255);
+				GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+			} else if (RS_Y < 0.25) {
+				GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+				GL2JNIView.lt[playerNum] = (int) (-(RS_Y) * 255);
+			}
+		}
+
 		mView.pushInput();
-		// Only handle Left Stick on an Xbox 360 controller if there was
-		// some actual motion on the stick,
-		// so otherwise the event can be handled as a DPAD event
-		return (pad.joystick[playerNum] || (!(pad.globalLS_X[playerNum] == pad.previousLS_X[playerNum])
-				|| !(pad.globalLS_Y[playerNum] == pad.previousLS_Y[playerNum])))
-				&& (!(pad.previousLS_X[playerNum] == 0.0f) || !(pad.previousLS_Y[playerNum] == 0.0f));
 	}
 
 	@Override
@@ -371,75 +375,34 @@ public class GL2JNINative extends NativeActivity {
 				return false;
 			}
 			if (!pad.compat[playerNum]) {
-
-				// Joystick
-				if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
-
-					// do other things with joystick
-					float LS_X = event.getAxisValue(OuyaController.AXIS_LS_X);
-					float LS_Y = event.getAxisValue(OuyaController.AXIS_LS_Y);
-					float RS_X = event.getAxisValue(OuyaController.AXIS_RS_X);
-					float RS_Y = event.getAxisValue(OuyaController.AXIS_RS_Y);
-					float L2 = event.getAxisValue(OuyaController.AXIS_L2);
-					float R2 = event.getAxisValue(OuyaController.AXIS_R2);
-
-					if (!pad.joystick[playerNum]) {
-						pad.previousLS_X[playerNum] = pad.globalLS_X[playerNum];
-						pad.previousLS_Y[playerNum] = pad.globalLS_Y[playerNum];
-						pad.globalLS_X[playerNum] = LS_X;
-						pad.globalLS_Y[playerNum] = LS_Y;
+				if ((event.getSource() & InputDevice.SOURCE_JOYSTICK) ==
+						InputDevice.SOURCE_JOYSTICK &&
+						event.getAction() == MotionEvent.ACTION_MOVE) {
+					final int historySize = event.getHistorySize();
+					for (int i = 0; i < historySize; i++) {
+						processJoystickInput(event, playerNum, i);
 					}
-
-					GL2JNIView.jx[playerNum] = (int) (LS_X * 126);
-					GL2JNIView.jy[playerNum] = (int) (LS_Y * 126);
-
-					GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-					GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-
-					if (prefs.getBoolean(Gamepad.pref_js_rbuttons + pad.portId[playerNum], true)) {
-						if (RS_Y > 0.25) {
-							handle_key(playerNum, pad.map[playerNum][0]/* A */, true);
-							pad.wasKeyStick[playerNum] = true;
-						} else if (RS_Y < 0.25) {
-							handle_key(playerNum, pad.map[playerNum][1]/* B */, true);
-							pad.wasKeyStick[playerNum] = true;
-						} else if (pad.wasKeyStick[playerNum]){
-							handle_key(playerNum, pad.map[playerNum][0], false);
-							handle_key(playerNum, pad.map[playerNum][1], false);
-							pad.wasKeyStick[playerNum] = false;
-						}
-					} else {
-						if (RS_Y > 0.25) {
-							GL2JNIView.rt[playerNum] = (int) (RS_Y * 255);
-							GL2JNIView.lt[playerNum] = (int) (L2 * 255);
-						} else if (RS_Y < 0.25) {
-							GL2JNIView.rt[playerNum] = (int) (R2 * 255);
-							GL2JNIView.lt[playerNum] = (int) (-(RS_Y) * 255);
-						}
-					}
+					processJoystickInput(event, playerNum, -1);
 				}
 			}
-			mView.pushInput();
-			if (!pad.joystick[playerNum] && (pad.globalLS_X[playerNum] == pad.previousLS_X[playerNum] && pad.globalLS_Y[playerNum] == pad.previousLS_Y[playerNum])
-					|| (pad.previousLS_X[playerNum] == 0.0f && pad.previousLS_Y[playerNum] == 0.0f))
-				// Only handle Left Stick on an Xbox 360 controller if there was
-				// some actual motion on the stick,
-				// so otherwise the event can be handled as a DPAD event
-				return false;
-			else
-				return true;
+			return (pad.joystick[playerNum] || (pad.globalLS_X[playerNum] != pad.previousLS_X[playerNum]
+					|| pad.globalLS_Y[playerNum] != pad.previousLS_Y[playerNum]))
+					&& (pad.previousLS_X[playerNum] != 0.0f || pad.previousLS_Y[playerNum] != 0.0f);
 		}
 		return false;
+	}
 
+	public boolean simulatedTouchEvent(int playerNum, float L2, float R2) {
+		GL2JNIView.lt[playerNum] = (int) (L2 * 255);
+		GL2JNIView.rt[playerNum] = (int) (R2 * 255);
+		mView.pushInput();
+		return true;
 	}
 
 	public boolean handle_key(Integer playerNum, int kc, boolean down) {
 		if (playerNum == null || playerNum == -1)
 			return false;
 		if (kc == pad.getSelectButtonCode()) {
-			return false;
-		}
-		if (pad.isActiveMoga[playerNum]) {
 			return false;
 		}
 
@@ -551,31 +514,11 @@ public class GL2JNINative extends NativeActivity {
 		return mView;
 	}
 
-	public void screenGrab() {
-		mView.screenGrab();
-	}
-
-	private boolean showMenu() {
-		if (popUp != null) {
-			if (!menu.dismissPopUps()) {
-				if (!popUp.isShowing()) {
-					displayPopUp(popUp);
-				} else {
-					popUp.dismiss();
-				}
-			} else {
-				popUp.dismiss();
-			}
-		}
-		return true;
-	}
-
 	@Override
 	protected void onPause() {
 		super.onPause();
 		mView.onPause();
 		JNIdc.pause();
-		moga.onPause();
 	}
 
 	@Override
@@ -583,7 +526,6 @@ public class GL2JNINative extends NativeActivity {
 		super.onDestroy();
 		mView.onDestroy();
 		JNIdc.destroy();
-		moga.onDestroy();
 	}
 
 	@Override
@@ -595,6 +537,5 @@ public class GL2JNINative extends NativeActivity {
 	protected void onResume() {
 		super.onResume();
 		mView.onResume();
-		moga.onResume();
 	}
 }

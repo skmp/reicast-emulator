@@ -175,9 +175,8 @@ public class FileBrowser extends Fragment {
 		String temp = mPrefs.getString(Config.pref_home, null);
 		if (temp == null || !new File(temp).isDirectory()) {
 			showToastMessage(getActivity().getString(R.string.config_home), Snackbar.LENGTH_LONG);
-		} else {
-			installButtons();
 		}
+		installButtons();
 		if (!ImgBrowse && !games) {
 			new LocateGames(R.array.flash).execute(home_directory);
 		} else {
@@ -417,7 +416,7 @@ public class FileBrowser extends Fragment {
 		private String heading;
 		private File parent;
 
-		public navigate(FileBrowser context) {
+		navigate(FileBrowser context) {
 			browser = new WeakReference<>(context);
 		}
 

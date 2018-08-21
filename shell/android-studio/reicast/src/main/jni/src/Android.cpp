@@ -8,18 +8,15 @@
 
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
 
 #include "types.h"
 #include "hw/maple/maple_cfg.h"
 #include "profiler/profiler.h"
-#include "cfg/cfg.h"
 #include "rend/TexCache.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 #include "oslib/audiobackend_android.h"
-
-#include "utils.h"
+#include "reios/reios.h"
 
 extern "C"
 {
@@ -49,6 +46,7 @@ extern "C"
     JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_dynarec(JNIEnv *env,jobject obj, jint dynarec)  __attribute__((visibility("default")));
     JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_idleskip(JNIEnv *env,jobject obj, jint idleskip)  __attribute__((visibility("default")));
     JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_unstable(JNIEnv *env,jobject obj, jint unstable)  __attribute__((visibility("default")));
+    JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_safemode(JNIEnv *env,jobject obj, jint safemode)  __attribute__((visibility("default")));
     JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_cable(JNIEnv *env,jobject obj, jint cable)  __attribute__((visibility("default")));
     JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_region(JNIEnv *env,jobject obj, jint region)  __attribute__((visibility("default")));
     JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_broadcast(JNIEnv *env,jobject obj, jint broadcast)  __attribute__((visibility("default")));
@@ -80,6 +78,11 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_idleskip(JNIEnv *env,
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_unstable(JNIEnv *env,jobject obj, jint unstable)
 {
     settings.dynarec.unstable_opt = unstable;
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_safemode(JNIEnv *env,jobject obj, jint safemode)
+{
+    settings.dynarec.safemode = safemode;
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_cable(JNIEnv *env,jobject obj, jint cable)
@@ -139,7 +142,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pvrrender(JNIEnv *env
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_syncedrender(JNIEnv *env,jobject obj, jint sync)
 {
-    settings.pvr.SynchronousRendering = sync;
+    settings.pvr.SynchronousRender = sync;
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_modvols(JNIEnv *env,jobject obj, jint volumes)
@@ -331,21 +334,35 @@ jobject vmulcd = NULL;
 jbyteArray jpix = NULL;
 jmethodID updatevmuscreen;
 
+void reios_info(JNIEnv *env) {
+    jmethodID reiosInfoMid=env->GetMethodID(env->GetObjectClass(emu),"reiosInfo","(Ljava/lang/String;Ljava/lang/String;)V");
+
+    char *id = (char*)malloc(9);
+    strcpy(id, reios_disk_id());
+    jstring reios_id = env->NewStringUTF(id);
+
+    char *name = (char*)malloc(129);
+    strcpy(name, reios_software_name);
+    jstring reios_name = env->NewStringUTF(name);
+
+    jenv->CallVoidMethod(emu, reiosInfoMid, reios_id, reios_name);
+}
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobject obj,jobject emu_thread)
 {
-	install_prof_handler(0);
+    install_prof_handler(0);
 
-	jenv=env;
-	emu=emu_thread;
+    jenv=env;
+    emu=emu_thread;
 
-	jsamples=env->NewShortArray(SAMPLE_COUNT*2);
-	writemid=env->GetMethodID(env->GetObjectClass(emu),"WriteBuffer","([SI)I");
+    jsamples=env->NewShortArray(SAMPLE_COUNT*2);
+    writemid=env->GetMethodID(env->GetObjectClass(emu),"WriteBuffer","([SI)I");
     coreMessageMid=env->GetMethodID(env->GetObjectClass(emu),"coreMessage","([B)V");
     dieMid=env->GetMethodID(env->GetObjectClass(emu),"Die","()V");
-//	msgboxf("HELLO!", MBX_OK);
 
-	dc_run();
+    reios_info(env);
+
+    dc_run();
 }
 
 int msgboxf(const wchar* Text,unsigned int Type,...)

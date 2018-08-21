@@ -23,9 +23,12 @@ build:
   parallel: true
   verbosity: minimal
 
-matrix:
-  only:
-    - configuration: Debug-v120
+  
+for
+-
+  matrix:
+    only:
+      - configuration: Debug-v120
 
 
 after_build:

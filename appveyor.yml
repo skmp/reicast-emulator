@@ -1,11 +1,18 @@
 version: git-{branch}-{build}
-configuration: Debug-v120
 
 
 image:
   - Visual Studio 2013
   - Visual Studio 2015
   - Visual Studio 2017
+
+configuration:
+  - Debug-v120
+  - Debug-v140
+  - Debug-v141
+  - Release-v120
+  - Release-v140
+  - Release-v141
 
 platform:
   - x86
@@ -15,14 +22,6 @@ build:
   project: shell/reicast.sln
   parallel: true
   verbosity: minimal
-
-configuration:
-  - Debug-v120
-  - Debug-v140
-  - Debug-v141
-  - Release-v120
-  - Release-v140
-  - Release-v141
 
 matrix:
   exclude:

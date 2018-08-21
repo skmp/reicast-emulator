@@ -1,30 +1,14 @@
 version: git-{branch}-{build}
-
-
-build:
-  project: shell/reicast.sln
-  parallel: true
-  verbosity: minimal
-  
-configuration:
-  - Debug-v120
-  - Debug-v140
-  - Debug-v141
-  - Release-v120
-  - Release-v140
-  - Release-v141
+configuration: Debug-v120
 
 platform:
   - x86
   - x64
-
-
-matrix:
-  exclude:
-    - configuration: Debug-v140
-    - configuration: Debug-v141
-    - configuration: Release-v140
-    - configuration: Release-v141
+  
+build:
+  project: shell/reicast.sln
+  parallel: true
+  verbosity: minimal
 
 after_build:
   - cmd: mkdir artifacts

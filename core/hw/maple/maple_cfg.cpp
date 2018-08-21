@@ -3,7 +3,8 @@
 #include "maple_helper.h"
 #include "maple_devs.h"
 #include "maple_cfg.h"
-#include "cfg/cfg.h"
+#include "../linux-dist/evdev.h"
+#include "../cfg/cfg.h"
 
 #define HAS_VMU
 /*
@@ -75,17 +76,23 @@ void mcfg_Create(MapleDeviceType type,u32 bus,u32 port)
 
 void mcfg_CreateDevices()
 {
-int numberOfControl = cfgLoadInt("players", "nb", 1);
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	if (numberOfControl <= 0)
-		numberOfControl = 1;
-	if (numberOfControl > 4)
-		numberOfControl = 4;
-
-	for (int i = 0; i < numberOfControl; i++){
-		mcfg_Create(MDT_SegaController, i, 5);
-	}
-
+	#if defined(USE_EVDEV)
+		int i, deviceId, size_needed;
+		for(i = 0; i < 4; i++) {
+			size_needed = snprintf(NULL, 0, EVDEV_DEVICE_CONFIG_KEY, i+1) + 1;
+			char* evdev_config_key = (char*)malloc(size_needed);
+			sprintf(evdev_config_key, EVDEV_DEVICE_CONFIG_KEY, i+1);
+			deviceId = cfgLoadInt("input", evdev_config_key, EVDEV_DEFAULT_DEVICE_ID(i+1));
+			free(evdev_config_key);
+			
+			if (deviceId >= 0) {
+				mcfg_Create(MDT_SegaController,i,5);
+			}
+		}
+	#else
+		mcfg_Create(MDT_SegaController,0,5);
+	#endif
 	mcfg_Create(MDT_SegaVMU,0,0);
 	mcfg_Create(MDT_SegaVMU,0,1);
 #else

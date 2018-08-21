@@ -1,9 +1,5 @@
 version: git-{branch}-{build}
 
-image:
-  - Visual Studio 2013
-  - Visual Studio 2015
-  - Visual Studio 2017
 
 build:
   project: shell/reicast.sln
@@ -25,8 +21,10 @@ platform:
 
 matrix:
   exclude:
-    - platform: x86
-      configuration: Debug-v141
+    - configuration: Debug-v140
+    - configuration: Debug-v141
+    - configuration: Release-v140
+    - configuration: Release-v141
 
 after_build:
   - cmd: mkdir artifacts

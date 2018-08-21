@@ -24,23 +24,8 @@ build:
   verbosity: minimal
 
 matrix:
-  exclude:
+  only:
     - configuration: Debug-v120
-      - image: Visual Studio 2015
-      - image: Visual Studio 2017
-    - configuration: Release-v120
-      - image: Visual Studio 2015
-      - image: Visual Studio 2017
-    - configuration: Debug-v140
-      image: Visual Studio 2013
-    - configuration: Release-v140
-      image: Visual Studio 2013
-    - configuration: Debug-v141
-      - image: Visual Studio 2013
-      - image: Visual Studio 2015
-    - configuration: Release-v141
-      - image: Visual Studio 2013
-      - image: Visual Studio 2015
 
 
 after_build:

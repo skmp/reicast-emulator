@@ -1,4 +1,3 @@
-version: git-{branch}-{build}
 
 
 image:
@@ -26,6 +25,7 @@ build:
   
 for
 -
+  version: git-{branch}-{build}
   matrix:
     only:
       - configuration: Debug-v120

@@ -220,7 +220,8 @@
 #endif
 
 #ifndef FEAT_AREC
-	#if HOST_CPU == CPU_ARM || HOST_CPU == CPU_X86
+	//#if HOST_CPU == CPU_ARM || HOST_CPU == CPU_X86
+	#if HOST_CPU == CPU_ARM
 		#define FEAT_AREC DYNAREC_JIT
 	#else
 		#define FEAT_AREC DYNAREC_NONE

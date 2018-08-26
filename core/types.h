@@ -496,7 +496,6 @@ struct RegisterStruct
 struct settings_t
 {
    unsigned System;
-   bool QueueRender;
    bool MMUEnabled;
 
 	struct {
@@ -519,6 +518,7 @@ struct settings_t
 		bool Clipping;
       int TextureUpscale;
 		int MaxFilteredTextureSize;
+		bool ThreadedRendering;
 	} rend;
 
 	struct

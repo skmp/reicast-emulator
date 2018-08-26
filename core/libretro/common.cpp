@@ -299,7 +299,8 @@ static void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, boo
 #elif HOST_CPU == CPU_GENERIC
    //nothing!
 #else
-#error Unsupported HOST_CPU
+   /* TODO/FIXME - ARMv8 (Aarch64) will end up here, just comment out error for now */
+//#error Unsupported HOST_CPU
 #endif
 #endif
 }
@@ -383,7 +384,8 @@ printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n", ctx.pc, dyna_cde);
 #elif HOST_CPU == CPU_X64
    //x64 has no rewrite support
 #else
-#error JIT: Not supported arch
+   /* TODO/FIXME - ARMv8 (Aarch64) will end up here, just comment out error for now */
+//#error JIT: Not supported arch
 #endif
 #endif
    else
@@ -482,7 +484,7 @@ cThread::cThread(ThreadEntryFP* function,void* prm)
 
 void cThread::Start()
 {
-   hThread = sthread_create(Entry, 0);
+   hThread = sthread_create((void (*)(void *))Entry, 0);
 }
 
 void cThread::WaitToEnd()
@@ -532,9 +534,19 @@ void cResetEvent::Reset()//reset
 	slock_unlock(mutx );
 #endif
 }
-void cResetEvent::Wait(u32 msec)//Wait for signal , then reset
+bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
 {
-	verify(false);
+#if !defined(TARGET_NO_THREADS)
+	slock_lock(mutx);
+	if (!state)
+		scond_wait_timeout(cond, mutx, (int64_t)msec * 1000);
+#endif
+	bool ret = state;
+	state = false;
+#if !defined(TARGET_NO_THREADS)
+   slock_unlock(mutx);
+#endif
+	return ret;
 }
 void cResetEvent::Wait()//Wait for signal , then reset
 {

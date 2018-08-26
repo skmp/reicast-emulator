@@ -830,7 +830,7 @@ static bool RenderFrame(void)
 
 	float scissoring_scale_x = 1;
 
-	if (!is_rtt)
+	if (!is_rtt && !pvrrc.isRenderFramebuffer)
    {
       scale_x=fb_scale_x;
       scale_y=fb_scale_y;
@@ -995,71 +995,77 @@ static bool RenderFrame(void)
    glcache.Disable(GL_SCISSOR_TEST);
 
 	//move vertex to gpu
+   if (!pvrrc.isRenderFramebuffer)
+   {
+      //Main VBO
+	   glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
+	   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
 
-	//Main VBO
-	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);
+      glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
 
-	glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW);
+      glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW); glCheck();
 
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
+      //Modvol VBO
+      if (pvrrc.modtrig.used())
+	   {
+         glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
+         glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
+      }
 
-	//Modvol VBO
-	if (pvrrc.modtrig.used())
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols);
-		glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW);
-	}
+      // TR PolyParam data
+      glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl.vbo.tr_poly_params);
+      glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.used(), pvrrc.global_param_tr.head(), GL_STATIC_DRAW);
+      glCheck();
 
-   // TR PolyParam data
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl.vbo.tr_poly_params);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.used(), pvrrc.global_param_tr.head(), GL_STATIC_DRAW);
-	glCheck();
+      int offs_x=ds2s_offs_x+0.5f;
+      //this needs to be scaled
 
-	int offs_x=ds2s_offs_x+0.5f;
-	//this needs to be scaled
-
-	//not all scaling affects pixel operations, scale to adjust for that
-	scale_x *= scissoring_scale_x;
+      //not all scaling affects pixel operations, scale to adjust for that
+      scale_x *= scissoring_scale_x;
 
 #if 0
-   //handy to debug really stupid render-not-working issues ...
-   printf("SS: %dx%d\n", screen_width, screen_height);
-   printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
-   printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
+      //handy to debug really stupid render-not-working issues ...
+      printf("SS: %dx%d\n", screen_width, screen_height);
+      printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
+      printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 #endif
 
-   if (!wide_screen_on)
-   {
-      float width  = (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x;
-		float height = (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y;
-		float min_x  = pvrrc.fb_X_CLIP.min / scale_x;
-		float min_y  = pvrrc.fb_Y_CLIP.min / scale_y;
-		if (!is_rtt)
-		{
-			// Add x offset for aspect ratio > 4/3
-			min_x = min_x * dc2s_scale_h + offs_x;
-			// Invert y coordinates when rendering to screen
-         min_y = screen_height - (min_y + height) * dc2s_scale_h;
-			width *= dc2s_scale_h;
-			height *= dc2s_scale_h;
-		}
-      else if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
-		{
-			min_x *= settings.rend.RenderToTextureUpscale;
-			min_y *= settings.rend.RenderToTextureUpscale;
-			width *= settings.rend.RenderToTextureUpscale;
-			height *= settings.rend.RenderToTextureUpscale;
-		}
+      if (!wide_screen_on)
+      {
+         float width  = (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x;
+         float height = (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y;
+         float min_x  = pvrrc.fb_X_CLIP.min / scale_x;
+         float min_y  = pvrrc.fb_Y_CLIP.min / scale_y;
+         if (!is_rtt)
+         {
+            // Add x offset for aspect ratio > 4/3
+            min_x = min_x * dc2s_scale_h + offs_x;
+            // Invert y coordinates when rendering to screen
+            min_y = screen_height - (min_y + height) * dc2s_scale_h;
+            width *= dc2s_scale_h;
+            height *= dc2s_scale_h;
+         }
+         else if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+         {
+            min_x *= settings.rend.RenderToTextureUpscale;
+            min_y *= settings.rend.RenderToTextureUpscale;
+            width *= settings.rend.RenderToTextureUpscale;
+            height *= settings.rend.RenderToTextureUpscale;
+         }
 
-      glScissor(min_x, min_y, width, height);
-      glcache.Enable(GL_SCISSOR_TEST);
+         glScissor(min_x, min_y, width, height);
+         glcache.Enable(GL_SCISSOR_TEST);
+      }
+
+      //restore scale_x
+      scale_x /= scissoring_scale_x;
+      DrawStrips(output_fbo);
    }
-
-	//restore scale_x
-	scale_x /= scissoring_scale_x;
-
-   DrawStrips(output_fbo);
+   else
+   {
+      glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+		DrawFramebuffer(dc_width, dc_height);
+   }
 
 	KillTex = false;
    
@@ -1088,9 +1094,16 @@ bool ProcessFrame(TA_context* ctx)
       printf("Texture cache cleared\n");
    }
 
-   if (!ta_parse_vdrc(ctx))
-      return false;
-
+   if (ctx->rend.isRenderFramebuffer)
+	{
+		RenderFramebuffer();
+		ctx->rend_inuse.Unlock();
+	}
+	else
+	{
+		if (!ta_parse_vdrc(ctx))
+			return false;
+	}
    CollectCleanup();
 
    if (ctx->rend.Overrun)
@@ -1244,17 +1257,24 @@ struct gl4rend : Renderer
 
 	bool Process(TA_context* ctx)
    {
+#if !defined(TARGET_NO_THREADS)
+      if (!settings.rend.ThreadedRendering)
+#endif
+         glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
       return ProcessFrame(ctx);
    }
 	bool Render()
    {
-      glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
-      return RenderFrame();
+      bool ret = RenderFrame();
+#if !defined(TARGET_NO_THREADS)
+      if (!settings.rend.ThreadedRendering)
+#endif
+    	  glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
+      return ret;
    }
 
 	void Present()
    {
-      glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
       co_dc_yield();
    }
 

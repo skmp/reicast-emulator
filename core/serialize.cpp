@@ -282,6 +282,14 @@ extern u32 FrameCount;
 //extern cThread rthd;
 extern bool pend_rend;
 
+//these will all get cleared out after a few frames - no need to serialize
+//static bool render_called = false;
+//u32 fb1_watch_addr_start;
+//u32 fb1_watch_addr_end;
+//u32 fb2_watch_addr_start;
+//u32 fb2_watch_addr_end;
+//bool fb_dirty;
+
 
 
 
@@ -632,6 +640,8 @@ extern unsigned VRAM_MASK;
 //static int TexCacheLookups;
 //static int TexCacheHits;
 //static float LastTexCacheStats;
+//maybe should get reset naturally if needed
+//GLuint fbTextureId;
 
 
 

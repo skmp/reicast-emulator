@@ -95,6 +95,7 @@ struct text_info {
 };
 
 extern gl_ctx gl;
+extern GLuint fbTextureId;
 
 struct modvol_shader_type
 {
@@ -115,6 +116,9 @@ extern int screen_height;
 
 GLuint BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();
+void RenderFramebuffer();
+void DrawFramebuffer(float w, float h);
+
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool two_volumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, int pass);

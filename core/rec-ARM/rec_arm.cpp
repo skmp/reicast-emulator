@@ -195,11 +195,6 @@ typedef void BinaryOP       (eReg Rd, eReg Rn, eReg Rm,       ConditionCode CC);
 typedef void BinaryOPImm    (eReg Rd, eReg Rn, s32 sImm8,     ConditionCode CC);
 typedef void UnaryOP        (eReg Rd, eReg Rs);
 
-u32* GetRegPtr(u32 reg)
-{
-	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
-}
-
 // you pick reg, loads Base with reg addr, no reg. mapping yet !
 void LoadSh4Reg_mem(eReg Rt, u32 Sh4_Reg, eCC CC=CC_AL)
 {

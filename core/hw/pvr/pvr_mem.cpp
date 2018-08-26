@@ -9,6 +9,7 @@
 #include "pvr_mem.h"
 #include "spg.h"
 #include "ta.h"
+#include "Renderer_if.h"
 #include "hw/mem/_vmem.h"
 
 //TODO : move code later to a plugin
@@ -210,11 +211,25 @@ void DYNACALL pvr_write_area1_8(u32 addr,u8 data)
 
 void DYNACALL pvr_write_area1_16(u32 addr,u16 data)
 {
+   u32 vaddr = addr & VRAM_MASK;
+   if (!fb_dirty
+         && ((vaddr >= fb1_watch_addr_start && vaddr < fb1_watch_addr_end)
+            || (vaddr >= fb2_watch_addr_start && vaddr < fb2_watch_addr_end)))
+   {
+      fb_dirty = true;
+   }
    *(u16*)&vram.data[pvr_map32(addr) & VRAM_MASK]=data;
 }
 
 void DYNACALL pvr_write_area1_32(u32 addr,u32 data)
 {
+   u32 vaddr = addr & VRAM_MASK;
+   if (!fb_dirty
+         && ((vaddr >= fb1_watch_addr_start && vaddr < fb1_watch_addr_end)
+            || (vaddr >= fb2_watch_addr_start && vaddr < fb2_watch_addr_end)))
+   {
+      fb_dirty = true;
+   }
    *(u32*)&vram.data[pvr_map32(addr) & VRAM_MASK] = data;
 }
 

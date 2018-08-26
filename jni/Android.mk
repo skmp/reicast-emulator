@@ -11,9 +11,11 @@ INCFLAGS      :=
 CFLAGS        :=
 CXXFLAGS      :=
 DYNAFLAGS     :=
+NO_THREADS    := 0
 HAVE_NEON     := 0
 WITH_DYNAREC  :=
 
+HAVE_GL       := 1
 HAVE_OPENGL   := 1
 GLES          := 1
 
@@ -29,16 +31,26 @@ else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
   WITH_DYNAREC := arm
   HAVE_NEON := 1
 else ifeq ($(TARGET_ARCH_ABI),x86)
-  # X86 dynarec isn't position independent, so it will not run on api 23+
-  # This core uses vulkan which is api 24+, so dynarec cannot be used
-  WITH_DYNAREC := bogus
+  WITH_DYNAREC := x86
 else ifeq ($(TARGET_ARCH_ABI),x86_64)
   WITH_DYNAREC := x86_64
 endif
 
 include $(ROOT_DIR)/Makefile.common
 
-COREFLAGS := -ffast-math -D__LIBRETRO__ -DINLINE="inline" -DANDROID -DHAVE_OPENGLES -DHAVE_OPENGLES2 -DTARGET_NO_THREADS $(GLFLAGS) $(INCFLAGS) $(DYNAFLAGS)
+COREFLAGS := -ffast-math -D__LIBRETRO__ -DINLINE="inline" -DANDROID -DHAVE_OPENGLES -DHAVE_OPENGLES2 $(GLFLAGS) $(INCFLAGS) $(DYNAFLAGS)
+
+ifeq ($(NO_THREADS),1)
+COREFLAGS += -DTARGET_NO_THREADS
+endif
+
+ifeq ($(HAVE_GENERIC_JIT),1)
+COREFLAGS += -DTARGET_NO_JIT
+endif
+
+ifeq ($(TARGET_ARCH_ABI),x86_64)
+COREFLAGS += -fno-operator-names
+endif
 
 ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
 	COREFLAGS += -DHOST_CPU=$(HOST_CPU_X64)
@@ -66,9 +78,14 @@ LOCAL_MODULE       := retro
 LOCAL_SRC_FILES    := $(SOURCES_CXX) $(SOURCES_C) $(SOURCES_ASM)
 LOCAL_CFLAGS       := $(COREFLAGS) $(CFLAGS)
 LOCAL_CXXFLAGS     := -std=c++11 $(COREFLAGS) $(CXXFLAGS)
-LOCAL_LDFLAGS      := -Wl,-version-script=$(LIBRETRO_DIR)/link.T
+LOCAL_LDFLAGS      := -Wl,-version-script=$(CORE_DIR)/link.T
 LOCAL_LDLIBS       := -lGLESv2
 LOCAL_CPP_FEATURES := exceptions
 LOCAL_ARM_NEON     := true
 LOCAL_ARM_MODE     := arm
+
+ifeq ($(NO_THREADS),1)
+else
+#LOCAL_LDLIBS       += -lpthread
+endif
 include $(BUILD_SHARED_LIBRARY)

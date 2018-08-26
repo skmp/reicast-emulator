@@ -57,3 +57,11 @@ Renderer* rend_GLES2();
 Renderer* rend_GL4();
 Renderer* rend_norend();
 Renderer* rend_softrend();
+
+extern u32 fb1_watch_addr_start;
+extern u32 fb1_watch_addr_end;
+extern u32 fb2_watch_addr_start;
+extern u32 fb2_watch_addr_end;
+extern bool fb_dirty;
+
+void check_framebuffer_write();

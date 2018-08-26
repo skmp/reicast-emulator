@@ -1306,17 +1306,15 @@ public:
 	__forceinline
 		static void AppendSpriteVertexA(TA_Sprite1A* sv)
 	{
-		u16* idx=vdrc.idx.Append(6);
+		u16* idx=vdrc.idx.Append(4);
 		u32 vbase=vdrc.verts.used();
 
 		idx[0]=vbase+0;
 		idx[1]=vbase+1;
 		idx[2]=vbase+2;
 		idx[3]=vbase+3;
-		idx[4]=vbase+3;
-		idx[5]=vbase+4;
 
-		CurrentPP->count=vdrc.idx.used()-CurrentPP->first-2;
+      CurrentPP->count=vdrc.idx.used()-CurrentPP->first;
 
 		Vertex* cv = vdrc.verts.Append(4);
 
@@ -1544,7 +1542,6 @@ bool ta_parse_vdrc(TA_context* ctx)
 	if (ctx->rend.isRTT || 0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
 	{
 		TAFifo0.vdec_init();
-      unsigned count = ctx->tad.render_pass_count;
 
       for (int pass = 0; pass <= ctx->tad.render_pass_count; pass++)
       {
@@ -1573,7 +1570,21 @@ bool ta_parse_vdrc(TA_context* ctx)
 #endif
       }
 
-      rv = true; //whatever
+      bool empty_context = true;
+		
+		// Don't draw empty contexts.
+		// Apparently the background plane is only drawn if it at least one polygon is drawn.
+		for (PolyParam *pp = vd_rc.global_param_op.head() + 1;
+			 empty_context && pp < vd_rc.global_param_op.LastPtr(0); pp++)
+			if (pp->count > 2)
+				empty_context = false;
+		for (PolyParam *pp = vd_rc.global_param_pt.head(); empty_context && pp < vd_rc.global_param_pt.LastPtr(0); pp++)
+			if (pp->count > 2)
+				empty_context = false;
+		for (PolyParam *pp = vd_rc.global_param_tr.head(); empty_context && pp < vd_rc.global_param_tr.LastPtr(0); pp++)
+			if (pp->count > 2)
+				empty_context = false;
+		rv = !empty_context;
 	}
 
    bool overrun = ctx->rend.Overrun;
@@ -1725,6 +1736,7 @@ void FillBGP(TA_context* ctx)
 	bgpp->pcw.Gouraud=bgpp->isp.Gouraud;
 	bgpp->pcw.Offset=bgpp->isp.Offset;
 	bgpp->pcw.Texture=bgpp->isp.Texture;
+   bgpp->pcw.Shadow = ISP_BACKGND_T.shadow;
 
 	float scale_x= (SCALER_CTL.hscale) ? 2.f:1.f;	//if AA hack the hacked pos value hacks
 	for (int i=0;i<3;i++)

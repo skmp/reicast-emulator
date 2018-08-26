@@ -1,6 +1,7 @@
 #include "deps/xbyak/xbyak.h"
 
 #include "types.h"
+#include <set>
 
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64
 #include "hw/sh4/sh4_opcode_list.h"

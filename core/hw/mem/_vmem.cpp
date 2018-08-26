@@ -9,6 +9,7 @@
 #include <unistd.h>
 #endif
 
+#include <set>
 #include "_vmem.h"
 #include "hw/aica/aica_if.h"
 #include "hw/sh4/dyna/blockmanager.h"

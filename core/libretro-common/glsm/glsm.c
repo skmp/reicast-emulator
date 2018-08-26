@@ -200,9 +200,9 @@ struct gl_cached_state
    int cap_translate[SGL_CAP_MAX];
 };
 
-static GLint glsm_max_textures;
+GLint glsm_max_textures;
 struct retro_hw_render_callback hw_render;
-static struct gl_cached_state gl_state;
+struct gl_cached_state gl_state;
 
 /* GL wrapper-side */
 

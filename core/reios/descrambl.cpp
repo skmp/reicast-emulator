@@ -11,7 +11,7 @@
 
 #define MAXCHUNK (2048*1024)
 
-static unsigned int seed;
+unsigned int seed;
 
 void my_srand(unsigned int n)
 {

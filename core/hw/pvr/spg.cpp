@@ -18,7 +18,7 @@ u32 vblk_cnt=0;
 u32 Line_Cycles=0;
 u32 Frame_Cycles=0;
 int render_end_sched;
-static int vblank_sched;
+int vblank_sched;
 int time_sync;
 
 void CalculateSync(void)

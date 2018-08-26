@@ -3,9 +3,14 @@
 */
 #include "types.h"
 #include "decoder.h"
+#include <set>
 #pragma once
 
+
+#define CODE_SIZE   (16*1024*1024)
 typedef void (*DynarecCodeEntryPtr)();
+
+extern u8* CodeCache;
 
 struct RuntimeBlockInfo_Core
 {
@@ -74,6 +79,57 @@ struct CachedBlockInfo: RuntimeBlockInfo_Core
 {
 	RuntimeBlockInfo* block;
 };
+
+#if FEAT_SHREC != DYNAREC_NONE
+typedef vector<RuntimeBlockInfo*> bm_List;
+#endif
+
+struct BlockMapCMP
+{
+	static bool is_code(RuntimeBlockInfo* blk)
+	{
+		if ((unat)((u8*)blk-CodeCache)<CODE_SIZE)
+			return true;
+		else
+			return false;
+	}
+
+	static unat get_blkstart(RuntimeBlockInfo* blk)
+	{
+		if (is_code(blk))
+			return (unat)blk;
+		else
+			return (unat)blk->code;
+	}
+
+	static unat get_blkend(RuntimeBlockInfo* blk)
+	{
+		if (is_code(blk))
+			return (unat)blk;
+		else
+			return (unat)blk->code+blk->host_code_size-1;
+	}
+
+	//return true if blkl > blkr
+	bool operator()(RuntimeBlockInfo* blkl, RuntimeBlockInfo* blkr) const
+	{
+		if (!is_code(blkl) && !is_code(blkr))
+			return (unat)blkl->code<(unat)blkr->code;
+
+		unat blkr_start=get_blkstart(blkr),blkl_end=get_blkend(blkl);
+
+		if (blkl_end<blkr_start)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+};
+
+typedef std::set<RuntimeBlockInfo*,BlockMapCMP> blkmap_t;
 
 void bm_WriteBlockMap(const string& file);
 

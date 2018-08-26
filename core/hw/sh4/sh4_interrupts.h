@@ -97,6 +97,13 @@ enum InterruptID
 		*/
 };
 
+struct InterptSourceList_Entry
+{
+	u16* PrioReg;
+	u32 Shift;
+	u32 IntEvnCode;
+};
+
 void SetInterruptPend(InterruptID intr);
 void ResetInterruptPend(InterruptID intr);
 #define InterruptPend(intr,v) ((v)==0?ResetInterruptPend(intr):SetInterruptPend(intr))

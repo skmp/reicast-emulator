@@ -16,7 +16,7 @@ u32 _pal_rev_256[4]={0};
 u32 _pal_rev_16[64]={0};
 u32 pal_rev_256[4]={0};
 u32 pal_rev_16[64]={0};
-u32 palette_ram[1024];
+//u32 palette_ram[1024];
 
 u32 decoded_colors[3][65536];
 
@@ -60,22 +60,22 @@ static u8 float_to_satu8_math(float val)
 }
 
 //vdec state variables
-static ModTriangle* lmr=0;
-static PolyParam nullPP;
+ModTriangle* lmr=0;
+PolyParam nullPP;
 
 
 PolyParam* CurrentPP=&nullPP;
 List<PolyParam>* CurrentPPlist;
 
 //TA state vars	
-DECL_ALIGN(4) static u8 FaceBaseColor[4];
-DECL_ALIGN(4) static u8 FaceOffsColor[4];
+DECL_ALIGN(4) u8 FaceBaseColor[4];
+DECL_ALIGN(4) u8 FaceOffsColor[4];
 #ifdef HAVE_OIT
-DECL_ALIGN(4) static u8 FaceBaseColor1[4];
-DECL_ALIGN(4) static u8 FaceOffsColor1[4];
+DECL_ALIGN(4) u8 FaceBaseColor1[4];
+DECL_ALIGN(4) u8 FaceOffsColor1[4];
 #endif
-DECL_ALIGN(4) static u32 SFaceBaseColor;
-DECL_ALIGN(4) static u32 SFaceOffsColor;
+DECL_ALIGN(4) u32 SFaceBaseColor;
+DECL_ALIGN(4) u32 SFaceOffsColor;
 
 //splitter function lookup
 extern u32 ta_type_lut[256];
@@ -91,8 +91,6 @@ const u32 SZ64=2;
 
 #include "ta_structs.h"
 
-typedef Ta_Dma* DYNACALL TaListFP(Ta_Dma* data,Ta_Dma* data_end);
-typedef void TACALL TaPolyParamFP(void* ptr);
 
 TaListFP* TaCmd;
 	

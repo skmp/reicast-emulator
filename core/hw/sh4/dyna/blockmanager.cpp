@@ -4,6 +4,7 @@
 */
 
 #include <algorithm>
+#include <set>
 #include "blockmanager.h"
 #include "ngen.h"
 
@@ -29,8 +30,6 @@ op_agent_t          oprofHandle;
 #if FEAT_SHREC != DYNAREC_NONE
 
 
-typedef vector<RuntimeBlockInfo*> bm_List;
-
 #define BLOCKS_IN_PAGE_LIST_COUNT (RAM_SIZE/4096)
 /* Naomi edit - allow for max possible size */
 bm_List blocks_page[/*BLOCKS_IN_PAGE_LIST_COUNT*/(32*1024*1024)/4096];
@@ -39,54 +38,9 @@ bm_List all_blocks;
 bm_List del_blocks;
 #include <set>
 
-struct BlockMapCMP
-{
-	static bool is_code(RuntimeBlockInfo* blk)
-	{
-		if ((unat)((u8*)blk-CodeCache)<CODE_SIZE)
-			return true;
-		else
-			return false;
-	}
 
-	static unat get_blkstart(RuntimeBlockInfo* blk)
-	{
-		if (is_code(blk)) 
-			return (unat)blk; 
-		else 
-			return (unat)blk->code;
-	}
-
-	static unat get_blkend(RuntimeBlockInfo* blk)
-	{
-		if (is_code(blk)) 
-			return (unat)blk; 
-		else 
-			return (unat)blk->code+blk->host_code_size-1;
-	}
-
-	//return true if blkl > blkr
-	bool operator()(RuntimeBlockInfo* blkl, RuntimeBlockInfo* blkr) const
-	{
-		if (!is_code(blkl) && !is_code(blkr))
-			return (unat)blkl->code<(unat)blkr->code;
-
-		unat blkr_start=get_blkstart(blkr),blkl_end=get_blkend(blkl);
-
-		if (blkl_end<blkr_start)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-};
-
-typedef std::set<RuntimeBlockInfo*,BlockMapCMP> blkmap_t;
 blkmap_t blkmap;
-u32 bm_gc_luc,bm_gcf_luc;
+//u32 bm_gc_luc,bm_gcf_luc;
 
 
 #define FPCA(x) ((DynarecCodeEntryPtr&)sh4rcb.fpcb[(x>>1)&FPCB_MASK])

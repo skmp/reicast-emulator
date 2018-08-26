@@ -47,7 +47,7 @@ static u32 read_u32bi(u8* ptr)
 	return (ptr[4]<<24) | (ptr[5]<<16) | (ptr[6]<<8) | (ptr[7]<<0);
 }
 
-static bool bootfile_inited = false;
+bool bootfile_inited = false;
 
 bool reios_locate_bootfile(const char* bootfile)
 {
@@ -407,8 +407,6 @@ static void reios_sys_misc(void)
 	Sh4cntx.r[0] = 0;
 }
 
-typedef void hook_fp();
-u32 hook_addr(hook_fp* fn);
 
 static void setup_syscall(u32 hook_addr, u32 syscall_addr)
 {

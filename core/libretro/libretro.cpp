@@ -1171,17 +1171,27 @@ size_t retro_get_memory_size(unsigned type)
 
 size_t retro_serialize_size (void)
 {
-   return 0; //TODO
+   unsigned int total_size = 0 ;
+   void *data = NULL ;
+
+   dc_serialize(&data, &total_size) ;
+   return total_size;
 }
 
 bool retro_serialize(void *data, size_t size)
 {
-   return false; //TODO
+   unsigned int total_size = 0 ;
+   void *data_ptr = data ;
+
+   return dc_serialize(&data_ptr, &total_size) ;
 }
 
 bool retro_unserialize(const void * data, size_t size)
 {
-   return false; //TODO
+   unsigned int total_size = 0 ;
+   void *data_ptr = (void*)data ;
+
+   return dc_unserialize(&data_ptr, &total_size) ;
 }
 
 // Cheats

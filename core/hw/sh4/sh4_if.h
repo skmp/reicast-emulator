@@ -203,18 +203,9 @@ struct sr_t
 		u32 status;
 	};
 	u32 T;
-	INLINE u32 GetFull()
-	{
-		return (status & STATUS_MASK) | T;
-	}
-
-	INLINE void SetFull(u32 value)
-	{
-		status=value & STATUS_MASK;
-		T=value&1;
-	}
 
 };
+
 
 //FPSCR (fpu status and control register) bitfield
 struct fpscr_t
@@ -359,9 +350,10 @@ struct Sh4Context
 		u64 raw[64-8];
 	};
 
-	u32 offset(u32 sh4_reg);
-	u32 offset(Sh4RegType sh4_reg) { return offset(sh4_reg); }
 };
+
+u32 sh4context_offset_u32(u32 sh4_reg);
+u32 sh4context_offset_regtype(Sh4RegType sh4_reg);
 
 void DYNACALL do_sqw_mmu(u32 dst);
 extern "C" void DYNACALL do_sqw_nommu_area_3(u32 dst, u8* sqb);
@@ -390,6 +382,17 @@ struct Sh4RCB
 
 extern Sh4RCB* p_sh4rcb;
 extern u8* sh4_dyna_rcb;
+
+INLINE u32 sh4_sr_GetFull()
+{
+	return (p_sh4rcb->cntx.sr.status & STATUS_MASK) | p_sh4rcb->cntx.sr.T;
+}
+
+INLINE void sh4_sr_SetFull(u32 value)
+{
+	p_sh4rcb->cntx.sr.status=value & STATUS_MASK;
+	p_sh4rcb->cntx.sr.T=value&1;
+}
 
 #define do_sqw_nommu sh4rcb.do_sqw_nommu
 

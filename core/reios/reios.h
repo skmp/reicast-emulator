@@ -24,4 +24,7 @@ const char* reios_locate_ip(void);
 
 bool reios_locate_bootfile(const char* bootfile);
 
+typedef void hook_fp();
+u32 hook_addr(hook_fp* fn);
+
 #define REIOS_OPCODE 0x085B

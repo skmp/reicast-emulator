@@ -313,19 +313,6 @@ void SortPParams(int first, int count)
 
 Vertex* vtx_sort_base;
 
-struct IndexTrig
-{
-	u16 id[3];
-	u16 pid;
-	f32 z;
-};
-
-struct SortTrigDrawParam
-{
-	PolyParam* ppid;
-	u16 first;
-	u16 count;
-};
 
 float min3(float v0,float v1,float v2)
 {

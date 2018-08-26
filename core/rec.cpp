@@ -1,5 +1,6 @@
 #include "types.h"
 
+#include <set>
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/modules/ccn.h"
 #include "hw/sh4/sh4_interrupts.h"

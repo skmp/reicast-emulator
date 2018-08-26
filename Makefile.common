@@ -74,6 +74,7 @@ SOURCES_CXX := \
 					$(CORE_DIR)/core/imgread/gdi.cpp \
 					\
 					$(CORE_DIR)/core/nullDC.cpp \
+					$(CORE_DIR)/core/serialize.cpp \
 					$(CORE_DIR)/core/stdclass.cpp \
 					\
 					$(DEPS_DIR)/coreio/coreio.cpp \

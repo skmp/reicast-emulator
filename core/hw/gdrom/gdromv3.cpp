@@ -35,108 +35,20 @@ signed int sns_key=0;
 #define GD_ERROR   0x09 // Reading of disc TOC failed (state does not allow access) 
 
 
-enum gd_states
-{
-	//Generic
-	gds_waitcmd,
-	gds_procata,
-	gds_waitpacket,
-	gds_procpacket,
-	gds_pio_send_data,
-	gds_pio_get_data,
-	gds_pio_end,
-	gds_procpacketdone,
 
-	//Command spec.
-	gds_readsector_pio,
-	gds_readsector_dma,
-	gds_process_set_mode,
-};
 
-static struct
-{
-	u32 start_sector;
-	u32 remaining_sectors;
-	u32 sector_type;
-} read_params;
-
-struct packet_cmd_t
-{
-	u32 index;
-	union
-	{
-		u16 data_16[6];
-		u8 data_8[12];
-
-      /* SPI command structs */
-      struct 
-      {
-         u8 cc;
-
-#ifdef MSB_FIRST
-         u8 head		: 1 ; //4 bytes, main cdrom header
-         u8 subh		: 1 ; //8 bytes, mode2 subheader
-         u8 data		: 1 ; //user data. 2048 for mode1, 2048 for m2f1, 2324 for m2f2
-         u8 other	: 1 ; //"other" data. I guess that means SYNC/ECC/EDC ?
-         //	u8 datasel	: 4 ;
-         u8 expdtype	: 3 ;
-         u8 prmtype	: 1 ;	
-#else
-         u8 prmtype	: 1 ;	
-         u8 expdtype	: 3 ;
-         //	u8 datasel	: 4 ;
-         u8 other	: 1 ; //"other" data. I guess that means SYNC/ECC/EDC ?
-         u8 data		: 1 ; //user data. 2048 for mode1, 2048 for m2f1, 2324 for m2f2
-         u8 subh		: 1 ; //8 bytes, mode2 subheader
-         u8 head		: 1 ; //4 bytes, main cdrom header
-#endif
-
-         u8 block[10];
-      }GDReadBlock;
-	};
-};
-
-static packet_cmd_t packet_cmd;
+read_params_t read_params ;
+packet_cmd_t packet_cmd;
 
 //Buffer for sector reads [dma]
-static struct
-{
-	u32 cache_index;
-	u32 cache_size;
-	u8 cache[8192 * 2352];	//up to 32 sectors
-} read_buff;
+read_buff_t read_buff ;
 
 //pio buffer
-static struct
-{
-	gd_states next_state;
-	u32 index;
-	u32 size;
-	u16 data[0x10000>>1]; //64 kb
-} pio_buff;
+pio_buff_t pio_buff ;
 
 u32 set_mode_offset;
-static struct
-{
-	u8 command;
-} ata_cmd;
-
-static struct
-{
-	bool playing;
-	u32 repeats;
-	union
-	{
-		u32 FAD;
-		struct
-		{
-			u8 B0; // MSB
-			u8 B1; // Middle byte
-			u8 B2; // LSB
-		};
-	}CurrAddr,EndAddr,StartAddr;
-} cdda;
-
+ata_cmd_t ata_cmd ;
+cdda_t cdda ;
 
 gd_states gd_state;
 DiscType gd_disk_type;
@@ -160,17 +72,8 @@ u32 data_write_mode=0;
 	
 	GD_StatusT GDStatus;
 
-	static union
-	{
-		struct
-		{
-			u8 low;
-			u8 hi;
-		};
-
-		u16 full;
-	} ByteCount;
 	
+ByteCount_t ByteCount ;
 //end
 
 void nilprintf(...){}

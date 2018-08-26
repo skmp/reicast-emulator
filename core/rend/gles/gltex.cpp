@@ -442,13 +442,6 @@ typedef map<u64,TextureCacheData>::iterator TexCacheIter;
 
 TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw);
 
-struct FBT
-{
-	u32 TexAddr;
-	GLuint depthb,stencilb;
-	GLuint tex;
-	GLuint fbo;
-};
 
 FBT fb_rtt;
 

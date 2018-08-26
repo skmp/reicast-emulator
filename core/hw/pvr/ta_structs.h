@@ -802,3 +802,7 @@ enum PixelFormat
 	PixelPal8 = 6,
 	PixelReserved = 7
 };
+
+typedef Ta_Dma* DYNACALL TaListFP(Ta_Dma* data,Ta_Dma* data_end);
+#define TACALL DYNACALL
+typedef void TACALL TaPolyParamFP(void* ptr);

@@ -4,6 +4,7 @@
 
 #include "types.h"
 
+#include <set>
 #include "../sh4_interpreter.h"
 #include "../sh4_opcode_list.h"
 #include "../sh4_core.h"
@@ -140,7 +141,7 @@ void Sh4_int_Reset(bool Manual)
    gbr=ssr=spc=sgr=dbr=vbr=0;
    mac.full=pr=fpul=0;
 
-   sr.SetFull(0x700000F0);
+   sh4_sr_SetFull(0x700000F0);
    old_sr.status=sr.status;
    UpdateSR();
 
@@ -190,13 +191,13 @@ void ExecuteDelayslot(void)
 
 void ExecuteDelayslot_RTE(void)
 {
-	u32 oldsr = sr.GetFull();
+	u32 oldsr = sh4_sr_GetFull();
 
 #if !defined(NO_MMU)
    if (settings.MMUEnabled)
    {
       try {
-         sr.SetFull(ssr);
+    	 sh4_sr_SetFull(ssr);
          ExecuteDelayslot();
       }
       catch (SH4ThrownException ex)
@@ -207,7 +208,7 @@ void ExecuteDelayslot_RTE(void)
    else
 #endif
    {
-      sr.SetFull(ssr);
+	  sh4_sr_SetFull(ssr);
       ExecuteDelayslot();
    }
 }

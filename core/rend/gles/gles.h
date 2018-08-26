@@ -130,3 +130,24 @@ extern struct ShaderUniforms_t
 	}
 
 } ShaderUniforms;
+
+struct IndexTrig
+{
+	u16 id[3];
+	u16 pid;
+	f32 z;
+};
+
+struct SortTrigDrawParam
+{
+	PolyParam* ppid;
+	u16 first;
+	u16 count;
+};
+struct FBT
+{
+	u32 TexAddr;
+	GLuint depthb,stencilb;
+	GLuint tex;
+	GLuint fbo;
+};

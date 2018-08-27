@@ -791,7 +791,6 @@ extern s8 joyy[4];
 
 bool serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size)
 {
-	printf("SER_SIZE %d\n", src_size) ;
 	if ( *dest != NULL )
 	{
 		memcpy(*dest, src, src_size) ;
@@ -804,7 +803,6 @@ bool serialize(void *src, unsigned int src_size, void **dest, unsigned int *tota
 
 bool unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size)
 {
-	printf("UNSER_SIZE %d\n", src_size) ;
 	if ( *dest != NULL )
 	{
 		memcpy(src, *dest, src_size) ;

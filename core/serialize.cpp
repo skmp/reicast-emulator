@@ -1403,7 +1403,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	us(fog_needs_update);
 	usa(pvr_regs,pvr_RegSize);
-
+	fog_needs_update = true ;
 
 
 	us(in_vblank);

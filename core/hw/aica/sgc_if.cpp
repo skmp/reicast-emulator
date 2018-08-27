@@ -326,7 +326,7 @@ struct ChannelEx
 		__forceinline s32 GetValue() { return val>>AEG_STEP_BITS;}
 		void SetValue(u32 aegb) { val=aegb<<AEG_STEP_BITS; }
 
-		_EG_state state=0;
+		_EG_state state=EG_Attack;
 
 		u32 AttackRate;
 		u32 Decay1Rate;
@@ -338,7 +338,7 @@ struct ChannelEx
 	struct
 	{
 		s32 value;
-		_EG_state state=0;
+		_EG_state state=EG_Attack;
 	} FEG;//i have to figure out how this works w/ AEG and channel state, and the iir values
 	
 	struct 

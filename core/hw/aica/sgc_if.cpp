@@ -1446,6 +1446,9 @@ bool channel_serialize(void **data, unsigned int *total_size)
 		s(Chans[i].enabled) ;
 		s(Chans[i].ChanelNumber) ;
 	}
+
+	/* TODO/FIXME - no possibility for this to return false? */
+	return true;
 }
 
 bool channel_unserialize(void **data, unsigned int *total_size)
@@ -1504,4 +1507,7 @@ bool channel_unserialize(void **data, unsigned int *total_size)
 		us(Chans[i].ChanelNumber) ;
 
 	}
+
+	/* TODO/FIXME - no possibility for this to return false? */
+	return true;
 }

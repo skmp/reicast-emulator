@@ -176,7 +176,7 @@ __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
       CompilePipelineShader(CurrentShader);
    else
    {
-      glcache.UseProgram(CurrentShader->program);
+      glUseProgram(CurrentShader->program);
       ShaderUniforms.Set(CurrentShader);
    }
    SetTileClip(gp->tileclip,true);

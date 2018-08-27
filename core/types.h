@@ -776,11 +776,11 @@ bool ra_unserialize(void *src, unsigned int src_size, void **dest, unsigned int 
 bool dc_serialize(void **data, unsigned int *total_size);
 bool dc_unserialize(void **data, unsigned int *total_size);
 
-#define s(v) ra_serialize(&(v), sizeof(v), data, total_size)
-#define us(v) ra_unserialize(&(v), sizeof(v), data, total_size)
+#define RETROARCH_S(v) ra_serialize(&(v), sizeof(v), data, total_size)
+#define RETROARCH_US(v) ra_unserialize(&(v), sizeof(v), data, total_size)
 
-#define sa(v_arr,num) ra_serialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
-#define usa(v_arr,num) ra_unserialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
+#define RETROARCH_SA(v_arr,num) ra_serialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
+#define RETROARCH_USA(v_arr,num) ra_unserialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
 
 
 enum

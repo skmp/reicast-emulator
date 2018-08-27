@@ -819,8 +819,8 @@ bool register_serialize(Array<RegisterStruct>& regs,void **data, unsigned int *t
 
 	for ( i = 0 ; i < regs.Size ; i++ )
 	{
-		s(regs.data[i].flags) ;
-		s(regs.data[i].data32) ;
+		RETROARCH_S(regs.data[i].flags) ;
+		RETROARCH_S(regs.data[i].data32) ;
 	}
 
 	return true ;
@@ -833,11 +833,11 @@ bool register_unserialize(Array<RegisterStruct>& regs,void **data, unsigned int 
 
 	for ( i = 0 ; i < regs.Size ; i++ )
 	{
-		us(regs.data[i].flags) ;
+		RETROARCH_US(regs.data[i].flags) ;
 		if ( ! (regs.data[i].flags & REG_RF) )
-			us(regs.data[i].data32) ;
+			RETROARCH_US(regs.data[i].data32) ;
 		else
-			us(dummy) ;
+			RETROARCH_US(dummy) ;
 	}
 	return true ;
 }
@@ -854,75 +854,75 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	if ( p_sh4rcb == NULL )
 		return false ;
 
-	s(version) ;
-	s(aica_interr) ;
-	s(aica_reg_L) ;
-	s(e68k_out) ;
-	s(e68k_reg_L) ;
-	s(e68k_reg_M) ;
+	RETROARCH_S(version) ;
+	RETROARCH_S(aica_interr) ;
+	RETROARCH_S(aica_reg_L) ;
+	RETROARCH_S(e68k_out) ;
+	RETROARCH_S(e68k_reg_L) ;
+	RETROARCH_S(e68k_reg_M) ;
 
-	sa(arm_Reg,RN_ARM_REG_COUNT);
-	s(armIrqEnable);
-	s(armFiqEnable);
-	s(armMode);
-	s(Arm7Enabled);
-	sa(cpuBitsSet,256);
-	s(intState);
-	s(stopState);
-	s(holdState);
+	RETROARCH_SA(arm_Reg,RN_ARM_REG_COUNT);
+	RETROARCH_S(armIrqEnable);
+	RETROARCH_S(armFiqEnable);
+	RETROARCH_S(armMode);
+	RETROARCH_S(Arm7Enabled);
+	RETROARCH_SA(cpuBitsSet,256);
+	RETROARCH_S(intState);
+	RETROARCH_S(stopState);
+	RETROARCH_S(holdState);
 
-	s(dsp);
+	RETROARCH_S(dsp);
 
 	for ( i = 0 ; i < 3 ; i++)
 	{
-		s(timers[i].c_step);
-		s(timers[i].m_step);
+		RETROARCH_S(timers[i].c_step);
+		RETROARCH_S(timers[i].m_step);
 	}
 
 
-	sa(aica_ram.data,aica_ram.size) ;
-	s(VREG);
-	s(ARMRST);
-	s(rtc_EN);
-	s(dma_sched_id);
+	RETROARCH_SA(aica_ram.data,aica_ram.size) ;
+	RETROARCH_S(VREG);
+	RETROARCH_S(ARMRST);
+	RETROARCH_S(rtc_EN);
+	RETROARCH_S(dma_sched_id);
 
-	sa(aica_reg,0x8000);
+	RETROARCH_SA(aica_reg,0x8000);
 
 
 
-	sa(volume_lut,16);
-	sa(tl_lut,256 + 768);
-	sa(AEG_ATT_SPS,64);
-	sa(AEG_DSR_SPS,64);
-	s(pl);
-	s(pr);
+	RETROARCH_SA(volume_lut,16);
+	RETROARCH_SA(tl_lut,256 + 768);
+	RETROARCH_SA(AEG_ATT_SPS,64);
+	RETROARCH_SA(AEG_DSR_SPS,64);
+	RETROARCH_S(pl);
+	RETROARCH_S(pr);
 
 	channel_serialize(data, total_size) ;
 
-	sa(cdda_sector,CDDA_SIZE);
-	s(cdda_index);
-	sa(mxlr,64);
-	s(samples_gen);
+	RETROARCH_SA(cdda_sector,CDDA_SIZE);
+	RETROARCH_S(cdda_index);
+	RETROARCH_SA(mxlr,64);
+	RETROARCH_S(samples_gen);
 
 
 	register_serialize(sb_regs, data, total_size) ;
-	s(SB_ISTNRM);
-	s(SB_FFST_rc);
-	s(SB_FFST);
+	RETROARCH_S(SB_ISTNRM);
+	RETROARCH_S(SB_FFST_rc);
+	RETROARCH_S(SB_FFST);
 
 
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern RomChip sys_rom;
 
-	s(sys_nvmem_sram.size);
-	s(sys_nvmem_sram.mask);
-	sa(sys_nvmem_sram.data,sys_nvmem_sram.size);
+	RETROARCH_S(sys_nvmem_sram.size);
+	RETROARCH_S(sys_nvmem_sram.mask);
+	RETROARCH_SA(sys_nvmem_sram.data,sys_nvmem_sram.size);
 
-	s(sys_nvmem_flash.size);
-	s(sys_nvmem_flash.mask);
-	s(sys_nvmem_flash.state);
-	sa(sys_nvmem_flash.data,sys_nvmem_flash.size);
+	RETROARCH_S(sys_nvmem_flash.size);
+	RETROARCH_S(sys_nvmem_flash.mask);
+	RETROARCH_S(sys_nvmem_flash.state);
+	RETROARCH_SA(sys_nvmem_flash.data,sys_nvmem_flash.size);
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern _vmem_handler area0_handler;
@@ -930,44 +930,44 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 
 
-	sa(reply_11,16) ;
+	RETROARCH_SA(reply_11,16) ;
 
 
 
-	s(gdrom_sched);
-	s(sns_asc);
-	s(sns_ascq);
-	s(sns_key);
+	RETROARCH_S(gdrom_sched);
+	RETROARCH_S(sns_asc);
+	RETROARCH_S(sns_ascq);
+	RETROARCH_S(sns_key);
 
-	s(packet_cmd);
-	s(set_mode_offset);
-	s(read_params);
-	s(packet_cmd);
-	s(read_buff);
-	s(pio_buff);
-	s(set_mode_offset);
-	s(ata_cmd);
-	s(cdda);
-	s(gd_state);
-	s(gd_disk_type);
-	s(data_write_mode);
-	s(DriveSel);
-	s(Error);
-	s(IntReason);
-	s(Features);
-	s(SecCount);
-	s(SecNumber);
-	s(GDStatus);
-	s(ByteCount);
-	s(GDROM_TICK);
-
-
-	sa(EEPROM,0x100);
-	s(EEPROM_loaded);
-	s(State);
+	RETROARCH_S(packet_cmd);
+	RETROARCH_S(set_mode_offset);
+	RETROARCH_S(read_params);
+	RETROARCH_S(packet_cmd);
+	RETROARCH_S(read_buff);
+	RETROARCH_S(pio_buff);
+	RETROARCH_S(set_mode_offset);
+	RETROARCH_S(ata_cmd);
+	RETROARCH_S(cdda);
+	RETROARCH_S(gd_state);
+	RETROARCH_S(gd_disk_type);
+	RETROARCH_S(data_write_mode);
+	RETROARCH_S(DriveSel);
+	RETROARCH_S(Error);
+	RETROARCH_S(IntReason);
+	RETROARCH_S(Features);
+	RETROARCH_S(SecCount);
+	RETROARCH_S(SecNumber);
+	RETROARCH_S(GDStatus);
+	RETROARCH_S(ByteCount);
+	RETROARCH_S(GDROM_TICK);
 
 
-	s(maple_ddt_pending_reset);
+	RETROARCH_SA(EEPROM,0x100);
+	RETROARCH_S(EEPROM_loaded);
+	RETROARCH_S(State);
+
+
+	RETROARCH_S(maple_ddt_pending_reset);
 
 	for (i = 0 ; i < 4 ; i++)
 		for (j = 0 ; j < 6 ; j++)
@@ -976,82 +976,82 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 
 
-	s(FrameCount);
-	s(pend_rend);
+	RETROARCH_S(FrameCount);
+	RETROARCH_S(pend_rend);
 
 
-	sa(YUV_tempdata,512/4);
-	s(YUV_dest);
-	s(YUV_blockcount);
-	s(YUV_x_curr);
-	s(YUV_y_curr);
-	s(YUV_x_size);
-	s(YUV_y_size);
-
-
-
-
-	s(fog_needs_update);
-	sa(pvr_regs,pvr_RegSize);
+	RETROARCH_SA(YUV_tempdata,512/4);
+	RETROARCH_S(YUV_dest);
+	RETROARCH_S(YUV_blockcount);
+	RETROARCH_S(YUV_x_curr);
+	RETROARCH_S(YUV_y_curr);
+	RETROARCH_S(YUV_x_size);
+	RETROARCH_S(YUV_y_size);
 
 
 
 
-	s(in_vblank);
-	s(clc_pvr_scanline);
-	s(pvr_numscanlines);
-	s(prv_cur_scanline);
-	s(vblk_cnt);
-	s(Line_Cycles);
-	s(Frame_Cycles);
-	s(render_end_sched);
-	s(vblank_sched);
-	s(time_sync);
-	s(speed_load_mspdf);
-	s(mips_counter);
-	s(full_rps);
+	RETROARCH_S(fog_needs_update);
+	RETROARCH_SA(pvr_regs,pvr_RegSize);
 
 
 
-	sa(ta_type_lut,256);
-	sa(ta_fsm,2049);
-	s(ta_fsm_cl);
+
+	RETROARCH_S(in_vblank);
+	RETROARCH_S(clc_pvr_scanline);
+	RETROARCH_S(pvr_numscanlines);
+	RETROARCH_S(prv_cur_scanline);
+	RETROARCH_S(vblk_cnt);
+	RETROARCH_S(Line_Cycles);
+	RETROARCH_S(Frame_Cycles);
+	RETROARCH_S(render_end_sched);
+	RETROARCH_S(vblank_sched);
+	RETROARCH_S(time_sync);
+	RETROARCH_S(speed_load_mspdf);
+	RETROARCH_S(mips_counter);
+	RETROARCH_S(full_rps);
 
 
-	s(pal_needs_update);
-	sa(_pal_rev_256,4);
-	sa(_pal_rev_16,64);
-	sa(pal_rev_256,4);
-	sa(pal_rev_16,64);
+
+	RETROARCH_SA(ta_type_lut,256);
+	RETROARCH_SA(ta_fsm,2049);
+	RETROARCH_S(ta_fsm_cl);
+
+
+	RETROARCH_S(pal_needs_update);
+	RETROARCH_SA(_pal_rev_256,4);
+	RETROARCH_SA(_pal_rev_16,64);
+	RETROARCH_SA(pal_rev_256,4);
+	RETROARCH_SA(pal_rev_16,64);
 	for ( i = 0 ; i < 3 ; i++ )
 	{
 		u32 *ptr = decoded_colors[i] ;
-		sa(ptr,65536);
+		RETROARCH_SA(ptr,65536);
 	}
-	s(tileclip_val);
-	sa(f32_su8_tbl,65536);
-	sa(FaceBaseColor,4);
-	sa(FaceOffsColor,4);
-	s(SFaceBaseColor);
-	s(SFaceOffsColor);
+	RETROARCH_S(tileclip_val);
+	RETROARCH_SA(f32_su8_tbl,65536);
+	RETROARCH_SA(FaceBaseColor,4);
+	RETROARCH_SA(FaceOffsColor,4);
+	RETROARCH_S(SFaceBaseColor);
+	RETROARCH_S(SFaceOffsColor);
 
 
-	s(palette_index);
-	s(KillTex);
-	sa(palette16_ram,1024);
-	sa(palette32_ram,1024);
+	RETROARCH_S(palette_index);
+	RETROARCH_S(KillTex);
+	RETROARCH_SA(palette16_ram,1024);
+	RETROARCH_SA(palette32_ram,1024);
 	for (i = 0 ; i < 2 ; i++)
 		for (j = 0 ; j < 8 ; j++)
 		{
 			u32 *ptr = detwiddle[i][j] ;
-			sa(ptr,1024);
+			RETROARCH_SA(ptr,1024);
 		}
-	sa(vram.data, vram.size);
+	RETROARCH_SA(vram.data, vram.size);
 
 
 
 
-	sa(OnChipRAM.data,OnChipRAM_SIZE);
+	RETROARCH_SA(OnChipRAM.data,OnChipRAM_SIZE);
 
 	register_serialize(CCN, data, total_size) ;
 	register_serialize(UBC, data, total_size) ;
@@ -1064,17 +1064,17 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	register_serialize(SCI, data, total_size) ;
 	register_serialize(SCIF, data, total_size) ;
 
-	sa(mem_b.data, mem_b.size);
+	RETROARCH_SA(mem_b.data, mem_b.size);
 
 
 
-	s(IRLPriority);
-	sa(InterruptEnvId,32);
-	sa(InterruptBit,32);
-	sa(InterruptLevelBit,16);
-	s(interrupt_vpend);
-	s(interrupt_vmask);
-	s(decoded_srimask);
+	RETROARCH_S(IRLPriority);
+	RETROARCH_SA(InterruptEnvId,32);
+	RETROARCH_SA(InterruptBit,32);
+	RETROARCH_SA(InterruptLevelBit,16);
+	RETROARCH_S(interrupt_vpend);
+	RETROARCH_S(interrupt_vmask);
+	RETROARCH_S(decoded_srimask);
 
 
 
@@ -1090,166 +1090,166 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	else if (do_sqw_nommu==&do_sqw_nommu_full)
 		i = 3 ;
 
-	s(i) ;
+	RETROARCH_S(i) ;
 
-	sa((*p_sh4rcb).sq_buffer,64/8);
+	RETROARCH_SA((*p_sh4rcb).sq_buffer,64/8);
 
 	//store these before unserializing and then restore after
 	//void *getptr = &((*p_sh4rcb).cntx.sr.GetFull) ;
 	//void *setptr = &((*p_sh4rcb).cntx.sr.SetFull) ;
-	s((*p_sh4rcb).cntx);
+	RETROARCH_S((*p_sh4rcb).cntx);
 
-	s(old_rm);
-	s(old_dn);
-
-
+	RETROARCH_S(old_rm);
+	RETROARCH_S(old_dn);
 
 
-	s(sh4_sched_ffb);
-	s(sh4_sched_intr);
-	s(sh4_sched_next_id);
+
+
+	RETROARCH_S(sh4_sched_ffb);
+	RETROARCH_S(sh4_sched_intr);
+	RETROARCH_S(sh4_sched_next_id);
 	//this list is populated during initialization so the size will always be the same
 	//extern vector<sched_list> list;
 	for ( i = 0 ; i < list.size() ; i++ )
 	{
-		s(list[i].tag) ;
-		s(list[i].start) ;
-		s(list[i].end) ;
+		RETROARCH_S(list[i].tag) ;
+		RETROARCH_S(list[i].start) ;
+		RETROARCH_S(list[i].end) ;
 	}
 
 
 
-	s(aica_sched);
-	s(rtc_sched);
+	RETROARCH_S(aica_sched);
+	RETROARCH_S(rtc_sched);
 
 
-	s(SCIF_SCFSR2);
-	s(SCIF_SCFRDR2);
-	s(SCIF_SCFDR2);
+	RETROARCH_S(SCIF_SCFSR2);
+	RETROARCH_S(SCIF_SCFRDR2);
+	RETROARCH_S(SCIF_SCFDR2);
 
 
-	s(BSC_PDTRA);
-
-
-
-
-	sa(tmu_shift,3);
-	sa(tmu_mask,3);
-	sa(tmu_mask64,3);
-	sa(old_mode,3);
-	sa(tmu_sched,3);
-	sa(tmu_ch_base,3);
-	sa(tmu_ch_base64,3);
+	RETROARCH_S(BSC_PDTRA);
 
 
 
 
-	sa(CCN_QACR_TR,2);
+	RETROARCH_SA(tmu_shift,3);
+	RETROARCH_SA(tmu_mask,3);
+	RETROARCH_SA(tmu_mask64,3);
+	RETROARCH_SA(old_mode,3);
+	RETROARCH_SA(tmu_sched,3);
+	RETROARCH_SA(tmu_ch_base,3);
+	RETROARCH_SA(tmu_ch_base64,3);
 
 
 
 
-	sa(UTLB,64);
-	sa(ITLB,4);
+	RETROARCH_SA(CCN_QACR_TR,2);
+
+
+
+
+	RETROARCH_SA(UTLB,64);
+	RETROARCH_SA(ITLB,4);
 #if defined(NO_MMU)
-	sa(sq_remap,64);
+	RETROARCH_SA(sq_remap,64);
 #else
-	sa(ITLB_LRU_USE,64);
-	s(mmu_error_TT);
+	RETROARCH_SA(ITLB_LRU_USE,64);
+	RETROARCH_S(mmu_error_TT);
 #endif
 
 
 
-	s(NullDriveDiscType);
-	sa(q_subchannel,96);
+	RETROARCH_S(NullDriveDiscType);
+	RETROARCH_SA(q_subchannel,96);
 
 
-	s(FLASH_SIZE);
-	s(BBSRAM_SIZE);
-	s(BIOS_SIZE);
-	s(RAM_SIZE);
-	s(ARAM_SIZE);
-	s(VRAM_SIZE);
-	s(RAM_MASK);
-	s(ARAM_MASK);
-	s(VRAM_MASK);
-
-
-
-	s(naomi_updates);
-	s(RomPioOffset);
-	s(DmaOffset);
-	s(DmaCount);
-	s(BoardID);
-	s(GSerialBuffer);
-	s(BSerialBuffer);
-	s(GBufPos);
-	s(BBufPos);
-	s(GState);
-	s(BState);
-	s(GOldClk);
-	s(BOldClk);
-	s(BControl);
-	s(BCmd);
-	s(BLastCmd);
-	s(GControl);
-	s(GCmd);
-	s(GLastCmd);
-	s(SerStep);
-	s(SerStep2);
-	sa(BSerial,69);
-	sa(GSerial,69);
-	s(reg_dimm_3c);
-	s(reg_dimm_40);
-	s(reg_dimm_44);
-	s(reg_dimm_48);
-	s(reg_dimm_4c);
-	s(NaomiDataRead);
-	s(NAOMI_ROM_OFFSETH);
-	s(NAOMI_ROM_OFFSETL);
-	s(NAOMI_ROM_DATA);
-	s(NAOMI_DMA_OFFSETH);
-	s(NAOMI_DMA_OFFSETL);
-	s(NAOMI_DMA_COUNT);
-	s(NAOMI_BOARDID_WRITE);
-	s(NAOMI_BOARDID_READ);
-	s(NAOMI_COMM_OFFSET);
-	s(NAOMI_COMM_DATA);
-
-	s(cycle_counter);
-	s(idxnxx);
-
-
-	s(state);
-	s(div_som_reg1);
-	s(div_som_reg2);
-	s(div_som_reg3);
+	RETROARCH_S(FLASH_SIZE);
+	RETROARCH_S(BBSRAM_SIZE);
+	RETROARCH_S(BIOS_SIZE);
+	RETROARCH_S(RAM_SIZE);
+	RETROARCH_S(ARAM_SIZE);
+	RETROARCH_S(VRAM_SIZE);
+	RETROARCH_S(RAM_MASK);
+	RETROARCH_S(ARAM_MASK);
+	RETROARCH_S(VRAM_MASK);
 
 
 
+	RETROARCH_S(naomi_updates);
+	RETROARCH_S(RomPioOffset);
+	RETROARCH_S(DmaOffset);
+	RETROARCH_S(DmaCount);
+	RETROARCH_S(BoardID);
+	RETROARCH_S(GSerialBuffer);
+	RETROARCH_S(BSerialBuffer);
+	RETROARCH_S(GBufPos);
+	RETROARCH_S(BBufPos);
+	RETROARCH_S(GState);
+	RETROARCH_S(BState);
+	RETROARCH_S(GOldClk);
+	RETROARCH_S(BOldClk);
+	RETROARCH_S(BControl);
+	RETROARCH_S(BCmd);
+	RETROARCH_S(BLastCmd);
+	RETROARCH_S(GControl);
+	RETROARCH_S(GCmd);
+	RETROARCH_S(GLastCmd);
+	RETROARCH_S(SerStep);
+	RETROARCH_S(SerStep2);
+	RETROARCH_SA(BSerial,69);
+	RETROARCH_SA(GSerial,69);
+	RETROARCH_S(reg_dimm_3c);
+	RETROARCH_S(reg_dimm_40);
+	RETROARCH_S(reg_dimm_44);
+	RETROARCH_S(reg_dimm_48);
+	RETROARCH_S(reg_dimm_4c);
+	RETROARCH_S(NaomiDataRead);
+	RETROARCH_S(NAOMI_ROM_OFFSETH);
+	RETROARCH_S(NAOMI_ROM_OFFSETL);
+	RETROARCH_S(NAOMI_ROM_DATA);
+	RETROARCH_S(NAOMI_DMA_OFFSETH);
+	RETROARCH_S(NAOMI_DMA_OFFSETL);
+	RETROARCH_S(NAOMI_DMA_COUNT);
+	RETROARCH_S(NAOMI_BOARDID_WRITE);
+	RETROARCH_S(NAOMI_BOARDID_READ);
+	RETROARCH_S(NAOMI_COMM_OFFSET);
+	RETROARCH_S(NAOMI_COMM_DATA);
 
-	//sa(CodeCache,CODE_SIZE) ;
-	//sa(SH4_TCB,CODE_SIZE+4096);
-	s(LastAddr);
-	s(LastAddr_min);
-	sa(block_hash,1024);
+	RETROARCH_S(cycle_counter);
+	RETROARCH_S(idxnxx);
 
 
-	sa(RegisterWrite,sh4_reg_count);
-	sa(RegisterRead,sh4_reg_count);
-	s(fallback_blocks);
-	s(total_blocks);
-	s(REMOVED_OPS);
+	RETROARCH_S(state);
+	RETROARCH_S(div_som_reg1);
+	RETROARCH_S(div_som_reg2);
+	RETROARCH_S(div_som_reg3);
 
 
 
 
-	sa(kcode,4);
-	sa(rt,4);
-	sa(lt,4);
-	sa(vks,4);
-	sa(joyx,4);
-	sa(joyy,4);
+	//RETROARCH_SA(CodeCache,CODE_SIZE) ;
+	//RETROARCH_SA(SH4_TCB,CODE_SIZE+4096);
+	RETROARCH_S(LastAddr);
+	RETROARCH_S(LastAddr_min);
+	RETROARCH_SA(block_hash,1024);
+
+
+	RETROARCH_SA(RegisterWrite,sh4_reg_count);
+	RETROARCH_SA(RegisterRead,sh4_reg_count);
+	RETROARCH_S(fallback_blocks);
+	RETROARCH_S(total_blocks);
+	RETROARCH_S(REMOVED_OPS);
+
+
+
+
+	RETROARCH_SA(kcode,4);
+	RETROARCH_SA(rt,4);
+	RETROARCH_SA(lt,4);
+	RETROARCH_SA(vks,4);
+	RETROARCH_SA(joyx,4);
+	RETROARCH_SA(joyy,4);
 
 
 
@@ -1264,75 +1264,75 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	*total_size = 0 ;
 
-	us(version) ;
-	us(aica_interr) ;
-	us(aica_reg_L) ;
-	us(e68k_out) ;
-	us(e68k_reg_L) ;
-	us(e68k_reg_M) ;
+	RETROARCH_US(version) ;
+	RETROARCH_US(aica_interr) ;
+	RETROARCH_US(aica_reg_L) ;
+	RETROARCH_US(e68k_out) ;
+	RETROARCH_US(e68k_reg_L) ;
+	RETROARCH_US(e68k_reg_M) ;
 
-	usa(arm_Reg,RN_ARM_REG_COUNT);
-	us(armIrqEnable);
-	us(armFiqEnable);
-	us(armMode);
-	us(Arm7Enabled);
-	usa(cpuBitsSet,256);
-	us(intState);
-	us(stopState);
-	us(holdState);
+	RETROARCH_USA(arm_Reg,RN_ARM_REG_COUNT);
+	RETROARCH_US(armIrqEnable);
+	RETROARCH_US(armFiqEnable);
+	RETROARCH_US(armMode);
+	RETROARCH_US(Arm7Enabled);
+	RETROARCH_USA(cpuBitsSet,256);
+	RETROARCH_US(intState);
+	RETROARCH_US(stopState);
+	RETROARCH_US(holdState);
 
-	us(dsp);
+	RETROARCH_US(dsp);
 
 	for ( i = 0 ; i < 3 ; i++)
 	{
-		us(timers[i].c_step);
-		us(timers[i].m_step);
+		RETROARCH_US(timers[i].c_step);
+		RETROARCH_US(timers[i].m_step);
 	}
 
 
-	usa(aica_ram.data,aica_ram.size) ;
-	us(VREG);
-	us(ARMRST);
-	us(rtc_EN);
-	us(dma_sched_id);
+	RETROARCH_USA(aica_ram.data,aica_ram.size) ;
+	RETROARCH_US(VREG);
+	RETROARCH_US(ARMRST);
+	RETROARCH_US(rtc_EN);
+	RETROARCH_US(dma_sched_id);
 
-	usa(aica_reg,0x8000);
+	RETROARCH_USA(aica_reg,0x8000);
 
 
 
-	usa(volume_lut,16);
-	usa(tl_lut,256 + 768);
-	usa(AEG_ATT_SPS,64);
-	usa(AEG_DSR_SPS,64);
-	us(pl);
-	us(pr);
+	RETROARCH_USA(volume_lut,16);
+	RETROARCH_USA(tl_lut,256 + 768);
+	RETROARCH_USA(AEG_ATT_SPS,64);
+	RETROARCH_USA(AEG_DSR_SPS,64);
+	RETROARCH_US(pl);
+	RETROARCH_US(pr);
 
 	channel_unserialize(data, total_size) ;
 
-	usa(cdda_sector,CDDA_SIZE);
-	us(cdda_index);
-	usa(mxlr,64);
-	us(samples_gen);
+	RETROARCH_USA(cdda_sector,CDDA_SIZE);
+	RETROARCH_US(cdda_index);
+	RETROARCH_USA(mxlr,64);
+	RETROARCH_US(samples_gen);
 
 
 	register_unserialize(sb_regs, data, total_size) ;
-	us(SB_ISTNRM);
-	us(SB_FFST_rc);
-	us(SB_FFST);
+	RETROARCH_US(SB_ISTNRM);
+	RETROARCH_US(SB_FFST_rc);
+	RETROARCH_US(SB_FFST);
 
 
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern RomChip sys_rom;
 
-	us(sys_nvmem_sram.size);
-	us(sys_nvmem_sram.mask);
-	usa(sys_nvmem_sram.data,sys_nvmem_sram.size);
+	RETROARCH_US(sys_nvmem_sram.size);
+	RETROARCH_US(sys_nvmem_sram.mask);
+	RETROARCH_USA(sys_nvmem_sram.data,sys_nvmem_sram.size);
 
-	us(sys_nvmem_flash.size);
-	us(sys_nvmem_flash.mask);
-	us(sys_nvmem_flash.state);
-	usa(sys_nvmem_flash.data,sys_nvmem_flash.size);
+	RETROARCH_US(sys_nvmem_flash.size);
+	RETROARCH_US(sys_nvmem_flash.mask);
+	RETROARCH_US(sys_nvmem_flash.state);
+	RETROARCH_USA(sys_nvmem_flash.data,sys_nvmem_flash.size);
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern _vmem_handler area0_handler;
@@ -1340,44 +1340,44 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 
 
-	usa(reply_11,16) ;
+	RETROARCH_USA(reply_11,16) ;
 
 
 
-	us(gdrom_sched);
-	us(sns_asc);
-	us(sns_ascq);
-	us(sns_key);
+	RETROARCH_US(gdrom_sched);
+	RETROARCH_US(sns_asc);
+	RETROARCH_US(sns_ascq);
+	RETROARCH_US(sns_key);
 
-	us(packet_cmd);
-	us(set_mode_offset);
-	us(read_params);
-	us(packet_cmd);
-	us(read_buff);
-	us(pio_buff);
-	us(set_mode_offset);
-	us(ata_cmd);
-	us(cdda);
-	us(gd_state);
-	us(gd_disk_type);
-	us(data_write_mode);
-	us(DriveSel);
-	us(Error);
-	us(IntReason);
-	us(Features);
-	us(SecCount);
-	us(SecNumber);
-	us(GDStatus);
-	us(ByteCount);
-	us(GDROM_TICK);
-
-
-	usa(EEPROM,0x100);
-	us(EEPROM_loaded);
-	us(State);
+	RETROARCH_US(packet_cmd);
+	RETROARCH_US(set_mode_offset);
+	RETROARCH_US(read_params);
+	RETROARCH_US(packet_cmd);
+	RETROARCH_US(read_buff);
+	RETROARCH_US(pio_buff);
+	RETROARCH_US(set_mode_offset);
+	RETROARCH_US(ata_cmd);
+	RETROARCH_US(cdda);
+	RETROARCH_US(gd_state);
+	RETROARCH_US(gd_disk_type);
+	RETROARCH_US(data_write_mode);
+	RETROARCH_US(DriveSel);
+	RETROARCH_US(Error);
+	RETROARCH_US(IntReason);
+	RETROARCH_US(Features);
+	RETROARCH_US(SecCount);
+	RETROARCH_US(SecNumber);
+	RETROARCH_US(GDStatus);
+	RETROARCH_US(ByteCount);
+	RETROARCH_US(GDROM_TICK);
 
 
-	us(maple_ddt_pending_reset);
+	RETROARCH_USA(EEPROM,0x100);
+	RETROARCH_US(EEPROM_loaded);
+	RETROARCH_US(State);
+
+
+	RETROARCH_US(maple_ddt_pending_reset);
 
 	for (i = 0 ; i < 4 ; i++)
 		for (j = 0 ; j < 6 ; j++)
@@ -1386,81 +1386,81 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 
 
-	us(FrameCount);
-	us(pend_rend);
+	RETROARCH_US(FrameCount);
+	RETROARCH_US(pend_rend);
 
 
-	usa(YUV_tempdata,512/4);
-	us(YUV_dest);
-	us(YUV_blockcount);
-	us(YUV_x_curr);
-	us(YUV_y_curr);
-	us(YUV_x_size);
-	us(YUV_y_size);
+	RETROARCH_USA(YUV_tempdata,512/4);
+	RETROARCH_US(YUV_dest);
+	RETROARCH_US(YUV_blockcount);
+	RETROARCH_US(YUV_x_curr);
+	RETROARCH_US(YUV_y_curr);
+	RETROARCH_US(YUV_x_size);
+	RETROARCH_US(YUV_y_size);
 
 
 
 
-	us(fog_needs_update);
-	usa(pvr_regs,pvr_RegSize);
+	RETROARCH_US(fog_needs_update);
+	RETROARCH_USA(pvr_regs,pvr_RegSize);
 	fog_needs_update = true ;
 
 
-	us(in_vblank);
-	us(clc_pvr_scanline);
-	us(pvr_numscanlines);
-	us(prv_cur_scanline);
-	us(vblk_cnt);
-	us(Line_Cycles);
-	us(Frame_Cycles);
-	us(render_end_sched);
-	us(vblank_sched);
-	us(time_sync);
-	us(speed_load_mspdf);
-	us(mips_counter);
-	us(full_rps);
+	RETROARCH_US(in_vblank);
+	RETROARCH_US(clc_pvr_scanline);
+	RETROARCH_US(pvr_numscanlines);
+	RETROARCH_US(prv_cur_scanline);
+	RETROARCH_US(vblk_cnt);
+	RETROARCH_US(Line_Cycles);
+	RETROARCH_US(Frame_Cycles);
+	RETROARCH_US(render_end_sched);
+	RETROARCH_US(vblank_sched);
+	RETROARCH_US(time_sync);
+	RETROARCH_US(speed_load_mspdf);
+	RETROARCH_US(mips_counter);
+	RETROARCH_US(full_rps);
 
 
 
-	usa(ta_type_lut,256);
-	usa(ta_fsm,2049);
-	us(ta_fsm_cl);
+	RETROARCH_USA(ta_type_lut,256);
+	RETROARCH_USA(ta_fsm,2049);
+	RETROARCH_US(ta_fsm_cl);
 
 
-	us(pal_needs_update);
-	usa(_pal_rev_256,4);
-	usa(_pal_rev_16,64);
-	usa(pal_rev_256,4);
-	usa(pal_rev_16,64);
+	RETROARCH_US(pal_needs_update);
+	RETROARCH_USA(_pal_rev_256,4);
+	RETROARCH_USA(_pal_rev_16,64);
+	RETROARCH_USA(pal_rev_256,4);
+	RETROARCH_USA(pal_rev_16,64);
 	for ( i = 0 ; i < 3 ; i++ )
 	{
 		u32 *ptr = decoded_colors[i] ;
-		usa(ptr,65536);
+		RETROARCH_USA(ptr,65536);
 	}
-	us(tileclip_val);
-	usa(f32_su8_tbl,65536);
-	usa(FaceBaseColor,4);
-	usa(FaceOffsColor,4);
-	us(SFaceBaseColor);
-	us(SFaceOffsColor);
+	RETROARCH_US(tileclip_val);
+	RETROARCH_USA(f32_su8_tbl,65536);
+	RETROARCH_USA(FaceBaseColor,4);
+	RETROARCH_USA(FaceOffsColor,4);
+	RETROARCH_US(SFaceBaseColor);
+	RETROARCH_US(SFaceOffsColor);
 
 
-	us(palette_index);
-	us(KillTex);
-	usa(palette16_ram,1024);
-	usa(palette32_ram,1024);
+	RETROARCH_US(palette_index);
+	RETROARCH_US(KillTex);
+	RETROARCH_USA(palette16_ram,1024);
+	RETROARCH_USA(palette32_ram,1024);
 	for (i = 0 ; i < 2 ; i++)
 		for (j = 0 ; j < 8 ; j++)
 		{
 			u32 *ptr = detwiddle[i][j] ;
-			usa(ptr,1024);
+			RETROARCH_USA(ptr,1024);
 		}
-	usa(vram.data, vram.size);
+	RETROARCH_USA(vram.data, vram.size);
 
 
 
 
-	usa(OnChipRAM.data,OnChipRAM_SIZE);
+	RETROARCH_USA(OnChipRAM.data,OnChipRAM_SIZE);
 
 	register_unserialize(CCN, data, total_size) ;
 	register_unserialize(UBC, data, total_size) ;
@@ -1473,22 +1473,22 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	register_unserialize(SCI, data, total_size) ;
 	register_unserialize(SCIF, data, total_size) ;
 
-	usa(mem_b.data, mem_b.size);
+	RETROARCH_USA(mem_b.data, mem_b.size);
 
 
 
-	us(IRLPriority);
-	usa(InterruptEnvId,32);
-	usa(InterruptBit,32);
-	usa(InterruptLevelBit,16);
-	us(interrupt_vpend);
-	us(interrupt_vmask);
-	us(decoded_srimask);
+	RETROARCH_US(IRLPriority);
+	RETROARCH_USA(InterruptEnvId,32);
+	RETROARCH_USA(InterruptBit,32);
+	RETROARCH_USA(InterruptLevelBit,16);
+	RETROARCH_US(interrupt_vpend);
+	RETROARCH_US(interrupt_vmask);
+	RETROARCH_US(decoded_srimask);
 
 
 
 
-	us(i) ;
+	RETROARCH_US(i) ;
 	if ( i == 0 )
 		do_sqw_nommu = &do_sqw_nommu_area_3 ;
 	else if ( i == 1 )
@@ -1500,167 +1500,167 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 
 
-	usa((*p_sh4rcb).sq_buffer,64/8);
+	RETROARCH_USA((*p_sh4rcb).sq_buffer,64/8);
 
 	//store these before unserializing and then restore after
 	//void *getptr = &((*p_sh4rcb).cntx.sr.GetFull) ;
 	//void *setptr = &((*p_sh4rcb).cntx.sr.SetFull) ;
-	us((*p_sh4rcb).cntx);
+	RETROARCH_US((*p_sh4rcb).cntx);
 	//(*p_sh4rcb).cntx.sr.GetFull = getptr ;
 	//(*p_sh4rcb).cntx.sr.SetFull = setptr ;
 
-	us(old_rm);
-	us(old_dn);
+	RETROARCH_US(old_rm);
+	RETROARCH_US(old_dn);
 
 
 
 
-	us(sh4_sched_ffb);
-	us(sh4_sched_intr);
-	us(sh4_sched_next_id);
+	RETROARCH_US(sh4_sched_ffb);
+	RETROARCH_US(sh4_sched_intr);
+	RETROARCH_US(sh4_sched_next_id);
 	//this list is populated during initialization so the size will always be the same
 	//extern vector<sched_list> list;
 	for ( i = 0 ; i < list.size() ; i++ )
 	{
-		us(list[i].tag) ;
-		us(list[i].start) ;
-		us(list[i].end) ;
+		RETROARCH_US(list[i].tag) ;
+		RETROARCH_US(list[i].start) ;
+		RETROARCH_US(list[i].end) ;
 	}
 
 
 
-	us(aica_sched);
-	us(rtc_sched);
+	RETROARCH_US(aica_sched);
+	RETROARCH_US(rtc_sched);
 
 
-	us(SCIF_SCFSR2);
-	us(SCIF_SCFRDR2);
-	us(SCIF_SCFDR2);
+	RETROARCH_US(SCIF_SCFSR2);
+	RETROARCH_US(SCIF_SCFRDR2);
+	RETROARCH_US(SCIF_SCFDR2);
 
 
-	us(BSC_PDTRA);
-
-
-
-
-	usa(tmu_shift,3);
-	usa(tmu_mask,3);
-	usa(tmu_mask64,3);
-	usa(old_mode,3);
-	usa(tmu_sched,3);
-	usa(tmu_ch_base,3);
-	usa(tmu_ch_base64,3);
+	RETROARCH_US(BSC_PDTRA);
 
 
 
 
-	usa(CCN_QACR_TR,2);
+	RETROARCH_USA(tmu_shift,3);
+	RETROARCH_USA(tmu_mask,3);
+	RETROARCH_USA(tmu_mask64,3);
+	RETROARCH_USA(old_mode,3);
+	RETROARCH_USA(tmu_sched,3);
+	RETROARCH_USA(tmu_ch_base,3);
+	RETROARCH_USA(tmu_ch_base64,3);
 
 
 
 
-	usa(UTLB,64);
-	usa(ITLB,4);
+	RETROARCH_USA(CCN_QACR_TR,2);
+
+
+
+
+	RETROARCH_USA(UTLB,64);
+	RETROARCH_USA(ITLB,4);
 #if defined(NO_MMU)
-	usa(sq_remap,64);
+	RETROARCH_USA(sq_remap,64);
 #else
-	usa(ITLB_LRU_USE,64);
-	us(mmu_error_TT);
+	RETROARCH_USA(ITLB_LRU_USE,64);
+	RETROARCH_US(mmu_error_TT);
 #endif
 
 
 
 
-	us(NullDriveDiscType);
-	usa(q_subchannel,96);
+	RETROARCH_US(NullDriveDiscType);
+	RETROARCH_USA(q_subchannel,96);
 
 
-	us(FLASH_SIZE);
-	us(BBSRAM_SIZE);
-	us(BIOS_SIZE);
-	us(RAM_SIZE);
-	us(ARAM_SIZE);
-	us(VRAM_SIZE);
-	us(RAM_MASK);
-	us(ARAM_MASK);
-	us(VRAM_MASK);
-
-
-
-	us(naomi_updates);
-	us(RomPioOffset);
-	us(DmaOffset);
-	us(DmaCount);
-	us(BoardID);
-	us(GSerialBuffer);
-	us(BSerialBuffer);
-	us(GBufPos);
-	us(BBufPos);
-	us(GState);
-	us(BState);
-	us(GOldClk);
-	us(BOldClk);
-	us(BControl);
-	us(BCmd);
-	us(BLastCmd);
-	us(GControl);
-	us(GCmd);
-	us(GLastCmd);
-	us(SerStep);
-	us(SerStep2);
-	usa(BSerial,69);
-	usa(GSerial,69);
-	us(reg_dimm_3c);
-	us(reg_dimm_40);
-	us(reg_dimm_44);
-	us(reg_dimm_48);
-	us(reg_dimm_4c);
-	us(NaomiDataRead);
-	us(NAOMI_ROM_OFFSETH);
-	us(NAOMI_ROM_OFFSETL);
-	us(NAOMI_ROM_DATA);
-	us(NAOMI_DMA_OFFSETH);
-	us(NAOMI_DMA_OFFSETL);
-	us(NAOMI_DMA_COUNT);
-	us(NAOMI_BOARDID_WRITE);
-	us(NAOMI_BOARDID_READ);
-	us(NAOMI_COMM_OFFSET);
-	us(NAOMI_COMM_DATA);
-
-	us(cycle_counter);
-	us(idxnxx);
-
-
-	us(state);
-	us(div_som_reg1);
-	us(div_som_reg2);
-	us(div_som_reg3);
+	RETROARCH_US(FLASH_SIZE);
+	RETROARCH_US(BBSRAM_SIZE);
+	RETROARCH_US(BIOS_SIZE);
+	RETROARCH_US(RAM_SIZE);
+	RETROARCH_US(ARAM_SIZE);
+	RETROARCH_US(VRAM_SIZE);
+	RETROARCH_US(RAM_MASK);
+	RETROARCH_US(ARAM_MASK);
+	RETROARCH_US(VRAM_MASK);
 
 
 
+	RETROARCH_US(naomi_updates);
+	RETROARCH_US(RomPioOffset);
+	RETROARCH_US(DmaOffset);
+	RETROARCH_US(DmaCount);
+	RETROARCH_US(BoardID);
+	RETROARCH_US(GSerialBuffer);
+	RETROARCH_US(BSerialBuffer);
+	RETROARCH_US(GBufPos);
+	RETROARCH_US(BBufPos);
+	RETROARCH_US(GState);
+	RETROARCH_US(BState);
+	RETROARCH_US(GOldClk);
+	RETROARCH_US(BOldClk);
+	RETROARCH_US(BControl);
+	RETROARCH_US(BCmd);
+	RETROARCH_US(BLastCmd);
+	RETROARCH_US(GControl);
+	RETROARCH_US(GCmd);
+	RETROARCH_US(GLastCmd);
+	RETROARCH_US(SerStep);
+	RETROARCH_US(SerStep2);
+	RETROARCH_USA(BSerial,69);
+	RETROARCH_USA(GSerial,69);
+	RETROARCH_US(reg_dimm_3c);
+	RETROARCH_US(reg_dimm_40);
+	RETROARCH_US(reg_dimm_44);
+	RETROARCH_US(reg_dimm_48);
+	RETROARCH_US(reg_dimm_4c);
+	RETROARCH_US(NaomiDataRead);
+	RETROARCH_US(NAOMI_ROM_OFFSETH);
+	RETROARCH_US(NAOMI_ROM_OFFSETL);
+	RETROARCH_US(NAOMI_ROM_DATA);
+	RETROARCH_US(NAOMI_DMA_OFFSETH);
+	RETROARCH_US(NAOMI_DMA_OFFSETL);
+	RETROARCH_US(NAOMI_DMA_COUNT);
+	RETROARCH_US(NAOMI_BOARDID_WRITE);
+	RETROARCH_US(NAOMI_BOARDID_READ);
+	RETROARCH_US(NAOMI_COMM_OFFSET);
+	RETROARCH_US(NAOMI_COMM_DATA);
 
-	//usa(CodeCache,CODE_SIZE) ;
-	//usa(SH4_TCB,CODE_SIZE+4096);
-	us(LastAddr);
-	us(LastAddr_min);
-	usa(block_hash,1024);
+	RETROARCH_US(cycle_counter);
+	RETROARCH_US(idxnxx);
 
 
-	usa(RegisterWrite,sh4_reg_count);
-	usa(RegisterRead,sh4_reg_count);
-	us(fallback_blocks);
-	us(total_blocks);
-	us(REMOVED_OPS);
+	RETROARCH_US(state);
+	RETROARCH_US(div_som_reg1);
+	RETROARCH_US(div_som_reg2);
+	RETROARCH_US(div_som_reg3);
 
 
 
 
-	usa(kcode,4);
-	usa(rt,4);
-	usa(lt,4);
-	usa(vks,4);
-	usa(joyx,4);
-	usa(joyy,4);
+	//RETROARCH_USA(CodeCache,CODE_SIZE) ;
+	//RETROARCH_USA(SH4_TCB,CODE_SIZE+4096);
+	RETROARCH_US(LastAddr);
+	RETROARCH_US(LastAddr_min);
+	RETROARCH_USA(block_hash,1024);
+
+
+	RETROARCH_USA(RegisterWrite,sh4_reg_count);
+	RETROARCH_USA(RegisterRead,sh4_reg_count);
+	RETROARCH_US(fallback_blocks);
+	RETROARCH_US(total_blocks);
+	RETROARCH_US(REMOVED_OPS);
+
+
+
+
+	RETROARCH_USA(kcode,4);
+	RETROARCH_USA(rt,4);
+	RETROARCH_USA(lt,4);
+	RETROARCH_USA(vks,4);
+	RETROARCH_USA(joyx,4);
+	RETROARCH_USA(joyy,4);
 
 	return true ;
 }

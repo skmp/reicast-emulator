@@ -789,7 +789,7 @@ extern s8 joyy[4];
 //extern struct gl_cached_state gl_state;
 
 
-bool serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size)
+bool ra_serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size)
 {
 	if ( *dest != NULL )
 	{
@@ -801,7 +801,7 @@ bool serialize(void *src, unsigned int src_size, void **dest, unsigned int *tota
 	return true ;
 }
 
-bool unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size)
+bool ra_unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size)
 {
 	if ( *dest != NULL )
 	{
@@ -1264,8 +1264,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	*total_size = 0 ;
 
-	bm_Reset() ;
-
 	us(version) ;
 	us(aica_interr) ;
 	us(aica_reg_L) ;
@@ -1405,8 +1403,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	us(fog_needs_update);
 	usa(pvr_regs,pvr_RegSize);
-
-
+	fog_needs_update = true ;
 
 
 	us(in_vblank);

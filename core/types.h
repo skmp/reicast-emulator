@@ -772,16 +772,16 @@ u32 static INLINE bitscanrev(u32 v)
 
 void os_DebugBreak(void);
 
-bool serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
-bool unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size);
+bool ra_serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
+bool ra_unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size);
 bool dc_serialize(void **data, unsigned int *total_size);
 bool dc_unserialize(void **data, unsigned int *total_size);
 
-#define s(v) serialize(&(v), sizeof(v), data, total_size)
-#define us(v) unserialize(&(v), sizeof(v), data, total_size)
+#define s(v) ra_serialize(&(v), sizeof(v), data, total_size)
+#define us(v) ra_unserialize(&(v), sizeof(v), data, total_size)
 
-#define sa(v_arr,num) serialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
-#define usa(v_arr,num) unserialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
+#define sa(v_arr,num) ra_serialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
+#define usa(v_arr,num) ra_unserialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
 
 
 enum

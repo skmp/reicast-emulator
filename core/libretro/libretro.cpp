@@ -107,10 +107,10 @@ int dc_init(int argc,wchar* argv[]);
 void dc_run();
 void dc_term(void);
 void dc_stop();
+void bm_Reset() ;
 extern Renderer* renderer;
 bool rend_single_frame();
 void rend_cancel_emu_wait();
-static void *emu_thread_func(void *);
 
 static int co_argc;
 static wchar** co_argv;
@@ -119,11 +119,13 @@ char *game_data;
 char g_base_name[128];
 char game_dir[1024];
 char game_dir_no_slash[1024];
-#if !defined(TARGET_NO_THREADS)
-static cThread emu_thread(&emu_thread_func, 0);
-#endif
 static bool emu_inited = false;
-
+static bool performed_serialization = false;
+#if !defined(TARGET_NO_THREADS)
+static void *emu_thread_func(void *);
+static cThread emu_thread(&emu_thread_func, 0);
+static cMutex mtx_serialization ;
+static cMutex mtx_mainloop ;
 static void *emu_thread_func(void *)
 {
     char* argv[] = { "reicast" };
@@ -131,12 +133,26 @@ static void *emu_thread_func(void *)
     dc_init(1, argv);
     
     emu_inited = true;
-    dc_run();
+    while ( true )
+    {
+    	performed_serialization = false ;
+    	mtx_mainloop.Lock() ;
+        dc_run();
+        mtx_mainloop.Unlock() ;
+
+    	mtx_serialization.Lock() ;
+    	mtx_serialization.Unlock() ;
+
+    	if (!performed_serialization)
+    		break ;
+    }
 
     dc_term();
 
     return NULL;
 }
+#endif
+
 
 void co_dc_yield(void)
 {
@@ -1174,7 +1190,25 @@ size_t retro_serialize_size (void)
    unsigned int total_size = 0 ;
    void *data = NULL ;
 
+#if !defined(TARGET_NO_THREADS)
+    if (settings.rend.ThreadedRendering && emu_inited)
+    {
+    	mtx_serialization.Lock() ;
+  		dc_stop() ;
+        rend_cancel_emu_wait();
+    	mtx_mainloop.Lock() ;
+    }
+#endif
    dc_serialize(&data, &total_size) ;
+   performed_serialization = true ;
+
+#if !defined(TARGET_NO_THREADS)
+    if (settings.rend.ThreadedRendering && emu_inited)
+    {
+    	mtx_mainloop.Unlock() ;
+    	mtx_serialization.Unlock() ;
+    }
+#endif
    return total_size;
 }
 
@@ -1182,16 +1216,67 @@ bool retro_serialize(void *data, size_t size)
 {
    unsigned int total_size = 0 ;
    void *data_ptr = data ;
+   bool result = false ;
 
-   return dc_serialize(&data_ptr, &total_size) ;
+   if ( !emu_inited )
+	   return false ;
+
+#if !defined(TARGET_NO_THREADS)
+    if (settings.rend.ThreadedRendering && emu_inited)
+    {
+    	mtx_serialization.Lock() ;
+  		dc_stop() ;
+        rend_cancel_emu_wait();
+    	mtx_mainloop.Lock() ;
+    }
+#endif
+
+   result = dc_serialize(&data_ptr, &total_size) ;
+   performed_serialization = true ;
+
+#if !defined(TARGET_NO_THREADS)
+    if (settings.rend.ThreadedRendering && emu_inited)
+    {
+    	mtx_mainloop.Unlock() ;
+    	mtx_serialization.Unlock() ;
+    }
+#endif
+
+    return result ;
 }
 
 bool retro_unserialize(const void * data, size_t size)
 {
    unsigned int total_size = 0 ;
    void *data_ptr = (void*)data ;
+   bool result = false ;
 
-   return dc_unserialize(&data_ptr, &total_size) ;
+   if ( !emu_inited )
+	   return false ;
+
+   bm_Reset() ;
+#if !defined(TARGET_NO_THREADS)
+    if (settings.rend.ThreadedRendering && emu_inited)
+    {
+    	mtx_serialization.Lock() ;
+  		dc_stop() ;
+        rend_cancel_emu_wait();
+    	mtx_mainloop.Lock() ;
+    }
+#endif
+
+    result = dc_unserialize(&data_ptr, &total_size) ;
+    performed_serialization = true ;
+
+#if !defined(TARGET_NO_THREADS)
+    if (settings.rend.ThreadedRendering && emu_inited)
+    {
+    	mtx_mainloop.Unlock() ;
+    	mtx_serialization.Unlock() ;
+    }
+#endif
+
+    return result ;
 }
 
 // Cheats

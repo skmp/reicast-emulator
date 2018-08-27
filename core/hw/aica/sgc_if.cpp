@@ -1405,46 +1405,46 @@ bool channel_serialize(void **data, unsigned int *total_size)
 	for ( i = 0 ; i < 64 ; i++)
 	{
 		addr = Chans[i].SA - (&(aica_ram.data[0])) ;
-		s(addr);
+		RETROARCH_S(addr);
 
-		s(Chans[i].CA) ;
-		s(Chans[i].step) ;
-		s(Chans[i].update_rate) ;
-		s(Chans[i].s0) ;
-		s(Chans[i].s1) ;
-		s(Chans[i].loop) ;
-		s(Chans[i].adpcm.last_quant) ;
-		s(Chans[i].noise_state) ;
-		s(Chans[i].VolMix.DLAtt) ;
-		s(Chans[i].VolMix.DRAtt) ;
-		s(Chans[i].VolMix.DSPAtt) ;
+		RETROARCH_S(Chans[i].CA) ;
+		RETROARCH_S(Chans[i].step) ;
+		RETROARCH_S(Chans[i].update_rate) ;
+		RETROARCH_S(Chans[i].s0) ;
+		RETROARCH_S(Chans[i].s1) ;
+		RETROARCH_S(Chans[i].loop) ;
+		RETROARCH_S(Chans[i].adpcm.last_quant) ;
+		RETROARCH_S(Chans[i].noise_state) ;
+		RETROARCH_S(Chans[i].VolMix.DLAtt) ;
+		RETROARCH_S(Chans[i].VolMix.DRAtt) ;
+		RETROARCH_S(Chans[i].VolMix.DSPAtt) ;
 
 		addr = Chans[i].VolMix.DSPOut - (&(dsp.MIXS[0])) ;
-		s(addr);
+		RETROARCH_S(addr);
 
-		s(Chans[i].AEG.val) ;
-		s(Chans[i].AEG.state) ;
-		s(Chans[i].AEG.AttackRate) ;
-		s(Chans[i].AEG.Decay1Rate) ;
-		s(Chans[i].AEG.Decay2Rate) ;
-		s(Chans[i].AEG.Decay2Value) ;
-		s(Chans[i].AEG.ReleaseRate) ;
-		s(Chans[i].FEG) ;
-		s(Chans[i].step_stream_lut1) ;
-		s(Chans[i].step_stream_lut2) ;
-		s(Chans[i].step_stream_lut3) ;
+		RETROARCH_S(Chans[i].AEG.val) ;
+		RETROARCH_S(Chans[i].AEG.state) ;
+		RETROARCH_S(Chans[i].AEG.AttackRate) ;
+		RETROARCH_S(Chans[i].AEG.Decay1Rate) ;
+		RETROARCH_S(Chans[i].AEG.Decay2Rate) ;
+		RETROARCH_S(Chans[i].AEG.Decay2Value) ;
+		RETROARCH_S(Chans[i].AEG.ReleaseRate) ;
+		RETROARCH_S(Chans[i].FEG) ;
+		RETROARCH_S(Chans[i].step_stream_lut1) ;
+		RETROARCH_S(Chans[i].step_stream_lut2) ;
+		RETROARCH_S(Chans[i].step_stream_lut3) ;
 
-		s(Chans[i].lfo.counter) ;
-		s(Chans[i].lfo.start_value) ;
-		s(Chans[i].lfo.state) ;
-		s(Chans[i].lfo.alfo) ;
-		s(Chans[i].lfo.alfo_shft) ;
-		s(Chans[i].lfo.plfo) ;
-		s(Chans[i].lfo.plfo_shft) ;
-		s(Chans[i].lfo.alfo_calc_lut) ;
-		s(Chans[i].lfo.plfo_calc_lut) ;
-		s(Chans[i].enabled) ;
-		s(Chans[i].ChanelNumber) ;
+		RETROARCH_S(Chans[i].lfo.counter) ;
+		RETROARCH_S(Chans[i].lfo.start_value) ;
+		RETROARCH_S(Chans[i].lfo.state) ;
+		RETROARCH_S(Chans[i].lfo.alfo) ;
+		RETROARCH_S(Chans[i].lfo.alfo_shft) ;
+		RETROARCH_S(Chans[i].lfo.plfo) ;
+		RETROARCH_S(Chans[i].lfo.plfo_shft) ;
+		RETROARCH_S(Chans[i].lfo.alfo_calc_lut) ;
+		RETROARCH_S(Chans[i].lfo.plfo_calc_lut) ;
+		RETROARCH_S(Chans[i].enabled) ;
+		RETROARCH_S(Chans[i].ChanelNumber) ;
 	}
 
 	/* TODO/FIXME - no possibility for this to return false? */
@@ -1458,53 +1458,53 @@ bool channel_unserialize(void **data, unsigned int *total_size)
 
 	for ( i = 0 ; i < 64 ; i++)
 	{
-		us(addr);
+		RETROARCH_US(addr);
 		Chans[i].SA = addr + (&(aica_ram.data[0])) ;
 
-		us(Chans[i].CA) ;
-		us(Chans[i].step) ;
-		us(Chans[i].update_rate) ;
-		us(Chans[i].s0) ;
-		us(Chans[i].s1) ;
-		us(Chans[i].loop) ;
-		us(Chans[i].adpcm.last_quant) ;
-		us(Chans[i].noise_state) ;
-		us(Chans[i].VolMix.DLAtt) ;
-		us(Chans[i].VolMix.DRAtt) ;
-		us(Chans[i].VolMix.DSPAtt) ;
+		RETROARCH_US(Chans[i].CA) ;
+		RETROARCH_US(Chans[i].step) ;
+		RETROARCH_US(Chans[i].update_rate) ;
+		RETROARCH_US(Chans[i].s0) ;
+		RETROARCH_US(Chans[i].s1) ;
+		RETROARCH_US(Chans[i].loop) ;
+		RETROARCH_US(Chans[i].adpcm.last_quant) ;
+		RETROARCH_US(Chans[i].noise_state) ;
+		RETROARCH_US(Chans[i].VolMix.DLAtt) ;
+		RETROARCH_US(Chans[i].VolMix.DRAtt) ;
+		RETROARCH_US(Chans[i].VolMix.DSPAtt) ;
 
-		us(addr);
+		RETROARCH_US(addr);
 		Chans[i].VolMix.DSPOut = addr + (&(dsp.MIXS[0])) ;
 
-		us(Chans[i].AEG.val) ;
-		us(Chans[i].AEG.state) ;
+		RETROARCH_US(Chans[i].AEG.val) ;
+		RETROARCH_US(Chans[i].AEG.state) ;
 		Chans[i].StepAEG=AEG_STEP_LUT[Chans[i].AEG.state];
-		us(Chans[i].AEG.AttackRate) ;
-		us(Chans[i].AEG.Decay1Rate) ;
-		us(Chans[i].AEG.Decay2Rate) ;
-		us(Chans[i].AEG.Decay2Value) ;
-		us(Chans[i].AEG.ReleaseRate) ;
-		us(Chans[i].FEG) ;
+		RETROARCH_US(Chans[i].AEG.AttackRate) ;
+		RETROARCH_US(Chans[i].AEG.Decay1Rate) ;
+		RETROARCH_US(Chans[i].AEG.Decay2Rate) ;
+		RETROARCH_US(Chans[i].AEG.Decay2Value) ;
+		RETROARCH_US(Chans[i].AEG.ReleaseRate) ;
+		RETROARCH_US(Chans[i].FEG) ;
 		Chans[i].StepFEG=FEG_STEP_LUT[Chans[i].FEG.state];
-		us(Chans[i].step_stream_lut1) ;
-		us(Chans[i].step_stream_lut2) ;
-		us(Chans[i].step_stream_lut3) ;
+		RETROARCH_US(Chans[i].step_stream_lut1) ;
+		RETROARCH_US(Chans[i].step_stream_lut2) ;
+		RETROARCH_US(Chans[i].step_stream_lut3) ;
 		Chans[i].StepStream=STREAM_STEP_LUT[Chans[i].step_stream_lut1][Chans[i].step_stream_lut2][Chans[i].step_stream_lut3] ;
 		Chans[i].StepStreamInitial=STREAM_INITAL_STEP_LUT[Chans[i].step_stream_lut1];
 
-		us(Chans[i].lfo.counter) ;
-		us(Chans[i].lfo.start_value) ;
-		us(Chans[i].lfo.state) ;
-		us(Chans[i].lfo.alfo) ;
-		us(Chans[i].lfo.alfo_shft) ;
-		us(Chans[i].lfo.plfo) ;
-		us(Chans[i].lfo.plfo_shft) ;
-		us(Chans[i].lfo.alfo_calc_lut) ;
-		us(Chans[i].lfo.plfo_calc_lut) ;
+		RETROARCH_US(Chans[i].lfo.counter) ;
+		RETROARCH_US(Chans[i].lfo.start_value) ;
+		RETROARCH_US(Chans[i].lfo.state) ;
+		RETROARCH_US(Chans[i].lfo.alfo) ;
+		RETROARCH_US(Chans[i].lfo.alfo_shft) ;
+		RETROARCH_US(Chans[i].lfo.plfo) ;
+		RETROARCH_US(Chans[i].lfo.plfo_shft) ;
+		RETROARCH_US(Chans[i].lfo.alfo_calc_lut) ;
+		RETROARCH_US(Chans[i].lfo.plfo_calc_lut) ;
 		Chans[i].lfo.alfo_calc = ALFOWS_CALC[Chans[i].lfo.alfo_calc_lut];
 		Chans[i].lfo.plfo_calc = PLFOWS_CALC[Chans[i].lfo.plfo_calc_lut];
-		us(Chans[i].enabled) ;
-		us(Chans[i].ChanelNumber) ;
+		RETROARCH_US(Chans[i].enabled) ;
+		RETROARCH_US(Chans[i].ChanelNumber) ;
 
 	}
 

@@ -272,11 +272,7 @@ private:
 	GLuint _texture_ids[TEXTURE_ID_CACHE_SIZE];
 	GLuint _texture_cache_size;
    std::map<GLuint, TextureParameters> _texture_params;
-#ifdef HAVE_OIT
    bool _disable_cache = true;
-#else
-   bool _disable_cache = false;
-#endif
 };
 
 extern GLCache glcache;

@@ -1405,46 +1405,46 @@ bool channel_serialize(void **data, unsigned int *total_size)
 	for ( i = 0 ; i < 64 ; i++)
 	{
 		addr = Chans[i].SA - (&(aica_ram.data[0])) ;
-		RETROARCH_S(addr);
+		LIBRETRO_S(addr);
 
-		RETROARCH_S(Chans[i].CA) ;
-		RETROARCH_S(Chans[i].step) ;
-		RETROARCH_S(Chans[i].update_rate) ;
-		RETROARCH_S(Chans[i].s0) ;
-		RETROARCH_S(Chans[i].s1) ;
-		RETROARCH_S(Chans[i].loop) ;
-		RETROARCH_S(Chans[i].adpcm.last_quant) ;
-		RETROARCH_S(Chans[i].noise_state) ;
-		RETROARCH_S(Chans[i].VolMix.DLAtt) ;
-		RETROARCH_S(Chans[i].VolMix.DRAtt) ;
-		RETROARCH_S(Chans[i].VolMix.DSPAtt) ;
+		LIBRETRO_S(Chans[i].CA) ;
+		LIBRETRO_S(Chans[i].step) ;
+		LIBRETRO_S(Chans[i].update_rate) ;
+		LIBRETRO_S(Chans[i].s0) ;
+		LIBRETRO_S(Chans[i].s1) ;
+		LIBRETRO_S(Chans[i].loop) ;
+		LIBRETRO_S(Chans[i].adpcm.last_quant) ;
+		LIBRETRO_S(Chans[i].noise_state) ;
+		LIBRETRO_S(Chans[i].VolMix.DLAtt) ;
+		LIBRETRO_S(Chans[i].VolMix.DRAtt) ;
+		LIBRETRO_S(Chans[i].VolMix.DSPAtt) ;
 
 		addr = Chans[i].VolMix.DSPOut - (&(dsp.MIXS[0])) ;
-		RETROARCH_S(addr);
+		LIBRETRO_S(addr);
 
-		RETROARCH_S(Chans[i].AEG.val) ;
-		RETROARCH_S(Chans[i].AEG.state) ;
-		RETROARCH_S(Chans[i].AEG.AttackRate) ;
-		RETROARCH_S(Chans[i].AEG.Decay1Rate) ;
-		RETROARCH_S(Chans[i].AEG.Decay2Rate) ;
-		RETROARCH_S(Chans[i].AEG.Decay2Value) ;
-		RETROARCH_S(Chans[i].AEG.ReleaseRate) ;
-		RETROARCH_S(Chans[i].FEG) ;
-		RETROARCH_S(Chans[i].step_stream_lut1) ;
-		RETROARCH_S(Chans[i].step_stream_lut2) ;
-		RETROARCH_S(Chans[i].step_stream_lut3) ;
+		LIBRETRO_S(Chans[i].AEG.val) ;
+		LIBRETRO_S(Chans[i].AEG.state) ;
+		LIBRETRO_S(Chans[i].AEG.AttackRate) ;
+		LIBRETRO_S(Chans[i].AEG.Decay1Rate) ;
+		LIBRETRO_S(Chans[i].AEG.Decay2Rate) ;
+		LIBRETRO_S(Chans[i].AEG.Decay2Value) ;
+		LIBRETRO_S(Chans[i].AEG.ReleaseRate) ;
+		LIBRETRO_S(Chans[i].FEG) ;
+		LIBRETRO_S(Chans[i].step_stream_lut1) ;
+		LIBRETRO_S(Chans[i].step_stream_lut2) ;
+		LIBRETRO_S(Chans[i].step_stream_lut3) ;
 
-		RETROARCH_S(Chans[i].lfo.counter) ;
-		RETROARCH_S(Chans[i].lfo.start_value) ;
-		RETROARCH_S(Chans[i].lfo.state) ;
-		RETROARCH_S(Chans[i].lfo.alfo) ;
-		RETROARCH_S(Chans[i].lfo.alfo_shft) ;
-		RETROARCH_S(Chans[i].lfo.plfo) ;
-		RETROARCH_S(Chans[i].lfo.plfo_shft) ;
-		RETROARCH_S(Chans[i].lfo.alfo_calc_lut) ;
-		RETROARCH_S(Chans[i].lfo.plfo_calc_lut) ;
-		RETROARCH_S(Chans[i].enabled) ;
-		RETROARCH_S(Chans[i].ChanelNumber) ;
+		LIBRETRO_S(Chans[i].lfo.counter) ;
+		LIBRETRO_S(Chans[i].lfo.start_value) ;
+		LIBRETRO_S(Chans[i].lfo.state) ;
+		LIBRETRO_S(Chans[i].lfo.alfo) ;
+		LIBRETRO_S(Chans[i].lfo.alfo_shft) ;
+		LIBRETRO_S(Chans[i].lfo.plfo) ;
+		LIBRETRO_S(Chans[i].lfo.plfo_shft) ;
+		LIBRETRO_S(Chans[i].lfo.alfo_calc_lut) ;
+		LIBRETRO_S(Chans[i].lfo.plfo_calc_lut) ;
+		LIBRETRO_S(Chans[i].enabled) ;
+		LIBRETRO_S(Chans[i].ChanelNumber) ;
 	}
 
 	/* TODO/FIXME - no possibility for this to return false? */
@@ -1458,53 +1458,53 @@ bool channel_unserialize(void **data, unsigned int *total_size)
 
 	for ( i = 0 ; i < 64 ; i++)
 	{
-		RETROARCH_US(addr);
+		LIBRETRO_US(addr);
 		Chans[i].SA = addr + (&(aica_ram.data[0])) ;
 
-		RETROARCH_US(Chans[i].CA) ;
-		RETROARCH_US(Chans[i].step) ;
-		RETROARCH_US(Chans[i].update_rate) ;
-		RETROARCH_US(Chans[i].s0) ;
-		RETROARCH_US(Chans[i].s1) ;
-		RETROARCH_US(Chans[i].loop) ;
-		RETROARCH_US(Chans[i].adpcm.last_quant) ;
-		RETROARCH_US(Chans[i].noise_state) ;
-		RETROARCH_US(Chans[i].VolMix.DLAtt) ;
-		RETROARCH_US(Chans[i].VolMix.DRAtt) ;
-		RETROARCH_US(Chans[i].VolMix.DSPAtt) ;
+		LIBRETRO_US(Chans[i].CA) ;
+		LIBRETRO_US(Chans[i].step) ;
+		LIBRETRO_US(Chans[i].update_rate) ;
+		LIBRETRO_US(Chans[i].s0) ;
+		LIBRETRO_US(Chans[i].s1) ;
+		LIBRETRO_US(Chans[i].loop) ;
+		LIBRETRO_US(Chans[i].adpcm.last_quant) ;
+		LIBRETRO_US(Chans[i].noise_state) ;
+		LIBRETRO_US(Chans[i].VolMix.DLAtt) ;
+		LIBRETRO_US(Chans[i].VolMix.DRAtt) ;
+		LIBRETRO_US(Chans[i].VolMix.DSPAtt) ;
 
-		RETROARCH_US(addr);
+		LIBRETRO_US(addr);
 		Chans[i].VolMix.DSPOut = addr + (&(dsp.MIXS[0])) ;
 
-		RETROARCH_US(Chans[i].AEG.val) ;
-		RETROARCH_US(Chans[i].AEG.state) ;
+		LIBRETRO_US(Chans[i].AEG.val) ;
+		LIBRETRO_US(Chans[i].AEG.state) ;
 		Chans[i].StepAEG=AEG_STEP_LUT[Chans[i].AEG.state];
-		RETROARCH_US(Chans[i].AEG.AttackRate) ;
-		RETROARCH_US(Chans[i].AEG.Decay1Rate) ;
-		RETROARCH_US(Chans[i].AEG.Decay2Rate) ;
-		RETROARCH_US(Chans[i].AEG.Decay2Value) ;
-		RETROARCH_US(Chans[i].AEG.ReleaseRate) ;
-		RETROARCH_US(Chans[i].FEG) ;
+		LIBRETRO_US(Chans[i].AEG.AttackRate) ;
+		LIBRETRO_US(Chans[i].AEG.Decay1Rate) ;
+		LIBRETRO_US(Chans[i].AEG.Decay2Rate) ;
+		LIBRETRO_US(Chans[i].AEG.Decay2Value) ;
+		LIBRETRO_US(Chans[i].AEG.ReleaseRate) ;
+		LIBRETRO_US(Chans[i].FEG) ;
 		Chans[i].StepFEG=FEG_STEP_LUT[Chans[i].FEG.state];
-		RETROARCH_US(Chans[i].step_stream_lut1) ;
-		RETROARCH_US(Chans[i].step_stream_lut2) ;
-		RETROARCH_US(Chans[i].step_stream_lut3) ;
+		LIBRETRO_US(Chans[i].step_stream_lut1) ;
+		LIBRETRO_US(Chans[i].step_stream_lut2) ;
+		LIBRETRO_US(Chans[i].step_stream_lut3) ;
 		Chans[i].StepStream=STREAM_STEP_LUT[Chans[i].step_stream_lut1][Chans[i].step_stream_lut2][Chans[i].step_stream_lut3] ;
 		Chans[i].StepStreamInitial=STREAM_INITAL_STEP_LUT[Chans[i].step_stream_lut1];
 
-		RETROARCH_US(Chans[i].lfo.counter) ;
-		RETROARCH_US(Chans[i].lfo.start_value) ;
-		RETROARCH_US(Chans[i].lfo.state) ;
-		RETROARCH_US(Chans[i].lfo.alfo) ;
-		RETROARCH_US(Chans[i].lfo.alfo_shft) ;
-		RETROARCH_US(Chans[i].lfo.plfo) ;
-		RETROARCH_US(Chans[i].lfo.plfo_shft) ;
-		RETROARCH_US(Chans[i].lfo.alfo_calc_lut) ;
-		RETROARCH_US(Chans[i].lfo.plfo_calc_lut) ;
+		LIBRETRO_US(Chans[i].lfo.counter) ;
+		LIBRETRO_US(Chans[i].lfo.start_value) ;
+		LIBRETRO_US(Chans[i].lfo.state) ;
+		LIBRETRO_US(Chans[i].lfo.alfo) ;
+		LIBRETRO_US(Chans[i].lfo.alfo_shft) ;
+		LIBRETRO_US(Chans[i].lfo.plfo) ;
+		LIBRETRO_US(Chans[i].lfo.plfo_shft) ;
+		LIBRETRO_US(Chans[i].lfo.alfo_calc_lut) ;
+		LIBRETRO_US(Chans[i].lfo.plfo_calc_lut) ;
 		Chans[i].lfo.alfo_calc = ALFOWS_CALC[Chans[i].lfo.alfo_calc_lut];
 		Chans[i].lfo.plfo_calc = PLFOWS_CALC[Chans[i].lfo.plfo_calc_lut];
-		RETROARCH_US(Chans[i].enabled) ;
-		RETROARCH_US(Chans[i].ChanelNumber) ;
+		LIBRETRO_US(Chans[i].enabled) ;
+		LIBRETRO_US(Chans[i].ChanelNumber) ;
 
 	}
 

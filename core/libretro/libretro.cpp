@@ -1218,10 +1218,10 @@ bool retro_serialize(void *data, size_t size)
    void *data_ptr = data ;
    bool result = false ;
 
-   if ( !emu_inited )
+#if !defined(TARGET_NO_THREADS)
+   if ( settings.rend.ThreadedRendering && !emu_inited )
 	   return false ;
 
-#if !defined(TARGET_NO_THREADS)
     if (settings.rend.ThreadedRendering && emu_inited)
     {
     	mtx_serialization.Lock() ;
@@ -1251,10 +1251,13 @@ bool retro_unserialize(const void * data, size_t size)
    void *data_ptr = (void*)data ;
    bool result = false ;
 
-   if ( !emu_inited )
+#if !defined(TARGET_NO_THREADS)
+   if ( settings.rend.ThreadedRendering && !emu_inited )
 	   return false ;
+#endif
 
    bm_Reset() ;
+
 #if !defined(TARGET_NO_THREADS)
     if (settings.rend.ThreadedRendering && emu_inited)
     {

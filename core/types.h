@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stddef.h>
 #include "build.h"
 
 #ifdef _MSC_VER

@@ -267,16 +267,16 @@ struct maple_sega_vmu: maple_base
 	
 	virtual bool maple_serialize(void **data, unsigned int *total_size)
 	{
-		RETROARCH_SA(flash_data,128*1024);
-		RETROARCH_SA(lcd_data,192);
-		RETROARCH_SA(lcd_data_decoded,48*32);
+		LIBRETRO_SA(flash_data,128*1024);
+		LIBRETRO_SA(lcd_data,192);
+		LIBRETRO_SA(lcd_data_decoded,48*32);
 		return true ;
 	}
 	virtual bool maple_unserialize(void **data, unsigned int *total_size)
 	{
-		RETROARCH_USA(flash_data,128*1024);
-		RETROARCH_USA(lcd_data,192);
-		RETROARCH_USA(lcd_data_decoded,48*32);
+		LIBRETRO_USA(flash_data,128*1024);
+		LIBRETRO_USA(lcd_data,192);
+		LIBRETRO_USA(lcd_data_decoded,48*32);
 		return true ;
 	}
 	virtual void OnSetup()
@@ -678,12 +678,12 @@ struct maple_microphone: maple_base
 
 	virtual bool maple_serialize(void **data, unsigned int *total_size)
 	{
-		RETROARCH_SA(micdata,SIZE_OF_MIC_DATA);
+		LIBRETRO_SA(micdata,SIZE_OF_MIC_DATA);
 		return true ;
 	}
 	virtual bool maple_unserialize(void **data, unsigned int *total_size)
 	{
-		RETROARCH_USA(micdata,SIZE_OF_MIC_DATA);
+		LIBRETRO_USA(micdata,SIZE_OF_MIC_DATA);
 		return true ;
 	}
 	virtual void OnSetup()
@@ -867,16 +867,16 @@ struct maple_sega_purupuru : maple_base
 
    virtual bool maple_serialize(void **data, unsigned int *total_size)
    {
-      RETROARCH_S(AST);
-      RETROARCH_S(AST_ms);
-      RETROARCH_S(VIBSET);
+      LIBRETRO_S(AST);
+      LIBRETRO_S(AST_ms);
+      LIBRETRO_S(VIBSET);
       return true ;
    }
    virtual bool maple_unserialize(void **data, unsigned int *total_size)
    {
-      RETROARCH_US(AST);
-      RETROARCH_US(AST_ms);
-      RETROARCH_US(VIBSET);
+      LIBRETRO_US(AST);
+      LIBRETRO_US(AST_ms);
+      LIBRETRO_US(VIBSET);
       return true ;
    }
    virtual u32 dma(u32 cmd)

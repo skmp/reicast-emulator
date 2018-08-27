@@ -819,8 +819,8 @@ bool register_serialize(Array<RegisterStruct>& regs,void **data, unsigned int *t
 
 	for ( i = 0 ; i < regs.Size ; i++ )
 	{
-		RETROARCH_S(regs.data[i].flags) ;
-		RETROARCH_S(regs.data[i].data32) ;
+		LIBRETRO_S(regs.data[i].flags) ;
+		LIBRETRO_S(regs.data[i].data32) ;
 	}
 
 	return true ;
@@ -833,11 +833,11 @@ bool register_unserialize(Array<RegisterStruct>& regs,void **data, unsigned int 
 
 	for ( i = 0 ; i < regs.Size ; i++ )
 	{
-		RETROARCH_US(regs.data[i].flags) ;
+		LIBRETRO_US(regs.data[i].flags) ;
 		if ( ! (regs.data[i].flags & REG_RF) )
-			RETROARCH_US(regs.data[i].data32) ;
+			LIBRETRO_US(regs.data[i].data32) ;
 		else
-			RETROARCH_US(dummy) ;
+			LIBRETRO_US(dummy) ;
 	}
 	return true ;
 }
@@ -854,75 +854,75 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	if ( p_sh4rcb == NULL )
 		return false ;
 
-	RETROARCH_S(version) ;
-	RETROARCH_S(aica_interr) ;
-	RETROARCH_S(aica_reg_L) ;
-	RETROARCH_S(e68k_out) ;
-	RETROARCH_S(e68k_reg_L) ;
-	RETROARCH_S(e68k_reg_M) ;
+	LIBRETRO_S(version) ;
+	LIBRETRO_S(aica_interr) ;
+	LIBRETRO_S(aica_reg_L) ;
+	LIBRETRO_S(e68k_out) ;
+	LIBRETRO_S(e68k_reg_L) ;
+	LIBRETRO_S(e68k_reg_M) ;
 
-	RETROARCH_SA(arm_Reg,RN_ARM_REG_COUNT);
-	RETROARCH_S(armIrqEnable);
-	RETROARCH_S(armFiqEnable);
-	RETROARCH_S(armMode);
-	RETROARCH_S(Arm7Enabled);
-	RETROARCH_SA(cpuBitsSet,256);
-	RETROARCH_S(intState);
-	RETROARCH_S(stopState);
-	RETROARCH_S(holdState);
+	LIBRETRO_SA(arm_Reg,RN_ARM_REG_COUNT);
+	LIBRETRO_S(armIrqEnable);
+	LIBRETRO_S(armFiqEnable);
+	LIBRETRO_S(armMode);
+	LIBRETRO_S(Arm7Enabled);
+	LIBRETRO_SA(cpuBitsSet,256);
+	LIBRETRO_S(intState);
+	LIBRETRO_S(stopState);
+	LIBRETRO_S(holdState);
 
-	RETROARCH_S(dsp);
+	LIBRETRO_S(dsp);
 
 	for ( i = 0 ; i < 3 ; i++)
 	{
-		RETROARCH_S(timers[i].c_step);
-		RETROARCH_S(timers[i].m_step);
+		LIBRETRO_S(timers[i].c_step);
+		LIBRETRO_S(timers[i].m_step);
 	}
 
 
-	RETROARCH_SA(aica_ram.data,aica_ram.size) ;
-	RETROARCH_S(VREG);
-	RETROARCH_S(ARMRST);
-	RETROARCH_S(rtc_EN);
-	RETROARCH_S(dma_sched_id);
+	LIBRETRO_SA(aica_ram.data,aica_ram.size) ;
+	LIBRETRO_S(VREG);
+	LIBRETRO_S(ARMRST);
+	LIBRETRO_S(rtc_EN);
+	LIBRETRO_S(dma_sched_id);
 
-	RETROARCH_SA(aica_reg,0x8000);
+	LIBRETRO_SA(aica_reg,0x8000);
 
 
 
-	RETROARCH_SA(volume_lut,16);
-	RETROARCH_SA(tl_lut,256 + 768);
-	RETROARCH_SA(AEG_ATT_SPS,64);
-	RETROARCH_SA(AEG_DSR_SPS,64);
-	RETROARCH_S(pl);
-	RETROARCH_S(pr);
+	LIBRETRO_SA(volume_lut,16);
+	LIBRETRO_SA(tl_lut,256 + 768);
+	LIBRETRO_SA(AEG_ATT_SPS,64);
+	LIBRETRO_SA(AEG_DSR_SPS,64);
+	LIBRETRO_S(pl);
+	LIBRETRO_S(pr);
 
 	channel_serialize(data, total_size) ;
 
-	RETROARCH_SA(cdda_sector,CDDA_SIZE);
-	RETROARCH_S(cdda_index);
-	RETROARCH_SA(mxlr,64);
-	RETROARCH_S(samples_gen);
+	LIBRETRO_SA(cdda_sector,CDDA_SIZE);
+	LIBRETRO_S(cdda_index);
+	LIBRETRO_SA(mxlr,64);
+	LIBRETRO_S(samples_gen);
 
 
 	register_serialize(sb_regs, data, total_size) ;
-	RETROARCH_S(SB_ISTNRM);
-	RETROARCH_S(SB_FFST_rc);
-	RETROARCH_S(SB_FFST);
+	LIBRETRO_S(SB_ISTNRM);
+	LIBRETRO_S(SB_FFST_rc);
+	LIBRETRO_S(SB_FFST);
 
 
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern RomChip sys_rom;
 
-	RETROARCH_S(sys_nvmem_sram.size);
-	RETROARCH_S(sys_nvmem_sram.mask);
-	RETROARCH_SA(sys_nvmem_sram.data,sys_nvmem_sram.size);
+	LIBRETRO_S(sys_nvmem_sram.size);
+	LIBRETRO_S(sys_nvmem_sram.mask);
+	LIBRETRO_SA(sys_nvmem_sram.data,sys_nvmem_sram.size);
 
-	RETROARCH_S(sys_nvmem_flash.size);
-	RETROARCH_S(sys_nvmem_flash.mask);
-	RETROARCH_S(sys_nvmem_flash.state);
-	RETROARCH_SA(sys_nvmem_flash.data,sys_nvmem_flash.size);
+	LIBRETRO_S(sys_nvmem_flash.size);
+	LIBRETRO_S(sys_nvmem_flash.mask);
+	LIBRETRO_S(sys_nvmem_flash.state);
+	LIBRETRO_SA(sys_nvmem_flash.data,sys_nvmem_flash.size);
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern _vmem_handler area0_handler;
@@ -930,44 +930,44 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 
 
-	RETROARCH_SA(reply_11,16) ;
+	LIBRETRO_SA(reply_11,16) ;
 
 
 
-	RETROARCH_S(gdrom_sched);
-	RETROARCH_S(sns_asc);
-	RETROARCH_S(sns_ascq);
-	RETROARCH_S(sns_key);
+	LIBRETRO_S(gdrom_sched);
+	LIBRETRO_S(sns_asc);
+	LIBRETRO_S(sns_ascq);
+	LIBRETRO_S(sns_key);
 
-	RETROARCH_S(packet_cmd);
-	RETROARCH_S(set_mode_offset);
-	RETROARCH_S(read_params);
-	RETROARCH_S(packet_cmd);
-	RETROARCH_S(read_buff);
-	RETROARCH_S(pio_buff);
-	RETROARCH_S(set_mode_offset);
-	RETROARCH_S(ata_cmd);
-	RETROARCH_S(cdda);
-	RETROARCH_S(gd_state);
-	RETROARCH_S(gd_disk_type);
-	RETROARCH_S(data_write_mode);
-	RETROARCH_S(DriveSel);
-	RETROARCH_S(Error);
-	RETROARCH_S(IntReason);
-	RETROARCH_S(Features);
-	RETROARCH_S(SecCount);
-	RETROARCH_S(SecNumber);
-	RETROARCH_S(GDStatus);
-	RETROARCH_S(ByteCount);
-	RETROARCH_S(GDROM_TICK);
-
-
-	RETROARCH_SA(EEPROM,0x100);
-	RETROARCH_S(EEPROM_loaded);
-	RETROARCH_S(State);
+	LIBRETRO_S(packet_cmd);
+	LIBRETRO_S(set_mode_offset);
+	LIBRETRO_S(read_params);
+	LIBRETRO_S(packet_cmd);
+	LIBRETRO_S(read_buff);
+	LIBRETRO_S(pio_buff);
+	LIBRETRO_S(set_mode_offset);
+	LIBRETRO_S(ata_cmd);
+	LIBRETRO_S(cdda);
+	LIBRETRO_S(gd_state);
+	LIBRETRO_S(gd_disk_type);
+	LIBRETRO_S(data_write_mode);
+	LIBRETRO_S(DriveSel);
+	LIBRETRO_S(Error);
+	LIBRETRO_S(IntReason);
+	LIBRETRO_S(Features);
+	LIBRETRO_S(SecCount);
+	LIBRETRO_S(SecNumber);
+	LIBRETRO_S(GDStatus);
+	LIBRETRO_S(ByteCount);
+	LIBRETRO_S(GDROM_TICK);
 
 
-	RETROARCH_S(maple_ddt_pending_reset);
+	LIBRETRO_SA(EEPROM,0x100);
+	LIBRETRO_S(EEPROM_loaded);
+	LIBRETRO_S(State);
+
+
+	LIBRETRO_S(maple_ddt_pending_reset);
 
 	for (i = 0 ; i < 4 ; i++)
 		for (j = 0 ; j < 6 ; j++)
@@ -976,82 +976,82 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 
 
-	RETROARCH_S(FrameCount);
-	RETROARCH_S(pend_rend);
+	LIBRETRO_S(FrameCount);
+	LIBRETRO_S(pend_rend);
 
 
-	RETROARCH_SA(YUV_tempdata,512/4);
-	RETROARCH_S(YUV_dest);
-	RETROARCH_S(YUV_blockcount);
-	RETROARCH_S(YUV_x_curr);
-	RETROARCH_S(YUV_y_curr);
-	RETROARCH_S(YUV_x_size);
-	RETROARCH_S(YUV_y_size);
-
-
-
-
-	RETROARCH_S(fog_needs_update);
-	RETROARCH_SA(pvr_regs,pvr_RegSize);
+	LIBRETRO_SA(YUV_tempdata,512/4);
+	LIBRETRO_S(YUV_dest);
+	LIBRETRO_S(YUV_blockcount);
+	LIBRETRO_S(YUV_x_curr);
+	LIBRETRO_S(YUV_y_curr);
+	LIBRETRO_S(YUV_x_size);
+	LIBRETRO_S(YUV_y_size);
 
 
 
 
-	RETROARCH_S(in_vblank);
-	RETROARCH_S(clc_pvr_scanline);
-	RETROARCH_S(pvr_numscanlines);
-	RETROARCH_S(prv_cur_scanline);
-	RETROARCH_S(vblk_cnt);
-	RETROARCH_S(Line_Cycles);
-	RETROARCH_S(Frame_Cycles);
-	RETROARCH_S(render_end_sched);
-	RETROARCH_S(vblank_sched);
-	RETROARCH_S(time_sync);
-	RETROARCH_S(speed_load_mspdf);
-	RETROARCH_S(mips_counter);
-	RETROARCH_S(full_rps);
+	LIBRETRO_S(fog_needs_update);
+	LIBRETRO_SA(pvr_regs,pvr_RegSize);
 
 
 
-	RETROARCH_SA(ta_type_lut,256);
-	RETROARCH_SA(ta_fsm,2049);
-	RETROARCH_S(ta_fsm_cl);
+
+	LIBRETRO_S(in_vblank);
+	LIBRETRO_S(clc_pvr_scanline);
+	LIBRETRO_S(pvr_numscanlines);
+	LIBRETRO_S(prv_cur_scanline);
+	LIBRETRO_S(vblk_cnt);
+	LIBRETRO_S(Line_Cycles);
+	LIBRETRO_S(Frame_Cycles);
+	LIBRETRO_S(render_end_sched);
+	LIBRETRO_S(vblank_sched);
+	LIBRETRO_S(time_sync);
+	LIBRETRO_S(speed_load_mspdf);
+	LIBRETRO_S(mips_counter);
+	LIBRETRO_S(full_rps);
 
 
-	RETROARCH_S(pal_needs_update);
-	RETROARCH_SA(_pal_rev_256,4);
-	RETROARCH_SA(_pal_rev_16,64);
-	RETROARCH_SA(pal_rev_256,4);
-	RETROARCH_SA(pal_rev_16,64);
+
+	LIBRETRO_SA(ta_type_lut,256);
+	LIBRETRO_SA(ta_fsm,2049);
+	LIBRETRO_S(ta_fsm_cl);
+
+
+	LIBRETRO_S(pal_needs_update);
+	LIBRETRO_SA(_pal_rev_256,4);
+	LIBRETRO_SA(_pal_rev_16,64);
+	LIBRETRO_SA(pal_rev_256,4);
+	LIBRETRO_SA(pal_rev_16,64);
 	for ( i = 0 ; i < 3 ; i++ )
 	{
 		u32 *ptr = decoded_colors[i] ;
-		RETROARCH_SA(ptr,65536);
+		LIBRETRO_SA(ptr,65536);
 	}
-	RETROARCH_S(tileclip_val);
-	RETROARCH_SA(f32_su8_tbl,65536);
-	RETROARCH_SA(FaceBaseColor,4);
-	RETROARCH_SA(FaceOffsColor,4);
-	RETROARCH_S(SFaceBaseColor);
-	RETROARCH_S(SFaceOffsColor);
+	LIBRETRO_S(tileclip_val);
+	LIBRETRO_SA(f32_su8_tbl,65536);
+	LIBRETRO_SA(FaceBaseColor,4);
+	LIBRETRO_SA(FaceOffsColor,4);
+	LIBRETRO_S(SFaceBaseColor);
+	LIBRETRO_S(SFaceOffsColor);
 
 
-	RETROARCH_S(palette_index);
-	RETROARCH_S(KillTex);
-	RETROARCH_SA(palette16_ram,1024);
-	RETROARCH_SA(palette32_ram,1024);
+	LIBRETRO_S(palette_index);
+	LIBRETRO_S(KillTex);
+	LIBRETRO_SA(palette16_ram,1024);
+	LIBRETRO_SA(palette32_ram,1024);
 	for (i = 0 ; i < 2 ; i++)
 		for (j = 0 ; j < 8 ; j++)
 		{
 			u32 *ptr = detwiddle[i][j] ;
-			RETROARCH_SA(ptr,1024);
+			LIBRETRO_SA(ptr,1024);
 		}
-	RETROARCH_SA(vram.data, vram.size);
+	LIBRETRO_SA(vram.data, vram.size);
 
 
 
 
-	RETROARCH_SA(OnChipRAM.data,OnChipRAM_SIZE);
+	LIBRETRO_SA(OnChipRAM.data,OnChipRAM_SIZE);
 
 	register_serialize(CCN, data, total_size) ;
 	register_serialize(UBC, data, total_size) ;
@@ -1064,17 +1064,17 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	register_serialize(SCI, data, total_size) ;
 	register_serialize(SCIF, data, total_size) ;
 
-	RETROARCH_SA(mem_b.data, mem_b.size);
+	LIBRETRO_SA(mem_b.data, mem_b.size);
 
 
 
-	RETROARCH_S(IRLPriority);
-	RETROARCH_SA(InterruptEnvId,32);
-	RETROARCH_SA(InterruptBit,32);
-	RETROARCH_SA(InterruptLevelBit,16);
-	RETROARCH_S(interrupt_vpend);
-	RETROARCH_S(interrupt_vmask);
-	RETROARCH_S(decoded_srimask);
+	LIBRETRO_S(IRLPriority);
+	LIBRETRO_SA(InterruptEnvId,32);
+	LIBRETRO_SA(InterruptBit,32);
+	LIBRETRO_SA(InterruptLevelBit,16);
+	LIBRETRO_S(interrupt_vpend);
+	LIBRETRO_S(interrupt_vmask);
+	LIBRETRO_S(decoded_srimask);
 
 
 
@@ -1090,166 +1090,166 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	else if (do_sqw_nommu==&do_sqw_nommu_full)
 		i = 3 ;
 
-	RETROARCH_S(i) ;
+	LIBRETRO_S(i) ;
 
-	RETROARCH_SA((*p_sh4rcb).sq_buffer,64/8);
+	LIBRETRO_SA((*p_sh4rcb).sq_buffer,64/8);
 
 	//store these before unserializing and then restore after
 	//void *getptr = &((*p_sh4rcb).cntx.sr.GetFull) ;
 	//void *setptr = &((*p_sh4rcb).cntx.sr.SetFull) ;
-	RETROARCH_S((*p_sh4rcb).cntx);
+	LIBRETRO_S((*p_sh4rcb).cntx);
 
-	RETROARCH_S(old_rm);
-	RETROARCH_S(old_dn);
-
-
+	LIBRETRO_S(old_rm);
+	LIBRETRO_S(old_dn);
 
 
-	RETROARCH_S(sh4_sched_ffb);
-	RETROARCH_S(sh4_sched_intr);
-	RETROARCH_S(sh4_sched_next_id);
+
+
+	LIBRETRO_S(sh4_sched_ffb);
+	LIBRETRO_S(sh4_sched_intr);
+	LIBRETRO_S(sh4_sched_next_id);
 	//this list is populated during initialization so the size will always be the same
 	//extern vector<sched_list> list;
 	for ( i = 0 ; i < list.size() ; i++ )
 	{
-		RETROARCH_S(list[i].tag) ;
-		RETROARCH_S(list[i].start) ;
-		RETROARCH_S(list[i].end) ;
+		LIBRETRO_S(list[i].tag) ;
+		LIBRETRO_S(list[i].start) ;
+		LIBRETRO_S(list[i].end) ;
 	}
 
 
 
-	RETROARCH_S(aica_sched);
-	RETROARCH_S(rtc_sched);
+	LIBRETRO_S(aica_sched);
+	LIBRETRO_S(rtc_sched);
 
 
-	RETROARCH_S(SCIF_SCFSR2);
-	RETROARCH_S(SCIF_SCFRDR2);
-	RETROARCH_S(SCIF_SCFDR2);
+	LIBRETRO_S(SCIF_SCFSR2);
+	LIBRETRO_S(SCIF_SCFRDR2);
+	LIBRETRO_S(SCIF_SCFDR2);
 
 
-	RETROARCH_S(BSC_PDTRA);
-
-
-
-
-	RETROARCH_SA(tmu_shift,3);
-	RETROARCH_SA(tmu_mask,3);
-	RETROARCH_SA(tmu_mask64,3);
-	RETROARCH_SA(old_mode,3);
-	RETROARCH_SA(tmu_sched,3);
-	RETROARCH_SA(tmu_ch_base,3);
-	RETROARCH_SA(tmu_ch_base64,3);
+	LIBRETRO_S(BSC_PDTRA);
 
 
 
 
-	RETROARCH_SA(CCN_QACR_TR,2);
+	LIBRETRO_SA(tmu_shift,3);
+	LIBRETRO_SA(tmu_mask,3);
+	LIBRETRO_SA(tmu_mask64,3);
+	LIBRETRO_SA(old_mode,3);
+	LIBRETRO_SA(tmu_sched,3);
+	LIBRETRO_SA(tmu_ch_base,3);
+	LIBRETRO_SA(tmu_ch_base64,3);
 
 
 
 
-	RETROARCH_SA(UTLB,64);
-	RETROARCH_SA(ITLB,4);
+	LIBRETRO_SA(CCN_QACR_TR,2);
+
+
+
+
+	LIBRETRO_SA(UTLB,64);
+	LIBRETRO_SA(ITLB,4);
 #if defined(NO_MMU)
-	RETROARCH_SA(sq_remap,64);
+	LIBRETRO_SA(sq_remap,64);
 #else
-	RETROARCH_SA(ITLB_LRU_USE,64);
-	RETROARCH_S(mmu_error_TT);
+	LIBRETRO_SA(ITLB_LRU_USE,64);
+	LIBRETRO_S(mmu_error_TT);
 #endif
 
 
 
-	RETROARCH_S(NullDriveDiscType);
-	RETROARCH_SA(q_subchannel,96);
+	LIBRETRO_S(NullDriveDiscType);
+	LIBRETRO_SA(q_subchannel,96);
 
 
-	RETROARCH_S(FLASH_SIZE);
-	RETROARCH_S(BBSRAM_SIZE);
-	RETROARCH_S(BIOS_SIZE);
-	RETROARCH_S(RAM_SIZE);
-	RETROARCH_S(ARAM_SIZE);
-	RETROARCH_S(VRAM_SIZE);
-	RETROARCH_S(RAM_MASK);
-	RETROARCH_S(ARAM_MASK);
-	RETROARCH_S(VRAM_MASK);
-
-
-
-	RETROARCH_S(naomi_updates);
-	RETROARCH_S(RomPioOffset);
-	RETROARCH_S(DmaOffset);
-	RETROARCH_S(DmaCount);
-	RETROARCH_S(BoardID);
-	RETROARCH_S(GSerialBuffer);
-	RETROARCH_S(BSerialBuffer);
-	RETROARCH_S(GBufPos);
-	RETROARCH_S(BBufPos);
-	RETROARCH_S(GState);
-	RETROARCH_S(BState);
-	RETROARCH_S(GOldClk);
-	RETROARCH_S(BOldClk);
-	RETROARCH_S(BControl);
-	RETROARCH_S(BCmd);
-	RETROARCH_S(BLastCmd);
-	RETROARCH_S(GControl);
-	RETROARCH_S(GCmd);
-	RETROARCH_S(GLastCmd);
-	RETROARCH_S(SerStep);
-	RETROARCH_S(SerStep2);
-	RETROARCH_SA(BSerial,69);
-	RETROARCH_SA(GSerial,69);
-	RETROARCH_S(reg_dimm_3c);
-	RETROARCH_S(reg_dimm_40);
-	RETROARCH_S(reg_dimm_44);
-	RETROARCH_S(reg_dimm_48);
-	RETROARCH_S(reg_dimm_4c);
-	RETROARCH_S(NaomiDataRead);
-	RETROARCH_S(NAOMI_ROM_OFFSETH);
-	RETROARCH_S(NAOMI_ROM_OFFSETL);
-	RETROARCH_S(NAOMI_ROM_DATA);
-	RETROARCH_S(NAOMI_DMA_OFFSETH);
-	RETROARCH_S(NAOMI_DMA_OFFSETL);
-	RETROARCH_S(NAOMI_DMA_COUNT);
-	RETROARCH_S(NAOMI_BOARDID_WRITE);
-	RETROARCH_S(NAOMI_BOARDID_READ);
-	RETROARCH_S(NAOMI_COMM_OFFSET);
-	RETROARCH_S(NAOMI_COMM_DATA);
-
-	RETROARCH_S(cycle_counter);
-	RETROARCH_S(idxnxx);
-
-
-	RETROARCH_S(state);
-	RETROARCH_S(div_som_reg1);
-	RETROARCH_S(div_som_reg2);
-	RETROARCH_S(div_som_reg3);
+	LIBRETRO_S(FLASH_SIZE);
+	LIBRETRO_S(BBSRAM_SIZE);
+	LIBRETRO_S(BIOS_SIZE);
+	LIBRETRO_S(RAM_SIZE);
+	LIBRETRO_S(ARAM_SIZE);
+	LIBRETRO_S(VRAM_SIZE);
+	LIBRETRO_S(RAM_MASK);
+	LIBRETRO_S(ARAM_MASK);
+	LIBRETRO_S(VRAM_MASK);
 
 
 
+	LIBRETRO_S(naomi_updates);
+	LIBRETRO_S(RomPioOffset);
+	LIBRETRO_S(DmaOffset);
+	LIBRETRO_S(DmaCount);
+	LIBRETRO_S(BoardID);
+	LIBRETRO_S(GSerialBuffer);
+	LIBRETRO_S(BSerialBuffer);
+	LIBRETRO_S(GBufPos);
+	LIBRETRO_S(BBufPos);
+	LIBRETRO_S(GState);
+	LIBRETRO_S(BState);
+	LIBRETRO_S(GOldClk);
+	LIBRETRO_S(BOldClk);
+	LIBRETRO_S(BControl);
+	LIBRETRO_S(BCmd);
+	LIBRETRO_S(BLastCmd);
+	LIBRETRO_S(GControl);
+	LIBRETRO_S(GCmd);
+	LIBRETRO_S(GLastCmd);
+	LIBRETRO_S(SerStep);
+	LIBRETRO_S(SerStep2);
+	LIBRETRO_SA(BSerial,69);
+	LIBRETRO_SA(GSerial,69);
+	LIBRETRO_S(reg_dimm_3c);
+	LIBRETRO_S(reg_dimm_40);
+	LIBRETRO_S(reg_dimm_44);
+	LIBRETRO_S(reg_dimm_48);
+	LIBRETRO_S(reg_dimm_4c);
+	LIBRETRO_S(NaomiDataRead);
+	LIBRETRO_S(NAOMI_ROM_OFFSETH);
+	LIBRETRO_S(NAOMI_ROM_OFFSETL);
+	LIBRETRO_S(NAOMI_ROM_DATA);
+	LIBRETRO_S(NAOMI_DMA_OFFSETH);
+	LIBRETRO_S(NAOMI_DMA_OFFSETL);
+	LIBRETRO_S(NAOMI_DMA_COUNT);
+	LIBRETRO_S(NAOMI_BOARDID_WRITE);
+	LIBRETRO_S(NAOMI_BOARDID_READ);
+	LIBRETRO_S(NAOMI_COMM_OFFSET);
+	LIBRETRO_S(NAOMI_COMM_DATA);
 
-	//RETROARCH_SA(CodeCache,CODE_SIZE) ;
-	//RETROARCH_SA(SH4_TCB,CODE_SIZE+4096);
-	RETROARCH_S(LastAddr);
-	RETROARCH_S(LastAddr_min);
-	RETROARCH_SA(block_hash,1024);
+	LIBRETRO_S(cycle_counter);
+	LIBRETRO_S(idxnxx);
 
 
-	RETROARCH_SA(RegisterWrite,sh4_reg_count);
-	RETROARCH_SA(RegisterRead,sh4_reg_count);
-	RETROARCH_S(fallback_blocks);
-	RETROARCH_S(total_blocks);
-	RETROARCH_S(REMOVED_OPS);
+	LIBRETRO_S(state);
+	LIBRETRO_S(div_som_reg1);
+	LIBRETRO_S(div_som_reg2);
+	LIBRETRO_S(div_som_reg3);
 
 
 
 
-	RETROARCH_SA(kcode,4);
-	RETROARCH_SA(rt,4);
-	RETROARCH_SA(lt,4);
-	RETROARCH_SA(vks,4);
-	RETROARCH_SA(joyx,4);
-	RETROARCH_SA(joyy,4);
+	//LIBRETRO_SA(CodeCache,CODE_SIZE) ;
+	//LIBRETRO_SA(SH4_TCB,CODE_SIZE+4096);
+	LIBRETRO_S(LastAddr);
+	LIBRETRO_S(LastAddr_min);
+	LIBRETRO_SA(block_hash,1024);
+
+
+	LIBRETRO_SA(RegisterWrite,sh4_reg_count);
+	LIBRETRO_SA(RegisterRead,sh4_reg_count);
+	LIBRETRO_S(fallback_blocks);
+	LIBRETRO_S(total_blocks);
+	LIBRETRO_S(REMOVED_OPS);
+
+
+
+
+	LIBRETRO_SA(kcode,4);
+	LIBRETRO_SA(rt,4);
+	LIBRETRO_SA(lt,4);
+	LIBRETRO_SA(vks,4);
+	LIBRETRO_SA(joyx,4);
+	LIBRETRO_SA(joyy,4);
 
 
 
@@ -1264,75 +1264,75 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	*total_size = 0 ;
 
-	RETROARCH_US(version) ;
-	RETROARCH_US(aica_interr) ;
-	RETROARCH_US(aica_reg_L) ;
-	RETROARCH_US(e68k_out) ;
-	RETROARCH_US(e68k_reg_L) ;
-	RETROARCH_US(e68k_reg_M) ;
+	LIBRETRO_US(version) ;
+	LIBRETRO_US(aica_interr) ;
+	LIBRETRO_US(aica_reg_L) ;
+	LIBRETRO_US(e68k_out) ;
+	LIBRETRO_US(e68k_reg_L) ;
+	LIBRETRO_US(e68k_reg_M) ;
 
-	RETROARCH_USA(arm_Reg,RN_ARM_REG_COUNT);
-	RETROARCH_US(armIrqEnable);
-	RETROARCH_US(armFiqEnable);
-	RETROARCH_US(armMode);
-	RETROARCH_US(Arm7Enabled);
-	RETROARCH_USA(cpuBitsSet,256);
-	RETROARCH_US(intState);
-	RETROARCH_US(stopState);
-	RETROARCH_US(holdState);
+	LIBRETRO_USA(arm_Reg,RN_ARM_REG_COUNT);
+	LIBRETRO_US(armIrqEnable);
+	LIBRETRO_US(armFiqEnable);
+	LIBRETRO_US(armMode);
+	LIBRETRO_US(Arm7Enabled);
+	LIBRETRO_USA(cpuBitsSet,256);
+	LIBRETRO_US(intState);
+	LIBRETRO_US(stopState);
+	LIBRETRO_US(holdState);
 
-	RETROARCH_US(dsp);
+	LIBRETRO_US(dsp);
 
 	for ( i = 0 ; i < 3 ; i++)
 	{
-		RETROARCH_US(timers[i].c_step);
-		RETROARCH_US(timers[i].m_step);
+		LIBRETRO_US(timers[i].c_step);
+		LIBRETRO_US(timers[i].m_step);
 	}
 
 
-	RETROARCH_USA(aica_ram.data,aica_ram.size) ;
-	RETROARCH_US(VREG);
-	RETROARCH_US(ARMRST);
-	RETROARCH_US(rtc_EN);
-	RETROARCH_US(dma_sched_id);
+	LIBRETRO_USA(aica_ram.data,aica_ram.size) ;
+	LIBRETRO_US(VREG);
+	LIBRETRO_US(ARMRST);
+	LIBRETRO_US(rtc_EN);
+	LIBRETRO_US(dma_sched_id);
 
-	RETROARCH_USA(aica_reg,0x8000);
+	LIBRETRO_USA(aica_reg,0x8000);
 
 
 
-	RETROARCH_USA(volume_lut,16);
-	RETROARCH_USA(tl_lut,256 + 768);
-	RETROARCH_USA(AEG_ATT_SPS,64);
-	RETROARCH_USA(AEG_DSR_SPS,64);
-	RETROARCH_US(pl);
-	RETROARCH_US(pr);
+	LIBRETRO_USA(volume_lut,16);
+	LIBRETRO_USA(tl_lut,256 + 768);
+	LIBRETRO_USA(AEG_ATT_SPS,64);
+	LIBRETRO_USA(AEG_DSR_SPS,64);
+	LIBRETRO_US(pl);
+	LIBRETRO_US(pr);
 
 	channel_unserialize(data, total_size) ;
 
-	RETROARCH_USA(cdda_sector,CDDA_SIZE);
-	RETROARCH_US(cdda_index);
-	RETROARCH_USA(mxlr,64);
-	RETROARCH_US(samples_gen);
+	LIBRETRO_USA(cdda_sector,CDDA_SIZE);
+	LIBRETRO_US(cdda_index);
+	LIBRETRO_USA(mxlr,64);
+	LIBRETRO_US(samples_gen);
 
 
 	register_unserialize(sb_regs, data, total_size) ;
-	RETROARCH_US(SB_ISTNRM);
-	RETROARCH_US(SB_FFST_rc);
-	RETROARCH_US(SB_FFST);
+	LIBRETRO_US(SB_ISTNRM);
+	LIBRETRO_US(SB_FFST_rc);
+	LIBRETRO_US(SB_FFST);
 
 
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern RomChip sys_rom;
 
-	RETROARCH_US(sys_nvmem_sram.size);
-	RETROARCH_US(sys_nvmem_sram.mask);
-	RETROARCH_USA(sys_nvmem_sram.data,sys_nvmem_sram.size);
+	LIBRETRO_US(sys_nvmem_sram.size);
+	LIBRETRO_US(sys_nvmem_sram.mask);
+	LIBRETRO_USA(sys_nvmem_sram.data,sys_nvmem_sram.size);
 
-	RETROARCH_US(sys_nvmem_flash.size);
-	RETROARCH_US(sys_nvmem_flash.mask);
-	RETROARCH_US(sys_nvmem_flash.state);
-	RETROARCH_USA(sys_nvmem_flash.data,sys_nvmem_flash.size);
+	LIBRETRO_US(sys_nvmem_flash.size);
+	LIBRETRO_US(sys_nvmem_flash.mask);
+	LIBRETRO_US(sys_nvmem_flash.state);
+	LIBRETRO_USA(sys_nvmem_flash.data,sys_nvmem_flash.size);
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern _vmem_handler area0_handler;
@@ -1340,44 +1340,44 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 
 
-	RETROARCH_USA(reply_11,16) ;
+	LIBRETRO_USA(reply_11,16) ;
 
 
 
-	RETROARCH_US(gdrom_sched);
-	RETROARCH_US(sns_asc);
-	RETROARCH_US(sns_ascq);
-	RETROARCH_US(sns_key);
+	LIBRETRO_US(gdrom_sched);
+	LIBRETRO_US(sns_asc);
+	LIBRETRO_US(sns_ascq);
+	LIBRETRO_US(sns_key);
 
-	RETROARCH_US(packet_cmd);
-	RETROARCH_US(set_mode_offset);
-	RETROARCH_US(read_params);
-	RETROARCH_US(packet_cmd);
-	RETROARCH_US(read_buff);
-	RETROARCH_US(pio_buff);
-	RETROARCH_US(set_mode_offset);
-	RETROARCH_US(ata_cmd);
-	RETROARCH_US(cdda);
-	RETROARCH_US(gd_state);
-	RETROARCH_US(gd_disk_type);
-	RETROARCH_US(data_write_mode);
-	RETROARCH_US(DriveSel);
-	RETROARCH_US(Error);
-	RETROARCH_US(IntReason);
-	RETROARCH_US(Features);
-	RETROARCH_US(SecCount);
-	RETROARCH_US(SecNumber);
-	RETROARCH_US(GDStatus);
-	RETROARCH_US(ByteCount);
-	RETROARCH_US(GDROM_TICK);
-
-
-	RETROARCH_USA(EEPROM,0x100);
-	RETROARCH_US(EEPROM_loaded);
-	RETROARCH_US(State);
+	LIBRETRO_US(packet_cmd);
+	LIBRETRO_US(set_mode_offset);
+	LIBRETRO_US(read_params);
+	LIBRETRO_US(packet_cmd);
+	LIBRETRO_US(read_buff);
+	LIBRETRO_US(pio_buff);
+	LIBRETRO_US(set_mode_offset);
+	LIBRETRO_US(ata_cmd);
+	LIBRETRO_US(cdda);
+	LIBRETRO_US(gd_state);
+	LIBRETRO_US(gd_disk_type);
+	LIBRETRO_US(data_write_mode);
+	LIBRETRO_US(DriveSel);
+	LIBRETRO_US(Error);
+	LIBRETRO_US(IntReason);
+	LIBRETRO_US(Features);
+	LIBRETRO_US(SecCount);
+	LIBRETRO_US(SecNumber);
+	LIBRETRO_US(GDStatus);
+	LIBRETRO_US(ByteCount);
+	LIBRETRO_US(GDROM_TICK);
 
 
-	RETROARCH_US(maple_ddt_pending_reset);
+	LIBRETRO_USA(EEPROM,0x100);
+	LIBRETRO_US(EEPROM_loaded);
+	LIBRETRO_US(State);
+
+
+	LIBRETRO_US(maple_ddt_pending_reset);
 
 	for (i = 0 ; i < 4 ; i++)
 		for (j = 0 ; j < 6 ; j++)
@@ -1386,81 +1386,81 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 
 
-	RETROARCH_US(FrameCount);
-	RETROARCH_US(pend_rend);
+	LIBRETRO_US(FrameCount);
+	LIBRETRO_US(pend_rend);
 
 
-	RETROARCH_USA(YUV_tempdata,512/4);
-	RETROARCH_US(YUV_dest);
-	RETROARCH_US(YUV_blockcount);
-	RETROARCH_US(YUV_x_curr);
-	RETROARCH_US(YUV_y_curr);
-	RETROARCH_US(YUV_x_size);
-	RETROARCH_US(YUV_y_size);
+	LIBRETRO_USA(YUV_tempdata,512/4);
+	LIBRETRO_US(YUV_dest);
+	LIBRETRO_US(YUV_blockcount);
+	LIBRETRO_US(YUV_x_curr);
+	LIBRETRO_US(YUV_y_curr);
+	LIBRETRO_US(YUV_x_size);
+	LIBRETRO_US(YUV_y_size);
 
 
 
 
-	RETROARCH_US(fog_needs_update);
-	RETROARCH_USA(pvr_regs,pvr_RegSize);
+	LIBRETRO_US(fog_needs_update);
+	LIBRETRO_USA(pvr_regs,pvr_RegSize);
 	fog_needs_update = true ;
 
 
-	RETROARCH_US(in_vblank);
-	RETROARCH_US(clc_pvr_scanline);
-	RETROARCH_US(pvr_numscanlines);
-	RETROARCH_US(prv_cur_scanline);
-	RETROARCH_US(vblk_cnt);
-	RETROARCH_US(Line_Cycles);
-	RETROARCH_US(Frame_Cycles);
-	RETROARCH_US(render_end_sched);
-	RETROARCH_US(vblank_sched);
-	RETROARCH_US(time_sync);
-	RETROARCH_US(speed_load_mspdf);
-	RETROARCH_US(mips_counter);
-	RETROARCH_US(full_rps);
+	LIBRETRO_US(in_vblank);
+	LIBRETRO_US(clc_pvr_scanline);
+	LIBRETRO_US(pvr_numscanlines);
+	LIBRETRO_US(prv_cur_scanline);
+	LIBRETRO_US(vblk_cnt);
+	LIBRETRO_US(Line_Cycles);
+	LIBRETRO_US(Frame_Cycles);
+	LIBRETRO_US(render_end_sched);
+	LIBRETRO_US(vblank_sched);
+	LIBRETRO_US(time_sync);
+	LIBRETRO_US(speed_load_mspdf);
+	LIBRETRO_US(mips_counter);
+	LIBRETRO_US(full_rps);
 
 
 
-	RETROARCH_USA(ta_type_lut,256);
-	RETROARCH_USA(ta_fsm,2049);
-	RETROARCH_US(ta_fsm_cl);
+	LIBRETRO_USA(ta_type_lut,256);
+	LIBRETRO_USA(ta_fsm,2049);
+	LIBRETRO_US(ta_fsm_cl);
 
 
-	RETROARCH_US(pal_needs_update);
-	RETROARCH_USA(_pal_rev_256,4);
-	RETROARCH_USA(_pal_rev_16,64);
-	RETROARCH_USA(pal_rev_256,4);
-	RETROARCH_USA(pal_rev_16,64);
+	LIBRETRO_US(pal_needs_update);
+	LIBRETRO_USA(_pal_rev_256,4);
+	LIBRETRO_USA(_pal_rev_16,64);
+	LIBRETRO_USA(pal_rev_256,4);
+	LIBRETRO_USA(pal_rev_16,64);
 	for ( i = 0 ; i < 3 ; i++ )
 	{
 		u32 *ptr = decoded_colors[i] ;
-		RETROARCH_USA(ptr,65536);
+		LIBRETRO_USA(ptr,65536);
 	}
-	RETROARCH_US(tileclip_val);
-	RETROARCH_USA(f32_su8_tbl,65536);
-	RETROARCH_USA(FaceBaseColor,4);
-	RETROARCH_USA(FaceOffsColor,4);
-	RETROARCH_US(SFaceBaseColor);
-	RETROARCH_US(SFaceOffsColor);
+	LIBRETRO_US(tileclip_val);
+	LIBRETRO_USA(f32_su8_tbl,65536);
+	LIBRETRO_USA(FaceBaseColor,4);
+	LIBRETRO_USA(FaceOffsColor,4);
+	LIBRETRO_US(SFaceBaseColor);
+	LIBRETRO_US(SFaceOffsColor);
 
 
-	RETROARCH_US(palette_index);
-	RETROARCH_US(KillTex);
-	RETROARCH_USA(palette16_ram,1024);
-	RETROARCH_USA(palette32_ram,1024);
+	LIBRETRO_US(palette_index);
+	LIBRETRO_US(KillTex);
+	LIBRETRO_USA(palette16_ram,1024);
+	LIBRETRO_USA(palette32_ram,1024);
 	for (i = 0 ; i < 2 ; i++)
 		for (j = 0 ; j < 8 ; j++)
 		{
 			u32 *ptr = detwiddle[i][j] ;
-			RETROARCH_USA(ptr,1024);
+			LIBRETRO_USA(ptr,1024);
 		}
-	RETROARCH_USA(vram.data, vram.size);
+	LIBRETRO_USA(vram.data, vram.size);
 
 
 
 
-	RETROARCH_USA(OnChipRAM.data,OnChipRAM_SIZE);
+	LIBRETRO_USA(OnChipRAM.data,OnChipRAM_SIZE);
 
 	register_unserialize(CCN, data, total_size) ;
 	register_unserialize(UBC, data, total_size) ;
@@ -1473,22 +1473,22 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	register_unserialize(SCI, data, total_size) ;
 	register_unserialize(SCIF, data, total_size) ;
 
-	RETROARCH_USA(mem_b.data, mem_b.size);
+	LIBRETRO_USA(mem_b.data, mem_b.size);
 
 
 
-	RETROARCH_US(IRLPriority);
-	RETROARCH_USA(InterruptEnvId,32);
-	RETROARCH_USA(InterruptBit,32);
-	RETROARCH_USA(InterruptLevelBit,16);
-	RETROARCH_US(interrupt_vpend);
-	RETROARCH_US(interrupt_vmask);
-	RETROARCH_US(decoded_srimask);
+	LIBRETRO_US(IRLPriority);
+	LIBRETRO_USA(InterruptEnvId,32);
+	LIBRETRO_USA(InterruptBit,32);
+	LIBRETRO_USA(InterruptLevelBit,16);
+	LIBRETRO_US(interrupt_vpend);
+	LIBRETRO_US(interrupt_vmask);
+	LIBRETRO_US(decoded_srimask);
 
 
 
 
-	RETROARCH_US(i) ;
+	LIBRETRO_US(i) ;
 	if ( i == 0 )
 		do_sqw_nommu = &do_sqw_nommu_area_3 ;
 	else if ( i == 1 )
@@ -1500,167 +1500,167 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 
 
-	RETROARCH_USA((*p_sh4rcb).sq_buffer,64/8);
+	LIBRETRO_USA((*p_sh4rcb).sq_buffer,64/8);
 
 	//store these before unserializing and then restore after
 	//void *getptr = &((*p_sh4rcb).cntx.sr.GetFull) ;
 	//void *setptr = &((*p_sh4rcb).cntx.sr.SetFull) ;
-	RETROARCH_US((*p_sh4rcb).cntx);
+	LIBRETRO_US((*p_sh4rcb).cntx);
 	//(*p_sh4rcb).cntx.sr.GetFull = getptr ;
 	//(*p_sh4rcb).cntx.sr.SetFull = setptr ;
 
-	RETROARCH_US(old_rm);
-	RETROARCH_US(old_dn);
+	LIBRETRO_US(old_rm);
+	LIBRETRO_US(old_dn);
 
 
 
 
-	RETROARCH_US(sh4_sched_ffb);
-	RETROARCH_US(sh4_sched_intr);
-	RETROARCH_US(sh4_sched_next_id);
+	LIBRETRO_US(sh4_sched_ffb);
+	LIBRETRO_US(sh4_sched_intr);
+	LIBRETRO_US(sh4_sched_next_id);
 	//this list is populated during initialization so the size will always be the same
 	//extern vector<sched_list> list;
 	for ( i = 0 ; i < list.size() ; i++ )
 	{
-		RETROARCH_US(list[i].tag) ;
-		RETROARCH_US(list[i].start) ;
-		RETROARCH_US(list[i].end) ;
+		LIBRETRO_US(list[i].tag) ;
+		LIBRETRO_US(list[i].start) ;
+		LIBRETRO_US(list[i].end) ;
 	}
 
 
 
-	RETROARCH_US(aica_sched);
-	RETROARCH_US(rtc_sched);
+	LIBRETRO_US(aica_sched);
+	LIBRETRO_US(rtc_sched);
 
 
-	RETROARCH_US(SCIF_SCFSR2);
-	RETROARCH_US(SCIF_SCFRDR2);
-	RETROARCH_US(SCIF_SCFDR2);
+	LIBRETRO_US(SCIF_SCFSR2);
+	LIBRETRO_US(SCIF_SCFRDR2);
+	LIBRETRO_US(SCIF_SCFDR2);
 
 
-	RETROARCH_US(BSC_PDTRA);
-
-
-
-
-	RETROARCH_USA(tmu_shift,3);
-	RETROARCH_USA(tmu_mask,3);
-	RETROARCH_USA(tmu_mask64,3);
-	RETROARCH_USA(old_mode,3);
-	RETROARCH_USA(tmu_sched,3);
-	RETROARCH_USA(tmu_ch_base,3);
-	RETROARCH_USA(tmu_ch_base64,3);
+	LIBRETRO_US(BSC_PDTRA);
 
 
 
 
-	RETROARCH_USA(CCN_QACR_TR,2);
+	LIBRETRO_USA(tmu_shift,3);
+	LIBRETRO_USA(tmu_mask,3);
+	LIBRETRO_USA(tmu_mask64,3);
+	LIBRETRO_USA(old_mode,3);
+	LIBRETRO_USA(tmu_sched,3);
+	LIBRETRO_USA(tmu_ch_base,3);
+	LIBRETRO_USA(tmu_ch_base64,3);
 
 
 
 
-	RETROARCH_USA(UTLB,64);
-	RETROARCH_USA(ITLB,4);
+	LIBRETRO_USA(CCN_QACR_TR,2);
+
+
+
+
+	LIBRETRO_USA(UTLB,64);
+	LIBRETRO_USA(ITLB,4);
 #if defined(NO_MMU)
-	RETROARCH_USA(sq_remap,64);
+	LIBRETRO_USA(sq_remap,64);
 #else
-	RETROARCH_USA(ITLB_LRU_USE,64);
-	RETROARCH_US(mmu_error_TT);
+	LIBRETRO_USA(ITLB_LRU_USE,64);
+	LIBRETRO_US(mmu_error_TT);
 #endif
 
 
 
 
-	RETROARCH_US(NullDriveDiscType);
-	RETROARCH_USA(q_subchannel,96);
+	LIBRETRO_US(NullDriveDiscType);
+	LIBRETRO_USA(q_subchannel,96);
 
 
-	RETROARCH_US(FLASH_SIZE);
-	RETROARCH_US(BBSRAM_SIZE);
-	RETROARCH_US(BIOS_SIZE);
-	RETROARCH_US(RAM_SIZE);
-	RETROARCH_US(ARAM_SIZE);
-	RETROARCH_US(VRAM_SIZE);
-	RETROARCH_US(RAM_MASK);
-	RETROARCH_US(ARAM_MASK);
-	RETROARCH_US(VRAM_MASK);
-
-
-
-	RETROARCH_US(naomi_updates);
-	RETROARCH_US(RomPioOffset);
-	RETROARCH_US(DmaOffset);
-	RETROARCH_US(DmaCount);
-	RETROARCH_US(BoardID);
-	RETROARCH_US(GSerialBuffer);
-	RETROARCH_US(BSerialBuffer);
-	RETROARCH_US(GBufPos);
-	RETROARCH_US(BBufPos);
-	RETROARCH_US(GState);
-	RETROARCH_US(BState);
-	RETROARCH_US(GOldClk);
-	RETROARCH_US(BOldClk);
-	RETROARCH_US(BControl);
-	RETROARCH_US(BCmd);
-	RETROARCH_US(BLastCmd);
-	RETROARCH_US(GControl);
-	RETROARCH_US(GCmd);
-	RETROARCH_US(GLastCmd);
-	RETROARCH_US(SerStep);
-	RETROARCH_US(SerStep2);
-	RETROARCH_USA(BSerial,69);
-	RETROARCH_USA(GSerial,69);
-	RETROARCH_US(reg_dimm_3c);
-	RETROARCH_US(reg_dimm_40);
-	RETROARCH_US(reg_dimm_44);
-	RETROARCH_US(reg_dimm_48);
-	RETROARCH_US(reg_dimm_4c);
-	RETROARCH_US(NaomiDataRead);
-	RETROARCH_US(NAOMI_ROM_OFFSETH);
-	RETROARCH_US(NAOMI_ROM_OFFSETL);
-	RETROARCH_US(NAOMI_ROM_DATA);
-	RETROARCH_US(NAOMI_DMA_OFFSETH);
-	RETROARCH_US(NAOMI_DMA_OFFSETL);
-	RETROARCH_US(NAOMI_DMA_COUNT);
-	RETROARCH_US(NAOMI_BOARDID_WRITE);
-	RETROARCH_US(NAOMI_BOARDID_READ);
-	RETROARCH_US(NAOMI_COMM_OFFSET);
-	RETROARCH_US(NAOMI_COMM_DATA);
-
-	RETROARCH_US(cycle_counter);
-	RETROARCH_US(idxnxx);
-
-
-	RETROARCH_US(state);
-	RETROARCH_US(div_som_reg1);
-	RETROARCH_US(div_som_reg2);
-	RETROARCH_US(div_som_reg3);
+	LIBRETRO_US(FLASH_SIZE);
+	LIBRETRO_US(BBSRAM_SIZE);
+	LIBRETRO_US(BIOS_SIZE);
+	LIBRETRO_US(RAM_SIZE);
+	LIBRETRO_US(ARAM_SIZE);
+	LIBRETRO_US(VRAM_SIZE);
+	LIBRETRO_US(RAM_MASK);
+	LIBRETRO_US(ARAM_MASK);
+	LIBRETRO_US(VRAM_MASK);
 
 
 
+	LIBRETRO_US(naomi_updates);
+	LIBRETRO_US(RomPioOffset);
+	LIBRETRO_US(DmaOffset);
+	LIBRETRO_US(DmaCount);
+	LIBRETRO_US(BoardID);
+	LIBRETRO_US(GSerialBuffer);
+	LIBRETRO_US(BSerialBuffer);
+	LIBRETRO_US(GBufPos);
+	LIBRETRO_US(BBufPos);
+	LIBRETRO_US(GState);
+	LIBRETRO_US(BState);
+	LIBRETRO_US(GOldClk);
+	LIBRETRO_US(BOldClk);
+	LIBRETRO_US(BControl);
+	LIBRETRO_US(BCmd);
+	LIBRETRO_US(BLastCmd);
+	LIBRETRO_US(GControl);
+	LIBRETRO_US(GCmd);
+	LIBRETRO_US(GLastCmd);
+	LIBRETRO_US(SerStep);
+	LIBRETRO_US(SerStep2);
+	LIBRETRO_USA(BSerial,69);
+	LIBRETRO_USA(GSerial,69);
+	LIBRETRO_US(reg_dimm_3c);
+	LIBRETRO_US(reg_dimm_40);
+	LIBRETRO_US(reg_dimm_44);
+	LIBRETRO_US(reg_dimm_48);
+	LIBRETRO_US(reg_dimm_4c);
+	LIBRETRO_US(NaomiDataRead);
+	LIBRETRO_US(NAOMI_ROM_OFFSETH);
+	LIBRETRO_US(NAOMI_ROM_OFFSETL);
+	LIBRETRO_US(NAOMI_ROM_DATA);
+	LIBRETRO_US(NAOMI_DMA_OFFSETH);
+	LIBRETRO_US(NAOMI_DMA_OFFSETL);
+	LIBRETRO_US(NAOMI_DMA_COUNT);
+	LIBRETRO_US(NAOMI_BOARDID_WRITE);
+	LIBRETRO_US(NAOMI_BOARDID_READ);
+	LIBRETRO_US(NAOMI_COMM_OFFSET);
+	LIBRETRO_US(NAOMI_COMM_DATA);
 
-	//RETROARCH_USA(CodeCache,CODE_SIZE) ;
-	//RETROARCH_USA(SH4_TCB,CODE_SIZE+4096);
-	RETROARCH_US(LastAddr);
-	RETROARCH_US(LastAddr_min);
-	RETROARCH_USA(block_hash,1024);
+	LIBRETRO_US(cycle_counter);
+	LIBRETRO_US(idxnxx);
 
 
-	RETROARCH_USA(RegisterWrite,sh4_reg_count);
-	RETROARCH_USA(RegisterRead,sh4_reg_count);
-	RETROARCH_US(fallback_blocks);
-	RETROARCH_US(total_blocks);
-	RETROARCH_US(REMOVED_OPS);
+	LIBRETRO_US(state);
+	LIBRETRO_US(div_som_reg1);
+	LIBRETRO_US(div_som_reg2);
+	LIBRETRO_US(div_som_reg3);
 
 
 
 
-	RETROARCH_USA(kcode,4);
-	RETROARCH_USA(rt,4);
-	RETROARCH_USA(lt,4);
-	RETROARCH_USA(vks,4);
-	RETROARCH_USA(joyx,4);
-	RETROARCH_USA(joyy,4);
+	//LIBRETRO_USA(CodeCache,CODE_SIZE) ;
+	//LIBRETRO_USA(SH4_TCB,CODE_SIZE+4096);
+	LIBRETRO_US(LastAddr);
+	LIBRETRO_US(LastAddr_min);
+	LIBRETRO_USA(block_hash,1024);
+
+
+	LIBRETRO_USA(RegisterWrite,sh4_reg_count);
+	LIBRETRO_USA(RegisterRead,sh4_reg_count);
+	LIBRETRO_US(fallback_blocks);
+	LIBRETRO_US(total_blocks);
+	LIBRETRO_US(REMOVED_OPS);
+
+
+
+
+	LIBRETRO_USA(kcode,4);
+	LIBRETRO_USA(rt,4);
+	LIBRETRO_USA(lt,4);
+	LIBRETRO_USA(vks,4);
+	LIBRETRO_USA(joyx,4);
+	LIBRETRO_USA(joyy,4);
 
 	return true ;
 }

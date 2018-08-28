@@ -187,7 +187,7 @@ bool gles_init();
 extern int screen_width,screen_height;
 
 static u64 tvs_base;
-static char gamedisk[256];
+std::string gamedisk;
 
 // Additonal controllers 2, 3 and 4 connected ?
 static bool add_controllers[3] = { false, false, false };
@@ -211,13 +211,13 @@ void os_DoEvents()
 //
 // Native thread that runs the actual nullDC emulator
 //
-static void *ThreadHandler(void *UserData)
+static void *ThreadHandler(const char *UserData)
 {
     char *Args[3];
     const char *P;
 
     // Make up argument list
-    P       = (const char *)UserData;
+    P       = UserData;
     Args[0] = (char*)"dc";
     Args[1] = (char*)"-config";
     Args[2] = P&&P[0]? (char *)malloc(strlen(P)+32):0;
@@ -310,33 +310,18 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_config(JNIEnv *env,jo
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk) {
     if (disk != NULL) {
         settings.imgread.LoadDefaultImage = 1;
-        const char *P = disk ? env->GetStringUTFChars(disk, 0) : 0;
-        if (!P) settings.imgread.DefaultImage[0] = '\0';
-        else {
-            printf("Got URI: '%s'\n", P);
-            strncpy(settings.imgread.DefaultImage,
-                    (strlen(P) >= 7) && !memcmp(P, "file://", 7) ? P + 7 : P,
-                    sizeof(settings.imgread.DefaultImage));
-            settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
-            env->ReleaseStringUTFChars(disk, P);
-        }
+        settings.imgread.DefaultImage = env->GetStringUTFChars(disk, 0);
+        printf("Boot Disk URI: '%s'\n", settings.imgread.DefaultImage.c_str());
+        env->ReleaseStringUTFChars(disk, 0);
     }
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobject obj,jstring fileName)
 {
-    // Get filename string from Java
-    const char* P = fileName? env->GetStringUTFChars(fileName,0):0;
-    if(!P) gamedisk[0] = '\0';
-    else
-    {
-        printf("Got URI: '%s'\n",P);
-        strncpy(gamedisk,(strlen(P)>=7)&&!memcmp(P,"file://",7)? P+7:P,sizeof(gamedisk));
-        gamedisk[sizeof(gamedisk)-1] = '\0';
-        env->ReleaseStringUTFChars(fileName,P);
-    }
+    gamedisk = env->GetStringUTFChars(fileName, 0);
+    env->ReleaseStringUTFChars(fileName, 0);
 
-    printf("Opening file: '%s'\n",gamedisk);
+    printf("Opening file: '%s'\n", gamedisk.c_str());
 
     // Initialize platform-specific stuff
     common_linux_setup();
@@ -353,7 +338,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_init(JNIEnv *env,jobj
   pthread_attr_destroy(&PTAttr);
   */
 
-    ThreadHandler(gamedisk);
+    ThreadHandler(gamedisk.c_str());
 }
 
 #define SAMPLE_COUNT 512
@@ -447,26 +432,16 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,j
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj,jstring disk)
 {
+    settings.imgread.DefaultImage.clear();
     if (settings.imgread.LoadDefaultImage == 1) {
-        if (!gamedisk) settings.imgread.DefaultImage[0] = '\0';
-        else {
-            printf("Got URI: '%s'\n", gamedisk);
-            strncpy(settings.imgread.DefaultImage, gamedisk, sizeof(settings.imgread.DefaultImage));
-            settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
-        }
+        printf("Disk Swap URI: '%s'\n", gamedisk.c_str());
+        settings.imgread.DefaultImage = gamedisk;
         DiscSwap();
     } else if (disk != NULL) {
         settings.imgread.LoadDefaultImage = 1;
-        const char *P = disk ? env->GetStringUTFChars(disk, 0) : 0;
-        if (!P) settings.imgread.DefaultImage[0] = '\0';
-        else {
-            printf("Got URI: '%s'\n", P);
-            strncpy(settings.imgread.DefaultImage,
-                    (strlen(P) >= 7) && !memcmp(P, "file://", 7) ? P + 7 : P,
-                    sizeof(settings.imgread.DefaultImage));
-            settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
-            env->ReleaseStringUTFChars(disk, P);
-        }
+        settings.imgread.DefaultImage = env->GetStringUTFChars(disk, 0);
+        printf("Disk Swap URI: '%s'\n", settings.imgread.DefaultImage.c_str());
+        env->ReleaseStringUTFChars(disk, 0);
         DiscSwap();
     }
 }

@@ -157,7 +157,7 @@ public class GL2JNIView extends GLSurfaceView
             if (GL2JNIActivity.syms != null)
                 JNIdc.data(1, GL2JNIActivity.syms);
         }
-        JNIdc.init(fileName);
+        JNIdc.init(fileName.replace("file://", ""));
         JNIdc.query(ethd);
 
         // By default, GLSurfaceView() creates a RGB_565 opaque surface.

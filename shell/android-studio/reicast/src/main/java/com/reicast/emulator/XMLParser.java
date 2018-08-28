@@ -271,8 +271,12 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	}
 
 	private String getValue(Element item, String str) {
-		NodeList n = item.getElementsByTagName(str);
-		return this.getElementValue(n.item(0));
+		if (item != null) {
+			NodeList n = item.getElementsByTagName(str);
+			return this.getElementValue(n.item(0));
+		} else {
+			return "";
+		}
 	}
 
 	private String getElementValue(Node elem) {

@@ -107,7 +107,9 @@ int dc_init(int argc,wchar* argv[]);
 void dc_run();
 void dc_term(void);
 void dc_stop();
+void dc_start();
 void bm_Reset() ;
+bool dc_is_running();
 extern Renderer* renderer;
 bool rend_single_frame();
 void rend_cancel_emu_wait();
@@ -1190,26 +1192,38 @@ size_t retro_serialize_size (void)
    unsigned int total_size = 0 ;
    void *data = NULL ;
 
-#if !defined(TARGET_NO_THREADS)
-    if (settings.rend.ThreadedRendering && emu_inited)
-    {
-    	mtx_serialization.Lock() ;
-  		dc_stop() ;
-        rend_cancel_emu_wait();
-    	mtx_mainloop.Lock() ;
-    }
-#endif
    dc_serialize(&data, &total_size) ;
-   performed_serialization = true ;
 
-#if !defined(TARGET_NO_THREADS)
-    if (settings.rend.ThreadedRendering && emu_inited)
-    {
-    	mtx_mainloop.Unlock() ;
-    	mtx_serialization.Unlock() ;
-    }
-#endif
    return total_size;
+}
+
+bool wait_until_dc_running()
+{
+	retro_time_t start_time = retro_perf_get_time_usec_t() ;
+	const retro_time_t FIVE_SECONDS = 5*1000000 ;
+	while(!dc_is_running())
+	{
+		if ( start_time+FIVE_SECONDS < retro_perf_get_time_usec_t() )
+		{
+			//timeout elapsed - dc not getting a chance to run - just bail
+			return false ;
+		}
+	}
+	return true ;
+}
+
+bool acquire_mainloop_lock()
+{
+	bool result = false ;
+	retro_time_t start_time = retro_perf_get_time_usec_t() ;
+	const retro_time_t FIVE_SECONDS = 5*1000000 ;
+
+    while ( ( start_time+FIVE_SECONDS > retro_perf_get_time_usec_t() ) && !(result = mtx_mainloop.TryLock())  )
+   	{
+    	rend_cancel_emu_wait();
+   	}
+
+    return result ;
 }
 
 bool retro_serialize(void *data, size_t size)
@@ -1225,9 +1239,17 @@ bool retro_serialize(void *data, size_t size)
     if (settings.rend.ThreadedRendering && emu_inited)
     {
     	mtx_serialization.Lock() ;
+    	if ( !wait_until_dc_running) {
+        	mtx_serialization.Unlock() ;
+        	return false ;
+    	}
+
   		dc_stop() ;
-        rend_cancel_emu_wait();
-    	mtx_mainloop.Lock() ;
+  		if ( !acquire_mainloop_lock() )
+  		{
+  			dc_start() ;
+  			return false ;
+  		}
     }
 #endif
 
@@ -1260,9 +1282,16 @@ bool retro_unserialize(const void * data, size_t size)
     if (settings.rend.ThreadedRendering && emu_inited)
     {
     	mtx_serialization.Lock() ;
+    	if ( !wait_until_dc_running) {
+        	mtx_serialization.Unlock() ;
+        	return false ;
+    	}
   		dc_stop() ;
-        rend_cancel_emu_wait();
-    	mtx_mainloop.Lock() ;
+  		if ( !acquire_mainloop_lock() )
+  		{
+  			dc_start() ;
+  			return false ;
+  		}
     }
 #endif
 

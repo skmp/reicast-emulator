@@ -281,6 +281,7 @@ struct fpscr_t
 
 typedef void RunFP();
 typedef void StopFP();
+typedef void StartFP();
 typedef void StepFP();
 typedef void SkipFP();
 typedef void ResetFP(bool Manual);
@@ -298,6 +299,7 @@ struct sh4_if
 {
 	RunFP* Run;
 	StopFP* Stop;
+	StartFP* Start;
 	StepFP* Step;
 	SkipFP* Skip;
 	ResetFP* Reset;

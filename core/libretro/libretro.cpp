@@ -1256,8 +1256,6 @@ bool retro_unserialize(const void * data, size_t size)
 	   return false ;
 #endif
 
-   bm_Reset() ;
-
 #if !defined(TARGET_NO_THREADS)
     if (settings.rend.ThreadedRendering && emu_inited)
     {
@@ -1267,6 +1265,8 @@ bool retro_unserialize(const void * data, size_t size)
     	mtx_mainloop.Lock() ;
     }
 #endif
+
+    bm_Reset() ;
 
     result = dc_unserialize(&data_ptr, &total_size) ;
     performed_serialization = true ;

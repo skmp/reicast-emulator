@@ -1,6 +1,7 @@
 DEBUG         := 0
 NO_REND       := 0
 HAVE_GL       := 1
+HAVE_GL2      := 0
 HAVE_OIT      := 0
 HAVE_CORE     := 0
 NO_THREADS    := 0
@@ -116,8 +117,10 @@ ifneq (,$(findstring unix,$(platform)))
 		LIBS += -lrt
 	endif
 
-	ifneq ($(HAVE_OIT), 1)
-		HAVE_GL3 = 1
+	ifneq ($(HAVE_GL2), 1)
+		ifneq ($(HAVE_OIT), 1)
+			HAVE_GL3 = 1
+		endif
 	endif
 
 	fpic = -fPIC
@@ -389,8 +392,10 @@ else ifeq ($(platform), emscripten)
 
 # Windows
 else
-	ifneq ($(HAVE_OIT), 1)
-		HAVE_GL3 = 1
+	ifneq ($(HAVE_GL2), 1)
+		ifneq ($(HAVE_OIT), 1)
+			HAVE_GL3 = 1
+		endif
 	endif
 	EXT       ?= dll
 	HAVE_GENERIC_JIT   = 0

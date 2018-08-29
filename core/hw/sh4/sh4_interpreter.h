@@ -37,6 +37,7 @@ enum OpcodeType
 /* interface */
 void Sh4_int_Run(void);
 void Sh4_int_Stop(void);
+void Sh4_int_Start(void);
 void Sh4_int_Step(void);
 void Sh4_int_Skip(void);
 void Sh4_int_Reset(bool Manual);

@@ -54,6 +54,12 @@ void Sh4_int_Stop(void)
 		sh4_int_bCpuRun=false;
 }
 
+void Sh4_int_Start(void)
+{
+	if (!sh4_int_bCpuRun)
+		sh4_int_bCpuRun=true;
+}
+
 void Sh4_int_Run(void)
 {
 	sh4_int_bCpuRun=true;
@@ -256,6 +262,7 @@ void Get_Sh4Interpreter(sh4_if* rv)
 {
 	rv->Run=Sh4_int_Run;
 	rv->Stop=Sh4_int_Stop;
+	rv->Start=Sh4_int_Start;
 	rv->Step=Sh4_int_Step;
 	rv->Skip=Sh4_int_Skip;
 	rv->Reset=Sh4_int_Reset;

@@ -406,6 +406,17 @@ void dc_stop()
 	sh4_cpu.Stop();
 }
 
+
+void dc_start()
+{
+	sh4_cpu.Start();
+}
+
+bool dc_is_running()
+{
+	return sh4_cpu.IsCpuRunning();
+}
+
 void LoadSettings(void)
 {
 	settings.dynarec.Enable			= 1;

@@ -218,6 +218,14 @@ public :
       slock_lock(mutx);
 #endif
 	}
+	bool TryLock()
+	{
+#ifndef TARGET_NO_THREADS
+      return slock_try_lock(mutx);
+#else
+      return false ;
+#endif
+	}
 	void Unlock()
 	{
 #ifndef TARGET_NO_THREADS

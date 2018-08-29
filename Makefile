@@ -1,6 +1,7 @@
 DEBUG         := 0
 NO_REND       := 0
 HAVE_GL       := 1
+HAVE_GL2      := 0
 HAVE_OIT      := 0
 HAVE_CORE     := 0
 NO_THREADS    := 0
@@ -16,9 +17,9 @@ HAVE_TEXUPSCALE := 1
 HAVE_OPENMP   := 1
 
 ifeq ($(HAVE_OIT), 1)
-TARGET_NAME   := reicast_oit
+	TARGET_NAME   := reicast_oit
 else
-TARGET_NAME   := reicast
+	TARGET_NAME   := reicast
 endif
 
 CXX      = ${CC_PREFIX}g++
@@ -36,7 +37,7 @@ CXXFLAGS :=
 
 GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")
-   CXXFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
+	CXXFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
 endif
 
 UNAME=$(shell uname -a)
@@ -90,7 +91,7 @@ DYNAREC_USED = 0
 CORE_DEFINES   := -D__LIBRETRO__
 
 ifeq ($(NO_VERIFY),1)
-CORE_DEFINES += -DNO_VERIFY
+	CORE_DEFINES += -DNO_VERIFY
 endif
 
 DC_PLATFORM=dreamcast
@@ -101,24 +102,27 @@ HOST_CPU_MIPS=0x20000003
 HOST_CPU_X64=0x20000004
 
 ifeq ($(STATIC_LINKING),1)
-EXT=a
-
+	EXT=a
 endif
 
 # Unix
 ifneq (,$(findstring unix,$(platform)))
 	EXT    ?= so
-   TARGET := $(TARGET_NAME)_libretro.$(EXT)
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	SHARED := -shared -Wl,--version-script=link.T
 	LDFLAGS +=  -Wl,--no-undefined
-ifneq (,$(findstring Haiku,$(shell uname -s)))
-	LIBS += -lroot
-else
-	LIBS += -lrt
-endif
-ifneq ($(HAVE_OIT), 1)
-	HAVE_GL3 = 1
-endif
+	ifneq (,$(findstring Haiku,$(shell uname -s)))
+		LIBS += -lroot
+	else
+		LIBS += -lrt
+	endif
+
+	ifneq ($(HAVE_GL2), 1)
+		ifneq ($(HAVE_OIT), 1)
+			HAVE_GL3 = 1
+		endif
+	endif
+
 	fpic = -fPIC
 
 	ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
@@ -302,11 +306,10 @@ else ifneq (,$(findstring theos_ios,$(platform)))
 	PLATCFLAGS += -DIOS -marm
 	CPUFLAGS += -DNO_ASM  -DARM -D__arm__ -DARM_ASM -D__NEON_OPT -DNOSSE
 
-
 # Android
 else ifneq (,$(findstring android,$(platform)))
 	fpic = -fPIC
-	EXT       ?= so
+	EXT ?= so
 	TARGET := $(TARGET_NAME)_libretro_android.$(EXT)
 	SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
 
@@ -324,7 +327,7 @@ else ifneq (,$(findstring android,$(platform)))
 # QNX
 else ifeq ($(platform), qnx)
 	fpic = -fPIC
-	EXT       ?= so
+	EXT ?= so
 	TARGET := $(TARGET_NAME)_libretro_$(platform).$(EXT)
 	SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
 
@@ -342,7 +345,7 @@ else ifeq ($(platform), qnx)
 
 # ARM
 else ifneq (,$(findstring armv,$(platform)))
-	EXT       ?= so
+	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined
 	fpic := -fPIC
@@ -389,9 +392,11 @@ else ifeq ($(platform), emscripten)
 
 # Windows
 else
-ifneq ($(HAVE_OIT), 1)
-	HAVE_GL3 = 1
-endif
+	ifneq ($(HAVE_GL2), 1)
+		ifneq ($(HAVE_OIT), 1)
+			HAVE_GL3 = 1
+		endif
+	endif
 	EXT       ?= dll
 	HAVE_GENERIC_JIT   = 0
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
@@ -481,27 +486,26 @@ ifeq ($(DEBUG),1)
 	LDFLAGS        += -g
 	CFLAGS         += -g
 else
-ifneq (,$(findstring msvc,$(platform)))
-	OPTFLAGS       := -O2
-else
-	OPTFLAGS       := -O3
-endif
+	ifneq (,$(findstring msvc,$(platform)))
+		OPTFLAGS       := -O2
+	else
+		OPTFLAGS       := -O3
+	endif
+
 	CORE_DEFINES   += -DNDEBUG
 	LDFLAGS        += -DNDEBUG
 
+	ifeq ($(HAVE_LTCG), 1)
+		CORE_DEFINES   += -flto
+	endif
 
-ifeq ($(HAVE_LTCG), 1)
-	CORE_DEFINES   += -flto
-endif
 	CORE_DEFINES      += -DRELEASE
 endif
-
 
 ifeq ($(HAVE_GL3), 1)
 	HAVE_CORE = 1
 	CORE_DEFINES += -DHAVE_GL3
 endif
-
 
 RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -frename-registers -ffast-math -ftree-vectorize -fomit-frame-pointer 
 
@@ -537,12 +541,12 @@ endif
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fexceptions -fno-rtti -std=gnu++11
 
 ifeq (,$(findstring msvc,$(platform)))
-CORE_DEFINES   += -funroll-loops
+	CORE_DEFINES   += -funroll-loops
 endif
 
 ifeq ($(HAVE_OIT), 1)
-HAVE_CORE = 1
-CORE_DEFINES += -DHAVE_OIT -DHAVE_GL4
+	HAVE_CORE = 1
+	CORE_DEFINES += -DHAVE_OIT -DHAVE_GL4
 endif
 
 ifeq ($(HAVE_CORE), 1)
@@ -657,4 +661,3 @@ endif
 
 clean:
 	rm -f $(OBJECTS) $(TARGET)
-

@@ -250,6 +250,14 @@ INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 LIBS += -lm -lrt -ldl
 LIBS  += -lpthread
 
+# 7-Zip/LZMA settings (CHDv5)
+CFLAGS += -D_7ZIP_ST
+
+# FLAC settings (CHDv5)
+RZDCY_CFLAGS += -DPACKAGE_VERSION="1.3.2" -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL -DHAVE_LROUND -DHAVE_STDINT_H -DHAVE_STDLIB_H -DHAVE_SYS_PARAM_H
+INCS += -I$(RZDCY_SRC_DIR)/deps/flac/include -I$(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/include
+LIBS += `pkg-config --libs flac`
+
 PREFIX ?= /usr/local
 MAN_DIR ?= ${PREFIX}/share/man/man1
 MENUENTRY_DIR ?= ${PREFIX}/share/applications

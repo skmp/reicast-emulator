@@ -943,12 +943,12 @@ static inline UINT32 get_bigendian_uint32(const UINT8 *base)
     the data stream in bigendian order
 -------------------------------------------------*/
 
-static inline void put_bigendian_uint24(UINT8 *base, UINT32 value)
+static inline void put_bigendian_uint32(UINT8 *base, UINT32 value)
 {
-	value &= 0xffffff;
-	base[0] = value >> 16;
-	base[1] = value >> 8;
-	base[2] = value;
+	base[0] = value >> 24;
+	base[1] = value >> 16;
+	base[2] = value >> 8;
+	base[3] = value;
 }
 
 /*-------------------------------------------------
@@ -956,7 +956,7 @@ static inline void put_bigendian_uint24(UINT8 *base, UINT32 value)
     the data stream in bigendian order
 -------------------------------------------------*/
 
-static inline void put_bigendian_uint32(UINT8 *base, UINT32 value)
+static inline void put_bigendian_uint24(UINT8 *base, UINT32 value)
 {
 	value &= 0xffffff;
 	base[0] = value >> 16;

@@ -23,10 +23,35 @@
     <ClCompile Include="..\core\cfg\cfg.cpp" />
     <ClCompile Include="..\core\cfg\ini.cpp" />
     <ClCompile Include="..\core\deps\chdpsr\cdipsr.cpp" />
-    <ClCompile Include="..\core\deps\chdr\chdr.cpp" />
+    <ClCompile Include="..\core\deps\chdr\bitstream.c" />
+    <ClCompile Include="..\core\deps\chdr\cdrom.c" />
+    <ClCompile Include="..\core\deps\chdr\chd.c" />
+    <ClCompile Include="..\core\deps\chdr\flac.c" />
+    <ClCompile Include="..\core\deps\chdr\huffman.c" />
     <ClCompile Include="..\core\deps\coreio\coreio.cpp" />
     <ClCompile Include="..\core\deps\crypto\md5.cpp" />
     <ClCompile Include="..\core\deps\crypto\sha1.cpp" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\bitmath.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\bitreader.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\cpu.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\crc.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\fixed.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\fixed_intrin_sse2.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\fixed_intrin_ssse3.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\float.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\format.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\lpc.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\lpc_intrin_avx2.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\lpc_intrin_sse.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\lpc_intrin_sse2.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\lpc_intrin_sse41.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\md5.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\memory.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\metadata_iterators.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\metadata_object.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\stream_decoder.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\window.c" />
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\windows_unicode_filenames.c" />
     <ClCompile Include="..\core\deps\libelf\elf.cpp" />
     <ClCompile Include="..\core\deps\libelf\elf32.cpp" />
     <ClCompile Include="..\core\deps\libelf\elf64.cpp" />
@@ -64,6 +89,19 @@
     <ClCompile Include="..\core\deps\libwebsocket\server.c" />
     <ClCompile Include="..\core\deps\libwebsocket\service.c" />
     <ClCompile Include="..\core\deps\libwebsocket\sha-1.c" />
+    <ClCompile Include="..\core\deps\lzma\C\Alloc.c" />
+    <ClCompile Include="..\core\deps\lzma\C\Bra.c" />
+    <ClCompile Include="..\core\deps\lzma\C\Bra86.c" />
+    <ClCompile Include="..\core\deps\lzma\C\BraIA64.c" />
+    <ClCompile Include="..\core\deps\lzma\C\CpuArch.c" />
+    <ClCompile Include="..\core\deps\lzma\C\Delta.c" />
+    <ClCompile Include="..\core\deps\lzma\C\LzFind.c" />
+    <ClCompile Include="..\core\deps\lzma\C\Lzma86Dec.c" />
+    <ClCompile Include="..\core\deps\lzma\C\Lzma86Enc.c" />
+    <ClCompile Include="..\core\deps\lzma\C\LzmaDec.c" />
+    <ClCompile Include="..\core\deps\lzma\C\LzmaEnc.c" />
+    <ClCompile Include="..\core\deps\lzma\C\LzmaLib.c" />
+    <ClCompile Include="..\core\deps\lzma\C\Sort.c" />
     <ClCompile Include="..\core\deps\zlib\adler32.c" />
     <ClCompile Include="..\core\deps\zlib\compress.c" />
     <ClCompile Include="..\core\deps\zlib\crc32.c" />
@@ -201,8 +239,12 @@
     <ClInclude Include="..\core\cfg\cfg.h" />
     <ClInclude Include="..\core\cfg\ini.h" />
     <ClInclude Include="..\core\deps\chdpsr\cdipsr.h" />
+    <ClInclude Include="..\core\deps\chdr\bitstream.h" />
+    <ClInclude Include="..\core\deps\chdr\cdrom.h" />
     <ClInclude Include="..\core\deps\chdr\chd.h" />
     <ClInclude Include="..\core\deps\chdr\coretypes.h" />
+    <ClInclude Include="..\core\deps\chdr\flac.h" />
+    <ClInclude Include="..\core\deps\chdr\huffman.h" />
     <ClInclude Include="..\core\deps\coreio\coreio.h" />
     <ClInclude Include="..\core\deps\crypto\md5.h" />
     <ClInclude Include="..\core\deps\crypto\sha1.h" />
@@ -434,8 +476,8 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;USE_LZMA;_7ZIP_ST;USE_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;NDEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\deps/flac/include;$(ProjectDir)..\core\deps/flac/src/libFLAC/include</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -466,8 +508,8 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;USE_LZMA;_7ZIP_ST;USE_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;NDEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\deps/flac/include;$(ProjectDir)..\core\deps/flac/src/libFLAC/include</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -500,8 +542,8 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;USE_LZMA;_7ZIP_ST;USE_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\deps/flac/include;$(ProjectDir)..\core\deps/flac/src/libFLAC/include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -521,8 +563,8 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;USE_LZMA;_7ZIP_ST;USE_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\deps/flac/include;$(ProjectDir)..\core\deps/flac/src/libFLAC/include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>

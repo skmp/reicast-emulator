@@ -2233,12 +2233,9 @@ static chd_error metadata_find_entry(chd_file *chd, UINT32 metatag, UINT32 metai
 
 		/* extract the data */
 		metaentry->metatag = get_bigendian_uint32(&raw_meta_header[0]);
-		metaentry->length = get_bigendian_uint32(&raw_meta_header[4]);
+		metaentry->flags = raw_meta_header[4];
+		metaentry->length = get_bigendian_uint24(&raw_meta_header[5]);
 		metaentry->next = get_bigendian_uint64(&raw_meta_header[8]);
-
-		/* flags are encoded in the high byte of length */
-		metaentry->flags = metaentry->length >> 24;
-		metaentry->length &= 0x00ffffff;
 
 		/* if we got a match, proceed */
 		if (metatag == CHDMETATAG_WILDCARD || metaentry->metatag == metatag)

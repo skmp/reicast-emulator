@@ -22,6 +22,8 @@ include $(CLEAR_VARS)
 FOR_ANDROID := 1
 WEBUI := 1
 USE_GLES := 1
+USE_FLAC := 1
+USE_LZMA := 1
 
 ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
   NOT_ARM := 1
@@ -81,6 +83,16 @@ else
   LOCAL_LDLIBS +=  -Wl,--no-warn-shared-textrel
 endif
 
+# 7-Zip/LZMA settings (CHDv5)
+ifdef USE_LZMA
+	LOCAL_CFLAGS += -D_7ZIP_ST
+endif
+
+# FLAC settings (CHDv5)
+ifdef USE_FLAC
+	RZDCY_CFLAGS += -DPACKAGE_VERSION="1.3.2" -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL -DHAVE_LROUND -DHAVE_STDINT_H -DHAVE_STDLIB_H -DHAVE_SYS_PARAM_H
+	INCS += -I$(RZDCY_SRC_DIR)/deps/flac/include -I$(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/include
+endif
 
 
 #

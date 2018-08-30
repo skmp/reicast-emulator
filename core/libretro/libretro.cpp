@@ -1199,11 +1199,11 @@ size_t retro_serialize_size (void)
 
 bool wait_until_dc_running()
 {
-	retro_time_t start_time = retro_perf_get_time_usec_t() ;
+	retro_time_t start_time = perf_cb.get_time_usec() ;
 	const retro_time_t FIVE_SECONDS = 5*1000000 ;
 	while(!dc_is_running())
 	{
-		if ( start_time+FIVE_SECONDS < retro_perf_get_time_usec_t() )
+		if ( start_time+FIVE_SECONDS < perf_cb.get_time_usec() )
 		{
 			//timeout elapsed - dc not getting a chance to run - just bail
 			return false ;
@@ -1215,10 +1215,10 @@ bool wait_until_dc_running()
 bool acquire_mainloop_lock()
 {
 	bool result = false ;
-	retro_time_t start_time = retro_perf_get_time_usec_t() ;
+	retro_time_t start_time = perf_cb.get_time_usec() ;
 	const retro_time_t FIVE_SECONDS = 5*1000000 ;
 
-    while ( ( start_time+FIVE_SECONDS > retro_perf_get_time_usec_t() ) && !(result = mtx_mainloop.TryLock())  )
+    while ( ( start_time+FIVE_SECONDS > perf_cb.get_time_usec() ) && !(result = mtx_mainloop.TryLock())  )
    	{
     	rend_cancel_emu_wait();
    	}

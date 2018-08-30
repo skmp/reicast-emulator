@@ -288,13 +288,13 @@ struct _chd_file
 	UINT32					maxhunk;		/* maximum hunk accessed */
 
 	UINT8					compressing;	/* are we compressing? */
-	MD5_CTX					compmd5;		/* running MD5 during compression */
-	SHA1_CTX				compsha1;		/* running SHA1 during compression */
+	struct MD5Context		compmd5;		/* running MD5 during compression */
+	struct sha1_ctx			compsha1;		/* running SHA1 during compression */
 	UINT32					comphunk;		/* next hunk we will compress */
 
 	UINT8					verifying;		/* are we verifying? */
-	MD5_CTX					vermd5; 		/* running MD5 during verification */
-	SHA1_CTX				versha1;		/* running SHA1 during verification */
+	struct MD5Context		vermd5; 		/* running MD5 during verification */
+	struct sha1_ctx			versha1;		/* running SHA1 during verification */
 	UINT32					verhunk;		/* next hunk we will verify */
 
 	UINT32					async_hunknum;	/* hunk index for asynchronous operations */

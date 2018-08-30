@@ -203,6 +203,7 @@ extern "C" {
 #define CHDCOMPRESSION_AV			3
 
 /* general codecs */
+#define CHD_CODEC_NONE 				0
 #define CHD_CODEC_ZLIB				CHD_MAKE_TAG('z','l','i','b')
 #define CHD_CODEC_LZMA				CHD_MAKE_TAG('l','z','m','a')
 #define CHD_CODEC_HUFFMAN			CHD_MAKE_TAG('h','u','f','f')

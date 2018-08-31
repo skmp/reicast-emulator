@@ -91,8 +91,8 @@ void main() \n\
 	vtx_uv=in_uv; \n\
 	vec4 vpos=in_pos; \n\
 #if TARGET_GL != GLES2 && TARGET_GL != GL2 \n\
-   if (isinf(vpos.z)) \n\
-		vpos.w = 1.18e-38; \n\
+   if (abs(vpos.z) > 1.0e10) \n\
+      vpos.w = 1.18e-10; \n\
 	else \n\
 #endif \n\
 		vpos.w = 1.0 / vpos.z; \n\

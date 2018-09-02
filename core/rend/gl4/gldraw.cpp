@@ -915,8 +915,6 @@ void DrawFramebuffer(float w, float h)
  	glActiveTexture(GL_TEXTURE0);
 	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
 
-	glBindVertexArray(gl.vbo.vao);
-
  	// FIXME This make glDrawElements fails on OSX
 	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);

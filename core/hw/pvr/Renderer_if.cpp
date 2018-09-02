@@ -235,7 +235,10 @@ void rend_cancel_emu_wait()
 {
 #if !defined(TARGET_NO_THREADS)
 	if (settings.rend.ThreadedRendering)
+	{
+		rs.Set();
 		re.Set();
+	}
 #endif
 }
 

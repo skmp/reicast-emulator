@@ -867,3 +867,11 @@ typedef union
 } reg_pair;
 
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb) ;
+
+#define SAMPLE_COUNT 512
+
+struct SoundFrame
+{
+   s16 l;
+   s16 r;
+};

@@ -893,20 +893,20 @@ void DrawFramebuffer(float w, float h)
 	PipelineShader *shader = gl.getShader(shaderId);
 	if (shader->program == -1)
    {
-      CurrentShader->cp_AlphaTest = 0;
-		CurrentShader->pp_ClipTestMode = 1;
-		CurrentShader->pp_Texture = 1;
-		CurrentShader->pp_UseAlpha = 0;
-		CurrentShader->pp_IgnoreTexA = 1;
-		CurrentShader->pp_ShadInstr = 0;
-		CurrentShader->pp_Offset = 0;
-		CurrentShader->pp_FogCtrl = 2;
-		CurrentShader->pp_TwoVolumes = false;
-		CurrentShader->pp_DepthFunc = 0;
-		CurrentShader->pp_Gouraud = false;
-		CurrentShader->pp_BumpMap = false;
-      CurrentShader->fog_clamping = false;
-		CurrentShader->pass = 1;
+      shader->cp_AlphaTest = 0;
+		shader->pp_ClipTestMode = 0;
+		shader->pp_Texture = 1;
+		shader->pp_UseAlpha = 0;
+		shader->pp_IgnoreTexA = 1;
+		shader->pp_ShadInstr = 0;
+		shader->pp_Offset = 0;
+		shader->pp_FogCtrl = 2;
+		shader->pp_TwoVolumes = false;
+		shader->pp_DepthFunc = 0;
+		shader->pp_Gouraud = false;
+		shader->pp_BumpMap = false;
+		shader->fog_clamping = false;
+		shader->pass = 1;
 		CompilePipelineShader(shader);
    }
    glcache.UseProgram(shader->program);
@@ -914,9 +914,9 @@ void DrawFramebuffer(float w, float h)
 
  	glActiveTexture(GL_TEXTURE0);
 	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
- #ifndef GLES
+
 	glBindVertexArray(gl.vbo.vao);
-#endif
+
  	// FIXME This make glDrawElements fails on OSX
 	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);

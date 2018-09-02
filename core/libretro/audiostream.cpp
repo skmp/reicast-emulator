@@ -30,7 +30,7 @@ void WriteSample(s16 r, s16 l)
 		if ( settings.rend.ThreadedRendering  )
 		{
 			mtx_audioLock.Lock() ;
-			memcpy(((void*)RingBufferStored)+ring_buffer_size,RingBuffer,sizeof(RingBuffer)) ;
+			memcpy(((u8*)RingBufferStored)+ring_buffer_size,RingBuffer,sizeof(RingBuffer)) ;
 			ring_buffer_size += sizeof(RingBuffer) ;
 			if ( ring_buffer_size  >= sizeof(RingBufferStored) )
 			{

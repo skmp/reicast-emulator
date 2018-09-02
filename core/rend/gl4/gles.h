@@ -40,6 +40,7 @@ struct PipelineShader
    GLuint shading_instr;
    GLuint fog_control;
    GLuint trilinear_alpha;
+   GLuint fog_clamp_min, fog_clamp_max;
 
    //
 	u32 cp_AlphaTest;
@@ -50,6 +51,7 @@ struct PipelineShader
    bool pp_TwoVolumes;
    bool pp_Gouraud;
    bool pp_BumpMap;
+   bool fog_clamping;
 };
 
 
@@ -121,7 +123,7 @@ void DrawFramebuffer(float w, float h);
 
 int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool two_volumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, int pass);
+							u32 pp_FogCtrl, bool two_volumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, int pass);
 void SetCull(u32 CulliMode);
 
 extern struct _ShaderUniforms_t ShaderUniforms;
@@ -296,6 +298,8 @@ typedef struct _ShaderUniforms_t
 	TSP tsp1;
 	TCW tcw0;
 	TCW tcw1;
+   float fog_clamp_min[4];
+	float fog_clamp_max[4];
 
 	void setUniformArray(GLuint location, int v0, int v1)
 	{
@@ -348,5 +352,10 @@ typedef struct _ShaderUniforms_t
 
       if (s->trilinear_alpha != -1)
 			glUniform1f(s->trilinear_alpha, trilinear_alpha);
+
+      if (s->fog_clamp_min != -1)
+			glUniform4fv(s->fog_clamp_min, 1, fog_clamp_min);
+		if (s->fog_clamp_max != -1)
+			glUniform4fv(s->fog_clamp_max, 1, fog_clamp_max);
    }
 } _ShaderUniforms;

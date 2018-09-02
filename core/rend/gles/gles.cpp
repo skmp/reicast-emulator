@@ -125,6 +125,7 @@ const char* PixelPipelineShader =
 #define pp_FogCtrl %d \n\
 #define pp_Gouraud %d \n\
 #define pp_BumpMap %d \n\
+#define FogClamping %d \n\
 #define PI 3.1415926 \n\
 \n\
 #define GLES2 0 \n\
@@ -170,10 +171,13 @@ uniform lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
 uniform highp float sp_FOG_DENSITY; \n\
 uniform sampler2D tex,fog_table; \n\
 uniform lowp float trilinear_alpha; \n\
+uniform lowp vec4 fog_clamp_min; \n\
+uniform lowp vec4 fog_clamp_max; \n\
 /* Vertex input*/ \n\
 INTERPOLATION in lowp vec4 vtx_base; \n\
 INTERPOLATION in lowp vec4 vtx_offs; \n\
 in mediump vec2 vtx_uv; \n\
+\n\
 lowp float fog_mode2(highp float w) \n\
 { \n\
    highp float z   = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\
@@ -183,6 +187,16 @@ lowp float fog_mode2(highp float w) \n\
    highp vec4 fog_coef = texture(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0)); \n\
    return fog_coef.FOG_CHANNEL; \n\
 } \n\
+ \n\
+highp vec4 fog_clamp(highp vec4 col) \n\
+{ \n\
+#if FogClamping == 1 \n\
+	return clamp(col, fog_clamp_min, fog_clamp_max); \n\
+#else \n\
+	return col; \n\
+#endif \n\
+} \n\
+ \n\
 void main() \n\
 { \n\
 	// Clip outside the box \n\
@@ -249,9 +263,12 @@ void main() \n\
 		#if pp_Offset==1 && pp_BumpMap == 0 \n\
 		{ \n\
 			color.rgb+=vtx_offs.rgb; \n\
+         color = fog_clamp(color); \n\
 			if (pp_FogCtrl==1) \n\
 				color.rgb=mix(color.rgb,sp_FOG_COL_VERT.rgb,vtx_offs.a); \n\
 		} \n\
+      #else \n\
+         color = fog_clamp(color); \n\
 		#endif\n\
 	} \n\
 	#endif\n\
@@ -315,7 +332,7 @@ int GetProgramID(
       u32 pp_IgnoreTexA,
       u32 pp_ShadInstr,
       u32 pp_Offset,
-      u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap)
+      u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping)
 {
 	u32 rv=0;
 
@@ -329,6 +346,7 @@ int GetProgramID(
 	rv<<=2; rv|=pp_FogCtrl;
    rv<<=1; rv|=pp_Gouraud;
    rv<<=1; rv|=pp_BumpMap;
+   rv<<=1; rv|=fog_clamping;
 
 	return rv;
 }
@@ -468,7 +486,7 @@ bool CompilePipelineShader(PipelineShader *s)
 
    sprintf(pshader,PixelPipelineShader, gl.glsl_version_header, gl.gl_version,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap);
+                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping);
 
 	s->program            = gl_CompileAndLink(vshader, pshader);
 
@@ -506,6 +524,17 @@ bool CompilePipelineShader(PipelineShader *s)
    if (gu != -1)
       glUniform1i(gu, 1);
    s->trilinear_alpha = glGetUniformLocation(s->program, "trilinear_alpha");
+   
+   if (s->fog_clamping)
+	{
+		s->fog_clamp_min = glGetUniformLocation(s->program, "fog_clamp_min");
+		s->fog_clamp_max = glGetUniformLocation(s->program, "fog_clamp_max");
+	}
+	else
+	{
+		s->fog_clamp_min = -1;
+		s->fog_clamp_max = -1;
+	}
 
    ShaderUniforms.Set(s);
 
@@ -568,6 +597,7 @@ static bool gl_create_resources(void)
    u32 pp_ShadInstr;
    u32 pp_Gouraud;
    u32 pp_BumpMap;
+   u32 fog_clamping;
 	PipelineShader* dshader  = 0;
    u32 compile              = 0;
 
@@ -599,27 +629,31 @@ static bool gl_create_resources(void)
                            {
                               for (pp_BumpMap = 0; pp_BumpMap <= 1; pp_BumpMap++)
                               {
-                                 dshader                  = &gl.program_table[GetProgramID(
-                                       cp_AlphaTest,
-                                       pp_ClipTestMode,
-                                       pp_Texture,
-                                       pp_UseAlpha,
-                                       pp_IgnoreTexA,
-                                       pp_ShadInstr,
-                                       pp_Offset,pp_FogCtrl,(bool)pp_Gouraud,
-                                       (bool)pp_BumpMap)];
+                                 for (fog_clamping = 0; fog_clamping <= 1; fog_clamping++)
+                                 {
+                                    dshader                  = &gl.program_table[GetProgramID(
+                                          cp_AlphaTest,
+                                          pp_ClipTestMode,
+                                          pp_Texture,
+                                          pp_UseAlpha,
+                                          pp_IgnoreTexA,
+                                          pp_ShadInstr,
+                                          pp_Offset,pp_FogCtrl,(bool)pp_Gouraud,
+                                          (bool)pp_BumpMap, (bool)fog_clamping)];
 
-                                 dshader->cp_AlphaTest    = cp_AlphaTest;
-                                 dshader->pp_ClipTestMode = pp_ClipTestMode-1;
-                                 dshader->pp_Texture      = pp_Texture;
-                                 dshader->pp_UseAlpha     = pp_UseAlpha;
-                                 dshader->pp_IgnoreTexA   = pp_IgnoreTexA;
-                                 dshader->pp_ShadInstr    = pp_ShadInstr;
-                                 dshader->pp_Offset       = pp_Offset;
-                                 dshader->pp_FogCtrl      = pp_FogCtrl;
-                                 dshader->pp_Gouraud      = pp_Gouraud;
-                                 dshader->pp_BumpMap      = pp_BumpMap;
-                                 dshader->program         = -1;
+                                    dshader->cp_AlphaTest    = cp_AlphaTest;
+                                    dshader->pp_ClipTestMode = pp_ClipTestMode-1;
+                                    dshader->pp_Texture      = pp_Texture;
+                                    dshader->pp_UseAlpha     = pp_UseAlpha;
+                                    dshader->pp_IgnoreTexA   = pp_IgnoreTexA;
+                                    dshader->pp_ShadInstr    = pp_ShadInstr;
+                                    dshader->pp_Offset       = pp_Offset;
+                                    dshader->pp_FogCtrl      = pp_FogCtrl;
+                                    dshader->pp_Gouraud      = pp_Gouraud;
+                                    dshader->pp_BumpMap      = pp_BumpMap;
+                                    dshader->fog_clamping    = fog_clamping;
+                                    dshader->program         = -1;
+                                 }
                               }
                            }
                         }
@@ -810,6 +844,16 @@ static bool RenderFrame(void)
    float fog_den_float = fog_den_mant * powf(2.0f,fog_den_exp);
 #endif
 	ShaderUniforms.fog_den_float= fog_den_float;
+
+   ShaderUniforms.fog_clamp_min[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
+	ShaderUniforms.fog_clamp_min[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
+	ShaderUniforms.fog_clamp_min[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
+	ShaderUniforms.fog_clamp_min[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
+	
+	ShaderUniforms.fog_clamp_max[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
+	ShaderUniforms.fog_clamp_max[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
+	ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
+	ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
 
 
 	if (fog_needs_update)

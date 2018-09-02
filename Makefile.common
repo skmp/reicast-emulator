@@ -78,7 +78,6 @@ SOURCES_CXX := \
 					$(CORE_DIR)/core/stdclass.cpp \
 					\
 					$(DEPS_DIR)/coreio/coreio.cpp \
-					$(DEPS_DIR)/chdr/chdr.cpp \
 					$(DEPS_DIR)/crypto/sha1.cpp \
 					$(DEPS_DIR)/crypto/sha256.cpp \
 					$(DEPS_DIR)/crypto/md5.cpp \
@@ -92,6 +91,13 @@ SOURCES_CXX := \
 					$(CORE_DIR)/core/reios/reios.cpp \
 					$(CORE_DIR)/core/reios/gdrom_hle.cpp \
 					$(CORE_DIR)/core/reios/descrambl.cpp
+
+SOURCES_C +=   \
+					$(DEPS_DIR)/chdr/bitstream.c \
+					$(DEPS_DIR)/chdr/cdrom.c \
+					$(DEPS_DIR)/chdr/chd.c \
+					$(DEPS_DIR)/chdr/flac.c \
+					$(DEPS_DIR)/chdr/huffman.c
 SOURCES_ASM :=
 
 ifeq ($(NO_REND), 1)
@@ -184,6 +190,27 @@ endif
 
 ifeq ($(HAVE_TEXUPSCALE),1)
 SOURCES_CXX += $(DEPS_DIR)/xbrz/xbrz.cpp
+endif
+
+ifeq ($(HAVE_CHD),1)
+INCFLAGS += -I$(DEPS_DIR)/flac/include
+
+SOURCES_C += \
+				 $(DEPS_DIR)/flac/bitmath.c \
+				 $(DEPS_DIR)/flac/bitreader.c \
+				 $(DEPS_DIR)/flac/cpu.c \
+				 $(DEPS_DIR)/flac/crc.c \
+				 $(DEPS_DIR)/flac/fixed.c \
+				 $(DEPS_DIR)/flac/float.c \
+				 $(DEPS_DIR)/flac/format.c \
+				 $(DEPS_DIR)/flac/lpc.c \
+				 $(DEPS_DIR)/flac/md5.c \
+				 $(DEPS_DIR)/flac/memory.c \
+				 $(DEPS_DIR)/flac/stream_decoder.c
+
+SOURCES_C += $(DEPS_DIR)/lzma/C/LzFind.c \
+				 $(DEPS_DIR)/lzma/C/LzmaDec.c \
+				 $(DEPS_DIR)/lzma/C/LzmaEnc.c
 endif
 
 SOURCES_C +=   $(DEPS_DIR)/zlib/deflate.c \

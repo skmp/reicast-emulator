@@ -14,6 +14,7 @@ DYNAFLAGS     :=
 NO_THREADS    := 0
 HAVE_NEON     := 0
 WITH_DYNAREC  :=
+HAVE_CHD      := 1
 
 HAVE_GL       := 1
 HAVE_OPENGL   := 1
@@ -71,6 +72,10 @@ endif
 GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")
   COREFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
+endif
+
+ifeq ($(HAVE_CHD),1)
+COREFLAGS += -DFLAC__HAS_OGG=0 -FLAC__NO_DLL -DHAVE_LROUND -DHAVE_STDINT_H -DHAVE_STDLIB_H -DHAVE_SYS_PARAM_H -D_7ZIP_ST -DUSE_FLAC -DUSE_LZMA
 endif
 
 include $(CLEAR_VARS)

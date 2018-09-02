@@ -302,14 +302,7 @@ void main() \n\
 		#if pp_Offset==1 && pp_BumpMap == 0 \n\
 		{ \n\
          color.rgb += offset.rgb; \n\
-         color = fog_clamp(color); \n\
-         #if pp_FogCtrl == 1 || pp_TwoVolumes == 1  // Per vertex \n\
-            IF(cur_fog_control == 1) \n\
-               color.rgb=mix(color.rgb, sp_FOG_COL_VERT.rgb, offset.a); \n\
-            #endif\n\
 		} \n\
-      #else \n\
-			color = fog_clamp(color); \n\
 		#endif\n\
 	} \n\
 	#endif\n\
@@ -319,10 +312,18 @@ void main() \n\
 			color.rgb *= shade_scale_factor; \n\
 	#endif\n\
    #if pp_FogCtrl==0 || pp_TwoVolumes == 1 // LUT \n\
-   IF(cur_fog_control == 0) \n\
-	{ \n\
-		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
-	} \n\
+   	IF(cur_fog_control == 0) \n\
+		{ \n\
+			color = fog_clamp(color); \n\
+			color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
+		} \n\
+	#endif\n\
+	#if pp_Offset==1 && pp_BumpMap == 0 && (pp_FogCtrl == 1 || pp_TwoVolumes == 1)  // Per vertex \n\
+		IF(cur_fog_control == 1) \n\
+		{ \n\
+			color = fog_clamp(color); \n\
+			color.rgb=mix(color.rgb, sp_FOG_COL_VERT.rgb, offset.a); \n\
+		} \n\
 	#endif\n\
    color *= trilinear_alpha; \n\
 	 \n\

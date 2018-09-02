@@ -124,10 +124,15 @@ char game_dir_no_slash[1024];
 static bool emu_inited = false;
 static bool performed_serialization = false;
 #if !defined(TARGET_NO_THREADS)
+extern SoundFrame RingBuffer[SAMPLE_COUNT];
+extern SoundFrame RingBufferStored[SAMPLE_COUNT];
+extern u32 ring_buffer_size ;
+extern bool flush_audio_buf;
 static void *emu_thread_func(void *);
 static cThread emu_thread(&emu_thread_func, 0);
 static cMutex mtx_serialization ;
 static cMutex mtx_mainloop ;
+extern cMutex mtx_audioLock ;
 static void *emu_thread_func(void *)
 {
     char* argv[] = { "reicast" };
@@ -139,6 +144,7 @@ static void *emu_thread_func(void *)
     {
     	performed_serialization = false ;
     	mtx_mainloop.Lock() ;
+    	rend_cancel_emu_wait() ;
         dc_run();
         mtx_mainloop.Unlock() ;
 
@@ -149,6 +155,7 @@ static void *emu_thread_func(void *)
     		break ;
     }
 
+	rend_cancel_emu_wait() ;
     dc_term();
 
     return NULL;
@@ -809,6 +816,15 @@ void retro_run (void)
 
 	   glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
 
+	   mtx_audioLock.Lock() ;
+	   if ( flush_audio_buf )
+	   {
+			audio_batch_cb((const int16_t*)RingBufferStored, (ring_buffer_size/sizeof(RingBuffer))*SAMPLE_COUNT);
+			flush_audio_buf = false ;
+			ring_buffer_size = 0 ;
+	   }
+	   mtx_audioLock.Unlock() ;
+
 	   poll_cb();
    }
    else
@@ -1239,7 +1255,7 @@ bool retro_serialize(void *data, size_t size)
     if (settings.rend.ThreadedRendering && emu_inited)
     {
     	mtx_serialization.Lock() ;
-    	if ( !wait_until_dc_running) {
+    	if ( !wait_until_dc_running()) {
         	mtx_serialization.Unlock() ;
         	return false ;
     	}
@@ -1248,6 +1264,7 @@ bool retro_serialize(void *data, size_t size)
   		if ( !acquire_mainloop_lock() )
   		{
   			dc_start() ;
+        	mtx_serialization.Unlock() ;
   			return false ;
   		}
     }
@@ -1282,7 +1299,7 @@ bool retro_unserialize(const void * data, size_t size)
     if (settings.rend.ThreadedRendering && emu_inited)
     {
     	mtx_serialization.Lock() ;
-    	if ( !wait_until_dc_running) {
+    	if ( !wait_until_dc_running()) {
         	mtx_serialization.Unlock() ;
         	return false ;
     	}
@@ -1290,6 +1307,7 @@ bool retro_unserialize(const void * data, size_t size)
   		if ( !acquire_mainloop_lock() )
   		{
   			dc_start() ;
+        	mtx_serialization.Unlock() ;
   			return false ;
   		}
     }

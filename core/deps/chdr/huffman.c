@@ -435,8 +435,9 @@ int huffman_build_tree(struct huffman_decoder* decoder, uint32_t totaldata, uint
 		/* if we have a non-zero weight, compute the number of bits */
 		if (node->weight > 0)
 		{
+         struct node_t *curnode = NULL;
 			/* determine the number of bits for this node */
-			for (struct node_t *curnode = node; curnode->parent != NULL; curnode = curnode->parent)
+			for (curnode = node; curnode->parent != NULL; curnode = curnode->parent)
 				node->numbits++;
 			if (node->numbits == 0)
 				node->numbits = 1;

@@ -194,7 +194,7 @@ struct TA_context
       rend.proc_end = render_pass == tad.render_pass_count ? tad.End() : 
          tad.render_passes[render_pass];
 	}
-	void Alloc(bool have_oit)
+	void Alloc()
 	{
       unsigned modtrig_size = 16384;
       unsigned    vert_size = 4*1024*1024; //up to 4 mb of vtx data/frame = ~ 96k vtx/frame

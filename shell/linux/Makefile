@@ -238,6 +238,19 @@ else
     $(error Unknown platform)
 endif
 
+# 7-Zip/LZMA settings (CHDv5)
+ifdef USE_LZMA
+	CFLAGS += -D_7ZIP_ST -D USE_LZMA
+endif
+
+# FLAC settings (CHDv5)
+ifdef USE_FLAC
+	RZDCY_CFLAGS += -DPACKAGE_VERSION="1.3.2" -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL -DHAVE_LROUND -DHAVE_STDINT_H -DHAVE_STDLIB_H -DHAVE_SYS_PARAM_H
+	INCS += -I$(RZDCY_SRC_DIR)/deps/flac/include -I$(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/include
+	CFLAGS += -D USE_FLAC
+	LIBS += `pkg-config --libs flac`
+endif
+
 RZDCY_SRC_DIR = $(LOCAL_PATH)/../../core
 include $(RZDCY_SRC_DIR)/core.mk
 
@@ -253,17 +266,6 @@ INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
 LIBS += -lm -lrt -ldl
 LIBS  += -lpthread
-
-# 7-Zip/LZMA settings (CHDv5)
-ifdef USE_LZMA
-	CFLAGS += -D_7ZIP_ST
-endif
-
-# FLAC settings (CHDv5)
-ifdef USE_FLAC
-	RZDCY_CFLAGS += -DPACKAGE_VERSION="1.3.2" -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL -DHAVE_LROUND -DHAVE_STDINT_H -DHAVE_STDLIB_H -DHAVE_SYS_PARAM_H
-	INCS += -I$(RZDCY_SRC_DIR)/deps/flac/include -I$(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/include
-endif
 
 PREFIX ?= /usr/local
 MAN_DIR ?= ${PREFIX}/share/man/man1

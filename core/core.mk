@@ -15,12 +15,7 @@ RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
 	RZDCY_MODULES += deps/lzma/C/
  endif
 
- ifdef USE_FLAC
-	RZDY_MODULES += deps/flac/src/libFLAC/
- endif
-
-
-ifdef WEBUI
+ ifdef WEBUI
 	RZDCY_MODULES += webui/
 	RZDCY_MODULES += deps/libwebsocket/
 

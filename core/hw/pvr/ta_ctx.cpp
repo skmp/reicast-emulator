@@ -183,13 +183,8 @@ TA_context* tactx_Alloc(void)
 	
 	if (!rv)
    {
-#ifdef HAVE_OIT
-      bool have_oit = true;
-#else
-      bool have_oit = false;
-#endif
       rv = new TA_context();
-      rv->Alloc(have_oit);
+      rv->Alloc();
       printf("new tactx\n");
    }
 

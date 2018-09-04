@@ -101,6 +101,7 @@ const char* PixelPipelineShader = SHADER_HEADER
 #define pp_DepthFunc %d \n\
 #define pp_Gouraud %d \n\
 #define pp_BumpMap %d \n\
+#define FogClamping %d \n\
 #define PASS %d \n\
 #define PI 3.1415926 \n\
  \n"
@@ -134,6 +135,8 @@ uniform int pp_Number; \n\
 uniform usampler2D shadow_stencil; \n\
 uniform sampler2D DepthTex; \n\
 uniform lowp float trilinear_alpha; \n\
+uniform lowp vec4 fog_clamp_min; \n\
+uniform lowp vec4 fog_clamp_max; \n\
 \n\
 uniform ivec2 blend_mode[2]; \n\
 #if pp_TwoVolumes == 1 \n\
@@ -150,6 +153,7 @@ INTERPOLATION in lowp vec4 vtx_offs; \n\
 INTERPOLATION in lowp vec4 vtx_base1; \n\
 INTERPOLATION in lowp vec4 vtx_offs1; \n\
 			  in mediump vec2 vtx_uv1; \n\
+ \n\
 lowp float fog_mode2(highp float w) \n\
 { \n\
    highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\ 
@@ -159,6 +163,16 @@ lowp float fog_mode2(highp float w) \n\
    vec4 fog_coef = texture(fog_table, vec2(idx / 128, 0.75 - (m - floor(m)) / 2)); \n\
    return fog_coef." FOG_CHANNEL "; \n\
 } \n\
+ \n\
+highp vec4 fog_clamp(highp vec4 col) \n\
+{ \n\
+#if FogClamping == 1 \n\
+	return clamp(col, fog_clamp_min, fog_clamp_max); \n\
+#else \n\
+	return col; \n\
+#endif \n\
+} \n\
+ \n\
 void main() \n\
 { \n\
    setFragDepth(); \n\
@@ -288,10 +302,6 @@ void main() \n\
 		#if pp_Offset==1 && pp_BumpMap == 0 \n\
 		{ \n\
          color.rgb += offset.rgb; \n\
-         #if pp_FogCtrl == 1 || pp_TwoVolumes == 1  // Per vertex \n\
-            IF(cur_fog_control == 1) \n\
-               color.rgb=mix(color.rgb, sp_FOG_COL_VERT.rgb, offset.a); \n\
-            #endif\n\
 		} \n\
 		#endif\n\
 	} \n\
@@ -302,10 +312,18 @@ void main() \n\
 			color.rgb *= shade_scale_factor; \n\
 	#endif\n\
    #if pp_FogCtrl==0 || pp_TwoVolumes == 1 // LUT \n\
-   IF(cur_fog_control == 0) \n\
-	{ \n\
-		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
-	} \n\
+   	IF(cur_fog_control == 0) \n\
+		{ \n\
+			color = fog_clamp(color); \n\
+			color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
+		} \n\
+	#endif\n\
+	#if pp_Offset==1 && pp_BumpMap == 0 && (pp_FogCtrl == 1 || pp_TwoVolumes == 1)  // Per vertex \n\
+		IF(cur_fog_control == 1) \n\
+		{ \n\
+			color = fog_clamp(color); \n\
+			color.rgb=mix(color.rgb, sp_FOG_COL_VERT.rgb, offset.a); \n\
+		} \n\
 	#endif\n\
    color *= trilinear_alpha; \n\
 	 \n\
@@ -408,7 +426,7 @@ int GetProgramID(
       u32 pp_IgnoreTexA,
       u32 pp_ShadInstr,
       u32 pp_Offset,
-      u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, int pass)
+      u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, int pass)
 {
 	u32 rv=0;
 
@@ -424,6 +442,7 @@ int GetProgramID(
    rv <<= 3; rv |= pp_DepthFunc;
    rv <<= 1; rv |= (int)pp_Gouraud;
    rv <<= 1; rv |= pp_BumpMap;
+   rv <<= 1; rv |= fog_clamping;
    rv <<= 2; rv |= pass;
 
 	return rv;
@@ -522,7 +541,7 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
 
 	sprintf(pshader, source,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_TwoVolumes, s->pp_DepthFunc, s->pp_Gouraud, s->pp_BumpMap, s->pass);
+                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_TwoVolumes, s->pp_DepthFunc, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, s->pass);
 
 
    s->program = gl_CompileAndLink(vshader, pshader);
@@ -569,6 +588,18 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
 		glUniform1i(gu, 2);     // GL_TEXTURE2
 
    s->trilinear_alpha = glGetUniformLocation(s->program, "trilinear_alpha");
+
+   if (s->fog_clamping)
+   {
+      s->fog_clamp_min = glGetUniformLocation(s->program, "fog_clamp_min");
+      s->fog_clamp_max = glGetUniformLocation(s->program, "fog_clamp_max");
+   }
+   else
+   {
+      s->fog_clamp_min = -1;
+      s->fog_clamp_max = -1;
+   }
+
 
    // Shadow stencil for OP/PT rendering pass
    gu = glGetUniformLocation(s->program, "shadow_stencil");
@@ -920,6 +951,16 @@ static bool RenderFrame(void)
    float fog_den_float = fog_den_mant * powf(2.0f,fog_den_exp);
 #endif
 	ShaderUniforms.fog_den_float= fog_den_float;
+
+   ShaderUniforms.fog_clamp_min[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
+	ShaderUniforms.fog_clamp_min[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
+	ShaderUniforms.fog_clamp_min[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
+	ShaderUniforms.fog_clamp_min[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
+	
+	ShaderUniforms.fog_clamp_max[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
+	ShaderUniforms.fog_clamp_max[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
+	ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
+	ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
 
    if (fog_needs_update)
 	{

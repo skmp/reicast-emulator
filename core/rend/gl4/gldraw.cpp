@@ -184,6 +184,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
             0,
             false,
             false,
+            false,
 				pass);
 
 		CurrentShader = gl.getShader(shaderId);
@@ -199,6 +200,8 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
          CurrentShader->pp_TwoVolumes = false;
          CurrentShader->pp_DepthFunc = 0;
          CurrentShader->pp_Gouraud = false;
+         CurrentShader->pp_BumpMap = false;
+			CurrentShader->fog_clamping = pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff;
          CurrentShader->pass = pass;
 
 			CompilePipelineShader(CurrentShader);
@@ -231,6 +234,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
                depth_func,
                gp->pcw.Gouraud,
                gp->tcw.PixelFmt == PixelBumpMap,
+               pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff,
                pass);
       CurrentShader = gl.getShader(shaderId);
 
@@ -247,6 +251,7 @@ __forceinline void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
          CurrentShader->pp_DepthFunc = depth_func;
          CurrentShader->pp_Gouraud = gp->pcw.Gouraud;
          CurrentShader->pp_BumpMap = gp->tcw.PixelFmt == PixelBumpMap;
+         CurrentShader->fog_clamping = pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff;
          CurrentShader->pass       = pass;
 
          CompilePipelineShader(CurrentShader);
@@ -883,23 +888,25 @@ void DrawFramebuffer(float w, float h)
 				0,
 				false,
 				false,
+            false,
 				1);
 	PipelineShader *shader = gl.getShader(shaderId);
 	if (shader->program == -1)
    {
-      CurrentShader->cp_AlphaTest = 0;
-		CurrentShader->pp_ClipTestMode = 1;
-		CurrentShader->pp_Texture = 1;
-		CurrentShader->pp_UseAlpha = 0;
-		CurrentShader->pp_IgnoreTexA = 1;
-		CurrentShader->pp_ShadInstr = 0;
-		CurrentShader->pp_Offset = 0;
-		CurrentShader->pp_FogCtrl = 2;
-		CurrentShader->pp_TwoVolumes = false;
-		CurrentShader->pp_DepthFunc = 0;
-		CurrentShader->pp_Gouraud = false;
-		CurrentShader->pp_BumpMap = false;
-		CurrentShader->pass = 1;
+      shader->cp_AlphaTest = 0;
+		shader->pp_ClipTestMode = 0;
+		shader->pp_Texture = 1;
+		shader->pp_UseAlpha = 0;
+		shader->pp_IgnoreTexA = 1;
+		shader->pp_ShadInstr = 0;
+		shader->pp_Offset = 0;
+		shader->pp_FogCtrl = 2;
+		shader->pp_TwoVolumes = false;
+		shader->pp_DepthFunc = 0;
+		shader->pp_Gouraud = false;
+		shader->pp_BumpMap = false;
+		shader->fog_clamping = false;
+		shader->pass = 1;
 		CompilePipelineShader(shader);
    }
    glcache.UseProgram(shader->program);
@@ -907,28 +914,15 @@ void DrawFramebuffer(float w, float h)
 
  	glActiveTexture(GL_TEXTURE0);
 	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
- #ifndef GLES
-	glBindVertexArray(gl.vbo.vao);
-#endif
- 	// FIXME This make glDrawElements fails on OSX
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
- 	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry);
+
+   SetupMainVBO();
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
- 	//setup vertex buffers attrib pointers
-	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
-	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
- 	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
-	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, col));
- 	glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
-	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, vtx_spc));
- 	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
-	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u));
-	
-	// FIXME This fails on OSX
-//	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, indices);
+   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
  	glcache.DeleteTextures(1, &fbTextureId);
 	fbTextureId = 0;
+
+   glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.bytes(), pvrrc.idx.head(), GL_STREAM_DRAW);
 }

@@ -3,6 +3,7 @@
 #include <libretro.h>
 
 extern retro_audio_sample_batch_t audio_batch_cb;
+bool dc_is_running();
 
 
 #if !defined(TARGET_NO_THREADS)
@@ -38,6 +39,10 @@ void WriteSample(s16 r, s16 l)
 			}
 			flush_audio_buf = true ;
 			mtx_audioLock.Unlock() ;
+			while ( flush_audio_buf && dc_is_running() )
+			{
+				//wait for emu_thread to reset flush_audio_buf or until the CPU processing has stopped
+			}
 		}
 		else
 #endif

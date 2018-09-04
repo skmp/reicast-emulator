@@ -125,7 +125,7 @@ static bool emu_inited = false;
 static bool performed_serialization = false;
 #if !defined(TARGET_NO_THREADS)
 extern SoundFrame RingBuffer[SAMPLE_COUNT];
-extern SoundFrame RingBufferStored[SAMPLE_COUNT];
+extern SoundFrame RingBufferStored[SAMPLE_COUNT*10];
 extern u32 ring_buffer_size ;
 extern bool flush_audio_buf;
 static void *emu_thread_func(void *);
@@ -210,6 +210,22 @@ static void input_set_deadzone_trigger( int percent )
 {
    if ( percent >= 0 && percent <= 100 )
       trigger_deadzone = (int)( percent * 0.01f * 0x8000);
+}
+
+void audiocallback()
+{
+	   mtx_audioLock.Lock() ;
+	   if ( flush_audio_buf )
+	   {
+			audio_batch_cb((const int16_t*)RingBufferStored, (ring_buffer_size/sizeof(RingBuffer))*SAMPLE_COUNT);
+			flush_audio_buf = false ;
+			ring_buffer_size = 0 ;
+	   }
+	   mtx_audioLock.Unlock() ;
+
+}
+void audio_setstate(bool enabled)
+{
 }
 
 void retro_set_environment(retro_environment_t cb)
@@ -356,6 +372,11 @@ void retro_set_environment(retro_environment_t cb)
    };
 
    cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
+
+   retro_audio_callback acb ;
+   acb.callback = audiocallback ;
+   acb.set_state = audio_setstate ;
+   cb(RETRO_ENVIRONMENT_SET_AUDIO_CALLBACK, &acb) ;
 }
 
 
@@ -815,15 +836,6 @@ void retro_run (void)
 	   is_dupe = !rend_single_frame();
 
 	   glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
-
-	   mtx_audioLock.Lock() ;
-	   if ( flush_audio_buf )
-	   {
-			audio_batch_cb((const int16_t*)RingBufferStored, (ring_buffer_size/sizeof(RingBuffer))*SAMPLE_COUNT);
-			flush_audio_buf = false ;
-			ring_buffer_size = 0 ;
-	   }
-	   mtx_audioLock.Unlock() ;
 
 	   poll_cb();
    }

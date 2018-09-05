@@ -91,12 +91,11 @@ void main() \n\
 	vtx_offs=in_offs; \n\
 	vtx_uv=in_uv; \n\
 	vec4 vpos=in_pos; \n\
+	vpos.w = extra_depth_scale / vpos.z; \n\
 #if TARGET_GL != GLES2 && TARGET_GL != GL2 \n\
-   if (abs(vpos.z) > 1.0e10) \n\
-      vpos.w = 1.18e-10; \n\
-	else \n\
+	if (abs(vpos.w) < 1.18e-10) \n\
+		vpos.w = 1.18e-10; \n\
 #endif \n\
-		vpos.w = extra_depth_scale / vpos.z; \n\
 #if TARGET_GL != GLES2 \n\
    if (vpos.w < 0.0) { \n\
       gl_Position = vec4(0.0, 0.0, 0.0, vpos.w); \n\

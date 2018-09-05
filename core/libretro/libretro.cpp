@@ -279,6 +279,10 @@ void retro_set_environment(retro_environment_t cb)
 #endif
       },
       {
+         "reicast_extra_depth_scale",
+         "Extra depth scaling; disabled|enabled",
+      },
+      {
          "reicast_gdrom_fast_loading",
          "GDROM Fast Loading (inaccurate); disabled|enabled",
       },
@@ -486,6 +490,16 @@ static void update_variables(bool first_startup)
    }
    else
       boot_to_bios = false;
+
+   var.key = "reicast_extra_depth_scale";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "enabled"))
+         settings.rend.ExtraDepthScale        = 1e26;
+      else
+         settings.rend.ExtraDepthScale        = 1.f;
+   }
 
    var.key = "reicast_gdrom_fast_loading";
 

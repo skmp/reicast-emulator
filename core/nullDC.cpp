@@ -446,6 +446,7 @@ void LoadSettings(void)
    settings.rend.RenderToTextureUpscale = 1;
 	settings.rend.MaxFilteredTextureSize = 256;
 #endif
+   settings.rend.ExtraDepthScale        = 1.f;
    settings.rend.Clipping               = true;
 
 

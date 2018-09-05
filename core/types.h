@@ -519,6 +519,7 @@ struct settings_t
 		bool Clipping;
       int TextureUpscale;
 		int MaxFilteredTextureSize;
+      f32 ExtraDepthScale;
 		bool ThreadedRendering;
 	} rend;
 

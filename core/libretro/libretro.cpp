@@ -214,6 +214,9 @@ static void input_set_deadzone_trigger( int percent )
 
 void audiocallback()
 {
+#if !defined(TARGET_NO_THREADS)
+    if (settings.rend.ThreadedRendering && emu_inited)
+    {
 	   mtx_audioLock.Lock() ;
 	   if ( flush_audio_buf )
 	   {
@@ -222,7 +225,8 @@ void audiocallback()
 			ring_buffer_size = 0 ;
 	   }
 	   mtx_audioLock.Unlock() ;
-
+    }
+#endif
 }
 void audio_setstate(bool enabled)
 {

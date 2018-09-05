@@ -72,11 +72,9 @@ void main() \n\
 	vtx_offs1 = in_offs1; \n\
 	vtx_uv1 = in_uv1; \n\
 	vec4 vpos=in_pos; \n\
-   if (abs(vpos.z) > 1.0e10) \n\
-      vpos.w = 1.18e-10; \n\
-	else \n\
-		vpos.w = extra_depth_scale / vpos.z; \n"
-	"\
+	vpos.w = extra_depth_scale / vpos.z; \n\
+	if (abs(vpos.w) < 1.18e-10) \n\
+		vpos.w = 1.18e-10; \n\
    if (vpos.w < 0.0) { \n\
       gl_Position = vec4(0.0, 0.0, 0.0, vpos.w); \n\
          return; \n\
@@ -158,7 +156,7 @@ INTERPOLATION in lowp vec4 vtx_offs1; \n\
  \n\
 lowp float fog_mode2(highp float w) \n\
 { \n\
-   highp float z = clamp(w * extra_depth_scale * sp_FOG_DENSITY, 1.0, 255.9999); \n\ 
+   highp float z = clamp(w * extra_depth_scale * sp_FOG_DENSITY, 1.0, 255.9999); \n\
    uint i = uint(floor(log2(z))); \n\
    highp float m = z * 16 / pow(2, i) - 16; \n\
    float idx = floor(m) + i * 16 + 0.5; \n\

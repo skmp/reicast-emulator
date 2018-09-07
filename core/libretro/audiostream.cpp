@@ -34,9 +34,7 @@ void WriteSample(s16 r, s16 l)
 			memcpy(((u8*)RingBufferStored)+ring_buffer_size,RingBuffer,sizeof(RingBuffer)) ;
 			ring_buffer_size += sizeof(RingBuffer) ;
 			if ( ring_buffer_size  >= sizeof(RingBufferStored) )
-			{
 				ring_buffer_size = 0 ;
-			}
 			flush_audio_buf = true ;
 			mtx_audioLock.Unlock() ;
 			while ( flush_audio_buf && dc_is_running() )

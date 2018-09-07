@@ -132,7 +132,6 @@ static void *emu_thread_func(void *);
 static cThread emu_thread(&emu_thread_func, 0);
 static cMutex mtx_serialization ;
 static cMutex mtx_mainloop ;
-extern cMutex mtx_audioLock ;
 static void *emu_thread_func(void *)
 {
     char* argv[] = { "reicast" };
@@ -212,20 +211,26 @@ static void input_set_deadzone_trigger( int percent )
       trigger_deadzone = (int)( percent * 0.01f * 0x8000);
 }
 
+static void audiocallback_impl()
+{
+   if ( flush_audio_buf )
+   {
+      audio_batch_cb((const int16_t*)RingBufferStored, (ring_buffer_size/sizeof(RingBuffer))*SAMPLE_COUNT);
+      flush_audio_buf = false ;
+      ring_buffer_size = 0 ;
+   }
+}
+
 void audiocallback()
 {
 #if !defined(TARGET_NO_THREADS)
-    if (settings.rend.ThreadedRendering && emu_inited)
-    {
-	   mtx_audioLock.Lock() ;
-	   if ( flush_audio_buf )
-	   {
-			audio_batch_cb((const int16_t*)RingBufferStored, (ring_buffer_size/sizeof(RingBuffer))*SAMPLE_COUNT);
-			flush_audio_buf = false ;
-			ring_buffer_size = 0 ;
-	   }
-	   mtx_audioLock.Unlock() ;
-    }
+   extern cMutex mtx_audioLock ;
+   if (settings.rend.ThreadedRendering && emu_inited)
+   {
+      mtx_audioLock.Lock() ;
+      audiocallback_impl();
+      mtx_audioLock.Unlock() ;
+   }
 #endif
 }
 void audio_setstate(bool enabled)
@@ -380,11 +385,6 @@ void retro_set_environment(retro_environment_t cb)
    };
 
    cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
-
-   retro_audio_callback acb ;
-   acb.callback = audiocallback ;
-   acb.set_state = audio_setstate ;
-   cb(RETRO_ENVIRONMENT_SET_AUDIO_CALLBACK, &acb) ;
 }
 
 
@@ -854,7 +854,7 @@ void retro_run (void)
 	   is_dupe = !rend_single_frame();
 
 	   glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
-
+      
 	   poll_cb();
    }
    else
@@ -1185,6 +1185,14 @@ bool retro_load_game(const struct retro_game_info *game)
       log_cb(RETRO_LOG_INFO, "Setting save dir to %s\n", save_dir);
       snprintf(eeprom_file, sizeof(eeprom_file), "%s%s.eeprom", save_dir, g_base_name);
       snprintf(nvmem_file, sizeof(nvmem_file), "%s%s.nvmem", save_dir, g_base_name);
+   }
+
+   if (settings.rend.ThreadedRendering)
+   {
+      retro_audio_callback acb ;
+      acb.callback = audiocallback ;
+      acb.set_state = audio_setstate ;
+      environ_cb(RETRO_ENVIRONMENT_SET_AUDIO_CALLBACK, &acb) ;
    }
 
    dc_prepare_system();

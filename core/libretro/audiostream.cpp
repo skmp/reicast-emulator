@@ -3,16 +3,9 @@
 #include <libretro.h>
 
 extern retro_audio_sample_batch_t audio_batch_cb;
-bool dc_is_running();
 
 
-#if !defined(TARGET_NO_THREADS)
 SoundFrame RingBuffer[SAMPLE_COUNT];
-SoundFrame RingBufferStored[SAMPLE_COUNT*10];
-u32 ring_buffer_size = 0 ;
-bool flush_audio_buf = false ;
-cMutex mtx_audioLock ;
-#endif
 
 void WriteSample(s16 r, s16 l)
 {
@@ -26,24 +19,5 @@ void WriteSample(s16 r, s16 l)
 	WritePtr=ptr;
 
 	if (WritePtr==(SAMPLE_COUNT-1))
-	{
-#if !defined(TARGET_NO_THREADS)
-		if ( settings.rend.ThreadedRendering  )
-		{
-			mtx_audioLock.Lock() ;
-			memcpy(((u8*)RingBufferStored)+ring_buffer_size,RingBuffer,sizeof(RingBuffer)) ;
-			ring_buffer_size += sizeof(RingBuffer) ;
-			if ( ring_buffer_size  >= sizeof(RingBufferStored) )
-				ring_buffer_size = 0 ;
-			flush_audio_buf = true ;
-			mtx_audioLock.Unlock() ;
-			while ( flush_audio_buf && dc_is_running() )
-			{
-				//wait for emu_thread to reset flush_audio_buf or until the CPU processing has stopped
-			}
-		}
-		else
-#endif
 		audio_batch_cb((const int16_t*)RingBuffer, SAMPLE_COUNT);
-	}
 }

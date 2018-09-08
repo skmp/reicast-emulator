@@ -805,7 +805,12 @@ static void update_variables(bool first_startup)
 bool renderer_inited = false;
 void retro_run (void)
 {
-   bool updated = false;
+   bool fastforward = false;
+   bool updated     = false;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_FASTFORWARDING, &fastforward) && !settings.rend.ThreadedRendering)
+      settings.aica.LimitFPS = !fastforward;
+
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       update_variables(false);
 

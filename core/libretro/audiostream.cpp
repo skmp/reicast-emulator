@@ -18,6 +18,7 @@ void WriteSample(s16 r, s16 l)
 	RingBuffer[ptr].l=l;
 	WritePtr=ptr;
 
-	if (WritePtr==(SAMPLE_COUNT-1))
-		audio_batch_cb((const int16_t*)RingBuffer, SAMPLE_COUNT);
+   if (WritePtr==(SAMPLE_COUNT-1))
+      if (!settings.rend.ThreadedRendering || settings.aica.LimitFPS)
+         audio_batch_cb((const int16_t*)RingBuffer, SAMPLE_COUNT);
 }

@@ -808,7 +808,7 @@ void retro_run (void)
    bool fastforward = false;
    bool updated     = false;
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_FASTFORWARDING, &fastforward) && !settings.rend.ThreadedRendering)
+   if (environ_cb(RETRO_ENVIRONMENT_GET_FASTFORWARDING, &fastforward) && settings.rend.ThreadedRendering)
       settings.aica.LimitFPS = !fastforward;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)

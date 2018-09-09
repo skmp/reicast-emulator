@@ -211,6 +211,61 @@ static void input_set_deadzone_trigger( int percent )
       trigger_deadzone = (int)( percent * 0.01f * 0x8000);
 }
 
+#define COLORS_STRING "BLACK 02|" \
+		"BLUE 03|" \
+		"LIGHT_BLUE 04|" \
+		"GREEN 05|" \
+		"CYAN 06|" \
+		"CYAN_BLUE 07|" \
+		"LIGHT_GREEN 08|" \
+		"CYAN_GREEN 09|" \
+		"LIGHT_CYAN 10|" \
+		"RED 11|" \
+		"PURPLE 12|" \
+		"LIGHT_PURPLE 13|" \
+		"YELLOW 14|" \
+		"GRAY 15|" \
+		"LIGHT_PURPLE_2 16|" \
+		"LIGHT_GREEN_2 17|" \
+		"LIGHT_GREEN_3 18|" \
+		"LIGHT_CYAN_2 19|" \
+		"LIGHT_RED_2 20|" \
+		"MAGENTA 21|" \
+		"LIGHT_PURPLE_2 22|" \
+		"LIGHT_ORANGE 23|" \
+		"ORANGE 24|" \
+		"LIGHT_PURPLE_3 25|" \
+		"LIGHT_YELLOW 26|" \
+		"LIGHT_YELLOW_2 27|" \
+		"WHITE 28" \
+
+#define VMU_SCREEN_PARAMS(num)       { \
+"reicast_vmu" #num "_screen_display", \
+"VMU Screen " #num " Display; disabled|enabled" \
+}, \
+{ \
+"reicast_vmu" #num "_screen_position", \
+"VMU Screen " #num " Position; Upper Left|Upper Right|Lower Left|Lower Right" \
+}, \
+{ \
+"reicast_vmu" #num "_screen_size_mult", \
+"VMU Screen " #num " Size; 1x|2x|3x|4x|5x" \
+}, \
+{ \
+"reicast_vmu" #num "_pixel_on_color", \
+"VMU Screen " #num " Pixel On Color; " "DEFAULT_ON 00|DEFAULT_OFF 01|" \
+COLORS_STRING \
+}, \
+{ \
+"reicast_vmu" #num "_pixel_off_color", \
+"VMU Screen " #num " Pixel Off Color; " "DEFAULT_OFF 01|DEFAULT_ON 00|" \
+COLORS_STRING \
+}, \
+{ \
+"reicast_vmu" #num "_screen_opacity", \
+"VMU Screen " #num " Opacity; 100%|90%|80%|70%|60%|50%|40%|30%|20%|10%" \
+}, \
+
 
 void retro_set_environment(retro_environment_t cb)
 {
@@ -356,6 +411,10 @@ void retro_set_environment(retro_environment_t cb)
          "reicast_allow_service_buttons",
          "Allow Naomi service buttons; disabled|enabled"
       },
+	  VMU_SCREEN_PARAMS(1)
+	  VMU_SCREEN_PARAMS(2)
+	  VMU_SCREEN_PARAMS(3)
+	  VMU_SCREEN_PARAMS(4)
       { NULL, NULL },
    };
 
@@ -396,6 +455,8 @@ extern int GDROM_TICK;
 static void update_variables(bool first_startup)
 {
    struct retro_variable var;
+   int i ;
+   char key[256] ;
 
    var.key = "reicast_widescreen_hack";
 
@@ -801,6 +862,110 @@ static void update_variables(bool first_startup)
    }
    else
       allow_service_buttons = false;
+
+
+   key[0] = '\0' ;
+
+   var.key = key ;
+   for ( i = 0 ; i < 4 ; i++)
+   {
+      vmu_screen_params[i].vmu_screen_display = false ;
+      vmu_screen_params[i].vmu_screen_position = UPPER_LEFT ;
+      vmu_screen_params[i].vmu_screen_size_mult = 1 ;
+      vmu_screen_params[i].vmu_pixel_on_R = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_ON].r ;
+      vmu_screen_params[i].vmu_pixel_on_G = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_ON].g ;
+      vmu_screen_params[i].vmu_pixel_on_B = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_ON].b ;
+      vmu_screen_params[i].vmu_pixel_off_R = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_OFF].r ;
+      vmu_screen_params[i].vmu_pixel_off_G = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_OFF].g ;
+      vmu_screen_params[i].vmu_pixel_off_B = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_OFF].b ;
+      vmu_screen_params[i].vmu_screen_opacity = 0xFF ;
+      vmu_screen_params[i].vmu_screen_needs_update = true ;
+
+      snprintf(key, sizeof(key), "reicast_vmu%d_screen_display", i+1) ;
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !strcmp("enabled", var.value) )
+       	 vmu_screen_params[i].vmu_screen_display = true ;
+
+
+      snprintf(key, sizeof(key), "reicast_vmu%d_screen_position", i+1) ;
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value  )
+      {
+         if (!strcmp("Upper Left", var.value))
+        	 vmu_screen_params[i].vmu_screen_position = UPPER_LEFT;
+         else if (!strcmp("Upper Right", var.value))
+        	 vmu_screen_params[i].vmu_screen_position = UPPER_RIGHT;
+         else if (!strcmp("Lower Left", var.value))
+        	 vmu_screen_params[i].vmu_screen_position = LOWER_LEFT;
+         else if (!strcmp("Lower Right", var.value))
+        	 vmu_screen_params[i].vmu_screen_position = LOWER_RIGHT;
+      }
+
+      snprintf(key, sizeof(key), "reicast_vmu%d_screen_size_mult", i+1) ;
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value  )
+      {
+         if (!strcmp("1x", var.value))
+        	 vmu_screen_params[i].vmu_screen_size_mult = 1;
+         else if (!strcmp("2x", var.value))
+        	 vmu_screen_params[i].vmu_screen_size_mult = 2;
+         else if (!strcmp("3x", var.value))
+        	 vmu_screen_params[i].vmu_screen_size_mult = 3;
+         else if (!strcmp("4x", var.value))
+        	 vmu_screen_params[i].vmu_screen_size_mult = 4;
+         else if (!strcmp("5x", var.value))
+        	 vmu_screen_params[i].vmu_screen_size_mult = 5;
+      }
+
+      snprintf(key, sizeof(key), "reicast_vmu%d_screen_opacity", i+1) ;
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value  )
+      {
+         if (!strcmp("100%", var.value))
+        	 vmu_screen_params[i].vmu_screen_opacity = 255;
+         else if (!strcmp("90%", var.value))
+        	 vmu_screen_params[i].vmu_screen_opacity = 9*25.5;
+         else if (!strcmp("80%", var.value))
+        	 vmu_screen_params[i].vmu_screen_opacity = 8*25.5;
+         else if (!strcmp("70%", var.value))
+        	 vmu_screen_params[i].vmu_screen_opacity = 7*25.5;
+         else if (!strcmp("60%", var.value))
+        	 vmu_screen_params[i].vmu_screen_opacity = 6*25.5;
+         else if (!strcmp("50%", var.value))
+        	 vmu_screen_params[i].vmu_screen_opacity = 5*25.5;
+         else if (!strcmp("40%", var.value))
+        	 vmu_screen_params[i].vmu_screen_opacity = 4*25.5;
+         else if (!strcmp("30%", var.value))
+        	 vmu_screen_params[i].vmu_screen_opacity = 3*25.5;
+         else if (!strcmp("20%", var.value))
+        	 vmu_screen_params[i].vmu_screen_opacity = 2*25.5;
+         else if (!strcmp("10%", var.value))
+        	 vmu_screen_params[i].vmu_screen_opacity = 1*25.5;
+      }
+
+      snprintf(key, sizeof(key), "reicast_vmu%d_pixel_on_color", i+1) ;
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && strlen(var.value)>1 )
+      {
+    	  int color_idx = atoi(var.value+(strlen(var.value)-2)) ;
+    	  vmu_screen_params[i].vmu_pixel_on_R = VMU_SCREEN_COLOR_MAP[color_idx].r ;
+    	  vmu_screen_params[i].vmu_pixel_on_G = VMU_SCREEN_COLOR_MAP[color_idx].g ;
+    	  vmu_screen_params[i].vmu_pixel_on_B = VMU_SCREEN_COLOR_MAP[color_idx].b ;
+      }
+
+      snprintf(key, sizeof(key), "reicast_vmu%d_pixel_off_color", i+1) ;
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && strlen(var.value)>1 )
+      {
+    	  int color_idx = atoi(var.value+(strlen(var.value)-2)) ;
+    	  vmu_screen_params[i].vmu_pixel_off_R = VMU_SCREEN_COLOR_MAP[color_idx].r ;
+    	  vmu_screen_params[i].vmu_pixel_off_G = VMU_SCREEN_COLOR_MAP[color_idx].g ;
+    	  vmu_screen_params[i].vmu_pixel_off_B = VMU_SCREEN_COLOR_MAP[color_idx].b ;
+      }
+
+
+   }
+
 }
 bool renderer_inited = false;
 void retro_run (void)
@@ -1306,6 +1471,7 @@ bool retro_unserialize(const void * data, size_t size)
    unsigned int total_size = 0 ;
    void *data_ptr = (void*)data ;
    bool result = false ;
+   int i ;
 
 #if !defined(TARGET_NO_THREADS)
    if ( settings.rend.ThreadedRendering && !emu_inited )
@@ -1333,6 +1499,10 @@ bool retro_unserialize(const void * data, size_t size)
     bm_Reset() ;
 
     result = dc_unserialize(&data_ptr, &total_size) ;
+
+    for ( i = 0 ; i < 4 ; i++)
+       vmu_screen_params[i].vmu_screen_needs_update = true ;
+
     performed_serialization = true ;
 
 #if !defined(TARGET_NO_THREADS)

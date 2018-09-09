@@ -325,6 +325,7 @@ void main() \n\
 int screen_width  = 640;
 int screen_height = 480;
 GLuint fogTextureId;
+GLuint vmuTextureId[4]={0,0,0,0};
 
 int GetProgramID(
       u32 cp_AlphaTest,
@@ -720,6 +721,141 @@ void UpdateFogTexture(u8 *fog_table)
 
 	glActiveTexture(GL_TEXTURE0);
 }
+void SetupMainVBO(void) ;
+
+void UpdateVmuTexture(int vmu_screen_number)
+{
+	s32 x,y ;
+	u8 temp_tex_buffer[VMU_SCREEN_HEIGHT*VMU_SCREEN_WIDTH*4];
+	u8 *dst = temp_tex_buffer;
+	u8 *src = NULL ;
+	u8 *origsrc = NULL ;
+	u8 vmu_pixel_on_R = vmu_screen_params[vmu_screen_number].vmu_pixel_on_R ;
+	u8 vmu_pixel_on_G = vmu_screen_params[vmu_screen_number].vmu_pixel_on_G ;
+	u8 vmu_pixel_on_B = vmu_screen_params[vmu_screen_number].vmu_pixel_on_B ;
+	u8 vmu_pixel_off_R = vmu_screen_params[vmu_screen_number].vmu_pixel_off_R ;
+	u8 vmu_pixel_off_G = vmu_screen_params[vmu_screen_number].vmu_pixel_off_G ;
+	u8 vmu_pixel_off_B = vmu_screen_params[vmu_screen_number].vmu_pixel_off_B ;
+	u8 vmu_screen_opacity = vmu_screen_params[vmu_screen_number].vmu_screen_opacity ;
+
+	if (vmuTextureId[vmu_screen_number] == 0)
+	{
+		vmuTextureId[vmu_screen_number] = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+	else
+		glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
+
+
+	origsrc = vmu_screen_params[vmu_screen_number].vmu_lcd_screen ;
+
+	if ( origsrc == NULL )
+		return ;
+
+
+	for ( y = VMU_SCREEN_HEIGHT-1 ; y >= 0 ; y--)
+	{
+		src = origsrc + (y*VMU_SCREEN_WIDTH) ;
+
+		for ( x = 0 ; x < VMU_SCREEN_WIDTH ; x++)
+		{
+			if ( *src++ > 0 )
+			{
+				*dst++ = vmu_pixel_on_R ;
+				*dst++ = vmu_pixel_on_G ;
+				*dst++ = vmu_pixel_on_B ;
+				*dst++ = vmu_screen_opacity ;
+			}
+			else
+			{
+				*dst++ = vmu_pixel_off_R ;
+				*dst++ = vmu_pixel_off_G ;
+				*dst++ = vmu_pixel_off_B ;
+				*dst++ = vmu_screen_opacity ;
+			}
+		}
+	}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VMU_SCREEN_WIDTH, VMU_SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer);
+
+	vmu_screen_params[vmu_screen_number].vmu_screen_needs_update = false ;
+
+}
+
+void DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives)
+{
+	float x=0 ;
+	float y=0 ;
+	float w=VMU_SCREEN_WIDTH*vmu_screen_params[vmu_screen_number].vmu_screen_size_mult ;
+	float h=VMU_SCREEN_HEIGHT*vmu_screen_params[vmu_screen_number].vmu_screen_size_mult ;
+
+	if ( vmu_screen_params[vmu_screen_number].vmu_screen_needs_update  )
+		UpdateVmuTexture(vmu_screen_number) ;
+
+	glActiveTexture(GL_TEXTURE0);
+
+	switch ( vmu_screen_params[vmu_screen_number].vmu_screen_position )
+	{
+		case UPPER_LEFT :
+		{
+			x = 0 ;
+			y = 0 ;
+			break ;
+		}
+		case UPPER_RIGHT :
+		{
+			x = 640-w ;
+			y = 0 ;
+			break ;
+		}
+		case LOWER_LEFT :
+		{
+			x = 0 ;
+			y = 480-h ;
+			break ;
+		}
+		case LOWER_RIGHT :
+		{
+			x = 640-w ;
+			y = 480-h ;
+			break ;
+		}
+	}
+
+    glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
+
+	glcache.Disable(GL_SCISSOR_TEST);
+	glcache.Disable(GL_DEPTH_TEST);
+	glcache.Disable(GL_STENCIL_TEST);
+	glcache.Disable(GL_CULL_FACE);
+    glcache.Enable(GL_BLEND);
+    glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	SetupMainVBO();
+
+	{
+		struct Vertex vertices[] = {
+				{ x,   y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
+				{ x,   y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
+				{ x+w, y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
+				{ x+w, y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+		};
+		GLushort indices[] = { 0, 1, 2, 1, 3 };
+
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+	}
+
+	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
+
+	if ( draw_additional_primitives )
+	{
+		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.bytes(), pvrrc.idx.head(), GL_STREAM_DRAW);
+	}
+}
 
 void vertex_buffer_unmap(void)
 {
@@ -738,6 +874,8 @@ void DoCleanup() {
 
 static bool RenderFrame(void)
 {
+   int vmu_screen_number = 0 ;
+
    DoCleanup();
 
 	bool is_rtt=pvrrc.isRTT;
@@ -1018,6 +1156,10 @@ static bool RenderFrame(void)
    {
       DrawFramebuffer(dc_width, dc_height);
    }
+
+   for ( vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
+      if ( vmu_screen_params[vmu_screen_number].vmu_screen_display )
+         DrawVmuTexture(vmu_screen_number, true) ;
 
 	KillTex = false;
    

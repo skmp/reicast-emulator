@@ -339,7 +339,7 @@ struct maple_sega_vmu: maple_base
 	FILE* file;
 	u8 flash_data[128*1024];
 	u8 lcd_data[192];
-	u8 lcd_data_decoded[48*32];
+	u8 lcd_data_decoded[VMU_SCREEN_WIDTH*VMU_SCREEN_HEIGHT];
 	
 	virtual bool maple_serialize(void **data, unsigned int *total_size)
 	{
@@ -362,6 +362,8 @@ struct maple_sega_vmu: maple_base
 		wchar tempy[512];
 		sprintf(tempy,"vmu_save_%s.bin",logical_port);
 		string apath=get_writable_data_path(tempy);
+
+		vmu_screen_params[bus_id].vmu_lcd_screen = lcd_data_decoded ;
 
 		uLongf dec_sz = sizeof(flash_data);
 		printf("Initializing VMU data...\n");

@@ -820,6 +820,70 @@ void rend_text_invl(vram_block* bl)
 
 GLuint fbTextureId;
 
+#if 0
+/* currently not needed, but perhaps for soft rendering */
+void render_vmu_screen(u8* screen_data, u32 width, u32 height, u8 vmu_screen_to_display)
+{
+	u8 *dst = screen_data;
+	u8 *src = NULL ;
+	u32 line_size = width*4 ;
+	u32 start_offset ;
+	u32 x,y ;
+
+	src = vmu_screen_params[vmu_screen_to_display].vmu_lcd_screen ;
+
+	if ( src == NULL )
+		return ;
+
+	switch ( vmu_screen_params[vmu_screen_to_display].vmu_screen_position )
+	{
+		case UPPER_LEFT :
+		{
+			start_offset = 0 ;
+			break ;
+		}
+		case UPPER_RIGHT :
+		{
+			start_offset = line_size - (VMU_SCREEN_WIDTH*vmu_screen_params[vmu_screen_to_display].vmu_screen_size_mult*4) ;
+			break ;
+		}
+		case LOWER_LEFT :
+		{
+			start_offset = line_size*(height - VMU_SCREEN_HEIGHT) ;
+			break ;
+		}
+		case LOWER_RIGHT :
+		{
+			start_offset = line_size*(height - VMU_SCREEN_HEIGHT) + (line_size - (VMU_SCREEN_WIDTH*vmu_screen_params[vmu_screen_to_display].vmu_screen_size_mult*4));
+			break ;
+		}
+	}
+
+
+	for ( y = 0 ; y < VMU_SCREEN_HEIGHT ; y++)
+	{
+		dst = screen_data + start_offset + (y*line_size);
+		for ( x = 0 ; x < VMU_SCREEN_WIDTH ; x++)
+		{
+			if ( *src++ > 0 )
+			{
+				*dst++ = vmu_screen_params[vmu_screen_to_display].vmu_pixel_on_R ;
+				*dst++ = vmu_screen_params[vmu_screen_to_display].vmu_pixel_on_G ;
+				*dst++ = vmu_screen_params[vmu_screen_to_display].vmu_pixel_on_B ;
+				*dst++ = vmu_screen_params[vmu_screen_to_display].vmu_screen_opacity ;
+			}
+			else
+			{
+				*dst++ = vmu_screen_params[vmu_screen_to_display].vmu_pixel_off_R ;
+				*dst++ = vmu_screen_params[vmu_screen_to_display].vmu_pixel_off_G ;
+				*dst++ = vmu_screen_params[vmu_screen_to_display].vmu_pixel_off_B ;
+				*dst++ = vmu_screen_params[vmu_screen_to_display].vmu_screen_opacity ;
+			}
+		}
+	}
+}
+#endif
+
 void RenderFramebuffer()
 {
 	if (FB_R_SIZE.fb_x_size == 0 || FB_R_SIZE.fb_y_size == 0)
@@ -942,5 +1006,8 @@ void RenderFramebuffer()
 			}
 			break;
 	}
+
+	//render_vmu_screen((u8*)pb.data(), width, height) ;
+
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pb.data());
 }

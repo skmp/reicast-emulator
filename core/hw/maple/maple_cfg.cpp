@@ -29,6 +29,72 @@ extern s8 joyx[4],joyy[4];
 extern u8 rt[4],lt[4];
 extern bool enable_purupuru;
 
+const char* VMU_SCREEN_COLOR_NAMES[VMU_NUM_COLORS] = {
+		"DEFAULT_ON",
+		"DEFAULT_OFF",
+		"BLACK",
+		"BLUE",
+		"LIGHT_BLUE",
+		"GREEN",
+		"GREEN_BLUE",
+		"GREEN_LIGHT_BLUE",
+		"LIGHT_GREEN",
+		"LIGHT_GREEN_BLUE",
+		"LIGHT_GREEN_LIGHT_BLUE",
+		"RED",
+		"RED_BLUE",
+		"RED_LIGHT_BLUE",
+		"RED_GREEN",
+		"RED_GREEN_BLUE",
+		"RED_GREEN_LIGHT_BLUE",
+		"RED_LIGHT_GREEN",
+		"RED_LIGHT_GREEN_BLUE",
+		"RED_LIGHT_GREEN_LIGHT_BLUE",
+		"LIGHT_RED",
+		"LIGHT_RED_BLUE",
+		"LIGHT_RED_LIGHT_BLUE",
+		"LIGHT_RED_GREEN",
+		"LIGHT_RED_GREEN_BLUE",
+		"LIGHT_RED_GREEN_LIGHT_BLUE",
+		"LIGHT_RED_LIGHT_GREEN",
+		"LIGHT_RED_LIGHT_GREEN_BLUE",
+		"WHITE"
+};
+const rgb_t VMU_SCREEN_COLOR_MAP[VMU_NUM_COLORS] = {
+		{ DEFAULT_VMU_PIXEL_ON_R,   DEFAULT_VMU_PIXEL_ON_G ,   DEFAULT_VMU_PIXEL_ON_B  },
+		{ DEFAULT_VMU_PIXEL_OFF_R,  DEFAULT_VMU_PIXEL_OFF_G ,  DEFAULT_VMU_PIXEL_OFF_B  },
+		{ 0x00, 0x00, 0x00 },
+		{ 0x00, 0x00, 0x7F },
+		{ 0x00, 0x00, 0xFF },
+		{ 0x00, 0x7F, 0x00 },
+		{ 0x00, 0x7F, 0x7F },
+		{ 0x00, 0x7F, 0xFF },
+		{ 0x00, 0xFF, 0x00 },
+		{ 0x00, 0xFF, 0x7F },
+		{ 0x00, 0xFF, 0xFF },
+		{ 0x7F, 0x00, 0x00 },
+		{ 0x7F, 0x00, 0x7F },
+		{ 0x7F, 0x00, 0xFF },
+		{ 0x7F, 0x7F, 0x00 },
+		{ 0x7F, 0x7F, 0x7F },
+		{ 0x7F, 0x7F, 0xFF },
+		{ 0x7F, 0xFF, 0x00 },
+		{ 0x7F, 0xFF, 0x7F },
+		{ 0x7F, 0xFF, 0xFF },
+		{ 0xFF, 0x00, 0x00 },
+		{ 0xFF, 0x00, 0x7F },
+		{ 0xFF, 0x00, 0xFF },
+		{ 0xFF, 0x7F, 0x00 },
+		{ 0xFF, 0x7F, 0x7F },
+		{ 0xFF, 0x7F, 0xFF },
+		{ 0xFF, 0xFF, 0x00 },
+		{ 0xFF, 0xFF, 0x7F },
+		{ 0xFF, 0xFF, 0xFF }
+};
+
+vmu_screen_params_t vmu_screen_params[4] ;
+
+
 u8 GetBtFromSgn(s8 val)
 {
 	return val+128;
@@ -60,7 +126,7 @@ struct MapleConfigMap : IMapleConfigMap
 	}
 	void SetImage(void* img)
 	{
-		//?
+		vmu_screen_params[dev->bus_id].vmu_screen_needs_update = true ;
 	}
 };
 
@@ -75,9 +141,14 @@ void mcfg_Create(MapleDeviceType type,u32 bus,u32 port)
 
 void mcfg_CreateDevices()
 {
+   int bus ;
+
+   for ( bus = 0 ; bus < 4 ; bus++)
+      vmu_screen_params[bus].vmu_lcd_screen = NULL ;
+
+
    if (settings.System == DC_PLATFORM_DREAMCAST)
    {
-      int bus;
       for (bus = 0; bus < 4; ++bus)
       {
          mcfg_Create(MDT_SegaController,bus,5);

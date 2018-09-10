@@ -805,6 +805,8 @@ void UpdateVmuTexture(int vmu_screen_number)
 
 void DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives)
 {
+	glActiveTexture(GL_TEXTURE0);
+
 	float x=0 ;
 	float y=0 ;
 	float w=VMU_SCREEN_WIDTH*vmu_screen_params[vmu_screen_number].vmu_screen_size_mult ;
@@ -812,8 +814,6 @@ void DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives)
 
 	if ( vmu_screen_params[vmu_screen_number].vmu_screen_needs_update  )
 		UpdateVmuTexture(vmu_screen_number) ;
-
-	glActiveTexture(GL_TEXTURE0);
 
 	switch ( vmu_screen_params[vmu_screen_number].vmu_screen_position )
 	{
@@ -853,6 +853,43 @@ void DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives)
     glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	SetupMainVBO();
+
+	ShaderUniforms.trilinear_alpha = 1.0;
+   int shaderId = GetProgramID(0,
+				1,
+				1,
+				0,
+				1,
+				0,
+				0,
+				2,
+				false,
+				0,
+				false,
+				false,
+            false,
+				1);
+	PipelineShader *shader = gl.getShader(shaderId);
+	if (shader->program == -1)
+   {
+      shader->cp_AlphaTest = 0;
+		shader->pp_ClipTestMode = 0;
+		shader->pp_Texture = 1;
+		shader->pp_UseAlpha = 0;
+		shader->pp_IgnoreTexA = 1;
+		shader->pp_ShadInstr = 0;
+		shader->pp_Offset = 0;
+		shader->pp_FogCtrl = 2;
+		shader->pp_TwoVolumes = false;
+		shader->pp_DepthFunc = 0;
+		shader->pp_Gouraud = false;
+		shader->pp_BumpMap = false;
+		shader->fog_clamping = false;
+		shader->pass = 1;
+		CompilePipelineShader(shader);
+   }
+   glcache.UseProgram(shader->program);
+   ShaderUniforms.Set(shader);
 
 	{
 		struct Vertex vertices[] = {

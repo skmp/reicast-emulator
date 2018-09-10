@@ -786,6 +786,8 @@ void UpdateVmuTexture(int vmu_screen_number)
 
 void DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives)
 {
+	glActiveTexture(GL_TEXTURE0);
+
 	float x=0 ;
 	float y=0 ;
 	float w=VMU_SCREEN_WIDTH*vmu_screen_params[vmu_screen_number].vmu_screen_size_mult ;
@@ -793,8 +795,6 @@ void DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives)
 
 	if ( vmu_screen_params[vmu_screen_number].vmu_screen_needs_update  )
 		UpdateVmuTexture(vmu_screen_number) ;
-
-	glActiveTexture(GL_TEXTURE0);
 
 	switch ( vmu_screen_params[vmu_screen_number].vmu_screen_position )
 	{
@@ -824,16 +824,25 @@ void DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives)
 		}
 	}
 
-    glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
+	glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
 
 	glcache.Disable(GL_SCISSOR_TEST);
 	glcache.Disable(GL_DEPTH_TEST);
 	glcache.Disable(GL_STENCIL_TEST);
 	glcache.Disable(GL_CULL_FACE);
-    glcache.Enable(GL_BLEND);
-    glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glcache.Enable(GL_BLEND);
+	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	SetupMainVBO();
+	ShaderUniforms.trilinear_alpha = 1.0;
+	PipelineShader *shader = &gl.program_table[GetProgramID(0, 1, 1, 0, 1, 0, 0, 2, false, false, false)];
+	if (shader->program == -1)
+		CompilePipelineShader(shader);
+	else
+	{
+		glcache.UseProgram(shader->program);
+		ShaderUniforms.Set(shader);
+	}
 
 	{
 		struct Vertex vertices[] = {

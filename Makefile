@@ -178,9 +178,7 @@ else ifneq (,$(findstring rpi,$(platform)))
 else ifneq (,$(findstring odroid,$(platform)))
 	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
-	ifeq ($(BOARD),1)
-		BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
-	endif
+	BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
 	SHARED := -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	LIBS += -lrt
@@ -188,8 +186,8 @@ else ifneq (,$(findstring odroid,$(platform)))
 	FORCE_GLES = 1
 	SINGLE_PREC_FLAGS = 1
 
-	CFLAGS += -marm -mfloat-abi=hard -mfpu=neon
-	CXXFLAGS += -marm -mfloat-abi=hard -mfpu=neon
+	CFLAGS += -marm -mfloat-abi=hard
+	CXXFLAGS += -marm -mfloat-abi=hard
 
 	ifneq (,$(findstring ODROIDC,$(BOARD)))
 		# ODROID-C1
@@ -198,16 +196,25 @@ else ifneq (,$(findstring odroid,$(platform)))
 	else ifneq (,$(findstring ODROID-XU3,$(BOARD)))
 		# ODROID-XU3 & -XU3 Lite
 		ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
-			CFLAGS += -march=armv7ve -mcpu=cortex-a15.cortex-a7
-			CXXFLAGS += -march=armv7ve -mcpu=cortex-a15.cortex-a7
+			CFLAGS += -march=armv7ve -mcpu=cortex-a15.cortex-a7 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
+			CXXFLAGS += -march=armv7ve -mcpu=cortex-a15.cortex-a7 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
 		else
-			CFLAGS += -mcpu=cortex-a9
-			CXXFLAGS += -mcpu=cortex-a9
+			CFLAGS += -mcpu=cortex-a9 -mfpu=neon
+			CXXFLAGS += -mcpu=cortex-a9 -mfpu=neon
+		endif
+	else ifneq (,$(findstring ODROID-XU4,$(BOARD)))
+		# ODROID-XU4 on newer kernels now identify as ODROID-XU4
+		ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
+			CFLAGS += -march=armv7ve -mcpu=cortex-a15.cortex-a7 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
+			CXXFLAGS += -march=armv7ve -mcpu=cortex-a15.cortex-a7 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
+		else
+			CFLAGS += -mcpu=cortex-a9 -mfpu=neon
+			CXXFLAGS += -mcpu=cortex-a9 -mfpu=neon
 		endif
 	else
 		# ODROID-U2, -U3, -X & -X2
-		CFLAGS += -mcpu=cortex-a9
-		CXXFLAGS += -mcpu=cortex-a9
+		CFLAGS += -mcpu=cortex-a9 -mfpu=neon
+		CXXFLAGS += -mcpu=cortex-a9 -mfpu=neon
 	endif
 
 	#Since we are using GCC, we use the CFLAGS and we add some extra parameters to be able to compile (taken from reicast/reicast-emulator)

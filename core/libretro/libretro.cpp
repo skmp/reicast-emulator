@@ -22,12 +22,6 @@ char slash = '/';
 
 #define RETRO_ENVIRONMENT_RETROARCH_START_BLOCK 0x800000
 
-#define RETRO_ENVIRONMENT_GET_FASTFORWARDING (1 | RETRO_ENVIRONMENT_RETROARCH_START_BLOCK)
-                                            /* bool * --
-                                            * Boolean value that indicates whether or not the frontend is in
-                                            * fastforwarding mode.
-                                            */
-
 #define RETRO_ENVIRONMENT_SET_SAVE_STATE_IN_BACKGROUND (2 | RETRO_ENVIRONMENT_RETROARCH_START_BLOCK)
                                             /* bool * --
                                             * Boolean value that tells the front end to save states in the

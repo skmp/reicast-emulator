@@ -4,6 +4,7 @@
 
 extern retro_audio_sample_batch_t audio_batch_cb;
 
+bool dc_is_running();
 
 SoundFrame RingBuffer[SAMPLE_COUNT];
 
@@ -19,6 +20,6 @@ void WriteSample(s16 r, s16 l)
 	WritePtr=ptr;
 
    if (WritePtr==(SAMPLE_COUNT-1))
-      if (!settings.rend.ThreadedRendering || settings.aica.LimitFPS)
+      if ( dc_is_running() && (!settings.rend.ThreadedRendering || settings.aica.LimitFPS) )
          audio_batch_cb((const int16_t*)RingBuffer, SAMPLE_COUNT);
 }

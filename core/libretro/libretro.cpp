@@ -20,8 +20,6 @@ char slash = '\\';
 char slash = '/';
 #endif
 
-#define RETRO_ENVIRONMENT_SET_SAVE_STATE_IN_BACKGROUND RETRO_ENVIRONMENT_PRIVATE+1
-
 u32 fskip;
 extern int screen_width;
 extern int screen_height;
@@ -103,6 +101,7 @@ retro_input_poll_t         poll_cb = NULL;
 retro_input_state_t        input_cb = NULL;
 retro_audio_sample_batch_t audio_batch_cb = NULL;
 retro_environment_t        environ_cb = NULL;
+retro_environment_t        frontend_clear_thread_waits_cb = NULL;
 static retro_rumble_interface rumble;
 
 int dc_init(int argc,wchar* argv[]);
@@ -156,6 +155,8 @@ static void *emu_thread_func(void *)
 
 	rend_cancel_emu_wait() ;
     dc_term();
+
+    emu_in_thread = false ;
 
     return NULL;
 }
@@ -442,6 +443,9 @@ void retro_init(void)
    // Set color mode
    unsigned color_mode = RETRO_PIXEL_FORMAT_XRGB8888;
    environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &color_mode);
+
+   environ_cb(RETRO_ENVIRONMENT_GET_CLEAR_ALL_THREAD_WAITS_CB, &frontend_clear_thread_waits_cb);
+
 }
 
 void retro_deinit(void)
@@ -979,7 +983,6 @@ void retro_run (void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       update_variables(false);
 
-   emu_in_thread = false ;
 #if !defined(TARGET_NO_THREADS)
    if (settings.rend.ThreadedRendering)
    {
@@ -1359,9 +1362,14 @@ void retro_unload_game(void)
    if (settings.rend.ThreadedRendering)
    {
 	   rend_cancel_emu_wait();
-	   printf("Waiting for emu thread...\n");
+	   printf("Waiting for emu thread......\n");
 	   if ( emu_in_thread )
+	   {
+		   frontend_clear_thread_waits_cb(1,NULL) ;
+		   printf("Waiting for emu thread to end...\n");
 		   emu_thread.WaitToEnd();
+		   frontend_clear_thread_waits_cb(0,NULL) ;
+	   }
 	   printf("...Done\n");
    }
    else

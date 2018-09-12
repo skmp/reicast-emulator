@@ -97,9 +97,6 @@
     <ClCompile Include="..\core\deps\crypto\sha1.cpp">
       <Filter>deps\crypto</Filter>
     </ClCompile>
-    <ClCompile Include="..\core\deps\chdr\chdr.cpp">
-      <Filter>deps\chdr</Filter>
-    </ClCompile>
     <ClCompile Include="..\core\imgread\cdi.cpp">
       <Filter>imgread</Filter>
     </ClCompile>
@@ -429,6 +426,123 @@
     <ClCompile Include="..\core\cfg\ini.cpp">
       <Filter>cfg</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\deps\chdr\chd.c">
+      <Filter>deps\chdr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\chdr\cdrom.c">
+      <Filter>deps\chdr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\chdr\flac.c">
+      <Filter>deps\chdr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\chdr\huffman.c">
+      <Filter>deps\chdr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\bitmath.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\bitreader.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\chdr\bitstream.c">
+      <Filter>deps\chdr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\cpu.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\crc.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\fixed_intrin_ssse3.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\fixed_intrin_sse2.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\fixed.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\lpc.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\lpc_intrin_avx2.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\lpc_intrin_sse.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\lpc_intrin_sse2.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\lpc_intrin_sse41.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\float.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\format.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\md5.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\memory.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\metadata_iterators.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\metadata_object.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\stream_decoder.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\window.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\flac\src\libFLAC\windows_unicode_filenames.c">
+      <Filter>deps\flac</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\C\Alloc.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\C\Bra.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\C\Bra86.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\C\BraIA64.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\C\CpuArch.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\C\Delta.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\C\LzFind.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\C\Lzma86Dec.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\C\Lzma86Enc.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\C\LzmaDec.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\C\LzmaEnc.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\C\LzmaLib.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lzma\C\Sort.c">
+      <Filter>deps\lzma</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -565,6 +679,12 @@
     </Filter>
     <Filter Include="hw\naomi">
       <UniqueIdentifier>{1752487d-0739-47bf-8c6b-1d38e6f389f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\flac">
+      <UniqueIdentifier>{7d3e87ac-8ae1-4826-a7fb-3f5008af507b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\lzma">
+      <UniqueIdentifier>{9198fe3c-8215-431d-9adf-d36e81eda98d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -945,6 +1065,18 @@
     </ClInclude>
     <ClInclude Include="..\core\hw\sh4\modules\mmu_impl.h">
       <Filter>hw\sh4\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\chdr\cdrom.h">
+      <Filter>deps\chdr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\chdr\flac.h">
+      <Filter>deps\chdr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\chdr\huffman.h">
+      <Filter>deps\chdr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\chdr\bitstream.h">
+      <Filter>deps\chdr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -8,6 +8,10 @@ USE_OSS := 1
 #USE_LIBAO := 1
 USE_EVDEV := 1
 
+# Settings for CHDv5 support
+USE_LZMA := 1
+USE_FLAC := 1
+
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
 AS=${CC_PREFIX}as
@@ -232,6 +236,19 @@ else ifneq (,$(findstring vero4k,$(platform)))
 
 else
     $(error Unknown platform)
+endif
+
+# 7-Zip/LZMA settings (CHDv5)
+ifdef USE_LZMA
+	CFLAGS += -D_7ZIP_ST -D USE_LZMA
+endif
+
+# FLAC settings (CHDv5)
+ifdef USE_FLAC
+	RZDCY_CFLAGS += -DPACKAGE_VERSION="1.3.2" -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL -DHAVE_LROUND -DHAVE_STDINT_H -DHAVE_STDLIB_H -DHAVE_SYS_PARAM_H
+	INCS += -I$(RZDCY_SRC_DIR)/deps/flac/include -I$(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/include
+	CFLAGS += -D USE_FLAC
+	LIBS += `pkg-config --libs flac`
 endif
 
 RZDCY_SRC_DIR = $(LOCAL_PATH)/../../core

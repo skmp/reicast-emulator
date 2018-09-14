@@ -167,6 +167,8 @@ __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 	else
 		ShaderUniforms.trilinear_alpha = 1.0;
 
+   bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+
    CurrentShader = &gl.program_table[
 									 GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
 											 	  SetTileClip(gp->tileclip, false) + 1,
@@ -178,7 +180,7 @@ __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 												  gp->tsp.FogCtrl,
                                       gp->pcw.Gouraud,
                                       gp->tcw.PixelFmt == PixelBumpMap,
-                                      pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff)];
+                                      color_clamp)];
 
    if (CurrentShader->program == -1)
       CompilePipelineShader(CurrentShader);

@@ -178,15 +178,15 @@ uniform highp float extra_depth_scale; \n\
 INTERPOLATION in lowp vec4 vtx_base; \n\
 INTERPOLATION in lowp vec4 vtx_offs; \n\
 in mediump vec2 vtx_uv; \n\
-\n\
+ \n\
 lowp float fog_mode2(highp float w) \n\
 { \n\
-   highp float z   = clamp(w * extra_depth_scale * sp_FOG_DENSITY, 1.0, 255.9999); \n\
-   highp float exp = floor(log2(z)); \n\
-   highp float m = z * 16.0 / pow(2.0, exp) - 16.0; \n\
-   lowp float idx = floor(m) + exp * 16.0 + 0.5; \n\
-   highp vec4 fog_coef = texture(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0)); \n\
-   return fog_coef.FOG_CHANNEL; \n\
+	highp float z = clamp(w * extra_depth_scale * sp_FOG_DENSITY, 1.0, 255.9999); \n\
+	highp float exp = floor(log2(z)); \n\
+	highp float m = z * 16.0 / pow(2.0, exp) - 16.0; \n\
+	lowp float idx = floor(m) + exp * 16.0 + 0.5; \n\
+	highp vec4 fog_coef = texture(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0)); \n\
+	return fog_coef.FOG_CHANNEL; \n\
 } \n\
  \n\
 highp vec4 fog_clamp(highp vec4 col) \n\
@@ -213,7 +213,7 @@ void main() \n\
 			discard; \n\
 	#endif \n\
 	\n\
-   lowp vec4 color=vtx_base; \n\
+	lowp vec4 color=vtx_base; \n\
 	#if pp_UseAlpha==0 \n\
 		color.a=1.0; \n\
 	#endif\n\
@@ -222,7 +222,7 @@ void main() \n\
 	#endif\n\
 	#if pp_Texture==1 \n\
 	{ \n\
-      lowp vec4 texcol=texture(tex, vtx_uv); \n\
+		lowp vec4 texcol=texture(tex, vtx_uv); \n\
 		 \n\
 		#if pp_BumpMap == 1 \n\
 			highp float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0; \n\
@@ -233,17 +233,16 @@ void main() \n\
 			#if pp_IgnoreTexA==1 \n\
 				texcol.a=1.0;	 \n\
 			#endif\n\
-         color *= trilinear_alpha; \n\
 			\n\
 			#if cp_AlphaTest == 1 \n\
 				if (cp_AlphaTestValue>texcol.a) discard;\n\
 			#endif  \n\
 		#endif \n\
-      #if pp_ShadInstr==0 \n\
-      { \n\
-         color=texcol; \n\
-      } \n\
-      #endif\n\
+		#if pp_ShadInstr==0 \n\
+		{ \n\
+			color=texcol; \n\
+		} \n\
+		#endif\n\
 		#if pp_ShadInstr==1 \n\
 		{ \n\
 			color.rgb*=texcol.rgb; \n\
@@ -264,30 +263,35 @@ void main() \n\
 		#if pp_Offset==1 && pp_BumpMap == 0 \n\
 		{ \n\
 			color.rgb+=vtx_offs.rgb; \n\
-			if (pp_FogCtrl==1) \n\
-         { \n\
-				color = fog_clamp(color); \n\
-				color.rgb=mix(color.rgb,sp_FOG_COL_VERT.rgb,vtx_offs.a); \n\
-         } \n\
 		} \n\
 		#endif\n\
 	} \n\
 	#endif\n\
-	#if pp_FogCtrl==0 \n\
+	 \n\
+	color = fog_clamp(color); \n\
+	 \n\
+	#if pp_FogCtrl == 0 \n\
 	{ \n\
-      color = fog_clamp(color); \n\
 		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
 	} \n\
 	#endif\n\
+	#if pp_FogCtrl == 1 && pp_Offset==1 && pp_BumpMap == 0 \n\
+	{ \n\
+		color.rgb=mix(color.rgb,sp_FOG_COL_VERT.rgb,vtx_offs.a); \n\
+	} \n\
+	#endif\n\
+	 \n\
+	color *= trilinear_alpha; \n\
+	 \n\
 	#if cp_AlphaTest == 1 \n\
-      color.a=1.0; \n\
+		color.a=1.0; \n\
 	#endif  \n\
-   //color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);\n\
+	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);\n\
 #if TARGET_GL != GLES2 \n\
 	highp float w = gl_FragCoord.w * 100000.0; \n\
 	gl_FragDepth = log2(1.0 + w) / 34.0; \n\
 #endif \n\
-   gl_FragColor =color; \n\
+	gl_FragColor =color; \n\
 }";
 
 const char* ModifierVolumeShader =

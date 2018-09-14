@@ -226,7 +226,7 @@ struct maple_sega_controller: maple_base
 
 		default:
 			//printf("UNKOWN MAPLE COMMAND %d\n",cmd);
-			return MDRE_UnknownFunction;
+         return MDRE_UnknownCmd;
 		}
 	}	
 };
@@ -916,18 +916,18 @@ struct maple_microphone: maple_base
 					return MDRS_DeviceReply;//MDRS_DataTransfer;
 				default:
 					printf("maple_microphone::dma UNHANDLED secondword %#010x\n",secondword);
-					break;
+               return MDRE_UnknownFunction;
 				}
 			}
 			default:
 				printf("maple_microphone::dma UNHANDLED function %#010x\n",function);
-				break;
+            return MDRE_UnknownFunction;
 			}
 		}
 
 		default:
 			printf("maple_microphone::dma UNHANDLED MAPLE COMMAND %d\n",cmd);
-			return MDRE_UnknownFunction;
+         return MDRE_UnknownCmd;
 		}
 	}	
 };
@@ -1032,7 +1032,7 @@ struct maple_sega_purupuru : maple_base
 
          default:
             //printf("UNKOWN MAPLE COMMAND %d\n",cmd);
-            return MDRE_UnknownFunction;
+            return MDRE_UnknownCmd;
       }
    }
 };
@@ -1590,6 +1590,7 @@ struct maple_naomi_jamma : maple_sega_controller
 		return MDRE_UnknownFunction;
 	}
 };
+
 maple_device* maple_Create(MapleDeviceType type)
 {
 	maple_device* rv=0;

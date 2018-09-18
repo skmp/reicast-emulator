@@ -269,12 +269,24 @@ struct TextureCacheData
       if (tcw.StrideSel && tcw.ScanOrder && (tex->PL || tex->PL32))
          stride = (TEXT_CONTROL&31)*32; //I think this needs +1 ?
 
-      //PrintTextureName();
+     //PrintTextureName();
+
+      u32 original_h = h;
       if (sa_tex > VRAM_SIZE || size == 0 || sa + size > VRAM_SIZE)
-		{
-         printf("Warning: invalid texture. Address %08X %08X size %d\n", sa_tex, sa, size);
-			return;
-		}
+      {
+    	 if (sa + size > VRAM_SIZE)
+    	 {
+    		// Shenmue Space Harrier mini-arcade loads a texture that goes beyond the end of VRAM
+    		// but only uses the top portion of it
+    		h = (VRAM_SIZE - sa) * 8 / stride / tex->bpp;
+    		size = stride * h * tex->bpp/8;
+         }
+         else
+         {
+        	printf("Warning: invalid texture. Address %08X %08X size %d\n", sa_tex, sa, size);
+        	return;
+         }
+      }
 
       void *temp_tex_buffer = NULL;
 		u32 upscaled_w = w;
@@ -347,6 +359,8 @@ struct TextureCacheData
 			memset(pb16.data(), 0x80, w * h * 2);
 			temp_tex_buffer = pb16.data();
       }
+      // Restore the original texture height if it was constrained to VRAM limits above
+      h = original_h;
 
       /* lock the texture to detect changes in it. */
       lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);

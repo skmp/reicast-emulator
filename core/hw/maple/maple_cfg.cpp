@@ -162,6 +162,7 @@ void mcfg_CreateDevices()
       }
       //TODO/FIXME - not sure what 'numberOfControl' should be here
       //mcfg_Create(MDT_Keyboard, numberOfControl, 5);
+      //mcfg_Create(MDT_Mouse, numberOfControl++, 5);
    }
    else
    {

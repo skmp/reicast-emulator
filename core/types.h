@@ -622,6 +622,12 @@ struct settings_t
 		bool OpenGlChecks;
 	} validate;
 
+   struct {
+		bool DCKeyboard;
+		bool DCMouse;
+		u32 MouseSensitivity;
+	} input;
+
 	struct {
 		int JammaSetup;
 	} mapping;

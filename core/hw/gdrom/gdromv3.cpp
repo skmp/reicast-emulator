@@ -980,15 +980,17 @@ int GDROM_TICK=1500000;
 
 static int getGDROMTicks()
 {
-	if (SB_GDST & 1)
-	{
-		if (SB_GDLEN - SB_GDLEND > 10240)
-			return 1000000;										// Large transfers: GD-ROM transfer rate 1.8 MB/s
-		else
-			return min((u32)10240, SB_GDLEN - SB_GDLEND) * 2;	// Small transfers: Max G1 bus rate: 50 MHz x 16 bits
-	}
-	else
-		return 0;
+   if (SB_GDST & 1)
+   {
+	  if (GDROM_TICK < 1500000)
+		 return GDROM_TICK;
+	  if (SB_GDLEN - SB_GDLEND > 10240)
+		 return 1000000;										// Large transfers: GD-ROM transfer rate 1.8 MB/s
+	  else
+		 return min((u32)10240, SB_GDLEN - SB_GDLEND) * 2;	// Small transfers: Max G1 bus rate: 50 MHz x 16 bits
+   }
+   else
+	  return 0;
 }
 
 //is this needed ?

@@ -531,6 +531,7 @@ struct settings_t
 		bool unstable_opt;
 		bool disable_nvmem;
       bool DisableDivMatching;
+      bool AutoDivMatching;
 	} dynarec;
 	
 	struct

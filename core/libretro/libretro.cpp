@@ -371,6 +371,10 @@ void retro_set_environment(retro_environment_t cb)
          "Region; Default|Japan|USA|Europe",
       },
       {
+         "reicast_div_matching",
+         "DIV matching (performance, less accurate); disabled|enabled|auto",
+      },
+      {
          "reicast_analog_stick_deadzone",
          "Analog Stick Deadzone; 15%|20%|25%|30%|0%|5%|10%"
       },
@@ -716,6 +720,27 @@ static void update_variables(bool first_startup)
    }
    else
          settings.dreamcast.region = 3;
+
+   var.key = "reicast_div_matching";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("auto", var.value))
+      {
+         settings.dynarec.DisableDivMatching = 0;
+         settings.dynarec.AutoDivMatching = true;
+      }
+      else if (!strcmp("enabled", var.value))
+      {
+         settings.dynarec.DisableDivMatching = 0;
+         settings.dynarec.AutoDivMatching = false;
+      }
+      else if (!strcmp("disabled", var.value))
+      {
+         settings.dynarec.DisableDivMatching = 1;
+         settings.dynarec.AutoDivMatching = false;
+      }
+   }
 
 #ifndef HAVE_OIT
    var.key = "reicast_precompile_shaders";

@@ -107,7 +107,7 @@ static struct game_type_naomi lut_games_naomi[] =
    { "Melty Blood Act Cadenza"               , -1, -1, -1, -1, -1, -1,   1,  1, -1, -1 },                /* Melty Blood Act Cadenza */
 
    /* Extra Depth Scaling */
-   { "SamuraiShowdownVI-SamuraiSpirits_v4"               , -1, -1, -1, -1, -1, -1,   -1,  -1, -1, 1 },                /* Samurai Shodown VI */
+   { "Samurai Showdown VI"               , -1, -1, -1, -1, -1, -1,   -1,  -1, -1, 1 },                /* Samurai Shodown VI */
 
    /* EG Hack only */
    /* Also needs translucent polygon depth mask hack */

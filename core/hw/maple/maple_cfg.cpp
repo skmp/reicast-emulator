@@ -160,6 +160,8 @@ void mcfg_CreateDevices()
          else
             mcfg_Create(MDT_SegaVMU,bus,1);
       }
+      //TODO/FIXME - not sure what 'numberOfControl' should be here
+      //mcfg_Create(MDT_Keyboard, numberOfControl, 5);
    }
    else
    {

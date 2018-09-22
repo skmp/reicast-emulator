@@ -35,6 +35,7 @@ struct game_type_naomi
    int eg_hack;                     /* -1, make no decision */
    int disable_div;                 /* -1, make no decision */
    int jamma_setup;                 /* -1, make no decision */
+   int extra_depth_scaling;         /* -1, make no decision */
 };
 
 static struct game_type lut_games[] = 
@@ -102,16 +103,19 @@ static struct game_type_naomi lut_games_naomi[] =
 {
    /* EG Hack */
    /* Also needs Div S matching disabled */
-   { "Metal Slug 6"                          , -1, -1, -1, -1, -1, -1,   1,  1, -1  },                /* Metal Slug 6 */
-   { "Melty Blood Act Cadenza"               , -1, -1, -1, -1, -1, -1,   1,  1, -1  },                /* Melty Blood Act Cadenza */
+   { "Metal Slug 6"                          , -1, -1, -1, -1, -1, -1,   1,  1, -1, -1 },                /* Metal Slug 6 */
+   { "Melty Blood Act Cadenza"               , -1, -1, -1, -1, -1, -1,   1,  1, -1, -1 },                /* Melty Blood Act Cadenza */
+
+   /* Extra Depth Scaling */
+   { "SamuraiShowdownVI-SamuraiSpirits_v4"               , -1, -1, -1, -1, -1, -1,   -1,  -1, -1, 1 },                /* Samurai Shodown VI */
 
    /* EG Hack only */
    /* Also needs translucent polygon depth mask hack */
-   { "Melty Blood Act Cadenza Version B"     , -1, -1, -1, -1,  1, -1,   1,  -1, -1  },               /* Melty Blood Act Cadenza Version B */
+   { "Melty Blood Act Cadenza Version B"     , -1, -1, -1, -1,  1, -1,   1,  -1, -1, -1  },               /* Melty Blood Act Cadenza Version B */
 
    /* EG Hack only */
-   { "Melty Blood Act Cadenza Version B2"    , -1, -1, -1, -1, -1, -1,   1, -1, -1  },                /* Melty Blood Act Cadenza Version B2 */
+   { "Melty Blood Act Cadenza Version B2"    , -1, -1, -1, -1, -1, -1,   1, -1, -1, -1  },                /* Melty Blood Act Cadenza Version B2 */
 
    /* Alternate Jamma I/O Setup */
-   { "Power Stone 2"                         , -1, -1, -1, -1, -1, -1,  -1, -1,  1  },                /* Power Stone 2 (4 players, also need to be set in service menu) */
+   { "Power Stone 2"                         , -1, -1, -1, -1, -1, -1,  -1, -1,  1, -1  },                /* Power Stone 2 (4 players, also need to be set in service menu) */
 };

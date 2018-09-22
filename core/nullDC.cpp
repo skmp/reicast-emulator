@@ -252,6 +252,12 @@ static void LoadSpecialSettingsNaomi(const char *name)
             settings.mapping.JammaSetup = lut_games_naomi[i].jamma_setup;
          }
 
+         if (lut_games_naomi[i].extra_depth_scaling != -1 && settings.rend.AutoExtraDepthScale)
+         {
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying auto extra depth scale.\n");
+            settings.rend.ExtraDepthScale = 1e26;
+         }
+
          break;
       }
    }

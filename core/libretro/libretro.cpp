@@ -332,7 +332,7 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_extra_depth_scale",
-         "Extra depth scaling; disabled|enabled",
+         "Extra depth scaling; auto|disabled|enabled",
       },
       {
          "reicast_gdrom_fast_loading",
@@ -555,10 +555,21 @@ static void update_variables(bool first_startup)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (!strcmp(var.value, "enabled"))
-         settings.rend.ExtraDepthScale        = 1e26;
-      else
+      if (!strcmp(var.value, "auto"))
+      {
+         settings.rend.AutoExtraDepthScale    = true;
          settings.rend.ExtraDepthScale        = 1.f;
+      }
+      else if (!strcmp(var.value, "enabled"))
+      {
+         settings.rend.AutoExtraDepthScale    = false;
+         settings.rend.ExtraDepthScale        = 1e26;
+      }
+      else
+      {
+         settings.rend.AutoExtraDepthScale    = false;
+         settings.rend.ExtraDepthScale        = 1.f;
+      }
    }
 
    var.key = "reicast_gdrom_fast_loading";

@@ -84,7 +84,7 @@ bool naomi_cart_LoadRom(char* file)
 	}
 	fclose(fl);
 
-	printf("+%d romfiles, %.2f MB set size, %.2f MB set address space\n", files.size(), setsize / 1024.f / 1024.f, RomSize / 1024.f / 1024.f);
+	printf("+%lu romfiles, %.2f MB set size, %.2f MB set address space\n", files.size(), setsize / 1024.f / 1024.f, RomSize / 1024.f / 1024.f);
 
 	if (RomCacheMap)
 	{
@@ -168,7 +168,7 @@ bool naomi_cart_LoadRom(char* file)
 		if (RomCacheMap[i] == INVALID_FD)
 		{
 			wprintf(L"-Reserving ram at 0x%08X, size 0x%08X\n", fstart[i], fsize[i]);
-			
+
 #if HOST_OS == OS_WINDOWS
 			bool mapped = RomDest == VirtualAlloc(RomDest, fsize[i], MEM_RESERVE, PAGE_NOACCESS);
 #else
@@ -204,7 +204,7 @@ bool naomi_cart_LoadRom(char* file)
 bool naomi_cart_SelectFile(void* handle)
 {
 	cfgLoadStr("config", "image", SelectedFile, "null");
-	
+
 #if HOST_OS == OS_WINDOWS
 	if (strcmp(SelectedFile, "null") == 0) {
 		OPENFILENAME ofn = { 0 };

@@ -8,6 +8,7 @@
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/aica/aica_if.h"
 #include "hw/naomi/naomi.h"
+#include "hw/modem/modem.h"
 
 #include "hw/flashrom/flashrom.h"
 #include "reios/reios.h"
@@ -314,8 +315,10 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) //	:MODEM
 	{
-		return (T)libExtDevice_ReadMem_A0_006(addr,sz);
-		//EMUERROR2("Read from area0_32 not implemented [MODEM], addr=%x",addr);
+	   if (settings.System == DC_PLATFORM_DREAMCAST)
+		  return (T)ModemReadMem_A0_006(addr, sz);
+	   else
+		  return (T)libExtDevice_ReadMem_A0_006(addr,sz);
 	}
 	//map 0x0060 to 0x006F
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) //	:G2 (Reserved)
@@ -409,8 +412,10 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) // MODEM
 	{
-		//EMUERROR4("Write to area0_32 not implemented [MODEM], addr=%x,data=%x,size=%d",addr,data,sz);
-		libExtDevice_WriteMem_A0_006(addr,data,sz);
+	   if (settings.System == DC_PLATFORM_DREAMCAST)
+		  ModemWriteMem_A0_006(addr, data, sz);
+	   else
+		  libExtDevice_WriteMem_A0_006(addr,data,sz);
 	}
 	//map 0x0060 to 0x006F
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) // G2 (Reserved)

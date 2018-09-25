@@ -15,9 +15,9 @@ We're primarily here to make Reicast better.
 
 When discussing things in the tracker, forum or discord, try to think of the project first, and not of personal issues you might have with people.
 
-Good example: Constructive feedback is good because it makes contributors feel accepted, valued and safe. When people feel safe they are more comfortable explaining their opinion/viewpoint, and that helps make the project better
+Strive for: Thinking "Constructive feedback is good because it makes contributors feel accepted, valued and safe. When people feel safe they are more comfortable explaining their opinion/viewpoint, and that helps make the project better"
 
-Bad example: Emotionally abusing people is fun and makes my day better
+Avoid: Thinking "Emotionally abusing people is fun and makes my (the abuser's) day better"
 
 Avoid negativity, be realistic, give constructive feedback
 ---

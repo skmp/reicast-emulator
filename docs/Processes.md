@@ -20,3 +20,4 @@ Where do things go?
 
 Roles in the project. Team vs non-team members, multiple-teams (?), other projects, ?
 
+Write down how we use github

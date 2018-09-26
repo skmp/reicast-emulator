@@ -149,7 +149,10 @@ void mcfg_CreateDevices()
 
    if (settings.System == DC_PLATFORM_DREAMCAST)
    {
-      for (bus = 0; bus < 4; ++bus)
+	  int controllers = 4;
+	  if (settings.input.DCKeyboard)
+		 controllers--;
+      for (bus = 0; bus < controllers; ++bus)
       {
          mcfg_Create(MDT_SegaController,bus,5);
 
@@ -160,8 +163,8 @@ void mcfg_CreateDevices()
          else
             mcfg_Create(MDT_SegaVMU,bus,1);
       }
-      //TODO/FIXME - not sure what 'numberOfControl' should be here
-      //mcfg_Create(MDT_Keyboard, numberOfControl, 5);
+	  if (settings.input.DCKeyboard)
+		 mcfg_Create(MDT_Keyboard, controllers++, 5);
       //mcfg_Create(MDT_Mouse, numberOfControl++, 5);
    }
    else

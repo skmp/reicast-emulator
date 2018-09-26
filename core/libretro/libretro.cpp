@@ -14,6 +14,7 @@
 #include "../rend/rend.h"
 #include "../hw/sh4/sh4_mem.h"
 #include "keyboard_map.h"
+#include "../hw/maple/maple_devs.h"
 
 #if defined(_XBOX) || defined(_WIN32)
 char slash = '\\';
@@ -445,6 +446,23 @@ void retro_set_environment(retro_environment_t cb)
    };
 
    cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
+
+   static const struct retro_controller_description ports_default[] =
+   {
+		 { "Gamepad",		RETRO_DEVICE_JOYPAD },
+		 { "Keyboard",		RETRO_DEVICE_KEYBOARD },
+		 { "Mouse",			RETRO_DEVICE_MOUSE },
+		 { "Disconnected",	RETRO_DEVICE_NONE },
+		 { 0 },
+   };
+   static const struct retro_controller_info ports[] = {
+           { ports_default,  3 },
+           { ports_default,  3 },
+           { ports_default,  3 },
+           { ports_default,  3 },
+           { 0 },
+   };
+   environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
 }
 
 void retro_keyboard_event(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers);
@@ -1675,6 +1693,24 @@ unsigned retro_get_region (void)
 // Controller
 void retro_set_controller_port_device(unsigned in_port, unsigned device)
 {
+   if (in_port < MAPLE_PORTS)
+   {
+	  switch (device)
+	  {
+	  case RETRO_DEVICE_JOYPAD:
+		 maple_devices[in_port] = MDT_SegaController;
+		 break;
+	  case RETRO_DEVICE_KEYBOARD:
+		 maple_devices[in_port] = MDT_Keyboard;
+		 break;
+	  case RETRO_DEVICE_MOUSE:
+		 maple_devices[in_port] = MDT_Mouse;
+		 break;
+	  default:
+		 maple_devices[in_port] = MDT_None;
+		 break;
+	  }
+   }
    //TODO
    if (rumble.set_rumble_state)
    {

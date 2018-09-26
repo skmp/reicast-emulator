@@ -1149,6 +1149,8 @@ u32 mo_buttons = 0xFFFFFFFF;
 f32 mo_x_delta;
 f32 mo_y_delta;
 f32 mo_wheel_delta;
+void UpdateInputState(u32 port);
+
  struct maple_mouse : maple_base
 {
 	static u16 mo_cvt(f32 delta)
@@ -1170,7 +1172,7 @@ f32 mo_wheel_delta;
 			w32(MFID_9_Mouse);
  			//struct data
 			//3*4
-			w32(0x00060700);	// Mouse, 2 buttons, 4 axes
+			w32(0x00070E00);	// Mouse, 3 buttons, 3 axes
 			w32(0);
 			w32(0);
 			//1	area code
@@ -1191,8 +1193,12 @@ f32 mo_wheel_delta;
 			w16(0x0069);
  			// Maximum current consumption (2)
 			w16(0x0120);
- 			return MDRS_DeviceStatus;
+
+			return MDRS_DeviceStatus;
+
  		case MDCF_GetCondition:
+			UpdateInputState(bus_id);
+
 			w32(MFID_9_Mouse);
 			//struct data
 			//int32 buttons       ; digital buttons bitfield (little endian)
@@ -1216,7 +1222,9 @@ f32 mo_wheel_delta;
  			mo_x_delta=0;
 			mo_y_delta=0;
 			mo_wheel_delta = 0;
- 			return MDRS_DataTransfer;
+
+			return MDRS_DataTransfer;
+
  		default:
 			printf("Mouse: unknown MAPLE COMMAND %d\n", cmd);
 			return MDRE_UnknownCmd;

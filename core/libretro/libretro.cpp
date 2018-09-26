@@ -1918,7 +1918,6 @@ void UpdateInputState(u32 port)
       return;
    }
 
-   int id;
    static const uint16_t joymap[] =
    {
       /* JOYPAD_B      */ DC_BTN_A,
@@ -1933,51 +1932,91 @@ void UpdateInputState(u32 port)
       /* JOYPAD_X      */ DC_BTN_Y,
    };
 
-   //
-   // -- buttons
-
-   for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_X; ++id)
+   switch (maple_devices[port])
    {
-      uint16_t dc_key = joymap[id];
-      bool is_down = input_cb(port, RETRO_DEVICE_JOYPAD, 0, id);
+	  case MDT_SegaController:
+	  {
+		   int id;
+		   //
+		   // -- buttons
 
-      if ( is_down )
-         kcode[port] &= ~dc_key;
-      else
-         kcode[port] |= dc_key;
-   }
+		   for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_X; ++id)
+		   {
+		      uint16_t dc_key = joymap[id];
+		      bool is_down = input_cb(port, RETRO_DEVICE_JOYPAD, 0, id);
 
-   //
-   // -- analog stick
+		      if ( is_down )
+		         kcode[port] &= ~dc_key;
+		      else
+		         kcode[port] |= dc_key;
+		   }
 
-   get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[port]), &(joyy[port]) );
+		   //
+		   // -- analog stick
+
+		   get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[port]), &(joyy[port]) );
 
 
-   //
-   // -- triggers
+		   //
+		   // -- triggers
 
-   if ( digital_triggers )
-   {
-      // -- digital left trigger
-      if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L) )
-         lt[port]=0xFF;
-      else if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2) )
-         lt[port]=0x7F;
-      else
-         lt[port]=0;
-      // -- digital right trigger
-      if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R) )
-         rt[port]=0xFF;
-      else if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2) )
-         rt[port]=0x7F;
-      else
-         rt[port]=0;
-   }
-   else
-   {
-	   // -- analog triggers
-	   lt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2 ) / 128;
-	   rt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2 ) / 128;
+		   if ( digital_triggers )
+		   {
+		      // -- digital left trigger
+		      if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L) )
+		         lt[port]=0xFF;
+		      else if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2) )
+		         lt[port]=0x7F;
+		      else
+		         lt[port]=0;
+		      // -- digital right trigger
+		      if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R) )
+		         rt[port]=0xFF;
+		      else if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2) )
+		         rt[port]=0x7F;
+		      else
+		         rt[port]=0;
+		   }
+		   else
+		   {
+			   // -- analog triggers
+			   lt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2 ) / 128;
+			   rt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2 ) / 128;
+		   }
+	  }
+	  break;
+
+	  case MDT_Mouse:
+	  {
+		 extern u32 mo_buttons;
+		 extern f32 mo_x_delta;
+		 extern f32 mo_y_delta;
+		 extern f32 mo_wheel_delta;
+
+		 mo_x_delta = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+		 mo_y_delta = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+
+		 bool btn_state = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
+		 if (btn_state)
+			mo_buttons &= ~(1 << 2);
+		 else
+			mo_buttons |= 1 << 2;
+		 btn_state = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
+		 if (btn_state)
+			mo_buttons &= ~(1 << 1);
+		 else
+			mo_buttons |= 1 << 1;
+		 btn_state = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE);
+		 if (btn_state)
+			mo_buttons &= ~(1 << 0);
+		 else
+			mo_buttons |= 1 << 0;
+		 if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELDOWN))
+			mo_wheel_delta -= 10;
+		 else if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELUP))
+			mo_wheel_delta += 10;
+	  }
+	  break;
    }
 }
 

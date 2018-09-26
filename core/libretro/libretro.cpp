@@ -13,6 +13,7 @@
 #endif
 #include "../rend/rend.h"
 #include "../hw/sh4/sh4_mem.h"
+#include "keyboard_map.h"
 
 #if defined(_XBOX) || defined(_WIN32)
 char slash = '\\';
@@ -429,6 +430,10 @@ void retro_set_environment(retro_environment_t cb)
          "Purupuru Pack (restart); enabled|disabled"
       },
       {
+         "reicast_enable_keyboard",
+         "Dreamcast Keyboard (restart); enabled|disabled"
+      },
+      {
          "reicast_allow_service_buttons",
          "Allow Naomi service buttons; disabled|enabled"
       },
@@ -442,6 +447,7 @@ void retro_set_environment(retro_environment_t cb)
    cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
 }
 
+void retro_keyboard_event(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers);
 
 // Now comes the interesting stuff
 void retro_init(void)
@@ -466,6 +472,9 @@ void retro_init(void)
 
    environ_cb(RETRO_ENVIRONMENT_GET_CLEAR_ALL_THREAD_WAITS_CB, &frontend_clear_thread_waits_cb);
 
+   init_kb_map();
+   struct retro_keyboard_callback kb_callback = { &retro_keyboard_event };
+   environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &kb_callback);
 }
 
 void retro_deinit(void)
@@ -919,6 +928,17 @@ static void update_variables(bool first_startup)
    else
       allow_service_buttons = false;
 
+   var.key = "reicast_enable_keyboard";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("enabled", var.value))
+         settings.input.DCKeyboard = true;
+      else
+    	 settings.input.DCKeyboard = false;
+   }
+   else
+	  settings.input.DCKeyboard = false;
 
    key[0] = '\0' ;
 
@@ -1943,6 +1963,63 @@ void UpdateVibration(u32 port, u32 value)
 
    rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, (u16)(65535 * pow_l));
    rumble.set_rumble_state(port, RETRO_RUMBLE_WEAK,   (u16)(65535 * pow_r));
+}
+
+extern u8 kb_shift; 		// shift keys pressed (bitmask)
+extern u8 kb_key[6];		// normal keys pressed (up to 6)
+static int kb_used;
+
+void retro_keyboard_event(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers)
+{
+   // Dreamcast keyboard emulation
+   if (keycode == RETROK_LSHIFT || keycode == RETROK_RSHIFT)
+	  if (!down)
+		 kb_shift &= ~(0x02 | 0x20);
+	  else
+		 kb_shift |= (0x02 | 0x20);
+   if (keycode == RETROK_LCTRL || keycode == RETROK_RCTRL)
+	  if (!down)
+		 kb_shift &= ~(0x01 | 0x10);
+	  else
+		 kb_shift |= (0x01 | 0x10);
+
+   u8 dc_keycode = kb_map[keycode];
+   if (dc_keycode != 0)
+   {
+	  if (down)
+	  {
+		 if (kb_used < 6)
+		 {
+			bool found = false;
+			for (int i = 0; !found && i < 6; i++)
+			{
+			   if (kb_key[i] == dc_keycode)
+				  found = true;
+			}
+			if (!found)
+			{
+			   kb_key[kb_used] = dc_keycode;
+			   kb_used++;
+			}
+		 }
+	  }
+	  else
+	  {
+		 if (kb_used > 0)
+		 {
+			for (int i = 0; i < 6; i++)
+			{
+			   if (kb_key[i] == dc_keycode)
+			   {
+				  kb_used--;
+				  for (int j = i; j < 5; j++)
+					 kb_key[j] = kb_key[j + 1];
+				  kb_key[5] = 0;
+			   }
+			}
+		 }
+	  }
+   }
 }
 
 void* libPvr_GetRenderTarget()

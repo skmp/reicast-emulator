@@ -1,6 +1,7 @@
 reicast shell
 ===========
 
-Makefiles, and "ui specific" code mostly resides here
+Makefiles, "ui specific" and platform-specific code 
+mostly resides here.  
 
-stuff in this folder are BSD Licensed
+_Stuff in this folder is BSD Licensed_

@@ -92,7 +92,7 @@ void main() \n\
 	vtx_uv=in_uv; \n\
 	vec4 vpos=in_pos; \n\
 	vpos.w = extra_depth_scale / vpos.z; \n\
-#if TARGET_GL != GLES2 && TARGET_GL != GL2 \n\
+#if TARGET_GL == GL3 \n\
 	if (abs(vpos.w) < 1.18e-10) \n\
 		vpos.w = 1.18e-10; \n\
 #endif \n\

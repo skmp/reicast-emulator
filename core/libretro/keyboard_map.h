@@ -110,13 +110,13 @@ static void init_kb_map()
 	 kb_map[RETROK_KP_ENTER] = 0x58;
 	 //59-62 Number keys 1-0 (Numeric keypad)
 	 kb_map[RETROK_KP1] = 0x59;
-	 kb_map[RETROK_KP2] = 0x5A;
+	 kb_map[RETROK_KP2] = 0x51;
 	 kb_map[RETROK_KP3] = 0x5B;
-	 kb_map[RETROK_KP4] = 0x5C;
+	 kb_map[RETROK_KP4] = 0x50;
 	 kb_map[RETROK_KP5] = 0x5D;
-	 kb_map[RETROK_KP6] = 0x5E;
+	 kb_map[RETROK_KP6] = 0x4F;
 	 kb_map[RETROK_KP7] = 0x5F;
-	 kb_map[RETROK_KP8] = 0x60;
+	 kb_map[RETROK_KP8] = 0x52;
 	 kb_map[RETROK_KP9] = 0x61;
 	 kb_map[RETROK_KP0] = 0x62;
 	 //63 "." (Numeric keypad)

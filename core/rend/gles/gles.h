@@ -55,9 +55,6 @@ struct gl_ctx
 	struct
 	{
 		GLuint geometry,modvols,idxs,idxs2;
-#ifndef GLES
-		GLuint vao;
-#endif
 	} vbo;
 
    const char *gl_version;

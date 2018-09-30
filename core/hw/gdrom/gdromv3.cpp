@@ -978,6 +978,21 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 
 int GDROM_TICK=1500000;
 
+static int getGDROMTicks()
+{
+   if (SB_GDST & 1)
+   {
+	  if (GDROM_TICK < 1500000)
+		 return GDROM_TICK;
+	  if (SB_GDLEN - SB_GDLEND > 10240)
+		 return 1000000;										// Large transfers: GD-ROM transfer rate 1.8 MB/s
+	  else
+		 return min((u32)10240, SB_GDLEN - SB_GDLEND) * 2;	// Small transfers: Max G1 bus rate: 50 MHz x 16 bits
+   }
+   else
+	  return 0;
+}
+
 //is this needed ?
 int GDRomschd(int i, int c, int j)
 {
@@ -995,7 +1010,7 @@ int GDRomschd(int i, int c, int j)
 	if(SB_GDLEN & 0x1F) 
 	{
 		die("\n!\tGDROM: SB_GDLEN has invalid size !\n");
-		return GDROM_TICK;
+      return 0;
 	}
 
 	//if we don't have any more sectors to read
@@ -1064,7 +1079,7 @@ int GDRomschd(int i, int c, int j)
 			gd_set_state(gds_procpacketdone);
 	}
 
-	return GDROM_TICK;
+   return getGDROMTicks();
 }
 
 //DMA Start
@@ -1082,8 +1097,14 @@ void GDROM_DmaStart(u32 addr, u32 data)
 		SB_GDSTARD=SB_GDSTAR;
 		SB_GDLEND=0;
       //printf("GDROM-DMA start addr %08X len %d\n", SB_GDSTAR, SB_GDLEN);
-		GDRomschd(0,0,0);
-		sh4_sched_request(gdrom_sched,GDROM_TICK);
+
+      int ticks = getGDROMTicks();
+		if (ticks < 448)	// FIXME #define
+		{
+			ticks = GDRomschd(0,0,0);
+		}
+ 		if (ticks)
+			sh4_sched_request(gdrom_sched, ticks);
 	}
 }
 

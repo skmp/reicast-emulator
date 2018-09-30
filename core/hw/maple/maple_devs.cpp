@@ -225,8 +225,8 @@ struct maple_sega_controller: maple_base
 		return MDRS_DataTransfer;
 
 		default:
-			//printf("UNKOWN MAPLE COMMAND %d\n",cmd);
-			return MDRE_UnknownFunction;
+			//printf("UNKNOWN MAPLE COMMAND %d\n",cmd);
+         return MDRE_UnknownCmd;
 		}
 	}	
 };
@@ -916,18 +916,18 @@ struct maple_microphone: maple_base
 					return MDRS_DeviceReply;//MDRS_DataTransfer;
 				default:
 					printf("maple_microphone::dma UNHANDLED secondword %#010x\n",secondword);
-					break;
+               return MDRE_UnknownFunction;
 				}
 			}
 			default:
 				printf("maple_microphone::dma UNHANDLED function %#010x\n",function);
-				break;
+            return MDRE_UnknownFunction;
 			}
 		}
 
 		default:
 			printf("maple_microphone::dma UNHANDLED MAPLE COMMAND %d\n",cmd);
-			return MDRE_UnknownFunction;
+         return MDRE_UnknownCmd;
 		}
 	}	
 };
@@ -1031,8 +1031,8 @@ struct maple_sega_purupuru : maple_base
             return MDRS_DeviceReply;
 
          default:
-            //printf("UNKOWN MAPLE COMMAND %d\n",cmd);
-            return MDRE_UnknownFunction;
+            //printf("UNKNOWN MAPLE COMMAND %d\n",cmd);
+            return MDRE_UnknownCmd;
       }
    }
 };
@@ -1083,6 +1083,154 @@ void printState(u32 cmd, u32* buffer_in, u32 buffer_in_len)
 			printf("\n");
 	}
 }
+
+u8 kb_shift; 		// shift keys pressed (bitmask)
+u8 kb_led; 			// leds currently lit
+u8 kb_key[6]={0};	// normal keys pressed
+ struct maple_keyboard : maple_base
+{
+	virtual u32 dma(u32 cmd)
+	{
+		switch (cmd)
+		{
+		case MDC_DeviceRequest:
+			//caps
+			//4
+         w32(MFID_6_Keyboard);
+ 			//struct data
+			//3*4
+         w32(0x80000502);	// US, 104 keys
+			w32(0);
+			w32(0);
+			//1	area code
+			w8(0xFF);
+			//1	direction
+			w8(0);
+         // Product name (30)
+			for (u32 i = 0; i < 30; i++)
+			{
+				w8((u8)maple_sega_kbd_name[i]);
+			}
+			//ptr_out += 30;
+         // License (60)
+			for (u32 i = 0; i < 60; i++)
+			{
+				w8((u8)maple_sega_brand[i]);
+			}
+
+         // Low-consumption standby current (2)
+			w16(0x01AE);
+
+         // Maximum current consumption (2)
+			w16(0x01F5);
+         
+         return MDRS_DeviceStatus;
+ 		case MDCF_GetCondition:
+         w32(MFID_6_Keyboard);
+			//struct data
+			//int8 shift          ; shift keys pressed (bitmask)	//1
+			w8(kb_shift);
+			//int8 led            ; leds currently lit			//1
+			w8(kb_led);
+			//int8 key[6]         ; normal keys pressed			//6
+         for (int i = 0; i < 6; i++)
+			{
+				w8(kb_key[i]);
+			}
+         return MDRS_DataTransfer;
+ 		default:
+			printf("Keyboard: unknown MAPLE COMMAND %d\n", cmd);
+         return MDRE_UnknownCmd;
+		}
+	}
+};
+
+u32 mo_buttons = 0xFFFFFFFF;
+f32 mo_x_delta;
+f32 mo_y_delta;
+f32 mo_wheel_delta;
+void UpdateInputState(u32 port);
+
+ struct maple_mouse : maple_base
+{
+	static u16 mo_cvt(f32 delta)
+	{
+		delta+=0x200;
+		if (delta<=0)
+			delta=0;
+		else if (delta>0x3FF)
+			delta=0x3FF;
+ 		return (u16) delta;
+	}
+ 	virtual u32 dma(u32 cmd)
+	{
+		switch (cmd)
+		{
+		case MDC_DeviceRequest:
+			//caps
+			//4
+			w32(MFID_9_Mouse);
+ 			//struct data
+			//3*4
+			w32(0x00070E00);	// Mouse, 3 buttons, 3 axes
+			w32(0);
+			w32(0);
+			//1	area code
+			w8(0xFF);
+			//1	direction
+			w8(0);
+			// Product name (30)
+			for (u32 i = 0; i < 30; i++)
+			{
+				w8((u8)maple_sega_mouse_name[i]);
+			}
+ 			// License (60)
+			for (u32 i = 0; i < 60; i++)
+			{
+				w8((u8)maple_sega_brand[i]);
+			}
+ 			// Low-consumption standby current (2)
+			w16(0x0069);
+ 			// Maximum current consumption (2)
+			w16(0x0120);
+
+			return MDRS_DeviceStatus;
+
+ 		case MDCF_GetCondition:
+			UpdateInputState(bus_id);
+
+			w32(MFID_9_Mouse);
+			//struct data
+			//int32 buttons       ; digital buttons bitfield (little endian)
+			w32(mo_buttons);
+			//int16 axis1         ; horizontal movement (0-$3FF) (little endian)
+			w16(mo_cvt(mo_x_delta));
+			//int16 axis2         ; vertical movement (0-$3FF) (little endian)
+			w16(mo_cvt(mo_y_delta));
+			//int16 axis3         ; mouse wheel movement (0-$3FF) (little endian)
+			w16(mo_cvt(mo_wheel_delta));
+			//int16 axis4         ; ? movement (0-$3FF) (little endian)
+			w16(mo_cvt(0));
+			//int16 axis5         ; ? movement (0-$3FF) (little endian)
+			w16(mo_cvt(0));
+			//int16 axis6         ; ? movement (0-$3FF) (little endian)
+			w16(mo_cvt(0));
+			//int16 axis7         ; ? movement (0-$3FF) (little endian)
+			w16(mo_cvt(0));
+			//int16 axis8         ; ? movement (0-$3FF) (little endian)
+			w16(mo_cvt(0));
+ 			mo_x_delta=0;
+			mo_y_delta=0;
+			mo_wheel_delta = 0;
+
+			return MDRS_DataTransfer;
+
+ 		default:
+			printf("Mouse: unknown MAPLE COMMAND %d\n", cmd);
+			return MDRE_UnknownCmd;
+		}
+	}
+};
 
 extern u16 kcode[4];
 extern s8 joyx[4],joyy[4];
@@ -1590,6 +1738,7 @@ struct maple_naomi_jamma : maple_sega_controller
 		return MDRE_UnknownFunction;
 	}
 };
+
 maple_device* maple_Create(MapleDeviceType type)
 {
 	maple_device* rv=0;
@@ -1610,6 +1759,14 @@ maple_device* maple_Create(MapleDeviceType type)
    case MDT_PurupuruPack:
       rv = new maple_sega_purupuru();
       break;
+
+   case MDT_Keyboard:
+		rv = new maple_keyboard();
+		break;
+
+   case MDT_Mouse:
+		rv = new maple_mouse();
+		break;
 
 	case MDT_NaomiJamma:
 		rv = new maple_naomi_jamma();

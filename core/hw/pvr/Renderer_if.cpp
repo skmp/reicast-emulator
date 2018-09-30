@@ -91,7 +91,8 @@ bool rend_frame(TA_context* ctx, bool draw_osd)
    bool proc = renderer->Process(ctx);
 
 #if !defined(TARGET_NO_THREADS)
-   if (settings.rend.ThreadedRendering && !ctx->rend.isRenderFramebuffer)
+   if (settings.rend.ThreadedRendering && (!proc || (!ctx->rend.isRenderFramebuffer && !ctx->rend.isRTT)))
+	   // If rendering to texture, continue locking until the frame is rendered
       re.Set();
 #endif
    
@@ -113,6 +114,9 @@ bool rend_single_frame(void)
    }
    while (!_pvrrc);
    bool do_swp = rend_frame(_pvrrc, true);
+
+	if (settings.rend.ThreadedRendering && _pvrrc->rend.isRTT)
+		re.Set();
 
    //clear up & free data ..
    FinishRender(_pvrrc);

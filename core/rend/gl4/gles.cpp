@@ -311,20 +311,22 @@ void main() \n\
 	   if (stencil.r == 0x81u) \n\
 			color.rgb *= shade_scale_factor; \n\
 	#endif\n\
+    \n\
+	color = fog_clamp(color); \n\
+	 \n\
    #if pp_FogCtrl==0 || pp_TwoVolumes == 1 // LUT \n\
    	IF(cur_fog_control == 0) \n\
 		{ \n\
-			color = fog_clamp(color); \n\
 			color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));  \n\
 		} \n\
 	#endif\n\
 	#if pp_Offset==1 && pp_BumpMap == 0 && (pp_FogCtrl == 1 || pp_TwoVolumes == 1)  // Per vertex \n\
 		IF(cur_fog_control == 1) \n\
 		{ \n\
-			color = fog_clamp(color); \n\
 			color.rgb=mix(color.rgb, sp_FOG_COL_VERT.rgb, offset.a); \n\
 		} \n\
 	#endif\n\
+    \n\
    color *= trilinear_alpha; \n\
 	 \n\
 	#if cp_AlphaTest == 1 \n\

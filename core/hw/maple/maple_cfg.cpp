@@ -94,6 +94,8 @@ const rgb_t VMU_SCREEN_COLOR_MAP[VMU_NUM_COLORS] = {
 
 vmu_screen_params_t vmu_screen_params[4] ;
 
+MapleDeviceType maple_devices[MAPLE_PORTS] =
+   { MDT_SegaController, MDT_SegaController, MDT_SegaController, MDT_SegaController };
 
 u8 GetBtFromSgn(s8 val)
 {
@@ -143,23 +145,35 @@ void mcfg_CreateDevices()
 {
    int bus ;
 
-   for ( bus = 0 ; bus < 4 ; bus++)
+   for ( bus = 0 ; bus < MAPLE_PORTS; bus++)
       vmu_screen_params[bus].vmu_lcd_screen = NULL ;
 
 
    if (settings.System == DC_PLATFORM_DREAMCAST)
    {
-      for (bus = 0; bus < 4; ++bus)
-      {
-         mcfg_Create(MDT_SegaController,bus,5);
+	  for (bus = 0; bus < MAPLE_PORTS; ++bus)
+	  {
+		 switch (maple_devices[bus])
+		 {
+		 case MDT_SegaController:
+			mcfg_Create(MDT_SegaController, bus, 5);
+			mcfg_Create(MDT_SegaVMU, bus, 0);
 
-         mcfg_Create(MDT_SegaVMU,bus,0);
+			if (enable_purupuru)
+			   mcfg_Create(MDT_PurupuruPack, bus, 1);
+			else
+			   mcfg_Create(MDT_SegaVMU, bus, 1);
+			break;
 
-         if (enable_purupuru)
-            mcfg_Create(MDT_PurupuruPack,bus,1);
-         else
-            mcfg_Create(MDT_SegaVMU,bus,1);
-      }
+		 case MDT_Keyboard:
+			 mcfg_Create(MDT_Keyboard, bus, 5);
+			 break;
+
+		 case MDT_Mouse:
+			 mcfg_Create(MDT_Mouse, bus, 5);
+			 break;
+		 }
+	  }
    }
    else
    {

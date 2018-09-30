@@ -13,6 +13,8 @@
 #endif
 #include "../rend/rend.h"
 #include "../hw/sh4/sh4_mem.h"
+#include "keyboard_map.h"
+#include "../hw/maple/maple_devs.h"
 
 #if defined(_XBOX) || defined(_WIN32)
 char slash = '\\';
@@ -332,7 +334,7 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_extra_depth_scale",
-         "Extra depth scaling; disabled|enabled",
+         "Extra depth scaling; auto|disabled|enabled",
       },
       {
          "reicast_gdrom_fast_loading",
@@ -369,6 +371,10 @@ void retro_set_environment(retro_environment_t cb)
       {
          "reicast_region",
          "Region; Default|Japan|USA|Europe",
+      },
+      {
+         "reicast_div_matching",
+         "DIV matching (performance, less accurate); disabled|enabled|auto",
       },
       {
          "reicast_analog_stick_deadzone",
@@ -425,6 +431,10 @@ void retro_set_environment(retro_environment_t cb)
          "Purupuru Pack (restart); enabled|disabled"
       },
       {
+         "reicast_enable_keyboard",
+         "Dreamcast Keyboard (restart); enabled|disabled"
+      },
+      {
          "reicast_allow_service_buttons",
          "Allow Naomi service buttons; disabled|enabled"
       },
@@ -436,8 +446,26 @@ void retro_set_environment(retro_environment_t cb)
    };
 
    cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
+
+   static const struct retro_controller_description ports_default[] =
+   {
+		 { "Gamepad",		RETRO_DEVICE_JOYPAD },
+		 { "Keyboard",		RETRO_DEVICE_KEYBOARD },
+		 { "Mouse",			RETRO_DEVICE_MOUSE },
+		 { "Disconnected",	RETRO_DEVICE_NONE },
+		 { 0 },
+   };
+   static const struct retro_controller_info ports[] = {
+           { ports_default,  3 },
+           { ports_default,  3 },
+           { ports_default,  3 },
+           { ports_default,  3 },
+           { 0 },
+   };
+   environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
 }
 
+void retro_keyboard_event(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers);
 
 // Now comes the interesting stuff
 void retro_init(void)
@@ -462,6 +490,9 @@ void retro_init(void)
 
    environ_cb(RETRO_ENVIRONMENT_GET_CLEAR_ALL_THREAD_WAITS_CB, &frontend_clear_thread_waits_cb);
 
+   init_kb_map();
+   struct retro_keyboard_callback kb_callback = { &retro_keyboard_event };
+   environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &kb_callback);
 }
 
 void retro_deinit(void)
@@ -551,10 +582,21 @@ static void update_variables(bool first_startup)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (!strcmp(var.value, "enabled"))
-         settings.rend.ExtraDepthScale        = 1e26;
-      else
+      if (!strcmp(var.value, "auto"))
+      {
+         settings.rend.AutoExtraDepthScale    = true;
          settings.rend.ExtraDepthScale        = 1.f;
+      }
+      else if (!strcmp(var.value, "enabled"))
+      {
+         settings.rend.AutoExtraDepthScale    = false;
+         settings.rend.ExtraDepthScale        = 1e26;
+      }
+      else
+      {
+         settings.rend.AutoExtraDepthScale    = false;
+         settings.rend.ExtraDepthScale        = 1.f;
+      }
    }
 
    var.key = "reicast_gdrom_fast_loading";
@@ -716,6 +758,27 @@ static void update_variables(bool first_startup)
    }
    else
          settings.dreamcast.region = 3;
+
+   var.key = "reicast_div_matching";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("auto", var.value))
+      {
+         settings.dynarec.DisableDivMatching = 0;
+         settings.dynarec.AutoDivMatching = true;
+      }
+      else if (!strcmp("enabled", var.value))
+      {
+         settings.dynarec.DisableDivMatching = 0;
+         settings.dynarec.AutoDivMatching = false;
+      }
+      else if (!strcmp("disabled", var.value))
+      {
+         settings.dynarec.DisableDivMatching = 1;
+         settings.dynarec.AutoDivMatching = false;
+      }
+   }
 
 #ifndef HAVE_OIT
    var.key = "reicast_precompile_shaders";
@@ -883,6 +946,17 @@ static void update_variables(bool first_startup)
    else
       allow_service_buttons = false;
 
+   var.key = "reicast_enable_keyboard";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("enabled", var.value))
+         settings.input.DCKeyboard = true;
+      else
+    	 settings.input.DCKeyboard = false;
+   }
+   else
+	  settings.input.DCKeyboard = false;
 
    key[0] = '\0' ;
 
@@ -1628,6 +1702,24 @@ unsigned retro_get_region (void)
 // Controller
 void retro_set_controller_port_device(unsigned in_port, unsigned device)
 {
+   if (in_port < MAPLE_PORTS)
+   {
+	  switch (device)
+	  {
+	  case RETRO_DEVICE_JOYPAD:
+		 maple_devices[in_port] = MDT_SegaController;
+		 break;
+	  case RETRO_DEVICE_KEYBOARD:
+		 maple_devices[in_port] = MDT_Keyboard;
+		 break;
+	  case RETRO_DEVICE_MOUSE:
+		 maple_devices[in_port] = MDT_Mouse;
+		 break;
+	  default:
+		 maple_devices[in_port] = MDT_None;
+		 break;
+	  }
+   }
    //TODO
    if (rumble.set_rumble_state)
    {
@@ -1835,7 +1927,6 @@ void UpdateInputState(u32 port)
       return;
    }
 
-   int id;
    static const uint16_t joymap[] =
    {
       /* JOYPAD_B      */ DC_BTN_A,
@@ -1850,51 +1941,91 @@ void UpdateInputState(u32 port)
       /* JOYPAD_X      */ DC_BTN_Y,
    };
 
-   //
-   // -- buttons
-
-   for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_X; ++id)
+   switch (maple_devices[port])
    {
-      uint16_t dc_key = joymap[id];
-      bool is_down = input_cb(port, RETRO_DEVICE_JOYPAD, 0, id);
+	  case MDT_SegaController:
+	  {
+		   int id;
+		   //
+		   // -- buttons
 
-      if ( is_down )
-         kcode[port] &= ~dc_key;
-      else
-         kcode[port] |= dc_key;
-   }
+		   for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_X; ++id)
+		   {
+		      uint16_t dc_key = joymap[id];
+		      bool is_down = input_cb(port, RETRO_DEVICE_JOYPAD, 0, id);
 
-   //
-   // -- analog stick
+		      if ( is_down )
+		         kcode[port] &= ~dc_key;
+		      else
+		         kcode[port] |= dc_key;
+		   }
 
-   get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[port]), &(joyy[port]) );
+		   //
+		   // -- analog stick
+
+		   get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[port]), &(joyy[port]) );
 
 
-   //
-   // -- triggers
+		   //
+		   // -- triggers
 
-   if ( digital_triggers )
-   {
-      // -- digital left trigger
-      if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L) )
-         lt[port]=0xFF;
-      else if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2) )
-         lt[port]=0x7F;
-      else
-         lt[port]=0;
-      // -- digital right trigger
-      if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R) )
-         rt[port]=0xFF;
-      else if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2) )
-         rt[port]=0x7F;
-      else
-         rt[port]=0;
-   }
-   else
-   {
-	   // -- analog triggers
-	   lt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2 ) / 128;
-	   rt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2 ) / 128;
+		   if ( digital_triggers )
+		   {
+		      // -- digital left trigger
+		      if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L) )
+		         lt[port]=0xFF;
+		      else if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2) )
+		         lt[port]=0x7F;
+		      else
+		         lt[port]=0;
+		      // -- digital right trigger
+		      if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R) )
+		         rt[port]=0xFF;
+		      else if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2) )
+		         rt[port]=0x7F;
+		      else
+		         rt[port]=0;
+		   }
+		   else
+		   {
+			   // -- analog triggers
+			   lt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2 ) / 128;
+			   rt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2 ) / 128;
+		   }
+	  }
+	  break;
+
+	  case MDT_Mouse:
+	  {
+		 extern u32 mo_buttons;
+		 extern f32 mo_x_delta;
+		 extern f32 mo_y_delta;
+		 extern f32 mo_wheel_delta;
+
+		 mo_x_delta = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+		 mo_y_delta = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+
+		 bool btn_state = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
+		 if (btn_state)
+			mo_buttons &= ~(1 << 2);
+		 else
+			mo_buttons |= 1 << 2;
+		 btn_state = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
+		 if (btn_state)
+			mo_buttons &= ~(1 << 1);
+		 else
+			mo_buttons |= 1 << 1;
+		 btn_state = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE);
+		 if (btn_state)
+			mo_buttons &= ~(1 << 0);
+		 else
+			mo_buttons |= 1 << 0;
+		 if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELDOWN))
+			mo_wheel_delta -= 10;
+		 else if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELUP))
+			mo_wheel_delta += 10;
+	  }
+	  break;
    }
 }
 
@@ -1916,6 +2047,63 @@ void UpdateVibration(u32 port, u32 value)
 
    rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, (u16)(65535 * pow_l));
    rumble.set_rumble_state(port, RETRO_RUMBLE_WEAK,   (u16)(65535 * pow_r));
+}
+
+extern u8 kb_shift; 		// shift keys pressed (bitmask)
+extern u8 kb_key[6];		// normal keys pressed (up to 6)
+static int kb_used;
+
+void retro_keyboard_event(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers)
+{
+   // Dreamcast keyboard emulation
+   if (keycode == RETROK_LSHIFT || keycode == RETROK_RSHIFT)
+	  if (!down)
+		 kb_shift &= ~(0x02 | 0x20);
+	  else
+		 kb_shift |= (0x02 | 0x20);
+   if (keycode == RETROK_LCTRL || keycode == RETROK_RCTRL)
+	  if (!down)
+		 kb_shift &= ~(0x01 | 0x10);
+	  else
+		 kb_shift |= (0x01 | 0x10);
+
+   u8 dc_keycode = kb_map[keycode];
+   if (dc_keycode != 0)
+   {
+	  if (down)
+	  {
+		 if (kb_used < 6)
+		 {
+			bool found = false;
+			for (int i = 0; !found && i < 6; i++)
+			{
+			   if (kb_key[i] == dc_keycode)
+				  found = true;
+			}
+			if (!found)
+			{
+			   kb_key[kb_used] = dc_keycode;
+			   kb_used++;
+			}
+		 }
+	  }
+	  else
+	  {
+		 if (kb_used > 0)
+		 {
+			for (int i = 0; i < 6; i++)
+			{
+			   if (kb_key[i] == dc_keycode)
+			   {
+				  kb_used--;
+				  for (int j = i; j < 5; j++)
+					 kb_key[j] = kb_key[j + 1];
+				  kb_key[5] = 0;
+			   }
+			}
+		 }
+	  }
+   }
 }
 
 void* libPvr_GetRenderTarget()

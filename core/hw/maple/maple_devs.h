@@ -7,10 +7,14 @@ enum MapleDeviceType
 	MDT_SegaVMU,
 	MDT_Microphone,
    MDT_PurupuruPack,
+   MDT_Keyboard,
+   MDT_Mouse,
 
 	MDT_NaomiJamma,
 
-	MDT_Count
+	MDT_Count,
+
+	MDT_None = -1
 };
 
 struct IMapleConfigMap;
@@ -44,3 +48,6 @@ maple_device* maple_Create(MapleDeviceType type);
 #define SIZE_OF_MIC_DATA	480 //ALSO DEFINED IN SipEmulator.java
 int get_mic_data(u8* buffer); //implemented in Android.cpp
 int push_vmu_screen(u8* buffer); //implemented in Android.cpp
+
+#define MAPLE_PORTS 4
+extern MapleDeviceType maple_devices[MAPLE_PORTS];	// Maple device configuration for mcfg_CreateDevices()

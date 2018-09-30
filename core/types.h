@@ -519,6 +519,7 @@ struct settings_t
 		bool Clipping;
       int TextureUpscale;
 		int MaxFilteredTextureSize;
+      bool AutoExtraDepthScale;
       f32 ExtraDepthScale;
 		bool ThreadedRendering;
 	} rend;
@@ -531,6 +532,7 @@ struct settings_t
 		bool unstable_opt;
 		bool disable_nvmem;
       bool DisableDivMatching;
+      bool AutoDivMatching;
 	} dynarec;
 	
 	struct
@@ -619,6 +621,12 @@ struct settings_t
 	struct {
 		bool OpenGlChecks;
 	} validate;
+
+   struct {
+		bool DCKeyboard;
+		bool DCMouse;
+		u32 MouseSensitivity;
+	} input;
 
 	struct {
 		int JammaSetup;

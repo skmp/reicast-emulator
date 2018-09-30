@@ -185,7 +185,8 @@ static void LoadSpecialSettings(void)
             settings.rend.RenderToTextureBuffer = lut_games[i].rendertotexturebuffer;
          }
 
-         if (lut_games[i].disable_div != -1)
+         if (lut_games[i].disable_div != -1 &&
+               settings.dynarec.AutoDivMatching)
          {
             log_cb(RETRO_LOG_INFO, "[Hack]: Applying Disable DIV hack.\n");
             settings.dynarec.DisableDivMatching = lut_games[i].disable_div;
@@ -238,7 +239,8 @@ static void LoadSpecialSettingsNaomi(const char *name)
             settings.rend.RenderToTextureBuffer = lut_games_naomi[i].rendertotexturebuffer;
          }
 
-         if (lut_games_naomi[i].disable_div != -1)
+         if (lut_games_naomi[i].disable_div != -1 &&
+               settings.dynarec.AutoDivMatching)
          {
             log_cb(RETRO_LOG_INFO, "[Hack]: Applying Disable DIV hack.\n");
             settings.dynarec.DisableDivMatching = lut_games_naomi[i].disable_div;
@@ -248,6 +250,12 @@ static void LoadSpecialSettingsNaomi(const char *name)
          {
             log_cb(RETRO_LOG_INFO, "[Hack]: Applying alternate Jamma I/O board setup.\n");
             settings.mapping.JammaSetup = lut_games_naomi[i].jamma_setup;
+         }
+
+         if (lut_games_naomi[i].extra_depth_scaling != -1 && settings.rend.AutoExtraDepthScale)
+         {
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying auto extra depth scale.\n");
+            settings.rend.ExtraDepthScale = 1e26;
          }
 
          break;
@@ -422,7 +430,7 @@ void LoadSettings(void)
 	settings.dynarec.Enable			= 1;
 	settings.dynarec.idleskip		= 1;
 	settings.dynarec.unstable_opt	= 0; 
-   settings.dynarec.DisableDivMatching       = 0;
+   //settings.dynarec.DisableDivMatching       = 0;
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
    settings.UpdateModeForced     = 0;
 	settings.dreamcast.RTC			= GetRTC_now();

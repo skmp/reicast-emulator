@@ -4,7 +4,9 @@ LIBRETRO_COMM_DIR = $(CORE_DIR)/core/libretro-common
 INCFLAGS    += -I$(CORE_DIR)/core/libretro \
 					-I$(CORE_DIR)/core/ \
 					-I$(DEPS_DIR) \
-					-I$(LIBRETRO_COMM_DIR)/include 
+					-I$(DEPS_DIR)/picotcp/include \
+					-I$(DEPS_DIR)/picotcp/modules \
+					-I$(LIBRETRO_COMM_DIR)/include
 
 CORE_DEFINES += -DNO_MMU
 
@@ -35,6 +37,10 @@ SOURCES_CXX := \
 					$(CORE_DIR)/core/hw/maple/maple_cfg.cpp \
 					\
 					$(CORE_DIR)/core/hw/mem/_vmem.cpp \
+					\
+					$(CORE_DIR)/core/hw/modem/dns.cpp \
+					$(CORE_DIR)/core/hw/modem/modem.cpp \
+					$(CORE_DIR)/core/hw/modem/picoppp.cpp \
 					\
 					$(CORE_DIR)/core/hw/pvr/drkPvr.cpp \
 					$(CORE_DIR)/core/hw/pvr/Renderer_if.cpp \
@@ -97,7 +103,28 @@ SOURCES_C +=   \
 					$(DEPS_DIR)/chdr/cdrom.c \
 					$(DEPS_DIR)/chdr/chd.c \
 					$(DEPS_DIR)/chdr/flac.c \
-					$(DEPS_DIR)/chdr/huffman.c
+					$(DEPS_DIR)/chdr/huffman.c \
+					\
+					$(DEPS_DIR)/picotcp/modules/pico_arp.c \
+					$(DEPS_DIR)/picotcp/modules/pico_dev_ppp.c \
+					$(DEPS_DIR)/picotcp/modules/pico_dns_client.c \
+					$(DEPS_DIR)/picotcp/modules/pico_dns_common.c \
+					$(DEPS_DIR)/picotcp/modules/pico_ethernet.c \
+					$(DEPS_DIR)/picotcp/modules/pico_fragments.c \
+					$(DEPS_DIR)/picotcp/modules/pico_ipv4.c\
+					$(DEPS_DIR)/picotcp/modules/pico_socket_tcp.c \
+					$(DEPS_DIR)/picotcp/modules/pico_socket_udp.c \
+					$(DEPS_DIR)/picotcp/modules/pico_tcp.c \
+					$(DEPS_DIR)/picotcp/modules/pico_udp.c \
+					$(DEPS_DIR)/picotcp/stack/pico_device.c \
+					$(DEPS_DIR)/picotcp/stack/pico_frame.c \
+					$(DEPS_DIR)/picotcp/stack/pico_md5.c \
+					$(DEPS_DIR)/picotcp/stack/pico_protocol.c \
+					$(DEPS_DIR)/picotcp/stack/pico_socket_multicast.c \
+					$(DEPS_DIR)/picotcp/stack/pico_socket.c \
+					$(DEPS_DIR)/picotcp/stack/pico_stack.c \
+					$(DEPS_DIR)/picotcp/stack/pico_tree.c
+
 SOURCES_ASM :=
 
 ifeq ($(NO_REND), 1)

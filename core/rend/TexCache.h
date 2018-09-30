@@ -103,7 +103,7 @@ void palette_update(void);
 
 // Unpack to 32-bit word
 
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && defined(GLES)
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && defined(HAVE_OPENGLES)
 // GLES doesn't have the native ordering 8888 so we need to put bytes in the RGBA memory order.
 #define ARGB1555_32( word )    ( ((word & 0x8000) ? 0xFF000000 : 0) | (((word>>10) & 0x1F)<<3)  | (((word>>5) & 0x1F)<<11)  | (((word>>0) & 0x1F)<<19) )
 
@@ -160,7 +160,7 @@ struct pp_8888
 {
 	__forceinline static u32 packRGB(u8 R,u8 G,u8 B)
 	{
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && defined(GLES)
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && defined(HAVE_OPENGLES)
       return (R << 0) | (G << 8) | (B << 16) | 0xFF000000;
 #else
       return (R << 24) | (G << 16) | (B << 8) | 0xFF;

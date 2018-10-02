@@ -69,6 +69,9 @@ int mips_counter;
 
 double full_rps;
 
+static u32 lightgun_line = 0xffff;
+static u32 lightgun_hpos;
+
 //called from sh4 context , should update pvr/ta state and everything else
 int spg_line_sched(int tag, int cycl, int jit)
 {
@@ -112,6 +115,12 @@ int spg_line_sched(int tag, int cycl, int jit)
 			asic_RaiseInterrupt(holly_HBLank); /* HBlank in */
          rend_vblank(); // notify for vblank
 		}
+		if (lightgun_line != 0xffff && lightgun_line == prv_cur_scanline)
+		{
+			SPG_TRIGGER_POS = ((lightgun_line & 0x3FF) << 16) | (lightgun_hpos & 0x3FF);
+			asic_RaiseInterrupt(holly_MAPLE_DMA);
+			lightgun_line = 0xffff;
+		}
 	}
 
 	//interrupts
@@ -142,6 +151,19 @@ int spg_line_sched(int tag, int cycl, int jit)
 	min_active=max(min_active,min_scanline);
 
 	return (min_active-prv_cur_scanline)*Line_Cycles;
+}
+
+void read_lightgun_position(int x, int y)
+{
+	if (y < 0 || y >= 480 || x < 0 || x >= 640)
+		// Off screen
+		lightgun_line = 0xffff;
+	else
+	{
+		lightgun_line = y / 2 + SPG_VBLANK_INT.vblank_out_interrupt_line_number;
+		lightgun_hpos = x * (SPG_HBLANK.hstart - SPG_HBLANK.hbend) / 640 + SPG_HBLANK.hbend * 2;	// Ok but why *2 ????
+		lightgun_hpos = min((u32)0x3FF, lightgun_hpos);
+	}
 }
 
 int rend_end_sch(int tag, int cycl, int jitt)

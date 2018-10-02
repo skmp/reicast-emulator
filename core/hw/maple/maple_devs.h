@@ -9,6 +9,7 @@ enum MapleDeviceType
    MDT_PurupuruPack,
    MDT_Keyboard,
    MDT_Mouse,
+	MDT_LightGun,
 
 	MDT_NaomiJamma,
 
@@ -35,6 +36,7 @@ struct maple_device
 	virtual u32 Dma(u32 Command,u32* buffer_in,u32 buffer_in_len,u32* buffer_out,u32& buffer_out_len)=0;
 	virtual bool maple_serialize(void **data, unsigned int *total_size){return true;};
 	virtual bool maple_unserialize(void **data, unsigned int *total_size){return true;};
+	virtual void get_lightgun_pos() {};
 };
 
 struct _NaomiState

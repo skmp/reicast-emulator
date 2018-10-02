@@ -1435,6 +1435,11 @@ void retro_unload_game(void)
 // Memory/Serialization
 void *retro_get_memory_data(unsigned type)
 {
+#if !defined(TARGET_NO_THREADS)
+   if ( settings.rend.ThreadedRendering && !emu_inited )
+	   return 0 ;
+#endif
+
    if ( type == RETRO_MEMORY_SYSTEM_RAM )
       return mem_b.data;
    return 0; //TODO
@@ -1442,6 +1447,10 @@ void *retro_get_memory_data(unsigned type)
 
 size_t retro_get_memory_size(unsigned type)
 {
+#if !defined(TARGET_NO_THREADS)
+   if ( settings.rend.ThreadedRendering && !emu_inited )
+	   return 0 ;
+#endif
    if ( type == RETRO_MEMORY_SYSTEM_RAM )
       return mem_b.size;
    return 0; //TODO

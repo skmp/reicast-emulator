@@ -7,7 +7,7 @@ description: |
 grade: stable
 icon: shell/linux/reicast.png
 confinement: strict
-architectures: all
+# architectures: all
 
 apps:
   reicast:
@@ -42,3 +42,10 @@ parts:
     stage-packages:
       - libevdev2
     after: [desktop-gtk2, alsa]
+
+    # use prime to select specific packages
+
+# have to setup docker image to test on clean environment for further customization
+# add a stable channel and all the specific releases
+# research on cmake usae with snapcraft
+# research on gradle integration for android testing

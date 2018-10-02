@@ -172,6 +172,14 @@ void mcfg_CreateDevices()
 		 case MDT_Mouse:
 			 mcfg_Create(MDT_Mouse, bus, 5);
 			 break;
+
+		 case MDT_LightGun:
+			 mcfg_Create(MDT_LightGun, bus, 5);
+			 if (enable_purupuru)
+				mcfg_Create(MDT_PurupuruPack, bus, 0);
+			 else
+				mcfg_Create(MDT_SegaVMU, bus, 0);
+			 break;
 		 }
 	  }
    }

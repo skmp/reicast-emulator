@@ -3,6 +3,7 @@
 #include "maple_helper.h"
 #include "maple_devs.h"
 #include "maple_cfg.h"
+#include "hw/pvr/spg.h"
 #include <time.h>
 
 #include "deps/zlib/zlib.h"
@@ -15,6 +16,7 @@ const char* maple_sega_dreameye_name_1 = "Dreamcast Camera Flash  Devic";
 const char* maple_sega_dreameye_name_2 = "Dreamcast Camera Flash LDevic";
 const char* maple_sega_mic_name = "MicDevice for Dreameye";
 const char* maple_sega_purupuru_name = "Puru Puru Pack";
+const char* maple_sega_lightgun_name = "Dreamcast Gun";
 
 const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRISES,LTD.";
 
@@ -1087,7 +1089,7 @@ void printState(u32 cmd, u32* buffer_in, u32 buffer_in_len)
 u8 kb_shift; 		// shift keys pressed (bitmask)
 u8 kb_led; 			// leds currently lit
 u8 kb_key[6]={0};	// normal keys pressed
- struct maple_keyboard : maple_base
+struct maple_keyboard : maple_base
 {
 	virtual u32 dma(u32 cmd)
 	{
@@ -1145,13 +1147,24 @@ u8 kb_key[6]={0};	// normal keys pressed
 	}
 };
 
+// Mouse buttons
+// bit 0: Button C
+// bit 1: Right button (B)
+// bit 2: Left button (A)
+// bit 3: Wheel button
 u32 mo_buttons = 0xFFFFFFFF;
+// Relative mouse coordinates [-512:511]
 f32 mo_x_delta;
 f32 mo_y_delta;
 f32 mo_wheel_delta;
+// Absolute mouse coordinates
+// Range [0:639] [0:479]
+// but may be outside this range if the pointer is offscreen or outside the 4:3 window.
+s32 mo_x_abs;
+s32 mo_y_abs;
 void UpdateInputState(u32 port);
 
- struct maple_mouse : maple_base
+struct maple_mouse : maple_base
 {
 	static u16 mo_cvt(f32 delta)
 	{
@@ -1230,6 +1243,87 @@ void UpdateInputState(u32 port);
 			return MDRE_UnknownCmd;
 		}
 	}
+};
+
+struct maple_lightgun : maple_base
+{
+   virtual MapleDeviceType get_device_type()
+   {
+	  return MDT_LightGun;
+   }
+
+   virtual u32 dma(u32 cmd)
+   {
+	  switch (cmd)
+	  {
+	  case MDC_DeviceRequest:
+		 //caps
+		 //4
+		 w32(MFID_7_LightGun | MFID_0_Input);
+
+		 //struct data
+		 //3*4
+		 w32(0);				// Light gun
+		 w32(0xFE000000);	// Controller
+		 w32(0);
+		 //1	area code
+		 w8(0x01);		// FF: Worldwide, 01: North America
+		 //1	direction
+		 w8(0);
+		 // Product name (30)
+		 for (u32 i = 0; i < 30; i++)
+		 {
+			w8((u8)maple_sega_lightgun_name[i]);
+		 }
+
+		 // License (60)
+		 for (u32 i = 0; i < 60; i++)
+		 {
+			w8((u8)maple_sega_brand[i]);
+		 }
+
+		 // Low-consumption standby current (2)
+		 w16(0x0069);	// 10.5 mA
+
+		 // Maximum current consumption (2)
+		 w16(0x0120);	// 28.8 mA
+
+		 return MDRS_DeviceStatus;
+
+	  case MDCF_GetCondition:
+	  {
+		 PlainJoystickState pjs;
+		 config->GetInput(&pjs);
+
+		 //caps
+		 //4
+		 w32(MFID_0_Input);
+
+		 //state data
+		 //2 key code
+		 w16(pjs.kcode | 0xFF01);
+
+		 //not used
+		 //2
+		 w16(0xFFFF);
+
+		 //not used
+		 //4
+		 w32(0x80808080);
+	  }
+
+	  return MDRS_DataTransfer;
+
+	  default:
+		 printf("Light gun: unknown MAPLE COMMAND %d\n", cmd);
+		 return MDRE_UnknownCmd;
+	  }
+   }
+
+   virtual void get_lightgun_pos()
+   {
+	  read_lightgun_position(mo_x_abs, mo_y_abs);
+   }
 };
 
 extern u16 kcode[4];
@@ -1766,6 +1860,10 @@ maple_device* maple_Create(MapleDeviceType type)
 
    case MDT_Mouse:
 		rv = new maple_mouse();
+		break;
+
+   case MDT_LightGun:
+		rv = new maple_lightgun();
 		break;
 
 	case MDT_NaomiJamma:

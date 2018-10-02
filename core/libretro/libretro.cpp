@@ -431,10 +431,6 @@ void retro_set_environment(retro_environment_t cb)
          "Purupuru Pack (restart); enabled|disabled"
       },
       {
-         "reicast_enable_keyboard",
-         "Dreamcast Keyboard (restart); enabled|disabled"
-      },
-      {
          "reicast_allow_service_buttons",
          "Allow Naomi service buttons; disabled|enabled"
       },
@@ -452,14 +448,15 @@ void retro_set_environment(retro_environment_t cb)
 		 { "Gamepad",		RETRO_DEVICE_JOYPAD },
 		 { "Keyboard",		RETRO_DEVICE_KEYBOARD },
 		 { "Mouse",			RETRO_DEVICE_MOUSE },
+		 { "Light Gun",		RETRO_DEVICE_LIGHTGUN },
 		 { "Disconnected",	RETRO_DEVICE_NONE },
 		 { 0 },
    };
    static const struct retro_controller_info ports[] = {
-           { ports_default,  3 },
-           { ports_default,  3 },
-           { ports_default,  3 },
-           { ports_default,  3 },
+           { ports_default,  4 },
+           { ports_default,  4 },
+           { ports_default,  4 },
+           { ports_default,  4 },
            { 0 },
    };
    environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
@@ -946,18 +943,6 @@ static void update_variables(bool first_startup)
    else
       allow_service_buttons = false;
 
-   var.key = "reicast_enable_keyboard";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (!strcmp("enabled", var.value))
-         settings.input.DCKeyboard = true;
-      else
-    	 settings.input.DCKeyboard = false;
-   }
-   else
-	  settings.input.DCKeyboard = false;
-
    key[0] = '\0' ;
 
    var.key = key ;
@@ -1168,61 +1153,8 @@ static void extract_directory(char *buf, const char *path, size_t size)
 
 extern void dc_prepare_system(void);
 
-static void extract_basename(char *buf, const char *path, size_t size)
+static void set_input_descriptors()
 {
-   const char *base = strrchr(path, slash);
-   if (!base)
-      base = path;
-
-   if (*base == slash)
-      base++;
-
-   strncpy(buf, base, size - 1);
-   buf[size - 1] = '\0';
-}
-
-// Loading/unloading games
-bool retro_load_game(const struct retro_game_info *game)
-{
-   glsm_ctx_params_t params = {0};
-   const char *dir = NULL;
-#ifdef _WIN32
-   char slash = '\\';
-#else
-   char slash = '/';
-#endif
-
-   extract_basename(g_base_name, game->path, sizeof(g_base_name));
-   extract_directory(game_dir, game->path, sizeof(game_dir));
-
-   // Storing rom dir for later use
-   char g_roms_dir[PATH_MAX];
-   snprintf(g_roms_dir, sizeof(g_roms_dir), "%s%c", game_dir, slash);
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE, &rumble) && log_cb)
-        log_cb(RETRO_LOG_INFO, "Rumble interface supported!\n");
-
-   if (!(environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir))
-      dir = game_dir;
-
-   snprintf(game_dir, sizeof(game_dir), "%s%cdc%c", dir, slash, slash);
-   snprintf(game_dir_no_slash, sizeof(game_dir_no_slash), "%s%cdc", dir, slash);
-
-   settings.dreamcast.cable = 3;
-   update_variables(true);
-
-   {
-      /* Check for extension .lst. If found, we will set the system type
-       * automatically to Naomi. */
-      char *ext = strrchr(g_base_name, '.');
-      if (ext)
-      {
-         log_cb(RETRO_LOG_INFO, "File extension is: %s\n", ext);
-         if (!strcmp(".lst", ext))
-            settings.System = DC_PLATFORM_NAOMI;
-      }
-   }
-
    if (settings.System == DC_PLATFORM_NAOMI)
    {
       struct retro_input_descriptor desc[] = {
@@ -1309,67 +1241,98 @@ bool retro_load_game(const struct retro_game_info *game)
    }
    else
    {
-      struct retro_input_descriptor desc[] = {
-         { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
-         { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
-         { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
-         { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
-         { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" },
-         { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" },
-         { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
-         { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" },
-         { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L Trigger" },
-         { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R Trigger" },
-         { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" },
-         { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
-         { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
+      struct retro_input_descriptor desc[15 * 4 + 1];
+      int descriptor_index = 0;
+      for (unsigned i = 0; i < 4; i++)
+      {
+    	 switch (maple_devices[i])
+    	 {
+    	 case MDT_SegaController:
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L Trigger" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R Trigger" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" };
+    		break;
 
-         { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
-         { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
-         { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
-         { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
-         { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" },
-         { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" },
-         { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
-         { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" },
-         { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L Trigger" },
-         { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R Trigger" },
-         { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" },
-         { 1, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
-         { 1, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
-
-         { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
-         { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
-         { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
-         { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
-         { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" },
-         { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" },
-         { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
-         { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" },
-         { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L Trigger" },
-         { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R Trigger" },
-         { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" },
-         { 2, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
-         { 2, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
-
-         { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
-         { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
-         { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
-         { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
-         { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" },
-         { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" },
-         { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
-         { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" },
-         { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L Trigger" },
-         { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R Trigger" },
-         { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" },
-         { 3, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
-         { 3, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
-
-         { 0 },
-      };
+    	 case MDT_LightGun:
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT,  "D-Pad Left" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP,    "D-Pad Up" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN,  "D-Pad Down" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT, "D-Pad Right" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER,	   "A" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_START,      "Start" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A,      "B" };
+    		break;
+    	 }
+      }
+      desc[descriptor_index++] = { 0 };
 
       environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
+   }
+}
+
+static void extract_basename(char *buf, const char *path, size_t size)
+{
+   const char *base = strrchr(path, slash);
+   if (!base)
+      base = path;
+
+   if (*base == slash)
+      base++;
+
+   strncpy(buf, base, size - 1);
+   buf[size - 1] = '\0';
+}
+
+// Loading/unloading games
+bool retro_load_game(const struct retro_game_info *game)
+{
+   glsm_ctx_params_t params = {0};
+   const char *dir = NULL;
+#ifdef _WIN32
+   char slash = '\\';
+#else
+   char slash = '/';
+#endif
+
+   extract_basename(g_base_name, game->path, sizeof(g_base_name));
+   extract_directory(game_dir, game->path, sizeof(game_dir));
+
+   // Storing rom dir for later use
+   char g_roms_dir[PATH_MAX];
+   snprintf(g_roms_dir, sizeof(g_roms_dir), "%s%c", game_dir, slash);
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE, &rumble) && log_cb)
+        log_cb(RETRO_LOG_INFO, "Rumble interface supported!\n");
+
+   if (!(environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir))
+      dir = game_dir;
+
+   snprintf(game_dir, sizeof(game_dir), "%s%cdc%c", dir, slash, slash);
+   snprintf(game_dir_no_slash, sizeof(game_dir_no_slash), "%s%cdc", dir, slash);
+
+   settings.dreamcast.cable = 3;
+   update_variables(true);
+
+   {
+      /* Check for extension .lst. If found, we will set the system type
+       * automatically to Naomi. */
+      char *ext = strrchr(g_base_name, '.');
+      if (ext)
+      {
+         log_cb(RETRO_LOG_INFO, "File extension is: %s\n", ext);
+         if (!strcmp(".lst", ext))
+            settings.System = DC_PLATFORM_NAOMI;
+      }
    }
 
    if (game->path[0] == '\0')
@@ -1706,6 +1669,9 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 	  case RETRO_DEVICE_MOUSE:
 		 maple_devices[in_port] = MDT_Mouse;
 		 break;
+	  case RETRO_DEVICE_LIGHTGUN:
+		 maple_devices[in_port] = MDT_LightGun;
+		 break;
 	  default:
 		 maple_devices[in_port] = MDT_None;
 		 break;
@@ -1717,6 +1683,7 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
       rumble.set_rumble_state(in_port, RETRO_RUMBLE_STRONG, 0);
       rumble.set_rumble_state(in_port, RETRO_RUMBLE_WEAK,   0);
    }
+   set_input_descriptors();
 }
 
 
@@ -1907,6 +1874,16 @@ static void UpdateInputStateNaomi(u32 port)
    get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[port]), &(joyy[port]) );
 }
 
+static void setDeviceButtonState(u32 port, int deviceType, int btnId, const uint16_t joymap[])
+{
+   uint16_t dc_key = joymap[btnId];
+   bool is_down = input_cb(port, deviceType, 0, btnId);
+   if (is_down)
+	  kcode[port] &= ~dc_key;
+   else
+	  kcode[port] |= dc_key;
+}
+
 void UpdateInputState(u32 port)
 {
    if (settings.System == DC_PLATFORM_NAOMI)
@@ -1942,13 +1919,7 @@ void UpdateInputState(u32 port)
 
 		   for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_X; ++id)
 		   {
-		      uint16_t dc_key = joymap[id];
-		      bool is_down = input_cb(port, RETRO_DEVICE_JOYPAD, 0, id);
-
-		      if ( is_down )
-		         kcode[port] &= ~dc_key;
-		      else
-		         kcode[port] |= dc_key;
+			  setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, id, joymap);
 		   }
 
 		   //
@@ -1983,6 +1954,57 @@ void UpdateInputState(u32 port)
 			   lt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2 ) / 128;
 			   rt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2 ) / 128;
 		   }
+	  }
+	  break;
+
+	  case MDT_LightGun:
+	  {
+		 static const uint16_t lg_joymap[] =
+		 {
+			  /* deprecated */ 			0,
+		      /* deprecated */ 			0,
+		      /* LIGHTGUN_TRIGGER */	DC_BTN_A,
+		      /* LIGHTGUN_AUX_A */		DC_BTN_B,
+		      /* LIGHTGUN_AUX_B */ 		0,
+			  /* deprecated */ 			0,
+			  /* LIGHTGUN_START */		DC_BTN_START,
+			  /* LIGHTGUN_SELECT */ 	0,
+			  /* LIGHTGUN_AUX_C */		0,
+		      /* LIGHTGUN_UP   */ 		DC_DPAD_UP,
+		      /* LIGHTGUN_DOWN   */ 	DC_DPAD_DOWN,
+		      /* LIGHTGUN_LEFT   */ 	DC_DPAD_LEFT,
+		      /* LIGHTGUN_RIGHT  */ 	DC_DPAD_RIGHT,
+		 };
+		 extern s32 mo_x_abs;
+		 extern s32 mo_y_abs;
+		 //
+		 // -- buttons
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER, lg_joymap);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_AUX_A, lg_joymap);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_START, lg_joymap);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP, lg_joymap);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN, lg_joymap);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT, lg_joymap);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT, lg_joymap);
+
+		 bool force_offscreen = false;
+
+		 if (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD))
+		 {
+			force_offscreen = true;
+			kcode[port] &= ~DC_BTN_A;
+		 }
+
+		 if (force_offscreen || input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN))
+		 {
+			mo_x_abs = -1;
+			mo_y_abs = -1;
+		 }
+		 else
+		 {
+			mo_x_abs = (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X) + 0x8000) * 640 / 0x10000;
+			mo_y_abs = (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y) + 0x8000) * 480 / 0x10000;
+		 }
 	  }
 	  break;
 

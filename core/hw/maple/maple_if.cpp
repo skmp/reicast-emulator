@@ -11,6 +11,15 @@
 #include "hw/holly/sb.h"
 #include "hw/maple/maple_helper.h"
 
+enum MaplePattern
+{
+	MP_Start,
+	MP_SDCKBOccupy = 2,
+	MP_Reset,
+	MP_SDCKBOccupyCancel,
+	MP_NOP = 7
+};
+
 maple_device* MapleDevices[4][6];
 
 int maple_sched;
@@ -52,13 +61,13 @@ static void maple_DoDma(void)
 		u32 header_2 = ReadMem32_nommu(addr + 4) &0x1FFFFFE0;
 
 		last = (header_1 >> 31) == 1;//is last transfer ?
-		u32 plen = (header_1 & 0xFF )+1;//transfer length
-		u32 maple_op=(header_1>>8)&7;
+		u32 plen = (header_1 & 0xFF )+1;//transfer length (32-bit unit)
+		u32 maple_op=(header_1>>8)&7;	// Pattern selection: 0 - START, 2 - SDCKB occupy permission, 3 - RESET, 4 - SDCKB occupy cancel, 7 - NOP
 		xfer_count+=plen*4;
 
 		//this is kinda wrong .. but meh
 		//really need to properly process the commands at some point
-		if (maple_op==0)
+		if (maple_op == MP_Start)
 		{
 			if (!IsOnSh4Ram(header_2))
 			{
@@ -103,6 +112,14 @@ static void maple_DoDma(void)
 
 			//goto next command
 			addr += 2 * 4 + plen * 4;
+		}
+		else if (maple_op == MP_SDCKBOccupy)
+		{
+			u32 bus = (header_1 >> 16) & 3;
+			if (MapleDevices[bus][5])
+				MapleDevices[bus][5]->get_lightgun_pos();
+
+			addr += 1 * 4;
 		}
 		else
 		{

@@ -117,14 +117,17 @@ else ifneq (,$(findstring x64,$(platform)))
     endif
 
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)
-else ifneq (,$(findstring armv7h,$(platform)))
+else ifneq (,$(findstring armv7,$(platform)))
     MFLAGS += -marm -mfloat-abi=hard -march=armv7-a -funroll-loops
     ASFLAGS += -mfloat-abi=hard -march=armv7-a
-    ifneq (,$(findstring neon,$(platform)))
-        MFLAGS += -mfpu=neon
-        ASFLAGS += -mfpu=neon
-    endif
-    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+    
+	#ifneq (,$(findstring neon,$(platform)))
+    #Commenting our fixes the snapcraft armhf build. Probably other ones too. Needs testing
+	MFLAGS += -mfpu=neon
+    ASFLAGS += -mfpu=neon
+    #endif
+    
+	CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
     USE_GLES := 1
 
 # LinCPP

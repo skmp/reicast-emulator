@@ -1,3 +1,5 @@
+[![Snap Status](https://build.snapcraft.io/badge/reicast/reicast-emulator.svg)](https://build.snapcraft.io/user/reicast/reicast-emulator)
+
 # General Notes
 ---
 Snap is a **squashfs** used to distribute applications on Linux targets in a
@@ -9,6 +11,7 @@ Snap is a **squashfs** used to distribute applications on Linux targets in a
 ---
 ### Installing snap 
 - Info on installing snap can be found at: [The official snap installation guide](https://docs.snapcraft.io/core/install)
+- For more info check: [Complete snap usage article](https://itsfoss.com/use-snap-packages-ubuntu-16-04/)
 
 - Most Linux distros are covered there. If you encounter a problem contact us @
   lx0@emudev.org.

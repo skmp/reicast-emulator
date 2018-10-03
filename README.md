@@ -110,7 +110,7 @@ Or open the .xcodeproj in Xcode and hit "Build".
 Building for Linux
 ------------------
 ### Using traditional make
-	Requirements:
+- Requirements:
 	* build-essential
 	* libasound2
 	* libegl1-mesa-dev
@@ -119,15 +119,15 @@ Building for Linux
 	* mesa-common-dev
 	* libgl1-mesa-dev
 
-	From project root directory:
+- From project root directory:
+```
+cd shell/linux
 
-	```
-	cd shell/linux
+make
+```
 
-	make
-	```
 ### Using snap
-Refer to our [snap README](https:github.com/reicast/reicast-emulator/snap/README.md)
+- Refer to our [snap README](https:github.com/reicast/reicast-emulator/snap/README.md)
 
 Translations
 ------------

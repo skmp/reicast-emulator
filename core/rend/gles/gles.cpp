@@ -1167,6 +1167,8 @@ static bool RenderFrame(void)
    }
    else
    {
+      glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+		glClear(GL_COLOR_BUFFER_BIT);
       DrawFramebuffer(dc_width, dc_height);
    }
 

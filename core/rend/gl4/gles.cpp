@@ -1286,6 +1286,8 @@ static bool RenderFrame(void)
    else
    {
       glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+      glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+		glClear(GL_COLOR_BUFFER_BIT);
 		DrawFramebuffer(dc_width, dc_height);
    }
 

@@ -1239,9 +1239,6 @@ static bool RenderFrame(void)
       glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.used(), pvrrc.global_param_tr.head(), GL_STATIC_DRAW);
       glCheck();
 
-      int offs_x=ds2s_offs_x+0.5f;
-      //this needs to be scaled
-
       //not all scaling affects pixel operations, scale to adjust for that
       scale_x *= scissoring_scale_x;
 
@@ -1261,11 +1258,23 @@ static bool RenderFrame(void)
          if (!is_rtt)
          {
             // Add x offset for aspect ratio > 4/3
-            min_x = min_x * dc2s_scale_h + offs_x;
+            min_x = min_x * dc2s_scale_h + ds2s_offs_x;
             // Invert y coordinates when rendering to screen
             min_y = screen_height - (min_y + height) * dc2s_scale_h;
             width *= dc2s_scale_h;
             height *= dc2s_scale_h;
+
+			if (ds2s_offs_x > 0)
+			{
+			   float rounded_offs_x = ds2s_offs_x + 0.5f;
+
+			   glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+			   glcache.Enable(GL_SCISSOR_TEST);
+			   glScissor(0, 0, rounded_offs_x, screen_height);
+			   glClear(GL_COLOR_BUFFER_BIT);
+			   glScissor(screen_width - rounded_offs_x, 0, rounded_offs_x, screen_height);
+			   glClear(GL_COLOR_BUFFER_BIT);
+			}
          }
          else if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
          {
@@ -1275,7 +1284,7 @@ static bool RenderFrame(void)
             height *= settings.rend.RenderToTextureUpscale;
          }
 
-         glScissor(min_x, min_y, width, height);
+         glScissor(min_x + 0.5f, min_y + 0.5f, width + 0.5f, height + 0.5f);
          glcache.Enable(GL_SCISSOR_TEST);
       }
 

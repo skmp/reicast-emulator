@@ -2075,6 +2075,26 @@ extern u8 kb_shift; 		// shift keys pressed (bitmask)
 extern u8 kb_key[6];		// normal keys pressed (up to 6)
 static int kb_used;
 
+static void release_key(unsigned dc_keycode)
+{
+   if (dc_keycode == 0)
+	  return;
+
+   if (kb_used > 0)
+   {
+	  for (int i = 0; i < 6; i++)
+	  {
+		 if (kb_key[i] == dc_keycode)
+		 {
+			kb_used--;
+			for (int j = i; j < 5; j++)
+			   kb_key[j] = kb_key[j + 1];
+			kb_key[5] = 0;
+		 }
+	  }
+   }
+}
+
 void retro_keyboard_event(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers)
 {
    // Dreamcast keyboard emulation
@@ -2088,6 +2108,18 @@ void retro_keyboard_event(bool down, unsigned keycode, uint32_t character, uint1
 		 kb_shift &= ~(0x01 | 0x10);
 	  else
 		 kb_shift |= (0x01 | 0x10);
+
+   // Make sure modifier keys are released
+   if ((key_modifiers & RETROKMOD_SHIFT) == 0)
+   {
+	  release_key(kb_map[RETROK_LSHIFT]);
+	  release_key(kb_map[RETROK_LSHIFT]);
+   }
+   if ((key_modifiers & RETROKMOD_CTRL) == 0)
+   {
+	  release_key(kb_map[RETROK_LCTRL]);
+	  release_key(kb_map[RETROK_RCTRL]);
+   }
 
    u8 dc_keycode = kb_map[keycode];
    if (dc_keycode != 0)
@@ -2111,19 +2143,7 @@ void retro_keyboard_event(bool down, unsigned keycode, uint32_t character, uint1
 	  }
 	  else
 	  {
-		 if (kb_used > 0)
-		 {
-			for (int i = 0; i < 6; i++)
-			{
-			   if (kb_key[i] == dc_keycode)
-			   {
-				  kb_used--;
-				  for (int j = i; j < 5; j++)
-					 kb_key[j] = kb_key[j + 1];
-				  kb_key[5] = 0;
-			   }
-			}
-		 }
+		 release_key(dc_keycode);
 	  }
    }
 }

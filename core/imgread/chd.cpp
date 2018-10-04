@@ -145,7 +145,8 @@ bool CHDDisc::TryOpen(const wchar* file)
 		Track t;
       t.StartFAD = total_frames + extraframes;
 		int padded = (frames + CD_TRACK_PADDING - 1) / CD_TRACK_PADDING;
-		extraframes += (padded * CD_TRACK_PADDING) - frames;
+		if (head->version >= 5)
+			extraframes += (padded * CD_TRACK_PADDING) - frames;
 		total_frames += frames;
 		t.EndFAD = total_frames - 1 + extraframes;
 		t.ADDR = 0;

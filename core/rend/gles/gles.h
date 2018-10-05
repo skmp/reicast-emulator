@@ -8,6 +8,10 @@
 #define VERTEX_COL_BASE_ARRAY 1
 #define VERTEX_COL_OFFS_ARRAY 2
 #define VERTEX_UV_ARRAY       3
+// OIT only
+#define VERTEX_COL_BASE1_ARRAY 4
+#define VERTEX_COL_OFFS1_ARRAY 5
+#define VERTEX_UV1_ARRAY 6
 
 #ifndef GL_UNSIGNED_INT_8_8_8_8
 #define GL_UNSIGNED_INT_8_8_8_8 0x8035
@@ -16,6 +20,7 @@
 #define glCheck()
 
 //vertex types
+extern u32 gcflip;
 extern float scale_x, scale_y;
 
 void DrawStrips(void);
@@ -75,6 +80,7 @@ struct text_info {
 
 extern gl_ctx gl;
 extern GLuint fbTextureId;
+extern float fb_scale_x, fb_scale_y;
 
 struct modvol_shader_type
 {
@@ -82,12 +88,17 @@ struct modvol_shader_type
    GLuint scale;
    GLuint sp_ShaderColor;
 };
+enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
-
+bool ProcessFrame(TA_context* ctx);
+void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
 text_info raw_GetTexture(TSP tsp, TCW tcw);
 void CollectCleanup();
 void DoCleanup();
 void SortPParams(int first, int count);
+void SetCull(u32 CullMode);
+s32 SetTileClip(u32 val, GLint uniform);
+void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();
@@ -99,8 +110,14 @@ int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping);
 void vertex_buffer_unmap(void);
 
+GLuint gl_CompileShader(const char* shader, GLuint type);
+GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader);
 bool CompilePipelineShader(PipelineShader* s);
-enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
+void co_dc_yield(void);
+void vertex_buffer_unmap();
+
+extern GLuint vmuTextureId[4];
+void UpdateVmuTexture(int vmu_screen_number);
 
 extern struct ShaderUniforms_t
 {
@@ -162,6 +179,8 @@ struct SortTrigDrawParam
 	u16 first;
 	u16 count;
 };
+
+// Render to texture
 struct FBT
 {
 	u32 TexAddr;
@@ -169,3 +188,4 @@ struct FBT
 	GLuint tex;
 	GLuint fbo;
 };
+extern FBT fb_rtt;

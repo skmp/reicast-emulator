@@ -4,15 +4,16 @@
  *  Created on: May 26, 2018
  *      Author: raph
  */
-#include "glcache.h"
+#include "gl4.h"
+#include "rend/gles/glcache.h"
 
 GLuint pixels_buffer;
 GLuint pixels_pointers;
 GLuint atomic_buffer;
-PipelineShader g_abuffer_final_shader;
-PipelineShader g_abuffer_final_nosort_shader;
-PipelineShader g_abuffer_clear_shader;
-PipelineShader g_abuffer_tr_modvol_shaders[ModeCount];
+gl4PipelineShader g_abuffer_final_shader;
+gl4PipelineShader g_abuffer_final_nosort_shader;
+gl4PipelineShader g_abuffer_clear_shader;
+gl4PipelineShader g_abuffer_tr_modvol_shaders[ModeCount];
 static GLuint g_quadBuffer = 0;
 static GLuint g_quadVertexArray = 0;
 
@@ -298,6 +299,11 @@ void initABuffer()
 
 	if (pixels_buffer == 0 )
 	{
+		// get the max buffer size
+		GLint64 size;
+		glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &size);
+		pixel_buffer_size = (GLuint)min((GLint64)pixel_buffer_size, size);
+
 		// Create the buffer
 		glGenBuffers(1, &pixels_buffer);
 		// Bind it
@@ -318,7 +324,7 @@ void initABuffer()
 		glBufferData(GL_ATOMIC_COUNTER_BUFFER, 4, NULL, GL_DYNAMIC_COPY);
 		glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, atomic_buffer);
 		GLint zero = 0;
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GLint), &zero);
+		glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLint), &zero);
 		glCheck();
 	}
 
@@ -326,23 +332,23 @@ void initABuffer()
 	{
 		char source[16384];
 		sprintf(source, final_shader_source, 1);
-		CompilePipelineShader(&g_abuffer_final_shader, source);
+		gl4CompilePipelineShader(&g_abuffer_final_shader, source);
 	}
 	if (g_abuffer_final_nosort_shader.program == 0)
 	{
 		char source[16384];
 		sprintf(source, final_shader_source, 0);
-		CompilePipelineShader(&g_abuffer_final_nosort_shader, source);
+		gl4CompilePipelineShader(&g_abuffer_final_nosort_shader, source);
 	}
 	if (g_abuffer_clear_shader.program == 0)
-		CompilePipelineShader(&g_abuffer_clear_shader, clear_shader_source);
+	   gl4CompilePipelineShader(&g_abuffer_clear_shader, clear_shader_source);
 	if (g_abuffer_tr_modvol_shaders[0].program == 0)
 	{
 		char source[16384];
 		for (int mode = 0; mode < ModeCount; mode++)
 		{
 			sprintf(source, tr_modvol_shader_source, mode);
-			CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], source);
+			gl4CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], source);
 		}
 	}
 
@@ -355,12 +361,41 @@ void initABuffer()
 
 	// Clear A-buffer pointers
 	glcache.UseProgram(g_abuffer_clear_shader.program);
-	ShaderUniforms.Set(&g_abuffer_clear_shader);
+	gl4ShaderUniforms.Set(&g_abuffer_clear_shader);
 
 	DrawQuad();
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 	glCheck();
+}
+
+void termABuffer()
+{
+   if (pixels_pointers != 0)
+   {
+	  glcache.DeleteTextures(1, &pixels_pointers);
+	  pixels_pointers = 0;
+   }
+   if (pixels_buffer != 0)
+   {
+	  glDeleteBuffers(1, &pixels_buffer);
+	  pixels_buffer = 0;
+   }
+   if (atomic_buffer != 0)
+   {
+	  glDeleteBuffers(1, &atomic_buffer);
+	  atomic_buffer = 0;
+   }
+   if (g_quadVertexArray != 0)
+   {
+	  glDeleteVertexArrays(1, &g_quadVertexArray);
+	  g_quadVertexArray = 0;
+   }
+   if (g_quadBuffer != 0)
+   {
+	  glDeleteBuffers(1, &g_quadBuffer);
+	  g_quadBuffer = 0;
+   }
 }
 
 void reshapeABuffer(int w, int h)
@@ -380,10 +415,10 @@ void DrawQuad()
 {
 	glBindVertexArray(g_quadVertexArray);
 
-	float xmin = (ShaderUniforms.scale_coefs[2] - 1) / ShaderUniforms.scale_coefs[0];
-	float xmax = (ShaderUniforms.scale_coefs[2] + 1) / ShaderUniforms.scale_coefs[0];
-	float ymin = (ShaderUniforms.scale_coefs[3] - 1) / ShaderUniforms.scale_coefs[1];
-	float ymax = (ShaderUniforms.scale_coefs[3] + 1) / ShaderUniforms.scale_coefs[1];
+	float xmin = (gl4ShaderUniforms.scale_coefs[2] - 1) / gl4ShaderUniforms.scale_coefs[0];
+	float xmax = (gl4ShaderUniforms.scale_coefs[2] + 1) / gl4ShaderUniforms.scale_coefs[0];
+	float ymin = (gl4ShaderUniforms.scale_coefs[3] - 1) / gl4ShaderUniforms.scale_coefs[1];
+	float ymax = (gl4ShaderUniforms.scale_coefs[3] + 1) / gl4ShaderUniforms.scale_coefs[1];
 	if (ymin > ymax)
 	{
 		float t = ymin;
@@ -425,7 +460,7 @@ void DrawTranslucentModVols(int first, int count)
 {
 	if (count == 0 || pvrrc.modtrig.used() == 0)
 		return;
-	SetupModvolVBO();
+	gl4SetupModvolVBO();
 
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -461,13 +496,13 @@ void DrawTranslucentModVols(int first, int count)
 		if (mod_base == -1)
 			mod_base = param.first;
 
-		PipelineShader *shader;
+		gl4PipelineShader *shader;
 		if (!param.isp.VolumeLast && mv_mode > 0)
 			shader = &g_abuffer_tr_modvol_shaders[Or];	// OR'ing (open volume or quad)
 		else
 			shader = &g_abuffer_tr_modvol_shaders[Xor];	// XOR'ing (closed volume)
 		glcache.UseProgram(shader->program);
-		ShaderUniforms.Set(shader);
+		gl4ShaderUniforms.Set(shader);
 
 		SetCull(param.isp.CullMode); glCheck();
 
@@ -480,7 +515,7 @@ void DrawTranslucentModVols(int first, int count)
 			//Sum the area
 			shader = &g_abuffer_tr_modvol_shaders[mv_mode == 1 ? Inclusion : Exclusion];
 			glcache.UseProgram(shader->program);
-			ShaderUniforms.Set(shader);
+			gl4ShaderUniforms.Set(shader);
 
 			glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
 			glDrawArrays(GL_TRIANGLES, mod_base * 3, (param.first + param.count - mod_base) * 3); glCheck();
@@ -522,7 +557,7 @@ void renderABuffer(bool sortFragments)
 {
 	// Render to output FBO
 	glcache.UseProgram(sortFragments ? g_abuffer_final_shader.program : g_abuffer_final_nosort_shader.program);
-	ShaderUniforms.Set(&g_abuffer_final_shader);
+	gl4ShaderUniforms.Set(&g_abuffer_final_shader);
 
 	glcache.Disable(GL_DEPTH_TEST);
 	glcache.Disable(GL_CULL_FACE);
@@ -534,7 +569,7 @@ void renderABuffer(bool sortFragments)
 
 	// Clear A-buffer pointers
 	glcache.UseProgram(g_abuffer_clear_shader.program);
-	ShaderUniforms.Set(&g_abuffer_clear_shader);
+	gl4ShaderUniforms.Set(&g_abuffer_clear_shader);
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	DrawQuad();

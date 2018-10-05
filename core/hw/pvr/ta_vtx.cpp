@@ -70,10 +70,8 @@ List<PolyParam>* CurrentPPlist;
 //TA state vars	
 DECL_ALIGN(4) u8 FaceBaseColor[4];
 DECL_ALIGN(4) u8 FaceOffsColor[4];
-#ifdef HAVE_OIT
 DECL_ALIGN(4) u8 FaceBaseColor1[4];
 DECL_ALIGN(4) u8 FaceOffsColor1[4];
-#endif
 DECL_ALIGN(4) u32 SFaceBaseColor;
 DECL_ALIGN(4) u32 SFaceOffsColor;
 
@@ -724,9 +722,7 @@ public:
 		CurrentPP=&nullPP;
 		CurrentPPlist=0;
       if ( ListType == ListType_Opaque_Modifier_Volume
-#ifdef HAVE_OIT
             || ListType == ListType_Translucent_Modifier_Volume
-#endif
          )
          EndModVol();
 	}
@@ -766,11 +762,9 @@ public:
 			if (d_pp->pcw.Texture) {
 				d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
 			}
-#ifdef HAVE_OIT
-         d_pp->tsp1.full = -1;
+			d_pp->tsp1.full = -1;
 			d_pp->tcw1.full = -1;
 			d_pp->texid1 = -1;
-#endif
 		}
 	}
 
@@ -824,12 +818,10 @@ public:
 
 		glob_param_bdc(pp);
 
-#ifdef HAVE_OIT
-      CurrentPP->tsp1.full = pp->tsp1.full;
+		CurrentPP->tsp1.full = pp->tsp1.full;
 		CurrentPP->tcw1.full = pp->tcw1.full;
 		if (pp->pcw.Texture)
-			CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
-#endif
+		   CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
 	}
 	__forceinline
 		static void TACALL AppendPolyParam4A(void* vpp)
@@ -838,12 +830,10 @@ public:
 
 		glob_param_bdc(pp);
 
-#ifdef HAVE_OIT
-      CurrentPP->tsp1.full = pp->tsp1.full;
+		CurrentPP->tsp1.full = pp->tsp1.full;
 		CurrentPP->tcw1.full = pp->tcw1.full;
 		if (pp->pcw.Texture)
-			CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
-#endif
+		   CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
 	}
 	__forceinline
 		static void TACALL AppendPolyParam4B(void* vpp)
@@ -851,9 +841,7 @@ public:
 		TA_PolyParam4B* pp=(TA_PolyParam4B*)vpp;
 
 		poly_float_color(FaceBaseColor,FaceColor0);
-#ifdef HAVE_OIT
-      poly_float_color(FaceBaseColor1, FaceColor1);
-#endif
+		poly_float_color(FaceBaseColor1, FaceColor1);
 	}
 
 	//Poly Strip handling
@@ -864,8 +852,6 @@ public:
 	{
       CurrentPP->count=vdrc.idx.used() - CurrentPP->first;
 
-#ifdef HAVE_OIT
-#if STRIPS_AS_PPARAMS
       if (CurrentPPlist==&vdrc.global_param_tr)
       {
          PolyParam* d_pp =CurrentPPlist->Append(); 
@@ -875,36 +861,15 @@ public:
          d_pp->count=0; 
       }
       else
-#endif
       {
-         int vbase=vdrc.verts.used();
+    	 int vbase=vdrc.verts.used();
 
          *vdrc.idx.Append()=vbase-1;
          *vdrc.idx.Append()=vbase;
          
          if (CurrentPP->count&1)
-            *vdrc.idx.Append()=vbase;
+        	*vdrc.idx.Append()=vbase;
       }
-#else
-
-		int vbase=vdrc.verts.used();
-
-		*vdrc.idx.Append()=vbase-1;
-		*vdrc.idx.Append()=vbase;
-
-		if (CurrentPP->count&1)
-			*vdrc.idx.Append()=vbase;
-#if STRIPS_AS_PPARAMS
-		if (CurrentPPlist==&vdrc.global_param_tr)
-		{
-			PolyParam* d_pp =CurrentPPlist->Append(); 
-			*d_pp=*CurrentPP;
-			CurrentPP=d_pp;
-			d_pp->first=vdrc.idx.used(); 
-			d_pp->count=0; 
-		}
-#endif
-#endif
 	}
 
 
@@ -1135,9 +1100,7 @@ public:
 		vert_cvt_base;
 
 		vert_packed_color(col,BaseCol0);
-#ifdef HAVE_OIT
-      vert_packed_color(col1, BaseCol1);
-#endif
+		vert_packed_color(col1, BaseCol1);
 	}
 
 	//(Non-Textured, Intensity,	with Two Volumes)
@@ -1147,9 +1110,7 @@ public:
 		vert_cvt_base;
 
 		vert_face_base_color(BaseInt0);
-#ifdef HAVE_OIT
-      vert_face_base_color1(BaseInt1);
-#endif
+		vert_face_base_color1(BaseInt1);
 	}
 
 	//(Textured, Packed Color,	with Two Volumes)	
@@ -1168,12 +1129,10 @@ public:
 	{
 		vert_res_base;
 
-#ifdef HAVE_OIT
-      vert_packed_color(col1, BaseCol1);
+		vert_packed_color(col1, BaseCol1);
 		vert_packed_color(spc1, OffsCol1);
 
 		vert_uv1_32(u1, v1);
-#endif
 	}
 
 	//(Textured, Packed Color, 16bit UV, with Two Volumes)
@@ -1192,12 +1151,10 @@ public:
 	{
 		vert_res_base;
 
-#ifdef HAVE_OIT
-      vert_packed_color(col1, BaseCol1);
+		vert_packed_color(col1, BaseCol1);
 		vert_packed_color(spc1, OffsCol1);
 
 		vert_uv1_16(u1, v1);
-#endif
 	}
 
 	//(Textured, Intensity,	with Two Volumes)
@@ -1216,12 +1173,10 @@ public:
 	{
 		vert_res_base;
 
-#ifdef HAVE_OIT
-      vert_face_base_color1(BaseInt1);
+		vert_face_base_color1(BaseInt1);
 		vert_face_offs_color1(OffsInt1);
 
 		vert_uv1_32(u1,v1);
-#endif
 	}
 
 	//(Textured, Intensity, 16bit UV, with Two Volumes)
@@ -1240,12 +1195,10 @@ public:
 	{
 		vert_res_base;
 
-#ifdef HAVE_OIT
-      vert_face_base_color1(BaseInt1);
+		vert_face_base_color1(BaseInt1);
 		vert_face_offs_color1(OffsInt1);
 
 		vert_uv1_16(u1, v1);
-#endif
 	}
 
 	//Sprites
@@ -1273,11 +1226,9 @@ public:
 		if (d_pp->pcw.Texture) {
 			d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
 		}
-#ifdef HAVE_OIT
-      d_pp->tcw1.full = -1;
+		d_pp->tcw1.full = -1;
 		d_pp->tsp1.full = -1;
 		d_pp->texid1 = -1;
-#endif
 
 		SFaceBaseColor=spr->BaseCol;
 		SFaceOffsColor=spr->OffsCol;
@@ -1435,10 +1386,8 @@ public:
 		List<ModifierVolumeParam> *list = NULL;
 		if (CurrentList == ListType_Opaque_Modifier_Volume)
 			list = &vdrc.global_param_mvo;
-#ifdef HAVE_OIT
 		else if (CurrentList == ListType_Translucent_Modifier_Volume)
 			list = &vdrc.global_param_mvo_tr;
-#endif
 		else
 			return;
 		if (list->used() > 0)
@@ -1456,10 +1405,8 @@ public:
       ModifierVolumeParam *p = NULL;
 		if (CurrentList == ListType_Opaque_Modifier_Volume)
          p = vdrc.global_param_mvo.Append();
-#ifdef HAVE_OIT
       else if (CurrentList == ListType_Translucent_Modifier_Volume)
 			p = vdrc.global_param_mvo_tr.Append();
-#endif
       else
 			return;
       p->isp.full = param->isp.full;
@@ -1469,11 +1416,7 @@ public:
 	__forceinline
 		static void AppendModVolVertexA(TA_ModVolA* mvv)
 	{
-#ifdef HAVE_OIT
-      if (CurrentList != ListType_Opaque_Modifier_Volume && CurrentList != ListType_Translucent_Modifier_Volume)
-#else
-		if (CurrentList!=ListType_Opaque_Modifier_Volume)
-#endif
+	   if (CurrentList != ListType_Opaque_Modifier_Volume && CurrentList != ListType_Translucent_Modifier_Volume)
 			return;
 		lmr=vdrc.modtrig.Append();
 
@@ -1493,15 +1436,11 @@ public:
 	__forceinline
 		static void AppendModVolVertexB(TA_ModVolB* mvv)
 	{
-#ifdef HAVE_OIT
-      if (CurrentList != ListType_Opaque_Modifier_Volume && CurrentList != ListType_Translucent_Modifier_Volume)
-#else
-		if (CurrentList!=ListType_Opaque_Modifier_Volume)
-#endif
-			return;
-		lmr->y2=mvv->y2;
-		lmr->z2=mvv->z2;
-		//update_fz(mvv->z2);
+	   if (CurrentList != ListType_Opaque_Modifier_Volume && CurrentList != ListType_Translucent_Modifier_Volume)
+		  return;
+	   lmr->y2=mvv->y2;
+	   lmr->z2=mvv->z2;
+	   //update_fz(mvv->z2);
 	}
 
 	static void VDECInit()
@@ -1564,10 +1503,8 @@ bool ta_parse_vdrc(TA_context* ctx)
          render_pass->pt_count = vd_rc.global_param_pt.used();
          render_pass->tr_count = vd_rc.global_param_tr.used();
          render_pass->autosort = UsingAutoSort(pass);
-			render_pass->z_clear = ClearZBeforePass(pass);
-#ifdef HAVE_OIT
+         render_pass->z_clear = ClearZBeforePass(pass);
          render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
-#endif
       }
 
       bool empty_context = true;
@@ -1720,11 +1657,9 @@ void FillBGP(TA_context* ctx)
 	bgpp->isp.full=vri(strip_base);
 	bgpp->tsp.full=vri(strip_base+4);
 	bgpp->tcw.full=vri(strip_base+8);
-#ifdef HAVE_OIT
-   bgpp->tcw1.full = -1;
+	bgpp->tcw1.full = -1;
 	bgpp->tsp1.full = -1;
 	bgpp->texid1 = -1;
-#endif
 	bgpp->count=4;
 	bgpp->first=0;
 	bgpp->tileclip=0;//disabled ! HA ~

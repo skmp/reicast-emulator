@@ -68,33 +68,33 @@ public:
 	void Enable(GLenum cap) {
 		switch (cap) {
 		case GL_BLEND:
-			if (_en_blend && !_disable_cache)
+			if (_en_blend == GL_TRUE && !_disable_cache)
 				return;
-			_en_blend = true;
+			_en_blend = GL_TRUE;
          glEnable(GL_BLEND);
 			break;
 		case GL_CULL_FACE:
-			if (_en_cull_face && !_disable_cache)
+			if (_en_cull_face == GL_TRUE && !_disable_cache)
 				return;
-			_en_cull_face = true;
+			_en_cull_face = GL_TRUE;
          glEnable(GL_CULL_FACE);
 			break;
 		case GL_DEPTH_TEST:
-			if (_en_depth_test && !_disable_cache)
+			if (_en_depth_test == GL_TRUE && !_disable_cache)
 				return;
-			_en_depth_test = true;
+			_en_depth_test = GL_TRUE;
          glEnable(GL_DEPTH_TEST);
 			break;
 		case GL_SCISSOR_TEST:
-			if (_en_scissor_test && !_disable_cache)
+			if (_en_scissor_test == GL_TRUE && !_disable_cache)
 				return;
-			_en_scissor_test = true;
+			_en_scissor_test = GL_TRUE;
          glEnable(GL_SCISSOR_TEST);
 			break;
 		case GL_STENCIL_TEST:
-			if (_en_stencil_test && !_disable_cache)
+			if (_en_stencil_test == GL_TRUE && !_disable_cache)
 				return;
-			_en_stencil_test = true;
+			_en_stencil_test = GL_TRUE;
          glEnable(GL_STENCIL_TEST);
 			break;
 		}
@@ -103,31 +103,31 @@ public:
 	void Disable(GLenum cap) {
 		switch (cap) {
 		case GL_BLEND:
-			if (!_en_blend && !_disable_cache)
+			if (_en_blend == GL_FALSE && !_disable_cache)
 				return;
 			_en_blend = false;
          glDisable(GL_BLEND);
 			break;
 		case GL_CULL_FACE:
-			if (!_en_cull_face && !_disable_cache)
+			if (_en_cull_face == GL_FALSE && !_disable_cache)
 				return;
 			_en_cull_face = false;
          glDisable(GL_CULL_FACE);
 			break;
 		case GL_DEPTH_TEST:
-			if (!_en_depth_test && !_disable_cache)
+			if (_en_depth_test == GL_FALSE && !_disable_cache)
 				return;
 			_en_depth_test = false;
          glDisable(GL_DEPTH_TEST);
 			break;
 		case GL_SCISSOR_TEST:
-			if (!_en_scissor_test && !_disable_cache)
+			if (_en_scissor_test == GL_FALSE && !_disable_cache)
 				return;
 			_en_scissor_test = false;
          glDisable(GL_SCISSOR_TEST);
 			break;
 		case GL_STENCIL_TEST:
-			if (!_en_stencil_test && !_disable_cache)
+			if (_en_stencil_test == GL_FALSE && !_disable_cache)
 				return;
 			_en_stencil_test = false;
          glDisable(GL_STENCIL_TEST);
@@ -208,36 +208,43 @@ void TexParameteri(GLenum target,  GLenum pname,  GLint param) {
 	}
 
 	void Reset() {
-		_texture = 0;
-		_src_blend_factor = GL_ONE;
-		_dst_blend_factor = GL_ZERO;
-		_clear_r = 0.f;
-		_clear_g = 0.f;
-		_clear_b = 0.f;
-		_clear_a = 0.f;
-		_en_blend = false;
-		_en_cull_face = false;
-		_en_depth_test = false;
-		_en_scissor_test = false;
-		_en_stencil_test = false;
-		_cull_face = GL_BACK;
-		_depth_func = GL_LESS;
-		_depth_mask = true;
-		_program = 0;
+		_texture = 0xFFFFFFFFu;
+		_src_blend_factor = 0xFFFFFFFFu;
+		_dst_blend_factor = 0xFFFFFFFFu;
+		_clear_r = -1.f;
+		_clear_g = -1.f;
+		_clear_b = -1.f;
+		_clear_a = -1.f;
+		_en_blend = 0xFF;
+		_en_cull_face = 0xFF;
+		_en_depth_test = 0xFF;
+		_en_scissor_test = 0xFF;
+		_en_stencil_test = 0xFF;
+		_cull_face = 0xFFFFFFFFu;
+		_depth_func = 0xFFFFFFFFu;
+		_depth_mask = 0xFF;
+		_program = 0xFFFFFFFFu;
 		_texture_cache_size = 0;
-		_stencil_func = GL_ALWAYS;
-		_stencil_ref = 0;
-		_stencil_fmask = ~0;
-		_stencil_sfail = GL_KEEP;
-		_stencil_dpfail = GL_KEEP;
-		_stencil_dppass = GL_KEEP;
-		_stencil_mask = ~0;
+		_stencil_func = 0xFFFFFFFFu;
+		_stencil_ref = -1;
+		_stencil_fmask = 0;
+		_stencil_sfail = 0xFFFFFFFFu;
+		_stencil_dpfail = 0xFFFFFFFFu;
+		_stencil_dppass = 0xFFFFFFFFu;
+		_stencil_mask = 0;
+	}
+
+	void DisableCache() { _disable_cache = true; }
+	void EnableCache()
+	{
+	   _disable_cache = true;
+	   Reset();
 	}
 
 private:
    class TextureParameters {
 	public:
-		TextureParameters() : _min_filter(GL_NEAREST_MIPMAP_LINEAR), _mag_filter(GL_LINEAR), _wrap_s(GL_REPEAT), _wrap_t(GL_REPEAT) {}
+		TextureParameters() : _min_filter(0xFFFFFFFFu), _mag_filter(0xFFFFFFFFu), _wrap_s(0xFFFFFFFFu), _wrap_t(0xFFFFFFFFu) {}
 
 		GLenum _min_filter;
 		GLenum _mag_filter;
@@ -253,11 +260,11 @@ private:
 	GLclampf _clear_g;
 	GLclampf _clear_b;
 	GLclampf _clear_a;
-	bool _en_blend;
-	bool _en_cull_face;
-	bool _en_depth_test;
-	bool _en_scissor_test;
-	bool _en_stencil_test;
+	GLboolean _en_blend;
+	GLboolean _en_cull_face;
+	GLboolean _en_depth_test;
+	GLboolean _en_scissor_test;
+	GLboolean _en_stencil_test;
 	GLenum _cull_face;
 	GLenum _depth_func;
 	GLboolean _depth_mask;
@@ -272,7 +279,7 @@ private:
 	GLuint _texture_ids[TEXTURE_ID_CACHE_SIZE];
 	GLuint _texture_cache_size;
    std::map<GLuint, TextureParameters> _texture_params;
-   bool _disable_cache = true;
+   bool _disable_cache;
 };
 
 extern GLCache glcache;

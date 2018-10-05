@@ -378,10 +378,8 @@ extern u8 f32_su8_tbl[65536];
 //TA state vars
 extern DECL_ALIGN(4) u8 FaceBaseColor[4];
 extern DECL_ALIGN(4) u8 FaceOffsColor[4];
-#ifdef HAVE_OIT
 extern DECL_ALIGN(4) u8 FaceBaseColor1[4];
 extern DECL_ALIGN(4) u8 FaceOffsColor1[4];
-#endif
 extern DECL_ALIGN(4) u32 SFaceBaseColor;
 extern DECL_ALIGN(4) u32 SFaceOffsColor;
 //maybe

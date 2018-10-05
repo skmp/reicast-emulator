@@ -79,8 +79,9 @@ extern int screen_height;
 
 PipelineShader* CurrentShader;
 extern u32 gcflip;
+GLuint vmuTextureId[4]={0,0,0,0};
 
-s32 SetTileClip(u32 val, bool set)
+s32 SetTileClip(u32 val, GLint uniform)
 {
 	float csx=0,csy=0,cex=0,cey=0;
 	u32 clipmode=val>>28;
@@ -104,7 +105,7 @@ s32 SetTileClip(u32 val, bool set)
 	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
 		return 0;
 	
-	if (set && clip_mode)
+	if (uniform >= 0 && clip_mode)
    {
       if (!pvrrc.isRTT)
       {
@@ -129,7 +130,7 @@ s32 SetTileClip(u32 val, bool set)
 			cex *= settings.rend.RenderToTextureUpscale;
 			cey *= settings.rend.RenderToTextureUpscale;
 		}
-		glUniform4f(CurrentShader->pp_ClipTest, csx, csy, cex, cey);		
+		glUniform4f(uniform, csx, csy, cex, cey);		
    }
 
 	return clip_mode;
@@ -155,7 +156,7 @@ static void SetTextureRepeatMode(GLuint dir, u32 clamp, u32 mirror)
 }
 
 template <u32 Type, bool SortingEnabled>
-__forceinline void SetGPState(const PolyParam* gp, u32 cflip)
+__forceinline static void SetGPState(const PolyParam* gp, u32 cflip)
 {
    if (gp->pcw.Texture && gp->tsp.FilterMode > 1)
 	{
@@ -171,7 +172,7 @@ __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 
    CurrentShader = &gl.program_table[
 									 GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
-											 	  SetTileClip(gp->tileclip, false) + 1,
+											 	  SetTileClip(gp->tileclip, -1) + 1,
 												  gp->pcw.Texture,
 												  gp->tsp.UseAlpha,
 												  gp->tsp.IgnoreTexA,
@@ -189,7 +190,7 @@ __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
       glUseProgram(CurrentShader->program);
       ShaderUniforms.Set(CurrentShader);
    }
-   SetTileClip(gp->tileclip,true);
+   SetTileClip(gp->tileclip, CurrentShader->pp_ClipTest);
 
    // This bit controls which pixels are affected
    // by modvols
@@ -245,7 +246,7 @@ __forceinline void SetGPState(const PolyParam* gp, u32 cflip)
 }
 
 template <u32 Type, bool SortingEnabled>
-void DrawList(const List<PolyParam>& gply, int first, int count)
+static void DrawList(const List<PolyParam>& gply, int first, int count)
 {
    PolyParam* params= &gply.head()[first];
 
@@ -760,7 +761,7 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 	}
 }
 
-void SetupMainVBO(void)
+static void SetupMainVBO(void)
 {
 	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);
@@ -792,7 +793,7 @@ static void SetupModvolVBO(void)
 	glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
 }
 
-void DrawModVols(int first, int count)
+static void DrawModVols(int first, int count)
 {
    /* A bit of explanation:
     * In theory it works like this: generate a 1-bit stencil for each polygon
@@ -979,4 +980,147 @@ void DrawFramebuffer(float w, float h)
 
    glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.bytes(), pvrrc.idx.head(), GL_STREAM_DRAW);
+}
+
+void UpdateVmuTexture(int vmu_screen_number)
+{
+	s32 x,y ;
+	u8 temp_tex_buffer[VMU_SCREEN_HEIGHT*VMU_SCREEN_WIDTH*4];
+	u8 *dst = temp_tex_buffer;
+	u8 *src = NULL ;
+	u8 *origsrc = NULL ;
+	u8 vmu_pixel_on_R = vmu_screen_params[vmu_screen_number].vmu_pixel_on_R ;
+	u8 vmu_pixel_on_G = vmu_screen_params[vmu_screen_number].vmu_pixel_on_G ;
+	u8 vmu_pixel_on_B = vmu_screen_params[vmu_screen_number].vmu_pixel_on_B ;
+	u8 vmu_pixel_off_R = vmu_screen_params[vmu_screen_number].vmu_pixel_off_R ;
+	u8 vmu_pixel_off_G = vmu_screen_params[vmu_screen_number].vmu_pixel_off_G ;
+	u8 vmu_pixel_off_B = vmu_screen_params[vmu_screen_number].vmu_pixel_off_B ;
+	u8 vmu_screen_opacity = vmu_screen_params[vmu_screen_number].vmu_screen_opacity ;
+
+	if (vmuTextureId[vmu_screen_number] == 0)
+	{
+		vmuTextureId[vmu_screen_number] = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+	else
+		glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
+
+
+	origsrc = vmu_screen_params[vmu_screen_number].vmu_lcd_screen ;
+
+	if ( origsrc == NULL )
+		return ;
+
+
+	for ( y = VMU_SCREEN_HEIGHT-1 ; y >= 0 ; y--)
+	{
+		src = origsrc + (y*VMU_SCREEN_WIDTH) ;
+
+		for ( x = 0 ; x < VMU_SCREEN_WIDTH ; x++)
+		{
+			if ( *src++ > 0 )
+			{
+				*dst++ = vmu_pixel_on_R ;
+				*dst++ = vmu_pixel_on_G ;
+				*dst++ = vmu_pixel_on_B ;
+				*dst++ = vmu_screen_opacity ;
+			}
+			else
+			{
+				*dst++ = vmu_pixel_off_R ;
+				*dst++ = vmu_pixel_off_G ;
+				*dst++ = vmu_pixel_off_B ;
+				*dst++ = vmu_screen_opacity ;
+			}
+		}
+	}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VMU_SCREEN_WIDTH, VMU_SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer);
+
+	vmu_screen_params[vmu_screen_number].vmu_screen_needs_update = false ;
+
+}
+
+void DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives)
+{
+	glActiveTexture(GL_TEXTURE0);
+
+	float x=0 ;
+	float y=0 ;
+	float w=VMU_SCREEN_WIDTH*vmu_screen_params[vmu_screen_number].vmu_screen_size_mult ;
+	float h=VMU_SCREEN_HEIGHT*vmu_screen_params[vmu_screen_number].vmu_screen_size_mult ;
+
+	if ( vmu_screen_params[vmu_screen_number].vmu_screen_needs_update  )
+		UpdateVmuTexture(vmu_screen_number) ;
+
+	switch ( vmu_screen_params[vmu_screen_number].vmu_screen_position )
+	{
+		case UPPER_LEFT :
+		{
+			x = 0 ;
+			y = 0 ;
+			break ;
+		}
+		case UPPER_RIGHT :
+		{
+			x = 640-w ;
+			y = 0 ;
+			break ;
+		}
+		case LOWER_LEFT :
+		{
+			x = 0 ;
+			y = 480-h ;
+			break ;
+		}
+		case LOWER_RIGHT :
+		{
+			x = 640-w ;
+			y = 480-h ;
+			break ;
+		}
+	}
+
+	glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
+
+	glcache.Disable(GL_SCISSOR_TEST);
+	glcache.Disable(GL_DEPTH_TEST);
+	glcache.Disable(GL_STENCIL_TEST);
+	glcache.Disable(GL_CULL_FACE);
+	glcache.Enable(GL_BLEND);
+	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	SetupMainVBO();
+	ShaderUniforms.trilinear_alpha = 1.0;
+	PipelineShader *shader = &gl.program_table[GetProgramID(0, 1, 1, 0, 1, 0, 0, 2, false, false, false)];
+	if (shader->program == -1)
+		CompilePipelineShader(shader);
+	else
+	{
+		glcache.UseProgram(shader->program);
+		ShaderUniforms.Set(shader);
+	}
+
+	{
+		struct Vertex vertices[] = {
+				{ x,   y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
+				{ x,   y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
+				{ x+w, y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
+				{ x+w, y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+		};
+		GLushort indices[] = { 0, 1, 2, 1, 3 };
+
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+	}
+
+	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
+
+	if ( draw_additional_primitives )
+	{
+		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.bytes(), pvrrc.idx.head(), GL_STREAM_DRAW);
+	}
 }

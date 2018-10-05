@@ -18,11 +18,7 @@ HAVE_OPENMP   := 1
 HAVE_CHD      := 1
 
 
-ifeq ($(HAVE_OIT), 1)
-	TARGET_NAME   := reicast_oit
-else
-	TARGET_NAME   := reicast
-endif
+TARGET_NAME   := reicast
 
 CXX      = ${CC_PREFIX}g++
 CC       = ${CC_PREFIX}gcc

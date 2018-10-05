@@ -8,6 +8,7 @@ extern u32 palette32_ram[1024];
 extern bool pal_needs_update,fog_needs_update;
 extern u32 pal_hash_256[4];
 extern u32 pal_hash_16[64];
+extern bool KillTex;
 
 extern u32 detwiddle[2][8][1024];
 

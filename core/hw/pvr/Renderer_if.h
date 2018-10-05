@@ -50,6 +50,7 @@ struct Renderer
 };
 
 extern Renderer* renderer;
+extern bool renderer_changed;
 
 
 Renderer* rend_D3D11();
@@ -65,3 +66,7 @@ extern u32 fb2_watch_addr_end;
 extern bool fb_dirty;
 
 void check_framebuffer_write();
+
+void rend_create_renderer();
+void rend_init_renderer();
+void rend_term_renderer();

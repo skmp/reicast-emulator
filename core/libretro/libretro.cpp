@@ -324,11 +324,10 @@ void retro_set_environment(retro_environment_t cb)
          "Internal resolution (restart); 640x480|320x240|1280x960|1920x1440|2560x1920|3200x2400|3840x2880|4480x3360|5120x3840|5760x4320|6400x4800|7040x5280|7680x5760|8320x6240|8960x6720|9600x7200|10240x7680|10880x8160|11520x8640|12160x9120|12800x9600",
       },
       {
+    	 "reicast_alpha_sorting",
 #ifdef HAVE_OIT
-         "reicast_oit_alpha_sorting",
-         "Alpha sorting; per-pixel (accurate)",
+         "Alpha sorting; per-pixel (accurate)|per-triangle (normal)|per-strip (fast, least accurate)",
 #else
-         "reicast_alpha_sorting",
          "Alpha sorting; per-triangle (normal)|per-strip (fast, least accurate)",
 #endif
       },
@@ -392,12 +391,6 @@ void retro_set_environment(retro_environment_t cb)
          "reicast_enable_dsp",
          "Enable DSP; enabled|disabled",
       },
-#ifndef HAVE_OIT
-      {
-         "reicast_precompile_shaders",
-         "Precompile shaders; disabled|enabled",
-      },
-#endif
 #ifdef HAVE_TEXUPSCALE
       {
          "reicast_texupscale",
@@ -608,24 +601,34 @@ static void update_variables(bool first_startup)
    else
       GDROM_TICK      = 1500000;
 
-#ifdef HAVE_OIT
-   var.key = "reicast_oit_alpha_sorting";
-#else
    var.key = "reicast_alpha_sorting";
-#endif
+   int previous_renderer = settings.pvr.rend;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (!strcmp(var.value, "per-strip (fast, least accurate)"))
+      {
+    	 settings.pvr.rend = 0;
          settings.pvr.Emulation.AlphaSortMode = 1;
+      }
       else if (!strcmp(var.value, "per-triangle (normal)"))
+      {
+    	 settings.pvr.rend = 0;
          settings.pvr.Emulation.AlphaSortMode = 0;
+      }
       else if (!strcmp(var.value, "per-pixel (accurate)"))
-         settings.pvr.Emulation.AlphaSortMode = 0; /* value not used for OIT */
+      {
+    	 settings.pvr.rend = 3;
+         settings.pvr.Emulation.AlphaSortMode = 0;	// Not used
+      }
    }
    else
+   {
+	  settings.pvr.rend = 0;
       settings.pvr.Emulation.AlphaSortMode = 0;
-
+   }
+   if (!first_startup && previous_renderer != settings.pvr.rend)
+	  renderer_changed = true;
 
    var.key = "reicast_mipmapping";
 
@@ -662,17 +665,16 @@ static void update_variables(bool first_startup)
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
       {
          if (!strcmp(var.value, "512MB"))
-            pixel_buffer_size = 0x20000000;
+            pixel_buffer_size = 0x20000000u;
          else if (!strcmp(var.value, "1GB"))
-            pixel_buffer_size = 0x40000000;
+            pixel_buffer_size = 0x40000000u;
          else if (!strcmp(var.value, "2GB"))
-            pixel_buffer_size = 0x80000000;
+            pixel_buffer_size = 0x80000000u;
          else
-            pixel_buffer_size = 0x20000000;
+            pixel_buffer_size = 0x20000000u;
       }
       else
-         pixel_buffer_size = 0x20000000;
-
+         pixel_buffer_size = 0x20000000u;
 #endif
    }
 
@@ -776,18 +778,6 @@ static void update_variables(bool first_startup)
          settings.dynarec.AutoDivMatching = false;
       }
    }
-
-#ifndef HAVE_OIT
-   var.key = "reicast_precompile_shaders";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (!strcmp("disabled", var.value))
-         settings.pvr.Emulation.precompile_shaders = false;
-      else
-         settings.pvr.Emulation.precompile_shaders = true;
-   }
-#endif
 
 #ifdef HAVE_TEXUPSCALE
    var.key = "reicast_texupscale";
@@ -1076,8 +1066,8 @@ void retro_run (void)
 	   // We can now initialize the renderer
 	   if (!renderer_inited)
 	   {
-		   renderer->Init();
-		   renderer_inited = true;
+		  rend_init_renderer();
+		  renderer_inited = true;
 	   }
 	   /// And start rendering
 	   is_dupe = !rend_single_frame();
@@ -1608,11 +1598,7 @@ const char* retro_get_system_directory(void)
 
 void retro_get_system_info(struct retro_system_info *info)
 {
-#ifdef HAVE_OIT
-   info->library_name = "Reicast OIT";
-#else
    info->library_name = "Reicast";
-#endif
 #ifndef GIT_VERSION
 #define GIT_VERSION ""
 #endif

@@ -8,32 +8,24 @@
 
 #include <libretro.h>
 
-#include "gles.h"
+#include "gl4.h"
 #include "../rend.h"
 #include "../TexCache.h"
 
 #include "../../hw/pvr/pvr_mem.h"
 #include "../../hw/mem/_vmem.h"
 
-extern retro_environment_t environ_cb;
-extern bool fog_needs_update;
-extern bool KillTex;
-GLCache glcache;
-gl_ctx gl;
+extern "C" struct retro_hw_render_callback hw_render;
+gl4_ctx gl4;
 
-_ShaderUniforms_t ShaderUniforms;
-u32 gcflip;
-
-float fb_scale_x = 0.0f;
-float fb_scale_y = 0.0f;
-float scale_x, scale_y;
+gl4ShaderUniforms_t gl4ShaderUniforms;
 
 #define FOG_CHANNEL "r"
 #define FOG_IMG_TYPE GL_RED
 
 //Fragment and vertex shaders code
 //
-const char* VertexShaderSource =
+static const char* VertexShaderSource =
 "#version 130 \n"
 "\
 #define pp_Gouraud %d \n\
@@ -46,7 +38,6 @@ const char* VertexShaderSource =
  \n\
 /* Vertex constants*/  \n\
 uniform highp vec4      scale; \n\
-uniform highp vec4      depth_scale; \n\
 uniform highp float     extra_depth_scale; \n\
 /* Vertex input */ \n\
 " "in highp vec4    in_pos; \n\
@@ -79,14 +70,13 @@ void main() \n\
       gl_Position = vec4(0.0, 0.0, 0.0, vpos.w); \n\
          return; \n\
    } \n\
-   vpos.z = vpos.w; \n"
-   "\
+	vpos.z = vpos.w; \n\
 	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
 	vpos.xy*=vpos.w;  \n\
 	gl_Position = vpos; \n\
 }";
 
-const char* PixelPipelineShader = SHADER_HEADER
+const char* gl4PixelPipelineShader = SHADER_HEADER
 "\
 #define cp_AlphaTest %d \n\
 #define pp_ClipTestMode %d \n\
@@ -103,12 +93,11 @@ const char* PixelPipelineShader = SHADER_HEADER
 #define FogClamping %d \n\
 #define PASS %d \n\
 #define PI 3.1415926 \n\
- \n"
-	"\
+ \n\
    #if PASS <= 1 \n\
 	out vec4 FragColor; \n\
-	#endif \n"
-"\
+#endif \n\
+ \n\
 #if pp_TwoVolumes == 1 \n\
 #define IF(x) if (x) \n\
 #else \n\
@@ -406,7 +395,7 @@ void main() \n\
 	#endif \n\
 }";
 
-const char* ModifierVolumeShader = SHADER_HEADER
+static const char* ModifierVolumeShader = SHADER_HEADER
 " \
 /* Vertex input*/ \n\
 void main() \n\
@@ -415,127 +404,7 @@ void main() \n\
       \n\
 }";
 
-
-int screen_width  = 640;
-int screen_height = 480;
-GLuint fogTextureId;
-GLuint vmuTextureId[4]={0,0,0,0};
-
-int GetProgramID(
-      u32 cp_AlphaTest,
-      u32 pp_ClipTestMode,
-      u32 pp_Texture,
-      u32 pp_UseAlpha,
-      u32 pp_IgnoreTexA,
-      u32 pp_ShadInstr,
-      u32 pp_Offset,
-      u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, int pass)
-{
-	u32 rv=0;
-
-	rv|=pp_ClipTestMode;
-	rv<<=1; rv|=cp_AlphaTest;
-	rv<<=1; rv|=pp_Texture;
-	rv<<=1; rv|=pp_UseAlpha;
-	rv<<=1; rv|=pp_IgnoreTexA;
-	rv<<=2; rv|=pp_ShadInstr;
-	rv<<=1; rv|=pp_Offset;
-	rv<<=2; rv|=pp_FogCtrl;
-   rv <<= 1; rv |= (int)pp_TwoVolumes;
-   rv <<= 3; rv |= pp_DepthFunc;
-   rv <<= 1; rv |= (int)pp_Gouraud;
-   rv <<= 1; rv |= pp_BumpMap;
-   rv <<= 1; rv |= fog_clamping;
-   rv <<= 2; rv |= pass;
-
-	return rv;
-}
-
-static GLuint gl_CompileShader(const char* shader,GLuint type)
-{
-	GLint result;
-	GLint compile_log_len;
-	GLuint rv=glCreateShader(type);
-	glShaderSource(rv, 1,&shader, NULL);
-	glCompileShader(rv);
-
-	//lets see if it compiled ...
-	glGetShaderiv(rv, GL_COMPILE_STATUS, &result);
-	glGetShaderiv(rv, GL_INFO_LOG_LENGTH, &compile_log_len);
-
-	if (!result && compile_log_len>0)
-	{
-		if (compile_log_len==0)
-			compile_log_len=1;
-		char* compile_log=(char*)malloc(compile_log_len);
-		*compile_log=0;
-
-		glGetShaderInfoLog(rv, compile_log_len, &compile_log_len, compile_log);
-		printf("Shader: %s \n%s\n",result?"compiled!":"failed to compile",compile_log);
-      printf("Failed shader source: %s\n", shader);
-
-		free(compile_log);
-	}
-
-	return rv;
-}
-
-static GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
-{
-	GLint compile_log_len;
-	GLint result;
-	/* Create vertex/fragment shaders */
-	GLuint vs      = gl_CompileShader(VertexShader ,GL_VERTEX_SHADER);
-	GLuint ps      = gl_CompileShader(FragmentShader ,GL_FRAGMENT_SHADER);
-	GLuint program = glCreateProgram();
-
-	glAttachShader(program, vs);
-	glAttachShader(program, ps);
-
-	/* Bind vertex attribute to VBO inputs */
-	glBindAttribLocation(program, VERTEX_POS_ARRAY,      "in_pos");
-	glBindAttribLocation(program, VERTEX_COL_BASE_ARRAY, "in_base");
-	glBindAttribLocation(program, VERTEX_COL_OFFS_ARRAY, "in_offs");
-	glBindAttribLocation(program, VERTEX_UV_ARRAY,       "in_uv");
-   glBindAttribLocation(program, VERTEX_COL_BASE1_ARRAY, "in_base1");
-	glBindAttribLocation(program, VERTEX_COL_OFFS1_ARRAY, "in_offs1");
-	glBindAttribLocation(program, VERTEX_UV1_ARRAY,       "in_uv1");
-
-	glBindFragDataLocation(program, 0, "FragColor");
-
-	glLinkProgram(program);
-	glGetProgramiv(program, GL_LINK_STATUS, &result);
-	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &compile_log_len);
-
-	if (!result && compile_log_len>0)
-	{
-      char *compile_log = NULL;
-
-		if (compile_log_len==0)
-			compile_log_len = 1;
-		compile_log_len   += 1024;
-		compile_log        = (char*)malloc(compile_log_len);
-		*compile_log       = 0;
-
-		glGetProgramInfoLog(program, compile_log_len, &compile_log_len, compile_log);
-		printf("Shader linking: %s \n (%d bytes), - %s -\n",result?"linked":"failed to link", compile_log_len,compile_log);
-
-		free(compile_log);
-		die("shader compile fail\n");
-	}
-
-	glDeleteShader(vs);
-	glDeleteShader(ps);
-
-	glcache.UseProgram(program);
-
-	verify(glIsProgram(program));
-
-	return program;
-}
-
-
-bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipelineShader */)
+bool gl4CompilePipelineShader(gl4PipelineShader *s, const char *source /* = PixelPipelineShader */)
 {
    char vshader[16384];
 
@@ -561,9 +430,8 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
 
 	//get the uniform locations
 	s->scale	             = glGetUniformLocation(s->program, "scale");
-	s->depth_scale        = glGetUniformLocation(s->program, "depth_scale");
 
-   s->extra_depth_scale = glGetUniformLocation(s->program, "extra_depth_scale");
+	s->extra_depth_scale = glGetUniformLocation(s->program, "extra_depth_scale");
 
 	s->pp_ClipTest        = glGetUniformLocation(s->program, "pp_ClipTest");
 
@@ -622,45 +490,21 @@ bool CompilePipelineShader(PipelineShader *s, const char *source /* = PixelPipel
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
-/*
-GL|ES 2
-Slower, smaller subset of gl2
-
-*Optimisation notes*
-Keep stuff in packed ints
-Keep data as small as possible
-Keep vertex programs as small as possible
-The drivers more or less suck. Don't depend on dynamic allocation, or any 'complex' feature
-as it is likely to be problematic/slow
-Do we really want to enable striping joins?
-
-*Design notes*
-Follow same architecture as the d3d renderer for now
-Render to texture, keep track of textures in GL memory
-Direct flip to screen (no vlbank/fb emulation)
-Do we really need a combining shader? it is needlessly expensive for openGL | ES
-Render contexts
-Free over time? we actually care about ram usage here?
-Limit max resource size? for psp 48k verts worked just fine
-
-FB:
-Pixel clip, mapping
-
-SPG/VO:
-mapping
-
-TA:
-Tile clip
-
-*/
-
 static void gl_term(void)
 {
-   glDeleteProgram(gl.modvol_shader.program);
-	glDeleteBuffers(1, &gl.vbo.geometry);
-	glDeleteBuffers(1, &gl.vbo.modvols);
-	glDeleteBuffers(1, &gl.vbo.idxs);
-	glDeleteBuffers(1, &gl.vbo.idxs2);
+   glDeleteProgram(gl4.modvol_shader.program);
+   glDeleteBuffers(1, &gl4.vbo.geometry);
+   glDeleteBuffers(1, &gl4.vbo.modvols);
+   glDeleteBuffers(1, &gl4.vbo.idxs);
+   glDeleteBuffers(1, &gl4.vbo.idxs2);
+   glDeleteBuffers(1, &gl4.vbo.tr_poly_params);
+   for (auto it = gl4.shaders.begin(); it != gl4.shaders.end(); it++)
+   {
+	  if (it->second->program != -1)
+		 glDeleteProgram(it->second->program);
+	  delete it->second;
+   }
+   gl4.shaders.clear();
 }
 
 static bool gl_create_resources(void)
@@ -676,34 +520,27 @@ static bool gl_create_resources(void)
    u32 pp_ShadInstr;
 
 	/* create VBOs */
-	glGenBuffers(1, &gl.vbo.geometry);
-	glGenBuffers(1, &gl.vbo.modvols);
-	glGenBuffers(1, &gl.vbo.idxs);
-	glGenBuffers(1, &gl.vbo.idxs2);
+	glGenBuffers(1, &gl4.vbo.geometry);
+	glGenBuffers(1, &gl4.vbo.modvols);
+	glGenBuffers(1, &gl4.vbo.idxs);
+	glGenBuffers(1, &gl4.vbo.idxs2);
 
    char vshader[16384];
 	sprintf(vshader, VertexShaderSource, 1);
 
-   gl.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
-	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
-	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
-   gl.modvol_shader.extra_depth_scale = glGetUniformLocation(gl.modvol_shader.program, "extra_depth_scale");
+   gl4.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
+	gl4.modvol_shader.scale          = glGetUniformLocation(gl4.modvol_shader.program, "scale");
+   gl4.modvol_shader.extra_depth_scale = glGetUniformLocation(gl4.modvol_shader.program, "extra_depth_scale");
 
    // Create the buffer for Translucent poly params
-	glGenBuffers(1, &gl.vbo.tr_poly_params);
+	glGenBuffers(1, &gl4.vbo.tr_poly_params);
 	// Bind it
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl.vbo.tr_poly_params);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl4.vbo.tr_poly_params);
 	// Declare storage
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, gl.vbo.tr_poly_params);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, gl4.vbo.tr_poly_params);
 	glCheck();
 
 	return true;
-}
-
-void vertex_buffer_unmap(void)
-{
-   glBindBuffer(GL_ARRAY_BUFFER, 0);
-   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 #ifdef MSB_FIRST
@@ -711,209 +548,6 @@ void vertex_buffer_unmap(void)
 #else
 #define INDEX_GET(a) (a)
 #endif
-
-void DoCleanup() {
-}
-
-void UpdateFogTexture(u8 *fog_table)
-{
-	glActiveTexture(GL_TEXTURE5);
-	if (fogTextureId == 0)
-	{
-		fogTextureId = glcache.GenTexture();
-		glcache.BindTexture(GL_TEXTURE_2D, fogTextureId);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	}
-	else
-		glcache.BindTexture(GL_TEXTURE_2D, fogTextureId);
-
-	u8 temp_tex_buffer[256];
-	for (int i = 0; i < 128; i++)
-	{
-		temp_tex_buffer[i] = fog_table[i * 4];
-		temp_tex_buffer[i + 128] = fog_table[i * 4 + 1];
-	}
-   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexImage2D(GL_TEXTURE_2D, 0, FOG_IMG_TYPE, 128, 2, 0, FOG_IMG_TYPE, GL_UNSIGNED_BYTE, temp_tex_buffer);
-	glCheck();
-
-	glActiveTexture(GL_TEXTURE0);
-}
-void SetupMainVBO(void) ;
-
-void UpdateVmuTexture(int vmu_screen_number)
-{
-	s32 x,y ;
-	u8 temp_tex_buffer[VMU_SCREEN_HEIGHT*VMU_SCREEN_WIDTH*4];
-	u8 *dst = temp_tex_buffer;
-	u8 *src = NULL ;
-	u8 *origsrc = NULL ;
-	u8 vmu_pixel_on_R = vmu_screen_params[vmu_screen_number].vmu_pixel_on_R ;
-	u8 vmu_pixel_on_G = vmu_screen_params[vmu_screen_number].vmu_pixel_on_G ;
-	u8 vmu_pixel_on_B = vmu_screen_params[vmu_screen_number].vmu_pixel_on_B ;
-	u8 vmu_pixel_off_R = vmu_screen_params[vmu_screen_number].vmu_pixel_off_R ;
-	u8 vmu_pixel_off_G = vmu_screen_params[vmu_screen_number].vmu_pixel_off_G ;
-	u8 vmu_pixel_off_B = vmu_screen_params[vmu_screen_number].vmu_pixel_off_B ;
-	u8 vmu_screen_opacity = vmu_screen_params[vmu_screen_number].vmu_screen_opacity ;
-
-	if (vmuTextureId[vmu_screen_number] == 0)
-	{
-		vmuTextureId[vmu_screen_number] = glcache.GenTexture();
-		glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	}
-	else
-		glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
-
-
-	origsrc = vmu_screen_params[vmu_screen_number].vmu_lcd_screen ;
-
-	if ( origsrc == NULL )
-		return ;
-
-
-	for ( y = VMU_SCREEN_HEIGHT-1 ; y >= 0 ; y--)
-	{
-		src = origsrc + (y*VMU_SCREEN_WIDTH) ;
-
-		for ( x = 0 ; x < VMU_SCREEN_WIDTH ; x++)
-		{
-			if ( *src++ > 0 )
-			{
-				*dst++ = vmu_pixel_on_R ;
-				*dst++ = vmu_pixel_on_G ;
-				*dst++ = vmu_pixel_on_B ;
-				*dst++ = vmu_screen_opacity ;
-			}
-			else
-			{
-				*dst++ = vmu_pixel_off_R ;
-				*dst++ = vmu_pixel_off_G ;
-				*dst++ = vmu_pixel_off_B ;
-				*dst++ = vmu_screen_opacity ;
-			}
-		}
-	}
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VMU_SCREEN_WIDTH, VMU_SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer);
-
-	vmu_screen_params[vmu_screen_number].vmu_screen_needs_update = false ;
-
-}
-
-void DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives)
-{
-	glActiveTexture(GL_TEXTURE0);
-
-	float x=0 ;
-	float y=0 ;
-	float w=VMU_SCREEN_WIDTH*vmu_screen_params[vmu_screen_number].vmu_screen_size_mult ;
-	float h=VMU_SCREEN_HEIGHT*vmu_screen_params[vmu_screen_number].vmu_screen_size_mult ;
-
-	if ( vmu_screen_params[vmu_screen_number].vmu_screen_needs_update  )
-		UpdateVmuTexture(vmu_screen_number) ;
-
-	switch ( vmu_screen_params[vmu_screen_number].vmu_screen_position )
-	{
-		case UPPER_LEFT :
-		{
-			x = 0 ;
-			y = 0 ;
-			break ;
-		}
-		case UPPER_RIGHT :
-		{
-			x = 640-w ;
-			y = 0 ;
-			break ;
-		}
-		case LOWER_LEFT :
-		{
-			x = 0 ;
-			y = 480-h ;
-			break ;
-		}
-		case LOWER_RIGHT :
-		{
-			x = 640-w ;
-			y = 480-h ;
-			break ;
-		}
-	}
-
-    glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
-
-	glcache.Disable(GL_SCISSOR_TEST);
-	glcache.Disable(GL_DEPTH_TEST);
-	glcache.Disable(GL_STENCIL_TEST);
-	glcache.Disable(GL_CULL_FACE);
-    glcache.Enable(GL_BLEND);
-    glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	SetupMainVBO();
-
-	ShaderUniforms.trilinear_alpha = 1.0;
-   int shaderId = GetProgramID(0,
-				1,
-				1,
-				0,
-				1,
-				0,
-				0,
-				2,
-				false,
-				0,
-				false,
-				false,
-            false,
-				1);
-	PipelineShader *shader = gl.getShader(shaderId);
-	if (shader->program == -1)
-   {
-      shader->cp_AlphaTest = 0;
-		shader->pp_ClipTestMode = 0;
-		shader->pp_Texture = 1;
-		shader->pp_UseAlpha = 0;
-		shader->pp_IgnoreTexA = 1;
-		shader->pp_ShadInstr = 0;
-		shader->pp_Offset = 0;
-		shader->pp_FogCtrl = 2;
-		shader->pp_TwoVolumes = false;
-		shader->pp_DepthFunc = 0;
-		shader->pp_Gouraud = false;
-		shader->pp_BumpMap = false;
-		shader->fog_clamping = false;
-		shader->pass = 1;
-		CompilePipelineShader(shader);
-   }
-   glcache.UseProgram(shader->program);
-   ShaderUniforms.Set(shader);
-
-	{
-		struct Vertex vertices[] = {
-				{ x,   y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
-				{ x,   y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-				{ x+w, y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-				{ x+w, y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
-		};
-		GLushort indices[] = { 0, 1, 2, 1, 3 };
-
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
-	}
-
-	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
-
-	if ( draw_additional_primitives )
-	{
-		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.bytes(), pvrrc.idx.head(), GL_STREAM_DRAW);
-	}
-}
 
 static bool RenderFrame(void)
 {
@@ -1095,19 +729,13 @@ static bool RenderFrame(void)
 	float ds2s_offs_x  = is_rtt ? 0 : ((screen_width-dc2s_scale_h*640)/2);
 
 	//-1 -> too much to left
-	ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h*scale_x);
-	ShaderUniforms.scale_coefs[1]= (is_rtt?2:-2) / dc_height;
+	gl4ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h*scale_x);
+	gl4ShaderUniforms.scale_coefs[1]= (is_rtt?2:-2) / dc_height;
    // FIXME CT2 needs 480 here instead of dc_height=512
-	ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
-	ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
+	gl4ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
+	gl4ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
 
-
-	ShaderUniforms.depth_coefs[0]=2/(vtx_max_fZ-vtx_min_fZ);
-	ShaderUniforms.depth_coefs[1]=-vtx_min_fZ-1;
-	ShaderUniforms.depth_coefs[2]=0;
-	ShaderUniforms.depth_coefs[3]=0;
-
-   ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
+	gl4ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
 
 	//printf("scale: %f, %f, %f, %f\n", ShaderUniforms.scale_coefs[0],scale_coefs[1], ShaderUniforms.scale_coefs[2], ShaderUniforms.scale_coefs[3]);
 
@@ -1115,13 +743,13 @@ static bool RenderFrame(void)
 	//VERT and RAM fog color constants
 	u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;
 	u8* fog_colram_bgra=(u8*)&FOG_COL_RAM;
-	ShaderUniforms.ps_FOG_COL_VERT[0]=fog_colvert_bgra[INDEX_GET(2)]/255.0f;
-	ShaderUniforms.ps_FOG_COL_VERT[1]=fog_colvert_bgra[INDEX_GET(1)]/255.0f;
-	ShaderUniforms.ps_FOG_COL_VERT[2]=fog_colvert_bgra[INDEX_GET(0)]/255.0f;
+	gl4ShaderUniforms.ps_FOG_COL_VERT[0]=fog_colvert_bgra[INDEX_GET(2)]/255.0f;
+	gl4ShaderUniforms.ps_FOG_COL_VERT[1]=fog_colvert_bgra[INDEX_GET(1)]/255.0f;
+	gl4ShaderUniforms.ps_FOG_COL_VERT[2]=fog_colvert_bgra[INDEX_GET(0)]/255.0f;
 
-	ShaderUniforms.ps_FOG_COL_RAM[0]=fog_colram_bgra [INDEX_GET(2)]/255.0f;
-	ShaderUniforms.ps_FOG_COL_RAM[1]=fog_colram_bgra [INDEX_GET(1)]/255.0f;
-	ShaderUniforms.ps_FOG_COL_RAM[2]=fog_colram_bgra [INDEX_GET(0)]/255.0f;
+	gl4ShaderUniforms.ps_FOG_COL_RAM[0]=fog_colram_bgra [INDEX_GET(2)]/255.0f;
+	gl4ShaderUniforms.ps_FOG_COL_RAM[1]=fog_colram_bgra [INDEX_GET(1)]/255.0f;
+	gl4ShaderUniforms.ps_FOG_COL_RAM[2]=fog_colram_bgra [INDEX_GET(0)]/255.0f;
 
 
 	//Fog density constant
@@ -1131,35 +759,34 @@ static bool RenderFrame(void)
 #ifndef MSB_FIRST
    float fog_den_float = fog_den_mant * powf(2.0f,fog_den_exp);
 #endif
-	ShaderUniforms.fog_den_float= fog_den_float;
+   gl4ShaderUniforms.fog_den_float= fog_den_float;
 
-   ShaderUniforms.fog_clamp_min[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_min[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_min[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_min[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
+   gl4ShaderUniforms.fog_clamp_min[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
+   gl4ShaderUniforms.fog_clamp_min[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
+   gl4ShaderUniforms.fog_clamp_min[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
+   gl4ShaderUniforms.fog_clamp_min[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
 	
-	ShaderUniforms.fog_clamp_max[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_max[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
+   gl4ShaderUniforms.fog_clamp_max[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
+   gl4ShaderUniforms.fog_clamp_max[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
+   gl4ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
+   gl4ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
 
    if (fog_needs_update)
-	{
-		fog_needs_update=false;
-      UpdateFogTexture((u8 *)FOG_TABLE);
-	}
+   {
+	  fog_needs_update=false;
+      UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE5, GL_RED);
+   }
 
-	glUseProgram(gl.modvol_shader.program);
+	glUseProgram(gl4.modvol_shader.program);
 
-	glUniform4fv(gl.modvol_shader.scale, 1, ShaderUniforms.scale_coefs);
-	glUniform4fv(gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
-   glUniform1f(gl.modvol_shader.extra_depth_scale, ShaderUniforms.extra_depth_scale);
+	glUniform4fv(gl4.modvol_shader.scale, 1, gl4ShaderUniforms.scale_coefs);
+	glUniform1f(gl4.modvol_shader.extra_depth_scale, gl4ShaderUniforms.extra_depth_scale);
 
 	GLfloat td[4]={0.5,0,0,0};
 
-	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
+	gl4ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
-   GLuint output_fbo;
+	GLuint output_fbo;
 
 	//setup render target first
 	if (is_rtt)
@@ -1198,7 +825,7 @@ static bool RenderFrame(void)
 		}
       //printf("RTT packmode=%d stride=%d - %d,%d -> %d,%d\n", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
  		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);	 		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
-      output_fbo = BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels, format);
+      output_fbo = gl4BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels, format);
 	}
    else
    {
@@ -1220,8 +847,8 @@ static bool RenderFrame(void)
    if (!pvrrc.isRenderFramebuffer)
    {
       //Main VBO
-	   glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
-	   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
+	   glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
+	   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs); glCheck();
 
       glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
 
@@ -1230,12 +857,12 @@ static bool RenderFrame(void)
       //Modvol VBO
       if (pvrrc.modtrig.used())
 	   {
-         glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
+         glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.modvols); glCheck();
          glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
       }
 
       // TR PolyParam data
-      glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl.vbo.tr_poly_params);
+      glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl4.vbo.tr_poly_params);
       glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.used(), pvrrc.global_param_tr.head(), GL_STATIC_DRAW);
       glCheck();
 
@@ -1290,20 +917,20 @@ static bool RenderFrame(void)
 
       //restore scale_x
       scale_x /= scissoring_scale_x;
-      DrawStrips(output_fbo);
+      gl4DrawStrips(output_fbo);
    }
    else
    {
-      glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+	  glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
       glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		DrawFramebuffer(dc_width, dc_height);
+      glClear(GL_COLOR_BUFFER_BIT);
+      gl4DrawFramebuffer(dc_width, dc_height);
    }
 
 
    for ( vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
       if ( vmu_screen_params[vmu_screen_number].vmu_screen_display )
-         DrawVmuTexture(vmu_screen_number, true) ;
+         gl4DrawVmuTexture(vmu_screen_number, true) ;
 
 	KillTex = false;
    
@@ -1312,45 +939,8 @@ static bool RenderFrame(void)
 
 	return !is_rtt;
 }
-
-void rend_set_fb_scale(float x,float y)
-{
-	fb_scale_x=x;
-	fb_scale_y=y;
-}
-
-void co_dc_yield(void);
-
-bool ProcessFrame(TA_context* ctx)
-{
-   ctx->rend_inuse.Lock();
-
-   if (KillTex)
-   {
-      void killtex();
-      killtex();
-      printf("Texture cache cleared\n");
-   }
-
-   if (ctx->rend.isRenderFramebuffer)
-	{
-		RenderFramebuffer();
-		ctx->rend_inuse.Unlock();
-	}
-	else
-	{
-		if (!ta_parse_vdrc(ctx))
-			return false;
-	}
-   CollectCleanup();
-
-   if (ctx->rend.Overrun)
-		printf("ERROR: TA context overrun\n");
-
-	return !ctx->rend.Overrun;
-}
-
 extern void initABuffer();
+void termABuffer();
 
 void gl_DebugOutput(GLenum source,
                             GLenum type,
@@ -1407,14 +997,26 @@ void reshapeABuffer(int w, int h);
 
 struct gl4rend : Renderer
 {
-	bool Init()
+   bool Init()
    {
-      glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
+	  glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
 
-      if (!gl_create_resources())
+	  int major = 0;
+	  int minor = 0;
+	  glGetIntegerv(GL_MAJOR_VERSION, &major);
+	  glGetIntegerv(GL_MINOR_VERSION, &minor);
+	  if (major < 4 || (major == 4 && minor < 3))
+	  {
+		 printf("Warning: OpenGL %d.%d doesn't support per-pixel sorting. 4.3 required\n", major, minor);
+		 return false;
+	  }
+
+	  if (!gl_create_resources())
          return false;
 
-      //    glEnable(GL_DEBUG_OUTPUT);
+      glcache.DisableCache();
+
+//    glEnable(GL_DEBUG_OUTPUT);
 //    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 //    glDebugMessageCallback(gl_DebugOutput, NULL);
 //    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
@@ -1430,6 +1032,7 @@ struct gl4rend : Renderer
          UpscalexBRZ(2, src, dst, 2, 2, false);
       }
 #endif
+      fog_needs_update = true;
 
       return true;
    }
@@ -1460,37 +1063,38 @@ struct gl4rend : Renderer
       reshapeABuffer(w, h);
 	}
 	void Term()
-   {
-		if (stencilTexId != 0)
-		{
-			glcache.DeleteTextures(1, &stencilTexId);
-			stencilTexId = 0;
-		}
-      if (depthTexId != 0)
-		{
-			glcache.DeleteTextures(1, &depthTexId);
-			depthTexId = 0;
-		}
-		if (opaqueTexId != 0)
-		{
-			glcache.DeleteTextures(1, &opaqueTexId);
-			opaqueTexId = 0;
-		}
-      if (depthSaveTexId != 0)
-		{
-			glcache.DeleteTextures(1, &depthSaveTexId);
-			depthSaveTexId = 0;
-		}
-      if (KillTex)
-      {
-         void killtex();
-         killtex();
-         printf("Texture cache cleared\n");
-      }
+	{
+	   termABuffer();
+	   if (stencilTexId != 0)
+	   {
+		  glcache.DeleteTextures(1, &stencilTexId);
+		  stencilTexId = 0;
+	   }
+	   if (depthTexId != 0)
+	   {
+		  glcache.DeleteTextures(1, &depthTexId);
+		  depthTexId = 0;
+	   }
+	   if (opaqueTexId != 0)
+	   {
+		  glcache.DeleteTextures(1, &opaqueTexId);
+		  opaqueTexId = 0;
+	   }
+	   if (depthSaveTexId != 0)
+	   {
+		  glcache.DeleteTextures(1, &depthSaveTexId);
+		  depthSaveTexId = 0;
+	   }
+	   if (KillTex)
+	   {
+		  void killtex();
+		  killtex();
+		  printf("Texture cache cleared\n");
+	   }
 
-      CollectCleanup();
+	   CollectCleanup();
 
-      gl_term();
+	   gl_term();
    }
 
 	bool Process(TA_context* ctx)

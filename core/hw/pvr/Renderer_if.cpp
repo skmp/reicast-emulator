@@ -67,6 +67,8 @@ u32 VertexCount=0;
 u32 FrameCount=1;
 
 Renderer* renderer;
+static Renderer* fallback_renderer;
+bool renderer_changed = false;	// Signals the renderer interface to switch renderer
 
 #if !defined(TARGET_NO_THREADS)
 cResetEvent rs(false,true);
@@ -86,8 +88,66 @@ bool fb_dirty;
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
 
+void rend_create_renderer()
+{
+#ifdef NO_REND
+	renderer	 = rend_norend();
+#else
+	switch (settings.pvr.rend)
+	{
+	default:
+	case 0:
+		printf("Creating per-triangle/strip renderer\n");
+		renderer = rend_GLES2();
+		break;
+#if defined(HAVE_OIT)
+	case 3:
+		printf("Creating per-pixel renderer\n");
+		renderer = rend_GL4();
+		fallback_renderer = rend_GLES2();
+		break;
+#endif
+	}
+#endif
+}
+
+void rend_init_renderer()
+{
+	if (!renderer->Init())
+    {
+		delete renderer;
+    	if (fallback_renderer == NULL || !fallback_renderer->Init())
+    	{
+    		if (fallback_renderer != NULL)
+    			delete fallback_renderer;
+    		die("Renderer initialization failed\n");
+    	}
+    	printf("Selected renderer initialization failed. Falling back to default renderer.\n");
+    	renderer  = fallback_renderer;
+    }
+}
+
+void rend_term_renderer()
+{
+	renderer->Term();
+	delete renderer;
+	renderer = NULL;
+	if (fallback_renderer != NULL)
+	{
+		delete fallback_renderer;
+		fallback_renderer = NULL;
+	}
+}
+
 bool rend_frame(TA_context* ctx, bool draw_osd)
 {
+   if (renderer_changed)
+   {
+	  renderer_changed = false;
+	  rend_term_renderer();
+	  rend_create_renderer();
+	  rend_init_renderer();
+   }
    bool proc = renderer->Process(ctx);
 
 #if !defined(TARGET_NO_THREADS)
@@ -143,17 +203,17 @@ void *rend_thread(void* p)
       printf("WARNING: Could not set CPU Affinity, continuing...\n");
 #endif
 
-   if (!renderer->Init())
-      die("rend->init() failed\n");
+   rend_init_renderer();
 
    //we don't know if this is true, so let's not speculate here
    //renderer->Resize(640, 480);
 
    while(rend_en)
    {
-      if (rend_single_frame())
-         renderer->Present();
+	  if (rend_single_frame())
+		 renderer->Present();
    }
+   rend_term_renderer();
 
    return 0;
 }
@@ -251,22 +311,15 @@ void rend_cancel_emu_wait()
 
 bool rend_init(void)
 {
-#ifdef NO_REND
-	renderer	 = rend_norend();
-#elif defined(HAVE_GL4)
-	renderer = rend_GL4();
-#else
-	renderer = rend_GLES2();
-#endif
+   rend_create_renderer();
 
 #if !defined(TARGET_NO_THREADS)
 	if (!settings.rend.ThreadedRendering)
 #endif
 	{
-		if (!renderer->Init())
-			die("rend->init() failed\n");
+	   rend_init_renderer();
 
-		renderer->Resize(screen_width, screen_height);
+	   renderer->Resize(screen_width, screen_height);
 	}
 
 #if SET_AFNT

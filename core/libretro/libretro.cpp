@@ -1344,6 +1344,8 @@ bool retro_load_game(const struct retro_game_info *game)
       }
    }
 
+   params.context_type          = RETRO_HW_CONTEXT_NONE;
+
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
    params.context_reset         = context_reset;
    params.context_destroy       = context_destroy;
@@ -1355,10 +1357,30 @@ bool retro_load_game(const struct retro_game_info *game)
 #endif
    params.imm_vbo_draw          = NULL;
    params.imm_vbo_disable       = NULL;
+#ifdef HAVE_OIT
+   params.context_type          = RETRO_HW_CONTEXT_OPENGL_CORE;
+   params.major                 = 4;
+   params.minor                 = 3;
+#elif defined(HAVE_GL3)
+   params.context_type          = RETRO_HW_CONTEXT_OPENGL_CORE;
+   params.major                 = 3;
+   params.minor                 = 0;
+#endif
 
    if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
-      return false;
-
+   {
+#if defined(HAVE_GL3)
+      params.context_type       = RETRO_HW_CONTEXT_OPENGL_CORE;
+      params.major              = 3;
+      params.minor              = 0;
+#else
+      params.context_type       = RETRO_HW_CONTEXT_OPENGL;
+      params.major              = 0;
+      params.minor              = 0;
+#endif
+      if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
+         return false;
+   }
 #endif
 
    if (settings.System == DC_PLATFORM_NAOMI)

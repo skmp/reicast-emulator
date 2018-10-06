@@ -250,7 +250,7 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 #if defined(_WIN32)
 					struct protoent *tcp_proto = getprotobyname("TCP");
 					setsockopt(sockfd, tcp_proto->p_proto, TCP_NODELAY, (const char *)&optval, optlen);
-#elif !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__NetBSD__)
+#elif !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__HAIKU__)
 					setsockopt(sockfd, SOL_TCP, TCP_NODELAY, (const void *)&optval, optlen);
 #else
 					struct protoent *tcp_proto = getprotobyname("TCP");

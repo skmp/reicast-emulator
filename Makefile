@@ -110,7 +110,7 @@ ifneq (,$(findstring unix,$(platform)))
 	SHARED := -shared -Wl,--version-script=link.T
 	LDFLAGS +=  -Wl,--no-undefined
 	ifneq (,$(findstring Haiku,$(shell uname -s)))
-		LIBS += -lroot
+		LIBS += -lroot -lnetwork
 	else
 		LIBS += -lrt
 	endif

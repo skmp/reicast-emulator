@@ -182,8 +182,9 @@ else ifneq (,$(findstring odroid,$(platform)))
 	FORCE_GLES = 1
 	SINGLE_PREC_FLAGS = 1
 
-	CFLAGS += -marm -mfloat-abi=hard
-	CXXFLAGS += -marm -mfloat-abi=hard
+	CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
+	CFLAGS += -marm -mfloat-abi=hard $(CPUFLAGS)
+	CXXFLAGS += -marm -mfloat-abi=hard $(CPUFLAGS)
 
 	ifneq (,$(findstring ODROIDC,$(BOARD)))
 		# ODROID-C1
@@ -192,8 +193,8 @@ else ifneq (,$(findstring odroid,$(platform)))
 	else ifneq (,$(findstring ODROID-XU3,$(BOARD)))
 		# ODROID-XU3 & -XU3 Lite
 		ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
-			CFLAGS += -march=armv7ve -mcpu=cortex-a15.cortex-a7 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
-			CXXFLAGS += -march=armv7ve -mcpu=cortex-a15.cortex-a7 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
+			CFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
+			CXXFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
 		else
 			CFLAGS += -mcpu=cortex-a9 -mfpu=neon
 			CXXFLAGS += -mcpu=cortex-a9 -mfpu=neon
@@ -201,8 +202,8 @@ else ifneq (,$(findstring odroid,$(platform)))
 	else ifneq (,$(findstring ODROID-XU4,$(BOARD)))
 		# ODROID-XU4 on newer kernels now identify as ODROID-XU4
 		ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
-			CFLAGS += -march=armv7ve -mcpu=cortex-a15.cortex-a7 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
-			CXXFLAGS += -march=armv7ve -mcpu=cortex-a15.cortex-a7 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
+			CFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
+			CXXFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
 		else
 			CFLAGS += -mcpu=cortex-a9 -mfpu=neon
 			CXXFLAGS += -mcpu=cortex-a9 -mfpu=neon
@@ -515,7 +516,32 @@ endif
 RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -frename-registers -ffast-math -ftree-vectorize -fomit-frame-pointer 
 
 ifeq ($(WITH_DYNAREC), arm)
-	RZDCY_CFLAGS += -march=armv7-a -mcpu=cortex-a9 -mfpu=vfpv3-d16
+	ifneq (,$(findstring odroid,$(platform)))
+		BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
+		ifneq (,$(findstring ODROIDC,$(BOARD)))
+			# ODROID-C1
+			RZDCY_CFLAGS += -marm -mcpu=cortex-a5
+		else ifneq (,$(findstring ODROID-XU3,$(BOARD)))
+			# ODROID-XU3 & -XU3 Lite
+			ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
+				RZDCY_CFLAGS += -marm -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4
+			else
+				RZDCY_CFLAGS += -marm -mcpu=cortex-a9 -mfpu=neon
+			endif
+		else ifneq (,$(findstring ODROID-XU4,$(BOARD)))
+			# ODROID-XU4 on newer kernels now identify as ODROID-XU4
+			ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
+				RZDCY_CFLAGS += -marm -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4
+			else
+				RZDCY_CFLAGS += -marm -mcpu=cortex-a9 -mfpu=neon
+			endif
+		else
+			# ODROID-U2, -U3, -X & -X2
+			RZDCY_CFLAGS += -marm -mcpu=cortex-a9 -mfpu=neon
+		endif
+	else
+		RZDCY_CFLAGS += -march=armv7-a -mcpu=cortex-a9 -mfpu=vfpv3-d16
+	endif
 	RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
 else
 	RZDCY_CFLAGS += -DTARGET_LINUX_x86

@@ -123,7 +123,8 @@ SOURCES_C +=   \
 					$(DEPS_DIR)/picotcp/stack/pico_socket_multicast.c \
 					$(DEPS_DIR)/picotcp/stack/pico_socket.c \
 					$(DEPS_DIR)/picotcp/stack/pico_stack.c \
-					$(DEPS_DIR)/picotcp/stack/pico_tree.c
+					$(DEPS_DIR)/picotcp/stack/pico_tree.c \
+					$(DEPS_DIR)/xxhash/xxhash.c
 
 SOURCES_ASM :=
 

@@ -3,19 +3,44 @@
 
 enum MapleDeviceType
 {
-	MDT_SegaController,
-	MDT_SegaVMU,
-	MDT_Microphone,
+   MDT_SegaController,
+   MDT_SegaVMU,
+   MDT_Microphone,
    MDT_PurupuruPack,
    MDT_Keyboard,
    MDT_Mouse,
-	MDT_LightGun,
+   MDT_LightGun,
 
-	MDT_NaomiJamma,
+   MDT_NaomiJamma,
 
-	MDT_Count,
+   MDT_Count,
 
-	MDT_None = -1
+   MDT_None = -1
+};
+
+enum NAOMI_KEYS
+{
+	NAOMI_START_KEY = 1 << 15,
+	NAOMI_SERVICE_KEY = 1 << 14,
+
+	NAOMI_UP_KEY = 1 << 13,
+	NAOMI_DOWN_KEY = 1 << 12,
+	NAOMI_LEFT_KEY = 1 << 11,
+	NAOMI_RIGHT_KEY = 1 << 10,
+
+	NAOMI_BTN0_KEY = 1 << 9,
+	NAOMI_BTN1_KEY = 1 << 8,
+	NAOMI_BTN2_KEY = 1 << 7,
+	NAOMI_BTN3_KEY = 1 << 6,
+	NAOMI_BTN4_KEY = 1 << 5,
+	NAOMI_BTN5_KEY = 1 << 4,
+	NAOMI_BTN6_KEY = 1 << 3,
+	NAOMI_BTN7_KEY = 1 << 2,
+
+	NAOMI_TEST_KEY = 1 << 16,
+
+	// Not an actual button
+	NAOMI_COIN_KEY = 1 << 0,
 };
 
 struct IMapleConfigMap;
@@ -33,9 +58,11 @@ struct maple_device
 
 	virtual void OnSetup(){};
 	virtual ~maple_device();
-	virtual u32 Dma(u32 Command,u32* buffer_in,u32 buffer_in_len,u32* buffer_out,u32& buffer_out_len)=0;
+	u32 Dma(u32 Command,u32* buffer_in,u32 buffer_in_len,u32* buffer_out,u32& buffer_out_len);
+	virtual u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) = 0;
 	virtual bool maple_serialize(void **data, unsigned int *total_size){return true;};
 	virtual bool maple_unserialize(void **data, unsigned int *total_size){return true;};
+	virtual MapleDeviceType get_device_type() = 0;
 	virtual void get_lightgun_pos() {};
 };
 

@@ -326,7 +326,7 @@ void retro_set_environment(retro_environment_t cb)
       {
     	 "reicast_alpha_sorting",
 #ifdef HAVE_OIT
-         "Alpha sorting; per-pixel (accurate)|per-triangle (normal)|per-strip (fast, least accurate)",
+         "Alpha sorting; per-triangle (normal)|per-strip (fast, least accurate)|per-pixel (accurate)",
 #else
          "Alpha sorting; per-triangle (normal)|per-strip (fast, least accurate)",
 #endif

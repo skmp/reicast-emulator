@@ -1362,19 +1362,18 @@ bool retro_load_game(const struct retro_game_info *game)
    params.major                 = 4;
    params.minor                 = 3;
 #elif defined(HAVE_GL3)
-   params.context_type          = RETRO_HW_CONTEXT_OPENGL_CORE;
+   params.context_type          = RETRO_HW_CONTEXT_OPENGL;
    params.major                 = 3;
    params.minor                 = 0;
 #endif
 
    if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
    {
+      params.context_type       = RETRO_HW_CONTEXT_OPENGL;
 #if defined(HAVE_GL3)
-      params.context_type       = RETRO_HW_CONTEXT_OPENGL_CORE;
       params.major              = 3;
       params.minor              = 0;
 #else
-      params.context_type       = RETRO_HW_CONTEXT_OPENGL;
       params.major              = 0;
       params.minor              = 0;
 #endif

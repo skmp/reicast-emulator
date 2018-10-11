@@ -1358,9 +1358,18 @@ bool retro_load_game(const struct retro_game_info *game)
    params.imm_vbo_draw          = NULL;
    params.imm_vbo_disable       = NULL;
 #ifdef HAVE_OIT
-   params.context_type          = RETRO_HW_CONTEXT_OPENGL_CORE;
-   params.major                 = 4;
-   params.minor                 = 3;
+   if (settings.pvr.rend == 3)
+   {
+	  params.context_type          = RETRO_HW_CONTEXT_OPENGL_CORE;
+	  params.major                 = 4;
+	  params.minor                 = 3;
+   }
+   else
+   {
+	   params.context_type          = RETRO_HW_CONTEXT_OPENGL_CORE;
+	   params.major                 = 3;
+	   params.minor                 = 0;
+   }
 #elif defined(HAVE_GL3)
    params.context_type          = RETRO_HW_CONTEXT_OPENGL_CORE;
    params.major                 = 3;

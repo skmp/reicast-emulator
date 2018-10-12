@@ -1640,18 +1640,13 @@ struct maple_naomi_jamma : maple_sega_controller
 				//printState(Command,buffer_in,buffer_in_len);
 				memcpy(EEPROM + address, dma_buffer_in + 4, size);
 
-#ifdef SAVE_EPPROM
-				string eeprom_file = get_eeprom_file_path();
-				FILE* f = fopen(eeprom_file.c_str(), "wb");
+				FILE* f = fopen(eeprom_file, "wb");
 				if (f)
 				{
-					fwrite(EEPROM, 1, 0x80, f);
-					fclose(f);
-					printf("Saved EEPROM to %s\n", eeprom_file.c_str());
+				   fwrite(EEPROM, 1, 0x80, f);
+				   fclose(f);
 				}
-				else
-					printf("EEPROM SAVE FAILED to %s\n", eeprom_file.c_str());
-#endif
+
 				w8(MDRS_JVSReply);
 				w8(0x00);
 				w8(0x20);
@@ -1664,22 +1659,13 @@ struct maple_naomi_jamma : maple_sega_controller
 
 			case 0x3:	//EEPROM read
 			{
-#ifdef SAVE_EPPROM
-				if (!EEPROM_loaded)
+				FILE* f = fopen(eeprom_file, "rb");
+				if (f)
 				{
-					EEPROM_loaded = true;
-					string eeprom_file = get_eeprom_file_path();
-					FILE* f = fopen(eeprom_file.c_str(), "rb");
-					if (f)
-					{
-						fread(EEPROM, 1, 0x80, f);
-						fclose(f);
-						printf("Loaded EEPROM from %s\n", eeprom_file.c_str());
-					}
-					else
-						printf("EEPROM file not found at %s\n", eeprom_file.c_str());
+				   fread(EEPROM, 1, 0x80, f);
+				   fclose(f);
 				}
-#endif
+
 				//printf("EEprom READ\n");
 				int address = dma_buffer_in[1];
 				//printState(Command,buffer_in,buffer_in_len);

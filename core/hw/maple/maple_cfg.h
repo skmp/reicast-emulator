@@ -62,4 +62,7 @@ void mcfg_CreateDevices();
 #else
 void mcfg_CreateDevices();
 #endif
+
 void mcfg_DestroyDevices();
+void mcfg_SerializeDevices(void **data, unsigned int *total_size);
+void mcfg_UnserializeDevices(void **data, unsigned int *total_size);

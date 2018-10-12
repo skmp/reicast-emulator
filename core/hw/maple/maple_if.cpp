@@ -67,7 +67,9 @@ static void maple_DoDma(void)
 
 		//this is kinda wrong .. but meh
 		//really need to properly process the commands at some point
-		if (maple_op == MP_Start)
+		switch (maple_op)
+		{
+		case MP_Start:
 		{
 			if (!IsOnSh4Ram(header_2))
 			{
@@ -95,17 +97,13 @@ static void maple_DoDma(void)
 
 			if (MapleDevices[bus][5] && MapleDevices[bus][port])
 			{
-				resp=MapleDevices[bus][port]->Dma(command,&p_data[1],inlen,&p_out[1],outlen);
-
-				if(reci&0x20)
-					reci|=maple_GetAttachedDevices(bus);
-
-				verify(u8(outlen/4)*4==outlen);
-				p_out[0]=(resp<<0)|(send<<8)|(reci<<16)|((outlen/4)<<24);
-				xfer_count+=outlen+4;
+				u32 outlen = MapleDevices[bus][port]->RawDma(&p_data[0], inlen + 4, &p_out[0]);
+				xfer_count =+ outlen;
 			}
 			else
 			{
+				if (port != 5 && command != 1)
+					printf("MAPLE: Unknown device bus %d port %d cmd %d\n", bus, port, command);
 				outlen=4;
 				p_out[0]=0xFFFFFFFF;
 			}
@@ -113,7 +111,9 @@ static void maple_DoDma(void)
 			//goto next command
 			addr += 2 * 4 + plen * 4;
 		}
-		else if (maple_op == MP_SDCKBOccupy)
+		break;
+
+		case MP_SDCKBOccupy:
 		{
 			u32 bus = (header_1 >> 16) & 3;
 			if (MapleDevices[bus][5])
@@ -121,8 +121,22 @@ static void maple_DoDma(void)
 
 			addr += 1 * 4;
 		}
-		else
-		{
+		break;
+
+		case MP_SDCKBOccupyCancel:
+			addr += 1 * 4;
+			break;
+
+		case MP_Reset:
+			addr += 1 * 4;
+			break;
+
+		case MP_NOP:
+			addr += 1 * 4;
+			break;
+
+		default:
+			printf("MAPLE: Unknown maple_op == %d length %d\n", maple_op, plen * 4);
 			addr += 1 * 4;
 		}
 	}

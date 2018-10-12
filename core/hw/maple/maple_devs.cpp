@@ -1168,16 +1168,16 @@ struct maple_keyboard : maple_base
 // bit 1: Right button (B)
 // bit 2: Left button (A)
 // bit 3: Wheel button
-u32 mo_buttons = 0xFFFFFFFF;
+u32 mo_buttons[4] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
 // Relative mouse coordinates [-512:511]
-f32 mo_x_delta;
-f32 mo_y_delta;
-f32 mo_wheel_delta;
+f32 mo_x_delta[4];
+f32 mo_y_delta[4];
+f32 mo_wheel_delta[4];
 // Absolute mouse coordinates
 // Range [0:639] [0:479]
 // but may be outside this range if the pointer is offscreen or outside the 4:3 window.
-s32 mo_x_abs;
-s32 mo_y_abs;
+f32 mo_x_abs[4];
+f32 mo_y_abs[4];
 void UpdateInputState(u32 port);
 
 struct maple_mouse : maple_base
@@ -1189,7 +1189,7 @@ struct maple_mouse : maple_base
 
 	static u16 mo_cvt(f32 delta)
 	{
-		delta+=0x200;
+		delta+=0x200 + 0.5;
 		if (delta<=0)
 			delta=0;
 		else if (delta>0x3FF)
@@ -1236,13 +1236,13 @@ struct maple_mouse : maple_base
 			w32(MFID_9_Mouse);
 			//struct data
 			//int32 buttons       ; digital buttons bitfield (little endian)
-			w32(mo_buttons);
+			w32(mo_buttons[bus_id]);
 			//int16 axis1         ; horizontal movement (0-$3FF) (little endian)
-			w16(mo_cvt(mo_x_delta));
+			w16(mo_cvt(mo_x_delta[bus_id]));
 			//int16 axis2         ; vertical movement (0-$3FF) (little endian)
-			w16(mo_cvt(mo_y_delta));
+			w16(mo_cvt(mo_y_delta[bus_id]));
 			//int16 axis3         ; mouse wheel movement (0-$3FF) (little endian)
-			w16(mo_cvt(mo_wheel_delta));
+			w16(mo_cvt(mo_wheel_delta[bus_id]));
 			//int16 axis4         ; ? movement (0-$3FF) (little endian)
 			w16(mo_cvt(0));
 			//int16 axis5         ; ? movement (0-$3FF) (little endian)
@@ -1253,9 +1253,9 @@ struct maple_mouse : maple_base
 			w16(mo_cvt(0));
 			//int16 axis8         ; ? movement (0-$3FF) (little endian)
 			w16(mo_cvt(0));
- 			mo_x_delta=0;
-			mo_y_delta=0;
-			mo_wheel_delta = 0;
+ 			mo_x_delta[bus_id] = 0;
+			mo_y_delta[bus_id] = 0;
+			mo_wheel_delta[bus_id] = 0;
 
 			return MDRS_DataTransfer;
 
@@ -1343,7 +1343,7 @@ struct maple_lightgun : maple_base
 
    virtual void get_lightgun_pos()
    {
-	  read_lightgun_position(mo_x_abs, mo_y_abs);
+	  read_lightgun_position(mo_x_abs[bus_id] + 0.5f, mo_y_abs[bus_id] + 0.5f);
    }
 };
 
@@ -1351,6 +1351,7 @@ extern u16 kcode[4];
 extern s8 joyx[4],joyy[4];
 extern u8 rt[4], lt[4];
 extern char eeprom_file[PATH_MAX];
+extern bool use_lightgun;
 
 /*
    Sega JVS I/O board
@@ -1398,6 +1399,9 @@ struct maple_naomi_jamma : maple_sega_controller
 	maple_naomi_jamma()
 	{
 		io_boards.push_back(new jvs_io_board(1, this));
+		if (use_lightgun)
+		   io_boards.back()->lightgun_as_analog = true;
+
 //		io_boards.back()->rotary_encoders = true;
 //		io_boards.push_back(new jvs_io_board(2, this));
 	}
@@ -2036,10 +2040,14 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
-						   u32 keycode = ~kcode[player];
+						   u16 keycode = ~kcode[player];
+						   LOGJVS("P%d %02x ", player + 1, (keycode >> 8) & 0xFF);
 						   JVS_OUT(keycode >> 8);
 						   if (buffer_in[cmdi + 2] > 1)
+						   {
+							  LOGJVS("%02x ", keycode & 0xFF);
 							  JVS_OUT(keycode);
+						   }
 						}
 						cmdi += 3;
 					}
@@ -2056,7 +2064,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							  if (!(kcode[slot] & NAOMI_COIN_KEY))
 								 coin_count[slot]++;
 
-							  LOGJVS("0:%d ", coin_count);
+							  LOGJVS("0:%d ", coin_count[slot]);
 							  JVS_OUT((coin_count[slot] >> 8) & 0x3F);		// status (2 highest bits, 0: normal), coin count MSB
 							  JVS_OUT(coin_count[slot]);					// coin count LSB
 						   }
@@ -2080,19 +2088,26 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						if (lightgun_as_analog)
 						{
 							// Death Crimson / Confidential Mission
-							u16 x = mo_x_abs * 0xFFFF / 639;
-							u16 y = mo_y_abs * 0xFFFF / 479;
-							if (mo_x_abs < 0 || mo_x_abs > 639 || mo_y_abs < 0 || mo_y_abs > 479)
+							while (axis < buffer_in[cmdi + 1] && axis < 8)
 							{
-								x = 0xffff;
-								y = 0xffff;
+							   u16 x = mo_x_abs[axis / 2] * 0xFFFF / 639 + 0.5f;
+							   u16 y = mo_y_abs[axis / 2] * 0xFFFF / 479 + 0.5f;
+							   if (mo_x_abs[axis / 2] < 0 || mo_x_abs[axis / 2] > 639 || mo_y_abs[axis / 2] < 0 || mo_y_abs[axis / 2] > 479)
+							   {
+								   x = 0xffff;
+								   y = 0xffff;
+							   }
+							   LOGJVS("P%d x,y:%4x,%4x ", axis / 2 + 1, x, y);
+							   JVS_OUT(x >> 8);		// X, MSB
+							   JVS_OUT(x);			// X, LSB
+							   axis++;
+							   if (axis < buffer_in[cmdi + 1])
+							   {
+								  JVS_OUT(y >> 8);		// Y, MSB
+								  JVS_OUT(y);			// Y, LSB
+								  axis++;
+							   }
 							}
-							LOGJVS("x,y:%4x,%4x ", x, y);
-							JVS_OUT(x >> 8);		// X, MSB
-							JVS_OUT(x);			// X, LSB
-							JVS_OUT(y >> 8);		// Y, MSB
-							JVS_OUT(y);			// Y, LSB
-							axis = 2;
 						}
 
 						for (; axis < buffer_in[cmdi + 1]; axis++)
@@ -2107,10 +2122,10 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 								 axis_value = (joyy[axis / 4] + 128) << 8;
 								 break;
 							  case 2:
-								 axis_value = rt[axis / 4] << 8;
+								 axis_value = (rt[axis / 4] + 128) << 8;
 								 break;
 							  case 3:
-								 axis_value = lt[axis / 4] << 8;
+								 axis_value = (lt[axis / 4] + 128) << 8;
 								 break;
 						   }
 						   LOGJVS("%d:%4x ", axis, axis_value);
@@ -2127,10 +2142,12 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						// TODO Fix this
 						static s16 rotx = 0;
 						static s16 roty = 0;
+						/*
 						rotx += mo_x_delta * 10;
 						roty += mo_y_delta * 10;
 						mo_x_delta = 0;
 						mo_y_delta = 0;
+						*/
 						LOGJVS("rotenc ");
 						for (int chan = 0; chan < buffer_in[cmdi + 1]; chan++)
 						{
@@ -2160,14 +2177,25 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 				case 0x25:	// Read screen pos inputs
 					{
 						JVS_STATUS1();	// report byte
-						// Channel number is jvs_request[channel][cmdi + 1]
-						u16 x = mo_x_abs * 0xFFFF / 639;
-						u16 y = (479 - mo_y_abs) * 0xFFFF / 479;
-						LOGJVS("lightgun %4x,%4x ", x, y);
-						JVS_OUT(x >> 8);		// X, MSB
-						JVS_OUT(x);			// X, LSB
-						JVS_OUT(y >> 8);		// Y, MSB
-						JVS_OUT(y);			// Y, LSB
+						u32 channel = buffer_in[cmdi + 1] - 1;
+						if (channel >= 4)
+						{
+							LOGJVS("P%d lightgun inv ", channel + 1);
+							JVS_OUT(0xFF);
+							JVS_OUT(0xFF);
+							JVS_OUT(0xFF);
+							JVS_OUT(0xFF);
+						}
+						else
+						{
+						   u16 x = mo_x_abs[channel] * 0xFFFF / 639 + 0.5f;
+						   u16 y = (479 - mo_y_abs[channel]) * 0xFFFF / 479 + 0.5f;
+						   LOGJVS("P%d lightgun %4x,%4x ", channel + 1, x, y);
+						   JVS_OUT(x >> 8);		// X, MSB
+						   JVS_OUT(x);			// X, LSB
+						   JVS_OUT(y >> 8);		// Y, MSB
+						   JVS_OUT(y);			// Y, LSB
+						}
 						cmdi += 2;
 					}
 					break;
@@ -2255,6 +2283,7 @@ maple_device* maple_Create(MapleDeviceType type)
 		break;
 
 	default:
+	    printf("Error: Uknown Maple device type %d\n", type);
 		return 0;
 	}
 

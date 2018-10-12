@@ -1494,7 +1494,15 @@ struct maple_naomi_jamma : maple_sega_controller
 
 	void handle_86_subcommand()
 	{
-		u32 subcode = dma_buffer_in[0];
+	   if (dma_count_in == 0)
+	   {
+		  w8(MDRS_JVSReply);
+		  w8(0);
+		  w8(0x20);
+		  w8(0x00);
+		  return;
+	   }
+	   u32 subcode = dma_buffer_in[0];
 
 		// CT fw uses 13 as a 17, and 17 as 13 and also uses 19
 		if (crazy_mode)
@@ -1649,7 +1657,8 @@ struct maple_naomi_jamma : maple_sega_controller
 				w8(0x20);
 				w8(0x01);
 				memcpy(dma_buffer_out, EEPROM, 4);
-				*dma_buffer_out += 4;
+				dma_buffer_out += 4;
+				*dma_count_out += 4;
 			}
 			break;
 
@@ -1679,7 +1688,8 @@ struct maple_naomi_jamma : maple_sega_controller
 				w8(0x20);
 				w8(0x20);
 				memcpy(dma_buffer_out, EEPROM + address, 0x80);
-				*dma_buffer_out += 0x80;
+				dma_buffer_out += 0x80;
+				*dma_count_out += 0x80;
 			}
 			break;
 
@@ -1708,7 +1718,7 @@ struct maple_naomi_jamma : maple_sega_controller
 				w8(MDRS_JVSReply);
 				w8(0x00);
 				w8(0x20);
-				w8(0x02);
+				w8(0x01);
 
 				w8(0x2);
 				w8(0x0);
@@ -1723,6 +1733,10 @@ struct maple_naomi_jamma : maple_sega_controller
 
 			default:
 				printf("JVS: Unknown 0x86 sub-command %x\n", subcode);
+				w8(MDRE_UnknownCmd);
+				w8(0x00);
+				w8(0x20);
+				w8(0x00);
 				break;
 		}
 	}

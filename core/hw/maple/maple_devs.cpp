@@ -1189,7 +1189,7 @@ struct maple_mouse : maple_base
 
 	static u16 mo_cvt(f32 delta)
 	{
-		delta+=0x200;
+		delta+=0x200 + 0.5;
 		if (delta<=0)
 			delta=0;
 		else if (delta>0x3FF)
@@ -2056,7 +2056,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							  if (!(kcode[slot] & NAOMI_COIN_KEY))
 								 coin_count[slot]++;
 
-							  LOGJVS("0:%d ", coin_count);
+							  LOGJVS("0:%d ", coin_count[slot]);
 							  JVS_OUT((coin_count[slot] >> 8) & 0x3F);		// status (2 highest bits, 0: normal), coin count MSB
 							  JVS_OUT(coin_count[slot]);					// coin count LSB
 						   }
@@ -2089,9 +2089,9 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							}
 							LOGJVS("x,y:%4x,%4x ", x, y);
 							JVS_OUT(x >> 8);		// X, MSB
-							JVS_OUT(x);			// X, LSB
+							JVS_OUT(x);				// X, LSB
 							JVS_OUT(y >> 8);		// Y, MSB
-							JVS_OUT(y);			// Y, LSB
+							JVS_OUT(y);				// Y, LSB
 							axis = 2;
 						}
 
@@ -2107,10 +2107,10 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 								 axis_value = (joyy[axis / 4] + 128) << 8;
 								 break;
 							  case 2:
-								 axis_value = rt[axis / 4] << 8;
+								 axis_value = (rt[axis / 4] + 128) << 8;
 								 break;
 							  case 3:
-								 axis_value = lt[axis / 4] << 8;
+								 axis_value = (lt[axis / 4] + 128) << 8;
 								 break;
 						   }
 						   LOGJVS("%d:%4x ", axis, axis_value);
@@ -2255,6 +2255,7 @@ maple_device* maple_Create(MapleDeviceType type)
 		break;
 
 	default:
+	    printf("Error: Uknown Maple device type %d\n", type);
 		return 0;
 	}
 

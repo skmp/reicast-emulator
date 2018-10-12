@@ -13,9 +13,8 @@ enum MapleDeviceType
 
    MDT_NaomiJamma,
 
+   MDT_None,
    MDT_Count,
-
-   MDT_None = -1
 };
 
 enum NAOMI_KEYS
@@ -37,7 +36,7 @@ enum NAOMI_KEYS
 	NAOMI_BTN6_KEY = 1 << 3,
 	NAOMI_BTN7_KEY = 1 << 2,
 
-	NAOMI_TEST_KEY = 1 << 16,
+	NAOMI_TEST_KEY = 1 << 1,
 
 	// Not an actual button
 	NAOMI_COIN_KEY = 1 << 0,

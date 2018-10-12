@@ -1725,10 +1725,12 @@ struct maple_naomi_jamma : maple_sega_controller
 
 	virtual u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out)
 	{
+	   /*
 		printf("JVS IN: ");
 		u8 *p = (u8*)buffer_in;
 		for (int i = 0; i < buffer_in_len; i++) printf("%02x ", *p++);
 		printf("\n");
+		*/
 
 		u32 out_len = 0;
 		dma_buffer_out = (u8 *)buffer_out;
@@ -1869,10 +1871,12 @@ struct maple_naomi_jamma : maple_sega_controller
 
 			break;
 		}
+		/*
 		printf("JVS OUT: ");
 		p = (u8 *)buffer_out;
 		for (int i = 0; i < out_len; i++) printf("%02x ", p[i]);
 		printf("\n");
+		*/
 
 		return out_len;
 	}

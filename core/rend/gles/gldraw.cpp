@@ -600,7 +600,6 @@ void DrawSorted(u32 count)
    //if any drawing commands, draw them
 	if (pidx_sort.size())
    {
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2);
       u32 count=pidx_sort.size();
 
       {
@@ -653,6 +652,8 @@ void DrawSorted(u32 count)
 			}
 
       }
+      // Re-bind the previous index buffer for subsequent render passes
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);
    }
 }
 
@@ -895,13 +896,7 @@ void DrawStrips(void)
 
       //initial state
       glcache.Enable(GL_DEPTH_TEST);
-
-#if 0
-      glClearDepth(0.f);
-#endif
       glcache.DepthMask(GL_TRUE);
-      glcache.StencilMask(0xFF);
-      glClear(GL_DEPTH_BUFFER_BIT );
 
       //Opaque
       DrawList<ListType_Opaque, false>(pvrrc.global_param_op, 

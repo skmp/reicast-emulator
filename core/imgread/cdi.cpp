@@ -4,7 +4,7 @@
 
 #include "common.h"
 
-#include "deps/chdpsr/cdipsr.h"
+#include "deps/cdipsr/cdipsr.h"
 
 Disc* cdi_parse(const wchar* file)
 {

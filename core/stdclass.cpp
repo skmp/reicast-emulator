@@ -11,7 +11,7 @@
 	#include <unistd.h>
 #endif
 
-#include "hw/mem/_vmem.h"
+#include "mem/_vmem.h"
 
 string user_config_dir;
 string user_data_dir;

@@ -28,7 +28,7 @@ struct regacc
 	}
 };
 
-#include "hw/sh4/sh4_opcode_list.h"
+#include "sh4/sh4_opcode_list.h"
 
 int stuffcmp(const void* p1,const void* p2)
 {

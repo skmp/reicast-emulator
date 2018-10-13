@@ -14,9 +14,9 @@
 #include "gdrom_hle.h"
 #include "descrambl.h"
 
-#include "hw/sh4/sh4_mem.h"
+#include "sh4/sh4_mem.h"
 
-#include "hw/naomi/naomi_cart.h"
+#include "naomi/naomi_cart.h"
 
 #include <map>
 

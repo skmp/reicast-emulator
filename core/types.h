@@ -749,7 +749,7 @@ inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
 
 static inline void do_nada(...) { }
 
-#ifdef _ANDROID
+#if defined(_ANDROID) && defined(_Z_SAYS_HELL_NO_SHIT_DONT_LINK_) // *FIXME*
 #include <android/log.h>
 
 #ifdef printf 
@@ -773,11 +773,19 @@ static inline void do_nada(...) { }
 		#define printf    LOGI
 	#endif
 #define putinf    LOGI
+
+#else // GRRRRRR
+
+#define LOGI(...) printf(__VA_ARGS__)
+#define LOGW(...) printf(__VA_ARGS__)
+#define LOGE(...) printf(__VA_ARGS__)
+#define LOGD(...) printf(__VA_ARGS__)
+#define putinf    LOGI
 #endif
 
 
 
-#include "hw/sh4/sh4_if.h"
+#include "sh4/sh4_if.h"
 
 //more to come
 

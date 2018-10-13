@@ -5,15 +5,15 @@
 
 #include <stdio.h>
 #include "types.h"
-#include "hw/sh4/sh4_if.h"
-#include "hw/sh4/sh4_mem.h"
+#include "sh4/sh4_if.h"
+#include "sh4/sh4_mem.h"
 
 #include "gdrom_hle.h"
 
 #define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
 
-//#define debugf printf
-#define debugf(...)
+#define debugf printf
+//#define debugf(...)
 
 void GDROM_HLE_ReadSES(u32 addr)
 {

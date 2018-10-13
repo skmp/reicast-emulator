@@ -10,12 +10,12 @@
 #include <GLES2/gl2.h>
 #include <types.h>
 
-#include "hw/maple/maple_cfg.h"
+#include "maple/maple_cfg.h"
 #include "profiler/profiler.h"
 #include "rend/TexCache.h"
-#include "hw/maple/maple_devs.h"
-#include "hw/maple/maple_if.h"
-#include "oslib/audiobackend_android.h"
+#include "maple/maple_devs.h"
+#include "maple/maple_if.h"
+#include "audiobackend/audiobackend_android.h"
 #include "reios/reios.h"
 #include "imgread/common.h"
 

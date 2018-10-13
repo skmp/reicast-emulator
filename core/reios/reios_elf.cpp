@@ -2,7 +2,7 @@
 
 #include "deps/libelf/elf.h"
 
-#include "hw/sh4/sh4_mem.h"
+#include "sh4/sh4_mem.h"
 
 bool reios_loadElf(const string& elf) {
 

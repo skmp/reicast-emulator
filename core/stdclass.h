@@ -4,10 +4,16 @@
 #include <vector>
 #include <string.h>
 
-#if HOST_OS!=OS_WINDOWS
-#include <pthread.h>
-#else
+
+
+
+
+#if HOST_OS==OS_WINDOWS
 #include <Windows.h>
+#elif HOST_OS==OS_NSW_HOS
+#include <switch.h>
+#else
+#include <pthread.h>
 #endif
 
 
@@ -189,6 +195,8 @@ class cResetEvent
 private:
 #if HOST_OS==OS_WINDOWS
 	EVENTHANDLE hEvent;
+#elif HOST_OS==OS_NSW_HOS
+	Event event;
 #else
 	pthread_mutex_t mutx;
 	pthread_cond_t cond;
@@ -210,6 +218,8 @@ class cMutex
 private:
 #if HOST_OS==OS_WINDOWS
 	CRITICAL_SECTION cs;
+#elif HOST_OS==OS_NSW_HOS
+	Mutex mutx;
 #else
 	pthread_mutex_t mutx;
 #endif
@@ -220,6 +230,8 @@ public :
 	{
 #if HOST_OS==OS_WINDOWS
 		InitializeCriticalSection(&cs);
+#elif HOST_OS==OS_NSW_HOS
+		mutexInit(&mutx);
 #else
 		pthread_mutex_init ( &mutx, NULL);
 #endif
@@ -228,6 +240,8 @@ public :
 	{
 #if HOST_OS==OS_WINDOWS
 		DeleteCriticalSection(&cs);
+#elif HOST_OS==OS_NSW_HOS
+		//*FIXME* checkout why there is no destroy
 #else
 		pthread_mutex_destroy(&mutx);
 #endif
@@ -236,6 +250,8 @@ public :
 	{
 #if HOST_OS==OS_WINDOWS
 		EnterCriticalSection(&cs);
+#elif HOST_OS==OS_NSW_HOS
+		mutexLock(&mutx);
 #else
 		pthread_mutex_lock(&mutx);
 #endif
@@ -244,6 +260,8 @@ public :
 	{
 #if HOST_OS==OS_WINDOWS
 		LeaveCriticalSection(&cs);
+#elif HOST_OS==OS_NSW_HOS
+		mutexUnlock(&mutx);
 #else
 		pthread_mutex_unlock(&mutx);
 #endif

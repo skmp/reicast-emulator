@@ -132,24 +132,36 @@
 #define OS_LINUX     0x10000002
 #define OS_DARWIN    0x10000003
 
+#define OS_NSW_HOS   0x80000001
+#define OS_PS4_BSD   0x80000002
+
+
 //HOST_CPU
 #define CPU_X86      0x20000001
 #define CPU_ARM      0x20000002
 #define CPU_MIPS     0x20000003
 #define CPU_X64      0x20000004
 #define CPU_GENERIC  0x20000005 //used for pnacl, emscripten, etc
+#define CPU_PPC      0x20000006
+#define CPU_PPC64    0x20000007
+#define CPU_A64      0x20000008
+#define CPU_MIPS64   0x20000009
 
 //BUILD_COMPILER
-#define COMPILER_VC  0x30000001
-#define COMPILER_GCC 0x30000002
+#define COMPILER_VC    0x30000001
+#define COMPILER_GCC   0x30000002
+#define COMPILER_CLANG 0x30000002
+#define COMPILER_INTEL 0x30000002
 
 //FEAT_SHREC, FEAT_AREC, FEAT_DSPREC
-#define DYNAREC_NONE	0x40000001
-#define DYNAREC_JIT		0x40000002
-#define DYNAREC_CPP		0x40000003
+#define DYNAREC_NONE   0x40000001
+#define DYNAREC_JIT    0x40000002
+#define DYNAREC_CPP    0x40000003
 
 
 //automatic
+
+#ifndef CMAKE_BUILD
 
 #if defined(_WIN32) && !defined(TARGET_WIN86) && !defined(TARGET_WIN64)
 	#if !defined(_M_AMD64)
@@ -160,10 +172,11 @@
 #endif
 
 #ifdef __GNUC__ 
-	#define BUILD_COMPILER COMPILER_GCC
+#define BUILD_COMPILER COMPILER_GCC
 #else
-	#define BUILD_COMPILER COMPILER_VC
+#define BUILD_COMPILER COMPILER_VC
 #endif
+
 
 //Targets
 #if defined(TARGET_WIN86)
@@ -239,7 +252,12 @@
 	#define FEAT_HAS_SOFTREND 1
 #endif
 
+#endif	// !CMAKE_BUILD
+
+
+
 //defaults
+
 
 #ifndef DC_PLATFORM 
 	#define DC_PLATFORM DC_PLATFORM_DREAMCAST
@@ -264,13 +282,13 @@
 		#define FEAT_DSPREC DYNAREC_NONE
 	#endif
 #endif
-
+/*
 #ifndef FEAT_HAS_NIXPROF
   #if HOST_OS != OS_WINDOWS
     #define FEAT_HAS_NIXPROF 1
   #endif
 #endif
-
+*/
 #ifndef FEAT_HAS_COREIO_HTTP
 	#define FEAT_HAS_COREIO_HTTP 1
 #endif
@@ -278,6 +296,7 @@
 #ifndef FEAT_HAS_SOFTREND
 	#define FEAT_HAS_SOFTREND BUILD_COMPILER == COMPILER_VC	//GCC wants us to enable sse4 globaly to enable intrins
 #endif
+
 
 //Depricated build configs
 #ifdef HOST_NO_REC

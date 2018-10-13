@@ -1,6 +1,6 @@
 #pragma once
 #include "types.h"
-#include "hw/sh4/dyna/shil.h"
+#include "sh4/dyna/shil.h"
 
 void prof_init();
 void prof_periodical();

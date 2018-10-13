@@ -80,7 +80,7 @@ static struct game_type lut_games[] =
    { "MK-5100050", -1, -1, -1,  1, -1, -1,  -1, -1  },                /* Sonic Adventure */
 
    /* Translucent Polygon Depth Mask */
-   { "RDC-0057",   -1, -1, -1, -1,  1, -1,  -1, -1  },                /* Cosmic Smash */
+   { "RDC-0057  ", -1, -1, -1, -1,  1, -1,  -1, -1  },                /* Cosmic Smash */
    { "HDR-0176  ", -1, -1, -1, -1,  1, -1,  -1, -1  },                /* Cosmic Smash */
 
    /* Render to texture buffer */

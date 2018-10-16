@@ -34,7 +34,11 @@ struct game_type_naomi
    int rendertotexturebuffer;       /* -1, make no decision */
    int eg_hack;                     /* -1, make no decision */
    int disable_div;                 /* -1, make no decision */
-   int jamma_setup;                 /* -1, make no decision */
+   int jamma_setup;                 /* -1, make no decision,
+									   0 = normal 2P setup,
+									   1 = 4 players setup
+									   2 = 2 I/O boards w/ rotary encoder,
+									   2 = 12bits/player, 16 drivers out for Sega Marine Fishing */
    int extra_depth_scaling;         /* -1, make no decision */
 };
 
@@ -118,4 +122,7 @@ static struct game_type_naomi lut_games_naomi[] =
 
    /* Alternate Jamma I/O Setup */
    { "Power Stone 2"                         , -1, -1, -1, -1, -1, -1,  -1, -1,  1, -1  },                /* Power Stone 2 (4 players, also need to be set in service menu) */
+   { "Shootout Pool"                         , -1, -1, -1, -1, -1, -1,  -1, -1,  2, -1  },                /* Shootout Pool: rotary encoders */
+   { "Virtua Golf ~ Dynamic Golf"            , -1, -1, -1, -1, -1, -1,  -1, -1,  2, -1  },                /* Virtua Golf/Dynamic Golf: rotary encoders */
+   { "Sega Marine Fishing"                   , -1, -1, -1, -1, -1, -1,  -1, -1,  3, -1  },                /* Sega Marine Fishing */
 };

@@ -4,6 +4,7 @@
 #include "maple_devs.h"
 #include "maple_cfg.h"
 #include "hw/pvr/spg.h"
+#include <math.h>
 #include <time.h>
 
 #include "deps/zlib/zlib.h"
@@ -1377,6 +1378,8 @@ public:
 	bool lightgun_as_analog = false;
 
 private:
+	u16 read_rotary_encoder(f32 &encoder_value, f32 delta_value);
+
 	u8 node_id = 0;
 	maple_naomi_jamma *parent;
 	u32 coin_count[2];
@@ -1395,12 +1398,21 @@ struct maple_naomi_jamma : maple_sega_controller
 
 	maple_naomi_jamma()
 	{
-		io_boards.push_back(new jvs_io_board(1, this));
-		if (use_lightgun)
-		   io_boards.back()->lightgun_as_analog = true;
+	}
 
-//		io_boards.back()->rotary_encoders = true;
-//		io_boards.push_back(new jvs_io_board(2, this));
+	void create_io_boards()
+	{
+	   if (!io_boards.empty())
+		  return;
+	   io_boards.push_back(new jvs_io_board(1, this));
+	   if (settings.mapping.JammaSetup == 2)
+	   {
+		  io_boards.back()->rotary_encoders = true;
+		  io_boards.push_back(new jvs_io_board(2, this));
+	   }
+	   else
+		   if (use_lightgun)
+			  io_boards.back()->lightgun_as_analog = true;
 	}
 
 	virtual MapleDeviceType get_device_type()
@@ -1467,7 +1479,7 @@ struct maple_naomi_jamma : maple_sega_controller
 			send_jvs_message(node_id, channel, length, temp_buffer);
 	}
 
-	bool receive_jvs_messages(u32 channel)
+	void receive_jvs_messages(u32 channel)
 	{
 	   if (dma_count_in == 0)
 	   {
@@ -1503,7 +1515,7 @@ struct maple_naomi_jamma : maple_sega_controller
 	   if (jvs_receive_length[channel] == 0)
 	   {
 		  w32(0);
-		  return false;
+		  return;
 	   }
 
 	   w8(0);
@@ -1517,8 +1529,6 @@ struct maple_naomi_jamma : maple_sega_controller
 	   dma_buffer_out += dword_length * 4 - 0x10 - 3;
 	   *dma_count_out += dword_length * 4 - 0x10 - 3;
 	   jvs_receive_length[channel] = 0;
-
-	   return true;
 	}
 
 	void handle_86_subcommand()
@@ -1764,6 +1774,7 @@ struct maple_naomi_jamma : maple_sega_controller
 	   for (int i = 0; i < buffer_in_len; i++) printf("%02x ", *p++);
 	   printf("\n");
 #endif
+	   create_io_boards();
 
 		u32 out_len = 0;
 		dma_buffer_out = (u8 *)buffer_out;
@@ -1935,6 +1946,13 @@ struct maple_naomi_jamma : maple_sega_controller
 	}
 };
 
+u16 jvs_io_board::read_rotary_encoder(f32 &encoder_value, f32 delta_value)
+{
+   encoder_value = fmod(encoder_value + delta_value, 65536.f);
+   while (encoder_value < 0)
+	  encoder_value += 65536.f;
+   return (u16)(encoder_value + 0.5);
+}
 
 #define JVS_OUT(b) buffer_out[length++] = b
 #define JVS_STATUS1() JVS_OUT(1)
@@ -1997,19 +2015,37 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 		JVS_STATUS1();
 
 		JVS_OUT(1);		// Digital inputs
-		JVS_OUT(rotary_encoders ? 1 : 2);		//   2 players
-		JVS_OUT(rotary_encoders ? 9 : 13);		//   13 bits
+		if (settings.mapping.JammaSetup == 1 && !rotary_encoders)	// 4 players
+		{
+			JVS_OUT(4);		//   4 players
+			JVS_OUT(12);	//   12 bits
+		}
+		else if (settings.mapping.JammaSetup == 3)					// Sega Marine Fishing
+		{
+		   JVS_OUT(2);		//   2 players
+		   JVS_OUT(12);		//   12 bits
+		}
+		else if (rotary_encoders)
+		{
+		   JVS_OUT(1);		//   1 player
+		   JVS_OUT(9);		//   9 bits
+		}
+		else														// Default
+		{
+		   JVS_OUT(2);		//   2 players
+		   JVS_OUT(13);		//   13 bits
+		}
 		JVS_OUT(0);
 
 		if (!rotary_encoders)
 		{
 			JVS_OUT(2);		// Coin inputs
-			JVS_OUT(2);		//   2 inputs
+			JVS_OUT(settings.mapping.JammaSetup == 1 ? 4 : 2);	//   2 or 4 inputs
 			JVS_OUT(0);
 			JVS_OUT(0);
 		}
 
-		if (!rotary_encoders)
+		if (!rotary_encoders && settings.mapping.JammaSetup != 1)
 		{
 			JVS_OUT(3);		// Analog inputs
 			JVS_OUT(8);		//   8 channels
@@ -2031,7 +2067,10 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 //		JVS_OUT(1);			//   1 channel
 
 		JVS_OUT(0x12);	// General output driver
-		JVS_OUT(rotary_encoders ? 8 : 6);	//    6 outputs
+		if (settings.mapping.JammaSetup == 3)				// Sega Marine Fishing
+			JVS_OUT(16);	//    16 outputs
+		else
+		   JVS_OUT(rotary_encoders ? 8 : 6);	//    6 outputs
 		JVS_OUT(0);
 		JVS_OUT(0);
 
@@ -2165,30 +2204,28 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 
 				case 0x23:	// Read rotary encoders
 					{
-						JVS_STATUS1();	// report byte
-						static s16 rotx[4] = { 0 };
-						static s16 roty[4] = { 0 };
-						LOGJVS("rotenc ");
-						for (int chan = 0; chan < buffer_in[cmdi + 1]; chan++)
-						{
-							if (chan & 1)
-							{
-								roty[chan / 2] += mo_y_delta[chan / 2] * 5 + 0.5;
-								mo_y_delta[chan / 2] = 0;
-								LOGJVS("%d:%4x ", chan, rotx[chan / 2] & 0xFFFF);
-								JVS_OUT(rotx[chan / 2] >> 8);	// MSB
-								JVS_OUT(rotx[chan / 2]);		// LSB
-							}
-							else
-							{
-								rotx[chan / 2] += mo_x_delta[chan / 2] * 5 + 0.5;
-								mo_x_delta[chan / 2] = 0;
-								LOGJVS("%d:%4x ", chan, roty[chan / 2] & 0xFFFF);
-								JVS_OUT(roty[chan / 2] >> 8);	// MSB
-								JVS_OUT(roty[chan / 2]);		// LSB
-							}
-						}
-						cmdi += 2;
+					   JVS_STATUS1();	// report byte
+					   static f32 rotx[4] = { 0 };
+					   static f32 roty[4] = { 0 };
+					   LOGJVS("rotenc ");
+					   for (int chan = 0; chan < buffer_in[cmdi + 1]; chan++)
+					   {
+						  u16 v;
+						  if (chan & 1)
+						  {
+							 v = read_rotary_encoder(roty[chan / 2], -mo_y_delta[chan / 2] / 3.f);
+							 mo_y_delta[chan / 2] = 0;
+						  }
+						  else
+						  {
+							 v = read_rotary_encoder(rotx[chan / 2], mo_x_delta[chan / 2] / 3.f);
+							 mo_x_delta[chan / 2] = 0;
+						  }
+						  LOGJVS("%d:%4x ", chan, v);
+						  JVS_OUT(v >> 8);		// MSB
+						  JVS_OUT(v);			// LSB
+					   }
+					   cmdi += 2;
 					}
 					break;
 

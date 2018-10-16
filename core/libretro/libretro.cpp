@@ -307,6 +307,10 @@ void retro_set_environment(retro_environment_t cb)
          "Internal resolution (restart); 640x480|320x240|1280x960|1920x1440|2560x1920|3200x2400|3840x2880|4480x3360|5120x3840|5760x4320|6400x4800|7040x5280|7680x5760|8320x6240|8960x6720|9600x7200|10240x7680|10880x8160|11520x8640|12160x9120|12800x9600",
       },
       {
+         "reicast_screen_rotation",
+         "Screen orientation; horizontal|vertical",
+      },
+      {
     	 "reicast_alpha_sorting",
 #ifdef HAVE_OIT
          "Alpha sorting; per-triangle (normal)|per-strip (fast, least accurate)|per-pixel (accurate)",
@@ -475,6 +479,7 @@ void retro_deinit(void)
 
 static bool is_dupe = false;
 extern int GDROM_TICK;
+static bool rotate_screen = false;
 
 static void update_variables(bool first_startup)
 {
@@ -493,6 +498,13 @@ static void update_variables(bool first_startup)
    }
    else
       settings.rend.WideScreen = 0;
+
+   var.key = "reicast_screen_rotation";
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !strcmp("vertical", var.value))
+   {
+	  rotate_screen = true;
+	  settings.rend.WideScreen = 0;
+   }
 
    var.key = "reicast_internal_resolution";
 
@@ -1285,6 +1297,8 @@ bool retro_load_game(const struct retro_game_info *game)
          mkdir_norecurse(data_dir);
       }
    }
+   int rotation = rotate_screen ? 1 : 0;
+   environ_cb(RETRO_ENVIRONMENT_SET_ROTATION, &rotation);
 
    params.context_type          = RETRO_HW_CONTEXT_NONE;
 
@@ -1587,11 +1601,22 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    const int spg_clks[4] = { 26944080, 13458568, 13462800, 26944080 };
    u32 pixel_clock= spg_clks[(SPG_CONTROL.full >> 6) & 3];
 
-   info->geometry.base_width   = screen_width;
-   info->geometry.base_height  = screen_height;
-   info->geometry.max_width    = screen_width;
-   info->geometry.max_height   = screen_height;
    info->geometry.aspect_ratio = settings.rend.WideScreen ? (16.0 / 9.0) : (4.0 / 3.0);
+   if (rotate_screen)
+   {
+	  info->geometry.base_width   = screen_height;
+	  info->geometry.base_height  = screen_width;
+	  info->geometry.max_width    = screen_height;
+	  info->geometry.max_height   = screen_width;
+	  info->geometry.aspect_ratio = 1 / info->geometry.aspect_ratio;
+   }
+   else
+   {
+	  info->geometry.base_width   = screen_width;
+	  info->geometry.base_height  = screen_height;
+	  info->geometry.max_width    = screen_width;
+	  info->geometry.max_height   = screen_height;
+   }
 
    switch (pixel_clock)
    {

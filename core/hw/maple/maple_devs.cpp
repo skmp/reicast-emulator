@@ -1389,12 +1389,9 @@ struct maple_naomi_jamma : maple_sega_controller
 	std::vector<jvs_io_board *> io_boards;
 	bool crazy_mode = false;
 
-	u8 jvs_repeat_request[256];
-	u32 jvs_repeat_length = 0;
-	u8 jvs_receive_buffer[512];
-	u32 jvs_receive_length = 0;
-
-	u8 *jvs_msg_start = NULL;
+	u8 jvs_repeat_request[32][256];
+	u8 jvs_receive_buffer[32][258];
+	u32 jvs_receive_length[32] = { 0 };
 
 	maple_naomi_jamma()
 	{
@@ -1411,47 +1408,10 @@ struct maple_naomi_jamma : maple_sega_controller
 		return MDT_NaomiJamma;
 	}
 
-	void jvs_recv8(u8 b)
+	u8 sense_line(u32 node_id)
 	{
-		if (jvs_receive_length < sizeof(jvs_receive_buffer))
-			jvs_receive_buffer[jvs_receive_length++] = b;
-	}
-	void jvs_recv32(u32 dw)
-	{
-		if (jvs_receive_length < sizeof(jvs_receive_buffer) - 3)
-		{
-			*((u32 *)&jvs_receive_buffer[jvs_receive_length]) = dw;
-			jvs_receive_length += 4;
-		}
-	}
-
-	void make_jvs_reply_buffer(u32 node_id, u32 channel)
-	{
-		jvs_msg_start = &jvs_receive_buffer[jvs_receive_length];
-		jvs_recv8(MDRS_JVSReply);
-		jvs_recv8(0x00);
-		jvs_recv8(0x20);
-		jvs_recv8(0x00);	// length in dword
-		jvs_recv32(0xffffff16);
-		jvs_recv32(0xffffffff);
-		jvs_recv32(0);
-		jvs_recv32(0);
-
-		jvs_recv8(0);
-		jvs_recv8(channel);	// channel id
 		bool last_node = node_id == io_boards.size();
-		jvs_recv8(last_node ? 0x8E : 0x8F);	// bit 0 is sense line level. If set during F1 <n>, more I/O boards need addressing
-		jvs_recv8(node_id);	// node number
-		jvs_recv8(0x00);	// 0: ok, 2: timeout, 3: dest node !=0, 4: checksum failed
-		jvs_recv8(0x00);	// len of following data
-	}
-
-	void finish_jvs_reply_buffer()
-	{
-		u32 total_len = &jvs_receive_buffer[jvs_receive_length] - jvs_msg_start;
-		jvs_msg_start[25] = total_len - 26;
-		jvs_receive_length = ((jvs_receive_length - 1) / 4) * 4 + 4;
-		jvs_msg_start[3] = jvs_receive_length / 4 - 1;
+		return last_node ? 0x8E : 0x8F;
 	}
 
 	void send_jvs_message(u32 node_id, u32 channel, u32 length, u8 *data)
@@ -1462,10 +1422,25 @@ struct maple_naomi_jamma : maple_sega_controller
 			u32 out_len = io_boards[node_id - 1]->handle_jvs_message(data, length, temp_buffer);
 			if (out_len > 0)
 			{
-				make_jvs_reply_buffer(node_id, channel);
-				memcpy(&jvs_receive_buffer[jvs_receive_length], temp_buffer, out_len);
-				jvs_receive_length += out_len;
-				finish_jvs_reply_buffer();
+				u8 *pbuf = &jvs_receive_buffer[channel][jvs_receive_length[channel]];
+				if (jvs_receive_length[channel] + out_len + 3 <= sizeof(jvs_receive_buffer[0]))
+				{
+					if (crazy_mode)
+					{
+						pbuf[0] = 0x00;		// ? 0: ok, 2: timeout, 3: dest node !=0, 4: checksum failed
+						pbuf[1] = out_len;
+						memcpy(&pbuf[2], temp_buffer, out_len);
+						jvs_receive_length[channel] += out_len + 2;
+					}
+					else
+					{
+						pbuf[0] = node_id;
+						pbuf[1] = 0x00;		// 0: ok, 2: timeout, 3: dest node !=0, 4: checksum failed
+						pbuf[2] = out_len;
+						memcpy(&pbuf[3], temp_buffer, out_len);
+						jvs_receive_length[channel] += out_len + 3;
+					}
+				}
 			}
 		}
 	}
@@ -1477,19 +1452,73 @@ struct maple_naomi_jamma : maple_sega_controller
 		{
 			memcpy(temp_buffer, data, length);
 		}
-		if (use_repeat && jvs_repeat_length > 0)
+		u32 repeat_len = jvs_repeat_request[node_id - 1][0];
+		if (use_repeat && repeat_len > 0)
 		{
-			memcpy(temp_buffer + length, jvs_repeat_request, jvs_repeat_length);
-			length += jvs_repeat_length;
+			memcpy(temp_buffer + length, &jvs_repeat_request[node_id - 1][1], repeat_len);
+			length += repeat_len;
 		}
 		if (node_id == ALL_NODES)
 		{
-			jvs_receive_length = 0;
 			for (int i = 0; i < io_boards.size(); i++)
 				send_jvs_message(i + 1, channel, length, temp_buffer);
 		}
 		else
 			send_jvs_message(node_id, channel, length, temp_buffer);
+	}
+
+	bool receive_jvs_messages(u32 channel)
+	{
+	   if (dma_count_in == 0)
+	   {
+		  w8(MDRS_JVSReply);
+		  w8(0);
+		  w8(0x20);
+		  w8(0x00);
+
+		  return;
+	   }
+	   u32 dword_length = (jvs_receive_length[channel] + 0x10 + 3 - 1) / 4 + 1;
+
+	   w8(MDRS_JVSReply);
+	   w8(0x00);
+	   w8(0x20);
+	   if (jvs_receive_length[channel] == 0)
+	   {
+		  w8(0x05);
+		  w8(0x32);
+	   }
+	   else
+	   {
+		  w8(dword_length);
+		  w8(0x16);
+	   }
+	   w8(0xff);
+	   w8(0xff);
+	   w8(0xff);
+	   w32(0xffffff00);
+	   w32(0);
+	   w32(0);
+
+	   if (jvs_receive_length[channel] == 0)
+	   {
+		  w32(0);
+		  return false;
+	   }
+
+	   w8(0);
+	   w8(channel);
+	   if (crazy_mode)
+		  w8(0x8E);
+	   else
+		  w8(sense_line(jvs_receive_buffer[channel][0]));	// bit 0 is sense line level. If set during F1 <n>, more I/O boards need addressing
+
+	   memcpy(dma_buffer_out, jvs_receive_buffer[channel], jvs_receive_length[channel]);
+	   dma_buffer_out += dword_length * 4 - 0x10 - 3;
+	   *dma_count_out += dword_length * 4 - 0x10 - 3;
+	   jvs_receive_length[channel] = 0;
+
+	   return true;
 	}
 
 	void handle_86_subcommand()
@@ -1528,7 +1557,7 @@ struct maple_naomi_jamma : maple_sega_controller
 				node_id = dma_buffer_in[6];
 				len = dma_buffer_in[7];
 				cmd = &dma_buffer_in[8];
-				channel = dma_buffer_in[5];
+				channel = dma_buffer_in[5] & 0x1f;
 			}
 			else
 			{
@@ -1541,11 +1570,11 @@ struct maple_naomi_jamma : maple_sega_controller
 		switch (subcode)
 		{
 			case 0x13:	// Store repeated request
-				if (len > 0)
+				if (len > 0 && node_id > 0 && node_id <= 0x1f)
 				{
 					printf("JVS node %d: Storing %d cmd bytes\n", node_id, len);
-					memcpy(jvs_repeat_request, cmd, len);
-					jvs_repeat_length = len;
+					jvs_repeat_request[node_id - 1][0] = len;
+					memcpy(&jvs_repeat_request[node_id - 1][1], cmd, len);
 				}
 				w8(MDRS_JVSReply);
 				w8(0);
@@ -1558,77 +1587,77 @@ struct maple_naomi_jamma : maple_sega_controller
 				break;
 
 			case 0x15:	// Receive JVS data
-				if (jvs_receive_length)
-				{
-					memcpy(dma_buffer_out, jvs_receive_buffer, jvs_receive_length);
-					*dma_count_out += jvs_receive_length;
-					jvs_receive_length = 0;
-				}
-				else
-				{
-					w8(MDRS_JVSReply);
-					w8(0x00);
-					w8(0x20);
-					w8(0x00);
-				}
+				receive_jvs_messages(dma_buffer_in[1]);
 				break;
 
 			case 0x17:	// Transmit without repeat
+				jvs_receive_length[channel] = 0;
 				send_jvs_messages(node_id, channel, false, len, cmd);
 				w8(MDRS_JVSReply);
 				w8(0);
 				w8(0x20);
 				w8(0x01);
-				w8(dma_buffer_in[0] + 1);	// subcommand + 1
+				w8(0x18);	// always
 				w8(channel);
-				w8(0);
+				w8(0x8E);	//sense_line(node_id));
 				w8(0);
 				break;
 
 			case 0x19:	// Transmit with repeat
 			case 0x21:
+				jvs_receive_length[channel] = 0;
 				send_jvs_messages(node_id, channel, true, len, cmd);
 				w8(MDRS_JVSReply);
 				w8(0);
 				w8(0x20);
 				w8(0x01);
-				w8(dma_buffer_in[0] + 1);	// subcommand + 1
+				w8(0x18);	// always
 				w8(channel);
-				w8(0);
+				w8(sense_line(node_id));
 				w8(0);
 				break;
+
+			case 0x35:	// Receive then transmit with repeat (15 then 27)
+				receive_jvs_messages(channel);
+				// FALLTHROUGH
 
 			case 0x27:	// Transmit with repeat
-				node_id = cmd[-1];
-				len = cmd[0];
-				cmd++;
+				{
+					jvs_receive_length[channel] = 0;
 
-				send_jvs_messages(node_id, channel, true, len, cmd);
-				w8(MDRS_JVSReply);
-				w8(0);
-				w8(0x20);
-				w8(0x01);
-				w8(dma_buffer_in[0] + 1);	// subcommand + 1
-				w8(channel);
-				w8(0);
-				w8(0);
+					u32 cmd_count = dma_buffer_in[6];
+					u32 idx = 7;
+					for (int i = 0; i < cmd_count; i++)
+					{
+						node_id = dma_buffer_in[idx];
+						len = dma_buffer_in[idx + 1];
+						cmd = &dma_buffer_in[idx + 2];
+						idx += len + 2;
+
+						send_jvs_messages(node_id, channel, true, len, cmd);
+					}
+
+					w8(MDRS_JVSReply);
+					w8(0);
+					w8(0x20);
+					w8(0x01);
+					w8(0x26);
+					w8(channel);
+					w8(sense_line(node_id));
+					w8(0);
+				}
 				break;
 
-			case 0x33:	// Receive then transmit with repeat
-				if (jvs_receive_length)
-				{
-					memcpy(dma_buffer_out, jvs_receive_buffer, jvs_receive_length);
-					*dma_count_out += jvs_receive_length;
-					jvs_receive_length = 0;
-				}
+			case 0x33:	// Receive then transmit with repeat (15 then 21)
+				receive_jvs_messages(channel);
 				send_jvs_messages(node_id, channel, true, len, cmd);
 				w8(MDRS_JVSReply);
 				w8(0);
 				w8(0x20);
 				w8(0x01);
-				w8(dma_buffer_in[0] + 1);	// subcommand + 1
+				w8(0x18);	// always
 				w8(channel);
-				w8(0);
+				w8(sense_line(node_id));
 				w8(0);
 				break;
 
@@ -1687,13 +1716,18 @@ struct maple_naomi_jamma : maple_sega_controller
 				w8(0x05);
 
 				w8(0x32);
-				w8(0xff);
-				w8(0xff);
-				w8(0xff);
-				w32(0xffffffff);	// bit16: 1=VGA, 0=NTSCi
-				w32(0xffffffff);
-				w32(0xffffffff);
-				w32(0xffffffff);
+				w8(0xff);		// in(0)
+				w8(0xff);		// in(1)
+				w8(0xff);		// in(2)
+
+				w8(0x00);
+				w8(0xff);		// in(4)
+				w8(0xff);		// in(5) bit0: 1=VGA, 0=NTSCi
+				w8(0xff);		// in(6)
+
+				w32(0x00);
+				w32(0x00);
+				w32(0x00);
 			}
 			break;
 
@@ -1710,11 +1744,6 @@ struct maple_naomi_jamma : maple_sega_controller
 				w8(0x0);
 				w8(0x0);
 				w8(0x0);
-//CT
-//				w8(0x0);
-//				w8(0x0);
-//				w8(0x0);
-//				w8(0x0);
 				break;
 
 			default:
@@ -1729,12 +1758,12 @@ struct maple_naomi_jamma : maple_sega_controller
 
 	virtual u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out)
 	{
-	   /*
-		printf("JVS IN: ");
-		u8 *p = (u8*)buffer_in;
-		for (int i = 0; i < buffer_in_len; i++) printf("%02x ", *p++);
-		printf("\n");
-		*/
+#ifdef DUMP_JVS
+	   printf("JVS IN: ");
+	   u8 *p = (u8*)buffer_in;
+	   for (int i = 0; i < buffer_in_len; i++) printf("%02x ", *p++);
+	   printf("\n");
+#endif
 
 		u32 out_len = 0;
 		dma_buffer_out = (u8 *)buffer_out;
@@ -1752,35 +1781,22 @@ struct maple_naomi_jamma : maple_sega_controller
 
 			case MDC_JVSUploadFirmware:
 			{
-				static FILE *fw_dump;
+				static u8 *ram;
 				static XXH32_state_t* state;
 
-				if (state == NULL)
-				{
-					 state = XXH32_createState();
-					 XXH32_reset(state, 0);
-				}
+				if (ram == NULL)
+					ram = (u8 *)calloc(0x10000, 1);
 
 				if (dma_buffer_in[1] == 0xff)
 				{
-					XXH32_hash_t hash = XXH32_digest(state);
+					u32 hash = XXH32(ram, 0x10000, 0);
 					LOGJVS("JVS Firmware hash %08x\n", hash);
-					if (hash == 0xEF29B145)
+					if (hash == 0xa7c50459)
 						crazy_mode = true;
 					else
 						crazy_mode = false;
-					XXH32_freeState(state);
-					state = NULL;
-
-					if (fw_dump)
-						fclose(fw_dump);
-					fw_dump = NULL;
-
-					return MDRS_DeviceReply;
-				}
 #ifdef DUMP_JVS_FW
-				if (fw_dump == NULL)
-				{
+					FILE *fw_dump;
 					char filename[128];
 					for (int i = 0; ; i++)
 					{
@@ -1793,22 +1809,26 @@ struct maple_naomi_jamma : maple_sega_controller
 							break;
 						}
 					}
-				}
+					if (fw_dump)
+					{
+						fwrite(ram, 1, 0x10000, fw_dump);
+						fclose(fw_dump);
+					}
 #endif
+					free(ram);
+					ram = NULL;
+					for (int i = 0; i < 32; i++)
+						jvs_repeat_request[i][0] = 0;
+
+					return MDRS_DeviceReply;
+				}
 				int xfer_bytes;
 				if (dma_buffer_in[0] == 0xff)
 					xfer_bytes = 0x1C;
 				else
 					xfer_bytes = 0x18;
 				u16 addr = (dma_buffer_in[2] << 8) + dma_buffer_in[3];
-				XXH32_update(state, &dma_buffer_in[4], xfer_bytes);
-#ifdef DUMP_JVS_FW
-				if (fw_dump)
-				{
-					fseek(fw_dump, addr, SEEK_SET);
-					fwrite(&dma_buffer_in[4], 1, xfer_bytes, fw_dump);
-				}
-#endif
+				memcpy(ram + addr, &dma_buffer_in[4], xfer_bytes);
 				u8 sum = 0;
 				for (int i = 0; i < 0x1C; i++)
 					sum += dma_buffer_in[i];
@@ -1851,10 +1871,7 @@ struct maple_naomi_jamma : maple_sega_controller
 			w8(MDRS_DeviceStatus);
 			w8(0x00);
 			w8(0x20);
-			w8(0x00);	// CT
-//			w8(0x01);
-//
-//			w32(2);
+			w8(0x00);
 
 			break;
 
@@ -1875,12 +1892,13 @@ struct maple_naomi_jamma : maple_sega_controller
 
 			break;
 		}
-		/*
+
+#ifdef DUMP_JVS
 		printf("JVS OUT: ");
 		p = (u8 *)buffer_out;
 		for (int i = 0; i < out_len; i++) printf("%02x ", p[i]);
 		printf("\n");
-		*/
+#endif
 
 		return out_len;
 	}
@@ -1888,10 +1906,9 @@ struct maple_naomi_jamma : maple_sega_controller
 	virtual bool maple_serialize(void **data, unsigned int *total_size)
 	{
 	   LIBRETRO_S(crazy_mode);
-	   LIBRETRO_S(jvs_repeat_length);
-	   LIBRETRO_SA(jvs_repeat_request, sizeof(jvs_repeat_request));
+	   LIBRETRO_S(jvs_repeat_request);
 	   LIBRETRO_S(jvs_receive_length);
-	   LIBRETRO_SA(jvs_receive_buffer, sizeof(jvs_receive_buffer));
+	   LIBRETRO_S(jvs_receive_buffer);
 	   size_t board_count = io_boards.size();
 	   LIBRETRO_S(board_count);
 	   for (int i = 0; i < io_boards.size(); i++)
@@ -1903,10 +1920,9 @@ struct maple_naomi_jamma : maple_sega_controller
 	virtual bool maple_unserialize(void **data, unsigned int *total_size)
 	{
 	   LIBRETRO_US(crazy_mode);
-	   LIBRETRO_US(jvs_repeat_length);
-	   LIBRETRO_USA(jvs_repeat_request, sizeof(jvs_repeat_request));
+	   LIBRETRO_US(jvs_repeat_request);
 	   LIBRETRO_US(jvs_receive_length);
-	   LIBRETRO_USA(jvs_receive_buffer, sizeof(jvs_receive_buffer));
+	   LIBRETRO_US(jvs_receive_buffer);
 	   size_t board_count;
 	   LIBRETRO_US(board_count);
 	   for (int i = 0; i < board_count; i++)
@@ -1949,8 +1965,11 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 	case 0x10:	// Read ID data
 		JVS_STATUS1();	// status
 		JVS_STATUS1();	// report
-		static char ID[] = "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10";
-		for (char *p = ID; *p != 0; )
+		const static char ID_837_13551[] = "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10";
+		const static char ID_837_13938[] = "SEGA ENTERPRISES,LTD.;837-13938 ENCORDER BD  ;Ver0.01;99/08";		// Virtua Golf, Outtrigger, Shootout Pool
+		const static char ID_837_13844[] = "SEGA ENTERPRISES,LTD.;837-13844-01 I/O CNTL BD2 ;Ver1.00;99/07";	// Sega Marine Fishing
+
+		for (const char *p = rotary_encoders ? ID_837_13938 : ID_837_13551; *p != 0; )
 			JVS_OUT(*p++);
 		JVS_OUT(0);
 		break;
@@ -1958,13 +1977,13 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 	case 0x11:	// Get command format version
 		JVS_STATUS1();
 		JVS_STATUS1();
-		JVS_OUT(0x13);	// 1.3
+		JVS_OUT(0x11);	// 1.1
 		break;
 
 	case 0x12:	// Get JAMMA VIDEO version
 		JVS_STATUS1();
 		JVS_STATUS1();
-		JVS_OUT(0x30);	// 3.0
+		JVS_OUT(0x20);	// 2.0
 		break;
 
 	case 0x13:	// Get communication version
@@ -1978,37 +1997,45 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 		JVS_STATUS1();
 
 		JVS_OUT(1);		// Digital inputs
-		JVS_OUT(2);		//   2 players
-		JVS_OUT(13);	//   13 bits
+		JVS_OUT(rotary_encoders ? 1 : 2);		//   2 players
+		JVS_OUT(rotary_encoders ? 9 : 13);		//   13 bits
 		JVS_OUT(0);
 
-		JVS_OUT(2);		// Coin inputs
-		JVS_OUT(2);		//   2 inputs
-		JVS_OUT(0);
-		JVS_OUT(0);
-
-		JVS_OUT(3);		// Analog inputs
-		JVS_OUT(4);		//   4 channels
-		JVS_OUT(0);		//   bits per channel, 0: unknown
-		JVS_OUT(0);
-
-		if (rotary_encoders)
+		if (!rotary_encoders)
 		{
-			JVS_OUT(4);		// Rotary encoders
-			JVS_OUT(2);		//   2 channels
+			JVS_OUT(2);		// Coin inputs
+			JVS_OUT(2);		//   2 inputs
 			JVS_OUT(0);
 			JVS_OUT(0);
 		}
 
-//			JVS_OUT(6);		// Light gun
-//			JVS_OUT(16);		//   X bits
-//			JVS_OUT(16);		//   Y bits
-//			JVS_OUT(1);			//   1 channel
+		if (!rotary_encoders)
+		{
+			JVS_OUT(3);		// Analog inputs
+			JVS_OUT(8);		//   8 channels
+			JVS_OUT(0x10);	//   16 bits per channel, 0: unknown
+			JVS_OUT(0);
+		}
+
+		if (rotary_encoders)
+		{
+			JVS_OUT(4);		// Rotary encoders
+			JVS_OUT(4);		//   4 channels
+			JVS_OUT(0);
+			JVS_OUT(0);
+		}
+
+//		JVS_OUT(6);		// Light gun
+//		JVS_OUT(12);		//   X bits
+//		JVS_OUT(12);		//   Y bits
+//		JVS_OUT(1);			//   1 channel
+
+		JVS_OUT(0x12);	// General output driver
+		JVS_OUT(rotary_encoders ? 8 : 6);	//    6 outputs
+		JVS_OUT(0);
+		JVS_OUT(0);
 
 		JVS_OUT(0);		// End of list
-		JVS_OUT(0);
-		JVS_OUT(0);
-		JVS_OUT(0);
 		break;
 
 	case 0x15:	// Master board ID
@@ -2094,8 +2121,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							   u16 y = mo_y_abs[axis / 2] * 0xFFFF / 479 + 0.5f;
 							   if (mo_x_abs[axis / 2] < 0 || mo_x_abs[axis / 2] > 639 || mo_y_abs[axis / 2] < 0 || mo_y_abs[axis / 2] > 479)
 							   {
-								   x = 0xffff;
-								   y = 0xffff;
+								   x = 0;
+								   y = 0;
 							   }
 							   LOGJVS("P%d x,y:%4x,%4x ", axis / 2 + 1, x, y);
 							   JVS_OUT(x >> 8);		// X, MSB
@@ -2139,35 +2166,26 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 				case 0x23:	// Read rotary encoders
 					{
 						JVS_STATUS1();	// report byte
-						// TODO Fix this
-						static s16 rotx = 0;
-						static s16 roty = 0;
-						/*
-						rotx += mo_x_delta * 10;
-						roty += mo_y_delta * 10;
-						mo_x_delta = 0;
-						mo_y_delta = 0;
-						*/
+						static s16 rotx[4] = { 0 };
+						static s16 roty[4] = { 0 };
 						LOGJVS("rotenc ");
 						for (int chan = 0; chan < buffer_in[cmdi + 1]; chan++)
 						{
-							if (chan == 0)
+							if (chan & 1)
 							{
-								LOGJVS("%d:%4x ", chan, rotx);
-								JVS_OUT(rotx >> 8);	// MSB
-								JVS_OUT(rotx);		// LSB
-							}
-							else if (chan == 1)
-							{
-								LOGJVS("%d:%4x ", chan, roty);
-								JVS_OUT(roty >> 8);	// MSB
-								JVS_OUT(roty);		// LSB
+								roty[chan / 2] += mo_y_delta[chan / 2] * 5 + 0.5;
+								mo_y_delta[chan / 2] = 0;
+								LOGJVS("%d:%4x ", chan, rotx[chan / 2] & 0xFFFF);
+								JVS_OUT(rotx[chan / 2] >> 8);	// MSB
+								JVS_OUT(rotx[chan / 2]);		// LSB
 							}
 							else
 							{
-								LOGJVS("%d:%4x ", chan, 0);
-								JVS_OUT(0x80);	// MSB
-								JVS_OUT(0x80);	// LSB
+								rotx[chan / 2] += mo_x_delta[chan / 2] * 5 + 0.5;
+								mo_x_delta[chan / 2] = 0;
+								LOGJVS("%d:%4x ", chan, roty[chan / 2] & 0xFFFF);
+								JVS_OUT(roty[chan / 2] >> 8);	// MSB
+								JVS_OUT(roty[chan / 2]);		// LSB
 							}
 						}
 						cmdi += 2;
@@ -2206,10 +2224,15 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					cmdi += buffer_in[cmdi + 1] + 2;
 					break;
 
-				// case 0x30, 0x31: add coin
+				case 0x30:	// substract coin
+					coin_count[buffer_in[cmdi + 1] - 1] -= buffer_in[cmdi + 2] << 8 + buffer_in[cmdi + 3];
+					JVS_STATUS1();	// report byte
+					cmdi += 4;
+					break;
+
 				default:
 					printf("JVS: Unknown input type %x\n", buffer_in[cmdi]);
-					JVS_OUT(2);		// report byte: command error
+					JVS_OUT(2);			// report byte: command error
 					cmdi = length_in;	// Ignore subsequent commands
 					break;
 				}
@@ -2218,6 +2241,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 		}
 		else
 		{
+			printf("JVS: Unknown JVS command %x\n", jvs_cmd);
 			JVS_OUT(2);	// Unknown command
 		}
 		break;

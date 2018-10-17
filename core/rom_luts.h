@@ -19,7 +19,6 @@ struct game_type
    int alpha_sort_mode;     /* -1, make no decision */
    int translucentPolygonDepthMask; /* -1, make no decision */
    int rendertotexturebuffer;       /* -1, make no decision */
-   int eg_hack;                     /* -1, make no decision */
    int disable_div;                 /* -1, make no decision */
 };
 
@@ -32,7 +31,6 @@ struct game_type_naomi
    int alpha_sort_mode;     /* -1, make no decision */
    int translucentPolygonDepthMask; /* -1, make no decision */
    int rendertotexturebuffer;       /* -1, make no decision */
-   int eg_hack;                     /* -1, make no decision */
    int disable_div;                 /* -1, make no decision */
    int jamma_setup;                 /* -1, make no decision,
 									   0 = normal 2P setup,
@@ -45,84 +43,48 @@ struct game_type_naomi
 static struct game_type lut_games[] = 
 {
    /* Update mode fullspeed */
-   { "T1210N    ",  1, -1, -1, -1, -1, -1,  -1, -1  },                /* Street Fighter III Double Impact */
+   { "T1210N    ",  1, -1, -1, -1, -1, -1,  -1  },                /* Street Fighter III Double Impact */
 
    /* Fallback to generic recompiler */
 
-   /* EG Hack */
-   { "T46703M   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Border Down (Japan) */
-   { "MK-51065  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Bomberman Online (USA) */
-   { "T47801M   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Chaos Field (Japan) */
-   { "T23202M   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Death Crimson OX (Japan) */
-   { "T2401N    ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Death Crimson OX (USA) */
-   { "T1223M    ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Eldorado Gate Vol. 1 (Japan) */
-   { "T44306N   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Fatal Fury: Mark of the Wolves (USA) */
-   { "T3108M    ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Garou: Mark of the Wolves (Japan) */
-   { "HDR-0078  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Jet Set Radio (Japan) */
-   { "MK-51058  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Jet Grind Radio (USA) */
-   { "MK-5105850", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Jet Set Radio (Europe) */
-   { "HDR-0079  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Napple Tale (Japan) */
-   { "MK-5110050", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Phantasy Star Online (Europe) */
-   { "HDR-0129  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Phantasy Star Online (Japan) */
-   { "MK-51100  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Phantasy Star Online (USA) */
-   { "MK-5119350", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Phantasy Star Online Ver. 2 (Europe) */
-   { "HDR-0163  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Phantasy Star Online Ver. 2 (Japan) */
-   { "MK-51193  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Phantasy Star Online Ver. 2 (USA) */
-   { "T9907M    ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Psyvariar 2 (Japan) */
-   { "HDR-0216  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Puyo Puyo Fever (Japan) */
-   { "T47802M   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Radirgy (Japan) */
-   { "HDR-0151  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Segagaga (Japan) */
-   { "HDR-0125  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Sonic Shuffle (Japan) */
-   { "MK-5106050", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Sonic Shuffle (Europe) */
-   { "MK-51060  ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Sonic Shuffle (USA) */
-   { "T29102M   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* Trigger Heart Exelica (Japan) */
-   { "T45101M   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* WWF Royal Rumble (Japan) */
-   { "T10003D 50", -1, -1, -1, -1, -1, -1,   1, -1  },                /* WWF Royal Rumble (Europe) */
-   { "T10005N   ", -1, -1, -1, -1, -1, -1,   1, -1  },                /* WWF Royal Rumble (USA) */
-
    /* Alpha sort mode */
-   { "MK-5100050", -1, -1, -1,  1, -1, -1,  -1, -1  },                /* Sonic Adventure */
+   { "MK-5100050", -1, -1, -1,  1, -1, -1,  -1  },                /* Sonic Adventure */
 
    /* Translucent Polygon Depth Mask */
-   { "RDC-0057  ", -1, -1, -1, -1,  1, -1,  -1, -1  },                /* Cosmic Smash */
-   { "HDR-0176  ", -1, -1, -1, -1,  1, -1,  -1, -1  },                /* Cosmic Smash */
+   { "RDC-0057  ", -1, -1, -1, -1,  1, -1,  -1  },                /* Cosmic Smash */
+   { "HDR-0176  ", -1, -1, -1, -1,  1, -1,  -1  },                /* Cosmic Smash */
 
    /* Render to texture buffer */
-   { "T40205N   ", -1, -1, -1, -1, -1,  1,  -1, -1  },                /* Tony Hawk's Pro Skater 1 (USA) */
-   { "T13006N   ", -1, -1, -1, -1, -1,  1,  -1, -1  },                /* Tony Hawk's Pro Skater 2 (USA) */
-   { "T13008D",    -1, -1, -1, -1, -1,  1,  -1, -1  },                /* Tony Hawk's Pro Skater 2 (USA) */
-   { "T23002N   ", -1, -1, -1, -1, -1,  1,  -1, -1  },                /* Star Wars Episode I: Jedi Power Battle (USA) */
+   { "T40205N   ", -1, -1, -1, -1, -1,  1,  -1  },                /* Tony Hawk's Pro Skater 1 (USA) */
+   { "T13006N   ", -1, -1, -1, -1, -1,  1,  -1  },                /* Tony Hawk's Pro Skater 2 (USA) */
+   { "T13008D",    -1, -1, -1, -1, -1,  1,  -1  },                /* Tony Hawk's Pro Skater 2 (USA) */
+   { "T23002N   ", -1, -1, -1, -1, -1,  1,  -1  },                /* Star Wars Episode I: Jedi Power Battle (USA) */
 
    /* Disable DIV matching */
-   { "T40216N   ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Surf Rocket Racers */
-   { "T23001D   ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Star Wars - Episode I - Racer (United Kingdom) */
-   { "T23001N   ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Star Wars - Episode I - Racer (USA) */
-   { "T30701D50 ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Pro Pinball Trilogy */
-   { "T15112N   ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Demolition Racer */
-   { "T7012D    ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Record of Lodoss War (EU) */
-   { "T40218N   ", -1, -1, -1, -1, -1,  -1,  -1, 1  },                /* Record of Lodoss War (USA) */
+   { "T40216N   ", -1, -1, -1, -1, -1,  -1,  1  },                /* Surf Rocket Racers */
+   { "T23001D   ", -1, -1, -1, -1, -1,  -1,  1  },                /* Star Wars - Episode I - Racer (United Kingdom) */
+   { "T23001N   ", -1, -1, -1, -1, -1,  -1,  1  },                /* Star Wars - Episode I - Racer (USA) */
+   { "T30701D50 ", -1, -1, -1, -1, -1,  -1,  1  },                /* Pro Pinball Trilogy */
+   { "T15112N   ", -1, -1, -1, -1, -1,  -1,  1  },                /* Demolition Racer */
+   { "T7012D    ", -1, -1, -1, -1, -1,  -1,  1  },                /* Record of Lodoss War (EU) */
+   { "T40218N   ", -1, -1, -1, -1, -1,  -1,  1  },                /* Record of Lodoss War (USA) */
 };
 
 static struct game_type_naomi lut_games_naomi[] = 
 {
-   /* EG Hack */
-   /* Also needs Div S matching disabled */
-   { "Metal Slug 6"                          , -1, -1, -1, -1, -1, -1,   1,  1, -1, -1 },                /* Metal Slug 6 */
-   { "Melty Blood Act Cadenza"               , -1, -1, -1, -1, -1, -1,   1,  1, -1, -1 },                /* Melty Blood Act Cadenza */
+   /* Div matching disabled */
+   { "METAL SLUG 6"                      , -1, -1, -1, -1, -1, -1,  1, -1,  -1 },                /* Metal Slug 6 */
+   { "WAVE RUNNER GP"                    , -1, -1, -1, -1, -1, -1,  1, -1,  -1 },                /* WaveRunner GP */
 
    /* Extra Depth Scaling */
-   { "Samurai Showdown VI"               , -1, -1, -1, -1, -1, -1,   -1,  -1, -1, 1 },                /* Samurai Shodown VI */
+   { "SAMURAI SPIRITS 6"                 , -1, -1, -1, -1, -1, -1,  -1, -1,  1 },                /* Samurai Shodown VI */
 
-   /* EG Hack only */
-   /* Also needs translucent polygon depth mask hack */
-   { "Melty Blood Act Cadenza Version B"     , -1, -1, -1, -1,  1, -1,   1,  -1, -1, -1  },               /* Melty Blood Act Cadenza Version B */
-
-   /* EG Hack only */
-   { "Melty Blood Act Cadenza Version B2"    , -1, -1, -1, -1, -1, -1,   1, -1, -1, -1  },                /* Melty Blood Act Cadenza Version B2 */
+   /* Translucent Polygon Depth Mask */
+   { "COSMIC SMASH IN JAPAN"             , -1, -1, -1, -1,  1, -1,  -1, -1, -1 },                /* Cosmic Smash */
 
    /* Alternate Jamma I/O Setup */
-   { "Power Stone 2"                         , -1, -1, -1, -1, -1, -1,  -1, -1,  1, -1  },                /* Power Stone 2 (4 players, also need to be set in service menu) */
-   { "Shootout Pool"                         , -1, -1, -1, -1, -1, -1,  -1, -1,  2, -1  },                /* Shootout Pool: rotary encoders */
-   { "Virtua Golf ~ Dynamic Golf"            , -1, -1, -1, -1, -1, -1,  -1, -1,  2, -1  },                /* Virtua Golf/Dynamic Golf: rotary encoders */
-   { "Sega Marine Fishing"                   , -1, -1, -1, -1, -1, -1,  -1, -1,  3, -1  },                /* Sega Marine Fishing */
+   { "POWER STONE 2 JAPAN"               , -1, -1, -1, -1, -1, -1,  -1,  1, -1 },                /* Power Stone 2 (4 players, also need to be set in service menu) */
+   { "SHOOTOUT POOL"                     , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Shootout Pool: rotary encoders */
+   { "DYNAMIC GOLF"                      , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Virtua Golf/Dynamic Golf: rotary encoders */
+   { "SEGA MARINE FISHING JAPAN"         , -1, -1, -1, -1, -1, -1,  -1,  3, -1 },                /* Sega Marine Fishing */
 };

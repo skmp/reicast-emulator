@@ -367,7 +367,8 @@ int dc_init(int argc,wchar* argv[])
 	sh4_cpu.Init();
 	mem_Init();
 
-	plugins_Init(name, sizeof(name));
+	if (plugins_Init(name, sizeof(name)))
+	   return -4;
 	
 	mem_map_default();
 
@@ -388,7 +389,7 @@ int dc_init(int argc,wchar* argv[])
          LoadSpecialSettings();
          break;
       case DC_PLATFORM_NAOMI:
-         LoadSpecialSettingsNaomi(name);
+         LoadSpecialSettingsNaomi(naomi_game_id);
          break;
    }
 

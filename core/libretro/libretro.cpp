@@ -135,7 +135,13 @@ static void *emu_thread_func(void *)
 {
     char* argv[] = { "reicast" };
     
-    dc_init(1, argv);
+    if (dc_init(1, argv))
+    {
+    	if (log_cb)
+    	   log_cb(RETRO_LOG_ERROR, "Reicast emulator initialization failed\n");
+
+    	return NULL;
+    }
     
     emu_inited = true;
     emu_in_thread = true ;
@@ -1076,7 +1082,12 @@ void retro_run (void)
    {
 	   if (first_run)
 	   {
-		   dc_init(co_argc,co_argv);
+		   if (dc_init(co_argc,co_argv))
+		   {
+			  if (log_cb)
+				 log_cb(RETRO_LOG_ERROR, "Reicast emulator initialization failed\n");
+			  return;
+		   }
 		   dc_run();
 		   first_run = false;
 		   return;

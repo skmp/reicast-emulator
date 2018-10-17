@@ -18,10 +18,11 @@ typedef HANDLE fd_t;
 typedef int fd_t;
 #define INVALID_FD -1
 
-#include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <errno.h>
 #endif
+#include <unistd.h>
 
 fd_t*	RomCacheMap;
 u32		RomCacheMapCount;

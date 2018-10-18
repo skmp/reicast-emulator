@@ -907,7 +907,8 @@ void DrawStrips(void)
             previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
       // Modifier volumes
-      DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
+      if (gl.stencil_present)
+    	 DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
       //Alpha blended
       if (settings.pvr.Emulation.AlphaSortMode == 0)

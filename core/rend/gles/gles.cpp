@@ -354,6 +354,8 @@ int GetProgramID(
 
 void findGLVersion()
 {
+   gl.stencil_present = true;
+
    while (true)
       if (glGetError() == GL_NO_ERROR)
          break;
@@ -375,6 +377,11 @@ void findGLVersion()
          gl.glsl_version_header = "";
       }
       gl.fog_image_format = GL_ALPHA;
+
+      GLint stencilBits = 0;
+      glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
+      if (stencilBits == 0)
+    	 gl.stencil_present = false;
    }
    else
    {
@@ -1093,7 +1100,7 @@ struct glesrend : Renderer
 
       glcache.EnableCache();
 
-#ifdef GLES
+#ifdef HAVE_OPENGLES
       glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
 #endif
 

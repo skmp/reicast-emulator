@@ -67,7 +67,7 @@ struct gl_ctx
    int gl_major;
    bool is_gles;
    GLuint fog_image_format;
-	//GLuint matrix;
+   bool stencil_present;
 };
 
 GLuint gl_GetTexture(TSP tsp,TCW tcw);

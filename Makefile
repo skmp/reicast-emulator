@@ -206,7 +206,6 @@ else ifeq ($(platform), classic_armv7_a7)
 			LDFLAGS += -static-libgcc -static-libstdc++
 		endif
 	endif
-	HAVE_OPENMP = 0
 	PLATFORM_EXT := unix
 	WITH_DYNAREC = arm
 #######################################

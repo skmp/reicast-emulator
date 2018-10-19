@@ -170,6 +170,47 @@ else ifneq (,$(findstring rpi,$(platform)))
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm
 
+# Classic Platforms ####################
+# Platform affix = classic_<ISA>_<µARCH>
+# Help at https://modmyclassic.com/comp
+
+# (armv7 a7, hard point, neon based) ### 
+# NESC, SNESC, C64 mini 
+else ifeq ($(platform), classic_armv7_a7)
+	EXT    ?= so
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+	SHARED := -shared -Wl,--version-script=link.T
+	fpic = -fPIC
+	LIBS += -lrt
+	ARM_FLOAT_ABI_HARD = 1
+	FORCE_GLES = 1
+	SINGLE_PREC_FLAGS = 1
+	HAVE_LTCG = 0
+	HAVE_OPENMP = 0
+	CFLAGS += -Ofast \
+	-fno-lto \
+	-fdata-sections -ffunction-sections -Wl,--gc-sections \
+	-fno-stack-protector -fno-ident -fomit-frame-pointer \
+	-falign-functions=1 -falign-jumps=1 -falign-loops=1 \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-unroll-loops \
+	-fmerge-all-constants -fno-math-errno \
+	-marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+	CXXFLAGS += $(CFLAGS)
+	ASFLAGS += $(CFLAGS)
+	ifeq ($(shell echo `$(CC) -dumpversion` "< 4.9" | bc -l), 1)
+		CFLAGS += -march=armv7-a
+	else
+		CFLAGS += -march=armv7ve
+		# If gcc is 5.0 or later
+		ifeq ($(shell echo `$(CC) -dumpversion` ">= 5" | bc -l), 1)
+			LDFLAGS += -static-libgcc -static-libstdc++
+		endif
+	endif
+	
+	PLATFORM_EXT := unix
+	WITH_DYNAREC=arm
+#######################################
+
 # ODROIDs
 else ifneq (,$(findstring odroid,$(platform)))
 	EXT    ?= so
@@ -494,7 +535,7 @@ ifeq ($(DEBUG),1)
 else
 	ifneq (,$(findstring msvc,$(platform)))
 		OPTFLAGS       := -O2
-	else
+	else ifneq ($(platform), classic_armv7_a7)
 		OPTFLAGS       := -O3
 	endif
 

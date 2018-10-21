@@ -98,7 +98,7 @@ static void maple_DoDma(void)
 			if (MapleDevices[bus][5] && MapleDevices[bus][port])
 			{
 				u32 outlen = MapleDevices[bus][port]->RawDma(&p_data[0], inlen + 4, &p_out[0]);
-				xfer_count =+ outlen;
+				xfer_count += outlen;
 			}
 			else
 			{

@@ -8,6 +8,7 @@
 #include "hw/flashrom/flashrom.h"
 #include "hw/mem/_vmem.h"
 #include "hw/gdrom/gdromv3.h"
+#include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/ta_structs.h"
@@ -28,7 +29,8 @@
  */
 
 enum serialize_version_enum {
-	V1
+	V1,
+	V2
 } ;
 
 //./core/hw/arm7/arm_mem.cpp
@@ -207,8 +209,9 @@ extern int GDROM_TICK;
 extern char EEPROM[0x100];
 extern bool EEPROM_loaded;
 
-
 //./core/hw/maple/maple_if.o
+//needs special handler
+extern maple_device* MapleDevices[4][6];
 //one time set
 //extern int maple_sched;
 //incremented but never read
@@ -807,7 +810,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
-	serialize_version_enum version = V1 ;
+	serialize_version_enum version = V2 ;
 
 	*total_size = 0 ;
 
@@ -1216,6 +1219,8 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
+	u8 dummy ;
+	int dummy_int ;
 	serialize_version_enum version = V1 ;
 
 	*total_size = 0 ;
@@ -1331,10 +1336,30 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	LIBRETRO_USA(EEPROM,0x100);
 	LIBRETRO_US(EEPROM_loaded);
 
+	if ( version == V1 )
+	{
+		//V1 saved NaomiState which was a struct of 3 u8 variables
+		LIBRETRO_US(dummy);
+		LIBRETRO_US(dummy);
+		LIBRETRO_US(dummy);
+	}
 
 	LIBRETRO_US(maple_ddt_pending_reset);
 
-	mcfg_UnserializeDevices(data, total_size);
+	if ( version == V1 )
+	{
+		for (i = 0 ; i < 4 ; i++)
+			for (j = 0 ; j < 6 ; j++)
+				if ( MapleDevices[i][j] != 0 )
+				{
+					MapleDeviceType devtype = MapleDevices[i][j]->get_device_type() ;
+					mcfg_DestroyDevice(i,j) ;
+					mcfg_Create(devtype, i, j);
+					MapleDevices[i][j]->maple_unserialize(data, total_size) ;
+				}
+	}
+	else
+		mcfg_UnserializeDevices(data, total_size);
 
 
 	LIBRETRO_US(FrameCount);
@@ -1471,11 +1496,24 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	LIBRETRO_US(sh4_sched_next_id);
 	//this list is populated during initialization so the size will always be the same
 	//extern vector<sched_list> list;
-	for ( i = 0 ; i < list.size() ; i++ )
+	if ( version == V1 )
 	{
-		LIBRETRO_US(list[i].tag) ;
-		LIBRETRO_US(list[i].start) ;
-		LIBRETRO_US(list[i].end) ;
+		//V1 did not have an extra scheduler - probably the modem
+		for ( i = 0 ; i < list.size()-1 ; i++ )
+		{
+			LIBRETRO_US(list[i].tag) ;
+			LIBRETRO_US(list[i].start) ;
+			LIBRETRO_US(list[i].end) ;
+		}
+	}
+	else
+	{
+		for ( i = 0 ; i < list.size() ; i++ )
+		{
+			LIBRETRO_US(list[i].tag) ;
+			LIBRETRO_US(list[i].start) ;
+			LIBRETRO_US(list[i].end) ;
+		}
 	}
 
 

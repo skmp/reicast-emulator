@@ -26,7 +26,7 @@ namespace xbrz
 template <uint32_t N> inline
 unsigned char getByte(uint32_t val) { return static_cast<unsigned char>((val >> (8 * N)) & 0xff); }
 // Note that we use RGBA, not ARGB
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && defined(GLES)
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && defined(HAVE_OPENGLES)
 inline unsigned char getAlpha(uint32_t pix) { return getByte<3>(pix); }
 inline unsigned char getRed  (uint32_t pix) { return getByte<0>(pix); }
 inline unsigned char getGreen(uint32_t pix) { return getByte<1>(pix); }

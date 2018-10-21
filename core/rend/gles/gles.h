@@ -100,6 +100,7 @@ void SetCull(u32 CullMode);
 s32 SetTileClip(u32 val, GLint uniform);
 void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
 
+void killtex();
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();
 void RenderFramebuffer();

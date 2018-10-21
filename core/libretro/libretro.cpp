@@ -110,7 +110,8 @@ void dc_run();
 void dc_term(void);
 void dc_stop();
 void dc_start();
-void bm_Reset() ;
+void bm_Reset() ;	// Sh4 dynarec block manager
+void FlushCache();	// Arm dynarec (arm and x86 only)
 bool dc_is_running();
 extern Renderer* renderer;
 bool rend_single_frame();
@@ -131,6 +132,8 @@ static void *emu_thread_func(void *);
 static cThread emu_thread(&emu_thread_func, 0);
 static cMutex mtx_serialization ;
 static cMutex mtx_mainloop ;
+static bool gl_ctx_resetting = false;
+
 static void *emu_thread_func(void *)
 {
     char* argv[] = { "reicast" };
@@ -1037,7 +1040,7 @@ static void update_variables(bool first_startup)
    }
 
 }
-bool renderer_inited = false;
+
 void retro_run (void)
 {
    bool fastforward = false;
@@ -1062,20 +1065,14 @@ void retro_run (void)
 	   if (!emu_inited)
 		   return;
 
+	   poll_cb();
+
 	   glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
 
-	   // We can now initialize the renderer
-	   if (!renderer_inited)
-	   {
-		  rend_init_renderer();
-		  renderer_inited = true;
-	   }
-	   /// And start rendering
+	   // Render
 	   is_dupe = !rend_single_frame();
 
 	   glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
-      
-	   poll_cb();
    }
    else
 #endif
@@ -1123,11 +1120,15 @@ void retro_reset (void)
 static void context_reset(void)
 {
    printf("context_reset.\n");
+   gl_ctx_resetting = false;
    glsm_ctl(GLSM_CTL_STATE_CONTEXT_RESET, NULL);
+   glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
 }
 
 static void context_destroy(void)
 {
+   gl_ctx_resetting = true;
+   renderer_changed = true;
    glsm_ctl(GLSM_CTL_STATE_CONTEXT_DESTROY, NULL);
 }
 #endif
@@ -1556,6 +1557,9 @@ bool retro_unserialize(const void * data, size_t size)
 #endif
 
     bm_Reset() ;
+#if FEAT_AREC == DYNAREC_JIT
+    FlushCache();
+#endif
 
     result = dc_unserialize(&data_ptr, &total_size) ;
 
@@ -1947,6 +1951,9 @@ static void UpdateInputStateNaomi(u32 port)
 
 void UpdateInputState(u32 port)
 {
+   if (gl_ctx_resetting)
+	  return;
+
    if (settings.System == DC_PLATFORM_NAOMI)
    {
       UpdateInputStateNaomi(0);

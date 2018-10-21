@@ -1279,14 +1279,16 @@ bool retro_load_game(const struct retro_game_info *game)
    update_variables(true);
 
    {
-      /* Check for extension .lst. If found, we will set the system type
+      /* Check for extension .lst, .bin or .dat. If found, we will set the system type
        * automatically to Naomi. */
       char *ext = strrchr(g_base_name, '.');
       if (ext)
       {
          log_cb(RETRO_LOG_INFO, "File extension is: %s\n", ext);
-         if (!strcmp(".lst", ext))
-            settings.System = DC_PLATFORM_NAOMI;
+         if (!strcmp(".lst", ext)
+        	   || !strcmp(".bin", ext) || !strcmp(".BIN", ext)
+        	   || !strcmp(".dat", ext) || !strcmp(".DAT", ext))
+        	settings.System = DC_PLATFORM_NAOMI;
       }
    }
 
@@ -1601,7 +1603,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #define GIT_VERSION ""
 #endif
    info->library_version = "0.1" GIT_VERSION;
-   info->valid_extensions = "chd|cdi|iso|elf|bin|cue|gdi|lst";
+   info->valid_extensions = "chd|cdi|iso|elf|bin|cue|gdi|lst|bin|dat";
    info->need_fullpath = true;
    info->block_extract = false;
 }

@@ -1215,7 +1215,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	return true ;
 }
 
-bool dc_unserialize(void **data, unsigned int *total_size)
+bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_size)
 {
 	int i = 0;
 	int j = 0;
@@ -1226,6 +1226,14 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	*total_size = 0 ;
 
 	LIBRETRO_US(version) ;
+
+	//This normally isn't necessary - but we need some way to differentiate between save states
+	//that were created after the format change and before the new format had a new version saved in it
+	if ( actual_data_size == 48324799)
+		version = V1 ;
+	else if ( actual_data_size == 70507869 )
+		version = V2 ;
+
 	LIBRETRO_US(aica_interr) ;
 	LIBRETRO_US(aica_reg_L) ;
 	LIBRETRO_US(e68k_out) ;

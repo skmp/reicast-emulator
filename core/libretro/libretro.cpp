@@ -1557,7 +1557,7 @@ bool retro_unserialize(const void * data, size_t size)
 
     bm_Reset() ;
 
-    result = dc_unserialize(&data_ptr, &total_size) ;
+    result = dc_unserialize(&data_ptr, &total_size, size) ;
 
     for ( i = 0 ; i < 4 ; i++)
        vmu_screen_params[i].vmu_screen_needs_update = true ;

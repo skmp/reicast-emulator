@@ -505,6 +505,8 @@ static void gl_term(void)
 	  delete it->second;
    }
    gl4.shaders.clear();
+   glDeleteTextures(1, &fbTextureId);
+   fbTextureId = 0;
 }
 
 static bool gl_create_resources(void)
@@ -999,8 +1001,6 @@ struct gl4rend : Renderer
 {
    bool Init()
    {
-	  glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
-
 	  int major = 0;
 	  int minor = 0;
 	  glGetIntegerv(GL_MAJOR_VERSION, &major);
@@ -1085,14 +1085,7 @@ struct gl4rend : Renderer
 		  glcache.DeleteTextures(1, &depthSaveTexId);
 		  depthSaveTexId = 0;
 	   }
-	   if (KillTex)
-	   {
-		  void killtex();
-		  killtex();
-		  printf("Texture cache cleared\n");
-	   }
-
-	   CollectCleanup();
+	   killtex();
 
 	   gl_term();
    }

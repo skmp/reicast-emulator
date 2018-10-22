@@ -1464,19 +1464,21 @@ struct maple_naomi_jamma : maple_sega_controller
 		{
 			memcpy(temp_buffer, data, length);
 		}
-		u32 repeat_len = jvs_repeat_request[node_id - 1][0];
-		if (use_repeat && repeat_len > 0)
-		{
-			memcpy(temp_buffer + length, &jvs_repeat_request[node_id - 1][1], repeat_len);
-			length += repeat_len;
-		}
 		if (node_id == ALL_NODES)
 		{
 			for (int i = 0; i < io_boards.size(); i++)
 				send_jvs_message(i + 1, channel, length, temp_buffer);
 		}
-		else
+		else if (node_id >= 1 && node_id <= 32)
+		{
+			u32 repeat_len = jvs_repeat_request[node_id - 1][0];
+			if (use_repeat && repeat_len > 0)
+			{
+				memcpy(temp_buffer + length, &jvs_repeat_request[node_id - 1][1], repeat_len);
+				length += repeat_len;
+			}
 			send_jvs_message(node_id, channel, length, temp_buffer);
+		}
 	}
 
 	void receive_jvs_messages(u32 channel)
@@ -2262,7 +2264,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					break;
 
 				case 0x30:	// substract coin
-					coin_count[buffer_in[cmdi + 1] - 1] -= buffer_in[cmdi + 2] << 8 + buffer_in[cmdi + 3];
+					coin_count[buffer_in[cmdi + 1] - 1] -= (buffer_in[cmdi + 2] << 8) + buffer_in[cmdi + 3];
 					JVS_STATUS1();	// report byte
 					cmdi += 4;
 					break;

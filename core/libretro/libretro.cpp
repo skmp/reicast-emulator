@@ -484,6 +484,12 @@ void retro_init(void)
 void retro_deinit(void)
 {
    first_run = true;
+
+   //When auto-save states are enabled this is needed to prevent the core from shutting down before
+   //any save state actions are still running - which results in partial saves
+   mtx_serialization.Lock() ;
+   mtx_serialization.Unlock() ;
+
 }
 
 static bool is_dupe = false;

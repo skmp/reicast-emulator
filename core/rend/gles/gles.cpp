@@ -593,6 +593,8 @@ static void gl_term(void)
 	glDeleteBuffers(1, &gl.vbo.modvols);
 	glDeleteBuffers(1, &gl.vbo.idxs);
 	glDeleteBuffers(1, &gl.vbo.idxs2);
+	glDeleteTextures(1, &fbTextureId);
+	fbTextureId = 0;
 
 	memset(gl.program_table,0,sizeof(gl.program_table));
 }
@@ -1091,10 +1093,8 @@ bool ProcessFrame(TA_context* ctx)
 
 struct glesrend : Renderer
 {
-	bool Init()
+   bool Init()
    {
-      glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
-
       if (!gl_create_resources())
          return false;
 
@@ -1120,16 +1120,9 @@ struct glesrend : Renderer
 	void Resize(int w, int h) { screen_width=w; screen_height=h; }
 	void Term()
    {
-      if (KillTex)
-      {
-         void killtex();
-         killtex();
-         printf("Texture cache cleared\n");
-      }
+	   killtex();
 
-      CollectCleanup();
-
-      gl_term();
+	   gl_term();
    }
 
 	bool Process(TA_context* ctx)

@@ -37,11 +37,11 @@ s32 libPvr_Init(void)
       //failed
       return rv_error;
    }
-	if (!rend_init())
-   {
-      //failed
-		return rv_error;
-   }
+//	if (!rend_init())
+//   {
+//      //failed
+//		return rv_error;
+//   }
 
 	return rv_ok;
 }

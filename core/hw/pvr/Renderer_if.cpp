@@ -141,10 +141,11 @@ void rend_term_renderer()
 
 bool rend_frame(TA_context* ctx, bool draw_osd)
 {
-   if (renderer_changed)
+   if (renderer_changed || renderer == NULL)
    {
 	  renderer_changed = false;
-	  rend_term_renderer();
+	  if (renderer != NULL)
+		 rend_term_renderer();
 	  rend_create_renderer();
 	  rend_init_renderer();
    }

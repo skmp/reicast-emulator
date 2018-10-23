@@ -238,6 +238,14 @@ __forceinline
 	//cflip is required when exploding triangles for triangle sorting
 	//gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
 	SetCull(gp->isp.CullMode^cflip^gcflip);
+	
+	if(Type == ListType_Translucent && SortingEnabled)
+	{
+		if((gp->isp.CullMode ^ cflip ^ gcflip) == 2)
+		{
+			glCullFace(GL_BACK);
+		}
+	}
 
 
 	if (gp->isp.full!= cache.isp.full)

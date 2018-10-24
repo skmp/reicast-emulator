@@ -44,6 +44,7 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 	vector<u32> fsize;
 
 	u32 setsize = 0;
+	bool raw_bin_file = false;
 
 	char t[512];
 	strcpy(t, file);
@@ -122,6 +123,7 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 	   fsize.push_back(file_size);
 	   setsize = file_size;
 	   RomSize = file_size;
+	   raw_bin_file = true;
 	}
 
 	printf("+%lu romfiles, %.2f MB set size, %.2f MB set address space\n", files.size(), setsize / 1024.f / 1024.f, RomSize / 1024.f / 1024.f);
@@ -152,7 +154,7 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 	//Create File Mapping Objects
 	for (size_t i = 0; i<files.size(); i++)
 	{
-		if (files[i][0] != '/' && files[i][0] != '\\')
+		if (!raw_bin_file)
 		{
 		   strncpy(t, file, sizeof(t));
 		   t[sizeof(t) - 1] = '\0';

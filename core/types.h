@@ -778,7 +778,7 @@ void os_DebugBreak(void);
 bool ra_serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
 bool ra_unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size);
 bool dc_serialize(void **data, unsigned int *total_size);
-bool dc_unserialize(void **data, unsigned int *total_size);
+bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_size);
 
 #define LIBRETRO_S(v) ra_serialize(&(v), sizeof(v), data, total_size)
 #define LIBRETRO_US(v) ra_unserialize(&(v), sizeof(v), data, total_size)

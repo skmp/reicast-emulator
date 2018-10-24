@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "maple_devs.h"
 
 enum PlainJoystickButtonId
 {
@@ -63,6 +64,8 @@ void mcfg_CreateDevices();
 void mcfg_CreateDevices();
 #endif
 
+void mcfg_Create(MapleDeviceType type,u32 bus,u32 port);
 void mcfg_DestroyDevices();
+void mcfg_DestroyDevice(int i, int j);
 void mcfg_SerializeDevices(void **data, unsigned int *total_size);
 void mcfg_UnserializeDevices(void **data, unsigned int *total_size);

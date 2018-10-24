@@ -484,6 +484,12 @@ void retro_init(void)
 void retro_deinit(void)
 {
    first_run = true;
+
+   //When auto-save states are enabled this is needed to prevent the core from shutting down before
+   //any save state actions are still running - which results in partial saves
+   mtx_serialization.Lock() ;
+   mtx_serialization.Unlock() ;
+
 }
 
 static bool is_dupe = false;
@@ -1563,7 +1569,7 @@ bool retro_unserialize(const void * data, size_t size)
     FlushCache();
 #endif
 
-    result = dc_unserialize(&data_ptr, &total_size) ;
+    result = dc_unserialize(&data_ptr, &total_size, size) ;
 
     for ( i = 0 ; i < 4 ; i++)
        vmu_screen_params[i].vmu_screen_needs_update = true ;

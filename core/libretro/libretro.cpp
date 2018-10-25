@@ -13,8 +13,10 @@
 #endif
 #include "../rend/rend.h"
 #include "../hw/sh4/sh4_mem.h"
+#include "../hw/sh4/sh4_sched.h"
 #include "keyboard_map.h"
 #include "../hw/maple/maple_devs.h"
+#include "../hw/pvr/spg.h"
 
 #if defined(_XBOX) || defined(_WIN32)
 char slash = '\\';
@@ -110,7 +112,6 @@ void dc_run();
 void dc_term(void);
 void dc_stop();
 void dc_start();
-void bm_Reset() ;	// Sh4 dynarec block manager
 void FlushCache();	// Arm dynarec (arm and x86 only)
 bool dc_is_running();
 extern Renderer* renderer;
@@ -124,7 +125,6 @@ char *game_data;
 char g_base_name[128];
 char game_dir[1024];
 char game_dir_no_slash[1024];
-static bool emu_inited = false;
 static bool emu_in_thread = false;
 static bool performed_serialization = false;
 #if !defined(TARGET_NO_THREADS)
@@ -136,17 +136,6 @@ static bool gl_ctx_resetting = false;
 
 static void *emu_thread_func(void *)
 {
-    char* argv[] = { "reicast" };
-    
-    if (dc_init(1, argv))
-    {
-    	if (log_cb)
-    	   log_cb(RETRO_LOG_ERROR, "Reicast emulator initialization failed\n");
-
-    	return NULL;
-    }
-    
-    emu_inited = true;
     emu_in_thread = true ;
     while ( true )
     {
@@ -1067,9 +1056,6 @@ void retro_run (void)
 		   emu_thread.Start();
 		   first_run = false;
 	   }
-	   // Then we wait until the emulator has initialized
-	   if (!emu_inited)
-		   return;
 
 	   poll_cb();
 
@@ -1083,18 +1069,6 @@ void retro_run (void)
    else
 #endif
    {
-	   if (first_run)
-	   {
-		   if (dc_init(co_argc,co_argv))
-		   {
-			  if (log_cb)
-				 log_cb(RETRO_LOG_ERROR, "Reicast emulator initialization failed\n");
-			  return;
-		   }
-		   dc_run();
-		   first_run = false;
-		   return;
-	   }
 	   dc_run();
    }
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
@@ -1110,13 +1084,10 @@ void retro_reset (void)
 {
 #if !defined(TARGET_NO_THREADS)
    if (settings.rend.ThreadedRendering)
-   {
-	   dc_stop();
-	   emu_inited = false;
-   }
+	  dc_stop();
    else
 #endif
-	   dc_term();
+	  dc_term();
    first_run = true;
    settings.dreamcast.cable = 3;
    update_variables(false);
@@ -1393,6 +1364,13 @@ bool retro_load_game(const struct retro_game_info *game)
 
    dc_prepare_system();
 
+   if (dc_init(co_argc,co_argv))
+   {
+	  if (log_cb)
+		 log_cb(RETRO_LOG_ERROR, "Reicast emulator initialization failed\n");
+	  return false;
+   }
+
    return true;
 }
 
@@ -1432,11 +1410,6 @@ void retro_unload_game(void)
 // Memory/Serialization
 void *retro_get_memory_data(unsigned type)
 {
-#if !defined(TARGET_NO_THREADS)
-   if ( settings.rend.ThreadedRendering && !emu_inited )
-	   return 0 ;
-#endif
-
    if ( type == RETRO_MEMORY_SYSTEM_RAM )
       return mem_b.data;
    return 0; //TODO
@@ -1444,10 +1417,6 @@ void *retro_get_memory_data(unsigned type)
 
 size_t retro_get_memory_size(unsigned type)
 {
-#if !defined(TARGET_NO_THREADS)
-   if ( settings.rend.ThreadedRendering && !emu_inited )
-	   return 0 ;
-#endif
    if ( type == RETRO_MEMORY_SYSTEM_RAM )
       return mem_b.size;
    return 0; //TODO
@@ -1499,12 +1468,9 @@ bool retro_serialize(void *data, size_t size)
    bool result = false ;
 
 #if !defined(TARGET_NO_THREADS)
-   if ( settings.rend.ThreadedRendering && !emu_inited )
-	   return false ;
-
-    if (settings.rend.ThreadedRendering && emu_inited)
+	mtx_serialization.Lock() ;
+    if (settings.rend.ThreadedRendering)
     {
-    	mtx_serialization.Lock() ;
     	if ( !wait_until_dc_running()) {
         	mtx_serialization.Unlock() ;
         	return false ;
@@ -1524,11 +1490,11 @@ bool retro_serialize(void *data, size_t size)
    performed_serialization = true ;
 
 #if !defined(TARGET_NO_THREADS)
-    if (settings.rend.ThreadedRendering && emu_inited)
+    if (settings.rend.ThreadedRendering)
     {
     	mtx_mainloop.Unlock() ;
-    	mtx_serialization.Unlock() ;
     }
+	mtx_serialization.Unlock() ;
 #endif
 
     return result ;
@@ -1542,12 +1508,7 @@ bool retro_unserialize(const void * data, size_t size)
    int i ;
 
 #if !defined(TARGET_NO_THREADS)
-   if ( settings.rend.ThreadedRendering && !emu_inited )
-	   return false ;
-#endif
-
-#if !defined(TARGET_NO_THREADS)
-    if (settings.rend.ThreadedRendering && emu_inited)
+    if (settings.rend.ThreadedRendering)
     {
     	mtx_serialization.Lock() ;
     	if ( !wait_until_dc_running()) {
@@ -1564,12 +1525,15 @@ bool retro_unserialize(const void * data, size_t size)
     }
 #endif
 
-    bm_Reset() ;
+    sh4_cpu.ResetCache();
 #if FEAT_AREC == DYNAREC_JIT
     FlushCache();
 #endif
 
     result = dc_unserialize(&data_ptr, &total_size, size) ;
+
+    sh4_sched_ffts();
+    CalculateSync();
 
     for ( i = 0 ; i < 4 ; i++)
        vmu_screen_params[i].vmu_screen_needs_update = true ;
@@ -1577,7 +1541,7 @@ bool retro_unserialize(const void * data, size_t size)
     performed_serialization = true ;
 
 #if !defined(TARGET_NO_THREADS)
-    if (settings.rend.ThreadedRendering && emu_inited)
+    if (settings.rend.ThreadedRendering)
     {
     	mtx_mainloop.Unlock() ;
     	mtx_serialization.Unlock() ;

@@ -295,7 +295,8 @@ void rend_end_render(void)
 		   re.Wait();
 	   else
 #endif
-           renderer->Present();
+		  if(renderer != NULL)
+			 renderer->Present();
    }
 }
 

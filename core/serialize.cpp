@@ -30,7 +30,8 @@
 
 enum serialize_version_enum {
 	V1,
-	V2
+	V2,
+	V3
 } ;
 
 //./core/hw/arm7/arm_mem.cpp
@@ -213,12 +214,14 @@ extern bool EEPROM_loaded;
 //needs special handler
 extern maple_device* MapleDevices[4][6];
 //one time set
-//extern int maple_sched;
+extern int maple_sched;
 //incremented but never read
 //extern u32 dmacount;
 extern bool maple_ddt_pending_reset;
 
 
+//./core/hw/modem/modem.cpp
+extern int modem_sched;
 
 
 
@@ -437,7 +440,7 @@ extern u32 old_dn;
 extern u64 sh4_sched_ffb;
 extern u32 sh4_sched_intr;
 extern vector<sched_list> list;
-extern int sh4_sched_next_id;
+//extern int sh4_sched_next_id;
 
 
 
@@ -810,7 +813,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
-	serialize_version_enum version = V2 ;
+	serialize_version_enum version = V3 ;
 
 	*total_size = 0 ;
 
@@ -848,7 +851,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(VREG);
 	LIBRETRO_S(ARMRST);
 	LIBRETRO_S(rtc_EN);
-	LIBRETRO_S(dma_sched_id);
 
 	LIBRETRO_SA(aica_reg,0x8000);
 
@@ -898,7 +900,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 
 
-	LIBRETRO_S(gdrom_sched);
 	LIBRETRO_S(sns_asc);
 	LIBRETRO_S(sns_ascq);
 	LIBRETRO_S(sns_key);
@@ -963,9 +964,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(vblk_cnt);
 	LIBRETRO_S(Line_Cycles);
 	LIBRETRO_S(Frame_Cycles);
-	LIBRETRO_S(render_end_sched);
-	LIBRETRO_S(vblank_sched);
-	LIBRETRO_S(time_sync);
 	LIBRETRO_S(speed_load_mspdf);
 	LIBRETRO_S(mips_counter);
 	LIBRETRO_S(full_rps);
@@ -1066,20 +1064,51 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	LIBRETRO_S(sh4_sched_ffb);
 	LIBRETRO_S(sh4_sched_intr);
-	LIBRETRO_S(sh4_sched_next_id);
-	//this list is populated during initialization so the size will always be the same
+
 	//extern vector<sched_list> list;
-	for ( i = 0 ; i < list.size() ; i++ )
+
+	LIBRETRO_S(list[aica_sched].tag) ;
+	LIBRETRO_S(list[aica_sched].start) ;
+	LIBRETRO_S(list[aica_sched].end) ;
+
+	LIBRETRO_S(list[rtc_sched].tag) ;
+	LIBRETRO_S(list[rtc_sched].start) ;
+	LIBRETRO_S(list[rtc_sched].end) ;
+
+	LIBRETRO_S(list[gdrom_sched].tag) ;
+	LIBRETRO_S(list[gdrom_sched].start) ;
+	LIBRETRO_S(list[gdrom_sched].end) ;
+
+	LIBRETRO_S(list[maple_sched].tag) ;
+	LIBRETRO_S(list[maple_sched].start) ;
+	LIBRETRO_S(list[maple_sched].end) ;
+
+	LIBRETRO_S(list[dma_sched_id].tag) ;
+	LIBRETRO_S(list[dma_sched_id].start) ;
+	LIBRETRO_S(list[dma_sched_id].end) ;
+
+	for (int i = 0; i < 3; i++)
 	{
-		LIBRETRO_S(list[i].tag) ;
-		LIBRETRO_S(list[i].start) ;
-		LIBRETRO_S(list[i].end) ;
+	   LIBRETRO_S(list[tmu_sched[i]].tag) ;
+	   LIBRETRO_S(list[tmu_sched[i]].start) ;
+	   LIBRETRO_S(list[tmu_sched[i]].end) ;
 	}
 
+	LIBRETRO_S(list[render_end_sched].tag) ;
+	LIBRETRO_S(list[render_end_sched].start) ;
+	LIBRETRO_S(list[render_end_sched].end) ;
 
+	LIBRETRO_S(list[vblank_sched].tag) ;
+	LIBRETRO_S(list[vblank_sched].start) ;
+	LIBRETRO_S(list[vblank_sched].end) ;
 
-	LIBRETRO_S(aica_sched);
-	LIBRETRO_S(rtc_sched);
+	LIBRETRO_S(list[time_sync].tag) ;
+	LIBRETRO_S(list[time_sync].start) ;
+	LIBRETRO_S(list[time_sync].end) ;
+
+    LIBRETRO_S(list[modem_sched].tag) ;
+    LIBRETRO_S(list[modem_sched].start) ;
+    LIBRETRO_S(list[modem_sched].end) ;
 
 
 	LIBRETRO_S(SCIF_SCFSR2);
@@ -1096,7 +1125,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_SA(tmu_mask,3);
 	LIBRETRO_SA(tmu_mask64,3);
 	LIBRETRO_SA(old_mode,3);
-	LIBRETRO_SA(tmu_sched,3);
 	LIBRETRO_SA(tmu_ch_base,3);
 	LIBRETRO_SA(tmu_ch_base64,3);
 
@@ -1210,7 +1238,9 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_SA(joyx,4);
 	LIBRETRO_SA(joyy,4);
 
-
+	LIBRETRO_S(settings.dreamcast.broadcast);
+	LIBRETRO_S(settings.dreamcast.cable);
+	LIBRETRO_S(settings.dreamcast.region);
 
 	return true ;
 }
@@ -1229,10 +1259,8 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 
 	//This normally isn't necessary - but we need some way to differentiate between save states
 	//that were created after the format change and before the new format had a new version saved in it
-	if ( actual_data_size == 48324799)
-		version = V1 ;
-	else if ( actual_data_size == 70507869 )
-		version = V2 ;
+	if (version == V1 && actual_data_size != 48324799 && actual_data_size != 48855967)
+	   version = V2 ;
 
 	LIBRETRO_US(aica_interr) ;
 	LIBRETRO_US(aica_reg_L) ;
@@ -1263,7 +1291,8 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(VREG);
 	LIBRETRO_US(ARMRST);
 	LIBRETRO_US(rtc_EN);
-	LIBRETRO_US(dma_sched_id);
+	if (version < V3)
+	   LIBRETRO_US(dummy_int);	//dma_sched_id
 
 	LIBRETRO_USA(aica_reg,0x8000);
 
@@ -1311,9 +1340,8 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 
 	LIBRETRO_USA(reply_11,16) ;
 
-
-
-	LIBRETRO_US(gdrom_sched);
+	if (version < V3)
+	   LIBRETRO_US(dummy_int);	//gdrom_sched
 	LIBRETRO_US(sns_asc);
 	LIBRETRO_US(sns_ascq);
 	LIBRETRO_US(sns_key);
@@ -1397,9 +1425,12 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(vblk_cnt);
 	LIBRETRO_US(Line_Cycles);
 	LIBRETRO_US(Frame_Cycles);
-	LIBRETRO_US(render_end_sched);
-	LIBRETRO_US(vblank_sched);
-	LIBRETRO_US(time_sync);
+	if (version < V3)
+	{
+	   LIBRETRO_US(dummy_int);	//render_end_sched
+	   LIBRETRO_US(dummy_int);	//vblank_sched
+	   LIBRETRO_US(dummy_int);	//time_sync
+	}
 	LIBRETRO_US(speed_load_mspdf);
 	LIBRETRO_US(mips_counter);
 	LIBRETRO_US(full_rps);
@@ -1440,7 +1471,6 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 			LIBRETRO_USA(ptr,1024);
 		}
 	LIBRETRO_USA(vram.data, vram.size);
-
 
 
 
@@ -1497,37 +1527,64 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(old_dn);
 
 
-
-
 	LIBRETRO_US(sh4_sched_ffb);
 	LIBRETRO_US(sh4_sched_intr);
-	LIBRETRO_US(sh4_sched_next_id);
-	//this list is populated during initialization so the size will always be the same
+	if (version < V3)
+	   LIBRETRO_US(dummy_int);	// sh4_sched_next_id
+
 	//extern vector<sched_list> list;
-	if ( version == V1 )
+
+	LIBRETRO_US(list[aica_sched].tag) ;
+	LIBRETRO_US(list[aica_sched].start) ;
+	LIBRETRO_US(list[aica_sched].end) ;
+
+	LIBRETRO_US(list[rtc_sched].tag) ;
+	LIBRETRO_US(list[rtc_sched].start) ;
+	LIBRETRO_US(list[rtc_sched].end) ;
+
+	LIBRETRO_US(list[gdrom_sched].tag) ;
+	LIBRETRO_US(list[gdrom_sched].start) ;
+	LIBRETRO_US(list[gdrom_sched].end) ;
+
+	LIBRETRO_US(list[maple_sched].tag) ;
+	LIBRETRO_US(list[maple_sched].start) ;
+	LIBRETRO_US(list[maple_sched].end) ;
+
+	LIBRETRO_US(list[dma_sched_id].tag) ;
+	LIBRETRO_US(list[dma_sched_id].start) ;
+	LIBRETRO_US(list[dma_sched_id].end) ;
+
+	for (int i = 0; i < 3; i++)
 	{
-		//V1 did not have an extra scheduler - probably the modem
-		for ( i = 0 ; i < list.size()-1 ; i++ )
-		{
-			LIBRETRO_US(list[i].tag) ;
-			LIBRETRO_US(list[i].start) ;
-			LIBRETRO_US(list[i].end) ;
-		}
+	   LIBRETRO_US(list[tmu_sched[i]].tag) ;
+	   LIBRETRO_US(list[tmu_sched[i]].start) ;
+	   LIBRETRO_US(list[tmu_sched[i]].end) ;
 	}
-	else
+
+	LIBRETRO_US(list[render_end_sched].tag) ;
+	LIBRETRO_US(list[render_end_sched].start) ;
+	LIBRETRO_US(list[render_end_sched].end) ;
+
+	LIBRETRO_US(list[vblank_sched].tag) ;
+	LIBRETRO_US(list[vblank_sched].start) ;
+	LIBRETRO_US(list[vblank_sched].end) ;
+
+	LIBRETRO_US(list[time_sync].tag) ;
+	LIBRETRO_US(list[time_sync].start) ;
+	LIBRETRO_US(list[time_sync].end) ;
+
+	if ( version >= V2 )
 	{
-		for ( i = 0 ; i < list.size() ; i++ )
-		{
-			LIBRETRO_US(list[i].tag) ;
-			LIBRETRO_US(list[i].start) ;
-			LIBRETRO_US(list[i].end) ;
-		}
+		LIBRETRO_US(list[modem_sched].tag) ;
+		LIBRETRO_US(list[modem_sched].start) ;
+		LIBRETRO_US(list[modem_sched].end) ;
 	}
 
-
-
-	LIBRETRO_US(aica_sched);
-	LIBRETRO_US(rtc_sched);
+	if (version < V3)
+	{
+	   LIBRETRO_US(dummy_int);	//aica_sched
+	   LIBRETRO_US(dummy_int);	//rtc_sched
+	}
 
 
 	LIBRETRO_US(SCIF_SCFSR2);
@@ -1544,7 +1601,13 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_USA(tmu_mask,3);
 	LIBRETRO_USA(tmu_mask64,3);
 	LIBRETRO_USA(old_mode,3);
-	LIBRETRO_USA(tmu_sched,3);
+	if (version < V3)
+	{
+	   //tmu_sched*3
+	   LIBRETRO_US(dummy_int);
+	   LIBRETRO_US(dummy_int);
+	   LIBRETRO_US(dummy_int);
+	}
 	LIBRETRO_USA(tmu_ch_base,3);
 	LIBRETRO_USA(tmu_ch_base64,3);
 
@@ -1658,6 +1721,13 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_USA(vks,4);
 	LIBRETRO_USA(joyx,4);
 	LIBRETRO_USA(joyy,4);
+
+	if (version >= V3)
+	{
+	   LIBRETRO_US(settings.dreamcast.broadcast);
+	   LIBRETRO_US(settings.dreamcast.cable);
+	   LIBRETRO_US(settings.dreamcast.region);
+	}
 
 	return true ;
 }

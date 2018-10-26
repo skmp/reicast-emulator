@@ -11,6 +11,7 @@
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/maple/maple_if.h"
 #include "hw/aica/aica_if.h"
+#include "hw/modem/modem.h"
 
 #include "hw/naomi/naomi.h"
 
@@ -774,6 +775,9 @@ void sb_Init(void)
 	pvr_sb_Init();
 	maple_Init();
 	aica_sb_Init();
+
+   if (settings.System != DC_PLATFORM_NAOMI)
+      ModemInit();
 }
 
 void sb_Reset(bool Manual)

@@ -60,7 +60,7 @@ static modemreg_t modem_regs;
 
 static u8 dspram[0x1000];
 
-static int modem_sched;
+int modem_sched;
 
 enum ModemStates
 {
@@ -313,11 +313,14 @@ static int modem_sched_func(int tag, int c, int j)
 	return callback_cycles;
 }
 
+void ModemInit()
+{
+   modem_sched = sh4_sched_register(0, &modem_sched_func);
+}
+
 static void schedule_callback(int ms)
 {
-	if (modem_sched == 0)
-		modem_sched = sh4_sched_register(0, &modem_sched_func);
-	sh4_sched_request(modem_sched, SH4_MAIN_CLOCK / 1000 * ms);
+   sh4_sched_request(modem_sched, SH4_MAIN_CLOCK / 1000 * ms);
 }
 
 #define SetReg16(rh,rl,v) {modem_regs.ptr[rh]=(v)>>8;modem_regs.ptr[rl]=(v)&0xFF; }

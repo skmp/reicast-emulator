@@ -226,12 +226,6 @@ void mcfg_DestroyDevice(int i, int j)
 
 void mcfg_SerializeDevices(void **data, unsigned int *total_size)
 {
-	if (*data == NULL)
-	{
-		// Return the maximum size needed (8 vmus)
-		*total_size += *total_size + (128 * 1024 + 192 + 48 * 32) * 8 + MAPLE_PORTS * 6;
-		return;
-	}
 	for (int i = 0; i < MAPLE_PORTS; i++)
 		for (int j = 0; j < 6; j++)
 		{
@@ -256,12 +250,6 @@ void mcfg_SerializeDevices(void **data, unsigned int *total_size)
 
 void mcfg_UnserializeDevices(void **data, unsigned int *total_size)
 {
-	if (*data == NULL)
-	{
-		// Return the maximum size needed (8 vmus)
-		*total_size += *total_size + (128 * 1024 + 192 + 48 * 32) * 8 + MAPLE_PORTS * 6;
-		return;
-	}
 	mcfg_DestroyDevices();
 
 	for (int i = 0; i < MAPLE_PORTS; i++)

@@ -311,6 +311,8 @@ static void pppdump(uint8_t *buf, int len, int egress)
 	if (dumpfp == NULL)
 	{
 		dumpfp = fopen("ppp.dump", "a");
+		if (dumpfp == NULL)
+		   return;
 		uint32_t reset_time = long_be(PICO_TIME());
 		fputc(7, dumpfp);					// Reset time
 		fwrite(&reset_time, sizeof(reset_time), 1, dumpfp);

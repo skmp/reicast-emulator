@@ -31,6 +31,9 @@ typedef SOCKET sock_t;
 #define L_EAGAIN WSAEWOULDBLOCK
 #define get_last_error() (WSAGetLastError())
 #define perror(s) do { if (s) printf("%s: ", s); printf("Winsock error: %d\n", WSAGetLastError()); } while (false)
+#define SHUT_WR SD_SEND
+#define SHUT_RD SD_RECEIVE
+#define SHUT_RDWR SD_BOTH
 #endif
 
 #endif

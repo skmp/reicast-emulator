@@ -437,7 +437,7 @@ static void read_native_sockets()
     for (auto it = tcp_connecting_sockets.begin(); it != tcp_connecting_sockets.end(); it++)
     {
        FD_SET(it->second, &write_fds);
-       max_fd = max(max_fd, it->second);
+       max_fd = max(max_fd, (int)it->second);
     }
     struct timeval tv;
     tv.tv_sec = 0;
@@ -451,7 +451,11 @@ static void read_native_sockets()
     		 it++;
     		 continue;
     	  }
+#ifdef _WIN32
+          char value;
+#else
     	  int value;
+#endif
     	  socklen_t l = sizeof(int);
     	  if (getsockopt(it->second, SOL_SOCKET, SO_ERROR, &value, &l) < 0 || value)
     	  {
@@ -683,9 +687,9 @@ static void *pico_thread_func(void *)
     	pico_stack_init();
     	pico_stack_inited = true;
 #if _WIN32
-		static WSADATA wsaData;
-		if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
-			printf("WSAStartup failed\n");
+    	static WSADATA wsaData;
+    	if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
+	    printf("WSAStartup failed\n");
 #endif
     }
 

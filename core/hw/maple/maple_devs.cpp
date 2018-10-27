@@ -986,7 +986,7 @@ struct maple_microphone: maple_base
 
 struct maple_sega_purupuru : maple_base
 {
-   u16 AST, AST_ms;
+   u16 AST = 19, AST_ms = 5000;
    u32 VIBSET;
 
    virtual MapleDeviceType get_device_type()
@@ -1083,7 +1083,7 @@ struct maple_sega_purupuru : maple_base
 
             VIBSET = *(u32*)&dma_buffer_in[4];
             //Do the rumble thing!
-            config->SetVibration(VIBSET);
+            config->SetVibration(VIBSET, AST_ms);
 
             return MDRS_DeviceReply;
 

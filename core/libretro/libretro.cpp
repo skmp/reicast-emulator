@@ -2,6 +2,9 @@
 #include <cstdarg>
 #include <math.h>
 #include "types.h"
+#ifndef _WIN32
+#include <sys/time.h>
+#endif
 
 #include <sys/stat.h>
 #include <retro_stat.h>
@@ -66,6 +69,9 @@ extern f32 mo_y_delta[4];
 extern f32 mo_wheel_delta[4];
 
 bool enable_purupuru = true;
+static u32 vib_stop_time[4];
+static double vib_strength[4];
+static double vib_delta[4];
 
 static bool first_run = true;
 
@@ -1701,6 +1707,37 @@ void os_CreateWindow()
    // Nothing to do here
 }
 
+static uint32_t get_time_ms()
+{
+#ifdef _WIN32
+#if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
+  #define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
+#else
+  #define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL
+#endif
+
+   FILETIME ft;
+   unsigned __int64 tmpres = 0;
+
+   GetSystemTimeAsFileTime(&ft);
+
+   tmpres |= ft.dwHighDateTime;
+   tmpres <<= 32;
+   tmpres |= ft.dwLowDateTime;
+
+   tmpres /= 10;  /*convert into microseconds*/
+   /*converting file time to unix epoch*/
+   tmpres -= DELTA_EPOCH_IN_MICROSECS;
+
+   return (uint32_t)(tmpres / 1000);	// milliseconds
+#else
+   struct timeval t;
+   gettimeofday(&t, NULL);
+
+   return (uint32_t)((t.tv_sec * 1000) + (t.tv_usec / 1000));
+#endif
+}
+
 static void get_analog_stick( retro_input_state_t input_state_cb,
                        int player_index,
                        int stick,
@@ -1939,6 +1976,19 @@ void UpdateInputState(u32 port)
       UpdateInputStateNaomi(3);
       return;
    }
+   if (rumble.set_rumble_state != NULL && vib_stop_time[port] > 0)
+   {
+	  if (get_time_ms() >= vib_stop_time[port])
+	  {
+		 vib_stop_time[port] = 0;
+		 rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, 0);
+	  }
+	  else if (vib_delta[port] > 0.0)
+	  {
+		 u32 rem_time = vib_stop_time[port] - get_time_ms();
+		 rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, 65535 * vib_strength[port] * rem_time * vib_delta[port]);
+	  }
+   }
 
    static const uint16_t joymap[] =
    {
@@ -2081,24 +2131,34 @@ void UpdateInputState(u32 port)
    }
 }
 
-void UpdateVibration(u32 port, u32 value)
+void UpdateVibration(u32 port, u32 value, u32 max_duration)
 {
    if (!rumble.set_rumble_state)
       return;
 
-   u8 POW_POS = (value >> 8) & 0x3;
-   u8 POW_NEG = (value >> 12) & 0x3;
+   u8 POW_POS = (value >> 8) & 0x7;
+   u8 POW_NEG = (value >> 12) & 0x7;
    u8 FREQ = (value >> 16) & 0xFF;
+   s16 INC = (value >> 24) & 0xFF;
+   if (value & 0x8000)			// INH
+	  INC = -INC;
+   else if (!(value & 0x0800))	// EXH
+	  INC = 0;
+   bool CNT = value & 1;
 
-   double pow = (POW_POS + POW_NEG) / 7.0;
-   double pow_l = pow * (0x3B - FREQ) / 17.0;
-   double pow_r = pow * (FREQ - 0x07) / 15.0;
+   double pow = min((POW_POS + POW_NEG) / 7.0, 1.0);
+   vib_strength[port] = pow;
 
-   if (pow_l > 1.0) pow_l = 1.0;
-   if (pow_r > 1.0) pow_r = 1.0;
+   rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, (u16)(65535 * pow));
 
-   rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, (u16)(65535 * pow_l));
-   rumble.set_rumble_state(port, RETRO_RUMBLE_WEAK,   (u16)(65535 * pow_r));
+   if (FREQ > 0 && (!CNT || INC))
+	  vib_stop_time[port] = get_time_ms() + min(1000 * (INC ? abs(INC) * max(POW_POS, POW_NEG) : 1) / FREQ, (int)max_duration);
+   else
+	  vib_stop_time[port] = get_time_ms() + max_duration;
+   if (INC == 0 || pow == 0)
+	  vib_delta[port] = 0.0;
+   else
+	  vib_delta[port] = FREQ / (1000.0 * INC * max(POW_POS, POW_NEG));
 }
 
 extern u8 kb_shift; 		// shift keys pressed (bitmask)

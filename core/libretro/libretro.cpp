@@ -15,7 +15,7 @@
 #include "../hw/sh4/sh4_mem.h"
 #include "../hw/sh4/sh4_sched.h"
 #include "keyboard_map.h"
-#include "../hw/maple/maple_devs.h"
+#include "../hw/maple/maple_cfg.h"
 #include "../hw/pvr/spg.h"
 
 #if defined(_XBOX) || defined(_WIN32)
@@ -1657,13 +1657,18 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 		 break;
 	  }
    }
-   //TODO
    if (rumble.set_rumble_state)
    {
       rumble.set_rumble_state(in_port, RETRO_RUMBLE_STRONG, 0);
       rumble.set_rumble_state(in_port, RETRO_RUMBLE_WEAK,   0);
    }
    set_input_descriptors();
+
+   if (!emu_in_thread)
+   {
+	  mcfg_DestroyDevices();
+	  mcfg_CreateDevices();
+   }
 }
 
 

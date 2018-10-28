@@ -73,7 +73,9 @@ void CCN_CCR_write(u32 addr, u32 value)
 #ifndef NDEBUG
 		printf("Sh4: i-cache invalidation %08X\n",curr_pc);
 #endif
-		sh4_cpu.ResetCache();
+		// Shikigami No Shiro II sets ICI frequently
+		// No reason to flush the dynarec cache for this
+		//sh4_cpu.ResetCache();
 	}
 
 	temp.ICI=0;

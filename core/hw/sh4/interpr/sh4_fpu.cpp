@@ -8,7 +8,7 @@
 #include "../sh4_rom.h"
 
 #include "hw/sh4/sh4_mem.h"
-
+#include "oslib/logging.h"
 
 #define sh4op(str) void DYNACALL str (u32 op)
 #define GetN(str)     ((str>>8) & 0xf)
@@ -56,17 +56,17 @@ INLINE void Denorm32(float &value)
 		if (IS_DENORMAL(v) && (*v&0x7fFFFFFF)!=0)
 		{
 			*v&=0x80000000;
-			//printf("Denormal ..\n");
+			//LOG_D("sh4_fpu", "Denormal ..\n");
 		}
 		if ((*v<=0x007FFFFF) && *v>0)
 		{
 			*v=0;
-			printf("Fixed +denorm\n");
+			LOG_D("sh4_fpu", "Fixed +denorm\n");
 		}
 		else if ((*v<=0x807FFFFF) && *v>0x80000000)
 		{
 			*v=0x80000000;
-			printf("Fixed -denorm\n");
+			LOG_D("sh4_fpu", "Fixed -denorm\n");
 		}
 	}
 }
@@ -682,7 +682,7 @@ sh4op(i1111_nn01_1111_1101)
 	XF[1] XF[5] XF[9] XF[13]  *	FR[n+1] -> FR[n+1]
 	XF[2] XF[6] XF[10] XF[14]   FR[n+2]    FR[n+2]
 	XF[3] XF[7] XF[11] XF[15]   FR[n+3]    FR[n+3]
-	
+
 	gota love linear algebra !
 	*/
 
@@ -733,6 +733,6 @@ sh4op(i1111_nn01_1111_1101)
 
 void iNimp(const char*str)
 {
-	printf("Unimplemented sh4 FPU instruction: %s\n", str);
+	LOG_W("sh4_fpu", "Unimplemented sh4 FPU instruction: %s\n", str);
 	//Sh4_int_Stop();
 }

@@ -3,7 +3,7 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_core.h"
 #include "types.h"
-
+#include "oslib/logging.h"
 
 #include "hw/mem/_vmem.h"
 
@@ -18,16 +18,16 @@ u32 sq_remap[64];
 
 //Sync memory mapping to MMU , suspend compiled blocks if needed.entry is a UTLB entry # , -1 is for full sync
 bool UTLB_Sync(u32 entry)
-{	
+{
 	if ((UTLB[entry].Address.VPN & (0xFC000000 >> 10)) == (0xE0000000 >> 10))
 	{
 		u32 vpn_sq = ((UTLB[entry].Address.VPN & 0x7FFFF) >> 10) & 0x3F;//upper bits are always known [0xE0/E1/E2/E3]
 		sq_remap[vpn_sq] = UTLB[entry].Data.PPN << 10;
-		printf("SQ remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
+		LOG_D("MMU", "SQ remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
 	}
 	else
 	{
-		printf("MEM remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
+		LOG_D("MMU", "MEM remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
 	}
 
 	return true;
@@ -35,7 +35,7 @@ bool UTLB_Sync(u32 entry)
 //Sync memory mapping to MMU, suspend compiled blocks if needed.entry is a ITLB entry # , -1 is for full sync
 void ITLB_Sync(u32 entry)
 {
-	printf("ITLB MEM remap %d : 0x%X to 0x%X\n",entry,ITLB[entry].Address.VPN<<10,ITLB[entry].Data.PPN<<10);
+	LOG_D("MMU", "ITLB MEM remap %d : 0x%X to 0x%X\n",entry,ITLB[entry].Address.VPN<<10,ITLB[entry].Data.PPN<<10);
 }
 
 void MMU_init()
@@ -71,8 +71,8 @@ defining NO_MMU disables the full mmu emulation
 
 #include "hw/mem/_vmem.h"
 
-#define printf_mmu(...)
-#define printf_win32(...)
+#define LOG_MMU(...)
+#define LOG_WIN32(...)
 
 //SQ fast remap , mailny hackish , assumes 1 mb pages
 //max 64 mb can be remapped on SQ
@@ -113,7 +113,7 @@ u32 ITLB_LRU_USE[64];
 //sync mem mapping to mmu , suspend compiled blocks if needed.entry is a UTLB entry # , -1 is for full sync
 bool UTLB_Sync(u32 entry)
 {
-	printf_mmu("UTLB MEM remap %d : 0x%X to 0x%X : %d\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10, UTLB[entry].Data.V);
+	LOG_MMU("UTLB MEM remap %d : 0x%X to 0x%X : %d\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10, UTLB[entry].Data.V);
 	if (UTLB[entry].Data.V == 0)
 		return true;
 
@@ -122,7 +122,7 @@ bool UTLB_Sync(u32 entry)
 #ifdef NO_MMU
 		u32 vpn_sq = ((UTLB[entry].Address.VPN & (0x3FFFFFF >> 10)) >> 10) & 0x3F;//upper bits are allways known [0xE0/E1/E2/E3]
 		sq_remap[vpn_sq] = UTLB[entry].Data.PPN << 10;
-		log("SQ remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
+		LOG_MMU("SQ remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
 #endif
 		return true;
 	}
@@ -131,10 +131,10 @@ bool UTLB_Sync(u32 entry)
 #ifdef NO_MMU
 		if ((UTLB[entry].Address.VPN&(0x1FFFFFFF >> 10)) == (UTLB[entry].Data.PPN&(0x1FFFFFFF >> 10)))
 		{
-			log("Static remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
+			LOG_MMU("Static remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
 			return true;
 		}
-		log("Dynamic remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
+		LOG_MMU("Dynamic remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
 #endif
 		return false;//log("MEM remap %d : 0x%X to 0x%X\n",entry,UTLB[entry].Address.VPN<<10,UTLB[entry].Data.PPN<<10);
 	}
@@ -142,7 +142,7 @@ bool UTLB_Sync(u32 entry)
 //sync mem mapping to mmu , suspend compiled blocks if needed.entry is a ITLB entry # , -1 is for full sync
 void ITLB_Sync(u32 entry)
 {
-	printf_mmu("ITLB MEM remap %d : 0x%X to 0x%X : %d\n", entry, ITLB[entry].Address.VPN << 10, ITLB[entry].Data.PPN << 10, ITLB[entry].Data.V);
+	LOG_MMU("ITLB MEM remap %d : 0x%X to 0x%X : %d\n", entry, ITLB[entry].Address.VPN << 10, ITLB[entry].Data.PPN << 10, ITLB[entry].Data.V);
 }
 
 void RaiseException(u32 expEvnt, u32 callVect) {
@@ -157,7 +157,7 @@ void RaiseException(u32 expEvnt, u32 callVect) {
 u32 mmu_error_TT;
 void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 {
-	printf_mmu("mmu_raise_exeption -> pc = 0x%X : ", next_pc);
+	LOG_MMU("mmu_raise_exeption -> pc = 0x%X : ", next_pc);
 	CCN_TEA = address;
 	CCN_PTEH.VPN = address >> 10;
 
@@ -168,13 +168,13 @@ void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 	{
 		//No error
 	case MMU_ERROR_NONE:
-		printf("Error : mmu_raise_exeption(MMU_ERROR_NONE)\n");
+		LOG_E("MMU", "mmu_raise_exeption(MMU_ERROR_NONE)\n");
 		getc(stdin);
 		break;
 
 		//TLB miss
 	case MMU_ERROR_TLB_MISS:
-		printf_mmu("MMU_ERROR_UTLB_MISS 0x%X, handled\n", address);
+		LOG_MMU("MMU_ERROR_UTLB_MISS 0x%X, handled\n", address);
 		if (am == MMU_TT_DWRITE)			//WTLBMISS - Write Data TLB Miss Exception
 			RaiseException(0x60, 0x400);
 		else if (am == MMU_TT_DREAD)		//RTLBMISS - Read Data TLB Miss Exception
@@ -187,12 +187,12 @@ void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 
 		//TLB Multyhit
 	case MMU_ERROR_TLB_MHIT:
-		printf("MMU_ERROR_TLB_MHIT @ 0x%X\n", address);
+		LOG_E("MMU", "MMU_ERROR_TLB_MHIT @ 0x%X\n", address);
 		break;
 
 		//Mem is read/write protected (depends on translation type)
 	case MMU_ERROR_PROTECTED:
-		printf_mmu("MMU_ERROR_PROTECTED 0x%X, handled\n", address);
+		LOG_MMU("MMU_ERROR_PROTECTED 0x%X, handled\n", address);
 		if (am == MMU_TT_DWRITE)			//WRITEPROT - Write Data TLB Protection Violation Exception
 			RaiseException(0xC0, 0x100);
 		else if (am == MMU_TT_DREAD)		//READPROT - Data TLB Protection Violation Exception
@@ -206,7 +206,7 @@ void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 
 		//Mem is write protected , firstwrite
 	case MMU_ERROR_FIRSTWRITE:
-		printf_mmu("MMU_ERROR_FIRSTWRITE\n");
+		LOG_MMU("MMU_ERROR_FIRSTWRITE\n");
 		verify(am == MMU_TT_DWRITE);
 		//FIRSTWRITE - Initial Page Write Exception
 		RaiseException(0x80, 0x100);
@@ -222,17 +222,17 @@ void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 			RaiseException(0xE0, 0x100);
 		else							//IADDERR - Instruction Address Error
 		{
-			printf_mmu("MMU_ERROR_BADADDR(i) 0x%X\n", address);
+			LOG_MMU("MMU_ERROR_BADADDR(i) 0x%X\n", address);
 			RaiseException(0xE0, 0x100);
 			return;
 		}
-		printf_mmu("MMU_ERROR_BADADDR(d) 0x%X, handled\n", address);
+		LOG_MMU("MMU_ERROR_BADADDR(d) 0x%X, handled\n", address);
 		return;
 		break;
 
 		//Can't Execute
 	case MMU_ERROR_EXECPROT:
-		printf("MMU_ERROR_EXECPROT 0x%X\n", address);
+		LOG_E("MMU", "MMU_ERROR_EXECPROT 0x%X\n", address);
 
 		//EXECPROT - Instruction TLB Protection Violation Exception
 		RaiseException(0xA0, 0x100);

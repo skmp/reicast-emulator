@@ -1,5 +1,7 @@
 #include <GL3/gl3w.h>
 
+#include "oslib/logging.h"
+
 #if defined(USE_SDL)
 	#include <SDL2/SDL.h>
 	static void open_libgl(void)
@@ -115,7 +117,7 @@ static int parse_version(void)
 	glGetIntegerv(GL_MAJOR_VERSION, &version.major);
 	glGetIntegerv(GL_MINOR_VERSION, &version.minor);
 
-	printf("GL context version: %d.%d\n", version.major, version.minor);
+	LOG_I("Khronos GL3", "GL context version: %d.%d\n", version.major, version.minor);
 	if (version.major < 3)
 		return -1;
 	return 0;

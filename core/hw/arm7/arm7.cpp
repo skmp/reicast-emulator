@@ -1,6 +1,6 @@
 ﻿#include "arm7.h"
 #include "arm_mem.h"
-
+#include "oslib/logging.h"
 
 #include <map>
 
@@ -8,9 +8,9 @@
 #define C_CORE
 
 #if 0
-	#define arm_printf printf
+	#define ARM_LOG LOG_D
 #else
-	void arm_printf(...) { }
+	void ARM_LOG(...) { }
 #endif
 
 //#define CPUReadHalfWordQuick(addr) arm_ReadMem16(addr & 0x7FFFFF)
@@ -80,7 +80,7 @@ typedef union
 		u8 B2;
 		u8 B3;
 	} B;
-	
+
 	struct
 	{
 		u16 W0;
@@ -310,7 +310,7 @@ void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
 			reg[17].I = reg[SPSR_UND].I;
 		break;
 	default:
-		printf("Unsupported ARM mode %02x\n", mode);
+		LOG_E("arm7", "Unsupported ARM mode %02x\n", mode);
 		die("Arm error..");
 		break;
 	}
@@ -347,7 +347,7 @@ void CPUUpdateCPSR()
 		CPSR.I |= 0x80;
 
 	CPSR.PSR.M=armMode;
-	
+
 	reg[16].I = CPSR.I;
 }
 
@@ -376,7 +376,7 @@ void CPUSoftwareInterrupt(int comment)
 	CPUSwitchMode(0x13, true, false);
 	reg[14].I = PC;
 //	reg[15].I = 0x08;
-	
+
 	armIrqEnable = false;
 	armNextPC = 0x08;
 //	reg[15].I += 4;
@@ -384,14 +384,14 @@ void CPUSoftwareInterrupt(int comment)
 
 void CPUUndefinedException()
 {
-	printf("arm7: CPUUndefinedException(). SOMETHING WENT WRONG\n");
+	LOG_E("arm7 ", "CPUUndefinedException(). SOMETHING WENT WRONG\n");
 	u32 PC = reg[R15_ARM_NEXT].I+4;
 	CPUSwitchMode(0x1b, true, false);
 	reg[14].I = PC;
 //	reg[15].I = 0x04;
 	armIrqEnable = false;
 	armNextPC = 0x04;
-//	reg[15].I += 4;  
+//	reg[15].I += 4;
 }
 
 void FlushCache();
@@ -412,7 +412,7 @@ void arm_Reset()
 	reg[16].I = 0x00000000;
 	reg[R13_IRQ].I = 0x03007FA0;
 	reg[R13_SVC].I = 0x03007FE0;
-	armIrqEnable = true;      
+	armIrqEnable = true;
 	armFiqEnable = false;
 	update_armintc();
 
@@ -472,7 +472,7 @@ void CPUFiq()
 
 /*
 	--Seems like aica has 3 interrupt controllers actualy (damn lazy sega ..)
-	The "normal" one (the one that exists on scsp) , one to emulate the 68k intc , and , 
+	The "normal" one (the one that exists on scsp) , one to emulate the 68k intc , and ,
 	of course , the arm7 one
 
 	The output of the sci* bits is input to the e68k , and the output of e68k is inputed into the FIQ
@@ -485,7 +485,7 @@ void arm_SetEnabled(bool enabled)
 {
 	if(!Arm7Enabled && enabled)
 			arm_Reset();
-	
+
 	Arm7Enabled=enabled;
 }
 
@@ -515,7 +515,7 @@ void update_armintc()
 void libAICA_TimeStep();
 
 #if FEAT_AREC == DYNAREC_NONE
-void arm_Run(u32 CycleCount) { 
+void arm_Run(u32 CycleCount) {
 	for (int i=0;i<32;i++)
 	{
 		arm_Run_(CycleCount/32);
@@ -534,7 +534,7 @@ extern "C" void CompileCode();
 			rd=rv;
 			if (set_flags)
 				PSR=(rd==pc?CPSR:flags);
-		
+
 		(mem ops)
 		Writes of R15:
 			R15+12
@@ -557,7 +557,7 @@ extern "C" void CompileCode();
 
 		if (pc settting opcode)
 			lookup again using armNextPC
-			
+
 
 		PC setting opcodes
 			ALU with write to PC
@@ -641,7 +641,7 @@ enum OpFlags
 
 		 Phase #3:
 			Move LDM/STM to templates
-			
+
 
 */
 
@@ -653,7 +653,7 @@ void AddDPOP(u32 subcd, u32 rflags, u32 wflags)
 	u32 mask=(15<<21) | (7<<25);
 
 	op.flags=rflags|wflags;
-	
+
 	if (wflags==DP_W_F)
 	{
 		//also match S bit for opcodes that must write to flags (CMP & co)
@@ -671,7 +671,7 @@ void AddDPOP(u32 subcd, u32 rflags, u32 wflags)
 	op.mask = mask | (1<<4) | (1<<7);
 	ops.push_back(op);
 
-	//imm8r4 form (bit 25=1) 
+	//imm8r4 form (bit 25=1)
 	op.key =  key  | (1<<25);
 	op.mask = mask;
 	ops.push_back(op);
@@ -683,7 +683,7 @@ void InitHash()
 		COND | 00 I OP1  S Rn Rd OPER2 -- Data opcode, PSR xfer
 		Data processing opcodes
 	*/
-		 
+
 	//AND   0000        Rn, OPER2, {Flags}    Rd, {Flags}
 	//EOR   0001        Rn, OPER2, {Flags}    Rd, {Flags}
 	//SUB   0010        Rn, OPER2, {Flags}    Rd, {Flags}
@@ -698,7 +698,7 @@ void InitHash()
 	AddDPOP(4,DP_R_ROFC, DP_W_RFC);
 	AddDPOP(12,DP_R_ROFC, DP_W_RFC);
 	AddDPOP(14,DP_R_ROFC, DP_W_RFC);
-	
+
 	//ADC   0101        Rn, OPER2, Flags      Rd, {Flags}
 	//SBC   0110        Rn, OPER2, Flags      Rd, {Flags}
 	//RSC   0111        Rn, OPER2, Flags      Rd, {Flags}
@@ -715,7 +715,7 @@ void InitHash()
 	//CMN   1011 S=1    Rn, OPER2             Flags
 	AddDPOP(10,DP_R_ROF, DP_W_F);
 	AddDPOP(11,DP_R_ROF, DP_W_F);
-	
+
 	//MOV   1101        OPER2, {Flags}        Rd, {Flags}
 	//MVN   1111        OPER2, {Flags}        Rd, {Flags}
 	AddDPOP(13,DP_R_OFC, DP_W_RFC);
@@ -726,7 +726,7 @@ void InitHash()
 
 
 /*
- *	
+ *
  *	X86 Compiler
  *
  */
@@ -840,7 +840,7 @@ u32 findfirstset(u32 v)
 #endif
 
 #if 0
-//LDM isn't perf. citrical, and as a result, not implemented fully. 
+//LDM isn't perf. citrical, and as a result, not implemented fully.
 //So this code is disabled
 //mask is *2
 template<u32 I>
@@ -883,7 +883,7 @@ void* GetMemOp(bool L, bool B)
 	}
 }
 
-//Decodes an opcode, returns type. 
+//Decodes an opcode, returns type.
 //opcd might be changed (currently for LDM/STM -> LDR/STR transforms)
 OpType DecodeOpcode(u32& opcd,u32& flags)
 {
@@ -903,11 +903,11 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 	//Opcode sets pc ?
 	bool _set_pc=
 		(CHK_BTS(3,26,0) && CHK_BTS(15,12,15))             || //Data processing w/ Rd=PC
-		(CHK_BTS(3,26,1) && CHK_BTS(15,12,15) && IS_LOAD ) || //LDR/STR w/ Rd=PC 
-		(CHK_BTS(7,25,4) && (opcd & 32768) &&  IS_LOAD)    || //LDM/STM w/ PC in list	
+		(CHK_BTS(3,26,1) && CHK_BTS(15,12,15) && IS_LOAD ) || //LDR/STR w/ Rd=PC
+		(CHK_BTS(7,25,4) && (opcd & 32768) &&  IS_LOAD)    || //LDM/STM w/ PC in list
 		CHK_BTS(7,25,5)                                    || //B or BL
 		CHK_BTS(15,24,15);                                    //SWI
-	
+
 	//NV condition means VFP on newer cores, let interpreter handle it...
 	if (CC==15)
 		return VOT_Fallback;
@@ -1032,7 +1032,7 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 	//Lets try mem opcodes since its not data processing
 
 
-	
+
 	/*
 		Lets Check LDR/STR !
 
@@ -1045,14 +1045,14 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 
 			Everything else handled
 		*/
-		arm_printf("ARM: MEM %08X L/S:%d, AWB:%d!\n",opcd,(opcd>>20)&1,(opcd>>21)&1);
+		ARM_LOG("arm7", "MEM %08X L/S:%d, AWB:%d!\n",opcd,(opcd>>20)&1,(opcd>>21)&1);
 
 		return VOT_Read;
 	}
 	else if ((opcd>>25)==(0xE6/2) && CHK_BTS(0x7,4,0) )
 	{
-		arm_printf("ARM: MEM REG to Reg %08X\n",opcd);
-		
+		ARM_LOG("arm7", "MEM REG to Reg %08X\n",opcd);
+
 		/*
 			I=1
 
@@ -1068,7 +1068,7 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 		//L=1
 		//W=1
 		//S=0
-		
+
 		u32 old_opcd=opcd;
 
 		//One register xfered
@@ -1098,7 +1098,7 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 		//Offset
 		opcd |= 4;
 
-		arm_printf("ARM: MEM TFX R %08X\n",opcd);
+		ARM_LOG("arm7", "MEM TFX R %08X\n",opcd);
 
 		return VOT_Read;
 	}
@@ -1110,7 +1110,7 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 		//L=1
 		//W=1
 		//S=0
-		
+
 		u32 old_opcd=opcd;
 
 		//One register xfered
@@ -1140,7 +1140,7 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 		//Offset
 		opcd |= 4;
 
-		arm_printf("ARM: MEM TFX W %08X\n",opcd);
+		ARM_LOG("arm7", "MEM TFX W %08X\n",opcd);
 
 		return VOT_Read;
 	}
@@ -1154,12 +1154,12 @@ OpType DecodeOpcode(u32& opcd,u32& flags)
 	}
 	else if ((opcd>>25)==(0xE8/2) && CHK_BTS(32768,0,0))
 	{
-		arm_printf("ARM: MEM FB %08X\n",opcd);
+		ARM_LOG("arm7", "MEM FB %08X\n",opcd);
 		flags|=OP_MFB; //(flag Just for the fallback counters)
 	}
 	else
 	{
-		arm_printf("ARM: FB %08X\n",opcd);
+		ARM_LOG("arm7", "FB %08X\n",opcd);
 	}
 
 	//by default fallback to interpr
@@ -1279,7 +1279,7 @@ void VirtualizeOpcode(u32 opcd,u32 flag,u32 pc)
 
 	//Opcode has been modified to use the new regs
 	//Emit it ...
-	arm_printf("Arm Virtual: %08X -> %08X\n",orig,opcd);
+	ARM_LOG("arm7", "Arm Virtual: %08X -> %08X\n",orig,opcd);
 	armEmit32(opcd);
 
 	//Store arm flags, rd12/rd16 (as indicated by the decoder flags)
@@ -1318,7 +1318,7 @@ u32 nfb,ffb,bfb,mfb;
  * Emulated arm fallbacks (using the aica arm interpreter)
  *
  * The goal is to run as much code possible under the varm interpreter
- * so it will run on arm w/o changes. A few opcodes are missing from varm 
+ * so it will run on arm w/o changes. A few opcodes are missing from varm
  * (MOV32 is a notable case) and as such i've added a few varm_* hooks
  *
  * This code also performs a LOT of compiletime and runtime state/value sanity checks.
@@ -1354,7 +1354,7 @@ void DumpRegs(const char* output)
 
 void DYNACALL PrintOp(u32 opcd)
 {
-	printf("%08X\n",opcd);
+	LOG_V("arm7", "%08X\n",opcd);
 }
 
 void armv_imm_to_reg(u32 regn, u32 imm)
@@ -1383,10 +1383,10 @@ void armv_setup()
 	x86e->x86_size=1024*64;
 	x86e->do_realloc=false;
 
-	
+
 	//load base reg ..
 	x86e->Emit(op_mov32,&virt_arm_reg(8),(u32)&arm_Reg[0]);
-	
+
 	//the "end" label is used to exit from the block, if a code modification (expected opcode // actual opcode in ram) is detected
 	end_lbl=x86e->CreateLabel(false,0);
 }
@@ -1528,7 +1528,7 @@ void  armEmit32(u32 emit32)
 	if (icPtr >= (ICache+ICacheSize-1024))
 		die("ICache is full, invalidate old entries ...");	//ifdebug
 
-	*(u32*)icPtr = emit32;  
+	*(u32*)icPtr = emit32;
 	icPtr+=4;
 }
 
@@ -1614,7 +1614,7 @@ void armv_MOV32(eReg regn, u32 imm)
 	No sanity checks on arm ..
 */
 
-#endif	// HOST_CPU 
+#endif	// HOST_CPU
 
 //Run a timeslice for ARMREC
 //CycleCount is pretty much fixed to (512*32) for now (might change to a diff constant, but will be constant)
@@ -1643,7 +1643,7 @@ void arm_Run(u32 CycleCount)
 
 		//lookup code at armNextPC, run a block & remove its cycles from the timeslice
 		clktks-=EntryPoints[(armNextPC & ARAM_MASK)/4]();
-		
+
 		#if HOST_CPU==CPU_X86
 			verify(armNextPC<=ARAM_MASK);
 		#endif
@@ -1702,7 +1702,7 @@ void DYNACALL MSR_do(u32 v)
 	else
 	{
 		CPUUpdateCPSR();
-	
+
 		u32 newValue = reg[16].I;
 		if(armMode > 0x10)
 		{
@@ -1782,7 +1782,7 @@ extern "C" void CompileCode()
 #endif
 			}
 			break;
-		
+
 		case VOT_BR:
 			{
 				//Branch to reg
@@ -1840,10 +1840,10 @@ extern "C" void CompileCode()
 				u32 offs=opcd&4095;
 				bool U=opcd&(1<<23);
 				bool Pre=opcd&(1<<24);
-				
+
 				bool W=opcd&(1<<21);
 				bool I=opcd&(1<<25);
-				
+
 				u32 Rn=(opcd>>16)&15;
 				u32 Rd=(opcd>>12)&15;
 
@@ -1893,9 +1893,9 @@ extern "C" void CompileCode()
 					{
 						addr+=U?offs:-offs;
 					}
-					
+
 					armv_MOV32(r0,addr);
-					
+
 					if (Pre && I==true)
 					{
 						MemOperand2(r1,I,U,offs,opcd);
@@ -1929,7 +1929,7 @@ extern "C" void CompileCode()
 						StoreReg(r0,Rd);
 					}
 				}
-				
+
 				//Write back from AGU, if any
 				if (DoWB)
 				{
@@ -1978,7 +1978,7 @@ extern "C" void CompileCode()
 		case VOT_LDM:
 			{
 				//P=0, U=1, S=0, L=1, W=1
-				
+
 				u32 Rn=(opcd>>16)&15;
 				u32 RList=opcd&0xFFFF;
 				u32 tsz=(cpuBitsSet[RList & 255] + cpuBitsSet[(RList >> 8) & 255]);
@@ -1989,12 +1989,12 @@ extern "C" void CompileCode()
 				verify(CHK_BTS(1,21,1)); //W=1
 				verify(CHK_BTS(1,20,1)); //L=0
 
-				
+
 				//if (tsz!=1)
 				//	goto FALLBACK;
 
 				bool _W=true; //w=1
-				
+
 
 				if (RList & (1<<Rn))
 					_W=false;
@@ -2016,7 +2016,7 @@ extern "C" void CompileCode()
 			}
 			break;
 			*/
-			
+
 		case VOT_Fallback:
 			{
 				//interpreter fallback
@@ -2067,7 +2067,7 @@ extern "C" void CompileCode()
 		if (op_flags & OP_SETS_PC)
 		{
 			//x86e->Emit(op_call,x86_ptr_imm(DumpRegs)); // great debugging tool
-			arm_printf("ARM: %06X: Block End %d\n",pc,ops);
+			ARM_LOG("arm7", "%06X: Block End %d\n",pc,ops);
 
 #if HOST_CPU==CPU_X86 && 0
 			//Great fallback finder, also spams console
@@ -2083,12 +2083,12 @@ extern "C" void CompileCode()
 		//block size limit ?
 		if (ops>32)
 		{
-			arm_printf("ARM: %06X: Block split %d\n",pc,ops);
+			ARM_LOG("arm7", "%06X: Block split %d\n",pc,ops);
 
 			armv_imm_to_reg(R15_ARM_NEXT,pc+4);
 			break;
 		}
-		
+
 		//Goto next opcode
 		pc+=4;
 	}
@@ -2154,7 +2154,7 @@ void armt_init()
 	VirtualProtect(ICache,ICacheSize,PAGE_EXECUTE_READWRITE,&old);
 #elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
 
-	printf("\n\t ARM7_TCB addr: %p | from: %p | addr here: %p\n", ICache, ARM7_TCB, armt_init);
+	LOG_D("arm7", "\n\t ARM7_TCB addr: %p | from: %p | addr here: %p\n", ICache, ARM7_TCB, armt_init);
 
 	if (mprotect(ICache, ICacheSize, PROT_EXEC|PROT_READ|PROT_WRITE))
 	{

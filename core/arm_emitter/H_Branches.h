@@ -1,6 +1,6 @@
 /*
- *	H_Branches.h
- *
+ *	H_Branches.h:
+ *  What's it doing mr. Willy Wonka?
  *
  */
 #pragma once
@@ -27,13 +27,13 @@ namespace ARM
 		snat lit = Literal(FnAddr);
 
 		if(0==lit) {
-			printf("Error, Compiler caught NULL literal, CALL(%08X)\n", FnAddr);
+			LOG_E("arm_emitter", "Compiler caught NULL literal, CALL(%08X)\n", FnAddr);
 			verify(false);
 			return;
 		}
 		if( (lit<-33554432) || (lit>33554428) )     // ..28 for BL ..30 for BLX
 		{
-			printf("Warning, CALL(%08X) is out of range for literal(%08X)\n", FnAddr, lit);
+			LOG_W("arm_emitter", "CALL(%08X) is out of range for literal(%08X)\n", FnAddr, lit);
 			// verify(false);
 
 			MOV32(IP, FnAddr, CC);
@@ -55,18 +55,18 @@ namespace ARM
 	{
         bool isThumb = FnAddr & 1;
         FnAddr &= ~1;
-        
+
         verify(!isThumb);
 		snat lit = Literal(FnAddr);
 
 		/*if(0==lit) {
-			printf("Error, Compiler caught NULL literal, JUMP(%08X)\n", FnAddr);
+			LOG_E("arm_emitter", "Compiler caught NULL literal, JUMP(%08X)\n", FnAddr);
 			verify(false);
 			return;
 		}*/
 		if( (lit<-33554432) || (lit>33554428) )     // ..28 for BL ..30 for BLX
 		{
-			printf("Warning, %X is out of range for imm jump! \n", FnAddr);
+			LOG_W("arm_emitter", "%X is out of range for imm jump! \n", FnAddr);
 			//verify(false);
 
 			MOV32(IP, FnAddr, CC);

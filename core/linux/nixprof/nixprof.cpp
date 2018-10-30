@@ -1,5 +1,5 @@
 #include "types.h"
-
+#include "oslib/logging.h"
 #if FEAT_HAS_NIXPROF
 #include "cfg/cfg.h"
 
@@ -39,14 +39,14 @@
 
 #include "linux/context.h"
 
-/** 
-@file      CallStack_Android.h 
-@brief     Getting the callstack under Android 
-@author    Peter Holtwick 
-*/ 
-#include <unwind.h> 
-#include <stdio.h> 
-#include <string.h> 
+/**
+@file      CallStack_Android.h
+@brief     Getting the callstack under Android
+@author    Peter Holtwick
+*/
+#include <unwind.h>
+#include <stdio.h>
+#include <string.h>
 
 static int tick_count=0;
 static pthread_t proft;
@@ -67,7 +67,7 @@ void prof_handler (int sn, siginfo_t * si, void *ctxr)
 {
 	rei_host_context_t ctx;
 	context_from_segfault(&ctx, ctxr);
-	
+
 	int thd=-1;
 	if (pthread_self()==thread[0]) thd=0;
 	else if (pthread_self()==thread[1]) thd=1;
@@ -104,17 +104,17 @@ static void elf_syms(FILE* out,const char* libfile)
 {
 	struct stat statbuf;
 
-	printf("LIBFILE \"%s\"\n", libfile);
+	LOG_I("nixprof", "LIBFILE \"%s\"\n", libfile);
 	int fd = open(libfile, O_RDONLY, 0);
 
 	if (!fd)
 	{
-		printf("Failed to open file \"%s\"\n", libfile);
+		LOG_E("nixprof", "Failed to open file \"%s\"\n", libfile);
 		return;
 	}
 	if (fstat(fd, &statbuf) < 0)
 	{
-		printf("Failed to fstat file \"%s\"\n", libfile);
+		LOG_E("nixprof", "Failed to fstat file \"%s\"\n", libfile);
 		return;
 	}
 
@@ -124,11 +124,11 @@ static void elf_syms(FILE* out,const char* libfile)
 
 		if (data == (void*)-1)
 		{
-			printf("Failed to mmap file \"%s\"\n", libfile);
+			LOG_E("nixprof", "Failed to mmap file \"%s\"\n", libfile);
 			return;
 		}
 
-		//printf("MMap: %08p, %08X\n",data,statbuf.st_size);
+		//LOG_D("nixprof", "MMap: %08p, %08X\n", data,statbuf.st_size);
 
 		int dynsym=-1;
 		int dynstr=-1;
@@ -145,13 +145,13 @@ static void elf_syms(FILE* out,const char* libfile)
 				uint64_t section_link = elf_getSectionLink(data, si);
 				switch (section_type) {
 				case SHT_DYNSYM:
-					fprintf(stderr, "DYNSYM");
+					LOG_E("nixprof", "DYNSYM");
 					dynsym = si;
 					if (section_link < scnt)
 						dynstr = section_link;
 					break;
 				case SHT_SYMTAB:
-					fprintf(stderr, "SYMTAB");
+					LOG_E("nixprof", "SYMTAB");
 					symtab = si;
 					if (section_link < scnt)
 						strtab = section_link;
@@ -163,7 +163,7 @@ static void elf_syms(FILE* out,const char* libfile)
 		}
 		else
 		{
-			printf("Invalid elf file\n");
+			LOG_E("nixprof", "Invalid elf file\n");
 		}
 
 		// Use SHT_SYMTAB if available insteaf of SHT_DYNSYM
@@ -177,7 +177,7 @@ static void elf_syms(FILE* out,const char* libfile)
 		if (dynsym >= 0)
 		{
 			prof_head(out,"libsym",libfile);
-			// printf("Found dymsym %d, and dynstr %d!\n",dynsym,dynstr);
+			// LOG_D("nixprof", "Found DYNSYM %d, and DYNSTR %d!\n", dynsym, dynstr);
 			elf_symbol* sym=(elf_symbol*)elf_getSection(data,dynsym);
 			elf64_symbol* sym64 = (elf64_symbol*) sym;
 
@@ -195,16 +195,17 @@ static void elf_syms(FILE* out,const char* libfile)
 				if (st_type == STT_FUNC && st_value && st_name && st_shndx)
 				{
 					char* name=(char*)elf_getSection(data,dynstr);// sym[i].st_shndx
-					// printf("Symbol %d: %s, %08" PRIx64 ", % " PRIi64 " bytes\n",
+					// LOG_D("nixprof", "Symbol %d: %s, %08" PRIx64 ", % " PRIi64 " bytes\n",
 						// i, name + st_name, st_value, st_size);
+
 					//PRIx64 & friends not in android ndk (yet?)
-					fprintf(out,"%08x %d %s\n", (int)st_value, (int)st_size, name + st_name);
+					fprintf(out, "%08x %d %s\n", (int)st_value, (int)st_size, name + st_name);
 				}
 			}
 		}
 		else
 		{
-			printf("No dynsym\n");
+			LOG_I("nixprof", "NO DYNSYM\n");
 		}
 
 		munmap(data,statbuf.st_size);
@@ -240,12 +241,12 @@ static void* profiler_main(void *ptr)
 		string logfile=get_writable_data_path(line);
 
 
-		printf("Profiler thread logging to -> %s\n", logfile.c_str());
+		LOG_D("nixprof", "Profiler thread logging to -> %s\n", logfile.c_str());
 
 		prof_out = fopen(logfile.c_str(), "wb");
 		if (!prof_out)
 		{
-			printf("Failed to open profiler file\n");
+			LOG_E("nixprof", "Failed to Open Profiler file\n");
 			return 0;
 		}
 
@@ -280,7 +281,7 @@ static void* profiler_main(void *ptr)
 
 		//Write shrec syms file !
 		prof_head(prof_out, "jitsym", "SH4");
-		
+
 		#if FEAT_SHREC != DYNAREC_NONE
 		sh4_jitsym(prof_out);
 		#endif
@@ -293,23 +294,23 @@ static void* profiler_main(void *ptr)
 		do
 		{
 			tick_count++;
-			// printf("Sending SIGPROF %08X %08X\n",thread[0],thread[1]);
+			// LOG_E("nixprof", "Sending SIGPROF %08X %08X\n",thread[0],thread[1]);
 			for (int i = 0; i < 2; i++) pthread_kill(thread[i], SIGPROF);
-			// printf("Sent SIGPROF\n");
+			// LOG_E("nixprof", "Sent SIGPROF\n");
 			usleep(prof_wait);
 			// fwrite(&prof_address[0],1,sizeof(prof_address[0])*2,prof_out);
 			fprintf(prof_out, "%p %p\n", prof_address[0], prof_address[1]);
 
 			if (!(tick_count % 10000))
 			{
-				printf("Profiler: %d ticks, flushing ..\n", tick_count);
+				LOG_D("nixprof", "Profiler: %d ticks, flushing ..\n", tick_count);
 				fflush(prof_out);
 			}
 		} while (prof_run);
 
 		fclose(maps);
 		fclose(prof_out);
-    
+
     return 0;
 }
 
@@ -328,7 +329,7 @@ void sample_Start(int freq)
 	if (prof_run)
 		return;
 	prof_wait = 1000000 / freq;
-	printf("sampling profiler: starting %d Hz %d wait\n", freq, prof_wait);
+	LOG_D("nixprof", "Sampling Profiler: starting %d Hz %d wait\n", freq, prof_wait);
 	prof_run = true;
 	pthread_create(&proft, NULL, profiler_main, 0);
 }
@@ -340,6 +341,6 @@ void sample_Stop()
 		prof_run = false;
 		pthread_join(proft, NULL);
 	}
-	printf("sampling profiler: stopped\n");
+	LOG_D("nixprof", "Sampling Profiler: Stopped!\n");
 }
 #endif

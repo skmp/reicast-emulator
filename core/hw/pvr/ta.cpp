@@ -1,6 +1,8 @@
 #include "ta.h"
 #include "ta_ctx.h"
 
+#include "oslib/logging.h"
+
 extern u32 ta_type_lut[256];
 
 /*
@@ -53,7 +55,7 @@ enum ta_state
 
 	               // -> TAS_NS, TAS_PLV32, TAS_PLHV32, TAS_PLV64, TAS_PLHV64
 	TAS_PLV32,     //polygon list PMV<?>, V32
-	
+
 	               // -> TAS_NS, TAS_PLV32, TAS_PLHV32, TAS_PLV64, TAS_PLHV64
 	TAS_PLV64,     //polygon list PMV<?>, V64
 
@@ -155,7 +157,7 @@ void fill_fsm()
 					fill_fsm(TAS_PLV32,i,k,nxt,0,p64);
 					fill_fsm(TAS_PLV64,i,k,nxt,0,p64);
 				}
-				
+
 
 				//32B command, no state change
 				fill_fsm(TAS_MLV64,i,-1,TAS_MLV64);
@@ -219,11 +221,11 @@ NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 
 	u32 cmd = trans>>4;
 	trans&=7;
-	//printf("Process state transition: %d || %d -> %d \n",cmd,state_in,trans&0xF);
+	//LOG_D("pvr", "Process state transition: %d || %d -> %d \n", cmd, state_in, trans & 0xF);
 
 	if (cmd == 8)
 	{
-		//printf("Invalid TA Param %d\n", dat->pcw.ParaType);
+		//LOG_E("pvr", "Invalid TA Param %d\n", dat->pcw.ParaType);
 	}
 	else
 	{
@@ -231,7 +233,7 @@ NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 		{
 			if (ta_fsm_cl==7)
 				ta_fsm_cl=dat->pcw.ListType;
-			//printf("List %d ended\n",ta_fsm_cl);
+			//LOG_d("pvr", "List %d ended\n", ta_fsm_cl);
 
 			if (ta_fsm_cl==ListType_Translucent)
 			{
@@ -296,7 +298,7 @@ void DYNACALL ta_thd_data32_i(void* data)
 {
 	if (ta_ctx == NULL)
 	{
-		printf("Warning: data sent to TA prior to ListInit. Implied\n");
+		LOG_W("pvr", "Data sent to TA prior to ListInit. Implied\n");
 		ta_vtx_ListInit();
 	}
 
@@ -305,7 +307,7 @@ void DYNACALL ta_thd_data32_i(void* data)
 
 	// First byte is PCW
 	PCW pcw = *(PCW*)data;
-	
+
 	// Copy the TA data
 	*dst = *src;
 

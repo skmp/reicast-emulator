@@ -5,14 +5,7 @@
 #include "maple_cfg.h"
 #include <time.h>
 
-#if _ANDROID
-#include <android/log.h>
-#include <jni.h>
-#else
-#define LOGW printf
-#define LOGI printf
-#endif
-
+#include "oslib/logging.h"
 #include "deps/zlib/zlib.h"
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
@@ -162,7 +155,7 @@ struct maple_sega_controller: maple_base
 {
 	virtual u32 dma(u32 cmd)
 	{
-		//printf("maple_sega_controller::dma Called 0x%X;Command %d\n",device_instance->port,Command);
+		//LOG_V("maple_sega_controller_dma", "Called 0x%X;Command %d\n", device_instance->port, Command);
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
@@ -232,7 +225,7 @@ struct maple_sega_controller: maple_base
 		return MDRS_DataTransfer;
 
 		default:
-			//printf("UNKOWN MAPLE COMMAND %d\n",cmd);
+			LOG_W("maple_devs", "UNKOWN MAPLE COMMAND %d\n", cmd);
 			return MDRE_UnknownFunction;
 		}
 	}
@@ -275,7 +268,7 @@ struct maple_sega_vmu: maple_base
 	// creates an empty VMU
 	bool init_emptyvmu()
 	{
-		printf("Initialising empty VMU...\n");
+		LOG_I("maple_dega_vmu", "Initialising empty VMU...\n");
 
 		uLongf dec_sz = sizeof(flash_data);
 		int rv = uncompress(flash_data, &dec_sz, vmu_default, sizeof(vmu_default));
@@ -297,24 +290,24 @@ struct maple_sega_vmu: maple_base
 		file = fopen(apath.c_str(), "rb+");
 		if (!file)
 		{
-			printf("Unable to open VMU save file \"%s\", creating new file\n",apath.c_str());
+			LOG_I("maple_sega_vmu", "Unable to open VMU save file \"%s\", creating new file\n", apath.c_str());
 			file = fopen(apath.c_str(), "wb");
 			if (file) {
 				if (!init_emptyvmu())
-					printf("Failed to initialize an empty VMU, you should reformat it using the BIOS\n");
+					LOG_W("maple_sega_vmu", "Failed to initialize an empty VMU, you should reformat it using the BIOS\n");
 
 				fwrite(flash_data, sizeof(flash_data), 1, file);
 				fseek(file, 0, SEEK_SET);
 			}
 			else
 			{
-				printf("Unable to create VMU!\n");
+				LOG_E("maple_sega_vmu", "Unable to create VMU!\n");
 			}
 		}
 
 		if (!file)
 		{
-			printf("Failed to create VMU save file \"%s\"\n",apath.c_str());
+			LOG_E("maple_sega_vmu", "Failed to create VMU save file \"%s\"\n",apath.c_str());
 		}
 		else
 		{
@@ -338,12 +331,12 @@ struct maple_sega_vmu: maple_base
 					fseek(file, 0, SEEK_SET);
 				}
 				else {
-					printf("Unable to create VMU!\n");
+					LOG_E("maple_sega_vmu", "Unable to create VMU!\n");
 				}
 			}
 			else
 			{
-				printf("Failed to initialize an empty VMU, you should reformat it using the BIOS\n");
+				LOG_I("maple_sega_vmu", "Failed to initialize an empty VMU, you should reformat it using the BIOS\n");
 			}
 		}
 
@@ -354,7 +347,7 @@ struct maple_sega_vmu: maple_base
 	}
 	virtual u32 dma(u32 cmd)
 	{
-		//printf("maple_sega_vmu::dma Called for port 0x%X, Command %d\n",device_instance->port,Command);
+		//LOG_D("maple_sega_vmu::dma", "Called for port 0x%X, Command %d\n",device_instance->port,Command);
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
@@ -432,7 +425,7 @@ struct maple_sega_vmu: maple_base
 						u32 pt=r32();
 						if (pt!=0)
 						{
-							printf("VMU: MDCF_GetMediaInfo -> bad input |%08X|, returning MDRE_UnknownCmd\n",pt);
+							LOG_W("VMU", "MDCF_GetMediaInfo -> bad input |%08X|, returning MDRE_UnknownCmd\n",pt);
 							return MDRE_UnknownCmd;
 						}
 						else
@@ -450,7 +443,7 @@ struct maple_sega_vmu: maple_base
 					break;
 
 				default:
-					printf("VMU: MDCF_GetMediaInfo -> Bad function used |%08X|, returning -2\n",function);
+					LOG_W("VMU", "MDCF_GetMediaInfo -> Bad function used |%08X|, returning -2\n",function);
 					return MDRE_UnknownFunction;//bad function
 				}
 			}
@@ -468,11 +461,11 @@ struct maple_sega_vmu: maple_base
 						u32 Block = (SWAP32(xo))&0xffff;
 						w32(xo);
 
-						if (Block>255)
+						if (Block > 255)
 						{
-							printf("Block read : %d\n",Block);
-							printf("BLOCK READ ERROR\n");
-							Block&=255;
+							LOG_W("maple_devs", "Block read : %d\n", Block);
+							LOG_E("maple_devs", "BLOCK READ ERROR\n");
+							Block &= 255;
 						}
 						wptr(flash_data+Block*512,512);
 
@@ -494,7 +487,7 @@ struct maple_sega_vmu: maple_base
 					{
 						if (r32()!=0)
 						{
-							printf("VMU: Block read: MFID_3_Clock : invalid params \n");
+							LOG_D("VMU", "Block read: MFID_3_Clock : invalid params \n");
 							return MDRE_TransminAgain; //invalid params
 						}
 						else
@@ -518,7 +511,7 @@ struct maple_sega_vmu: maple_base
 							w8(timenow->tm_sec);
 							w8(0);
 
-							printf("VMU: CLOCK Read-> datetime is %04d/%02d/%02d ~ %02d:%02d:%02d!\n",timebuf[0]+timebuf[1]*256,timebuf[2],timebuf[3],timebuf[4],timebuf[5],timebuf[6]);
+							LOG_I("VMU", "CLOCK Read-> datetime is %04d/%02d/%02d ~ %02d:%02d:%02d!\n",timebuf[0]+timebuf[1]*256,timebuf[2],timebuf[3],timebuf[4],timebuf[5],timebuf[6]);
 
 							return MDRS_DataTransfer;//transfer reply ...
 						}
@@ -526,7 +519,7 @@ struct maple_sega_vmu: maple_base
 					break;
 
 				default:
-					printf("VMU: cmd MDCF_BlockRead -> Bad function |%08X| used, returning -2\n",function);
+					LOG_W("VMU", "cmd MDCF_BlockRead -> Bad function |%08X| used, returning -2\n",function);
 					return MDRE_UnknownFunction;//bad function
 				}
 			}
@@ -553,7 +546,7 @@ struct maple_sega_vmu: maple_base
 						}
 						else
 						{
-							printf("Failed to save VMU %s data\n",logical_port);
+							LOG_W("maple_devs", "Failed to save VMU %s data\n",logical_port);
 						}
 						return MDRS_DeviceReply;//just ko
 					}
@@ -646,7 +639,7 @@ struct maple_sega_vmu: maple_base
 						{
 							u8 timebuf[8];
 							rptr(timebuf,8);
-							printf("VMU: CLOCK Write-> datetime is %04d/%02d/%02d ~ %02d:%02d:%02d! Nothing set tho ...\n",timebuf[0]+timebuf[1]*256,timebuf[2],timebuf[3],timebuf[4],timebuf[5],timebuf[6]);
+							LOG_I("VMU", "CLOCK Write-> datetime is %04d/%02d/%02d ~ %02d:%02d:%02d! Nothing set tho ...\n",timebuf[0]+timebuf[1]*256,timebuf[2],timebuf[3],timebuf[4],timebuf[5],timebuf[6]);
 							return  MDRS_DeviceReply;//ok !
 						}
 					}
@@ -654,7 +647,7 @@ struct maple_sega_vmu: maple_base
 
 					default:
 					{
-						printf("VMU: command MDCF_BlockWrite -> Bad function used, returning MDRE_UnknownFunction\n");
+						LOG_E("VMU", "command MDCF_BlockWrite -> Bad function used, returning MDRE_UnknownFunction\n");
 						return  MDRE_UnknownFunction;//bad function
 					}
 				}
@@ -673,7 +666,7 @@ struct maple_sega_vmu: maple_base
 						u32 bp=r32();
 						if (bp)
 						{
-							printf("BEEP : %08X\n",bp);
+							LOG_V("maple_devs", "BEEP : %08X\n", bp);
 						}
 						return  MDRS_DeviceReply;//just ko
 					}
@@ -681,7 +674,7 @@ struct maple_sega_vmu: maple_base
 
 				default:
 					{
-						printf("VMU: command MDCF_SetCondition -> Bad function used, returning MDRE_UnknownFunction\n");
+						LOG_E("VMU", "command MDCF_SetCondition -> Bad function used, returning MDRE_UnknownFunction\n");
 						return MDRE_UnknownFunction;//bad function
 					}
 					break;
@@ -690,7 +683,7 @@ struct maple_sega_vmu: maple_base
 
 
 		default:
-			//printf("Unknown MAPLE COMMAND %d\n",cmd);
+			//LOG_W("maple_devs", "Unknown MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -708,13 +701,13 @@ struct maple_microphone: maple_base
 
 	virtual u32 dma(u32 cmd)
 	{
-		//printf("maple_microphone::dma Called 0x%X;Command %d\n",this->maple_port,cmd);
-		//LOGD("maple_microphone::dma Called 0x%X;Command %d\n",this->maple_port,cmd);
+		//LOG_D("maple_microphone_dma", "Called 0x%X;Command %d\n",this->maple_port,cmd);
+		//LOG_D("maple_microphone_dma", "Called 0x%X;Command %d\n",this->maple_port,cmd);
 
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
-			LOGI("maple_microphone::dma MDC_DeviceRequest");
+			LOG_I("maple_microphone_dma", "MDC_DeviceRequest");
 			//this was copied from the controller case with just the id and name replaced!
 
 			//caps
@@ -749,7 +742,7 @@ struct maple_microphone: maple_base
 
 		case MDCF_GetCondition:
 			{
-				LOGI("maple_microphone::dma MDCF_GetCondition");
+				LOG_I("maple_microphone_dma", "MDCF_GetCondition");
 				//this was copied from the controller case with just the id replaced!
 
 				//PlainJoystickState pjs;
@@ -786,16 +779,16 @@ struct maple_microphone: maple_base
 
 		case MDC_DeviceReset:
 			//uhhh do nothing?
-			LOGI("maple_microphone::dma MDC_DeviceReset");
+			LOG_I("maple_microphone_dma", "MDC_DeviceReset");
 			return MDRS_DeviceReply;
 
 		case MDCF_MICControl:
 		{
-			//LOGD("maple_microphone::dma handling MDCF_MICControl %d\n",cmd);
+			//LOG_D("maple_microphone_dma", "handling MDCF_MICControl %d\n",cmd);
 			//MONEY
 			u32 function=r32();
-			//LOGD("maple_microphone::dma MDCF_MICControl function (1st word) %#010x\n", function);
-			//LOGD("maple_microphone::dma MDCF_MICControl words: %d\n", dma_count_in);
+			//LOG_D("maple_microphone_dma", "MDCF_MICControl function (1st word) %#010x\n", function);
+			//LOG_D("maple_microphone_dma", "MDCF_MICControl words: %d\n", dma_count_in);
 
 			switch(function)
 			{
@@ -815,17 +808,17 @@ struct maple_microphone: maple_base
 				 *
 				 */
 				u32 secondword=r32();
-				//LOGD("maple_microphone::dma MDCF_MICControl subcommand (2nd word) %#010x\n", subcommand);
+				//LOG_D("maple_microphone_dma", "MDCF_MICControl subcommand (2nd word) %#010x\n", subcommand);
 
 				u32 subcommand = secondword & 0xFF; //just get last byte for now, deal with params later
 
-				//LOGD("maple_microphone::dma MDCF_MICControl (3rd word) %#010x\n", r32());
-				//LOGD("maple_microphone::dma MDCF_MICControl (4th word) %#010x\n", r32());
+				//LOG_D("maple_microphone_dma", "MDCF_MICControl (3rd word) %#010x\n", r32());
+				//LOG_D("maple_microphone_dma", "MDCF_MICControl (4th word) %#010x\n", r32());
 				switch(subcommand)
 				{
 				case 0x01:
 				{
-					//LOGI("maple_microphone::dma MDCF_MICControl someone wants some data! (2nd word) %#010x\n", secondword);
+					//LOG_I("maple_microphone_dma", "MDCF_MICControl someone wants some data! (2nd word) %#010x\n", secondword);
 
 					w32(MFID_4_Mic);
 
@@ -849,29 +842,29 @@ struct maple_microphone: maple_base
 					return MDRS_DataTransfer;
 				}
 				case 0x02:
-					LOGI("maple_microphone::dma MDCF_MICControl toggle recording %#010x\n",secondword);
+					LOG_I("maple_microphone_dma", "MDCF_MICControl toggle recording %#010x\n",secondword);
 					return MDRS_DeviceReply;
 				case 0x03:
-					LOGI("maple_microphone::dma MDCF_MICControl set gain %#010x\n",secondword);
+					LOG_I("maple_microphone_dma", "MDCF_MICControl set gain %#010x\n",secondword);
 					return MDRS_DeviceReply;
 				case MDRE_TransminAgain:
-					LOGW("maple_microphone::dma MDCF_MICControl MDRE_TransminAgain");
+					LOG_W("maple_microphone_dma", "MDCF_MICControl MDRE_TransminAgain");
 					//apparently this doesnt matter
 					//wptr(micdata, SIZE_OF_MIC_DATA);
 					return MDRS_DeviceReply;//MDRS_DataTransfer;
 				default:
-					LOGW("maple_microphone::dma UNHANDLED secondword %#010x\n",secondword);
+					LOG_W("maple_microphone_dma", "UNHANDLED secondword %#010x\n",secondword);
 					break;
 				}
 			}
 			default:
-				LOGW("maple_microphone::dma UNHANDLED function %#010x\n",function);
+				LOG_W("maple_microphone_dma", "UNHANDLED function %#010x\n",function);
 				break;
 			}
 		}
 
 		default:
-			LOGW("maple_microphone::dma UNHANDLED MAPLE COMMAND %d\n",cmd);
+			LOG_W("maple_microphone_dma", "UNHANDLED MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownFunction;
 		}
 	}
@@ -963,7 +956,7 @@ struct maple_sega_purupuru : maple_base
 			return MDRS_DeviceReply;
 
 		default:
-			//printf("UNKOWN MAPLE COMMAND %d\n",cmd);
+			LOG_W("maple_devs", "UNKNOWN MAPLE COMMAND %d\n",cmd);
 			return MDRE_UnknownFunction;
 		}
 	}
@@ -1007,17 +1000,16 @@ enum NAOMI_KEYS
 
 void printState(u32 cmd, u32* buffer_in, u32 buffer_in_len)
 {
-	printf("Command : 0x%X", cmd);
+	LOG_V("maple_devs", "Command : 0x%X\n", cmd);
 	if (buffer_in_len>0)
-		printf(",Data : %d bytes\n", buffer_in_len);
-	else
-		printf("\n");
+		LOG_V("maple_devs", "Data : %d bytes\n", buffer_in_len);
+
 	buffer_in_len >>= 2;
 	while (buffer_in_len-->0)
 	{
-		printf("%08X ", *buffer_in++);
+		LOG_V("maple_devs", "%08X ", *buffer_in++);
 		if (buffer_in_len == 0)
-			printf("\n");
+			LOG_V("maple_devs", "\n");
 	}
 }
 
@@ -1043,7 +1035,7 @@ struct maple_naomi_jamma : maple_sega_controller
 		case 0x86:
 		{
 			u32 subcode = *(u8*)buffer_in;
-			//printf("Naomi 0x86 : %x\n",SubCode);
+			//LOG_D("maple_devs", "Naomi 0x86 : %x\n", SubCode);
 			switch (subcode)
 			{
 			case 0x15:
@@ -1150,7 +1142,7 @@ struct maple_naomi_jamma : maple_sega_controller
 					break;
 
 					default:
-						printf("unknown CAP %X\n", State.Cmd);
+						LOG_W("maple_devs", "unknown CAP %X\n", State.Cmd);
 						return 0;
 					}
 					buffer_out_len = 4 * 4;
@@ -1322,7 +1314,7 @@ struct maple_naomi_jamma : maple_sega_controller
 			{
 				int address = buffer_in_b[1];
 				int size = buffer_in_b[2];
-				//printf("EEprom write %08X %08X\n",address,size);
+				//LOG_D("maple_devs", "EEprom write %08X %08X\n", address, size);
 				//printState(Command,buffer_in,buffer_in_len);
 				memcpy(EEPROM + address, buffer_in_b + 4, size);
 
@@ -1335,7 +1327,7 @@ struct maple_naomi_jamma : maple_sega_controller
 				{
 					fwrite(EEPROM, 1, 0x80, f);
 					fclose(f);
-					wprintf(L"SAVED EEPROM to %s\n", eeprom_file);
+					LOG_I("maple_devs", L"SAVED EEPROM to %s\n", eeprom_file);
 				}
 #endif
 			}
@@ -1354,11 +1346,11 @@ struct maple_naomi_jamma : maple_sega_controller
 					{
 						fread(EEPROM, 1, 0x80, f);
 						fclose(f);
-						wprintf(L"LOADED EEPROM from %s\n", eeprom_file);
+						LOG_I("maple_devs", L"LOADED EEPROM from %s\n", eeprom_file);
 					}
 				}
 #endif
-				//printf("EEprom READ ?\n");
+				//LOG_W("maple_devs", "EEprom READ ?\n");
 				int address = buffer_in_b[1];
 				//printState(Command,buffer_in,buffer_in_len);
 				memcpy(buffer_out, EEPROM + address, 0x80);
@@ -1379,7 +1371,7 @@ struct maple_naomi_jamma : maple_sega_controller
 			//case 0x1:
 			//	break;
 			default:
-				printf("Unknown 0x86 : SubCommand 0x%X - State: Cmd 0x%X Mode :  0x%X Node : 0x%X\n", subcode, State.Cmd, State.Mode, State.Node);
+				LOG_E("maple_devs", "Unknown 0x86 : SubCommand 0x%X - State: Cmd 0x%X Mode :  0x%X Node : 0x%X\n", subcode, State.Cmd, State.Mode, State.Node);
 				printState(cmd, buffer_in, buffer_in_len);
 			}
 
@@ -1401,7 +1393,7 @@ struct maple_naomi_jamma : maple_sega_controller
 
 
 		default:
-			printf("unknown MAPLE Frame\n");
+			LOG_W("maple_devs", "unknown MAPLE Frame\n");
 			//printState(Command, buffer_in, buffer_in_len);
 			break;
 		}

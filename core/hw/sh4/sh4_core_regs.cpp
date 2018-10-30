@@ -5,7 +5,7 @@
 #include "types.h"
 #include "sh4_core.h"
 #include "sh4_interrupts.h"
-
+#include "oslib/logging.h"
 
 Sh4RCB* p_sh4rcb;
 sh4_if  sh4_cpu;
@@ -45,7 +45,7 @@ bool UpdateSR()
 	{
 		if (sr.RB)
 		{
-			printf("UpdateSR MD=0;RB=1 , this must not happen\n");
+			LOG_W("sh4_core_regs", "UpdateSR MD=0;RB=1 , this must not happen\n");
 			sr.RB =0;//error - must always be 0
 			if (old_sr.RB)
 				ChangeGPR();//switch
@@ -72,14 +72,14 @@ void SetFloatStatusReg()
 	{
 		old_rm=fpscr.RM ;
 		old_dn=fpscr.DN ;
-        
+
         //Correct rounding is required by some games (SOTB, etc)
 #if BUILD_COMPILER == COMPILER_VC
         if (fpscr.RM == 1)  //if round to 0 , set the flag
             _controlfp(_RC_CHOP, _MCW_RC);
         else
             _controlfp(_RC_NEAR, _MCW_RC);
-        
+
         if (fpscr.DN)     //denormals are considered 0
             _controlfp(_DN_FLUSH, _MCW_DN);
         else
@@ -101,7 +101,7 @@ void SetFloatStatusReg()
 		unsigned int y = 0x02000000;
 		if (fpscr.RM==1)  //if round to 0 , set the flag
 			y|=3<<22;
-	
+
 		if (fpscr.DN)
 			y|=1<<24;
 
@@ -118,7 +118,7 @@ void SetFloatStatusReg()
 				: "r"(x), "r"(y)
 			);
     #else
-        printf("SetFloatStatusReg: Unsupported platform\n");
+        LOG_E("sh4_core_regs", "SetFloatStatusReg: Unsupported platform\n");
     #endif
 #endif
 
@@ -226,7 +226,7 @@ u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 			return &Sh4cntx.jdyn;
 
 		default:
-			EMUERROR2("Unknown register ID %d",reg);
+			LOG_E("sh4_core_regs", "Unknown register ID %d", reg);
 			die("Invalid reg");
 			return 0;
 			break;

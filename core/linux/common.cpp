@@ -1,5 +1,6 @@
 #include "types.h"
 #include "cfg/cfg.h"
+#include "oslib/logging.h"
 
 #if HOST_OS==OS_LINUX || HOST_OS == OS_DARWIN
 #if HOST_OS == OS_DARWIN
@@ -10,7 +11,7 @@
 #if !defined(TARGET_NACL32)
 #include <poll.h>
 #include <termios.h>
-#endif  
+#endif
 //#include <curses.h>
 #include <fcntl.h>
 #include <semaphore.h>
@@ -38,20 +39,20 @@ bool BM_LockedWrite(u8* address);
 
 #if HOST_OS == OS_DARWIN
 void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
-	
+
     rei_host_context_t ctx;
-    
+
     context_from_segfault(&ctx, segfault_ctx);
 
 	unat pc = (unat)ctx.pc;
 	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE));
-	
-	printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n", pc, pc - (unat)sigill_handler, (unat)si->si_addr, dyna_cde);
-	
-	printf("Entering infiniloop");
+
+	LOG_E("linux", "SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n", pc, pc - (unat)sigill_handler, (unat)si->si_addr, dyna_cde);
+
+	LOG_W("linux", "Entering infiniloop");
 
 	for (;;);
-	printf("PC is used here %08X\n", pc);
+	LOG_I("linux", "PC is used here %08X\n", pc);
 }
 #endif
 
@@ -65,9 +66,9 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	bool dyna_cde = ((unat)ctx.pc>(unat)CodeCache) && ((unat)ctx.pc<(unat)(CodeCache + CODE_SIZE));
 
 	//ucontext_t* ctx=(ucontext_t*)ctxr;
-	//printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,ctx->uc_mcontext.arm_pc,dyna_cde);
+	//LOG_E("linux", "mprot hit @ ptr 0x%08X @@ code: %08X, %d\n", si->si_addr, ctx->uc_mcontext.arm_pc, dyna_cde);
 
-	
+
 	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
 		return;
 	#if FEAT_SHREC == DYNAREC_JIT
@@ -96,7 +97,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	#endif
 	else
 	{
-		printf("SIGSEGV @ %u (fault_handler+0x%u) ... %p -> was not in vram\n", ctx.pc, ctx.pc - (unat)fault_handler, si->si_addr);
+		LOG_E("linux", "SIGSEGV @ %u (fault_handler+0x%u) ... %p -> was not in vram\n", ctx.pc, ctx.pc - (unat)fault_handler, si->si_addr);
 		die("segfault");
 		signal(SIGSEGV, SIG_DFL);
 	}
@@ -116,7 +117,7 @@ void install_fault_handler (void)
 #if HOST_OS == OS_DARWIN
     //this is broken on osx/ios/mach in general
     sigaction(SIGBUS, &act, &segv_oact);
-    
+
     act.sa_sigaction = sigill_handler;
     sigaction(SIGILL, &act, &segv_oact);
 #endif
@@ -193,16 +194,16 @@ void cResetEvent::Wait()//Wait for signal , then reset
 void VArray2::LockRegion(u32 offset,u32 size)
 {
 	#if !defined(TARGET_NO_EXCEPTIONS)
-	u32 inpage=offset & PAGE_MASK;
-	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ );
-	if (rv!=0)
+	u32 inpage = offset & PAGE_MASK;
+	u32 rv = mprotect(data+offset-inpage, size+inpage, PROT_READ );
+	if (rv != 0)
 	{
-		printf("mprotect(%8s,%08X,R) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
-		die("mprotect  failed ..\n");
+		LOG_E("linux", "mprotect(%8s,%08X,R) failed: %d | %d\n", data+offset-inpage, size+inpage, rv, errno);
+		die("mprotect failed ..\n");
 	}
 
 	#else
-		printf("VA2: LockRegion\n");
+		LOG_I("linux", "VA2: LockRegion\n");
 	#endif
 }
 
@@ -215,14 +216,14 @@ void print_mem_addr()
     ifp = fopen("/proc/self/maps", "r");
 
     if (ifp == NULL) {
-        fprintf(stderr, "Can't open input file /proc/self/maps!\n");
+        LOG_E("linux", "Can't open input file /proc/self/maps!\n");
         exit(1);
     }
 
     ofp = fopen(outputFilename, "w");
 
     if (ofp == NULL) {
-        fprintf(stderr, "Can't open output file %s!\n",
+        LOG_E("linux", "Can't open output file %s!\n",
                 outputFilename);
 #if HOST_OS == OS_LINUX
         ofp = stderr;
@@ -249,11 +250,11 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 	if (rv!=0)
 	{
         print_mem_addr();
-		printf("mprotect(%8p,%08X,RW) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
+		LOG_E("linux", "mprotect(%8p,%08X,RW) failed: %d | %d\n", data+offset-inpage, size+inpage, rv, errno);
 		die("mprotect  failed ..\n");
 	}
 	#else
-		printf("VA2: UnLockRegion\n");
+		LOG_I("linux", "VA2: UnLockRegion\n");
 	#endif
 }
 double os_GetSeconds()
@@ -290,15 +291,15 @@ void enable_runfast()
 		: "r"(x), "r"(y)
 	);
 
-	printf("ARM VFP-Run Fast (NFP) enabled !\n");
+	LOG_I("linux", "ARM VFP-Run Fast (NFP) enabled !\n");
 	#endif
 }
 
 void linux_fix_personality() {
         #if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_OS_MAC) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
-          printf("Personality: %08X\n", personality(0xFFFFFFFF));
+          LOG_I("linux", "Personality: %08X\n", personality(0xFFFFFFFF));
           personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
-          printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
+          LOG_I("linux", "Updated personality: %08X\n", personality(0xFFFFFFFF));
         #endif
 }
 
@@ -308,12 +309,12 @@ void linux_rpi2_init() {
 	void (*rpi_bcm_init)(void);
 
 	handle = dlopen("libbcm_host.so", RTLD_LAZY);
-	
+
 	if (handle) {
-		printf("found libbcm_host\n");
+		LOG_I("linux", "Found libbcm_host!\n");
 		*(void**) (&rpi_bcm_init) = dlsym(handle, "bcm_host_init");
 		if (rpi_bcm_init) {
-			printf("rpi2: bcm_init\n");
+			LOG_I("raspberry_pi", "rpi2: bcm_init\n");
 			rpi_bcm_init();
 		}
 	}
@@ -328,10 +329,10 @@ void common_linux_setup()
 	enable_runfast();
 	install_fault_handler();
 	signal(SIGINT, exit);
-	
+
 	settings.profile.run_counts=0;
-	
-	printf("Linux paging: %ld %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
-	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
+
+	LOG_I("linux", "Linux paging: %ld %08X %08X\n", sysconf(_SC_PAGESIZE), PAGE_SIZE, PAGE_MASK);
+	verify(PAGE_MASK == (sysconf(_SC_PAGESIZE) - 1));
 }
 #endif

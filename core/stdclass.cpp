@@ -3,7 +3,7 @@
 #include <sys/stat.h>
 #include "types.h"
 
-#if BUILD_COMPILER==COMPILER_VC
+#if BUILD_COMPILERi == COMPILER_VC
 	#include <io.h>
 	#define access _access
 	#define R_OK   4
@@ -45,7 +45,8 @@ void add_system_data_dir(const string& dir)
 
 string get_writable_config_path(const string& filename)
 {
-	/* Only stuff in the user_config_dir is supposed to be writable,
+	/*
+	 * Only stuff in the user_config_dir is supposed to be writable,
 	 * so we always return that.
 	 */
 	return (user_config_dir + filename);
@@ -68,7 +69,7 @@ string get_readonly_config_path(const string& filename)
 		}
 	}
 
-	// Not found, so we return the user variant
+	/* Not found; so we return the user variant */
 	return user_filepath;
 }
 
@@ -97,14 +98,16 @@ string get_readonly_data_path(const string& filename)
 		}
 	}
 
-	// Not found, so we return the user variant
+	/* Not found; so we return the user variant */
 	return user_filepath;
 }
 
 
 #if 0
-//File Enumeration
-void FindAllFiles(FileFoundCB* callback,wchar* dir,void* param)
+/* File Enumeration */
+// TODO: What's this #if 0 flag?
+
+void FindAllFiles(FileFoundCB* callback, wchar* dir, void* param)
 {
 	WIN32_FIND_DATA FindFileData;
 	HANDLE hFind = INVALID_HANDLE_VALUE;
@@ -112,32 +115,31 @@ void FindAllFiles(FileFoundCB* callback,wchar* dir,void* param)
 	DWORD dwError;
 
 	strncpy (DirSpec, dir, strlen(dir)+1);
-	//strncat (DirSpec, "\\*", 3);
-	
-	hFind = FindFirstFile( DirSpec, &FindFileData);
 
-	if (hFind == INVALID_HANDLE_VALUE) 
+	hFind = FindFirstFile(DirSpec, &FindFileData);
+
+	if (hFind == INVALID_HANDLE_VALUE)
 	{
 		return;
-	} 
-	else 
+	}
+	else
 	{
 
-		if ((FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)==0)
+		if ( (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
 		{
-			callback(FindFileData.cFileName,param);
+			callback(FindFileData.cFileName, param);
 		}
 u32 rv;
-		while ( (rv=FindNextFile(hFind, &FindFileData)) != 0) 
-		{ 
-			if ((FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)==0)
+		while ( (rv = FindNextFile(hFind, &FindFileData)) != 0)
+		{
+			if ( (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
 			{
-				callback(FindFileData.cFileName,param);
+				callback(FindFileData.cFileName, param);
 			}
 		}
 		dwError = GetLastError();
 		FindClose(hFind);
-		if (dwError != ERROR_NO_MORE_FILES) 
+		if (dwError != ERROR_NO_MORE_FILES)
 		{
 			return ;
 		}
@@ -147,10 +149,8 @@ u32 rv;
 #endif
 
 /*
-#include "dc\sh4\rec_v1\compiledblock.h"
-#include "dc\sh4\rec_v1\blockmanager.h"
+TODO: Why are these commented out?
 
 bool VramLockedWrite(u8* address);
 bool RamLockedWrite(u8* address,u32* sp);
-
 */

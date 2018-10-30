@@ -18,6 +18,8 @@
 #include "hw/aica/aica_if.h"
 #include "hw/gdrom/gdrom_if.h"
 
+#include "oslib/logging.h"
+
 #include <time.h>
 #include <float.h>
 
@@ -55,13 +57,13 @@ void emit_WriteCodeCache()
 	wchar path[512];
 	sprintf(path,"/code_cache_%8p.bin",CodeCache);
 	string pt2=get_writable_data_path(path);
-	printf("Writing code cache to %s\n",pt2.c_str());
+	LOG_I("sh4_dyna_driver", "Writing code cache to %s\n", pt2.c_str());
 	FILE*f=fopen(pt2.c_str(),"wb");
 	if (f)
 	{
 		fwrite(CodeCache,LastAddr,1,f);
 		fclose(f);
-		printf("Written!\n");
+		LOG_I("sh4_dyna_driver", "Written!\n");
 	}
 
 	bm_WriteBlockMap(pt2+".map");
@@ -74,20 +76,20 @@ void RASDASD()
 }
 void recSh4_ClearCache()
 {
-	LastAddr=LastAddr_min;
+	LastAddr = LastAddr_min;
 	bm_Reset();
 
-	printf("recSh4:Dynarec Cache clear at %08X\n",curr_pc);
+	LOG_V("sh4_dyna_driver", "Dynarec Cache clear at %08X\n", curr_pc);
 }
 
 void recSh4_Run()
 {
-	sh4_int_bCpuRun=true;
+	sh4_int_bCpuRun = true;
 
-	sh4_dyna_rcb=(u8*)&Sh4cntx + sizeof(Sh4cntx);
-	printf("cntx // fpcb offset: %d // pc offset: %d // pc %08X\n",(u8*)&sh4rcb.fpcb-sh4_dyna_rcb,(u8*)&sh4rcb.cntx.pc-sh4_dyna_rcb,sh4rcb.cntx.pc);
-	
-	verify(rcb_noffs(&next_pc)==-184);
+	sh4_dyna_rcb = (u8*)&Sh4cntx + sizeof(Sh4cntx);
+	LOG_V("sh4_dyna_driver", "cntx // fpcb offset: %d // pc offset: %d // pc %08X\n", (u8*)&sh4rcb.fpcb-sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc-sh4_dyna_rcb, sh4rcb.cntx.pc);
+
+	verify(rcb_noffs(&next_pc) == -184);
 	ngen_mainloop(sh4_dyna_rcb);
 
 #if !defined(TARGET_BOUNDED_EXECUTION)
@@ -135,10 +137,10 @@ bool DoCheck(u32 pc)
 
 			//Shenmue 2
 			case 0x348000:
-				
+
 			//Shenmue
 			case 0x41860e:
-			
+
 
 				return true;
 
@@ -202,10 +204,10 @@ void RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	has_jcond=false;
 	BranchBlock=NextBlock=csc_RetCache=0xFFFFFFFF;
 	BlockType=BET_SCL_Intr;
-	
+
 	addr=rpc;
 	fpu_cfg=rfpu_cfg;
-	
+
 	oplist.clear();
 
 	dec_DecodeBlock(this,SH4_TIMESLICE/2);
@@ -227,7 +229,7 @@ DynarecCodeEntryPtr rdv_CompilePC()
 
 		rbi->Setup(pc,fpscr);
 
-		
+
 		bool do_opts=((rbi->addr&0x3FFFFFFF)>0x0C010100);
 		rbi->staging_runs=do_opts?100:-100;
 		ngen_Compile(rbi,DoCheck(rbi->addr),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
@@ -246,7 +248,7 @@ DynarecCodeEntryPtr rdv_CompilePC()
 
 DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 {
-	//printf("rdv_FailedToFindBlock ~ %08X\n",pc);
+	//LOG_D("sh4_dyna_driver", "rdv_FailedToFindBlock ~ %08X\n", pc);
 	next_pc=pc;
 
 	return rdv_CompilePC();
@@ -290,7 +292,7 @@ DynarecCodeEntryPtr rdv_FindCode()
 	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
 	if (rv==ngen_FailedToFindBlock)
 		return 0;
-	
+
 	return rv;
 }
 
@@ -299,7 +301,7 @@ DynarecCodeEntryPtr rdv_FindOrCompile()
 	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
 	if (rv==ngen_FailedToFindBlock)
 		rv=rdv_CompilePC();
-	
+
 	return rv;
 }
 
@@ -309,10 +311,10 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 
 	if (!rbi)
 	{
-		printf("Stale block ..");
+		LOG_W("sh4_dyna_driver", "Stale block ..");
 		rbi=bm_GetStaleBlock(code);
 	}
-	
+
 	verify(rbi != NULL);
 
 	u32 bcls=BET_GET_CLS(rbi->BlockType);
@@ -372,9 +374,9 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 	}
 	else
 	{
-		printf(" .. null RBI: %08X -- unlinked stale block\n",next_pc);
+		LOG_W("sh4_dyna_driver", " .. null RBI: %08X -- unlinked stale block\n",next_pc);
 	}
-	
+
 	return (void*)rv;
 }
 void recSh4_Stop()
@@ -403,7 +405,7 @@ void recSh4_Reset(bool Manual)
 
 void recSh4_Init()
 {
-	printf("recSh4 Init\n");
+	LOG_I("sh4_dyna_driver", "recSh4 Init\n");
 	Sh4_int_Init();
 	bm_Init();
 	bm_Reset();
@@ -414,11 +416,11 @@ void recSh4_Init()
 
 	verify(rcb_noffs(&p_sh4rcb->cntx.sh4_sched_next) == -152);
 	verify(rcb_noffs(&p_sh4rcb->cntx.interrupt_pend) == -148);
-	
+
 	if (_nvmem_enabled()) {
 		verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));
 	}
-	
+
 #if defined(_WIN64)
 	for (int i = 10; i < 1300; i++) {
 
@@ -444,8 +446,8 @@ void recSh4_Init()
 	DWORD old;
 	VirtualProtect(CodeCache,CODE_SIZE,PAGE_EXECUTE_READWRITE,&old);
 #elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
-	
-	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
+
+	LOG_D("sh4_dyna_driver", "\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
 
 	#if FEAT_SHREC == DYNAREC_JIT
 		if (mprotect(CodeCache, CODE_SIZE, PROT_READ|PROT_WRITE|PROT_EXEC))
@@ -467,7 +469,7 @@ void recSh4_Init()
 
 void recSh4_Term()
 {
-	printf("recSh4 Term\n");
+	LOG_I("sh4_dyna_driver", "recSh4 Term\n");
 	bm_Term();
 	Sh4_int_Term();
 

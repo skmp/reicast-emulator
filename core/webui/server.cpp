@@ -43,6 +43,7 @@
 
 #include "deps/libwebsocket/libwebsockets.h"
 #include "oslib/oslib.h"
+#include "oslib/logging.h"
 
 static int close_testing;
 int max_poll_elements;
@@ -88,7 +89,7 @@ enum demo_protocols {
 struct serveable {
 	const char *urlpath;
 	const char *mimetype;
-}; 
+};
 
 struct per_session_data__http {
 	int fd;
@@ -155,7 +156,7 @@ dump_handshake_info(struct libwebsocket *wsi)
 
 		lws_hdr_copy(wsi, buf, sizeof buf, (lws_token_indexes)n);
 
-		fprintf(stderr, "    %s = %s\n", token_names[n], buf);
+		LOG_E("webui_server", "    %s = %s\n", token_names[n], buf);
 	}
 }
 
@@ -402,7 +403,7 @@ bail:
 		libwebsockets_get_peer_addresses(context, wsi, (int)(long)in, client_name,
 			     sizeof(client_name), client_ip, sizeof(client_ip));
 
-		fprintf(stderr, "Received network connect from %s (%s)\n",
+		LOG_E("webui_server", "Received network connect from %s (%s)\n",
 							client_name, client_ip);
 #endif
 		/* if we returned non-zero from here, we kill the connection */
@@ -524,7 +525,7 @@ callback_dumb_increment(struct libwebsocket_context *context,
 		break;
 
 	case LWS_CALLBACK_RECEIVE:
-//		fprintf(stderr, "rx %d\n", (int)len);
+//		LOG_E("webui_server", "rx %d\n", (int)len);
 		if (len < 6)
 			break;
 		if (strcmp((const char *)in, "reset\n") == 0)
@@ -810,7 +811,7 @@ void webui_start()
 	double old_time = 0;
 
 	while (n >= 0 && !force_exit) {
-		
+
 		double time = os_GetSeconds();
 
 		/*

@@ -11,6 +11,7 @@
 #include "pvr_sb_regs.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "ta.h"
+#include "oslib/logging.h"
 
 void RegWrite_SB_C2DST(u32 addr, u32 data)
 {
@@ -33,13 +34,13 @@ void do_pvr_dma()
 
 	if(0x8201 != (dmaor &DMAOR_MASK))
 	{
-		printf("\n!\tDMAC: DMAOR has invalid settings (%X) !\n", dmaor);
+		LOG_E("pvr_dmac", "DMAOR has invalid settings (%X) !\n", dmaor);
 		return;
 	}
 
 	if (len & 0x1F)
 	{
-		printf("\n!\tDMAC: SB_C2DLEN has invalid size (%X) !\n", len);
+		LOG_E("pvr_dmac", "SB_C2DLEN has invalid size (%X) !\n", len);
 		return;
 	}
 
@@ -140,7 +141,7 @@ void pvr_sb_Init()
 	//0x005F7C18    SB_PDST RW  PVR-DMA start
 	sb_rio_register(SB_PDST_addr,RIO_WF,0,&RegWrite_SB_PDST);
 
-	//0x005F6808    SB_C2DST RW  ch2-DMA start 
+	//0x005F6808    SB_C2DST RW  ch2-DMA start
 	sb_rio_register(SB_C2DST_addr,RIO_WF,0,&RegWrite_SB_C2DST);
 
 	//0x005F6820    SB_SDST RW  Sort-DMA start

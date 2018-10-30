@@ -1,15 +1,13 @@
 /*
-	Command line parsing
-	~yay~
-
-	Nothing too interesting here, really
+	Command line Parsing and Interfacing code
 */
-
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 
 #include "cfg/cfg.h"
+
+#include "oslib/logging.h"
 
 wchar* trim_ws(wchar* str)
 {
@@ -24,7 +22,7 @@ wchar* trim_ws(wchar* str)
 	}
 
 	size_t l=strlen(str);
-	
+
 	if (l==0)
 		return 0;
 
@@ -49,19 +47,19 @@ int setconfig(wchar** arg,int cl)
 	{
 		if (cl<1)
 		{
-			printf("-config : invalid number of parameters, format is section:key=value\n");
+			LOG_W("cfg", "Invalid number of parameters, Format is section:key=value\n");
 			return rv;
 		}
 		wchar* sep=strstr(arg[1],":");
 		if (sep==0)
 		{
-			printf("-config : invalid parameter %s, format is section:key=value\n",arg[1]);
+			LOG_W("cfg", "Invalid parameter %s, Format is section:key=value\n",arg[1]);
 			return rv;
 		}
 		wchar* value=strstr(sep+1,"=");
 		if (value==0)
 		{
-			printf("-config : invalid parameter %s, format is section:key=value\n",arg[1]);
+			LOG_W("cfg", "Invalid parameter %s, format is section:key=value\n",arg[1]);
 			return rv;
 		}
 
@@ -74,14 +72,14 @@ int setconfig(wchar** arg,int cl)
 
 		if (sect==0 || key==0)
 		{
-			printf("-config : invalid parameter, format is section:key=value\n");
+			LOG_W("cfg", "Invalid parameter, Format is section:key=value\n");
 			return rv;
 		}
 
 		const wchar* constval = value;
 		if (constval==0)
 			constval="";
-		printf("Virtual cfg %s:%s=%s\n",sect,key,value);
+		LOG_I("cfg", "Virtual cfg %s:%s=%s\n", sect, key, value);
 
 		cfgSetVirtual(sect,key,value);
 		rv++;
@@ -122,10 +120,10 @@ void cli_pause()
 #endif
 
 #if defined(_WIN32)
-	printf("\nPress a key to exit.\n");
+	LOG_I("cfg", "\nPress a key to exit.\n"); //TODO logging
 	_getch();
 #else
-	printf("\nPress enter to exit.\n");
+	LOG_I("cfg", "\nPress enter to exit.\n"); //TODO logging
 	char c = getchar();
 #endif
 }
@@ -134,6 +132,7 @@ void cli_pause()
 
 int showhelp(wchar** arg,int cl)
 {
+	/* TODO Harry: Rework the cmd help page */
 	printf("\nAvailable commands :\n");
 
 	printf("-config	section:key=value [, ..]: add a virtual config value\n Virtual config values won't be saved to the .cfg file\n unless a different value is written to em\nNote :\n You can specify many settings in the xx:yy=zz , gg:hh=jj , ...\n format.The spaces between the values and ',' are needed.\n");
@@ -147,7 +146,7 @@ int showhelp(wchar** arg,int cl)
 
 int showversion(wchar** arg,int cl)
 {
-	printf("\nReicast Version: # %s built on %s \n", REICAST_VERSION, __DATE__);
+	LOG_I("cfg", "\nReicast Version: # %s built on %s \n", REICAST_VERSION, __DATE__);
 
 	cli_pause();
 	return 0;
@@ -183,23 +182,22 @@ bool ParseCommandLine(int argc,wchar* argv[])
 				&& (stricmp(extension, ".cdi") == 0 || stricmp(extension, ".chd") == 0
 					|| stricmp(extension, ".gdi") == 0 || stricmp(extension, ".lst") == 0))
 			{
-				printf("Using '%s' as cd image\n", *arg);
+				LOG_I("cfg", "Using '%s' as CD Image\n", *arg);
 				cfgSetVirtual("config", "image", *arg);
 			}
 			else if (extension && stricmp(extension, ".elf") == 0)
 			{
-				printf("Using '%s' as reios elf file\n", *arg);
+				LOG_I("cfg", "Using '%s' as reios elf file\n", *arg);
 				cfgSetVirtual("config", "reios.enabled", "1");
 				cfgSetVirtual("reios", "ElfFile", *arg);
 			}
 			else
 			{
-				printf("wtf %s is supposed to do ?\n",*arg);
+				LOG_E("cfg", "WTF %s is supposed to do ?\n", *arg);
 			}
 		}
 		arg++;
 		cl--;
 	}
-	printf("\n");
 	return false;
 }

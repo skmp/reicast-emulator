@@ -1,9 +1,8 @@
-//Bus state controller registers
-
+/* Bus state controller registers */
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
-
 #include "hw/naomi/naomi.h"
+#include "oslib/logging.h"
 
 BSC_PDTRA_type BSC_PDTRA;
 
@@ -14,14 +13,14 @@ void write_BSC_PCTRA(u32 addr, u32 data)
 	#if DC_PLATFORM == DC_PLATFORM_NAOMI
 		NaomiBoardIDWriteControl((u16)data);
 	#else
-	//printf("C:BSC_PCTRA = %08X\n",data);
+	//LOG_D("sh4_module_bsc", "C:BSC_PCTRA = %08X\n", data);
 	#endif
 }
 //u32 port_out_data;
 void write_BSC_PDTRA(u32 addr, u32 data)
 {
 	BSC_PDTRA.full=(u16)data;
-	//printf("D:BSC_PDTRA = %08X\n",data);
+	//LOG_D("sh4_module_bsc", "D:BSC_PDTRA = %08X\n",data);
 
 	#if DC_PLATFORM == DC_PLATFORM_NAOMI
 		NaomiBoardIDWrite((u16)data);
@@ -35,26 +34,26 @@ u32 read_BSC_PDTRA(u32 addr)
 		return NaomiBoardIDRead();
 
 	#else
-	
+
 		/* as seen on chankast */
 		u32 tpctra = BSC_PCTRA.full;
 		u32 tpdtra = BSC_PDTRA.full;
-		
+
 		u32 tfinal=0;
 		// magic values
 		if ((tpctra&0xf) == 0x8)
 			tfinal = 3;
 		else if ((tpctra&0xf) == 0xB)
 			tfinal = 3;
-		else			
+		else
 			tfinal = 0;
 
 		if ((tpctra&0xf) == 0xB && (tpdtra&0xf) == 2)
 			tfinal = 0;
 		else if ((tpctra&0xf) == 0xC && (tpdtra&0xf) == 2)
-			tfinal = 3;      
+			tfinal = 3;
 
-		tfinal |= settings.dreamcast.cable <<8;  
+		tfinal |= settings.dreamcast.cable <<8;
 
 		return tfinal;
 
@@ -113,7 +112,7 @@ void bsc_init()
 	sh4_rio_reg(BSC,BSC_GPIOIC_addr,RIO_DATA,16);
 
 	//note: naomi//aw might depend on rfcr
-	
+
 #if DC_PLATFORM == DC_PLATFORM_NAOMI
 	sh4_rio_reg(BSC, BSC_RFCR_addr, RIO_RO, 16);
 	BSC_RFCR.full = 17;

@@ -1,4 +1,5 @@
 #include "oslib/audiobackend_alsa.h"
+#include "oslib/logging.h"
 #if USE_ALSA
 #include <alsa/asoundlib.h>
 
@@ -27,7 +28,7 @@ static void alsa_init()
 
 	if (rc < 0)
 	{
-		fprintf(stderr, "unable to open PCM device: %s\n", snd_strerror(rc));
+		LOG_E("alsa", "unable to open PCM device: %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -38,7 +39,7 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_any(handle, params);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_any %s\n", snd_strerror(rc));
+		LOG_E("alsa", "snd_pcm_hw_params_any %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -48,7 +49,7 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_set_access(handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_access %s\n", snd_strerror(rc));
+		LOG_E("alsa", "snd_pcm_hw_params_set_access %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -56,7 +57,7 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_set_format(handle, params, SND_PCM_FORMAT_S16_LE);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_format %s\n", snd_strerror(rc));
+		LOG_E("alsa", "snd_pcm_hw_params_set_format %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -64,7 +65,7 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_set_channels(handle, params, 2);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_channels %s\n", snd_strerror(rc));
+		LOG_E("alsa", "snd_pcm_hw_params_set_channels %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -73,7 +74,7 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_set_rate_near(handle, params, &val, &dir);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_rate_near %s\n", snd_strerror(rc));
+		LOG_E("alsa", "snd_pcm_hw_params_set_rate_near %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -82,14 +83,14 @@ static void alsa_init()
 	rc=snd_pcm_hw_params_set_period_size_near(handle, params, &frames, &dir);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
+		LOG_E("alsa", "snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
 		return;
 	}
 	frames*=4;
 	rc=snd_pcm_hw_params_set_buffer_size_near(handle, params, &frames);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
+		LOG_E("alsa", "snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
 		return;
 	}
 
@@ -97,7 +98,7 @@ static void alsa_init()
 	rc = snd_pcm_hw_params(handle, params);
 	if (rc < 0)
 	{
-		fprintf(stderr, "Unable to set hw parameters: %s\n", snd_strerror(rc));
+		LOG_E("alsa", "Unable to set hw parameters: %s\n", snd_strerror(rc));
 		return;
 	}
 }
@@ -110,17 +111,17 @@ static u32 alsa_push(void* frame, u32 samples, bool wait)
 	if (rc == -EPIPE)
 	{
 		/* EPIPE means underrun */
-		fprintf(stderr, "ALSA: underrun occurred\n");
+		LOG_E("alsa", "underrun occurred\n");
 		snd_pcm_prepare(handle);
 		alsa_push(frame, samples * 8, wait);
 	}
 	else if (rc < 0)
 	{
-		fprintf(stderr, "ALSA: error from writei: %s\n", snd_strerror(rc));
+		LOG_E("alsa", "error from writei: %s\n", snd_strerror(rc));
 	}
 	else if (rc != samples)
 	{
-		fprintf(stderr, "ALSA: short write, wrote %d frames of %d\n", rc, samples);
+		LOG_E("alsa", "short write, wrote %d frames of %d\n", rc, samples);
 	}
 	return 1;
 }

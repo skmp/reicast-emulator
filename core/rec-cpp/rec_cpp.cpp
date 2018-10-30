@@ -16,6 +16,7 @@
 #include "emitter/x86_emitter.h"
 #include "profiler/profiler.h"
 #include "oslib/oslib.h"
+#include "oslib/logging.h"
 
 #define SHIL_MODE 2
 #include "hw/sh4/dyna/shil_canonical.h"
@@ -87,7 +88,7 @@ u32* GetRegPtr(u32 reg)
 }
 
 void ngen_blockcheckfail(u32 pc) {
-	printf("REC CPP: SMC invalidation at %08X\n", pc);
+	LOG_W("rec_cpp", "SMC invalidation at %08X\n", pc);
 	rdv_BlockCheckFail(pc);
 }
 
@@ -114,7 +115,7 @@ typedef vector<CC_PS> CC_pars_t;
 struct opcode_cc_aBaCbC {
 	template <typename T>
 	struct opex2 : public opcodeExec  {
-		
+
 		u32 rs2;
 		u32* rs1;
 		u32* rd;
@@ -542,7 +543,7 @@ struct opcode_cc_gHgHfD {
 struct opcode_cc_vV {
 	struct opex : public opcodeExec {
 		void* fn;
-		
+
 		void execute()  {
 			((void(*)())fn)();
 		}
@@ -594,7 +595,7 @@ struct opcode_ifb_pc : public opcodeExec {
 	OpCallFP* oph;
 	u32 pc;
 	u16 opcode;
-	 
+
 	void execute()  {
 		next_pc = pc;
 		oph(opcode);
@@ -628,7 +629,7 @@ struct opcode_jdyn_imm : public opcodeExec {
 struct opcode_mov32 : public opcodeExec {
 	u32* src;
 	u32* dst;
-	
+
 	void execute()  {
 		*dst = *src;
 	}
@@ -769,7 +770,7 @@ struct opcode_blockend : public opcodeExec {
 
 	void execute()  {
 		//do whatever
-		
+
 
 		switch (end_type) {
 
@@ -942,7 +943,7 @@ opcodeExec* createType_fast<OPCODE_CC(sig)>(const CC_pars_t& prms, void* fun, sh
 	typedef OPCODE_CC(sig) CTR; \
 	\
 	static map<void*, opcodeExec* (*)(const CC_pars_t& prms, void* fun)> funsf = {\
-		
+
 #define FAST_gis \
 };\
 	\
@@ -1106,7 +1107,7 @@ opcodeExec* createType(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
 	if (!funs.count(fun)) {
 		funs[fun] = funs_id_count++;
 
-		printf("DEFINE %s: FAST_po(%s)\n", getCTN(&createType<CTR>).c_str(), shil_opcode_name(opcode->op));
+		LOG_D("rec_cpp", "DEFINE %s: FAST_po(%s)\n", getCTN(&createType<CTR>).c_str(), shil_opcode_name(opcode->op));
 	}
 
 	typedef typename CTR::opex thetype;
@@ -1201,7 +1202,7 @@ public:
 	size_t opcode_index;
 	opcodeExec** ptrsg;
 	void compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise) {
-		
+
 		//we need an extra one for the end opcode and optionally one more for block check
 		auto ptrs = fnnCtor_forreal(block->oplist.size() + 1 + (force_checks ? 1 : 0))(block->guest_cycles);
 
@@ -1247,7 +1248,7 @@ public:
 				if (op.rs1.imm_value()) {
 					auto opc = new opcode_ifb_pc();
 					ptrs.ptrs[i] = opc;
-					
+
 					opc->pc = op.rs2.imm_value();
 					opc->opcode = op.rs3.imm_value();
 
@@ -1263,7 +1264,7 @@ public:
 				}
 			}
 			break;
-			
+
 			case shop_jcond:
 			case shop_jdyn:
 			{
@@ -1280,7 +1281,7 @@ public:
 
 					opc->src = op.rs1.reg_ptr();
 				}
-				
+
 			}
 			break;
 
@@ -1290,7 +1291,7 @@ public:
 
 				verify(op.rs1.is_reg() || op.rs1.is_imm());
 
-			
+
 				if (op.rs1.is_imm()) {
 					auto opc = new opcode_mov32_imm();
 					ptrs.ptrs[i] = opc;
@@ -1305,7 +1306,7 @@ public:
 					opc->src = op.rs1.reg_ptr();
 					opc->dst = op.rd.reg_ptr();
 				}
-				
+
 
 			}
 			break;
@@ -1410,7 +1411,7 @@ public:
 			case shop_writem:
 			{
 				u32 size = op.flags & 0x7f;
-				
+
 				if (op.rs1.is_imm()) {
 					verify(op.rs3.is_null());
 					if (size == 1)
@@ -1487,7 +1488,7 @@ public:
 				}
 			}
 			break;
-			
+
 			default:
 				shil_chf[op.op](&op);
 				break;
@@ -1547,12 +1548,12 @@ public:
 		}
 		if (!nm.size())
 			nm = "vV";
-		
+
 		if (unmap.count(nm)) {
 			ptrsg[opcode_index] = unmap[nm](CC_pars, ccfn, op);
 		}
 		else {
-			printf("IMPLEMENT CC_CALL CLASS: %s\n", nm.c_str());
+			LOG_D("rec_cpp", "IMPLEMENT CC_CALL CLASS: %s\n", nm.c_str());
 			ptrsg[opcode_index] = new opcodeDie();
 		}
 	}

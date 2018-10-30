@@ -3,6 +3,7 @@
 #include "pvr_regs.h"
 #include "hw/holly/holly_intc.h"
 #include "oslib/oslib.h"
+#include "oslib/logging.h"
 #include "hw/sh4/sh4_sched.h"
 
 //SPG emulation; Scanline/Raster beam registers & interrupts
@@ -35,15 +36,15 @@ void CalculateSync()
 
 	u32 sync_cycles=(SPG_LOAD.hcount+1)*(SPG_LOAD.vcount+1);
 	pvr_numscanlines=SPG_LOAD.vcount+1;
-	
+
 	Line_Cycles=(u32)((u64)SH4_MAIN_CLOCK*(u64)(SPG_LOAD.hcount+1)/(u64)pixel_clock);
-	
+
 	if (SPG_CONTROL.interlace)
 	{
 		//this is a temp hack
 		Line_Cycles/=2;
 		u32 interl_mode=VO_CONTROL.field_mode;
-		
+
 		//if (interl_mode==2)//3 will be funny =P
 		//  scale_y=0.5f;//single interlace
 		//else
@@ -62,9 +63,9 @@ void CalculateSync()
 	}
 
 	rend_set_fb_scale(scale_x,scale_y);
-	
+
 	//Frame_Cycles=(u64)DCclock*(u64)sync_cycles/(u64)pixel_clock;
-	
+
 	Frame_Cycles=pvr_numscanlines*Line_Cycles;
 	prv_cur_scanline=0;
 
@@ -103,7 +104,7 @@ int spg_line_sched(int tag, int cycl, int jit)
 		prv_cur_scanline=(prv_cur_scanline+1)%pvr_numscanlines;
 		clc_pvr_scanline -= Line_Cycles;
 		//Check for scanline interrupts -- really need to test the scanline values
-		
+
 		if (SPG_VBLANK_INT.vblank_in_interrupt_line_number == prv_cur_scanline)
 			asic_RaiseInterrupt(holly_SCANINT1);
 
@@ -118,7 +119,7 @@ int spg_line_sched(int tag, int cycl, int jit)
 
 		SPG_STATUS.vsync=in_vblank;
 		SPG_STATUS.scanline=prv_cur_scanline;
-		
+
 		//Vblank start -- really need to test the scanline values
 		if (prv_cur_scanline==0)
 		{
@@ -132,7 +133,7 @@ int spg_line_sched(int tag, int cycl, int jit)
 			asic_RaiseInterrupt(holly_HBLank);// -> This turned out to be HBlank btw , needs to be emulated ;(
 			//TODO : rend_if_VBlank();
 			rend_vblank();//notify for vblank :)
-			
+
 			if ((os_GetSeconds()-last_fps)>2)
 			{
 				static int Last_FC;
@@ -182,19 +183,19 @@ int spg_line_sched(int tag, int cycl, int jit)
 				full_rps=(spd_fps+fskip/ts);
 
 				#ifdef TARGET_PANDORA
-				sprintf(fpsStr,"CPU: %4.2f V: %4.2f (%s%s%4.2f) R: %4.2f+%4.2f", 
+				sprintf(fpsStr,"CPU: %4.2f V: %4.2f (%s%s%4.2f) R: %4.2f+%4.2f",
 					spd_cpu*100/200,spd_vbs,
 					mode,res,fullvbs,
 					spd_fps,fskip/ts);
 				#else
-				sprintf(fpsStr,"%s/%c - %4.2f (%4.2f) - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f", 
+				sprintf(fpsStr,"%s/%c - %4.2f (%4.2f) - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f",
 					VER_SHORTNAME,'n',mspdf,speed_load_mspdf,spd_cpu*100/200,spd_vbs,
 					spd_vbs/full_rps,mode,res,fullvbs,
 					spd_fps,fskip/ts
 					, mv, mv_c, mips_counter/ 1024.0 / 1024.0);
 					mips_counter = 0;
 				#endif
-				
+
 				fskip=0;
 				os_SetWindowText(fpsStr);
 

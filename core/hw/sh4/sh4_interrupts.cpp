@@ -173,7 +173,7 @@ bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect)
 
 	next_pc = vbr + CallVect;
 
-	//printf("RaiseException: from %08X , pc errh %08X, %08X vect\n", spc, epc, next_pc);
+	//LOG_E("sh4_interrupt", "RaiseException: from %08X , pc errh %08X, %08X vect\n", spc, epc, next_pc);
 	return true;
 }
 

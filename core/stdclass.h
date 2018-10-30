@@ -4,7 +4,7 @@
 #include <vector>
 #include <string.h>
 
-#if HOST_OS!=OS_WINDOWS
+#if HOST_OS != OS_WINDOWS
 #include <pthread.h>
 #else
 #include <Windows.h>
@@ -20,149 +20,151 @@
 #define PAGE_MASK (PAGE_SIZE-1)
 #endif
 
-//Commonly used classes across the project
-//Simple Array class for helping me out ;P
+/* Commonly used classes across the project */
+
 template<class T>
 class Array
 {
-public:
-	T* data;
-	u32 Size;
+	/* Simple Array implementation */
+	public:
+		T* data;
+		u32 Size;
 
-	Array(T* Source,u32 ellements)
-	{
-		//initialise array
-		data=Source;
-		Size=ellements;
-	}
-
-	Array(u32 ellements)
-	{
-		//initialise array
-		data=0;
-		Resize(ellements,false);
-		Size=ellements;
-	}
-
-	Array(u32 ellements,bool zero)
-	{
-		//initialise array
-		data=0;
-		Resize(ellements,zero);
-		Size=ellements;
-	}
-
-	Array()
-	{
-		//initialise array
-		data=0;
-		Size=0;
-	}
-
-	~Array()
-	{
-		if  (data)
+		Array(T* Source, u32 elements)
 		{
-			#ifdef MEM_ALLOC_TRACE
-			printf("WARNING : DESTRUCTOR WITH NON FREED ARRAY [arrayid:%d]\n",id);
-			#endif
-			Free();
+			/* Initialise array */
+			data = Source;
+			Size = elements;
 		}
-	}
 
-	void SetPtr(T* Source,u32 ellements)
-	{
-		//initialise array
-		Free();
-		data=Source;
-		Size=ellements;
-	}
-
-	T* Resize(u32 size,bool bZero)
-	{
-		if (size==0)
+		Array(u32 elements)
 		{
-			if (data)
+			/* Initialise array */
+			data = 0;
+			Resize(elements, false);
+			Size = elements;
+		}
+
+		Array(u32 elements, bool zero)
+		{
+			/* Initialise array */
+			data = 0;
+			Resize(elements, zero);
+			Size = elements;
+		}
+
+		Array()
+		{
+			//initialise array
+			data = 0;
+			Size = 0;
+		}
+
+		~Array()
+		{
+			/* Array Destructor */
+			if  (data)
 			{
 				#ifdef MEM_ALLOC_TRACE
-				printf("Freeing data -> resize to zero[Array:%d]\n",id);
+				LOG_W("stdclass", "DESTRUCTOR WITH NON FREED ARRAY [arrayid:%d]\n",id);
 				#endif
 				Free();
 			}
-
 		}
-		
-		if (!data)
-			data=(T*)malloc(size*sizeof(T));
-		else
-			data=(T*)realloc(data,size*sizeof(T));
 
-		//TODO : Optimise this
-		//if we allocated more , Zero it out
-		if (bZero)
+		void SetPtr(T* Source, u32 elements)
 		{
-			if (size>Size)
+			/* Initialise array */
+			Free();
+			data = Source;
+			Size = elements;
+		}
+
+		T* Resize(u32 size,bool bZero)
+		{
+			if (size == 0)
 			{
-				for (u32 i=Size;i<size;i++)
+				if (data)
 				{
-					u8*p =(u8*)&data[i];
-					for (size_t j=0;j<sizeof(T);j++)
+					#ifdef MEM_ALLOC_TRACE
+					LOG_I("stdclass", "Freeing data -> resize to zero[Array:%d]\n",id);
+					#endif
+					Free();
+				}
+
+			}
+
+			if (!data)
+				data = (T*)malloc( size*sizeof(T) );
+			else
+				data = (T*)realloc( data,size*sizeof(T) );
+
+			//TODO : Optimise this
+			//if we allocated more , Zero it out
+			if (bZero)
+			{
+				if (size > Size)
+				{
+					for (u32 i = Size; i < size; i++)
 					{
-						p[j]=0;
+						u8*p = (u8*)&data[i];
+						for (size_t j = 0; j < sizeof(T); j++)
+						{
+						p[j] = 0;
+						}
 					}
 				}
 			}
+			Size = size;
+
+			return data;
 		}
-		Size=size;
 
-		return data;
-	}
-
-	void Zero()
-	{
-		memset(data,0,sizeof(T)*Size);
-	}
-
-	void Free()
-	{
-		if (Size != 0)
+		void Zero()
 		{
-			if (data)
-				free(data);
-
-			data = NULL;
+			memset(data, 0, sizeof(T) * Size);
 		}
-	}
+
+		void Free()
+		{
+			if (Size != 0)
+			{
+				if (data)
+					free(data);
+
+				data = NULL;
+			}
+		}
 
 
-	INLINE T& operator [](const u32 i)
-	{
+		INLINE T& operator [](const u32 i)
+		{
 #ifdef MEM_BOUND_CHECK
-		if (i>=Size)
-		{
-			printf("Error: Array %d , index out of range (%d>%d)\n",id,i,Size-1);
-			MEM_DO_BREAK;
-		}
+			if (i >= Size)
+			{
+				LOD_E("stdcleas", "Array %d , index out of range (%d>%d)\n", id, i, Size - 1);
+				MEM_DO_BREAK;
+			}
 #endif
-		return data[i];
-	}
+			return data[i];
+		}
 
-	INLINE T& operator [](const s32 i)
-	{
-#ifdef MEM_BOUND_CHECK
-		if (!(i>=0 && i<(s32)Size))
+		INLINE T& operator [](const s32 i)
 		{
-			printf("Error: Array %d , index out of range (%d > %d)\n",id,i,Size-1);
-			MEM_DO_BREAK;
-		}
+#ifdef MEM_BOUND_CHECK
+			if ( !( i >= 0 && i < (s32)Size ))
+			{
+				LOG_E("stdclass", "Array %d , index out of range (%d > %d)\n", id, i, Size - 1);
+				MEM_DO_BREAK;
+			}
 #endif
-		return data[i];
-	}
+			return data[i];
+		}
 };
 
-//Windoze code
-//Threads
+/* Windows code: */
 
+/* Threads */
 #if !defined(HOST_NO_THREADS)
 typedef  void* ThreadEntryFP(void* param);
 
@@ -170,45 +172,45 @@ typedef void* THREADHANDLE;
 
 class cThread
 {
-private:
-	ThreadEntryFP* Entry;
-	void* param;
-public :
-	THREADHANDLE hThread;
-	cThread(ThreadEntryFP* function,void* param);
-	
-	void Start();
-	void WaitToEnd();
+	private:
+		ThreadEntryFP* Entry;
+		void* param;
+	public :
+		THREADHANDLE hThread;
+		cThread(ThreadEntryFP* function,void* param);
+
+		void Start();
+		void WaitToEnd();
 };
 #endif
-//Wait Events
+
+/* Wait Events */
 typedef void* EVENTHANDLE;
 class cResetEvent
 {
 
-private:
-#if HOST_OS==OS_WINDOWS
-	EVENTHANDLE hEvent;
-#else
-	pthread_mutex_t mutx;
-	pthread_cond_t cond;
+	private:
+	#if HOST_OS == OS_WINDOWS
+		EVENTHANDLE hEvent;
+	#else
+		pthread_mutex_t mutx;
+		pthread_cond_t cond;
+	#endif
 
-#endif
-
-public :
-	bool state;
-	cResetEvent(bool State,bool Auto);
-	~cResetEvent();
-	void Set();		//Set state to signaled
-	void Reset();	//Set state to non signaled
-	void Wait(u32 msec);//Wait for signal , then reset[if auto]
-	void Wait();	//Wait for signal , then reset[if auto]
+	public :
+		bool state;
+		cResetEvent(bool State, bool Auto);
+		~cResetEvent();
+		void Set();				//Set state to signaled
+		void Reset();			//Set state to non signaled
+		void Wait(u32 msec);	//Wait for signal , then reset[if auto]
+		void Wait();			//Wait for signal , then reset[if auto]
 };
 
 class cMutex
 {
 private:
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS == OS_WINDOWS
 	CRITICAL_SECTION cs;
 #else
 	pthread_mutex_t mutx;
@@ -219,7 +221,7 @@ public :
 	cMutex()
 	{
 #if HOST_OS==OS_WINDOWS
-		InitializeCriticalSection(&cs);
+		InitializeCriticalSection( &cs );
 #else
 		pthread_mutex_init ( &mutx, NULL);
 #endif
@@ -250,13 +252,13 @@ public :
 	}
 };
 
-//Set the path !
+/* Set Paths */
 void set_user_config_dir(const string& dir);
 void set_user_data_dir(const string& dir);
 void add_system_config_dir(const string& dir);
 void add_system_data_dir(const string& dir);
 
-//subpath format: /data/fsca-table.bit
+/* Subpath Format: /data/fsca-table.bit */
 string get_writable_config_path(const string& filename);
 string get_writable_data_path(const string& filename);
 string get_readonly_config_path(const string& filename);
@@ -266,38 +268,40 @@ bool file_exists(const string& filename);
 
 class VArray2
 {
-public:
+	/* TODO: What's this doing? */
+	public:
 
-	u8* data;
-	u32 size;
-	//void Init(void* data,u32 sz);
-	//void Term();
-	void LockRegion(u32 offset,u32 size);
-	void UnLockRegion(u32 offset,u32 size);
+		u8* data;
+		u32 size;
+		//void Init(void* data,u32 sz);
+		//void Term();
+		void LockRegion(u32 offset, u32 size);
+		void UnLockRegion(u32 offset, u32 size);
 
-	void Zero()
-	{
-		UnLockRegion(0,size);
-		memset(data,0,size);
-	}
-
-	INLINE u8& operator [](const u32 i)
-    {
-#ifdef MEM_BOUND_CHECK
-        if (i>=size)
+		void Zero()
 		{
-			printf("Error: VArray2 , index out of range (%d>%d)\n",i,size-1);
-			MEM_DO_BREAK;
+			UnLockRegion(0, size);
+			memset(data, 0, size);
 		}
+
+		INLINE u8& operator [](const u32 i)
+		{
+#ifdef MEM_BOUND_CHECK
+			if (i >= size)
+			{
+				LOG_E("stdclass", "VArray2 , index out of range (%d>%d)\n", i, size - 1);
+				MEM_DO_BREAK;
+			}
 #endif
-		return data[i];
-    }
+			return data[i];
+		}
 };
 
 int ExeptionHandler(u32 dwCode, void* pExceptionPointers);
-int msgboxf(const wchar* text,unsigned int type,...);
+int msgboxf(const wchar* text, unsigned int type,...);
 
 
+/* TODO: Document these codes */
 #define MBX_OK                       0x00000000L
 #define MBX_OKCANCEL                 0x00000001L
 #define MBX_ABORTRETRYIGNORE         0x00000002L

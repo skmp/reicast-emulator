@@ -1,0 +1,706 @@
+/* this might do various check on GDROM and media */
+
+int
+security_stuff(arg)		/* _8ce00000 */
+   unsigned int arg;
+{
+   return (_8ce0000c(arg));
+}
+
+int
+_8ce0000c()
+{
+   _8ce0001e();
+   return (_8ce00044(arg));
+}
+
+void
+_8ce0001e()	/* zero out _8ce0a7c to _8ce0a88 */
+{
+   char *dst;
+
+   for (dst = _8ce00a7c; dst < _8ce00a88; dst++)
+      *dst = 0x00;
+
+}
+
+int
+_8ce00044(arg)
+   unsigned int arg;
+{
+
+   switch (arg) {
+      case 0:
+	 *_8ce00a80 = _8ce01000;	/* sector buffer ptr at 8ce00a80 */
+	 _8ce0029a();
+	 break;
+      case 1:
+	 return (_8ce0052a());
+	 break;
+      case 2:
+	 unscramble_data();
+	 break;
+      default:
+	 break;
+   }
+
+   return (0);
+
+}
+
+int
+read_abort(gdchn)		/* _8ce0007a */
+   unsigned char gdchn;
+{
+
+   int status[4];
+
+   gdGdcReadAbort(gdchn);
+   while(1) {
+      gdGdcExecServer();
+      switch (gdGdcGetCmdStat(gdchn, status)) {
+         case -1:
+	    return (-1);
+	    break;
+         case 0:
+	    return (0);
+	    break;
+         case 1:
+	 case 3:
+	    break;
+	 case 2:
+	    return (0);
+	    break;
+	 default:
+	    return (-1);
+	    break;
+      }
+   }
+
+}
+
+int
+dma_transfer(gdchn, buf, size)	/* _8ce000c4 */
+   char gdchn, *buf;
+   int size;
+{
+
+   int dmabuf[2];
+   int status;
+
+   dmabuf[0] = buf;
+   dmabuf[1] = size;
+
+   if (gdGdcCheckDmaTrans(gdchn, &status) != 0) {
+      return (-1);
+   }
+
+   for (i = 0; i < (size + 0x1f)>>5; i++) {
+      __asm__("ocbi @buf\n");	/* invalidate cache entry at *buf */
+      buf = buf + 32;
+   }
+
+   while (gdGdcReqDmaTrans(gdchn, dmabuf) != 0);
+
+   while (1) {
+      switch (gdGdcCheckDmaTrans(gdchn, buf)) {
+         case -1:
+	    return (-1);
+	    break;
+
+         case 0:
+	    return (0);
+	    break;
+
+         case 1:
+	    gdGdcExecServer();
+	    switch (gdGdcGetCmdStat(gdchn, buf)) {
+	       case -1:
+	          return (-1);
+	          break;
+
+	       case 1:
+	       case 3:
+	       case 4:
+	          break;
+
+	       case 2:
+	          return (1);
+	          break;
+
+	       default:
+		  return (-1);
+		  break;
+
+	    }
+      }
+   }
+
+}
+
+int
+_8ce0019a(arg)
+{
+
+   switch (dma_transfer(*GdcHn, *_8ce00a80, 2048)) {
+      case 0:
+	 break;
+      case 1:
+	 return (-1);
+      default:
+	 return (-2);
+   }
+
+   /* _8ce001ca */
+
+   for (i = 0; i < *_8ce00a80[4]; i++) {
+      temp = *(_8ce00a80 + 0x18 + i<<3);
+      if (temp[2] & 0xff000000 != _8c000000) {
+	 if (temp[2] & 0xff000000 != _0c000000) {
+	    return (-1);
+	 }
+      }
+      /* _8c00230 */
+      if (temp[2] & 0x0000001f != 0) {
+	 return (-3);
+      }
+      if (temp[1] >= 0x01000000) {
+	 return (-3);
+      }
+      if (temp[1] & 0x0000001f != 0) {
+	 return (-3);
+      }
+
+      /* _8ce00246 */
+
+      switch (dma_transfer(*GdcHn, temp[2], temp[1])) {
+	 case 0:
+	    /* do loop if not finished */
+	    break;
+	 case 1:
+	    if (*_8ce00a80[4] == (++i)) {
+	       *arg = *_8ce00a80[5];
+	       return (0);
+	    }
+	    else {
+	       return (-2);
+	    }
+	    break;
+	 default:
+	    return (-2);
+	    break;
+      }
+   }
+
+}
+
+void
+_8ce0029a()
+{
+
+   unsigned int gdchn, arg;
+
+   gdchn = *GdcHn;
+
+   if (_8ce0019a(&arg) != 0) {
+      read_abort(gdchn);
+      syBtExit(1);
+   }
+
+   *_8c00e004 = arg;
+   return;
+
+}
+
+int
+_8ce002cc(param1, param2, param3)
+   int param1, *param2, *param3;
+{
+
+   int params[3];
+   int gdchn;
+   int status[4];
+
+   params[0] = param1;
+   params[1] = param2;
+   params[2] = param3;
+
+   gdchn = gdGdcReqCmd(CMD_GETTRACKS, params);
+   if (gdchn == 0) {
+      return (-1);
+   }
+
+   for (i = 0;; i++) {
+      gdGdcExecServer();
+      switch (gdGdcGetCmdStat(gdchn, status)) {
+         case -1:
+	    param1 = -1;		/* not sure what to make of this :/ */
+	    return (-1);
+	    break;
+         case 0:
+	 case 2:
+	    param1 = -1;
+	    return (0);
+	    break;
+         case 1:
+	    if (i >= 0x1000) {
+	       return (-1);
+	    }
+	    break;
+         default:
+	    param1 = -1;
+	    return (-1);
+	    break;
+      }
+   }
+
+}
+
+int
+_8ce00358()
+{
+
+   int i;
+   int gdchn;
+
+   char my_toc[408];
+   int status[4];
+   int buf[2];
+
+   buf[0] = 0;
+   buf[1] = my_toc;
+
+   gdchn = gdGdcReqCmd(CMD_GETTOC2, buf);
+   if (gdchn == 0)
+      return (-1);
+
+   for (i = 0; i < 0x1000; i++) {
+      gdGdcExecServer();
+      switch (gdGdcGetCmdStat(gdchn, status)) {
+         case -1:
+	    return (-1);
+	    break;
+
+         case 0:
+         case 2:
+	    /* what the heck does this check for? */
+	    if (my_toc[0] & 0x40)
+	       return (-1);
+	    return (0);
+	    break;
+
+         case 1:
+	    break;
+
+         default:
+	    return (-1);
+	    break;
+      }
+   }
+
+}
+
+int
+check_katana(ip)		/* _8ce003e0 */
+   char *ip;
+{
+
+   char buf[18];
+
+   memcpy(17, buf, "SEGA SEGAKATANA ");
+
+   for (i = 0; i < 16; i++) {
+      if (ip[i] != buf[i]) {
+	 return (-1);
+      }
+   }
+
+   return (0);
+
+}
+
+int
+load_IP(sct)		/* _8ce00438 */
+   int sct;
+{
+
+   int buf[4];
+   int status1[2];
+   int status2[4];
+   int params[4];
+   int gdchn;
+
+   gdGdcGetDrvStat(status);
+
+   if (status[1] == 0x20) {
+      buf[0] = 0;
+      buf[1] = 0x2000;
+      buf[2] = 0x0800;
+      buf[3] = 0x0800;
+      gdGdcChangeDatatype(&buf);
+   }
+
+   params[0] = sct;
+   params[1] = 7;
+   params[2] = _8c008000;
+   params[3] = 0;
+   gdchn = gdGdcReqCmd(CMD_DMAREAD, params);
+   if (gdchn == 0) {
+      return (-1);
+   }
+
+   ptr = _8c008000;
+   for (i = 0; i < ((0x3800+0x1f)>>5); i++) {
+      __asm__("ocbi @ptr\n");
+      ptr = ptr + 32;
+   }
+
+   i = 0;	/* R11 */
+   j = 0;	/* R14 */
+   while (1) {
+      gdGdcExecServer();
+      switch (gdGdcGetCmdStat(gdchn, status2)) {
+         case -1:
+	    return (-1);
+	    break;
+         case 1:
+	    if (i > status2[2]) {
+	       j = 0;
+	    } else {
+	       j++;
+	    }
+	    i = status2[2];
+	    if (j > 0x01000000) {
+	       read_abort();
+	       return (-1);
+	    }
+	    j++;
+	    break;
+         case 2:
+	    return (check_katana((char *)_8c008000));
+	    break;
+         default:
+	    return (-1);
+	    break;
+      }
+   }
+
+}
+
+int
+_8ce0052a()	/* this prolly does checks on media */
+{
+
+   int param1, param2;
+   int sct;
+   int buf[4];
+
+   param1 = 0;
+   if (_8ce002cc(0, &param1, &param2) == 0) {
+      if (param1 == 2) {
+	 if (_8ce00358() == 0) {
+	    if (_8ce002cc(2, &param1, &param2) == 0) {
+	       sct = param2;
+	    } else {
+	       sct = 0;
+	    }
+	 } else {
+	    sct = 0;
+	 }
+      } else {
+	 sct = 0;
+      }
+   } else {
+      sct = 0;
+   }
+
+   if (sct != 0) {
+      for (j = 0; j < 10; j++) {
+         if (load_IP(sct) != 0) {
+	    return (sct);
+         }
+      }
+      buf[0] = 1;
+      gdGdcChangeDatatype(&buf);
+      if (buf[2] == 2048) {
+	 buf[0] = 0;
+	 buf[1] = 0x2000;
+	 buf[2] = 0x0400;
+	 buf[3] = 0x0800;
+	 gdGdcChangeDatatype(&buf);
+      }
+   }
+
+   return (0);
+
+}
+
+unsigned short
+_8ce005f0(void)
+{
+	*_8ce00a84 = (((*_8ce00a84) * 2109) + 9273) & 0x7fff;
+/*	*_8ce00a84 = ((*_8ce00a84) * (*_8ce00a70) + *_8ce00a74) & 0x7fff; */
+	return (*_8ce00a84 + 0xc000);
+}
+
+int
+_8ce00614(gdchn, addr)
+	int gdchn;
+	int *addr;
+{
+
+	int status;
+	int cmdstat;
+	int result;
+
+	result = gdGdcCheckDmaTrans(gdchn, &status);
+	if (result != 0) {
+		/* _8ce0067c */
+		switch (result) {
+			case -1:
+				return (-1);
+				break;
+
+			case 0:
+				return (1);
+				break;
+
+			case 1:
+				break;
+
+			default:
+				return (-1);
+				break;
+		}
+		/* _8ce00698 */
+	}
+	/* _8ce00634 */
+
+	/* this only goes thru once */
+	for (i = 0; i < (0x20 + 0x1f)>>5; i++) {
+		__asm__("ocbi @buf\n");
+		buf = buf + 32;
+	}
+
+	/* _8ce00668 */
+
+	dmabuf[0] = buf;
+	dmabuf[1] = 0x20;
+	result = gdGdcReqDmaTrans(gdchn, dmabuf);
+	/* _8ce0067c */
+	switch (result) {
+		case -1:
+			return (-1);
+			break;
+
+		case 0:
+			return (1);
+			break;
+
+		case 1:
+			break;
+
+		default:
+			return (-1);
+			break;
+	}
+	/* _8ce00698 */
+
+	gdGdcExecServer();
+	switch (gdGdcGetCmdStat(gdchn, &cmdstat)) {
+		case -1:
+			return (-1);
+			break;
+
+		case 1:
+		case 3:
+		case 4:
+			/* _8ce006c2 */
+			return (0);
+			break;
+
+		case 2:
+			/* _8ce006cc */
+			return (2);
+			break;
+
+		default:
+			return (-1);
+			break;
+	}
+}
+
+void
+unscramble(size, gdchn, addr)		/* _8ce006e0 */
+	int arg1;
+	int gdchn;
+	int *addr;
+{
+
+	short *ptr = _8ce01000;		/* R6 */
+	int i;
+	int bs = size>>5;	/* R5 */
+	short *k;		/* R12 */
+	short *k2;
+	int index;
+	int l;			/* R14 */
+	int m;			/* R11 */
+	int temp;
+
+	for (i = 0, ptr1 = ptr2; i < bs; i++)
+		ptr[i] = i;
+
+	k = k2 = &ptr[bs-1];
+	l = 0;
+	for (m = bs - 1; m >= 0; m--) {
+		/* _8ce00728 */
+		/* inline 8ce005f0() */
+		/* this is the main part of the crypt. it scrambles the
+		   way 32 bytes are copied */
+		*_8ce00a84 = (((*_8ce00a84) * 2109) + 9273) & 0x7fff;
+		index = (((*_8ce00a84 + 0xc000) & 0xffff) * m)>>16;
+
+		temp = ptr[index];
+		ptr[index] = *k;
+		*k = temp;
+		k--;
+		if (++l >= 0) {
+			switch(_8ce00614(gdchn, (addr + *k2<<5))) {
+				case -1:
+					return (-1);
+					break;
+
+				case 0:
+					break;
+
+				case 1:
+				case 2:
+					/* _8ce0076e */
+					l--;
+					k2--;
+					break;
+
+				default:
+					return (-1);
+					break;
+			}
+		}
+		/* _8ce00772 == _8ce00778 */
+	}
+	/* _8ce00778 */
+	while (l >= 0) {
+		switch (_8ce00614(gdchn, (addr + *k2<<5))) {
+			case -1:
+				return (-1);
+				break;
+
+			case 0:
+				break;
+
+			case 1:
+			case 2:
+				/* _8ce007a0 */
+				l--;
+				k2--;
+				break;
+
+			default:
+				return (-1);
+				break;
+		}
+	}
+	/* _8ce007ae */
+
+	return (0);
+
+}
+
+void
+unscramble_data()		/* _8ce007f0 */
+{
+
+	int size;	/* R13 */
+	int j;		/* R14 */
+	char *ptr;	/* R10 */
+	int gdchn;	/* R12 */
+	int status;
+	int align;	/* @R15 */
+
+	gdchn = *GdcHn;
+
+	size = *GdParam4;
+	*_8ce00a84 = size & 0x0000ffff;
+
+	align = size & 0x0000001f;
+	if (align != 0)
+		size -= align;
+
+	ptr = _8c010000;
+	j = 0x00200000;
+	do {
+		while (size >= j) {
+			if (unscramble(j, gdchn, ptr) != 0) {
+				read_abort(gdchn);
+				sys_do_bioscall(1);	/* syBtExit(1) */
+			}
+			/* _8ce00844 */
+			size = size - j;
+			ptr = ptr + ((j>>2)<<2);
+		}
+		/* _8ce0084c */
+		j = j>>1;
+	} while (j >= 0x20);
+
+	/* _8ce00852 */
+
+	if (align != 0) {
+		while (1) {
+			result = _8ce00614(gdchn, ptr);
+			if (result == 1 || result == 2)
+				break;
+			if (result != 0) {
+				read_abort(gdchn);
+				sys_do_bioscall(1);	/* syBtExit(1) */
+			}
+		}
+	}
+	/* _8ce00880 */
+
+	read_abort(gdchn);
+	gdGdcGetDrvStat(&status);
+
+	if (status == GDD_DRVSTAT_OPEN)
+		sys_do_bios(1);		/* syBtExit(1) */
+
+	/* could this disable gdrom? */
+	*_a05f74e4 = 0x000042fe;
+
+}
+
+void
+memcpy(size, arg2, arg3)		/* _8ce00a18 */
+   int size;
+   int *dst;
+   int *src;
+{
+
+   char *ptr1, *ptr2;
+
+   if (size == 0) {
+      return;
+   }
+
+   ptr1 = (char *)src;
+   ptr2 = (char *)dst;
+   while (1) {
+      *(ptr2++) = *(ptr1++);
+      if (ptr1 >= src+size) return;
+      *(ptr2++) = *(ptr1++);
+      if (ptr1 >= src+size) return;
+      *(ptr2++) = *(ptr1++);
+      if (ptr1 >= src+size) return;
+      *(ptr2++) = *(ptr1++);
+      if (ptr1 >= src+size) return;
+   }
+
+}

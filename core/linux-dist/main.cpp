@@ -15,6 +15,8 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include <unistd.h>
 
+#include "oslib/logging.h"
+
 #if defined(TARGET_EMSCRIPTEN)
 	#include <emscripten.h>
 #endif
@@ -62,8 +64,9 @@ int msgboxf(const wchar* text, unsigned int type, ...)
 	vsprintf(temp, text, args);
 	va_end(args);
 
-	//printf(NULL,temp,VER_SHORTNAME,type | MB_TASKMODAL);
+	//LOG_D("linux", "NULL,temp,VER_SHORTNAME,type | MB_TASKMODAL);
 	puts(temp);
+
 	return MBX_OK;
 }
 
@@ -89,7 +92,7 @@ s8 joyx[4], joyy[4];
 void emit_WriteCodeCache();
 
 #if defined(USE_JOYSTICK)
-	/* legacy joystick input */
+	/* Legacy Joystick input */
 	static int joystick_fd = -1; // Joystick file descriptor
 #endif
 
@@ -101,15 +104,18 @@ void os_SetupInput()
 
 	#if defined(USE_JOYSTICK)
 		int joystick_device_id = cfgLoadInt("input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
+
 		if (joystick_device_id < 0) {
-			puts("Legacy Joystick input disabled by config.\n");
+			LOG_I("input", "Legacy Joystick input disabled by config.\n");
 		}
 		else
 		{
 			int joystick_device_length = snprintf(NULL, 0, JOYSTICK_DEVICE_STRING, joystick_device_id);
 			char* joystick_device = (char*)malloc(joystick_device_length + 1);
+
 			sprintf(joystick_device, JOYSTICK_DEVICE_STRING, joystick_device_id);
 			joystick_fd = input_joystick_init(joystick_device);
+
 			free(joystick_device);
 		}
 	#endif
@@ -173,7 +179,7 @@ void os_DoEvents()
 
 void os_SetWindowText(const char * text)
 {
-	printf("%s\n",text);
+	LOG_V("misc", "%s\n",text);
 	#if defined(SUPPORT_X11)
 		x11_window_set_text(text);
 	#endif
@@ -400,8 +406,8 @@ int main(int argc, wchar* argv[])
 	{
 		add_system_data_dir(dirs[i]);
 	}
-	printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
-	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
+	LOG_I("cfg", "Config dir is: %s\n", get_writable_config_path("/").c_str());
+	LOG_I("cfg", "Data dir is:   %s\n", get_writable_data_path("/").c_str());
 
 	#if defined(USE_SDL)
 		if (SDL_Init(0) != 0)
@@ -451,7 +457,7 @@ void os_DebugBreak()
 	#if !defined(TARGET_EMSCRIPTEN)
 		raise(SIGTRAP);
 	#else
-		printf("DEBUGBREAK!\n");
+		LOG_D("trap", "DEBUGBREAK!\n");
 		exit(-1);
 	#endif
 }

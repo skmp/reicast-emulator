@@ -8,6 +8,8 @@
 #endif
 #endif
 
+#include "oslib/logging.h"
+
 static SDL_Window* window = NULL;
 static SDL_GLContext glcontext;
 
@@ -61,15 +63,16 @@ void input_sdl_init()
 			die("error initializing SDL Joystick subsystem");
 		}
 	}
-	// Open joystick device
+	/* Open joystick device */
 	int numjoys = SDL_NumJoysticks();
-	printf("Number of Joysticks found = %i\n", numjoys);
+	LOG_I("sdl", "Number of Joysticks found = %i\n", numjoys);
+
 	if (numjoys > 0)
 	{
 		JoySDL = SDL_JoystickOpen(0);
 	}
 
-	printf("Joystick opened\n");
+	LOG_V("sdl", "Joystick opened\n");
 
 	if (JoySDL)
 	{
@@ -84,18 +87,18 @@ void input_sdl_init()
 		ButtonCount = SDL_JoystickNumButtons(JoySDL);
 		Name = SDL_JoystickName(JoySDL);
 
-		printf("SDK: Found '%s' joystick with %d axes and %d buttons\n", Name, AxisCount, ButtonCount);
+		LOG_I("sdl", "Found '%s' joystick with %d axes and %d buttons\n", Name, AxisCount, ButtonCount);
 
 		if (Name != NULL && strcmp(Name,"Microsoft X-Box 360 pad")==0)
 		{
 			sdl_map_btn  = sdl_map_btn_xbox360;
 			sdl_map_axis = sdl_map_axis_xbox360;
-			printf("Using Xbox 360 map\n");
+			LOG_V("sdl", "Using Xbox 360 map\n");
 		}
 	}
 	else
 	{
-		printf("SDK: No Joystick Found\n");
+		LOG_I("sdl", "No Joystick Found\n");
 	}
 
 	#ifdef TARGET_PANDORA
@@ -120,6 +123,8 @@ void input_sdl_init()
 
 void input_sdl_handle(u32 port)
 {
+	/* A short description here. */
+
 	#define SET_FLAG(field, mask, expr) field =((expr) ? (field & ~mask) : (field | mask))
 	static int mouse_use = 0;
 	SDL_Event event;
@@ -131,14 +136,20 @@ void input_sdl_handle(u32 port)
 		switch (event.type)
 		{
 			case SDL_QUIT:
+			{
 				dc_stop();
 				break;
+			}
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
+			{
 				k = event.key.keysym.sym;
 				value = (event.type == SDL_KEYDOWN) ? 1 : 0;
-				printf("type %i key %i \n", event.type, k);
-				switch (k) {
+
+				LOG_D("sdl", "type %i key %i \n", event.type, k);
+
+				switch (k)
+				{
 					//TODO: Better keymaps for non-pandora platforms
 					case SDLK_SPACE:
 						SET_FLAG(kcode[port], DC_BTN_C, value);
@@ -218,19 +229,21 @@ void input_sdl_handle(u32 port)
 				#endif
 				}
 				break;
+			}
 			case SDL_JOYBUTTONDOWN:
 			case SDL_JOYBUTTONUP:
+			{
 				value = (event.type == SDL_JOYBUTTONDOWN) ? 1 : 0;
 				k = event.jbutton.button;
 				{
 					u32 mt = sdl_map_btn[k] >> 16;
 					u32 mo = sdl_map_btn[k] & 0xFFFF;
 
-					// printf("BUTTON %d,%d\n",JE.number,JE.value);
+					LOG_V("sdl", "BUTTON %d,%d\n",JE.number,JE.value);
 
 					if (mt == 0)
 					{
-						// printf("Mapped to %d\n",mo);
+						log_verbose(LOG_VERBOSE, "sdl", "Mapped to %d\n",mo);
 						if (value)
 							kcode[port] &= ~mo;
 						else
@@ -238,7 +251,7 @@ void input_sdl_handle(u32 port)
 					}
 					else if (mt == 1)
 					{
-						// printf("Mapped to %d %d\n",mo,JE.value?255:0);
+						LOG_V("sdl", "Mapped to %d %d\n",mo,JE.value?255:0);
 						if (mo == 0)
 						{
 							lt[port] = value ? 255 : 0;
@@ -251,6 +264,7 @@ void input_sdl_handle(u32 port)
 
 				}
 				break;
+			}
 			case SDL_JOYAXISMOTION:
 				k = event.jaxis.axis;
 				value = event.jaxis.value;
@@ -258,8 +272,8 @@ void input_sdl_handle(u32 port)
 					u32 mt = sdl_map_axis[k] >> 16;
 					u32 mo = sdl_map_axis[k] & 0xFFFF;
 
-					//printf("AXIS %d,%d\n",JE.number,JE.value);
-					s8 v=(s8)(value/256); //-127 ... + 127 range
+					LOG_V("sdl", "AXIS %d,%d\n",JE.number,JE.value);
+					s8 v = (s8)(value / 256); //-127 ... + 127 range
 					#ifdef TARGET_PANDORA
 						v = JSensitivity[128+v];
 					#endif
@@ -277,13 +291,13 @@ void input_sdl_handle(u32 port)
 							kcode[port] &= ~(mo*2);
 						}
 
-						// printf("Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
+						LOG_V("sdl", "Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
 					}
 					else if (mt == 1)
 					{
 						if (v >= 0) v++;  //up to 255
 
-						//   printf("AXIS %d,%d Mapped to %d %d %d\n",JE.number,JE.value,mo,v,v+127);
+						LOG_V("sdl", "AXIS %d,%d Mapped to %d %d %d\n",JE.number,JE.value,mo,v,v+127);
 
 						if (mo == 0)
 						{
@@ -296,7 +310,7 @@ void input_sdl_handle(u32 port)
 					}
 					else if (mt == 2)
 					{
-						//  printf("AXIS %d,%d Mapped to %d %d [%d]",JE.number,JE.value,mo,v);
+						LOG_V("sdl", "AXIS %d,%d Mapped to %d %d [%d]",JE.number,JE.value,mo,v);
 						if (mo == 0)
 						{
 							joyx[port] = v;
@@ -312,7 +326,7 @@ void input_sdl_handle(u32 port)
 					xx = event.motion.xrel;
 					yy = event.motion.yrel;
 
-					// some caping and dead zone...
+					/* Some caping and dead zone */
 					if (abs(xx) < 4)
 					{
 						xx = 0;
@@ -343,22 +357,27 @@ void input_sdl_handle(u32 port)
 						yy = -255;
 					}
 
-					//if (abs(xx)>0 || abs(yy)>0) printf("mouse %i, %i\n", xx, yy);
+					if (abs(xx)>0 || abs(yy)>0) LOG_D("sdl", "mouse %i, %i\n", xx, yy);
 					switch (mouse_use)
 					{
-						case 0:  // nothing
+						/* Nothing */
+						case 0:
 							break;
-						case 1:  // Up=RT, Down=LT
-							if (yy<0)
+
+						/* Up = RT, Down = LT */
+						case 1:
+							if (yy < 0)
 							{
 								rt[port] = -yy;
 							}
-							else if (yy>0)
+							else if (yy > 0)
 							{
 								lt[port] = yy;
 							}
 							break;
-						case 2:  // Left=LT, Right=RT
+
+						/* Left = LT, Right = RT */
+						case 2:
 							if (xx < 0)
 							{
 								lt[port] = -xx;
@@ -368,7 +387,9 @@ void input_sdl_handle(u32 port)
 								rt[port] = xx;
 							}
 							break;
-						case 3:  // Nub = ABXY
+
+						/* Nub = ABXY */
+						case 3:
 							if (xx < -127)
 							{
 								kcode[port] &= ~DC_BTN_X;
@@ -410,7 +431,7 @@ void sdl_window_create()
 	{
 		if(SDL_InitSubSystem(SDL_INIT_VIDEO) != 0)
 		{
-			die("error initializing SDL Joystick subsystem");
+			die("ERROR initializing SDL Joystick subsystem");
 		}
 	}
 
@@ -455,7 +476,7 @@ void sdl_window_create()
 	}
 	SDL_GL_MakeCurrent(window, NULL);
 
-	printf("Created SDL Window (%ix%i) and GL Context successfully\n", window_width, window_height);
+	LOG_I("sdl", "Created SDL Window (%ix%i) and GL Context successfully\n", window_width, window_height);
 }
 
 extern int screen_width, screen_height;
@@ -472,6 +493,7 @@ bool gl_init(void* wind, void* disp)
 
 void gl_swap()
 {
+	/* Wanna resize boy? */
 	SDL_GL_SwapWindow(window);
 
 	/* Check if drawable has been resized */
@@ -487,5 +509,6 @@ void gl_swap()
 
 void gl_term()
 {
+	/* Kill it with fire */
 	SDL_GL_DeleteContext(glcontext);
 }

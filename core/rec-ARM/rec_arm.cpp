@@ -11,7 +11,7 @@
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/sh4/sh4_mem.h"
-
+#include "oslib/logging.h"
 /*
 
 	ARM ABI
@@ -226,7 +226,7 @@ void StoreSh4Reg_mem(eReg Rt,u32 Sh4_Reg, eCC CC=CC_AL)
 EmitAPI LoadSh4Reg_mem(eReg Rt, shil_param Sh4_Reg, eCC CC=CC_AL)
 {
 	if (!Sh4_Reg.is_r32())
-		printf("REG FAIL: %d\n",Sh4_Reg._reg);
+		LOG_E("rec_arm", "REG FAIL: %d\n",Sh4_Reg._reg);
 	verify(Sh4_Reg.is_r32());
 	LoadSh4Reg_mem(Rt,Sh4_Reg._reg,CC);
 }
@@ -363,7 +363,7 @@ u32 DynaRBI::Relink()
 	{
 		//quick opt here:
 		//peek into reg alloc, store actuall sr_T register to relink_data
-		bool last_op_sets_flags=!has_jcond && oplist.size() > 0 && 
+		bool last_op_sets_flags=!has_jcond && oplist.size() > 0 &&
 			oplist[oplist.size()-1].rd._reg==reg_sr_T && ccmap.count(oplist[oplist.size()-1].op);
 
 		ConditionCode CC=CC_EQ;
@@ -383,7 +383,7 @@ u32 DynaRBI::Relink()
 		{
 			if (!has_jcond)
 			{
-				printf("SLOW COND PATH %d\n",oplist[oplist.size()-1].op);
+				LOG_W("rec_arm", "SLOW COND PATH %d\n", oplist[oplist.size() - 1].op);
 				LoadSh4Reg_mem(r4,reg_sr_T);
 			}
 
@@ -443,7 +443,7 @@ u32 DynaRBI::Relink()
 			UBFX(r1, r4, 1, 23);
 #endif
 			LDR(r15,r2,r1,Offset,true,S_LSL,2);
-			
+
 #else
 			if (pBranchBlock)
 			{
@@ -517,7 +517,7 @@ u32 DynaRBI::Relink()
 		}
 
 	default:
-		printf("Error, Relink() Block Type: %X\n", BlockType);
+		LOG_E("rec_arm", "Relink() Block Type: %X\n", BlockType);
 		verify(false);
 		break;
 	}
@@ -538,7 +538,7 @@ void ngen_Unary(shil_opcode* op, UnaryOP unop)
 void ngen_Binary(shil_opcode* op, BinaryOP dtop,BinaryOPImm dtopimm, bool has_imm=true)
 {
 	verify(reg.mapg(op->rd)!=r0 && reg.mapg(op->rs1)!=r0);
-	
+
 	eReg rs2=r0;
 	if (has_imm && op->rs2.is_imm())    // **FIXME** ???
 	{
@@ -558,7 +558,7 @@ void ngen_Binary(shil_opcode* op, BinaryOP dtop,BinaryOPImm dtopimm, bool has_im
 	}
 	else
 	{
-		printf("ngen_Bin ??? %d \n",op->rs2.type);
+		LOG_W("rec_arm", "ngen_Bin ??? %d \n",op->rs2.type);
 		verify(false);
 	}
 
@@ -586,12 +586,12 @@ struct CC_PS
 	shil_param* par;
 };
 vector<CC_PS> CC_pars;
-void ngen_CC_Start(shil_opcode* op) 
-{ 
+void ngen_CC_Start(shil_opcode* op)
+{
 	CC_pars.clear();
 }
-void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp) 
-{ 
+void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
+{
 	switch(tp)
 	{
 		case CPT_f32rv:
@@ -599,7 +599,7 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 			{
 				if (reg.IsAllocg(*par))
 				{
-					//printf("MOV(reg.map(*par),r0); %d\n",reg.map(*par));
+					//LOG_D("rec_arm", "MOV(reg.map(*par),r0); %d\n",reg.map(*par));
 					VMOV(reg.mapg(*par),f0);
 				}
 				else if (reg.IsAllocf(*par))
@@ -616,7 +616,7 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 			{
 				if (reg.IsAllocg(*par))
 				{
-					//printf("MOV(reg.map(*par),r0); %d\n",reg.map(*par));
+					//LOG_D("rec_arm", "MOV(reg.map(*par),r0); %d\n",reg.map(*par));
 					MOV(reg.mapg(*par),r0);
 				}
 				else if (reg.IsAllocf(*par))
@@ -649,7 +649,7 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 	}
 }
 
-void ngen_CC_Call(shil_opcode* op,void* function) 
+void ngen_CC_Call(shil_opcode* op,void* function)
 {
 	u32 rd=r0;
 	u32 fd=f0;
@@ -665,16 +665,16 @@ void ngen_CC_Call(shil_opcode* op,void* function)
 			if (CC_pars[i].par->is_reg())
 			{
 				#ifdef ARM_HARDFP
-				if (CC_pars[i].type == CPT_f32) 
+				if (CC_pars[i].type == CPT_f32)
 				{
 					if (reg.IsAllocg(*CC_pars[i].par))
 					{
-						//printf("MOV((eReg)rd,reg.map(*CC_pars[i].par)); %d %d\n",rd,reg.map(*CC_pars[i].par));
+						//LOG_D("rec_arm", "MOV((eReg)rd,reg.map(*CC_pars[i].par)); %d %d\n",rd,reg.map(*CC_pars[i].par));
 						VMOV((eFSReg)fd,reg.mapg(*CC_pars[i].par));
 					}
 					else if (reg.IsAllocf(*CC_pars[i].par))
 					{
-						//printf("LoadSh4Reg_mem((eReg)rd, *CC_pars[i].par); %d\n",rd);
+						//LOG_D("rec_arm", "LoadSh4Reg_mem((eReg)rd, *CC_pars[i].par); %d\n",rd);
 						VMOV((eFSReg)fd,reg.mapfs(*CC_pars[i].par));
 					}
 					else
@@ -685,12 +685,12 @@ void ngen_CC_Call(shil_opcode* op,void* function)
 
 				if (reg.IsAllocg(*CC_pars[i].par))
 				{
-					//printf("MOV((eReg)rd,reg.map(*CC_pars[i].par)); %d %d\n",rd,reg.map(*CC_pars[i].par));
+					//LOG_D("rec_arm", "MOV((eReg)rd,reg.map(*CC_pars[i].par)); %d %d\n",rd,reg.map(*CC_pars[i].par));
 					MOV((eReg)rd,reg.mapg(*CC_pars[i].par));
 				}
 				else if (reg.IsAllocf(*CC_pars[i].par))
 				{
-					//printf("LoadSh4Reg_mem((eReg)rd, *CC_pars[i].par); %d\n",rd);
+					//LOG_D("rec_arm", "LoadSh4Reg_mem((eReg)rd, *CC_pars[i].par); %d\n",rd);
 					VMOV((eReg)rd,reg.mapfs(*CC_pars[i].par));
 				}
 				else
@@ -699,18 +699,18 @@ void ngen_CC_Call(shil_opcode* op,void* function)
 			else
 			{
 				verify(CC_pars[i].type != CPT_f32);
-				//printf("MOV32((eReg)rd, CC_pars[i].par->_imm); %d\n",rd);
+				//LOG_D("rec_arm", "MOV32((eReg)rd, CC_pars[i].par->_imm); %d\n",rd);
 				MOV32((eReg)rd, CC_pars[i].par->_imm);
 			}
 		}
 		rd++;
 	}
-	//printf("used reg r0 to r%d, %d params, calling %08X\n",rd-1,CC_pars.size(),function);
+	//LOG_D("rec_arm", "used reg r0 to r%d, %d params, calling %08X\n",rd-1,CC_pars.size(),function);
 	CALL((u32)function);
 }
-void ngen_CC_Finish(shil_opcode* op) 
-{ 
-	CC_pars.clear(); 
+void ngen_CC_Finish(shil_opcode* op)
+{
+	CC_pars.clear();
 }
 
 void* _vmem_read_const(u32 addr,bool& ismem,u32 sz);
@@ -741,7 +741,7 @@ mem_op_type memop_type(shil_opcode* op)
 	if (sz==8) Lsz=SZ_64F;
 
 	verify(Lsz!=-1);
-	
+
 	return (mem_op_type)Lsz;
 }
 
@@ -790,7 +790,7 @@ unat _mem_func[2][5]=
 	{0,0,0,(unat)_vmem_ReadMem32,(unat)_vmem_ReadMem64},
 };
 
-struct 
+struct
 {
 	u32 mask;
 	u32 key;
@@ -822,7 +822,7 @@ op_table[]=
 	{0x0F300F00,0x0D000A00,false,SZ_32F,2},
 	//VSTR.64
 	{0x0F300F00,0x0D000B00,false,SZ_64F,2},
-	
+
 	{0,0},
 };
 
@@ -903,7 +903,7 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 
 	if (offs==-1)
 	{
-		printf("%08X : invalid size\n",ptr[0]);
+		LOG_E("rec_arm", "%08X : invalid size\n",ptr[0]);
 		die("can't decode opcode\n");
 	}
 
@@ -914,7 +914,7 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 	eFDReg fd;
 
 	//Get used regs from opcodes ..
-	
+
 	if ((ptr[0].full & 0x0FE00070)==0x07E00050)
 	{
 		//from ubfx !
@@ -926,7 +926,7 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 	}
 	else
 	{
-		printf("fail raddr %08X {@%08X}:(\n",ptr[0].full,regs[1]);
+		LOG_E("rec_arm", "fail raddr %08X {@%08X}:(\n", ptr[0].full,regs[1]);
 		die("Invalid opcode: vmem fixup\n");
 	}
 	//from mem op
@@ -956,9 +956,9 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 	32F,w:	vmov ft,r0
 	64F,w:	vmov fd,[r1:r0]
 	*/
-	
-	
-	//printf("Failed %08X:%08X (%d,%d,%d,r%d, r%d,f%d,d%d) code %08X, addr %08X, native %08X (%08X), fixing via %s\n",ptr->full,fop,optp,read,offs,raddr,rt,ft,fd,ptr,sh4_addr,fault_addr,fault_offs,is_sq?"SQ":"MR");
+
+
+	//LOG_D("rec_arm", "Failed %08X:%08X (%d,%d,%d,r%d, r%d,f%d,d%d) code %08X, addr %08X, native %08X (%08X), fixing via %s\n",ptr->full,fop,optp,read,offs,raddr,rt,ft,fd,ptr,sh4_addr,fault_addr,fault_offs,is_sq?"SQ":"MR");
 
 	//fault offset must always be the addr from ubfx (sanity check)
 	verify((fault_offs==0) || fault_offs==(0x1FFFFFFF&sh4_addr));
@@ -968,7 +968,7 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 		//SQ !
 		s32 sq_offs=sq_both-sh4_ctr;
 		verify(sq_offs==rcb_noffs(sq_both));
-		
+
 		verify(!read && optp>=SZ_32I);
 
 		if (optp==SZ_32I)
@@ -1057,7 +1057,7 @@ eReg GenMemAddr(shil_opcode* op,eReg raddr=r0)
 		{
 			ADD(raddr,reg.mapg(op->rs1),op->rs3._imm);
 		}
-		else 
+		else
 		{
 			MOV32(r1,op->rs3._imm);
 			ADD(raddr,reg.mapg(op->rs1),r1);
@@ -1069,7 +1069,7 @@ eReg GenMemAddr(shil_opcode* op,eReg raddr=r0)
 	}
 	else if (!op->rs3.is_null())
 	{
-		printf("rs3: %08X\n",op->rs3.type);
+		LOG_D("rec_arm", "rs3: %08X\n", op->rs3.type);
 		die("invalid rs3");
 	}
 	else
@@ -1091,7 +1091,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			{
 				bool isram=false;
 				void* ptr=_vmem_read_const(op->rs1._imm,isram,memop_bytes(optp));
-				
+
 				verify(optp!=SZ_64F);
 
 				if (isram)
@@ -1104,13 +1104,13 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 							MOV32(r0,(u32)ptr);
 							LDRB(reg.mapg(op->rd),r0);
 							SXTB(reg.mapg(op->rd),reg.mapg(op->rd));
-						} 
+						}
 						break;
 
 					case SZ_16:
 						{
 							LoadImmBase16(reg.mapg(op->rd),(u32)ptr,true);    // true for sx
-						} 
+						}
 						break;
 
 					case SZ_32I:
@@ -1163,8 +1163,8 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 						}
 						break;
 					}
-				} 
-				else 
+				}
+				else
 				{
 					MOV32(r0,op->rs1._imm);
 
@@ -1197,16 +1197,16 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 
 					switch(optp)
 					{
-					case SZ_8:	
-						LDRSB(reg.mapg(op->rd),r1,r8,true); 
+					case SZ_8:
+						LDRSB(reg.mapg(op->rd),r1,r8,true);
 						break;
 
-					case SZ_16: 
-						LDRSH(reg.mapg(op->rd),r1,r8,true); 
+					case SZ_16:
+						LDRSH(reg.mapg(op->rd),r1,r8,true);
 						break;
 
-					case SZ_32I: 
-						LDR(reg.mapg(op->rd),r1,r8,Offset,true); 
+					case SZ_32I:
+						LDR(reg.mapg(op->rd),r1,r8,Offset,true);
 						break;
 
 					case SZ_32F:
@@ -1224,15 +1224,15 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				} else {
 					switch(optp)
 					{
-					case SZ_8:	
+					case SZ_8:
 						vmem_slowpath(raddr, reg.mapg(op->rd), f0, d0, optp, true);
 						break;
 
-					case SZ_16: 
+					case SZ_16:
 						vmem_slowpath(raddr, reg.mapg(op->rd), f0, d0, optp, true);
 						break;
 
-					case SZ_32I: 
+					case SZ_32I:
 						vmem_slowpath(raddr, reg.mapg(op->rd), f0, d0, optp, true);
 						break;
 
@@ -1256,7 +1256,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			mem_op_type optp=memop_type(op);
 
 			eReg raddr=GenMemAddr(op);
-			
+
 			//TODO: use reg alloc
 			if (optp == SZ_64F)
 				VLDR(d0,r8,op->rs2.reg_nofs()/4);
@@ -1265,7 +1265,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				BIC(r1,raddr,0xE0000000);
 				//UBFX(r1,raddr,0,29);
 				//SUB(r1,raddr,raddr);
-				
+
 				s32 sq_offs=rcb_noffs(sq_both);
 				switch(optp)
 				{
@@ -1279,7 +1279,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 
 				case SZ_32I:
 					if (op->flags2!=0x1337)
-						STR(reg.mapg(op->rs2),r1,r8,Offset,true); 
+						STR(reg.mapg(op->rs2),r1,r8,Offset,true);
 					else
 					{
 						emit_Skip(-4);
@@ -1403,7 +1403,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 
 					if (reg.IsAllocf(op->rd))
 						type|=1;
-					
+
 					if (reg.IsAllocf(op->rs1))
 						type|=2;
 
@@ -1431,16 +1431,16 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				{
 					die("Invalid mov32 size");
 				}
-				
+
 			}
 			break;
-			
+
 		case shop_mov64:
 		{
 			verify(op->rs1.is_r64() && op->rd.is_r64());
 			//LoadSh4Reg64(r0,op->rs1);
 			//StoreSh4Reg64(r0,op->rd);
-			
+
 			VLDR(d0,r8,op->rs1.reg_nofs()/4);
 			VSTR(d0,r8,op->rd.reg_nofs()/4);
 			break;
@@ -1458,7 +1458,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 
 		case shop_ifb:
 		{
-			if (op->rs1._imm) 
+			if (op->rs1._imm)
 			{
 				MOV32(r1,op->rs2._imm);
 				StoreSh4Reg_mem(r1,reg_nextpc);
@@ -1488,7 +1488,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		case shop_sub:	ngen_Binary(op,SUB,SUB);    break;
 		case shop_ror:	ngen_Binary(op,ROR,ROR);    break;
 
-			
+
 		case shop_adc:
 		{
 			//RSBS(reg.map(op.rs3),reg.map(op.rs3),0);
@@ -1525,10 +1525,10 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				RRX(reg.mapg(op->rd),reg.mapg(op->rs1));         //RRX w/ carry :)
 				if (reg.mapg(op->rd2)==reg.mapg(op->rs1))
 					MOV(reg.mapg(op->rd2), r0);
-				
+
 			}
 			break;
-			
+
 		case shop_rocl:
 			{
 				//ADD(reg.mapg(op->rd),reg.mapg(op->rs2),reg.mapg(op->rs1),1,true); //(C,rd)= rs1<<1 + (|) rs2
@@ -1537,9 +1537,9 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				ADC(reg.mapg(op->rd2),reg.mapg(op->rd2),0);     //rd2=C (or MOVCS rd2, 1)
 			}
 			break;
-			
+
 		case shop_sbc:
-			//printf("sbc: r%d r%d r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rd2),reg.mapg(op->rs1),reg.mapg(op->rs2), reg.mapg(op->rs3));
+			//LOG_D("rec_arm", "sbc: r%d r%d r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rd2),reg.mapg(op->rs1),reg.mapg(op->rs2), reg.mapg(op->rs3));
 			{
 				EOR(reg.mapg(op->rd2),reg.mapg(op->rs3),1);
 				LSR(reg.mapg(op->rd2),reg.mapg(op->rd2),1,true); //C=rs3, rd2=0
@@ -1547,9 +1547,9 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				MOV(reg.mapg(op->rd2), 1, CC_CC);
 			}
 			break;
-		
+
 		case shop_shld:
-			//printf("shld: r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
+			//LOG_D("rec_arm", "shld: r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
 			{
 				verify(!op->rs2.is_imm());
 				AND(r0, reg.mapg(op->rs2), 0x8000001F, true);
@@ -1558,11 +1558,11 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				LSL(reg.mapg(op->rd), reg.mapg(op->rs1), r0, CC_PL);
 				//MOV(reg.mapg(op->rd), reg.mapg(op->rs1), S_LSL, r0, CC_PL);
 				//MOV(reg.mapg(op->rd), reg.mapg(op->rs1), S_LSR, r0, CC_MI);
-			}		
+			}
 			break;
 
 		case shop_shad:
-			//printf("shad: r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
+			//LOG_D("rec_arm", "shad: r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
 			{
 				verify(!op->rs2.is_imm());
 				AND(r0, reg.mapg(op->rs2), 0x8000001F, true);
@@ -1571,7 +1571,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				LSL(reg.mapg(op->rd), reg.mapg(op->rs1), r0, CC_PL);
 				//MOV(reg.mapg(op->rd), reg.mapg(op->rs1), S_LSL, r0, CC_PL);
 				//MOV(reg.mapg(op->rd), reg.mapg(op->rs1), S_ASR, r0, CC_MI);
-			}		
+			}
 			break;
 
 		case shop_sync_sr:
@@ -1620,7 +1620,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			}
 			else
 			{
-				printf("ngen_Bin ??? %d \n",op->rs2.type);
+				LOG_W("rec_arm", "ngen_Bin ??? %d \n", op->rs2.type);
 				verify(false);
 			}
 
@@ -1645,12 +1645,12 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		    MOVW(reg.mapg(op->rd),1,opcls2[op->op-shop_test]);
 		    break;
         }
-		
+
 		case shop_setpeq:
 			{
 				EOR(r1, reg.mapg(op->rs1), reg.mapg(op->rs2));
 				MOVW(reg.mapg(op->rd), 0);
-				
+
 				TST(r1, 0xFF000000);
 				TST(r1, 0x00FF0000, CC_NE);
 				TST(r1, 0x0000FF00, CC_NE);
@@ -1658,7 +1658,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				MOVW(reg.mapg(op->rd), 1, CC_EQ);
 			}
 			break;
-		
+
 		//UXTH for zero extention and/or more mul forms (for 16 and 64 bits)
 
 		case shop_mul_u16:
@@ -1698,7 +1698,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 /*		case shop_div32u:
 			// Doesn't work
 			// algo from new arm dynarec from mupen64plus
-			//printf("div32u: r%d r%d r%d r%d\n",reg.mapg(op->rd2),reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
+			//LOG_D("rec_arm", "div32u: r%d r%d r%d r%d\n",reg.mapg(op->rd2),reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
 			{
 				// remainder = r0, quotient = r1, HOST_TEMPREG = r2, copy de rs1 = r3, copy de rs2 = r4
 				MOV(r3, reg.mapg(op->rs1));
@@ -1720,7 +1720,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			}
 			break;*/
 /*		case shop_div32s:
-			//printf("div32s r%d, r%d, r%d, r%d\n", reg.mapg(op->rd2),reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
+			//LOG_D("rec_arm", "div32s r%d, r%d, r%d, r%d\n", reg.mapg(op->rd2),reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
 			// algo from dynarec from pcsxrearmed
 			// remainder = r0, quotient = r1, HOST_TEMPREG = r2, copy de rs1 = r3, copy de rs2 = r4
 			{
@@ -1750,7 +1750,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				MOV(reg.mapg(op->rd), r1);
 			}
 			break;*/
-	
+
 		case shop_pref:
 			{
 				if (op->flags != 0x1337)
@@ -1767,7 +1767,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					CALL((unat)&do_sqw_mmu,op->flags==0x1337?CC_AL:CC_EQ);
 				}
 				else
-				{	
+				{
 					LDR(r2,r8,rcb_noffs(&do_sqw_nommu));
 					SUB(r1,r8,-rcb_noffs(sq_both));
 					BLX(r2,op->flags==0x1337?CC_AL:CC_EQ);
@@ -1778,7 +1778,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 /*
 		case shop_cvt_i2f_z:
 		case shop_cvt_i2f_n:
-			
+
 			break;
 */
 
@@ -1794,7 +1794,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				(op->op==shop_ext_s8?SXTB:SXTH)(reg.mapg(op->rd),reg.mapg(op->rs1),CC_AL);
 			}
 			break;
-			
+
 
 				//fpu
 		case shop_fadd:
@@ -1821,7 +1821,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		}
 		break;
 
-		
+
 		case shop_fmac:
 			{
 				verify(reg.mapfs(op->rd)==reg.mapfs(op->rs1));
@@ -1873,7 +1873,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 #endif
 		}
 		break;
-			
+
 
 		case shop_fsca:
 			{
@@ -1883,7 +1883,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				MOVW(r1,((unat)sin_table)&0xFFFF);
 				UXTH(r0,reg.mapg(op->rs1));
 				MOVT(r1,((u32)sin_table)>>16);
-				
+
 				/*
 					LDRD(r0,r1,r0,lsl,3);
 					VMOV.64
@@ -1895,7 +1895,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				//LSL(r0,r0,3);
 				//ADD(r0,r1,r0); //EMITTER: Todo, add with shifted !
 				ADD(r0,r1,r0, S_LSL, 3);
-				
+
 				VLDR(/*reg.mapf(op->rd,0)*/d0,r0,0);
 				VSTR(d0,r8,op->rd.reg_nofs()/4);
 			}
@@ -1903,7 +1903,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 
 		case shop_fipr:
 			{
-				
+
 				eFQReg _r1=q0;
 				eFQReg _r2=q0;
 
@@ -1930,7 +1930,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				VMLA_VFP(reg.mapfs(op->rd),f1,(eFSReg)(fs2+1));
 				VMLA_VFP(reg.mapfs(op->rd),f2,(eFSReg)(fs2+2));
 				VMLA_VFP(reg.mapfs(op->rd),f3,(eFSReg)(fs2+3));
-#else			
+#else
 				VMUL_F32(q0,_r1,_r2);
 				VPADD_F32(d0,d0,d1);
 				VADD_VFP(reg.mapfs(op->rd),f0,f1);
@@ -1951,7 +1951,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					rdp=r0;
 					SUB(r0,r8,op->rd.reg_aofs());
 				}
-	
+
 #if 1
 				//f0,f1,f2,f3	  : vin
 				//f4,f5,f6,f7     : out
@@ -1966,7 +1966,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				VMUL_VFP(f5,f9,f0);
 				VMUL_VFP(f6,f10,f0);
 				VMUL_VFP(f7,f11,f0);
-				
+
 				VLDM(d6,r2,2,1);
 
 				VMLA_VFP(f4,f12,f1);
@@ -2017,8 +2017,8 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 					v4= A*3 + B*7 + C*b + D*f
 					D0      D1
 					f0   f1     f2   f3
-					0145 * AABB + 89cd*CCDD = A0+C8|A1+C9|B4+Dc|B5+Dd -> 
-					
+					0145 * AABB + 89cd*CCDD = A0+C8|A1+C9|B4+Dc|B5+Dd ->
+
 					v01=D0+D1 =  { A0+B4+C8+Dc, A1+B5+C9+Dd }
 
 						AB, CD -> AABB CCDD
@@ -2056,20 +2056,20 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			}
 			break;
 
-			
+
 			case shop_cvt_f2i_t:
-				
-				//printf("f2i: r%d f%d\n",reg.mapg(op->rd),reg.mapf(op->rs1));
+
+				//LOG_D("rec_arm", "f2i: r%d f%d\n",reg.mapg(op->rd),reg.mapf(op->rs1));
 				//BKPT();
 				VCVT_to_S32_VFP(f0,reg.mapf(op->rs1));
 				VMOV(reg.mapg(op->rd),f0);
 				//shil_chf[op->op](op);
 				break;
-			
+
 			case shop_cvt_i2f_n:	// may be some difference should be made ?
 			case shop_cvt_i2f_z:
-			
-				//printf("i2f: f%d r%d\n",reg.mapf(op->rd),reg.mapg(op->rs1));
+
+				//LOG_D("rec_arm", "i2f: f%d r%d\n",reg.mapf(op->rd),reg.mapg(op->rs1));
 				//BKPT();
 				VMOV(f0, reg.mapg(op->rs1));
 				VCVT_from_S32_VFP(reg.mapfs(op->rd),f0);
@@ -2078,12 +2078,12 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 #endif
 
 		default:
-			//printf("CFB %d\n",op->op);
+			//LOG_D("rec_arm", "CFB %d\n",op->op);
 			shil_chf[op->op](op);
 			break;
 
 __default:
-			printf("@@\tError, Default case (0x%X) in ngen_CompileBlock!\n", op->op);
+			LOG_E("rec_arm", "@@\tDefault case (0x%X) in ngen_CompileBlock!\n", op->op);
 			verify(false);
 			break;
 		}
@@ -2092,7 +2092,7 @@ __default:
 
 void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise)
 {
-	//printf("Compile: %08X, %d, %d\n",block->addr,staging,optimise);
+	//LOG_D("rec_arm", "Compile: %08X, %d, %d\n",block->addr,staging,optimise);
 	block->code=(DynarecCodeEntryPtr)EMIT_GET_PTR();
 
 	//StoreImms(r0,r1,(u32)&last_run_block,(u32)code); //useful when code jumps to random locations ...
@@ -2152,7 +2152,7 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 	for (size_t i=0;i<block->oplist.size();i++)
 	{
 		op=&block->oplist[i];
-		
+
 		op->host_offs=(u8*)EMIT_GET_PTR()-blk_start;
 
 		if (i!=0)
@@ -2168,7 +2168,7 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 	extern u32 ralst[4];
 
 	MOV32(r0,(u32)&ralst[0]);
-	
+
 	LDR(r1,r0,0);
 	ADD(r1,r1,reg.preload_gpr);
 	STR(r1,r0,0);
@@ -2196,7 +2196,7 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 		if (block->pBranchBlock) block->pBranchBlock->AddRef(block);
 	*/
 
-	
+
 	//Relink written bytes must be added to the count !
 
 	block->relink_offset=(u8*)EMIT_GET_PTR()-(u8*)block->code;
@@ -2220,7 +2220,7 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 
 void ngen_ResetBlocks()
 {
-	printf("@@\tngen_ResetBlocks()\n");
+	LOG_D("rec_arm", "@@\tngen_ResetBlocks()\n");
 }
 /*
 	SHR ..
@@ -2234,7 +2234,7 @@ void ngen_init()
 {
     verify(FPCB_OFFSET == -0x2100000 || FPCB_OFFSET == -0x4100000);
     verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
-    
+
 	for (int s=0;s<6;s++)
 	{
 		void* fn=s==0?(void*)_vmem_ReadMem8SX32:
@@ -2299,7 +2299,7 @@ void ngen_init()
 		BX(LR);
 	}
 
-	printf("readm helpers: up to %08X\n",EMIT_GET_PTR());
+	LOG_D("rec_arm", "readm helpers: up to %08X\n", EMIT_GET_PTR());
 	emit_SetBaseAddr();
 
 
@@ -2308,11 +2308,11 @@ void ngen_init()
 
 	ccmap[shop_seteq]=CC_EQ;
 	ccnmap[shop_seteq]=CC_NE;
-	
-	
+
+
 	ccmap[shop_setge]=CC_GE;
 	ccnmap[shop_setge]=CC_LT;
-	
+
 	ccmap[shop_setgt]=CC_GT;
 	ccnmap[shop_setgt]=CC_LE;
 

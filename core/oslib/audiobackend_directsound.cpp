@@ -19,31 +19,31 @@ static void directsound_init()
 	verifyc(dsound->SetCooperativeLevel((HWND)libPvr_GetRenderTarget(),DSSCL_PRIORITY));
 	IDirectSoundBuffer* buffer_;
 
-	WAVEFORMATEX wfx; 
-	DSBUFFERDESC desc; 
+	WAVEFORMATEX wfx;
+	DSBUFFERDESC desc;
 
-	// Set up WAV format structure. 
+	// Set up WAV format structure.
 
-	memset(&wfx, 0, sizeof(WAVEFORMATEX)); 
-	wfx.wFormatTag = WAVE_FORMAT_PCM; 
-	wfx.nChannels = 2; 
-	wfx.nSamplesPerSec = 44100; 
-	wfx.nBlockAlign = 4; 
-	wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign; 
-	wfx.wBitsPerSample = 16; 
+	memset(&wfx, 0, sizeof(WAVEFORMATEX));
+	wfx.wFormatTag = WAVE_FORMAT_PCM;
+	wfx.nChannels = 2;
+	wfx.nSamplesPerSec = 44100;
+	wfx.nBlockAlign = 4;
+	wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
+	wfx.wBitsPerSample = 16;
 
-	// Set up DSBUFFERDESC structure. 
+	// Set up DSBUFFERDESC structure.
 
 	ds_ring_size=8192*wfx.nBlockAlign;
 
-	memset(&desc, 0, sizeof(DSBUFFERDESC)); 
-	desc.dwSize = sizeof(DSBUFFERDESC); 
-	desc.dwFlags = DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLPOSITIONNOTIFY;// _CTRLPAN | DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY; 
-	
-	desc.dwBufferBytes = ds_ring_size; 
-	desc.lpwfxFormat = &wfx; 
+	memset(&desc, 0, sizeof(DSBUFFERDESC));
+	desc.dwSize = sizeof(DSBUFFERDESC);
+	desc.dwFlags = DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLPOSITIONNOTIFY;// _CTRLPAN | DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY;
 
-	
+	desc.dwBufferBytes = ds_ring_size;
+	desc.lpwfxFormat = &wfx;
+
+
 
 	if (settings.aica.HW_mixing==0)
 	{
@@ -71,7 +71,7 @@ static void directsound_init()
 
 	//Play the buffer !
 	verifyc(buffer->Play(0,0,DSBPLAY_LOOPING));
-	
+
 }
 
 
@@ -101,6 +101,7 @@ static int directsound_getusedSamples()
 
 static u32 directsound_push_nw(void* frame, u32 samplesb)
 {
+	/* TODO: Rework formatting */
 	DWORD pc,wch;
 
 	u32 bytes=samplesb*4;
@@ -115,7 +116,7 @@ static u32 directsound_push_nw(void* frame, u32 samplesb)
 
 	fsz-=32;
 
-	//printf("%d: r:%d w:%d (f:%d wh:%d)\n",fsz>bytes,pc,wc,fsz,wch);
+	LOG_D("Audio", "%d: r:%d w:%d (f:%d wh:%d)\n", fsz > bytes, pc, wc, fsz, wch);
 
 	if (fsz>bytes)
 	{
@@ -159,8 +160,8 @@ static u32 directsound_push(void* frame, u32 samples, bool wait)
 	wait &= w;
 
 	int ffs=1;
-	
-	/*
+
+	/* TODO: REVIEW
 	while (directsound_IsAudioBufferedLots() && wait)
 		if (ffs == 0)
 			ffs = printf("AUD WAIT %d\n", directsound_getusedSamples());
@@ -175,7 +176,7 @@ static u32 directsound_push(void* frame, u32 samples, bool wait)
 static void directsound_term()
 {
 	buffer->Stop();
-	
+
 	buffer->Release();
 	dsound->Release();
 }

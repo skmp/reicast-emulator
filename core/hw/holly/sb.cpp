@@ -5,6 +5,7 @@
 
 #include "types.h"
 #include "sb.h"
+#include "oslib/logging.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/pvr/pvr_sb_regs.h"
 #include "hw/gdrom/gdrom_if.h"
@@ -32,7 +33,7 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 #ifdef TRACE
 	if (offset & 3/*(size-1)*/) //4 is min align size
 	{
-		EMUERROR("Unaligned System Bus register read");
+		LOG_E("sb_holly", "Unalligned System Bus register read");
 	}
 #endif
 
@@ -53,7 +54,7 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 		}
 		else
 		{
-			//printf("SB: %08X\n",addr);
+			//LOG_V("sb_holly", "%08X\n", addr);
 			return sb_regs[offset].readFunctionAddr(addr);
 		}
 #ifdef TRACE
@@ -61,11 +62,12 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 	else
 	{
 		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR("ERROR [wrong size read on register]");
+			LOG_E("sb_holly", "[Wrong size read on register]");
 	}
 #endif
+// TODO Harry
 //  if ((sb_regs[offset].flags& REG_NOT_IMPL))
-//      EMUERROR2("Read from System Control Regs , not  implemented , addr=%x",addr);
+//		LOG_E("sb_holly", "Read from System Control Regs, not implemented, addr= %x", addr);
 	return 0;
 }
 
@@ -75,7 +77,7 @@ void sb_WriteMem(u32 addr,u32 data,u32 sz)
 #ifdef TRACE
 	if (offset & 3/*(size-1)*/) //4 is min align size
 	{
-		EMUERROR("Unaligned System bus register write");
+		LOG_E("sb_holly", "[Unaligned System bus register write]");
 	}
 #endif
 offset>>=2;
@@ -95,11 +97,11 @@ offset>>=2;
 		}
 		else
 		{
-			//printf("SBW: %08X\n",addr);
+			//LOG_V("sb_holly", "%08X\n", addr);
 			sb_regs[offset].writeFunctionAddr(addr,data);
 			/*
 			if (sb_regs[offset].flags & REG_CONST)
-				EMUERROR("Error [Write to read only register , const]");
+				LOG_E("sb_holly", "[Write to read only register , const]");
 			else
 			{
 				if ()
@@ -110,7 +112,7 @@ offset>>=2;
 				else
 				{
 					if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-						EMUERROR("ERROR [Write to read only register]");
+						LOG_E("holly_sb", "[Write to read only register]");
 				}
 			}*/
 			return;
@@ -120,10 +122,10 @@ offset>>=2;
 	else
 	{
 		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR4("ERROR :wrong size write on register ; offset=%x , data=%x,sz=%d",offset,data,sz);
+			LOG_E("holly_sb", "Wrong size write on register ; offset=%x , data=%x,sz=%d", offset, data, sz);
 	}
 	if ((sb_regs[offset].flags& REG_NOT_IMPL))
-		EMUERROR3("Write to System Control Regs , not  implemented , addr=%x,data=%x",addr,data);
+		LOG_E("holly_sb", "Write to System Control Regs, not implemented, addr=%x,data=%x", addr, data);
 #endif
 
 }
@@ -187,7 +189,7 @@ void SB_SFRES_write32(u32 addr, u32 data)
 {
 	if ((u16)data==0x7611)
 	{
-		printf("SB/HOLLY: System reset requested -- but cannot SOFT_RESET\n");
+		LOG_W("sb_holly", "System reset requested -- but cannot SOFT_RESET\n");
 	}
 }
 void sb_Init()

@@ -4,6 +4,7 @@
 
 #pragma once
 #include "types.h"
+#include "oslib/logging.h"
 
 struct MemChip
 {
@@ -24,7 +25,7 @@ struct MemChip
 		return data[addr&mask];
 	}
 
-	u32 Read(u32 addr,u32 sz) 
+	u32 Read(u32 addr,u32 sz)
 	{
 		addr&=mask;
 
@@ -84,12 +85,12 @@ struct MemChip
 			{
 				sprintf(temp,"%s%s",base,curr);
 			}
-			
+
 			curr=next+1;
 
 			if (Load(temp))
 			{
-				printf("Loaded %s as %s\n\n",temp,title.c_str());
+				LOG_I("flashrom", "Loaded %s as %s\n\n", temp, title.c_str());
 				return true;
 			}
 		} while(next);
@@ -104,7 +105,7 @@ struct MemChip
 		sprintf(path,"%s%s%s",root.c_str(),prefix.c_str(),name_ro.c_str());
 		Save(path);
 
-		printf("Saved %s as %s\n\n",path,title.c_str());
+		LOG_I("flashrom", "Saved %s as %s\n\n", path, title.c_str());
 	}
 };
 struct RomChip : MemChip
@@ -161,7 +162,7 @@ struct DCFlashChip : MemChip // I think its Micronix :p
 		FS_Erase,
 
 		FS_Write,
-		
+
 
 	};
 
@@ -171,7 +172,7 @@ struct DCFlashChip : MemChip // I think its Micronix :p
 		//reset the flash chip state
 		state=FS_CMD_AA;
 	}
-	
+
 	virtual u8 Read8(u32 addr)
 	{
 		u32 rv=MemChip::Read8(addr);
@@ -185,7 +186,7 @@ struct DCFlashChip : MemChip // I think its Micronix :p
 
 		return rv;
 	}
-	
+
 
 	void Write(u32 addr,u32 val,u32 sz)
 	{
@@ -193,7 +194,7 @@ struct DCFlashChip : MemChip // I think its Micronix :p
 			die("invalid access size");
 
 		addr &= mask;
-		
+
 		switch(state)
 		{
 		case FS_Erase_AA:
@@ -223,7 +224,7 @@ struct DCFlashChip : MemChip // I think its Micronix :p
 					state=FS_Erase_AA;
 					break;
 				default:
-					printf("Flash write: address=%06X, value=%08X, size=%d\n",addr,val,sz);
+					LOG_I("flashrom", "Write: address=%06X, value=%08X, size=%d\n", addr, val, sz);
 					state=FS_CMD_AA;
 					die("lolwhut");
 				}
@@ -235,11 +236,11 @@ struct DCFlashChip : MemChip // I think its Micronix :p
 				switch(val)
 				{
 				case 0x30:
-					printf("Erase Sector %08X! (%08X)\n",addr,addr&(~0x3FFF));
+					LOG_I("flashrom", "Erase Sector %08X! (%08X)\n", addr, addr&(~0x3FFF));
 					memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
 					break;
 				default:
-					printf("Flash write: address=%06X, value=%08X, size=%d\n",addr,val,sz);
+					LOG_I("flashrom", "Write: address=%06X, value=%08X, size=%d\n",addr,val,sz);
 					die("erase .. what ?");
 				}
 				state=FS_CMD_AA;
@@ -248,11 +249,11 @@ struct DCFlashChip : MemChip // I think its Micronix :p
 
 		case FS_Write:
 			{
-				//printf("flash write\n");
+				LOG_V("flashrom", "Flash Write\n");
 				data[addr]&=val;
 				state=FS_CMD_AA;
 			}
 			break;
 		}
-	}	
+	}
 };

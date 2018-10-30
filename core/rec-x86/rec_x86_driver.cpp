@@ -1,4 +1,5 @@
 #include "types.h"
+#include "oslib/logging.h"
 
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
 #include "rec_x86_ngen.h"
@@ -42,7 +43,7 @@ void DetectCpuFeatures()
 	{
 		__asm addps xmm0,xmm0
 	}
-	__except(1) 
+	__except(1)
 	{
 		sse_1=false;
 	}
@@ -51,7 +52,7 @@ void DetectCpuFeatures()
 	{
 		__asm addpd xmm0,xmm0
 	}
-	__except(1) 
+	__except(1)
 	{
 		sse_2=false;
 	}
@@ -60,7 +61,7 @@ void DetectCpuFeatures()
 	{
 		__asm addsubpd xmm0,xmm0
 	}
-	__except(1) 
+	__except(1)
 	{
 		sse_3=false;
 	}
@@ -69,18 +70,18 @@ void DetectCpuFeatures()
 	{
 		__asm phaddw xmm0,xmm0
 	}
-	__except(1) 
+	__except(1)
 	{
 		ssse_3=false;
 	}
 
-	
+
 	__try
 	{
 		__asm paddd mm0,mm1
 		__asm emms;
 	}
-	__except(1) 
+	__except(1)
 	{
 		mmx=false;
 	}
@@ -139,7 +140,7 @@ void x86_reg_alloc::FreezeXMM()
 	f32* slpc=thaw_regs;
 	while(*fpreg!=-1)
 	{
-		if (SpanNRegfIntr(current_opid,*fpreg))	
+		if (SpanNRegfIntr(current_opid,*fpreg))
 			x86e->Emit(op_movss,slpc++,*fpreg);
 		fpreg++;
 	}
@@ -154,7 +155,7 @@ void x86_reg_alloc::ThawXMM()
 	f32* slpc=thaw_regs;
 	while(*fpreg!=-1)
 	{
-		if (SpanNRegfIntr(current_opid,*fpreg))	
+		if (SpanNRegfIntr(current_opid,*fpreg))
 			x86e->Emit(op_movss,*fpreg,slpc++);
 		fpreg++;
 	}
@@ -190,14 +191,14 @@ void DYNACALL csc_fail(u32 addr,u32 addy)
 	{
 		u32 fail_idx=(csc_sidx>>1)|(csc_sidx<<31);
 
-		printf("Ret Mismatch: %08X instead of %08X!\n",addr,addy);
+		LOG_W("rec_x86", "Ret Mismatch: %08X instead of %08X!\n",addr,addy);
 	}
 }
 void csc_pop(RuntimeBlockInfo* block)
 {
 	x86_Label* end=x86e->CreateLabel(false,8);
 	x86_Label* try_dyn=x86e->CreateLabel(false,8);
-	
+
 	//static guess
 	x86_Label* stc_hit=x86e->CreateLabel(false,8);
 	x86e->Emit(op_cmp32,ECX,&block->csc_RetCache);
@@ -210,7 +211,7 @@ void csc_pop(RuntimeBlockInfo* block)
 		//else, do cache
 		x86e->Emit(op_mov32,&block->csc_RetCache,ECX);
 	}
-	
+
 	x86e->MarkLabel(stc_hit);
 	x86e->Emit(op_add32,&ret_stc,1);
 	if (csc_mode==1)
@@ -218,7 +219,7 @@ void csc_pop(RuntimeBlockInfo* block)
 	x86e->Emit(op_jmp,end);
 
 	x86e->MarkLabel(try_dyn);
-	
+
 	if (csc_mode==0)
 	{
 		//csc !
@@ -239,7 +240,7 @@ void csc_pop(RuntimeBlockInfo* block)
 		x86e->Emit(op_cmp32,EDX,ECX);
 	}
 
-	
+
 	x86e->Emit(op_jne,end);
 	x86e->Emit(op_add32,&ret_hit,1);
 	//x86e->Emit(op_jmp,end);
@@ -251,10 +252,10 @@ void csc_pop(RuntimeBlockInfo* block)
 
 void DYNACALL PrintBlock(u32 pc)
 {
-	printf("block: 0x%08X\n",pc);
-	for (int i=0;i<16;i++)
-		printf("%08X ",r[i]);
-	printf("\n");
+	/* Should I leave this be? -- lx0 */
+	LOG_D("rec_x86", "Block: 0x%08X\n", pc);
+	for (int i = 0; i < 16; i++)
+		LOG_D("%08X ", r[i]);
 }
 
 u32* GetRegPtr(u32 reg)
@@ -285,7 +286,7 @@ void CheckBlock(RuntimeBlockInfo* block,x86_ptr_imm place)
 		sz-=4;
 		sa+=4;
 	}
-	
+
 }
 
 
@@ -296,7 +297,7 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 
 	((DynaRBI*)block)->reloc_info=0;
 
-	
+
 	//Setup emitter
 	x86e = new x86_block();
 	x86e->Init(0,0);
@@ -315,7 +316,7 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 
 	//run register allocator
 	reg.DoAlloc(block,alloc_regs,xmm_alloc_regs);
-	
+
 	//block header//
 
 	//block invl. checks
@@ -355,13 +356,13 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 		shil_opcode* op=&block->oplist[i];
 
 		u32 opcd_start=x86e->opcode_count;
-		if (prof.enable) 
+		if (prof.enable)
 		{
 			x86e->Emit(op_add32,&prof.counters.shil.executed[op->op],1);
 		}
 
 		op->host_offs=x86e->x86_indx;
-		
+
 		if (prof.enable)
 		{
 			set<int> reg_wt;
@@ -383,7 +384,7 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 				reg_rd.insert(op->rs3._reg+z);
 
 			set<int>::iterator iter=reg_wt.begin();
-			while( iter != reg_wt.end() ) 
+			while( iter != reg_wt.end() )
 			{
 				if (reg_rd.count(*iter))
 				{
@@ -399,15 +400,15 @@ void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool st
 			}
 
 			iter=reg_rd.begin();
-			while( iter != reg_rd.end() ) 
+			while( iter != reg_rd.end() )
 			{
 				x86e->Emit(op_add32,&prof.counters.ralloc.reg_r[*iter],1);
 				++iter;
 			}
 		}
-		
+
 		reg.OpBegin(op,i);
-			
+
 		ngen_opcode(block,op,x86e,staging,optimise);
 
 		if (prof.enable) x86e->Emit(op_add32,&prof.counters.shil.host_ops[op->op],x86e->opcode_count-opcd_start);
@@ -505,14 +506,14 @@ u32 DynaRBI::Relink()
 	{
 		//csc_push(this);
 	}
-		
+
 	switch(BlockType)
 	{
 	case BET_Cond_0:
 	case BET_Cond_1:
 		{
 			x86e->Emit(op_cmp32,GetRegPtr(has_jcond?reg_pc_dyn:reg_sr_T),BlockType&1);
-			
+
 			x86_Label* noBranch=x86e->CreateLabel(0,8);
 
 			x86e->Emit(op_jne,noBranch);
@@ -677,7 +678,7 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 				if (sz==SZ_64F)
 					x86e->Emit(op_movss,buff4,XMM1);
 			}
-		}	
+		}
 	}
 	else if (mode==1)
 	{
@@ -835,7 +836,7 @@ bool ngen_Rewrite(unat& addr,unat retadr,unat acc)
 					//found !
 
 					if ((acc >> 26) == 0x38 && !w) {
-						printf("WARNING: SQ AREA READ, %08X from sh4:%08X. THIS IS UNDEFINED ON A REAL DREACMAST.\n", acc, bm_GetBlock(x86e->x86_buff)->addr);
+						LOG_W("rec_x86", "SQ AREA READ, %08X from sh4:%08X. THIS IS UNDEFINED ON A REAL DREACMAST.\n", acc, bm_GetBlock(x86e->x86_buff)->addr);
 					}
 
 					if ((acc >> 26) == 0x38) //sq ?
@@ -853,12 +854,12 @@ bool ngen_Rewrite(unat& addr,unat retadr,unat acc)
 
 					addr=retadr-5;
 
-					//printf("Patched: %08X for access @ %08X\n",addr,acc);
+					//LOG_D("rec_x86", "Patched: %08X for access @ %08X\n", addr, acc);
 					return true;
 				}
 			}
 		}
-		
+
 		die("Failed to match the code :(\n");
 
 		return false;

@@ -1,6 +1,6 @@
 /*
 
-	This is a header file that can create 
+	This is a header file that can create
 	a) Shil opcode enums
 	b) Shil opcode classes/portable C implementation ("canonical" implementation)
 	c) The routing table for canonical implementations
@@ -40,11 +40,11 @@ extern "C" f32 fipr_asm(float* fn, float* fm);
 	#define SHIL_START
 	#define SHIL_END
 
-	#define shil_opc(name) struct shil_opcl_##name { 
+	#define shil_opc(name) struct shil_opcl_##name {
 	#define shil_opc_end() };
 
 	#define shil_canonical(rv,name,args,code) struct name { static rv impl args { code } };
-	
+
 	#define shil_cf_arg_u32(x) ngen_CC_Param(op,&op->x,CPT_u32);
 	#define shil_cf_arg_f32(x) ngen_CC_Param(op,&op->x,CPT_f32);
 	#define shil_cf_arg_ptr(x) ngen_CC_Param(op,&op->x,CPT_ptr);
@@ -60,14 +60,14 @@ extern "C" f32 fipr_asm(float* fn, float* fm);
 	#define SHIL_START
 	#define SHIL_END
 
-	#define shil_opc(name) struct shil_opcl_##name { 
+	#define shil_opc(name) struct shil_opcl_##name {
 	#define shil_opc_end() };
 
 	#define shil_canonical(rv,name,args,code) struct name { static rv impl args; };
 	#define shil_compile(code) static void compile(shil_opcode* op);
 #elif  SHIL_MODE==3
 	//generate struct list ...
-	
+
 
 	#define SHIL_START \
 	shil_chfp* shil_chf[] = {
@@ -140,7 +140,7 @@ shil_compile \
 #define BIN_OP_I2(tp,z) BIN_OP_I_BASE( return ((tp) r1) z ((tp) r2); ,u32,u32)
 #define BIN_OP_I3(z,w) BIN_OP_I_BASE( return (r1 z r2) w; ,u32,u32)
 #define BIN_OP_I4(tp,z,rt,pt) BIN_OP_I_BASE( return ((tp)(pt)r1) z ((tp)(pt)r2); ,u32,rt)
-	
+
 #define BIN_OP_F(z) BIN_OP_I_BASE( return r1 z r2; ,f32,f32)
 #define BIN_OP_FU(z) BIN_OP_I_BASE( return r1 z r2; ,f32,u32)
 
@@ -159,7 +159,7 @@ shil_compile( \
 #define BIN_OP_I2(tp,z)
 #define BIN_OP_I3(z,w)
 #define BIN_OP_I4(tp,z,rt,k)
-	
+
 #define BIN_OP_F(z)
 #define BIN_OP_FU(z)
 
@@ -198,7 +198,7 @@ shil_recimp()
 shil_opc_end()
 
 //mem io
-shil_opc(readm)	
+shil_opc(readm)
 shil_recimp()
 shil_opc_end()
 
@@ -643,7 +643,7 @@ shil_opc(debug_3)
 shil_canonical
 (
 void,f1,(u32 r1,u32 r2,u32 r3),
-	printf("%08X, %08X, %08X\n",r1,r2,r3);
+	LOG_D("sh4_dyna_shil", "%08X, %08X, %08X\n", r1, r2, r3);
 )
 
 shil_compile
@@ -661,7 +661,7 @@ shil_opc(debug_1)
 shil_canonical
 (
 void,f1,(u32 r1),
-	printf("%08X\n",r1);
+	LOG_D("sh4_dyna_shil", "%08X\n", r1);
 )
 
 shil_compile
@@ -800,7 +800,7 @@ u32,f1,(u32 r1,u32 r2),
 	if ( (temp&0xFF000000) && (temp&0x00FF0000) && (temp&0x0000FF00) && (temp&0x000000FF) )
 		return 0;
 	else
-		return 1;		
+		return 1;
 )
 
 shil_compile
@@ -1039,7 +1039,7 @@ SHIL_END
 #undef BIN_OP_I2
 #undef BIN_OP_I3
 #undef BIN_OP_I4
-	
+
 #undef BIN_OP_F
 
 #undef UN_OP_I

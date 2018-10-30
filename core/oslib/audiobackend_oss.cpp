@@ -1,4 +1,6 @@
 #include "oslib/audiobackend_oss.h"
+#include "oslib/logging.h"
+
 #ifdef USE_OSS
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
@@ -12,21 +14,21 @@ static void oss_init()
 	oss_audio_fd = open("/dev/dsp", O_WRONLY);
 	if (oss_audio_fd < 0)
 	{
-		printf("Couldn't open /dev/dsp.\n");
+		LOG_E("oss", "Couldn't Open /dev/dsp.\n");
 	}
 	else
 	{
-		printf("sound enabled, dsp opened for write\n");
+		LOG_I("oss", "Sound Enabled, DSP Opened for Write\n");
 		int tmp=44100;
 		int err_ret;
 		err_ret=ioctl(oss_audio_fd,SNDCTL_DSP_SPEED,&tmp);
-		printf("set Frequency to %i, return %i (rate=%i)\n", 44100, err_ret, tmp);
+		LOG_V("oss", "set Frequency to %i, return %i (rate=%i)\n", 44100, err_ret, tmp);
 		int channels=2;
 		err_ret=ioctl(oss_audio_fd, SNDCTL_DSP_CHANNELS, &channels);
-		printf("set dsp to stereo (%i => %i)\n", channels, err_ret);
+		LOG_V("oss", "set DSP to stereo (%i => %i)\n", channels, err_ret);
 		int format=AFMT_S16_LE;
 		err_ret=ioctl(oss_audio_fd, SNDCTL_DSP_SETFMT, &format);
-		printf("set dsp to %s audio (%i/%i => %i)\n", "16bits signed", AFMT_S16_LE, format, err_ret);
+		LOG_V("oss", "set DSP to %s audio (%i/%i => %i)\n", "16bits signed", AFMT_S16_LE, format, err_ret);
 	}
 }
 

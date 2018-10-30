@@ -53,7 +53,7 @@ TA:
 Tile clip
 
 */
-
+#include "oslib/logging.h"
 #include "oslib/oslib.h"
 #include "rend/rend.h"
 #include "hw/pvr/Renderer_if.h"
@@ -413,11 +413,11 @@ int screen_height;
 		EGLint maj, min;
 		if (!eglInitialize(gl.setup.display, &maj, &min))
 		{
-			printf("EGL Error: eglInitialize failed\n");
+			LOG_E("egl", "eglInitialize failed\n");
 			return false;
 		}
 
-		printf("Info: EGL version %d.%d\n",maj,min);
+		LOG_I("egl", "EGL version %d.%d\n", maj, min);
 
 
 
@@ -429,7 +429,7 @@ int screen_height;
 		EGLConfig config;
 		if (!eglChooseConfig(gl.setup.display, pi32ConfigAttribs, &config, 1, &num_config) || (num_config != 1))
 		{
-			printf("EGL Error: eglChooseConfig failed\n");
+			LOG_E("egl", "eglChooseConfig failed\n");
 			return false;
 		}
 
@@ -461,7 +461,7 @@ int screen_height;
 		screen_width=w;
 		screen_height=h;
 
-		printf("EGL config: %p, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
+		LOG_I("egl", "config: %p, %08X, %08X %dx%d\n", gl.setup.context, gl.setup.display, gl.setup.surface, w, h);
 		return true;
 	}
 
@@ -750,7 +750,7 @@ GLuint gl_CompileShader(const char* shader,GLuint type)
 		*compile_log=0;
 
 		glGetShaderInfoLog(rv, compile_log_len, &compile_log_len, compile_log);
-		printf("Shader: %s \n%s\n",result?"compiled!":"failed to compile",compile_log);
+		LOG_I("gles", "Shader: %s \n%s\n",result?"compiled!":"failed to compile",compile_log);
 
 		free(compile_log);
 	}
@@ -794,7 +794,7 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 		*compile_log=0;
 
 		glGetProgramInfoLog(program, compile_log_len, &compile_log_len, compile_log);
-		printf("Shader linking: %s \n (%d bytes), - %s -\n",result?"linked":"failed to link", compile_log_len,compile_log);
+		LOG_I("gles", "Shader linking: %s \n (%d bytes), - %s -\n",result?"linked":"failed to link", compile_log_len,compile_log);
 
 		free(compile_log);
 		die("shader compile fail\n");
@@ -949,7 +949,7 @@ bool gl_create_resources()
 
 
 	gl.OSD_SHADER.program=gl_CompileAndLink(VertexShaderSource,OSD_Shader);
-	printf("OSD: %d\n",gl.OSD_SHADER.program);
+	LOG_I("gles", "OSD: %d\n", gl.OSD_SHADER.program);
 	gl.OSD_SHADER.scale=glGetUniformLocation(gl.OSD_SHADER.program, "scale");
 	gl.OSD_SHADER.depth_scale=glGetUniformLocation(gl.OSD_SHADER.program, "depth_scale");
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"),0);		//bind osd texture to slot 0
@@ -1071,10 +1071,10 @@ void tryfit(float* x,float* y)
 		float diff=min(max(b*logf(x[i])/logf(2.0)+a,(double)0),(double)1)-y[i];
 		maxdev=max((float)fabs((float)diff),(float)maxdev);
 	}
-	printf("FOG TABLE Curve match: maxdev: %.02f cents\n",maxdev*100);
-	fog_coefs[0]=a;
-	fog_coefs[1]=b;
-	//printf("%f\n",B*log(maxdev)/log(2.0)+A);
+	LOG_D("gles", "FOG TABLE Curve match: maxdev: %.02f cents\n", maxdev * 100);
+	fog_coefs[0] = a;
+	fog_coefs[1] = b;
+	//LOG_D("gles", "%f\n", (B * log(maxdev) / log(2.0) + A));
 }
 
 
@@ -1447,8 +1447,8 @@ void OSD_DRAW()
 
 bool ProcessFrame(TA_context* ctx)
 {
-	//disable RTTs for now ..
-	if (ctx->rend.isRTT)
+	/* Disable RTTs for now */
+	if (ctx -> rend.isRTT)
 		return false;
 
 	ctx->rend_inuse.Lock();
@@ -1458,7 +1458,7 @@ bool ProcessFrame(TA_context* ctx)
 	{
 		void killtex();
 		killtex();
-		printf("Texture cache cleared\n");
+		LOG_I("gles", "Texture Cache Cleared\n");
 	}
 
 	if (!ta_parse_vdrc(ctx))
@@ -1661,10 +1661,10 @@ bool RenderFrame()
 	ShaderUniforms.depth_coefs[2]=0;
 	ShaderUniforms.depth_coefs[3]=0;
 
-	//printf("scale: %f, %f, %f, %f\n",scale_coefs[0],scale_coefs[1],scale_coefs[2],scale_coefs[3]);
+	//LOG_D("gles", "scale: %f, %f, %f, %f\n", scale_coefs[0], scale_coefs[1], scale_coefs[2], scale_coefs[3]);
 
 
-	//VERT and RAM fog color constants
+	/* VERT and RAM fog color constants */
 	u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;
 	u8* fog_colram_bgra=(u8*)&FOG_COL_RAM;
 	ShaderUniforms.ps_FOG_COL_VERT[0]=fog_colvert_bgra[2]/255.0f;
@@ -1816,10 +1816,10 @@ bool RenderFrame()
 	scale_x *= scissoring_scale_x;
 
 	#if 0
-		//handy to debug really stupid render-not-working issues ...
-		printf("SS: %dx%d\n", screen_width, screen_height);
-		printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
-		printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
+		/* Handy to Debug really dumb render-not-working issues */
+		LOG_D("gles", "SS: %dx%d\n", screen_width, screen_height);
+		LOG_D("gles", "SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
+		LOG_D("gles", "SCI: %f, %f, %f, %f\n", offs_x + pvrrc.fb_X_CLIP.min / scale_x, (pvrrc.fb_Y_CLIP.min/scale_y) * dc2s_scale_h, (pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min + 1) / scale_x * dc2s_scale_h, (pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1) / scale_y * dc2s_scale_h);
 	#endif
 
 	glScissor(offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
@@ -1923,7 +1923,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 
 	if (!file)
 	{
-		printf("Error opening %s\n", filename);
+		LOG_E("gles", "Opening %s\n", filename);
 		return TEXTURE_LOAD_ERROR;
 	}
 
@@ -1933,31 +1933,31 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 	//read the header
 	fread(header,1,8,file);
 
-	//test if png
+	/* Test if png */
 	int is_png = !png_sig_cmp(header, 0, 8);
 	if (!is_png)
 	{
 		fclose(file);
-		printf("Not a PNG file : %s", filename);
+		LOG_E("gles", "Not a PNG file : %s", filename);
 		return TEXTURE_LOAD_ERROR;
 	}
 
-	//create png struct
+	/* Create png struct */
 	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL,
 		NULL, NULL);
 	if (!png_ptr)
 	{
 		fclose(file);
-		printf("Unable to create PNG struct : %s", filename);
+		LOG_E("gles", "Unable to create PNG struct : %s", filename);
 		return (TEXTURE_LOAD_ERROR);
 	}
 
-	//create png info struct
+	/* Create png info struct */
 	png_infop info_ptr = png_create_info_struct(png_ptr);
 	if (!info_ptr)
 	{
 		png_destroy_read_struct(&png_ptr, (png_infopp) NULL, (png_infopp) NULL);
-		printf("Unable to create PNG info : %s", filename);
+		LOG_E("gles", "Unable to create PNG info : %s", filename);
 		fclose(file);
 		return (TEXTURE_LOAD_ERROR);
 	}
@@ -1967,7 +1967,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 	if (!end_info)
 	{
 		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp) NULL);
-		printf("Unable to create PNG end info : %s", filename);
+		LOG_E("gles", "Unable to create PNG end info : %s", filename);
 		fclose(file);
 		return (TEXTURE_LOAD_ERROR);
 	}
@@ -1976,7 +1976,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 	if (setjmp(png_jmpbuf(png_ptr)))
 	{
 		fclose(file);
-		printf("Error during setjmp : %s", filename);
+		LOG_E("gles", "During setjmp : %s", filename);
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 		return (TEXTURE_LOAD_ERROR);
 	}
@@ -2015,7 +2015,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 	{
 		//clean up memory and close stuff
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-		printf("Unable to allocate image_data while loading %s ", filename);
+		LOG_E("gles", "Unable to allocate image_data while loading %s ", filename);
 		fclose(file);
 		return TEXTURE_LOAD_ERROR;
 	}
@@ -2027,7 +2027,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 		//clean up memory and close stuff
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 		delete[] image_data;
-		printf("Unable to allocate row_pointer while loading %s ", filename);
+		LOG_E("gles", "Unable to allocate row_pointer while loading %s ", filename);
 		fclose(file);
 		return TEXTURE_LOAD_ERROR;
 	}

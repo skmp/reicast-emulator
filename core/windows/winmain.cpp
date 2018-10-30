@@ -3,6 +3,7 @@
 #include "imgread\common.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
+#include "oslib/logging.h"
 
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
@@ -130,7 +131,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 
 	u8* address=(u8*)pExceptionRecord->ExceptionInformation[1];
 
-	//printf("[EXC] During access to : 0x%X\n", address);
+	//LOG_D("winmain", "[EXC] During access to : 0x%X\n", address);
 
 	if (VramLockedWrite(address))
 	{
@@ -154,7 +155,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 #endif
 	else
 	{
-		printf("[GPF]Unhandled access to : 0x%X\n",(unat)address);
+		LOG_W("winmain", "[GPF]Unhandled access to : 0x%X\n",(unat)address);
 	}
 
 	return EXCEPTION_CONTINUE_SEARCH;
@@ -632,7 +633,7 @@ _In_opt_ PVOID Context
 	Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
 	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE;
 	Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
-	printf("TABLE CALLBACK\n");
+	LOG_I("winmain", "TABLE CALLBACK\n");
 	//for (;;);
 	return Table;
 }
@@ -673,7 +674,7 @@ void setup_seh() {
 
 
 // DEF_CONSOLE allows you to override linker subsystem and therefore default console //
-//	: pragma isn't pretty but def's are configurable 
+//	: pragma isn't pretty but def's are configurable
 #ifdef DEF_CONSOLE
 #pragma comment(linker, "/subsystem:console")
 
@@ -728,7 +729,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 	}
 	__except( ExeptionHandler(GetExceptionInformation()) )
 	{
-		printf("Unhandled exception - Emulation thread halted...\n");
+		LOG_E("winmain", "Unhandled exception - Emulation thread halted...\n");
 	}
 	SetUnhandledExceptionFilter(0);
 

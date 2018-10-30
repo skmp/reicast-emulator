@@ -12,6 +12,7 @@
 #include "types.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/maple/maple_helper.h"
+#include "oslib/logging.h"
 
 maple_device* MapleDevices[4][6];
 
@@ -41,11 +42,11 @@ void maple_vblank()
 		{
 			if (maple_ddt_pending_reset)
 			{
-				//printf("DDT vblank ; reset pending\n");
+				//LOG_D("maple", "DDT vblank ; reset pending\n");
 			}
 			else
 			{
-				//printf("DDT vblank\n");
+				//LOG_D("maple", "DDT vblank\n");
 				maple_DoDma();
 				SB_MDST = 0;
 				if ((SB_MSYS>>12)&1)
@@ -108,7 +109,7 @@ void maple_DoDma()
 	verify(SB_MDST &1)
 
 #if debug_maple
-	printf("Maple: DoMapleDma\n");
+	LOG_D("maple", "DoMapleDma\n");
 #endif
 	u32 addr = SB_MDSTAR;
 	u32 xfer_count=0;
@@ -130,7 +131,7 @@ void maple_DoDma()
 		{
 			if (!IsOnSh4Ram(header_2))
 			{
-				printf("MAPLE ERROR : DESTINATION NOT ON SH4 RAM 0x%X\n",header_2);
+				LOG_E("maple", "DESTINATION NOT ON SH4 RAM 0x%X\n",header_2);
 				header_2&=0xFFFFFF;
 				header_2|=(3<<26);
 			}
@@ -138,16 +139,16 @@ void maple_DoDma()
 			u32 outlen=0;
 
 			u32* p_data =(u32*) GetMemPtr(addr + 8,(plen)*sizeof(u32));
-			
-			//Command code 
+
+			//Command code
 			u32 command=p_data[0] &0xFF;
-			//Recipient address 
+			//Recipient address
 			u32 reci=(p_data[0] >> 8) & 0xFF;//0-5;
 			u32 port=maple_GetPort(reci);
 			u32 bus=maple_GetBusId(reci);
-			//Sender address 
+			//Sender address
 			u32 send=(p_data[0] >> 16) & 0xFF;
-			//Number of additional words in frame 
+			//Number of additional words in frame
 			u32 inlen=(p_data[0]>>24) & 0xFF;
 			u32 resp=0;
 			inlen*=4;
@@ -178,7 +179,7 @@ void maple_DoDma()
 		}
 	}
 
-	//printf("Maple XFER size %d bytes - %.2f ms\n",xfer_count,xfer_count*100.0f/(2*1024*1024/8));
+	//LOG_V("maple", "Maple XFER size %d bytes - %.2f ms\n",xfer_count,xfer_count*100.0f/(2*1024*1024/8));
 	sh4_sched_request(maple_schid,xfer_count*(SH4_MAIN_CLOCK/(2*1024*1024/8)));
 }
 
@@ -191,7 +192,7 @@ int maple_schd(int tag, int c, int j)
 	}
 	else
 	{
-		printf("WARNING: MAPLE DMA ABORT\n");
+		LOG_W("maple", "MAPLE DMA ABORT\n");
 		SB_MDST=0; //I really wonder what this means, can the DMA be continued ?
 	}
 
@@ -210,7 +211,7 @@ void maple_Init()
 	*/
 
 	sb_rio_register(SB_MSHTCL_addr,RIO_WF,0,&maple_SB_MSHTCL_Write);
-	
+
 	/*
 	sb_regs[(SB_MSHTCL_addr-SB_BASE)>>2].flags=REG_32BIT_READWRITE;
 	sb_regs[(SB_MSHTCL_addr-SB_BASE)>>2].writeFunction=maple_SB_MSHTCL_Write;
@@ -233,5 +234,5 @@ void maple_Reset(bool Manual)
 
 void maple_Term()
 {
-	
+
 }

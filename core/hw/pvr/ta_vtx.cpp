@@ -9,6 +9,7 @@
 #include "ta_ctx.h"
 #include "pvr_mem.h"
 #include "Renderer_if.h"
+#include "oslib/logging.h"
 
 u32 ta_type_lut[256];
 
@@ -31,16 +32,16 @@ extern u32 TA_VTXC,TA_SPRC,TA_EOSC,TA_PPC,TA_SPC,TA_EOLC,TA_V64HC;
 #define TA_EOL (TA_EOLC++)
 #define TA_V64H (TA_V64HC++)
 #else
-#define TA_VTX 
-#define TA_SPR 
-#define TA_EOS 
-#define TA_PP 
-#define TA_SP 
-#define TA_EOL 
-#define TA_V64H 
+#define TA_VTX
+#define TA_SPR
+#define TA_EOS
+#define TA_PP
+#define TA_SP
+#define TA_EOL
+#define TA_V64H
 #endif
 
-	
+
 //cache state vars
 u32 tileclip_val=0;
 
@@ -65,7 +66,7 @@ u8 float_to_satu8_2(float val)
 	u32 m2=(vl-0x3f80)>>31;  //1 if smaller 0x3f80 or negative
 	u32 vo=vl-0x3b80;
 	vo &= (~m1>>22);
-	
+
 	return f32_su8_tbl[0x3b80+vo] | (~m2>>24);
 }
 
@@ -82,7 +83,7 @@ PolyParam nullPP;
 PolyParam* CurrentPP=&nullPP;
 List<PolyParam>* CurrentPPlist;
 
-//TA state vars	
+//TA state vars
 DECL_ALIGN(4) static u8 FaceBaseColor[4];
 DECL_ALIGN(4) static u8 FaceOffsColor[4];
 DECL_ALIGN(4) static u32 SFaceBaseColor;
@@ -115,7 +116,7 @@ typedef void TACALL TaPolyParamFP(void* ptr);
 
 //#define TaCmd ((TaListFP*&)sh4rcb.tacmd_void)
 TaListFP* TaCmd;
-	
+
 u32 CurrentList;
 TaListFP* VerxexDataFP;
 bool ListIsFinished[5];
@@ -126,7 +127,7 @@ f32 f16(u16 v)
 	return *(f32*)&z;
 }
 
-	
+
 #if HOST_CPU==CPU_X86
 extern u32 TA_VTX_O;
 #define TA_VTX_OVH(n) (TA_VTX_O+=n);
@@ -150,14 +151,14 @@ public:
 	{
 		verify(CurrentList==ListType_None);
 		//verify(ListIsFinished[new_list]==false);
-		//printf("Starting list %d\n",new_list);
+		//LOG_V("pvr", "Starting list %d\n", new_list);
 		CurrentList=new_list;
 		StartList(CurrentList);
 	}
 
 	static Ta_Dma* DYNACALL NullVertexData(Ta_Dma* data,Ta_Dma* data_end)
 	{
-		printf("TA: Invalid state, ignoring VTX data\n");
+		LOG_W("pvr", "TA: Invalid state, ignoring VTX data\n");
 		return data+SZ32;
 	}
 
@@ -224,7 +225,7 @@ case num : {\
 			//64b , may be on 2 pass
 			ver_64B_def(5);//(Textured, Floating Color)
 			ver_64B_def(6);//(Textured, Floating Color, 16bit UV)
-			ver_64B_def(11);//(Textured, Packed Color,	with Two Volumes)	
+			ver_64B_def(11);//(Textured, Packed Color,	with Two Volumes)
 			ver_64B_def(12);//(Textured, Packed Color, 16bit UV, with Two Volumes)
 			ver_64B_def(13);//(Textured, Intensity,	with Two Volumes)
 			ver_64B_def(14);//(Textured, Intensity, 16bit UV, with Two Volumes)
@@ -235,7 +236,7 @@ case num : {\
 	};
 
 	//Code Splitter/routers
-		
+
 	//helper function for dummy dma's.Handles 32B and then switches to ta_main for next data
 	static Ta_Dma* TACALL ta_dummy_32(Ta_Dma* data,Ta_Dma* data_end)
 	{
@@ -248,7 +249,7 @@ case num : {\
 		TaCmd=ta_main;
 		return data+SZ32;
 	}
-		
+
 	static Ta_Dma* TACALL ta_mod_vol_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
 		TA_VertexParam* vp=(TA_VertexParam*)data;
@@ -273,7 +274,7 @@ case num : {\
 		TA_V64H;
 		//32B more needed , 32B done :)
 		TaCmd=ta_main;
-			
+
 		AppendSpriteVertexB((TA_Sprite1B*)data);
 
 		return data+SZ32;
@@ -330,17 +331,17 @@ data+=poly_size;
 		{
 			ITER
 		} while (HAS_FULL_DATA);
-			
+
 		if (IS_FIST_HALF)
 		{
 		fist_half:
 			ta_handle_poly<poly_type,1>(data,0);
 			if (data->pcw.EndOfStrip) EndPolyStrip();
 			TaCmd=ta_handle_poly<poly_type,2>;
-					
+
 			data+=SZ32;
 		}
-			
+
 		return data;
 
 strip_end:
@@ -374,14 +375,14 @@ strip_end:
 			AppendPolyParam2B((TA_PolyParam2B*)data);
 		else
 			AppendPolyParam4B((TA_PolyParam4B*)data);
-	
+
 		TaCmd=ta_main;
 		return data+SZ32;
 	}
 
 public:
-	
-	//Group_En bit seems ignored, thanks p1pkin 
+
+	//Group_En bit seems ignored, thanks p1pkin
 #define group_EN() /*if (data->pcw.Group_En) */{ TileClipMode(data->pcw.User_Clip);}
 	static Ta_Dma* TACALL ta_main(Ta_Dma* data,Ta_Dma* data_end)
 	{
@@ -398,7 +399,7 @@ public:
 					if (CurrentList==ListType_None)
 					{
 						CurrentList=data->pcw.ListType;
-						//printf("End_Of_List : list error\n");
+						//LOG_E("pvr", "End_Of_List : list error\n");
 					}
 					else
 					{
@@ -406,7 +407,7 @@ public:
 						EndList(CurrentList);//end a list olny if it was realy started
 					}
 
-					//printf("End list %X\n",CurrentList);
+					//LOG_E("pvr", "End list %X\n",CurrentList);
 					ListIsFinished[CurrentList]=true;
 					CurrentList=ListType_None;
 					VerxexDataFP=NullVertexData;
@@ -461,7 +462,7 @@ public:
 						u32 ppid=(u8)(uid>>8);
 
 						VerxexDataFP=ta_poly_data_lut[pdid];
-							
+
 
 						if (data != data_end || psz==1)
 						{
@@ -494,7 +495,7 @@ public:
 						ta_list_start(data->pcw.ListType);	//start a list ;)
 
 					VerxexDataFP=ta_sprite_data;
-					//printf("Sprite \n");
+					//LOG_E("pvr", "Sprite \n"); We are with 7UP ppl, choose fronts
 					AppendSpriteParam((TA_SpriteParam*)data);
 					data+=SZ32;
 				}
@@ -505,7 +506,7 @@ public:
 				//log ("vtx");
 				{
 
-					//printf("VTX:0x%08X\n",VerxexDataFP);
+					//LOG_D("pvr", "VTX: 0x%08X\n", VerxexDataFP);
 					//verify(VerxexDataFP!=NullVertexData);
 					data=VerxexDataFP(data,data_end);
 				}
@@ -620,7 +621,7 @@ public:
 				if (pcw.Col_Type==0)
 				{
 					if (pcw.UV_16bit==0)
-						return 11;          //(Textured, Packed Color, with Two Volumes)	
+						return 11;          //(Textured, Packed Color, with Two Volumes)
 
 					else
 						return 12;          //(Textured, Packed Color, 16bit UV, with Two Volumes)
@@ -634,7 +635,7 @@ public:
 				else
 				{
 					if (pcw.UV_16bit==0)
-						return 13;          //(Textured, Intensity, with Two Volumes)	
+						return 13;          //(Textured, Intensity, with Two Volumes)
 
 					else
 						return 14;          //(Textured, Intensity, 16bit UV, with Two Volumes)
@@ -731,7 +732,7 @@ public:
 		CurrentList = ListType_None;
 		ListIsFinished[0]=ListIsFinished[1]=ListIsFinished[2]=ListIsFinished[3]=ListIsFinished[4]=false;
 	}
-		
+
 	__forceinline
 		static void SetTileClip(u32 xmin,u32 ymin,u32 xmax,u32 ymax)
 	{
@@ -786,24 +787,24 @@ public:
 	template<class T>
 	static void glob_param_bdc_(T* pp)
 	{
-		if (CurrentPP->pcw.full!=pp->pcw.full || 
-			CurrentPP->tcw.full!=pp->tcw.full || 
-			CurrentPP->tsp.full!=pp->tsp.full || 
-			CurrentPP->isp.full!=pp->isp.full	) 
+		if (CurrentPP->pcw.full!=pp->pcw.full ||
+			CurrentPP->tcw.full!=pp->tcw.full ||
+			CurrentPP->tsp.full!=pp->tsp.full ||
+			CurrentPP->isp.full!=pp->isp.full	)
 		{
 			PolyParam* d_pp=CurrentPP;
 			if (CurrentPP->count!=0)
 			{
-				d_pp=CurrentPPlist->Append(); 
+				d_pp=CurrentPPlist->Append();
 				CurrentPP=d_pp;
 			}
-			d_pp->first=vdrc.idx.used(); 
-			d_pp->count=0; 
+			d_pp->first=vdrc.idx.used();
+			d_pp->count=0;
 
-			d_pp->isp=pp->isp; 
-			d_pp->tsp=pp->tsp; 
+			d_pp->isp=pp->isp;
+			d_pp->tsp=pp->tsp;
 			d_pp->tcw=pp->tcw;
-			d_pp->pcw=pp->pcw; 
+			d_pp->pcw=pp->pcw;
 			d_pp->tileclip=tileclip_val;
 
 			d_pp->texid = -1;
@@ -897,17 +898,17 @@ public:
 #if STRIPS_AS_PPARAMS
 		if (CurrentPPlist==&vdrc.global_param_tr)
 		{
-			PolyParam* d_pp =CurrentPPlist->Append(); 
+			PolyParam* d_pp =CurrentPPlist->Append();
 			*d_pp=*CurrentPP;
 			CurrentPP=d_pp;
-			d_pp->first=vdrc.idx.used(); 
-			d_pp->count=0; 
+			d_pp->first=vdrc.idx.used();
+			d_pp->count=0;
 		}
 #endif
 	}
 
 
-	
+
 	static inline void update_fz(float z)
 	{
 		if ((s32&)vdrc.fZ_max<(s32&)z && (s32&)z<0x49800000)
@@ -1123,7 +1124,7 @@ public:
 		vert_face_base_color(BaseInt0);
 	}
 
-	//(Textured, Packed Color,	with Two Volumes)	
+	//(Textured, Packed Color,	with Two Volumes)
 	__forceinline
 		static void AppendPolyVertex11A(TA_Vertex11A* vtx)
 	{
@@ -1195,28 +1196,28 @@ public:
 
 	}
 
-	//Sprites
+	/* Sprites */
 	__forceinline
 		static void AppendSpriteParam(TA_SpriteParam* spr)
 	{
-		//printf("Sprite\n");
+		//LOG_E("pvr", "Sprite\n");
 		PolyParam* d_pp=CurrentPP;
 		if (CurrentPP->count!=0)
 		{
-			d_pp=CurrentPPlist->Append(); 
+			d_pp=CurrentPPlist->Append();
 			CurrentPP=d_pp;
 		}
 
-		d_pp->first=vdrc.idx.used(); 
+		d_pp->first=vdrc.idx.used();
 		d_pp->count=0;
-		d_pp->isp=spr->isp; 
-		d_pp->tsp=spr->tsp; 
-		d_pp->tcw=spr->tcw; 
-		d_pp->pcw=spr->pcw; 
+		d_pp->isp=spr->isp;
+		d_pp->tsp=spr->tsp;
+		d_pp->tcw=spr->tcw;
+		d_pp->pcw=spr->pcw;
 		d_pp->tileclip=tileclip_val;
 
 		d_pp->texid = -1;
-		
+
 		if (d_pp->pcw.Texture) {
 			d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
 		}
@@ -1359,10 +1360,10 @@ public:
 #if STRIPS_AS_PPARAMS
 		if (CurrentPPlist==&vdrc.global_param_tr)
 		{
-			PolyParam* d_pp =CurrentPPlist->Append(); 
+			PolyParam* d_pp =CurrentPPlist->Append();
 			*d_pp=*CurrentPP;
 			CurrentPP=d_pp;
-			d_pp->first=vdrc.idx.used(); 
+			d_pp->first=vdrc.idx.used();
 			d_pp->count=0;
 		}
 #endif
@@ -1440,12 +1441,12 @@ bool ta_parse_vdrc(TA_context* ctx)
 	verify( vd_ctx == 0);
 	vd_ctx = ctx;
 	vd_rc = vd_ctx->rend;
-	
+
 	ta_parse_cnt++;
 	if (0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
 	{
 		TAFifo0.vdec_init();
-		
+
 		Ta_Dma* ta_data=(Ta_Dma*)vd_rc.proc_start;
 		Ta_Dma* ta_data_end=((Ta_Dma*)vd_rc.proc_end)-1;
 
@@ -1464,7 +1465,7 @@ bool ta_parse_vdrc(TA_context* ctx)
 
 	ctx->rend.Overrun = overrun;
 	if (overrun)
-		printf("Warning: TA context overrun\n");
+		LOG_W("pvr", "TA context overrun\n");
 
 	return !overrun;
 }
@@ -1534,7 +1535,7 @@ void vtxdec_init()
 	for (u32 i=0;i<65536;i++)
 	{
 		u32 fr=i<<16;
-		
+
 		f32_su8_tbl[i]=float_to_satu8_math((f32&)fr);
 	}
 
@@ -1554,7 +1555,7 @@ static OnLoad ol_vtxdec(&vtxdec_init);
 
 void FillBGP(TA_context* ctx)
 {
-	
+
 	//Render pre-code
 	//--BG poly
 	u32 param_base=PARAM_BASE & 0xF00000;

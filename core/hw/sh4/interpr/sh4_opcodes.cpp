@@ -2,6 +2,7 @@
 	sh4 base core
 	most of it is (very) old
 	could use many cleanups, lets hope someone does them
+	TODO Harry: Clean thy fck up
 */
 
 //All non fpu opcodes :)
@@ -17,7 +18,7 @@
 #include "../sh4_interrupts.h"
 #include "../modules/tmu.h"
 #include "hw/gdrom/gdrom_if.h"
-
+#include "oslib/logging.h"
 #include "hw/sh4/sh4_opcode.h"
 
 void dofoo(sh4_opcode op)
@@ -61,7 +62,7 @@ void dofoo(sh4_opcode op)
 // 0xxx
 void cpu_iNimp(u32 op, const char* info)
 {
-	printf("\n\nUnimplemented opcode: %08X next_pc: %08X pr: %08X msg: %s\n", op, next_pc, pr, info);
+	LOG_W("sh4_opcodes", "Unimplemented opcode: %08X next_pc: %08X pr: %08X msg: %s\n", op, next_pc, pr, info);
 	//next_pc = pr; //debug hackfix: try to recover by returning from call
 	die("iNimp reached\n");
 	//sh4_cpu.Stop();
@@ -69,9 +70,7 @@ void cpu_iNimp(u32 op, const char* info)
 
 void cpu_iWarn(u32 op, const char* info)
 {
-	printf("Check opcode : %X : ", op);
-	printf("%s", info);
-	printf(" @ %X\n", curr_pc);
+	LOG_W("sh4_opcodes", "Check opcode : %X : %s @ %X\n", op, info, curr_pc);
 }
 
 //this file contains ALL register to register full moves
@@ -277,7 +276,7 @@ sh4op(i0010_nnnn_mmmm_0100)
 	//iNimp("mov.b <REG_M>,@-<REG_N>");
 	u32 n = GetN(op);
 	u32 m = GetM(op);
-	
+
 	u32 addr = r[n] - 1;
 	WriteMemBOU8(r[n], (u32)-1, r[m]);
 	r[n] = addr;
@@ -334,7 +333,7 @@ sh4op(i0100_nnnn_0000_0010)
 sh4op(i0100_nnnn_0001_0010)
 {
 	u32 n = GetN(op);
-	
+
 	u32 addr = r[n] - 4;
 	WriteMemU32(addr, mac.l);
 	r[n] = addr;
@@ -366,7 +365,7 @@ sh4op(i0100_nnnn_0001_0011)
 {
 	//iNimp("stc.l GBR,@-<REG_N>");
 	u32 n = GetN(op);
-	
+
 	u32 addr = r[n] - 4;
 	WriteMemU32(addr, gbr);
 	r[n] = addr;
@@ -916,9 +915,9 @@ sh4op(i0000_nnnn_0000_0011)
 	u32 n = GetN(op);
 	u32 newpc = r[n] + next_pc +2;
 	u32 newpr = next_pc + 2;
-	
+
 	ExecuteDelayslot(); //WARN : pr and r[n] can change here
-	
+
 	pr = newpr;
 	next_pc = newpc;
 }
@@ -1028,7 +1027,7 @@ sh4op(i1011_iiii_iiii_iiii)
 // trapa #<imm>
 sh4op(i1100_0011_iiii_iiii)
 {
-	//printf("trapa 0x%X\n",(GetImm8(op) << 2));
+	//LOG_D("sh4_opcodes", "trapa 0x%X\n",(GetImm8(op) << 2));
 	CCN_TRA = (GetImm8(op) << 2);
 	Do_Exception(next_pc,0x160,0x100);
 }
@@ -1226,7 +1225,7 @@ sh4op(i0000_0000_0000_1001)
 //ldtlb
 sh4op(i0000_0000_0011_1000)
 {
-	//printf("ldtlb %d/%d\n",CCN_MMUCR.URC,CCN_MMUCR.URB);
+	//LOG_D("sh4_opcodes", "ldtlb %d/%d\n", CCN_MMUCR.URC, CCN_MMUCR.URB);
 	UTLB[CCN_MMUCR.URC].Data=CCN_PTEL;
 	UTLB[CCN_MMUCR.URC].Address=CCN_PTEH;
 
@@ -1237,21 +1236,21 @@ sh4op(i0000_0000_0011_1000)
 sh4op(i0000_nnnn_1001_0011)
 {
 	u32 n = GetN(op);
-	//printf("ocbi @0x%08X \n",r[n]);
+	//LOG_D("sh4_opcodes", "ocbi @0x%08X \n",r[n]);
 }
 
 //ocbp @<REG_N>
 sh4op(i0000_nnnn_1010_0011)
 {
 	u32 n = GetN(op);
-	//printf("ocbp @0x%08X \n",r[n]);
+	//LOG_D("sh4_opcodes", "ocbp @0x%08X \n",r[n]);
 }
 
 //ocbwb @<REG_N>
 sh4op(i0000_nnnn_1011_0011)
 {
 	u32 n = GetN(op);
-	//printf("ocbwb @0x%08X \n",r[n]);
+	//LOG_D("sh4_opcodes", "ocbwb @0x%08X \n",r[n]);
 }
 
 //pref @<REG_N>
@@ -1551,7 +1550,7 @@ sh4op(i0100_nnnn_mmmm_1111)
 	u32 m = GetM(op);
 	if (sr.S!=0)
 	{
-		printf("mac.w @<REG_M>+,@<REG_N>+ : s=%d\n",sr.S);
+		LOG_D("sh4_opcodes", "mac.w @<REG_M>+,@<REG_N>+ : s=%d\n", sr.S);
 	}
 	else
 	{
@@ -1589,7 +1588,7 @@ sh4op(i0000_nnnn_mmmm_1111)
 
 	mac.full += (s64)rm * (s64)rn;
 
-	//printf("%I64u %I64u | %d %d | %d %d\n",mac,mul,macl,mach,rm,rn);
+	//LOG_V("sh4_opcodes", "%I64u %I64u | %d %d | %d %d\n", mac, mul, macl, mach, rm, rn);
 }
 
 //mul.l <REG_M>,<REG_N>
@@ -1710,7 +1709,7 @@ sh4op(i0011_nnnn_mmmm_1110)
 // addv <REG_M>,<REG_N>
 sh4op(i0011_nnnn_mmmm_1111)
 {
-	printf("WARN: addv <REG_M>,<REG_N> used, %04X\n",op);
+	LOG_W("sh4_opcodes", "addv <REG_M>,<REG_N> used, %04X\n", op);
 	//Retail game "Twinkle Star Sprites" "uses" this opcode.
 	//iNimp(op, "addv <REG_M>,<REG_N>");
 	u32 n = GetN(op);
@@ -1765,7 +1764,7 @@ sh4op(i0011_nnnn_mmmm_1010)
 //subv <REG_M>,<REG_N>
 sh4op(i0011_nnnn_mmmm_1011)
 {
-	printf("WARN: subv <REG_M>,<REG_N> used, %04X\n",op);
+	LOG_W("sh4_opcodes", "subv <REG_M>,<REG_N> used, %04X\n", op);
 	//Retail game "Twinkle Star Sprites" "uses" this opcode.
 	//iNimp(op, "subv <REG_M>,<REG_N>");
 	u32 n = GetN(op);
@@ -2056,7 +2055,7 @@ sh4op(i0010_nnnn_mmmm_1101)
 //tst.b #<imm>,@(R0,GBR)
 sh4op(i1100_1100_iiii_iiii)
 {
-	printf("WARN: tst.b #<imm>,@(R0,GBR) used, %04X\n",op);
+	LOG_W("sh4_opcodes", "tst.b #<imm>,@(R0,GBR) used, %04X\n", op);
 	//Retail game "Twinkle Star Sprites" "uses" this opcode.
 	u32 imm=GetImm8(op);
 
@@ -2210,12 +2209,12 @@ sh4op(i0100_nnnn_0000_1110)
 sh4op(iNotImplemented)
 {
 #ifndef NO_MMU
-	printf("iNimp %04X\n", op);
+	LOG_I("sh4_opcodes", "iNimp %04X\n", op);
 	SH4ThrownException ex = { next_pc - 2, 0x180, 0x100 };
 	throw ex;
 #else
 	cpu_iNimp(op, "Unknown opcode");
 #endif
-	
+
 }
 

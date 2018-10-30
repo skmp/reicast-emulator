@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include "linux-dist/joystick.h"
+#include "oslib/logging.h"
 
 #if defined(USE_JOYSTICK)
 #include <linux/joystick.h>
@@ -21,7 +22,7 @@
 		int button_count = 0;
 		char name[128] = "Unknown";
 
-		printf("joystick: Trying to open device at '%s'\n", device);
+		LOG_I("joystick", "Trying to open device at '%s'\n", device);
 
 		int fd = open(device, O_RDONLY);
 
@@ -32,7 +33,7 @@
 			ioctl(fd, JSIOCGBUTTONS, &button_count);
 			ioctl(fd, JSIOCGNAME(sizeof(name)), &name);
 
-			printf("joystick: Found '%s' with %d axis and %d buttons at '%s'.\n", name, axis_count, button_count, device);
+			LOG_I("joystick", "Found '%s' with %d axis and %d buttons at '%s'.\n", name, axis_count, button_count, device);
 
 			if (strcmp(name, "Microsoft X-Box 360 pad") == 0 ||
 					strcmp(name, "Xbox Gamepad (userspace driver)") == 0 ||
@@ -40,7 +41,7 @@
 			{
 				joystick_map_btn = joystick_map_btn_xbox360;
 				joystick_map_axis = joystick_map_axis_xbox360;
-				printf("joystick: Using Xbox 360 map\n");
+				LOG_V("joystick", "Using Xbox 360 map\n");
 			}
 		}
 		else
@@ -53,7 +54,7 @@
 
 	bool input_joystick_handle(int fd, u32 port)
 	{
-		// Joystick must be connected
+		/* Check if joystick is connected */
 		if(fd < 0) {
 			return false;
 		}
@@ -69,7 +70,7 @@
 					u32 mt = joystick_map_axis[JE.number] >> 16;
 					u32 mo = joystick_map_axis[JE.number] & 0xFFFF;
 
-					//printf("AXIS %d,%d\n",JE.number,JE.value);
+					LOG_D("joystick", "AXIS %d,%d\n", JE.number, JE.value);
 					s8 v=(s8)(JE.value/256); //-127 ... + 127 range
 
 					if (mt == 0)
@@ -85,7 +86,7 @@
 							kcode[port] &= ~(mo*2);
 						}
 
-					 //printf("Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
+						LOG_D("joystick", "Mapped to %d %d %d\n", mo, kcode[port]&mo, kcode[port]&(mo*2));
 					}
 					else if (mt == 1)
 					{
@@ -93,7 +94,7 @@
 						{
 							v++;  //up to 255
 						}
-						//printf("AXIS %d,%d Mapped to %d %d %d\n",JE.number,JE.value,mo,v,v+127);
+						LOG_D("joystick", "AXIS %d,%d Mapped to %d %d %d\n", JE.number, JE.value, mo, v, v+127);
 						if (mo == 0)
 						{
 							lt[port] = (v + 127);
@@ -105,7 +106,7 @@
 					}
 					else if (mt == 2)
 					{
-						//  printf("AXIS %d,%d Mapped to %d %d [%d]",JE.number,JE.value,mo,v);
+						LOG_D("joystick", "AXIS %d,%d Mapped to %d %d [%d]",JE.number,JE.value,mo,v);
 						if (mo == 0)
 						{
 							joyx[port] = v;
@@ -123,11 +124,11 @@
 					u32 mt = joystick_map_btn[JE.number] >> 16;
 					u32 mo = joystick_map_btn[JE.number] & 0xFFFF;
 
-					// printf("BUTTON %d,%d\n",JE.number,JE.value);
+					LOG_DEBUG("joystick", "BUTTON %d,%d\n", JE.number, JE.value);
 
 					if (mt == 0)
 					{
-						// printf("Mapped to %d\n",mo);
+						LOG_V("joystick", "Mapped to %d\n", mo);
 						if (JE.value)
 						{
 							kcode[port] &= ~mo;
@@ -139,7 +140,7 @@
 					}
 					else if (mt == 1)
 					{
-						// printf("Mapped to %d %d\n",mo,JE.value?255:0);
+						LOG_VERBOSE("joystick", "Mapped to %d %d\n", mo, (JE.value ? 255 : 0));
 						if (mo==0)
 						{
 							lt[port] = JE.value ? 255 : 0;

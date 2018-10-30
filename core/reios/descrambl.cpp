@@ -29,7 +29,7 @@ void load(FILE *fh, unsigned char *ptr, unsigned long sz)
 {
 	if (fread(ptr, 1, sz, fh) != sz)
 	{
-		fprintf(stderr, "Read error!\n");
+		LOG_E("descrambl", "Read error!\n");
 		exit(1);
 	}
 }

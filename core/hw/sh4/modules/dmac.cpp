@@ -3,6 +3,8 @@
 		Dreamcast uses sh4's dmac in ddt mode to multiplex ch0 and ch2 for dma access.
 		nullDC just 'fakes' each dma as if it was a full channel, never bothering properly
 		updating the dmac regs -- it works just fine really :|
+
+	TODO Harry: Port this description
 */
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
@@ -13,6 +15,7 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/holly/holly_intc.h"
 #include "types.h"
+#include "oslib/logging.h"
 
 /*
 u32 DMAC_SAR[4];
@@ -36,25 +39,25 @@ void DMAC_Ch2St()
 
 	if(0x8201 != (dmaor &DMAOR_MASK))
 	{
-		printf("\n!\tDMAC: DMAOR has invalid settings (%X) !\n", dmaor);
+		LOG_E("sh4_DMAC", "DMAOR has invalid settings (%X) !\n", dmaor);
 		return;
 	}
 
 	if (len & 0x1F)
 	{
-		printf("\n!\tDMAC: SB_C2DLEN has invalid size (%X) !\n", len);
+		LOG_E("sh4_DMAC", "SB_C2DLEN has invalid size (%X) !\n", len);
 		return;
 	}
 
-//	printf(">>\tDMAC: Ch2 DMA SRC=%X DST=%X LEN=%X\n", src, dst, len );
+	//LOG_D("sh4_DMAC", "Ch2 DMA SRC=%X DST=%X LEN=%X\n", src, dst, len );
 
 	// Direct DList DMA (Ch2)
 
-	// Texture DMA 
+	// Texture DMA
 	if((dst >= 0x10000000) && (dst <= 0x10FFFFFF))
 	{
 		u32 p_addr=src & RAM_MASK;
-		//GetMemPtr perhaps ? it's not good to use the mem arrays directly 
+		//GetMemPtr perhaps ? it's not good to use the mem arrays directly
 		while(len)
 		{
 			if ((p_addr+len)>RAM_SIZE)
@@ -79,7 +82,7 @@ void DMAC_Ch2St()
 	// If SB_C2DSTAT reg is inrange from 0x11000000 to 0x11FFFFE0,	 set 1 in SB_LMMODE0 reg.
 	else if((dst >= 0x11000000) && (dst <= 0x11FFFFE0))
 	{
-		//printf(">>\tDMAC: TEX LNMODE0 Ch2 DMA SRC=%X DST=%X LEN=%X | LN(%X::%X)\n", src, dst, len, *pSB_LMMODE0, *pSB_LMMODE1 );
+		//LOG_D("sh4_DMAC", "TEX LNMODE0 Ch2 DMA SRC=%X DST=%X LEN=%X | LN(%X::%X)\n", src, dst, len, *pSB_LMMODE0, *pSB_LMMODE1 );
 
 		dst=(dst&0xFFFFFF) |0xa4000000;
 		/*WriteMemBlock_nommu_ptr(dst,(u32*)GetMemPtr(src,len),len);
@@ -116,9 +119,9 @@ void DMAC_Ch2St()
 	//	*pSB_LMMODE1 = 1;           // this prob was done by system already
 	//	WriteMem(SB_LMMODE0, 0, 4); // should this be done ?
 	}
-	else 
-	{ 
-		printf("\n!\tDMAC: SB_C2DSTAT has invalid address (%X) !\n", dst); 
+	else
+	{
+		LOG_D("sh4_DMAC", "SB_C2DSTAT has invalid address (%X) !\n", dst);
 		src+=len;
 	}
 
@@ -142,7 +145,7 @@ void DMAC_Ch2St()
 //ch0/on demand data transfer request
 void dmac_ddt_ch0_ddt(u32 src,u32 dst,u32 count)
 {
-	
+
 }
 
 //ch2/direct data transfer request
@@ -173,13 +176,13 @@ template<u32 ch>
 void WriteCHCR(u32 addr, u32 data)
 {
 	DMAC_CHCR(ch).full=data;
-	//printf("Write to CHCR%d = 0x%X\n",ch,data);
+	//LOG_D("sh4_DMAC", "Write to CHCR%d = 0x%X\n",ch,data);
 }
 
 void WriteDMAOR(u32 addr, u32 data)
 {
 	DMAC_DMAOR.full=data;
-	//printf("Write to DMAOR = 0x%X\n",data);
+	//LOG_D("sh4_DMAC", "Write to DMAOR = 0x%X\n",data);
 }
 
 //Init term res

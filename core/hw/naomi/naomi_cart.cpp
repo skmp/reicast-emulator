@@ -1,5 +1,6 @@
 #include "naomi_cart.h"
 #include "cfg/cfg.h"
+#include "oslib/logging.h"
 
 u8* RomPtr;
 u32 RomSize;
@@ -24,7 +25,7 @@ char SelectedFile[512];
 bool naomi_cart_LoadRom(char* file)
 {
 
-	printf("\nnullDC-Naomi rom loader v1.2\n");
+	LOG_I("naomi", "\nnullDC-Naomi ROM Loader v1.2\n");
 
 	size_t folder_pos = strlen(file) - 1;
 	while (folder_pos>1 && (file[folder_pos] != '\\' && file[folder_pos] != '/'))
@@ -50,11 +51,11 @@ bool naomi_cart_LoadRom(char* file)
 
 	char* eon = strstr(line, "\n");
 	if (!eon)
-		printf("+Loading naomi rom that has no name\n");
+		LOG_I("naomi", "Loading ROM that has no name\n");
 	else
 		*eon = 0;
 
-	printf("+Loading naomi rom : %s\n", line);
+	LOG_I("naomi", "Loading ROM: %s\n", line);
 
 	line = fgets(t, 512, fl);
 	if (!line)
@@ -84,7 +85,7 @@ bool naomi_cart_LoadRom(char* file)
 	}
 	fclose(fl);
 
-	printf("+%d romfiles, %.2f MB set size, %.2f MB set address space\n", files.size(), setsize / 1024.f / 1024.f, RomSize / 1024.f / 1024.f);
+	LOG_I("naomi", "%d romfiles, %.2f MB set size, %.2f MB set address space\n", files.size(), setsize / 1024.f / 1024.f, RomSize / 1024.f / 1024.f);
 
 	if (RomCacheMap)
 	{
@@ -113,6 +114,7 @@ bool naomi_cart_LoadRom(char* file)
 	verify(RomPtr != (void*)-1);
 
 	// FIXME: Data loss if buffer is too small
+	/* TODO Harry */
 	strncpy(t, file, sizeof(t));
 	t[sizeof(t) - 1] = '\0';
 
@@ -135,7 +137,7 @@ bool naomi_cart_LoadRom(char* file)
 #endif
 		if (RomCache == INVALID_FD)
 		{
-			wprintf(L"-Unable to read file %s\n", files[i].c_str());
+			LOG_E("naomi_cart", "-Unable to read file %s\n", files[i].c_str());
 			RomCacheMap[i] = INVALID_FD;
 			continue;
 		}
@@ -148,11 +150,11 @@ bool naomi_cart_LoadRom(char* file)
 #endif
 
 		verify(RomCacheMap[i] != INVALID_FD);
-		wprintf(L"-Preparing \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
+		LOG_V("naomi_cart", "-Preparing \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
 	}
 
 	//We have all file mapping objects, we start to map the ram
-	printf("+Mapping ROM\n");
+	LOG_I("naomi", "~~~ Mapping ROM ~~~\n");
 	//Release the segment we reserved so we can map the files there
 #if HOST_OS == OS_WINDOWS
 	verify(VirtualFree(RomPtr, 0, MEM_RELEASE));
@@ -167,8 +169,8 @@ bool naomi_cart_LoadRom(char* file)
 
 		if (RomCacheMap[i] == INVALID_FD)
 		{
-			wprintf(L"-Reserving ram at 0x%08X, size 0x%08X\n", fstart[i], fsize[i]);
-			
+			LOG_D("naomi_cart", "-Reserving ram at 0x%08X, size 0x%08X\n", fstart[i], fsize[i]);
+
 #if HOST_OS == OS_WINDOWS
 			bool mapped = RomDest == VirtualAlloc(RomDest, fsize[i], MEM_RESERVE, PAGE_NOACCESS);
 #else
@@ -179,7 +181,7 @@ bool naomi_cart_LoadRom(char* file)
 		}
 		else
 		{
-			wprintf(L"-Mapping \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
+			LOG_V("naomi_cart", "-Mapping \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
 #if HOST_OS == OS_WINDOWS
 			bool mapped = RomDest != MapViewOfFileEx(RomCacheMap[i], FILE_MAP_READ, 0, 0, fsize[i], RomDest);
 #else
@@ -187,15 +189,14 @@ bool naomi_cart_LoadRom(char* file)
 #endif
 			if (!mapped)
 			{
-				printf("-Mapping ROM FAILED\n");
+				LOG_E("naomi", "Mapping ROM FAILED!!\n");
 				//unmap file
 				return false;
 			}
 		}
 	}
 
-	//done :)
-	printf("\nMapped ROM Successfully !\n\n");
+	LOG_I("naomi", "\nMapped ROM Successfully !\n\n");
 
 
 	return true;
@@ -204,7 +205,7 @@ bool naomi_cart_LoadRom(char* file)
 bool naomi_cart_SelectFile(void* handle)
 {
 	cfgLoadStr("config", "image", SelectedFile, "null");
-	
+
 #if HOST_OS == OS_WINDOWS
 	if (strcmp(SelectedFile, "null") == 0) {
 		OPENFILENAME ofn = { 0 };
@@ -231,7 +232,7 @@ bool naomi_cart_SelectFile(void* handle)
 	}
 
 
-	printf("EEPROM file : %s.eeprom\n", SelectedFile);
+	LOG_I("naomi", "EEPROM file : %s.eeprom\n", SelectedFile);
 
 	return true;
 }

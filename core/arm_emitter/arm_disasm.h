@@ -6,13 +6,13 @@
 
 namespace ARM
 {
-	
-	
-	
+
+
+
 	inline static void armdis_cc(u32 cond, char *ccbuff)	// Length is always 8 for our static'{n,m}ess
 	{
 		switch(cond)
-		{	
+		{
 		case EQ:	sprintf(ccbuff, "EQ");	return;
 		case NE:	sprintf(ccbuff, "NE");	return;
 		case CS:	sprintf(ccbuff, "CS");	return;
@@ -32,7 +32,7 @@ namespace ARM
 
 		case AL:	return;		// sprintf(ccbuff, "AL");	-- ALways doesn't need to be specified
 
-		case UC:				// 
+		case UC:				//
 		default:	return;		// DIE
 		}
 	}
@@ -70,19 +70,19 @@ namespace ARM
 
 		//	u32 uOP = ((op>>12)&0xFF00) | ((op>>4)&255) ;
 
-		u32 uCC = ((op>>28) & 0x0F) ;		// 
+		u32 uCC = ((op>>28) & 0x0F) ;		//
 
-		u32 uO1 = ((op>>25) & 0x07) ;		// 
-		u32 uO2 = ((op>> 4) & 0x01) ;		// 
-		u32 uC1 = ((op>>21) & 0x0F) ;		// 
-		u32 uC2 = ((op>> 5) & 0x07) ;		// 
+		u32 uO1 = ((op>>25) & 0x07) ;		//
+		u32 uO2 = ((op>> 4) & 0x01) ;		//
+		u32 uC1 = ((op>>21) & 0x0F) ;		//
+		u32 uC2 = ((op>> 5) & 0x07) ;		//
 		u32 uSB = ((op>>20) & 0x01) ;		// Sign Change Bit
 
 
 		/*
 		if (uCC == UC) {
 
-			printf ("DBG armdis has UC instruction %X\n", op);
+			LOG_W("arm_amitter", "DBG armdis has UC instruction %X\n", op);
 			sprintf (disbuf, "UNCONDITIONAL / UNHANDLED INSTRUCTION");
 			return;
 
@@ -94,18 +94,18 @@ namespace ARM
 		}
 
 
-		if (uO1 == 0) 
+		if (uO1 == 0)
 		{
 
 			if (uO2 == 0) {
 
 				if ((uC1 & 0xC) == 8) {
-					printf ("DBG armdis 0:0 10xx misc instruction \n", uCC);
+					LOG_W("arm_emitter", "DBG armdis 0:0 10xx misc instruction \n", uCC);
 					sprintf (disbuf, "UNHANDLED INSTRUCTION 0:");
 					return;
 				}
 
-				// DP imm.shift			
+				// DP imm.shift
 
 
 

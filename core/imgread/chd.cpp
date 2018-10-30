@@ -1,6 +1,7 @@
 #include "common.h"
 
 #include "deps/chdr/chd.h"
+#include "oslib/logging.h"
 
 struct CHDDisc : Disc
 {
@@ -10,7 +11,7 @@ struct CHDDisc : Disc
 
 	u32 hunkbytes;
 	u32 sph;
-	
+
 	CHDDisc()
 	{
 		chd=0;
@@ -19,8 +20,8 @@ struct CHDDisc : Disc
 
 	bool TryOpen(const wchar* file);
 
-	~CHDDisc() 
-	{ 
+	~CHDDisc()
+	{
 		if (hunk_mem)
 			delete [] hunk_mem;
 		if (chd)
@@ -35,9 +36,9 @@ struct CHDTrack : TrackFile
 	u32 StartHunk;
 	u32 fmt;
 
-	CHDTrack(CHDDisc* disc, u32 StartFAD,u32 StartHunk, u32 fmt) 
-	{ 
-		this->disc=disc; 
+	CHDTrack(CHDDisc* disc, u32 StartFAD,u32 StartHunk, u32 fmt)
+	{
+		this->disc=disc;
 		this->StartFAD=StartFAD;
 		this->StartHunk=StartHunk;
 		this->fmt=fmt;
@@ -55,9 +56,9 @@ struct CHDTrack : TrackFile
 		u32 hunk_ofs=fad_offs%disc->sph;
 
 		memcpy(dst,disc->hunk_mem+hunk_ofs*(2352+96),fmt);
-		
+
 		*sector_type=fmt==2352?SECFMT_2352:SECFMT_2048_MODE1;
-		
+
 		//While space is reserved for it, the images contain no actual subcodes
 		//memcpy(subcode,disc->hunk_mem+hunk_ofs*(2352+96)+2352,96);
 		*subcode_type=SUBFMT_NONE;
@@ -71,7 +72,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 	if (err!=CHDERR_NONE)
 		return false;
 
-	printf("chd: parsing file %s\n",file);
+	LOG_I("imgread_chd", "Parsing file %s\n", file);
 
 	const chd_header* head = chd_get_header(chd);
 
@@ -81,12 +82,12 @@ bool CHDDisc::TryOpen(const wchar* file)
 
 	sph = hunkbytes/(2352+96);
 
-	if (hunkbytes%(2352+96)!=0) 
+	if (hunkbytes%(2352+96)!=0)
 	{
-		printf("chd: hunkbytes is invalid, %d\n",hunkbytes);
+		LOG_W("imgread_chd", "[hunkbytes] is invalid, %d\n",hunkbytes);
 		return false;
 	}
-	
+
 	u32 tag;
 	u8 flags;
 	char temp[512];
@@ -113,16 +114,16 @@ bool CHDDisc::TryOpen(const wchar* file)
 		}
 		else
 		{
-			printf("chd: Unable to find metadata, %d\n",err);
+			LOG_W("imgread_chd", "Unable to find metadata, %d\n",err);
 			break;
 		}
 
 		if (tkid!=(tracks.size()+1) || (strcmp(type,"MODE1_RAW")!=0 && strcmp(type,"AUDIO")!=0 && strcmp(type,"MODE1")!=0) || strcmp(subtype,"NONE")!=0 || pregap!=0 || postgap!=0)
 		{
-			printf("chd: track type %s is not supported\n",type);
+			LOG_W("imgread_chd", "Track type %s is not supported\n", type);
 			return false;
 		}
-		printf("%s\n",temp);
+		LOG_D("imgread_chd", "%s\n", temp);
 		Track t;
 		t.StartFAD=total_frames;
 		total_frames+=frames;
@@ -140,7 +141,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 
 	if (total_frames!=549300 || tracks.size()<3)
 	{
-		printf("WARNING: chd: Total frames is wrong: %u frames in %u tracks\n",total_frames,tracks.size());
+		LOG_W("imgread_chd", "Total frames is wrong: %u frames in %u tracks\n",total_frames,tracks.size());
 #ifndef NOT_REICAST
 		msgboxf("This is an improper dump!",MBX_ICONEXCLAMATION);
 #endif
@@ -156,7 +157,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 Disc* chd_parse(const wchar* file)
 {
 	CHDDisc* rv = new CHDDisc();
-	
+
 	if (rv->TryOpen(file))
 		return rv;
 	else

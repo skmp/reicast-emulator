@@ -1,0 +1,327 @@
+[INFO][cfg] Using '/home/pleb/git/reicast/dreamcast_games/ika.chd' as cd image
+
+[INFO][cfg] Config dir is: /root/.config/reicast/
+
+[INFO][cfg] Data dir is:   /root/.local/share/reicast/
+
+Personality: 00000000
+Updated personality: 00000000
+Linux paging: 4096 00001000 00000FFF
+MAP 00800000 w/ 25165824
+MAP 20000000 w/ 25165824
+MAP 04000000 w/ 16777216
+MAP 06000000 w/ 16777216
+MAP 0C000000 w/ 0
+A8
+vmem reserve: base: 48B70000, aram: 68b70000, vram: 4CB70000, ram: 54B70000
+Resetting mem
+Mem alloc successful![INFO][cfg] Using '/home/pleb/git/reicast/dreamcast_games/ika.chd' as cd image
+
+libwebsockets test server - (C) Copyright 2010-2013 Andy Green <andy@warmcat.com> - licensed under LGPL2.1
+Initial logging level 7
+Library version: 1.3 c11b847
+IPV6 not compiled in
+libev support not compiled in
+ static allocation: 4488 + (16 x 1024 fds) = 20872 bytes
+ canonical_hostname = parrot
+ per-conn mem: 184 + 1554 headers + protocol rx buf
+ Listening on port 5678
+[WARNING][cfg] Malformed entry on config - ignoring @ 53(ElfFile)
+
+[WARNING][cfg] Malformed entry on config - ignoring @ 56(ta.HashCheckFile)
+
+[WARNING][cfg] Malformed entry on config - ignoring @ 57(ta.HashLogFile)
+
+[INFO][x11] Found 7 matching FB configs.
+
+[INFO][x11] Chosen visual ID = 0x21
+
+Unable to find bios in
+/root/.local/share/reicast/.data/
+Exiting...
+No nvmem loaded
+reios: Init
+Did not load BIOS, using reios
+GL context version: 4.2
+chd: parsing file /home/pleb/git/reicast/dreamcast_games/ika.chd
+TRACK:1 TYPE:MODE1_RAW SUBTYPE:NONE FRAMES:6095 PREGAP:0 PGTYPE:MODE1 PGSUB:RW POSTGAP:0
+TRACK:2 TYPE:AUDIO SUBTYPE:NONE FRAMES:38905 PREGAP:0 PGTYPE:MODE1 PGSUB:RW POSTGAP:0
+TRACK:3 TYPE:MODE1_RAW SUBTYPE:NONE FRAMES:504150 PREGAP:0 PGTYPE:MODE1 PGSUB:RW POSTGAP:0
+chd: Unable to find metadata, 19
+gdrom: Opened image "/home/pleb/git/reicast/dreamcast_games/ika.chd"
+Using Recompiler
+[VERBOSE][audio] Auto-selected audio backend "alsa" (Advanced Linux Sound Architecture).
+
+[VERBOSE][audio] Initializing audio backend "alsa" (Advanced Linux Sound Architecture)...
+
+OSD: 6
+recSh4 Init
+Freeing fpcb
+
+	 CodeCache addr: 0x55c4ebf0f000 | from: 0x55c4ebf0f000 | addr here: 0x55c4ebf0d4a0
+Error opening /root/.local/share/reicast/data/buttons.png
+[VERBOSE][evdev] evdev: Trying to open device at '/dev/input/event0'
+
+[VERBOSE][evdev] evdev: Found 'AT Translated Set 2 keyboard' at '/dev/input/event0'
+
+[VERBOSE][evdev] evdev: reading mapping file: 'keyboard.cfg'
+
+[INFO][evdev] btn_a = KEY_A (30)
+
+[INFO][evdev] btn_b = KEY_B (48)
+
+[INFO][evdev] btn_c = KEY_C (46)
+
+[INFO][evdev] btn_d = KEY_D (32)
+
+[INFO][evdev] btn_x = KEY_X (45)
+
+[INFO][evdev] btn_y = KEY_Y (21)
+
+[INFO][evdev] btn_z = KEY_Z (44)
+
+[INFO][evdev] btn_start = KEY_ENTER (28)
+
+[WARNING][evdev] WARNING: emulator/btn_escape not configured!
+
+[INFO][evdev] btn_dpad1_left = KEY_LEFT (105)
+
+[INFO][evdev] btn_dpad1_right = KEY_RIGHT (106)
+
+[INFO][evdev] btn_dpad1_up = KEY_UP (103)
+
+[INFO][evdev] btn_dpad1_down = KEY_DOWN (108)
+
+[WARNING][evdev] WARNING: dreamcast/btn_dpad2_left not configured!
+
+[WARNING][evdev] WARNING: dreamcast/btn_dpad2_right not configured!
+
+[WARNING][evdev] WARNING: dreamcast/btn_dpad2_up not configured!
+
+[WARNING][evdev] WARNING: dreamcast/btn_dpad2_down not configured!
+
+[INFO][evdev] btn_trigger_left = KEY_LEFTCTRL (29)
+
+[INFO][evdev] btn_trigger_right = KEY_RIGHTCTRL (97)
+
+[WARNING][evdev] WARNING: compat/axis_dpad1_x not configured!
+
+[WARNING][evdev] WARNING: compat/axis_dpad1_y not configured!
+
+[WARNING][evdev] WARNING: compat/axis_dpad2_x not configured!
+
+[WARNING][evdev] WARNING: compat/axis_dpad2_y not configured!
+
+[WARNING][evdev] WARNING: dreamcast/axis_x not configured!
+
+[WARNING][evdev] WARNING: dreamcast/axis_y not configured!
+
+[WARNING][evdev] WARNING: dreamcast/axis_trigger_left not configured!
+
+[WARNING][evdev] WARNING: dreamcast/axis_trigger_right not configured!
+
+[INFO][evdev] evdev: Using 'Generic Keyboard' mapping
+
+[ERROR][maple] Unsupported configuration (-1) for Maple Device, using VMU
+
+[ERROR][maple] Unsupported configuration (-1) for Maple Device, using VMU
+
+[INFO][evdev] evdev: Controller 2 disabled by config.
+
+[INFO][evdev] evdev: Controller 3 disabled by config.
+
+[INFO][evdev] evdev: Controller 4 disabled by config.
+
+Sh4 Reset
+cntx // fpcb offset: -68157440 // pc offset: -184 // pc A0000000
+Get MemPtr unsupported area : addr=0xA0000000
+-----------------
+REIOS: Booting up
+-----------------
+reios: loading ip.bin from FAD: 45150
+reios: bootfile is '1ST_READ.BIN    '
+reios: iso9660 PVD found
+reios: iso9660 root_directory, FAD: 45170, len: 2048
+Found 1ST_READ.BIN at 000065
+filename len: 14
+file LBA: 548498
+file LEN: 1027892
+Freeing fpcb
+recSh4:Dynarec Cache clear at AC0082FE
+Sh4: i-cache invalidation AC0082FE
+Freeing fpcb
+recSh4:Dynarec Cache clear at AC0082FE
+VREG = 03 ARMRST 00
+VREG = 03 ARMRST 00
+new tactx
+DIV32S matched 1% @ 0x8C0098D8
+DIV32S matched 100% @ 0x8C0098DE
+div32s 1/0/3
+DIV32S matched 1% @ 0x8C009A36
+DIV32S matched 100% @ 0x8C009A3E
+div32s 1/0/3
+DIV32S matched 1% @ 0x8C009AC0
+DIV32S matched 1% @ 0x8C009ACA
+[VERBOSE][misc] reicast git/n - 35.67 (0.00) - 28.04 - V: 16.81 (34.00, NTSC480i59.95) R: 0.49+0.00 VTX: 0.00 , MIPS: 0.00
+
+reios_sys_misc - r7: 0x00000000, r4 0x00000000, r5 0x00000064, r6 0x00000140
+GDROM:	Unknown GDROM CC:1E PRM:8CFFFFF4
+reios_sys_misc - r7: 0x00000001, r4 0x00000001, r5 0x8CFFFFC8, r6 0x00000000
+Sh4: i-cache invalidation AC00E0DA
+Freeing fpcb
+recSh4:Dynarec Cache clear at AC00E0DA
+Freeing fpcb
+recSh4:Dynarec Cache clear at AC00FFFE
+Sh4: i-cache invalidation AC00FFFE
+Freeing fpcb
+recSh4:Dynarec Cache clear at AC00FFFE
+Invalid GD-DMA start, SB_GDEN=0.Ingoring it.
+Sh4: i-cache invalidation 8C0439A6
+Freeing fpcb
+recSh4:Dynarec Cache clear at 8C0439A6
+Sh4: i-cache invalidation AC042332
+Freeing fpcb
+recSh4:Dynarec Cache clear at AC042332
+<*******>MMU Enabled , ONLY SQ remaps work<*******>
+SQ remap 1 : 0xE0000000 to 0x0
+SQ remap 1 : 0xE0000000 to 0xC000000
+SQ remap 2 : 0xE0100000 to 0x0
+SQ remap 2 : 0xE0100000 to 0xC100000
+SQ remap 3 : 0xE0200000 to 0x0
+SQ remap 3 : 0xE0200000 to 0xC200000
+SQ remap 4 : 0xE0300000 to 0x0
+SQ remap 4 : 0xE0300000 to 0xC300000
+SQ remap 5 : 0xE0400000 to 0x0
+SQ remap 5 : 0xE0400000 to 0xC400000
+SQ remap 6 : 0xE0500000 to 0x0
+SQ remap 6 : 0xE0500000 to 0xC500000
+SQ remap 7 : 0xE0600000 to 0x0
+SQ remap 7 : 0xE0600000 to 0xC600000
+SQ remap 8 : 0xE0700000 to 0x0
+SQ remap 8 : 0xE0700000 to 0xC700000
+SQ remap 9 : 0xE0800000 to 0x0
+SQ remap 9 : 0xE0800000 to 0xC800000
+SQ remap 10 : 0xE0900000 to 0x0
+SQ remap 10 : 0xE0900000 to 0xC900000
+SQ remap 11 : 0xE0A00000 to 0x0
+SQ remap 11 : 0xE0A00000 to 0xCA00000
+SQ remap 12 : 0xE0B00000 to 0x0
+SQ remap 12 : 0xE0B00000 to 0xCB00000
+SQ remap 13 : 0xE0C00000 to 0x0
+SQ remap 13 : 0xE0C00000 to 0xCC00000
+SQ remap 14 : 0xE0D00000 to 0x0
+SQ remap 14 : 0xE0D00000 to 0xCD00000
+SQ remap 15 : 0xE0E00000 to 0x0
+SQ remap 15 : 0xE0E00000 to 0xCE00000
+SQ remap 16 : 0xE0F00000 to 0x0
+SQ remap 16 : 0xE0F00000 to 0xCF00000
+SQ remap 17 : 0xE1000000 to 0x0
+SQ remap 17 : 0xE1000000 to 0x10000000
+SQ remap 18 : 0xE1100000 to 0x0
+SQ remap 18 : 0xE1100000 to 0x10100000
+SQ remap 19 : 0xE1200000 to 0x0
+SQ remap 19 : 0xE1200000 to 0x10200000
+SQ remap 20 : 0xE1300000 to 0x0
+SQ remap 20 : 0xE1300000 to 0x10300000
+SQ remap 21 : 0xE1400000 to 0x0
+SQ remap 21 : 0xE1400000 to 0x10400000
+SQ remap 22 : 0xE1500000 to 0x0
+SQ remap 22 : 0xE1500000 to 0x10500000
+SQ remap 23 : 0xE1600000 to 0x0
+SQ remap 23 : 0xE1600000 to 0x10600000
+SQ remap 24 : 0xE1700000 to 0x0
+SQ remap 24 : 0xE1700000 to 0x10700000
+SQ remap 25 : 0xE1800000 to 0x0
+SQ remap 25 : 0xE1800000 to 0x10800000
+
+GDROM:	HLE GDROM_INIT
+DIV32S matched 1% @ 0x8C0615BA
+DIV32S matched 100% @ 0x8C0615C0
+div32s 1/0/3
+DIV32S matched 1% @ 0x8C0645F2
+DIV32S matched 100% @ 0x8C0645F8
+div32s 0/1/2
+GDROM:	CMD INIT CC:18 PRM:0
+GDROM:	Unknown GDROM CC:28 PRM:8C00EFA4
+SQ remap 1 : 0xE0000000 to 0xC000000
+SQ remap 1 : 0xE0000000 to 0x0
+SQ remap 2 : 0xE0100000 to 0xC100000
+SQ remap 2 : 0xE0100000 to 0x0
+SQ remap 3 : 0xE0200000 to 0xC200000
+SQ remap 3 : 0xE0200000 to 0x0
+SQ remap 4 : 0xE0300000 to 0xC300000
+SQ remap 4 : 0xE0300000 to 0x0
+SQ remap 5 : 0xE0400000 to 0xC400000
+SQ remap 5 : 0xE0400000 to 0x0
+SQ remap 6 : 0xE0500000 to 0xC500000
+SQ remap 6 : 0xE0500000 to 0x0
+SQ remap 7 : 0xE0600000 to 0xC600000
+SQ remap 7 : 0xE0600000 to 0x0
+SQ remap 8 : 0xE0700000 to 0xC700000
+SQ remap 8 : 0xE0700000 to 0x0
+SQ remap 9 : 0xE0800000 to 0xC800000
+SQ remap 9 : 0xE0800000 to 0x0
+SQ remap 10 : 0xE0900000 to 0xC900000
+SQ remap 10 : 0xE0900000 to 0x0
+SQ remap 11 : 0xE0A00000 to 0xCA00000
+SQ remap 11 : 0xE0A00000 to 0x0
+SQ remap 12 : 0xE0B00000 to 0xCB00000
+SQ remap 12 : 0xE0B00000 to 0x0
+SQ remap 13 : 0xE0C00000 to 0xCC00000
+SQ remap 13 : 0xE0C00000 to 0x0
+SQ remap 14 : 0xE0D00000 to 0xCD00000
+SQ remap 14 : 0xE0D00000 to 0x0
+SQ remap 15 : 0xE0E00000 to 0xCE00000
+SQ remap 15 : 0xE0E00000 to 0x0
+SQ remap 16 : 0xE0F00000 to 0xCF00000
+SQ remap 16 : 0xE0F00000 to 0x0
+SQ remap 17 : 0xE1000000 to 0x10000000
+SQ remap 17 : 0xE1000000 to 0x0
+SQ remap 18 : 0xE1100000 to 0x10100000
+SQ remap 18 : 0xE1100000 to 0x0
+SQ remap 19 : 0xE1200000 to 0x10200000
+SQ remap 19 : 0xE1200000 to 0x0
+SQ remap 20 : 0xE1300000 to 0x10300000
+SQ remap 20 : 0xE1300000 to 0x0
+SQ remap 21 : 0xE1400000 to 0x10400000
+SQ remap 21 : 0xE1400000 to 0x0
+SQ remap 22 : 0xE1500000 to 0x10500000
+SQ remap 22 : 0xE1500000 to 0x0
+SQ remap 23 : 0xE1600000 to 0x10600000
+SQ remap 23 : 0xE1600000 to 0x0
+SQ remap 24 : 0xE1700000 to 0x10700000
+SQ remap 24 : 0xE1700000 to 0x0
+SQ remap 25 : 0xE1800000 to 0x10800000
+SQ remap 25 : 0xE1800000 to 0x0
+reios_sys_misc - r7: 0x00004000, r4 0x00000001, r5 0xF4000000, r6 0x00004000
+[VERBOSE][misc] reicast git/n - 10.03 (0.00) - 99.67 - V: 59.75 (inf, NTSC480i59.95) R: 0.00+0.00 VTX: 0.00 , MIPS: 0.00
+
+[VERBOSE][misc] reicast git/n - 10.07 (0.00) - 99.26 - V: 59.50 (inf, NTSC480i59.95) R: 0.00+0.00 VTX: 0.00 , MIPS: 0.00
+
+[VERBOSE][misc] reicast git/n - 9.92 (0.00) - 100.85 - V: 60.46 (inf, NTSC480i59.95) R: 0.00+0.00 VTX: 0.00 , MIPS: 0.00
+
+[VERBOSE][misc] reicast git/n - 10.09 (0.00) - 99.16 - V: 59.44 (inf, NTSC480i59.95) R: 0.00+0.00 VTX: 0.00 , MIPS: 0.00
+
+[VERBOSE][misc] reicast git/n - 9.98 (0.00) - 100.17 - V: 60.04 (inf, NTSC480i59.95) R: 0.00+0.00 VTX: 0.00 , MIPS: 0.00
+
+[VERBOSE][misc] reicast git/n - 9.92 (0.00) - 100.76 - V: 60.40 (inf, NTSC480i59.95) R: 0.00+0.00 VTX: 0.00 , MIPS: 0.00
+
+[VERBOSE][misc] reicast git/n - 10.11 (0.00) - 98.87 - V: 59.27 (inf, NTSC480i59.95) R: 0.00+0.00 VTX: 0.00 , MIPS: 0.00
+
+[VERBOSE][misc] reicast git/n - 9.95 (0.00) - 100.47 - V: 60.23 (inf, NTSC480i59.95) R: 0.00+0.00 VTX: 0.00 , MIPS: 0.00
+
+[VERBOSE][misc] reicast git/n - 10.00 (0.00) - 99.99 - V: 59.94 (inf, NTSC480i59.95) R: 0.00+0.00 VTX: 0.00 , MIPS: 0.00
+
+[VERBOSE][misc] reicast git/n - 10.03 (0.00) - 99.67 - V: 59.75 (inf, NTSC480i59.95) R: 0.00+0.00 VTX: 0.00 , MIPS: 0.00
+
+[VERBOSE][misc] reicast git/n - 9.99 (0.00) - 100.10 - V: 60.01 (inf, NTSC480i59.95) R: 0.00+0.00 VTX: 0.00 , MIPS: 0.00
+
+[VERBOSE][misc] reicast git/n - 10.01 (0.00) - 99.85 - V: 59.86 (inf, NTSC480i59.95) R: 0.00+0.00 VTX: 0.00 , MIPS: 0.00
+
+[VERBOSE][misc] reicast git/n - 10.00 (0.00) - 100.03 - V: 59.96 (inf, NTSC480i59.95) R: 0.00+0.00 VTX: 0.00 , MIPS: 0.00
+
+recSh4 Term
+Sh4 Term
+Saved /root/.local/share/reicast/.data/dc_nvmem.bin as nvmem
+
+[VERBOSE][audio] Terminating audio backend "alsa" (Advanced Linux Sound Architecture)...

@@ -70,7 +70,7 @@ encoded_type param_type(u32 imm)
 	encoded_type rv;
 	rv.imm=imm;
 	//later : detect u8/s8/s16/s32 encodings :)
-	
+
 	if (IsS8(imm))
 		rv.type=pg_IMM_S8;
 	else if ((imm & (~0xFF))==0)
@@ -104,7 +104,7 @@ void Match_opcode(x86_block* block,const x86_opcode* ops,encoded_type pg1,encode
 		die(temp);
 		return;
 	}
-//	printf("Matched opcode %s to %s\n",DissasmClass(ops->opcode),DissasmClass(match->opcode));
+	LOG_V("x86_emitter", "Matched opcode %s to %s\n", DissasmClass(ops->opcode), DissasmClass(match->opcode));
 	match->encode(block,match,&pg1,&pg2,pg3.imm);
 }
 

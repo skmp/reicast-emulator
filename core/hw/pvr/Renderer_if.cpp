@@ -2,6 +2,7 @@
 #include "ta.h"
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
+#include "oslib/logging.h"
 
 #include "deps/zlib/zlib.h"
 
@@ -108,7 +109,7 @@ void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL
 
 	u32 t = VRAM_SIZE;
 	fwrite(&t, 1, sizeof(t), fw);
-	
+
 	u8* compressed;
 	uLongf compressed_size;
 	u8* src_vram = vram;
@@ -143,7 +144,7 @@ void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL
 }
 
 TA_context* read_frame(const char* file, u8* vram_ref) {
-	
+
 	FILE* fw = fopen(file, "rb");
 	char id0[8] = { 0 };
 	u32 t = 0;
@@ -192,7 +193,7 @@ TA_context* read_frame(const char* file, u8* vram_ref) {
 
 	ctx->tad.thd_data += t;
 	fclose(fw);
-    
+
     return ctx;
 }
 
@@ -260,7 +261,7 @@ void* rend_thread(void* p)
 
 	{
 
-		printf("WARNING: Could not set CPU Affinity, continuing...\n");
+		LOG_W("pvr", "Could not set CPU Affinity, continuing...\n");
 
 	}
 	#endif
@@ -322,22 +323,22 @@ void rend_start_render()
 				int ch = fgetc(fCheckFrames);
 
 				if (ch == EOF) {
-					printf("Testing: TA Hash log matches, exiting\n");
+					LOG_D("pvr", "Testing: TA Hash log matches, exiting\n");
 					exit(1);
 				}
-				
+
 				verify(ch == FRAME_MD5);
 
 				fread(digest2, 1, 16, fCheckFrames);
 
 				verify(memcmp(digest, digest2, 16) == 0);
 
-				
+
 			}
 
 			/*
 			u8* dig = digest;
-			printf("FRAME: %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n",
+			LOG_D("pvr", "FRAME: %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n",
 				digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
 				digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]
 				);
@@ -346,26 +347,26 @@ void rend_start_render()
 
 		if (!ctx->rend.Overrun)
 		{
-			//printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
+			//LOG_D("pvr", "REP: %.2f ms\n", render_end_pending_cycles / 200000.0);
 			FillBGP(ctx);
-			
+
 			ctx->rend.isRTT=is_rtt;
 			ctx->rend.isAutoSort = UsingAutoSort();
 
 			ctx->rend.fb_X_CLIP=FB_X_CLIP;
 			ctx->rend.fb_Y_CLIP=FB_Y_CLIP;
-			
+
 			max_idx=max(max_idx,ctx->rend.idx.used());
 			max_vtx=max(max_vtx,ctx->rend.verts.used());
 			max_op=max(max_op,ctx->rend.global_param_op.used());
 			max_pt=max(max_pt,ctx->rend.global_param_pt.used());
 			max_tr=max(max_tr,ctx->rend.global_param_tr.used());
-			
+
 			max_mvo=max(max_mvo,ctx->rend.global_param_mvo.used());
 			max_modt=max(max_modt,ctx->rend.modtrig.used());
 
 #if HOST_OS==OS_WINDOWS && 0
-			printf("max: idx: %d, vtx: %d, op: %d, pt: %d, tr: %d, mvo: %d, modt: %d, ov: %d\n", max_idx, max_vtx, max_op, max_pt, max_tr, max_mvo, max_modt, ovrn);
+			LOG_I("pvr", "max: idx: %d, vtx: %d, op: %d, pt: %d, tr: %d, mvo: %d, modt: %d, ov: %d\n", max_idx, max_vtx, max_op, max_pt, max_tr, max_mvo, max_modt, ovrn);
 #endif
 			if (QueueRender(ctx))
 			{
@@ -381,7 +382,7 @@ void rend_start_render()
 		else
 		{
 			ovrn++;
-			printf("WARNING: Rendering context is overrun (%d), aborting frame\n",ovrn);
+			LOG_W("pvr", "Rendering context is overrun (%d), aborting frame\n", ovrn);
 			tactx_Recycle(ctx);
 		}
 	}
@@ -390,11 +391,11 @@ void rend_start_render()
 
 void rend_end_render()
 {
-#if 1 //also disabled the printf, it takes quite some time ...
+#if 1
 	#if HOST_OS!=OS_WINDOWS && !(defined(_ANDROID) || defined(TARGET_PANDORA))
 		//too much console spam.
-		//TODO: how about a counter?
-		//if (!re.state) printf("Render > Extended time slice ...\n");
+		//TODO Harry: How about a counter?
+		//if (!re.state) LOG_D("pvr", "Render > Extended time slice ...\n");
 	#endif
 #endif
 
@@ -411,7 +412,7 @@ void rend_end_render()
 void rend_end_wait()
 {
 	#if HOST_OS!=OS_WINDOWS && !defined(_ANDROID)
-	//	if (!re.state) printf("Render End: Waiting ...\n");
+	//	if (!re.state) { LOG_I("pvr", "Render End: Waiting ...\n"); }
 	#endif
 	re.Wait();
 	pvrrc.InUse=false;
@@ -421,11 +422,11 @@ void rend_end_wait()
 bool rend_init()
 {
 	if ((fLogFrames = fopen(settings.pvr.HashLogFile.c_str(), "wb"))) {
-		printf("Saving frame hashes to: '%s'\n", settings.pvr.HashLogFile.c_str());
+		LOG_I("pvr", "Saving frame hashes to: '%s'\n", settings.pvr.HashLogFile.c_str());
 	}
 
 	if ((fCheckFrames = fopen(settings.pvr.HashCheckFile.c_str(), "rb"))) {
-		printf("Comparing frame hashes against: '%s'\n", settings.pvr.HashCheckFile.c_str());
+		LOG_I("pvr", "Comparing frame hashes against: '%s'\n", settings.pvr.HashCheckFile.c_str());
 	}
 
 #ifdef NO_REND
@@ -486,7 +487,7 @@ bool rend_init()
 
 	{
 
-		printf("WARNING: Could not set CPU Affinity, continuing...\n");
+		LOG_W("pvr", "Could not set CPU Affinity, continuing...\n");
 
 	}
 #endif

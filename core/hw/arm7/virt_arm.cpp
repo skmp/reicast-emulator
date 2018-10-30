@@ -95,7 +95,7 @@ namespace VARM
 
 		return clockTicks;
 	}
-	
+
 	void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
 	{
 		verify(mode==0x10);
@@ -190,7 +190,7 @@ namespace VARM
 		reg[17].I = CPSR;
 		else
 		reg[17].I = reg[SPSR_ABT].I;
-		break;    
+		break;
 		case 0x1b:
 		reg[13].I = reg[R13_UND].I;
 		reg[14].I = reg[R14_UND].I;
@@ -199,9 +199,9 @@ namespace VARM
 		reg[17].I = CPSR;
 		else
 		reg[17].I = reg[SPSR_UND].I;
-		break;    
+		break;
 		default:
-		printf("Unsupported ARM mode %02x\n", mode);
+		LOG_E("virt_arm7", "Unsupported ARM mode %02x\n", mode);
 		die("Arm error..");
 		break;
 		}
@@ -281,7 +281,7 @@ namespace VARM
 		armNextPC = reg[15].I;
 		reg[15].I += 4;
 
-		//arm_FiqPending = false; 
+		//arm_FiqPending = false;
 	}
 
 	void virt_arm_init()

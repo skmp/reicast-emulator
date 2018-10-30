@@ -35,7 +35,7 @@
 #undef _CRT_SECURE_NO_DEPRECATE
 #endif
 
-#define _CRT_SECURE_NO_DEPRECATE 
+#define _CRT_SECURE_NO_DEPRECATE
 //unnamed struncts/unions
 #pragma warning( disable : 4201)
 
@@ -119,7 +119,7 @@ enum HollyInterruptType
 };
 
 enum HollyInterruptID
-{		
+{
 		// asic9a /sh4 external holly normal [internal]
 		holly_RENDER_DONE_vd = holly_nrm | 0,	//bit 0 = End of Render interrupt : Video
 		holly_RENDER_DONE_isp = holly_nrm | 1,	//bit 1 = End of Render interrupt : ISP
@@ -128,11 +128,11 @@ enum HollyInterruptID
 		holly_SCANINT1 = holly_nrm | 3,			//bit 3 = V Blank-in interrupt
 		holly_SCANINT2 = holly_nrm | 4,			//bit 4 = V Blank-out interrupt
 		holly_HBLank = holly_nrm | 5,			//bit 5 = H Blank-in interrupt
-												
+
 		holly_YUV_DMA = holly_nrm | 6,			//bit 6 = End of Transferring interrupt : YUV
 		holly_OPAQUE = holly_nrm | 7,			//bit 7 = End of Transferring interrupt : Opaque List
 		holly_OPAQUEMOD = holly_nrm | 8,		//bit 8 = End of Transferring interrupt : Opaque Modifier Volume List
-		
+
 		holly_TRANS = holly_nrm | 9,			//bit 9 = End of Transferring interrupt : Translucent List
 		holly_TRANSMOD = holly_nrm | 10,		//bit 10 = End of Transferring interrupt : Translucent Modifier Volume List
 		holly_PVR_DMA = holly_nrm | 11,			//bit 11 = End of DMA interrupt : PVR-DMA
@@ -141,12 +141,12 @@ enum HollyInterruptID
 		holly_MAPLE_VBOI = holly_nrm | 13,		//bit 13 = Maple V blank over interrupt
 		holly_GDROM_DMA = holly_nrm | 14,		//bit 14 = End of DMA interrupt : GD-DMA
 		holly_SPU_DMA = holly_nrm | 15,			//bit 15 = End of DMA interrupt : AICA-DMA
-		
+
 		holly_EXT_DMA1 = holly_nrm | 16,		//bit 16 = End of DMA interrupt : Ext-DMA1(External 1)
 		holly_EXT_DMA2 = holly_nrm | 17,		//bit 17 = End of DMA interrupt : Ext-DMA2(External 2)
 		holly_DEV_DMA = holly_nrm | 18,			//bit 18 = End of DMA interrupt : Dev-DMA(Development tool DMA)
-		
-		holly_CH2_DMA = holly_nrm | 19,			//bit 19 = End of DMA interrupt : ch2-DMA 
+
+		holly_CH2_DMA = holly_nrm | 19,			//bit 19 = End of DMA interrupt : ch2-DMA
 		holly_PVR_SortDMA = holly_nrm | 20,		//bit 20 = End of DMA interrupt : Sort-DMA (Transferring for alpha sorting)
 		holly_PUNCHTHRU = holly_nrm | 21,		//bit 21 = End of Transferring interrupt : Punch Through List
 
@@ -184,8 +184,8 @@ enum HollyInterruptID
 		//bit 23 = G2 : AICA-DMA Time out
 		//bit 24 = G2 : Ext-DMA1 Time out
 		//bit 25 = G2 : Ext-DMA2 Time out
-		//bit 26 = G2 : Dev-DMA Time out 
-		//bit 27 = G2 : Time out in CPU accessing 	
+		//bit 26 = G2 : Dev-DMA Time out
+		//bit 27 = G2 : Time out in CPU accessing
 };
 
 
@@ -196,7 +196,7 @@ struct vram_block
 	u32 end;
 	u32 len;
 	u32 type;
- 
+
 	void* userdata;
 };
 
@@ -204,7 +204,7 @@ struct vram_block
 #if (DC_PLATFORM==DC_PLATFORM_DREAMCAST)
 
 	#define BUILD_DREAMCAST 1
-	
+
 	//DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
 	#define RAM_SIZE (16*1024*1024)
 	#define VRAM_SIZE (8*1024*1024)
@@ -217,7 +217,7 @@ struct vram_block
 	#define NVR_OPTIONAL 0
 
 #elif  (DC_PLATFORM==DC_PLATFORM_DEV_UNIT)
-	
+
 	#define BUILD_DEV_UNIT 1
 
 	//Devkit : 32 mb ram, 8? mb vram, 2? mb aram, 2? mb bios, ? flash
@@ -250,7 +250,7 @@ struct vram_block
 	#define RAM_SIZE (32*1024*1024)
 	#define VRAM_SIZE (16*1024*1024)
 	#define ARAM_SIZE (8*1024*1024)
-	#define BIOS_SIZE (2*1024*1024)	
+	#define BIOS_SIZE (2*1024*1024)
 	#define BBSRAM_SIZE (32*1024)
 
 	#define ROM_PREFIX "n2_"
@@ -258,7 +258,7 @@ struct vram_block
 	#define NVR_OPTIONAL 1
 
 #elif  (DC_PLATFORM==DC_PLATFORM_ATOMISWAVE)
-	
+
 	#define BUILD_ATOMISWAVE 1
 
 	//Atomiswave : 16(?) mb ram, 16 mb vram, 8 mb aram, 64kb bios, 64k flash
@@ -325,7 +325,7 @@ struct NDC_WINDOW_RECT
 //******************************************************
 //*********************** PowerVR **********************
 //******************************************************
- 
+
 void libCore_vramlock_Unlock_block  (vram_block* block);
 void libCore_vramlock_Unlock_block_wb  (vram_block* block);
 vram_block* libCore_vramlock_Lock(u32 start_offset,u32 end_offset,void* userdata);
@@ -342,7 +342,7 @@ enum DiscType
 	CdRom_XA=0x20,
 	CdRom_Extra=0x30,
 	CdRom_CDI=0x40,
-	GdRom=0x80,		
+	GdRom=0x80,
 
 	NoDisk=0x1,			//These are a bit hacky .. but work for now ...
 	Open=0x2,			//tray is open :)
@@ -437,12 +437,12 @@ int darw_printf(const wchar* Text,...);
 #define puts(X) printf("%s\n", X)
 #endif
 
-//includes from c++rt
+/* Includes from C++rt */
 #include <vector>
 #include <string>
 using namespace std;
 
-//used for asm-olny functions
+/* Used for asm-olny functions */
 #if defined(X86) && COMPILER_VC==BUILD_COMPILER
 #define naked   __declspec( naked )
 #else
@@ -453,16 +453,18 @@ using namespace std;
 #if DEBUG
 //force
 #define INLINE
-//sugest
+//suggest
 #define SINLINE
+
 #else
 //force
 #define INLINE __forceinline
-//sugest
+//suggest
 #define SINLINE __inline
+
 #endif
 
-//no inline -- fixme
+/* No inline -- FIXME */
 #if HOST_OS==OS_WINDOWS
 #define NOINLINE __declspec(noinline)
 #else
@@ -477,19 +479,8 @@ using namespace std;
 #define unlikely(x)       __builtin_expect((x),0)
 #endif
 
-//basic includes
+/* Basic Includes */
 #include "stdclass.h"
-
-#define EMUERROR(x)( printf("Error in %s:" "%s" ":%d  -> " x "\n", __FILE__,__FUNCTION__ ,__LINE__ ))
-#define EMUERROR2(x,a)(printf("Error in %s:" "%s" ":%d  -> " x "\n)",__FILE__,__FUNCTION__,__LINE__,a))
-#define EMUERROR3(x,a,b)(printf("Error in %s:" "%s" ":%d  -> " x "\n)",__FILE__,__FUNCTION__,__LINE__,a,b))
-#define EMUERROR4(x,a,b,c)(printf("Error in %s:" "%s" ":%d  -> " x "\n",__FILE__,__FUNCTION__,__LINE__,a,b,c))
-
-#define EMUWARN(x)(printf(      "Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__))
-#define EMUWARN2(x,a)(printf(   "Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a))
-#define EMUWARN3(x,a,b)(printf( "Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a,b))
-#define EMUWARN4(x,a,b,c)(printf("Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a,b,c))
-
 
 #ifndef NO_MMU
 #define _X_x_X_MMU_VER_STR "/mmu"
@@ -498,13 +489,13 @@ using namespace std;
 #endif
 
 
-#if DC_PLATFORM==DC_PLATFORM_DREAMCAST
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 	#define VER_EMUNAME		"reicast"
-#elif DC_PLATFORM==DC_PLATFORM_DEV_UNIT
+#elif DC_PLATFORM == DC_PLATFORM_DEV_UNIT
 	#define VER_EMUNAME		"reicast-DevKit-SET5.21"
-#elif DC_PLATFORM==DC_PLATFORM_NAOMI
+#elif DC_PLATFORM == DC_PLATFORM_NAOMI
 	#define VER_EMUNAME		"reicast-Naomi"
-#elif DC_PLATFORM==DC_PLATFORM_ATOMISWAVE
+#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	#define VER_EMUNAME		"reicast-AtomisWave"
 #else
 	#error unknown target platform
@@ -515,10 +506,11 @@ using namespace std;
 #define VER_SHORTNAME	VER_EMUNAME " git" _X_x_X_MMU_VER_STR
 
 
+/* Windows Specific */
 void os_DebugBreak();
 #define dbgbreak os_DebugBreak()
 
-#if COMPILER_VC==BUILD_COMPILER
+#if COMPILER_VC == BUILD_COMPILER
 #pragma warning( disable : 4127 4996 /*4244*/)
 #else
 #define stricmp strcasecmp
@@ -534,9 +526,7 @@ void os_DebugBreak();
 
 #define fverify verify
 
-
-//will be removed sometime soon
-//This shit needs to be moved to proper headers
+/* TODO Harry: This shit needs to be moved to proper headers */
 typedef u32  RegReadFP();
 typedef u32  RegReadAddrFP(u32 addr);
 
@@ -555,28 +545,30 @@ typedef void RegWriteAddrFP(u32 addr, u32 data);
 */
 enum RegStructFlags
 {
-	//Basic :
-	REG_ACCESS_8=1,
-	REG_ACCESS_16=2,
-	REG_ACCESS_32=4,
+	/* Basic: */
+	REG_ACCESS_8 = 1,
+	REG_ACCESS_16 = 2,
+	REG_ACCESS_32 = 4,
 
-	REG_RF=8,
-	REG_WF=16,
-	REG_RO=32,
-	REG_WO=64,
-	REG_CONST=128,
-	REG_NO_ACCESS=REG_RO|REG_WO,
+	/* Advanced */
+	REG_RF = 8,
+	REG_WF = 16,
+	REG_RO = 32,
+	REG_WO = 64,
+	REG_CONST = 128,
+	REG_NO_ACCESS= REG_RO | REG_WO,
 };
 
 enum RegIO
 {
+	/* Register Input/Output */
 	RIO_DATA = 0,
 	RIO_WF = REG_WF,
 	RIO_FUNC = REG_WF | REG_RF,
 	RIO_RO = REG_RO | REG_WF,
 	RIO_RO_FUNC = REG_RO | REG_RF | REG_WF,
 	RIO_CONST = REG_RO | REG_WF,
-	RIO_WO_FUNC = REG_WF | REG_RF | REG_WO, 
+	RIO_WO_FUNC = REG_WF | REG_RF | REG_WO,
 	RIO_NO_ACCESS = REG_WF | REG_RF | REG_NO_ACCESS
 };
 
@@ -598,14 +590,21 @@ struct RegisterStruct
 		RegWriteAddrFP* writeFunctionAddr;
 	};
 
-	u32 flags;					//Access flags !
+	/* Access Flags */
+	u32 flags;
 };
 
 
 struct settings_t
 {
+	/* Settings Struct
+	 * Here every possible settings value is declared.
+	 *
+	 */
+
+	/* Bios Settings */
 	struct {
-		bool UseReios;
+		bool UseReios;	// Our own DC BIOS implementation
 	} bios;
 
 	struct {
@@ -620,6 +619,7 @@ struct settings_t
 		bool Clipping;
 	} rend;
 
+	/* Dynamic Recompiler Settings */
 	struct
 	{
 		bool Enable;
@@ -628,12 +628,13 @@ struct settings_t
 		bool safemode;
 		bool disable_nvmem;
 	} dynarec;
-	
+
 	struct
 	{
 		u32 run_counts;
 	} profile;
 
+	/* DC Settings */
 	struct
 	{
 		u32 cable;
@@ -642,19 +643,20 @@ struct settings_t
 		u32 broadcast;
 	} dreamcast;
 
+	/* AICA Settings */
 	struct
 	{
-		u32 HW_mixing;		//(0) -> SW , 1 -> HW , 2 -> Auto
-		u32 BufferSize;		//In samples ,*4 for bytes (1024)
-		u32 LimitFPS;		//0 -> no , (1) -> limit
-		u32 GlobalFocus;	//0 -> only hwnd , (1) -> Global
-		u32 BufferCount;	//BufferCount+2 buffers used , max 60 , default 0
+		u32 HW_mixing;			/* (0) -> SW , 1 -> HW , 2 -> Auto */
+		u32 BufferSize;			/* In samples ,*4 for bytes (1024) */
+		u32 LimitFPS;			/* 0 -> no , (1) -> limit */
+		u32 GlobalFocus;		/* 0 -> only hwnd , (1) -> Global */
+		u32 BufferCount;		/* BufferCount+2 buffers used , max 60 , default 0 */
 		u32 CDDAMute;
 		u32 GlobalMute;
-		u32 DSPEnabled;		//0 -> no, 1 -> yes
+		u32 DSPEnabled;			/* 0 -> no, 1 -> yes */
 		u32 NoBatch;
-		u32 NoSound;        //0 ->sound, 1 -> no sound
-		bool OldSyncronousDma;		// 0 -> sync dma (old behavior), 1 -> async dma (fixes some games, partial implementation)
+		u32 NoSound;			/* 0 ->sound, 1 -> no sound */
+		bool OldSyncronousDma;	/* 0 -> sync dma (old behavior), 1 -> async dma (fixes some games, partial implementation) */
 	} aica;
 
 #if USE_OMX
@@ -682,6 +684,7 @@ struct settings_t
 		char LastImage[512];
 	} imgread;
 
+	/* PVR Settings */
 	struct
 	{
 		struct
@@ -690,7 +693,7 @@ struct settings_t
 			u32 VSync;
 		} Video;
 
-		struct 
+		struct
 		{
 			u32 MultiSampleCount;
 			u32 MultiSampleQuality;
@@ -715,7 +718,7 @@ struct settings_t
 		u32 ta_skip;
 		u32 subdivide_transp;
 		u32 rend;
-		
+
 		u32 MaxThreads;
 		u32 SynchronousRender;
 
@@ -740,19 +743,16 @@ void SaveSettings();
 u32 GetRTC_now();
 extern u32 patchRB;
 
-inline bool is_s8(u32 v) { return (s8)v==(s32)v; }
-inline bool is_u8(u32 v) { return (u8)v==(s32)v; }
-inline bool is_s16(u32 v) { return (s16)v==(s32)v; }
-inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
+inline bool is_s8(u32 v)	{ return (s8)v == (s32)v; }
+inline bool is_u8(u32 v)	{ return (u8)v == (s32)v; }
+inline bool is_s16(u32 v)	{ return (s16)v == (s32)v; }
+inline bool is_u16(u32 v)	{ return (u16)v == (u32)v; }
 
 #define verifyc(x) verify(!FAILED(x))
 
 static inline void do_nada(...) { }
 
-#ifdef _ANDROID
-#include <android/log.h>
-
-#ifdef printf 
+#ifdef printf
 #undef printf
 #endif
 
@@ -760,41 +760,37 @@ static inline void do_nada(...) { }
 #undef puts
 #endif
 
+/* TODO Harry: logging */
 #define LOG_TAG   "reicast"
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
-#define LOGW(...) __android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
 	#ifdef STRIP_TEXT
 		#define puts do_nada
 		#define printf do_nada
 	#else
-		#define puts      LOGI
-		#define printf    LOGI
+		/* TODO Harry */
+		#define puts      printf
+		#define printf    printf
 	#endif
-#define putinf    LOGI
-#endif
+#define putinf    printf
 
 
 
 #include "hw/sh4/sh4_if.h"
 
-//more to come
-
 extern sh4_if				  sh4_cpu;
 
-//sh4 thread
+/* sh4 Thread */
 s32 plugins_Init();
 void plugins_Term();
 void plugins_Reset(bool Manual);
 
-//PVR
+/* PVR */
 s32 libPvr_Init();
 void libPvr_Reset(bool Manual);
 void libPvr_Term();
 
-
+/* TODO: Review */
 //void DYNACALL libPvr_TaSQ(u32* data);				//size is 32 byte transfer counts
+
 u32 libPvr_ReadReg(u32 addr,u32 size);
 void libPvr_WriteReg(u32 addr,u32 data,u32 size);
 
@@ -803,7 +799,8 @@ void libPvr_LockedBlockWrite(vram_block* block,u32 addr);	//set to 0 if not used
 void* libPvr_GetRenderTarget();
 void* libPvr_GetRenderSurface();
 
-//AICA
+
+/* AICA */
 s32 libAICA_Init();
 void libAICA_Reset(bool Manual);
 void libAICA_Term();
@@ -817,14 +814,14 @@ void libAICA_WriteMem_aica_ram(u32 addr,u32 data,u32 size);
 void libAICA_Update(u32 cycles);				//called every ~1800 cycles, set to 0 if not used
 
 
-//GDR
+/* GDR */
 s32 libGDR_Init();
 void libGDR_Reset(bool M);
 void libGDR_Term();
 
 void libCore_gdrom_disc_change();
 
-//IO
+/* IO */
 void libGDR_ReadSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
 void libGDR_ReadSubChannel(u8 * buff, u32 format, u32 len);
 void libGDR_GetToc(u32* toc,u32 area);
@@ -832,7 +829,7 @@ u32 libGDR_GetDiscType();
 void libGDR_GetSessionInfo(u8* pout,u8 session);
 
 
-//ExtDev
+/* ExtDev */
 s32 libExtDevice_Init();
 void libExtDevice_Reset(bool M);
 void libExtDevice_Term();
@@ -848,7 +845,7 @@ static void libExtDevice_WriteMem_A0_010(u32 addr,u32 data,u32 size) { }
 static u32 libExtDevice_ReadMem_A5(u32 addr,u32 size){ return 0; }
 static void libExtDevice_WriteMem_A5(u32 addr,u32 data,u32 size) { }
 
-//ARM
+/* ARM */
 s32 libARM_Init();
 void libARM_Reset(bool M);
 void libARM_Term();
@@ -863,7 +860,7 @@ void libARM_Update(u32 cycles);
 			else if (sz==2)							\
 				return *(u16*)&arr[addr];			\
 			else if (sz==4)							\
-				return *(u32*)&arr[addr];}	
+				return *(u32*)&arr[addr];}
 
 #define WriteMemArr(arr,addr,data,sz)				\
 			{if(sz==1)								\
@@ -871,7 +868,7 @@ void libARM_Update(u32 cycles);
 			else if (sz==2)							\
 				{*(u16*)&arr[addr]=(u16)data;}		\
 			else if (sz==4)							\
-			{*(u32*)&arr[addr]=data;}}	
+			{*(u32*)&arr[addr]=data;}}
 
 #define WriteMemArrRet(arr,addr,data,sz)				\
 			{if(sz==1)								\
@@ -879,7 +876,7 @@ void libARM_Update(u32 cycles);
 			else if (sz==2)							\
 				{*(u16*)&arr[addr]=(u16)data;return;}		\
 			else if (sz==4)							\
-			{*(u32*)&arr[addr]=data;return;}}	
+			{*(u32*)&arr[addr]=data;return;}}
 
 struct OnLoad
 {

@@ -3,12 +3,15 @@
 #include "aica_mem.h"
 #include "hw/aica/aica_if.h"
 #include <math.h>
+#include "oslib/logging.h"
+
 #undef FAR
 
 //#define CLIP_WARN
-#define key_printf(...)
-#define aeg_printf(...)
-#define step_printf(...)
+/* Harry  TODO */
+#define KEY_LOG(...)
+#define AEG_LOG(...)
+#define STEP_LOG(...)
 
 #ifdef CLIP_WARN
 #define clip_verify(x) verify(x)
@@ -53,12 +56,12 @@ const char* stream_names[]=
 };
 
 //x.8 format
-const s32 adpcm_qs[8] = 
+const s32 adpcm_qs[8] =
 {
 	0x0e6, 0x0e6, 0x0e6, 0x0e6, 0x133, 0x199, 0x200, 0x266,
 };
 //x.3 format
-const s32 adpcm_scale[16] = 
+const s32 adpcm_scale[16] =
 {
 	1,3,5,7,9,11,13,15,
 	-1,-3,-5,-7,-9,-11,-13,-15,
@@ -96,7 +99,7 @@ s16 pl=0,pr=0;
 struct DSP_OUT_VOL_REG
 {
 	//--	EFSDL[3:0]	--	EFPAN[4:0]
-	
+
 	u32 EFPAN:5;
 	u32 res_1:3;
 
@@ -186,12 +189,12 @@ struct ChannelCommonData
 	//+24	--	DISDL[3:0]	--	DIPAN[4:0]
 	u32 DIPAN:5;
 	u32 rez_24_0:3;
-	
+
 	u32 DISDL:4;
 	u32 rez_24_1:4;
 
 	u32 pad_12:16;
-	
+
 
 	//+28	TL[7:0]	--	Q[4:0]
 	u32 Q:5;
@@ -210,27 +213,27 @@ struct ChannelCommonData
 	//+30	--	FLV1[12:0]
 	u32 FLV1:13;
 	u32 rez_30_0:3;
-	
+
 	u32 pad_15:16;
 
 	//+34	--	FLV2[12:0]
 	u32 FLV2:13;
 	u32 rez_34_0:3;
-	
+
 	u32 pad_16:16;
 
 	//+38	--	FLV3[12:0]
 	u32 FLV3:13;
 	u32 rez_38_0:3;
-	
+
 	u32 pad_17:16;
 
 	//+3C	--	FLV4[12:0]
 	u32 FLV4:13;
 	u32 rez_3C_0:3;
-	
+
 	u32 pad_18:16;
-	
+
 	//+40	--	FAR[4:0]	--	FD1R[4:0]
 	u32 FD1R:5;
 	u32 rez_40_0:3;
@@ -295,7 +298,7 @@ struct ChannelEx
 
 		u8 looped;
 	} loop;
-	
+
 	struct
 	{
 		//used in adpcm decoding
@@ -318,12 +321,12 @@ struct ChannelEx
 		u32 DSPAtt;
 		SampleType* DSPOut;
 	} VolMix;
-	
+
 	void (* StepAEG)(ChannelEx* ch);
 	void (* StepFEG)(ChannelEx* ch);
 	void (* StepStream)(ChannelEx* ch);
 	void (* StepStreamInitial)(ChannelEx* ch);
-	
+
 	struct
 	{
 		s32 val;
@@ -338,14 +341,14 @@ struct ChannelEx
 		u32 Decay2Rate;
 		u32 ReleaseRate;
 	} AEG;
-	
+
 	struct
 	{
 		s32 value;
 		_EG_state state;
 	} FEG;//i have to figure out how this works w/ AEG and channel state, and the iir values
-	
-	struct 
+
+	struct
 	{
 		u32 counter;
 		u32 start_value;
@@ -403,13 +406,13 @@ struct ChannelEx
 
 			//Volume & Mixer processing
 			//All attenuations are added together then applied and mixed :)
-			
+
 			//offset is up to 511
 			//*Att is up to 511
 			//logtable handles up to 1024, anything >=255 is mute
 
 			u32 ofsatt=lfo.alfo+(AEG.GetValue()>>2);
-			
+
 			s32* logtable=ofsatt+tl_lut;
 
 			oLeft=FPMul(sample,logtable[VolMix.DLAtt],15);
@@ -482,12 +485,12 @@ struct ChannelEx
 			step.full=0;
 
 			loop.looped=false;
-			
+
 			adpcm.Reset(this);
 
 			StepStreamInitial(this);
 
-			key_printf("[%d] KEY_ON %s @ %f Hz, loop : %d\n",Channel,stream_names[ChanData->PCMS],(44100.0*update_rate)/1024,ChanData->LPCTL);
+			KEY_LOG("[%d] KEY_ON %s @ %f Hz, loop : %d\n", Channel, stream_names[ChanData->PCMS], (44100.0*update_rate) / 1024, ChanData->LPCTL);
 		}
 		else
 		{
@@ -498,7 +501,7 @@ struct ChannelEx
 	{
 		if (AEG.state!=EG_Release)
 		{
-			key_printf("[%d] KEY_OFF -> Release\n",Channel);
+			KEY_LOG("[%d] KEY_OFF -> Release\n", Channel);
 			SetAegState(EG_Release);
 			//switch to release state
 		}
@@ -523,7 +526,7 @@ struct ChannelEx
 		u32 addr = (ccd->SA_hi<<16) | ccd->SA_low;
 		if (ccd->PCMS==0)
 			addr&=~1; //0: 16 bit
-		
+
 		SA=&aica_ram.data[addr];
 	}
 	//LSA,LEA
@@ -635,7 +638,7 @@ struct ChannelEx
 	{
 		//this needs to be filled
 	}
-	
+
 	//WHEE :D!
 	void RegWrite(u32 offset)
 	{
@@ -733,7 +736,7 @@ struct ChannelEx
 			break;
 
 		}
-	} 
+	}
 };
 
 __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
@@ -770,7 +773,7 @@ __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
 
 		s0=ch->noise_state;
 		s0>>=16;
-		
+
 		s1=ch->noise_state*16807 + 0xbeef;
 		s1>>=16;
 		break;
@@ -803,7 +806,7 @@ __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
 			u8 sf=(CA&1)*4;
 			ad1>>=sf;
 			ad2>>=4-sf;
-		
+
 			ad1&=0xF;
 			ad2&=0xF;
 
@@ -817,7 +820,7 @@ __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
 		}
 		break;
 	}
-	
+
 	ch->s0=s0;
 	ch->s1=s1;
 }
@@ -850,8 +853,8 @@ void StreamStep(ChannelEx* ch)
 		{
 			if ((ch->AEG.state==EG_Attack) && (CA>=ch->loop.LSA))
 			{
-				
-				step_printf("[%d]LPSLNK : Switching to EG_Decay1 %X\n",Channel,AEG.GetValue());
+
+				STEP_LOG("[%d]LPSLNK : Switching to EG_Decay1 %X\n", Channel, AEG.GetValue());
 				ch->SetAegState(EG_Decay1);
 			}
 		}
@@ -952,7 +955,7 @@ void AegStep(ChannelEx* ch)
 				ch->AEG.SetValue(0);
 				if (!ch->ccd->LPSLNK)
 				{
-					aeg_printf("[%d]AEG_step : Switching to EG_Decay1 %d\n",ch->AEG.GetValue());
+					AEG_LOG("[%d]AEG_step : Switching to EG_Decay1 %d\n", ch->AEG.GetValue());
 					ch->SetAegState(EG_Decay1);
 				}
 			}
@@ -964,7 +967,7 @@ void AegStep(ChannelEx* ch)
 			ch->AEG.val+=ch->AEG.Decay1Rate;
 			if (((u32)ch->AEG.GetValue())>=ch->AEG.Decay2Value)
 			{
-				aeg_printf("[%d]AEG_step : Switching to EG_Decay2 @ %x\n",ch->AEG.GetValue());
+				AEG_LOG("[%d]AEG_step : Switching to EG_Decay2 @ %x\n", ch->AEG.GetValue());
 				ch->SetAegState(EG_Decay2);
 			}
 		}
@@ -975,7 +978,7 @@ void AegStep(ChannelEx* ch)
 			ch->AEG.val+=ch->AEG.Decay2Rate;
 			if (ch->AEG.GetValue()>=0x3FF)
 			{
-				aeg_printf("[%d]AEG_step : Switching to EG_Release @ %x\n",ch->AEG.GetValue());
+				AEG_LOG("[%d]AEG_step : Switching to EG_Release @ %x\n", ch->AEG.GetValue());
 				ch->AEG.SetValue(0x3FF);
 				ch->SetAegState(EG_Release);
 			}
@@ -984,10 +987,10 @@ void AegStep(ChannelEx* ch)
 	case EG_Release: //only on key_off ?
 		{
 			ch->AEG.val+=ch->AEG.ReleaseRate;
-			
+
 			if (ch->AEG.GetValue()>=0x3FF)
 			{
-				aeg_printf("[%d]AEG_step : EG_Release End @ %x\n",ch->AEG.GetValue());
+				AEG_LOG("[%d]AEG_step : EG_Release End @ %x\n",ch->AEG.GetValue());
 				ch->AEG.SetValue(0x3FF); // TODO: mnn, should we do anything about it running wild ?
 				ch->disable(); // TODO: Is this ok here? It's a speed optimisation (since the channel is muted)
 			}
@@ -998,7 +1001,7 @@ void AegStep(ChannelEx* ch)
 template<u32 state>
 void FegStep(ChannelEx* ch)
 {
-	
+
 }
 void staticinitialise()
 {
@@ -1057,7 +1060,7 @@ void staticinitialise()
 
 AicaChannel AicaChannel::Chans[64];
 
-#define Chans AicaChannel::Chans 
+#define Chans AicaChannel::Chans
 double dbToval(double db)
 {
 	return pow(10,db/20.0);
@@ -1110,7 +1113,7 @@ void sgc_Init()
 
 void sgc_Term()
 {
-	
+
 }
 
 void WriteChannelReg8(u32 channel,u32 reg)
@@ -1131,10 +1134,10 @@ void ReadCommonReg(u32 reg,bool byte)
 	case 0x2811: //LP & misc
 		{
 			u32 chan=CommonData->MSLC;
-			
+
 			CommonData->LP=Chans[chan].loop.looped;
 			verify(CommonData->AFSET==0);
-		
+
 			CommonData->EG=Chans[chan].AEG.GetValue(); //AEG is only 10 bits, FEG is 13 bits
 			CommonData->SGC=Chans[chan].AEG.state;
 
@@ -1147,7 +1150,7 @@ void ReadCommonReg(u32 reg,bool byte)
 		{
 			u32 chan=CommonData->MSLC;
 			CommonData->CA = Chans[chan].CA /*& (~1023)*/; //mmnn??
-			//printf("[%d] CA read %d\n",chan,Chans[chan].CA);
+			//LOG_D("aica", "[%d] CA read %d\n", chan, Chans[chan].CA);
 		}
 		break;
 	}
@@ -1211,7 +1214,7 @@ void AICA_Sample32()
 #endif
 	//OK , generated all Channels  , now DSP/ect + final mix ;p
 	//CDDA EXTS input
-	
+
 	for (int i=0;i<32;i++)
 	{
 		SampleType mixl,mixr;
@@ -1232,7 +1235,7 @@ void AICA_Sample32()
 		//Add CDDA / DSP effect(s)
 
 		//CDDA
-		if (settings.aica.CDDAMute==0) 
+		if (settings.aica.CDDAMute==0)
 		{
 			VOLPAN(EXTS0L,dsp_out_vol[16].EFSDL,dsp_out_vol[16].EFPAN,mixl,mixr);
 			VOLPAN(EXTS0R,dsp_out_vol[17].EFSDL,dsp_out_vol[17].EFPAN,mixl,mixr);
@@ -1278,9 +1281,9 @@ void AICA_Sample32()
 
 #ifdef CLIP_WARN
 		if (((s16)mixl) != mixl)
-			printf("Clipped mixl %d\n",mixl);
+			LOG_W("aica", "Clipped mixl %d\n",mixl);
 		if (((s16)mixr) != mixr)
-			printf("Clipped mixr %d\n",mixr);
+			LOG_W("aica", "Clipped mixr %d\n",mixr);
 #endif
 
 		clip16(mixl);
@@ -1301,10 +1304,10 @@ void AICA_Sample()
 	memset(dsp.MIXS,0,sizeof(dsp.MIXS));
 
 	ChannelEx::StepAll(mixl,mixr);
-	
+
 	//OK , generated all Channels  , now DSP/ect + final mix ;p
 	//CDDA EXTS input
-	
+
 	if (cdda_index>=CDDA_SIZE)
 	{
 		cdda_index=0;
@@ -1320,7 +1323,7 @@ void AICA_Sample()
 	//Add CDDA / DSP effect(s)
 
 	//CDDA
-	if (settings.aica.CDDAMute==0) 
+	if (settings.aica.CDDAMute==0)
 	{
 		VOLPAN(EXTS0L,dsp_out_vol[16].EFSDL,dsp_out_vol[16].EFPAN,mixl,mixr);
 		VOLPAN(EXTS0R,dsp_out_vol[17].EFSDL,dsp_out_vol[17].EFPAN,mixl,mixr);
@@ -1347,7 +1350,7 @@ void AICA_Sample()
 		mixl+=mixr;
 		mixr=mixl;
 	}
-	
+
 	//MVOL !
 	//we want to make sure mix* is *At least* 23 bits wide here, so 64 bit mul !
 	u32 mvol=CommonData->MVOL;
@@ -1367,9 +1370,9 @@ void AICA_Sample()
 
 #ifdef CLIP_WARN
 	if (((s16)mixl) != mixl)
-		printf("Clipped mixl %d\n",mixl);
+		LOG_W("aica", "Clipped mixl %d\n", mixl);
 	if (((s16)mixr) != mixr)
-		printf("Clipped mixr %d\n",mixr);
+		LOG_W("aica", "Clipped mixr %d\n", mixr);
 #endif
 
 	clip16(mixl);

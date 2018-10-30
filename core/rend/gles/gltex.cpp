@@ -1,7 +1,7 @@
 #include "gles.h"
 #include "rend/TexCache.h"
 #include "hw/pvr/pvr_mem.h"
-
+#include "oslib/logging.h"
 /*
 Textures
 
@@ -81,7 +81,7 @@ struct TextureCacheData
 
 	//decoded texture info
 	u32 sa;         //pixel data start address in vram (might be offset for mipmaps/etc)
-	u32 sa_tex;		//texture data start address in vram 
+	u32 sa_tex;		//texture data start address in vram
 	u32 w,h;        //width & height of the texture
 	u32 size;       //size, in bytes, in vram
 
@@ -102,29 +102,29 @@ struct TextureCacheData
 
 	void PrintTextureName()
 	{
-		printf("Texture: %s ",tex?tex->name:"?format?");
+		/* TODO Harry: Refactor */
+		LOG_V("gltex", "Texture: %s ", tex ? tex->name : "?format?");
 
 		if (tcw.VQ_Comp)
-			printf(" VQ");
+			LOG_V("gltex", " VQ");
 
 		if (tcw.ScanOrder==0)
-			printf(" TW");
+			LOG_V("gltex", " TW");
 
 		if (tcw.MipMapped)
-			printf(" MM");
+			LOG_V("gltex", " MM");
 
 		if (tcw.StrideSel)
-			printf(" Stride");
+			LOG_V("gltex", " Stride");
 
-		printf(" %dx%d @ 0x%X",8<<tsp.TexU,8<<tsp.TexV,tcw.TexAddr<<3);
-		printf("\n");
+		LOG_V("gltex", " %dx%d @ 0x%X\n", 8 << tsp.TexU, 8 << tsp.TexV, tcw.TexAddr << 3);
 	}
 
 	void SetRepeatMode(GLuint dir,u32 clamp,u32 mirror)
 	{
 		if (clamp)
 			glTexParameteri (GL_TEXTURE_2D, dir, GL_CLAMP_TO_EDGE);
-		else 
+		else
 			glTexParameteri (GL_TEXTURE_2D, dir, mirror?GL_MIRRORED_REPEAT : GL_REPEAT);
 	}
 
@@ -138,7 +138,7 @@ struct TextureCacheData
 		else {
 			texID = 0;
 		}
-		
+
 		pData = 0;
 		tex_type = 0;
 
@@ -222,7 +222,7 @@ struct TextureCacheData
 				verify(tcw.VQ_Comp==0);
 				//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
 				int stride=w;
-				if (tcw.StrideSel) 
+				if (tcw.StrideSel)
 					stride=(TEXT_CONTROL&31)*32;
 				//Call the format specific conversion code
 				texconv=tex->PL;
@@ -253,10 +253,10 @@ struct TextureCacheData
 			}
 			break;
 		default:
-			printf("Unhandled texture %d\n",tcw.PixelFmt);
-			size=w*h*2;
+			LOG_W("gltex", "Unhandled texture %d\n", tcw.PixelFmt);
+			size = w * h * 2;
 			memset(temp_tex_buffer,0xFFFFFFFF,size);
-			texconv=0;
+			texconv = 0;
 		}
 	}
 
@@ -268,7 +268,7 @@ struct TextureCacheData
 
 		GLuint textype=tex->type;
 
-		if (pal_table_rev) 
+		if (pal_table_rev)
 		{
 			textype=PAL_TYPE[PAL_RAM_CTRL&3];
 			pal_local_rev=*pal_table_rev; //make sure to update the local rev, so it won't have to redo the tex
@@ -284,7 +284,7 @@ struct TextureCacheData
 
 		u32 stride=w;
 
-		if (tcw.StrideSel && tcw.ScanOrder && tex->PL) 
+		if (tcw.StrideSel && tcw.ScanOrder && tex->PL)
 			stride=(TEXT_CONTROL&31)*32; //I think this needs +1 ?
 
 		if(texconv!=0)
@@ -294,8 +294,8 @@ struct TextureCacheData
 		else
 		{
 			//fill it in with a temp color
-			printf("UNHANDLED TEXTURE\n");
-			memset(temp_tex_buffer,0xF88F8F7F,w*h*2);
+			LOG_E("gltex", "UNHANDLED TEXTURE\n");
+			memset(temp_tex_buffer, 0xF88F8F7F, w * h * 2);
 		}
 
 		//PrintTextureName();
@@ -343,7 +343,7 @@ struct TextureCacheData
 
 	//true if : dirty or paletted texture and revs don't match
 	bool NeedsUpdate() { return (dirty) || (pal_table_rev!=0 && *pal_table_rev!=pal_local_rev); }
-	
+
 	void Delete()
 	{
 		if (pData) {
@@ -526,8 +526,8 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 	rv.width = tf->w;
 	rv.pdata = tf->pData;
 	rv.textype = tf->tex_type;
-	
-	
+
+
 	return rv;
 }
 
@@ -547,7 +547,7 @@ void CollectCleanup() {
 	}
 
 	for (size_t i=0; i<list.size(); i++) {
-		//printf("Deleting %d\n",TexCache[list[i]].texID);
+		//LOG_D("gltex", "Deleting %d\n",TexCache[list[i]].texID);
 		TexCache[list[i]].Delete();
 
 		TexCache.erase(list[i]);

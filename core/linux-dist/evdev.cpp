@@ -10,6 +10,7 @@
 #include <vector>
 #include <map>
 #include <dlfcn.h>
+#include "oslib/logging.h"
 
 #if defined(USE_EVDEV)
 	bool libevdev_tried = false;
@@ -43,7 +44,7 @@
 
 		if (!lib_handle)
 		{
-			fprintf(stderr, "%s\n", dlerror());
+			LOG_E("evdev", "%s\n", dlerror());
 			failed = true;
 		}
 		else
@@ -53,7 +54,7 @@
 			const char* error1 = dlerror();
 			if (error1 != NULL)
 			{
-				fprintf(stderr, "%s\n", error1);
+				LOG_E("evdev", "%s\n", error1);
 				failed = true;
 			}
 
@@ -62,7 +63,7 @@
 			const char* error2 = dlerror();
 			if (error2 != NULL)
 			{
-				fprintf(stderr, "%s\n", error2);
+				LOG_E("evdev", "%s\n", error2);
 				failed = true;
 			}
 		}
@@ -96,7 +97,7 @@
 		}
 		s32 min = abs.minimum;
 		s32 max = abs.maximum;
-		printf("evdev: range of axis %d is from %d to %d\n", code, min, max);
+		LOG_V("evdev", "Range of axis %d is from %d to %d\n", code, min, max);
 		if(inverted)
 		{
 			this->range = (min - max);
@@ -123,24 +124,16 @@
 		switch (value)
 		{
 			case 0:
-				#if defined(_DEBUG) || defined(DEBUG)
-				printf("Maple Device: None\n");
-				#endif
+				LOG_D("maple", "Maple Device: None\n");
 				return MDT_None;
 			case 1:
-				#if defined(_DEBUG) || defined(DEBUG)
-				printf("Maple Device: VMU\n");
-				#endif
+				LOG_D("maple", "Maple Device: VMU\n");
 				return MDT_SegaVMU;
 			case 2:
-				#if defined(_DEBUG) || defined(DEBUG)
-				printf("Maple Device: Microphone\n");
-				#endif
+				LOG_D("maple", "Maple Device: Microphone\n");
 				return MDT_Microphone;
 			case 3:
-				#if defined(_DEBUG) || defined(DEBUG)
-				printf("Maple Device: PuruPuruPack\n");
-				#endif
+				LOG_D("maple", "Maple Device: PuruPuruPack\n");
 				return MDT_PurupuruPack;
 			default:
 				MapleDeviceType result = MDT_None;
@@ -153,11 +146,12 @@
 					result = MDT_SegaVMU;
 				}
 
-				printf("Unsupported configuration (%d) for Maple Device, using %s\n", value, result_type.c_str());
+				LOG_E("maple", "Unsupported configuration (%d) for Maple Device, using %s\n", value, result_type.c_str());
 				return result;
 		}
 	}
 
+	/* Mapping Hashmap */
 	std::map<std::string, EvdevControllerMapping> loaded_mappings;
 
 	int load_keycode(ConfigFile* cfg, string section, string dc_key)
@@ -177,11 +171,11 @@
 
 			if (code < 0)
 			{
-				printf("evdev: failed to find keycode for '%s'\n", keycode.c_str());
+				LOG_E("evdev", "Failed to find keycode for '%s'\n", keycode.c_str());
 			}
 			else
 			{
-				printf("%s = %s (%d)\n", dc_key.c_str(), keycode.c_str(), code);
+				LOG_I("evdev", "%s = %s (%d)\n", dc_key.c_str(), keycode.c_str(), code);
 			}
 		}
 		else
@@ -199,17 +193,17 @@
 
 				if (name != NULL)
 				{
-					printf("%s = %s (%d)\n", dc_key.c_str(), name, code);
+					LOG_I("evdev", "%s = %s (%d)\n", dc_key.c_str(), name, code);
 				}
 				else
 				{
-					printf("%s = %d\n", dc_key.c_str(), code);
+					LOG_I("evdev", "%s = %d\n", dc_key.c_str(), code);
 				}
 			}
 		}
 
 		if (code < 0)
-			printf("WARNING: %s/%s not configured!\n", section.c_str(), dc_key.c_str());
+			LOG_W("evdev", "%s/%s Not Configured!\n", section.c_str(), dc_key.c_str());
 
 		return code;
 	}
@@ -260,7 +254,7 @@
 
 	bool input_evdev_button_assigned(EvdevControllerMapping* mapping, int button)
 	{
-		// Don't check unassigned buttons
+		/* Don't check unassigned buttons */
 		if (button == -1)
 			return false;
 
@@ -314,7 +308,7 @@
 
 		char name[256] = "Unknown";
 
-		printf("evdev: Trying to open device at '%s'\n", device);
+		LOG_V("evdev", "Trying to open device at '%s'\n", device);
 
 		int fd = open(device, O_RDWR);
 
@@ -328,7 +322,7 @@
 			}
 			else
 			{
-				printf("evdev: Found '%s' at '%s'\n", name, device);
+				LOG_V("evdev", "Found '%s' at '%s'\n", name, device);
 
 				controller->fd = fd;
 
@@ -338,7 +332,7 @@
 				{
 					// custom mapping defined in config, use that
 					mapping_fname = custom_mapping_fname;
-					printf("evdev: user defined custom mapping found (%s)\n", custom_mapping_fname);
+					LOG_V("evdev", "User defined custom mapping found (%s)\n", custom_mapping_fname);
 				}
 				else
 				{
@@ -359,7 +353,7 @@
 						string dir = get_readonly_data_path(mapping_path);
 						free(mapping_path);
 						if (file_exists(dir)) {
-							printf("evdev: found a named mapping for the device (%s)\n", name_cfg);
+							LOG_V("evdev", "Found a named mapping for the device (%s)\n", name_cfg);
 							mapping_fname = name_cfg;
 						}
 						else {
@@ -393,12 +387,12 @@
 					FILE* mapping_fd = NULL;
 					if(mapping_fname[0] == '/')
 					{
-						// Absolute mapping
+						/* Absolute Mapping */
 						mapping_fd = fopen(mapping_fname, "r");
 					}
 					else
 					{
-						// Mapping from ~/.reicast/mappings/
+						/* Mapping from ~/.reicast/mappings/ */
 						size_t size_needed = snprintf(NULL, 0, EVDEV_MAPPING_PATH, mapping_fname) + 1;
 						char* mapping_path = (char*)malloc(size_needed);
 						sprintf(mapping_path, EVDEV_MAPPING_PATH, mapping_fname);
@@ -408,20 +402,20 @@
 
 					if(mapping_fd != NULL)
 					{
-						printf("evdev: reading mapping file: '%s'\n", mapping_fname);
+						LOG_V("evdev", "Reading Mapping File: '%s'\n", mapping_fname);
 						loaded_mappings.insert(std::make_pair(string(mapping_fname), load_mapping(mapping_fd)));
 						fclose(mapping_fd);
 
 					}
 					else
 					{
-						printf("evdev: unable to open mapping file '%s'\n", mapping_fname);
+						LOG_E("evdev", "Unable to Open Mapping File '%s'\n", mapping_fname);
 						perror("evdev");
 						return -3;
 					}
 				}
 				controller->mapping = &loaded_mappings.find(string(mapping_fname))->second;
-				printf("evdev: Using '%s' mapping\n", controller->mapping->name.c_str());
+				LOG_I("evdev", "Using '%s' mapping\n", controller->mapping->name.c_str());
 				controller->init();
 
 				return 0;
@@ -453,7 +447,7 @@
 			// Check if the same device is already in use on another port
 			if (evdev_device_id[port] < 0)
 			{
-				printf("evdev: Controller %d disabled by config.\n", port + 1);
+				LOG_I("evdev", "Controller %d disabled by config.\n", port + 1);
 			}
 			else
 			{
@@ -487,7 +481,7 @@
 							// Multiple controllers with the same device, check for multiple button assignments
 							if (input_evdev_button_duplicate_button(evdev_controllers[i].mapping, evdev_controllers[port].mapping))
 							{
-								printf("WARNING: One or more button(s) of this device is also used in the configuration of input device %d (mapping: %s)\n", i,
+								LOG_W("evdev", "One or more button(s) of this device is also used in the configuration of input device %d (mapping: %s)\n", i,
 								evdev_controllers[i].mapping->name.c_str());
 							}
 						}
@@ -669,10 +663,10 @@
 		if (controller->fd < 0 || controller->rumble_effect_id == -2)
 		{
 			// Either the controller is not used or previous rumble effect failed
-			printf("RUMBLE: %s\n", "Skipped!");
+			LOG_W("evdev", "RUMBLE: %s\n", "Skipped!");
 			return;
 		}
-		printf("RUMBLE: %u / %u (%d)\n", pow_strong, pow_weak, controller->rumble_effect_id);
+		LOG_I("evdev", "RUMBLE: %u / %u (%d)\n", pow_strong, pow_weak, controller->rumble_effect_id);
 		struct ff_effect effect;
 		effect.type = FF_RUMBLE;
 		effect.id = controller->rumble_effect_id;

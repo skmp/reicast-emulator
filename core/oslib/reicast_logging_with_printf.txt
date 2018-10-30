@@ -1,0 +1,266 @@
+Using '/home/pleb/ika.chd' as cd image
+
+Config dir is: /root/.config/reicast/
+Data dir is:   /root/.local/share/reicast/
+Personality: 00000000
+Updated personality: 00000000
+Linux paging: 4096 00001000 00000FFF
+MAP 00800000 w/ 25165824
+MAP 20000000 w/ 25165824
+MAP 04000000 w/ 16777216
+MAP 06000000 w/ 16777216
+MAP 0C000000 w/ 0
+A8
+vmem reserve: base: 17810000, aram: 37810000, vram: 1B810000, ram: 23810000
+Resetting mem
+Mem alloc successful!Using '/home/pleb/ika.chd' as cd image
+
+libwebsockets test server - (C) Copyright 2010-2013 Andy Green <andy@warmcat.com> - licensed under LGPL2.1
+Initial logging level 7
+Library version: 1.3 c11b847
+IPV6 not compiled in
+libev support not compiled in
+Malformed entry on config - ignoring @ 47(ElfFile)
+Malformed entry on config - ignoring @ 50(ta.HashCheckFile)
+Malformed entry on config - ignoring @ 51(ta.HashLogFile)
+ static allocation: 4488 + (16 x 1024 fds) = 20872 bytes
+ canonical_hostname = parrot
+ per-conn mem: 184 + 1554 headers + protocol rx buf
+ Listening on port 5678
+Found 7 matching FB configs.
+Chosen visual ID = 0x21
+Loaded /root/.local/share/reicast/data/dc_boot.bin as bootrom
+
+Loaded /root/.local/share/reicast/data/dc_flash.bin as nvram
+
+GL context version: 4.2
+OSD: 6
+Error opening /root/.local/share/reicast/data/buttons.png
+chd: parsing file /home/pleb/ika.chd
+TRACK:1 TYPE:MODE1_RAW SUBTYPE:NONE FRAMES:6095 PREGAP:0 PGTYPE:MODE1 PGSUB:RW POSTGAP:0
+TRACK:2 TYPE:AUDIO SUBTYPE:NONE FRAMES:38905 PREGAP:0 PGTYPE:MODE1 PGSUB:RW POSTGAP:0
+TRACK:3 TYPE:MODE1_RAW SUBTYPE:NONE FRAMES:504150 PREGAP:0 PGTYPE:MODE1 PGSUB:RW POSTGAP:0
+chd: Unable to find metadata, 19
+gdrom: Opened image "/home/pleb/ika.chd"
+Using Recompiler
+Auto-selected audio backend "alsa" (Advanced Linux Sound Architecture).
+Initializing audio backend "alsa" (Advanced Linux Sound Architecture)...
+recSh4 Init
+Freeing fpcb
+
+	 CodeCache addr: 0x5564a8de3000 | from: 0x5564a8de3000 | addr here: 0x5564a8de1b40
+evdev: Trying to open device at '/dev/input/event0'
+evdev: Found 'AT Translated Set 2 keyboard' at '/dev/input/event0'
+evdev: reading mapping file: 'keyboard.cfg'
+btn_a = KEY_A (30)
+btn_b = KEY_B (48)
+btn_c = KEY_C (46)
+btn_d = KEY_D (32)
+btn_x = KEY_X (45)
+btn_y = KEY_Y (21)
+btn_z = KEY_Z (44)
+btn_start = KEY_ENTER (28)
+WARNING: emulator/btn_escape not configured!
+btn_dpad1_left = KEY_LEFT (105)
+btn_dpad1_right = KEY_RIGHT (106)
+btn_dpad1_up = KEY_UP (103)
+btn_dpad1_down = KEY_DOWN (108)
+WARNING: dreamcast/btn_dpad2_left not configured!
+WARNING: dreamcast/btn_dpad2_right not configured!
+WARNING: dreamcast/btn_dpad2_up not configured!
+WARNING: dreamcast/btn_dpad2_down not configured!
+btn_trigger_left = KEY_LEFTCTRL (29)
+btn_trigger_right = KEY_RIGHTCTRL (97)
+WARNING: compat/axis_dpad1_x not configured!
+WARNING: compat/axis_dpad1_y not configured!
+WARNING: compat/axis_dpad2_x not configured!
+WARNING: compat/axis_dpad2_y not configured!
+WARNING: dreamcast/axis_x not configured!
+WARNING: dreamcast/axis_y not configured!
+WARNING: dreamcast/axis_trigger_left not configured!
+WARNING: dreamcast/axis_trigger_right not configured!
+evdev: Using 'Generic Keyboard' mapping
+Unsupported configuration (-1) for Maple Device, using VMU
+Unsupported configuration (-1) for Maple Device, using VMU
+Initialising empty VMU...
+evdev: Controller 2 disabled by config.
+evdev: Controller 3 disabled by config.
+evdev: Controller 4 disabled by config.
+Sh4 Reset
+cntx // fpcb offset: -68157440 // pc offset: -184 // pc A0000000
+Get MemPtr unsupported area : addr=0xA0000000
+Get MemPtr unsupported area : addr=0xA0000018
+Sh4: i-cache invalidation A0000016
+Freeing fpcb
+recSh4:Dynarec Cache clear at A0000016
+Get MemPtr unsupported area : addr=0x80000080
+Get MemPtr unsupported area : addr=0x800000A8
+Get MemPtr unsupported area : addr=0x800000BE
+Get MemPtr unsupported area : addr=0x800000C6
+Freeing fpcb
+recSh4:Dynarec Cache clear at 8C0000DE
+Invalid GD-DMA start, SB_GDEN=0.Ingoring it.
+VREG = 03 ARMRST 00
+VREG = 03 ARMRST 01
+VREG = 03 ARMRST 00
+SPI : unknown ? [0x70]
+SPI : unknown ? [0x71]
+sh4io: Invalid read access @@ 00000030
+Sh4: i-cache invalidation 8C00DD78
+Freeing fpcb
+recSh4:Dynarec Cache clear at 8C00DD78
+DIV32S matched 1% @ 0x8C00CF78
+DIV32S matched 100% @ 0x8C00CF7E
+div32s 1/0/3
+Invalid GD-DMA start, SB_GDEN=0.Ingoring it.
+Sh4: i-cache invalidation 8C09E6A6
+Freeing fpcb
+recSh4:Dynarec Cache clear at 8C09E6A6
+Sh4: i-cache invalidation AC09D990
+Freeing fpcb
+recSh4:Dynarec Cache clear at AC09D990
+VREG = 03 ARMRST 00
+new tactx
+new tactx
+DIV32S matched 1% @ 0x8C091086
+DIV32S matched 100% @ 0x8C09108C
+div32s 1/0/3
+DIV32S matched 1% @ 0x8C0911E4
+DIV32S matched 100% @ 0x8C0911EC
+div32s 1/0/3
+DIV32S matched 1% @ 0x8C09126E
+DIV32S matched 1% @ 0x8C091278
+VREG = 03 ARMRST 01
+VREG = 03 ARMRST 01
+VREG = 03 ARMRST 00
+FOG TABLE Curve match: maxdev: 0.42 cents
+reicast git/n - 10.27 (0.00) - 97.40 - V: 58.39 (2.44, NTSC480i59.95) R: 23.95+0.00 VTX: 0.00 , MIPS: 0.00
+reicast git/n - 10.10 (0.00) - 99.05 - V: 59.38 (1.00, NTSC480i59.95) R: 59.38+0.00 VTX: 0.00 , MIPS: 0.00
+SPI : unknown ? [0x70]
+SPI : unknown ? [0x71]
+reicast git/n - 10.01 (0.00) - 99.93 - V: 59.90 (1.20, NTSC480i59.95) R: 49.92+0.00 VTX: 0.00 , MIPS: 0.00
+Sh4: i-cache invalidation AC09EC6E
+Freeing fpcb
+recSh4:Dynarec Cache clear at AC09EC6E
+DIV32S matched 1% @ 0x8C00CF78
+DIV32S matched 100% @ 0x8C00CF7E
+div32s 1/0/3
+DIV32S matched 1% @ 0x8C00D0D6
+DIV32S matched 100% @ 0x8C00D0DE
+div32s 1/0/3
+DIV32S matched 1% @ 0x8C00D160
+DIV32S matched 1% @ 0x8C00D16A
+Sh4: i-cache invalidation AC00043A
+Freeing fpcb
+recSh4:Dynarec Cache clear at AC00043A
+Freeing fpcb
+recSh4:Dynarec Cache clear at AC0082FE
+Sh4: i-cache invalidation AC0082FE
+Freeing fpcb
+recSh4:Dynarec Cache clear at AC0082FE
+VREG = 03 ARMRST 00
+DIV32S matched 1% @ 0x8C0098D8
+DIV32S matched 100% @ 0x8C0098DE
+div32s 1/0/3
+DIV32S matched 1% @ 0x8C009A36
+DIV32S matched 100% @ 0x8C009A3E
+div32s 1/0/3
+DIV32S matched 1% @ 0x8C009AC0
+DIV32S matched 1% @ 0x8C009ACA
+reicast git/n - 9.99 (0.00) - 100.08 - V: 59.99 (2.00, NTSC480i59.95) R: 30.00+0.00 VTX: 0.00 , MIPS: 0.00
+Sh4: i-cache invalidation AC00E0DA
+Freeing fpcb
+recSh4:Dynarec Cache clear at AC00E0DA
+Freeing fpcb
+recSh4:Dynarec Cache clear at AC00FFFE
+Sh4: i-cache invalidation AC00FFFE
+Freeing fpcb
+recSh4:Dynarec Cache clear at AC00FFFE
+Sh4: i-cache invalidation 8C0439A6
+Freeing fpcb
+recSh4:Dynarec Cache clear at 8C0439A6
+Sh4: i-cache invalidation AC042332
+Freeing fpcb
+recSh4:Dynarec Cache clear at AC042332
+<*******>MMU Enabled , ONLY SQ remaps work<*******>
+SQ remap 1 : 0xE0000000 to 0x0
+SQ remap 1 : 0xE0000000 to 0xC000000
+SQ remap 2 : 0xE0100000 to 0x0
+SQ remap 2 : 0xE0100000 to 0xC100000
+SQ remap 3 : 0xE0200000 to 0x0
+SQ remap 3 : 0xE0200000 to 0xC200000
+SQ remap 4 : 0xE0300000 to 0x0
+SQ remap 4 : 0xE0300000 to 0xC300000
+SQ remap 5 : 0xE0400000 to 0x0
+SQ remap 5 : 0xE0400000 to 0xC400000
+SQ remap 6 : 0xE0500000 to 0x0
+SQ remap 6 : 0xE0500000 to 0xC500000
+SQ remap 7 : 0xE0600000 to 0x0
+SQ remap 7 : 0xE0600000 to 0xC600000
+SQ remap 8 : 0xE0700000 to 0x0
+SQ remap 8 : 0xE0700000 to 0xC700000
+SQ remap 9 : 0xE0800000 to 0x0
+SQ remap 9 : 0xE0800000 to 0xC800000
+SQ remap 10 : 0xE0900000 to 0x0
+SQ remap 10 : 0xE0900000 to 0xC900000
+SQ remap 11 : 0xE0A00000 to 0x0
+SQ remap 11 : 0xE0A00000 to 0xCA00000
+SQ remap 12 : 0xE0B00000 to 0x0
+SQ remap 12 : 0xE0B00000 to 0xCB00000
+SQ remap 13 : 0xE0C00000 to 0x0
+SQ remap 13 : 0xE0C00000 to 0xCC00000
+SQ remap 14 : 0xE0D00000 to 0x0
+SQ remap 14 : 0xE0D00000 to 0xCD00000
+SQ remap 15 : 0xE0E00000 to 0x0
+SQ remap 15 : 0xE0E00000 to 0xCE00000
+SQ remap 16 : 0xE0F00000 to 0x0
+SQ remap 16 : 0xE0F00000 to 0xCF00000
+SQ remap 17 : 0xE1000000 to 0x0
+SQ remap 17 : 0xE1000000 to 0x10000000
+SQ remap 18 : 0xE1100000 to 0x0
+SQ remap 18 : 0xE1100000 to 0x10100000
+SQ remap 19 : 0xE1200000 to 0x0
+SQ remap 19 : 0xE1200000 to 0x10200000
+SQ remap 20 : 0xE1300000 to 0x0
+SQ remap 20 : 0xE1300000 to 0x10300000
+SQ remap 21 : 0xE1400000 to 0x0
+SQ remap 21 : 0xE1400000 to 0x10400000
+SQ remap 22 : 0xE1500000 to 0x0
+SQ remap 22 : 0xE1500000 to 0x10500000
+SQ remap 23 : 0xE1600000 to 0x0
+SQ remap 23 : 0xE1600000 to 0x10600000
+SQ remap 24 : 0xE1700000 to 0x0
+SQ remap 24 : 0xE1700000 to 0x10700000
+SQ remap 25 : 0xE1800000 to 0x0
+SQ remap 25 : 0xE1800000 to 0x10800000
+DIV32S matched 1% @ 0x8C0615BA
+DIV32S matched 100% @ 0x8C0615C0
+div32s 1/0/3
+DIV32S matched 1% @ 0x8C0645F2
+DIV32S matched 100% @ 0x8C0645F8
+div32s 0/1/2
+SPI : unknown ? [0x70]
+SPI : unknown ? [0x71]
+VREG = 03 ARMRST 01
+VREG = 03 ARMRST 00
+reicast git/n - 10.09 (0.00) - 99.09 - V: 59.40 (inf, NTSC480i59.95) R: 0.00+0.00 VTX: 0.00 , MIPS: 0.00
+DIV32S matched 1% @ 0x8C061768
+DIV32S matched 100% @ 0x8C061770
+div32s 1/0/3
+DIV32S matched 1% @ 0x8C0617F2
+DIV32S matched 1% @ 0x8C0617FC
+FOG TABLE Curve match: maxdev: 100.00 cents
+reicast git/n - 10.81 (0.00) - 92.54 - V: 55.47 (111.00, NTSC480i59.95) R: 0.50+0.00 VTX: 0.00 , MIPS: 0.00
+reicast git/n - 10.03 (0.00) - 99.67 - V: 59.75 (inf, NTSC480i59.95) R: 0.00+0.00 VTX: 0.00 , MIPS: 0.00
+reicast git/n - 9.91 (0.00) - 100.86 - V: 60.46 (1.38, NTSC480i59.95) R: 43.47+0.50 VTX: 0.00 , MIPS: 0.00
+reicast git/n - 10.00 (0.00) - 100.01 - V: 59.95 (1.03, NTSC480i59.95) R: 54.96+3.50 VTX: 0.00 , MIPS: 0.00
+reicast git/n - 10.00 (0.00) - 100.01 - V: 59.95 (1.00, NTSC480i59.95) R: 59.95+0.00 VTX: 0.00 , MIPS: 0.00
+reicast git/n - 10.14 (0.00) - 98.57 - V: 59.09 (2.50, NTSC480i59.95) R: 18.71+4.92 VTX: 0.00 , MIPS: 0.00
+FOG TABLE Curve match: maxdev: 0.00 cents
+reicast git/n - 10.02 (0.00) - 99.85 - V: 59.85 (1.00, NTSC480i59.95) R: 59.35+0.50 VTX: 0.00 , MIPS: 0.00
+reicast git/n - 9.98 (0.00) - 100.25 - V: 60.09 (1.00, NTSC480i59.95) R: 60.09+0.00 VTX: 0.00 , MIPS: 0.00
+recSh4 Term
+Sh4 Term
+Saved /root/.local/share/reicast/.data/dc_nvmem.bin as nvmem
+
+Terminating audio backend "alsa" (Advanced Linux Sound Architecture)...

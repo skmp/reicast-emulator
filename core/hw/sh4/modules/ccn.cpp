@@ -1,5 +1,5 @@
-//gah , ccn emulation
-//CCN: Cache and TLB controller
+/* CCN Emulation */
+/* CCN: Cache and TLB controller */
 
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
@@ -8,11 +8,9 @@
 #include "../sh4_core.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
+#include "oslib/logging.h"
 
-
-//Types
-
-
+/* Types */
 u32 CCN_QACR_TR[2];
 
 template<u32 idx>
@@ -27,7 +25,7 @@ void CCN_QACR_write(u32 addr, u32 value)
 
 	switch(area)
 	{
-		case 3: 
+		case 3:
 			if (_nvmem_enabled())
 				do_sqw_nommu=&do_sqw_nommu_area_3;
 			else
@@ -48,9 +46,9 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 
 	if ((temp.AT!=CCN_MMUCR.AT) && (temp.AT==1))
 	{
-		printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
+		LOG_D("sh4_modules", "<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
 	}
-	
+
 	if (temp.TI)
 	{
 		temp.TI=0;
@@ -66,7 +64,7 @@ void CCN_CCR_write(u32 addr, u32 value)
 	//what is 0xAC13DBF8 from ?
 	if (temp.ICI && curr_pc!=0xAC13DBF8)
 	{
-		printf("Sh4: i-cache invalidation %08X\n",curr_pc);
+	LOG_D("sh4_modules", "i-cache invalidation %08X\n", curr_pc);
 		sh4_cpu.ResetCache();
 	}
 

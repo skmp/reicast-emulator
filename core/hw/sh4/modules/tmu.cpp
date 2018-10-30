@@ -7,7 +7,7 @@
 #include "tmu.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_mmr.h"
-
+#include "oslib/logging.h"
 
 #define tmu_underflow 0x0100
 #define tmu_UNIE      0x0020
@@ -39,7 +39,7 @@ void UpdateTMU_chan(u32 clc)
 		//count :D
 		tmu_prescaler[ch]+=clc;
 		u32 steps=tmu_prescaler[ch]>>tmu_prescaler_shift[ch];
-		
+
 		//remove the full steps from the prescaler counter
 		tmu_prescaler[ch]&=tmu_prescaler_mask[ch];
 
@@ -52,7 +52,7 @@ void UpdateTMU_chan(u32 clc)
 			//raise the interrupt
 			TMU_TCR(ch) |= tmu_underflow;
 			InterruptPend(tmu_intID[ch],1);
-			
+
 			//remove the full underflows (possible because we only check every 448 cycles)
 			//this can be done with a div, but its very very very rare so this is probably faster
 			//THIS can probably be replaced with a verify check on counter setup (haven't seen any game do this)
@@ -176,15 +176,15 @@ void UpdateTMUCounts(u32 reg)
 			break;
 
 		case 5: //reserved
-			printf("TMU ch%d - TCR%d mode is reserved (5)",reg,reg);
+			LOG_I("sh4_TMU ", "ch%d - TCR%d mode is reserved (5)", reg, reg);
 			break;
 
 		case 6: //RTC
-			printf("TMU ch%d - TCR%d mode is RTC (6), can't be used on Dreamcast",reg,reg);
+			LOG_I("sh4_TMU", "ch%d - TCR%d mode is RTC (6), can't be used on Dreamcast",reg,reg);
 			break;
 
 		case 7: //external
-			printf("TMU ch%d - TCR%d mode is External (7), can't be used on Dreamcast",reg,reg);
+			LOG_I("sh4_TMU", "ch%d - TCR%d mode is External (7), can't be used on Dreamcast",reg,reg);
 			break;
 	}
 	tmu_shift[reg]+=2;
@@ -203,13 +203,13 @@ void TMU_TCR_write(u32 addr, u32 data)
 //Chan 2 not used functions
 u32 TMU_TCPR2_read(u32 addr)
 {
-	EMUERROR("Read from TMU_TCPR2 - this register should be not used on Dreamcast according to docs");
+	LOG_E("sh4_tmu", "Read from TMU_TCPR2 - this register should be not used on Dreamcast according to docs");
 	return 0;
 }
 
 void TMU_TCPR2_write(u32 addr, u32 data)
 {
-	EMUERROR2("Write to TMU_TCPR2 - this register should be not used on Dreamcast according to docs, data=%d",data);
+	LOG_E("sh4_tmu", "Write to TMU_TCPR2 - this register should be not used on Dreamcast according to docs, data=%d", data);
 }
 
 void write_TMU_TSTR(u32 addr, u32 data)
@@ -224,9 +224,9 @@ void write_TMU_TSTR(u32 addr, u32 data)
 int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 {
 	if (tmu_mask[ch]) {
-		
+
 		u32 tcnt = read_TMU_TCNTch(ch);
-		
+
 		s64 tcnt64 = (s64)read_TMU_TCNTch64(ch);
 
 		u32 tcor = TMU_TCOR(ch);
@@ -238,14 +238,14 @@ int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 			//raise interrupt, timer counted down
 			TMU_TCR(ch) |= tmu_underflow;
 			InterruptPend(tmu_intID[ch], 1);
-			
-			//printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
+
+			//LOG_I("sh4_TMU", "Interrupt for %d, %d cycles\n", ch, sch_cycl);
 
 			//schedule next trigger by writing the TCNT register
 			write_TMU_TCNTch(ch, tcor + tcnt);
 		}
 		else {
-			
+
 			//schedule next trigger by writing the TCNT register
 			write_TMU_TCNTch(ch, tcnt);
 		}
@@ -289,7 +289,7 @@ void tmu_init()
 
 	//TMU TCNT2 0xFFD80024 0x1FD80024 32 0xFFFFFFFF 0xFFFFFFFF Held Held Pclk
 	sh4_rio_reg(TMU,TMU_TCNT2_addr,RIO_FUNC,32,&read_TMU_TCNT<2>,&write_TMU_TCNT<2>);
-	
+
 	//TMU TCR2 0xFFD80028 0x1FD80028 16 0x0000 0x0000 Held Held Pclk
 	sh4_rio_reg(TMU,TMU_TCR2_addr,RIO_WF,16,0,&TMU_TCR_write<2>);
 

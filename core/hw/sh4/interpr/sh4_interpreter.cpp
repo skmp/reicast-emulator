@@ -21,6 +21,7 @@
 #include "profiler/profiler.h"
 #include "../dyna/blockmanager.h"
 #include "../sh4_sched.h"
+#include "oslib/logging.h"
 
 #include <time.h>
 #include <float.h>
@@ -86,7 +87,7 @@ void Sh4_int_Step()
 {
 	if (sh4_int_bCpuRun)
 	{
-		printf("Sh4 Is running , can't step\n");
+		LOG_I("sh4_intrp", "Sh4 Is running , can't step\n");
 	}
 	else
 	{
@@ -100,7 +101,7 @@ void Sh4_int_Skip()
 {
 	if (sh4_int_bCpuRun)
 	{
-		printf("Sh4 Is running, can't Skip\n");
+		LOG_I("sh4_intrp", "Sh4 Is running, can't Skip\n");
 	}
 	else
 	{
@@ -112,7 +113,7 @@ void Sh4_int_Reset(bool Manual)
 {
 	if (sh4_int_bCpuRun)
 	{
-		printf("Sh4 Is running, can't Reset\n");
+		LOG_I("sh4_intrp", "Sh4 Is running, can't Reset\n");
 	}
 	else
 	{
@@ -133,7 +134,7 @@ void Sh4_int_Reset(bool Manual)
 		UpdateFPSCR();
 
 		//Any more registers have default value ?
-		printf("Sh4 Reset\n");
+		LOG_I("sh4_intrp", "Sh4 Reset\n");
 	}
 }
 
@@ -157,7 +158,7 @@ void ExecuteDelayslot()
 	}
 	catch (SH4ThrownException ex) {
 		ex.epc -= 2;
-		//printf("Delay slot exception\n");
+		//LOG_D("sh4_intrp", "Delay slot exception\n");
 		throw ex;
 	}
 #endif
@@ -226,7 +227,7 @@ int DreamcastSecond(int tag, int c, int j)
 	bm_Periodical_1s();
 #endif
 
-	//printf("%d ticks\n",sh4_sched_intr);
+	//LOG_D("sh4_intrp", "%d ticks\n", sh4_sched_intr);
 	sh4_sched_intr=0;
 	return SH4_MAIN_CLOCK;
 }
@@ -246,7 +247,7 @@ int UpdateSystem()
 	//this is an optimisation (mostly for ARM)
 	//makes scheduling easier !
 	//update_fp* tmu=pUpdateTMU;
-	
+
 	Sh4cntx.sh4_sched_next-=448;
 	if (Sh4cntx.sh4_sched_next<0)
 		sh4_sched_tick(448);
@@ -291,7 +292,7 @@ void Sh4_int_Init()
 void Sh4_int_Term()
 {
 	Sh4_int_Stop();
-	printf("Sh4 Term\n");
+	LOG_I("sh4_intrp", "Sh4 Term\n");
 }
 
 /*

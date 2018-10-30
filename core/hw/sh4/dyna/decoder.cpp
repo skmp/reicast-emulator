@@ -1,4 +1,5 @@
 /*
+	TODO Harry
 	Ugly, hacky, bad code
 	It decodes sh4 opcodes too
 */
@@ -14,6 +15,7 @@
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_mem.h"
 #include "decoder_opcodes.h"
+#include "oslib/logging.h"
 
 #define BLOCK_MAX_SH_OPS_SOFT 500
 #define BLOCK_MAX_SH_OPS_HARD 511
@@ -21,7 +23,7 @@
 RuntimeBlockInfo* blk;
 
 
-const char idle_hash[] = 
+const char idle_hash[] =
 	//BIOS
 	">:1:05:BD3BE51F:1E886EE6:6BDB3F70:7FB25EA3:DE0083A8"
 	">:1:04:CB0C9B99:5082FB07:50A46C46:4035B1F1:6A9F47DC"
@@ -128,7 +130,7 @@ struct
 void Emit(shilop op,shil_param rd=shil_param(),shil_param rs1=shil_param(),shil_param rs2=shil_param(),u32 flags=0,shil_param rs3=shil_param(),shil_param rd2=shil_param())
 {
 	shil_opcode sp;
-		
+
 	sp.flags=flags;
 	sp.op=op;
 	sp.rd=(rd);
@@ -289,7 +291,7 @@ sh4dec(i0000_nnnn_0000_0011)
 	dec_End(0xFFFFFFFF,BET_DynamicCall,true);
 }
 //jsr @<REG_N>
-sh4dec(i0100_nnnn_0000_1011) 
+sh4dec(i0100_nnnn_0000_1011)
 {
 	u32 n = GetN(op);
 
@@ -385,7 +387,7 @@ sh4dec(i0100_nnnn_0010_0100)
 {
 	u32 n = GetN(op);
 	Sh4RegType rn=(Sh4RegType)(reg_r0+n);
-	
+
 	Emit(shop_rocl,rn,rn,reg_sr_T,0,shil_param(),reg_sr_T);
 	/*
 	Emit(shop_ror,rn,rn,mk_imm(31));
@@ -468,7 +470,7 @@ void dec_param(DecParam p,shil_param& r1,shil_param& r2, u32 op)
 	case PRM_PC_D8_x4:
 		r1=mk_imm(((state.cpu.rpc+4)&0xFFFFFFFC)+(GetImm8(op)<<2));
 		break;
-	
+
 	case PRM_ZERO:
 		r1= mk_imm(0);
 		break;
@@ -581,7 +583,7 @@ void dec_param(DecParam p,shil_param& r1,shil_param& r2, u32 op)
 	case PRM_CREG:	//SR/GBR/VBR/SSR/SPC/<RM_BANK>
 		r1=mk_regi(CREGS[GetM(op)]);
 		break;
-	
+
 	//reg/imm reg/reg
 	case PRM_RN_D4_x1:
 	case PRM_RN_D4_x2:
@@ -660,10 +662,10 @@ u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 		}
 		else
 		{
-			//printf("DIV MATCH BROKEN BY: %s\n",OpDesc[opcode]->diss);
+			//LOG_D("decoder", "DIV MATCH BROKEN BY: %s\n", OpDesc[opcode]->diss);
 			break;
 		}
-		
+
 		opcode=ReadMem16(v_pc);
 		v_pc+=2;
 		if ((opcode&MASK_N_M)==DIV1_KEY)
@@ -672,7 +674,7 @@ u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 				reg2=(Sh4RegType)GetM(opcode);
 			else if (reg2!=(Sh4RegType)GetM(opcode))
 				break;
-			
+
 			if (reg2==reg1)
 				break;
 
@@ -680,7 +682,7 @@ u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 				reg3=(Sh4RegType)GetN(opcode);
 			else if (reg3!=(Sh4RegType)GetN(opcode))
 				break;
-			
+
 			if (reg3==reg1)
 				break;
 
@@ -689,7 +691,7 @@ u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 		else
 			break;
 	}
-	
+
 	if (settings.dynarec.safemode)
 		return 0;
 	else
@@ -704,7 +706,7 @@ bool MatchDiv32u(u32 op,u32 pc)
 	u32 match=MatchDiv32(pc+2,div_som_reg1,div_som_reg2,div_som_reg3);
 
 
-	//log("DIV32U matched %d%% @ 0x%X\n",match*100/65,pc);
+	//LOG_D("sh4_decoder", "DIV32U matched %d%% @ 0x%X\n", match * 100 / 65, pc);
 	if (match==65)
 	{
 		//DIV32U was perfectly matched :)
@@ -724,22 +726,22 @@ bool MatchDiv32s(u32 op,u32 pc)
 	div_som_reg3=(Sh4RegType)n;
 
 	u32 match=MatchDiv32(pc+2,div_som_reg1,div_som_reg2,div_som_reg3);
-	printf("DIV32S matched %d%% @ 0x%X\n",match*100/65,pc);
-	
-	if (match==65)
+	LOG_D("sh4_dyna_decoder", "DIV32S matched %d%% @ 0x%X\n", match * 100 / 65, pc);
+
+	if (match == 65)
 	{
-		//DIV32S was perfectly matched :)
-		printf("div32s %d/%d/%d\n",div_som_reg1,div_som_reg2,div_som_reg3);
+		/* DIV32S was perfectly matched */
+		LOG_I("sh4_dyna_decoder", "DIV32S %d/%d/%d\n", div_som_reg1, div_som_reg2, div_som_reg3);
 		return true;
 	}
 	else //no match ...
 	{
 		/*
-		printf("%04X\n",ReadMem16(pc-2));
-		printf("%04X\n",ReadMem16(pc-0));
-		printf("%04X\n",ReadMem16(pc+2));
-		printf("%04X\n",ReadMem16(pc+4));
-		printf("%04X\n",ReadMem16(pc+6));*/
+		LOG_V("sh4_dyna_decoder", "%04X\n",ReadMem16(pc-2));
+		LOG_V("sh4_dyna_decoder", "%04X\n",ReadMem16(pc-0));
+		LOG_V"sh4_dyna_decoder", "%04X\n",ReadMem16(pc+2));
+		LOG_V("sh4_dyna_decoder", "%04X\n",ReadMem16(pc+4));
+		LOG_V("sh4_dyna_decoder", "%04X\n",ReadMem16(pc+6));*/
 		return false;
 	}
 }
@@ -764,7 +766,7 @@ bool dec_generic(u32 op)
 	DecMode mode;DecParam d;DecParam s;shilop natop;u32 e;
 	if (OpDesc[op]->decode==0)
 		return false;
-	
+
 	u64 inf=OpDesc[op]->decode;
 
 	e=(u32)(inf>>32);
@@ -857,7 +859,7 @@ bool dec_generic(u32 op)
 		break;
 
 	case DM_UnaryOp: //d= op s
-		if (transfer_64 && natop==shop_mov32) 
+		if (transfer_64 && natop==shop_mov32)
 			natop=shop_mov64;
 
 		if (natop==shop_cvt_i2f_n && state.cpu.RoundToZero)
@@ -929,7 +931,7 @@ bool dec_generic(u32 op)
 			Emit(natop,rs1,rs2,mk_imm(e==1?0xFF:0xFFFF));
 		}
 		break;
-	
+
 	case DM_MUL:
 		{
 			shilop op;
@@ -963,12 +965,12 @@ bool dec_generic(u32 op)
 					verify(!state.cpu.is_delayslot);
 					//div32u
 					Emit(shop_div32u,mk_reg(div_som_reg1),mk_reg(div_som_reg1),mk_reg(div_som_reg2),0,shil_param(),mk_reg(div_som_reg3));
-					
+
 					Emit(shop_and,mk_reg(reg_sr_T),mk_reg(div_som_reg1),mk_imm(1));
 					Emit(shop_shr,mk_reg(div_som_reg1),mk_reg(div_som_reg1),mk_imm(1));
 
 					Emit(shop_div32p2,mk_reg(div_som_reg3),mk_reg(div_som_reg3),mk_reg(div_som_reg2),0,shil_param(reg_sr_T));
-					
+
 					//skip the aggregated opcodes
 					state.cpu.rpc+=128;
 					blk->guest_cycles+=CPU_RATIO*64;
@@ -989,12 +991,12 @@ bool dec_generic(u32 op)
 					verify(!state.cpu.is_delayslot);
 					//div32s
 					Emit(shop_div32s,mk_reg(div_som_reg1),mk_reg(div_som_reg1),mk_reg(div_som_reg2),0,shil_param(),mk_reg(div_som_reg3));
-					
+
 					Emit(shop_and,mk_reg(reg_sr_T),mk_reg(div_som_reg1),mk_imm(1));
 					Emit(shop_sar,mk_reg(div_som_reg1),mk_reg(div_som_reg1),mk_imm(1));
 
 					Emit(shop_div32p2,mk_reg(div_som_reg3),mk_reg(div_som_reg3),mk_reg(div_som_reg2),0,shil_param(reg_sr_T));
-					
+
 					//skip the aggregated opcodes
 					state.cpu.rpc+=128;
 					blk->guest_cycles+=CPU_RATIO*64;
@@ -1047,9 +1049,9 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 	blk=rbi;
 	state.Setup(blk->addr,blk->fpu_cfg);
 	ngen_GetFeatures(&state.ngen);
-	
+
 	blk->guest_opcodes=0;
-	
+
 	for(;;)
 	{
 		switch(state.NextOp)
@@ -1060,7 +1062,7 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 			//there is no break here by design
 		case NDO_NextOp:
 			{
-				if ( 
+				if (
 					( (blk->oplist.size() >= BLOCK_MAX_SH_OPS_SOFT) || (blk->guest_cycles >= max_cycles) )
 					&& !state.cpu.is_delayslot
 					)
@@ -1091,7 +1093,7 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 					u32 op=ReadMem16(state.cpu.rpc);
 					if (op==0 && state.cpu.is_delayslot)
 					{
-						printf("Delayslot 0 hack!\n");
+						LOG_I("sh4_dyna_decoder", "Delayslot 0 hack!\n");
 					}
 					else
 					{
@@ -1153,7 +1155,7 @@ _end:
 	blk->BlockType=state.BlockType;
 
 	verify(blk->oplist.size() <= BLOCK_MAX_SH_OPS_HARD);
-	
+
 #if HOST_OS == OS_WINDOWS
 	switch(rbi->addr)
 	{
@@ -1162,7 +1164,7 @@ _end:
 	case 0x8C0BA506:
 	case 0x8C0BA526:
 	case 0x8C224800:
-		printf("HASH: %08X reloc %s\n",blk->addr,blk->hash(false,true));
+		LOG_D("sh4_dyna_decoder", "HASH: %08X reloc %s\n", blk->addr, blk-> hash(false, true));
 		break;
 	}
 #endif
@@ -1173,7 +1175,7 @@ _end:
 		//Experimental hash-id based idle skip
 		if (strstr(idle_hash,blk->hash(false,true)))
 		{
-			//printf("IDLESKIP: %08X reloc match %s\n",blk->addr,blk->hash(false,true));
+			//LOG_D("sh4_dyna_decoder", "IDLESKIP: %08X reloc match %s\n", blk->addr, blk-> hash(false, true));
 			blk->guest_cycles=max_cycles*100;
 		}
 		else

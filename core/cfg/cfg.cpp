@@ -9,6 +9,8 @@
 #include "cfg.h"
 #include "ini.h"
 
+#include "oslib/logging.h"
+
 string cfgPath;
 bool save_config = true;
 
@@ -19,7 +21,7 @@ void savecfgf()
 	FILE* cfgfile = fopen(cfgPath.c_str(),"wt");
 	if (!cfgfile)
 	{
-		printf("Error : Unable to open file for saving \n");
+		LOG_E("cfg", "Unable to Open File for Saving \n");
 	}
 	else
 	{
@@ -91,11 +93,11 @@ bool cfgOpen()
 	{
 		// Config file can't be opened
 		int error_code = errno;
-		printf("Warning: Unable to open the config file '%s' for reading (%s)\n", config_path_read.c_str(), strerror(error_code));
+		LOG_W("cfg", "Unable to Open the Config File '%s' for Reading (%s)\n", config_path_read.c_str(), strerror(error_code));
 		if (error_code == ENOENT || cfgPath != config_path_read)
 		{
 			// Config file didn't exist
-			printf("Creating new empty config file at '%s'\n", cfgPath.c_str());
+			LOG_I("cfg", "Creating new Empty Config File at '%s'\n", cfgPath.c_str());
 			savecfgf();
 		}
 		else
@@ -108,12 +110,13 @@ bool cfgOpen()
 	return true;
 }
 
-//Implementations of the interface :)
-//Section must be set
-//If key is 0 , it looks for the section
-//0 : not found
-//1 : found section , key was 0
-//2 : found section & key
+/* Implementations of the interface */
+/*		Section must be set
+ *		If key is 0 , it looks for the section
+ *			0 : not found
+ *			1 : found section , key was 0
+ *			2 : found section & key
+ */
 s32  cfgExists(const wchar * Section, const wchar * Key)
 {
 	if(cfgdb.has_entry(string(Section), string(Key)))

@@ -1,6 +1,7 @@
 #include "_vmem.h"
 #include "hw/aica/aica_if.h"
 #include "hw/sh4/dyna/blockmanager.h"
+#include "oslib/logging.h"
 
 #define HANDLER_MAX 0x1F
 #define HANDLER_COUNT (HANDLER_MAX+1)
@@ -102,7 +103,7 @@ void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
 	u32   page=addr>>24;
 	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
 	void* ptr=(void*)(iirf&~HANDLER_MAX);
-	
+
 	if (ptr==0)
 	{
 		ismem=false;
@@ -174,7 +175,7 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 		{
 			T rv=_vmem_RF32[id/4](addr);
 			rv|=(T)((u64)_vmem_RF32[id/4](addr+4)<<32);
-			
+
 			return rv;
 		}
 		else
@@ -250,31 +251,31 @@ void DYNACALL _vmem_WriteMem64(u32 Address,u64 data) { _vmem_writet<u64>(Address
 //default read handlers
 u8 DYNACALL _vmem_ReadMem8_not_mapped(u32 addresss)
 {
-	printf("[sh4]Read8 from 0x%X, not mapped [_vmem default handler]\n",addresss);
+	LOG_W("sh4_vmem", "Read8 from 0x%X, not mapped [_vmem default handler]\n",addresss);
 	return (u8)MEM_ERROR_RETURN_VALUE;
 }
 u16 DYNACALL _vmem_ReadMem16_not_mapped(u32 addresss)
 {
-	printf("[sh4]Read16 from 0x%X, not mapped [_vmem default handler]\n",addresss);
+	LOG_W("sh4_vmem", "Read16 from 0x%X, not mapped [_vmem default handler]\n",addresss);
 	return (u16)MEM_ERROR_RETURN_VALUE;
 }
 u32 DYNACALL _vmem_ReadMem32_not_mapped(u32 addresss)
 {
-	printf("[sh4]Read32 from 0x%X, not mapped [_vmem default handler]\n",addresss);
+	LOG_W("sh4_vmem", "Read32 from 0x%X, not mapped [_vmem default handler]\n",addresss);
 	return (u32)MEM_ERROR_RETURN_VALUE;
 }
 //default write handers
 void DYNACALL _vmem_WriteMem8_not_mapped(u32 addresss,u8 data)
 {
-	printf("[sh4]Write8 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
+	LOG_W("sh4_vmem", "Write8 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
 }
 void DYNACALL _vmem_WriteMem16_not_mapped(u32 addresss,u16 data)
 {
-	printf("[sh4]Write16 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
+	LOG_W("sh4_vmem", "Write16 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
 }
 void DYNACALL _vmem_WriteMem32_not_mapped(u32 addresss,u32 data)
 {
-	printf("[sh4]Write32 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
+	LOG_W("sh4_vmem", "Write32 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
 }
 //code to register handlers
 //0 is considered error :)
@@ -369,12 +370,12 @@ void _vmem_reset()
 	memset(_vmem_RF8,0,sizeof(_vmem_RF8));
 	memset(_vmem_RF16,0,sizeof(_vmem_RF16));
 	memset(_vmem_RF32,0,sizeof(_vmem_RF32));
-	
+
 	//clear write tables
 	memset(_vmem_WF8,0,sizeof(_vmem_WF8));
 	memset(_vmem_WF16,0,sizeof(_vmem_WF16));
 	memset(_vmem_WF32,0,sizeof(_vmem_WF32));
-	
+
 	//clear meminfo table
 	memset(_vmem_MemInfo_ptr,0,sizeof(_vmem_MemInfo_ptr));
 
@@ -428,7 +429,7 @@ void _vmem_bm_reset() {
 			_vmem_bm_reset_nvmem();
 		#endif
 	}
-    
+
     if (!virt_ram_base || HOST_OS == OS_DARWIN) {
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
 	}
@@ -543,21 +544,21 @@ error:
 		return ptr;
 	}
 
-	
+
 	void* _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
 	{
 		void* ptr;
 		void* rv;
 
-		printf("MAP %08X w/ %d\n",dst,offset);
+		LOG_V("vmem", "MAP %08X w/ %d\n", dst, offset);
 		u32 map_times=addrsz/size;
 		verify((addrsz%size)==0);
 		verify(map_times>=1);
 		u32 prot=PROT_READ|(w?PROT_WRITE:0);
 		rv= mmap(&virt_ram_base[dst], size, prot, MAP_SHARED | MAP_NOSYNC | MAP_FIXED, fd, offset);
-		if (MAP_FAILED==rv || rv!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0)) 
+		if (MAP_FAILED==rv || rv!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0))
 		{
-			printf("MAP1 failed %d\n",errno);
+			LOG_E("vmem", "MAP1 Failed %d\n", errno);
 			return 0;
 		}
 
@@ -567,7 +568,7 @@ error:
 			ptr=mmap(&virt_ram_base[dst], size, prot , MAP_SHARED | MAP_NOSYNC | MAP_FIXED, fd, offset);
 			if (MAP_FAILED==ptr || ptr!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0))
 			{
-				printf("MAP2 failed %d\n",errno);
+				LOG_E("vmem", "MAP2 failed %d\n",errno);
 				return 0;
 			}
 		}
@@ -577,7 +578,7 @@ error:
 
 	void* _nvmem_alloc_mem()
 	{
-        
+
 #if HOST_OS == OS_DARWIN
 		string path = get_writable_data_path("/dcnzorz_mem");
         fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
@@ -596,14 +597,14 @@ error:
 #else
 
 		fd = ashmem_create_region(0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE);
-		if (false)//this causes writebacks to flash -> slow and stuttery 
+		if (false)//this causes writebacks to flash -> slow and stuttery
 		{
 		fd = open("/data/data/com.reicast.emulator/files/dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
 		unlink("/data/data/com.reicast.emulator/files/dcnzorz_mem");
 		}
 #endif
 
-		
+
 
 		u32 sz= 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE + 0x10000;
 		void* rv=mmap(0, sz, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
@@ -643,14 +644,14 @@ void _vmem_bm_reset_nvmem()
     #endif
 #endif
 
-	printf("Freeing fpcb\n");
+	LOG_I("vmem", "Freeing fpcb\n");
 }
 
 bool BM_LockedWrite(u8* address)
 {
 	if (!_nvmem_enabled())
 		return false;
-	
+
 #if FEAT_SHREC != DYNAREC_NONE
 	u32 addr=address-(u8*)p_sh4rcb->fpcb;
 
@@ -658,7 +659,7 @@ bool BM_LockedWrite(u8* address)
 
 	if (addr<sizeof(p_sh4rcb->fpcb))
 	{
-		//printf("Allocated %d PAGES [%08X]\n",++pagecnt,addr);
+		//LOG_V("vmem", "Allocated %d PAGES [%08X]\n", ++pagecnt, addr);
 
 #if HOST_OS==OS_WINDOWS
 		verify(VirtualAlloc(address,PAGE_SIZE,MEM_COMMIT,PAGE_READWRITE));
@@ -667,7 +668,7 @@ bool BM_LockedWrite(u8* address)
 #endif
 
 		bm_vmem_pagefill((void**)address,PAGE_SIZE);
-		
+
 		return true;
 	}
 #else
@@ -689,7 +690,7 @@ bool _vmem_reserve()
 
 	if (virt_ram_base==0)
 		return _vmem_reserve_nonvmem();
-	
+
 	p_sh4rcb=(Sh4RCB*)virt_ram_base;
 
 #if HOST_OS==OS_WINDOWS
@@ -717,12 +718,12 @@ bool _vmem_reserve()
 	aica_ram.data=(u8*)ptr;
 	//[0x01000000 ,0x04000000) -> unused
 	unused_buffer(0x01000000,0x04000000);
-	
+
 
 	//Area 1
 	//[0x04000000,0x05000000) -> vram (16mb, warped on dc)
 	map_buffer(0x04000000,0x05000000,MAP_VRAM_START_OFFSET,VRAM_SIZE,true);
-	
+
 	vram.size=VRAM_SIZE;
 	vram.data=(u8*)ptr;
 
@@ -735,40 +736,40 @@ bool _vmem_reserve()
 
 	//[0x07000000,0x08000000) -> unused (32b path) mirror
 	unused_buffer(0x07000000,0x08000000);
-	
+
 	//Area 2
 	//[0x08000000,0x0C000000) -> unused
 	unused_buffer(0x08000000,0x0C000000);
-	
+
 	//Area 3
 	//[0x0C000000,0x0D000000) -> main ram
 	//[0x0D000000,0x0E000000) -> main ram mirror
 	//[0x0E000000,0x0F000000) -> main ram mirror
 	//[0x0F000000,0x10000000) -> main ram mirror
 	map_buffer(0x0C000000,0x10000000,MAP_RAM_START_OFFSET,RAM_SIZE,true);
-	
+
 	mem_b.size=RAM_SIZE;
 	mem_b.data=(u8*)ptr;
-	
-	printf("A8\n");
+
+	LOG_V("vmem", "A8\n");
 
 	//Area 4
 	//Area 5
 	//Area 6
 	//Area 7
-	//all -> Unused 
+	//all -> Unused
 	//[0x10000000,0x20000000) -> unused
 	unused_buffer(0x10000000,0x20000000);
 
-	printf("vmem reserve: base: %08X, aram: %08x, vram: %08X, ram: %08X\n",virt_ram_base,aica_ram.data,vram.data,mem_b.data);
+	LOG_I("vmem", "reserve: base: %08X, aram: %08x, vram: %08X, ram: %08X\n", virt_ram_base, aica_ram.data, vram.data, mem_b.data);
 
-	printf("Resetting mem\n");
+	LOG_I("vmem", "Resetting mem\n");
 
 	aica_ram.Zero();
 	vram.Zero();
 	mem_b.Zero();
 
-	printf("Mem alloc successful!");
+	LOG_I("vmem", "Mem alloc successful!");
 
 	return virt_ram_base!=0;
 }

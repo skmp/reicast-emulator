@@ -3,7 +3,7 @@
 
 
 #include "common.h"
-
+#include "oslib/logging.h"
 #include "deps/chdpsr/cdipsr.h"
 
 Disc* cdi_parse(const wchar* file)
@@ -24,7 +24,7 @@ Disc* cdi_parse(const wchar* file)
 	image.remaining_sessions = image.sessions;
 
 	/////////////////////////////////////////////////////////////// Loop sessions
-	
+
 	bool ft=true, CD_M2=false,CD_M1=false,CD_DA=false;
 
 	while(image.remaining_sessions > 0)
@@ -36,10 +36,10 @@ Disc* cdi_parse(const wchar* file)
 
 		image.header_position = core_ftell(fsource);
 
-		printf("\nSession %d has %d track(s)\n",image.global_current_session,image.tracks);
+		LOG_I("imgread_cdi", "\nSession %d has %d track(s)\n",image.global_current_session,image.tracks);
 
 		if (image.tracks == 0)
-			printf("Open session\n");
+			LOG_V("imgread_cdi", "Open session\n");
 		else
 		{
 			// Clear cuesheet
@@ -56,40 +56,33 @@ Disc* cdi_parse(const wchar* file)
 
 				image.header_position = core_ftell(fsource);
 
-				// Show info
-
-				printf("Saving  ");
-				printf("Track: %2d  ",track.global_current_track);
-				printf("Type: ");
+				/* Show info */
+				LOG_I("imgread_cdi", "Saving ~~> Track: %2d  Type: ", track.global_current_track);
 				switch(track.mode)
 				{
-				case 0 : printf("Audio/"); break;
-				case 1 : printf("Mode1/"); break;
-				case 2 :
-				default: printf("Mode2/"); break;
+					case 0 : LOG_I("imgread_cdi", "Audio/%lu", track.sector_size); break;
+					case 1 : LOG_I("imgread_cdi", "Mode1/%lu", track.sector_size); break;
+					case 2 :
+					default: LOG_I("imgread_cdi", "Mode2/%lu", track.sector_size); break;
 				}
-				printf("%lu  ",track.sector_size);
-				
-				printf("Pregap: %-3ld  ",track.pregap_length);
-				printf("Size: %-6ld  ",track.length);
-				printf("LBA: %-6ld  ",track.start_lba);
-				
+				LOG_I("imgread_cdi", "\tPregap: %-3ld \tSize: %-6ld  \tLBA: %-6ld\n", track.pregap_length, track.length, track.start_lba);
+
 				if (ft)
 				{
-					ft=false;
+					ft = false;
 					Session s;
-					s.StartFAD=track.pregap_length + track.start_lba;
-					s.FirstTrack=track.global_current_track;
+					s.StartFAD = track.pregap_length + track.start_lba;
+					s.FirstTrack = track.global_current_track;
 					rv->sessions.push_back(s);
 				}
 
 				Track t;
-				if (track.mode==2)
-					CD_M2=true;
-				if (track.mode==1)
-					CD_M1=true;
-				if (track.mode==0)
-					CD_DA=true;
+				if (track.mode == 2)
+					CD_M2 = true;
+				if (track.mode == 1)
+					CD_M1 = true;
+				if (track.mode == 0)
+					CD_DA = true;
 
 
 
@@ -101,28 +94,25 @@ Disc* cdi_parse(const wchar* file)
 				t.file = new RawTrackFile(core_fopen(file),track.position + track.pregap_length * track.sector_size,t.StartFAD,track.sector_size);
 
 				rv->tracks.push_back(t);
-
-				 printf("\n");
-
-				//       if (track.pregap_length != 150) printf("Warning! This track seems to have a non-standard pregap...\n");
+				//       if (track.pregap_length != 150) LOG_W("imgread_cdi", "This track seems to have a non-standard pregap...\n");
 
 				if (track.length < 0)
-					printf( "Negative track size found\n"
+					LOG_E("imgread_cdi", "Negative track size found!\n"
 					"You must extract image with /pregap option");
 
 				//if (!opts.showinfo)
 				{
 					if (track.total_length < track.length + track.pregap_length)
 					{
-						printf("\nThis track seems truncated. Skipping...\n");
+						LOG_I("imgread_cdi", "\nThis track seems truncated. Skipping...\n");
 						core_fseek(fsource, track.position, SEEK_SET);
 						core_fseek(fsource, track.total_length, SEEK_CUR);
 						track.position = core_ftell(fsource);
 					}
 					else
 					{
-						
-						printf("Track position: %lu\n",track.position + track.pregap_length * track.sector_size);
+
+						LOG_I("imgread_cdi", "Track position: %lu\n", track.position + track.pregap_length * track.sector_size);
 						core_fseek(fsource, track.position, SEEK_SET);
 						//     fseek(fsource, track->pregap_length * track->sector_size, SEEK_CUR);
 						//     fseek(fsource, track->length * track->sector_size, SEEK_CUR);
@@ -185,7 +175,7 @@ Disc* cdi_parse(const wchar* file)
 
 	DWORD dwSize;//
 	DWORD dwErr = PfcGetToc(file, pstToc, dwSize);
-	if (dwErr == PFCTOC_OK) 
+	if (dwErr == PFCTOC_OK)
 	{
 		rv= new CDIDisc(pstToc,file);
 	}

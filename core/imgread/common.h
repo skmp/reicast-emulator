@@ -1,6 +1,8 @@
 #pragma once
 #include "gd_driver.h"
 #include <vector>
+#include "oslib/logging.h"
+
 using namespace std;
 
 #include "deps/coreio/coreio.h"
@@ -59,10 +61,10 @@ MODE1:
 SYNC (12) | HEAD (4) | data (2048) | edc (4) | space (8) | ecc (276)
 MODE2:
 SYNC (12) | HEAD (4) | sub-head (8) | sector_data (2328)
-  -form1 sector_data: 
+  -form1 sector_data:
    data (2048) | edc (4) | ecc (276)
 
-  -form2 sector_data: 
+  -form2 sector_data:
    data (2324) |edc(4)
 */
 
@@ -71,7 +73,7 @@ enum SectorFormat
 	SECFMT_2352,				//full sector
 	SECFMT_2048_MODE1,			//2048 user byte, form1 sector
 	SECFMT_2048_MODE2_FORM1,	//2048 user bytes, form2m1 sector
-	SECFMT_2336_MODE2,			//2336 user bytes, 
+	SECFMT_2336_MODE2,			//2336 user bytes,
 };
 
 enum SubcodeFormat
@@ -189,25 +191,25 @@ struct Disc
 				}
 				else if (fmt==2352 && (secfmt==SECFMT_2048_MODE1 || secfmt==SECFMT_2048_MODE2_FORM1 ))
 				{
-					printf("GDR:fmt=2352;secfmt=2048\n");
+					LOG_I("GDR", "fmt=2352;secfmt=2048\n");
 					memcpy(dst,temp,2048);
 				}
 				else
 				{
-					printf("ERROR: UNABLE TO CONVERT SECTOR. THIS IS FATAL.");
+					LOG_E("GDR", "UNABLE TO CONVERT SECTOR. THIS IS FATAL.");
 					//verify(false);
 				}
 			}
 			else
 			{
-				printf("Sector Read miss FAD: %d\n", FAD);
+				LOG_W("GDR", "Sector Read miss FAD: %d\n", FAD);
 			}
 			dst+=fmt;
 			FAD++;
 			count--;
 		}
 	}
-	virtual ~Disc() 
+	virtual ~Disc()
 	{
 		for (size_t i=0;i<tracks.size();i++)
 			tracks[i].Destroy();
@@ -243,7 +245,7 @@ struct Disc
 			u32 fmt=tracks[i].CTRL==4?2048:2352;
 			char fsto[1024];
 			sprintf(fsto,"%s%s%d.img",path.c_str(),".track",i);
-			
+
 			FILE* fo=fopen(fsto,"wb");
 
 			for (u32 j=tracks[i].StartFAD;j<=tracks[i].EndFAD;j++)

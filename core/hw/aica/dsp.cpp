@@ -8,11 +8,11 @@
 
 	Tries to emulate a guesstimation of the aica dsp, by directly emitting x86 opcodes.
 
-	This was my first dsp implementation, as implemented for nullDC 1.0.3. 
-	
-	This was derived from a schematic I drew for the dsp, based on 
-	liberal interpretation of known specs, the saturn dsp, digital 
-	electronics assumptions, as well as "best-fitted" my typical 
+	This was my first dsp implementation, as implemented for nullDC 1.0.3.
+
+	This was derived from a schematic I drew for the dsp, based on
+	liberal interpretation of known specs, the saturn dsp, digital
+	electronics assumptions, as well as "best-fitted" my typical
 	test game suite.
 
 
@@ -37,7 +37,7 @@ struct _INST
 	unsigned int TRA;
 	unsigned int TWT;
 	unsigned int TWA;
-	
+
 	unsigned int XSEL;
 	unsigned int YSEL;
 	unsigned int IRA;
@@ -74,7 +74,7 @@ naked u16 packasm(s32 val)
 	{
 		mov edx,ecx;        //eax will be sign
 		and edx,0x80000;    //get the sign
-		
+
 		jz poz;
 		neg ecx;
 
@@ -107,7 +107,7 @@ naked s32 unpackasm(u32 val)
 	{
 		mov eax,ecx;        //get mantissa bits
 		and ecx,0x7FF;      //
-		
+
 		shl eax,11;         //get shift factor (shift)
 		mov edx,eax;        //keep a copy for the sign
 		and eax,0xF;        //get shift factor (mask)
@@ -116,7 +116,7 @@ naked s32 unpackasm(u32 val)
 
 		test edx,0x10;      //signed ?
 		jnz _negme;
-		
+
 		ret;    //nop, return as is
 
 _negme:
@@ -195,7 +195,7 @@ void DecodeInst(u32 *IPtr,_INST *i)
 	i->TRA=(IPtr[0]>>9)&0x7F;
 	i->TWT=(IPtr[0]>>8)&0x01;
 	i->TWA=(IPtr[0]>>1)&0x7F;
-	
+
 	i->XSEL=(IPtr[1]>>15)&0x01;
 	i->YSEL=(IPtr[1]>>13)&0x03;
 	i->IRA=(IPtr[1]>>7)&0x3F;
@@ -217,7 +217,7 @@ void DecodeInst(u32 *IPtr,_INST *i)
 
 	i->NOFL=(IPtr[3]>>15)&1;		//????
 	//i->COEF=(IPtr[3]>>9)&0x3f;
-	
+
 	i->MASA=(IPtr[3]>>9)&0x3f;	//???
 	i->ADREB=(IPtr[3]>>8)&0x1;
 	i->NXADR=(IPtr[3]>>7)&0x1;
@@ -277,7 +277,7 @@ void dsp_rec_DRAM_CI(x86_block& x86e,_INST& prev_op,u32 step,x86_gpr_reg MEM_RD_
 	//Request : step x (odd step)
 	//Operation : x+1   (even step)
 	//Data avail : x+2   (odd step, can request again)
-	if (!(step&1))	
+	if (!(step&1))
 	{
 		//Get and mask ram address :)
 		x86e.Emit(op_mov32,EAX,&dsp.regs.MEM_ADDR);
@@ -306,7 +306,7 @@ void dsp_rec_MEM_AGU(x86_block& x86e,_INST& op,u32 step)
 {
 	nwtn(ADRS_REG);
 	nwtn(MEM_ADDR);
-	
+
 	//These opcode fields are valid on odd steps (mem req. is only allowed then)
 	//MEM Request : step x
 	//Mem operation : step x+1 (address is available at this point)
@@ -318,7 +318,7 @@ void dsp_rec_MEM_AGU(x86_block& x86e,_INST& op,u32 step)
 		//Added if ADREB
 		if (op.ADREB)
 			x86e.Emit(op_add32,EAX,&dsp.regs.ADRS_REG);
-		
+
 		//+1 if NXADR is set
 		if (op.NXADR)
 			x86e.Emit(op_add32,EAX,1);
@@ -414,7 +414,7 @@ void dsp_rec_MEMS_WRITE(x86_block& x86e,_INST& op,u32 step,x86_gpr_reg INPUTS)
 		}
 		x86e.Emit(op_mov32,&dsp.MEMS[op.IWA],EAX);
 	}
-	
+
 	wtn(MEMS);
 }
 //Reads : MEM_RD_DATA_NV (Wire)
@@ -501,7 +501,7 @@ void dsp_rec_MAD(x86_block& x86e,_INST& op,u32 step,x86_gpr_reg INPUTS,x86_gpr_r
 
 	//Do the mul -- maby it has overflow protection ?
 	//24+13=37, -11 = 26
-	//that can be >>1 or >>2 on the shifter after the mul 
+	//that can be >>1 or >>2 on the shifter after the mul
 	x86e.Emit(op_imul32,mul_x_input);
 	//*NOTE* here, shrd is unsigned, but we have EDX signed, and we may only shift up to 11 bits from it
 	//so it works just fine :)
@@ -536,7 +536,7 @@ void dsp_rec_MAD(x86_block& x86e,_INST& op,u32 step,x86_gpr_reg INPUTS,x86_gpr_r
 		{
 			x86e.Emit(op_neg32,EDX);
 		}
-		
+
 		//Add hm, is there overflow protection here ?
 		//The result of mul is on EAX, we modify that
 		x86e.Emit(op_add32,EAX,EDX);
@@ -599,8 +599,8 @@ void dsp_rec_EFO_FB(x86_block& x86e,_INST& op,u32 step,x86_gpr_reg INPUTS)
 	if (op.EWT)
 	{
 		x86e.Emit(op_mov32,EDX,EAX);
-		//top 16 bits ? or lower 16 ? 
-		//i use top 16, following the same rule as the input 
+		//top 16 bits ? or lower 16 ?
+		//i use top 16, following the same rule as the input
 		x86e.Emit(op_sar32,EDX,4);
 
 		//write :)
@@ -609,13 +609,13 @@ void dsp_rec_EFO_FB(x86_block& x86e,_INST& op,u32 step,x86_gpr_reg INPUTS)
 
 	//Write TEMPS ?
 	if (op.TWT)
-	{	
+	{
 		//Temps is 24 bit, stored as s32 (no conversion required)
 
 		//write it
 		x86e.Emit(op_mov32,dsp_reg_GenerateTempsAddrs(x86e,op.TWA,ECX),EAX);
 	}
- 
+
 	//COMMON TO FRC_REG and ADRS_REG
 	//interpolation mode : shift1=1=shift0
 	//non interpolation : shift1!=1 && shift0!=1 ? ( why && ?) -- i implement it as ||
@@ -637,7 +637,7 @@ void dsp_rec_EFO_FB(x86_block& x86e,_INST& op,u32 step,x86_gpr_reg INPUTS)
 		}
 		x86e.Emit(op_mov32,&dsp.regs.FRC_REG,ECX);
 	}
-	
+
 	//Write to ADDRS_REG ?
 	if (op.ADRL)
 	{
@@ -688,7 +688,7 @@ void dsp_recompile()
 
 	x86_block x86e;
 	x86e.Init(dyna_realloc,dyna_realloc);
-	
+
 	x86e.Emit(op_push32,EBX);
 	x86e.Emit(op_push32,EBP);
 	x86e.Emit(op_push32,ESI);
@@ -718,7 +718,7 @@ void dsp_recompile()
 		DecodeInst(mpro,&op);
 		DecodeInst(prev_mpro,&prev_op);
 
-		//printf("[%d] "
+		//LOG_V("dsp", "[%d] "
 		//	"TRA %d,TWT %d,TWA %d,XSEL %d,YSEL %d,IRA %d,IWT %d,IWA %d,TABLE %d,MWT %d,MRD %d,EWT %d,EWA %d,ADRL %d,FRCL %d,SHIFT %d,YRL %d,NEGB %d,ZERO %d,BSEL %d,NOFL %d,MASA %d,ADREB %d,NXADR %d\n"
 		//	,step
 		//	,op.TRA,op.TWT,op.TWA,op.XSEL,op.YSEL,op.IRA,op.IWT,op.IWA,op.TABLE,op.MWT,op.MRD,op.EWT,op.EWA,op.ADRL,op.FRCL,op.SHIFT,op.YRL,op.NEGB,op.ZERO,op.BSEL,op.NOFL,op.MASA,op.ADREB,op.NXADR);
@@ -727,31 +727,31 @@ void dsp_recompile()
 		_dsp_debug_step_start();
 		//DSP regs are on memory
 		//Wires stay on x86 regs, written to memory as fast as possible
-		
+
 		//EDI=MEM_RD_DATA_NV
 		dsp_rec_DRAM_CI(x86e,prev_op,step,EDI);
-		
+
 		//;)
 		//Address Generation Unit ! nothing spectacular really ...
 		dsp_rec_MEM_AGU(x86e,op,step);
-		
+
 		//Calculate INPUTS wire
 		//ESI : INPUTS
 		dsp_rec_INPUTS(x86e,op,ESI);
-		
+
 		//:o ?
 		//Write the MEMS register
 		dsp_rec_MEMS_WRITE(x86e,op,step,ESI);
-		
+
 		//Write the MEM_RD_DATA regiter
 		//Last use of MEM_RD_DATA_NV(EDI)
 		dsp_rec_MEM_RD_DATA_WRITE(x86e,op,step,EDI);
 		//EDI is now free :D
-		
+
 		//EDI is used for MAD_OUT_NV
 		//Mul-add
 		dsp_rec_MAD(x86e,op,step,ESI,EDI);
-		
+
 		//Effect output/ Feedback
 		dsp_rec_EFO_FB(x86e,op,step,ESI);
 
@@ -810,7 +810,7 @@ void dsp_recompile()
 }
 
 
-
+/* TODO Harry: remove these */
 void dsp_print_mame();
 void dsp_step_mame();
 void dsp_emu_grandia();
@@ -827,7 +827,7 @@ void dsp_step()
 	}
 	//dsp_step_mame();
 	//dsp_emu_grandia();
-	
+
 	//run the code :p
 	((void (*)())&dsp.DynCode)();
 

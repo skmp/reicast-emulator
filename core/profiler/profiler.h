@@ -1,34 +1,35 @@
 #pragma once
 #include "types.h"
 #include "hw/sh4/dyna/shil.h"
+#include "oslib/logging.h"
 
 void prof_init();
 void prof_periodical();
 
 inline void print_array(const char* name, u32* arr,u32 size)
 {
-	printf("%s = [",name);
+	LOG_V("profiler", "%s = [",name);
 	for(u32 i=0; i<size; i++)
 	{
-		printf("%d ",arr[i]);
+		LOG_V("profiler", "%d ",arr[i]);
 		if (i%12==0)
-			printf(" ...\n");
+			LOG_V("profiler", " ...\n");
 	}
-	printf("];\n");
+	LOG_V("profiler", "];\n");
 }
 
 inline void print_elem(const char* name, u32 val)
 {
-	printf("%s=%d;\n",name,val);
+	LOG_V("profiler", "%s=%d;\n", name, val);
 }
 
-inline void print_head(const char* name) { printf("//<%s>\n",name); }
+inline void print_head(const char* name) { LOG_V("profiler", "//<%s>\n",name); }
 
 struct profiler_cfg
 {
 	bool enable;
 
-	struct 
+	struct
 	{
 		struct
 		{
@@ -55,7 +56,7 @@ struct profiler_cfg
 
 				print_array("executed",executed,shop_max);
 				print_array("host_ops",host_ops,shop_max);
-				
+
 				print_elem("readm_const",readm_const);
 				print_elem("readm_reg",readm_reg);
 				print_elem("readm_reg_imm",readm_reg_imm);
@@ -70,7 +71,7 @@ struct profiler_cfg
 			u32 reg_r[sh4_reg_count];
 			u32 reg_w[sh4_reg_count];
 			u32 reg_rw[sh4_reg_count];
-			
+
 			void print()
 			{
 				print_head("ralloc");
@@ -90,8 +91,8 @@ struct profiler_cfg
 			u32 callstack_miss;
 			u32 slowpath;
 
-			void print() 
-			{ 
+			void print()
+			{
 				print_head("bm");
 				print_elem("bm_cache",cached);
 				print_elem("linked_cond",linked_cond);
@@ -107,7 +108,7 @@ struct profiler_cfg
 		{
 			u32 call_direct; u32 call_indirect;
 			u32 jump_direct; u32 jump_indirect;
-			
+
 			u32 cond[2];		//conditional false, true
 			u32 ret;		//only indirect
 

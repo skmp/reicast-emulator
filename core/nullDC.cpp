@@ -1,10 +1,10 @@
-// nullDC.cpp : Makes magic cookies
-//
+/* nullDC.cpp : Makes magic cookies */
 
-//initialse Emu
+/* Initialise Emulator */
 #include "types.h"
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
+#include "oslib/logging.h"
 #include "hw/mem/_vmem.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
@@ -20,49 +20,58 @@
 settings_t settings;
 
 /*
-	libndc
+	-~-~-~- libndc -~-~-~-
 
-	//initialise (and parse the command line)
-	ndc_init(argc,argv);
+	1. Initialise (and parse the command line)
 
+	~~>		ndc_init(argc, argv);
 	...
-	//run a dreamcast slice
-	//either a frame, or up to 25 ms of emulation
-	//returns 1 if the frame is ready (fb needs to be flipped -- i'm looking at you android)
-	ndc_step();
 
+	2. Run a DreamCast slice:
+		- Either a frame, OR up to 25 ms of emulation
+		- returns 1 when the frame is ready
+			* NOTE: (fb needs to be flipped)
+
+		~~>		ndc_step();
 	...
-	//terminate (and free everything)
-	ndc_term()
+
+	3. Terminate (and free everything):
+
+	~~>		ndc_term()
 */
 
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS == OS_WINDOWS
 #include <windows.h>
 #endif
 
-int GetFile(char *szFileName, char *szParse=0, u32 flags=0)
+int GetFile(char *szFileName, char *szParse = 0, u32 flags = 0)
 {
-	cfgLoadStr("config","image",szFileName,"null");
-	if (strcmp(szFileName,"null")==0)
+	/* Clear and Document TODO */
+	cfgLoadStr("config", "image", szFileName, "null");
+
+	if (strcmp(szFileName,"null") == 0)
 	{
 	#if HOST_OS==OS_WINDOWS
 		OPENFILENAME ofn;
-		ZeroMemory( &ofn , sizeof( ofn));
-	ofn.lStructSize = sizeof ( ofn );
-	ofn.hwndOwner = NULL  ;
-	ofn.lpstrFile = szFileName ;
-	ofn.lpstrFile[0] = '\0';
-	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrFilter = "All\0*.*\0\0";
-	ofn.nFilterIndex =1;
-	ofn.lpstrFileTitle = NULL ;
-	ofn.nMaxFileTitle = 0 ;
-	ofn.lpstrInitialDir=NULL ;
+		ZeroMemory(&ofn, sizeof(ofn));
+
+	ofn.lStructSize =		sizeof(ofn);
+	ofn.hwndOwner =			NULL;
+	ofn.lpstrFile =			szFileName;
+	ofn.lpstrFile[0] =		'\0';
+	ofn.nMaxFile =			MAX_PATH;
+	ofn.lpstrFilter =		"All\0*.*\0\0";
+	ofn.nFilterIndex =		1;
+	ofn.lpstrFileTitle =	NULL;
+	ofn.nMaxFileTitle =		0;
+	ofn.lpstrInitialDir	=	NULL;
+
 	ofn.Flags = OFN_PATHMUSTEXIST|OFN_FILEMUSTEXIST ;
 
-		if (GetOpenFileNameA(&ofn))
+		if ( GetOpenFileNameA(&ofn) )
 		{
 			//already there
+			/* TODO Harry: WTF */
 			//strcpy(szFileName,ofn.lpstrFile);
 		}
 	#endif
@@ -80,6 +89,7 @@ s32 plugins_Init()
 
 	if (s32 rv = libGDR_Init())
 		return rv;
+
 	#if DC_PLATFORM == DC_PLATFORM_NAOMI
 	if (!naomi_cart_SelectFile(libPvr_GetRenderTarget()))
 		return rv_serror;
@@ -94,14 +104,13 @@ s32 plugins_Init()
 	//if (s32 rv = libExtDevice_Init())
 	//	return rv;
 
-
-
 	return rv_ok;
 }
 
 void plugins_Term()
 {
-	//term all plugins
+	/* Terminate all plugins */
+
 	//libExtDevice_Term();
 	libARM_Term();
 	libAICA_Term();
@@ -126,23 +135,23 @@ void* webui_th(void* p)
 	return 0;
 }
 
-cThread webui_thd(&webui_th,0);
+cThread webui_thd(&webui_th, 0);
 #endif
 
 #if defined(_ANDROID)
 int reios_init_value;
 
-void reios_init(int argc,wchar* argv[])
+void reios_init(int argc, wchar* argv[])
 #else
-int dc_init(int argc,wchar* argv[])
+int dc_init(int argc, wchar* argv[])
 #endif
 {
-	setbuf(stdin,0);
-	setbuf(stdout,0);
-	setbuf(stderr,0);
+	setbuf(stdin, 0);
+	setbuf(stdout, 0);
+	setbuf(stderr, 0);
 	if (!_vmem_reserve())
 	{
-		printf("Failed to alloc mem\n");
+		LOG_W("nulldc", "Failed to allocate Memory!\n");
 #if defined(_ANDROID)
 		reios_init_value = -1;
 		return;
@@ -155,7 +164,7 @@ int dc_init(int argc,wchar* argv[])
 	webui_thd.Start();
 #endif
 
-	if(ParseCommandLine(argc,argv))
+	if(ParseCommandLine(argc, argv))
 	{
 #if defined(_ANDROID)
         reios_init_value = 69;
@@ -164,9 +173,9 @@ int dc_init(int argc,wchar* argv[])
         return 69;
 #endif
 	}
-	if(!cfgOpen())
+	if( !cfgOpen() )
 	{
-		msgboxf("Unable to open config file",MBX_ICONERROR);
+		msgboxf("Unable to open config file", MBX_ICONERROR);
 #if defined(_ANDROID)
 		reios_init_value = -4;
 		return;
@@ -174,13 +183,16 @@ int dc_init(int argc,wchar* argv[])
 		return -4;
 #endif
 	}
+
 	LoadSettings();
+
 #ifndef _ANDROID
 	os_CreateWindow();
 #endif
 
 	int rv = 0;
 
+/* In all platforms except Apple ones */
 #if HOST_OS != OS_DARWIN
     #define DATA_PATH "/data/"
 #else
@@ -189,7 +201,7 @@ int dc_init(int argc,wchar* argv[])
 
 	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
 	{
-		if (!LoadHle(get_readonly_data_path(DATA_PATH)))
+		if ( !LoadHle(get_readonly_data_path(DATA_PATH)) )
 		{
 #if defined(_ANDROID)
 			reios_init_value = -4;
@@ -200,7 +212,7 @@ int dc_init(int argc,wchar* argv[])
 		}
 		else
 		{
-			printf("Did not load bios, using reios\n");
+			LOG_W("nulldc", "Did not load BIOS; using reios\n");
 		}
 	}
 
@@ -221,14 +233,14 @@ int dc_init()
 #if FEAT_SHREC != DYNAREC_NONE
 	if(settings.dynarec.Enable)
 	{
-		Get_Sh4Recompiler(&sh4_cpu);
-		printf("Using Recompiler\n");
+		Get_Sh4Recompiler( &sh4_cpu );
+		LOG_I("nulldc", "Using Recompiler\n");
 	}
 	else
 #endif
 	{
-		Get_Sh4Interpreter(&sh4_cpu);
-		printf("Using Interpreter\n");
+		Get_Sh4Interpreter( &sh4_cpu );
+		LOG_I("nulldc", "Using Interpreter\n");
 	}
 
     InitAudio();
@@ -248,7 +260,7 @@ int dc_init()
 	mem_Reset(false);
 
 	sh4_cpu.Reset(false);
-	
+
 	return rv;
 }
 
@@ -285,11 +297,14 @@ void dc_stop()
 
 void LoadSettings()
 {
+	/* Initialize the settings values properly */
 #ifndef _ANDROID
 	settings.dynarec.Enable			= cfgLoadInt("config", "Dynarec.Enabled", 1) != 0;
 	settings.dynarec.idleskip		= cfgLoadInt("config", "Dynarec.idleskip", 1) != 0;
 	settings.dynarec.unstable_opt	= cfgLoadInt("config", "Dynarec.unstable-opt", 0);
-	//disable_nvmem can't be loaded, because nvmem init is before cfg load
+
+	/* disable_nvmem -- Can't be loaded, because nvmem init is before cfg load */
+
 	settings.dreamcast.cable		= cfgLoadInt("config", "Dreamcast.Cable", 3);
 	settings.dreamcast.RTC			= cfgLoadInt("config", "Dreamcast.RTC", GetRTC_now());
 	settings.dreamcast.region		= cfgLoadInt("config", "Dreamcast.Region", 3);
@@ -317,7 +332,7 @@ void LoadSettings()
 
 	settings.validate.OpenGlChecks	= cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
 
-	// Configured on a per-game basis
+	/* Configured on a per-game basis */
 	settings.dynarec.safemode		= 0;
 	settings.rend.ModifierVolumes	= 1;
 
@@ -326,20 +341,20 @@ void LoadSettings()
 #endif
 
 #if SUPPORT_DISPMANX
-	settings.dispmanx.Width			= cfgLoadInt("dispmanx","width",640);
-	settings.dispmanx.Height		= cfgLoadInt("dispmanx","height",480);
-	settings.dispmanx.Keep_Aspect	= cfgLoadBool("dispmanx","maintain_aspect",true);
+	settings.dispmanx.Width			= cfgLoadInt("dispmanx", "width", 640);
+	settings.dispmanx.Height		= cfgLoadInt("dispmanx", "height", 480);
+	settings.dispmanx.Keep_Aspect	= cfgLoadBool("dispmanx", "maintain_aspect", true);
 #endif
 
 #if (HOST_OS != OS_LINUX || defined(_ANDROID) || defined(TARGET_PANDORA))
-	settings.aica.BufferSize=2048;
+	settings.aica.BufferSize = 2048;
 #else
-	settings.aica.BufferSize=1024;
+	settings.aica.BufferSize = 1024;
 #endif
 
 #if USE_OMX
-	settings.omx.Audio_Latency		= cfgLoadInt("omx","audio_latency",100);
-	settings.omx.Audio_HDMI			= cfgLoadBool("omx","audio_hdmi",true);
+	settings.omx.Audio_Latency		= cfgLoadInt("omx", "audio_latency", 100);
+	settings.omx.Audio_HDMI			= cfgLoadBool("omx", "audio_hdmi", true);
 #endif
 
 /*
@@ -353,15 +368,20 @@ void LoadSettings()
 void LoadCustom()
 {
 	char *reios_id = reios_disk_id();
-
 	char *p = reios_id + strlen(reios_id) - 1;
+
 	while (p >= reios_id && *p == ' ')
+	{
 		*p-- = '\0';
-	if (p < reios_id || *p == '\0')
-		return;
+	}
+
+	if (p < reios_id || *p == '\0') { return; }
 
 	if (reios_software_name[0] != '\0')
+	{
 		cfgSaveStr(reios_id, "software.name", reios_software_name);
+	}
+
 	settings.dynarec.Enable			= cfgGameInt(reios_id,"Dynarec.Enabled", settings.dynarec.Enable ? 1 : 0) != 0;
 	settings.dynarec.idleskip		= cfgGameInt(reios_id,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
 	settings.dynarec.unstable_opt	= cfgGameInt(reios_id,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
@@ -376,16 +396,16 @@ void LoadCustom()
 
 	settings.pvr.MaxThreads			= cfgGameInt(reios_id, "pvr.MaxThreads", settings.pvr.MaxThreads);
 	settings.pvr.SynchronousRender	= cfgGameInt(reios_id, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
-	settings.dreamcast.cable = cfgGameInt(reios_id, "Dreamcast.Cable", settings.dreamcast.cable);
-	settings.dreamcast.region = cfgGameInt(reios_id, "Dreamcast.Region", settings.dreamcast.region);
-	settings.dreamcast.broadcast = cfgGameInt(reios_id, "Dreamcast.Broadcast", settings.dreamcast.broadcast);
+	settings.dreamcast.cable		= cfgGameInt(reios_id, "Dreamcast.Cable", settings.dreamcast.cable);
+	settings.dreamcast.region		= cfgGameInt(reios_id, "Dreamcast.Region", settings.dreamcast.region);
+	settings.dreamcast.broadcast	= cfgGameInt(reios_id, "Dreamcast.Broadcast", settings.dreamcast.broadcast);
 }
 
 void SaveSettings()
 {
-	cfgSaveInt("config","Dynarec.Enabled",		settings.dynarec.Enable);
-	cfgSaveInt("config","Dreamcast.Cable",		settings.dreamcast.cable);
-	cfgSaveInt("config","Dreamcast.RTC",		settings.dreamcast.RTC);
-	cfgSaveInt("config","Dreamcast.Region",		settings.dreamcast.region);
-	cfgSaveInt("config","Dreamcast.Broadcast",	settings.dreamcast.broadcast);
+	cfgSaveInt("config", "Dynarec.Enabled",		settings.dynarec.Enable);
+	cfgSaveInt("config", "Dreamcast.Cable",		settings.dreamcast.cable);
+	cfgSaveInt("config", "Dreamcast.RTC",		settings.dreamcast.RTC);
+	cfgSaveInt("config", "Dreamcast.Region",	settings.dreamcast.region);
+	cfgSaveInt("config", "Dreamcast.Broadcast",	settings.dreamcast.broadcast);
 }

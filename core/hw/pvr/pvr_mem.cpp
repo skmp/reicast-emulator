@@ -10,9 +10,11 @@
 #include "pvr_regs.h"
 #include "Renderer_if.h"
 #include "hw/mem/_vmem.h"
+#include "oslib/logging.h"
 
-//TODO : move code later to a plugin
-//TODO : Fix registers arrays , they must be smaller now doe to the way SB registers are handled
+// TODO Harry
+// TODO : move code later to a plugin
+// TODO : Fix registers arrays , they must be smaller now doe to the way SB registers are handled
 #include "hw/holly/holly_intc.h"
 
 
@@ -67,7 +69,7 @@ INLINE u8 GetY420(int x, int y,u8* base)
 		y -= 8;
 		base += 128;
 	}
-	
+
 	return base[x+y*8];
 }
 
@@ -151,7 +153,7 @@ INLINE void YUV_ConvertMacroBlock(u8* datap)
 	if (YUV_blockcount==TA_YUV_TEX_CNT)
 	{
 		YUV_init();
-		
+
 		asic_RaiseInterrupt(holly_YUV_DMA);
 	}
 }
@@ -168,7 +170,7 @@ void YUV_data(u32* data , u32 count)
 
 	verify(block_size==384); //no support for 512
 
-	
+
 	count*=32;
 
 	while(count>=block_size)
@@ -181,14 +183,13 @@ void YUV_data(u32* data , u32 count)
 	verify(count==0);
 }
 
-//Regs
+/* Regs */
+/* vram 32-64b */
 
-//vram 32-64b
-
-//read
+/* Read */
 u8 DYNACALL pvr_read_area1_8(u32 addr)
 {
-	printf("8-bit VRAM reads are not possible\n");
+	LOG_E("pvr", "8-bit VRAM reads are not possible\n");
 	return 0;
 }
 
@@ -201,10 +202,10 @@ u32 DYNACALL pvr_read_area1_32(u32 addr)
 	return *(u32*)&vram[pvr_map32(addr) & VRAM_MASK];
 }
 
-//write
+/* Write */
 void DYNACALL pvr_write_area1_8(u32 addr,u8 data)
 {
-	printf("8-bit VRAM writes are not possible\n");
+	LOG_E("pvr", "8-bit VRAM writes are not possible\n");
 }
 void DYNACALL pvr_write_area1_16(u32 addr,u16 data)
 {
@@ -217,9 +218,9 @@ void DYNACALL pvr_write_area1_32(u32 addr,u32 data)
 
 void TAWrite(u32 address,u32* data,u32 count)
 {
-	//printf("TAWrite 0x%08X %d\n",address,count);
-	u32 address_w=address&0x1FFFFFF;//correct ?
-	if (address_w<0x800000)//TA poly
+	//LOG_D("pvr", "TAWrite 0x%08X %d\n", address, count);
+	u32 address_w = address & 0x1FFFFFF; /* Correct? */
+	if (address_w < 0x800000)//TA poly
 	{
 		ta_vtx_data(data,count);
 	}
@@ -230,7 +231,7 @@ void TAWrite(u32 address,u32* data,u32 count)
 	else //Vram Writef
 	{
 		//shouldn't really get here (?) -> works on dc :D need to handle lmmodes
-		//printf("Vram Write 0x%X , size %d\n",address,count*32);
+		//LOG_D("pvr", "Vram Write 0x%X , size %d\n", address, count * 32);
 		memcpy(&vram.data[address&VRAM_MASK],data,count*32);
 	}
 }
@@ -256,12 +257,13 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
 	{
 		YUV_data((u32*)sq,1);
 	}
-	else //Vram Writef
+	/* Vram Writef */
+	else
 	{
-		//shouldn't really get here (?)
-		//printf("Vram Write 0x%X , size %d\n",address,count*32);
-		u8* vram=sqb+512+0x04000000;
-		MemWrite32(&vram[address_w&(VRAM_MASK-0x1F)],sq);
+		/* Shouldn't really get here ??? */
+		//LOG_D("pvr", "Vram Write 0x%X , size %d\n", address, count*32);
+		u8* vram = sqb + 512 + 0x04000000;
+		MemWrite32(&vram[address_w&(VRAM_MASK-0x1F)], sq);
 	}
 }
 #endif

@@ -14,7 +14,7 @@
 #include "emitter/x86_emitter.h"
 #include "profiler/profiler.h"
 #include "oslib/oslib.h"
-
+#include "oslib/logging.h"
 
 struct DynaRBI : RuntimeBlockInfo
 {
@@ -82,7 +82,7 @@ u32* GetRegPtr(u32 reg)
 }
 
 void ngen_blockcheckfail(u32 pc) {
-	printf("X64 JIT: SMC invalidation at %08X\n", pc);
+	LOG_W("X64 JIT ", "SMC invalidation at %08X\n", pc);
 	rdv_BlockCheckFail(pc);
 }
 
@@ -186,11 +186,11 @@ public:
 			sz-=4;
 			sa+=4;
 		}
-		
+
 	}
 
 	void compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise) {
-		
+
 		if (force_checks) {
 			CheckBlock(block);
 		}
@@ -484,7 +484,7 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 
 	compiler = new BlockCompiler();
 
-	
+
 	compiler->compile(block, force_checks, reset, staging, optimise);
 
 	delete compiler;

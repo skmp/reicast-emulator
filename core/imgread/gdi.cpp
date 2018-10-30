@@ -3,6 +3,8 @@
 #include <sstream>
 #include <algorithm>
 
+#include "oslib/logging.h"
+
 // given file/name.ext or file\name.ext returns file/ or file\, depending on the platform
 // given name.ext returns ./ or .\, depending on the platform
 string OS_dirname(string file)
@@ -38,7 +40,7 @@ string normalize_path_separator(string path)
 	return path;
 }
 
-#if 0 // TODO: Move this to some tests, make it platform agnostic
+#if 0 /* TODO Harry: Move this to some tests, make it platform agnostic */
 namespace {
 	struct OS_dirname_Test {
 		OS_dirname_Test() {
@@ -65,7 +67,7 @@ Disc* load_gdi(const char* file)
 {
 	u32 iso_tc;
 	Disc* disc = new Disc();
-	
+
 	//memset(&gdi_toc,0xFFFFFFFF,sizeof(gdi_toc));
 	//memset(&gdi_ses,0xFFFFFFFF,sizeof(gdi_ses));
 	core_file* t=core_fopen(file);
@@ -88,9 +90,9 @@ Disc* load_gdi(const char* file)
 	istringstream gdi(gdi_data);
 
 	gdi >> iso_tc;
-	printf("\nGDI : %d tracks\n",iso_tc);
+	LOG_I("imgread_gdi", "%d tracks\n", iso_tc);
 
-	
+
 	string basepath = OS_dirname(file);
 
 	u32 TRACK=0,FADS=0,CTRL=0,SSIZE=0;
@@ -110,7 +112,7 @@ Disc* load_gdi(const char* file)
 		do {
 			gdi >> last;
 		} while (isspace(last));
-		
+
 		if (last == '"')
 		{
 			gdi >> std::noskipws;
@@ -129,8 +131,8 @@ Disc* load_gdi(const char* file)
 		}
 
 		gdi >> OFFSET;
-		
-		printf("file[%d] \"%s\": FAD:%d, CTRL:%d, SSIZE:%d, OFFSET:%d\n", TRACK, track_filename.c_str(), FADS, CTRL, SSIZE, OFFSET);
+
+		LOG_I("imgread_gdi", "file[%d] \"%s\": FAD:%d, CTRL:%d, SSIZE:%d, OFFSET:%d\n", TRACK, track_filename.c_str(), FADS, CTRL, SSIZE, OFFSET);
 
 		Track t;
 		t.ADDR=0;
@@ -141,7 +143,7 @@ Disc* load_gdi(const char* file)
 		if (SSIZE!=0)
 		{
 			string path = basepath + normalize_path_separator(track_filename);
-			t.file = new RawTrackFile(core_fopen(path.c_str()),OFFSET,t.StartFAD,SSIZE);	
+			t.file = new RawTrackFile(core_fopen(path.c_str()),OFFSET,t.StartFAD,SSIZE);
 		}
 		disc->tracks.push_back(t);
 	}

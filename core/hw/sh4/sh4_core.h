@@ -1,7 +1,7 @@
 #pragma once
 #include "types.h"
 #include "sh4_if.h"
-
+#include "oslib/logging.h"
 
 #define r Sh4cntx.r
 #define r_bank Sh4cntx.r_bank
@@ -42,8 +42,8 @@ union DoubleReg
 static INLINE f64 GetDR(u32 n)
 {
 #ifdef TRACE
-	if (n>7)
-		printf("DR_r INDEX OVERRUN %d >7",n);
+	if (n > 7)
+		LOG_E("sh4_core", "DR_r INDEX OVERRUN %d >7",n);
 #endif
 	DoubleReg t;
 
@@ -57,7 +57,7 @@ static INLINE f64 GetXD(u32 n)
 {
 #ifdef TRACE
 	if (n>7)
-		printf("XD_r INDEX OVERRUN %d >7",n);
+		LOG_E("sh4_core", "XD_r INDEX OVERRUN %d >7",n);
 #endif
 	DoubleReg t;
 
@@ -71,7 +71,7 @@ static INLINE void SetDR(u32 n,f64 val)
 {
 #ifdef TRACE
 	if (n>7)
-		printf("DR_w INDEX OVERRUN %d >7",n);
+		LOG_E("sh4_core", "DR_w INDEX OVERRUN %d >7",n);
 #endif
 	DoubleReg t;
 	t.dbl=val;
@@ -85,7 +85,7 @@ static INLINE void SetXD(u32 n,f64 val)
 {
 #ifdef TRACE
 	if (n>7)
-		printf("XD_w INDEX OVERRUN %d >7",n);
+		LOG_E("sh4_core", "XD_w INDEX OVERRUN %d >7",n);
 #endif
 
 	DoubleReg t;

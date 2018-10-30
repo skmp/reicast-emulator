@@ -361,7 +361,7 @@ struct RegAlloc
 			return (nregf_t)-1;
 		}
 	}
-	
+
 
 	bool IsFlushOp(RuntimeBlockInfo* block, int opid)
 	{
@@ -417,7 +417,7 @@ struct RegAlloc
 
 	void flush_span(u32 sid)
 	{
-		if (spans[sid]) 
+		if (spans[sid])
 		{
 			spans[sid]->Flush();
 			spans[sid]=0;
@@ -545,17 +545,17 @@ struct RegAlloc
 
 				//insert regs into sets ..
 				InsertRegs(reg_wt,op->rd);
-				
+
 				InsertRegs(reg_wt,op->rd2);
 
 				InsertRegs(reg_rd,op->rs1);
-				
+
 				InsertRegs(reg_rd,op->rs2);
 
 				InsertRegs(reg_rd,op->rs3);
 
 				set<shil_param>::iterator iter=reg_wt.begin();
-				while( iter != reg_wt.end() ) 
+				while( iter != reg_wt.end() )
 				{
 					if (reg_rd.count(*iter))
 					{
@@ -625,7 +625,7 @@ struct RegAlloc
 				}
 
 				iter=reg_rd.begin();
-				while( iter != reg_rd.end() ) 
+				while( iter != reg_rd.end() )
 				{
 					//r
 					if ((*iter).is_reg())
@@ -655,11 +655,11 @@ struct RegAlloc
 					}
 					++iter;
 				}
-			
+
 				/*
 				for (int sid=0;sid<sh4_reg_count;sid++)
 				{
-					if (spans[sid]) 
+					if (spans[sid])
 					{
 						spans[sid]->Flush();
 						spans[sid]=0;
@@ -688,7 +688,7 @@ struct RegAlloc
 
 		u32 reg_cc_max_f=regsf.size();
 
-		
+
 		//Trim span count to max reg count
 		for (size_t opid=0;opid<block->oplist.size();opid++)
 		{
@@ -712,13 +712,13 @@ struct RegAlloc
 
 			if (false)
 			{
-				printf("After reduction ..\n");
+				LOG_D("sh4_dyna_regalloc", "After reduction ..\n");
 				for (u32 sid=0;sid<all_spans.size();sid++)
 				{
 					RegSpan* spn=all_spans[sid];
 
 					if (spn->contains(opid))
-						printf("\t[%c]span: %d (r%d), [%d:%d],n: %d, p: %d\n",spn->cacc(opid)?'x':' ',sid,all_spans[sid]->regstart,all_spans[sid]->start,all_spans[sid]->end,all_spans[sid]->nacc(opid),all_spans[sid]->pacc(opid));
+						LOG_D("sh4_dyna_regalloc", "\t[%c]span: %d (r%d), [%d:%d],n: %d, p: %d\n", spn->cacc(opid) ? 'x' : ' ', sid, all_spans[sid] -> regstart, all_spans[sid] -> start, all_spans[sid] -> end, all_spans[sid] -> nacc(opid), all_spans[sid] -> pacc(opid));
 				}
 			}
 		}
@@ -728,9 +728,9 @@ struct RegAlloc
 		{
 			bool alias_mov=false;
 
-			if (block->oplist[opid].op==shop_mov32 && 
-				( 
-				(block->oplist[opid].rd.is_r32i() && block->oplist[opid].rs1.is_r32i() ) || 
+			if (block->oplist[opid].op==shop_mov32 &&
+				(
+				(block->oplist[opid].rd.is_r32i() && block->oplist[opid].rs1.is_r32i() ) ||
 				(block->oplist[opid].rd.is_r32f() && block->oplist[opid].rs1.is_r32f() )
 				))
 			{
@@ -757,7 +757,7 @@ struct RegAlloc
 						else
 							d->aliased=true;
 
-						//printf("[%08X] rALIA %d from %d\n",spn,spn->regstart,spn->nreg);
+						//LOG_D("sh4_dyna_regalloc", "[%08X] rALIA %d from %d\n",spn,spn->regstart,spn->nreg);
 						alias_mov=true;
 					}
 				}
@@ -783,7 +783,7 @@ struct RegAlloc
 							spn->nreg=regs.back();
 							regs.pop_back();
 
-							//printf("rALOC %d from %d\n",spn->regstart,spn->nreg);
+							//LOG_D("sh4_dyna_regalloc", "rALOC %d from %d\n",spn->regstart,spn->nreg);
 						}
 					}
 				}
@@ -803,7 +803,7 @@ struct RegAlloc
 					{
 						verify(regs.size()<reg_cc_max_g);
 						regs.push_front(spn->nreg);
-						//printf("rFREE %d from %d\n",spn->regstart,spn->nreg);
+						//LOG_D("sh4_dyna_regalloc", "rFREE %d from %d\n",spn->regstart,spn->nreg);
 					}
 				}
 			}
@@ -820,7 +820,7 @@ struct RegAlloc
 		for (u32 sid=0;sid<all_spans.size();sid++)
 		{
 			RegSpan* spn=all_spans[sid];
-			
+
 			if (spn->start==0) continue; //can't move anyway ..
 
 			//try to move beginnings backwards
@@ -856,12 +856,12 @@ struct RegAlloc
 					}
 					if (opid_found!=-1 && (spn->start-opid)<=1 && opid_plc<2)
 						break;
-					
+
 					opid++;
 				}
 
 				bool do_move= false;
-				
+
 				if (opid_found!=-1)
 				{
 					do_move=true;
@@ -870,12 +870,12 @@ struct RegAlloc
 
 				if ( do_move)
 				{
-					printf("Span PLD is movable by %d, moved by %d w/ %d!!\n",slack,spn->start-opid_found,opid_plc);
+					LOG_D("sh4_dyna_regalloc", "Span PLD is movable by %d, moved by %d w/ %d!!\n",slack,spn->start-opid_found,opid_plc);
 					spn->start=opid_found;
 				}
 				else
 				{
-					printf("Span PLD is movable by %d but  %d -> not moved :(\n",slack,opid_plc);
+					LOG_D("sh4_dyna_regalloc", "Span PLD is movable by %d but  %d -> not moved :(\n",slack,opid_plc);
 				}
 			}
 		}
@@ -888,7 +888,7 @@ struct RegAlloc
 		for (u32 sid=0;sid<all_spans.size();sid++)
 		{
 			RegSpan* spn=all_spans[sid];
-			
+
 			if (spn->end==blk_last) continue; //can't move anyway ..
 
 			//try to move beginnings backwards
@@ -925,7 +925,7 @@ struct RegAlloc
 
 					if (opid_found!=-1 && (opid-spn->end)<=1 && opid_plc<2)
 						break;
-					
+
 					opid--;
 				}
 
@@ -939,30 +939,30 @@ struct RegAlloc
 
 				if ( do_move)
 				{
-					printf("Span WB is movable by %d, moved by %d w/ %d!!\n",slack,opid_found-spn->end,opid_plc);
+					LOG_D("sh4_dyna_regalloc", "Span WB is movable by %d, moved by %d w/ %d!!\n",slack,opid_found-spn->end,opid_plc);
 					spn->end=opid_found;
 				}
 				else
 				{
-					printf("Span WB is movable by %d but  %d -> not moved :(\n",slack,opid_plc);
+					LOG_D("sh4_dyna_regalloc", "Span WB is movable by %d but  %d -> not moved :(\n",slack,opid_plc);
 				}
 			}
 		}
 #endif
 
 #endif
-		//printf("%d spills\n",spills);
+		//LOG_D("sh4_dyna_regalloc", "%d spills\n",spills);
 	}
 
 
 	void SplitSpans(u32 cc,u32 reg_cc_max ,bool fpr,u32 opid)
 	{
-		bool was_large=false;	//this control prints
+		bool was_large=false;	//this control logging
 
 		while (cc>reg_cc_max)
 		{
 			if (was_large)
-				printf("Opcode: %d, %d active spans\n",opid,cc);
+				LOG_D("sh4_dyna_regalloc", "Opcode: %d, %d active spans\n",opid,cc);
 
 			RegSpan* last_pacc=0;
 			RegSpan* last_nacc=0;
@@ -982,12 +982,12 @@ struct RegAlloc
 							last_pacc=spn;
 					}
 					if (was_large)
-						printf("\t[%c]span: %d (r%d), [%d:%d],n: %d, p: %d\n",spn->cacc(opid)?'x':' ',sid,all_spans[sid]->regstart,all_spans[sid]->start,all_spans[sid]->end,all_spans[sid]->nacc(opid),all_spans[sid]->pacc(opid));
+						LOG_D("sh4_dyna_regalloc", "\t[%c]span: %d (r%d), [%d:%d],n: %d, p: %d\n",spn->cacc(opid)?'x':' ',sid,all_spans[sid]->regstart,all_spans[sid]->start,all_spans[sid]->end,all_spans[sid]->nacc(opid),all_spans[sid]->pacc(opid));
 				}
 			}
 
-			//printf("Last pacc: %d, vlen %d | reg r%d\n",last_pacc->nacc(opid)-opid,last_pacc->nacc(opid)-last_pacc->pacc(opid),last_pacc->regstart);
-			//printf("Last nacc: %d, vlen %d | reg r%d\n",last_nacc->nacc(opid)-opid,last_nacc->nacc(opid)-last_nacc->pacc(opid),last_nacc->regstart);
+			//LOG_D("sh4_dyna_regalloc", "Last pacc: %d, vlen %d | reg r%d\n",last_pacc->nacc(opid)-opid,last_pacc->nacc(opid)-last_pacc->pacc(opid),last_pacc->regstart);
+			//LOG_D("sh4_dyna_regalloc", "Last nacc: %d, vlen %d | reg r%d\n",last_nacc->nacc(opid)-opid,last_nacc->nacc(opid)-last_nacc->pacc(opid),last_nacc->regstart);
 
 			RegSpan* spn= new RegSpan(*last_nacc);
 			spn->start=last_nacc->nacc(opid);
@@ -1083,7 +1083,7 @@ struct RegAlloc
 
 			if (spn->begining(current_opid) && spn->preload)
 			{
-				//printf("Op %d: Preloading r%d to %d\n",current_opid,spn->regstart,spn->nreg);
+				//LOG_D("sh4_dyna_regalloc", "Op %d: Preloading r%d to %d\n",current_opid,spn->regstart,spn->nreg);
 				if (spn->fpr)
 				{
 					preload_fpu++;
@@ -1106,7 +1106,7 @@ struct RegAlloc
 
 			if (spn->ending(current_opid) && spn->writeback)
 			{
-				//printf("Op %d: Writing back r%d to %d\n",current_opid,spn->regstart,spn->nreg);
+				//LOG_D("sh4_dyna_regalloc", "Op %d: Writing back r%d to %d\n",current_opid,spn->regstart,spn->nreg);
 				if (spn->fpr)
 				{
 					writeback_fpu++;
@@ -1128,7 +1128,7 @@ struct RegAlloc
 
 		for (int sid=0;sid<sh4_reg_count;sid++)
 		{
-			if (spans[sid]) 
+			if (spans[sid])
 				spans[sid]=0;
 		}
 

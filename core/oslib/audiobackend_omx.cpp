@@ -1,4 +1,6 @@
 #include "oslib/audiobackend_omx.h"
+#include "oslib/logging.h"
+
 #if USE_OMX
 
 #include <IL/OMX_Broadcom.h>
@@ -70,7 +72,7 @@ static u32 omx_get_latency()
 
 	OMX_ERRORTYPE error = OMX_GetConfig(omx_handle, OMX_IndexConfigAudioRenderingLatency, &param);
 	if(error != OMX_ErrorNone)
-		fprintf(stderr, "OMX: failed to get OMX configuration (OMX_IndexConfigAudioRenderingLatency). Error 0x%X\n", error);
+		LOG_E("omx", "Failed to get OMX configuration (OMX_IndexConfigAudioRenderingLatency). Error 0x%X\n", error);
 
 	return param.nU32 * 1000 / OUTPUT_FREQ;
 }
@@ -82,7 +84,7 @@ static void omx_init()
 	error = OMX_Init();
 	if(error != OMX_ErrorNone)
 	{
-		fprintf(stderr, "OMX: OMX_Init() failed. Error 0x%X\n", error);
+		LOG_E("omx","OMX_Init() failed. Error 0x%X\n", error);
 		return;
 	}
 
@@ -99,7 +101,7 @@ static void omx_init()
 	error = OMX_GetHandle(&omx_handle, (OMX_STRING)"OMX.broadcom.audio_render", NULL, &callbacks);
 	if(error != OMX_ErrorNone)
 	{
-		fprintf(stderr, "OMX: OMX_GetHandle() failed. Error 0x%X\n", error);
+		LOG_E("omx","OMX_GetHandle() failed. Error 0x%X\n", error);
 		return;
 	}
 
@@ -114,7 +116,7 @@ static void omx_init()
 
 	error = OMX_SetParameter(omx_handle, OMX_IndexParamPortDefinition, &param);
 	if(error != OMX_ErrorNone)
-		fprintf(stderr, "OMX: failed to set OMX_IndexParamPortDefinition. Error 0x%X\n", error);
+		LOG_E("omx", "Failed to set OMX_IndexParamPortDefinition. Error 0x%X\n", error);
 
 	OMX_AUDIO_PARAM_PCMMODETYPE pcm;
 	memset(&pcm, 0, sizeof(OMX_AUDIO_PARAM_PCMMODETYPE));
@@ -133,12 +135,12 @@ static void omx_init()
 
 	error = OMX_SetParameter(omx_handle, OMX_IndexParamAudioPcm, &pcm);
 	if(error != OMX_ErrorNone)
-		fprintf(stderr, "OMX: failed to set OMX_IndexParamAudioPcm. Error 0x%X\n", error);
+		LOG_E("omx", "Failed to set OMX_IndexParamAudioPcm. Error 0x%X\n", error);
 
 	// Disable all ports
 	error = OMX_SendCommand(omx_handle, OMX_CommandPortDisable, PORT_INDEX, NULL);
 	if(error != OMX_ErrorNone)
-		fprintf(stderr, "OMX: failed to do OMX_CommandPortDisable. Error 0x%X\n", error);
+		LOG_E("omx", "Failed to do OMX_CommandPortDisable. Error 0x%X\n", error);
 
 	OMX_PORT_PARAM_TYPE param2;
 	memset(&param2, 0, sizeof(OMX_PORT_PARAM_TYPE));
@@ -147,7 +149,7 @@ static void omx_init()
 	error = OMX_GetParameter(omx_handle, OMX_IndexParamOtherInit, &param2);
 	if(error != OMX_ErrorNone)
 	{
-		fprintf(stderr, "OMX: failed to get OMX_IndexParamOtherInit. Error 0x%X\n", error);
+		LOG_E("omx", "Failed to get OMX_IndexParamOtherInit. Error 0x%X\n", error);
 	}
 	else
 	{
@@ -156,7 +158,7 @@ static void omx_init()
 			u32 port = param2.nStartPortNumber + i;
 			error = OMX_SendCommand(omx_handle, OMX_CommandPortDisable, port, NULL);
 			if(error != OMX_ErrorNone)
-				fprintf(stderr, "OMX: failed to do OMX_CommandPortDisable on port %u. Error 0x%X\n", port, error);
+				LOG_E("omx", "Failed to do OMX_CommandPortDisable on port %u. Error 0x%X\n", port, error);
 		}
 	}
 
@@ -164,7 +166,7 @@ static void omx_init()
 	error = OMX_SendCommand(omx_handle, OMX_CommandStateSet, OMX_StateIdle, NULL);
 	if(error != OMX_ErrorNone)
 	{
-		fprintf(stderr, "OMX: failed to set OMX_CommandStateSet. Error 0x%X\n", error);
+		LOG_E("omx", "Failed to set OMX_CommandStateSet. Error 0x%X\n", error);
 		return;
 	}
 	omx_wait_for_state(OMX_StateIdle);
@@ -174,17 +176,17 @@ static void omx_init()
 	error = OMX_GetState(omx_handle, &state);
 	if(error != OMX_ErrorNone || !(state == OMX_StateIdle || state == OMX_StateExecuting || state == OMX_StatePause))
 	{
-		fprintf(stderr, "OMX: state is incorrect. State 0x%X; Error 0x%X\n", state, error);
+		LOG_E("omx", " state is incorrect. State 0x%X; Error 0x%X\n", state, error);
 		return;
 	}
 
 	// Create audio buffers
-	fprintf(stderr, "OMX: creating %u buffers\n", buffer_count);
+	LOG_E("omx", " creating %u buffers\n", buffer_count);
 
 	// Enable port
 	error = OMX_SendCommand(omx_handle, OMX_CommandPortEnable, PORT_INDEX, NULL);
 	if(error != OMX_ErrorNone)
-		fprintf(stderr, "OMX: failed to do OMX_CommandPortEnable. Error 0x%X\n", error);
+		LOG_E("omx", "Failed to do OMX_CommandPortEnable. Error 0x%X\n", error);
 
 	// Free audio buffers if they're allocated
 	if(audio_buffers != NULL)
@@ -197,7 +199,7 @@ static void omx_init()
 		error = OMX_AllocateBuffer(omx_handle, &audio_buffers[i], PORT_INDEX, NULL, buffer_size);
 		if(error != OMX_ErrorNone)
 		{
-			fprintf(stderr, "OMX: failed to allocate buffer[%u]. Error 0x%X\n", i, error);
+			LOG_E("omx", "Failed to allocate buffer[%u]. Error 0x%X\n", i, error);
 			return;
 		}
 	}
@@ -206,7 +208,7 @@ static void omx_init()
 	error = OMX_SendCommand(omx_handle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
 	if(error != OMX_ErrorNone)
 	{
-		fprintf(stderr, "OMX: failed to do OMX_CommandStateSet. Error 0x%X\n", error);
+		LOG_E("omx", "Failed to do OMX_CommandStateSet. Error 0x%X\n", error);
 		return;
 	}
 	omx_wait_for_state(OMX_StateExecuting);
@@ -220,7 +222,7 @@ static void omx_init()
 
 		error = OMX_EmptyThisBuffer(omx_handle, audio_buffers[i]);
 		if(error != OMX_ErrorNone)
-			fprintf(stderr, "OMX: failed to empty buffer[%u]. Error 0x%X\n", i, error);
+			LOG_E("omx", "Failed to empty buffer[%u]. Error 0x%X\n", i, error);
 	}
 
 	char* output_device = "local";
@@ -236,14 +238,14 @@ static void omx_init()
 	error = OMX_SetConfig(omx_handle, OMX_IndexConfigBrcmAudioDestination, &ar_dest);
 	if(error != OMX_ErrorNone)
 	{
-		fprintf(stderr, "OMX: failed to set OMX configuration (OMX_IndexConfigBrcmAudioDestination). Error 0x%X\n", error);
+		LOG_E("omx", "Failed to set OMX configuration (OMX_IndexConfigBrcmAudioDestination). Error 0x%X\n", error);
 		return;
 	}
 
 	audio_buffer_idx = 0;
 	buffer_length = 0;
 
-	fprintf(stderr, "OMX: audio output to '%s'\n", ar_dest.sName);
+	LOG_E("omx", " audio output to '%s'\n", ar_dest.sName);
 }
 
 static u32 omx_push(void* frame, u32 samples, bool wait)
@@ -265,7 +267,7 @@ static u32 omx_push(void* frame, u32 samples, bool wait)
 		}
 		else if(latency == 0)
 		{
-			fprintf(stderr, "OMX: underrun occurred\n");
+			LOG_E("omx", " underrun occurred\n");
 		}
 
 		memcpy(audio_buffers[audio_buffer_idx]->pBuffer + buffer_length, frame, copy_size);
@@ -279,7 +281,7 @@ static u32 omx_push(void* frame, u32 samples, bool wait)
 
 			OMX_ERRORTYPE error = OMX_EmptyThisBuffer(omx_handle, audio_buffers[audio_buffer_idx]);
 			if(error != OMX_ErrorNone)
-				fprintf(stderr, "OMX: failed to empty buffer[%u]. Error 0x%X\n", audio_buffer_idx, error);
+				LOG_E("omx", "Failed to empty buffer[%u]. Error 0x%X\n", audio_buffer_idx, error);
 
 			audio_buffer_idx = (audio_buffer_idx + 1) % buffer_count;
 			buffer_length = 0;
@@ -299,7 +301,7 @@ static void omx_term()
 
 	error = OMX_Deinit();
 	if(error != OMX_ErrorNone)
-		fprintf(stderr, "OMX: OMX_Deinit() failed. Error 0x%X\n", error);
+		LOG_E("omx", " OMX_Deinit() failed. Error 0x%X\n", error);
 
 	if(audio_buffers != NULL)
 	{

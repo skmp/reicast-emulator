@@ -1,6 +1,6 @@
 #include "gles.h"
 #include "rend/rend.h"
-
+#include "oslib/logging.h"
 #include <algorithm>
 /*
 
@@ -18,7 +18,7 @@ Takes vertex, textures and renders to the currently set up target
 //#define NO_STENCIL_WORKAROUND
 
 
-const static u32 CullMode[]= 
+const static u32 CullMode[]=
 {
 
 	GL_NONE, //0    No culling          No culling
@@ -42,7 +42,7 @@ const static u32 Zfunction[]=
 /*
 0   Zero                  (0, 0, 0, 0)
 1   One                   (1, 1, 1, 1)
-2   Dither Color          (OR, OG, OB, OA) 
+2   Dither Color          (OR, OG, OB, OA)
 3   Inverse Dither Color  (1-OR, 1-OG, 1-OB, 1-OA)
 4   SRC Alpha             (SA, SA, SA, SA)
 5   Inverse SRC Alpha     (1-SA, 1-SA, 1-SA, 1-SA)
@@ -144,7 +144,7 @@ s32 SetTileClip(u32 val, bool set)
 
 	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
 		return 0;
-	
+
 	if (set && clip_mode) {
 		csy = 480 - csy;
 		cey = 480 - cey;
@@ -163,7 +163,7 @@ s32 SetTileClip(u32 val, bool set)
 void SetCull(u32 CulliMode)
 {
 	if (CullMode[CulliMode]==GL_NONE)
-	{ 
+	{
 		glDisable(GL_CULL_FACE);
 	}
 	else
@@ -180,7 +180,7 @@ __forceinline
 	//has to preserve cache_tsp/cache_isp
 	//can freely use cache_tcw
 	CurrentShader=&gl.pogram_table[GetProgramID(Type==ListType_Punch_Through?1:0,SetTileClip(gp->tileclip,false)+1,gp->pcw.Texture,gp->tsp.UseAlpha,gp->tsp.IgnoreTexA,gp->tsp.ShadInstr,gp->pcw.Offset,gp->tsp.FogCtrl)];
-	
+
 	if (CurrentShader->program == -1)
 		CompilePipelineShader(CurrentShader);
 	if (CurrentShader->program != cache.program)
@@ -247,7 +247,7 @@ __forceinline
 		//set Z mode, only if required
 		if (!(Type==ListType_Punch_Through || (Type==ListType_Translucent && SortingEnabled)))
 			glDepthFunc(Zfunction[gp->isp.DepthMode]);
-		
+
 #if TRIG_SORT
 		if (SortingEnabled)
 			glDepthMask(GL_FALSE);
@@ -510,7 +510,7 @@ void GenSorted()
 	PolyParam* pp_base=pvrrc.global_param_tr.head();
 	PolyParam* pp=pp_base;
 	PolyParam* pp_end= pp + pvrrc.global_param_tr.used();
-	
+
 	Vertex* vtx_arr=vtx_base+idx_base[pp->first];
 	vtx_sort_base=vtx_base;
 
@@ -521,17 +521,17 @@ void GenSorted()
 		vtx_cnt=vtx_count;
 
 #if PRINT_SORT_STATS
-	printf("TVTX: %d || %d\n",vtx_cnt,vtx_count);
+	LOG_I("TVTX", "%d || %d\n",vtx_cnt,vtx_count);
 #endif
-	
+
 	if (vtx_count<=0)
 		return;
 
 	//make lists of all triangles, with their pid and vid
 	static vector<IndexTrig> lst;
-	
+
 	lst.resize(vtx_count*4);
-	
+
 
 	int pfsti=0;
 
@@ -644,7 +644,7 @@ void GenSorted()
 				}
 
 				flip ^= 1;
-				
+
 				vtx++;
 			}
 		}
@@ -675,7 +675,7 @@ void GenSorted()
 	}
 #endif
 
-	
+
 #if 0
 	//tries to optimise draw calls by reordering non-intersecting polygons
 	//uber slow and not very effective
@@ -728,7 +728,7 @@ void GenSorted()
 		if (idx!=pid /* && !PP_EQ(&pp_base[pid],&pp_base[idx]) */ )
 		{
 			SortTrigDrawParam stdp={pp_base + pid, (u16)(i*3), 0};
-			
+
 			if (idx!=-1)
 			{
 				SortTrigDrawParam* last=&pidx_sort[pidx_sort.size()-1];
@@ -744,7 +744,7 @@ void GenSorted()
 	stdp->count=aused*3-stdp->first;
 
 #if PRINT_SORT_STATS
-	printf("Reassembled into %d from %d\n",pidx_sort.size(),pp_end-pp_base);
+	LOG_I("gldraw", "Reassembled into %d from %d\n",pidx_sort.size(),pp_end-pp_base);
 #endif
 
 	//Upload to GPU if needed
@@ -754,7 +754,7 @@ void GenSorted()
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER,vidx_sort.size()*2,&vidx_sort[0],GL_STREAM_DRAW);
 
-		if (tess_gen) printf("Generated %.2fK Triangles !\n",tess_gen/1000.0);
+		if (tess_gen) LOG_V("gldraw", "Generated %.2fK Triangles !\n",tess_gen/1000.0);
 	}
 }
 
@@ -766,7 +766,7 @@ void DrawSorted()
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
 
 		u32 count=pidx_sort.size();
-		
+
 		{
 			cache.Reset(pidx_sort[0].ppid);
 
@@ -791,7 +791,7 @@ void DrawSorted()
 				{
 					SetGPState<ListType_Translucent,true>(params);
 					glDrawElements(GL_TRIANGLES, pidx_sort[p].count, GL_UNSIGNED_SHORT, (GLvoid*)(2*pidx_sort[p].first)); glCheck();
-				
+
 #if 0
 					//Verify restriping -- only valid if no sort
 					int fs=pidx_sort[p].first;
@@ -871,12 +871,12 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 		if (mv_mode==1)
 		{
 			// Inclusion volume
-			//res : old : final 
+			//res : old : final
 			//0   : 0      : 00
 			//0   : 1      : 01
 			//1   : 0      : 01
 			//1   : 1      : 01
-			
+
 
 			//if (1<=st) st=1; else st=0;
 			glStencilFunc(GL_LEQUAL,1,3);
@@ -889,7 +889,7 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 			/*
 			//if !=0 -> set to 10
 			verifyc(dev->SetRenderState(D3DRS_STENCILFUNC,D3DCMP_LESSEQUAL));
-			verifyc(dev->SetRenderState(D3DRS_STENCILREF,1));					
+			verifyc(dev->SetRenderState(D3DRS_STENCILREF,1));
 			verifyc(dev->SetRenderState(D3DRS_STENCILPASS,D3DSTENCILOP_REPLACE));
 			verifyc(dev->SetRenderState(D3DRS_STENCILFAIL,D3DSTENCILOP_ZERO));
 			*/
@@ -903,7 +903,7 @@ void SetMVS_Mode(u32 mv_mode,ISP_Modvol ispc)
 			*/
 
 			// The initial value for exclusion volumes is 1 so we need to invert the result before and'ing.
-			//res : old : final 
+			//res : old : final
 			//0   : 0   : 00
 			//0   : 1   : 01
 			//1   : 0   : 00
@@ -1076,12 +1076,12 @@ void DrawModVols()
 		//black out any stencil with '1'
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-		
+
 		glEnable(GL_STENCIL_TEST);
 		glStencilFunc(GL_EQUAL,0x81,0x81); //only pixels that are Modvol enabled, and in area 1
-		
+
 		//clear the stencil result bit
-		glStencilMask(0x3);    //write to lsb 
+		glStencilMask(0x3);    //write to lsb
 		glStencilOp(GL_ZERO,GL_ZERO,GL_ZERO);
 #ifndef NO_STENCIL_WORKAROUND
 		//looks like a driver bug ?

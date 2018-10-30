@@ -1,5 +1,6 @@
 #include "ini.h"
 #include <sstream>
+#include "oslib/logging.h"
 
 wchar* trim_ws(wchar* str);
 
@@ -239,7 +240,7 @@ void ConfigFile::parse(FILE* file)
 
 			if (!separator)
 			{
-				printf("Malformed entry on config - ignoring @ %d(%s)\n",cline, tl);
+				LOG_W("cfg", "Malformed entry on config - ignoring @ %d(%s)\n",cline, tl);
 				continue;
 			}
 
@@ -249,7 +250,7 @@ void ConfigFile::parse(FILE* file)
 			char* value = trim_ws(separator + 1);
 			if (name == NULL || value == NULL)
 			{
-				printf("Malformed entry on config - ignoring @ %d(%s)\n",cline, tl);
+				LOG_W("cfg", "Malformed entry on config - ignoring @ %d(%s)\n",cline, tl);
 				continue;
 			}
 			else

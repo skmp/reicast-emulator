@@ -13,6 +13,7 @@
 #include "cfg/cfg.h"
 #include "linux-dist/x11.h"
 #include "linux-dist/main.h"
+#include "oslib/logging.h"
 
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"
@@ -63,7 +64,7 @@ void x11_window_set_fullscreen(bool fullscreen)
 		xev.xclient.data.l[3] = 1;
 		xev.xclient.data.l[4] = 0;
 
-		printf("x11: setting fullscreen to %d\n", fullscreen);
+		LOG_V("x11", "Setting Fullscreen to %d\n", fullscreen);
 		XSendEvent((Display*)x11_disp, DefaultRootWindow((Display*)x11_disp), False, SubstructureNotifyMask, &xev);
 }
 
@@ -102,9 +103,9 @@ void input_x11_handle()
 					else if (e.type == KeyRelease && e.xkey.keycode == KEY_F10)
 					{
 						if (sample_Switch(3000)) {
-							printf("Starting profiling\n");
+							LOG_D("x11", "Starting profiling\n");
 						} else {
-							printf("Stopping profiling\n");
+							LOG_D("x11", "Stopping profiling\n");
 						}
 					}
 #endif
@@ -142,7 +143,7 @@ void input_x11_handle()
 						}
 
 						#if defined(_DEBUG)
-						printf("KEY: %d -> %d: %d\n", e.xkey.keycode, dc_key, x11_dc_buttons );
+						LOG_D("x11", "KEY: %d -> %d: %d\n", e.xkey.keycode, dc_key, x11_dc_buttons );
 						#endif
 					}
 					break;
@@ -179,10 +180,10 @@ void input_x11_init()
 	// Shoulder trigger
 	x11_keymap[KEY_F] = DC_AXIS_LT;
 	x11_keymap[KEY_V] = DC_AXIS_RT;
-	
+
 	x11_keyboard_input = (cfgLoadInt("input", "enable_x11_keyboard", 1) >= 1);
 	if (!x11_keyboard_input)
-		printf("X11 Keyboard input disabled by config.\n");
+		LOG_I("x11", "X11 Keyboard input disabled by config.\n");
 }
 
 void x11_window_create()
@@ -209,18 +210,18 @@ void x11_window_create()
 		x11Display = XOpenDisplay(NULL);
 		if (!x11Display && !(x11Display = XOpenDisplay(":0")))
 		{
-			printf("Error: Unable to open X display\n");
+			LOG_E("x11", "Unable to open X display\n");
 			return;
 		}
 		x11Screen = XDefaultScreen(x11Display);
 
-		// Gets the window parameters
+		/* Gets the window parameters */
 		sRootWindow = RootWindow(x11Display, x11Screen);
 
 		int depth = CopyFromParent;
 
 		#if !defined(GLES)
-			// Get a matching FB config
+			/* Get a matching FB config */
 			static int visual_attribs[] =
 			{
 				GLX_X_RENDERABLE    , True,
@@ -241,11 +242,11 @@ void x11_window_create()
 
 			int glx_major, glx_minor;
 
-			// FBConfigs were added in GLX version 1.3.
+			/* FBConfigs were added in GLX version 1.3!!! */
 			if (!glXQueryVersion(x11Display, &glx_major, &glx_minor) ||
 					((glx_major == 1) && (glx_minor < 3)) || (glx_major < 1))
 			{
-				printf("Invalid GLX version");
+				LOG_E("x11", "Invalid GLX version");
 				exit(1);
 			}
 
@@ -253,17 +254,17 @@ void x11_window_create()
 			GLXFBConfig* fbc = glXChooseFBConfig(x11Display, x11Screen, visual_attribs, &fbcount);
 			if (!fbc)
 			{
-				printf("Failed to retrieve a framebuffer config\n");
+				LOG_E("x11", "Failed to retrieve a framebuffer config\n");
 				exit(1);
 			}
-			printf("Found %d matching FB configs.\n", fbcount);
+			LOG_I("x11", "Found %d matching FB configs.\n", fbcount);
 
 			GLXFBConfig bestFbc = fbc[0];
 			XFree(fbc);
 
 			// Get a visual
 			XVisualInfo *vi = glXGetVisualFromFBConfig(x11Display, bestFbc);
-			printf("Chosen visual ID = 0x%lx\n", vi->visualid);
+			LOG_I("x11", "Chosen visual ID = 0x%lx\n", vi->visualid);
 
 
 			depth = vi->depth;
@@ -276,7 +277,7 @@ void x11_window_create()
 			XMatchVisualInfo(x11Display, x11Screen, i32Depth, TrueColor, x11Visual);
 			if (!x11Visual)
 			{
-				printf("Error: Unable to acquire visual\n");
+				LOG_E("x11", "Unable to acquire visual\n");
 				return;
 			}
 			x11Colormap = XCreateColormap(x11Display, sRootWindow, x11Visual->visual, AllocNone);
@@ -284,7 +285,7 @@ void x11_window_create()
 
 		sWA.colormap = x11Colormap;
 
-		// Add to these for handling other events
+		/* Add to these for handling other events */
 		sWA.event_mask = StructureNotifyMask | ExposureMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask;
 		ui32Mask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
 
@@ -356,7 +357,7 @@ void x11_window_create()
 	}
 	else
 	{
-		printf("Not creating X11 window ..\n");
+		LOG_W("x11", "Not creating X11 window!!\n");
 	}
 }
 

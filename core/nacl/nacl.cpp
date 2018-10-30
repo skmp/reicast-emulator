@@ -16,7 +16,7 @@
 
 #include "types.h"
 #include "maple_cfg.h"
-
+#include "oslib/logging.h"
 #include <GLES2/gl2.h>
 
 extern int screen_width,screen_height;
@@ -45,7 +45,7 @@ bool rend_framePending();
 pthread_t emut;
 
 void* emuthread(void* ) {
-  printf("Emu thread starting up");
+  LOG_D("nacl", "Emulator Thread starting up");
   char *Args[3];
   Args[0] = "dc";
 
@@ -66,7 +66,7 @@ class HelloWorldInstance : public pp::Instance {
  public:
   explicit HelloWorldInstance(PP_Instance instance) : pp::Instance(instance), callback_factory_(this) {
     rei_instance = this;
-    printf("Reicast NACL loaded\n");
+    LOG_I("nacl", "Reicast NACL Loaded\n");
     nacl_io_init_ppapi(instance, pp::Module::Get()->get_browser_interface());
 
     umount("/");
@@ -100,7 +100,7 @@ class HelloWorldInstance : public pp::Instance {
 
   bool InitGL(int32_t new_width, int32_t new_height) {
     if (!glInitializePPAPI(pp::Module::Get()->get_browser_interface())) {
-      fprintf(stderr, "Unable to initialize GL PPAPI!\n");
+      LOG_E("nacl", "Unable to initialize GL PPAPI!\n");
       return false;
     }
 
@@ -114,7 +114,7 @@ class HelloWorldInstance : public pp::Instance {
 
     context_ = pp::Graphics3D(this, attrib_list);
     if (!BindGraphics(context_)) {
-      fprintf(stderr, "Unable to bind 3d context!\n");
+      LOG_E("nacl", "Unable to bind 3D context!\n");
       context_ = pp::Graphics3D();
       glSetCurrentContextPPAPI(0);
       return false;
@@ -143,7 +143,7 @@ class HelloWorldInstance : public pp::Instance {
       // Resize the buffers to the new size of the module.
       int32_t result = context_.ResizeBuffers(new_width, new_height);
       if (result < 0) {
-        printf("Unable to resize buffers to %d x %d!\n");
+        LOG_W("nacl", "Unable to resize buffers to %d x %d!\n");
         return;
       }
     }
@@ -151,7 +151,7 @@ class HelloWorldInstance : public pp::Instance {
     width_ = new_width;
     height_ = new_height;
     glViewport(0, 0, width_, height_);
-    printf("Resize: %d x %d\n", new_width, new_height);
+    LOG_I("nacl", "Resize: %d x %d\n", new_width, new_height);
   }
 
 
@@ -165,10 +165,10 @@ class HelloWorldInstance : public pp::Instance {
 
     if (rend_framePending()) {
       while (!rend_single_frame()) ;
-      printf("Rendered frame\n");
+      LOG_V("nacl", "Rendered frame\n");
     }
 
-    printf("Swapping buffers\n");
+    LOG_D("nacl", "Swapping buffers\n");
     context_.SwapBuffers(
         callback_factory_.NewCallback(&HelloWorldInstance::RenderLoop));
   }

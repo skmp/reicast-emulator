@@ -35,24 +35,25 @@ struct CHDTrack : TrackFile
 {
 	CHDDisc* disc;
 	u32 StartFAD;
-	u32 StartHunk;
+	u32 Offset;
 	u32 fmt;
 
-	CHDTrack(CHDDisc* disc, u32 StartFAD,u32 StartHunk, u32 fmt)
+	CHDTrack(CHDDisc* disc, u32 StartFAD,u32 Offset, u32 fmt)
 	{
 		this->disc=disc;
 		this->StartFAD=StartFAD;
-		this->StartHunk=StartHunk;
+		this->Offset=Offset;
 		this->fmt=fmt;
 	}
 
 	virtual void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)
 	{
-		u32 fad_offs=FAD-StartFAD;
-		u32 hunk=(fad_offs)/disc->sph + StartHunk;
+		u32 fad_offs = FAD + Offset;
+		u32 hunk=(fad_offs)/disc->sph;
 		if (disc->old_hunk!=hunk)
 		{
 			chd_read(disc->chd,hunk,disc->hunk_mem); //CHDERR_NONE
+			disc->old_hunk = hunk;
 		}
 
 		u32 hunk_ofs=fad_offs%disc->sph;
@@ -97,8 +98,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 	u32 total_frames = 150;
 
 	u32 total_secs = 0;
-	u32 total_hunks = 0;
-   int extraframes = 0;
+	u32 Offset = 0;
 
 	for(;;)
 	{
@@ -143,18 +143,15 @@ bool CHDDisc::TryOpen(const wchar* file)
 		}
 		printf("%s\n",temp);
 		Track t;
-      t.StartFAD = total_frames + extraframes;
-		int padded = (frames + CD_TRACK_PADDING - 1) / CD_TRACK_PADDING;
-		if (head->version >= 5)
-			extraframes += (padded * CD_TRACK_PADDING) - frames;
+      t.StartFAD = total_frames;
 		total_frames += frames;
-		t.EndFAD = total_frames - 1 + extraframes;
+		t.EndFAD = total_frames - 1;
 		t.ADDR = 0;
 		t.CTRL = strcmp(type,"AUDIO") == 0 ? 0 : 4;
-		t.file = new CHDTrack(this, t.StartFAD, total_hunks, strcmp(type,"MODE1") ? 2352 : 2048);
- 		total_hunks += frames / sph;
-		if (frames % sph)
-			total_hunks++;
+		t.file = new CHDTrack(this, t.StartFAD, Offset - t.StartFAD, strcmp(type,"MODE1") ? 2352 : 2048);
+
+		int padded = (frames + CD_TRACK_PADDING - 1) / CD_TRACK_PADDING;
+		Offset += padded * CD_TRACK_PADDING;
 
 		tracks.push_back(t);
 	}

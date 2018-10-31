@@ -1139,7 +1139,7 @@ static void set_input_descriptors()
    int descriptor_index = 0;
    if (settings.System == DC_PLATFORM_NAOMI)
    {
-      for (unsigned i = 0; i < 4; i++)
+      for (unsigned i = 0; i < MAPLE_PORTS; i++)
       {
     	 switch (maple_devices[i])
     	 {
@@ -1149,11 +1149,11 @@ static void set_input_descriptors()
     		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN,  "D-Pad Down" };
     		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT, "D-Pad Right" };
     		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER,	   "Trigger" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A,      "Button 2" },
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_B,      "Button 3" },
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_C,      "Button 4" },
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD,     "Button 5" },
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SELECT,     "Coin" },
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A,      "Button 2" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_B,      "Button 3" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_C,      "Button 4" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD,     "Button 5" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SELECT,     "Coin" };
     		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_START,      "Start" };
     		break;
 
@@ -1182,7 +1182,7 @@ static void set_input_descriptors()
    }
    else
    {
-      for (unsigned i = 0; i < 4; i++)
+      for (unsigned i = 0; i < MAPLE_PORTS; i++)
       {
     	 switch (maple_devices[i])
     	 {
@@ -1662,18 +1662,18 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 		 maple_devices[in_port] = MDT_None;
 		 break;
 	  }
+	  set_input_descriptors();
+
+	  if (!emu_in_thread)
+	  {
+		 mcfg_DestroyDevices();
+		 mcfg_CreateDevices();
+	  }
    }
    if (rumble.set_rumble_state)
    {
-      rumble.set_rumble_state(in_port, RETRO_RUMBLE_STRONG, 0);
-      rumble.set_rumble_state(in_port, RETRO_RUMBLE_WEAK,   0);
-   }
-   set_input_descriptors();
-
-   if (!emu_in_thread)
-   {
-	  mcfg_DestroyDevices();
-	  mcfg_CreateDevices();
+	  rumble.set_rumble_state(in_port, RETRO_RUMBLE_STRONG, 0);
+	  rumble.set_rumble_state(in_port, RETRO_RUMBLE_WEAK,   0);
    }
 }
 

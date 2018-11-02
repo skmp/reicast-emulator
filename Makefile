@@ -188,7 +188,7 @@ else ifeq ($(platform), classic_armv7_a7)
 	HAVE_LTCG = 0
 	HAVE_OPENMP = 0
 	CFLAGS += -Ofast \
-	-fno-lto \
+	-flto=4 -fwhole-program -fuse-linker-plugin \
 	-fdata-sections -ffunction-sections -Wl,--gc-sections \
 	-fno-stack-protector -fno-ident -fomit-frame-pointer \
 	-falign-functions=1 -falign-jumps=1 -falign-loops=1 \
@@ -197,10 +197,13 @@ else ifeq ($(platform), classic_armv7_a7)
 	-marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
 	CXXFLAGS += $(CFLAGS)
 	ASFLAGS += $(CFLAGS)
+	LDFLAGS += -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
 	ifeq ($(shell echo `$(CC) -dumpversion` "< 4.9" | bc -l), 1)
 		CFLAGS += -march=armv7-a
+		LDFLAGS += -march=armv7-a
 	else
 		CFLAGS += -march=armv7ve
+		LDFLAGS += -march=armv7ve
 		# If gcc is 5.0 or later
 		ifeq ($(shell echo `$(CC) -dumpversion` ">= 5" | bc -l), 1)
 			LDFLAGS += -static-libgcc -static-libstdc++

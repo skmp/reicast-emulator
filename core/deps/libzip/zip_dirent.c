@@ -378,8 +378,10 @@ _zip_dirent_torrent_normalize(struct zip_dirent *de)
 #ifdef HAVE_STRUCT_TM_TM_ZONE
 	time(&now);
 	l = localtime(&now);
+#ifndef _WIN32
 	torrenttime.tm_gmtoff = l->tm_gmtoff;
 	torrenttime.tm_zone = l->tm_zone;
+#endif
 #endif
 
 	last_mod = mktime(&torrenttime);

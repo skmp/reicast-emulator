@@ -1271,7 +1271,8 @@ bool retro_load_game(const struct retro_game_info *game)
          log_cb(RETRO_LOG_INFO, "File extension is: %s\n", ext);
          if (!strcmp(".lst", ext)
         	   || !strcmp(".bin", ext) || !strcmp(".BIN", ext)
-        	   || !strcmp(".dat", ext) || !strcmp(".DAT", ext))
+        	   || !strcmp(".dat", ext) || !strcmp(".DAT", ext)
+        	   || !strcmp(".zip", ext) || !strcmp(".ZIP", ext))
         	settings.System = DC_PLATFORM_NAOMI;
       }
    }
@@ -1583,9 +1584,9 @@ void retro_get_system_info(struct retro_system_info *info)
 #define GIT_VERSION ""
 #endif
    info->library_version = "0.1" GIT_VERSION;
-   info->valid_extensions = "chd|cdi|iso|elf|cue|gdi|lst|bin|dat";
+   info->valid_extensions = "chd|cdi|iso|elf|cue|gdi|lst|bin|dat|zip";
    info->need_fullpath = true;
-   info->block_extract = false;
+   info->block_extract = true;
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)

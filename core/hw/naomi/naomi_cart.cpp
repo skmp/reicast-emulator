@@ -1,7 +1,12 @@
 #include "naomi_cart.h"
+#include "deps/libzip/zip.h"
+#include "decrypt.h"
+#include "naomi_roms.h"
+#include "hw/flashrom/flashrom.h"
 
 u8* RomPtr;
 u32 RomSize;
+u8 naomi_cart_ram[64 * 1024];
 
 #ifdef _WIN32
 #include <windows.h>
@@ -27,6 +32,191 @@ typedef int fd_t;
 fd_t*	RomCacheMap;
 u32		RomCacheMapCount;
 char naomi_game_id[33];
+static CartridgeType cartridge_type;
+u32 cartridge_key;
+
+extern RomChip sys_rom;
+extern char game_dir_no_slash[1024];
+
+static bool naomi_LoadBios(const char *filename)
+{
+	int biosid = 0;
+	for (; BIOS[biosid].name != NULL; biosid++)
+		if (!stricmp(BIOS[biosid].name, filename))
+			break;
+	if (BIOS[biosid].name == NULL)
+	{
+		printf("Unknown BIOS %s\n", filename);
+		return false;
+	}
+
+	struct BIOS_t *bios = &BIOS[biosid];
+
+	std::string basepath(game_dir_no_slash);
+	basepath += "/";
+
+	zip *zip_archive = zip_open((basepath + filename).c_str(), 0, NULL);
+	if (zip_archive == NULL)
+	{
+		printf("Cannot find BIOS %s\n", filename);
+		return false;
+	}
+
+	int romid = 0;
+	while (bios->blobs[romid].filename != NULL)
+	{
+		if (bios->blobs[romid].blob_type == Copy)
+		{
+			verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
+			verify(bios->blobs[romid].src_offset + bios->blobs[romid].length <= BIOS_SIZE);
+			memcpy(sys_rom.data + bios->blobs[romid].offset, sys_rom.data + bios->blobs[romid].src_offset, bios->blobs[romid].length);
+		}
+		else
+		{
+			zip_file* file = zip_fopen(zip_archive, bios->blobs[romid].filename, 0);
+			if (!file) {
+				printf("%s: Cannot open %s\n", filename, bios->blobs[romid].filename);
+				goto error;
+			}
+			if (bios->blobs[romid].blob_type == Normal)
+			{
+				verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
+				size_t read = zip_fread(file, sys_rom.data + bios->blobs[romid].offset, bios->blobs[romid].length);
+			}
+			else if (bios->blobs[romid].blob_type == InterleavedWord)
+			{
+				u8 *buf = (u8 *)malloc(bios->blobs[romid].length);
+				if (buf == NULL)
+				{
+					printf("malloc failed\n");
+					zip_fclose(file);
+					goto error;
+				}
+				verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
+				size_t read = zip_fread(file, buf, bios->blobs[romid].length);
+				u16 *to = (u16 *)(RomPtr + bios->blobs[romid].offset);
+				u16 *from = (u16 *)buf;
+				for (int i = bios->blobs[romid].length / 2; --i >= 0; to++)
+					*to++ = *from++;
+				free(buf);
+			}
+			else
+				die("Unknown blob type\n");
+			zip_fclose(file);
+		}
+		romid++;
+	}
+
+	zip_close(zip_archive);
+
+	return true;
+
+error:
+	zip_close(zip_archive);
+	return false;
+}
+
+static bool naomi_cart_LoadZip(char *filename)
+{
+	char *p = strrchr(filename, '/');
+#ifdef _WIN32
+	p = strrchr(p == NULL ? filename : p, '\\');
+#endif
+	if (p == NULL)
+		p = filename;
+	else
+		p++;
+
+	int gameid = 0;
+	for (; Games[gameid].name != NULL; gameid++)
+		if (!stricmp(Games[gameid].name, p))
+			break;
+	if (Games[gameid].name == NULL)
+	{
+		printf("Unknown game %s\n", filename);
+		return false;
+	}
+
+	struct Game *game = &Games[gameid];
+
+	if (game->bios != NULL)
+	{
+		if (!naomi_LoadBios(game->bios))
+			return false;
+	}
+
+	zip *zip_archive = zip_open(filename, 0, NULL);
+	if (zip_archive == NULL)
+	{
+		printf("Cannot open %s\n", filename);
+		return false;
+	}
+
+	RomSize = game->size;
+	RomPtr = (u8 *)malloc(RomSize);
+	memset(RomPtr, 0xFF, RomSize);
+	cartridge_type = game->cart_type;
+	cartridge_key = game->key;
+
+	int romid = 0;
+	while (game->blobs[romid].filename != NULL)
+	{
+		if (game->blobs[romid].blob_type == Copy)
+		{
+			verify(game->blobs[romid].offset + game->blobs[romid].length <= RomSize);
+			verify(game->blobs[romid].src_offset + game->blobs[romid].length <= RomSize);
+			memcpy(RomPtr + game->blobs[romid].offset, RomPtr + game->blobs[romid].src_offset, game->blobs[romid].length);
+		}
+		else
+		{
+			zip_file* file = zip_fopen(zip_archive, game->blobs[romid].filename, 0);
+			if (!file) {
+				printf("%s: Cannot open %s\n", filename, game->blobs[romid].filename);
+				goto error;
+			}
+			if (game->blobs[romid].blob_type == Normal)
+			{
+				verify(game->blobs[romid].offset + game->blobs[romid].length <= RomSize);
+				size_t read = zip_fread(file, RomPtr + game->blobs[romid].offset, game->blobs[romid].length);
+			}
+			else if (game->blobs[romid].blob_type == InterleavedWord)
+			{
+				u8 *buf = (u8 *)malloc(game->blobs[romid].length);
+				if (buf == NULL)
+				{
+					printf("malloc failed\n");
+					zip_fclose(file);
+					goto error;
+				}
+				verify(game->blobs[romid].offset + game->blobs[romid].length <= RomSize);
+				size_t read = zip_fread(file, buf, game->blobs[romid].length);
+				u16 *to = (u16 *)(RomPtr + game->blobs[romid].offset);
+				u16 *from = (u16 *)buf;
+				for (int i = game->blobs[romid].length / 2; --i >= 0; to++)
+					*to++ = *from++;
+				free(buf);
+			}
+			else
+				die("Unknown blob type\n");
+			zip_fclose(file);
+		}
+		romid++;
+	}
+	zip_close(zip_archive);
+	cyptoSetKey(game->key);
+
+	memcpy(naomi_game_id, RomPtr + 0x30, sizeof(naomi_game_id) - 1);
+	naomi_game_id[sizeof(naomi_game_id) - 1] = '\0';
+	for (char *p = naomi_game_id + sizeof(naomi_game_id) - 2; *p == ' ' && p >= naomi_game_id; *p-- = '\0');
+	printf("NAOMI GAME ID [%s]\n", naomi_game_id);
+
+	return true;
+
+error:
+	zip_close(zip_archive);
+	free(RomPtr);
+	return false;
+}
 
 bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 {
@@ -50,6 +240,10 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 	strcpy(t, file);
 
 	char *pdot = strrchr(file, '.');
+
+	if (pdot != NULL && (!strcmp(pdot, ".zip") || !strcmp(pdot, ".ZIP")))
+		return naomi_cart_LoadZip(file);
+
 	if (pdot != NULL && (!strcmp(pdot, ".lst") || !strcmp(pdot, ".LST")))
 	{
 	   FILE* fl = fopen(t, "r");
@@ -288,8 +482,64 @@ bool naomi_cart_Read(u32 offset, u32 size, void* dst) {
 	if (!RomPtr)
 		return false;
 
-	memcpy(dst, naomi_cart_GetPtr(offset, size), size);
+	if (cartridge_type == M2 && (offset & 0x40000000) != 0)
+	{
+		if (offset == 0x4001fffe)
+		{
+			u16 data = cryptoDecrypt();
+			data = ((data & 0xff00) >> 8) | ((data & 0x00ff) << 8);
+			*(u16 *)dst = data;
+			return true;
+		}
+		EMUERROR("naomi_cart_Read: Invalid read @ %08x\n", offset);
+		return false;
+	}
+	offset &= 0x1FFFFFFF;
+	if (offset >= RomSize || (offset + size) > RomSize)
+	{
+		static u32 ones = 0xffffffff;
+
+		// Makes Outtrigger boot
+		EMUERROR("naomi_cart_Read: offset %d > %d\n", offset, RomSize);
+		memcpy(dst, &ones, size);
+	}
+	else
+	{
+		memcpy(dst, &RomPtr[offset], size);
+	}
+
 	return true;
+}
+
+bool naomi_cart_Write(u32 offset, u32 size, u32 data)
+{
+	if (!RomPtr)
+		return false;
+
+	if (cartridge_type == M2 && (offset & 0x40000000) != 0)
+	{
+		if (offset & 0x00020000)
+		{
+			offset &= sizeof(naomi_cart_ram) - 1;
+			naomi_cart_ram[offset] = data;
+			naomi_cart_ram[offset + 1] = data >> 8;
+			return true;
+		}
+		switch (offset & 0x1ffff)
+		{
+			case 0x1fff8:
+				cyptoSetLowAddr(data);
+				return true;
+			case 0x1fffa:
+				cyptoSetHighAddr(data);
+				return true;
+			case 0x1fffc:
+				cyptoSetSubkey(data);
+				return true;
+		}
+	}
+	EMUERROR("naomi_cart_Write: Invalid write @ %08x data %x\n", offset, data);
+	return false;
 }
 
 void* naomi_cart_GetPtr(u32 offset, u32 size) {

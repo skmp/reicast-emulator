@@ -83,8 +83,11 @@ static struct game_type_naomi lut_games_naomi[] =
    { "COSMIC SMASH IN JAPAN"             , -1, -1, -1, -1,  1, -1,  -1, -1, -1 },                /* Cosmic Smash */
 
    /* Alternate Jamma I/O Setup */
-   { "POWER STONE 2 JAPAN"               , -1, -1, -1, -1, -1, -1,  -1,  1, -1 },                /* Power Stone 2 (4 players, also need to be set in service menu) */
+   { "POWER STONE 2 JAPAN"               , -1, -1, -1, -1, -1, -1,  -1,  1, -1 },                /* Power Stone 2 (4 players, also needs to be set in service menu) */
+   { "RINGOUT 4X4 JAPAN"                 , -1, -1, -1, -1, -1, -1,  -1,  1, -1 },                /* Ring Out 4x4 (4 players, also needs to be set in service menu) */
    { "SHOOTOUT POOL"                     , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Shootout Pool: rotary encoders */
    { "DYNAMIC GOLF"                      , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Virtua Golf/Dynamic Golf: rotary encoders */
+   { "CRACKIN'DJ  ver JAPAN"             , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Crackin'DJ: rotary encoders */
+   { "CRACKIN'DJ PART2  ver JAPAN"       , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Crackin'DJ 2: rotary encoders */
    { "SEGA MARINE FISHING JAPAN"         , -1, -1, -1, -1, -1, -1,  -1,  3, -1 },                /* Sega Marine Fishing */
 };

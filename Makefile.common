@@ -105,6 +105,61 @@ SOURCES_C +=   \
 					$(DEPS_DIR)/chdr/flac.c \
 					$(DEPS_DIR)/chdr/huffman.c \
 					\
+					$(DEPS_DIR)/libzip/mkstemp.c \
+					$(DEPS_DIR)/libzip/zip_add.c \
+					$(DEPS_DIR)/libzip/zip_add_dir.c \
+					$(DEPS_DIR)/libzip/zip_close.c \
+					$(DEPS_DIR)/libzip/zip_delete.c \
+					$(DEPS_DIR)/libzip/zip_dirent.c \
+					$(DEPS_DIR)/libzip/zip_entry_free.c \
+					$(DEPS_DIR)/libzip/zip_entry_new.c \
+					$(DEPS_DIR)/libzip/zip_error.c \
+					$(DEPS_DIR)/libzip/zip_error_clear.c \
+					$(DEPS_DIR)/libzip/zip_error_get.c \
+					$(DEPS_DIR)/libzip/zip_error_get_sys_type.c \
+					$(DEPS_DIR)/libzip/zip_error_strerror.c \
+					$(DEPS_DIR)/libzip/zip_error_to_str.c \
+					$(DEPS_DIR)/libzip/zip_err_str.c \
+					$(DEPS_DIR)/libzip/zip_fclose.c \
+					$(DEPS_DIR)/libzip/zip_file_error_clear.c \
+					$(DEPS_DIR)/libzip/zip_file_error_get.c \
+					$(DEPS_DIR)/libzip/zip_file_get_offset.c \
+					$(DEPS_DIR)/libzip/zip_filerange_crc.c \
+					$(DEPS_DIR)/libzip/zip_file_strerror.c \
+					$(DEPS_DIR)/libzip/zip_fopen.c \
+					$(DEPS_DIR)/libzip/zip_fopen_index.c \
+					$(DEPS_DIR)/libzip/zip_fread.c \
+					$(DEPS_DIR)/libzip/zip_free.c \
+					$(DEPS_DIR)/libzip/zip_get_archive_comment.c \
+					$(DEPS_DIR)/libzip/zip_get_archive_flag.c \
+					$(DEPS_DIR)/libzip/zip_get_file_comment.c \
+					$(DEPS_DIR)/libzip/zip_get_name.c \
+					$(DEPS_DIR)/libzip/zip_get_num_files.c \
+					$(DEPS_DIR)/libzip/zip_memdup.c \
+					$(DEPS_DIR)/libzip/zip_name_locate.c \
+					$(DEPS_DIR)/libzip/zip_new.c \
+					$(DEPS_DIR)/libzip/zip_open.c \
+					$(DEPS_DIR)/libzip/zip_rename.c \
+					$(DEPS_DIR)/libzip/zip_replace.c \
+					$(DEPS_DIR)/libzip/zip_set_archive_comment.c \
+					$(DEPS_DIR)/libzip/zip_set_archive_flag.c \
+					$(DEPS_DIR)/libzip/zip_set_file_comment.c \
+					$(DEPS_DIR)/libzip/zip_set_name.c \
+					$(DEPS_DIR)/libzip/zip_source_buffer.c \
+					$(DEPS_DIR)/libzip/zip_source_file.c \
+					$(DEPS_DIR)/libzip/zip_source_filep.c \
+					$(DEPS_DIR)/libzip/zip_source_free.c \
+					$(DEPS_DIR)/libzip/zip_source_function.c \
+					$(DEPS_DIR)/libzip/zip_source_zip.c \
+					$(DEPS_DIR)/libzip/zip_stat.c \
+					$(DEPS_DIR)/libzip/zip_stat_index.c \
+					$(DEPS_DIR)/libzip/zip_stat_init.c \
+					$(DEPS_DIR)/libzip/zip_strerror.c \
+					$(DEPS_DIR)/libzip/zip_unchange_all.c \
+					$(DEPS_DIR)/libzip/zip_unchange_archive.c \
+					$(DEPS_DIR)/libzip/zip_unchange.c \
+					$(DEPS_DIR)/libzip/zip_unchange_data.c \
+					\
 					$(DEPS_DIR)/picotcp/modules/pico_arp.c \
 					$(DEPS_DIR)/picotcp/modules/pico_dev_ppp.c \
 					$(DEPS_DIR)/picotcp/modules/pico_dns_client.c \
@@ -153,8 +208,8 @@ endif
 endif
 
 SOURCES_CXX += $(CORE_DIR)/core/hw/naomi/naomi.cpp \
-					$(CORE_DIR)/core/hw/naomi/naomi_cart.cpp 
-
+					$(CORE_DIR)/core/hw/naomi/naomi_cart.cpp \
+					$(CORE_DIR)/core/hw/naomi/decrypt.cpp
 
 ifeq ($(HAVE_GENERIC_JIT), 1)
 DYNAREC_USED = 1

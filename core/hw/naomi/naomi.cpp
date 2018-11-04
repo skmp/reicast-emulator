@@ -15,6 +15,7 @@ u32 naomi_updates;
 //#define NAOMI_COMM
 
 u32 RomPioOffset=0;
+bool RomPioAutoIncrement;
 
 u32 DmaOffset;
 u32 DmaCount;
@@ -440,7 +441,7 @@ u32  ReadMem_naomi(u32 Addr, u32 sz)
 
 		//These are known to be valid on normal ROMs and DIMM board
 	case NAOMI_ROM_OFFSETH_addr&255:
-		return RomPioOffset>>16;
+		return RomPioOffset>>16 | (RomPioAutoIncrement << 15);
 
 	case NAOMI_ROM_OFFSETL_addr&255:
 		return RomPioOffset&0xFFFF;
@@ -449,7 +450,8 @@ u32  ReadMem_naomi(u32 Addr, u32 sz)
 		{
 			u32 rv = 0;
 			naomi_cart_Read(RomPioOffset, 2, &rv);
-			RomPioOffset += 2;
+			if (RomPioAutoIncrement)
+			   RomPioOffset += 2;
 
 			return rv;
 		}
@@ -552,6 +554,7 @@ void WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 
 		//These are known to be valid on normal ROMs and DIMM board
 	case NAOMI_ROM_OFFSETH_addr&255:
+	    RomPioAutoIncrement = (data & 0x8000) != 0;
 		RomPioOffset&=0x0000ffff;
 		RomPioOffset|=(data<<16)&0x7fff0000;
 		return;
@@ -562,10 +565,10 @@ void WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 		return;
 
 	case NAOMI_ROM_DATA_addr&255:
-#ifndef NDEBUG
-		printf("naomi WriteMem:Write to rom ? sure ? no , i dont think so %%) %X <= %X, %d\n", Addr, data, sz);
-#endif
-		return;
+	   naomi_cart_Write(RomPioOffset, sz, data);
+	   if (RomPioAutoIncrement)
+		  RomPioOffset += 2;
+	   return;
 
 	case NAOMI_DMA_OFFSETH_addr&255:
 		DmaOffset&=0x0000ffff;

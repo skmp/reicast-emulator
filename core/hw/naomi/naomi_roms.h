@@ -30,12 +30,14 @@ enum BlobType {
 	Normal = 0,
 	SwapWordBytes = 0,
 	InterleavedWord,
-	Copy
+	Copy,
+	M4Key
 };
 
 enum CartridgeType {
 	M1,
 	M2,
+	M4,
 	AW
 };
 
@@ -84,6 +86,66 @@ BIOS[] =
 			//{ "epr-21864p.ic27", 0x000000, 0x200000 },
 			// Ferrari F355 Deluxe (Japan, prototype)
 			//{ "epr-21862p.ic27", 0x000000, 0x200000 },
+			{ NULL, 0, 0 },
+		}
+	},
+	{
+		"naomi.zip",
+		{
+				//ROM_SYSTEM_BIOS( 0, "bios0",   "epr-21576h (Japan)" )
+				{ "epr-21576h.ic27", 0x000000, 0x200000 },
+				//ROM_SYSTEM_BIOS( 1, "bios1",   "epr-21576g (Japan)" )
+//				{ "epr-21576g.ic27", 0x000000, 0x200000 },
+				//ROM_SYSTEM_BIOS( 2, "bios2",   "epr-21576e (Japan)" )
+//				{ "epr-21576e.ic27", 0x000000, 0x200000 },
+				//ROM_SYSTEM_BIOS( 3, "bios3",   "epr-21576d (Japan)" )
+//				{ "epr-21576d.ic27", 0x000000, 0x200000 },
+//				ROM_SYSTEM_BIOS( 4, "bios4",   "epr-21576c (Japan)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 4,  "epr-21576c.ic27", 0x000000, 0x200000, BAD_DUMP CRC(4599ad13) SHA1(7e730e9452a792d76f210c33a955d385538682c7) ) \
+//				ROM_SYSTEM_BIOS( 5, "bios5",   "epr-21576b (Japan)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 5,  "epr-21576b.ic27", 0x000000, 0x200000, CRC(755a6e07) SHA1(7e8b8ccfc063144d89668e7224dcd8a36c54f3b3) ) \
+//				ROM_SYSTEM_BIOS( 6, "bios6",   "epr-21576a (Japan)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 6,  "epr-21576a.ic27", 0x000000, 0x200000, CRC(cedfe439) SHA1(f27798bf3d890863ef0c1d9dcb4e7782249dca27) ) \
+//				ROM_SYSTEM_BIOS( 7, "bios7",   "epr-21576 (Japan)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 7,  "epr-21576.ic27",  0x000000, 0x200000, CRC(9dad3495) SHA1(5fb66f9a2b68d120f059c72758e65d34f461044a) ) \
+//				ROM_SYSTEM_BIOS( 8, "bios8",   "epr-21578h (Export)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 8,  "epr-21578h.ic27", 0x000000, 0x200000, CRC(7b452946) SHA1(8e9f153bbada24b37066dc45b64a7bf0d4f26a9b) ) \
+//				ROM_SYSTEM_BIOS( 9, "bios9",   "epr-21578g (Export)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 9,  "epr-21578g.ic27", 0x000000, 0x200000, CRC(55413214) SHA1(bd2748365a9fc1821c9369aa7155d7c41c4df43e) ) \
+//				ROM_SYSTEM_BIOS( 10, "bios10", "epr-21578f (Export)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 10, "epr-21578f.ic27", 0x000000, 0x200000, CRC(628a27fd) SHA1(dae7add616b1a2478f00608823e88c3b82a0e78f) ) \
+//				ROM_SYSTEM_BIOS( 11, "bios11", "epr-21578e (Export)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 11, "epr-21578e.ic27", 0x000000, 0x200000, CRC(087f09a3) SHA1(0418eb2cf9766f0b1b874a4e92528779e22c0a4a) ) \
+//				ROM_SYSTEM_BIOS( 12, "bios12", "epr-21578d (Export)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 12, "epr-21578d.ic27", 0x000000, 0x200000, CRC(dfd5f42a) SHA1(614a0db4743a5e5a206190d6786ade24325afbfd) ) \
+//				ROM_SYSTEM_BIOS( 13, "bios13", "epr-21578a (Export)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 13, "epr-21578a.ic27", 0x000000, 0x200000, CRC(6c9aad83) SHA1(555918de76d8dbee2a97d8a95297ef694b3e803f) ) \
+				//ROM_SYSTEM_BIOS( 14, "bios14", "epr-21577h (USA)" )
+//				{ "epr-21577h.ic27", 0x000000, 0x200000 },
+//				ROM_SYSTEM_BIOS( 15, "bios15", "epr-21577g (USA)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 15, "epr-21577g.ic27", 0x000000, 0x200000, CRC(25f64af7) SHA1(99f9e6cc0642319bd2da492611220540add573e8) ) \
+//				ROM_SYSTEM_BIOS( 16, "bios16", "epr-21577e (USA)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 16, "epr-21577e.ic27", 0x000000, 0x200000, CRC(cf36e97b) SHA1(b085305982e7572e58b03a9d35f17ae319c3bbc6) ) \
+//				ROM_SYSTEM_BIOS( 17, "bios17", "epr-21577d (USA)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 17, "epr-21577d.ic27", 0x000000, 0x200000, CRC(60ddcbbe) SHA1(58b15096d269d6df617ca1810b66b47deb184958) ) \
+//				ROM_SYSTEM_BIOS( 18, "bios18", "epr-21577a (USA)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 18, "epr-21577a.ic27", 0x000000, 0x200000, CRC(969dc491) SHA1(581d1eae328b87b67508a7586ffc60cee256f70f) ) \
+//				ROM_SYSTEM_BIOS( 19, "bios19", "epr-21579d (Korea)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 19, "epr-21579d.ic27", 0x000000, 0x200000, CRC(33513691) SHA1(b1d8c7c516e1471a788fcf7a02a794ad2f05aeeb) ) \
+//				ROM_SYSTEM_BIOS( 20, "bios20", "epr-21579 (Korea)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 20, "epr-21579.ic27",  0x000000, 0x200000, CRC(71f9c918) SHA1(d15af8b947f41eea7c203b565cd403e3f37a2017) ) \
+//				ROM_SYSTEM_BIOS( 21, "bios21", "Set4 Dev BIOS" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 21, "boot_rom_64b8.ic606", 0x000000, 0x080000, CRC(7a50fab9) SHA1(ef79f448e0bf735d1264ad4f051d24178822110f) ) \
+//				ROM_SYSTEM_BIOS( 22, "bios22", "Dev BIOS v1.10" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 22, "develop110.ic27", 0x000000, 0x200000, CRC(de7cfdb0) SHA1(da16800edc4d49f70481c124d487f544c2fa8ce7) ) \
+//				ROM_SYSTEM_BIOS( 23, "bios23", "Dev BIOS (Nov 1998)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 23, "develop.ic27", 0x000000, 0x200000, CRC(309a196a) SHA1(409b50371feb648f10efd6b7ac420bf08d9a3b5a) ) \
+//				ROM_SYSTEM_BIOS( 24, "bios24", "Development ROM Board" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 24, "zukinver0930.ic25", 0x000000, 0x200000, CRC(58e17c23) SHA1(19330f906accf1b859f56bbcedc2edff73747599) ) \
+//				ROM_SYSTEM_BIOS( 25, "bios25", "epr-21576h (multi-region hack)" ) \
+//				ROM_LOAD16_WORD_SWAP_BIOS( 25, "epr-21576h_multi.ic27", 0x000000, 0x200000, CRC(cce01f1f) SHA1(cca17119ad13e3a4ef7cb6902a37b65d6a844aee) ) \
+//				ROM_REGION( 0x4000, "altera_pof", 0) \
+//				ROM_LOAD("315-6188.ic31", 0x0000, 0x2034, CRC(7c9fea46) SHA1(f77c07ae65dfed18c1c4c632c8945be21d02ddaf) )
 			{ NULL, 0, 0 },
 		}
 	},
@@ -156,6 +218,21 @@ Games[] =
 			{ "mpr-23583.ic3",   0x2800000, 0x1000000 },
 			{ "mpr-23584.ic4",   0x3800000, 0x1000000 },
 			{ "mpr-23585.ic5",   0x4800000, 0x1000000 },
+			{ NULL, 0, 0 },
+		}
+	},
+	// Akatsuki Blitzkampf Ausf. Achse (Japan)
+	{
+		"ausfache.zip",
+		0x10000000,
+		0x5504,
+		"naomi.zip",
+		M4,
+		{
+			{ "ic8.bin",    0x0000000, 0x4000000 },
+			{ "ic9.bin",    0x4000000, 0x4000000 },
+			// IC10 and IC11 Populated, Empty
+			{ "317-05130-jpn.ic3", 0, 0x800, M4Key },
 			{ NULL, 0, 0 },
 		}
 	},
@@ -397,6 +474,78 @@ Games[] =
 			{ "mpr-22823.ic6",  0x3000000, 0x800000 },
 			{ "mpr-22824.ic7",  0x3800000, 0x800000 },
 			{ "mpr-22825.ic8",  0x4000000, 0x800000 },
+			{ NULL, 0, 0 },
+		}
+	},
+	// Melty Blood Actress Again (Japan)
+	{
+		"mbaao.zip",
+		0x18000000,
+		0x5506,
+		"naomi.zip",	// Needs BIOS version h
+		M4,
+		{
+			{ "ic8.bin",      0x00000000, 0x4000000 },
+			{ "ic9.bin",      0x04000000, 0x4000000 },
+			{ "ic10.bin",     0x08000000, 0x4000000 },
+			{ "ic11.bin",     0x0c000000, 0x4000000 },
+			{ "ic12.bin",     0x10000000, 0x4000000 },
+			{ "ic13.bin",     0x14000000, 0x4000000 },
+			{ "317-5133-jpn.ic3", 0, 0x800, M4Key },	// pic_readout
+			{ NULL, 0, 0 },
+		}
+	},
+	// Melty Blood Actress Again Version A (Japan, Rev A)
+	{
+		"mbaa.zip",
+		0x18000000,
+		0x5586,
+		"naomi.zip",	// Needs BIOS version h
+		M4,
+		{
+			{ "ic8.bin",      0x00000000, 0x4000000 },
+			{ "epr-24455.ic7",0x00000000, 0x0400000 }, // EPR mode, overwrite FPR data
+			{ "ic9.bin",      0x04000000, 0x4000000 },
+			{ "ic10.bin",     0x08000000, 0x4000000 },
+			{ "ic11.bin",     0x0c000000, 0x4000000 },
+			{ "ic12.bin",     0x10000000, 0x4000000 },
+			{ "ic13.bin",     0x14000000, 0x4000000 },
+			{ "317-5133-jpn.ic3", 0, 0x800, M4Key },	// pic_readout
+			{ NULL, 0, 0 },
+		}
+	},
+	// Marvel Vs. Capcom 2 New Age of Heroes (Export, Korea, Rev A)
+	{
+		"mvsc2.zip",
+		0x08800000,
+		0xc18b6e7c,
+		NULL,
+		M1,
+		{
+			{ "epr-23085a.ic11", 0x0000000, 0x0400000 },
+			{ "mpr-23048.ic17s", 0x0800000, 0x0800000 },
+			{ "mpr-23049.ic18",  0x1000000, 0x0800000 },
+			{ "mpr-23050.ic19s", 0x1800000, 0x0800000 },
+			{ "mpr-23051.ic20",  0x2000000, 0x0800000 },
+			{ "mpr-23052.ic21s", 0x2800000, 0x0800000 },
+			{ "mpr-23053.ic22",  0x3000000, 0x0800000 },
+			{ "mpr-23054.ic23s", 0x3800000, 0x0800000 },
+			{ "mpr-23055.ic24",  0x4000000, 0x0800000 },
+			{ "mpr-23056.ic25s", 0x4800000, 0x0800000 },
+			{ "mpr-23057.ic26",  0x5000000, 0x0800000 },
+			{ "mpr-23058.ic27s", 0x5800000, 0x0800000 },
+			{ "mpr-23059.ic28",  0x6000000, 0x0800000 },
+			{ "mpr-23060.ic29",  0x6800000, 0x0800000 },
+			{ "mpr-23061.ic30s", 0x7000000, 0x0800000 },
+			{ "mpr-23083.ic31",  0x7800000, 0x0400000 },
+			// 32 bit area starts here
+			{ "mpr-23083.ic31",  0x8000000, 0x0400000, InterleavedWord },
+			{ "mpr-23084.ic32s", 0x8000002, 0x0400000, InterleavedWord },
+
+			{ "copy",			0x400000,  0x400000, Copy, 0x1200000 },
+
+			//ROM_REGION(0x200, "some_eeprom", 0)	// TODO
+			//{  "25lc040.ic13s", 0x000000, 0x200, CRC(dc449637) SHA1(6cab09f61be1498271a36bff6a114a4eeeb00e1a) )
 			{ NULL, 0, 0 },
 		}
 	},
@@ -680,6 +829,29 @@ Games[] =
 			{ NULL, 0, 0 },
 		}
 	},
+	// Touch de Uno! 2 (Japan)
+	{
+		"tduno2.zip",
+		0x4000000,
+		0x2f6f0f8d,
+		NULL,
+		M1,
+		{
+			{ "epr-23071.ic11",  0x0000000, 0x0200000 },
+			{ "epr-23071.ic11",  0x0200000, 0x0200000 },	// Reload
+			{ "mpr-23063.ic17s", 0x1000000, 0x0800000, InterleavedWord },
+			{ "mpr-23064.ic18",  0x1000002, 0x0800000, InterleavedWord },
+			{ "mpr-23065.ic19s", 0x2000000, 0x0800000, InterleavedWord },
+			{ "mpr-23066.ic20",  0x2000002, 0x0800000, InterleavedWord },
+			{ "mpr-23067.ic21s", 0x3000000, 0x0800000, InterleavedWord },
+			{ "mpr-23068.ic22",  0x3000002, 0x0800000, InterleavedWord },
+
+			{ "copy", 0x400000, 0xc00000, Copy, 0x1000000 },
+			//ROM_REGION(0x200, "some_eeprom", 0)
+			//ROM_LOAD( "25lc040.ic13s", 0, 0x200, CRC(6291605c) SHA1(44f757da4814b08108d1a4f431c9a39c38acecb2) )
+			{ NULL, 0, 0 },
+		}
+	},
 	// The Typing of the Dead (Rev A)
 	{
 		"totd.zip",
@@ -766,6 +938,38 @@ Games[] =
 			{ "mpr-22946.ic19s", 0x9800000, 0x0800000 },
 			{ "mpr-22947.ic20s", 0xa000000, 0x0800000 },
 			{ "mpr-22948.ic21s", 0xa800000, 0x0800000 },
+			{ NULL, 0, 0 },
+		}
+	},
+	// Virtua Tennis 2 / Power Smash 2 (Rev A)
+	{
+		"vtenis2c.zip",
+		0x0a000000,
+		0x2d2d4743,
+		NULL,
+		M1,
+		{
+			{ "epr-22327a.ic11", 0x000000, 0x400000 },
+			{ "mpr-22307.ic17s",  0x1000000, 0x800000, InterleavedWord },
+			{ "mpr-22308.ic18",   0x1000002, 0x800000, InterleavedWord },
+			{ "mpr-22309.ic19s",  0x2000000, 0x800000, InterleavedWord },
+			{ "mpr-22310.ic20",   0x2000002, 0x800000, InterleavedWord },
+			{ "mpr-22311.ic21s",  0x3000000, 0x800000, InterleavedWord },
+			{ "mpr-22312.ic22",   0x3000002, 0x800000, InterleavedWord },
+			{ "mpr-22313.ic23s",  0x4000000, 0x800000, InterleavedWord },
+			{ "mpr-22314.ic24",   0x4000002, 0x800000, InterleavedWord },
+			{ "mpr-22315.ic25s",  0x5000000, 0x800000, InterleavedWord },
+			{ "mpr-22316.ic26",   0x5000002, 0x800000, InterleavedWord },
+			{ "mpr-22317.ic27s",  0x6000000, 0x800000, InterleavedWord },
+			{ "mpr-22318.ic28",   0x6000002, 0x800000, InterleavedWord },
+			{ "mpr-22319.ic29",   0x7000000, 0x800000, InterleavedWord },
+			{ "mpr-22320.ic30s",  0x7000002, 0x800000, InterleavedWord },
+			{ "mpr-22321.ic31",   0x8000000, 0x800000, InterleavedWord },
+			{ "mpr-22322.ic32s",  0x8000002, 0x800000, InterleavedWord },
+			{ "mpr-22323.ic33",   0x9000000, 0x800000, InterleavedWord },
+			{ "mpr-22324.ic34s",  0x9000002, 0x800000, InterleavedWord },
+
+			{ "copy",			0x400000,  0xc00000, Copy, 0x1000000 },
 			{ NULL, 0, 0 },
 		}
 	},

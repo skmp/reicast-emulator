@@ -1362,12 +1362,13 @@ struct maple_naomi_jamma;
 class jvs_io_board
 {
 public:
-	jvs_io_board(u8 node_id, maple_naomi_jamma *parent)
+	jvs_io_board(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
 	{
 		this->node_id = node_id;
 		this->parent = parent;
 		coin_count[0] = 3;
 		coin_count[1] = 0;
+		this->first_player = first_player;
 	}
 
 	u32 handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_out);
@@ -1383,6 +1384,7 @@ private:
 	u8 node_id = 0;
 	maple_naomi_jamma *parent;
 	u32 coin_count[2];
+	u8 first_player;
 };
 
 struct maple_naomi_jamma : maple_sega_controller
@@ -1409,6 +1411,11 @@ struct maple_naomi_jamma : maple_sega_controller
 	   {
 		  io_boards.back()->rotary_encoders = true;
 		  io_boards.push_back(new jvs_io_board(2, this));
+	   }
+	   else if (settings.mapping.JammaSetup == 4)
+	   {
+		  // Ring Out 4x4
+		  io_boards.push_back(new jvs_io_board(2, this, 2));
 	   }
 	   else
 		   if (use_lightgun)
@@ -2108,8 +2115,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
-						   u16 keycode = ~kcode[player];
-						   LOGJVS("P%d %02x ", player + 1, (keycode >> 8) & 0xFF);
+						   u16 keycode = first_player + player > 3 ? 0 : ~kcode[first_player + player];
+						   LOGJVS("P%d %02x ", first_player + player + 1, (keycode >> 8) & 0xFF);
 						   JVS_OUT(keycode >> 8);
 						   if (buffer_in[cmdi + 2] > 1)
 						   {
@@ -2127,9 +2134,10 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						LOGJVS("coins ");
 						for (int slot = 0; slot < buffer_in[cmdi + 1]; slot++)
 						{
-						   if (slot < sizeof(coin_count)/sizeof(*coin_count))
+						   if (slot < sizeof(coin_count)/sizeof(*coin_count)
+								 && first_player + slot < 4)
 						   {
-							  if (!(kcode[slot] & NAOMI_COIN_KEY))
+							  if (!(kcode[first_player + slot] & NAOMI_COIN_KEY))
 								 coin_count[slot]++;
 
 							  LOGJVS("0:%d ", coin_count[slot]);
@@ -2156,16 +2164,18 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						if (lightgun_as_analog)
 						{
 							// Death Crimson / Confidential Mission
-							while (axis < buffer_in[cmdi + 1] && axis < 8)
+							while (axis < buffer_in[cmdi + 1] && first_player * 2 + axis < 8)
 							{
-							   u16 x = mo_x_abs[axis / 2] * 0xFFFF / 639 + 0.5f;
-							   u16 y = mo_y_abs[axis / 2] * 0xFFFF / 479 + 0.5f;
-							   if (mo_x_abs[axis / 2] < 0 || mo_x_abs[axis / 2] > 639 || mo_y_abs[axis / 2] < 0 || mo_y_abs[axis / 2] > 479)
+							   int player_num = first_player + axis / 2;
+							   u16 x = mo_x_abs[player_num] * 0xFFFF / 639 + 0.5f;
+							   u16 y = mo_y_abs[player_num] * 0xFFFF / 479 + 0.5f;
+							   if (mo_x_abs[player_num] < 0 || mo_x_abs[player_num] > 639
+									 || mo_y_abs[player_num] < 0 || mo_y_abs[player_num] > 479)
 							   {
 								   x = 0;
 								   y = 0;
 							   }
-							   LOGJVS("P%d x,y:%4x,%4x ", axis / 2 + 1, x, y);
+							   LOGJVS("P%d x,y:%4x,%4x ", player_num + 1, x, y);
 							   JVS_OUT(x >> 8);		// X, MSB
 							   JVS_OUT(x);			// X, LSB
 							   axis++;
@@ -2178,25 +2188,36 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							}
 						}
 
+						// FIXME Need to know how many axes per player for correct mapping
+						int axes_per_player = 4;
+						if (settings.mapping.JammaSetup == 4)
+						   // Hack for Ring Out 4x4
+						   axes_per_player = 2;
+
 						for (; axis < buffer_in[cmdi + 1]; axis++)
 						{
-						   u16 axis_value;
-						   switch (axis)
+						   int player_num = first_player + axis / axes_per_player;
+						   int player_axis = axis % axes_per_player;
+						   u16 axis_value = 0x8000;
+						   if (player_num < 4)
 						   {
-							  case 0:
-								 axis_value = (joyx[axis / 4] + 128) << 8;
-								 break;
-							  case 1:
-								 axis_value = (joyy[axis / 4] + 128) << 8;
-								 break;
-							  case 2:
-								 axis_value = (rt[axis / 4] + 128) << 8;
-								 break;
-							  case 3:
-								 axis_value = (lt[axis / 4] + 128) << 8;
-								 break;
+							  switch (player_axis)
+							  {
+								 case 0:
+									axis_value = (joyx[player_num] + 128) << 8;
+									break;
+								 case 1:
+									axis_value = (joyy[player_num] + 128) << 8;
+									break;
+								 case 2:
+									axis_value = (rt[player_num] + 128) << 8;
+									break;
+								 case 3:
+									axis_value = (lt[player_num] + 128) << 8;
+									break;
+							  }
 						   }
-						   LOGJVS("%d:%4x ", axis, axis_value);
+						   LOGJVS("P%d.%d:%4x ", player_num + 1, player_axis + 1, axis_value);
 						   JVS_OUT(axis_value >> 8);
 						   JVS_OUT(axis_value);
 						}
@@ -2235,9 +2256,10 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					{
 						JVS_STATUS1();	// report byte
 						u32 channel = buffer_in[cmdi + 1] - 1;
-						if (channel >= 4)
+						int player_num = first_player + channel;
+						if (player_num >= 4)
 						{
-							LOGJVS("P%d lightgun inv ", channel + 1);
+							LOGJVS("P%d lightgun inv ", player_num + 1);
 							JVS_OUT(0xFF);
 							JVS_OUT(0xFF);
 							JVS_OUT(0xFF);
@@ -2245,9 +2267,9 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						}
 						else
 						{
-						   u16 x = mo_x_abs[channel] * 0xFFFF / 639 + 0.5f;
-						   u16 y = (479 - mo_y_abs[channel]) * 0xFFFF / 479 + 0.5f;
-						   LOGJVS("P%d lightgun %4x,%4x ", channel + 1, x, y);
+						   u16 x = mo_x_abs[player_num] * 0xFFFF / 639 + 0.5f;
+						   u16 y = (479 - mo_y_abs[player_num]) * 0xFFFF / 479 + 0.5f;
+						   LOGJVS("P%d lightgun %4x,%4x ", player_num + 1, x, y);
 						   JVS_OUT(x >> 8);		// X, MSB
 						   JVS_OUT(x);			// X, LSB
 						   JVS_OUT(y >> 8);		// Y, MSB

@@ -36,7 +36,9 @@ struct game_type_naomi
 									   0 = normal 2P setup,
 									   1 = 4 players setup
 									   2 = 2 I/O boards w/ rotary encoder,
-									   2 = 12bits/player, 16 drivers out for Sega Marine Fishing */
+									   3 = 12bits/player, 16 drivers out for Sega Marine Fishing
+									   4 = 2 I/O boards, 4 players for Ring Out 4x4
+									   */
    int extra_depth_scaling;         /* -1, make no decision */
 };
 
@@ -84,10 +86,10 @@ static struct game_type_naomi lut_games_naomi[] =
 
    /* Alternate Jamma I/O Setup */
    { "POWER STONE 2 JAPAN"               , -1, -1, -1, -1, -1, -1,  -1,  1, -1 },                /* Power Stone 2 (4 players, also needs to be set in service menu) */
-   { "RINGOUT 4X4 JAPAN"                 , -1, -1, -1, -1, -1, -1,  -1,  1, -1 },                /* Ring Out 4x4 (4 players, also needs to be set in service menu) */
    { "SHOOTOUT POOL"                     , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Shootout Pool: rotary encoders */
    { "DYNAMIC GOLF"                      , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Virtua Golf/Dynamic Golf: rotary encoders */
    { "CRACKIN'DJ  ver JAPAN"             , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Crackin'DJ: rotary encoders */
    { "CRACKIN'DJ PART2  ver JAPAN"       , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Crackin'DJ 2: rotary encoders */
    { "SEGA MARINE FISHING JAPAN"         , -1, -1, -1, -1, -1, -1,  -1,  3, -1 },                /* Sega Marine Fishing */
+   { "RINGOUT 4X4 JAPAN"                 , -1, -1, -1, -1, -1, -1,  -1,  4, -1 },                /* Ring Out 4x4 (4 players, also needs to be set in service menu) */
 };

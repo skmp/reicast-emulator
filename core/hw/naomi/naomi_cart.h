@@ -73,7 +73,7 @@ private:
 	u8 naomi_cart_ram[64 * 1024];
 };
 
-bool naomi_cart_SelectFile(void* handle);
+bool naomi_cart_SelectFile(char *s, size_t len);
 
 extern char naomi_game_id[];
 

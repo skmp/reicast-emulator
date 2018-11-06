@@ -4,7 +4,7 @@
 /* Based on mame 315-5881_crypt.cpp and stvprot.cpp */
 
 #include <stdlib.h>
-#include "types.h"
+#include "naomi_cart.h"
 
 typedef struct sbox_s {
   u8 table[64];
@@ -623,21 +623,9 @@ static u16 block_decrypt(uint32_t game_key, uint16_t sequence_key, uint16_t coun
 	return aux;
 }
 
-extern u8 *RomPtr;
-extern u32 RomSize;
-extern u8 naomi_cart_ram[64 * 1024];
-
 static u16 m_read(uint32_t addr)
 {
-//	u16 dat= MappedMemoryReadWord(NULL, 0x02000000+2*addr);
-//	return ((dat&0xff00)>>8)|((dat&0x00ff)<<8);
-	if ((addr & 0xffff0000) == 0x01000000)
-	{
-		int base = 2 * (addr & 0x7fff);
-		return naomi_cart_ram[base + 1] | (naomi_cart_ram[base] << 8);
-	}
-	verify(2 * addr + 1 < RomSize);
-	return RomPtr[2 * addr + 1] | (RomPtr[2 * addr] << 8);
+	return ((M2Cartridge *)CurrentCartridge)->ReadCipheredData(addr);
 }
 
 static u16 get_decrypted_16()
@@ -823,5 +811,5 @@ u16 cryptoDecrypt()
 		base = &buffer[buffer_pos];
 		buffer_pos += 2;
 	}
-	return (base[0] << 8) | base[1];
+	return (base[1] << 8) | base[0];	// Swapping the bytes now
 }

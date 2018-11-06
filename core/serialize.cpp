@@ -23,6 +23,7 @@
 #include "rend/gles/gles.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/dyna/ngen.h"
+#include "hw/naomi/naomi_cart.h"
 
 /*
  * search for "maybe" to find items that were left out that may be needed
@@ -31,7 +32,8 @@
 enum serialize_version_enum {
 	V1,
 	V2,
-	V3
+	V3,
+	V4
 } ;
 
 //./core/hw/arm7/arm_mem.cpp
@@ -615,9 +617,6 @@ extern unsigned VRAM_MASK;
 
 //./core/hw/naomi/naomi.o
 extern u32 naomi_updates;
-extern u32 RomPioOffset;
-extern u32 DmaOffset;
-extern u32 DmaCount;
 extern u32 BoardID;
 extern u32 GSerialBuffer;
 extern u32 BSerialBuffer;
@@ -793,12 +792,14 @@ bool register_serialize(Array<RegisterStruct>& regs,void **data, unsigned int *t
 	return true ;
 }
 
-bool register_unserialize(Array<RegisterStruct>& regs,void **data, unsigned int *total_size )
+bool register_unserialize(Array<RegisterStruct>& regs,void **data, unsigned int *total_size, u32 force_size = 0)
 {
 	int i = 0 ;
 	u32 dummy = 0 ;
 
-	for ( i = 0 ; i < regs.Size ; i++ )
+	if (force_size == 0)
+	   force_size = regs.Size;
+	for ( i = 0 ; i < force_size ; i++ )
 	{
 		LIBRETRO_US(regs.data[i].flags) ;
 		if ( ! (regs.data[i].flags & REG_RF) )
@@ -813,7 +814,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
-	serialize_version_enum version = V3 ;
+	serialize_version_enum version = V4 ;
 
 	*total_size = 0 ;
 
@@ -1164,9 +1165,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 
 	LIBRETRO_S(naomi_updates);
-	LIBRETRO_S(RomPioOffset);
-	LIBRETRO_S(DmaOffset);
-	LIBRETRO_S(DmaCount);
 	LIBRETRO_S(BoardID);
 	LIBRETRO_S(GSerialBuffer);
 	LIBRETRO_S(BSerialBuffer);
@@ -1192,16 +1190,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(reg_dimm_48);
 	LIBRETRO_S(reg_dimm_4c);
 	LIBRETRO_S(NaomiDataRead);
-	LIBRETRO_S(NAOMI_ROM_OFFSETH);
-	LIBRETRO_S(NAOMI_ROM_OFFSETL);
-	LIBRETRO_S(NAOMI_ROM_DATA);
-	LIBRETRO_S(NAOMI_DMA_OFFSETH);
-	LIBRETRO_S(NAOMI_DMA_OFFSETL);
-	LIBRETRO_S(NAOMI_DMA_COUNT);
-	LIBRETRO_S(NAOMI_BOARDID_WRITE);
-	LIBRETRO_S(NAOMI_BOARDID_READ);
-	LIBRETRO_S(NAOMI_COMM_OFFSET);
-	LIBRETRO_S(NAOMI_COMM_DATA);
 
 	LIBRETRO_S(cycle_counter);
 	LIBRETRO_S(idxnxx);
@@ -1241,6 +1229,9 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(settings.dreamcast.broadcast);
 	LIBRETRO_S(settings.dreamcast.cable);
 	LIBRETRO_S(settings.dreamcast.region);
+
+	if (CurrentCartridge != NULL)
+	   CurrentCartridge->Serialize(data, total_size);
 
 	return true ;
 }
@@ -1476,13 +1467,13 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 
 	LIBRETRO_USA(OnChipRAM.data,OnChipRAM_SIZE);
 
-	register_unserialize(CCN, data, total_size) ;
+	register_unserialize(CCN, data, total_size, version < V4 ? 16 : 0) ;
 	register_unserialize(UBC, data, total_size) ;
 	register_unserialize(BSC, data, total_size) ;
 	register_unserialize(DMAC, data, total_size) ;
 	register_unserialize(CPG, data, total_size) ;
 	register_unserialize(RTC, data, total_size) ;
-	register_unserialize(INTC, data, total_size) ;
+	register_unserialize(INTC, data, total_size, version < V4 ? 4 : 0) ;
 	register_unserialize(TMU, data, total_size) ;
 	register_unserialize(SCI, data, total_size) ;
 	register_unserialize(SCIF, data, total_size) ;
@@ -1648,9 +1639,12 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 
 
 	LIBRETRO_US(naomi_updates);
-	LIBRETRO_US(RomPioOffset);
-	LIBRETRO_US(DmaOffset);
-	LIBRETRO_US(DmaCount);
+	if (version < V4)
+	{
+	   LIBRETRO_US(dummy_int);			// RomPioOffset
+	   LIBRETRO_US(dummy_int);			// DmaOffset
+	   LIBRETRO_US(dummy_int);			// DmaCount
+	}
 	LIBRETRO_US(BoardID);
 	LIBRETRO_US(GSerialBuffer);
 	LIBRETRO_US(BSerialBuffer);
@@ -1676,16 +1670,19 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(reg_dimm_48);
 	LIBRETRO_US(reg_dimm_4c);
 	LIBRETRO_US(NaomiDataRead);
-	LIBRETRO_US(NAOMI_ROM_OFFSETH);
-	LIBRETRO_US(NAOMI_ROM_OFFSETL);
-	LIBRETRO_US(NAOMI_ROM_DATA);
-	LIBRETRO_US(NAOMI_DMA_OFFSETH);
-	LIBRETRO_US(NAOMI_DMA_OFFSETL);
-	LIBRETRO_US(NAOMI_DMA_COUNT);
-	LIBRETRO_US(NAOMI_BOARDID_WRITE);
-	LIBRETRO_US(NAOMI_BOARDID_READ);
-	LIBRETRO_US(NAOMI_COMM_OFFSET);
-	LIBRETRO_US(NAOMI_COMM_DATA);
+	if (version < V4)
+	{
+	   LIBRETRO_US(dummy_int);		// NAOMI_ROM_OFFSETH
+	   LIBRETRO_US(dummy_int);		// NAOMI_ROM_OFFSETL
+	   LIBRETRO_US(dummy_int);		// NAOMI_ROM_DATA
+	   LIBRETRO_US(dummy_int);		// NAOMI_DMA_OFFSETH
+	   LIBRETRO_US(dummy_int);		// NAOMI_DMA_OFFSETL
+	   LIBRETRO_US(dummy_int);		// NAOMI_DMA_COUNT
+	   LIBRETRO_US(dummy_int);		// NAOMI_BOARDID_WRITE
+	   LIBRETRO_US(dummy_int);		// NAOMI_BOARDID_READ
+	   LIBRETRO_US(dummy_int);		// NAOMI_COMM_OFFSET
+	   LIBRETRO_US(dummy_int);		// NAOMI_COMM_DATA
+	}
 
 	LIBRETRO_US(cycle_counter);
 	LIBRETRO_US(idxnxx);
@@ -1728,6 +1725,11 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	   LIBRETRO_US(settings.dreamcast.cable);
 	   LIBRETRO_US(settings.dreamcast.region);
 	}
+	if (version >= V4 && CurrentCartridge != NULL)
+	{
+	   CurrentCartridge->Unserialize(data, total_size);
+	}
+
 
 	return true ;
 }

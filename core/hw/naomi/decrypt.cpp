@@ -1,7 +1,10 @@
-/* Encryption/decryption 315-5881 chip support */
-/* used on Naomi M2 ROM boards */
-/* Borrowed from yabause */
-/* Based on mame 315-5881_crypt.cpp and stvprot.cpp */
+/* Encryption/decryption 315-5881 chip support
+ * used on Naomi M2 ROM boards
+ * Borrowed from yabause
+ * Based on mame/src/mame/machine/315-5881_crypt.cpp and stvprot.cpp
+ * // license:BSD-3-Clause
+ * // copyright-holders:Andreas Naive, Olivier Galibert, David Haywood
+ */
 
 #include <stdlib.h>
 #include "naomi_cart.h"

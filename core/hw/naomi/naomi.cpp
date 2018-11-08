@@ -5,6 +5,7 @@
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/holly_intc.h"
+#include "hw/maple/maple_devs.h"
 
 #include "naomi.h"
 #include "naomi_cart.h"
@@ -627,4 +628,53 @@ void Update_naomi()
 		}
 	}
 #endif
+}
+static u8 aw_maple_devs;
+extern u16 kcode[4];
+
+u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
+	addr &= 0x7ff;
+	//printf("libExtDevice_ReadMem_A0_006 %d@%08x: %x\n", size, addr, mem600[addr]);
+	switch (addr)
+	{
+	case 0x280:
+	   {
+		  // 0x00600280 r  0000dcba
+		  //	a/b - 1P/2P coin inputs (JAMMA), active low
+		  //	c/d - 3P/4P coin inputs (EX. IO board), active low
+		  //
+		  //	(ab == 0) -> BIOS skip RAM test
+		  u8 coins = 0xF;
+		  for (int i = 0;i < 4; i++)
+			 if (!(kcode[i] & AWAVE_COIN_KEY))
+				// FIXME Coin Error if set for too long
+				coins &= ~(1 << i);
+		  return coins;
+	   }
+	case 0x284:		// Atomiswave maple devices
+		// ddcc0000 where cc/dd are the types of devices on maple bus 2 and 3:
+		// 0: regular AtomisWave controller
+		// 1: light gun
+		// 2,3: mouse/trackball
+		//printf("NAOMI 600284 read %x\n", aw_maple_devs);
+		return aw_maple_devs;
+	}
+	EMUERROR("Unhandled read @ %x", addr);
+	return 0xFF;
+}
+
+void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
+	addr &= 0x7ff;
+	//printf("libExtDevice_WriteMem_A0_006 %d@%08x: %x\n", size, addr, data);
+	switch (addr)
+	{
+	case 0x284:		// Atomiswave maple devices
+		printf("NAOMI 600284 write %x\n", data);
+		aw_maple_devs = data & 0xF0;
+		break;
+	//case 0x28C:		// Wheel force feedback?
+	default:
+		break;
+	}
+	EMUERROR("Unhandled write @ %x: %x", addr, data);
 }

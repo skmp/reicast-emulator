@@ -42,6 +42,28 @@ enum NAOMI_KEYS
 	NAOMI_COIN_KEY = 1 << 0,
 };
 
+enum AWAVE_KEYS
+{
+	AWAVE_START_KEY = 1 << 3,
+
+	AWAVE_BTN0_KEY  = 1 << 2,
+	AWAVE_BTN1_KEY  = 1 << 1,
+	AWAVE_BTN2_KEY  = 1 << 0,
+	AWAVE_BTN3_KEY  = 1 << 10,
+	AWAVE_BTN4_KEY  = 1 << 9,
+
+	AWAVE_UP_KEY    = 1 << 4,
+	AWAVE_DOWN_KEY  = 1 << 5,
+	AWAVE_LEFT_KEY  = 1 << 6,
+	AWAVE_RIGHT_KEY = 1 << 7,
+
+	AWAVE_SERVICE_KEY = 1 << 13,
+	AWAVE_TEST_KEY 	  = 1 << 14,
+
+	// Not an actual button
+	AWAVE_COIN_KEY    = 1 << 15,
+};
+
 struct IMapleConfigMap;
 
 struct maple_device

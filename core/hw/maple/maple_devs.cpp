@@ -206,7 +206,11 @@ struct maple_sega_controller: maple_base
 
 			//struct data
 			//3*4
-			w32( 0xfe060f00);
+			if (settings.System != DC_PLATFORM_ATOMISWAVE)
+			   w32( 0xfe060f00);
+			else
+			   // More buttons, more digital axes
+			   w32( 0xff663f00 );
 			w32( 0);
 			w32( 0);
 
@@ -244,24 +248,48 @@ struct maple_sega_controller: maple_base
 				//2 key code
 				w16(pjs.kcode);
 
-				//triggers
-				//1 R
-				w8(pjs.trigger[PJTI_R]);
-				//1 L
-				w8(pjs.trigger[PJTI_L]);
+				if (settings.System != DC_PLATFORM_ATOMISWAVE)
+				{
+				   //triggers
+				   //1 R
+				   w8(pjs.trigger[PJTI_R]);
+				   //1 L
+				   w8(pjs.trigger[PJTI_L]);
 
-				//joyx
-				//1
-				w8(pjs.joy[PJAI_X1]);
-				//joyy
-				//1
-				w8(pjs.joy[PJAI_Y1]);
+				   //joyx
+				   //1
+				   w8(pjs.joy[PJAI_X1]);
+				   //joyy
+				   //1
+				   w8(pjs.joy[PJAI_Y1]);
 
-				//not used
-				//1
-				w8(0x80);
-				//1
-				w8(0x80);
+				   //not used
+				   //1
+				   w8(0x80);
+				   //1
+				   w8(0x80);
+				}
+				else
+				{
+				   //not used
+				   //1
+				   w8(0);
+				   //1
+				   w8(0);
+
+				   //joyx
+				   //1
+				   w8(pjs.joy[PJAI_X1]);
+				   //joyy
+				   //1
+				   w8(pjs.joy[PJAI_Y1]);	// FIXME Need to set the range of analog axes (at least -128/+127 or 0/255)
+
+				   //triggers
+				   //1 R
+				   w8(pjs.trigger[PJTI_R] + 128);
+				   //1 L
+				   w8(pjs.trigger[PJTI_L] + 128);
+				}
 			}
 
 		return MDRS_DataTransfer;
@@ -2204,16 +2232,16 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							  switch (player_axis)
 							  {
 								 case 0:
-									axis_value = (joyx[player_num] + 128) << 8;
+									axis_value = (joyx[player_num] + 128) << 8;	// FIXME Need to set the range of analog axes (at least -128/+127 or 0/255)
 									break;
 								 case 1:
 									axis_value = (joyy[player_num] + 128) << 8;
 									break;
 								 case 2:
-									axis_value = (rt[player_num] + 128) << 8;
+									axis_value = rt[player_num] << 8;
 									break;
 								 case 3:
-									axis_value = (lt[player_num] + 128) << 8;
+									axis_value = lt[player_num] << 8;
 									break;
 							  }
 						   }

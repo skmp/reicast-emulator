@@ -20,6 +20,7 @@
 #include "keyboard_map.h"
 #include "../hw/maple/maple_cfg.h"
 #include "../hw/pvr/spg.h"
+#include "../hw/naomi/naomi_cart.h"
 
 #if defined(_XBOX) || defined(_WIN32)
 char slash = '\\';
@@ -49,6 +50,7 @@ extern int screen_height;
 char save_dir[PATH_MAX];
 char eeprom_file[PATH_MAX];
 char nvmem_file[PATH_MAX];
+char nvmem_file2[PATH_MAX];		// AtomisWave
 bool boot_to_bios;
 
 static int astick_deadzone = 0;
@@ -298,7 +300,7 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_system",
-         "System type (restart); auto|dreamcast|naomi",
+         "System type (restart); auto|dreamcast|naomi|atomiswave",
       },
 #ifdef HAVE_OIT
       {
@@ -659,6 +661,8 @@ static void update_variables(bool first_startup)
             settings.System = DC_PLATFORM_DREAMCAST;
          else if (!strcmp(var.value, "naomi"))
             settings.System = DC_PLATFORM_NAOMI;
+         else if (!strcmp(var.value, "atomiswave"))
+            settings.System = DC_PLATFORM_ATOMISWAVE;
       }
       else
          settings.System = DC_PLATFORM_DREAMCAST;
@@ -1180,6 +1184,46 @@ static void set_input_descriptors()
     	 }
       }
    }
+   else if (settings.System == DC_PLATFORM_ATOMISWAVE)
+   {
+      for (unsigned i = 0; i < MAPLE_PORTS; i++)
+      {
+    	 switch (maple_devices[i])
+    	 {
+    	 case MDT_SegaController:
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "Button 1" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "Button 2" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "Button 3" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Button 4" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Button 5" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "Button 6" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,"Coin" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,    "Test" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,    "Service" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Axis 1" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Axis 2" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Axis 3" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Axis 4" };
+    		break;
+
+    	 case MDT_LightGun:
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT,  "D-Pad Left" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP,    "D-Pad Up" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN,  "D-Pad Down" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT, "D-Pad Right" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER,	   "Trigger" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_START,      "Start" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A,      "Button 2" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SELECT,	   "Coin" };
+    		break;
+    	 }
+      }
+   }
    else
    {
       for (unsigned i = 0; i < MAPLE_PORTS; i++)
@@ -1263,8 +1307,8 @@ bool retro_load_game(const struct retro_game_info *game)
    update_variables(true);
 
    {
-      /* Check for extension .lst, .bin or .dat. If found, we will set the system type
-       * automatically to Naomi. */
+      /* Check for extension .lst, .bin, .dat or .zip. If found, we will set the system type
+       * automatically to Naomi or AtomisWave. */
       char *ext = strrchr(g_base_name, '.');
       if (ext)
       {
@@ -1273,12 +1317,17 @@ bool retro_load_game(const struct retro_game_info *game)
         	   || !strcmp(".bin", ext) || !strcmp(".BIN", ext)
         	   || !strcmp(".dat", ext) || !strcmp(".DAT", ext)
         	   || !strcmp(".zip", ext) || !strcmp(".ZIP", ext))
-        	settings.System = DC_PLATFORM_NAOMI;
+        	settings.System = naomi_cart_GetSystemType(game->path);
       }
    }
 
    if (game->path[0] == '\0')
-      boot_to_bios = true;
+   {
+	  if (settings.System == DC_PLATFORM_DREAMCAST)
+		 boot_to_bios = true;
+	  else
+		 return false;
+   }
 
    if (!boot_to_bios)
       game_data = strdup(game->path);
@@ -1346,7 +1395,7 @@ bool retro_load_game(const struct retro_game_info *game)
    }
 #endif
 
-   if (settings.System == DC_PLATFORM_NAOMI)
+   if (settings.System != DC_PLATFORM_DREAMCAST)
    {
       if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir) {
          char g_save_dir[PATH_MAX];
@@ -1367,6 +1416,7 @@ bool retro_load_game(const struct retro_game_info *game)
       log_cb(RETRO_LOG_INFO, "Setting save dir to %s\n", save_dir);
       snprintf(eeprom_file, sizeof(eeprom_file), "%s%s.eeprom", save_dir, g_base_name);
       snprintf(nvmem_file, sizeof(nvmem_file), "%s%s.nvmem", save_dir, g_base_name);
+      snprintf(nvmem_file2, sizeof(nvmem_file2), "%s%s.nvmem2", save_dir, g_base_name);
    }
 
    dc_prepare_system();
@@ -1860,6 +1910,108 @@ static void setDeviceButtonState(u32 port, int deviceType, int btnId, const uint
 	  kcode[port] |= dc_key;
 }
 
+static void UpdateInputStateAWave(u32 port)
+{
+   int id;
+   int max_id;
+
+   static const uint16_t joymap[] =
+   {
+      /* JOYPAD_B      */ AWAVE_BTN0_KEY, /* BTN1 */
+      /* JOYPAD_Y      */ AWAVE_BTN2_KEY, /* BTN3 */
+      /* JOYPAD_SELECT */ AWAVE_COIN_KEY,
+      /* JOYPAD_START  */ AWAVE_START_KEY,
+      /* JOYPAD_UP     */ AWAVE_UP_KEY,
+      /* JOYPAD_DOWN   */ AWAVE_DOWN_KEY,
+      /* JOYPAD_LEFT   */ AWAVE_LEFT_KEY,
+      /* JOYPAD_RIGHT  */ AWAVE_RIGHT_KEY,
+      /* JOYPAD_A      */ AWAVE_BTN1_KEY, /* BTN2 */
+      /* JOYPAD_X      */ AWAVE_BTN3_KEY, /* BTN4 */
+      /* JOYPAD_L      */ 0,
+      /* JOYPAD_R      */ AWAVE_BTN4_KEY, /* BTN5 */
+      /* JOYPAD_L2     */ 0,
+      /* JOYPAD_R2     */ 0,
+      /* JOYPAD_L3     */ AWAVE_TEST_KEY,
+      /* JOYPAD_R3     */ AWAVE_SERVICE_KEY,
+   };
+
+   static const uint16_t lg_joymap[] =
+   {
+	   /* deprecated */ 			0,
+	   /* deprecated */ 			0,
+	   /* LIGHTGUN_TRIGGER */	AWAVE_BTN0_KEY,
+	   /* LIGHTGUN_AUX_A */		AWAVE_BTN1_KEY,
+	   /* LIGHTGUN_AUX_B */ 		0,
+	   /* deprecated */ 			0,
+	   /* LIGHTGUN_START */		AWAVE_START_KEY,
+	   /* LIGHTGUN_SELECT */ 	AWAVE_COIN_KEY,
+	   /* LIGHTGUN_AUX_C */		    0,
+	   /* LIGHTGUN_UP   */ 		AWAVE_UP_KEY,
+	   /* LIGHTGUN_DOWN   */ 	AWAVE_DOWN_KEY,
+	   /* LIGHTGUN_LEFT   */ 	AWAVE_LEFT_KEY,
+	   /* LIGHTGUN_RIGHT  */ 	AWAVE_RIGHT_KEY,
+   };
+
+   switch (maple_devices[port])
+   {
+   case MDT_LightGun:
+	  {
+		 //
+		 // -- buttons
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER, lg_joymap);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_AUX_A, lg_joymap);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_START, lg_joymap);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_SELECT, lg_joymap);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP, lg_joymap);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN, lg_joymap);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT, lg_joymap);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT, lg_joymap);
+
+		 bool force_offscreen = false;
+
+		 if (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD))
+		 {
+			force_offscreen = true;
+			kcode[port] &= ~AWAVE_BTN0_KEY;
+		 }
+
+		 if (force_offscreen || input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN))
+		 {
+			mo_x_abs[port] = -1;
+			mo_y_abs[port] = -1;
+		 }
+		 else
+		 {
+			int x = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X);
+			int y = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y);
+			mo_x_abs[port] = (x + 0x8000) * 640.f / 0x10000;
+			mo_y_abs[port] = (y + 0x8000) * 480.f / 0x10000;
+		 }
+	  }
+	  break;
+
+   default:
+	  //
+	  // -- buttons
+
+	  max_id = (allow_service_buttons ? RETRO_DEVICE_ID_JOYPAD_R3 : RETRO_DEVICE_ID_JOYPAD_R2);
+	  for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= max_id; ++id)
+	  {
+		 setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, id, joymap);
+	  }
+	  //
+	  // -- analog stick
+
+	  get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[port]), &(joyy[port]) );
+	  get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_RIGHT, (s8*)&rt[port], (s8 *)&lt[port] );
+
+	  // -- mouse, for rotary encoders
+	  mo_x_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+	  mo_y_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+	  break;
+   }
+}
+
 static void UpdateInputStateNaomi(u32 port)
 {
    int id;
@@ -1975,6 +2127,14 @@ void UpdateInputState(u32 port)
       UpdateInputStateNaomi(1);
       UpdateInputStateNaomi(2);
       UpdateInputStateNaomi(3);
+      return;
+   }
+   else if (settings.System == DC_PLATFORM_ATOMISWAVE)
+   {
+      UpdateInputStateAWave(0);
+      UpdateInputStateAWave(1);
+      UpdateInputStateAWave(2);
+      UpdateInputStateAWave(3);
       return;
    }
    if (rumble.set_rumble_state != NULL && vib_stop_time[port] > 0)

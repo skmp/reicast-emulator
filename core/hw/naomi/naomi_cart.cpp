@@ -8,6 +8,7 @@
 #include "hw/holly/holly_intc.h"
 #include "m1cartridge.h"
 #include "m4cartridge.h"
+#include "awcartridge.h"
 
 Cartridge *CurrentCartridge;
 
@@ -38,9 +39,11 @@ u32		RomCacheMapCount;
 char naomi_game_id[33];
 
 extern RomChip sys_rom;
+extern DCFlashChip sys_nvmem_flash;		// AtomisWave BIOS is loaded there
+
 extern char game_dir_no_slash[1024];
 
-static bool naomi_LoadBios(const char *filename)
+static bool naomi_LoadBios(const char *filename, zip *child_zip)
 {
 	int biosid = 0;
 	for (; BIOS[biosid].name != NULL; biosid++)
@@ -52,38 +55,41 @@ static bool naomi_LoadBios(const char *filename)
 		return false;
 	}
 
+	MemChip *rom_chip;
+	if (settings.System == DC_PLATFORM_NAOMI)
+	   rom_chip = &sys_rom;
+	else
+	   rom_chip = &sys_nvmem_flash;
+
 	struct BIOS_t *bios = &BIOS[biosid];
 
 	std::string basepath(game_dir_no_slash);
 	basepath += "/";
 
 	zip *zip_archive = zip_open((basepath + filename).c_str(), 0, NULL);
-	if (zip_archive == NULL)
-	{
-		printf("Cannot find BIOS %s\n", filename);
-		return false;
-	}
 
 	int romid = 0;
 	while (bios->blobs[romid].filename != NULL)
 	{
 		if (bios->blobs[romid].blob_type == Copy)
 		{
-			verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
-			verify(bios->blobs[romid].src_offset + bios->blobs[romid].length <= BIOS_SIZE);
-			memcpy(sys_rom.data + bios->blobs[romid].offset, sys_rom.data + bios->blobs[romid].src_offset, bios->blobs[romid].length);
+			verify(bios->blobs[romid].offset + bios->blobs[romid].length <= rom_chip->size);
+			verify(bios->blobs[romid].src_offset + bios->blobs[romid].length <= rom_chip->size);
+			memcpy(rom_chip->data + bios->blobs[romid].offset, rom_chip->data + bios->blobs[romid].src_offset, bios->blobs[romid].length);
 		}
 		else
 		{
-			zip_file* file = zip_fopen(zip_archive, bios->blobs[romid].filename, 0);
+			zip_file* file = zip_fopen(child_zip, bios->blobs[romid].filename, 0);
+			if (file == NULL && zip_archive != NULL)
+				file = zip_fopen(zip_archive, bios->blobs[romid].filename, 0);
 			if (!file) {
 				printf("%s: Cannot open %s\n", filename, bios->blobs[romid].filename);
 				goto error;
 			}
 			if (bios->blobs[romid].blob_type == Normal)
 			{
-				verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
-				size_t read = zip_fread(file, sys_rom.data + bios->blobs[romid].offset, bios->blobs[romid].length);
+				verify(bios->blobs[romid].offset + bios->blobs[romid].length <= rom_chip->size);
+				size_t read = zip_fread(file, rom_chip->data + bios->blobs[romid].offset, bios->blobs[romid].length);
 			}
 			else if (bios->blobs[romid].blob_type == InterleavedWord)
 			{
@@ -94,9 +100,9 @@ static bool naomi_LoadBios(const char *filename)
 					zip_fclose(file);
 					goto error;
 				}
-				verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
+				verify(bios->blobs[romid].offset + bios->blobs[romid].length <= rom_chip->size);
 				size_t read = zip_fread(file, buf, bios->blobs[romid].length);
-				u16 *to = (u16 *)(sys_rom.data + bios->blobs[romid].offset);
+				u16 *to = (u16 *)(rom_chip->data + bios->blobs[romid].offset);
 				u16 *from = (u16 *)buf;
 				for (int i = bios->blobs[romid].length / 2; --i >= 0; to++)
 					*to++ = *from++;
@@ -109,12 +115,18 @@ static bool naomi_LoadBios(const char *filename)
 		romid++;
 	}
 
-	zip_close(zip_archive);
+	if (zip_archive != NULL)
+		zip_close(zip_archive);
+
+	if (settings.System == DC_PLATFORM_ATOMISWAVE)
+	   // Reload the writeable portion of the FlashROM
+	   sys_nvmem_flash.Reload();
 
 	return true;
 
 error:
-	zip_close(zip_archive);
+	if (zip_archive != NULL)
+		zip_close(zip_archive);
 	return false;
 }
 
@@ -141,12 +153,6 @@ static bool naomi_cart_LoadZip(char *filename)
 
 	struct Game *game = &Games[gameid];
 
-	if (game->bios != NULL)
-	{
-		if (!naomi_LoadBios(game->bios))
-			return false;
-	}
-
 	zip *zip_archive = zip_open(filename, 0, NULL);
 	if (zip_archive == NULL)
 	{
@@ -154,33 +160,31 @@ static bool naomi_cart_LoadZip(char *filename)
 		return false;
 	}
 
+	if (game->bios != NULL)
+	{
+		if (!naomi_LoadBios(game->bios, zip_archive))
+			return false;
+	}
+
 	switch (game->cart_type)
 	{
 	case M1:
-		{
-			M1Cartridge *cart = new M1Cartridge(game->size);
-			cart->SetKey(game->key);
-			CurrentCartridge = cart;
-		}
+		CurrentCartridge = new M1Cartridge(game->size);
 		break;
 	case M2:
-		{
-			M2Cartridge *cart = new M2Cartridge(game->size);
-			cart->SetKey(game->key);
-			CurrentCartridge = cart;
-		}
+		CurrentCartridge = new M2Cartridge(game->size);
 		break;
 	case M4:
-		{
-			M4Cartridge *cart = new M4Cartridge(game->size);
-			cart->SetM4Id(game->key);
-			CurrentCartridge = cart;
-		}
+		CurrentCartridge = new M4Cartridge(game->size);
+		break;
+	case AW:
+		CurrentCartridge = new AWCartridge(game->size);
 		break;
 	default:
 		die("Unsupported cartridge type\n");
 		break;
 	}
+	CurrentCartridge->SetKey(game->key);
 
 	int romid = 0;
 	while (game->blobs[romid].filename != NULL)
@@ -224,9 +228,8 @@ static bool naomi_cart_LoadZip(char *filename)
 				free(buf);
 				printf("Mapped %s: %lx bytes (interleaved word) at %07x\n", game->blobs[romid].filename, read, game->blobs[romid].offset);
 			}
-			else if (game->blobs[romid].blob_type == M4Key)
+			else if (game->blobs[romid].blob_type == Key)
 			{
-				verify(game->cart_type == M4);
 				u8 *buf = (u8 *)malloc(game->blobs[romid].length);
 				if (buf == NULL)
 				{
@@ -235,7 +238,7 @@ static bool naomi_cart_LoadZip(char *filename)
 					goto error;
 				}
 				size_t read = zip_fread(file, buf, game->blobs[romid].length);
-				((M4Cartridge *)CurrentCartridge)->SetKeyData(buf);
+				CurrentCartridge->SetKeyData(buf);
 				printf("Loaded %s: %lx bytes M4 Key\n", game->blobs[romid].filename, read);
 			}
 			else
@@ -245,6 +248,8 @@ static bool naomi_cart_LoadZip(char *filename)
 		romid++;
 	}
 	zip_close(zip_archive);
+
+	CurrentCartridge->Init();
 
 	strcpy(naomi_game_id, CurrentCartridge->GetGameId().c_str());
 	printf("NAOMI GAME ID [%s]\n", naomi_game_id);
@@ -256,6 +261,37 @@ error:
 	delete CurrentCartridge;
 	CurrentCartridge = NULL;
 	return false;
+}
+
+int naomi_cart_GetSystemType(const char* file)
+{
+   const char *pdot = strrchr(file, '.');
+
+   if (pdot == NULL || (strcmp(pdot, ".zip") && strcmp(pdot, ".ZIP")))
+	  // Not a ZIP file so it has to be a Naomi game
+	  return DC_PLATFORM_NAOMI;
+
+   const char *p = strrchr(file, '/');
+#ifdef _WIN32
+   p = strrchr(p == NULL ? filename : p, '\\');
+#endif
+   if (p == NULL)
+	  p = file;
+   else
+	  p++;
+
+   int gameid = 0;
+   for (; Games[gameid].name != NULL; gameid++)
+	  if (!stricmp(Games[gameid].name, p))
+		 break;
+   if (Games[gameid].name == NULL)
+	  // Not found. Will fail later
+	  return DC_PLATFORM_NAOMI;
+
+   if (Games[gameid].cart_type == AW)
+	  return DC_PLATFORM_ATOMISWAVE;
+   else
+	  return DC_PLATFORM_NAOMI;
 }
 
 bool naomi_cart_LoadRom(char* file, char *s, size_t len)

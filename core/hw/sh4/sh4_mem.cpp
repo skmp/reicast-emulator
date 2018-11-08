@@ -320,7 +320,7 @@ u8* GetMemPtr(u32 Addr,u32 size)
 		case 6:
 		case 7:
 		default:
-			printf("Get MemPtr unsupported area : addr=0x%X\n",Addr);
+			//printf("Get MemPtr unsupported area : addr=0x%X\n",Addr);
 			return 0;
 	}
 }

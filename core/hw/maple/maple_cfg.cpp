@@ -106,38 +106,43 @@ u8 GetBtFromSgn(s8 val)
 struct MapleConfigMap : IMapleConfigMap
 {
 	maple_device* dev;
+	int player_num;
 
-	MapleConfigMap(maple_device* dev)
+	MapleConfigMap(maple_device* dev, int player_num = -1)
 	{
 		this->dev=dev;
+		this->player_num = player_num;
 	}
 
    void SetVibration(u32 value, u32 max_duration)
    {
-      UpdateVibration(dev->bus_id, value, max_duration);
+      UpdateVibration(player_num == -1 ? dev->bus_id : player_num, value, max_duration);
    }
 
 	void GetInput(PlainJoystickState* pjs)
 	{
-		UpdateInputState(dev->bus_id);
+	   int pnum = player_num == -1 ? dev->bus_id : player_num;
+	   UpdateInputState(pnum);
 
-		pjs->kcode=kcode[dev->bus_id] | 0xF901;
-		pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[dev->bus_id]);
-		pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[dev->bus_id]);
-		pjs->trigger[PJTI_R]=rt[dev->bus_id];
-		pjs->trigger[PJTI_L]=lt[dev->bus_id];
+	   pjs->kcode=kcode[pnum];
+	   if (settings.System == DC_PLATFORM_DREAMCAST)
+		  pjs->kcode |= 0xF901;
+	   pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[pnum]);
+	   pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[pnum]);
+	   pjs->trigger[PJTI_R]=rt[pnum];
+	   pjs->trigger[PJTI_L]=lt[pnum];
 	}
 	void SetImage(void* img)
 	{
-		vmu_screen_params[dev->bus_id].vmu_screen_needs_update = true ;
+		vmu_screen_params[player_num == -1 ? dev->bus_id : player_num].vmu_screen_needs_update = true ;
 	}
 };
 
-void mcfg_Create(MapleDeviceType type,u32 bus,u32 port)
+void mcfg_Create(MapleDeviceType type,u32 bus,u32 port, int player_num /* = -1 */)
 {
 	maple_device* dev=maple_Create(type);
 	dev->Setup(maple_GetAddress(bus,port));
-	dev->config = new MapleConfigMap(dev);
+	dev->config = new MapleConfigMap(dev, player_num);
 	dev->OnSetup();
 	MapleDevices[bus][port]=dev;
 }
@@ -184,7 +189,7 @@ void mcfg_CreateDevices()
 		 }
 	  }
    }
-   else
+   else if (settings.System == DC_PLATFORM_NAOMI)
    {
       use_lightgun = false;
 	  for (int i = 0; i < MAPLE_PORTS; i++)
@@ -203,6 +208,33 @@ void mcfg_CreateDevices()
 		 default:
 			break;
 		 }
+	  }
+   }
+   else if (settings.System == DC_PLATFORM_ATOMISWAVE)
+   {
+	  mcfg_Create(MDT_SegaController, 0, 5);
+	  mcfg_Create(MDT_SegaController, 1, 5);
+	  switch (settings.mapping.JammaSetup)
+	  {
+	  case 5:
+		 // 2 players with analog axes
+		 mcfg_Create(MDT_SegaController, 2, 5, 0);
+		 mcfg_Create(MDT_SegaController, 3, 5, 1);
+		 break;
+	  case 6:
+		 // Light guns
+		 mcfg_Create(MDT_LightGun, 2, 5, 0);
+		 mcfg_Create(MDT_LightGun, 3, 5, 1);
+		 break;
+	  case 2:
+		 // Track-ball
+		 mcfg_Create(MDT_Mouse, 2, 5, 0);
+		 break;
+	  default:
+		 // 4 players
+		 mcfg_Create(MDT_SegaController, 2, 5);
+		 mcfg_Create(MDT_SegaController, 3, 5);
+		 break;
 	  }
    }
 }

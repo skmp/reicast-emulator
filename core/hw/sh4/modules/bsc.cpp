@@ -106,7 +106,7 @@ void bsc_init()
 
 	//note: naomi//aw might depend on rfcr
 	
-   if (settings.System == DC_PLATFORM_NAOMI)
+   if (settings.System == DC_PLATFORM_NAOMI || settings.System == DC_PLATFORM_ATOMISWAVE)
    {
       sh4_rio_reg(BSC, BSC_RFCR_addr, RIO_RO, 16);
       BSC_RFCR.full = 17;

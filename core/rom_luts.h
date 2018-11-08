@@ -35,9 +35,11 @@ struct game_type_naomi
    int jamma_setup;                 /* -1, make no decision,
 									   0 = normal 2P setup,
 									   1 = 4 players setup
-									   2 = 2 I/O boards w/ rotary encoder,
+									   2 = 2 I/O boards w/ rotary encoder (or Track ball for AtomisWave)
 									   3 = 12bits/player, 16 drivers out for Sega Marine Fishing
 									   4 = 2 I/O boards, 4 players for Ring Out 4x4
+									   5 = 3 analog axes (AtomisWave)
+									   6 = 2 light guns (AtomisWave)
 									   */
    int extra_depth_scaling;         /* -1, make no decision */
 };
@@ -92,4 +94,9 @@ static struct game_type_naomi lut_games_naomi[] =
    { "CRACKIN'DJ PART2  ver JAPAN"       , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Crackin'DJ 2: rotary encoders */
    { "SEGA MARINE FISHING JAPAN"         , -1, -1, -1, -1, -1, -1,  -1,  3, -1 },                /* Sega Marine Fishing */
    { "RINGOUT 4X4 JAPAN"                 , -1, -1, -1, -1, -1, -1,  -1,  4, -1 },                /* Ring Out 4x4 (4 players, also needs to be set in service menu) */
+   { "Sports Shooting USA"               , -1, -1, -1, -1, -1, -1,  -1,  6, -1 },                /* Sports Shooting USA (light guns) */
+   { "SEGA CLAY CHALLENGE"               , -1, -1, -1, -1, -1, -1,  -1,  6, -1 },                /* Sega Clay Challenge (light guns */
+   { "FASTER THAN SPEED"                 , -1, -1, -1, -1, -1, -1,  -1,  5, -1 },                /* Faster Than Speed (analog axes) */
+   { "MAXIMUM SPEED"                     , -1, -1, -1, -1, -1, -1,  -1,  5, -1 },                /* Maximum Speed (analog axes) */
+   { "BASS FISHING SIMULATOR VER.A"      , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Sega Bass Fishing Challenge (Track-ball) */
 };

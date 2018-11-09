@@ -100,6 +100,13 @@ BIOS[] =
 		}
 	},
 	{
+		"hod2bios.zip",
+		{
+			{ "epr-21331.ic27", 0x000000, 0x200000 },
+			{ NULL, 0, 0 },
+		}
+	},
+	{
 		"naomi.zip",
 		{
 				//ROM_SYSTEM_BIOS( 0, "bios0",   "epr-21576h (Japan)" )
@@ -192,26 +199,26 @@ Games[] =
         M1,
         {
             { "epr-23377.ic11",  0x0000000, 0x0400000 },
-            { "mpr-23357.ic17s", 0x1000000, 0x0800000 },
-            { "mpr-23358.ic18",  0x1000002, 0x0800000 },
-            { "mpr-23359.ic19s", 0x2000000, 0x0800000 },
-            { "mpr-23360.ic20",  0x2000002, 0x0800000 },
-            { "mpr-23361.ic21s", 0x3000000, 0x0800000 },
-            { "mpr-23362.ic22",  0x3000002, 0x0800000 },
-            { "mpr-23363.ic23s", 0x4000000, 0x0800000 },
-            { "mpr-23364.ic24",  0x4000002, 0x0800000 },
-            { "mpr-23365.ic25s", 0x5000000, 0x0800000 },
-            { "mpr-23366.ic26",  0x5000002, 0x0800000 },
-            { "mpr-23367.ic27s", 0x6000000, 0x0800000 },
-            { "mpr-23368.ic28",  0x6000002, 0x0800000 },
-            { "mpr-23369.ic29",  0x7000000, 0x0800000 },
-            { "mpr-23370.ic30s", 0x7000002, 0x0800000 },
-            { "mpr-23371.ic31",  0x8000000, 0x0800000 },
-            { "mpr-23372.ic32s", 0x8000002, 0x0800000 },
-            { "mpr-23373.ic33",  0x9000000, 0x0800000 },
-            { "mpr-23374.ic34s", 0x9000002, 0x0800000 },
-            { "mpr-23375.ic35",  0xa000000, 0x0800000 },
-            { "mpr-23376.ic36s", 0xa000002, 0x0800000 },
+            { "mpr-23357.ic17s", 0x1000000, 0x0800000, InterleavedWord },
+            { "mpr-23358.ic18",  0x1000002, 0x0800000, InterleavedWord },
+            { "mpr-23359.ic19s", 0x2000000, 0x0800000, InterleavedWord },
+            { "mpr-23360.ic20",  0x2000002, 0x0800000, InterleavedWord },
+            { "mpr-23361.ic21s", 0x3000000, 0x0800000, InterleavedWord },
+            { "mpr-23362.ic22",  0x3000002, 0x0800000, InterleavedWord },
+            { "mpr-23363.ic23s", 0x4000000, 0x0800000, InterleavedWord },
+            { "mpr-23364.ic24",  0x4000002, 0x0800000, InterleavedWord },
+            { "mpr-23365.ic25s", 0x5000000, 0x0800000, InterleavedWord },
+            { "mpr-23366.ic26",  0x5000002, 0x0800000, InterleavedWord },
+            { "mpr-23367.ic27s", 0x6000000, 0x0800000, InterleavedWord },
+            { "mpr-23368.ic28",  0x6000002, 0x0800000, InterleavedWord },
+            { "mpr-23369.ic29",  0x7000000, 0x0800000, InterleavedWord },
+            { "mpr-23370.ic30s", 0x7000002, 0x0800000, InterleavedWord },
+            { "mpr-23371.ic31",  0x8000000, 0x0800000, InterleavedWord },
+            { "mpr-23372.ic32s", 0x8000002, 0x0800000, InterleavedWord },
+            { "mpr-23373.ic33",  0x9000000, 0x0800000, InterleavedWord },
+            { "mpr-23374.ic34s", 0x9000002, 0x0800000, InterleavedWord },
+            { "mpr-23375.ic35",  0xa000000, 0x0800000, InterleavedWord },
+            { "mpr-23376.ic36s", 0xa000002, 0x0800000, InterleavedWord },
             { NULL, 0, 0 },
         }
     },
@@ -220,37 +227,34 @@ Games[] =
         "kick4csh.zip",
         0x9000000,
         0x820857c9,
-        NULL,
+        "naomi.zip",
         M1,
         {
             { "epr-24212.ic11",   0x0000000, 0x400000 },
-            { "opr-24213a.ic17s", 0x1000000, 0x800000 },
-            { "opr-24214a.ic18",  0x1000002, 0x800000 },
-            { "opr-24215a.ic19s", 0x2000000, 0x800000 },
-            { "opr-24216a.ic20",  0x2000002, 0x800000 },
-            { "opr-24224a.ic21s", 0x3000000, 0x800000 },
-            { "opr-24225a.ic22",  0x3000002, 0x800000 },
-            { "opr-24226a.ic23s", 0x4000000, 0x800000 },
-            { "opr-24227a.ic24",  0x4000002, 0x800000 },
-            { "opr-24228a.ic25s", 0x5000000, 0x800000 },
-            { "opr-24229a.ic26",  0x5000002, 0x800000 },
-            { "opr-24230a.ic27s", 0x6000000, 0x800000 },
-            { "opr-24231a.ic28",  0x6000002, 0x800000 },
-            { "opr-24232a.ic29",  0x7000000, 0x800000 },
-            { "opr-24233a.ic30s", 0x7000002, 0x800000 },
-            { "opr-24234a.ic31",  0x8000000, 0x800000 },
-            { "opr-24235a.ic32s", 0x8000002, 0x800000 },
+            { "opr-24213a.ic17s", 0x1000000, 0x800000, InterleavedWord },
+            { "opr-24214a.ic18",  0x1000002, 0x800000, InterleavedWord },
+            { "opr-24215a.ic19s", 0x2000000, 0x800000, InterleavedWord },
+            { "opr-24216a.ic20",  0x2000002, 0x800000, InterleavedWord },
+            { "opr-24224a.ic21s", 0x3000000, 0x800000, InterleavedWord },
+            { "opr-24225a.ic22",  0x3000002, 0x800000, InterleavedWord },
+            { "opr-24226a.ic23s", 0x4000000, 0x800000, InterleavedWord },
+            { "opr-24227a.ic24",  0x4000002, 0x800000, InterleavedWord },
+            { "opr-24228a.ic25s", 0x5000000, 0x800000, InterleavedWord },
+            { "opr-24229a.ic26",  0x5000002, 0x800000, InterleavedWord },
+            { "opr-24230a.ic27s", 0x6000000, 0x800000, InterleavedWord },
+            { "opr-24231a.ic28",  0x6000002, 0x800000, InterleavedWord },
+            { "opr-24232a.ic29",  0x7000000, 0x800000, InterleavedWord },
+            { "opr-24233a.ic30s", 0x7000002, 0x800000, InterleavedWord },
+            { "opr-24234a.ic31",  0x8000000, 0x800000, InterleavedWord },
+            { "opr-24235a.ic32s", 0x8000002, 0x800000, InterleavedWord },
             { "copy",             0x400000, 0xc00000, Copy, 0x1000000 },
             
             //ROM_REGION(0x200, "some_eeprom", 0)
             //ROM_LOAD( "25lc040.ic13s", 0, 0x200, CRC(1576366a) SHA1(3e8bf3dbc8a248a6863242b78d5c6e53a869e951) )
-            { "25lc040.ic13s", 0, 0x200 },
             
             //ROM_REGION(0x220000, "hopper_board", 0)
             //ROM_LOAD( "fpr-24150.ic6",   0x0000000, 0x200000, CRC(3845c34c) SHA1(027b17bac64482ee152773d5fab30fcbc6e2bcb7) ) // SH4 code
             //ROM_LOAD( "6372a.ic3",       0x0200000, 0x020000, CRC(f30839ad) SHA1(ea1a32c4da1ed9745300bcdd7964a7c0964e3221) ) // FPGA config
-            { "fpr-24150.ic6",   0x0000000, 0x200000 },
-            { "6372a.ic3",       0x0200000, 0x020000 },
             
             { NULL, 0, 0 },
         }
@@ -300,22 +304,22 @@ Games[] =
         M1,
         {
             { "epr-23227.ic11",  0x0000000, 0x0400000 },
-            { "mpr-23211.ic17s", 0x1000000, 0x0800000 },
-            { "mpr-23212.ic18",  0x1000002, 0x0800000 },
-            { "mpr-23213.ic19s", 0x2000000, 0x0800000 },
-            { "mpr-23214.ic20",  0x2000002, 0x0800000 },
-            { "mpr-23215.ic21s", 0x3000000, 0x0800000 },
-            { "mpr-23216.ic22",  0x3000002, 0x0800000 },
-            { "mpr-23217.ic23s", 0x4000000, 0x0800000 },
-            { "mpr-23218.ic24",  0x4000002, 0x0800000 },
-            { "mpr-23219.ic25s", 0x5000000, 0x0800000 },
-            { "mpr-23220.ic26",  0x5000002, 0x0800000 },
-            { "mpr-23221.ic27s", 0x6000000, 0x0800000 },
-            { "mpr-23222.ic28",  0x6000002, 0x0800000 },
-            { "mpr-23223.ic29",  0x7000000, 0x0800000 },
-            { "mpr-23224.ic30s", 0x7000002, 0x0800000 },
-            { "mpr-23225.ic31",  0x8000000, 0x0800000 },
-            { "mpr-23226.ic32s", 0x8000002, 0x0800000 },
+            { "mpr-23211.ic17s", 0x1000000, 0x0800000, InterleavedWord },
+            { "mpr-23212.ic18",  0x1000002, 0x0800000, InterleavedWord },
+            { "mpr-23213.ic19s", 0x2000000, 0x0800000, InterleavedWord },
+            { "mpr-23214.ic20",  0x2000002, 0x0800000, InterleavedWord },
+            { "mpr-23215.ic21s", 0x3000000, 0x0800000, InterleavedWord },
+            { "mpr-23216.ic22",  0x3000002, 0x0800000, InterleavedWord },
+            { "mpr-23217.ic23s", 0x4000000, 0x0800000, InterleavedWord },
+            { "mpr-23218.ic24",  0x4000002, 0x0800000, InterleavedWord },
+            { "mpr-23219.ic25s", 0x5000000, 0x0800000, InterleavedWord },
+            { "mpr-23220.ic26",  0x5000002, 0x0800000, InterleavedWord },
+            { "mpr-23221.ic27s", 0x6000000, 0x0800000, InterleavedWord },
+            { "mpr-23222.ic28",  0x6000002, 0x0800000, InterleavedWord },
+            { "mpr-23223.ic29",  0x7000000, 0x0800000, InterleavedWord },
+            { "mpr-23224.ic30s", 0x7000002, 0x0800000, InterleavedWord },
+            { "mpr-23225.ic31",  0x8000000, 0x0800000, InterleavedWord },
+            { "mpr-23226.ic32s", 0x8000002, 0x0800000, InterleavedWord },
             { NULL, 0, 0 },
         }
     },
@@ -328,10 +332,10 @@ Games[] =
         M1,
         {   
             { "epr-23844.ic11",  0x0000000, 0x400000 },
-            { "mtp-23840.ic17s", 0x1000000, 0x800000 },
-            { "mtp-23841.ic18",  0x1000002, 0x800000 },
-            { "mtp-23842.ic19s", 0x2000000, 0x800000 },
-            { "mtp-23843.ic20",  0x2000002, 0x800000 },
+            { "mtp-23840.ic17s", 0x1000000, 0x800000, InterleavedWord },
+            { "mtp-23841.ic18",  0x1000002, 0x800000, InterleavedWord },
+            { "mtp-23842.ic19s", 0x2000000, 0x800000, InterleavedWord },
+            { "mtp-23843.ic20",  0x2000002, 0x800000, InterleavedWord },
             { "copy",            0x400000, 0xc00000, Copy, 0x1000000 },
             { NULL, 0, 0 },
         }
@@ -345,10 +349,10 @@ Games[] =
         M1,
         {   
             { "epr-24065a.ic11", 0x0000000, 0x0400000 },
-            { "opr-24060.ic17s", 0x1000000, 0x0800000 },
-            { "opr-24061.ic18",  0x1000002, 0x0800000 },
-            { "opr-24062.ic19s", 0x2000000, 0x0800000 },
-            { "opr-24063.ic20",  0x2000002, 0x0800000 },
+            { "opr-24060.ic17s", 0x1000000, 0x0800000, InterleavedWord },
+            { "opr-24061.ic18",  0x1000002, 0x0800000, InterleavedWord },
+            { "opr-24062.ic19s", 0x2000000, 0x0800000, InterleavedWord },
+            { "opr-24063.ic20",  0x2000002, 0x0800000, InterleavedWord },
             { "copy",            0x400000, 0xc00000, Copy, 0x1000000 },
             
             //ROM_REGION(0x200, "some_eeprom", 0)
@@ -366,10 +370,10 @@ Games[] =
         M1,
         {
             { "epr-24148.ic11",  0x0000000, 0x400000 },
-            { "opr-24174.ic17s", 0x1000000, 0x800000 },
-            { "opr-24175.ic18",  0x1000002, 0x800000 },
-            { "opr-24176.ic19s", 0x2000000, 0x800000 },
-            { "opr-24177.ic20",  0x2000002, 0x800000 },
+            { "opr-24174.ic17s", 0x1000000, 0x800000, InterleavedWord },
+            { "opr-24175.ic18",  0x1000002, 0x800000, InterleavedWord },
+            { "opr-24176.ic19s", 0x2000000, 0x800000, InterleavedWord },
+            { "opr-24177.ic20",  0x2000002, 0x800000, InterleavedWord },
             { "copy",            0x400000, 0xc00000, Copy, 0x1000000 },
             { NULL, 0, 0 },
         }
@@ -1380,7 +1384,6 @@ Games[] =
             
             //ROM_REGION( 0x20000, "jyu_io", 0 )  // H8/3334-based I/O board ROM, eventually should be separated out
             //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
-            { "jyu1_prg0a.ic3", 0x000000, 0x020000 },
             
             { NULL, 0, 0 },
         }
@@ -1410,10 +1413,6 @@ Games[] =
         NULL,
         M2,
         {
-            //ROM_REGION( 0x10000, "io_board", 0)
-            //ROM_LOAD("epr-22084.ic3", 0x0000, 0x10000, CRC(18cf58bb) SHA1(1494f8215231929e41bbe2a133658d01882fbb0f) )
-            { "epr-22084.ic3",  0x0000, 0x10000 },
-            
             { "epr-22163.ic22", 0x0000000, 0x0400000 },
             { "mpr-22142.ic1",  0x0800000, 0x0800000 },
             { "mpr-22143.ic2",  0x1000000, 0x0800000 },
@@ -1434,6 +1433,9 @@ Games[] =
             { "mpr-22158.ic17s",0x8800000, 0x0800000 },
             { "mpr-22159.ic18s",0x9000000, 0x0800000 },
             { "mpr-22160.ic19s",0x9800000, 0x0800000 },		
+            //ROM_REGION( 0x10000, "io_board", 0)
+            //ROM_LOAD("epr-22084.ic3", 0x0000, 0x10000, CRC(18cf58bb) SHA1(1494f8215231929e41bbe2a133658d01882fbb0f) )
+
             { NULL, 0, 0 },
         }
     },
@@ -2239,7 +2241,6 @@ Games[] =
            
             //ROM_REGION( 0x200000, "ioboard", 0) // touch screen I/O board, program disassembles as little-endian SH-4
             //ROM_LOAD( "fpr24351.ic14", 0x000000, 0x200000, CRC(4d1b7b89) SHA1(965b8c6b5a2e7b3f1b1e2eac19c86000c3b66754) )
-            { "fpr24351.ic14",  0x000000, 0x2000000 },
             
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0461-com.ic3", 0, 0x800, BAD_DUMP CRC(c9282cdd) SHA1(23933e489d763515428e2714cc6e7676df1d5323) )
@@ -2337,7 +2338,6 @@ Games[] =
             
             //ROM_REGION( 0x200000, "ioboard", 0) // touch screen I/O board, program disassembles as little-endian SH-4
             //ROM_LOAD( "fpr24351.ic14", 0x000000, 0x200000, CRC(4d1b7b89) SHA1(965b8c6b5a2e7b3f1b1e2eac19c86000c3b66754) )
-            { "fpr24351.ic14",  0x000000, 0x2000000 },
             
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0461-com.ic3", 0, 0x800, BAD_DUMP CRC(c9282cdd) SHA1(23933e489d763515428e2714cc6e7676df1d5323) )
@@ -2938,8 +2938,6 @@ Games[] =
             //ROM_REGION( 0x1400000, "network", 0)    // network board
             //ROM_LOAD( "fpr-24330a.ic2", 0x000000, 0x400000, CRC(8d89877e) SHA1(6caafc49114eb0358e217bc2d1a3ab58a93c8d19) )
             //ROM_LOAD( "flash128.ic4s", 0x400000, 0x1000000, CRC(866ed675) SHA1(2c4c06935b7ab1876e640cede51713b841833567) )
-            { "fpr-24330a.ic2", 0x000000,  0x400000  },
-            { "flash128.ic4s",  0x400000,  0x1000000 },
             
             { NULL, 0, 0 },
         }

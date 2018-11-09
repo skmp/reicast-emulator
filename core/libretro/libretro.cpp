@@ -2010,6 +2010,12 @@ static void UpdateInputStateAWave(u32 port)
 	  mo_y_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
 	  break;
    }
+
+   // Avoid Left+Right or Up+Down buttons being pressed together as this crashes some games
+   if ((kcode[port] & (AWAVE_UP_KEY | AWAVE_DOWN_KEY)) == 0)
+	  kcode[port] |= AWAVE_UP_KEY | AWAVE_DOWN_KEY;
+   if ((kcode[port] & (AWAVE_LEFT_KEY | AWAVE_RIGHT_KEY)) == 0)
+	  kcode[port] |= AWAVE_LEFT_KEY | AWAVE_RIGHT_KEY;
 }
 
 static void UpdateInputStateNaomi(u32 port)
@@ -2114,6 +2120,12 @@ static void UpdateInputStateNaomi(u32 port)
 	  mo_y_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
 	  break;
    }
+
+   // Avoid Left+Right or Up+Down buttons being pressed together as this crashes some games
+   if ((kcode[port] & (NAOMI_UP_KEY|NAOMI_DOWN_KEY)) == 0)
+	  kcode[port] |= NAOMI_UP_KEY|NAOMI_DOWN_KEY;
+   if ((kcode[port] & (NAOMI_LEFT_KEY|NAOMI_RIGHT_KEY)) == 0)
+	  kcode[port] |= NAOMI_LEFT_KEY|NAOMI_RIGHT_KEY;
 }
 
 void UpdateInputState(u32 port)

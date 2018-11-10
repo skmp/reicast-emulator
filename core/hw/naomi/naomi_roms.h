@@ -287,7 +287,7 @@ Games[] =
             // 32 bit area starts here
             { "mpr-23083.ic31",  0x8000000, 0x0400000, InterleavedWord },
             { "mpr-23084.ic32s", 0x8000002, 0x0400000, InterleavedWord },
-            { "copy",            0x4000000, 0x4000000, Copy, 0x1200000 },
+            { "copy",            0x0400000, 0x0400000, Copy, 0x1200000 },
             
             //ROM_REGION(0x200, "some_eeprom", 0)
             //ROM_LOAD( "25lc040.ic13s", 0x000000, 0x200, CRC(dc449637) SHA1(6cab09f61be1498271a36bff6a114a4eeeb00e1a) )

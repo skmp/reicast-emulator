@@ -29,6 +29,7 @@ RomChip sys_rom;
 SRamChip sys_nvmem_sram;
 DCFlashChip sys_nvmem_flash;
 
+extern bool bios_loaded;
 extern char nvmem_file[PATH_MAX];
 extern char nvmem_file2[PATH_MAX];	// AtomisWave
 
@@ -107,11 +108,19 @@ static bool nvr_is_optional(void)
 
 bool LoadRomFiles(const string& root)
 {
-   if (settings.System != DC_PLATFORM_ATOMISWAVE
-		 && !sys_rom.Load(root, get_rom_prefix(), get_rom_names(), "bootrom"))
+   if (settings.System != DC_PLATFORM_ATOMISWAVE)
    {
-	  msgboxf("Unable to find bios in \n%s\nExiting...", MBX_ICONERROR, root.c_str());
-	  return false;
+	  if (!sys_rom.Load(root, get_rom_prefix(), get_rom_names(), "bootrom"))
+	  {
+		 if (settings.System == DC_PLATFORM_DREAMCAST || settings.System == DC_PLATFORM_DEV_UNIT)
+		 {
+			// Dreamcast absolutely needs a BIOS
+			msgboxf("Unable to find bios in \n%s\nExiting...", MBX_ICONERROR, root.c_str());
+			return false;
+		 }
+	  }
+	  else
+		 bios_loaded = true;
    }
    if (!nvmem_load(root, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram"))
    {

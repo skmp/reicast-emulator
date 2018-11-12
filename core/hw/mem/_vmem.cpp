@@ -789,8 +789,6 @@ bool _vmem_reserve(void)
    vram.Zero();
    mem_b.Zero();
 
-	printf("Mem alloc successful!");
-
 	return virt_ram_base!=0;
 }
 #else

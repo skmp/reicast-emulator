@@ -631,6 +631,7 @@ void Update_naomi()
 }
 static u8 aw_maple_devs;
 extern u16 kcode[4];
+static bool once;
 
 u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 	addr &= 0x7ff;
@@ -644,6 +645,12 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 		  //	c/d - 3P/4P coin inputs (EX. IO board), active low
 		  //
 		  //	(ab == 0) -> BIOS skip RAM test
+		  if (!once)
+		  {
+			 // Skip the RAM test. Also fixes Dolphin Blue in-game freeze
+			 once = true;
+			 return 0;
+		  }
 		  u8 coins = 0xF;
 		  for (int i = 0;i < 4; i++)
 			 if (!(kcode[i] & AWAVE_COIN_KEY))

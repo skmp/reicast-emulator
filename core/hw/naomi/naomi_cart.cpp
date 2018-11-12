@@ -11,6 +11,7 @@
 #include "awcartridge.h"
 
 Cartridge *CurrentCartridge;
+bool bios_loaded = false;
 
 #ifdef _WIN32
 #include <windows.h>
@@ -43,7 +44,7 @@ extern DCFlashChip sys_nvmem_flash;		// AtomisWave BIOS is loaded there
 
 extern char game_dir_no_slash[1024];
 
-static bool naomi_LoadBios(const char *filename, zip *child_zip)
+static bool naomi_LoadBios(const char *filename, zip *child_zip, int region)
 {
 	int biosid = 0;
 	for (; BIOS[biosid].name != NULL; biosid++)
@@ -68,10 +69,19 @@ static bool naomi_LoadBios(const char *filename, zip *child_zip)
 
 	zip *zip_archive = zip_open((basepath + filename).c_str(), 0, NULL);
 
-	int romid = 0;
-	while (bios->blobs[romid].filename != NULL)
+	bool found_region = false;
+	for (int romid = 0; bios->blobs[romid].filename != NULL; romid++)
 	{
-		if (bios->blobs[romid].blob_type == Copy)
+	   if (region == -1)
+		  region = bios->blobs[romid].region;
+	   else
+	   {
+		  if (bios->blobs[romid].region != region)
+			 continue;
+	   }
+	   found_region = true;
+
+	    if (bios->blobs[romid].blob_type == Copy)
 		{
 			verify(bios->blobs[romid].offset + bios->blobs[romid].length <= rom_chip->size);
 			verify(bios->blobs[romid].src_offset + bios->blobs[romid].length <= rom_chip->size);
@@ -122,7 +132,7 @@ static bool naomi_LoadBios(const char *filename, zip *child_zip)
 	   // Reload the writeable portion of the FlashROM
 	   sys_nvmem_flash.Reload();
 
-	return true;
+	return found_region;
 
 error:
 	if (zip_archive != NULL)
@@ -160,11 +170,24 @@ static bool naomi_cart_LoadZip(char *filename)
 		return false;
 	}
 
+	const char *bios = "naomi.zip";
 	if (game->bios != NULL)
+	   bios = game->bios;
+	if (!naomi_LoadBios(bios, zip_archive, settings.dreamcast.region))
 	{
-		if (!naomi_LoadBios(game->bios, zip_archive))
-			return false;
+	   printf("Warning: Region %d bios not found in %s\n", settings.dreamcast.region, bios);
+	   if (!naomi_LoadBios(bios, zip_archive, -1))
+	   {
+		  // If a specific BIOS is needed for this game, fail.
+		  if (game->bios != NULL || !bios_loaded)
+		  {
+			 printf("Error: cannot load BIOS. Exiting\n");
+			 return false;
+		  }
+		  // otherwise use the default BIOS
+	   }
 	}
+	bios_loaded = true;
 
 	switch (game->cart_type)
 	{
@@ -239,7 +262,7 @@ static bool naomi_cart_LoadZip(char *filename)
 				}
 				size_t read = zip_fread(file, buf, game->blobs[romid].length);
 				CurrentCartridge->SetKeyData(buf);
-				printf("Loaded %s: %lx bytes M4 Key\n", game->blobs[romid].filename, read);
+				printf("Loaded %s: %lx bytes cart key\n", game->blobs[romid].filename, read);
 			}
 			else
 				die("Unknown blob type\n");

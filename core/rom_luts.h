@@ -103,4 +103,5 @@ static struct game_type_naomi lut_games_naomi[] =
    { "BLOPON"                            , -1, -1, -1, -1, -1, -1,  -1,  5, -1 },                /* Block Pong (analog axes) */
    { "BASS FISHING SIMULATOR VER.A"      , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Sega Bass Fishing Challenge (Track-ball) */
    { "DRIVE"                             , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* WaiWai Drive */
+   { "KICK '4' CASH"                     , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Kick '4' Cash */
 };

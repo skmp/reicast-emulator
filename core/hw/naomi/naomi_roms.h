@@ -6,7 +6,7 @@
 	Rom information from mame (https://github.com/mamedev/mame)
 	license:LGPL-2.1+
 	copyright-holders: Samuele Zannoli, R. Belmont, ElSemi, David Haywood, Angelo Salese, Olivier Galibert, MetalliC
-
+	
 	This file is part of reicast.
 
     reicast is free software: you can redistribute it and/or modify
@@ -219,12 +219,12 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
-    // Kick '4' Cash
+    // Kick '4' Cash (Export)
     {
         "kick4csh.zip",
         0x9000000,
         0x820857c9,
-        "naomi.zip",			// Needs Export BIOS
+        "naomi.zip",
         M1,
         {
             { "epr-24212.ic11",   0x0000000, 0x400000 },
@@ -375,6 +375,24 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Shootout Pool Prize (Export) / Shootout Pool The Medal (Japan) Version B (prototype)
+    {
+        "shootplmp.zip",
+        0x3000000,
+        0x9dbde9cd,
+        NULL,
+        M1,
+        {
+            { "rom0.ic22", 0x0000000, 0x400000 },
+            { "rom1.ic1s", 0x0800000, 0x800000 },
+            { "rom2.ic2s", 0x1000000, 0x800000 },
+            { "rom3.ic3s", 0x1800000, 0x800000 },
+            { "rom4.ic4s", 0x2000000, 0x800000 },
+            // IC5 - IC21 populated, empty.
+            { NULL, 0, 0 },
+        }
+    },
+
     // Touch de Uno! 2 (Japan)
     {
         "tduno2.zip",
@@ -463,6 +481,187 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // 18 Wheeler (deluxe)
+    {
+        "18wheelro.zip",
+        0x0a800000,
+        0x2807cf54,
+        NULL,
+        M2,
+        {
+            { "epr-22185.ic22",  0x0000000, 0x400000 },
+            { "mpr-22164.ic1",   0x0800000, 0x800000 },
+            { "mpr-22165.ic2",   0x1000000, 0x800000 },
+            { "mpr-22166.ic3",   0x1800000, 0x800000 },
+            { "mpr-22167.ic4",   0x2000000, 0x800000 },
+            { "mpr-22168.ic5",   0x2800000, 0x800000 },
+            { "mpr-22169.ic6",   0x3000000, 0x800000 },
+            { "mpr-22170.ic7",   0x3800000, 0x800000 },
+            { "mpr-22171.ic8",   0x4000000, 0x800000 },
+            { "mpr-22172.ic9",   0x4800000, 0x800000 },
+            { "mpr-22173.ic10",  0x5000000, 0x800000 },
+            { "mpr-22174.ic11",  0x5800000, 0x800000 },
+            { "mpr-22175.ic12s", 0x6000000, 0x800000 },
+            { "mpr-22176.ic13s", 0x6800000, 0x800000 },
+            { "mpr-22177.ic14s", 0x7000000, 0x800000 },
+            { "mpr-22178.ic15s", 0x7800000, 0x800000 },
+            { "mpr-22179.ic16s", 0x8000000, 0x800000 },
+            { "mpr-22180.ic17s", 0x8800000, 0x800000 },
+            { "mpr-22181.ic18s", 0x9000000, 0x800000 },
+            { "mpr-22182.ic19s", 0x9800000, 0x800000 },
+            { "mpr-22183.ic20s", 0xa000000, 0x800000 },
+            
+            // JVS I/O board 837-13844, external Z80 code for Sega 315-6146 "MIE" MCU
+            //ROM_REGION( 0x20000, "jvsio", ROMREGION_ERASEFF)
+            //ROM_LOAD( "epr-21868.ic7", 0x000000, 0x010000, CRC(c306a51f) SHA1(7833b73dc34c4c62401a30637968f46b949ceac0) )
+            
+            // later version of the same I/O board (temporary, we'll handle this properly later)
+            //ROM_LOAD( "epr-22082.ic7", 0x010000, 0x010000, CRC(de26fc6c) SHA1(cf8ef7969770fff8697299c3e3152413b898a967) )
+            
+            // 837-14645 JVS I/O, uses same PCB as 837-13844
+            //ROM_LOAD( "epr-24354.ic7", 0x000000, 0x010000, CRC(0ce43505) SHA1(7700e3acfb756dfbf95f3ff14786d1bcb57e2f7d) )
+            
+            // 18 Wheeler motor controller 838-13992, code is for a TMPZ84C015 which is Z80 compatible
+            //ROM_REGION( 0x10000, "motorio", ROMREGION_ERASEFF)
+            //ROM_LOAD( "epr-23000.ic8", 0x000000, 0x010000, CRC(e3b162f7) SHA1(52c7ad759c3c4a3148764e14d77ba5006bc8af48) )
+            
+            { NULL, 0, 0 },
+        }
+    },
+    // 18 Wheeler (deluxe) (Rev T)
+    {
+        "18wheelrt.zip",
+        0x0a800000,
+        0x2807cf54,
+        NULL,
+        M2,
+        {
+            { "epr-22185t.ic22", 0x0000000, 0x400000 },
+            { "mpr-22164.ic1",   0x0800000, 0x800000 },
+            { "mpr-22165.ic2",   0x1000000, 0x800000 },
+            { "mpr-22166.ic3",   0x1800000, 0x800000 },
+            { "mpr-22167.ic4",   0x2000000, 0x800000 },
+            { "mpr-22168.ic5",   0x2800000, 0x800000 },
+            { "mpr-22169.ic6",   0x3000000, 0x800000 },
+            { "mpr-22170.ic7",   0x3800000, 0x800000 },
+            { "mpr-22171.ic8",   0x4000000, 0x800000 },
+            { "mpr-22172.ic9",   0x4800000, 0x800000 },
+            { "mpr-22173.ic10",  0x5000000, 0x800000 },
+            { "mpr-22174.ic11",  0x5800000, 0x800000 },
+            { "mpr-22175.ic12s", 0x6000000, 0x800000 },
+            { "mpr-22176.ic13s", 0x6800000, 0x800000 },
+            { "mpr-22177.ic14s", 0x7000000, 0x800000 },
+            { "mpr-22178.ic15s", 0x7800000, 0x800000 },
+            { "mpr-22179.ic16s", 0x8000000, 0x800000 },
+            { "mpr-22180.ic17s", 0x8800000, 0x800000 },
+            { "mpr-22181.ic18s", 0x9000000, 0x800000 },
+            { "mpr-22182.ic19s", 0x9800000, 0x800000 },
+            { "mpr-22183.ic20s", 0xa000000, 0x800000 },
+
+            // JVS I/O board 837-13844, external Z80 code for Sega 315-6146 "MIE" MCU
+            //ROM_REGION( 0x20000, "jvsio", ROMREGION_ERASEFF)
+            //ROM_LOAD( "epr-21868.ic7", 0x000000, 0x010000, CRC(c306a51f) SHA1(7833b73dc34c4c62401a30637968f46b949ceac0) )
+            
+            // later version of the same I/O board (temporary, we'll handle this properly later)
+            //ROM_LOAD( "epr-22082.ic7", 0x010000, 0x010000, CRC(de26fc6c) SHA1(cf8ef7969770fff8697299c3e3152413b898a967) )
+            
+            // 837-14645 JVS I/O, uses same PCB as 837-13844
+            //ROM_LOAD( "epr-24354.ic7", 0x000000, 0x010000, CRC(0ce43505) SHA1(7700e3acfb756dfbf95f3ff14786d1bcb57e2f7d) )
+            
+            // 18 Wheeler motor controller 838-13992, code is for a TMPZ84C015 which is Z80 compatible
+            //ROM_REGION( 0x10000, "motorio", ROMREGION_ERASEFF)
+            //ROM_LOAD( "epr-23000.ic8", 0x000000, 0x010000, CRC(e3b162f7) SHA1(52c7ad759c3c4a3148764e14d77ba5006bc8af48) )
+            
+            { NULL, 0, 0 },
+        }
+    },
+    // 18 Wheeler (standard)
+    {
+        "18wheels.zip",
+        0x0a800000,
+        0x2807cf54,
+        NULL,
+        M2,
+        {
+            { "epr-23298.ic22",  0x0000000, 0x400000 },
+            { "mpr-22164.ic1",   0x0800000, 0x800000 },
+            { "mpr-22165.ic2",   0x1000000, 0x800000 },
+            { "mpr-22166.ic3",   0x1800000, 0x800000 },
+            { "mpr-22167.ic4",   0x2000000, 0x800000 },
+            { "mpr-22168.ic5",   0x2800000, 0x800000 },
+            { "mpr-22169.ic6",   0x3000000, 0x800000 },
+            { "mpr-22170.ic7",   0x3800000, 0x800000 },
+            { "mpr-22171.ic8",   0x4000000, 0x800000 },
+            { "mpr-22172.ic9",   0x4800000, 0x800000 },
+            { "mpr-22173.ic10",  0x5000000, 0x800000 },
+            { "mpr-22174.ic11",  0x5800000, 0x800000 },
+            { "mpr-22175.ic12s", 0x6000000, 0x800000 },
+            { "mpr-22176.ic13s", 0x6800000, 0x800000 },
+            { "mpr-22177.ic14s", 0x7000000, 0x800000 },
+            { "mpr-22178.ic15s", 0x7800000, 0x800000 },
+            { "mpr-22179.ic16s", 0x8000000, 0x800000 },
+            { "mpr-22180.ic17s", 0x8800000, 0x800000 },
+            { "mpr-22181.ic18s", 0x9000000, 0x800000 },
+            { "mpr-22182.ic19s", 0x9800000, 0x800000 },
+            { "mpr-22183.ic20s", 0xa000000, 0x800000 },
+            
+            // JVS I/O board 837-13844, code is for a Z80 of unknown type (it's inside the big Sega ASIC)
+            //ROM_REGION( 0x20000, "jvsio", ROMREGION_ERASEFF)
+            //ROM_LOAD( "epr-21868.ic7", 0x000000, 0x010000, CRC(c306a51f) SHA1(7833b73dc34c4c62401a30637968f46b949ceac0) )
+            
+            // later version of the same I/O board (temporary, we'll handle this properly later)
+            //ROM_LOAD( "epr-22082.ic7", 0x010000, 0x010000, CRC(de26fc6c) SHA1(cf8ef7969770fff8697299c3e3152413b898a967) )
+            
+            // 18 Wheeler motor controller 838-13992, code is for a TMPZ84C015 which is Z80 compatible
+            //ROM_REGION( 0x10000, "motorio", ROMREGION_ERASEFF)
+            //ROM_LOAD( "epr-23000.ic8", 0x000000, 0x010000, CRC(e3b162f7) SHA1(52c7ad759c3c4a3148764e14d77ba5006bc8af48) )
+            
+            { NULL, 0, 0 },
+        }
+    },
+    // 18 Wheeler (upright)
+    {
+        "18wheelu.zip",
+        0x0a800000,
+        0x2807cf54,
+        NULL,
+        M2,
+        {
+            { "epr-23299.ic22",  0x0000000, 0x400000 },
+            { "mpr-22164.ic1",   0x0800000, 0x800000 },
+            { "mpr-22165.ic2",   0x1000000, 0x800000 },
+            { "mpr-22166.ic3",   0x1800000, 0x800000 },
+            { "mpr-22167.ic4",   0x2000000, 0x800000 },
+            { "mpr-22168.ic5",   0x2800000, 0x800000 },
+            { "mpr-22169.ic6",   0x3000000, 0x800000 },
+            { "mpr-22170.ic7",   0x3800000, 0x800000 },
+            { "mpr-22171.ic8",   0x4000000, 0x800000 },
+            { "mpr-22172.ic9",   0x4800000, 0x800000 },
+            { "mpr-22173.ic10",  0x5000000, 0x800000 },
+            { "mpr-22174.ic11",  0x5800000, 0x800000 },
+            { "mpr-22175.ic12s", 0x6000000, 0x800000 },
+            { "mpr-22176.ic13s", 0x6800000, 0x800000 },
+            { "mpr-22177.ic14s", 0x7000000, 0x800000 },
+            { "mpr-22178.ic15s", 0x7800000, 0x800000 },
+            { "mpr-22179.ic16s", 0x8000000, 0x800000 },
+            { "mpr-22180.ic17s", 0x8800000, 0x800000 },
+            { "mpr-22181.ic18s", 0x9000000, 0x800000 },
+            { "mpr-22182.ic19s", 0x9800000, 0x800000 },
+            { "mpr-22183.ic20s", 0xa000000, 0x800000 },
+            
+            // JVS I/O board 837-13844, code is for a Z80 of unknown type (it's inside the big Sega ASIC)
+            //ROM_REGION( 0x20000, "jvsio", ROMREGION_ERASEFF)
+            //ROM_LOAD( "epr-21868.ic7", 0x000000, 0x010000, CRC(c306a51f) SHA1(7833b73dc34c4c62401a30637968f46b949ceac0) )
+            
+            // later version of the same I/O board (temporary, we'll handle this properly later)
+            //ROM_LOAD( "epr-22082.ic7", 0x010000, 0x010000, CRC(de26fc6c) SHA1(cf8ef7969770fff8697299c3e3152413b898a967) )
+            
+            // 840-0023    2000     317-0273-COM   Naomi
+            //ROM_PARAMETER( ":rom_board:segam2crypt:key", "2807cf54" )
+            
+            { NULL, 0, 0 },
+        }
+    },
     // Airline Pilots (Rev B) 
     {
         "alpilot.zip",
@@ -491,6 +690,29 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Airline Pilots (Japan, Rev A)
+    {
+        "alpilotj.zip",
+        0x0b000000,
+        0x28070e41,
+        "airlbios.zip",
+        M2,
+        {
+            { "epr-21739a.ic22", 0x000000,  0x400000 },
+            { "mpr-21728.ic1",   0x0800000, 0x800000 },
+            { "mpr-21729.ic2",   0x1000000, 0x800000 },
+            { "mpr-21730.ic3",   0x1800000, 0x800000 },
+            { "mpr-21731.ic4",   0x2000000, 0x800000 },
+            { "mpr-21732.ic5",   0x2800000, 0x800000 },
+            { "mpr-21733.ic6",   0x3000000, 0x800000 },
+            { "mpr-21734.ic7",   0x3800000, 0x800000 },
+            { "mpr-21735.ic8",   0x4000000, 0x800000 },
+            { "mpr-21736.ic9",   0x4800000, 0x800000 },
+            { "mpr-21737.ic10",  0x5000000, 0x800000 },
+            { "mpr-21738.ic11",  0x5800000, 0x800000 },
+            { NULL, 0, 0 },
+        }
+    },
     // Alien Front (Rev T)
     {
         "alienfnt.zip",
@@ -508,6 +730,23 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Alien Front (Rev A)
+    {
+        "alienfnta.zip",
+        0x05800000,
+        0x28174343,
+        NULL,
+        M2,
+        {
+            { "epr-23586a.ic22", 0x0000000, 0x0400000 },
+            { "mpr-23581.ic1",   0x0800000, 0x1000000 },
+            { "mpr-23582.ic2",   0x1800000, 0x1000000 },
+            { "mpr-23583.ic3",   0x2800000, 0x1000000 },
+            { "mpr-23584.ic4",   0x3800000, 0x1000000 },
+            { "mpr-23585.ic5",   0x4800000, 0x1000000 },
+            { NULL, 0, 0 },
+        }
+    },
     // Capcom Vs. SNK Millennium Fight 2000 (JPN, USA, EXP, KOR, AUS) (Rev C)
     {
         "capsnk.zip",
@@ -516,7 +755,7 @@ Games[] =
         NULL,
         M2,
         {
-            { "epr-23511c.ic22", 0x0000000, 0x0400000 },
+            { "epr-23511c.ic22", 0x000000,  0x400000  },
             { "mpr-23504.ic1",   0x0800000, 0x1000000 },
             { "mpr-23505.ic2",   0x1800000, 0x1000000 },
             { "mpr-23506.ic3",   0x2800000, 0x1000000 },
@@ -524,6 +763,44 @@ Games[] =
             { "mpr-23508.ic5",   0x4800000, 0x1000000 },
             { "mpr-23509.ic6",   0x5800000, 0x1000000 },
             { "mpr-23510.ic7",   0x6800000, 0x1000000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // Capcom Vs. SNK Millennium Fight 2000 (Rev A)
+    {
+        "capsnka.zip",
+        0x07800000,
+        0x00000000,
+        NULL,
+        M2,
+        {
+            { "epr-23511a.ic22", 0x000000,  0x400000  },
+            { "mpr-23504.ic1",   0x0800000, 0x1000000 },
+            { "mpr-23505.ic2",   0x1800000, 0x1000000 },
+            { "mpr-23506.ic3",   0x2800000, 0x1000000 },
+            { "mpr-23507.ic4",   0x3800000, 0x1000000 },
+            { "mpr-23508.ic5",   0x4800000, 0x1000000 },
+            { "mpr-23509.ic6",   0x5800000, 0x1000000 },
+            { "mpr-23510.ic7",   0x6800000, 0x1000000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // Capcom Vs. SNK Millennium Fight 2000
+    {
+        "capsnkb.zip",
+        0x07800000,
+        0x00000000,
+        NULL,
+        M2,
+        {
+            { "epr-23511.ic22", 0x000000,  0x400000  },
+            { "mpr-23504.ic1",  0x0800000, 0x1000000 },
+            { "mpr-23505.ic2",  0x1800000, 0x1000000 },
+            { "mpr-23506.ic3",  0x2800000, 0x1000000 },
+            { "mpr-23507.ic4",  0x3800000, 0x1000000 },
+            { "mpr-23508.ic5",  0x4800000, 0x1000000 },
+            { "mpr-23509.ic6",  0x5800000, 0x1000000 },
+            { "mpr-23510.ic7",  0x6800000, 0x1000000 },
             { NULL, 0, 0 },
         }
     },
@@ -627,6 +904,26 @@ Games[] =
             { "mpr-23425.ic6",   0x3000000, 0x0800000 },
             { "mpr-23426.ic7",   0x3800000, 0x0800000 },
             { "mpr-23427.ic8",   0x4000000, 0x0800000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // Cosmic Smash
+    {
+        "csmasho.zip",
+        0x04800000,
+        0x28103347,
+        NULL,
+        M2,
+        {
+            { "epr-23428.ic22", 0x0000000, 0x400000  },
+            { "mpr-23420.ic1",  0x0800000, 0x0800000 },
+            { "mpr-23421.ic2",  0x1000000, 0x0800000 },
+            { "mpr-23422.ic3",  0x1800000, 0x0800000 },
+            { "mpr-23423.ic4",  0x2000000, 0x0800000 },
+            { "mpr-23424.ic5",  0x2800000, 0x0800000 },
+            { "mpr-23425.ic6",  0x3000000, 0x0800000 },
+            { "mpr-23426.ic7",  0x3800000, 0x0800000 },
+            { "mpr-23427.ic8",  0x4000000, 0x0800000 },
             { NULL, 0, 0 },
         }
     },
@@ -802,7 +1099,45 @@ Games[] =
         NULL,
         M2,
         {
-            { "epr-22207.ic22", 0x0000000, 0x0400000 }, 
+            { "epr-22207.ic22",  0x0000000, 0x0400000 }, 
+            { "mpr-22100.ic1",   0x0800000, 0x0800000 },
+            { "mpr-22101.ic2",   0x1000000, 0x0800000 },
+            { "mpr-22102.ic3",   0x1800000, 0x0800000 },
+            { "mpr-22103.ic4",   0x2000000, 0x0800000 },
+            { "mpr-22104.ic5",   0x2800000, 0x0800000 },
+            { "mpr-22105.ic6",   0x3000000, 0x0800000 },
+            { "mpr-22106.ic7",   0x3800000, 0x0800000 },
+            { "mpr-22107.ic8",   0x4000000, 0x0800000 },
+            { "mpr-22108.ic9",   0x4800000, 0x0800000 },
+            { "mpr-22109.ic10",  0x5000000, 0x0800000 },
+            { "mpr-22110.ic11",  0x5800000, 0x0800000 },
+            { "mpr-22111.ic12s", 0x6000000, 0x0800000 },
+            { "mpr-22112.ic13s", 0x6800000, 0x0800000 },
+            { "mpr-22113.ic14s", 0x7000000, 0x0800000 },
+            { "mpr-22114.ic15s", 0x7800000, 0x0800000 },
+            { "mpr-22115.ic16s", 0x8000000, 0x0800000 },
+            { "mpr-22116.ic17s", 0x8800000, 0x0800000 },
+            { "mpr-22117.ic18s", 0x9000000, 0x0800000 },
+            { "mpr-22118.ic19s", 0x9800000, 0x0800000 },
+            { "mpr-22119.ic20s", 0xa000000, 0x0800000 },
+            { "mpr-22120.ic21s", 0xa800000, 0x0800000 },
+            
+            // on-cart X76F100 eeprom contents
+            //ROM_REGION( 0x84, "naomibd_eeprom", 0 )
+            //ROM_LOAD( "841-0003.sf",  0x000000, 0x000084, CRC(3a119a17) SHA1(d37a092cca7c9cfc5f2637b355af90a65d04013e) )
+            
+            { NULL, 0, 0 },
+        }
+    },
+    // Dead or Alive 2 (Rev A)
+    {
+        "doa2a.zip",
+        0xb000000,
+        0x0008ad01,
+        NULL,
+        M2,
+        {
+            { "epr-22121a.ic22", 0x0000000, 0x0400000 },
             { "mpr-22100.ic1",   0x0800000, 0x0800000 },
             { "mpr-22101.ic2",   0x1000000, 0x0800000 },
             { "mpr-22102.ic3",   0x1800000, 0x0800000 },
@@ -1004,6 +1339,39 @@ Games[] =
             { "mpr-22845.ic19s", 0x9800000, 0x800000 },
             { "mpr-22846.ic20s", 0xa000000, 0x800000 },
             { "mpr-22847.ic21s", 0xa800000, 0x800000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // Ferrari F355 Challenge (twin/deluxe, preview)
+    {
+        "f355twinp.zip",
+        0x0b000000,
+        0x2806efd4,
+        "f355bios.zip",
+        M2,
+        {
+            { "epr-22848p.ic22", 0x0000000, 0x400000 },
+            { "rom1.ic1s",       0x0800000, 0x800000 },
+            { "rom2.ic2s",       0x1000000, 0x800000 },
+            { "rom3.ic3s",       0x1800000, 0x800000 },
+            { "rom4.ic4s",       0x2000000, 0x800000 },
+            { "rom5.ic5s",       0x2800000, 0x800000 },
+            { "rom6.ic6s",       0x3000000, 0x800000 },
+            { "rom7.ic7s",       0x3800000, 0x800000 },
+            { "rom8.ic8s",       0x4000000, 0x800000 },
+            { "rom9.ic9s",       0x4800000, 0x800000 },
+            { "rom10.ic10s",     0x5000000, 0x800000 },
+            { "rom11.ic11s",     0x5800000, 0x800000 },
+            { "rom12.ic12s",     0x6000000, 0x800000 },
+            { "rom13.ic13s",     0x6800000, 0x800000 },
+            { "rom14.ic14s",     0x7000000, 0x800000 },
+            { "rom15.ic15s",     0x7800000, 0x800000 },
+            { "rom16.ic16s",     0x8000000, 0x800000 },
+            { "rom17.ic17s",     0x8800000, 0x800000 },
+            { "rom18.ic18s",     0x9000000, 0x800000 },
+            { "rom19.ic19s",     0x9800000, 0x800000 },
+            { "rom20.ic20s",     0xa000000, 0x800000 },
+            { "rom21.ic21s",     0xa800000, 0x800000 },
             { NULL, 0, 0 },
         }
     },
@@ -1238,6 +1606,105 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // The House of the Dead 2
+    {
+        "hotd2o.zip",
+        0xa800000,
+        0xfffffff, // not populated
+        "hod2bios.zip",
+        M2,
+        {
+            { "epr-21385.ic22",  0x0000000, 0x200000 },
+            { "epr-21385.ic22",  0x0200000, 0x200000 }, //reload
+            { "mpr-21386.ic1",   0x0800000, 0x800000 },
+            { "mpr-21387.ic2",   0x1000000, 0x800000 },
+            { "mpr-21388.ic3",   0x1800000, 0x800000 },
+            { "mpr-21389.ic4",   0x2000000, 0x800000 },
+            { "mpr-21390.ic5",   0x2800000, 0x800000 },
+            { "mpr-21391.ic6",   0x3000000, 0x800000 },
+            { "mpr-21392.ic7",   0x3800000, 0x800000 },
+            { "mpr-21393.ic8",   0x4000000, 0x800000 },
+            { "mpr-21394.ic9",   0x4800000, 0x800000 },
+            { "mpr-21395.ic10",  0x5000000, 0x800000 },
+            { "mpr-21396.ic11",  0x5800000, 0x800000 },
+            { "mpr-21397.ic12s", 0x6000000, 0x800000 },
+            { "mpr-21398.ic13s", 0x6800000, 0x800000 },
+            { "mpr-21399.ic14s", 0x7000000, 0x800000 },
+            { "mpr-21400.ic15s", 0x7800000, 0x800000 },
+            { "mpr-21401.ic16s", 0x8000000, 0x800000 },
+            { "mpr-21402.ic17s", 0x8800000, 0x800000 },
+            { "mpr-21403.ic18s", 0x9000000, 0x800000 },
+            { "mpr-21404.ic19s", 0x9800000, 0x800000 },
+            { "mpr-21405.ic20s", 0xa000000, 0x800000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // The House of the Dead 2 (Export)
+    {
+        "hotd2e.zip",
+        0xa800000,
+        0xfffffff, // not populated
+        "hod2bios.zip",
+        M2,
+        {
+            { "epr-21805.ic22",  0x0000000, 0x200000 },
+            { "epr-21805.ic22",  0x0200000, 0x200000 }, //reload
+            { "mpr-21386.ic1",   0x0800000, 0x800000 },
+            { "mpr-21387.ic2",   0x1000000, 0x800000 },
+            { "mpr-21388.ic3",   0x1800000, 0x800000 },
+            { "mpr-21389.ic4",   0x2000000, 0x800000 },
+            { "mpr-21390.ic5",   0x2800000, 0x800000 },
+            { "mpr-21391.ic6",   0x3000000, 0x800000 },
+            { "mpr-21392.ic7",   0x3800000, 0x800000 },
+            { "mpr-21393.ic8",   0x4000000, 0x800000 },
+            { "mpr-21394.ic9",   0x4800000, 0x800000 },
+            { "mpr-21395.ic10",  0x5000000, 0x800000 },
+            { "mpr-21396.ic11",  0x5800000, 0x800000 },
+            { "mpr-21397.ic12s", 0x6000000, 0x800000 },
+            { "mpr-21398.ic13s", 0x6800000, 0x800000 },
+            { "mpr-21399.ic14s", 0x7000000, 0x800000 },
+            { "mpr-21400.ic15s", 0x7800000, 0x800000 },
+            { "mpr-21401.ic16s", 0x8000000, 0x800000 },
+            { "mpr-21402.ic17s", 0x8800000, 0x800000 },
+            { "mpr-21403.ic18s", 0x9000000, 0x800000 },
+            { "mpr-21404.ic19s", 0x9800000, 0x800000 },
+            { "mpr-21405.ic20s", 0xa000000, 0x800000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // The House of the Dead 2 (prototype)
+    {
+        "hotd2p.zip",
+        0xa800000,
+        0xfffffff, // not populated
+        "hod2bios.zip",
+        M2,
+        {
+            { "hotd2proto.ic22", 0x000000,  0x200000 },
+            { "hotd2proto.ic22", 0x200000,  0x200000 },
+            { "mpr-21386.ic1",   0x0800000, 0x800000 },
+            { "mpr-21387.ic2",   0x1000000, 0x800000 },
+            { "mpr-21388.ic3",   0x1800000, 0x800000 },
+            { "mpr-21389.ic4",   0x2000000, 0x800000 },
+            { "mpr-21390.ic5",   0x2800000, 0x800000 },
+            { "mpr-21391.ic6",   0x3000000, 0x800000 },
+            { "mpr-21392.ic7",   0x3800000, 0x800000 },
+            { "mpr-21393.ic8",   0x4000000, 0x800000 },
+            { "mpr-21394.ic9",   0x4800000, 0x800000 },
+            { "mpr-21395.ic10",  0x5000000, 0x800000 },
+            { "mpr-21396.ic11",  0x5800000, 0x800000 },
+            { "mpr-21397.ic12s", 0x6000000, 0x800000 },
+            { "mpr-21398.ic13s", 0x6800000, 0x800000 },
+            { "mpr-21399.ic14s", 0x7000000, 0x800000 },
+            { "mpr-21400.ic15s", 0x7800000, 0x800000 },
+            { "mpr-21401.ic16s", 0x8000000, 0x800000 },
+            { "mpr-21402.ic17s", 0x8800000, 0x800000 },
+            { "mpr-21403.ic18s", 0x9000000, 0x800000 },
+            { "mpr-21404.ic19s", 0x9800000, 0x800000 },
+            { "mpr-21405.ic20s", 0xa000000, 0x800000 },
+            { NULL, 0, 0 },
+        }
+    },
     // Inu No Osanpo / Dog Walking (Rev A)
     {
         "inunoos.zip",
@@ -1354,6 +1821,23 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.001) (World)
+    {
+        "mushi2eo.zip",
+        0x07800000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        {
+            { "fpr-24333.ic8", 0x0000000, 0x4000000 },
+            { "fpr-24334.ic9", 0x4000000, 0x4000000 },
+            
+            //ROM_REGION( 0x800, "pic_readout", 0 )
+            //ROM_LOAD( "317-0437-com.ic3", 0, 0x800, CRC(3b6fcee8) SHA1(65fbdd3b8c61a4b5ccb6389b25483a7ecdc0794d) )
+            
+            { NULL, 0, 0 },
+        }
+    },
     // Mushiking The King Of Beetle 2K5 1st
     {
         "mushi2k5.zip",
@@ -1370,6 +1854,32 @@ Games[] =
             { "mpr-24280.ic5",  0x4800000, 0x1000000 },
             { "mpr-24281.ic6",  0x5800000, 0x1000000 },
             { "mpr-24282.ic7",  0x6800000, 0x1000000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // Mushiking The King Of Beetle (MUSHIUSA '04 1ST, Prototype)
+    {
+        "mushikep.zip",
+        0x07800000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        {
+            { "rom1.ic1s",    0x0800000, 0x800000 },
+            { "rom2.ic2s",    0x1000000, 0x800000 },
+            { "rom3.ic3s",    0x1800000, 0x800000 },
+            { "rom4.ic4s",    0x2000000, 0x800000 },
+            { "rom5.ic5s",    0x2800000, 0x800000 },
+            { "rom6.ic6s",    0x3000000, 0x800000 },
+            { "rom7.ic7s",    0x3800000, 0x800000 },        
+            // not used, contain random garbage
+            // ROM_LOAD( "rom8.ic8s",    0x4000000, 0x800000, CRC(a1d1339e) SHA1(2f5dd8472c3b983bce7d14e076c8cb7b6bd535ff) )
+            // ROM_LOAD( "rom9.ic9s",    0x4800000, 0x800000, CRC(a1d1339e) SHA1(2f5dd8472c3b983bce7d14e076c8cb7b6bd535ff) )
+            // ROM_LOAD( "rom10.ic10s",  0x5000000, 0x800000, CRC(a1d1339e) SHA1(2f5dd8472c3b983bce7d14e076c8cb7b6bd535ff) )
+            // ROM_LOAD( "rom11.ic11s",  0x5800000, 0x800000, CRC(a1d1339e) SHA1(2f5dd8472c3b983bce7d14e076c8cb7b6bd535ff) )
+            
+            //ROM_REGION(0x84, "some_eeprom", 0)
+            //ROM_LOAD("sflash.ic37", 0x000000, 0x000084, CRC(88f1db52) SHA1(5ebfa6c45abf2fa6f560832f366ed03ca91709a5) )
             { NULL, 0, 0 },
         }
     },
@@ -1423,6 +1933,59 @@ Games[] =
             { "nja1ma8.4d",  0x8000000, 0x1000000 },
             { "nja1ma9.4c",  0x9000000, 0x1000000 },
             { "nja1ma10.4b", 0xa000000, 0x1000000 },
+            
+            //ROM_REGION( 0x20000, "jyu_io", 0 )  // H8/3334-based I/O board ROM, eventually should be separated out
+            //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
+            
+            { NULL, 0, 0 },
+        }
+    },
+    // Ninja Assault (Asia, NJA4 Ver.A)
+    {
+        "ninjaslta.zip",
+        0xb000000,
+        0x000ca510,
+        NULL,
+        M2,
+        {
+            { "nja4vera.2d",     0x0800000, 0x0800000 },
+            { "nja1vera.2c",     0x1000000, 0x0800000 },
+            { "nja1vera.2b",     0x1800000, 0x0800000 },
+            { "nja1ma2.4l",      0x2000000, 0x1000000 },
+            { "nja1ma3.4k",      0x3000000, 0x1000000 },
+            { "nja1ma4.4j",      0x4000000, 0x1000000 },
+            { "nja1ma5.4h",      0x5000000, 0x1000000 },
+            { "nja1ma6.4f",      0x6000000, 0x1000000 },
+            { "nja1ma7.4e",      0x7000000, 0x1000000 },
+            { "nja1ma8.4d",      0x8000000, 0x1000000 },
+            { "nja1ma9.4c",      0x9000000, 0x1000000 },
+            { "nja1ma10.4b",     0xa000000, 0x1000000 },
+            
+            //ROM_REGION( 0x20000, "jyu_io", 0 )  // H8/3334-based I/O board ROM, eventually should be separated out
+            //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
+            { NULL, 0, 0 },
+        }
+    },
+    // Ninja Assault (Japan, NJA1 Ver.A)
+    {
+        "ninjasltj.zip",
+        0xb000000,
+        0x000ca510,
+        NULL,
+        M2,
+        {
+            { "nja1vera.2d",     0x0800000, 0x0800000 },
+            { "nja1vera.2c",     0x1000000, 0x0800000 },
+            { "nja1vera.2b",     0x1800000, 0x0800000 },
+            { "nja1ma2.4l",      0x2000000, 0x1000000 },
+            { "nja1ma3.4k",      0x3000000, 0x1000000 },
+            { "nja1ma4.4j",      0x4000000, 0x1000000 },
+            { "nja1ma5.4h",      0x5000000, 0x1000000 },
+            { "nja1ma6.4f",      0x6000000, 0x1000000 },
+            { "nja1ma7.4e",      0x7000000, 0x1000000 },
+            { "nja1ma8.4d",      0x8000000, 0x1000000 },
+            { "nja1ma9.4c",      0x9000000, 0x1000000 },
+            { "nja1ma10.4b",     0xa000000, 0x1000000 },
             
             //ROM_REGION( 0x20000, "jyu_io", 0 )  // H8/3334-based I/O board ROM, eventually should be separated out
             //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
@@ -1573,6 +2136,27 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Power Stone 2 (bootleg)
+    {
+        "pstone2b.zip",
+        0x05000000,
+        0x000b8dc0,
+        NULL,
+        M2,
+        {
+            { "00.ic1",  0x0000000, 0x0800000 },
+            { "01.ic2",  0x0800000, 0x0800000 },
+            { "02.ic3",  0x1000000, 0x0800000 },
+            { "03.ic4",  0x1800000, 0x0800000 },
+            { "04.ic5",  0x2000000, 0x0800000 },
+            { "05.ic6",  0x2800000, 0x0800000 },
+            { "06.ic7",  0x3000000, 0x0800000 },
+            { "07.ic8",  0x3800000, 0x0800000 },
+            { "08.ic9",  0x4000000, 0x0800000 },
+            { "09.ic10", 0x4800000, 0x0800000 },
+            { NULL, 0, 0 },
+        }
+    },
     // Puyo Puyo Da! (Japan)
     {
         "puyoda.zip",
@@ -1627,6 +2211,28 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Ring Out 4x4
+    {
+        "ringouto.zip",
+        0x05800000,
+        0x280b1e40,
+        NULL,
+        M2,
+        {
+            { "epr-21779.ic22", 0x0000000, 0x400000 },
+            { "mpr-21761.ic1",  0x0800000, 0x800000 },
+            { "mpr-21762.ic2",  0x1000000, 0x800000 },
+            { "mpr-21763.ic3",  0x1800000, 0x800000 },
+            { "mpr-21764.ic4",  0x2000000, 0x800000 },
+            { "mpr-21765.ic5",  0x2800000, 0x800000 },
+            { "mpr-21766.ic6",  0x3000000, 0x800000 },
+            { "mpr-21767.ic7",  0x3800000, 0x800000 },
+            { "mpr-21768.ic8",  0x4000000, 0x800000 },
+            { "mpr-21769.ic9",  0x4800000, 0x800000 },
+            { "mpr-21770.ic10", 0x5000000, 0x800000 },
+            { NULL, 0, 0 },
+        }
+    },
     // Samba De Amigo (Rev B)
     {
         "samba.zip",
@@ -1652,6 +2258,32 @@ Games[] =
             { "mpr-22963.ic14s", 0x7000000, 0x0800000 },
             { "mpr-22964.ic15s", 0x7800000, 0x0800000 },
             { "mpr-22965.ic16s", 0x8000000, 0x0800000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // Samba De Amigo (USA, prototype)
+    {
+        "sambap.zip",
+        0x08800000,
+        0x280a8b5d,
+        NULL,
+        M2,
+        {
+            { "sambaproto.ic22", 0x000000,   0x0400000  },
+            { "rom1.ic1s",       0x00800000, 0x00800000 },
+            { "rom2.ic2s",       0x01000000, 0x00800000 },
+            { "rom3.ic3s",       0x01800000, 0x00800000 },
+            { "rom4.ic4s",       0x02000000, 0x00800000 },
+            { "rom5.ic5s",       0x02800000, 0x00800000 },
+            { "rom6.ic6s",       0x03000000, 0x00800000 },
+            { "rom7.ic7s",       0x03800000, 0x00800000 },
+            { "rom8.ic8s",       0x04000000, 0x00800000 },
+            { "rom9.ic9s",       0x04800000, 0x00800000 },
+            { "rom10.ic10s",     0x05000000, 0x00800000 },
+            { "rom11.ic11s",     0x05800000, 0x00800000 },
+            { "rom12.ic12s",     0x06000000, 0x00800000 },
+            { "rom13.ic13s",     0x06800000, 0x00800000 },
+            { "rom14.ic14s",     0x07000000, 0x00800000 },
             { NULL, 0, 0 },
         }
     },
@@ -1718,6 +2350,160 @@ Games[] =
             { "mpr-22070.ic10",  0x5000000, 0x0800000 },
             { "mpr-22071.ic11",  0x5800000, 0x0800000 },
             { "mpr-22072.ic12s", 0x6000000, 0x0800000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // Star Horse (satellite)
+    { 
+        "shorse.zip",
+        0x7000000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        {
+            { "epr-23627.ic22", 0x0000000, 0x0400000 },
+            { "mpr-23275.ic1",  0x0800000, 0x1000000 },
+            { "mpr-23276.ic2",  0x1800000, 0x1000000 },
+            { "mpr-23277.ic3",  0x2800000, 0x1000000 },
+            { "mpr-23278.ic4",  0x3800000, 0x1000000 },
+            { "mpr-23279.ic5",  0x4800000, 0x1000000 },
+            { "mpr-23280.ic6",  0x5800000, 0x1000000 },
+            { "mpr-23281.ic7",  0x6800000, 0x0800000 },
+            
+            //ROM_REGION(0x84, "some_eeprom", 0)
+            //ROM_LOAD( "sflash.ic46",   0x000000, 0x000084, CRC(4929e940) SHA1(f8c4277ca0ae5e36b2eed033cc731b8fc4fccafc) )
+            
+            { NULL, 0, 0 },
+        }
+    },
+    // Star Horse (live and backup)
+    {
+        "shorsel.zip",
+        0x7000000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        {
+            { "epr-23626.ic22", 0x0000000, 0x200000 },
+            { "epr-23626.ic22", 0x0200000, 0x200000 }, //reload
+            { "rom1.ic1s",      0x0800000, 0x800000 },
+            { "rom2.ic2s",      0x1000000, 0x800000 },
+            { "rom3.ic3s",      0x1800000, 0x800000 },
+            { "rom4.ic4s",      0x2000000, 0x800000 },
+            { "rom5.ic5s",      0x2800000, 0x800000 },
+            { "rom6.ic6s",      0x3000000, 0x800000 },
+            { "rom7.ic7s",      0x3800000, 0x800000 },
+            { "rom8.ic8s",      0x4000000, 0x800000 },
+            { "rom9.ic9s",      0x4800000, 0x800000 },
+            { "rom10.ic10s",    0x5000000, 0x800000 },
+            { "rom11.ic11s",    0x5800000, 0x800000 },
+            { "rom12.ic12s",    0x6000000, 0x800000 },
+            { "rom13.ic13s",    0x6800000, 0x800000 },
+            { "rom14.ic14s",    0x7000000, 0x800000 },
+            { "rom15.ic15s",    0x7800000, 0x800000 },
+            { "rom16.ic16s",    0x8000000, 0x800000 },
+            { "rom17.ic17s",    0x8800000, 0x800000 },
+            // .18s chip is not present but is tested for an FF fill (pull-up resistors on the PCB's data bus presumably accomplish this)
+            
+            //ROM_REGION(0x84, "some_eeprom", 0)
+            //ROM_LOAD( "sflash.ic37",   0x000000, 0x000084, CRC(1557297e) SHA1(41e8a7a8eaf5076b124d378afdf97e328d100e72) )
+            
+            { NULL, 0, 0 },
+        }
+    },
+    // Star Horse (main screens)
+    {
+        "shorsem.zip",
+        0x7000000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        {
+            { "epr-23625.ic22", 0x0000000, 0x0400000 },
+            { "mpr-23231.ic1",  0x0800000, 0x1000000 },
+            { "mpr-23232.ic2",  0x1800000, 0x1000000 },
+            { "mpr-23233.ic3",  0x2800000, 0x1000000 },
+            { "mpr-23234.ic4",  0x3800000, 0x1000000 },
+            
+            //ROM_REGION(0x84, "some_eeprom", 0)
+            //ROM_LOAD( "sflash.ic46",   0x000000, 0x000084, CRC(951684e4) SHA1(0beaf5827064252293223b946c04b8698e7207bb) )
+            
+            { NULL, 0, 0 },
+        }
+    },
+    // Star Horse Progress (backup data)
+    {
+        "shorsepb.zip",
+        0x7000000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        {
+            { "rom1.ic1s",   0x00800000, 0x00800000 },
+            { "rom2.ic2s",   0x01000000, 0x00800000 },
+            
+            //ROM_REGION(0x84, "some_eeprom", 0)
+            //ROM_LOAD( "sflash.ic37",   0x000000, 0x000084, CRC(fe8f8f5c) SHA1(839461ab736e0228dec7e2512e1692d6ecc4e664) )
+            
+            { NULL, 0, 0 },
+        }
+    },
+    // Star Horse Progress (live, Rev A)
+    {
+        "shorsepl.zip",
+        0x7000000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        {
+            { "epr-24107a.ic22", 0x00000000, 0x00400000 },
+            { "mpr-24108.ic1",   0x00800000, 0x01000000 },
+            { "mpr-24109.ic2",   0x01800000, 0x01000000 },
+            { "mpr-24110.ic3",   0x02800000, 0x01000000 },
+            { "mpr-24111.ic4",   0x03800000, 0x01000000 },
+            { "mpr-24112.ic5",   0x04800000, 0x01000000 },
+            { "mpr-24113.ic6",   0x05800000, 0x01000000 },
+            { "mpr-24114.ic7",   0x06800000, 0x01000000 },
+            { "mpr-24115.ic8",   0x07800000, 0x01000000 },
+            { "mpr-24116.ic9",   0x08800000, 0x01000000 },
+            { "mpr-24117.ic10",  0x09800000, 0x01000000 },
+            { "mpr-24118.ic11",  0x0a800000, 0x01000000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // Star Horse Progress (main screens)
+    {
+        "shorsepm.zip",
+        0x7000000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        {
+            { "epr-24087b.ic22", 0x00000000, 0x00400000 },
+            { "mpr-24088.ic1",   0x00800000, 0x01000000 },
+            { "mpr-24089.ic2",   0x01800000, 0x01000000 },
+            { "mpr-24090.ic3",   0x02800000, 0x01000000 },
+            { "mpr-24091.ic4",   0x03800000, 0x01000000 },
+            { "mpr-24092.ic5",   0x04800000, 0x01000000 },
+            { "mpr-24093.ic6",   0x05800000, 0x01000000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // Star Horse Progress (sound & backup)
+    {
+        "shorseps.zip",
+        0x7000000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        {
+            { "epr-24097a.ic22", 0x00000000, 0x00400000 },
+            { "mpr-24098.ic1",   0x00800000, 0x01000000 },
+            { "mpr-24099.ic2",   0x01800000, 0x01000000 },
+            { "mpr-24100.ic3",   0x02800000, 0x01000000 },
+            { "mpr-24101.ic4",   0x03800000, 0x01000000 },
+            { "mpr-24102.ic5",   0x04800000, 0x01000000 },
+            { "mpr-24103.ic6",   0x05800000, 0x01000000 },
             { NULL, 0, 0 },
         }
     },
@@ -1862,6 +2648,38 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Sega Strike Fighter (Rev A, no training mode)
+    {
+        "sstrkfgta.zip",
+        0x0b000000,
+        0x28132303,
+        NULL,
+        M2,
+        {
+            { "epr-23786a.ic22", 0x0000000, 0x400000 },
+            { "mpr-23302.ic1",   0x0800000, 0x800000 },
+            { "mpr-23303.ic2",   0x1000000, 0x800000 },
+            { "mpr-23304.ic3",   0x1800000, 0x800000 },
+            { "mpr-23305.ic4",   0x2000000, 0x800000 },
+            { "mpr-23306.ic5",   0x2800000, 0x800000 },
+            { "mpr-23307.ic6",   0x3000000, 0x800000 },
+            { "mpr-23308.ic7",   0x3800000, 0x800000 },
+            { "mpr-23309.ic8",   0x4000000, 0x800000 },
+            { "mpr-23310.ic9",   0x4800000, 0x800000 },
+            { "mpr-23311.ic10",  0x5000000, 0x800000 },
+            { "mpr-23312.ic11",  0x5800000, 0x800000 },
+            { "mpr-23313.ic12s", 0x6000000, 0x800000 },
+            { "mpr-23314.ic13s", 0x6800000, 0x800000 },
+            { "mpr-23315.ic14s", 0x7000000, 0x800000 },
+            { "mpr-23316.ic15s", 0x7800000, 0x800000 },
+            { "mpr-23317.ic16s", 0x8000000, 0x800000 },
+            { "mpr-23318.ic17s", 0x8800000, 0x800000 },
+            { "mpr-23319.ic18s", 0x9000000, 0x800000 },
+            { "mpr-23320.ic19s", 0x9800000, 0x800000 },
+            { "mpr-23321.ic20s", 0xa000000, 0x800000 },
+            { NULL, 0, 0 },
+        }
+    },
     // Idol Janshi Suchie-Pai 3 (JPN)
     {
         "suchie3.zip",
@@ -1944,6 +2762,39 @@ Games[] =
             { "mpr-23019.ic19s", 0x9800000, 0x0800000 },
             { "mpr-23020.ic20s", 0xa000000, 0x0800000 },
             // IC21s not populated
+            { NULL, 0, 0 },
+        }
+    },
+    // The Typing of the Dead
+    {
+        "totdo.zip",
+        0x0b000000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        {
+            { "epr-23021.ic22",  0x0000000, 0x0400000 },
+            { "mpr-23001.ic1",   0x0800000, 0x0800000 },
+            { "mpr-23002.ic2",   0x1000000, 0x0800000 },
+            { "mpr-23003.ic3",   0x1800000, 0x0800000 },
+            { "mpr-23004.ic4",   0x2000000, 0x0800000 },
+            { "mpr-23005.ic5",   0x2800000, 0x0800000 },
+            // IC6 not populated
+            { "mpr-23007.ic7",   0x3800000, 0x0800000 },
+            { "mpr-23008.ic8",   0x4000000, 0x0800000 },
+            { "mpr-23009.ic9",   0x4800000, 0x0800000 },
+            { "mpr-23010.ic10",  0x5000000, 0x0800000 },
+            { "mpr-23011.ic11",  0x5800000, 0x0800000 },
+            { "mpr-23012.ic12s", 0x6000000, 0x0800000 },
+            // IC13S not populated
+            { "mpr-23014.ic14s", 0x7000000, 0x0800000 },
+            { "mpr-23015.ic15s", 0x7800000, 0x0800000 },
+            { "mpr-23016.ic16s", 0x8000000, 0x0800000 },
+            { "mpr-23017.ic17s", 0x8800000, 0x0800000 },
+            { "mpr-23018.ic18s", 0x9000000, 0x0800000 },
+            { "mpr-23019.ic19s", 0x9800000, 0x0800000 },
+            { "mpr-23020.ic20s", 0xa000000, 0x0800000 },
+            // IC21S not populated
             { NULL, 0, 0 },
         }
     },
@@ -2030,6 +2881,72 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Virtua NBA
+    {
+        "virnbao.zip",
+        0x0b000000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        {
+            { "epr-22949.ic22",  0x0000000, 0x0400000 },
+            { "mpr-22928.ic1",   0x0800000, 0x0800000 },
+            { "mpr-22929.ic2",   0x1000000, 0x0800000 },
+            { "mpr-22930.ic3",   0x1800000, 0x0800000 },
+            { "mpr-22931.ic4",   0x2000000, 0x0800000 },
+            { "mpr-22932.ic5",   0x2800000, 0x0800000 },
+            { "mpr-22933.ic6",   0x3000000, 0x0800000 },
+            { "mpr-22934.ic7",   0x3800000, 0x0800000 },
+            { "mpr-22935.ic8",   0x4000000, 0x0800000 },
+            { "mpr-22936.ic9",   0x4800000, 0x0800000 },
+            { "mpr-22937.ic10",  0x5000000, 0x0800000 },
+            { "mpr-22938.ic11",  0x5800000, 0x0800000 },
+            { "mpr-22939.ic12s", 0x6000000, 0x0800000 },
+            { "mpr-22940.ic13s", 0x6800000, 0x0800000 },
+            { "mpr-22941.ic14s", 0x7000000, 0x0800000 },
+            { "mpr-22942.ic15s", 0x7800000, 0x0800000 },
+            { "mpr-22943.ic16s", 0x8000000, 0x0800000 },
+            { "mpr-22944.ic17s", 0x8800000, 0x0800000 },
+            { "mpr-22945.ic18s", 0x9000000, 0x0800000 },
+            { "mpr-22946.ic19s", 0x9800000, 0x0800000 },
+            { "mpr-22947.ic20s", 0xa000000, 0x0800000 },
+            { "mpr-22948.ic21s", 0xa800000, 0x0800000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // Virtua NBA (prototype)
+    {
+        "virnbap.zip",
+        0x0b000000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        {
+            { "vnbaearly.ic22",  0x0000000, 0x0400000 },
+            { "mpr-22928.ic1",   0x0800000, 0x0800000 },
+            { "mpr-22929.ic2",   0x1000000, 0x0800000 },
+            { "mpr-22930.ic3",   0x1800000, 0x0800000 },
+            { "mpr-22931.ic4",   0x2000000, 0x0800000 },
+            { "mpr-22932.ic5",   0x2800000, 0x0800000 },
+            { "mpr-22933.ic6",   0x3000000, 0x0800000 },
+            { "mpr-22934.ic7",   0x3800000, 0x0800000 },
+            { "mpr-22935.ic8",   0x4000000, 0x0800000 },
+            { "mpr-22936.ic9",   0x4800000, 0x0800000 },
+            { "mpr-22937.ic10",  0x5000000, 0x0800000 },
+            { "mpr-22938.ic11",  0x5800000, 0x0800000 },
+            { "mpr-22939.ic12s", 0x6000000, 0x0800000 },
+            { "mpr-22940.ic13s", 0x6800000, 0x0800000 },
+            { "mpr-22941.ic14s", 0x7000000, 0x0800000 },
+            { "mpr-22942.ic15s", 0x7800000, 0x0800000 },
+            { "mpr-22943.ic16s", 0x8000000, 0x0800000 },
+            { "mpr-22944.ic17s", 0x8800000, 0x0800000 },
+            { "mpr-22945.ic18s", 0x9000000, 0x0800000 },
+            { "mpr-22946.ic19s", 0x9800000, 0x0800000 },
+            { "mpr-22947.ic20s", 0xa000000, 0x0800000 },
+            { "mpr-22948.ic21s", 0xa800000, 0x0800000 },
+            { NULL, 0, 0 },
+        }
+    },
     // Virtual On Oratorio Tangram M.S.B.S. ver5.66 2000 Edition
     {
         "vonot.zip",
@@ -2064,6 +2981,33 @@ Games[] =
         M2,
         {
             { "epr-21929c.ic22", 0x0000000, 0x0400000 },
+            { "mpr-21924.ic1",   0x0800000, 0x0800000 },
+            { "mpr-21925.ic2",   0x1000000, 0x0800000 },
+            { "mpr-21911.ic3",   0x1800000, 0x0800000 },
+            { "mpr-21926.ic4",   0x2000000, 0x0800000 },
+            { "mpr-21913.ic5",   0x2800000, 0x0800000 },
+            { "mpr-21914.ic6",   0x3000000, 0x0800000 },
+            { "mpr-21915.ic7",   0x3800000, 0x0800000 },
+            { "mpr-21916.ic8",   0x4000000, 0x0800000 },
+            { "mpr-21917.ic9",   0x4800000, 0x0800000 },
+            { "mpr-21918.ic10",  0x5000000, 0x0800000 },
+            { "mpr-21919.ic11",  0x5800000, 0x0800000 },
+            { "mpr-21920.ic12s", 0x6000000, 0x0800000 },
+            { "mpr-21921.ic13s", 0x6800000, 0x0800000 },
+            { "mpr-21922.ic14s", 0x7000000, 0x0800000 },
+            { "mpr-21923.ic15s", 0x7800000, 0x0400000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // Virtua Striker 2 Ver. 2000
+    {
+        "vs2_2ko.zip",
+        0x8000000,
+        0x28088b08,
+        NULL,
+        M2,
+        {
+            {"epr-21929.ic22",   0x0000000, 0x0400000 },
             { "mpr-21924.ic1",   0x0800000, 0x0800000 },
             { "mpr-21925.ic2",   0x1000000, 0x0800000 },
             { "mpr-21911.ic3",   0x1800000, 0x0800000 },
@@ -2123,6 +3067,30 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Wave Runner GP (USA, Rev A)
+    {
+        "wrungpo.zip",
+        0x06800000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        {
+            { "epr-23725a.ic22", 0x0000000, 0x400000  },
+            { "mpr-23719.ic1",   0x0800000, 0x1000000 },
+            { "mpr-23720.ic2",   0x1800000, 0x1000000 },
+            { "mpr-23721.ic3",   0x2800000, 0x1000000 },
+            { "mpr-23722.ic4",   0x3800000, 0x1000000 },
+            { "mpr-23723.ic5",   0x4800000, 0x1000000 },
+            { "mpr-23724.ic6",   0x5800000, 0x1000000 },
+            // note: origin ROM board have 12x8MB FlashROMs with same contents as above
+            
+            // 838-12801 DRIVE BD WAVERUNNER
+            //ROM_REGION( 0x10000, "motorio", ROMREGION_ERASEFF)
+            //ROM_LOAD( "epr-19250.ic8", 0x000000, 0x010000, CRC(542d3836) SHA1(128cb0bfaf05791d219437653002f6bb948a4ad5) )
+            
+            { NULL, 0, 0 },
+        }
+    },
     // World Kicks (WK2 Ver. A)
     {
         "wldkicks.zip",
@@ -2145,6 +3113,28 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // World Kicks (Japan, WK1 Ver.A)
+    {
+        "wldkicksj.zip",
+        0xb000000,
+        0x052e2901,
+        NULL,
+        M2,
+        {
+            { "wk1vera.2d",  0x0800000, 0x800000 },
+            { "wk2vera.2c",  0x1000000, 0x800000 },
+            { "wk1ma2.4m",   0x2000000, 0x1000000 },
+            { "wk1ma3.4l",   0x3000000, 0x1000000 },
+            { "wk1ma4.4k",   0x4000000, 0x1000000 },
+            { "wk1ma5.4j",   0x5000000, 0x1000000 },
+            { "wk1ma6.4h",   0x6000000, 0x1000000 },
+            { "wk1ma7.4f",   0x7000000, 0x1000000 },
+            { "wk1ma8.4e",   0x8000000, 0x1000000 },
+            { "wk1ma9.4d",   0x9000000, 0x1000000 },
+            { "wk1ma10.4c",  0xa000000, 0x1000000 },
+            { NULL, 0, 0 },
+        }
+    },
     // World Kicks (US, WK3 Ver.A)
     {
         "wldkicksu.zip",
@@ -2164,6 +3154,50 @@ Games[] =
             { "wk1ma8.4e",  0x8000000, 0x1000000 },
             { "wk1ma9.4d",  0x9000000, 0x1000000 },
             { "wk1ma10.4c", 0xa000000, 0x1000000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // World Kicks PCB (Japan, WKC1 Ver.A)
+    {
+        "wldkickspj.zip",
+        0xb000000,
+        0x052e2901,
+        NULL,
+        M2,
+        {
+            { "wkc1vera.2d", 0x0800000, 0x800000 },
+            { "wkc1vera.2c", 0x1000000, 0x800000 },
+            { "wk1ma2.4m",   0x2000000, 0x1000000 },
+            { "wk1ma3.4l",   0x3000000, 0x1000000 },
+            { "wk1ma4.4k",   0x4000000, 0x1000000 },
+            { "wk1ma5.4j",   0x5000000, 0x1000000 },
+            { "wk1ma6.4h",   0x6000000, 0x1000000 },
+            { "wk1ma7.4f",   0x7000000, 0x1000000 },
+            { "wk1ma8.4e",   0x8000000, 0x1000000 },
+            { "wk1ma9.4d",   0x9000000, 0x1000000 },
+            { "wk1ma10.4c",  0xa000000, 0x1000000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // World Kicks PCB (World, WKC2 Ver.A)
+    {
+        "wldkickspw.zip",
+        0xb000000,
+        0x052e2901,
+        NULL,
+        M2,
+        {
+            { "wkc2vera.2d", 0x0800000, 0x800000 },
+            { "wkc1vera.2c", 0x1000000, 0x800000 },
+            { "wk1ma2.4m",   0x2000000, 0x1000000 },
+            { "wk1ma3.4l",   0x3000000, 0x1000000 },
+            { "wk1ma4.4k",   0x4000000, 0x1000000 },
+            { "wk1ma5.4j",   0x5000000, 0x1000000 },
+            { "wk1ma6.4h",   0x6000000, 0x1000000 },
+            { "wk1ma7.4f",   0x7000000, 0x1000000 },
+            { "wk1ma8.4e",   0x8000000, 0x1000000 },
+            { "wk1ma9.4d",   0x9000000, 0x1000000 },
+            { "wk1ma10.4c",  0xa000000, 0x1000000 },
             { NULL, 0, 0 },
         }
     },
@@ -2300,6 +3334,64 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Asian Dynamite / Dynamite Deka EX (older)
+    {
+        "asndynmto.zip",
+        0x10000000,
+        0x5504,
+        "naomi.zip",
+        M4,
+        {
+            { "fpr-24382.ic8",  0x0000000, 0x4000000 },
+            { "fpr-24383.ic9",  0x4000000, 0x4000000 },
+            { "fpr-24384.ic10", 0x8000000, 0x4000000 },
+            { "fpr-24385.ic11", 0xc000000, 0x4000000 },
+            
+            //ROM_REGION( 0x800, "pic_readout", 0 )
+            //ROM_LOAD( "317-0495-com.ic3", 0, 0x800, CRC(c229a59b) SHA1(497dcc1e4e52eb044a8b709edbd00126cef212b1) )
+            
+            { NULL, 0, 0 },
+        }
+    },
+    // Derby Owners Club World Edition (Rev B)
+    {
+        "drbyocwb.zip",
+        0x7800000,
+        0x0000000,
+        "naomi.zip",
+        M4,
+        {
+            { "epr-22336b.ic22", 0x000000,  0x400000  },
+            { "mpr-22328.ic1",   0x0800000, 0x1000000 },
+            { "mpr-22329.ic2",   0x1800000, 0x1000000 },
+            { "mpr-22330.ic3",   0x2800000, 0x1000000 },
+            { "mpr-22331.ic4",   0x3800000, 0x1000000 },
+            { "mpr-22332.ic5",   0x4800000, 0x1000000 },
+            { "mpr-22333.ic6",   0x5800000, 0x1000000 },
+            { "mpr-22334.ic7",   0x6800000, 0x1000000 },
+            
+            { NULL, 0, 0 },
+        }
+    },
+    // Derby Owners Club World Edition (Rev C)
+    {
+        "drbyocwc.zip",
+        0x7800000,
+        0x0000000,
+        "naomi.zip",
+        M4,
+        {
+            { "epr-22336c.ic22", 0x000000,  0x400000  },
+            { "mpr-22328.ic1",   0x0800000, 0x1000000 },
+            { "mpr-22329.ic2",   0x1800000, 0x1000000 },
+            { "mpr-22330.ic3",   0x2800000, 0x1000000 },
+            { "mpr-22331.ic4",   0x3800000, 0x1000000 },
+            { "mpr-22332.ic5",   0x4800000, 0x1000000 },
+            { "mpr-22333.ic6",   0x5800000, 0x1000000 },
+            { "mpr-22334.ic7",   0x6800000, 0x1000000 },
+            { NULL, 0, 0 },
+        }
+    },
     // Illvelo (Illmatic Envelope)
     {
         "illvelo.zip",
@@ -2315,13 +3407,12 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
-    // Manic Panic Ghosts!
+    // Manic Panic Ghosts! *** BAD DUMP ***
     {
         "manicpnc.zip",
         0x14000000,
         0x5505,
-        //"naomi.zip",
-        NULL,
+        "naomi.zip",
         M4,
         {
             { "fpr-24408.ic8",  0x00000000, 0x4000000 },
@@ -2397,8 +3488,7 @@ Games[] =
         "mushik2e.zip",
         0x8000000,
         0x5582,
-        //"naomi.zip",
-        NULL,
+        "naomi.zip",
         M4,
         {
             { "fpr-24333.ic8", 0x0000000, 0x4000000 },
@@ -2412,7 +3502,7 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
-    // Pokasuka Ghost
+    // Pokasuka Ghost *** BAD DUMP ***
     {
         "pokasuka.zip",
         0x14000000,
@@ -2471,9 +3561,8 @@ Games[] =
         "sl2007.zip",
         0x10000000,
         0x5504,
-        //"naomi.zip",
-        NULL,
-        M4,
+        NULL, // requires epr-21576g.ic27
+        M4,   // not a real M4, rom header decrypted
         {
             { "fpr-24413.ic8",  0x0000000, 0x4000000 },
             { "fpr-24414.ic9",  0x4000000, 0x4000000 },
@@ -2483,7 +3572,7 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
-    // Touch De Zunou (Rev A)
+    // Touch De Zunou (Rev A) *** BAD DUMP ***
     {
         "zunou.zip",
         0x8000000,
@@ -2518,6 +3607,23 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Animal Basket (19 Jan 2005)
+    {
+        "anmlbskta.zip",
+        0x4000000,
+        0x0000000,
+        "awbios.zip",
+        AW,
+        {
+            { "u3",  0x0000000, 0x1000000 },
+            { "u1",  0x1000000, 0x1000000 },
+            { "u4",  0x2000000, 0x1000000 },
+            { "u2",  0x3000000, 0x1000000 },
+            // U14-U17 not populated
+            { "vm2001f01.bin", 0, 4, Key },
+            { NULL, 0, 0 },
+        }
+    },
     // Sega Bass Fishing Challenge Version A
     {
         "basschal.zip",
@@ -2533,6 +3639,26 @@ Games[] =
             { "vera.u15",     0x04000000, 0x01000000 },
             { "vera.u17",     0x05000000, 0x01000000 },
             { "vera.u14",     0x06000000, 0x01000000 },
+            { "vera.u16",     0x07000000, 0x01000000 },
+            { "315-6248.bin", 0, 4, Key }, // simplified
+            { NULL, 0, 0 },
+        }
+    },
+    // Sega Bass Fishing Challenge
+    {
+        "basschalo.zip",
+        0x8000000,
+        0x0000000,
+        "awbios.zip",
+        AW,
+        {
+            { "610-0811.u3",  0x00000000, 0x01000000 },
+            { "610-0811.u1",  0x01000000, 0x01000000 },
+            { "vera.u4",      0x02000000, 0x01000000 },
+            { "610-0811.u2",  0x03000000, 0x01000000 },
+            { "610-0811.u15", 0x04000000, 0x01000000 },
+            { "610-0811.u17", 0x05000000, 0x01000000 },
+            { "610-0811.u14", 0x06000000, 0x01000000 },
             { "vera.u16",     0x07000000, 0x01000000 },
             { "315-6248.bin", 0, 4, Key }, // simplified
             { NULL, 0, 0 },
@@ -2733,6 +3859,26 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // The King of Fighters Neowave (Japan)
+    {
+        "kofnwj.zip",
+        0x8000000,
+        0x0000000,
+        "awbios.zip",
+        AW,
+        {
+            { "ax2201jp_p01.ic18", 0x0000000, 0x0800000 },
+            // these are taken from the above set, game *seems* to work fine with these
+            { "ax2201m01.ic11", 0x1000000, 0x1000000 },
+            { "ax2202m01.ic12", 0x2000000, 0x1000000 },
+            { "ax2203m01.ic13", 0x3000000, 0x1000000 },
+            { "ax2204m01.ic14", 0x4000000, 0x1000000 },
+            { "ax2205m01.ic15", 0x5000000, 0x1000000 },
+            { "ax2206m01.ic16", 0x6000000, 0x1000000 },
+            { "ax2201f01.bin", 0, 4, Key },
+            { NULL, 0, 0 },
+        }
+    },
     // The King of Fighters XI
     {
         "kofxi.zip",
@@ -2828,6 +3974,26 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // NeoGeo Battle Coliseum (Japan)
+    {
+        "ngbcj.zip",
+        0x14000000,
+        0x00000000,
+        "awbios.zip",
+        AW,
+        {
+            { "ax3301p01.fmem1", 0x00000000, 0x0800000 },
+            { "ax3301m01.mrom1", 0x02000000, 0x2000000 },
+            { "ax3302m01.mrom2", 0x04000000, 0x2000000 },
+            { "ax3303m01.mrom3", 0x06000000, 0x2000000 },
+            { "ax3304m01.mrom4", 0x0a000000, 0x2000000 },
+            { "ax3305m01.mrom5", 0x0c000000, 0x2000000 },
+            { "ax3306m01.mrom6", 0x0e000000, 0x2000000 },
+            { "ax3307m01.mrom7", 0x12000000, 0x2000000 },
+            { "ax3301f01.bin", 0, 4, Key },
+            { NULL, 0, 0 },
+        }
+    },
     // Ranger Mission
     {
         "rangrmsn.zip",
@@ -2866,6 +4032,34 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // The Rumble Fish (prototype)
+    {
+        "rumblefp.zip",
+        0x8000000,
+        0x0000000,
+        "awbios.zip",
+        AW,
+        {
+            { "ic12", 0x00000000, 0x00800000 },
+            { "ic13", 0x00800000, 0x00800000 },
+            { "ic14", 0x01000000, 0x00800000 },
+            { "ic15", 0x01800000, 0x00800000 },
+            { "ic16", 0x02000000, 0x00800000 },
+            { "ic17", 0x02800000, 0x00800000 },
+            { "ic18", 0x03000000, 0x00800000 },
+            { "ic19", 0x03800000, 0x00800000 },
+            { "ic20", 0x04000000, 0x00800000 },
+            { "ic21", 0x04800000, 0x00800000 },
+            { "ic22", 0x05000000, 0x00800000 },
+            { "ic23", 0x05800000, 0x00800000 },
+            { "ic24", 0x06000000, 0x00800000 },
+            { "ic25", 0x06800000, 0x00800000 },
+            { "ic26", 0x07000000, 0x00800000 },
+            // IC27 populated, empty
+            { "key.bin", 0, 4, Key },
+            { NULL, 0, 0 },
+        }
+    },
     // The Rumble Fish 2
     {
         "rumblef2.zip",
@@ -2881,6 +4075,34 @@ Games[] =
             { "ax3404m01.mrom4", 0xa000000, 0x2000000 },
             { "ax3405m01.mrom5", 0xc000000, 0x2000000 },
             { "ax3401f01.bin", 0, 4, Key },
+            { NULL, 0, 0 },
+        }
+    },
+    // The Rumble Fish 2 (prototype)
+    {
+        "rumblf2p.zip",
+        0xe000000,
+        0x0000000,
+        "awbios.zip",
+        AW,
+        {
+            { "ic12", 0x00000000, 0x00800000 },
+            { "ic13", 0x00800000, 0x00800000 },
+            { "ic14", 0x01000000, 0x00800000 },
+            { "ic15", 0x01800000, 0x00800000 },
+            { "ic16", 0x02000000, 0x00800000 },
+            { "ic17", 0x02800000, 0x00800000 },
+            { "ic18", 0x03000000, 0x00800000 },
+            { "ic19", 0x03800000, 0x00800000 },
+            { "ic20", 0x04000000, 0x00800000 },
+            { "ic21", 0x04800000, 0x00800000 },
+            { "ic22", 0x05000000, 0x00800000 },
+            { "ic23", 0x05800000, 0x00800000 },
+            { "ic24", 0x06000000, 0x00800000 },
+            { "ic25", 0x06800000, 0x00800000 },
+            { "ic26", 0x07000000, 0x00800000 },
+            // IC27 populated, empty
+            { "julie_dev.bin", 0, 4, Key },
             { NULL, 0, 0 },
         }
     },

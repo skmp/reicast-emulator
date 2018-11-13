@@ -6,6 +6,7 @@
 	Rom information from mame (https://github.com/mamedev/mame)
 	license:LGPL-2.1+
 	copyright-holders: Samuele Zannoli, R. Belmont, ElSemi, David Haywood, Angelo Salese, Olivier Galibert, MetalliC
+	
 	This file is part of reicast.
 
     reicast is free software: you can redistribute it and/or modify

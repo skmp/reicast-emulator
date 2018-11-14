@@ -71,7 +71,7 @@ public:
 	u16 ReadCipheredData(u32 offset);
 	virtual void Serialize(void** data, unsigned int* total_size) override;
 	virtual void Unserialize(void** data, unsigned int* total_size) override;
-	virtual void* M2Cartridge::GetDmaPtr(u32& size) override;
+	virtual void* GetDmaPtr(u32& size) override;
 
 private:
 	u8 naomi_cart_ram[64 * 1024];

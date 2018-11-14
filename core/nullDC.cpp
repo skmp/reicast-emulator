@@ -258,6 +258,12 @@ static void LoadSpecialSettingsNaomi(const char *name)
             settings.rend.ExtraDepthScale = 1e26;
          }
 
+         if (lut_games_naomi[i].game_inputs != NULL)
+         {
+            log_cb(RETRO_LOG_INFO, "Setting custom input descriptors\n");
+        	naomi_game_inputs = lut_games_naomi[i].game_inputs;
+         }
+
          break;
       }
    }

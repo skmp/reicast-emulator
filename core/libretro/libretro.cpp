@@ -1137,89 +1137,301 @@ static void extract_directory(char *buf, const char *path, size_t size)
 
 extern void dc_prepare_system(void);
 
+static uint16_t map_gamepad_button(unsigned device, unsigned id)
+{
+   static const uint16_t dc_joymap[] =
+   {
+      /* JOYPAD_B      */ DC_BTN_A,
+      /* JOYPAD_Y      */ DC_BTN_X,
+      /* JOYPAD_SELECT */ 0,
+      /* JOYPAD_START  */ DC_BTN_START,
+      /* JOYPAD_UP     */ DC_DPAD_UP,
+      /* JOYPAD_DOWN   */ DC_DPAD_DOWN,
+      /* JOYPAD_LEFT   */ DC_DPAD_LEFT,
+      /* JOYPAD_RIGHT  */ DC_DPAD_RIGHT,
+      /* JOYPAD_A      */ DC_BTN_B,
+      /* JOYPAD_X      */ DC_BTN_Y,
+   };
+
+   static const uint16_t dc_lg_joymap[] =
+   {
+	  /* deprecated */ 			0,
+	  /* deprecated */ 			0,
+	  /* LIGHTGUN_TRIGGER */	DC_BTN_A,
+	  /* LIGHTGUN_AUX_A */		DC_BTN_B,
+	  /* LIGHTGUN_AUX_B */ 		0,
+	  /* deprecated */ 			0,
+	  /* LIGHTGUN_START */		DC_BTN_START,
+	  /* LIGHTGUN_SELECT */ 	0,
+	  /* LIGHTGUN_AUX_C */		0,
+	  /* LIGHTGUN_UP   */ 		DC_DPAD_UP,
+	  /* LIGHTGUN_DOWN   */ 	DC_DPAD_DOWN,
+	  /* LIGHTGUN_LEFT   */ 	DC_DPAD_LEFT,
+	  /* LIGHTGUN_RIGHT  */ 	DC_DPAD_RIGHT,
+   };
+
+   static const uint16_t aw_joymap[] =
+   {
+      /* JOYPAD_B      */ AWAVE_BTN0_KEY, /* BTN1 */
+      /* JOYPAD_Y      */ AWAVE_BTN2_KEY, /* BTN3 */
+      /* JOYPAD_SELECT */ AWAVE_COIN_KEY,
+      /* JOYPAD_START  */ AWAVE_START_KEY,
+      /* JOYPAD_UP     */ AWAVE_UP_KEY,
+      /* JOYPAD_DOWN   */ AWAVE_DOWN_KEY,
+      /* JOYPAD_LEFT   */ AWAVE_LEFT_KEY,
+      /* JOYPAD_RIGHT  */ AWAVE_RIGHT_KEY,
+      /* JOYPAD_A      */ AWAVE_BTN1_KEY, /* BTN2 */
+      /* JOYPAD_X      */ AWAVE_BTN3_KEY, /* BTN4 */
+      /* JOYPAD_L      */ 0,
+      /* JOYPAD_R      */ AWAVE_BTN4_KEY, /* BTN5 */
+      /* JOYPAD_L2     */ 0,
+      /* JOYPAD_R2     */ 0,
+      /* JOYPAD_L3     */ AWAVE_TEST_KEY,
+      /* JOYPAD_R3     */ AWAVE_SERVICE_KEY,
+   };
+
+   static const uint16_t aw_lg_joymap[] =
+   {
+	   /* deprecated */ 			0,
+	   /* deprecated */ 			0,
+	   /* LIGHTGUN_TRIGGER */	AWAVE_TRIGGER_KEY,
+	   /* LIGHTGUN_AUX_A */		AWAVE_BTN0_KEY,
+	   /* LIGHTGUN_AUX_B */ 	AWAVE_BTN1_KEY,
+	   /* deprecated */ 			0,
+	   /* LIGHTGUN_START */		AWAVE_START_KEY,
+	   /* LIGHTGUN_SELECT */ 	AWAVE_COIN_KEY,
+	   /* LIGHTGUN_AUX_C */		AWAVE_BTN2_KEY,
+	   /* LIGHTGUN_UP   */ 		AWAVE_UP_KEY,
+	   /* LIGHTGUN_DOWN   */ 	AWAVE_DOWN_KEY,
+	   /* LIGHTGUN_LEFT   */ 	AWAVE_LEFT_KEY,
+	   /* LIGHTGUN_RIGHT  */ 	AWAVE_RIGHT_KEY,
+   };
+
+   static const uint16_t nao_joymap[] =
+   {
+      /* JOYPAD_B      */ NAOMI_BTN0_KEY, /* BTN1 */
+      /* JOYPAD_Y      */ NAOMI_BTN2_KEY, /* BTN3 */
+      /* JOYPAD_SELECT */ NAOMI_COIN_KEY,
+      /* JOYPAD_START  */ NAOMI_START_KEY,
+      /* JOYPAD_UP     */ NAOMI_UP_KEY,
+      /* JOYPAD_DOWN   */ NAOMI_DOWN_KEY,
+      /* JOYPAD_LEFT   */ NAOMI_LEFT_KEY,
+      /* JOYPAD_RIGHT  */ NAOMI_RIGHT_KEY,
+      /* JOYPAD_A      */ NAOMI_BTN1_KEY, /* BTN2 */
+      /* JOYPAD_X      */ NAOMI_BTN3_KEY, /* BTN4 */
+      /* JOYPAD_L      */ NAOMI_BTN5_KEY, /* BTN6 */
+      /* JOYPAD_R      */ NAOMI_BTN4_KEY, /* BTN5 */
+      /* JOYPAD_L2     */ 0,
+      /* JOYPAD_R2     */ 0,
+      /* JOYPAD_L3     */ NAOMI_TEST_KEY,
+      /* JOYPAD_R3     */ NAOMI_SERVICE_KEY,
+   };
+
+   static const uint16_t nao_lg_joymap[] =
+   {
+	   /* deprecated */ 			0,
+	   /* deprecated */ 			0,
+	   /* LIGHTGUN_TRIGGER */	NAOMI_BTN0_KEY,
+	   /* LIGHTGUN_AUX_A */		NAOMI_BTN1_KEY,
+	   /* LIGHTGUN_AUX_B */ 	NAOMI_BTN2_KEY,
+	   /* deprecated */ 			0,
+	   /* LIGHTGUN_START */		NAOMI_START_KEY,
+	   /* LIGHTGUN_SELECT */ 	NAOMI_COIN_KEY,
+	   /* LIGHTGUN_AUX_C */		NAOMI_BTN3_KEY,
+	   /* LIGHTGUN_UP   */ 		NAOMI_UP_KEY,
+	   /* LIGHTGUN_DOWN   */ 	NAOMI_DOWN_KEY,
+	   /* LIGHTGUN_LEFT   */ 	NAOMI_LEFT_KEY,
+	   /* LIGHTGUN_RIGHT  */ 	NAOMI_RIGHT_KEY,
+   };
+
+   const uint16_t *joymap;
+   size_t joymap_size;
+
+   switch (settings.System)
+   {
+   case DC_PLATFORM_DREAMCAST:
+   case DC_PLATFORM_DEV_UNIT:
+	  switch (device)
+	  {
+	  case RETRO_DEVICE_JOYPAD:
+		 joymap = dc_joymap;
+		 joymap_size = ARRAY_SIZE(dc_joymap);
+		 break;
+	  case RETRO_DEVICE_LIGHTGUN:
+		 joymap = dc_lg_joymap;
+		 joymap_size = ARRAY_SIZE(dc_lg_joymap);
+		 break;
+	  default:
+		 return 0;
+	  }
+	  break;
+
+   case DC_PLATFORM_NAOMI:
+	  switch (device)
+	  {
+	  case RETRO_DEVICE_JOYPAD:
+		 joymap = nao_joymap;
+		 joymap_size = ARRAY_SIZE(nao_joymap);
+		 break;
+	  case RETRO_DEVICE_LIGHTGUN:
+		 joymap = nao_lg_joymap;
+		 joymap_size = ARRAY_SIZE(nao_lg_joymap);
+		 break;
+	  default:
+		 return 0;
+	  }
+	  break;
+
+   case DC_PLATFORM_ATOMISWAVE:
+	  switch (device)
+	  {
+	  case RETRO_DEVICE_JOYPAD:
+		 joymap = aw_joymap;
+		 joymap_size = ARRAY_SIZE(aw_joymap);
+		 break;
+	  case RETRO_DEVICE_LIGHTGUN:
+		 joymap = aw_lg_joymap;
+		 joymap_size = ARRAY_SIZE(aw_lg_joymap);
+		 break;
+	  default:
+		 return 0;
+	  }
+	  break;
+
+   default:
+	  return 0;
+   }
+
+   if (id >= joymap_size)
+	  return 0;
+   else
+	  return joymap[id];
+}
+
+static const char *get_button_name(unsigned device, unsigned id, const char *default_name)
+{
+   if (naomi_game_inputs == NULL)
+	  return default_name;
+   uint16_t mask = map_gamepad_button(device, id);
+   if (mask == 0)
+	  return NULL;
+   for (int i = 0; naomi_game_inputs->buttons[i].mask != 0; i++)
+	  if (naomi_game_inputs->buttons[i].mask == mask)
+		 return naomi_game_inputs->buttons[i].name;
+   return NULL;
+}
+
+static const char *get_axis_name(unsigned index, const char *default_name)
+{
+   if (naomi_game_inputs == NULL)
+	  return default_name;
+   for (int i = 0; naomi_game_inputs->axes[i].name != NULL; i++)
+	  if (i == index)
+		 return naomi_game_inputs->axes[i].name;
+   return NULL;
+}
+
 static void set_input_descriptors()
 {
    struct retro_input_descriptor desc[18 * 4 + 1];
    int descriptor_index = 0;
-   if (settings.System == DC_PLATFORM_NAOMI)
+   if (settings.System == DC_PLATFORM_NAOMI || settings.System == DC_PLATFORM_ATOMISWAVE)
    {
+	  const char *name;
+
       for (unsigned i = 0; i < MAPLE_PORTS; i++)
       {
     	 switch (maple_devices[i])
     	 {
     	 case MDT_LightGun:
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT,  "D-Pad Left" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP,    "D-Pad Up" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN,  "D-Pad Down" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT, "D-Pad Right" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER,	   "Trigger" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A,      "Button 2" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_B,      "Button 3" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_C,      "Button 4" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD,     "Button 5" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SELECT,     "Coin" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_START,      "Start" };
+    		name = get_button_name(RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT, "D-Pad Left");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT, name };
+    		name = get_button_name(RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP, "D-Pad Up");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP, name };
+    		name = get_button_name(RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN, "D-Pad Down");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN, name };
+    		name = get_button_name(RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT, "D-Pad Right") ;
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT, name };
+    		name = get_button_name(RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER, "Trigger");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER, name };
+    		name = get_button_name(RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_AUX_A, "Button 1");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A, name };
+    		name = get_button_name(RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_AUX_B, "Button 2");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_B, name };
+    		name = get_button_name(RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_AUX_C, "Button 3");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_C, name };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD, "Reload" };
+    		name = get_button_name(RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_SELECT, "Coin");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SELECT, name };
+    		name = get_button_name(RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_START, "Start");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_START, name };
     		break;
 
-    	 default:
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "Button 1" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "Button 2" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Button 3" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Button 4" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "Button 5" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "Button 6" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Coin" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "Test" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Service" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Axis 1" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Axis 2" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Axis 3" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Axis 4" };
-    		break;
-    	 }
-      }
-   }
-   else if (settings.System == DC_PLATFORM_ATOMISWAVE)
-   {
-      for (unsigned i = 0; i < MAPLE_PORTS; i++)
-      {
-    	 switch (maple_devices[i])
-    	 {
     	 case MDT_SegaController:
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "Button 1" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "Button 2" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "Button 3" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Button 4" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Button 5" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "Button 6" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,"Coin" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,    "Test" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,    "Service" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Axis 1" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Axis 2" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Axis 3" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Axis 4" };
-    		break;
-
-    	 case MDT_LightGun:
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT,  "D-Pad Left" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP,    "D-Pad Up" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN,  "D-Pad Down" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT, "D-Pad Right" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER,	   "Trigger" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_START,      "Start" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A,      "Button 2" };
-    		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SELECT,	   "Coin" };
+    		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, name };
+    		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, name };
+    		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  name };
+    		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, name };
+    		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_B, "Button 1");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, name };
+    		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_A, "Button 2");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, name };
+    		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_Y, "Button 3");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y, name };
+    		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_X, "Button 4");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X, name };
+    		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_R, "Button 5");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R, name };
+    		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_L, "Button 6");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L, name };
+    		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_START, "Start");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, name };
+    		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_SELECT, "Coin");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, name };
+    		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_L3, "Test");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3, name };
+    		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_R3, "Service");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3, name };
+    		name = get_axis_name(0, "Axis 1");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, name };
+    		name = get_axis_name(1, "Axis 2");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, name };
+    		name = get_axis_name(2, "Axis 3");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, name };
+    		name = get_axis_name(3, "Axis 4");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, name };
     		break;
     	 }
       }
@@ -1900,9 +2112,9 @@ static uint16_t get_analog_trigger( retro_input_state_t input_state_cb,
    return trigger;
 }
 
-static void setDeviceButtonState(u32 port, int deviceType, int btnId, const uint16_t joymap[])
+static void setDeviceButtonState(u32 port, int deviceType, int btnId)
 {
-   uint16_t dc_key = joymap[btnId];
+   uint16_t dc_key = map_gamepad_button(deviceType, btnId);
    bool is_down = input_cb(port, deviceType, 0, btnId);
    if (is_down)
 	  kcode[port] &= ~dc_key;
@@ -1910,112 +2122,30 @@ static void setDeviceButtonState(u32 port, int deviceType, int btnId, const uint
 	  kcode[port] |= dc_key;
 }
 
-static void UpdateInputStateAWave(u32 port)
+static void updateMouseState(u32 port)
 {
-   int id;
-   int max_id;
+   mo_x_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+   mo_y_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
 
-   static const uint16_t joymap[] =
-   {
-      /* JOYPAD_B      */ AWAVE_BTN0_KEY, /* BTN1 */
-      /* JOYPAD_Y      */ AWAVE_BTN2_KEY, /* BTN3 */
-      /* JOYPAD_SELECT */ AWAVE_COIN_KEY,
-      /* JOYPAD_START  */ AWAVE_START_KEY,
-      /* JOYPAD_UP     */ AWAVE_UP_KEY,
-      /* JOYPAD_DOWN   */ AWAVE_DOWN_KEY,
-      /* JOYPAD_LEFT   */ AWAVE_LEFT_KEY,
-      /* JOYPAD_RIGHT  */ AWAVE_RIGHT_KEY,
-      /* JOYPAD_A      */ AWAVE_BTN1_KEY, /* BTN2 */
-      /* JOYPAD_X      */ AWAVE_BTN3_KEY, /* BTN4 */
-      /* JOYPAD_L      */ 0,
-      /* JOYPAD_R      */ AWAVE_BTN4_KEY, /* BTN5 */
-      /* JOYPAD_L2     */ 0,
-      /* JOYPAD_R2     */ 0,
-      /* JOYPAD_L3     */ AWAVE_TEST_KEY,
-      /* JOYPAD_R3     */ AWAVE_SERVICE_KEY,
-   };
-
-   static const uint16_t lg_joymap[] =
-   {
-	   /* deprecated */ 			0,
-	   /* deprecated */ 			0,
-	   /* LIGHTGUN_TRIGGER */	AWAVE_BTN0_KEY,
-	   /* LIGHTGUN_AUX_A */		AWAVE_BTN1_KEY,
-	   /* LIGHTGUN_AUX_B */ 		0,
-	   /* deprecated */ 			0,
-	   /* LIGHTGUN_START */		AWAVE_START_KEY,
-	   /* LIGHTGUN_SELECT */ 	AWAVE_COIN_KEY,
-	   /* LIGHTGUN_AUX_C */		    0,
-	   /* LIGHTGUN_UP   */ 		AWAVE_UP_KEY,
-	   /* LIGHTGUN_DOWN   */ 	AWAVE_DOWN_KEY,
-	   /* LIGHTGUN_LEFT   */ 	AWAVE_LEFT_KEY,
-	   /* LIGHTGUN_RIGHT  */ 	AWAVE_RIGHT_KEY,
-   };
-
-   switch (maple_devices[port])
-   {
-   case MDT_LightGun:
-	  {
-		 //
-		 // -- buttons
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_AUX_A, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_START, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_SELECT, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT, lg_joymap);
-
-		 bool force_offscreen = false;
-
-		 if (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD))
-		 {
-			force_offscreen = true;
-			kcode[port] &= ~AWAVE_BTN0_KEY;
-		 }
-
-		 if (force_offscreen || input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN))
-		 {
-			mo_x_abs[port] = -1;
-			mo_y_abs[port] = -1;
-		 }
-		 else
-		 {
-			int x = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X);
-			int y = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y);
-			mo_x_abs[port] = (x + 0x8000) * 640.f / 0x10000;
-			mo_y_abs[port] = (y + 0x8000) * 480.f / 0x10000;
-		 }
-	  }
-	  break;
-
-   default:
-	  //
-	  // -- buttons
-
-	  max_id = (allow_service_buttons ? RETRO_DEVICE_ID_JOYPAD_R3 : RETRO_DEVICE_ID_JOYPAD_R2);
-	  for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= max_id; ++id)
-	  {
-		 setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, id, joymap);
-	  }
-	  //
-	  // -- analog stick
-
-	  get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[port]), &(joyy[port]) );
-	  get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_RIGHT, (s8*)&rt[port], (s8 *)&lt[port] );
-
-	  // -- mouse, for rotary encoders
-	  mo_x_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-	  mo_y_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
-	  break;
-   }
-
-   // Avoid Left+Right or Up+Down buttons being pressed together as this crashes some games
-   if ((kcode[port] & (AWAVE_UP_KEY | AWAVE_DOWN_KEY)) == 0)
-	  kcode[port] |= AWAVE_UP_KEY | AWAVE_DOWN_KEY;
-   if ((kcode[port] & (AWAVE_LEFT_KEY | AWAVE_RIGHT_KEY)) == 0)
-	  kcode[port] |= AWAVE_LEFT_KEY | AWAVE_RIGHT_KEY;
+   bool btn_state = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
+   if (btn_state)
+	  mo_buttons[port] &= ~(1 << 2);
+   else
+	  mo_buttons[port] |= 1 << 2;
+   btn_state = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
+   if (btn_state)
+	  mo_buttons[port] &= ~(1 << 1);
+   else
+	  mo_buttons[port] |= 1 << 1;
+   btn_state = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE);
+   if (btn_state)
+	  mo_buttons[port] &= ~(1 << 0);
+   else
+	  mo_buttons[port] |= 1 << 0;
+   if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELDOWN))
+	  mo_wheel_delta[port] -= 10;
+   else if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELUP))
+	  mo_wheel_delta[port] += 10;
 }
 
 static void UpdateInputStateNaomi(u32 port)
@@ -2023,66 +2153,32 @@ static void UpdateInputStateNaomi(u32 port)
    int id;
    int max_id;
 
-   static const uint16_t joymap[] =
-   {
-      /* JOYPAD_B      */ NAOMI_BTN0_KEY, /* BTN1 */
-      /* JOYPAD_Y      */ NAOMI_BTN2_KEY, /* BTN3 */
-      /* JOYPAD_SELECT */ NAOMI_COIN_KEY,
-      /* JOYPAD_START  */ NAOMI_START_KEY,
-      /* JOYPAD_UP     */ NAOMI_UP_KEY,
-      /* JOYPAD_DOWN   */ NAOMI_DOWN_KEY,
-      /* JOYPAD_LEFT   */ NAOMI_LEFT_KEY,
-      /* JOYPAD_RIGHT  */ NAOMI_RIGHT_KEY,
-      /* JOYPAD_A      */ NAOMI_BTN1_KEY, /* BTN2 */
-      /* JOYPAD_X      */ NAOMI_BTN3_KEY, /* BTN4 */
-      /* JOYPAD_L      */ NAOMI_BTN5_KEY, /* BTN6 */
-      /* JOYPAD_R      */ NAOMI_BTN4_KEY, /* BTN5 */
-      /* JOYPAD_L2     */ 0,
-      /* JOYPAD_R2     */ 0,
-      /* JOYPAD_L3     */ NAOMI_TEST_KEY,
-      /* JOYPAD_R3     */ NAOMI_SERVICE_KEY,
-   };
-
-   static const uint16_t lg_joymap[] =
-   {
-	   /* deprecated */ 			0,
-	   /* deprecated */ 			0,
-	   /* LIGHTGUN_TRIGGER */	NAOMI_BTN0_KEY,
-	   /* LIGHTGUN_AUX_A */		NAOMI_BTN1_KEY,
-	   /* LIGHTGUN_AUX_B */ 	NAOMI_BTN2_KEY,
-	   /* deprecated */ 			0,
-	   /* LIGHTGUN_START */		NAOMI_START_KEY,
-	   /* LIGHTGUN_SELECT */ 	NAOMI_COIN_KEY,
-	   /* LIGHTGUN_AUX_C */		NAOMI_BTN3_KEY,
-	   /* LIGHTGUN_UP   */ 		NAOMI_UP_KEY,
-	   /* LIGHTGUN_DOWN   */ 	NAOMI_DOWN_KEY,
-	   /* LIGHTGUN_LEFT   */ 	NAOMI_LEFT_KEY,
-	   /* LIGHTGUN_RIGHT  */ 	NAOMI_RIGHT_KEY,
-   };
-
    switch (maple_devices[port])
    {
    case MDT_LightGun:
 	  {
 		 //
 		 // -- buttons
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_AUX_A, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_AUX_B, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_AUX_C, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_START, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_SELECT, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT, lg_joymap);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_AUX_A);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_AUX_B);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_AUX_C);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_START);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_SELECT);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT);
 
 		 bool force_offscreen = false;
 
 		 if (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD))
 		 {
 			force_offscreen = true;
-			kcode[port] &= ~NAOMI_BTN0_KEY;
+			if (settings.System == DC_PLATFORM_NAOMI)
+			   kcode[port] &= ~NAOMI_BTN0_KEY;
+			else
+			   kcode[port] &= ~AWAVE_TRIGGER_KEY;
 		 }
 
 		 if (force_offscreen || input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN))
@@ -2107,25 +2203,78 @@ static void UpdateInputStateNaomi(u32 port)
 	  max_id = (allow_service_buttons ? RETRO_DEVICE_ID_JOYPAD_R3 : RETRO_DEVICE_ID_JOYPAD_R2);
 	  for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= max_id; ++id)
 	  {
-		 setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, id, joymap);
+		 setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, id);
 	  }
 	  //
 	  // -- analog stick
 
 	  get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[port]), &(joyy[port]) );
 	  get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_RIGHT, (s8*)&rt[port], (s8 *)&lt[port] );
+	  if (naomi_game_inputs != NULL)
+	  {
+		 for (int i = 0; i < 4; i++)
+		 {
+			if (naomi_game_inputs->axes[i].name == NULL)
+			   break;
+			AxisType axis_type = naomi_game_inputs->axes[i].type;
+			switch (i)
+			{
+			case 0:
+			   if (axis_type == Half)
+				  joyx[port] = max((int)joyx[port], 0) * 2;
+			   else
+				  joyx[port] += 128;
+			   break;
+			case 1:
+			   if (axis_type == Half)
+				  joyy[port] = max((int)joyy[port], 0) * 2;
+			   else
+				  joyy[port] += 128;
+			   break;
+			case 2:
+			   if (axis_type == Half)
+				  rt[port] = max((int)rt[port], 0) * 2;
+			   else
+				  rt[port] += 128;
+			   break;
+			case 3:
+			   if (axis_type == Half)
+				  lt[port] = max((int)lt[port], 0) * 2;
+			   else
+				  lt[port] += 128;
+			   break;
+			}
+		 }
+	  }
+	  else
+	  {
+		 // Make all axes full by default
+		 joyx[port] += 128;
+		 joyy[port] += 128;
+		 rt[port] += 128;
+		 lt[port] += 128;
+	  }
 
 	  // -- mouse, for rotary encoders
-	  mo_x_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-	  mo_y_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+	  updateMouseState(port);
 	  break;
    }
 
    // Avoid Left+Right or Up+Down buttons being pressed together as this crashes some games
-   if ((kcode[port] & (NAOMI_UP_KEY|NAOMI_DOWN_KEY)) == 0)
-	  kcode[port] |= NAOMI_UP_KEY|NAOMI_DOWN_KEY;
-   if ((kcode[port] & (NAOMI_LEFT_KEY|NAOMI_RIGHT_KEY)) == 0)
-	  kcode[port] |= NAOMI_LEFT_KEY|NAOMI_RIGHT_KEY;
+	if (settings.System == DC_PLATFORM_NAOMI)
+	{
+	   if ((kcode[port] & (NAOMI_UP_KEY|NAOMI_DOWN_KEY)) == 0)
+		  kcode[port] |= NAOMI_UP_KEY|NAOMI_DOWN_KEY;
+	   if ((kcode[port] & (NAOMI_LEFT_KEY|NAOMI_RIGHT_KEY)) == 0)
+		  kcode[port] |= NAOMI_LEFT_KEY|NAOMI_RIGHT_KEY;
+	}
+	else
+	{
+	   if ((kcode[port] & (AWAVE_UP_KEY|AWAVE_DOWN_KEY)) == 0)
+		  kcode[port] |= AWAVE_UP_KEY|AWAVE_DOWN_KEY;
+	   if ((kcode[port] & (AWAVE_LEFT_KEY|AWAVE_RIGHT_KEY)) == 0)
+		  kcode[port] |= AWAVE_LEFT_KEY|AWAVE_RIGHT_KEY;
+	}
 }
 
 void UpdateInputState(u32 port)
@@ -2133,20 +2282,12 @@ void UpdateInputState(u32 port)
    if (gl_ctx_resetting)
 	  return;
 
-   if (settings.System == DC_PLATFORM_NAOMI)
+   if (settings.System == DC_PLATFORM_NAOMI || settings.System == DC_PLATFORM_ATOMISWAVE)
    {
       UpdateInputStateNaomi(0);
       UpdateInputStateNaomi(1);
       UpdateInputStateNaomi(2);
       UpdateInputStateNaomi(3);
-      return;
-   }
-   else if (settings.System == DC_PLATFORM_ATOMISWAVE)
-   {
-      UpdateInputStateAWave(0);
-      UpdateInputStateAWave(1);
-      UpdateInputStateAWave(2);
-      UpdateInputStateAWave(3);
       return;
    }
    if (rumble.set_rumble_state != NULL && vib_stop_time[port] > 0)
@@ -2163,20 +2304,6 @@ void UpdateInputState(u32 port)
 	  }
    }
 
-   static const uint16_t joymap[] =
-   {
-      /* JOYPAD_B      */ DC_BTN_A,
-      /* JOYPAD_Y      */ DC_BTN_X,
-      /* JOYPAD_SELECT */ 0,
-      /* JOYPAD_START  */ DC_BTN_START,
-      /* JOYPAD_UP     */ DC_DPAD_UP,
-      /* JOYPAD_DOWN   */ DC_DPAD_DOWN,
-      /* JOYPAD_LEFT   */ DC_DPAD_LEFT,
-      /* JOYPAD_RIGHT  */ DC_DPAD_RIGHT,
-      /* JOYPAD_A      */ DC_BTN_B,
-      /* JOYPAD_X      */ DC_BTN_Y,
-   };
-
    switch (maple_devices[port])
    {
 	  case MDT_SegaController:
@@ -2187,7 +2314,7 @@ void UpdateInputState(u32 port)
 
 		   for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_X; ++id)
 		   {
-			  setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, id, joymap);
+			  setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, id);
 		   }
 
 		   //
@@ -2227,32 +2354,15 @@ void UpdateInputState(u32 port)
 
 	  case MDT_LightGun:
 	  {
-		 static const uint16_t lg_joymap[] =
-		 {
-			  /* deprecated */ 			0,
-		      /* deprecated */ 			0,
-		      /* LIGHTGUN_TRIGGER */	DC_BTN_A,
-		      /* LIGHTGUN_AUX_A */		DC_BTN_B,
-		      /* LIGHTGUN_AUX_B */ 		0,
-			  /* deprecated */ 			0,
-			  /* LIGHTGUN_START */		DC_BTN_START,
-			  /* LIGHTGUN_SELECT */ 	0,
-			  /* LIGHTGUN_AUX_C */		0,
-		      /* LIGHTGUN_UP   */ 		DC_DPAD_UP,
-		      /* LIGHTGUN_DOWN   */ 	DC_DPAD_DOWN,
-		      /* LIGHTGUN_LEFT   */ 	DC_DPAD_LEFT,
-		      /* LIGHTGUN_RIGHT  */ 	DC_DPAD_RIGHT,
-		 };
-
 		 //
 		 // -- buttons
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_AUX_A, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_START, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT, lg_joymap);
-		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT, lg_joymap);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_AUX_A);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_START);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT);
+		 setDeviceButtonState(port, RETRO_DEVICE_LIGHTGUN, RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT);
 
 		 bool force_offscreen = false;
 
@@ -2276,31 +2386,8 @@ void UpdateInputState(u32 port)
 	  break;
 
 	  case MDT_Mouse:
-	  {
-		 mo_x_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-		 mo_y_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
-
-		 bool btn_state = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
-		 if (btn_state)
-			mo_buttons[port] &= ~(1 << 2);
-		 else
-			mo_buttons[port] |= 1 << 2;
-		 btn_state = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
-		 if (btn_state)
-			mo_buttons[port] &= ~(1 << 1);
-		 else
-			mo_buttons[port] |= 1 << 1;
-		 btn_state = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE);
-		 if (btn_state)
-			mo_buttons[port] &= ~(1 << 0);
-		 else
-			mo_buttons[port] |= 1 << 0;
-		 if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELDOWN))
-			mo_wheel_delta[port] -= 10;
-		 else if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELUP))
-			mo_wheel_delta[port] += 10;
-	  }
-	  break;
+		 updateMouseState(port);
+		 break;
    }
 }
 

@@ -4,6 +4,7 @@
 #include "maple_devs.h"
 #include "maple_cfg.h"
 #include "hw/pvr/spg.h"
+#include "hw/naomi/naomi_cart.h"
 #include <math.h>
 #include <time.h>
 
@@ -244,12 +245,12 @@ struct maple_sega_controller: maple_base
 				//4
 				w32(MFID_0_Input);
 
-				//state data
-				//2 key code
-				w16(pjs.kcode);
-
 				if (settings.System != DC_PLATFORM_ATOMISWAVE)
 				{
+					//state data
+					//2 key code
+					w16(pjs.kcode);
+
 				   //triggers
 				   //1 R
 				   w8(pjs.trigger[PJTI_R]);
@@ -271,6 +272,10 @@ struct maple_sega_controller: maple_base
 				}
 				else
 				{
+					//state data
+					//2 key code
+					w16(pjs.kcode | AWAVE_TRIGGER_KEY);
+
 				   //not used
 				   //1
 				   w8(0);
@@ -279,16 +284,16 @@ struct maple_sega_controller: maple_base
 
 				   //joyx
 				   //1
-				   w8(pjs.joy[PJAI_X1]);
+				   w8(pjs.joy[PJAI_X1] - 128);
 				   //joyy
 				   //1
-				   w8(pjs.joy[PJAI_Y1]);	// FIXME Need to set the range of analog axes (at least -128/+127 or 0/255)
+				   w8(pjs.joy[PJAI_Y1] - 128);
 
 				   //triggers
 				   //1 R
-				   w8(pjs.trigger[PJTI_R] + 128);
+				   w8(pjs.trigger[PJTI_R]);
 				   //1 L
-				   w8(pjs.trigger[PJTI_L] + 128);
+				   w8(pjs.trigger[PJTI_L]);
 				}
 			}
 
@@ -1207,7 +1212,6 @@ f32 mo_wheel_delta[4];
 // but may be outside this range if the pointer is offscreen or outside the 4:3 window.
 f32 mo_x_abs[4];
 f32 mo_y_abs[4];
-void UpdateInputState(u32 port);
 
 struct maple_mouse : maple_base
 {
@@ -1260,31 +1264,32 @@ struct maple_mouse : maple_base
 			return MDRS_DeviceStatus;
 
  		case MDCF_GetCondition:
-			UpdateInputState(bus_id);
+		    {
+		       u32 buttons;
+		       f32 delta_x, delta_y, delta_wheel;
+			   config->GetMouse(&buttons, &delta_x, &delta_y, &delta_wheel);
 
-			w32(MFID_9_Mouse);
-			//struct data
-			//int32 buttons       ; digital buttons bitfield (little endian)
-			w32(mo_buttons[bus_id]);
-			//int16 axis1         ; horizontal movement (0-$3FF) (little endian)
-			w16(mo_cvt(mo_x_delta[bus_id]));
-			//int16 axis2         ; vertical movement (0-$3FF) (little endian)
-			w16(mo_cvt(mo_y_delta[bus_id]));
-			//int16 axis3         ; mouse wheel movement (0-$3FF) (little endian)
-			w16(mo_cvt(mo_wheel_delta[bus_id]));
-			//int16 axis4         ; ? movement (0-$3FF) (little endian)
-			w16(mo_cvt(0));
-			//int16 axis5         ; ? movement (0-$3FF) (little endian)
-			w16(mo_cvt(0));
-			//int16 axis6         ; ? movement (0-$3FF) (little endian)
-			w16(mo_cvt(0));
-			//int16 axis7         ; ? movement (0-$3FF) (little endian)
-			w16(mo_cvt(0));
-			//int16 axis8         ; ? movement (0-$3FF) (little endian)
-			w16(mo_cvt(0));
- 			mo_x_delta[bus_id] = 0;
-			mo_y_delta[bus_id] = 0;
-			mo_wheel_delta[bus_id] = 0;
+			   w32(MFID_9_Mouse);
+			   //struct data
+			   //int32 buttons       ; digital buttons bitfield (little endian)
+			   w32(buttons);
+			   //int16 axis1         ; horizontal movement (0-$3FF) (little endian)
+			   w16(mo_cvt(delta_x));
+			   //int16 axis2         ; vertical movement (0-$3FF) (little endian)
+			   w16(mo_cvt(delta_y));
+			   //int16 axis3         ; mouse wheel movement (0-$3FF) (little endian)
+			   w16(mo_cvt(delta_wheel));
+			   //int16 axis4         ; ? movement (0-$3FF) (little endian)
+			   w16(mo_cvt(0));
+			   //int16 axis5         ; ? movement (0-$3FF) (little endian)
+			   w16(mo_cvt(0));
+			   //int16 axis6         ; ? movement (0-$3FF) (little endian)
+			   w16(mo_cvt(0));
+			   //int16 axis7         ; ? movement (0-$3FF) (little endian)
+			   w16(mo_cvt(0));
+			   //int16 axis8         ; ? movement (0-$3FF) (little endian)
+			   w16(mo_cvt(0));
+		    }
 
 			return MDRS_DataTransfer;
 
@@ -1351,7 +1356,10 @@ struct maple_lightgun : maple_base
 
 		 //state data
 		 //2 key code
-		 w16(pjs.kcode | 0xFF01);
+		 if (settings.System != DC_PLATFORM_ATOMISWAVE)
+			w16(pjs.kcode | 0xFF01);
+		 else
+			w16((pjs.kcode & AWAVE_TRIGGER_KEY) == 0 ? ~AWAVE_BTN0_KEY : ~0);
 
 		 //not used
 		 //2
@@ -1372,7 +1380,9 @@ struct maple_lightgun : maple_base
 
    virtual void get_lightgun_pos()
    {
-	  read_lightgun_position(mo_x_abs[bus_id] + 0.5f, mo_y_abs[bus_id] + 0.5f);
+	  f32 x, y;
+	  config->GetAbsolutePosition(&x, &y);
+	  read_lightgun_position(x + 0.5f, y + 0.5f);
    }
 };
 
@@ -2216,8 +2226,14 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							}
 						}
 
-						// FIXME Need to know how many axes per player for correct mapping
 						int axes_per_player = 4;
+						if (naomi_game_inputs != NULL)
+						{
+						   int i = 0;
+						   while (naomi_game_inputs->axes[i].name != NULL)
+							  i++;
+						   axes_per_player = max(i, 1);
+						}
 						if (settings.mapping.JammaSetup == 4)
 						   // Hack for Ring Out 4x4
 						   axes_per_player = 2;
@@ -2232,10 +2248,10 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							  switch (player_axis)
 							  {
 								 case 0:
-									axis_value = (joyx[player_num] + 128) << 8;	// FIXME Need to set the range of analog axes (at least -128/+127 or 0/255)
+									axis_value = joyx[player_num] << 8;
 									break;
 								 case 1:
-									axis_value = (joyy[player_num] + 128) << 8;
+									axis_value = joyy[player_num] << 8;
 									break;
 								 case 2:
 									axis_value = rt[player_num] << 8;

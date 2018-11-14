@@ -44,6 +44,8 @@ extern DCFlashChip sys_nvmem_flash;		// AtomisWave BIOS is loaded there
 
 extern char game_dir_no_slash[1024];
 
+InputDescriptors *naomi_game_inputs;
+
 static bool naomi_LoadBios(const char *filename, zip *child_zip, int region)
 {
 	int biosid = 0;
@@ -89,7 +91,9 @@ static bool naomi_LoadBios(const char *filename, zip *child_zip, int region)
 		}
 		else
 		{
-			zip_file* file = zip_fopen(child_zip, bios->blobs[romid].filename, 0);
+			zip_file* file = NULL;
+			if (child_zip != NULL)
+			   file = zip_fopen(child_zip, bios->blobs[romid].filename, 0);
 			if (file == NULL && zip_archive != NULL)
 				file = zip_fopen(zip_archive, bios->blobs[romid].filename, 0);
 			if (!file) {
@@ -122,7 +126,6 @@ static bool naomi_LoadBios(const char *filename, zip *child_zip, int region)
 				die("Unknown blob type\n");
 			zip_fclose(file);
 		}
-		romid++;
 	}
 
 	if (zip_archive != NULL)
@@ -208,6 +211,7 @@ static bool naomi_cart_LoadZip(char *filename)
 		break;
 	}
 	CurrentCartridge->SetKey(game->key);
+	naomi_game_inputs = game->inputs;
 
 	int romid = 0;
 	while (game->blobs[romid].filename != NULL)
@@ -348,6 +352,20 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 
 	if (pdot != NULL && (!strcmp(pdot, ".zip") || !strcmp(pdot, ".ZIP")))
 		return naomi_cart_LoadZip(file);
+
+	// Try to load BIOS from naomi.zip
+	if (!naomi_LoadBios("naomi.zip", NULL, settings.dreamcast.region))
+	{
+	   printf("Warning: Region %d bios not found in naomi.zip\n", settings.dreamcast.region);
+	   if (!naomi_LoadBios("naomi.zip", NULL, -1))
+	   {
+		  if (!bios_loaded)
+		  {
+			 printf("Error: cannot load BIOS. Exiting\n");
+			 return false;
+		  }
+	   }
+	}
 
 	u8* RomPtr;
 	u32 RomSize;
@@ -889,7 +907,24 @@ bool M2Cartridge::Read(u32 offset, u32 size, void* dst)
 		EMUERROR("Invalid read @ %08x\n", offset);
 		return false;
 	}
+	else if (!(RomPioOffset & 0x20000000))
+	{
+		// 4MB mode
+		offset = (offset & 0x103fffff) | ((offset & 0x07c00000) << 1);
+	}
 	return NaomiCartridge::Read(offset, size, dst);
+}
+
+void* M2Cartridge::GetDmaPtr(u32& size)
+{
+	if (RomPioOffset & 0x20000000)
+		return NaomiCartridge::GetDmaPtr(size);
+
+	// 4MB mode
+	u32 offset4mb = (DmaOffset & 0x103fffff) | ((DmaOffset & 0x07c00000) << 1);
+	size = min(min(size, 0x400000 - (offset4mb & 0x3FFFFF)), RomSize - offset4mb);
+
+	return GetPtr(offset4mb, size);
 }
 
 bool M2Cartridge::Write(u32 offset, u32 size, u32 data)

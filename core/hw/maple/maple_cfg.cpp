@@ -28,6 +28,12 @@ extern u32 vks[4];
 extern s8 joyx[4],joyy[4];
 extern u8 rt[4],lt[4];
 extern bool enable_purupuru;
+extern f32 mo_x_abs[4];
+extern f32 mo_y_abs[4];
+extern u32 mo_buttons[4];
+extern f32 mo_x_delta[4];
+extern f32 mo_y_delta[4];
+extern f32 mo_wheel_delta[4];
 
 const char* VMU_SCREEN_COLOR_NAMES[VMU_NUM_COLORS] = {
 		"DEFAULT_ON",
@@ -135,6 +141,24 @@ struct MapleConfigMap : IMapleConfigMap
 	void SetImage(void* img)
 	{
 		vmu_screen_params[player_num == -1 ? dev->bus_id : player_num].vmu_screen_needs_update = true ;
+	}
+	void GetAbsolutePosition(f32 *px, f32 *py)
+	{
+	   int pnum = player_num == -1 ? dev->bus_id : player_num;
+	   *px = mo_x_abs[pnum];
+	   *py = mo_y_abs[pnum];
+	}
+	void GetMouse(u32 *buttons, f32 *delta_x, f32 *delta_y, f32 *delta_wheel)
+	{
+	   int pnum = player_num == -1 ? dev->bus_id : player_num;
+	   *buttons = mo_buttons[pnum];
+	   *delta_x = mo_x_delta[pnum];
+	   *delta_y = mo_y_delta[pnum];
+	   *delta_wheel = mo_wheel_delta[pnum];
+
+	   mo_x_delta[pnum] = 0;
+	   mo_y_delta[pnum] = 0;
+	   mo_wheel_delta[pnum] = 0;
 	}
 };
 

@@ -54,6 +54,8 @@ struct IMapleConfigMap
 {
    virtual void SetVibration(u32 value, u32 max_duration) = 0;
 	virtual void GetInput(PlainJoystickState* pjs)=0;
+	virtual void GetAbsolutePosition(f32 *px, f32 *py) = 0;
+	virtual void GetMouse(u32 *buttons, f32 *delta_x, f32 *delta_y, f32 *delta_wheel) = 0;
 	virtual void SetImage(void* img)=0;
 	virtual ~IMapleConfigMap() {}
 };

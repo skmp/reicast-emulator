@@ -62,6 +62,7 @@ enum AWAVE_KEYS
 
 	// Not an actual button
 	AWAVE_COIN_KEY    = 1 << 15,
+	AWAVE_TRIGGER_KEY    = 1 << 12,
 };
 
 struct IMapleConfigMap;

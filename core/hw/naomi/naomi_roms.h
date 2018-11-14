@@ -23,6 +23,7 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "naomi_roms_input.h"
 
 #define MAX_GAME_FILES 40
 
@@ -183,6 +184,7 @@ struct Game
 		BlobType blob_type;
 		u32 src_offset;		// For copy
 	} blobs[MAX_GAME_FILES];
+	InputDescriptors *inputs;
 }
 Games[] =
 {
@@ -290,7 +292,8 @@ Games[] =
             //ROM_LOAD( "25lc040.ic13s", 0x000000, 0x200, CRC(dc449637) SHA1(6cab09f61be1498271a36bff6a114a4eeeb00e1a) )
             
             { NULL, 0, 0 },
-        }
+        },
+        &mvsc2_inputs
     },
     // Quiz Ah Megamisama (JPN, USA, EXP, KOR, AUS)
     {
@@ -446,7 +449,8 @@ Games[] =
             { "mpr-22324.ic34s", 0x9000002, 0x800000, InterleavedWord },
             { "copy",			 0x0400000, 0xc00000, Copy, 0x1000000 }, // changed
             { NULL, 0, 0 },
-        }
+        },
+        &vtenis2c_inputs
     },
     // Naomi M2/M3 Roms
     // 18 Wheeler (deluxe) (Rev A)
@@ -479,7 +483,8 @@ Games[] =
             { "mpr-22182.ic19s", 0x9800000, 0x800000 },
             { "mpr-22183.ic20s", 0xa000000, 0x800000 },
             { NULL, 0, 0 },
-        }
+        },
+        &_18wheelr_inputs
     },
     // 18 Wheeler (deluxe)
     {
@@ -526,7 +531,8 @@ Games[] =
             //ROM_LOAD( "epr-23000.ic8", 0x000000, 0x010000, CRC(e3b162f7) SHA1(52c7ad759c3c4a3148764e14d77ba5006bc8af48) )
             
             { NULL, 0, 0 },
-        }
+        },
+        &_18wheelr_inputs
     },
     // 18 Wheeler (deluxe) (Rev T)
     {
@@ -573,7 +579,8 @@ Games[] =
             //ROM_LOAD( "epr-23000.ic8", 0x000000, 0x010000, CRC(e3b162f7) SHA1(52c7ad759c3c4a3148764e14d77ba5006bc8af48) )
             
             { NULL, 0, 0 },
-        }
+        },
+        &_18wheelr_inputs
     },
     // 18 Wheeler (standard)
     {
@@ -617,7 +624,8 @@ Games[] =
             //ROM_LOAD( "epr-23000.ic8", 0x000000, 0x010000, CRC(e3b162f7) SHA1(52c7ad759c3c4a3148764e14d77ba5006bc8af48) )
             
             { NULL, 0, 0 },
-        }
+        },
+        &_18wheelr_inputs
     },
     // 18 Wheeler (upright)
     {
@@ -660,7 +668,8 @@ Games[] =
             //ROM_PARAMETER( ":rom_board:segam2crypt:key", "2807cf54" )
             
             { NULL, 0, 0 },
-        }
+        },
+        &_18wheelr_inputs
     },
     // Airline Pilots (Rev B) 
     {
@@ -728,7 +737,8 @@ Games[] =
             { "mpr-23584.ic4",   0x3800000, 0x1000000 },
             { "mpr-23585.ic5",   0x4800000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        &alienfnt_inputs
     },
     // Alien Front (Rev A)
     {
@@ -745,7 +755,8 @@ Games[] =
             { "mpr-23584.ic4",   0x3800000, 0x1000000 },
             { "mpr-23585.ic5",   0x4800000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        &alienfnt_inputs
     },
     // Capcom Vs. SNK Millennium Fight 2000 (JPN, USA, EXP, KOR, AUS) (Rev C)
     {
@@ -764,7 +775,8 @@ Games[] =
             { "mpr-23509.ic6",   0x5800000, 0x1000000 },
             { "mpr-23510.ic7",   0x6800000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        &capsnk_inputs
     },
     // Capcom Vs. SNK Millennium Fight 2000 (Rev A)
     {
@@ -783,7 +795,8 @@ Games[] =
             { "mpr-23509.ic6",   0x5800000, 0x1000000 },
             { "mpr-23510.ic7",   0x6800000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        &capsnk_inputs
     },
     // Capcom Vs. SNK Millennium Fight 2000
     {
@@ -802,7 +815,8 @@ Games[] =
             { "mpr-23509.ic6",  0x5800000, 0x1000000 },
             { "mpr-23510.ic7",  0x6800000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        &capsnk_inputs
     },
     // Crackin' DJ
     {
@@ -885,7 +899,8 @@ Games[] =
             { "mpr-21682.ic14s", 0x7000000, 0x800000 },
             { "mpr-21683.ic15s", 0x7800000, 0x800000 },
             { NULL, 0, 0 },
-        }
+        },
+        &crzytaxi_inputs
     },
     // Cosmic Smash (Rev A)
     {
@@ -949,7 +964,8 @@ Games[] =
             { "mpr-23208.ic11",  0x5800000, 0x0800000 },
             { "mpr-23209.ic12s", 0x6000000, 0x0800000 },
             { NULL, 0, 0 },
-        }
+        },
+        &cspike_inputs
     },
     // Death Crimson OX (JPN, USA, EXP, KOR, AUS)
     {
@@ -971,7 +987,8 @@ Games[] =
             { "mpr-23522.ic9",   0x4800000, 0x0800000 },
             { "mpr-23523.ic10",  0x5000000, 0x0800000 },
             { NULL, 0, 0 },
-        }
+        },
+        &trigger_inputs
     },
     // Death Crimson OX
     {
@@ -993,7 +1010,8 @@ Games[] =
             { "mpr-23522.ic9",  0x4800000, 0x0800000 },
             { "mpr-23523.ic10", 0x5000000, 0x0800000 },
             { NULL, 0, 0 },
-        }
+        },
+        &trigger_inputs
     },
     // Derby Owners Club 2000 (Rev A)
     {
@@ -1504,7 +1522,8 @@ Games[] =
             { "bhf1ma14.6m", 0xe000000, 0x1000000 },
             { "bhf1ma15.6l", 0xf000000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        &gunsur2_inputs
     },
     // Gun Survivor 2 Biohazard Code: Veronica (Japan, BHF1 Ver.E)
     {
@@ -1530,7 +1549,8 @@ Games[] =
             { "bhf1ma14.6m", 0xe000000, 0x1000000 },
             { "bhf1ma15.6l", 0xf000000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        &gunsur2_inputs
     },
     // Giga Wing 2
     {
@@ -1911,7 +1931,8 @@ Games[] =
             //ROM_LOAD("sflash.ic37", 0x000000, 0x000084, CRC(37a66f3c) SHA1(df6cd2cdc2813caa5da4dc9f171998485bcbdc44))
 
             { NULL, 0, 0 },
-        }
+        },
+        &mvsc2_inputs
     },
     // Ninja Assault (NJA3 Ver. A)
     {
@@ -3797,7 +3818,8 @@ Games[] =
             { "ax1706m01.ic16", 0x6000000, 0x1000000 },
             { "ax1701f01.bin", 0, 4, Key },
             { NULL, 0, 0 },
-        }
+        },
+        &ftspeed_inputs,
     },
     // Guilty Gear Isuka
     {
@@ -3935,7 +3957,7 @@ Games[] =
             { "ax0505m01.ic15", 0x5000000, 0x1000000 },
             { "ax0501f01.bin", 0, 4, Key },
             { NULL, 0, 0 },
-        }
+        },&maxspeed_inputs
     },
     // Metal Slug 6
     {

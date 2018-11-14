@@ -42,6 +42,7 @@ struct game_type_naomi
 									   6 = 2 light guns (AtomisWave)
 									   */
    int extra_depth_scaling;         /* -1, make no decision */
+   InputDescriptors *game_inputs;
 };
 
 static struct game_type lut_games[] = 
@@ -74,6 +75,10 @@ static struct game_type lut_games[] =
    { "T40218N   ", -1, -1, -1, -1, -1,  -1,  1  },                /* Record of Lodoss War (USA) */
 };
 
+extern InputDescriptors gunsur2_inputs;
+extern InputDescriptors ftspeed_inputs;
+extern InputDescriptors maxspeed_inputs;
+
 static struct game_type_naomi lut_games_naomi[] = 
 {
    /* Div matching disabled */
@@ -98,10 +103,13 @@ static struct game_type_naomi lut_games_naomi[] =
    { "Sports Shooting USA"               , -1, -1, -1, -1, -1, -1,  -1,  6, -1 },                /* Sports Shooting USA (light guns) */
    { "SEGA CLAY CHALLENGE"               , -1, -1, -1, -1, -1, -1,  -1,  6, -1 },                /* Sega Clay Challenge (light guns) */
    { "EXTREME HUNTING"                   , -1, -1, -1, -1, -1, -1,  -1,  6, -1 },                /* Extreme Hunting (light guns) */
-   { "FASTER THAN SPEED"                 , -1, -1, -1, -1, -1, -1,  -1,  5, -1 },                /* Faster Than Speed (analog axes) */
-   { "MAXIMUM SPEED"                     , -1, -1, -1, -1, -1, -1,  -1,  5, -1 },                /* Maximum Speed (analog axes) */
+   { "FASTER THAN SPEED"                 , -1, -1, -1, -1, -1, -1,  -1,  5, -1, &ftspeed_inputs },/* Faster Than Speed (analog axes) */
+   { "MAXIMUM SPEED"                     , -1, -1, -1, -1, -1, -1,  -1,  5, -1, &maxspeed_inputs },/* Maximum Speed (analog axes) */
    { "BLOPON"                            , -1, -1, -1, -1, -1, -1,  -1,  5, -1 },                /* Block Pong (analog axes) */
    { "BASS FISHING SIMULATOR VER.A"      , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Sega Bass Fishing Challenge (Track-ball) */
    { "DRIVE"                             , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* WaiWai Drive */
    { "KICK '4' CASH"                     , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Kick '4' Cash */
+
+   /* Input descriptors */
+   { " BIOHAZARD  GUN SURVIVOR2"         , -1, -1, -1, -1, -1, -1,  -1, -1, -1, &gunsur2_inputs }, /* Gun Survivor 2 Biohazard Code: Veronica */
 };

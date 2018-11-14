@@ -126,7 +126,7 @@ bool LoadRomFiles(const string& root)
    {
 	  if (nvr_is_optional())
 	  {
-		 printf("flash/nvmem is missing, will create new file...");
+		 printf("flash/nvmem is missing, will create new file...\n");
 	  }
 	  else
 	  {

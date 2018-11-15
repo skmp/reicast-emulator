@@ -478,7 +478,7 @@ Games[] =
             { "mpr-22322.ic32s", 0x8000002, 0x800000, InterleavedWord },
             { "mpr-22323.ic33",  0x9000000, 0x800000, InterleavedWord },
             { "mpr-22324.ic34s", 0x9000002, 0x800000, InterleavedWord },
-            { "copy",			 0x400000,  0xc00000, Copy, 0x1000000 },
+            { "copy",            0x400000,  0xc00000, Copy, 0x1000000 },
             { NULL, 0, 0 },
         },
         &vtenis2c_inputs

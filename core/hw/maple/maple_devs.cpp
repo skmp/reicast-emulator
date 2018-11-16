@@ -2116,6 +2116,7 @@ struct maple_naomi_jamma : maple_sega_controller
 	   LIBRETRO_US(jvs_repeat_request);
 	   LIBRETRO_US(jvs_receive_length);
 	   LIBRETRO_US(jvs_receive_buffer);
+	   create_io_boards();
 	   size_t board_count;
 	   LIBRETRO_US(board_count);
 	   for (int i = 0; i < board_count; i++)

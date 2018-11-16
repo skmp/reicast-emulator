@@ -2028,7 +2028,8 @@ Games[] =
             //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
             
             { NULL, 0, 0 },
-        }
+        },
+        &ninjaslt_inputs
     },
     // Ninja Assault (Asia, NJA4 Ver.A)
     {
@@ -2054,7 +2055,8 @@ Games[] =
             //ROM_REGION( 0x20000, "jyu_io", 0 )  // H8/3334-based I/O board ROM, eventually should be separated out
             //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
             { NULL, 0, 0 },
-        }
+        },
+        &ninjaslt_inputs
     },
     // Ninja Assault (Japan, NJA1 Ver.A)
     {
@@ -2081,7 +2083,8 @@ Games[] =
             //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
             
             { NULL, 0, 0 },
-        }
+        },
+        &ninjaslt_inputs
     },
     // Ninja Assault (US, NJA3 Ver.A)
     {
@@ -2108,7 +2111,8 @@ Games[] =
             //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
             
             { NULL, 0, 0 },
-        }
+        },
+        &ninjaslt_inputs
     },
     // Oinori-daimyoujin Matsuri
     {

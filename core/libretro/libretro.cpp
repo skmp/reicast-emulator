@@ -133,6 +133,7 @@ char *game_data;
 char g_base_name[128];
 char game_dir[1024];
 char game_dir_no_slash[1024];
+char g_roms_dir[PATH_MAX];
 static bool emu_in_thread = false;
 static bool performed_serialization = false;
 #if !defined(TARGET_NO_THREADS)
@@ -1503,7 +1504,6 @@ bool retro_load_game(const struct retro_game_info *game)
    extract_directory(game_dir, game->path, sizeof(game_dir));
 
    // Storing rom dir for later use
-   char g_roms_dir[PATH_MAX];
    snprintf(g_roms_dir, sizeof(g_roms_dir), "%s%c", game_dir, slash);
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE, &rumble) && log_cb)

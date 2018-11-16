@@ -3706,9 +3706,72 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
-
-	// Naomi GD-roms
-
+    // Naomi GD Roms
+    // NAME
+    {
+        "azumanga.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5091-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0018",
+    },
+    // NAME
+    {
+        "bdrdown.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5097-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0023a",
+    },
+    // NAME
+    {
+        "cfield.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5102-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0025",
+    },
+    // NAME
+    {
+        "chocomk.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5085-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0014a",
+    },
+    // NAME
+    {
+        "cleoftp.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5083-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0012",
+    },
 	// Confidential Mission
 	{
         "confmiss.zip",
@@ -3720,7 +3783,544 @@ Games[] =
             { "317-0298-com.pic",  0, 0x4000 },
             { NULL, 0, 0 },
         },
-		"gds-0001",
+        "gds-0001",
+    },
+    // NAME
+    {
+        "cvsgd.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5076-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0004",
+    },
+    // NAME
+    // ver 010804
+    // with Japan BIOS will be shown 010705, likely forgot / was not cared to update it
+    {
+        "cvs2.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5078-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0008",
+    },
+    // NAME
+    // ver 010705
+    {
+        "cvs2mf.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5078-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0007a",
+    },
+    // NAME
+    {
+        "dygolf.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0308-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0009a",
+    },
+    // NAME
+    {
+        "ggxx.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5082-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0011",
+    },
+    // NAME
+    {
+        "ggxxac.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5126-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0041",
+    },
+    // NAME
+    {
+        "ggxxrl.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5092-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0019a",
+    },
+    // NAME
+    {
+        "ggxxrlo.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5092-jpn.pic" , 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0019",
+    },    
+    // NAME
+    {
+        "ggxxsla.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5111-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0033a",
+    },
+    // NAME
+    {
+        "gundmgd.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5069-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0001",
+    },
+    // NAME
+    {
+        "gundmxgd.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5079-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0006",
+    },
+    // NAME
+    {
+        "ikaruga.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5081-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0010",
+    },
+    // NAME
+    {
+        "jingystm.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5122-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0037",
+    },
+    // NAME
+    {
+        "karous.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5125-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0040",
+    },
+    // NAME
+    {
+        "keyboard.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0323-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0017",
+    },
+    // NAME
+    {
+        "kurucham.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5115-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0034",
+    },
+        // NAME
+    {
+        "lupinsho.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0325-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0018",
+    },
+    // NAME
+    {
+        "luptype.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0332-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0021a",
+    },
+    // NAME
+    {
+        "meltyb.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5124-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0039a",
+    },
+    // NAME
+    {
+        "meltybld.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5104-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0028c",
+    },
+    // NAME
+    {
+        "meltyblo.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5104-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0028",
+    },
+    // NAME
+    {
+        "meltybo.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5124-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0039",
+    },
+    // NAME
+    {
+        "moeru.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5084-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0013",
+    },
+    // NAME
+    {
+        "mok.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0333-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0022",
+    },
+    // NAME
+    {
+        "monkeyba.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0307-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0008",
+    },
+    // NAME
+    {
+        "ngdup23a.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0314-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0023a",
+    },
+    // NAME
+    {
+        "ngdup23c.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0338-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0023c",
+    },
+    // NAME
+    {
+        "ngdup23e.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0387-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0023e",
+    },
+    // NAME
+    {
+        "psyvar2.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5100-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0024",
+    },
+    // NAME
+    // Follows Mame 0.198 romset
+    {
+        "puyofev.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0375-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0031",
+    },
+    // NAME
+    {
+        "quizqgd.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5090-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0017",
+    },
+    // NAME
+    {
+        "radirgy.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5110-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0032a",
+    },
+    // NAME
+    {
+        "radirgyo.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5110-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0032",
+    },
+    // NAME
+    {
+        "senko.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5107-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0030a",
+    },
+    // NAME
+    {
+        "senkoo.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5107-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0030",
+    },
+    // NAME
+    {
+        "senkosp.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5123-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0038",
+    },
+    // NAME
+    {
+        "sfz3ugd.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5072-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0002",
+    },
+    // NAME
+    {
+        "shaktam.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0299-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0002b",
+    },
+    // NAME
+    {
+        "shaktamb.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0321-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0016",
+    },
+    // NAME
+    {
+        "shaktmsp.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0315-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0013",
+    },
+    // NAME
+    {
+        "shikgam2.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5095-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0021",
     },
 	// Slashout
 	{
@@ -3733,9 +4333,216 @@ Games[] =
             { "317-0302-com.pic",  0, 0x4000 },
             { NULL, 0, 0 },
         },
-		"gds-0004",
+        "gds-0004",
     },
-
+    // NAME
+    {
+        "spkrbtl.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0303-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0005",
+    },
+    // NAME
+    {
+        "sprtjam.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0300-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0003",
+    },
+    // NAME
+    {
+        "ss2005.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5108-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0031a",
+    },
+    // NAME
+    {
+        "ss2005o.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5108-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0031",
+    },
+    // NAME
+    {
+        "starseek.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5077-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0005",
+    },
+    // NAME
+    {
+        "takoron.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5127-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0042",
+    },
+    // NAME
+    {
+        "tetkiwam.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5093-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0020",
+    },
+    // NAME
+    {
+        "trgheart.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5121-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0036a",
+    },
+    // NAME
+    {
+        "trghearto.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5121-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0036",
+    },
+    // NAME
+    {
+        "trizeal.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5103-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0026",
+    },
+    // NAME
+    {
+        "undefeat.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5117-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0035",
+    },
+    // NAME
+    {
+        "usagiym.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-5096-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gdl-0022",
+    },
+    // NAME
+    {
+        "vathlete.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0330-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0019",
+    },
+    // NAME
+    {
+        "vtennis2.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0318-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0015a",
+    },
+    // NAME
+    {
+        "vtennisg.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0312-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0011",
+    },
+    // NAME
+    {
+        "wsbbgd.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0309-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0010",
+    },
     // AtomisWave Roms
     // Animal Basket (24 Jan 2005)
     {

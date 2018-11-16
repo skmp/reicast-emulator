@@ -98,6 +98,7 @@ static struct game_type_naomi lut_games_naomi[] =
    { "DYNAMIC GOLF"                      , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Virtua Golf/Dynamic Golf: rotary encoders */
    { "CRACKIN'DJ  ver JAPAN"             , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Crackin'DJ: rotary encoders */
    { "CRACKIN'DJ PART2  ver JAPAN"       , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Crackin'DJ 2: rotary encoders */
+   { "OUTTRIGGER     JAPAN"              , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Outtrigger: rotary encoders */
    { "SEGA MARINE FISHING JAPAN"         , -1, -1, -1, -1, -1, -1,  -1,  3, -1 },                /* Sega Marine Fishing */
    { "RINGOUT 4X4 JAPAN"                 , -1, -1, -1, -1, -1, -1,  -1,  4, -1 },                /* Ring Out 4x4 (4 players, also needs to be set in service menu) */
    { "Sports Shooting USA"               , -1, -1, -1, -1, -1, -1,  -1,  6, -1 },                /* Sports Shooting USA (light guns) */
@@ -109,6 +110,7 @@ static struct game_type_naomi lut_games_naomi[] =
    { "BASS FISHING SIMULATOR VER.A"      , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Sega Bass Fishing Challenge (Track-ball) */
    { "DRIVE"                             , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* WaiWai Drive */
    { "KICK '4' CASH"                     , -1, -1, -1, -1, -1, -1,  -1,  2, -1 },                /* Kick '4' Cash */
+   { "NINJA ASSAULT"                     , -1, -1, -1, -1, -1, -1,  -1,  7, -1 },                /* Ninja Assault */
 
    /* Input descriptors */
    { " BIOHAZARD  GUN SURVIVOR2"         , -1, -1, -1, -1, -1, -1,  -1, -1, -1, &gunsur2_inputs }, /* Gun Survivor 2 Biohazard Code: Veronica */

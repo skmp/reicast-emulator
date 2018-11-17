@@ -3706,8 +3706,8 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
-    // Naomi GD Roms
-    // NAME
+     // Naomi GD Roms
+    // Azumanga Daioh Puzzle Bobble (GDL-0018)
     {
         "azumanga.zip",
         0x4000,
@@ -3720,7 +3720,7 @@ Games[] =
         },
         "gdl-0018",
     },
-    // NAME
+    // Border Down (Rev A) (GDL-0023A)
     {
         "bdrdown.zip",
         0x4000,
@@ -3733,7 +3733,7 @@ Games[] =
         },
         "gdl-0023a",
     },
-    // NAME
+    // Chaos Field (Japan) (GDL-0025)
     {
         "cfield.zip",
         0x4000,
@@ -3746,7 +3746,7 @@ Games[] =
         },
         "gdl-0025",
     },
-    // NAME
+    // Musapey's Choco Marker (Rev A) (GDL-0014A)
     {
         "chocomk.zip",
         0x4000,
@@ -3759,7 +3759,7 @@ Games[] =
         },
         "gdl-0014a",
     },
-    // NAME
+    // Cleopatra Fortune Plus (GDL-0012)
     {
         "cleoftp.zip",
         0x4000,
@@ -3772,8 +3772,8 @@ Games[] =
         },
         "gdl-0012",
     },
-	// Confidential Mission
-	{
+    // Confidential Mission (GDS-0001)
+    {
         "confmiss.zip",
         0x4000,
         0,
@@ -3785,7 +3785,7 @@ Games[] =
         },
         "gds-0001",
     },
-    // NAME
+    // Capcom Vs. SNK Millennium Fight 2000 Pro (Japan) (GDL-0004)
     {
         "cvsgd.zip",
         0x4000,
@@ -3798,7 +3798,7 @@ Games[] =
         },
         "gdl-0004",
     },
-    // NAME
+    // Capcom Vs. SNK 2 Mark Of The Millennium 2001 (GDL-0008)
     // ver 010804
     // with Japan BIOS will be shown 010705, likely forgot / was not cared to update it
     {
@@ -3813,7 +3813,7 @@ Games[] =
         },
         "gdl-0008",
     },
-    // NAME
+    // Capcom Vs. SNK 2 Millionaire Fighting 2001 (Rev A) (GDL-0007A)
     // ver 010705
     {
         "cvs2mf.zip",
@@ -3827,7 +3827,7 @@ Games[] =
         },
         "gdl-0007a",
     },
-    // NAME
+    // Virtua Golf / Dynamic Golf (Rev A) (GDS-0009A)
     {
         "dygolf.zip",
         0x4000,
@@ -3840,7 +3840,7 @@ Games[] =
         },
         "gds-0009a",
     },
-    // NAME
+    // Guilty Gear XX (GDL-0011)
     {
         "ggxx.zip",
         0x4000,
@@ -3853,7 +3853,7 @@ Games[] =
         },
         "gdl-0011",
     },
-    // NAME
+    // Guilty Gear XX Accent Core (Japan) (GDL-0041)
     {
         "ggxxac.zip",
         0x4000,
@@ -3866,7 +3866,7 @@ Games[] =
         },
         "gdl-0041",
     },
-    // NAME
+    // Guilty Gear XX #Reload (Japan, Rev A) (GDL-0019A)
     {
         "ggxxrl.zip",
         0x4000,
@@ -3879,7 +3879,7 @@ Games[] =
         },
         "gdl-0019a",
     },
-    // NAME
+    // Guilty Gear XX #Reload (Japan) (GDL-0019)
     {
         "ggxxrlo.zip",
         0x4000,
@@ -3892,7 +3892,7 @@ Games[] =
         },
         "gdl-0019",
     },    
-    // NAME
+    // Guilty Gear XX Slash (Japan, Rev A) (GDL-0033A)
     {
         "ggxxsla.zip",
         0x4000,
@@ -3905,7 +3905,7 @@ Games[] =
         },
         "gdl-0033a",
     },
-    // NAME
+    // Mobile Suit Gundam: Federation Vs. Zeon (GDL-0001)
     {
         "gundmgd.zip",
         0x4000,
@@ -3918,7 +3918,7 @@ Games[] =
         },
         "gdl-0001",
     },
-    // NAME
+    // Mobile Suit Gundam: Federation Vs. Zeon DX (USA, Japan) (GDL-0006)
     {
         "gundmxgd.zip",
         0x4000,
@@ -3931,7 +3931,7 @@ Games[] =
         },
         "gdl-0006",
     },
-    // NAME
+    // Ikaruga (GDL-0010)
     {
         "ikaruga.zip",
         0x4000,
@@ -3944,7 +3944,7 @@ Games[] =
         },
         "gdl-0010",
     },
-    // NAME
+    // Jingi Storm - The Arcade (Japan) (GDL-0037)
     {
         "jingystm.zip",
         0x4000,
@@ -3957,7 +3957,7 @@ Games[] =
         },
         "gdl-0037",
     },
-    // NAME
+    // Karous (Japan) (GDL-0040)
     {
         "karous.zip",
         0x4000,
@@ -3970,7 +3970,7 @@ Games[] =
         },
         "gdl-0040",
     },
-    // NAME
+    // La Keyboard (GDS-0017)
     {
         "keyboard.zip",
         0x4000,
@@ -3983,7 +3983,7 @@ Games[] =
         },
         "gds-0017",
     },
-    // NAME
+    // Kurukuru Chameleon (Japan) (GDL-0034)
     {
         "kurucham.zip",
         0x4000,
@@ -3996,7 +3996,7 @@ Games[] =
         },
         "gdl-0034",
     },
-        // NAME
+        // Lupin The Third - The Shooting (GDS-0018)
     {
         "lupinsho.zip",
         0x4000,
@@ -4009,7 +4009,7 @@ Games[] =
         },
         "gds-0018",
     },
-    // NAME
+    // Lupin The Third - The Typing (Rev A) (GDS-0021A)
     {
         "luptype.zip",
         0x4000,
@@ -4022,7 +4022,7 @@ Games[] =
         },
         "gds-0021a",
     },
-    // NAME
+    // Melty Blood Act Cadenza Version B2 (Japan) (GDL-0039A)
     {
         "meltyb.zip",
         0x4000,
@@ -4035,7 +4035,7 @@ Games[] =
         },
         "gdl-0039a",
     },
-    // NAME
+    // Melty Blood Act Cadenza Ver. A (Japan) (GDL-0028C)
     {
         "meltybld.zip",
         0x4000,
@@ -4048,7 +4048,7 @@ Games[] =
         },
         "gdl-0028c",
     },
-    // NAME
+    // Melty Blood Act Cadenza (Japan) (GDL-0028)
     {
         "meltyblo.zip",
         0x4000,
@@ -4061,7 +4061,7 @@ Games[] =
         },
         "gdl-0028",
     },
-    // NAME
+    // Melty Blood Act Cadenza Version B (Japan) (GDL-0039)
     {
         "meltybo.zip",
         0x4000,
@@ -4074,7 +4074,7 @@ Games[] =
         },
         "gdl-0039",
     },
-    // NAME
+    // Moeru Casinyo (Japan) (GDL-0013)
     {
         "moeru.zip",
         0x4000,
@@ -4087,7 +4087,7 @@ Games[] =
         },
         "gdl-0013",
     },
-    // NAME
+    // The Maze of the Kings (GDS-0022)
     {
         "mok.zip",
         0x4000,
@@ -4100,7 +4100,7 @@ Games[] =
         },
         "gds-0022",
     },
-    // NAME
+    // Monkey Ball (GDS-0008)
     {
         "monkeyba.zip",
         0x4000,
@@ -4113,7 +4113,7 @@ Games[] =
         },
         "gds-0008",
     },
-    // NAME
+    // NAME 
     {
         "ngdup23a.zip",
         0x4000,
@@ -4152,7 +4152,7 @@ Games[] =
         },
         "gds-0023e",
     },
-    // NAME
+    // Psyvariar 2 - The Will To Fabricate (Japan) (GDL-0024)
     {
         "psyvar2.zip",
         0x4000,
@@ -4165,8 +4165,7 @@ Games[] =
         },
         "gdl-0024",
     },
-    // NAME
-    // Follows Mame 0.198 romset
+    // Puyo Pop Fever (World) (GDS-0034)
     {
         "puyofev.zip",
         0x4000,
@@ -4177,9 +4176,22 @@ Games[] =
             { "317-0375-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
         },
+        "gds-0034",
+    },
+    // Puyo Puyo Fever (Japan) (GDS-0031)
+    {
+        "puyofevj.zip",
+        0x4000,
+        0,
+        "naomi.zip",
+        GD,
+        {
+            { "317-0375-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
         "gds-0031",
     },
-    // NAME
+    // Quiz Keitai Q mode (GDL-0017)
     {
         "quizqgd.zip",
         0x4000,
@@ -4192,7 +4204,7 @@ Games[] =
         },
         "gdl-0017",
     },
-    // NAME
+    // Radirgy (Japan, Rev A) (GDL-0032A)
     {
         "radirgy.zip",
         0x4000,
@@ -4205,7 +4217,7 @@ Games[] =
         },
         "gdl-0032a",
     },
-    // NAME
+    // Radirgy (Japan) (GDL-0032)
     {
         "radirgyo.zip",
         0x4000,
@@ -4218,7 +4230,7 @@ Games[] =
         },
         "gdl-0032",
     },
-    // NAME
+    // Senko No Ronde (Japan, Rev A) (GDL-0030A)
     {
         "senko.zip",
         0x4000,
@@ -4231,7 +4243,7 @@ Games[] =
         },
         "gdl-0030a",
     },
-    // NAME
+    // Senko No Ronde (Japan) (GDL-0030)
     {
         "senkoo.zip",
         0x4000,
@@ -4244,7 +4256,7 @@ Games[] =
         },
         "gdl-0030",
     },
-    // NAME
+    // Senko No Ronde Special (Export, Japan) (GDL-0038)
     {
         "senkosp.zip",
         0x4000,
@@ -4257,7 +4269,7 @@ Games[] =
         },
         "gdl-0038",
     },
-    // NAME
+    // Street Fighter Zero 3 Upper (Japan) (GDL-0002)
     {
         "sfz3ugd.zip",
         0x4000,
@@ -4270,7 +4282,7 @@ Games[] =
         },
         "gdl-0002",
     },
-    // NAME
+    // Shakatto Tambourine (Rev B) (GDS-0002B)
     {
         "shaktam.zip",
         0x4000,
@@ -4283,7 +4295,7 @@ Games[] =
         },
         "gds-0002b",
     },
-    // NAME
+    // Shakatto Tambourine Cho Powerup Chu (2K1 AUT) (GDS-0016)
     {
         "shaktamb.zip",
         0x4000,
@@ -4296,7 +4308,7 @@ Games[] =
         },
         "gds-0016",
     },
-    // NAME
+    // Shakatto Tambourine Motto Norinori Shinkyoku Tsuika (2K1 SPR) (GDS-0013)
     {
         "shaktmsp.zip",
         0x4000,
@@ -4309,7 +4321,7 @@ Games[] =
         },
         "gds-0013",
     },
-    // NAME
+    // Shikigami No Shiro II / The Castle of Shikigami II (GDL-0021)
     {
         "shikgam2.zip",
         0x4000,
@@ -4322,8 +4334,8 @@ Games[] =
         },
         "gdl-0021",
     },
-	// Slashout
-	{
+    // Slashout (GDS-0004)
+    {
         "slashout.zip",
         0x4000,
         0,
@@ -4335,7 +4347,7 @@ Games[] =
         },
         "gds-0004",
     },
-    // NAME
+    // Spikers Battle (GDS-0005)
     {
         "spkrbtl.zip",
         0x4000,
@@ -4348,7 +4360,7 @@ Games[] =
         },
         "gds-0005",
     },
-    // NAME
+    // Sports Jam (GDS-0003)
     {
         "sprtjam.zip",
         0x4000,
@@ -4361,7 +4373,7 @@ Games[] =
         },
         "gds-0003",
     },
-    // NAME
+    // Super Shanghai 2005 (Japan, Rev A) (GDL-0031A)
     {
         "ss2005.zip",
         0x4000,
@@ -4374,7 +4386,7 @@ Games[] =
         },
         "gdl-0031a",
     },
-    // NAME
+    // Super Shanghai 2005 (Japan) (GDL-0031)
     {
         "ss2005o.zip",
         0x4000,
@@ -4387,7 +4399,7 @@ Games[] =
         },
         "gdl-0031",
     },
-    // NAME
+    // Doki Doki Idol Star Seeker (GDL-0005)
     {
         "starseek.zip",
         0x4000,
@@ -4400,7 +4412,7 @@ Games[] =
         },
         "gdl-0005",
     },
-    // NAME
+    // Noukone Puzzle Takoron (Japan) (GDL-0042)
     {
         "takoron.zip",
         0x4000,
@@ -4413,7 +4425,7 @@ Games[] =
         },
         "gdl-0042",
     },
-    // NAME
+    // Tetris Kiwamemichi (Japan) (GDL-0020)
     {
         "tetkiwam.zip",
         0x4000,
@@ -4426,7 +4438,7 @@ Games[] =
         },
         "gdl-0020",
     },
-    // NAME
+    // Trigger Heart Exelica Ver.A (Japan) (GDL-0036A)
     {
         "trgheart.zip",
         0x4000,
@@ -4439,7 +4451,7 @@ Games[] =
         },
         "gdl-0036a",
     },
-    // NAME
+    // Trigger Heart Exelica (Japan) (GDL-0036)
     {
         "trghearto.zip",
         0x4000,
@@ -4452,7 +4464,7 @@ Games[] =
         },
         "gdl-0036",
     },
-    // NAME
+    // Trizeal (Japan) (GDL-0026)
     {
         "trizeal.zip",
         0x4000,
@@ -4465,7 +4477,7 @@ Games[] =
         },
         "gdl-0026",
     },
-    // NAME
+    // Under Defeat (Japan) (GDL-0035)
     {
         "undefeat.zip",
         0x4000,
@@ -4478,7 +4490,7 @@ Games[] =
         },
         "gdl-0035",
     },
-    // NAME
+    // Usagi - Yamashiro Mahjong Hen (Japan) (GDL-0022)
     {
         "usagiym.zip",
         0x4000,
@@ -4491,7 +4503,7 @@ Games[] =
         },
         "gdl-0022",
     },
-    // NAME
+    // Virtua Athletics / Virtua Athlete (GDS-0019)
     {
         "vathlete.zip",
         0x4000,
@@ -4504,7 +4516,7 @@ Games[] =
         },
         "gds-0019",
     },
-    // NAME
+    // Virtua Tennis 2 / Power Smash 2 (Rev A) (GDS-0015A)
     {
         "vtennis2.zip",
         0x4000,
@@ -4517,7 +4529,7 @@ Games[] =
         },
         "gds-0015a",
     },
-    // NAME
+    // Virtua Tennis / Power Smash (GDS-0011)
     {
         "vtennisg.zip",
         0x4000,
@@ -4530,7 +4542,7 @@ Games[] =
         },
         "gds-0011",
     },
-    // NAME
+    // World Series Baseball / Super Major League (GDS-0010)
     {
         "wsbbgd.zip",
         0x4000,

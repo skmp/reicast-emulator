@@ -4113,45 +4113,6 @@ Games[] =
         },
         "gds-0008",
     },
-    // NAME 
-    {
-        "ngdup23a.zip",
-        0x4000,
-        0,
-        "naomi.zip",
-        GD,
-        {
-            { "317-0314-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
-        },
-        "gds-0023a",
-    },
-    // NAME
-    {
-        "ngdup23c.zip",
-        0x4000,
-        0,
-        "naomi.zip",
-        GD,
-        {
-            { "317-0338-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
-        },
-        "gds-0023c",
-    },
-    // NAME
-    {
-        "ngdup23e.zip",
-        0x4000,
-        0,
-        "naomi.zip",
-        GD,
-        {
-            { "317-0387-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
-        },
-        "gds-0023e",
-    },
     // Psyvariar 2 - The Will To Fabricate (Japan) (GDL-0024)
     {
         "psyvar2.zip",

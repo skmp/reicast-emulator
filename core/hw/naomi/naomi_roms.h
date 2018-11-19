@@ -43,6 +43,14 @@ enum CartridgeType {
 	GD
 };
 
+enum RegionType {
+	REGION_JAPAN = 0,
+	REGION_USA = 1,
+	REGION_EXPORT = 2,
+	REGION_KOREA = 3,
+	REGION_AUSTRALIA = 4
+};
+
 struct BIOS_t
 {
 	const char* name;
@@ -177,6 +185,7 @@ struct Game
 	u32 key;
 	const char *bios;
 	CartridgeType cart_type;
+	RegionType region_flag;
 	struct
 	{
 		const char* filename;
@@ -198,6 +207,7 @@ Games[] =
         0x7f805c3f,
         NULL,
         M1,
+        REGION_AUSTRALIA,
         {
             { "epr-23377.ic11",  0x0000000, 0x0400000 },
             { "mpr-23357.ic17s", 0x1000000, 0x0800000, InterleavedWord },
@@ -230,6 +240,7 @@ Games[] =
         0x820857c9,
         "naomi.zip",
         M1,
+        REGION_AUSTRALIA,
         {
             { "epr-24212.ic11",   0x0000000, 0x400000 },
             { "opr-24213a.ic17s", 0x1000000, 0x800000, InterleavedWord },
@@ -267,6 +278,7 @@ Games[] =
         0xc18b6e7c,
         NULL,
         M1,
+        REGION_AUSTRALIA,
         {
             { "epr-23085a.ic11", 0x0000000, 0x0400000 },
             { "mpr-23048.ic17s", 0x0800000, 0x0800000 },
@@ -305,6 +317,7 @@ Games[] =
         0x3892fb3a,
         NULL,
         M1,
+        REGION_AUSTRALIA,
         {
             { "epr-24217.ic11",  0x0000000, 0x0400000 },
             { "mpr-24218.ic17s", 0x1000000, 0x0800000, InterleavedWord },
@@ -336,6 +349,7 @@ Games[] =
         0xcd9b4896,
         NULL,
         M1,
+        REGION_AUSTRALIA,
         {
             { "epr-23227.ic11",  0x0000000, 0x0400000 },
             { "mpr-23211.ic17s", 0x1000000, 0x0800000, InterleavedWord },
@@ -364,6 +378,7 @@ Games[] =
         0xa0f37ca7,
         NULL,
         M1,
+        REGION_AUSTRALIA,
         {   
             { "epr-23844.ic11",  0x0000000, 0x400000 },
             { "mtp-23840.ic17s", 0x1000000, 0x800000, InterleavedWord },
@@ -381,6 +396,7 @@ Games[] =
         0x9dbde9cd,
         NULL,
         M1,
+        REGION_AUSTRALIA,
         {   
             { "epr-24065a.ic11", 0x0000000, 0x0400000 },
             { "opr-24060.ic17s", 0x1000000, 0x0800000, InterleavedWord },
@@ -402,6 +418,7 @@ Games[] =
         0x9dbde9cd,
         NULL,
         M1,
+        REGION_AUSTRALIA,
         {
             { "epr-24148.ic11",  0x0000000, 0x400000 },
             { "opr-24174.ic17s", 0x1000000, 0x800000, InterleavedWord },
@@ -419,6 +436,7 @@ Games[] =
         0x9dbde9cd,
         NULL,
         M1,
+        REGION_AUSTRALIA,
         {
             { "rom0.ic22", 0x0000000, 0x400000 },
             { "rom1.ic1s", 0x0800000, 0x800000 },
@@ -437,6 +455,7 @@ Games[] =
         0x2f6f0f8d,
         NULL,
         M1,
+        REGION_AUSTRALIA,
         {
             { "epr-23071.ic11",  0x0000000, 0x0200000 },
             { "epr-23071.ic11",  0x0200000, 0x0200000 }, // reload
@@ -461,6 +480,7 @@ Games[] =
         0x2d2d4743,
         NULL,
         M1,
+        REGION_AUSTRALIA,
         {
             { "epr-22327a.ic11", 0x0000000, 0x400000 },
             { "mpr-22307.ic17s", 0x1000000, 0x800000, InterleavedWord },
@@ -495,6 +515,7 @@ Games[] =
         0x2807cf54,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22185a.ic22", 0x0000000, 0x400000 },
             { "mpr-22164.ic1",   0x0800000, 0x800000 },
@@ -529,6 +550,7 @@ Games[] =
         0x2807cf54,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22185.ic22",  0x0000000, 0x400000 },
             { "mpr-22164.ic1",   0x0800000, 0x800000 },
@@ -578,6 +600,7 @@ Games[] =
         0x2807cf54,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22185t.ic22", 0x0000000, 0x400000 },
             { "mpr-22164.ic1",   0x0800000, 0x800000 },
@@ -627,6 +650,7 @@ Games[] =
         0x2807cf54,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23298.ic22",  0x0000000, 0x400000 },
             { "mpr-22164.ic1",   0x0800000, 0x800000 },
@@ -673,6 +697,7 @@ Games[] =
         0x2807cf54,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23299.ic22",  0x0000000, 0x400000 },
             { "mpr-22164.ic1",   0x0800000, 0x800000 },
@@ -718,6 +743,7 @@ Games[] =
         0x28070e41,
         "airlbios.zip",
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-21787b.ic22", 0x0000000, 0x400000 },
             { "mpr-21728.ic1",   0x0800000, 0x800000 },
@@ -746,6 +772,7 @@ Games[] =
         0x28070e41,
         "airlbios.zip",
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-21739a.ic22", 0x000000,  0x400000 },
             { "mpr-21728.ic1",   0x0800000, 0x800000 },
@@ -769,6 +796,7 @@ Games[] =
         0x28174343,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23586t.ic22", 0x0000000, 0x0400000 },
             { "mpr-23581.ic1",   0x0800000, 0x1000000 },
@@ -788,6 +816,7 @@ Games[] =
         0x28174343,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23586a.ic22", 0x0000000, 0x0400000 },
             { "mpr-23581.ic1",   0x0800000, 0x1000000 },
@@ -807,6 +836,7 @@ Games[] =
         0x00000000,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23511c.ic22", 0x000000,  0x400000  },
             { "mpr-23504.ic1",   0x0800000, 0x1000000 },
@@ -828,6 +858,7 @@ Games[] =
         0x00000000,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23511a.ic22", 0x000000,  0x400000  },
             { "mpr-23504.ic1",   0x0800000, 0x1000000 },
@@ -849,6 +880,7 @@ Games[] =
         0x00000000,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23511.ic22", 0x000000,  0x400000  },
             { "mpr-23504.ic1",  0x0800000, 0x1000000 },
@@ -870,6 +902,7 @@ Games[] =
         0x281c2347,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23450.ic22", 0x0000000, 0x0400000 },
             { "mpr-23525.ic1",  0x0800000, 0x1000000 },
@@ -892,6 +925,7 @@ Games[] =
         0x28428247,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23674.ic22", 0x0000000, 0x400000 },
             { "rom1.ic1s",      0x0800000, 0x800000 },
@@ -928,6 +962,7 @@ Games[] =
         0x280d2f45,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-21684.ic22",  0x0000000, 0x400000 },
             { "mpr-21671.ic1",   0x0800000, 0x800000 },
@@ -955,6 +990,7 @@ Games[] =
         0x28103347,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23428a.ic22", 0x0000000, 0x0400000 },
             { "mpr-23420.ic1",   0x0800000, 0x0800000 },
@@ -975,6 +1011,7 @@ Games[] =
         0x28103347,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23428.ic22", 0x0000000, 0x400000  },
             { "mpr-23420.ic1",  0x0800000, 0x0800000 },
@@ -995,6 +1032,7 @@ Games[] =
         0x000e2010,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23210.ic22",  0x0000000, 0x0400000 },
             { "mpr-23198.ic1",   0x0800000, 0x0800000 },
@@ -1021,6 +1059,7 @@ Games[] =
         0x000b64d0,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23524a.ic22", 0x0000000, 0x0400000 },
             { "mpr-23514.ic1",   0x0800000, 0x0800000 },
@@ -1045,6 +1084,7 @@ Games[] =
         0x000b64d0,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23524.ic22", 0x0000000, 0x0400000 },
             { "mpr-23514.ic1",  0x0800000, 0x0800000 },
@@ -1069,6 +1109,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22284a.ic22", 0x0000000, 0x400000 },
             { "mpr-22223.ic1",   0x0800000, 0x800000 },
@@ -1097,6 +1138,7 @@ Games[] =
         0x280fee35,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22099b.ic22", 0x0000000, 0x0400000 },
             { "mpr-22085.ic1",   0x0800000, 0x0800000 },
@@ -1123,6 +1165,7 @@ Games[] =
         0x2a436bb7,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22306b.ic22", 0x0000000, 0x0400000 },
             { "mpr-22295.ic1",   0x0800000, 0x1000000 },
@@ -1146,6 +1189,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22336d.ic22", 0x0000000, 0x0400000 },
             { "mpr-22328.ic1",   0x0800000, 0x1000000 },
@@ -1165,6 +1209,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22336b.ic22", 0x000000,  0x400000  },
             { "mpr-22328.ic1",   0x0800000, 0x1000000 },
@@ -1184,6 +1229,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22336c.ic22", 0x000000,  0x400000  },
             { "mpr-22328.ic1",   0x0800000, 0x1000000 },
@@ -1203,6 +1249,7 @@ Games[] =
         0x0008ad01,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22207.ic22",  0x0000000, 0x0400000 }, 
             { "mpr-22100.ic1",   0x0800000, 0x0800000 },
@@ -1241,6 +1288,7 @@ Games[] =
         0x0008ad01,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22121a.ic22", 0x0000000, 0x0400000 },
             { "mpr-22100.ic1",   0x0800000, 0x0800000 },
@@ -1279,6 +1327,7 @@ Games[] =
         0x0008ad01,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "doa2verm.ic22",   0x0000000, 0x0400000 },
             { "mpr-22100.ic1",   0x0800000, 0x0800000 },
@@ -1317,6 +1366,7 @@ Games[] =
         0x2804ae71,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22141b.ic22", 0x0000000, 0x0200000 },
             { "epr-22141b.ic22", 0x0200000, 0x0200000 }, // reload
@@ -1349,6 +1399,7 @@ Games[] =
         0x280e6ae1,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-21575.ic22",  0x0000000, 0x0200000 },
             { "epr-21575.ic22",  0x0200000, 0x0200000 }, // reload
@@ -1383,6 +1434,7 @@ Games[] =
         0x280e8f84,
         "f355dlx.zip",
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-21902.ic22",  0x0000000, 0x0400000 },
             { "mpr-21881.ic1",   0x0800000, 0x0800000 },
@@ -1421,6 +1473,7 @@ Games[] =
         0x2806efd4,
         "f355bios.zip",
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22848.ic22",  0x0000000, 0x400000 },
             { "mpr-22827.ic1",   0x0800000, 0x800000 },
@@ -1454,6 +1507,7 @@ Games[] =
         0x2806efd4,
         "f355bios.zip",
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22848p.ic22", 0x0000000, 0x400000 },
             { "rom1.ic1s",       0x0800000, 0x800000 },
@@ -1487,6 +1541,7 @@ Games[] =
         0x281666c6,
         "f355bios.zip",
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23399.ic22",     0x0000000, 0x400000 },
             { "mpr-23378.ic1",      0x0800000, 0x800000 },
@@ -1520,6 +1575,7 @@ Games[] =
         0x28074a61,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-21820.ic22", 0x0000000, 0x0200000 },
             { "epr-21820.ic22", 0x0200000, 0x0200000 }, // reload
@@ -1544,6 +1600,7 @@ Games[] =
         0x00076110,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23356.ic22",  0x0000000, 0x0400000 },
             { "mpr-23342.ic1",   0x0800000, 0x0800000 },
@@ -1570,6 +1627,7 @@ Games[] =
         0x000e8010,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23638.ic22", 0x0000000, 0x0400000 },
             { "mpr-23628.ic1",  0x0800000, 0x1000000 },
@@ -1592,6 +1650,7 @@ Games[] =
         0x000680d0,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "bhf2vere.2f", 0x0000000, 0x0800000 },
             { "bhf1ma2.4m",  0x2000000, 0x1000000 },
@@ -1620,6 +1679,7 @@ Games[] =
         0x000680d0,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "bhf1vere.2f", 0x0000000, 0x0800000 },
             { "bhf1ma2.4m",  0x2000000, 0x1000000 },
@@ -1648,6 +1708,7 @@ Games[] =
         0x000b25d0,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22270.ic22", 0x0000000, 0x0200000 },
             { "epr-22270.ic22", 0x0200000, 0x0200000 }, // reload
@@ -1666,6 +1727,7 @@ Games[] =
         0x00038510,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23716a.ic22", 0x0000000, 0x0400000 },
             { "mpr-23705.ic1",   0x0800000, 0x0800000 },
@@ -1689,6 +1751,7 @@ Games[] =
         0xfffffff, // not populated
         "hod2bios.zip",
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-21585.ic22",  0x0000000, 0x200000 },
             { "epr-21585.ic22",  0x0200000, 0x200000 }, // reload
@@ -1722,6 +1785,7 @@ Games[] =
         0xfffffff, // not populated
         "hod2bios.zip",
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-21385.ic22",  0x0000000, 0x200000 },
             { "epr-21385.ic22",  0x0200000, 0x200000 }, //reload
@@ -1755,6 +1819,7 @@ Games[] =
         0xfffffff, // not populated
         "hod2bios.zip",
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-21805.ic22",  0x0000000, 0x200000 },
             { "epr-21805.ic22",  0x0200000, 0x200000 }, //reload
@@ -1788,6 +1853,7 @@ Games[] =
         0xfffffff, // not populated
         "hod2bios.zip",
         M2,
+        REGION_AUSTRALIA,
         {
             { "hotd2proto.ic22", 0x000000,  0x200000 },
             { "hotd2proto.ic22", 0x200000,  0x200000 },
@@ -1821,6 +1887,7 @@ Games[] =
         0x294bc3e3,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22294a.ic22", 0x0000000, 0x400000 },
             { "rom1.ic1s",       0x0800000, 0x800000 },
@@ -1849,6 +1916,7 @@ Games[] =
         0x280fab95,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22826a.ic22", 0x0000000, 0x400000 },
             { "mpr-22818.ic1",   0x0800000, 0x800000 },
@@ -1869,6 +1937,7 @@ Games[] =
         0x280b8ef5,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22993.ic22",  0x0000000, 0x200000 },
             { "epr-22993.ic22",  0x0200000, 0x200000 }, // reload
@@ -1897,6 +1966,7 @@ Games[] =
         0x280fea94,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "maz2vera.2d", 0x0800000, 0x0800000 },
             { "maz1ma1.4m",  0x1000000, 0x1000000 },
@@ -1917,6 +1987,7 @@ Games[] =
         0x280fea94,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "maz3vera.2d", 0x0800000, 0x0800000 },
             { "maz1ma1.4m",  0x1000000, 0x1000000 },
@@ -1937,6 +2008,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-24241.ic22", 0x00000000, 0x00400000 },
             { "mpr-24242.ic1",  0x00800000, 0x01000000 },
@@ -1954,6 +2026,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-24286.ic22", 0x0000000, 0x0400000 },
             { "mpr-24276.ic1",  0x0800000, 0x1000000 },
@@ -1973,6 +2046,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "rom1.ic1s", 0x0800000, 0x800000 },
             { "rom2.ic2s", 0x1000000, 0x800000 },
@@ -1999,6 +2073,7 @@ Games[] =
         0x0002c840,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23062a.ic22", 0x0000000, 0x0400000 },
             { "mpr-23048.ic1",   0x0800000, 0x0800000 },
@@ -2031,6 +2106,7 @@ Games[] =
         0x000ca510,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "nja2vera.2d", 0x0800000, 0x0800000 },
             { "nja1vera.2c", 0x1000000, 0x0800000 },
@@ -2060,6 +2136,7 @@ Games[] =
         0x000ca510,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "nja4vera.2d", 0x0800000, 0x0800000 },
             { "nja1vera.2c", 0x1000000, 0x0800000 },
@@ -2088,6 +2165,7 @@ Games[] =
         0x000ca510,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "nja1vera.2d", 0x0800000, 0x0800000 },
             { "nja1vera.2c", 0x1000000, 0x0800000 },
@@ -2117,6 +2195,7 @@ Games[] =
         0x000ca510,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "nja3vera.2d", 0x0800000, 0x0800000 },
             { "nja1vera.2c", 0x1000000, 0x0800000 },
@@ -2146,6 +2225,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-24053.ic22", 0x0000000, 0x0400000 },
             { "mpr-24054.ic1",  0x0800000, 0x1000000 },
@@ -2163,6 +2243,7 @@ Games[] =
         0x280fea94,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22163.ic22",  0x0000000, 0x0400000 },
             { "mpr-22142.ic1",   0x0800000, 0x0800000 },
@@ -2197,6 +2278,7 @@ Games[] =
         0x000725d0,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23548a.ic22", 0x0000000, 0x0400000 },
             { "mpr-23537.ic1",   0x0800000, 0x1000000 },
@@ -2220,6 +2302,7 @@ Games[] =
         0x000e69c1,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-21597.ic22", 0x0000000, 0x0200000 },
             { "epr-21597.ic22", 0x0200000, 0x0200000 }, // reload
@@ -2241,6 +2324,7 @@ Games[] =
         0x000b8dc0,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23127.ic22", 0x0000000, 0x0400000 },
             { "mpr-23118.ic1",  0x0800000, 0x0800000 },
@@ -2262,6 +2346,7 @@ Games[] =
         0x000b8dc0,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "00.ic1",  0x0000000, 0x0800000 },
             { "01.ic2",  0x0800000, 0x0800000 },
@@ -2283,6 +2368,7 @@ Games[] =
         0x000acd40,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22206.ic22",  0x0000000, 0x400000 },
             { "mpr-22186.ic1",   0x0800000, 0x800000 },
@@ -2315,6 +2401,7 @@ Games[] =
         0x280b1e40,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-21779a.ic22", 0x0000000, 0x400000 },
             { "mpr-21761.ic1",   0x0800000, 0x800000 },
@@ -2337,6 +2424,7 @@ Games[] =
         0x280b1e40,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-21779.ic22", 0x0000000, 0x400000 },
             { "mpr-21761.ic1",  0x0800000, 0x800000 },
@@ -2359,6 +2447,7 @@ Games[] =
         0x280a8b5d,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22966b.ic22", 0x0000000, 0x0400000 }, // was also found in cartridge with Rev.A case label
             { "mpr-22950.ic1",   0x0800000, 0x0800000 },
@@ -2387,6 +2476,7 @@ Games[] =
         0x280a8b5d,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "sambaproto.ic22", 0x000000,   0x0400000  },
             { "rom1.ic1s",       0x00800000, 0x00800000 },
@@ -2413,6 +2503,7 @@ Games[] =
         0x281702cf,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23600.ic22", 0x00000000, 0x0400000 },
             { "mpr-23589.ic1",  0x00800000, 0x1000000 },
@@ -2436,6 +2527,7 @@ Games[] =
         0x2808ae51,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             {  "epr-22909.ic22", 0x0000000, 0x200000 },
             {  "epr-22909.ic22", 0x0200000, 0x200000 }, // reload
@@ -2455,6 +2547,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22060.ic22",  0x0000000, 0x0400000 },
             { "mpr-22061.ic1",   0x0800000, 0x0800000 },
@@ -2479,6 +2572,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23627.ic22", 0x0000000, 0x0400000 },
             { "mpr-23275.ic1",  0x0800000, 0x1000000 },
@@ -2502,6 +2596,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23626.ic22", 0x0000000, 0x200000 },
             { "epr-23626.ic22", 0x0200000, 0x200000 }, //reload
@@ -2537,6 +2632,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23625.ic22", 0x0000000, 0x0400000 },
             { "mpr-23231.ic1",  0x0800000, 0x1000000 },
@@ -2557,6 +2653,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "rom1.ic1s",   0x00800000, 0x00800000 },
             { "rom2.ic2s",   0x01000000, 0x00800000 },
@@ -2574,6 +2671,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-24107a.ic22", 0x00000000, 0x00400000 },
             { "mpr-24108.ic1",   0x00800000, 0x01000000 },
@@ -2597,6 +2695,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-24087b.ic22", 0x00000000, 0x00400000 },
             { "mpr-24088.ic1",   0x00800000, 0x01000000 },
@@ -2615,6 +2714,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-24097a.ic22", 0x00000000, 0x00400000 },
             { "mpr-24098.ic1",   0x00800000, 0x01000000 },
@@ -2633,6 +2733,7 @@ Games[] =
         0x28048a01,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22059.ic22",  0x0000000, 0x200000 },
             { "epr-22059.ic22",  0x0200000, 0x200000 }, // reload
@@ -2667,6 +2768,7 @@ Games[] =
         0x281a66ca,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23341.ic22",  0x0000000, 0x0400000 },
             { "mpr-23324.ic1",   0x0800000, 0x0800000 },
@@ -2696,6 +2798,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22221.ic22",  0x0000000, 0x0400000 },
             { "mpr-22208.ic1",   0x0800000, 0x0800000 },
@@ -2720,6 +2823,7 @@ Games[] =
         0x00078d01,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22977b.ic22", 0x0000000, 0x0400000 },
             { "mpr-22967.ic1",   0x0800000, 0x0800000 },
@@ -2742,6 +2846,7 @@ Games[] =
         0x28132303,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23323a.ic22", 0x0000000, 0x400000 },
             { "mpr-23302.ic1",   0x0800000, 0x800000 },
@@ -2774,6 +2879,7 @@ Games[] =
         0x28132303,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23786a.ic22", 0x0000000, 0x400000 },
             { "mpr-23302.ic1",   0x0800000, 0x800000 },
@@ -2806,6 +2912,7 @@ Games[] =
         0x000368e1,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-21979.ic22", 0x0000000, 0x0200000 },
             { "epr-21979.ic22", 0x0200000, 0x0200000 }, // reload
@@ -2833,6 +2940,7 @@ Games[] =
         0x28028ea5,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             //ROM_REGION16_BE( 0x80, "main_eeprom", 0 )
             //ROM_LOAD16_WORD("main_eeprom.bin", 0x0000, 0x0080, CRC(fea29cbb) SHA1(4099f1747aafa07db34f6e072cd9bfaa83bae10e) )
@@ -2858,6 +2966,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23021a.ic22", 0x0000000, 0x0400000 },
             { "mpr-23001.ic1",   0x0800000, 0x0800000 },
@@ -2891,6 +3000,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23021.ic22",  0x0000000, 0x0400000 },
             { "mpr-23001.ic1",   0x0800000, 0x0800000 },
@@ -2924,6 +3034,7 @@ Games[] =
         0x052e2901,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "trf1vera.2f", 0x0000000, 0x0800000 },
             { "trf1vera.2d", 0x0800000, 0x0800000 },
@@ -2952,6 +3063,7 @@ Games[] =
         0x2802ca85,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22035.ic22", 0x0000000, 0x0400000 },
             { "mpr-22025.ic1",  0x0800000, 0x0800000 },
@@ -2974,6 +3086,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23073.ic22",  0x0000000, 0x0400000 },
             { "mpr-22928.ic1",   0x0800000, 0x0800000 },
@@ -3007,6 +3120,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22949.ic22",  0x0000000, 0x0400000 },
             { "mpr-22928.ic1",   0x0800000, 0x0800000 },
@@ -3040,6 +3154,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "vnbaearly.ic22",  0x0000000, 0x0400000 },
             { "mpr-22928.ic1",   0x0800000, 0x0800000 },
@@ -3073,6 +3188,7 @@ Games[] =
         0x28010715,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23198.ic22",  0x0000000, 0x400000 },
             { "mpr-23182.ic1",   0x0800000, 0x800000 },
@@ -3098,6 +3214,7 @@ Games[] =
         0x28088b08,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-21929c.ic22", 0x0000000, 0x0400000 },
             { "mpr-21924.ic1",   0x0800000, 0x0800000 },
@@ -3125,6 +3242,7 @@ Games[] =
         0x28088b08,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             {"epr-21929.ic22",   0x0000000, 0x0400000 },
             { "mpr-21924.ic1",   0x0800000, 0x0800000 },
@@ -3152,6 +3270,7 @@ Games[] =
         0x2803eb15,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22927.ic22", 0x0000000, 0x0400000 },
             { "mpr-22916.ic1",  0x0800000, 0x0800000 },
@@ -3175,6 +3294,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-24059.ic22", 0x0000000, 0x0400000 },
             { "mpr-23719.ic1",  0x0800000, 0x1000000 },
@@ -3193,6 +3313,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-23725a.ic22", 0x0000000, 0x400000  },
             { "mpr-23719.ic1",   0x0800000, 0x1000000 },
@@ -3217,6 +3338,7 @@ Games[] =
         0x052e2901,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "wk2vera.2d", 0x0800000, 0x800000  },
             { "wk2vera.2c", 0x1000000, 0x800000  },
@@ -3239,6 +3361,7 @@ Games[] =
         0x052e2901,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "wk1vera.2d", 0x0800000, 0x800000 },
             { "wk2vera.2c", 0x1000000, 0x800000 },
@@ -3261,6 +3384,7 @@ Games[] =
         0x052e2901,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "wk3vera.2d", 0x0800000, 0x800000  },
             { "wk2vera.2c", 0x1000000, 0x800000  },
@@ -3283,6 +3407,7 @@ Games[] =
         0x052e2901,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "wkc1vera.2d", 0x0800000, 0x800000 },
             { "wkc1vera.2c", 0x1000000, 0x800000 },
@@ -3305,6 +3430,7 @@ Games[] =
         0x052e2901,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "wkc2vera.2d", 0x0800000, 0x800000 },
             { "wkc1vera.2c", 0x1000000, 0x800000 },
@@ -3327,6 +3453,7 @@ Games[] =
         0x281627c3,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-22261.ic22", 0x0000000, 0x0400000 },
             { "mpr-22262.ic1",  0x0800000, 0x1000000 },
@@ -3347,6 +3474,7 @@ Games[] =
         0x0007c010,
         NULL,
         M2,
+        REGION_JAPAN,
         {
             { "epr-23689.ic22", 0x0000000, 0x0400000 },
             { "mpr-23684.ic1",  0x0800000, 0x1000000 },
@@ -3364,6 +3492,7 @@ Games[] =
         0x28012b41,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-21707a.ic22", 0x0000000, 0x0200000 },
             { "epr-21707a.ic22", 0x0200000, 0x0200000 }, // reload
@@ -3396,6 +3525,7 @@ Games[] =
         0x28012b41,
         NULL,
         M2,
+        REGION_AUSTRALIA,
         {
             { "epr-21707.ic22",  0x0000000, 0x0200000 },
             { "epr-21707.ic22",  0x0200000, 0x0200000 }, // Reload
@@ -3429,6 +3559,7 @@ Games[] =
         0x5504,
         "naomi.zip",
         M4,
+        REGION_JAPAN,
         {
             { "ic8.bin", 0x0000000, 0x4000000 },
             { "ic9.bin", 0x4000000, 0x4000000 },
@@ -3444,6 +3575,7 @@ Games[] =
         0x5504,
         "naomi.zip",
         M4,
+        REGION_AUSTRALIA,
         {
             { "fpr-24382.ic8",  0x0000000, 0x4000000 },
             { "fpr-24383.ic9",  0x4000000, 0x4000000 },
@@ -3460,6 +3592,7 @@ Games[] =
         0x5504,
         "naomi.zip",
         M4,
+        REGION_AUSTRALIA,
         {
             { "fpr-24382.ic8",  0x0000000, 0x4000000 },
             { "fpr-24383.ic9",  0x4000000, 0x4000000 },
@@ -3479,6 +3612,7 @@ Games[] =
         0x5504,
         "naomi.zip",
         M4,
+        REGION_AUSTRALIA,
         {
             { "fpr-24437.ic8",  0x0000000, 0x4000000 },
             { "fpr-24438.ic9",  0x4000000, 0x4000000 },
@@ -3494,6 +3628,7 @@ Games[] =
         0x5505,
         "naomi.zip",
         M4,
+        REGION_AUSTRALIA,
         {
             { "fpr-24408.ic8",  0x00000000, 0x4000000 },
             { "fpr-24372.ic9",  0x04000000, 0x4000000 },
@@ -3518,6 +3653,7 @@ Games[] =
         0x5504,
         "naomi.zip",
         M4,
+        REGION_AUSTRALIA,
         {
             { "ic8.bin",  0x0000000, 0x4000000 },
             { "ic9.bin",  0x4000000, 0x4000000 },
@@ -3533,6 +3669,7 @@ Games[] =
         0x5586,
         "naomi.zip",
         M4,
+        REGION_AUSTRALIA,
         {
             { "ic8.bin",       0x00000000, 0x4000000 },
             { "epr-24455.ic7", 0x00000000, 0x0400000 }, // EPR mode, overwrite FPR data
@@ -3552,6 +3689,7 @@ Games[] =
         0x5506,
         "naomi.zip",
         M4,
+        REGION_AUSTRALIA,
         {
             { "ic8.bin",  0x00000000, 0x4000000 },
             { "ic9.bin",  0x04000000, 0x4000000 },
@@ -3570,6 +3708,7 @@ Games[] =
         0x5502,
         "naomi.zip",
         M4,
+        REGION_AUSTRALIA,
         {
             { "fpr-24333.ic8", 0x0000000, 0x4000000 },
             { "fpr-24334.ic9", 0x4000000, 0x4000000 },
@@ -3587,6 +3726,7 @@ Games[] =
         0x5582,
         "naomi.zip",
         M4,
+        REGION_AUSTRALIA,
         {
             { "fpr-24333.ic8", 0x0000000, 0x4000000 },
             { "epr-24357.ic7", 0x0000000, 0x0400000 },
@@ -3607,6 +3747,7 @@ Games[] =
         0x5502,
         "naomi.zip",
         M4,
+        REGION_AUSTRALIA,
         {
             { "fpr-24417.ic8", 0x0000000, 0x4000000 },
             { "fpr-24418.ic9", 0x4000000, 0x4000000 },
@@ -3625,6 +3766,7 @@ Games[] =
         0x5505,
         "naomi.zip",
         M4,
+        REGION_AUSTRALIA,
         {
             { "fpr-24365.ic8",  0x00000000, 0x4000000 },
             { "fpr-24366.ic9",  0x04000000, 0x4000000 },
@@ -3649,6 +3791,7 @@ Games[] =
         0x5504,
         "naomi.zip",
         M4,
+        REGION_AUSTRALIA,
         {
             { "ic8.bin", 0x0000000, 0x4000000 },
             { "ic9.bin", 0x4000000, 0x4000000 },
@@ -3663,6 +3806,7 @@ Games[] =
         0x5504,
         "naomi.zip",
         M4,
+        REGION_AUSTRALIA,
         {
             { "fpr-24423.ic8",  0x00000000, 0x4000000 },
             { "fpr-24424.ic9",  0x04000000, 0x4000000 },
@@ -3678,7 +3822,8 @@ Games[] =
         0x10000000,
         0x5504,
         NULL, // requires epr-21576g.ic27
-        M4,   // not a real M4, rom header decrypted
+        M4,
+        REGION_AUSTRALIA,   // not a real M4, rom header decrypted
         {
             { "fpr-24413.ic8",  0x0000000, 0x4000000 },
             { "fpr-24414.ic9",  0x4000000, 0x4000000 },
@@ -3695,6 +3840,7 @@ Games[] =
         0x5502,
         "naomi.zip",
         M4,
+        REGION_AUSTRALIA,
         {
             { "fpr-24338.ic8", 0x0000000, 0x4000000 },
             { "fpr-24339.ic9", 0x4000000, 0x4000000 },
@@ -3714,6 +3860,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5091-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3727,6 +3874,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5097-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3740,6 +3888,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5102-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3753,6 +3902,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5085-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3766,6 +3916,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5083-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3779,6 +3930,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0298-com.pic",  0, 0x4000 },
             { NULL, 0, 0 },
@@ -3792,6 +3944,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5076-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3807,6 +3960,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5078-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3821,6 +3975,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5078-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3834,6 +3989,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0308-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3847,6 +4003,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5082-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3860,6 +4017,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_JAPAN,
         {
             { "317-5126-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3873,6 +4031,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5092-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3886,6 +4045,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5092-jpn.pic" , 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3899,6 +4059,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5111-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3912,6 +4073,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5069-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3925,6 +4087,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5079-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3938,6 +4101,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5081-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3951,6 +4115,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5122-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3964,6 +4129,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5125-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3977,6 +4143,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0323-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -3990,6 +4157,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5115-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4003,6 +4171,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0325-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4016,6 +4185,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0332-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4029,6 +4199,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5124-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4042,6 +4213,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5104-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4055,6 +4227,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5104-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4068,6 +4241,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5124-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4081,6 +4255,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5084-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4094,6 +4269,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0333-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4107,6 +4283,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0307-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4120,6 +4297,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_JAPAN,
         {
             { "317-5100-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4133,6 +4311,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0375-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4146,6 +4325,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0375-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4159,6 +4339,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5090-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4172,6 +4353,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5110-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4185,6 +4367,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5110-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4198,6 +4381,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5107-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4211,6 +4395,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5107-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4224,6 +4409,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5123-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4237,6 +4423,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_JAPAN,
         {
             { "317-5072-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4250,6 +4437,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0299-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4263,6 +4451,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0321-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4276,6 +4465,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0315-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4289,6 +4479,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5095-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4302,6 +4493,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0302-com.pic",  0, 0x4000 },
             { NULL, 0, 0 },
@@ -4315,6 +4507,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0303-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4328,6 +4521,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0300-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4341,6 +4535,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5108-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4354,6 +4549,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5108-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4367,6 +4563,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5077-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4380,6 +4577,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5127-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4393,6 +4591,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5093-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4406,6 +4605,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5121-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4419,6 +4619,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5121-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4432,6 +4633,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5103-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4445,6 +4647,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5117-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4458,6 +4661,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-5096-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4471,6 +4675,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0330-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4484,6 +4689,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0318-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4497,6 +4703,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0312-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4510,6 +4717,7 @@ Games[] =
         0,
         "naomi.zip",
         GD,
+        REGION_AUSTRALIA,
         {
             { "317-0309-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4524,6 +4732,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "vm2001f01.u3",  0x0000000, 0x800000 },
             { "vm2001f01.u4",  0x1000000, 0x800000 },
@@ -4540,6 +4749,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "u3",  0x0000000, 0x1000000 },
             { "u1",  0x1000000, 0x1000000 },
@@ -4557,6 +4767,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "vera.u3",  0x00000000, 0x01000000 },
             { "vera.u1",  0x01000000, 0x01000000 },
@@ -4577,6 +4788,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "610-0811.u3",  0x00000000, 0x01000000 },
             { "610-0811.u1",  0x01000000, 0x01000000 },
@@ -4597,6 +4809,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "u3", 0x0000000, 0x1000000 },
             { "u1", 0x1000000, 0x1000000 },
@@ -4615,6 +4828,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "608-2161.u3",  0x0000000, 0x1000100 },
             { "608-2161.u1",  0x1000000, 0x1000100 },
@@ -4635,6 +4849,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax0601p01.ic18", 0x0000000, 0x0800000 },
             { "ax0601m01.ic11", 0x1000000, 0x1000000 },
@@ -4655,6 +4870,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "695-0014.u3",  0x0000000, 0x1000000 },
             { "695-0014.u1",  0x1000000, 0x1000000 },
@@ -4675,6 +4891,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax0401p01.ic18", 0x0000000, 0x0800000 },
             { "ax0401m01.ic11", 0x1000000, 0x1000000 },
@@ -4693,6 +4910,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax1901p01.ic18", 0x0000000, 0x0800000 },
             { "ax1901m01.ic11", 0x1000000, 0x1000000 },
@@ -4713,6 +4931,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax1701p01.ic18", 0x0000000, 0x0800000 },
             { "ax1701m01.ic11", 0x1000000, 0x1000000 },
@@ -4734,6 +4953,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax1201p01.ic18", 0x0000000, 0x0800000 },
             { "ax1201m01.ic10", 0x0800000, 0x1000000 },
@@ -4755,6 +4975,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax0801p01.ic18", 0x0000000, 0x0800000 },
             { "ax0801m01.ic11", 0x1000000, 0x1000000 },
@@ -4775,6 +4996,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax2201en_p01.ic18", 0x0000000, 0x0800000 },
             { "ax2201m01.ic11",    0x1000000, 0x1000000 },
@@ -4794,6 +5016,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax2201jp_p01.ic18", 0x0000000, 0x0800000 },
             // these are taken from the above set, game *seems* to work fine with these
@@ -4814,6 +5037,7 @@ Games[] =
         0x00000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax3201p01.fmem1", 0x00000000, 0x0800000 },
             { "ax3201m01.mrom1", 0x02000000, 0x2000000 },
@@ -4834,6 +5058,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax1301p01.ic18", 0x0000000, 0x0800000 },
             { "ax1301m01.ic11", 0x1000000, 0x1000000 },
@@ -4854,6 +5079,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax0501p01.ic18", 0x0000000, 0x0800000 },
             { "ax0501m01.ic11", 0x1000000, 0x1000000 },
@@ -4874,6 +5100,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax3001p01.fmem1", 0x0000000, 0x0800000 },
             { "ax3001m01.mrom1", 0x2000000, 0x2000000 },
@@ -4891,6 +5118,7 @@ Games[] =
         0x00000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax3301en_p01.fmem1", 0x00000000, 0x0800000 },
             { "ax3301m01.mrom1",    0x02000000, 0x2000000 },
@@ -4911,6 +5139,7 @@ Games[] =
         0x00000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax3301p01.fmem1", 0x00000000, 0x0800000 },
             { "ax3301m01.mrom1", 0x02000000, 0x2000000 },
@@ -4931,6 +5160,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax1601p01.ic18", 0x0000000, 0x0800000 },
             { "ax1601m01.ic11", 0x1000000, 0x1000000 },
@@ -4949,6 +5179,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax1801p01.ic18", 0x0000000, 0x0800000 },
             { "ax1801m01.ic11", 0x1000000, 0x1000000 },
@@ -4969,6 +5200,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ic12", 0x00000000, 0x00800000 },
             { "ic13", 0x00800000, 0x00800000 },
@@ -4997,6 +5229,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax3401p01.fmem1", 0x0000000, 0x0800000 },
             { "ax3401m01.mrom1", 0x2000000, 0x2000000 },
@@ -5015,6 +5248,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ic12", 0x00000000, 0x00800000 },
             { "ic13", 0x00800000, 0x00800000 },
@@ -5043,6 +5277,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax1401p01.ic18", 0x0000000, 0x0800000 },
             { "ax1401m01.ic11", 0x1000000, 0x1000000 },
@@ -5063,6 +5298,7 @@ Games[] =
         0x00000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax2901p01.fmem1", 0x00000000, 0x0800000 },
             { "ax2901m01.mrom1", 0x02000000, 0x2000000 },
@@ -5083,6 +5319,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax0101p01.ic18", 0x0000000, 0x0800000 },
             { "ax0101m01.ic11", 0x1000000, 0x1000000 },
@@ -5100,6 +5337,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ic12", 0x00000000, 0x00800000 },
             { "ic14", 0x01000000, 0x00800000 },
@@ -5118,6 +5356,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax2001p01.ic18", 0x0000000, 0x0800000 },
             { "ax2001m01.ic11", 0x1000000, 0x1000000 },
@@ -5138,6 +5377,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "u3", 0x0000000, 0x1000000 },
             { "u1", 0x1000000, 0x1000000 },
@@ -5152,6 +5392,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "ax2401p01.ic18", 0x0000000, 0x0800000 },
             { "ax2401m01.ic11", 0x1000000, 0x1000000 },
@@ -5170,6 +5411,7 @@ Games[] =
         0x0000000,
         "awbios.zip",
         AW,
+        REGION_AUSTRALIA,
         {
             { "610-0752.u3",  0x0000000, 0x1000000 },
             { "610-0752.u1",  0x1000000, 0x1000000 },

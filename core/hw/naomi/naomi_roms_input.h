@@ -178,8 +178,8 @@ InputDescriptors ninjaslt_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "ENTER" },
 			{ NAOMI_BTN1_KEY, "TRIGGER 1P" },	// swapped with btn4
-			{ NAOMI_BTN2_KEY, "START 2P" },
-			{ NAOMI_BTN3_KEY, "START 1P" },
+			{ NAOMI_BTN2_KEY, "START 1P" },
+			{ NAOMI_BTN3_KEY, "START 2P" },
 			{ NAOMI_BTN5_KEY, "TRIGGER 2P" },
 			{ NAOMI_UP_KEY, "SELECT UP" },
 			{ NAOMI_DOWN_KEY, "SELECT DOWN" },

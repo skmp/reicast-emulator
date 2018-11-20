@@ -32,7 +32,8 @@ enum BlobType {
 	SwapWordBytes = 0,
 	InterleavedWord,
 	Copy,
-	Key
+	Key,
+	Eeprom
 };
 
 enum CartridgeType {
@@ -3877,6 +3878,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5097-jpn.pic", 0, 0x4000 },
+			{ "bdrdown-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0023a",
@@ -3891,6 +3893,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5102-com.pic", 0, 0x4000 },
+			{ "cfield-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0025",
@@ -4076,6 +4079,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5069-com.pic", 0, 0x4000 },
+			{ "gundmgd-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0001",
@@ -4090,6 +4094,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5079-com.pic", 0, 0x4000 },
+			{ "gundmxgd-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0006",
@@ -4132,6 +4137,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5125-com.pic", 0, 0x4000 },
+			{ "karous-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0040",
@@ -4146,6 +4152,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-0323-com.pic", 0, 0x4000 },
+			{ "keyboard-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gds-0017",
@@ -4258,6 +4265,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5084-jpn.pic", 0, 0x4000 },
+			{ "moeru-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0013",
@@ -4300,6 +4308,7 @@ Games[] =
         REGION_JAPAN,
         {
             { "317-5100-jpn.pic", 0, 0x4000 },
+			{ "psyvar2-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0024",
@@ -4314,6 +4323,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-0375-com.pic", 0, 0x4000 },
+			{ "puyofev-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gds-0034",
@@ -4328,6 +4338,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-0375-com.pic", 0, 0x4000 },
+			{ "puyofev-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gds-0031",
@@ -4342,6 +4353,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5090-jpn.pic", 0, 0x4000 },
+			{ "quizqgd-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0017",
@@ -4356,6 +4368,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5110-jpn.pic", 0, 0x4000 },
+			{ "radirgy-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0032a",
@@ -4370,6 +4383,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5110-jpn.pic", 0, 0x4000 },
+			{ "radirgy-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0032",
@@ -4384,6 +4398,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5107-jpn.pic", 0, 0x4000 },
+			{ "senko-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0030a",
@@ -4398,6 +4413,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5107-jpn.pic", 0, 0x4000 },
+			{ "senkoo-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0030",
@@ -4426,6 +4442,7 @@ Games[] =
         REGION_JAPAN,
         {
             { "317-5072-com.pic", 0, 0x4000 },
+			{ "sfz3ugd-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0002",
@@ -4482,6 +4499,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5095-jpn.pic", 0, 0x4000 },
+			{ "shikgam2-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0021",
@@ -4538,6 +4556,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5108-jpn.pic", 0, 0x4000 },
+			{ "ss2005-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0031a",
@@ -4552,6 +4571,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5108-jpn.pic", 0, 0x4000 },
+			{ "ss2005-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0031",
@@ -4594,6 +4614,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5093-jpn.pic", 0, 0x4000 },
+			{ "tetkiwam-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0020",
@@ -4608,6 +4629,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5121-jpn.pic", 0, 0x4000 },
+			{ "trgheart-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0036a",
@@ -4622,6 +4644,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5121-jpn.pic", 0, 0x4000 },
+			{ "trgheart-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0036",
@@ -4636,6 +4659,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5103-jpn.pic", 0, 0x4000 },
+			{ "trizeal-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0026",
@@ -4650,6 +4674,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5117-jpn.pic", 0, 0x4000 },
+			{ "undefeat-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0035",
@@ -4664,6 +4689,7 @@ Games[] =
         REGION_AUSTRALIA,
         {
             { "317-5096-jpn.pic", 0, 0x4000 },
+			{ "usagiym-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0022",

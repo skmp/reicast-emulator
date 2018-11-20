@@ -81,6 +81,12 @@ static void maple_DoDma(void)
 			u32 outlen=0;
 
 			u32* p_data =(u32*) GetMemPtr(addr + 8,(plen)*sizeof(u32));
+			if (p_data == NULL)
+			{
+				printf("MAPLE ERROR : INVALID SB_MDSTAR value 0x%X\n", addr);
+				SB_MDST=0;
+				return;
+			}
 			
 			//Command code 
 			u32 command=p_data[0] &0xFF;

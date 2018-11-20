@@ -46,6 +46,7 @@ extern DCFlashChip sys_nvmem_flash;		// AtomisWave BIOS is loaded there
 extern char game_dir_no_slash[1024];
 
 InputDescriptors *naomi_game_inputs;
+u8 *naomi_default_eeprom;
 
 static bool naomi_LoadBios(const char *filename, zip *child_zip, int region)
 {
@@ -224,8 +225,7 @@ static bool naomi_cart_LoadZip(char *filename)
 	CurrentCartridge->SetKey(game->key);
 	naomi_game_inputs = game->inputs;
 
-	int romid = 0;
-	while (game->blobs[romid].filename != NULL)
+	for (int romid = 0; game->blobs[romid].filename != NULL; romid++)
 	{
 		u32 len = game->blobs[romid].length;
 
@@ -241,7 +241,11 @@ static bool naomi_cart_LoadZip(char *filename)
 			zip_file* file = zip_fopen(zip_archive, game->blobs[romid].filename, 0);
 			if (!file) {
 				printf("%s: Cannot open %s\n", filename, game->blobs[romid].filename);
-				goto error;
+				if (game->blobs[romid].blob_type != Eeprom)
+				   // Default eeprom file is optional
+				   goto error;
+				else
+				   continue;
 			}
 			if (game->blobs[romid].blob_type == Normal)
 			{
@@ -279,11 +283,22 @@ static bool naomi_cart_LoadZip(char *filename)
 				CurrentCartridge->SetKeyData(buf);
 				printf("Loaded %s: %lx bytes cart key\n", game->blobs[romid].filename, read);
 			}
+			else if (game->blobs[romid].blob_type == Eeprom)
+			{
+			    naomi_default_eeprom = (u8 *)malloc(game->blobs[romid].length);
+			    if (naomi_default_eeprom == NULL)
+			    {
+			       printf("malloc failed\n");
+			       zip_fclose(file);
+			       goto error;
+			    }
+			    size_t read = zip_fread(file, naomi_default_eeprom, game->blobs[romid].length);
+			    printf("Loaded %s: %lx bytes default eeprom\n", game->blobs[romid].filename, read);
+			}
 			else
 				die("Unknown blob type\n");
-			zip_fclose(file);
+		   zip_fclose(file);
 		}
-		romid++;
 	}
 	zip_close(zip_archive);
 

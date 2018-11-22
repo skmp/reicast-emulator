@@ -223,7 +223,8 @@ else ifeq ($(platform), rockpro64)
         ARM_FLOAT_ABI_HARD = 1
         FORCE_GLES = 1
         SINGLE_PREC_FLAGS = 1
-        CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize CFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72.cortex-a53 -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad $(CPUFLAGS)
+        CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
+	CFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72.cortex-a53 -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad $(CPUFLAGS)
         CXXFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72.cortex-a53 -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad $(CPUFLAGS)
         ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
         PLATFORM_EXT := unix

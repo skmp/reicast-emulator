@@ -2412,7 +2412,7 @@ void UpdateVibration(u32 port, u32 value, u32 max_duration)
    rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, (u16)(65535 * pow));
 
    if (FREQ > 0 && (!CNT || INC))
-	  vib_stop_time[port] = get_time_ms() + min(1000 * (INC ? abs(INC) * max(POW_POS, POW_NEG) : 1) / FREQ, (int)max_duration);
+	  vib_stop_time[port] = get_time_ms() + min((int)(1000 * (INC ? abs(INC) * max(POW_POS, POW_NEG) : 1) / FREQ), (int)max_duration);
    else
 	  vib_stop_time[port] = get_time_ms() + max_duration;
    if (INC == 0 || pow == 0)

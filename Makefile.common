@@ -96,7 +96,11 @@ SOURCES_CXX := \
 					$(CORE_DIR)/core/reios/reios_elf.cpp \
 					$(CORE_DIR)/core/reios/reios.cpp \
 					$(CORE_DIR)/core/reios/gdrom_hle.cpp \
-					$(CORE_DIR)/core/reios/descrambl.cpp
+					$(CORE_DIR)/core/reios/descrambl.cpp \
+					\
+					$(CORE_DIR)/core/archive/archive.cpp \
+					$(CORE_DIR)/core/archive/7zArchive.cpp \
+					$(CORE_DIR)/core/archive/ZipArchive.cpp
 
 SOURCES_C +=   \
 					$(DEPS_DIR)/chdr/bitstream.c \
@@ -294,9 +298,29 @@ SOURCES_C += \
 				 $(DEPS_DIR)/flac/memory.c \
 				 $(DEPS_DIR)/flac/stream_decoder.c
 
-SOURCES_C += $(DEPS_DIR)/lzma/C/LzFind.c \
+SOURCES_C += $(DEPS_DIR)/lzma/C/7zArcIn.c \
+				 $(DEPS_DIR)/lzma/C/7zBuf.c \
+				 $(DEPS_DIR)/lzma/C/7zCrc.c \
+				 $(DEPS_DIR)/lzma/C/7zCrcOpt.c \
+				 $(DEPS_DIR)/lzma/C/7zDec.c \
+				 $(DEPS_DIR)/lzma/C/7zFile.c \
+				 $(DEPS_DIR)/lzma/C/7zStream.c \
+				 $(DEPS_DIR)/lzma/C/Alloc.c \
+				 $(DEPS_DIR)/lzma/C/Bcj2.c \
+				 $(DEPS_DIR)/lzma/C/Bra86.c \
+				 $(DEPS_DIR)/lzma/C/Bra.c \
+				 $(DEPS_DIR)/lzma/C/BraIA64.c \
+				 $(DEPS_DIR)/lzma/C/CpuArch.c \
+				 $(DEPS_DIR)/lzma/C/Delta.c \
+				 $(DEPS_DIR)/lzma/C/LzFind.c \
+				 $(DEPS_DIR)/lzma/C/Lzma2Dec.c \
+				 $(DEPS_DIR)/lzma/C/Lzma86Dec.c \
+				 $(DEPS_DIR)/lzma/C/Lzma86Enc.c \
 				 $(DEPS_DIR)/lzma/C/LzmaDec.c \
-				 $(DEPS_DIR)/lzma/C/LzmaEnc.c
+				 $(DEPS_DIR)/lzma/C/LzmaEnc.c \
+				 $(DEPS_DIR)/lzma/C/LzmaLib.c \
+				 $(DEPS_DIR)/lzma/C/Sort.c
+
 endif
 
 SOURCES_C +=   $(DEPS_DIR)/zlib/deflate.c \

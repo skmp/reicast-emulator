@@ -1528,7 +1528,8 @@ bool retro_load_game(const struct retro_game_info *game)
          if (!strcmp(".lst", ext)
         	   || !strcmp(".bin", ext) || !strcmp(".BIN", ext)
         	   || !strcmp(".dat", ext) || !strcmp(".DAT", ext)
-        	   || !strcmp(".zip", ext) || !strcmp(".ZIP", ext))
+        	   || !strcmp(".zip", ext) || !strcmp(".ZIP", ext)
+        	   || !strcmp(".7z", ext) || !strcmp(".7Z", ext))
         	settings.System = naomi_cart_GetSystemType(game->path);
       }
    }
@@ -1846,7 +1847,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #define GIT_VERSION ""
 #endif
    info->library_version = "0.1" GIT_VERSION;
-   info->valid_extensions = "chd|cdi|iso|elf|cue|gdi|lst|bin|dat|zip";
+   info->valid_extensions = "chd|cdi|iso|elf|cue|gdi|lst|bin|dat|zip|7z";
    info->need_fullpath = true;
    info->block_extract = true;
 }

@@ -109,7 +109,7 @@ static bool naomi_LoadBios(const char *filename, Archive *child_archive, Archive
 			if (bios->blobs[romid].blob_type == Normal)
 			{
 				verify(bios->blobs[romid].offset + bios->blobs[romid].length <= rom_chip->size);
-				u32 read = file->Read(sys_rom.data + bios->blobs[romid].offset, bios->blobs[romid].length);
+				u32 read = file->Read(rom_chip->data + bios->blobs[romid].offset, bios->blobs[romid].length);
 			}
 			else if (bios->blobs[romid].blob_type == InterleavedWord)
 			{

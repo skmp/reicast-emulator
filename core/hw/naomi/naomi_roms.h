@@ -4185,7 +4185,7 @@ Games[] =
         0,
 		"naomi",
         GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         {
             { "317-5092-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4200,7 +4200,7 @@ Games[] =
         0,
 		"naomi",
         GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         {
             { "317-5092-jpn.pic" , 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4215,7 +4215,7 @@ Games[] =
         0,
 		"naomi",
         GD,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         {
             { "317-5111-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },

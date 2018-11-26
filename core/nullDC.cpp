@@ -465,7 +465,8 @@ void LoadSettings(void)
    settings.rend.RenderToTextureBuffer  = false;
    settings.rend.RenderToTexture        = true;
    settings.rend.RenderToTextureUpscale = 1;
-	settings.rend.MaxFilteredTextureSize = 256;
+   settings.rend.MaxFilteredTextureSize = 256;
+   settings.pvr.SynchronousRendering	 = 0;
 #endif
    if (settings.rend.ExtraDepthScale == 0)
       settings.rend.ExtraDepthScale = 1.f;
@@ -474,7 +475,6 @@ void LoadSettings(void)
 
    settings.rend.ModifierVolumes        = true;
    settings.rend.TranslucentPolygonDepthMask = false;
-	settings.pvr.SynchronousRendering	 = 0;
 
 	settings.debug.SerialConsole         = 0;
 

@@ -412,6 +412,10 @@ void retro_set_environment(retro_environment_t cb)
          "reicast_threaded_rendering",
          "Threaded rendering (restart); disabled|enabled",
       },
+      {
+         "reicast_synchronous_rendering",
+         "Synchronous rendering; disabled|enabled",
+      },
 #endif
       {
          "reicast_enable_purupuru",
@@ -881,6 +885,17 @@ static void update_variables(bool first_startup)
 
    }
 #endif
+
+   var.key = "reicast_synchronous_rendering";
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+	   if (!strcmp("enabled", var.value))
+		   settings.pvr.SynchronousRendering = 1;
+	   else
+		   settings.pvr.SynchronousRendering = 0;
+   }
+   else
+	   settings.pvr.SynchronousRendering = 0;
 
    var.key = "reicast_enable_purupuru";
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -1973,6 +1988,11 @@ void os_CreateWindow()
 
 static uint32_t get_time_ms()
 {
+   return (uint32_t)(os_GetSeconds() * 1000.0);
+}
+
+double os_GetSeconds()
+{
 #ifdef _WIN32
 #if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
   #define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
@@ -1993,12 +2013,12 @@ static uint32_t get_time_ms()
    /*converting file time to unix epoch*/
    tmpres -= DELTA_EPOCH_IN_MICROSECS;
 
-   return (uint32_t)(tmpres / 1000);	// milliseconds
+   return (double)tmpres / 1000000.0;	// microsecond -> second
 #else
    struct timeval t;
    gettimeofday(&t, NULL);
 
-   return (uint32_t)((t.tv_sec * 1000) + (t.tv_usec / 1000));
+   return (double)t.tv_sec + (double)t.tv_usec / 1000000.0;
 #endif
 }
 

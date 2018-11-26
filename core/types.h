@@ -756,6 +756,7 @@ void os_MakeExecutable(void* ptr, u32 sz);
 
 void os_DoEvents();
 void os_CreateWindow();
+double os_GetSeconds();
 
 #ifdef _MSC_VER
 #include <intrin.h>

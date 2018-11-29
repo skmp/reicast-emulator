@@ -1091,7 +1091,7 @@ bool ProcessFrame(TA_context* ctx)
 	}
    CollectCleanup();
 
-   return true;
+   return !ctx->rend.Overrun;
 }
 
 struct glesrend : Renderer

@@ -2094,14 +2094,37 @@ void ngen_Compile_arm(RuntimeBlockInfo* block,bool force_checks, bool reset, boo
 	//scheduler
 	if (force_checks)
 	{
-		MOV32(r0,block->addr);
-		u32* ptr=(u32*)GetMemPtr(block->addr,4);
-		MOV32(r2,(u32)ptr);
-		LDR(r2,r2,0);
-		MOV32(r1,*ptr);
-		CMP(r1,r2);
+		s32 sz = block->sh4_code_size;
+		u32 addr = block->addr;
+		MOV32(r0,addr);
 
-		JUMP((u32)ngen_blockcheckfail, CC_NE);
+		while (sz > 0)
+		{
+			if (sz > 2)
+			{
+				u32* ptr=(u32*)GetMemPtr(addr,4);
+				MOV32(r2,(u32)ptr);
+				LDR(r2,r2,0);
+				MOV32(r1,*ptr);
+				CMP(r1,r2);
+
+				JUMP((u32)ngen_blockcheckfail, CC_NE);
+				addr += 4;
+				sz -= 4;
+			}
+			else
+			{
+				u16* ptr = (u16 *)GetMemPtr(addr, 2);
+				MOV32(r2, (u32)ptr);
+				LDRH(r2, r2, 0, AL);
+				MOVW(r1, *ptr, AL);
+				CMP(r1, r2);
+
+				JUMP((u32)ngen_blockcheckfail, CC_NE);
+				addr += 2;
+				sz -= 2;
+			}
+		}
 	}
 
 	u32 cyc=block->guest_cycles;

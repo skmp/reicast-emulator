@@ -722,7 +722,7 @@ static void update_variables(bool first_startup)
          settings.dreamcast.cable = 0;
       else if (!strcmp("TV (RGB)", var.value))
          settings.dreamcast.cable = 2;
-      else if (!strcmp("TV (VBS/Y+S/C)", var.value))
+      else if (!strcmp("TV (Composite)", var.value))
          settings.dreamcast.cable = 3;
    }
 

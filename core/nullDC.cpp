@@ -191,6 +191,11 @@ static void LoadSpecialSettings(void)
             log_cb(RETRO_LOG_INFO, "[Hack]: Applying Disable DIV hack.\n");
             settings.dynarec.DisableDivMatching = lut_games[i].disable_div;
          }
+         if (lut_games[i].extra_depth_scale != 1 && settings.rend.AutoExtraDepthScale)
+         {
+            log_cb(RETRO_LOG_INFO, "[Hack]: Applying auto extra depth scale.\n");
+        	settings.rend.ExtraDepthScale = lut_games[i].extra_depth_scale;
+         }
 
          break;
       }
@@ -252,10 +257,10 @@ static void LoadSpecialSettingsNaomi(const char *name)
             settings.mapping.JammaSetup = lut_games_naomi[i].jamma_setup;
          }
 
-         if (lut_games_naomi[i].extra_depth_scaling != -1 && settings.rend.AutoExtraDepthScale)
+         if (lut_games_naomi[i].extra_depth_scale != 1 && settings.rend.AutoExtraDepthScale)
          {
             log_cb(RETRO_LOG_INFO, "[Hack]: Applying auto extra depth scale.\n");
-            settings.rend.ExtraDepthScale = 1e26;
+            settings.rend.ExtraDepthScale = lut_games_naomi[i].extra_depth_scale;
          }
 
          if (lut_games_naomi[i].game_inputs != NULL)

@@ -76,7 +76,7 @@ static struct game_type lut_games[] =
    { "T40218N   ", -1, -1, -1, -1, -1,  -1,  1, 1  },                /* Record of Lodoss War (USA) */
 
    /* Extra depth scaling */
-   { "MK-51182  ", -1, -1, -1, -1, -1,  -1,  1, 10000  },            /* NHL 2K2 */
+   { "MK-51182  ", -1, -1, -1, -1, -1,  -1,  1, 10000.f },           /* NHL 2K2 */
 };
 
 extern InputDescriptors gunsur2_inputs;

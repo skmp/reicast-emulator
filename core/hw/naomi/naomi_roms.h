@@ -1989,7 +1989,9 @@ Games[] =
             { "mpr-22824.ic7",   0x3800000, 0x800000 },
             { "mpr-22825.ic8",   0x4000000, 0x800000 },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &jambo_inputs
     },
     // Mars TV (JPN)
     {
@@ -3314,7 +3316,9 @@ Games[] =
             { "mpr-23193.ic12s", 0x6000000, 0x800000 },
             { "mpr-23194.ic13s", 0x6800000, 0x800000 },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &vonot_inputs
     },
     // Virtua Striker 2 Ver. 2000 (JPN, USA, EXP, KOR, AUS) (Rev C)
     {

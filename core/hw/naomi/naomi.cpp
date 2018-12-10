@@ -630,8 +630,9 @@ void Update_naomi()
 #endif
 }
 static u8 aw_maple_devs;
-extern u16 kcode[4];
+extern u32 kcode[4];
 static bool once;
+static bool coin_chute[4];
 
 u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 	addr &= 0x7ff;
@@ -653,9 +654,19 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 		  }
 		  u8 coins = 0xF;
 		  for (int i = 0;i < 4; i++)
+		  {
 			 if (!(kcode[i] & AWAVE_COIN_KEY))
-				// FIXME Coin Error if set for too long
-				coins &= ~(1 << i);
+			 {
+				if (!coin_chute[i])
+				{
+				   coin_chute[i] = true;
+				   coins &= ~(1 << i);
+				}
+			 }
+			 else
+				coin_chute[i] = false;
+		  }
+
 		  return coins;
 	   }
 	case 0x284:		// Atomiswave maple devices

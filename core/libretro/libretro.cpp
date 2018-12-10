@@ -58,7 +58,7 @@ static int trigger_deadzone = 0;
 static bool digital_triggers = false;
 static bool allow_service_buttons = false;
 
-u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
+u32 kcode[4] = {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
 u8 rt[4] = {0, 0, 0, 0};
 u8 lt[4] = {0, 0, 0, 0};
 u32 vks[4];
@@ -1153,9 +1153,9 @@ static void extract_directory(char *buf, const char *path, size_t size)
 
 extern void dc_prepare_system(void);
 
-static uint16_t map_gamepad_button(unsigned device, unsigned id)
+static uint32_t map_gamepad_button(unsigned device, unsigned id)
 {
-   static const uint16_t dc_joymap[] =
+   static const uint32_t dc_joymap[] =
    {
       /* JOYPAD_B      */ DC_BTN_A,
       /* JOYPAD_Y      */ DC_BTN_X,
@@ -1169,7 +1169,7 @@ static uint16_t map_gamepad_button(unsigned device, unsigned id)
       /* JOYPAD_X      */ DC_BTN_Y,
    };
 
-   static const uint16_t dc_lg_joymap[] =
+   static const uint32_t dc_lg_joymap[] =
    {
 	  /* deprecated */ 			0,
 	  /* deprecated */ 			0,
@@ -1186,7 +1186,7 @@ static uint16_t map_gamepad_button(unsigned device, unsigned id)
 	  /* LIGHTGUN_RIGHT  */ 	DC_DPAD_RIGHT,
    };
 
-   static const uint16_t aw_joymap[] =
+   static const uint32_t aw_joymap[] =
    {
       /* JOYPAD_B      */ AWAVE_BTN0_KEY, /* BTN1 */
       /* JOYPAD_Y      */ AWAVE_BTN2_KEY, /* BTN3 */
@@ -1206,7 +1206,7 @@ static uint16_t map_gamepad_button(unsigned device, unsigned id)
       /* JOYPAD_R3     */ AWAVE_SERVICE_KEY,
    };
 
-   static const uint16_t aw_lg_joymap[] =
+   static const uint32_t aw_lg_joymap[] =
    {
 	   /* deprecated */ 			0,
 	   /* deprecated */ 			0,
@@ -1223,7 +1223,7 @@ static uint16_t map_gamepad_button(unsigned device, unsigned id)
 	   /* LIGHTGUN_RIGHT  */ 	AWAVE_RIGHT_KEY,
    };
 
-   static const uint16_t nao_joymap[] =
+   static const uint32_t nao_joymap[] =
    {
       /* JOYPAD_B      */ NAOMI_BTN0_KEY, /* BTN1 */
       /* JOYPAD_Y      */ NAOMI_BTN2_KEY, /* BTN3 */
@@ -1237,13 +1237,13 @@ static uint16_t map_gamepad_button(unsigned device, unsigned id)
       /* JOYPAD_X      */ NAOMI_BTN3_KEY, /* BTN4 */
       /* JOYPAD_L      */ NAOMI_BTN5_KEY, /* BTN6 */
       /* JOYPAD_R      */ NAOMI_BTN4_KEY, /* BTN5 */
-      /* JOYPAD_L2     */ 0,
-      /* JOYPAD_R2     */ 0,
+      /* JOYPAD_L2     */ NAOMI_BTN7_KEY, /* BTN8 */
+      /* JOYPAD_R2     */ NAOMI_BTN6_KEY, /* BTN7 */
       /* JOYPAD_L3     */ NAOMI_TEST_KEY,
       /* JOYPAD_R3     */ NAOMI_SERVICE_KEY,
    };
 
-   static const uint16_t nao_lg_joymap[] =
+   static const uint32_t nao_lg_joymap[] =
    {
 	   /* deprecated */ 			0,
 	   /* deprecated */ 			0,
@@ -1260,7 +1260,7 @@ static uint16_t map_gamepad_button(unsigned device, unsigned id)
 	   /* LIGHTGUN_RIGHT  */ 	NAOMI_RIGHT_KEY,
    };
 
-   const uint16_t *joymap;
+   const uint32_t *joymap;
    size_t joymap_size;
 
    switch (settings.System)
@@ -1320,15 +1320,18 @@ static uint16_t map_gamepad_button(unsigned device, unsigned id)
 
    if (id >= joymap_size)
 	  return 0;
-   else
-	  return joymap[id];
+   uint32_t mapped = joymap[id];
+   // Hack to bind Button 9 instead of Service when not used
+   if (id == RETRO_DEVICE_ID_JOYPAD_R3 && device == RETRO_DEVICE_JOYPAD && settings.System == DC_PLATFORM_NAOMI && !allow_service_buttons)
+	  mapped = NAOMI_BTN8_KEY;
+   return mapped;
 }
 
 static const char *get_button_name(unsigned device, unsigned id, const char *default_name)
 {
    if (naomi_game_inputs == NULL)
 	  return default_name;
-   uint16_t mask = map_gamepad_button(device, id);
+   uint32_t mask = map_gamepad_button(device, id);
    if (mask == 0)
 	  return NULL;
    for (int i = 0; naomi_game_inputs->buttons[i].mask != 0; i++)
@@ -1349,7 +1352,7 @@ static const char *get_axis_name(unsigned index, const char *default_name)
 
 static void set_input_descriptors()
 {
-   struct retro_input_descriptor desc[18 * 4 + 1];
+   struct retro_input_descriptor desc[20 * 4 + 1];
    int descriptor_index = 0;
    if (settings.System == DC_PLATFORM_NAOMI || settings.System == DC_PLATFORM_ATOMISWAVE)
    {
@@ -1424,6 +1427,12 @@ static void set_input_descriptors()
     		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_L, "Button 6");
     		if (name != NULL)
     		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L, name };
+    		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_R2, "Button 7");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2, name };
+    		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_L2, "Button 8");
+    		if (name != NULL)
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2, name };
     		name = get_button_name(RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_START, "Start");
     		if (name != NULL)
     		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, name };
@@ -2135,7 +2144,7 @@ static uint16_t get_analog_trigger( retro_input_state_t input_state_cb,
 
 static void setDeviceButtonState(u32 port, int deviceType, int btnId)
 {
-   uint16_t dc_key = map_gamepad_button(deviceType, btnId);
+   uint32_t dc_key = map_gamepad_button(deviceType, btnId);
    bool is_down = input_cb(port, deviceType, 0, btnId);
    if (is_down)
 	  kcode[port] &= ~dc_key;
@@ -2221,10 +2230,22 @@ static void UpdateInputStateNaomi(u32 port)
 	  //
 	  // -- buttons
 
-	  max_id = (allow_service_buttons ? RETRO_DEVICE_ID_JOYPAD_R3 : RETRO_DEVICE_ID_JOYPAD_R2);
-	  for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= max_id; ++id)
+	  for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_R3; ++id)
 	  {
-		 setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, id);
+		 switch (id)
+		 {
+		 case RETRO_DEVICE_ID_JOYPAD_L3:
+			if (allow_service_buttons)
+			   setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, id);
+			break;
+		 case RETRO_DEVICE_ID_JOYPAD_R3:
+			if (settings.System == DC_PLATFORM_NAOMI || allow_service_buttons)
+			   setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, id);
+			break;
+		 default:
+			setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, id);
+			break;
+		 }
 	  }
 	  //
 	  // -- analog stick

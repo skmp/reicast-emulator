@@ -33,7 +33,8 @@ enum serialize_version_enum {
 	V1,
 	V2,
 	V3,
-	V4
+	V4,
+	V5
 } ;
 
 //./core/hw/arm7/arm_mem.cpp
@@ -737,12 +738,12 @@ extern u32 REMOVED_OPS;
 
 
 //./core/libretro/libretro.o
-extern u16 kcode[4];
-extern u8 rt[4];
-extern u8 lt[4];
-extern u32 vks[4];
-extern s8 joyx[4];
-extern s8 joyy[4];
+//extern u32 kcode[4];
+//extern u8 rt[4];
+//extern u8 lt[4];
+//extern u32 vks[4];
+//extern s8 joyx[4];
+//extern s8 joyy[4];
 
 
 
@@ -814,7 +815,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
-	serialize_version_enum version = V4 ;
+	serialize_version_enum version = V5 ;
 
 	*total_size = 0 ;
 
@@ -1216,15 +1217,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(total_blocks);
 	LIBRETRO_S(REMOVED_OPS);
 
-
-
-
-	LIBRETRO_SA(kcode,4);
-	LIBRETRO_SA(rt,4);
-	LIBRETRO_SA(lt,4);
-	LIBRETRO_SA(vks,4);
-	LIBRETRO_SA(joyx,4);
-	LIBRETRO_SA(joyy,4);
 
 	LIBRETRO_S(settings.dreamcast.broadcast);
 	LIBRETRO_S(settings.dreamcast.cable);
@@ -1709,15 +1701,19 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(total_blocks);
 	LIBRETRO_US(REMOVED_OPS);
 
-
-
-
-	LIBRETRO_USA(kcode,4);
-	LIBRETRO_USA(rt,4);
-	LIBRETRO_USA(lt,4);
-	LIBRETRO_USA(vks,4);
-	LIBRETRO_USA(joyx,4);
-	LIBRETRO_USA(joyy,4);
+	if (version < V5)
+	{
+	   LIBRETRO_US(dummy_int);	// u16 kcode[4]
+	   LIBRETRO_US(dummy_int);
+	   LIBRETRO_US(dummy_int);	// u8 rt[4]
+	   LIBRETRO_US(dummy_int);	// u8 lt[4]
+	   LIBRETRO_US(dummy_int);	// u32 vks[4]
+	   LIBRETRO_US(dummy_int);
+	   LIBRETRO_US(dummy_int);
+	   LIBRETRO_US(dummy_int);
+	   LIBRETRO_US(dummy_int);	// s8 joyx[4]
+	   LIBRETRO_US(dummy_int);	// s8 joyy[4]
+	}
 
 	if (version >= V3)
 	{

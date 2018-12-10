@@ -90,6 +90,7 @@ struct ButtonDescriptor
 {
    u32 mask;
    const char *name;
+   u32 p2_mask;
 };
 
 enum AxisType {
@@ -105,7 +106,7 @@ struct AxisDescriptor
 
 struct InputDescriptors
 {
-   ButtonDescriptor buttons[16];
+   ButtonDescriptor buttons[18];
    AxisDescriptor axes[8];
 };
 

@@ -39,7 +39,7 @@ struct PlainJoystickState
 {
 	PlainJoystickState()
 	{
-		kcode=0xFFFF;
+		kcode=0xFFFFFFFF;
 		joy[0]=joy[1]=joy[2]=joy[3]=0x80;
 		trigger[0]=trigger[1]=0;
 	}

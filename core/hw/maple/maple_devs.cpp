@@ -1386,7 +1386,7 @@ struct maple_lightgun : maple_base
    }
 };
 
-extern u16 kcode[4];
+extern u32 kcode[4];
 extern s8 joyx[4],joyy[4];
 extern u8 rt[4], lt[4];
 extern char eeprom_file[PATH_MAX];
@@ -1404,8 +1404,10 @@ public:
 	{
 		this->node_id = node_id;
 		this->parent = parent;
-		coin_count[0] = 3;
+		coin_count[0] = 0;
+		coin_chute[0] = false;
 		coin_count[1] = 0;
+		coin_chute[1] = false;
 		this->first_player = first_player;
 	}
 
@@ -1417,7 +1419,7 @@ public:
 
 protected:
 	virtual const char *get_id() = 0;
-	virtual u16 remap_buttons(u16 keycode) { return keycode; }
+	virtual u32 remap_buttons(u32 keycode) { return keycode; }
 	u32 player_count = 0;
 	u32 digital_in_count = 0;
 	u32 coin_input_count = 0;
@@ -1432,6 +1434,7 @@ private:
 	u8 node_id = 0;
 	maple_naomi_jamma *parent;
 	u32 coin_count[2];
+	bool coin_chute[2];
 	u8 first_player;
 };
 
@@ -1515,7 +1518,7 @@ public:
 	}
 protected:
 	virtual const char *get_id() override { return "namco ltd.;JYU-PCB;Ver1.00;JPN,2Coins 2Guns"; }
-	virtual u16 remap_buttons(u16 keycode)
+	virtual u32 remap_buttons(u32 keycode)
 	{
 	   // Swap button 1 and 4
 	   u16 mapped = keycode | NAOMI_BTN1_KEY | NAOMI_BTN4_KEY;
@@ -2285,10 +2288,28 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						   global_btns |= 0x80;
 						JVS_OUT(global_btns);		// test, tilt1, tilt2, tilt3, unused, unused, unused, unused
 
+						u32 next_keycode = 0;
+
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
-						   u16 keycode = first_player + player > 3 ? 0 : ~kcode[first_player + player];
+						   u32 keycode = first_player + player > 3 ? 0 : ~kcode[first_player + player];
 						   keycode = remap_buttons(keycode);
+
+						   if (naomi_game_inputs != NULL)
+						   {
+							  u32 new_keycode = 0;
+							  for (int i = 0; naomi_game_inputs->buttons[i].mask != 0; i++)
+							  {
+								 if ((naomi_game_inputs->buttons[i].mask & keycode) != 0
+									   && naomi_game_inputs->buttons[i].p2_mask != 0)
+								 {
+									new_keycode |= naomi_game_inputs->buttons[i].p2_mask;
+									keycode &= ~naomi_game_inputs->buttons[i].mask;
+								 }
+							  }
+							  keycode |= next_keycode;
+							  next_keycode = new_keycode;
+						   }
 						   LOGJVS("P%d %02x ", first_player + player + 1, (keycode >> 8) & 0xFF);
 						   JVS_OUT(keycode >> 8);
 						   if (buffer_in[cmdi + 2] > 1)
@@ -2307,11 +2328,19 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						LOGJVS("coins ");
 						for (int slot = 0; slot < buffer_in[cmdi + 1]; slot++)
 						{
-						   if (slot < sizeof(coin_count)/sizeof(*coin_count)
+						   if (slot < ARRAY_SIZE(coin_count)
 								 && first_player + slot < 4)
 						   {
 							  if (!(kcode[first_player + slot] & NAOMI_COIN_KEY))
-								 coin_count[slot]++;
+							  {
+								 if (!coin_chute[slot])
+								 {
+									coin_chute[slot] = true;
+									coin_count[slot]++;
+								 }
+							  }
+							  else
+								 coin_chute[slot] = false;
 
 							  LOGJVS("0:%d ", coin_count[slot]);
 							  JVS_OUT((coin_count[slot] >> 8) & 0x3F);		// status (2 highest bits, 0: normal), coin count MSB

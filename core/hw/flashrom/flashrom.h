@@ -17,6 +17,7 @@ struct MemChip
 	MemChip(u32 size, u32 write_protect_size = 0)
 	{
       Allocate(size);
+	  this->write_protect_size = write_protect_size;
 	}
 	~MemChip() { delete[] data; }
 

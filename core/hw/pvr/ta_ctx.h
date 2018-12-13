@@ -127,7 +127,7 @@ struct rend_context
 	u32 fog_clamp_max;
 
 	List<Vertex>      verts;
-	List<u16>         idx;
+	List<u32>         idx;
 	List<ModTriangle> modtrig;
 	List<ModifierVolumeParam>  global_param_mvo;
    List<ModifierVolumeParam>  global_param_mvo_tr;
@@ -202,7 +202,7 @@ struct TA_context
 
 		rend.verts.InitBytes(vert_size,&rend.Overrun, "verts"); 
 		rend.idx.Init(120*1024,&rend.Overrun, "idx"); // up to 120K indices (idx have stripification overhead)
-		rend.global_param_op.Init(4096,&rend.Overrun, "global_param_op");
+		rend.global_param_op.Init(8192,&rend.Overrun, "global_param_op");
 		rend.global_param_pt.Init(4096,&rend.Overrun, "global_param_pt");
 		rend.global_param_mvo.Init(4096,&rend.Overrun, "global_param_mvo");
       rend.global_param_mvo_tr.Init(4096,&rend.Overrun, "global_param_mvo_tr");

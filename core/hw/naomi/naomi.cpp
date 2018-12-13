@@ -632,7 +632,7 @@ void Update_naomi()
 static u8 aw_maple_devs;
 extern u32 kcode[4];
 static bool once;
-static bool coin_chute[4];
+static int coin_chute[4];
 
 u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 	addr &= 0x7ff;
@@ -653,18 +653,19 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 			 return 0;
 		  }
 		  u8 coins = 0xF;
-		  for (int i = 0;i < 4; i++)
+		  for (int i = 0; i < 4; i++)
 		  {
 			 if (!(kcode[i] & AWAVE_COIN_KEY))
 			 {
-				if (!coin_chute[i])
+				// ggx15 needs 4 or 5 reads to register the coin but it needs to be limited to avoid coin errors
+				if (coin_chute[i] < 5)
 				{
-				   coin_chute[i] = true;
+				   coin_chute[i]++;
 				   coins &= ~(1 << i);
 				}
 			 }
 			 else
-				coin_chute[i] = false;
+				coin_chute[i] = 0;
 		  }
 
 		  return coins;

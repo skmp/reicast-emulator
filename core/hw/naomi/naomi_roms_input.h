@@ -70,6 +70,26 @@ InputDescriptors alienfnt_inputs = {
 	  },
 };
 
+InputDescriptors alpilot_inputs = {
+	  {
+			{ NAOMI_BTN0_KEY, "LANDING GEAR SW" },
+			{ NAOMI_BTN1_KEY, "VIEW CHANGE" },
+			{ NAOMI_BTN2_KEY, "FLAP SWITCH" },
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ "ELEVATOR", Full },
+			{ "AILERON", Full },
+			{ "", Full },
+			{ "RUDDER PEDAL", Full },
+			{ "THRUST LEVER L", Half },
+			{ "THRUST LEVER R", Half },
+			{ NULL },
+	  },
+};
+
 InputDescriptors capsnk_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "SHOT1" },

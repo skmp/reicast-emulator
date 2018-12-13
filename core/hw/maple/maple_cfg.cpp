@@ -24,8 +24,7 @@ void UpdateInputState(u32 port);
 void UpdateVibration(u32 port, u32 value, u32 max_duration);
 
 extern u32 kcode[4];
-extern u32 vks[4];
-extern s8 joyx[4],joyy[4];
+extern s8 joyx[4], joyy[4], joyrx[4], joyry[4];
 extern u8 rt[4],lt[4];
 extern bool enable_purupuru;
 extern f32 mo_x_abs[4];
@@ -135,6 +134,8 @@ struct MapleConfigMap : IMapleConfigMap
 		  pjs->kcode |= 0xF901;
 	   pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[pnum]);
 	   pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[pnum]);
+	   pjs->joy[PJAI_X2]=GetBtFromSgn(joyrx[pnum]);
+	   pjs->joy[PJAI_Y2]=GetBtFromSgn(joyry[pnum]);
 	   pjs->trigger[PJTI_R]=rt[pnum];
 	   pjs->trigger[PJTI_L]=lt[pnum];
 	}

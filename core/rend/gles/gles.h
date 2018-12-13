@@ -169,7 +169,7 @@ extern struct ShaderUniforms_t
 
 struct IndexTrig
 {
-	u16 id[3];
+	u32 id[3];
 	u16 pid;
 	f32 z;
 };
@@ -177,8 +177,8 @@ struct IndexTrig
 struct SortTrigDrawParam
 {
 	PolyParam* ppid;
-	u16 first;
-	u16 count;
+	u32 first;
+	u32 count;
 };
 
 // Render to texture

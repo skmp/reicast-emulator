@@ -1,6 +1,6 @@
 #pragma once
 //bits that affect drawing (for caching params)
-#define PCW_DRAW_MASK (0x000000CC)
+#define PCW_DRAW_MASK (0x000000CE)
 
 #pragma pack(push, 1)   // n = 1
 //	Global Param/misc structs

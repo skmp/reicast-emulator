@@ -63,6 +63,7 @@ u8 rt[4] = {0, 0, 0, 0};
 u8 lt[4] = {0, 0, 0, 0};
 u32 vks[4];
 s8 joyx[4], joyy[4];
+s8 joyrx[4], joyry[4];
 extern f32 mo_x_abs[4];
 extern f32 mo_y_abs[4];
 extern u32 mo_buttons[4];
@@ -1352,7 +1353,7 @@ static const char *get_axis_name(unsigned index, const char *default_name)
 
 static void set_input_descriptors()
 {
-   struct retro_input_descriptor desc[20 * 4 + 1];
+   struct retro_input_descriptor desc[22 * 4 + 1];
    int descriptor_index = 0;
    if (settings.System == DC_PLATFORM_NAOMI || settings.System == DC_PLATFORM_ATOMISWAVE)
    {
@@ -1446,17 +1447,23 @@ static void set_input_descriptors()
     		if (name != NULL)
     		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3, name };
     		name = get_axis_name(0, "Axis 1");
-    		if (name != NULL)
+    		if (name != NULL && name[0] != '\0')
     		   desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, name };
     		name = get_axis_name(1, "Axis 2");
-    		if (name != NULL)
+    		if (name != NULL && name[0] != '\0')
     		   desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, name };
     		name = get_axis_name(2, "Axis 3");
-    		if (name != NULL)
+    		if (name != NULL && name[0] != '\0')
     		   desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, name };
     		name = get_axis_name(3, "Axis 4");
-    		if (name != NULL)
+    		if (name != NULL && name[0] != '\0')
     		   desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, name };
+    		name = get_axis_name(4, NULL);
+    		if (name != NULL && name[0] != '\0')
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2, name };
+    		name = get_axis_name(5, NULL);
+    		if (name != NULL && name[0] != '\0')
+    		   desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2, name };
     		break;
     	 }
       }
@@ -2251,7 +2258,10 @@ static void UpdateInputStateNaomi(u32 port)
 	  // -- analog stick
 
 	  get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[port]), &(joyy[port]) );
-	  get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_RIGHT, (s8*)&rt[port], (s8 *)&lt[port] );
+	  get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_RIGHT, &(joyrx[port]), &(joyry[port]));
+	  lt[port] = get_analog_trigger(input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2) / 128;
+	  rt[port] = get_analog_trigger(input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2) / 128;
+
 	  if (naomi_game_inputs != NULL)
 	  {
 		 for (int i = 0; i < 4; i++)
@@ -2275,11 +2285,23 @@ static void UpdateInputStateNaomi(u32 port)
 			   break;
 			case 2:
 			   if (axis_type == Half)
+				  joyrx[port] = max((int)joyrx[port], 0) * 2;
+			   else
+				  joyrx[port] += 128;
+			   break;
+			case 3:
+			   if (axis_type == Half)
+				  joyry[port] = max((int)joyry[port], 0) * 2;
+			   else
+				  joyry[port] += 128;
+			   break;
+			case 4:
+			   if (axis_type == Half)
 				  rt[port] = max((int)rt[port], 0) * 2;
 			   else
 				  rt[port] += 128;
 			   break;
-			case 3:
+			case 5:
 			   if (axis_type == Half)
 				  lt[port] = max((int)lt[port], 0) * 2;
 			   else
@@ -2293,6 +2315,8 @@ static void UpdateInputStateNaomi(u32 port)
 		 // Make all axes full by default
 		 joyx[port] += 128;
 		 joyy[port] += 128;
+		 joyrx[port] += 128;
+		 joyry[port] += 128;
 		 rt[port] += 128;
 		 lt[port] += 128;
 	  }

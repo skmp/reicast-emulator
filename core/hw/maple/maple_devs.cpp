@@ -289,11 +289,12 @@ struct maple_sega_controller: maple_base
 				   //1
 				   w8(pjs.joy[PJAI_Y1] - 128);
 
-				   //triggers
-				   //1 R
-				   w8(pjs.trigger[PJTI_R]);
-				   //1 L
-				   w8(pjs.trigger[PJTI_L]);
+				   //joyrx
+				   //1
+				   w8(pjs.joy[PJAI_X2] - 128);
+				   //joyry
+				   //1
+				   w8(pjs.joy[PJAI_Y2] - 128);
 				}
 			}
 
@@ -1387,7 +1388,7 @@ struct maple_lightgun : maple_base
 };
 
 extern u32 kcode[4];
-extern s8 joyx[4],joyy[4];
+extern s8 joyx[4], joyy[4], joyrx[4], joyry[4];
 extern u8 rt[4], lt[4];
 extern char eeprom_file[PATH_MAX];
 extern bool use_lightgun;
@@ -2418,9 +2419,15 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 									axis_value = joyy[player_num] << 8;
 									break;
 								 case 2:
-									axis_value = rt[player_num] << 8;
+									axis_value = joyrx[player_num] << 8;
 									break;
 								 case 3:
+									axis_value = joyry[player_num] << 8;
+									break;
+								 case 4:
+									axis_value = rt[player_num] << 8;
+									break;
+								 case 5:
 									axis_value = lt[player_num] << 8;
 									break;
 							  }

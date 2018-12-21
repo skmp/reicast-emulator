@@ -118,6 +118,7 @@ retro_environment_t        frontend_clear_thread_waits_cb = NULL;
 static retro_rumble_interface rumble;
 
 int dc_init(int argc,wchar* argv[]);
+void dc_reset();
 void dc_run();
 void dc_term(void);
 void dc_stop();
@@ -127,6 +128,7 @@ bool dc_is_running();
 extern Renderer* renderer;
 bool rend_single_frame();
 void rend_cancel_emu_wait();
+bool acquire_mainloop_lock();
 
 static void init_disk_control_interface(const char *initial_image_path);
 
@@ -1113,14 +1115,32 @@ void retro_run (void)
 void retro_reset (void)
 {
 #if !defined(TARGET_NO_THREADS)
+   mtx_serialization.Lock();
    if (settings.rend.ThreadedRendering)
+   {
 	  dc_stop();
-   else
+	  if (!acquire_mainloop_lock())
+	  {
+		 dc_start();
+		 mtx_serialization.Unlock();
+		 return;
+	  }
+   }
 #endif
-	  dc_term();
-   first_run = true;
+
    settings.dreamcast.cable = 3;
+   settings.dreamcast.RTC = GetRTC_now();
    update_variables(false);
+   dc_reset();
+
+#if !defined(TARGET_NO_THREADS)
+   if (settings.rend.ThreadedRendering)
+   {
+	  performed_serialization = true;
+	  mtx_mainloop.Unlock();
+   }
+   mtx_serialization.Unlock();
+#endif
 }
 
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)

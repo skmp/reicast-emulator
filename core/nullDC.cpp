@@ -337,6 +337,14 @@ void dc_prepare_system(void)
    VRAM_MASK        = (VRAM_SIZE-1);
 }
 
+void dc_reset()
+{
+	plugins_Reset(false);
+	mem_Reset(false);
+
+	sh4_cpu.Reset(false);
+}
+
 int dc_init(int argc,wchar* argv[])
 {
    char name[128];
@@ -391,10 +399,7 @@ int dc_init(int argc,wchar* argv[])
 
 	mcfg_CreateDevices();
 
-	plugins_Reset(false);
-	mem_Reset(false);
-	
-	sh4_cpu.Reset(false);
+	dc_reset();
 
    const char* bootfile = reios_locate_ip();
    if (!bootfile || !reios_locate_bootfile("1ST_READ.BIN"))

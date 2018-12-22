@@ -32,7 +32,7 @@ if(${HOST_OS} EQUAL ${OS_WINDOWS})
 	./core/osd/windows/winmain.cpp
 	./core/osd/audiobackend/audiostream.cpp
 	./core/osd/audiobackend/audiobackend_directsound.cpp
-	./core/osd/rend/TexCache.cpp:q
+	./core/osd/rend/TexCache.cpp
 	./core/osd/rend/d3d11/d3d11.cpp
 	./core/osd/rend/gles/gles.cpp 
 	./core/osd/rend/gles/gltex.cpp

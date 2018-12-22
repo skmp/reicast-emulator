@@ -3,4 +3,4 @@
  */
 #pragma once
 
-#define REICAST_VERSION "r8.1-28-g6ad13268"
+#define REICAST_VERSION "r8.1-30-gad881e88"

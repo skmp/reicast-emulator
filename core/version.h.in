@@ -1,0 +1,6 @@
+/*
+ *	reicast: version.h
+ */
+#pragma once
+
+#define REICAST_VERSION "@GIT_VERSION@"

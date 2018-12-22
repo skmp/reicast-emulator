@@ -9,8 +9,8 @@
 #
 
 
-#set(USE_QT On)
-
+set(USE_QT On)
+set(ZBUILD On)
 
 
 
@@ -273,9 +273,14 @@ if(${HOST_OS} EQUAL ${OS_LINUX})
 endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+#
   set(BUILD_COMPILER ${COMPILER_VC})
   message("MSVC Platform: ${CMAKE_VS_PLATFORM_NAME}")
   message("MSVC Toolset:  ${CMAKE_VS_PLATFORM_TOOLSET}")
+  
+  
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1)
+
 #
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") 
   set(BUILD_COMPILER ${COMPILER_GCC})
@@ -339,8 +344,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_CXX_FLAGS}")
 
 
 
-
-set(DEBUG_CMAKE ON)
+if(ZBUILD)
+  set(DEBUG_CMAKE ON)
+  add_definitions(-D_Z_)
+endif()
 
 if(DEBUG_CMAKE)
 message(" ------------------------------------------------")
@@ -354,16 +361,15 @@ endif()
 
 
 if (TARGET_NSW) # -DCMAKE_TOOLCHAIN_FILE=./cmake/devkitA64.cmake -DTARGET_NSW=ON
-set(HOST_OS ${OS_NSW_HOS}) 
+  set(HOST_OS ${OS_NSW_HOS}) 
 
-message(" DEVKITA64: ${DEVKITA64} ")
-message("HOST_OS ${HOST_OS}")
+  message(" DEVKITA64: ${DEVKITA64} ")
+  message("HOST_OS ${HOST_OS}")
 
-add_definitions(-DGLES)
-add_definitions(-D__SWITCH__)
-add_definitions(-DHOST_NO_THREADS)
+  add_definitions(-DGLES)
+  add_definitions(-D__SWITCH__)
+  add_definitions(-DHOST_NO_THREADS)
 endif()
-
 
 
 

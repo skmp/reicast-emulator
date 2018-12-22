@@ -11,6 +11,11 @@ include_directories ("${libosd_base_path}")
 include_directories ("${libosd_base_path}/rend/khronos")
 
 
+
+
+
+## Global Sources ##
+#
 set(libosd_SRCS ./core/osd/oslib.h)
 
 
@@ -39,6 +44,17 @@ endif()
 
 
 
+
+## Todo: somehow figure audio backend options out, esp for linux
+##	finding build packages doesn't help, but option can be for building support
+
+# base stream 
+list(APPEND libosd_SRCS ./core/osd/audiobackend/audiostream.cpp)
+
+
+
+
+
 ################ This may make things confusing, can't be helped really  ##############################
 #
 #	Qt is a cross platform lib,  so it's not tech. OSD... However it replaces many osdeps in the build.
@@ -47,20 +63,19 @@ endif()
 
 
 
-if(USE_QT)
+if(USE_QT)	## Ensure CMAKE_PREFIX_PATH is set ##
 
-
-  #set(CMAKE_PREFIX_PATH )
-  find_package(Qt5 COMPONENTS Widgets REQUIRED) # recent cmake + Qt use CMAKE_PREFIX_PATH to find module in Qt path
+  find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED) # recent cmake + Qt use CMAKE_PREFIX_PATH to find module in Qt path
+  ## Note:  These are only for finding, if you don't include in target_link_libraries you won't even get include paths updated
 
   set(CMAKE_AUTOMOC ON)
-  set(CMAKE_AUTOUIC ON)
-
+# set(CMAKE_AUTOUIC ON)
+# set(CMAKE_AUTORCC ON)
   
   set(d_qt ./core/osd/qt)
 
-  list(APPEND libosd_SRCS 
-    ${d_qt}/mainwindow.h ${d_qt}/mainwindow.cpp
+  list(APPEND libosd_SRCS	# qt5_wrap_cpp(${d_qt}/ )
+    ${d_qt}/mainwindow.h ${d_qt}/mainwindow.cpp		# should use qt5_wrap_cpp() functions so the rest of the code won't get moc called on it from CMAKE_AUTOMOC
   )
   
   add_definitions(-DUSE_QT -DUI_QT -DOSD_QT)
@@ -78,10 +93,7 @@ elseif (${HOST_OS} EQUAL ${OS_WINDOWS} AND NOT USE_QT)
 #
   list(APPEND libosd_SRCS 
 	./core/osd/windows/winmain.cpp
-
 	./core/osd/rend/d3d11/d3d11.cpp
-
-	./core/osd/audiobackend/audiostream.cpp
 	./core/osd/audiobackend/audiobackend_directsound.cpp
   )
 #
@@ -99,7 +111,7 @@ elseif (${HOST_OS} EQUAL ${OS_LINUX} OR
 	./core/osd/linux/common.cpp
 	./core/osd/linux/context.cpp
 	./core/osd/linux/nixprof/nixprof.cpp
-	./core/osd/audiobackend/audiostream.cpp
+
 	./core/osd/audiobackend/audiobackend_oss.cpp # add option
   ) # todo: configure linux audio lib options
   
@@ -123,21 +135,21 @@ elseif (${HOST_OS} EQUAL ${OS_LINUX} OR
 #
 elseif(${HOST_OS} EQUAL ${OS_DARWIN})
 #
-error("libosd darwin")
+  error("libosd darwin")
 #
 elseif(${HOST_OS} EQUAL ${OS_IOS})
 #
-error("libosd apple ios")
+  error("libosd apple ios")
 #
 elseif(${HOST_OS} EQUAL ${OS_ANDROID})
 #
-error("libosd android")
+  error("libosd android")
 #
 elseif(${HOST_OS} EQUAL ${OS_NSW_HOS})
-
-  list(APPEND libosd_SRCS 
-	./core/osd/nswitch/main.cpp
-  )
+#
+  error("libosd NSW HOS")
+  list(APPEND libosd_SRCS ./core/osd/nswitch/main.cpp)
+#
 else()
 #
   error("libosd can't figure out OS use SDL ?")

@@ -253,7 +253,7 @@ elf32_fprintf(FILE *f, struct Elf32_Header *file, int size, const char *name, in
 	unsigned numSegments;
 	struct Elf32_Shdr *sections;
 	unsigned numSections;
-	int i, r;
+	int r;
 	char *str_table;
 
 	fprintf(f, "Found an elf32 file called \"%s\" located "
@@ -293,7 +293,7 @@ elf32_fprintf(FILE *f, struct Elf32_Header *file, int size, const char *name, in
 		fprintf(f, "Program Headers:\n");
 		fprintf(f, "  Type           Offset   VirtAddr   PhysAddr   "
 			"FileSiz MemSiz  Flg Align\n");
-		for (i = 0; i < numSegments; i++) {
+		for (uint32_t i = 0; i < numSegments; i++) {
 			if (segments[i].p_type != 1) {
 				fprintf(f, "segment %d is not loadable, "
 					"skipping\n", i);
@@ -314,7 +314,7 @@ elf32_fprintf(FILE *f, struct Elf32_Header *file, int size, const char *name, in
 
 		printf("Section Headers:\n");
 		printf("  [Nr] Name              Type            Addr     Off\n");
-		for (i = 0; i < numSections; i++) {
+		for (uint32_t i = 0; i < numSections; i++) {
 			//if (elf_checkSection(file, i) == 0) {
 			fprintf(f, "[%2d] %s %x %x\n", i, elf32_getSectionName(file, i),
 				//fprintf(f, "[%2d] %-17.17s %-15.15s %x %x\n", i, elf32_getSectionName(file, i), " ", 

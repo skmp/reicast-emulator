@@ -86,6 +86,7 @@
 #  define UINT64_MAX       (__UINT64_C(18446744073709551615))
 #endif
 
+
 /*
  * Checks that elfFile points to a valid elf file. Returns 0 if the elf
  * file is valid, < 0 if invalid. 
@@ -200,7 +201,7 @@ elf_getSectionName(void *elfFile, int i)
 		: elf64_getSectionName((Elf64_Header*)elfFile, i);
 }
 
-uint32_t
+uint64_t
 elf_getSectionFlags(void *elfFile, int i)
 {
 	return ISELF32 (elfFile)

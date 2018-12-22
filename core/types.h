@@ -24,25 +24,6 @@
 	#define DYNACALL
 #endif
 
-#if BUILD_COMPILER==COMPILER_VC
-#ifdef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
-#undef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
-#endif
-
-#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
-
-#ifdef _CRT_SECURE_NO_DEPRECATE
-#undef _CRT_SECURE_NO_DEPRECATE
-#endif
-
-#define _CRT_SECURE_NO_DEPRECATE 
-//unnamed struncts/unions
-#pragma warning( disable : 4201)
-
-//unused parameters
-#pragma warning( disable : 4100)
-#endif
-
 
 
 #if BUILD_COMPILER==COMPILER_VC
@@ -58,14 +39,24 @@
 #endif
 #define _CRT_SECURE_NO_DEPRECATE
 
-//Do not complain when i use enum::member
-#pragma warning( disable : 4482)
 
-//unnamed struncts/unions
-#pragma warning( disable : 4201)
+#pragma warning(disable : 4482)		// Do not complain when i use enum::member
+#pragma warning(disable : 4201)		// unnamed struncts/unions
+#pragma warning(disable : 4100)		// unused parameters
 
-//unused parameters
-#pragma warning( disable : 4100)
+
+#ifdef _Z_  // Annoying things, only disable for dev. builds in cmake so I can actually see something other than warnings easily //
+  #pragma warning(disable : 4018)	// Signed/Unsigned , these _should_ be fixed, as with many other warnings the deps do it too so i'm not going to look @ them
+  #pragma warning(disable : 4244)	// 
+  #pragma warning(disable : 4267)	// : '=' : conversion from '' to '', possible loss of data
+  #pragma warning(disable : 4312)	// ptr conv of greater size?  better than lesser ...
+  #pragma warning(disable : 4333)	// 
+  #pragma warning(disable : 4996)	// The POSIX name for this item is deprecated. Instead, use the ISO ...   << deps don't include types.h :|
+
+  #pragma warning(disable : 4313)	// 'printf' : '%X' in format string conflicts with argument 2 of type 'DynarecCodeEntryPtr'
+  #pragma warning(disable : 4477)	// 'printf' : format string '%06X' requires an argument of type 'unsigned int', but variadic argument 2 has type 'DynarecCodeEntryPtr'
+#endif
+
 #endif
 
 #include <stdint.h>
@@ -785,7 +776,7 @@ static inline void do_nada(...) { }
 
 
 
-#include "sh4/sh4_if.h"
+#include "dc_arch/sh4/sh4_if.h"
 
 //more to come
 

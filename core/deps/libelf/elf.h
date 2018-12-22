@@ -348,7 +348,7 @@ uint64_t elf_getSectionAddr(void *elfFile, int i);
  *
  * \return The flags of a given section
  */
-uint32_t elf_getSectionFlags(void *elfFile, int i);
+uint64_t elf_getSectionFlags(void *elfFile, int i);
 
 /**
  * Return the type for a given sections

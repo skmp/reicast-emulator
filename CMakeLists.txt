@@ -82,6 +82,6 @@ endif()
 
 
 if(USE_QT)
-  target_link_libraries(reicast Qt5::Widgets) # libdreamcast libosd) #  libui , externals
+  target_link_libraries(reicast Qt5::Widgets Qt5::OpenGL) # libdreamcast libosd) #  libui , externals
 endif()
 

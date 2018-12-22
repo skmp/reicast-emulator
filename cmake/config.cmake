@@ -9,6 +9,21 @@
 #
 
 
+#set(USE_QT On)
+
+
+
+
+set(BUILD_LIBS OFF)         ## Scope:Local If set will build libs { dreamcast, osd, ... }
+set(BUILD_LIB_TYPE STATIC)  ## Scope:Local If BUILD_LIBS is set, will use this as type of lib to use { STATIC, SHARED, MODULE (plugin) } *TODO*
+set(BUILD_SHARED_LIBS OFF)  ## Scope:CMAKE If type is not specified in add_library, use SHARED
+
+
+
+
+## Build flags ##
+#
+
 set(DC_PLATFORM_MASK        7)  # Z: Uh, not a bitset
 set(DC_PLATFORM_DREAMCAST   0)  # /* Works, for the most part */
 set(DC_PLATFORM_DEV_UNIT    1)  # /* This is missing hardware */
@@ -49,15 +64,6 @@ set(COMPILER_VC    0x30000001)  # BUILD_COMPILER
 set(COMPILER_GCC   0x30000002)
 set(COMPILER_CLANG 0x30000002)
 set(COMPILER_INTEL 0x30000002)
-
-
-
-
-
-
-set(BUILD_LIBS OFF)         ## Scope:Local If set will build libs { dreamcast, osd, ... }
-set(BUILD_LIB_TYPE STATIC)  ## Scope:Local If BUILD_LIBS is set, will use this as type of lib to use { STATIC, SHARED, MODULE (plugin) } *TODO*
-set(BUILD_SHARED_LIBS OFF)  ## Scope:CMAKE If type is not specified in add_library, use SHARED
 
 
 
@@ -125,6 +131,7 @@ else()
   set(host_arch "${CMAKE_SYSTEM_PROCESSOR}")
   set(HOST_CPU ${CPU_GENERIC})
 endif()
+
 
 
 

@@ -5,7 +5,7 @@ project(reicast)
 enable_language(ASM)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
-
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 
 ## built-in cmake modules #
@@ -81,8 +81,7 @@ if(NOT ${HOST_OS} EQUAL ${OS_NSW_HOS})
 endif()
 
 
-
-target_link_libraries(reicast) # libdreamcast libosd) #  libui , externals
-
-
+if(USE_QT)
+  target_link_libraries(reicast Qt5::Widgets) # libdreamcast libosd) #  libui , externals
+endif()
 

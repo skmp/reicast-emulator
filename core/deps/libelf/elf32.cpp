@@ -114,10 +114,8 @@ elf32_getStringTable(struct Elf32_Header *elfFile)
  * ELF32_Phdr_t structs.  The size of the array can be found by calling
  * getNumProgramSegments. */
 struct Elf32_Phdr *
-elf32_getProgramSegmentTable(struct Elf32_Header *elfFile)
-{
-	struct Elf32_Header *fileHdr = elfFile;
-	return (struct Elf32_Phdr *) (fileHdr->e_phoff + (long) elfFile);
+elf32_getProgramSegmentTable(struct Elf32_Header *elfFile) {
+	return (struct Elf32_Phdr *) ((uint64_t)elfFile->e_phoff + (uint64_t)elfFile);
 }
 
 /* Returns the number of program segments in this elf file. */

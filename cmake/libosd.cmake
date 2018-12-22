@@ -11,10 +11,7 @@ include_directories ("${libosd_base_path}")
 include_directories ("${libosd_base_path}/rend/khronos")
 
 
-  #set(libosd_LDEP lgles
-
-
-
+set(libosd_SRCS ./core/osd/oslib.h)
 
 
 ## Todo: make option
@@ -24,21 +21,68 @@ include_directories ("${libosd_base_path}/rend/khronos")
 #../core/rend/soft:		softrend.cpp
 #../core/rend/norend:	norend.cpp
 
+if(NOT NO_GLES)
+  list(APPEND libosd_SRCS ./core/osd/rend/TexCache.cpp)
+
+  list(APPEND libosd_SRCS ./core/osd/rend/gles/gles.cpp) 
+  list(APPEND libosd_SRCS ./core/osd/rend/gles/gltex.cpp)
+  list(APPEND libosd_SRCS ./core/osd/rend/gles/gldraw.cpp)
+endif()
+
+if(HEADLESS)
+  list(APPEND libosd_SRCS ./core/osd/rend/norend/norend.cpp)
+endif()
+
+if(${HOST_CPU} EQUAL ${CPU_X86} OR ${HOST_CPU} EQUAL ${CPU_X64})
+  list(APPEND libosd_SRCS ./core/osd/rend/soft/softrend.cpp)
+endif()
 
 
-if(${HOST_OS} EQUAL ${OS_WINDOWS})
+
+################ This may make things confusing, can't be helped really  ##############################
 #
-  set(libosd_SRCS
+#	Qt is a cross platform lib,  so it's not tech. OSD... However it replaces many osdeps in the build.
+#		Use an option and set def,  and make a bigger mess :|
+#
+
+
+
+if(USE_QT)
+
+
+  #set(CMAKE_PREFIX_PATH )
+  find_package(Qt5 COMPONENTS Widgets REQUIRED) # recent cmake + Qt use CMAKE_PREFIX_PATH to find module in Qt path
+
+  set(CMAKE_AUTOMOC ON)
+  set(CMAKE_AUTOUIC ON)
+
+  
+  set(d_qt ./core/osd/qt)
+
+  list(APPEND libosd_SRCS 
+    ${d_qt}/mainwindow.h ${d_qt}/mainwindow.cpp
+  )
+  
+  add_definitions(-DUSE_QT -DUI_QT -DOSD_QT)
+
+  
+
+#elseif (USE_SDL)
+###################################################################################################
+
+
+
+
+
+elseif (${HOST_OS} EQUAL ${OS_WINDOWS} AND NOT USE_QT)
+#
+  list(APPEND libosd_SRCS 
 	./core/osd/windows/winmain.cpp
+
+	./core/osd/rend/d3d11/d3d11.cpp
+
 	./core/osd/audiobackend/audiostream.cpp
 	./core/osd/audiobackend/audiobackend_directsound.cpp
-	./core/osd/rend/TexCache.cpp
-	./core/osd/rend/d3d11/d3d11.cpp
-	./core/osd/rend/gles/gles.cpp 
-	./core/osd/rend/gles/gltex.cpp
-	./core/osd/rend/gles/gldraw.cpp 
-	./core/osd/rend/soft/softrend.cpp
-#	./core/osd/rend/norend/norend.cpp
   )
 #
 elseif (${HOST_OS} EQUAL ${OS_LINUX} OR  
@@ -51,23 +95,19 @@ elseif (${HOST_OS} EQUAL ${OS_LINUX} OR
   
   link_libraries(pthread dl rt asound Xext GLESv2 EGL)
   
-  set(libosd_SRCS
+  list(APPEND libosd_SRCS 
 	./core/osd/linux/common.cpp
 	./core/osd/linux/context.cpp
 	./core/osd/linux/nixprof/nixprof.cpp
 	./core/osd/audiobackend/audiostream.cpp
 	./core/osd/audiobackend/audiobackend_oss.cpp # add option
-	./core/osd/rend/TexCache.cpp
-	./core/osd/rend/gles/gles.cpp 
-	./core/osd/rend/gles/gltex.cpp
-	./core/osd/rend/gles/gldraw.cpp 
   ) # todo: configure linux audio lib options
   
   if(NOT ANDROID)
     list(APPEND libosd_SRCS 
-    ./core/osd/linux-dist/x11.cpp
-	./core/osd/linux-dist/main.cpp
-	./core/osd/linux-dist/evdev.cpp)
+		./core/osd/linux-dist/x11.cpp
+		./core/osd/linux-dist/main.cpp
+		./core/osd/linux-dist/evdev.cpp)
 	
     add_definitions(-DSUPPORT_X11)  ## don't use GLES ?
     link_libraries(X11)
@@ -79,9 +119,6 @@ elseif (${HOST_OS} EQUAL ${OS_LINUX} OR
     )
   endif()
   
-  if(${HOST_CPU} EQUAL ${CPU_X86} OR ${HOST_CPU} EQUAL ${CPU_X64})
-	list(APPEND libosd_SRCS ./core/osd/rend/soft/softrend.cpp)
-  endif()
   
 #
 elseif(${HOST_OS} EQUAL ${OS_DARWIN})
@@ -98,13 +135,8 @@ error("libosd android")
 #
 elseif(${HOST_OS} EQUAL ${OS_NSW_HOS})
 
-  set(libosd_SRCS
+  list(APPEND libosd_SRCS 
 	./core/osd/nswitch/main.cpp
-
-	./core/osd/rend/TexCache.cpp
-	./core/osd/rend/gles/gles.cpp 
-	./core/osd/rend/gles/gltex.cpp
-	./core/osd/rend/gles/gldraw.cpp 
   )
 else()
 #

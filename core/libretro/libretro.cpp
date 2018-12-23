@@ -332,10 +332,6 @@ void retro_set_environment(retro_environment_t cb)
 #endif
       },
       {
-         "reicast_extra_depth_scale",
-         "Extra depth scaling; auto|disabled|enabled",
-      },
-      {
          "reicast_gdrom_fast_loading",
          "GDROM Fast Loading (inaccurate); disabled|enabled",
       },
@@ -370,6 +366,10 @@ void retro_set_environment(retro_environment_t cb)
       {
          "reicast_region",
          "Region; Default|Japan|USA|Europe",
+      },
+      {
+         "reicast_language",
+         "Language; Default|Japanese|English|German|French|Spanish|Italian",
       },
       {
          "reicast_div_matching",
@@ -586,27 +586,6 @@ static void update_variables(bool first_startup)
    else
       boot_to_bios = false;
 
-   var.key = "reicast_extra_depth_scale";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (!strcmp(var.value, "auto"))
-      {
-         settings.rend.AutoExtraDepthScale    = true;
-         settings.rend.ExtraDepthScale        = 1.f;
-      }
-      else if (!strcmp(var.value, "enabled"))
-      {
-         settings.rend.AutoExtraDepthScale    = false;
-         settings.rend.ExtraDepthScale        = 1e26;
-      }
-      else
-      {
-         settings.rend.AutoExtraDepthScale    = false;
-         settings.rend.ExtraDepthScale        = 1.f;
-      }
-   }
-
    var.key = "reicast_gdrom_fast_loading";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -777,6 +756,28 @@ static void update_variables(bool first_startup)
    }
    else
          settings.dreamcast.region = 3;
+
+   var.key = "reicast_language";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("Japanese", var.value))
+         settings.dreamcast.language = 0;
+      else if (!strcmp("English", var.value))
+         settings.dreamcast.language = 1;
+      else if (!strcmp("German", var.value))
+         settings.dreamcast.language = 2;
+      else if (!strcmp("French", var.value))
+         settings.dreamcast.language = 3;
+      else if (!strcmp("Spanish", var.value))
+         settings.dreamcast.language = 4;
+      else if (!strcmp("Italian", var.value))
+         settings.dreamcast.language = 5;
+      else if (!strcmp("Default", var.value))
+         settings.dreamcast.language = 6;
+   }
+   else
+         settings.dreamcast.language = 6;
 
    var.key = "reicast_div_matching";
 

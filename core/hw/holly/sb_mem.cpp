@@ -134,6 +134,29 @@ bool LoadRomFiles(const string& root)
 		 return false;
 	  }
    }
+   if (settings.System == DC_PLATFORM_DREAMCAST)
+   {
+	  struct flash_syscfg_block syscfg;
+	  int res = sys_nvmem_flash.ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
+
+	  if (!res)
+	  {
+		 // write out default settings
+		 memset(&syscfg, 0xff, sizeof(syscfg));
+		 syscfg.time_lo = 0;
+		 syscfg.time_hi = 0;
+		 syscfg.lang = 0;
+		 syscfg.mono = 0;
+		 syscfg.autostart = 1;
+	  }
+	  u32 time = GetRTC_now();
+	  syscfg.time_lo = time & 0xffff;
+	  syscfg.time_hi = time >> 16;
+	  if (settings.dreamcast.language <= 5)
+		 syscfg.lang = settings.dreamcast.language;
+
+	  sys_nvmem_flash.WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
+   }
 
    return true;
 }

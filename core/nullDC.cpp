@@ -451,7 +451,7 @@ bool dc_is_running()
 
 void LoadSettings(void)
 {
-	settings.dynarec.Enable			= 1;
+   settings.dynarec.Enable			= 1;
 	settings.dynarec.idleskip		= 1;
 	settings.dynarec.unstable_opt	= 0; 
    //settings.dynarec.DisableDivMatching       = 0;
@@ -478,8 +478,9 @@ void LoadSettings(void)
    settings.rend.MaxFilteredTextureSize = 256;
    settings.pvr.SynchronousRendering	 = 0;
 #endif
-   if (settings.rend.ExtraDepthScale == 0)
-      settings.rend.ExtraDepthScale = 1.f;
+   settings.rend.AutoExtraDepthScale    = true;
+   settings.rend.ExtraDepthScale        = 1.f;
+
    settings.rend.Clipping               = true;
 
 

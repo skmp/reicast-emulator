@@ -21,6 +21,7 @@
 #include "../hw/maple/maple_cfg.h"
 #include "../hw/pvr/spg.h"
 #include "../hw/naomi/naomi_cart.h"
+#include "../imgread/common.h"
 
 #if defined(_XBOX) || defined(_WIN32)
 char slash = '\\';
@@ -117,6 +118,7 @@ retro_environment_t        frontend_clear_thread_waits_cb = NULL;
 static retro_rumble_interface rumble;
 
 int dc_init(int argc,wchar* argv[]);
+void dc_reset();
 void dc_run();
 void dc_term(void);
 void dc_stop();
@@ -126,6 +128,9 @@ bool dc_is_running();
 extern Renderer* renderer;
 bool rend_single_frame();
 void rend_cancel_emu_wait();
+bool acquire_mainloop_lock();
+
+static void init_disk_control_interface(const char *initial_image_path);
 
 static int co_argc;
 static wchar** co_argv;
@@ -352,7 +357,7 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_cable_type",
-         "Cable type; TV (RGB)|TV (VBS/Y+S/C)|VGA (RGB)",
+         "Cable type; TV (RGB)|TV (Composite)|VGA (RGB)",
       },
       {
          "reicast_broadcast",
@@ -1110,14 +1115,32 @@ void retro_run (void)
 void retro_reset (void)
 {
 #if !defined(TARGET_NO_THREADS)
+   mtx_serialization.Lock();
    if (settings.rend.ThreadedRendering)
+   {
 	  dc_stop();
-   else
+	  if (!acquire_mainloop_lock())
+	  {
+		 dc_start();
+		 mtx_serialization.Unlock();
+		 return;
+	  }
+   }
 #endif
-	  dc_term();
-   first_run = true;
+
    settings.dreamcast.cable = 3;
+   settings.dreamcast.RTC = GetRTC_now();
    update_variables(false);
+   dc_reset();
+
+#if !defined(TARGET_NO_THREADS)
+   if (settings.rend.ThreadedRendering)
+   {
+	  performed_serialization = true;
+	  mtx_mainloop.Unlock();
+   }
+   mtx_serialization.Unlock();
+#endif
 }
 
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
@@ -1671,6 +1694,7 @@ bool retro_load_game(const struct retro_game_info *game)
 		 log_cb(RETRO_LOG_ERROR, "Reicast emulator initialization failed\n");
 	  return false;
    }
+   init_disk_control_interface(game->path);
 
    return true;
 }
@@ -2599,4 +2623,86 @@ void os_DebugBreak(void)
    printf("DEBUGBREAK!\n");
    //exit(-1);
    __builtin_trap();
+}
+
+// Disk swapping
+static struct retro_disk_control_callback retro_disk_control_cb;
+static unsigned disk_index = 0;
+static std::vector<std::string> disk_paths;
+static bool disc_tray_open = false;
+
+static bool retro_set_eject_state(bool ejected)
+{
+   disc_tray_open = ejected;
+
+   return true;
+}
+
+static bool retro_get_eject_state()
+{
+   return disc_tray_open;
+}
+
+static unsigned retro_get_image_index()
+{
+   return disk_index;
+}
+
+static bool retro_set_image_index(unsigned index)
+{
+   settings.imgread.LoadDefaultImage = true;
+   disk_index = index;
+   if (disk_index >= disk_paths.size())
+   {
+	  // No disk in drive
+	  settings.imgread.DefaultImage[0] = '\0';
+	  return true;
+   }
+   strncpy(settings.imgread.DefaultImage, disk_paths[index].c_str(), sizeof(settings.imgread.DefaultImage));
+   settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
+
+   return DiscSwap();
+}
+
+static unsigned retro_get_num_images()
+{
+   return disk_paths.size();
+}
+
+static bool retro_add_image_index()
+{
+   disk_paths.push_back("");
+
+   return true;
+}
+
+static bool retro_replace_image_index(unsigned index, const struct retro_game_info *info)
+{
+  if (info == nullptr)
+  {
+    if (index < disk_paths.size())
+    {
+      disk_paths.erase(disk_paths.begin() + index);
+      if (disk_index >= index && disk_index > 0)
+        disk_index--;
+    }
+  }
+  else
+    disk_paths[index] = info->path;
+
+  return true;
+}
+
+static void init_disk_control_interface(const char *initial_image_path)
+{
+  retro_disk_control_cb.set_eject_state = retro_set_eject_state;
+  retro_disk_control_cb.get_eject_state = retro_get_eject_state;
+  retro_disk_control_cb.set_image_index = retro_set_image_index;
+  retro_disk_control_cb.get_image_index = retro_get_image_index;
+  retro_disk_control_cb.get_num_images  = retro_get_num_images;
+  retro_disk_control_cb.add_image_index = retro_add_image_index;
+  retro_disk_control_cb.replace_image_index = retro_replace_image_index;
+
+  environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE, &retro_disk_control_cb);
+  disk_paths.push_back(initial_image_path);
 }

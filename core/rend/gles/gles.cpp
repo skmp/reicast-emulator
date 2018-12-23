@@ -353,6 +353,7 @@ int GetProgramID(
 void findGLVersion()
 {
    gl.stencil_present = true;
+   gl.index_type = GL_UNSIGNED_INT;
 
    while (true)
       if (glGetError() == GL_NO_ERROR)
@@ -373,6 +374,7 @@ void findGLVersion()
       {
          gl.gl_version = "GLES2";
          gl.glsl_version_header = "";
+         gl.index_type = GL_UNSIGNED_SHORT;
       }
       gl.fog_image_format = GL_ALPHA;
 
@@ -747,6 +749,23 @@ void vertex_buffer_unmap(void)
 void DoCleanup() {
 }
 
+static void upload_vertex_indices()
+{
+	if (gl.index_type == GL_UNSIGNED_SHORT)
+	{
+		static bool overrun;
+		static List<u16> short_idx;
+		if (short_idx.daty != NULL)
+			short_idx.Free();
+		short_idx.Init(pvrrc.idx.used(), &overrun, NULL);
+		for (u32 *p = pvrrc.idx.head(); p < pvrrc.idx.LastPtr(0); p++)
+			*(short_idx.Append()) = *p;
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, short_idx.bytes(), short_idx.head(), GL_STREAM_DRAW);
+	}
+	else
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
+}
+
 static bool RenderFrame(void)
 {
    int vmu_screen_number = 0 ;
@@ -974,7 +993,7 @@ static bool RenderFrame(void)
 
       glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
 
-      glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW); glCheck();
+      upload_vertex_indices();
 
       //Modvol VBO
       if (pvrrc.modtrig.used())
@@ -1040,7 +1059,9 @@ static bool RenderFrame(void)
    else
    {
       glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-		glClear(GL_COLOR_BUFFER_BIT);
+      glClear(GL_COLOR_BUFFER_BIT);
+      glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
       DrawFramebuffer(dc_width, dc_height);
    }
 

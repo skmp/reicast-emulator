@@ -43,7 +43,7 @@ u32 GetRTC_now(void)
 	time_t temp=time(0);
 	timeinfo=*localtime(&temp);
 	if (timeinfo.tm_isdst)
-		rawtime+=24*3600;//add an hour if dst (maybe rtc has a reg for that ? *watch* and add it if yes :)
+		rawtime += 3600;	//add an hour if dst (maybe rtc has a reg for that ? *watch* and add it if yes :)
 
 	u32 RTC=0x5bfc8900 + (u32)rawtime;// add delta to known dc time
 	return RTC;

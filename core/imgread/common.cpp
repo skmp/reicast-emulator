@@ -133,22 +133,19 @@ bool InitDrive_(wchar* fn)
 	//try all drivers
 	disc = OpenDisc(fn);
 
-	if (disc!=0)
+	if (disc != NULL)
 	{
 		printf("gdrom: Opened image \"%s\"\n",fn);
-		NullDriveDiscType=Busy;
-#ifndef NOT_REICAST
-		libCore_gdrom_disc_change();
-#endif
-//		Sleep(400); //busy for a bit // what, really ?
-		return true;
+		NullDriveDiscType = Busy;
 	}
 	else
 	{
 		printf("gdrom: Failed to open image \"%s\"\n",fn);
-		NullDriveDiscType=NoDisk; //no disc :)
+		NullDriveDiscType = NoDisk; //no disc :)
 	}
-	return false;
+	libCore_gdrom_disc_change();
+
+	return disc != NULL;
 }
 
 #ifndef NOT_REICAST
@@ -202,6 +199,10 @@ bool InitDrive(u32 fileflags)
 
 bool DiscSwap(u32 fileflags)
 {
+	// These Additional Sense Codes mean "The lid was closed"
+	sns_asc = 0x28;
+	sns_ascq = 0x00;
+	sns_key = 0x6;
 	if (settings.imgread.LoadDefaultImage)
 	{
 		printf("Loading default image \"%s\"\n",settings.imgread.DefaultImage);
@@ -222,16 +223,10 @@ bool DiscSwap(u32 fileflags)
 	{
 		NullDriveDiscType=Open;
 		gd_setdisc();
-		sns_asc=0x28;
-		sns_ascq=0x00;
-		sns_key=0x6;
 		return true;
 	}
 	else if (gfrv == -1)
 	{
-		sns_asc=0x28;
-		sns_ascq=0x00;
-		sns_key=0x6;
 		return false;
 	}
 
@@ -243,16 +238,10 @@ bool DiscSwap(u32 fileflags)
 		//msgboxf("Selected image failed to load",MBX_ICONERROR);
 		NullDriveDiscType=Open;
 		gd_setdisc();
-		sns_asc=0x28;
-		sns_ascq=0x00;
-		sns_key=0x6;
 		return true;
 	}
 	else
 	{
-		sns_asc=0x28;
-		sns_ascq=0x00;
-		sns_key=0x6;
 		return true;
 	}
 }

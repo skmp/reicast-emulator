@@ -67,7 +67,10 @@ struct gl_ctx
    int gl_major;
    bool is_gles;
    GLuint fog_image_format;
+   GLenum index_type;
    bool stencil_present;
+
+   size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };
 
 GLuint gl_GetTexture(TSP tsp,TCW tcw);

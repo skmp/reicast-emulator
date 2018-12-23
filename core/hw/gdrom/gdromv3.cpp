@@ -1,4 +1,4 @@
-﻿/*
+/*
 	gdrom, v3
 	Overly complex implementation of a very ugly device
 */
@@ -562,7 +562,6 @@ void gd_process_spi_cmd()
 
 	case SPI_CD_READ2:
 		printf_spicmd("SPI_CD_READ2\n");
-		printf("GDROM: Unhandled Sega SPI frame: SPI_CD_READ2\n");
 
 		gd_set_state(gds_procpacketdone);
 		break;
@@ -571,7 +570,6 @@ void gd_process_spi_cmd()
 	case SPI_REQ_STAT:
 		{
 			printf_spicmd("SPI_REQ_STAT\n");
-			//printf("GDROM: Unhandled Sega SPI frame: SPI_REQ_STAT\n");
 			u8 stat[10];
 
 			//0  0   0   0   0   STATUS
@@ -601,7 +599,6 @@ void gd_process_spi_cmd()
 
 	case SPI_REQ_ERROR:
 		printf_spicmd("SPI_REQ_ERROR\n");
-		//printf("GDROM: Unhandled Sega SPI frame: SPI_REQ_ERROR\n");
 		
 		u8 resp[10];
 		resp[0]=0xF0;
@@ -630,7 +627,6 @@ void gd_process_spi_cmd()
 
 	case SPI_CD_OPEN:
 		printf_spicmd("SPI_CD_OPEN\n");
-		printf("GDROM: Unhandled Sega SPI frame: SPI_CD_OPEN\n");
 		
 		
 		gd_set_state(gds_procpacketdone);
@@ -639,7 +635,6 @@ void gd_process_spi_cmd()
 	case SPI_CD_PLAY:
 		{
 			printf_spicmd("SPI_CD_PLAY\n");
-			printf("GDROM: Unhandled Sega SPI frame: SPI_CD_PLAY\n");
 			//cdda.CurrAddr.FAD=60000;
 
 			cdda.playing=true;
@@ -681,7 +676,6 @@ void gd_process_spi_cmd()
 	case SPI_CD_SEEK:
 		{
 			printf_spicmd("SPI_CD_SEEK\n");
-			printf("GDROM: Unhandled Sega SPI frame: SPI_CD_SEEK\n");
 
 			SecNumber.Status=GD_PAUSE;
 			cdda.playing=false;
@@ -727,7 +721,6 @@ void gd_process_spi_cmd()
 
 	case SPI_CD_SCAN:
 		printf_spicmd("SPI_CD_SCAN\n");
-		printf("GDROM: Unhandled Sega SPI frame: SPI_CD_SCAN\n");
 		
 
 		gd_set_state(gds_procpacketdone);
@@ -736,7 +729,6 @@ void gd_process_spi_cmd()
 	case SPI_GET_SCD:
 		{
 			printf_spicmd("SPI_GET_SCD\n");
-			//printf("\nGDROM:\tUnhandled Sega SPI frame: SPI_GET_SCD\n");
 
 			u32 format;
 			format=packet_cmd.data_8[1]&0xF;
@@ -747,6 +739,7 @@ void gd_process_spi_cmd()
 			//0 Reserved
 			subc_info[0]=0;
 			//1 Audio status
+#if 0
 			if (SecNumber.Status==GD_STANDBY)
 			{
 				//13h  Audio playback ended normally
@@ -769,7 +762,7 @@ void gd_process_spi_cmd()
 				else
 					subc_info[1]=0x15;//15h	No audio status information
 			}
-			
+#endif
 			subc_info[1]=0x15;
 
 			if (format==0)

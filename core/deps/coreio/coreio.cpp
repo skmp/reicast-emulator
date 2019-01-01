@@ -18,10 +18,14 @@
 #include <sstream>
 
 #if FEAT_HAS_COREIO_HTTP
-	#if HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
+	#if HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN || HOST_OS == OS_PS4_BSD
 		#include <sys/socket.h>
 		#include <netinet/in.h>
+#if HOST_OS == OS_PS4_BSD
+		//#include <libnet/header/ip.h>
+#else
 		#include <netinet/ip.h>
+#endif
 		#include <netinet/tcp.h>
 		#include <netdb.h>
 		#include <unistd.h>

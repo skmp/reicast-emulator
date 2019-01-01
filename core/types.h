@@ -1,6 +1,8 @@
 #pragma once
 
 #include "build.h"
+#include "version.h"
+
 
 #if BUILD_COMPILER==COMPILER_VC
 #define DECL_ALIGN(x) __declspec(align(x))
@@ -84,15 +86,14 @@ typedef double f64;
 typedef ptrdiff_t snat;
 typedef size_t unat;
 
-#ifdef X64
-typedef u64 unat;
-#endif
 
 typedef char wchar;
 
 #define EXPORT extern "C" __declspec(dllexport)
 
-
+constexpr unat KB(unat n) { return 1024 * n; }
+constexpr unat MB(unat n) { return 1024 * KB(n); }
+constexpr unat GB(unat n) { return 1024 * MB(n); }
 
 #ifndef CDECL
 #define CDECL __cdecl
@@ -197,11 +198,11 @@ struct vram_block
 	#define BUILD_DREAMCAST 1
 	
 	//DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
-	#define RAM_SIZE (16*1024*1024)
-	#define VRAM_SIZE (8*1024*1024)
-	#define ARAM_SIZE (2*1024*1024)
-	#define BIOS_SIZE (2*1024*1024)
-	#define FLASH_SIZE (128*1024)
+	#define RAM_SIZE	MB(16)	// (16*1024*1024)
+	#define VRAM_SIZE	MB(8)	// (8*1024*1024)
+	#define ARAM_SIZE	MB(2)	// (2*1024*1024)
+	#define BIOS_SIZE	MB(2)	// (2*1024*1024)
+	#define FLASH_SIZE	KB(128)	// (128*1024)
 
 	#define ROM_PREFIX "dc_"
 	#define ROM_NAMES
@@ -212,11 +213,11 @@ struct vram_block
 	#define BUILD_DEV_UNIT 1
 
 	//Devkit : 32 mb ram, 8? mb vram, 2? mb aram, 2? mb bios, ? flash
-	#define RAM_SIZE (32*1024*1024)
-	#define VRAM_SIZE (8*1024*1024)
-	#define ARAM_SIZE (2*1024*1024)
-	#define BIOS_SIZE (2*1024*1024)
-	#define FLASH_SIZE (128*1024)
+	#define RAM_SIZE	MB(32)	// (32*1024*1024)
+	#define VRAM_SIZE	MB(8)	// (8*1024*1024)
+	#define ARAM_SIZE	MB(2)	// (2*1024*1024)
+	#define BIOS_SIZE	MB(2)	// (2*1024*1024)
+	#define FLASH_SIZE	KB(128)	// (128*1024)
 
 	#define ROM_PREFIX "hkt_"
 	#define ROM_NAMES
@@ -225,11 +226,11 @@ struct vram_block
 #elif  (DC_PLATFORM==DC_PLATFORM_NAOMI)
 
 	//Naomi : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
-	#define RAM_SIZE (32*1024*1024)
-	#define VRAM_SIZE (16*1024*1024)
-	#define ARAM_SIZE (8*1024*1024)
-	#define BIOS_SIZE (2*1024*1024)
-	#define BBSRAM_SIZE (32*1024)
+	#define RAM_SIZE	MB(32)	// (32*1024*1024)
+	#define VRAM_SIZE	MB(16)	// (16*1024*1024)
+	#define ARAM_SIZE	MB(8)	// (8*1024*1024)
+	#define BIOS_SIZE	MB(2)	// (2*1024*1024)
+	#define BBSRAM_SIZE	KB(32)	// (32*1024)
 
 	#define ROM_PREFIX "naomi_"
 	#define ROM_NAMES ";epr-21576d.bin"
@@ -238,11 +239,11 @@ struct vram_block
 #elif  (DC_PLATFORM==DC_PLATFORM_NAOMI2)
 
 	//Naomi2 : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
-	#define RAM_SIZE (32*1024*1024)
-	#define VRAM_SIZE (16*1024*1024)
-	#define ARAM_SIZE (8*1024*1024)
-	#define BIOS_SIZE (2*1024*1024)	
-	#define BBSRAM_SIZE (32*1024)
+	#define RAM_SIZE	MB(32)	// (32*1024*1024)
+	#define VRAM_SIZE	MB(16)	// (16*1024*1024)
+	#define ARAM_SIZE	MB(8)	// (8*1024*1024)
+	#define BIOS_SIZE	MB(2)	// (2*1024*1024)
+	#define BBSRAM_SIZE	KB(32)	// (32*1024)
 
 	#define ROM_PREFIX "n2_"
 	#define ROM_NAMES
@@ -253,11 +254,11 @@ struct vram_block
 	#define BUILD_ATOMISWAVE 1
 
 	//Atomiswave : 16(?) mb ram, 16 mb vram, 8 mb aram, 64kb bios, 64k flash
-	#define RAM_SIZE (16*1024*1024)
-	#define VRAM_SIZE (16*1024*1024)
-	#define ARAM_SIZE (8*1024*1024)
-	#define BIOS_SIZE (64*1024)
-	#define FLASH_SIZE (64*1024)
+	#define RAM_SIZE	MB(16)	// (16*1024*1024)
+	#define VRAM_SIZE	MB(16)	// (16*1024*1024)
+	#define ARAM_SIZE	MB(8)	// (8*1024*1024)
+	#define BIOS_SIZE	KB(64)	// (64*1024)
+	#define FLASH_SIZE	KB(64)	// (64*1024)
 
 	#define ROM_PREFIX "aw_"
 	#define ROM_NAMES ";bios.ic23_l"
@@ -289,6 +290,34 @@ struct vram_block
 #define SH4_MAIN_CLOCK (200*1000*1000)		//[200000000] XTal(13.5) -> PLL (33.3) -> PLL 1:6 (200)
 #define SH4_RAM_CLOCK (100*1000*1000)		//[100000000] XTal(13.5) -> PLL (33.3) -> PLL 1:3 (100)	, also suplied to HOLLY chip
 #define G2_BUS_CLOCK (25*1000*1000)			//[25000000]  from Holly, from SH4_RAM_CLOCK w/ 2 2:1 plls
+
+
+
+#ifndef NO_MMU
+#define _X_x_X_MMU_VER_STR "/mmu"
+#else
+#define _X_x_X_MMU_VER_STR ""
+#endif
+
+
+#if DC_PLATFORM==DC_PLATFORM_DREAMCAST
+#define VER_EMUNAME		"reicast"
+#elif DC_PLATFORM==DC_PLATFORM_DEV_UNIT
+#define VER_EMUNAME		"reicast-DevKit-SET5.21"
+#elif DC_PLATFORM==DC_PLATFORM_NAOMI
+#define VER_EMUNAME		"reicast-Naomi"
+#elif DC_PLATFORM==DC_PLATFORM_ATOMISWAVE
+#define VER_EMUNAME		"reicast-AtomisWave"
+#else
+#error unknown target platform
+#endif
+
+
+#define VER_FULLNAME	VER_EMUNAME " git-" REICAST_VERSION _X_x_X_MMU_VER_STR " (built " __DATE__ "@" __TIME__ ")"
+#define VER_SHORTNAME	VER_EMUNAME " git-" REICAST_VERSION _X_x_X_MMU_VER_STR
+
+
+
 
 
 enum ndc_error_codes
@@ -481,29 +510,6 @@ using namespace std;
 #define EMUWARN3(x,a,b)(printf( "Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a,b))
 #define EMUWARN4(x,a,b,c)(printf("Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a,b,c))
 
-
-#ifndef NO_MMU
-#define _X_x_X_MMU_VER_STR "/mmu"
-#else
-#define _X_x_X_MMU_VER_STR ""
-#endif
-
-
-#if DC_PLATFORM==DC_PLATFORM_DREAMCAST
-	#define VER_EMUNAME		"reicast"
-#elif DC_PLATFORM==DC_PLATFORM_DEV_UNIT
-	#define VER_EMUNAME		"reicast-DevKit-SET5.21"
-#elif DC_PLATFORM==DC_PLATFORM_NAOMI
-	#define VER_EMUNAME		"reicast-Naomi"
-#elif DC_PLATFORM==DC_PLATFORM_ATOMISWAVE
-	#define VER_EMUNAME		"reicast-AtomisWave"
-#else
-	#error unknown target platform
-#endif
-
-
-#define VER_FULLNAME	VER_EMUNAME " git" _X_x_X_MMU_VER_STR " (built " __DATE__ "@" __TIME__ ")"
-#define VER_SHORTNAME	VER_EMUNAME " git" _X_x_X_MMU_VER_STR
 
 
 void os_DebugBreak();
@@ -870,15 +876,15 @@ void libARM_Update(u32 cycles);
 			else if (sz==2)							\
 				{*(u16*)&arr[addr]=(u16)data;}		\
 			else if (sz==4)							\
-			{*(u32*)&arr[addr]=data;}}	
+				{*(u32*)&arr[addr]=data;}}	
 
-#define WriteMemArrRet(arr,addr,data,sz)				\
+#define WriteMemArrRet(arr,addr,data,sz)			\
 			{if(sz==1)								\
-				{arr[addr]=(u8)data;return;}				\
+				{arr[addr]=(u8)data;return;}		\
 			else if (sz==2)							\
-				{*(u16*)&arr[addr]=(u16)data;return;}		\
+				{*(u16*)&arr[addr]=(u16)data;return;} \
 			else if (sz==4)							\
-			{*(u32*)&arr[addr]=data;return;}}	
+				{*(u32*)&arr[addr]=data;return;}}	
 
 struct OnLoad
 {

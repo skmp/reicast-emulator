@@ -85,3 +85,16 @@ if(USE_QT)
   target_link_libraries(reicast Qt5::Widgets Qt5::OpenGL) # libdreamcast libosd) #  libui , externals
 endif()
 
+
+
+if(DEBUG_CMAKE)
+  message(" ------------------------------------------------")
+  message(" - HOST_OS: ${HOST_OS} - HOST_CPU: ${HOST_CPU}   ")
+  message(" - host_os: ${host_os} - host_arch: ${host_arch} ")
+  message(" ------------------------------------------------")
+  message("  C  Flags: ${CMAKE_C_FLAGS} ")
+  message(" CXX Flags: ${CMAKE_CXX_FLAGS} ")
+  message(" LINK_DIRS: ${LINK_DIRECTORIES}")
+  message("LINK_FLAGS: ${CMAKE_EXE_LINKER_FLAGS}")
+  message(" ------------------------------------------------\n")
+endif()

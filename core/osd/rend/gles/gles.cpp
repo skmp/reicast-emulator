@@ -397,9 +397,9 @@ int screen_height;
 	// Create a basic GLES context
 	bool gl_init(void* wind, void* disp)
 	{
-	#if !defined(_ANDROID)
-		gl.setup.native_wind=(EGLNativeWindowType)wind;
-		gl.setup.native_disp=(EGLNativeDisplayType)disp;
+	#if !defined(_ANDROID) // Now i've seen it all,,, gles.cpp:402:24: error: cast from pointer to smaller type 'EGLNativeDisplayType' (aka 'int') loses information
+		gl.setup.native_wind=(EGLNativeWindowType)(s64)wind;
+		gl.setup.native_disp=(EGLNativeDisplayType)(s64)disp;
 
 		//try to get a display
 		gl.setup.display = eglGetDisplay(gl.setup.native_disp);

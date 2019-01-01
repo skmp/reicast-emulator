@@ -239,6 +239,8 @@
 #define FEAT_DSPREC DYNAREC_NONE
 #endif
 
+#endif	// !CMAKE_BUILD
+
 
 #if defined(TARGET_NO_NIXPROF)
 #define FEAT_HAS_NIXPROF 0
@@ -251,8 +253,6 @@
 #if defined(TARGET_SOFTREND)
 	#define FEAT_HAS_SOFTREND 1
 #endif
-
-#endif	// !CMAKE_BUILD
 
 
 

@@ -1,0 +1,89 @@
+﻿{
+  "environments": [
+    {
+      // Could set things up here instead of the toolchain file, instead make this global env. and use a TOOLCHAIN var
+      //"INCLUDE": "${env.INCLUDE};",
+
+      "TOOLCHAIN_FILE": "ps4sdk.cmake",
+      "environment": "toolchain.generic"
+    }
+  ],
+  "configurations": [
+    {
+      "name": "x86-Debug",
+      "generator": "Ninja",
+      "description": "TemplateDescription_Localize_x86Debug",
+      "configurationType": "Debug",
+      "inheritEnvironments": [ "msvc_x86" ],
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    },
+    {
+      "name": "x86-Release",
+      "generator": "Ninja",
+      "description": "TemplateDescription_Localize_x86Release",
+      "configurationType": "RelWithDebInfo",
+      "inheritEnvironments": [ "msvc_x86" ],
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    },
+    {
+      "name": "x64-Debug",
+      "generator": "Ninja",
+      "description": "TemplateDescription_Localize_x64Debug",
+      "configurationType": "Debug",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    },
+    {
+      "name": "x64-Release",
+      "generator": "Ninja",
+      "description": "TemplateDescription_Localize_x64Release",
+      "configurationType": "RelWithDebInfo",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    },
+    {
+      //"variables": [ { "TOOLCHAIN_FILE": "ps4sdk.cmake" } ],   // This doesn't seem to override toolchain.generic:: [env.]TOOLCHAIN_FILE , or pass to the cmake cache
+
+      "name": "PS4 SDK",
+      "generator": "Ninja",
+      "description": "TemplateDescription_Localize_PS4SDK",
+      "configurationType": "RelWithDebInfo",
+      "inheritEnvironments": [ "toolchain.generic" ],
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
+      "cmakeCommandArgs": "-DCMAKE_TOOLCHAIN_FILE=${projectDir}\\cmake\\ps4sdk.cmake", // ${projectDir}/cmake/${env.TOOLCHAIN_FILE}
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    },
+    {
+      //"variables": [ { "TOOLCHAIN_FILE": "devkitA64.cmake" } ],
+
+      "name": "NSW SDK",
+      "generator": "Ninja",
+      "description": "TemplateDescription_Localize_PS4SDK",
+      "configurationType": "RelWithDebInfo",
+      "inheritEnvironments": [ "toolchain.generic" ],
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
+      "cmakeCommandArgs": "-DCMAKE_TOOLCHAIN_FILE=${projectDir}\\cmake\\devkitA64.cmake", // ${projectDir}/cmake/${env.TOOLCHAIN_FILE}
+      "buildCommandArgs": "-v",
+      "ctestCommandArgs": ""
+    }
+  ]
+}

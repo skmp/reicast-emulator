@@ -3,6 +3,7 @@
 #include "types.h"
 
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64
+
 #include "sh4/sh4_opcode_list.h"
 #include "sh4/modules/ccn.h"
 #include "sh4/sh4_interrupts.h"
@@ -14,6 +15,7 @@
 #include "../x86_emitter/x86_emitter.h"
 #include "profiler/profiler.h"
 #include "oslib.h"
+
 
 
 struct DynaRBI : RuntimeBlockInfo

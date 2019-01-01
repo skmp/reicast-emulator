@@ -11,36 +11,45 @@ include_directories ("${libosd_base_path}")
 include_directories ("${libosd_base_path}/rend/khronos")
 
 
-
-
+set(d_osd  ./core/osd)		# These help keep paths somewhat configurable during dev.
+set(d_rend ./core/osd/rend)
 
 ## Global Sources ##
 #
-set(libosd_SRCS ./core/osd/oslib.h)
+set(libosd_SRCS ${d_osd}/oslib.h)
+
+
+
+
+
+### Rend ###
+#
+
+# texture cache
+list(APPEND libosd_SRCS ${d_rend}/TexCache.cpp)
 
 
 ## Todo: make option
-
+#
 #../core/rend/gles:		gles.cpp gldraw.cpp gltex.cpp gles.h  
 #../core/rend/d3d11:	d3d11.cpp
 #../core/rend/soft:		softrend.cpp
 #../core/rend/norend:	norend.cpp
 
 if(NOT NO_GLES)
-  list(APPEND libosd_SRCS ./core/osd/rend/TexCache.cpp)
-
-  list(APPEND libosd_SRCS ./core/osd/rend/gles/gles.cpp) 
-  list(APPEND libosd_SRCS ./core/osd/rend/gles/gltex.cpp)
-  list(APPEND libosd_SRCS ./core/osd/rend/gles/gldraw.cpp)
+  list(APPEND libosd_SRCS ${d_rend}/gles/gles.cpp) 
+  list(APPEND libosd_SRCS ${d_rend}/gles/gltex.cpp)
+  list(APPEND libosd_SRCS ${d_rend}/gles/gldraw.cpp)
 endif()
 
 if(HEADLESS)
-  list(APPEND libosd_SRCS ./core/osd/rend/norend/norend.cpp)
+  list(APPEND libosd_SRCS ${d_rend}/norend/norend.cpp)
 endif()
 
 if(${HOST_CPU} EQUAL ${CPU_X86} OR ${HOST_CPU} EQUAL ${CPU_X64})
-  list(APPEND libosd_SRCS ./core/osd/rend/soft/softrend.cpp)
+  list(APPEND libosd_SRCS ${d_rend}/soft/softrend.cpp)
 endif()
+
 
 
 
@@ -49,7 +58,7 @@ endif()
 ##	finding build packages doesn't help, but option can be for building support
 
 # base stream 
-list(APPEND libosd_SRCS ./core/osd/audiobackend/audiostream.cpp)
+list(APPEND libosd_SRCS ${d_osd}/audiobackend/audiostream.cpp)
 
 
 
@@ -62,94 +71,145 @@ list(APPEND libosd_SRCS ./core/osd/audiobackend/audiostream.cpp)
 #
 
 
-
 if(USE_QT)	## Ensure CMAKE_PREFIX_PATH is set ##
-
+#
   find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED) # recent cmake + Qt use CMAKE_PREFIX_PATH to find module in Qt path
   ## Note:  These are only for finding, if you don't include in target_link_libraries you won't even get include paths updated
 
   set(CMAKE_AUTOMOC ON)
 # set(CMAKE_AUTOUIC ON)
 # set(CMAKE_AUTORCC ON)
-  
-  set(d_qt ./core/osd/qt)
 
-  list(APPEND libosd_SRCS	# qt5_wrap_cpp(${d_qt}/ )
-    ${d_qt}/mainwindow.h ${d_qt}/mainwindow.cpp		# should use qt5_wrap_cpp() functions so the rest of the code won't get moc called on it from CMAKE_AUTOMOC
+  list(APPEND libosd_SRCS	# qt5_wrap_cpp(${d_qt}/ )		# should use qt5_wrap_cpp() functions so the rest of the code won't get moc called on it from CMAKE_AUTOMOC
+	${d_osd}/qt/qt_ui.h      ${d_osd}/qt/qt_ui.cpp
+    ${d_osd}/qt/qt_osd.h     ${d_osd}/qt/qt_osd.cpp
   )
   
-  add_definitions(-DUSE_QT -DUI_QT -DOSD_QT)
+  add_definitions(-DUSE_QT -DQT_UI -DQT_OSD)
+ 
 
+
+
+#
+elseif(USE_SDL)
+#
+  find_package(SDL)
+
+  list(APPEND libosd_SRCS ${d_osd}/sdl/sdl_ui.cpp)
   
+  add_definitions(-DUSE_SDL -DSDL_UI)
 
-#elseif (USE_SDL)
-###################################################################################################
-
-
+endif()
 
 
-
-elseif (${HOST_OS} EQUAL ${OS_WINDOWS} AND NOT USE_QT)
+## WIP ./osd/$OS$/$OS$_{osd,ui,rend?}
 #
-  list(APPEND libosd_SRCS 
-	./core/osd/windows/winmain.cpp
-	./core/osd/rend/d3d11/d3d11.cpp
-	./core/osd/audiobackend/audiobackend_directsound.cpp
-  )
-#
-elseif (${HOST_OS} EQUAL ${OS_LINUX} OR  
-		${HOST_OS} EQUAL ${OS_ANDROID})
+
+if (${HOST_OS} EQUAL ${OS_WINDOWS})
 #
   message("-----------------------------------------------------")
-  message("  LINUX OS ")
+  message(" OS: Windows ")
+
+  list(APPEND libosd_SRCS ${d_osd}/windows/win_osd.cpp)
+  
+  list(APPEND libosd_SRCS ${d_osd}/audiobackend/audiobackend_directsound.cpp)
+
+  if(NOT USE_QT AND NOT USE_SDL)
+    list(APPEND libosd_SRCS 
+      ${d_osd}/windows/winmain.cpp	#win_ui
+      ${d_osd}/rend/d3d11/d3d11.cpp
+    )
+  endif()
+#
+elseif (${HOST_OS} EQUAL ${OS_LINUX}   OR  ## This should prob be if POSIX_COMPAT : ./osd/posix_base_osd
+		${HOST_OS} EQUAL ${OS_ANDROID} OR
+		${HOST_OS} EQUAL ${OS_DARWIN})
+#
+  message("-----------------------------------------------------")
+  message(" OS: Linux ")
+
+  list(APPEND libosd_SRCS ./core/osd/linux/lin_osd.cpp)
+  
+  if(NOT USE_QT AND NOT USE_SDL)
+
+    list(APPEND libosd_SRCS 
+      ${d_osd}/linux/common.cpp
+      ${d_osd}/linux/context.cpp
+      ${d_osd}/linux/nixprof/nixprof.cpp
+
+      ${d_osd}/audiobackend/audiobackend_oss.cpp # add option
+    ) # todo: configure linux audio lib options
+  
+    if(NOT ANDROID)
+      list(APPEND libosd_SRCS 
+		${d_osd}/linux-dist/x11.cpp
+		${d_osd}/linux-dist/main.cpp
+		${d_osd}/linux-dist/evdev.cpp)
+	
+      add_definitions(-DSUPPORT_X11)  ## don't use GLES ?
+      link_libraries(X11)
+    else()
+      set(libANDROID_SRCS 
+        ./shell/android-studio/reicast/src/main/jni/src/Android.cpp
+        ./shell/android-studio/reicast/src/main/jni/src/utils.cpp
+    #   ./shell/android-studio/reicast/src/main/jni/src/XperiaPlay.c
+      )
+    endif() # ANDROID
+
+  endif() # NOT USE_QT
+  
 
   add_definitions(-DGLES -DUSE_EVDEV)
   
   link_libraries(pthread dl rt asound Xext GLESv2 EGL)
   
-  list(APPEND libosd_SRCS 
-	./core/osd/linux/common.cpp
-	./core/osd/linux/context.cpp
-	./core/osd/linux/nixprof/nixprof.cpp
-
-	./core/osd/audiobackend/audiobackend_oss.cpp # add option
-  ) # todo: configure linux audio lib options
-  
-  if(NOT ANDROID)
-    list(APPEND libosd_SRCS 
-		./core/osd/linux-dist/x11.cpp
-		./core/osd/linux-dist/main.cpp
-		./core/osd/linux-dist/evdev.cpp)
-	
-    add_definitions(-DSUPPORT_X11)  ## don't use GLES ?
-    link_libraries(X11)
-  else()
-    set(libANDROID_SRCS 
-      ./shell/android-studio/reicast/src/main/jni/src/Android.cpp
-      ./shell/android-studio/reicast/src/main/jni/src/utils.cpp
-    # ./shell/android-studio/reicast/src/main/jni/src/XperiaPlay.c
-    )
-  endif()
-  
-  
-#
-elseif(${HOST_OS} EQUAL ${OS_DARWIN})
-#
-  error("libosd darwin")
-#
+#elseif(${HOST_OS} EQUAL ${OS_ANDROID})
+#elseif(${HOST_OS} EQUAL ${OS_DARWIN})
 elseif(${HOST_OS} EQUAL ${OS_IOS})
 #
-  error("libosd apple ios")
-#
-elseif(${HOST_OS} EQUAL ${OS_ANDROID})
-#
-  error("libosd android")
+  message("-----------------------------------------------------")
+  message(" OS: Apple iOS ")
+
+  list(APPEND libosd_SRCS ${d_osd}/apple/ios_osd.cpp)
+  #if NOT QT OR SDL then add NATIVE UI code 
 #
 elseif(${HOST_OS} EQUAL ${OS_NSW_HOS})
 #
-  error("libosd NSW HOS")
-  list(APPEND libosd_SRCS ./core/osd/nswitch/main.cpp)
+  message("-----------------------------------------------------")
+  message(" OS: Switch HOS ")
+  
+  list(APPEND libosd_SRCS ${d_osd}/switch/nsw_osd.cpp)
 #
+elseif(${HOST_OS} EQUAL ${OS_PS4_BSD})
+#
+  message("-----------------------------------------------------")
+  message(" OS: Playstation4 BSD ")
+  ## This will prob use posix / linux/common.cpp as a base too *FIXME* 
+  list(APPEND libosd_SRCS
+	${d_osd}/ps4/ps4_util.S
+	${d_osd}/ps4/ps4_osd.cpp
+	
+    ${d_osd}/linux/common.cpp
+
+  # ${d_osd}/audiobackend/audiobackend_oss.cpp
+  )
+	#LIBS = -lkernel_tau_stub_weak -lSceSysmodule_tau_stub_weak -lSceSystemService_stub_weak 
+	#-lSceSystemService_tau_stub_weak -lSceShellCoreUtil_tau_stub_weak 
+	#-lScePigletv2VSH_tau_stub_weak -lkernel_util
+
+	##	link_libraries() doesn't work 
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${PS4TARGET}/tauon/lib")
+
+	### Add a helper to add libSce PREFIX and [_tau]*_stub[_weak]*.a SUFFIX
+	#
+	link_libraries(
+					libScePad_stub_weak.a libSceNet_stub_weak.a libSceCommonDialog_stub_weak.a
+
+					libc_stub_weak.a libScePosix_stub_weak.a
+
+					libSceSystemService_tau_stub.a libkernel_tau_stub.a libkernel_util.a
+					libScePigletv2VSH_tau_stub.a libSceSysmodule_tau_stub.a 
+					)
 else()
 #
   error("libosd can't figure out OS use SDL ?")
@@ -172,7 +232,7 @@ else()
 endif()
 
 if(NOT ${HOST_OS} EQUAL ${OS_NSW_HOS})
-  source_group(TREE ${PROJECT_SOURCE_DIR}/core/osd PREFIX src\\libosd FILES ${libosd_SRCS})
+  source_group(TREE ${libosd_base_path} PREFIX src\\libosd FILES ${libosd_SRCS})
 endif()
 
 if(ANDROID)  # *FIXME*

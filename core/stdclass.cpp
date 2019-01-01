@@ -18,6 +18,12 @@ string user_data_dir;
 std::vector<string> system_config_dirs;
 std::vector<string> system_data_dirs;
 
+
+#ifdef PS4  // *FIXME* F'n annoying SCE likes to play with things //
+extern "C" int access(const char *path, int flags);
+#endif
+
+
 bool file_exists(const string& filename)
 {
 	return (access(filename.c_str(), R_OK) == 0);

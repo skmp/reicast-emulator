@@ -9,7 +9,6 @@
 #
 
 
-set(USE_QT On)
 set(ZBUILD On)
 
 
@@ -158,6 +157,9 @@ endif()
 
 
 
+
+### These were for internal testing, don't use ###
+#
 function(CpuIs CpuType Res)
   set(${Res} OFF PARENT_SCOPE)
   if (${HOST_CPU} EQUAL ${CpuType})
@@ -302,7 +304,7 @@ if ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
     (${BUILD_COMPILER} EQUAL ${COMPILER_CLANG}))
 
   
-  set(_C_FLAGS "-fno-operator-names")
+  set(_C_FLAGS "-fno-operator-names -fcxx-exceptions") ## xbyak needs exceptions
   
   
   if(USE_32B OR TARGET_LINUX_X86)
@@ -321,6 +323,7 @@ endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${_C_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_CXX_FLAGS}")
+
 
 
 #if defined(TARGET_NAOMI)
@@ -343,49 +346,52 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_CXX_FLAGS}")
 #endif
 
 
-
-if(ZBUILD)
-  set(DEBUG_CMAKE ON)
-  add_definitions(-D_Z_)
-endif()
-
-if(DEBUG_CMAKE)
-message(" ------------------------------------------------")
-message(" - HOST_OS: ${HOST_OS} - HOST_CPU: ${HOST_CPU}   ")
-message(" - host_os: ${host_os} - host_arch: ${host_arch} ")
-message(" ------------------------------------------------")
-message("  C  Flags: ${CMAKE_C_FLAGS} ")
-message(" CXX Flags: ${CMAKE_CXX_FLAGS} ")
-message(" ------------------------------------------------\n")
-endif()
-
-
 if (TARGET_NSW) # -DCMAKE_TOOLCHAIN_FILE=./cmake/devkitA64.cmake -DTARGET_NSW=ON
   set(HOST_OS ${OS_NSW_HOS}) 
 
   message(" DEVKITA64: ${DEVKITA64} ")
   message("HOST_OS ${HOST_OS}")
 
-  add_definitions(-DGLES)
-  add_definitions(-D__SWITCH__)
-  add_definitions(-DHOST_NO_THREADS)
+  add_definitions(-D__SWITCH__ -DGLES -DMESA_EGL_NO_X11_HEADERS)
+  add_definitions(-DTARGET_NO_THREADS -DTARGET_NO_EXCEPTIONS -DTARGET_NO_NIXPROF)
+  add_definitions(-DTARGET_NO_COREIO_HTTP -DTARGET_NO_WEBUI -UTARGET_SOFTREND)
+  add_definitions(-D_GLIBCXX_USE_C99_MATH_TR1 -D_LDBL_EQ_DBL)
+
+endif()
+
+if (TARGET_PS4) # -DCMAKE_TOOLCHAIN_FILE=./cmake/{ps4sdk,clang_scei}.cmake -DTARGET_PS4=ON
+  set(HOST_OS ${OS_PS4_BSD})
+  message("HOST_OS ${HOST_OS}")
+  
+
+  add_definitions(-DPS4 -DTARGET_PS4 -DTARGET_BSD -D__ORBIS__ -DGLES -DMESA_EGL_NO_X11_HEADERS)  ## last needed for __unix__ on eglplatform.h
+  add_definitions(-DTARGET_NO_THREADS -DTARGET_NO_EXCEPTIONS -DTARGET_NO_NIXPROF)
+  add_definitions(-DTARGET_NO_COREIO_HTTP -DTARGET_NO_WEBUI -UTARGET_SOFTREND)
+
+
+  message("*******FIXME******** LARGE PAGES !!")
 endif()
 
 
 
-
-
-
+if(ZBUILD)
+  set(DEBUG_CMAKE ON)
+  add_definitions(-D_Z_)  # Get rid of some warnings and internal dev testing
+  
+  if(NOT TARGET_PS4 AND NOT TARGET_NSW)
+    set(USE_QT On)
+  endif()
+endif()
 
 
 
 # configure options for osd/ui 
 # osd_default, osd_qt
 # ui_default, ui_sdl, ui_qt
-
-
-
 # USE_NATIVE , USE_SDL , USE_QT  -- these (can) define multiple
+
+option(USE_QT False "Use Qt5 for UI and support OS Deps.")
+
 
 
 

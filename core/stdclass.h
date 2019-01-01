@@ -22,7 +22,9 @@
 #undef PAGE_MASK
 #define PAGE_MASK (PAGE_SIZE-1)
 #else
+#ifndef PAGE_SIZE
 #define PAGE_SIZE 4096
+#endif
 #define PAGE_MASK (PAGE_SIZE-1)
 #endif
 
@@ -169,7 +171,7 @@ public:
 //Windoze code
 //Threads
 
-#if !defined(HOST_NO_THREADS)
+#if !defined(TARGET_NO_THREADS)
 typedef  void* ThreadEntryFP(void* param);
 
 typedef void* THREADHANDLE;

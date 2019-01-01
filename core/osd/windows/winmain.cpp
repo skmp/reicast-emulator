@@ -776,87 +776,34 @@ void os_DoEvents()
 
 
 
-//Windoze Code implementation of commong classes from here and after ..
-
-//Thread class
-cThread::cThread(ThreadEntryFP* function,void* prm)
-{
-	Entry=function;
-	param=prm;
-}
-
-
-void cThread::Start()
-{
-	hThread=CreateThread(NULL,NULL,(LPTHREAD_START_ROUTINE)Entry,param,0,NULL);
-	ResumeThread(hThread);
-}
-
-void cThread::WaitToEnd()
-{
-	WaitForSingleObject(hThread,INFINITE);
-}
-//End thread class
-
-//cResetEvent Calss
-cResetEvent::cResetEvent(bool State,bool Auto)
-{
-		hEvent = CreateEvent(
-		NULL,             // default security attributes
-		Auto?FALSE:TRUE,  // auto-reset event?
-		State?TRUE:FALSE, // initial state is State
-		NULL			  // unnamed object
-		);
-}
-cResetEvent::~cResetEvent()
-{
-	//Destroy the event object ?
-	 CloseHandle(hEvent);
-}
-void cResetEvent::Set()//Signal
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	SetEvent(hEvent);
-}
-void cResetEvent::Reset()//reset
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	ResetEvent(hEvent);
-}
-void cResetEvent::Wait(u32 msec)//Wait for signal , then reset
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	WaitForSingleObject(hEvent,msec);
-}
-void cResetEvent::Wait()//Wait for signal , then reset
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	WaitForSingleObject(hEvent,(u32)-1);
-}
-//End AutoResetEvent
-
-void VArray2::LockRegion(u32 offset,u32 size)
-{
-	//verify(offset+size<this->size);
-	verify(size!=0);
-	DWORD old;
-	VirtualProtect(((u8*)data)+offset , size, PAGE_READONLY,&old);
-}
-void VArray2::UnLockRegion(u32 offset,u32 size)
-{
-	//verify(offset+size<=this->size);
-	verify(size!=0);
-	DWORD old;
-	VirtualProtect(((u8*)data)+offset , size, PAGE_READWRITE,&old);
-}
-
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }
+
+int GetFile(char *szFileName, char *szParse = 0, u32 flags = 0)
+{
+	cfgLoadStr("config", "image", szFileName, "null");
+	if (strcmp(szFileName, "null") == 0)
+	{
+		OPENFILENAME ofn;
+		ZeroMemory(&ofn, sizeof(ofn));
+		ofn.lStructSize = sizeof(ofn);
+		ofn.hwndOwner = NULL;
+		ofn.lpstrFile = szFileName;
+		ofn.lpstrFile[0] = '\0';
+		ofn.nMaxFile = MAX_PATH;
+		ofn.lpstrFilter = "All\0*.*\0\0";
+		ofn.nFilterIndex = 1;
+		ofn.lpstrFileTitle = NULL;
+		ofn.nMaxFileTitle = 0;
+		ofn.lpstrInitialDir = NULL;
+		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+		if (GetOpenFileNameA(&ofn))
+		{
+			//already there
+			//strcpy(szFileName,ofn.lpstrFile);
+		}
+	}
+
+	return 1;
+}

@@ -77,6 +77,19 @@ typedef HDC     EGLNativeDisplayType;
 typedef HBITMAP EGLNativePixmapType;
 typedef HWND    EGLNativeWindowType;
 
+#elif defined(__ORBIS__) /* Orbis (PS4) */
+
+struct _SceWindow {
+	uint32_t id;
+	uint32_t width;
+	uint32_t height;
+};
+typedef struct _SceWindow SceWindow;
+
+typedef int   EGLNativeDisplayType;
+typedef void *EGLNativePixmapType;
+typedef SceWindow *EGLNativeWindowType;
+
 #elif defined(__WINSCW__) || defined(__SYMBIAN32__)  /* Symbian */
 
 typedef int   EGLNativeDisplayType;

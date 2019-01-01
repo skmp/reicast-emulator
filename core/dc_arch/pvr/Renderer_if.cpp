@@ -239,32 +239,16 @@ void* rend_thread(void* p)
 	install_prof_handler(1);
 #endif
 
-	#if SET_AFNT
+#if SET_AFNT
 	cpu_set_t mask;
-
-	/* CPU_ZERO initializes all the bits in the mask to zero. */
-
-	CPU_ZERO( &mask );
-
-
-
-	/* CPU_SET sets only the bit corresponding to cpu. */
-
-	CPU_SET( 1, &mask );
-
-
+	CPU_ZERO( &mask );		/* CPU_ZERO initializes all the bits in the mask to zero. */
+	CPU_SET( 1, &mask );	/* CPU_SET sets only the bit corresponding to cpu. */
 
 	/* sched_setaffinity returns 0 in success */
-
-	if( sched_setaffinity( 0, sizeof(mask), &mask ) == -1 )
-
-	{
-
+	if( sched_setaffinity( 0, sizeof(mask), &mask ) == -1 )	{
 		printf("WARNING: Could not set CPU Affinity, continuing...\n");
-
 	}
-	#endif
-
+#endif
 
 
 	if (!renderer->Init())
@@ -438,7 +422,7 @@ bool rend_init()
 		case 0:
 			renderer = rend_GLES2();
 			break;
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS && !defined(USE_QT)
 		case 1:
 			renderer = rend_D3D11();
 			break;

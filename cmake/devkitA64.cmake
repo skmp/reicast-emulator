@@ -36,9 +36,6 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
 include_directories(${DEVKITPRO}/libnx/include)
 
-add_definitions(-D_GLIBCXX_USE_C99_MATH_TR1 -D_LDBL_EQ_DBL)
-
-
 
 
 set(TARGET_NSW ON)

@@ -8,9 +8,6 @@
 #if _ANDROID
 #include <android/log.h>
 #include <jni.h>
-#else
-#define LOGW printf
-#define LOGI printf
 #endif
 
 #include "deps/zlib/zlib.h"

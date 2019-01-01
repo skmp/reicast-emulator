@@ -1,8 +1,3 @@
-#include <omp.h>
-#include "pvr/Renderer_if.h"
-#include "pvr/pvr_mem.h"
-#include "oslib.h"
-
 /*
 	SSE/MMX based softrend
 
@@ -13,6 +8,17 @@
 	and does depth and color, but no alpha, texture, or pixel
 	processing. All of the pipeline is based on quads.
 */
+
+#include "oslib.h"
+
+
+
+#if FEAT_HAS_SOFTREND
+
+#include <omp.h>
+#include "pvr/Renderer_if.h"
+#include "pvr/pvr_mem.h"
+
 
 #include <mmintrin.h>
 #include <xmmintrin.h>
@@ -1235,3 +1241,5 @@ struct softrend : Renderer
 Renderer* rend_softrend() {
 	return new(_mm_malloc(sizeof(softrend), 32)) softrend();
 }
+
+#endif // FEAT_HAS_SOFTREND

@@ -87,42 +87,9 @@ void plugins_Reset(bool Manual)
 
 
 
-#if !defined(USE_QT)	// Everything below is gross, nothx
+#if !defined(USE_QT)
 
-
-
-#if HOST_OS==OS_WINDOWS
-#include <windows.h>
-
-int GetFile(char *szFileName, char *szParse = 0, u32 flags = 0)
-{
-	cfgLoadStr("config", "image", szFileName, "null");
-	if (strcmp(szFileName, "null") == 0)
-	{
-		OPENFILENAME ofn;
-		ZeroMemory(&ofn, sizeof(ofn));
-		ofn.lStructSize = sizeof(ofn);
-		ofn.hwndOwner = NULL;
-		ofn.lpstrFile = szFileName;
-		ofn.lpstrFile[0] = '\0';
-		ofn.nMaxFile = MAX_PATH;
-		ofn.lpstrFilter = "All\0*.*\0\0";
-		ofn.nFilterIndex = 1;
-		ofn.lpstrFileTitle = NULL;
-		ofn.nMaxFileTitle = 0;
-		ofn.lpstrInitialDir = NULL;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-		if (GetOpenFileNameA(&ofn))
-		{
-			//already there
-			//strcpy(szFileName,ofn.lpstrFile);
-		}
-	}
-
-	return 1;
-}
-#else // Lets not pretend it did anything on non windows platforms anyhow ...
+#if HOST_OS!=OS_WINDOWS // && !USE_QT
 int GetFile(char *szFileName, char *szParse = 0, u32 flags = 0) { return -1; }
 #endif
 
@@ -327,9 +294,9 @@ void LoadSettings()
 	settings.pvr.subdivide_transp	= cfgLoadInt("config", "pvr.Subdivide", 0);
 
 	settings.pvr.ta_skip		= cfgLoadInt("config", "ta.skip", 0);
-	settings.pvr.rend		= cfgLoadInt("config", "pvr.rend", 0);
+	settings.pvr.rend			= cfgLoadInt("config", "pvr.rend", 0);
 
-	settings.pvr.MaxThreads		= cfgLoadInt("config", "pvr.MaxThreads", 3);
+	settings.pvr.MaxThreads			= cfgLoadInt("config", "pvr.MaxThreads", 3);
 	settings.pvr.SynchronousRender	= cfgLoadInt("config", "pvr.SynchronousRendering", 0);
 
 	settings.debug.SerialConsole	= cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
@@ -340,7 +307,7 @@ void LoadSettings()
 	settings.validate.OpenGlChecks	= cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
 
 	// Configured on a per-game basis
-	settings.dynarec.safemode	= 0;
+	settings.dynarec.safemode		= 0;
 	settings.aica.DelayInterrupt	= 0;
 	settings.rend.ModifierVolumes	= 1;
 #endif

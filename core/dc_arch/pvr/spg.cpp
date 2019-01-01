@@ -80,7 +80,9 @@ int elapse_time(int tag, int cycl, int jit)
 #endif
 	return min(max(Frame_Cycles,(u32)1*1000*1000),(u32)8*1000*1000);
 }
-#if HOST_OS==OS_WINDOWS
+
+// W T F ... just ... why?
+#if HOST_OS==OS_WINDOWS && !defined(USE_QT)
 extern double speed_load_mspdf;
 #else
 double speed_load_mspdf;

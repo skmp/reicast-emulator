@@ -1,21 +1,25 @@
 #include "types.h"
 #include "cfg/cfg.h"
 
-#if HOST_OS==OS_LINUX || HOST_OS == OS_DARWIN
+#if HOST_OS == OS_LINUX  || \
+	HOST_OS == OS_DARWIN || \
+	HOST_OS == OS_PS4_BSD
+
 #if HOST_OS == OS_DARWIN
 	#define _XOPEN_SOURCE 1
 	#define __USE_GNU 1
 	#include <TargetConditionals.h>
 #endif
-#if !defined(TARGET_NACL32)
+
+#if !defined(TARGET_NACL32) && !defined(TARGET_PS4)
 #include <poll.h>
 #include <termios.h>
 #endif  
+
 //#include <curses.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <stdarg.h>
-#include <signal.h>
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
@@ -31,6 +35,11 @@
 #include "sh4/dyna/ngen.h"
 
 #if !defined(TARGET_NO_EXCEPTIONS)
+
+
+#include <signal.h>
+
+
 bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
 u32* ngen_readm_fail_v2(u32* ptr,u32* regs,u32 saddr);
 bool VramLockedWrite(u8* address);
@@ -55,7 +64,6 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 }
 #endif
 
-#if !defined(TARGET_NO_EXCEPTIONS)
 void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 {
 	rei_host_context_t ctx;
@@ -101,12 +109,9 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 		signal(SIGSEGV, SIG_DFL);
 	}
 }
-#endif
 
-#endif
-void install_fault_handler (void)
+void install_fault_handler(void)
 {
-#if !defined(TARGET_NO_EXCEPTIONS)
 	struct sigaction act, segv_oact;
 	memset(&act, 0, sizeof(act));
 	act.sa_sigaction = fault_handler;
@@ -114,14 +119,18 @@ void install_fault_handler (void)
 	act.sa_flags = SA_SIGINFO;
 	sigaction(SIGSEGV, &act, &segv_oact);
 #if HOST_OS == OS_DARWIN
-    //this is broken on osx/ios/mach in general
-    sigaction(SIGBUS, &act, &segv_oact);
-    
-    act.sa_sigaction = sigill_handler;
-    sigaction(SIGILL, &act, &segv_oact);
-#endif
+	//this is broken on osx/ios/mach in general
+	sigaction(SIGBUS, &act, &segv_oact);
+
+	act.sa_sigaction = sigill_handler;
+	sigaction(SIGILL, &act, &segv_oact);
 #endif
 }
+
+
+#else	// need install_fault_handler() if TARGET_NO_EXCEPTIONS defined??
+#endif	// TARGET_NO_EXCEPTIONS
+
 
 #if !defined(TARGET_NO_THREADS)
 
@@ -142,8 +151,9 @@ void cThread::WaitToEnd()
 	pthread_join((pthread_t)hThread,0);
 }
 
-//End thread class
 #endif
+//End thread class
+
 
 //cResetEvent Calss
 cResetEvent::cResetEvent(bool State,bool Auto)
@@ -326,12 +336,14 @@ void common_linux_setup()
 	linux_rpi2_init();
 
 	enable_runfast();
+#if !defined(TARGET_NO_EXCEPTIONS)
 	install_fault_handler();
 	signal(SIGINT, exit);
-	
+#endif
+
 	settings.profile.run_counts=0;
 	
-	printf("Linux paging: %ld %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
-	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
+	printf("Linux paging: %ld %08X %08X\n", getpagesize(), PAGE_SIZE, PAGE_MASK);
+	verify(PAGE_MASK == (getpagesize()-1)); // (sysconf(_SC_PAGESIZE)
 }
 #endif

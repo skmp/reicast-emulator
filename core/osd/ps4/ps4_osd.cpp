@@ -261,12 +261,45 @@ static void cleanup(void) {
 
 
 void common_linux_setup();
-int dc_init(int argc, wchar* argv[]);
+int dc_init(int argc, char* argv[]);
 void dc_run();
 void dc_term();
 
 int main(int argc, char* argv[])
 {
+	atexit(&cleanup);
+
+	int ret = sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_SYSTEM_SERVICE);
+	if (ret) {
+		EPRINTF("sceSysmoduleLoadModuleInternal(%s) failed: 0x%08X\n", "SCE_SYSMODULE_INTERNAL_SYSTEM_SERVICE", ret);
+		goto err;
+	}
+
+	g_sandbox_word = sceKernelGetFsSandboxRandomWord();
+	if (!g_sandbox_word) {
+		EPRINTF("sceKernelGetFsSandboxRandomWord failed.\n");
+		goto err;
+	}
+
+	if (!load_modules()) {
+		EPRINTF("Unable to load modules.\n");
+		goto err;
+	}
+	if (!do_patches()) {
+		EPRINTF("Unable to patch modules.\n");
+		goto err;
+	}
+
+	ret = sceSystemServiceHideSplashScreen();
+	if (ret) {
+		EPRINTF("sceSystemServiceHideSplashScreen failed: 0x%08X\n", ret);
+		goto err;
+	}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+
 	/* Set directories */
 	set_user_config_dir(PS4_DIR_CFG);
 	set_user_data_dir(PS4_DIR_DATA);
@@ -285,9 +318,16 @@ int main(int argc, char* argv[])
 
 	dc_term();
 
+
+
+
+err:
 	return 0;
 }
 
+void catchReturnFromMain(int exit_code) {
+	/* dummy */
+}
 
 
 

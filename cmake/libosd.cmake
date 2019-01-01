@@ -207,9 +207,16 @@ elseif(${HOST_OS} EQUAL ${OS_PS4_BSD})
 
 					libc_stub_weak.a libScePosix_stub_weak.a
 
-					libSceSystemService_tau_stub.a libkernel_tau_stub.a libkernel_util.a
-					libScePigletv2VSH_tau_stub.a libSceSysmodule_tau_stub.a 
+					#libSceSystemService_tau_stub.a libkernel_tau_stub.a libkernel_util.a
+					#libScePigletv2VSH_tau_stub.a libSceSysmodule_tau_stub.a 
+
+
+					
+					kernel_tau_stub_weak SceSysmodule_tau_stub_weak SceSystemService_stub_weak SceSystemService_tau_stub_weak SceShellCoreUtil_tau_stub_weak ScePigletv2VSH_tau_stub_weak kernel_util
 					)
+
+
+
 else()
 #
   error("libosd can't figure out OS use SDL ?")

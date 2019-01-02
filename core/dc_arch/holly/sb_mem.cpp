@@ -29,9 +29,13 @@ SRamChip sys_nvmem(BBSRAM_SIZE);
 
 bool LoadRomFiles(const string& root)
 {
+	printf("----------------------------------------------\n");
+	printf("LoadRomFiles: root: \"%s\"\n", root.c_str());
+	printf("----------------------------------------------\n");
+
 	if (!sys_rom.Load(root, ROM_PREFIX, "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin" ROM_NAMES, "bootrom"))
 	{
-		msgboxf("Unable to find bios in \n%s\nExiting...", MBX_ICONERROR, root.c_str());
+		msgboxf("Unable to find bios in: %s\nExiting...", MBX_ICONERROR, root.c_str());
 		return false;
 	}
 	if (!sys_nvmem.Load(root, ROM_PREFIX, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram"))
@@ -42,7 +46,7 @@ bool LoadRomFiles(const string& root)
 		}
 		else
 		{
-			msgboxf("Unable to find flash/nvmem in \n%s\nExiting...", MBX_ICONERROR, root.c_str());
+			msgboxf("Unable to find flash/nvmem in: %s\nExiting...", MBX_ICONERROR, root.c_str());
 			return false;
 		}
 	}

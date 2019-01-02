@@ -4,6 +4,15 @@
 #include "types.h"
 #include "cfg/cfg.h"
 
+
+
+#include <kernel_ex.h>
+#include <sysmodule_ex.h>
+#include <system_service_ex.h>
+#include <shellcore_util.h>
+#include <piglet.h>
+
+
 extern "C" int syscall(int num, ...);
 
 
@@ -63,8 +72,9 @@ void UpdateVibration(u32 port, u32 value) {
 void os_CreateWindow() { }
 
 
-void* libPvr_GetRenderTarget() { return 0; }
-void* libPvr_GetRenderSurface() { return 0; }
+SceWindow render_window = { 0, 1920,1080 }; // width, height };
+void* libPvr_GetRenderTarget() { return &render_window; }
+void* libPvr_GetRenderSurface() { return (void*)(u64)EGL_DEFAULT_DISPLAY; }
 
 
 int __cdecl msgboxf(const char* text, unsigned int type, ...)
@@ -76,19 +86,12 @@ int __cdecl msgboxf(const char* text, unsigned int type, ...)
 	vsprintf(temp, text, args);
 	va_end(args);
 
-
+	printf("----------------------------------------------\n");
+	printf("msgbox(\" %s \" ); \n", temp);
+	printf("----------------------------------------------\n\n");
 //	QMessageBox::information(0, "", temp, QMessageBox::Ok);
 	return 0;
 }
-
-
-
-#include <kernel_ex.h>
-#include <sysmodule_ex.h>
-#include <system_service_ex.h>
-#include <shellcore_util.h>
-#include <piglet.h>
-
 
 
 #define RENDER_WIDTH 1920
@@ -98,8 +101,9 @@ int __cdecl msgboxf(const char* text, unsigned int type, ...)
 #define SHCOMP_MODULE_NAME "libSceShaccVSH.sprx"
 
 
+#define PS4_PKG
 
-#ifdef PS4_PKG
+#ifdef PS4_PKG			// These are RO ofc, use unjailed /data for W
 
 # define PS4_DIR_CFG	"/app0/reicast"	
 # define PS4_DIR_DATA	"/app0/reicast/data"
@@ -267,7 +271,11 @@ void dc_term();
 
 int main(int argc, char* argv[])
 {
+	printf("\n\n\n\n -- REICAST BETA -- \n\n\n\n");
+
 	atexit(&cleanup);
+
+printf("sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_SYSTEM_SERVICE);\n");
 
 	int ret = sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_SYSTEM_SERVICE);
 	if (ret) {
@@ -280,6 +288,8 @@ int main(int argc, char* argv[])
 		EPRINTF("sceKernelGetFsSandboxRandomWord failed.\n");
 		goto err;
 	}
+
+printf("load_modules();\n");
 
 	if (!load_modules()) {
 		EPRINTF("Unable to load modules.\n");
@@ -298,7 +308,7 @@ int main(int argc, char* argv[])
 
 
 ///////////////////////////////////////////////////////////////////////////////
-
+	printf("common_setup()\n");
 
 	/* Set directories */
 	set_user_config_dir(PS4_DIR_CFG);
@@ -306,16 +316,19 @@ int main(int argc, char* argv[])
 
 	printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
 	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
-
+	printf("RO Data dir is:   %s\n", get_readonly_data_path("/").c_str());
 
 	common_linux_setup();
 
 	settings.profile.run_counts = 0;
 
+printf("dc_init();\n");
 	dc_init(argc, argv);
 
+printf("dc_run();\n");
 	dc_run();
 
+printf("dc_term();\n");
 	dc_term();
 
 

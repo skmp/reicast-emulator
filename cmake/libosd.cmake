@@ -193,28 +193,6 @@ elseif(${HOST_OS} EQUAL ${OS_PS4_BSD})
 
   # ${d_osd}/audiobackend/audiobackend_oss.cpp
   )
-	#LIBS = -lkernel_tau_stub_weak -lSceSysmodule_tau_stub_weak -lSceSystemService_stub_weak 
-	#-lSceSystemService_tau_stub_weak -lSceShellCoreUtil_tau_stub_weak 
-	#-lScePigletv2VSH_tau_stub_weak -lkernel_util
-
-	##	link_libraries() doesn't work 
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${PS4TARGET}/tauon/lib")
-
-	### Add a helper to add libSce PREFIX and [_tau]*_stub[_weak]*.a SUFFIX
-	#
-	link_libraries(
-					libScePad_stub_weak.a libSceNet_stub_weak.a libSceCommonDialog_stub_weak.a
-
-					libc_stub_weak.a libScePosix_stub_weak.a
-
-					#libSceSystemService_tau_stub.a libkernel_tau_stub.a libkernel_util.a
-					#libScePigletv2VSH_tau_stub.a libSceSysmodule_tau_stub.a 
-
-
-					
-					kernel_tau_stub_weak SceSysmodule_tau_stub_weak SceSystemService_stub_weak SceSystemService_tau_stub_weak SceShellCoreUtil_tau_stub_weak ScePigletv2VSH_tau_stub_weak kernel_util
-					)
-
 
 
 else()

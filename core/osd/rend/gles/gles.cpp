@@ -386,6 +386,13 @@ void main() \n\
 	" FRAGCOL "=vtx_base*" TEXLOOKUP "(tex,uv.st); \n\n\
 }";
 
+#ifdef TARGET_PS4
+#include <kernel_ex.h>
+#include <sysmodule_ex.h>
+#include <system_service_ex.h>
+#include <shellcore_util.h>
+#include <piglet.h>
+#endif
 
 gl_ctx gl;
 
@@ -397,9 +404,36 @@ int screen_height;
 	// Create a basic GLES context
 	bool gl_init(void* wind, void* disp)
 	{
-	#if !defined(_ANDROID) // Now i've seen it all,,, gles.cpp:402:24: error: cast from pointer to smaller type 'EGLNativeDisplayType' (aka 'int') loses information
-		gl.setup.native_wind=(EGLNativeWindowType)(s64)wind;
-		gl.setup.native_disp=(EGLNativeDisplayType)(s64)disp;
+#ifdef TARGET_PS4
+		ScePglConfig pgl_config;
+
+		memset(&pgl_config, 0, sizeof(pgl_config));
+		{
+			pgl_config.size = sizeof(pgl_config);
+			pgl_config.flags = SCE_PGL_FLAGS_USE_COMPOSITE_EXT | SCE_PGL_FLAGS_USE_FLEXIBLE_MEMORY | 0x60;
+			pgl_config.processOrder = 1;
+			pgl_config.systemSharedMemorySize = 0x200000;
+			pgl_config.videoSharedMemorySize = 0x2400000;
+			pgl_config.maxMappedFlexibleMemory = 0xAA00000;
+			pgl_config.drawCommandBufferSize = 0xC0000;
+			pgl_config.lcueResourceBufferSize = 0x10000;
+			pgl_config.dbgPosCmd_0x40 = 1920;
+			pgl_config.dbgPosCmd_0x44 = 1080;
+			pgl_config.dbgPosCmd_0x48 = 0;
+			pgl_config.dbgPosCmd_0x4C = 0;
+			pgl_config.unk_0x5C = 2;
+		}
+
+		if (!scePigletSetConfigurationVSH(&pgl_config)) {
+			printf("scePigletSetConfigurationVSH failed.\n");
+			return false;
+		}
+#endif
+
+
+	#if !defined(_ANDROID)
+		gl.setup.native_wind=(EGLNativeWindowType)(u64)wind;
+		gl.setup.native_disp=(EGLNativeDisplayType)(u64)disp;
 
 		//try to get a display
 		gl.setup.display = eglGetDisplay(gl.setup.native_disp);
@@ -986,9 +1020,11 @@ bool gl_create_resources();
 //setup
 
 
+
+
+
 bool gles_init()
 {
-
 	if (!gl_init((void*)libPvr_GetRenderTarget(),
 		         (void*)libPvr_GetRenderSurface()))
 			return false;

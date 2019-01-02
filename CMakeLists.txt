@@ -72,9 +72,13 @@ list(APPEND reicast_SRCS
   ./core/imgread/cdi.cpp
   ./core/imgread/chd.cpp
 #
-  )  # todo add all the deps or add them to lib
+)  # todo add all the deps or add them to lib
 
-add_executable(reicast ${reicast_SRCS} ${deps_SRCS}) 
+if(TARGET_PS4)
+  set(binSuffix ".elf")
+endif()
+
+add_executable(reicast${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
 
 if(NOT ${HOST_OS} EQUAL ${OS_NSW_HOS})
   source_group(TREE ${PROJECT_SOURCE_DIR} PREFIX src FILES ${reicast_SRCS}) #${PROJECT_SOURCE_DIR}/core

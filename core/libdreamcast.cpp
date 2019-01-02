@@ -118,6 +118,9 @@ int dc_init(int argc,wchar* argv[])
 	setbuf(stdin,0);
 	setbuf(stdout,0);
 	setbuf(stderr,0);
+
+	printf("---------------------------------\n\t_vmem_reserve()\n---------------------------------\n");
+
 	if (!_vmem_reserve())
 	{
 		printf("Failed to alloc mem\n");
@@ -142,6 +145,8 @@ int dc_init(int argc,wchar* argv[])
         return 69;
 #endif
 	}
+
+	printf("---------------------------------\n\t cfgOpen()\n---------------------------------\n");
 	if(!cfgOpen())
 	{
 		msgboxf("Unable to open config file",MBX_ICONERROR);
@@ -152,6 +157,7 @@ int dc_init(int argc,wchar* argv[])
 		return -4;
 #endif
 	}
+	printf("---------------------------------\n\t LoadSettings()\n---------------------------------\n");
 	LoadSettings();
 #ifndef _ANDROID
 	os_CreateWindow();
@@ -159,11 +165,14 @@ int dc_init(int argc,wchar* argv[])
 
 	int rv = 0;
 
-#if HOST_OS != OS_DARWIN
+	printf("---------------------------------\n\t LoadRomFiles()\n---------------------------------\n");
+#if HOST_OS != OS_DARWIN && !defined(PS4)
     #define DATA_PATH "/data/"
 #else
     #define DATA_PATH "/"
 #endif
+
+	printf("\n\t ---- FN DATA PATH : %s\n\n", DATA_PATH);
 
 	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
 	{

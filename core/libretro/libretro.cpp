@@ -431,6 +431,14 @@ void retro_set_environment(retro_environment_t cb)
          "reicast_allow_service_buttons",
          "Allow Naomi service buttons; disabled|enabled"
       },
+      {
+         "reicast_custom_textures",
+         "Load custom textures; disabled|enabled"
+      },
+      {
+         "reicast_dump_textures",
+         "Dump textures; disabled|enabled"
+      },
 	  VMU_SCREEN_PARAMS(1)
 	  VMU_SCREEN_PARAMS(2)
 	  VMU_SCREEN_PARAMS(3)
@@ -964,6 +972,30 @@ static void update_variables(bool first_startup)
    }
    else
       allow_service_buttons = false;
+
+   var.key = "reicast_custom_textures";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("enabled", var.value))
+         settings.rend.CustomTextures = true;
+      else
+    	 settings.rend.CustomTextures = false;
+   }
+   else
+	  settings.rend.CustomTextures = false;
+
+   var.key = "reicast_dump_textures";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("enabled", var.value))
+         settings.rend.DumpTextures = true;
+      else
+    	 settings.rend.DumpTextures = false;
+   }
+   else
+	  settings.rend.DumpTextures = false;
 
    key[0] = '\0' ;
 

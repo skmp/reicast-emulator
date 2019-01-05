@@ -109,6 +109,22 @@ SOURCES_C +=   \
 					$(DEPS_DIR)/chdr/flac.c \
 					$(DEPS_DIR)/chdr/huffman.c \
 					\
+					$(DEPS_DIR)/libpng/png.c \
+					$(DEPS_DIR)/libpng/pngerror.c \
+					$(DEPS_DIR)/libpng/pngget.c \
+					$(DEPS_DIR)/libpng/pngmem.c \
+					$(DEPS_DIR)/libpng/pngpread.c \
+					$(DEPS_DIR)/libpng/pngread.c \
+					$(DEPS_DIR)/libpng/pngrio.c \
+					$(DEPS_DIR)/libpng/pngrtran.c \
+					$(DEPS_DIR)/libpng/pngrutil.c \
+					$(DEPS_DIR)/libpng/pngset.c \
+					$(DEPS_DIR)/libpng/pngtrans.c \
+					$(DEPS_DIR)/libpng/pngwio.c \
+					$(DEPS_DIR)/libpng/pngwrite.c \
+					$(DEPS_DIR)/libpng/pngwtran.c \
+					$(DEPS_DIR)/libpng/pngwutil.c \
+					\
 					$(DEPS_DIR)/libzip/mkstemp.c \
 					$(DEPS_DIR)/libzip/zip_add.c \
 					$(DEPS_DIR)/libzip/zip_add_dir.c \
@@ -195,7 +211,8 @@ ifeq ($(HAVE_GL), 1)
 
 SOURCES_CXX += $(CORE_DIR)/core/rend/gles/gles.cpp \
 					$(CORE_DIR)/core/rend/gles/gldraw.cpp \
-					$(CORE_DIR)/core/rend/gles/gltex.cpp
+					$(CORE_DIR)/core/rend/gles/gltex.cpp \
+					$(CORE_DIR)/core/rend/gles/CustomTexture.cpp
 ifeq ($(HAVE_OIT), 1)
 SOURCES_CXX += $(CORE_DIR)/core/rend/gl4/gles.cpp \
 					$(CORE_DIR)/core/rend/gl4/gldraw.cpp \

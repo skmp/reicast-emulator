@@ -484,7 +484,7 @@ cThread::cThread(ThreadEntryFP* function,void* prm)
 
 void cThread::Start()
 {
-   hThread = sthread_create((void (*)(void *))Entry, 0);
+   hThread = sthread_create((void (*)(void *))Entry, param);
 }
 
 void cThread::WaitToEnd()

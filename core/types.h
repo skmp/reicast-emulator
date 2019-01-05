@@ -521,6 +521,8 @@ struct settings_t
       bool AutoExtraDepthScale;
       f32 ExtraDepthScale;
 		bool ThreadedRendering;
+		bool CustomTextures;
+		bool DumpTextures;
 	} rend;
 
 	struct

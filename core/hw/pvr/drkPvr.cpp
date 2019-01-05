@@ -15,6 +15,9 @@
 #include "pvr_regs.h"
 #include "pvr_mem.h"
 #include "Renderer_if.h"
+#include "rend/gles/CustomTexture.h"
+
+extern CustomTexture custom_texture;
 
 void libPvr_LockedBlockWrite (vram_block* block,u32 addr)
 {
@@ -49,6 +52,7 @@ s32 libPvr_Init(void)
 //called when exiting from sh4 thread , from the new thread context (for any thread specific de init) :P
 void libPvr_Term(void)
 {
-	rend_term();
+   custom_texture.Terminate();	// Avoid deadlock on exit (win32)
+   rend_term();
    spg_Term();
 }

@@ -89,7 +89,7 @@ bool CustomTexture::Init()
 		std::string game_id = GetGameId();
 		if (game_id.length() > 0)
 		{
-			textures_path = std::string(retro_get_system_directory()) + "/dc/data/textures/"
+			textures_path = std::string(retro_get_system_directory()) + "/dc/textures/"
 					+ game_id + "/";
 
 			DIR *dir = opendir(textures_path.c_str());
@@ -271,7 +271,7 @@ u8* CustomTexture::LoadPNG(const std::string& fname, int &width, int &height)
 
 	// set the individual row_pointers to point at the correct offsets of image_data
 	for (int i = 0; i < height; ++i)
-		row_pointers[i] = image_data + i * rowbytes;
+		row_pointers[height - i - 1] = image_data + i * rowbytes;
 
 	//read the png into image_data through row_pointers
 	png_read_image(png_ptr, row_pointers);
@@ -285,7 +285,7 @@ u8* CustomTexture::LoadPNG(const std::string& fname, int &width, int &height)
 
 void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *temp_tex_buffer)
 {
-	std::string base_dump_dir = get_writable_data_path("/data/texdump/");
+	std::string base_dump_dir = get_writable_data_path("/texdump/");
 	if (!file_exists(base_dump_dir))
 		mkdir(base_dump_dir.c_str(), 0755);
 	std::string game_id = GetGameId();
@@ -310,8 +310,8 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 	png_bytepp rows = (png_bytepp)malloc(h * sizeof(png_bytep));
 	for (int y = 0; y < h; y++)
 	{
-		rows[y] = (png_bytep)malloc(w * 4);	// 32-bit per pixel
-		u8 *dst = (u8 *)rows[y];
+		rows[h - y - 1] = (png_bytep)malloc(w * 4);	// 32-bit per pixel
+		u8 *dst = (u8 *)rows[h - y - 1];
 		switch (textype)
 		{
 		case GL_UNSIGNED_SHORT_4_4_4_4:

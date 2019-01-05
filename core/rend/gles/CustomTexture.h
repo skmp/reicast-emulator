@@ -31,10 +31,10 @@ public:
 	u8* LoadCustomTexture(u32 hash, int& width, int& height);
 	void LoadCustomTextureAsync(TextureCacheData *texture_data);
 	void DumpTexture(u32 hash, int w, int h, GLuint textype, void *temp_tex_buffer);
+	void Terminate();
 
 private:
 	bool Init();
-	void Terminate();
 	void LoaderThread();
 	u8* LoadPNG(const std::string& fname, int &width, int &height);
 	std::string GetGameId();

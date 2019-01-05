@@ -20,12 +20,10 @@
 
 #include <algorithm>
 #include <sstream>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
 
 #include "deps/libpng/png.h"
 #include "reios/reios.h"
+#include "retro_stat.h"
 
 extern const char *retro_get_system_directory();
 
@@ -92,12 +90,10 @@ bool CustomTexture::Init()
 			textures_path = std::string(retro_get_system_directory()) + "/dc/textures/"
 					+ game_id + "/";
 
-			DIR *dir = opendir(textures_path.c_str());
-			if (dir != NULL)
+			if (path_is_directory(textures_path.c_str()))
 			{
 				printf("Found custom textures directory: %s\n", textures_path.c_str());
 				custom_textures_available = true;
-				closedir(dir);
 				loader_thread.Start();
 			}
 		}
@@ -286,15 +282,15 @@ u8* CustomTexture::LoadPNG(const std::string& fname, int &width, int &height)
 void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *temp_tex_buffer)
 {
 	std::string base_dump_dir = get_writable_data_path("/texdump/");
-	if (!file_exists(base_dump_dir))
-		mkdir(base_dump_dir.c_str(), 0755);
+	if (!path_is_valid(base_dump_dir.c_str()))
+		mkdir_norecurse(base_dump_dir.c_str());
 	std::string game_id = GetGameId();
 	if (game_id.length() == 0)
 	   return;
 
 	base_dump_dir += game_id + "/";
-	if (!file_exists(base_dump_dir))
-		mkdir(base_dump_dir.c_str(), 0755);
+	if (!path_is_valid(base_dump_dir.c_str()))
+		mkdir_norecurse(base_dump_dir.c_str());
 
 	std::stringstream path;
 	path << base_dump_dir << std::hex << hash << ".png";

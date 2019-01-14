@@ -6,7 +6,8 @@ INCFLAGS    += -I$(CORE_DIR)/core/libretro \
 					-I$(DEPS_DIR) \
 					-I$(DEPS_DIR)/picotcp/include \
 					-I$(DEPS_DIR)/picotcp/modules \
-					-I$(LIBRETRO_COMM_DIR)/include
+					-I$(LIBRETRO_COMM_DIR)/include \
+					-I$(DEPS_DIR)/vixl
 
 CORE_DEFINES += -DNO_MMU
 
@@ -281,6 +282,28 @@ endif
 
 ifeq ($(WITH_DYNAREC), arm)
 SOURCES_ASM += $(CORE_DIR)/core/rec-ARM/ngen_arm.S
+endif
+
+# Recompiler (ARM64)
+ifeq ($(WITH_DYNAREC), arm64)
+DYNAREC_USED = 1
+SOURCES_CXX += $(CORE_DIR)/core/rec-ARM64/rec_arm64.cpp \
+				$(DEPS_DIR)/vixl/code-buffer-vixl.cc \
+				$(DEPS_DIR)/vixl/compiler-intrinsics-vixl.cc \
+				$(DEPS_DIR)/vixl/cpu-features.cc \
+				$(DEPS_DIR)/vixl/utils-vixl.cc \
+				$(DEPS_DIR)/vixl/aarch64/assembler-aarch64.cc \
+				$(DEPS_DIR)/vixl/aarch64/cpu-aarch64.cc \
+				$(DEPS_DIR)/vixl/aarch64/cpu-features-auditor-aarch64.cc \
+				$(DEPS_DIR)/vixl/aarch64/decoder-aarch64.cc \
+				$(DEPS_DIR)/vixl/aarch64/disasm-aarch64.cc \
+				$(DEPS_DIR)/vixl/aarch64/instructions-aarch64.cc \
+				$(DEPS_DIR)/vixl/aarch64/instrument-aarch64.cc \
+				$(DEPS_DIR)/vixl/aarch64/logic-aarch64.cc \
+				$(DEPS_DIR)/vixl/aarch64/macro-assembler-aarch64.cc \
+				$(DEPS_DIR)/vixl/aarch64/operands-aarch64.cc \
+				$(DEPS_DIR)/vixl/aarch64/pointer-auth-aarch64.cc \
+				$(DEPS_DIR)/vixl/aarch64/simulator-aarch64.cc
 endif
 
 SOURCES_CXX += $(CORE_DIR)/core/libretro/libretro.cpp \

@@ -136,6 +136,7 @@
 #define CPU_MIPS     0x20000003
 #define CPU_X64      0x20000004
 #define CPU_GENERIC  0x20000005 //used for pnacl, emscripten, etc
+#define CPU_ARM64    0x20000006
 
 //FEAT_SHREC, FEAT_AREC, FEAT_DSPREC
 #define DYNAREC_NONE	0x40000001
@@ -165,6 +166,10 @@
 #elif defined(TARGET_LINUX_ARMELv7)
 #ifndef HOST_CPU
 #define HOST_CPU CPU_ARM
+#endif
+#elif defined(TARGET_LINUX_ARMv8)
+#ifndef HOST_CPU
+#define HOST_CPU CPU_ARM64
 #endif
 #elif defined(TARGET_LINUX_x86)
 #ifndef HOST_CPU

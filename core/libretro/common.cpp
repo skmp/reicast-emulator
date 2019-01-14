@@ -244,6 +244,8 @@ struct rei_host_context_t
 	u32 esp;
 #elif HOST_CPU == CPU_ARM
 	u32 r[15];
+#elif HOST_CPU == CPU_ARM64
+	u64 r[31];
 #endif
 };
 
@@ -275,7 +277,12 @@ static void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, boo
    for (int i = 0; i < 15; i++)
       bicopy(reictx->r[i], MCTX(->__ss.__r[i]), to_segfault);
 #endif
+#elif HOST_CPU == CPU_ARM64
+	bicopy(reictx->pc, MCTX(.pc), to_segfault);
+	u64* r =(u64*) &MCTX(.regs[0]);
 
+	for (int i = 0; i < 31; i++)
+		bicopy(reictx->r[i], r[i], to_segfault);
 #elif HOST_CPU == CPU_X86
 #ifdef __linux__
    bicopy(reictx->pc, MCTX(.gregs[REG_EIP]), to_segfault);
@@ -299,8 +306,7 @@ static void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, boo
 #elif HOST_CPU == CPU_GENERIC
    //nothing!
 #else
-   /* TODO/FIXME - ARMv8 (Aarch64) will end up here, just comment out error for now */
-//#error Unsupported HOST_CPU
+#error Unsupported HOST_CPU
 #endif
 #endif
 }
@@ -331,8 +337,8 @@ static void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx)
    size_t pc     = (size_t)ctx.pc;
    bool dyna_cde = (pc > (size_t)CodeCache) && (pc < (size_t)(CodeCache + CODE_SIZE));
 
-   printf("SIGILL @ %08X, signal_handler + 0x%08X ... %08X -> was not in vram, %d\n",
-         pc, pc - (size_t)sigill_handler, (size_t)si->si_addr, dyna_cde);
+   printf("SIGILL @ %p ... %p -> was not in vram, %d\n",
+         pc, si->si_addr, dyna_cde);
 
    printf("Entering infiniloop");
 
@@ -354,7 +360,7 @@ static void signal_handler(int sn, siginfo_t * si, void *segfault_ctx)
    bool dyna_cde = ((size_t)ctx.pc > (size_t)CodeCache) && ((size_t)ctx.pc < (size_t)(CodeCache + CODE_SIZE));
 
 #ifdef LOG_SIGHANDLER
-printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n", ctx.pc, dyna_cde);
+printf("mprot hit @ ptr %p @@ pc: %p, %d\n", si->si_addr, ctx.pc, dyna_cde);
 #endif
 
    if (VramLockedWrite((u8*)si->si_addr))
@@ -383,14 +389,15 @@ printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n", ctx.pc, dyna_cde);
    }
 #elif HOST_CPU == CPU_X64
    //x64 has no rewrite support
+#elif HOST_CPU == CPU_ARM64
+   // arm64 has no rewrite support
 #else
-   /* TODO/FIXME - ARMv8 (Aarch64) will end up here, just comment out error for now */
-//#error JIT: Not supported arch
+#error JIT: Not supported arch
 #endif
 #endif
    else
    {
-      printf("SIGSEGV @ %p (signal_handler + 0x%p) ... %p -> was not in vram\n", ctx.pc, ctx.pc - (size_t)signal_handler, si->si_addr);
+      printf("SIGSEGV @ %p ... %p -> was not in vram (dyna code %d)\n", ctx.pc, si->si_addr, dyna_cde);
       die("segfault");
       signal(SIGSEGV, SIG_DFL);
    }

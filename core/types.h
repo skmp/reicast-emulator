@@ -379,6 +379,27 @@ using namespace std;
 //basic includes
 #include "stdclass.h"
 
+#ifdef _ANDROID
+#include <android/log.h>
+
+#ifdef printf
+#undef printf
+#endif
+
+#ifdef puts
+#undef puts
+#endif
+
+#define LOG_TAG   "lr-reicast"
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
+#define LOGW(...) __android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
+#define puts      LOGI
+#define printf    LOGI
+#define putinf    LOGI
+#endif
+
 #ifndef RELEASE
 #define EMUERROR(format, ...) printf("Error in %s:%s:%d: " format "\n", __FILE__,__FUNCTION__ ,__LINE__, ##__VA_ARGS__)
 #else

@@ -82,7 +82,7 @@ u32 DYNACALL rdv_DoInterrupts_pc(u32 pc);
 void ngen_init();
 
 //Called to compile a block
-void ngen_Compile(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise);
+extern void (*ngen_Compile)(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise);
 
 //Called when blocks are reseted
 void ngen_ResetBlocks();
@@ -107,10 +107,10 @@ enum CanonicalParamType
 	CPT_ptr
 };
 
-void ngen_CC_Start(shil_opcode* op);
-void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp);
-void ngen_CC_Call(shil_opcode* op,void* function);
-void ngen_CC_Finish(shil_opcode* op);
+extern void (*ngen_CC_Start)(shil_opcode* op);
+extern void (*ngen_CC_Param)(shil_opcode* op,shil_param* par,CanonicalParamType tp);
+extern void (*ngen_CC_Call)(shil_opcode* op,void* function);
+extern void (*ngen_CC_Finish)(shil_opcode* op);
 
 RuntimeBlockInfo* ngen_AllocateBlock();
 

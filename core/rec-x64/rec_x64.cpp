@@ -53,6 +53,28 @@ void ngen_mainloop(void* v_cntx)
 			"pushq %%r14					\n\t"
 			"pushq %%r15					\n\t"
 			"subq $8, %%rsp					\n\t"	// 8 for stack 16-byte alignment
+#ifdef __MACH__
+			"movl %[_SH4_TIMESLICE], _cycle_counter(%%rip)	\n"
+
+		"run_loop:							\n\t"
+			"movq _p_sh4rcb(%%rip), %%rax	\n\t"
+			"movl %c[CpuRunning](%%rax), %%edx	\n\t"
+			"testl %%edx, %%edx				\n\t"
+			"je end_run_loop				\n"
+
+		"slice_loop:						\n\t"
+			"movq _p_sh4rcb(%%rip), %%rax	\n\t"
+			"movl %c[pc](%%rax), %%edi		\n\t"
+			"call _bm_GetCode				\n\t"
+			"call *%%rax					\n\t"
+			"movl _cycle_counter(%%rip), %%ecx \n\t"
+			"testl %%ecx, %%ecx				\n\t"
+			"jg slice_loop					\n\t"
+
+			"addl %[_SH4_TIMESLICE], %%ecx	\n\t"
+			"movl %%ecx, _cycle_counter(%%rip)	\n\t"
+			"call _UpdateSystem_INTC		\n\t"
+#else
 			"movl %[_SH4_TIMESLICE], cycle_counter(%%rip)	\n"
 
 		"run_loop:							\n\t"
@@ -77,6 +99,7 @@ void ngen_mainloop(void* v_cntx)
 			"addl %[_SH4_TIMESLICE], %%ecx	\n\t"
 			"movl %%ecx, cycle_counter(%%rip)	\n\t"
 			"call UpdateSystem_INTC			\n\t"
+#endif	// __MACH__
 			"jmp run_loop					\n"
 
 		"end_run_loop:						\n\t"
@@ -94,9 +117,12 @@ void ngen_mainloop(void* v_cntx)
 			:
 			: [CpuRunning] "i"(offsetof(Sh4RCB, cntx.CpuRunning)),
 			  [pc] "i"(offsetof(Sh4RCB, cntx.pc)),
-			  [_SH4_TIMESLICE] "i"(SH4_TIMESLICE),
+			  [_SH4_TIMESLICE] "i"(SH4_TIMESLICE)
+#ifndef __MACH__
+			  ,
 			  "i"(&bm_GetCode),			// avoid link error with -flto
 			  "i" (&UpdateSystem_INTC)	// same
+#endif
 			: "memory"
 	);
 }
@@ -896,6 +922,9 @@ public:
 
                mov(call_regs64[regused++], (size_t)prm.reg_ptr());
 
+               break;
+            default:
+               // Other cases handled in ngen_CC_param
                break;
 			}
 		}

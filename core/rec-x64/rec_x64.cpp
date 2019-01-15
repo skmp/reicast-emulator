@@ -56,24 +56,27 @@ void ngen_mainloop(void* v_cntx)
 #ifdef __MACH__
 			"movl %[_SH4_TIMESLICE], _cycle_counter(%%rip)	\n"
 
-		"run_loop:							\n\t"
+		"1:							  		\n\t"
 			"movq _p_sh4rcb(%%rip), %%rax	\n\t"
 			"movl %c[CpuRunning](%%rax), %%edx	\n\t"
 			"testl %%edx, %%edx				\n\t"
-			"je end_run_loop				\n"
+			"je 3f							\n"
 
-		"slice_loop:						\n\t"
+		"2:								 	\n\t"
 			"movq _p_sh4rcb(%%rip), %%rax	\n\t"
 			"movl %c[pc](%%rax), %%edi		\n\t"
 			"call _bm_GetCode				\n\t"
 			"call *%%rax					\n\t"
 			"movl _cycle_counter(%%rip), %%ecx \n\t"
 			"testl %%ecx, %%ecx				\n\t"
-			"jg slice_loop					\n\t"
+			"jg 2b							\n\t"
 
 			"addl %[_SH4_TIMESLICE], %%ecx	\n\t"
 			"movl %%ecx, _cycle_counter(%%rip)	\n\t"
 			"call _UpdateSystem_INTC		\n\t"
+			"jmp 1b							\n"
+
+		"3:									\n\t"
 #else
 			"movl %[_SH4_TIMESLICE], cycle_counter(%%rip)	\n"
 
@@ -99,10 +102,11 @@ void ngen_mainloop(void* v_cntx)
 			"addl %[_SH4_TIMESLICE], %%ecx	\n\t"
 			"movl %%ecx, cycle_counter(%%rip)	\n\t"
 			"call UpdateSystem_INTC			\n\t"
-#endif	// __MACH__
-			"jmp run_loop					\n"
+			"jmp 1b							\n"
 
 		"end_run_loop:						\n\t"
+#endif	// __MACH__
+
 			"addq $8, %%rsp					\n\t"
 			"popq %%r15						\n\t"
 			"popq %%r14						\n\t"

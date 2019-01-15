@@ -102,7 +102,7 @@ void ngen_mainloop(void* v_cntx)
 			"addl %[_SH4_TIMESLICE], %%ecx	\n\t"
 			"movl %%ecx, cycle_counter(%%rip)	\n\t"
 			"call UpdateSystem_INTC			\n\t"
-			"jmp 1b							\n"
+			"jmp run_loop					\n"
 
 		"end_run_loop:						\n\t"
 #endif	// __MACH__

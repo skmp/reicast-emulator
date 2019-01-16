@@ -39,90 +39,96 @@ void ngen_FailedToFindBlock_internal(void)
 
 void(*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
 
+#ifdef __MACH__
+#define _U "_"
+#else
+#define _U
+#endif
+
 void ngen_mainloop(void* v_cntx)
 {
 	__asm__ volatile (
-			"pushq %%rbx					\n\t"
-			"pushq %%rbp					\n\t"
+			"pushq %%rbx						\n\t"
+			"pushq %%rbp						\n\t"
 #ifdef _WIN32
-			"pushq %%rdi					\n\t"
-			"pushq %%rsi					\n\t"
+			"pushq %%rdi						\n\t"
+			"pushq %%rsi						\n\t"
 #endif
-			"pushq %%r12					\n\t"
-			"pushq %%r13					\n\t"
-			"pushq %%r14					\n\t"
-			"pushq %%r15					\n\t"
-			"subq $8, %%rsp					\n\t"	// 8 for stack 16-byte alignment
-#ifdef __MACH__
-			"movl %[_SH4_TIMESLICE], _cycle_counter(%%rip)	\n"
+			"pushq %%r12						\n\t"
+			"pushq %%r13						\n\t"
+			"pushq %%r14						\n\t"
+			"pushq %%r15						\n\t"
+			"subq $8, %%rsp						\n\t"	// 8 for stack 16-byte alignment
+#if defined(__MACH__) || defined(_ANDROID)
+			"movl %[_SH4_TIMESLICE], " _U "cycle_counter(%%rip)	\n"
 
-		"1:							  		\n\t"
-			"movq _p_sh4rcb(%%rip), %%rax	\n\t"
+		"1:							  			\n\t"
+			"movq " _U "p_sh4rcb(%%rip), %%rax	\n\t"
 			"movl %c[CpuRunning](%%rax), %%edx	\n\t"
-			"testl %%edx, %%edx				\n\t"
-			"je 3f							\n"
+			"testl %%edx, %%edx					\n\t"
+			"je 3f								\n"
 
-		"2:								 	\n\t"
-			"movq _p_sh4rcb(%%rip), %%rax	\n\t"
-			"movl %c[pc](%%rax), %%edi		\n\t"
-			"call _bm_GetCode				\n\t"
-			"call *%%rax					\n\t"
-			"movl _cycle_counter(%%rip), %%ecx \n\t"
-			"testl %%ecx, %%ecx				\n\t"
-			"jg 2b							\n\t"
+		"2:								 		\n\t"
+			"movq " _U "p_sh4rcb(%%rip), %%rax	\n\t"
+			"movl %c[pc](%%rax), %%edi			\n\t"
+			"call " _U "bm_GetCode				\n\t"
+			"call *%%rax						\n\t"
+			"movl " _U "cycle_counter(%%rip), %%ecx \n\t"
+			"testl %%ecx, %%ecx					\n\t"
+			"jg 2b								\n\t"
 
-			"addl %[_SH4_TIMESLICE], %%ecx	\n\t"
-			"movl %%ecx, _cycle_counter(%%rip)	\n\t"
-			"call _UpdateSystem_INTC		\n\t"
-			"jmp 1b							\n"
+			"addl %[_SH4_TIMESLICE], %%ecx		\n\t"
+			"movl %%ecx, " _U "cycle_counter(%%rip)	\n\t"
+			"call " _U "UpdateSystem_INTC		\n\t"
+			"jmp 1b								\n"
 
-		"3:									\n\t"
+		"3:										\n\t"
 #else
 			"movl %[_SH4_TIMESLICE], cycle_counter(%%rip)	\n"
 
-		"run_loop:							\n\t"
-			"movq p_sh4rcb(%%rip), %%rax	\n\t"
+		"run_loop:								\n\t"
+			"movq p_sh4rcb(%%rip), %%rax		\n\t"
 			"movl %p[CpuRunning](%%rax), %%edx	\n\t"
-			"testl %%edx, %%edx				\n\t"
-			"je end_run_loop				\n"
+			"testl %%edx, %%edx					\n\t"
+			"je end_run_loop					\n"
 
-		"slice_loop:						\n\t"
-			"movq p_sh4rcb(%%rip), %%rax	\n\t"
+		"slice_loop:							\n\t"
+			"movq p_sh4rcb(%%rip), %%rax		\n\t"
 #ifdef _WIN32
-			"movl %p[pc](%%rax), %%ecx		\n\t"
+			"movl %p[pc](%%rax), %%ecx			\n\t"
 #else
-			"movl %p[pc](%%rax), %%edi		\n\t"
+			"movl %p[pc](%%rax), %%edi			\n\t"
 #endif
-			"call bm_GetCode				\n\t"
-			"call *%%rax					\n\t"
-			"movl cycle_counter(%%rip), %%ecx \n\t"
-			"testl %%ecx, %%ecx				\n\t"
-			"jg slice_loop					\n\t"
+			"call bm_GetCode					\n\t"
+			"call *%%rax						\n\t"
+			"movl cycle_counter(%%rip), %%ecx 	\n\t"
+			"testl %%ecx, %%ecx					\n\t"
+			"jg slice_loop						\n\t"
 
-			"addl %[_SH4_TIMESLICE], %%ecx	\n\t"
+			"addl %[_SH4_TIMESLICE], %%ecx		\n\t"
 			"movl %%ecx, cycle_counter(%%rip)	\n\t"
-			"call UpdateSystem_INTC			\n\t"
-			"jmp run_loop					\n"
+			"call UpdateSystem_INTC				\n\t"
+			"jmp run_loop						\n"
 
-		"end_run_loop:						\n\t"
-#endif	// __MACH__
+		"end_run_loop:							\n\t"
+#endif	// !__MACH__
 
-			"addq $8, %%rsp					\n\t"
-			"popq %%r15						\n\t"
-			"popq %%r14						\n\t"
-			"popq %%r13						\n\t"
-			"popq %%r12						\n\t"
+			"addq $8, %%rsp					 	\n\t"
+			"popq %%r15							\n\t"
+			"popq %%r14							\n\t"
+			"popq %%r13							\n\t"
+			"popq %%r12							\n\t"
 #ifdef _WIN32
-			"popq %%rsi						\n\t"
-			"popq %%rdi						\n\t"
+			"popq %%rsi							\n\t"
+			"popq %%rdi							\n\t"
 #endif
-			"popq %%rbp						\n\t"
-			"popq %%rbx						\n\t"
+			"popq %%rbp							\n\t"
+			"popq %%rbx							\n\t"
 			:
 			: [CpuRunning] "i"(offsetof(Sh4RCB, cntx.CpuRunning)),
 			  [pc] "i"(offsetof(Sh4RCB, cntx.pc)),
 			  [_SH4_TIMESLICE] "i"(SH4_TIMESLICE)
-#ifndef __MACH__
+#if !defined(__MACH__) && !defined(_ANDROID)
 			  ,
 			  "i"(&bm_GetCode),			// avoid link error with -flto
 			  "i" (&UpdateSystem_INTC)	// same

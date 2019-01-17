@@ -43,7 +43,7 @@ void ngen_init(void)
          ngen_CC_Call = ngen_CC_Call_arm;
          ngen_CC_Param = ngen_CC_Param_arm;
          ngen_CC_Finish = ngen_CC_Finish_arm;
-#elif FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_ARM64 && 0 // FIXME
+#elif FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_ARM64
          extern void ngen_init_arm64(void);
          extern void ngen_Compile_arm64(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise);
          extern void ngen_CC_Start_arm64(shil_opcode* op);

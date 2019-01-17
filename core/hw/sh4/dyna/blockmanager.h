@@ -1,6 +1,7 @@
 /*
 	In case you wonder, the extern "C" stuff are for the assembly code on beagleboard/pandora
 */
+#include <map>
 #include "types.h"
 #include "decoder.h"
 #include <set>
@@ -73,6 +74,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 
 	u32 memops;
 	u32 linkedmemops;
+	std::map<void*, u32> memory_accesses;	// key is host pc when access is made, value is opcode id
 };
 
 struct CachedBlockInfo: RuntimeBlockInfo_Core

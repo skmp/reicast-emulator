@@ -1,4 +1,5 @@
 #include "deps/xbyak/xbyak.h"
+#include "deps/xbyak/xbyak_util.h"
 
 #include "types.h"
 
@@ -298,11 +299,6 @@ public:
 
   						switch(size)
   						{
-  						case 1:
-  							GenCall((void (*)())ptr);
-							movsx(ecx, al);
-  							break;
-
   						case 2:
   							GenCall((void (*)())ptr);
 							movsx(ecx, ax);
@@ -313,8 +309,8 @@ public:
   							mov(ecx, eax);
   							break;
 
-  						case 8:
-  							die("SZ_64F not supported");
+  						default:
+  							die("Invalid size");
   							break;
   						}
   						host_reg_to_shil_param(op.rd, ecx);
@@ -395,7 +391,7 @@ public:
 					movd(call_regs[1], regalloc.MapXRegister(op.rs2, 1));
 					shl(call_regs64[1], 32);
 					movd(eax, regalloc.MapXRegister(op.rs2, 0));
-					or(call_regs64[1], rax);
+					or_(call_regs64[1], rax);
 #else
 					mov(rax, (uintptr_t)op.rs2.reg_ptr());
 					mov(call_regs64[1], qword[rax]);
@@ -438,17 +434,17 @@ public:
             case shop_not:
                if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
             	  mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
-               not(regalloc.MapRegister(op.rd));
-               break;
+ 				not_(regalloc.MapRegister(op.rd));
+              break;
 
             case shop_and:
-               GenBinaryOp(op, &BlockCompilerx64::and);
+               GenBinaryOp(op, &BlockCompilerx64::and_);
                break;
             case shop_or:
-               GenBinaryOp(op, &BlockCompilerx64::or);
+               GenBinaryOp(op, &BlockCompilerx64::or_);
                break;
             case shop_xor:
-               GenBinaryOp(op, &BlockCompilerx64::xor);
+               GenBinaryOp(op, &BlockCompilerx64::xor_);
                break;
             case shop_add:
                GenBinaryOp(op, &BlockCompilerx64::add);
@@ -534,7 +530,7 @@ public:
                test(ecx, 0x1f);
                jnz(non_zero);
                if (op.op == shop_shld)
-            	  xor(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd));
+            	  xor_(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd));
                else
             	  sar(regalloc.MapRegister(op.rd), 31);
                jmp(exit);
@@ -688,8 +684,15 @@ public:
 
             case shop_fmac:
                if (regalloc.mapf(op.rd) != regalloc.mapf(op.rs1))
-            	  movss(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs1));
-               vfmadd231ss(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs2), regalloc.MapXRegister(op.rs3));
+               	movss(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs1));
+               if (cpu.has(Xbyak::util::Cpu::tFMA))
+               	vfmadd231ss(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs2), regalloc.MapXRegister(op.rs3));
+					else
+					{
+						movss(xmm0, regalloc.MapXRegister(op.rs2));
+						mulss(xmm0, regalloc.MapXRegister(op.rs3));
+						addss(regalloc.MapXRegister(op.rd), xmm0);
+					}
                break;
 
             case shop_fsrra:
@@ -701,15 +704,15 @@ public:
                ucomiss(regalloc.MapXRegister(op.rs1), regalloc.MapXRegister(op.rs2));
                if (op.op == shop_fsetgt)
                {
-            	  seta(al);
+               	seta(al);
                }
                else
                {
-            	  //special case
-            	  //We want to take in account the 'unordered' case on the fpu
-            	  lahf();
-            	  test(ah, 0x44);
-            	  setnp(al);
+               	//special case
+               	//We want to take in account the 'unordered' case on the fpu
+               	lahf();
+               	test(ah, 0x44);
+               	setnp(al);
                }
                movzx(regalloc.MapRegister(op.rd), al);
                break;
@@ -728,43 +731,110 @@ public:
                break;
 
             case shop_fipr:
-               mov(rax, (size_t)op.rs1.reg_ptr());
-               movaps(regalloc.MapXRegister(op.rd), dword[rax]);
-               mov(rax, (size_t)op.rs2.reg_ptr());
-               mulps(regalloc.MapXRegister(op.rd), dword[rax]);
-               haddps(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rd));
-               haddps(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rd));
-               break;
+				{
+					mov(rax, (size_t)op.rs1.reg_ptr());
+					movaps(regalloc.MapXRegister(op.rd), dword[rax]);
+					mov(rax, (size_t)op.rs2.reg_ptr());
+					mulps(regalloc.MapXRegister(op.rd), dword[rax]);
+					const Xbyak::Xmm &rd = regalloc.MapXRegister(op.rd);
+					if (cpu.has(Xbyak::util::Cpu::tSSE3))
+					{
+						haddps(rd, rd);
+						haddps(rd, rd);
+					}
+					else
+					{
+						movhlps(xmm1, rd);
+						addps(rd, xmm1);
+						movaps(xmm1, rd);
+						shufps(xmm1, xmm1,1);
+						addss(rd, xmm1);
+					}
+				}
+            break;
 
             case shop_ftrv:
-               mov(rax, (uintptr_t)op.rs1.reg_ptr());
-               vmovaps(xmm0, xword[rax]);					// fn[0-4]
-               mov(rax, (uintptr_t)op.rs2.reg_ptr());		// fm[0-15]
+            	mov(rax, (uintptr_t)op.rs1.reg_ptr());
+            	if (cpu.has(Xbyak::util::Cpu::tAVX) && cpu.has(Xbyak::util::Cpu::tFMA))
+            	{
+            		movaps(xmm0, xword[rax]);					// fn[0-4]
+            		mov(rax, (uintptr_t)op.rs2.reg_ptr());		// fm[0-15]
 
-               pshufd(xmm1, xmm0, 0x00);					// fn[0]
-               vmulps(xmm2, xmm1, xword[rax]);				// fm[0-3]
-               pshufd(xmm1, xmm0, 0x55);					// fn[1]
-               vfmadd231ps(xmm2, xmm1, xword[rax + 16]);	// fm[4-7]
-               pshufd(xmm1, xmm0, 0xaa);					// fn[2]
-               vfmadd231ps(xmm2, xmm1, xword[rax + 32]);	// fm[8-11]
-               pshufd(xmm1, xmm0, 0xff);					// fn[3]
-               vfmadd231ps(xmm2, xmm1, xword[rax + 48]);	// fm[12-15]
-               mov(rax, (uintptr_t)op.rd.reg_ptr());
-               vmovaps(xword[rax], xmm2);
+            		pshufd(xmm1, xmm0, 0x00);					// fn[0]
+            		vmulps(xmm2, xmm1, xword[rax]);				// fm[0-3]
+            		pshufd(xmm1, xmm0, 0x55);					// fn[1]
+            		vfmadd231ps(xmm2, xmm1, xword[rax + 16]);	// fm[4-7]
+            		pshufd(xmm1, xmm0, 0xaa);					// fn[2]
+            		vfmadd231ps(xmm2, xmm1, xword[rax + 32]);	// fm[8-11]
+            		pshufd(xmm1, xmm0, 0xff);					// fn[3]
+            		vfmadd231ps(xmm2, xmm1, xword[rax + 48]);	// fm[12-15]
+            		mov(rax, (uintptr_t)op.rd.reg_ptr());
+            		movaps(xword[rax], xmm2);
+            	}
+            	else
+            	{
+            		if (cpu.has(Xbyak::util::Cpu::tSSE2))
+            		{
+            			movaps(xmm3, xword[rax]);                   //xmm0=vector
+            			pshufd(xmm0, xmm3, 0);                      //xmm0={v0}
+            			pshufd(xmm1, xmm3, 0x55);                   //xmm1={v1}
+            			pshufd(xmm2, xmm3, 0xaa);                   //xmm2={v2}
+            			pshufd(xmm3, xmm3, 0xff);                   //xmm3={v3}
+            		}
+            		else
+            		{
+            			movaps(xmm0, xword[rax]);                   //xmm0=vector
+
+            			movaps(xmm3, xmm0);                         //xmm3=vector
+            			shufps(xmm0, xmm0, 0);                      //xmm0={v0}
+            			movaps(xmm1, xmm3);                         //xmm1=vector
+            			movaps(xmm2, xmm3);                         //xmm2=vector
+            			shufps(xmm3, xmm3, 0xff);                   //xmm3={v3}
+            			shufps(xmm1, xmm1, 0x55);                   //xmm1={v1}
+            			shufps(xmm2, xmm2, 0xaa);                   //xmm2={v2}
+            		}
+
+            		//do the matrix mult !
+            		mov(rax, (uintptr_t)op.rs2.reg_ptr());
+            		mulps(xmm0, xword[rax + 0]);   //v0*=vm0
+            		mulps(xmm1, xword[rax + 16]);  //v1*=vm1
+            		mulps(xmm2, xword[rax + 32]);  //v2*=vm2
+            		mulps(xmm3, xword[rax + 48]);  //v3*=vm3
+
+            		addps(xmm0, xmm1);	 //sum it all up
+            		addps(xmm2, xmm3);
+            		addps(xmm0, xmm2);
+
+            		mov(rax, (uintptr_t)op.rd.reg_ptr());
+            		movaps(xword[rax], xmm0);
+            	}
                break;
 
             case shop_frswap:
                mov(rax, (uintptr_t)op.rs1.reg_ptr());
                mov(rcx, (uintptr_t)op.rd.reg_ptr());
-               vmovaps(ymm0, yword[rax]);
-               vmovaps(ymm1, yword[rcx]);
-               vmovaps(yword[rax], ymm1);
-               vmovaps(yword[rcx], ymm0);
+					if (cpu.has(Xbyak::util::Cpu::tAVX))
+					{
+						vmovaps(ymm0, yword[rax]);
+						vmovaps(ymm1, yword[rcx]);
+						vmovaps(yword[rax], ymm1);
+						vmovaps(yword[rcx], ymm0);
 
-               vmovaps(ymm0, yword[rax + 32]);
-               vmovaps(ymm1, yword[rcx + 32]);
-               vmovaps(yword[rax + 32], ymm1);
-               vmovaps(yword[rcx + 32], ymm0);
+						vmovaps(ymm0, yword[rax + 32]);
+						vmovaps(ymm1, yword[rcx + 32]);
+						vmovaps(yword[rax + 32], ymm1);
+						vmovaps(yword[rcx + 32], ymm0);
+					}
+					else
+					{
+						for (int i = 0; i < 4; i++)
+						{
+							movaps(xmm0, xword[rax + (i * 16)]);
+							movaps(xmm1, xword[rcx + (i * 16)]);
+							movaps(xword[rax + (i * 16)], xmm1);
+							movaps(xword[rcx + (i * 16)], xmm0);
+						}
+					}
                break;
 
             case shop_cvt_f2i_t:
@@ -1108,6 +1178,7 @@ private:
 	vector<CC_PS> CC_pars;
 
 	X64RegAlloc regalloc;
+	Xbyak::util::Cpu cpu;
 	static const u32 float_sign_mask;
 	static const u32 float_abs_mask;
 	static const f32 cvtf2i_pos_saturation;

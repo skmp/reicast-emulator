@@ -28,6 +28,8 @@
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
 
+#define EXPLODE_SPANS
+
 #include "hw/sh4/sh4_opcode_list.h"
 
 #include "hw/sh4/sh4_mmr.h"
@@ -104,51 +106,52 @@ void ngen_mainloop(void* v_cntx)
 
 	__asm__ volatile
 	(
-		"stp x19, x20, [sp, #-144]!	\n\t"
+		"stp x19, x20, [sp, #-160]!	\n\t"
 		"stp x21, x22, [sp, #16]	\n\t"
 		"stp x23, x24, [sp, #32]	\n\t"
 		"stp x25, x26, [sp, #48]	\n\t"
 		"stp x27, x28, [sp, #64]	\n\t"
-		"stp s8, s9, [sp, #80]		\n\t"
-		"stp s10, s11, [sp, #96]	\n\t"
-		"stp s12, s13, [sp, #112]	\n\t"
-		"stp s14, s15, [sp, #128]	\n\t"
+		"stp x29, x30, [sp, #80]	\n\t"
+		"stp s8, s9, [sp, #96]		\n\t"
+		"stp s10, s11, [sp, #112]	\n\t"
+		"stp s12, s13, [sp, #128]	\n\t"
+		"stp s14, s15, [sp, #144]	\n\t"
 		// Use x28 as sh4 context pointer
 		"mov x28, %0				\n\t"
 		// Use x27 as cycle_counter
-		"mov w27, %2				\n\t"	// SH4_TIMESLICE
+		"mov w27, %[_SH4_TIMESLICE]	\n\t"
 
 	"run_loop:						\n\t"
-		"ldr w0, [x28, %3]			\n\t"	// CpuRunning
-		"cmp w0, #0					\n\t"
-		"b.eq end_run_loop			\n\t"
+		"ldr w0, [x28, %[CpuRunning]]	\n\t"
+		"cbz w0, end_run_loop		\n\t"
 
 	"slice_loop:					\n\t"
-		"ldr w0, [x28, %1]			\n\t"	// pc
+		"ldr w0, [x28, %[pc]]		\n\t"
 		"bl bm_GetCode				\n\t"
 		"blr x0						\n\t"
 		"cmp w27, #0				\n\t"
 		"b.gt slice_loop			\n\t"
 
-		"add w27, w27, %2			\n\t"	// SH4_TIMESLICE
+		"add w27, w27, %[_SH4_TIMESLICE]	\n\t"
 		"bl UpdateSystem_INTC		\n\t"
 		"b run_loop					\n\t"
 
 	"end_run_loop:					\n\t"
-		"ldp s14, s15, [sp, #128]	\n\t"
-		"ldp s12, s13, [sp, #112]	\n\t"
-		"ldp s10, s11, [sp, #96]	\n\t"
-		"ldp s8, s9, [sp, #80]		\n\t"
+		"ldp s14, s15, [sp, #144]	\n\t"
+		"ldp s12, s13, [sp, #128]	\n\t"
+		"ldp s10, s11, [sp, #112]	\n\t"
+		"ldp s8, s9, [sp, #96]		\n\t"
+		"ldp x29, x30, [sp, #80]	\n\t"
 		"ldp x27, x28, [sp, #64]	\n\t"
 		"ldp x25, x26, [sp, #48]	\n\t"
 		"ldp x23, x24, [sp, #32]	\n\t"
 		"ldp x21, x22, [sp, #16]	\n\t"
-		"ldp x19, x20, [sp], #144	\n\t"
+		"ldp x19, x20, [sp], #160	\n\t"
 		:
-		: "r"(reinterpret_cast<uintptr_t>(&ctx->cntx)),
-		  "i"(offsetof(Sh4Context, pc)),
-		  "i"(SH4_TIMESLICE),
-		  "i"(offsetof(Sh4Context, CpuRunning))
+		: [cntx] "r"(reinterpret_cast<uintptr_t>(&ctx->cntx)),
+		  [pc] "i"(offsetof(Sh4Context, pc)),
+		  [_SH4_TIMESLICE] "i"(SH4_TIMESLICE),
+		  [CpuRunning] "i"(offsetof(Sh4Context, CpuRunning))
 		: "memory"
 	);
 }
@@ -173,7 +176,10 @@ class Arm64Assembler : public MacroAssembler
 	typedef void (MacroAssembler::*Arm64Op_RROF)(const Register&, const Register&, const Operand&, enum FlagsUpdate);
 
 public:
-	Arm64Assembler() : MacroAssembler((u8 *)emit_GetCCPtr(), 64 * 1024), regalloc(this)
+	Arm64Assembler() : Arm64Assembler(emit_GetCCPtr())
+	{
+	}
+	Arm64Assembler(void *buffer) : MacroAssembler((u8 *)buffer, 64 * 1024), regalloc(this)
 	{
 		call_regs.push_back(&w0);
 		call_regs.push_back(&w1);
@@ -220,24 +226,6 @@ public:
 			((*this).*arm_op2)(regalloc.MapRegister(op->rd), regalloc.MapRegister(op->rs1), op3, LeaveFlags);
 	}
 
-	template <typename R, typename... P>
-	void ngen_CallRuntime(R (*function)(P...))
-	{
-		if (!frame_reg_saved)
-		{
-			Str(x30, MemOperand(sp, -16, PreIndex));
-			frame_reg_saved = true;
-		}
-		Literal<uintptr_t> *function_address = function_literals[(void*)function];
-		if (function_address == NULL)
-		{
-			function_address = new Literal<uintptr_t>(reinterpret_cast<uintptr_t>(function), GetLiteralPool(), RawLiteral::kDeletedOnPoolDestruction);
-			function_literals[(void*)function] = function_address;
-		}
-		Ldr(x9, function_address);
-		Blr(x9);
-	}
-
 	const Register& GenMemAddr(const shil_opcode& op, const Register* raddr = NULL)
 	{
 		const Register* ret_reg = raddr == NULL ? &w0 : raddr;
@@ -268,6 +256,7 @@ public:
 	void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
 	{
 		//printf("REC-ARM64 compiling %08x\n", block->addr);
+		this->block = block;
 		if (force_checks)
 			CheckBlock(block);
 
@@ -292,7 +281,7 @@ public:
 				}
 				Mov(*call_regs[0], op.rs3._imm);
 
-				ngen_CallRuntime(OpDesc[op.rs3._imm]->oph);
+				GenCallRuntime(OpDesc[op.rs3._imm]->oph);
 				break;
 
 			case shop_jcond:
@@ -334,189 +323,28 @@ public:
 				verify(op.rd.is_reg());
 				verify(op.rs1.is_reg() || op.rs1.is_imm());
 
+#ifdef EXPLODE_SPANS
+				Fmov(regalloc.MapVRegister(op.rd, 0), regalloc.MapVRegister(op.rs1, 0));
+				Fmov(regalloc.MapVRegister(op.rd, 1), regalloc.MapVRegister(op.rs1, 1));
+#else
 				shil_param_to_host_reg(op.rs1, x15);
 				host_reg_to_shil_param(op.rd, x15);
+#endif
 				break;
 
 			case shop_readm:
-			{
-				u32 size = op.flags & 0x7f;
-				bool is_float = op.rs2.is_r32f() || op.rd.is_r32f();
-
-				if (op.rs1.is_imm())
-				{
-					bool isram = false;
-					void* ptr = _vmem_read_const(op.rs1._imm, isram, size);
-
-					if (isram)
-					{
-						Ldr(x1, reinterpret_cast<uintptr_t>(ptr));
-						switch (size)
-						{
-						case 2:
-							Ldrsh(regalloc.MapRegister(op.rd), MemOperand(x1, xzr, SXTW));
-							break;
-
-						case 4:
-							if (is_float)
-								Ldr(regalloc.MapVRegister(op.rd), MemOperand(x1));
-							else
-								Ldr(regalloc.MapRegister(op.rd), MemOperand(x1));
-							break;
-
-						default:
-							die("Invalid size");
-							break;
-						}
-					}
-					else
-					{
-						// Not RAM
-						Mov(w0, op.rs1._imm);
-
-						switch(size)
-						{
-						case 1:
-							ngen_CallRuntime((void (*)())ptr);
-							Sxtb(w0, w0);
-							break;
-
-						case 2:
-							ngen_CallRuntime((void (*)())ptr);
-							Sxth(w0, w0);
-							break;
-
-						case 4:
-							ngen_CallRuntime((void (*)())ptr);
-							break;
-
-						case 8:
-							die("SZ_64F not supported");
-							break;
-						}
-
-						if (regalloc.IsAllocg(op.rd))
-							Mov(regalloc.MapRegister(op.rd), w0);
-						else
-							Fmov(regalloc.MapVRegister(op.rd), w0);
-					}
-				}
-				else
-				{
-#if 0	// Direct memory access. Need to handle SIGSEGV and rewrite block as needed (?)
-					const Register& raddr = GenMemAddr(&op);
-
-					if (_nvmem_enabled())
-					{
-						Add(w1, raddr, sizeof(Sh4Context));
-						Bfc(w1, 29, 3);		// addr &= ~0xE0000000
-
-						switch(size)
-						{
-						case 1:
-							Ldrsb(regalloc.MapRegister(op.rd), MemOperand(x28, x1, SXTW));
-							break;
-
-						case 2:
-							Ldrsh(regalloc.MapRegister(op.rd), MemOperand(x28, x1, SXTW));
-							break;
-
-						case 4:
-							if (!is_float)
-								Ldr(regalloc.MapRegister(op.rd), MemOperand(x28, x1));
-							else
-								Ldr(regalloc.MapVRegister(op.rd), MemOperand(x28, x1));
-							break;
-
-						case 8:
-							// TODO use regalloc
-							Ldr(x0, MemOperand(x28, x1));
-							Str(x0, sh4_context_mem_operand(op.rd.reg_ptr()));
-							break;
-						}
-					}
-					else
-					{
-						// TODO
-						die("Not implemented")
-					}
-#endif
-
-					GenMemAddr(op, call_regs[0]);
-
-					switch (size)
-					{
-					case 1:
-						ngen_CallRuntime(ReadMem8);
-						Sxtb(w0, w0);
-						break;
-
-					case 2:
-						ngen_CallRuntime(ReadMem16);
-						Sxth(w0, w0);
-						break;
-
-					case 4:
-						ngen_CallRuntime(ReadMem32);
-						break;
-
-					case 8:
-						ngen_CallRuntime(ReadMem64);
-						break;
-
-					default:
-						die("1..8 bytes");
-						break;
-					}
-
-					if (size != 8)
-						host_reg_to_shil_param(op.rd, w0);
-					else
-						host_reg_to_shil_param(op.rd, x0);
-				}
-			}
+				GenReadMemory(op, i);
 			break;
 
 			case shop_writem:
-			{
-				GenMemAddr(op, call_regs[0]);
-
-				u32 size = op.flags & 0x7f;
-				if (size != 8)
-					shil_param_to_host_reg(op.rs2, *call_regs[1]);
-				else
-					shil_param_to_host_reg(op.rs2, *call_regs64[1]);
-
-				switch (size)
-				{
-				case 1:
-					ngen_CallRuntime(WriteMem8);
+				GenWriteMemory(op, i);
 					break;
-
-				case 2:
-					ngen_CallRuntime(WriteMem16);
-					break;
-
-				case 4:
-					ngen_CallRuntime(WriteMem32);
-					break;
-
-				case 8:
-					ngen_CallRuntime(WriteMem64);
-					break;
-
-				default:
-					die("1..8 bytes");
-					break;
-				}
-			}
-			break;
 
 			case shop_sync_sr:
-				ngen_CallRuntime(UpdateSR);
+				GenCallRuntime(UpdateSR);
 				break;
 			case shop_sync_fpscr:
-				ngen_CallRuntime(UpdateFPSCR);
+				GenCallRuntime(UpdateFPSCR);
 				break;
 
 			case shop_swaplb:
@@ -701,11 +529,7 @@ public:
 					Ldr(x9, MemOperand(x9));
 					Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
 				}
-				if (!frame_reg_saved)
-				{
-					Str(x30, MemOperand(sp, -16, PreIndex));
-					frame_reg_saved = true;
-				}
+				SaveFramePointer();
 				if (op.flags == 0x1337)
 					Blr(x9);
 				else
@@ -770,11 +594,13 @@ public:
 			case shop_fsca:
 				Mov(x1, reinterpret_cast<uintptr_t>(&sin_table));
 				Add(x1, x1, Operand(regalloc.MapRegister(op.rs1), UXTH, 3));
-				// TODO use regalloc
-				//Ldr(regalloc.MapVRegister(op.rd, 0), MemOperand(x1, 4, PostIndex));
-				//Ldr(regalloc.MapVRegister(op.rd, 1), MemOperand(x1));
+#ifdef EXPLODE_SPANS
+				Ldr(regalloc.MapVRegister(op.rd, 0), MemOperand(x1, 4, PostIndex));
+				Ldr(regalloc.MapVRegister(op.rd, 1), MemOperand(x1));
+#else
 				Ldr(x2, MemOperand(x1));
 				Str(x2, sh4_context_mem_operand(op.rd.reg_ptr()));
+#endif
 				break;
 
 			case shop_fipr:
@@ -889,7 +715,7 @@ public:
 			}
 			Str(w10, sh4_context_mem_operand(&next_pc));
 
-			ngen_CallRuntime(UpdateINTC);
+			GenCallRuntime(UpdateINTC);
 			break;
 
 		default:
@@ -900,31 +726,7 @@ public:
 			Ldr(x30, MemOperand(sp, 16, PostIndex));
 		Ret();
 
-		Label code_end;
-		Bind(&code_end);
-
-		FinalizeCode();
-
-		block->code = GetBuffer()->GetStartAddress<DynarecCodeEntryPtr>();
-		block->host_code_size = GetBuffer()->GetSizeInBytes();
-		block->host_opcodes = GetLabelAddress<u32*>(&code_end) - GetBuffer()->GetStartAddress<u32*>();
-
-		emit_Skip(block->host_code_size);
-		CacheFlush((void*)block->code, GetBuffer()->GetEndAddress<void*>());
-#if 0
-		Instruction* instr_start = GetBuffer()->GetStartAddress<Instruction*>();
-		Instruction* instr_end = GetLabelAddress<Instruction*>(&code_end);
-		Decoder decoder;
-		Disassembler disasm;
-		decoder.AppendVisitor(&disasm);
-		Instruction* instr;
-		for (instr = instr_start; instr < instr_end; instr += kInstructionSize) {
-			decoder.Decode(instr);
-			printf("VIXL\t %p:\t%s\n",
-			           reinterpret_cast<void*>(instr),
-			           disasm.GetOutput());
-		}
-#endif
+		Finalize();
 	}
 
 	void ngen_CC_Start(shil_opcode* op)
@@ -1005,7 +807,7 @@ public:
 				break;
 			}
 		}
-		ngen_CallRuntime((void (*)())function);
+		GenCallRuntime((void (*)())function);
 	}
 
 	MemOperand sh4_context_mem_operand(void *p)
@@ -1015,7 +817,346 @@ public:
 		return MemOperand(x28, offset);
 	}
 
+	void GenReadMemorySlow(const shil_opcode& op)
+	{
+		Instruction *start_instruction = GetCursorAddress<Instruction *>();
+		u32 size = op.flags & 0x7f;
+
+		switch (size)
+		{
+		case 1:
+			GenCallRuntime(ReadMem8);
+			Sxtb(w0, w0);
+			break;
+
+		case 2:
+			GenCallRuntime(ReadMem16);
+			Sxth(w0, w0);
+			break;
+
+		case 4:
+			GenCallRuntime(ReadMem32);
+			break;
+
+		case 8:
+			GenCallRuntime(ReadMem64);
+			break;
+
+		default:
+			die("1..8 bytes");
+			break;
+		}
+
+		if (size != 8)
+			host_reg_to_shil_param(op.rd, w0);
+		else
+		{
+#ifdef EXPLODE_SPANS
+			verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
+			Fmov(regalloc.MapVRegister(op.rd, 0), w0);
+			Lsr(x0, x0, 32);
+			Fmov(regalloc.MapVRegister(op.rd, 1), w0);
+#else
+			host_reg_to_shil_param(op.rd, x0);
+#endif
+		}
+		EnsureCodeSize(start_instruction, read_memory_rewrite_size);
+	}
+
+	void GenWriteMemorySlow(const shil_opcode& op)
+	{
+		Instruction *start_instruction = GetCursorAddress<Instruction *>();
+		u32 size = op.flags & 0x7f;
+		switch (size)
+		{
+		case 1:
+			GenCallRuntime(WriteMem8);
+			break;
+
+		case 2:
+			GenCallRuntime(WriteMem16);
+			break;
+
+		case 4:
+			GenCallRuntime(WriteMem32);
+			break;
+
+		case 8:
+			GenCallRuntime(WriteMem64);
+			break;
+
+		default:
+			die("1..8 bytes");
+			break;
+		}
+		EnsureCodeSize(start_instruction, write_memory_rewrite_size);
+	}
+
+	void InitializeRewrite(RuntimeBlockInfo *block, size_t opid)
+	{
+		regalloc.DoAlloc(block);
+		regalloc.current_opid = opid;
+		frame_reg_saved = true;
+	}
+
+	void Finalize(bool rewrite = false)
+	{
+		Label code_end;
+		Bind(&code_end);
+
+		FinalizeCode();
+
+		if (!rewrite)
+		{
+			block->code = GetBuffer()->GetStartAddress<DynarecCodeEntryPtr>();
+			block->host_code_size = GetBuffer()->GetSizeInBytes();
+			block->host_opcodes = GetLabelAddress<u32*>(&code_end) - GetBuffer()->GetStartAddress<u32*>();
+
+			emit_Skip(block->host_code_size);
+		}
+		CacheFlush(GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
+#if 0
+		if (rewrite)
+		{
+			Instruction* instr_start = GetBuffer()->GetStartAddress<Instruction*>();
+			Instruction* instr_end = GetLabelAddress<Instruction*>(&code_end);
+//			Instruction* instr_end = (Instruction*)((u8 *)block->code + block->host_code_size);
+			Decoder decoder;
+			Disassembler disasm;
+			decoder.AppendVisitor(&disasm);
+			Instruction* instr;
+			for (instr = instr_start; instr < instr_end; instr += kInstructionSize) {
+				decoder.Decode(instr);
+				printf("VIXL\t %p:\t%s\n",
+						   reinterpret_cast<void*>(instr),
+						   disasm.GetOutput());
+			}
+		}
+#endif
+	}
+
 private:
+	template <typename R, typename... P>
+	void GenCallRuntime(R (*function)(P...))
+	{
+		SaveFramePointer();
+		uintptr_t offset = reinterpret_cast<uintptr_t>(function) - GetBuffer()->GetStartAddress<uintptr_t>();
+		Label function_label;
+		BindToOffset(&function_label, offset);
+		Bl(&function_label);
+	}
+
+	void GenReadMemory(const shil_opcode& op, size_t opid)
+	{
+		u32 size = op.flags & 0x7f;
+
+		if (GenReadMemoryImmediate(op))
+			return;
+
+		SaveFramePointer();	// needed if rewritten
+
+		GenMemAddr(op, call_regs[0]);
+
+		if (GenReadMemoryFast(op, opid))
+			return;
+
+		GenReadMemorySlow(op);
+	}
+
+	bool GenReadMemoryImmediate(const shil_opcode& op)
+	{
+		if (!op.rs1.is_imm())
+			return false;
+
+		u32 size = op.flags & 0x7f;
+		bool isram = false;
+		void* ptr = _vmem_read_const(op.rs1._imm, isram, size);
+
+		if (isram)
+		{
+			Ldr(x1, reinterpret_cast<uintptr_t>(ptr));
+			switch (size)
+			{
+			case 2:
+				Ldrsh(regalloc.MapRegister(op.rd), MemOperand(x1, xzr, SXTW));
+				break;
+
+			case 4:
+				if (op.rd.is_r32f())
+					Ldr(regalloc.MapVRegister(op.rd), MemOperand(x1));
+				else
+					Ldr(regalloc.MapRegister(op.rd), MemOperand(x1));
+				break;
+
+			default:
+				die("Invalid size");
+				break;
+			}
+		}
+		else
+		{
+			// Not RAM
+			Mov(w0, op.rs1._imm);
+
+			switch(size)
+			{
+			case 1:
+				GenCallRuntime((void (*)())ptr);
+				Sxtb(w0, w0);
+				break;
+
+			case 2:
+				GenCallRuntime((void (*)())ptr);
+				Sxth(w0, w0);
+				break;
+
+			case 4:
+				GenCallRuntime((void (*)())ptr);
+				break;
+
+			case 8:
+				die("SZ_64F not supported");
+				break;
+			}
+
+			if (regalloc.IsAllocg(op.rd))
+				Mov(regalloc.MapRegister(op.rd), w0);
+			else
+				Fmov(regalloc.MapVRegister(op.rd), w0);
+		}
+
+		return true;
+	}
+
+	bool GenReadMemoryFast(const shil_opcode& op, size_t opid)
+	{
+		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
+		if (!_nvmem_enabled())
+			return false;
+
+		Instruction *start_instruction = GetCursorAddress<Instruction *>();
+
+		// WARNING: the rewrite code relies on having two ops before the memory access
+		// Update ngen_Rewrite (and perhaps read_memory_rewrite_size) if adding or removing code
+		Add(w1, *call_regs[0], sizeof(Sh4Context), LeaveFlags);
+		Bfc(w1, 29, 3);		// addr &= ~0xE0000000
+
+		//printf("direct read memory access opid %d pc %p code addr %08x\n", opid, GetCursorAddress<void *>(), this->block->addr);
+		this->block->memory_accesses[GetCursorAddress<void *>()] = (u32)opid;
+
+		u32 size = op.flags & 0x7f;
+		switch(size)
+		{
+		case 1:
+			Ldrsb(regalloc.MapRegister(op.rd), MemOperand(x28, x1, SXTW));
+			break;
+
+		case 2:
+			Ldrsh(regalloc.MapRegister(op.rd), MemOperand(x28, x1, SXTW));
+			break;
+
+		case 4:
+			if (!op.rd.is_r32f())
+				Ldr(regalloc.MapRegister(op.rd), MemOperand(x28, x1));
+			else
+				Ldr(regalloc.MapVRegister(op.rd), MemOperand(x28, x1));
+			break;
+
+		case 8:
+			Ldr(x1, MemOperand(x28, x1));
+			break;
+		}
+
+		if (size == 8)
+		{
+#ifdef EXPLODE_SPANS
+			verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
+			Fmov(regalloc.MapVRegister(op.rd, 0), w1);
+			Lsr(x1, x1, 32);
+			Fmov(regalloc.MapVRegister(op.rd, 1), w1);
+#else
+			Str(x1, sh4_context_mem_operand(op.rd.reg_ptr()));
+#endif
+		}
+		EnsureCodeSize(start_instruction, read_memory_rewrite_size);
+
+		return true;
+	}
+
+	void GenWriteMemory(const shil_opcode& op, size_t opid)
+	{
+		SaveFramePointer();	// needed if rewritten
+
+		GenMemAddr(op, call_regs[0]);
+
+		u32 size = op.flags & 0x7f;
+		if (size != 8)
+			shil_param_to_host_reg(op.rs2, *call_regs[1]);
+		else
+		{
+#ifdef EXPLODE_SPANS
+			verify(op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1));
+			Fmov(*call_regs[1], regalloc.MapVRegister(op.rs2, 1));
+			Lsl(*call_regs64[1], *call_regs64[1], 32);
+			Fmov(w2, regalloc.MapVRegister(op.rs2, 0));
+			Orr(*call_regs64[1], *call_regs64[1], x2);
+#else
+			shil_param_to_host_reg(op.rs2, *call_regs64[1]);
+#endif
+		}
+		if (GenWriteMemoryFast(op, opid))
+			return;
+
+		GenWriteMemorySlow(op);
+	}
+
+	bool GenWriteMemoryFast(const shil_opcode& op, size_t opid)
+	{
+		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
+		if (!_nvmem_enabled())
+			return false;
+
+		Instruction *start_instruction = GetCursorAddress<Instruction *>();
+
+		// WARNING: the rewrite code relies on having two ops before the memory access
+		// Update ngen_Rewrite (and perhaps write_memory_rewrite_size) if adding or removing code
+		Add(w7, *call_regs[0], sizeof(Sh4Context), LeaveFlags);
+		Bfc(w7, 29, 3);		// addr &= ~0xE0000000
+
+		//printf("direct write memory access opid %d pc %p code addr %08x\n", opid, GetCursorAddress<void *>(), this->block->addr);
+		this->block->memory_accesses[GetCursorAddress<void *>()] = (u32)opid;
+
+		u32 size = op.flags & 0x7f;
+		switch(size)
+		{
+		case 1:
+			Strb(w1, MemOperand(x28, x7, SXTW));
+			break;
+
+		case 2:
+			Strh(w1, MemOperand(x28, x7, SXTW));
+			break;
+
+		case 4:
+			Str(w1, MemOperand(x28, x7));
+			break;
+
+		case 8:
+			Str(x1, MemOperand(x28, x7));
+			break;
+		}
+		EnsureCodeSize(start_instruction, write_memory_rewrite_size);
+
+		return true;
+	}
+
+	void EnsureCodeSize(Instruction *start_instruction, int code_size)
+	{
+		while (GetCursorAddress<Instruction *>() - start_instruction < code_size * kInstructionSize)
+			Nop();
+		verify (GetCursorAddress<Instruction *>() - start_instruction == code_size * kInstructionSize);
+	}
+
 	void CheckBlock(RuntimeBlockInfo* block)
 	{
 		s32 sz = block->sh4_code_size;
@@ -1076,10 +1217,7 @@ private:
 		else if (param.is_reg())
 		{
 			if (param.is_r64f())
-			{
-				// TODO use regalloc
 				Ldr(reg, sh4_context_mem_operand(param.reg_ptr()));
-			}
 			else if (param.is_r32f())
 				Fmov(reg, regalloc.MapVRegister(param));
 			else
@@ -1095,7 +1233,6 @@ private:
 	{
 		if (reg.Is64Bits())
 		{
-			// TODO use regalloc
 			Str((const Register&)reg, sh4_context_mem_operand(param.reg_ptr()));
 		}
 		else if (regalloc.IsAllocg(param))
@@ -1114,6 +1251,15 @@ private:
 		}
 	}
 
+	void SaveFramePointer()
+	{
+		if (!frame_reg_saved)
+		{
+			Str(x30, MemOperand(sp, -16, PreIndex));
+			frame_reg_saved = true;
+		}
+	}
+
 	struct CC_PS
 	{
 		CanonicalParamType type;
@@ -1125,7 +1271,10 @@ private:
 	std::vector<const VRegister*> call_fregs;
 	Arm64RegAlloc regalloc;
 	bool frame_reg_saved = false;
-	std::map<void*, Literal<uintptr_t>*> function_literals;
+	RuntimeBlockInfo* block;
+	const int read_memory_rewrite_size = 6;	// worst case for u64: add, bfc, ldr, fmov, lsr, fmov
+											// FIXME rewrite size per read/write size?
+	const int write_memory_rewrite_size = 3;
 };
 
 static Arm64Assembler* compiler;
@@ -1160,6 +1309,39 @@ void ngen_CC_Call_arm64(shil_opcode*op, void* function)
 void ngen_CC_Finish_arm64(shil_opcode* op)
 {
 
+}
+
+bool ngen_Rewrite(unat& host_pc, unat, unat)
+{
+	u32 guest_pc = p_sh4rcb->cntx.pc;
+	//printf("ngen_Rewrite pc %p code addr %08x\n", host_pc, guest_pc);
+	RuntimeBlockInfo *block = bm_GetBlock(guest_pc);
+	if (block == NULL)
+	{
+		printf("ngen_Rewrite: Block at %08x not found\n", guest_pc);
+		return false;
+	}
+	u32 *code_ptr = (u32*)host_pc;
+	auto it = block->memory_accesses.find(code_ptr);
+	if (it == block->memory_accesses.end())
+	{
+		printf("ngen_Rewrite: memory access at %p not found (%lu entries)\n", code_ptr, block->memory_accesses.size());
+		return false;
+	}
+	u32 opid = it->second;
+	verify(opid < block->oplist.size());
+	const shil_opcode& op = block->oplist[opid];
+	Arm64Assembler *assembler = new Arm64Assembler(code_ptr - 2);	// Skip the 2 preceding ops (bic, add)
+	assembler->InitializeRewrite(block, opid);
+	if (op.op == shop_readm)
+		assembler->GenReadMemorySlow(op);
+	else
+		assembler->GenWriteMemorySlow(op);
+	assembler->Finalize(true);
+	delete assembler;
+	host_pc = (unat)(code_ptr - 2);
+
+	return true;
 }
 
 void Arm64RegAlloc::Preload(u32 reg, eReg nreg)

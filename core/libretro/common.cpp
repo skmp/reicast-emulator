@@ -244,8 +244,6 @@ struct rei_host_context_t
 	u32 esp;
 #elif HOST_CPU == CPU_ARM
 	u32 r[15];
-#elif HOST_CPU == CPU_ARM64
-	u64 r[31];
 #endif
 };
 
@@ -279,10 +277,6 @@ static void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, boo
 #endif
 #elif HOST_CPU == CPU_ARM64
 	bicopy(reictx->pc, MCTX(.pc), to_segfault);
-	u64* r =(u64*) &MCTX(.regs[0]);
-
-	for (int i = 0; i < 31; i++)
-		bicopy(reictx->r[i], r[i], to_segfault);
 #elif HOST_CPU == CPU_X86
 #ifdef __linux__
    bicopy(reictx->pc, MCTX(.gregs[REG_EIP]), to_segfault);
@@ -390,7 +384,10 @@ printf("mprot hit @ ptr %p @@ pc: %p, %d\n", si->si_addr, ctx.pc, dyna_cde);
 #elif HOST_CPU == CPU_X64
    //x64 has no rewrite support
 #elif HOST_CPU == CPU_ARM64
-   // arm64 has no rewrite support
+	else if (dyna_cde && ngen_Rewrite(ctx.pc, 0, 0))
+	{
+		context_to_segfault(&ctx, segfault_ctx);
+	}
 #else
 #error JIT: Not supported arch
 #endif

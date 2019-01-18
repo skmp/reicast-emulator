@@ -57,7 +57,7 @@ extern "C" {
 #endif
 
 int UpdateSystem(void);
-int UpdateSystem_INTC(void);
+__attribute__((used)) int UpdateSystem_INTC(void);
 
 #ifdef __cplusplus
 }

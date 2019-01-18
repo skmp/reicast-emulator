@@ -135,7 +135,7 @@ typedef std::set<RuntimeBlockInfo*,BlockMapCMP> blkmap_t;
 
 void bm_WriteBlockMap(const string& file);
 
-extern "C" DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr);
+extern "C" __attribute__((used)) DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr);
 
 RuntimeBlockInfo* bm_GetBlock2(void* dynarec_code);
 RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code);

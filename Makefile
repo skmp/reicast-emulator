@@ -507,6 +507,7 @@ endif
 
 ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
 	HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_X64)
+	HAVE_LTCG = 0
 endif
 
 ifeq ($(WITH_DYNAREC), x86)

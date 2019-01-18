@@ -46,97 +46,110 @@ void(*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
 #define _U
 #endif
 
+#ifdef _WIN32
+#define WIN32_ONLY(x) x
+#else
+#define WIN32_ONLY(x)
+#endif
+
+#define STRINGIFY(x) #x
+#define _S(x) STRINGIFY(x)
+#define CPU_RUNNING 135266148
+#define PC 135266120
+
+#ifdef _WIN32
+        // Fully naked function in win32 for proper SEH prologue
+        __asm__ (
+                        ".text                                                  \n\t"
+                        ".p2align 4,,15                                 \n\t"
+                        ".globl ngen_mainloop                   \n\t"
+                        ".def   ngen_mainloop;  .scl    2;      .type   32;     .endef  \n\t"
+                        ".seh_proc      ngen_mainloop           \n\t"
+                "ngen_mainloop:                                         \n\t"
+#else
 void ngen_mainloop(void* v_cntx)
 {
-	__asm__ volatile (
-			"pushq %%rbx						\n\t"
-			"pushq %%rbp						\n\t"
-#ifdef _WIN32
-			"pushq %%rdi						\n\t"
-			"pushq %%rsi						\n\t"
+        __asm__ (
 #endif
-			"pushq %%r12						\n\t"
-			"pushq %%r13						\n\t"
-			"pushq %%r14						\n\t"
-			"pushq %%r15						\n\t"
-			"subq $8, %%rsp						\n\t"	// 8 for stack 16-byte alignment
-#if defined(__MACH__) || defined(_ANDROID)
-			"movl %[_SH4_TIMESLICE], " _U "cycle_counter(%%rip)	\n"
-
-		"1:							  			\n\t"
-			"movq " _U "p_sh4rcb(%%rip), %%rax	\n\t"
-			"movl %c[CpuRunning](%%rax), %%edx	\n\t"
-			"testl %%edx, %%edx					\n\t"
-			"je 3f								\n"
-
-		"2:								 		\n\t"
-			"movq " _U "p_sh4rcb(%%rip), %%rax	\n\t"
-			"movl %c[pc](%%rax), %%edi			\n\t"
-			"call " _U "bm_GetCode				\n\t"
-			"call *%%rax						\n\t"
-			"movl " _U "cycle_counter(%%rip), %%ecx \n\t"
-			"testl %%ecx, %%ecx					\n\t"
-			"jg 2b								\n\t"
-
-			"addl %[_SH4_TIMESLICE], %%ecx		\n\t"
-			"movl %%ecx, " _U "cycle_counter(%%rip)	\n\t"
-			"call " _U "UpdateSystem_INTC		\n\t"
-			"jmp 1b								\n"
-
-		"3:										\n\t"
+                        "pushq %rbx                                             \n\t"
+WIN32_ONLY(     ".seh_pushreg %rbx                              \n\t")
+                        "pushq %rbp                                             \n\t"
+#ifdef _WIN32
+                        ".seh_pushreg %rbp                              \n\t"
+                        "pushq %rdi                                             \n\t"
+                        ".seh_pushreg %rdi                              \n\t"
+                        "pushq %rsi                                             \n\t"
+                        ".seh_pushreg %rsi                              \n\t"
+#endif
+                        "pushq %r12                                             \n\t"
+WIN32_ONLY(     ".seh_pushreg %r12                              \n\t")
+                        "pushq %r13                                             \n\t"
+WIN32_ONLY(     ".seh_pushreg %r13                              \n\t")
+                        "pushq %r14                                             \n\t"
+WIN32_ONLY(     ".seh_pushreg %r14                              \n\t")
+                        "pushq %r15                                             \n\t"
+#ifdef _WIN32
+                        ".seh_pushreg %r15                              \n\t"
+                        "subq $40, %rsp                                 \n\t"   // 32-byte shadow space + 8 for stack 16-byte alignment
+                        ".seh_stackalloc 40                             \n\t"
+                        ".seh_endprologue                               \n\t"
 #else
-			"movl %[_SH4_TIMESLICE], cycle_counter(%%rip)	\n"
+                        "subq $8, %rsp                                  \n\t"   // 8 for stack 16-byte alignment
+#endif
+                        "movl $" _S(SH4_TIMESLICE) "," _U "cycle_counter(%rip)  \n"
 
-		"run_loop:								\n\t"
-			"movq p_sh4rcb(%%rip), %%rax		\n\t"
-			"movl %p[CpuRunning](%%rax), %%edx	\n\t"
-			"testl %%edx, %%edx					\n\t"
-			"je end_run_loop					\n"
+                "1:                                                                             \n\t"   // run_loop
+                        "movq " _U "p_sh4rcb(%rip), %rax        \n\t"
+                        "movl " _S(CPU_RUNNING) "(%rax), %edx   \n\t"
+                        "testl %edx, %edx                                       \n\t"
+                        "je 3f                                                          \n"             // end_run_loop
 
-		"slice_loop:							\n\t"
-			"movq p_sh4rcb(%%rip), %%rax		\n\t"
+                "2:                                                                             \n\t"   // slice_loop
+                        "movq " _U "p_sh4rcb(%rip), %rax        \n\t"
 #ifdef _WIN32
-			"movl %p[pc](%%rax), %%ecx			\n\t"
+                        "movl " _S(PC)"(%rax), %ecx     \n\t"
 #else
-			"movl %p[pc](%%rax), %%edi			\n\t"
+                        "movl " _S(PC)"(%rax), %edi     \n\t"
 #endif
-			"call bm_GetCode					\n\t"
-			"call *%%rax						\n\t"
-			"movl cycle_counter(%%rip), %%ecx 	\n\t"
-			"testl %%ecx, %%ecx					\n\t"
-			"jg slice_loop						\n\t"
+                        "call " _U "bm_GetCode                          \n\t"
+                        "call *%rax                                             \n\t"
+                        "movl " _U "cycle_counter(%rip), %ecx \n\t"
+                        "testl %ecx, %ecx                                       \n\t"
+                        "jg 2b                                                          \n\t"   // slice_loop
 
-			"addl %[_SH4_TIMESLICE], %%ecx		\n\t"
-			"movl %%ecx, cycle_counter(%%rip)	\n\t"
-			"call UpdateSystem_INTC				\n\t"
-			"jmp run_loop						\n"
+                        "addl $" _S(SH4_TIMESLICE) ", %ecx              \n\t"
+                        "movl %ecx, " _U "cycle_counter(%rip)   \n\t"
+                        "call " _U "UpdateSystem_INTC           \n\t"
+                        "jmp 1b                                                         \n"             // run_loop
 
-		"end_run_loop:							\n\t"
-#endif	// !__MACH__
+                "3:                                                                             \n\t"   // end_run_loop
 
-			"addq $8, %%rsp					 	\n\t"
-			"popq %%r15							\n\t"
-			"popq %%r14							\n\t"
-			"popq %%r13							\n\t"
-			"popq %%r12							\n\t"
 #ifdef _WIN32
-			"popq %%rsi							\n\t"
-			"popq %%rdi							\n\t"
+                        "addq $40, %rsp                                         \n\t"
+#else
+                        "addq $8, %rsp                                          \n\t"
 #endif
-			"popq %%rbp							\n\t"
-			"popq %%rbx							\n\t"
-			:
-			: [CpuRunning] "i"(offsetof(Sh4RCB, cntx.CpuRunning)),
-			  [pc] "i"(offsetof(Sh4RCB, cntx.pc)),
-			  [_SH4_TIMESLICE] "i"(SH4_TIMESLICE)
-#if !defined(__MACH__) && !defined(_ANDROID)
-			  ,
-			  "i"(&bm_GetCode),			// avoid link error with -flto
-			  "i" (&UpdateSystem_INTC)	// same
+                        "popq %r15                                                      \n\t"
+                        "popq %r14                                                      \n\t"
+                        "popq %r13                                                      \n\t"
+                        "popq %r12                                                      \n\t"
+#ifdef _WIN32
+                        "popq %rsi                                                      \n\t"
+                        "popq %rdi                                                      \n\t"
 #endif
-			: "memory"
-	);
+                        "popq %rbp                                                      \n\t"
+                        "popq %rbx                                                      \n\t"
+#ifdef _WIN32
+                        "ret                                                            \n\t"
+                        ".seh_endproc                                           \n\t"
+        );
+#else
+        );
 }
+#endif
+
+#undef _U
+#undef _S
 
 RuntimeBlockInfo* ngen_AllocateBlock(void)
 {
@@ -755,7 +768,7 @@ public:
 
             case shop_ftrv:
             	mov(rax, (uintptr_t)op.rs1.reg_ptr());
-            	if (cpu.has(Xbyak::util::Cpu::tAVX) && cpu.has(Xbyak::util::Cpu::tFMA))
+            	if (cpu.has(Xbyak::util::Cpu::tFMA))
             	{
             		movaps(xmm0, xword[rax]);					// fn[0-4]
             		mov(rax, (uintptr_t)op.rs2.reg_ptr());		// fm[0-15]
@@ -1096,19 +1109,24 @@ private:
 	template<class Ret, class... Params>
 	void GenCall(Ret(*function)(Params...))
 	{
-	   sub(rsp, 16);
-	   movd(ptr[rsp + 0], xmm8);
-	   movd(ptr[rsp + 4], xmm9);
-	   movd(ptr[rsp + 8], xmm10);
-	   movd(ptr[rsp + 12], xmm11);
+#ifndef _WIN32
+		// Need to save xmm registers as they are not preserved in linux/mach
+		sub(rsp, 16);
+		movd(ptr[rsp + 0], xmm8);
+		movd(ptr[rsp + 4], xmm9);
+		movd(ptr[rsp + 8], xmm10);
+		movd(ptr[rsp + 12], xmm11);
+#endif
 
 	   call(function);
 
+#ifndef _WIN32
 	   movd(xmm8, ptr[rsp + 0]);
 	   movd(xmm9, ptr[rsp + 4]);
 	   movd(xmm10, ptr[rsp + 8]);
 	   movd(xmm11, ptr[rsp + 12]);
 	   add(rsp, 16);
+#endif
 	}
 
 	// uses eax/rax
@@ -1209,11 +1227,13 @@ static BlockCompilerx64* compilerx64_data;
 
 void ngen_Compile_x64(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
 {
-   verify(emit_FreeSpace() >= 16 * 1024);
+	verify(CPU_RUNNING == offsetof(Sh4RCB, cntx.CpuRunning));
+	verify(PC == offsetof(Sh4RCB, cntx.pc));
+	verify(emit_FreeSpace() >= 16 * 1024);
 
 	compilerx64_data = new BlockCompilerx64();
 
-   BlockCompilerx64 *compiler = compilerx64_data;
+	BlockCompilerx64 *compiler = compilerx64_data;
 	
 	compiler->compile(block, force_checks, reset, staging, optimise);
 

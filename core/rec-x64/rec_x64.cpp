@@ -200,9 +200,7 @@ public:
 		}
 		regalloc.DoAlloc(block);
 
-		mov(rax, (size_t)&cycle_counter);
-
-		sub(dword[rax], block->guest_cycles);
+		sub(dword[rip + &cycle_counter], block->guest_cycles);
 
 #ifdef _WIN32
 		sub(rsp, 0x28);		// 32-byte shadow space + 8 byte alignment
@@ -338,10 +336,7 @@ public:
 					   if (op.rs3.is_imm())
 						   add(call_regs[0], op.rs3._imm);
 					   else
-					   {
-						   shil_param_to_host_reg(op.rs3, edx);
-						   add(call_regs[0], edx);
-					   }
+							add(call_regs[0], regalloc.MapRegister(op.rs3));
 				   }
 
 				   if (size == 1) {
@@ -390,10 +385,7 @@ public:
 					if (op.rs3.is_imm())
 						add(call_regs[0], op.rs3._imm);
 					else
-					{
-						shil_param_to_host_reg(op.rs3, edx);	// edx is call_regs[1] on win32 so it's safe here
-						add(call_regs[0], edx);
-					}
+						add(call_regs[0], regalloc.MapRegister(op.rs3));
 				}
 
                   if (size != 8)
@@ -750,6 +742,7 @@ public:
 					mov(rax, (size_t)op.rs2.reg_ptr());
 					mulps(regalloc.MapXRegister(op.rd), dword[rax]);
 					const Xbyak::Xmm &rd = regalloc.MapXRegister(op.rd);
+					// Only first-generation 64-bit CPUs lack SSE3 support
 					if (cpu.has(Xbyak::util::Cpu::tSSE3))
 					{
 						haddps(rd, rd);
@@ -768,6 +761,7 @@ public:
 
             case shop_ftrv:
             	mov(rax, (uintptr_t)op.rs1.reg_ptr());
+#if 0	// vfmadd231ps and vmulps cause rounding problems
             	if (cpu.has(Xbyak::util::Cpu::tFMA))
             	{
             		movaps(xmm0, xword[rax]);					// fn[0-4]
@@ -785,27 +779,13 @@ public:
             		movaps(xword[rax], xmm2);
             	}
             	else
+#endif
             	{
-            		if (cpu.has(Xbyak::util::Cpu::tSSE2))
-            		{
-            			movaps(xmm3, xword[rax]);                   //xmm0=vector
-            			pshufd(xmm0, xmm3, 0);                      //xmm0={v0}
-            			pshufd(xmm1, xmm3, 0x55);                   //xmm1={v1}
-            			pshufd(xmm2, xmm3, 0xaa);                   //xmm2={v2}
-            			pshufd(xmm3, xmm3, 0xff);                   //xmm3={v3}
-            		}
-            		else
-            		{
-            			movaps(xmm0, xword[rax]);                   //xmm0=vector
-
-            			movaps(xmm3, xmm0);                         //xmm3=vector
-            			shufps(xmm0, xmm0, 0);                      //xmm0={v0}
-            			movaps(xmm1, xmm3);                         //xmm1=vector
-            			movaps(xmm2, xmm3);                         //xmm2=vector
-            			shufps(xmm3, xmm3, 0xff);                   //xmm3={v3}
-            			shufps(xmm1, xmm1, 0x55);                   //xmm1={v1}
-            			shufps(xmm2, xmm2, 0xaa);                   //xmm2={v2}
-            		}
+            		movaps(xmm3, xword[rax]);                   //xmm0=vector
+            		pshufd(xmm0, xmm3, 0);                      //xmm0={v0}
+            		pshufd(xmm1, xmm3, 0x55);                   //xmm1={v1}
+            		pshufd(xmm2, xmm3, 0xaa);                   //xmm2={v2}
+            		pshufd(xmm3, xmm3, 0xff);                   //xmm3={v3}
 
             		//do the matrix mult !
             		mov(rax, (uintptr_t)op.rs2.reg_ptr());

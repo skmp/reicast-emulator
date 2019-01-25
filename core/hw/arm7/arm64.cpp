@@ -201,7 +201,7 @@ void armv_bic(ARM::eReg regd, ARM::eReg regn, u32 imm)
 }
 
 #if 0
-static class android_buf : public std::stringbuf
+class android_buf : public std::stringbuf
 {
 public:
 	virtual int sync() override {

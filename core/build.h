@@ -233,7 +233,7 @@
 #endif
 
 #ifndef FEAT_DSPREC
-	#if HOST_CPU == CPU_X86
+	#if HOST_CPU == CPU_X86 || HOST_CPU == CPU_ARM64
 		#define FEAT_DSPREC DYNAREC_JIT
 	#else
 		#define FEAT_DSPREC DYNAREC_NONE

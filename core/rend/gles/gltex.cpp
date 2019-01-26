@@ -609,7 +609,7 @@ void ReadRTTBuffer() {
 					break;
 				case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
 					for (u32 c = 0; c < w; c++) {
-						*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] >= fb_alpha_threshold ? 0x8000 : 0);
+						*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] > fb_alpha_threshold ? 0x8000 : 0);
 						p += 4;
 					}
 					break;
@@ -638,7 +638,7 @@ void ReadRTTBuffer() {
 
     //dumpRtTexture(fb_rtt.TexAddr, w, h);
     
-    if (w > 1024 || h > 1024) {
+    if (w > 1024 || h > 1024 || settings.rend.RenderToTextureBuffer) {
     	glcache.DeleteTextures(1, &fb_rtt.tex);
     }
     else

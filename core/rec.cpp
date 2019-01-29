@@ -29,6 +29,7 @@ void ngen_init(void)
          ngen_CC_Param = ngen_CC_Param_x86;
          ngen_CC_Finish = ngen_CC_Finish_x86;
 
+         break;
 #elif FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_ARM
          extern void ngen_init_arm(void);
          extern void ngen_Compile_arm(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise);
@@ -43,6 +44,8 @@ void ngen_init(void)
          ngen_CC_Call = ngen_CC_Call_arm;
          ngen_CC_Param = ngen_CC_Param_arm;
          ngen_CC_Finish = ngen_CC_Finish_arm;
+
+         break;
 #elif FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_ARM64
          extern void ngen_init_arm64(void);
          extern void ngen_Compile_arm64(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise);
@@ -57,6 +60,8 @@ void ngen_init(void)
          ngen_CC_Call = ngen_CC_Call_arm64;
          ngen_CC_Param = ngen_CC_Param_arm64;
          ngen_CC_Finish = ngen_CC_Finish_arm64;
+
+         break;
 #elif FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64
          extern void ngen_Compile_x64(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise);
          extern void ngen_CC_Start_x64(shil_opcode* op);
@@ -69,6 +74,8 @@ void ngen_init(void)
          ngen_CC_Call = ngen_CC_Call_x64;
          ngen_CC_Param = ngen_CC_Param_x64;
          ngen_CC_Finish = ngen_CC_Finish_x64;
+
+         break;
 #elif defined(TARGET_NO_JIT)
          /* we want this to fall through */
 #else

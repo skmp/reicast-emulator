@@ -170,7 +170,7 @@ else ifneq (,$(findstring rpi,$(platform)))
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm
 	HAVE_GENERIC_JIT = 0
-	CPUFLAGS += -DLOW_END
+	CORE_DEFINES += -DLOW_END
 
 # Classic Platforms #####################
 # Platform affix = classic_<ISA>_<µARCH>
@@ -214,7 +214,7 @@ else ifeq ($(platform), classic_armv7_a7)
 	PLATFORM_EXT := unix
 	WITH_DYNAREC = arm
 	HAVE_GENERIC_JIT = 0
-	CPUFLAGS += -DLOW_END
+	CORE_DEFINES += -DLOW_END
 #########################################
 # (armv8 a35, hard point, neon based) ###
 # PlayStation Classic
@@ -255,7 +255,7 @@ else ifeq ($(platform), classic_armv8_a35)
 	PLATFORM_EXT := unix
 	WITH_DYNAREC = arm
 	HAVE_GENERIC_JIT = 0
-	CPUFLAGS += -DLOW_END
+	CORE_DEFINES += -DLOW_END
 #########################################
 
 # RockPro64

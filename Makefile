@@ -170,12 +170,13 @@ else ifneq (,$(findstring rpi,$(platform)))
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm
 	HAVE_GENERIC_JIT = 0
+	CPUFLAGS += -DLOW_END
 
-# Classic Platforms ####################
+# Classic Platforms #####################
 # Platform affix = classic_<ISA>_<µARCH>
 # Help at https://modmyclassic.com/comp
-
-# (armv7 a7, hard point, neon based) ### 
+#########################################
+# (armv7 a7, hard point, neon based) ####
 # NESC, SNESC, C64 mini 
 else ifeq ($(platform), classic_armv7_a7)
 	EXT    ?= so
@@ -213,7 +214,49 @@ else ifeq ($(platform), classic_armv7_a7)
 	PLATFORM_EXT := unix
 	WITH_DYNAREC = arm
 	HAVE_GENERIC_JIT = 0
-#######################################
+	CPUFLAGS += -DLOW_END
+#########################################
+# (armv8 a35, hard point, neon based) ###
+# PlayStation Classic
+else ifeq ($(platform), classic_armv8_a35)
+	EXT    ?= so
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+	SHARED := -shared -Wl,--version-script=link.T
+	fpic = -fPIC
+	LIBS += -lrt
+	ARM_FLOAT_ABI_HARD = 1
+	FORCE_GLES = 1
+	SINGLE_PREC_FLAGS = 1
+	HAVE_LTCG = 0
+	HAVE_OPENMP = 0
+	CFLAGS += -Ofast \
+	-flto=4 -fwhole-program -fuse-linker-plugin \
+	-fdata-sections -ffunction-sections -Wl,--gc-sections \
+	-fno-stack-protector -fno-ident -fomit-frame-pointer \
+	-falign-functions=1 -falign-jumps=1 -falign-loops=1 \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-unroll-loops \
+	-fmerge-all-constants -fno-math-errno \
+	-marm -mtune=cortex-a35 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+	CXXFLAGS += $(CFLAGS)
+	ASFLAGS += $(CFLAGS)
+	LDFLAGS += -marm -mtune=cortex-a35 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+	FORCE_GLES=1
+	ifeq ($(shell echo `$(CC) -dumpversion` "< 4.9" | bc -l), 1)
+		CFLAGS += -march=armv8-a
+		LDFLAGS += -march=armv8-a
+	else
+		CFLAGS += -march=armv8-a
+		LDFLAGS += -march=armv8-a
+		# If gcc is 5.0 or later
+		ifeq ($(shell echo `$(CC) -dumpversion` ">= 5" | bc -l), 1)
+			LDFLAGS += -static-libgcc -static-libstdc++
+		endif
+	endif
+	PLATFORM_EXT := unix
+	WITH_DYNAREC = arm
+	HAVE_GENERIC_JIT = 0
+	CPUFLAGS += -DLOW_END
+#########################################
 
 # RockPro64
 else ifeq ($(platform), rockpro64)

@@ -325,15 +325,23 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
     	 "reicast_alpha_sorting",
+#ifdef LOW_END
+         "Alpha sorting; per-strip (fast, least accurate)|per-triangle (normal)",
+#else
 #ifdef HAVE_OIT
          "Alpha sorting; per-triangle (normal)|per-strip (fast, least accurate)|per-pixel (accurate)",
 #else
          "Alpha sorting; per-triangle (normal)|per-strip (fast, least accurate)",
 #endif
+#endif
       },
       {
          "reicast_gdrom_fast_loading",
-         "GDROM Fast Loading (inaccurate); disabled|enabled",
+#ifdef LOW_END
+         "GDROM Fast Loading (inaccurate); enabled|disabled",
+#else
+         "GDROM Fast Loading (inaccurate); disabled|enabled",	
+#endif
       },
       {
          "reicast_mipmapping",
@@ -353,11 +361,19 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_cable_type",
+#ifdef LOW_END
+         "Cable type; VGA (RGB)|TV (RGB)|TV (Composite)",	
+#else
          "Cable type; TV (RGB)|TV (Composite)|VGA (RGB)",
+#endif
       },
       {
          "reicast_broadcast",
-         "Broadcast; PAL_M|PAL_N|NTSC|PAL|Default",
+#ifdef LOW_END
+         "Broadcast; Default|PAL_M|PAL_N|NTSC|PAL",
+#else
+         "Broadcast; PAL_M|PAL_N|NTSC|PAL|Default",	
+#endif
       },
       {
          "reicast_framerate",
@@ -373,7 +389,11 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_div_matching",
-         "DIV matching (performance, less accurate); disabled|enabled|auto",
+#ifdef LOW_END
+         "DIV matching (performance, less accurate); enabled|disabled|auto",
+#else
+         "DIV matching (performance, less accurate); disabled|enabled|auto",	
+#endif
       },
       {
          "reicast_analog_stick_deadzone",
@@ -389,7 +409,11 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_enable_dsp",
+#ifdef LOW_END
+         "Enable DSP; disabled|enabled",
+#else
          "Enable DSP; enabled|disabled",
+#endif
       },
 #ifdef HAVE_TEXUPSCALE
       {
@@ -416,7 +440,11 @@ void retro_set_environment(retro_environment_t cb)
 #if !defined(TARGET_NO_THREADS)
       {
          "reicast_threaded_rendering",
-         "Threaded rendering (restart); disabled|enabled",
+#ifdef LOW_END
+         "Threaded rendering (restart); enabled|disabled",
+#else
+				 "Threaded rendering (restart); disabled|enabled",
+#endif
       },
       {
          "reicast_synchronous_rendering",

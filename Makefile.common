@@ -80,6 +80,7 @@ SOURCES_CXX := \
 					$(CORE_DIR)/core/imgread/cdi.cpp \
 					$(CORE_DIR)/core/imgread/chd.cpp \
 					$(CORE_DIR)/core/imgread/common.cpp \
+					$(CORE_DIR)/core/imgread/cue.cpp \
 					$(CORE_DIR)/core/imgread/gdi.cpp \
 					\
 					$(CORE_DIR)/core/nullDC.cpp \

@@ -3,6 +3,7 @@
 Disc* chd_parse(const wchar* file);
 Disc* gdi_parse(const wchar* file);
 Disc* cdi_parse(const wchar* file);
+Disc* cue_parse(const wchar* file);
 
 u32 NullDriveDiscType;
 Disc* disc;
@@ -12,6 +13,7 @@ Disc*(*drivers[])(const wchar* path)=
 	chd_parse,
 	gdi_parse,
 	cdi_parse,
+	cue_parse,
 	0
 };
 

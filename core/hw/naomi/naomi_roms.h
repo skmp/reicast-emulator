@@ -3222,8 +3222,8 @@ Games[] =
     },
     // Virtua NBA (USA)
     {
-		"virnba",
-		NULL,
+        "virnba",
+        NULL,
         0x0b000000,
         0xffffffff, // not populated
         NULL,
@@ -3258,9 +3258,9 @@ Games[] =
     // Virtua NBA
     {
         "virnbao",
-		"virnba",
+        "virnba",
         0x0b000000,
-        0xffffffff, // not populated
+        0x28068b58,
         NULL,
         M2,
         REGION_AUSTRALIA,
@@ -3293,9 +3293,9 @@ Games[] =
     // Virtua NBA (prototype)
     {
         "virnbap",
-		"virnba",
+        "virnba",
         0x0b000000,
-        0xffffffff, // not populated
+        0x28068b58,
         NULL,
         M2,
         REGION_AUSTRALIA,
@@ -3322,6 +3322,41 @@ Games[] =
             { "mpr-22946.ic19s", 0x9800000, 0x0800000 },
             { "mpr-22947.ic20s", 0xa000000, 0x0800000 },
             { "mpr-22948.ic21s", 0xa800000, 0x0800000 },
+            { NULL, 0, 0 },
+        }
+    },
+    // Virtua NBA (prototype, 15.11)
+    {
+        "virnbapa",
+        "virnba",
+        0x0b000000,
+        0x28068b58,
+        NULL,
+        M2,
+        REGION_AUSTRALIA,
+        {
+            { "11-15.ic22",      0x0000000, 0x0400000 },
+            { "rom1.ic1s",       0x0800000, 0x0800000 },
+            { "rom2.ic2s",       0x1000000, 0x0800000 },
+            { "rom3.ic3s",       0x1800000, 0x0800000 },
+            { "rom4.ic4s",       0x2000000, 0x0800000 },
+            { "rom5.ic5s",       0x2800000, 0x0800000 },
+            { "rom6.ic6s",       0x3000000, 0x0800000 },
+            { "rom7.ic7s",       0x3800000, 0x0800000 },
+            { "rom8.ic8s",       0x4000000, 0x0800000 },
+            { "rom9.ic9s",       0x4800000, 0x0800000 },
+            { "rom10.ic10s",     0x5000000, 0x0800000 },
+            { "rom11.ic11s",     0x5800000, 0x0800000 },
+            { "rom12.ic12s",     0x6000000, 0x0800000 },
+            { "rom13.ic13s",     0x6800000, 0x0800000 },
+            { "rom14.ic14s",     0x7000000, 0x0800000 },
+            { "rom15.ic15s",     0x7800000, 0x0800000 },
+            { "rom16.ic16s",     0x8000000, 0x0800000 },
+            { "rom17.ic17s",     0x8800000, 0x0800000 },
+            { "rom18.ic18s",     0x9000000, 0x0800000 },
+            { "rom19.ic19s",     0x9800000, 0x0800000 },
+            { "rom20.ic20s",     0xa000000, 0x0800000 },
+            { "rom21.ic21s",     0xa800000, 0x0800000 },
             { NULL, 0, 0 },
         }
     },
@@ -4363,13 +4398,28 @@ Games[] =
         },
         "gdl-0034",
     },
-        // Lupin The Third - The Shooting (GDS-0018)
+    // Lupin The Third - The Shooting (Rev A) (GDS-0018A)
     {
-		"lupinsho",
-		NULL,
+        "lupinsho",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
+        GD,
+        REGION_AUSTRALIA,
+        {
+            { "317-0325-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0018a",
+    },
+    // Lupin The Third - The Shooting (GDS-0018)
+    {
+        "lupinshoo",
+        "lupinsho",
+        0x4000,
+        0,
+        "naomi",
         GD,
         REGION_AUSTRALIA,
         {

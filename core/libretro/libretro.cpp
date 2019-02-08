@@ -1890,6 +1890,7 @@ bool retro_unserialize(const void * data, size_t size)
 
     result = dc_unserialize(&data_ptr, &total_size, size) ;
 
+    dsp.dyndirty = true;
     sh4_sched_ffts();
     CalculateSync();
 

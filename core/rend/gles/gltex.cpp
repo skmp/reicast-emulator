@@ -663,12 +663,12 @@ void ReadRTTBuffer() {
     	TextureCacheData *texture_data = getTextureCacheData(tsp, tcw);
     	if (texture_data->texID != 0)
     		glcache.DeleteTextures(1, &texture_data->texID);
-    	else {
+    	else
     		texture_data->Create(false);
-    		texture_data->lock_block = libCore_vramlock_Lock(texture_data->sa_tex, texture_data->sa + texture_data->size - 1, texture_data);
-    	}
     	texture_data->texID = fb_rtt.tex;
     	texture_data->dirty = 0;
+    	if (texture_data->lock_block == NULL)
+    		texture_data->lock_block = libCore_vramlock_Lock(texture_data->sa_tex, texture_data->sa + texture_data->size - 1, texture_data);
     }
     fb_rtt.tex = 0;
 

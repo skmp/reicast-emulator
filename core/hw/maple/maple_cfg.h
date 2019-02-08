@@ -60,12 +60,7 @@ struct IMapleConfigMap
 	virtual ~IMapleConfigMap() {}
 };
 
-#ifndef _ANDROID
 void mcfg_CreateDevices();
-#else
-void mcfg_CreateDevices();
-#endif
-
 void mcfg_Create(MapleDeviceType type,u32 bus,u32 port, int player_num = -1);
 void mcfg_DestroyDevices();
 void mcfg_DestroyDevice(int i, int j);

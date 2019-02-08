@@ -22,6 +22,7 @@
 #include "../hw/pvr/spg.h"
 #include "../hw/naomi/naomi_cart.h"
 #include "../imgread/common.h"
+#include "../hw/aica/dsp.h"
 
 #if defined(_XBOX) || defined(_WIN32)
 char slash = '\\';
@@ -1890,6 +1891,7 @@ bool retro_unserialize(const void * data, size_t size)
 
     result = dc_unserialize(&data_ptr, &total_size, size) ;
 
+    dsp.dyndirty = true;
     sh4_sched_ffts();
     CalculateSync();
 

@@ -41,11 +41,11 @@ ifdef CPP_REC
     RZDCY_MODULES += rec-cpp/
 endif
 
-ifndef NO_REND
+#ifndef NO_REND
     RZDCY_MODULES += rend/gles/
-else
+#else
     RZDCY_MODULES += rend/norend/
-endif
+#endif
 
 ifdef HAS_SOFTREND
 	RZDCY_MODULES += rend/soft/

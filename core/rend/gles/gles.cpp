@@ -397,7 +397,7 @@ int screen_height;
 	// Create a basic GLES context
 	bool gl_init(void* wind, void* disp)
 	{
-	#if !defined(_ANDROID)
+	#if !defined(_ANDROID) && !defined(TARGET_SWITCH)
 		gl.setup.native_wind=(EGLNativeWindowType)wind;
 		gl.setup.native_disp=(EGLNativeDisplayType)disp;
 
@@ -1898,7 +1898,7 @@ struct glesrend : Renderer
 
 	void Present() { gl_swap(); glViewport(0, 0, screen_width, screen_height); }
 
-	void DrawOSD() { OSD_DRAW(); }
+	void DrawOSD() { /*OSD_DRAW();*/ }
 
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
 		return gl_GetTexture(tsp, tcw);

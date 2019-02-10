@@ -449,6 +449,9 @@ bool rend_init()
 			renderer = rend_softrend();
 			break;
 #endif
+		case 3:
+			renderer	 = rend_norend();
+			break;
 	}
 
 #endif
@@ -459,7 +462,7 @@ bool rend_init()
   #else
     if (!renderer->Init()) die("rend->init() failed\n");
 
-    renderer->Resize(640, 480);
+    renderer->Resize(1280, 720);
   #endif
 #endif
 

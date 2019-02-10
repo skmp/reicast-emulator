@@ -4,10 +4,12 @@
 #include <vector>
 #include <string.h>
 
-#if HOST_OS!=OS_WINDOWS
-#include <pthread.h>
-#else
+#if HOST_OS==OS_WINDOWS
 #include <Windows.h>
+#elif HOST_OS==OS_HORIZON
+#include <switch.h>
+#else
+#include <pthread.h>
 #endif
 
 
@@ -205,50 +207,64 @@ public :
 	void Wait();	//Wait for signal , then reset[if auto]
 };
 
-class cMutex
-{
-private:
 #if HOST_OS==OS_WINDOWS
+class cMutex {
+private:
 	CRITICAL_SECTION cs;
-#else
-	pthread_mutex_t mutx;
-#endif
 
 public :
 	bool state;
-	cMutex()
-	{
-#if HOST_OS==OS_WINDOWS
+	cMutex() {
 		InitializeCriticalSection(&cs);
-#else
-		pthread_mutex_init ( &mutx, NULL);
-#endif
 	}
-	~cMutex()
-	{
-#if HOST_OS==OS_WINDOWS
+	~cMutex() {
 		DeleteCriticalSection(&cs);
-#else
-		pthread_mutex_destroy(&mutx);
-#endif
 	}
-	void Lock()
-	{
-#if HOST_OS==OS_WINDOWS
+	void Lock() {
 		EnterCriticalSection(&cs);
-#else
-		pthread_mutex_lock(&mutx);
-#endif
 	}
-	void Unlock()
-	{
-#if HOST_OS==OS_WINDOWS
+	void Unlock() {
 		LeaveCriticalSection(&cs);
-#else
-		pthread_mutex_unlock(&mutx);
-#endif
 	}
 };
+#elif HOST_OS==OS_HORIZON
+class cMutex {
+private:
+	RMutex m;
+public :
+	cMutex() {
+		rmutexInit(&m);
+	}
+	~cMutex() {}
+	void Lock() {
+		rmutexLock(&m);
+	}
+	void Unlock() {
+		rmutexUnlock (&m);
+	}
+};
+#else
+class cMutex {
+private:
+	pthread_mutex_t mutx;
+
+public :
+	bool state;
+	cMutex() {
+		pthread_mutex_init ( &mutx, NULL);
+	}
+	~cMutex() {
+		pthread_mutex_destroy(&mutx);
+	}
+	void Lock() {
+		pthread_mutex_lock(&mutx);
+	}
+	void Unlock() {
+		pthread_mutex_unlock(&mutx);
+	}
+};
+
+#endif
 
 //Set the path !
 void set_user_config_dir(const string& dir);

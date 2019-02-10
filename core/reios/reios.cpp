@@ -624,7 +624,7 @@ void reios_boot() {
 		}
 		else {
 			verify(DC_PLATFORM == DC_PLATFORM_NAOMI);
-			
+			#ifdef TARGET_NAOMI
 			u32* sz = (u32*)naomi_cart_GetPtr(0x368, 4);
 			if (!sz) {
 				msgboxf("Naomi boot failure", MBX_ICONERROR);
@@ -637,6 +637,9 @@ void reios_boot() {
 			WriteMemBlock_nommu_ptr(0x0c020000, (u32*)naomi_cart_GetPtr(0, size), size);
 
 			reios_setuo_naomi(0x0c021000);
+			#else
+			die("Naomi support was not built-in");
+			#endif
 		}
 	}
 }

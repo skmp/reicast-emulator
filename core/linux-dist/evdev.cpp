@@ -1,3 +1,5 @@
+#if defined(USE_EVDEV)
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <linux/input.h>
@@ -11,7 +13,6 @@
 #include <map>
 #include <dlfcn.h>
 
-#if defined(USE_EVDEV)
 	bool libevdev_tried = false;
 	bool libevdev_available = false;
 	typedef int (*libevdev_func1_t)(int, const char*);

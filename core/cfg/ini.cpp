@@ -3,6 +3,8 @@
 
 wchar* trim_ws(wchar* str);
 
+namespace emuconf {
+
 /* ConfigEntry */
 
 string ConfigEntry::get_string()
@@ -281,3 +283,5 @@ void ConfigFile::save(FILE* file)
 		fputs("\n", file);
 	}
 }
+
+} // namespace emuconf

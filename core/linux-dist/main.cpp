@@ -448,7 +448,7 @@ int push_vmu_screen(u8* buffer) { return 0; }
 
 void os_DebugBreak()
 {
-	#if !defined(TARGET_EMSCRIPTEN)
+	#if !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_SWITCH)
 		raise(SIGTRAP);
 	#else
 		printf("DEBUGBREAK!\n");

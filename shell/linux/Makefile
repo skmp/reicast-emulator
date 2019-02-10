@@ -135,6 +135,28 @@ else ifneq (,$(findstring lincpp,$(platform)))
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_JIT
     CXXFLAGS += -fexceptions -std=gnu++11
 
+# Nintendo Switch
+else ifneq (,$(findstring switch,$(platform)))
+    NO_REC := 1
+    NOT_ARM := 1
+    USE_X11 := 1
+    USE_SDL := 1
+    USE_GLES := 1
+    ARCH  :=  -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE
+    CFLAGS += -D TARGET_SWITCH -D TARGET_NO_REC -D TARGET_NO_JIT $(ARCH) -D__SWITCH__
+    CFLAGS +=-I/home/david/switch-toolchain/devkitpro/libnx/include -I/home/david/switch-toolchain/devkitpro/portlibs/switch/include/ -D MESA_EGL_NO_X11_HEADERS  
+    CFLAGS += -D TARGET_NO_EXCEPTIONS -D TARGET_NO_NVMEM -D TARGET_NO_WEBUI -D TARGET_NO_COREIO_HTTP -D TARGET_NO_NIXPROF
+    CXXFLAGS += -fno-exceptions -std=gnu++11 -fno-rtti
+    CC_PREFIX ?= /home/david/switch-toolchain/devkitpro/devkitA64/bin/aarch64-none-elf-
+    #CFLAGS += -D TARGET_GCW0 -D TARGET_NO_REC -fsingle-precision-constant
+    LIBS += `/home/david/switch-toolchain/devkitpro/portlibs/switch/bin/sdl2-config --libs`
+    LDFLAGS += -specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH)
+    undefine WEBUI
+    undefine USE_X11
+    undefine USE_OSS
+    undefine USE_ALSA
+    undefine USE_EVDEV
+
 # Raspberry Pi 2
 else ifneq (,$(findstring rpi,$(platform)))
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
@@ -247,8 +269,10 @@ CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
-LIBS += -lm -lrt -ldl
-LIBS  += -lpthread
+LIBS += -lm # -lrt -ldl
+ifeq (,$(findstring switch,$(platform)))
+    LIBS  += -lpthread
+endif
 
 PREFIX ?= /usr/local
 MAN_DIR ?= ${PREFIX}/share/man/man1

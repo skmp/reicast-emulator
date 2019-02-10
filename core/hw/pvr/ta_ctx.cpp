@@ -15,7 +15,7 @@ tad_context ta_tad;
 TA_context*  vd_ctx;
 rend_context vd_rc;
 
-#if ANDROID
+#if defined(ANDROID) || defined(TARGET_SWITCH)
 #include <errno.h>
 #include <malloc.h>
 

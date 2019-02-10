@@ -1,6 +1,8 @@
 #include "naomi_cart.h"
 #include "cfg/cfg.h"
 
+#if DC_PLATFORM == DC_PLATFORM_NAOMI
+
 u8* RomPtr;
 u32 RomSize;
 
@@ -253,3 +255,5 @@ void* naomi_cart_GetPtr(u32 offset, u32 size) {
 
 	return &RomPtr[offset];
 }
+
+#endif

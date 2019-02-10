@@ -12,7 +12,7 @@
 string cfgPath;
 bool save_config = true;
 
-ConfigFile cfgdb;
+emuconf::ConfigFile cfgdb;
 
 void savecfgf()
 {

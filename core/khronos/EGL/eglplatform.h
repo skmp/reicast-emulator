@@ -93,6 +93,12 @@ typedef struct ANativeWindow*           EGLNativeWindowType;
 typedef struct egl_native_pixmap_t*     EGLNativePixmapType;
 typedef void*                           EGLNativeDisplayType;
 
+#elif defined(MESA_EGL_NO_X11_HEADERS)
+
+typedef void            *EGLNativeDisplayType;
+typedef khronos_uintptr_t EGLNativePixmapType;
+typedef khronos_uintptr_t EGLNativeWindowType;
+
 #elif defined(__unix__)
 
 /* X11 (tentative)  */

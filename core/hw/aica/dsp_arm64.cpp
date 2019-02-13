@@ -53,6 +53,9 @@ public:
 			Stp(xzr, xzr, MemOperand(x0, 48));
 			Ret();
 			FinalizeCode();
+#ifdef _ANDROID
+			Arm64CacheFlush(GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
+#endif
 
 			return;
 		}

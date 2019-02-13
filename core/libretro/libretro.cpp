@@ -317,7 +317,7 @@ void retro_set_environment(retro_environment_t cb)
 #endif
       {
          "reicast_internal_resolution",
-#ifdef LOW_END
+#ifdef LOW_RES
          "Internal resolution (restart); 320x240|640x480|1280x960|1440x1080|1920x1440|2560x1920|2880x2160|3200x2400|3840x2880|4480x3360|5120x3840|5760x4320|6400x4800|7040x5280|7680x5760|8320x6240|8960x6720|9600x7200|10240x7680|10880x8160|11520x8640|12160x9120|12800x9600",
 #else
          "Internal resolution (restart); 640x480|320x240|1280x960|1440x1080|1920x1440|2560x1920|2880x2160|3200x2400|3840x2880|4480x3360|5120x3840|5760x4320|6400x4800|7040x5280|7680x5760|8320x6240|8960x6720|9600x7200|10240x7680|10880x8160|11520x8640|12160x9120|12800x9600",	
@@ -373,11 +373,7 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_broadcast",
-#ifdef LOW_END
          "Broadcast; Default|PAL_M|PAL_N|NTSC|PAL",
-#else
-         "Broadcast; PAL_M|PAL_N|NTSC|PAL|Default",	
-#endif
       },
       {
          "reicast_framerate",
@@ -444,11 +440,7 @@ void retro_set_environment(retro_environment_t cb)
 #if !defined(TARGET_NO_THREADS)
       {
          "reicast_threaded_rendering",
-#ifdef LOW_END
          "Threaded rendering (restart); enabled|disabled",
-#else
-				 "Threaded rendering (restart); disabled|enabled",
-#endif
       },
       {
          "reicast_synchronous_rendering",

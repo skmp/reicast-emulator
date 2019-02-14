@@ -449,6 +449,10 @@ void retro_set_environment(retro_environment_t cb)
       },
 #endif
       {
+         "reicast_frame_skipping",
+         "Frame skipping; disabled|1|2|3|4|5|6",
+      },
+      {
          "reicast_enable_purupuru",
          "Purupuru Pack (restart); enabled|disabled"
       },
@@ -936,6 +940,18 @@ static void update_variables(bool first_startup)
    }
    else
 	   settings.pvr.SynchronousRendering = 0;
+
+   var.key = "reicast_frame_skipping";
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+	   if (!strcmp("disabled", var.value))
+		   settings.pvr.ta_skip = 0;
+	   else {
+		   settings.pvr.ta_skip = max(0, min(6, var.value[0] - '0'));
+	   }
+   }
+   else
+	   settings.pvr.ta_skip = 0;
 
    var.key = "reicast_enable_purupuru";
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)

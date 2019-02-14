@@ -318,7 +318,11 @@ void retro_set_environment(retro_environment_t cb)
 #endif
       {
          "reicast_internal_resolution",
-         "Internal resolution (restart); 640x480|320x240|1280x960|1440x1080|1920x1440|2560x1920|2880x2160|3200x2400|3840x2880|4480x3360|5120x3840|5760x4320|6400x4800|7040x5280|7680x5760|8320x6240|8960x6720|9600x7200|10240x7680|10880x8160|11520x8640|12160x9120|12800x9600",
+#ifdef LOW_RES
+         "Internal resolution (restart); 320x240|640x480|1280x960|1440x1080|1920x1440|2560x1920|2880x2160|3200x2400|3840x2880|4480x3360|5120x3840|5760x4320|6400x4800|7040x5280|7680x5760|8320x6240|8960x6720|9600x7200|10240x7680|10880x8160|11520x8640|12160x9120|12800x9600",
+#else
+         "Internal resolution (restart); 640x480|320x240|1280x960|1440x1080|1920x1440|2560x1920|2880x2160|3200x2400|3840x2880|4480x3360|5120x3840|5760x4320|6400x4800|7040x5280|7680x5760|8320x6240|8960x6720|9600x7200|10240x7680|10880x8160|11520x8640|12160x9120|12800x9600",	
+#endif
       },
       {
          "reicast_screen_rotation",
@@ -326,15 +330,23 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
     	 "reicast_alpha_sorting",
+#ifdef LOW_END
+         "Alpha sorting; per-strip (fast, least accurate)|per-triangle (normal)",
+#else
 #ifdef HAVE_OIT
          "Alpha sorting; per-triangle (normal)|per-strip (fast, least accurate)|per-pixel (accurate)",
 #else
          "Alpha sorting; per-triangle (normal)|per-strip (fast, least accurate)",
 #endif
+#endif
       },
       {
          "reicast_gdrom_fast_loading",
-         "GDROM Fast Loading (inaccurate); disabled|enabled",
+#ifdef LOW_END
+         "GDROM Fast Loading (inaccurate); enabled|disabled",
+#else
+         "GDROM Fast Loading (inaccurate); disabled|enabled",	
+#endif
       },
       {
          "reicast_mipmapping",
@@ -354,11 +366,15 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_cable_type",
+#ifdef LOW_END
+         "Cable type; VGA (RGB)|TV (RGB)|TV (Composite)",	
+#else
          "Cable type; TV (RGB)|TV (Composite)|VGA (RGB)",
+#endif
       },
       {
          "reicast_broadcast",
-         "Broadcast; PAL_M|PAL_N|NTSC|PAL|Default",
+         "Broadcast; Default|PAL_M|PAL_N|NTSC|PAL",
       },
       {
          "reicast_framerate",
@@ -374,7 +390,11 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_div_matching",
-         "DIV matching (performance, less accurate); disabled|enabled|auto",
+#ifdef LOW_END
+         "DIV matching (performance, less accurate); enabled|disabled|auto",
+#else
+         "DIV matching (performance, less accurate); disabled|enabled|auto",	
+#endif
       },
       {
          "reicast_analog_stick_deadzone",
@@ -390,7 +410,11 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_enable_dsp",
+#ifdef LOW_END
+         "Enable DSP; disabled|enabled",
+#else
          "Enable DSP; enabled|disabled",
+#endif
       },
 #ifdef HAVE_TEXUPSCALE
       {
@@ -417,7 +441,7 @@ void retro_set_environment(retro_environment_t cb)
 #if !defined(TARGET_NO_THREADS)
       {
          "reicast_threaded_rendering",
-         "Threaded rendering (restart); disabled|enabled",
+         "Threaded rendering (restart); enabled|disabled",
       },
       {
          "reicast_synchronous_rendering",

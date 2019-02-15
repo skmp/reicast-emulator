@@ -276,6 +276,24 @@ else ifeq ($(platform), rockpro64)
 	WITH_DYNAREC=arm
 	HAVE_GENERIC_JIT = 0
 
+# Tinkerboard
+else ifeq ($(platform), tinkerboard)
+    EXT ?= so
+    TARGET := $(TARGET_NAME)_libretro.$(EXT)
+    SHARED := -shared -Wl,--version-script=link.T
+    fpic = -fPIC
+    LIBS += -lrt
+    ARM_FLOAT_ABI_HARD = 1
+    FORCE_GLES = 1
+    SINGLE_PREC_FLAGS = 1
+    CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
+    CFLAGS += -marm -mfpu=neon-vfpv4 -mtune=cortex-a17 -mfloat-abi=hard $(CPUFLAGS)
+    CXXFLAGS += -marm -mfpu=neon-vfpv4 -mtune=cortex-a17 -mfloat-abi=hard $(CPUFLAGS)
+    ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
+    PLATFORM_EXT := unix
+    WITH_DYNAREC=arm
+    HAVE_GENERIC_JIT = 0
+		
 # ODROIDs
 else ifneq (,$(findstring odroid,$(platform)))
 	EXT    ?= so

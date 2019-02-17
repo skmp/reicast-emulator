@@ -258,6 +258,46 @@ else ifeq ($(platform), classic_armv8_a35)
 	CORE_DEFINES += -DLOW_END -DLOW_RES
 #########################################
 
+# sun8i Allwinner H2+ / H3 
+# like Orange PI, Nano PI, Banana PI, Tritium
+else ifeq ($(platform), sun8i)
+	EXT    ?= so
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+	SHARED := -shared -Wl,--version-script=link.T
+	fpic = -fPIC
+	LIBS += -lrt
+	ARM_FLOAT_ABI_HARD = 1
+	FORCE_GLES = 1
+	SINGLE_PREC_FLAGS = 1
+	HAVE_LTCG = 0
+	HAVE_OPENMP = 0
+	CFLAGS += -Ofast \
+	-flto=4 -fwhole-program -fuse-linker-plugin \
+	-fdata-sections -ffunction-sections -Wl,--gc-sections \
+	-fno-stack-protector -fno-ident -fomit-frame-pointer \
+	-falign-functions=1 -falign-jumps=1 -falign-loops=1 \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-unroll-loops \
+	-fmerge-all-constants -fno-math-errno \
+	-marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+	CXXFLAGS += $(CFLAGS)
+	ASFLAGS += $(CFLAGS)
+	LDFLAGS += -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+	ifeq ($(shell echo `$(CC) -dumpversion` "< 4.9" | bc -l), 1)
+		CFLAGS += -march=armv7-a
+		LDFLAGS += -march=armv7-a
+	else
+		CFLAGS += -march=armv7ve
+		LDFLAGS += -march=armv7ve
+		# If gcc is 5.0 or later
+		ifeq ($(shell echo `$(CC) -dumpversion` ">= 5" | bc -l), 1)
+			LDFLAGS += -static-libgcc -static-libstdc++
+		endif
+	endif
+	PLATFORM_EXT := unix
+	WITH_DYNAREC = arm
+	HAVE_GENERIC_JIT = 0
+#######################################
+
 # RockPro64
 else ifeq ($(platform), rockpro64)
 	EXT ?= so

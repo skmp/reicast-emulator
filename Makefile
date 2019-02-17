@@ -296,6 +296,7 @@ else ifeq ($(platform), sun8i)
 	PLATFORM_EXT := unix
 	WITH_DYNAREC = arm
 	HAVE_GENERIC_JIT = 0
+	CORE_DEFINES += -DLOW_END
 #######################################
 
 # RockPro64

@@ -13,6 +13,7 @@
 #include "gdcartridge.h"
 
 extern char g_base_name[128];
+extern char g_parent_name[128];
 extern char g_roms_dir[PATH_MAX];
 
 /*
@@ -515,6 +516,8 @@ void GDCartridge::device_start()
 		Disc *gdrom = OpenDisc((gdrom_path + ".chd").c_str());
 		if (gdrom == NULL)
 			gdrom = OpenDisc((gdrom_path + ".gdi").c_str());
+		if (gdrom == NULL && g_parent_name != NULL)
+			gdrom = OpenDisc((std::string(g_roms_dir) + "/" + g_parent_name + "/" + gdrom_name + ".chd").c_str());
 		if (gdrom == NULL)
 		{
 		   printf("Naomi GD-ROM: can't open %s\n", gdrom_path.c_str());

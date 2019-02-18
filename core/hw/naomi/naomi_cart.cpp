@@ -39,6 +39,7 @@ fd_t*	RomCacheMap;
 u32		RomCacheMapCount;
 
 char naomi_game_id[33];
+char g_parent_name[128];
 
 extern RomChip sys_rom;
 extern DCFlashChip sys_nvmem_flash;		// AtomisWave BIOS is loaded there
@@ -177,6 +178,7 @@ static bool naomi_cart_LoadZip(char *filename)
 	}
 
 	struct Game *game = &Games[gameid];
+	strncpy(g_parent_name, game->parent_name, sizeof(game->parent_name));
 
 	Archive *archive = OpenArchive(filename);
 	if (archive != NULL)

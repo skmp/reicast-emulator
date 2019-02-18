@@ -178,7 +178,6 @@ static bool naomi_cart_LoadZip(char *filename)
 	}
 
 	struct Game *game = &Games[gameid];
-	strncpy(g_parent_name, game->parent_name, sizeof(game->parent_name));
 
 	Archive *archive = OpenArchive(filename);
 	if (archive != NULL)
@@ -187,6 +186,7 @@ static bool naomi_cart_LoadZip(char *filename)
 	Archive *parent_archive = NULL;
 	if (game->parent_name != NULL)
 	{
+	   strncpy(g_parent_name, game->parent_name, sizeof(game->parent_name));
 	   std::string parent_path(g_roms_dir);
 	   parent_path += "/";
 	   parent_path += game->parent_name;

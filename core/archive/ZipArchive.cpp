@@ -27,6 +27,8 @@ ZipArchive::~ZipArchive()
 
 bool ZipArchive::Open(const char* path)
 {
+	if (path_is_directory(path))
+		return false;
 	zip = zip_open(path, 0, NULL);
 	return (zip != NULL);
 }

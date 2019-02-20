@@ -354,6 +354,10 @@ else ifneq (,$(findstring odroid,$(platform)))
 		# ODROID-C1
 		CFLAGS += -mcpu=cortex-a5
 		CXXFLAGS += -mcpu=cortex-a5
+	else ifneq (,$(findstring ODROID-N2,$(BOARD)))
+    	# ODROID-N2
+		CFLAGS += -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad
+		CXXFLAGS += -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad
 	else ifneq (,$(findstring ODROID-XU3,$(BOARD)))
 		# ODROID-XU3 & -XU3 Lite
 		ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"

@@ -298,6 +298,25 @@ else ifeq ($(platform), sun8i)
 	HAVE_GENERIC_JIT = 0
 #######################################
 
+# Odroid-N2
+else ifeq ($(platform), odroid-n2)
+	EXT ?= so
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+	SHARED := -shared -Wl,--version-script=link.T
+	fpic = -fPIC
+	LIBS += -lrt
+	ARM_FLOAT_ABI_HARD = 1
+	FORCE_GLES = 1
+	SINGLE_PREC_FLAGS = 1
+    PLATCFLAGS += -DTARGET_LINUX_ARMv8
+	CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
+	CFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad $(CPUFLAGS)
+	CXXFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad $(CPUFLAGS)
+	ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
+	PLATFORM_EXT := unix
+	WITH_DYNAREC=arm64
+	HAVE_GENERIC_JIT = 0
+
 # RockPro64
 else ifeq ($(platform), rockpro64)
 	EXT ?= so
@@ -354,10 +373,6 @@ else ifneq (,$(findstring odroid,$(platform)))
 		# ODROID-C1
 		CFLAGS += -mcpu=cortex-a5
 		CXXFLAGS += -mcpu=cortex-a5
-	else ifneq (,$(findstring ODROID-N2,$(BOARD)))
-    	# ODROID-N2
-		CFLAGS += -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad
-		CXXFLAGS += -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad
 	else ifneq (,$(findstring ODROID-XU3,$(BOARD)))
 		# ODROID-XU3 & -XU3 Lite
 		ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
@@ -696,9 +711,6 @@ ifeq ($(WITH_DYNAREC), arm)
 		ifneq (,$(findstring ODROIDC,$(BOARD)))
 			# ODROID-C1
 			RZDCY_CFLAGS += -marm -mcpu=cortex-a5
-        else ifneq (,$(findstring ODROID-N2,$(BOARD)))
-            # ODROID-N2
-            RZDCY_CFLAGS += -marm -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad
 		else ifneq (,$(findstring ODROID-XU3,$(BOARD)))
 			# ODROID-XU3 & -XU3 Lite
 			ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
@@ -876,3 +888,4 @@ endif
 
 clean:
 	rm -f $(OBJECTS) $(TARGET)
+

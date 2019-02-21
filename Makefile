@@ -308,10 +308,10 @@ else ifeq ($(platform), odroid-n2)
 	ARM_FLOAT_ABI_HARD = 1
 	FORCE_GLES = 1
 	SINGLE_PREC_FLAGS = 1
-    PLATCFLAGS += -DTARGET_LINUX_ARMv8
+	PLATCFLAGS += -DTARGET_LINUX_ARMv8
 	CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
-	CFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad $(CPUFLAGS)
-	CXXFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad $(CPUFLAGS)
+	CFLAGS += -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 -mfpu=neon-fp-armv8 $(CPUFLAGS)
+	CXXFLAGS += -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 -mfpu=neon-fp-armv8 $(CPUFLAGS)
 	ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm64

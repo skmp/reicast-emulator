@@ -696,6 +696,9 @@ ifeq ($(WITH_DYNAREC), arm)
 		ifneq (,$(findstring ODROIDC,$(BOARD)))
 			# ODROID-C1
 			RZDCY_CFLAGS += -marm -mcpu=cortex-a5
+        else ifneq (,$(findstring ODROID-N2,$(BOARD)))
+            # ODROID-N2
+            RZDCY_CFLAGS += -marm -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad
 		else ifneq (,$(findstring ODROID-XU3,$(BOARD)))
 			# ODROID-XU3 & -XU3 Lite
 			ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"

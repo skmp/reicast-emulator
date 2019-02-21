@@ -857,6 +857,7 @@ CXXFLAGS   += $(fpic)
 LDFLAGS    += $(fpic)
 
 OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o) $(SOURCES_ASM:.S=.o)
+OBJECTS:=$(OBJECTS:.cc=.o)
 
 ifneq (,$(findstring msvc,$(platform)))
 	OBJOUT = -Fo

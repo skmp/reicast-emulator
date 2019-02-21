@@ -298,6 +298,24 @@ else ifeq ($(platform), sun8i)
 	HAVE_GENERIC_JIT = 0
 #######################################
 
+# Odroid-N2
+else ifeq ($(platform), odroid-n2)
+	EXT ?= so
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+	SHARED := -shared -Wl,--version-script=link.T
+	fpic = -fPIC
+	LIBS += -lrt
+	ARM_FLOAT_ABI_HARD = 0
+	FORCE_GLES = 1
+	SINGLE_PREC_FLAGS = 1
+	CPUFLAGS += -DTARGET_LINUX_ARMv8 -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
+	CFLAGS += -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 $(CPUFLAGS)
+	CXXFLAGS += -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 $(CPUFLAGS)
+	ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
+	PLATFORM_EXT := unix
+	WITH_DYNAREC=arm64
+	HAVE_GENERIC_JIT = 0
+
 # RockPro64
 else ifeq ($(platform), rockpro64)
 	EXT ?= so
@@ -839,6 +857,7 @@ CXXFLAGS   += $(fpic)
 LDFLAGS    += $(fpic)
 
 OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o) $(SOURCES_ASM:.S=.o)
+OBJECTS:=$(OBJECTS:.cc=.o)
 
 ifneq (,$(findstring msvc,$(platform)))
 	OBJOUT = -Fo
@@ -867,5 +886,9 @@ endif
 %.o: %.S
 	$(CC_AS) $(ASFLAGS) $(INCFLAGS) $< -o $@
 
+%.o: %.cc
+	$(CXX) $(INCFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
+
 clean:
 	rm -f $(OBJECTS) $(TARGET)
+

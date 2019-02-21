@@ -305,13 +305,13 @@ else ifeq ($(platform), odroid-n2)
 	SHARED := -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	LIBS += -lrt
-	ARM_FLOAT_ABI_HARD = 1
+	ARM_FLOAT_ABI_HARD = 0
 	FORCE_GLES = 1
 	SINGLE_PREC_FLAGS = 1
 	PLATCFLAGS += -DTARGET_LINUX_ARMv8
 	CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
-	CFLAGS += -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 -mfpu=neon-fp-armv8 $(CPUFLAGS)
-	CXXFLAGS += -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 -mfpu=neon-fp-armv8 $(CPUFLAGS)
+	CFLAGS += -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 $(CPUFLAGS)
+	CXXFLAGS += -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 $(CPUFLAGS)
 	ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm64

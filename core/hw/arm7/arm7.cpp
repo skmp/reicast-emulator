@@ -1593,7 +1593,9 @@ void armv_MOV32(eReg regn, u32 imm)
 	No sanity checks on arm ..
 */
 
-#endif	// HOST_CPU  == CPU_ARM
+#elif HOST_CPU == CPU_ARM64
+#include <sys/mman.h>
+#endif
 
 //Run a timeslice for ARMREC
 //CycleCount is pretty much fixed to (512*32) for now (might change to a diff constant, but will be constant)

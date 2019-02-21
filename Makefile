@@ -886,9 +886,7 @@ endif
 	$(CC_AS) $(ASFLAGS) $(INCFLAGS) $< -o $@
 
 %.o: %.cc
-    $(CXX) $(INCFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) $(INCFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
 
 clean:
 	rm -f $(OBJECTS) $(TARGET)
-
-

@@ -1,13 +1,13 @@
 /*
-	Created on: Nov 2, 2018
+    Created on: Nov 2, 2018
 
-	Copyright 2018 flyinghead
+    Copyright 2018 flyinghead
 
-	Rom information from mame (https://github.com/mamedev/mame)
-	license:LGPL-2.1+
-	copyright-holders: Samuele Zannoli, R. Belmont, ElSemi, David Haywood, Angelo Salese, Olivier Galibert, MetalliC
-	
-	This file is part of reicast.
+    Rom information from mame (https://github.com/mamedev/mame)
+    license:LGPL-2.1+
+    copyright-holders: Samuele Zannoli, R. Belmont, ElSemi, David Haywood, Angelo Salese, Olivier Galibert, MetalliC
+    
+    This file is part of reicast.
 
     reicast is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,176 +28,182 @@
 #define MAX_GAME_FILES 40
 
 enum BlobType {
-	Normal = 0,
-	SwapWordBytes = 0,
-	InterleavedWord,
-	Copy,
-	Key,
-	Eeprom
+    Normal = 0,
+    SwapWordBytes = 0,
+    InterleavedWord,
+    Copy,
+    Key,
+    Eeprom
 };
 
 enum CartridgeType {
-	M1,
-	M2,
-	M4,
-	AW,
-	GD
+    M1,
+    M2,
+    M4,
+    AW,
+    GD
 };
 
 enum RegionType {
-	REGION_JAPAN = 0,
-	REGION_USA = 1,
-	REGION_EXPORT = 2,
-	REGION_KOREA = 3,
-	REGION_AUSTRALIA = 4
+    REGION_JAPAN = 0,
+    REGION_USA = 1,
+    REGION_EXPORT = 2,
+    REGION_KOREA = 3,
+    REGION_AUSTRALIA = 4
+};
+
+enum RotationType {
+    ROT0 = 0,
+    ROT270 = 3,
 };
 
 struct BIOS_t
 {
-	const char* name;
-	struct
-	{
-		u32 region;		// 0: Japan, 1: USA, 2: Export, 3: Other
-		const char* filename;
-		u32 offset;
-		u32 length;
-		BlobType blob_type;
-		u32 src_offset;		// For copy
-	} blobs[MAX_GAME_FILES];
+    const char* name;
+    struct
+    {
+        u32 region;        // 0: Japan, 1: USA, 2: Export, 3: Other
+        const char* filename;
+        u32 offset;
+        u32 length;
+        BlobType blob_type;
+        u32 src_offset;        // For copy
+    } blobs[MAX_GAME_FILES];
 }
 BIOS[] =
 {
-	{
-		"airlbios",
-		{
-			{ 2, "epr-21802.ic27", 0x000000, 0x200000 },
-			{ 1, "epr-21801.ic27", 0x000000, 0x200000 },
-			{ 0, NULL, 0, 0 },
-		}
-	},
-	{
-		"awbios",
-		{
-			{ 0, "bios0.ic23", 0x000000, 0x020000 },
-			//or
-			//{ "bios1.ic23", 0x000000, 0x020000 },
-			{ 0, NULL, 0, 0 },
-		}
-	},
-	{
-		"f355bios",
-		{
-			{ 2, "epr-22851.ic27", 0x000000, 0x200000 },
-			{ 1, "epr-22850.ic27", 0x000000, 0x200000 },
-			{ 0, "epr-22849.ic27", 0x000000, 0x200000 },
-			{ 0, NULL, 0, 0 },
-		}
-	},
-	{
-		"f355dlx",
-		{
-			// Ferrari F355 Deluxe (Export)
-			{ 2, "epr-21864.ic27", 0x000000, 0x200000 },
-			// Ferrari F355 Deluxe (USA)
-			{ 1, "epr-21863.ic27", 0x000000, 0x200000 },
-			// Ferrari F355 Deluxe (Japan)
-			{ 0, "epr-21862.ic27", 0x000000, 0x200000 },
-			// Ferrari F355 Deluxe (Export, prototype)
-			//{ 2, "epr-21864p.ic27", 0x000000, 0x200000 },
-			// Ferrari F355 Deluxe (Japan, prototype)
-			//{ 0, "epr-21862p.ic27", 0x000000, 0x200000 },
-			{ 0, NULL, 0, 0 },
-		}
-	},
-	{
-		"hod2bios",
-		{
-			{ 0, "epr-21331.ic27", 0x000000, 0x200000 },
-			{ 0, NULL, 0, 0 },
-		}
-	},
-	{
-		"naomi",
-		{
-			//ROM_SYSTEM_BIOS( 0, "bios0",   "epr-21576h (Japan)" )
-			{ 0, "epr-21576h.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 1, "bios1",   "epr-21576g (Japan)" )
-			//{ 0, "epr-21576g.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 2, "bios2",   "epr-21576e (Japan)" )
-			//{ 0, "epr-21576e.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 3, "bios3",   "epr-21576d (Japan)" )
-			//{ 0, "epr-21576d.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 4, "bios4",   "epr-21576c (Japan)" )
-			//{ 0, "epr-21576c.ic27", 0x000000, 0x200000 }, // BAD DUMP
-			//ROM_SYSTEM_BIOS( 5, "bios5",   "epr-21576b (Japan)" )
-			//{ 0, "epr-21576b.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 6, "bios6",   "epr-21576a (Japan)" )
-			//{ 0, "epr-21576a.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 7, "bios7",   "epr-21576 (Japan)" )
-			//{ 0, "epr-21576.ic27",  0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 8, "bios8",   "epr-21578h (Export)" )
-			{ 2, "epr-21578h.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 9, "bios9",   "epr-21578g (Export)" )
-			//{ 2, "epr-21578g.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 10, "bios10", "epr-21578f (Export)" )
-			//{ 2, "epr-21578f.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 11, "bios11", "epr-21578e (Export)" )
-			//{ 2, "epr-21578e.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 12, "bios12", "epr-21578d (Export)" )
-			//{ 2, "epr-21578d.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 13, "bios13", "epr-21578a (Export)" )
-			//{ 2, "epr-21578a.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 14, "bios14", "epr-21577h (USA)" )
-			{ 1, "epr-21577h.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 15, "bios15", "epr-21577g (USA)" )
-			//{ 1, "epr-21577g.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 16, "bios16", "epr-21577e (USA)" )
-			//{ 1, "epr-21577e.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 17, "bios17", "epr-21577d (USA)" )
-			//{ 1, "epr-21577d.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 18, "bios18", "epr-21577a (USA)" )
-			//{ 1, "epr-21577a.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 19, "bios19", "epr-21579d (Korea)" )
-			{ 3, "epr-21579d.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 20, "bios20", "epr-21579 (Korea)" )
-			//{ 3, "epr-21579.ic27",  0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 21, "bios21", "Set4 Dev BIOS" )
-			//{ 3, "boot_rom_64b8.ic606", 0x000000, 0x080000 },
-			//ROM_SYSTEM_BIOS( 22, "bios22", "Dev BIOS v1.10" )
-			//{ 3, "develop110.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 23, "bios23", "Dev BIOS (Nov 1998)" )
-			//{ 3, "develop.ic27", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 24, "bios24", "Development ROM Board" )
-			//{ 3, "zukinver0930.ic25", 0x000000, 0x200000 },
-			//ROM_SYSTEM_BIOS( 25, "bios25", "epr-21576h (multi-region hack)" )
-			//{ 3, "epr-21576h_multi.ic27", 0x000000, 0x200000 },
-			{ 0, NULL, 0, 0 },
-		}
-	},
-	{
-		NULL,
-	}
+    {
+        "airlbios",
+        {
+            { 2, "epr-21802.ic27", 0x000000, 0x200000 },
+            { 1, "epr-21801.ic27", 0x000000, 0x200000 },
+            { 0, NULL, 0, 0 },
+        }
+    },
+    {
+        "awbios",
+        {
+            { 0, "bios0.ic23", 0x000000, 0x020000 },
+            //or
+            //{ "bios1.ic23", 0x000000, 0x020000 },
+            { 0, NULL, 0, 0 },
+        }
+    },
+    {
+        "f355bios",
+        {
+            { 2, "epr-22851.ic27", 0x000000, 0x200000 },
+            { 1, "epr-22850.ic27", 0x000000, 0x200000 },
+            { 0, "epr-22849.ic27", 0x000000, 0x200000 },
+            { 0, NULL, 0, 0 },
+        }
+    },
+    {
+        "f355dlx",
+        {
+            // Ferrari F355 Deluxe (Export)
+            { 2, "epr-21864.ic27", 0x000000, 0x200000 },
+            // Ferrari F355 Deluxe (USA)
+            { 1, "epr-21863.ic27", 0x000000, 0x200000 },
+            // Ferrari F355 Deluxe (Japan)
+            { 0, "epr-21862.ic27", 0x000000, 0x200000 },
+            // Ferrari F355 Deluxe (Export, prototype)
+            //{ 2, "epr-21864p.ic27", 0x000000, 0x200000 },
+            // Ferrari F355 Deluxe (Japan, prototype)
+            //{ 0, "epr-21862p.ic27", 0x000000, 0x200000 },
+            { 0, NULL, 0, 0 },
+        }
+    },
+    {
+        "hod2bios",
+        {
+            { 0, "epr-21331.ic27", 0x000000, 0x200000 },
+            { 0, NULL, 0, 0 },
+        }
+    },
+    {
+        "naomi",
+        {
+            //ROM_SYSTEM_BIOS( 0, "bios0",   "epr-21576h (Japan)" )
+            { 0, "epr-21576h.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 1, "bios1",   "epr-21576g (Japan)" )
+            //{ 0, "epr-21576g.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 2, "bios2",   "epr-21576e (Japan)" )
+            //{ 0, "epr-21576e.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 3, "bios3",   "epr-21576d (Japan)" )
+            //{ 0, "epr-21576d.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 4, "bios4",   "epr-21576c (Japan)" )
+            //{ 0, "epr-21576c.ic27", 0x000000, 0x200000 }, // BAD DUMP
+            //ROM_SYSTEM_BIOS( 5, "bios5",   "epr-21576b (Japan)" )
+            //{ 0, "epr-21576b.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 6, "bios6",   "epr-21576a (Japan)" )
+            //{ 0, "epr-21576a.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 7, "bios7",   "epr-21576 (Japan)" )
+            //{ 0, "epr-21576.ic27",  0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 8, "bios8",   "epr-21578h (Export)" )
+            { 2, "epr-21578h.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 9, "bios9",   "epr-21578g (Export)" )
+            //{ 2, "epr-21578g.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 10, "bios10", "epr-21578f (Export)" )
+            //{ 2, "epr-21578f.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 11, "bios11", "epr-21578e (Export)" )
+            //{ 2, "epr-21578e.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 12, "bios12", "epr-21578d (Export)" )
+            //{ 2, "epr-21578d.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 13, "bios13", "epr-21578a (Export)" )
+            //{ 2, "epr-21578a.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 14, "bios14", "epr-21577h (USA)" )
+            { 1, "epr-21577h.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 15, "bios15", "epr-21577g (USA)" )
+            //{ 1, "epr-21577g.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 16, "bios16", "epr-21577e (USA)" )
+            //{ 1, "epr-21577e.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 17, "bios17", "epr-21577d (USA)" )
+            //{ 1, "epr-21577d.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 18, "bios18", "epr-21577a (USA)" )
+            //{ 1, "epr-21577a.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 19, "bios19", "epr-21579d (Korea)" )
+            { 3, "epr-21579d.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 20, "bios20", "epr-21579 (Korea)" )
+            //{ 3, "epr-21579.ic27",  0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 21, "bios21", "Set4 Dev BIOS" )
+            //{ 3, "boot_rom_64b8.ic606", 0x000000, 0x080000 },
+            //ROM_SYSTEM_BIOS( 22, "bios22", "Dev BIOS v1.10" )
+            //{ 3, "develop110.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 23, "bios23", "Dev BIOS (Nov 1998)" )
+            //{ 3, "develop.ic27", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 24, "bios24", "Development ROM Board" )
+            //{ 3, "zukinver0930.ic25", 0x000000, 0x200000 },
+            //ROM_SYSTEM_BIOS( 25, "bios25", "epr-21576h (multi-region hack)" )
+            //{ 3, "epr-21576h_multi.ic27", 0x000000, 0x200000 },
+            { 0, NULL, 0, 0 },
+        }
+    },
+    {
+        NULL,
+    }
 };
 
 struct Game
 {
-	const char* name;
-	const char* parent_name;
-	u32 size;
-	u32 key;
-	const char *bios;
-	CartridgeType cart_type;
-	RegionType region_flag;
-	struct
-	{
-		const char* filename;
-		u32 offset;
-		u32 length;
-		BlobType blob_type;
-		u32 src_offset;		// For copy
-	} blobs[MAX_GAME_FILES];
-	const char *gdrom_name;
-	InputDescriptors *inputs;
+    const char* name;
+    const char* parent_name;
+    u32 size;
+    u32 key;
+    const char *bios;
+    CartridgeType cart_type;
+    RegionType region_flag;
+    RotationType rotation_flag;
+    struct
+    {
+        const char* filename;
+        u32 offset;
+        u32 length;
+        BlobType blob_type;
+        u32 src_offset;        // For copy
+    } blobs[MAX_GAME_FILES];
+    const char *gdrom_name;
+    InputDescriptors *inputs;
 }
 Games[] =
 {
@@ -205,12 +211,13 @@ Games[] =
     // Giant Gram 2000 (JPN, USA, EXP, KOR, AUS)
     { 
         "gram2000",
-		NULL,
+        NULL,
         0x0b000000,
         0x7f805c3f,
         NULL,
         M1,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23377.ic11",  0x0000000, 0x0400000 },
             { "mpr-23357.ic17s", 0x1000000, 0x0800000, InterleavedWord },
@@ -239,12 +246,13 @@ Games[] =
     // Kick '4' Cash (Export)
     {
         "kick4csh",
-		NULL,
+        NULL,
         0x9000000,
         0x820857c9,
-        "naomi",	// Needs Export BIOS
+        "naomi",    // Needs Export BIOS
         M1,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-24212.ic11",   0x0000000, 0x400000 },
             { "opr-24213a.ic17s", 0x1000000, 0x800000, InterleavedWord },
@@ -278,12 +286,13 @@ Games[] =
     // Marvel Vs. Capcom 2 New Age of Heroes (Export, Korea, Rev A)    
     {
         "mvsc2",
-		NULL,
+        NULL,
         0x08800000,
         0xc18b6e7c,
         NULL,
         M1,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23085a.ic11", 0x0000000, 0x0400000 },
             { "mpr-23048.ic17s", 0x0800000, 0x0800000 },
@@ -318,12 +327,13 @@ Games[] =
     // Mushiking The King Of Beetle (2K3 2ND, World)
     {
         "mushike",
-		NULL,
+        NULL,
         0x4000000,
         0x3892fb3a,
         NULL,
         M1,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-24217.ic11",  0x0000000, 0x0400000 },
             { "mpr-24218.ic17s", 0x1000000, 0x0800000, InterleavedWord },
@@ -351,12 +361,13 @@ Games[] =
     // Quiz Ah Megamisama (JPN, USA, EXP, KOR, AUS)
     {
         "qmegamis",
-		NULL,
+        NULL,
         0x9000200,
         0xcd9b4896,
         NULL,
         M1,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23227.ic11",  0x0000000, 0x0400000 },
             { "mpr-23211.ic17s", 0x1000000, 0x0800000, InterleavedWord },
@@ -381,12 +392,13 @@ Games[] =
     // Shootout Pool
     {
         "shootopl",
-		NULL,
+        NULL,
         0x3000000,
         0xa0f37ca7,
         NULL,
         M1,
         REGION_AUSTRALIA,
+        ROT0,
         {   
             { "epr-23844.ic11",  0x0000000, 0x400000 },
             { "mtp-23840.ic17s", 0x1000000, 0x800000, InterleavedWord },
@@ -400,12 +412,13 @@ Games[] =
     // Shootout Pool The Medal / Shootout Pool Prize (Rev A)
     {
         "shootpl",
-		NULL,
+        NULL,
         0x3000000,
         0x9dbde9cd,
         NULL,
         M1,
         REGION_AUSTRALIA,
+        ROT0,
         {   
             { "epr-24065a.ic11", 0x0000000, 0x0400000 },
             { "opr-24060.ic17s", 0x1000000, 0x0800000, InterleavedWord },
@@ -423,12 +436,13 @@ Games[] =
     // Shootout Pool The Medal Ver. B / Shootout Pool Prize Ver. B
     {
         "shootplm",
-		NULL,
+        NULL,
         0x3000000,
         0x9dbde9cd,
         NULL,
         M1,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-24148.ic11",  0x0000000, 0x400000 },
             { "opr-24174.ic17s", 0x1000000, 0x800000, InterleavedWord },
@@ -442,12 +456,13 @@ Games[] =
     // Shootout Pool Prize (Export) / Shootout Pool The Medal (Japan) Version B (prototype)
     {
         "shootplmp",
-		"shootplm",
+        "shootplm",
         0x3000000,
         0x9dbde9cd,
         NULL,
         M1,
         REGION_JAPAN,
+        ROT0,
         {
             { "rom0.ic22", 0x0000000, 0x400000 },
             { "rom1.ic1s", 0x0800000, 0x800000 },
@@ -462,12 +477,13 @@ Games[] =
     // Touch de Uno! 2 (Japan)
     {
         "tduno2",
-		NULL,
+        NULL,
         0x4000000,
         0x2f6f0f8d,
         NULL,
         M1,
         REGION_JAPAN,
+        ROT0,
         {
             { "epr-23071.ic11",  0x0000000, 0x0200000 },
             { "epr-23071.ic11",  0x0200000, 0x0200000 }, // reload
@@ -488,12 +504,13 @@ Games[] =
     // Virtua Tennis 2 / Power Smash 2 (Rev A)
     {
         "vtenis2c",
-		NULL,
+        NULL,
         0x0a000000,
         0x2d2d4743,
         NULL,
         M1,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22327a.ic11", 0x0000000, 0x400000 },
             { "mpr-22307.ic17s", 0x1000000, 0x800000, InterleavedWord },
@@ -524,12 +541,13 @@ Games[] =
     // 18 Wheeler (deluxe) (Rev A)
     {
         "18wheelr",
-		NULL,
+        NULL,
         0x0a800000,
         0x2807cf54,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22185a.ic22", 0x0000000, 0x400000 },
             { "mpr-22164.ic1",   0x0800000, 0x800000 },
@@ -560,12 +578,13 @@ Games[] =
     // 18 Wheeler (deluxe)
     {
         "18wheelro",
-		"18wheelr",
+        "18wheelr",
         0x0a800000,
         0x2807cf54,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22185.ic22",  0x0000000, 0x400000 },
             { "mpr-22164.ic1",   0x0800000, 0x800000 },
@@ -611,12 +630,13 @@ Games[] =
     // 18 Wheeler (deluxe) (Rev T)
     {
         "18wheelrt",
-		"18wheelr",
+        "18wheelr",
         0x0a800000,
         0x2807cf54,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22185t.ic22", 0x0000000, 0x400000 },
             { "mpr-22164.ic1",   0x0800000, 0x800000 },
@@ -662,12 +682,13 @@ Games[] =
     // 18 Wheeler (standard)
     {
         "18wheels",
-		"18wheelr",
+        "18wheelr",
         0x0a800000,
         0x2807cf54,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23298.ic22",  0x0000000, 0x400000 },
             { "mpr-22164.ic1",   0x0800000, 0x800000 },
@@ -710,12 +731,13 @@ Games[] =
     // 18 Wheeler (upright)
     {
         "18wheelu",
-		"18wheelr",
+        "18wheelr",
         0x0a800000,
         0x2807cf54,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23299.ic22",  0x0000000, 0x400000 },
             { "mpr-22164.ic1",   0x0800000, 0x800000 },
@@ -757,12 +779,13 @@ Games[] =
     // Airline Pilots (Rev B) 
     {
         "alpilot",
-		NULL,
+        NULL,
         0x0b000000,
         0x28070e41,
         "naomi",
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-21787b.ic22", 0x0000000, 0x400000 },
             { "mpr-21728.ic1",   0x0800000, 0x800000 },
@@ -789,12 +812,13 @@ Games[] =
     // Airline Pilots (Japan, Rev A)
     {
         "alpilotj",
-		NULL,
+        NULL,
         0x0b000000,
         0x28070e41,
         "naomi",
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-21739a.ic22", 0x000000,  0x400000 },
             { "mpr-21728.ic1",   0x0800000, 0x800000 },
@@ -816,12 +840,13 @@ Games[] =
     // Alien Front (Rev T)
     {
         "alienfnt",
-		NULL,
+        NULL,
         0x05800000,
         0x28174343,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23586t.ic22", 0x0000000, 0x0400000 },
             { "mpr-23581.ic1",   0x0800000, 0x1000000 },
@@ -837,12 +862,13 @@ Games[] =
     // Alien Front (Rev A)
     {
         "alienfnta",
-		"alienfnt",
+        "alienfnt",
         0x05800000,
         0x28174343,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23586a.ic22", 0x0000000, 0x0400000 },
             { "mpr-23581.ic1",   0x0800000, 0x1000000 },
@@ -858,12 +884,13 @@ Games[] =
     // Capcom Vs. SNK Millennium Fight 2000 (JPN, USA, EXP, KOR, AUS) (Rev C)
     {
         "capsnk",
-		NULL,
+        NULL,
         0x07800000,
         0x00000000,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23511c.ic22", 0x0000000, 0x0400000 },
             { "mpr-23504.ic1",   0x0800000, 0x1000000 },
@@ -881,12 +908,13 @@ Games[] =
     // Capcom Vs. SNK Millennium Fight 2000 (Rev A)
     {
         "capsnka",
-		"capsnk",
+        "capsnk",
         0x07800000,
         0x00000000,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23511a.ic22", 0x000000,  0x400000  },
             { "mpr-23504.ic1",   0x0800000, 0x1000000 },
@@ -904,12 +932,13 @@ Games[] =
     // Capcom Vs. SNK Millennium Fight 2000
     {
         "capsnkb",
-		"capsnk",
+        "capsnk",
         0x07800000,
         0x00000000,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23511.ic22", 0x000000,  0x400000  },
             { "mpr-23504.ic1",  0x0800000, 0x1000000 },
@@ -927,12 +956,13 @@ Games[] =
     // Crackin' DJ
     {
         "crackndj",
-		NULL,
+        NULL,
         0x0a800000,
         0x281c2347,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23450.ic22", 0x0000000, 0x0400000 },
             { "mpr-23525.ic1",  0x0800000, 0x1000000 },
@@ -951,12 +981,13 @@ Games[] =
     // Crackin' DJ Part 2 (Japan)
     {
         "crakndj2",
-		NULL,
+        NULL,
         0x0a800000,
         0x28428247,
         NULL,
         M2,
         REGION_JAPAN,
+        ROT0,
         {
             { "epr-23674.ic22", 0x0000000, 0x400000 },
             { "rom1.ic1s",      0x0800000, 0x800000 },
@@ -989,12 +1020,13 @@ Games[] =
     // Crazy Taxi
     {
         "crzytaxi",
-		NULL,
+        NULL,
         0x08800000,
         0x280d2f45,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-21684.ic22",  0x0000000, 0x400000 },
             { "mpr-21671.ic1",   0x0800000, 0x800000 },
@@ -1018,12 +1050,13 @@ Games[] =
     // Cosmic Smash (Rev A)
     {
         "csmash",
-		NULL,
+        NULL,
         0x04800000,
         0x28103347,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23428a.ic22", 0x0000000, 0x0400000 },
             { "mpr-23420.ic1",   0x0800000, 0x0800000 },
@@ -1040,12 +1073,13 @@ Games[] =
     // Cosmic Smash
     {
         "csmasho",
-		"csmash",
+        "csmash",
         0x04800000,
         0x28103347,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23428.ic22", 0x0000000, 0x400000  },
             { "mpr-23420.ic1",  0x0800000, 0x0800000 },
@@ -1062,12 +1096,13 @@ Games[] =
     // Cannon Spike / Gun Spike
     {
         "cspike",
-		NULL,
+        NULL,
         0x06800000,
         0x000e2010,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23210.ic22",  0x0000000, 0x0400000 },
             { "mpr-23198.ic1",   0x0800000, 0x0800000 },
@@ -1090,12 +1125,13 @@ Games[] =
     // Death Crimson OX (JPN, USA, EXP, KOR, AUS)
     {
         "deathcox",
-		NULL,
+        NULL,
         0x05800000,
         0x000b64d0,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23524a.ic22", 0x0000000, 0x0400000 },
             { "mpr-23514.ic1",   0x0800000, 0x0800000 },
@@ -1116,12 +1152,13 @@ Games[] =
     // Death Crimson OX
     {
         "deathcoxo",
-		"deathcox",
+        "deathcox",
         0x05800000,
         0x000b64d0,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23524.ic22", 0x0000000, 0x0400000 },
             { "mpr-23514.ic1",  0x0800000, 0x0800000 },
@@ -1142,12 +1179,13 @@ Games[] =
     // Derby Owners Club 2000 (Rev A)
     {
         "derbyo2k",
-		NULL,
+        NULL,
         0x8800000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22284a.ic22", 0x0000000, 0x400000 },
             { "mpr-22223.ic1",   0x0800000, 0x800000 },
@@ -1172,12 +1210,13 @@ Games[] =
     // Derby Owners Club (JPN, USA, EXP, KOR, AUS) (Rev B)
     {
         "derbyoc",
-		NULL,
+        NULL,
         0x07800000,
         0x280fee35,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22099b.ic22", 0x0000000, 0x0400000 },
             { "mpr-22085.ic1",   0x0800000, 0x0800000 },
@@ -1200,12 +1239,13 @@ Games[] =
     // Derby Owners Club II (JPN, USA, EXP, KOR, AUS) (Rev B)
     {
         "derbyoc2",
-		NULL,
+        NULL,
         0x0b800000,
         0x2a436bb7,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22306b.ic22", 0x0000000, 0x0400000 },
             { "mpr-22295.ic1",   0x0800000, 0x1000000 },
@@ -1225,12 +1265,13 @@ Games[] =
     // Derby Owners Club World Edition (JPN, USA, EXP, KOR, AUS) (Rev D)
     {
         "derbyocw",
-		NULL,
+        NULL,
         0x07800000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22336d.ic22", 0x0000000, 0x0400000 },
             { "mpr-22328.ic1",   0x0800000, 0x1000000 },
@@ -1246,12 +1287,13 @@ Games[] =
     // Derby Owners Club World Edition (Rev B)
     {
         "drbyocwb",
-		"derbyocw",
+        "derbyocw",
         0x7800000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22336b.ic22", 0x000000,  0x400000  },
             { "mpr-22328.ic1",   0x0800000, 0x1000000 },
@@ -1267,12 +1309,13 @@ Games[] =
     // Derby Owners Club World Edition (Rev C)
     {
         "drbyocwc",
-		"derbyocw",
+        "derbyocw",
         0x7800000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22336c.ic22", 0x000000,  0x400000  },
             { "mpr-22328.ic1",   0x0800000, 0x1000000 },
@@ -1288,12 +1331,13 @@ Games[] =
     // Dead or Alive 2 (JPN, USA, EXP, KOR, AUS)
     {
         "doa2",
-		"doa2m",
+        "doa2m",
         0xb000000,
         0x0008ad01,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22207.ic22",  0x0000000, 0x0400000 }, 
             { "mpr-22100.ic1",   0x0800000, 0x0800000 },
@@ -1328,12 +1372,13 @@ Games[] =
     // Dead or Alive 2 (Rev A)
     {
         "doa2a",
-		"doa2m",
+        "doa2m",
         0xb000000,
         0x0008ad01,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22121a.ic22", 0x0000000, 0x0400000 },
             { "mpr-22100.ic1",   0x0800000, 0x0800000 },
@@ -1368,12 +1413,13 @@ Games[] =
     // Dead or Alive 2 Millennium (JPN, USA, EXP, KOR, AUS)
     {
         "doa2m",
-		NULL,
+        NULL,
         0xb000000,
         0x0008ad01,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "doa2verm.ic22",   0x0000000, 0x0400000 },
             { "mpr-22100.ic1",   0x0800000, 0x0800000 },
@@ -1408,12 +1454,13 @@ Games[] =
     // Dynamite Baseball '99 (JPN) / World Series '99 (USA, EXP, KOR, AUS) (Rev B) ***
     {
         "dybb99",
-		NULL,
+        NULL,
         0x0a000000,
         0x2804ae71,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22141b.ic22", 0x0000000, 0x0200000 },
             { "epr-22141b.ic22", 0x0200000, 0x0200000 }, // reload
@@ -1441,13 +1488,14 @@ Games[] =
     },
     // Dynamite Baseball NAOMI (Japan)
     {
-		"dybbnao",
-		NULL,
+        "dybbnao",
+        NULL,
         0x0b000000,
         0x280e6ae1,
         NULL,
         M2,
         REGION_JAPAN,
+        ROT0,
         {
             { "epr-21575.ic22",  0x0000000, 0x0200000 },
             { "epr-21575.ic22",  0x0200000, 0x0200000 }, // reload
@@ -1477,13 +1525,14 @@ Games[] =
     },
     // Ferrari F355 Challenge (deluxe)
     {
-		"f355",
-		NULL,
+        "f355",
+        NULL,
         0x0b000000,
         0x280e8f84,
-		"f355dlx",
+        "f355dlx",
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-21902.ic22",  0x0000000, 0x0400000 },
             { "mpr-21881.ic1",   0x0800000, 0x0800000 },
@@ -1517,13 +1566,14 @@ Games[] =
     },
     // Ferrari F355 Challenge (twin)
     {
-		"f355twin",
-		NULL,
+        "f355twin",
+        NULL,
         0x0b000000,
         0x2806efd4,
-		"f355bios",
+        "f355bios",
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22848.ic22",  0x0000000, 0x400000 },
             { "mpr-22827.ic1",   0x0800000, 0x800000 },
@@ -1553,12 +1603,13 @@ Games[] =
     // Ferrari F355 Challenge (twin/deluxe, preview)
     {
         "f355twinp",
-		"f355twin",
+        "f355twin",
         0x0b000000,
         0x2806efd4,
         "f355bios",
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22848p.ic22", 0x0000000, 0x400000 },
             { "rom1.ic1s",       0x0800000, 0x800000 },
@@ -1587,13 +1638,14 @@ Games[] =
     },
     // Ferrari F355 Challenge 2 (twin)
     {
-		"f355twn2",
-		NULL,
+        "f355twn2",
+        NULL,
         0xb000000,
         0x281666c6,
-		"f355bios",
+        "f355bios",
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23399.ic22",     0x0000000, 0x400000 },
             { "mpr-23378.ic1",      0x0800000, 0x800000 },
@@ -1622,13 +1674,14 @@ Games[] =
     },
     // Giant Gram: All Japan Pro Wrestling 2 (JPN, USA, EXP, KOR, AUS)
     {
-		"ggram2",
-		NULL,
+        "ggram2",
+        NULL,
         0x06000000,
         0x28074a61,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-21820.ic22", 0x0000000, 0x0200000 },
             { "epr-21820.ic22", 0x0200000, 0x0200000 }, // reload
@@ -1649,12 +1702,13 @@ Games[] =
     // Guilty Gear X (JPN)
     {
         "ggx",
-		NULL,
+        NULL,
         0x07800000,
         0x00076110,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23356.ic22",  0x0000000, 0x0400000 },
             { "mpr-23342.ic1",   0x0800000, 0x0800000 },
@@ -1676,13 +1730,14 @@ Games[] =
     },
     // Mobile Suit Gundam: Federation Vs. Zeon
     {
-		"gundmct",
-		NULL,
+        "gundmct",
+        NULL,
         0x0a800000,
         0x000e8010,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23638.ic22", 0x0000000, 0x0400000 },
             { "mpr-23628.ic1",  0x0800000, 0x1000000 },
@@ -1701,12 +1756,13 @@ Games[] =
     // Gun Survivor 2 Biohazard Code: Veronica (BHF2 Ver. E)
     {
         "gunsur2",
-		NULL,
+        NULL,
         0x10000000,
         0x000680d0,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "bhf2vere.2f", 0x0000000, 0x0800000 },
             { "bhf1ma2.4m",  0x2000000, 0x1000000 },
@@ -1730,13 +1786,14 @@ Games[] =
     },
     // Gun Survivor 2 Biohazard Code: Veronica (Japan, BHF1 Ver.E)
     {
-		"gunsur2j",		// FIXME not booting, no test mode
-		"gunsur2",
+        "gunsur2j",        // FIXME not booting, no test mode
+        "gunsur2",
         0x10000000,
         0x000680d0,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "bhf1vere.2f", 0x0000000, 0x0800000 },
             { "bhf1ma2.4m",  0x2000000, 0x1000000 },
@@ -1760,13 +1817,14 @@ Games[] =
     },
     // Giga Wing 2
     {
-		"gwing2",
-		NULL,
+        "gwing2",
+        NULL,
         0x05800000,
         0x000b25d0,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22270.ic22", 0x0000000, 0x0200000 },
             { "epr-22270.ic22", 0x0200000, 0x0200000 }, // reload
@@ -1781,12 +1839,13 @@ Games[] =
     // Heavy Metal Geomatrix (JPN, USA, EUR, ASI, AUS) (Rev B)
     {
         "hmgeo",
-		NULL,
+        NULL,
         0x06000000,
         0x00038510,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23716a.ic22", 0x0000000, 0x0400000 },
             { "mpr-23705.ic1",   0x0800000, 0x0800000 },
@@ -1806,12 +1865,13 @@ Games[] =
     // House of the Dead 2
     {
         "hotd2",
-		NULL,
+        NULL,
         0xa800000,
         0xfffffff, // not populated
         "hod2bios",
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-21585.ic22",  0x0000000, 0x200000 },
             { "epr-21585.ic22",  0x0200000, 0x200000 }, // reload
@@ -1841,12 +1901,13 @@ Games[] =
     // The House of the Dead 2
     {
         "hotd2o",
-		NULL,
+        NULL,
         0xa800000,
         0xfffffff, // not populated
         "hod2bios",
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-21385.ic22",  0x0000000, 0x200000 },
             { "epr-21385.ic22",  0x0200000, 0x200000 }, //reload
@@ -1876,12 +1937,13 @@ Games[] =
     // The House of the Dead 2 (Export)
     {
         "hotd2e",
-		NULL,
+        NULL,
         0xa800000,
         0xfffffff, // not populated
         "hod2bios",
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-21805.ic22",  0x0000000, 0x200000 },
             { "epr-21805.ic22",  0x0200000, 0x200000 }, //reload
@@ -1911,12 +1973,13 @@ Games[] =
     // The House of the Dead 2 (prototype)
     {
         "hotd2p",
-		NULL,
+        NULL,
         0xa800000,
         0xfffffff, // not populated
         "hod2bios",
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "hotd2proto.ic22", 0x000000,  0x200000 },
             { "hotd2proto.ic22", 0x200000,  0x200000 },
@@ -1946,12 +2009,13 @@ Games[] =
     // Inu No Osanpo / Dog Walking (Rev A)
     {
         "inunoos",
-		NULL,
+        NULL,
         0x08800000,
         0x294bc3e3,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22294a.ic22", 0x0000000, 0x400000 },
             { "rom1.ic1s",       0x0800000, 0x800000 },
@@ -1975,13 +2039,14 @@ Games[] =
     },
     // Jambo! Safari (Rev A)
     {
-		"jambo",
-		NULL,
+        "jambo",
+        NULL,
         0x08800000,
         0x280fab95,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22826a.ic22", 0x0000000, 0x400000 },
             { "mpr-22818.ic1",   0x0800000, 0x800000 },
@@ -2000,12 +2065,13 @@ Games[] =
     // Mars TV (JPN)
     {
         "marstv",
-		NULL,
+        NULL,
         0x08000000,
         0x280b8ef5,
         NULL,
         M2,
         REGION_JAPAN,
+        ROT0,
         {
             { "epr-22993.ic22",  0x0000000, 0x200000 },
             { "epr-22993.ic22",  0x0200000, 0x200000 }, // reload
@@ -2030,12 +2096,13 @@ Games[] =
     // Mazan: Flash of the Blade (MAZ2 Ver. A)
     {
         "mazan",
-		NULL,
+        NULL,
         0x10000000,
         0x280fea94,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "maz2vera.2d", 0x0800000, 0x0800000 },
             { "maz1ma1.4m",  0x1000000, 0x1000000 },
@@ -2052,12 +2119,13 @@ Games[] =
     // Mazan: Flash of the Blade (US, MAZ3 Ver.A)
     {
         "mazanu",
-		"mazan",
+        "mazan",
         0x10000000,
         0x280fea94,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "maz3vera.2d", 0x0800000, 0x0800000 },
             { "maz1ma1.4m",  0x1000000, 0x1000000 },
@@ -2074,12 +2142,13 @@ Games[] =
     // Mushiking The King Of Beetles - Mushiking IV / V / VI (World)
     {
         "mushi2k4",
-		NULL,
+        NULL,
         0x5800000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-24241.ic22", 0x00000000, 0x00400000 },
             { "mpr-24242.ic1",  0x00800000, 0x01000000 },
@@ -2093,12 +2162,13 @@ Games[] =
     // Mushiking The King Of Beetles 2005 First (Japan)
     {
         "mushi2k5",
-		NULL,
+        NULL,
         0x7800000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_JAPAN,
+        ROT0,
         {
             { "epr-24286.ic22", 0x0000000, 0x0400000 },
             { "mpr-24276.ic1",  0x0800000, 0x1000000 },
@@ -2114,12 +2184,13 @@ Games[] =
     // Mushiking The King Of Beetle (MUSHIUSA '04 1ST, Prototype)
     {
         "mushikep",
-		"mushike",
+        "mushike",
         0x07800000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "rom1.ic1s", 0x0800000, 0x800000 },
             { "rom2.ic2s", 0x1000000, 0x800000 },
@@ -2141,13 +2212,14 @@ Games[] =
     },
     // Marvel Vs. Capcom 2 New Age of Heroes (USA, Rev A)
     {
-		"mvsc2u",
-		"mvsc2",
+        "mvsc2u",
+        "mvsc2",
         0x07800000,
         0x0002c840,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23062a.ic22", 0x0000000, 0x0400000 },
             { "mpr-23048.ic1",   0x0800000, 0x0800000 },
@@ -2176,12 +2248,13 @@ Games[] =
     // Ninja Assault (NJA3 Ver. A)
     {
         "ninjaslt",
-		NULL,
+        NULL,
         0xb000000,
         0x000ca510,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "nja2vera.2d", 0x0800000, 0x0800000 },
             { "nja1vera.2c", 0x1000000, 0x0800000 },
@@ -2207,12 +2280,13 @@ Games[] =
     // Ninja Assault (Asia, NJA4 Ver.A)
     {
         "ninjaslta",
-		"ninjaslt",
+        "ninjaslt",
         0xb000000,
         0x000ca510,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "nja4vera.2d", 0x0800000, 0x0800000 },
             { "nja1vera.2c", 0x1000000, 0x0800000 },
@@ -2237,12 +2311,13 @@ Games[] =
     // Ninja Assault (Japan, NJA1 Ver.A)
     {
         "ninjasltj",
-		"ninjaslt",
+        "ninjaslt",
         0xb000000,
         0x000ca510,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "nja1vera.2d", 0x0800000, 0x0800000 },
             { "nja1vera.2c", 0x1000000, 0x0800000 },
@@ -2268,12 +2343,13 @@ Games[] =
     // Ninja Assault (US, NJA3 Ver.A)
     {
         "ninjasltu",
-		"ninjaslt",
+        "ninjaslt",
         0xb000000,
         0x000ca510,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "nja3vera.2d", 0x0800000, 0x0800000 },
             { "nja1vera.2c", 0x1000000, 0x0800000 },
@@ -2299,12 +2375,13 @@ Games[] =
     // Oinori-daimyoujin Matsuri
     {
         "oinori",
-		NULL,
+        NULL,
         0x05800000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-24053.ic22", 0x0000000, 0x0400000 },
             { "mpr-24054.ic1",  0x0800000, 0x1000000 },
@@ -2317,13 +2394,14 @@ Games[] =
     },
     // OutTrigger (JPN, USA, EXP, KOR, AUS)
     {
-		"otrigger",
-		NULL,
+        "otrigger",
+        NULL,
         0xa000000,
         0x280fea94,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22163.ic22",  0x0000000, 0x0400000 },
             { "mpr-22142.ic1",   0x0800000, 0x0800000 },
@@ -2354,12 +2432,13 @@ Games[] =
     // Moero! Justice Gakuen (JPN) / Project Justice (USA, EXP, KOR, AUS) (Rev A)
     {
         "pjustic",
-		NULL,
+        NULL,
         0x0b800000,
         0x000725d0,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23548a.ic22", 0x0000000, 0x0400000 },
             { "mpr-23537.ic1",   0x0800000, 0x1000000 },
@@ -2378,13 +2457,14 @@ Games[] =
     },
     // Power Stone
     {
-		"pstone",
-		NULL,
+        "pstone",
+        NULL,
         0x04800000,
         0x000e69c1,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-21597.ic22", 0x0000000, 0x0200000 },
             { "epr-21597.ic22", 0x0200000, 0x0200000 }, // reload
@@ -2401,13 +2481,14 @@ Games[] =
     },
     // Power Stone 2
     {
-		"pstone2",
-		NULL,
+        "pstone2",
+        NULL,
         0x05000000,
         0x000b8dc0,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23127.ic22", 0x0000000, 0x0400000 },
             { "mpr-23118.ic1",  0x0800000, 0x0800000 },
@@ -2425,12 +2506,13 @@ Games[] =
     // Power Stone 2 (bootleg)
     {
         "pstone2b",
-		"pstone2",
+        "pstone2",
         0x05000000,
         0x000b8dc0,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "00.ic1",  0x0000000, 0x0800000 },
             { "01.ic2",  0x0800000, 0x0800000 },
@@ -2447,13 +2529,14 @@ Games[] =
     },
     // Puyo Puyo Da! (Japan)
     {
-		"puyoda",
-		NULL,
+        "puyoda",
+        NULL,
         0x0a800000,
         0x000acd40,
         NULL,
         M2,
         REGION_JAPAN,
+        ROT0,
         {
             { "epr-22206.ic22",  0x0000000, 0x400000 },
             { "mpr-22186.ic1",   0x0800000, 0x800000 },
@@ -2481,13 +2564,14 @@ Games[] =
     },
     // Ring Out 4x4 (Rev A)
     {
-		"ringout",
-		NULL,
+        "ringout",
+        NULL,
         0x05800000,
         0x280b1e40,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-21779a.ic22", 0x0000000, 0x400000 },
             { "mpr-21761.ic1",   0x0800000, 0x800000 },
@@ -2506,12 +2590,13 @@ Games[] =
     // Ring Out 4x4
     {
         "ringouto",
-		"ringout",
+        "ringout",
         0x05800000,
         0x280b1e40,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-21779.ic22", 0x0000000, 0x400000 },
             { "mpr-21761.ic1",  0x0800000, 0x800000 },
@@ -2536,6 +2621,7 @@ Games[] =
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22966b.ic22", 0x0000000, 0x0400000 }, // was also found in cartridge with Rev.A case label
             { "mpr-22950.ic1",   0x0800000, 0x0800000 },
@@ -2566,6 +2652,7 @@ Games[] =
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22966a.ic22", 0x0000000, 0x0400000 },
             { "mpr-22950.ic1",   0x0800000, 0x0800000 },
@@ -2596,6 +2683,7 @@ Games[] =
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "sambaproto.ic22", 0x000000,   0x0400000  },
             { "rom1.ic1s",       0x00800000, 0x00800000 },
@@ -2617,13 +2705,14 @@ Games[] =
     },
     // Samba de Amigo ver. 2000 (Japan)
     {
-		"samba2k",
-		NULL,
+        "samba2k",
+        NULL,
         0x0b800000,
         0x281702cf,
         NULL,
         M2,
         REGION_JAPAN,
+        ROT0,
         {
             { "epr-23600.ic22", 0x00000000, 0x0400000 },
             { "mpr-23589.ic1",  0x00800000, 0x1000000 },
@@ -2642,13 +2731,14 @@ Games[] =
     },
     // Sega Tetris
     {
-		"sgtetris",
-		NULL,
+        "sgtetris",
+        NULL,
         0x03800000,
         0x2808ae51,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             {  "epr-22909.ic22", 0x0000000, 0x200000 },
             {  "epr-22909.ic22", 0x0200000, 0x200000 }, // reload
@@ -2664,12 +2754,13 @@ Games[] =
     // Dengen Tenshi Taisen Janshi Shangri-la (JPN, USA, EXP, KOR, AUS)
     {
         "shangril",
-		NULL,
+        NULL,
         0x06800000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22060.ic22",  0x0000000, 0x0400000 },
             { "mpr-22061.ic1",   0x0800000, 0x0800000 },
@@ -2690,12 +2781,13 @@ Games[] =
     // Star Horse (satellite)
     { 
         "shorse",
-		NULL,
+        NULL,
         0x7000000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT270,
         {
             { "epr-23627.ic22", 0x0000000, 0x0400000 },
             { "mpr-23275.ic1",  0x0800000, 0x1000000 },
@@ -2715,12 +2807,13 @@ Games[] =
     // Star Horse (live and backup)
     {
         "shorsel",
-		"shorse",
+        "shorse",
         0x7000000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23626.ic22", 0x0000000, 0x200000 },
             { "epr-23626.ic22", 0x0200000, 0x200000 }, //reload
@@ -2752,12 +2845,13 @@ Games[] =
     // Star Horse (main screens)
     {
         "shorsem",
-		"shorse",
+        "shorse",
         0x7000000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23625.ic22", 0x0000000, 0x0400000 },
             { "mpr-23231.ic1",  0x0800000, 0x1000000 },
@@ -2771,15 +2865,38 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Star Horse Progress (satellite, Rev A)
+    { 
+        "shorsep",
+        NULL,
+        0x7800000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        REGION_AUSTRALIA,
+        ROT270,
+        {
+            { "epr-24122a.ic22", 0x0000000, 0x0400000 },
+            { "mpr-24123.ic1",   0x0800000, 0x1000000 },
+            { "mpr-24124.ic2",   0x1800000, 0x1000000 },
+            { "mpr-24125.ic3",   0x2800000, 0x1000000 },
+            { "mpr-24126.ic4",   0x3800000, 0x1000000 },
+            { "mpr-24127.ic5",   0x4800000, 0x1000000 },
+            { "mpr-24128.ic6",   0x5800000, 0x1000000 },
+            { "mpr-24129.ic7",   0x6800000, 0x1000000 },
+            { NULL, 0, 0 },
+        }
+    },
     // Star Horse Progress (backup data)
     {
         "shorsepb",
-		"shorsep",
+        "shorsep",
         0x7000000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "rom1.ic1s",   0x00800000, 0x00800000 },
             { "rom2.ic2s",   0x01000000, 0x00800000 },
@@ -2793,12 +2910,13 @@ Games[] =
     // Star Horse Progress (live, Rev A)
     {
         "shorsepl",
-		"shorsep",
+        "shorsep",
         0x7000000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-24107a.ic22", 0x00000000, 0x00400000 },
             { "mpr-24108.ic1",   0x00800000, 0x01000000 },
@@ -2818,12 +2936,13 @@ Games[] =
     // Star Horse Progress (main screens)
     {
         "shorsepm",
-		"shorsep",
+        "shorsep",
         0x7000000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-24087b.ic22", 0x00000000, 0x00400000 },
             { "mpr-24088.ic1",   0x00800000, 0x01000000 },
@@ -2838,12 +2957,13 @@ Games[] =
     // Star Horse Progress (sound & backup)
     {
         "shorseps",
-		"shorsep",
+        "shorsep",
         0x7000000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-24097a.ic22", 0x00000000, 0x00400000 },
             { "mpr-24098.ic1",   0x00800000, 0x01000000 },
@@ -2855,15 +2975,38 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Star Horse 2001 (satellite, Rev B)
+    { 
+        "shors2k1",
+        NULL,
+        0x7800000,
+        0xffffffff, // not populated
+        NULL,
+        M2,
+        REGION_AUSTRALIA,
+        ROT270,
+        {
+            { "epr-23739b.ic22", 0x00000000, 0x00400000 },
+            { "mpr-23740.ic1",   0x00800000, 0x01000000 },
+            { "mpr-23741.ic2",   0x01800000, 0x01000000 },
+            { "mpr-23742.ic3",   0x02800000, 0x01000000 },
+            { "mpr-23743.ic4",   0x03800000, 0x01000000 },
+            { "mpr-23744.ic5",   0x04800000, 0x01000000 },
+            { "mpr-23745.ic6",   0x05800000, 0x01000000 },
+            { "mpr-23746.ic7",   0x06800000, 0x01000000 },
+            { NULL, 0, 0 },
+        }
+    },
     // Super Major League '99
     {
         "smlg99",
-		NULL,
+        NULL,
         0x0b000000,
         0x28048a01,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22059.ic22",  0x0000000, 0x200000 },
             { "epr-22059.ic22",  0x0200000, 0x200000 }, // reload
@@ -2893,13 +3036,14 @@ Games[] =
     },
     // Slashout
     {
-		"slasho",
-		NULL,
+        "slasho",
+        NULL,
         0x09000000,
         0x281a66ca,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23341.ic22",  0x0000000, 0x0400000 },
             { "mpr-23324.ic1",   0x0800000, 0x0800000 },
@@ -2924,13 +3068,14 @@ Games[] =
     },
     // Sega Marine Fishing
     {
-		"smarinef",
-		NULL,
+        "smarinef",
+        NULL,
         0x06800000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22221.ic22",  0x0000000, 0x0400000 },
             { "mpr-22208.ic1",   0x0800000, 0x0800000 },
@@ -2951,12 +3096,13 @@ Games[] =
     // Spawn In the Demon's Hand (JPN, USA, EUR, ASI, AUS) (Rev B)
     {
         "spawn",
-		NULL,
+        NULL,
         0x05800000,
         0x00078d01,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22977b.ic22", 0x0000000, 0x0400000 },
             { "mpr-22967.ic1",   0x0800000, 0x0800000 },
@@ -2974,13 +3120,14 @@ Games[] =
     },
     // Sega Strike Fighter (Rev A)
     {
-		"sstrkfgt",
-		NULL,
+        "sstrkfgt",
+        NULL,
         0x0b000000,
         0x28132303,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23323a.ic22", 0x0000000, 0x400000 },
             { "mpr-23302.ic1",   0x0800000, 0x800000 },
@@ -3009,12 +3156,13 @@ Games[] =
     // Sega Strike Fighter (Rev A, no training mode)
     {
         "sstrkfgta",
-		"sstrkfgt",
+        "sstrkfgt",
         0x0b000000,
         0x28132303,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23786a.ic22", 0x0000000, 0x400000 },
             { "mpr-23302.ic1",   0x0800000, 0x800000 },
@@ -3043,12 +3191,13 @@ Games[] =
     // Idol Janshi Suchie-Pai 3 (JPN)
     {
         "suchie3",
-		NULL,
+        NULL,
         0x07800000,
         0x000368e1,
         NULL,
         M2,
         REGION_JAPAN,
+        ROT0,
         {
             { "epr-21979.ic22", 0x0000000, 0x0200000 },
             { "epr-21979.ic22", 0x0200000, 0x0200000 }, // reload
@@ -3072,12 +3221,13 @@ Games[] =
     // Touch de Uno! / Unou Nouryoku Check Machine
     {
         "tduno",
-		NULL,
+        NULL,
         0x04000000,
         0x28028ea5,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             //ROM_REGION16_BE( 0x80, "main_eeprom", 0 )
             //ROM_LOAD16_WORD("main_eeprom.bin", 0x0000, 0x0080, CRC(fea29cbb) SHA1(4099f1747aafa07db34f6e072cd9bfaa83bae10e) )
@@ -3098,13 +3248,14 @@ Games[] =
     },
     // The Typing of the Dead (Rev A)
     {
-		"totd",
-		NULL,
+        "totd",
+        NULL,
         0x0b000000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23021a.ic22", 0x0000000, 0x0400000 },
             { "mpr-23001.ic1",   0x0800000, 0x0800000 },
@@ -3134,12 +3285,13 @@ Games[] =
     // The Typing of the Dead
     {
         "totdo",
-		"totd",
+        "totd",
         0x0b000000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23021.ic22",  0x0000000, 0x0400000 },
             { "mpr-23001.ic1",   0x0800000, 0x0800000 },
@@ -3169,12 +3321,13 @@ Games[] =
     // Shin Nihon Pro Wrestling Toukon Retsuden 4 Arcade Edition (TRF1 Ver. A)
     {
         "toukon4",
-		NULL,
+        NULL,
         0x10000000,
         0x052e2901,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "trf1vera.2f", 0x0000000, 0x0800000 },
             { "trf1vera.2d", 0x0800000, 0x0800000 },
@@ -3198,13 +3351,14 @@ Games[] =
     },
     // Toy Fighter
     {
-		"toyfight",
-		NULL,
+        "toyfight",
+        NULL,
         0x08000000,
         0x2802ca85,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22035.ic22", 0x0000000, 0x0400000 },
             { "mpr-22025.ic1",  0x0800000, 0x0800000 },
@@ -3229,6 +3383,7 @@ Games[] =
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23073.ic22",  0x0000000, 0x0400000 },
             { "mpr-22928.ic1",   0x0800000, 0x0800000 },
@@ -3264,6 +3419,7 @@ Games[] =
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22949.ic22",  0x0000000, 0x0400000 },
             { "mpr-22928.ic1",   0x0800000, 0x0800000 },
@@ -3299,6 +3455,7 @@ Games[] =
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "vnbaearly.ic22",  0x0000000, 0x0400000 },
             { "mpr-22928.ic1",   0x0800000, 0x0800000 },
@@ -3334,6 +3491,7 @@ Games[] =
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "11-15.ic22",      0x0000000, 0x0400000 },
             { "rom1.ic1s",       0x0800000, 0x0800000 },
@@ -3363,12 +3521,13 @@ Games[] =
     // Virtual On Oratorio Tangram M.S.B.S. ver5.66 2000 Edition
     {
         "vonot",
-		NULL,
+        NULL,
         0x07000000,
         0x28010715,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23198.ic22",  0x0000000, 0x400000 },
             { "mpr-23182.ic1",   0x0800000, 0x800000 },
@@ -3391,13 +3550,14 @@ Games[] =
     },
     // Virtua Striker 2 Ver. 2000 (JPN, USA, EXP, KOR, AUS) (Rev C)
     {
-		"vs2_2k",
-		NULL,
+        "vs2_2k",
+        NULL,
         0x8000000,
         0x28088b08,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-21929c.ic22", 0x0000000, 0x0400000 },
             { "mpr-21924.ic1",   0x0800000, 0x0800000 },
@@ -3421,12 +3581,13 @@ Games[] =
     // Virtua Striker 2 Ver. 2000
     {
         "vs2_2ko",
-		"vs2_2k",
+        "vs2_2k",
         0x8000000,
         0x28088b08,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             {"epr-21929.ic22",   0x0000000, 0x0400000 },
             { "mpr-21924.ic1",   0x0800000, 0x0800000 },
@@ -3450,12 +3611,13 @@ Games[] =
     // Virtua Tennis (USA, EXP, KOR, AUS) / Power Smash (JPN)
     {
         "vtennis",
-		NULL,
+        NULL,
         0x06000000,
         0x2803eb15,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22927.ic22", 0x0000000, 0x0400000 },
             { "mpr-22916.ic1",  0x0800000, 0x0800000 },
@@ -3475,12 +3637,13 @@ Games[] =
     // Wave Runner GP
     {
         "wrungp",
-		NULL,
+        NULL,
         0x06800000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-24059.ic22", 0x0000000, 0x0400000 },
             { "mpr-23719.ic1",  0x0800000, 0x1000000 },
@@ -3495,12 +3658,13 @@ Games[] =
     // Wave Runner GP (USA, Rev A)
     {
         "wrungpo",
-		"wrungp",
+        "wrungp",
         0x06800000,
         0xffffffff, // not populated
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-23725a.ic22", 0x0000000, 0x400000  },
             { "mpr-23719.ic1",   0x0800000, 0x1000000 },
@@ -3521,12 +3685,13 @@ Games[] =
     // World Kicks (WK2 Ver. A)
     {
         "wldkicks",
-		NULL,
+        NULL,
         0xb000000,
         0x052e2901,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "wk2vera.2d", 0x0800000, 0x0800000 },
             { "wk2vera.2c", 0x1000000, 0x0800000 },
@@ -3545,12 +3710,13 @@ Games[] =
     // World Kicks (Japan, WK1 Ver.A)
     {
         "wldkicksj",
-		"wldkicks",
+        "wldkicks",
         0xb000000,
         0x052e2901,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "wk1vera.2d", 0x0800000, 0x0800000 },
             { "wk2vera.2c", 0x1000000, 0x0800000 },
@@ -3569,12 +3735,13 @@ Games[] =
     // World Kicks (US, WK3 Ver.A)
     {
         "wldkicksu",
-		"wldkicks",
+        "wldkicks",
         0xb000000,
         0x052e2901,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "wk3vera.2d", 0x0800000, 0x0800000 },
             { "wk2vera.2c", 0x1000000, 0x0800000 },
@@ -3593,12 +3760,13 @@ Games[] =
     // World Kicks PCB (Japan, WKC1 Ver.A)
     {
         "wldkickspj",
-		"wldkicks",
+        "wldkicks",
         0xb000000,
         0x052e2901,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "wkc1vera.2d", 0x0800000, 0x0800000 },
             { "wkc1vera.2c", 0x1000000, 0x0800000 },
@@ -3617,12 +3785,13 @@ Games[] =
     // World Kicks PCB (World, WKC2 Ver.A)
     {
         "wldkickspw",
-		"wldkicks",
+        "wldkicks",
         0xb000000,
         0x052e2901,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "wkc2vera.2d", 0x0800000, 0x0800000 },
             { "wkc1vera.2c", 0x1000000, 0x0800000 },
@@ -3641,12 +3810,13 @@ Games[] =
     // WWF Royal Rumble (JPN, USA, EXP, KOR, AUS)
     {
         "wwfroyal",
-		NULL,
+        NULL,
         0x08800000,
         0x281627c3,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-22261.ic22", 0x0000000, 0x0400000 },
             { "mpr-22262.ic1",  0x0800000, 0x1000000 },
@@ -3662,13 +3832,14 @@ Games[] =
     },
     // Zero Gunner 2
     {
-		"zerogu2",
-		NULL,
+        "zerogu2",
+        NULL,
         0x05800000,
         0x0007c010,
         NULL,
         M2,
         REGION_JAPAN,
+        ROT0,
         {
             { "epr-23689.ic22", 0x0000000, 0x0400000 },
             { "mpr-23684.ic1",  0x0800000, 0x1000000 },
@@ -3682,12 +3853,13 @@ Games[] =
     // Zombie Revenge
     {
         "zombrvn",
-		NULL,
+        NULL,
         0xa000000,
         0x28012b41,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-21707a.ic22", 0x0000000, 0x0200000 },
             { "epr-21707a.ic22", 0x0200000, 0x0200000 }, // reload
@@ -3713,15 +3885,16 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
-	// Zombie Revenge
-	{
-		"zombrvno",
-		"zombrvn",
+    // Zombie Revenge
+    {
+        "zombrvno",
+        "zombrvn",
         0x0a000000,
         0x28012b41,
         NULL,
         M2,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "epr-21707.ic22",  0x0000000, 0x0200000 },
             { "epr-21707.ic22",  0x0200000, 0x0200000 }, // Reload
@@ -3751,12 +3924,13 @@ Games[] =
     // Akatsuki Blitzkampf Ausf. Achse (Japan)
     {
         "ausfache",
-		NULL,
+        NULL,
         0x10000000,
         0x5504,
         "naomi",
         M4,
         REGION_JAPAN,
+        ROT0,
         {
             { "ic8.bin", 0x0000000, 0x4000000 },
             { "ic9.bin", 0x4000000, 0x4000000 },
@@ -3768,12 +3942,13 @@ Games[] =
     // Asian Dynamite
     {
         "asndynmt",
-		NULL,
+        NULL,
         0x10000000,
         0x5504,
         "naomi",
         M4,
         REGION_EXPORT,
+        ROT0,
         {
             { "fpr-24382.ic8",  0x0000000, 0x4000000 },
             { "fpr-24383.ic9",  0x4000000, 0x4000000 },
@@ -3786,12 +3961,13 @@ Games[] =
     // Asian Dynamite / Dynamite Deka EX (older)
     {
         "asndynmto",
-		"asndynmt",
+        "asndynmt",
         0x10000000,
         0x5504,
         "naomi",
         M4,
         REGION_EXPORT,
+        ROT0,
         {
             { "fpr-24382.ic8",  0x0000000, 0x4000000 },
             { "fpr-24383.ic9",  0x4000000, 0x4000000 },
@@ -3801,15 +3977,16 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
-    // Illvelo (Illmatic Envelope)
+    // Illvelo (Illmatic Envelope) (Japan)
     {
         "illvelo",
-		NULL,
+        NULL,
         0x10000000,
         0x5504,
         "naomi",
         M4,
         REGION_JAPAN,
+        ROT270,
         {
             { "fpr-24437.ic8",  0x0000000, 0x4000000 },
             { "fpr-24438.ic9",  0x4000000, 0x4000000 },
@@ -3821,12 +3998,13 @@ Games[] =
     // Manic Panic Ghosts! *** BAD DUMP ***
     {
         "manicpnc",
-		NULL,
+        NULL,
         0x14000000,
         0x5505,
         "naomi",
         M4,
         REGION_EXPORT,
+        ROT0,
         {
             { "fpr-24408.ic8",  0x00000000, 0x4000000 },
             { "fpr-24372.ic9",  0x04000000, 0x4000000 },
@@ -3844,15 +4022,16 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
-    // Mamoru-kun wa Norowarete Shimatta!
+    // Mamoru-kun wa Norowarete Shimatta! (Japan)
     {
         "mamonoro",
-		NULL,
+        NULL,
         0x10000000,
         0x5504,
         "naomi",
         M4,
         REGION_JAPAN,
+        ROT270,
         {
             { "ic8.bin",  0x0000000, 0x4000000 },
             { "ic9.bin",  0x4000000, 0x4000000 },
@@ -3864,12 +4043,13 @@ Games[] =
     // Melty Blood Actress Again Version A (Japan, Rev A)
     {
         "mbaa",
-		NULL,
+        NULL,
         0x18000000,
         0x5586,
         "naomi",
         M4,
         REGION_JAPAN,
+        ROT0,
         {
             { "ic8.bin",       0x00000000, 0x4000000 },
             { "epr-24455.ic7", 0x00000000, 0x0400000 }, // EPR mode, overwrite FPR data
@@ -3885,12 +4065,13 @@ Games[] =
     // Melty Blood Actress Again (Japan) (Clone)
     {
         "mbaao",
-		"mbaa",
+        "mbaa",
         0x18000000,
         0x5506,
         "naomi",
         M4,
         REGION_JAPAN,
+        ROT0,
         {
             { "ic8.bin",  0x00000000, 0x4000000 },
             { "ic9.bin",  0x04000000, 0x4000000 },
@@ -3905,12 +4086,13 @@ Games[] =
     // Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.001) (World)
     {
         "mushi2eo",
-		"mushik2e",
+        "mushik2e",
         0x8000000,
         0x5502,
         "naomi",
         M4,
         REGION_EXPORT,
+        ROT0,
         {
             { "fpr-24333.ic8", 0x0000000, 0x4000000 },
             { "fpr-24334.ic9", 0x4000000, 0x4000000 },
@@ -3921,12 +4103,13 @@ Games[] =
     // MushiKing II - The King Of Beetle II ENG (Ver. 1.001)
     {
         "mushik2e",
-		NULL,
+        NULL,
         0x8000000,
         0x5582,
         "naomi",
         M4,
         REGION_EXPORT,
+        ROT0,
         {
             { "fpr-24333.ic8", 0x0000000, 0x4000000 },
             { "epr-24357.ic7", 0x0000000, 0x0400000 },
@@ -3943,12 +4126,13 @@ Games[] =
     // change game version (4/5/6): in BACKUP DATA CLEAR menu hold P1 and P2 buttons 1 for 3 seconds, then change version number in appeared menu and select YES(CLEAR)
     {
         "mushik4e",
-		NULL,
+        NULL,
         0x8000000,
         0x5502,
         "naomi",
         M4,
         REGION_EXPORT,
+        ROT0,
         {
             { "fpr-24417.ic8", 0x0000000, 0x4000000 },
             { "fpr-24418.ic9", 0x4000000, 0x4000000 },
@@ -3963,12 +4147,13 @@ Games[] =
     // Pokasuka Ghost *** BAD DUMP ***
     {
         "pokasuka",
-		NULL,
+        NULL,
         0x14000000,
         0x5505,
         "naomi",
         M4,
         REGION_JAPAN,
+        ROT0,
         {
             { "fpr-24365.ic8",  0x00000000, 0x4000000 },
             { "fpr-24366.ic9",  0x04000000, 0x4000000 },
@@ -3989,12 +4174,13 @@ Games[] =
     // Radirgy Noa
     {
         "radirgyn",
-		NULL,
+        NULL,
         0x10000000,
         0x5504,
         "naomi",
         M4,
         REGION_JAPAN,
+        ROT0,
         {
             { "ic8.bin", 0x0000000, 0x4000000 },
             { "ic9.bin", 0x4000000, 0x4000000 },
@@ -4005,12 +4191,13 @@ Games[] =
     // Rhythm Tengoku
     {
         "rhytngk",
-		NULL,
+        NULL,
         0x10000000,
         0x5504,
         "naomi",
         M4,
         REGION_JAPAN,
+        ROT0,
         {
             { "fpr-24423.ic8",  0x00000000, 0x4000000 },
             { "fpr-24424.ic9",  0x04000000, 0x4000000 },
@@ -4020,15 +4207,16 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
-    // Shooting Love 2007
+    // Shooting Love 2007 (Japan)
     {
         "sl2007",
-		NULL,
+        NULL,
         0x10000000,
         0x5504,
         "naomi",
         M4,
         REGION_JAPAN,
+        ROT270,
         {
             { "fpr-24413.ic8",  0x0000000, 0x4000000 },
             { "fpr-24414.ic9",  0x4000000, 0x4000000 },
@@ -4041,12 +4229,13 @@ Games[] =
     // Touch De Zunou (Rev A) *** BAD DUMP ***
     {
         "zunou",
-		NULL,
+        NULL,
         0x8000000,
         0x5502,
         "naomi",
         M4,
         REGION_JAPAN,
+        ROT0,
         {
             { "fpr-24338.ic8", 0x0000000, 0x4000000 },
             { "fpr-24339.ic9", 0x4000000, 0x4000000 },
@@ -4058,16 +4247,33 @@ Games[] =
             { NULL, 0, 0 },
         }
     },
+    // Star Horse Progress Returns (satellite)
+    { 
+        "shorsepr",
+        NULL,
+        0x8000000,
+        0x5502,
+        "naomi",
+        M4,
+        REGION_AUSTRALIA,
+        ROT270,
+        {
+            { "fpr-24489.ic8",  0x00000000, 0x4000000 },
+            { "fpr-24490.ic9",  0x04000000, 0x4000000 },
+            { NULL, 0, 0 },
+        }
+    },
      // Naomi GD Roms
     // Azumanga Daioh Puzzle Bobble (GDL-0018)
     {
-		"azumanga",
-		NULL,
+        "azumanga",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-5091-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4076,45 +4282,48 @@ Games[] =
     },
     // Border Down (Rev A) (GDL-0023A)
     {
-		"bdrdown",
-		NULL,
+        "bdrdown",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-5097-jpn.pic", 0, 0x4000 },
-			{ "bdrdown-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "bdrdown-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0023a",
     },
     // Chaos Field (Japan) (GDL-0025)
     {
-		"cfield",
-		NULL,
+        "cfield",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5102-com.pic", 0, 0x4000 },
-			{ "cfield-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "cfield-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0025",
     },
     // Musapey's Choco Marker (Rev A) (GDL-0014A)
     {
-		"chocomk",
-		NULL,
+        "chocomk",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-5085-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4123,13 +4332,14 @@ Games[] =
     },
     // Cleopatra Fortune Plus (GDL-0012)
     {
-		"cleoftp",
-		NULL,
+        "cleoftp",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-5083-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4138,13 +4348,14 @@ Games[] =
     },
     // Confidential Mission (GDS-0001)
     {
-		"confmiss",
-		NULL,
+        "confmiss",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0298-com.pic",  0, 0x4000 },
             { NULL, 0, 0 },
@@ -4153,13 +4364,14 @@ Games[] =
     },
     // Capcom Vs. SNK Millennium Fight 2000 Pro (Japan) (GDL-0004)
     {
-		"cvsgd",
-		NULL,
+        "cvsgd",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5076-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4170,13 +4382,14 @@ Games[] =
     // ver 010804
     // with Japan BIOS will be shown 010705, likely forgot / was not cared to update it
     {
-		"cvs2",
-		NULL,
+        "cvs2",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-5078-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4186,13 +4399,14 @@ Games[] =
     // Capcom Vs. SNK 2 Millionaire Fighting 2001 (Rev A) (GDL-0007A)
     // ver 010705
     {
-		"cvs2mf",
-		"cvs2",
+        "cvs2mf",
+        "cvs2",
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-5078-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4201,13 +4415,14 @@ Games[] =
     },
     // Virtua Golf / Dynamic Golf (Rev A) (GDS-0009A)
     {
-		"dygolf",
-		NULL,
+        "dygolf",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0308-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4216,13 +4431,14 @@ Games[] =
     },
     // Guilty Gear XX (GDL-0011)
     {
-		"ggxx",
-		NULL,
+        "ggxx",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-5082-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4231,13 +4447,14 @@ Games[] =
     },
     // Guilty Gear XX Accent Core (Japan) (GDL-0041)
     {
-		"ggxxac",
-		NULL,
+        "ggxxac",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5126-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4246,13 +4463,14 @@ Games[] =
     },
     // Guilty Gear XX #Reload (Japan, Rev A) (GDL-0019A)
     {
-		"ggxxrl",
-		NULL,
+        "ggxxrl",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5092-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4261,13 +4479,14 @@ Games[] =
     },
     // Guilty Gear XX #Reload (Japan) (GDL-0019)
     {
-		"ggxxrlo",
-		"ggxxrl",
+        "ggxxrlo",
+        "ggxxrl",
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5092-jpn.pic" , 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4276,13 +4495,14 @@ Games[] =
     },    
     // Guilty Gear XX Slash (Japan, Rev A) (GDL-0033A)
     {
-		"ggxxsla",
-		NULL,
+        "ggxxsla",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5111-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4291,45 +4511,48 @@ Games[] =
     },
     // Mobile Suit Gundam: Federation Vs. Zeon (GDL-0001)
     {
-		"gundmgd",
-		NULL,
+        "gundmgd",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-5069-com.pic", 0, 0x4000 },
-			{ "gundmgd-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "gundmgd-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0001",
     },
     // Mobile Suit Gundam: Federation Vs. Zeon DX (USA, Japan) (GDL-0006)
     {
-		"gundmxgd",
-		NULL,
+        "gundmxgd",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-5079-com.pic", 0, 0x4000 },
-			{ "gundmxgd-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "gundmxgd-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0006",
     },
     // Ikaruga (GDL-0010)
     {
-		"ikaruga",
-		NULL,
+        "ikaruga",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT270,
         {
             { "317-5081-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4338,13 +4561,14 @@ Games[] =
     },
     // Jingi Storm - The Arcade (Japan) (GDL-0037)
     {
-		"jingystm",
-		NULL,
+        "jingystm",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5122-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4353,45 +4577,48 @@ Games[] =
     },
     // Karous (Japan) (GDL-0040)
     {
-		"karous",
-		NULL,
+        "karous",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT270,
         {
             { "317-5125-com.pic", 0, 0x4000 },
-			{ "karous-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "karous-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0040",
     },
     // La Keyboard (GDS-0017)
     {
-		"keyboard",
-		NULL,
+        "keyboard",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0323-com.pic", 0, 0x4000 },
-			{ "keyboard-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "keyboard-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gds-0017",
     },
     // Kurukuru Chameleon (Japan) (GDL-0034)
     {
-		"kurucham",
-		NULL,
+        "kurucham",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5115-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4407,6 +4634,7 @@ Games[] =
         "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0325-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4422,6 +4650,7 @@ Games[] =
         "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0325-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4430,13 +4659,14 @@ Games[] =
     },
     // Lupin The Third - The Typing (Rev A) (GDS-0021A)
     {
-		"luptype",
-		NULL,
+        "luptype",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0332-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4445,13 +4675,14 @@ Games[] =
     },
     // Melty Blood Act Cadenza Version B2 (Japan) (GDL-0039A)
     {
-		"meltyb",
-		NULL,
+        "meltyb",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5124-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4460,13 +4691,14 @@ Games[] =
     },
     // Melty Blood Act Cadenza Ver. A (Japan) (GDL-0028C)
     {
-		"meltybld",
-		NULL,
+        "meltybld",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5104-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4475,13 +4707,14 @@ Games[] =
     },
     // Melty Blood Act Cadenza (Japan) (GDL-0028)
     {
-		"meltyblo",
-		"meltybld",
+        "meltyblo",
+        "meltybld",
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5104-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4490,13 +4723,14 @@ Games[] =
     },
     // Melty Blood Act Cadenza Version B (Japan) (GDL-0039)
     {
-		"meltybo",
-		"meltyb",
+        "meltybo",
+        "meltyb",
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5124-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4505,29 +4739,31 @@ Games[] =
     },
     // Moeru Casinyo (Japan) (GDL-0013)
     {
-		"moeru",
-		NULL,
+        "moeru",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5084-jpn.pic", 0, 0x4000 },
-			{ "moeru-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "moeru-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0013",
     },
     // The Maze of the Kings (GDS-0022)
     {
-		"mok",
-		NULL,
+        "mok",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0333-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4536,13 +4772,14 @@ Games[] =
     },
     // Monkey Ball (GDS-0008)
     {
-		"monkeyba",
-		NULL,
+        "monkeyba",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0307-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4551,141 +4788,150 @@ Games[] =
     },
     // Psyvariar 2 - The Will To Fabricate (Japan) (GDL-0024)
     {
-		"psyvar2",
-		NULL,
+        "psyvar2",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT270,
         {
             { "317-5100-jpn.pic", 0, 0x4000 },
-			{ "psyvar2-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "psyvar2-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0024",
     },
     // Puyo Pop Fever (World) (GDS-0034)
     {
-		"puyofev",
-		NULL,
+        "puyofev",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0375-com.pic", 0, 0x4000 },
-			{ "puyofev-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "puyofev-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gds-0034",
     },
     // Puyo Puyo Fever (Japan) (GDS-0031)
     {
-		"puyofevj",
-		"puyofev",
+        "puyofevj",
+        "puyofev",
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-0375-com.pic", 0, 0x4000 },
-			{ "puyofev-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "puyofev-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gds-0031",
     },
     // Quiz Keitai Q mode (GDL-0017)
     {
-		"quizqgd",
-		NULL,
+        "quizqgd",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT270,
         {
             { "317-5090-jpn.pic", 0, 0x4000 },
-			{ "quizqgd-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "quizqgd-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0017",
     },
     // Radirgy (Japan, Rev A) (GDL-0032A)
     {
-		"radirgy",
-		NULL,
+        "radirgy",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT270,
         {
             { "317-5110-jpn.pic", 0, 0x4000 },
-			{ "radirgy-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "radirgy-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0032a",
     },
     // Radirgy (Japan) (GDL-0032)
     {
-		"radirgyo",
-		"radirgy",
+        "radirgyo",
+        "radirgy",
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT270,
         {
             { "317-5110-jpn.pic", 0, 0x4000 },
-			{ "radirgy-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "radirgy-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0032",
     },
     // Senko No Ronde (Japan, Rev A) (GDL-0030A)
     {
-		"senko",
-		NULL,
+        "senko",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5107-jpn.pic", 0, 0x4000 },
-			{ "senko-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "senko-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0030a",
     },
     // Senko No Ronde (Japan) (GDL-0030)
     {
-		"senkoo",
-		"senko",
+        "senkoo",
+        "senko",
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5107-jpn.pic", 0, 0x4000 },
-			{ "senkoo-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "senkoo-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0030",
     },
     // Senko No Ronde Special (Export, Japan) (GDL-0038)
     {
-		"senkosp",
-		NULL,
+        "senkosp",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
-        REGION_JAPAN, // one of the few exceptions that doesn't work with USA bios while they work with Export bios, so it's safer to restrict it to Japan bios
+        REGION_JAPAN,
+        ROT0, // one of the few exceptions that doesn't work with USA bios while they work with Export bios, so it's safer to restrict it to Japan bios
         {
             { "317-5123-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4694,29 +4940,31 @@ Games[] =
     },
     // Street Fighter Zero 3 Upper (Japan) (GDL-0002)
     {
-		"sfz3ugd",
-		NULL,
+        "sfz3ugd",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5072-com.pic", 0, 0x4000 },
-			{ "sfz3ugd-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "sfz3ugd-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0002",
     },
     // Shakatto Tambourine (Rev B) (GDS-0002B)
     {
-		"shaktam",
-		NULL,
+        "shaktam",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0299-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4725,13 +4973,14 @@ Games[] =
     },
     // Shakatto Tambourine Cho Powerup Chu (2K1 AUT) (GDS-0016)
     {
-		"shaktamb",
-		NULL,
+        "shaktamb",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0321-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4740,13 +4989,14 @@ Games[] =
     },
     // Shakatto Tambourine Motto Norinori Shinkyoku Tsuika (2K1 SPR) (GDS-0013)
     {
-		"shaktmsp",
-		NULL,
+        "shaktmsp",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0315-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4755,29 +5005,31 @@ Games[] =
     },
     // Shikigami No Shiro II / The Castle of Shikigami II (GDL-0021)
     {
-		"shikgam2",
-		NULL,
+        "shikgam2",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT270,
         {
             { "317-5095-jpn.pic", 0, 0x4000 },
-			{ "shikgam2-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "shikgam2-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0021",
     },
     // Slashout (GDS-0004)
     {
-		"slashout",
-		NULL,
+        "slashout",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0302-com.pic",  0, 0x4000 },
             { NULL, 0, 0 },
@@ -4786,13 +5038,14 @@ Games[] =
     },
     // Spikers Battle (GDS-0005)
     {
-		"spkrbtl",
-		NULL,
+        "spkrbtl",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0303-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4801,13 +5054,14 @@ Games[] =
     },
     // Sports Jam (GDS-0003)
     {
-		"sprtjam",
-		NULL,
+        "sprtjam",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0300-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4816,45 +5070,48 @@ Games[] =
     },
     // Super Shanghai 2005 (Japan, Rev A) (GDL-0031A)
     {
-		"ss2005",
-		NULL,
+        "ss2005",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5108-jpn.pic", 0, 0x4000 },
-			{ "ss2005-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "ss2005-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0031a",
     },
     // Super Shanghai 2005 (Japan) (GDL-0031)
     {
-		"ss2005o",
-		"ss2005",
+        "ss2005o",
+        "ss2005",
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5108-jpn.pic", 0, 0x4000 },
-			{ "ss2005-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "ss2005-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0031",
     },
     // Doki Doki Idol Star Seeker (GDL-0005)
     {
-		"starseek",
-		NULL,
+        "starseek",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-5077-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4863,13 +5120,14 @@ Games[] =
     },
     // Noukone Puzzle Takoron (Japan) (GDL-0042)
     {
-		"takoron",
-		NULL,
+        "takoron",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5127-jpn.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4878,109 +5136,116 @@ Games[] =
     },
     // Tetris Kiwamemichi (Japan) (GDL-0020)
     {
-		"tetkiwam",
-		NULL,
+        "tetkiwam",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5093-jpn.pic", 0, 0x4000 },
-			{ "tetkiwam-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "tetkiwam-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0020",
     },
     // Trigger Heart Exelica Ver.A (Japan) (GDL-0036A)
     {
-		"trgheart",
-		NULL,
+        "trgheart",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT270,
         {
             { "317-5121-jpn.pic", 0, 0x4000 },
-			{ "trgheart-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "trgheart-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0036a",
     },
     // Trigger Heart Exelica (Japan) (GDL-0036)
     {
-		"trghearto",
-		"trgheart",
+        "trghearto",
+        "trgheart",
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT270,
         {
             { "317-5121-jpn.pic", 0, 0x4000 },
-			{ "trgheart-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "trgheart-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0036",
     },
     // Trizeal (Japan) (GDL-0026)
     {
-		"trizeal",
-		NULL,
+        "trizeal",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT270,
         {
             { "317-5103-jpn.pic", 0, 0x4000 },
-			{ "trizeal-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "trizeal-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0026",
     },
     // Under Defeat (Japan) (GDL-0035)
     {
-		"undefeat",
-		NULL,
+        "undefeat",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT270,
         {
             { "317-5117-jpn.pic", 0, 0x4000 },
-			{ "undefeat-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "undefeat-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0035",
     },
     // Usagi - Yamashiro Mahjong Hen (Japan) (GDL-0022)
     {
-		"usagiym",
-		NULL,
+        "usagiym",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_JAPAN,
+        ROT0,
         {
             { "317-5096-jpn.pic", 0, 0x4000 },
-			{ "usagiym-default-eeprom.bin", 0, 0x80, Eeprom },
+            { "usagiym-default-eeprom.bin", 0, 0x80, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0022",
     },
     // Virtua Athletics / Virtua Athlete (GDS-0019)
     {
-		"vathlete",
-		NULL,
+        "vathlete",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0330-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -4989,13 +5254,14 @@ Games[] =
     },
     // Virtua Tennis 2 / Power Smash 2 (Rev A) (GDS-0015A)
     {
-		"vtennis2",
-		NULL,
+        "vtennis2",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0318-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -5004,13 +5270,14 @@ Games[] =
     },
     // Virtua Tennis / Power Smash (GDS-0011)
     {
-		"vtennisg",
-		NULL,
+        "vtennisg",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0312-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -5019,13 +5286,14 @@ Games[] =
     },
     // World Series Baseball / Super Major League (GDS-0010)
     {
-		"wsbbgd",
-		NULL,
+        "wsbbgd",
+        NULL,
         0x4000,
         0,
-		"naomi",
+        "naomi",
         GD,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "317-0309-com.pic", 0, 0x4000 },
             { NULL, 0, 0 },
@@ -5036,12 +5304,13 @@ Games[] =
     // Animal Basket (24 Jan 2005)
     {
         "anmlbskt",
-		NULL,
+        NULL,
         0x4000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT270,
         {
             { "vm2001f01.u3",  0x0000000, 0x800000 },
             { "vm2001f01.u4",  0x1000000, 0x800000 },
@@ -5054,12 +5323,13 @@ Games[] =
     // Animal Basket (19 Jan 2005)
     {
         "anmlbskta",
-		"anmlbskt",
+        "anmlbskt",
         0x4000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT270,
         {
             { "u3",  0x0000000, 0x1000000 },
             { "u1",  0x1000000, 0x1000000 },
@@ -5073,12 +5343,13 @@ Games[] =
     // Sega Bass Fishing Challenge Version A
     {
         "basschal",
-		NULL,
+        NULL,
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "vera.u3",  0x00000000, 0x01000000 },
             { "vera.u1",  0x01000000, 0x01000000 },
@@ -5095,12 +5366,13 @@ Games[] =
     // Sega Bass Fishing Challenge
     {
         "basschalo",
-		"basschal",
+        "basschal",
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "610-0811.u3",  0x00000000, 0x01000000 },
             { "610-0811.u1",  0x01000000, 0x01000000 },
@@ -5117,12 +5389,13 @@ Games[] =
     // Block Pong-Pong
     {
         "blokpong",
-		NULL,
+        NULL,
         0x4000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT270,
         {
             { "u3", 0x0000000, 0x1000000 },
             { "u1", 0x1000000, 0x1000000 },
@@ -5137,12 +5410,13 @@ Games[] =
     // Sega Clay Challenge
     {
         "claychal",
-		NULL,
+        NULL,
         0x8000100,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "608-2161.u3",  0x0000000, 0x1000100 },
             { "608-2161.u1",  0x1000000, 0x1000100 },
@@ -5159,12 +5433,13 @@ Games[] =
     // Demolish Fist
     {
         "demofist",
-		NULL,
+        NULL,
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax0601p01.ic18", 0x0000000, 0x0800000 },
             { "ax0601m01.ic11", 0x1000000, 0x1000000 },
@@ -5181,12 +5456,13 @@ Games[] =
     // Dirty Pigskin Football
     {
         "dirtypig",
-		NULL,
+        NULL,
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "695-0014.u3",  0x0000000, 0x1000000 },
             { "695-0014.u1",  0x1000000, 0x1000000 },
@@ -5203,12 +5479,13 @@ Games[] =
     // Dolphin Blue
     {
         "dolphin",
-		NULL,
+        NULL,
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax0401p01.ic18", 0x0000000, 0x0800000 },
             { "ax0401m01.ic11", 0x1000000, 0x1000000 },
@@ -5223,12 +5500,13 @@ Games[] =
     // Fist Of The North Star
     {
         "fotns",
-		NULL,
+        NULL,
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax1901p01.ic18", 0x0000000, 0x0800000 },
             { "ax1901m01.ic11", 0x1000000, 0x1000000 },
@@ -5245,12 +5523,13 @@ Games[] =
     // Faster Than Speed
     {
         "ftspeed",
-		NULL,
+        NULL,
         0x9000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax1701p01.ic18", 0x0000000, 0x0800000 },
             { "ax1701m01.ic11", 0x1000000, 0x1000000 },
@@ -5268,12 +5547,13 @@ Games[] =
     // Guilty Gear Isuka
     {
         "ggisuka",
-		NULL,
+        NULL,
         0x9000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax1201p01.ic18", 0x0000000, 0x0800000 },
             { "ax1201m01.ic10", 0x0800000, 0x1000000 },
@@ -5291,12 +5571,13 @@ Games[] =
     // Guilty Gear X ver. 1.5
     {
         "ggx15",
-		NULL,
+        NULL,
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax0801p01.ic18", 0x0000000, 0x0800000 },
             { "ax0801m01.ic11", 0x1000000, 0x1000000 },
@@ -5313,12 +5594,13 @@ Games[] =
     // The King of Fighters Neowave
     {
         "kofnw",
-		NULL,
+        NULL,
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax2201en_p01.ic18", 0x0000000, 0x0800000 },
             { "ax2201m01.ic11",    0x1000000, 0x1000000 },
@@ -5334,12 +5616,13 @@ Games[] =
     // The King of Fighters Neowave (Japan)
     {
         "kofnwj",
-		"kofnw",
+        "kofnw",
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax2201jp_p01.ic18", 0x0000000, 0x0800000 },
             // these are taken from the above set, game *seems* to work fine with these
@@ -5356,12 +5639,13 @@ Games[] =
     // The King of Fighters XI
     {
         "kofxi",
-		NULL,
+        NULL,
         0x14000000,
         0x00000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax3201p01.fmem1", 0x00000000, 0x0800000 },
             { "ax3201m01.mrom1", 0x02000000, 0x2000000 },
@@ -5378,12 +5662,13 @@ Games[] =
     // Knights of Valour - The Seven Spirits
     {
         "kov7sprt",
-		NULL,
+        NULL,
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax1301p01.ic18", 0x0000000, 0x0800000 },
             { "ax1301m01.ic11", 0x1000000, 0x1000000 },
@@ -5400,12 +5685,13 @@ Games[] =
     // Maximum Speed
     {
         "maxspeed",
-		NULL,
+        NULL,
         0x9000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax0501p01.ic18", 0x0000000, 0x0800000 },
             { "ax0501m01.ic11", 0x1000000, 0x1000000 },
@@ -5422,12 +5708,13 @@ Games[] =
     // Metal Slug 6
     {
         "mslug6",
-		NULL,
+        NULL,
         0xc000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax3001p01.fmem1", 0x0000000, 0x0800000 },
             { "ax3001m01.mrom1", 0x2000000, 0x2000000 },
@@ -5441,12 +5728,13 @@ Games[] =
     // NeoGeo Battle Coliseum
     {
         "ngbc",
-		NULL,
+        NULL,
         0x14000000,
         0x00000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax3301en_p01.fmem1", 0x00000000, 0x0800000 },
             { "ax3301m01.mrom1",    0x02000000, 0x2000000 },
@@ -5463,12 +5751,13 @@ Games[] =
     // NeoGeo Battle Coliseum (Japan)
     {
         "ngbcj",
-		"ngbc",
+        "ngbc",
         0x14000000,
         0x00000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax3301p01.fmem1", 0x00000000, 0x0800000 },
             { "ax3301m01.mrom1", 0x02000000, 0x2000000 },
@@ -5485,12 +5774,13 @@ Games[] =
     // Ranger Mission
     {
         "rangrmsn",
-		NULL,
+        NULL,
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax1601p01.ic18", 0x0000000, 0x0800000 },
             { "ax1601m01.ic11", 0x1000000, 0x1000000 },
@@ -5505,12 +5795,13 @@ Games[] =
     // The Rumble Fish
     {
         "rumblef",
-		NULL,
+        NULL,
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax1801p01.ic18", 0x0000000, 0x0800000 },
             { "ax1801m01.ic11", 0x1000000, 0x1000000 },
@@ -5527,12 +5818,13 @@ Games[] =
     // The Rumble Fish (prototype)
     {
         "rumblefp",
-		"rumblef",
+        "rumblef",
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ic12", 0x00000000, 0x00800000 },
             { "ic13", 0x00800000, 0x00800000 },
@@ -5557,12 +5849,13 @@ Games[] =
     // The Rumble Fish 2
     {
         "rumblef2",
-		NULL,
+        NULL,
         0xe000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax3401p01.fmem1", 0x0000000, 0x0800000 },
             { "ax3401m01.mrom1", 0x2000000, 0x2000000 },
@@ -5577,12 +5870,13 @@ Games[] =
     // The Rumble Fish 2 (prototype)
     {
         "rumblf2p",
-		"rumblef2",
+        "rumblef2",
         0xe000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ic12", 0x00000000, 0x00800000 },
             { "ic13", 0x00800000, 0x00800000 },
@@ -5607,12 +5901,13 @@ Games[] =
     // Net Select: Salaryman Kintaro
     {
         "salmankt",
-		NULL,
+        NULL,
         0x9000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax1401p01.ic18", 0x0000000, 0x0800000 },
             { "ax1401m01.ic11", 0x1000000, 0x1000000 },
@@ -5629,12 +5924,13 @@ Games[] =
     // Samurai Spirits Tenkaichi Kenkakuden
     {
         "samsptk",
-		NULL,
+        NULL,
         0x14000000,
         0x00000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax2901p01.fmem1", 0x00000000, 0x0800000 },
             { "ax2901m01.mrom1", 0x02000000, 0x2000000 },
@@ -5651,12 +5947,13 @@ Games[] =
     // Sports Shooting USA
     {
         "sprtshot",
-		NULL,
+        NULL,
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax0101p01.ic18", 0x0000000, 0x0800000 },
             { "ax0101m01.ic11", 0x1000000, 0x1000000 },
@@ -5670,12 +5967,13 @@ Games[] =
     // Sushi Bar
     {
         "sushibar",
-		NULL,
+        NULL,
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ic12", 0x00000000, 0x00800000 },
             { "ic14", 0x01000000, 0x00800000 },
@@ -5690,12 +5988,13 @@ Games[] =
     // Net Select Horse Racing: Victory Furlong"
     {
         "vfurlong",
-		NULL,
+        NULL,
         0x9000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax2001p01.ic18", 0x0000000, 0x0800000 },
             { "ax2001m01.ic11", 0x1000000, 0x1000000 },
@@ -5712,12 +6011,13 @@ Games[] =
     // WaiWai Drive
     {
         "waidrive",
-		NULL,
+        NULL,
         0x4000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT270,
         {
             { "u3", 0x0000000, 0x1000000 },
             { "u1", 0x1000000, 0x1000000 },
@@ -5728,12 +6028,13 @@ Games[] =
     // Extreme Hunting
     {
         "xtrmhunt",
-		NULL,
+        NULL,
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "ax2401p01.ic18", 0x0000000, 0x0800000 },
             { "ax2401m01.ic11", 0x1000000, 0x1000000 },
@@ -5748,12 +6049,13 @@ Games[] =
     // Extreme Hunting 2
     {
         "xtrmhnt2",
-		NULL,
+        NULL,
         0x8000000,
         0x0000000,
         "awbios",
         AW,
         REGION_AUSTRALIA,
+        ROT0,
         {
             { "610-0752.u3",  0x0000000, 0x1000000 },
             { "610-0752.u1",  0x1000000, 0x1000000 },

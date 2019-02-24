@@ -273,16 +273,6 @@ DYNAREC_USED = 1
 SOURCES_CXX += $(CORE_DIR)/core/rec-ARM/rec_arm.cpp
 endif
 
-ifeq ($(DYNAREC_USED),1)
-SOURCES_CXX += $(CORE_DIR)/core/rec.cpp
-# Dynarec
-SOURCES_CXX += $(CORE_DIR)/core/hw/sh4/dyna/decoder.cpp \
-					$(CORE_DIR)/core/hw/sh4/dyna/driver.cpp \
-					$(CORE_DIR)/core/hw/sh4/dyna/blockmanager.cpp \
-					$(CORE_DIR)/core/hw/sh4/dyna/shil.cpp 
-
-endif
-
 ifeq ($(WITH_DYNAREC), arm)
 SOURCES_ASM += $(CORE_DIR)/core/rec-ARM/ngen_arm.S
 endif
@@ -307,6 +297,16 @@ SOURCES_CXX += $(CORE_DIR)/core/rec-ARM64/rec_arm64.cpp \
 				$(DEPS_DIR)/vixl/aarch64/operands-aarch64.cc \
 				$(DEPS_DIR)/vixl/aarch64/pointer-auth-aarch64.cc \
 				$(DEPS_DIR)/vixl/aarch64/simulator-aarch64.cc
+endif
+
+ifeq ($(DYNAREC_USED),1)
+SOURCES_CXX += $(CORE_DIR)/core/rec.cpp
+# Dynarec
+SOURCES_CXX += $(CORE_DIR)/core/hw/sh4/dyna/decoder.cpp \
+					$(CORE_DIR)/core/hw/sh4/dyna/driver.cpp \
+					$(CORE_DIR)/core/hw/sh4/dyna/blockmanager.cpp \
+					$(CORE_DIR)/core/hw/sh4/dyna/shil.cpp 
+
 endif
 
 SOURCES_CXX += $(CORE_DIR)/core/libretro/libretro.cpp \

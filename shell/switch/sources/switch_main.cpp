@@ -286,8 +286,8 @@ void UpdateInputState(u32 port) {
     if (kDown & KEY_MINUS)
 		dc_stop();
 
-	lt[port]=(kDown & KEY_LSTICK) ? 255 : 0;
-	rt[port]=(kDown & KEY_RSTICK) ? 255 : 0;
+	lt[port]=(kDown & (KEY_ZL | KEY_L)) ? 255 : 0;
+	rt[port]=(kDown & (KEY_ZR | KEY_R)) ? 255 : 0;
 
 	JoystickPosition pos_left;
     hidJoystickRead(&pos_left, CONTROLLER_P1_AUTO, JOYSTICK_LEFT);

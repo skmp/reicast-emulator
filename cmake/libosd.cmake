@@ -169,9 +169,26 @@ elseif(${HOST_OS} EQUAL ${OS_DARWIN})
   message("-----------------------------------------------------")
   message(" OS: Apple OS X ")
 
-  list(APPEND libosd_SRCS 
+
+  list(APPEND objc_SRCS
+    ./shell/apple/emulator-osx/emulator-osx/osx-main.mm
+    ./shell/apple/emulator-osx/emulator-osx/AppDelegate.swift
+    ./shell/apple/emulator-osx/emulator-osx/EmuGLView.swift
+  )
+
+  set_source_files_properties(${objc_SRCS} PROPERTIES COMPILE_FLAGS "-x objective-c++")
+
+
+
+  list(APPEND libosd_SRCS ${objc_SRCS}
     ${d_osd}/linux/common.cpp
-    ${d_osd}/apple/osx_osd.cpp)
+    ${d_osd}/linux/context.cpp
+    ${d_osd}/audiobackend/audiobackend_coreaudio.cpp
+    # if NOT USE_SWIFT / ObjC
+    #${d_osd}/apple/osx_osd.cpp
+    )
+
+
 
 elseif(${HOST_OS} EQUAL ${OS_IOS})
 #
@@ -216,15 +233,13 @@ endif()
 
 
 
-
-
 if(BUILD_LIBS)
   add_library(libosd ${BUILD_LIB_TYPE} ${libosd_SRCS})
 else()
   list(APPEND reicast_SRCS ${libosd_SRCS})
 endif()
 
-if(NOT ${HOST_OS} EQUAL ${OS_NSW_HOS})
+if(NOT ${HOST_OS} EQUAL ${OS_NSW_HOS} AND NOT TARGET_OSX AND NOT TARGET_IOS)
   source_group(TREE ${libosd_base_path} PREFIX src\\libosd FILES ${libosd_SRCS})
 endif()
 

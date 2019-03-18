@@ -1,12 +1,16 @@
 [
-    {
-      "name": "PS4 SDK",
-      "preferredGenerator": "Ninja",
-      "toolchainFile": "${workspaceRoot}\\cmake\\ps4sdk.cmake"
-    },
-    {
-      "name": "NSW SDK",
-      "preferredGenerator": "Ninja",
-      "toolchainFile": "${workspaceRoot}\\cmake\\devkitA64.cmake"
-    }
-  ]
+  {
+    "name": "Xcode",
+    "preferredGenerator": { "name": "Xcode" }
+  },
+  {
+    "name": "PS4 SDK",
+    "preferredGenerator": { "name":  "Ninja" },
+    "toolchainFile": "${workspaceRoot}\\cmake\\ps4sdk.cmake"
+  },
+  {
+    "name": "NSW SDK",
+    "preferredGenerator": { "name":  "Ninja" },
+    "toolchainFile": "${workspaceRoot}\\cmake\\devkitA64.cmake"
+  }
+]

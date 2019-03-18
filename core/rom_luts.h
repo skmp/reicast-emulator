@@ -66,6 +66,7 @@ static struct game_type lut_games[] =
    { "T13008D",    -1, -1, -1, -1, -1,  1,  -1, 1  },                /* Tony Hawk's Pro Skater 2 (USA) */
    { "T23002N   ", -1, -1, -1, -1, -1,  1,  -1, 1  },                /* Star Wars Episode I: Jedi Power Battle (USA) */
    { "MK-51052  ", -1, -1, -1, -1, -1,  1,  -1, 1  },                /* Skies of Arcadia */
+   { "MK-51007  ", -1, -1, -1, -1, -1,  1,  -1, 1  },                /* Flag to Flag */
 
    /* Disable DIV matching */
    { "T40216N   ", -1, -1, -1, -1, -1,  -1,  1, 1  },                /* Surf Rocket Racers */

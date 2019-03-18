@@ -81,28 +81,43 @@ void DMAC_Ch2St()
 	{
 		//printf(">>\tDMAC: TEX LNMODE0 Ch2 DMA SRC=%X DST=%X LEN=%X | LN(%X::%X)\n", src, dst, len, *pSB_LMMODE0, *pSB_LMMODE1 );
 
-		dst=(dst&0xFFFFFF) |0xa4000000;
-		/*WriteMemBlock_nommu_ptr(dst,(u32*)GetMemPtr(src,len),len);
-		src+=len;*/
-		u32 p_addr=src & RAM_MASK;
-		while(len)
+		if (SB_LMMODE0 == 0)
 		{
-			if ((p_addr+len)>RAM_SIZE)
+			dst=(dst&0xFFFFFF) |0xa4000000;
+			/*WriteMemBlock_nommu_ptr(dst,(u32*)GetMemPtr(src,len),len);
+			src+=len;*/
+			u32 p_addr=src & RAM_MASK;
+			while(len)
 			{
-				//u32 *sys_buf=(u32 *)GetMemPtr(src,len);//(&mem_b[src&RAM_MASK]);
-				u32 new_len=RAM_SIZE-p_addr;
-				WriteMemBlock_nommu_dma(dst,src,new_len);
-				len-=new_len;
-				src+=new_len;
-				dst+=new_len;
+				if ((p_addr+len)>RAM_SIZE)
+				{
+					//u32 *sys_buf=(u32 *)GetMemPtr(src,len);//(&mem_b[src&RAM_MASK]);
+					u32 new_len=RAM_SIZE-p_addr;
+					WriteMemBlock_nommu_dma(dst,src,new_len);
+					len-=new_len;
+					src+=new_len;
+					dst+=new_len;
+				}
+				else
+				{
+					//u32 *sys_buf=(u32 *)GetMemPtr(src,len);//(&mem_b[src&RAM_MASK]);
+					//WriteMemBlock_nommu_ptr(dst,sys_buf,len);
+					WriteMemBlock_nommu_dma(dst,src,len);
+					src+=len;
+					break;
+				}
 			}
-			else
+		}
+		else
+		{
+			dst = (dst & 0xFFFFFF) | 0xa5000000;	// 32b path
+			while (len > 0)
 			{
-				//u32 *sys_buf=(u32 *)GetMemPtr(src,len);//(&mem_b[src&RAM_MASK]);
-				//WriteMemBlock_nommu_ptr(dst,sys_buf,len);
-				WriteMemBlock_nommu_dma(dst,src,len);
-				src+=len;
-				break;
+				u32 v = ReadMem32(src);
+				pvr_write_area1_32(dst, v);
+				len -= 4;
+				src += 4;
+				dst += 4;
 			}
 		}
 	//	*pSB_LMMODE0 = 1;           // this prob was done by system already

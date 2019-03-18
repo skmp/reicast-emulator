@@ -146,6 +146,12 @@ MD5Final(md5byte digest[16], struct MD5Context *ctx)
 #define MD5STEP(f,w,x,y,z,in,s) \
 	 (w += f(x,y,z) + in, w = (w<<s | w>>(32-s)) + x)
 
+#if __cplusplus > 199711
+#define _REGISTER
+#else
+#define _REGISTER register
+#endif
+
 /*
  * The core of the MD5 algorithm, this alters an existing MD5 hash to
  * reflect the addition of 16 longwords of new data.  MD5Update blocks
@@ -154,7 +160,7 @@ MD5Final(md5byte digest[16], struct MD5Context *ctx)
 void
 MD5Transform(UWORD32 buf[4], UWORD32 const in[16])
 {
-	register UWORD32 a, b, c, d;
+	_REGISTER UWORD32 a, b, c, d;
 
 	a = buf[0];
 	b = buf[1];

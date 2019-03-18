@@ -101,13 +101,13 @@ elseif(("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "AMD64") OR
   set(host_arch "x64")
   set(HOST_CPU ${CPU_X64})
 #
-elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm")
-  set(host_arch "arm")
-  set(HOST_CPU ${CPU_ARM})
-#
 elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64")
   set(host_arch "arm64")
   set(HOST_CPU ${CPU_A64})
+#
+elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm")
+  set(host_arch "arm")
+  set(HOST_CPU ${CPU_ARM})
 #
 elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "ppc64")
   set(host_arch "ppc64")
@@ -139,77 +139,34 @@ string(TOLOWER ${CMAKE_SYSTEM_NAME} host_os)
 
 ## HOST_* is not TARGET_*  ;;  change ndc-e internal naming it's wrong , then change this  ;;
 
-if("Android" STREQUAL "${host_os}"  OR ANDROID)
+if("android" STREQUAL "${host_os}"  OR ANDROID)
   set(HOST_OS ${OS_LINUX}) 	# *FIXME* we might have to keep as OS_LINUX or add to full cleanup list :|
+
 elseif(CMAKE_HOST_WIN32)
   set(HOST_OS ${OS_WINDOWS}) 
-elseif(CMAKE_HOST_UNIX)
-  set(HOST_OS ${OS_LINUX})   # todo android check, just check android vars?
+
 elseif(CMAKE_HOST_APPLE)
-  set(HOST_OS ${OS_DARWIN})  # todo ios check, check compiler/arch?
-endif()
 
-
-
-if(CMAKE_HOST_APPLE AND (${HOST_CPU} EQUAL ${CPU_ARM}))
-  set(HOST_OS ${OS_IOS})
-endif()
-
-
-
-
-### These were for internal testing, don't use ###
-#
-function(CpuIs CpuType Res)
-  set(${Res} OFF PARENT_SCOPE)
-  if (${HOST_CPU} EQUAL ${CpuType})
-    set(${Res} ON PARENT_SCOPE)
+  if("${host_arch}" MATCHES "arm")
+    set(HOST_OS ${OS_IOS})
+    set(TARGET_IOS On)
+    add_definitions(-DTARGET_IPHONE -DTARGET_IOS)
+  else()
+    set(HOST_OS ${OS_DARWIN})  # todo ios check, check compiler/arch?
+    set(TARGET_OSX On)
+    add_definitions(-DTARGET_OSX)
   endif()
-endfunction()
+  
+elseif(CMAKE_HOST_UNIX) # GP UNIX MUST BE AFTER OTHER UNIX'ish options such as APPLE , it matches both 
 
-macro(CpuIsX86 res)
-  CpuIs(CPU_X86 ${res})
-endmacro()
-
-macro(CpuIsX64 res)
-  CpuIs(CPU_X64 ${res})
-endmacro()
-
-macro(CpuIsARM res)
-  CpuIs(CPU_ARM ${res})
-endmacro()
-
-macro(CpuIsA64 res)
-  CpuIs(CPU_A64 ${res})
-endmacro()
-
-macro(CpuIsPPC res)
-  CpuIs(CPU_PPC ${res})
-endmacro()
-
-macro(CpuIsPPC64 res)
-  CpuIs(CPU_PPC64 ${res})
-endmacro()
-
-macro(CpuIsMIPS res)
-  CpuIs(CPU_MIPS ${res})
-endmacro()
-
-macro(CpuIsMIPS64 res)
-  CpuIs(CPU_MIPS64 ${res})
-endmacro()
-
-
-
+    set(HOST_OS ${OS_LINUX})   # todo android check, just check android vars?
+endif()
 
 
 
 #option(TARGET_NO_REC  BOOL "")
 #option(TARGET_NO_AREC BOOL "")
 #option(TARGET_NO_JIT  BOOL "")
-
-
-
 
 
 
@@ -287,7 +244,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") 
   set(BUILD_COMPILER ${COMPILER_GCC})
 #
-elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # AppleClang ffs
   set(BUILD_COMPILER ${COMPILER_CLANG})
 #
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
@@ -304,7 +261,7 @@ if ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
     (${BUILD_COMPILER} EQUAL ${COMPILER_CLANG}))
 
   
-  set(_C_FLAGS "-fno-operator-names -fcxx-exceptions") ## xbyak needs exceptions
+  set(_C_FLAGS "-fno-operator-names")
   
   
   if(USE_32B OR TARGET_LINUX_X86)
@@ -312,11 +269,15 @@ if ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
   endif()
   
   if((${HOST_CPU} EQUAL ${CPU_X86}) OR (${HOST_CPU} EQUAL ${CPU_X64}))
-    set(_C_FLAGS "${_C_FLAGS} -msse4 -fopenmp")
+    set(_C_FLAGS "${_C_FLAGS} -msse4")
+    
+    if(NOT CMAKE_HOST_APPLE)
+      set(_C_FLAGS "${_C_FLAGS} -fopenmp")
+    endif()
   endif() # X86 family
   
     
-  set(_CXX_FLAGS "${_CXX_FLAGS} ${_C_FLAGS}")
+  set(_CXX_FLAGS "${_CXX_FLAGS} ${_C_FLAGS} -std=c++17 -fcxx-exceptions") ## xbyak needs exceptions
 endif()
 
 
@@ -378,8 +339,9 @@ if(ZBUILD)
   set(DEBUG_CMAKE ON)
   add_definitions(-D_Z_)  # Get rid of some warnings and internal dev testing
   
-  if(NOT TARGET_PS4 AND NOT TARGET_NSW)
-    set(USE_QT On)
+  if(NOT TARGET_PS4 AND NOT TARGET_NSW AND 
+     NOT TARGET_OSX AND NOT TARGET_IOS )
+     set(USE_QT ON)
   endif()
 endif()
 
@@ -424,3 +386,62 @@ add_definitions(-DDEF_CONSOLE)
 
 set(RE_CMAKE_CONFIGURED 1)
 #add_definitions(-D=${})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### These were for internal testing, don't use ###
+#
+function(CpuIs CpuType Res)
+  set(${Res} OFF PARENT_SCOPE)
+  if (${HOST_CPU} EQUAL ${CpuType})
+    set(${Res} ON PARENT_SCOPE)
+  endif()
+endfunction()
+
+macro(CpuIsX86 res)
+  CpuIs(CPU_X86 ${res})
+endmacro()
+
+macro(CpuIsX64 res)
+  CpuIs(CPU_X64 ${res})
+endmacro()
+
+macro(CpuIsARM res)
+  CpuIs(CPU_ARM ${res})
+endmacro()
+
+macro(CpuIsA64 res)
+  CpuIs(CPU_A64 ${res})
+endmacro()
+
+macro(CpuIsPPC res)
+  CpuIs(CPU_PPC ${res})
+endmacro()
+
+macro(CpuIsPPC64 res)
+  CpuIs(CPU_PPC64 ${res})
+endmacro()
+
+macro(CpuIsMIPS res)
+  CpuIs(CPU_MIPS ${res})
+endmacro()
+
+macro(CpuIsMIPS64 res)
+  CpuIs(CPU_MIPS64 ${res})
+endmacro()
+
+
+
+
+

@@ -16,12 +16,20 @@ STATIC_LINKING:= 0
 HAVE_TEXUPSCALE := 1
 HAVE_OPENMP   := 1
 HAVE_CHD      := 1
+HAVE_CLANG    := 0
 
 
 TARGET_NAME   := reicast
 
-CXX      = ${CC_PREFIX}g++
-CC       = ${CC_PREFIX}gcc
+ifeq ($(HAVE_CLANG),1)
+	CXX      = ${CC_PREFIX}clang++
+	CC       = ${CC_PREFIX}clang
+	SHARED   := -fuse-ld=lld
+else
+	CXX      = ${CC_PREFIX}g++
+	CC       = ${CC_PREFIX}gcc
+	SHARED   :=
+endif
 CC_AS    = ${CC_PREFIX}as
 
 MFLAGS   := 
@@ -107,7 +115,7 @@ endif
 ifneq (,$(findstring unix,$(platform)))
 	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
-	SHARED := -shared -Wl,--version-script=link.T
+	SHARED += -shared -Wl,--version-script=link.T
 	LDFLAGS +=  -Wl,--no-undefined
 	ifneq (,$(findstring Haiku,$(shell uname -s)))
 		LIBS += -lroot -lnetwork
@@ -144,7 +152,7 @@ ifneq (,$(findstring unix,$(platform)))
 else ifneq (,$(findstring rpi,$(platform)))
 	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
-	SHARED := -shared -Wl,--version-script=link.T
+	SHARED += -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	LIBS += -lrt
 	ARM_FLOAT_ABI_HARD = 1
@@ -181,7 +189,7 @@ else ifneq (,$(findstring rpi,$(platform)))
 else ifeq ($(platform), classic_armv7_a7)
 	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
-	SHARED := -shared -Wl,--version-script=link.T
+	SHARED += -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	LIBS += -lrt
 	ARM_FLOAT_ABI_HARD = 1
@@ -221,7 +229,7 @@ else ifeq ($(platform), classic_armv7_a7)
 else ifeq ($(platform), classic_armv8_a35)
 	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
-	SHARED := -shared -Wl,--version-script=link.T
+	SHARED += -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	LIBS += -lrt
 	ARM_FLOAT_ABI_HARD = 1
@@ -263,7 +271,7 @@ else ifeq ($(platform), classic_armv8_a35)
 else ifeq ($(platform), sun8i)
 	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
-	SHARED := -shared -Wl,--version-script=link.T
+	SHARED += -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	LIBS += -lrt
 	ARM_FLOAT_ABI_HARD = 1
@@ -303,7 +311,7 @@ else ifeq ($(platform), sun8i)
 else ifeq ($(platform), odroid-n2)
 	EXT ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
-	SHARED := -shared -Wl,--version-script=link.T
+	SHARED += -shared -Wl,--version-script=link.T
 	LDFLAGS +=  -Wl,--no-undefined
 	fpic = -fPIC
 	LIBS += -lrt
@@ -323,15 +331,19 @@ else ifeq ($(platform), odroid-n2)
 else ifeq ($(platform), rockpro64)
 	EXT ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
-	SHARED := -shared -Wl,--version-script=link.T
+	SHARED += -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	LIBS += -lrt
 	ARM_FLOAT_ABI_HARD = 1
 	FORCE_GLES = 1
 	SINGLE_PREC_FLAGS = 1
 	CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
-	CFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72.cortex-a53 -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad $(CPUFLAGS)
-	CXXFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72.cortex-a53 -mfpu=neon-fp-armv8 -mvectorize-with-neon-quad $(CPUFLAGS)
+	CFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72.cortex-a53 -mfpu=neon-fp-armv8 $(CPUFLAGS)
+	CXXFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72.cortex-a53 -mfpu=neon-fp-armv8 $(CPUFLAGS)
+	ifeq ($(HAVE_CLANG),0)
+		CFLAGS += -mvectorize-with-neon-quad
+		CXXFLAGS += -mvectorize-with-neon-quad
+	endif
 	ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm
@@ -341,7 +353,7 @@ else ifeq ($(platform), rockpro64)
 else ifeq ($(platform), tinkerboard)
     EXT ?= so
     TARGET := $(TARGET_NAME)_libretro.$(EXT)
-    SHARED := -shared -Wl,--version-script=link.T
+    SHARED += -shared -Wl,--version-script=link.T
     fpic = -fPIC
     LIBS += -lrt
     ARM_FLOAT_ABI_HARD = 1
@@ -360,7 +372,7 @@ else ifneq (,$(findstring odroid,$(platform)))
 	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
-	SHARED := -shared -Wl,--version-script=link.T
+	SHARED += -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	LIBS += -lrt
 	ARM_FLOAT_ABI_HARD = 1
@@ -377,21 +389,31 @@ else ifneq (,$(findstring odroid,$(platform)))
 		CXXFLAGS += -mcpu=cortex-a5
 	else ifneq (,$(findstring ODROID-XU3,$(BOARD)))
 		# ODROID-XU3 & -XU3 Lite
-		ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
-			CFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
-			CXXFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
+		ifeq ($(HAVE_CLANG),1)
+			CFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4
+			CXXFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4
 		else
-			CFLAGS += -mcpu=cortex-a9 -mfpu=neon
-			CXXFLAGS += -mcpu=cortex-a9 -mfpu=neon
+			ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
+				CFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
+				CXXFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
+			else
+				CFLAGS += -mcpu=cortex-a9 -mfpu=neon
+				CXXFLAGS += -mcpu=cortex-a9 -mfpu=neon
+			endif
 		endif
 	else ifneq (,$(findstring ODROID-XU4,$(BOARD)))
 		# ODROID-XU4 on newer kernels now identify as ODROID-XU4
-		ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
-			CFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
-			CXXFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
+		ifeq ($(HAVE_CLANG),1)
+			CFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4
+			CXXFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4
 		else
-			CFLAGS += -mcpu=cortex-a9 -mfpu=neon
-			CXXFLAGS += -mcpu=cortex-a9 -mfpu=neon
+			ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
+				CFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
+				CXXFLAGS += -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
+			else
+				CFLAGS += -mcpu=cortex-a9 -mfpu=neon
+				CXXFLAGS += -mcpu=cortex-a9 -mfpu=neon
+			endif
 		endif
 	else
 		# ODROID-U2, -U3, -X & -X2
@@ -410,7 +432,7 @@ else ifneq (,$(findstring odroid,$(platform)))
 else ifneq (,$(findstring imx6,$(platform)))
 	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
-	SHARED := -shared -Wl,--version-script=link.T
+	SHARED += -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	FORCE_GLES = 1
 	LIBS += -lrt
@@ -505,7 +527,7 @@ else ifneq (,$(findstring android,$(platform)))
 	fpic = -fPIC
 	EXT ?= so
 	TARGET := $(TARGET_NAME)_libretro_android.$(EXT)
-	SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
+	SHARED += -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
 
 	CC = arm-linux-androideabi-gcc
 	CXX = arm-linux-androideabi-g++
@@ -524,7 +546,7 @@ else ifeq ($(platform), qnx)
 	fpic = -fPIC
 	EXT ?= so
 	TARGET := $(TARGET_NAME)_libretro_$(platform).$(EXT)
-	SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
+	SHARED += -shared -Wl,--version-script=link.T -Wl,--no-undefined -Wl,--warn-common
 
 	CC = qcc -Vgcc_ntoarmv7le
 	CC_AS = qcc -Vgcc_ntoarmv7le
@@ -543,7 +565,7 @@ else ifeq ($(platform), qnx)
 else ifneq (,$(findstring armv,$(platform)))
 	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
-	SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined
+	SHARED += -shared -Wl,--version-script=link.T -Wl,--no-undefined
 	fpic := -fPIC
 	CPUFLAGS += -DNO_ASM -DARM -D__arm__ -DARM_ASM -DNOSSE
 	WITH_DYNAREC=arm

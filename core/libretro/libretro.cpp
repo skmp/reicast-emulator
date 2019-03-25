@@ -2709,8 +2709,15 @@ static bool disc_tray_open = false;
 static bool retro_set_eject_state(bool ejected)
 {
    disc_tray_open = ejected;
-
-   return true;
+   if (ejected)
+   {
+      DiscOpenLid();
+      return true;
+   }
+   else
+   {
+      return DiscSwap();
+   }
 }
 
 static bool retro_get_eject_state()
@@ -2736,7 +2743,10 @@ static bool retro_set_image_index(unsigned index)
    strncpy(settings.imgread.DefaultImage, disk_paths[index].c_str(), sizeof(settings.imgread.DefaultImage));
    settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
 
-   return DiscSwap();
+   if (disc_tray_open)
+      return true;
+   else
+      return DiscSwap();
 }
 
 static unsigned retro_get_num_images()

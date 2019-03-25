@@ -199,6 +199,16 @@ bool InitDrive(u32 fileflags)
    return true;
 }
 
+void DiscOpenLid()
+{
+	TermDrive();
+	NullDriveDiscType = Open;
+	gd_setdisc();
+	sns_asc = 0x29;
+	sns_ascq = 0x00;
+	sns_key = 0x6;
+}
+
 bool DiscSwap(u32 fileflags)
 {
 	// These Additional Sense Codes mean "The lid was closed"

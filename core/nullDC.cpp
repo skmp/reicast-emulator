@@ -36,6 +36,7 @@ settings_t settings;
 extern char game_dir[1024];
 extern char *game_data;
 extern bool boot_to_bios;
+extern bool reset_requested;
 
 extern void init_mem();
 extern void arm_Init();
@@ -447,6 +448,13 @@ void dc_start()
 bool dc_is_running()
 {
 	return sh4_cpu.IsCpuRunning();
+}
+
+// Called on the emulator thread for soft reset
+void dc_request_reset()
+{
+	reset_requested = true;
+	dc_stop();
 }
 
 void LoadSettings(void)

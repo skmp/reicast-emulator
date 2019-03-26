@@ -231,6 +231,7 @@ struct TextureCacheData
 	//VQ quantizers table for VQ tex
 	//a texture can't be both VQ and PAL at the same time
 	u32 texture_hash;			// xxhash of texture data, used for custom textures
+	u32 old_texture_hash;		// legacy hash
 	u8* custom_image_data;		// loaded custom image data
 	u32 custom_width;
 	u32 custom_height;

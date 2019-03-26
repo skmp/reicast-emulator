@@ -50,6 +50,10 @@ void CustomTexture::LoaderThread()
 				texture->ComputeHash();
 				int width, height;
 				u8 *image_data = LoadCustomTexture(texture->texture_hash, width, height);
+				if (image_data == NULL)
+				{
+					image_data = LoadCustomTexture(texture->old_texture_hash, width, height);
+				}
 				if (image_data != NULL)
 				{
 					if (texture->custom_image_data != NULL)

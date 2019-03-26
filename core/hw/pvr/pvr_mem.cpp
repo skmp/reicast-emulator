@@ -15,6 +15,7 @@
 //TODO : move code later to a plugin
 //TODO : Fix registers arrays , they must be smaller now doe to the way SB registers are handled
 #include "hw/holly/holly_intc.h"
+#include "hw/holly/sb.h"
 
 //YUV converter code :)
 //inits the YUV converter
@@ -276,10 +277,22 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
    }
    else //Vram Writef
    {
-      //shouldn't really get here (?)
-      //printf("Vram Write 0x%X , size %d\n",address,count*32);
-      u8* vram=sqb + TA_YUV422_MACROBLOCK_SIZE + 0x04000000;
-		MemWrite32(&vram[address_w&(VRAM_MASK-0x1F)],sq);
+		// Used by WinCE
+		//printf("Vram TAWriteSQ 0x%X SB_LMMODE0 %d\n",address, SB_LMMODE0);
+		if (SB_LMMODE0 == 0)
+		{
+			// 64b path
+			u8* vram=sqb+512+0x04000000;
+			MemWrite32(&vram[address_w&(VRAM_MASK-0x1F)],sq);
+		}
+		else
+		{
+			// 32b path
+			for (int i = 0; i < 8; i++, address_w += 4)
+			{
+				pvr_write_area1_32(address_w, ((u32 *)sq)[i]);
+			}
+		}
    }
 }
 #endif

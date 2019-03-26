@@ -149,6 +149,7 @@ static cThread emu_thread(&emu_thread_func, 0);
 static cMutex mtx_serialization ;
 static cMutex mtx_mainloop ;
 static bool gl_ctx_resetting = false;
+bool reset_requested;
 
 static void *emu_thread_func(void *)
 {
@@ -164,8 +165,13 @@ static void *emu_thread_func(void *)
     	mtx_serialization.Lock() ;
     	mtx_serialization.Unlock() ;
 
-    	if (!performed_serialization)
+    	if (!performed_serialization && !reset_requested)
     		break ;
+    	if (reset_requested)
+    	{
+    		dc_reset();
+    		reset_requested = false;
+    	}
     }
 
 	rend_cancel_emu_wait() ;

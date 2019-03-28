@@ -133,6 +133,8 @@ bool acquire_mainloop_lock();
 
 static void init_disk_control_interface(const char *initial_image_path);
 
+static bool read_m3u(const char *file);
+
 static int co_argc;
 static wchar** co_argv;
 
@@ -150,6 +152,12 @@ static cMutex mtx_serialization ;
 static cMutex mtx_mainloop ;
 static bool gl_ctx_resetting = false;
 bool reset_requested;
+
+// Disk swapping
+static struct retro_disk_control_callback retro_disk_control_cb;
+static unsigned disk_index = 0;
+static std::vector<std::string> disk_paths;
+static bool disc_tray_open = false;
 
 static void *emu_thread_func(void *)
 {
@@ -1652,10 +1660,11 @@ bool retro_load_game(const struct retro_game_info *game)
    settings.dreamcast.cable = 3;
    update_variables(true);
 
+   char *ext = strrchr(g_base_name, '.');
+
    {
       /* Check for extension .lst, .bin, .dat or .zip. If found, we will set the system type
        * automatically to Naomi or AtomisWave. */
-      char *ext = strrchr(g_base_name, '.');
       if (ext)
       {
          log_cb(RETRO_LOG_INFO, "File extension is: %s\n", ext);
@@ -1664,7 +1673,19 @@ bool retro_load_game(const struct retro_game_info *game)
         	   || !strcmp(".dat", ext) || !strcmp(".DAT", ext)
         	   || !strcmp(".zip", ext) || !strcmp(".ZIP", ext)
         	   || !strcmp(".7z", ext) || !strcmp(".7Z", ext))
-        	settings.System = naomi_cart_GetSystemType(game->path);
+         {
+            settings.System = naomi_cart_GetSystemType(game->path);
+         }
+         // If m3u playlist found load the paths into array
+         else if (!strcmp(".m3u", ext) || !strcmp(".M3U", ext))
+         {
+            if (!read_m3u(game->path))
+            {
+               if (log_cb)
+                  log_cb(RETRO_LOG_ERROR, "%s\n", "[libretro]: failed to read m3u file ...\n");
+               return false;
+            }
+         }
       }
    }
 
@@ -1677,7 +1698,19 @@ bool retro_load_game(const struct retro_game_info *game)
    }
 
    if (!boot_to_bios)
-      game_data = strdup(game->path);
+   {
+      // if an m3u file was loaded, disk_paths will already be populated so load the game from there
+      if (disk_paths.size() > 0)
+      {
+         disk_index = 0;
+         game_data = strdup(disk_paths[disk_index].c_str());
+      }
+      else
+      {
+         disk_paths.push_back(game->path);
+         game_data = strdup(game->path);
+      } 
+   }
 
    {
       char data_dir[1024];
@@ -1983,7 +2016,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #define GIT_VERSION ""
 #endif
    info->library_version = "0.1" GIT_VERSION;
-   info->valid_extensions = "chd|cdi|iso|elf|cue|gdi|lst|bin|dat|zip|7z";
+   info->valid_extensions = "chd|cdi|iso|elf|cue|gdi|lst|bin|dat|zip|7z|m3u";
    info->need_fullpath = true;
    info->block_extract = true;
 }
@@ -2706,12 +2739,6 @@ void os_DebugBreak(void)
    __builtin_trap();
 }
 
-// Disk swapping
-static struct retro_disk_control_callback retro_disk_control_cb;
-static unsigned disk_index = 0;
-static std::vector<std::string> disk_paths;
-static bool disc_tray_open = false;
-
 static bool retro_set_eject_state(bool ejected)
 {
    disc_tray_open = ejected;
@@ -2795,5 +2822,48 @@ static void init_disk_control_interface(const char *initial_image_path)
   retro_disk_control_cb.replace_image_index = retro_replace_image_index;
 
   environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE, &retro_disk_control_cb);
-  disk_paths.push_back(initial_image_path);
+}
+
+static bool read_m3u(const char *file)
+{
+   char line[PATH_MAX];
+   char name[PATH_MAX];
+   FILE *f = fopen(file, "r");
+
+   if (!f)
+   {
+      log_cb(RETRO_LOG_ERROR, "Could not read file\n");
+      return false;
+   }
+
+   while (fgets(line, sizeof(line), f) && disk_index <= disk_paths.size())
+   {
+      if (line[0] == '#')
+         continue;
+
+      char *carriage_return = strchr(line, '\r');
+      if (carriage_return)
+         *carriage_return = '\0';
+
+      char *newline = strchr(line, '\n');
+      if (newline)
+         *newline = '\0';
+
+      // Remove any beginning and ending quotes as these can cause issues when feeding the paths into command line later
+      if (line[0] == '"')
+         memmove(line, line + 1, strlen(line));
+
+      if (line[strlen(line) - 1] == '"')
+         line[strlen(line) - 1]  = '\0';
+
+      if (line[0] != '\0')
+      {
+         snprintf(name, sizeof(name), "%s%s", g_roms_dir, line);
+         disk_paths.push_back(name);
+         disk_index++;
+      }
+   }
+
+   fclose(f);
+   return (disk_index != 0);
 }

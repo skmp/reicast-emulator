@@ -246,7 +246,7 @@ void TexParameteri(GLenum target,  GLenum pname,  GLint param) {
 	}
 	void EnableCache()
 	{
-	   _disable_cache = true;
+	   _disable_cache = false;
 	   Reset();
 	}
 

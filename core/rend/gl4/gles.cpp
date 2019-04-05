@@ -500,9 +500,8 @@ static void gl_term(void)
    glDeleteBuffers(1, &gl4.vbo.tr_poly_params);
    for (auto it = gl4.shaders.begin(); it != gl4.shaders.end(); it++)
    {
-	  if (it->second->program != -1)
-		 glDeleteProgram(it->second->program);
-	  delete it->second;
+   	if (it->second.program != 0)
+   		glDeleteProgram(it->second.program);
    }
    gl4.shaders.clear();
    glDeleteTextures(1, &fbTextureId);

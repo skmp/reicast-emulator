@@ -166,30 +166,26 @@ __forceinline static void SetGPState(const PolyParam* gp, u32 cflip)
 			ShaderUniforms.trilinear_alpha = 1.0 - ShaderUniforms.trilinear_alpha;
 	}
 	else
-		ShaderUniforms.trilinear_alpha = 1.0;
+		ShaderUniforms.trilinear_alpha = 1.f;
 
    bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 
-   CurrentShader = &gl.program_table[
-									 GetProgramID(Type == ListType_Punch_Through ? 1 : 0,
-											 	  SetTileClip(gp->tileclip, -1) + 1,
-												  gp->pcw.Texture,
-												  gp->tsp.UseAlpha,
-												  gp->tsp.IgnoreTexA,
-												  gp->tsp.ShadInstr,
-												  gp->pcw.Offset,
-												  gp->tsp.FogCtrl,
-                                      gp->pcw.Gouraud,
-                                      gp->tcw.PixelFmt == PixelBumpMap,
-                                      color_clamp)];
+	CurrentShader = GetProgram(Type == ListType_Punch_Through ? 1 : 0,
+								  SetTileClip(gp->tileclip, -1) + 1,
+								  gp->pcw.Texture,
+								  gp->tsp.UseAlpha,
+								  gp->tsp.IgnoreTexA,
+								  gp->tsp.ShadInstr,
+								  gp->pcw.Offset,
+								  gp->tsp.FogCtrl,
+								  gp->pcw.Gouraud,
+								  gp->tcw.PixelFmt == PixelBumpMap,
+								  color_clamp,
+								  ShaderUniforms.trilinear_alpha != 1.f);
 
-   if (CurrentShader->program == -1)
-      CompilePipelineShader(CurrentShader);
-   else
-   {
-      glUseProgram(CurrentShader->program);
-      ShaderUniforms.Set(CurrentShader);
-   }
+	glcache.UseProgram(CurrentShader->program);
+	if (CurrentShader->trilinear_alpha != -1)
+		glUniform1f(CurrentShader->trilinear_alpha, ShaderUniforms.trilinear_alpha);
    SetTileClip(gp->tileclip, CurrentShader->pp_ClipTest);
 
    // This bit controls which pixels are affected
@@ -969,15 +965,9 @@ void DrawFramebuffer(float w, float h)
 	glcache.Disable(GL_STENCIL_TEST);
 	glcache.Disable(GL_CULL_FACE);
 	glcache.Disable(GL_BLEND);
- 	ShaderUniforms.trilinear_alpha = 1.0;
- 	PipelineShader *shader = &gl.program_table[GetProgramID(0, 1, 1, 0, 1, 0, 0, 2, false, false, false)];
-	if (shader->program == -1)
-		CompilePipelineShader(shader);
-	else
-	{
-		glcache.UseProgram(shader->program);
-		ShaderUniforms.Set(shader);
-	}
+ 	PipelineShader *shader = GetProgram(0, 1, 1, 0, 1, 0, 0, 2, false, false, false, false);
+	glcache.UseProgram(shader->program);
+
  	glActiveTexture(GL_TEXTURE0);
 	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
 
@@ -1101,15 +1091,8 @@ void DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives)
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	SetupMainVBO();
-	ShaderUniforms.trilinear_alpha = 1.0;
-	PipelineShader *shader = &gl.program_table[GetProgramID(0, 1, 1, 0, 1, 0, 0, 2, false, false, false)];
-	if (shader->program == -1)
-		CompilePipelineShader(shader);
-	else
-	{
-		glcache.UseProgram(shader->program);
-		ShaderUniforms.Set(shader);
-	}
+	PipelineShader *shader = GetProgram(0, 1, 1, 0, 1, 0, 0, 2, false, false, false, false);
+	glcache.UseProgram(shader->program);
 
 	{
 		struct Vertex vertices[] = {

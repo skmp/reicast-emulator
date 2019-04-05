@@ -119,6 +119,7 @@ static const char* PixelPipelineShader =
 #define pp_Gouraud %d \n\
 #define pp_BumpMap %d \n\
 #define FogClamping %d \n\
+#define pp_TriLinear %d \n\
 #define PI 3.1415926 \n\
 \n\
 #define GLES2 0 \n\
@@ -274,7 +275,9 @@ void main() \n\
 	} \n\
 	#endif\n\
 	 \n\
+	#if pp_TriLinear == 1 \n\
 	color *= trilinear_alpha; \n\
+	#endif \n\
 	 \n\
 	#if cp_AlphaTest == 1 \n\
 		color.a=1.0; \n\
@@ -323,7 +326,7 @@ int screen_width  = 640;
 int screen_height = 480;
 GLuint fogTextureId;
 
-int GetProgramID(
+PipelineShader *GetProgram(
       u32 cp_AlphaTest,
       u32 pp_ClipTestMode,
       u32 pp_Texture,
@@ -331,7 +334,11 @@ int GetProgramID(
       u32 pp_IgnoreTexA,
       u32 pp_ShadInstr,
       u32 pp_Offset,
-      u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping)
+      u32 pp_FogCtrl,
+      bool pp_Gouraud,
+      bool pp_BumpMap,
+      bool fog_clamping,
+      bool trilinear)
 {
 	u32 rv=0;
 
@@ -346,8 +353,27 @@ int GetProgramID(
    rv<<=1; rv|=pp_Gouraud;
    rv<<=1; rv|=pp_BumpMap;
    rv<<=1; rv|=fog_clamping;
+   rv<<=1; rv|=trilinear;
 
-	return rv;
+   PipelineShader *shader = &gl.shaders[rv];
+   if (shader->program == 0)
+   {
+   	shader->cp_AlphaTest = cp_AlphaTest;
+   	shader->pp_ClipTestMode = pp_ClipTestMode - 1;
+   	shader->pp_Texture = pp_Texture;
+   	shader->pp_UseAlpha = pp_UseAlpha;
+   	shader->pp_IgnoreTexA = pp_IgnoreTexA;
+   	shader->pp_ShadInstr = pp_ShadInstr;
+   	shader->pp_Offset = pp_Offset;
+   	shader->pp_FogCtrl = pp_FogCtrl;
+   	shader->pp_Gouraud = pp_Gouraud;
+   	shader->pp_BumpMap = pp_BumpMap;
+   	shader->fog_clamping = fog_clamping;
+   	shader->trilinear = trilinear;
+   	CompilePipelineShader(shader);
+   }
+
+   return shader;
 }
 
 void findGLVersion()
@@ -497,7 +523,7 @@ bool CompilePipelineShader(PipelineShader *s)
 
    sprintf(pshader,PixelPipelineShader, gl.glsl_version_header, gl.gl_version,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping);
+                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, s->trilinear);
 
 	s->program            = gl_CompileAndLink(vshader, pshader);
 
@@ -596,7 +622,7 @@ static void gl_term(void)
 	glDeleteTextures(1, &fbTextureId);
 	fbTextureId = 0;
 
-	memset(gl.program_table,0,sizeof(gl.program_table));
+	gl.shaders.clear();
 }
 
 static bool gl_create_resources(void)
@@ -622,64 +648,6 @@ static bool gl_create_resources(void)
 	glGenBuffers(1, &gl.vbo.idxs);
 	glGenBuffers(1, &gl.vbo.idxs2);
 
-	memset(gl.program_table,0,sizeof(gl.program_table));
-
-   for(cp_AlphaTest = 0; cp_AlphaTest <= 1; cp_AlphaTest++)
-	{
-      for (pp_ClipTestMode = 0; pp_ClipTestMode <= 2; pp_ClipTestMode++)
-		{
-			for (pp_UseAlpha = 0; pp_UseAlpha <= 1; pp_UseAlpha++)
-			{
-				for (pp_Texture = 0; pp_Texture <= 1; pp_Texture++)
-				{
-					for (pp_FogCtrl = 0; pp_FogCtrl <= 3; pp_FogCtrl++)
-					{
-						for (pp_IgnoreTexA = 0; pp_IgnoreTexA <= 1; pp_IgnoreTexA++)
-						{
-							for (pp_ShadInstr = 0; pp_ShadInstr <= 3; pp_ShadInstr++)
-							{
-								for (pp_Offset = 0; pp_Offset <= 1; pp_Offset++)
-                        {
-                           for (pp_Gouraud = 0; pp_Gouraud <= 1; pp_Gouraud++)
-                           {
-                              for (pp_BumpMap = 0; pp_BumpMap <= 1; pp_BumpMap++)
-                              {
-                                 for (fog_clamping = 0; fog_clamping <= 1; fog_clamping++)
-                                 {
-                                    dshader                  = &gl.program_table[GetProgramID(
-                                          cp_AlphaTest,
-                                          pp_ClipTestMode,
-                                          pp_Texture,
-                                          pp_UseAlpha,
-                                          pp_IgnoreTexA,
-                                          pp_ShadInstr,
-                                          pp_Offset,pp_FogCtrl,(bool)pp_Gouraud,
-                                          (bool)pp_BumpMap, (bool)fog_clamping)];
-
-                                    dshader->cp_AlphaTest    = cp_AlphaTest;
-                                    dshader->pp_ClipTestMode = pp_ClipTestMode-1;
-                                    dshader->pp_Texture      = pp_Texture;
-                                    dshader->pp_UseAlpha     = pp_UseAlpha;
-                                    dshader->pp_IgnoreTexA   = pp_IgnoreTexA;
-                                    dshader->pp_ShadInstr    = pp_ShadInstr;
-                                    dshader->pp_Offset       = pp_Offset;
-                                    dshader->pp_FogCtrl      = pp_FogCtrl;
-                                    dshader->pp_Gouraud      = pp_Gouraud;
-                                    dshader->pp_BumpMap      = pp_BumpMap;
-                                    dshader->fog_clamping    = fog_clamping;
-                                    dshader->program         = -1;
-                                 }
-                              }
-                           }
-                        }
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
    findGLVersion();
 
    char vshader[8192];
@@ -692,15 +660,6 @@ static bool gl_create_resources(void)
 	gl.modvol_shader.depth_scale          = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
    gl.modvol_shader.extra_depth_scale = glGetUniformLocation(gl.modvol_shader.program, "extra_depth_scale");
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
-
-   if (settings.pvr.Emulation.precompile_shaders)
-   {
-      for (i=0;i<sizeof(gl.program_table)/sizeof(gl.program_table[0]);i++)
-      {
-         if (!CompilePipelineShader(	&gl.program_table[i] ))
-            return false;
-      }
-   }
 
 	return true;
 }
@@ -912,18 +871,11 @@ static bool RenderFrame(void)
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
-#if 0
-	for (u32 i=0;i<sizeof(gl.program_table)/sizeof(gl.program_table[0]);i++)
+	for (auto it : gl.shaders)
 	{
-		PipelineShader* s=&gl.program_table[i];
-		if (s->program == -1)
-			continue;
-
-		glcache.UseProgram(s->program);
-
-      ShaderUniforms.Set(s);
+		glcache.UseProgram(it.second.program);
+		ShaderUniforms.Set(&it.second);
 	}
-#endif
 
 	//setup render target first
 	if (is_rtt)

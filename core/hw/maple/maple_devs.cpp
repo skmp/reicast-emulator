@@ -2397,7 +2397,10 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						   int i = 0;
 						   while (naomi_game_inputs->axes[i].name != NULL)
 							  i++;
-						   axes_per_player = max(i, 1);
+						   if (i == 0)
+							  axes_per_player = 2;	// Default
+						   else
+							  axes_per_player = i;
 						}
 						if (settings.mapping.JammaSetup == 4)
 						   // Hack for Ring Out 4x4

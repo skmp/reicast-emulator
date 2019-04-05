@@ -1,4 +1,5 @@
 #pragma once
+#include <unordered_map>
 #include "rend/rend.h"
 #include <glsm/glsm.h>
 #include <glsm/glsmsym.h>
@@ -39,6 +40,7 @@ struct PipelineShader
  	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
    bool pp_Gouraud, pp_BumpMap;
    bool fog_clamping;
+   bool trilinear;
 };
 
 
@@ -55,7 +57,7 @@ struct gl_ctx
 
 	} modvol_shader;
 
-	PipelineShader program_table[12288];
+	std::unordered_map<u32, PipelineShader> shaders;
 
 	struct
 	{
@@ -109,9 +111,9 @@ void ReadRTTBuffer();
 void RenderFramebuffer();
 void DrawFramebuffer(float w, float h);
 
-int GetProgramID(u32 cp_AlphaTest, u32 pp_ClipTestMode,
+PipelineShader *GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping);
+							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear);
 void vertex_buffer_unmap(void);
 
 GLuint gl_CompileShader(const char* shader, GLuint type);
@@ -158,9 +160,6 @@ extern struct ShaderUniforms_t
 
 		if (s->sp_FOG_COL_VERT!=-1)
 			glUniform3fv( s->sp_FOG_COL_VERT, 1, ps_FOG_COL_VERT);
-
-		if (s->trilinear_alpha != -1)
-			glUniform1f(s->trilinear_alpha, trilinear_alpha);
 
       if (s->fog_clamp_min != -1)
 			glUniform4fv(s->fog_clamp_min, 1, fog_clamp_min);

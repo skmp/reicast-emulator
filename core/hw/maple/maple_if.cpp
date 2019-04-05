@@ -10,6 +10,7 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
 #include "hw/maple/maple_helper.h"
+#include "maple_cfg.h"
 
 enum MaplePattern
 {
@@ -151,6 +152,8 @@ static void maple_DoDma(void)
 	sh4_sched_request(maple_sched,xfer_count*(SH4_MAIN_CLOCK/(2*1024*1024/8)));
 }
 
+static void maple_handle_reconnect();
+
 //really hackish
 //misses delay , and stop/start implementation
 //ddt/etc are just hacked for wince to work
@@ -178,6 +181,7 @@ void maple_vblank()
 			maple_ddt_pending_reset=false;
 		}
 	}
+	maple_handle_reconnect();
 }
 void maple_SB_MSHTCL_Write(u32 addr, u32 data)
 {
@@ -253,4 +257,21 @@ void maple_Reset(bool Manual)
 void maple_Term()
 {
 	
+}
+
+static u64 reconnect_time;
+
+void maple_ReconnectDevices()
+{
+	mcfg_DestroyDevices();
+	reconnect_time = sh4_sched_now64() + SH4_MAIN_CLOCK / 10;
+}
+
+static void maple_handle_reconnect()
+{
+	if (reconnect_time != 0 && reconnect_time <= sh4_sched_now64())
+	{
+		reconnect_time = 0;
+		mcfg_CreateDevices();
+	}
 }

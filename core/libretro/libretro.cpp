@@ -18,7 +18,7 @@
 #include "../hw/sh4/sh4_mem.h"
 #include "../hw/sh4/sh4_sched.h"
 #include "keyboard_map.h"
-#include "../hw/maple/maple_cfg.h"
+#include "hw/maple/maple_if.h"
 #include "../hw/pvr/spg.h"
 #include "../hw/naomi/naomi_cart.h"
 #include "../imgread/common.h"
@@ -468,7 +468,7 @@ void retro_set_environment(retro_environment_t cb)
       },
       {
          "reicast_enable_purupuru",
-         "Purupuru Pack (restart); enabled|disabled"
+         "Purupuru Pack; enabled|disabled"
       },
       {
          "reicast_allow_service_buttons",
@@ -969,7 +969,13 @@ static void update_variables(bool first_startup)
 
    var.key = "reicast_enable_purupuru";
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-      enable_purupuru = (strcmp("enabled", var.value) == 0);
+   {
+      if (enable_purupuru != (strcmp("enabled", var.value) == 0) && settings.System == DC_PLATFORM_DREAMCAST)
+      {
+      	enable_purupuru = (strcmp("enabled", var.value) == 0);
+      	maple_ReconnectDevices();
+      }
+   }
 
    var.key = "reicast_analog_stick_deadzone";
    var.value = NULL;
@@ -2097,11 +2103,11 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 	  }
 	  set_input_descriptors();
 
-	  if (!emu_in_thread)
+	  if (settings.System == DC_PLATFORM_DREAMCAST)
 	  {
-		 mcfg_DestroyDevices();
-		 mcfg_CreateDevices();
+		  maple_ReconnectDevices();
 	  }
+
    }
    if (rumble.set_rumble_state)
    {

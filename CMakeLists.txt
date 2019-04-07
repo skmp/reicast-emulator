@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.5.0 FATAL_ERROR)
 
-project(reicast)
+set(TNAME reicast)
+
+project(${TNAME})
 
 enable_language(ASM)
+
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -49,9 +52,9 @@ configure_file(${reicast_core_path}/version.h.in ${reicast_core_path}/version.h 
 set(reicast_SRCS "")
 
 include(config)			# configure build settings, must be first
+include(libdreamcast)	# main emulator core lib
 include(deps)
 include(libosd)			# OS Dep. base 
-include(libdreamcast)	# main emulator core lib
 
 
 
@@ -78,7 +81,8 @@ if(TARGET_PS4)
   set(binSuffix ".elf")
 endif()
 
-add_executable(reicast${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
+add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
+
 
 if(NOT ${HOST_OS} EQUAL ${OS_NSW_HOS})
   source_group(TREE ${PROJECT_SOURCE_DIR} PREFIX src FILES ${reicast_SRCS}) #${PROJECT_SOURCE_DIR}/core
@@ -86,9 +90,35 @@ endif()
 
 
 if(USE_QT)
-  target_link_libraries(reicast Qt5::Widgets Qt5::OpenGL) # libdreamcast libosd) #  libui , externals
+  target_link_libraries(${TNAME} Qt5::Widgets Qt5::OpenGL) # libdreamcast libosd) #  libui , externals
 endif()
 
+
+
+if(APPLE)
+  enable_language(Swift)
+  set_property(TARGET ${TNAME} PROPERTY XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "./shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h")
+
+target_link_libraries(${TNAME}
+#  "-framework Cocoa"
+#  "-framework AppKit"
+  "-framework CoreData"
+  "-framework CoreAudio"
+  "-framework AudioUnit"
+  "-framework AudioToolbox"
+  "-framework Foundation"
+)
+
+#### OSX Notes,  when not using xcode you have to make app bundle,  edit plist and copy,  convert MainMenu.xib to nib and copy, 
+#null@devpc:~$ /Users/null/Documents/projects/reicast-emulator/bin/RelWithDebInfo/Reicast.app/Contents/MacOS/reicast ; exit;
+#2019-03-18 14:28:44.842 reicast[11468:131797] Unknown class _TtC12emulator_osx9EmuGLView in Interface Builder file at path /Users/null/Documents/projects/reicast-emulator/bin/RelWithDebInfo/Reicast.app/Contents/Resources/MainMenu.nib.
+#2019-03-18 14:28:44.842 reicast[11468:131797] Unknown class _TtC12emulator_osx11AppDelegate in Interface Builder file at path /Users/null/Documents/projects/reicast-emulator/bin/RelWithDebInfo/Reicast.app/Contents/Resources/MainMenu.nib.
+#2019-03-18 14:28:44.860 reicast[11468:131797] Failed to connect (window) outlet from (NSObject) to (NSWindow): missing setter or instance variable
+#
+
+
+
+endif()
 
 
 if(DEBUG_CMAKE)

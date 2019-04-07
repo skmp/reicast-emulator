@@ -81,7 +81,7 @@ if(USE_QT)	## Ensure CMAKE_PREFIX_PATH is set ##
 # set(CMAKE_AUTORCC ON)
 
   list(APPEND libosd_SRCS	# qt5_wrap_cpp(${d_qt}/ )		# should use qt5_wrap_cpp() functions so the rest of the code won't get moc called on it from CMAKE_AUTOMOC
-	${d_osd}/qt/qt_ui.h      ${d_osd}/qt/qt_ui.cpp
+	  ${d_osd}/qt/qt_ui.h      ${d_osd}/qt/qt_ui.cpp
     ${d_osd}/qt/qt_osd.h     ${d_osd}/qt/qt_osd.cpp
   )
   
@@ -122,13 +122,12 @@ if (${HOST_OS} EQUAL ${OS_WINDOWS})
   endif()
 #
 elseif (${HOST_OS} EQUAL ${OS_LINUX}   OR  ## This should prob be if POSIX_COMPAT : ./osd/posix_base_osd
-		${HOST_OS} EQUAL ${OS_ANDROID} OR
-		${HOST_OS} EQUAL ${OS_DARWIN})
+	    	${HOST_OS} EQUAL ${OS_ANDROID} )
 #
   message("-----------------------------------------------------")
   message(" OS: Linux ")
 
-  list(APPEND libosd_SRCS ./core/osd/linux/lin_osd.cpp)
+#  list(APPEND libosd_SRCS ./core/osd/linux/lin_osd.cpp)
   
   if(NOT USE_QT AND NOT USE_SDL)
 
@@ -164,7 +163,33 @@ elseif (${HOST_OS} EQUAL ${OS_LINUX}   OR  ## This should prob be if POSIX_COMPA
   link_libraries(pthread dl rt asound Xext GLESv2 EGL)
   
 #elseif(${HOST_OS} EQUAL ${OS_ANDROID})
-#elseif(${HOST_OS} EQUAL ${OS_DARWIN})
+
+elseif(${HOST_OS} EQUAL ${OS_DARWIN})
+#
+  message("-----------------------------------------------------")
+  message(" OS: Apple OS X ")
+
+
+  list(APPEND objc_SRCS
+    ./shell/apple/emulator-osx/emulator-osx/osx-main.mm
+    ./shell/apple/emulator-osx/emulator-osx/AppDelegate.swift
+    ./shell/apple/emulator-osx/emulator-osx/EmuGLView.swift
+  )
+
+  set_source_files_properties(${objc_SRCS} PROPERTIES COMPILE_FLAGS "-x objective-c++")
+
+
+
+  list(APPEND libosd_SRCS ${objc_SRCS}
+    ${d_osd}/linux/common.cpp
+    ${d_osd}/linux/context.cpp
+    ${d_osd}/audiobackend/audiobackend_coreaudio.cpp
+    # if NOT USE_SWIFT / ObjC
+    #${d_osd}/apple/osx_osd.cpp
+    )
+
+
+
 elseif(${HOST_OS} EQUAL ${OS_IOS})
 #
   message("-----------------------------------------------------")
@@ -208,15 +233,13 @@ endif()
 
 
 
-
-
 if(BUILD_LIBS)
   add_library(libosd ${BUILD_LIB_TYPE} ${libosd_SRCS})
 else()
   list(APPEND reicast_SRCS ${libosd_SRCS})
 endif()
 
-if(NOT ${HOST_OS} EQUAL ${OS_NSW_HOS})
+if(NOT ${HOST_OS} EQUAL ${OS_NSW_HOS} AND NOT TARGET_OSX AND NOT TARGET_IOS)
   source_group(TREE ${libosd_base_path} PREFIX src\\libosd FILES ${libosd_SRCS})
 endif()
 

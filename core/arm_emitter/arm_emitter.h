@@ -35,7 +35,7 @@ namespace ARM
 #if defined(_DEBUG) || defined(DEBUG)
 
 	#define EAPI static void
-	
+
 	#define DECL_I				\
 	    u32 Instruction=0
 
@@ -43,7 +43,7 @@ namespace ARM
 	    u32 Instruction=(d)
 
 #else
-	
+
 //	#define _inlineExSVoidA __extension__ static __inline void __attribute__ ((__always_inline__))
 
 	#define EAPI				\
@@ -63,8 +63,8 @@ namespace ARM
 	/*
 	 *	TEMP
 	 */
-	
-	
+
+
 #define I			(Instruction)
 
 #define SET_CC		I |= (((u32)CC&15)<<28)

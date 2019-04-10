@@ -86,7 +86,7 @@ union ISP_Modvol
 
 union TSP
 {
-	struct 
+	struct
 	{
 		u32 TexV        : 3;
 		u32 TexU        : 3;

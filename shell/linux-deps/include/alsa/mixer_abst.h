@@ -43,11 +43,11 @@ extern "C" {
 #define SM_CAP_GSWITCH		(1<<2)
 #define SM_CAP_PVOLUME		(1<<3)
 #define SM_CAP_PVOLUME_JOIN	(1<<4)
-#define SM_CAP_PSWITCH		(1<<5) 
-#define SM_CAP_PSWITCH_JOIN	(1<<6) 
-#define SM_CAP_CVOLUME		(1<<7) 
-#define SM_CAP_CVOLUME_JOIN	(1<<8) 
-#define SM_CAP_CSWITCH		(1<<9) 
+#define SM_CAP_PSWITCH		(1<<5)
+#define SM_CAP_PSWITCH_JOIN	(1<<6)
+#define SM_CAP_CVOLUME		(1<<7)
+#define SM_CAP_CVOLUME_JOIN	(1<<8)
+#define SM_CAP_CSWITCH		(1<<9)
 #define SM_CAP_CSWITCH_JOIN	(1<<10)
 #define SM_CAP_CSWITCH_EXCL	(1<<11)
 #define SM_CAP_PENUM		(1<<12)
@@ -77,7 +77,7 @@ typedef struct _sm_class_basic {
 	snd_ctl_card_info_t *info;
 } sm_class_basic_t;
 
-struct sm_elem_ops {	
+struct sm_elem_ops {
 	int (*is)(snd_mixer_elem_t *elem, int dir, int cmd, int val);
 	int (*get_range)(snd_mixer_elem_t *elem, int dir, long *min, long *max);
 	int (*set_range)(snd_mixer_elem_t *elem, int dir, long min, long max);

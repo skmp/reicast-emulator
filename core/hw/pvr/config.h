@@ -1,7 +1,7 @@
 #define OP_ON 1
 #define OP_OFF 2
 
-//Debugging stuff 
+//Debugging stuff
 #define DO_VERIFY OP_OFF
 
 

@@ -636,7 +636,7 @@ extern "C" {
 #endif
 #endif /* KHRONOS_SUPPORT_INT64 */
 #endif /* EGL_NV_sync */
-    
+
 #ifndef EGL_NV_system_time
 #define EGL_NV_system_time 1
     typedef khronos_utime_nanoseconds_t EGLuint64NV;
@@ -649,7 +649,7 @@ extern "C" {
 #endif
 #endif /* KHRONOS_SUPPORT_INT64 */
 #endif /* EGL_NV_system_time */
-    
+
 #ifdef __cplusplus
 }
 #endif

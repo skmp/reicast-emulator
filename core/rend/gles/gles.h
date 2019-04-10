@@ -244,28 +244,28 @@ struct TextureCacheData
 {
 	TSP tsp;        //dreamcast texture parameters
 	TCW tcw;
-	
+
 	GLuint texID;   //gl texture
 	u16* pData;
 	int tex_type;
-	
+
 	u32 Lookups;
-	
+
 	//decoded texture info
 	u32 sa;         //pixel data start address in vram (might be offset for mipmaps/etc)
 	u32 sa_tex;		//texture data start address in vram
 	u32 w,h;        //width & height of the texture
 	u32 size;       //size, in bytes, in vram
-	
+
 	PvrTexInfo* tex;
 	TexConvFP*  texconv;
 	TexConvFP32*  texconv32;
-	
+
 	u32 dirty;
 	vram_block* lock_block;
-	
+
 	u32 Updates;
-	
+
 	//used for palette updates
 	u32 palette_hash;			// Palette hash at time of last update
 	u32  indirect_color_ptr;    //palette color table index for pal. tex
@@ -277,14 +277,14 @@ struct TextureCacheData
 	volatile u32 custom_width;
 	volatile u32 custom_height;
 	std::atomic_int custom_load_in_progress;
-	
+
 	void PrintTextureName();
-	
+
 	bool IsPaletted()
 	{
 		return tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8;
 	}
-	
+
 	void Create(bool isGL);
 	void ComputeHash();
 	void Update();

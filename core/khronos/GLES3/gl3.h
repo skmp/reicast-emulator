@@ -931,7 +931,7 @@ extern "C" {
     GL_APICALL void GL_APIENTRY glTexStorage3D (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
     GL_APICALL void GL_APIENTRY glGetInternalformativ (GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint *params);
 #endif /* GL_ES_VERSION_3_0 */
-    
+
 #ifdef __cplusplus
 }
 #endif

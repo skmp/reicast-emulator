@@ -106,7 +106,7 @@ void x86_reg_alloc::FreezeXMM()
 	f32* slpc=thaw_regs;
 	while(*fpreg!=-1)
 	{
-		if (SpanNRegfIntr(current_opid,*fpreg))	
+		if (SpanNRegfIntr(current_opid,*fpreg))
 			x86e->Emit(op_movss,slpc++,*fpreg);
 		fpreg++;
 	}
@@ -121,7 +121,7 @@ void x86_reg_alloc::ThawXMM()
 	f32* slpc=thaw_regs;
 	while(*fpreg!=-1)
 	{
-		if (SpanNRegfIntr(current_opid,*fpreg))	
+		if (SpanNRegfIntr(current_opid,*fpreg))
 			x86e->Emit(op_movss,*fpreg,slpc++);
 		fpreg++;
 	}
@@ -164,7 +164,7 @@ void csc_pop(RuntimeBlockInfo* block)
 {
 	x86_Label* end=x86e->CreateLabel(false,8);
 	x86_Label* try_dyn=x86e->CreateLabel(false,8);
-	
+
 	//static guess
 	x86_Label* stc_hit=x86e->CreateLabel(false,8);
 	x86e->Emit(op_cmp32,ECX,&block->csc_RetCache);
@@ -177,7 +177,7 @@ void csc_pop(RuntimeBlockInfo* block)
 		//else, do cache
 		x86e->Emit(op_mov32,&block->csc_RetCache,ECX);
 	}
-	
+
 	x86e->MarkLabel(stc_hit);
 	x86e->Emit(op_add32,&ret_stc,1);
 	if (csc_mode==1)
@@ -185,7 +185,7 @@ void csc_pop(RuntimeBlockInfo* block)
 	x86e->Emit(op_jmp,end);
 
 	x86e->MarkLabel(try_dyn);
-	
+
 	if (csc_mode==0)
 	{
 		//csc !
@@ -206,7 +206,7 @@ void csc_pop(RuntimeBlockInfo* block)
 		x86e->Emit(op_cmp32,EDX,ECX);
 	}
 
-	
+
 	x86e->Emit(op_jne,end);
 	x86e->Emit(op_add32,&ret_hit,1);
 	//x86e->Emit(op_jmp,end);
@@ -297,7 +297,7 @@ void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, 
 
 	//run register allocator
 	reg.DoAlloc(block,alloc_regs,xmm_alloc_regs);
-	
+
 	//block header//
 
 	//block invl. checks
@@ -337,13 +337,13 @@ void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, 
 		shil_opcode* op=&block->oplist[i];
 
 		u32 opcd_start=x86e->opcode_count;
-		if (prof.enable) 
+		if (prof.enable)
 		{
 			x86e->Emit(op_add32,&prof.counters.shil.executed[op->op],1);
 		}
 
 		op->host_offs=x86e->x86_indx;
-		
+
 		if (prof.enable)
 		{
 			set<int> reg_wt;
@@ -365,7 +365,7 @@ void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, 
 				reg_rd.insert(op->rs3._reg+z);
 
 			set<int>::iterator iter=reg_wt.begin();
-			while( iter != reg_wt.end() ) 
+			while( iter != reg_wt.end() )
 			{
 				if (reg_rd.count(*iter))
 				{
@@ -381,15 +381,15 @@ void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, 
 			}
 
 			iter=reg_rd.begin();
-			while( iter != reg_rd.end() ) 
+			while( iter != reg_rd.end() )
 			{
 				x86e->Emit(op_add32,&prof.counters.ralloc.reg_r[*iter],1);
 				++iter;
 			}
 		}
-		
+
 		reg.OpBegin(op,i);
-			
+
 		ngen_opcode(block,op,x86e,staging,optimise);
 
 		if (prof.enable) x86e->Emit(op_add32,&prof.counters.shil.host_ops[op->op],x86e->opcode_count-opcd_start);
@@ -487,14 +487,14 @@ u32 DynaRBI::Relink()
 	{
 		//csc_push(this);
 	}
-		
+
 	switch(BlockType)
 	{
 	case BET_Cond_0:
 	case BET_Cond_1:
 		{
 			x86e->Emit(op_cmp32,GetRegPtr(has_jcond?reg_pc_dyn:reg_sr_T),BlockType&1);
-			
+
 			x86_Label* noBranch=x86e->CreateLabel(0,8);
 
 			x86e->Emit(op_jne,noBranch);
@@ -659,7 +659,7 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 				if (sz==SZ_64F)
 					x86e->Emit(op_movss,buff4,XMM1);
 			}
-		}	
+		}
 	}
 	else if (mode==1)
 	{
@@ -842,7 +842,7 @@ bool ngen_Rewrite(unat& addr,unat retadr,unat acc)
 				}
 			}
 		}
-		
+
 		die("Failed to match the code :(\n");
 
 		return false;

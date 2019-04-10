@@ -64,7 +64,7 @@
 
   };
 
-  
+
   /* High Sierra format primary descriptor */
   #define HSFDCL(from, to) (to - from + 1)
 
@@ -418,7 +418,7 @@ printdirent(FILE* w, struct directent *dp, struct fs *fs, bool& first) {
     fbname = ISO_BY(FDV(dp, name(), fs->type));
     entlen -= enttaken;
 
-	if (name_len == 1 && fbname <= 1) 
+	if (name_len == 1 && fbname <= 1)
 		return;
 
 
@@ -572,7 +572,7 @@ bool parse_cdfs(FILE* w, cdimage* cdio, const char* name, int offs, bool first) 
 	memset(&rootent, 0, sizeof(rootent));
 
 	fsd.fd = cdio;
-	
+
 
 	/* is there a filesystem we can understand here? */
 	if (iscdromfs(&rootent, &fsd, offs) ) {
@@ -580,7 +580,7 @@ bool parse_cdfs(FILE* w, cdimage* cdio, const char* name, int offs, bool first) 
 		fprintf(w, "%s\"%s\": [", first? "\n":",\n", name);
 		printdirents(w, &rootent, &fsd);
 		fprintf(w, "\n]");
-		
+
 		return true;
 	}
 	else

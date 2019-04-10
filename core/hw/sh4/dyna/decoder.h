@@ -15,7 +15,7 @@ enum BlockEndType
 	BET_SCL_Call=1,
 	BET_SCL_Ret=2,
 	BET_SCL_Intr=3,
-	
+
 
 	BET_StaticJump=mkbet(BET_CLS_Static,BET_SCL_Jump,0),    //BranchBlock is jump target
 	BET_StaticCall=mkbet(BET_CLS_Static,BET_SCL_Call,0),    //BranchBlock is jump target, NextBlock is ret hint

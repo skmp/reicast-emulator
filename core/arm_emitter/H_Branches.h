@@ -55,7 +55,7 @@ namespace ARM
 	{
         bool isThumb = FnAddr & 1;
         FnAddr &= ~1;
-        
+
         verify(!isThumb);
 		snat lit = Literal(FnAddr);
 

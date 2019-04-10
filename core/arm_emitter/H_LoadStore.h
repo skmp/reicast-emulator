@@ -54,7 +54,7 @@ namespace ARM
 			SXTH(Rt,Rt);
 	}
 
-	
+
 
 	/*
 	 *	Store Helpers
@@ -98,7 +98,7 @@ namespace ARM
 	}
 
 
-	
+
 #if defined(_DEVEL) && 0	// These require testing //
 
 	EAPI LoadImmBase8(eReg Rt, u32 Base, bool Extend=false, ConditionCode CC=AL)

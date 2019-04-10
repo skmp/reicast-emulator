@@ -33,16 +33,16 @@ struct d3d11 : Renderer
 		UINT               numLevelsRequested = 1;
 		D3D_FEATURE_LEVEL  FeatureLevelsSupported;
 
-		if( FAILED (hr = D3D11CreateDeviceAndSwapChain( NULL, 
-						D3D_DRIVER_TYPE_HARDWARE, 
-						NULL, 
+		if( FAILED (hr = D3D11CreateDeviceAndSwapChain( NULL,
+						D3D_DRIVER_TYPE_HARDWARE,
+						NULL,
 						0,
-						&FeatureLevelsRequested, 
-						numLevelsRequested, 
-						D3D11_SDK_VERSION, 
-						&sd, 
-						&swapchain, 
-						&dev, 
+						&FeatureLevelsRequested,
+						numLevelsRequested,
+						D3D11_SDK_VERSION,
+						&sd,
+						&swapchain,
+						&dev,
 						&FeatureLevelsSupported,
 						&devctx )))
 		{
@@ -52,7 +52,7 @@ struct d3d11 : Renderer
 		ID3D11Texture2D* pBackBuffer;
 
 		// Get a pointer to the back buffer
-		hr = swapchain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), 
+		hr = swapchain->GetBuffer( 0, __uuidof( ID3D11Texture2D ),
 									 ( LPVOID* )&pBackBuffer );
 
 		// Create a render-target view

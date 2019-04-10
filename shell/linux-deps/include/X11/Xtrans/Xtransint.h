@@ -51,10 +51,10 @@ from The Open Group.
 #define _XTRANSINT_H_
 
 /*
- * XTRANSDEBUG will enable the PRMSG() macros used in the X Transport 
- * Interface code. Each use of the PRMSG macro has a level associated with 
- * it. XTRANSDEBUG is defined to be a level. If the invocation level is =< 
- * the value of XTRANSDEBUG, then the message will be printed out to stderr. 
+ * XTRANSDEBUG will enable the PRMSG() macros used in the X Transport
+ * Interface code. Each use of the PRMSG macro has a level associated with
+ * it. XTRANSDEBUG is defined to be a level. If the invocation level is =<
+ * the value of XTRANSDEBUG, then the message will be printed out to stderr.
  * Recommended levels are:
  *
  *	XTRANSDEBUG=1	Error messages
@@ -312,7 +312,7 @@ typedef struct _Xtransport_table {
  * systems, so they may be emulated.
  */
 
-#if defined(SYSV) && defined(__i386__) && !defined(__SCO__) && !defined(sun) || defined(WIN32) 
+#if defined(SYSV) && defined(__i386__) && !defined(__SCO__) && !defined(sun) || defined(WIN32)
 
 #define READV(ciptr, iov, iovcnt)	TRANS(ReadV)(ciptr, iov, iovcnt)
 
@@ -329,7 +329,7 @@ static	int TRANS(ReadV)(
 #endif /* CRAY || (SYSV && __i386__) || WIN32 || __sxg__ || */
 
 
-#if defined(SYSV) && defined(__i386__) && !defined(__SCO__) && !defined(sun) || defined(WIN32) 
+#if defined(SYSV) && defined(__i386__) && !defined(__SCO__) && !defined(sun) || defined(WIN32)
 
 #define WRITEV(ciptr, iov, iovcnt)	TRANS(WriteV)(ciptr, iov, iovcnt)
 

@@ -1762,7 +1762,7 @@ struct maple_naomi_jamma : maple_sega_controller
 		w32(0xffffff00);
 		w32(0);
 		w32(0);
-		
+
 		if (jvs_receive_length[channel] == 0)
 		{
 			w32(0);

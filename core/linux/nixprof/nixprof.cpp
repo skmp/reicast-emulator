@@ -39,14 +39,14 @@
 
 #include "linux/context.h"
 
-/** 
-@file      CallStack_Android.h 
-@brief     Getting the callstack under Android 
-@author    Peter Holtwick 
-*/ 
-#include <unwind.h> 
-#include <stdio.h> 
-#include <string.h> 
+/**
+@file      CallStack_Android.h
+@brief     Getting the callstack under Android
+@author    Peter Holtwick
+*/
+#include <unwind.h>
+#include <stdio.h>
+#include <string.h>
 
 static int tick_count=0;
 static pthread_t proft;
@@ -67,7 +67,7 @@ void prof_handler (int sn, siginfo_t * si, void *ctxr)
 {
 	rei_host_context_t ctx;
 	context_from_segfault(&ctx, ctxr);
-	
+
 	int thd=-1;
 	if (pthread_self()==thread[0]) thd=0;
 	else if (pthread_self()==thread[1]) thd=1;
@@ -280,7 +280,7 @@ static void* profiler_main(void *ptr)
 
 		//Write shrec syms file !
 		prof_head(prof_out, "jitsym", "SH4");
-		
+
 		#if FEAT_SHREC != DYNAREC_NONE
 		sh4_jitsym(prof_out);
 		#endif
@@ -309,7 +309,7 @@ static void* profiler_main(void *ptr)
 
 		fclose(maps);
 		fclose(prof_out);
-    
+
     return 0;
 }
 

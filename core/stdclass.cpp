@@ -158,14 +158,14 @@ void FindAllFiles(FileFoundCB* callback,wchar* dir,void* param)
 
 	strncpy (DirSpec, dir, strlen(dir)+1);
 	//strncat (DirSpec, "\\*", 3);
-	
+
 	hFind = FindFirstFile( DirSpec, &FindFileData);
 
-	if (hFind == INVALID_HANDLE_VALUE) 
+	if (hFind == INVALID_HANDLE_VALUE)
 	{
 		return;
-	} 
-	else 
+	}
+	else
 	{
 
 		if ((FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)==0)
@@ -173,8 +173,8 @@ void FindAllFiles(FileFoundCB* callback,wchar* dir,void* param)
 			callback(FindFileData.cFileName,param);
 		}
 u32 rv;
-		while ( (rv=FindNextFile(hFind, &FindFileData)) != 0) 
-		{ 
+		while ( (rv=FindNextFile(hFind, &FindFileData)) != 0)
+		{
 			if ((FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)==0)
 			{
 				callback(FindFileData.cFileName,param);
@@ -182,7 +182,7 @@ u32 rv;
 		}
 		dwError = GetLastError();
 		FindClose(hFind);
-		if (dwError != ERROR_NO_MORE_FILES) 
+		if (dwError != ERROR_NO_MORE_FILES)
 		{
 			return ;
 		}

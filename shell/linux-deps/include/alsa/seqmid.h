@@ -42,7 +42,7 @@ extern "C" {
 /**
  * \brief initialize event record
  * \param ev event record pointer
- * 
+ *
  * This macro clears the given event record pointer to the default status.
  */
 #define snd_seq_ev_clear(ev) \
@@ -111,7 +111,7 @@ extern "C" {
  *
  * This macro sets the event to the direct passing mode
  * to be delivered immediately without queueing.
- * 
+ *
  * \sa snd_seq_ev_schedule_tick(), snd_seq_ev_schedule_real()
  */
 #define snd_seq_ev_set_direct(ev) \

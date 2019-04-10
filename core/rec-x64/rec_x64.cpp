@@ -243,7 +243,7 @@ public:
 	{
 		//printf("X86_64 compiling %08x to %p\n", block->addr, emit_GetCCPtr());
 		CheckBlock(smc_checks, block);
-		
+
 		regalloc.DoAlloc(block);
 
 		sub(dword[rip + &cycle_counter], block->guest_cycles);
@@ -1099,7 +1099,7 @@ private:
 					mov(rax, reinterpret_cast<uintptr_t>(ptr));
 					mov(edx, *(u32*)ptr);
 					cmp(dword[rax], edx);
-					jne(reinterpret_cast<const void*>(&ngen_blockcheckfail));		
+					jne(reinterpret_cast<const void*>(&ngen_blockcheckfail));
 				}
 		 	}
 		 	break;
@@ -1291,7 +1291,7 @@ void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, 
 	verify(emit_FreeSpace() >= 16 * 1024);
 
 	compiler = new BlockCompiler();
-	
+
 	compiler->compile(block, smc_checks, reset, staging, optimise);
 
 	delete compiler;

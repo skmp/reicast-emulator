@@ -227,7 +227,7 @@ int snd_ctl_open_lconf(snd_ctl_t **ctl, const char *name, int mode, snd_config_t
 int snd_ctl_open_fallback(snd_ctl_t **ctl, snd_config_t *root, const char *name, const char *orig_name, int mode);
 int snd_ctl_close(snd_ctl_t *ctl);
 int snd_ctl_nonblock(snd_ctl_t *ctl, int nonblock);
-int snd_async_add_ctl_handler(snd_async_handler_t **handler, snd_ctl_t *ctl, 
+int snd_async_add_ctl_handler(snd_async_handler_t **handler, snd_ctl_t *ctl,
 			      snd_async_callback_t callback, void *private_data);
 snd_ctl_t *snd_async_handler_get_ctl(snd_async_handler_t *handler);
 int snd_ctl_poll_descriptors_count(snd_ctl_t *ctl);
@@ -501,7 +501,7 @@ typedef int (*snd_hctl_compare_t)(const snd_hctl_elem_t *e1,
 				  const snd_hctl_elem_t *e2);
 int snd_hctl_compare_fast(const snd_hctl_elem_t *c1,
 			  const snd_hctl_elem_t *c2);
-/** 
+/**
  * \brief HCTL callback function
  * \param hctl HCTL handle
  * \param mask event mask
@@ -511,7 +511,7 @@ int snd_hctl_compare_fast(const snd_hctl_elem_t *c1,
 typedef int (*snd_hctl_callback_t)(snd_hctl_t *hctl,
 				   unsigned int mask,
 				   snd_hctl_elem_t *elem);
-/** 
+/**
  * \brief HCTL element callback function
  * \param elem HCTL element
  * \param mask event mask

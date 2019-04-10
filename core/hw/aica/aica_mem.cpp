@@ -5,10 +5,10 @@
 
 u8 aica_reg[0x8000];
 
-//00000000~007FFFFF @DRAM_AREA* 
-//00800000~008027FF @CHANNEL_DATA 
-//00802800~00802FFF @COMMON_DATA 
-//00803000~00807FFF @DSP_DATA 
+//00000000~007FFFFF @DRAM_AREA*
+//00800000~008027FF @CHANNEL_DATA
+//00802800~00802FFF @COMMON_DATA
+//00803000~00807FFF @DSP_DATA
 template<u32 sz>
 u32 ReadReg(u32 addr)
 {
@@ -61,7 +61,7 @@ void WriteReg(u32 addr,u32 data)
 		{
 			WriteMemArr(aica_reg,addr,data,1);
 		}
-		else 
+		else
 		{
 			WriteMemArr(aica_reg,addr,data,2);
 		}

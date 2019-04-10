@@ -95,7 +95,7 @@ enum DecParam
 	PRM_TWO,
 	PRM_TWO_INV,
 	PRM_ONE_F32,
-	
+
 	// imms
 	PRM_SIMM8,
 	PRM_UIMM8,
@@ -119,7 +119,7 @@ enum DecParam
 
 	PRM_SREG,   //FPUL/FPSCR/MACH/MACL/PR/DBR/SGR
 	PRM_CREG,   //SR/GBR/VBR/SSR/SPC/<RM_BANK>
-	
+
 	//reg/imm reg/reg
 	PRM_RN_D4_x1,
 	PRM_RN_D4_x2,

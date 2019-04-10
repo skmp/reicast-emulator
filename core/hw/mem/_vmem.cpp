@@ -102,7 +102,7 @@ void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
 	u32   page=addr>>24;
 	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
 	void* ptr=(void*)(iirf&~HANDLER_MAX);
-	
+
 	if (ptr==0)
 	{
 		ismem=false;
@@ -174,7 +174,7 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 		{
 			T rv=_vmem_RF32[id/4](addr);
 			rv|=(T)((u64)_vmem_RF32[id/4](addr+4)<<32);
-			
+
 			return rv;
 		}
 		else
@@ -369,12 +369,12 @@ void _vmem_reset()
 	memset(_vmem_RF8,0,sizeof(_vmem_RF8));
 	memset(_vmem_RF16,0,sizeof(_vmem_RF16));
 	memset(_vmem_RF32,0,sizeof(_vmem_RF32));
-	
+
 	//clear write tables
 	memset(_vmem_WF8,0,sizeof(_vmem_WF8));
 	memset(_vmem_WF16,0,sizeof(_vmem_WF16));
 	memset(_vmem_WF32,0,sizeof(_vmem_WF32));
-	
+
 	//clear meminfo table
 	memset(_vmem_MemInfo_ptr,0,sizeof(_vmem_MemInfo_ptr));
 
@@ -561,7 +561,7 @@ error:
 		return ptr;
 	}
 
-	
+
 	void* _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
 	{
 		void* ptr;
@@ -573,7 +573,7 @@ error:
 		verify(map_times>=1);
 		u32 prot=PROT_READ|(w?PROT_WRITE:0);
 		rv= mmap(&virt_ram_base[dst], size, prot, MAP_SHARED | MAP_NOSYNC | MAP_FIXED, fd, offset);
-		if (MAP_FAILED==rv || rv!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0)) 
+		if (MAP_FAILED==rv || rv!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0))
 		{
 			printf("MAP1 failed %d\n",errno);
 			return 0;
@@ -595,7 +595,7 @@ error:
 
 	void* _nvmem_alloc_mem()
 	{
-        
+
 #if HOST_OS == OS_DARWIN
 		string path = get_writable_data_path("/dcnzorz_mem");
         fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
@@ -614,14 +614,14 @@ error:
 #else
 
 		fd = ashmem_create_region(0, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX);
-		if (false)//this causes writebacks to flash -> slow and stuttery 
+		if (false)//this causes writebacks to flash -> slow and stuttery
 		{
 		fd = open("/data/data/com.reicast.emulator/files/dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
 		unlink("/data/data/com.reicast.emulator/files/dcnzorz_mem");
 		}
 #endif
 
-		
+
 
 		u32 sz = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
 		void* rv=mmap(0, sz, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
@@ -668,7 +668,7 @@ bool BM_LockedWrite(u8* address)
 {
 	if (!_nvmem_enabled())
 		return false;
-	
+
 #if FEAT_SHREC != DYNAREC_NONE
 	u32 addr=address-(u8*)p_sh4rcb->fpcb;
 
@@ -685,7 +685,7 @@ bool BM_LockedWrite(u8* address)
 #endif
 
 		bm_vmem_pagefill((void**)address,PAGE_SIZE);
-		
+
 		return true;
 	}
 #else
@@ -707,7 +707,7 @@ bool _vmem_reserve()
 
 	if (virt_ram_base==0)
 		return _vmem_reserve_nonvmem();
-	
+
 	p_sh4rcb=(Sh4RCB*)virt_ram_base;
 
 	// Map the sh4 context but protect access to Sh4RCB.fpcb[]
@@ -736,12 +736,12 @@ bool _vmem_reserve()
 	aica_ram.data=(u8*)ptr;
 	//[0x01000000 ,0x04000000) -> unused
 	unused_buffer(0x01000000,0x04000000);
-	
+
 
 	//Area 1
 	//[0x04000000,0x05000000) -> vram (16mb, warped on dc)
 	map_buffer(0x04000000,0x05000000,MAP_VRAM_START_OFFSET,VRAM_SIZE,true);
-	
+
 	vram.size=VRAM_SIZE;
 	vram.data=(u8*)ptr;
 
@@ -754,26 +754,26 @@ bool _vmem_reserve()
 
 	//[0x07000000,0x08000000) -> unused (32b path) mirror
 	unused_buffer(0x07000000,0x08000000);
-	
+
 	//Area 2
 	//[0x08000000,0x0C000000) -> unused
 	unused_buffer(0x08000000,0x0C000000);
-	
+
 	//Area 3
 	//[0x0C000000,0x0D000000) -> main ram
 	//[0x0D000000,0x0E000000) -> main ram mirror
 	//[0x0E000000,0x0F000000) -> main ram mirror
 	//[0x0F000000,0x10000000) -> main ram mirror
 	map_buffer(0x0C000000,0x10000000,MAP_RAM_START_OFFSET,RAM_SIZE,true);
-	
+
 	mem_b.size=RAM_SIZE;
 	mem_b.data=(u8*)ptr;
-	
+
 	//Area 4
 	//Area 5
 	//Area 6
 	//Area 7
-	//all -> Unused 
+	//all -> Unused
 	//[0x10000000,0x20000000) -> unused
 	unused_buffer(0x10000000,0x20000000);
 

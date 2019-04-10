@@ -42,8 +42,8 @@ Status:
 
 
 namespace ARM
-{	
-	
+{
+
 #if defined(_DEVEL) && 0
 
 	//	S
@@ -55,7 +55,7 @@ namespace ARM
 	EAPI SADDSUBX(eReg Rd, eReg Rm, eReg Rs, ConditionCode CC=AL) ;
 	EAPI SSUBADDX(eReg Rd, eReg Rm, eReg Rs, ConditionCode CC=AL) ;
 
-	
+
 	//	Q
 	//
 	EAPI QADD8   (eReg Rd, eReg Rm, eReg Rs, ConditionCode CC=AL) ;
@@ -108,5 +108,5 @@ namespace ARM
 #endif
 
 
-	
+
 };

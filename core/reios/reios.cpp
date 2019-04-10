@@ -22,7 +22,7 @@
 
 //#define debugf printf
 
-#define debugf(...) 
+#define debugf(...)
 
 #define dc_bios_syscall_system				0x8C0000B0
 #define dc_bios_syscall_font				0x8C0000B4
@@ -58,7 +58,7 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 		printf("reios: iso9660 PVD found\n");
 		u32 lba = read_u32bi(&temp[156 + 2]); //make sure to use big endian
 		u32 len = read_u32bi(&temp[156 + 10]); //make sure to use big endian
-		
+
 		data_len = ((len + 2047) / 2048) *2048;
 
 		printf("reios: iso9660 root_directory, FAD: %d, len: %d\n", 150 + lba, data_len);
@@ -74,7 +74,7 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 
 			u32 lba = read_u32bi(&temp[i - 33 +  2]); //make sure to use big endian
 			u32 len = read_u32bi(&temp[i - 33 + 10]); //make sure to use big endian
-			
+
 			printf("filename len: %d\n", temp[i - 1]);
 			printf("file LBA: %d\n", lba);
 			printf("file LEN: %d\n", len);
@@ -166,7 +166,7 @@ void reios_sys_system() {
 			Sh4cntx.r[0] = 0;
 			break;
 
-		case 2: //SYSINFO_ICON 
+		case 2: //SYSINFO_ICON
 		{
 			printf("SYSINFO_ICON\n");
 			/*
@@ -177,7 +177,7 @@ void reios_sys_system() {
 		}
 		break;
 
-		case 3: //SYSINFO_ID 
+		case 3: //SYSINFO_ID
 		{
 			WriteMem32(SYSINFO_ID_ADDR + 0, 0xe1e2e3e4);
 			WriteMem32(SYSINFO_ID_ADDR + 4, 0xe5e6e7e8);
@@ -210,7 +210,7 @@ void reios_sys_flashrom() {
 	};
 
 	switch (cmd) {
-			case 0: // FLASHROM_INFO 
+			case 0: // FLASHROM_INFO
 			{
 				/*
 					r4 = partition number(0 - 4)
@@ -218,11 +218,11 @@ void reios_sys_flashrom() {
 						The first will be the offset of the partition start, in bytes from the start of the flashrom.
 						The second will be the size of the partition, in bytes.
 
-						#define FLASHROM_PT_SYSTEM      0   /< \brief Factory settings (read-only, 8K) 
-						#define FLASHROM_PT_RESERVED    1   /< \brief reserved (all 0s, 8K) 
-						#define FLASHROM_PT_BLOCK_1     2   /< \brief Block allocated (16K) 
-						#define FLASHROM_PT_SETTINGS    3   /< \brief Game settings (block allocated, 32K) 
-						#define FLASHROM_PT_BLOCK_2     4   /< \brief Block allocated (64K) 
+						#define FLASHROM_PT_SYSTEM      0   /< \brief Factory settings (read-only, 8K)
+						#define FLASHROM_PT_RESERVED    1   /< \brief reserved (all 0s, 8K)
+						#define FLASHROM_PT_BLOCK_1     2   /< \brief Block allocated (16K)
+						#define FLASHROM_PT_SETTINGS    3   /< \brief Game settings (block allocated, 32K)
+						#define FLASHROM_PT_BLOCK_2     4   /< \brief Block allocated (64K)
 				*/
 
 				u32 part = Sh4cntx.r[4];
@@ -233,7 +233,7 @@ void reios_sys_flashrom() {
 				if (part <= 4) {
 					pDst[0] = flashrom_info[part][0];
 					pDst[1] = flashrom_info[part][1];
-					
+
 					Sh4cntx.r[0] = 0;
 				}
 				else {
@@ -242,7 +242,7 @@ void reios_sys_flashrom() {
 			}
 			break;
 
-			case 1:	//FLASHROM_READ 
+			case 1:	//FLASHROM_READ
 			{
 				/*
 				r4 = read start position, in bytes from the start of the flashrom
@@ -259,8 +259,8 @@ void reios_sys_flashrom() {
 			}
 			break;
 
-			
-			case 2:	//FLASHROM_WRITE 
+
+			case 2:	//FLASHROM_WRITE
 			{
 				/*
 					r4 = write start position, in bytes from the start of the flashrom
@@ -280,8 +280,8 @@ void reios_sys_flashrom() {
 			}
 			break;
 
-			case 3:	//FLASHROM_DELETE  
-			{			
+			case 3:	//FLASHROM_DELETE
+			{
 				u32 offs = Sh4cntx.r[4];
 				u32 dest = Sh4cntx.r[5];
 
@@ -303,7 +303,7 @@ void reios_sys_flashrom() {
 				}
 			}
 			break;
-			
+
 	default:
 		printf("reios_sys_flashrom: not handled, %d\n", cmd);
 	}
@@ -362,7 +362,7 @@ void gd_do_bioscall()
 		printf("gd_do_bioscall: (%d) %d, %d, %d\n", Sh4cntx.r[4], Sh4cntx.r[5], Sh4cntx.r[6], Sh4cntx.r[7]);
 		break;
 	}
-	
+
 	//gdGdcInitSystem
 }
 
@@ -491,7 +491,7 @@ void reios_setuo_naomi(u32 boot_addr) {
 		[0x1d]	0.000000000	float
 		[0x1e]	0.000000000	float
 		[0x1f]	0.000000000	float
-		
+
 		-		r	0x13e1fec0	unsigned int [16]
 		[0x0]	0x0c021000	unsigned int
 		[0x1]	0x0c01f820	unsigned int
@@ -514,7 +514,7 @@ void reios_setuo_naomi(u32 boot_addr) {
 		full	0x0000000000002000	unsigned __int64
 		l	0x00002000	unsigned int
 		h	0x00000000	unsigned int
-		
+
 		-		r_bank	0x13e1ff08	unsigned int [8]
 		[0x0]	0x00000000	unsigned int
 		[0x1]	0x00000000	unsigned int

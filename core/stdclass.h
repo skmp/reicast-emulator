@@ -91,7 +91,7 @@ public:
 			}
 
 		}
-		
+
 		if (!data)
 			data=(T*)malloc(size*sizeof(T));
 		else
@@ -176,7 +176,7 @@ private:
 public :
 	THREADHANDLE hThread;
 	cThread(ThreadEntryFP* function,void* param);
-	
+
 	void Start();
 	void WaitToEnd();
 };

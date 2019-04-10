@@ -35,26 +35,26 @@ u32 read_BSC_PDTRA(u32 addr)
 		return NaomiBoardIDRead();
 
 	#else
-	
+
 		/* as seen on chankast */
 		u32 tpctra = BSC_PCTRA.full;
 		u32 tpdtra = BSC_PDTRA.full;
-		
+
 		u32 tfinal=0;
 		// magic values
 		if ((tpctra&0xf) == 0x8)
 			tfinal = 3;
 		else if ((tpctra&0xf) == 0xB)
 			tfinal = 3;
-		else			
+		else
 			tfinal = 0;
 
 		if ((tpctra&0xf) == 0xB && (tpdtra&0xf) == 2)
 			tfinal = 0;
 		else if ((tpctra&0xf) == 0xC && (tpdtra&0xf) == 2)
-			tfinal = 3;      
+			tfinal = 3;
 
-		tfinal |= settings.dreamcast.cable <<8;  
+		tfinal |= settings.dreamcast.cable <<8;
 
 		return tfinal;
 

@@ -46,17 +46,17 @@ struct BlockMapCMP
 
 	static unat get_blkstart(RuntimeBlockInfo* blk)
 	{
-		if (is_code(blk)) 
-			return (unat)blk; 
-		else 
+		if (is_code(blk))
+			return (unat)blk;
+		else
 			return (unat)blk->code;
 	}
 
 	static unat get_blkend(RuntimeBlockInfo* blk)
 	{
-		if (is_code(blk)) 
-			return (unat)blk; 
-		else 
+		if (is_code(blk))
+			return (unat)blk;
+		else
 			return (unat)blk->code+blk->host_code_size-1;
 	}
 
@@ -156,7 +156,7 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 
 		sprintf(fname,"sh4:%08X,c:%d,s:%d,h:%d",blk->addr,blk->guest_cycles,blk->guest_opcodes,blk->host_opcodes);
 
-		if (op_write_native_code(oprofHandle, fname, (uint64_t)blk->code, (void*)blk->code, blk->host_code_size) != 0) 
+		if (op_write_native_code(oprofHandle, fname, (uint64_t)blk->code, (void*)blk->code, blk->host_code_size) != 0)
 		{
 			printf("op_write_native_code error\n");
 		}
@@ -166,12 +166,12 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 }
 
 bool UDgreaterX ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
-{	
+{
 	return elem1->runs > elem2->runs;
 }
 
 bool UDgreaterLOC ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
-{	
+{
 	return elem1->addr < elem2->addr;
 }
 
@@ -199,7 +199,7 @@ u32 FindPath(RuntimeBlockInfo* rbi, u32 sa,s32 mc,u32& plc)
 			plc=plc2;
 			return rbi->guest_cycles+v2;
 		}
-		
+
 	}
 	else if (rbi->BlockType==BET_StaticJump)
 	{
@@ -310,9 +310,9 @@ void bm_Rebuild()
 	RASDASD();
 
 	blkmap.clear();
-	
+
 	std::sort(all_blocks.begin(),all_blocks.end(),UDgreaterLOC);
-	
+
 	for(size_t i=0; i<all_blocks.size(); i++)
 	{
 		bool do_opts=((all_blocks[i]->addr&0x3FFFFFFF)>0x0C010100);
@@ -396,7 +396,7 @@ void bm_Term()
 {
 #ifdef DYNA_OPROF
 	if (oprofHandle) op_close_agent(oprofHandle);
-	
+
 	oprofHandle=0;
 #endif
 	bm_Reset();
@@ -482,7 +482,7 @@ void bm_PrintTopBlocks()
 			all_blocks[i]->runs/total_runs,
 			all_blocks[i]->guest_cycles*all_blocks[i]->runs/total_cycles,
 			all_blocks[i]->host_opcodes*all_blocks[i]->runs/total_hops);
-		
+
 		sel_hops+=all_blocks[i]->host_opcodes*all_blocks[i]->runs;
 	}
 
@@ -498,7 +498,7 @@ void bm_PrintTopBlocks()
 			all_blocks[i]->runs/total_runs,
 			all_blocks[i]->guest_cycles*all_blocks[i]->runs/total_cycles,
 			all_blocks[i]->host_opcodes*all_blocks[i]->runs/total_hops);
-		
+
 		sel_hops+=all_blocks[i]->host_opcodes*all_blocks[i]->runs;
 	}
 
@@ -542,14 +542,14 @@ RuntimeBlockInfo::~RuntimeBlockInfo()
 }
 #include <algorithm>
 
-void RuntimeBlockInfo::AddRef(RuntimeBlockInfo* other) 
-{ 
-	pre_refs.push_back(other); 
+void RuntimeBlockInfo::AddRef(RuntimeBlockInfo* other)
+{
+	pre_refs.push_back(other);
 }
 
-void RuntimeBlockInfo::RemRef(RuntimeBlockInfo* other) 
-{ 
-	pre_refs.erase(find(pre_refs.begin(),pre_refs.end(),other)); 
+void RuntimeBlockInfo::RemRef(RuntimeBlockInfo* other)
+{
+	pre_refs.erase(find(pre_refs.begin(),pre_refs.end(),other));
 }
 
 bool print_stats;
@@ -616,7 +616,7 @@ void print_blocks()
 			u8* pucode=(u8*)blk->code;
 
 			size_t j=0;
-			
+
 			fprintf(f,"{\n");
 			for (;j<blk->oplist.size();j++)
 			{
@@ -638,7 +638,7 @@ void print_blocks()
 				string s=op->dissasm();
 				fprintf(f,"//il:%d:%d:%s\n",op->guest_offs,op->host_offs,s.c_str());
 			}
-			
+
 			fprint_hex(f,"//h:",pucode,hcode,blk->host_code_size);
 
 			fprintf(f,"}\n");

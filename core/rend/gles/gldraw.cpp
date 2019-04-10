@@ -12,7 +12,7 @@ Takes vertex, textures and renders to the currently set up target
 
 */
 
-const static u32 CullMode[]= 
+const static u32 CullMode[]=
 {
 
 	GL_NONE, //0    No culling          No culling
@@ -36,7 +36,7 @@ const static u32 Zfunction[]=
 /*
 0   Zero                  (0, 0, 0, 0)
 1   One                   (1, 1, 1, 1)
-2   Dither Color          (OR, OG, OB, OA) 
+2   Dither Color          (OR, OG, OB, OA)
 3   Inverse Dither Color  (1-OR, 1-OG, 1-OB, 1-OA)
 4   SRC Alpha             (SA, SA, SA, SA)
 5   Inverse SRC Alpha     (1-SA, 1-SA, 1-SA, 1-SA)
@@ -140,7 +140,7 @@ s32 SetTileClip(u32 val, GLint uniform)
 void SetCull(u32 CulliMode)
 {
 	if (CullMode[CulliMode]==GL_NONE)
-	{ 
+	{
 		glcache.Disable(GL_CULL_FACE);
 	}
 	else
@@ -187,7 +187,7 @@ __forceinline
 								  gp->tcw.PixelFmt == PixelBumpMap,
 								  color_clamp,
 								  ShaderUniforms.trilinear_alpha != 1.f);
-	
+
 	glcache.UseProgram(CurrentShader->program);
 	if (CurrentShader->trilinear_alpha != -1)
 		glUniform1f(CurrentShader->trilinear_alpha, ShaderUniforms.trilinear_alpha);
@@ -492,7 +492,7 @@ void GenSorted(int first, int count)
 	PolyParam* pp_base = &pvrrc.global_param_tr.head()[first];
 	PolyParam* pp = pp_base;
 	PolyParam* pp_end = pp + count;
-	
+
 	Vertex* vtx_arr=vtx_base+idx_base[pp->first];
 	vtx_sort_base=vtx_base;
 
@@ -505,15 +505,15 @@ void GenSorted(int first, int count)
 #if PRINT_SORT_STATS
 	printf("TVTX: %d || %d\n",vtx_cnt,vtx_count);
 #endif
-	
+
 	if (vtx_count<=0)
 		return;
 
 	//make lists of all triangles, with their pid and vid
 	static vector<IndexTrig> lst;
-	
+
 	lst.resize(vtx_count*4);
-	
+
 
 	int pfsti=0;
 
@@ -627,7 +627,7 @@ void GenSorted(int first, int count)
 				}
 
 				flip ^= 1;
-				
+
 				vtx++;
 			}
 		}
@@ -658,7 +658,7 @@ void GenSorted(int first, int count)
 	}
 #endif
 
-	
+
 #if 0
 	//tries to optimise draw calls by reordering non-intersecting polygons
 	//uber slow and not very effective
@@ -711,7 +711,7 @@ void GenSorted(int first, int count)
 		if (idx!=pid /* && !PP_EQ(&pp_base[pid],&pp_base[idx]) */ )
 		{
 			SortTrigDrawParam stdp = { pp_base + pid, i * 3, 0 };
-			
+
 			if (idx!=-1)
 			{
 				SortTrigDrawParam* last=&pidx_sort[pidx_sort.size()-1];
@@ -760,7 +760,7 @@ void DrawSorted(bool multipass)
 	if (pidx_sort.size())
 	{
 		u32 count=pidx_sort.size();
-		
+
 		{
 			//set some 'global' modes for all primitives
 
@@ -776,7 +776,7 @@ void DrawSorted(bool multipass)
 					SetGPState<ListType_Translucent,true>(params);
 					glDrawElements(GL_TRIANGLES, pidx_sort[p].count, gl.index_type,
 							(GLvoid*)(gl.get_index_size() * pidx_sort[p].first)); glCheck();
-				
+
 #if 0
 					//Verify restriping -- only valid if no sort
 					int fs=pidx_sort[p].first;
@@ -897,12 +897,12 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 		if (mv_mode == Inclusion)
 		{
 			// Inclusion volume
-			//res : old : final 
+			//res : old : final
 			//0   : 0      : 00
 			//0   : 1      : 01
 			//1   : 0      : 01
 			//1   : 1      : 01
-			
+
 			// if (1<=st) st=1; else st=0;
 			glcache.StencilFunc(GL_LEQUAL,1,3);
 			glcache.StencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
@@ -915,7 +915,7 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 				(actually, i think there was also another, racing game)
 			*/
 			// The initial value for exclusion volumes is 1 so we need to invert the result before and'ing.
-			//res : old : final 
+			//res : old : final
 			//0   : 0   : 00
 			//0   : 1   : 01
 			//1   : 0   : 00
@@ -1033,10 +1033,10 @@ void DrawModVols(int first, int count)
 		//black out any stencil with '1'
 		glcache.Enable(GL_BLEND);
 		glcache.BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-		
+
 		glcache.Enable(GL_STENCIL_TEST);
 		glcache.StencilFunc(GL_EQUAL,0x81,0x81); //only pixels that are Modvol enabled, and in area 1
-		
+
 		//clear the stencil result bit
 		glcache.StencilMask(0x3);    //write to lsb
 		glcache.StencilOp(GL_ZERO,GL_ZERO,GL_ZERO);

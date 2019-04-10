@@ -255,7 +255,7 @@ typedef enum _snd_pcm_subformat {
 typedef enum _snd_pcm_state {
 	/** Open */
 	SND_PCM_STATE_OPEN = 0,
-	/** Setup installed */ 
+	/** Setup installed */
 	SND_PCM_STATE_SETUP,
 	/** Ready to start */
 	SND_PCM_STATE_PREPARED,
@@ -420,9 +420,9 @@ typedef union _snd_pcm_sync_id {
 /** #SND_PCM_TYPE_METER scope handle */
 typedef struct _snd_pcm_scope snd_pcm_scope_t;
 
-int snd_pcm_open(snd_pcm_t **pcm, const char *name, 
+int snd_pcm_open(snd_pcm_t **pcm, const char *name,
 		 snd_pcm_stream_t stream, int mode);
-int snd_pcm_open_lconf(snd_pcm_t **pcm, const char *name, 
+int snd_pcm_open_lconf(snd_pcm_t **pcm, const char *name,
 		       snd_pcm_stream_t stream, int mode,
 		       snd_config_t *lconf);
 int snd_pcm_open_fallback(snd_pcm_t **pcm, snd_config_t *root,
@@ -437,7 +437,7 @@ int snd_pcm_poll_descriptors_count(snd_pcm_t *pcm);
 int snd_pcm_poll_descriptors(snd_pcm_t *pcm, struct pollfd *pfds, unsigned int space);
 int snd_pcm_poll_descriptors_revents(snd_pcm_t *pcm, struct pollfd *pfds, unsigned int nfds, unsigned short *revents);
 int snd_pcm_nonblock(snd_pcm_t *pcm, int nonblock);
-int snd_async_add_pcm_handler(snd_async_handler_t **handler, snd_pcm_t *pcm, 
+int snd_async_add_pcm_handler(snd_async_handler_t **handler, snd_pcm_t *pcm,
 			      snd_async_callback_t callback, void *private_data);
 snd_pcm_t *snd_async_handler_get_pcm(snd_async_handler_t *handler);
 int snd_pcm_info(snd_pcm_t *pcm, snd_pcm_info_t *info);
@@ -919,7 +919,7 @@ snd_pcm_sframes_t snd_pcm_mmap_commit(snd_pcm_t *pcm,
 snd_pcm_sframes_t snd_pcm_mmap_writei(snd_pcm_t *pcm, const void *buffer, snd_pcm_uframes_t size);
 snd_pcm_sframes_t snd_pcm_mmap_readi(snd_pcm_t *pcm, void *buffer, snd_pcm_uframes_t size);
 snd_pcm_sframes_t snd_pcm_mmap_writen(snd_pcm_t *pcm, void **bufs, snd_pcm_uframes_t size);
-snd_pcm_sframes_t snd_pcm_mmap_readn(snd_pcm_t *pcm, void **bufs, snd_pcm_uframes_t size);                                                                
+snd_pcm_sframes_t snd_pcm_mmap_readn(snd_pcm_t *pcm, void **bufs, snd_pcm_uframes_t size);
 
 /** \} */
 

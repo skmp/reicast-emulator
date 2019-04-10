@@ -63,7 +63,7 @@ void read_sectors_to(u32 addr, u32 sector, u32 count) {
 			count--;
 		}
 	}
-	
+
 }
 
 void GDROM_HLE_ReadDMA(u32 addr)
@@ -73,7 +73,7 @@ void GDROM_HLE_ReadDMA(u32 addr)
 	u32 b = ReadMem32(addr + 0x08);
 	u32 u = ReadMem32(addr + 0x0C);
 
-	
+
 
 	debugf("GDROM:\tPIO READ Sector=%d, Num=%d, Buffer=0x%08X, Unk01=0x%08X\n", s, n, b, u);
 	read_sectors_to(b, s, n);
@@ -178,34 +178,34 @@ void gdrom_hle_op()
 			last_cmd = r[0] = --dwReqID;		// RET Request ID
 		break;
 
-		case GDROM_CHECK_COMMAND:	// 
+		case GDROM_CHECK_COMMAND:	//
 			r[0] = last_cmd == r[4] ? 2 : 0; // RET Finished : Invalid
 			debugf("\nGDROM:\tHLE CHECK COMMAND REQID:%X  param ptr: %X -> %X\n", r[4], r[5], r[0]);
 			last_cmd = 0xFFFFFFFF;			// INVALIDATE CHECK CMD
 		break;
 
 			// NO return, NO params
-		case GDROM_MAIN:	
+		case GDROM_MAIN:
 			debugf("\nGDROM:\tHLE GDROM_MAIN\n");
 			break;
 
 		case GDROM_INIT:	printf("\nGDROM:\tHLE GDROM_INIT\n");	break;
 		case GDROM_RESET:	printf("\nGDROM:\tHLE GDROM_RESET\n");	break;
 
-		case GDROM_CHECK_DRIVE:		// 
+		case GDROM_CHECK_DRIVE:		//
 			debugf("\nGDROM:\tHLE GDROM_CHECK_DRIVE r4:%X\n",r[4],r[5]);
 			WriteMem32(r[4]+0,0x02);	// STANDBY
 			WriteMem32(r[4]+4,libGDR_GetDiscType());	// CDROM | 0x80 for GDROM
 			r[0]=0;					// RET SUCCESS
 		break;
 
-		case GDROM_ABORT_COMMAND:	// 
+		case GDROM_ABORT_COMMAND:	//
 			printf("\nGDROM:\tHLE GDROM_ABORT_COMMAND r4:%X\n",r[4],r[5]);
 			r[0]=-1;				// RET FAILURE
 		break;
 
 
-		case GDROM_SECTOR_MODE:		// 
+		case GDROM_SECTOR_MODE:		//
 			printf("GDROM:\tHLE GDROM_SECTOR_MODE PTR_r4:%X\n",r[4]);
 			for(int i=0; i<4; i++) {
 				SecMode[i] = ReadMem32(r[4]+(i<<2));
@@ -217,7 +217,7 @@ void gdrom_hle_op()
 		default: printf("\nGDROM:\tUnknown SYSCALL: %X\n",r[7]); break;
 		}
 	}
-	else							// MISC 
+	else							// MISC
 	{
 		printf("SYSCALL:\tSYSCALL: %X\n",r[7]);
 	}

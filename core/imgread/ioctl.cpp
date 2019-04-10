@@ -68,8 +68,8 @@ typedef struct _CDROM_TOC_FULL_TOC_DATA
   #define CDROM_READ_TOC_EX_FORMAT_PMA      0x03
   #define CDROM_READ_TOC_EX_FORMAT_ATIP     0x04
   #define CDROM_READ_TOC_EX_FORMAT_CDTEXT   0x05
-  
-typedef struct _CDROM_READ_TOC_EX 
+
+typedef struct _CDROM_READ_TOC_EX
 {
     UCHAR  Format : 4;
     UCHAR  Reserved1 : 3;
@@ -79,7 +79,7 @@ typedef struct _CDROM_READ_TOC_EX
     UCHAR  Reserved3;
  } CDROM_READ_TOC_EX, *PCDROM_READ_TOC_EX;
 #endif
-struct spti_s 
+struct spti_s
 {
 	SCSI_PASS_THROUGH_DIRECT sptd;
 	DWORD alignmentDummy;
@@ -112,7 +112,7 @@ bool spti_SendCommand(HANDLE hand,spti_s& s,SCSI_ADDRESS& ioctl_addr)
 //	s.sptd.DataBuffer         = pdata;
 
 	DWORD bytesReturnedIO = 0;
-	if(!DeviceIoControl(hand, IOCTL_SCSI_PASS_THROUGH_DIRECT, &s, sizeof(s), &s, sizeof(s), &bytesReturnedIO, NULL)) 
+	if(!DeviceIoControl(hand, IOCTL_SCSI_PASS_THROUGH_DIRECT, &s, sizeof(s), &s, sizeof(s), &bytesReturnedIO, NULL))
 		return false;
 
 	if(s.sptd.ScsiStatus)
@@ -135,7 +135,7 @@ bool spti_Read10(HANDLE hand,void * pdata,u32 sector,SCSI_ADDRESS& ioctl_addr)
 
 	s.sptd.Cdb[7] = 0;
 	s.sptd.Cdb[8] = 1;
-	
+
 	s.sptd.CdbLength          = 0x0A;
 	s.sptd.DataIn             = 0x01;//DATA_IN
 	s.sptd.DataTransferLength = 0x800;
@@ -150,7 +150,7 @@ bool spti_ReadCD(HANDLE hand,void * pdata,u32 sector,SCSI_ADDRESS& ioctl_addr)
 	MMC_READCD& r=*(MMC_READCD*)s.sptd.Cdb;
 
 	r.opcode	= MMC_READCD_OPCODE;
-	
+
 
 	//lba
 	r.LBA[0] = (BYTE)(sector >> 0x18 & 0xFF);
@@ -162,16 +162,16 @@ bool spti_ReadCD(HANDLE hand,void * pdata,u32 sector,SCSI_ADDRESS& ioctl_addr)
 	r.len[0]=0;
 	r.len[1]=0;
 	r.len[2]=1;
-	
+
 	//0xF8
 	r.sync=1;
 	r.HeaderCodes=3;
 	r.UserData=1;
 	r.EDC_ECC=1;
-	
+
 
 	r.subchannel=1;
-	
+
 	s.sptd.CdbLength          = 12;
 	s.sptd.DataIn             = 0x01;//DATA_IN
 	s.sptd.DataTransferLength = 2448;
@@ -211,17 +211,17 @@ struct PhysicalDrive:Disc
 		printf(" Opened device %s, reading TOC ...",path);
 		// Get track-table and parse it
 		CDROM_READ_TOC_EX tocrq={0};
-		 
+
 	 	tocrq.Format = CDROM_READ_TOC_EX_FORMAT_FULL_TOC;
 	 	tocrq.Msf=1;
 	 	tocrq.SessionTrack=1;
 		u8 buff[2048];
 	 	CDROM_TOC_FULL_TOC_DATA *ftd=(CDROM_TOC_FULL_TOC_DATA*)buff;
-	
+
 		ULONG BytesRead;
 		memset(buff,0,sizeof(buff));
 		int code = DeviceIoControl(drive,IOCTL_CDROM_READ_TOC_EX,&tocrq,sizeof(tocrq),ftd, 2048, &BytesRead, NULL);
-		
+
 //		CDROM_TOC toc;
 		int currs=-1;
 		if (0==code)
@@ -327,11 +327,11 @@ void PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,S
 
 
 	static __RAW_READ_INFO Info;
-	
+
 	Info.SectorCount=1;
 	Info.DiskOffset.QuadPart = LBA * CD_SECTOR_SIZE; //CD_SECTOR_SIZE, even though we read RAW sectors. Its how winapi works.
 	ULONG Dummy;
-	
+
 	//try all 3 track modes, starting from the one that succeeded last time (Info is static) to save time !
 	for (int tr=0;tr<3;tr++)
 	{
@@ -365,12 +365,12 @@ void PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,S
 
 Disc* ioctl_parse(const wchar* file)
 {
-	
+
 	if (strlen(file)==3 && GetDriveType(file)==DRIVE_CDROM)
 	{
 		printf("Opening device %s ...",file);
 		wchar fn[]={ '\\', '\\', '.', '\\', file[0],':', '\0' };
-		PhysicalDrive* rv = new PhysicalDrive();	
+		PhysicalDrive* rv = new PhysicalDrive();
 
 		if (rv->Build(fn))
 		{

@@ -161,16 +161,16 @@ void maple_DoDma()
 				SB_MDST=0;
 				return;
 			}
-			
-			//Command code 
+
+			//Command code
 			u32 command=p_data[0] &0xFF;
-			//Recipient address 
+			//Recipient address
 			u32 reci=(p_data[0] >> 8) & 0xFF;//0-5;
 			u32 port=maple_GetPort(reci);
 			u32 bus=maple_GetBusId(reci);
-			//Sender address 
+			//Sender address
 			u32 send=(p_data[0] >> 16) & 0xFF;
-			//Number of additional words in frame 
+			//Number of additional words in frame
 			u32 inlen=(p_data[0]>>24) & 0xFF;
 			u32 resp=0;
 			inlen*=4;
@@ -253,7 +253,7 @@ void maple_Init()
 	*/
 
 	sb_rio_register(SB_MSHTCL_addr,RIO_WF,0,&maple_SB_MSHTCL_Write);
-	
+
 	/*
 	sb_regs[(SB_MSHTCL_addr-SB_BASE)>>2].flags=REG_32BIT_READWRITE;
 	sb_regs[(SB_MSHTCL_addr-SB_BASE)>>2].writeFunction=maple_SB_MSHTCL_Write;
@@ -276,7 +276,7 @@ void maple_Reset(bool Manual)
 
 void maple_Term()
 {
-	
+
 }
 
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST

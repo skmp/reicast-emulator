@@ -8,7 +8,7 @@
 
 namespace ARM
 {
-	
+
 	EAPI MLA(eReg Rd, eReg Rn, eReg Rs, eReg Rm, ConditionCode CC=AL)   //     *FIXME* S
 	{
 		DECL_Id(0x00200090);
@@ -35,7 +35,7 @@ namespace ARM
 	EAPI UMULL(eReg Rdhi, eReg Rdlo, eReg Rs, eReg Rm, ConditionCode CC=AL)   //     *FIXME* S
 	{
 		DECL_Id(0x00800090);
-		
+
 		SET_CC;
 		I |= (Rdhi&15)<<16;
 		I |= (Rdlo&15)<<12;
@@ -43,11 +43,11 @@ namespace ARM
 		I |= (Rm&15);
 		EMIT_I;
 	}
-	
+
 	EAPI SMULL(eReg Rdhi, eReg Rdlo, eReg Rs, eReg Rm, ConditionCode CC=AL)   //     *FIXME* S
 	{
 		DECL_Id(0x00C00090);
-		
+
 		SET_CC;
 		I |= (Rdhi&15)<<16;
 		I |= (Rdlo&15)<<12;
@@ -55,12 +55,12 @@ namespace ARM
 		I |= (Rm&15);
 		EMIT_I;
 	}
-	
-	
 
 
 
-	
+
+
+
 #if 0
 SMLA<x><y>	Signed halfword Multiply Accumulate.
 SMLAD		Signed halfword Multiply Accumulate, Dual.

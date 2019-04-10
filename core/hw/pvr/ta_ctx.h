@@ -86,7 +86,7 @@ struct  tad_context
 		if (render_pass_count < sizeof(render_passes) / sizeof(u8*) - 1)
 			render_pass_count++;
 	}
-	
+
 	u8* End()
 	{
 		return thd_data == thd_root ? thd_old_data : thd_data;
@@ -121,12 +121,12 @@ struct rend_context
 	bool Overrun;
 	bool isRTT;
 	bool isRenderFramebuffer;
-	
+
 	double early;
 
 	FB_X_CLIP_type    fb_X_CLIP;
 	FB_Y_CLIP_type    fb_Y_CLIP;
-	
+
 	u32 fog_clamp_min;
 	u32 fog_clamp_max;
 
@@ -174,7 +174,7 @@ struct TA_context
 	tad_context tad;
 	rend_context rend;
 
-	
+
 	/*
 		Dreamcast games use up to 20k vtx, 30k idx, 1k (in total) parameters.
 		at 30 fps, thats 600kvtx (900 stripped)
@@ -186,7 +186,7 @@ struct TA_context
 			recv:   idx: 33528, vtx: 23451, op: 128, pt: 4, tr: 133, mvo: 14, modt: 342
 			sc:     idx: 26150, vtx: 17417, op: 162, pt: 12, tr: 244, mvo: 6, modt: 2044
 			doa2le: idx: 47178, vtx: 34046, op: 868, pt: 0, tr: 354, mvo: 92, modt: 976 (overruns)
-			ika:    idx: 46748, vtx: 33818, op: 984, pt: 9, tr: 234, mvo: 10, modt: 16, ov: 0  
+			ika:    idx: 46748, vtx: 33818, op: 984, pt: 9, tr: 234, mvo: 10, modt: 16, ov: 0
 			ct:     idx: 30920, vtx: 21468, op: 752, pt: 0, tr: 360, mvo: 101, modt: 732, ov: 0
 			sa2:    idx: 36094, vtx: 24520, op: 1330, pt: 10, tr: 177, mvo: 39, modt: 360, ov: 0
 	*/
@@ -212,7 +212,7 @@ struct TA_context
 		rend.global_param_mvo_tr.Init(4096, &rend.Overrun, "global_param_mvo_tr");
 
 		rend.modtrig.Init(16384, &rend.Overrun, "modtrig");
-		
+
 		rend.render_passes.Init(sizeof(RenderPass) * 10, &rend.Overrun, "render_passes");	// 10 render passes
 
 		Reset();

@@ -67,14 +67,14 @@ void SetFloatStatusReg()
 	{
 		old_rm=fpscr.RM ;
 		old_dn=fpscr.DN ;
-        
+
         //Correct rounding is required by some games (SOTB, etc)
 #if BUILD_COMPILER == COMPILER_VC
         if (fpscr.RM == 1)  //if round to 0 , set the flag
             _controlfp(_RC_CHOP, _MCW_RC);
         else
             _controlfp(_RC_NEAR, _MCW_RC);
-        
+
         if (fpscr.DN)     //denormals are considered 0
             _controlfp(_DN_FLUSH, _MCW_DN);
         else
@@ -96,7 +96,7 @@ void SetFloatStatusReg()
 		unsigned int y = 0x02000000;
 		if (fpscr.RM==1)  //if round to 0 , set the flag
 			y|=3<<22;
-	
+
 		if (fpscr.DN)
 			y|=1<<24;
 

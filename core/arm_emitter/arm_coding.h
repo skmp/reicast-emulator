@@ -6,7 +6,7 @@
 
 namespace ARM
 {
-	
+
 
 	/*
 	 *	Encoding Hi-Order 4bits, ConditionCode
@@ -48,8 +48,8 @@ namespace ARM
 		ConditionCode_Size
 	};
 
-	
-	
+
+
 	/*
 	 *	Data-processing OPCODE 4bits, DPOP
 	 *
@@ -85,7 +85,7 @@ namespace ARM
 		S_RRX=S_ROR
 	};
 
-	
+
 	/*
 	 *	eReg:		ARM Register ID
 	 *
@@ -109,13 +109,13 @@ namespace ARM
 
 		v1 = r4,    v2 = r5,    v3 = r6,    v4 = r7,	v5 = r8,    v6 = r9,
 		V1 = R4,    V2 = R5,    V3 = R6,    V4 = R7,	V5 = R8,    V6 = R9,
-		
+
 		rfp = r9,	sl = r10,	fp = r11,	ip = r12,	sp = r13,	lr = r14,	pc = r15,
 		RFP = R9,	SL = R10,	FP = R11,	IP = R12,	SP = R13,	LR = R14,	PC = R15,
 	};
 
 
-	
+
 	/*
 	 *	eFQReg:		Float [Quad] Register ID		(A.SIMD)
 	 *
@@ -132,7 +132,7 @@ namespace ARM
 		Q8,  Q9,  Q10, Q11,
 		Q12, Q13, Q14, Q15
 	};
-	
+
 
 	/*
 	 *	eFDReg:		Float [Double] Register ID		(VFP / A.SIMD)
@@ -218,7 +218,7 @@ namespace ARM
 
 		_push_eabi  = _lr|_v1|_v2|_v3|_v4|_v5|_v6|_sl|_fp|_ip,  // this is guesswork ..
 	};
-	
+
 
 
 	/// WIP ///
@@ -231,9 +231,9 @@ namespace ARM
 			u8  vD8[8];
 			u8  vS8[4];
 
-			u16 vQ16[8];	// *VFP: If half-word extensions are enabled 
-			u16 vD16[4];	// *VFP: If half-word extensions are enabled 
-			u16 vS16[2];	// *VFP: If half-word extensions are enabled 
+			u16 vQ16[8];	// *VFP: If half-word extensions are enabled
+			u16 vD16[4];	// *VFP: If half-word extensions are enabled
+			u16 vS16[2];	// *VFP: If half-word extensions are enabled
 
 			u32 vQ32[4];
 			u32 vD32[2];

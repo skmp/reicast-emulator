@@ -59,13 +59,13 @@ namespace ARM
 					}
 
 		c8		0		c{3,5,6,7}	[0-3]			TLB maintenance ops. *										WO
-		
+
 		c9		[0-7]	c{0,2,5,8}	[0-7]			Reserved for Branch Predictor, Cache and TCM ops.			RSVD, OP.ACCESS
 		c9		[0-7]	c[12-15]	[0-7]			Reserved for Performance monitors.							RSVD, OP.ACCESS
 
 		c10		0		c{0,1,4,8}	[0-7]			Reserved for TLB lockdown ops.								RSVD, OP.ACCESS
 		c10		0		c2			{0,1}			PRRR, NMRRR,	TEX Remap									RW
-		
+
 		c11		[0-7]	c{0,8,15}	[0-7]			Reserved for DMA ops. TCM access.							RSVD, OP.ACCESS
 
 		c12		0		c0			{0,1}			Security Extensions											RW, IMPL.OPTIONAL
@@ -78,7 +78,7 @@ namespace ARM
 	*/
 
 
-	
+
 /*************************************************************************************************
  *	CP15 c0:  ID codes registers
  *************************************************************************************************/
@@ -131,7 +131,7 @@ namespace ARM
 		u32 IminLine	: 4;
 		u32 SBZ			: 10;
 		u32 L1Ip		: 2;
-		u32 DminLine	: 4;	// 
+		u32 DminLine	: 4;	//
 		u32 ERG			: 4;	// Exclusives Reservation Granule.
 		u32 CWG			: 4;	// Cache Writeback Granule.
 		u32 RAZ			: 1;
@@ -140,7 +140,7 @@ namespace ARM
 
 
 
-	
+
 	/*
 	 *	TCMTR, TCM Type Register
 	 */
@@ -186,7 +186,7 @@ namespace ARM
 	};
 
 
-	
+
 	/*
 	 *	CLIDR, Cache Level ID Register
 	 */
@@ -232,7 +232,7 @@ namespace ARM
 
 
 
-	
+
 /*************************************************************************************************
  *	CP15 c1:  System control registers
  *************************************************************************************************/
@@ -255,7 +255,7 @@ namespace ARM
 	 *
 	 *		D32DIS:1 && ASEDIS:0 is INVALID
 	 *		ASEDIS on hw { w. VFP & w.o A.SIMD } is RAO/WI, if bit is not supported it is RAZ/WI.
-	 *		
+	 *
 	 *		When Security Extensions are enabled, NSACR controls CP access from non-secure state.
 	 *
 	 *		VFP uses CP10 && CP11, the values of .cp10 && .cp11 should be the same.
@@ -310,13 +310,13 @@ namespace ARM
 	union SCR
 	{
 		struct {
-			u32 NS	: 1;	// 
-			u32 IRQ	: 1;	// 
-			u32 FIQ	: 1;	// 
-			u32 EA	: 1;	// 
-			u32 FW	: 1;	// 
-			u32 AW	: 1;	// 
-			u32 nET	: 1;	// 
+			u32 NS	: 1;	//
+			u32 IRQ	: 1;	//
+			u32 FIQ	: 1;	//
+			u32 EA	: 1;	//
+			u32 FW	: 1;	//
+			u32 AW	: 1;	//
+			u32 nET	: 1;	//
 			u32 SBZP:25;
 		};
 
@@ -332,7 +332,6 @@ namespace ARM
 
 
 
-	
 
 
 
@@ -340,7 +339,8 @@ namespace ARM
 
 
 
-	
+
+
 /*************************************************************************************************
  *	CP15 c{2,3}:  Memory protection and control registers
  *************************************************************************************************/
@@ -349,14 +349,14 @@ namespace ARM
 	// TTBR0 TTVR1 TTVCR
 	// DACR, Domain Access Control Register
 
-	
-	
+
+
 /*************************************************************************************************
  *	CP15 c4:  Not used
  *************************************************************************************************/
 
-	
-	
+
+
 /*************************************************************************************************
  *	CP15 c{5,6}:  Memory system fault registers
  *************************************************************************************************/
@@ -369,8 +369,8 @@ namespace ARM
 	// IFAR,  Instruction Fault Address Register
 
 
-	
-	
+
+
 /*************************************************************************************************
  *	CP15 c7:  Cache maintenance / misc
  *************************************************************************************************/
@@ -378,8 +378,8 @@ namespace ARM
 
 
 
-	
-	
+
+
 /*************************************************************************************************
  *************************************************************************************************
  *	A.SIMD and VFP extension system registers
@@ -393,7 +393,7 @@ namespace ARM
 		R_MVFR0		= 7,	// 0b0111
 	};
 
-	
+
 	//	FPSID	Floating Point System ID Register
 	//	MVFR1	Media and VFP Feature Register 1
 	//	MVFR0	Media and VFP Feature Register 0
@@ -412,9 +412,9 @@ namespace ARM
 	{
 		VFPv1	= 0,	// Not Permitted in ARMv7
 		VFPv2_Cv1,		// Not Permitted in ARMv7
-		VFPv3_Cv2,		// 
+		VFPv3_Cv2,		//
 		VFPv3_Null,		// Full hardware, no trap
-		VFPv3_Cv3,		// 
+		VFPv3_Cv3,		//
 	};
 
 
@@ -428,17 +428,17 @@ namespace ARM
 		u32 OFC		: 1;	// *
 		u32 UFC		: 1;	// *
 		u32 IXC		: 1;	// *
-		u32 SBZP1	: 2;	// 
+		u32 SBZP1	: 2;	//
 		u32 IDC		: 1;	// *
 		u32 IOE		: 1;	// ** All ** bits are FP trap enable bits
 		u32 DZE		: 1;	// ** only supported in VFPv2 && VFPv3U
 		u32 OFE		: 1;	// ** - RAZ elsewhere -
 		u32 UFE		: 1;	// **
 		u32 IXE		: 1;	// **
-		u32 SBZP2	: 2;	// 
+		u32 SBZP2	: 2;	//
 		u32 IDE		: 1;	// **
 		u32 Len		: 3;	// SBZ for ARMv7 VFP, ignored for A.SIMD
-		u32 SBZP3	: 1;	// 
+		u32 SBZP3	: 1;	//
 		u32 Stride	: 2;	// SBZ for ARMv7 VFP, ignored for A.SIMD
 		u32 RMode	: 2;	// Rounding Mode
 		u32 FZ		: 1;	// Flush-to-Zero

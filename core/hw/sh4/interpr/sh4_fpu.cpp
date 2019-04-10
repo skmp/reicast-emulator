@@ -682,7 +682,7 @@ sh4op(i1111_nn01_1111_1101)
 	XF[1] XF[5] XF[9] XF[13]  *	FR[n+1] -> FR[n+1]
 	XF[2] XF[6] XF[10] XF[14]   FR[n+2]    FR[n+2]
 	XF[3] XF[7] XF[11] XF[15]   FR[n+3]    FR[n+3]
-	
+
 	gota love linear algebra !
 	*/
 

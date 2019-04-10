@@ -32,10 +32,10 @@ void rtc_init()
 
 	//RTC RYRCNT H'FFC8 001C H'1FC8 001C 16 Held Held Held Held Pclk
 	sh4_rio_reg(RTC,RTC_RYRCNT_addr,RIO_DATA,16);
-	
+
 	//RTC RSECAR H'FFC8 0020 H'1FC8 0020 8 Held *2 Held Held Held Pclk
 	sh4_rio_reg(RTC,RTC_RSECAR_addr,RIO_DATA,8);
-	
+
 	//RTC RMINAR H'FFC8 0024 H'1FC8 0024 8 Held *2 Held Held Held Pclk
 	sh4_rio_reg(RTC,RTC_RMINAR_addr,RIO_DATA,8);
 

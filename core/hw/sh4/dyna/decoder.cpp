@@ -21,7 +21,7 @@
 RuntimeBlockInfo* blk;
 
 
-const char idle_hash[] = 
+const char idle_hash[] =
 	//BIOS
 	">:1:05:BD3BE51F:1E886EE6:6BDB3F70:7FB25EA3:DE0083A8"
 	">:1:04:CB0C9B99:5082FB07:50A46C46:4035B1F1:6A9F47DC"
@@ -74,7 +74,7 @@ state_t state ;
 void Emit(shilop op,shil_param rd=shil_param(),shil_param rs1=shil_param(),shil_param rs2=shil_param(),u32 flags=0,shil_param rs3=shil_param(),shil_param rd2=shil_param())
 {
 	shil_opcode sp;
-		
+
 	sp.flags=flags;
 	sp.op=op;
 	sp.rd=(rd);
@@ -235,7 +235,7 @@ sh4dec(i0000_nnnn_0000_0011)
 	dec_End(0xFFFFFFFF,BET_DynamicCall,true);
 }
 //jsr @<REG_N>
-sh4dec(i0100_nnnn_0000_1011) 
+sh4dec(i0100_nnnn_0000_1011)
 {
 	u32 n = GetN(op);
 
@@ -331,7 +331,7 @@ sh4dec(i0100_nnnn_0010_0100)
 {
 	u32 n = GetN(op);
 	Sh4RegType rn=(Sh4RegType)(reg_r0+n);
-	
+
 	Emit(shop_rocl,rn,rn,reg_sr_T,0,shil_param(),reg_sr_T);
 	/*
 	Emit(shop_ror,rn,rn,mk_imm(31));
@@ -414,7 +414,7 @@ void dec_param(DecParam p,shil_param& r1,shil_param& r2, u32 op)
 	case PRM_PC_D8_x4:
 		r1=mk_imm(((state.cpu.rpc+4)&0xFFFFFFFC)+(GetImm8(op)<<2));
 		break;
-	
+
 	case PRM_ZERO:
 		r1= mk_imm(0);
 		break;
@@ -527,7 +527,7 @@ void dec_param(DecParam p,shil_param& r1,shil_param& r2, u32 op)
 	case PRM_CREG:	//SR/GBR/VBR/SSR/SPC/<RM_BANK>
 		r1=mk_regi(CREGS[GetM(op)]);
 		break;
-	
+
 	//reg/imm reg/reg
 	case PRM_RN_D4_x1:
 	case PRM_RN_D4_x2:
@@ -609,7 +609,7 @@ u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 			//printf("DIV MATCH BROKEN BY: %s\n",OpDesc[opcode]->diss);
 			break;
 		}
-		
+
 		opcode=ReadMem16(v_pc);
 		v_pc+=2;
 		if ((opcode&MASK_N_M)==DIV1_KEY)
@@ -618,7 +618,7 @@ u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 				reg2=(Sh4RegType)GetM(opcode);
 			else if (reg2!=(Sh4RegType)GetM(opcode))
 				break;
-			
+
 			if (reg2==reg1)
 				break;
 
@@ -626,7 +626,7 @@ u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 				reg3=(Sh4RegType)GetN(opcode);
 			else if (reg3!=(Sh4RegType)GetN(opcode))
 				break;
-			
+
 			if (reg3==reg1)
 				break;
 
@@ -635,7 +635,7 @@ u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 		else
 			break;
 	}
-	
+
 	return match;
 }
 bool MatchDiv32u(u32 op,u32 pc)
@@ -674,7 +674,7 @@ bool MatchDiv32s(u32 op,u32 pc)
 
 	u32 match=MatchDiv32(pc+2,div_som_reg1,div_som_reg2,div_som_reg3);
 	//printf("DIV32S matched %d%% @ 0x%X\n",match*100/65,pc);
-	
+
 	if (match==65)
 	{
 		//DIV32S was perfectly matched :)
@@ -713,7 +713,7 @@ bool dec_generic(u32 op)
 	DecMode mode;DecParam d;DecParam s;shilop natop;u32 e;
 	if (OpDesc[op]->decode==0)
 		return false;
-	
+
 	u64 inf=OpDesc[op]->decode;
 
 	e=(u32)(inf>>32);
@@ -806,7 +806,7 @@ bool dec_generic(u32 op)
 		break;
 
 	case DM_UnaryOp: //d= op s
-		if (transfer_64 && natop==shop_mov32) 
+		if (transfer_64 && natop==shop_mov32)
 			natop=shop_mov64;
 
 		if (natop==shop_cvt_i2f_n && state.cpu.RoundToZero)
@@ -878,7 +878,7 @@ bool dec_generic(u32 op)
 			Emit(natop,rs1,rs2,mk_imm(e==1?0xFF:0xFFFF));
 		}
 		break;
-	
+
 	case DM_MUL:
 		{
 			shilop op;
@@ -912,12 +912,12 @@ bool dec_generic(u32 op)
 					verify(!state.cpu.is_delayslot);
 					//div32u
 					Emit(shop_div32u,mk_reg(div_som_reg1),mk_reg(div_som_reg1),mk_reg(div_som_reg2),0,shil_param(),mk_reg(div_som_reg3));
-					
+
 					Emit(shop_and,mk_reg(reg_sr_T),mk_reg(div_som_reg1),mk_imm(1));
 					Emit(shop_shr,mk_reg(div_som_reg1),mk_reg(div_som_reg1),mk_imm(1));
 
 					Emit(shop_div32p2,mk_reg(div_som_reg3),mk_reg(div_som_reg3),mk_reg(div_som_reg2),0,shil_param(reg_sr_T));
-					
+
 					//skip the aggregated opcodes
 					state.cpu.rpc+=128;
 					blk->guest_cycles+=CPU_RATIO*64;
@@ -938,12 +938,12 @@ bool dec_generic(u32 op)
 					verify(!state.cpu.is_delayslot);
 					//div32s
 					Emit(shop_div32s,mk_reg(div_som_reg1),mk_reg(div_som_reg1),mk_reg(div_som_reg2),0,shil_param(),mk_reg(div_som_reg3));
-					
+
 					Emit(shop_and,mk_reg(reg_sr_T),mk_reg(div_som_reg1),mk_imm(1));
 					Emit(shop_sar,mk_reg(div_som_reg1),mk_reg(div_som_reg1),mk_imm(1));
 
 					Emit(shop_div32p2,mk_reg(div_som_reg3),mk_reg(div_som_reg3),mk_reg(div_som_reg2),0,shil_param(reg_sr_T));
-					
+
 					//skip the aggregated opcodes
 					state.cpu.rpc+=128;
 					blk->guest_cycles+=CPU_RATIO*64;
@@ -1016,9 +1016,9 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 	blk=rbi;
 	state_Setup(blk->addr,blk->fpu_cfg);
 	ngen_GetFeatures(&state.ngen);
-	
+
 	blk->guest_opcodes=0;
-	
+
 	for(;;)
 	{
 		switch(state.NextOp)
@@ -1029,7 +1029,7 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 			//there is no break here by design
 		case NDO_NextOp:
 			{
-				if ( 
+				if (
 					( (blk->oplist.size() >= BLOCK_MAX_SH_OPS_SOFT) || (blk->guest_cycles >= max_cycles) )
 					&& !state.cpu.is_delayslot
 					)
@@ -1122,7 +1122,7 @@ _end:
 	blk->BlockType=state.BlockType;
 
 	verify(blk->oplist.size() <= BLOCK_MAX_SH_OPS_HARD);
-	
+
 #if HOST_OS == OS_WINDOWS
 	switch(rbi->addr)
 	{

@@ -190,7 +190,7 @@ typedef long BytesReadable_t;
 #endif
 
 
-#if defined(WIN32) || defined(USG) 
+#if defined(WIN32) || defined(USG)
 
 /*
  *      TRANS(Readv) and TRANS(Writev) use struct iovec, normally found
@@ -465,13 +465,13 @@ TRANS(GetPeerNetworkId)(
 
 #endif /* ICE_t */
 
-int 
+int
 TRANS(GetHostname) (
     char *	/* buf */,
     int 	/* maxlen */
 );
 
-#if defined(WIN32) && defined(TCPCONN) 
+#if defined(WIN32) && defined(TCPCONN)
 int TRANS(WSAStartup)();
 #endif
 

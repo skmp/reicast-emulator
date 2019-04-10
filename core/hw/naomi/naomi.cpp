@@ -93,7 +93,7 @@ void NaomiBoardIDWrite(const u16 Data)
 	int Clk=Data&4;
 	int Rst=Data&0x20;
 	int Sta=Data&0x10;
-	
+
 
 	if(Rst)
 	{
@@ -101,12 +101,12 @@ void NaomiBoardIDWrite(const u16 Data)
 		BBufPos=0;
 	}
 
-	
+
 	if(Clk!=BOldClk && !Clk)	//Falling Edge clock
 	{
 		//State change
-		if(BState==0 && Sta) 
-			BState=1;		
+		if(BState==0 && Sta)
+			BState=1;
 		if(BState==1 && !Sta)
 			BState=2;
 
@@ -280,7 +280,7 @@ void NaomiGameIDWrite(const u16 Data)
 	int Rst=Data&0x04;
 	int Sta=Data&0x08;
 	int Cmd=Data&0x10;
-	
+
 
 	if(Rst)
 	{
@@ -288,18 +288,18 @@ void NaomiGameIDWrite(const u16 Data)
 		GBufPos=0;
 	}
 
-	
+
 	if(Clk!=GOldClk && !Clk)	//Falling Edge clock
 	{
 		//State change
-		if(GState==0 && Sta) 
-			GState=1;		
+		if(GState==0 && Sta)
+			GState=1;
 		if(GState==1 && !Sta)
 			GState=2;
-		
-		
-		
-		
+
+
+
+
 
 		//State processing
 		if(GState==1)		//LoadBoardID
@@ -327,7 +327,7 @@ void NaomiGameIDWrite(const u16 Data)
 				GCmd&=0xfffffffe;
 			GControl=Cmd;
 		}
-		
+
 	}
 
 	GOldClk=Clk;
@@ -375,7 +375,7 @@ void _WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 //
 
 //SO the writes to 3c/stuff are not relaced with 4c '1'
-//If the dimm board has some internal cpu/pic logic 
+//If the dimm board has some internal cpu/pic logic
 //4c '1' seems to be the init done bit (?)
 //n1/n2 clears it after getting a non 0 value
 //n1 bios writes the value -1, meaning it expects the bit 0 to be set
@@ -443,16 +443,16 @@ void Naomi_DmaStart(u32 addr, u32 data)
 		printf("Invalid (NAOMI)GD-DMA start, SB_GDEN=0.Ingoring it.\n");
 		return;
 	}
-	
+
 	NaomiDataRead = true;
 	SB_GDST|=data&1;
 
 	if (SB_GDST==1)
 	{
 		verify(1 == SB_GDDIR );
-	
+
 		SB_GDSTARD=SB_GDSTAR+SB_GDLEN;
-		
+
 		SB_GDLEND=SB_GDLEN;
 		SB_GDST=0;
 		if (CurrentCartridge != NULL)
@@ -489,24 +489,24 @@ void naomi_reg_Init()
 	#ifdef NAOMI_COMM
 	CommMapFile = CreateFileMapping(
 		INVALID_HANDLE_VALUE,    // use paging file
-		NULL,                    // default security 
+		NULL,                    // default security
 		PAGE_READWRITE,          // read/write access
-		0,                       // max. object size 
-		0x1000*4,                // buffer size  
+		0,                       // max. object size
+		0x1000*4,                // buffer size
 		L"Global\\nullDC_103_naomi_comm");                 // name of mapping object
 
-	if (CommMapFile == NULL || CommMapFile==INVALID_HANDLE_VALUE) 
-	{ 
+	if (CommMapFile == NULL || CommMapFile==INVALID_HANDLE_VALUE)
+	{
 		_tprintf(TEXT("Could not create file mapping object (%d).\nTrying to open existing one\n"), 	GetLastError());
-		
+
 		CommMapFile=OpenFileMapping(
                    FILE_MAP_ALL_ACCESS,   // read/write access
                    FALSE,                 // do not inherit the name
-                   L"Global\\nullDC_103_naomi_comm");               // name of mapping object 
+                   L"Global\\nullDC_103_naomi_comm");               // name of mapping object
 	}
-	
-	if (CommMapFile == NULL || CommMapFile==INVALID_HANDLE_VALUE) 
-	{ 
+
+	if (CommMapFile == NULL || CommMapFile==INVALID_HANDLE_VALUE)
+	{
 		_tprintf(TEXT("Could not open existing file either\n"), 	GetLastError());
 		CommMapFile=INVALID_HANDLE_VALUE;
 	}
@@ -515,14 +515,14 @@ void naomi_reg_Init()
 		printf("NAOMI: Created \"Global\\nullDC_103_naomi_comm\"\n");
 		CommSharedMem = (u32*) MapViewOfFile(CommMapFile,   // handle to map object
 			FILE_MAP_ALL_ACCESS, // read/write permission
-			0,                   
-			0,                   
-			0x1000*4);           
+			0,
+			0,
+			0x1000*4);
 
-		if (CommSharedMem == NULL) 
-		{ 
-			_tprintf(TEXT("Could not map view of file (%d).\n"), 
-				GetLastError()); 
+		if (CommSharedMem == NULL)
+		{
+			_tprintf(TEXT("Could not map view of file (%d).\n"),
+				GetLastError());
 
 			CloseHandle(CommMapFile);
 			CommMapFile=INVALID_HANDLE_VALUE;
@@ -593,12 +593,12 @@ void Update_naomi()
 		return;
 	}
 
-	if(0 == len) 
+	if(0 == len)
 	{
 		printf("\n!\tGDROM: Len: %X, Abnormal Termination !\n", len);
 	}
 	u32 len_backup=len;
-	if( 1 == SB_GDDIR ) 
+	if( 1 == SB_GDDIR )
 	{
 		WriteMemBlock_nommu_ptr(dst,NaomiRom+(DmaOffset&0x7ffffff),size);
 
@@ -627,7 +627,7 @@ void Update_naomi()
 		//And all buffer :p
 		if (buff_size==0)
 		{
-			verify(!SB_GDST&1)		
+			verify(!SB_GDST&1)
 			gd_set_state(gds_procpacketdone);
 		}
 	}

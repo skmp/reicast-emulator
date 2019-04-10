@@ -50,11 +50,11 @@ void DMAC_Ch2St()
 
 	// Direct DList DMA (Ch2)
 
-	// Texture DMA 
+	// Texture DMA
 	if((dst >= 0x10000000) && (dst <= 0x10FFFFFF))
 	{
 		u32 p_addr=src & RAM_MASK;
-		//GetMemPtr perhaps ? it's not good to use the mem arrays directly 
+		//GetMemPtr perhaps ? it's not good to use the mem arrays directly
 		while(len)
 		{
 			if ((p_addr+len)>RAM_SIZE)
@@ -125,9 +125,9 @@ void DMAC_Ch2St()
 		die(".\tPVR DList DMA LNMODE1\n\n");
 		src+=len;
 	}
-	else 
-	{ 
-		printf("\n!\tDMAC: SB_C2DSTAT has invalid address (%X) !\n", dst); 
+	else
+	{
+		printf("\n!\tDMAC: SB_C2DSTAT has invalid address (%X) !\n", dst);
 		src+=len;
 	}
 
@@ -150,7 +150,7 @@ void DMAC_Ch2St()
 //ch0/on demand data transfer request
 void dmac_ddt_ch0_ddt(u32 src,u32 dst,u32 count)
 {
-	
+
 }
 
 //ch2/direct data transfer request

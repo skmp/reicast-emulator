@@ -56,7 +56,7 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		//a write of anything works ?
 		ta_vtx_ListCont();
 	}
-	
+
 	if (addr == SPG_CONTROL_addr || addr == SPG_LOAD_addr)
 	{
 		if (PvrReg(addr, u32) != data)

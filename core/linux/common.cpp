@@ -10,7 +10,7 @@
 #if !defined(TARGET_NACL32)
 #include <poll.h>
 #include <termios.h>
-#endif  
+#endif
 //#include <curses.h>
 #include <fcntl.h>
 #include <semaphore.h>
@@ -42,16 +42,16 @@ bool BM_LockedWrite(u8* address);
 
 #if HOST_OS == OS_DARWIN
 void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
-	
+
     rei_host_context_t ctx;
-    
+
     context_from_segfault(&ctx, segfault_ctx);
 
 	unat pc = (unat)ctx.pc;
 	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE));
-	
+
 	printf("SIGILL @ %lx -> %p was not in vram, dynacode:%d\n", pc, si->si_addr, dyna_cde);
-	
+
 	//printf("PC is used here %08X\n", pc);
     kill(getpid(), SIGABRT);
 }
@@ -69,7 +69,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	//ucontext_t* ctx=(ucontext_t*)ctxr;
 	//printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,ctx->uc_mcontext.arm_pc,dyna_cde);
 
-	
+
 	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
 		return;
 	#if FEAT_SHREC == DYNAREC_JIT
@@ -123,7 +123,7 @@ void install_fault_handler (void)
 #if HOST_OS == OS_DARWIN
     //this is broken on osx/ios/mach in general
     sigaction(SIGBUS, &act, &segv_oact);
-    
+
     act.sa_sigaction = sigill_handler;
     sigaction(SIGILL, &act, &segv_oact);
 #endif
@@ -353,7 +353,7 @@ void linux_rpi2_init() {
 	void (*rpi_bcm_init)(void);
 
 	handle = dlopen("libbcm_host.so", RTLD_LAZY);
-	
+
 	if (handle) {
 		printf("found libbcm_host\n");
 		*(void**) (&rpi_bcm_init) = dlsym(handle, "bcm_host_init");
@@ -373,9 +373,9 @@ void common_linux_setup()
 	enable_runfast();
 	install_fault_handler();
 	signal(SIGINT, exit);
-	
+
 	settings.profile.run_counts=0;
-	
+
 	printf("Linux paging: %ld %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
 	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
 }

@@ -227,7 +227,7 @@ Games[] =
 {
     // Naomi M1 Roms
     // Giant Gram 2000 (JPN, USA, EXP, KOR, AUS)
-    { 
+    {
         "gram2000",
 		NULL,
         0x0b000000,
@@ -288,19 +288,19 @@ Games[] =
             { "opr-24234a.ic31",  0x8000000, 0x800000, InterleavedWord },
             { "opr-24235a.ic32s", 0x8000002, 0x800000, InterleavedWord },
             { "copy",             0x400000, 0xc00000, Copy, 0x1000000 },
-            
+
             //ROM_REGION(0x200, "some_eeprom", 0)
             //ROM_LOAD( "25lc040.ic13s", 0, 0x200, CRC(1576366a) SHA1(3e8bf3dbc8a248a6863242b78d5c6e53a869e951) )
-            
+
 			// TODO Need emulation of 837-14438 board on serial port
             //ROM_REGION(0x220000, "hopper_board", 0)
             //ROM_LOAD( "fpr-24150.ic6",   0x0000000, 0x200000, CRC(3845c34c) SHA1(027b17bac64482ee152773d5fab30fcbc6e2bcb7) ) // SH4 code
             //ROM_LOAD( "6372a.ic3",       0x0200000, 0x020000, CRC(f30839ad) SHA1(ea1a32c4da1ed9745300bcdd7964a7c0964e3221) ) // FPGA config
-            
+
             { NULL, 0, 0 },
         }
     },
-    // Marvel Vs. Capcom 2 New Age of Heroes (Export, Korea, Rev A)    
+    // Marvel Vs. Capcom 2 New Age of Heroes (Export, Korea, Rev A)
     {
         "mvsc2",
 		NULL,
@@ -326,15 +326,15 @@ Games[] =
             { "mpr-23060.ic29",  0x6800000, 0x0800000 },
             { "mpr-23061.ic30s", 0x7000000, 0x0800000 },
             { "mpr-23083.ic31",  0x7800000, 0x0400000 },
-            
+
             // 32 bit area starts here
             { "mpr-23083.ic31",  0x8000000, 0x0400000, InterleavedWord },
             { "mpr-23084.ic32s", 0x8000002, 0x0400000, InterleavedWord },
             { "copy",            0x0400000, 0x0400000, Copy, 0x1200000 },
-            
+
             //ROM_REGION(0x200, "some_eeprom", 0)
             //ROM_LOAD( "25lc040.ic13s", 0x000000, 0x200, CRC(dc449637) SHA1(6cab09f61be1498271a36bff6a114a4eeeb00e1a) )
-            
+
             { NULL, 0, 0 },
         },
         NULL,
@@ -358,10 +358,10 @@ Games[] =
             { "mpr-24222.ic21s", 0x3000000, 0x0800000, InterleavedWord },
             { "mpr-24223.ic22",  0x3000002, 0x0800000, InterleavedWord },
             { "copy",            0x400000,  0xc00000,  Copy, 0x1000000 },
-            
+
             //ROM_REGION(0x200, "some_eeprom", 0)
             //{ "25lc040.ic13s", 0, 0x200, CRC(9adb86c2) SHA1(682d06b2004809c3c7ff2f4f9bc0bde0e51885c0) )
-            
+
             // MUSHIKING
             // The King of Beetle
             // TYPE-1
@@ -369,7 +369,7 @@ Games[] =
             // note: this dump from "empty/dead" Management Chip with no game run count left
             //ROM_REGION( 0x80, "rf_tag", 0 )
             //{ "mushi_type1.bin", 0, 0x80, CRC(8f36572b) SHA1(87e00e56d07a961e9180c7da02e35f7fd216dbae) )
-            
+
             { NULL, 0, 0 },
         }
     },
@@ -412,7 +412,7 @@ Games[] =
         NULL,
         M1,
         REGION_AUSTRALIA,
-        {   
+        {
             { "epr-23844.ic11",  0x0000000, 0x400000 },
             { "mtp-23840.ic17s", 0x1000000, 0x800000, InterleavedWord },
             { "mtp-23841.ic18",  0x1000002, 0x800000, InterleavedWord },
@@ -431,17 +431,17 @@ Games[] =
         NULL,
         M1,
         REGION_AUSTRALIA,
-        {   
+        {
             { "epr-24065a.ic11", 0x0000000, 0x0400000 },
             { "opr-24060.ic17s", 0x1000000, 0x0800000, InterleavedWord },
             { "opr-24061.ic18",  0x1000002, 0x0800000, InterleavedWord },
             { "opr-24062.ic19s", 0x2000000, 0x0800000, InterleavedWord },
             { "opr-24063.ic20",  0x2000002, 0x0800000, InterleavedWord },
             { "copy",            0x400000, 0xc00000, Copy, 0x1000000 },
-            
+
             //ROM_REGION(0x200, "some_eeprom", 0)
             //ROM_LOAD( "25lc040.ic13s", 0, 0x200, CRC(d11312d3) SHA1(c444012954f58a9af283ab8439f31cb89de9c14d) )
-            
+
             { NULL, 0, 0 },
         }
     },
@@ -503,10 +503,10 @@ Games[] =
             { "mpr-23067.ic21s", 0x3000000, 0x0800000, InterleavedWord },
             { "mpr-23068.ic22",  0x3000002, 0x0800000, InterleavedWord },
             { "copy",            0x400000 , 0xc00000,  Copy, 0x1000000 },
-            
+
             //ROM_REGION(0x200, "some_eeprom", 0)
             //ROM_LOAD( "25lc040.ic13s", 0, 0x200, CRC(6291605c) SHA1(44f757da4814b08108d1a4f431c9a39c38acecb2) )
-            
+
             { NULL, 0, 0 },
         }
     },
@@ -613,21 +613,21 @@ Games[] =
             { "mpr-22181.ic18s", 0x9000000, 0x800000 },
             { "mpr-22182.ic19s", 0x9800000, 0x800000 },
             { "mpr-22183.ic20s", 0xa000000, 0x800000 },
-            
+
             // JVS I/O board 837-13844, external Z80 code for Sega 315-6146 "MIE" MCU
             //ROM_REGION( 0x20000, "jvsio", ROMREGION_ERASEFF)
             //ROM_LOAD( "epr-21868.ic7", 0x000000, 0x010000, CRC(c306a51f) SHA1(7833b73dc34c4c62401a30637968f46b949ceac0) )
-            
+
             // later version of the same I/O board (temporary, we'll handle this properly later)
             //ROM_LOAD( "epr-22082.ic7", 0x010000, 0x010000, CRC(de26fc6c) SHA1(cf8ef7969770fff8697299c3e3152413b898a967) )
-            
+
             // 837-14645 JVS I/O, uses same PCB as 837-13844
             //ROM_LOAD( "epr-24354.ic7", 0x000000, 0x010000, CRC(0ce43505) SHA1(7700e3acfb756dfbf95f3ff14786d1bcb57e2f7d) )
-            
+
             // 18 Wheeler motor controller 838-13992, code is for a TMPZ84C015 which is Z80 compatible
             //ROM_REGION( 0x10000, "motorio", ROMREGION_ERASEFF)
             //ROM_LOAD( "epr-23000.ic8", 0x000000, 0x010000, CRC(e3b162f7) SHA1(52c7ad759c3c4a3148764e14d77ba5006bc8af48) )
-            
+
             { NULL, 0, 0 },
         },
         NULL,
@@ -668,17 +668,17 @@ Games[] =
             // JVS I/O board 837-13844, external Z80 code for Sega 315-6146 "MIE" MCU
             //ROM_REGION( 0x20000, "jvsio", ROMREGION_ERASEFF)
             //ROM_LOAD( "epr-21868.ic7", 0x000000, 0x010000, CRC(c306a51f) SHA1(7833b73dc34c4c62401a30637968f46b949ceac0) )
-            
+
             // later version of the same I/O board (temporary, we'll handle this properly later)
             //ROM_LOAD( "epr-22082.ic7", 0x010000, 0x010000, CRC(de26fc6c) SHA1(cf8ef7969770fff8697299c3e3152413b898a967) )
-            
+
             // 837-14645 JVS I/O, uses same PCB as 837-13844
             //ROM_LOAD( "epr-24354.ic7", 0x000000, 0x010000, CRC(0ce43505) SHA1(7700e3acfb756dfbf95f3ff14786d1bcb57e2f7d) )
-            
+
             // 18 Wheeler motor controller 838-13992, code is for a TMPZ84C015 which is Z80 compatible
             //ROM_REGION( 0x10000, "motorio", ROMREGION_ERASEFF)
             //ROM_LOAD( "epr-23000.ic8", 0x000000, 0x010000, CRC(e3b162f7) SHA1(52c7ad759c3c4a3148764e14d77ba5006bc8af48) )
-            
+
             { NULL, 0, 0 },
         },
         NULL,
@@ -715,18 +715,18 @@ Games[] =
             { "mpr-22181.ic18s", 0x9000000, 0x800000 },
             { "mpr-22182.ic19s", 0x9800000, 0x800000 },
             { "mpr-22183.ic20s", 0xa000000, 0x800000 },
-            
+
             // JVS I/O board 837-13844, code is for a Z80 of unknown type (it's inside the big Sega ASIC)
             //ROM_REGION( 0x20000, "jvsio", ROMREGION_ERASEFF)
             //ROM_LOAD( "epr-21868.ic7", 0x000000, 0x010000, CRC(c306a51f) SHA1(7833b73dc34c4c62401a30637968f46b949ceac0) )
-            
+
             // later version of the same I/O board (temporary, we'll handle this properly later)
             //ROM_LOAD( "epr-22082.ic7", 0x010000, 0x010000, CRC(de26fc6c) SHA1(cf8ef7969770fff8697299c3e3152413b898a967) )
-            
+
             // 18 Wheeler motor controller 838-13992, code is for a TMPZ84C015 which is Z80 compatible
             //ROM_REGION( 0x10000, "motorio", ROMREGION_ERASEFF)
             //ROM_LOAD( "epr-23000.ic8", 0x000000, 0x010000, CRC(e3b162f7) SHA1(52c7ad759c3c4a3148764e14d77ba5006bc8af48) )
-            
+
             { NULL, 0, 0 },
         },
         NULL,
@@ -763,23 +763,23 @@ Games[] =
             { "mpr-22181.ic18s", 0x9000000, 0x800000 },
             { "mpr-22182.ic19s", 0x9800000, 0x800000 },
             { "mpr-22183.ic20s", 0xa000000, 0x800000 },
-            
+
             // JVS I/O board 837-13844, code is for a Z80 of unknown type (it's inside the big Sega ASIC)
             //ROM_REGION( 0x20000, "jvsio", ROMREGION_ERASEFF)
             //ROM_LOAD( "epr-21868.ic7", 0x000000, 0x010000, CRC(c306a51f) SHA1(7833b73dc34c4c62401a30637968f46b949ceac0) )
-            
+
             // later version of the same I/O board (temporary, we'll handle this properly later)
             //ROM_LOAD( "epr-22082.ic7", 0x010000, 0x010000, CRC(de26fc6c) SHA1(cf8ef7969770fff8697299c3e3152413b898a967) )
-            
+
             // 840-0023    2000     317-0273-COM   Naomi
             //ROM_PARAMETER( ":rom_board:segam2crypt:key", "2807cf54" )
-            
+
             { NULL, 0, 0 },
         },
         NULL,
         &_18wheelr_inputs
     },
-    // Airline Pilots (Rev B) 
+    // Airline Pilots (Rev B)
     {
         "alpilot",
 		NULL,
@@ -801,11 +801,11 @@ Games[] =
             { "mpr-21736.ic9",   0x4800000, 0x800000 },
             { "mpr-21737.ic10",  0x5000000, 0x800000 },
             { "mpr-21738.ic11",  0x5800000, 0x800000 },
-            
+
             // on-cart X76F100 eeprom contents
             //ROM_REGION( 0x84, "naomibd_eeprom", 0 )
             //ROM_LOAD( "airlinepdx.sf",  0x000000, 0x000084, CRC(404b2add) SHA1(540c8474806775646ace111a2993397b1419fee3) )
-            
+
             { NULL, 0, 0 },
         }
     },
@@ -1000,10 +1000,10 @@ Games[] =
             { "rom18.ic18s",    0x9000000, 0x800000 },
             { "rom19.ic19s",    0x9800000, 0x800000 },
             { "rom20.ic20s",    0xa000000, 0x800000 },
-            
+
             //ROM_REGION(0x84, "some_eeprom", 0)
             //ROM_LOAD("sflash.ic37", 0x000000, 0x000084, CRC(08f27149) SHA1(3b8d53dcf2c09035b318022906c444cf8504d7fa) )
-            
+
             { NULL, 0, 0 },
         }
     },
@@ -1316,7 +1316,7 @@ Games[] =
         M2,
         REGION_AUSTRALIA,
         {
-            { "epr-22207.ic22", 0x0000000, 0x0400000 }, 
+            { "epr-22207.ic22", 0x0000000, 0x0400000 },
             { "mpr-22100.ic1",   0x0800000, 0x0800000 },
             { "mpr-22101.ic2",   0x1000000, 0x0800000 },
             { "mpr-22102.ic3",   0x1800000, 0x0800000 },
@@ -1342,7 +1342,7 @@ Games[] =
             // on-cart X76F100 eeprom contents
             //ROM_REGION( 0x84, "naomibd_eeprom", 0 )
             //ROM_LOAD( "841-0003.sf",  0x000000, 0x000084, CRC(3a119a17) SHA1(d37a092cca7c9cfc5f2637b355af90a65d04013e) )
-            
+
 			{ NULL, 0, 0 },
 		}
 	},
@@ -1378,11 +1378,11 @@ Games[] =
             { "mpr-22118.ic19s", 0x9800000, 0x0800000 },
             { "mpr-22119.ic20s", 0xa000000, 0x0800000 },
             { "mpr-22120.ic21s", 0xa800000, 0x0800000 },
-            
+
             // on-cart X76F100 eeprom contents
             //ROM_REGION( 0x84, "naomibd_eeprom", 0 )
             //ROM_LOAD( "841-0003.sf",  0x000000, 0x000084, CRC(3a119a17) SHA1(d37a092cca7c9cfc5f2637b355af90a65d04013e) )
-            
+
             { NULL, 0, 0 },
         }
     },
@@ -1418,7 +1418,7 @@ Games[] =
 			{ "mpr-22118.ic19s",0x9800000, 0x0800000 },
 			{ "mpr-22119.ic20s",0xa000000, 0x0800000 },
 			{ "mpr-22120.ic21s",0xa800000, 0x0800000 },
-            
+
             // on-cart X76F100 eeprom contents
 			//ROM_REGION( 0x84, "naomibd_eeprom", 0 )
 			//ROM_LOAD( "841-0003.sf",  0x000000, 0x000084, CRC(3a119a17) SHA1(d37a092cca7c9cfc5f2637b355af90a65d04013e) )
@@ -1528,11 +1528,11 @@ Games[] =
 			{ "mpr-21899.ic19s", 0x9800000, 0x0800000 },
 			{ "mpr-21900.ic20s", 0xa000000, 0x0800000 },
 			{ "mpr-21901.ic21s", 0xa800000, 0x0800000 },
-            
+
             //ROM_REGION( 0x10000, "drivebd", 0 ) // drive board ROM
             //ROM_LOAD( "epr-21867p.bin", 0x000000, 0x010000, CRC(6143b911) SHA1(360ebc53696da7a29e6404376c82947563274835) ) // prototype preview
             //ROM_LOAD( "epr-21867.bin", 0x000000, 0x010000, CRC(4f93a2a0) SHA1(875907e7fcfc44850e2c60c12268ac61c742f217) )
-            
+
 			{ NULL, 0, 0 },
 		}
 	},
@@ -1810,7 +1810,7 @@ Games[] =
         M2,
         REGION_AUSTRALIA,
 		{
-            { "epr-23716a.ic22", 0x0000000, 0x0400000 }, 
+            { "epr-23716a.ic22", 0x0000000, 0x0400000 },
             { "mpr-23705.ic1",   0x0800000, 0x0800000 },
             { "mpr-23706.ic2",   0x1000000, 0x0800000 },
             { "mpr-23707.ic3",   0x1800000, 0x0800000 },
@@ -2045,7 +2045,7 @@ Games[] =
             { "mpr-22989.ic12s", 0x6000000, 0x800000 },
             { "mpr-22990.ic13s", 0x6800000, 0x800000 },
             { "mpr-22991.ic14s", 0x7000000, 0x800000 },
-            { "mpr-22992.ic15s", 0x7800000, 0x800000 },		
+            { "mpr-22992.ic15s", 0x7800000, 0x800000 },
 			{ NULL, 0, 0 },
 		}
 	},
@@ -2067,7 +2067,7 @@ Games[] =
             { "maz1ma5.4h",  0x5000000, 0x1000000 },
             { "maz1ma6.4f",  0x6000000, 0x1000000 },
             { "maz1ma7.4e",  0x7000000, 0x1000000 },
-            { "maz1ma8.4d",  0x8000000, 0x1000000 },		
+            { "maz1ma8.4d",  0x8000000, 0x1000000 },
 			{ NULL, 0, 0 },
 		}
 	},
@@ -2149,13 +2149,13 @@ Games[] =
             { "rom4.ic4s",    0x2000000, 0x800000 },
             { "rom5.ic5s",    0x2800000, 0x800000 },
             { "rom6.ic6s",    0x3000000, 0x800000 },
-            { "rom7.ic7s",    0x3800000, 0x800000 },        
+            { "rom7.ic7s",    0x3800000, 0x800000 },
             // not used, contain random garbage
             // ROM_LOAD( "rom8.ic8s",    0x4000000, 0x800000, CRC(a1d1339e) SHA1(2f5dd8472c3b983bce7d14e076c8cb7b6bd535ff) )
             // ROM_LOAD( "rom9.ic9s",    0x4800000, 0x800000, CRC(a1d1339e) SHA1(2f5dd8472c3b983bce7d14e076c8cb7b6bd535ff) )
             // ROM_LOAD( "rom10.ic10s",  0x5000000, 0x800000, CRC(a1d1339e) SHA1(2f5dd8472c3b983bce7d14e076c8cb7b6bd535ff) )
             // ROM_LOAD( "rom11.ic11s",  0x5800000, 0x800000, CRC(a1d1339e) SHA1(2f5dd8472c3b983bce7d14e076c8cb7b6bd535ff) )
-            
+
             //ROM_REGION(0x84, "some_eeprom", 0)
             //ROM_LOAD("sflash.ic37", 0x000000, 0x000084, CRC(88f1db52) SHA1(5ebfa6c45abf2fa6f560832f366ed03ca91709a5) )
             { NULL, 0, 0 },
@@ -2245,7 +2245,7 @@ Games[] =
             { "nja1ma8.4d",      0x8000000, 0x1000000 },
             { "nja1ma9.4c",      0x9000000, 0x1000000 },
             { "nja1ma10.4b",     0xa000000, 0x1000000 },
-            
+
             //ROM_REGION( 0x20000, "jyu_io", 0 )  // H8/3334-based I/O board ROM, eventually should be separated out
             //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
             { NULL, 0, 0 },
@@ -2275,10 +2275,10 @@ Games[] =
             { "nja1ma8.4d",      0x8000000, 0x1000000 },
             { "nja1ma9.4c",      0x9000000, 0x1000000 },
             { "nja1ma10.4b",     0xa000000, 0x1000000 },
-            
+
             //ROM_REGION( 0x20000, "jyu_io", 0 )  // H8/3334-based I/O board ROM, eventually should be separated out
             //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
-            
+
             { NULL, 0, 0 },
         },
 		NULL,
@@ -2306,10 +2306,10 @@ Games[] =
             { "nja1ma8.4d",  0x8000000, 0x1000000 },
             { "nja1ma9.4c",  0x9000000, 0x1000000 },
             { "nja1ma10.4b", 0xa000000, 0x1000000 },
-            
+
             //ROM_REGION( 0x20000, "jyu_io", 0 )  // H8/3334-based I/O board ROM, eventually should be separated out
             //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
-            
+
             { NULL, 0, 0 },
         },
 		NULL,
@@ -2330,7 +2330,7 @@ Games[] =
             { "mpr-24055.ic2",  0x1800000, 0x1000000 },
             { "mpr-24056.ic3",  0x2800000, 0x1000000 },
             { "mpr-24057.ic4",  0x3800000, 0x1000000 },
-            { "mpr-24058.ic5",  0x4800000, 0x1000000 },		
+            { "mpr-24058.ic5",  0x4800000, 0x1000000 },
             { NULL, 0, 0 },
         }
     },
@@ -2391,7 +2391,7 @@ Games[] =
             { "mpr-23544.ic8",   0x7800000, 0x1000000 },
             { "mpr-23545.ic9",   0x8800000, 0x1000000 },
             { "mpr-23546.ic10",  0x9800000, 0x1000000 },
-            { "mpr-23547.ic11",  0xa800000, 0x1000000 },		
+            { "mpr-23547.ic11",  0xa800000, 0x1000000 },
 			{ NULL, 0, 0 },
 		}
 	},
@@ -2677,7 +2677,7 @@ Games[] =
 		}
 	},
     // Star Horse (satellite)
-    { 
+    {
         "shorse",
 		NULL,
         0x7000000,
@@ -2694,10 +2694,10 @@ Games[] =
             { "mpr-23279.ic5",  0x4800000, 0x1000000 },
             { "mpr-23280.ic6",  0x5800000, 0x1000000 },
             { "mpr-23281.ic7",  0x6800000, 0x0800000 },
-            
+
             //ROM_REGION(0x84, "some_eeprom", 0)
             //ROM_LOAD( "sflash.ic46",   0x000000, 0x000084, CRC(4929e940) SHA1(f8c4277ca0ae5e36b2eed033cc731b8fc4fccafc) )
-            
+
             { NULL, 0, 0 },
         }
     },
@@ -2731,10 +2731,10 @@ Games[] =
             { "rom16.ic16s",    0x8000000, 0x800000 },
             { "rom17.ic17s",    0x8800000, 0x800000 },
             // .18s chip is not present but is tested for an FF fill (pull-up resistors on the PCB's data bus presumably accomplish this)
-            
+
             //ROM_REGION(0x84, "some_eeprom", 0)
             //ROM_LOAD( "sflash.ic37",   0x000000, 0x000084, CRC(1557297e) SHA1(41e8a7a8eaf5076b124d378afdf97e328d100e72) )
-            
+
             { NULL, 0, 0 },
         }
     },
@@ -2753,10 +2753,10 @@ Games[] =
             { "mpr-23232.ic2",  0x1800000, 0x1000000 },
             { "mpr-23233.ic3",  0x2800000, 0x1000000 },
             { "mpr-23234.ic4",  0x3800000, 0x1000000 },
-            
+
             //ROM_REGION(0x84, "some_eeprom", 0)
             //ROM_LOAD( "sflash.ic46",   0x000000, 0x000084, CRC(951684e4) SHA1(0beaf5827064252293223b946c04b8698e7207bb) )
-            
+
             { NULL, 0, 0 },
         }
     },
@@ -2772,10 +2772,10 @@ Games[] =
         {
             { "rom1.ic1s",   0x00800000, 0x00800000 },
             { "rom2.ic2s",   0x01000000, 0x00800000 },
-            
+
             //ROM_REGION(0x84, "some_eeprom", 0)
             //ROM_LOAD( "sflash.ic37",   0x000000, 0x000084, CRC(fe8f8f5c) SHA1(839461ab736e0228dec7e2512e1692d6ecc4e664) )
-            
+
             { NULL, 0, 0 },
         }
     },
@@ -2876,7 +2876,7 @@ Games[] =
             { "mpr-22055.ic18s", 0x9000000, 0x800000 },
             { "mpr-22056.ic19s", 0x9800000, 0x800000 },
             { "mpr-22057.ic20s", 0xa000000, 0x800000 },
-            { "mpr-22058.ic21s", 0xa800000, 0x800000 },		
+            { "mpr-22058.ic21s", 0xa800000, 0x800000 },
 			{ NULL, 0, 0 },
 		}
 	},
@@ -3054,7 +3054,7 @@ Games[] =
             { "mpr-21990.ic11", 0x5800000, 0x0800000 },
             { "mpr-21991.ic12s",0x6000000, 0x0800000 },
             { "mpr-21992.ic13s",0x6800000, 0x0800000 },
-            { "mpr-21993.ic14s",0x7000000, 0x0400000 },		
+            { "mpr-21993.ic14s",0x7000000, 0x0400000 },
             { NULL, 0, 0 },
         }
     },
@@ -3077,11 +3077,11 @@ Games[] =
             { "mpr-22075.ic2",  0x1000000, 0x800000 },
             { "mpr-22076.ic3",  0x1800000, 0x800000 },
             { "mpr-22077.ic4",  0x2000000, 0x400000 },
-            
+
             // on-cart X76F100 eeprom contents
             //ROM_REGION( 0x84, "naomibd_eeprom", 0 )
             //ROM_LOAD( "x76f100.ic37", 0x000000, 0x000084, CRC(c79251d5) SHA1(3e70bbbb6d28bade7eec7e27d716463045656f98) )
-            
+
 			{ NULL, 0, 0 },
 		}
 	},
@@ -3465,11 +3465,11 @@ Games[] =
             { "mpr-23723.ic5",   0x4800000, 0x1000000 },
             { "mpr-23724.ic6",   0x5800000, 0x1000000 },
             // note: origin ROM board have 12x8MB FlashROMs with same contents as above
-            
+
             // 838-12801 DRIVE BD WAVERUNNER
             //ROM_REGION( 0x10000, "motorio", ROMREGION_ERASEFF)
             //ROM_LOAD( "epr-19250.ic8", 0x000000, 0x010000, CRC(542d3836) SHA1(128cb0bfaf05791d219437653002f6bb948a4ad5) )
-            
+
             { NULL, 0, 0 },
         }
     },
@@ -3753,7 +3753,7 @@ Games[] =
             { "fpr-24384.ic10", 0x8000000, 0x4000000 },
             { "fpr-24385.ic11", 0xc000000, 0x4000000 },
 			{ "317-0495-com.ic3", 0, 0x800, Key },
-            
+
             { NULL, 0, 0 },
         }
     },
@@ -3789,14 +3789,14 @@ Games[] =
             { "fpr-24373.ic10", 0x08000000, 0x4000000 },
             { "fpr-24374.ic11", 0x0c000000, 0x4000000 },
             { "fpr-24375.ic12", 0x10000000, 0x4000000 },
-           
+
             //ROM_REGION( 0x200000, "ioboard", 0) // touch screen I/O board, program disassembles as little-endian SH-4
             //ROM_LOAD( "fpr24351.ic14", 0x000000, 0x200000, CRC(4d1b7b89) SHA1(965b8c6b5a2e7b3f1b1e2eac19c86000c3b66754) )
-            
+
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0461-com.ic3", 0, 0x800, BAD_DUMP CRC(c9282cdd) SHA1(23933e489d763515428e2714cc6e7676df1d5323) )
             { "317-0461-com.ic3", 0, 0x800, Key },
-            
+
             { NULL, 0, 0 },
         }
     },
@@ -3887,11 +3887,11 @@ Games[] =
             { "fpr-24333.ic8", 0x0000000, 0x4000000 },
             { "epr-24357.ic7", 0x0000000, 0x0400000 },
             { "fpr-24334.ic9", 0x4000000, 0x4000000 },
-            
+
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0437-com.ic3", 0, 0x800, CRC(3b6fcee8) SHA1(65fbdd3b8c61a4b5ccb6389b25483a7ecdc0794d) )
             { "317-0437-com.ic3", 0, 0x800, Key },
-            
+
             { NULL, 0, 0 },
         }
     },
@@ -3908,11 +3908,11 @@ Games[] =
         {
             { "fpr-24417.ic8", 0x0000000, 0x4000000 },
             { "fpr-24418.ic9", 0x4000000, 0x4000000 },
-            
+
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0437-com.ic3", 0, 0x800, CRC(3b6fcee8) SHA1(65fbdd3b8c61a4b5ccb6389b25483a7ecdc0794d) )
             { "317-0437-com.ic3", 0, 0x800, Key },
-            
+
             { NULL, 0, 0 },
         }
     },
@@ -3931,14 +3931,14 @@ Games[] =
             { "fpr-24367.ic10", 0x08000000, 0x4000000 },
             { "fpr-24368.ic11", 0x0c000000, 0x4000000 },
             { "fpr-24369.ic12", 0x10000000, 0x4000000 },
-            
+
             //ROM_REGION( 0x200000, "ioboard", 0) // touch screen I/O board, program disassembles as little-endian SH-4
             //ROM_LOAD( "fpr24351.ic14", 0x000000, 0x200000, CRC(4d1b7b89) SHA1(965b8c6b5a2e7b3f1b1e2eac19c86000c3b66754) )
-            
+
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0461-com.ic3", 0, 0x800, BAD_DUMP CRC(c9282cdd) SHA1(23933e489d763515428e2714cc6e7676df1d5323) )
             { "317-0461-com.ic3", 0, 0x800, Key },
-            
+
             { NULL, 0, 0 },
         }
     },
@@ -4006,7 +4006,7 @@ Games[] =
         {
             { "fpr-24338.ic8", 0x0000000, 0x4000000 },
             { "fpr-24339.ic9", 0x4000000, 0x4000000 },
-            
+
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0435-jpn.ic3", 0, 0x800, BAD_DUMP CRC(b553d900) SHA1(ed1c3c2053f2c0e98cb5c4d99f93143a66c29e5c) )
             { "317-0435-jpn.ic3", 0, 0x800, Key },
@@ -5132,8 +5132,8 @@ Games[] =
             { "u1", 0x1000000, 0x1000000 },
             { "u4", 0x2000000, 0x1000000 },
             //ROM_LOAD( "u2",  0x3000000, 0x1000000, CRC(b9162d97) SHA1(7f561617fa0538da554ad6f6c4d6a20e739491dc) ) // garbage data not used by this game, match anmlbskta U2
-            // U14-U17 not populated 
-            
+            // U14-U17 not populated
+
             { "vm2001f01.bin", 0, 4, Key },
             { NULL, 0, 0 },
         }
@@ -5178,7 +5178,7 @@ Games[] =
             { "ax0605m01.ic15", 0x5000000, 0x1000000 },
             { "ax0606m01.ic16", 0x6000000, 0x1000000 },
             { "ax0607m01.ic17", 0x7000000, 0x1000000 },
-            { "ax0601f01.bin", 0, 4, Key }, 
+            { "ax0601f01.bin", 0, 4, Key },
             { NULL, 0, 0 },
         }
     },
@@ -5459,7 +5459,7 @@ Games[] =
             { "ax3304m01.mrom4",    0x0a000000, 0x2000000 },
             { "ax3305m01.mrom5",    0x0c000000, 0x2000000 },
             { "ax3306m01.mrom6",    0x0e000000, 0x2000000 },
-            { "ax3307m01.mrom7",    0x12000000, 0x2000000 },		
+            { "ax3307m01.mrom7",    0x12000000, 0x2000000 },
             { "ax3301f01.bin", 0, 4, Key },
             { NULL, 0, 0 },
         }
@@ -5768,11 +5768,11 @@ Games[] =
             { "610-0752.u14",   0x6000000, 0x1000000 },
             { "610-0752.u16",   0x7000000, 0x1000000 },
             { "315-6248.bin", 0, 4, Key },
-            
+
             //ROM_REGION( 0x1400000, "network", 0)    // network board
             //ROM_LOAD( "fpr-24330a.ic2", 0x000000, 0x400000, CRC(8d89877e) SHA1(6caafc49114eb0358e217bc2d1a3ab58a93c8d19) )
             //ROM_LOAD( "flash128.ic4s", 0x400000, 0x1000000, CRC(866ed675) SHA1(2c4c06935b7ab1876e640cede51713b841833567) )
-            
+
             { NULL, 0, 0 },
         }
     },

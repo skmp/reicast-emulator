@@ -11,7 +11,7 @@
 typedef int sh4_sched_callback(int tag, int sch_cycl, int jitter);
 
 /*
-	Registed a callback to the scheduler. The returned id 
+	Registed a callback to the scheduler. The returned id
 	is used for sh4_sched_request and sh4_sched_elapsed calls
 */
 int sh4_sched_register(int tag, sh4_sched_callback* ssc);
@@ -31,7 +31,7 @@ u64 sh4_sched_now64();
 /*
 	Schedule a callback to be called sh4 *cycles* after the
 	invocation of this function. *Cycles* range is (0, 200M].
-	
+
 	Passing a value of 0 disables the callback.
 	If called multiple times, only the last call is in effect
 */

@@ -83,7 +83,7 @@ void SetCurrentTARC(u32 addr)
 		//Flush cache to context
 		verify(ta_ctx != 0);
 		ta_ctx->tad=ta_tad;
-		
+
 		//clear context
 		ta_ctx=0;
 		ta_tad.Reset(0);
@@ -100,7 +100,7 @@ bool TryDecodeTARC()
 
 		vd_ctx->rend.proc_start = vd_ctx->rend.proc_end + 32;
 		vd_ctx->rend.proc_end = vd_ctx->tad.thd_data;
-			
+
 		vd_ctx->rend_inuse.Lock();
 		vd_rc = vd_ctx->rend;
 
@@ -132,14 +132,14 @@ u64 last_cyces = 0;
 bool QueueRender(TA_context* ctx)
 {
 	verify(ctx != 0);
-	
+
 	if (FrameSkipping && frameskip) {
  		frameskip=1-frameskip;
 		tactx_Recycle(ctx);
 		fskip++;
 		return false;
  	}
- 	
+
  	//Try to limit speed to a "sane" level
  	//Speed is also limited via audio, but audio
  	//is sometimes not accurate enough (android, vista+)
@@ -149,7 +149,7 @@ bool QueueRender(TA_context* ctx)
  	last_frame = os_GetSeconds();
 
  	bool too_fast = (cycle_span / time_span) > (SH4_MAIN_CLOCK * 1.2);
-	
+
 	if (rqueue && too_fast && settings.pvr.SynchronousRender) {
 		//wait for a frame if
 		//  we have another one queue'd and
@@ -224,7 +224,7 @@ TA_context* tactx_Alloc()
 		ctx_pool.pop_back();
 	}
 	mtx_pool.Unlock();
-	
+
 	if (!rv)
 	{
 		rv = new TA_context();
@@ -281,7 +281,7 @@ TA_context* tactx_Pop(u32 addr)
 		if (ctx_list[i]->Address==addr)
 		{
 			TA_context* rv = ctx_list[i];
-			
+
 			if (ta_ctx == rv)
 				SetCurrentTARC(TACTX_NONE);
 

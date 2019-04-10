@@ -97,7 +97,7 @@ void palette_update();
 #define ARGB1555( word )	( ((word>>15)&1) | (((word>>10) & 0x1F)<<11)  | (((word>>5) & 0x1F)<<6)  | (((word>>0) & 0x1F)<<1) )
 
 #define ARGB565( word )	( (((word>>0)&0x1F)<<0) | (((word>>5)&0x3F)<<5) | (((word>>11)&0x1F)<<11) )
-	
+
 #define ARGB4444( word ) ( (((word>>0)&0xF)<<4) | (((word>>4)&0xF)<<8) | (((word>>8)&0xF)<<12) | (((word>>12)&0xF)<<0) )
 
 #define ARGB8888( word ) ( (((word>>4)&0xF)<<4) | (((word>>12)&0xF)<<8) | (((word>>20)&0xF)<<12) | (((word>>28)&0xF)<<0) )
@@ -121,7 +121,7 @@ __forceinline u32 YUV422(s32 Y,s32 Yu,s32 Yv)
 	//s32 B = (76283*(Y - 16) + 132252*(Yu - 128))>>16;
 	//s32 G = (76283*(Y - 16) - 53281 *(Yv - 128) - 25624*(Yu - 128))>>16;
 	//s32 R = (76283*(Y - 16) + 104595*(Yv - 128))>>16;
-	
+
 	s32 R = Y + Yv*11/8;            // Y + (Yv-128) * (11/8) ?
 	s32 G = Y - (Yu*11 + Yv*22)/32; // Y - (Yu-128) * (11/8) * 0.25 - (Yv-128) * (11/8) * 0.5 ?
 	s32 B = Y + Yu*110/64;          // Y + (Yu-128) * (11/8) * 1.25 ?
@@ -614,7 +614,7 @@ template void texture_VQ<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,
 #define tex4444_VQ32 texture_VQ<conv4444_TW32<pp_8888>, u32>
 
 #define Is_64_Bit(addr) ((addr &0x1000000)==0)
- 
+
 //vram_block, vramLockCBFP on plugin headers
 
 

@@ -286,7 +286,7 @@ extern struct gl4ShaderUniforms_t
 
 		if (s->trilinear_alpha != -1)
 			glUniform1f(s->trilinear_alpha, trilinear_alpha);
-		
+
 		if (s->fog_clamp_min != -1)
 			glUniform4fv(s->fog_clamp_min, 1, fog_clamp_min);
 		if (s->fog_clamp_max != -1)

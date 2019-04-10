@@ -622,7 +622,7 @@ void setup_seh() {
 
 
 // DEF_CONSOLE allows you to override linker subsystem and therefore default console //
-//	: pragma isn't pretty but def's are configurable 
+//	: pragma isn't pretty but def's are configurable
 #ifdef DEF_CONSOLE
 #pragma comment(linker, "/subsystem:console")
 

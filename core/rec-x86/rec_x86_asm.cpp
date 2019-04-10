@@ -79,7 +79,7 @@ naked void ngen_mainloop(void* cntx)
 
 		mov [loop_no_update],offset no_update;
 		mov [intc_sched],offset intc_sched_offs;
-		
+
 		mov eax,0;
 		//next_pc _MUST_ be on ecx
 no_update:

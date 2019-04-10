@@ -246,7 +246,7 @@ void TextureCacheData::ComputeHash()
 	old_texture_hash = texture_hash;
 	texture_hash ^= tcw.full;
 }
-	
+
 void TextureCacheData::Update()
 {
 	//texture state tracking stuff
@@ -440,12 +440,12 @@ bool TextureCacheData::NeedsUpdate() {
 			|| (tcw.PixelFmt == PixelPal8 && palette_hash != pal_hash_256[tcw.PalSelect >> 4]);
 	return rc;
 }
-	
+
 bool TextureCacheData::Delete()
 {
 	if (custom_load_in_progress > 0)
 		return false;
-	
+
 	if (pData) {
 		#if FEAT_HAS_SOFTREND
 			_mm_free(pData);
@@ -463,7 +463,7 @@ bool TextureCacheData::Delete()
 	lock_block=0;
 	if (custom_image_data != NULL)
 		delete [] custom_image_data;
-	
+
 	return true;
 }
 
@@ -812,8 +812,8 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 	rv.width = tf->w;
 	rv.pdata = tf->pData;
 	rv.textype = tf->tex_type;
-	
-	
+
+
 	return rv;
 }
 
@@ -874,7 +874,7 @@ void RenderFramebuffer()
 	int width = (FB_R_SIZE.fb_x_size + 1) << 1;     // in 16-bit words
 	int height = FB_R_SIZE.fb_y_size + 1;
 	int modulus = (FB_R_SIZE.fb_modulus - 1) << 1;
-	
+
 	int bpp;
 	switch (FB_R_CTRL.fb_depth)
 	{
@@ -897,24 +897,24 @@ void RenderFramebuffer()
 			bpp = 4;
 			break;
 	}
-	
+
 	if (fbTextureId == 0)
 		fbTextureId = glcache.GenTexture();
-	
+
 	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
-	
+
 	//set texture repeat mode
 	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	
+
 	u32 addr = SPG_CONTROL.interlace && !SPG_STATUS.fieldnum ? FB_R_SOF2 : FB_R_SOF1;
-	
+
 	PixelBuffer<u32> pb;
 	pb.init(width, height);
 	u8 *dst = (u8*)pb.data();
-	
+
 	switch (FB_R_CTRL.fb_depth)
 	{
 		case fbde_0555:    // 555 RGB
@@ -932,7 +932,7 @@ void RenderFramebuffer()
 				addr += modulus * bpp;
 			}
 			break;
-			
+
 		case fbde_565:    // 565 RGB
 			for (int y = 0; y < height; y++)
 			{

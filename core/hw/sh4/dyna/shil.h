@@ -13,7 +13,7 @@ enum shil_param_type
 	FMT_I32,
 	FMT_F32,
 	FMT_F64,
-	
+
 	FMT_V2,
 	FMT_V3,
 	FMT_V4,
@@ -88,7 +88,7 @@ struct shil_param
 			type=FMT_I32;
 			_reg=reg;
 		}
-		
+
 	}
 	union
 	{
@@ -126,10 +126,10 @@ struct shil_param
 								type==FMT_V3?3:type==FMT_V4?4:type==FMT_V8?8:
 								type==FMT_V16?16:1; }	//count of hardware regs
 
-	/*	
+	/*
 		Imms:
 		is_imm
-		
+
 		regs:
 		integer regs            : is_r32i,is_r32,count=1
 		fpu regs, single view   : is_r32f,is_r32,count=1

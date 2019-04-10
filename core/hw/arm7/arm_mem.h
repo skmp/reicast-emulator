@@ -14,7 +14,7 @@ static inline T DYNACALL ReadMemArm(u32 addr)
 	if (addr<0x800000)
 	{
 		T rv=*(T*)&aica_ram[addr&(ARAM_MASK-(sz-1))];
-		
+
 		if (unlikely(sz==4 && addr&3))
 		{
 			u32 sf=(addr&3)*8;

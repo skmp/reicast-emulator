@@ -53,7 +53,7 @@ enum ta_state
 
 	               // -> TAS_NS, TAS_PLV32, TAS_PLHV32, TAS_PLV64, TAS_PLHV64
 	TAS_PLV32,     //polygon list PMV<?>, V32
-	
+
 	               // -> TAS_NS, TAS_PLV32, TAS_PLHV32, TAS_PLV64, TAS_PLHV64
 	TAS_PLV64,     //polygon list PMV<?>, V64
 
@@ -155,7 +155,7 @@ void fill_fsm()
 					fill_fsm(TAS_PLV32,i,k,nxt,0,p64);
 					fill_fsm(TAS_PLV64,i,k,nxt,0,p64);
 				}
-				
+
 
 				//32B command, no state change
 				fill_fsm(TAS_MLV64,i,-1,TAS_MLV64);
@@ -306,7 +306,7 @@ void DYNACALL ta_thd_data32_i(void* data)
 
 	// First byte is PCW
 	PCW pcw = *(PCW*)data;
-	
+
 	// Copy the TA data
 	*dst = *src;
 

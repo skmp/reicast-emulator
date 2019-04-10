@@ -154,13 +154,13 @@ Disc* cue_parse(const wchar* file)
 				if (core_fsize(track_file) % sector_size != 0)
 					printf("Warning: Size of track %s is not multiple of sector size %d\n", track_filename.c_str(), sector_size);
 				current_fad = t.StartFAD + (u32)core_fsize(track_file) / sector_size;
-				
+
 				//printf("file[%lu] \"%s\": StartFAD:%d, sector_size:%d file_size:%d\n", disc->tracks.size(),
 				//		track_filename.c_str(), t.StartFAD, sector_size, (u32)core_fsize(track_file));
 
 				t.file = new RawTrackFile(track_file, 0, t.StartFAD, sector_size);
 				disc->tracks.push_back(t);
-				
+
 				track_number = -1;
 				track_type.clear();
 				track_filename.clear();

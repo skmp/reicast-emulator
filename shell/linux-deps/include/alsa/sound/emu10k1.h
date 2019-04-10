@@ -162,7 +162,7 @@
 #define A_EXTIN_SPDIF_CD_L	0x02	/* digital CD left */
 #define A_EXTIN_SPDIF_CD_R	0x03	/* digital CD left */
 #define A_EXTIN_OPT_SPDIF_L     0x04    /* audigy drive Optical SPDIF - left */
-#define A_EXTIN_OPT_SPDIF_R     0x05    /*                              right */ 
+#define A_EXTIN_OPT_SPDIF_R     0x05    /*                              right */
 #define A_EXTIN_LINE2_L		0x08	/* audigy drive line2/mic2 - left */
 #define A_EXTIN_LINE2_R		0x09	/*                           right */
 #define A_EXTIN_ADC_L		0x0a    /* Philips ADC - left */
@@ -267,7 +267,7 @@ typedef struct {
 	int iface;			/* interface identifier */
 	unsigned int device;		/* device/client number */
 	unsigned int subdevice;		/* subdevice (substream) number */
-	unsigned char name[44];		/* ASCII name of item */ 
+	unsigned char name[44];		/* ASCII name of item */
 	unsigned int index;		/* index of item */
 } emu10k1_ctl_elem_id_t;
 

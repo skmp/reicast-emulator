@@ -11,8 +11,8 @@
 #define MCIPD_addr (0x28B4+4)
 #define MCIRE_addr (0x28B4+8)
 
-#define TIMER_A 0x2890 
-#define TIMER_B (0x2890+4) 
+#define TIMER_A 0x2890
+#define TIMER_B (0x2890+4)
 #define TIMER_C (0x2890+8)
 #define REG_L (0x2D00)
 #define REG_M (0x2D04)
@@ -26,7 +26,7 @@ struct CommonData_struct
 	entry(MEM8MB,1);
 	entry(pad0_0,5);
 	entry(Mono,1);
-	
+
 	u32 :16;
 	//+4
 	entry(RBP,12);
@@ -56,13 +56,13 @@ struct CommonData_struct
 	entry(EG,13);
 	entry(SGC,2);
 	entry(LP,1);
-	
+
 	u32 :16;
 	//+14
 	entry(CA,16);
 
 	u32 :16;
-	
+
 	//quite a bit padding here :)
 	u8 pad_med_0[0x6C-4];
 
@@ -164,7 +164,7 @@ struct CommonData_struct
 	entry(padBC_0,5)
 
 	u32 :16;
-	
+
 	//some other misc shit FAR away is here :p
 	u8 pad_lot_0[0x344-4];
 
@@ -188,7 +188,7 @@ struct CommonData_struct
 	entry(L5_r,1);
 	entry(L6_r,1);
 	entry(L7_r,1);
-	
+
 	entry(pad500_0,8);
 
 	u32 :16;
@@ -204,7 +204,7 @@ struct CommonData_struct
 	entry(M6_r,1);
 	entry(M7_r,1);
 	entry(RP,1);
-	
+
 	entry(pad504_0,7);
 
 	u32 :16;
@@ -218,43 +218,43 @@ struct DSPData_struct
 
 	//+0x200
 	u32 MADRS[64];		//15:0
-	
+
 	//+0x300
 	u8 PAD0[0x100];
 
 	//+0x400
 	u32 MPRO[128*4];	//15:0
-	
+
 	//+0xC00
 	u8 PAD1[0x400];
 
 	//+0x1000
-	struct 
-	{ 
+	struct
+	{
 		u32 l;			//7:0
 		u32 h;			//15:0 (23:8)
-	} 
+	}
 	TEMP[128];
 
 	//+0x1400
-	struct 
-	{ 
+	struct
+	{
 		u32 l;			//7:0
 		u32 h;			//15:0 (23:8)
-	} 
+	}
 	MEMS[32];
-	
+
 	//+0x1500
-	struct 
-	{ 
+	struct
+	{
 		u32 l;			//3:0
 		u32 h;			//15:0 (19:4)
-	} 
+	}
 	MIXS[16];
 
 	//+0x1580
 	u32 EFREG[16];		//15:0
-	
+
 	//+0x15C0
 	u32 EXTS[2];		//15:0
 };
@@ -262,30 +262,30 @@ union InterruptInfo
 {
 	struct
 	{
-		//Bit 0 (R): Requests interrupt to external interrupt input pin "INTON". (SCSI) 
+		//Bit 0 (R): Requests interrupt to external interrupt input pin "INTON". (SCSI)
 		entry(INTON,1);
-		//Bit 1 (R): Reserved. 
+		//Bit 1 (R): Reserved.
 		entry(res_1,1);
-		//Bit 2 (R): Reserved. 
+		//Bit 2 (R): Reserved.
 		entry(res_3,1);
-		//Bit 3 (R): MIDI input interrupt. 
-		//(Interrupt request generated when input FIFO has fetched valid data. Hence, if the CPU reads FIFO data, it must read the lot once and leave the FIFO empty. When the FIFO has changed to empty status, the interrupt request is canceled automatically.) 
+		//Bit 3 (R): MIDI input interrupt.
+		//(Interrupt request generated when input FIFO has fetched valid data. Hence, if the CPU reads FIFO data, it must read the lot once and leave the FIFO empty. When the FIFO has changed to empty status, the interrupt request is canceled automatically.)
 		entry(MIDI_IN,1);
-		//Bit 4 (R): DMA end interrupt 
+		//Bit 4 (R): DMA end interrupt
 		entry(DMA_END,1);
-		//Bit 5 (R/W): SCPU interrupt caused by data being written to the CPU, so only "1" can be written. (Writing "0" has no effect.) This flag can be set from either the MCPU or the SCPU. 
+		//Bit 5 (R/W): SCPU interrupt caused by data being written to the CPU, so only "1" can be written. (Writing "0" has no effect.) This flag can be set from either the MCPU or the SCPU.
 		entry(SCPU,1);
-		//Bit 6 (R): Timer A interrupt 
+		//Bit 6 (R): Timer A interrupt
 		entry(TimerA,1);
-		//Bit 7 (R): Timer B interrupt 
+		//Bit 7 (R): Timer B interrupt
 		entry(TimerB,1);
-		//Bit 8 (R): Timer C interrupt 
+		//Bit 8 (R): Timer C interrupt
 		entry(TimerC,1);
-		//Bit 9 (R): MIDI output interrupt. 
+		//Bit 9 (R): MIDI output interrupt.
 		//(If the output FIFO changes to empty status, an interrupt request is generated.)
-		//(If the status is no longer empty because data is written to the output FIFO, the interrupt request is canceled automatically.) 
+		//(If the status is no longer empty because data is written to the output FIFO, the interrupt request is canceled automatically.)
 		entry(MIDI_OUT,1);
-		//Bit 10 (R): Interrupt of one sample interval 
+		//Bit 10 (R): Interrupt of one sample interval
 		entry(SAMPLE_DONE,1);
 	};
 	u32 full;

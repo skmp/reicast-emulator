@@ -36,6 +36,6 @@ void mmu_set_state();
 	void DYNACALL mmu_WriteMem16(u32 addr, u16 data);
 	void DYNACALL mmu_WriteMem32(u32 addr, u32 data);
 	void DYNACALL mmu_WriteMem64(u32 addr, u64 data);
-	
+
 	bool mmu_TranslateSQW(u32 addr, u32* mapped);
 #endif

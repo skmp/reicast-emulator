@@ -37,7 +37,7 @@
  * See the \ref pcm_plugins page for more details.
  * \{
  */
-  
+
 #define SND_PCM_PLUGIN_RATE_MIN 4000	/**< minimal rate for the rate plugin */
 #define SND_PCM_PLUGIN_RATE_MAX 192000	/**< maximal rate for the rate plugin */
 
@@ -81,7 +81,7 @@ int snd_pcm_copy_open(snd_pcm_t **pcmp, const char *name,
 int _snd_pcm_copy_open(snd_pcm_t **pcmp, const char *name,
 		       snd_config_t *root, snd_config_t *conf,
                        snd_pcm_stream_t stream, int mode);
-                                              
+
 /*
  *  Linear conversion plugin
  */

@@ -10,7 +10,7 @@ namespace ARM
 {
 
 #if defined(_DEVEL)
-	
+
 	//	MRS	Move PSR to General-purpose Register.
 	//
 	EAPI MRS(eReg Rd, u32 R, ConditionCode CC=AL)
@@ -32,7 +32,7 @@ namespace ARM
 		MSR{<cond>} SPSR_<fields>, #<immediate>
 		MSR{<cond>} SPSR_<fields>, <Rm>
 	*/
-	
+
 
 	// MSR: Immediate operand
 	//
@@ -49,7 +49,7 @@ namespace ARM
 		EMIT_I;
 	}
 
-		
+
 	// MSR: Register operand
 	//
 	EAPI MSR(u32 R, u32 fmask, eReg Rm, ConditionCode CC=AL)
@@ -68,9 +68,9 @@ namespace ARM
 
 	//	CPS	Change Processor State.
 	//
-	EAPI CPS(u32 imod, u32 mmod, u32 mode)	// ** [A|I|F] 
+	EAPI CPS(u32 imod, u32 mmod, u32 mode)	// ** [A|I|F]
 	{
-		DECL_Id(0xF1000000);	
+		DECL_Id(0xF1000000);
 
 		//	Note: UNconditional instruction!
 		I |= (imod&3)<<18;

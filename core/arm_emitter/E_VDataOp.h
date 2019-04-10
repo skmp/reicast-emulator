@@ -20,7 +20,7 @@
 
 namespace ARM
 {
-	
+
 
 
 
@@ -65,14 +65,14 @@ namespace ARM
 	SET_Dd;	SET_Dn;	SET_Dm
 
 #define DECL_Qdnm
-    
-    
-    
-    
+
+
+
+
 
 #define VdpInstrF(viName, viId)	\
 		EAPI V##viName##_F32	(eFQReg Qd, eFQReg Qn, eFQReg Qm)  {   DECL_Id(viId);  SET_Qdnm;   EMIT_I; }   \
-		EAPI V##viName##_F32	(eFDReg Dd, eFDReg Dn, eFDReg Dm)  {   DECL_Id(viId);  SET_Ddnm;   EMIT_I; }   
+		EAPI V##viName##_F32	(eFDReg Dd, eFDReg Dn, eFDReg Dm)  {   DECL_Id(viId);  SET_Ddnm;   EMIT_I; }
 
 
 #define VdpInstrI_EOR(viName, viId) \
@@ -108,11 +108,11 @@ namespace ARM
                 EAPI V##viName##_S32 (eFDReg Dd, eFDReg Dn, eFDReg Dm)    {   V##viName   (Dd, Dn, Dm, 32, 0);   }
 
 //#       define VdpInstrImm  (viName, viId)
-    
+
 
 	// Another three or four like the above .. immN, above w/ size, F32 w/ sz
 
-	
+
 /*
  *	A.SIMD Parallel Add/Sub
  *
@@ -235,10 +235,10 @@ namespace ARM
 
 	//	VCEQ			{	DECL_Id(0xF3000810);	SET_Vdnm;	EMIT_I;	}	.F32	{	DECL_Id(0xF2000E00);	SET_Vdnm;	EMIT_I;	}
 	VdpInstrI(CEQ, 0xF3200810)
-//	VdpInstrF(CEQ, 0xF2000e00)	
+//	VdpInstrF(CEQ, 0xF2000e00)
 	//	VCGE			{	DECL_Id(0xF2000310);	SET_Vdnm;	EMIT_I;	}	.F32	{	DECL_Id(0xF3000E00);	SET_Vdnm;	EMIT_I;	}
 	VdpInstrI(CGE, 0xF2200310)
-//	VdpInstrF(CGE, 0xF3000e00)	
+//	VdpInstrF(CGE, 0xF3000e00)
 	//	VCGT			{	DECL_Id(0xF2000300);	SET_Vdnm;	EMIT_I;	}	.F32	{	DECL_Id(0xF3200E00);	SET_Vdnm;	EMIT_I;	}
 	//*SEB*  0xF220030 for S32, 0xF3200300 for U32, 0xF2000300 is for S8.
 	VdpInstrI(CGT, 0xF2200300)
@@ -257,12 +257,12 @@ namespace ARM
 
 
 /*
- *	A.SIMD shift			** SET_imm6;	needed for non Vdnm 
+ *	A.SIMD shift			** SET_imm6;	needed for non Vdnm
  *
 	Vector Saturating Rounding Shift Left				VQRSHL
 	Vector Saturating Rounding Shift Right and Narrow	VQRSHRN, VQRSHRUN
 	Vector Saturating Shift Left						VQSHL (register), VQSHL, VQSHLU (immediate)
-	Vector Saturating Shift Right and Narrow			VQSHRN, VQSHRUN 
+	Vector Saturating Shift Right and Narrow			VQSHRN, VQSHRUN
 	Vector Rounding Shift Left							VRSHL
 	Vector Rounding Shift Right							VRSHR
 	Vector Rounding Shift Right and Accumulate			VRSRA
@@ -317,65 +317,65 @@ namespace ARM
 
 	VdpInstrI(MLA,       0xF2000900)
 	VdpInstrI(MLS,       0xF3000900)
-	
+
 	VdpInstrF(MLA,       0xF2000D10)
 	VdpInstrF(MLS,       0xF2200D10)
-	
+
 	//by scalar
 	//this should be really qd,dn,sm not dm
-	EAPI VMUL_F32(eFQReg Qd,eFQReg Qn, eFDReg Dm, int idx)	
+	EAPI VMUL_F32(eFQReg Qd,eFQReg Qn, eFDReg Dm, int idx)
 	{
 		DECL_Id(0xF2800840);
-		
+
 		SET_Qd;
 		SET_Qn;
 		I |= 1<<8;	//SET_F
-		
+
 		SET_Dm;
 		I |= 0x1<<24;	//SET_Q not compatible
 
 		I |= 2<<20;		//size to 32
-		
+
 		I |= Dm&15;		//only lower 15 regs are avail
 
 
 		//set register sub index
 		if (idx)
 			I |= 1<<5;
- 
+
 		EMIT_I;
 	}
-		
-	EAPI VMLA_F32(eFQReg Qd,eFQReg Qn, eFDReg Dm, int idx)	
+
+	EAPI VMLA_F32(eFQReg Qd,eFQReg Qn, eFDReg Dm, int idx)
 	{
 		DECL_Id(0xF2800040);
-		
+
 		SET_Qd;
 		SET_Qn;
 		I |= 1<<8;	//SET_F
-		
+
 		SET_Dm;
 		I |= 0x1<<24;	//SET_Q not compatible
 
 		I |= 2<<20;		//size to 32
-		
+
 		I |= Dm&15;		//only lower 15 regs are avail
 
 
 		//set register sub index
 		if (idx)
 			I |= 1<<5;
- 
+
 		EMIT_I;
 	}
 //	VdpInstrU(MLAL,       0xF2000D10)	*QDD
 //	VdpInstrU(MLSL,       0xF2200D10)	*QDD
-	
-	
+
+
 	VdpInstrI(MUL,       0xF2000910)
-	
+
 	VdpInstrF(MUL,       0xF3000D10)
-	
+
 //	VdpInstrU(MULL,       0xF3000D10)	*QDD
 
 	//	VMLA  I			{	DECL_Id(0xF2000900);	SET_Vdnm;	EMIT_I;	}	// * I |= ((size&3)<<20)
@@ -406,7 +406,7 @@ namespace ARM
 
 
 
- 
+
 
 
 
@@ -448,11 +448,11 @@ namespace ARM
 
 	//	VABD  I			{	DECL_Id(0xF);
 	//	VABDL I			{	DECL_Id(0xF);
-	
+
 	//	VABD  F			{	DECL_Id(0xF);
 
 	//	VABS			{	DECL_Id(0xF);	SET_Vd;	SET_Vm;		EMIT_I;	}
-	
+
 	EAPI VSQRT_F32(eFSReg Sd, eFSReg Sm, ConditionCode CC=AL)
 	{
 		DECL_Id(0x0EB10AC0);	SET_CC;
@@ -478,7 +478,7 @@ namespace ARM
 		I |= ((Sm&0x1E)>>1)  | ((Sm&1)<<5);
 		EMIT_I;
 	}
-	
+
 	//imm move, fpu
 	EAPI VMOV(eFSReg Sd, u32 imm8_fpu, ConditionCode CC=AL)
 	{
@@ -532,7 +532,7 @@ namespace ARM
 	//	VRECPS			{	DECL_Id(0xF2000F10);	SET_Vdnm;			EMIT_I;	}		// sz&1<<20		(.F32)
 	//	VRSQRTE			{	DECL_Id(0xF3B30480);	SET_Vd;	SET_Vm;		EMIT_I;	}		// size&3<<18	F&1<<8		***
 	//	VRSQRTS			{	DECL_Id(0xF2200F10);	SET_Vdnm;			EMIT_I;	}		// sz&1<<20		(.F32)
-	//	VREVsz			{	DECL_Id(0xF3B00000);	SET_Vd;	SET_Vm;		EMIT_I;	}		// size&3<<18	op&3<<7		***	
+	//	VREVsz			{	DECL_Id(0xF3B00000);	SET_Vd;	SET_Vm;		EMIT_I;	}		// size&3<<18	op&3<<7		***
 
 	//	VQABS			{	DECL_Id(0xF3B00700);	SET_Vd;	SET_Vm;		EMIT_I;	}		// size&3<<18
 	//	VQMOVN			{	DECL_Id(0xF3B20200);	SET_Vd;	SET_Vm;		EMIT_I;	}		// size&3<<18	op&3<<6	op:00=MOVN op11=srcUnsigned op:x1=dstUnsigned
@@ -545,7 +545,7 @@ namespace ARM
 	//	VTRN			{	DECL_Id(0xF3B20080);	SET_Vd;	SET_Vm;		EMIT_I;	}		// size&3<<18
 	//	VUZP			{	DECL_Id(0xF3B20100);	SET_Vd;	SET_Vm;		EMIT_I;	}		// size&3<<18
 	//	VZIP			{	DECL_Id(0xF3B20180);	SET_Vd;	SET_Vm;		EMIT_I;	}		// size&3<<18
-	//	
+	//
 
 
 //	VDUP	&	VMOVN	&	VMOVL	are implemented in VRegXfer.h ...
@@ -556,7 +556,7 @@ namespace ARM
 
 
 	/*
-	 *	VFPv3 Instructions 
+	 *	VFPv3 Instructions
 	 *
 	 */
 
@@ -597,7 +597,7 @@ namespace ARM
 
 	VfpInstrS(DIV,	0x0E800A00)
 
-	
+
 	EAPI VCVT_to_S32_VFP (eFSReg Sd, eFSReg Sm, ConditionCode CC=CC_AL)  {   DECL_Id(0x0EBD0AC0);  SET_CC;	SET_Sd; SET_Sm;   EMIT_I; }		//	VfpInstrS(ABS,	0x0EB00AC0)		** {D,S}dm
 	// 0x0EB80A40 is to_U32. to_S32 is 0x0EB80AC0
 	EAPI VCVT_from_S32_VFP (eFSReg Sd, eFSReg Sm, ConditionCode CC=CC_AL)  {   DECL_Id(0x0EB80AC0);  SET_CC;	SET_Sd; SET_Sm;   EMIT_I; }		//	VfpInstrS(ABS,	0x0EB00AC0)		** {D,S}dm
@@ -644,7 +644,7 @@ namespace ARM
 
 
 
-	
+
 
 
 

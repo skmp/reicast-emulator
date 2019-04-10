@@ -44,7 +44,7 @@
 		memrel8={8b signed offset}
 		memrel16={16b signed offset,memrel8}
 		memrel32={32b signed offset,memrel16}
-		
+
 		//Labels are higher level constructs , they are converted to memrel*
 		defined_label={memrel8 or memrel16 or memrel32}
 		undefined_label={memrel32}
@@ -117,7 +117,7 @@ enum x86_opcode_param
 
 	//reg , group 1
 	pg_R0  = ENC_PARAM_CONST(1,0),		//EAX , AX , or AH , depending on encoding mode
-	pg_CL  = ENC_PARAM_CONST(1,1),		//CL 
+	pg_CL  = ENC_PARAM_CONST(1,1),		//CL
 	pg_REG  = ENC_PARAM_CONST(1,2),		//any reg :p
 
 	//imm ,group 3
@@ -182,7 +182,7 @@ struct x86_opcode
 	x86_opcode_class opcode;
 	u8 b_data[4];
 	x86_opcode_encoderFP* encode;
-	
+
 	//note : rm_rev affects only encoding , so other flags are not affected . r/m,r w/ GPR,XMM have p1:GPR and p2: XMM
 	x86_opcode_param pg_1;		//param 1 group , valid for any r or r/m encoding.Ignored on m mode of r/m
 	x86_opcode_param pg_2;		//param 2 group , valid for any r or r/m encoding.Ignored on m mode of r/m
@@ -217,7 +217,7 @@ void encode_rex(x86_block* block,encoded_type* mrm,u32 mrm_reg,u32 ofe=0)
 {
 	u32 flags = (ofe>>3) & 1; //opcode field extension
 
-	
+
 	flags |= (mrm_reg>>1) & 4;//mod R/M byte reg field extension
 
 	if (mrm)
@@ -299,13 +299,13 @@ void x86_encode_opcode_tmpl(x86_block* block, const x86_opcode* op, encoded_type
 	case enc_param_memdir:
 		for (int i=0;i<(sz);i++)
 			block->write8(op->b_data[i]);
-		
+
 		code_patch cp;
-		
+
 		cp.dest=p1->ptr;
 		cp.type=4|0;
 		cp.offset=block->x86_indx;
-		
+
 		block_patches.push_back(cp);
 
 		block->write32(0x12345678);
@@ -329,7 +329,7 @@ void x86_encode_opcode_tmpl(x86_block* block, const x86_opcode* op, encoded_type
 	case enc_param_memrel_16:
 		for (int i=0;i<(sz);i++)
 			block->write8(op->b_data[i]);
-		
+
 		cp.dest=p1->ptr;
 		cp.type=2;
 		if (p1->ptr_type)
@@ -366,7 +366,7 @@ void x86_encode_opcode_tmpl(x86_block* block, const x86_opcode* op, encoded_type
 			block->write8(p3);
 		else if (enc_op_size==opsz_16)
 			block->write16(p3);
-		else 
+		else
 			block->write32(p3);
 		break;
 
@@ -434,11 +434,11 @@ x86_opcode x86_oplist[]=
 	//OP_2(op_mov32,0xB8,enc_plus_r,enc_imm,1,pg_REG,pg_IMM_U32,opsz_32),
 	OP(op_mov32,0xB8,enc_param_plus_r,enc_imm_native,1,pg_REG,pg_NONE,pg_IMM_U32,opsz_32),
 	//{op_mov32,1,0xB8,OP_ENCODING(enc_plus_r,imm_native,pg_REG,pg_IMM_U32,pg_NONE,opsz_16_32)},
-	
+
 
 	//DEC reg32 48 +rd Decrement the contents of a 32-bit register by 1.
 	//{op_dec32,1,0x48,OP_ENCODING(enc_plus_r,enc_param_none,pg_REG,pg_NONE,pg_NONE,opsz_16_32)},
-	
+
 	//DEC reg/mem32 FF /1 Decrement the contents of a 32-bit register or memory location by 1.
 	s_d(1,op_dec32,0xFF,1,opsz_16),
 	s_d(1,op_dec32,0xFF,1,opsz_32),
@@ -446,7 +446,7 @@ x86_opcode x86_oplist[]=
 
 	//INC reg32 40 +rd Increment the contents of a 32-bit register by 1.
 	//{op_inc32,1,0x40,OP_ENCODING(enc_plus_r,enc_param_none,pg_REG,pg_NONE,pg_NONE,opsz_16_32)},
-	
+
 	//INC reg/mem32 FF /0 Increment the contents of a 32-bit register or memory location by 1.
 	s_d(0,op_inc32,0xFF,1,opsz_16),
 	s_d(0,op_inc32,0xFF,1,opsz_32),
@@ -455,7 +455,7 @@ x86_opcode x86_oplist[]=
 	//RET C3 Near return to the calling procedure.
 	OP_0(op_ret,0xC3,1,opsz_32),
 	//{op_ret,1,0xC3,OP_ENCODING(enc_param_none,enc_param_none,pg_NONE,pg_NONE,pg_NONE,opsz_32)},
-	
+
 	//RET imm16 C2 iw Near return to the calling procedure then pop of the specified number of bytes from the stack.
 	OP_1_imm(op_reti,0xC3,enc_imm_16,1,pg_IMM_U16,opsz_32),
 	//{op_reti,1,0xC2,OP_ENCODING(enc_param_none,imm_u16,pg_IMM_U16,pg_NONE,pg_NONE,opsz_32)},
@@ -466,7 +466,7 @@ x86_opcode x86_oplist[]=
 /*
 void Init()
 {
-	
+
 	for (u32 i=0;x86_oplist[i].opcode!=op_count;i++)
 	{
 		x86_opcode* op=&x86_oplist[i];
@@ -483,7 +483,7 @@ void Init()
 			ops.push_back(*op);
 		}
 	}
-	
+
 }
 */
 

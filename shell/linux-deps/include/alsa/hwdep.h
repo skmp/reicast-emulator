@@ -68,7 +68,7 @@ typedef enum _snd_hwdep_iface {
 	SND_HWDEP_IFACE_USX2Y_PCM,	/**< Tascam US122, US224 & US428 raw USB PCM */
 	SND_HWDEP_IFACE_PCXHR,		/**< Digigram PCXHR */
 	SND_HWDEP_IFACE_SB_RC,		/**< SB Extigy/Audigy2NX remote control */
-                
+
 	SND_HWDEP_IFACE_LAST = SND_HWDEP_IFACE_SB_RC  /**< last known hwdep interface */
 } snd_hwdep_iface_t;
 

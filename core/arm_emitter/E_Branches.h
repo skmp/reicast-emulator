@@ -7,8 +7,8 @@
 
 
 namespace ARM
-{	
-	
+{
+
 	EAPI B(u32 sImm24, ConditionCode CC=AL)
 	{
 		DECL_Id(0x0A000000);
@@ -26,7 +26,7 @@ namespace ARM
 		I |= ((sImm24>>2)&0xFFFFFF);
 		EMIT_I;
 	}
-	
+
 
 	// Note: Either X variant will switch to THUMB* if bit0 of addr is 1
 	//
@@ -59,7 +59,7 @@ namespace ARM
 	}
 
 
-	
+
 
 	// This encoding looks correct,  but segfaults,  the pc val is align(pc,4) but this should be right in ARM
 	//

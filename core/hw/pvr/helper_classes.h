@@ -14,8 +14,8 @@ struct List
 	__forceinline int bytes() const { return used()* sizeof(T); }
 
 	NOINLINE
-	T* sig_overrun() 
-	{ 
+	T* sig_overrun()
+	{
 		*overrun |= true;
 		Clear();
 		if (list_name != NULL)
@@ -24,7 +24,7 @@ struct List
 		return daty;
 	}
 
-	__forceinline 
+	__forceinline
 	T* Append(int n=1)
 	{
 		int ad=avail-n;
@@ -40,10 +40,10 @@ struct List
 			return sig_overrun();
 	}
 
-	__forceinline 
-	T* LastPtr(int n=1) 
-	{ 
-		return daty-n; 
+	__forceinline
+	T* LastPtr(int n=1)
+	{
+		return daty-n;
 	}
 
 	T* head() const { return daty-used(); }
@@ -53,7 +53,7 @@ struct List
 		maxbytes-=maxbytes%sizeof(T);
 
 		daty=(T*)malloc(maxbytes);
-		
+
 		verify(daty!=0);
 
 		avail=size=maxbytes/sizeof(T);

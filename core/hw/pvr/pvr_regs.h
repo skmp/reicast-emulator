@@ -14,7 +14,7 @@ void Regs_Reset(bool Manual);
 #define ID_addr                 0x00000000 // R   Device ID
 #define REVISION_addr           0x00000004 // R   Revision number
 #define SOFTRESET_addr          0x00000008 // RW  CORE & TA software reset
-	
+
 #define STARTRENDER_addr        0x00000014 // RW  Drawing start
 #define TEST_SELECT_addr        0x00000018 // RW  Test (writing this register is prohibited)
 
@@ -30,7 +30,7 @@ void Regs_Reset(bool Manual);
 #define FB_R_SOF1_addr          0x00000050 // RW  Read start address for field - 1/strip - 1
 #define FB_R_SOF2_addr          0x00000054 // RW  Read start address for field - 2/strip - 2
 
-#define FB_R_SIZE_addr          0x0000005C // RW  Frame buffer XY size	
+#define FB_R_SIZE_addr          0x0000005C // RW  Frame buffer XY size
 #define FB_W_SOF1_addr          0x00000060 // RW  Write start address for field - 1/strip - 1
 #define FB_W_SOF2_addr          0x00000064 // RW  Write start address for field - 2/strip - 2
 #define FB_X_CLIP_addr          0x00000068 // RW  Pixel clip X coordinate
@@ -57,8 +57,8 @@ void Regs_Reset(bool Manual);
 #define FOG_CLAMP_MAX_addr      0x000000BC // RW  Color clamping maximum value
 #define FOG_CLAMP_MIN_addr      0x000000C0 // RW  Color clamping minimum value
 #define SPG_TRIGGER_POS_addr    0x000000C4 // RW  External trigger signal HV counter value
-#define SPG_HBLANK_INT_addr     0x000000C8 // RW  H-blank interrupt control	
-#define SPG_VBLANK_INT_addr     0x000000CC // RW  V-blank interrupt control	
+#define SPG_HBLANK_INT_addr     0x000000C8 // RW  H-blank interrupt control
+#define SPG_VBLANK_INT_addr     0x000000CC // RW  V-blank interrupt control
 #define SPG_CONTROL_addr        0x000000D0 // RW  Sync pulse generator control
 #define SPG_HBLANK_addr         0x000000D4 // RW  H-blank control
 #define SPG_LOAD_addr           0x000000D8 // RW  HV counter load value
@@ -200,7 +200,7 @@ union SPG_LOAD_type
 	struct
 	{
 		u32 hcount : 10; //9-0
-		u32 res    : 6 ; //15-10	
+		u32 res    : 6 ; //15-10
 		u32 vcount : 10; //25-16
 		u32 res1   : 6 ; //31-26
 	};
@@ -212,7 +212,7 @@ union SPG_VBLANK_type
 	struct
 	{
 		u32 vstart : 10; //9-0
-		u32 res    : 6 ; //15-10	
+		u32 res    : 6 ; //15-10
 		u32 vbend  : 10; //25-16
 		u32 res1   : 6 ; //31-26
 	};
@@ -370,7 +370,7 @@ union TA_GLOB_TILE_CLIP_type
 	};
 	u32 full;
 };
- 
+
 union TA_YUV_TEX_CTRL_type
 {
 	struct
@@ -422,7 +422,7 @@ union TA_YUV_TEX_CTRL_type
 #define ID                PvrReg(ID_addr,u32)	         // R   Device ID
 #define REVISION          PvrReg(REVISION_addr,u32)      // R   Revision number
 #define SOFTRESET         PvrReg(SOFTRESET_addr,u32)     // RW  CORE & TA software reset
-	
+
 #define STARTRENDER       PvrReg(STARTRENDER_addr,u32)   // RW  Drawing start
 #define TEST_SELECT       PvrReg(TEST_SELECT_addr,u32)   // RW  Test (writing this register is prohibited)
 

@@ -219,7 +219,7 @@ int snd_use_case_get_list(snd_use_case_mgr_t *uc_mgr,
 /**
  * \brief Get current - string
  * \param uc_mgr Use case manager
- * \param identifier 
+ * \param identifier
  * \param value Value pointer
  * \return Zero if success, otherwise a negative error code
  *
@@ -276,8 +276,8 @@ int snd_use_case_get(snd_use_case_mgr_t *uc_mgr,
 /**
  * \brief Get current - integer
  * \param uc_mgr Use case manager
- * \param identifier 
- * \param value result 
+ * \param identifier
+ * \param value result
  * \return Zero if success, otherwise a negative error code
  *
  * Known identifiers:

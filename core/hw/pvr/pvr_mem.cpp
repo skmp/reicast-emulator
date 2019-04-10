@@ -70,7 +70,7 @@ INLINE u8 GetY420(int x, int y,u8* base)
 		y -= 8;
 		base += 128;
 	}
-	
+
 	return base[x+y*8];
 }
 
@@ -154,7 +154,7 @@ INLINE void YUV_ConvertMacroBlock(u8* datap)
 	if (YUV_blockcount==TA_YUV_TEX_CNT)
 	{
 		YUV_init();
-		
+
 		asic_RaiseInterrupt(holly_YUV_DMA);
 	}
 }
@@ -341,7 +341,7 @@ u32 pvr_map32(u32 offset32)
 	rv |= (offset32 & offset_bits) * 2;
 
 	rv |= bank * 4;
-	
+
 	return rv;
 }
 

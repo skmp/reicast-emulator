@@ -26,18 +26,18 @@ Array<RegisterStruct> TMU(12,true);  //TMU  : 12 registers
 Array<RegisterStruct> SCI(8,true);   //SCI  : 8 registers
 Array<RegisterStruct> SCIF(10,true); //SCIF : 10 registers
 
-u32 sh4io_read_noacc(u32 addr) 
-{ 
+u32 sh4io_read_noacc(u32 addr)
+{
 	EMUERROR("sh4io: Invalid read access @@ %08X",addr);
-	return 0; 
-} 
-void sh4io_write_noacc(u32 addr, u32 data) 
-{ 
-	EMUERROR("sh4io: Invalid write access @@ %08X %08X",addr,data);
-	//verify(false); 
+	return 0;
 }
-void sh4io_write_const(u32 addr, u32 data) 
-{ 
+void sh4io_write_noacc(u32 addr, u32 data)
+{
+	EMUERROR("sh4io: Invalid write access @@ %08X %08X",addr,data);
+	//verify(false);
+}
+void sh4io_write_const(u32 addr, u32 data)
+{
 	EMUERROR("sh4io: Const write ignored @@ %08X <- %08X",addr,data);
 }
 
@@ -72,7 +72,7 @@ void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegR
 
 template<u32 sz>
 u32 sh4_rio_read(Array<RegisterStruct>& sb_regs, u32 addr)
-{	
+{
 	u32 offset = addr&255;
 #ifdef TRACE
 	if (offset & 3/*(size-1)*/) //4 is min align size
@@ -93,7 +93,7 @@ u32 sh4_rio_read(Array<RegisterStruct>& sb_regs, u32 addr)
 				return  sb_regs[offset].data32;
 			else if (sz==2)
 				return  sb_regs[offset].data16;
-			else 
+			else
 				return  sb_regs[offset].data8;
 		}
 		else
@@ -170,7 +170,7 @@ offset>>=2;
 	if ((sb_regs[offset].flags& REG_NOT_IMPL))
 		EMUERROR3("Write to System Control Regs, not implemented - addr=%x, data=%x",addr,data);
 #endif
-	
+
 }
 
 //Region P4
@@ -180,7 +180,7 @@ T DYNACALL ReadMem_P4(u32 addr)
 {
 	/*if (((addr>>26)&0x7)==7)
 	{
-	return ReadMem_area7(addr,sz);	
+	return ReadMem_area7(addr,sz);
 	}*/
 
 	switch((addr>>24)&0xFF)
@@ -630,7 +630,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	{
 		CCN_QACR_write<1>(addr,data);
 		return;
-	}	
+	}
 
 	//printf("%08X\n",addr);
 

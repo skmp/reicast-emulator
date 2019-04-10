@@ -24,7 +24,7 @@ wchar* trim_ws(wchar* str)
 	}
 
 	size_t l=strlen(str);
-	
+
 	if (l==0)
 		return 0;
 

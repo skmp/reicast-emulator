@@ -1608,17 +1608,17 @@ extern "C" {
     GL_APICALL void GL_APIENTRY glEndTilingQCOM (GLbitfield preserveMask);
 #endif
 #endif /* GL_QCOM_tiled_rendering */
-    
+
 #ifndef GL_QCOM_writeonly_rendering
 #define GL_QCOM_writeonly_rendering 1
 #define GL_WRITEONLY_RENDERING_QCOM       0x8823
 #endif /* GL_QCOM_writeonly_rendering */
-    
+
 #ifndef GL_VIV_shader_binary
 #define GL_VIV_shader_binary 1
 #define GL_SHADER_BINARY_VIV              0x8FC4
 #endif /* GL_VIV_shader_binary */
-    
+
 #ifdef __cplusplus
 }
 #endif

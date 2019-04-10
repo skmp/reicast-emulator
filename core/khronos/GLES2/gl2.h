@@ -517,7 +517,7 @@ extern "C" {
     GL_APICALL void GL_APIENTRY glVertexAttribPointer (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
     GL_APICALL void GL_APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height);
 #endif /* GL_ES_VERSION_2_0 */
-    
+
 #ifdef __cplusplus
 }
 #endif

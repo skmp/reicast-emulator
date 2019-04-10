@@ -623,7 +623,7 @@ union BSC_WCR3_type
 		u32 A0H1   : 1;
 		u32 A0S0   : 1;
 		u32 res_0  : 1;
-		u32 A1H0   : 1; //TODO: check if this is correct, on the manual it says A1H0 .. typo in the manual ? 
+		u32 A1H0   : 1; //TODO: check if this is correct, on the manual it says A1H0 .. typo in the manual ?
 		u32 A1H1   : 1;
 		u32 A1S0   : 1;
 		u32 res_1  : 1;

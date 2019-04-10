@@ -29,7 +29,7 @@ void CCN_QACR_write(u32 addr, u32 value)
 
 	switch(area)
 	{
-		case 3: 
+		case 3:
 			if (_nvmem_enabled())
 				do_sqw_nommu=&do_sqw_nommu_area_3;
 			else

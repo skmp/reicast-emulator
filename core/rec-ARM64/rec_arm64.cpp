@@ -355,7 +355,7 @@ public:
 		SaveFramePointer();
 #endif
 		this->block = block;
-		
+
 		CheckBlock(smc_checks, block);
 
 		// run register allocator

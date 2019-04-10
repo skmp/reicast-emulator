@@ -15,7 +15,7 @@ bool IsS8(u32 value)
 }
 #include "x86_op_encoder.h"
 #include "x86_matcher.h"
-//x86_Label 
+//x86_Label
 /*
 //x86_ptr/x86_ptr_imm
 x86_ptr x86_ptr::create(void* ptr)
@@ -29,7 +29,7 @@ x86_ptr x86_ptr::create(unat ptr)
 	x86_ptr rv(0);
 	rv.ptr_int=ptr;
 	return rv;
-#pragma warning(default:4312) 
+#pragma warning(default:4312)
 }
 /*
 x86_ptr_imm x86_ptr_imm::create(void* ptr)
@@ -39,11 +39,11 @@ x86_ptr_imm x86_ptr_imm::create(void* ptr)
 }*/
 x86_ptr_imm x86_ptr_imm::create(unat ptr)
 {
-#pragma warning(disable:4312) 
+#pragma warning(disable:4312)
 	x86_ptr_imm rv(0);
 	rv.ptr_int=ptr;
 	return rv;
-#pragma warning(default:4312) 
+#pragma warning(default:4312)
 }
 //x86_block
 //init things
@@ -356,7 +356,7 @@ void x86_block::Emit(x86_opcode_class op,x86_ptr_imm disp)
 //lbl
 void x86_block::Emit(x86_opcode_class op,x86_Label* lbl)
 {
-	
+
 	ME_op_1_nrm(op,lbl);
 }
 
@@ -548,10 +548,10 @@ x86_mrm_t x86_mrm(x86_reg base,x86_reg index,x86_sib_scale scale,x86_ptr disp)
 		bool force_disp=false;
 		u8 disp_sz=3;
 
-		
+
 		if (base==EBP)
 			force_disp=true;
-		
+
 		if (base==NO_REG)
 		{
 			rv.sib=make_sib(scale,index,EBP);

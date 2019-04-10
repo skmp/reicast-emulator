@@ -25,9 +25,9 @@ namespace ARM
 		EMIT_I;
 	}
 
-	
+
 	//	Unsigned sum of absolute differences
-	//	
+	//
 	EAPI USAD8(eReg Rd, eReg Rm, eReg Rs, ConditionCode CC=AL)
 	{
 		DECL_Id(0x0780F010);
@@ -50,15 +50,15 @@ namespace ARM
 		I |= (Rm&15);
 		EMIT_I;
 	}
-	
+
 
 
 
 	/*
 	 *	Packing Instructions
 	 */
-	
-	
+
+
 	EAPI PKHBT(eReg Rd, eReg Rn, eReg Rm, ConditionCode CC=AL)    // * shift_imm
 	{
 		DECL_Id(0x06800010);
@@ -134,13 +134,13 @@ namespace ARM
 
 
 
-	
+
 	/*
 	 *	Saturate Instructions
 	 */
 
-	
-	 
+
+
 	//	SSAT{<cond>} <Rd>, #<immed>, <Rm>{, <shift>}
 	//
 	EAPI SSAT(eReg Rd, u32 sat_imm, eReg Rm, u32 sft_imm, ConditionCode CC=AL)	// sh&1 << 6

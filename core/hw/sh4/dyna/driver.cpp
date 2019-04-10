@@ -95,7 +95,7 @@ void recSh4_Run()
 
 	if (settings.dynarec.SmcCheckLevel != FullCheck)
 		printf("Warning: SMC check mode is %d\n", settings.dynarec.SmcCheckLevel);
-	
+
 	verify(rcb_noffs(&next_pc)==-184);
 	ngen_mainloop(sh4_dyna_rcb);
 
@@ -146,10 +146,10 @@ SmcCheckEnum DoCheck(u32 pc)
 
 					//Shenmue 2
 					case 0x348000:
-						
+
 					//Shenmue
 					case 0x41860e:
-					
+
 
 						return FastCheck;
 
@@ -228,10 +228,10 @@ void RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	has_jcond=false;
 	BranchBlock=NextBlock=csc_RetCache=0xFFFFFFFF;
 	BlockType=BET_SCL_Intr;
-	
+
 	addr=rpc;
 	fpu_cfg=rfpu_cfg;
-	
+
 	oplist.clear();
 
 	dec_DecodeBlock(this,SH4_TIMESLICE/2);
@@ -253,7 +253,7 @@ DynarecCodeEntryPtr rdv_CompilePC()
 
 		rbi->Setup(pc,fpscr);
 
-		
+
 		bool do_opts=((rbi->addr&0x3FFFFFFF)>0x0C010100);
 		rbi->staging_runs=do_opts?100:-100;
 		ngen_Compile(rbi,DoCheck(rbi->addr),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
@@ -322,7 +322,7 @@ DynarecCodeEntryPtr rdv_FindCode()
 	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
 	if (rv==ngen_FailedToFindBlock)
 		return 0;
-	
+
 	return rv;
 }
 
@@ -331,7 +331,7 @@ DynarecCodeEntryPtr rdv_FindOrCompile()
 	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
 	if (rv==ngen_FailedToFindBlock)
 		rv=rdv_CompilePC();
-	
+
 	return rv;
 }
 
@@ -344,7 +344,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 		printf("Stale block ..");
 		rbi=bm_GetStaleBlock(code);
 	}
-	
+
 	verify(rbi != NULL);
 
 	u32 bcls=BET_GET_CLS(rbi->BlockType);
@@ -406,7 +406,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 	{
 		printf(" .. null RBI: %08X -- unlinked stale block\n",next_pc);
 	}
-	
+
 	return (void*)rv;
 }
 void recSh4_Stop()
@@ -451,11 +451,11 @@ void recSh4_Init()
 
 	verify(rcb_noffs(&p_sh4rcb->cntx.sh4_sched_next) == -152);
 	verify(rcb_noffs(&p_sh4rcb->cntx.interrupt_pend) == -148);
-	
+
 	if (_nvmem_enabled()) {
 		verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));
 	}
-	
+
 #if defined(_WIN64)
 #ifdef _MSC_VER
 	for (int i = 10; i < 1300; i++) {
@@ -486,7 +486,7 @@ void recSh4_Init()
 	DWORD old;
 	VirtualProtect(CodeCache,CODE_SIZE,PAGE_EXECUTE_READWRITE,&old);
 #elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
-	
+
 	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
 
 	#if FEAT_SHREC == DYNAREC_JIT

@@ -53,7 +53,7 @@ u32 twiddle_slow(u32 x,u32 y,u32 x_sz,u32 y_sz)
 			x>>=1;
 			sh++;
 		}
-	}	
+	}
 	return rv;
 }
 
@@ -146,7 +146,7 @@ void vramlock_list_remove(vram_block* block)
 		}
 	}
 }
- 
+
 void vramlock_list_add(vram_block* block)
 {
 	u32 base = block->start/PAGE_SIZE;
@@ -170,7 +170,7 @@ added_it:
 		i=i;
 	}
 }
- 
+
 cMutex vramlist_lock;
 
 //simple IsInRange test
@@ -183,7 +183,7 @@ inline bool IsInRange(vram_block* block,u32 offset)
 vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* userdata)
 {
 	vram_block* block=(vram_block* )malloc(sizeof(vram_block));
- 
+
 	if (end_offset64>(VRAM_SIZE-1))
 	{
 		msgboxf("vramlock_Lock_64: end_offset64>(VRAM_SIZE-1) \n Tried to lock area out of vram , possibly bug on the pvr plugin",MBX_OK);
@@ -196,7 +196,7 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 		start_offset64=0;
 	}
 
-	
+
 
 	block->end=end_offset64;
 	block->start=start_offset64;
@@ -206,16 +206,16 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 
 	{
 		vramlist_lock.Lock();
-	
+
 		vram.LockRegion(block->start,block->len);
 
 		//TODO: Fix this for 32M wrap as well
 		if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
 			vram.LockRegion(block->start + VRAM_SIZE, block->len);
 		}
-		
+
 		vramlock_list_add(block);
-		
+
 		vramlist_lock.Unlock();
 	}
 
@@ -232,7 +232,7 @@ bool VramLockedWrite(u8* address)
 
 		size_t addr_hash = offset/PAGE_SIZE;
 		vector<vram_block*>* list=&VramLocks[addr_hash];
-		
+
 		{
 			vramlist_lock.Lock();
 
@@ -241,7 +241,7 @@ bool VramLockedWrite(u8* address)
 				if ((*list)[i])
 				{
 					libPvr_LockedBlockWrite((*list)[i],(u32)offset);
-				
+
 					if ((*list)[i])
 					{
 						msgboxf("Error : pvr is supposed to remove lock",MBX_OK);
@@ -258,7 +258,7 @@ bool VramLockedWrite(u8* address)
 			if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
 				vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
 			}
-			
+
 			vramlist_lock.Unlock();
 		}
 

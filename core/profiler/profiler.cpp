@@ -154,7 +154,7 @@ void prof_periodical()
 
 	printf("TA %.2f %.2f || %.2f\n",TA_VTXC/1000.0,TA_SPRC/1000.0,TA_VTX_O/1000.0);
 	printf("PVR %.2f\n",PVR_VTXC/1000.0);
-	
+
 	TA_VTXC=TA_SPRC=TA_VTX_O=PVR_VTXC=0;
 
 #endif
@@ -166,7 +166,7 @@ void prof_periodical()
 			printf("%s: %.2fM\n",shil_opcode_name(i),v);
 	}
 
-	
+
 	if (prof.counters.shil.readm_reg!=0)
 	{
 		printf("***PROFILE REPORT***\n");
@@ -216,5 +216,5 @@ void prof_periodical() { }
 	Commands:
 	name(par1=x,par2=y)
 
-	
+
 */

@@ -7,7 +7,7 @@
 #define MA_3(x,y,z) {x,y,z}
 #define MA_4(x,y,z,l) {x,y,z,l}
 
-const x86_opcode all_opcodes[] = 
+const x86_opcode all_opcodes[] =
 {
 	#include "generated_descriptors.h"
 };

@@ -64,7 +64,7 @@ Disc* load_gdi(const char* file)
 {
 	u32 iso_tc;
 	Disc* disc = new Disc();
-	
+
 	//memset(&gdi_toc,0xFFFFFFFF,sizeof(gdi_toc));
 	//memset(&gdi_ses,0xFFFFFFFF,sizeof(gdi_ses));
 	core_file* t=core_fopen(file);
@@ -89,7 +89,7 @@ Disc* load_gdi(const char* file)
 	gdi >> iso_tc;
 	printf("\nGDI : %d tracks\n",iso_tc);
 
-	
+
 	string basepath = OS_dirname(file);
 
 	u32 TRACK=0,FADS=0,CTRL=0,SSIZE=0;
@@ -109,7 +109,7 @@ Disc* load_gdi(const char* file)
 		do {
 			gdi >> last;
 		} while (isspace(last));
-		
+
 		if (last == '"')
 		{
 			gdi >> std::noskipws;
@@ -128,7 +128,7 @@ Disc* load_gdi(const char* file)
 		}
 
 		gdi >> OFFSET;
-		
+
 		printf("file[%d] \"%s\": FAD:%d, CTRL:%d, SSIZE:%d, OFFSET:%d\n", TRACK, track_filename.c_str(), FADS, CTRL, SSIZE, OFFSET);
 
 		Track t;
@@ -141,7 +141,7 @@ Disc* load_gdi(const char* file)
 		if (SSIZE!=0)
 		{
 			string path = basepath + normalize_path_separator(track_filename);
-			t.file = new RawTrackFile(core_fopen(path.c_str()),OFFSET,t.StartFAD,SSIZE);	
+			t.file = new RawTrackFile(core_fopen(path.c_str()),OFFSET,t.StartFAD,SSIZE);
 		}
 		disc->tracks.push_back(t);
 	}

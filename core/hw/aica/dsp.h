@@ -13,7 +13,7 @@ struct dsp_t
 	s32 MEMS[32];
 	//20 bit wide
 	s32 MIXS[16];
-	
+
 	//RBL/RBP (decoded)
 	u32 RBP;
 	u32 RBL;

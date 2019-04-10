@@ -447,7 +447,7 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *source /* = Pix
 		glUniform1i(gu, 2);		// GL_TEXTURE2
 
 	s->trilinear_alpha = glGetUniformLocation(s->program, "trilinear_alpha");
-	
+
 	if (s->fog_clamping)
 	{
 		s->fog_clamp_min = glGetUniformLocation(s->program, "fog_clamp_min");
@@ -698,12 +698,12 @@ static bool RenderFrame()
 	gl4ShaderUniforms.fog_clamp_min[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
 	gl4ShaderUniforms.fog_clamp_min[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
 	gl4ShaderUniforms.fog_clamp_min[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
-	
+
 	gl4ShaderUniforms.fog_clamp_max[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
 	gl4ShaderUniforms.fog_clamp_max[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
 	gl4ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
 	gl4ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
-	
+
 	if (fog_needs_update && settings.rend.Fog)
 	{
 		fog_needs_update = false;

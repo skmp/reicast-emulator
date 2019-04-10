@@ -133,7 +133,7 @@ void pvr_sb_Init()
 	//0x005F7C18    SB_PDST RW  PVR-DMA start
 	sb_rio_register(SB_PDST_addr,RIO_WF,0,&RegWrite_SB_PDST);
 
-	//0x005F6808    SB_C2DST RW  ch2-DMA start 
+	//0x005F6808    SB_C2DST RW  ch2-DMA start
 	sb_rio_register(SB_C2DST_addr,RIO_WF,0,&RegWrite_SB_C2DST);
 
 	//0x005F6820    SB_SDST RW  Sort-DMA start

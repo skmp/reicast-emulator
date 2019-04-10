@@ -28,7 +28,7 @@ from The Open Group.
 
 /*
  * Copyright © 2005 Daniel Stone
- * 
+ *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
@@ -85,7 +85,7 @@ typedef long fd_mask;
 #define howmany(x,y)	(((x)+((y)-1))/(y))
 #endif
 
-#if defined(BSD) && BSD < 198911 
+#if defined(BSD) && BSD < 198911
 typedef struct fd_set {
 	fd_mask fds_bits[howmany(FD_SETSIZE, NFDBITS)];
 } fd_set;
@@ -117,7 +117,7 @@ typedef struct fd_set {
 /*
  * The howmany(FD_SETSIZE, NFDBITS) computes the number of elements in the
  * array. before accessing an element in the array we check it exists.
- * If it does not exist then the compiler discards the code to access it. 
+ * If it does not exist then the compiler discards the code to access it.
  */
 #define XFD_ANYSET(p) \
         ((howmany(FD_SETSIZE, NFDBITS) > 0 && (__XFDS_BITS(p, 0))) || \
@@ -143,7 +143,7 @@ typedef struct fd_set {
         int __i__; \
         for (__i__ = 0; __i__ < howmany(FD_SETSIZE, NFDBITS); __i__++) \
 		__XFDS_BITS((dst), __i__) = ((__XFDS_BITS((b1), __i__)) | (__XFDS_BITS((b2), __i__))); \
-        }        
+        }
 #define XFD_UNSET(dst,b1) { \
         int __i__; \
         for (__i__ = 0; __i__ < howmany(FD_SETSIZE, NFDBITS); __i__++) \
@@ -211,7 +211,7 @@ typedef struct fd_set {
         XFD_FD(set,XFD_SETCOUNT(set)++)=(fd); \
 } while(0)
 
-#define getdtablesize() FD_SETSIZE 
+#define getdtablesize() FD_SETSIZE
 
 #endif /* WIN32 */
 

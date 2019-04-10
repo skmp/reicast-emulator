@@ -80,17 +80,17 @@ namespace ARM
 	EAPI VDUP32(eFQReg Qd, eReg Rt, ConditionCode=AL)	{ VDUP(Qd,Rt,32,CC); }
 	EAPI VDUP32(eFDReg Dd, eReg Rt, ConditionCode=AL)	{ VDUP(Dd,Rt,32,CC); }
 
-	EAPI VDUP32(eFQReg Qd, eFDReg Dm, int idx)	
+	EAPI VDUP32(eFQReg Qd, eFDReg Dm, int idx)
 	{
 		DECL_Id(0xF3B00C00);
-		
+
 		//Set_Qd seems to be incompitable here ?
 		I |= (((Qd<<1)&0x0E)<<12);	\
 		I |= (((Qd<<1)&0x10)<<18);
 		SET_Dm;
 		I |= 0x40;	//SET_Q
 		I |= 0x4 << 16;	// 32 bits 4=0100
-		I |= (idx&1) << 19;	// set idx 
+		I |= (idx&1) << 19;	// set idx
 
 		EMIT_I;
 	}
@@ -160,11 +160,11 @@ namespace ARM
 		// Dd[x]  where x==Index  Dd is 64b, 2x32[0,1](1bit) 4x16[0-3](2bits) 8x8[0-7](3bits)
 		if (Size== 8) { I |= (1<<22) | ((Index&4)<<18) | ((Index&3)<<5) ;	}	// x -> opc1:0, opc2	(3bits)	| opc1:1 SET
 		if (Size==16) { I |= (1<<5) | ((Index&2)<<20) | ((Index&1<<6)) ;	}	// x -> opc1:0, opc2:1	(2bits)	| opc2:0 SET
-		if (Size==32) { I |= ((Index&1)<<21) ;								}	// x -> opc1:0			(1bit)	
+		if (Size==32) { I |= ((Index&1)<<21) ;								}	// x -> opc1:0			(1bit)
 		EMIT_I;
 	}
 
-	
+
 
 	/*
 	 *	VMOV:	(scalar to ARM)		A.SIMD / VFP IF Size=32
@@ -178,12 +178,12 @@ namespace ARM
 		// Dd[x]  where x==Index  Dd is 64b, 2x32[0,1](1bit) 4x16[0-3](2bits) 8x8[0-7](3bits)
 		if (Size== 8) { I |= (1<<22) | ((Index&4)<<18) | ((Index&3)<<5) ;	}	// x -> opc1:0, opc2	(3bits)	| opc1:1 SET
 		if (Size==16) { I |= (1<<5) | ((Index&2)<<20) | ((Index&1<<6)) ;	}	// x -> opc1:0, opc2:1	(2bits)	| opc2:0 SET
-		if (Size==32) { I |= ((Index&1)<<21) ;								}	// x -> opc1:0			(1bit)	
+		if (Size==32) { I |= ((Index&1)<<21) ;								}	// x -> opc1:0			(1bit)
 		EMIT_I;
 	}
 
-	
-	
+
+
 
 	/*
 	 *	VMOV:	(between ARM and single either direction)		VFP
@@ -202,9 +202,9 @@ namespace ARM
 		EMIT_I;
 	}
 
-	
-	
-	
+
+
+
 
 	/*
 	 *	VMOV:	(between two ARM regs and two contiguous singles either direction)		VFP
@@ -223,9 +223,9 @@ namespace ARM
 		EMIT_I;
 	}
 
-	
-	
-	
+
+
+
 
 	/*
 	 *	VMOV:	(between two ARM regs and a Double)	Dm <-> Rt2:Rt	A.SIMD/VFP
@@ -244,8 +244,8 @@ namespace ARM
 		EMIT_I;
 	}
 
-	
-	
+
+
 
 	/*
 	 *	VMOVL:	Takes each element in a VDouble && Sign or Zero extends into a VQuad	A.SIMD
@@ -272,9 +272,9 @@ namespace ARM
 	EAPI VMOVL_S32(eFQReg Qd, eFDReg Dm)	{ VMOVL(Qd,Dm,32,1);	}
 	EAPI VMOVL_U32(eFQReg Qd, eFDReg Dm)	{ VMOVL(Qd,Dm,32,0);	}
 
-	
-	
-	
+
+
+
 
 	/*
 	 *	VMOVN:	Copies least significant half of each element of a VQuad into the elements of a VDouble 	A.SIMD
@@ -340,5 +340,5 @@ namespace ARM
 #undef SET_Rt
 #undef SET_Rtx2
 
-	
+
 };

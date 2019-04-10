@@ -265,7 +265,7 @@ sh4op(i0010_nnnn_mmmm_0100)
 {
 	u32 n = GetN(op);
 	u32 m = GetM(op);
-	
+
 	u32 addr = r[n] - 1;
 	WriteMemBOU8(r[n], (u32)-1, r[m]);
 	r[n] = addr;
@@ -320,7 +320,7 @@ sh4op(i0100_nnnn_0000_0010)
 sh4op(i0100_nnnn_0001_0010)
 {
 	u32 n = GetN(op);
-	
+
 	u32 addr = r[n] - 4;
 	WriteMemU32(addr, mac.l);
 	r[n] = addr;
@@ -351,7 +351,7 @@ sh4op(i0100_nnnn_1111_0010)
 sh4op(i0100_nnnn_0001_0011)
 {
 	u32 n = GetN(op);
-	
+
 	u32 addr = r[n] - 4;
 	WriteMemU32(addr, gbr);
 	r[n] = addr;
@@ -869,9 +869,9 @@ sh4op(i0000_nnnn_0000_0011)
 	u32 n = GetN(op);
 	u32 newpc = r[n] + next_pc +2;
 	u32 newpr = next_pc + 2;
-	
+
 	ExecuteDelayslot(); //WARN : pr and r[n] can change here
-	
+
 	pr = newpr;
 	next_pc = newpc;
 }
@@ -882,7 +882,7 @@ sh4op(i0000_0000_0010_1011)
 {
 	u32 newpc = spc;
 	// FIXME In an RTE delay slot, status register (SR) bits are referenced as follows.
-	// In instruction access, the MD bit is used before modification, and in data access, 
+	// In instruction access, the MD bit is used before modification, and in data access,
 	// the MD bit is accessed after modification.
 	// The other bits—S, T, M, Q, FD, BL, and RB—after modification are used for delay slot
 	// instruction execution. The STC and STC.L SR instructions access all SR bits after modification.
@@ -2142,6 +2142,6 @@ sh4op(iNotImplemented)
 #else
 	cpu_iNimp(op, "Unknown opcode");
 #endif
-	
+
 }
 

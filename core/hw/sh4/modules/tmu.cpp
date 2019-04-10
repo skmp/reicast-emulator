@@ -39,7 +39,7 @@ void UpdateTMU_chan(u32 clc)
 		//count :D
 		tmu_prescaler[ch]+=clc;
 		u32 steps=tmu_prescaler[ch]>>tmu_prescaler_shift[ch];
-		
+
 		//remove the full steps from the prescaler counter
 		tmu_prescaler[ch]&=tmu_prescaler_mask[ch];
 
@@ -52,7 +52,7 @@ void UpdateTMU_chan(u32 clc)
 			//raise the interrupt
 			TMU_TCR(ch) |= tmu_underflow;
 			InterruptPend(tmu_intID[ch],1);
-			
+
 			//remove the full underflows (possible because we only check every 448 cycles)
 			//this can be done with a div, but its very very very rare so this is probably faster
 			//THIS can probably be replaced with a verify check on counter setup (haven't seen any game do this)
@@ -224,9 +224,9 @@ void write_TMU_TSTR(u32 addr, u32 data)
 int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 {
 	if (tmu_mask[ch]) {
-		
+
 		u32 tcnt = read_TMU_TCNTch(ch);
-		
+
 		s64 tcnt64 = (s64)read_TMU_TCNTch64(ch);
 
 		u32 tcor = TMU_TCOR(ch);
@@ -238,14 +238,14 @@ int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 			//raise interrupt, timer counted down
 			TMU_TCR(ch) |= tmu_underflow;
 			InterruptPend(tmu_intID[ch], 1);
-			
+
 			//printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
 
 			//schedule next trigger by writing the TCNT register
 			write_TMU_TCNTch(ch, tcor + tcnt);
 		}
 		else {
-			
+
 			//schedule next trigger by writing the TCNT register
 			write_TMU_TCNTch(ch, tcnt);
 		}
@@ -289,7 +289,7 @@ void tmu_init()
 
 	//TMU TCNT2 0xFFD80024 0x1FD80024 32 0xFFFFFFFF 0xFFFFFFFF Held Held Pclk
 	sh4_rio_reg(TMU,TMU_TCNT2_addr,RIO_FUNC,32,&read_TMU_TCNT<2>,&write_TMU_TCNT<2>);
-	
+
 	//TMU TCR2 0xFFD80028 0x1FD80028 16 0x0000 0x0000 Held Held Pclk
 	sh4_rio_reg(TMU,TMU_TCR2_addr,RIO_WF,16,0,&TMU_TCR_write<2>);
 

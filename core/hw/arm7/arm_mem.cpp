@@ -53,7 +53,7 @@ T arm_ReadReg(u32 addr)
 		return e68k_reg_M;	//shouldn't really happen
 	else
 		return libAICA_ReadReg(addr,sz);
-}		
+}
 template <u32 sz,class T>
 void arm_WriteReg(u32 addr,T data)
 {
@@ -74,10 +74,10 @@ void arm_WriteReg(u32 addr,T data)
 	}
 }
 
-//00000000~007FFFFF @DRAM_AREA* 
-//00800000~008027FF @CHANNEL_DATA 
-//00802800~00802FFF @COMMON_DATA 
-//00803000~00807FFF @DSP_DATA 
+//00000000~007FFFFF @DRAM_AREA*
+//00800000~008027FF @CHANNEL_DATA
+//00802800~00802FFF @COMMON_DATA
+//00803000~00807FFF @DSP_DATA
 
 template u8 arm_ReadReg<1,u8>(u32 adr);
 template u16 arm_ReadReg<2,u16>(u32 adr);

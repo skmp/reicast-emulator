@@ -142,7 +142,7 @@ TRANS(ConvertAddress)(int *familyp, int *addrlenp, Xtransaddr **addrp)
 	    {
 		*familyp=FamilyLocal;
 	    }
-	    else 
+	    else
 	    {
 		*familyp=FamilyInternet;
 		*addrlenp = sizeof (struct in_addr);
@@ -161,7 +161,7 @@ TRANS(ConvertAddress)(int *familyp, int *addrlenp, Xtransaddr **addrp)
 #endif /* defined(TCPCONN) || defined(STREAMSCONN) */
 
 
-#if defined(UNIXCONN) || defined(LOCALCONN) 
+#if defined(UNIXCONN) || defined(LOCALCONN)
     case AF_UNIX:
     {
 	*familyp=FamilyLocal;
@@ -190,7 +190,7 @@ TRANS(ConvertAddress)(int *familyp, int *addrlenp, Xtransaddr **addrp)
 	 * In the case of a local connection, we need to get the
 	 * host name for authentication.
 	 */
-	
+
 	char hostnamebuf[256];
 	int len = TRANS(GetHostname) (hostnamebuf, sizeof hostnamebuf);
 
@@ -251,7 +251,7 @@ TRANS(GetMyNetworkId) (XtransConnInfo ciptr)
 
     switch (family)
     {
-#if defined(UNIXCONN) || defined(STREAMSCONN) || defined(LOCALCONN) 
+#if defined(UNIXCONN) || defined(STREAMSCONN) || defined(LOCALCONN)
     case AF_UNIX:
     {
 	struct sockaddr_un *saddr = (struct sockaddr_un *) addr;
@@ -341,7 +341,7 @@ TRANS(GetPeerNetworkId) (XtransConnInfo ciptr)
     switch (family)
     {
     case AF_UNSPEC:
-#if defined(UNIXCONN) || defined(STREAMSCONN) || defined(LOCALCONN) 
+#if defined(UNIXCONN) || defined(STREAMSCONN) || defined(LOCALCONN)
     case AF_UNIX:
     {
 	if (gethostname (addrbuf, sizeof (addrbuf)) == 0)
@@ -386,7 +386,7 @@ TRANS(GetPeerNetworkId) (XtransConnInfo ciptr)
 	 * Assume that if it does not respond in NAMESERVER_TIMEOUT seconds
 	 * that something is wrong and do not make the user wait.
 	 * gethostbyaddr will continue after a signal, so we have to
-	 * jump out of it. 
+	 * jump out of it.
 	 */
 
 	nameserver_timedout = 0;
@@ -431,7 +431,7 @@ TRANS(GetPeerNetworkId) (XtransConnInfo ciptr)
 #endif /* ICE_t */
 
 
-#if defined(WIN32) && defined(TCPCONN) 
+#if defined(WIN32) && defined(TCPCONN)
 int
 TRANS(WSAStartup) (void)
 {
@@ -478,7 +478,7 @@ is_numeric (const char *str)
  * it's not save if the directory has non-root ownership or the sticky
  * bit cannot be set and fail.
  */
-static int 
+static int
 trans_mkdir(const char *path, int mode)
 {
     struct stat buf;
@@ -501,7 +501,7 @@ trans_mkdir(const char *path, int mode)
 	    if (mode & 01000) {
 		PRMSG(1, "mkdir: ERROR: euid != 0,"
 		      "directory %s will not be created.\n",
-		      path, 0, 0);	    
+		      path, 0, 0);
 #ifdef FAIL_HARD
 		return -1;
 #endif
@@ -531,7 +531,7 @@ trans_mkdir(const char *path, int mode)
 	}
 
 	return 0;
-	
+
     } else {
 	if (S_ISDIR(buf.st_mode)) {
 	    int updateOwner = 0;
@@ -550,7 +550,7 @@ trans_mkdir(const char *path, int mode)
 	     */
 	    if ((~mode) & 0077 & buf.st_mode)
 		updateMode = 1;
-	    
+
 	    /*
 	     * If the directory is not writeable not everybody may
 	     * be able to create sockets. Therefore warn if mode
@@ -560,7 +560,7 @@ trans_mkdir(const char *path, int mode)
 		updateMode = 1;
 		status |= WARN_NO_ACCESS;
 	    }
-	    
+
 	    /*
 	     * If 'sticky' bit is requested fail if owner isn't root
 	     * as we assume the caller makes certain security implications
@@ -572,7 +572,7 @@ trans_mkdir(const char *path, int mode)
 		    updateMode = 1;
 		}
 	    }
-	    
+
 #ifdef HAS_FCHOWN
 	    /*
 	     * If fchown(2) and fchmod(2) are available, try to correct the
@@ -607,7 +607,7 @@ trans_mkdir(const char *path, int mode)
 		}
 	    }
 #endif
-	    
+
 	    if (updateOwner && !updatedOwner) {
 #ifdef FAIL_HARD
 		if (status & FAIL_IF_NOT_ROOT) {
@@ -621,7 +621,7 @@ trans_mkdir(const char *path, int mode)
 		      path, 0, 0);
 #endif
 	    }
-	    
+
 	    if (updateMode && !updatedMode) {
 #ifdef FAIL_HARD
 		if (status & FAIL_IF_NOMODE) {

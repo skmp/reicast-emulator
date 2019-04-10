@@ -55,7 +55,7 @@ enum snd_seq_event_type {
 	SND_SEQ_EVENT_NOTEOFF,
 	/** key pressure change (aftertouch); event data type = #snd_seq_ev_note_t */
 	SND_SEQ_EVENT_KEYPRESS,
-	
+
 	/** controller; event data type = #snd_seq_ev_ctrl_t */
 	SND_SEQ_EVENT_CONTROLLER = 10,
 	/** program change; event data type = #snd_seq_ev_ctrl_t */
@@ -81,7 +81,7 @@ enum snd_seq_event_type {
 	SND_SEQ_EVENT_TIMESIGN,
 	/** SMF Key Signature event; event data type = #snd_seq_ev_ctrl_t */
 	SND_SEQ_EVENT_KEYSIGN,
-	        
+
 	/** MIDI Real Time Start message; event data type = #snd_seq_ev_queue_control_t */
 	SND_SEQ_EVENT_START = 30,
 	/** MIDI Real Time Continue message; event data type = #snd_seq_ev_queue_control_t */
@@ -291,7 +291,7 @@ typedef struct snd_seq_event {
 	snd_seq_event_type_t type;	/**< event type */
 	unsigned char flags;		/**< event flags */
 	unsigned char tag;		/**< tag */
-	
+
 	unsigned char queue;		/**< schedule queue */
 	snd_seq_timestamp_t time;	/**< schedule time */
 

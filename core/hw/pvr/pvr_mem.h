@@ -35,5 +35,5 @@ void TAWrite(u32 address,u32* data,u32 count);
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
 
 void YUV_init();
-//registers 
+//registers
 #define PVR_BASE 0x005F8000

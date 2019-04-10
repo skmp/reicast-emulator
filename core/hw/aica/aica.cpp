@@ -31,7 +31,7 @@ u32 GetL(u32 witch)
 
 	if (CommonData->SCILV1 & bit)
 		rv|=2;
-	
+
 	if (CommonData->SCILV2 & bit)
 		rv|=4;
 
@@ -103,7 +103,7 @@ void libAICA_TimeStep()
 
 	//Make sure sh4/arm interrupt system is up to date :)
 	update_arm_interrupts();
-	UpdateSh4Ints();	
+	UpdateSh4Ints();
 }
 
 //Memory i/o

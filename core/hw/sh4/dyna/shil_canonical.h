@@ -1,6 +1,6 @@
 /*
 
-	This is a header file that can create 
+	This is a header file that can create
 	a) Shil opcode enums
 	b) Shil opcode classes/portable C implementation ("canonical" implementation)
 	c) The routing table for canonical implementations
@@ -40,11 +40,11 @@ extern "C" f32 fipr_asm(float* fn, float* fm);
 	#define SHIL_START
 	#define SHIL_END
 
-	#define shil_opc(name) struct shil_opcl_##name { 
+	#define shil_opc(name) struct shil_opcl_##name {
 	#define shil_opc_end() };
 
 	#define shil_canonical(rv,name,args,code) struct name { static rv impl args { code } };
-	
+
 	#define shil_cf_arg_u32(x) ngen_CC_Param(op,&op->x,CPT_u32);
 	#define shil_cf_arg_f32(x) ngen_CC_Param(op,&op->x,CPT_f32);
 	#define shil_cf_arg_ptr(x) ngen_CC_Param(op,&op->x,CPT_ptr);
@@ -60,14 +60,14 @@ extern "C" f32 fipr_asm(float* fn, float* fm);
 	#define SHIL_START
 	#define SHIL_END
 
-	#define shil_opc(name) struct shil_opcl_##name { 
+	#define shil_opc(name) struct shil_opcl_##name {
 	#define shil_opc_end() };
 
 	#define shil_canonical(rv,name,args,code) struct name { static rv impl args; };
 	#define shil_compile(code) static void compile(shil_opcode* op);
 #elif  SHIL_MODE==3
 	//generate struct list ...
-	
+
 
 	#define SHIL_START \
 	shil_chfp* shil_chf[] = {
@@ -159,7 +159,7 @@ shil_compile( \
 #define BIN_OP_I2(tp,z)
 #define BIN_OP_I3(z,w)
 #define BIN_OP_I4(tp,z,rt,k)
-	
+
 #define BIN_OP_F(z)
 #define BIN_OP_FU(z)
 
@@ -198,7 +198,7 @@ shil_recimp()
 shil_opc_end()
 
 //mem io
-shil_opc(readm)	
+shil_opc(readm)
 shil_recimp()
 shil_opc_end()
 
@@ -787,7 +787,7 @@ u32,f1,(u32 r1,u32 r2),
 	if ( (temp&0xFF000000) && (temp&0x00FF0000) && (temp&0x0000FF00) && (temp&0x000000FF) )
 		return 0;
 	else
-		return 1;		
+		return 1;
 )
 
 shil_compile
@@ -1023,7 +1023,7 @@ SHIL_END
 #undef BIN_OP_I2
 #undef BIN_OP_I3
 #undef BIN_OP_I4
-	
+
 #undef BIN_OP_F
 
 #undef UN_OP_I

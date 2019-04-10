@@ -86,7 +86,7 @@ enum x86_reg
 	R14q,
 	R15q,
 #endif
-	
+
 	//8 bit
 
 	AL=reg_GPR8,

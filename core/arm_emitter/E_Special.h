@@ -7,11 +7,11 @@
 
 namespace ARM
 {
-	
-	
-	
-	
-	
+
+
+
+
+
 	EAPI ARMERROR()
 	{
 		DECL_Id(0xFFFFFFFF);

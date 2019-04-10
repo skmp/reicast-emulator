@@ -27,7 +27,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	s32 staging_runs;
 
 	/*
-		
+
 	*/
 	fpscr_t fpu_cfg;
 	u32 guest_cycles;
@@ -40,7 +40,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 
 	//0 if not available
 	RuntimeBlockInfo* pBranchBlock;
-	RuntimeBlockInfo* pNextBlock; 
+	RuntimeBlockInfo* pNextBlock;
 
 	u32 relink_offset;
 	u32 relink_data;
@@ -60,7 +60,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 
 	virtual u32 Relink()=0;
 	virtual void Relocate(void* dst)=0;
-	
+
 	//predecessors references
 	vector<RuntimeBlockInfo*> pre_refs;
 

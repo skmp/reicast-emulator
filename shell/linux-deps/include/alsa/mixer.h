@@ -45,7 +45,7 @@ typedef struct _snd_mixer_class snd_mixer_class_t;
 /** Mixer element handle */
 typedef struct _snd_mixer_elem snd_mixer_elem_t;
 
-/** 
+/**
  * \brief Mixer callback function
  * \param mixer Mixer handle
  * \param mask event mask
@@ -56,7 +56,7 @@ typedef int (*snd_mixer_callback_t)(snd_mixer_t *ctl,
 				    unsigned int mask,
 				    snd_mixer_elem_t *elem);
 
-/** 
+/**
  * \brief Mixer element callback function
  * \param elem Mixer element
  * \param mask event mask
@@ -270,17 +270,17 @@ int snd_mixer_selem_set_playback_switch(snd_mixer_elem_t *elem, snd_mixer_selem_
 int snd_mixer_selem_set_capture_switch(snd_mixer_elem_t *elem, snd_mixer_selem_channel_id_t channel, int value);
 int snd_mixer_selem_set_playback_switch_all(snd_mixer_elem_t *elem, int value);
 int snd_mixer_selem_set_capture_switch_all(snd_mixer_elem_t *elem, int value);
-int snd_mixer_selem_get_playback_volume_range(snd_mixer_elem_t *elem, 
+int snd_mixer_selem_get_playback_volume_range(snd_mixer_elem_t *elem,
 					      long *min, long *max);
-int snd_mixer_selem_get_playback_dB_range(snd_mixer_elem_t *elem, 
+int snd_mixer_selem_get_playback_dB_range(snd_mixer_elem_t *elem,
 					  long *min, long *max);
-int snd_mixer_selem_set_playback_volume_range(snd_mixer_elem_t *elem, 
+int snd_mixer_selem_set_playback_volume_range(snd_mixer_elem_t *elem,
 					      long min, long max);
-int snd_mixer_selem_get_capture_volume_range(snd_mixer_elem_t *elem, 
+int snd_mixer_selem_get_capture_volume_range(snd_mixer_elem_t *elem,
 					     long *min, long *max);
-int snd_mixer_selem_get_capture_dB_range(snd_mixer_elem_t *elem, 
+int snd_mixer_selem_get_capture_dB_range(snd_mixer_elem_t *elem,
 					 long *min, long *max);
-int snd_mixer_selem_set_capture_volume_range(snd_mixer_elem_t *elem, 
+int snd_mixer_selem_set_capture_volume_range(snd_mixer_elem_t *elem,
 					     long min, long max);
 
 int snd_mixer_selem_is_enumerated(snd_mixer_elem_t *elem);

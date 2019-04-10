@@ -121,7 +121,7 @@ void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL
 
 	u32 t = VRAM_SIZE;
 	fwrite(&t, 1, sizeof(t), fw);
-	
+
 	u8* compressed;
 	uLongf compressed_size;
 	u8* src_vram = vram;
@@ -164,7 +164,7 @@ void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL
 }
 
 TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
-	
+
 	FILE* fw = fopen(file, "rb");
 	if (fw == NULL)
 		die("Cannot open frame to display");
@@ -237,7 +237,7 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 	fread(pvr_regs, 1, sizeof(pvr_regs), fw);
 
 	fclose(fw);
-    
+
     return ctx;
 }
 
@@ -426,7 +426,7 @@ void rend_start_render()
 	if (ctx)
 	{
 		bool is_rtt=(FB_W_SOF1& 0x1000000)!=0 && !ctx->rend.isRenderFramebuffer;
-		
+
 		if (fLogFrames || fCheckFrames) {
 			MD5Context md5;
 			u8 digest[16];
@@ -449,14 +449,14 @@ void rend_start_render()
 					printf("Testing: TA Hash log matches, exiting\n");
 					exit(1);
 				}
-				
+
 				verify(ch == FRAME_MD5);
 
 				fread(digest2, 1, 16, fCheckFrames);
 
 				verify(memcmp(digest, digest2, 16) == 0);
 
-				
+
 			}
 
 			/*
@@ -474,21 +474,21 @@ void rend_start_render()
 			//printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
 			if (!ctx->rend.isRenderFramebuffer)
 				FillBGP(ctx);
-			
+
 			ctx->rend.isRTT=is_rtt;
 
 			ctx->rend.fb_X_CLIP=FB_X_CLIP;
 			ctx->rend.fb_Y_CLIP=FB_Y_CLIP;
-			
+
 			ctx->rend.fog_clamp_min = FOG_CLAMP_MIN;
 			ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
-			
+
 			max_idx=max(max_idx,ctx->rend.idx.used());
 			max_vtx=max(max_vtx,ctx->rend.verts.used());
 			max_op=max(max_op,ctx->rend.global_param_op.used());
 			max_pt=max(max_pt,ctx->rend.global_param_pt.used());
 			max_tr=max(max_tr,ctx->rend.global_param_tr.used());
-			
+
 			max_mvo=max(max_mvo,ctx->rend.global_param_mvo.used());
 			max_modt=max(max_modt,ctx->rend.modtrig.used());
 

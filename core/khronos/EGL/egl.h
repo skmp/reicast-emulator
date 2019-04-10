@@ -300,28 +300,28 @@ extern "C" {
     EGLAPI EGLBoolean EGLAPIENTRY eglDestroyContext(EGLDisplay dpy, EGLContext ctx);
     EGLAPI EGLBoolean EGLAPIENTRY eglMakeCurrent(EGLDisplay dpy, EGLSurface draw,
                                                  EGLSurface read, EGLContext ctx);
-    
+
     EGLAPI EGLContext EGLAPIENTRY eglGetCurrentContext(void);
     EGLAPI EGLSurface EGLAPIENTRY eglGetCurrentSurface(EGLint readdraw);
     EGLAPI EGLDisplay EGLAPIENTRY eglGetCurrentDisplay(void);
     EGLAPI EGLBoolean EGLAPIENTRY eglQueryContext(EGLDisplay dpy, EGLContext ctx,
                                                   EGLint attribute, EGLint *value);
-    
+
     EGLAPI EGLBoolean EGLAPIENTRY eglWaitGL(void);
     EGLAPI EGLBoolean EGLAPIENTRY eglWaitNative(EGLint engine);
     EGLAPI EGLBoolean EGLAPIENTRY eglSwapBuffers(EGLDisplay dpy, EGLSurface surface);
     EGLAPI EGLBoolean EGLAPIENTRY eglCopyBuffers(EGLDisplay dpy, EGLSurface surface,
                                                  EGLNativePixmapType target);
-    
+
     /* This is a generic function pointer type, whose name indicates it must
      * be cast to the proper type *and calling convention* before use.
      */
     typedef void (*__eglMustCastToProperFunctionPointerType)(void);
-    
+
     /* Now, define eglGetProcAddress using the generic function ptr. type */
     EGLAPI __eglMustCastToProperFunctionPointerType EGLAPIENTRY
     eglGetProcAddress(const char *procname);
-    
+
 #ifdef __cplusplus
 }
 #endif

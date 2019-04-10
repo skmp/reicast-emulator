@@ -28,7 +28,7 @@ Disc* cdi_parse(const wchar* file)
 	image.remaining_sessions = image.sessions;
 
 	/////////////////////////////////////////////////////////////// Loop sessions
-	
+
 	bool ft=true, CD_M2=false,CD_M1=false,CD_DA=false;
 
 	while(image.remaining_sessions > 0)
@@ -73,7 +73,7 @@ Disc* cdi_parse(const wchar* file)
 				default: printf("Mode2/"); break;
 				}
 				printf("%lu  ",track.sector_size);
-				
+
 				printf("Pregap: %-3ld  ",track.pregap_length);
 				printf("Size: %-6ld  ",track.length);
 				printf("LBA: %-6ld  ",track.start_lba);
@@ -125,7 +125,7 @@ Disc* cdi_parse(const wchar* file)
 					}
 					else
 					{
-						
+
 						//printf("Track position: %lu\n",track.position + track.pregap_length * track.sector_size);
 						core_fseek(fsource, track.position, SEEK_SET);
 						//     fseek(fsource, track->pregap_length * track->sector_size, SEEK_CUR);
@@ -190,7 +190,7 @@ Disc* cdi_parse(const wchar* file)
 
 	DWORD dwSize;//
 	DWORD dwErr = PfcGetToc(file, pstToc, dwSize);
-	if (dwErr == PFCTOC_OK) 
+	if (dwErr == PFCTOC_OK)
 	{
 		rv= new CDIDisc(pstToc,file);
 	}

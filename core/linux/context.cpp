@@ -92,7 +92,7 @@ void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_se
 	#error Unsupported HOST_CPU
 #endif
 	#endif
-	
+
 }
 
 void context_from_segfault(rei_host_context_t* reictx, void* segfault_ctx) {

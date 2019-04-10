@@ -7,7 +7,7 @@
 
 namespace ARM
 {
-	
+
 	//	[cond][110][Opcode][-Rn-][----][101][---------]
 	//
 	//	cond != 0b1111	| LDC && STC consume these
@@ -78,7 +78,7 @@ namespace ARM
 		EMIT_I;
 	}
 
-	
+
 
 	/*
 	 *	V{LD,ST}M:	Vector Load/Store Multiple

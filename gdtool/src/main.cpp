@@ -32,31 +32,31 @@ void data_kvp(FILE* w, const char* k, const char* v, bool first) {
 	fprintf(w, "%s\t\"%s\":\"%s\"", first?"\n":",\n", k, v);
 }
 
-void parse_ip_meta(FILE* w, u8* ip_meta, bool first) 
+void parse_ip_meta(FILE* w, u8* ip_meta, bool first)
 {
 	char temp[256];
 
 	const char* chm = (const char*)ip_meta;
 
 	#define HH(ofs, len, name, first) { strncpy(temp, chm+ofs, len); temp[len]=0; for (int i=len-1; i>=0; i--) if(temp[i]==' ') temp[i]=0; else break; data_kvp(w, #name, temp, first);  }
-	
+
 	fprintf(w, "%s\"meta-info\": {\n", first?"\n":",\n");
-	
+
 	//data_kvp("type", "\"meta-info\"");
 
 	HH(0x00,  16, hardwareId, true);
 	HH(0x10,  16, makerId, false);
-	
+
 	HH(0x80, 128, productName, false);
 	HH(0x4A,   6, productVersion, false);
 	HH(0x50,  16, releaseDate, false);
 	HH(0x40,  10, productId, false);
 	HH(0x20,  16, discId, false);
-	
+
 
 	HH(0x30,   8, areas, false);
 	HH(0x38,   8, peripherals, false);
-	
+
 	HH(0x60,  16, bootfile, false);
 	HH(0x70,  16, publisher, false);
 
@@ -86,7 +86,7 @@ struct gdio : cdimage {
 			int toread = min(2048, rem) - pos%2048;
 
 			memcpy(to, &tmp[pos%2048], toread),
-			
+
 			(char*&)to += rem;
 			pos += toread;
 			rem -= toread;
@@ -118,7 +118,7 @@ bool extract_info(FILE* w, bool first, Disc* d, const string& basename) {
 			printf("Not a selfboot cd\n");
 			return false;
 		}
-		start_fad = d->sessions[1].StartFAD; 
+		start_fad = d->sessions[1].StartFAD;
 	}
 
 	u8 ip_meta[2048];
@@ -138,7 +138,7 @@ bool extract_info(FILE* w, bool first, Disc* d, const string& basename) {
 		if (d->type == GdRom) {
 			verify(d->sessions.size() == 2);
 		}
-			
+
 		fprintf(w,",\n\"tracks\": [");
 		{
 			for (int i=0; i<d->tracks.size(); i++) {
@@ -158,7 +158,7 @@ bool extract_info(FILE* w, bool first, Disc* d, const string& basename) {
 
 		//im
 		gdio* image = new gdio(d);
-		
+
 		if (d->type == GdRom) {
 			parse_cdfs(w, image, "gdfs", d->tracks[0].StartFAD-image->offs, false);
 		}
@@ -171,7 +171,7 @@ bool extract_info(FILE* w, bool first, Disc* d, const string& basename) {
 	data_tail();
 }
 void extract_data(FILE* w, bool first, Disc* d, int start_fad, int size) {
-	
+
 	u8 temp[2048];
 
 	int current = start_fad;
@@ -182,7 +182,7 @@ void extract_data(FILE* w, bool first, Disc* d, int start_fad, int size) {
 		int step = min(2048, size);
 
 		fwrite(temp, 1, step, w);
-						
+
 		size-=step;
 	}
 }
@@ -233,10 +233,10 @@ bool jsarray;
 vector<string> cmds;
 vector<string> files;
 void exec_cmd(FILE* w, bool first,  Disc* d, const string& basename) {
-	
+
 	for (auto i=cmds.begin();i!=cmds.end();i++)
 	{
-		switch((*i)[0]) 
+		switch((*i)[0])
 		{
 			case 'g':
 				{
@@ -245,7 +245,7 @@ void exec_cmd(FILE* w, bool first,  Disc* d, const string& basename) {
 				int size = atoi((++i)->c_str());
 
 				extract_data(w, first, d, start_fad, size);
-				
+
 			}
 			break;
 
@@ -293,7 +293,7 @@ bool process_image(FILE* w, bool& first, const string& image) {
 
 
 void parse_args(int argc, char** argv) {
-	
+
 	int i = 1;
 
 	int rem = argc - i -1;
@@ -301,7 +301,7 @@ void parse_args(int argc, char** argv) {
 	while(i  < argc) {
 		char** p= argv + i;
 
-		if (p[0][0] == '-') 
+		if (p[0][0] == '-')
 		{
 			auto cmd = string(p[0]);
 
@@ -348,7 +348,7 @@ int main(int argc, char** argv)
 
 
 	if (jsarray) {
-		fprintf(w, "\n[\n");	
+		fprintf(w, "\n[\n");
 	}
 
 	if (files.size() > 0) {

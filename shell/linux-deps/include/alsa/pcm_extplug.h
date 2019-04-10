@@ -44,7 +44,7 @@ enum {
 	SND_PCM_EXTPLUG_HW_CHANNELS,	/**< channels */
 	SND_PCM_EXTPLUG_HW_PARAMS	/**< max number of hw constraints */
 };
-	
+
 /** Handle of external filter plugin */
 typedef struct snd_pcm_extplug snd_pcm_extplug_t;
 /** Callback table of extplug */

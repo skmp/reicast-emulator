@@ -574,7 +574,7 @@ bool naomi_cart_LoadRom(char* file)
 		if (RomCacheMap[i] == INVALID_FD)
 		{
 			//printf("-Reserving ram at 0x%08X, size 0x%08X\n", fstart[i], fsize[i]);
-			
+
 #if HOST_OS == OS_WINDOWS
 			bool mapped = RomDest == VirtualAlloc(RomDest, fsize[i], MEM_RESERVE, PAGE_NOACCESS);
 #else
@@ -632,7 +632,7 @@ bool naomi_cart_SelectFile()
 	char SelectedFile[512];
 
 	cfgLoadStr("config", "image", SelectedFile, "null");
-	
+
 	if (!naomi_cart_LoadRom(SelectedFile))
 	{
 		printf("Cannot load %s: error %d\n", SelectedFile, errno);

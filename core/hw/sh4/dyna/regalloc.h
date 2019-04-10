@@ -361,7 +361,7 @@ struct RegAlloc
 			return (nregf_t)-1;
 		}
 	}
-	
+
 
 	bool IsFlushOp(RuntimeBlockInfo* block, int opid)
 	{
@@ -417,7 +417,7 @@ struct RegAlloc
 
 	void flush_span(u32 sid)
 	{
-		if (spans[sid]) 
+		if (spans[sid])
 		{
 			spans[sid]->Flush();
 			spans[sid]=0;
@@ -541,17 +541,17 @@ struct RegAlloc
 
 				//insert regs into sets ..
 				InsertRegs(reg_wt,op->rd);
-				
+
 				InsertRegs(reg_wt,op->rd2);
 
 				InsertRegs(reg_rd,op->rs1);
-				
+
 				InsertRegs(reg_rd,op->rs2);
 
 				InsertRegs(reg_rd,op->rs3);
 
 				set<shil_param>::iterator iter=reg_wt.begin();
-				while( iter != reg_wt.end() ) 
+				while( iter != reg_wt.end() )
 				{
 					if (reg_rd.count(*iter))
 					{
@@ -621,7 +621,7 @@ struct RegAlloc
 				}
 
 				iter=reg_rd.begin();
-				while( iter != reg_rd.end() ) 
+				while( iter != reg_rd.end() )
 				{
 					//r
 					if ((*iter).is_reg())
@@ -651,11 +651,11 @@ struct RegAlloc
 					}
 					++iter;
 				}
-			
+
 				/*
 				for (int sid=0;sid<sh4_reg_count;sid++)
 				{
-					if (spans[sid]) 
+					if (spans[sid])
 					{
 						spans[sid]->Flush();
 						spans[sid]=0;
@@ -684,7 +684,7 @@ struct RegAlloc
 
 		u32 reg_cc_max_f=regsf.size();
 
-		
+
 		//Trim span count to max reg count
 		for (size_t opid=0;opid<block->oplist.size();opid++)
 		{
@@ -724,9 +724,9 @@ struct RegAlloc
 		{
 			bool alias_mov=false;
 
-			if (block->oplist[opid].op==shop_mov32 && 
-				( 
-				(block->oplist[opid].rd.is_r32i() && block->oplist[opid].rs1.is_r32i() ) || 
+			if (block->oplist[opid].op==shop_mov32 &&
+				(
+				(block->oplist[opid].rd.is_r32i() && block->oplist[opid].rs1.is_r32i() ) ||
 				(block->oplist[opid].rd.is_r32f() && block->oplist[opid].rs1.is_r32f() )
 				))
 			{
@@ -816,7 +816,7 @@ struct RegAlloc
 		for (u32 sid=0;sid<all_spans.size();sid++)
 		{
 			RegSpan* spn=all_spans[sid];
-			
+
 			if (spn->start==0) continue; //can't move anyway ..
 
 			//try to move beginnings backwards
@@ -852,12 +852,12 @@ struct RegAlloc
 					}
 					if (opid_found!=-1 && (spn->start-opid)<=1 && opid_plc<2)
 						break;
-					
+
 					opid++;
 				}
 
 				bool do_move= false;
-				
+
 				if (opid_found!=-1)
 				{
 					do_move=true;
@@ -884,7 +884,7 @@ struct RegAlloc
 		for (u32 sid=0;sid<all_spans.size();sid++)
 		{
 			RegSpan* spn=all_spans[sid];
-			
+
 			if (spn->end==blk_last) continue; //can't move anyway ..
 
 			//try to move beginnings backwards
@@ -921,7 +921,7 @@ struct RegAlloc
 
 					if (opid_found!=-1 && (opid-spn->end)<=1 && opid_plc<2)
 						break;
-					
+
 					opid--;
 				}
 
@@ -1126,7 +1126,7 @@ struct RegAlloc
 
 		for (int sid=0;sid<sh4_reg_count;sid++)
 		{
-			if (spans[sid]) 
+			if (spans[sid])
 				spans[sid]=0;
 		}
 

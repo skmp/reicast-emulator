@@ -59,10 +59,10 @@ MODE1:
 SYNC (12) | HEAD (4) | data (2048) | edc (4) | space (8) | ecc (276)
 MODE2:
 SYNC (12) | HEAD (4) | sub-head (8) | sector_data (2328)
-  -form1 sector_data: 
+  -form1 sector_data:
    data (2048) | edc (4) | ecc (276)
 
-  -form2 sector_data: 
+  -form2 sector_data:
    data (2324) |edc(4)
 */
 
@@ -71,7 +71,7 @@ enum SectorFormat
 	SECFMT_2352,				//full sector
 	SECFMT_2048_MODE1,			//2048 user byte, form1 sector
 	SECFMT_2048_MODE2_FORM1,	//2048 user bytes, form2m1 sector
-	SECFMT_2336_MODE2,			//2336 user bytes, 
+	SECFMT_2336_MODE2,			//2336 user bytes,
 	SECFMT_2448_MODE2,			//2048 user bytes, ? SYNC (12) | HEAD (4) | sub-head (8) | data (2048) | edc (4) | ecc (276) + subcodes (96) ?
 };
 
@@ -213,7 +213,7 @@ struct Disc
 			count--;
 		}
 	}
-	virtual ~Disc() 
+	virtual ~Disc()
 	{
 		for (size_t i=0;i<tracks.size();i++)
 			tracks[i].Destroy();
@@ -249,7 +249,7 @@ struct Disc
 			u32 fmt=tracks[i].CTRL==4?2048:2352;
 			char fsto[1024];
 			sprintf(fsto,"%s%s%d.img",path.c_str(),".track",i);
-			
+
 			FILE* fo=fopen(fsto,"wb");
 
 			for (u32 j=tracks[i].StartFAD;j<=tracks[i].EndFAD;j++)

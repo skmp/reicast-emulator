@@ -36,13 +36,13 @@ void map_area1_init()
 void map_area1(u32 base)
 {
 	//map vram
-	
+
 	//Lower 32 mb map
 	//64b interface
 	_vmem_map_block(vram.data,0x04 | base,0x04 | base,VRAM_SIZE-1);
 	//32b interface
 	_vmem_map_handler(area1_32b,0x05 | base,0x05 | base);
-	
+
 	//Upper 32 mb mirror
 	//0x0600 to 0x07FF
 	_vmem_mirror_mapping(0x06|base,0x04|base,0x02);
@@ -74,7 +74,7 @@ void map_area3(u32 base)
 //AREA 4
 void map_area4_init()
 {
-	
+
 }
 
 void map_area4(u32 base)
@@ -113,7 +113,7 @@ void map_area5(u32 base)
 	_vmem_map_handler(area5_handler,base|0x14,base|0x17);
 }
 
-//AREA 6	--	Unassigned 
+//AREA 6	--	Unassigned
 void map_area6_init()
 {
 	//nothing to map :p
@@ -130,7 +130,7 @@ void mem_map_default()
 	//vmem - init/reset :)
 	_vmem_init();
 
-	
+
 	//*TEMP*
 	//setup a fallback handler , that calls old code :)
 	//_vmem_handler def_handler =
@@ -216,7 +216,7 @@ void mem_Term()
 
 	//write back Flash/SRAM
 	SaveRomFiles(get_writable_data_path("/data/"));
-	
+
 	//mem_b.Term(); // handled by vmem
 
 	//vmem
@@ -318,7 +318,7 @@ u8* GetMemPtr(u32 Addr,u32 size)
 	{
 		case 3:
 		return &mem_b[Addr & RAM_MASK];
-		
+
 		case 0:
 		case 1:
 		case 2:

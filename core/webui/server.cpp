@@ -88,7 +88,7 @@ enum demo_protocols {
 struct serveable {
 	const char *urlpath;
 	const char *mimetype;
-}; 
+};
 
 struct per_session_data__http {
 	int fd;
@@ -810,7 +810,7 @@ void webui_start()
 	double old_time = 0;
 
 	while (n >= 0 && !force_exit) {
-		
+
 		double time = os_GetSeconds();
 
 		/*

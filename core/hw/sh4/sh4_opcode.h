@@ -15,7 +15,7 @@ enum OpcodeAccessFlags
 	OAF_SR_S,
 	OAF_FPSCR,
 	OAF_PC,
-	
+
 	//Other storage
 	OAF_MEM,
 	OAF_SQWB,

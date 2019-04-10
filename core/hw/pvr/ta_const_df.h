@@ -1,5 +1,5 @@
 ///this file is here to make up for C++'s limitations
-static TaListFP* ta_poly_data_lut[15] = 
+static TaListFP* ta_poly_data_lut[15] =
 {
 	ta_poly_data<0,SZ32>,
 	ta_poly_data<1,SZ32>,

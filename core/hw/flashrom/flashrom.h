@@ -28,7 +28,7 @@ struct MemChip
 		return data[addr&mask];
 	}
 
-	u32 Read(u32 addr,u32 sz) 
+	u32 Read(u32 addr,u32 sz)
 	{
 		addr&=mask;
 
@@ -96,7 +96,7 @@ struct MemChip
 			{
 				sprintf(temp,"%s%s",base,curr);
 			}
-			
+
 			curr=next+1;
 
 			if (Load(temp))
@@ -239,7 +239,7 @@ struct DCFlashChip : MemChip
 		//reset the flash chip state
 		state = FS_Normal;
 	}
-	
+
 	virtual u8 Read8(u32 addr)
 	{
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
@@ -267,7 +267,7 @@ struct DCFlashChip : MemChip
 
 		return rv;
 	}
-	
+
 
 	void Write(u32 addr,u32 val,u32 sz)
 	{
@@ -275,7 +275,7 @@ struct DCFlashChip : MemChip
 			die("invalid access size");
 
 		addr &= mask;
-		
+
 		switch(state)
 		{
 		case FS_Normal:

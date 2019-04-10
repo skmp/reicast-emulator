@@ -35,7 +35,7 @@ public:
 	virtual bool gamepad_btn_input(u32 code, bool pressed);
 	bool gamepad_axis_input(u32 code, int value);
 	virtual ~GamepadDevice() {}
-	
+
 	void detect_btn_input(input_detected_cb button_pressed);
 	void detect_axis_input(input_detected_cb axis_moved);
 	void cancel_detect_input()

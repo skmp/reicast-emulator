@@ -15,9 +15,9 @@
 void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool staging, bool optimise);
 
 #if BUILD_COMPILER == COMPILER_GCC
-extern "C" 
+extern "C"
 {
-#endif	
+#endif
 
 void ngen_LinkBlock_Generic_stub();
 void ngen_LinkBlock_cond_Next_stub();

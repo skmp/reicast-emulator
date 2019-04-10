@@ -11,7 +11,7 @@
 namespace ARM
 {
 
-	
+
 	enum AddrMode {
 
 		Offset,			// [Rn, offset]		- Base:Offset used for access, no writeback
@@ -98,7 +98,7 @@ namespace ARM
 		I,P,U,W	- Specify type of addressing mode
 		L		- Specify Load (L==1), else Store
 		S		- Specify signed (S==1), else unsigned access
-		H		- Specify Halfword access, else signed byte	
+		H		- Specify Halfword access, else signed byte
 
 	--------------------------------------------------------------------------------------
 
@@ -131,8 +131,8 @@ namespace ARM
 	LDRB I	010 PU1W1 Rn Rt imm12				-	STRB I	010 PU1W0 Rn Rt imm12
 	LDRB R	011 PU1W1 Rn Rt imm5 type 0 Rm		-	STRB R	011 PU1W0 Rn Rt imm5 type 0 Rm
 
-	LDRBT I	
-	LDRBT R	
+	LDRBT I
+	LDRBT R
 
 	--------------------------------------------------------------------------------------
 
@@ -181,8 +181,8 @@ extern eReg reg_addr;
 extern eReg reg_dst;
 extern s32 imma;
 
-EAPI LDR (eReg Rt, eReg Rn, s32 sImm12=0, AddrMode mode=Offset, ConditionCode CC=AL)	
-{	
+EAPI LDR (eReg Rt, eReg Rn, s32 sImm12=0, AddrMode mode=Offset, ConditionCode CC=AL)
+{
 	if (emit_opt+4==(u8*)EMIT_GET_PTR() && reg_addr==Rn && imma==sImm12)
 	{
 		if (reg_dst!=Rt)
@@ -190,16 +190,16 @@ EAPI LDR (eReg Rt, eReg Rn, s32 sImm12=0, AddrMode mode=Offset, ConditionCode CC
 	}
 	else
 	{
-		DECL_Id(0x04100000); SET_CC; SET_Rtn; SET_AddrMode; SET_sImm12; EMIT_I;	
+		DECL_Id(0x04100000); SET_CC; SET_Rtn; SET_AddrMode; SET_sImm12; EMIT_I;
 	}
 }
-EAPI STR (eReg Rt, eReg Rn, s32 sImm12=0, AddrMode mode=Offset, ConditionCode CC=AL)	
-{	
+EAPI STR (eReg Rt, eReg Rn, s32 sImm12=0, AddrMode mode=Offset, ConditionCode CC=AL)
+{
 	emit_opt=0;//(u8*)EMIT_GET_PTR();
 	reg_addr=Rn;
 	reg_dst=Rt;
 	imma=sImm12;
-	DECL_Id(0x04000000); SET_CC; SET_Rtn; SET_AddrMode; SET_sImm12; EMIT_I;	
+	DECL_Id(0x04000000); SET_CC; SET_Rtn; SET_AddrMode; SET_sImm12; EMIT_I;
 }
 EAPI LDRB(eReg Rt, eReg Rn, s32 sImm12=0, AddrMode mode=Offset, ConditionCode CC=AL)	{	DECL_Id(0x04500000); SET_CC; SET_Rtn; SET_AddrMode; SET_sImm12; SET_B; EMIT_I;	}	// Prob don't need SET_B, in iID
 EAPI STRB(eReg Rt, eReg Rn, s32 sImm12=0, AddrMode mode=Offset, ConditionCode CC=AL)	{	DECL_Id(0x04400000); SET_CC; SET_Rtn; SET_AddrMode; SET_sImm12; SET_B; EMIT_I;	}	// Prob don't need SET_B, in iID

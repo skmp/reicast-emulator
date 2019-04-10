@@ -129,7 +129,7 @@ typedef enum snd_seq_client_type {
 	SND_SEQ_USER_CLIENT     = 1,	/**< user client */
 	SND_SEQ_KERNEL_CLIENT   = 2	/**< kernel client */
 } snd_seq_client_type_t;
-                        
+
 size_t snd_seq_client_info_sizeof(void);
 /** allocate a #snd_seq_client_info_t container on stack */
 #define snd_seq_client_info_alloca(ptr) \

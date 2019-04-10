@@ -45,7 +45,7 @@ void EXPORT_CALL handle_SwitchDisc(u32 id,void* w,void* p)
 	//msgboxf("This feature is not yet implemented",MB_ICONWARNING);
 	//return;
 	TermDrive();
-	
+
 	NullDriveDiscType=Busy;
 	DriveNotifyEvent(DiskChange,0);
 	Sleep(150);	//busy for a bit

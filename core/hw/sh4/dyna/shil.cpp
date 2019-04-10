@@ -196,7 +196,7 @@ void rdgrp(RuntimeBlockInfo* blk)
 		}
 	}
 
-	
+
 	for (size_t i=0;i<blk->oplist.size();i++)
 	{
 		shil_opcode* op=&blk->oplist[i];
@@ -282,7 +282,7 @@ void wtgrp(RuntimeBlockInfo* blk)
 		}
 	}
 
-	
+
 	for (size_t i=0;i<blk->oplist.size();i++)
 	{
 		shil_opcode* op=&blk->oplist[i];
@@ -331,7 +331,7 @@ void rw_related(RuntimeBlockInfo* blk)
 					reg[op->rd._reg]=0;
 			}
 		}
-		else 
+		else
 		{
 
 			if (op->op==shop_readm || op->op==shop_writem)
@@ -353,9 +353,9 @@ void rw_related(RuntimeBlockInfo* blk)
 				}
 			}
 
-			if (op->rd.is_reg() && reg[op->rd._reg]) 
+			if (op->rd.is_reg() && reg[op->rd._reg])
 				reg[op->rd._reg]=0;
-			if (op->rd2.is_reg() && reg[op->rd2._reg]) 
+			if (op->rd2.is_reg() && reg[op->rd2._reg])
 				reg[op->rd2._reg]=0;
 		}
 
@@ -392,9 +392,9 @@ void constprop(RuntimeBlockInfo* blk)
 			/*
 				not all opcodes can take rs2 as constant
 			*/
-			if (op->op!=shop_readm && op->op!=shop_writem 
-				&& op->op!=shop_mul_u16 && op->op!=shop_mul_s16 && op->op!=shop_mul_i32 
-				&& op->op!=shop_mul_u64 && op->op!=shop_mul_s64 
+			if (op->op!=shop_readm && op->op!=shop_writem
+				&& op->op!=shop_mul_u16 && op->op!=shop_mul_s16 && op->op!=shop_mul_i32
+				&& op->op!=shop_mul_u64 && op->op!=shop_mul_s64
 				&& op->op!=shop_adc && op->op!=shop_sbc)
 			{
 				op->rs2.type=FMT_IMM;
@@ -435,7 +435,7 @@ void constprop(RuntimeBlockInfo* blk)
 					else
 					{
 						//x86e->Emit(sr32,reg.mapg(op->rd),-v);
-						if (op->op!=shop_shad)	
+						if (op->op!=shop_shad)
 							op->op=shop_shr;
 						else
 							op->op=shop_sar;
@@ -465,7 +465,7 @@ void constprop(RuntimeBlockInfo* blk)
 				if (blk->BlockType==BET_DynamicJump || blk->BlockType==BET_DynamicCall)
 				{
 					blk->BranchBlock=rv[op->rs1._reg];
-					if (op->rs2.is_imm())	
+					if (op->rs2.is_imm())
 						blk->BranchBlock+=op->rs2._imm;;
 
 					blk->BlockType=blk->BlockType==BET_DynamicJump?BET_StaticJump:BET_StaticCall;
@@ -485,18 +485,18 @@ void constprop(RuntimeBlockInfo* blk)
 			}
 			else if (op->op==shop_add || op->op==shop_sub)
 			{
-									
+
 				if (op->rs2.is_imm())
 				{
 					op->rs1.type=1;
-					op->rs1._imm= op->op==shop_add ? 
+					op->rs1._imm= op->op==shop_add ?
 						(rv[op->rs1._reg]+op->rs2._imm):
 						(rv[op->rs1._reg]-op->rs2._imm);
 					op->rs2.type=0;
 					printf("%s -> mov32!\n",op->op==shop_add?"shop_add":"shop_sub");
 					op->op=shop_mov32;
 				}
-				
+
 				else if (op->op==shop_add && !op->rs2.is_imm())
 				{
 					u32 immy=rv[op->rs1._reg];
@@ -545,7 +545,7 @@ void constprop(RuntimeBlockInfo* blk)
 //read_v4m3z1
 void read_v4m3z1(RuntimeBlockInfo* blk)
 {
-	
+
 	int state=0;
 	int st_sta=0;
 	Sh4RegType reg_a;
@@ -575,7 +575,7 @@ void read_v4m3z1(RuntimeBlockInfo* blk)
 			if (state==7)
 			{
 				u32 start=st_sta;
-				
+
 				for (int j=0;j<6;j++)
 				{
 					blk->oplist.erase(blk->oplist.begin()+start);
@@ -610,7 +610,7 @@ void read_v4m3z1(RuntimeBlockInfo* blk)
 			else
 				goto _next_st;
 		}
-		else if (state >1 && 
+		else if (state >1 &&
 			op->op==shop_readm && op->rd.is_r32f() && op->rd._reg==(reg_fb+state/2) && op->rs1.is_r32i() && op->rs1._reg==reg_a && op->rs3.is_null())
 		{
 			goto _next_st;
@@ -625,12 +625,12 @@ void read_v4m3z1(RuntimeBlockInfo* blk)
 				if (a)
 					printf("NOT B\b");
 				u32 start=st_sta;
-								
+
 				for (int j=0;j<5;j++)
 				{
 					blk->oplist.erase(blk->oplist.begin()+start);
 				}
-				
+
 				i=start+1;
 				op=&blk->oplist[start+0];
 				op->op=shop_readm;
@@ -722,7 +722,7 @@ void enswap(RuntimeBlockInfo* blk)
 {
 	Sh4RegType r;
 	int state=0;
-	
+
 	for (size_t i=0;i<blk->oplist.size();i++)
 	{
 		shil_opcode* op=&blk->oplist[i];
@@ -744,7 +744,7 @@ void enswap(RuntimeBlockInfo* blk)
 			}
 		}
 
-		if (state==1 && op->op==shop_ror && op->rs2.is_imm() && op->rs2._imm==16 && 
+		if (state==1 && op->op==shop_ror && op->rs2.is_imm() && op->rs2._imm==16 &&
 			op->rs1._reg==r)
 		{
 			if (op->rd._reg==r)
@@ -874,7 +874,7 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 	for (size_t i=0;i<blk->oplist.size();i++)
 	{
 		shil_opcode* op=&blk->oplist[i];
-		
+
 		if (op->rs1.is_reg() && st[op->rs1._reg]==0)
 			st[op->rs1._reg]=1;
 
@@ -930,9 +930,9 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 //	rdgrp(blk);
 //	wtgrp(blk);
 	//constprop(blk);
-	
+
 #endif
-	bool last_op_sets_flags=!blk->has_jcond && blk->oplist.size() > 0 && 
+	bool last_op_sets_flags=!blk->has_jcond && blk->oplist.size() > 0 &&
 		blk->oplist[blk->oplist.size()-1].rd._reg==reg_sr_T;
 
 	srt_waw(blk);
@@ -1049,7 +1049,7 @@ string dissasm_param(const shil_param& prm, bool comma)
 			ss << ", ";
 
 	if (prm.is_imm())
-	{	
+	{
 		if (prm.is_imm_s8())
 			ss  << (s32)prm._imm ;
 		else
@@ -1069,7 +1069,7 @@ string dissasm_param(const shil_param& prm, bool comma)
 			ss << "sr";
 		else
 			ss << "s" << prm._reg;
-			
+
 
 		if (prm.count()>1)
 		{

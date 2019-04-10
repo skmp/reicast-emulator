@@ -20,13 +20,13 @@
 
 namespace ARM
 {
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
 	/*
 	 *	imm				Rd,[Rn,] imm
 	 *	reg				Rd,Rn,Rm shift
@@ -36,56 +36,56 @@ namespace ARM
 	 * sp.reg			Rd {SP} Rm shift
 	 *
 	 */
-	
-	
+
+
 #if 0
 #define dpInstr(iName, iId)	\
 		EAPI iName (eReg Rd, eReg Rn, u32 Imm)	;	\
 		EAPI iName (eReg Rd, eReg Rn, eReg Rm, eShiftOp type=S_LSL, u32 Imm=0)	;	\
 		EAPI iName (eReg Rd, eReg Rn, eReg Rm, eShiftOp type, eReg Rs)	;
-#endif	
-	
+#endif
+
 	/*
-	
+
 	ADC	IMM	0x02A00000
 	ADC REG	0x00A00000
 	ADC RSR	0x00A00010
-	
+
 	ADD IMM	0x02800000
 	ADD REG	0x00800000
 	ADD RSR 0x00800010
 ADD.SP.IMM	0x028D0000
 ADD.SP.REG	0x008D0000
-	
+
 	AND IMM	0x02000000
 	AND REG	0x00000000
 	AND RSR	0x00000010
-	
-	
+
+
 //	ASR's do not fit this pattern moved elsewhere	//
-	
-	
-	
+
+
+
 	BIC IMM	0x03C00000
 	BIC REG 0x01C00000
 	BIC RSR 0x01C00010
-	
+
 	CMN IMM	0x03700000		// N imm
 	CMN REG	0x01700000		// NMshift
 	CMN RSR	0x01700010		// NMtypeS
-	
+
 	CMP IMM 0x03500000		// N imm
 	CMP REG 0x01500000
 	CMP RSR 0x01500010
-	
-	
+
+
 	EOR IMM	0x02200000
 	EOR REG	0x00200000
 	EOR REG	0x00200010
-	
-	
+
+
 	*/
-	
+
 #define DP_PARAMS   (eReg Rd, eReg Rn, ShiftOp Shift, ConditionCode CC=AL)
 #define DP_RPARAMS  (eReg Rd, eReg Rn, eReg Rm, ConditionCode CC=AL)
 
@@ -108,8 +108,8 @@ ADD.SP.REG	0x008D0000
 #define DP_OPCODE(opcode)   \
     I |= (opcode)<<21
 
-	
-	
+
+
 	EAPI	AND DP_PARAMS	{ DP_COMMON;	DP_OPCODE(DP_AND);	EMIT_I; }
 	EAPI	EOR DP_PARAMS	{ DP_COMMON;	DP_OPCODE(DP_EOR);	EMIT_I; }
 	EAPI	SUB DP_PARAMS	{ DP_COMMON;	DP_OPCODE(DP_SUB);	EMIT_I; }
@@ -126,7 +126,7 @@ ADD.SP.REG	0x008D0000
 	EAPI	MOV DP_PARAMS	{ DP_COMMON;	DP_OPCODE(DP_MOV);	EMIT_I; }
 	EAPI	BIC DP_PARAMS	{ DP_COMMON;	DP_OPCODE(DP_BIC);	EMIT_I; }
 	EAPI	MVN DP_PARAMS	{ DP_COMMON;	DP_OPCODE(DP_MVN);	EMIT_I; }
-	
+
 #if defined(_DEVEL) && defined(_NODEF_)   // These require testing -> CMP/MOV Shifter(Reg)? fmt broken?		// Simple third reg type w/ no shifter
 	EAPI	AND DP_PARAMS	{ DP_RCOMMON;	DP_OPCODE(DP_AND);	EMIT_I; }
 	EAPI	EOR DP_PARAMS	{ DP_RCOMMON;	DP_OPCODE(DP_EOR);	EMIT_I; }
@@ -174,7 +174,7 @@ ADD.SP.REG	0x008D0000
 
 		static bool is_i8r4(u32 i32) {	return ARMImmid8r4_enc(i32) != -1;	}
 
-   
+
 
 		EAPI ADD(eReg Rd, eReg Rn, eReg Rm, u32 RmLSL, bool S, ConditionCode CC=AL)
         {
@@ -200,7 +200,7 @@ ADD.SP.REG	0x008D0000
 		EAPI ADD(eReg Rd, eReg Rn, eReg Rm, ShiftOp Shift, u32 Imm8, ConditionCode CC=AL)
 		{
             DECL_Id(0x00800000);
-			
+
 			SET_CC;
             I |= (Rn&15)<<16;
             I |= (Rd&15)<<12;
@@ -209,7 +209,7 @@ ADD.SP.REG	0x008D0000
 			I |= (Imm8&31)<<7;
 			EMIT_I;
 		}
-		
+
 		EAPI ADD(eReg Rd, eReg Rn, eReg Rm, ConditionCode CC=AL)
         {
 			ADD(Rd,Rn,Rm,false,CC);
@@ -260,10 +260,10 @@ ADD.SP.REG	0x008D0000
 		EAPI ADC(eReg Rd, eReg Rn, eReg Rm, bool S, ShiftOp Shift, u32 Imm8, ConditionCode CC=AL)
 		{
 			DECL_Id(0x00A00000);
-			
+
 			if (S)
 			I |= 1<<20;
-			
+
 			SET_CC;
 			I |= (Rn&15)<<16;
 			I |= (Rd&15)<<12;
@@ -272,8 +272,8 @@ ADD.SP.REG	0x008D0000
 			I |= (Imm8&31)<<7;
 			EMIT_I;
 		}
-		
-	
+
+
 
         EAPI ADR(eReg Rd, s32 Imm8, ConditionCode CC=AL)
         {
@@ -317,11 +317,11 @@ ADD.SP.REG	0x008D0000
             I |= ARMImmid8r4(Imm8);  // * 12b imm is 8b imm 4b rot. spec, add rot support!
             EMIT_I;
         }
-		
+
 		EAPI ORR(eReg Rd, eReg Rn, eReg Rm, ShiftOp Shift, eReg Rs, ConditionCode CC=AL)
 		{
 			DECL_Id(0x01800000);
-			
+
 			SET_CC;
 			I |= (Rn&15)<<16;
 			I |= (Rd&15)<<12;
@@ -331,14 +331,14 @@ ADD.SP.REG	0x008D0000
 			I |= 1<<4;
 			EMIT_I;
 		}
-	
+
 		EAPI ORR(eReg Rd, eReg Rn, eReg Rm, bool S, ShiftOp Shift, u32 Imm8, ConditionCode CC=AL)
 		{
 			DECL_Id(0x01800000);
-			
+
 			if (S)
 				I |= 1<<20;
-			
+
 			SET_CC;
 			I |= (Rn&15)<<16;
 			I |= (Rd&15)<<12;
@@ -347,7 +347,7 @@ ADD.SP.REG	0x008D0000
 			I |= (Imm8&31)<<7;
 			EMIT_I;
 		}
-		
+
 		EAPI AND(eReg Rd, eReg Rn, eReg Rm, bool S, ConditionCode CC=AL)
         {
             DECL_Id(0x00000000);
@@ -465,22 +465,22 @@ ADD.SP.REG	0x008D0000
 		EAPI SBC(eReg Rd, eReg Rn, eReg Rm, bool S, ConditionCode CC=AL)
 		{
 			DECL_Id(0x00C00000);
-			
+
 			if (S)
 			I |= 1<<20;
-			
+
 			SET_CC;
 			I |= (Rn&15)<<16;
 			I |= (Rd&15)<<12;
 			I |= (Rm&15);
 			EMIT_I;
 		}
-		
+
 		EAPI SBC(eReg Rd, eReg Rn, eReg Rm, ConditionCode CC=AL)
 		{
 			SBC(Rd,Rn,Rm,false,CC);
 		}
-	
+
         EAPI RSB(eReg Rd, eReg Rn, eReg Rm, ConditionCode CC=AL)
         {
             DECL_Id(0x00600000);
@@ -510,7 +510,7 @@ ADD.SP.REG	0x008D0000
 
 			if (S)
 			I |= 1<<20;
-			
+
             SET_CC;
             I |= (Rn&15)<<16;
             I |= (Rd&15)<<12;
@@ -604,20 +604,20 @@ ADD.SP.REG	0x008D0000
 		EAPI MOV(eReg Rd, eReg Rm, bool S, ConditionCode CC=AL)
 		{
 			DECL_Id(0x01A00000);
-			
+
 			if (S)
 				I |= 1<<20;
-			
+
 			SET_CC;
 			I |= (Rd&15)<<12;
 			I |= (Rm&15);
 			EMIT_I;
 		}
-		
+
 		EAPI MOV(eReg Rd, eReg Rm, ShiftOp Shift, u32 Imm8, ConditionCode CC=AL)
 		{
 			DECL_Id(0x01A00000);
-			
+
 			SET_CC;
 			I |= (Rd&15)<<12;
 			I |= (Rm&15);
@@ -625,11 +625,11 @@ ADD.SP.REG	0x008D0000
 			I |= (Imm8&31)<<7;
 			EMIT_I;
 		}
-		
+
 		EAPI MOV(eReg Rd, eReg Rm, ShiftOp Shift, eReg Rs, ConditionCode CC=AL)
 		{
 			DECL_Id(0x01A00000);
-			
+
 			SET_CC;
 			I |= (Rd&15)<<12;
 			I |= (Rm&15);
@@ -638,7 +638,7 @@ ADD.SP.REG	0x008D0000
 			I |= 1<<4;
 			EMIT_I;
 		}
-	
+
 		EAPI MOVW(eReg Rd, u32 Imm16, ConditionCode CC=AL)
 		{
 			DECL_Id(0x03000000);
@@ -660,18 +660,18 @@ ADD.SP.REG	0x008D0000
 			I |= (Imm16&0x0FFF);
 			EMIT_I;
 		}
-		
+
 		EAPI MOV(eReg Rd, s32 Imm8, ConditionCode CC=AL)
 		{
 			DECL_Id(0x03A00000);
-			
+
 			SET_CC;
 			I |= (Rd&15)<<12;
 			I |= ARMImmid8r4(Imm8);  // * 12b imm is 8b imm 4b rot. spec, add rot support!
 			EMIT_I;
 		}
-		
-	
+
+
 
 
 
@@ -699,7 +699,7 @@ ADD.SP.REG	0x008D0000
 		EAPI CMP(eReg Rd, eReg Rm, ShiftOp Shift, eReg Rs, ConditionCode CC=AL)
 		{
 			DECL_Id(0x01500000);
-			
+
 			SET_CC;
 			I |= (Rd&15)<<12;
 			I |= (Rm&15);
@@ -708,11 +708,11 @@ ADD.SP.REG	0x008D0000
 			I |= 1<<4;
 			EMIT_I;
 		}
-		
+
 		EAPI CMP(eReg Rd, eReg Rm, ShiftOp Shift, u32 Imm8, ConditionCode CC=AL)
 		{
 			DECL_Id(0x01500000);
-			
+
 			SET_CC;
 			I |= (Rd&15)<<12;
 			I |= (Rm&15);
@@ -720,7 +720,7 @@ ADD.SP.REG	0x008D0000
 			I |= (Imm8&31)<<7;
 			EMIT_I;
 		}
-		
+
 		EAPI LSL(eReg Rd, eReg Rn, eReg Rm, ConditionCode CC=AL)
 		{
 			DECL_Id(0x01A00010);
@@ -766,7 +766,7 @@ ADD.SP.REG	0x008D0000
 			EMIT_I;
 		}
 
-		
+
 		EAPI LSR(eReg Rd, eReg Rm, s32 imm5, bool S, ConditionCode CC=AL)
 		{
 			DECL_Id(0x01A00020);

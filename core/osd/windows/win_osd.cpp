@@ -52,12 +52,12 @@ void cResetEvent::Reset()//reset
 	#endif
 	ResetEvent(hEvent);
 }
-bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
+void cResetEvent::Wait(u32 msec)//Wait for signal , then reset
 {
 	#if defined(DEBUG_THREADS)
 		Sleep(rand() % 10);
 	#endif
-	return WaitForSingleObject(hEvent,msec) == WAIT_OBJECT_0;
+	WaitForSingleObject(hEvent,msec) == WAIT_OBJECT_0;
 }
 void cResetEvent::Wait()//Wait for signal , then reset
 {

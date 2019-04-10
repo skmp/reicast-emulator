@@ -36,7 +36,7 @@ struct MemChip
 		return rv;
 	}
 
-	bool Load(const string& file)
+	bool Load(const wstring& file)
 	{
 		FILE* f=fopen(file.c_str(),"rb");
 		if (f)
@@ -48,7 +48,7 @@ struct MemChip
 		return false;
 	}
 
-	void Save(const string& file)
+	void Save(const wstring& file)
 	{
 		FILE* f=fopen(file.c_str(),"wb");
 		if (f)
@@ -58,38 +58,38 @@ struct MemChip
 		}
 	}
 
-	bool Load(const string& root,const string& prefix,const string& names_ro,const string& title)
+	bool Load(const wstring& root,const wstring& prefix,const wstring& names_ro,const wstring& title)
 	{
-		wchar base[512];
-		wchar temp[512];
-		wchar names[512];
+		wchar_t base[512];
+		wchar_t temp[512];
+		wchar_t names[512];
 
 		// FIXME: Data loss if buffer is too small
-		strncpy(names,names_ro.c_str(), sizeof(names));
+		wcsncpy(names,names_ro.c_str(), sizeof(names));
 		names[sizeof(names) - 1] = '\0';
 
-		sprintf(base,"%s",root.c_str());
+		swprintf(base,L"%s",root.c_str());
 
-		wchar* curr=names;
-		wchar* next;
+		wchar_t* curr=names;
+		wchar_t* next;
 		do
 		{
-			next=strstr(curr,";");
+			next=wcsstr(curr,L";");
 			if(next) *next=0;
 			if (curr[0]=='%')
 			{
-				sprintf(temp,"%s%s%s",base,prefix.c_str(),curr+1);
+				swprintf(temp,L"%s%s%s",base,prefix.c_str(),curr+1);
 			}
 			else
 			{
-				sprintf(temp,"%s%s",base,curr);
+				swprintf(temp,L"%s%s",base,curr);
 			}
 			
 			curr=next+1;
 
 			if (Load(temp))
 			{
-				printf("Loaded %s as %s\n\n",temp,title.c_str());
+				wprintf(L"Loaded %s as %s\n\n",temp,title.c_str());
 				return true;
 			}
 		} while(next);
@@ -97,14 +97,14 @@ struct MemChip
 
 		return false;
 	}
-	void Save(const string& root,const string& prefix,const string& name_ro,const string& title)
+	void Save(const wstring& root,const wstring& prefix,const wstring& name_ro,const wstring& title)
 	{
-		wchar path[512];
+		wchar_t path[512];
 
-		sprintf(path,"%s%s%s",root.c_str(),prefix.c_str(),name_ro.c_str());
+		swprintf(path,L"%s%s%s",root.c_str(),prefix.c_str(),name_ro.c_str());
 		Save(path);
 
-		printf("Saved %s as %s\n\n",path,title.c_str());
+		wprintf(L"Saved %s as %s\n\n",path,title.c_str());
 	}
 };
 struct RomChip : MemChip
@@ -116,7 +116,7 @@ struct RomChip : MemChip
 	}
 	void Write(u32 addr,u32 data,u32 sz)
 	{
-		die("Write to RomChip is not possible, address=%x, data=%x, size=%d");
+		die(L"Write to RomChip is not possible, address=%x, data=%x, size=%d");
 	}
 };
 struct SRamChip : MemChip
@@ -143,7 +143,7 @@ struct SRamChip : MemChip
 			return;
 		}
 
-		die("invalid access size");
+		die(L"invalid access size");
 	}
 };
 struct DCFlashChip : MemChip // I think its Micronix :p
@@ -190,7 +190,7 @@ struct DCFlashChip : MemChip // I think its Micronix :p
 	void Write(u32 addr,u32 val,u32 sz)
 	{
 		if (sz != 1)
-			die("invalid access size");
+			die(L"invalid access size");
 
 		addr &= mask;
 		
@@ -223,9 +223,9 @@ struct DCFlashChip : MemChip // I think its Micronix :p
 					state=FS_Erase_AA;
 					break;
 				default:
-					printf("Flash write: address=%06X, value=%08X, size=%d\n",addr,val,sz);
+					wprintf(L"Flash write: address=%06X, value=%08X, size=%d\n",addr,val,sz);
 					state=FS_CMD_AA;
-					die("lolwhut");
+					die(L"lolwhut");
 				}
 			}
 			break;
@@ -235,12 +235,12 @@ struct DCFlashChip : MemChip // I think its Micronix :p
 				switch(val)
 				{
 				case 0x30:
-					printf("Erase Sector %08X! (%08X)\n",addr,addr&(~0x3FFF));
+					wprintf(L"Erase Sector %08X! (%08X)\n",addr,addr&(~0x3FFF));
 					memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
 					break;
 				default:
-					printf("Flash write: address=%06X, value=%08X, size=%d\n",addr,val,sz);
-					die("erase .. what ?");
+					wprintf(L"Flash write: address=%06X, value=%08X, size=%d\n",addr,val,sz);
+					die(L"erase .. what ?");
 				}
 				state=FS_CMD_AA;
 			}
@@ -248,7 +248,7 @@ struct DCFlashChip : MemChip // I think its Micronix :p
 
 		case FS_Write:
 			{
-				//printf("flash write\n");
+				//wprintf(L"flash write\n");
 				data[addr]&=val;
 				state=FS_CMD_AA;
 			}

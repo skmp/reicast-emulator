@@ -75,14 +75,14 @@ void os_wait_cycl(u32 c);
 
 int elapse_time(int tag, int cycl, int jit)
 {
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 	//os_wait_cycl(cycl);
 #endif
 	return min(max(Frame_Cycles,(u32)1*1000*1000),(u32)8*1000*1000);
 }
 
 // W T F ... just ... why?
-#if HOST_OS==OS_WINDOWS && !defined(USE_QT)
+#if (HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP) && !defined(USE_QT)
 extern double speed_load_mspdf;
 #else
 double speed_load_mspdf;
@@ -162,20 +162,20 @@ int spg_line_sched(int tag, int cycl, int jit)
 				VertexCount=0;
 				vblk_cnt=0;
 
-				char fpsStr[256];
-				const char* mode=0;
-				const char* res=0;
+				wchar_t fpsStr[256];
+				const wchar_t* mode=0;
+				const wchar_t* res=0;
 
-				res=SPG_CONTROL.interlace?"480i":"240p";
+				res=SPG_CONTROL.interlace?L"480i":L"240p";
 
 				if (SPG_CONTROL.NTSC==0 && SPG_CONTROL.PAL==1)
-					mode="PAL";
+					mode=L"PAL";
 				else if (SPG_CONTROL.NTSC==1 && SPG_CONTROL.PAL==0)
-					mode="NTSC";
+					mode=L"NTSC";
 				else
 				{
-					res=SPG_CONTROL.interlace?"480i":"480p";
-					mode="VGA";
+					res=SPG_CONTROL.interlace?L"480i":L"480p";
+					mode=L"VGA";
 				}
 
 				double frames_done=spd_cpu/2;
@@ -184,12 +184,12 @@ int spg_line_sched(int tag, int cycl, int jit)
 				full_rps=(spd_fps+fskip/ts);
 
 				#ifdef TARGET_PANDORA
-				sprintf(fpsStr,"CPU: %4.2f V: %4.2f (%s%s%4.2f) R: %4.2f+%4.2f", 
+				swprintf(fpsStr,L"CPU: %4.2f V: %4.2f (%s%s%4.2f) R: %4.2f+%4.2f", 
 					spd_cpu*100/200,spd_vbs,
 					mode,res,fullvbs,
 					spd_fps,fskip/ts);
 				#else
-				sprintf(fpsStr,"%s/%c - %4.2f (%4.2f) - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f", 
+				swprintf(fpsStr,L"%s/%c - %4.2f (%4.2f) - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f", 
 					VER_SHORTNAME,'n',mspdf,speed_load_mspdf,spd_cpu*100/200,spd_vbs,
 					spd_vbs/full_rps,mode,res,fullvbs,
 					spd_fps,fskip/ts

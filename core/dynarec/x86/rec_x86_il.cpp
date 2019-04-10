@@ -29,7 +29,7 @@ void ngen_Bin(shil_opcode* op,x86_opcode_class natop,bool has_imm=true,bool has_
 	}
 	else
 	{
-		printf("%d \n",op->rs1.type);
+		wprintf(L"%d \n",op->rs1.type);
 		verify(false);
 	}
 }
@@ -49,7 +49,7 @@ void ngen_fp_bin(shil_opcode* op,x86_opcode_class natop)
 	}
 	else
 	{
-		printf("%d \n",op->rs2.type);
+		wprintf(L"%d \n",op->rs2.type);
 		verify(false);
 	}
 //	verify(has_wb);
@@ -91,14 +91,14 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 				}
 				else
 				{
-					die("Must not happen !\n");
+					die(L"Must not happen !\n");
 					x86e->Emit(op_push32,x86_ptr(par->reg_ptr()));
 				}
 			}
 			else if (par->is_imm())
 				x86e->Emit(op_push,par->_imm);
 			else
-				die("invalid combination");
+				die(L"invalid combination");
 			ngen_CC_BytesPushed+=4;
 			break;
 		//push the ptr itself
@@ -132,14 +132,14 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 			/*else if (reg.IsAllocf(*par))
 				x86e->Emit(op_movd_xmm_from_r32,reg.mapf(*par),EAX);*/
 			else
-				die("Must not happen!\n");
+				die(L"Must not happen!\n");
 			break;
 
 		case CPT_u64rvH:
 			if (reg.IsAllocg(*par))
 				x86e->Emit(op_mov32,reg.mapg(*par),EDX);
 			else
-				die("Must not happen!\n");
+				die(L"Must not happen!\n");
 			break;
 
 		//Store from ST(0)
@@ -290,7 +290,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 						}
 						else
 						{
-							die("Invalid mem read size");
+							die(L"Invalid mem read size");
 						}
 					}
 					else
@@ -317,7 +317,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 					}
 					else if (!op->rs3.is_null())
 					{
-						die("invalid rs3");
+						die(L"invalid rs3");
 					}
 					else
 						if (prof.enable) x86e->Emit(op_add32,&prof.counters.shil.readm_reg,1);
@@ -497,7 +497,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 
 					if (size==8 && optimise)
 					{
-						die("unreachable");
+						die(L"unreachable");
 #ifdef OPTIMIZATION_GRAVEYARD
 						verify(op->rd.count()==2 && reg.IsAllocf(op->rd,0) && reg.IsAllocf(op->rd,1));
 
@@ -588,10 +588,10 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 
 						else if (size==8)
 						{
-							die("A");
+							die(L"A");
 						}
 						else
-							die("Invalid mem read size");
+							die(L"Invalid mem read size");
 
 						goto done_writem;
 					}
@@ -614,8 +614,8 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				}
 				else if (!op->rs3.is_null())
 				{
-					printf("rs3: %08X\n",op->rs3.type);
-					die("invalid rs3");
+					wprintf(L"rs3: %08X\n",op->rs3.type);
+					die(L"invalid rs3");
 				}
 
 #if 1
@@ -650,7 +650,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				}
 #endif
 #ifdef OPTIMIZATION_GRAVEYARD
-				die("woohoo");
+				die(L"woohoo");
 				/*
 				if (size==8 && optimise)
 				{
@@ -680,7 +680,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 						}
 						else
 						{
-							die("Must not happen\n");
+							die(L"Must not happen\n");
 						}
 					}
 					else
@@ -943,14 +943,14 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 						if (reg.mapf(op->rd) != reg.mapf(op->rs1))
 							x86e->Emit(op_movss,reg.mapf(op->rd),reg.mapf(op->rs1));
 						else
-							printf("Renamed fmov !\n");
+							wprintf(L"Renamed fmov !\n");
 						break;
 						
 					}
 				}
 				else
 				{
-					die("Invalid mov32 size");
+					die(L"Invalid mov32 size");
 				}
 				
 			}
@@ -1025,7 +1025,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 
 				if (op->rs2.is_imm())
 				{
-					die("sh*d: no imms please\n");
+					die(L"sh*d: no imms please\n");
 				}
 				else
 				{
@@ -1531,7 +1531,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 
 
 defaulty:
-			printf("OH CRAP %d\n",op->op);
+			wprintf(L"OH CRAP %d\n",op->op);
 			verify(false);
 		}
 }

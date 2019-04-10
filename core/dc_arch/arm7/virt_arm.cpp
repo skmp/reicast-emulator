@@ -201,8 +201,8 @@ namespace VARM
 		reg[17].I = reg[SPSR_UND].I;
 		break;    
 		default:
-		printf("Unsupported ARM mode %02x\n", mode);
-		die("Arm error..");
+		wprintf(L"Unsupported ARM mode %02x\n", mode);
+		die(L"Arm error..");
 		break;
 		}
 		armMode = mode;
@@ -254,12 +254,12 @@ namespace VARM
 
 	void CPUSoftwareInterrupt(int comment)
 	{
-		die("Can't happen");
+		die(L"Can't happen");
 	}
 
 	void CPUUndefinedException()
 	{
-		die("Can't happen");
+		die(L"Can't happen");
 	}
 
 	void virt_arm_reset()

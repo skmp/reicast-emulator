@@ -155,7 +155,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 						new OnLongClickListener() {
 							public boolean onLongClick(View view) {
 								new AlertDialog.Builder(mContext.get()).setCancelable(true).setIcon(game_icon)
-										.setTitle(mContext.get().getString(R.string.game_details, game_name))
+										.setTitle(mContext.get().getString(R.wstring.game_details, game_name))
 										.setMessage(game_details).create().show();
 								return true;
 							}
@@ -203,7 +203,7 @@ public class XMLParser extends AsyncTask<String, Integer, String> {
 	}
 
 	private void initializeDefaults() {
-		game_details = mContext.get().getString(R.string.info_unavailable);
+		game_details = mContext.get().getString(R.wstring.info_unavailable);
 		final String nameLower = game.getName().toLowerCase(Locale.getDefault());
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			game_icon = mContext.get().getResources().getDrawable(

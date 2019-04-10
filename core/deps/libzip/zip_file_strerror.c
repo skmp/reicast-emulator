@@ -1,5 +1,5 @@
 /*
-  zip_file_sterror.c -- get string representation of zip file error
+  zip_file_sterror.c -- get wstring representation of zip file error
   Copyright (C) 1999-2007 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.

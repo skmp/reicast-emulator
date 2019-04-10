@@ -22,10 +22,10 @@ local gzFile gz_open OF((const void *, int, const char *));
 #if defined UNDER_CE
 
 /* Map the Windows error number in ERROR to a locale-dependent error message
-   string and return a pointer to it.  Typically, the values for ERROR come
+   wstring and return a pointer to it.  Typically, the values for ERROR come
    from GetLastError.
 
-   The string pointed to shall not be modified by the application, but may be
+   The wstring pointed to shall not be modified by the application, but may be
    overwritten by a subsequent call to gz_strwinerror
 
    The gz_strwinerror function does not change the current setting of
@@ -62,7 +62,7 @@ char ZLIB_INTERNAL *gz_strwinerror (error)
         LocalFree(msgbuf);
     }
     else {
-        sprintf(buf, "unknown win32 error (%ld)", error);
+        swprintf(buf, "unknown win32 error (%ld)", error);
     }
 
     SetLastError(lasterr);
@@ -293,7 +293,7 @@ gzFile ZEXPORT gzdopen(fd, mode)
 #if !defined(NO_snprintf) && !defined(NO_vsnprintf)
     snprintf(path, 7 + 3 * sizeof(int), "<fd:%d>", fd); /* for debugging */
 #else
-    sprintf(path, "<fd:%d>", fd);   /* for debugging */
+    swprintf(path, "<fd:%d>", fd);   /* for debugging */
 #endif
     gz = gz_open(path, fd, mode);
     free(path);
@@ -569,7 +569,7 @@ void ZEXPORT gzclearerr(file)
 /* Create an error message in allocated memory and set state->err and
    state->msg accordingly.  Free any previous error message already there.  Do
    not try to free or allocate space if the error is Z_MEM_ERROR (out of
-   memory).  Simply save the error message as a static string.  If there is an
+   memory).  Simply save the error message as a static wstring.  If there is an
    allocation failure constructing the error message, then convert the error to
    out of memory. */
 void ZLIB_INTERNAL gz_error(state, err, msg)
@@ -593,7 +593,7 @@ void ZLIB_INTERNAL gz_error(state, err, msg)
     if (msg == NULL)
         return;
 
-    /* for an out of memory error, return literal string when requested */
+    /* for an out of memory error, return literal wstring when requested */
     if (err == Z_MEM_ERROR)
         return;
 
@@ -608,8 +608,8 @@ void ZLIB_INTERNAL gz_error(state, err, msg)
              "%s%s%s", state->path, ": ", msg);
 #else
     strcpy(state->msg, state->path);
-    strcat(state->msg, ": ");
-    strcat(state->msg, msg);
+    wcscat(state->msg, ": ");
+    wcscat(state->msg, msg);
 #endif
     return;
 }

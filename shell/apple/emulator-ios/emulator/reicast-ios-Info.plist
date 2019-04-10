@@ -3,25 +3,25 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
+	<wstring>en</wstring>
 	<key>CFBundleDisplayName</key>
-	<string>Reicast</string>
+	<wstring>Reicast</wstring>
 	<key>CFBundleExecutable</key>
-	<string>${EXECUTABLE_NAME}</string>
+	<wstring>${EXECUTABLE_NAME}</wstring>
 	<key>CFBundleIdentifier</key>
-	<string>com.reicast.$(PRODUCT_NAME:rfc1034identifier)</string>
+	<wstring>com.reicast.$(PRODUCT_NAME:rfc1034identifier)</wstring>
 	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
+	<wstring>6.0</wstring>
 	<key>CFBundleName</key>
-	<string>${PRODUCT_NAME}</string>
+	<wstring>${PRODUCT_NAME}</wstring>
 	<key>CFBundlePackageType</key>
-	<string>APPL</string>
+	<wstring>APPL</wstring>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<wstring>1.0</wstring>
 	<key>CFBundleSignature</key>
-	<string>????</string>
+	<wstring>????</wstring>
 	<key>CFBundleVersion</key>
-	<string>1.0</string>
+	<wstring>1.0</wstring>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSHighResolutionCapable</key>
@@ -29,32 +29,32 @@
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
-	<string>MainStoryboard</string>
+	<wstring>MainStoryboard</wstring>
 	<key>UIMainStoryboardFile</key>
-	<string>MainStoryboard</string>
+	<wstring>MainStoryboard</wstring>
 	<key>UIMainStoryboardFile~ipad</key>
-	<string>MainStoryboard</string>
+	<wstring>MainStoryboard</wstring>
 	<key>UIPrerenderedIcon</key>
 	<true/>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<wstring>armv7</wstring>
 	</array>
 	<key>UIStatusBarHidden</key>
 	<true/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationPortrait</string>
+		<wstring>UIInterfaceOrientationLandscapeLeft</wstring>
+		<wstring>UIInterfaceOrientationLandscapeRight</wstring>
+		<wstring>UIInterfaceOrientationPortraitUpsideDown</wstring>
+		<wstring>UIInterfaceOrientationPortrait</wstring>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
+		<wstring>UIInterfaceOrientationPortrait</wstring>
+		<wstring>UIInterfaceOrientationPortraitUpsideDown</wstring>
+		<wstring>UIInterfaceOrientationLandscapeLeft</wstring>
+		<wstring>UIInterfaceOrientationLandscapeRight</wstring>
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>

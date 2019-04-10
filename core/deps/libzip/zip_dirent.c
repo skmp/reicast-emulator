@@ -537,7 +537,7 @@ _zip_readfpstr(FILE *fp, unsigned int len, int nulp, struct zip_error *error)
     }
 
     if (nulp) {
-	/* replace any in-string NUL characters with spaces */
+	/* replace any in-wstring NUL characters with spaces */
 	r[len] = 0;
 	for (o=r; o<r+len; o++)
 	    if (*o == '\0')
@@ -564,7 +564,7 @@ _zip_readstr(unsigned char **buf, int len, int nulp, struct zip_error *error)
     *buf += len;
 
     if (nulp) {
-	/* replace any in-string NUL characters with spaces */
+	/* replace any in-wstring NUL characters with spaces */
 	r[len] = 0;
 	for (o=r; o<r+len; o++)
 	    if (*o == '\0')

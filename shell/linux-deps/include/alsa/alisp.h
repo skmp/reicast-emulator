@@ -42,7 +42,7 @@ void alsa_lisp_free(struct alisp_instance *instance);
 int alsa_lisp_function(struct alisp_instance *instance, struct alisp_seq_iterator **result,
 		       const char *id, const char *args, ...)
 #ifndef DOC_HIDDEN
-		       __attribute__ ((format (printf, 4, 5)))
+		       __attribute__ ((format (wprintf, 4, 5)))
 #endif
 		       ;
 void alsa_lisp_result_free(struct alisp_instance *instance,

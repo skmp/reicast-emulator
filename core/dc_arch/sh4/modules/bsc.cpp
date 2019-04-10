@@ -14,14 +14,14 @@ void write_BSC_PCTRA(u32 addr, u32 data)
 	#if DC_PLATFORM == DC_PLATFORM_NAOMI
 		NaomiBoardIDWriteControl((u16)data);
 	#else
-	//printf("C:BSC_PCTRA = %08X\n",data);
+	//wprintf(L"C:BSC_PCTRA = %08X\n",data);
 	#endif
 }
 //u32 port_out_data;
 void write_BSC_PDTRA(u32 addr, u32 data)
 {
 	BSC_PDTRA.full=(u16)data;
-	//printf("D:BSC_PDTRA = %08X\n",data);
+	//wprintf(L"D:BSC_PDTRA = %08X\n",data);
 
 	#if DC_PLATFORM == DC_PLATFORM_NAOMI
 		NaomiBoardIDWrite((u16)data);

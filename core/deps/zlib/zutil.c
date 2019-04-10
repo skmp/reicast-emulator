@@ -125,12 +125,12 @@ int ZLIB_INTERNAL z_verbose = verbose;
 void ZLIB_INTERNAL z_error (m)
     char *m;
 {
-    fprintf(stderr, "%s\n", m);
+    fwprintf(stderr, "%s\n", m);
     exit(1);
 }
 #endif
 
-/* exported to allow conversion of error code to string for compress() and
+/* exported to allow conversion of error code to wstring for compress() and
  * uncompress()
  */
 const char * ZEXPORT zError(err)

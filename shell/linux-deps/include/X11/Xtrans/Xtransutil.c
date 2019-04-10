@@ -255,9 +255,9 @@ TRANS(GetMyNetworkId) (XtransConnInfo ciptr)
     case AF_UNIX:
     {
 	struct sockaddr_un *saddr = (struct sockaddr_un *) addr;
-	networkId = (char *) xalloc (3 + strlen (transName) +
-	    strlen (hostnamebuf) + strlen (saddr->sun_path));
-	sprintf (networkId, "%s/%s:%s", transName,
+	networkId = (char *) xalloc (3 + wcslen (transName) +
+	    wcslen (hostnamebuf) + wcslen (saddr->sun_path));
+	swprintf (networkId, "%s/%s:%s", transName,
 	    hostnamebuf, saddr->sun_path);
 	break;
     }
@@ -285,9 +285,9 @@ TRANS(GetMyNetworkId) (XtransConnInfo ciptr)
 	    portnum = ntohs (saddr->sin_port);
 
 	snprintf (portnumbuf, sizeof(portnumbuf), "%d", portnum);
-	networkId = (char *) xalloc (3 + strlen (transName) +
-	    strlen (hostnamebuf) + strlen (portnumbuf));
-	sprintf (networkId, "%s/%s:%s", transName, hostnamebuf, portnumbuf);
+	networkId = (char *) xalloc (3 + wcslen (transName) +
+	    wcslen (hostnamebuf) + wcslen (portnumbuf));
+	swprintf (networkId, "%s/%s:%s", transName, hostnamebuf, portnumbuf);
 	break;
     }
 #endif /* defined(TCPCONN) || defined(STREAMSCONN) */
@@ -419,11 +419,11 @@ TRANS(GetPeerNetworkId) (XtransConnInfo ciptr)
 
 
     hostname = (char *) xalloc (
-	strlen (ciptr->transptr->TransName) + strlen (addr) + 2);
+	wcslen (ciptr->transptr->TransName) + wcslen (addr) + 2);
     strcpy (hostname, ciptr->transptr->TransName);
-    strcat (hostname, "/");
+    wcscat (hostname, "/");
     if (addr)
-	strcat (hostname, addr);
+	wcscat (hostname, addr);
 
     return (hostname);
 }
@@ -452,7 +452,7 @@ is_numeric (const char *str)
 {
     int i;
 
-    for (i = 0; i < (int) strlen (str); i++)
+    for (i = 0; i < (int) wcslen (str); i++)
 	if (!isdigit (str[i]))
 	    return (0);
 

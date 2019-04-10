@@ -165,7 +165,7 @@
 
 /* standard hard disk metadata */
 #define HARD_DISK_METADATA_TAG		0x47444444	/* 'GDDD' */
-#define HARD_DISK_METADATA_FORMAT	"CYLS:%d,HEADS:%d,SECS:%d,BPS:%d"
+#define HARD_DISK_METADATA_FORMAT	L"CYLS:%d,HEADS:%d,SECS:%d,BPS:%d"
 
 /* hard disk identify information */
 #define HARD_DISK_IDENT_METADATA_TAG 0x49444e54 /* 'IDNT' */
@@ -179,13 +179,13 @@
 /* standard CD-ROM metadata */
 #define CDROM_OLD_METADATA_TAG		0x43484344	/* 'CHCD' */
 #define CDROM_TRACK_METADATA_TAG	0x43485452	/* 'CHTR' */
-#define CDROM_TRACK_METADATA_FORMAT	"TRACK:%d TYPE:%s SUBTYPE:%s FRAMES:%d"
+#define CDROM_TRACK_METADATA_FORMAT	L"TRACK:%d TYPE:%s SUBTYPE:%s FRAMES:%d"
 #define CDROM_TRACK_METADATA2_TAG	0x43485432	/* 'CHT2' */
-#define CDROM_TRACK_METADATA2_FORMAT	"TRACK:%d TYPE:%s SUBTYPE:%s FRAMES:%d PREGAP:%d PGTYPE:%s PGSUB:%s POSTGAP:%d"
+#define CDROM_TRACK_METADATA2_FORMAT	L"TRACK:%d TYPE:%s SUBTYPE:%s FRAMES:%d PREGAP:%d PGTYPE:%s PGSUB:%s POSTGAP:%d"
 
 /* standard A/V metadata */
 #define AV_METADATA_TAG				0x41564156	/* 'AVAV' */
-#define AV_METADATA_FORMAT			"FPS:%d.%06d WIDTH:%d HEIGHT:%d INTERLACED:%d CHANNELS:%d SAMPLERATE:%d"
+#define AV_METADATA_FORMAT			L"FPS:%d.%06d WIDTH:%d HEIGHT:%d INTERLACED:%d CHANNELS:%d SAMPLERATE:%d"
 
 /* A/V laserdisc frame metadata */
 #define AV_LD_METADATA_TAG			0x41564C44	/* 'AVLD' */
@@ -289,7 +289,7 @@ chd_error chd_create(const char *filename, UINT64 logicalbytes, UINT32 hunkbytes
 chd_error chd_create_file(core_file *file, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 compression, chd_file *parent);
 
 /* open an existing CHD file */
-chd_error chd_open(const wchar *filename, int mode, chd_file *parent, chd_file **chd);
+chd_error chd_open(const wchar_t *filename, int mode, chd_file *parent, chd_file **chd);
 
 
 /* close a CHD file */
@@ -298,7 +298,7 @@ void chd_close(chd_file *chd);
 /* return the associated core_file */
 core_file *chd_core_file(chd_file *chd);
 
-/* return an error string for the given CHD error */
+/* return an error wstring for the given CHD error */
 const char *chd_error_string(chd_error err);
 
 
@@ -344,7 +344,7 @@ chd_error chd_verify_finish(chd_file *chd, chd_verify_result *result);
 /* set internal codec parameters */
 chd_error chd_codec_config(chd_file *chd, int param, void *config);
 
-/* return a string description of a codec */
+/* return a wstring description of a codec */
 const char *chd_get_codec_name(UINT32 codec);
 
 

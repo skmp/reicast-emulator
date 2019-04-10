@@ -36,17 +36,17 @@ void DMAC_Ch2St()
 
 	if(0x8201 != (dmaor &DMAOR_MASK))
 	{
-		printf("\n!\tDMAC: DMAOR has invalid settings (%X) !\n", dmaor);
+		wprintf(L"\n!\tDMAC: DMAOR has invalid settings (%X) !\n", dmaor);
 		return;
 	}
 
 	if (len & 0x1F)
 	{
-		printf("\n!\tDMAC: SB_C2DLEN has invalid size (%X) !\n", len);
+		wprintf(L"\n!\tDMAC: SB_C2DLEN has invalid size (%X) !\n", len);
 		return;
 	}
 
-//	printf(">>\tDMAC: Ch2 DMA SRC=%X DST=%X LEN=%X\n", src, dst, len );
+//	wprintf(L">>\tDMAC: Ch2 DMA SRC=%X DST=%X LEN=%X\n", src, dst, len );
 
 	// Direct DList DMA (Ch2)
 
@@ -79,7 +79,7 @@ void DMAC_Ch2St()
 	// If SB_C2DSTAT reg is inrange from 0x11000000 to 0x11FFFFE0,	 set 1 in SB_LMMODE0 reg.
 	else if((dst >= 0x11000000) && (dst <= 0x11FFFFE0))
 	{
-		//printf(">>\tDMAC: TEX LNMODE0 Ch2 DMA SRC=%X DST=%X LEN=%X | LN(%X::%X)\n", src, dst, len, *pSB_LMMODE0, *pSB_LMMODE1 );
+		//wprintf(L">>\tDMAC: TEX LNMODE0 Ch2 DMA SRC=%X DST=%X LEN=%X | LN(%X::%X)\n", src, dst, len, *pSB_LMMODE0, *pSB_LMMODE1 );
 
 		dst=(dst&0xFFFFFF) |0xa4000000;
 		/*WriteMemBlock_nommu_ptr(dst,(u32*)GetMemPtr(src,len),len);
@@ -111,14 +111,14 @@ void DMAC_Ch2St()
 	// If SB_C2DSTAT reg is in range from 0x13000000 to 0x13FFFFE0, set 1 in SB_LMMODE1 reg.
 	else if((dst >= 0x13000000) && (dst <= 0x13FFFFE0))
 	{
-		die(".\tPVR DList DMA LNMODE1\n\n");
+		die(L".\tPVR DList DMA LNMODE1\n\n");
 		src+=len;
 	//	*pSB_LMMODE1 = 1;           // this prob was done by system already
 	//	WriteMem(SB_LMMODE0, 0, 4); // should this be done ?
 	}
 	else 
 	{ 
-		printf("\n!\tDMAC: SB_C2DSTAT has invalid address (%X) !\n", dst); 
+		wprintf(L"\n!\tDMAC: SB_C2DSTAT has invalid address (%X) !\n", dst); 
 		src+=len;
 	}
 
@@ -173,13 +173,13 @@ template<u32 ch>
 void WriteCHCR(u32 addr, u32 data)
 {
 	DMAC_CHCR(ch).full=data;
-	//printf("Write to CHCR%d = 0x%X\n",ch,data);
+	//wprintf(L"Write to CHCR%d = 0x%X\n",ch,data);
 }
 
 void WriteDMAOR(u32 addr, u32 data)
 {
 	DMAC_DMAOR.full=data;
-	//printf("Write to DMAOR = 0x%X\n",data);
+	//wprintf(L"Write to DMAOR = 0x%X\n",data);
 }
 
 //Init term res

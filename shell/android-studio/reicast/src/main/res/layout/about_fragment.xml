@@ -13,7 +13,7 @@
         android:layout_marginTop="10dp"
         android:ems="12"
         android:gravity="center"
-        android:text="@string/about_text" />
+        android:text="@wstring/about_text" />
 
     <TextView
         android:id="@+id/revision_text"
@@ -23,7 +23,7 @@
         android:layout_marginTop="10dp"
         android:ems="12"
         android:gravity="center"
-        android:text="@string/revision_text" />
+        android:text="@wstring/revision_text" />
 
     <LinearLayout
         android:id="@+id/changelist"

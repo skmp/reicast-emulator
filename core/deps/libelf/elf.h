@@ -108,7 +108,7 @@ ELF file into memory.
 #include "elf64.h"
 
 struct elf_symbol {
-  uint32_t st_name;               // Symbol name (string table index)
+  uint32_t st_name;               // Symbol name (wstring table index)
   uint32_t st_value;              // Symbol value
   uint32_t st_size;               // Symbol size
   uint8_t  st_info;               // Symbol type and binding

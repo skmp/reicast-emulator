@@ -23,11 +23,11 @@ bool UTLB_Sync(u32 entry)
 	{
 		u32 vpn_sq = ((UTLB[entry].Address.VPN & 0x7FFFF) >> 10) & 0x3F;//upper bits are always known [0xE0/E1/E2/E3]
 		sq_remap[vpn_sq] = UTLB[entry].Data.PPN << 10;
-		printf("SQ remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
+		wprintf(L"SQ remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
 	}
 	else
 	{
-		printf("MEM remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
+		wprintf(L"MEM remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
 	}
 
 	return true;
@@ -35,7 +35,7 @@ bool UTLB_Sync(u32 entry)
 //Sync memory mapping to MMU, suspend compiled blocks if needed.entry is a ITLB entry # , -1 is for full sync
 void ITLB_Sync(u32 entry)
 {
-	printf("ITLB MEM remap %d : 0x%X to 0x%X\n",entry,ITLB[entry].Address.VPN<<10,ITLB[entry].Data.PPN<<10);
+	wprintf(L"ITLB MEM remap %d : 0x%X to 0x%X\n",entry,ITLB[entry].Address.VPN<<10,ITLB[entry].Data.PPN<<10);
 }
 
 void MMU_init()
@@ -150,7 +150,7 @@ void RaiseException(u32 expEvnt, u32 callVect) {
 	SH4ThrownException ex = { next_pc - 2, expEvnt, callVect };
 	throw ex;
 #else
-	msgboxf("Can't raise exceptions yet", MBX_ICONERROR);
+	msgboxf(L"Can't raise exceptions yet", MBX_ICONERROR);
 #endif
 }
 
@@ -168,7 +168,7 @@ void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 	{
 		//No error
 	case MMU_ERROR_NONE:
-		printf("Error : mmu_raise_exeption(MMU_ERROR_NONE)\n");
+		wprintf(L"Error : mmu_raise_exeption(MMU_ERROR_NONE)\n");
 		getc(stdin);
 		break;
 
@@ -187,7 +187,7 @@ void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 
 		//TLB Multyhit
 	case MMU_ERROR_TLB_MHIT:
-		printf("MMU_ERROR_TLB_MHIT @ 0x%X\n", address);
+		wprintf(L"MMU_ERROR_TLB_MHIT @ 0x%X\n", address);
 		break;
 
 		//Mem is read/write protected (depends on translation type)
@@ -232,7 +232,7 @@ void mmu_raise_exeption(u32 mmu_error, u32 address, u32 am)
 
 		//Can't Execute
 	case MMU_ERROR_EXECPROT:
-		printf("MMU_ERROR_EXECPROT 0x%X\n", address);
+		wprintf(L"MMU_ERROR_EXECPROT 0x%X\n", address);
 
 		//EXECPROT - Instruction TLB Protection Violation Exception
 		RaiseException(0xA0, 0x100);

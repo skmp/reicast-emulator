@@ -1,5 +1,5 @@
 /*
-  zip_error_sterror.c -- get string representation of struct zip_error
+  zip_error_sterror.c -- get wstring representation of struct zip_error
   Copyright (C) 1999-2007 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
@@ -51,7 +51,7 @@ _zip_error_strerror(struct zip_error *err)
     _zip_error_fini(err);
 
     if (err->zip_err < 0 || err->zip_err >= _zip_nerr_str) {
-	sprintf(buf, "Unknown error %d", err->zip_err);
+	swprintf(buf, "Unknown error %d", err->zip_err);
 	zs = NULL;
 	ss = buf;
     }
@@ -75,11 +75,11 @@ _zip_error_strerror(struct zip_error *err)
     if (ss == NULL)
 	return zs;
     else {
-	if ((s=(char *)malloc(strlen(ss)
-			      + (zs ? strlen(zs)+2 : 0) + 1)) == NULL)
+	if ((s=(char *)malloc(wcslen(ss)
+			      + (zs ? wcslen(zs)+2 : 0) + 1)) == NULL)
 	    return _zip_err_str[ZIP_ER_MEMORY];
 	
-	sprintf(s, "%s%s%s",
+	swprintf(s, "%s%s%s",
 		(zs ? zs : ""),
 		(zs ? ": " : ""),
 		ss);

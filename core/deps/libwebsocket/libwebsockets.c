@@ -22,7 +22,7 @@
 
 #include "private-libwebsockets.h"
 
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 	#pragma comment(lib, "Ws2_32.lib")
 #endif
 
@@ -347,7 +347,7 @@ libwebsockets_get_peer_addresses(struct libwebsocket_context *context,
 
 		// Strip off the IPv4 to IPv6 header if one exists
 		if (strncmp(rip, "::ffff:", 7) == 0)
-			memmove(rip, rip + 7, strlen(rip) - 6);
+			memmove(rip, rip + 7, wcslen(rip) - 6);
 
 		getnameinfo((struct sockaddr *)&sin6,
 				sizeof(struct sockaddr_in6), name,
@@ -368,7 +368,7 @@ libwebsockets_get_peer_addresses(struct libwebsocket_context *context,
 			goto bail;
 		}
 
-		strncpy(name, host->h_name, name_len);
+		wcsncpy(name, host->h_name, name_len);
 		name[name_len - 1] = '\0';
 
 		host1 = gethostbyname(host->h_name);
@@ -388,17 +388,17 @@ libwebsockets_get_peer_addresses(struct libwebsocket_context *context,
 				continue;
 
 			if (host1->h_addrtype == AF_INET)
-				sprintf(ip, "%u.%u.%u.%u",
+				swprintf(ip, "%u.%u.%u.%u",
 						p[0], p[1], p[2], p[3]);
 #ifdef AF_LOCAL
 			else {
 				un = (struct sockaddr_un *)p;
-				strncpy(ip, un->sun_path, sizeof(ip) - 1);
+				wcsncpy(ip, un->sun_path, sizeof(ip) - 1);
 				ip[sizeof(ip) - 1] = '\0';
 			}
 #endif
 			p = NULL;
-			strncpy(rip, ip, rip_len);
+			wcsncpy(rip, ip, rip_len);
 			rip[rip_len - 1] = '\0';
 		}
 	}
@@ -509,19 +509,19 @@ lws_latency(struct libwebsocket_context *context, struct libwebsocket *wsi,
 	}
 	if (completed) {
 		if (wsi->action_start == wsi->latency_start)
-			sprintf(buf,
+			swprintf(buf,
 			  "Completion first try lat %luus: %p: ret %d: %s\n",
 					u - wsi->latency_start,
 						      (void *)wsi, ret, action);
 		else
-			sprintf(buf,
+			swprintf(buf,
 			  "Completion %luus: lat %luus: %p: ret %d: %s\n",
 				u - wsi->action_start,
 					u - wsi->latency_start,
 						      (void *)wsi, ret, action);
 		wsi->action_start = 0;
 	} else
-		sprintf(buf, "lat %luus: %p: ret %d: %s\n",
+		swprintf(buf, "lat %luus: %p: ret %d: %s\n",
 			      u - wsi->latency_start, (void *)wsi, ret, action);
 
 	if (u - wsi->latency_start > context->worst_latency) {
@@ -619,9 +619,9 @@ int user_callback_handle_rxflow(callback_function callback_function,
 /**
  * libwebsocket_set_proxy() - Setups proxy to libwebsocket_context.
  * @context:	pointer to struct libwebsocket_context you want set proxy to
- * @proxy: pointer to c string containing proxy in format address:port
+ * @proxy: pointer to c wstring containing proxy in format address:port
  *
- * Returns 0 if proxy string was parsed and proxy was setup. 
+ * Returns 0 if proxy wstring was parsed and proxy was setup. 
  * Returns -1 if @proxy is NULL or has incorrect format.
  *
  * This is only required if your OS does not provide the http_proxy
@@ -642,7 +642,7 @@ libwebsocket_set_proxy(struct libwebsocket_context *context, const char *proxy)
 	if (!proxy)
 		return -1;
 
-	strncpy(context->http_proxy_address, proxy,
+	wcsncpy(context->http_proxy_address, proxy,
 				sizeof(context->http_proxy_address) - 1);
 	context->http_proxy_address[
 				sizeof(context->http_proxy_address) - 1] = '\0';
@@ -721,12 +721,12 @@ LWS_VISIBLE void lwsl_emit_stderr(int level, const char *line)
 	for (n = 0; n < LLL_COUNT; n++)
 		if (level == (1 << n)) {
 			now = time_in_microseconds() / 100;
-			sprintf(buf, "[%lu:%04d] %s: ", (unsigned long) now / 10000,
+			swprintf(buf, "[%lu:%04d] %s: ", (unsigned long) now / 10000,
 				(int)(now % 10000), log_level_names[n]);
 			break;
 		}
 
-	fprintf(stderr, "%s%s", buf, line);
+	fwprintf(stderr, "%s%s", buf, line);
 }
 
 
@@ -750,7 +750,7 @@ LWS_VISIBLE void _lws_log(int filter, const char *format, ...)
  * lws_set_log_level() - Set the logging bitfield
  * @level:	OR together the LLL_ debug contexts you want output from
  * @log_emit_function:	NULL to leave it as it is, or a user-supplied
- *			function to perform log string emission instead of
+ *			function to perform log wstring emission instead of
  *			the default stderr one.
  *
  *	log level defaults to "err", "warn" and "notice" contexts enabled and

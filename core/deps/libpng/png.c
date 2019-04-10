@@ -68,7 +68,7 @@ png_set_sig_bytes(png_structrp png_ptr, int num_bytes)
  * can simply check the remaining bytes for extra assurance.  Returns
  * an integer less than, equal to, or greater than zero if sig is found,
  * respectively, to be less than, to match, or be greater than the correct
- * PNG signature (this is the same behavior as strcmp, memcmp, etc).
+ * PNG signature (this is the same behavior as wcscmp, memcmp, etc).
  */
 int PNGAPI
 png_sig_cmp(png_const_bytep sig, png_size_t start, png_size_t num_to_check)
@@ -193,7 +193,7 @@ int
 png_user_version_check(png_structrp png_ptr, png_const_charp user_png_ver)
 {
    /* Libpng versions 1.0.0 and later are binary compatible if the version
-    * string matches through the second '.'; we must recompile any
+    * wstring matches through the second '.'; we must recompile any
     * applications that use any older library version.
     */
 
@@ -730,8 +730,8 @@ png_save_int_32(png_bytep buf, png_int_32 i)
 #  endif
 
 #  ifdef PNG_TIME_RFC1123_SUPPORTED
-/* Convert the supplied time into an RFC 1123 string suitable for use in
- * a "Creation Time" or other text-based time string.
+/* Convert the supplied time into an RFC 1123 wstring suitable for use in
+ * a "Creation Time" or other text-based time wstring.
  */
 int PNGAPI
 png_convert_to_rfc1123_buffer(char out[29], png_const_timep ptime)
@@ -754,7 +754,7 @@ png_convert_to_rfc1123_buffer(char out[29], png_const_timep ptime)
       size_t pos = 0;
       char number_buf[5]; /* enough for a four-digit year */
 
-#     define APPEND_STRING(string) pos = png_safecat(out, 29, pos, (string))
+#     define APPEND_STRING(wstring) pos = png_safecat(out, 29, pos, (wstring))
 #     define APPEND_NUMBER(format, value)\
          APPEND_STRING(PNG_FORMAT_NUMBER(number_buf, format, (value)))
 #     define APPEND(ch) if (pos < 28) out[pos++] = (ch)
@@ -831,7 +831,7 @@ png_get_copyright(png_const_structrp png_ptr)
 #endif
 }
 
-/* The following return the library version as a short string in the
+/* The following return the library version as a short wstring in the
  * format 1.0.0 through 99.99.99zz.  To get the version of *.h files
  * used with your application, print out PNG_LIBPNG_VER_STRING, which
  * is defined in png.h.
@@ -857,7 +857,7 @@ png_get_header_ver(png_const_structrp png_ptr)
 png_const_charp PNGAPI
 png_get_header_version(png_const_structrp png_ptr)
 {
-   /* Returns longer string containing both version and date */
+   /* Returns longer wstring containing both version and date */
    PNG_UNUSED(png_ptr)  /* Silence compiler warning about unused png_ptr */
 #ifdef __STDC__
    return PNG_HEADER_VERSION_STRING
@@ -940,7 +940,7 @@ png_handle_as_unknown(png_const_structrp png_ptr, png_const_bytep chunk_name)
    p_end = png_ptr->chunk_list;
    p = p_end + png_ptr->num_chunk_list*5; /* beyond end */
 
-   /* The code is the fifth byte after each four byte string.  Historically this
+   /* The code is the fifth byte after each four byte wstring.  Historically this
     * code was always searched from the end of the list, this is no longer
     * necessary because the 'set' routine handles duplicate entries correcty.
     */
@@ -996,15 +996,15 @@ png_access_version_number(void)
 }
 
 #if defined(PNG_READ_SUPPORTED) || defined(PNG_WRITE_SUPPORTED)
-/* Ensure that png_ptr->zstream.msg holds some appropriate error message string.
+/* Ensure that png_ptr->zstream.msg holds some appropriate error message wstring.
  * If it doesn't 'ret' is used to set it to something appropriate, even in cases
  * like Z_OK or Z_STREAM_END where the error code is apparently a success code.
  */
 void /* PRIVATE */
 png_zstream_error(png_structrp png_ptr, int ret)
 {
-   /* Translate 'ret' into an appropriate error string, priority is given to the
-    * one in zstream if set.  This always returns a string, even in cases like
+   /* Translate 'ret' into an appropriate error wstring, priority is given to the
+    * one in zstream if set.  This always returns a wstring, even in cases like
     * Z_OK or Z_STREAM_END where the error code is a success code.
     */
    if (png_ptr->zstream.msg == NULL) switch (ret)
@@ -2715,7 +2715,7 @@ png_check_IHDR(png_const_structrp png_ptr,
 #define png_fp_set(state, value) ((state) = (value) | ((state) & PNG_FP_STICKY))
 
 int /* PRIVATE */
-png_check_fp_number(png_const_charp string, png_size_t size, int *statep,
+png_check_fp_number(png_const_charp wstring, png_size_t size, int *statep,
     png_size_tp whereami)
 {
    int state = *statep;
@@ -2725,7 +2725,7 @@ png_check_fp_number(png_const_charp string, png_size_t size, int *statep,
    {
       int type;
       /* First find the type of the next character */
-      switch (string[i])
+      switch (wstring[i])
       {
       case 43:  type = PNG_FP_SAW_SIGN;                   break;
       case 45:  type = PNG_FP_SAW_SIGN + PNG_FP_NEGATIVE; break;
@@ -2840,15 +2840,15 @@ PNG_FP_End:
 }
 
 
-/* The same but for a complete string. */
+/* The same but for a complete wstring. */
 int
-png_check_fp_string(png_const_charp string, png_size_t size)
+png_check_fp_string(png_const_charp wstring, png_size_t size)
 {
    int        state=0;
    png_size_t char_index=0;
 
-   if (png_check_fp_number(string, size, &state, &char_index) != 0 &&
-      (char_index == size || string[char_index] == 0))
+   if (png_check_fp_number(wstring, size, &state, &char_index) != 0 &&
+      (char_index == size || wstring[char_index] == 0))
       return state /* must be non-zero - see above */;
 
    return 0; /* i.e. fail */
@@ -2909,7 +2909,7 @@ void /* PRIVATE */
 png_ascii_from_fp(png_const_structrp png_ptr, png_charp ascii, png_size_t size,
     double fp, unsigned int precision)
 {
-   /* We use standard functions from math.h, but not printf because
+   /* We use standard functions from math.h, but not wprintf because
     * that would require stdio.  The caller must supply a buffer of
     * sufficient size or we will png_error.  The tests on size and
     * the space in ascii[] consumed are indicated below.
@@ -3134,7 +3134,7 @@ png_ascii_from_fp(png_const_structrp png_ptr, png_charp ascii, png_size_t size,
             /* The total output count (max) is now 4+precision */
 
             /* Check for an exponent, if we don't need one we are
-             * done and just need to terminate the string.  At
+             * done and just need to terminate the wstring.  At
              * this point exp_b10==(-1) is effectively a flag - it got
              * to '-1' because of the decrement after outputting
              * the decimal point above (the exponent required is
@@ -3299,7 +3299,7 @@ png_ascii_from_fixed(png_const_structrp png_ptr, png_charp ascii,
          else
             *ascii++ = 48;
 
-         /* And null terminate the string: */
+         /* And null terminate the wstring: */
          *ascii = 0;
          return;
       }

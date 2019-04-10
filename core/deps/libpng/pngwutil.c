@@ -458,7 +458,7 @@ png_free_buffer_list(png_structrp png_ptr, png_compression_bufferp *listp)
 
 #ifdef PNG_WRITE_COMPRESSED_TEXT_SUPPORTED
 /* This pair of functions encapsulates the operation of (a) compressing a
- * text string, and (b) issuing it later as a series of chunk data writes.
+ * text wstring, and (b) issuing it later as a series of chunk data writes.
  * The compression_state structure is shared context for these functions
  * set up by the caller to allow access to the relevant local variables.
  *
@@ -1546,7 +1546,7 @@ png_write_tEXt(png_structrp png_ptr, png_const_charp key, png_const_charp text,
       text_len = 0;
 
    else
-      text_len = strlen(text);
+      text_len = wcslen(text);
 
    if (text_len > PNG_UINT_31_MAX - (key_len+1))
       png_error(png_ptr, "tEXt: text too long");
@@ -1601,7 +1601,7 @@ png_write_zTXt(png_structrp png_ptr, png_const_charp key, png_const_charp text,
 
    /* Compute the compressed data; do it now for the length */
    png_text_compress_init(&comp, (png_const_bytep)text,
-       text == NULL ? 0 : strlen(text));
+       text == NULL ? 0 : wcslen(text));
 
    if (png_text_compress(png_ptr, png_zTXt, &comp, key_len) != Z_OK)
       png_error(png_ptr, png_ptr->zstream.msg);
@@ -1669,9 +1669,9 @@ png_write_iTXt(png_structrp png_ptr, int compression, png_const_charp key,
     * TODO: validate the language tag correctly (see the spec.)
     */
    if (lang == NULL) lang = ""; /* empty language is valid */
-   lang_len = strlen(lang)+1;
+   lang_len = wcslen(lang)+1;
    if (lang_key == NULL) lang_key = ""; /* may be empty */
-   lang_key_len = strlen(lang_key)+1;
+   lang_key_len = wcslen(lang_key)+1;
    if (text == NULL) text = ""; /* may be empty */
 
    prefix_len = key_len;
@@ -1685,7 +1685,7 @@ png_write_iTXt(png_structrp png_ptr, int compression, png_const_charp key,
    else
       prefix_len = (png_uint_32)(prefix_len + lang_key_len);
 
-   png_text_compress_init(&comp, (png_const_bytep)text, strlen(text));
+   png_text_compress_init(&comp, (png_const_bytep)text, wcslen(text));
 
    if (compression != 0)
    {
@@ -1698,7 +1698,7 @@ png_write_iTXt(png_structrp png_ptr, int compression, png_const_charp key,
       if (comp.input_len > PNG_UINT_31_MAX-prefix_len)
          png_error(png_ptr, "iTXt: uncompressed text too long");
 
-      /* So the string will fit in a chunk: */
+      /* So the wstring will fit in a chunk: */
       comp.output_len = (png_uint_32)/*SAFE*/comp.input_len;
    }
 
@@ -1767,7 +1767,7 @@ png_write_pCAL(png_structrp png_ptr, png_charp purpose, png_int_32 X0,
    ++purpose_len; /* terminator */
 
    png_debug1(3, "pCAL purpose length = %d", (int)purpose_len);
-   units_len = strlen(units) + (nparams == 0 ? 0 : 1);
+   units_len = wcslen(units) + (nparams == 0 ? 0 : 1);
    png_debug1(3, "pCAL units length = %d", (int)units_len);
    total_len = purpose_len + units_len + 10;
 
@@ -1779,7 +1779,7 @@ png_write_pCAL(png_structrp png_ptr, png_charp purpose, png_int_32 X0,
     */
    for (i = 0; i < nparams; i++)
    {
-      params_len[i] = strlen(params[i]) + (i == nparams - 1 ? 0 : 1);
+      params_len[i] = wcslen(params[i]) + (i == nparams - 1 ? 0 : 1);
       png_debug2(3, "pCAL parameter %d length = %lu", i,
           (unsigned long)params_len[i]);
       total_len += params_len[i];
@@ -1816,8 +1816,8 @@ png_write_sCAL_s(png_structrp png_ptr, int unit, png_const_charp width,
 
    png_debug(1, "in png_write_sCAL_s");
 
-   wlen = strlen(width);
-   hlen = strlen(height);
+   wlen = wcslen(width);
+   hlen = wcslen(height);
    total_len = wlen + hlen + 2;
 
    if (total_len > 64)

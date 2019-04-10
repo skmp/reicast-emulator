@@ -41,7 +41,7 @@ extern "C" {
 #include <stddef.h>
 #include <basetsd.h>
 
-#define strcasecmp stricmp
+#define strcasecmp wcsicmp
 #define getdtablesize() 30000
 
 #define LWS_VISIBLE
@@ -654,7 +654,7 @@ struct libwebsocket_extension;
  *		if (len < 100)
  *			return 1;
  *
- *		*p += sprintf(*p, "Cookie: a=b\x0d\x0a");
+ *		*p += swprintf(*p, "Cookie: a=b\x0d\x0a");
  *
  *		return 0;
  *

@@ -61,15 +61,15 @@
 /* Stream status */
 
 
-/* Data structure describing a single value and its code string. */
+/* Data structure describing a single value and its code wstring. */
 typedef struct ct_data_s {
     union {
         ush  freq;       /* frequency count */
-        ush  code;       /* bit string */
+        ush  code;       /* bit wstring */
     } fc;
     union {
         ush  dad;        /* father node in Huffman tree */
-        ush  len;        /* length of bit string */
+        ush  len;        /* length of bit wstring */
     } dl;
 } FAR ct_data;
 
@@ -129,14 +129,14 @@ typedef struct internal_state {
      */
 
     Posf *prev;
-    /* Link to older string with same hash index. To limit the size of this
+    /* Link to older wstring with same hash index. To limit the size of this
      * array to 64K, this link is maintained only for the last 32K strings.
      * An index in this array is thus a window index modulo 32K.
      */
 
     Posf *head; /* Heads of the hash chains or NIL. */
 
-    uInt  ins_h;          /* hash index of string to be inserted */
+    uInt  ins_h;          /* hash index of wstring to be inserted */
     uInt  hash_size;      /* number of elements in hash table */
     uInt  hash_bits;      /* log2(hash_size) */
     uInt  hash_mask;      /* hash_size-1 */
@@ -156,8 +156,8 @@ typedef struct internal_state {
     uInt match_length;           /* length of best match */
     IPos prev_match;             /* previous match */
     int match_available;         /* set if previous match exists */
-    uInt strstart;               /* start of string to insert */
-    uInt match_start;            /* start of matching string */
+    uInt strstart;               /* start of wstring to insert */
+    uInt match_start;            /* start of matching wstring */
     uInt lookahead;              /* number of valid bytes ahead in window */
 
     uInt prev_length;
@@ -230,7 +230,7 @@ typedef struct internal_state {
      *   - creating new Huffman trees less frequently may not provide fast
      *     adaptation to changes in the input data statistics. (Take for
      *     example a binary file with poorly compressible code followed by
-     *     a highly compressible string table.) Smaller buffer sizes give
+     *     a highly compressible wstring table.) Smaller buffer sizes give
      *     fast adaptation but have of course the overhead of transmitting
      *     trees more frequently.
      *   - I can't count above 4
@@ -246,7 +246,7 @@ typedef struct internal_state {
 
     ulg opt_len;        /* bit length of current block with optimal trees */
     ulg static_len;     /* bit length of current block with static trees */
-    uInt matches;       /* number of string matches in current block */
+    uInt matches;       /* number of wstring matches in current block */
     uInt insert;        /* bytes at end of window left to insert */
 
 #ifdef DEBUG

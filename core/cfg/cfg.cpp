@@ -9,7 +9,7 @@
 #include "cfg.h"
 #include "ini.h"
 
-string cfgPath;
+wstring cfgPath;
 bool save_config = true;
 
 ConfigFile cfgdb;
@@ -19,7 +19,7 @@ void savecfgf()
 	FILE* cfgfile = fopen(cfgPath.c_str(),"wt");
 	if (!cfgfile)
 	{
-		printf("Error : Unable to open file for saving \n");
+		wprintf(L"Error : Unable to open file for saving \n");
 	}
 	else
 	{
@@ -27,9 +27,9 @@ void savecfgf()
 		fclose(cfgfile);
 	}
 }
-void  cfgSaveStr(const wchar * Section, const wchar * Key, const wchar * String)
+void  cfgSaveStr(const wchar_t * Section, const wchar_t * Key, const wchar_t * String)
 {
-	cfgdb.set(string(Section), string(Key), string(String));
+	cfgdb.set(wstring(Section), wstring(Key), wstring(String));
 	if(save_config)
 	{
 		savecfgf();
@@ -62,8 +62,8 @@ void  cfgSaveStr(const wchar * Section, const wchar * Key, const wchar * String)
 	emu:PluginPath	: Returns the path where the plugins are loaded from
 	emu:DataPath	: Returns the path where the bios/data files are
 
-	emu:FullName	: str,returns the emulator's name + version string (ex."nullDC v1.0.0 Private Beta 2 built on {datetime}")
-	emu:ShortName	: str,returns the emulator's name + version string , short form (ex."nullDC 1.0.0pb2")
+	emu:FullName	: str,returns the emulator's name + version wstring (ex."nullDC v1.0.0 Private Beta 2 built on {datetime}")
+	emu:ShortName	: str,returns the emulator's name + version wstring , short form (ex."nullDC 1.0.0pb2")
 	emu:Name		: str,returns the emulator's name (ex."nullDC")
 
 	These are read/write
@@ -78,8 +78,8 @@ void  cfgSaveStr(const wchar * Section, const wchar * Key, const wchar * String)
 
 bool cfgOpen()
 {
-	const char* filename = "/emu.cfg";
-	string config_path_read = get_readonly_config_path(filename);
+	const wchar_t* filename = L"/emu.cfg";
+	wstring config_path_read = get_readonly_config_path(filename);
 	cfgPath = get_writable_config_path(filename);
 
 	FILE* cfgfile = fopen(config_path_read.c_str(),"r");
@@ -91,11 +91,11 @@ bool cfgOpen()
 	{
 		// Config file can't be opened
 		int error_code = errno;
-		printf("Warning: Unable to open the config file '%s' for reading (%s)\n", config_path_read.c_str(), strerror(error_code));
+		wprintf(L"Warning: Unable to open the config file '%s' for reading (%s)\n", config_path_read.c_str(), strerror(error_code));
 		if (error_code == ENOENT || cfgPath != config_path_read)
 		{
 			// Config file didn't exist
-			printf("Creating new empty config file at '%s'\n", cfgPath.c_str());
+			wprintf(L"Creating new empty config file at '%s'\n", cfgPath.c_str());
 			savecfgf();
 		}
 		else
@@ -114,80 +114,80 @@ bool cfgOpen()
 //0 : not found
 //1 : found section , key was 0
 //2 : found section & key
-s32  cfgExists(const wchar * Section, const wchar * Key)
+s32  cfgExists(const wchar_t * Section, const wchar_t * Key)
 {
-	if(cfgdb.has_entry(string(Section), string(Key)))
+	if(cfgdb.has_entry(wstring(Section), wstring(Key)))
 	{
 		return 2;
 	}
 	else
 	{
-		return (cfgdb.has_section(string(Section)) ? 1 : 0);
+		return (cfgdb.has_section(wstring(Section)) ? 1 : 0);
 	}
 }
-void  cfgLoadStr(const wchar * Section, const wchar * Key, wchar * Return,const wchar* Default)
+void  cfgLoadStr(const wchar_t * Section, const wchar_t * Key, wchar_t * Return,const wchar_t* Default)
 {
-	string value = cfgdb.get(Section, Key, Default);
+	wstring value = cfgdb.get(Section, Key, Default);
 	// FIXME: Buffer overflow possible
-	strcpy(Return, value.c_str());
+	wcscpy(Return, value.c_str());
 }
 
-string  cfgLoadStr(const wchar * Section, const wchar * Key, const wchar* Default)
+wstring  cfgLoadStr(const wchar_t * Section, const wchar_t * Key, const wchar_t* Default)
 {
-	if(!cfgdb.has_entry(string(Section), string(Key)))
+	if(!cfgdb.has_entry(wstring(Section), wstring(Key)))
 	{
 		cfgSaveStr(Section, Key, Default);
 	}
-	return cfgdb.get(string(Section), string(Key), string(Default));
+	return cfgdb.get(wstring(Section), wstring(Key), wstring(Default));
 }
 
 //These are helpers , mainly :)
-void  cfgSaveInt(const wchar * Section, const wchar * Key, s32 Int)
+void  cfgSaveInt(const wchar_t * Section, const wchar_t * Key, s32 Int)
 {
-	cfgdb.set_int(string(Section), string(Key), Int);
+	cfgdb.set_int(wstring(Section), wstring(Key), Int);
 	if(save_config)
 	{
 		savecfgf();
 	}
 }
 
-s32  cfgLoadInt(const wchar * Section, const wchar * Key,s32 Default)
+s32  cfgLoadInt(const wchar_t * Section, const wchar_t * Key,s32 Default)
 {
-	if(!cfgdb.has_entry(string(Section), string(Key)))
+	if(!cfgdb.has_entry(wstring(Section), wstring(Key)))
 	{
 		cfgSaveInt(Section, Key, Default);
 	}
-	return cfgdb.get_int(string(Section), string(Key), Default);
+	return cfgdb.get_int(wstring(Section), wstring(Key), Default);
 }
 
-s32  cfgGameInt(const wchar * Section, const wchar * Key,s32 Default)
+s32  cfgGameInt(const wchar_t * Section, const wchar_t * Key,s32 Default)
 {
-    if(cfgdb.has_entry(string(Section), string(Key)))
+    if(cfgdb.has_entry(wstring(Section), wstring(Key)))
     {
-        return cfgdb.get_int(string(Section), string(Key), Default);
+        return cfgdb.get_int(wstring(Section), wstring(Key), Default);
     }
     return Default;
 }
 
-void  cfgSaveBool(const wchar * Section, const wchar * Key, bool BoolValue)
+void  cfgSaveBool(const wchar_t * Section, const wchar_t * Key, bool BoolValue)
 {
-	cfgdb.set_bool(string(Section), string(Key), BoolValue);
+	cfgdb.set_bool(wstring(Section), wstring(Key), BoolValue);
 	if(save_config)
 	{
 		savecfgf();
 	}
 }
 
-bool  cfgLoadBool(const wchar * Section, const wchar * Key,bool Default)
+bool  cfgLoadBool(const wchar_t * Section, const wchar_t * Key,bool Default)
 {
-	if(!cfgdb.has_entry(string(Section), string(Key)))
+	if(!cfgdb.has_entry(wstring(Section), wstring(Key)))
 	{
 		cfgSaveBool(Section, Key, Default);
 	}
-	return cfgdb.get_bool(string(Section), string(Key), Default);
+	return cfgdb.get_bool(wstring(Section), wstring(Key), Default);
 }
 
-void cfgSetVirtual(const wchar * Section, const wchar * Key, const wchar * String)
+void cfgSetVirtual(const wchar_t * Section, const wchar_t * Key, const wchar_t * String)
 {
-	cfgdb.set(string(Section), string(Key), string(String), true);
+	cfgdb.set(wstring(Section), wstring(Key), wstring(String), true);
 }

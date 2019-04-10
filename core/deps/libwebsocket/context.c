@@ -34,7 +34,7 @@ static const char *library_version = LWS_LIBRARY_VERSION " " LWS_BUILD_HASH;
 /**
  * lws_get_library_version: get version and git hash library built from
  *
- *	returns a const char * to a string like "1.1 178d78c"
+ *	returns a const char * to a wstring like "1.1 178d78c"
  *	representing the library version followed by the git head hash it
  *	was built from
  */
@@ -182,7 +182,7 @@ libwebsocket_create_context(struct lws_context_creation_info *info)
 	/* split the proxy ads:port if given */
 
 	if (info->http_proxy_address) {
-		strncpy(context->http_proxy_address, info->http_proxy_address,
+		wcsncpy(context->http_proxy_address, info->http_proxy_address,
 				      sizeof(context->http_proxy_address) - 1);
 		context->http_proxy_address[
 				sizeof(context->http_proxy_address) - 1] = '\0';
@@ -191,7 +191,7 @@ libwebsocket_create_context(struct lws_context_creation_info *info)
 #ifdef HAVE_GETENV
 		p = getenv("http_proxy");
 		if (p) {
-			strncpy(context->http_proxy_address, p,
+			wcsncpy(context->http_proxy_address, p,
 				       sizeof(context->http_proxy_address) - 1);
 			context->http_proxy_address[
 				sizeof(context->http_proxy_address) - 1] = '\0';

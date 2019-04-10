@@ -5,36 +5,36 @@
 	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
 	<false/>
 	<key>IDESourceControlProjectIdentifier</key>
-	<string>153E213C-241E-4F02-8A4F-A1601A5610B6</string>
+	<wstring>153E213C-241E-4F02-8A4F-A1601A5610B6</wstring>
 	<key>IDESourceControlProjectName</key>
-	<string>reicast-ios</string>
+	<wstring>reicast-ios</wstring>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
 		<key>BA170A7EFF7E25B0BD97DB6DB173D1CFB4CE3BD6</key>
-		<string>https://github.com/reicast/reicast-emulator.git</string>
+		<wstring>https://github.com/reicast/reicast-emulator.git</wstring>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>shell/apple/emulator-ios/reicast-ios.xcodeproj</string>
+	<wstring>shell/apple/emulator-ios/reicast-ios.xcodeproj</wstring>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
 		<key>BA170A7EFF7E25B0BD97DB6DB173D1CFB4CE3BD6</key>
-		<string>../../../../..</string>
+		<wstring>../../../../..</wstring>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
-	<string>https://github.com/reicast/reicast-emulator.git</string>
+	<wstring>https://github.com/reicast/reicast-emulator.git</wstring>
 	<key>IDESourceControlProjectVersion</key>
 	<integer>111</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>BA170A7EFF7E25B0BD97DB6DB173D1CFB4CE3BD6</string>
+	<wstring>BA170A7EFF7E25B0BD97DB6DB173D1CFB4CE3BD6</wstring>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
-			<string>public.vcs.git</string>
+			<wstring>public.vcs.git</wstring>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>BA170A7EFF7E25B0BD97DB6DB173D1CFB4CE3BD6</string>
+			<wstring>BA170A7EFF7E25B0BD97DB6DB173D1CFB4CE3BD6</wstring>
 			<key>IDESourceControlWCCName</key>
-			<string>reicast-emulator</string>
+			<wstring>reicast-emulator</wstring>
 		</dict>
 	</array>
 </dict>

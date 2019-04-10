@@ -26,7 +26,7 @@ struct libwebsocket *libwebsocket_client_connect_2(
 	 */
 
 	if (context->http_proxy_port) {
-		plen = sprintf((char *)context->service_buffer,
+		plen = swprintf((char *)context->service_buffer,
 			"CONNECT %s:%u HTTP/1.0\x0d\x0a"
 			"User-agent: libwebsockets\x0d\x0a"
 /*Proxy-authorization: basic aGVsbG86d29ybGQ= */
@@ -212,7 +212,7 @@ struct libwebsocket *libwebsocket_client_connect_2(
 
 		/*
 		 * (will overwrite existing pointer,
-		 * leaving old string/frag there but unreferenced)
+		 * leaving old wstring/frag there but unreferenced)
 		 */
 		if (lws_hdr_simple_create(wsi, _WSI_TOKEN_CLIENT_PEER_ADDRESS,
 						   context->http_proxy_address))

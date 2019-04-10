@@ -4,7 +4,7 @@
 
 #include "sh4/sh4_mem.h"
 
-bool reios_loadElf(const string& elf) {
+bool reios_loadElf(const wstring& elf) {
 
 	FILE* f = fopen(elf.c_str(), "rb");
 	if (!f) {

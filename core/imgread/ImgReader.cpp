@@ -42,7 +42,7 @@ void libGDR_GetSessionInfo(u8* out,u8 ses)
 /*
 void EXPORT_CALL handle_SwitchDisc(u32 id,void* w,void* p)
 {
-	//msgboxf("This feature is not yet implemented",MB_ICONWARNING);
+	//msgboxf(L"This feature is not yet implemented",MB_ICONWARNING);
 	//return;
 	TermDrive();
 	
@@ -55,7 +55,7 @@ void EXPORT_CALL handle_SwitchDisc(u32 id,void* w,void* p)
 	Sleep(150); //tray is open
 
 	while(!InitDrive(2))//no "cancel"
-		msgboxf("Init Drive failed, disc must be valid for swap",0x00000010L);
+		msgboxf(L"Init Drive failed, disc must be valid for swap",0x00000010L);
 
 	DriveNotifyEvent(DiskChange,0);
 	//new disc is in

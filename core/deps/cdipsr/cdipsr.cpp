@@ -55,10 +55,10 @@ void CDI_read_track (FILE *fsource, image_s *image, track_s *track)
             fseek(fsource, 8, SEEK_CUR); // extra data (DJ 3.00.780 and up)
 
          fread(&current_start_mark, 10, 1, fsource);
-         if (memcmp(TRACK_START_MARK, current_start_mark, 10)) printf( "Unsupported format: Could not find the track start mark");
+         if (memcmp(TRACK_START_MARK, current_start_mark, 10)) wprintf(L"Unsupported format: Could not find the track start mark");
 
          fread(&current_start_mark, 10, 1, fsource);
-         if (memcmp(TRACK_START_MARK, current_start_mark, 10)) printf(  "Unsupported format: Could not find the track start mark");
+         if (memcmp(TRACK_START_MARK, current_start_mark, 10)) wprintf(L"Unsupported format: Could not find the track start mark");
 
          fseek(fsource, 4, SEEK_CUR);
          fread(&track->filename_length, 1, 1, fsource);
@@ -85,10 +85,10 @@ void CDI_read_track (FILE *fsource, image_s *image, track_s *track)
                case 0 : track->sector_size = 2048; break;
                case 1 : track->sector_size = 2336; break;
                case 2 : track->sector_size = 2352; break;
-               default: printf("Unsupported sector size");
+               default: wprintf(L"Unsupported sector size");
                }
 
-         if (track->mode > 2) printf( "Unsupported format: Track mode not supported");
+         if (track->mode > 2) wprintf(L"Unsupported format: Track mode not supported");
 
          fseek(fsource, 29, SEEK_CUR);
          if (image->version != CDI_V2)
@@ -117,14 +117,14 @@ void CDI_init (FILE *fsource, image_s *image, char *fsourcename)
 {
 	image->length = core_fsize(fsource);
 
-     if (image->length < 8) printf( "Image file is too short");
+     if (image->length < 8) wprintf(L"Image file is too short");
 
      fseek(fsource, image->length-8, SEEK_SET);
      fread(&image->version, 4, 1, fsource);
      fread(&image->header_offset, 4, 1, fsource);
 
-   //  if (errno != 0) printf( fsourcename);
-     if (image->header_offset == 0) printf( "Bad image format");
+   //  if (errno != 0) wprintf( fsourcename);
+     if (image->header_offset == 0) wprintf(L"Bad image format");
 }
 
 void CDI_get_sessions (FILE *fsource, image_s *image)

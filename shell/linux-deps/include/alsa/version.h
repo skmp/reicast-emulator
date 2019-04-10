@@ -10,6 +10,6 @@
 #define SND_LIB_VERSION		((SND_LIB_MAJOR<<16)|\
 				 (SND_LIB_MINOR<<8)|\
 				  SND_LIB_SUBMINOR)
-/** library version (string) */
+/** library version (wstring) */
 #define SND_LIB_VERSION_STR	"1.0.25"
 

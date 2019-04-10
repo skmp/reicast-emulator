@@ -21,7 +21,7 @@
 
 #include "private-libwebsockets.h"
 
-#define LWS_CPYAPP(ptr, str) { strcpy(ptr, str); ptr += strlen(str); }
+#define LWS_CPYAPP(ptr, str) { strcpy(ptr, str); ptr += wcslen(str); }
 #ifndef LWS_NO_EXTENSIONS
 LWS_VISIBLE int
 lws_extension_server_handshake(struct libwebsocket_context *context,
@@ -79,7 +79,7 @@ lws_extension_server_handshake(struct libwebsocket_context *context,
 
 		while (ext && ext->callback) {
 
-			if (strcmp(ext_name, ext->name)) {
+			if (wcscmp(ext_name, ext->name)) {
 				ext++;
 				continue;
 			}
@@ -117,7 +117,7 @@ lws_extension_server_handshake(struct libwebsocket_context *context,
 			else
 				LWS_CPYAPP(*p,
 				 "\x0d\x0aSec-WebSocket-Extensions: ");
-			*p += sprintf(*p, "%s", ext_name);
+			*p += swprintf(*p, "%s", ext_name);
 			ext_count++;
 
 			/* instantiate the extension on this conn */
@@ -184,7 +184,7 @@ handshake_0405(struct libwebsocket_context *context, struct libwebsocket *wsi)
 	 * since key length is restricted above (currently 128), cannot
 	 * overflow
 	 */
-	n = sprintf((char *)context->service_buffer,
+	n = swprintf((char *)context->service_buffer,
 				"%s258EAFA5-E914-47DA-95CA-C5AB0DC85B11",
 				lws_hdr_simple_ptr(wsi, WSI_TOKEN_KEY));
 

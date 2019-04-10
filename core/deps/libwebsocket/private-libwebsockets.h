@@ -32,7 +32,7 @@
 #ifdef CMAKE_BUILD
 #include "lws_config.h"
 #else
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 #define inline __inline
 #else /* not WIN32 */
 #include "config.h"
@@ -785,9 +785,9 @@ LWS_EXTERN int interface_to_sa(struct libwebsocket_context *context,
 LWS_EXTERN void lwsl_emit_stderr(int level, const char *line);
 
 #ifdef _WIN32
-LWS_EXTERN HANDLE lws_plat_open_file(const char* filename, unsigned long* filelen);
+LWS_EXTERN HANDLE lws_plat_open_file(const wchar_t* filename, unsigned long* filelen);
 #else
-LWS_EXTERN int lws_plat_open_file(const char* filename, unsigned long* filelen);
+LWS_EXTERN int lws_plat_open_file(const wchar_t* filename, unsigned long* filelen);
 #endif
 
 enum lws_ssl_capable_status {

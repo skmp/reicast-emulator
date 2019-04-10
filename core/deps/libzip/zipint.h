@@ -105,7 +105,7 @@ enum zip_state { ZIP_ST_UNCHANGED, ZIP_ST_DELETED, ZIP_ST_REPLACED,
 struct zip_error {
     int zip_err;	/* libzip error code (ZIP_ER_*) */
     int sys_err;	/* copy of errno (E*) or zlib error code */
-    char *str;		/* string representation or NULL */
+    char *str;		/* wstring representation or NULL */
 };
 
 /* zip archive, part of API */

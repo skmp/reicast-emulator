@@ -27,7 +27,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_back" />
+                android:text="@wstring/popup_button_back" />
         </TableRow>
 
         <TableRow
@@ -44,7 +44,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_widescreen" />
+                android:text="@wstring/popup_button_widescreen" />
         </TableRow>
 
         <TableRow
@@ -61,7 +61,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_frames_down" />
+                android:text="@wstring/popup_button_frames_down" />
         </TableRow>
 
         <TableRow
@@ -78,7 +78,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_frames_up" />
+                android:text="@wstring/popup_button_frames_up" />
         </TableRow>
 
         <TableRow
@@ -95,7 +95,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_frame_limit" />
+                android:text="@wstring/popup_button_frame_limit" />
         </TableRow>
 
         <TableRow
@@ -112,7 +112,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_audio" />
+                android:text="@wstring/popup_button_audio" />
         </TableRow>
 
         <TableRow
@@ -129,7 +129,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_turbo" />
+                android:text="@wstring/popup_button_turbo" />
         </TableRow>
     </TableLayout>
 

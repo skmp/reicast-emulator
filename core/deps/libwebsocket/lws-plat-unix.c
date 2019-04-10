@@ -2,7 +2,7 @@
 
 #include "build.h"
 
-#if HOST_OS != OS_WINDOWS
+#if HOST_OS != OS_WINDOWS && HOST_OS!=OS_UWP
 /*
  * included from libwebsockets.c for unix builds
  */
@@ -93,7 +93,7 @@ LWS_VISIBLE void lwsl_emit_syslog(int level, const char *line)
 		break;
 	}
 	*/
-	printf("%s", line);
+	wprintf(L"%s", line);
 }
 
 LWS_VISIBLE int
@@ -301,7 +301,7 @@ interface_to_sa(struct libwebsocket_context *context,
 
 		lwsl_info(" interface %s vs %s\n", ifc->ifa_name, ifname);
 
-		if (strcmp(ifc->ifa_name, ifname))
+		if (wcscmp(ifc->ifa_name, ifname))
 			continue;
 
 		switch (ifc->ifa_addr->sa_family) {
@@ -373,7 +373,7 @@ lws_plat_change_pollfd(struct libwebsocket_context *context,
 }
 
 LWS_VISIBLE int
-lws_plat_open_file(const char* filename, unsigned long* filelen)
+lws_plat_open_file(const wchar_t* filename, unsigned long* filelen)
 {
 	struct stat stat_buf;
 	int ret = open(filename, O_RDONLY);

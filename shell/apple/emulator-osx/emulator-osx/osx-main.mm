@@ -13,11 +13,11 @@
 
 #include <OpenGL/gl3.h>
 
-int msgboxf(const wchar* text,unsigned int type,...)
+int msgboxf(const wchar_t* text,unsigned int type,...)
 {
     va_list args;
 
-    wchar temp[2048];
+    wchar_t temp[2048];
     va_start(args, type);
     vsprintf(temp, text, args);
     va_end(args);
@@ -26,10 +26,10 @@ int msgboxf(const wchar* text,unsigned int type,...)
     return 0;
 }
 
-int darw_printf(const wchar* text,...) {
+int darw_printf(const wchar_t* text,...) {
     va_list args;
 
-    wchar temp[2048];
+    wchar_t temp[2048];
     va_start(args, text);
     vsprintf(temp, text, args);
     va_end(args);
@@ -93,7 +93,7 @@ void gl_swap() {
 
 }
 
-int dc_init(int argc,wchar* argv[]);
+int dc_init(int argc,wchar_t* argv[]);
 void dc_run();
 void dc_term();
 void dc_stop();
@@ -101,7 +101,7 @@ void dc_stop();
 bool has_init = false;
 void* emuthread(void*) {
     settings.profile.run_counts=0;
-    string home = (string)getenv("HOME");
+    wstring home = (wstring)getenv("HOME");
     if(home.c_str())
     {
         home += "/.reicast";
@@ -114,7 +114,7 @@ void* emuthread(void*) {
         set_user_config_dir(".");
         set_user_data_dir(".");
     }
-    char* argv[] = { "reicast" };
+    wchar_t* argv[] = { "reicast" };
 
     dc_init(1,argv);
 
@@ -193,7 +193,7 @@ void handle_trig(u8* dckey, int state) {
         dckey[0] = 0;
 }
 
-extern "C" void emu_key_input(char* keyt, int state) {
+extern "C" void emu_key_input(wchar_t* keyt, int state) {
     int key = keyt[0];
     switch(key) {
         case 'z':     handle_key(Btn_X, state); break;

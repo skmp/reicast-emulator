@@ -88,6 +88,6 @@ bool IsOnRam(u32 addr);
 u32 GetRamPageFromAddress(u32 RamAddress);
 
 
-bool LoadRomFiles(const string& root);
-void SaveRomFiles(const string& root);
-bool LoadHle(const string& root);
+bool LoadRomFiles(const wstring& root);
+void SaveRomFiles(const wstring& root);
+bool LoadHle(const wstring& root);

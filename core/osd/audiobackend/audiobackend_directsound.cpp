@@ -1,5 +1,5 @@
 #include "audiobackend_directsound.h"
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 #include "oslib.h"
 #include <initguid.h>
 #include <dsound.h>
@@ -61,7 +61,7 @@ static void directsound_init()
 	}
 	else
 	{
-		die("settings.HW_mixing: Invalid value");
+		die(L"settings.HW_mixing: Invalid value");
 	}
 
 	if (settings.aica.GlobalFocus)
@@ -117,7 +117,7 @@ static u32 directsound_push_nw(void* frame, u32 samplesb)
 
 	fsz-=32;
 
-	//printf("%d: r:%d w:%d (f:%d wh:%d)\n",fsz>bytes,pc,wc,fsz,wch);
+	//wprintf(L"%d: r:%d w:%d (f:%d wh:%d)\n",fsz>bytes,pc,wc,fsz,wch);
 
 	if (fsz>bytes)
 	{
@@ -165,11 +165,11 @@ static u32 directsound_push(void* frame, u32 samples, bool wait)
 	/*
 	while (directsound_IsAudioBufferedLots() && wait)
 		if (ffs == 0)
-			ffs = printf("AUD WAIT %d\n", directsound_getusedSamples());
+			ffs = wprintf(L"AUD WAIT %d\n", directsound_getusedSamples());
 	*/
 
 	while (!directsound_push_nw(frame, samples) && wait)
-		0 && printf("FAILED waiting on audio FAILED %d\n", directsound_getusedSamples());
+		0 && wprintf(L"FAILED waiting on audio FAILED %d\n", directsound_getusedSamples());
 
 	return 1;
 }
@@ -183,8 +183,8 @@ static void directsound_term()
 }
 
 audiobackend_t audiobackend_directsound = {
-    "directsound", // Slug
-    "Microsoft DirectSound", // Name
+    L"directsound", // Slug
+    L"Microsoft DirectSound", // Name
     &directsound_init,
     &directsound_push,
     &directsound_term

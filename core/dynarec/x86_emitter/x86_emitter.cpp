@@ -61,7 +61,7 @@ void* x86_Label::GetPtr()
 	return owner->x86_buff + this->target_opcode;
 }
 
-const char* DissasmClass(x86_opcode_class opcode)
+const wchar_t* DissasmClass(x86_opcode_class opcode)
 {
 	#ifdef X86_OP_NAMES
 	return Names[opcode];
@@ -268,21 +268,21 @@ void x86_block::x86_buffer_ensure(u32 size)
 void  x86_block::write8(u32 value)
 {
 	x86_buffer_ensure(15);
-	//printf("%02X ",value);
+	//wprintf(L"%02X ",value);
 	x86_buff[x86_indx]=value;
 	x86_indx+=1;
 }
 void  x86_block::write16(u32 value)
 {
 	x86_buffer_ensure(15);
-	//printf("%04X ",value);
+	//wprintf(L"%04X ",value);
 	*(u16*)&x86_buff[x86_indx]=value;
 	x86_indx+=2;
 }
 void  x86_block::write32(u32 value)
 {
 	x86_buffer_ensure(15);
-	//printf("%08X ",value);
+	//wprintf(L"%08X ",value);
 	*(u32*)&x86_buff[x86_indx]=value;
 	x86_indx+=4;
 }

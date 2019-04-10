@@ -1,67 +1,67 @@
 <resources>
 
-    <string name="menu_settings">Ustawienia</string>
+    <wstring name="menu_settings">Ustawienia</wstring>
 
-    <string name="system_path">Ścieżka systemowa (lokalizacja folderu zawierającego dc_boot.bin/dc_flash.bin)</string>
-    <string name="browser_path">Domyślna ścieżka systemowa</string>
-    <string name="games_path">Ścieżka obrazów (lokalizacja obrazów dysków .gdi, .chd or .cdi)</string>
-    <string name="game_path">Domyślna ścieżka obrazów</string>
+    <wstring name="system_path">Ścieżka systemowa (lokalizacja folderu zawierającego dc_boot.bin/dc_flash.bin)</wstring>
+    <wstring name="browser_path">Domyślna ścieżka systemowa</wstring>
+    <wstring name="games_path">Ścieżka obrazów (lokalizacja obrazów dysków .gdi, .chd or .cdi)</wstring>
+    <wstring name="game_path">Domyślna ścieżka obrazów</wstring>
     
-    <string name="boot_bios">Uruchom BIOS\'a Dreamcast\'a</string>
-    <string name="missing_bios">Brak BIOS\'u. BIOS Dreamcast\'a jest potrzebny, aby ten emulator działał. Skopiuj BIOS do %1$s/data/dc_boot.bin</string>
-    <string name="missing_flash">Brak Flash\'a. Plik Flash Dreamcast\'a jest potrzebny, aby ten emulator działał. Skopiuj plik Flash do %1$s/data/dc_flash.bin</string>
-	<string name="require_bios">You have to provide the BIOS</string>
+    <wstring name="boot_bios">Uruchom BIOS\'a Dreamcast\'a</wstring>
+    <wstring name="missing_bios">Brak BIOS\'u. BIOS Dreamcast\'a jest potrzebny, aby ten emulator działał. Skopiuj BIOS do %1$s/data/dc_boot.bin</wstring>
+    <wstring name="missing_flash">Brak Flash\'a. Plik Flash Dreamcast\'a jest potrzebny, aby ten emulator działał. Skopiuj plik Flash do %1$s/data/dc_flash.bin</wstring>
+	<wstring name="require_bios">You have to provide the BIOS</wstring>
     
-    <string name="folder_bios">URUCHOM BIOS</string>
-    <string name="folder_select">WYBIERZ BIEŻĄCY FOLDER</string>
+    <wstring name="folder_bios">URUCHOM BIOS</wstring>
+    <wstring name="folder_select">WYBIERZ BIEŻĄCY FOLDER</wstring>
 
-    <string name="select_dynarec">Opcje Dynarec</string>
-    <string name="select_unstable">Niestabilne optymalizacje</string>
-    <string name="select_region">Region DC</string>
-    <string name="select_limitfps">Limit FPS</string>
-    <string name="select_mipmaps">Użyj Mipmap (fix dla starego SGX540)</string>
-    <string name="select_stretch">Tryb Szerokoekranowy</string>
-    <string name="set_frameskip">Wartość Frameskip</string>
-    <string name="select_render">PVR Rendering (na razie nie działa)</string>
+    <wstring name="select_dynarec">Opcje Dynarec</wstring>
+    <wstring name="select_unstable">Niestabilne optymalizacje</wstring>
+    <wstring name="select_region">Region DC</wstring>
+    <wstring name="select_limitfps">Limit FPS</wstring>
+    <wstring name="select_mipmaps">Użyj Mipmap (fix dla starego SGX540)</wstring>
+    <wstring name="select_stretch">Tryb Szerokoekranowy</wstring>
+    <wstring name="set_frameskip">Wartość Frameskip</wstring>
+    <wstring name="select_render">PVR Rendering (na razie nie działa)</wstring>
 
-    <string name="games_listing">Dostępne gry Dreamcast\'a</string>
+    <wstring name="games_listing">Dostępne gry Dreamcast\'a</wstring>
 
-    <string name="customize_touch_controls">Dostosuj układ przycisków dotykowych</string>
-    <string name="launch_editor">Uruchom Edytor</string>
-    <string name="touch_vibration">Wibracja przy dotyku</string>
-    <string name="controller_a">Kontroler A</string>
-    <string name="controller_b">Kontroler B</string>
-    <string name="controller_c">Kontroler C</string>
-    <string name="controller_d">Kontroler D</string>
-    <string name="controller_not_connected">Brak podłączonego kontrolera</string>
-    <string name="controller_none_selected">Nie wybrano kontrolera</string>
-    <string name="select">Wybierz</string>
-    <string name="remove">Usuń</string>
-    <string name="select_controller_title">Wybierz kontroler</string>
-    <string name="select_controller_message">Naciśnij dowolny przycisk na kontrolerze %1$s aby poodłączyć do portu</string>
-    <string name="controller_already_in_use">Ten kontroler jest już używany!</string>
-    <string name="modified_layout">Włącz własny układ kontrolera</string>
-    <string name="controller_compat">Włącz tryb kompatybilności</string>
+    <wstring name="customize_touch_controls">Dostosuj układ przycisków dotykowych</wstring>
+    <wstring name="launch_editor">Uruchom Edytor</wstring>
+    <wstring name="touch_vibration">Wibracja przy dotyku</wstring>
+    <wstring name="controller_a">Kontroler A</wstring>
+    <wstring name="controller_b">Kontroler B</wstring>
+    <wstring name="controller_c">Kontroler C</wstring>
+    <wstring name="controller_d">Kontroler D</wstring>
+    <wstring name="controller_not_connected">Brak podłączonego kontrolera</wstring>
+    <wstring name="controller_none_selected">Nie wybrano kontrolera</wstring>
+    <wstring name="select">Wybierz</wstring>
+    <wstring name="remove">Usuń</wstring>
+    <wstring name="select_controller_title">Wybierz kontroler</wstring>
+    <wstring name="select_controller_message">Naciśnij dowolny przycisk na kontrolerze %1$s aby poodłączyć do portu</wstring>
+    <wstring name="controller_already_in_use">Ten kontroler jest już używany!</wstring>
+    <wstring name="modified_layout">Włącz własny układ kontrolera</wstring>
+    <wstring name="controller_compat">Włącz tryb kompatybilności</wstring>
     
-    <string name="customize_physical_controls">Dostosuj prawdziwy kontroler</string>
-    <string name="map_keycode_title">Modyfikuj kontroler</string>
-    <string name="map_keycode_message">Przyciśni przycisk dla %1$s</string>
+    <wstring name="customize_physical_controls">Dostosuj prawdziwy kontroler</wstring>
+    <wstring name="map_keycode_title">Modyfikuj kontroler</wstring>
+    <wstring name="map_keycode_message">Przyciśni przycisk dla %1$s</wstring>
 
-    <string name="about_text">reicast jest emulatorem dreamcast\'a</string>
-    <string name="revision_text">Wersja: %1$s [%2$s]</string>
+    <wstring name="about_text">reicast jest emulatorem dreamcast\'a</wstring>
+    <wstring name="revision_text">Wersja: %1$s [%2$s]</wstring>
     
-    <string-array name="controllers">
+    <wstring-array name="controllers">
     <item>Controller A</item>
     <item>Controller B</item>
     <item>Controller C</item>
     <item>Controller D</item>
-    </string-array>
+    </wstring-array>
 
-	<string name="browser">Eksplorator</string>
-    <string name="settings">Konfiguracja</string>
-    <string name="paths">Ścieżki</string>
-    <string name="input">Kontrolery</string>
-    <string name="about">O nas</string>
-    <string name="rateme">Oceń nas</string>
+	<wstring name="browser">Eksplorator</wstring>
+    <wstring name="settings">Konfiguracja</wstring>
+    <wstring name="paths">Ścieżki</wstring>
+    <wstring name="input">Kontrolery</wstring>
+    <wstring name="about">O nas</wstring>
+    <wstring name="rateme">Oceń nas</wstring>
 
 </resources>

@@ -43,7 +43,7 @@ void _vmem_get_ptrs(u32 sz,bool write,void*** vmap,void*** func)
 		return;
 
 	default:
-		die("invalid size");
+		die(L"invalid size");
 	}
 }
 
@@ -83,7 +83,7 @@ void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 		}
 		else
 		{
-			die("Invalid size");
+			die(L"Invalid size");
 		}
 	}
 	else
@@ -94,7 +94,7 @@ void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 
 		return &(((u8*)ptr)[addr]);
 	}
-	die("Invalid memory size");
+	die(L"Invalid memory size");
 
 	return 0;
 }
@@ -124,7 +124,7 @@ void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
 		}
 		else
 		{
-			die("Invalid size");
+			die(L"Invalid size");
 		}
 	}
 	else
@@ -135,7 +135,7 @@ void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
 
 		return ptr;
 	}
-	die("Invalid memory size");
+	die(L"Invalid memory size");
 
 	return 0;
 }
@@ -181,7 +181,7 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 		}
 		else
 		{
-			die("Invalid size");
+			die(L"Invalid size");
 		}
 	}
 }
@@ -223,7 +223,7 @@ INLINE void DYNACALL _vmem_writet(u32 addr,T data)
 		}
 		else
 		{
-			die("Invalid size");
+			die(L"Invalid size");
 		}
 	}
 }
@@ -252,31 +252,31 @@ void DYNACALL _vmem_WriteMem64(u32 Address,u64 data) { _vmem_writet<u64>(Address
 //default read handlers
 u8 DYNACALL _vmem_ReadMem8_not_mapped(u32 addresss)
 {
-	printf("[sh4]Read8 from 0x%X, not mapped [_vmem default handler]\n",addresss);
+	wprintf(L"[sh4]Read8 from 0x%X, not mapped [_vmem default handler]\n",addresss);
 	return (u8)MEM_ERROR_RETURN_VALUE;
 }
 u16 DYNACALL _vmem_ReadMem16_not_mapped(u32 addresss)
 {
-	printf("[sh4]Read16 from 0x%X, not mapped [_vmem default handler]\n",addresss);
+	wprintf(L"[sh4]Read16 from 0x%X, not mapped [_vmem default handler]\n",addresss);
 	return (u16)MEM_ERROR_RETURN_VALUE;
 }
 u32 DYNACALL _vmem_ReadMem32_not_mapped(u32 addresss)
 {
-	printf("[sh4]Read32 from 0x%X, not mapped [_vmem default handler]\n",addresss);
+	wprintf(L"[sh4]Read32 from 0x%X, not mapped [_vmem default handler]\n",addresss);
 	return (u32)MEM_ERROR_RETURN_VALUE;
 }
 //default write handers
 void DYNACALL _vmem_WriteMem8_not_mapped(u32 addresss,u8 data)
 {
-	printf("[sh4]Write8 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
+	wprintf(L"[sh4]Write8 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
 }
 void DYNACALL _vmem_WriteMem16_not_mapped(u32 addresss,u16 data)
 {
-	printf("[sh4]Write16 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
+	wprintf(L"[sh4]Write16 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
 }
 void DYNACALL _vmem_WriteMem32_not_mapped(u32 addresss,u32 data)
 {
-	printf("[sh4]Write32 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
+	wprintf(L"[sh4]Write32 to 0x%X=0x%X, not mapped [_vmem default handler]\n",addresss,data);
 }
 //code to register handlers
 //0 is considered error :)
@@ -440,7 +440,7 @@ void _vmem_bm_reset() {
 #define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)
 #define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)
 
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 #include <Windows.h>
 HANDLE mem_handle;
 
@@ -549,7 +549,7 @@ error:
 		void* ptr;
 		void* rv;
 
-		printf("MAP %08X w/ %d\n",dst,offset);
+		wprintf(L"MAP %08X w/ %d\n",dst,offset);
 		u32 map_times=addrsz/size;
 		verify((addrsz%size)==0);
 		verify(map_times>=1);
@@ -557,7 +557,7 @@ error:
 		rv= mmap(&virt_ram_base[dst], size, prot, MAP_SHARED | MAP_NOSYNC | MAP_FIXED, fd, offset);
 		if (MAP_FAILED==rv || rv!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0)) 
 		{
-			printf("MAP1 failed %d\n",errno);
+			wprintf(L"MAP1 failed %d\n",errno);
 			return 0;
 		}
 
@@ -567,7 +567,7 @@ error:
 			ptr=mmap(&virt_ram_base[dst], size, prot , MAP_SHARED | MAP_NOSYNC | MAP_FIXED, fd, offset);
 			if (MAP_FAILED==ptr || ptr!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0))
 			{
-				printf("MAP2 failed %d\n",errno);
+				wprintf(L"MAP2 failed %d\n",errno);
 				return 0;
 			}
 		}
@@ -579,7 +579,7 @@ error:
 	{
         
 #if HOST_OS == OS_DARWIN
-		string path = get_writable_data_path("/dcnzorz_mem");
+		wstring path = get_writable_data_path("/dcnzorz_mem");
         fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
         unlink(path.c_str());
         verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
@@ -643,7 +643,7 @@ void _vmem_bm_reset_nvmem()
     #endif
 #endif
 
-	printf("Freeing fpcb\n");
+	wprintf(L"Freeing fpcb\n");
 }
 
 bool BM_LockedWrite(u8* address)
@@ -658,9 +658,9 @@ bool BM_LockedWrite(u8* address)
 
 	if (addr<sizeof(p_sh4rcb->fpcb))
 	{
-		//printf("Allocated %d PAGES [%08X]\n",++pagecnt,addr);
+		//wprintf(L"Allocated %d PAGES [%08X]\n",++pagecnt,addr);
 
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 		verify(VirtualAlloc(address,PAGE_SIZE,MEM_COMMIT,PAGE_READWRITE));
 #else
 		mprotect (address, PAGE_SIZE, PROT_READ | PROT_WRITE);
@@ -671,7 +671,7 @@ bool BM_LockedWrite(u8* address)
 		return true;
 	}
 #else
-die("BM_LockedWrite and NO REC");
+die(L"BM_LockedWrite and NO REC");
 #endif
 	return false;
 }
@@ -692,7 +692,7 @@ bool _vmem_reserve()
 	
 	p_sh4rcb=(Sh4RCB*)virt_ram_base;
 
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 	//verify(p_sh4rcb==VirtualAlloc(p_sh4rcb,sizeof(Sh4RCB),MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE));
 	verify(p_sh4rcb==VirtualAlloc(p_sh4rcb,sizeof(Sh4RCB),MEM_RESERVE,PAGE_NOACCESS));
 
@@ -750,7 +750,7 @@ bool _vmem_reserve()
 	mem_b.size=RAM_SIZE;
 	mem_b.data=(u8*)ptr;
 	
-	printf("A8\n");
+	wprintf(L"A8\n");
 
 	//Area 4
 	//Area 5
@@ -760,15 +760,15 @@ bool _vmem_reserve()
 	//[0x10000000,0x20000000) -> unused
 	unused_buffer(0x10000000,0x20000000);
 
-	printf("vmem reserve: base: %08p, aram: %08p, vram: %08p, ram: %08p\n",virt_ram_base,aica_ram.data,vram.data,mem_b.data);
+	wprintf(L"vmem reserve: base: %08p, aram: %08p, vram: %08p, ram: %08p\n",virt_ram_base,aica_ram.data,vram.data,mem_b.data);
 
-	printf("Resetting mem\n");
+	wprintf(L"Resetting mem\n");
 
 	aica_ram.Zero();
 	vram.Zero();
 	mem_b.Zero();
 
-	printf("Mem alloc successful!");
+	wprintf(L"Mem alloc successful!");
 
 	return virt_ram_base!=0;
 }

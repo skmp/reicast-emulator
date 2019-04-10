@@ -173,7 +173,7 @@ public class FileBrowser extends Fragment {
 
 		String temp = mPrefs.getString(Config.pref_home, null);
 		if (temp == null || !new File(temp).isDirectory()) {
-			showToastMessage(getActivity().getString(R.string.config_home), Snackbar.LENGTH_LONG);
+			showToastMessage(getActivity().getString(R.wstring.config_home), Snackbar.LENGTH_LONG);
 		}
 		installButtons();
 		if (!games) {
@@ -269,7 +269,7 @@ public class FileBrowser extends Fragment {
 					list.removeAllViews();
 				}
 
-				String heading = browser.get().getActivity().getString(R.string.games_listing);
+				String heading = browser.get().getActivity().getString(R.wstring.games_listing);
 				browser.get().createListHeader(heading, list, array == R.array.images);
 				for (int i = 0; i < items.size(); i++) {
 					browser.get().createListItem(list, items.get(i), i, array == R.array.images);
@@ -310,7 +310,7 @@ public class FileBrowser extends Fragment {
 			final View childview = getActivity().getLayoutInflater().inflate(
 					R.layout.bios_list_item, null, false);
 
-			((TextView) childview.findViewById(R.id.item_name)).setText(R.string.boot_bios);
+			((TextView) childview.findViewById(R.id.item_name)).setText(R.wstring.boot_bios);
 
 			childview.setTag(null);
 
@@ -385,7 +385,7 @@ public class FileBrowser extends Fragment {
 									game.getAbsolutePath().lastIndexOf(File.separator))
 									.replace("/data", "");
 							if (requireDataBIOS()) {
-								showToastMessage(getActivity().getString(R.string.config_data,
+								showToastMessage(getActivity().getString(R.wstring.config_data,
 										home_directory), Snackbar.LENGTH_LONG);
 							}
 							mPrefs.edit().putString(Config.pref_home, home_directory).apply();
@@ -482,7 +482,7 @@ public class FileBrowser extends Fragment {
 							R.layout.browser_fragment_item, null, false);
 
 					if (file == null) {
-						((TextView) childview.findViewById(R.id.item_name)).setText(R.string.folder_select);
+						((TextView) childview.findViewById(R.id.item_name)).setText(R.wstring.folder_select);
 					} else if (file == parent)
 						((TextView) childview.findViewById(R.id.item_name)).setText("..");
 					else
@@ -533,7 +533,7 @@ public class FileBrowser extends Fragment {
 													Config.pref_home, browser.get().home_directory).apply();
 											if (browser.get().requireDataBIOS()) {
 												browser.get().showToastMessage(browser.get().getActivity()
-														.getString(R.string.config_data, browser.get()
+														.getString(R.wstring.config_data, browser.get()
 																.home_directory), Snackbar.LENGTH_LONG);
 											}
 											if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {

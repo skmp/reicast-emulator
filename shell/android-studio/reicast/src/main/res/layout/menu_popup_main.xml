@@ -41,7 +41,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_disk" />
+                android:text="@wstring/popup_button_disk" />
         </TableRow>
 
         <TableRow
@@ -58,7 +58,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_vmu_swap" />
+                android:text="@wstring/popup_button_vmu_swap" />
         </TableRow>
 
         <TableRow
@@ -75,7 +75,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_options" />
+                android:text="@wstring/popup_button_options" />
         </TableRow>
 
         <TableRow
@@ -92,7 +92,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_debugging" />
+                android:text="@wstring/popup_button_debugging" />
         </TableRow>
 
         <TableRow
@@ -109,7 +109,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_screenshot" />
+                android:text="@wstring/popup_button_screenshot" />
         </TableRow>
 
         <TableRow
@@ -126,7 +126,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_exit" />
+                android:text="@wstring/popup_button_exit" />
         </TableRow>
     </TableLayout>
 

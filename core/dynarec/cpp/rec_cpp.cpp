@@ -87,7 +87,7 @@ u32* GetRegPtr(u32 reg)
 }
 
 void ngen_blockcheckfail(u32 pc) {
-	printf("REC CPP: SMC invalidation at %08X\n", pc);
+	wprintf(L"REC CPP: SMC invalidation at %08X\n", pc);
 	rdv_BlockCheckFail(pc);
 }
 
@@ -98,7 +98,7 @@ class opcodeExec {
 
 class opcodeDie : public opcodeExec {
 	void execute()  {
-		die("death opcode");
+		die(L"death opcode");
 	}
 };
 
@@ -809,7 +809,7 @@ struct opcode_blockend : public opcodeExec {
 			break;
 
 		default:
-			die("NOT GONNA HAPPEN TODAY, ALRIGHY?");
+			die(L"NOT GONNA HAPPEN TODAY, ALRIGHY?");
 		}
 	}
 };
@@ -890,7 +890,7 @@ public:
 template <>
 class fnblock<0> {
 	void execute() {
-		die("WHATNOT");
+		die(L"WHATNOT");
 	}
 };
 
@@ -1094,7 +1094,7 @@ FAST_gis
 
 typedef opcodeExec*(*foas)(const CC_pars_t& prms, void* fun, shil_opcode* opcode);
 
-string getCTN(foas code);
+wstring getCTN(foas code);
 
 template <typename CTR>
 opcodeExec* createType(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
@@ -1106,7 +1106,7 @@ opcodeExec* createType(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
 	if (!funs.count(fun)) {
 		funs[fun] = funs_id_count++;
 
-		printf("DEFINE %s: FAST_po(%s)\n", getCTN(&createType<CTR>).c_str(), shil_opcode_name(opcode->op));
+		wprintf(L"DEFINE %s: FAST_po(%s)\n", getCTN(&createType<CTR>).c_str(), shil_opcode_name(opcode->op));
 	}
 
 	typedef typename CTR::opex thetype;
@@ -1116,7 +1116,7 @@ opcodeExec* createType(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
 	return rv;
 }
 
-map< string, foas> unmap = {
+map< wstring, foas> unmap = {
 	{ "aBaCbC", &createType_fast<opcode_cc_aBaCbC> },
 	{ "aCaCbC", &createType<opcode_cc_aCaCbC> },
 	{ "aCbC", &createType<opcode_cc_aCbC> },
@@ -1142,8 +1142,8 @@ map< string, foas> unmap = {
 	{ "vV", &createType<opcode_cc_vV> },
 };
 
-string getCTN(foas f) {
-	auto it = find_if(unmap.begin(), unmap.end(), [f](const map< string, foas>::value_type& s) { return s.second == f; });
+wstring getCTN(foas f) {
+	auto it = find_if(unmap.begin(), unmap.end(), [f](const map< wstring, foas>::value_type& s) { return s.second == f; });
 
 	return it->first;
 }
@@ -1540,7 +1540,7 @@ public:
 
 	void ngen_CC_Finish(shil_opcode* op)
 	{
-		string nm = "";
+		wstring nm = "";
 		for (auto m : CC_pars) {
 			nm += (char)(m.type + 'a');
 			nm += (char)(m.prm->type + 'A');
@@ -1552,7 +1552,7 @@ public:
 			ptrsg[opcode_index] = unmap[nm](CC_pars, ccfn, op);
 		}
 		else {
-			printf("IMPLEMENT CC_CALL CLASS: %s\n", nm.c_str());
+			wprintf(L"IMPLEMENT CC_CALL CLASS: %s\n", nm.c_str());
 			ptrsg[opcode_index] = new opcodeDie();
 		}
 	}

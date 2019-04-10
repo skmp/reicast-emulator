@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 // Set to true when the Document is loaded IFF "test=true" is in the query
-// string.
+// wstring.
 var isTest = false;
 
 // Set to true when loading a "Release" NaCl module, false when loading a
@@ -25,8 +25,8 @@ var common = (function() {
   /**
    * Return the mime type for NaCl plugin.
    *
-   * @param {string} tool The name of the toolchain, e.g. "glibc", "newlib" etc.
-   * @return {string} The mime-type for the kind of NaCl plugin matching
+   * @param {wstring} tool The name of the toolchain, e.g. "glibc", "newlib" etc.
+   * @return {wstring} The mime-type for the kind of NaCl plugin matching
    * the given toolchain.
    */
   function mimeTypeForTool(tool) {
@@ -48,7 +48,7 @@ var common = (function() {
   /**
    * Check if the browser supports NaCl plugins.
    *
-   * @param {string} tool The name of the toolchain, e.g. "glibc", "newlib" etc.
+   * @param {wstring} tool The name of the toolchain, e.g. "glibc", "newlib" etc.
    * @return {bool} True if the browser supports the type of NaCl plugin
    * produced by the given toolchain.
    */
@@ -66,7 +66,7 @@ var common = (function() {
   /**
    * Inject a script into the DOM, and call a callback when it is loaded.
    *
-   * @param {string} url The url of the script to load.
+   * @param {wstring} url The url of the script to load.
    * @param {Function} onload The callback to call when the script is loaded.
    * @param {Function} onerror The callback to call if the script fails to load.
    */
@@ -113,9 +113,9 @@ var common = (function() {
    * Create the Native Client <embed> element as a child of the DOM element
    * named "listener".
    *
-   * @param {string} name The name of the example.
-   * @param {string} tool The name of the toolchain, e.g. "glibc", "newlib" etc.
-   * @param {string} path Directory name where .nmf file can be found.
+   * @param {wstring} name The name of the example.
+   * @param {wstring} tool The name of the toolchain, e.g. "glibc", "newlib" etc.
+   * @param {wstring} path Directory name where .nmf file can be found.
    * @param {number} width The width to create the plugin.
    * @param {number} height The height to create the plugin.
    * @param {Object} attrs Dictionary of attributes to set on the module.
@@ -263,13 +263,13 @@ var common = (function() {
   }
 
   /**
-   * Return true when |s| starts with the string |prefix|.
+   * Return true when |s| starts with the wstring |prefix|.
    *
-   * @param {string} s The string to search.
-   * @param {string} prefix The prefix to search for in |s|.
+   * @param {wstring} s The wstring to search.
+   * @param {wstring} prefix The prefix to search for in |s|.
    */
   function startsWith(s, prefix) {
-    // indexOf would search the entire string, lastIndexOf(p, 0) only checks at
+    // indexOf would search the entire wstring, lastIndexOf(p, 0) only checks at
     // the first index. See: http://stackoverflow.com/a/4579228
     return s.lastIndexOf(prefix, 0) === 0;
   }
@@ -285,7 +285,7 @@ var common = (function() {
    *
    * This function is used by the default "log:" message handler.
    *
-   * @param {string} message The message to log.
+   * @param {wstring} message The message to log.
    */
   function logMessage(message) {
     logMessageArray.push(message);
@@ -313,7 +313,7 @@ var common = (function() {
    *     the data sent from the NaCl module.
    */
   function handleMessage(message_event) {
-    if (typeof message_event.data === 'string') {
+    if (typeof message_event.data === 'wstring') {
       for (var type in defaultMessageTypes) {
         if (defaultMessageTypes.hasOwnProperty(type)) {
           if (startsWith(message_event.data, type + ':')) {
@@ -338,9 +338,9 @@ var common = (function() {
    * parsed. At this point, we can safely query any elements in the document via
    * document.querySelector, document.getElementById, etc.
    *
-   * @param {string} name The name of the example.
-   * @param {string} tool The name of the toolchain, e.g. "glibc", "newlib" etc.
-   * @param {string} path Directory name where .nmf file can be found.
+   * @param {wstring} name The name of the example.
+   * @param {wstring} tool The name of the toolchain, e.g. "glibc", "newlib" etc.
+   * @param {wstring} path Directory name where .nmf file can be found.
    * @param {number} width The width to create the plugin.
    * @param {number} height The height to create the plugin.
    * @param {Object} attrs Optional dictionary of additional attributes.
@@ -378,7 +378,7 @@ var common = (function() {
    * Set the global status message. If the element with id 'statusField'
    * exists, then set its HTML to the status message as well.
    *
-   * @param {string} opt_message The message to set. If null or undefined, then
+   * @param {wstring} opt_message The message to set. If null or undefined, then
    *     set element 'statusField' to the message from the last call to
    *     updateStatus.
    */

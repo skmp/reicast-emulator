@@ -17,7 +17,7 @@ struct RuntimeBlockInfo_Core
 struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 {
 	void Setup(u32 pc,fpscr_t fpu_cfg);
-	const char* hash(bool full=true, bool reloc=false);
+	const wchar_t* hash(bool full=true, bool reloc=false);
 
 	u32 host_code_size;	//in bytes
 	u32 sh4_code_size; //in bytes
@@ -78,7 +78,7 @@ struct CachedBlockInfo: RuntimeBlockInfo_Core
 	RuntimeBlockInfo* block;
 };
 
-void bm_WriteBlockMap(const string& file);
+void bm_WriteBlockMap(const wstring& file);
 
 
 DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr);

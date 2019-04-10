@@ -50,13 +50,13 @@ const char *snd_strerror(int errnum);
  * \param line Line number.
  * \param function Function name.
  * \param err Value of \c errno, or 0 if not relevant.
- * \param fmt \c printf(3) format.
- * \param ... \c printf(3) arguments.
+ * \param fmt \c wprintf(3) format.
+ * \param ... \c wprintf(3) arguments.
  *
  * A function of this type is called by the ALSA library when an error occurs.
  * This function usually shows the message on the screen, and/or logs it.
  */
-typedef void (*snd_lib_error_handler_t)(const char *file, int line, const char *function, int err, const char *fmt, ...) /* __attribute__ ((format (printf, 5, 6))) */;
+typedef void (*snd_lib_error_handler_t)(const char *file, int line, const char *function, int err, const char *fmt, ...) /* __attribute__ ((format (wprintf, 5, 6))) */;
 extern snd_lib_error_handler_t snd_lib_error;
 extern int snd_lib_error_set_handler(snd_lib_error_handler_t handler);
 

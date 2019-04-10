@@ -1,5 +1,5 @@
 /*
-  zip_error_to_str.c -- get string representation of zip error code
+  zip_error_to_str.c -- get wstring representation of zip error code
   Copyright (C) 1999-2007 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.

@@ -9,7 +9,7 @@
 #
 
 
-set(ZBUILD On)
+set(ZBUILD OFF)
 
 
 
@@ -126,7 +126,7 @@ elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "mips")   # todo: check , r* names?
   set(HOST_CPU ${CPU_MIPS})
 #
 else()
-  message("Warning: Unknown Host System Processor: ${CMAKE_SYSTEM_PROCESSOR}")
+  message("Warning: Unknown Host System Processor: \"${CMAKE_SYSTEM_PROCESSOR}\"")
   set(host_arch "${CMAKE_SYSTEM_PROCESSOR}")
   set(HOST_CPU ${CPU_GENERIC})
 endif()
@@ -238,7 +238,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   message("MSVC Toolset:  ${CMAKE_VS_PLATFORM_TOOLSET}")
   
   
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1)
+  add_definitions(-DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1)
 
 #
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") 

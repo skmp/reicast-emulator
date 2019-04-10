@@ -69,7 +69,7 @@ from The Open Group.
 #define TRANS(func) _X11Trans/**/func
 #endif
 #ifdef XTRANSDEBUG
-static char* __xtransname = "_X11Trans";
+static wchar_t* __xtransname = "_X11Trans";
 #endif
 #endif /* X11_t */
 
@@ -80,7 +80,7 @@ static char* __xtransname = "_X11Trans";
 #define TRANS(func) _XSERVTrans/**/func
 #endif
 #ifdef XTRANSDEBUG
-static char* __xtransname = "_XSERVTrans";
+static wchar_t* __xtransname = "_XSERVTrans";
 #endif
 #define X11_t
 #endif /* XSERV_t */
@@ -92,7 +92,7 @@ static char* __xtransname = "_XSERVTrans";
 #define TRANS(func) _XimXTrans/**/func
 #endif
 #ifdef XTRANSDEBUG
-static char* __xtransname = "_XimTrans";
+static wchar_t* __xtransname = "_XimTrans";
 #endif
 #endif /* XIM_t */
 
@@ -103,7 +103,7 @@ static char* __xtransname = "_XimTrans";
 #define TRANS(func) _FSTrans/**/func
 #endif
 #ifdef XTRANSDEBUG
-static char* __xtransname = "_FSTrans";
+static wchar_t* __xtransname = "_FSTrans";
 #endif
 #endif /* FS_t */
 
@@ -114,7 +114,7 @@ static char* __xtransname = "_FSTrans";
 #define TRANS(func) _FontTrans/**/func
 #endif
 #ifdef XTRANSDEBUG
-static char* __xtransname = "_FontTrans";
+static wchar_t* __xtransname = "_FontTrans";
 #endif
 #endif /* FONT_t */
 
@@ -125,7 +125,7 @@ static char* __xtransname = "_FontTrans";
 #define TRANS(func) _IceTrans/**/func
 #endif
 #ifdef XTRANSDEBUG
-static char* __xtransname = "_IceTrans";
+static wchar_t* __xtransname = "_IceTrans";
 #endif
 #endif /* ICE_t */
 
@@ -136,7 +136,7 @@ static char* __xtransname = "_IceTrans";
 #define TRANS(func) _TESTTrans/**/func
 #endif
 #ifdef XTRANSDEBUG
-static char* __xtransname = "_TESTTrans";
+static wchar_t* __xtransname = "_TESTTrans";
 #endif
 #endif /* TEST_t */
 
@@ -148,7 +148,7 @@ static char* __xtransname = "_TESTTrans";
 #endif
 #define X11_t		/* The server defines this - so should the LBX proxy */
 #ifdef XTRANSDEBUG
-static char* __xtransname = "_LBXPROXYTrans";
+static wchar_t* __xtransname = "_LBXPROXYTrans";
 #endif
 #endif /* LBXPROXY_t */
 
@@ -159,7 +159,7 @@ static char* __xtransname = "_LBXPROXYTrans";
 #define TRANS(func) _XTrans/**/func
 #endif
 #ifdef XTRANSDEBUG
-static char* __xtransname = "_XTrans";
+static wchar_t* __xtransname = "_XTrans";
 #endif
 #endif /* !TRANS */
 
@@ -332,7 +332,7 @@ int TRANS(CreateListener)(
 );
 
 int TRANS(NoListen) (
-    char*               /* protocol*/
+    wchar_t*               /* protocol*/
 );
 
 int TRANS(ResetListener)(

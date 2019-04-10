@@ -5,24 +5,24 @@
 void prof_init();
 void prof_periodical();
 
-inline void print_array(const char* name, u32* arr,u32 size)
+inline void print_array(const wchar_t* name, u32* arr,u32 size)
 {
-	printf("%s = [",name);
+	wprintf(L"%s = [",name);
 	for(u32 i=0; i<size; i++)
 	{
-		printf("%d ",arr[i]);
+		wprintf(L"%d ",arr[i]);
 		if (i%12==0)
-			printf(" ...\n");
+			wprintf(L" ...\n");
 	}
-	printf("];\n");
+	wprintf(L"];\n");
 }
 
-inline void print_elem(const char* name, u32 val)
+inline void print_elem(const wchar_t* name, u32 val)
 {
-	printf("%s=%d;\n",name,val);
+	wprintf(L"%s=%d;\n",name,val);
 }
 
-inline void print_head(const char* name) { printf("//<%s>\n",name); }
+inline void print_head(const wchar_t* name) { wprintf(L"//<%s>\n",name); }
 
 struct profiler_cfg
 {
@@ -51,15 +51,15 @@ struct profiler_cfg
 
 			void print()
 			{
-				print_head("shil");
+				print_head(L"shil");
 
-				print_array("executed",executed,shop_max);
-				print_array("host_ops",host_ops,shop_max);
+				print_array(L"executed",executed,shop_max);
+				print_array(L"host_ops",host_ops,shop_max);
 				
-				print_elem("readm_const",readm_const);
-				print_elem("readm_reg",readm_reg);
-				print_elem("readm_reg_imm",readm_reg_imm);
-				print_elem("readm_reg_reg",readm_reg_reg);
+				print_elem(L"readm_const",readm_const);
+				print_elem(L"readm_reg",readm_reg);
+				print_elem(L"readm_reg_imm",readm_reg_imm);
+				print_elem(L"readm_reg_reg",readm_reg_reg);
 			}
 
 		} shil;
@@ -73,10 +73,10 @@ struct profiler_cfg
 			
 			void print()
 			{
-				print_head("ralloc");
-				print_array("reg_r",reg_r,sh4_reg_count);
-				print_array("reg_w",reg_w,sh4_reg_count);
-				print_array("reg_rw",reg_rw,sh4_reg_count);
+				print_head(L"ralloc");
+				print_array(L"reg_r",reg_r,sh4_reg_count);
+				print_array(L"reg_w",reg_w,sh4_reg_count);
+				print_array(L"reg_rw",reg_rw,sh4_reg_count);
 			}
 		} ralloc;
 
@@ -92,14 +92,14 @@ struct profiler_cfg
 
 			void print() 
 			{ 
-				print_head("bm");
-				print_elem("bm_cache",cached);
-				print_elem("linked_cond",linked_cond);
-				print_elem("linked_direct",linked_direct);
-				print_elem("linked_indirect",linked_indirect);
-				print_elem("callstack_hit",callstack_hit);
-				print_elem("callstack_miss",callstack_miss);
-				print_elem("slowpath",slowpath);
+				print_head(L"bm");
+				print_elem(L"bm_cache",cached);
+				print_elem(L"linked_cond",linked_cond);
+				print_elem(L"linked_direct",linked_direct);
+				print_elem(L"linked_indirect",linked_indirect);
+				print_elem(L"callstack_hit",callstack_hit);
+				print_elem(L"callstack_miss",callstack_miss);
+				print_elem(L"slowpath",slowpath);
 			}
 		} bm;
 
@@ -116,19 +116,19 @@ struct profiler_cfg
 
 			void print()
 			{
-				print_head("blkrun");
+				print_head(L"blkrun");
 
-				print_elem("call_direct",call_direct);
-				print_elem("call_indirect",call_indirect);
-				print_elem("jump_direct",jump_direct);
-				print_elem("jump_indirect",jump_indirect);
-				print_elem("cond0",cond[0]);
-				print_elem("cond1",cond[1]);
-				print_elem("ret",ret);
+				print_elem(L"call_direct",call_direct);
+				print_elem(L"call_indirect",call_indirect);
+				print_elem(L"jump_direct",jump_direct);
+				print_elem(L"jump_indirect",jump_indirect);
+				print_elem(L"cond0",cond[0]);
+				print_elem(L"cond1",cond[1]);
+				print_elem(L"ret",ret);
 
-				print_elem("force_check",force_check);
+				print_elem(L"force_check",force_check);
 
-				print_array("cycles",cycles,512);
+				print_array(L"cycles",cycles,512);
 
 			}
 		} blkrun;

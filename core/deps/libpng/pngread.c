@@ -3212,7 +3212,7 @@ png_image_read_colormapped(png_voidp argument)
        */
       if (row_bytes < 0)
       {
-         char *ptr = png_voidcast(char*, first_row);
+         char *ptr = png_voidcast(wchar_t*, first_row);
          ptr += (image->height-1) * (-row_bytes);
          first_row = png_voidcast(png_voidp, ptr);
       }
@@ -4043,7 +4043,7 @@ png_image_read_direct(png_voidp argument)
        */
       if (row_bytes < 0)
       {
-         char *ptr = png_voidcast(char*, first_row);
+         char *ptr = png_voidcast(wchar_t*, first_row);
          ptr += (image->height-1) * (-row_bytes);
          first_row = png_voidcast(png_voidp, ptr);
       }

@@ -634,7 +634,7 @@ namespace VULKAN_HPP_NAMESPACE
     eErrorNotPermittedEXT = VK_ERROR_NOT_PERMITTED_EXT
   };
 
-  VULKAN_HPP_INLINE std::string to_string(Result value)
+  VULKAN_HPP_INLINE std::wstring to_string(Result value)
   {
     switch (value)
     {
@@ -680,8 +680,8 @@ namespace VULKAN_HPP_NAMESPACE
   class ErrorCategoryImpl : public std::error_category
   {
     public:
-    virtual const char* name() const noexcept override { return VULKAN_HPP_NAMESPACE_STRING"::Result"; }
-    virtual std::string message(int ev) const override { return to_string(static_cast<Result>(ev)); }
+    virtual const wchar_t* name() const noexcept override { return VULKAN_HPP_NAMESPACE_STRING"::Result"; }
+    virtual std::wstring message(int ev) const override { return to_string(static_cast<Result>(ev)); }
   };
 
 #if defined(_MSC_VER) && (_MSC_VER == 1800)
@@ -713,19 +713,19 @@ namespace VULKAN_HPP_NAMESPACE
     public:
     virtual ~Error() = default;
 
-    virtual const char* what() const noexcept = 0;
+    virtual const wchar_t* what() const noexcept = 0;
   };
 
   class LogicError : public Error, public std::logic_error
   {
     public:
-    explicit LogicError( const std::string& what )
+    explicit LogicError( const std::wstring& what )
       : Error(), std::logic_error(what) {}
     explicit LogicError( char const * what )
       : Error(), std::logic_error(what) {}
     virtual ~LogicError() = default;
 
-    virtual const char* what() const noexcept { return std::logic_error::what(); }
+    virtual const wchar_t* what() const noexcept { return std::logic_error::what(); }
   };
 
   class SystemError : public Error, public std::system_error
@@ -733,19 +733,19 @@ namespace VULKAN_HPP_NAMESPACE
     public:
     SystemError( std::error_code ec )
       : Error(), std::system_error(ec) {}
-    SystemError( std::error_code ec, std::string const& what )
+    SystemError( std::error_code ec, std::wstring const& what )
       : Error(), std::system_error(ec, what) {}
     SystemError( std::error_code ec, char const * what )
       : Error(), std::system_error(ec, what) {}
     SystemError( int ev, std::error_category const& ecat )
       : Error(), std::system_error(ev, ecat) {}
-    SystemError( int ev, std::error_category const& ecat, std::string const& what)
+    SystemError( int ev, std::error_category const& ecat, std::wstring const& what)
       : Error(), std::system_error(ev, ecat, what) {}
     SystemError( int ev, std::error_category const& ecat, char const * what)
       : Error(), std::system_error(ev, ecat, what) {}
     virtual ~SystemError() = default;
 
-    virtual const char* what() const noexcept { return std::system_error::what(); }
+    virtual const wchar_t* what() const noexcept { return std::system_error::what(); }
   };
 
 #if defined(_MSC_VER) && (_MSC_VER == 1800)
@@ -755,7 +755,7 @@ namespace VULKAN_HPP_NAMESPACE
   class OutOfHostMemoryError : public SystemError
   {
   public:
-    OutOfHostMemoryError( std::string const& message )
+    OutOfHostMemoryError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorOutOfHostMemory ), message ) {}
     OutOfHostMemoryError( char const * message )
       : SystemError( make_error_code( Result::eErrorOutOfHostMemory ), message ) {}
@@ -763,7 +763,7 @@ namespace VULKAN_HPP_NAMESPACE
   class OutOfDeviceMemoryError : public SystemError
   {
   public:
-    OutOfDeviceMemoryError( std::string const& message )
+    OutOfDeviceMemoryError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorOutOfDeviceMemory ), message ) {}
     OutOfDeviceMemoryError( char const * message )
       : SystemError( make_error_code( Result::eErrorOutOfDeviceMemory ), message ) {}
@@ -771,7 +771,7 @@ namespace VULKAN_HPP_NAMESPACE
   class InitializationFailedError : public SystemError
   {
   public:
-    InitializationFailedError( std::string const& message )
+    InitializationFailedError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorInitializationFailed ), message ) {}
     InitializationFailedError( char const * message )
       : SystemError( make_error_code( Result::eErrorInitializationFailed ), message ) {}
@@ -779,7 +779,7 @@ namespace VULKAN_HPP_NAMESPACE
   class DeviceLostError : public SystemError
   {
   public:
-    DeviceLostError( std::string const& message )
+    DeviceLostError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorDeviceLost ), message ) {}
     DeviceLostError( char const * message )
       : SystemError( make_error_code( Result::eErrorDeviceLost ), message ) {}
@@ -787,7 +787,7 @@ namespace VULKAN_HPP_NAMESPACE
   class MemoryMapFailedError : public SystemError
   {
   public:
-    MemoryMapFailedError( std::string const& message )
+    MemoryMapFailedError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorMemoryMapFailed ), message ) {}
     MemoryMapFailedError( char const * message )
       : SystemError( make_error_code( Result::eErrorMemoryMapFailed ), message ) {}
@@ -795,7 +795,7 @@ namespace VULKAN_HPP_NAMESPACE
   class LayerNotPresentError : public SystemError
   {
   public:
-    LayerNotPresentError( std::string const& message )
+    LayerNotPresentError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorLayerNotPresent ), message ) {}
     LayerNotPresentError( char const * message )
       : SystemError( make_error_code( Result::eErrorLayerNotPresent ), message ) {}
@@ -803,7 +803,7 @@ namespace VULKAN_HPP_NAMESPACE
   class ExtensionNotPresentError : public SystemError
   {
   public:
-    ExtensionNotPresentError( std::string const& message )
+    ExtensionNotPresentError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorExtensionNotPresent ), message ) {}
     ExtensionNotPresentError( char const * message )
       : SystemError( make_error_code( Result::eErrorExtensionNotPresent ), message ) {}
@@ -811,7 +811,7 @@ namespace VULKAN_HPP_NAMESPACE
   class FeatureNotPresentError : public SystemError
   {
   public:
-    FeatureNotPresentError( std::string const& message )
+    FeatureNotPresentError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorFeatureNotPresent ), message ) {}
     FeatureNotPresentError( char const * message )
       : SystemError( make_error_code( Result::eErrorFeatureNotPresent ), message ) {}
@@ -819,7 +819,7 @@ namespace VULKAN_HPP_NAMESPACE
   class IncompatibleDriverError : public SystemError
   {
   public:
-    IncompatibleDriverError( std::string const& message )
+    IncompatibleDriverError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorIncompatibleDriver ), message ) {}
     IncompatibleDriverError( char const * message )
       : SystemError( make_error_code( Result::eErrorIncompatibleDriver ), message ) {}
@@ -827,7 +827,7 @@ namespace VULKAN_HPP_NAMESPACE
   class TooManyObjectsError : public SystemError
   {
   public:
-    TooManyObjectsError( std::string const& message )
+    TooManyObjectsError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorTooManyObjects ), message ) {}
     TooManyObjectsError( char const * message )
       : SystemError( make_error_code( Result::eErrorTooManyObjects ), message ) {}
@@ -835,7 +835,7 @@ namespace VULKAN_HPP_NAMESPACE
   class FormatNotSupportedError : public SystemError
   {
   public:
-    FormatNotSupportedError( std::string const& message )
+    FormatNotSupportedError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorFormatNotSupported ), message ) {}
     FormatNotSupportedError( char const * message )
       : SystemError( make_error_code( Result::eErrorFormatNotSupported ), message ) {}
@@ -843,7 +843,7 @@ namespace VULKAN_HPP_NAMESPACE
   class FragmentedPoolError : public SystemError
   {
   public:
-    FragmentedPoolError( std::string const& message )
+    FragmentedPoolError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorFragmentedPool ), message ) {}
     FragmentedPoolError( char const * message )
       : SystemError( make_error_code( Result::eErrorFragmentedPool ), message ) {}
@@ -851,7 +851,7 @@ namespace VULKAN_HPP_NAMESPACE
   class OutOfPoolMemoryError : public SystemError
   {
   public:
-    OutOfPoolMemoryError( std::string const& message )
+    OutOfPoolMemoryError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorOutOfPoolMemory ), message ) {}
     OutOfPoolMemoryError( char const * message )
       : SystemError( make_error_code( Result::eErrorOutOfPoolMemory ), message ) {}
@@ -859,7 +859,7 @@ namespace VULKAN_HPP_NAMESPACE
   class InvalidExternalHandleError : public SystemError
   {
   public:
-    InvalidExternalHandleError( std::string const& message )
+    InvalidExternalHandleError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorInvalidExternalHandle ), message ) {}
     InvalidExternalHandleError( char const * message )
       : SystemError( make_error_code( Result::eErrorInvalidExternalHandle ), message ) {}
@@ -867,7 +867,7 @@ namespace VULKAN_HPP_NAMESPACE
   class SurfaceLostKHRError : public SystemError
   {
   public:
-    SurfaceLostKHRError( std::string const& message )
+    SurfaceLostKHRError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorSurfaceLostKHR ), message ) {}
     SurfaceLostKHRError( char const * message )
       : SystemError( make_error_code( Result::eErrorSurfaceLostKHR ), message ) {}
@@ -875,7 +875,7 @@ namespace VULKAN_HPP_NAMESPACE
   class NativeWindowInUseKHRError : public SystemError
   {
   public:
-    NativeWindowInUseKHRError( std::string const& message )
+    NativeWindowInUseKHRError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorNativeWindowInUseKHR ), message ) {}
     NativeWindowInUseKHRError( char const * message )
       : SystemError( make_error_code( Result::eErrorNativeWindowInUseKHR ), message ) {}
@@ -883,7 +883,7 @@ namespace VULKAN_HPP_NAMESPACE
   class OutOfDateKHRError : public SystemError
   {
   public:
-    OutOfDateKHRError( std::string const& message )
+    OutOfDateKHRError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorOutOfDateKHR ), message ) {}
     OutOfDateKHRError( char const * message )
       : SystemError( make_error_code( Result::eErrorOutOfDateKHR ), message ) {}
@@ -891,7 +891,7 @@ namespace VULKAN_HPP_NAMESPACE
   class IncompatibleDisplayKHRError : public SystemError
   {
   public:
-    IncompatibleDisplayKHRError( std::string const& message )
+    IncompatibleDisplayKHRError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorIncompatibleDisplayKHR ), message ) {}
     IncompatibleDisplayKHRError( char const * message )
       : SystemError( make_error_code( Result::eErrorIncompatibleDisplayKHR ), message ) {}
@@ -899,7 +899,7 @@ namespace VULKAN_HPP_NAMESPACE
   class ValidationFailedEXTError : public SystemError
   {
   public:
-    ValidationFailedEXTError( std::string const& message )
+    ValidationFailedEXTError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorValidationFailedEXT ), message ) {}
     ValidationFailedEXTError( char const * message )
       : SystemError( make_error_code( Result::eErrorValidationFailedEXT ), message ) {}
@@ -907,7 +907,7 @@ namespace VULKAN_HPP_NAMESPACE
   class InvalidShaderNVError : public SystemError
   {
   public:
-    InvalidShaderNVError( std::string const& message )
+    InvalidShaderNVError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorInvalidShaderNV ), message ) {}
     InvalidShaderNVError( char const * message )
       : SystemError( make_error_code( Result::eErrorInvalidShaderNV ), message ) {}
@@ -915,7 +915,7 @@ namespace VULKAN_HPP_NAMESPACE
   class InvalidDrmFormatModifierPlaneLayoutEXTError : public SystemError
   {
   public:
-    InvalidDrmFormatModifierPlaneLayoutEXTError( std::string const& message )
+    InvalidDrmFormatModifierPlaneLayoutEXTError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorInvalidDrmFormatModifierPlaneLayoutEXT ), message ) {}
     InvalidDrmFormatModifierPlaneLayoutEXTError( char const * message )
       : SystemError( make_error_code( Result::eErrorInvalidDrmFormatModifierPlaneLayoutEXT ), message ) {}
@@ -923,7 +923,7 @@ namespace VULKAN_HPP_NAMESPACE
   class FragmentationEXTError : public SystemError
   {
   public:
-    FragmentationEXTError( std::string const& message )
+    FragmentationEXTError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorFragmentationEXT ), message ) {}
     FragmentationEXTError( char const * message )
       : SystemError( make_error_code( Result::eErrorFragmentationEXT ), message ) {}
@@ -931,7 +931,7 @@ namespace VULKAN_HPP_NAMESPACE
   class NotPermittedEXTError : public SystemError
   {
   public:
-    NotPermittedEXTError( std::string const& message )
+    NotPermittedEXTError( std::wstring const& message )
       : SystemError( make_error_code( Result::eErrorNotPermittedEXT ), message ) {}
     NotPermittedEXTError( char const * message )
       : SystemError( make_error_code( Result::eErrorNotPermittedEXT ), message ) {}
@@ -1730,7 +1730,7 @@ public:
   {
     return ::vkDebugMarkerSetObjectTagEXT( device, pTagInfo);
   }
-  void vkDebugReportMessageEXT( VkInstance instance, VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage  ) const
+  void vkDebugReportMessageEXT( VkInstance instance, VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const wchar_t* pLayerPrefix, const wchar_t* pMessage  ) const
   {
     return ::vkDebugReportMessageEXT( instance, flags, objectType, object, location, messageCode, pLayerPrefix, pMessage);
   }
@@ -1874,7 +1874,7 @@ public:
   {
     return ::vkEndCommandBuffer( commandBuffer);
   }
-  VkResult vkEnumerateDeviceExtensionProperties( VkPhysicalDevice physicalDevice, const char* pLayerName, uint32_t* pPropertyCount, VkExtensionProperties* pProperties  ) const
+  VkResult vkEnumerateDeviceExtensionProperties( VkPhysicalDevice physicalDevice, const wchar_t* pLayerName, uint32_t* pPropertyCount, VkExtensionProperties* pProperties  ) const
   {
     return ::vkEnumerateDeviceExtensionProperties( physicalDevice, pLayerName, pPropertyCount, pProperties);
   }
@@ -1882,7 +1882,7 @@ public:
   {
     return ::vkEnumerateDeviceLayerProperties( physicalDevice, pPropertyCount, pProperties);
   }
-  VkResult vkEnumerateInstanceExtensionProperties( const char* pLayerName, uint32_t* pPropertyCount, VkExtensionProperties* pProperties  ) const
+  VkResult vkEnumerateInstanceExtensionProperties( const wchar_t* pLayerName, uint32_t* pPropertyCount, VkExtensionProperties* pProperties  ) const
   {
     return ::vkEnumerateInstanceExtensionProperties( pLayerName, pPropertyCount, pProperties);
   }
@@ -1980,7 +1980,7 @@ public:
   {
     return ::vkGetDeviceMemoryCommitment( device, memory, pCommittedMemoryInBytes);
   }
-  PFN_vkVoidFunction vkGetDeviceProcAddr( VkDevice device, const char* pName  ) const
+  PFN_vkVoidFunction vkGetDeviceProcAddr( VkDevice device, const wchar_t* pName  ) const
   {
     return ::vkGetDeviceProcAddr( device, pName);
   }
@@ -2062,7 +2062,7 @@ public:
   {
     return ::vkGetImageSubresourceLayout( device, image, pSubresource, pLayout);
   }
-  PFN_vkVoidFunction vkGetInstanceProcAddr( VkInstance instance, const char* pName  ) const
+  PFN_vkVoidFunction vkGetInstanceProcAddr( VkInstance instance, const wchar_t* pName  ) const
   {
     return ::vkGetInstanceProcAddr( instance, pName);
   }
@@ -9503,9 +9503,9 @@ public:
 
   struct ApplicationInfo
   {
-    ApplicationInfo( const char* pApplicationName_ = nullptr,
+    ApplicationInfo( const wchar_t* pApplicationName_ = nullptr,
                      uint32_t applicationVersion_ = 0,
-                     const char* pEngineName_ = nullptr,
+                     const wchar_t* pEngineName_ = nullptr,
                      uint32_t engineVersion_ = 0,
                      uint32_t apiVersion_ = 0 )
       : pApplicationName( pApplicationName_ )
@@ -9532,7 +9532,7 @@ public:
       return *this;
     }
 
-    ApplicationInfo& setPApplicationName( const char* pApplicationName_ )
+    ApplicationInfo& setPApplicationName( const wchar_t* pApplicationName_ )
     {
       pApplicationName = pApplicationName_;
       return *this;
@@ -9544,7 +9544,7 @@ public:
       return *this;
     }
 
-    ApplicationInfo& setPEngineName( const char* pEngineName_ )
+    ApplicationInfo& setPEngineName( const wchar_t* pEngineName_ )
     {
       pEngineName = pEngineName_;
       return *this;
@@ -9593,9 +9593,9 @@ public:
 
   public:
     const void* pNext = nullptr;
-    const char* pApplicationName;
+    const wchar_t* pApplicationName;
     uint32_t applicationVersion;
-    const char* pEngineName;
+    const wchar_t* pEngineName;
     uint32_t engineVersion;
     uint32_t apiVersion;
   };
@@ -9606,9 +9606,9 @@ public:
     InstanceCreateInfo( InstanceCreateFlags flags_ = InstanceCreateFlags(),
                         const ApplicationInfo* pApplicationInfo_ = nullptr,
                         uint32_t enabledLayerCount_ = 0,
-                        const char* const* ppEnabledLayerNames_ = nullptr,
+                        const wchar_t* const* ppEnabledLayerNames_ = nullptr,
                         uint32_t enabledExtensionCount_ = 0,
-                        const char* const* ppEnabledExtensionNames_ = nullptr )
+                        const wchar_t* const* ppEnabledExtensionNames_ = nullptr )
       : flags( flags_ )
       , pApplicationInfo( pApplicationInfo_ )
       , enabledLayerCount( enabledLayerCount_ )
@@ -9652,7 +9652,7 @@ public:
       return *this;
     }
 
-    InstanceCreateInfo& setPpEnabledLayerNames( const char* const* ppEnabledLayerNames_ )
+    InstanceCreateInfo& setPpEnabledLayerNames( const wchar_t* const* ppEnabledLayerNames_ )
     {
       ppEnabledLayerNames = ppEnabledLayerNames_;
       return *this;
@@ -9664,7 +9664,7 @@ public:
       return *this;
     }
 
-    InstanceCreateInfo& setPpEnabledExtensionNames( const char* const* ppEnabledExtensionNames_ )
+    InstanceCreateInfo& setPpEnabledExtensionNames( const wchar_t* const* ppEnabledExtensionNames_ )
     {
       ppEnabledExtensionNames = ppEnabledExtensionNames_;
       return *this;
@@ -9705,9 +9705,9 @@ public:
     InstanceCreateFlags flags;
     const ApplicationInfo* pApplicationInfo;
     uint32_t enabledLayerCount;
-    const char* const* ppEnabledLayerNames;
+    const wchar_t* const* ppEnabledLayerNames;
     uint32_t enabledExtensionCount;
-    const char* const* ppEnabledExtensionNames;
+    const wchar_t* const* ppEnabledExtensionNames;
   };
   static_assert( sizeof( InstanceCreateInfo ) == sizeof( VkInstanceCreateInfo ), "struct and wrapper have different size!" );
 
@@ -12227,7 +12227,7 @@ public:
 
   struct DebugMarkerMarkerInfoEXT
   {
-    DebugMarkerMarkerInfoEXT( const char* pMarkerName_ = nullptr,
+    DebugMarkerMarkerInfoEXT( const wchar_t* pMarkerName_ = nullptr,
                               std::array<float,4> const& color_ = { { 0, 0, 0, 0 } } )
       : pMarkerName( pMarkerName_ )
     {
@@ -12250,7 +12250,7 @@ public:
       return *this;
     }
 
-    DebugMarkerMarkerInfoEXT& setPMarkerName( const char* pMarkerName_ )
+    DebugMarkerMarkerInfoEXT& setPMarkerName( const wchar_t* pMarkerName_ )
     {
       pMarkerName = pMarkerName_;
       return *this;
@@ -12290,7 +12290,7 @@ public:
 
   public:
     const void* pNext = nullptr;
-    const char* pMarkerName;
+    const wchar_t* pMarkerName;
     float color[4];
   };
   static_assert( sizeof( DebugMarkerMarkerInfoEXT ) == sizeof( VkDebugMarkerMarkerInfoEXT ), "struct and wrapper have different size!" );
@@ -17504,7 +17504,7 @@ public:
 
   struct DebugUtilsLabelEXT
   {
-    DebugUtilsLabelEXT( const char* pLabelName_ = nullptr,
+    DebugUtilsLabelEXT( const wchar_t* pLabelName_ = nullptr,
                         std::array<float,4> const& color_ = { { 0, 0, 0, 0 } } )
       : pLabelName( pLabelName_ )
     {
@@ -17527,7 +17527,7 @@ public:
       return *this;
     }
 
-    DebugUtilsLabelEXT& setPLabelName( const char* pLabelName_ )
+    DebugUtilsLabelEXT& setPLabelName( const wchar_t* pLabelName_ )
     {
       pLabelName = pLabelName_;
       return *this;
@@ -17567,7 +17567,7 @@ public:
 
   public:
     const void* pNext = nullptr;
-    const char* pLabelName;
+    const wchar_t* pLabelName;
     float color[4];
   };
   static_assert( sizeof( DebugUtilsLabelEXT ) == sizeof( VkDebugUtilsLabelEXT ), "struct and wrapper have different size!" );
@@ -21923,7 +21923,7 @@ public:
   {
     DebugUtilsObjectNameInfoEXT( ObjectType objectType_ = ObjectType::eUnknown,
                                  uint64_t objectHandle_ = 0,
-                                 const char* pObjectName_ = nullptr )
+                                 const wchar_t* pObjectName_ = nullptr )
       : objectType( objectType_ )
       , objectHandle( objectHandle_ )
       , pObjectName( pObjectName_ )
@@ -21958,7 +21958,7 @@ public:
       return *this;
     }
 
-    DebugUtilsObjectNameInfoEXT& setPObjectName( const char* pObjectName_ )
+    DebugUtilsObjectNameInfoEXT& setPObjectName( const wchar_t* pObjectName_ )
     {
       pObjectName = pObjectName_;
       return *this;
@@ -21995,7 +21995,7 @@ public:
     const void* pNext = nullptr;
     ObjectType objectType;
     uint64_t objectHandle;
-    const char* pObjectName;
+    const wchar_t* pObjectName;
   };
   static_assert( sizeof( DebugUtilsObjectNameInfoEXT ) == sizeof( VkDebugUtilsObjectNameInfoEXT ), "struct and wrapper have different size!" );
 
@@ -22102,9 +22102,9 @@ public:
   struct DebugUtilsMessengerCallbackDataEXT
   {
     DebugUtilsMessengerCallbackDataEXT( DebugUtilsMessengerCallbackDataFlagsEXT flags_ = DebugUtilsMessengerCallbackDataFlagsEXT(),
-                                        const char* pMessageIdName_ = nullptr,
+                                        const wchar_t* pMessageIdName_ = nullptr,
                                         int32_t messageIdNumber_ = 0,
-                                        const char* pMessage_ = nullptr,
+                                        const wchar_t* pMessage_ = nullptr,
                                         uint32_t queueLabelCount_ = 0,
                                         const DebugUtilsLabelEXT* pQueueLabels_ = nullptr,
                                         uint32_t cmdBufLabelCount_ = 0,
@@ -22146,7 +22146,7 @@ public:
       return *this;
     }
 
-    DebugUtilsMessengerCallbackDataEXT& setPMessageIdName( const char* pMessageIdName_ )
+    DebugUtilsMessengerCallbackDataEXT& setPMessageIdName( const wchar_t* pMessageIdName_ )
     {
       pMessageIdName = pMessageIdName_;
       return *this;
@@ -22158,7 +22158,7 @@ public:
       return *this;
     }
 
-    DebugUtilsMessengerCallbackDataEXT& setPMessage( const char* pMessage_ )
+    DebugUtilsMessengerCallbackDataEXT& setPMessage( const wchar_t* pMessage_ )
     {
       pMessage = pMessage_;
       return *this;
@@ -22237,9 +22237,9 @@ public:
   public:
     const void* pNext = nullptr;
     DebugUtilsMessengerCallbackDataFlagsEXT flags;
-    const char* pMessageIdName;
+    const wchar_t* pMessageIdName;
     int32_t messageIdNumber;
-    const char* pMessage;
+    const wchar_t* pMessage;
     uint32_t queueLabelCount;
     const DebugUtilsLabelEXT* pQueueLabels;
     uint32_t cmdBufLabelCount;
@@ -22466,9 +22466,9 @@ public:
                       uint32_t queueCreateInfoCount_ = 0,
                       const DeviceQueueCreateInfo* pQueueCreateInfos_ = nullptr,
                       uint32_t enabledLayerCount_ = 0,
-                      const char* const* ppEnabledLayerNames_ = nullptr,
+                      const wchar_t* const* ppEnabledLayerNames_ = nullptr,
                       uint32_t enabledExtensionCount_ = 0,
-                      const char* const* ppEnabledExtensionNames_ = nullptr,
+                      const wchar_t* const* ppEnabledExtensionNames_ = nullptr,
                       const PhysicalDeviceFeatures* pEnabledFeatures_ = nullptr )
       : flags( flags_ )
       , queueCreateInfoCount( queueCreateInfoCount_ )
@@ -22521,7 +22521,7 @@ public:
       return *this;
     }
 
-    DeviceCreateInfo& setPpEnabledLayerNames( const char* const* ppEnabledLayerNames_ )
+    DeviceCreateInfo& setPpEnabledLayerNames( const wchar_t* const* ppEnabledLayerNames_ )
     {
       ppEnabledLayerNames = ppEnabledLayerNames_;
       return *this;
@@ -22533,7 +22533,7 @@ public:
       return *this;
     }
 
-    DeviceCreateInfo& setPpEnabledExtensionNames( const char* const* ppEnabledExtensionNames_ )
+    DeviceCreateInfo& setPpEnabledExtensionNames( const wchar_t* const* ppEnabledExtensionNames_ )
     {
       ppEnabledExtensionNames = ppEnabledExtensionNames_;
       return *this;
@@ -22583,9 +22583,9 @@ public:
     uint32_t queueCreateInfoCount;
     const DeviceQueueCreateInfo* pQueueCreateInfos;
     uint32_t enabledLayerCount;
-    const char* const* ppEnabledLayerNames;
+    const wchar_t* const* ppEnabledLayerNames;
     uint32_t enabledExtensionCount;
-    const char* const* ppEnabledExtensionNames;
+    const wchar_t* const* ppEnabledExtensionNames;
     const PhysicalDeviceFeatures* pEnabledFeatures;
   };
   static_assert( sizeof( DeviceCreateInfo ) == sizeof( VkDeviceCreateInfo ), "struct and wrapper have different size!" );
@@ -23399,7 +23399,7 @@ public:
     PipelineShaderStageCreateInfo( PipelineShaderStageCreateFlags flags_ = PipelineShaderStageCreateFlags(),
                                    ShaderStageFlagBits stage_ = ShaderStageFlagBits::eVertex,
                                    ShaderModule module_ = ShaderModule(),
-                                   const char* pName_ = nullptr,
+                                   const wchar_t* pName_ = nullptr,
                                    const SpecializationInfo* pSpecializationInfo_ = nullptr )
       : flags( flags_ )
       , stage( stage_ )
@@ -23443,7 +23443,7 @@ public:
       return *this;
     }
 
-    PipelineShaderStageCreateInfo& setPName( const char* pName_ )
+    PipelineShaderStageCreateInfo& setPName( const wchar_t* pName_ )
     {
       pName = pName_;
       return *this;
@@ -23489,7 +23489,7 @@ public:
     PipelineShaderStageCreateFlags flags;
     ShaderStageFlagBits stage;
     ShaderModule module;
-    const char* pName;
+    const wchar_t* pName;
     const SpecializationInfo* pSpecializationInfo;
   };
   static_assert( sizeof( PipelineShaderStageCreateInfo ) == sizeof( VkPipelineShaderStageCreateInfo ), "struct and wrapper have different size!" );
@@ -30044,7 +30044,7 @@ public:
     }
 
     DisplayKHR display;
-    const char* displayName;
+    const wchar_t* displayName;
     Extent2D physicalDimensions;
     Extent2D physicalResolution;
     SurfaceTransformFlagsKHR supportedTransforms;
@@ -30519,7 +30519,7 @@ public:
   {
     DebugMarkerObjectNameInfoEXT( DebugReportObjectTypeEXT objectType_ = DebugReportObjectTypeEXT::eUnknown,
                                   uint64_t object_ = 0,
-                                  const char* pObjectName_ = nullptr )
+                                  const wchar_t* pObjectName_ = nullptr )
       : objectType( objectType_ )
       , object( object_ )
       , pObjectName( pObjectName_ )
@@ -30554,7 +30554,7 @@ public:
       return *this;
     }
 
-    DebugMarkerObjectNameInfoEXT& setPObjectName( const char* pObjectName_ )
+    DebugMarkerObjectNameInfoEXT& setPObjectName( const wchar_t* pObjectName_ )
     {
       pObjectName = pObjectName_;
       return *this;
@@ -30591,7 +30591,7 @@ public:
     const void* pNext = nullptr;
     DebugReportObjectTypeEXT objectType;
     uint64_t object;
-    const char* pObjectName;
+    const wchar_t* pObjectName;
   };
   static_assert( sizeof( DebugMarkerObjectNameInfoEXT ) == sizeof( VkDebugMarkerObjectNameInfoEXT ), "struct and wrapper have different size!" );
 
@@ -38332,22 +38332,22 @@ public:
 
 
   template<typename Dispatch = DispatchLoaderStatic>
-  Result enumerateInstanceExtensionProperties( const char* pLayerName, uint32_t* pPropertyCount, ExtensionProperties* pProperties, Dispatch const &d = Dispatch() );
+  Result enumerateInstanceExtensionProperties( const wchar_t* pLayerName, uint32_t* pPropertyCount, ExtensionProperties* pProperties, Dispatch const &d = Dispatch() );
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
   template <typename Allocator = std::allocator<ExtensionProperties>, typename Dispatch = DispatchLoaderStatic> 
-  typename ResultValueType<std::vector<ExtensionProperties,Allocator>>::type enumerateInstanceExtensionProperties( Optional<const std::string> layerName = nullptr, Dispatch const &d = Dispatch() );
+  typename ResultValueType<std::vector<ExtensionProperties,Allocator>>::type enumerateInstanceExtensionProperties( Optional<const std::wstring> layerName = nullptr, Dispatch const &d = Dispatch() );
   template <typename Allocator = std::allocator<ExtensionProperties>, typename Dispatch = DispatchLoaderStatic> 
-  typename ResultValueType<std::vector<ExtensionProperties,Allocator>>::type enumerateInstanceExtensionProperties( Optional<const std::string> layerName, Allocator const& vectorAllocator, Dispatch const &d );
+  typename ResultValueType<std::vector<ExtensionProperties,Allocator>>::type enumerateInstanceExtensionProperties( Optional<const std::wstring> layerName, Allocator const& vectorAllocator, Dispatch const &d );
 #endif /*VULKAN_HPP_DISABLE_ENHANCED_MODE*/
 
   template<typename Dispatch>
-  VULKAN_HPP_INLINE Result enumerateInstanceExtensionProperties( const char* pLayerName, uint32_t* pPropertyCount, ExtensionProperties* pProperties, Dispatch const &d)
+  VULKAN_HPP_INLINE Result enumerateInstanceExtensionProperties( const wchar_t* pLayerName, uint32_t* pPropertyCount, ExtensionProperties* pProperties, Dispatch const &d)
   {
     return static_cast<Result>( d.vkEnumerateInstanceExtensionProperties( pLayerName, pPropertyCount, reinterpret_cast<VkExtensionProperties*>( pProperties ) ) );
   }
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
   template <typename Allocator, typename Dispatch> 
-  VULKAN_HPP_INLINE typename ResultValueType<std::vector<ExtensionProperties,Allocator>>::type enumerateInstanceExtensionProperties( Optional<const std::string> layerName, Dispatch const &d )
+  VULKAN_HPP_INLINE typename ResultValueType<std::vector<ExtensionProperties,Allocator>>::type enumerateInstanceExtensionProperties( Optional<const std::wstring> layerName, Dispatch const &d )
   {
     std::vector<ExtensionProperties,Allocator> properties;
     uint32_t propertyCount;
@@ -38369,7 +38369,7 @@ public:
     return createResultValue( result, properties, VULKAN_HPP_NAMESPACE_STRING"::enumerateInstanceExtensionProperties" );
   }
   template <typename Allocator, typename Dispatch> 
-  VULKAN_HPP_INLINE typename ResultValueType<std::vector<ExtensionProperties,Allocator>>::type enumerateInstanceExtensionProperties( Optional<const std::string> layerName, Allocator const& vectorAllocator, Dispatch const &d )
+  VULKAN_HPP_INLINE typename ResultValueType<std::vector<ExtensionProperties,Allocator>>::type enumerateInstanceExtensionProperties( Optional<const std::wstring> layerName, Allocator const& vectorAllocator, Dispatch const &d )
   {
     std::vector<ExtensionProperties,Allocator> properties( vectorAllocator );
     uint32_t propertyCount;
@@ -40687,10 +40687,10 @@ public:
     }
 
     template<typename Dispatch = DispatchLoaderStatic>
-    PFN_vkVoidFunction getProcAddr( const char* pName, Dispatch const &d = Dispatch() ) const;
+    PFN_vkVoidFunction getProcAddr( const wchar_t* pName, Dispatch const &d = Dispatch() ) const;
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
     template<typename Dispatch = DispatchLoaderStatic>
-    PFN_vkVoidFunction getProcAddr( const std::string & name, Dispatch const &d = Dispatch() ) const;
+    PFN_vkVoidFunction getProcAddr( const std::wstring & name, Dispatch const &d = Dispatch() ) const;
 #endif /*VULKAN_HPP_DISABLE_ENHANCED_MODE*/
 
     template<typename Dispatch = DispatchLoaderStatic>
@@ -42198,13 +42198,13 @@ public:
   static_assert( sizeof( Device ) == sizeof( VkDevice ), "handle and wrapper have different size!" );
 
   template<typename Dispatch>
-  VULKAN_HPP_INLINE PFN_vkVoidFunction Device::getProcAddr( const char* pName, Dispatch const &d) const
+  VULKAN_HPP_INLINE PFN_vkVoidFunction Device::getProcAddr( const wchar_t* pName, Dispatch const &d) const
   {
     return d.vkGetDeviceProcAddr( m_device, pName );
   }
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
   template<typename Dispatch>
-  VULKAN_HPP_INLINE PFN_vkVoidFunction Device::getProcAddr( const std::string & name, Dispatch const &d ) const
+  VULKAN_HPP_INLINE PFN_vkVoidFunction Device::getProcAddr( const std::wstring & name, Dispatch const &d ) const
   {
     return d.vkGetDeviceProcAddr( m_device, name.c_str() );
   }
@@ -43202,7 +43202,7 @@ public:
     static_assert( sizeof( Pipeline ) <= sizeof( UniqueHandle<Pipeline, Dispatch> ), "Pipeline is greater than UniqueHandle<Pipeline, Dispatch>!" );
     std::vector<UniqueHandle<Pipeline, Dispatch>, Allocator> pipelines;
     pipelines.reserve( createInfos.size() );
-    Pipeline* buffer = reinterpret_cast<Pipeline*>( reinterpret_cast<char*>( pipelines.data() ) + createInfos.size() * ( sizeof( UniqueHandle<Pipeline, Dispatch> ) - sizeof( Pipeline ) ) );
+    Pipeline* buffer = reinterpret_cast<Pipeline*>( reinterpret_cast<wchar_t*>( pipelines.data() ) + createInfos.size() * ( sizeof( UniqueHandle<Pipeline, Dispatch> ) - sizeof( Pipeline ) ) );
     Result result = static_cast<Result>(d.vkCreateGraphicsPipelines( m_device, static_cast<VkPipelineCache>( pipelineCache ), createInfos.size() , reinterpret_cast<const VkGraphicsPipelineCreateInfo*>( createInfos.data() ), reinterpret_cast<const VkAllocationCallbacks*>( static_cast<const AllocationCallbacks*>( allocator ) ), reinterpret_cast<VkPipeline*>( buffer ) ) );
 
     ObjectDestroy<Device,Dispatch> deleter( *this, allocator, d );
@@ -43219,7 +43219,7 @@ public:
     static_assert( sizeof( Pipeline ) <= sizeof( UniqueHandle<Pipeline, Dispatch> ), "Pipeline is greater than UniqueHandle<Pipeline, Dispatch>!" );
     std::vector<UniqueHandle<Pipeline, Dispatch>, Allocator> pipelines( vectorAllocator );
     pipelines.reserve( createInfos.size() );
-    Pipeline* buffer = reinterpret_cast<Pipeline*>( reinterpret_cast<char*>( pipelines.data() ) + createInfos.size() * ( sizeof( UniqueHandle<Pipeline, Dispatch> ) - sizeof( Pipeline ) ) );
+    Pipeline* buffer = reinterpret_cast<Pipeline*>( reinterpret_cast<wchar_t*>( pipelines.data() ) + createInfos.size() * ( sizeof( UniqueHandle<Pipeline, Dispatch> ) - sizeof( Pipeline ) ) );
     Result result = static_cast<Result>(d.vkCreateGraphicsPipelines( m_device, static_cast<VkPipelineCache>( pipelineCache ), createInfos.size() , reinterpret_cast<const VkGraphicsPipelineCreateInfo*>( createInfos.data() ), reinterpret_cast<const VkAllocationCallbacks*>( static_cast<const AllocationCallbacks*>( allocator ) ), reinterpret_cast<VkPipeline*>( buffer ) ) );
 
     ObjectDestroy<Device,Dispatch> deleter( *this, allocator, d );
@@ -43276,7 +43276,7 @@ public:
     static_assert( sizeof( Pipeline ) <= sizeof( UniqueHandle<Pipeline, Dispatch> ), "Pipeline is greater than UniqueHandle<Pipeline, Dispatch>!" );
     std::vector<UniqueHandle<Pipeline, Dispatch>, Allocator> pipelines;
     pipelines.reserve( createInfos.size() );
-    Pipeline* buffer = reinterpret_cast<Pipeline*>( reinterpret_cast<char*>( pipelines.data() ) + createInfos.size() * ( sizeof( UniqueHandle<Pipeline, Dispatch> ) - sizeof( Pipeline ) ) );
+    Pipeline* buffer = reinterpret_cast<Pipeline*>( reinterpret_cast<wchar_t*>( pipelines.data() ) + createInfos.size() * ( sizeof( UniqueHandle<Pipeline, Dispatch> ) - sizeof( Pipeline ) ) );
     Result result = static_cast<Result>(d.vkCreateComputePipelines( m_device, static_cast<VkPipelineCache>( pipelineCache ), createInfos.size() , reinterpret_cast<const VkComputePipelineCreateInfo*>( createInfos.data() ), reinterpret_cast<const VkAllocationCallbacks*>( static_cast<const AllocationCallbacks*>( allocator ) ), reinterpret_cast<VkPipeline*>( buffer ) ) );
 
     ObjectDestroy<Device,Dispatch> deleter( *this, allocator, d );
@@ -43293,7 +43293,7 @@ public:
     static_assert( sizeof( Pipeline ) <= sizeof( UniqueHandle<Pipeline, Dispatch> ), "Pipeline is greater than UniqueHandle<Pipeline, Dispatch>!" );
     std::vector<UniqueHandle<Pipeline, Dispatch>, Allocator> pipelines( vectorAllocator );
     pipelines.reserve( createInfos.size() );
-    Pipeline* buffer = reinterpret_cast<Pipeline*>( reinterpret_cast<char*>( pipelines.data() ) + createInfos.size() * ( sizeof( UniqueHandle<Pipeline, Dispatch> ) - sizeof( Pipeline ) ) );
+    Pipeline* buffer = reinterpret_cast<Pipeline*>( reinterpret_cast<wchar_t*>( pipelines.data() ) + createInfos.size() * ( sizeof( UniqueHandle<Pipeline, Dispatch> ) - sizeof( Pipeline ) ) );
     Result result = static_cast<Result>(d.vkCreateComputePipelines( m_device, static_cast<VkPipelineCache>( pipelineCache ), createInfos.size() , reinterpret_cast<const VkComputePipelineCreateInfo*>( createInfos.data() ), reinterpret_cast<const VkAllocationCallbacks*>( static_cast<const AllocationCallbacks*>( allocator ) ), reinterpret_cast<VkPipeline*>( buffer ) ) );
 
     ObjectDestroy<Device,Dispatch> deleter( *this, allocator, d );
@@ -43592,7 +43592,7 @@ public:
     static_assert( sizeof( DescriptorSet ) <= sizeof( UniqueHandle<DescriptorSet, Dispatch> ), "DescriptorSet is greater than UniqueHandle<DescriptorSet, Dispatch>!" );
     std::vector<UniqueHandle<DescriptorSet, Dispatch>, Allocator> descriptorSets;
     descriptorSets.reserve( allocateInfo.descriptorSetCount );
-    DescriptorSet* buffer = reinterpret_cast<DescriptorSet*>( reinterpret_cast<char*>( descriptorSets.data() ) + allocateInfo.descriptorSetCount * ( sizeof( UniqueHandle<DescriptorSet, Dispatch> ) - sizeof( DescriptorSet ) ) );
+    DescriptorSet* buffer = reinterpret_cast<DescriptorSet*>( reinterpret_cast<wchar_t*>( descriptorSets.data() ) + allocateInfo.descriptorSetCount * ( sizeof( UniqueHandle<DescriptorSet, Dispatch> ) - sizeof( DescriptorSet ) ) );
     Result result = static_cast<Result>(d.vkAllocateDescriptorSets( m_device, reinterpret_cast<const VkDescriptorSetAllocateInfo*>( &allocateInfo ), reinterpret_cast<VkDescriptorSet*>( buffer ) ) );
 
     PoolFree<Device,DescriptorPool,Dispatch> deleter( *this, allocateInfo.descriptorPool, d );
@@ -43609,7 +43609,7 @@ public:
     static_assert( sizeof( DescriptorSet ) <= sizeof( UniqueHandle<DescriptorSet, Dispatch> ), "DescriptorSet is greater than UniqueHandle<DescriptorSet, Dispatch>!" );
     std::vector<UniqueHandle<DescriptorSet, Dispatch>, Allocator> descriptorSets( vectorAllocator );
     descriptorSets.reserve( allocateInfo.descriptorSetCount );
-    DescriptorSet* buffer = reinterpret_cast<DescriptorSet*>( reinterpret_cast<char*>( descriptorSets.data() ) + allocateInfo.descriptorSetCount * ( sizeof( UniqueHandle<DescriptorSet, Dispatch> ) - sizeof( DescriptorSet ) ) );
+    DescriptorSet* buffer = reinterpret_cast<DescriptorSet*>( reinterpret_cast<wchar_t*>( descriptorSets.data() ) + allocateInfo.descriptorSetCount * ( sizeof( UniqueHandle<DescriptorSet, Dispatch> ) - sizeof( DescriptorSet ) ) );
     Result result = static_cast<Result>(d.vkAllocateDescriptorSets( m_device, reinterpret_cast<const VkDescriptorSetAllocateInfo*>( &allocateInfo ), reinterpret_cast<VkDescriptorSet*>( buffer ) ) );
 
     PoolFree<Device,DescriptorPool,Dispatch> deleter( *this, allocateInfo.descriptorPool, d );
@@ -43877,7 +43877,7 @@ public:
     static_assert( sizeof( CommandBuffer ) <= sizeof( UniqueHandle<CommandBuffer, Dispatch> ), "CommandBuffer is greater than UniqueHandle<CommandBuffer, Dispatch>!" );
     std::vector<UniqueHandle<CommandBuffer, Dispatch>, Allocator> commandBuffers;
     commandBuffers.reserve( allocateInfo.commandBufferCount );
-    CommandBuffer* buffer = reinterpret_cast<CommandBuffer*>( reinterpret_cast<char*>( commandBuffers.data() ) + allocateInfo.commandBufferCount * ( sizeof( UniqueHandle<CommandBuffer, Dispatch> ) - sizeof( CommandBuffer ) ) );
+    CommandBuffer* buffer = reinterpret_cast<CommandBuffer*>( reinterpret_cast<wchar_t*>( commandBuffers.data() ) + allocateInfo.commandBufferCount * ( sizeof( UniqueHandle<CommandBuffer, Dispatch> ) - sizeof( CommandBuffer ) ) );
     Result result = static_cast<Result>(d.vkAllocateCommandBuffers( m_device, reinterpret_cast<const VkCommandBufferAllocateInfo*>( &allocateInfo ), reinterpret_cast<VkCommandBuffer*>( buffer ) ) );
 
     PoolFree<Device,CommandPool,Dispatch> deleter( *this, allocateInfo.commandPool, d );
@@ -43894,7 +43894,7 @@ public:
     static_assert( sizeof( CommandBuffer ) <= sizeof( UniqueHandle<CommandBuffer, Dispatch> ), "CommandBuffer is greater than UniqueHandle<CommandBuffer, Dispatch>!" );
     std::vector<UniqueHandle<CommandBuffer, Dispatch>, Allocator> commandBuffers( vectorAllocator );
     commandBuffers.reserve( allocateInfo.commandBufferCount );
-    CommandBuffer* buffer = reinterpret_cast<CommandBuffer*>( reinterpret_cast<char*>( commandBuffers.data() ) + allocateInfo.commandBufferCount * ( sizeof( UniqueHandle<CommandBuffer, Dispatch> ) - sizeof( CommandBuffer ) ) );
+    CommandBuffer* buffer = reinterpret_cast<CommandBuffer*>( reinterpret_cast<wchar_t*>( commandBuffers.data() ) + allocateInfo.commandBufferCount * ( sizeof( UniqueHandle<CommandBuffer, Dispatch> ) - sizeof( CommandBuffer ) ) );
     Result result = static_cast<Result>(d.vkAllocateCommandBuffers( m_device, reinterpret_cast<const VkCommandBufferAllocateInfo*>( &allocateInfo ), reinterpret_cast<VkCommandBuffer*>( buffer ) ) );
 
     PoolFree<Device,CommandPool,Dispatch> deleter( *this, allocateInfo.commandPool, d );
@@ -43968,7 +43968,7 @@ public:
     static_assert( sizeof( SwapchainKHR ) <= sizeof( UniqueHandle<SwapchainKHR, Dispatch> ), "SwapchainKHR is greater than UniqueHandle<SwapchainKHR, Dispatch>!" );
     std::vector<UniqueHandle<SwapchainKHR, Dispatch>, Allocator> swapchainKHRs;
     swapchainKHRs.reserve( createInfos.size() );
-    SwapchainKHR* buffer = reinterpret_cast<SwapchainKHR*>( reinterpret_cast<char*>( swapchainKHRs.data() ) + createInfos.size() * ( sizeof( UniqueHandle<SwapchainKHR, Dispatch> ) - sizeof( SwapchainKHR ) ) );
+    SwapchainKHR* buffer = reinterpret_cast<SwapchainKHR*>( reinterpret_cast<wchar_t*>( swapchainKHRs.data() ) + createInfos.size() * ( sizeof( UniqueHandle<SwapchainKHR, Dispatch> ) - sizeof( SwapchainKHR ) ) );
     Result result = static_cast<Result>(d.vkCreateSharedSwapchainsKHR( m_device, createInfos.size() , reinterpret_cast<const VkSwapchainCreateInfoKHR*>( createInfos.data() ), reinterpret_cast<const VkAllocationCallbacks*>( static_cast<const AllocationCallbacks*>( allocator ) ), reinterpret_cast<VkSwapchainKHR*>( buffer ) ) );
 
     ObjectDestroy<Device,Dispatch> deleter( *this, allocator, d );
@@ -43985,7 +43985,7 @@ public:
     static_assert( sizeof( SwapchainKHR ) <= sizeof( UniqueHandle<SwapchainKHR, Dispatch> ), "SwapchainKHR is greater than UniqueHandle<SwapchainKHR, Dispatch>!" );
     std::vector<UniqueHandle<SwapchainKHR, Dispatch>, Allocator> swapchainKHRs( vectorAllocator );
     swapchainKHRs.reserve( createInfos.size() );
-    SwapchainKHR* buffer = reinterpret_cast<SwapchainKHR*>( reinterpret_cast<char*>( swapchainKHRs.data() ) + createInfos.size() * ( sizeof( UniqueHandle<SwapchainKHR, Dispatch> ) - sizeof( SwapchainKHR ) ) );
+    SwapchainKHR* buffer = reinterpret_cast<SwapchainKHR*>( reinterpret_cast<wchar_t*>( swapchainKHRs.data() ) + createInfos.size() * ( sizeof( UniqueHandle<SwapchainKHR, Dispatch> ) - sizeof( SwapchainKHR ) ) );
     Result result = static_cast<Result>(d.vkCreateSharedSwapchainsKHR( m_device, createInfos.size() , reinterpret_cast<const VkSwapchainCreateInfoKHR*>( createInfos.data() ), reinterpret_cast<const VkAllocationCallbacks*>( static_cast<const AllocationCallbacks*>( allocator ) ), reinterpret_cast<VkSwapchainKHR*>( buffer ) ) );
 
     ObjectDestroy<Device,Dispatch> deleter( *this, allocator, d );
@@ -45710,7 +45710,7 @@ public:
     static_assert( sizeof( Pipeline ) <= sizeof( UniqueHandle<Pipeline, Dispatch> ), "Pipeline is greater than UniqueHandle<Pipeline, Dispatch>!" );
     std::vector<UniqueHandle<Pipeline, Dispatch>, Allocator> pipelines;
     pipelines.reserve( createInfos.size() );
-    Pipeline* buffer = reinterpret_cast<Pipeline*>( reinterpret_cast<char*>( pipelines.data() ) + createInfos.size() * ( sizeof( UniqueHandle<Pipeline, Dispatch> ) - sizeof( Pipeline ) ) );
+    Pipeline* buffer = reinterpret_cast<Pipeline*>( reinterpret_cast<wchar_t*>( pipelines.data() ) + createInfos.size() * ( sizeof( UniqueHandle<Pipeline, Dispatch> ) - sizeof( Pipeline ) ) );
     Result result = static_cast<Result>(d.vkCreateRayTracingPipelinesNV( m_device, static_cast<VkPipelineCache>( pipelineCache ), createInfos.size() , reinterpret_cast<const VkRayTracingPipelineCreateInfoNV*>( createInfos.data() ), reinterpret_cast<const VkAllocationCallbacks*>( static_cast<const AllocationCallbacks*>( allocator ) ), reinterpret_cast<VkPipeline*>( buffer ) ) );
 
     ObjectDestroy<Device,Dispatch> deleter( *this, allocator, d );
@@ -45727,7 +45727,7 @@ public:
     static_assert( sizeof( Pipeline ) <= sizeof( UniqueHandle<Pipeline, Dispatch> ), "Pipeline is greater than UniqueHandle<Pipeline, Dispatch>!" );
     std::vector<UniqueHandle<Pipeline, Dispatch>, Allocator> pipelines( vectorAllocator );
     pipelines.reserve( createInfos.size() );
-    Pipeline* buffer = reinterpret_cast<Pipeline*>( reinterpret_cast<char*>( pipelines.data() ) + createInfos.size() * ( sizeof( UniqueHandle<Pipeline, Dispatch> ) - sizeof( Pipeline ) ) );
+    Pipeline* buffer = reinterpret_cast<Pipeline*>( reinterpret_cast<wchar_t*>( pipelines.data() ) + createInfos.size() * ( sizeof( UniqueHandle<Pipeline, Dispatch> ) - sizeof( Pipeline ) ) );
     Result result = static_cast<Result>(d.vkCreateRayTracingPipelinesNV( m_device, static_cast<VkPipelineCache>( pipelineCache ), createInfos.size() , reinterpret_cast<const VkRayTracingPipelineCreateInfoNV*>( createInfos.data() ), reinterpret_cast<const VkAllocationCallbacks*>( static_cast<const AllocationCallbacks*>( allocator ) ), reinterpret_cast<VkPipeline*>( buffer ) ) );
 
     ObjectDestroy<Device,Dispatch> deleter( *this, allocator, d );
@@ -45880,12 +45880,12 @@ public:
 #endif /*VULKAN_HPP_DISABLE_ENHANCED_MODE*/
 
     template<typename Dispatch = DispatchLoaderStatic>
-    Result enumerateDeviceExtensionProperties( const char* pLayerName, uint32_t* pPropertyCount, ExtensionProperties* pProperties, Dispatch const &d = Dispatch() ) const;
+    Result enumerateDeviceExtensionProperties( const wchar_t* pLayerName, uint32_t* pPropertyCount, ExtensionProperties* pProperties, Dispatch const &d = Dispatch() ) const;
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
     template <typename Allocator = std::allocator<ExtensionProperties>, typename Dispatch = DispatchLoaderStatic> 
-    typename ResultValueType<std::vector<ExtensionProperties,Allocator>>::type enumerateDeviceExtensionProperties( Optional<const std::string> layerName = nullptr, Dispatch const &d = Dispatch() ) const;
+    typename ResultValueType<std::vector<ExtensionProperties,Allocator>>::type enumerateDeviceExtensionProperties( Optional<const std::wstring> layerName = nullptr, Dispatch const &d = Dispatch() ) const;
     template <typename Allocator = std::allocator<ExtensionProperties>, typename Dispatch = DispatchLoaderStatic> 
-    typename ResultValueType<std::vector<ExtensionProperties,Allocator>>::type enumerateDeviceExtensionProperties( Optional<const std::string> layerName, Allocator const& vectorAllocator, Dispatch const &d ) const;
+    typename ResultValueType<std::vector<ExtensionProperties,Allocator>>::type enumerateDeviceExtensionProperties( Optional<const std::wstring> layerName, Allocator const& vectorAllocator, Dispatch const &d ) const;
 #endif /*VULKAN_HPP_DISABLE_ENHANCED_MODE*/
 
     template<typename Dispatch = DispatchLoaderStatic>
@@ -46504,13 +46504,13 @@ public:
 #endif /*VULKAN_HPP_DISABLE_ENHANCED_MODE*/
 
   template<typename Dispatch>
-  VULKAN_HPP_INLINE Result PhysicalDevice::enumerateDeviceExtensionProperties( const char* pLayerName, uint32_t* pPropertyCount, ExtensionProperties* pProperties, Dispatch const &d) const
+  VULKAN_HPP_INLINE Result PhysicalDevice::enumerateDeviceExtensionProperties( const wchar_t* pLayerName, uint32_t* pPropertyCount, ExtensionProperties* pProperties, Dispatch const &d) const
   {
     return static_cast<Result>( d.vkEnumerateDeviceExtensionProperties( m_physicalDevice, pLayerName, pPropertyCount, reinterpret_cast<VkExtensionProperties*>( pProperties ) ) );
   }
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
   template <typename Allocator, typename Dispatch> 
-  VULKAN_HPP_INLINE typename ResultValueType<std::vector<ExtensionProperties,Allocator>>::type PhysicalDevice::enumerateDeviceExtensionProperties( Optional<const std::string> layerName, Dispatch const &d ) const
+  VULKAN_HPP_INLINE typename ResultValueType<std::vector<ExtensionProperties,Allocator>>::type PhysicalDevice::enumerateDeviceExtensionProperties( Optional<const std::wstring> layerName, Dispatch const &d ) const
   {
     std::vector<ExtensionProperties,Allocator> properties;
     uint32_t propertyCount;
@@ -46532,7 +46532,7 @@ public:
     return createResultValue( result, properties, VULKAN_HPP_NAMESPACE_STRING"::PhysicalDevice::enumerateDeviceExtensionProperties" );
   }
   template <typename Allocator, typename Dispatch> 
-  VULKAN_HPP_INLINE typename ResultValueType<std::vector<ExtensionProperties,Allocator>>::type PhysicalDevice::enumerateDeviceExtensionProperties( Optional<const std::string> layerName, Allocator const& vectorAllocator, Dispatch const &d ) const
+  VULKAN_HPP_INLINE typename ResultValueType<std::vector<ExtensionProperties,Allocator>>::type PhysicalDevice::enumerateDeviceExtensionProperties( Optional<const std::wstring> layerName, Allocator const& vectorAllocator, Dispatch const &d ) const
   {
     std::vector<ExtensionProperties,Allocator> properties( vectorAllocator );
     uint32_t propertyCount;
@@ -48152,10 +48152,10 @@ public:
 #endif /*VULKAN_HPP_DISABLE_ENHANCED_MODE*/
 
     template<typename Dispatch = DispatchLoaderStatic>
-    PFN_vkVoidFunction getProcAddr( const char* pName, Dispatch const &d = Dispatch() ) const;
+    PFN_vkVoidFunction getProcAddr( const wchar_t* pName, Dispatch const &d = Dispatch() ) const;
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
     template<typename Dispatch = DispatchLoaderStatic>
-    PFN_vkVoidFunction getProcAddr( const std::string & name, Dispatch const &d = Dispatch() ) const;
+    PFN_vkVoidFunction getProcAddr( const std::wstring & name, Dispatch const &d = Dispatch() ) const;
 #endif /*VULKAN_HPP_DISABLE_ENHANCED_MODE*/
 
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
@@ -48300,10 +48300,10 @@ public:
 #endif /*VULKAN_HPP_DISABLE_ENHANCED_MODE*/
 
     template<typename Dispatch = DispatchLoaderStatic>
-    void debugReportMessageEXT( DebugReportFlagsEXT flags, DebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, Dispatch const &d = Dispatch() ) const;
+    void debugReportMessageEXT( DebugReportFlagsEXT flags, DebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const wchar_t* pLayerPrefix, const wchar_t* pMessage, Dispatch const &d = Dispatch() ) const;
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
     template<typename Dispatch = DispatchLoaderStatic>
-    void debugReportMessageEXT( DebugReportFlagsEXT flags, DebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const std::string & layerPrefix, const std::string & message, Dispatch const &d = Dispatch() ) const;
+    void debugReportMessageEXT( DebugReportFlagsEXT flags, DebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const std::wstring & layerPrefix, const std::wstring & message, Dispatch const &d = Dispatch() ) const;
 #endif /*VULKAN_HPP_DISABLE_ENHANCED_MODE*/
 
     template<typename Dispatch = DispatchLoaderStatic>
@@ -48471,13 +48471,13 @@ public:
 #endif /*VULKAN_HPP_DISABLE_ENHANCED_MODE*/
 
   template<typename Dispatch>
-  VULKAN_HPP_INLINE PFN_vkVoidFunction Instance::getProcAddr( const char* pName, Dispatch const &d) const
+  VULKAN_HPP_INLINE PFN_vkVoidFunction Instance::getProcAddr( const wchar_t* pName, Dispatch const &d) const
   {
     return d.vkGetInstanceProcAddr( m_instance, pName );
   }
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
   template<typename Dispatch>
-  VULKAN_HPP_INLINE PFN_vkVoidFunction Instance::getProcAddr( const std::string & name, Dispatch const &d ) const
+  VULKAN_HPP_INLINE PFN_vkVoidFunction Instance::getProcAddr( const std::wstring & name, Dispatch const &d ) const
   {
     return d.vkGetInstanceProcAddr( m_instance, name.c_str() );
   }
@@ -48784,13 +48784,13 @@ public:
 #endif /*VULKAN_HPP_DISABLE_ENHANCED_MODE*/
 
   template<typename Dispatch>
-  VULKAN_HPP_INLINE void Instance::debugReportMessageEXT( DebugReportFlagsEXT flags, DebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, Dispatch const &d) const
+  VULKAN_HPP_INLINE void Instance::debugReportMessageEXT( DebugReportFlagsEXT flags, DebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const wchar_t* pLayerPrefix, const wchar_t* pMessage, Dispatch const &d) const
   {
     d.vkDebugReportMessageEXT( m_instance, static_cast<VkDebugReportFlagsEXT>( flags ), static_cast<VkDebugReportObjectTypeEXT>( objectType ), object, location, messageCode, pLayerPrefix, pMessage );
   }
 #ifndef VULKAN_HPP_DISABLE_ENHANCED_MODE
   template<typename Dispatch>
-  VULKAN_HPP_INLINE void Instance::debugReportMessageEXT( DebugReportFlagsEXT flags, DebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const std::string & layerPrefix, const std::string & message, Dispatch const &d ) const
+  VULKAN_HPP_INLINE void Instance::debugReportMessageEXT( DebugReportFlagsEXT flags, DebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const std::wstring & layerPrefix, const std::wstring & message, Dispatch const &d ) const
   {
 #ifdef VULKAN_HPP_NO_EXCEPTIONS
     VULKAN_HPP_ASSERT( layerPrefix.size() == message.size() );
@@ -49451,493 +49451,493 @@ public:
   template <> struct isStructureChainValid<PipelineViewportStateCreateInfo, PipelineViewportCoarseSampleOrderStateCreateInfoNV>{ enum { value = true }; };
   template <> struct isStructureChainValid<DeviceCreateInfo, DeviceMemoryOverallocationCreateInfoAMD>{ enum { value = true }; };
   template <> struct isStructureChainValid<DeviceCreateInfo, DeviceGroupDeviceCreateInfo>{ enum { value = true }; };
-  VULKAN_HPP_INLINE std::string to_string(FramebufferCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(FramebufferCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(FramebufferCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(FramebufferCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(QueryPoolCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(QueryPoolCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(QueryPoolCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(QueryPoolCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(RenderPassCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(RenderPassCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(RenderPassCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(RenderPassCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineLayoutCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineLayoutCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineLayoutCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineLayoutCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineCacheCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineCacheCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineCacheCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineCacheCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineDepthStencilStateCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineDepthStencilStateCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineDepthStencilStateCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineDepthStencilStateCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineDynamicStateCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineDynamicStateCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineDynamicStateCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineDynamicStateCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineColorBlendStateCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineColorBlendStateCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineColorBlendStateCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineColorBlendStateCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineMultisampleStateCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineMultisampleStateCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineMultisampleStateCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineMultisampleStateCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineRasterizationStateCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineRasterizationStateCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineRasterizationStateCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineRasterizationStateCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineViewportStateCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineViewportStateCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineViewportStateCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineViewportStateCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineTessellationStateCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineTessellationStateCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineTessellationStateCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineTessellationStateCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineInputAssemblyStateCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineInputAssemblyStateCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineInputAssemblyStateCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineInputAssemblyStateCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineVertexInputStateCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineVertexInputStateCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineVertexInputStateCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineVertexInputStateCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineShaderStageCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineShaderStageCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineShaderStageCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineShaderStageCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(BufferViewCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(BufferViewCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(BufferViewCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(BufferViewCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(InstanceCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(InstanceCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(InstanceCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(InstanceCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DeviceCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(DeviceCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DeviceCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(DeviceCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SemaphoreCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(SemaphoreCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SemaphoreCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(SemaphoreCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ShaderModuleCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(ShaderModuleCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ShaderModuleCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(ShaderModuleCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(EventCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(EventCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(EventCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(EventCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(MemoryMapFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(MemoryMapFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(MemoryMapFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(MemoryMapFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DescriptorPoolResetFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(DescriptorPoolResetFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DescriptorPoolResetFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(DescriptorPoolResetFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DescriptorUpdateTemplateCreateFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(DescriptorUpdateTemplateCreateFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DescriptorUpdateTemplateCreateFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(DescriptorUpdateTemplateCreateFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DisplayModeCreateFlagBitsKHR)
+  VULKAN_HPP_INLINE std::wstring to_string(DisplayModeCreateFlagBitsKHR)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DisplayModeCreateFlagsKHR)
+  VULKAN_HPP_INLINE std::wstring to_string(DisplayModeCreateFlagsKHR)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DisplaySurfaceCreateFlagBitsKHR)
+  VULKAN_HPP_INLINE std::wstring to_string(DisplaySurfaceCreateFlagBitsKHR)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DisplaySurfaceCreateFlagsKHR)
+  VULKAN_HPP_INLINE std::wstring to_string(DisplaySurfaceCreateFlagsKHR)
   {
     return "{}";
   }
 
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
-  VULKAN_HPP_INLINE std::string to_string(AndroidSurfaceCreateFlagBitsKHR)
+  VULKAN_HPP_INLINE std::wstring to_string(AndroidSurfaceCreateFlagBitsKHR)
   {
     return "(void)";
   }
 #endif /*VK_USE_PLATFORM_ANDROID_KHR*/
 
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
-  VULKAN_HPP_INLINE std::string to_string(AndroidSurfaceCreateFlagsKHR)
+  VULKAN_HPP_INLINE std::wstring to_string(AndroidSurfaceCreateFlagsKHR)
   {
     return "{}";
   }
 #endif /*VK_USE_PLATFORM_ANDROID_KHR*/
 
 #ifdef VK_USE_PLATFORM_VI_NN
-  VULKAN_HPP_INLINE std::string to_string(ViSurfaceCreateFlagBitsNN)
+  VULKAN_HPP_INLINE std::wstring to_string(ViSurfaceCreateFlagBitsNN)
   {
     return "(void)";
   }
 #endif /*VK_USE_PLATFORM_VI_NN*/
 
 #ifdef VK_USE_PLATFORM_VI_NN
-  VULKAN_HPP_INLINE std::string to_string(ViSurfaceCreateFlagsNN)
+  VULKAN_HPP_INLINE std::wstring to_string(ViSurfaceCreateFlagsNN)
   {
     return "{}";
   }
 #endif /*VK_USE_PLATFORM_VI_NN*/
 
 #ifdef VK_USE_PLATFORM_WAYLAND_KHR
-  VULKAN_HPP_INLINE std::string to_string(WaylandSurfaceCreateFlagBitsKHR)
+  VULKAN_HPP_INLINE std::wstring to_string(WaylandSurfaceCreateFlagBitsKHR)
   {
     return "(void)";
   }
 #endif /*VK_USE_PLATFORM_WAYLAND_KHR*/
 
 #ifdef VK_USE_PLATFORM_WAYLAND_KHR
-  VULKAN_HPP_INLINE std::string to_string(WaylandSurfaceCreateFlagsKHR)
+  VULKAN_HPP_INLINE std::wstring to_string(WaylandSurfaceCreateFlagsKHR)
   {
     return "{}";
   }
 #endif /*VK_USE_PLATFORM_WAYLAND_KHR*/
 
 #ifdef VK_USE_PLATFORM_WIN32_KHR
-  VULKAN_HPP_INLINE std::string to_string(Win32SurfaceCreateFlagBitsKHR)
+  VULKAN_HPP_INLINE std::wstring to_string(Win32SurfaceCreateFlagBitsKHR)
   {
     return "(void)";
   }
 #endif /*VK_USE_PLATFORM_WIN32_KHR*/
 
 #ifdef VK_USE_PLATFORM_WIN32_KHR
-  VULKAN_HPP_INLINE std::string to_string(Win32SurfaceCreateFlagsKHR)
+  VULKAN_HPP_INLINE std::wstring to_string(Win32SurfaceCreateFlagsKHR)
   {
     return "{}";
   }
 #endif /*VK_USE_PLATFORM_WIN32_KHR*/
 
 #ifdef VK_USE_PLATFORM_XLIB_KHR
-  VULKAN_HPP_INLINE std::string to_string(XlibSurfaceCreateFlagBitsKHR)
+  VULKAN_HPP_INLINE std::wstring to_string(XlibSurfaceCreateFlagBitsKHR)
   {
     return "(void)";
   }
 #endif /*VK_USE_PLATFORM_XLIB_KHR*/
 
 #ifdef VK_USE_PLATFORM_XLIB_KHR
-  VULKAN_HPP_INLINE std::string to_string(XlibSurfaceCreateFlagsKHR)
+  VULKAN_HPP_INLINE std::wstring to_string(XlibSurfaceCreateFlagsKHR)
   {
     return "{}";
   }
 #endif /*VK_USE_PLATFORM_XLIB_KHR*/
 
 #ifdef VK_USE_PLATFORM_XCB_KHR
-  VULKAN_HPP_INLINE std::string to_string(XcbSurfaceCreateFlagBitsKHR)
+  VULKAN_HPP_INLINE std::wstring to_string(XcbSurfaceCreateFlagBitsKHR)
   {
     return "(void)";
   }
 #endif /*VK_USE_PLATFORM_XCB_KHR*/
 
 #ifdef VK_USE_PLATFORM_XCB_KHR
-  VULKAN_HPP_INLINE std::string to_string(XcbSurfaceCreateFlagsKHR)
+  VULKAN_HPP_INLINE std::wstring to_string(XcbSurfaceCreateFlagsKHR)
   {
     return "{}";
   }
 #endif /*VK_USE_PLATFORM_XCB_KHR*/
 
 #ifdef VK_USE_PLATFORM_IOS_MVK
-  VULKAN_HPP_INLINE std::string to_string(IOSSurfaceCreateFlagBitsMVK)
+  VULKAN_HPP_INLINE std::wstring to_string(IOSSurfaceCreateFlagBitsMVK)
   {
     return "(void)";
   }
 #endif /*VK_USE_PLATFORM_IOS_MVK*/
 
 #ifdef VK_USE_PLATFORM_IOS_MVK
-  VULKAN_HPP_INLINE std::string to_string(IOSSurfaceCreateFlagsMVK)
+  VULKAN_HPP_INLINE std::wstring to_string(IOSSurfaceCreateFlagsMVK)
   {
     return "{}";
   }
 #endif /*VK_USE_PLATFORM_IOS_MVK*/
 
 #ifdef VK_USE_PLATFORM_MACOS_MVK
-  VULKAN_HPP_INLINE std::string to_string(MacOSSurfaceCreateFlagBitsMVK)
+  VULKAN_HPP_INLINE std::wstring to_string(MacOSSurfaceCreateFlagBitsMVK)
   {
     return "(void)";
   }
 #endif /*VK_USE_PLATFORM_MACOS_MVK*/
 
 #ifdef VK_USE_PLATFORM_MACOS_MVK
-  VULKAN_HPP_INLINE std::string to_string(MacOSSurfaceCreateFlagsMVK)
+  VULKAN_HPP_INLINE std::wstring to_string(MacOSSurfaceCreateFlagsMVK)
   {
     return "{}";
   }
 #endif /*VK_USE_PLATFORM_MACOS_MVK*/
 
 #ifdef VK_USE_PLATFORM_FUCHSIA
-  VULKAN_HPP_INLINE std::string to_string(ImagePipeSurfaceCreateFlagBitsFUCHSIA)
+  VULKAN_HPP_INLINE std::wstring to_string(ImagePipeSurfaceCreateFlagBitsFUCHSIA)
   {
     return "(void)";
   }
 #endif /*VK_USE_PLATFORM_FUCHSIA*/
 
 #ifdef VK_USE_PLATFORM_FUCHSIA
-  VULKAN_HPP_INLINE std::string to_string(ImagePipeSurfaceCreateFlagsFUCHSIA)
+  VULKAN_HPP_INLINE std::wstring to_string(ImagePipeSurfaceCreateFlagsFUCHSIA)
   {
     return "{}";
   }
 #endif /*VK_USE_PLATFORM_FUCHSIA*/
 
-  VULKAN_HPP_INLINE std::string to_string(CommandPoolTrimFlagBits)
+  VULKAN_HPP_INLINE std::wstring to_string(CommandPoolTrimFlagBits)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CommandPoolTrimFlags)
+  VULKAN_HPP_INLINE std::wstring to_string(CommandPoolTrimFlags)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineViewportSwizzleStateCreateFlagBitsNV)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineViewportSwizzleStateCreateFlagBitsNV)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineViewportSwizzleStateCreateFlagsNV)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineViewportSwizzleStateCreateFlagsNV)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineDiscardRectangleStateCreateFlagBitsEXT)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineDiscardRectangleStateCreateFlagBitsEXT)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineDiscardRectangleStateCreateFlagsEXT)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineDiscardRectangleStateCreateFlagsEXT)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineCoverageToColorStateCreateFlagBitsNV)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineCoverageToColorStateCreateFlagBitsNV)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineCoverageToColorStateCreateFlagsNV)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineCoverageToColorStateCreateFlagsNV)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineCoverageModulationStateCreateFlagBitsNV)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineCoverageModulationStateCreateFlagBitsNV)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineCoverageModulationStateCreateFlagsNV)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineCoverageModulationStateCreateFlagsNV)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ValidationCacheCreateFlagBitsEXT)
+  VULKAN_HPP_INLINE std::wstring to_string(ValidationCacheCreateFlagBitsEXT)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ValidationCacheCreateFlagsEXT)
+  VULKAN_HPP_INLINE std::wstring to_string(ValidationCacheCreateFlagsEXT)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DebugUtilsMessengerCreateFlagBitsEXT)
+  VULKAN_HPP_INLINE std::wstring to_string(DebugUtilsMessengerCreateFlagBitsEXT)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DebugUtilsMessengerCreateFlagsEXT)
+  VULKAN_HPP_INLINE std::wstring to_string(DebugUtilsMessengerCreateFlagsEXT)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DebugUtilsMessengerCallbackDataFlagBitsEXT)
+  VULKAN_HPP_INLINE std::wstring to_string(DebugUtilsMessengerCallbackDataFlagBitsEXT)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DebugUtilsMessengerCallbackDataFlagsEXT)
+  VULKAN_HPP_INLINE std::wstring to_string(DebugUtilsMessengerCallbackDataFlagsEXT)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineRasterizationConservativeStateCreateFlagBitsEXT)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineRasterizationConservativeStateCreateFlagBitsEXT)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineRasterizationConservativeStateCreateFlagsEXT)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineRasterizationConservativeStateCreateFlagsEXT)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineRasterizationStateStreamCreateFlagBitsEXT)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineRasterizationStateStreamCreateFlagBitsEXT)
   {
     return "(void)";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineRasterizationStateStreamCreateFlagsEXT)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineRasterizationStateStreamCreateFlagsEXT)
   {
     return "{}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ImageLayout value)
+  VULKAN_HPP_INLINE std::wstring to_string(ImageLayout value)
   {
     switch (value)
     {
@@ -49960,7 +49960,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(AttachmentLoadOp value)
+  VULKAN_HPP_INLINE std::wstring to_string(AttachmentLoadOp value)
   {
     switch (value)
     {
@@ -49971,7 +49971,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(AttachmentStoreOp value)
+  VULKAN_HPP_INLINE std::wstring to_string(AttachmentStoreOp value)
   {
     switch (value)
     {
@@ -49981,7 +49981,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ImageType value)
+  VULKAN_HPP_INLINE std::wstring to_string(ImageType value)
   {
     switch (value)
     {
@@ -49992,7 +49992,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ImageTiling value)
+  VULKAN_HPP_INLINE std::wstring to_string(ImageTiling value)
   {
     switch (value)
     {
@@ -50003,7 +50003,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ImageViewType value)
+  VULKAN_HPP_INLINE std::wstring to_string(ImageViewType value)
   {
     switch (value)
     {
@@ -50018,7 +50018,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CommandBufferLevel value)
+  VULKAN_HPP_INLINE std::wstring to_string(CommandBufferLevel value)
   {
     switch (value)
     {
@@ -50028,7 +50028,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ComponentSwizzle value)
+  VULKAN_HPP_INLINE std::wstring to_string(ComponentSwizzle value)
   {
     switch (value)
     {
@@ -50043,7 +50043,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DescriptorType value)
+  VULKAN_HPP_INLINE std::wstring to_string(DescriptorType value)
   {
     switch (value)
     {
@@ -50064,7 +50064,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(QueryType value)
+  VULKAN_HPP_INLINE std::wstring to_string(QueryType value)
   {
     switch (value)
     {
@@ -50077,7 +50077,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(BorderColor value)
+  VULKAN_HPP_INLINE std::wstring to_string(BorderColor value)
   {
     switch (value)
     {
@@ -50091,7 +50091,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineBindPoint value)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineBindPoint value)
   {
     switch (value)
     {
@@ -50102,7 +50102,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineCacheHeaderVersion value)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineCacheHeaderVersion value)
   {
     switch (value)
     {
@@ -50111,7 +50111,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PrimitiveTopology value)
+  VULKAN_HPP_INLINE std::wstring to_string(PrimitiveTopology value)
   {
     switch (value)
     {
@@ -50130,7 +50130,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SharingMode value)
+  VULKAN_HPP_INLINE std::wstring to_string(SharingMode value)
   {
     switch (value)
     {
@@ -50140,7 +50140,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(IndexType value)
+  VULKAN_HPP_INLINE std::wstring to_string(IndexType value)
   {
     switch (value)
     {
@@ -50151,7 +50151,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(Filter value)
+  VULKAN_HPP_INLINE std::wstring to_string(Filter value)
   {
     switch (value)
     {
@@ -50162,7 +50162,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SamplerMipmapMode value)
+  VULKAN_HPP_INLINE std::wstring to_string(SamplerMipmapMode value)
   {
     switch (value)
     {
@@ -50172,7 +50172,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SamplerAddressMode value)
+  VULKAN_HPP_INLINE std::wstring to_string(SamplerAddressMode value)
   {
     switch (value)
     {
@@ -50185,7 +50185,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CompareOp value)
+  VULKAN_HPP_INLINE std::wstring to_string(CompareOp value)
   {
     switch (value)
     {
@@ -50201,7 +50201,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PolygonMode value)
+  VULKAN_HPP_INLINE std::wstring to_string(PolygonMode value)
   {
     switch (value)
     {
@@ -50213,7 +50213,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CullModeFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(CullModeFlagBits value)
   {
     switch (value)
     {
@@ -50225,10 +50225,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CullModeFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(CullModeFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & CullModeFlagBits::eNone) result += "None | ";
     if (value & CullModeFlagBits::eFront) result += "Front | ";
     if (value & CullModeFlagBits::eBack) result += "Back | ";
@@ -50236,7 +50236,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(FrontFace value)
+  VULKAN_HPP_INLINE std::wstring to_string(FrontFace value)
   {
     switch (value)
     {
@@ -50246,7 +50246,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(BlendFactor value)
+  VULKAN_HPP_INLINE std::wstring to_string(BlendFactor value)
   {
     switch (value)
     {
@@ -50273,7 +50273,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(BlendOp value)
+  VULKAN_HPP_INLINE std::wstring to_string(BlendOp value)
   {
     switch (value)
     {
@@ -50332,7 +50332,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(StencilOp value)
+  VULKAN_HPP_INLINE std::wstring to_string(StencilOp value)
   {
     switch (value)
     {
@@ -50348,7 +50348,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(LogicOp value)
+  VULKAN_HPP_INLINE std::wstring to_string(LogicOp value)
   {
     switch (value)
     {
@@ -50372,7 +50372,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(InternalAllocationType value)
+  VULKAN_HPP_INLINE std::wstring to_string(InternalAllocationType value)
   {
     switch (value)
     {
@@ -50381,7 +50381,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SystemAllocationScope value)
+  VULKAN_HPP_INLINE std::wstring to_string(SystemAllocationScope value)
   {
     switch (value)
     {
@@ -50394,7 +50394,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PhysicalDeviceType value)
+  VULKAN_HPP_INLINE std::wstring to_string(PhysicalDeviceType value)
   {
     switch (value)
     {
@@ -50407,7 +50407,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(VertexInputRate value)
+  VULKAN_HPP_INLINE std::wstring to_string(VertexInputRate value)
   {
     switch (value)
     {
@@ -50417,7 +50417,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(Format value)
+  VULKAN_HPP_INLINE std::wstring to_string(Format value)
   {
     switch (value)
     {
@@ -50652,7 +50652,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(StructureType value)
+  VULKAN_HPP_INLINE std::wstring to_string(StructureType value)
   {
     switch (value)
     {
@@ -50964,7 +50964,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SubpassContents value)
+  VULKAN_HPP_INLINE std::wstring to_string(SubpassContents value)
   {
     switch (value)
     {
@@ -50974,7 +50974,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DynamicState value)
+  VULKAN_HPP_INLINE std::wstring to_string(DynamicState value)
   {
     switch (value)
     {
@@ -50997,7 +50997,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DescriptorUpdateTemplateType value)
+  VULKAN_HPP_INLINE std::wstring to_string(DescriptorUpdateTemplateType value)
   {
     switch (value)
     {
@@ -51007,7 +51007,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ObjectType value)
+  VULKAN_HPP_INLINE std::wstring to_string(ObjectType value)
   {
     switch (value)
     {
@@ -51053,7 +51053,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(QueueFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(QueueFlagBits value)
   {
     switch (value)
     {
@@ -51066,10 +51066,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(QueueFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(QueueFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & QueueFlagBits::eGraphics) result += "Graphics | ";
     if (value & QueueFlagBits::eCompute) result += "Compute | ";
     if (value & QueueFlagBits::eTransfer) result += "Transfer | ";
@@ -51078,7 +51078,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DeviceQueueCreateFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(DeviceQueueCreateFlagBits value)
   {
     switch (value)
     {
@@ -51087,15 +51087,15 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DeviceQueueCreateFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(DeviceQueueCreateFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & DeviceQueueCreateFlagBits::eProtected) result += "Protected | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(MemoryPropertyFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(MemoryPropertyFlagBits value)
   {
     switch (value)
     {
@@ -51109,10 +51109,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(MemoryPropertyFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(MemoryPropertyFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & MemoryPropertyFlagBits::eDeviceLocal) result += "DeviceLocal | ";
     if (value & MemoryPropertyFlagBits::eHostVisible) result += "HostVisible | ";
     if (value & MemoryPropertyFlagBits::eHostCoherent) result += "HostCoherent | ";
@@ -51122,7 +51122,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(MemoryHeapFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(MemoryHeapFlagBits value)
   {
     switch (value)
     {
@@ -51132,16 +51132,16 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(MemoryHeapFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(MemoryHeapFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & MemoryHeapFlagBits::eDeviceLocal) result += "DeviceLocal | ";
     if (value & MemoryHeapFlagBits::eMultiInstance) result += "MultiInstance | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(AccessFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(AccessFlagBits value)
   {
     switch (value)
     {
@@ -51177,10 +51177,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(AccessFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(AccessFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & AccessFlagBits::eIndirectCommandRead) result += "IndirectCommandRead | ";
     if (value & AccessFlagBits::eIndexRead) result += "IndexRead | ";
     if (value & AccessFlagBits::eVertexAttributeRead) result += "VertexAttributeRead | ";
@@ -51212,7 +51212,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(BufferUsageFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(BufferUsageFlagBits value)
   {
     switch (value)
     {
@@ -51233,10 +51233,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(BufferUsageFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(BufferUsageFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & BufferUsageFlagBits::eTransferSrc) result += "TransferSrc | ";
     if (value & BufferUsageFlagBits::eTransferDst) result += "TransferDst | ";
     if (value & BufferUsageFlagBits::eUniformTexelBuffer) result += "UniformTexelBuffer | ";
@@ -51253,7 +51253,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(BufferCreateFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(BufferCreateFlagBits value)
   {
     switch (value)
     {
@@ -51265,10 +51265,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(BufferCreateFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(BufferCreateFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & BufferCreateFlagBits::eSparseBinding) result += "SparseBinding | ";
     if (value & BufferCreateFlagBits::eSparseResidency) result += "SparseResidency | ";
     if (value & BufferCreateFlagBits::eSparseAliased) result += "SparseAliased | ";
@@ -51276,7 +51276,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ShaderStageFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(ShaderStageFlagBits value)
   {
     switch (value)
     {
@@ -51300,10 +51300,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ShaderStageFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(ShaderStageFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & ShaderStageFlagBits::eVertex) result += "Vertex | ";
     if (value & ShaderStageFlagBits::eTessellationControl) result += "TessellationControl | ";
     if (value & ShaderStageFlagBits::eTessellationEvaluation) result += "TessellationEvaluation | ";
@@ -51323,7 +51323,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ImageUsageFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(ImageUsageFlagBits value)
   {
     switch (value)
     {
@@ -51341,10 +51341,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ImageUsageFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(ImageUsageFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & ImageUsageFlagBits::eTransferSrc) result += "TransferSrc | ";
     if (value & ImageUsageFlagBits::eTransferDst) result += "TransferDst | ";
     if (value & ImageUsageFlagBits::eSampled) result += "Sampled | ";
@@ -51358,7 +51358,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ImageCreateFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(ImageCreateFlagBits value)
   {
     switch (value)
     {
@@ -51381,10 +51381,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ImageCreateFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(ImageCreateFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & ImageCreateFlagBits::eSparseBinding) result += "SparseBinding | ";
     if (value & ImageCreateFlagBits::eSparseResidency) result += "SparseResidency | ";
     if (value & ImageCreateFlagBits::eSparseAliased) result += "SparseAliased | ";
@@ -51403,7 +51403,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ImageViewCreateFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(ImageViewCreateFlagBits value)
   {
     switch (value)
     {
@@ -51412,15 +51412,15 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ImageViewCreateFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(ImageViewCreateFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & ImageViewCreateFlagBits::eFragmentDensityMapDynamicEXT) result += "FragmentDensityMapDynamicEXT | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SamplerCreateFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(SamplerCreateFlagBits value)
   {
     switch (value)
     {
@@ -51430,16 +51430,16 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SamplerCreateFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(SamplerCreateFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & SamplerCreateFlagBits::eSubsampledEXT) result += "SubsampledEXT | ";
     if (value & SamplerCreateFlagBits::eSubsampledCoarseReconstructionEXT) result += "SubsampledCoarseReconstructionEXT | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineCreateFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineCreateFlagBits value)
   {
     switch (value)
     {
@@ -51453,10 +51453,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineCreateFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineCreateFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & PipelineCreateFlagBits::eDisableOptimization) result += "DisableOptimization | ";
     if (value & PipelineCreateFlagBits::eAllowDerivatives) result += "AllowDerivatives | ";
     if (value & PipelineCreateFlagBits::eDerivative) result += "Derivative | ";
@@ -51466,7 +51466,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ColorComponentFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(ColorComponentFlagBits value)
   {
     switch (value)
     {
@@ -51478,10 +51478,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ColorComponentFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(ColorComponentFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & ColorComponentFlagBits::eR) result += "R | ";
     if (value & ColorComponentFlagBits::eG) result += "G | ";
     if (value & ColorComponentFlagBits::eB) result += "B | ";
@@ -51489,7 +51489,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(FenceCreateFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(FenceCreateFlagBits value)
   {
     switch (value)
     {
@@ -51498,15 +51498,15 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(FenceCreateFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(FenceCreateFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & FenceCreateFlagBits::eSignaled) result += "Signaled | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(FormatFeatureFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(FormatFeatureFlagBits value)
   {
     switch (value)
     {
@@ -51539,10 +51539,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(FormatFeatureFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(FormatFeatureFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & FormatFeatureFlagBits::eSampledImage) result += "SampledImage | ";
     if (value & FormatFeatureFlagBits::eStorageImage) result += "StorageImage | ";
     if (value & FormatFeatureFlagBits::eStorageImageAtomic) result += "StorageImageAtomic | ";
@@ -51571,7 +51571,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(QueryControlFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(QueryControlFlagBits value)
   {
     switch (value)
     {
@@ -51580,15 +51580,15 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(QueryControlFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(QueryControlFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & QueryControlFlagBits::ePrecise) result += "Precise | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(QueryResultFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(QueryResultFlagBits value)
   {
     switch (value)
     {
@@ -51600,10 +51600,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(QueryResultFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(QueryResultFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & QueryResultFlagBits::e64) result += "64 | ";
     if (value & QueryResultFlagBits::eWait) result += "Wait | ";
     if (value & QueryResultFlagBits::eWithAvailability) result += "WithAvailability | ";
@@ -51611,7 +51611,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CommandBufferUsageFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(CommandBufferUsageFlagBits value)
   {
     switch (value)
     {
@@ -51622,17 +51622,17 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CommandBufferUsageFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(CommandBufferUsageFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & CommandBufferUsageFlagBits::eOneTimeSubmit) result += "OneTimeSubmit | ";
     if (value & CommandBufferUsageFlagBits::eRenderPassContinue) result += "RenderPassContinue | ";
     if (value & CommandBufferUsageFlagBits::eSimultaneousUse) result += "SimultaneousUse | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(QueryPipelineStatisticFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(QueryPipelineStatisticFlagBits value)
   {
     switch (value)
     {
@@ -51651,10 +51651,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(QueryPipelineStatisticFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(QueryPipelineStatisticFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & QueryPipelineStatisticFlagBits::eInputAssemblyVertices) result += "InputAssemblyVertices | ";
     if (value & QueryPipelineStatisticFlagBits::eInputAssemblyPrimitives) result += "InputAssemblyPrimitives | ";
     if (value & QueryPipelineStatisticFlagBits::eVertexShaderInvocations) result += "VertexShaderInvocations | ";
@@ -51669,7 +51669,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ImageAspectFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(ImageAspectFlagBits value)
   {
     switch (value)
     {
@@ -51688,10 +51688,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ImageAspectFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(ImageAspectFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & ImageAspectFlagBits::eColor) result += "Color | ";
     if (value & ImageAspectFlagBits::eDepth) result += "Depth | ";
     if (value & ImageAspectFlagBits::eStencil) result += "Stencil | ";
@@ -51706,7 +51706,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SparseImageFormatFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(SparseImageFormatFlagBits value)
   {
     switch (value)
     {
@@ -51717,17 +51717,17 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SparseImageFormatFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(SparseImageFormatFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & SparseImageFormatFlagBits::eSingleMiptail) result += "SingleMiptail | ";
     if (value & SparseImageFormatFlagBits::eAlignedMipSize) result += "AlignedMipSize | ";
     if (value & SparseImageFormatFlagBits::eNonstandardBlockSize) result += "NonstandardBlockSize | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SparseMemoryBindFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(SparseMemoryBindFlagBits value)
   {
     switch (value)
     {
@@ -51736,15 +51736,15 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SparseMemoryBindFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(SparseMemoryBindFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & SparseMemoryBindFlagBits::eMetadata) result += "Metadata | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineStageFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineStageFlagBits value)
   {
     switch (value)
     {
@@ -51778,10 +51778,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PipelineStageFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(PipelineStageFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & PipelineStageFlagBits::eTopOfPipe) result += "TopOfPipe | ";
     if (value & PipelineStageFlagBits::eDrawIndirect) result += "DrawIndirect | ";
     if (value & PipelineStageFlagBits::eVertexInput) result += "VertexInput | ";
@@ -51811,7 +51811,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CommandPoolCreateFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(CommandPoolCreateFlagBits value)
   {
     switch (value)
     {
@@ -51822,17 +51822,17 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CommandPoolCreateFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(CommandPoolCreateFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & CommandPoolCreateFlagBits::eTransient) result += "Transient | ";
     if (value & CommandPoolCreateFlagBits::eResetCommandBuffer) result += "ResetCommandBuffer | ";
     if (value & CommandPoolCreateFlagBits::eProtected) result += "Protected | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CommandPoolResetFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(CommandPoolResetFlagBits value)
   {
     switch (value)
     {
@@ -51841,15 +51841,15 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CommandPoolResetFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(CommandPoolResetFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & CommandPoolResetFlagBits::eReleaseResources) result += "ReleaseResources | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CommandBufferResetFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(CommandBufferResetFlagBits value)
   {
     switch (value)
     {
@@ -51858,15 +51858,15 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CommandBufferResetFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(CommandBufferResetFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & CommandBufferResetFlagBits::eReleaseResources) result += "ReleaseResources | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SampleCountFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(SampleCountFlagBits value)
   {
     switch (value)
     {
@@ -51881,10 +51881,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SampleCountFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(SampleCountFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & SampleCountFlagBits::e1) result += "1 | ";
     if (value & SampleCountFlagBits::e2) result += "2 | ";
     if (value & SampleCountFlagBits::e4) result += "4 | ";
@@ -51895,7 +51895,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(AttachmentDescriptionFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(AttachmentDescriptionFlagBits value)
   {
     switch (value)
     {
@@ -51904,15 +51904,15 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(AttachmentDescriptionFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(AttachmentDescriptionFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & AttachmentDescriptionFlagBits::eMayAlias) result += "MayAlias | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(StencilFaceFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(StencilFaceFlagBits value)
   {
     switch (value)
     {
@@ -51923,17 +51923,17 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(StencilFaceFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(StencilFaceFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & StencilFaceFlagBits::eFront) result += "Front | ";
     if (value & StencilFaceFlagBits::eBack) result += "Back | ";
     if (value & StencilFaceFlagBits::eVkStencilFrontAndBack) result += "VkStencilFrontAndBack | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DescriptorPoolCreateFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(DescriptorPoolCreateFlagBits value)
   {
     switch (value)
     {
@@ -51943,16 +51943,16 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DescriptorPoolCreateFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(DescriptorPoolCreateFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & DescriptorPoolCreateFlagBits::eFreeDescriptorSet) result += "FreeDescriptorSet | ";
     if (value & DescriptorPoolCreateFlagBits::eUpdateAfterBindEXT) result += "UpdateAfterBindEXT | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DependencyFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(DependencyFlagBits value)
   {
     switch (value)
     {
@@ -51963,17 +51963,17 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DependencyFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(DependencyFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & DependencyFlagBits::eByRegion) result += "ByRegion | ";
     if (value & DependencyFlagBits::eDeviceGroup) result += "DeviceGroup | ";
     if (value & DependencyFlagBits::eViewLocal) result += "ViewLocal | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PresentModeKHR value)
+  VULKAN_HPP_INLINE std::wstring to_string(PresentModeKHR value)
   {
     switch (value)
     {
@@ -51987,7 +51987,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ColorSpaceKHR value)
+  VULKAN_HPP_INLINE std::wstring to_string(ColorSpaceKHR value)
   {
     switch (value)
     {
@@ -52010,7 +52010,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DisplayPlaneAlphaFlagBitsKHR value)
+  VULKAN_HPP_INLINE std::wstring to_string(DisplayPlaneAlphaFlagBitsKHR value)
   {
     switch (value)
     {
@@ -52022,10 +52022,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DisplayPlaneAlphaFlagsKHR value)
+  VULKAN_HPP_INLINE std::wstring to_string(DisplayPlaneAlphaFlagsKHR value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & DisplayPlaneAlphaFlagBitsKHR::eOpaque) result += "Opaque | ";
     if (value & DisplayPlaneAlphaFlagBitsKHR::eGlobal) result += "Global | ";
     if (value & DisplayPlaneAlphaFlagBitsKHR::ePerPixel) result += "PerPixel | ";
@@ -52033,7 +52033,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CompositeAlphaFlagBitsKHR value)
+  VULKAN_HPP_INLINE std::wstring to_string(CompositeAlphaFlagBitsKHR value)
   {
     switch (value)
     {
@@ -52045,10 +52045,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CompositeAlphaFlagsKHR value)
+  VULKAN_HPP_INLINE std::wstring to_string(CompositeAlphaFlagsKHR value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & CompositeAlphaFlagBitsKHR::eOpaque) result += "Opaque | ";
     if (value & CompositeAlphaFlagBitsKHR::ePreMultiplied) result += "PreMultiplied | ";
     if (value & CompositeAlphaFlagBitsKHR::ePostMultiplied) result += "PostMultiplied | ";
@@ -52056,7 +52056,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SurfaceTransformFlagBitsKHR value)
+  VULKAN_HPP_INLINE std::wstring to_string(SurfaceTransformFlagBitsKHR value)
   {
     switch (value)
     {
@@ -52073,10 +52073,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SurfaceTransformFlagsKHR value)
+  VULKAN_HPP_INLINE std::wstring to_string(SurfaceTransformFlagsKHR value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & SurfaceTransformFlagBitsKHR::eIdentity) result += "Identity | ";
     if (value & SurfaceTransformFlagBitsKHR::eRotate90) result += "Rotate90 | ";
     if (value & SurfaceTransformFlagBitsKHR::eRotate180) result += "Rotate180 | ";
@@ -52089,7 +52089,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(TimeDomainEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(TimeDomainEXT value)
   {
     switch (value)
     {
@@ -52101,7 +52101,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DebugReportFlagBitsEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(DebugReportFlagBitsEXT value)
   {
     switch (value)
     {
@@ -52114,10 +52114,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DebugReportFlagsEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(DebugReportFlagsEXT value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & DebugReportFlagBitsEXT::eInformation) result += "Information | ";
     if (value & DebugReportFlagBitsEXT::eWarning) result += "Warning | ";
     if (value & DebugReportFlagBitsEXT::ePerformanceWarning) result += "PerformanceWarning | ";
@@ -52126,7 +52126,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DebugReportObjectTypeEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(DebugReportObjectTypeEXT value)
   {
     switch (value)
     {
@@ -52171,7 +52171,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(RasterizationOrderAMD value)
+  VULKAN_HPP_INLINE std::wstring to_string(RasterizationOrderAMD value)
   {
     switch (value)
     {
@@ -52181,7 +52181,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ExternalMemoryHandleTypeFlagBitsNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(ExternalMemoryHandleTypeFlagBitsNV value)
   {
     switch (value)
     {
@@ -52193,10 +52193,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ExternalMemoryHandleTypeFlagsNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(ExternalMemoryHandleTypeFlagsNV value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & ExternalMemoryHandleTypeFlagBitsNV::eOpaqueWin32) result += "OpaqueWin32 | ";
     if (value & ExternalMemoryHandleTypeFlagBitsNV::eOpaqueWin32Kmt) result += "OpaqueWin32Kmt | ";
     if (value & ExternalMemoryHandleTypeFlagBitsNV::eD3D11Image) result += "D3D11Image | ";
@@ -52204,7 +52204,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ExternalMemoryFeatureFlagBitsNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(ExternalMemoryFeatureFlagBitsNV value)
   {
     switch (value)
     {
@@ -52215,17 +52215,17 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ExternalMemoryFeatureFlagsNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(ExternalMemoryFeatureFlagsNV value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & ExternalMemoryFeatureFlagBitsNV::eDedicatedOnly) result += "DedicatedOnly | ";
     if (value & ExternalMemoryFeatureFlagBitsNV::eExportable) result += "Exportable | ";
     if (value & ExternalMemoryFeatureFlagBitsNV::eImportable) result += "Importable | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ValidationCheckEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(ValidationCheckEXT value)
   {
     switch (value)
     {
@@ -52235,7 +52235,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SubgroupFeatureFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(SubgroupFeatureFlagBits value)
   {
     switch (value)
     {
@@ -52252,10 +52252,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SubgroupFeatureFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(SubgroupFeatureFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & SubgroupFeatureFlagBits::eBasic) result += "Basic | ";
     if (value & SubgroupFeatureFlagBits::eVote) result += "Vote | ";
     if (value & SubgroupFeatureFlagBits::eArithmetic) result += "Arithmetic | ";
@@ -52268,7 +52268,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(IndirectCommandsLayoutUsageFlagBitsNVX value)
+  VULKAN_HPP_INLINE std::wstring to_string(IndirectCommandsLayoutUsageFlagBitsNVX value)
   {
     switch (value)
     {
@@ -52280,10 +52280,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(IndirectCommandsLayoutUsageFlagsNVX value)
+  VULKAN_HPP_INLINE std::wstring to_string(IndirectCommandsLayoutUsageFlagsNVX value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & IndirectCommandsLayoutUsageFlagBitsNVX::eUnorderedSequences) result += "UnorderedSequences | ";
     if (value & IndirectCommandsLayoutUsageFlagBitsNVX::eSparseSequences) result += "SparseSequences | ";
     if (value & IndirectCommandsLayoutUsageFlagBitsNVX::eEmptyExecutions) result += "EmptyExecutions | ";
@@ -52291,7 +52291,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ObjectEntryUsageFlagBitsNVX value)
+  VULKAN_HPP_INLINE std::wstring to_string(ObjectEntryUsageFlagBitsNVX value)
   {
     switch (value)
     {
@@ -52301,16 +52301,16 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ObjectEntryUsageFlagsNVX value)
+  VULKAN_HPP_INLINE std::wstring to_string(ObjectEntryUsageFlagsNVX value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & ObjectEntryUsageFlagBitsNVX::eGraphics) result += "Graphics | ";
     if (value & ObjectEntryUsageFlagBitsNVX::eCompute) result += "Compute | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(IndirectCommandsTokenTypeNVX value)
+  VULKAN_HPP_INLINE std::wstring to_string(IndirectCommandsTokenTypeNVX value)
   {
     switch (value)
     {
@@ -52326,7 +52326,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ObjectEntryTypeNVX value)
+  VULKAN_HPP_INLINE std::wstring to_string(ObjectEntryTypeNVX value)
   {
     switch (value)
     {
@@ -52339,7 +52339,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DescriptorSetLayoutCreateFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(DescriptorSetLayoutCreateFlagBits value)
   {
     switch (value)
     {
@@ -52349,16 +52349,16 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DescriptorSetLayoutCreateFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(DescriptorSetLayoutCreateFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & DescriptorSetLayoutCreateFlagBits::ePushDescriptorKHR) result += "PushDescriptorKHR | ";
     if (value & DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPoolEXT) result += "UpdateAfterBindPoolEXT | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ExternalMemoryHandleTypeFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(ExternalMemoryHandleTypeFlagBits value)
   {
     switch (value)
     {
@@ -52377,10 +52377,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ExternalMemoryHandleTypeFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(ExternalMemoryHandleTypeFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & ExternalMemoryHandleTypeFlagBits::eOpaqueFd) result += "OpaqueFd | ";
     if (value & ExternalMemoryHandleTypeFlagBits::eOpaqueWin32) result += "OpaqueWin32 | ";
     if (value & ExternalMemoryHandleTypeFlagBits::eOpaqueWin32Kmt) result += "OpaqueWin32Kmt | ";
@@ -52395,7 +52395,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ExternalMemoryFeatureFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(ExternalMemoryFeatureFlagBits value)
   {
     switch (value)
     {
@@ -52406,17 +52406,17 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ExternalMemoryFeatureFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(ExternalMemoryFeatureFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & ExternalMemoryFeatureFlagBits::eDedicatedOnly) result += "DedicatedOnly | ";
     if (value & ExternalMemoryFeatureFlagBits::eExportable) result += "Exportable | ";
     if (value & ExternalMemoryFeatureFlagBits::eImportable) result += "Importable | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ExternalSemaphoreHandleTypeFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(ExternalSemaphoreHandleTypeFlagBits value)
   {
     switch (value)
     {
@@ -52429,10 +52429,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ExternalSemaphoreHandleTypeFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(ExternalSemaphoreHandleTypeFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & ExternalSemaphoreHandleTypeFlagBits::eOpaqueFd) result += "OpaqueFd | ";
     if (value & ExternalSemaphoreHandleTypeFlagBits::eOpaqueWin32) result += "OpaqueWin32 | ";
     if (value & ExternalSemaphoreHandleTypeFlagBits::eOpaqueWin32Kmt) result += "OpaqueWin32Kmt | ";
@@ -52441,7 +52441,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ExternalSemaphoreFeatureFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(ExternalSemaphoreFeatureFlagBits value)
   {
     switch (value)
     {
@@ -52451,16 +52451,16 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ExternalSemaphoreFeatureFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(ExternalSemaphoreFeatureFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & ExternalSemaphoreFeatureFlagBits::eExportable) result += "Exportable | ";
     if (value & ExternalSemaphoreFeatureFlagBits::eImportable) result += "Importable | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SemaphoreImportFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(SemaphoreImportFlagBits value)
   {
     switch (value)
     {
@@ -52469,15 +52469,15 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SemaphoreImportFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(SemaphoreImportFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & SemaphoreImportFlagBits::eTemporary) result += "Temporary | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ExternalFenceHandleTypeFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(ExternalFenceHandleTypeFlagBits value)
   {
     switch (value)
     {
@@ -52489,10 +52489,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ExternalFenceHandleTypeFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(ExternalFenceHandleTypeFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & ExternalFenceHandleTypeFlagBits::eOpaqueFd) result += "OpaqueFd | ";
     if (value & ExternalFenceHandleTypeFlagBits::eOpaqueWin32) result += "OpaqueWin32 | ";
     if (value & ExternalFenceHandleTypeFlagBits::eOpaqueWin32Kmt) result += "OpaqueWin32Kmt | ";
@@ -52500,7 +52500,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ExternalFenceFeatureFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(ExternalFenceFeatureFlagBits value)
   {
     switch (value)
     {
@@ -52510,16 +52510,16 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ExternalFenceFeatureFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(ExternalFenceFeatureFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & ExternalFenceFeatureFlagBits::eExportable) result += "Exportable | ";
     if (value & ExternalFenceFeatureFlagBits::eImportable) result += "Importable | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(FenceImportFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(FenceImportFlagBits value)
   {
     switch (value)
     {
@@ -52528,15 +52528,15 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(FenceImportFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(FenceImportFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & FenceImportFlagBits::eTemporary) result += "Temporary | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SurfaceCounterFlagBitsEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(SurfaceCounterFlagBitsEXT value)
   {
     switch (value)
     {
@@ -52545,15 +52545,15 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SurfaceCounterFlagsEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(SurfaceCounterFlagsEXT value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & SurfaceCounterFlagBitsEXT::eVblank) result += "Vblank | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DisplayPowerStateEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(DisplayPowerStateEXT value)
   {
     switch (value)
     {
@@ -52564,7 +52564,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DeviceEventTypeEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(DeviceEventTypeEXT value)
   {
     switch (value)
     {
@@ -52573,7 +52573,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DisplayEventTypeEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(DisplayEventTypeEXT value)
   {
     switch (value)
     {
@@ -52582,7 +52582,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PeerMemoryFeatureFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(PeerMemoryFeatureFlagBits value)
   {
     switch (value)
     {
@@ -52594,10 +52594,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PeerMemoryFeatureFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(PeerMemoryFeatureFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & PeerMemoryFeatureFlagBits::eCopySrc) result += "CopySrc | ";
     if (value & PeerMemoryFeatureFlagBits::eCopyDst) result += "CopyDst | ";
     if (value & PeerMemoryFeatureFlagBits::eGenericSrc) result += "GenericSrc | ";
@@ -52605,7 +52605,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(MemoryAllocateFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(MemoryAllocateFlagBits value)
   {
     switch (value)
     {
@@ -52614,15 +52614,15 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(MemoryAllocateFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(MemoryAllocateFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & MemoryAllocateFlagBits::eDeviceMask) result += "DeviceMask | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DeviceGroupPresentModeFlagBitsKHR value)
+  VULKAN_HPP_INLINE std::wstring to_string(DeviceGroupPresentModeFlagBitsKHR value)
   {
     switch (value)
     {
@@ -52634,10 +52634,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DeviceGroupPresentModeFlagsKHR value)
+  VULKAN_HPP_INLINE std::wstring to_string(DeviceGroupPresentModeFlagsKHR value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & DeviceGroupPresentModeFlagBitsKHR::eLocal) result += "Local | ";
     if (value & DeviceGroupPresentModeFlagBitsKHR::eRemote) result += "Remote | ";
     if (value & DeviceGroupPresentModeFlagBitsKHR::eSum) result += "Sum | ";
@@ -52645,7 +52645,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SwapchainCreateFlagBitsKHR value)
+  VULKAN_HPP_INLINE std::wstring to_string(SwapchainCreateFlagBitsKHR value)
   {
     switch (value)
     {
@@ -52656,17 +52656,17 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SwapchainCreateFlagsKHR value)
+  VULKAN_HPP_INLINE std::wstring to_string(SwapchainCreateFlagsKHR value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & SwapchainCreateFlagBitsKHR::eSplitInstanceBindRegions) result += "SplitInstanceBindRegions | ";
     if (value & SwapchainCreateFlagBitsKHR::eProtected) result += "Protected | ";
     if (value & SwapchainCreateFlagBitsKHR::eMutableFormat) result += "MutableFormat | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ViewportCoordinateSwizzleNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(ViewportCoordinateSwizzleNV value)
   {
     switch (value)
     {
@@ -52682,7 +52682,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DiscardRectangleModeEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(DiscardRectangleModeEXT value)
   {
     switch (value)
     {
@@ -52692,7 +52692,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SubpassDescriptionFlagBits value)
+  VULKAN_HPP_INLINE std::wstring to_string(SubpassDescriptionFlagBits value)
   {
     switch (value)
     {
@@ -52702,16 +52702,16 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SubpassDescriptionFlags value)
+  VULKAN_HPP_INLINE std::wstring to_string(SubpassDescriptionFlags value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & SubpassDescriptionFlagBits::ePerViewAttributesNVX) result += "PerViewAttributesNVX | ";
     if (value & SubpassDescriptionFlagBits::ePerViewPositionXOnlyNVX) result += "PerViewPositionXOnlyNVX | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(PointClippingBehavior value)
+  VULKAN_HPP_INLINE std::wstring to_string(PointClippingBehavior value)
   {
     switch (value)
     {
@@ -52721,7 +52721,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SamplerReductionModeEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(SamplerReductionModeEXT value)
   {
     switch (value)
     {
@@ -52732,7 +52732,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(TessellationDomainOrigin value)
+  VULKAN_HPP_INLINE std::wstring to_string(TessellationDomainOrigin value)
   {
     switch (value)
     {
@@ -52742,7 +52742,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SamplerYcbcrModelConversion value)
+  VULKAN_HPP_INLINE std::wstring to_string(SamplerYcbcrModelConversion value)
   {
     switch (value)
     {
@@ -52755,7 +52755,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(SamplerYcbcrRange value)
+  VULKAN_HPP_INLINE std::wstring to_string(SamplerYcbcrRange value)
   {
     switch (value)
     {
@@ -52765,7 +52765,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ChromaLocation value)
+  VULKAN_HPP_INLINE std::wstring to_string(ChromaLocation value)
   {
     switch (value)
     {
@@ -52775,7 +52775,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(BlendOverlapEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(BlendOverlapEXT value)
   {
     switch (value)
     {
@@ -52786,7 +52786,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CoverageModulationModeNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(CoverageModulationModeNV value)
   {
     switch (value)
     {
@@ -52798,7 +52798,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ValidationCacheHeaderVersionEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(ValidationCacheHeaderVersionEXT value)
   {
     switch (value)
     {
@@ -52807,7 +52807,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ShaderInfoTypeAMD value)
+  VULKAN_HPP_INLINE std::wstring to_string(ShaderInfoTypeAMD value)
   {
     switch (value)
     {
@@ -52818,7 +52818,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(QueueGlobalPriorityEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(QueueGlobalPriorityEXT value)
   {
     switch (value)
     {
@@ -52830,7 +52830,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DebugUtilsMessageSeverityFlagBitsEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(DebugUtilsMessageSeverityFlagBitsEXT value)
   {
     switch (value)
     {
@@ -52842,10 +52842,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DebugUtilsMessageSeverityFlagsEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(DebugUtilsMessageSeverityFlagsEXT value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & DebugUtilsMessageSeverityFlagBitsEXT::eVerbose) result += "Verbose | ";
     if (value & DebugUtilsMessageSeverityFlagBitsEXT::eInfo) result += "Info | ";
     if (value & DebugUtilsMessageSeverityFlagBitsEXT::eWarning) result += "Warning | ";
@@ -52853,7 +52853,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DebugUtilsMessageTypeFlagBitsEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(DebugUtilsMessageTypeFlagBitsEXT value)
   {
     switch (value)
     {
@@ -52864,17 +52864,17 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DebugUtilsMessageTypeFlagsEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(DebugUtilsMessageTypeFlagsEXT value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & DebugUtilsMessageTypeFlagBitsEXT::eGeneral) result += "General | ";
     if (value & DebugUtilsMessageTypeFlagBitsEXT::eValidation) result += "Validation | ";
     if (value & DebugUtilsMessageTypeFlagBitsEXT::ePerformance) result += "Performance | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ConservativeRasterizationModeEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(ConservativeRasterizationModeEXT value)
   {
     switch (value)
     {
@@ -52885,7 +52885,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DescriptorBindingFlagBitsEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(DescriptorBindingFlagBitsEXT value)
   {
     switch (value)
     {
@@ -52897,10 +52897,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DescriptorBindingFlagsEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(DescriptorBindingFlagsEXT value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & DescriptorBindingFlagBitsEXT::eUpdateAfterBind) result += "UpdateAfterBind | ";
     if (value & DescriptorBindingFlagBitsEXT::eUpdateUnusedWhilePending) result += "UpdateUnusedWhilePending | ";
     if (value & DescriptorBindingFlagBitsEXT::ePartiallyBound) result += "PartiallyBound | ";
@@ -52908,7 +52908,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(VendorId value)
+  VULKAN_HPP_INLINE std::wstring to_string(VendorId value)
   {
     switch (value)
     {
@@ -52919,7 +52919,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(DriverIdKHR value)
+  VULKAN_HPP_INLINE std::wstring to_string(DriverIdKHR value)
   {
     switch (value)
     {
@@ -52937,7 +52937,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ConditionalRenderingFlagBitsEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(ConditionalRenderingFlagBitsEXT value)
   {
     switch (value)
     {
@@ -52946,15 +52946,15 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ConditionalRenderingFlagsEXT value)
+  VULKAN_HPP_INLINE std::wstring to_string(ConditionalRenderingFlagsEXT value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & ConditionalRenderingFlagBitsEXT::eInverted) result += "Inverted | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(ShadingRatePaletteEntryNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(ShadingRatePaletteEntryNV value)
   {
     switch (value)
     {
@@ -52974,7 +52974,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CoarseSampleOrderTypeNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(CoarseSampleOrderTypeNV value)
   {
     switch (value)
     {
@@ -52986,7 +52986,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(GeometryInstanceFlagBitsNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(GeometryInstanceFlagBitsNV value)
   {
     switch (value)
     {
@@ -52998,10 +52998,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(GeometryInstanceFlagsNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(GeometryInstanceFlagsNV value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & GeometryInstanceFlagBitsNV::eTriangleCullDisable) result += "TriangleCullDisable | ";
     if (value & GeometryInstanceFlagBitsNV::eTriangleFrontCounterclockwise) result += "TriangleFrontCounterclockwise | ";
     if (value & GeometryInstanceFlagBitsNV::eForceOpaque) result += "ForceOpaque | ";
@@ -53009,7 +53009,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(GeometryFlagBitsNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(GeometryFlagBitsNV value)
   {
     switch (value)
     {
@@ -53019,16 +53019,16 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(GeometryFlagsNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(GeometryFlagsNV value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & GeometryFlagBitsNV::eOpaque) result += "Opaque | ";
     if (value & GeometryFlagBitsNV::eNoDuplicateAnyHitInvocation) result += "NoDuplicateAnyHitInvocation | ";
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(BuildAccelerationStructureFlagBitsNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(BuildAccelerationStructureFlagBitsNV value)
   {
     switch (value)
     {
@@ -53041,10 +53041,10 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(BuildAccelerationStructureFlagsNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(BuildAccelerationStructureFlagsNV value)
   {
     if (!value) return "{}";
-    std::string result;
+    std::wstring result;
     if (value & BuildAccelerationStructureFlagBitsNV::eAllowUpdate) result += "AllowUpdate | ";
     if (value & BuildAccelerationStructureFlagBitsNV::eAllowCompaction) result += "AllowCompaction | ";
     if (value & BuildAccelerationStructureFlagBitsNV::ePreferFastTrace) result += "PreferFastTrace | ";
@@ -53053,7 +53053,7 @@ public:
     return "{" + result.substr(0, result.size() - 3) + "}";
   }
 
-  VULKAN_HPP_INLINE std::string to_string(CopyAccelerationStructureModeNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(CopyAccelerationStructureModeNV value)
   {
     switch (value)
     {
@@ -53063,7 +53063,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(AccelerationStructureTypeNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(AccelerationStructureTypeNV value)
   {
     switch (value)
     {
@@ -53073,7 +53073,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(GeometryTypeNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(GeometryTypeNV value)
   {
     switch (value)
     {
@@ -53083,7 +53083,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(AccelerationStructureMemoryRequirementsTypeNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(AccelerationStructureMemoryRequirementsTypeNV value)
   {
     switch (value)
     {
@@ -53094,7 +53094,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(RayTracingShaderGroupTypeNV value)
+  VULKAN_HPP_INLINE std::wstring to_string(RayTracingShaderGroupTypeNV value)
   {
     switch (value)
     {
@@ -53105,7 +53105,7 @@ public:
     }
   }
 
-  VULKAN_HPP_INLINE std::string to_string(MemoryOverallocationBehaviorAMD value)
+  VULKAN_HPP_INLINE std::wstring to_string(MemoryOverallocationBehaviorAMD value)
   {
     switch (value)
     {

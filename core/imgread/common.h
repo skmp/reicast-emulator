@@ -97,8 +97,8 @@ void GetDriveToc(u32* to,DiskArea area);
 void GetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
 
 void GetDriveSessionInfo(u8* to,u8 session);
-int GetFile(char *szFileName, char *szParse,u32 flags);
-int msgboxf(wchar* text,unsigned int type,...);
+int GetFile(wchar_t *szFileName, wchar_t *szParse=0,u32 flags=0);
+int msgboxf(wchar_t* text,unsigned int type,...);
 void printtoc(TocInfo* toc,SessionInfo* ses);
 extern u8 q_subchannel[96];
 
@@ -189,18 +189,18 @@ struct Disc
 				}
 				else if (fmt==2352 && (secfmt==SECFMT_2048_MODE1 || secfmt==SECFMT_2048_MODE2_FORM1 ))
 				{
-					printf("GDR:fmt=2352;secfmt=2048\n");
+					wprintf(L"GDR:fmt=2352;secfmt=2048\n");
 					memcpy(dst,temp,2048);
 				}
 				else
 				{
-					printf("ERROR: UNABLE TO CONVERT SECTOR. THIS IS FATAL.");
+					wprintf(L"ERROR: UNABLE TO CONVERT SECTOR. THIS IS FATAL.");
 					//verify(false);
 				}
 			}
 			else
 			{
-				printf("Sector Read miss FAD: %d\n", FAD);
+				wprintf(L"Sector Read miss FAD: %d\n", FAD);
 			}
 			dst+=fmt;
 			FAD++;
@@ -236,13 +236,13 @@ struct Disc
 		EndFAD=549300;
 	}
 
-	void Dump(const string& path)
+	void Dump(const wstring& path)
 	{
 		for (u32 i=0;i<tracks.size();i++)
 		{
 			u32 fmt=tracks[i].CTRL==4?2048:2352;
-			char fsto[1024];
-			sprintf(fsto,"%s%s%d.img",path.c_str(),".track",i);
+			wchar_t fsto[1024];
+			swprintf(fsto, L"%s%s%d.img", path.c_str(), L".track", i);
 			
 			FILE* fo=fopen(fsto,"wb");
 
@@ -259,7 +259,7 @@ struct Disc
 
 extern Disc* disc;
 
-Disc* OpenDisc(const wchar* fn);
+Disc* OpenDisc(const wchar_t* fn);
 
 struct RawTrackFile : TrackFile
 {

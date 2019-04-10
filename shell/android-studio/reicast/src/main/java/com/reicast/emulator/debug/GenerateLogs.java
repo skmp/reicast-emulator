@@ -201,7 +201,7 @@ public class GenerateLogs extends AsyncTask<String, Integer, String> {
 	@Override
 	protected void onPostExecute(final String response) {
 		if (response != null) {
-			showToastMessage(mContext.get().getString(R.string.log_saved), Snackbar.LENGTH_LONG);
+			showToastMessage(mContext.get().getString(R.wstring.log_saved), Snackbar.LENGTH_LONG);
 			android.content.ClipboardManager clipboard = (android.content.ClipboardManager) mContext.get()
 					.getSystemService(Context.CLIPBOARD_SERVICE);
 			android.content.ClipData clip = android.content.ClipData.newPlainText("logcat", response);

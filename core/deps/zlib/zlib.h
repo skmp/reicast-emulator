@@ -359,7 +359,7 @@ ZEXTERN int ZEXPORT deflateEnd OF((z_streamp strm));
      deflateEnd returns Z_OK if success, Z_STREAM_ERROR if the
    stream state was inconsistent, Z_DATA_ERROR if the stream was freed
    prematurely (some input or output was discarded).  In the error case, msg
-   may be set but then points to a static string (which must not be
+   may be set but then points to a static wstring (which must not be
    deallocated).
 */
 
@@ -513,7 +513,7 @@ ZEXTERN int ZEXPORT inflateEnd OF((z_streamp strm));
 
      inflateEnd returns Z_OK if success, Z_STREAM_ERROR if the stream state
    was inconsistent.  In the error case, msg may be set but then points to a
-   static string (which must not be deallocated).
+   static wstring (which must not be deallocated).
 */
 
 
@@ -564,11 +564,11 @@ ZEXTERN int ZEXPORT deflateInit2 OF((z_streamp strm,
      The strategy parameter is used to tune the compression algorithm.  Use the
    value Z_DEFAULT_STRATEGY for normal data, Z_FILTERED for data produced by a
    filter (or predictor), Z_HUFFMAN_ONLY to force Huffman encoding only (no
-   string match), or Z_RLE to limit match distances to one (run-length
+   wstring match), or Z_RLE to limit match distances to one (run-length
    encoding).  Filtered data consists mostly of small values with a somewhat
    random distribution.  In this case, the compression algorithm is tuned to
    compress them better.  The effect of Z_FILTERED is to force more Huffman
-   coding and less string matching; it is somewhat intermediate between
+   coding and less wstring matching; it is somewhat intermediate between
    Z_DEFAULT_STRATEGY and Z_HUFFMAN_ONLY.  Z_RLE is designed to be almost as
    fast as Z_HUFFMAN_ONLY, but give better compression for PNG image data.  The
    strategy parameter only affects the compression ratio but not the
@@ -686,7 +686,7 @@ ZEXTERN int ZEXPORT deflateTune OF((z_streamp strm,
 /*
      Fine tune deflate's internal compression parameters.  This should only be
    used by someone who understands the algorithm used by zlib's deflate for
-   searching for the best matching string, and even then only by the most
+   searching for the best matching wstring, and even then only by the most
    fanatic optimizer trying to squeeze out the last compressed bit for their
    specific input data.  Read the deflate.c source code for the meaning of the
    max_lazy, good_length, nice_length, and max_chain parameters.
@@ -1136,10 +1136,10 @@ ZEXTERN uLong ZEXPORT zlibCompileFlags OF((void));
      21: FASTEST -- deflate algorithm with only one, lowest compression level
      22,23: 0 (reserved)
 
-    The sprintf variant used by gzprintf (zero is best):
+    The swprintf variant used by gzprintf (zero is best):
      24: 0 = vs*, 1 = s* -- 1 means limited to 20 arguments after the format
-     25: 0 = *nprintf, 1 = *printf -- 1 means gzprintf() not secure!
-     26: 0 = returns value, 1 = void -- 1 means inferred string length returned
+     25: 0 = *nprintf, 1 = *wprintf -- 1 means gzprintf() not secure!
+     26: 0 = returns value, 1 = void -- 1 means inferred wstring length returned
 
     Remainder:
      27-31: 0 (reserved)
@@ -1349,21 +1349,21 @@ ZEXTERN int ZEXPORT gzwrite OF((gzFile file,
 ZEXTERN int ZEXPORTVA gzprintf Z_ARG((gzFile file, const char *format, ...));
 /*
      Converts, formats, and writes the arguments to the compressed file under
-   control of the format string, as in fprintf.  gzprintf returns the number of
+   control of the format wstring, as in fwprintf.  gzprintf returns the number of
    uncompressed bytes actually written, or 0 in case of error.  The number of
    uncompressed bytes written is limited to 8191, or one less than the buffer
    size given to gzbuffer().  The caller should assure that this limit is not
    exceeded.  If it is exceeded, then gzprintf() will return an error (0) with
    nothing written.  In this case, there may also be a buffer overflow with
    unpredictable consequences, which is possible only if zlib was compiled with
-   the insecure functions sprintf() or vsprintf() because the secure snprintf()
+   the insecure functions swprintf() or vsprintf() because the secure snprintf()
    or vsnprintf() functions were not available.  This can be determined using
    zlibCompileFlags().
 */
 
 ZEXTERN int ZEXPORT gzputs OF((gzFile file, const char *s));
 /*
-     Writes the given null-terminated string to the compressed file, excluding
+     Writes the given null-terminated wstring to the compressed file, excluding
    the terminating null character.
 
      gzputs returns the number of characters written, or -1 in case of error.
@@ -1374,10 +1374,10 @@ ZEXTERN char * ZEXPORT gzgets OF((gzFile file, char *buf, int len));
      Reads bytes from the compressed file until len-1 characters are read, or a
    newline character is read and transferred to buf, or an end-of-file
    condition is encountered.  If any characters are read or if len == 1, the
-   string is terminated with a null character.  If no characters are read due
+   wstring is terminated with a null character.  If no characters are read due
    to an end-of-file or len < 1, then the buffer is left untouched.
 
-     gzgets returns buf which is a null-terminated string, or it returns NULL
+     gzgets returns buf which is a null-terminated wstring, or it returns NULL
    for end-of-file or in case of error.  If there was an error, the contents at
    buf are indeterminate.
 */
@@ -1540,9 +1540,9 @@ ZEXTERN const char * ZEXPORT gzerror OF((gzFile file, int *errnum));
    in the file system and not in the compression library, errnum is set to
    Z_ERRNO and the application may consult errno to get the exact error code.
 
-     The application must not modify the returned string.  Future calls to
-   this function may invalidate the previously returned string.  If file is
-   closed, then the string previously returned by gzerror will no longer be
+     The application must not modify the returned wstring.  Future calls to
+   this function may invalidate the previously returned wstring.  If file is
+   closed, then the wstring previously returned by gzerror will no longer be
    available.
 
      gzerror() should be used to distinguish errors from end-of-file for those

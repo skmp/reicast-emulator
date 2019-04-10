@@ -93,9 +93,9 @@ SOFTWARE.
  * Before adding new keysyms, please do consider the following: In
  * addition to the keysym names defined in this file, the
  * XStringToKeysym() and XKeysymToString() functions will also handle
- * any keysym string of the form "U0020" to "U007E" and "U00A0" to
+ * any keysym wstring of the form "U0020" to "U007E" and "U00A0" to
  * "U10FFFF" for all possible Unicode characters. In other words,
- * every possible Unicode character has already a keysym string
+ * every possible Unicode character has already a keysym wstring
  * defined algorithmically, even if it is not listed here. Therefore,
  * defining an additional keysym macro is only necessary where a
  * non-hexadecimal mnemonic name is needed, or where the new keysym

@@ -521,7 +521,7 @@ void GenSorted()
 		vtx_cnt=vtx_count;
 
 #if PRINT_SORT_STATS
-	printf("TVTX: %d || %d\n",vtx_cnt,vtx_count);
+	wprintf(L"TVTX: %d || %d\n",vtx_cnt,vtx_count);
 #endif
 	
 	if (vtx_count<=0)
@@ -744,7 +744,7 @@ void GenSorted()
 	stdp->count=aused*3-stdp->first;
 
 #if PRINT_SORT_STATS
-	printf("Reassembled into %d from %d\n",pidx_sort.size(),pp_end-pp_base);
+	wprintf(L"Reassembled into %d from %d\n",pidx_sort.size(),pp_end-pp_base);
 #endif
 
 	//Upload to GPU if needed
@@ -754,7 +754,7 @@ void GenSorted()
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER,vidx_sort.size()*2,&vidx_sort[0],GL_STREAM_DRAW);
 
-		if (tess_gen) printf("Generated %.2fK Triangles !\n",tess_gen/1000.0);
+		if (tess_gen) wprintf(L"Generated %.2fK Triangles !\n",tess_gen/1000.0);
 	}
 }
 

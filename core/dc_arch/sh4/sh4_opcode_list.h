@@ -8,7 +8,7 @@
 
 extern OpCallFP* OpPtr[0x10000];
 
-typedef void OpDissasmFP(char* out,const char* const FormatString,u32 pc,u16 opcode);
+typedef void OpDissasmFP(wchar_t* out,const wchar_t* const FormatString,u32 pc,u16 opcode);
 
 enum sh4_eu
 {
@@ -40,16 +40,16 @@ struct sh4_opcodelistentry
 	u32 mask;
 	u32 rez;
 	u32 type;
-	const char* diss;
+	const wchar_t* diss;
 	u8 IssueCycles;
 	u8 LatencyCycles;
 	sh4_eu unit;
 	sh4_exept_fixup ex_fixup;
 	u64 decode;
 	u64 fallbacks;
-	void Dissasemble(char* strout,u32 pc , u16 params) const
+	void Dissasemble(wchar_t* strout,u32 pc , u16 params) const
 	{
-		sprintf(strout,"%s:%08X:%04X",diss,pc,params);
+		swprintf(strout,L"%s:%08X:%04X",diss,pc,params);
 	}
 
 	INLINE bool SetPC() const
@@ -78,7 +78,7 @@ extern sh4_opcodelistentry* OpDesc[0x10000];
 extern sh4_opcodelistentry opcodes[];
 #define ExecuteOpcode(op) {OpPtr[op](op);}
 
-void DissasembleOpcode(u16 opcode,u32 pc,char* Dissasm);
+void DissasembleOpcode(u16 opcode,u32 pc,wchar_t* Dissasm);
 enum DecParam
 {
 	// Constants

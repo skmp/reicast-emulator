@@ -27,9 +27,9 @@
  *          message is preceded by 'n' 3-space indentations (not implemented
  *          on Microsoft compilers unless PNG_DEBUG_FILE is also
  *          defined, to allow debug DLL compilation with no standard IO).
- *   message: a printf(3) style text string.  A trailing '\n' is added
+ *   message: a wprintf(3) style text wstring.  A trailing '\n' is added
  *            to the message.
- *   arg: 0 to 2 arguments for printf(3) style substitution in message.
+ *   arg: 0 to 2 arguments for wprintf(3) style substitution in message.
  */
 #ifndef PNGDEBUG_H
 #define PNGDEBUG_H
@@ -81,7 +81,7 @@
 #            define png_debug(l,m) \
        do { \
        int num_tabs=l; \
-       fprintf(PNG_DEBUG_FILE,"%s" m PNG_STRING_NEWLINE,(num_tabs==1 ? "   " : \
+       fwprintf(PNG_DEBUG_FILE,"%s" m PNG_STRING_NEWLINE,(num_tabs==1 ? "   " : \
          (num_tabs==2 ? "      " : (num_tabs>2 ? "         " : "")))); \
        } while (0)
 #          endif
@@ -89,7 +89,7 @@
 #            define png_debug1(l,m,p1) \
        do { \
        int num_tabs=l; \
-       fprintf(PNG_DEBUG_FILE,"%s" m PNG_STRING_NEWLINE,(num_tabs==1 ? "   " : \
+       fwprintf(PNG_DEBUG_FILE,"%s" m PNG_STRING_NEWLINE,(num_tabs==1 ? "   " : \
          (num_tabs==2 ? "      " : (num_tabs>2 ? "         " : ""))),p1); \
        } while (0)
 #          endif
@@ -97,7 +97,7 @@
 #            define png_debug2(l,m,p1,p2) \
        do { \
        int num_tabs=l; \
-       fprintf(PNG_DEBUG_FILE,"%s" m PNG_STRING_NEWLINE,(num_tabs==1 ? "   " : \
+       fwprintf(PNG_DEBUG_FILE,"%s" m PNG_STRING_NEWLINE,(num_tabs==1 ? "   " : \
          (num_tabs==2 ? "      " : (num_tabs>2 ? "         " : ""))),p1,p2);\
        } while (0)
 #          endif
@@ -110,7 +110,7 @@
        snprintf(format,256,"%s%s%s",(num_tabs==1 ? "\t" : \
          (num_tabs==2 ? "\t\t":(num_tabs>2 ? "\t\t\t":""))), \
          m,PNG_STRING_NEWLINE); \
-       fprintf(PNG_DEBUG_FILE,format); \
+       fwprintf(PNG_DEBUG_FILE,format); \
        } while (0)
 #          endif
 #          ifndef png_debug1
@@ -121,7 +121,7 @@
        snprintf(format,256,"%s%s%s",(num_tabs==1 ? "\t" : \
          (num_tabs==2 ? "\t\t":(num_tabs>2 ? "\t\t\t":""))), \
          m,PNG_STRING_NEWLINE); \
-       fprintf(PNG_DEBUG_FILE,format,p1); \
+       fwprintf(PNG_DEBUG_FILE,format,p1); \
        } while (0)
 #          endif
 #          ifndef png_debug2
@@ -132,7 +132,7 @@
        snprintf(format,256,"%s%s%s",(num_tabs==1 ? "\t" : \
          (num_tabs==2 ? "\t\t":(num_tabs>2 ? "\t\t\t":""))), \
          m,PNG_STRING_NEWLINE); \
-       fprintf(PNG_DEBUG_FILE,format,p1,p2); \
+       fwprintf(PNG_DEBUG_FILE,format,p1,p2); \
        } while (0)
 #          endif
 #        endif /* __STDC __ */

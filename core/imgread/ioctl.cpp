@@ -1,6 +1,6 @@
 #include "types.h"
 
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 #include "common.h"
 
 #include <stddef.h>
@@ -201,14 +201,14 @@ struct PhysicalDrive:Disc
 		use_scsi=false;
 	}
 
-	bool Build(wchar* path)
+	bool Build(wchar_t* path)
 	{
 		drive = CreateFile( path, GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL, OPEN_EXISTING, 0, NULL);
 
 		if ( INVALID_HANDLE_VALUE == drive )
 			return false; //failed to open
 
-		printf(" Opened device %s, reading TOC ...",path);
+		wprintf(L" Opened device %s, reading TOC ...",path);
 		// Get track-table and parse it
 		CDROM_READ_TOC_EX tocrq={0};
 		 
@@ -226,14 +226,14 @@ struct PhysicalDrive:Disc
 		int currs=-1;
 		if (0==code)
 		{
-			printf(" failed\n");
+			wprintf(L" failed\n");
 			//failed to read toc
 			CloseHandle(drive);
 			return false;
 		}
 		else
 		{
-			printf(" done !\n");
+			wprintf(L" done !\n");
 
 			type=CdRom_XA;
 
@@ -359,17 +359,17 @@ void PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,S
 		}
 	}
 
-	printf("IOCTL: Totally failed to read sector @LBA %d\n", LBA);
+	wprintf(L"IOCTL: Totally failed to read sector @LBA %d\n", LBA);
 }
 
 
-Disc* ioctl_parse(const wchar* file)
+Disc* ioctl_parse(const wchar_t* file)
 {
 	
-	if (strlen(file)==3 && GetDriveType(file)==DRIVE_CDROM)
+	if (wcslen(file)==3 && GetDriveType(file)==DRIVE_CDROM)
 	{
-		printf("Opening device %s ...",file);
-		wchar fn[]={ '\\', '\\', '.', '\\', file[0],':', '\0' };
+		wprintf(L"Opening device %s ...",file);
+		wchar_t fn[]={ '\\', '\\', '.', '\\', file[0],':', '\0' };
 		PhysicalDrive* rv = new PhysicalDrive();	
 
 		if (rv->Build(fn))

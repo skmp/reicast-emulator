@@ -1,33 +1,27 @@
 #include "ini.h"
 #include <sstream>
 
-wchar* trim_ws(wchar* str);
+wchar_t* trim_ws(wchar_t* str);
 
 /* ConfigEntry */
 
-string ConfigEntry::get_string()
+wstring ConfigEntry::get_string()
 {
 	return this->value;
 }
 
 int ConfigEntry::get_int()
 {
-	if (strstr(this->value.c_str(), "0x") != NULL)
-	{
-		return strtol(this->value.c_str(), NULL, 16);
-	}
-	else
-	{
-		return atoi(this->value.c_str());
-	}
+	int base = (wcsstr(this->value.c_str(), L"0x") != NULL) ? 16 : 10 ;
+	return wcstol(this->value.c_str(), NULL, base);
 }
 
 bool ConfigEntry::get_bool()
 {
-	if (stricmp(this->value.c_str(), "yes") == 0 ||
-		  stricmp(this->value.c_str(), "true") == 0 ||
-		  stricmp(this->value.c_str(), "on") == 0 ||
-		  stricmp(this->value.c_str(), "1") == 0)
+	if (wcsicmp(this->value.c_str(), L"yes") == 0 ||
+		wcsicmp(this->value.c_str(), L"true") == 0 ||
+		wcsicmp(this->value.c_str(), L"on") == 0 ||
+		wcsicmp(this->value.c_str(), L"1") == 0)
 	{
 		return true;
 	}
@@ -39,12 +33,12 @@ bool ConfigEntry::get_bool()
 
 /* ConfigSection */
 
-bool ConfigSection::has_entry(string name)
+bool ConfigSection::has_entry(wstring name)
 {
 	return (this->entries.count(name) == 1);
 };
 
-ConfigEntry* ConfigSection::get_entry(string name)
+ConfigEntry* ConfigSection::get_entry(wstring name)
 {
 	if(this->has_entry(name))
 	{
@@ -53,7 +47,7 @@ ConfigEntry* ConfigSection::get_entry(string name)
 	return NULL;
 };
 
-void ConfigSection::set(string name, string value)
+void ConfigSection::set(wstring name, wstring value)
 {
 	ConfigEntry new_entry = { value };
 	this->entries[name] = new_entry;
@@ -61,7 +55,7 @@ void ConfigSection::set(string name, string value)
 
 /* ConfigFile */
 
-ConfigSection* ConfigFile::add_section(string name, bool is_virtual)
+ConfigSection* ConfigFile::add_section(wstring name, bool is_virtual)
 {
 	ConfigSection new_section;
 	if (is_virtual)
@@ -73,12 +67,12 @@ ConfigSection* ConfigFile::add_section(string name, bool is_virtual)
 	return &this->sections[name];
 };
 
-bool ConfigFile::has_section(string name)
+bool ConfigFile::has_section(wstring name)
 {
 	return (this->virtual_sections.count(name) == 1 || this->sections.count(name) == 1);
 }
 
-bool ConfigFile::has_entry(string section_name, string entry_name)
+bool ConfigFile::has_entry(wstring section_name, wstring entry_name)
 {
 	ConfigSection* section = this->get_section(section_name, true);
 	if ((section != NULL) && section->has_entry(entry_name))
@@ -89,7 +83,7 @@ bool ConfigFile::has_entry(string section_name, string entry_name)
 	return ((section != NULL) && section->has_entry(entry_name));
 }
 
-ConfigSection* ConfigFile::get_section(string name, bool is_virtual)
+ConfigSection* ConfigFile::get_section(wstring name, bool is_virtual)
 {
 	if(is_virtual)
 	{
@@ -108,7 +102,7 @@ ConfigSection* ConfigFile::get_section(string name, bool is_virtual)
 	return NULL;
 };
 
-ConfigEntry* ConfigFile::get_entry(string section_name, string entry_name)
+ConfigEntry* ConfigFile::get_entry(wstring section_name, wstring entry_name)
 {
 	ConfigSection* section = this->get_section(section_name, true);
 	if(section != NULL && section->has_entry(entry_name))
@@ -125,7 +119,7 @@ ConfigEntry* ConfigFile::get_entry(string section_name, string entry_name)
 
 }
 
-string ConfigFile::get(string section_name, string entry_name, string default_value)
+wstring ConfigFile::get(wstring section_name, wstring entry_name, wstring default_value)
 {
 	ConfigEntry* entry = this->get_entry(section_name, entry_name);
 	if (entry == NULL)
@@ -138,7 +132,7 @@ string ConfigFile::get(string section_name, string entry_name, string default_va
 	}
 }
 
-int ConfigFile::get_int(string section_name, string entry_name, int default_value)
+int ConfigFile::get_int(wstring section_name, wstring entry_name, int default_value)
 {
 	ConfigEntry* entry = this->get_entry(section_name, entry_name);
 	if (entry == NULL)
@@ -151,7 +145,7 @@ int ConfigFile::get_int(string section_name, string entry_name, int default_valu
 	}
 }
 
-bool ConfigFile::get_bool(string section_name, string entry_name, bool default_value)
+bool ConfigFile::get_bool(wstring section_name, wstring entry_name, bool default_value)
 {
 	ConfigEntry* entry = this->get_entry(section_name, entry_name);
 	if (entry == NULL)
@@ -164,7 +158,7 @@ bool ConfigFile::get_bool(string section_name, string entry_name, bool default_v
 	}
 }
 
-void ConfigFile::set(string section_name, string entry_name, string value, bool is_virtual)
+void ConfigFile::set(wstring section_name, wstring entry_name, wstring value, bool is_virtual)
 {
 	ConfigSection* section = this->get_section(section_name, is_virtual);
 	if(section == NULL)
@@ -174,16 +168,16 @@ void ConfigFile::set(string section_name, string entry_name, string value, bool 
 	section->set(entry_name, value);
 };
 
-void ConfigFile::set_int(string section_name, string entry_name, int value, bool is_virtual)
+void ConfigFile::set_int(wstring section_name, wstring entry_name, int value, bool is_virtual)
 {
-	std::stringstream str_value;
+	std::wstringstream str_value;
 	str_value << value;
 	this->set(section_name, entry_name, str_value.str(), is_virtual);
 }
 
-void ConfigFile::set_bool(string section_name, string entry_name, bool value, bool is_virtual)
+void ConfigFile::set_bool(wstring section_name, wstring entry_name, bool value, bool is_virtual)
 {
-	string str_value = (value ? "yes" : "no");
+	wstring str_value = (value ? L"yes" : L"no");
 	this->set(section_name, entry_name, str_value, is_virtual);
 }
 
@@ -193,68 +187,68 @@ void ConfigFile::parse(FILE* file)
 	{
 		return;
 	}
-	char line[512];
-	char current_section[512] = { '\0' };
+	wchar_t line[512];
+	wchar_t current_section[512] = { '\0' };
 	int cline = 0;
 	while(file && !feof(file))
 	{
-		if (fgets(line, 512, file) == NULL || feof(file))
+		if (fgetws(line, 512, file) == NULL || feof(file))
 		{
 			break;
 		}
 
 		cline++;
 
-		if (strlen(line) < 3)
+		if (wcslen(line) < 3)
 		{
 			continue;
 		}
 
-		if (line[strlen(line)-1] == '\r' ||
-			  line[strlen(line)-1] == '\n')
+		if (line[wcslen(line)-1] == '\r' ||
+			  line[wcslen(line)-1] == '\n')
 		{
-			line[strlen(line)-1] = '\0';
+			line[wcslen(line)-1] = '\0';
 		}
 
-		char* tl = trim_ws(line);
+		wchar_t* tl = trim_ws(line);
 
-		if (tl[0] == '[' && tl[strlen(tl)-1] == ']')
+		if (tl[0] == '[' && tl[wcslen(tl)-1] == ']')
 		{
-			tl[strlen(tl)-1] = '\0';
+			tl[wcslen(tl)-1] = '\0';
 
 			// FIXME: Data loss if buffer is too small
-			strncpy(current_section, tl+1, sizeof(current_section));
+			wcsncpy(current_section, tl+1, sizeof(current_section));
 			current_section[sizeof(current_section) - 1] = '\0';
 
 			trim_ws(current_section);
 		}
 		else
 		{
-			if (strlen(current_section) == 0)
+			if (wcslen(current_section) == 0)
 			{
 				continue; //no open section
 			}
 
-			char* separator = strstr(tl, "=");
+			wchar_t* separator = wcsstr(tl, L"=");
 
 			if (!separator)
 			{
-				printf("Malformed entry on config - ignoring @ %d(%s)\n",cline, tl);
+				wprintf(L"Malformed entry on config - ignoring @ %d(%s)\n",cline, tl);
 				continue;
 			}
 
 			*separator = '\0';
 
-			char* name = trim_ws(tl);
-			char* value = trim_ws(separator + 1);
+			wchar_t* name = trim_ws(tl);
+			wchar_t* value = trim_ws(separator + 1);
 			if (name == NULL || value == NULL)
 			{
-				printf("Malformed entry on config - ignoring @ %d(%s)\n",cline, tl);
+				wprintf(L"Malformed entry on config - ignoring @ %d(%s)\n",cline, tl);
 				continue;
 			}
 			else
 			{
-				this->set(string(current_section), string(name), string(value));
+				this->set(wstring(current_section), wstring(name), wstring(value));
 			}
 		}
 	}
@@ -262,22 +256,22 @@ void ConfigFile::parse(FILE* file)
 
 void ConfigFile::save(FILE* file)
 {
-	for(std::map<string, ConfigSection>::iterator section_it = this->sections.begin();
+	for(std::map<wstring, ConfigSection>::iterator section_it = this->sections.begin();
 		  section_it != this->sections.end(); section_it++)
 	{
-		string section_name = section_it->first;
+		wstring section_name = section_it->first;
 		ConfigSection section = section_it->second;
 
-		fprintf(file, "[%s]\n", section_name.c_str());
+		fwprintf(file, L"[%s]\n", section_name.c_str());
 
-		for(std::map<string, ConfigEntry>::iterator entry_it = section.entries.begin();
+		for(std::map<wstring, ConfigEntry>::iterator entry_it = section.entries.begin();
 			  entry_it != section.entries.end(); entry_it++)
 		{
-			string entry_name = entry_it->first;
+			wstring entry_name = entry_it->first;
 			ConfigEntry entry = entry_it->second;
-			fprintf(file, "%s = %s\n", entry_name.c_str(), entry.get_string().c_str());
+			fwprintf(file, L"%s = %s\n", entry_name.c_str(), entry.get_string().c_str());
 		}
 
-		fputs("\n", file);
+		fputws(L"\n", file);
 	}
 }

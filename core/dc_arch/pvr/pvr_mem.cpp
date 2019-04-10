@@ -159,7 +159,7 @@ void YUV_data(u32* data , u32 count)
 {
 	if (YUV_blockcount==0)
 	{
-		die("YUV_data : YUV decoder not inited , *WATCH*\n");
+		die(L"YUV_data : YUV decoder not inited , *WATCH*\n");
 		//wtf ? not inited
 		YUV_init();
 	}
@@ -188,7 +188,7 @@ void YUV_data(u32* data , u32 count)
 //read
 u8 DYNACALL pvr_read_area1_8(u32 addr)
 {
-	printf("8-bit VRAM reads are not possible\n");
+	wprintf(L"8-bit VRAM reads are not possible\n");
 	return 0;
 }
 
@@ -204,7 +204,7 @@ u32 DYNACALL pvr_read_area1_32(u32 addr)
 //write
 void DYNACALL pvr_write_area1_8(u32 addr,u8 data)
 {
-	printf("8-bit VRAM writes are not possible\n");
+	wprintf(L"8-bit VRAM writes are not possible\n");
 }
 void DYNACALL pvr_write_area1_16(u32 addr,u16 data)
 {
@@ -217,7 +217,7 @@ void DYNACALL pvr_write_area1_32(u32 addr,u32 data)
 
 void TAWrite(u32 address,u32* data,u32 count)
 {
-	//printf("TAWrite 0x%08X %d\n",address,count);
+	//wprintf(L"TAWrite 0x%08X %d\n",address,count);
 	u32 address_w=address&0x1FFFFFF;//correct ?
 	if (address_w<0x800000)//TA poly
 	{
@@ -230,7 +230,7 @@ void TAWrite(u32 address,u32* data,u32 count)
 	else //Vram Writef
 	{
 		//shouldn't really get here (?) -> works on dc :D need to handle lmmodes
-		//printf("Vram Write 0x%X , size %d\n",address,count*32);
+		//wprintf(L"Vram Write 0x%X , size %d\n",address,count*32);
 		memcpy(&vram.data[address&VRAM_MASK],data,count*32);
 	}
 }
@@ -259,7 +259,7 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
 	else //Vram Writef
 	{
 		//shouldn't really get here (?)
-		//printf("Vram Write 0x%X , size %d\n",address,count*32);
+		//wprintf(L"Vram Write 0x%X , size %d\n",address,count*32);
 		u8* vram=sqb+512+0x04000000;
 		MemWrite32(&vram[address_w&(VRAM_MASK-0x1F)],sq);
 	}

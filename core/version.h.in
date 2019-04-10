@@ -3,4 +3,4 @@
  */
 #pragma once
 
-#define REICAST_VERSION "@GIT_VERSION@"
+#define REICAST_VERSION L"@GIT_VERSION@"

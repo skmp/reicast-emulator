@@ -293,7 +293,7 @@ struct RegAlloc
 			}
 		}
 
-		die("map must return value\n");
+		die(L"map must return value\n");
 		return (nreg_t)-1;
 	}
 
@@ -308,7 +308,7 @@ struct RegAlloc
 		}
 		else
 		{
-			die("map must return value\n");
+			die(L"map must return value\n");
 			return (nreg_t)-1;
 		}
 	}
@@ -327,7 +327,7 @@ struct RegAlloc
 			}
 		}
 
-		die("map must return value\n");
+		die(L"map must return value\n");
 		return (nregf_t)-1;
 	}
 
@@ -342,7 +342,7 @@ struct RegAlloc
 		}
 		else
 		{
-			die("map must return value\n");
+			die(L"map must return value\n");
 			return (nregf_t)-1;
 		}
 	}
@@ -357,7 +357,7 @@ struct RegAlloc
 		}
 		else
 		{
-			die("map must return value\n");
+			die(L"map must return value\n");
 			return (nregf_t)-1;
 		}
 	}
@@ -411,7 +411,7 @@ struct RegAlloc
 				return all_spans[sid];
 			}
 		}
-		die("Failed to find span");
+		die(L"Failed to find span");
 		return NULL;
 	}
 
@@ -712,13 +712,13 @@ struct RegAlloc
 
 			if (false)
 			{
-				printf("After reduction ..\n");
+				wprintf(L"After reduction ..\n");
 				for (u32 sid=0;sid<all_spans.size();sid++)
 				{
 					RegSpan* spn=all_spans[sid];
 
 					if (spn->contains(opid))
-						printf("\t[%c]span: %d (r%d), [%d:%d],n: %d, p: %d\n",spn->cacc(opid)?'x':' ',sid,all_spans[sid]->regstart,all_spans[sid]->start,all_spans[sid]->end,all_spans[sid]->nacc(opid),all_spans[sid]->pacc(opid));
+						wprintf(L"\t[%c]span: %d (r%d), [%d:%d],n: %d, p: %d\n",spn->cacc(opid)?'x':' ',sid,all_spans[sid]->regstart,all_spans[sid]->start,all_spans[sid]->end,all_spans[sid]->nacc(opid),all_spans[sid]->pacc(opid));
 				}
 			}
 		}
@@ -757,7 +757,7 @@ struct RegAlloc
 						else
 							d->aliased=true;
 
-						//printf("[%08X] rALIA %d from %d\n",spn,spn->regstart,spn->nreg);
+						//wprintf(L"[%08X] rALIA %d from %d\n",spn,spn->regstart,spn->nreg);
 						alias_mov=true;
 					}
 				}
@@ -783,7 +783,7 @@ struct RegAlloc
 							spn->nreg=regs.back();
 							regs.pop_back();
 
-							//printf("rALOC %d from %d\n",spn->regstart,spn->nreg);
+							//wprintf(L"rALOC %d from %d\n",spn->regstart,spn->nreg);
 						}
 					}
 				}
@@ -803,7 +803,7 @@ struct RegAlloc
 					{
 						verify(regs.size()<reg_cc_max_g);
 						regs.push_front(spn->nreg);
-						//printf("rFREE %d from %d\n",spn->regstart,spn->nreg);
+						//wprintf(L"rFREE %d from %d\n",spn->regstart,spn->nreg);
 					}
 				}
 			}
@@ -870,12 +870,12 @@ struct RegAlloc
 
 				if ( do_move)
 				{
-					printf("Span PLD is movable by %d, moved by %d w/ %d!!\n",slack,spn->start-opid_found,opid_plc);
+					wprintf(L"Span PLD is movable by %d, moved by %d w/ %d!!\n",slack,spn->start-opid_found,opid_plc);
 					spn->start=opid_found;
 				}
 				else
 				{
-					printf("Span PLD is movable by %d but  %d -> not moved :(\n",slack,opid_plc);
+					wprintf(L"Span PLD is movable by %d but  %d -> not moved :(\n",slack,opid_plc);
 				}
 			}
 		}
@@ -939,19 +939,19 @@ struct RegAlloc
 
 				if ( do_move)
 				{
-					printf("Span WB is movable by %d, moved by %d w/ %d!!\n",slack,opid_found-spn->end,opid_plc);
+					wprintf(L"Span WB is movable by %d, moved by %d w/ %d!!\n",slack,opid_found-spn->end,opid_plc);
 					spn->end=opid_found;
 				}
 				else
 				{
-					printf("Span WB is movable by %d but  %d -> not moved :(\n",slack,opid_plc);
+					wprintf(L"Span WB is movable by %d but  %d -> not moved :(\n",slack,opid_plc);
 				}
 			}
 		}
 #endif
 
 #endif
-		//printf("%d spills\n",spills);
+		//wprintf(L"%d spills\n",spills);
 	}
 
 
@@ -962,7 +962,7 @@ struct RegAlloc
 		while (cc>reg_cc_max)
 		{
 			if (was_large)
-				printf("Opcode: %d, %d active spans\n",opid,cc);
+				wprintf(L"Opcode: %d, %d active spans\n",opid,cc);
 
 			RegSpan* last_pacc=0;
 			RegSpan* last_nacc=0;
@@ -982,12 +982,12 @@ struct RegAlloc
 							last_pacc=spn;
 					}
 					if (was_large)
-						printf("\t[%c]span: %d (r%d), [%d:%d],n: %d, p: %d\n",spn->cacc(opid)?'x':' ',sid,all_spans[sid]->regstart,all_spans[sid]->start,all_spans[sid]->end,all_spans[sid]->nacc(opid),all_spans[sid]->pacc(opid));
+						wprintf(L"\t[%c]span: %d (r%d), [%d:%d],n: %d, p: %d\n",spn->cacc(opid)?'x':' ',sid,all_spans[sid]->regstart,all_spans[sid]->start,all_spans[sid]->end,all_spans[sid]->nacc(opid),all_spans[sid]->pacc(opid));
 				}
 			}
 
-			//printf("Last pacc: %d, vlen %d | reg r%d\n",last_pacc->nacc(opid)-opid,last_pacc->nacc(opid)-last_pacc->pacc(opid),last_pacc->regstart);
-			//printf("Last nacc: %d, vlen %d | reg r%d\n",last_nacc->nacc(opid)-opid,last_nacc->nacc(opid)-last_nacc->pacc(opid),last_nacc->regstart);
+			//wprintf(L"Last pacc: %d, vlen %d | reg r%d\n",last_pacc->nacc(opid)-opid,last_pacc->nacc(opid)-last_pacc->pacc(opid),last_pacc->regstart);
+			//wprintf(L"Last nacc: %d, vlen %d | reg r%d\n",last_nacc->nacc(opid)-opid,last_nacc->nacc(opid)-last_nacc->pacc(opid),last_nacc->regstart);
 
 			RegSpan* spn= new RegSpan(*last_nacc);
 			spn->start=last_nacc->nacc(opid);
@@ -1083,7 +1083,7 @@ struct RegAlloc
 
 			if (spn->begining(current_opid) && spn->preload)
 			{
-				//printf("Op %d: Preloading r%d to %d\n",current_opid,spn->regstart,spn->nreg);
+				//wprintf(L"Op %d: Preloading r%d to %d\n",current_opid,spn->regstart,spn->nreg);
 				if (spn->fpr)
 				{
 					preload_fpu++;
@@ -1106,7 +1106,7 @@ struct RegAlloc
 
 			if (spn->ending(current_opid) && spn->writeback)
 			{
-				//printf("Op %d: Writing back r%d to %d\n",current_opid,spn->regstart,spn->nreg);
+				//wprintf(L"Op %d: Writing back r%d to %d\n",current_opid,spn->regstart,spn->nreg);
 				if (spn->fpr)
 				{
 					writeback_fpu++;

@@ -37,7 +37,7 @@
  * with older builds.
  */
 #if ZLIB_VERNUM < 0x1260
-#  define PNGZ_MSG_CAST(s) png_constcast(char*,s)
+#  define PNGZ_MSG_CAST(s) png_constcast(wchar_t*,s)
 #  define PNGZ_INPUT_CAST(b) png_constcast(png_bytep,b)
 #else
 #  define PNGZ_MSG_CAST(s) (s)

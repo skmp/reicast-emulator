@@ -297,8 +297,8 @@ int ZEXPORT gzputs(file, str)
     int ret;
     unsigned len;
 
-    /* write string */
-    len = (unsigned)strlen(str);
+    /* write wstring */
+    len = (unsigned)wcslen(str);
     ret = gzwrite(file, str, len);
     return ret == 0 && len != 0 ? -1 : ret;
 }
@@ -338,7 +338,7 @@ int ZEXPORTVA gzvprintf(gzFile file, const char *format, va_list va)
     if (strm->avail_in && gz_comp(state, Z_NO_FLUSH) == -1)
         return 0;
 
-    /* do the printf() into the input buffer, put length in len */
+    /* do the wprintf() into the input buffer, put length in len */
     size = (int)(state->size);
     state->in[size - 1] = 0;
 #ifdef NO_vsnprintf
@@ -352,13 +352,13 @@ int ZEXPORTVA gzvprintf(gzFile file, const char *format, va_list va)
 #else
 #  ifdef HAS_vsnprintf_void
     (void)vsnprintf((char *)(state->in), size, format, va);
-    len = strlen((char *)(state->in));
+    len = wcslen((char *)(state->in));
 #  else
     len = vsnprintf((char *)(state->in), size, format, va);
 #  endif
 #endif
 
-    /* check that printf() results fit in buffer */
+    /* check that wprintf() results fit in buffer */
     if (len <= 0 || len >= (int)size || state->in[size - 1] != 0)
         return 0;
 
@@ -423,24 +423,24 @@ int ZEXPORTVA gzprintf (file, format, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10,
     if (strm->avail_in && gz_comp(state, Z_NO_FLUSH) == -1)
         return 0;
 
-    /* do the printf() into the input buffer, put length in len */
+    /* do the wprintf() into the input buffer, put length in len */
     size = (int)(state->size);
     state->in[size - 1] = 0;
 #ifdef NO_snprintf
 #  ifdef HAS_sprintf_void
-    sprintf((char *)(state->in), format, a1, a2, a3, a4, a5, a6, a7, a8,
+    swprintf((char *)(state->in), format, a1, a2, a3, a4, a5, a6, a7, a8,
             a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20);
     for (len = 0; len < size; len++)
         if (state->in[len] == 0) break;
 #  else
-    len = sprintf((char *)(state->in), format, a1, a2, a3, a4, a5, a6, a7, a8,
+    len = swprintf((char *)(state->in), format, a1, a2, a3, a4, a5, a6, a7, a8,
                   a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20);
 #  endif
 #else
 #  ifdef HAS_snprintf_void
     snprintf((char *)(state->in), size, format, a1, a2, a3, a4, a5, a6, a7, a8,
              a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20);
-    len = strlen((char *)(state->in));
+    len = wcslen((char *)(state->in));
 #  else
     len = snprintf((char *)(state->in), size, format, a1, a2, a3, a4, a5, a6,
                    a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18,
@@ -448,7 +448,7 @@ int ZEXPORTVA gzprintf (file, format, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10,
 #  endif
 #endif
 
-    /* check that printf() results fit in buffer */
+    /* check that wprintf() results fit in buffer */
     if (len <= 0 || len >= (int)size || state->in[size - 1] != 0)
         return 0;
 

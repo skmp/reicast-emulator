@@ -85,8 +85,8 @@ public class CloudFragment extends Fragment {
 		uploadBtn.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View arg0) {
-				confirmDialog.setMessage(R.string.uploadWarning);
-				confirmDialog.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+				confirmDialog.setMessage(R.wstring.uploadWarning);
+				confirmDialog.setPositiveButton(android.R.wstring.ok, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						setClient();
 						task = "Upload";
@@ -94,7 +94,7 @@ public class CloudFragment extends Fragment {
 						actionRequired = true;
 					}
 				});
-				confirmDialog.setNegativeButton(R.string.cancel, null);
+				confirmDialog.setNegativeButton(R.wstring.cancel, null);
 				confirmDialog.show();
 
 			}
@@ -105,8 +105,8 @@ public class CloudFragment extends Fragment {
 		downloadBtn.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View arg0) {
-				confirmDialog.setMessage(R.string.downloadWarning);
-				confirmDialog.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+				confirmDialog.setMessage(R.wstring.downloadWarning);
+				confirmDialog.setPositiveButton(android.R.wstring.ok, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						setClient();
 						task = "Download";
@@ -114,7 +114,7 @@ public class CloudFragment extends Fragment {
 						actionRequired = true;
 					}
 				});
-				confirmDialog.setNegativeButton(R.string.cancel, null);
+				confirmDialog.setNegativeButton(R.wstring.cancel, null);
 				confirmDialog.show();
 			}
 		});

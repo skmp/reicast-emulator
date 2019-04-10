@@ -77,7 +77,7 @@ void* libPvr_GetRenderTarget() { return &render_window; }
 void* libPvr_GetRenderSurface() { return (void*)(u64)EGL_DEFAULT_DISPLAY; }
 
 
-int __cdecl msgboxf(const char* text, unsigned int type, ...)
+int __cdecl msgboxf(const wchar_t* text, unsigned int type, ...)
 {
 	va_list args;
 
@@ -86,9 +86,9 @@ int __cdecl msgboxf(const char* text, unsigned int type, ...)
 	vsprintf(temp, text, args);
 	va_end(args);
 
-	printf("----------------------------------------------\n");
-	printf("msgbox(\" %s \" ); \n", temp);
-	printf("----------------------------------------------\n\n");
+	wprintf(L"----------------------------------------------\n");
+	wprintf(L"msgbox(\" %s \" ); \n", temp);
+	wprintf(L"----------------------------------------------\n\n");
 //	QMessageBox::information(0, "", temp, QMessageBox::Ok);
 	return 0;
 }
@@ -119,7 +119,7 @@ int __cdecl msgboxf(const char* text, unsigned int type, ...)
 
 #endif
 
-#define EPRINTF printf
+#define EPRINTF wprintf
 
 
 static SceKernelModule s_piglet_module = -1;
@@ -128,7 +128,7 @@ static SceKernelModule s_shcomp_module = -1;
 
 
 
-const char* g_sandbox_word = NULL;
+const wchar_t* g_sandbox_word = NULL;
 
 static bool load_modules(void) {
 	int ret;
@@ -216,16 +216,16 @@ static void pgl_patches_cb(void* arg, uint8_t* base, uint64_t size) {
 
 /// util.h
 
-SceKernelModule load_module_from_sandbox(const char* name, size_t args, const void* argp, unsigned int flags, const SceKernelLoadModuleOpt* opts, int* res);
+SceKernelModule load_module_from_sandbox(const wchar_t* name, size_t args, const void* argp, unsigned int flags, const SceKernelLoadModuleOpt* opts, int* res);
 
-bool get_module_base(const char* name, uint64_t* base, uint64_t* size);
+bool get_module_base(const wchar_t* name, uint64_t* base, uint64_t* size);
 
 typedef void module_patch_cb_t(void* arg, uint8_t* base, uint64_t size);
-bool patch_module(const char* name, module_patch_cb_t* cb, void* arg);
+bool patch_module(const wchar_t* name, module_patch_cb_t* cb, void* arg);
 
 void hexdump(const void* data, size_t size);
 
-void send_notify(const char* format, ...);
+void send_notify(const wchar_t* format, ...);
 
 //// end util.h
 
@@ -265,17 +265,17 @@ static void cleanup(void) {
 
 
 void common_linux_setup();
-int dc_init(int argc, char* argv[]);
+int dc_init(int argc, wchar_t* argv[]);
 void dc_run();
 void dc_term();
 
-int main(int argc, char* argv[])
+int main(int argc, wchar_t* argv[])
 {
-	printf("\n\n\n\n -- REICAST BETA -- \n\n\n\n");
+	wprintf(L"\n\n\n\n -- REICAST BETA -- \n\n\n\n");
 
 	atexit(&cleanup);
 
-printf("sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_SYSTEM_SERVICE);\n");
+wprintf(L"sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_SYSTEM_SERVICE);\n");
 
 	int ret = sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_SYSTEM_SERVICE);
 	if (ret) {
@@ -289,7 +289,7 @@ printf("sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_SYSTEM_SERVICE);\n
 		goto err;
 	}
 
-printf("load_modules();\n");
+wprintf(L"load_modules();\n");
 
 	if (!load_modules()) {
 		EPRINTF("Unable to load modules.\n");
@@ -308,27 +308,27 @@ printf("load_modules();\n");
 
 
 ///////////////////////////////////////////////////////////////////////////////
-	printf("common_setup()\n");
+	wprintf(L"common_setup()\n");
 
 	/* Set directories */
 	set_user_config_dir(PS4_DIR_CFG);
 	set_user_data_dir(PS4_DIR_DATA);
 
-	printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
-	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
-	printf("RO Data dir is:   %s\n", get_readonly_data_path("/").c_str());
+	wprintf(L"Config dir is: %s\n", get_writable_config_path("/").c_str());
+	wprintf(L"Data dir is:   %s\n", get_writable_data_path("/").c_str());
+	wprintf(L"RO Data dir is:   %s\n", get_readonly_data_path("/").c_str());
 
 	common_linux_setup();
 
 	settings.profile.run_counts = 0;
 
-printf("dc_init();\n");
+wprintf(L"dc_init();\n");
 	dc_init(argc, argv);
 
-printf("dc_run();\n");
+wprintf(L"dc_run();\n");
 	dc_run();
 
-printf("dc_term();\n");
+wprintf(L"dc_term();\n");
 	dc_term();
 
 
@@ -350,7 +350,7 @@ void catchReturnFromMain(int exit_code) {
 
 
 
-SceKernelModule load_module_from_sandbox(const char* name, size_t args, const void* argp, unsigned int flags, const SceKernelLoadModuleOpt* opts, int* res) {
+SceKernelModule load_module_from_sandbox(const wchar_t* name, size_t args, const void* argp, unsigned int flags, const SceKernelLoadModuleOpt* opts, int* res) {
 	char file_path[SCE_KERNEL_MAX_NAME_LENGTH];
 	SceKernelModule module;
 
@@ -361,7 +361,7 @@ SceKernelModule load_module_from_sandbox(const char* name, size_t args, const vo
 	return module;
 }
 
-bool get_module_base(const char* name, uint64_t* base, uint64_t* size) {
+bool get_module_base(const wchar_t* name, uint64_t* base, uint64_t* size) {
 	SceKernelModuleInfo moduleInfo;
 	int ret;
 
@@ -384,7 +384,7 @@ err:
 	return false;
 }
 
-bool patch_module(const char* name, module_patch_cb_t* cb, void* arg) {
+bool patch_module(const wchar_t* name, module_patch_cb_t* cb, void* arg) {
 	uint64_t base, size;
 	int ret;
 
@@ -408,7 +408,7 @@ err:
 	return false;
 }
 
-void send_notify(const char* format, ...) {
+void send_notify(const wchar_t* format, ...) {
 	SceNotificationRequest req;
 	va_list args;
 
@@ -418,7 +418,7 @@ void send_notify(const char* format, ...) {
 
 		va_start(args, format);
 		req.buf[0] = '%'; /* XXX: hackity hack */
-		vsnprintf((char*)req.buf + 1, 0xB4, format, args);
+		vsnprintf((wchar_t*)req.buf + 1, 0xB4, format, args);
 		va_end(args);
 	}
 
@@ -431,20 +431,20 @@ void hexdump(const void* data, size_t size) {
 	size_t i, j, k;
 	for (i = 0; i < size; i += n) {
 		k = (i + n) <= size ? n : (size - i);
-		printf("%8p:", (uint8_t*)data + i);
+		wprintf(L"%8p:", (uint8_t*)data + i);
 		for (j = 0; j < k; ++j) {
-			printf(" %02x", p[i + j]);
+			wprintf(L" %02x", p[i + j]);
 		}
 		for (j = k; j < n; ++j) {
-			printf("   ");
+			wprintf(L"   ");
 		}
-		printf("  ");
+		wprintf(L"  ");
 		for (j = 0; j < k; ++j) {
-			printf("%c", isprint(p[i + j]) ? p[i + j] : '.');
+			wprintf(L"%c", isprint(p[i + j]) ? p[i + j] : '.');
 		}
 		for (j = k; j < n; ++j) {
-			printf(" ");
+			wprintf(L" ");
 		}
-		printf("\n");
+		wprintf(L"\n");
 	}
 }

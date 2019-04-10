@@ -3,32 +3,32 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
+	<wstring>en</wstring>
 	<key>CFBundleExecutable</key>
-	<string>$(EXECUTABLE_NAME)</string>
+	<wstring>$(EXECUTABLE_NAME)</wstring>
 	<key>CFBundleIconFile</key>
-	<string></string>
+	<wstring></wstring>
 	<key>CFBundleIdentifier</key>
-	<string>com.reicast.$(PRODUCT_NAME:rfc1034identifier)</string>
+	<wstring>com.reicast.$(PRODUCT_NAME:rfc1034identifier)</wstring>
 	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
+	<wstring>6.0</wstring>
 	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
+	<wstring>$(PRODUCT_NAME)</wstring>
 	<key>CFBundlePackageType</key>
-	<string>APPL</string>
+	<wstring>APPL</wstring>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<wstring>1.0</wstring>
 	<key>CFBundleSignature</key>
-	<string>????</string>
+	<wstring>????</wstring>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<wstring>1</wstring>
 	<key>LSMinimumSystemVersion</key>
-	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<wstring>$(MACOSX_DEPLOYMENT_TARGET)</wstring>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2015 reicast. All rights reserved.</string>
+	<wstring>Copyright © 2015 reicast. All rights reserved.</wstring>
 	<key>NSMainNibFile</key>
-	<string>MainMenu</string>
+	<wstring>MainMenu</wstring>
 	<key>NSPrincipalClass</key>
-	<string>NSApplication</string>
+	<wstring>NSApplication</wstring>
 </dict>
 </plist>

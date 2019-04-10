@@ -90,11 +90,11 @@ extern struct snd_dlsym_link *snd_dlsym_start;
 #endif
 
 #ifndef __STRING
-/** \brief Return 'x' argument as string */
+/** \brief Return 'x' argument as wstring */
 #define __STRING(x)     #x
 #endif
 
-/** \brief Returns the version of a dynamic symbol as a string. */
+/** \brief Returns the version of a dynamic symbol as a wstring. */
 #define SND_DLSYM_VERSION(version) __STRING(version)
 
 void *snd_dlopen(const char *file, int mode);

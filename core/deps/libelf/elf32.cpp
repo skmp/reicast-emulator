@@ -166,13 +166,17 @@ elf32_getSection(struct Elf32_Header *elfFile, int i)
 	return (char *)elfFile + sections[i].sh_offset;
 }
 
+#include "stdclass.h"
+
 void *
 elf32_getSectionNamed(struct Elf32_Header *elfFile, char *str)
 {
 	int numSections = elf32_getNumSections(elfFile);
 	int i;
 	for (i = 0; i < numSections; i++) {
-		if (strcmp(str, elf32_getSectionName(elfFile, i)) == 0) {
+		wstring s = toWString(str);
+		wstring section = toWString(elf32_getSectionName(elfFile, i));
+		if(s==section) {	//if (wcscmp(str, elf32_getSectionName(elfFile, i)) == 0) {
 			return elf32_getSection(elfFile, i);
 		}
 	}
@@ -199,16 +203,16 @@ elf32_printStringTable(struct Elf32_Header *elfFile)
 	char * stringTable;
 
 	if (!sections) {
-		printf("No sections.\n");
+		wprintf(L"No sections.\n");
 		return;
 	}
 	
 	stringTable = ((void *)elfFile) + sections[elfFile->e_shstrndx].sh_offset;
 	
-	printf("File is %p; sections is %p; string table is %p\n", elfFile, sections, stringTable);
+	wprintf(L"File is %p; sections is %p; wstring table is %p\n", elfFile, sections, stringTable);
 
 	for (counter=0; counter < sections[elfFile->e_shstrndx].sh_size; counter++) {
-		printf("%02x %c ", stringTable[counter], 
+		wprintf(L"%02x %c ", stringTable[counter], 
 				stringTable[counter] >= 0x20 ? stringTable[counter] : '.');
 	}
 }
@@ -256,13 +260,12 @@ elf32_fprintf(FILE *f, struct Elf32_Header *file, int size, const char *name, in
 	int r;
 	char *str_table;
 
-	fprintf(f, "Found an elf32 file called \"%s\" located "
-		"at address 0x%p\n", name, file);
+	fwprintf(f, L"Found an elf32 file called \"%s\" located at address 0x%p\n", name, file);
 
 	if ((r = elf32_checkFile(file)) != 0) {
 		char *magic = (char*) file;
-		fprintf(f, "Invalid elf file (%d)\n", r);
-		fprintf(f, "Magic is: %2.2hhx %2.2hhx %2.2hhx %2.2hhx\n",
+		fwprintf(f, L"Invalid elf file (%d)\n", r);
+		fwprintf(f, L"Magic is: %2.2hhx %2.2hhx %2.2hhx %2.2hhx\n",
 			magic[0], magic[1], magic[2], magic[3]);
 		return;
 	}
@@ -278,7 +281,7 @@ elf32_fprintf(FILE *f, struct Elf32_Header *file, int size, const char *name, in
 	numSections = elf32_getNumSections(file);
 
 	if ((uintptr_t) sections >  ((uintptr_t) file + size)) {
-		fprintf(f, "Corrupted elfFile..\n");
+		fwprintf(f, L"Corrupted elfFile..\n");
 		return;
 	}
 
@@ -290,15 +293,15 @@ elf32_fprintf(FILE *f, struct Elf32_Header *file, int size, const char *name, in
 		/*
 		 * print out info about each program segment 
 		 */
-		fprintf(f, "Program Headers:\n");
-		fprintf(f, "  Type           Offset   VirtAddr   PhysAddr   "
+		fwprintf(f, L"Program Headers:\n");
+		fwprintf(f, L"  Type           Offset   VirtAddr   PhysAddr   "
 			"FileSiz MemSiz  Flg Align\n");
 		for (uint32_t i = 0; i < numSegments; i++) {
 			if (segments[i].p_type != 1) {
-				fprintf(f, "segment %d is not loadable, "
+				fwprintf(f, L"segment %d is not loadable, "
 					"skipping\n", i);
 			} else {
-				fprintf(f, "  LOAD           0x%06d 0x%08d 0x%08d 0x%05d 0x%05d %c%c%c 0x%04d\n",
+				fwprintf(f, L"  LOAD           0x%06d 0x%08d 0x%08d 0x%05d 0x%05d %c%c%c 0x%04d\n",
 					segments[i].p_offset, segments[i].p_vaddr,
 					segments[i].p_paddr,
 					segments[i].p_filesz, segments[i].p_memsz,
@@ -312,13 +315,13 @@ elf32_fprintf(FILE *f, struct Elf32_Header *file, int size, const char *name, in
 	if (flags & ELF_PRINT_SECTIONS) {
 		str_table = elf32_getSegmentStringTable(file);
 
-		printf("Section Headers:\n");
-		printf("  [Nr] Name              Type            Addr     Off\n");
+		wprintf(L"Section Headers:\n");
+		wprintf(L"  [Nr] Name              Type            Addr     Off\n");
 		for (uint32_t i = 0; i < numSections; i++) {
 			//if (elf_checkSection(file, i) == 0) {
-			fprintf(f, "[%2d] %s %x %x\n", i, elf32_getSectionName(file, i),
-				//fprintf(f, "[%2d] %-17.17s %-15.15s %x %x\n", i, elf32_getSectionName(file, i), " ", 
-				///fprintf(f, "%-17.17s %-15.15s %08x %06x\n", elf32_getSectionName(file, i), " "	/* sections[i].sh_type 
+			fwprintf(f, L"[%2d] %s %x %x\n", i, elf32_getSectionName(file, i),
+				//fwprintf(f, L"[%2d] %-17.17s %-15.15s %x %x\n", i, elf32_getSectionName(file, i), " ", 
+				///fwprintf(f, L"%-17.17s %-15.15s %08x %06x\n", elf32_getSectionName(file, i), " "	/* sections[i].sh_type 
 				//									 */ ,
 				sections[i].sh_addr, sections[i].sh_offset);
 			//}

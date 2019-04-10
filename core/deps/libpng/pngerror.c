@@ -92,7 +92,7 @@ PNG_FUNCTION(void,PNGAPI
 png_err,(png_const_structrp png_ptr),PNG_NORETURN)
 {
    /* Prior to 1.5.2 the error_fn received a NULL pointer, expressed
-    * erroneously as '\0', instead of the empty string "".  This was
+    * erroneously as '\0', instead of the empty wstring "".  This was
     * apparently an error, introduced in libpng-1.2.20, and png_default_error
     * will crash in this case.
     */
@@ -110,13 +110,13 @@ png_err,(png_const_structrp png_ptr),PNG_NORETURN)
  */
 size_t
 png_safecat(png_charp buffer, size_t bufsize, size_t pos,
-    png_const_charp string)
+    png_const_charp wstring)
 {
    if (buffer != NULL && pos < bufsize)
    {
-      if (string != NULL)
-         while (*string != '\0' && pos < bufsize-1)
-           buffer[pos++] = *string++;
+      if (wstring != NULL)
+         while (*wstring != '\0' && pos < bufsize-1)
+           buffer[pos++] = *wstring++;
 
       buffer[pos] = '\0';
    }
@@ -127,7 +127,7 @@ png_safecat(png_charp buffer, size_t bufsize, size_t pos,
 #if defined(PNG_WARNINGS_SUPPORTED) || defined(PNG_TIME_RFC1123_SUPPORTED)
 /* Utility to dump an unsigned value into a buffer, given a start pointer and
  * and end pointer (which should point just *beyond* the end of the buffer!)
- * Returns the pointer to the start of the formatted string.
+ * Returns the pointer to the start of the formatted wstring.
  */
 png_charp
 png_format_number(png_const_charp start, png_charp end, int format,
@@ -239,16 +239,16 @@ png_warning(png_const_structrp png_ptr, png_const_charp warning_message)
 }
 
 /* These functions support 'formatted' warning messages with up to
- * PNG_WARNING_PARAMETER_COUNT parameters.  In the format string the parameter
+ * PNG_WARNING_PARAMETER_COUNT parameters.  In the format wstring the parameter
  * is introduced by @<number>, where 'number' starts at 1.  This follows the
  * standard established by X/Open for internationalizable error messages.
  */
 void
 png_warning_parameter(png_warning_parameters p, int number,
-    png_const_charp string)
+    png_const_charp wstring)
 {
    if (number > 0 && number <= PNG_WARNING_PARAMETER_COUNT)
-      (void)png_safecat(p[number-1], (sizeof p[number-1]), 0, string);
+      (void)png_safecat(p[number-1], (sizeof p[number-1]), 0, wstring);
 }
 
 void
@@ -296,12 +296,12 @@ png_formatted_warning(png_const_structrp png_ptr, png_warning_parameters p,
     * to msg[i++] then returns here to validate that there is still space for
     * the trailing '\0'.  It may (in the case of a parameter) read more than
     * one character from message[]; it must check for '\0' and continue to the
-    * test if it finds the end of string.
+    * test if it finds the end of wstring.
     */
    while (i<(sizeof msg)-1 && *message != '\0')
    {
-      /* '@' at end of string is now just printed (previously it was skipped);
-       * it is an error in the calling code to terminate the string with @.
+      /* '@' at end of wstring is now just printed (previously it was skipped);
+       * it is an error in the calling code to terminate the wstring with @.
        */
       if (p != NULL && *message == '@' && message[1] != '\0')
       {
@@ -309,7 +309,7 @@ png_formatted_warning(png_const_structrp png_ptr, png_warning_parameters p,
          static const char valid_parameters[] = "123456789";
          int parameter = 0;
 
-         /* Search for the parameter digit, the index in the string is the
+         /* Search for the parameter digit, the index in the wstring is the
           * parameter to use.
           */
          while (valid_parameters[parameter] != parameter_char &&
@@ -341,7 +341,7 @@ png_formatted_warning(png_const_structrp png_ptr, png_warning_parameters p,
       }
 
       /* At this point *message can't be '\0', even in the bad parameter case
-       * above where there is a lone '@' at the end of the message string.
+       * above where there is a lone '@' at the end of the message wstring.
        */
       msg[i++] = *message++;
    }
@@ -729,24 +729,24 @@ png_default_error,(png_const_structrp png_ptr, png_const_charp error_message),
       if ((offset > 1) && (offset < 15))
       {
          error_number[offset - 1] = '\0';
-         fprintf(stderr, "libpng error no. %s: %s",
+         fwprintf(stderr, "libpng error no. %s: %s",
              error_number, error_message + offset + 1);
-         fprintf(stderr, PNG_STRING_NEWLINE);
+         fwprintf(stderr, PNG_STRING_NEWLINE);
       }
 
       else
       {
-         fprintf(stderr, "libpng error: %s, offset=%d",
+         fwprintf(stderr, "libpng error: %s, offset=%d",
              error_message, offset);
-         fprintf(stderr, PNG_STRING_NEWLINE);
+         fwprintf(stderr, PNG_STRING_NEWLINE);
       }
    }
    else
 #endif
    {
-      fprintf(stderr, "libpng error: %s", error_message ? error_message :
+      fwprintf(stderr, "libpng error: %s", error_message ? error_message :
          "undefined");
-      fprintf(stderr, PNG_STRING_NEWLINE);
+      fwprintf(stderr, PNG_STRING_NEWLINE);
    }
 #else
    PNG_UNUSED(error_message) /* Make compiler happy */
@@ -800,24 +800,24 @@ png_default_warning(png_const_structrp png_ptr, png_const_charp warning_message)
       if ((offset > 1) && (offset < 15))
       {
          warning_number[offset + 1] = '\0';
-         fprintf(stderr, "libpng warning no. %s: %s",
+         fwprintf(stderr, "libpng warning no. %s: %s",
              warning_number, warning_message + offset);
-         fprintf(stderr, PNG_STRING_NEWLINE);
+         fwprintf(stderr, PNG_STRING_NEWLINE);
       }
 
       else
       {
-         fprintf(stderr, "libpng warning: %s",
+         fwprintf(stderr, "libpng warning: %s",
              warning_message);
-         fprintf(stderr, PNG_STRING_NEWLINE);
+         fwprintf(stderr, PNG_STRING_NEWLINE);
       }
    }
    else
 #  endif
 
    {
-      fprintf(stderr, "libpng warning: %s", warning_message);
-      fprintf(stderr, PNG_STRING_NEWLINE);
+      fwprintf(stderr, "libpng warning: %s", warning_message);
+      fwprintf(stderr, PNG_STRING_NEWLINE);
    }
 #else
    PNG_UNUSED(warning_message) /* Make compiler happy */

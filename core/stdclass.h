@@ -8,7 +8,7 @@
 
 
 
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 #include <Windows.h>
 #elif HOST_OS==OS_NSW_HOS
 #include <switch.h>
@@ -72,7 +72,7 @@ public:
 		if  (data)
 		{
 			#ifdef MEM_ALLOC_TRACE
-			printf("WARNING : DESTRUCTOR WITH NON FREED ARRAY [arrayid:%d]\n",id);
+			wprintf(L"WARNING : DESTRUCTOR WITH NON FREED ARRAY [arrayid:%d]\n",id);
 			#endif
 			Free();
 		}
@@ -93,7 +93,7 @@ public:
 			if (data)
 			{
 				#ifdef MEM_ALLOC_TRACE
-				printf("Freeing data -> resize to zero[Array:%d]\n",id);
+				wprintf(L"Freeing data -> resize to zero[Array:%d]\n",id);
 				#endif
 				Free();
 			}
@@ -148,7 +148,7 @@ public:
 #ifdef MEM_BOUND_CHECK
 		if (i>=Size)
 		{
-			printf("Error: Array %d , index out of range (%d>%d)\n",id,i,Size-1);
+			wprintf(L"Error: Array %d , index out of range (%d>%d)\n",id,i,Size-1);
 			MEM_DO_BREAK;
 		}
 #endif
@@ -160,7 +160,7 @@ public:
 #ifdef MEM_BOUND_CHECK
 		if (!(i>=0 && i<(s32)Size))
 		{
-			printf("Error: Array %d , index out of range (%d > %d)\n",id,i,Size-1);
+			wprintf(L"Error: Array %d , index out of range (%d > %d)\n",id,i,Size-1);
 			MEM_DO_BREAK;
 		}
 #endif
@@ -195,7 +195,7 @@ class cResetEvent
 {
 
 private:
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 	EVENTHANDLE hEvent;
 #elif HOST_OS==OS_NSW_HOS
 	Event event;
@@ -211,14 +211,14 @@ public :
 	~cResetEvent();
 	void Set();		//Set state to signaled
 	void Reset();	//Set state to non signaled
-	void Wait(u32 msec);//Wait for signal , then reset[if auto]
+	bool Wait(u32 msec);//Wait for signal , then reset[if auto]
 	void Wait();	//Wait for signal , then reset[if auto]
 };
 
 class cMutex
 {
 private:
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 	CRITICAL_SECTION cs;
 #elif HOST_OS==OS_NSW_HOS
 	Mutex mutx;
@@ -230,7 +230,7 @@ public :
 	bool state;
 	cMutex()
 	{
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 		InitializeCriticalSection(&cs);
 #elif HOST_OS==OS_NSW_HOS
 		mutexInit(&mutx);
@@ -240,7 +240,7 @@ public :
 	}
 	~cMutex()
 	{
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 		DeleteCriticalSection(&cs);
 #elif HOST_OS==OS_NSW_HOS
 		//*FIXME* checkout why there is no destroy
@@ -250,7 +250,7 @@ public :
 	}
 	void Lock()
 	{
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 		EnterCriticalSection(&cs);
 #elif HOST_OS==OS_NSW_HOS
 		mutexLock(&mutx);
@@ -260,7 +260,7 @@ public :
 	}
 	void Unlock()
 	{
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 		LeaveCriticalSection(&cs);
 #elif HOST_OS==OS_NSW_HOS
 		mutexUnlock(&mutx);
@@ -270,18 +270,28 @@ public :
 	}
 };
 
+
+#ifdef UNICODE
+
+FILE * fopen(const wchar_t *filename, const char * mode);
+
+std::string  toString(std::wstring ws);
+std::wstring toWString(std::string s);
+
+#endif
+
 //Set the path !
-void set_user_config_dir(const string& dir);
-void set_user_data_dir(const string& dir);
-void add_system_config_dir(const string& dir);
-void add_system_data_dir(const string& dir);
+void set_user_config_dir(const wstring& dir);
+void set_user_data_dir(const wstring& dir);
+void add_system_config_dir(const wstring& dir);
+void add_system_data_dir(const wstring& dir);
 
 //subpath format: /data/fsca-table.bit
-string get_writable_config_path(const string& filename);
-string get_writable_data_path(const string& filename);
-string get_readonly_config_path(const string& filename);
-string get_readonly_data_path(const string& filename);
-bool file_exists(const string& filename);
+wstring get_writable_config_path(const wstring& filename);
+wstring get_writable_data_path(const wstring& filename);
+wstring get_readonly_config_path(const wstring& filename);
+wstring get_readonly_data_path(const wstring& filename);
+bool file_exists(const wstring& filename);
 
 
 class VArray2
@@ -306,7 +316,7 @@ public:
 #ifdef MEM_BOUND_CHECK
         if (i>=size)
 		{
-			printf("Error: VArray2 , index out of range (%d>%d)\n",i,size-1);
+			wprintf(L"Error: VArray2 , index out of range (%d>%d)\n",i,size-1);
 			MEM_DO_BREAK;
 		}
 #endif
@@ -315,7 +325,7 @@ public:
 };
 
 int ExeptionHandler(u32 dwCode, void* pExceptionPointers);
-int msgboxf(const wchar* text,unsigned int type,...);
+int msgboxf(const wchar_t* text,unsigned int type,...);
 
 
 #define MBX_OK                       0x00000000L

@@ -90,31 +90,31 @@ void install_prof_handler(int id)
 	thread[id]=pthread_self();
 }
 
-static void prof_head(FILE* out, const char* type, const char* name)
+static void prof_head(FILE* out, const wchar_t* type, const wchar_t* name)
 {
-	fprintf(out,"==xx==xx==\n%s:%s\n",type,name);
+	fwprintf(out,"==xx==xx==\n%s:%s\n",type,name);
 }
 
-static void prof_head(FILE* out, const char* type, int d)
+static void prof_head(FILE* out, const wchar_t* type, int d)
 {
-	fprintf(out,"==xx==xx==\n%s:%d\n",type,d);
+	fwprintf(out,"==xx==xx==\n%s:%d\n",type,d);
 }
 
-static void elf_syms(FILE* out,const char* libfile)
+static void elf_syms(FILE* out,const wchar_t* libfile)
 {
 	struct stat statbuf;
 
-	printf("LIBFILE \"%s\"\n", libfile);
+	wprintf(L"LIBFILE \"%s\"\n", libfile);
 	int fd = open(libfile, O_RDONLY, 0);
 
 	if (!fd)
 	{
-		printf("Failed to open file \"%s\"\n", libfile);
+		wprintf(L"Failed to open file \"%s\"\n", libfile);
 		return;
 	}
 	if (fstat(fd, &statbuf) < 0)
 	{
-		printf("Failed to fstat file \"%s\"\n", libfile);
+		wprintf(L"Failed to fstat file \"%s\"\n", libfile);
 		return;
 	}
 
@@ -124,11 +124,11 @@ static void elf_syms(FILE* out,const char* libfile)
 
 		if (data == (void*)-1)
 		{
-			printf("Failed to mmap file \"%s\"\n", libfile);
+			wprintf(L"Failed to mmap file \"%s\"\n", libfile);
 			return;
 		}
 
-		//printf("MMap: %08p, %08X\n",data,statbuf.st_size);
+		//wprintf(L"MMap: %08p, %08X\n",data,statbuf.st_size);
 
 		int dynsym=-1;
 		int dynstr=-1;
@@ -145,13 +145,13 @@ static void elf_syms(FILE* out,const char* libfile)
 				uint64_t section_link = elf_getSectionLink(data, si);
 				switch (section_type) {
 				case SHT_DYNSYM:
-					fprintf(stderr, "DYNSYM");
+					fwprintf(stderr, "DYNSYM");
 					dynsym = si;
 					if (section_link < scnt)
 						dynstr = section_link;
 					break;
 				case SHT_SYMTAB:
-					fprintf(stderr, "SYMTAB");
+					fwprintf(stderr, "SYMTAB");
 					symtab = si;
 					if (section_link < scnt)
 						strtab = section_link;
@@ -163,7 +163,7 @@ static void elf_syms(FILE* out,const char* libfile)
 		}
 		else
 		{
-			printf("Invalid elf file\n");
+			wprintf(L"Invalid elf file\n");
 		}
 
 		// Use SHT_SYMTAB if available insteaf of SHT_DYNSYM
@@ -177,7 +177,7 @@ static void elf_syms(FILE* out,const char* libfile)
 		if (dynsym >= 0)
 		{
 			prof_head(out,"libsym",libfile);
-			// printf("Found dymsym %d, and dynstr %d!\n",dynsym,dynstr);
+			// wprintf(L"Found dymsym %d, and dynstr %d!\n",dynsym,dynstr);
 			elf_symbol* sym=(elf_symbol*)elf_getSection(data,dynsym);
 			elf64_symbol* sym64 = (elf64_symbol*) sym;
 
@@ -194,17 +194,17 @@ static void elf_syms(FILE* out,const char* libfile)
 				uint64_t st_size  =  elf32 ? sym[i].st_size  : sym64[i].st_size;
 				if (st_type == STT_FUNC && st_value && st_name && st_shndx)
 				{
-					char* name=(char*)elf_getSection(data,dynstr);// sym[i].st_shndx
-					// printf("Symbol %d: %s, %08" PRIx64 ", % " PRIi64 " bytes\n",
+					wchar_t* name=(wchar_t*)elf_getSection(data,dynstr);// sym[i].st_shndx
+					// wprintf(L"Symbol %d: %s, %08" PRIx64 ", % " PRIi64 " bytes\n",
 						// i, name + st_name, st_value, st_size);
 					//PRIx64 & friends not in android ndk (yet?)
-					fprintf(out,"%08x %d %s\n", (int)st_value, (int)st_size, name + st_name);
+					fwprintf(out,"%08x %d %s\n", (int)st_value, (int)st_size, name + st_name);
 				}
 			}
 		}
 		else
 		{
-			printf("No dynsym\n");
+			wprintf(L"No dynsym\n");
 		}
 
 		munmap(data,statbuf.st_size);
@@ -219,8 +219,8 @@ static int str_ends_with(const char * str, const char * suffix)
 	if (str == NULL || suffix == NULL)
 		return 0;
 
-	size_t str_len = strlen(str);
-	size_t suffix_len = strlen(suffix);
+	size_t str_len = wcslen(str);
+	size_t suffix_len = wcslen(suffix);
 
 	if (suffix_len > str_len)
 		return 0;
@@ -235,35 +235,35 @@ static void* profiler_main(void *ptr)
 	FILE* prof_out;
 	char line[512];
 
-	sprintf(line, "/%d.reprof", tick_count);
+	swprintf(line, "/%d.reprof", tick_count);
 
-		string logfile=get_writable_data_path(line);
+		wstring logfile=get_writable_data_path(line);
 
 
-		printf("Profiler thread logging to -> %s\n", logfile.c_str());
+		wprintf(L"Profiler thread logging to -> %s\n", logfile.c_str());
 
 		prof_out = fopen(logfile.c_str(), "wb");
 		if (!prof_out)
 		{
-			printf("Failed to open profiler file\n");
+			wprintf(L"Failed to open profiler file\n");
 			return 0;
 		}
 
-		set<string> libs;
+		set<wstring> libs;
 
 		prof_head(prof_out, "vaddr", "");
 		FILE* maps = fopen("/proc/self/maps", "r");
 		while (!feof(maps))
 		{
-			fgets(line, 512, maps);
-			fputs(line, prof_out);
+			fgetws(line, 512, maps);
+			fgetws(line, prof_out);
 
-			if (strstr(line, ".so"))
+			if (wcsstr(line, ".so"))
 			{
 				char file[512];
 				file[0] = 0;
-				sscanf(line, "%*x-%*x %*s %*x %*x:%*x %*d %s\n", file);
-				if (strlen(file))
+				swscanf(line, "%*x-%*x %*s %*x %*x:%*x %*d %s\n", file);
+				if (wcslen(file))
 					libs.insert(file);
 			}
 		}
@@ -273,7 +273,7 @@ static void* profiler_main(void *ptr)
 		fwrite(syms_ptr, 1, syms_len, prof_out);
 
 		//write exports from .so's
-		for (set<string>::iterator it = libs.begin(); it != libs.end(); it++)
+		for (set<wstring>::iterator it = libs.begin(); it != libs.end(); it++)
 		{
 			elf_syms(prof_out, it->c_str());
 		}
@@ -293,16 +293,16 @@ static void* profiler_main(void *ptr)
 		do
 		{
 			tick_count++;
-			// printf("Sending SIGPROF %08X %08X\n",thread[0],thread[1]);
+			// wprintf(L"Sending SIGPROF %08X %08X\n",thread[0],thread[1]);
 			for (int i = 0; i < 2; i++) pthread_kill(thread[i], SIGPROF);
-			// printf("Sent SIGPROF\n");
+			// wprintf(L"Sent SIGPROF\n");
 			usleep(prof_wait);
 			// fwrite(&prof_address[0],1,sizeof(prof_address[0])*2,prof_out);
-			fprintf(prof_out, "%p %p\n", prof_address[0], prof_address[1]);
+			fwprintf(prof_out, "%p %p\n", prof_address[0], prof_address[1]);
 
 			if (!(tick_count % 10000))
 			{
-				printf("Profiler: %d ticks, flushing ..\n", tick_count);
+				wprintf(L"Profiler: %d ticks, flushing ..\n", tick_count);
 				fflush(prof_out);
 			}
 		} while (prof_run);
@@ -328,7 +328,7 @@ void sample_Start(int freq)
 	if (prof_run)
 		return;
 	prof_wait = 1000000 / freq;
-	printf("sampling profiler: starting %d Hz %d wait\n", freq, prof_wait);
+	wprintf(L"sampling profiler: starting %d Hz %d wait\n", freq, prof_wait);
 	prof_run = true;
 	pthread_create(&proft, NULL, profiler_main, 0);
 }
@@ -340,6 +340,6 @@ void sample_Stop()
 		prof_run = false;
 		pthread_join(proft, NULL);
 	}
-	printf("sampling profiler: stopped\n");
+	wprintf(L"sampling profiler: stopped\n");
 }
 #endif

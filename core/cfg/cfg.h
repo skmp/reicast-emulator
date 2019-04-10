@@ -9,15 +9,15 @@
 */
 
 bool cfgOpen();
-s32   cfgLoadInt(const wchar * lpSection, const wchar * lpKey,s32 Default);
-s32   cfgGameInt(const wchar * lpSection, const wchar * lpKey,s32 Default);
-void  cfgSaveInt(const wchar * lpSection, const wchar * lpKey, s32 Int);
-void  cfgLoadStr(const wchar * lpSection, const wchar * lpKey, wchar * lpReturn,const wchar* lpDefault);
-string  cfgLoadStr(const wchar * Section, const wchar * Key, const wchar* Default);
-void  cfgSaveStr(const wchar * lpSection, const wchar * lpKey, const wchar * lpString);
-void  cfgSaveBool(const wchar * Section, const wchar * Key, bool BoolValue);
-bool  cfgLoadBool(const wchar * Section, const wchar * Key,bool Default);
-s32  cfgExists(const wchar * Section, const wchar * Key);
-void cfgSetVirtual(const wchar * lpSection, const wchar * lpKey, const wchar * lpString);
+s32   cfgLoadInt(const wchar_t * lpSection, const wchar_t * lpKey,s32 Default);
+s32   cfgGameInt(const wchar_t * lpSection, const wchar_t * lpKey,s32 Default);
+void  cfgSaveInt(const wchar_t * lpSection, const wchar_t * lpKey, s32 Int);
+void  cfgLoadStr(const wchar_t * lpSection, const wchar_t * lpKey, wchar_t * lpReturn,const wchar_t* lpDefault);
+wstring  cfgLoadStr(const wchar_t * Section, const wchar_t * Key, const wchar_t* Default);
+void  cfgSaveStr(const wchar_t * lpSection, const wchar_t * lpKey, const wchar_t * lpString);
+void  cfgSaveBool(const wchar_t * Section, const wchar_t * Key, bool BoolValue);
+bool  cfgLoadBool(const wchar_t * Section, const wchar_t * Key,bool Default);
+s32  cfgExists(const wchar_t * Section, const wchar_t * Key);
+void cfgSetVirtual(const wchar_t * lpSection, const wchar_t * lpKey, const wchar_t * lpString);
 
-bool ParseCommandLine(int argc,wchar* argv[]);
+bool ParseCommandLine(int argc,wchar_t* argv[]);

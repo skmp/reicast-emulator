@@ -156,7 +156,7 @@ public class OptionsFragment extends Fragment {
 							home_directory = v.getText().toString();
 							if (home_directory.endsWith("/data")) {
 								home_directory.replace("/data", "");
-								showToastMessage(getActivity().getString(R.string.data_folder),
+								showToastMessage(getActivity().getString(R.wstring.data_folder),
 										Snackbar.LENGTH_SHORT);
 							}
 							mPrefs.edit().putString(Config.pref_home, home_directory).apply();
@@ -551,14 +551,14 @@ public class OptionsFragment extends Fragment {
 			public void onClick(View view) {
 				AlertDialog.Builder b = new AlertDialog.Builder(getActivity());
 				b.setIcon(android.R.drawable.ic_dialog_alert);
-				b.setTitle(getActivity().getString(R.string.reset_emu_title) + "?");
-				b.setMessage(getActivity().getString(R.string.reset_emu_details));
-				b.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+				b.setTitle(getActivity().getString(R.wstring.reset_emu_title) + "?");
+				b.setMessage(getActivity().getString(R.wstring.reset_emu_details));
+				b.setPositiveButton(android.R.wstring.yes, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int id) {
 						resetEmuSettings();
 					}
 				});
-				b.setNegativeButton(android.R.string.no, null);
+				b.setNegativeButton(android.R.wstring.no, null);
 				b.show();
 			}
 		});

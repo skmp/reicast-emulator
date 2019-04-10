@@ -329,7 +329,7 @@ cleanup:
 				if (wsi->protocol->name == NULL)
 					break;
 			} else
-				if (wsi->protocol->name && strcmp(
+				if (wsi->protocol->name && wcscmp(
 					lws_hdr_simple_ptr(wsi,
 						WSI_TOKEN_PROTOCOL),
 						      wsi->protocol->name) == 0)
@@ -729,7 +729,7 @@ LWS_VISIBLE int libwebsockets_return_http_status(
 	if (code >= 500 && code < (500 + ARRAY_SIZE(err500)))
 		description = err500[code - 500];
 
-	n = sprintf((char *)context->service_buffer,
+	n = swprintf((char *)context->service_buffer,
 		"HTTP/1.0 %u %s\x0d\x0a"
 		"Server: libwebsockets\x0d\x0a"
 		"Content-Type: text/html\x0d\x0a\x0d\x0a"
@@ -749,7 +749,7 @@ LWS_VISIBLE int libwebsockets_return_http_status(
  * @wsi:		Websocket instance (available from user callback)
  * @file:		The file to issue over http
  * @content_type:	The http content type, eg, text/html
- * @other_headers:	NULL or pointer to \0-terminated other header string
+ * @other_headers:	NULL or pointer to \0-terminated other header wstring
  *
  *	This function is intended to be called from the callback in response
  *	to http requests from the client.  It allows the callback to issue
@@ -779,15 +779,15 @@ LWS_VISIBLE int libwebsockets_serve_http_file(
 		return -1;
 	}
 
-	p += sprintf((char *)p,
+	p += swprintf((char *)p,
 "HTTP/1.0 200 OK\x0d\x0aServer: libwebsockets\x0d\x0a""Content-Type: %s\x0d\x0a",
 								  content_type);
 	if (other_headers) {
-		n = strlen(other_headers);
+		n = wcslen(other_headers);
 		memcpy(p, other_headers, n);
 		p += n;
 	}
-	p += sprintf((char *)p,
+	p += swprintf((char *)p,
 		"Content-Length: %lu\x0d\x0a\x0d\x0a", wsi->u.http.filelen);
 
 	ret = libwebsocket_write(wsi, context->service_buffer,

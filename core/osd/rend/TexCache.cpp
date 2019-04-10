@@ -169,13 +169,13 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
  
 	if (end_offset64>(VRAM_SIZE-1))
 	{
-		msgboxf("vramlock_Lock_64: end_offset64>(VRAM_SIZE-1) \n Tried to lock area out of vram , possibly bug on the pvr plugin",MBX_OK);
+		msgboxf(L"vramlock_Lock_64: end_offset64>(VRAM_SIZE-1) \n Tried to lock area out of vram , possibly bug on the pvr plugin",MBX_OK);
 		end_offset64=(VRAM_SIZE-1);
 	}
 
 	if (start_offset64>end_offset64)
 	{
-		msgboxf("vramlock_Lock_64: start_offset64>end_offset64 \n Tried to lock negative block , possibly bug on the pvr plugin",MBX_OK);
+		msgboxf(L"vramlock_Lock_64: start_offset64>end_offset64 \n Tried to lock negative block , possibly bug on the pvr plugin",MBX_OK);
 		start_offset64=0;
 	}
 
@@ -227,7 +227,7 @@ bool VramLockedWrite(u8* address)
 				
 					if ((*list)[i])
 					{
-						msgboxf("Error : pvr is supposed to remove lock",MBX_OK);
+						msgboxf(L"Error : pvr is supposed to remove lock",MBX_OK);
 						dbgbreak;
 					}
 
@@ -264,7 +264,7 @@ void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {
 		//VRAM_SIZE/PAGE_SIZE;
 	if (block->end>VRAM_SIZE)
-		msgboxf("Error : block end is after vram , skipping unlock",MBX_OK);
+		msgboxf(L"Error : block end is after vram , skipping unlock",MBX_OK);
 	else
 	{
 		vramlock_list_remove(block);

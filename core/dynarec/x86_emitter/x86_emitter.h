@@ -8,7 +8,7 @@
 using namespace std;
 //Oh god , x86 is a sooo badly designed opcode arch -_-
 
-const char* DissasmClass(x86_opcode_class opcode);
+const wchar_t* DissasmClass(x86_opcode_class opcode);
 
 #define REG_CLASS(regv) (regv>>16)
 #define REG_ID(regv) (regv&0xFFFF)

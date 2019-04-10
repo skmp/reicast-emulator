@@ -100,11 +100,11 @@ void Match_opcode(x86_block* block,const x86_opcode* ops,encoded_type pg1,encode
 	if (match==0)
 	{
 		char temp[512];
-		sprintf(temp,"Unable to match opcode %s",DissasmClass(ops->opcode));
+		swprintf(temp,"Unable to match opcode %s",DissasmClass(ops->opcode));
 		die(temp);
 		return;
 	}
-//	printf("Matched opcode %s to %s\n",DissasmClass(ops->opcode),DissasmClass(match->opcode));
+//	wprintf(L"Matched opcode %s to %s\n",DissasmClass(ops->opcode),DissasmClass(match->opcode));
 	match->encode(block,match,&pg1,&pg2,pg3.imm);
 }
 

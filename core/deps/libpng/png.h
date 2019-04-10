@@ -148,7 +148,7 @@
  * A "png_get_copyright" function is available, for convenient use in "about"
  * boxes and the like:
  *
- *    printf("%s", png_get_copyright(NULL));
+ *    wprintf(L"%s", png_get_copyright(NULL));
  *
  * Also, the PNG logo (in PNG format, of course) is supplied in the
  * files "pngbar.png" and "pngbar.jpg (88x31) and "pngnow.png" (98x31).
@@ -171,7 +171,7 @@
  *    the first widely used release:
  *
  *    source                 png.h  png.h  shared-lib
- *    version                string   int  version
+ *    version                wstring   int  version
  *    -------                ------ -----  ----------
  *    0.89c "1.0 beta 3"     0.89      89  1.0.89
  *    0.90  "1.0 beta 4"     0.90      90  0.90  [should have been 2.0.90]
@@ -184,7 +184,7 @@
  *    0.99a-m                0.99      99  2.0.99
  *    1.00                   1.00     100  2.1.0 [100 should be 10000]
  *    1.0.0      (from here on, the   100  2.1.0 [100 should be 10000]
- *    1.0.1       png.h string is   10001  2.1.0
+ *    1.0.1       png.h wstring is   10001  2.1.0
  *    1.0.1a-e    identical to the  10002  from here on, the shared library
  *    1.0.2       source version)   10002  is 2.V where V is the source code
  *    1.0.2a-b                      10003  version, except as noted.
@@ -257,7 +257,7 @@
  *    The integer is
  *        "png_uint_16 year" in png_time_struct.
  *
- *    The string is
+ *    The wstring is
  *        "char time_buffer[29]" in png_struct.  This is no longer used
  *    in libpng-1.6.x and will be removed from libpng-1.7.0.
  *
@@ -372,12 +372,12 @@
  * Ref MSDN: Private as priority over Special
  * VS_FF_PRIVATEBUILD File *was not* built using standard release
  * procedures. If this value is given, the StringFileInfo block must
- * contain a PrivateBuild string.
+ * contain a PrivateBuild wstring.
  *
  * VS_FF_SPECIALBUILD File *was* built by the original company using
  * standard release procedures but is a variation of the standard
  * file of the same version number. If this value is given, the
- * StringFileInfo block must contain a SpecialBuild string.
+ * StringFileInfo block must contain a SpecialBuild wstring.
  */
 
 #ifdef PNG_USER_PRIVATEBUILD /* From pnglibconf.h */
@@ -459,7 +459,7 @@ extern "C" {
 /* This triggers a compiler error in png.c, if png.c and png.h
  * do not agree upon the version number.
  */
-typedef char* png_libpng_version_1_6_34;
+typedef wchar_t* png_libpng_version_1_6_34;
 
 /* Basic control structions.  Read libpng-manual.txt or libpng.3 for more info.
  *
@@ -575,12 +575,12 @@ typedef png_sPLT_t * * png_sPLT_tpp;
 #ifdef PNG_TEXT_SUPPORTED
 /* png_text holds the contents of a text/ztxt/itxt chunk in a PNG file,
  * and whether that contents is compressed or not.  The "key" field
- * points to a regular zero-terminated C string.  The "text" fields can be a
- * regular C string, an empty string, or a NULL pointer.
+ * points to a regular zero-terminated C wstring.  The "text" fields can be a
+ * regular C wstring, an empty wstring, or a NULL pointer.
  * However, the structure returned by png_get_text() will always contain
- * the "text" field as a regular zero-terminated C string (possibly
- * empty), never a NULL pointer, so it can be safely used in printf() and
- * other string-handling functions.  Note that the "itxt_length", "lang", and
+ * the "text" field as a regular zero-terminated C wstring (possibly
+ * empty), never a NULL pointer, so it can be safely used in wprintf() and
+ * other wstring-handling functions.  Note that the "itxt_length", "lang", and
  * "lang_key" members of the structure only exist when the library is built
  * with iTXt chunk support.  Prior to libpng-1.4.0 the library was built by
  * default without iTXt support. Also note that when iTXt *is* supported,
@@ -598,13 +598,13 @@ typedef struct png_text_struct
                               1: iTXt, none
                               2: iTXt, deflate  */
    png_charp key;          /* keyword, 1-79 character description of "text" */
-   png_charp text;         /* comment, may be an empty string (ie "")
+   png_charp text;         /* comment, may be an empty wstring (ie "")
                               or a NULL pointer */
-   png_size_t text_length; /* length of the text string */
-   png_size_t itxt_length; /* length of the itxt string */
+   png_size_t text_length; /* length of the text wstring */
+   png_size_t itxt_length; /* length of the itxt wstring */
    png_charp lang;         /* language code, 0-79 characters
                               or a NULL pointer */
-   png_charp lang_key;     /* keyword translated UTF-8 string, 0 or more
+   png_charp lang_key;     /* keyword translated UTF-8 wstring, 0 or more
                               chars or a NULL pointer */
 } png_text;
 typedef png_text * png_textp;
@@ -1055,7 +1055,7 @@ PNG_EXPORT(22, void, png_read_info,
 #endif
 
 #ifdef PNG_TIME_RFC1123_SUPPORTED
-   /* Convert to a US string format: there is no localization support in this
+   /* Convert to a US wstring format: there is no localization support in this
     * routine.  The original implementation used a 29 character buffer in
     * png_struct, this will be removed in future versions.
     */
@@ -1580,7 +1580,7 @@ PNG_EXPORT(226, void, png_set_text_compression_method, (png_structrp png_ptr,
 /* These next functions are called for input/output, memory, and error
  * handling.  They are in the file pngrio.c, pngwio.c, and pngerror.c,
  * and call standard C I/O routines such as fread(), fwrite(), and
- * fprintf().  These functions can be made to use other I/O routines
+ * fwprintf().  These functions can be made to use other I/O routines
  * at run time for those applications that need to handle I/O in a
  * different manner by calling png_set_???_fn().  See libpng-manual.txt for
  * more information.
@@ -1805,7 +1805,7 @@ PNG_EXPORTA(101, void, png_free_default, (png_const_structrp png_ptr,
 PNG_EXPORTA(102, void, png_error, (png_const_structrp png_ptr,
     png_const_charp error_message), PNG_NORETURN);
 
-/* The same, but the chunk name is prepended to the error string. */
+/* The same, but the chunk name is prepended to the error wstring. */
 PNG_EXPORTA(103, void, png_chunk_error, (png_const_structrp png_ptr,
     png_const_charp error_message), PNG_NORETURN);
 
@@ -1947,7 +1947,7 @@ PNG_EXPORT(129, png_int_32, png_get_y_offset_microns,
 #endif /* EASY_ACCESS */
 
 #ifdef PNG_READ_SUPPORTED
-/* Returns pointer to signature string read from PNG header */
+/* Returns pointer to signature wstring read from PNG header */
 PNG_EXPORT(130, png_const_bytep, png_get_signature, (png_const_structrp png_ptr,
     png_const_inforp info_ptr));
 #endif
@@ -2713,7 +2713,7 @@ typedef struct
 
    /* In the event of an error or warning the following field will be set to a
     * non-zero value and the 'message' field will contain a '\0' terminated
-    * string with the libpng error or warning message.  If both warnings and
+    * wstring with the libpng error or warning message.  If both warnings and
     * an error were encountered, only the error is recorded.  If there
     * are multiple warnings, only the first one is recorded.
     *

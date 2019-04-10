@@ -16,7 +16,7 @@
             android:layout_weight="1"
             android:layout_marginTop="10dp"
             android:gravity="center"
-            android:text="@string/pgc_doc" />
+            android:text="@wstring/pgc_doc" />
 
         <TableLayout
             android:layout_width="match_parent"
@@ -35,7 +35,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/pgc_select_game" />
+                    android:text="@wstring/pgc_select_game" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -66,7 +66,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/joystick_layout" />
+                    android:text="@wstring/joystick_layout" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -94,7 +94,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_unstable" />
+                    android:text="@wstring/select_unstable" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -121,7 +121,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center_vertical|left"
-                    android:text="@string/set_frameskip" />
+                    android:text="@wstring/set_frameskip" />
 
                 <EditText
                    android:id="@+id/current_frames"
@@ -162,7 +162,7 @@
                     android:layout_weight="1"
                     android:ems="10"
                     android:gravity="center_vertical"
-                    android:text="@string/experimental_opts" />
+                    android:text="@wstring/experimental_opts" />
             </TableRow>
 
             <View
@@ -181,7 +181,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_dynarec" />
+                    android:text="@wstring/select_dynarec" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -209,7 +209,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_safemode" />
+                    android:text="@wstring/select_safemode" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -237,7 +237,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_render" />
+                    android:text="@wstring/select_render" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -265,7 +265,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_syncrender" />
+                    android:text="@wstring/select_syncrender" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -293,7 +293,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_modvols" />
+                    android:text="@wstring/select_modvols" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -321,7 +321,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_interrupt" />
+                    android:text="@wstring/select_interrupt" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -349,7 +349,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="0dip"
                     android:layout_weight="1"
-                    android:text="@string/boot_disk" />
+                    android:text="@wstring/boot_disk" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -377,14 +377,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/clear_pgc" />
+                    android:text="@wstring/clear_pgc" />
 
                 <Button
                     android:id="@+id/save_pg_btn"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/save_pgc" />
+                    android:text="@wstring/save_pgc" />
             </TableRow>
 
             <TableRow
@@ -397,14 +397,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/import_pgc" />
+                    android:text="@wstring/import_pgc" />
 
                 <Button
                     android:id="@+id/export_pg_btn"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/export_pgc" />
+                    android:text="@wstring/export_pgc" />
             </TableRow>
 
         </TableLayout>

@@ -23,7 +23,7 @@
                     android:layout_weight="1"
                     android:ems="10"
                     android:layout_marginLeft="4dp"
-                    android:text="@string/customize_touch_controls" />
+                    android:text="@wstring/customize_touch_controls" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -38,7 +38,7 @@
                         android:layout_height="0dp"
                         android:layout_weight="1"
                         android:ems="8"
-                        android:text="@string/launch_editor" />
+                        android:text="@wstring/launch_editor" />
                 </LinearLayout>
             </TableRow>
 
@@ -53,7 +53,7 @@
                     android:ems="10"
                     android:layout_marginLeft="4dp"
                     android:gravity="center_vertical|left"
-                    android:text="@string/touch_vibration" />
+                    android:text="@wstring/touch_vibration" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -88,7 +88,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:layout_marginLeft="4dp"
-                        android:text="@string/vibration_duration" />
+                        android:text="@wstring/vibration_duration" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -134,7 +134,7 @@
                     android:layout_weight="1"
                     android:ems="10"
                     android:layout_marginLeft="4dp"
-                    android:text="@string/customize_physical_controls" />
+                    android:text="@wstring/customize_physical_controls" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -149,7 +149,7 @@
                         android:layout_height="0dp"
                         android:layout_weight="1"
                         android:ems="8"
-                        android:text="@string/launch_editor" />
+                        android:text="@wstring/launch_editor" />
                 </LinearLayout>
             </TableRow>
 
@@ -178,7 +178,7 @@
                         android:ems="10"
                         android:gravity="center_vertical|left"
                         android:layout_marginLeft="6dp"
-                        android:text="@string/enable_microphone" />
+                        android:text="@wstring/enable_microphone" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -251,14 +251,14 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
-                            android:text="@string/controller_a" />
+                            android:text="@wstring/controller_a" />
 
                         <TextView
                             android:id="@+id/textViewDeviceDescriptorPlayer1"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
-                            android:text="@string/controller_none_selected" />
+                            android:text="@wstring/controller_none_selected" />
 
                         <TextView
                             android:id="@+id/textViewPeripheralsPlayer1"
@@ -267,7 +267,7 @@
                             android:layout_marginTop="10dp"
                             android:layout_marginLeft="5dp"
                             android:ems="10"
-                            android:text="@string/controller_1_vmu" />
+                            android:text="@wstring/controller_1_vmu" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -283,14 +283,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:ems="6"
-                        android:text="@string/select" />
+                        android:text="@wstring/select" />
 
                     <Button
                         android:id="@+id/buttonRemoveControllerPlayer1"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:ems="6"
-                        android:text="@string/remove" />
+                        android:text="@wstring/remove" />
                 </LinearLayout>
             </TableRow>
 
@@ -342,14 +342,14 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
-                            android:text="@string/controller_b" />
+                            android:text="@wstring/controller_b" />
 
                         <TextView
                             android:id="@+id/textViewDeviceDescriptorPlayer2"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
-                            android:text="@string/controller_none_selected" />
+                            android:text="@wstring/controller_none_selected" />
 
                         <LinearLayout
                             android:layout_width="wrap_content"
@@ -388,14 +388,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:ems="6"
-                        android:text="@string/select" />
+                        android:text="@wstring/select" />
 
                     <Button
                         android:id="@+id/buttonRemoveControllerPlayer2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:ems="6"
-                        android:text="@string/remove" />
+                        android:text="@wstring/remove" />
                 </LinearLayout>
             </TableRow>
 
@@ -447,14 +447,14 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
-                            android:text="@string/controller_c" />
+                            android:text="@wstring/controller_c" />
 
                         <TextView
                             android:id="@+id/textViewDeviceDescriptorPlayer3"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
-                            android:text="@string/controller_none_selected" />
+                            android:text="@wstring/controller_none_selected" />
 
                         <LinearLayout
                             android:layout_width="wrap_content"
@@ -493,14 +493,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:ems="6"
-                        android:text="@string/select" />
+                        android:text="@wstring/select" />
 
                     <Button
                         android:id="@+id/buttonRemoveControllerPlayer3"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:ems="6"
-                        android:text="@string/remove" />
+                        android:text="@wstring/remove" />
                 </LinearLayout>
             </TableRow>
 
@@ -552,14 +552,14 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
-                            android:text="@string/controller_d" />
+                            android:text="@wstring/controller_d" />
 
                         <TextView
                             android:id="@+id/textViewDeviceDescriptorPlayer4"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
-                            android:text="@string/controller_none_selected" />
+                            android:text="@wstring/controller_none_selected" />
 
                         <LinearLayout
                             android:layout_width="wrap_content"
@@ -598,14 +598,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:ems="6"
-                        android:text="@string/select" />
+                        android:text="@wstring/select" />
 
                     <Button
                         android:id="@+id/buttonRemoveControllerPlayer4"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:ems="6"
-                        android:text="@string/remove" />
+                        android:text="@wstring/remove" />
                 </LinearLayout>
             </TableRow>
         </TableLayout>

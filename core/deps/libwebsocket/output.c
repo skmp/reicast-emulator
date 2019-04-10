@@ -59,14 +59,14 @@ LWS_VISIBLE void lwsl_hexdump(void *vbuf, size_t len)
 		start = n;
 		p = line;
 
-		p += sprintf(p, "%04X: ", start);
+		p += swprintf(p, "%04X: ", start);
 
 		for (m = 0; m < 16 && n < len; m++)
-			p += sprintf(p, "%02X ", buf[n++]);
+			p += swprintf(p, "%02X ", buf[n++]);
 		while (m++ < 16)
-			p += sprintf(p, "   ");
+			p += swprintf(p, "   ");
 
-		p += sprintf(p, "   ");
+		p += swprintf(p, "   ");
 
 		for (m = 0; m < 16 && (start + m) < len; m++) {
 			if (buf[start + m] >= ' ' && buf[start + m] < 127)

@@ -306,125 +306,125 @@ void imul(const Operand& op) { opR_ModM(op, 0, 5, 0xF6); }
 void inc(const Operand& op) { opIncDec(op, 0x40, 0); }
 void insertps(const Xmm& xmm, const Operand& op, uint8 imm) { opGen(xmm, op, 0x21, 0x66, isXMM_XMMorMEM, imm, 0x3A); }
 void ja(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x77, 0x87, 0x0F); }//-V524
-void ja(const char *label, LabelType type = T_AUTO) { ja(std::string(label), type); }//-V524
+void ja(const wchar_t *label, LabelType type = T_AUTO) { ja(std::wstring(label), type); }//-V524
 void ja(const void *addr) { opJmpAbs(addr, T_NEAR, 0x77, 0x87, 0x0F); }//-V524
-void ja(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x77, 0x87, 0x0F); }//-V524
+void ja(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x77, 0x87, 0x0F); }//-V524
 void jae(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x73, 0x83, 0x0F); }//-V524
-void jae(const char *label, LabelType type = T_AUTO) { jae(std::string(label), type); }//-V524
+void jae(const wchar_t *label, LabelType type = T_AUTO) { jae(std::wstring(label), type); }//-V524
 void jae(const void *addr) { opJmpAbs(addr, T_NEAR, 0x73, 0x83, 0x0F); }//-V524
-void jae(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x73, 0x83, 0x0F); }//-V524
+void jae(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x73, 0x83, 0x0F); }//-V524
 void jb(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x72, 0x82, 0x0F); }//-V524
-void jb(const char *label, LabelType type = T_AUTO) { jb(std::string(label), type); }//-V524
+void jb(const wchar_t *label, LabelType type = T_AUTO) { jb(std::wstring(label), type); }//-V524
 void jb(const void *addr) { opJmpAbs(addr, T_NEAR, 0x72, 0x82, 0x0F); }//-V524
-void jb(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x72, 0x82, 0x0F); }//-V524
+void jb(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x72, 0x82, 0x0F); }//-V524
 void jbe(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x76, 0x86, 0x0F); }//-V524
-void jbe(const char *label, LabelType type = T_AUTO) { jbe(std::string(label), type); }//-V524
+void jbe(const wchar_t *label, LabelType type = T_AUTO) { jbe(std::wstring(label), type); }//-V524
 void jbe(const void *addr) { opJmpAbs(addr, T_NEAR, 0x76, 0x86, 0x0F); }//-V524
-void jbe(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x76, 0x86, 0x0F); }//-V524
+void jbe(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x76, 0x86, 0x0F); }//-V524
 void jc(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x72, 0x82, 0x0F); }//-V524
-void jc(const char *label, LabelType type = T_AUTO) { jc(std::string(label), type); }//-V524
+void jc(const wchar_t *label, LabelType type = T_AUTO) { jc(std::wstring(label), type); }//-V524
 void jc(const void *addr) { opJmpAbs(addr, T_NEAR, 0x72, 0x82, 0x0F); }//-V524
-void jc(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x72, 0x82, 0x0F); }//-V524
+void jc(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x72, 0x82, 0x0F); }//-V524
 void je(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x74, 0x84, 0x0F); }//-V524
-void je(const char *label, LabelType type = T_AUTO) { je(std::string(label), type); }//-V524
+void je(const wchar_t *label, LabelType type = T_AUTO) { je(std::wstring(label), type); }//-V524
 void je(const void *addr) { opJmpAbs(addr, T_NEAR, 0x74, 0x84, 0x0F); }//-V524
-void je(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x74, 0x84, 0x0F); }//-V524
+void je(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x74, 0x84, 0x0F); }//-V524
 void jg(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x7F, 0x8F, 0x0F); }//-V524
-void jg(const char *label, LabelType type = T_AUTO) { jg(std::string(label), type); }//-V524
+void jg(const wchar_t *label, LabelType type = T_AUTO) { jg(std::wstring(label), type); }//-V524
 void jg(const void *addr) { opJmpAbs(addr, T_NEAR, 0x7F, 0x8F, 0x0F); }//-V524
-void jg(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x7F, 0x8F, 0x0F); }//-V524
+void jg(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x7F, 0x8F, 0x0F); }//-V524
 void jge(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x7D, 0x8D, 0x0F); }//-V524
-void jge(const char *label, LabelType type = T_AUTO) { jge(std::string(label), type); }//-V524
+void jge(const wchar_t *label, LabelType type = T_AUTO) { jge(std::wstring(label), type); }//-V524
 void jge(const void *addr) { opJmpAbs(addr, T_NEAR, 0x7D, 0x8D, 0x0F); }//-V524
-void jge(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x7D, 0x8D, 0x0F); }//-V524
+void jge(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x7D, 0x8D, 0x0F); }//-V524
 void jl(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x7C, 0x8C, 0x0F); }//-V524
-void jl(const char *label, LabelType type = T_AUTO) { jl(std::string(label), type); }//-V524
+void jl(const wchar_t *label, LabelType type = T_AUTO) { jl(std::wstring(label), type); }//-V524
 void jl(const void *addr) { opJmpAbs(addr, T_NEAR, 0x7C, 0x8C, 0x0F); }//-V524
-void jl(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x7C, 0x8C, 0x0F); }//-V524
+void jl(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x7C, 0x8C, 0x0F); }//-V524
 void jle(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x7E, 0x8E, 0x0F); }//-V524
-void jle(const char *label, LabelType type = T_AUTO) { jle(std::string(label), type); }//-V524
+void jle(const wchar_t *label, LabelType type = T_AUTO) { jle(std::wstring(label), type); }//-V524
 void jle(const void *addr) { opJmpAbs(addr, T_NEAR, 0x7E, 0x8E, 0x0F); }//-V524
-void jle(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x7E, 0x8E, 0x0F); }//-V524
+void jle(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x7E, 0x8E, 0x0F); }//-V524
 void jna(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x76, 0x86, 0x0F); }//-V524
-void jna(const char *label, LabelType type = T_AUTO) { jna(std::string(label), type); }//-V524
+void jna(const wchar_t *label, LabelType type = T_AUTO) { jna(std::wstring(label), type); }//-V524
 void jna(const void *addr) { opJmpAbs(addr, T_NEAR, 0x76, 0x86, 0x0F); }//-V524
-void jna(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x76, 0x86, 0x0F); }//-V524
+void jna(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x76, 0x86, 0x0F); }//-V524
 void jnae(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x72, 0x82, 0x0F); }//-V524
-void jnae(const char *label, LabelType type = T_AUTO) { jnae(std::string(label), type); }//-V524
+void jnae(const wchar_t *label, LabelType type = T_AUTO) { jnae(std::wstring(label), type); }//-V524
 void jnae(const void *addr) { opJmpAbs(addr, T_NEAR, 0x72, 0x82, 0x0F); }//-V524
-void jnae(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x72, 0x82, 0x0F); }//-V524
+void jnae(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x72, 0x82, 0x0F); }//-V524
 void jnb(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x73, 0x83, 0x0F); }//-V524
-void jnb(const char *label, LabelType type = T_AUTO) { jnb(std::string(label), type); }//-V524
+void jnb(const wchar_t *label, LabelType type = T_AUTO) { jnb(std::wstring(label), type); }//-V524
 void jnb(const void *addr) { opJmpAbs(addr, T_NEAR, 0x73, 0x83, 0x0F); }//-V524
-void jnb(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x73, 0x83, 0x0F); }//-V524
+void jnb(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x73, 0x83, 0x0F); }//-V524
 void jnbe(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x77, 0x87, 0x0F); }//-V524
-void jnbe(const char *label, LabelType type = T_AUTO) { jnbe(std::string(label), type); }//-V524
+void jnbe(const wchar_t *label, LabelType type = T_AUTO) { jnbe(std::wstring(label), type); }//-V524
 void jnbe(const void *addr) { opJmpAbs(addr, T_NEAR, 0x77, 0x87, 0x0F); }//-V524
-void jnbe(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x77, 0x87, 0x0F); }//-V524
+void jnbe(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x77, 0x87, 0x0F); }//-V524
 void jnc(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x73, 0x83, 0x0F); }//-V524
-void jnc(const char *label, LabelType type = T_AUTO) { jnc(std::string(label), type); }//-V524
+void jnc(const wchar_t *label, LabelType type = T_AUTO) { jnc(std::wstring(label), type); }//-V524
 void jnc(const void *addr) { opJmpAbs(addr, T_NEAR, 0x73, 0x83, 0x0F); }//-V524
-void jnc(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x73, 0x83, 0x0F); }//-V524
+void jnc(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x73, 0x83, 0x0F); }//-V524
 void jne(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x75, 0x85, 0x0F); }//-V524
-void jne(const char *label, LabelType type = T_AUTO) { jne(std::string(label), type); }//-V524
+void jne(const wchar_t *label, LabelType type = T_AUTO) { jne(std::wstring(label), type); }//-V524
 void jne(const void *addr) { opJmpAbs(addr, T_NEAR, 0x75, 0x85, 0x0F); }//-V524
-void jne(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x75, 0x85, 0x0F); }//-V524
+void jne(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x75, 0x85, 0x0F); }//-V524
 void jng(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x7E, 0x8E, 0x0F); }//-V524
-void jng(const char *label, LabelType type = T_AUTO) { jng(std::string(label), type); }//-V524
+void jng(const wchar_t *label, LabelType type = T_AUTO) { jng(std::wstring(label), type); }//-V524
 void jng(const void *addr) { opJmpAbs(addr, T_NEAR, 0x7E, 0x8E, 0x0F); }//-V524
-void jng(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x7E, 0x8E, 0x0F); }//-V524
+void jng(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x7E, 0x8E, 0x0F); }//-V524
 void jnge(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x7C, 0x8C, 0x0F); }//-V524
-void jnge(const char *label, LabelType type = T_AUTO) { jnge(std::string(label), type); }//-V524
+void jnge(const wchar_t *label, LabelType type = T_AUTO) { jnge(std::wstring(label), type); }//-V524
 void jnge(const void *addr) { opJmpAbs(addr, T_NEAR, 0x7C, 0x8C, 0x0F); }//-V524
-void jnge(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x7C, 0x8C, 0x0F); }//-V524
+void jnge(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x7C, 0x8C, 0x0F); }//-V524
 void jnl(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x7D, 0x8D, 0x0F); }//-V524
-void jnl(const char *label, LabelType type = T_AUTO) { jnl(std::string(label), type); }//-V524
+void jnl(const wchar_t *label, LabelType type = T_AUTO) { jnl(std::wstring(label), type); }//-V524
 void jnl(const void *addr) { opJmpAbs(addr, T_NEAR, 0x7D, 0x8D, 0x0F); }//-V524
-void jnl(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x7D, 0x8D, 0x0F); }//-V524
+void jnl(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x7D, 0x8D, 0x0F); }//-V524
 void jnle(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x7F, 0x8F, 0x0F); }//-V524
-void jnle(const char *label, LabelType type = T_AUTO) { jnle(std::string(label), type); }//-V524
+void jnle(const wchar_t *label, LabelType type = T_AUTO) { jnle(std::wstring(label), type); }//-V524
 void jnle(const void *addr) { opJmpAbs(addr, T_NEAR, 0x7F, 0x8F, 0x0F); }//-V524
-void jnle(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x7F, 0x8F, 0x0F); }//-V524
+void jnle(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x7F, 0x8F, 0x0F); }//-V524
 void jno(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x71, 0x81, 0x0F); }//-V524
-void jno(const char *label, LabelType type = T_AUTO) { jno(std::string(label), type); }//-V524
+void jno(const wchar_t *label, LabelType type = T_AUTO) { jno(std::wstring(label), type); }//-V524
 void jno(const void *addr) { opJmpAbs(addr, T_NEAR, 0x71, 0x81, 0x0F); }//-V524
-void jno(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x71, 0x81, 0x0F); }//-V524
+void jno(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x71, 0x81, 0x0F); }//-V524
 void jnp(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x7B, 0x8B, 0x0F); }//-V524
-void jnp(const char *label, LabelType type = T_AUTO) { jnp(std::string(label), type); }//-V524
+void jnp(const wchar_t *label, LabelType type = T_AUTO) { jnp(std::wstring(label), type); }//-V524
 void jnp(const void *addr) { opJmpAbs(addr, T_NEAR, 0x7B, 0x8B, 0x0F); }//-V524
-void jnp(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x7B, 0x8B, 0x0F); }//-V524
+void jnp(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x7B, 0x8B, 0x0F); }//-V524
 void jns(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x79, 0x89, 0x0F); }//-V524
-void jns(const char *label, LabelType type = T_AUTO) { jns(std::string(label), type); }//-V524
+void jns(const wchar_t *label, LabelType type = T_AUTO) { jns(std::wstring(label), type); }//-V524
 void jns(const void *addr) { opJmpAbs(addr, T_NEAR, 0x79, 0x89, 0x0F); }//-V524
-void jns(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x79, 0x89, 0x0F); }//-V524
+void jns(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x79, 0x89, 0x0F); }//-V524
 void jnz(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x75, 0x85, 0x0F); }//-V524
-void jnz(const char *label, LabelType type = T_AUTO) { jnz(std::string(label), type); }//-V524
+void jnz(const wchar_t *label, LabelType type = T_AUTO) { jnz(std::wstring(label), type); }//-V524
 void jnz(const void *addr) { opJmpAbs(addr, T_NEAR, 0x75, 0x85, 0x0F); }//-V524
-void jnz(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x75, 0x85, 0x0F); }//-V524
+void jnz(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x75, 0x85, 0x0F); }//-V524
 void jo(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x70, 0x80, 0x0F); }//-V524
-void jo(const char *label, LabelType type = T_AUTO) { jo(std::string(label), type); }//-V524
+void jo(const wchar_t *label, LabelType type = T_AUTO) { jo(std::wstring(label), type); }//-V524
 void jo(const void *addr) { opJmpAbs(addr, T_NEAR, 0x70, 0x80, 0x0F); }//-V524
-void jo(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x70, 0x80, 0x0F); }//-V524
+void jo(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x70, 0x80, 0x0F); }//-V524
 void jp(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x7A, 0x8A, 0x0F); }//-V524
-void jp(const char *label, LabelType type = T_AUTO) { jp(std::string(label), type); }//-V524
+void jp(const wchar_t *label, LabelType type = T_AUTO) { jp(std::wstring(label), type); }//-V524
 void jp(const void *addr) { opJmpAbs(addr, T_NEAR, 0x7A, 0x8A, 0x0F); }//-V524
-void jp(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x7A, 0x8A, 0x0F); }//-V524
+void jp(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x7A, 0x8A, 0x0F); }//-V524
 void jpe(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x7A, 0x8A, 0x0F); }//-V524
-void jpe(const char *label, LabelType type = T_AUTO) { jpe(std::string(label), type); }//-V524
+void jpe(const wchar_t *label, LabelType type = T_AUTO) { jpe(std::wstring(label), type); }//-V524
 void jpe(const void *addr) { opJmpAbs(addr, T_NEAR, 0x7A, 0x8A, 0x0F); }//-V524
-void jpe(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x7A, 0x8A, 0x0F); }//-V524
+void jpe(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x7A, 0x8A, 0x0F); }//-V524
 void jpo(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x7B, 0x8B, 0x0F); }//-V524
-void jpo(const char *label, LabelType type = T_AUTO) { jpo(std::string(label), type); }//-V524
+void jpo(const wchar_t *label, LabelType type = T_AUTO) { jpo(std::wstring(label), type); }//-V524
 void jpo(const void *addr) { opJmpAbs(addr, T_NEAR, 0x7B, 0x8B, 0x0F); }//-V524
-void jpo(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x7B, 0x8B, 0x0F); }//-V524
+void jpo(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x7B, 0x8B, 0x0F); }//-V524
 void js(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x78, 0x88, 0x0F); }//-V524
-void js(const char *label, LabelType type = T_AUTO) { js(std::string(label), type); }//-V524
+void js(const wchar_t *label, LabelType type = T_AUTO) { js(std::wstring(label), type); }//-V524
 void js(const void *addr) { opJmpAbs(addr, T_NEAR, 0x78, 0x88, 0x0F); }//-V524
-void js(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x78, 0x88, 0x0F); }//-V524
+void js(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x78, 0x88, 0x0F); }//-V524
 void jz(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0x74, 0x84, 0x0F); }//-V524
-void jz(const char *label, LabelType type = T_AUTO) { jz(std::string(label), type); }//-V524
+void jz(const wchar_t *label, LabelType type = T_AUTO) { jz(std::wstring(label), type); }//-V524
 void jz(const void *addr) { opJmpAbs(addr, T_NEAR, 0x74, 0x84, 0x0F); }//-V524
-void jz(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0x74, 0x84, 0x0F); }//-V524
+void jz(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0x74, 0x84, 0x0F); }//-V524
 void lahf() { db(0x9F); }
 void lddqu(const Xmm& xmm, const Address& addr) { db(0xF2); opModM(addr, xmm, 0x0F, 0xF0); }
 void ldmxcsr(const Address& addr) { opModM(addr, Reg32(2), 0x0F, 0xAE); }
@@ -1538,9 +1538,9 @@ void vunpcklpd(const Xmm& x, const Operand& op) { vunpcklpd(x, x, op); }
 void vunpcklps(const Xmm& x, const Operand& op) { vunpcklps(x, x, op); }
 #endif
 #ifdef XBYAK64
-void jecxz(std::string label) { db(0x67); opJmp(label, T_SHORT, 0xe3, 0, 0); }
+void jecxz(std::wstring label) { db(0x67); opJmp(label, T_SHORT, 0xe3, 0, 0); }
 void jecxz(const Label& label) { db(0x67); opJmp(label, T_SHORT, 0xe3, 0, 0); }
-void jrcxz(std::string label) { opJmp(label, T_SHORT, 0xe3, 0, 0); }
+void jrcxz(std::wstring label) { opJmp(label, T_SHORT, 0xe3, 0, 0); }
 void jrcxz(const Label& label) { opJmp(label, T_SHORT, 0xe3, 0, 0); }
 void cdqe() { db(0x48); db(0x98); }
 void cqo() { db(0x48); db(0x99); }
@@ -1558,9 +1558,9 @@ void vcvttsd2si(const Reg64& r, const Operand& op) { opAVX_X_X_XM(Xmm(r.getIdx()
 void vmovq(const Xmm& x, const Reg64& r) { opAVX_X_X_XM(x, xm0, Xmm(r.getIdx()), T_66 | T_0F | T_W1 | T_EVEX | T_EW1, 0x6E); }
 void vmovq(const Reg64& r, const Xmm& x) { opAVX_X_X_XM(x, xm0, Xmm(r.getIdx()), T_66 | T_0F | T_W1 | T_EVEX | T_EW1, 0x7E); }
 #else
-void jcxz(std::string label) { db(0x67); opJmp(label, T_SHORT, 0xe3, 0, 0); }
+void jcxz(std::wstring label) { db(0x67); opJmp(label, T_SHORT, 0xe3, 0, 0); }
 void jcxz(const Label& label) { db(0x67); opJmp(label, T_SHORT, 0xe3, 0, 0); }
-void jecxz(std::string label) { opJmp(label, T_SHORT, 0xe3, 0, 0); }
+void jecxz(std::wstring label) { opJmp(label, T_SHORT, 0xe3, 0, 0); }
 void jecxz(const Label& label) { opJmp(label, T_SHORT, 0xe3, 0, 0); }
 void aaa() { db(0x37); }
 void aad() { db(0xD5); db(0x0A); }

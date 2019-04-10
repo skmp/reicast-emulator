@@ -53,16 +53,16 @@
 #include "profiler/profiler.h"
 #endif
 
-int msgboxf(const wchar* text, unsigned int type, ...)
+int msgboxf(const wchar_t* text, unsigned int type, ...)
 {
 	va_list args;
 
-	wchar temp[2048];
+	wchar_t temp[2048];
 	va_start(args, type);
 	vsprintf(temp, text, args);
 	va_end(args);
 
-	//printf(NULL,temp,VER_SHORTNAME,type | MB_TASKMODAL);
+	//wprintf(NULL,temp,VER_SHORTNAME,type | MB_TASKMODAL);
 	puts(temp);
 	return MBX_OK;
 }
@@ -100,15 +100,15 @@ void os_SetupInput()
 	#endif
 
 	#if defined(USE_JOYSTICK)
-		int joystick_device_id = cfgLoadInt("input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
+		int joystick_device_id = cfgLoadInt(L"input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
 		if (joystick_device_id < 0) {
 			puts("Legacy Joystick input disabled by config.\n");
 		}
 		else
 		{
 			int joystick_device_length = snprintf(NULL, 0, JOYSTICK_DEVICE_STRING, joystick_device_id);
-			char* joystick_device = (char*)malloc(joystick_device_length + 1);
-			sprintf(joystick_device, JOYSTICK_DEVICE_STRING, joystick_device_id);
+			wchar_t* joystick_device = (wchar_t*)malloc(joystick_device_length + 1);
+			swprintf(joystick_device, JOYSTICK_DEVICE_STRING, joystick_device_id);
 			joystick_fd = input_joystick_init(joystick_device);
 			free(joystick_device);
 		}
@@ -173,7 +173,7 @@ void os_DoEvents()
 
 void os_SetWindowText(const char * text)
 {
-	printf("%s\n",text);
+	wprintf(L"%s\n",text);
 	#if defined(SUPPORT_X11)
 		x11_window_set_text(text);
 	#endif
@@ -196,7 +196,7 @@ void os_CreateWindow()
 }
 
 void common_linux_setup();
-int dc_init(int argc,wchar* argv[]);
+int dc_init(int argc,wchar_t* argv[]);
 void dc_run();
 void dc_term();
 
@@ -237,15 +237,15 @@ void dc_term();
 	}
 #endif
 
-string find_user_config_dir()
+wstring find_user_config_dir()
 {
 	#ifdef USES_HOMEDIR
 		struct stat info;
-		string home = "";
+		wstring home = "";
 		if(getenv("HOME") != NULL)
 		{
 			// Support for the legacy config dir at "$HOME/.reicast"
-			string legacy_home = (string)getenv("HOME") + "/.reicast";
+			wstring legacy_home = (wstring)getenv("HOME") + "/.reicast";
 			if((stat(legacy_home.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
 			{
 				// "$HOME/.reicast" already exists, let's use it!
@@ -256,12 +256,12 @@ string find_user_config_dir()
 			 * Consult the XDG Base Directory Specification for details:
 			 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
 			 */
-			home = (string)getenv("HOME") + "/.config/reicast";
+			home = (wstring)getenv("HOME") + "/.config/reicast";
 		}
 		if(getenv("XDG_CONFIG_HOME") != NULL)
 		{
 			// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
-			home = (string)getenv("XDG_CONFIG_HOME") + "/reicast";
+			home = (wstring)getenv("XDG_CONFIG_HOME") + "/reicast";
 		}
 
 		if(!home.empty())
@@ -279,15 +279,15 @@ string find_user_config_dir()
 	return ".";
 }
 
-string find_user_data_dir()
+wstring find_user_data_dir()
 {
 	#ifdef USES_HOMEDIR
 		struct stat info;
-		string data = "";
+		wstring data = "";
 		if(getenv("HOME") != NULL)
 		{
 			// Support for the legacy config dir at "$HOME/.reicast"
-			string legacy_data = (string)getenv("HOME") + "/.reicast";
+			wstring legacy_data = (wstring)getenv("HOME") + "/.reicast";
 			if((stat(legacy_data.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
 			{
 				// "$HOME/.reicast" already exists, let's use it!
@@ -298,12 +298,12 @@ string find_user_data_dir()
 			 * Consult the XDG Base Directory Specification for details:
 			 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
 			 */
-			data = (string)getenv("HOME") + "/.local/share/reicast";
+			data = (wstring)getenv("HOME") + "/.local/share/reicast";
 		}
 		if(getenv("XDG_DATA_HOME") != NULL)
 		{
 			// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.config
-			data = (string)getenv("XDG_DATA_HOME") + "/reicast";
+			data = (wstring)getenv("XDG_DATA_HOME") + "/reicast";
 		}
 
 		if(!data.empty())
@@ -321,16 +321,16 @@ string find_user_data_dir()
 	return ".";
 }
 
-std::vector<string> find_system_config_dirs()
+std::vector<wstring> find_system_config_dirs()
 {
-	std::vector<string> dirs;
+	std::vector<wstring> dirs;
 	if (getenv("XDG_CONFIG_DIRS") != NULL)
 	{
-		string s = (string)getenv("XDG_CONFIG_DIRS");
+		wstring s = (wstring)getenv("XDG_CONFIG_DIRS");
 
-		string::size_type pos = 0;
-		string::size_type n = s.find(":", pos);
-		while(n != std::string::npos)
+		wstring::size_type pos = 0;
+		wstring::size_type n = s.find(":", pos);
+		while(n != std::wstring::npos)
 		{
 			dirs.push_back(s.substr(pos, n-pos) + "/reicast");
 			pos = n + 1;
@@ -347,16 +347,16 @@ std::vector<string> find_system_config_dirs()
 	return dirs;
 }
 
-std::vector<string> find_system_data_dirs()
+std::vector<wstring> find_system_data_dirs()
 {
-	std::vector<string> dirs;
+	std::vector<wstring> dirs;
 	if (getenv("XDG_DATA_DIRS") != NULL)
 	{
-		string s = (string)getenv("XDG_DATA_DIRS");
+		wstring s = (wstring)getenv("XDG_DATA_DIRS");
 
-		string::size_type pos = 0;
-		string::size_type n = s.find(":", pos);
-		while(n != std::string::npos)
+		wstring::size_type pos = 0;
+		wstring::size_type n = s.find(":", pos);
+		while(n != std::wstring::npos)
 		{
 			dirs.push_back(s.substr(pos, n-pos) + "/reicast");
 			pos = n + 1;
@@ -374,7 +374,7 @@ std::vector<string> find_system_data_dirs()
 }
 
 
-int main(int argc, wchar* argv[])
+int main(int argc, wchar_t* argv[])
 {
 	#ifdef TARGET_PANDORA
 		signal(SIGSEGV, clean_exit);
@@ -389,7 +389,7 @@ int main(int argc, wchar* argv[])
 	/* Set directories */
 	set_user_config_dir(find_user_config_dir());
 	set_user_data_dir(find_user_data_dir());
-	std::vector<string> dirs;
+	std::vector<wstring> dirs;
 	dirs = find_system_config_dirs();
 	for(unsigned int i = 0; i < dirs.size(); i++)
 	{
@@ -400,13 +400,13 @@ int main(int argc, wchar* argv[])
 	{
 		add_system_data_dir(dirs[i]);
 	}
-	printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
-	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
+	wprintf(L"Config dir is: %s\n", get_writable_config_path("/").c_str());
+	wprintf(L"Data dir is:   %s\n", get_writable_data_path("/").c_str());
 
 	#if defined(USE_SDL)
 		if (SDL_Init(0) != 0)
 		{
-			die("SDL: Initialization failed!");
+			die(L"SDL: Initialization failed!");
 		}
 	#endif
 
@@ -451,7 +451,7 @@ void os_DebugBreak()
 	#if !defined(TARGET_EMSCRIPTEN)
 		raise(SIGTRAP);
 	#else
-		printf("DEBUGBREAK!\n");
+		wprintf(L"DEBUGBREAK!\n");
 		exit(-1);
 	#endif
 }

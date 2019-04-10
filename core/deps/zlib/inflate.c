@@ -338,22 +338,22 @@ void makefixed()
     puts("     */");
     puts("");
     size = 1U << 9;
-    printf("    static const code lenfix[%u] = {", size);
+    wprintf(L"    static const code lenfix[%u] = {", size);
     low = 0;
     for (;;) {
-        if ((low % 7) == 0) printf("\n        ");
-        printf("{%u,%u,%d}", (low & 127) == 99 ? 64 : state.lencode[low].op,
+        if ((low % 7) == 0) wprintf(L"\n        ");
+        wprintf(L"{%u,%u,%d}", (low & 127) == 99 ? 64 : state.lencode[low].op,
                state.lencode[low].bits, state.lencode[low].val);
         if (++low == size) break;
         putchar(',');
     }
     puts("\n    };");
     size = 1U << 5;
-    printf("\n    static const code distfix[%u] = {", size);
+    wprintf(L"\n    static const code distfix[%u] = {", size);
     low = 0;
     for (;;) {
-        if ((low % 6) == 0) printf("\n        ");
-        printf("{%u,%u,%d}", state.distcode[low].op, state.distcode[low].bits,
+        if ((low % 6) == 0) wprintf(L"\n        ");
+        wprintf(L"{%u,%u,%d}", state.distcode[low].op, state.distcode[low].bits,
                state.distcode[low].val);
         if (++low == size) break;
         putchar(',');
@@ -580,7 +580,7 @@ unsigned copy;
 
    A state may also return if there is not enough output space available to
    complete that state.  Those states are copying stored data, writing a
-   literal byte, and copying a matching string.
+   literal byte, and copying a matching wstring.
 
    When returning, a "goto inf_leave" is used to update the total counters,
    update the check value, and determine whether any progress has been made
@@ -1379,7 +1379,7 @@ z_streamp strm;
 {
     unsigned len;               /* number of bytes to look at or looked at */
     unsigned long in, out;      /* temporary to save total_in and total_out */
-    unsigned char buf[4];       /* to restore bit buffer to byte string */
+    unsigned char buf[4];       /* to restore bit buffer to byte wstring */
     struct inflate_state FAR *state;
 
     /* check parameters */

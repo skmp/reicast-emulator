@@ -187,7 +187,7 @@ public:
 	explicit Error(int err) : err_(err)
 	{
 		if (err_ < 0 || err_ > ERR_INTERNAL) {
-			fprintf(stderr, "bad err=%d in Xbyak::Error\n", err_);
+			fwprintf(stderr, L"bad err=%d in Xbyak::Error\n", err_);
 			exit(1);
 		}
 	}
@@ -226,7 +226,7 @@ public:
 			"can't convert",
 			"label is not set by L()",
 			"label is already set by L()",
-			"bad label string",
+			"bad label wstring",
 			"err munmap",
 			"opmask is already set",
 			"rounding is already set",
@@ -926,7 +926,7 @@ public:
 			}
 			for (size_t j = 0; j < 16; j++) {
 				if (j < disp) {
-					printf("%02X", p[i * 16 + j]);
+					wprintf(L"%02X", p[i * 16 + j]);
 				}
 			}
 			putchar('\n');
@@ -1100,27 +1100,27 @@ public:
 	const uint8 *getAddress() const;
 
 	// backward compatibility
-	static inline std::string toStr(int num)
+	static inline std::wstring toStr(int num)
 	{
-		char buf[16];
+		wchar_t buf[16];
 #if defined(_MSC_VER) && (_MSC_VER < 1900)
-		_snprintf_s
+		_snwprintf_s
 #else
-		snprintf
+		swprintf
 #endif
-		(buf, sizeof(buf), ".%08x", num);
+		(buf, sizeof(buf), L".%08x", num);
 		return buf;
 	}
 };
 
 class LabelManager {
-	// for string label
+	// for wstring label
 	struct SlabelVal {
 		size_t offset;
 		SlabelVal(size_t offset) : offset(offset) {}
 	};
-	typedef XBYAK_STD_UNORDERED_MAP<std::string, SlabelVal> SlabelDefList;
-	typedef XBYAK_STD_UNORDERED_MULTIMAP<std::string, const JmpLabel> SlabelUndefList;
+	typedef XBYAK_STD_UNORDERED_MAP<std::wstring, SlabelVal> SlabelDefList;
+	typedef XBYAK_STD_UNORDERED_MULTIMAP<std::wstring, const JmpLabel> SlabelUndefList;
 	struct SlabelState {
 		SlabelDefList defList;
 		SlabelUndefList undefList;
@@ -1236,21 +1236,21 @@ public:
 		stateList_.pop_back();
 	}
 	void set(CodeArray *base) { base_ = base; }
-	void defineSlabel(std::string label)
+	void defineSlabel(std::wstring label)
 	{
-		if (label == "@b" || label == "@f") throw Error(ERR_BAD_LABEL_STR);
-		if (label == "@@") {
+		if (label == L"@b" || label == L"@f") throw Error(ERR_BAD_LABEL_STR);
+		if (label == L"@@") {
 			SlabelDefList& defList = stateList_.front().defList;
-			SlabelDefList::iterator i = defList.find("@f");
+			SlabelDefList::iterator i = defList.find(L"@f");
 			if (i != defList.end()) {
 				defList.erase(i);
-				label = "@b";
+				label = L"@b";
 			} else {
-				i = defList.find("@b");
+				i = defList.find(L"@b");
 				if (i != defList.end()) {
 					defList.erase(i);
 				}
-				label = "@f";
+				label = L"@f";
 			}
 		}
 		SlabelState& st = *label.c_str() == '.' ? stateList_.back() : stateList_.front();
@@ -1268,18 +1268,18 @@ public:
 		define_inner(clabelDefList_, clabelUndefList_, dst.id, i->second.offset);
 		dst.mgr = this;
 	}
-	bool getOffset(size_t *offset, std::string& label) const
+	bool getOffset(size_t *offset, std::wstring& label) const
 	{
 		const SlabelDefList& defList = stateList_.front().defList;
-		if (label == "@b") {
-			if (defList.find("@f") != defList.end()) {
-				label = "@f";
-			} else if (defList.find("@b") == defList.end()) {
+		if (label == L"@b") {
+			if (defList.find(L"@f") != defList.end()) {
+				label = L"@f";
+			} else if (defList.find(L"@b") == defList.end()) {
 				throw Error(ERR_LABEL_IS_NOT_FOUND);
 			}
-		} else if (label == "@f") {
-			if (defList.find("@f") != defList.end()) {
-				label = "@b";
+		} else if (label == L"@f") {
+			if (defList.find(L"@f") != defList.end()) {
+				label = L"@b";
 			}
 		}
 		const SlabelState& st = *label.c_str() == '.' ? stateList_.back() : stateList_.front();
@@ -1289,7 +1289,7 @@ public:
 	{
 		return getOffset_inner(clabelDefList_, offset, getId(label));
 	}
-	void addUndefinedLabel(const std::string& label, const JmpLabel& jmp)
+	void addUndefinedLabel(const std::wstring& label, const JmpLabel& jmp)
 	{
 		SlabelState& st = *label.c_str() == '.' ? stateList_.back() : stateList_.front();
 		st.undefList.insert(SlabelUndefList::value_type(label, jmp));
@@ -2128,7 +2128,7 @@ public:
 #ifndef XBYAK_DISABLE_SEGMENT
 	const Segment es, cs, ss, ds, fs, gs;
 #endif
-	void L(const std::string& label) { labelMgr_.defineSlabel(label); }
+	void L(const std::wstring& label) { labelMgr_.defineSlabel(label); }
 	void L(const Label& label) { labelMgr_.defineClabel(label); }
 	void inLocalLabel() { labelMgr_.enterLocal(); }
 	void outLocalLabel() { labelMgr_.leaveLocal(); }
@@ -2143,19 +2143,19 @@ public:
 		put address of label to buffer
 		@note the put size is 4(32-bit), 8(64-bit)
 	*/
-	void putL(std::string label) { putL_inner(label); }
+	void putL(std::wstring label) { putL_inner(label); }
 	void putL(const Label& label) { putL_inner(label); }
 
 	void jmp(const Operand& op) { opR_ModM(op, BIT, 4, 0xFF, NONE, NONE, true); }
-	void jmp(std::string label, LabelType type = T_AUTO) { opJmp(label, type, 0xEB, 0xE9, 0); }
-	void jmp(const char *label, LabelType type = T_AUTO) { jmp(std::string(label), type); }
+	void jmp(std::wstring label, LabelType type = T_AUTO) { opJmp(label, type, 0xEB, 0xE9, 0); }
+	void jmp(const wchar_t *label, LabelType type = T_AUTO) { jmp(std::wstring(label), type); }
 	void jmp(const Label& label, LabelType type = T_AUTO) { opJmp(label, type, 0xEB, 0xE9, 0); }
 	void jmp(const void *addr, LabelType type = T_AUTO) { opJmpAbs(addr, type, 0xEB, 0xE9); }
 
 	void call(const Operand& op) { opR_ModM(op, 16 | i32e, 2, 0xFF, NONE, NONE, true); }
-	// call(string label), not const std::string&
-	void call(std::string label) { opJmp(label, T_NEAR, 0, 0xE8, 0); }
-	void call(const char *label) { call(std::string(label)); }
+	// call(wstring label), not const std::wstring&
+	void call(std::wstring label) { opJmp(label, T_NEAR, 0, 0xE8, 0); }
+	void call(const wchar_t *label) { call(std::wstring(label)); }
 	void call(const Label& label) { opJmp(label, T_NEAR, 0, 0xE8, 0); }
 	// call(function pointer)
 #ifdef XBYAK_VARIADIC_TEMPLATE
@@ -2269,7 +2269,7 @@ public:
 			throw Error(ERR_BAD_COMBINATION);
 		}
 	}
-	void mov(const NativeReg& reg, const char *label) // can't use std::string
+	void mov(const NativeReg& reg, const wchar_t *label) // can't use std::wstring
 	{
 		if (label == 0) {
 			mov(static_cast<const Operand&>(reg), 0); // call imm
@@ -2481,7 +2481,7 @@ public:
 	{
 		if (x == 1) return;
 		if (x < 1 || (x & (x - 1))) throw Error(ERR_BAD_ALIGN);
-		if (isAutoGrow() && x > inner::ALIGN_PAGE_SIZE) fprintf(stderr, "warning:autoGrow mode does not support %d align\n", (int)x);
+		if (isAutoGrow() && x > inner::ALIGN_PAGE_SIZE) fwprintf(stderr, L"warning:autoGrow mode does not support %d align\n", (int)x);
 		size_t remain = size_t(getCurr()) % x;
 		if (remain) {
 			nop(x - remain, useMultiByteNop);

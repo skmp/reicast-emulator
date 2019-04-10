@@ -362,8 +362,8 @@ static int trans_mkdir (
  */
 
 #if defined(XTRANSDEBUG)
-/* add hack to the format string to avoid warnings about extra arguments
- * to fprintf.
+/* add hack to the format wstring to avoid warnings about extra arguments
+ * to fwprintf.
  */
 #ifdef XTRANSDEBUGTIMESTAMP
 #if defined(XSERV_t) && defined(TRANS_SERVER)
@@ -382,9 +382,9 @@ static int trans_mkdir (
 			int hack= 0, saveerrno=errno; \
                         struct timeval tp;\
                         gettimeofday(&tp,0); \
-			fprintf(stderr, "%s", __xtransname); fflush(stderr); \
-			fprintf(stderr, x+hack,a,b,c); fflush(stderr); \
-                        fprintf(stderr, "timestamp (ms): %d\n",tp.tv_sec*1000+tp.tv_usec/1000); \
+			fwprintf(stderr, "%s", __xtransname); fflush(stderr); \
+			fwprintf(stderr, x+hack,a,b,c); fflush(stderr); \
+                        fwprintf(stderr, "timestamp (ms): %d\n",tp.tv_sec*1000+tp.tv_usec/1000); \
                         fflush(stderr); \
 			errno=saveerrno; \
 			} else ((void)0)
@@ -401,8 +401,8 @@ static int trans_mkdir (
 #else
 #define PRMSG(lvl,x,a,b,c)	if (lvl <= XTRANSDEBUG){ \
 			int hack= 0, saveerrno=errno; \
-			fprintf(stderr, "%s", __xtransname); fflush(stderr); \
-			fprintf(stderr, x+hack,a,b,c); fflush(stderr); \
+			fwprintf(stderr, "%s", __xtransname); fflush(stderr); \
+			fwprintf(stderr, x+hack,a,b,c); fflush(stderr); \
 			errno=saveerrno; \
 			} else ((void)0)
 #endif /* XSERV_t && TRANS_SERVER */

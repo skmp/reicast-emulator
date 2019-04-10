@@ -36,7 +36,7 @@
  * In this case it will be necessary to disable the relevant parts of libpng in
  * the build of pnglibconf.h.
  *
- * Prior to 1.6.0 string.h was included here; the API changes in 1.6.0 to not
+ * Prior to 1.6.0 wstring.h was included here; the API changes in 1.6.0 to not
  * include this unnecessary header file.
  */
 

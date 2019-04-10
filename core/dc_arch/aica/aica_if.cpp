@@ -54,7 +54,7 @@ u32 ReadMem_aica_rtc(u32 addr,u32 sz)
 		return 0;
 	}
 
-	printf("ReadMem_aica_rtc : invalid address\n");
+	wprintf(L"ReadMem_aica_rtc : invalid address\n");
 	return 0;
 }
 
@@ -131,12 +131,12 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 		if (addr==0x2C01)
 		{
 			VREG=data;
-			printf("VREG = %02X\n",VREG);
+			wprintf(L"VREG = %02X\n",VREG);
 		}
 		else if (addr==0x2C00)
 		{
 			ARMRST=data;
-			printf("ARMRST = %02X\n",ARMRST);
+			wprintf(L"ARMRST = %02X\n",ARMRST);
 			ArmSetRST();
 		}
 		else
@@ -150,7 +150,7 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 		{
 			VREG=(data>>8)&0xFF;
 			ARMRST=data&0xFF;
-			printf("VREG = %02X ARMRST %02X\n",VREG,ARMRST);
+			wprintf(L"VREG = %02X ARMRST %02X\n",VREG,ARMRST);
 			ArmSetRST();
 		}
 		else
@@ -227,7 +227,7 @@ void Write_SB_ADST(u32 addr, u32 data)
 				u32 tmp=src;
 				src=dst;
 				dst=tmp;
-				printf("**AICA DMA : SB_ADDIR==1: Not sure this works, please report if broken/missing sound or crash\n**");
+				wprintf(L"**AICA DMA : SB_ADDIR==1: Not sure this works, please report if broken/missing sound or crash\n**");
 			}
 
 			WriteMemBlock_nommu_dma(dst,src,len);
@@ -281,10 +281,10 @@ void Write_SB_E1ST(u32 addr, u32 data)
 				u32 t=src;
 				src=dst;
 				dst=t;
-				printf("G2-EXT1 DMA : SB_E1DIR==1 DMA Read to 0x%X from 0x%X %d bytes\n",dst,src,len);
+				wprintf(L"G2-EXT1 DMA : SB_E1DIR==1 DMA Read to 0x%X from 0x%X %d bytes\n",dst,src,len);
 			}
 			else
-				printf("G2-EXT1 DMA : SB_E1DIR==0:DMA Write to 0x%X from 0x%X %d bytes\n",dst,src,len);
+				wprintf(L"G2-EXT1 DMA : SB_E1DIR==0:DMA Write to 0x%X from 0x%X %d bytes\n",dst,src,len);
 
 			WriteMemBlock_nommu_dma(dst,src,len);
 

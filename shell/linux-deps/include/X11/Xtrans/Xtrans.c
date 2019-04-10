@@ -163,7 +163,7 @@ TRANS(SelectTransport) (char *protocol)
      * a case insensitive match.
      */
 
-    strncpy (protobuf, protocol, PROTOBUFSIZE - 1);
+    wcsncpy (protobuf, protocol, PROTOBUFSIZE - 1);
     protobuf[PROTOBUFSIZE-1] = '\0';
 
     for (i = 0; i < PROTOBUFSIZE && protobuf[i] != '\0'; i++)
@@ -174,7 +174,7 @@ TRANS(SelectTransport) (char *protocol)
 
     for (i = 0; i < NUMTRANS; i++)
     {
-	if (!strcmp (protobuf, Xtransports[i].transport->TransName))
+	if (!wcscmp (protobuf, Xtransports[i].transport->TransName))
 	    return Xtransports[i].transport;
     }
 
@@ -189,12 +189,12 @@ TRANS(ParseAddress) (char *address, char **protocol, char **host, char **port)
 
 {
     /*
-     * For the font library, the address is a string formatted
+     * For the font library, the address is a wstring formatted
      * as "protocol/host:port[/catalogue]".  Note that the catologue
      * is optional.  At this time, the catologue info is ignored, but
      * we have to parse it anyways.
      *
-     * Other than fontlib, the address is a string formatted
+     * Other than fontlib, the address is a wstring formatted
      * as "protocol/host:port".
      *
      * If the protocol part is missing, then assume TCP.
@@ -209,12 +209,12 @@ TRANS(ParseAddress) (char *address, char **protocol, char **host, char **port)
 
     PRMSG (3,"ParseAddress(%s)\n", address, 0, 0);
 
-    /* Copy the string so it can be changed */
+    /* Copy the wstring so it can be changed */
 
-    tmpptr = mybuf = (char *) xalloc (strlen (address) + 1);
+    tmpptr = mybuf = (char *) xalloc (wcslen (address) + 1);
     strcpy (mybuf, address);
 
-    /* Parse the string to get each component */
+    /* Parse the wstring to get each component */
     
     /* Get the protocol part */
 
@@ -256,7 +256,7 @@ TRANS(ParseAddress) (char *address, char **protocol, char **host, char **port)
 
 	*mybuf ++= '\0'; /* put a null at the end of the protocol */
 
-	if (strlen(_protocol) == 0)
+	if (wcslen(_protocol) == 0)
 	{
 	    /*
 	     * If there is a hostname, then assume tcp, otherwise
@@ -290,7 +290,7 @@ TRANS(ParseAddress) (char *address, char **protocol, char **host, char **port)
 	 an IPv6 host and not a DECnet node with a : in it's name, unless
          DECnet is specifically requested */
       && ( ((mybuf - 1) == _host) || (*(mybuf - 2) != ':') ||
-	((_protocol != NULL) && (strcmp(_protocol, "dnet") == 0)) )
+	((_protocol != NULL) && (wcscmp(_protocol, "dnet") == 0)) )
 #endif
 	)
     {
@@ -300,7 +300,7 @@ TRANS(ParseAddress) (char *address, char **protocol, char **host, char **port)
 
     *mybuf ++= '\0';
 
-    _host_len = strlen(_host);
+    _host_len = wcslen(_host);
     if (_host_len == 0)
     {
 	TRANS(GetHostname) (hostnamebuf, sizeof (hostnamebuf));
@@ -309,7 +309,7 @@ TRANS(ParseAddress) (char *address, char **protocol, char **host, char **port)
 #if defined(IPv6) && defined(AF_INET6)
     /* hostname in IPv6 [numeric_addr]:0 form? */
     else if ( (_host_len > 3) && 
-      ((strcmp(_protocol, "tcp") == 0) || (strcmp(_protocol, "inet6") == 0))
+      ((wcscmp(_protocol, "tcp") == 0) || (wcscmp(_protocol, "inet6") == 0))
       && (*_host == '[') && (*(_host + _host_len - 1) == ']') ) { 
 	struct sockaddr_in6 sin6;
 
@@ -349,7 +349,7 @@ TRANS(ParseAddress) (char *address, char **protocol, char **host, char **port)
 
 #ifdef HAVE_LAUNCHD
     /* launchd sockets will look like 'local//tmp/launch-XgkNns/:0' */
-    if(address != NULL && strlen(address)>8 && (!strncmp(address,"local//",7))) {
+    if(address != NULL && wcslen(address)>8 && (!strncmp(address,"local//",7))) {
       _protocol="local";
       _host="";
       _port=address+6;
@@ -358,10 +358,10 @@ TRANS(ParseAddress) (char *address, char **protocol, char **host, char **port)
 
     /*
      * Now that we have all of the components, allocate new
-     * string space for them.
+     * wstring space for them.
      */
 
-    if ((*protocol = (char *) xalloc(strlen (_protocol) + 1)) == NULL)
+    if ((*protocol = (char *) xalloc(wcslen (_protocol) + 1)) == NULL)
     {
 	/* Malloc failed */
 	*port = NULL;
@@ -373,7 +373,7 @@ TRANS(ParseAddress) (char *address, char **protocol, char **host, char **port)
     else
         strcpy (*protocol, _protocol);
 
-    if ((*host = (char *) xalloc (strlen (_host) + 1)) == NULL)
+    if ((*host = (char *) xalloc (wcslen (_host) + 1)) == NULL)
     {
 	/* Malloc failed */
 	*port = NULL;
@@ -386,7 +386,7 @@ TRANS(ParseAddress) (char *address, char **protocol, char **host, char **port)
     else
         strcpy (*host, _host);
 
-    if ((*port = (char *) xalloc (strlen (_port) + 1)) == NULL)
+    if ((*port = (char *) xalloc (wcslen (_port) + 1)) == NULL)
     {
 	/* Malloc failed */
 	*port = NULL;
@@ -538,9 +538,9 @@ TRANS(Reopen) (int type, int trans_id, int fd, char *port)
 	return NULL;
     }
 
-    if ((save_port = (char *) xalloc (strlen (port) + 1)) == NULL)
+    if ((save_port = (char *) xalloc (wcslen (port) + 1)) == NULL)
     {
-	PRMSG (1,"Reopen: Unable to malloc port string\n", 0, 0, 0);
+	PRMSG (1,"Reopen: Unable to malloc port wstring\n", 0, 0, 0);
 
 	return NULL;
     }
@@ -667,7 +667,7 @@ TRANS(GetReopenInfo) (XtransConnInfo ciptr,
 	    *trans_id = Xtransports[i].transport_id;
 	    *fd = ciptr->fd;
 
-	    if ((*port = (char *) xalloc (strlen (ciptr->port) + 1)) == NULL)
+	    if ((*port = (char *) xalloc (wcslen (ciptr->port) + 1)) == NULL)
 		return 0;
 	    else
 	    {
@@ -1062,11 +1062,11 @@ TRANS(MakeAllCOTSServerListeners) (char *port, int *partial, int *count_ret,
     *count_ret = 0;
 
 #ifdef XQUARTZ_EXPORTS_LAUNCHD_FD
-    fprintf(stderr, "Launchd socket fd: %d\n", xquartz_launchd_fd);
+    fwprintf(stderr, "Launchd socket fd: %d\n", xquartz_launchd_fd);
     if(xquartz_launchd_fd != -1) {
         if((ciptr = TRANS(ReopenCOTSServer(TRANS_SOCKET_LOCAL_INDEX,
                                            xquartz_launchd_fd, getenv("DISPLAY"))))==NULL)
-            fprintf(stderr,"Got NULL while trying to Reopen launchd port\n");
+            fwprintf(stderr,"Got NULL while trying to Reopen launchd port\n");
         else 
             temp_ciptrs[(*count_ret)++] = ciptr;
     }
@@ -1366,15 +1366,15 @@ int TRANS(GetHostname) (char *buf, int maxlen)
     struct utsname name;
 
     uname (&name);
-    len = strlen (name.nodename);
+    len = wcslen (name.nodename);
     if (len >= maxlen) len = maxlen - 1;
-    strncpy (buf, name.nodename, len);
+    wcsncpy (buf, name.nodename, len);
     buf[len] = '\0';
 #else
     buf[0] = '\0';
     (void) gethostname (buf, maxlen);
     buf [maxlen - 1] = '\0';
-    len = strlen(buf);
+    len = wcslen(buf);
 #endif /* NEED_UTSNAME */
     return len;
 }

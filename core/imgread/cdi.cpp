@@ -6,7 +6,7 @@
 
 #include "deps/cdipsr/cdipsr.h"
 
-Disc* cdi_parse(const wchar* file)
+Disc* cdi_parse(const wchar_t* file)
 {
 	core_file* fsource=core_fopen(file);
 
@@ -36,10 +36,10 @@ Disc* cdi_parse(const wchar* file)
 
 		image.header_position = core_ftell(fsource);
 
-		printf("\nSession %d has %d track(s)\n",image.global_current_session,image.tracks);
+		wprintf(L"\nSession %d has %d track(s)\n",image.global_current_session,image.tracks);
 
 		if (image.tracks == 0)
-			printf("Open session\n");
+			wprintf(L"Open session\n");
 		else
 		{
 			// Clear cuesheet
@@ -58,21 +58,21 @@ Disc* cdi_parse(const wchar* file)
 
 				// Show info
 
-				printf("Saving  ");
-				printf("Track: %2d  ",track.global_current_track);
-				printf("Type: ");
+				wprintf(L"Saving  ");
+				wprintf(L"Track: %2d  ",track.global_current_track);
+				wprintf(L"Type: ");
 				switch(track.mode)
 				{
-				case 0 : printf("Audio/"); break;
-				case 1 : printf("Mode1/"); break;
+				case 0 : wprintf(L"Audio/"); break;
+				case 1 : wprintf(L"Mode1/"); break;
 				case 2 :
-				default: printf("Mode2/"); break;
+				default: wprintf(L"Mode2/"); break;
 				}
-				printf("%lu  ",track.sector_size);
+				wprintf(L"%lu  ",track.sector_size);
 				
-				printf("Pregap: %-3ld  ",track.pregap_length);
-				printf("Size: %-6ld  ",track.length);
-				printf("LBA: %-6ld  ",track.start_lba);
+				wprintf(L"Pregap: %-3ld  ",track.pregap_length);
+				wprintf(L"Size: %-6ld  ",track.length);
+				wprintf(L"LBA: %-6ld  ",track.start_lba);
 				
 				if (ft)
 				{
@@ -102,19 +102,18 @@ Disc* cdi_parse(const wchar* file)
 
 				rv->tracks.push_back(t);
 
-				 printf("\n");
+				 wprintf(L"\n");
 
-				//       if (track.pregap_length != 150) printf("Warning! This track seems to have a non-standard pregap...\n");
+				//       if (track.pregap_length != 150) wprintf(L"Warning! This track seems to have a non-standard pregap...\n");
 
 				if (track.length < 0)
-					printf( "Negative track size found\n"
-					"You must extract image with /pregap option");
+					wprintf(L"Negative track size found\n You must extract image with /pregap option");
 
 				//if (!opts.showinfo)
 				{
 					if (track.total_length < track.length + track.pregap_length)
 					{
-						printf("\nThis track seems truncated. Skipping...\n");
+						wprintf(L"\nThis track seems truncated. Skipping...\n");
 						core_fseek(fsource, track.position, SEEK_SET);
 						core_fseek(fsource, track.total_length, SEEK_CUR);
 						track.position = core_ftell(fsource);
@@ -122,7 +121,7 @@ Disc* cdi_parse(const wchar* file)
 					else
 					{
 						
-						printf("Track position: %lu\n",track.position + track.pregap_length * track.sector_size);
+						wprintf(L"Track position: %lu\n",track.position + track.pregap_length * track.sector_size);
 						core_fseek(fsource, track.position, SEEK_SET);
 						//     fseek(fsource, track->pregap_length * track->sector_size, SEEK_CUR);
 						//     fseek(fsource, track->length * track->sector_size, SEEK_CUR);

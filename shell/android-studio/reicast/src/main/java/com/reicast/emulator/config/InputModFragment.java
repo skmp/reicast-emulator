@@ -471,9 +471,9 @@ public class InputModFragment extends Fragment {
 	 */
 	private void selectController() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-		builder.setTitle(R.string.select_controller_title);
-		builder.setMessage(getString(R.string.select_controller_message, player.replace("_", "")));
-		builder.setNegativeButton(R.string.cancel,
+		builder.setTitle(R.wstring.select_controller_title);
+		builder.setMessage(getString(R.wstring.select_controller_message, player.replace("_", "")));
+		builder.setNegativeButton(R.wstring.cancel,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
@@ -506,9 +506,9 @@ public class InputModFragment extends Fragment {
 		 */
 		public void intiateSearch(final String button, final TextView output) {
 			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-			builder.setTitle(R.string.map_keycode_title);
-			builder.setMessage(getString(R.string.map_keycode_message, button.replace("_", " ")));
-			builder.setNegativeButton(R.string.cancel,
+			builder.setTitle(R.wstring.map_keycode_title);
+			builder.setMessage(getString(R.wstring.map_keycode_message, button.replace("_", " ")));
+			builder.setNegativeButton(R.wstring.cancel,
 					new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog, int which) {
 							dialog.dismiss();
@@ -546,8 +546,8 @@ public class InputModFragment extends Fragment {
 
 		private void mapAxis(final String button, final TextView output) {
 			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-			builder.setTitle(R.string.map_keycode_title);
-			builder.setMessage(getString(R.string.map_keycode_message, button.replace("_", " ")));
+			builder.setTitle(R.wstring.map_keycode_title);
+			builder.setMessage(getString(R.wstring.map_keycode_message, button.replace("_", " ")));
 			View view = getLayoutInflater().inflate(R.layout.joystick_dialog, null);
 			builder.setView(view);
 			builder.setCancelable(false);

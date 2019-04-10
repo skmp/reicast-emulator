@@ -69,6 +69,7 @@ float fb_scale_x,fb_scale_y;
 #define attr "attribute"
 #define vary "varying"
 #endif
+
 #if 1
 
 //Fragment and vertex shaders code
@@ -118,12 +119,11 @@ void main() \n\
 	gl_Position = vpos; \n\
 }";
 
-
 #else
 
 
 
-const char* VertexShaderSource =
+const wchar_t* VertexShaderSource =
 				""
 				"/* Test Projection Matrix */"
 				""
@@ -425,7 +425,7 @@ int screen_height;
 		}
 
 		if (!scePigletSetConfigurationVSH(&pgl_config)) {
-			printf("scePigletSetConfigurationVSH failed.\n");
+			wprintf(L"scePigletSetConfigurationVSH failed.\n");
 			return false;
 		}
 #endif
@@ -447,11 +447,11 @@ int screen_height;
 		EGLint maj, min;
 		if (!eglInitialize(gl.setup.display, &maj, &min))
 		{
-			printf("EGL Error: eglInitialize failed\n");
+			wprintf(L"EGL Error: eglInitialize failed\n");
 			return false;
 		}
 
-		printf("Info: EGL version %d.%d\n",maj,min);
+		wprintf(L"Info: EGL version %d.%d\n",maj,min);
 
 
 
@@ -463,7 +463,7 @@ int screen_height;
 		EGLConfig config;
 		if (!eglChooseConfig(gl.setup.display, pi32ConfigAttribs, &config, 1, &num_config) || (num_config != 1))
 		{
-			printf("EGL Error: eglChooseConfig failed\n");
+			wprintf(L"EGL Error: eglChooseConfig failed\n");
 			return false;
 		}
 
@@ -495,7 +495,7 @@ int screen_height;
 		screen_width=w;
 		screen_height=h;
 
-		printf("EGL config: %p, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
+		wprintf(L"EGL config: %p, %08X, %08X %dx%d\n",gl.setup.context,gl.setup.display,gl.setup.surface,w,h);
 		return true;
 	}
 
@@ -522,7 +522,7 @@ int screen_height;
 	//destroy the gles context and free resources
 	void gl_term()
 	{
-	#if HOST_OS==OS_WINDOWS
+	#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 		ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
 	#endif
 	#ifdef TARGET_PANDORA
@@ -544,7 +544,7 @@ int screen_height;
 	}
 #else
 
-	#if HOST_OS == OS_WINDOWS
+	#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 		#define WGL_DRAW_TO_WINDOW_ARB         0x2001
 		#define WGL_ACCELERATION_ARB           0x2003
 		#define WGL_SWAP_METHOD_ARB            0x2007
@@ -784,7 +784,7 @@ GLuint gl_CompileShader(const char* shader,GLuint type)
 		*compile_log=0;
 
 		glGetShaderInfoLog(rv, compile_log_len, &compile_log_len, compile_log);
-		printf("Shader: %s \n%s\n",result?"compiled!":"failed to compile",compile_log);
+		wprintf(L"Shader: %s \n%s\n",result?"compiled!":"failed to compile",compile_log);
 
 		free(compile_log);
 	}
@@ -828,10 +828,10 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 		*compile_log=0;
 
 		glGetProgramInfoLog(program, compile_log_len, &compile_log_len, compile_log);
-		printf("Shader linking: %s \n (%d bytes), - %s -\n",result?"linked":"failed to link", compile_log_len,compile_log);
+		wprintf(L"Shader linking: %s \n (%d bytes), - %s -\n",result?"linked":"failed to link", compile_log_len,compile_log);
 
 		free(compile_log);
-		die("shader compile fail\n");
+		die(L"shader compile fail\n");
 	}
 
 	glDeleteShader(vs);
@@ -983,7 +983,7 @@ bool gl_create_resources()
 
 
 	gl.OSD_SHADER.program=gl_CompileAndLink(VertexShaderSource,OSD_Shader);
-	printf("OSD: %d\n",gl.OSD_SHADER.program);
+	wprintf(L"OSD: %d\n",gl.OSD_SHADER.program);
 	gl.OSD_SHADER.scale=glGetUniformLocation(gl.OSD_SHADER.program, "scale");
 	gl.OSD_SHADER.depth_scale=glGetUniformLocation(gl.OSD_SHADER.program, "depth_scale");
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"),0);		//bind osd texture to slot 0
@@ -998,9 +998,9 @@ bool gl_create_resources()
 	#endif
 
 	int w, h;
-	osd_tex=loadPNG(get_readonly_data_path("/data/buttons.png"),w,h);
+	osd_tex=loadPNG(get_readonly_data_path(L"/data/buttons.png"),w,h);
 #ifdef TARGET_PANDORA
-	osd_font=loadPNG(get_readonly_data_path("/font2.png"),w,h);
+	osd_font=loadPNG(get_readonly_data_path(L"/font2.png"),w,h);
 #endif
 
 	return true;
@@ -1013,7 +1013,7 @@ void gl_swap();
 //destroy the gles context and free resources
 void gl_term();
 
-GLuint gl_CompileShader(const char* shader,GLuint type);
+GLuint gl_CompileShader(const wchar_t* shader,GLuint type);
 
 bool gl_create_resources();
 
@@ -1107,10 +1107,10 @@ void tryfit(float* x,float* y)
 		float diff=min(max(b*logf(x[i])/logf(2.0)+a,(double)0),(double)1)-y[i];
 		maxdev=max((float)fabs((float)diff),(float)maxdev);
 	}
-	printf("FOG TABLE Curve match: maxdev: %.02f cents\n",maxdev*100);
+	wprintf(L"FOG TABLE Curve match: maxdev: %.02f cents\n",maxdev*100);
 	fog_coefs[0]=a;
 	fog_coefs[1]=b;
-	//printf("%f\n",B*log(maxdev)/log(2.0)+A);
+	//wprintf(L"%f\n",B*log(maxdev)/log(2.0)+A);
 }
 
 
@@ -1217,7 +1217,7 @@ static void ClearBG()
 
 void DrawButton2(float* xy, bool state) { DrawButton(xy,state?0:255); }
 #ifdef TARGET_PANDORA
-static void DrawCenteredText(float yy, float scale, int transparency, const char* text)
+static void DrawCenteredText(float yy, float scale, int transparency, const wchar_t* text)
 // Draw a centered text. Font is loaded from font2.png file. Each char is 16*16 size, so scale it down so it's not too big
 // Transparency 255=opaque, 0=not visible
 {
@@ -1225,7 +1225,7 @@ static void DrawCenteredText(float yy, float scale, int transparency, const char
 
   vtx.z=1;
 
-  float w=float(strlen(text)*14)*scale;
+  float w=float(wcslen(text)*14)*scale;
 
   float x=320-w/2.0f;
   float y=yy;
@@ -1237,7 +1237,7 @@ static void DrawCenteredText(float yy, float scale, int transparency, const char
   if (transparency<0) transparency=0;
   if (transparency>255) transparency=255;
 
-  for (int i=0; i<strlen(text); i++) {
+  for (int i=0; i<wcslen(text); i++) {
     int c=text[i];
     float u=float(c%16);
     float v=float(c/16);
@@ -1266,7 +1266,7 @@ static void DrawCenteredText(float yy, float scale, int transparency, const char
     osd_count+=4;
   }
 }
-static void DrawRightedText(float yy, float scale, int transparency, const char* text)
+static void DrawRightedText(float yy, float scale, int transparency, const wchar_t* text)
 // Draw a text right justified. Font is loaded from font2.png file. Each char is 16*16 size, so scale it down so it's not too big
 // Transparency 255=opaque, 0=not visible
 {
@@ -1274,7 +1274,7 @@ static void DrawRightedText(float yy, float scale, int transparency, const char*
 
   vtx.z=1;
 
-  float w=float(strlen(text)*14)*scale;
+  float w=float(wcslen(text)*14)*scale;
 
   float x=640-w;
   float y=yy;
@@ -1286,7 +1286,7 @@ static void DrawRightedText(float yy, float scale, int transparency, const char*
   if (transparency<0) transparency=0;
   if (transparency>255) transparency=255;
 
-  for (int i=0; i<strlen(text); i++) {
+  for (int i=0; i<wcslen(text); i++) {
     int c=text[i];
     float u=float(c%16);
     float v=float(c/16);
@@ -1494,7 +1494,7 @@ bool ProcessFrame(TA_context* ctx)
 	{
 		void killtex();
 		killtex();
-		printf("Texture cache cleared\n");
+		wprintf(L"Texture cache cleared\n");
 	}
 
 	if (!ta_parse_vdrc(ctx))
@@ -1697,7 +1697,7 @@ bool RenderFrame()
 	ShaderUniforms.depth_coefs[2]=0;
 	ShaderUniforms.depth_coefs[3]=0;
 
-	//printf("scale: %f, %f, %f, %f\n",scale_coefs[0],scale_coefs[1],scale_coefs[2],scale_coefs[3]);
+	//wprintf(L"scale: %f, %f, %f, %f\n",scale_coefs[0],scale_coefs[1],scale_coefs[2],scale_coefs[3]);
 
 
 	//VERT and RAM fog color constants
@@ -1800,7 +1800,7 @@ bool RenderFrame()
 			break;
 
 		case 7: //7     invalid
-			die("7 is not valid");
+			die(L"7 is not valid");
 			break;
 		}
 		BindRTT(FB_W_SOF1&VRAM_MASK,FB_X_CLIP.max-FB_X_CLIP.min+1,FB_Y_CLIP.max-FB_Y_CLIP.min+1,channels,format);
@@ -1853,9 +1853,9 @@ bool RenderFrame()
 
 	#if 0
 		//handy to debug really stupid render-not-working issues ...
-		printf("SS: %dx%d\n", screen_width, screen_height);
-		printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
-		printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
+		wprintf(L"SS: %dx%d\n", screen_width, screen_height);
+		wprintf(L"SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
+		wprintf(L"SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 	#endif
 
 	glScissor(offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
@@ -1872,7 +1872,7 @@ bool RenderFrame()
 
 	DrawStrips();
 
-	#if HOST_OS==OS_WINDOWS
+	#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 		//Sleep(40); //to test MT stability
 	#endif
 
@@ -1951,15 +1951,15 @@ void png_cstd_read(png_structp png_ptr, png_bytep data, png_size_t length)
 	fread(data,1, length,pngfile);
 }
 
-GLuint loadPNG(const string& fname, int &width, int &height)
+GLuint loadPNG(const wstring& fname, int &width, int &height)
 {
-	const char* filename=fname.c_str();
+	const wchar_t* filename=fname.c_str();
 	FILE* file = fopen(filename, "rb");
 	pngfile=file;
 
 	if (!file)
 	{
-		printf("Error opening %s\n", filename);
+		wprintf(L"Error opening %s\n", filename);
 		return TEXTURE_LOAD_ERROR;
 	}
 
@@ -1974,7 +1974,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 	if (!is_png)
 	{
 		fclose(file);
-		printf("Not a PNG file : %s", filename);
+		wprintf(L"Not a PNG file : %s", filename);
 		return TEXTURE_LOAD_ERROR;
 	}
 
@@ -1984,7 +1984,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 	if (!png_ptr)
 	{
 		fclose(file);
-		printf("Unable to create PNG struct : %s", filename);
+		wprintf(L"Unable to create PNG struct : %s", filename);
 		return (TEXTURE_LOAD_ERROR);
 	}
 
@@ -1993,7 +1993,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 	if (!info_ptr)
 	{
 		png_destroy_read_struct(&png_ptr, (png_infopp) NULL, (png_infopp) NULL);
-		printf("Unable to create PNG info : %s", filename);
+		wprintf(L"Unable to create PNG info : %s", filename);
 		fclose(file);
 		return (TEXTURE_LOAD_ERROR);
 	}
@@ -2003,7 +2003,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 	if (!end_info)
 	{
 		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp) NULL);
-		printf("Unable to create PNG end info : %s", filename);
+		wprintf(L"Unable to create PNG end info : %s", filename);
 		fclose(file);
 		return (TEXTURE_LOAD_ERROR);
 	}
@@ -2012,7 +2012,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 	if (setjmp(png_jmpbuf(png_ptr)))
 	{
 		fclose(file);
-		printf("Error during setjmp : %s", filename);
+		wprintf(L"Error during setjmp : %s", filename);
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 		return (TEXTURE_LOAD_ERROR);
 	}
@@ -2051,7 +2051,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 	{
 		//clean up memory and close stuff
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-		printf("Unable to allocate image_data while loading %s ", filename);
+		wprintf(L"Unable to allocate image_data while loading %s ", filename);
 		fclose(file);
 		return TEXTURE_LOAD_ERROR;
 	}
@@ -2063,7 +2063,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 		//clean up memory and close stuff
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 		delete[] image_data;
-		printf("Unable to allocate row_pointer while loading %s ", filename);
+		wprintf(L"Unable to allocate row_pointer while loading %s ", filename);
 		fclose(file);
 		return TEXTURE_LOAD_ERROR;
 	}

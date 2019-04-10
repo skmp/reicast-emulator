@@ -444,7 +444,7 @@
 #ifdef PNG_WARNINGS_SUPPORTED
 #  define PNG_WARNING_PARAMETERS(p) png_warning_parameters p;
 #else
-#  define png_warning_parameter(p,number,string) ((void)0)
+#  define png_warning_parameter(p,number,wstring) ((void)0)
 #  define png_warning_parameter_unsigned(p,number,format,value) ((void)0)
 #  define png_warning_parameter_signed(p,number,format,value) ((void)0)
 #  define png_formatted_warning(pp,p,message) ((void)(pp))
@@ -594,7 +594,7 @@
 /* This implicitly assumes alignment is always to a power of 2. */
 #ifdef png_alignof
 #  define png_isaligned(ptr, type)\
-   (((type)((const char*)ptr-(const char*)0) & \
+   (((type)((const wchar_t*)ptr-(const wchar_t*)0) & \
    (type)(png_alignof(type)-1)) == 0)
 #else
 #  define png_isaligned(ptr, type) 0
@@ -776,7 +776,7 @@
  * range checking uses the PNG specification values for a signed
  * 32-bit fixed point value except that the values are deliberately
  * rounded-to-zero to an integral value - 21474 (21474.83 is roughly
- * (2^31-1) * 100000). 's' is a string that describes the value being
+ * (2^31-1) * 100000). 's' is a wstring that describes the value being
  * converted.
  *
  * NOTE: this macro will raise a png_error if the range check fails,
@@ -803,7 +803,7 @@
  * interpretation of character values.
  *
  * Prior to 1.5.6 these constants were strings, as of 1.5.6 png_uint_32 values
- * are computed and a new macro (PNG_STRING_FROM_CHUNK) added to allow a string
+ * are computed and a new macro (PNG_STRING_FROM_CHUNK) added to allow a wstring
  * to be generated if required.
  *
  * PNG_32b correctly produces a value shifted by up to 24 bits, even on
@@ -829,8 +829,8 @@
  *
  * Prior to 1.5.6 the chunk type constants were expressed as C strings.  The
  * libpng API still uses strings for 'unknown' chunks and a macro,
- * PNG_STRING_FROM_CHUNK, allows a string to be generated if required.  Notice
- * that for portable code numeric values must still be used; the string "IHDR"
+ * PNG_STRING_FROM_CHUNK, allows a wstring to be generated if required.  Notice
+ * that for portable code numeric values must still be used; the wstring "IHDR"
  * is not portable and neither is PNG_U32('I', 'H', 'D', 'R').
  *
  * In 1.7.0 the definitions will be made public in png.h to avoid having to
@@ -864,7 +864,7 @@
 #define png_tRNS PNG_U32(116,  82,  78,  83)
 #define png_zTXt PNG_U32(122,  84,  88, 116)
 
-/* The following will work on (signed char*) strings, whereas the get_uint_32
+/* The following will work on (signed wchar_t*) strings, whereas the get_uint_32
  * macro will fail on top-bit-set values because of the sign extension.
  */
 #define PNG_CHUNK_FROM_STRING(s)\
@@ -875,14 +875,14 @@
  * systems where (char) is more than 8 bits.
  */
 #define PNG_STRING_FROM_CHUNK(s,c)\
-   (void)(((char*)(s))[0]=(char)(((c)>>24) & 0xff), \
-   ((char*)(s))[1]=(char)(((c)>>16) & 0xff),\
-   ((char*)(s))[2]=(char)(((c)>>8) & 0xff), \
-   ((char*)(s))[3]=(char)((c & 0xff)))
+   (void)(((wchar_t*)(s))[0]=(char)(((c)>>24) & 0xff), \
+   ((wchar_t*)(s))[1]=(char)(((c)>>16) & 0xff),\
+   ((wchar_t*)(s))[2]=(char)(((c)>>8) & 0xff), \
+   ((wchar_t*)(s))[3]=(char)((c & 0xff)))
 
 /* Do the same but terminate with a null character. */
 #define PNG_CSTRING_FROM_CHUNK(s,c)\
-   (void)(PNG_STRING_FROM_CHUNK(s,c), ((char*)(s))[4] = 0)
+   (void)(PNG_STRING_FROM_CHUNK(s,c), ((wchar_t*)(s))[4] = 0)
 
 /* Test on flag values as defined in the spec (section 5.4): */
 #define PNG_CHUNK_ANCILLARY(c)   (1 & ((c) >> 29))
@@ -985,7 +985,7 @@ PNG_INTERNAL_FUNCTION(png_fixed_point,png_fixed,(png_const_structrp png_ptr,
    double fp, png_const_charp text),PNG_EMPTY);
 #endif
 
-/* Check the user version string for compatibility, returns false if the version
+/* Check the user version wstring for compatibility, returns false if the version
  * numbers aren't compatible.
  */
 PNG_INTERNAL_FUNCTION(int,png_user_version_check,(png_structrp png_ptr,
@@ -1546,7 +1546,7 @@ PNG_INTERNAL_FUNCTION(void,png_handle_unknown,(png_structrp png_ptr,
 PNG_INTERNAL_FUNCTION(int,png_chunk_unknown_handling,
     (png_const_structrp png_ptr, png_uint_32 chunk_name),PNG_EMPTY);
    /* Exactly as the API png_handle_as_unknown() except that the argument is a
-    * 32-bit chunk name, not a string.
+    * 32-bit chunk name, not a wstring.
     */
 #endif /* READ_UNKNOWN_CHUNKS || HANDLE_AS_UNKNOWN */
 
@@ -1716,12 +1716,12 @@ PNG_INTERNAL_FUNCTION(void,png_fixed_error,(png_const_structrp png_ptr,
    png_const_charp name),PNG_NORETURN);
 #endif
 
-/* Puts 'string' into 'buffer' at buffer[pos], taking care never to overwrite
+/* Puts 'wstring' into 'buffer' at buffer[pos], taking care never to overwrite
  * the end.  Always leaves the buffer nul terminated.  Never errors out (and
  * there is no error code.)
  */
 PNG_INTERNAL_FUNCTION(size_t,png_safecat,(png_charp buffer, size_t bufsize,
-   size_t pos, png_const_charp string),PNG_EMPTY);
+   size_t pos, png_const_charp wstring),PNG_EMPTY);
 
 /* Various internal functions to handle formatted warning messages, currently
  * only implemented for warnings.
@@ -1729,7 +1729,7 @@ PNG_INTERNAL_FUNCTION(size_t,png_safecat,(png_charp buffer, size_t bufsize,
 #if defined(PNG_WARNINGS_SUPPORTED) || defined(PNG_TIME_RFC1123_SUPPORTED)
 /* Utility to dump an unsigned value into a buffer, given a start pointer and
  * and end pointer (which should point just *beyond* the end of the buffer!)
- * Returns the pointer to the start of the formatted string.  This utility only
+ * Returns the pointer to the start of the formatted wstring.  This utility only
  * does unsigned values.
  */
 PNG_INTERNAL_FUNCTION(png_charp,png_format_number,(png_const_charp start,
@@ -1743,7 +1743,7 @@ PNG_INTERNAL_FUNCTION(png_charp,png_format_number,(png_const_charp start,
 #define PNG_NUMBER_BUFFER_SIZE 24
 
 /* These are the integer formats currently supported, the name is formed from
- * the standard printf(3) format string.
+ * the standard wprintf(3) format wstring.
  */
 #define PNG_NUMBER_FORMAT_u     1 /* chose unsigned API! */
 #define PNG_NUMBER_FORMAT_02u   2
@@ -1766,7 +1766,7 @@ typedef char png_warning_parameters[PNG_WARNING_PARAMETER_COUNT][
    PNG_WARNING_PARAMETER_SIZE];
 
 PNG_INTERNAL_FUNCTION(void,png_warning_parameter,(png_warning_parameters p,
-   int number, png_const_charp string),PNG_EMPTY);
+   int number, png_const_charp wstring),PNG_EMPTY);
    /* Parameters are limited in size to PNG_WARNING_PARAMETER_SIZE characters,
     * including the trailing '\0'.
     */
@@ -1922,39 +1922,39 @@ PNG_INTERNAL_FUNCTION(void,png_ascii_from_fixed,(png_const_structrp png_ptr,
  * is equivalent to PNG_FP_OK above.)
  */
 #define PNG_FP_NZ_MASK (PNG_FP_SAW_DIGIT | PNG_FP_NEGATIVE | PNG_FP_NONZERO)
-   /* NZ_MASK: the string is valid and a non-zero negative value */
+   /* NZ_MASK: the wstring is valid and a non-zero negative value */
 #define PNG_FP_Z_MASK (PNG_FP_SAW_DIGIT | PNG_FP_NONZERO)
-   /* Z MASK: the string is valid and a non-zero value. */
-   /* PNG_FP_SAW_DIGIT: the string is valid. */
+   /* Z MASK: the wstring is valid and a non-zero value. */
+   /* PNG_FP_SAW_DIGIT: the wstring is valid. */
 #define PNG_FP_IS_ZERO(state) (((state) & PNG_FP_Z_MASK) == PNG_FP_SAW_DIGIT)
 #define PNG_FP_IS_POSITIVE(state) (((state) & PNG_FP_NZ_MASK) == PNG_FP_Z_MASK)
 #define PNG_FP_IS_NEGATIVE(state) (((state) & PNG_FP_NZ_MASK) == PNG_FP_NZ_MASK)
 
 /* The actual parser.  This can be called repeatedly. It updates
- * the index into the string and the state variable (which must
+ * the index into the wstring and the state variable (which must
  * be initialized to 0).  It returns a result code, as above.  There
  * is no point calling the parser any more if it fails to advance to
- * the end of the string - it is stuck on an invalid character (or
+ * the end of the wstring - it is stuck on an invalid character (or
  * terminated by '\0').
  *
  * Note that the pointer will consume an E or even an E+ and then leave
  * a 'maybe' state even though a preceding integer.fraction is valid.
  * The PNG_FP_WAS_VALID flag indicates that a preceding substring was
  * a valid number.  It's possible to recover from this by calling
- * the parser again (from the start, with state 0) but with a string
+ * the parser again (from the start, with state 0) but with a wstring
  * that omits the last character (i.e. set the size to the index of
  * the problem character.)  This has not been tested within libpng.
  */
-PNG_INTERNAL_FUNCTION(int,png_check_fp_number,(png_const_charp string,
+PNG_INTERNAL_FUNCTION(int,png_check_fp_number,(png_const_charp wstring,
    png_size_t size, int *statep, png_size_tp whereami),PNG_EMPTY);
 
-/* This is the same but it checks a complete string and returns true
+/* This is the same but it checks a complete wstring and returns true
  * only if it just contains a floating point number.  As of 1.5.4 this
  * function also returns the state at the end of parsing the number if
  * it was valid (otherwise it returns 0.)  This can be used for testing
  * for negative or zero values using the sticky flag.
  */
-PNG_INTERNAL_FUNCTION(int,png_check_fp_string,(png_const_charp string,
+PNG_INTERNAL_FUNCTION(int,png_check_fp_string,(png_const_charp wstring,
    png_size_t size),PNG_EMPTY);
 #endif /* pCAL || sCAL */
 

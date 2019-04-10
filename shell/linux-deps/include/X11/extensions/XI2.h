@@ -165,9 +165,9 @@
 #define XIDependentTouch                        2
 
 /* XI2 event mask macros */
-#define XISetMask(ptr, event)   (((unsigned char*)(ptr))[(event)>>3] |=  (1 << ((event) & 7)))
-#define XIClearMask(ptr, event) (((unsigned char*)(ptr))[(event)>>3] &= ~(1 << ((event) & 7)))
-#define XIMaskIsSet(ptr, event) (((unsigned char*)(ptr))[(event)>>3] &   (1 << ((event) & 7)))
+#define XISetMask(ptr, event)   (((unsigned wchar_t*)(ptr))[(event)>>3] |=  (1 << ((event) & 7)))
+#define XIClearMask(ptr, event) (((unsigned wchar_t*)(ptr))[(event)>>3] &= ~(1 << ((event) & 7)))
+#define XIMaskIsSet(ptr, event) (((unsigned wchar_t*)(ptr))[(event)>>3] &   (1 << ((event) & 7)))
 #define XIMaskLen(event)        (((event) >> 3) + 1)
 
 /* Fake device ID's for event selection */

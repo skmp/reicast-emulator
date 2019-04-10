@@ -263,7 +263,7 @@ TRANS(SocketSelectFamily) (int first, char *family)
 
     for (i = first + 1; i < NUMSOCKETFAMILIES;i++)
     {
-        if (!strcmp (family, Sockettrans2devtab[i].transname))
+        if (!wcscmp (family, Sockettrans2devtab[i].transname))
 	    return i;
     }
 
@@ -469,7 +469,7 @@ TRANS(SocketReopen) (int i, int type, int fd, char *port)
       return NULL;
     }
 
-    portlen = strlen(port) + 1; // include space for trailing null
+    portlen = wcslen(port) + 1; // include space for trailing null
 #ifdef SOCK_MAXADDRLEN
     if (portlen < 0 || portlen > (SOCK_MAXADDRLEN + 2)) {
       PRMSG (1, "SocketReopen: invalid portlen %d\n", portlen, 0, 0);
@@ -514,7 +514,7 @@ TRANS(SocketReopen) (int i, int type, int fd, char *port)
 #ifdef HAS_STRLCPY
     strlcpy(addr->sa_data, port, portlen);
 #else
-    strncpy(addr->sa_data, port, portlen);
+    wcsncpy(addr->sa_data, port, portlen);
 #endif
     ciptr->family = AF_UNIX;
     memcpy(ciptr->peeraddr, ciptr->addr, sizeof(struct sockaddr));
@@ -840,9 +840,9 @@ set_sun_path(const char *port, const char *upath, char *path, int abstract)
     if (*port == '/') /* a full pathname */
 	upath = "";
 
-    if (strlen(port) + strlen(upath) > maxlen)
+    if (wcslen(port) + wcslen(upath) > maxlen)
 	return -1;
-    sprintf(path, "%s%s%s", at, upath, port);
+    swprintf(path, "%s%s%s", at, upath, port);
     return 0;
 }
 #endif
@@ -955,22 +955,22 @@ TRANS(SocketINETCreateListener) (XtransConnInfo ciptr, char *port, unsigned int 
      * to handle it here, than try and come up with a transport independent
      * representation that can be passed in and resolved the usual way.
      *
-     * The port that is passed here is really a string containing the idisplay
+     * The port that is passed here is really a wstring containing the idisplay
      * from ConnectDisplay().
      */
 
     if (is_numeric (port))
     {
 	/* fixup the server port address */
-	tmpport = X_TCP_PORT + strtol (port, (char**)NULL, 10);
-	sprintf (portbuf,"%lu", tmpport);
+	tmpport = X_TCP_PORT + strtol (port, (wchar_t**)NULL, 10);
+	swprintf (portbuf,"%lu", tmpport);
 	port = portbuf;
     }
 #endif
 
     if (port && *port)
     {
-	/* Check to see if the port string is just a number (handles X11) */
+	/* Check to see if the port wstring is just a number (handles X11) */
 
 	if (!is_numeric (port))
 	{
@@ -986,7 +986,7 @@ TRANS(SocketINETCreateListener) (XtransConnInfo ciptr, char *port, unsigned int 
 	}
 	else
 	{
-	    tmpport = strtol (port, (char**)NULL, 10);
+	    tmpport = strtol (port, (wchar_t**)NULL, 10);
 	    /* 
 	     * check that somehow the port address isn't negative or in
 	     * the range of reserved port addresses. This can happen and
@@ -1106,18 +1106,18 @@ TRANS(SocketUNIXCreateListener) (XtransConnInfo ciptr, char *port,
     }
 
 #if (defined(BSD44SOCKETS) || defined(__UNIXWARE__)) 
-    sockname.sun_len = strlen(sockname.sun_path);
+    sockname.sun_len = wcslen(sockname.sun_path);
 #endif
 
 #if defined(BSD44SOCKETS) || defined(SUN_LEN)
     namelen = SUN_LEN(&sockname);
 #else
-    namelen = strlen(sockname.sun_path) + offsetof(struct sockaddr_un, sun_path);
+    namelen = wcslen(sockname.sun_path) + offsetof(struct sockaddr_un, sun_path);
 #endif
 
     if (abstract) {
 	sockname.sun_path[0] = '\0';
-	namelen = offsetof(struct sockaddr_un, sun_path) + 1 + strlen(&sockname.sun_path[1]);
+	namelen = offsetof(struct sockaddr_un, sun_path) + 1 + wcslen(&sockname.sun_path[1]);
     }
     else
 	unlink (sockname.sun_path);
@@ -1461,14 +1461,14 @@ TRANS(SocketINETConnect) (XtransConnInfo ciptr, char *host, char *port)
      * to handle it here, than try and come up with a transport independent
      * representation that can be passed in and resolved the usual way.
      *
-     * The port that is passed here is really a string containing the idisplay
+     * The port that is passed here is really a wstring containing the idisplay
      * from ConnectDisplay().
      */
 
     if (is_numeric (port))
     {
-	tmpport = X_TCP_PORT + strtol (port, (char**)NULL, 10);
-	sprintf (portbuf, "%lu", tmpport);
+	tmpport = X_TCP_PORT + strtol (port, (wchar_t**)NULL, 10);
+	swprintf (portbuf, "%lu", tmpport);
 	port = portbuf;
     }
 #endif
@@ -1476,7 +1476,7 @@ TRANS(SocketINETConnect) (XtransConnInfo ciptr, char *host, char *port)
 #if defined(IPv6) && defined(AF_INET6)
     {
 	if (addrlist != NULL) {
-	    if (strcmp(host,addrlist->host) || strcmp(port,addrlist->port)) {
+	    if (wcscmp(host,addrlist->host) || wcscmp(port,addrlist->port)) {
 		if (addrlist->firstaddr)
 		    freeaddrinfo(addrlist->firstaddr);
 		addrlist->firstaddr = NULL;
@@ -1487,9 +1487,9 @@ TRANS(SocketINETConnect) (XtransConnInfo ciptr, char *host, char *port)
 	}
 
 	if (addrlist->firstaddr == NULL) {
-	    strncpy(addrlist->port, port, sizeof(addrlist->port));
+	    wcsncpy(addrlist->port, port, sizeof(addrlist->port));
 	    addrlist->port[sizeof(addrlist->port) - 1] = '\0';
-	    strncpy(addrlist->host, host, sizeof(addrlist->host));
+	    wcsncpy(addrlist->host, host, sizeof(addrlist->host));
 	    addrlist->host[sizeof(addrlist->host) - 1] = '\0';
 
 	    bzero(&hints,sizeof(hints));
@@ -1539,7 +1539,7 @@ TRANS(SocketINETConnect) (XtransConnInfo ciptr, char *host, char *port)
 			ntohs(sin->sin_port), 0, 0); 
 
 		if (Sockettrans2devtab[ciptr->index].family == AF_INET6) {
-		    if (strcmp(Sockettrans2devtab[ciptr->index].transname,
+		    if (wcscmp(Sockettrans2devtab[ciptr->index].transname,
 				"tcp") == 0) {
 			XtransConnInfo newciptr;
 
@@ -1580,7 +1580,7 @@ TRANS(SocketINETConnect) (XtransConnInfo ciptr, char *host, char *port)
 			ntohs(sin6->sin6_port), 0, 0); 
 
 		if (Sockettrans2devtab[ciptr->index].family == AF_INET) {
-		    if (strcmp(Sockettrans2devtab[ciptr->index].transname,
+		    if (wcscmp(Sockettrans2devtab[ciptr->index].transname,
 				"tcp") == 0) {
 			XtransConnInfo newciptr;
 
@@ -1636,7 +1636,7 @@ TRANS(SocketINETConnect) (XtransConnInfo ciptr, char *host, char *port)
 #define INADDR_NONE ((in_addr_t) 0xffffffff)
 #endif
 
-	/* check for ww.xx.yy.zz host string */
+	/* check for ww.xx.yy.zz host wstring */
 
 	if (isascii (host[0]) && isdigit (host[0])) {
 	    tmpaddr = inet_addr (host); /* returns network byte order */
@@ -1670,7 +1670,7 @@ TRANS(SocketINETConnect) (XtransConnInfo ciptr, char *host, char *port)
 	 * fill in sin_port
 	 */
 
-	/* Check for number in the port string */
+	/* Check for number in the port wstring */
 
 	if (!is_numeric (port)) {
 	    if ((servp = _XGetservbyname (port,"tcp",sparams)) == NULL) {
@@ -1680,7 +1680,7 @@ TRANS(SocketINETConnect) (XtransConnInfo ciptr, char *host, char *port)
 	    }
 	    sockname.sin_port = htons (servp->s_port);
 	} else {
-	    tmpport = strtol (port, (char**)NULL, 10);
+	    tmpport = strtol (port, (wchar_t**)NULL, 10);
 	    if (tmpport < 1024 || tmpport > USHRT_MAX)
 		return TRANS_CONNECT_FAILED;
 	    sockname.sin_port = htons (((unsigned short) tmpport));
@@ -1814,7 +1814,7 @@ UnixHostReallyLocal (char *host)
 
     TRANS(GetHostname) (hostnamebuf, sizeof (hostnamebuf));
 
-    if (strcmp (hostnamebuf, host) == 0)
+    if (wcscmp (hostnamebuf, host) == 0)
     {
 	return (1);
     } else {
@@ -1960,7 +1960,7 @@ TRANS(SocketUNIXConnect) (XtransConnInfo ciptr, char *host, char *port)
      * we know for sure it will fail.
      */
 
-    if (host && *host && host[0]!='/' && strcmp (host, "unix") != 0 && !UnixHostReallyLocal (host))
+    if (host && *host && host[0]!='/' && wcscmp (host, "unix") != 0 && !UnixHostReallyLocal (host))
     {
 	PRMSG (1,
 	   "SocketUNIXConnect: Cannot connect to non-local host %s\n",
@@ -1992,20 +1992,20 @@ TRANS(SocketUNIXConnect) (XtransConnInfo ciptr, char *host, char *port)
     }
 
 #if (defined(BSD44SOCKETS) || defined(__UNIXWARE__)) 
-    sockname.sun_len = strlen (sockname.sun_path);
+    sockname.sun_len = wcslen (sockname.sun_path);
 #endif
 
 #if defined(BSD44SOCKETS) || defined(SUN_LEN)
     namelen = SUN_LEN (&sockname);
 #else
-    namelen = strlen (sockname.sun_path) + offsetof(struct sockaddr_un, sun_path);
+    namelen = wcslen (sockname.sun_path) + offsetof(struct sockaddr_un, sun_path);
 #endif
 
 
 
     /*
      * Adjust the socket path if using abstract sockets.
-     * Done here because otherwise all the strlen() calls above would fail.
+     * Done here because otherwise all the wcslen() calls above would fail.
      */
 
     if (abstract) {
@@ -2266,7 +2266,7 @@ TRANS(SocketUNIXCloseForCloning) (XtransConnInfo ciptr)
 
 #ifdef TCPCONN
 # ifdef TRANS_SERVER
-static char* tcp_nolisten[] = {
+static wchar_t* tcp_nolisten[] = {
 	"inet",
 #if defined(IPv6) && defined(AF_INET6)
 	"inet6",
@@ -2446,7 +2446,7 @@ Xtransport	TRANS(SocketLocalFuncs) = {
 #endif /* !LOCALCONN */
 # ifdef TRANS_SERVER
 #  if !defined(LOCALCONN)
-static char* unix_nolisten[] = { "local" , NULL };
+static wchar_t* unix_nolisten[] = { "local" , NULL };
 #  endif
 # endif
 	    

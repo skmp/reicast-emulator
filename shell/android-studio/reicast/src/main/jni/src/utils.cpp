@@ -23,23 +23,23 @@ extern "C" {
 zip_file* file;
 
 zip* APKArchive;
-void setAPK (const char* apkPath) {
-  LOGI("Loading APK %s", apkPath);
+void setAPK (const wchar_t* apkPath) {
+  LOGI(L"Loading APK %s", apkPath);
   APKArchive = zip_open(apkPath, 0, NULL);
   if (APKArchive == NULL) {
-    LOGE("Error loading APK");
+    LOGE(L"Error loading APK");
     return;
   }
 
   //Just for debug, print APK contents
   int numFiles = zip_get_num_files(APKArchive);
   for (int i=0; i<numFiles; i++) {
-    const char* name = zip_get_name(APKArchive, i, 0);
+    const wchar_t* name = zip_get_name(APKArchive, i, 0);
     if (name == NULL) {
-      LOGE("Error reading zip file name at index %i : %s", i, zip_strerror(APKArchive));
+      LOGE(L"Error reading zip file name at index %i : %s", i, zip_strerror(APKArchive));
       return;
     }
-    LOGI("File %i : %s\n", i, name);
+    LOGI(L"File %i : %s\n", i, name);
   }
 }
 
@@ -47,10 +47,10 @@ void png_zip_read(png_structp png_ptr, png_bytep data, png_size_t length) {
   zip_fread(file, data, length);
 }
 
-GLuint loadTextureFromPNG(const char* filename, int &width, int &height) {
+GLuint loadTextureFromPNG(const wchar_t* filename, int &width, int &height) {
   file = zip_fopen(APKArchive, filename, 0);
   if (!file) {
-    LOGE("Error opening %s from APK", filename);
+    LOGE(L"Error opening %s from APK", filename);
     return TEXTURE_LOAD_ERROR;
   }
 
@@ -64,7 +64,7 @@ GLuint loadTextureFromPNG(const char* filename, int &width, int &height) {
   int is_png = !png_sig_cmp(header, 0, 8);
   if (!is_png) {
     zip_fclose(file);
-    LOGE("Not a png file : %s", filename);
+    LOGE(L"Not a png file : %s", filename);
     return TEXTURE_LOAD_ERROR;
   }
 
@@ -72,7 +72,7 @@ GLuint loadTextureFromPNG(const char* filename, int &width, int &height) {
   png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
   if (!png_ptr) {
     zip_fclose(file);
-    LOGE("Unable to create png struct : %s", filename);
+    LOGE(L"Unable to create png struct : %s", filename);
     return (TEXTURE_LOAD_ERROR);
   }
 
@@ -80,7 +80,7 @@ GLuint loadTextureFromPNG(const char* filename, int &width, int &height) {
   png_infop info_ptr = png_create_info_struct(png_ptr);
   if (!info_ptr) {
     png_destroy_read_struct(&png_ptr, (png_infopp) NULL, (png_infopp) NULL);
-    LOGE("Unable to create png info : %s", filename);
+    LOGE(L"Unable to create png info : %s", filename);
     zip_fclose(file);
     return (TEXTURE_LOAD_ERROR);
   }
@@ -89,7 +89,7 @@ GLuint loadTextureFromPNG(const char* filename, int &width, int &height) {
   png_infop end_info = png_create_info_struct(png_ptr);
   if (!end_info) {
     png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp) NULL);
-    LOGE("Unable to create png end info : %s", filename);
+    LOGE(L"Unable to create png end info : %s", filename);
     zip_fclose(file);
     return (TEXTURE_LOAD_ERROR);
   }
@@ -97,7 +97,7 @@ GLuint loadTextureFromPNG(const char* filename, int &width, int &height) {
   //png error stuff, not sure libpng man suggests this.
   if (setjmp(png_jmpbuf(png_ptr))) {
     zip_fclose(file);
-    LOGE("Error during setjmp : %s", filename);
+    LOGE(L"Error during setjmp : %s", filename);
     png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
     return (TEXTURE_LOAD_ERROR);
   }
@@ -134,7 +134,7 @@ GLuint loadTextureFromPNG(const char* filename, int &width, int &height) {
   if (!image_data) {
     //clean up memory and close stuff
     png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-    LOGE("Unable to allocate image_data while loading %s ", filename);
+    LOGE(L"Unable to allocate image_data while loading %s ", filename);
     zip_fclose(file);
     return TEXTURE_LOAD_ERROR;
   }
@@ -145,7 +145,7 @@ GLuint loadTextureFromPNG(const char* filename, int &width, int &height) {
     //clean up memory and close stuff
     png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
     delete[] image_data;
-    LOGE("Unable to allocate row_pointer while loading %s ", filename);
+    LOGE(L"Unable to allocate row_pointer while loading %s ", filename);
     zip_fclose(file);
     return TEXTURE_LOAD_ERROR;
   }

@@ -366,7 +366,7 @@ _zip_headercomp(struct zip_dirent *h1, int local1p, struct zip_dirent *h2,
 	|| (h1->last_mod != h2->last_mod)
 	|| (h1->filename_len != h2->filename_len)
 	|| !h1->filename || !h2->filename
-	|| strcmp(h1->filename, h2->filename))
+	|| wcscmp(h1->filename, h2->filename))
 	return -1;
 
     /* check that CRC and sizes are zero if data descriptor is used */

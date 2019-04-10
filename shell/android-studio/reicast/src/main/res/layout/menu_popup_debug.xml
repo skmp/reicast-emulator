@@ -27,7 +27,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_back" />
+                android:text="@wstring/popup_button_back" />
         </TableRow>
 
         <TableRow
@@ -44,7 +44,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_clear_cache" />
+                android:text="@wstring/popup_button_clear_cache" />
         </TableRow>
 
         <TableRow
@@ -61,7 +61,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_profiler_one" />
+                android:text="@wstring/popup_button_profiler_one" />
         </TableRow>
 
         <TableRow
@@ -78,7 +78,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_profiler_two" />
+                android:text="@wstring/popup_button_profiler_two" />
         </TableRow>
 
         <TableRow
@@ -95,7 +95,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rounded"
                 android:ems="8"
-                android:text="@string/popup_button_print_stats" />
+                android:text="@wstring/popup_button_print_stats" />
         </TableRow>
     </TableLayout>
 

@@ -58,23 +58,23 @@ void input_sdl_init()
 	{
 		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
 		{
-			die("error initializing SDL Joystick subsystem");
+			die(L"error initializing SDL Joystick subsystem");
 		}
 	}
 	// Open joystick device
 	int numjoys = SDL_NumJoysticks();
-	printf("Number of Joysticks found = %i\n", numjoys);
+	wprintf(L"Number of Joysticks found = %i\n", numjoys);
 	if (numjoys > 0)
 	{
 		JoySDL = SDL_JoystickOpen(0);
 	}
 
-	printf("Joystick opened\n");
+	wprintf(L"Joystick opened\n");
 
 	if (JoySDL)
 	{
 		int AxisCount,ButtonCount;
-		const char* Name;
+		const wchar_t* Name;
 
 		AxisCount   = 0;
 		ButtonCount = 0;
@@ -84,18 +84,18 @@ void input_sdl_init()
 		ButtonCount = SDL_JoystickNumButtons(JoySDL);
 		Name = SDL_JoystickName(JoySDL);
 
-		printf("SDK: Found '%s' joystick with %d axes and %d buttons\n", Name, AxisCount, ButtonCount);
+		wprintf(L"SDK: Found '%s' joystick with %d axes and %d buttons\n", Name, AxisCount, ButtonCount);
 
-		if (Name != NULL && strcmp(Name,"Microsoft X-Box 360 pad")==0)
+		if (Name != NULL && wcscmp(Name,"Microsoft X-Box 360 pad")==0)
 		{
 			sdl_map_btn  = sdl_map_btn_xbox360;
 			sdl_map_axis = sdl_map_axis_xbox360;
-			printf("Using Xbox 360 map\n");
+			wprintf(L"Using Xbox 360 map\n");
 		}
 	}
 	else
 	{
-		printf("SDK: No Joystick Found\n");
+		wprintf(L"SDK: No Joystick Found\n");
 	}
 
 	#ifdef TARGET_PANDORA
@@ -137,7 +137,7 @@ void input_sdl_handle(u32 port)
 			case SDL_KEYUP:
 				k = event.key.keysym.sym;
 				value = (event.type == SDL_KEYDOWN) ? 1 : 0;
-				printf("type %i key %i \n", event.type, k);
+				wprintf(L"type %i key %i \n", event.type, k);
 				switch (k) {
 					//TODO: Better keymaps for non-pandora platforms
 					case SDLK_SPACE:
@@ -226,11 +226,11 @@ void input_sdl_handle(u32 port)
 					u32 mt = sdl_map_btn[k] >> 16;
 					u32 mo = sdl_map_btn[k] & 0xFFFF;
 
-					// printf("BUTTON %d,%d\n",JE.number,JE.value);
+					// wprintf(L"BUTTON %d,%d\n",JE.number,JE.value);
 
 					if (mt == 0)
 					{
-						// printf("Mapped to %d\n",mo);
+						// wprintf(L"Mapped to %d\n",mo);
 						if (value)
 							kcode[port] &= ~mo;
 						else
@@ -238,7 +238,7 @@ void input_sdl_handle(u32 port)
 					}
 					else if (mt == 1)
 					{
-						// printf("Mapped to %d %d\n",mo,JE.value?255:0);
+						// wprintf(L"Mapped to %d %d\n",mo,JE.value?255:0);
 						if (mo == 0)
 						{
 							lt[port] = value ? 255 : 0;
@@ -258,7 +258,7 @@ void input_sdl_handle(u32 port)
 					u32 mt = sdl_map_axis[k] >> 16;
 					u32 mo = sdl_map_axis[k] & 0xFFFF;
 
-					//printf("AXIS %d,%d\n",JE.number,JE.value);
+					//wprintf(L"AXIS %d,%d\n",JE.number,JE.value);
 					s8 v=(s8)(value/256); //-127 ... + 127 range
 					#ifdef TARGET_PANDORA
 						v = JSensitivity[128+v];
@@ -277,13 +277,13 @@ void input_sdl_handle(u32 port)
 							kcode[port] &= ~(mo*2);
 						}
 
-						// printf("Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
+						// wprintf(L"Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
 					}
 					else if (mt == 1)
 					{
 						if (v >= 0) v++;  //up to 255
 
-						//   printf("AXIS %d,%d Mapped to %d %d %d\n",JE.number,JE.value,mo,v,v+127);
+						//   wprintf(L"AXIS %d,%d Mapped to %d %d %d\n",JE.number,JE.value,mo,v,v+127);
 
 						if (mo == 0)
 						{
@@ -296,7 +296,7 @@ void input_sdl_handle(u32 port)
 					}
 					else if (mt == 2)
 					{
-						//  printf("AXIS %d,%d Mapped to %d %d [%d]",JE.number,JE.value,mo,v);
+						//  wprintf(L"AXIS %d,%d Mapped to %d %d [%d]",JE.number,JE.value,mo,v);
 						if (mo == 0)
 						{
 							joyx[port] = v;
@@ -343,7 +343,7 @@ void input_sdl_handle(u32 port)
 						yy = -255;
 					}
 
-					//if (abs(xx)>0 || abs(yy)>0) printf("mouse %i, %i\n", xx, yy);
+					//if (abs(xx)>0 || abs(yy)>0) wprintf(L"mouse %i, %i\n", xx, yy);
 					switch (mouse_use)
 					{
 						case 0:  // nothing
@@ -392,10 +392,10 @@ void input_sdl_handle(u32 port)
 	}
 }
 
-void sdl_window_set_text(const char* text)
+void sdl_window_set_text(const wchar_t* text)
 {
 	#ifdef TARGET_PANDORA
-		strncpy(OSD_Counters, text, 256);
+		wcsncpy(OSD_Counters, text, 256);
 	#else
 		if(window)
 		{
@@ -410,12 +410,12 @@ void sdl_window_create()
 	{
 		if(SDL_InitSubSystem(SDL_INIT_VIDEO) != 0)
 		{
-			die("error initializing SDL Joystick subsystem");
+			die(L"error initializing SDL Joystick subsystem");
 		}
 	}
 
-	int window_width  = cfgLoadInt("x11","width", WINDOW_WIDTH);
-	int window_height = cfgLoadInt("x11","height", WINDOW_HEIGHT);
+	int window_width  = cfgLoadInt(L"x11","width", WINDOW_WIDTH);
+	int window_height = cfgLoadInt(L"x11","height", WINDOW_HEIGHT);
 
 	int flags = SDL_WINDOW_OPENGL;
 	#ifdef TARGET_PANDORA
@@ -445,17 +445,17 @@ void sdl_window_create()
 	window = SDL_CreateWindow("Reicast Emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,	window_width, window_height, flags);
 	if (!window)
 	{
-		die("error creating SDL window");
+		die(L"error creating SDL window");
 	}
 
 	glcontext = SDL_GL_CreateContext(window);
 	if (!glcontext)
 	{
-		die("Error creating SDL GL context");
+		die(L"Error creating SDL GL context");
 	}
 	SDL_GL_MakeCurrent(window, NULL);
 
-	printf("Created SDL Window (%ix%i) and GL Context successfully\n", window_width, window_height);
+	wprintf(L"Created SDL Window (%ix%i) and GL Context successfully\n", window_width, window_height);
 }
 
 extern int screen_width, screen_height;

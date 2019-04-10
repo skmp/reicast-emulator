@@ -11,9 +11,9 @@
 
 #include "cfg/cfg.h"
 
-wchar* trim_ws(wchar* str)
+wchar_t* trim_ws(wchar_t* str)
 {
-	if (str==0 || strlen(str)==0)
+	if (str==0 || wcslen(str)==0)
 		return 0;
 
 	while(*str)
@@ -23,7 +23,7 @@ wchar* trim_ws(wchar* str)
 		str++;
 	}
 
-	size_t l=strlen(str);
+	size_t l=wcslen(str);
 	
 	if (l==0)
 		return 0;
@@ -42,51 +42,51 @@ wchar* trim_ws(wchar* str)
 	return str;
 }
 
-int setconfig(wchar** arg,int cl)
+int setconfig(wchar_t** arg,int cl)
 {
 	int rv=0;
 	for(;;)
 	{
 		if (cl<1)
 		{
-			printf("-config : invalid number of parameters, format is section:key=value\n");
+			wprintf(L"-config : invalid number of parameters, format is section:key=value\n");
 			return rv;
 		}
-		wchar* sep=strstr(arg[1],":");
+		wchar_t* sep=wcsstr(arg[1],L":");
 		if (sep==0)
 		{
-			printf("-config : invalid parameter %s, format is section:key=value\n",arg[1]);
+			wprintf(L"-config : invalid parameter %s, format is section:key=value\n",arg[1]);
 			return rv;
 		}
-		wchar* value=strstr(sep+1,"=");
+		wchar_t* value=wcsstr(sep+1,L"=");
 		if (value==0)
 		{
-			printf("-config : invalid parameter %s, format is section:key=value\n",arg[1]);
+			wprintf(L"-config : invalid parameter %s, format is section:key=value\n",arg[1]);
 			return rv;
 		}
 
 		*sep++=0;
 		*value++=0;
 
-		wchar* sect=trim_ws(arg[1]);
-		wchar* key=trim_ws(sep);
+		wchar_t* sect=trim_ws(arg[1]);
+		wchar_t* key=trim_ws(sep);
 		value=trim_ws(value);
 
 		if (sect==0 || key==0)
 		{
-			printf("-config : invalid parameter, format is section:key=value\n");
+			wprintf(L"-config : invalid parameter, format is section:key=value\n");
 			return rv;
 		}
 
-		const wchar* constval = value;
+		const wchar_t* constval = value;
 		if (constval==0)
-			constval="";
-		printf("Virtual cfg %s:%s=%s\n",sect,key,value);
+			constval=L"";
+		wprintf(L"Virtual cfg %s:%s=%s\n",sect,key,value);
 
 		cfgSetVirtual(sect,key,value);
 		rv++;
 
-		if (cl>=3 && stricmp(arg[2],",")==0)
+		if (cl>=3 && wcsicmp(arg[2],L",")==0)
 		{
 			cl-=2;
 			arg+=2;
@@ -122,54 +122,54 @@ void cli_pause()
 #endif
 
 #if defined(_WIN32)
-	printf("\nPress a key to exit.\n");
+	wprintf(L"\nPress a key to exit.\n");
 	_getch();
 #else
-	printf("\nPress enter to exit.\n");
+	wprintf(L"\nPress enter to exit.\n");
 	char c = getchar();
 #endif
 }
 
 
 
-int showhelp(wchar** arg,int cl)
+int showhelp(wchar_t** arg,int cl)
 {
-	printf("\nAvailable commands :\n");
+	wprintf(L"\nAvailable commands :\n");
 
-	printf("-config	section:key=value [, ..]: add a virtual config value\n Virtual config values won't be saved to the .cfg file\n unless a different value is written to em\nNote :\n You can specify many settings in the xx:yy=zz , gg:hh=jj , ...\n format.The spaces between the values and ',' are needed.\n");
-	printf("\n-help: show help info\n");
-	printf("\n-version: show current version #\n\n");
+	wprintf(L"-config	section:key=value [, ..]: add a virtual config value\n Virtual config values won't be saved to the .cfg file\n unless a different value is written to em\nNote :\n You can specify many settings in the xx:yy=zz , gg:hh=jj , ...\n format.The spaces between the values and ',' are needed.\n");
+	wprintf(L"\n-help: show help info\n");
+	wprintf(L"\n-version: show current version #\n\n");
 
 	cli_pause();
 	return 0;
 }
 
 
-int showversion(wchar** arg,int cl)
+int showversion(wchar_t** arg,int cl)
 {
-	printf("\nReicast Version: # %s built on %s \n", REICAST_VERSION, __DATE__);
+	wprintf(L"\nReicast Version: # %s built on %s \n", REICAST_VERSION, __DATE__);
 
 	cli_pause();
 	return 0;
 }
 
-bool ParseCommandLine(int argc,wchar* argv[])
+bool ParseCommandLine(int argc,wchar_t* argv[])
 {
 	int cl=argc-2;
-	wchar** arg=argv+1;
+	wchar_t** arg=argv+1;
 	while(cl>=0)
 	{
-		if (stricmp(*arg,"-help")==0 || stricmp(*arg,"--help")==0)
+		if (wcsicmp(*arg,L"-help")==0 || wcsicmp(*arg,L"--help")==0)
 		{
 			showhelp(arg,cl);
 			return true;
 		}
-		if (stricmp(*arg,"-version")==0 || stricmp(*arg,"--version")==0)
+		if (wcsicmp(*arg,L"-version")==0 || wcsicmp(*arg,L"--version")==0)
 		{
 			showversion(arg,cl);
 			return true;
 		}
-		else if (stricmp(*arg,"-config")==0 || stricmp(*arg,"--config")==0)
+		else if (wcsicmp(*arg,L"-config")==0 || wcsicmp(*arg,L"--config")==0)
 		{
 			int as=setconfig(arg,cl);
 			cl-=as;
@@ -177,29 +177,29 @@ bool ParseCommandLine(int argc,wchar* argv[])
 		}
 		else
 		{
-			char* extension = strrchr(*arg, '.');
+			wchar_t* extension = wcsrchr(*arg, '.');
 
 			if (extension
-				&& (stricmp(extension, ".cdi") == 0 || stricmp(extension, ".chd") == 0
-					|| stricmp(extension, ".gdi") == 0 || stricmp(extension, ".lst") == 0))
+				&& (wcsicmp(extension, L".cdi") == 0 || wcsicmp(extension, L".chd") == 0
+					|| wcsicmp(extension, L".gdi") == 0 || wcsicmp(extension, L".lst") == 0))
 			{
-				printf("Using '%s' as cd image\n", *arg);
-				cfgSetVirtual("config", "image", *arg);
+				wprintf(L"Using '%s' as cd image\n", *arg);
+				cfgSetVirtual(L"config", L"image", *arg);
 			}
-			else if (extension && stricmp(extension, ".elf") == 0)
+			else if (extension && wcsicmp(extension, L".elf") == 0)
 			{
-				printf("Using '%s' as reios elf file\n", *arg);
-				cfgSetVirtual("config", "reios.enabled", "1");
-				cfgSetVirtual("reios", "ElfFile", *arg);
+				wprintf(L"Using '%s' as reios elf file\n", *arg);
+				cfgSetVirtual(L"config", L"reios.enabled", L"1");
+				cfgSetVirtual(L"reios", L"ElfFile", *arg);
 			}
 			else
 			{
-				printf("wtf %s is supposed to do ?\n",*arg);
+				wprintf(L"wtf %s is supposed to do ?\n",*arg);
 			}
 		}
 		arg++;
 		cl--;
 	}
-	printf("\n");
+	wprintf(L"\n");
 	return false;
 }

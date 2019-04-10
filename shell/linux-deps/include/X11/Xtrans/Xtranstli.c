@@ -127,7 +127,7 @@ TRANS(TLISelectFamily)(char *family)
     
     for(i=0;i<NUMTLIFAMILIES;i++)
     {
-	if( !strcmp(family,TLItrans2devtab[i].transname) )
+	if( !wcscmp(family,TLItrans2devtab[i].transname) )
 	    return i;
     }
     return -1;
@@ -279,11 +279,11 @@ TRANS(TLITLIBindLocal)(int fd, int family, char *port)
 	if( *port == '/' ) { /* A full pathname */
 	    (void) strcpy(sunaddr->sun_path, port);
 	} else {
-	    (void) sprintf(sunaddr->sun_path,"%s%s", TLINODENAME, port );
+	    (void) swprintf(sunaddr->sun_path,"%s%s", TLINODENAME, port );
 	}
 #endif /*NUKE*/
 	
-	(void) sprintf(sunaddr->sun_path,"%s%d",
+	(void) swprintf(sunaddr->sun_path,"%s%d",
 		       TLINODENAME, getpid()^time(NULL) );
 	
 	PRMSG(4, "TLITLIBindLocal: binding to %s\n",
@@ -379,7 +379,7 @@ TRANS(TLIAddrToNetbuf)(int tlifamily, char *host, char *port,
     if( (handlep=setnetconfig()) == NULL )
 	return -1;
 
-    lport = strtol (port, (char**)NULL, 10);
+    lport = strtol (port, (wchar_t**)NULL, 10);
     if (lport < 1024 || lport > USHRT_MAX)
 	return -1;
     
@@ -392,7 +392,7 @@ TRANS(TLIAddrToNetbuf)(int tlifamily, char *host, char *port,
     
     while( (netconfigp=getnetconfig(handlep)) != NULL )
     {
-	if( strcmp(netconfigp->nc_protofmly,
+	if( wcscmp(netconfigp->nc_protofmly,
 		   TLItrans2devtab[tlifamily].protofamily) != 0 )
 	    continue;
 	PRMSG(5,"TLIAddrToNetbuf: Trying to resolve %s.%s for %s\n",
@@ -764,14 +764,14 @@ TRANS(TLIINETCreateListener)(XtransConnInfo ciptr, char *port, unsigned int flag
      * to handle it here, than try and come up with a transport independent
      * representation that can be passed in and resolved the usual way.
      *
-     * The port that is passed here is really a string containing the idisplay
+     * The port that is passed here is really a wstring containing the idisplay
      * from ConnectDisplay().
      */
     
     if (is_numeric (port))
     {
-	tmpport = X_TCP_PORT + strtol (port, (char**)NULL, 10);
-	sprintf(portbuf,"%u", tmpport);
+	tmpport = X_TCP_PORT + strtol (port, (wchar_t**)NULL, 10);
+	swprintf(portbuf,"%u", tmpport);
 	port = portbuf;
     }
 #endif
@@ -842,10 +842,10 @@ TRANS(TLITLICreateListener)(XtransConnInfo ciptr, char *port, unsigned int flags
 	if( *port == '/' ) { /* A full pathname */
 	    (void) strcpy(sunaddr->sun_path, port);
 	} else {
-	    (void) sprintf(sunaddr->sun_path,"%s%s", TLINODENAME, port );
+	    (void) swprintf(sunaddr->sun_path,"%s%s", TLINODENAME, port );
 	}
     } else {
-	(void) sprintf(sunaddr->sun_path,"%s%d", TLINODENAME, getpid());
+	(void) swprintf(sunaddr->sun_path,"%s%d", TLINODENAME, getpid());
     }
     
     req->addr.buf=(char *)sunaddr;
@@ -1084,14 +1084,14 @@ TRANS(TLIINETConnect)(XtransConnInfo ciptr, char *host, char *port)
      * to handle it here, than try and come up with a transport independent
      * representation that can be passed in and resolved the usual way.
      *
-     * The port that is passed here is really a string containing the idisplay
+     * The port that is passed here is really a wstring containing the idisplay
      * from ConnectDisplay().
      */
     
     if (is_numeric (port))
     {
-	tmpport = X_TCP_PORT + strtol (port, (char**)NULL, 10);
-	sprintf(portbuf,"%u", tmpport );
+	tmpport = X_TCP_PORT + strtol (port, (wchar_t**)NULL, 10);
+	swprintf(portbuf,"%u", tmpport );
 	port = portbuf;
     }
 #endif
@@ -1142,11 +1142,11 @@ TRANS(TLITLIConnect)(XtransConnInfo ciptr, char *host, char *port)
     
     sunaddr->sun_family=AF_UNIX;
     if( *port == '/' ||
-	strncmp (port, TLINODENAME, strlen (TLINODENAME)) == 0) {
+	strncmp (port, TLINODENAME, wcslen (TLINODENAME)) == 0) {
 	/* Use the port as is */
 	(void) strcpy(sunaddr->sun_path, port);
     } else {
-	(void) sprintf(sunaddr->sun_path,"%s%s", TLINODENAME, port );
+	(void) swprintf(sunaddr->sun_path,"%s%s", TLINODENAME, port );
     }
 
     sndcall->addr.buf=(char *)sunaddr;

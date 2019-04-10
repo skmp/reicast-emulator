@@ -4,7 +4,7 @@
 
 struct EvdevControllerMapping
 {
-	const string name;
+	const wstring name;
 	const int Btn_A;
 	const int Btn_B;
 	const int Btn_C;

@@ -3,7 +3,7 @@
 
 #include "build.h"
 
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 
 unsigned long long
 time_in_microseconds()
@@ -300,7 +300,7 @@ lws_plat_change_pollfd(struct libwebsocket_context *context,
 }
 
 LWS_VISIBLE HANDLE
-lws_plat_open_file(const char* filename, unsigned long* filelen)
+lws_plat_open_file(const wchar_t* filename, unsigned long* filelen)
 {
 	HANDLE ret;
 	WCHAR buffer[MAX_PATH];

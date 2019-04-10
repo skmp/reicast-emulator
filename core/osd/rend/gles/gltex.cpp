@@ -31,7 +31,7 @@ typedef void TexConvFP(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
 
 struct PvrTexInfo
 {
-	const char* name;
+	const wchar_t* name;
 	int bpp;        //4/8 for pal. 16 for uv, argb
 	GLuint type;
 	TexConvFP *PL;
@@ -41,14 +41,14 @@ struct PvrTexInfo
 
 PvrTexInfo format[8]=
 {
-	{"1555", 16,GL_UNSIGNED_SHORT_5_5_5_1, &tex1555_PL,&tex1555_TW,&tex1555_VQ},	//1555
-	{"565", 16,GL_UNSIGNED_SHORT_5_6_5,    &tex565_PL,&tex565_TW,&tex565_VQ},		//565
-	{"4444", 16,GL_UNSIGNED_SHORT_4_4_4_4, &tex4444_PL,&tex4444_TW,&tex4444_VQ},	//4444
-	{"yuv", 16,GL_UNSIGNED_SHORT_5_6_5,    &texYUV422_PL,&texYUV422_TW,&texYUV422_VQ},	//yuv
-	{"UNSUPPORTED BUMP MAPPED POLY", 16,GL_UNSIGNED_SHORT_4_4_4_4,&texBMP_PL,&texBMP_TW,&texBMP_VQ},	//bump_ns
-	{"pal4", 4,0,0,texPAL4_TW,0},	//pal4
-	{"pla8", 8,0,0,texPAL8_TW,0},	//pal8
-	{"ns/1555", 0},	//ns, 1555
+	{L"1555", 16,GL_UNSIGNED_SHORT_5_5_5_1, &tex1555_PL,&tex1555_TW,&tex1555_VQ},	//1555
+	{L"565", 16,GL_UNSIGNED_SHORT_5_6_5,    &tex565_PL,&tex565_TW,&tex565_VQ},		//565
+	{L"4444", 16,GL_UNSIGNED_SHORT_4_4_4_4, &tex4444_PL,&tex4444_TW,&tex4444_VQ},	//4444
+	{L"yuv", 16,GL_UNSIGNED_SHORT_5_6_5,    &texYUV422_PL,&texYUV422_TW,&texYUV422_VQ},	//yuv
+	{L"UNSUPPORTED BUMP MAPPED POLY", 16,GL_UNSIGNED_SHORT_4_4_4_4,&texBMP_PL,&texBMP_TW,&texBMP_VQ},	//bump_ns
+	{L"pal4", 4,0,0,texPAL4_TW,0},	//pal4
+	{L"pla8", 8,0,0,texPAL8_TW,0},	//pal8
+	{L"ns/1555", 0},	//ns, 1555
 };
 
 const u32 MipPoint[8] =
@@ -102,22 +102,22 @@ struct TextureCacheData
 
 	void PrintTextureName()
 	{
-		printf("Texture: %s ",tex?tex->name:"?format?");
+		wprintf(L"Texture: %s ", tex ? tex->name : L"?format?");
 
 		if (tcw.VQ_Comp)
-			printf(" VQ");
+			wprintf(L" VQ");
 
 		if (tcw.ScanOrder==0)
-			printf(" TW");
+			wprintf(L" TW");
 
 		if (tcw.MipMapped)
-			printf(" MM");
+			wprintf(L" MM");
 
 		if (tcw.StrideSel)
-			printf(" Stride");
+			wprintf(L" Stride");
 
-		printf(" %dx%d @ 0x%X",8<<tsp.TexU,8<<tsp.TexV,tcw.TexAddr<<3);
-		printf("\n");
+		wprintf(L" %dx%d @ 0x%X",8<<tsp.TexU,8<<tsp.TexV,tcw.TexAddr<<3);
+		wprintf(L"\n");
 	}
 
 	void SetRepeatMode(GLuint dir,u32 clamp,u32 mirror)
@@ -253,7 +253,7 @@ struct TextureCacheData
 			}
 			break;
 		default:
-			printf("Unhandled texture %d\n",tcw.PixelFmt);
+			wprintf(L"Unhandled texture %d\n",tcw.PixelFmt);
 			size=w*h*2;
 			memset(temp_tex_buffer,0xFFFFFFFF,size);
 			texconv=0;
@@ -294,7 +294,7 @@ struct TextureCacheData
 		else
 		{
 			//fill it in with a temp color
-			printf("UNHANDLED TEXTURE\n");
+			wprintf(L"UNHANDLED TEXTURE\n");
 			memset(temp_tex_buffer,0xF88F8F7F,w*h*2);
 		}
 
@@ -336,7 +336,7 @@ struct TextureCacheData
 					}
 				}
 			#else
-				die("Soft rend disabled, invalid code path");
+				die(L"Soft rend disabled, invalid code path");
 			#endif
 		}
 	}
@@ -351,7 +351,7 @@ struct TextureCacheData
 				_mm_free(pData);
 				pData = 0;
 			#else
-				die("softrend disabled, invalid codepath");
+				die(L"softrend disabled, invalid codepath");
 			#endif
 		}
 
@@ -547,7 +547,7 @@ void CollectCleanup() {
 	}
 
 	for (size_t i=0; i<list.size(); i++) {
-		//printf("Deleting %d\n",TexCache[list[i]].texID);
+		//wprintf(L"Deleting %d\n",TexCache[list[i]].texID);
 		TexCache[list[i]].Delete();
 
 		TexCache.erase(list[i]);

@@ -53,8 +53,8 @@ zip_rename(struct zip *za, int idx, const char *name)
     if ((old_name=zip_get_name(za, idx, 0)) == NULL)
 	return -1;
 								    
-    new_is_dir = (name[strlen(name)-1] == '/');
-    old_is_dir = (old_name[strlen(old_name)-1] == '/');
+    new_is_dir = (name[wcslen(name)-1] == '/');
+    old_is_dir = (old_name[wcslen(old_name)-1] == '/');
 
     if (new_is_dir != old_is_dir) {
 	_zip_error_set(&za->error, ZIP_ER_INVAL, 0);

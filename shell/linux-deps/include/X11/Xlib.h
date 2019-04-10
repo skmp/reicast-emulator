@@ -356,9 +356,9 @@ typedef struct {
  * Data structure for ServerFamilyInterpreted addresses in host routines
  */
 typedef struct {
-	int typelength;		/* length of type string, in bytes */
-	int valuelength;	/* length of value string, in bytes */
-	char *type;		/* pointer to where to find the type string */
+	int typelength;		/* length of type wstring, in bytes */
+	int valuelength;	/* length of value wstring, in bytes */
+	char *type;		/* pointer to where to find the type wstring */
 	char *value;		/* pointer to where to find the address */
 } XServerInterpretedAddress;
 
@@ -388,7 +388,7 @@ typedef struct _XImage {
 		unsigned int	/* depth */,
 		int		/* format */,
 		int		/* offset */,
-		char*		/* data */,
+		wchar_t*		/* data */,
 		unsigned int	/* width */,
 		unsigned int	/* height */,
 		int		/* bitmap_pad */,
@@ -538,7 +538,7 @@ _XDisplay
 	int (*private15)(
 		struct _XDisplay*
 		);
-	char *display_name;	/* "host:display" string used on this connect*/
+	char *display_name;	/* "host:display" wstring used on this connect*/
 	int default_screen;	/* default screen for operations */
 	int nscreens;		/* number of screens on this server*/
 	Screen *screens;	/* pointer to list of screens */
@@ -1052,8 +1052,8 @@ typedef struct {
     unsigned	default_char;	/* char to print for undefined character */
     int         n_properties;   /* how many properties there are */
     XFontProp	*properties;	/* pointer to array of additional properties*/
-    XCharStruct	min_bounds;	/* minimum bounds over all existing char*/
-    XCharStruct	max_bounds;	/* maximum bounds over all existing char*/
+    XCharStruct	min_bounds;	/* minimum bounds over all existing wchar_t*/
+    XCharStruct	max_bounds;	/* maximum bounds over all existing wchar_t*/
     XCharStruct	*per_char;	/* first_char to last_char information */
     int		ascent;		/* log. extent above baseline for spacing */
     int		descent;	/* log. descent below baseline for spacing */
@@ -1063,7 +1063,7 @@ typedef struct {
  * PolyText routines take these as arguments.
  */
 typedef struct {
-    char *chars;		/* pointer to string */
+    char *chars;		/* pointer to wstring */
     int nchars;			/* number of characters */
     int delta;			/* delta between strings */
     Font font;			/* font to print it in, None don't change */
@@ -1269,7 +1269,7 @@ typedef struct _XIMText {
     union {
 	char *multi_byte;
 	wchar_t *wide_char;
-    } string;
+    } wstring;
 } XIMText;
 
 typedef	unsigned long	 XIMPreeditState;
@@ -1303,7 +1303,7 @@ typedef struct _XIMStringConversionText {
     union {
 	char *mbs;
 	wchar_t *wcs;
-    } string;
+    } wstring;
 } XIMStringConversionText;
 
 typedef	unsigned short	XIMStringConversionPosition;
@@ -1339,7 +1339,7 @@ typedef struct _XIMStringConversionCallbackStruct {
 } XIMStringConversionCallbackStruct;
 
 typedef struct _XIMPreeditDrawCallbackStruct {
-    int caret;		/* Cursor offset within pre-edit string */
+    int caret;		/* Cursor offset within pre-edit wstring */
     int chg_first;	/* Starting change position */
     int chg_length;	/* Length of the change in character count */
     XIMText *text;
@@ -1352,7 +1352,7 @@ typedef enum {
 } XIMCaretStyle;
 
 typedef struct _XIMPreeditCaretCallbackStruct {
-    int position;		 /* Caret offset within pre-edit string */
+    int position;		 /* Caret offset within pre-edit wstring */
     XIMCaretDirection direction; /* Caret moves direction */
     XIMCaretStyle style;	 /* Feedback of the caret */
 } XIMPreeditCaretCallbackStruct;
@@ -1401,7 +1401,7 @@ extern int _Xdebug;
 
 extern XFontStruct *XLoadQueryFont(
     Display*		/* display */,
-    _Xconst char*	/* name */
+    _Xconst wchar_t*	/* name */
 );
 
 extern XFontStruct *XQueryFont(
@@ -1452,7 +1452,7 @@ extern XImage *XCreateImage(
     unsigned int	/* depth */,
     int			/* format */,
     int			/* offset */,
-    char*		/* data */,
+    wchar_t*		/* data */,
     unsigned int	/* width */,
     unsigned int	/* height */,
     int			/* bitmap_pad */,
@@ -1489,7 +1489,7 @@ extern XImage *XGetSubImage(
  * X function declarations.
  */
 extern Display *XOpenDisplay(
-    _Xconst char*	/* display_name */
+    _Xconst wchar_t*	/* display_name */
 );
 
 extern void XrmInitialize(
@@ -1513,15 +1513,15 @@ extern Status XGetAtomNames(
     Display*		/* dpy */,
     Atom*		/* atoms */,
     int			/* count */,
-    char**		/* names_return */
+    wchar_t**		/* names_return */
 );
 extern char *XGetDefault(
     Display*		/* display */,
-    _Xconst char*	/* program */,
-    _Xconst char*	/* option */
+    _Xconst wchar_t*	/* program */,
+    _Xconst wchar_t*	/* option */
 );
 extern char *XDisplayName(
-    _Xconst char*	/* string */
+    _Xconst wchar_t*	/* wstring */
 );
 extern char *XKeysymToString(
     KeySym		/* keysym */
@@ -1543,12 +1543,12 @@ extern int (*XSetAfterFunction(
 );
 extern Atom XInternAtom(
     Display*		/* display */,
-    _Xconst char*	/* atom_name */,
+    _Xconst wchar_t*	/* atom_name */,
     Bool		/* only_if_exists */
 );
 extern Status XInternAtoms(
     Display*		/* dpy */,
-    char**		/* names */,
+    wchar_t**		/* names */,
     int			/* count */,
     Bool		/* onlyIfExists */,
     Atom*		/* atoms_return */
@@ -1587,7 +1587,7 @@ extern Cursor XCreateFontCursor(
 );
 extern Font XLoadFont(
     Display*		/* display */,
-    _Xconst char*	/* name */
+    _Xconst wchar_t*	/* name */
 );
 extern GC XCreateGC(
     Display*		/* display */,
@@ -1612,14 +1612,14 @@ extern Pixmap XCreatePixmap(
 extern Pixmap XCreateBitmapFromData(
     Display*		/* display */,
     Drawable		/* d */,
-    _Xconst char*	/* data */,
+    _Xconst wchar_t*	/* data */,
     unsigned int	/* width */,
     unsigned int	/* height */
 );
 extern Pixmap XCreatePixmapFromBitmapData(
     Display*		/* display */,
     Drawable		/* d */,
-    char*		/* data */,
+    wchar_t*		/* data */,
     unsigned int	/* width */,
     unsigned int	/* height */,
     unsigned long	/* fg */,
@@ -1662,13 +1662,13 @@ extern Colormap *XListInstalledColormaps(
 );
 extern char **XListFonts(
     Display*		/* display */,
-    _Xconst char*	/* pattern */,
+    _Xconst wchar_t*	/* pattern */,
     int			/* maxnames */,
     int*		/* actual_count_return */
 );
 extern char **XListFontsWithInfo(
     Display*		/* display */,
-    _Xconst char*	/* pattern */,
+    _Xconst wchar_t*	/* pattern */,
     int			/* maxnames */,
     int*		/* count_return */,
     XFontStruct**	/* info_return */
@@ -1716,7 +1716,7 @@ extern KeySym *XGetKeyboardMapping(
     int*		/* keysyms_per_keycode_return */
 );
 extern KeySym XStringToKeysym(
-    _Xconst char*	/* string */
+    _Xconst wchar_t*	/* wstring */
 );
 extern long XMaxRequestSize(
     Display*		/* display */
@@ -1755,7 +1755,7 @@ extern void XUnlockDisplay(
 
 extern XExtCodes *XInitExtension(
     Display*		/* display */,
-    _Xconst char*	/* name */
+    _Xconst wchar_t*	/* name */
 );
 
 extern XExtCodes *XAddExtension(
@@ -1912,7 +1912,7 @@ extern Status XWithdrawWindow(
 extern Status XGetCommand(
     Display*		/* display */,
     Window		/* w */,
-    char***		/* argv_return */,
+    wchar_t***		/* argv_return */,
     int*		/* argc_return */
 );
 extern Status XGetWMColormapWindows(
@@ -1928,7 +1928,7 @@ extern Status XSetWMColormapWindows(
     int			/* count */
 );
 extern void XFreeStringList(
-    char**		/* list */
+    wchar_t**		/* list */
 );
 extern int XSetTransientForHint(
     Display*		/* display */,
@@ -1996,7 +1996,7 @@ extern Status XAllocColorPlanes(
 extern Status XAllocNamedColor(
     Display*		/* display */,
     Colormap		/* colormap */,
-    _Xconst char*	/* color_name */,
+    _Xconst wchar_t*	/* color_name */,
     XColor*		/* screen_def_return */,
     XColor*		/* exact_def_return */
 );
@@ -2080,7 +2080,7 @@ extern int XChangeProperty(
     Atom		/* type */,
     int			/* format */,
     int			/* mode */,
-    _Xconst unsigned char*	/* data */,
+    _Xconst unsigned wchar_t*	/* data */,
     int			/* nelements */
 );
 
@@ -2333,7 +2333,7 @@ extern int XDrawImageString(
     GC			/* gc */,
     int			/* x */,
     int			/* y */,
-    _Xconst char*	/* string */,
+    _Xconst wchar_t*	/* wstring */,
     int			/* length */
 );
 
@@ -2343,7 +2343,7 @@ extern int XDrawImageString16(
     GC			/* gc */,
     int			/* x */,
     int			/* y */,
-    _Xconst XChar2b*	/* string */,
+    _Xconst XChar2b*	/* wstring */,
     int			/* length */
 );
 
@@ -2415,7 +2415,7 @@ extern int XDrawString(
     GC			/* gc */,
     int			/* x */,
     int			/* y */,
-    _Xconst char*	/* string */,
+    _Xconst wchar_t*	/* wstring */,
     int			/* length */
 );
 
@@ -2425,7 +2425,7 @@ extern int XDrawString16(
     GC			/* gc */,
     int			/* x */,
     int			/* y */,
-    _Xconst XChar2b*	/* string */,
+    _Xconst XChar2b*	/* wstring */,
     int			/* length */
 );
 
@@ -2461,7 +2461,7 @@ extern int XEventsQueued(
 extern Status XFetchName(
     Display*		/* display */,
     Window		/* w */,
-    char**		/* window_name_return */
+    wchar_t**		/* window_name_return */
 );
 
 extern int XFillArc(
@@ -2544,7 +2544,7 @@ extern int XFreeCursor(
 );
 
 extern int XFreeExtensionList(
-    char**		/* list */
+    wchar_t**		/* list */
 );
 
 extern int XFreeFont(
@@ -2553,17 +2553,17 @@ extern int XFreeFont(
 );
 
 extern int XFreeFontInfo(
-    char**		/* names */,
+    wchar_t**		/* names */,
     XFontStruct*	/* free_info */,
     int			/* actual_count */
 );
 
 extern int XFreeFontNames(
-    char**		/* list */
+    wchar_t**		/* list */
 );
 
 extern int XFreeFontPath(
-    char**		/* list */
+    wchar_t**		/* list */
 );
 
 extern int XFreeGC(
@@ -2583,8 +2583,8 @@ extern int XFreePixmap(
 extern int XGeometry(
     Display*		/* display */,
     int			/* screen */,
-    _Xconst char*	/* position */,
-    _Xconst char*	/* default_position */,
+    _Xconst wchar_t*	/* position */,
+    _Xconst wchar_t*	/* default_position */,
     unsigned int	/* bwidth */,
     unsigned int	/* fwidth */,
     unsigned int	/* fheight */,
@@ -2598,17 +2598,17 @@ extern int XGeometry(
 
 extern int XGetErrorDatabaseText(
     Display*		/* display */,
-    _Xconst char*	/* name */,
-    _Xconst char*	/* message */,
-    _Xconst char*	/* default_string */,
-    char*		/* buffer_return */,
+    _Xconst wchar_t*	/* name */,
+    _Xconst wchar_t*	/* message */,
+    _Xconst wchar_t*	/* default_string */,
+    wchar_t*		/* buffer_return */,
     int			/* length */
 );
 
 extern int XGetErrorText(
     Display*		/* display */,
     int			/* code */,
-    char*		/* buffer_return */,
+    wchar_t*		/* buffer_return */,
     int			/* length */
 );
 
@@ -2640,7 +2640,7 @@ extern Status XGetGeometry(
 extern Status XGetIconName(
     Display*		/* display */,
     Window		/* w */,
-    char**		/* icon_name_return */
+    wchar_t**		/* icon_name_return */
 );
 
 extern int XGetInputFocus(
@@ -2663,7 +2663,7 @@ extern int XGetPointerControl(
 
 extern int XGetPointerMapping(
     Display*		/* display */,
-    unsigned char*	/* map_return */,
+    unsigned wchar_t*	/* map_return */,
     int			/* nmap */
 );
 
@@ -2693,7 +2693,7 @@ extern int XGetWindowProperty(
     int*		/* actual_format_return */,
     unsigned long*	/* nitems_return */,
     unsigned long*	/* bytes_after_return */,
-    unsigned char**	/* prop_return */
+    unsigned wchar_t**	/* prop_return */
 );
 
 extern Status XGetWindowAttributes(
@@ -2791,7 +2791,7 @@ extern int XKillClient(
 extern Status XLookupColor(
     Display*		/* display */,
     Colormap		/* colormap */,
-    _Xconst char*	/* color_name */,
+    _Xconst wchar_t*	/* color_name */,
     XColor*		/* exact_def_return */,
     XColor*		/* screen_def_return */
 );
@@ -2858,12 +2858,12 @@ extern int XNoOp(
 extern Status XParseColor(
     Display*		/* display */,
     Colormap		/* colormap */,
-    _Xconst char*	/* spec */,
+    _Xconst wchar_t*	/* spec */,
     XColor*		/* exact_def_return */
 );
 
 extern int XParseGeometry(
-    _Xconst char*	/* parsestring */,
+    _Xconst wchar_t*	/* parsestring */,
     int*		/* x_return */,
     int*		/* y_return */,
     unsigned int*	/* width_return */,
@@ -2977,7 +2977,7 @@ extern int XQueryColors(
 
 extern Bool XQueryExtension(
     Display*		/* display */,
-    _Xconst char*	/* name */,
+    _Xconst wchar_t*	/* name */,
     int*		/* major_opcode_return */,
     int*		/* first_event_return */,
     int*		/* first_error_return */
@@ -3003,7 +3003,7 @@ extern Bool XQueryPointer(
 extern int XQueryTextExtents(
     Display*		/* display */,
     XID			/* font_ID */,
-    _Xconst char*	/* string */,
+    _Xconst wchar_t*	/* wstring */,
     int			/* nchars */,
     int*		/* direction_return */,
     int*		/* font_ascent_return */,
@@ -3014,7 +3014,7 @@ extern int XQueryTextExtents(
 extern int XQueryTextExtents16(
     Display*		/* display */,
     XID			/* font_ID */,
-    _Xconst XChar2b*	/* string */,
+    _Xconst XChar2b*	/* wstring */,
     int			/* nchars */,
     int*		/* direction_return */,
     int*		/* font_ascent_return */,
@@ -3039,7 +3039,7 @@ extern int XRaiseWindow(
 extern int XReadBitmapFile(
     Display*		/* display */,
     Drawable 		/* d */,
-    _Xconst char*	/* filename */,
+    _Xconst wchar_t*	/* filename */,
     unsigned int*	/* width_return */,
     unsigned int*	/* height_return */,
     Pixmap*		/* bitmap_return */,
@@ -3048,10 +3048,10 @@ extern int XReadBitmapFile(
 );
 
 extern int XReadBitmapFileData(
-    _Xconst char*	/* filename */,
+    _Xconst wchar_t*	/* filename */,
     unsigned int*	/* width_return */,
     unsigned int*	/* height_return */,
-    unsigned char**	/* data_return */,
+    unsigned wchar_t**	/* data_return */,
     int*		/* x_hot_return */,
     int*		/* y_hot_return */
 );
@@ -3061,7 +3061,7 @@ extern int XRebindKeysym(
     KeySym		/* keysym */,
     KeySym*		/* list */,
     int			/* mod_count */,
-    _Xconst unsigned char*	/* string */,
+    _Xconst unsigned wchar_t*	/* wstring */,
     int			/* bytes_string */
 );
 
@@ -3196,7 +3196,7 @@ extern int XSetCloseDownMode(
 extern int XSetCommand(
     Display*		/* display */,
     Window		/* w */,
-    char**		/* argv */,
+    wchar_t**		/* argv */,
     int			/* argc */
 );
 
@@ -3204,7 +3204,7 @@ extern int XSetDashes(
     Display*		/* display */,
     GC			/* gc */,
     int			/* dash_offset */,
-    _Xconst char*	/* dash_list */,
+    _Xconst wchar_t*	/* dash_list */,
     int			/* n */
 );
 
@@ -3228,7 +3228,7 @@ extern int XSetFont(
 
 extern int XSetFontPath(
     Display*		/* display */,
-    char**		/* directories */,
+    wchar_t**		/* directories */,
     int			/* ndirs */
 );
 
@@ -3253,7 +3253,7 @@ extern int XSetGraphicsExposures(
 extern int XSetIconName(
     Display*		/* display */,
     Window		/* w */,
-    _Xconst char*	/* icon_name */
+    _Xconst wchar_t*	/* icon_name */
 );
 
 extern int XSetInputFocus(
@@ -3285,7 +3285,7 @@ extern int XSetPlaneMask(
 
 extern int XSetPointerMapping(
     Display*		/* display */,
-    _Xconst unsigned char*	/* map */,
+    _Xconst unsigned wchar_t*	/* map */,
     int			/* nmap */
 );
 
@@ -3376,14 +3376,14 @@ extern int XSetWindowColormap(
 
 extern int XStoreBuffer(
     Display*		/* display */,
-    _Xconst char*	/* bytes */,
+    _Xconst wchar_t*	/* bytes */,
     int			/* nbytes */,
     int			/* buffer */
 );
 
 extern int XStoreBytes(
     Display*		/* display */,
-    _Xconst char*	/* bytes */,
+    _Xconst wchar_t*	/* bytes */,
     int			/* nbytes */
 );
 
@@ -3403,13 +3403,13 @@ extern int XStoreColors(
 extern int XStoreName(
     Display*		/* display */,
     Window		/* w */,
-    _Xconst char*	/* window_name */
+    _Xconst wchar_t*	/* window_name */
 );
 
 extern int XStoreNamedColor(
     Display*		/* display */,
     Colormap		/* colormap */,
-    _Xconst char*	/* color */,
+    _Xconst wchar_t*	/* color */,
     unsigned long	/* pixel */,
     int			/* flags */
 );
@@ -3421,7 +3421,7 @@ extern int XSync(
 
 extern int XTextExtents(
     XFontStruct*	/* font_struct */,
-    _Xconst char*	/* string */,
+    _Xconst wchar_t*	/* wstring */,
     int			/* nchars */,
     int*		/* direction_return */,
     int*		/* font_ascent_return */,
@@ -3431,7 +3431,7 @@ extern int XTextExtents(
 
 extern int XTextExtents16(
     XFontStruct*	/* font_struct */,
-    _Xconst XChar2b*	/* string */,
+    _Xconst XChar2b*	/* wstring */,
     int			/* nchars */,
     int*		/* direction_return */,
     int*		/* font_ascent_return */,
@@ -3441,13 +3441,13 @@ extern int XTextExtents16(
 
 extern int XTextWidth(
     XFontStruct*	/* font_struct */,
-    _Xconst char*	/* string */,
+    _Xconst wchar_t*	/* wstring */,
     int			/* count */
 );
 
 extern int XTextWidth16(
     XFontStruct*	/* font_struct */,
-    _Xconst XChar2b*	/* string */,
+    _Xconst XChar2b*	/* wstring */,
     int			/* count */
 );
 
@@ -3548,7 +3548,7 @@ extern int XWindowEvent(
 
 extern int XWriteBitmapFile(
     Display*		/* display */,
-    _Xconst char*	/* filename */,
+    _Xconst wchar_t*	/* filename */,
     Pixmap		/* bitmap */,
     unsigned int	/* width */,
     unsigned int	/* height */,
@@ -3559,14 +3559,14 @@ extern int XWriteBitmapFile(
 extern Bool XSupportsLocale (void);
 
 extern char *XSetLocaleModifiers(
-    const char*		/* modifier_list */
+    const wchar_t*		/* modifier_list */
 );
 
 extern XOM XOpenOM(
     Display*			/* display */,
     struct _XrmHashBucketRec*	/* rdb */,
-    _Xconst char*		/* res_name */,
-    _Xconst char*		/* res_class */
+    _Xconst wchar_t*		/* res_name */,
+    _Xconst wchar_t*		/* res_class */
 );
 
 extern Status XCloseOM(
@@ -3616,10 +3616,10 @@ extern char *XGetOCValues(
 
 extern XFontSet XCreateFontSet(
     Display*		/* display */,
-    _Xconst char*	/* base_font_name_list */,
-    char***		/* missing_charset_list */,
+    _Xconst wchar_t*	/* base_font_name_list */,
+    wchar_t***		/* missing_charset_list */,
     int*		/* missing_charset_count */,
-    char**		/* def_string */
+    wchar_t**		/* def_string */
 );
 
 extern void XFreeFontSet(
@@ -3630,7 +3630,7 @@ extern void XFreeFontSet(
 extern int XFontsOfFontSet(
     XFontSet		/* font_set */,
     XFontStruct***	/* font_struct_list */,
-    char***		/* font_name_list */
+    wchar_t***		/* font_name_list */
 );
 
 extern char *XBaseFontNameListOfFontSet(
@@ -3659,7 +3659,7 @@ extern XFontSetExtents *XExtentsOfFontSet(
 
 extern int XmbTextEscapement(
     XFontSet		/* font_set */,
-    _Xconst char*	/* text */,
+    _Xconst wchar_t*	/* text */,
     int			/* bytes_text */
 );
 
@@ -3671,13 +3671,13 @@ extern int XwcTextEscapement(
 
 extern int Xutf8TextEscapement(
     XFontSet		/* font_set */,
-    _Xconst char*	/* text */,
+    _Xconst wchar_t*	/* text */,
     int			/* bytes_text */
 );
 
 extern int XmbTextExtents(
     XFontSet		/* font_set */,
-    _Xconst char*	/* text */,
+    _Xconst wchar_t*	/* text */,
     int			/* bytes_text */,
     XRectangle*		/* overall_ink_return */,
     XRectangle*		/* overall_logical_return */
@@ -3693,7 +3693,7 @@ extern int XwcTextExtents(
 
 extern int Xutf8TextExtents(
     XFontSet		/* font_set */,
-    _Xconst char*	/* text */,
+    _Xconst wchar_t*	/* text */,
     int			/* bytes_text */,
     XRectangle*		/* overall_ink_return */,
     XRectangle*		/* overall_logical_return */
@@ -3701,7 +3701,7 @@ extern int Xutf8TextExtents(
 
 extern Status XmbTextPerCharExtents(
     XFontSet		/* font_set */,
-    _Xconst char*	/* text */,
+    _Xconst wchar_t*	/* text */,
     int			/* bytes_text */,
     XRectangle*		/* ink_extents_buffer */,
     XRectangle*		/* logical_extents_buffer */,
@@ -3725,7 +3725,7 @@ extern Status XwcTextPerCharExtents(
 
 extern Status Xutf8TextPerCharExtents(
     XFontSet		/* font_set */,
-    _Xconst char*	/* text */,
+    _Xconst wchar_t*	/* text */,
     int			/* bytes_text */,
     XRectangle*		/* ink_extents_buffer */,
     XRectangle*		/* logical_extents_buffer */,
@@ -3772,7 +3772,7 @@ extern void XmbDrawString(
     GC			/* gc */,
     int			/* x */,
     int			/* y */,
-    _Xconst char*	/* text */,
+    _Xconst wchar_t*	/* text */,
     int			/* bytes_text */
 );
 
@@ -3794,7 +3794,7 @@ extern void Xutf8DrawString(
     GC			/* gc */,
     int			/* x */,
     int			/* y */,
-    _Xconst char*	/* text */,
+    _Xconst wchar_t*	/* text */,
     int			/* bytes_text */
 );
 
@@ -3805,7 +3805,7 @@ extern void XmbDrawImageString(
     GC			/* gc */,
     int			/* x */,
     int			/* y */,
-    _Xconst char*	/* text */,
+    _Xconst wchar_t*	/* text */,
     int			/* bytes_text */
 );
 
@@ -3827,15 +3827,15 @@ extern void Xutf8DrawImageString(
     GC			/* gc */,
     int			/* x */,
     int			/* y */,
-    _Xconst char*	/* text */,
+    _Xconst wchar_t*	/* text */,
     int			/* bytes_text */
 );
 
 extern XIM XOpenIM(
     Display*			/* dpy */,
     struct _XrmHashBucketRec*	/* rdb */,
-    char*			/* res_name */,
-    char*			/* res_class */
+    wchar_t*			/* res_name */,
+    wchar_t*			/* res_class */
 );
 
 extern Status XCloseIM(
@@ -3906,7 +3906,7 @@ extern Bool XFilterEvent(
 extern int XmbLookupString(
     XIC			/* ic */,
     XKeyPressedEvent*	/* event */,
-    char*		/* buffer_return */,
+    wchar_t*		/* buffer_return */,
     int			/* bytes_buffer */,
     KeySym*		/* keysym_return */,
     Status*		/* status_return */
@@ -3924,7 +3924,7 @@ extern int XwcLookupString(
 extern int Xutf8LookupString(
     XIC			/* ic */,
     XKeyPressedEvent*	/* event */,
-    char*		/* buffer_return */,
+    wchar_t*		/* buffer_return */,
     int			/* bytes_buffer */,
     KeySym*		/* keysym_return */,
     Status*		/* status_return */
@@ -3939,8 +3939,8 @@ extern XVaNestedList XVaCreateNestedList(
 extern Bool XRegisterIMInstantiateCallback(
     Display*			/* dpy */,
     struct _XrmHashBucketRec*	/* rdb */,
-    char*			/* res_name */,
-    char*			/* res_class */,
+    wchar_t*			/* res_name */,
+    wchar_t*			/* res_class */,
     XIDProc			/* callback */,
     XPointer			/* client_data */
 );
@@ -3948,8 +3948,8 @@ extern Bool XRegisterIMInstantiateCallback(
 extern Bool XUnregisterIMInstantiateCallback(
     Display*			/* dpy */,
     struct _XrmHashBucketRec*	/* rdb */,
-    char*			/* res_name */,
-    char*			/* res_class */,
+    wchar_t*			/* res_name */,
+    wchar_t*			/* res_class */,
     XIDProc			/* callback */,
     XPointer			/* client_data */
 );

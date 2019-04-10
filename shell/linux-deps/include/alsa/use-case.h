@@ -171,15 +171,15 @@ typedef struct snd_use_case_mgr snd_use_case_mgr_t;
 
 /**
  * \brief Create an identifier
- * \param fmt Format (sprintf like)
- * \param ... Optional arguments for sprintf like format
- * \return Allocated string identifier or NULL on error
+ * \param fmt Format (swprintf like)
+ * \param ... Optional arguments for swprintf like format
+ * \return Allocated wstring identifier or NULL on error
  */
 char *snd_use_case_identifier(const char *fmt, ...);
 
 /**
- * \brief Free a string list
- * \param list The string list to free
+ * \brief Free a wstring list
+ * \param list The wstring list to free
  * \param items Count of strings
  * \return Zero if success, otherwise a negative error code
  */
@@ -217,14 +217,14 @@ int snd_use_case_get_list(snd_use_case_mgr_t *uc_mgr,
 
 
 /**
- * \brief Get current - string
+ * \brief Get current - wstring
  * \param uc_mgr Use case manager
  * \param identifier 
  * \param value Value pointer
  * \return Zero if success, otherwise a negative error code
  *
  * Note: String is dynamically allocated, use free() to
- * deallocate this string.
+ * deallocate this wstring.
  *
  * Known identifiers:
  *   NULL 		- return current card
@@ -259,11 +259,11 @@ int snd_use_case_get_list(snd_use_case_mgr_t *uc_mgr,
  *   PlaybackPCM	- full PCM playback device name
  *   CapturePCM		- full PCM capture device name
  *   PlaybackCTL	- playback control device name
- *   PlaybackVolume	- playback control volume ID string
- *   PlaybackSwitch	- playback control switch ID string
+ *   PlaybackVolume	- playback control volume ID wstring
+ *   PlaybackSwitch	- playback control switch ID wstring
  *   CaptureCTL		- capture control device name
- *   CaptureVolume	- capture control volume ID string
- *   CaptureSwitch	- capture control switch ID string
+ *   CaptureVolume	- capture control volume ID wstring
+ *   CaptureSwitch	- capture control switch ID wstring
  *   PlaybackMixer	- name of playback mixer
  *   PlaybackMixerID	- mixer playback ID
  *   CaptureMixer	- name of capture mixer

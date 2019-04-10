@@ -89,8 +89,8 @@ void plugins_Reset(bool Manual)
 
 #if !defined(USE_QT)
 
-#if HOST_OS!=OS_WINDOWS // && !USE_QT
-int GetFile(char *szFileName, char *szParse = 0, u32 flags = 0) { return -1; }
+#if HOST_OS!=OS_WINDOWS && HOST_OS!=OS_UWP // && !USE_QT
+int GetFile(wchar_t *szFileName, wchar_t *szParse = 0, u32 flags = 0) { return -1; }
 #endif
 
 
@@ -110,20 +110,20 @@ cThread webui_thd(&webui_th,0);
 #if defined(_ANDROID)
 int reios_init_value;
 
-void reios_init(int argc,wchar* argv[])
+void reios_init(int argc,wchar_t* argv[])
 #else
-int dc_init(int argc,wchar* argv[])
+int dc_init(int argc,wchar_t* argv[])
 #endif
 {
 	setbuf(stdin,0);
 	setbuf(stdout,0);
 	setbuf(stderr,0);
 
-	printf("---------------------------------\n\t_vmem_reserve()\n---------------------------------\n");
+	wprintf(L"---------------------------------\n\t_vmem_reserve()\n---------------------------------\n");
 
 	if (!_vmem_reserve())
 	{
-		printf("Failed to alloc mem\n");
+		wprintf(L"Failed to alloc mem\n");
 #if defined(_ANDROID)
 		reios_init_value = -1;
 		return;
@@ -146,10 +146,10 @@ int dc_init(int argc,wchar* argv[])
 #endif
 	}
 
-	printf("---------------------------------\n\t cfgOpen()\n---------------------------------\n");
+	wprintf(L"---------------------------------\n\t cfgOpen()\n---------------------------------\n");
 	if(!cfgOpen())
 	{
-		msgboxf("Unable to open config file",MBX_ICONERROR);
+		msgboxf(L"Unable to open config file",MBX_ICONERROR);
 #if defined(_ANDROID)
 		reios_init_value = -4;
 		return;
@@ -157,7 +157,7 @@ int dc_init(int argc,wchar* argv[])
 		return -4;
 #endif
 	}
-	printf("---------------------------------\n\t LoadSettings()\n---------------------------------\n");
+	wprintf(L"---------------------------------\n\t LoadSettings()\n---------------------------------\n");
 	LoadSettings();
 #ifndef _ANDROID
 	os_CreateWindow();
@@ -165,14 +165,14 @@ int dc_init(int argc,wchar* argv[])
 
 	int rv = 0;
 
-	printf("---------------------------------\n\t LoadRomFiles()\n---------------------------------\n");
+	wprintf(L"---------------------------------\n\t LoadRomFiles()\n---------------------------------\n");
 #if HOST_OS != OS_DARWIN && !defined(PS4)
-    #define DATA_PATH "/data/"
+    #define DATA_PATH L"/data/"
 #else
     #define DATA_PATH "/"
 #endif
 
-	printf("\n\t ---- FN DATA PATH : %s\n\n", DATA_PATH);
+	wprintf(L"\n\t ---- FN DATA PATH : %s\n\n", DATA_PATH);
 
 	if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
 	{
@@ -187,7 +187,7 @@ int dc_init(int argc,wchar* argv[])
 		}
 		else
 		{
-			printf("Did not load bios, using reios\n");
+			wprintf(L"Did not load bios, using reios\n");
 		}
 	}
 
@@ -209,13 +209,13 @@ int dc_init()
 	if(settings.dynarec.Enable)
 	{
 		Get_Sh4Recompiler(&sh4_cpu);
-		printf("Using Recompiler\n");
+		wprintf(L"Using Recompiler\n");
 	}
 	else
 #endif
 	{
 		Get_Sh4Interpreter(&sh4_cpu);
-		printf("Using Interpreter\n");
+		wprintf(L"Using Interpreter\n");
 	}
 
     InitAudio();
@@ -253,7 +253,7 @@ void dc_term()
 #ifndef _ANDROID
 	SaveSettings();
 #endif
-	SaveRomFiles(get_writable_data_path("/data/"));
+	SaveRomFiles(get_writable_data_path(DATA_PATH));
 
     TermAudio();
 }
@@ -261,7 +261,7 @@ void dc_term()
 #if defined(_ANDROID)
 void dc_pause()
 {
-	SaveRomFiles(get_writable_data_path("/data/"));
+	SaveRomFiles(get_writable_data_path(DATA_PATH));
 }
 #endif
 
@@ -285,35 +285,35 @@ void dc_stop()
 void LoadSettings()
 {
 #ifndef _ANDROID
-	settings.dynarec.Enable		= cfgLoadInt("config", "Dynarec.Enabled", 1) != 0;
-	settings.dynarec.idleskip	= cfgLoadInt("config", "Dynarec.idleskip", 1) != 0;
-	settings.dynarec.unstable_opt	= cfgLoadInt("config", "Dynarec.unstable-opt", 0);
+	settings.dynarec.Enable		= cfgLoadInt(L"config", L"Dynarec.Enabled", 1) != 0;
+	settings.dynarec.idleskip	= cfgLoadInt(L"config", L"Dynarec.idleskip", 1) != 0;
+	settings.dynarec.unstable_opt	= cfgLoadInt(L"config", L"Dynarec.unstable-opt", 0);
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
-	settings.dreamcast.cable	= cfgLoadInt("config", "Dreamcast.Cable", 3);
-	settings.dreamcast.RTC		= cfgLoadInt("config", "Dreamcast.RTC", GetRTC_now());
-	settings.dreamcast.region	= cfgLoadInt("config", "Dreamcast.Region", 3);
-	settings.dreamcast.broadcast	= cfgLoadInt("config", "Dreamcast.Broadcast", 4);
-	settings.aica.LimitFPS		= cfgLoadInt("config", "aica.LimitFPS", 1);
-	settings.aica.NoBatch		= cfgLoadInt("config", "aica.NoBatch", 0);
-	settings.aica.NoSound		= cfgLoadInt("config", "aica.NoSound", 0);
-	settings.rend.UseMipmaps	= cfgLoadInt("config", "rend.UseMipmaps", 1);
-	settings.rend.WideScreen	= cfgLoadInt("config", "rend.WideScreen", 0);
-	settings.rend.Clipping		= cfgLoadInt("config", "rend.Clipping", 1);
+	settings.dreamcast.cable	= cfgLoadInt(L"config", L"Dreamcast.Cable", 3);
+	settings.dreamcast.RTC		= cfgLoadInt(L"config", L"Dreamcast.RTC", GetRTC_now());
+	settings.dreamcast.region	= cfgLoadInt(L"config", L"Dreamcast.Region", 3);
+	settings.dreamcast.broadcast= cfgLoadInt(L"config", L"Dreamcast.Broadcast", 4);
+	settings.aica.LimitFPS		= cfgLoadInt(L"config", L"aica.LimitFPS", 1);
+	settings.aica.NoBatch		= cfgLoadInt(L"config", L"aica.NoBatch", 0);
+	settings.aica.NoSound		= cfgLoadInt(L"config", L"aica.NoSound", 0);
+	settings.rend.UseMipmaps	= cfgLoadInt(L"config", L"rend.UseMipmaps", 1);
+	settings.rend.WideScreen	= cfgLoadInt(L"config", L"rend.WideScreen", 0);
+	settings.rend.Clipping		= cfgLoadInt(L"config", L"rend.Clipping", 1);
 
-	settings.pvr.subdivide_transp	= cfgLoadInt("config", "pvr.Subdivide", 0);
+	settings.pvr.subdivide_transp	= cfgLoadInt(L"config", L"pvr.Subdivide", 0);
 
-	settings.pvr.ta_skip		= cfgLoadInt("config", "ta.skip", 0);
-	settings.pvr.rend			= cfgLoadInt("config", "pvr.rend", 0);
+	settings.pvr.ta_skip			= cfgLoadInt(L"config", L"ta.skip", 0);
+	settings.pvr.rend				= cfgLoadInt(L"config", L"pvr.rend", 0);
 
-	settings.pvr.MaxThreads			= cfgLoadInt("config", "pvr.MaxThreads", 3);
-	settings.pvr.SynchronousRender	= cfgLoadInt("config", "pvr.SynchronousRendering", 0);
+	settings.pvr.MaxThreads			= cfgLoadInt(L"config", L"pvr.MaxThreads", 3);
+	settings.pvr.SynchronousRender	= cfgLoadInt(L"config", L"pvr.SynchronousRendering", 0);
 
-	settings.debug.SerialConsole	= cfgLoadInt("config", "Debug.SerialConsoleEnabled", 0) != 0;
+	settings.debug.SerialConsole	= cfgLoadInt(L"config", L"Debug.SerialConsoleEnabled", 0) != 0;
 
-	settings.bios.UseReios		= cfgLoadInt("config", "bios.UseReios", 0);
-	settings.reios.ElfFile		= cfgLoadStr("reios", "ElfFile", "");
+	settings.bios.UseReios			= cfgLoadInt(L"config", L"bios.UseReios", 0);
+	settings.reios.ElfFile			= cfgLoadStr(L"reios", L"ElfFile", L"");
 
-	settings.validate.OpenGlChecks	= cfgLoadInt("validate", "OpenGlChecks", 0) != 0;
+	settings.validate.OpenGlChecks	= cfgLoadInt(L"validate", L"OpenGlChecks", 0) != 0;
 
 	// Configured on a per-game basis
 	settings.dynarec.safemode		= 0;
@@ -321,13 +321,13 @@ void LoadSettings()
 	settings.rend.ModifierVolumes	= 1;
 #endif
 
-	settings.pvr.HashLogFile	= cfgLoadStr("testing", "ta.HashLogFile", "");
-	settings.pvr.HashCheckFile	= cfgLoadStr("testing", "ta.HashCheckFile", "");
+	settings.pvr.HashLogFile		= cfgLoadStr(L"testing", L"ta.HashLogFile", L"");
+	settings.pvr.HashCheckFile		= cfgLoadStr(L"testing", L"ta.HashCheckFile", L"");
 
 #if SUPPORT_DISPMANX
-	settings.dispmanx.Width		= cfgLoadInt("dispmanx","width",640);
-	settings.dispmanx.Height	= cfgLoadInt("dispmanx","height",480);
-	settings.dispmanx.Keep_Aspect	= cfgLoadBool("dispmanx","maintain_aspect",true);
+	settings.dispmanx.Width			= cfgLoadInt(L"dispmanx",L"width",640);
+	settings.dispmanx.Height		= cfgLoadInt(L"dispmanx",L"height",480);
+	settings.dispmanx.Keep_Aspect	= cfgLoadBool(L"dispmanx",L"maintain_aspect",true);
 #endif
 
 #if (HOST_OS != OS_LINUX || defined(_ANDROID) || defined(TARGET_PANDORA))
@@ -337,7 +337,7 @@ void LoadSettings()
 #endif
 
 #if USE_OMX
-	settings.omx.Audio_Latency	= cfgLoadInt("omx","audio_latency",100);
+	settings.omx.Audio_Latency	= cfgLoadInt(L"omx","audio_latency",100);
 	settings.omx.Audio_HDMI		= cfgLoadBool("omx","audio_hdmi",true);
 #endif
 
@@ -351,33 +351,33 @@ void LoadSettings()
 
 void LoadCustom()
 {
-	char *reios_id = reios_disk_id();
+	wstring reios_id = toWString(reios_disk_id());
+	wstring sw_name  = toWString(reios_software_name);
+	cfgSaveStr(reios_id.c_str(), L"software.name", sw_name.c_str());
+	settings.dynarec.Enable			= cfgLoadInt(reios_id.c_str(),L"Dynarec.Enabled",		settings.dynarec.Enable ? 1 : 0) != 0;
+	settings.dynarec.idleskip		= cfgGameInt(reios_id.c_str(),L"Dynarec.idleskip",		settings.dynarec.idleskip ? 1 : 0) != 0;
+	settings.dynarec.unstable_opt	= cfgGameInt(reios_id.c_str(),L"Dynarec.unstable-opt",	settings.dynarec.unstable_opt);
+	settings.dynarec.safemode		= cfgGameInt(reios_id.c_str(),L"Dynarec.safemode",		settings.dynarec.safemode);
+	settings.aica.DelayInterrupt	= cfgLoadInt(reios_id.c_str(),L"aica.DelayInterrupt",	settings.aica.DelayInterrupt);
+	settings.rend.ModifierVolumes	= cfgGameInt(reios_id.c_str(),L"rend.ModifierVolumes",	settings.rend.ModifierVolumes);
+	settings.rend.Clipping			= cfgGameInt(reios_id.c_str(),L"rend.Clipping",			settings.rend.Clipping);
 
-	cfgSaveStr(reios_id, "software.name", reios_software_name);
-	settings.dynarec.Enable		= cfgLoadInt(reios_id,"Dynarec.Enabled", settings.dynarec.Enable ? 1 : 0) != 0;
-	settings.dynarec.idleskip	= cfgGameInt(reios_id,"Dynarec.idleskip", settings.dynarec.idleskip ? 1 : 0) != 0;
-	settings.dynarec.unstable_opt	= cfgGameInt(reios_id,"Dynarec.unstable-opt", settings.dynarec.unstable_opt);
-	settings.dynarec.safemode	= cfgGameInt(reios_id,"Dynarec.safemode", settings.dynarec.safemode);
-	settings.aica.DelayInterrupt	= cfgLoadInt(reios_id,"aica.DelayInterrupt", settings.aica.DelayInterrupt);
-	settings.rend.ModifierVolumes	= cfgGameInt(reios_id,"rend.ModifierVolumes", settings.rend.ModifierVolumes);
-	settings.rend.Clipping		= cfgGameInt(reios_id,"rend.Clipping", settings.rend.Clipping);
+	settings.pvr.subdivide_transp	= cfgGameInt(reios_id.c_str(),L"pvr.Subdivide",			settings.pvr.subdivide_transp);
 
-	settings.pvr.subdivide_transp	= cfgGameInt(reios_id,"pvr.Subdivide", settings.pvr.subdivide_transp);
+	settings.pvr.ta_skip			= cfgGameInt(reios_id.c_str(),L"ta.skip",	settings.pvr.ta_skip);
+	settings.pvr.rend				= cfgGameInt(reios_id.c_str(),L"pvr.rend",	settings.pvr.rend);
 
-	settings.pvr.ta_skip		= cfgGameInt(reios_id,"ta.skip", settings.pvr.ta_skip);
-	settings.pvr.rend		= cfgGameInt(reios_id,"pvr.rend", settings.pvr.rend);
-
-	settings.pvr.MaxThreads		= cfgGameInt(reios_id, "pvr.MaxThreads", settings.pvr.MaxThreads);
-	settings.pvr.SynchronousRender	= cfgGameInt(reios_id, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+	settings.pvr.MaxThreads			= cfgGameInt(reios_id.c_str(),L"pvr.MaxThreads", settings.pvr.MaxThreads);
+	settings.pvr.SynchronousRender	= cfgGameInt(reios_id.c_str(),L"pvr.SynchronousRendering", settings.pvr.SynchronousRender);
 }
 
 void SaveSettings()
 {
-	cfgSaveInt("config","Dynarec.Enabled",		settings.dynarec.Enable);
-	cfgSaveInt("config","Dreamcast.Cable",		settings.dreamcast.cable);
-	cfgSaveInt("config","Dreamcast.RTC",		settings.dreamcast.RTC);
-	cfgSaveInt("config","Dreamcast.Region",		settings.dreamcast.region);
-	cfgSaveInt("config","Dreamcast.Broadcast",	settings.dreamcast.broadcast);
+	cfgSaveInt(L"config",L"Dynarec.Enabled",	settings.dynarec.Enable);
+	cfgSaveInt(L"config",L"Dreamcast.Cable",	settings.dreamcast.cable);
+	cfgSaveInt(L"config",L"Dreamcast.RTC",		settings.dreamcast.RTC);
+	cfgSaveInt(L"config",L"Dreamcast.Region",	settings.dreamcast.region);
+	cfgSaveInt(L"config",L"Dreamcast.Broadcast",settings.dreamcast.broadcast);
 }
 
 

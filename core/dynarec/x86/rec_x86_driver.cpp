@@ -37,7 +37,7 @@ void DetectCpuFeatures()
 	if (detected) return;
 	detected=true;
 
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 	__try
 	{
 		__asm addps xmm0,xmm0
@@ -190,7 +190,7 @@ void DYNACALL csc_fail(u32 addr,u32 addy)
 	{
 		u32 fail_idx=(csc_sidx>>1)|(csc_sidx<<31);
 
-		printf("Ret Mismatch: %08X instead of %08X!\n",addr,addy);
+		wprintf(L"Ret Mismatch: %08X instead of %08X!\n",addr,addy);
 	}
 }
 void csc_pop(RuntimeBlockInfo* block)
@@ -251,10 +251,10 @@ void csc_pop(RuntimeBlockInfo* block)
 
 void DYNACALL PrintBlock(u32 pc)
 {
-	printf("block: 0x%08X\n",pc);
+	wprintf(L"block: 0x%08X\n",pc);
 	for (int i=0;i<16;i++)
-		printf("%08X ",r[i]);
-	printf("\n");
+		wprintf(L"%08X ",r[i]);
+	wprintf(L"\n");
 }
 
 u32* GetRegPtr(u32 reg)
@@ -495,7 +495,7 @@ u32 DynaRBI::Relink()
 		break;
 
 	default:
-		die("Invalid block end type");
+		die(L"Invalid block end type");
 	}
 
 	x86e->Emit(op_jmp, x86_ptr_imm(loop_no_update));
@@ -703,14 +703,14 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 		}
 		else
 		{
-			die("Can't happen\n");
+			die(L"Can't happen\n");
 		}
 	}
 	else
 	{
 		//General
 
-		#if HOST_OS != OS_WINDOWS
+		#if HOST_OS != OS_WINDOWS && HOST_OS!=OS_UWP
 			//maintain 16 byte alignment
 			x86e->Emit(op_sub32, ESP, 12);
 		#endif
@@ -722,7 +722,7 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 			}
 			else
 			{
-				#if HOST_OS == OS_WINDOWS
+				#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 					//on linux, we have scratch space on esp
 					x86e->Emit(op_sub32,ESP,8);
 				#endif
@@ -741,7 +741,7 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 				x86e->Emit(op_movd_xmm_from_r32,XMM1,EDX);
 			}
 		}
-		#if HOST_OS != OS_WINDOWS
+		#if HOST_OS != OS_WINDOWS && HOST_OS!=OS_UWP
 			//maintain 16 byte alignment
 			if ((sz == SZ_64F) && w == 1) {
 				x86e->Emit(op_add32, ESP, 4);
@@ -835,7 +835,7 @@ bool ngen_Rewrite(unat& addr,unat retadr,unat acc)
 					//found !
 
 					if ((acc >> 26) == 0x38 && !w) {
-						printf("WARNING: SQ AREA READ, %08X from sh4:%08X. THIS IS UNDEFINED ON A REAL DREACMAST.\n", acc, bm_GetBlock(x86e->x86_buff)->addr);
+						wprintf(L"WARNING: SQ AREA READ, %08X from sh4:%08X. THIS IS UNDEFINED ON A REAL DREACMAST.\n", acc, bm_GetBlock(x86e->x86_buff)->addr);
 					}
 
 					if ((acc >> 26) == 0x38) //sq ?
@@ -853,13 +853,13 @@ bool ngen_Rewrite(unat& addr,unat retadr,unat acc)
 
 					addr=retadr-5;
 
-					//printf("Patched: %08X for access @ %08X\n",addr,acc);
+					//wprintf(L"Patched: %08X for access @ %08X\n",addr,acc);
 					return true;
 				}
 			}
 		}
 		
-		die("Failed to match the code :(\n");
+		die(L"Failed to match the code :(\n");
 
 		return false;
 	}

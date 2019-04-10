@@ -45,7 +45,7 @@ bool UpdateSR()
 	{
 		if (sr.RB)
 		{
-			printf("UpdateSR MD=0;RB=1 , this must not happen\n");
+			wprintf(L"UpdateSR MD=0;RB=1 , this must not happen\n");
 			sr.RB =0;//error - must always be 0
 			if (old_sr.RB)
 				ChangeGPR();//switch
@@ -118,7 +118,7 @@ void SetFloatStatusReg()
 				: "r"(x), "r"(y)
 			);
     #else
-        printf("SetFloatStatusReg: Unsupported platform\n");
+        wprintf(L"SetFloatStatusReg: Unsupported platform\n");
     #endif
 #endif
 
@@ -227,7 +227,7 @@ u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 
 		default:
 			EMUERROR2("Unknown register ID %d",reg);
-			die("Invalid reg");
+			die(L"Invalid reg");
 			return 0;
 			break;
 		}

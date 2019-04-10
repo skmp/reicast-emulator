@@ -100,7 +100,7 @@ int lws_client_socket_service(struct libwebsocket_context *context,
 		}
 
 		context->service_buffer[13] = '\0';
-		if (strcmp((char *)context->service_buffer, "HTTP/1.0 200 ")) {
+		if (wcscmp((char *)context->service_buffer, "HTTP/1.0 200 ")) {
 			libwebsocket_close_and_free_session(context, wsi,
 						     LWS_CLOSE_STATUS_NOSTATUS);
 			lwsl_err("ERROR proxy: %s\n", context->service_buffer);
@@ -146,7 +146,7 @@ int lws_client_socket_service(struct libwebsocket_context *context,
 #ifdef USE_CYASSL
 #ifdef CYASSL_SNI_HOST_NAME
 			CyaSSL_UseSNI(wsi->ssl, CYASSL_SNI_HOST_NAME,
-				hostname, strlen(hostname));
+				hostname, wcslen(hostname));
 #endif
 #else
 			SSL_set_tlsext_host_name(wsi->ssl, hostname);
@@ -509,7 +509,7 @@ lws_client_interpret_server_handshake(struct libwebsocket_context *context,
 		goto bail3;
 	}
 	strtolower(p);
-	if (strcmp(p, "websocket")) {
+	if (wcscmp(p, "websocket")) {
 		lwsl_warn(
 		      "lws_client_handshake: got bad Upgrade header '%s'\n", p);
 		goto bail3;
@@ -521,7 +521,7 @@ lws_client_interpret_server_handshake(struct libwebsocket_context *context,
 		goto bail3;
 	}
 	strtolower(p);
-	if (strcmp(p, "upgrade")) {
+	if (wcscmp(p, "upgrade")) {
 		lwsl_warn("lws_client_int_s_hs: bad header %s\n", p);
 		goto bail3;
 	}
@@ -550,7 +550,7 @@ lws_client_interpret_server_handshake(struct libwebsocket_context *context,
 	}
 
 	p = lws_hdr_simple_ptr(wsi, WSI_TOKEN_PROTOCOL);
-	len = strlen(p);
+	len = wcslen(p);
 
 	while (*pc && !okay) {
 		if (!strncmp(pc, p, len) &&
@@ -575,7 +575,7 @@ lws_client_interpret_server_handshake(struct libwebsocket_context *context,
 	n = 0;
 	wsi->protocol = NULL;
 	while (context->protocols[n].callback && !wsi->protocol) {
-		if (strcmp(p, context->protocols[n].name) == 0) {
+		if (wcscmp(p, context->protocols[n].name) == 0) {
 			wsi->protocol = &context->protocols[n];
 			break;
 		}
@@ -635,7 +635,7 @@ check_extensions:
 		ext = wsi->protocol->owning_server->extensions;
 		while (ext && ext->callback) {
 
-			if (strcmp(ext_name, ext->name)) {
+			if (wcscmp(ext_name, ext->name)) {
 				ext++;
 				continue;
 			}
@@ -690,7 +690,7 @@ check_accept:
 	 */
 
 	p = lws_hdr_simple_ptr(wsi, WSI_TOKEN_ACCEPT);
-	if (strcmp(p, wsi->u.hdr.ah->initial_handshake_hash_base64)) {
+	if (wcscmp(p, wsi->u.hdr.ah->initial_handshake_hash_base64)) {
 		lwsl_warn("lws_client_int_s_hs: accept %s wrong vs %s\n", p,
 				  wsi->u.hdr.ah->initial_handshake_hash_base64);
 		goto bail2;
@@ -860,30 +860,30 @@ libwebsockets_generate_client_handshake(struct libwebsocket_context *context,
 	 * Sec-WebSocket-Version: 4
 	 */
 
-	p += sprintf(p, "GET %s HTTP/1.1\x0d\x0a",
+	p += swprintf(p, "GET %s HTTP/1.1\x0d\x0a",
 				lws_hdr_simple_ptr(wsi, _WSI_TOKEN_CLIENT_URI));
 
-	p += sprintf(p,
+	p += swprintf(p,
 		"Pragma: no-cache\x0d\x0a""Cache-Control: no-cache\x0d\x0a");
 
-	p += sprintf(p, "Host: %s\x0d\x0a",
+	p += swprintf(p, "Host: %s\x0d\x0a",
 			       lws_hdr_simple_ptr(wsi, _WSI_TOKEN_CLIENT_HOST));
-	p += sprintf(p,
+	p += swprintf(p,
 "Upgrade: websocket\x0d\x0a""Connection: Upgrade\x0d\x0a""Sec-WebSocket-Key: ");
 	strcpy(p, key_b64);
-	p += strlen(key_b64);
-	p += sprintf(p, "\x0d\x0a");
+	p += wcslen(key_b64);
+	p += swprintf(p, "\x0d\x0a");
 	if (lws_hdr_simple_ptr(wsi, _WSI_TOKEN_CLIENT_ORIGIN))
-		p += sprintf(p, "Origin: http://%s\x0d\x0a",
+		p += swprintf(p, "Origin: http://%s\x0d\x0a",
 			     lws_hdr_simple_ptr(wsi, _WSI_TOKEN_CLIENT_ORIGIN));
 
 	if (lws_hdr_simple_ptr(wsi, _WSI_TOKEN_CLIENT_SENT_PROTOCOLS))
-		p += sprintf(p, "Sec-WebSocket-Protocol: %s\x0d\x0a",
+		p += swprintf(p, "Sec-WebSocket-Protocol: %s\x0d\x0a",
 		     lws_hdr_simple_ptr(wsi, _WSI_TOKEN_CLIENT_SENT_PROTOCOLS));
 
 	/* tell the server what extensions we could support */
 
-	p += sprintf(p, "Sec-WebSocket-Extensions: ");
+	p += swprintf(p, "Sec-WebSocket-Extensions: ");
 #ifndef LWS_NO_EXTENSIONS
 	ext = context->extensions;
 	while (ext && ext->callback) {
@@ -917,16 +917,16 @@ libwebsockets_generate_client_handshake(struct libwebsocket_context *context,
 
 		if (ext_count)
 			*p++ = ',';
-		p += sprintf(p, "%s", ext->name);
+		p += swprintf(p, "%s", ext->name);
 		ext_count++;
 
 		ext++;
 	}
 #endif
-	p += sprintf(p, "\x0d\x0a");
+	p += swprintf(p, "\x0d\x0a");
 
 	if (wsi->ietf_spec_revision)
-		p += sprintf(p, "Sec-WebSocket-Version: %d\x0d\x0a",
+		p += swprintf(p, "Sec-WebSocket-Version: %d\x0d\x0a",
 					       wsi->ietf_spec_revision);
 
 	/* give userland a chance to append, eg, cookies */
@@ -935,12 +935,12 @@ libwebsockets_generate_client_handshake(struct libwebsocket_context *context,
 		LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER,
 		NULL, &p, (pkt + sizeof(context->service_buffer)) - p - 12);
 
-	p += sprintf(p, "\x0d\x0a");
+	p += swprintf(p, "\x0d\x0a");
 
 	/* prepare the expected server accept response */
 
 	key_b64[39] = '\0'; /* enforce composed length below buf sizeof */
-	n = sprintf(buf, "%s258EAFA5-E914-47DA-95CA-C5AB0DC85B11", key_b64);
+	n = swprintf(buf, "%s258EAFA5-E914-47DA-95CA-C5AB0DC85B11", key_b64);
 
 	SHA1((unsigned char *)buf, n, (unsigned char *)hash);
 

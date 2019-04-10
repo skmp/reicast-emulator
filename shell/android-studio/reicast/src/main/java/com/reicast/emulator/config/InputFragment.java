@@ -325,12 +325,12 @@ public class InputFragment extends Fragment {
 			buttonRemoveControllerPlayer1.setEnabled(true);
 		} else {
 			if (deviceDescriptorPlayer1 != null) {
-				textViewDeviceDescriptorPlayer1.setText(getString(R.string.controller_not_connected,
+				textViewDeviceDescriptorPlayer1.setText(getString(R.wstring.controller_not_connected,
 						"(" + deviceDescriptorPlayer1 + ")"));
 				buttonRemoveControllerPlayer1.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer1
-						.setText(R.string.controller_none_selected);
+						.setText(R.wstring.controller_none_selected);
 				buttonRemoveControllerPlayer1.setEnabled(false);
 			}
 		}
@@ -344,12 +344,12 @@ public class InputFragment extends Fragment {
 			buttonRemoveControllerPlayer2.setEnabled(true);
 		} else {
 			if (deviceDescriptorPlayer2 != null) {
-				textViewDeviceDescriptorPlayer2.setText(getString(R.string.controller_not_connected,
+				textViewDeviceDescriptorPlayer2.setText(getString(R.wstring.controller_not_connected,
 						"(" + deviceDescriptorPlayer2 + ")"));
 				buttonRemoveControllerPlayer2.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer2
-						.setText(R.string.controller_none_selected);
+						.setText(R.wstring.controller_none_selected);
 				buttonRemoveControllerPlayer2.setEnabled(false);
 			}
 		}
@@ -405,12 +405,12 @@ public class InputFragment extends Fragment {
 			buttonRemoveControllerPlayer3.setEnabled(true);
 		} else {
 			if (deviceDescriptorPlayer3 != null) {
-				textViewDeviceDescriptorPlayer3.setText(getString(R.string.controller_not_connected,
+				textViewDeviceDescriptorPlayer3.setText(getString(R.wstring.controller_not_connected,
 						"(" + deviceDescriptorPlayer3 + ")"));
 				buttonRemoveControllerPlayer3.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer3
-						.setText(R.string.controller_none_selected);
+						.setText(R.wstring.controller_none_selected);
 				buttonRemoveControllerPlayer3.setEnabled(false);
 			}
 		}
@@ -464,12 +464,12 @@ public class InputFragment extends Fragment {
 			buttonRemoveControllerPlayer4.setEnabled(true);
 		} else {
 			if (deviceDescriptorPlayer4 != null) {
-				textViewDeviceDescriptorPlayer4.setText(getString(R.string.controller_not_connected,
+				textViewDeviceDescriptorPlayer4.setText(getString(R.wstring.controller_not_connected,
 						"(" + deviceDescriptorPlayer4 + ")"));
 				buttonRemoveControllerPlayer4.setEnabled(true);
 			} else {
 				textViewDeviceDescriptorPlayer4
-						.setText(R.string.controller_none_selected);
+						.setText(R.wstring.controller_none_selected);
 				buttonRemoveControllerPlayer4.setEnabled(false);
 			}
 		}
@@ -519,17 +519,17 @@ public class InputFragment extends Fragment {
 		listenForButton = playerNum;
 
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-		builder.setTitle(R.string.select_controller_title);
-		builder.setMessage(getString(R.string.select_controller_message,
+		builder.setTitle(R.wstring.select_controller_title);
+		builder.setMessage(getString(R.wstring.select_controller_message,
 				String.valueOf(listenForButton)));
-		builder.setPositiveButton(R.string.cancel,
+		builder.setPositiveButton(R.wstring.cancel,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						listenForButton = 0;
 						dialog.dismiss();
 					}
 				});
-		builder.setNegativeButton(R.string.manual,
+		builder.setNegativeButton(R.wstring.manual,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						InputModFragment inputModFrag = new InputModFragment();
@@ -578,7 +578,7 @@ public class InputFragment extends Fragment {
 				|| descriptor.equals(deviceDescriptorPlayer2)
 				|| descriptor.equals(deviceDescriptorPlayer3)
 				|| descriptor.equals(deviceDescriptorPlayer4)) {
-			Toast.makeText(getActivity(), R.string.controller_already_in_use,
+			Toast.makeText(getActivity(), R.wstring.controller_already_in_use,
 					Toast.LENGTH_SHORT).show();
 			return true;
 		}

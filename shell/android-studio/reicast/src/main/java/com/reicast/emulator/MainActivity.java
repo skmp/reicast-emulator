@@ -142,7 +142,7 @@ public class MainActivity extends AppCompatActivity implements
 
 		DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
 		android.support.v7.app.ActionBarDrawerToggle toggle = new android.support.v7.app.ActionBarDrawerToggle(
-				this, drawer, toolbar, R.string.drawer_open, R.string.drawer_shut) {
+				this, drawer, toolbar, R.wstring.drawer_open, R.wstring.drawer_shut) {
 			@Override
 			public void onDrawerOpened(View drawerView) {
 
@@ -174,7 +174,7 @@ public class MainActivity extends AppCompatActivity implements
 
 		final SearchView searchView = (SearchView) findViewById(R.id.searchView);
 		if (searchView != null) {
-			searchView.setQueryHint(getString(R.string.search_hint));
+			searchView.setQueryHint(getString(R.wstring.search_hint));
 			searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 				@Override
 				public boolean onQueryTextSubmit(String query) {
@@ -204,15 +204,15 @@ public class MainActivity extends AppCompatActivity implements
 	 */
 	private void displayLogOutput(final String error) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-		builder.setTitle(R.string.report_issue);
+		builder.setTitle(R.wstring.report_issue);
 		builder.setMessage(error);
-		builder.setPositiveButton(R.string.report,
+		builder.setPositiveButton(R.wstring.report,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						generateErrorLog();
 					}
 				});
-		builder.setNegativeButton(R.string.dismiss,
+		builder.setNegativeButton(R.wstring.dismiss,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
@@ -273,7 +273,7 @@ public class MainActivity extends AppCompatActivity implements
 		OptionsFragment optsFrag = new OptionsFragment();
 		getSupportFragmentManager().beginTransaction().replace(
 				R.id.fragment_container, optsFrag, "OPTIONS_FRAG").commit();
-		setTitle(R.string.settings);
+		setTitle(R.wstring.settings);
 	}
 
 	/**
@@ -305,13 +305,13 @@ public class MainActivity extends AppCompatActivity implements
 				.beginTransaction()
 				.replace(R.id.fragment_container, firstFragment, "MAIN_BROWSER")
 				.addToBackStack(null).commit();
-		setTitle(R.string.browser);
+		setTitle(R.wstring.browser);
 	}
 
 	public void launchBIOSdetection() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle(R.string.bios_selection);
-		builder.setPositiveButton(R.string.browse,
+		builder.setTitle(R.wstring.bios_selection);
+		builder.setPositiveButton(R.wstring.browse,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						String home_directory = mPrefs.getString(Config.pref_home,
@@ -319,10 +319,10 @@ public class MainActivity extends AppCompatActivity implements
 						onMainBrowseSelected(home_directory, false, null);
 					}
 				});
-		builder.setNegativeButton(R.string.gdrive,
+		builder.setNegativeButton(R.wstring.gdrive,
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						showToastMessage(getString(R.string.require_bios),
+						showToastMessage(getString(R.wstring.require_bios),
 								Snackbar.LENGTH_SHORT);
 					}
 				});
@@ -417,7 +417,7 @@ public class MainActivity extends AppCompatActivity implements
 						.beginTransaction()
 						.replace(R.id.fragment_container, browseFrag, "MAIN_BROWSER")
 						.addToBackStack(null).commit();
-				setTitle(R.string.browser);
+				setTitle(R.wstring.browser);
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
 
@@ -435,7 +435,7 @@ public class MainActivity extends AppCompatActivity implements
 						.beginTransaction()
 						.replace(R.id.fragment_container, optionsFrag, "OPTIONS_FRAG")
 						.addToBackStack(null).commit();
-				setTitle(R.string.settings);
+				setTitle(R.wstring.settings);
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
 
@@ -453,7 +453,7 @@ public class MainActivity extends AppCompatActivity implements
 						.beginTransaction()
 						.replace(R.id.fragment_container, pgconfigFrag, "PGCONFIG_FRAG")
 						.addToBackStack(null).commit();
-				setTitle(R.string.pgconfig);
+				setTitle(R.wstring.pgconfig);
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
 
@@ -471,7 +471,7 @@ public class MainActivity extends AppCompatActivity implements
 						.beginTransaction()
 						.replace(R.id.fragment_container, inputFrag, "INPUT_FRAG")
 						.addToBackStack(null).commit();
-				setTitle(R.string.input);
+				setTitle(R.wstring.input);
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
 
@@ -489,7 +489,7 @@ public class MainActivity extends AppCompatActivity implements
 						.beginTransaction()
 						.replace(R.id.fragment_container, aboutFrag, "ABOUT_FRAG")
 						.addToBackStack(null).commit();
-				setTitle(R.string.about);
+				setTitle(R.wstring.about);
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
 
@@ -507,7 +507,7 @@ public class MainActivity extends AppCompatActivity implements
 						.beginTransaction()
 						.replace(R.id.fragment_container, cloudFrag, "CLOUD_FRAG")
 						.addToBackStack(null).commit();
-				setTitle(R.string.cloud);
+				setTitle(R.wstring.cloud);
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
 
@@ -515,7 +515,7 @@ public class MainActivity extends AppCompatActivity implements
 				// vib.vibrate(50);
 				startActivity(new Intent(Intent.ACTION_VIEW,
 						Uri.parse("market://details?id=" + getPackageName())));
-				//setTitle(R.string.rateme);
+				//setTitle(R.wstring.rateme);
 				drawer.closeDrawer(GravityCompat.START);
 				return true;
 

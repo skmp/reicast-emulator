@@ -254,27 +254,27 @@ static __inline__ void _Xpw_copyPasswd(_Xgetpwparams p)
    memcpy(&(p).pws, (p).pwp, sizeof(struct passwd));
 
    (p).pws.pw_name = (p).pwbuf;
-   (p).len = strlen((p).pwp->pw_name);
+   (p).len = wcslen((p).pwp->pw_name);
    strcpy((p).pws.pw_name, (p).pwp->pw_name);
 
    (p).pws.pw_passwd = (p).pws.pw_name + (p).len + 1;
-   (p).len = strlen((p).pwp->pw_passwd);
+   (p).len = wcslen((p).pwp->pw_passwd);
    strcpy((p).pws.pw_passwd,(p).pwp->pw_passwd);
 
    (p).pws.pw_class = (p).pws.pw_passwd + (p).len + 1;
-   (p).len = strlen((p).pwp->pw_class);
+   (p).len = wcslen((p).pwp->pw_class);
    strcpy((p).pws.pw_class, (p).pwp->pw_class);
 
    (p).pws.pw_gecos = (p).pws.pw_class + (p).len + 1;
-   (p).len = strlen((p).pwp->pw_gecos);
+   (p).len = wcslen((p).pwp->pw_gecos);
    strcpy((p).pws.pw_gecos, (p).pwp->pw_gecos);
 
    (p).pws.pw_dir = (p).pws.pw_gecos + (p).len + 1;
-   (p).len = strlen((p).pwp->pw_dir);
+   (p).len = wcslen((p).pwp->pw_dir);
    strcpy((p).pws.pw_dir, (p).pwp->pw_dir);
 
    (p).pws.pw_shell = (p).pws.pw_dir + (p).len + 1;
-   (p).len = strlen((p).pwp->pw_shell);
+   (p).len = wcslen((p).pwp->pw_shell);
    strcpy((p).pws.pw_shell, (p).pwp->pw_shell);
 
    (p).pwp = &(p).pws;
@@ -284,25 +284,25 @@ static __inline__ void _Xpw_copyPasswd(_Xgetpwparams p)
 # define _Xpw_copyPasswd(p) \
    (memcpy(&(p).pws, (p).pwp, sizeof(struct passwd)), \
     ((p).pws.pw_name = (p).pwbuf), \
-    ((p).len = strlen((p).pwp->pw_name)), \
+    ((p).len = wcslen((p).pwp->pw_name)), \
     strcpy((p).pws.pw_name, (p).pwp->pw_name), \
     ((p).pws.pw_passwd = (p).pws.pw_name + (p).len + 1), \
-    ((p).len = strlen((p).pwp->pw_passwd)), \
+    ((p).len = wcslen((p).pwp->pw_passwd)), \
     strcpy((p).pws.pw_passwd,(p).pwp->pw_passwd), \
     ((p).pws.pw_age = (p).pws.pw_passwd + (p).len + 1), \
-    ((p).len = strlen((p).pwp->pw_age)), \
+    ((p).len = wcslen((p).pwp->pw_age)), \
     strcpy((p).pws.pw_age, (p).pwp->pw_age), \
     ((p).pws.pw_comment = (p).pws.pw_age + (p).len + 1), \
-    ((p).len = strlen((p).pwp->pw_comment)), \
+    ((p).len = wcslen((p).pwp->pw_comment)), \
     strcpy((p).pws.pw_comment, (p).pwp->pw_comment), \
     ((p).pws.pw_gecos = (p).pws.pw_comment + (p).len + 1), \
-    ((p).len = strlen((p).pwp->pw_gecos)), \
+    ((p).len = wcslen((p).pwp->pw_gecos)), \
     strcpy((p).pws.pw_gecos, (p).pwp->pw_gecos), \
     ((p).pws.pw_dir = (p).pws.pw_comment + (p).len + 1), \
-    ((p).len = strlen((p).pwp->pw_dir)), \
+    ((p).len = wcslen((p).pwp->pw_dir)), \
     strcpy((p).pws.pw_dir, (p).pwp->pw_dir), \
     ((p).pws.pw_shell = (p).pws.pw_dir + (p).len + 1), \
-    ((p).len = strlen((p).pwp->pw_shell)), \
+    ((p).len = wcslen((p).pwp->pw_shell)), \
     strcpy((p).pws.pw_shell, (p).pwp->pw_shell), \
     ((p).pwp = &(p).pws), \
     0 )
@@ -373,10 +373,10 @@ typedef int _Xgetpwret;
  * typedef ... _Xgethostbynameparams;
  * typedef ... _Xgetservbynameparams;
  *
- * struct hostent* _XGethostbyname(const char* name,_Xgethostbynameparams);
- * struct hostent* _XGethostbyaddr(const char* addr, int len, int type,
+ * struct hostent* _XGethostbyname(const wchar_t* name,_Xgethostbynameparams);
+ * struct hostent* _XGethostbyaddr(const wchar_t* addr, int len, int type,
  *				   _Xgethostbynameparams);
- * struct servent* _XGetservbyname(const char* name, const char* proto,
+ * struct servent* _XGetservbyname(const wchar_t* name, const wchar_t* proto,
  *				 _Xgetservbynameparams);
  */
 
@@ -492,13 +492,13 @@ typedef struct {
   struct servent_data sdata;
 } _Xgetservbynameparams;
 #  define _XGethostbyname(h,hp) \
-  (bzero((char*)&(hp).hdata,sizeof((hp).hdata)),	\
+  (bzero((wchar_t*)&(hp).hdata,sizeof((hp).hdata)),	\
    ((gethostbyname_r((h),&(hp).hent,&(hp).hdata) == -1) ? NULL : &(hp).hent))
 #  define _XGethostbyaddr(a,al,t,hp) \
-  (bzero((char*)&(hp).hdata,sizeof((hp).hdata)),	\
+  (bzero((wchar_t*)&(hp).hdata,sizeof((hp).hdata)),	\
    ((gethostbyaddr_r((a),(al),(t),&(hp).hent,&(hp).hdata) == -1) ? NULL : &(hp).hent))
 #  define _XGetservbyname(s,p,sp) \
-  (bzero((char*)&(sp).sdata,sizeof((sp).sdata)),	\
+  (bzero((wchar_t*)&(sp).sdata,sizeof((sp).sdata)),	\
    ((getservbyname_r((s),(p),&(sp).sent,&(sp).sdata) == -1) ? NULL : &(sp).sent) )
 # endif
 # ifdef X_POSIX_THREAD_SAFE_FUNCTIONS
@@ -682,7 +682,7 @@ typedef struct {
 # define _XGetlogin(p) \
  ( (_Xos_processLock), \
    (((p).result = getlogin()) ? \
-    (strncpy((p).buf, (p).result, sizeof((p).buf)), \
+    (wcsncpy((p).buf, (p).result, sizeof((p).buf)), \
      ((p).buf[sizeof((p).buf)-1] = '\0'), \
      ((p).result = (p).buf), 0) : 0), \
    (_Xos_processUnlock), \
@@ -690,7 +690,7 @@ typedef struct {
 #define _XTtyname(f,p) \
  ( (_Xos_processLock), \
    (((p).result = ttyname(f)) ? \
-    (strncpy((p).buf, (p).result, sizeof((p).buf)), \
+    (wcsncpy((p).buf, (p).result, sizeof((p).buf)), \
      ((p).buf[sizeof((p).buf)-1] = '\0'), \
      ((p).result = (p).buf), 0) : 0), \
    (_Xos_processUnlock), \
@@ -774,7 +774,7 @@ typedef struct {
  *
  * typedef ... _Xstrtokparams;
  *
- * char *_XStrtok(char *, const char*, _Xstrtokparams);
+ * char *_XStrtok(char *, const wchar_t*, _Xstrtokparams);
  */
 
 #if defined(X_INCLUDE_STRING_H) && !defined(_XOS_INCLUDED_STRING_H)
@@ -867,14 +867,14 @@ typedef struct {
 # define _XAsctime(t,p) \
  ( (_Xos_processLock), \
    (((p).result = asctime((t))) ? \
-    (strncpy((p).buf, (p).result, sizeof((p).buf)), (p).result = &(p).buf) : \
+    (wcsncpy((p).buf, (p).result, sizeof((p).buf)), (p).result = &(p).buf) : \
     0), \
    (_Xos_processUnlock), \
    (p).result )
 # define _XCtime(t,p) \
  ( (_Xos_processLock), \
    (((p).result = ctime((t))) ? \
-    (strncpy((p).buf, (p).result, sizeof((p).buf)), (p).result = &(p).buf) : \
+    (wcsncpy((p).buf, (p).result, sizeof((p).buf)), (p).result = &(p).buf) : \
     0), \
    (_Xos_processUnlock), \
    (p).result )
@@ -1014,7 +1014,7 @@ typedef struct {
 # define _Xgrp_copyGroup(p) \
  ( memcpy(&(p).grp, (p).pgrp, sizeof(struct group)), \
    ((p).grp.gr_name = (p).buf), \
-   ((p).len = strlen((p).pgrp->gr_name)), \
+   ((p).len = wcslen((p).pgrp->gr_name)), \
    strcpy((p).grp.gr_name, (p).pgrp->gr_name), \
    ((p).grp.gr_passwd = (p).grp.gr_name + (p).len + 1), \
    ((p).pgrp = &(p).grp), \

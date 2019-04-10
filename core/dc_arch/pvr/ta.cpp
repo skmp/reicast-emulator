@@ -11,7 +11,7 @@ extern u32 ta_type_lut[256];
 	Render/TA thread -> ta data -> draw lists -> draw
 */
 
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 extern u32 SQW,DMAW;
 #define SQWC(x) (SQW+=x)
 #define DMAWC(x) (DMAW+=x)
@@ -219,11 +219,11 @@ NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 
 	u32 cmd = trans>>4;
 	trans&=7;
-	//printf("Process state transition: %d || %d -> %d \n",cmd,state_in,trans&0xF);
+	//wprintf(L"Process state transition: %d || %d -> %d \n",cmd,state_in,trans&0xF);
 
 	if (cmd == 8)
 	{
-		//printf("Invalid TA Param %d\n", dat->pcw.ParaType);
+		//wprintf(L"Invalid TA Param %d\n", dat->pcw.ParaType);
 	}
 	else
 	{
@@ -231,7 +231,7 @@ NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 		{
 			if (ta_fsm_cl==7)
 				ta_fsm_cl=dat->pcw.ListType;
-			//printf("List %d ended\n",ta_fsm_cl);
+			//wprintf(L"List %d ended\n",ta_fsm_cl);
 
 			if (ta_fsm_cl==ListType_Translucent)
 			{
@@ -262,7 +262,7 @@ NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 		}
 		else
 		{
-			die("WTF ?\n");
+			die(L"WTF ?\n");
 		}
 	}
 

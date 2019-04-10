@@ -101,7 +101,7 @@ struct _XDisplay
 	int (*synchandler)(	/* Synchronization handler */
 		struct _XDisplay*
 		);
-	char *display_name;	/* "host:display" string used on this connect*/
+	char *display_name;	/* "host:display" wstring used on this connect*/
 	int default_screen;	/* default screen for operations */
 	int nscreens;		/* number of screens on this server*/
 	Screen *screens;	/* pointer to list of screens */
@@ -721,7 +721,7 @@ typedef struct _XInternalAsync {
     Bool (*handler)(
 		    Display*	/* dpy */,
 		    xReply*	/* rep */,
-		    char*	/* buf */,
+		    wchar_t*	/* buf */,
 		    int		/* len */,
 		    XPointer	/* data */
 		    );
@@ -818,11 +818,11 @@ typedef int (*ErrorType) (
     int*	/* ret_code */
 );
 
-typedef char* (*ErrorStringType) (
+typedef wchar_t* (*ErrorStringType) (
     Display*	/* display */,
     int		/* code */,
     XExtCodes*	/* codes */,
-    char*	/* buffer */,
+    wchar_t*	/* buffer */,
     int		/* nbytes */
 );
 
@@ -835,7 +835,7 @@ typedef void (*PrintErrorType)(
 typedef void (*BeforeFlushType)(
     Display*	/* display */,
     XExtCodes*	/* codes */,
-    _Xconst char* /* data */,
+    _Xconst wchar_t* /* data */,
     long	/* len */
 );
 
@@ -853,7 +853,7 @@ typedef struct _XExten {		/* private to extension mechanism */
 	FreeFontType free_Font;		/* routine to call when Font freed */
 	CloseDisplayType close_display;	/* routine to call when connection closed */
 	ErrorType error;		/* who to call when an error occurs */
-	ErrorStringType error_string;	/* routine to supply error string */
+	ErrorStringType error_string;	/* routine to supply error wstring */
 	char *name;			/* name of this extension */
 	PrintErrorType error_values;	/* routine to supply error values */
 	BeforeFlushType before_flush;	/* routine to call when sending data */
@@ -893,7 +893,7 @@ extern char *_XAllocTemp(
 );
 extern void _XFreeTemp(
     Display*		/* dpy */,
-    char*		/* buf */,
+    wchar_t*		/* buf */,
     unsigned long	/* nbytes */
 );
 extern Visual *_XVIDtoVisual(
@@ -905,7 +905,7 @@ extern unsigned long _XSetLastRequestRead(
     xGenericReply*	/* rep */
 );
 extern int _XGetHostname(
-    char*	/* buf */,
+    wchar_t*	/* buf */,
     int		/* maxlen */
 );
 extern Screen *_XScreenOfWindow(
@@ -915,15 +915,15 @@ extern Screen *_XScreenOfWindow(
 extern Bool _XAsyncErrorHandler(
     Display*	/* dpy */,
     xReply*	/* rep */,
-    char*	/* buf */,
+    wchar_t*	/* buf */,
     int		/* len */,
     XPointer	/* data */
 );
 extern char *_XGetAsyncReply(
     Display*	/* dpy */,
-    char*	/* replbuf */,
+    wchar_t*	/* replbuf */,
     xReply*	/* rep */,
-    char*	/* buf */,
+    wchar_t*	/* buf */,
     int		/* len */,
     int		/* extra */,
     Bool	/* discard */
@@ -949,17 +949,17 @@ extern void _XReadEvents(
 );
 extern int _XRead(
     Display*	/* dpy */,
-    char*	/* data */,
+    wchar_t*	/* data */,
     long	/* size */
 );
 extern void _XReadPad(
     Display*	/* dpy */,
-    char*	/* data */,
+    wchar_t*	/* data */,
     long	/* size */
 );
 extern void _XSend(
     Display*		/* dpy */,
-    _Xconst char*	/* data */,
+    _Xconst wchar_t*	/* data */,
     long		/* size */
 );
 extern Status _XReply(
@@ -1110,18 +1110,18 @@ extern int (*XESetError(
     Display*, xError*, XExtCodes*, int*
 );
 
-extern char* (*XESetErrorString(
+extern wchar_t* (*XESetErrorString(
     Display*		/* display */,
     int			/* extension */,
-    char* (*) (
+    wchar_t* (*) (
 	        Display*		/* display */,
                 int			/* code */,
                 XExtCodes*		/* codes */,
-                char*			/* buffer */,
+                wchar_t*			/* buffer */,
                 int			/* nbytes */
               )		/* proc */
 ))(
-    Display*, int, XExtCodes*, char*, int
+    Display*, int, XExtCodes*, wchar_t*, int
 );
 
 extern void (*XESetPrintErrorValues (
@@ -1203,11 +1203,11 @@ extern void (*XESetBeforeFlush(
     void (*) (
 	       Display*			/* display */,
 	       XExtCodes*		/* codes */,
-	       _Xconst char*		/* data */,
+	       _Xconst wchar_t*		/* data */,
 	       long			/* len */
             )		/* proc */
 ))(
-    Display*, XExtCodes*, _Xconst char*, long
+    Display*, XExtCodes*, _Xconst wchar_t*, long
 );
 
 /* internal connections for IMs */
@@ -1253,43 +1253,43 @@ struct _XConnWatchInfo {	/* info from XAddConnectionWatch */
 };
 
 #ifdef __UNIXOS2__
-extern char* __XOS2RedirRoot(
-    char*
+extern wchar_t* __XOS2RedirRoot(
+    wchar_t*
 );
 #endif
 
 extern int _XTextHeight(
     XFontStruct*	/* font_struct */,
-    _Xconst char*	/* string */,
+    _Xconst wchar_t*	/* wstring */,
     int			/* count */
 );
 
 extern int _XTextHeight16(
     XFontStruct*	/* font_struct */,
-    _Xconst XChar2b*	/* string */,
+    _Xconst XChar2b*	/* wstring */,
     int			/* count */
 );
 
 #if defined(WIN32)
 
 extern int _XOpenFile(
-    _Xconst char*	/* path */,
+    _Xconst wchar_t*	/* path */,
     int			/* flags */
 );
 
 extern int _XOpenFileMode(
-    _Xconst char*	/* path */,
+    _Xconst wchar_t*	/* path */,
     int			/* flags */,
     mode_t              /* mode */
 );
 
 extern void* _XFopenFile(
-    _Xconst char*	/* path */,
-    _Xconst char*	/* mode */
+    _Xconst wchar_t*	/* path */,
+    _Xconst wchar_t*	/* mode */
 );
 
 extern int _XAccessFile(
-    _Xconst char*	/* path */
+    _Xconst wchar_t*	/* path */
 );
 #else
 #define _XOpenFile(path,flags) open(path,flags)
@@ -1302,7 +1302,7 @@ extern Status _XEventToWire(Display *dpy, XEvent *re, xEvent *event);
 
 extern int _XF86LoadQueryLocaleFont(
     Display*		/* dpy */,
-    _Xconst char*	/* name*/,
+    _Xconst wchar_t*	/* name*/,
     XFontStruct**	/* xfp*/,
     Font*		/* fidp */
 );

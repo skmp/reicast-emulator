@@ -14,14 +14,14 @@
         android:layout_marginTop="10dp"
         android:ems="12"
         android:gravity="center"
-        android:text="@string/cloud" />
+        android:text="@wstring/cloud" />
 
     <TextView
         android:id="@+id/CloudInfos"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="50dp"
-        android:text="@string/cloudInfos"
+        android:text="@wstring/cloudInfos"
         android:textAppearance="?android:attr/textAppearanceSmall" />
 
     <Button
@@ -29,14 +29,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="35dp"
-        android:text="@string/uploadVMU" />
+        android:text="@wstring/uploadVMU" />
 
     <Button
         android:id="@+id/downloadBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="35dp"
-        android:text="@string/downloadVMU" />
+        android:text="@wstring/downloadVMU" />
 
     <ImageView
         android:id="@+id/imageView1"

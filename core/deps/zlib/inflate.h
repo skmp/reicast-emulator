@@ -42,7 +42,7 @@ typedef enum {
             LENEXT,     /* i: waiting for length extra bits */
             DIST,       /* i: waiting for distance code */
             DISTEXT,    /* i: waiting for distance extra bits */
-            MATCH,      /* o: waiting for output space to copy string */
+            MATCH,      /* o: waiting for output space to copy wstring */
             LIT,        /* o: waiting for output space to write literal */
     CHECK,      /* i: waiting for 32-bit check value */
     LENGTH,     /* i: waiting for 32-bit length (gzip) */
@@ -97,9 +97,9 @@ struct inflate_state {
         /* bit accumulator */
     unsigned long hold;         /* input bit accumulator */
     unsigned bits;              /* number of bits in "in" */
-        /* for string and stored block copying */
+        /* for wstring and stored block copying */
     unsigned length;            /* literal or length of data to copy */
-    unsigned offset;            /* distance back to copy string from */
+    unsigned offset;            /* distance back to copy wstring from */
         /* for table and code decoding */
     unsigned extra;             /* extra bits needed */
         /* fixed and dynamic code tables */

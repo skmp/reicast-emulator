@@ -5,34 +5,34 @@
     <item
         android:id="@+id/browser_menu"
         android:icon="@drawable/ic_subdirectory_arrow_right"
-        android:title="@string/browser" />
+        android:title="@wstring/browser" />
     <item
         android:id="@+id/settings_menu"
         android:icon="@drawable/ic_settings"
-        android:title="@string/settings" />
+        android:title="@wstring/settings" />
     <item
         android:id="@+id/input_menu"
         android:icon="@drawable/ic_input"
-        android:title="@string/input" />
+        android:title="@wstring/input" />
     <item
         android:id="@+id/pgconfig_menu"
         android:icon="@drawable/ic_settings"
-        android:title="@string/pgconfig" />
+        android:title="@wstring/pgconfig" />
     <item
         android:id="@+id/cloud_menu"
         android:icon="@drawable/ic_cloud_queue"
-        android:title="@string/cloud" />
+        android:title="@wstring/cloud" />
     <item
         android:id="@+id/rateme_menu"
         android:icon="@drawable/ic_rate_review"
-        android:title="@string/rateme" />
+        android:title="@wstring/rateme" />
     <item
         android:id="@+id/message_menu"
         android:icon="@drawable/ic_send"
-        android:title="@string/messages" />
+        android:title="@wstring/messages" />
     <item
         android:id="@+id/about_menu"
         android:icon="@drawable/ic_info_outline"
-        android:title="@string/about" />
+        android:title="@wstring/about" />
 
 </menu>

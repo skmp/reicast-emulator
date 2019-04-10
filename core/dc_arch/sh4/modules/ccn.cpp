@@ -48,7 +48,7 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 
 	if ((temp.AT!=CCN_MMUCR.AT) && (temp.AT==1))
 	{
-		printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
+		wprintf(L"<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
 	}
 	
 	if (temp.TI)
@@ -66,7 +66,7 @@ void CCN_CCR_write(u32 addr, u32 value)
 	//what is 0xAC13DBF8 from ?
 	if (temp.ICI && curr_pc!=0xAC13DBF8)
 	{
-		printf("Sh4: i-cache invalidation %08X\n",curr_pc);
+		wprintf(L"Sh4: i-cache invalidation %08X\n",curr_pc);
 		sh4_cpu.ResetCache();
 	}
 

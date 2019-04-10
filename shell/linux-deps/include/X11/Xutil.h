@@ -55,7 +55,7 @@ SOFTWARE.
 
 /*
  * Bitmask returned by XParseGeometry().  Each bit tells if the corresponding
- * value (x, y, width, height) was found in the parsed string.
+ * value (x, y, width, height) was found in the parsed wstring.
  */
 #define NoValue		0x0000
 #define XValue  	0x0001
@@ -349,7 +349,7 @@ typedef struct {
 typedef int XContext;
 
 #define XUniqueContext()       ((XContext) XrmUniqueQuark())
-#define XStringToContext(string)   ((XContext) XrmStringToQuark(string))
+#define XStringToContext(wstring)   ((XContext) XrmStringToQuark(wstring))
 
 _XFUNCPROTOBEGIN
 
@@ -525,7 +525,7 @@ extern void XConvertCase(
 
 extern int XLookupString(
     XKeyEvent*		/* event_struct */,
-    char*		/* buffer_return */,
+    wchar_t*		/* buffer_return */,
     int			/* bytes_buffer */,
     KeySym*		/* keysym_return */,
     XComposeStatus*	/* status_in_out */
@@ -569,7 +569,7 @@ extern int XSaveContext(
     Display*		/* display */,
     XID			/* rid */,
     XContext		/* context */,
-    _Xconst char*	/* data */
+    _Xconst wchar_t*	/* data */
 );
 
 extern int XSetClassHint(
@@ -609,10 +609,10 @@ extern int XSetSizeHints(
 extern int XSetStandardProperties(
     Display*		/* display */,
     Window		/* w */,
-    _Xconst char*	/* window_name */,
-    _Xconst char*	/* icon_name */,
+    _Xconst wchar_t*	/* window_name */,
+    _Xconst wchar_t*	/* icon_name */,
     Pixmap		/* icon_pixmap */,
-    char**		/* argv */,
+    wchar_t**		/* argv */,
     int			/* argc */,
     XSizeHints*		/* hints */
 );
@@ -659,7 +659,7 @@ extern void XSetWMProperties(
     Window		/* w */,
     XTextProperty*	/* window_name */,
     XTextProperty*	/* icon_name */,
-    char**		/* argv */,
+    wchar_t**		/* argv */,
     int			/* argc */,
     XSizeHints*		/* normal_hints */,
     XWMHints*		/* wm_hints */,
@@ -669,9 +669,9 @@ extern void XSetWMProperties(
 extern void XmbSetWMProperties(
     Display*		/* display */,
     Window		/* w */,
-    _Xconst char*	/* window_name */,
-    _Xconst char*	/* icon_name */,
-    char**		/* argv */,
+    _Xconst wchar_t*	/* window_name */,
+    _Xconst wchar_t*	/* icon_name */,
+    wchar_t**		/* argv */,
     int			/* argc */,
     XSizeHints*		/* normal_hints */,
     XWMHints*		/* wm_hints */,
@@ -681,9 +681,9 @@ extern void XmbSetWMProperties(
 extern void Xutf8SetWMProperties(
     Display*		/* display */,
     Window		/* w */,
-    _Xconst char*	/* window_name */,
-    _Xconst char*	/* icon_name */,
-    char**		/* argv */,
+    _Xconst wchar_t*	/* window_name */,
+    _Xconst wchar_t*	/* icon_name */,
+    wchar_t**		/* argv */,
     int			/* argc */,
     XSizeHints*		/* normal_hints */,
     XWMHints*		/* wm_hints */,
@@ -723,7 +723,7 @@ extern int XShrinkRegion(
 );
 
 extern Status XStringListToTextProperty(
-    char**		/* list */,
+    wchar_t**		/* list */,
     int			/* count */,
     XTextProperty*	/* text_prop_return */
 );
@@ -736,7 +736,7 @@ extern int XSubtractRegion(
 
 extern int XmbTextListToTextProperty(
     Display*		display,
-    char**		list,
+    wchar_t**		list,
     int			count,
     XICCEncodingStyle	style,
     XTextProperty*	text_prop_return
@@ -752,7 +752,7 @@ extern int XwcTextListToTextProperty(
 
 extern int Xutf8TextListToTextProperty(
     Display*		display,
-    char**		list,
+    wchar_t**		list,
     int			count,
     XICCEncodingStyle	style,
     XTextProperty*	text_prop_return
@@ -764,14 +764,14 @@ extern void XwcFreeStringList(
 
 extern Status XTextPropertyToStringList(
     XTextProperty*	/* text_prop */,
-    char***		/* list_return */,
+    wchar_t***		/* list_return */,
     int*		/* count_return */
 );
 
 extern int XmbTextPropertyToTextList(
     Display*		display,
     const XTextProperty* text_prop,
-    char***		list_return,
+    wchar_t***		list_return,
     int*		count_return
 );
 
@@ -785,7 +785,7 @@ extern int XwcTextPropertyToTextList(
 extern int Xutf8TextPropertyToTextList(
     Display*		display,
     const XTextProperty* text_prop,
-    char***		list_return,
+    wchar_t***		list_return,
     int*		count_return
 );
 
@@ -804,8 +804,8 @@ extern int XUnionRegion(
 extern int XWMGeometry(
     Display*		/* display */,
     int			/* screen_number */,
-    _Xconst char*	/* user_geometry */,
-    _Xconst char*	/* default_geometry */,
+    _Xconst wchar_t*	/* user_geometry */,
+    _Xconst wchar_t*	/* default_geometry */,
     unsigned int	/* border_width */,
     XSizeHints*		/* hints */,
     int*		/* x_return */,

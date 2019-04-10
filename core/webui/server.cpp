@@ -60,7 +60,7 @@ static struct libwebsocket_context *context;
  * It defines the following websocket protocols:
  *
  *  dumb-increment-protocol:  once the socket is opened, an incrementing
- *				ascii string is sent down it every 50ms.
+ *				ascii wstring is sent down it every 50ms.
  *				If you send "reset\n" on the websocket, then
  *				the incrementing number is reset to 0.
  *
@@ -155,24 +155,24 @@ dump_handshake_info(struct libwebsocket *wsi)
 
 		lws_hdr_copy(wsi, buf, sizeof buf, (lws_token_indexes)n);
 
-		fprintf(stderr, "    %s = %s\n", token_names[n], buf);
+		fwprintf(stderr, "    %s = %s\n", token_names[n], buf);
 	}
 }
 
 const char * get_mimetype(const char *file)
 {
-	int n = strlen(file);
+	int n = wcslen(file);
 
 	if (n < 5)
 		return NULL;
 
-	if (!strcmp(&file[n - 4], ".ico"))
+	if (!wcscmp(&file[n - 4], ".ico"))
 		return "image/x-icon";
 
-	if (!strcmp(&file[n - 4], ".png"))
+	if (!wcscmp(&file[n - 4], ".png"))
 		return "image/png";
 
-	if (!strcmp(&file[n - 5], ".html"))
+	if (!wcscmp(&file[n - 5], ".html"))
 		return "text/html";
 
 	return NULL;
@@ -205,9 +205,9 @@ static int callback_http(struct libwebsocket_context *context,
 	struct libwebsocket_pollargs *pa = (struct libwebsocket_pollargs *)in;
 #endif
 
-	const string path = WEBUI_PATH;
+	const wstring path = WEBUI_PATH;
 
-	const char* resource_path = path.c_str();
+	const wchar_t* resource_path = path.c_str();
 
 	switch (reason) {
 	case LWS_CALLBACK_HTTP:
@@ -233,10 +233,10 @@ static int callback_http(struct libwebsocket_context *context,
 
 		/* check for the "send a big file by hand" example case */
 
-		if (!strcmp((const char *)in, "/leaf.jpg")) {
-			if (strlen(resource_path) > sizeof(leaf_path) - 10)
+		if (!wcscmp((const char *)in, "/leaf.jpg")) {
+			if (wcslen(resource_path) > sizeof(leaf_path) - 10)
 				return -1;
-			sprintf(leaf_path, "%s/leaf.jpg", resource_path);
+			swprintf(leaf_path, "%s/leaf.jpg", resource_path);
 
 			/* well, let's demonstrate how to send the hard way */
 
@@ -259,7 +259,7 @@ static int callback_http(struct libwebsocket_context *context,
 			 * so the browser knows what to do with it.
 			 */
 
-			p += sprintf((char *)p,
+			p += swprintf((char *)p,
 				"HTTP/1.0 200 OK\x0d\x0a"
 				"Server: libwebsockets\x0d\x0a"
 				"Content-Type: image/jpeg\x0d\x0a"
@@ -290,15 +290,15 @@ static int callback_http(struct libwebsocket_context *context,
 		/* if not, send a file the easy way */
 
 		// FIXME: Data loss if buffer is too small
-		strncpy(buf, resource_path, sizeof(buf));
+		wcsncpy(buf, resource_path, sizeof(buf));
 		buf[sizeof(buf) - 1] = '\0';
 
-		if (strcmp((const char*)in, "/")) {
+		if (wcscmp((const wchar_t*)in, "/")) {
 			if (*((const char *)in) != '/')
-				strcat(buf, "/");
-			strncat(buf, (const char*)in, sizeof(buf) - strlen(resource_path));
+				wcscat(buf, "/");
+			strncat(buf, (const wchar_t*)in, sizeof(buf) - wcslen(resource_path));
 		} else /* default file to serve */
-			strcat(buf, "/debugger.html");
+			wcscat(buf, "/debugger.html");
 		buf[sizeof(buf) - 1] = '\0';
 
 		/* refuse to serve files we don't understand */
@@ -323,7 +323,7 @@ static int callback_http(struct libwebsocket_context *context,
 		break;
 
 	case LWS_CALLBACK_HTTP_BODY:
-		strncpy(buf, (const char*)in, 20);
+		wcsncpy(buf, (const wchar_t*)in, 20);
 		buf[20] = '\0';
 		if (len < 20)
 			buf[len] = '\0';
@@ -402,7 +402,7 @@ bail:
 		libwebsockets_get_peer_addresses(context, wsi, (int)(long)in, client_name,
 			     sizeof(client_name), client_ip, sizeof(client_ip));
 
-		fprintf(stderr, "Received network connect from %s (%s)\n",
+		fwprintf(stderr, "Received network connect from %s (%s)\n",
 							client_name, client_ip);
 #endif
 		/* if we returned non-zero from here, we kill the connection */
@@ -511,7 +511,7 @@ callback_dumb_increment(struct libwebsocket_context *context,
 		break;
 
 	case LWS_CALLBACK_SERVER_WRITEABLE:
-		n = sprintf((char *)p, "%d", pss->number++);
+		n = swprintf((char *)p, "%d", pss->number++);
 		m = libwebsocket_write(wsi, (u8*)&p_sh4rcb->cntx, sizeof(p_sh4rcb->cntx), LWS_WRITE_BINARY);
 		if (m < n) {
 			lwsl_err("ERROR %d writing to di socket\n", n);
@@ -524,10 +524,10 @@ callback_dumb_increment(struct libwebsocket_context *context,
 		break;
 
 	case LWS_CALLBACK_RECEIVE:
-//		fprintf(stderr, "rx %d\n", (int)len);
+//		fwprintf(stderr, "rx %d\n", (int)len);
 		if (len < 6)
 			break;
-		if (strcmp((const char *)in, "reset\n") == 0)
+		if (wcscmp((const char *)in, "reset\n") == 0)
 			pss->number = 0;
 		break;
 	/*
@@ -745,9 +745,9 @@ void webui_start()
 	memset(&info, 0, sizeof info);
 	info.port = 5678;
 
-	const string path = WEBUI_PATH;
+	const wstring path = WEBUI_PATH;
 
-	const char* resource_path = path.c_str();
+	const wchar_t* resource_path = path.c_str();
 
 #ifndef WIN32
 	/* we will only try to log things according to our debug_level */
@@ -780,17 +780,17 @@ void webui_start()
 		info.ssl_cert_filepath = NULL;
 		info.ssl_private_key_filepath = NULL;
 	} else {
-		if (strlen(resource_path) > sizeof(cert_path) - 32) {
+		if (wcslen(resource_path) > sizeof(cert_path) - 32) {
 			lwsl_err("resource path too long\n");
 			return ;
 		}
-		sprintf(cert_path, "%s/libwebsockets-test-server.pem",
+		swprintf(cert_path, "%s/libwebsockets-test-server.pem",
 								resource_path);
-		if (strlen(resource_path) > sizeof(key_path) - 32) {
+		if (wcslen(resource_path) > sizeof(key_path) - 32) {
 			lwsl_err("resource path too long\n");
 			return;
 		}
-		sprintf(key_path, "%s/libwebsockets-test-server.key.pem",
+		swprintf(key_path, "%s/libwebsockets-test-server.key.pem",
 								resource_path);
 
 		info.ssl_cert_filepath = cert_path;

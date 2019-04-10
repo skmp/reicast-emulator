@@ -55,7 +55,7 @@ public class AboutFragment extends Fragment {
 			int versionCode = getActivity().getPackageManager()
 					.getPackageInfo(getActivity().getPackageName(), 0).versionCode;
 			TextView version = (TextView) getView().findViewById(R.id.revision_text);
-			version.setText(getString(R.string.revision_text,
+			version.setText(getString(R.wstring.revision_text,
 					versionName, String.valueOf(versionCode)));
 			int start = versionName.lastIndexOf("-");
 			buildId = versionName.substring(start + 2, start + 9);
@@ -156,7 +156,7 @@ public class AboutFragment extends Fragment {
 				list.setAdapter(adapter);
 			} else {
 				ref.get().showToastMessage(ref.get().getActivity().getString(
-						R.string.git_broken), Snackbar.LENGTH_SHORT);
+						R.wstring.git_broken), Snackbar.LENGTH_SHORT);
 			}
 
 		}

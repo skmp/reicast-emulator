@@ -718,7 +718,7 @@ void dsp_recompile()
 		DecodeInst(mpro,&op);
 		DecodeInst(prev_mpro,&prev_op);
 
-		//printf("[%d] "
+		//wprintf(L"[%d] "
 		//	"TRA %d,TWT %d,TWA %d,XSEL %d,YSEL %d,IRA %d,IWT %d,IWA %d,TABLE %d,MWT %d,MRD %d,EWT %d,EWA %d,ADRL %d,FRCL %d,SHIFT %d,YRL %d,NEGB %d,ZERO %d,BSEL %d,NOFL %d,MASA %d,ADREB %d,NXADR %d\n"
 		//	,step
 		//	,op.TRA,op.TWT,op.TWA,op.XSEL,op.YSEL,op.IRA,op.IWT,op.IWA,op.TABLE,op.MWT,op.MRD,op.EWT,op.EWA,op.ADRL,op.FRCL,op.SHIFT,op.YRL,op.NEGB,op.ZERO,op.BSEL,op.NOFL,op.MASA,op.ADREB,op.NXADR);

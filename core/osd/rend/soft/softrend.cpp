@@ -41,7 +41,7 @@ u32 decoded_colors[3][65536];
 DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 2]; //Color + depth
 DECL_ALIGN(32) u32 pixels[MAX_RENDER_PIXELS];
 
-#if HOST_OS != OS_WINDOWS
+#if HOST_OS != OS_WINDOWS && HOST_OS!=OS_UWP
 
 struct RECT {
 	int left, top, right, bottom;
@@ -817,7 +817,7 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 	}
 }
 
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 	BITMAPINFOHEADER bi = { sizeof(BITMAPINFOHEADER), 0, 0, 1, 32, BI_RGB };
 #endif
 
@@ -904,7 +904,7 @@ struct softrend : Renderer
 		return !is_rtt;
 	}
 
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 	HWND hWnd;
 	HBITMAP hBMP = 0, holdBMP;
 	HDC hmem;
@@ -917,7 +917,7 @@ struct softrend : Renderer
 		u8 ushuffle[] = { 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80};
 		memcpy(&shuffle_alpha, ushuffle, sizeof(shuffle_alpha));
 
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 		hWnd = (HWND)libPvr_GetRenderTarget();
 
 		bi.biWidth = 640;
@@ -1157,7 +1157,7 @@ struct softrend : Renderer
 	}
 
 	virtual void Term() {
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 		if (hBMP) {
 			DeleteObject(SelectObject(hmem, holdBMP));
 			DeleteDC(hmem);
@@ -1181,7 +1181,7 @@ struct softrend : Renderer
 		#define SHUFFL(v) v
 		//	#define SHUFFL(v) shuffle_pixel(v)
 
-		#if HOST_OS == OS_WINDOWS
+		#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 			#define FLIP_Y 479 -
 		#else
 			#define FLIP_Y
@@ -1199,7 +1199,7 @@ struct softrend : Renderer
 			}
 		}
 
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 		SetDIBits(hmem, hBMP, 0, 480, pixels, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
 
 		RECT clientRect;

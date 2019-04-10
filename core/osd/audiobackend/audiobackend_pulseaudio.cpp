@@ -16,14 +16,14 @@ static void pulseaudio_init()
 	/* Create a new playback stream */
 	pulse_stream = pa_simple_new(NULL, "reicast", PA_STREAM_PLAYBACK, NULL, "reicast", &ss, NULL, NULL, NULL);
   if (!pulse_stream) {
-    fprintf(stderr, "PulseAudio: pa_simple_new() failed!\n");
+    fwprintf(stderr, "PulseAudio: pa_simple_new() failed!\n");
   }
 }
 
 static u32 pulseaudio_push(void* frame, u32 samples, bool wait)
 {
 	if (pa_simple_write(pulse_stream, frame, (size_t) samples*4, NULL) < 0) {
-      fprintf(stderr, "PulseAudio: pa_simple_write() failed!\n");
+      fwprintf(stderr, "PulseAudio: pa_simple_write() failed!\n");
 	}
 }
 
@@ -32,7 +32,7 @@ static void pulseaudio_term() {
 	{
 		// Make sure that every single sample was played
 		if (pa_simple_drain(pulse_stream, NULL) < 0) {
-        fprintf(stderr, "PulseAudio: pa_simple_drain() failed!\n");
+        fwprintf(stderr, "PulseAudio: pa_simple_drain() failed!\n");
     }
 		pa_simple_free(pulse_stream);
 	}

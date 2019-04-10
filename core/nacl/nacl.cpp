@@ -22,13 +22,13 @@
 extern int screen_width,screen_height;
 bool rend_single_frame();
 bool gles_init();
-extern "C" int reicast_main(int argc, char* argv[]);
+extern "C" int reicast_main(int argc, wchar_t* argv[]);
 
-int msgboxf(const wchar* text,unsigned int type,...)
+int msgboxf(const wchar_t* text,unsigned int type,...)
 {
 	va_list args;
 
-	wchar temp[2048];
+	wchar_t temp[2048];
 	va_start(args, type);
 	vsprintf(temp, text, args);
 	va_end(args);
@@ -37,7 +37,7 @@ int msgboxf(const wchar* text,unsigned int type,...)
 	return 0;
 }
 
-int dc_init(int argc,wchar* argv[]);
+int dc_init(int argc,wchar_t* argv[]);
 void dc_run();
 
 bool rend_framePending();
@@ -45,7 +45,7 @@ bool rend_framePending();
 pthread_t emut;
 
 void* emuthread(void* ) {
-  printf("Emu thread starting up");
+  wprintf(L"Emu thread starting up");
   char *Args[3];
   Args[0] = "dc";
 
@@ -66,7 +66,7 @@ class HelloWorldInstance : public pp::Instance {
  public:
   explicit HelloWorldInstance(PP_Instance instance) : pp::Instance(instance), callback_factory_(this) {
     rei_instance = this;
-    printf("Reicast NACL loaded\n");
+    wprintf(L"Reicast NACL loaded\n");
     nacl_io_init_ppapi(instance, pp::Module::Get()->get_browser_interface());
 
     umount("/");
@@ -94,13 +94,13 @@ class HelloWorldInstance : public pp::Instance {
   /// asynchronously.
   /// @param[in] var_message The message posted by the browser.  The possible
   ///     messages are 'fortyTwo' and 'reverseText:Hello World'.  Note that
-  ///     the 'reverseText' form contains the string to reverse following a ':'
+  ///     the 'reverseText' form contains the wstring to reverse following a ':'
   ///     separator.
   virtual void HandleMessage(const pp::Var& var_message);
 
   bool InitGL(int32_t new_width, int32_t new_height) {
     if (!glInitializePPAPI(pp::Module::Get()->get_browser_interface())) {
-      fprintf(stderr, "Unable to initialize GL PPAPI!\n");
+      fwprintf(stderr, "Unable to initialize GL PPAPI!\n");
       return false;
     }
 
@@ -114,7 +114,7 @@ class HelloWorldInstance : public pp::Instance {
 
     context_ = pp::Graphics3D(this, attrib_list);
     if (!BindGraphics(context_)) {
-      fprintf(stderr, "Unable to bind 3d context!\n");
+      fwprintf(stderr, "Unable to bind 3d context!\n");
       context_ = pp::Graphics3D();
       glSetCurrentContextPPAPI(0);
       return false;
@@ -143,7 +143,7 @@ class HelloWorldInstance : public pp::Instance {
       // Resize the buffers to the new size of the module.
       int32_t result = context_.ResizeBuffers(new_width, new_height);
       if (result < 0) {
-        printf("Unable to resize buffers to %d x %d!\n");
+        wprintf(L"Unable to resize buffers to %d x %d!\n");
         return;
       }
     }
@@ -151,7 +151,7 @@ class HelloWorldInstance : public pp::Instance {
     width_ = new_width;
     height_ = new_height;
     glViewport(0, 0, width_, height_);
-    printf("Resize: %d x %d\n", new_width, new_height);
+    wprintf(L"Resize: %d x %d\n", new_width, new_height);
   }
 
 
@@ -165,10 +165,10 @@ class HelloWorldInstance : public pp::Instance {
 
     if (rend_framePending()) {
       while (!rend_single_frame()) ;
-      printf("Rendered frame\n");
+      wprintf(L"Rendered frame\n");
     }
 
-    printf("Swapping buffers\n");
+    wprintf(L"Swapping buffers\n");
     context_.SwapBuffers(
         callback_factory_.NewCallback(&HelloWorldInstance::RenderLoop));
   }
@@ -209,11 +209,11 @@ class HelloWorldModule : public pp::Module {
 };
 }  // namespace hello_world
 
-int nacl_printf(const wchar* text,...)
+int nacl_printf(const wchar_t* text,...)
 {
   va_list args;
 
-  wchar temp[2048];
+  wchar_t temp[2048];
   va_start(args, text);
   int rv = vsprintf(temp, text, args);
   va_end(args);

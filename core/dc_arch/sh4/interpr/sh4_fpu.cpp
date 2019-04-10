@@ -22,7 +22,7 @@
 
 #define pi (3.14159265f)
 
-void iNimp(const char*str);
+void iNimp(const wchar_t*str);
 
 #define IS_DENORMAL(f) (((*(f))&0x7f800000) == 0)
 
@@ -56,17 +56,17 @@ INLINE void Denorm32(float &value)
 		if (IS_DENORMAL(v) && (*v&0x7fFFFFFF)!=0)
 		{
 			*v&=0x80000000;
-			//printf("Denormal ..\n");
+			//wprintf(L"Denormal ..\n");
 		}
 		if ((*v<=0x007FFFFF) && *v>0)
 		{
 			*v=0;
-			printf("Fixed +denorm\n");
+			wprintf(L"Fixed +denorm\n");
 		}
 		else if ((*v<=0x807FFFFF) && *v>0x80000000)
 		{
 			*v=0x80000000;
-			printf("Fixed -denorm\n");
+			wprintf(L"Fixed -denorm\n");
 		}
 	}
 }
@@ -342,7 +342,7 @@ sh4op(i1111_nnnn_mmmm_1011)
 {
 	if (fpscr.SZ == 0)
 	{
-		//iNimp("fmov.s <FREG_M>,@-<REG_N>");
+		//iNimp(L"fmov.s <FREG_M>,@-<REG_N>");
 		u32 n = GetN(op);
 		u32 m = GetM(op);
 
@@ -450,7 +450,7 @@ sh4op(i1111_nnn0_1111_1101)
 
 	}
 	else
-		iNimp("FSCA : Double precision mode");
+		iNimp(L"FSCA : Double precision mode");
 }
 
 //FSRRA //1111_nnnn_0111_1101
@@ -464,7 +464,7 @@ sh4op(i1111_nnnn_0111_1101)
 		CHECK_FPU_32(fr[n]);
 	}
 	else
-		iNimp("FSRRA : Double precision mode");
+		iNimp(L"FSRRA : Double precision mode");
 }
 
 //fcnvds <DR_N>,FPUL
@@ -479,7 +479,7 @@ sh4op(i1111_nnnn_1011_1101)
 	}
 	else
 	{
-		iNimp("fcnvds <DR_N>,FPUL,m=0");
+		iNimp(L"fcnvds <DR_N>,FPUL,m=0");
 	}
 }
 
@@ -495,7 +495,7 @@ sh4op(i1111_nnnn_1010_1101)
 	}
 	else
 	{
-		iNimp("fcnvsd FPUL,<DR_N>,m=0");
+		iNimp(L"fcnvsd FPUL,<DR_N>,m=0");
 	}
 }
 
@@ -517,7 +517,7 @@ sh4op(i1111_nnmm_1110_1101)
 	}
 	else
 	{
-		die("FIPR Precision=1");
+		die(L"FIPR Precision=1");
 	}
 }
 
@@ -525,7 +525,7 @@ sh4op(i1111_nnmm_1110_1101)
 sh4op(i1111_nnnn_1000_1101)
 {
 	if (fpscr.PR!=0)
-		die("fldi0 <Dreg_N>");
+		die(L"fldi0 <Dreg_N>");
 
 	u32 n = GetN(op);
 
@@ -537,7 +537,7 @@ sh4op(i1111_nnnn_1000_1101)
 sh4op(i1111_nnnn_1001_1101)
 {
 	if (fpscr.PR!=0)
-		die("fldi1 <Dreg_N>");
+		die(L"fldi1 <Dreg_N>");
 
 	u32 n = GetN(op);
 
@@ -598,7 +598,7 @@ sh4op(i1111_1011_1111_1101)
 //fschg
 sh4op(i1111_0011_1111_1101)
 {
-	//iNimp("fschg");
+	//iNimp(L"fschg");
 	fpscr.SZ = 1 - fpscr.SZ;
 }
 
@@ -653,7 +653,7 @@ sh4op(i1111_nnnn_0011_1101)
 //fmac <FREG_0>,<FREG_M>,<FREG_N>
 sh4op(i1111_nnnn_mmmm_1110)
 {
-	//iNimp("fmac <FREG_0>,<FREG_M>,<FREG_N>");
+	//iNimp(L"fmac <FREG_0>,<FREG_M>,<FREG_N>");
 	if (fpscr.PR==0)
 	{
 		u32 n = GetN(op);
@@ -664,7 +664,7 @@ sh4op(i1111_nnnn_mmmm_1110)
 	}
 	else
 	{
-		iNimp("fmac <DREG_0>,<DREG_M>,<DREG_N>");
+		iNimp(L"fmac <DREG_0>,<DREG_M>,<DREG_N>");
 	}
 }
 
@@ -672,7 +672,7 @@ sh4op(i1111_nnnn_mmmm_1110)
 //ftrv xmtrx,<FV_N>
 sh4op(i1111_nn01_1111_1101)
 {
-	//iNimp("ftrv xmtrx,<FV_N>");
+	//iNimp(L"ftrv xmtrx,<FV_N>");
 
 	/*
 	XF[0] XF[4] XF[8] XF[12]    FR[n]      FR[n]
@@ -723,13 +723,13 @@ sh4op(i1111_nn01_1111_1101)
 	}
 	else
 	{
-		iNimp("FTRV in dp mode");
+		iNimp(L"FTRV in dp mode");
 	}
 }
 
 
-void iNimp(const char*str)
+void iNimp(const wchar_t*str)
 {
-	printf("Unimplemented sh4 FPU instruction: %s\n", str);
+	wprintf(L"Unimplemented sh4 FPU instruction: %s\n", str);
 	//Sh4_int_Stop();
 }

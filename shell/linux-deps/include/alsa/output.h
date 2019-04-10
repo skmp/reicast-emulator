@@ -68,7 +68,7 @@ size_t snd_output_buffer_string(snd_output_t *output, char **buf);
 int snd_output_close(snd_output_t *output);
 int snd_output_printf(snd_output_t *output, const char *format, ...)
 #ifndef DOC_HIDDEN
-	__attribute__ ((format (printf, 2, 3)))
+	__attribute__ ((format (wprintf, 2, 3)))
 #endif
 	;
 int snd_output_vprintf(snd_output_t *output, const char *format, va_list args);

@@ -267,8 +267,8 @@ static xthread_t _X_no_thread_id;
 #      if defined(_CMA_VENDOR_) && defined(_CMA__IBM) && (_CMA_VENDOR_ == _CMA__IBM)
 #       ifdef DEBUG		/* too much of a hack to enable normally */
 /* see also cma__obj_set_name() */
-#        define xmutex_set_name(m,str) ((char**)(m)->field1)[5] = (str)
-#        define xcondition_set_name(cv,str) ((char**)(cv)->field1)[5] = (str)
+#        define xmutex_set_name(m,str) ((wchar_t**)(m)->field1)[5] = (str)
+#        define xcondition_set_name(cv,str) ((wchar_t**)(cv)->field1)[5] = (str)
 #       endif /* DEBUG */
 #      endif /* _CMA_VENDOR_ == _CMA__IBM */
 #     endif /* USE_NBSD_THREADLIB */

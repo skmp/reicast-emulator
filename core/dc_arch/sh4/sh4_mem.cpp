@@ -223,7 +223,7 @@ void mem_Term()
 	sh4_area0_Term();
 
 	//write back Flash/SRAM
-	SaveRomFiles(get_writable_data_path("/data/"));
+	SaveRomFiles(get_writable_data_path(L"/data/"));
 	
 	//mem_b.Term(); // handled by vmem
 
@@ -297,7 +297,7 @@ void WriteMemBlock_nommu_sq(u32 dst,u32* src)
 void WriteMemBlock_ptr(u32 addr,u32* data,u32 size)
 {
 #ifndef NO_MMU
-	die("failed\n");
+	die(L"failed\n");
 #endif
 	WriteMemBlock_nommu_ptr(addr,data,size);
 }
@@ -320,7 +320,7 @@ u8* GetMemPtr(u32 Addr,u32 size)
 		case 6:
 		case 7:
 		default:
-			printf("Get MemPtr unsupported area : addr=0x%X\n",Addr);
+			wprintf(L"Get MemPtr unsupported area : addr=0x%X\n",Addr);
 			return 0;
 	}
 }

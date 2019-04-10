@@ -36,7 +36,7 @@
             android:paddingRight="16dp"
             android:textSize="@dimen/primary_text_material"
             android:textColor="@color/ice_light"
-            android:text="@string/disk_loading" />
+            android:text="@wstring/disk_loading" />
     </LinearLayout>
 
     <View

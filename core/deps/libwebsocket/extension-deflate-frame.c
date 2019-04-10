@@ -281,7 +281,7 @@ bail:
 
 	case LWS_EXT_CALLBACK_CHECK_OK_TO_PROPOSE_EXTENSION:
 		/* Avoid x-webkit-deflate-frame extension on client */
-		if (!strcmp((char *)in, "x-webkit-deflate-frame"))
+		if (!wcscmp((char *)in, "x-webkit-deflate-frame"))
 			return 1;
 		break;
 

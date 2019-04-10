@@ -84,7 +84,7 @@ u32* GetRegPtr(u32 reg)
 }
 
 void ngen_blockcheckfail(u32 pc) {
-	printf("X64 JIT: SMC invalidation at %08X\n", pc);
+	wprintf(L"X64 JIT: SMC invalidation at %08X\n", pc);
 	rdv_BlockCheckFail(pc);
 }
 
@@ -96,7 +96,7 @@ public:
 	vector<Xbyak::Xmm> call_regsxmm;
 
 	BlockCompiler() : Xbyak::CodeGenerator(64 * 1024, emit_GetCCPtr()) {
-		#if HOST_OS == OS_WINDOWS
+		#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 			call_regs.push_back(ecx);
 			call_regs.push_back(edx);
 			call_regs.push_back(r8d);
@@ -283,7 +283,7 @@ public:
 					mov(rcx, rax);
 				}
 				else {
-					die("1..8 bytes");
+					die(L"1..8 bytes");
 				}
 
 				if (size != 8)
@@ -313,7 +313,7 @@ public:
 				else if (size == 8)
 					call((void*)WriteMem64);
 				else {
-					die("1..8 bytes");
+					die(L"1..8 bytes");
 				}
 			}
 			break;
@@ -383,7 +383,7 @@ public:
 			break;
 
 		default:
-			die("Invalid block end type");
+			die(L"Invalid block end type");
 		}
 
 
@@ -468,7 +468,7 @@ public:
 
 				mov(call_regs64[regused++], (size_t)prm.reg_ptr());
 
-				//die("FAIL");
+				//die(L"FAIL");
 
 				break;
 			}

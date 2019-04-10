@@ -55,8 +55,8 @@
   #pragma warning(disable : 4333)	// 
   #pragma warning(disable : 4996)	// The POSIX name for this item is deprecated. Instead, use the ISO ...   << deps don't include types.h :|
 
-  #pragma warning(disable : 4313)	// 'printf' : '%X' in format string conflicts with argument 2 of type 'DynarecCodeEntryPtr'
-  #pragma warning(disable : 4477)	// 'printf' : format string '%06X' requires an argument of type 'unsigned int', but variadic argument 2 has type 'DynarecCodeEntryPtr'
+  #pragma warning(disable : 4313)	// 'wprintf' : '%X' in format wstring conflicts with argument 2 of type 'DynarecCodeEntryPtr'
+  #pragma warning(disable : 4477)	// 'wprintf' : format wstring '%06X' requires an argument of type 'unsigned int', but variadic argument 2 has type 'DynarecCodeEntryPtr'
 #endif
 
 #endif
@@ -87,7 +87,7 @@ typedef ptrdiff_t snat;
 typedef size_t unat;
 
 
-typedef char wchar;
+#include <wchar.h>	//typedef char wchar_t;
 
 #define EXPORT extern "C" __declspec(dllexport)
 
@@ -204,7 +204,7 @@ struct vram_block
 	#define BIOS_SIZE	MB(2)	// (2*1024*1024)
 	#define FLASH_SIZE	KB(128)	// (128*1024)
 
-	#define ROM_PREFIX "dc_"
+	#define ROM_PREFIX L"dc_"
 	#define ROM_NAMES
 	#define NVR_OPTIONAL 0
 
@@ -219,7 +219,7 @@ struct vram_block
 	#define BIOS_SIZE	MB(2)	// (2*1024*1024)
 	#define FLASH_SIZE	KB(128)	// (128*1024)
 
-	#define ROM_PREFIX "hkt_"
+	#define ROM_PREFIX L"hkt_"
 	#define ROM_NAMES
 	#define NVR_OPTIONAL 0
 
@@ -232,8 +232,8 @@ struct vram_block
 	#define BIOS_SIZE	MB(2)	// (2*1024*1024)
 	#define BBSRAM_SIZE	KB(32)	// (32*1024)
 
-	#define ROM_PREFIX "naomi_"
-	#define ROM_NAMES ";epr-21576d.bin"
+	#define ROM_PREFIX L"naomi_"
+	#define ROM_NAMES L";epr-21576d.bin"
 	#define NVR_OPTIONAL 1
 
 #elif  (DC_PLATFORM==DC_PLATFORM_NAOMI2)
@@ -245,7 +245,7 @@ struct vram_block
 	#define BIOS_SIZE	MB(2)	// (2*1024*1024)
 	#define BBSRAM_SIZE	KB(32)	// (32*1024)
 
-	#define ROM_PREFIX "n2_"
+	#define ROM_PREFIX L"n2_"
 	#define ROM_NAMES
 	#define NVR_OPTIONAL 1
 
@@ -260,8 +260,8 @@ struct vram_block
 	#define BIOS_SIZE	KB(64)	// (64*1024)
 	#define FLASH_SIZE	KB(64)	// (64*1024)
 
-	#define ROM_PREFIX "aw_"
-	#define ROM_NAMES ";bios.ic23_l"
+	#define ROM_PREFIX L"aw_"
+	#define ROM_NAMES L";bios.ic23_l"
 	#define NVR_OPTIONAL 1
 
 #else
@@ -294,20 +294,20 @@ struct vram_block
 
 
 #ifndef NO_MMU
-#define _X_x_X_MMU_VER_STR "/mmu"
+#define _X_x_X_MMU_VER_STR L"/mmu"
 #else
-#define _X_x_X_MMU_VER_STR ""
+#define _X_x_X_MMU_VER_STR L""
 #endif
 
 
 #if DC_PLATFORM==DC_PLATFORM_DREAMCAST
-#define VER_EMUNAME		"reicast"
+#define VER_EMUNAME		L"reicast"
 #elif DC_PLATFORM==DC_PLATFORM_DEV_UNIT
-#define VER_EMUNAME		"reicast-DevKit-SET5.21"
+#define VER_EMUNAME		L"reicast-DevKit-SET5.21"
 #elif DC_PLATFORM==DC_PLATFORM_NAOMI
-#define VER_EMUNAME		"reicast-Naomi"
+#define VER_EMUNAME		L"reicast-Naomi"
 #elif DC_PLATFORM==DC_PLATFORM_ATOMISWAVE
-#define VER_EMUNAME		"reicast-AtomisWave"
+#define VER_EMUNAME		L"reicast-AtomisWave"
 #else
 #error unknown target platform
 #endif
@@ -446,15 +446,15 @@ struct maple_device_instance
 #include <stdio.h>
 
 #if defined(TARGET_NACL32)
-	int nacl_printf(const wchar* Text,...);
-	#define printf nacl_printf
-	#define puts(X) printf("%s\n", X)
+	int nacl_printf(const wchar_t* Text,...);
+	#define wprintf nacl_printf
+	#define puts(X) wprintf(L"%s\n", X)
 #endif
 
 #if HOST_OS == OS_DARWIN
-int darw_printf(const wchar* Text,...);
-#define printf darw_printf
-#define puts(X) printf("%s\n", X)
+int darw_printf(const wchar_t* Text,...);
+#define wprintf darw_printf
+#define puts(X) wprintf(L"%s\n", X)
 #endif
 
 //includes from c++rt
@@ -483,13 +483,13 @@ using namespace std;
 #endif
 
 //no inline -- fixme
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 #define NOINLINE __declspec(noinline)
 #else
 #define NOINLINE __attribute__ ((noinline))
 #endif
 
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 #define likely(x) x
 #define unlikely(x) x
 #else
@@ -500,15 +500,15 @@ using namespace std;
 //basic includes
 #include "stdclass.h"
 
-#define EMUERROR(x)( printf("Error in %s:" "%s" ":%d  -> " x "\n", __FILE__,__FUNCTION__ ,__LINE__ ))
-#define EMUERROR2(x,a)(printf("Error in %s:" "%s" ":%d  -> " x "\n)",__FILE__,__FUNCTION__,__LINE__,a))
-#define EMUERROR3(x,a,b)(printf("Error in %s:" "%s" ":%d  -> " x "\n)",__FILE__,__FUNCTION__,__LINE__,a,b))
-#define EMUERROR4(x,a,b,c)(printf("Error in %s:" "%s" ":%d  -> " x "\n",__FILE__,__FUNCTION__,__LINE__,a,b,c))
+#define EMUERROR(x)( wprintf(L"Error in %s:" "%s" ":%d  -> " x "\n", __FILE__,__FUNCTION__ ,__LINE__ ))
+#define EMUERROR2(x,a)(wprintf(L"Error in %s:" "%s" ":%d  -> " x "\n)",__FILE__,__FUNCTION__,__LINE__,a))
+#define EMUERROR3(x,a,b)(wprintf(L"Error in %s:" "%s" ":%d  -> " x "\n)",__FILE__,__FUNCTION__,__LINE__,a,b))
+#define EMUERROR4(x,a,b,c)(wprintf(L"Error in %s:" "%s" ":%d  -> " x "\n",__FILE__,__FUNCTION__,__LINE__,a,b,c))
 
-#define EMUWARN(x)(printf(      "Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__))
-#define EMUWARN2(x,a)(printf(   "Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a))
-#define EMUWARN3(x,a,b)(printf( "Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a,b))
-#define EMUWARN4(x,a,b,c)(printf("Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a,b,c))
+#define EMUWARN(x)(wprintf(      L"Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__))
+#define EMUWARN2(x,a)(wprintf(   L"Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a))
+#define EMUWARN3(x,a,b)(wprintf( L"Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a,b))
+#define EMUWARN4(x,a,b,c)(wprintf(L"Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a,b,c))
 
 
 
@@ -518,12 +518,12 @@ void os_DebugBreak();
 #if COMPILER_VC==BUILD_COMPILER
 #pragma warning( disable : 4127 4996 /*4244*/)
 #else
-#define stricmp strcasecmp
+#define wcsicmp strcasecmp
 #endif
 
 #ifndef STRIP_TEXT
-#define verify(x) if((x)==false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d \n",MBX_ICONERROR,(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
-#define die(reason) { msgboxf("Fatal error : %s\n in %s -> %s : %d \n",MBX_ICONERROR,(reason),(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
+#define verify(x) if((x)==false){ msgboxf(L"Verify Failed  : " #x L"\n in %s -> %s : %d \n",MBX_ICONERROR,(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
+#define die(reason) { msgboxf(L"Fatal error : %s\n in %s -> %s : %d \n",MBX_ICONERROR,(reason),(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
 #else
 #define verify(x) if((x)==false) { dbgbreak; }
 #define die(reason) { dbgbreak; }
@@ -606,7 +606,7 @@ struct settings_t
 	} bios;
 
 	struct {
-		string ElfFile;
+		wstring ElfFile;
 	} reios;
 
 	struct
@@ -675,8 +675,8 @@ struct settings_t
 	{
 		bool PatchRegion;
 		bool LoadDefaultImage;
-		char DefaultImage[512];
-		char LastImage[512];
+		wchar_t DefaultImage[512];
+		wchar_t LastImage[512];
 	} imgread;
 
 	struct
@@ -716,8 +716,8 @@ struct settings_t
 		u32 MaxThreads;
 		u32 SynchronousRender;
 
-		string HashLogFile;
-		string HashCheckFile;
+		wstring HashLogFile;
+		wstring HashCheckFile;
 	} pvr;
 
 	struct {
@@ -749,8 +749,8 @@ static inline void do_nada(...) { }
 #if defined(_ANDROID) && defined(_Z_SAYS_HELL_NO_SHIT_DONT_LINK_) // *FIXME*
 #include <android/log.h>
 
-#ifdef printf 
-#undef printf
+#ifdef wprintf 
+#undef wprintf
 #endif
 
 #ifdef puts
@@ -764,19 +764,19 @@ static inline void do_nada(...) { }
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
 	#ifdef STRIP_TEXT
 		#define puts do_nada
-		#define printf do_nada
+		#define wprintf do_nada
 	#else
 		#define puts      LOGI
-		#define printf    LOGI
+		#define wprintf    LOGI
 	#endif
 #define putinf    LOGI
 
 #else // GRRRRRR
 
-#define LOGI(...) printf(__VA_ARGS__)
-#define LOGW(...) printf(__VA_ARGS__)
-#define LOGE(...) printf(__VA_ARGS__)
-#define LOGD(...) printf(__VA_ARGS__)
+#define LOGI(...) wprintf(__VA_ARGS__)
+#define LOGW(...) wprintf(__VA_ARGS__)
+#define LOGE(...) wprintf(__VA_ARGS__)
+#define LOGD(...) wprintf(__VA_ARGS__)
 #define putinf    LOGI
 #endif
 

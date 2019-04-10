@@ -184,13 +184,17 @@ elf64_getSection(void *elfFile, int i)
 	return (char *)elfFile + sections[i].sh_offset;
 }
 
+#include "stdclass.h"
+
 void           *
 elf64_getSectionNamed(void *elfFile, char *str)
 {
 	int             numSections = elf64_getNumSections(elfFile);
 	int             i;
 	for (i = 0; i < numSections; i++) {
-		if (strcmp(str, elf64_getSectionName(elfFile, i)) == 0) {
+		wstring s = toWString(str);
+		wstring section = toWString(elf64_getSectionName(elfFile, i));
+		if(s==section) {	//if (strcmp(str, elf64_getSectionName(elfFile, i)) == 0) {
 			return elf64_getSection(elfFile, i);
 		}
 	}
@@ -249,20 +253,20 @@ elf64_showDetails(void *elfFile, int size, char *name)
 	                r;
 	char           *str_table;
 
-	printf("Found an elf64 file called \"%s\" located "
+	wprintf(L"Found an elf64 file called \"%s\" located "
 	       "at address 0x%lx\n", name, elfFile);
 
 	if ((r = elf64_checkFile(elfFile)) != 0) {
 		char           *magic = elfFile;
-		printf("Invalid elf file (%d)\n", r);
-		printf("Magic is: %02.2hhx %02.2hhx %02.2hhx %02.2hhx\n",
+		wprintf(L"Invalid elf file (%d)\n", r);
+		wprintf(L"Magic is: %02.2hhx %02.2hhx %02.2hhx %02.2hhx\n",
 		       magic[0], magic[1], magic[2], magic[3]);
 		return;
 	}
 
 	str_table = elf64_getSegmentStringTable(elfFile);
 
-	printf("Got str_table... %p\n", str_table);
+	wprintf(L"Got str_table... %p\n", str_table);
 
 	/*
 	 * get a pointer to the table of program segments 
@@ -275,10 +279,10 @@ elf64_showDetails(void *elfFile, int size, char *name)
 
 	if ((void *) sections > (void *) elfFile + size ||
 	    (((uintptr_t) sections & 0xf) != 0)) {
-		printf("Corrupted elfFile..\n");
+		wprintf(L"Corrupted elfFile..\n");
 		return;
 	}
-	printf("Sections: %p\n", sections);
+	wprintf(L"Sections: %p\n", sections);
 	/*
 	 * print out info about each section 
 	 */
@@ -287,16 +291,16 @@ elf64_showDetails(void *elfFile, int size, char *name)
 	/*
 	 * print out info about each program segment 
 	 */
-	printf("Program Headers:\n");
-	printf("  Type           Offset   VirtAddr   PhysAddr   "
+	wprintf(L"Program Headers:\n");
+	wprintf(L"  Type           Offset   VirtAddr   PhysAddr   "
 	       "FileSiz MemSiz  Flg Align\n");
 	for (i = 0; i < numSegments; i++) {
 
 		if (segments[i].p_type != 1) {
-			printf("segment %d is not loadable, "
+			wprintf(L"segment %d is not loadable, "
 			       "skipping\n", i);
 		} else {
-			printf("  LOAD           0x%06lx 0x%08lx 0x%08lx"
+			wprintf(L"  LOAD           0x%06lx 0x%08lx 0x%08lx"
 			       " 0x%05lx 0x%05lx %c%c%c 0x%04lx\n",
 			       segments[i].p_offset, segments[i].p_vaddr,
 			       segments[i].p_vaddr,
@@ -308,11 +312,11 @@ elf64_showDetails(void *elfFile, int size, char *name)
 		}
 	}
 
-	printf("Section Headers:\n");
-	printf("  [Nr] Name              Type            Addr     Off\n");
+	wprintf(L"Section Headers:\n");
+	wprintf(L"  [Nr] Name              Type            Addr     Off\n");
 	for (i = 0; i < numSections; i++) {
 		if (elf_checkSection(elfFile, i) == 0) {
-			printf("%-17.17s %-15.15s %08x %06x\n", elf64_getSectionName(elfFile, i), " "	/* sections[i].sh_type 
+			wprintf(L"%-17.17s %-15.15s %08x %06x\n", elf64_getSectionName(elfFile, i), " "	/* sections[i].sh_type 
 													 */ ,
 			       sections[i].sh_addr, sections[i].sh_offset);
 		}

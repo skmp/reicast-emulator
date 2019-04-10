@@ -46,7 +46,7 @@ from The Open Group.
 _XFUNCPROTOBEGIN
 extern char *_Xsetlocale(
     int /* category */,
-    _Xconst char* /* name */
+    _Xconst wchar_t* /* name */
 );
 _XFUNCPROTOEND
 

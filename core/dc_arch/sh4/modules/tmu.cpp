@@ -176,15 +176,15 @@ void UpdateTMUCounts(u32 reg)
 			break;
 
 		case 5: //reserved
-			printf("TMU ch%d - TCR%d mode is reserved (5)",reg,reg);
+			wprintf(L"TMU ch%d - TCR%d mode is reserved (5)",reg,reg);
 			break;
 
 		case 6: //RTC
-			printf("TMU ch%d - TCR%d mode is RTC (6), can't be used on Dreamcast",reg,reg);
+			wprintf(L"TMU ch%d - TCR%d mode is RTC (6), can't be used on Dreamcast",reg,reg);
 			break;
 
 		case 7: //external
-			printf("TMU ch%d - TCR%d mode is External (7), can't be used on Dreamcast",reg,reg);
+			wprintf(L"TMU ch%d - TCR%d mode is External (7), can't be used on Dreamcast",reg,reg);
 			break;
 	}
 	tmu_shift[reg]+=2;
@@ -239,7 +239,7 @@ int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 			TMU_TCR(ch) |= tmu_underflow;
 			InterruptPend(tmu_intID[ch], 1);
 			
-			//printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
+			//wprintf(L"Interrupt for %d, %d cycles\n", ch, sch_cycl);
 
 			//schedule next trigger by writing the TCNT register
 			write_TMU_TCNTch(ch, tcor + tcnt);

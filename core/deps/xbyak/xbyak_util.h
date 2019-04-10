@@ -367,9 +367,9 @@ public:
 	}
 	void putFamily() const
 	{
-		printf("family=%d, model=%X, stepping=%d, extFamily=%d, extModel=%X\n",
+		wprintf(L"family=%d, model=%X, stepping=%d, extFamily=%d, extModel=%X\n",
 			family, model, stepping, extFamily, extModel);
-		printf("display:family=%X, model=%X\n", displayFamily, displayModel);
+		wprintf(L"display:family=%X, model=%X\n", displayFamily, displayModel);
 	}
 	bool has(Type type) const
 	{
@@ -456,7 +456,7 @@ public:
 	Pack& append(const Xbyak::Reg64& t)
 	{
 		if (n_ == maxTblNum) {
-			fprintf(stderr, "ERR Pack::can't append\n");
+			fwprintf(stderr, "ERR Pack::can't append\n");
 			throw Error(ERR_BAD_PARAMETER);
 		}
 		tbl_[n_++] = &t;
@@ -465,7 +465,7 @@ public:
 	void init(const Xbyak::Reg64 *tbl, size_t n)
 	{
 		if (n > maxTblNum) {
-			fprintf(stderr, "ERR Pack::init bad n=%d\n", (int)n);
+			fwprintf(stderr, "ERR Pack::init bad n=%d\n", (int)n);
 			throw Error(ERR_BAD_PARAMETER);
 		}
 		n_ = n;
@@ -476,7 +476,7 @@ public:
 	const Xbyak::Reg64& operator[](size_t n) const
 	{
 		if (n >= n_) {
-			fprintf(stderr, "ERR Pack bad n=%d\n", (int)n);
+			fwprintf(stderr, "ERR Pack bad n=%d\n", (int)n);
 			throw Error(ERR_BAD_PARAMETER);
 		}
 		return *tbl_[n];
@@ -489,7 +489,7 @@ public:
 	{
 		if (num == size_t(-1)) num = n_ - pos;
 		if (pos + num > n_) {
-			fprintf(stderr, "ERR Pack::sub bad pos=%d, num=%d\n", (int)pos, (int)num);
+			fwprintf(stderr, "ERR Pack::sub bad pos=%d, num=%d\n", (int)pos, (int)num);
 			throw Error(ERR_BAD_PARAMETER);
 		}
 		Pack pack;
@@ -502,9 +502,9 @@ public:
 	void put() const
 	{
 		for (size_t i = 0; i < n_; i++) {
-			printf("%s ", tbl_[i]->toString());
+			wprintf(L"%s ", tbl_[i]->toString());
 		}
-		printf("\n");
+		wprintf(L"\n");
 	}
 };
 
@@ -631,10 +631,10 @@ public:
 		try {
 			close();
 		} catch (std::exception& e) {
-			printf("ERR:StackFrame %s\n", e.what());
+			wprintf(L"ERR:StackFrame %s\n", e.what());
 			exit(1);
 		} catch (...) {
-			printf("ERR:StackFrame otherwise\n");
+			wprintf(L"ERR:StackFrame otherwise\n");
 			exit(1);
 		}
 	}

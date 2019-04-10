@@ -26,7 +26,7 @@
             android:layout_height="match_parent"
             android:paddingLeft="10dp"
             android:paddingTop="@dimen/nav_header_vertical_spacing"
-            android:text="@string/app_name"
+            android:text="@wstring/app_name"
             android:gravity="center_vertical"
             android:textAlignment="gravity"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
@@ -37,7 +37,7 @@
         android:id="@+id/project_link"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/app_site"
+        android:text="@wstring/app_site"
         android:autoLink="web"
         android:textColor="@color/ice_dark" />
 

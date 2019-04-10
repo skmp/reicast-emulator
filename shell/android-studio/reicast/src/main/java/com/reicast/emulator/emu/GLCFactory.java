@@ -28,7 +28,7 @@ public class GLCFactory {
         {
             int[] attrList = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL10.EGL_NONE };
 
-            LOGI("Creating OpenGL ES 2.0 context");
+            LOGI(L"Creating OpenGL ES 2.0 context");
 
             checkEglError("Before eglCreateContext",egl);
             EGLContext context = egl.eglCreateContext(display,eglConfig,EGL10.EGL_NO_CONTEXT,attrList);
@@ -38,7 +38,7 @@ public class GLCFactory {
 
         public void destroyContext(EGL10 egl,EGLDisplay display,EGLContext context)
         {
-            LOGI("Destroying OpenGL ES 2.0 context");
+            LOGI(L"Destroying OpenGL ES 2.0 context");
             egl.eglDestroyContext(display,context);
         }
     }

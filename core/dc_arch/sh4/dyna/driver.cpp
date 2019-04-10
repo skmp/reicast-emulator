@@ -1,6 +1,6 @@
 #include "types.h"
 
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 #include <windows.h>
 #elif HOST_OS==OS_LINUX
 #include <unistd.h>
@@ -30,7 +30,7 @@
 
 #if !defined(_WIN64)
 u8 SH4_TCB[CODE_SIZE+4096]
-#if HOST_OS == OS_WINDOWS || FEAT_SHREC != DYNAREC_JIT
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP || FEAT_SHREC != DYNAREC_JIT
 	;
 #elif HOST_OS == OS_LINUX || HOST_OS == OS_PS4_BSD
 	__attribute__((section(".text")));
@@ -52,19 +52,19 @@ void* emit_GetCCPtr() { return emit_ptr==0?(void*)&CodeCache[LastAddr]:(void*)em
 void emit_SetBaseAddr() { LastAddr_min = LastAddr; }
 void emit_WriteCodeCache()
 {
-	wchar path[512];
-	sprintf(path,"/code_cache_%8p.bin",CodeCache);
-	string pt2=get_writable_data_path(path);
-	printf("Writing code cache to %s\n",pt2.c_str());
+	wchar_t path[512];
+	swprintf(path,L"/code_cache_%8p.bin",CodeCache);
+	wstring pt2=get_writable_data_path(path);
+	wprintf(L"Writing code cache to %s\n",pt2.c_str());
 	FILE*f=fopen(pt2.c_str(),"wb");
 	if (f)
 	{
 		fwrite(CodeCache,LastAddr,1,f);
 		fclose(f);
-		printf("Written!\n");
+		wprintf(L"Written!\n");
 	}
 
-	bm_WriteBlockMap(pt2+".map");
+	bm_WriteBlockMap(pt2 + L".map");
 }
 
 void RASDASD()
@@ -77,7 +77,7 @@ void recSh4_ClearCache()
 	LastAddr=LastAddr_min;
 	bm_Reset();
 
-	printf("recSh4:Dynarec Cache clear at %08X\n",curr_pc);
+	wprintf(L"recSh4:Dynarec Cache clear at %08X\n",curr_pc);
 }
 
 void recSh4_Run()
@@ -85,7 +85,7 @@ void recSh4_Run()
 	sh4_int_bCpuRun=true;
 
 	sh4_dyna_rcb=(u8*)&Sh4cntx + sizeof(Sh4cntx);
-	printf("cntx // fpcb offset: %d // pc offset: %d // pc %08X\n",(u8*)&sh4rcb.fpcb-sh4_dyna_rcb,(u8*)&sh4rcb.cntx.pc-sh4_dyna_rcb,sh4rcb.cntx.pc);
+	wprintf(L"cntx // fpcb offset: %d // pc offset: %d // pc %08X\n",(u8*)&sh4rcb.fpcb-sh4_dyna_rcb,(u8*)&sh4rcb.cntx.pc-sh4_dyna_rcb,sh4rcb.cntx.pc);
 	
 	verify(rcb_noffs(&next_pc)==-184);
 	ngen_mainloop(sh4_dyna_rcb);
@@ -151,11 +151,11 @@ bool DoCheck(u32 pc)
 
 void AnalyseBlock(RuntimeBlockInfo* blk);
 
-char block_hash[1024];
+wchar_t block_hash[1024];
 
 #include "deps/crypto/sha1.h"
 
-const char* RuntimeBlockInfo::hash(bool full, bool relocable)
+const wchar_t* RuntimeBlockInfo::hash(bool full, bool relocable)
 {
 	sha1_ctx ctx;
 	sha1_init(&ctx);
@@ -185,9 +185,9 @@ const char* RuntimeBlockInfo::hash(bool full, bool relocable)
 	sha1_final(&ctx);
 
 	if (full)
-		sprintf(block_hash,">:%d:%08X:%02X:%08X:%08X:%08X:%08X:%08X",relocable,this->addr,this->guest_opcodes,ctx.digest[0],ctx.digest[1],ctx.digest[2],ctx.digest[3],ctx.digest[4]);
+		swprintf(block_hash,L">:%d:%08X:%02X:%08X:%08X:%08X:%08X:%08X",relocable,this->addr,this->guest_opcodes,ctx.digest[0],ctx.digest[1],ctx.digest[2],ctx.digest[3],ctx.digest[4]);
 	else
-		sprintf(block_hash,">:%d:%02X:%08X:%08X:%08X:%08X:%08X",relocable,this->guest_opcodes,ctx.digest[0],ctx.digest[1],ctx.digest[2],ctx.digest[3],ctx.digest[4]);
+		swprintf(block_hash,L">:%d:%02X:%08X:%08X:%08X:%08X:%08X",relocable,this->guest_opcodes,ctx.digest[0],ctx.digest[1],ctx.digest[2],ctx.digest[3],ctx.digest[4]);
 
 	//return ctx
 	return block_hash;
@@ -246,7 +246,7 @@ DynarecCodeEntryPtr rdv_CompilePC()
 
 DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 {
-	//printf("rdv_FailedToFindBlock ~ %08X\n",pc);
+	//wprintf(L"rdv_FailedToFindBlock ~ %08X\n",pc);
 	next_pc=pc;
 
 	return rdv_CompilePC();
@@ -309,7 +309,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 
 	if (!rbi)
 	{
-		printf("Stale block ..");
+		wprintf(L"Stale block ..");
 		rbi=bm_GetStaleBlock(code);
 	}
 	
@@ -372,7 +372,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 	}
 	else
 	{
-		printf(" .. null RBI: %08X -- unlinked stale block\n",next_pc);
+		wprintf(L" .. null RBI: %08X -- unlinked stale block\n",next_pc);
 	}
 	
 	return (void*)rv;
@@ -403,7 +403,7 @@ void recSh4_Reset(bool Manual)
 
 void recSh4_Init()
 {
-	printf("recSh4 Init\n");
+	wprintf(L"recSh4 Init\n");
 	Sh4_int_Init();
 	bm_Init();
 	bm_Reset();
@@ -440,18 +440,18 @@ void recSh4_Init()
     CodeCache = (u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
 #endif
 
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 	DWORD old;
 	VirtualProtect(CodeCache,CODE_SIZE,PAGE_EXECUTE_READWRITE,&old);
 #elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
 	
-	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
+	wprintf(L"\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
 
 	#if FEAT_SHREC == DYNAREC_JIT
 		if (mprotect(CodeCache, CODE_SIZE, PROT_READ|PROT_WRITE|PROT_EXEC))
 		{
 			perror("\n\tError,Couldn’t mprotect CodeCache!");
-			die("Couldn’t mprotect CodeCache");
+			die(L"Couldn’t mprotect CodeCache");
 		}
 	#endif
 
@@ -467,7 +467,7 @@ void recSh4_Init()
 
 void recSh4_Term()
 {
-	printf("recSh4 Term\n");
+	wprintf(L"recSh4 Term\n");
 	bm_Term();
 	Sh4_int_Term();
 

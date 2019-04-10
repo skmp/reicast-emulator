@@ -150,14 +150,14 @@ public:
 	{
 		verify(CurrentList==ListType_None);
 		//verify(ListIsFinished[new_list]==false);
-		//printf("Starting list %d\n",new_list);
+		//wprintf(L"Starting list %d\n",new_list);
 		CurrentList=new_list;
 		StartList(CurrentList);
 	}
 
 	static Ta_Dma* DYNACALL NullVertexData(Ta_Dma* data,Ta_Dma* data_end)
 	{
-		printf("TA: Invalid state, ignoring VTX data\n");
+		wprintf(L"TA: Invalid state, ignoring VTX data\n");
 		return data+SZ32;
 	}
 
@@ -398,7 +398,7 @@ public:
 					if (CurrentList==ListType_None)
 					{
 						CurrentList=data->pcw.ListType;
-						//printf("End_Of_List : list error\n");
+						//wprintf(L"End_Of_List : list error\n");
 					}
 					else
 					{
@@ -406,7 +406,7 @@ public:
 						EndList(CurrentList);//end a list olny if it was realy started
 					}
 
-					//printf("End list %X\n",CurrentList);
+					//wprintf(L"End list %X\n",CurrentList);
 					ListIsFinished[CurrentList]=true;
 					CurrentList=ListType_None;
 					VerxexDataFP=NullVertexData;
@@ -426,7 +426,7 @@ public:
 			case ParamType_Object_List_Set:
 				{
 
-					die("ParamType_Object_List_Set");
+					die(L"ParamType_Object_List_Set");
 					// *cough* ignore it :p
 					data+=SZ32;
 				}
@@ -494,7 +494,7 @@ public:
 						ta_list_start(data->pcw.ListType);	//start a list ;)
 
 					VerxexDataFP=ta_sprite_data;
-					//printf("Sprite \n");
+					//wprintf(L"Sprite \n");
 					AppendSpriteParam((TA_SpriteParam*)data);
 					data+=SZ32;
 				}
@@ -505,7 +505,7 @@ public:
 				//log ("vtx");
 				{
 
-					//printf("VTX:0x%08X\n",VerxexDataFP);
+					//wprintf(L"VTX:0x%08X\n",VerxexDataFP);
 					//verify(VerxexDataFP!=NullVertexData);
 					data=VerxexDataFP(data,data_end);
 				}
@@ -516,7 +516,7 @@ public:
 			case 3:
 			case 6:
 				{
-					die("Unhandled parameter");
+					die(L"Unhandled parameter");
 					data+=SZ32;
 				}
 				break;
@@ -1199,7 +1199,7 @@ public:
 	__forceinline
 		static void AppendSpriteParam(TA_SpriteParam* spr)
 	{
-		//printf("Sprite\n");
+		//wprintf(L"Sprite\n");
 		PolyParam* d_pp=CurrentPP;
 		if (CurrentPP->count!=0)
 		{

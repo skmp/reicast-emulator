@@ -53,7 +53,7 @@ zip_add_dir(struct zip *za, const char *name)
     }
 
     s = NULL;
-    len = strlen(name);
+    len = wcslen(name);
 
     if (name[len-1] != '/') {
 	if ((s=(char *)malloc(len+2)) == NULL) {

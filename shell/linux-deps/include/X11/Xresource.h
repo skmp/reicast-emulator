@@ -87,16 +87,16 @@ typedef int       XrmQuark, *XrmQuarkList;
 typedef char *XrmString;
 #define NULLSTRING ((XrmString) 0)
 
-/* find quark for string, create new quark if none already exists */
+/* find quark for wstring, create new quark if none already exists */
 extern XrmQuark XrmStringToQuark(
-    _Xconst char* 	/* string */
+    _Xconst wchar_t* 	/* wstring */
 );
 
 extern XrmQuark XrmPermStringToQuark(
-    _Xconst char* 	/* string */
+    _Xconst wchar_t* 	/* wstring */
 );
 
-/* find string for quark */
+/* find wstring for quark */
 extern XrmString XrmQuarkToString(
     XrmQuark 		/* quark */
 );
@@ -105,7 +105,7 @@ extern XrmQuark XrmUniqueQuark(
     void
 );
 
-#define XrmStringsEqual(a1, a2) (strcmp(a1, a2) == 0)
+#define XrmStringsEqual(a1, a2) (wcscmp(a1, a2) == 0)
 
 
 /****************************************************************
@@ -117,12 +117,12 @@ extern XrmQuark XrmUniqueQuark(
 typedef enum {XrmBindTightly, XrmBindLoosely} XrmBinding, *XrmBindingList;
 
 extern void XrmStringToQuarkList(
-    _Xconst char*	/* string */,
+    _Xconst wchar_t*	/* wstring */,
     XrmQuarkList	/* quarks_return */
 );
 
 extern void XrmStringToBindingQuarkList(
-    _Xconst char*	/* string */,
+    _Xconst wchar_t*	/* wstring */,
     XrmBindingList	/* bindings_return */,
     XrmQuarkList	/* quarks_return */
 );
@@ -136,7 +136,7 @@ extern void XrmStringToBindingQuarkList(
 typedef XrmQuark     XrmName;
 typedef XrmQuarkList XrmNameList;
 #define XrmNameToString(name)		XrmQuarkToString(name)
-#define XrmStringToName(string)		XrmStringToQuark(string)
+#define XrmStringToName(wstring)		XrmStringToQuark(wstring)
 #define XrmStringToNameList(str, name)	XrmStringToQuarkList(str, name)
 
 typedef XrmQuark     XrmClass;
@@ -154,7 +154,7 @@ typedef XrmQuarkList XrmClassList;
  ****************************************************************/
 
 typedef XrmQuark     XrmRepresentation;
-#define XrmStringToRepresentation(string)   XrmStringToQuark(string)
+#define XrmStringToRepresentation(wstring)   XrmStringToQuark(wstring)
 #define	XrmRepresentationToString(type)   XrmQuarkToString(type)
 
 typedef struct {
@@ -189,8 +189,8 @@ extern void XrmQPutResource(
 
 extern void XrmPutResource(
     XrmDatabase*	/* database */,
-    _Xconst char*	/* specifier */,
-    _Xconst char*	/* type */,
+    _Xconst wchar_t*	/* specifier */,
+    _Xconst wchar_t*	/* type */,
     XrmValue*		/* value */
 );
 
@@ -198,18 +198,18 @@ extern void XrmQPutStringResource(
     XrmDatabase*	/* database */,
     XrmBindingList      /* bindings */,
     XrmQuarkList	/* quarks */,
-    _Xconst char*	/* value */
+    _Xconst wchar_t*	/* value */
 );
 
 extern void XrmPutStringResource(
     XrmDatabase*	/* database */,
-    _Xconst char*	/* specifier */,
-    _Xconst char*	/* value */
+    _Xconst wchar_t*	/* specifier */,
+    _Xconst wchar_t*	/* value */
 );
 
 extern void XrmPutLineResource(
     XrmDatabase*	/* database */,
-    _Xconst char*	/* line */
+    _Xconst wchar_t*	/* line */
 );
 
 extern Bool XrmQGetResource(
@@ -222,9 +222,9 @@ extern Bool XrmQGetResource(
 
 extern Bool XrmGetResource(
     XrmDatabase		/* database */,
-    _Xconst char*	/* str_name */,
-    _Xconst char*	/* str_class */,
-    char**		/* str_type_return */,
+    _Xconst wchar_t*	/* str_name */,
+    _Xconst wchar_t*	/* str_class */,
+    wchar_t**		/* str_type_return */,
     XrmValue*		/* value_return */
 );
 
@@ -264,22 +264,22 @@ extern XrmDatabase XrmGetDatabase(
 #endif /* !_XP_PRINT_SERVER_ */
 
 extern XrmDatabase XrmGetFileDatabase(
-    _Xconst char*	/* filename */
+    _Xconst wchar_t*	/* filename */
 );
 
 extern Status XrmCombineFileDatabase(
-    _Xconst char* 	/* filename */,
+    _Xconst wchar_t* 	/* filename */,
     XrmDatabase*	/* target */,
     Bool		/* override */
 );
 
 extern XrmDatabase XrmGetStringDatabase(
-    _Xconst char*	/* data */  /*  null terminated string */
+    _Xconst wchar_t*	/* data */  /*  null terminated wstring */
 );
 
 extern void XrmPutFileDatabase(
     XrmDatabase		/* database */,
-    _Xconst char*	/* filename */
+    _Xconst wchar_t*	/* filename */
 );
 
 extern void XrmMergeDatabases(
@@ -325,7 +325,7 @@ extern const char *XrmLocaleOfDatabase(
 
 typedef enum {
     XrmoptionNoArg,	/* Value is specified in OptionDescRec.value	    */
-    XrmoptionIsArg,     /* Value is the option string itself		    */
+    XrmoptionIsArg,     /* Value is the option wstring itself		    */
     XrmoptionStickyArg, /* Value is characters immediately following option */
     XrmoptionSepArg,    /* Value is next argument in argv		    */
     XrmoptionResArg,	/* Resource and value in next argument in argv      */
@@ -347,9 +347,9 @@ extern void XrmParseCommand(
     XrmDatabase*	/* database */,
     XrmOptionDescList	/* table */,
     int			/* table_count */,
-    _Xconst char*	/* name */,
+    _Xconst wchar_t*	/* name */,
     int*		/* argc_in_out */,
-    char**		/* argv_in_out */
+    wchar_t**		/* argv_in_out */
 );
 
 _XFUNCPROTOEND

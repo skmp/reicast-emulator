@@ -1758,9 +1758,9 @@ typedef VkFlags VkStencilFaceFlags;
 typedef struct VkApplicationInfo {
     VkStructureType    sType;
     const void*        pNext;
-    const char*        pApplicationName;
+    const wchar_t*        pApplicationName;
     uint32_t           applicationVersion;
-    const char*        pEngineName;
+    const wchar_t*        pEngineName;
     uint32_t           engineVersion;
     uint32_t           apiVersion;
 } VkApplicationInfo;
@@ -1771,9 +1771,9 @@ typedef struct VkInstanceCreateInfo {
     VkInstanceCreateFlags       flags;
     const VkApplicationInfo*    pApplicationInfo;
     uint32_t                    enabledLayerCount;
-    const char* const*          ppEnabledLayerNames;
+    const wchar_t* const*          ppEnabledLayerNames;
     uint32_t                    enabledExtensionCount;
-    const char* const*          ppEnabledExtensionNames;
+    const wchar_t* const*          ppEnabledExtensionNames;
 } VkInstanceCreateInfo;
 
 typedef void* (VKAPI_PTR *PFN_vkAllocationFunction)(
@@ -2062,9 +2062,9 @@ typedef struct VkDeviceCreateInfo {
     uint32_t                           queueCreateInfoCount;
     const VkDeviceQueueCreateInfo*     pQueueCreateInfos;
     uint32_t                           enabledLayerCount;
-    const char* const*                 ppEnabledLayerNames;
+    const wchar_t* const*                 ppEnabledLayerNames;
     uint32_t                           enabledExtensionCount;
-    const char* const*                 ppEnabledExtensionNames;
+    const wchar_t* const*                 ppEnabledExtensionNames;
     const VkPhysicalDeviceFeatures*    pEnabledFeatures;
 } VkDeviceCreateInfo;
 
@@ -2324,7 +2324,7 @@ typedef struct VkPipelineShaderStageCreateInfo {
     VkPipelineShaderStageCreateFlags    flags;
     VkShaderStageFlagBits               stage;
     VkShaderModule                      module;
-    const char*                         pName;
+    const wchar_t*                         pName;
     const VkSpecializationInfo*         pSpecializationInfo;
 } VkPipelineShaderStageCreateInfo;
 
@@ -2880,12 +2880,12 @@ typedef VkResult (VKAPI_PTR *PFN_vkGetPhysicalDeviceImageFormatProperties)(VkPhy
 typedef void (VKAPI_PTR *PFN_vkGetPhysicalDeviceProperties)(VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties* pProperties);
 typedef void (VKAPI_PTR *PFN_vkGetPhysicalDeviceQueueFamilyProperties)(VkPhysicalDevice physicalDevice, uint32_t* pQueueFamilyPropertyCount, VkQueueFamilyProperties* pQueueFamilyProperties);
 typedef void (VKAPI_PTR *PFN_vkGetPhysicalDeviceMemoryProperties)(VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties* pMemoryProperties);
-typedef PFN_vkVoidFunction (VKAPI_PTR *PFN_vkGetInstanceProcAddr)(VkInstance instance, const char* pName);
-typedef PFN_vkVoidFunction (VKAPI_PTR *PFN_vkGetDeviceProcAddr)(VkDevice device, const char* pName);
+typedef PFN_vkVoidFunction (VKAPI_PTR *PFN_vkGetInstanceProcAddr)(VkInstance instance, const wchar_t* pName);
+typedef PFN_vkVoidFunction (VKAPI_PTR *PFN_vkGetDeviceProcAddr)(VkDevice device, const wchar_t* pName);
 typedef VkResult (VKAPI_PTR *PFN_vkCreateDevice)(VkPhysicalDevice physicalDevice, const VkDeviceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDevice* pDevice);
 typedef void (VKAPI_PTR *PFN_vkDestroyDevice)(VkDevice device, const VkAllocationCallbacks* pAllocator);
-typedef VkResult (VKAPI_PTR *PFN_vkEnumerateInstanceExtensionProperties)(const char* pLayerName, uint32_t* pPropertyCount, VkExtensionProperties* pProperties);
-typedef VkResult (VKAPI_PTR *PFN_vkEnumerateDeviceExtensionProperties)(VkPhysicalDevice physicalDevice, const char* pLayerName, uint32_t* pPropertyCount, VkExtensionProperties* pProperties);
+typedef VkResult (VKAPI_PTR *PFN_vkEnumerateInstanceExtensionProperties)(const wchar_t* pLayerName, uint32_t* pPropertyCount, VkExtensionProperties* pProperties);
+typedef VkResult (VKAPI_PTR *PFN_vkEnumerateDeviceExtensionProperties)(VkPhysicalDevice physicalDevice, const wchar_t* pLayerName, uint32_t* pPropertyCount, VkExtensionProperties* pProperties);
 typedef VkResult (VKAPI_PTR *PFN_vkEnumerateInstanceLayerProperties)(uint32_t* pPropertyCount, VkLayerProperties* pProperties);
 typedef VkResult (VKAPI_PTR *PFN_vkEnumerateDeviceLayerProperties)(VkPhysicalDevice physicalDevice, uint32_t* pPropertyCount, VkLayerProperties* pProperties);
 typedef void (VKAPI_PTR *PFN_vkGetDeviceQueue)(VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pQueue);
@@ -3057,11 +3057,11 @@ VKAPI_ATTR void VKAPI_CALL vkGetPhysicalDeviceMemoryProperties(
 
 VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(
     VkInstance                                  instance,
-    const char*                                 pName);
+    const wchar_t*                                 pName);
 
 VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetDeviceProcAddr(
     VkDevice                                    device,
-    const char*                                 pName);
+    const wchar_t*                                 pName);
 
 VKAPI_ATTR VkResult VKAPI_CALL vkCreateDevice(
     VkPhysicalDevice                            physicalDevice,
@@ -3074,13 +3074,13 @@ VKAPI_ATTR void VKAPI_CALL vkDestroyDevice(
     const VkAllocationCallbacks*                pAllocator);
 
 VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateInstanceExtensionProperties(
-    const char*                                 pLayerName,
+    const wchar_t*                                 pLayerName,
     uint32_t*                                   pPropertyCount,
     VkExtensionProperties*                      pProperties);
 
 VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateDeviceExtensionProperties(
     VkPhysicalDevice                            physicalDevice,
-    const char*                                 pLayerName,
+    const wchar_t*                                 pLayerName,
     uint32_t*                                   pPropertyCount,
     VkExtensionProperties*                      pProperties);
 
@@ -4991,7 +4991,7 @@ typedef VkFlags VkDisplaySurfaceCreateFlagsKHR;
 
 typedef struct VkDisplayPropertiesKHR {
     VkDisplayKHR                  display;
-    const char*                   displayName;
+    const wchar_t*                   displayName;
     VkExtent2D                    physicalDimensions;
     VkExtent2D                    physicalResolution;
     VkSurfaceTransformFlagsKHR    supportedTransforms;
@@ -6282,8 +6282,8 @@ typedef VkBool32 (VKAPI_PTR *PFN_vkDebugReportCallbackEXT)(
     uint64_t                                    object,
     size_t                                      location,
     int32_t                                     messageCode,
-    const char*                                 pLayerPrefix,
-    const char*                                 pMessage,
+    const wchar_t*                                 pLayerPrefix,
+    const wchar_t*                                 pMessage,
     void*                                       pUserData);
 
 typedef struct VkDebugReportCallbackCreateInfoEXT {
@@ -6297,7 +6297,7 @@ typedef struct VkDebugReportCallbackCreateInfoEXT {
 
 typedef VkResult (VKAPI_PTR *PFN_vkCreateDebugReportCallbackEXT)(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback);
 typedef void (VKAPI_PTR *PFN_vkDestroyDebugReportCallbackEXT)(VkInstance instance, VkDebugReportCallbackEXT callback, const VkAllocationCallbacks* pAllocator);
-typedef void (VKAPI_PTR *PFN_vkDebugReportMessageEXT)(VkInstance instance, VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage);
+typedef void (VKAPI_PTR *PFN_vkDebugReportMessageEXT)(VkInstance instance, VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const wchar_t* pLayerPrefix, const wchar_t* pMessage);
 
 #ifndef VK_NO_PROTOTYPES
 VKAPI_ATTR VkResult VKAPI_CALL vkCreateDebugReportCallbackEXT(
@@ -6318,8 +6318,8 @@ VKAPI_ATTR void VKAPI_CALL vkDebugReportMessageEXT(
     uint64_t                                    object,
     size_t                                      location,
     int32_t                                     messageCode,
-    const char*                                 pLayerPrefix,
-    const char*                                 pMessage);
+    const wchar_t*                                 pLayerPrefix,
+    const wchar_t*                                 pMessage);
 #endif
 
 #define VK_NV_glsl_shader 1
@@ -6378,7 +6378,7 @@ typedef struct VkDebugMarkerObjectNameInfoEXT {
     const void*                   pNext;
     VkDebugReportObjectTypeEXT    objectType;
     uint64_t                      object;
-    const char*                   pObjectName;
+    const wchar_t*                   pObjectName;
 } VkDebugMarkerObjectNameInfoEXT;
 
 typedef struct VkDebugMarkerObjectTagInfoEXT {
@@ -6394,7 +6394,7 @@ typedef struct VkDebugMarkerObjectTagInfoEXT {
 typedef struct VkDebugMarkerMarkerInfoEXT {
     VkStructureType    sType;
     const void*        pNext;
-    const char*        pMarkerName;
+    const wchar_t*        pMarkerName;
     float              color[4];
 } VkDebugMarkerMarkerInfoEXT;
 
@@ -7490,7 +7490,7 @@ typedef struct VkDebugUtilsObjectNameInfoEXT {
     const void*        pNext;
     VkObjectType       objectType;
     uint64_t           objectHandle;
-    const char*        pObjectName;
+    const wchar_t*        pObjectName;
 } VkDebugUtilsObjectNameInfoEXT;
 
 typedef struct VkDebugUtilsObjectTagInfoEXT {
@@ -7506,7 +7506,7 @@ typedef struct VkDebugUtilsObjectTagInfoEXT {
 typedef struct VkDebugUtilsLabelEXT {
     VkStructureType    sType;
     const void*        pNext;
-    const char*        pLabelName;
+    const wchar_t*        pLabelName;
     float              color[4];
 } VkDebugUtilsLabelEXT;
 
@@ -7514,9 +7514,9 @@ typedef struct VkDebugUtilsMessengerCallbackDataEXT {
     VkStructureType                              sType;
     const void*                                  pNext;
     VkDebugUtilsMessengerCallbackDataFlagsEXT    flags;
-    const char*                                  pMessageIdName;
+    const wchar_t*                                  pMessageIdName;
     int32_t                                      messageIdNumber;
-    const char*                                  pMessage;
+    const wchar_t*                                  pMessage;
     uint32_t                                     queueLabelCount;
     const VkDebugUtilsLabelEXT*                  pQueueLabels;
     uint32_t                                     cmdBufLabelCount;

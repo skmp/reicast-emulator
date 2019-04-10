@@ -4,7 +4,7 @@
 u8* RomPtr;
 u32 RomSize;
 
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 	typedef HANDLE fd_t;
 	#define INVALID_FD INVALID_HANDLE_VALUE
 #else
@@ -19,51 +19,51 @@ u32 RomSize;
 fd_t*	RomCacheMap;
 u32		RomCacheMapCount;
 
-char SelectedFile[512];
+wchar_t SelectedFile[512];
 
-bool naomi_cart_LoadRom(char* file)
+bool naomi_cart_LoadRom(wchar_t* file)
 {
 
-	printf("\nnullDC-Naomi rom loader v1.2\n");
+	wprintf(L"\nnullDC-Naomi rom loader v1.2\n");
 
-	size_t folder_pos = strlen(file) - 1;
+	size_t folder_pos = wcslen(file) - 1;
 	while (folder_pos>1 && (file[folder_pos] != '\\' && file[folder_pos] != '/'))
 		folder_pos--;
 
 	folder_pos++;
 
 	// FIXME: Data loss if buffer is too small
-	char t[512];
-	strncpy(t, file, sizeof(t));
+	wchar_t t[512];
+	wcsncpy(t, file, sizeof(t));
 	t[sizeof(t) - 1] = '\0';
 
 	FILE* fl = fopen(t, "r");
 	if (!fl)
 		return false;
 
-	char* line = fgets(t, 512, fl);
+	wchar_t* line = fgetws(t, 512, fl);
 	if (!line)
 	{
 		fclose(fl);
 		return false;
 	}
 
-	char* eon = strstr(line, "\n");
+	wchar_t* eon = wcsstr(line, L"\n");
 	if (!eon)
-		printf("+Loading naomi rom that has no name\n");
+		wprintf(L"+Loading naomi rom that has no name\n");
 	else
 		*eon = 0;
 
-	printf("+Loading naomi rom : %s\n", line);
+	wprintf(L"+Loading naomi rom : %s\n", line);
 
-	line = fgets(t, 512, fl);
+	line = fgetws(t, 512, fl);
 	if (!line)
 	{
 		fclose(fl);
 		return false;
 	}
 
-	vector<string> files;
+	vector<wstring> files;
 	vector<u32> fstart;
 	vector<u32> fsize;
 
@@ -72,19 +72,19 @@ bool naomi_cart_LoadRom(char* file)
 
 	while (line)
 	{
-		char filename[512];
+		wchar_t filename[512];
 		u32 addr, sz;
-		sscanf(line, "\"%[^\"]\",%x,%x", filename, &addr, &sz);
+		swscanf(line, L"\"%[^\"]\",%x,%x", filename, &addr, &sz);
 		files.push_back(filename);
 		fstart.push_back(addr);
 		fsize.push_back(sz);
 		setsize += sz;
 		RomSize = max(RomSize, (addr + sz));
-		line = fgets(t, 512, fl);
+		line = fgetws(t, 512, fl);
 	}
 	fclose(fl);
 
-	printf("+%d romfiles, %.2f MB set size, %.2f MB set address space\n", files.size(), setsize / 1024.f / 1024.f, RomSize / 1024.f / 1024.f);
+	wprintf(L"+%d romfiles, %.2f MB set size, %.2f MB set address space\n", files.size(), setsize / 1024.f / 1024.f, RomSize / 1024.f / 1024.f);
 
 	if (RomCacheMap)
 	{
@@ -96,14 +96,14 @@ bool naomi_cart_LoadRom(char* file)
 	RomCacheMap = new fd_t[files.size()];
 
 	// FIXME: Data loss if buffer is too small
-	strncpy(t, file, sizeof(t));
+	wcsncpy(t, file, sizeof(t));
 	t[sizeof(t) - 1] = '\0';
 
 	t[folder_pos] = 0;
-	strcat(t, "ndcn-composed.cache");
+	wcscat(t, L"ndcn-composed.cache");
 
 	//Allocate space for the ram, so we are sure we have a segment of continius ram
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 	RomPtr = (u8*)VirtualAlloc(0, RomSize, MEM_RESERVE, PAGE_NOACCESS);
 #else
 	RomPtr = (u8*)mmap(0, RomSize, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
@@ -113,22 +113,22 @@ bool naomi_cart_LoadRom(char* file)
 	verify(RomPtr != (void*)-1);
 
 	// FIXME: Data loss if buffer is too small
-	strncpy(t, file, sizeof(t));
+	wcsncpy(t, file, sizeof(t));
 	t[sizeof(t) - 1] = '\0';
 
 	//Create File Mapping Objects
 	for (size_t i = 0; i<files.size(); i++)
 	{
 		t[folder_pos] = 0;
-		strcat(t, files[i].c_str());
+		wcscat(t, files[i].c_str());
 		fd_t RomCache;
 
-		if (strcmp(files[i].c_str(), "null") == 0)
+		if (wcscmp(files[i].c_str(), L"null") == 0)
 		{
 			RomCacheMap[i] = INVALID_FD;
 			continue;
 		}
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 		RomCache = CreateFile(t, FILE_READ_ACCESS, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 #else
 		RomCache = open(t, O_RDONLY);
@@ -140,7 +140,7 @@ bool naomi_cart_LoadRom(char* file)
 			continue;
 		}
 
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 		RomCacheMap[i] = CreateFileMapping(RomCache, 0, PAGE_READONLY, 0, fsize[i], 0);
 		verify(CloseHandle(RomCache));
 #else
@@ -152,9 +152,9 @@ bool naomi_cart_LoadRom(char* file)
 	}
 
 	//We have all file mapping objects, we start to map the ram
-	printf("+Mapping ROM\n");
+	wprintf(L"+Mapping ROM\n");
 	//Release the segment we reserved so we can map the files there
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 	verify(VirtualFree(RomPtr, 0, MEM_RELEASE));
 #else
 	munmap(RomPtr, RomSize);
@@ -169,7 +169,7 @@ bool naomi_cart_LoadRom(char* file)
 		{
 			wprintf(L"-Reserving ram at 0x%08X, size 0x%08X\n", fstart[i], fsize[i]);
 			
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 			bool mapped = RomDest == VirtualAlloc(RomDest, fsize[i], MEM_RESERVE, PAGE_NOACCESS);
 #else
 			bool mapped = RomDest == (u8*)mmap(RomDest, RomSize, PROT_NONE, MAP_PRIVATE, 0, 0);
@@ -180,14 +180,14 @@ bool naomi_cart_LoadRom(char* file)
 		else
 		{
 			wprintf(L"-Mapping \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 			bool mapped = RomDest != MapViewOfFileEx(RomCacheMap[i], FILE_MAP_READ, 0, 0, fsize[i], RomDest);
 #else
 			bool mapped = RomDest != mmap(RomDest, fsize[i], PROT_READ, MAP_PRIVATE, RomCacheMap[i], 0 );
 #endif
 			if (!mapped)
 			{
-				printf("-Mapping ROM FAILED\n");
+				wprintf(L"-Mapping ROM FAILED\n");
 				//unmap file
 				return false;
 			}
@@ -195,7 +195,7 @@ bool naomi_cart_LoadRom(char* file)
 	}
 
 	//done :)
-	printf("\nMapped ROM Successfully !\n\n");
+	wprintf(L"\nMapped ROM Successfully !\n\n");
 
 
 	return true;
@@ -203,16 +203,16 @@ bool naomi_cart_LoadRom(char* file)
 
 bool naomi_cart_SelectFile(void* handle)
 {
-	cfgLoadStr("config", "image", SelectedFile, "null");
+	cfgLoadStr(L"config", L"image", SelectedFile, L"null");
 	
-#if HOST_OS == OS_WINDOWS
-	if (strcmp(SelectedFile, "null") == 0) {
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+	if (wcscmp(SelectedFile, L"null") == 0) {
 		OPENFILENAME ofn = { 0 };
 		ofn.lStructSize = sizeof(OPENFILENAME);
 		ofn.hInstance = (HINSTANCE)GetModuleHandle(0);
 		ofn.lpstrFile = SelectedFile;
 		ofn.nMaxFile = MAX_PATH;
-		ofn.lpstrFilter = "*.lst\0*.lst\0\0";
+		ofn.lpstrFilter = L"*.lst\0*.lst\0\0";
 		ofn.nFilterIndex = 0;
 		ofn.hwndOwner = (HWND)handle;
 		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
@@ -223,15 +223,15 @@ bool naomi_cart_SelectFile(void* handle)
 #endif
 	if (!naomi_cart_LoadRom(SelectedFile))
 	{
-		cfgSaveStr("emu", "gamefile", "naomi_bios");
+		cfgSaveStr(L"emu", L"gamefile", L"naomi_bios");
 	}
 	else
 	{
-		cfgSaveStr("emu", "gamefile", SelectedFile);
+		cfgSaveStr(L"emu", L"gamefile", SelectedFile);
 	}
 
 
-	printf("EEPROM file : %s.eeprom\n", SelectedFile);
+	wprintf(L"EEPROM file : %s.eeprom\n", SelectedFile);
 
 	return true;
 }

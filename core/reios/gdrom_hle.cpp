@@ -12,7 +12,7 @@
 
 #define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
 
-#define debugf printf
+#define debugf wprintf
 //#define debugf(...)
 
 void GDROM_HLE_ReadSES(u32 addr)
@@ -22,7 +22,7 @@ void GDROM_HLE_ReadSES(u32 addr)
 	u32 ba = ReadMem32(addr + 8);
 	u32 bb = ReadMem32(addr + 12);
 
-	printf("GDROM_HLE_ReadSES: doing nothing w/ %d, %d, %d, %d\n", s, b, ba, bb);
+	wprintf(L"GDROM_HLE_ReadSES: doing nothing w/ %d, %d, %d, %d\n", s, b, ba, bb);
 }
 void GDROM_HLE_ReadTOC(u32 Addr)
 {
@@ -32,7 +32,7 @@ void GDROM_HLE_ReadTOC(u32 Addr)
 	u32* pDst = (u32*)GetMemPtr(b, 0);
 
 	//
-	debugf("GDROM READ TOC : %X %X \n\n", s, b);
+	debugf(L"GDROM READ TOC : %X %X \n\n", s, b);
 
 	libGDR_GetToc(pDst, s);
 
@@ -46,7 +46,7 @@ void read_sectors_to(u32 addr, u32 sector, u32 count) {
 	u8 * pDst = GetMemPtr(addr, 0);
 
 	if (pDst) {
-		libGDR_ReadSector(pDst, sector, count, 2048);
+		libGDR_ReadSector(pDst, sector, count, 2048);//*FIXME* how'd VS manage this: debugf("
 	}
 	else {
 		u8 temp[2048];
@@ -75,7 +75,7 @@ void GDROM_HLE_ReadDMA(u32 addr)
 
 	
 
-	debugf("GDROM:\tPIO READ Sector=%d, Num=%d, Buffer=0x%08X, Unk01=0x%08X\n", s, n, b, u);
+	debugf(L"GDROM:\tPIO READ Sector=%d, Num=%d, Buffer=0x%08X, Unk01=0x%08X\n", s, n, b, u);
 	read_sectors_to(b, s, n);
 }
 
@@ -86,7 +86,7 @@ void GDROM_HLE_ReadPIO(u32 addr)
 	u32 b = ReadMem32(addr + 0x08);
 	u32 u = ReadMem32(addr + 0x0C);
 
-	debugf("GDROM:\tPIO READ Sector=%d, Num=%d, Buffer=0x%08X, Unk01=0x%08X\n", s, n, b, u);
+	debugf(L"GDROM:\tPIO READ Sector=%d, Num=%d, Buffer=0x%08X, Unk01=0x%08X\n", s, n, b, u);
 
 	read_sectors_to(b, s, n);
 }
@@ -97,7 +97,7 @@ void GDCC_HLE_GETSCD(u32 addr) {
 	u32 b = ReadMem32(addr + 0x08);
 	u32 u = ReadMem32(addr + 0x0C);
 
-	printf("GDROM: Doing nothing for GETSCD [0]=%d, [1]=%d, [2]=0x%08X, [3]=0x%08X\n", s, n, b, u);
+	wprintf(L"GDROM: Doing nothing for GETSCD [0]=%d, [1]=%d, [2]=0x%08X, [3]=0x%08X\n", s, n, b, u);
 }
 
 #define r Sh4cntx.r
@@ -110,7 +110,7 @@ void GD_HLE_Command(u32 cc, u32 prm)
 	switch(cc)
 	{
 	case GDCC_GETTOC:
-		printf("GDROM:\t*FIXME* CMD GETTOC CC:%X PRM:%X\n",cc,prm);
+		wprintf(L"GDROM:\t*FIXME* CMD GETTOC CC:%X PRM:%X\n",cc,prm);
 		break;
 
 	case GDCC_GETTOC2:
@@ -118,12 +118,12 @@ void GD_HLE_Command(u32 cc, u32 prm)
 		break;
 
 	case GDCC_GETSES:
-		debugf("GDROM:\tGETSES CC:%X PRM:%X\n", cc, prm);
+		debugf(L"GDROM:\tGETSES CC:%X PRM:%X\n", cc, prm);
 		GDROM_HLE_ReadSES(r[5]);
 		break;
 
 	case GDCC_INIT:
-		printf("GDROM:\tCMD INIT CC:%X PRM:%X\n",cc,prm);
+		wprintf(L"GDROM:\tCMD INIT CC:%X PRM:%X\n",cc,prm);
 		break;
 
 	case GDCC_PIOREAD:
@@ -131,34 +131,34 @@ void GD_HLE_Command(u32 cc, u32 prm)
 		break;
 
 	case GDCC_DMAREAD:
-		debugf("GDROM:\tCMD DMAREAD CC:%X PRM:%X\n", cc, prm);
+		debugf(L"GDROM:\tCMD DMAREAD CC:%X PRM:%X\n", cc, prm);
 		GDROM_HLE_ReadDMA(r[5]);
 		break;
 
 
 	case GDCC_PLAY_SECTOR:
-		printf("GDROM:\tCMD PLAYSEC? CC:%X PRM:%X\n",cc,prm);
+		wprintf(L"GDROM:\tCMD PLAYSEC? CC:%X PRM:%X\n",cc,prm);
 		break;
 
 	case GDCC_RELEASE:
-		printf("GDROM:\tCMD RELEASE? CC:%X PRM:%X\n",cc,prm);
+		wprintf(L"GDROM:\tCMD RELEASE? CC:%X PRM:%X\n",cc,prm);
 		break;
 
-	case GDCC_STOP:	printf("GDROM:\tCMD STOP CC:%X PRM:%X\n",cc,prm);	break;
-	case GDCC_SEEK:	printf("GDROM:\tCMD SEEK CC:%X PRM:%X\n",cc,prm);	break;
-	case GDCC_PLAY:	printf("GDROM:\tCMD PLAY CC:%X PRM:%X\n",cc,prm);	break;
-	case GDCC_PAUSE:printf("GDROM:\tCMD PAUSE CC:%X PRM:%X\n",cc,prm);	break;
+	case GDCC_STOP:	wprintf(L"GDROM:\tCMD STOP CC:%X PRM:%X\n",cc,prm);	break;
+	case GDCC_SEEK:	wprintf(L"GDROM:\tCMD SEEK CC:%X PRM:%X\n",cc,prm);	break;
+	case GDCC_PLAY:	wprintf(L"GDROM:\tCMD PLAY CC:%X PRM:%X\n",cc,prm);	break;
+	case GDCC_PAUSE:wprintf(L"GDROM:\tCMD PAUSE CC:%X PRM:%X\n",cc,prm);	break;
 
 	case GDCC_READ:
-		printf("GDROM:\tCMD READ CC:%X PRM:%X\n",cc,prm);
+		wprintf(L"GDROM:\tCMD READ CC:%X PRM:%X\n",cc,prm);
 		break;
 
 	case GDCC_GETSCD:
-		debugf("GDROM:\tGETSCD CC:%X PRM:%X\n",cc,prm);
+		debugf(L"GDROM:\tGETSCD CC:%X PRM:%X\n",cc,prm);
 		GDCC_HLE_GETSCD(r[5]);
 		break;
 
-	default: printf("GDROM:\tUnknown GDROM CC:%X PRM:%X\n",cc,prm); break;
+	default: wprintf(L"GDROM:\tUnknown GDROM CC:%X PRM:%X\n",cc,prm); break;
 	}
 }
 
@@ -173,52 +173,52 @@ void gdrom_hle_op()
 		{
 			// *FIXME* NEED RET
 		case GDROM_SEND_COMMAND:	// SEND GDROM COMMAND RET: - if failed + req id
-			debugf("\nGDROM:\tHLE SEND COMMAND CC:%X  param ptr: %X\n",r[4],r[5]);
+			debugf(L"\nGDROM:\tHLE SEND COMMAND CC:%X  param ptr: %X\n",r[4],r[5]);
 			GD_HLE_Command(r[4],r[5]);
 			last_cmd = r[0] = --dwReqID;		// RET Request ID
 		break;
 
 		case GDROM_CHECK_COMMAND:	// 
 			r[0] = last_cmd == r[4] ? 2 : 0; // RET Finished : Invalid
-			debugf("\nGDROM:\tHLE CHECK COMMAND REQID:%X  param ptr: %X -> %X\n", r[4], r[5], r[0]);
+			debugf(L"\nGDROM:\tHLE CHECK COMMAND REQID:%X  param ptr: %X -> %X\n", r[4], r[5], r[0]);
 			last_cmd = 0xFFFFFFFF;			// INVALIDATE CHECK CMD
 		break;
 
 			// NO return, NO params
 		case GDROM_MAIN:	
-			debugf("\nGDROM:\tHLE GDROM_MAIN\n");
+			debugf(L"\nGDROM:\tHLE GDROM_MAIN\n");
 			break;
 
-		case GDROM_INIT:	printf("\nGDROM:\tHLE GDROM_INIT\n");	break;
-		case GDROM_RESET:	printf("\nGDROM:\tHLE GDROM_RESET\n");	break;
+		case GDROM_INIT:	wprintf(L"\nGDROM:\tHLE GDROM_INIT\n");	break;
+		case GDROM_RESET:	wprintf(L"\nGDROM:\tHLE GDROM_RESET\n");	break;
 
 		case GDROM_CHECK_DRIVE:		// 
-			debugf("\nGDROM:\tHLE GDROM_CHECK_DRIVE r4:%X\n",r[4],r[5]);
+			debugf(L"\nGDROM:\tHLE GDROM_CHECK_DRIVE r4:%X\n",r[4],r[5]);
 			WriteMem32(r[4]+0,0x02);	// STANDBY
 			WriteMem32(r[4]+4,libGDR_GetDiscType());	// CDROM | 0x80 for GDROM
 			r[0]=0;					// RET SUCCESS
 		break;
 
 		case GDROM_ABORT_COMMAND:	// 
-			printf("\nGDROM:\tHLE GDROM_ABORT_COMMAND r4:%X\n",r[4],r[5]);
+			wprintf(L"\nGDROM:\tHLE GDROM_ABORT_COMMAND r4:%X\n",r[4],r[5]);
 			r[0]=-1;				// RET FAILURE
 		break;
 
 
 		case GDROM_SECTOR_MODE:		// 
-			printf("GDROM:\tHLE GDROM_SECTOR_MODE PTR_r4:%X\n",r[4]);
+			wprintf(L"GDROM:\tHLE GDROM_SECTOR_MODE PTR_r4:%X\n",r[4]);
 			for(int i=0; i<4; i++) {
 				SecMode[i] = ReadMem32(r[4]+(i<<2));
-				printf("%08X%s",SecMode[i],((3==i) ? "\n" : "\t"));
+				wprintf(L"%08X%s",SecMode[i],((3==i) ? "\n" : "\t"));
 			}
 			r[0]=0;					// RET SUCCESS
 		break;
 
-		default: printf("\nGDROM:\tUnknown SYSCALL: %X\n",r[7]); break;
+		default: wprintf(L"\nGDROM:\tUnknown SYSCALL: %X\n",r[7]); break;
 		}
 	}
 	else							// MISC 
 	{
-		printf("SYSCALL:\tSYSCALL: %X\n",r[7]);
+		wprintf(L"SYSCALL:\tSYSCALL: %X\n",r[7]);
 	}
 }

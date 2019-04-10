@@ -114,7 +114,7 @@ struct png_info_def
     * The data in "text" is an array of pointers to uncompressed,
     * null-terminated C strings. Each chunk has a keyword that describes the
     * textual data contained in that chunk.  Keywords are not required to be
-    * unique, and the text string may be empty.  Any number of text chunks may
+    * unique, and the text wstring may be empty.  Any number of text chunks may
     * be in an image.
     */
    int num_text; /* number of comments read or comments to write */
@@ -215,10 +215,10 @@ defined(PNG_READ_BACKGROUND_SUPPORTED)
     * implemented, and for a description of the ASCII parameter strings.
     * Data values are valid if (valid & PNG_INFO_pCAL) non-zero.
     */
-   png_charp pcal_purpose;  /* pCAL chunk description string */
+   png_charp pcal_purpose;  /* pCAL chunk description wstring */
    png_int_32 pcal_X0;      /* minimum value */
    png_int_32 pcal_X1;      /* maximum value */
-   png_charp pcal_units;    /* Latin-1 string giving physical units */
+   png_charp pcal_units;    /* Latin-1 wstring giving physical units */
    png_charpp pcal_params;  /* ASCII strings containing parameter values */
    png_byte pcal_type;      /* equation type (see PNG_EQUATION_ below) */
    png_byte pcal_nparams;   /* number of parameters given in pcal_params */
@@ -252,8 +252,8 @@ defined(PNG_READ_BACKGROUND_SUPPORTED)
     * non-zero.
     */
    png_byte scal_unit;         /* unit of physical scale */
-   png_charp scal_s_width;     /* string containing height */
-   png_charp scal_s_height;    /* string containing width */
+   png_charp scal_s_width;     /* wstring containing height */
+   png_charp scal_s_height;    /* wstring containing width */
 #endif
 
 #ifdef PNG_INFO_IMAGE_SUPPORTED

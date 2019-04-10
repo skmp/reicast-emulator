@@ -61,7 +61,7 @@ public class GLCFactory14 {
 		for ( int clientVersion = 3; clientVersion >= 2; clientVersion-- ) {
 			int[] attrList = { EGL_CONTEXT_CLIENT_VERSION, clientVersion, EGL14.EGL_NONE };
 
-			LOGI("Creating OpenGL ES " + clientVersion + " context");
+			LOGI(L"Creating OpenGL ES " + clientVersion + " context");
 
 			context = EGL14.eglCreateContext(display, eglConfig, EGL14.EGL_NO_CONTEXT, attrList, 0);
 			if (context != EGL14.EGL_NO_CONTEXT) {

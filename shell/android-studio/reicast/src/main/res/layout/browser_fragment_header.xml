@@ -35,7 +35,7 @@
             android:layout_marginLeft="6dp"
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
-            android:text="@string/disk_loading" />
+            android:text="@wstring/disk_loading" />
     </LinearLayout>
 
     <View

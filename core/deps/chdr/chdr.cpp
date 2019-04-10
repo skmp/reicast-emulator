@@ -559,7 +559,7 @@ cleanup:
     filename
 -------------------------------------------------*/
 
-chd_error chd_open(const wchar *filename, int mode, chd_file *parent, chd_file **chd)
+chd_error chd_open(const wchar_t *filename, int mode, chd_file *parent, chd_file **chd)
 {
 	chd_error err;
 	core_file *file = NULL;
@@ -639,7 +639,7 @@ void chd_close(chd_file *chd)
 	if (chd->owns_file && chd->file != NULL)
 		core_fclose(chd->file);
 
-	if (PRINTF_MAX_HUNK) printf("Max hunk = %d/%d\n", chd->maxhunk, chd->header.totalhunks);
+	if (PRINTF_MAX_HUNK) wprintf(L"Max hunk = %d/%d\n", chd->maxhunk, chd->header.totalhunks);
 
 	/* free our memory */
 	free(chd);
@@ -658,7 +658,7 @@ core_file *chd_core_file(chd_file *chd)
 
 
 /*-------------------------------------------------
-    chd_error_string - return an error string for
+    chd_error_string - return an error wstring for
     the given CHD error
 -------------------------------------------------*/
 
@@ -769,12 +769,12 @@ chd_error chd_get_metadata(chd_file *chd, UINT32 searchtag, UINT32 searchindex, 
 		/* unless we're an old version and they are requesting hard disk metadata */
 		if (chd->header.version < 3 && (searchtag == HARD_DISK_METADATA_TAG || searchtag == CHDMETATAG_WILDCARD) && searchindex == 0)
 		{
-			char faux_metadata[256];
+			wchar_t faux_metadata[256];
 			UINT32 faux_length;
 
 			/* fill in the faux metadata */
-			sprintf(faux_metadata, HARD_DISK_METADATA_FORMAT, chd->header.obsolete_cylinders, chd->header.obsolete_heads, chd->header.obsolete_sectors, chd->header.hunkbytes / chd->header.obsolete_hunksize);
-			faux_length = (UINT32)strlen(faux_metadata) + 1;
+			swprintf(faux_metadata, HARD_DISK_METADATA_FORMAT, chd->header.obsolete_cylinders, chd->header.obsolete_heads, chd->header.obsolete_sectors, chd->header.hunkbytes / chd->header.obsolete_hunksize);
+			faux_length = (UINT32)wcslen(faux_metadata) + 1;
 
 			/* copy the metadata itself */
 			memcpy(output, faux_metadata, MIN(outputlen, faux_length));

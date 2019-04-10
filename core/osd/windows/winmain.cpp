@@ -11,30 +11,34 @@
 #include "maple\maple_cfg.h"
 #pragma comment(lib, "XInput9_1_0.lib")
 
-PCHAR*
+
+
+#ifndef DEF_CONSOLE
+
+TCHAR*
 	CommandLineToArgvA(
-	PCHAR CmdLine,
+	TCHAR* CmdLine,
 	int* _argc
 	)
 {
-	PCHAR* argv;
-	PCHAR  _argv;
+	TCHAR* argv;
+	TCHAR*  _argv;
 	ULONG   len;
 	ULONG   argc;
-	CHAR    a;
+	TCHAR    a;
 	ULONG   i, j;
 
 	BOOLEAN  in_QM;
 	BOOLEAN  in_TEXT;
 	BOOLEAN  in_SPACE;
 
-	len = strlen(CmdLine);
+	len = wcslen((wchar_t*)CmdLine);
 	i = ((len+2)/2)*sizeof(PVOID) + sizeof(PVOID);
 
-	argv = (PCHAR*)GlobalAlloc(GMEM_FIXED,
+	argv = (TCHAR*)GlobalAlloc(GMEM_FIXED,
 		i + (len+2)*sizeof(CHAR));
 
-	_argv = (PCHAR)(((PUCHAR)argv)+i);
+	_argv = (TCHAR*)(((PUCHAR)argv)+i);
 
 	argc = 0;
 	argv[argc] = _argv;
@@ -104,6 +108,7 @@ PCHAR*
 	(*_argc) = argc;
 	return argv;
 }
+#endif // !DEF_CONSOLE
 
 void dc_stop(void);
 
@@ -130,7 +135,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 
 	u8* address=(u8*)pExceptionRecord->ExceptionInformation[1];
 
-	//printf("[EXC] During access to : 0x%X\n", address);
+	//wprintf(L"[EXC] During access to : 0x%X\n", address);
 
 	if (VramLockedWrite(address))
 	{
@@ -154,7 +159,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 #endif
 	else
 	{
-		printf("[GPF]Unhandled access to : 0x%X\n",(unat)address);
+		wprintf(L"[GPF]Unhandled access to : 0x%X\n",(unat)address);
 	}
 
 	return EXCEPTION_CONTINUE_SEARCH;
@@ -163,21 +168,21 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 
 void SetupPath()
 {
-	char fname[512];
+	wchar_t fname[512];
 	GetModuleFileName(0,fname,512);
-	string fn=string(fname);
+	wstring fn=wstring(fname);
 	fn=fn.substr(0,fn.find_last_of('\\'));
 	set_user_config_dir(fn);
 	set_user_data_dir(fn);
 }
 
-int msgboxf(const wchar* text,unsigned int type,...)
+int msgboxf(const wchar_t* text,unsigned int type,...)
 {
 	va_list args;
 
-	wchar temp[2048];
+	wchar_t temp[2048];
 	va_start(args, type);
-	vsprintf(temp, text, args);
+	wvsprintf(temp, text, args);
 	va_end(args);
 
 
@@ -349,7 +354,7 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 // Windows class name to register
-#define WINDOW_CLASS "nilDC"
+#define WINDOW_CLASS L"wc_reicast"
 
 // Width and height of the window
 #define WINDOW_WIDTH  1280
@@ -376,7 +381,7 @@ void os_CreateWindow()
 	ATOM registerClass = RegisterClass(&sWC);
 	if (!registerClass)
 	{
-		MessageBox(0, ("Failed to register the window class"), ("Error"), MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(0, L"Failed to register the window class", L"Error", MB_OK | MB_ICONEXCLAMATION);
 	}
 
 	// Create the eglWindow
@@ -419,7 +424,7 @@ BOOL CtrlHandler( DWORD fdwCtrlType )
 }
 
 
-void os_SetWindowText(const char* text)
+void os_SetWindowText(const wchar_t* text)
 {
 	if (GetWindowLong((HWND)libPvr_GetRenderTarget(),GWL_STYLE)&WS_BORDER)
 	{
@@ -632,7 +637,7 @@ _In_opt_ PVOID Context
 	Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
 	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE;
 	Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
-	printf("TABLE CALLBACK\n");
+	wprintf(L"TABLE CALLBACK\n");
 	//for (;;);
 	return Table;
 }
@@ -687,9 +692,9 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 
 {
 	int argc=0;
-	wchar* cmd_line=GetCommandLineA();
-	wchar** argv=CommandLineToArgvA(cmd_line,&argc);
-	if(strstr(cmd_line,"NoConsole")==0)
+	wchar_t* cmd_line=GetCommandLineA();
+	wchar_t** argv=CommandLineToArgvA(cmd_line,&argc);
+	if(wcsstr(cmd_line,"NoConsole")==0)
 	{
 		if (AllocConsole())
 		{
@@ -702,10 +707,11 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 
 #endif
 
-
+#if 0	//*FIXME* wchar_t
 	if(ParseCommandLine(argc,argv)) {
 		return rv_cli_finish;
 	}
+#endif
 
 	ReserveBottomMemory();
 	tick_thd.Start();
@@ -714,10 +720,10 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 	//SetUnhandledExceptionFilter(&ExeptionHandler);
 	__try
 	{
-		int dc_init(int argc,wchar* argv[]);
+		int dc_init(int argc,wchar_t* argv[]);
 		void dc_run();
 		void dc_term();
-		if (0 == dc_init(argc, argv))
+		if (0 == dc_init(0,NULL))//*FIXME* wchar_t (argc, argv))
 		{
 #ifdef _WIN64
 			setup_seh();
@@ -728,7 +734,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 	}
 	__except( ExeptionHandler(GetExceptionInformation()) )
 	{
-		printf("Unhandled exception - Emulation thread halted...\n");
+		wprintf(L"Unhandled exception - Emulation thread halted...\n");
 	}
 	SetUnhandledExceptionFilter(0);
 
@@ -779,10 +785,11 @@ void os_DoEvents()
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }
 
-int GetFile(char *szFileName, char *szParse = 0, u32 flags = 0)
+int GetFile(wchar_t *szFileName, char *szParse, u32 flags)
 {
-	cfgLoadStr("config", "image", szFileName, "null");
-	if (strcmp(szFileName, "null") == 0)
+	cfgLoadStr(L"config", L"image", szFileName, L"null");
+
+	if (wcscmp(szFileName, L"null") == 0)
 	{
 		OPENFILENAME ofn;
 		ZeroMemory(&ofn, sizeof(ofn));
@@ -791,17 +798,17 @@ int GetFile(char *szFileName, char *szParse = 0, u32 flags = 0)
 		ofn.lpstrFile = szFileName;
 		ofn.lpstrFile[0] = '\0';
 		ofn.nMaxFile = MAX_PATH;
-		ofn.lpstrFilter = "All\0*.*\0\0";
+		ofn.lpstrFilter = L"All\0*.*\0\0";
 		ofn.nFilterIndex = 1;
 		ofn.lpstrFileTitle = NULL;
 		ofn.nMaxFileTitle = 0;
 		ofn.lpstrInitialDir = NULL;
 		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-		if (GetOpenFileNameA(&ofn))
+		if (GetOpenFileName(&ofn))
 		{
 			//already there
-			//strcpy(szFileName,ofn.lpstrFile);
+			//wcscpy(szFileName,ofn.lpstrFile);
 		}
 	}
 

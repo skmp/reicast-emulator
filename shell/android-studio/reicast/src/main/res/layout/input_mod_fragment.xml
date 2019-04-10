@@ -36,7 +36,7 @@
                 android:ems="10"
                 android:layout_marginLeft="4dp"
                 android:gravity="center_vertical|left"
-                android:text="@string/modified_layout" />
+                android:text="@wstring/modified_layout" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -64,7 +64,7 @@
                 android:ems="10"
                 android:layout_marginLeft="4dp"
                 android:gravity="center_vertical|left"
-                android:text="@string/controller_compat" />
+                android:text="@wstring/controller_compat" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -105,7 +105,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="4dp"
                     android:ems="10"
-                    android:text="@string/a_button" />
+                    android:text="@wstring/a_button" />
             </LinearLayout>
 
             <LinearLayout
@@ -121,7 +121,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/select" />
+                    android:text="@wstring/select" />
 
                 <Button
                     android:id="@+id/remove_a_button"
@@ -129,7 +129,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/remove" />
+                    android:text="@wstring/remove" />
             </LinearLayout>
         </TableRow>
 
@@ -157,7 +157,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="4dp"
                     android:ems="10"
-                    android:text="@string/b_button" />
+                    android:text="@wstring/b_button" />
             </LinearLayout>
 
             <LinearLayout
@@ -173,7 +173,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/select" />
+                    android:text="@wstring/select" />
 
                 <Button
                     android:id="@+id/remove_b_button"
@@ -181,7 +181,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/remove" />
+                    android:text="@wstring/remove" />
             </LinearLayout>
         </TableRow>
 
@@ -209,7 +209,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="4dp"
                     android:ems="10"
-                    android:text="@string/x_button" />
+                    android:text="@wstring/x_button" />
             </LinearLayout>
 
             <LinearLayout
@@ -225,7 +225,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/select" />
+                    android:text="@wstring/select" />
 
                 <Button
                     android:id="@+id/remove_x_button"
@@ -233,7 +233,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/remove" />
+                    android:text="@wstring/remove" />
             </LinearLayout>
         </TableRow>
 
@@ -261,7 +261,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="4dp"
                     android:ems="10"
-                    android:text="@string/y_button" />
+                    android:text="@wstring/y_button" />
             </LinearLayout>
 
             <LinearLayout
@@ -277,7 +277,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/select" />
+                    android:text="@wstring/select" />
 
                 <Button
                     android:id="@+id/remove_y_button"
@@ -285,7 +285,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/remove" />
+                    android:text="@wstring/remove" />
             </LinearLayout>
         </TableRow>
 
@@ -313,7 +313,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="4dp"
                     android:ems="10"
-                    android:text="@string/left_button" />
+                    android:text="@wstring/left_button" />
             </LinearLayout>
 
             <LinearLayout
@@ -329,7 +329,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/select" />
+                    android:text="@wstring/select" />
 
                 <Button
                     android:id="@+id/remove_l_button"
@@ -337,7 +337,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/remove" />
+                    android:text="@wstring/remove" />
             </LinearLayout>
         </TableRow>
 
@@ -365,7 +365,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="4dp"
                     android:ems="10"
-                    android:text="@string/right_button" />
+                    android:text="@wstring/right_button" />
             </LinearLayout>
 
             <LinearLayout
@@ -381,7 +381,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/select" />
+                    android:text="@wstring/select" />
 
                 <Button
                     android:id="@+id/remove_r_button"
@@ -389,7 +389,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/remove" />
+                    android:text="@wstring/remove" />
             </LinearLayout>
         </TableRow>
 
@@ -410,7 +410,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="4dp"
                     android:ems="10"
-                    android:text="@string/rstick_mode" />
+                    android:text="@wstring/rstick_mode" />
             </LinearLayout>
 
             <LinearLayout
@@ -445,7 +445,7 @@
                 android:ems="10"
                 android:layout_marginLeft="4dp"
                 android:gravity="center_vertical|left"
-                android:text="@string/joystick_layout" />
+                android:text="@wstring/joystick_layout" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -473,7 +473,7 @@
                 android:layout_marginLeft="4dp"
                 android:layout_weight="1"
                 android:ems="10"
-                android:text="@string/joystick_x" />
+                android:text="@wstring/joystick_x" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -488,7 +488,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/select" />
+                    android:text="@wstring/select" />
 
                 <Button
                     android:id="@+id/remove_joystick_x"
@@ -496,7 +496,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/remove" />
+                    android:text="@wstring/remove" />
             </LinearLayout>
         </TableRow>
 
@@ -511,7 +511,7 @@
                 android:layout_marginLeft="4dp"
                 android:layout_weight="1"
                 android:ems="10"
-                android:text="@string/joystick_y" />
+                android:text="@wstring/joystick_y" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -526,7 +526,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/select" />
+                    android:text="@wstring/select" />
 
                 <Button
                     android:id="@+id/remove_joystick_y"
@@ -534,7 +534,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/remove" />
+                    android:text="@wstring/remove" />
             </LinearLayout>
         </TableRow>
 
@@ -549,7 +549,7 @@
                 android:layout_marginLeft="4dp"
                 android:layout_weight="1"
                 android:ems="10"
-                android:text="@string/dpad_up" />
+                android:text="@wstring/dpad_up" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -564,7 +564,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/select" />
+                    android:text="@wstring/select" />
 
                 <Button
                     android:id="@+id/remove_dpad_up"
@@ -572,7 +572,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/remove" />
+                    android:text="@wstring/remove" />
             </LinearLayout>
         </TableRow>
 
@@ -587,7 +587,7 @@
                 android:layout_marginLeft="4dp"
                 android:layout_weight="1"
                 android:ems="10"
-                android:text="@string/dpad_down" />
+                android:text="@wstring/dpad_down" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -602,7 +602,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/select" />
+                    android:text="@wstring/select" />
 
                 <Button
                     android:id="@+id/remove_dpad_down"
@@ -610,7 +610,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/remove" />
+                    android:text="@wstring/remove" />
             </LinearLayout>
         </TableRow>
 
@@ -625,7 +625,7 @@
                 android:layout_marginLeft="4dp"
                 android:layout_weight="1"
                 android:ems="10"
-                android:text="@string/dpad_left" />
+                android:text="@wstring/dpad_left" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -640,7 +640,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/select" />
+                    android:text="@wstring/select" />
 
                 <Button
                     android:id="@+id/remove_dpad_left"
@@ -648,7 +648,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/remove" />
+                    android:text="@wstring/remove" />
             </LinearLayout>
         </TableRow>
 
@@ -663,7 +663,7 @@
                 android:layout_marginLeft="4dp"
                 android:layout_weight="1"
                 android:ems="10"
-                android:text="@string/dpad_right" />
+                android:text="@wstring/dpad_right" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -678,7 +678,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/select" />
+                    android:text="@wstring/select" />
 
                 <Button
                     android:id="@+id/remove_dpad_right"
@@ -686,7 +686,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/remove" />
+                    android:text="@wstring/remove" />
             </LinearLayout>
         </TableRow>
 
@@ -714,7 +714,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="4dp"
                     android:ems="10"
-                    android:text="@string/start_button" />
+                    android:text="@wstring/start_button" />
             </LinearLayout>
 
             <LinearLayout
@@ -730,7 +730,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/select" />
+                    android:text="@wstring/select" />
 
                 <Button
                     android:id="@+id/remove_start"
@@ -738,7 +738,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/remove" />
+                    android:text="@wstring/remove" />
             </LinearLayout>
         </TableRow>
 
@@ -765,7 +765,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:ems="10"
-                    android:text="@string/select_button" />
+                    android:text="@wstring/select_button" />
             </LinearLayout>
 
             <LinearLayout
@@ -781,7 +781,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/select" />
+                    android:text="@wstring/select" />
 
                 <Button
                     android:id="@+id/remove_select"
@@ -789,7 +789,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:ems="6"
-                    android:text="@string/remove" />
+                    android:text="@wstring/remove" />
             </LinearLayout>
         </TableRow>
     </TableLayout>

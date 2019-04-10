@@ -10,7 +10,7 @@
   ],
   "configurations": [
     {
-      "name": "x86-Debug",
+      "name": "win-x86-Debug",
       "generator": "Ninja",
       "description": "TemplateDescription_Localize_x86Debug",
       "configurationType": "Debug",
@@ -22,7 +22,7 @@
       "ctestCommandArgs": ""
     },
     {
-      "name": "x86-Release",
+      "name": "win-x86-Release",
       "generator": "Ninja",
       "description": "TemplateDescription_Localize_x86Release",
       "configurationType": "RelWithDebInfo",
@@ -34,7 +34,7 @@
       "ctestCommandArgs": ""
     },
     {
-      "name": "x64-Debug",
+      "name": "win-x64-Debug",
       "generator": "Ninja",
       "description": "TemplateDescription_Localize_x64Debug",
       "configurationType": "Debug",
@@ -46,7 +46,7 @@
       "ctestCommandArgs": ""
     },
     {
-      "name": "x64-Release",
+      "name": "win-x64-Release",
       "generator": "Ninja",
       "description": "TemplateDescription_Localize_x64Release",
       "configurationType": "RelWithDebInfo",

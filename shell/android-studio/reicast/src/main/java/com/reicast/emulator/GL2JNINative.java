@@ -159,7 +159,7 @@ public class GL2JNINative extends NativeActivity {
 					new Handler().post(new Runnable() {
 						public void run() {
 							Toast.makeText(getApplicationContext(),
-									R.string.controller_unavailable,
+									R.wstring.controller_unavailable,
 									Toast.LENGTH_SHORT).show();
 							finish();
 						}

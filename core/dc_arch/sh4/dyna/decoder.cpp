@@ -21,40 +21,40 @@
 RuntimeBlockInfo* blk;
 
 
-const char idle_hash[] = 
+const wchar_t idle_hash[] = 
 	//BIOS
-	">:1:05:BD3BE51F:1E886EE6:6BDB3F70:7FB25EA3:DE0083A8"
-	">:1:04:CB0C9B99:5082FB07:50A46C46:4035B1F1:6A9F47DC"
-	">:1:04:26AEABE5:E9D01A08:C25DD887:EEAFF173:CE2BBA10"
-	">:1:0A:5785DC3D:68688650:C5E1AFB3:7F686AE5:89538042"
+	L">:1:05:BD3BE51F:1E886EE6:6BDB3F70:7FB25EA3:DE0083A8"
+	L">:1:04:CB0C9B99:5082FB07:50A46C46:4035B1F1:6A9F47DC"
+	L">:1:04:26AEABE5:E9D01A08:C25DD887:EEAFF173:CE2BBA10"
+	L">:1:0A:5785DC3D:68688650:C5E1AFB3:7F686AE5:89538042"
 
 	//SC
-	">:1:0A:5693F8B9:E5C0D65C:ABF59CAC:B05DF34C:4A359E4A"
-	">:1:04:BC1C1C9C:C17809D5:1EA4548E:8CD97AFE:E263253F"
-	">:1:04:DD9FDF9D:55306FAD:4B3FDAEF:1D58EE41:11301FF1"
+	L">:1:0A:5693F8B9:E5C0D65C:ABF59CAC:B05DF34C:4A359E4A"
+	L">:1:04:BC1C1C9C:C17809D5:1EA4548E:8CD97AFE:E263253F"
+	L">:1:04:DD9FDF9D:55306FAD:4B3FDAEF:1D58EE41:11301FF1"
 
 	//HH
-	">:1:07:3778EBBC:29B99980:3E6CBA8E:4CA0C16A:AD952F27"
-	">:1:04:23F5F301:89CDFEC8:EBB8EB1A:57709C84:55EA4585"
+	L">:1:07:3778EBBC:29B99980:3E6CBA8E:4CA0C16A:AD952F27"
+	L">:1:04:23F5F301:89CDFEC8:EBB8EB1A:57709C84:55EA4585"
 
 	//these look very suspicious, but I'm not sure about any of them
 	//cross testing w/ IKA makes them more suspects than not
-	">:1:0D:DF0C1754:1E3DDC72:E845B7BF:AE1FC6D2:8644F261"
-	">:1:04:DB35BCA0:AB19570C:0E0E54D7:CCA83E6E:A8D17744"
+	L">:1:0D:DF0C1754:1E3DDC72:E845B7BF:AE1FC6D2:8644F261"
+	L">:1:04:DB35BCA0:AB19570C:0E0E54D7:CCA83E6E:A8D17744"
 
 	//IKA
 
 	//Also on HH, dunno if IDLESKIP
 	//Looks like this one is
-	">:1:04:DB35BCA0:AB19570C:0E0E54D7:CCA83E6E:A8D17744"
+	L">:1:04:DB35BCA0:AB19570C:0E0E54D7:CCA83E6E:A8D17744"
 
 	//Similar to the hh 1:07 one, dunno if idleskip
 	//Looks like yhis one is
-	">:1:0D:DF0C1754:1E3DDC72:E845B7BF:AE1FC6D2:8644F261"
+	L">:1:0D:DF0C1754:1E3DDC72:E845B7BF:AE1FC6D2:8644F261"
 
 	//also does the -1 load
 	//looks like this one is
-	">1:08:AF4AC687:08BA1CD0:18592E67:45174350:C9EADF11";
+	L">1:08:AF4AC687:08BA1CD0:18592E67:45174350:C9EADF11";
 
 shil_param mk_imm(u32 immv)
 {
@@ -624,7 +624,7 @@ void dec_param(DecParam p,shil_param& r1,shil_param& r2, u32 op)
 		break;
 
 	default:
-		die("Non-supported parameter used");
+		die(L"Non-supported parameter used");
 	}
 }
 
@@ -660,7 +660,7 @@ u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 		}
 		else
 		{
-			//printf("DIV MATCH BROKEN BY: %s\n",OpDesc[opcode]->diss);
+			//wprintf(L"DIV MATCH BROKEN BY: %s\n",OpDesc[opcode]->diss);
 			break;
 		}
 		
@@ -724,22 +724,22 @@ bool MatchDiv32s(u32 op,u32 pc)
 	div_som_reg3=(Sh4RegType)n;
 
 	u32 match=MatchDiv32(pc+2,div_som_reg1,div_som_reg2,div_som_reg3);
-	printf("DIV32S matched %d%% @ 0x%X\n",match*100/65,pc);
+	wprintf(L"DIV32S matched %d%% @ 0x%X\n",match*100/65,pc);
 	
 	if (match==65)
 	{
 		//DIV32S was perfectly matched :)
-		printf("div32s %d/%d/%d\n",div_som_reg1,div_som_reg2,div_som_reg3);
+		wprintf(L"div32s %d/%d/%d\n",div_som_reg1,div_som_reg2,div_som_reg3);
 		return true;
 	}
 	else //no match ...
 	{
 		/*
-		printf("%04X\n",ReadMem16(pc-2));
-		printf("%04X\n",ReadMem16(pc-0));
-		printf("%04X\n",ReadMem16(pc+2));
-		printf("%04X\n",ReadMem16(pc+4));
-		printf("%04X\n",ReadMem16(pc+6));*/
+		wprintf(L"%04X\n",ReadMem16(pc-2));
+		wprintf(L"%04X\n",ReadMem16(pc-0));
+		wprintf(L"%04X\n",ReadMem16(pc+2));
+		wprintf(L"%04X\n",ReadMem16(pc+4));
+		wprintf(L"%04X\n",ReadMem16(pc+6));*/
 		return false;
 	}
 }
@@ -947,7 +947,7 @@ bool dec_generic(u32 op)
 				case -64: op=shop_mul_s64; rd2 = mk_reg(reg_mach); break;
 
 				default:
-					die("DM_MUL: Failed to classify opcode");
+					die(L"DM_MUL: Failed to classify opcode");
 			}
 
 			Emit(op,rd,rs1,rs2,0,shil_param(),rd2);
@@ -1091,7 +1091,7 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 					u32 op=ReadMem16(state.cpu.rpc);
 					if (op==0 && state.cpu.is_delayslot)
 					{
-						printf("Delayslot 0 hack!\n");
+						wprintf(L"Delayslot 0 hack!\n");
 					}
 					else
 					{
@@ -1136,7 +1136,7 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 			break;
 
 		case NDO_Jump:
-			die("Too old");
+			die(L"Too old");
 			state.NextOp=state.JumpOp;
 			state.cpu.rpc=state.JumpAddr;
 			break;
@@ -1154,7 +1154,7 @@ _end:
 
 	verify(blk->oplist.size() <= BLOCK_MAX_SH_OPS_HARD);
 	
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 	switch(rbi->addr)
 	{
 	case 0x8C09ED16:
@@ -1162,7 +1162,7 @@ _end:
 	case 0x8C0BA506:
 	case 0x8C0BA526:
 	case 0x8C224800:
-		printf("HASH: %08X reloc %s\n",blk->addr,blk->hash(false,true));
+		wprintf(L"HASH: %08X reloc %s\n",blk->addr,blk->hash(false,true));
 		break;
 	}
 #endif
@@ -1171,9 +1171,9 @@ _end:
 	if (settings.dynarec.idleskip)
 	{
 		//Experimental hash-id based idle skip
-		if (strstr(idle_hash,blk->hash(false,true)))
+		if (wcsstr(idle_hash,blk->hash(false,true)))
 		{
-			//printf("IDLESKIP: %08X reloc match %s\n",blk->addr,blk->hash(false,true));
+			//wprintf(L"IDLESKIP: %08X reloc match %s\n",blk->addr,blk->hash(false,true));
 			blk->guest_cycles=max_cycles*100;
 		}
 		else

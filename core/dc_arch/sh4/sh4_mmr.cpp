@@ -28,17 +28,17 @@ Array<RegisterStruct> SCIF(10,true); //SCIF : 10 registers
 
 u32 sh4io_read_noacc(u32 addr) 
 { 
-	printf("sh4io: Invalid read access @@ %08X\n",addr);
+	wprintf(L"sh4io: Invalid read access @@ %08X\n",addr);
 	return 0; 
 } 
 void sh4io_write_noacc(u32 addr, u32 data) 
 { 
-	printf("sh4io: Invalid write access @@ %08X %08X\n",addr,data);
+	wprintf(L"sh4io: Invalid write access @@ %08X %08X\n",addr,data);
 	//verify(false); 
 }
 void sh4io_write_const(u32 addr, u32 data) 
 { 
-	printf("sh4io: Const write ignored @@ %08X <- %08X\n",addr,data);
+	wprintf(L"sh4io: Const write ignored @@ %08X <- %08X\n",addr,data);
 }
 
 void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf)
@@ -140,7 +140,7 @@ offset>>=2;
 		}
 		else
 		{
-			//printf("RSW: %08X\n",addr);
+			//wprintf(L"RSW: %08X\n",addr);
 			sb_regs[offset].writeFunctionAddr(addr,data);
 			/*
 			if (sb_regs[offset].flags & REG_CONST)
@@ -165,10 +165,10 @@ offset>>=2;
 	else
 	{
 		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR4("ERROR: Wrong size write on register - offset=%x, data=%x, size=%d",offset,data,sz);
+			EMUERROR4(L"ERROR: Wrong size write on register - offset=%x, data=%x, size=%d",offset,data,sz);
 	}
 	if ((sb_regs[offset].flags& REG_NOT_IMPL))
-		EMUERROR3("Write to System Control Regs, not implemented - addr=%x, data=%x",addr,data);
+		EMUERROR3(L"Write to System Control Regs, not implemented - addr=%x, data=%x",addr,data);
 #endif
 	
 }
@@ -190,22 +190,22 @@ T DYNACALL ReadMem_P4(u32 addr)
 	case 0xE1:
 	case 0xE2:
 	case 0xE3:
-		printf("Unhandled p4 read [Store queue] 0x%x\n",addr);
+		wprintf(L"Unhandled p4 read [Store queue] 0x%x\n",addr);
 		return 0;
 		break;
 
 	case 0xF0:
-		//printf("Unhandled p4 read [Instruction cache address array] 0x%x\n",addr);
+		//wprintf(L"Unhandled p4 read [Instruction cache address array] 0x%x\n",addr);
 		return 0;
 		break;
 
 	case 0xF1:
-		//printf("Unhandled p4 read [Instruction cache data array] 0x%x\n",addr);
+		//wprintf(L"Unhandled p4 read [Instruction cache data array] 0x%x\n",addr);
 		return 0;
 		break;
 
 	case 0xF2:
-		//printf("Unhandled p4 read [Instruction TLB address array] 0x%x\n",addr);
+		//wprintf(L"Unhandled p4 read [Instruction TLB address array] 0x%x\n",addr);
 		{
 			u32 entry=(addr>>8)&3;
 			return ITLB[entry].Address.reg_data | (ITLB[entry].Data.V<<8);
@@ -213,7 +213,7 @@ T DYNACALL ReadMem_P4(u32 addr)
 		break;
 
 	case 0xF3:
-		//printf("Unhandled p4 read [Instruction TLB data arrays 1 and 2] 0x%x\n",addr);
+		//wprintf(L"Unhandled p4 read [Instruction TLB data arrays 1 and 2] 0x%x\n",addr);
 		{
 			u32 entry=(addr>>8)&3;
 			return ITLB[entry].Data.reg_data;
@@ -226,18 +226,18 @@ T DYNACALL ReadMem_P4(u32 addr)
 			//W=(addr>>14)&1;
 			//A=(addr>>3)&1;
 			//Set=(addr>>5)&0xFF;
-			//printf("Unhandled p4 read [Operand cache address array] %d:%d,%d  0x%x\n",Set,W,A,addr);
+			//wprintf(L"Unhandled p4 read [Operand cache address array] %d:%d,%d  0x%x\n",Set,W,A,addr);
 			return 0;
 		}
 		break;
 
 	case 0xF5:
-		//printf("Unhandled p4 read [Operand cache data array] 0x%x",addr);
+		//wprintf(L"Unhandled p4 read [Operand cache data array] 0x%x",addr);
 		return 0;
 		break;
 
 	case 0xF6:
-		//printf("Unhandled p4 read [Unified TLB address array] 0x%x\n",addr);
+		//wprintf(L"Unhandled p4 read [Unified TLB address array] 0x%x\n",addr);
 		{
 			u32 entry=(addr>>8)&63;
 			u32 rv=UTLB[entry].Address.reg_data;
@@ -248,7 +248,7 @@ T DYNACALL ReadMem_P4(u32 addr)
 		break;
 
 	case 0xF7:
-		//printf("Unhandled p4 read [Unified TLB data arrays 1 and 2] 0x%x\n",addr);
+		//wprintf(L"Unhandled p4 read [Unified TLB data arrays 1 and 2] 0x%x\n",addr);
 		{
 			u32 entry=(addr>>8)&63;
 			return UTLB[entry].Data.reg_data;
@@ -256,11 +256,11 @@ T DYNACALL ReadMem_P4(u32 addr)
 		break;
 
 	case 0xFF:
-		printf("Unhandled p4 read [area7] 0x%x\n",addr);
+		wprintf(L"Unhandled p4 read [area7] 0x%x\n",addr);
 		break;
 
 	default:
-		printf("Unhandled p4 read [Reserved] 0x%x\n",addr);
+		wprintf(L"Unhandled p4 read [Reserved] 0x%x\n",addr);
 		break;
 	}
 
@@ -286,21 +286,21 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 	case 0xE1:
 	case 0xE2:
 	case 0xE3:
-		printf("Unhandled p4 Write [Store queue] 0x%x",addr);
+		wprintf(L"Unhandled p4 Write [Store queue] 0x%x",addr);
 		break;
 
 	case 0xF0:
-		//printf("Unhandled p4 Write [Instruction cache address array] 0x%x = %x\n",addr,data);
+		//wprintf(L"Unhandled p4 Write [Instruction cache address array] 0x%x = %x\n",addr,data);
 		return;
 		break;
 
 	case 0xF1:
-		//printf("Unhandled p4 Write [Instruction cache data array] 0x%x = %x\n",addr,data);
+		//wprintf(L"Unhandled p4 Write [Instruction cache data array] 0x%x = %x\n",addr,data);
 		return;
 		break;
 
 	case 0xF2:
-		//printf("Unhandled p4 Write [Instruction TLB address array] 0x%x = %x\n",addr,data);
+		//wprintf(L"Unhandled p4 Write [Instruction TLB address array] 0x%x = %x\n",addr,data);
 		{
 			u32 entry=(addr>>8)&3;
 			ITLB[entry].Address.reg_data=data & 0xFFFFFCFF;
@@ -313,11 +313,11 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 	case 0xF3:
 		if (addr&0x800000)
 		{
-			printf("Unhandled p4 Write [Instruction TLB data array 2] 0x%x = %x\n",addr,data);
+			wprintf(L"Unhandled p4 Write [Instruction TLB data array 2] 0x%x = %x\n",addr,data);
 		}
 		else
 		{
-			//printf("Unhandled p4 Write [Instruction TLB data array 1] 0x%x = %x\n",addr,data);
+			//wprintf(L"Unhandled p4 Write [Instruction TLB data array 1] 0x%x = %x\n",addr,data);
 			u32 entry=(addr>>8)&3;
 			ITLB[entry].Data.reg_data=data;
 			ITLB_Sync(entry);
@@ -331,13 +331,13 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 			//W=(addr>>14)&1;
 			//A=(addr>>3)&1;
 			//Set=(addr>>5)&0xFF;
-			//printf("Unhandled p4 Write [Operand cache address array] %d:%d,%d  0x%x = %x\n",Set,W,A,addr,data);
+			//wprintf(L"Unhandled p4 Write [Operand cache address array] %d:%d,%d  0x%x = %x\n",Set,W,A,addr,data);
 			return;
 		}
 		break;
 
 	case 0xF5:
-		//printf("Unhandled p4 Write [Operand cache data array] 0x%x = %x\n",addr,data);
+		//wprintf(L"Unhandled p4 Write [Operand cache data array] 0x%x = %x\n",addr,data);
 		return;
 		break;
 
@@ -346,7 +346,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 			if (addr&0x80)
 			{
 				#ifdef NO_MMU
-					printf("Unhandled p4 Write [Unified TLB address array, Associative Write] 0x%x = %x\n",addr,data);
+					wprintf(L"Unhandled p4 Write [Unified TLB address array, Associative Write] 0x%x = %x\n",addr,data);
 				#endif
 
 				CCN_PTEH_type t;
@@ -393,11 +393,11 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 	case 0xF7:
 		if (addr&0x800000)
 		{
-			printf("Unhandled p4 Write [Unified TLB data array 2] 0x%x = %x\n",addr,data);
+			wprintf(L"Unhandled p4 Write [Unified TLB data array 2] 0x%x = %x\n",addr,data);
 		}
 		else
 		{
-			//printf("Unhandled p4 Write [Unified TLB data array 1] 0x%x = %x\n",addr,data);
+			//wprintf(L"Unhandled p4 Write [Unified TLB data array 1] 0x%x = %x\n",addr,data);
 			u32 entry=(addr>>8)&63;
 			UTLB[entry].Data.reg_data=data;
 			UTLB_Sync(entry);
@@ -406,15 +406,15 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 		break;
 
 	case 0xFF:
-		printf("Unhandled p4 Write [area7] 0x%x = %x\n",addr,data);
+		wprintf(L"Unhandled p4 Write [area7] 0x%x = %x\n",addr,data);
 		break;
 
 	default:
-		printf("Unhandled p4 Write [Reserved] 0x%x\n",addr);
+		wprintf(L"Unhandled p4 Write [Reserved] 0x%x\n",addr);
 		break;
 	}
 
-	EMUERROR3("Write to P4 not implemented - addr=%x, data=%x",addr,data);
+	EMUERROR3(L"Write to P4 not implemented - addr=%x, data=%x",addr,data);
 }
 
 
@@ -428,7 +428,7 @@ T DYNACALL ReadMem_sq(u32 addr)
 {
 	if (sz!=4)
 	{
-		printf("Store Queue Error - only 4 byte read are possible[x%X]\n",addr);
+		wprintf(L"Store Queue Error - only 4 byte read are possible[x%X]\n",addr);
 		return 0xDE;
 	}
 
@@ -443,7 +443,7 @@ template <u32 sz,class T>
 void DYNACALL WriteMem_sq(u32 addr,T data)
 {
 	if (sz!=4)
-		printf("Store Queue Error - only 4 byte writes are possible[x%X=0x%X]\n",addr,data);
+		wprintf(L"Store Queue Error - only 4 byte writes are possible[x%X=0x%X]\n",addr,data);
 
 	u32 united_offset=addr & 0x3C;
 
@@ -477,7 +477,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	}
 	//else if (addr==)
 
-	//printf("%08X\n",addr);
+	//wprintf(L"%08X\n",addr);
 	addr&=0x1FFFFFFF;
 	u32 map_base=addr>>16;
 	switch (map_base & 0x1FFF)
@@ -640,7 +640,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		return;
 	}	
 
-	//printf("%08X\n",addr);
+	//wprintf(L"%08X\n",addr);
 
 	addr&=0x1FFFFFFF;
 	u32 map_base=addr>>16;
@@ -795,7 +795,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		break;
 	}
 
-	//EMUERROR3("Write to Area7 not implemented , addr=%x,data=%x",addr,data);
+	//EMUERROR3(L"Write to Area7 not implemented , addr=%x,data=%x",addr,data);
 }
 
 
@@ -816,13 +816,13 @@ T DYNACALL ReadMem_area7_OCR_T(u32 addr)
 			return (T)*(u32*)&OnChipRAM[addr&OnChipRAM_MASK];
 		else
 		{
-			printf("ReadMem_area7_OCR_T: template SZ is wrong = %d\n",sz);
+			wprintf(L"ReadMem_area7_OCR_T: template SZ is wrong = %d\n",sz);
 			return 0xDE;
 		}
 	}
 	else
 	{
-		printf("On Chip Ram Read, but OCR is disabled\n");
+		wprintf(L"On Chip Ram Read, but OCR is disabled\n");
 		return 0xDE;
 	}
 }
@@ -841,12 +841,12 @@ void DYNACALL WriteMem_area7_OCR_T(u32 addr,T data)
 			*(u32*)&OnChipRAM[addr&OnChipRAM_MASK]=data;
 		else
 		{
-			printf("WriteMem_area7_OCR_T: template SZ is wrong = %d\n",sz);
+			wprintf(L"WriteMem_area7_OCR_T: template SZ is wrong = %d\n",sz);
 		}
 	}
 	else
 	{
-		printf("On Chip Ram Write, but OCR is disabled\n");
+		wprintf(L"On Chip Ram Write, but OCR is disabled\n");
 	}
 }
 

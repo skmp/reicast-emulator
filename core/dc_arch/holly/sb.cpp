@@ -53,7 +53,7 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 		}
 		else
 		{
-			//printf("SB: %08X\n",addr);
+			//wprintf(L"SB: %08X\n",addr);
 			return sb_regs[offset].readFunctionAddr(addr);
 		}
 #ifdef TRACE
@@ -95,7 +95,7 @@ offset>>=2;
 		}
 		else
 		{
-			//printf("SBW: %08X\n",addr);
+			//wprintf(L"SBW: %08X\n",addr);
 			sb_regs[offset].writeFunctionAddr(addr,data);
 			/*
 			if (sb_regs[offset].flags & REG_CONST)
@@ -120,10 +120,10 @@ offset>>=2;
 	else
 	{
 		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR4("ERROR :wrong size write on register ; offset=%x , data=%x,sz=%d",offset,data,sz);
+			EMUERROR4(L"ERROR :wrong size write on register ; offset=%x , data=%x,sz=%d",offset,data,sz);
 	}
 	if ((sb_regs[offset].flags& REG_NOT_IMPL))
-		EMUERROR3("Write to System Control Regs , not  implemented , addr=%x,data=%x",addr,data);
+		EMUERROR3(L"Write to System Control Regs , not  implemented , addr=%x,data=%x",addr,data);
 #endif
 
 }
@@ -187,7 +187,7 @@ void SB_SFRES_write32(u32 addr, u32 data)
 {
 	if ((u16)data==0x7611)
 	{
-		printf("SB/HOLLY: System reset requested -- but cannot SOFT_RESET\n");
+		wprintf(L"SB/HOLLY: System reset requested -- but cannot SOFT_RESET\n");
 	}
 }
 void sb_Init()

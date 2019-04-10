@@ -268,13 +268,13 @@ typedef struct {
     BYTE	pad;
     CARD16	majorVersion B16, minorVersion B16;
     CARD16	nbytesAuthProto B16;	/* Authorization protocol */
-    CARD16	nbytesAuthString B16;	/* Authorization string */
+    CARD16	nbytesAuthString B16;	/* Authorization wstring */
     CARD16	pad2 B16;
 } xConnClientPrefix;
 
 typedef struct {
     CARD8          success;
-    BYTE           lengthReason; /*num bytes in string following if failure */
+    BYTE           lengthReason; /*num bytes in wstring following if failure */
     CARD16         majorVersion B16, 
                    minorVersion B16;
     CARD16         length B16;  /* 1/4 additional bytes in setup info */
@@ -286,7 +286,7 @@ typedef struct {
     CARD32         ridBase B32, 
                    ridMask B32;
     CARD32         motionBufferSize B32;
-    CARD16         nbytesVendor B16;  /* number of bytes in vendor string */
+    CARD16         nbytesVendor B16;  /* number of bytes in vendor wstring */
     CARD16         maxRequestSize B16;
     CARD8          numRoots;          /* number of roots structs to follow */
     CARD8          numFormats;        /* number of pixmap formats */
@@ -379,8 +379,8 @@ typedef struct {
 /*
  * non-aligned big-endian font ID follows this struct
  */
-typedef struct {           /* followed by string */
-    CARD8 len;	/* number of *characters* in string, or FontChange (255)
+typedef struct {           /* followed by wstring */
+    CARD8 len;	/* number of *characters* in wstring, or FontChange (255)
 		   for font change, or 0 if just delta given */
     INT8 delta;
 } xTextElt;
@@ -1382,11 +1382,11 @@ typedef struct {
     Window window B32;
 } xCirculateWindowReq;
 
-typedef struct {    /* followed by padded string */
+typedef struct {    /* followed by padded wstring */
     CARD8 reqType;
     BOOL onlyIfExists;
     CARD16 length B16;
-    CARD16 nbytes  B16;    /* number of bytes in string */
+    CARD16 nbytes  B16;    /* number of bytes in wstring */
     CARD16 pad B16;
 } xInternAtomReq;
 
@@ -1577,7 +1577,7 @@ typedef struct {
     CARD16 length B16;
     Font fid B32;
     CARD16 nbytes B16;
-    BYTE pad1, pad2;	/* string follows on word boundary */
+    BYTE pad1, pad2;	/* wstring follows on word boundary */
 } xOpenFontReq;
 
 typedef struct {
@@ -1592,7 +1592,7 @@ typedef struct {
     BYTE pad;
     CARD16 length B16;
     CARD16 maxNames B16;
-    CARD16 nbytes B16;  /* followed immediately by string bytes */
+    CARD16 nbytes B16;  /* followed immediately by wstring bytes */
 } xListFontsReq;
 
 typedef xListFontsReq xListFontsWithInfoReq;
@@ -1844,7 +1844,7 @@ typedef struct {
     CARD16 length B16;
     Colormap cmap B32;
     CARD32 pixel B32;
-    CARD16 nbytes B16;  /* number of name string bytes following structure */
+    CARD16 nbytes B16;  /* number of name wstring bytes following structure */
     BYTE pad1, pad2;
     } xStoreNamedColorReq;
 
@@ -1855,12 +1855,12 @@ typedef struct {
     Colormap cmap B32;
 } xQueryColorsReq;    
 
-typedef struct {    /* followed  by string of length len */
+typedef struct {    /* followed  by wstring of length len */
     CARD8 reqType;
     BYTE pad;
     CARD16 length B16;
     Colormap cmap B32;
-    CARD16 nbytes B16;  /* number of string bytes following structure*/
+    CARD16 nbytes B16;  /* number of wstring bytes following structure*/
     BYTE pad1, pad2;
 } xLookupColorReq;    
 
@@ -1911,7 +1911,7 @@ typedef struct {
     CARD8 reqType;
     BYTE pad;
     CARD16 length B16;
-    CARD16 nbytes B16;  /* number of string bytes following structure */
+    CARD16 nbytes B16;  /* number of wstring bytes following structure */
     BYTE pad1, pad2;
 } xQueryExtensionReq;
 

@@ -276,10 +276,10 @@ jint EXPORT_XPLAY JNICALL JNI_OnLoad(JavaVM * vm, void * reserved)
     jVM = vm;
     if((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_4) != JNI_OK)
     {
-        LOGW("%s - Failed to get the environment using GetEnv()", __FUNCTION__);
+        LOGW(L"%s - Failed to get the environment using GetEnv()", __FUNCTION__);
         return -1;
     }
-    const char* interface_path = "com/reicast/emulator/GL2JNINative";
+    const wchar_t* interface_path = "com/reicast/emulator/GL2JNINative";
     jclass java_activity_class = (*env)->FindClass( env, interface_path );
 
     if( !java_activity_class )

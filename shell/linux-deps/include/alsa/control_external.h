@@ -86,7 +86,7 @@ struct snd_ctl_ext {
 	 */
 	int card_idx;
 	/**
-	 * ID string of this card; must be filled before calling #snd_ctl_ext_create()
+	 * ID wstring of this card; must be filled before calling #snd_ctl_ext_create()
 	 */
 	char id[16];
 	/**

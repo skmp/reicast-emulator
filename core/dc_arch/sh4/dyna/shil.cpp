@@ -29,7 +29,7 @@ void RegWriteInfo(shil_opcode* ops, shil_param p,size_t ord)
 		{
 			if (RegisterWrite[p._reg+i]>=RegisterRead[p._reg+i] && RegisterWrite[p._reg+i]!=0xFFFFFFFF)	//if last read was before last write, and there was a last write
 			{
-				printf("DEAD OPCODE %d %d!\n",RegisterWrite[p._reg+i],ord);
+				wprintf(L"DEAD OPCODE %d %d!\n",RegisterWrite[p._reg+i],ord);
 				ops[RegisterWrite[p._reg+i]].Flow=1; //the last write was unused
 			}
 			RegisterWrite[p._reg+i]=ord;
@@ -110,11 +110,11 @@ void sq_pref(RuntimeBlockInfo* blk, int i, Sh4RegType rt, bool mark)
 	{
 		blk->oplist[i].flags =0x1337;
 		sq_pref(blk,i,rt,true);
-		printf("SQW-WM match %d !\n",data);
+		wprintf(L"SQW-WM match %d !\n",data);
 	}
 	else if (data)
 	{
-		printf("SQW-WM FAIL %d !\n",data);
+		wprintf(L"SQW-WM FAIL %d !\n",data);
 	}
 }
 
@@ -185,11 +185,11 @@ void rdgrp(RuntimeBlockInfo* blk)
 					blk->oplist[started].Flow=(rdc-1)*2 - (pend_add?1:0);
 					blk->oplist[started+1].rs2._imm=addv;
 
-					printf("Read Combination %d %d!\n",rdc,addv);
+					wprintf(L"Read Combination %d %d!\n",rdc,addv);
 				}
 				else if (rdc!=1)
 				{
-					printf("Read Combination failed %d %d %d\n",rdc,rdc*stride*4,addv);
+					wprintf(L"Read Combination failed %d %d %d\n",rdc,rdc*stride*4,addv);
 				}
 				started=-1;
 			}
@@ -270,11 +270,11 @@ void wtgrp(RuntimeBlockInfo* blk)
 					blk->oplist[started].Flow=(rdc-1)*2 - (pend_add?1:0);
 					blk->oplist[started+1].rs2._imm=addv;
 
-					printf("Write Combination %d %d!\n",rdc,addv);
+					wprintf(L"Write Combination %d %d!\n",rdc,addv);
 				}
 				else if (rdc!=1)
 				{
-					printf("Write Combination failed fr%d,%d, %d %d %d\n",regd,mask,rdc,rdc*stride*4,addv);
+					wprintf(L"Write Combination failed fr%d,%d, %d %d %d\n",regd,mask,rdc,rdc*stride*4,addv);
 				}
 				i=started;
 				started=-1;
@@ -365,11 +365,11 @@ void rw_related(RuntimeBlockInfo* blk)
 	{
 		u32 lookups=memtotal-total;
 
-		//printf("rw_related total: %d/%d -- %.2f:1\n",total,memtotal,memtotal/(float)lookups);
+		//wprintf(L"rw_related total: %d/%d -- %.2f:1\n",total,memtotal,memtotal/(float)lookups);
 	}
 	else
 	{
-		//printf("rw_related total: none\n");
+		//wprintf(L"rw_related total: none\n");
 	}
 
 	blk->memops=memtotal;
@@ -404,7 +404,7 @@ void constprop(RuntimeBlockInfo* blk)
 				{
 					//convert em to mov/shl/shr
 
-					printf("sh*d -> s*l !\n");
+					wprintf(L"sh*d -> s*l !\n");
 					s32 v=op->rs2._imm;
 
 					if (v>=0)
@@ -458,7 +458,7 @@ void constprop(RuntimeBlockInfo* blk)
 					op->rs1._imm+=op->rs3._imm;
 					op->rs3.type=FMT_NULL;
 				}
-				printf("%s promotion: %08X\n",shop_readm==op->op?"shop_readm":"shop_writem",op->rs1._imm);
+				wprintf(L"%s promotion: %08X\n",shop_readm==op->op?"shop_readm":"shop_writem",op->rs1._imm);
 			}
 			else if (op->op==shop_jdyn)
 			{
@@ -471,12 +471,12 @@ void constprop(RuntimeBlockInfo* blk)
 					blk->BlockType=blk->BlockType==BET_DynamicJump?BET_StaticJump:BET_StaticCall;
 					blk->oplist.erase(blk->oplist.begin()+i);
 					i--;
-					printf("SBP: %08X -> %08X!\n",blk->addr,blk->BranchBlock);
+					wprintf(L"SBP: %08X -> %08X!\n",blk->addr,blk->BranchBlock);
 					continue;
 				}
 				else
 				{
-					printf("SBP: failed :(\n");
+					wprintf(L"SBP: failed :(\n");
 				}
 			}
 			else if (op->op==shop_mov32)
@@ -493,7 +493,7 @@ void constprop(RuntimeBlockInfo* blk)
 						(rv[op->rs1._reg]+op->rs2._imm):
 						(rv[op->rs1._reg]-op->rs2._imm);
 					op->rs2.type=0;
-					printf("%s -> mov32!\n",op->op==shop_add?"shop_add":"shop_sub");
+					wprintf(L"%s -> mov32!\n",op->op==shop_add?"shop_add":"shop_sub");
 					op->op=shop_mov32;
 				}
 				
@@ -503,7 +503,7 @@ void constprop(RuntimeBlockInfo* blk)
 					op->rs1=op->rs2;
 					op->rs2.type=1;
 					op->rs2._imm=immy;
-					printf("%s -> imm prm (%08X)!\n",op->op==shop_add?"shop_add":"shop_sub",immy);
+					wprintf(L"%s -> imm prm (%08X)!\n",op->op==shop_add?"shop_add":"shop_sub",immy);
 				}
 			}
 			else
@@ -531,7 +531,7 @@ void constprop(RuntimeBlockInfo* blk)
 			{
 				isi[op->rd._reg]=true;
 				rv[op->rd._reg]= ReadMem32(op->rs1._imm);
-				printf("IMM MOVE: %08X -> %08X\n",op->rs1._imm,rv[op->rd._reg]);
+				wprintf(L"IMM MOVE: %08X -> %08X\n",op->rs1._imm,rv[op->rd._reg]);
 
 				op->op=shop_mov32;
 				op->rs1._imm=rv[op->rd._reg];
@@ -623,7 +623,7 @@ void read_v4m3z1(RuntimeBlockInfo* blk)
 				if (b)
 					st_sta--;
 				if (a)
-					printf("NOT B\b");
+					wprintf(L"NOT B\b");
 				u32 start=st_sta;
 								
 				for (int j=0;j<5;j++)
@@ -664,7 +664,7 @@ void read_v4m3z1(RuntimeBlockInfo* blk)
 			goto _fail;
 
 
-		die("wth");
+		die(L"wth");
 
 _next_st:
 		state ++;
@@ -740,7 +740,7 @@ void enswap(RuntimeBlockInfo* blk)
 			}
 			else
 			{
-				printf("bswap -- wrong regs\n");
+				wprintf(L"bswap -- wrong regs\n");
 			}
 		}
 
@@ -755,7 +755,7 @@ void enswap(RuntimeBlockInfo* blk)
 			}
 			else
 			{
-				printf("bswap -- wrong regs\n");
+				wprintf(L"bswap -- wrong regs\n");
 			}
 		}
 
@@ -763,11 +763,11 @@ void enswap(RuntimeBlockInfo* blk)
 		{
 			if (op->rd._reg!=r)
 			{
-				printf("oops?\n");
+				wprintf(L"oops?\n");
 			}
 			else
 			{
-				printf("SWAPM!\n");
+				wprintf(L"SWAPM!\n");
 			}
 			op->Flow=1;
 			state=0;
@@ -893,14 +893,14 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 
 	if (st[reg_sr_T]&1)
 	{
-		printf("BLOCK: %08X\n",blk->addr);
+		wprintf(L"BLOCK: %08X\n",blk->addr);
 
 		puts("rin: ");
 
 		for (int i=0;i<sh4_reg_count;i++)
 		{
 			if (st[i]&1)
-				printf("%s ",name_reg(i).c_str());
+				wprintf(L"%s ",name_reg(i).c_str());
 		}
 
 		puts("\nrout: ");
@@ -908,7 +908,7 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 		for (int i=0;i<sh4_reg_count;i++)
 		{
 			if (st[i]&2)
-				printf("%s ",name_reg(i).c_str());
+				wprintf(L"%s ",name_reg(i).c_str());
 		}
 
 		puts("\nr-ns: ");
@@ -916,7 +916,7 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 		for (int i=0;i<sh4_reg_count;i++)
 		{
 			if (st[i]==2)
-				printf("%s ",name_reg(i).c_str());
+				wprintf(L"%s ",name_reg(i).c_str());
 		}
 
 
@@ -991,13 +991,13 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 		if (RegisterWrite[i]!=0)
 		{
 			affregs++;
-			//printf("r%02d:%02d ",i,RegisterWrite[i]);
+			//wprintf(L"r%02d:%02d ",i,RegisterWrite[i]);
 		}
 	}
-	//printf("<> %d\n",affregs);
+	//wprintf(L"<> %d\n",affregs);
 
-	//printf("%d FB, %d native, %.2f%% || %d removed ops!\n",fallback_blocks,total_blocks-fallback_blocks,fallback_blocks*100.f/total_blocks,REMOVED_OPS);
-	//printf("\nBlock: %d affecter regs %d c\n",affregs,blk->guest_cycles);
+	//wprintf(L"%d FB, %d native, %.2f%% || %d removed ops!\n",fallback_blocks,total_blocks-fallback_blocks,fallback_blocks*100.f/total_blocks,REMOVED_OPS);
+	//wprintf(L"\nBlock: %d affecter regs %d c\n",affregs,blk->guest_cycles);
 }
 
 void UpdateFPSCR();
@@ -1022,9 +1022,9 @@ bool UpdateSR();
 #include "shil_canonical.h"
 #endif
 
-string name_reg(u32 reg)
+wstring name_reg(u32 reg)
 {
-	stringstream ss;
+	wstringstream ss;
 
 	if (reg>=reg_fr_0 && reg<=reg_xf_15)
 		ss << "f" << (reg-16);
@@ -1041,9 +1041,9 @@ string name_reg(u32 reg)
 
 	return ss.str();
 }
-string dissasm_param(const shil_param& prm, bool comma)
+wstring dissasm_param(const shil_param& prm, bool comma)
 {
-	stringstream ss;
+	wstringstream ss;
 
 	if (!prm.is_null() && comma)
 			ss << ", ";
@@ -1080,10 +1080,10 @@ string dissasm_param(const shil_param& prm, bool comma)
 	return ss.str();
 }
 
-string shil_opcode::dissasm()
+wstring shil_opcode::dissasm()
 {
-	stringstream ss;
-	ss << shilop_str[op] << " " << dissasm_param(rd,false) << dissasm_param(rd2,true) << " <= " << dissasm_param(rs1,false) << dissasm_param(rs2,true) << dissasm_param(rs3,true);
+	wstringstream ss;
+	ss << shilop_str[op] << L" " << dissasm_param(rd,false) << dissasm_param(rd2,true) << L" <= " << dissasm_param(rs1,false) << dissasm_param(rs2,true) << dissasm_param(rs3,true);
 	return ss.str();
 }
 

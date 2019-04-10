@@ -222,7 +222,8 @@ elseif(${HOST_OS} EQUAL ${OS_PS4_BSD})
 
 else()
 #
-  error("libosd can't figure out OS use SDL ?")
+  message("libosd can't figure out OS use SDL ?")
+  error()
 #
 endif()
 

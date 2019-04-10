@@ -21,7 +21,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="0dip"
                 android:layout_weight="1"
-                android:text="@string/system_path" />
+                android:text="@wstring/system_path" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -41,7 +41,7 @@
                     android:id="@+id/browse_main_path"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/locate" />
+                    android:text="@wstring/locate" />
             </LinearLayout>
         </LinearLayout>
 
@@ -57,7 +57,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="0dip"
                 android:layout_weight="1"
-                android:text="@string/games_path" />
+                android:text="@wstring/games_path" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -77,7 +77,7 @@
                     android:id="@+id/browse_game_path"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/browse" />
+                    android:text="@wstring/browse" />
             </LinearLayout>
         </LinearLayout>
         
@@ -98,7 +98,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_reios" />
+                    android:text="@wstring/select_reios" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -128,7 +128,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="0dip"
                 android:layout_weight="1"
-                android:text="@string/button_theme" />
+                android:text="@wstring/button_theme" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -162,7 +162,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_details" />
+                    android:text="@wstring/select_details" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -192,7 +192,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="0dip"
                 android:layout_weight="1"
-                android:text="@string/select_bios" />
+                android:text="@wstring/select_bios" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -228,7 +228,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_native" />
+                    android:text="@wstring/select_native" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -256,7 +256,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_unstable" />
+                    android:text="@wstring/select_unstable" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -284,7 +284,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_mipmaps" />
+                    android:text="@wstring/select_mipmaps" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -312,7 +312,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_stretch" />
+                    android:text="@wstring/select_stretch" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -339,7 +339,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center_vertical|left"
-                    android:text="@string/set_frameskip" />
+                    android:text="@wstring/set_frameskip" />
 
                 <EditText
                    android:id="@+id/current_frames"
@@ -380,7 +380,7 @@
                     android:layout_weight="1"
                     android:ems="10"
                     android:gravity="center_vertical"
-                    android:text="@string/optimization_opts" />
+                    android:text="@wstring/optimization_opts" />
             </TableRow>
 
             <View
@@ -399,7 +399,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_fps" />
+                    android:text="@wstring/select_fps" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -427,7 +427,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_software" />
+                    android:text="@wstring/select_software" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -455,7 +455,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_sound" />
+                    android:text="@wstring/select_sound" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -483,7 +483,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_depth" />
+                    android:text="@wstring/select_depth" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -512,7 +512,7 @@
                     android:layout_weight="1"
                     android:ems="10"
                     android:gravity="center_vertical"
-                    android:text="@string/experimental_opts" />
+                    android:text="@wstring/experimental_opts" />
             </TableRow>
 
             <View
@@ -531,7 +531,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_dynarec" />
+                    android:text="@wstring/select_dynarec" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -559,7 +559,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_cable" />
+                    android:text="@wstring/select_cable" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -588,7 +588,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_region" />
+                    android:text="@wstring/select_region" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -617,7 +617,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_broadcast" />
+                    android:text="@wstring/select_broadcast" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -646,7 +646,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_limitfps" />
+                    android:text="@wstring/select_limitfps" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -674,7 +674,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_render" />
+                    android:text="@wstring/select_render" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -702,7 +702,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/select_syncrender" />
+                    android:text="@wstring/select_syncrender" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -730,7 +730,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="0dip"
                     android:layout_weight="1"
-                    android:text="@string/boot_disk" />
+                    android:text="@wstring/boot_disk" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -759,7 +759,7 @@
                     android:layout_weight="0.5"
                     android:ems="10"
                     android:gravity="center_vertical|left"
-                    android:text="@string/reset_emu_title" />
+                    android:text="@wstring/reset_emu_title" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -772,7 +772,7 @@
                         android:id="@+id/reset_emu_btn"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/reset_emu" />
+                        android:text="@wstring/reset_emu" />
                 </LinearLayout>
             </TableRow>
         </TableLayout>

@@ -12,11 +12,11 @@
  *
  *      The most straightforward technique turns out to be the fastest for
  *      most input files: try all possible matches and select the longest.
- *      The key feature of this algorithm is that insertions into the string
+ *      The key feature of this algorithm is that insertions into the wstring
  *      dictionary are very simple and thus fast, and deletions are avoided
  *      completely. Insertions are performed at each input character, whereas
- *      string matches are performed only when the previous match ends. So it
- *      is preferable to spend more time in matches to allow very fast string
+ *      wstring matches are performed only when the previous match ends. So it
+ *      is preferable to spend more time in matches to allow very fast wstring
  *      insertions and avoid deletions. The matching algorithm for small
  *      strings is inspired from that of Rabin & Karp. A brute force approach
  *      is used to find longer strings when a small match has been found.
@@ -57,7 +57,7 @@ const char deflate_copyright[] =
   If you use the zlib library in a product, an acknowledgment is welcome
   in the documentation of your product. If for some reason you cannot
   include such an acknowledgment, I would appreciate that you keep this
-  copyright string in the executable of your product.
+  copyright wstring in the executable of your product.
  */
 
 /* ===========================================================================
@@ -168,8 +168,8 @@ struct static_tree_desc_s {int dummy;}; /* for buggy compilers */
 
 
 /* ===========================================================================
- * Insert string str in the dictionary and set match_head to the previous head
- * of the hash chain (the most recent string with same hash key). Return
+ * Insert wstring str in the dictionary and set match_head to the previous head
+ * of the hash chain (the most recent wstring with same hash key). Return
  * the previous length of the hash chain.
  * If this file is compiled with -DFASTEST, the compression level is forced
  * to 1, and no hash chains are maintained.
@@ -924,7 +924,7 @@ int ZEXPORT deflate (strm, flush)
             if (flush == Z_PARTIAL_FLUSH) {
                 _tr_align(s);
             } else if (flush != Z_BLOCK) { /* FULL_FLUSH or SYNC_FLUSH */
-                _tr_stored_block(s, (char*)0, 0L, 0);
+                _tr_stored_block(s, (wchar_t*)0, 0L, 0);
                 /* For a full flush, this empty block will be recognized
                  * as a special marker by inflate_sync().
                  */
@@ -1133,12 +1133,12 @@ local void lm_init (s)
 
 #ifndef FASTEST
 /* ===========================================================================
- * Set match_start to the longest match starting at the given string and
+ * Set match_start to the longest match starting at the given wstring and
  * return its length. Matches shorter or equal to prev_length are discarded,
  * in which case the result is equal to prev_length and match_start is
  * garbage.
  * IN assertions: cur_match is the head of the hash chain for the current
- *   string (strstart) and its distance is <= MAX_DIST, and prev_length >= 1
+ *   wstring (strstart) and its distance is <= MAX_DIST, and prev_length >= 1
  * OUT assertion: the match length is not greater than s->lookahead.
  */
 #ifndef ASMV
@@ -1150,15 +1150,15 @@ local uInt longest_match(s, cur_match)
     IPos cur_match;                             /* current match */
 {
     unsigned chain_length = s->max_chain_length;/* max hash chain length */
-    register Bytef *scan = s->window + s->strstart; /* current string */
-    register Bytef *match;                       /* matched string */
+    register Bytef *scan = s->window + s->strstart; /* current wstring */
+    register Bytef *match;                       /* matched wstring */
     register int len;                           /* length of current match */
     int best_len = s->prev_length;              /* best match length so far */
     int nice_match = s->nice_match;             /* stop if match long enough */
     IPos limit = s->strstart > (IPos)MAX_DIST(s) ?
         s->strstart - (IPos)MAX_DIST(s) : NIL;
     /* Stop when cur_match becomes <= limit. To simplify the code,
-     * we prevent matches with the string of window index 0.
+     * we prevent matches with the wstring of window index 0.
      */
     Posf *prev = s->prev;
     uInt wmask = s->w_mask;
@@ -1298,8 +1298,8 @@ local uInt longest_match(s, cur_match)
     deflate_state *s;
     IPos cur_match;                             /* current match */
 {
-    register Bytef *scan = s->window + s->strstart; /* current string */
-    register Bytef *match;                       /* matched string */
+    register Bytef *scan = s->window + s->strstart; /* current wstring */
+    register Bytef *match;                       /* matched wstring */
     register int len;                           /* length of current match */
     register Bytef *strend = s->window + s->strstart + MAX_MATCH;
 
@@ -1361,15 +1361,15 @@ local void check_match(s, start, match, length)
     /* check that the match is indeed a match */
     if (zmemcmp(s->window + match,
                 s->window + start, length) != EQUAL) {
-        fprintf(stderr, " start %u, match %u, length %d\n",
+        fwprintf(stderr, " start %u, match %u, length %d\n",
                 start, match, length);
         do {
-            fprintf(stderr, "%c%c", s->window[match++], s->window[start++]);
+            fwprintf(stderr, "%c%c", s->window[match++], s->window[start++]);
         } while (--length != 0);
         z_error("invalid match");
     }
     if (z_verbose > 1) {
-        fprintf(stderr,"\\[%d,%d]", start-match, length);
+        fwprintf(stderr,"\\[%d,%d]", start-match, length);
         do { putc(s->window[start++], stderr); } while (--length != 0);
     }
 }
@@ -1636,7 +1636,7 @@ local block_state deflate_fast(s, flush)
         /* Make sure that we always have enough lookahead, except
          * at the end of the input file. We need MAX_MATCH bytes
          * for the next match, plus MIN_MATCH bytes to insert the
-         * string following the next match.
+         * wstring following the next match.
          */
         if (s->lookahead < MIN_LOOKAHEAD) {
             fill_window(s);
@@ -1646,7 +1646,7 @@ local block_state deflate_fast(s, flush)
             if (s->lookahead == 0) break; /* flush the current block */
         }
 
-        /* Insert the string window[strstart .. strstart+2] in the
+        /* Insert the wstring window[strstart .. strstart+2] in the
          * dictionary, and set hash_head to the head of the hash chain:
          */
         hash_head = NIL;
@@ -1658,9 +1658,9 @@ local block_state deflate_fast(s, flush)
          * At this point we have always match_length < MIN_MATCH
          */
         if (hash_head != NIL && s->strstart - hash_head <= MAX_DIST(s)) {
-            /* To simplify the code, we prevent matches with the string
+            /* To simplify the code, we prevent matches with the wstring
              * of window index 0 (in particular we have to avoid a match
-             * of the string with itself at the start of the input file).
+             * of the wstring with itself at the start of the input file).
              */
             s->match_length = longest_match (s, hash_head);
             /* longest_match() sets match_start */
@@ -1679,7 +1679,7 @@ local block_state deflate_fast(s, flush)
 #ifndef FASTEST
             if (s->match_length <= s->max_insert_length &&
                 s->lookahead >= MIN_MATCH) {
-                s->match_length--; /* string at strstart already in table */
+                s->match_length--; /* wstring at strstart already in table */
                 do {
                     s->strstart++;
                     INSERT_STRING(s, s->strstart, hash_head);
@@ -1739,7 +1739,7 @@ local block_state deflate_slow(s, flush)
         /* Make sure that we always have enough lookahead, except
          * at the end of the input file. We need MAX_MATCH bytes
          * for the next match, plus MIN_MATCH bytes to insert the
-         * string following the next match.
+         * wstring following the next match.
          */
         if (s->lookahead < MIN_LOOKAHEAD) {
             fill_window(s);
@@ -1749,7 +1749,7 @@ local block_state deflate_slow(s, flush)
             if (s->lookahead == 0) break; /* flush the current block */
         }
 
-        /* Insert the string window[strstart .. strstart+2] in the
+        /* Insert the wstring window[strstart .. strstart+2] in the
          * dictionary, and set hash_head to the head of the hash chain:
          */
         hash_head = NIL;
@@ -1764,9 +1764,9 @@ local block_state deflate_slow(s, flush)
 
         if (hash_head != NIL && s->prev_length < s->max_lazy_match &&
             s->strstart - hash_head <= MAX_DIST(s)) {
-            /* To simplify the code, we prevent matches with the string
+            /* To simplify the code, we prevent matches with the wstring
              * of window index 0 (in particular we have to avoid a match
-             * of the string with itself at the start of the input file).
+             * of the wstring with itself at the start of the input file).
              */
             s->match_length = longest_match (s, hash_head);
             /* longest_match() sets match_start */

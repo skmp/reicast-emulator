@@ -55,12 +55,12 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 	unat pc = (unat)ctx.pc;
 	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE));
 	
-	printf("SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n", pc, pc - (unat)sigill_handler, (unat)si->si_addr, dyna_cde);
+	wprintf(L"SIGILL @ %08X, fault_handler+0x%08X ... %08X -> was not in vram, %d\n", pc, pc - (unat)sigill_handler, (unat)si->si_addr, dyna_cde);
 	
-	printf("Entering infiniloop");
+	wprintf(L"Entering infiniloop");
 
 	for (;;);
-	printf("PC is used here %08X\n", pc);
+	wprintf(L"PC is used here %08X\n", pc);
 }
 #endif
 
@@ -73,7 +73,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	bool dyna_cde = ((unat)ctx.pc>(unat)CodeCache) && ((unat)ctx.pc<(unat)(CodeCache + CODE_SIZE));
 
 	//ucontext_t* ctx=(ucontext_t*)ctxr;
-	//printf("mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,ctx->uc_mcontext.arm_pc,dyna_cde);
+	//wprintf(L"mprot hit @ ptr 0x%08X @@ code: %08X, %d\n",si->si_addr,ctx->uc_mcontext.arm_pc,dyna_cde);
 
 	
 	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
@@ -104,8 +104,8 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	#endif
 	else
 	{
-		printf("SIGSEGV @ %u (fault_handler+0x%u) ... %p -> was not in vram\n", ctx.pc, ctx.pc - (unat)fault_handler, si->si_addr);
-		die("segfault");
+		wprintf(L"SIGSEGV @ %u (fault_handler+0x%u) ... %p -> was not in vram\n", ctx.pc, ctx.pc - (unat)fault_handler, si->si_addr);
+		die(L"segfault");
 		signal(SIGSEGV, SIG_DFL);
 	}
 }
@@ -207,12 +207,12 @@ void VArray2::LockRegion(u32 offset,u32 size)
 	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ );
 	if (rv!=0)
 	{
-		printf("mprotect(%8s,%08X,R) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
-		die("mprotect  failed ..\n");
+		wprintf(L"mprotect(%8s,%08X,R) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
+		die(L"mprotect  failed ..\n");
 	}
 
 	#else
-		printf("VA2: LockRegion\n");
+		wprintf(L"VA2: LockRegion\n");
 	#endif
 }
 
@@ -225,14 +225,14 @@ void print_mem_addr()
     ifp = fopen("/proc/self/maps", "r");
 
     if (ifp == NULL) {
-        fprintf(stderr, "Can't open input file /proc/self/maps!\n");
+        fwprintf(stderr, "Can't open input file /proc/self/maps!\n");
         exit(1);
     }
 
     ofp = fopen(outputFilename, "w");
 
     if (ofp == NULL) {
-        fprintf(stderr, "Can't open output file %s!\n",
+        fwprintf(stderr, "Can't open output file %s!\n",
                 outputFilename);
 #if HOST_OS == OS_LINUX
         ofp = stderr;
@@ -242,8 +242,8 @@ void print_mem_addr()
     }
 
     char line [ 512 ];
-    while (fgets(line, sizeof line, ifp) != NULL) {
-        fprintf(ofp, "%s", line);
+    while (fgetws(line, sizeof line, ifp) != NULL) {
+        fwprintf(ofp, "%s", line);
     }
 
     fclose(ifp);
@@ -259,11 +259,11 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 	if (rv!=0)
 	{
         print_mem_addr();
-		printf("mprotect(%8p,%08X,RW) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
-		die("mprotect  failed ..\n");
+		wprintf(L"mprotect(%8p,%08X,RW) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
+		die(L"mprotect  failed ..\n");
 	}
 	#else
-		printf("VA2: UnLockRegion\n");
+		wprintf(L"VA2: UnLockRegion\n");
 	#endif
 }
 double os_GetSeconds()
@@ -300,15 +300,15 @@ void enable_runfast()
 		: "r"(x), "r"(y)
 	);
 
-	printf("ARM VFP-Run Fast (NFP) enabled !\n");
+	wprintf(L"ARM VFP-Run Fast (NFP) enabled !\n");
 	#endif
 }
 
 void linux_fix_personality() {
         #if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_OS_MAC) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN)
-          printf("Personality: %08X\n", personality(0xFFFFFFFF));
+          wprintf(L"Personality: %08X\n", personality(0xFFFFFFFF));
           personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
-          printf("Updated personality: %08X\n", personality(0xFFFFFFFF));
+          wprintf(L"Updated personality: %08X\n", personality(0xFFFFFFFF));
         #endif
 }
 
@@ -320,10 +320,10 @@ void linux_rpi2_init() {
 	handle = dlopen("libbcm_host.so", RTLD_LAZY);
 	
 	if (handle) {
-		printf("found libbcm_host\n");
+		wprintf(L"found libbcm_host\n");
 		*(void**) (&rpi_bcm_init) = dlsym(handle, "bcm_host_init");
 		if (rpi_bcm_init) {
-			printf("rpi2: bcm_init\n");
+			wprintf(L"rpi2: bcm_init\n");
 			rpi_bcm_init();
 		}
 	}
@@ -343,7 +343,7 @@ void common_linux_setup()
 
 	settings.profile.run_counts=0;
 	
-	printf("Linux paging: %ld %08X %08X\n", getpagesize(), PAGE_SIZE, PAGE_MASK);
+	wprintf(L"Linux paging: %ld %08X %08X\n", getpagesize(), PAGE_SIZE, PAGE_MASK);
 	verify(PAGE_MASK == (getpagesize()-1)); // (sysconf(_SC_PAGESIZE)
 }
 #endif

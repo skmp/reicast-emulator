@@ -149,7 +149,7 @@ shil_compile \
 
 #define shil_recimp() \
 shil_compile( \
-	die("This opcode requires native dynarec implementation"); \
+	die(L"This opcode requires native dynarec implementation"); \
 )
 
 #else
@@ -643,7 +643,7 @@ shil_opc(debug_3)
 shil_canonical
 (
 void,f1,(u32 r1,u32 r2,u32 r3),
-	printf("%08X, %08X, %08X\n",r1,r2,r3);
+	wprintf(L"%08X, %08X, %08X\n",r1,r2,r3);
 )
 
 shil_compile
@@ -661,7 +661,7 @@ shil_opc(debug_1)
 shil_canonical
 (
 void,f1,(u32 r1),
-	printf("%08X\n",r1);
+	wprintf(L"%08X\n",r1);
 )
 
 shil_compile

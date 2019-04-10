@@ -93,7 +93,7 @@ void mcfg_CreateController(u32 bus, MapleDeviceType maple_type1, MapleDeviceType
 void mcfg_CreateDevicesFromConfig()
 {
 	// Create the configure controller count
-	int numberOfControl = cfgLoadInt("players", "nb", 1);
+	int numberOfControl = cfgLoadInt(L"players", L"nb", 1);
 
 	if (numberOfControl <= 0)
 		numberOfControl = 1;

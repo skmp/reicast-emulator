@@ -155,9 +155,9 @@ struct shil_opcode
 	u16 host_offs;
 	u16 guest_offs;
 
-	string dissasm();
+	wstring dissasm();
 };
 
 const char* shil_opcode_name(int op);
 
-string name_reg(u32 reg);
+wstring name_reg(u32 reg);

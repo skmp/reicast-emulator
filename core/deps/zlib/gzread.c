@@ -508,7 +508,7 @@ char * ZEXPORT gzgets(file, buf, len)
     }
 
     /* copy output bytes up to new line or len - 1, whichever comes first --
-       append a terminating zero to the string (we don't check for a zero in
+       append a terminating zero to the wstring (we don't check for a zero in
        the contents, let the user worry about that) */
     str = buf;
     left = (unsigned)len - 1;
@@ -536,7 +536,7 @@ char * ZEXPORT gzgets(file, buf, len)
         buf += n;
     } while (left && eol == NULL);
 
-    /* return terminated string, or if nothing, end of file */
+    /* return terminated wstring, or if nothing, end of file */
     if (buf == str)
         return NULL;
     buf[0] = 0;

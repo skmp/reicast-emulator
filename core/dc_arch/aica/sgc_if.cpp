@@ -44,12 +44,12 @@ double AEG_DSR_Time[]=
 u32 AEG_ATT_SPS[64];
 u32 AEG_DSR_SPS[64];
 
-const char* stream_names[]=
+const wchar_t* stream_names[]=
 {
-	"0: 16-bit PCM (two's complement format)",
-	"1: 8-bit PCM (two's complement format)",
-	"2: 4-bit ADPCM (Yamaha format)",
-	"3: 4-bit ADPCM long stream"
+	L"0: 16-bit PCM (two's complement format)",
+	L"1: 8-bit PCM (two's complement format)",
+	L"2: 4-bit ADPCM (Yamaha format)",
+	L"3: 4-bit ADPCM long stream"
 };
 
 //x.8 format
@@ -1147,7 +1147,7 @@ void ReadCommonReg(u32 reg,bool byte)
 		{
 			u32 chan=CommonData->MSLC;
 			CommonData->CA = Chans[chan].CA /*& (~1023)*/; //mmnn??
-			//printf("[%d] CA read %d\n",chan,Chans[chan].CA);
+			//wprintf(L"[%d] CA read %d\n",chan,Chans[chan].CA);
 		}
 		break;
 	}
@@ -1206,7 +1206,7 @@ void AICA_Sample32()
 			mxlr[i*2+1] += oRight;
 		}
 	}
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 	samples_gen += sg;
 #endif
 	//OK , generated all Channels  , now DSP/ect + final mix ;p
@@ -1278,9 +1278,9 @@ void AICA_Sample32()
 
 #ifdef CLIP_WARN
 		if (((s16)mixl) != mixl)
-			printf("Clipped mixl %d\n",mixl);
+			wprintf(L"Clipped mixl %d\n",mixl);
 		if (((s16)mixr) != mixr)
-			printf("Clipped mixr %d\n",mixr);
+			wprintf(L"Clipped mixr %d\n",mixr);
 #endif
 
 		clip16(mixl);
@@ -1367,9 +1367,9 @@ void AICA_Sample()
 
 #ifdef CLIP_WARN
 	if (((s16)mixl) != mixl)
-		printf("Clipped mixl %d\n",mixl);
+		wprintf(L"Clipped mixl %d\n",mixl);
 	if (((s16)mixr) != mixr)
-		printf("Clipped mixr %d\n",mixr);
+		wprintf(L"Clipped mixr %d\n",mixr);
 #endif
 
 	clip16(mixl);

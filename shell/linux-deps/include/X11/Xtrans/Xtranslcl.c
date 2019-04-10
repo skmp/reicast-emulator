@@ -160,14 +160,14 @@ TRANS(FillAddrInfo)(XtransConnInfo ciptr, char *sun_path, char *peer_sun_path)
 
     sunaddr->sun_family = AF_UNIX;
 
-    if (strlen(sun_path) > sizeof(sunaddr->sun_path) - 1) {
+    if (wcslen(sun_path) > sizeof(sunaddr->sun_path) - 1) {
 	PRMSG(1, "FillAddrInfo: path too long\n", 0, 0, 0);
 	xfree((char *) sunaddr);
 	return 0;
     }
     strcpy (sunaddr->sun_path, sun_path);
 #if defined(BSD44SOCKETS) 
-    sunaddr->sun_len = strlen (sunaddr->sun_path);
+    sunaddr->sun_len = wcslen (sunaddr->sun_path);
 #endif
 
     ciptr->addr = (char *) sunaddr;
@@ -188,14 +188,14 @@ TRANS(FillAddrInfo)(XtransConnInfo ciptr, char *sun_path, char *peer_sun_path)
 
     p_sunaddr->sun_family = AF_UNIX;
 
-    if (strlen(peer_sun_path) > sizeof(p_sunaddr->sun_path) - 1) {
+    if (wcslen(peer_sun_path) > sizeof(p_sunaddr->sun_path) - 1) {
 	PRMSG(1, "FillAddrInfo: peer path too long\n", 0, 0, 0);
 	xfree((char *) p_sunaddr);
 	return 0;
     }
     strcpy (p_sunaddr->sun_path, peer_sun_path);
 #if defined(BSD44SOCKETS) 
-    p_sunaddr->sun_len = strlen (p_sunaddr->sun_path);
+    p_sunaddr->sun_len = wcslen (p_sunaddr->sun_path);
 #endif
 
     ciptr->peeraddr = (char *) p_sunaddr;
@@ -323,12 +323,12 @@ TRANS(PTSOpenClient)(XtransConnInfo ciptr, char *port)
 #else
     if (port && *port ) {
 	if( *port == '/' ) { /* A full pathname */
-		(void) sprintf(server_path, "%s", port);
+		(void) swprintf(server_path, "%s", port);
 	    } else {
-		(void) sprintf(server_path, "%s%s", PTSNODENAME, port);
+		(void) swprintf(server_path, "%s%s", PTSNODENAME, port);
 	    }
     } else {
-	(void) sprintf(server_path, "%s%d", PTSNODENAME, getpid());
+	(void) swprintf(server_path, "%s%d", PTSNODENAME, getpid());
     }
 
 
@@ -406,9 +406,9 @@ TRANS(PTSOpenClient)(XtransConnInfo ciptr, char *port)
      * write slave name to server
      */
 
-    namelen = strlen(slave);
+    namelen = wcslen(slave);
     buf[0] = namelen;
-    (void) sprintf(&buf[1], slave);
+    (void) swprintf(&buf[1], slave);
     (void) write(server, buf, namelen+1);
     (void) close(server);
 
@@ -470,12 +470,12 @@ TRANS(PTSOpenServer)(XtransConnInfo ciptr, char *port)
 #else
     if (port && *port ) {
 	if( *port == '/' ) { /* A full pathname */
-		(void) sprintf(server_path, "%s", port);
+		(void) swprintf(server_path, "%s", port);
 	    } else {
-		(void) sprintf(server_path, "%s%s", PTSNODENAME, port);
+		(void) swprintf(server_path, "%s%s", PTSNODENAME, port);
 	    }
     } else {
-	(void) sprintf(server_path, "%s%d", PTSNODENAME, getpid());
+	(void) swprintf(server_path, "%s%d", PTSNODENAME, getpid());
     }
 
 #ifdef HAS_STICKY_DIR_BIT
@@ -635,7 +635,7 @@ TRANS(PTSAccept)(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
     sunaddr->sun_family=AF_UNIX;
     strcpy(sunaddr->sun_path,buf);
 #if defined(BSD44SOCKETS) 
-    sunaddr->sun_len=strlen(sunaddr->sun_path);
+    sunaddr->sun_len=wcslen(sunaddr->sun_path);
 #endif
 
     newciptr->peeraddr=(char *)sunaddr;
@@ -1027,7 +1027,7 @@ TRANS(SCOOpenClient)(XtransConnInfo ciptr, char *port)
     PRMSG(2,"SCOOpenClient: Protocol is not supported by a SCO connection\n", 0,0,0);
     return -1;
 #else
-    (void) sprintf(server_path, SCORNODENAME, port);
+    (void) swprintf(server_path, SCORNODENAME, port);
 
     if ((server = open(server_path, O_RDWR)) < 0) {
 	PRMSG(1,"SCOOpenClient: failed to open %s\n", server_path, 0,0 );
@@ -1113,8 +1113,8 @@ TRANS(SCOOpenServer)(XtransConnInfo ciptr, char *port)
     PRMSG(1,"SCOOpenServer: Protocol is not supported by a SCO connection\n", 0,0,0);
     return -1;
 #else
-    (void) sprintf(serverR_path, SCORNODENAME, port);
-    (void) sprintf(serverS_path, SCOSNODENAME, port);
+    (void) swprintf(serverR_path, SCORNODENAME, port);
+    (void) swprintf(serverS_path, SCOSNODENAME, port);
 
 #if !defined(X11_t) || !defined(__SCO__)
     unlink(serverR_path);
@@ -1288,12 +1288,12 @@ TRANS(PTSReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 #else
     if (port && *port ) {
 	if( *port == '/' ) { /* A full pathname */
-		(void) sprintf(server_path, "%s", port);
+		(void) swprintf(server_path, "%s", port);
 	    } else {
-		(void) sprintf(server_path, "%s%s", PTSNODENAME, port);
+		(void) swprintf(server_path, "%s%s", PTSNODENAME, port);
 	    }
     } else {
-	(void) sprintf(server_path, "%s%ld", PTSNODENAME, (long)getpid());
+	(void) swprintf(server_path, "%s%ld", PTSNODENAME, (long)getpid());
     }
 
     if (TRANS(FillAddrInfo) (ciptr, server_path, server_path) == 0)
@@ -1328,12 +1328,12 @@ TRANS(NAMEDReopenServer)(XtransConnInfo ciptr, int fd, char *port)
 #else
     if ( port && *port ) {
 	if( *port == '/' ) { /* A full pathname */
-	    (void) sprintf(server_path, "%s", port);
+	    (void) swprintf(server_path, "%s", port);
 	} else {
-	    (void) sprintf(server_path, "%s%s", NAMEDNODENAME, port);
+	    (void) swprintf(server_path, "%s%s", NAMEDNODENAME, port);
 	}
     } else {
-	(void) sprintf(server_path, "%s%ld", NAMEDNODENAME, (long)getpid());
+	(void) swprintf(server_path, "%s%ld", NAMEDNODENAME, (long)getpid());
     }
 
     if (TRANS(FillAddrInfo) (ciptr, server_path, server_path) == 0)
@@ -1368,8 +1368,8 @@ TRANS(SCOReopenServer)(XtransConnInfo ciptr, int fd, char *port)
     PRMSG(2,"SCOReopenServer: Protocol is not supported by a SCO connection\n", 0,0,0);
     return 0;
 #else
-    (void) sprintf(serverR_path, SCORNODENAME, port);
-    (void) sprintf(serverS_path, SCOSNODENAME, port);
+    (void) swprintf(serverR_path, SCORNODENAME, port);
+    (void) swprintf(serverS_path, SCOSNODENAME, port);
 
 #if defined(X11_t) && defined(__SCO__)
     ciptr->flags |= TRANS_NOUNLINK;
@@ -1678,9 +1678,9 @@ TRANS(LocalInitTransports)(char *protocol)
 {
     PRMSG(3,"LocalInitTransports(%s)\n", protocol, 0,0 );
 
-    if( strcmp(protocol,"local") && strcmp(protocol,"LOCAL") )
+    if( wcscmp(protocol,"local") && wcscmp(protocol,"LOCAL") )
     {
-	workingXLOCAL=freeXLOCAL=(char *)xalloc (strlen (protocol) + 1);
+	workingXLOCAL=freeXLOCAL=(char *)xalloc (wcslen (protocol) + 1);
 	if (workingXLOCAL)
 	    strcpy (workingXLOCAL, protocol);
     }
@@ -1688,7 +1688,7 @@ TRANS(LocalInitTransports)(char *protocol)
 	XLOCAL=(char *)getenv("XLOCAL");
 	if(XLOCAL==NULL)
 	    XLOCAL=DEF_XLOCAL;
-	workingXLOCAL=freeXLOCAL=(char *)xalloc (strlen (XLOCAL) + 1);
+	workingXLOCAL=freeXLOCAL=(char *)xalloc (wcslen (XLOCAL) + 1);
 	if (workingXLOCAL)
 	    strcpy (workingXLOCAL, XLOCAL);
     }
@@ -1728,16 +1728,16 @@ TRANS(LocalGetNextTransport)(void)
 	for(i=0;i<NUMTRANSPORTS;i++)
 	{
 	    /*
-	     * This is equivalent to a case insensitive strcmp(),
+	     * This is equivalent to a case insensitive wcscmp(),
 	     * but should be more portable.
 	     */
-	    strncpy(typebuf,typetocheck,TYPEBUFSIZE);
+	    wcsncpy(typebuf,typetocheck,TYPEBUFSIZE);
 	    for(j=0;j<TYPEBUFSIZE;j++)
 		if (isupper(typebuf[j]))
 		    typebuf[j]=tolower(typebuf[j]);
 
 	    /* Now, see if they match */
-	    if(!strcmp(LOCALtrans2devtab[i].transname,typebuf))
+	    if(!wcscmp(LOCALtrans2devtab[i].transname,typebuf))
 		return &LOCALtrans2devtab[i];
 	}
     }
@@ -1770,7 +1770,7 @@ HostReallyLocal (char *host)
     char buf[256];
 
 #ifdef NEED_UTSNAME
-    if (uname (&name) >= 0 && strcmp (host, name.nodename) == 0)
+    if (uname (&name) >= 0 && wcscmp (host, name.nodename) == 0)
 	return (1);
 #endif
 
@@ -1778,7 +1778,7 @@ HostReallyLocal (char *host)
     (void) gethostname (buf, 256);
     buf[255] = '\0';
 
-    if (strcmp (host, buf) == 0)
+    if (wcscmp (host, buf) == 0)
 	return (1);
 
     return (0);
@@ -1803,7 +1803,7 @@ TRANS(LocalOpenClient)(int type, char *protocol, char *host, char *port)
      * we know for sure it will fail.
      */
 
-    if (strcmp (host, "unix") != 0 && !HostReallyLocal (host))
+    if (wcscmp (host, "unix") != 0 && !HostReallyLocal (host))
     {
 	PRMSG (1,
 	   "LocalOpenClient: Cannot connect to non-local host %s\n",
@@ -1818,7 +1818,7 @@ TRANS(LocalOpenClient)(int type, char *protocol, char *host, char *port)
      * to handle it here, than try and come up with a transport independent
      * representation that can be passed in and resolved the usual way.
      *
-     * The port that is passed here is really a string containing the idisplay
+     * The port that is passed here is really a wstring containing the idisplay
      * from ConnectDisplay(). Since that is what we want for the local transports,
      * we don't have to do anything special.
      */
@@ -1908,7 +1908,7 @@ TRANS(LocalOpenServer)(int type, char *protocol, char *host, char *port)
 
     for(i=1;i<NUMTRANSPORTS;i++)
     {
-	if( strcmp(protocol,LOCALtrans2devtab[i].transname) != 0 )
+	if( wcscmp(protocol,LOCALtrans2devtab[i].transname) != 0 )
 	    continue;
 	switch( type )
 	{
@@ -2032,11 +2032,11 @@ TRANS(LocalOpenCOTSServer)(Xtransport *thistrans, char *protocol,
 	workingXLOCAL = strchr(workingXLOCAL, ':');
 	if (workingXLOCAL && *workingXLOCAL)
 	    *workingXLOCAL++ = '\0';
-	strncpy(typebuf, typetocheck, TYPEBUFSIZE);
+	wcsncpy(typebuf, typetocheck, TYPEBUFSIZE);
 	for (j = 0; j < TYPEBUFSIZE; j++)
 	    if (isupper(typebuf[j]))
 		typebuf[j] = tolower(typebuf[j]);
-	if (!strcmp(thistrans->TransName, typebuf))
+	if (!wcscmp(thistrans->TransName, typebuf))
 	    found = 1;
 	typetocheck = workingXLOCAL;
     }
@@ -2096,7 +2096,7 @@ TRANS(LocalReopenCOTSServer)(Xtransport *thistrans, int fd, char *port)
 
     for(index=1;index<NUMTRANSPORTS;index++)
     {
-	if( strcmp(thistrans->TransName,
+	if( wcscmp(thistrans->TransName,
 	    LOCALtrans2devtab[index].transname) == 0 )
 	    break;
     }
@@ -2120,7 +2120,7 @@ TRANS(LocalReopenCLTSServer)(Xtransport *thistrans, int fd, char *port)
 
     for(index=1;index<NUMTRANSPORTS;index++)
     {
-	if( strcmp(thistrans->TransName,
+	if( wcscmp(thistrans->TransName,
 	    LOCALtrans2devtab[index].transname) == 0 )
 	    break;
     }

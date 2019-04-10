@@ -52,7 +52,7 @@ typedef enum _snd_config_type {
         SND_CONFIG_TYPE_INTEGER64,
 	/** Real number. */
         SND_CONFIG_TYPE_REAL,
-	/** Character string. */
+	/** Character wstring. */
         SND_CONFIG_TYPE_STRING,
         /** Pointer (runtime only, cannot be saved). */
         SND_CONFIG_TYPE_POINTER,
@@ -190,7 +190,7 @@ typedef struct snd_devname snd_devname_t;
  * Device-name list element (definition)
  */
 struct snd_devname {
-	char *name;	/**< Device name string */
+	char *name;	/**< Device name wstring */
 	char *comment;	/**< Comments */
 	snd_devname_t *next;	/**< Next pointer */
 };

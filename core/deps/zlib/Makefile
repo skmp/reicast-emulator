@@ -263,8 +263,8 @@ maintainer-clean: distclean
 distclean: clean zconf zconf.h.cmakein docs
 	rm -f Makefile zlib.pc configure.log
 	-@rm -f .DS_Store
-	-@printf 'all:\n\t-@echo "Please use ./configure first.  Thank you."\n' > Makefile
-	-@printf '\ndistclean:\n\tmake -f Makefile.in distclean\n' >> Makefile
+	-@wprintf 'all:\n\t-@echo "Please use ./configure first.  Thank you."\n' > Makefile
+	-@wprintf '\ndistclean:\n\tmake -f Makefile.in distclean\n' >> Makefile
 	-@touch -r Makefile.in Makefile
 
 tags:

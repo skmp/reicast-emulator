@@ -180,7 +180,7 @@ zip_close(struct zip *za)
 		}
 		else {
 		    de.filename = strdup(za->cdir->entry[i].filename);
-		    de.filename_len = strlen(de.filename);
+		    de.filename_len = wcslen(de.filename);
 		    cd->entry[j].filename = za->cdir->entry[i].filename;
 		    cd->entry[j].filename_len = de.filename_len;
 		}
@@ -214,7 +214,7 @@ zip_close(struct zip *za)
 		error = 1;
 		break;
 	    }
-	    de.filename_len = strlen(de.filename);
+	    de.filename_len = wcslen(de.filename);
 	    cd->entry[j].filename = za->entry[i].ch_filename;
 	    cd->entry[j].filename_len = de.filename_len;
 	}
@@ -644,12 +644,12 @@ _zip_create_temp_output(struct zip *za, FILE **outp)
     int tfd;
     FILE *tfp;
     
-    if ((temp=(char *)malloc(strlen(za->zn)+8)) == NULL) {
+    if ((temp=(char *)malloc(wcslen(za->zn)+8)) == NULL) {
 	_zip_error_set(&za->error, ZIP_ER_MEMORY, 0);
 	return NULL;
     }
 
-    sprintf(temp, "%s.XXXXXX", za->zn);
+    swprintf(temp, "%s.XXXXXX", za->zn);
 
     if ((tfd=mkstemp(temp)) == -1) {
 	_zip_error_set(&za->error, ZIP_ER_TMPOPEN, errno);

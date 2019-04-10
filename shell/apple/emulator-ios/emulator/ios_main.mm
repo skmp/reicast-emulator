@@ -24,24 +24,24 @@
 #include "hw/maple/maple_cfg.h"
 
 
-int msgboxf(const wchar* text,unsigned int type,...)
+int msgboxf(const wchar_t* text,unsigned int type,...)
 {
     va_list args;
 
-    wchar temp[2048];
+    wchar_t temp[2048];
     va_start(args, type);
     vsprintf(temp, text, args);
     va_end(args);
 
-    //printf(NULL,temp,VER_SHORTNAME,type | MB_TASKMODAL);
+    //wprintf(NULL,temp,VER_SHORTNAME,type | MB_TASKMODAL);
     puts(temp);
     return 0;
 }
 
-int darw_printf(const wchar* text,...) {
+int darw_printf(const wchar_t* text,...) {
     va_list args;
 
-    wchar temp[2048];
+    wchar_t temp[2048];
     va_start(args, text);
     vsprintf(temp, text, args);
     va_end(args);
@@ -53,7 +53,7 @@ int darw_printf(const wchar* text,...) {
 
 
 void common_linux_setup();
-int dc_init(int argc,wchar* argv[]);
+int dc_init(int argc,wchar_t* argv[]);
 void dc_run();
 
 u16 kcode[4];
@@ -61,19 +61,19 @@ u32 vks[4];
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
 
-extern "C" int reicast_main(int argc, wchar* argv[])
+extern "C" int reicast_main(int argc, wchar_t* argv[])
 {
     //if (argc==2)
     //ndcid=atoi(argv[1]);
 
-    string homedir = [ [[[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] objectAtIndex:0] path] UTF8String];
+    wstring homedir = [ [[[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] objectAtIndex:0] path] UTF8String];
     set_user_config_dir(homedir);
     set_user_data_dir(homedir);
 
     freopen( (homedir + "/log.txt").c_str(), "wb", stdout);
 
-    printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
-    printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
+    wprintf(L"Config dir is: %s\n", get_writable_config_path("/").c_str());
+    wprintf(L"Data dir is:   %s\n", get_writable_data_path("/").c_str());
 
     common_linux_setup();
 
@@ -95,7 +95,7 @@ u32  os_Push(void*, u32, bool) {
     return 1;
 }
 
-void os_SetWindowText(const char* t) {
+void os_SetWindowText(const wchar_t* t) {
     puts(t);
 }
 

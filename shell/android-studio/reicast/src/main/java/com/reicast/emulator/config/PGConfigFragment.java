@@ -122,7 +122,7 @@ public class PGConfigFragment extends Fragment {
 					bootdiskEdit.getText().toString()).apply();
 		else
 			mPrefs.edit().remove(Emulator.pref_bootdisk).apply();
-		showToastMessage(getActivity().getString(R.string.pgconfig_saved), Snackbar.LENGTH_SHORT);
+		showToastMessage(getActivity().getString(R.wstring.pgconfig_saved), Snackbar.LENGTH_SHORT);
 	}
 
 	private void clearSettings(SharedPreferences mPrefs, String gameId) {
@@ -137,7 +137,7 @@ public class PGConfigFragment extends Fragment {
 				.remove(Emulator.pref_modvols)
 				.remove(Emulator.pref_interrupt)
 				.remove(Emulator.pref_bootdisk).apply();
-		showToastMessage(getActivity().getString(R.string.pgconfig_cleared), Snackbar.LENGTH_SHORT);
+		showToastMessage(getActivity().getString(R.wstring.pgconfig_cleared), Snackbar.LENGTH_SHORT);
 		configureViewByGame(gameId);
 	}
 
@@ -245,7 +245,7 @@ public class PGConfigFragment extends Fragment {
 					copy(new File(getActivity().getExternalFilesDir(null),
 							gameId + ".xml"), xml);
 					showToastMessage(getActivity().getString(
-							R.string.pgconfig_imported), Snackbar.LENGTH_SHORT);
+							R.wstring.pgconfig_imported), Snackbar.LENGTH_SHORT);
 					configureViewByGame(gameId);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -266,7 +266,7 @@ public class PGConfigFragment extends Fragment {
 						copy(xml, new File(getActivity().getExternalFilesDir(null),
 								gameId + ".xml"));
 					showToastMessage(getActivity().getString(
-							R.string.pgconfig_exported), Snackbar.LENGTH_SHORT);
+							R.wstring.pgconfig_exported), Snackbar.LENGTH_SHORT);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

@@ -122,7 +122,7 @@ RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
 	}
 	else
 	{
-		printf("bm_GetBlock(%8s) failed ..\n",dynarec_code);
+		wprintf(L"bm_GetBlock(%8s) failed ..\n",dynarec_code);
 		return 0;
 	}
 }
@@ -149,7 +149,7 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 	all_blocks.push_back(blk);
 	if (blkmap.find(blk)!=blkmap.end())
 	{
-		printf("DUP: %08X %08X %08X %08X\n", (*blkmap.find(blk))->addr,(*blkmap.find(blk))->code,blk->addr,blk->code);
+		wprintf(L"DUP: %08X %08X %08X %08X\n", (*blkmap.find(blk))->addr,(*blkmap.find(blk))->code,blk->addr,blk->code);
 		verify(false);
 	}
 	blkmap.insert(blk);
@@ -163,11 +163,11 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 	{
 		char fname[512];
 
-		sprintf(fname,"sh4:%08X,c:%d,s:%d,h:%d",blk->addr,blk->guest_cycles,blk->guest_opcodes,blk->host_opcodes);
+		swprintf(fname,"sh4:%08X,c:%d,s:%d,h:%d",blk->addr,blk->guest_cycles,blk->guest_opcodes,blk->host_opcodes);
 
 		if (op_write_native_code(oprofHandle, fname, (uint64_t)blk->code, (void*)blk->code, blk->host_code_size) != 0) 
 		{
-			printf("op_write_native_code error\n");
+			wprintf(L"op_write_native_code error\n");
 		}
 	}
 #endif
@@ -238,9 +238,9 @@ u32 FindPath(RuntimeBlockInfo* rbi, u32 sa,s32 mc,u32& plc)
 	else
 	{
 		if (plc!=1)
-			printf("Chain lost due to %d\n",rbi->BlockType);
+			wprintf(L"Chain lost due to %d\n",rbi->BlockType);
 		else
-			printf("Chain fail due to %d\n",rbi->BlockType);
+			wprintf(L"Chain fail due to %d\n",rbi->BlockType);
 		return rbi->guest_cycles;
 	}
 }
@@ -257,7 +257,7 @@ void FindPath(u32 start)
 	if (plen>1)
 	{
 		total_saved+=(plen-1)*2*rbi->runs;
-		printf("%08X: %d, %d, %.2f, %.2f\n",start,pclc,plen,pclc/(float)plen,plen*2*rbi->runs/1000.f);
+		wprintf(L"%08X: %d, %d, %.2f, %.2f\n",start,pclc,plen,pclc/(float)plen,plen*2*rbi->runs/1000.f);
 	}
 	rbi->runs=0;
 }
@@ -272,7 +272,7 @@ void bm_Periodical_1s()
 	del_blocks.clear();
 
 	if (rebuild_counter>0) rebuild_counter--;
-#if HOST_OS==OS_WINDOWS && 0
+#if (HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP) && 0
 	std::sort(all_blocks.begin(),all_blocks.end(),UDgreaterX);
 
 	map<u32,u32> vmap;
@@ -320,7 +320,7 @@ void bm_Periodical_1s()
 	for(int i=0;i<all_blocks.size();i++)
 		all_blocks[i]->runs=0;
 
-	printf("Total Saved: %.2f || Total Loop Runs: %.2f  || Total Runs: %.2f\n",total_saved/1000.f,total_l_runs/1000.f,total_runs/1000.f);
+	wprintf(L"Total Saved: %.2f || Total Loop Runs: %.2f  || Total Runs: %.2f\n",total_saved/1000.f,total_l_runs/1000.f,total_runs/1000.f);
 #endif
 }
 
@@ -342,7 +342,7 @@ void bm_Rebuild()
 
 		if (all_blocks[i]->staging_runs<0 && do_opts)
 		{
-//#if HOST_OS==OS_WINDOWS
+//#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 			//constprop(all_blocks[i]);
 //#endif
 		}
@@ -400,7 +400,7 @@ void bm_Reset()
 		{
 			if (op_unload_native_code(oprofHandle, (uint64_t)del_blocks[i]->code) != 0)
 			{
-				printf("op_unload_native_code error\n");
+				wprintf(L"op_unload_native_code error\n");
 			}
 		}
 	}
@@ -414,9 +414,9 @@ void bm_Init()
 #ifdef DYNA_OPROF
 	oprofHandle=op_open_agent();
 	if (oprofHandle==0)
-		printf("bm: Failed to open oprofile\n");
+		wprintf(L"bm: Failed to open oprofile\n");
 	else
-		printf("bm: Oprofile integration enabled !\n");
+		wprintf(L"bm: Oprofile integration enabled !\n");
 #endif
 }
 
@@ -429,20 +429,20 @@ void bm_Term()
 #endif
 }
 
-void bm_WriteBlockMap(const string& file)
+void bm_WriteBlockMap(const wstring& file)
 {
 	FILE* f=fopen(file.c_str(),"wb");
 	if (f)
 	{
-		printf("Writing block map !\n");
+		wprintf(L"Writing block map !\n");
 		for (size_t i=0; i<all_blocks.size(); i++)
 		{
-			fprintf(f,"block: %d:%08X:%08X:%d:%d:%d\n",all_blocks[i]->BlockType,all_blocks[i]->addr,all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes);
+			fwprintf(f,L"block: %d:%08X:%08X:%d:%d:%d\n",all_blocks[i]->BlockType,all_blocks[i]->addr,all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes);
 			for(size_t j=0;j<all_blocks[i]->oplist.size();j++)
-				fprintf(f,"\top: %d:%d:%s\n",j,all_blocks[i]->oplist[j].guest_offs,all_blocks[i]->oplist[j].dissasm().c_str());
+				fwprintf(f,L"\top: %d:%d:%s\n",j,all_blocks[i]->oplist[j].guest_offs,all_blocks[i]->oplist[j].dissasm().c_str());
 		}
 		fclose(f);
-		printf("Finished writing block map\n");
+		wprintf(L"Finished writing block map\n");
 	}
 }
 
@@ -470,7 +470,7 @@ void sh4_jitsym(FILE* out)
 {
 	for (size_t i=0; i<all_blocks.size(); i++)
 	{
-		fprintf(out,"%08p %d %08X\n",all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->addr);
+		fwprintf(out,L"%08p %d %08X\n",all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->addr);
 	}
 }
 
@@ -491,7 +491,7 @@ void bm_PrintTopBlocks()
 		total_runs+=all_blocks[i]->runs;
 	}
 
-	printf("Total lookups:  %.0fKRuns, %.0fKLuops, Total cycles: %.0fMhz, Total Hops: %.0fMips, Total Sops: %.0fMips! \n",total_runs/1000,total_lups/1000,total_cycles/1000/1000,total_hops/1000/1000,total_sops/1000/1000);
+	wprintf(L"Total lookups:  %.0fKRuns, %.0fKLuops, Total cycles: %.0fMhz, Total Hops: %.0fMips, Total Sops: %.0fMips! \n",total_runs/1000,total_lups/1000,total_cycles/1000/1000,total_hops/1000/1000,total_sops/1000/1000);
 	total_hops/=100;
 	total_cycles/=100;
 	total_runs/=100;
@@ -499,7 +499,7 @@ void bm_PrintTopBlocks()
 	double sel_hops=0;
 	for (size_t i=0;i<(all_blocks.size()/100);i++)
 	{
-		printf("Block %08X: %06X, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)\n",
+		wprintf(L"Block %08X: %06X, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)\n",
 			all_blocks[i]->addr, all_blocks[i]->code,all_blocks[i]->runs,
 			all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes,all_blocks[i]->host_opcodes,
 
@@ -510,12 +510,12 @@ void bm_PrintTopBlocks()
 		sel_hops+=all_blocks[i]->host_opcodes*all_blocks[i]->runs;
 	}
 
-	printf(" >-< %.2f%% covered in top 1%% blocks\n",sel_hops/total_hops);
+	wprintf(L" >-< %.2f%% covered in top 1%% blocks\n",sel_hops/total_hops);
 
 	size_t i;
 	for (i=all_blocks.size()/100;sel_hops/total_hops<50;i++)
 	{
-		printf("Block %08X: %06X, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)\n",
+		wprintf(L"Block %08X: %06X, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)\n",
 			all_blocks[i]->addr, all_blocks[i]->code,all_blocks[i]->runs,
 			all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes,all_blocks[i]->host_opcodes,
 
@@ -526,31 +526,31 @@ void bm_PrintTopBlocks()
 		sel_hops+=all_blocks[i]->host_opcodes*all_blocks[i]->runs;
 	}
 
-	printf(" >-< %.2f%% covered in top %.2f%% blocks\n",sel_hops/total_hops,i*100.0/all_blocks.size());
+	wprintf(L" >-< %.2f%% covered in top %.2f%% blocks\n",sel_hops/total_hops,i*100.0/all_blocks.size());
 
 }
 
 void bm_Sort()
 {
-	printf("!!!!!!!!!!!!!!!!!!! BLK REPORT !!!!!!!!!!!!!!!!!!!!n");
+	wprintf(L"!!!!!!!!!!!!!!!!!!! BLK REPORT !!!!!!!!!!!!!!!!!!!!n");
 
-	printf("     ---- Blocks: Sorted based on Runs ! ----     \n");
+	wprintf(L"     ---- Blocks: Sorted based on Runs ! ----     \n");
 	std::sort(all_blocks.begin(),all_blocks.end(),UDgreater);
 	bm_PrintTopBlocks();
 
-	printf("<><><><><><><><><><><><><><><><><><><><><><><><><>\n");
+	wprintf(L"<><><><><><><><><><><><><><><><><><><><><><><><><>\n");
 
-	printf("     ---- Blocks: Sorted based on hops ! ----     \n");
+	wprintf(L"     ---- Blocks: Sorted based on hops ! ----     \n");
 	std::sort(all_blocks.begin(),all_blocks.end(),UDgreater2);
 	bm_PrintTopBlocks();
 
-	printf("<><><><><><><><><><><><><><><><><><><><><><><><><>\n");
+	wprintf(L"<><><><><><><><><><><><><><><><><><><><><><><><><>\n");
 
-	printf("     ---- Blocks: Sorted based on wefs ! ----     \n");
+	wprintf(L"     ---- Blocks: Sorted based on wefs ! ----     \n");
 	std::sort(all_blocks.begin(),all_blocks.end(),UDgreater3);
 	bm_PrintTopBlocks();
 
-	printf("^^^^^^^^^^^^^^^^^^^ END REPORT ^^^^^^^^^^^^^^^^^^^\n");
+	wprintf(L"^^^^^^^^^^^^^^^^^^^ END REPORT ^^^^^^^^^^^^^^^^^^^\n");
 
 	for (size_t i=0;i<all_blocks.size();i++)
 	{
@@ -578,7 +578,7 @@ void RuntimeBlockInfo::RemRef(RuntimeBlockInfo* other)
 
 bool print_stats;
 
-void fprint_hex(FILE* d,const char* init,u8* ptr, u32& ofs, u32 limit)
+void fprint_hex(FILE* d,const wchar_t* init,u8* ptr, u32& ofs, u32 limit)
 {
 	int base=ofs;
 	int cnt=0;
@@ -586,17 +586,17 @@ void fprint_hex(FILE* d,const char* init,u8* ptr, u32& ofs, u32 limit)
 	{
 		if (cnt==32)
 		{
-			fputs("\n",d);
+			fputws(L"\n",d);
 			cnt=0;
 		}
 
 		if (cnt==0)
-			fprintf(d,"%s:%d:",init,ofs-base);
+			fwprintf(d,L"%s:%d:",init,ofs-base);
 
-		fprintf(d," %02X",ptr[ofs++]);
+		fwprintf(d,L" %02X",ptr[ofs++]);
 		cnt++;
 	}
-	fputs("\n",d);
+	fputws(L"\n",d);
 }
 
 
@@ -607,10 +607,10 @@ void print_blocks()
 
 	if (print_stats)
 	{
-		f=fopen(get_writable_data_path("/blkmap.lst").c_str(),"w");
+		f=fopen(get_writable_data_path(L"/blkmap.lst").c_str(),"w");
 		print_stats=0;
 
-		printf("Writing blocks to %p\n",f);
+		wprintf(L"Writing blocks to %p\n",f);
 	}
 
 	for (size_t i=0;i<all_blocks.size();i++)
@@ -619,21 +619,21 @@ void print_blocks()
 
 		if (f)
 		{
-			fprintf(f,"block: %08X\n",blk);
-			fprintf(f,"addr: %08X\n",blk->addr);
-			fprintf(f,"hash: %s\n",blk->hash());
-			fprintf(f,"hash_rloc: %s\n",blk->hash(false,true));
-			fprintf(f,"code: %08X\n",blk->code);
-			fprintf(f,"runs: %d\n",blk->runs);
-			fprintf(f,"BlockType: %d\n",blk->BlockType);
-			fprintf(f,"NextBlock: %08X\n",blk->NextBlock);
-			fprintf(f,"BranchBlock: %08X\n",blk->BranchBlock);
-			fprintf(f,"pNextBlock: %08X\n",blk->pNextBlock);
-			fprintf(f,"pBranchBlock: %08X\n",blk->pBranchBlock);
-			fprintf(f,"guest_cycles: %d\n",blk->guest_cycles);
-			fprintf(f,"guest_opcodes: %d\n",blk->guest_opcodes);
-			fprintf(f,"host_opcodes: %d\n",blk->host_opcodes);
-			fprintf(f,"il_opcodes: %d\n",blk->oplist.size());
+			fwprintf(f,L"block: %08X\n",blk);
+			fwprintf(f,L"addr: %08X\n",blk->addr);
+			fwprintf(f,L"hash: %s\n",blk->hash());
+			fwprintf(f,L"hash_rloc: %s\n",blk->hash(false,true));
+			fwprintf(f,L"code: %08X\n",blk->code);
+			fwprintf(f,L"runs: %d\n",blk->runs);
+			fwprintf(f,L"BlockType: %d\n",blk->BlockType);
+			fwprintf(f,L"NextBlock: %08X\n",blk->NextBlock);
+			fwprintf(f,L"BranchBlock: %08X\n",blk->BranchBlock);
+			fwprintf(f,L"pNextBlock: %08X\n",blk->pNextBlock);
+			fwprintf(f,L"pBranchBlock: %08X\n",blk->pBranchBlock);
+			fwprintf(f,L"guest_cycles: %d\n",blk->guest_cycles);
+			fwprintf(f,L"guest_opcodes: %d\n",blk->guest_opcodes);
+			fwprintf(f,L"host_opcodes: %d\n",blk->host_opcodes);
+			fwprintf(f,L"il_opcodes: %d\n",blk->oplist.size());
 
 			u32 hcode=0;
 			s32 gcode=-1;
@@ -641,11 +641,11 @@ void print_blocks()
 
 			size_t j=0;
 			
-			fprintf(f,"{\n");
+			fwprintf(f,L"{\n");
 			for (;j<blk->oplist.size();j++)
 			{
 				shil_opcode* op=&all_blocks[i]->oplist[j];
-				fprint_hex(f,"//h:",pucode,hcode,op->host_offs);
+				fprint_hex(f,L"//h:",pucode,hcode,op->host_offs);
 
 				if (gcode!=op->guest_offs)
 				{
@@ -653,19 +653,19 @@ void print_blocks()
 					u32 rpc=blk->addr+gcode;
 					u16 op=ReadMem16(rpc);
 
-					char temp[128];
+					wchar_t temp[128];
 					OpDesc[op]->Dissasemble(temp,rpc,op);
 
-					fprintf(f,"//g:%s\n",temp);
+					fwprintf(f,L"//g:%s\n",temp);
 				}
 
-				string s=op->dissasm();
-				fprintf(f,"//il:%d:%d:%s\n",op->guest_offs,op->host_offs,s.c_str());
+				wstring s=op->dissasm();
+				fwprintf(f,L"//il:%d:%d:%s\n",op->guest_offs,op->host_offs,s.c_str());
 			}
 			
-			fprint_hex(f,"//h:",pucode,hcode,blk->host_code_size);
+			fprint_hex(f,L"//h:",pucode,hcode,blk->host_code_size);
 
-			fprintf(f,"}\n");
+			fwprintf(f,L"}\n");
 		}
 
 		all_blocks[i]->runs=0;

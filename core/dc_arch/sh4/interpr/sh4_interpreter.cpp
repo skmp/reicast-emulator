@@ -86,7 +86,7 @@ void Sh4_int_Step()
 {
 	if (sh4_int_bCpuRun)
 	{
-		printf("Sh4 Is running , can't step\n");
+		wprintf(L"Sh4 Is running , can't step\n");
 	}
 	else
 	{
@@ -100,7 +100,7 @@ void Sh4_int_Skip()
 {
 	if (sh4_int_bCpuRun)
 	{
-		printf("Sh4 Is running, can't Skip\n");
+		wprintf(L"Sh4 Is running, can't Skip\n");
 	}
 	else
 	{
@@ -112,7 +112,7 @@ void Sh4_int_Reset(bool Manual)
 {
 	if (sh4_int_bCpuRun)
 	{
-		printf("Sh4 Is running, can't Reset\n");
+		wprintf(L"Sh4 Is running, can't Reset\n");
 	}
 	else
 	{
@@ -133,7 +133,7 @@ void Sh4_int_Reset(bool Manual)
 		UpdateFPSCR();
 
 		//Any more registers have default value ?
-		printf("Sh4 Reset\n");
+		wprintf(L"Sh4 Reset\n");
 	}
 }
 
@@ -157,7 +157,7 @@ void ExecuteDelayslot()
 	}
 	catch (SH4ThrownException ex) {
 		ex.epc -= 2;
-		//printf("Delay slot exception\n");
+		//wprintf(L"Delay slot exception\n");
 		throw ex;
 	}
 #endif
@@ -176,7 +176,7 @@ void ExecuteDelayslot_RTE()
 #if !defined(NO_MMU)
 	}
 	catch (SH4ThrownException ex) {
-		msgboxf("RTE Exception", MBX_ICONERROR);
+		msgboxf(L"RTE Exception", MBX_ICONERROR);
 	}
 #endif
 }
@@ -221,7 +221,7 @@ int DreamcastSecond(int tag, int c, int j)
 {
 	settings.dreamcast.RTC++;
 
-#if 1 //HOST_OS==OS_WINDOWS
+#if 1 //HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 	prof_periodical();
 #endif
 
@@ -229,7 +229,7 @@ int DreamcastSecond(int tag, int c, int j)
 	bm_Periodical_1s();
 #endif
 
-	//printf("%d ticks\n",sh4_sched_intr);
+	//wprintf(L"%d ticks\n",sh4_sched_intr);
 	sh4_sched_intr=0;
 	return SH4_MAIN_CLOCK;
 }
@@ -294,7 +294,7 @@ void Sh4_int_Init()
 void Sh4_int_Term()
 {
 	Sh4_int_Stop();
-	printf("Sh4 Term\n");
+	wprintf(L"Sh4 Term\n");
 }
 
 /*

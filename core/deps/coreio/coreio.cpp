@@ -35,13 +35,13 @@
 #endif
 
 #if FEAT_HAS_COREIO_HTTP
-string url_encode(const string &value) {
-	ostringstream escaped;
+wstring url_encode(const wstring &value) {
+	wostringstream escaped;
 	escaped.fill('0');
 	escaped << hex;
 
-	for (string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
-		string::value_type c = (*i);
+	for (wstring::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
+		wstring::value_type c = (*i);
 
 		// Keep alphanumeric and other accepted characters intact
 		if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~' || c  == '/' || c =='%' ) {
@@ -56,29 +56,29 @@ string url_encode(const string &value) {
 	return escaped.str();
 }
 
-size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void* pdata){
-    string request;
-    string response;
+size_t HTTP_GET(wstring host, int port,wstring path, size_t offs, size_t len, void* pdata){
+    wstring request;
+    wstring response;
 
     struct sockaddr_in serveraddr;
     int sock;
 
-    std::stringstream request2;
+    std::wstringstream request2;
 
 	if (len) {
-		request2 << "GET " << path << " HTTP/1.1"<<endl;
-		request2 << "User-Agent: reicastdc" << endl;
+		request2 << L"GET " << path << L" HTTP/1.1"<<endl;
+		request2 << L"User-Agent: reicastdc" << endl;
 		//request2 << "" << endl;
-		request2 << "Host: " << host << endl;
-		request2 << "Accept: */*" << endl;
-		request2 << "Range: bytes=" << offs << "-" << (offs + len-1) << endl;
+		request2 << L"Host: " << host << endl;
+		request2 << L"Accept: */*" << endl;
+		request2 << L"Range: bytes=" << offs << L"-" << (offs + len-1) << endl;
 		request2 << endl;
 	}
 	else {
-		request2 << "HEAD " << path << " HTTP/1.1"<<endl;
-		request2 << "User-Agent: reicastdc" << endl;
+		request2 << L"HEAD " << path << L" HTTP/1.1"<<endl;
+		request2 << L"User-Agent: reicastdc" << endl;
 		//request2 << "" << endl;
-		request2 << "Host: " << host << endl;
+		request2 << L"Host: " << host << endl;
 		request2 << endl;
 	}
 
@@ -87,10 +87,10 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
 
 	static bool init = false;
 	if (!init) {
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 		static WSADATA wsaData;
 		if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
-			die("WSAStartup fail");
+			die(L"WSAStartup fail");
 #endif
 		init = true;
 	}
@@ -103,12 +103,12 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
     //connect
     memset(&serveraddr, 0, sizeof(serveraddr));
     serveraddr.sin_family      = AF_INET;
-	serveraddr.sin_addr.s_addr = *(int*)gethostbyname( host.c_str() )->h_addr_list[0];
+	serveraddr.sin_addr.s_addr = *(int*)gethostbyname( toString(host).c_str() )->h_addr_list[0];
     serveraddr.sin_port        = htons((unsigned short) port);
     if (connect(sock, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0)
         return -1;
 
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 	BOOL v = TRUE;
 #else
 	int v = 1;
@@ -116,7 +116,7 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
 
 	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const char*)&v, sizeof(v));
     //send request
-    if (send(sock, request.c_str(), request.length(), 0) != request.length())
+    if (send(sock, toString(request).c_str(), request.length(), 0) != request.length())
         return -1;
 
 	/*
@@ -134,7 +134,7 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
 	size_t rv = 0;
 
 	for (;;) {
-		stringstream ss;
+		wstringstream ss;
 		for (;;) {
 			char t;
 			if (recv(sock, &t, 1, 0) <= 0)
@@ -145,14 +145,14 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
 				continue;
 			}
 
-			string ln = ss.str();
+			wstring ln = ss.str();
 
 			if (ln.size() == 1)
 				goto _data;
-			string CL = "Content-Length:";
+			wstring CL = L"Content-Length:";
 
 			if (ln.substr(0, CL.size()) == CL) {
-				sscanf(ln.substr(CL.size(), ln.npos).c_str(),"%d", &content_length);
+				swscanf(ln.substr(CL.size(), ln.npos).c_str(),L"%d", &content_length);
 			}
 
 			break;
@@ -181,7 +181,7 @@ _data:
 
 	_cleanup:
     //disconnect
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
     closesocket(sock);
 #else
 	close(sock);
@@ -198,33 +198,33 @@ _data:
 
 struct CORE_FILE {
 	FILE* f;
-	string path;
+	wstring path;
 	size_t seek_ptr;
 
-	string host;
+	wstring host;
 	int port;
 };
 
-core_file* core_fopen(const char* filename)
+core_file* core_fopen(const wchar_t* filename)
 {
-	string p = filename;
+	wstring p = filename;
 
 	CORE_FILE* rv = new CORE_FILE();
 	rv->f = 0;
 	rv->path = p;
 #if FEAT_HAS_COREIO_HTTP
-	if (p.substr(0,7)=="http://") {
+	if (p.substr(0,7)==L"http://") {
 		rv->host = p.substr(7,p.npos);
-		rv->host = rv->host.substr(0, rv->host.find_first_of("/"));
+		rv->host = rv->host.substr(0, rv->host.find_first_of(L"/"));
 
-		rv->path = url_encode(p.substr(p.find("/", 7), p.npos));
+		rv->path = url_encode(p.substr(p.find(L"/", 7), p.npos));
 		
 		rv->port = 80;
-		size_t pos = rv->host.find_first_of(":");
+		size_t pos = rv->host.find_first_of(L":");
 		if (pos != rv->host.npos) {
-			string port = rv->host.substr(pos, rv->host.npos );
-			rv->host = rv->host.substr(0, rv->host.find_first_of(":"));
-			sscanf(port.c_str(),"%d",&rv->port);
+			wstring port = rv->host.substr(pos, rv->host.npos );
+			rv->host = rv->host.substr(0, rv->host.find_first_of(L":"));
+			swscanf(port.c_str(),L"%d",&rv->port);
 		}
 	} else
 #endif	
@@ -249,7 +249,7 @@ size_t core_fseek(core_file* fc, size_t offs, size_t origin) {
 	else if (origin == SEEK_CUR)
 		f->seek_ptr += offs;
 	else
-		die("Invalid code path");
+		die(L"Invalid code path");
 
 	if (f->f)
 		fseek(f->f, f->seek_ptr, SEEK_SET);

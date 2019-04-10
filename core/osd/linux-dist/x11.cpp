@@ -63,7 +63,7 @@ void x11_window_set_fullscreen(bool fullscreen)
 		xev.xclient.data.l[3] = 1;
 		xev.xclient.data.l[4] = 0;
 
-		printf("x11: setting fullscreen to %d\n", fullscreen);
+		wprintf(L"x11: setting fullscreen to %d\n", fullscreen);
 		XSendEvent((Display*)x11_disp, DefaultRootWindow((Display*)x11_disp), False, SubstructureNotifyMask, &xev);
 }
 
@@ -102,9 +102,9 @@ void input_x11_handle()
 					else if (e.type == KeyRelease && e.xkey.keycode == KEY_F10)
 					{
 						if (sample_Switch(3000)) {
-							printf("Starting profiling\n");
+							wprintf(L"Starting profiling\n");
 						} else {
-							printf("Stopping profiling\n");
+							wprintf(L"Stopping profiling\n");
 						}
 					}
 #endif
@@ -142,7 +142,7 @@ void input_x11_handle()
 						}
 
 						#if defined(_DEBUG)
-						printf("KEY: %d -> %d: %d\n", e.xkey.keycode, dc_key, x11_dc_buttons );
+						wprintf(L"KEY: %d -> %d: %d\n", e.xkey.keycode, dc_key, x11_dc_buttons );
 						#endif
 					}
 					break;
@@ -180,14 +180,14 @@ void input_x11_init()
 	x11_keymap[KEY_F] = DC_AXIS_LT;
 	x11_keymap[KEY_V] = DC_AXIS_RT;
 	
-	x11_keyboard_input = (cfgLoadInt("input", "enable_x11_keyboard", 1) >= 1);
+	x11_keyboard_input = (cfgLoadInt(L"input", "enable_x11_keyboard", 1) >= 1);
 	if (!x11_keyboard_input)
-		printf("X11 Keyboard input disabled by config.\n");
+		wprintf(L"X11 Keyboard input disabled by config.\n");
 }
 
 void x11_window_create()
 {
-	if (cfgLoadInt("pvr", "nox11", 0) == 0)
+	if (cfgLoadInt(L"pvr", "nox11", 0) == 0)
 	{
 		XInitThreads();
 		// X11 variables
@@ -209,7 +209,7 @@ void x11_window_create()
 		x11Display = XOpenDisplay(NULL);
 		if (!x11Display && !(x11Display = XOpenDisplay(":0")))
 		{
-			printf("Error: Unable to open X display\n");
+			wprintf(L"Error: Unable to open X display\n");
 			return;
 		}
 		x11Screen = XDefaultScreen(x11Display);
@@ -245,7 +245,7 @@ void x11_window_create()
 			if (!glXQueryVersion(x11Display, &glx_major, &glx_minor) ||
 					((glx_major == 1) && (glx_minor < 3)) || (glx_major < 1))
 			{
-				printf("Invalid GLX version");
+				wprintf(L"Invalid GLX version");
 				exit(1);
 			}
 
@@ -253,17 +253,17 @@ void x11_window_create()
 			GLXFBConfig* fbc = glXChooseFBConfig(x11Display, x11Screen, visual_attribs, &fbcount);
 			if (!fbc)
 			{
-				printf("Failed to retrieve a framebuffer config\n");
+				wprintf(L"Failed to retrieve a framebuffer config\n");
 				exit(1);
 			}
-			printf("Found %d matching FB configs.\n", fbcount);
+			wprintf(L"Found %d matching FB configs.\n", fbcount);
 
 			GLXFBConfig bestFbc = fbc[0];
 			XFree(fbc);
 
 			// Get a visual
 			XVisualInfo *vi = glXGetVisualFromFBConfig(x11Display, bestFbc);
-			printf("Chosen visual ID = 0x%lx\n", vi->visualid);
+			wprintf(L"Chosen visual ID = 0x%lx\n", vi->visualid);
 
 
 			depth = vi->depth;
@@ -276,7 +276,7 @@ void x11_window_create()
 			XMatchVisualInfo(x11Display, x11Screen, i32Depth, TrueColor, x11Visual);
 			if (!x11Visual)
 			{
-				printf("Error: Unable to acquire visual\n");
+				wprintf(L"Error: Unable to acquire visual\n");
 				return;
 			}
 			x11Colormap = XCreateColormap(x11Display, sRootWindow, x11Visual->visual, AllocNone);
@@ -288,9 +288,9 @@ void x11_window_create()
 		sWA.event_mask = StructureNotifyMask | ExposureMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask;
 		ui32Mask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
 
-		x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
-		x11_height = cfgLoadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
-		x11_fullscreen = (cfgLoadInt("x11", "fullscreen", DEFAULT_FULLSCREEN) > 0);
+		x11_width = cfgLoadInt(L"x11", "width", DEFAULT_WINDOW_WIDTH);
+		x11_height = cfgLoadInt(L"x11", "height", DEFAULT_WINDOW_HEIGHT);
+		x11_fullscreen = (cfgLoadInt(L"x11", "fullscreen", DEFAULT_FULLSCREEN) > 0);
 
 		if (x11_width < 0 || x11_height < 0)
 		{
@@ -343,7 +343,7 @@ void x11_window_create()
 
 			if (!x11_glc)
 			{
-				die("Failed to create GL3.1 context\n");
+				die(L"Failed to create GL3.1 context\n");
 			}
 		#endif
 
@@ -356,18 +356,18 @@ void x11_window_create()
 	}
 	else
 	{
-		printf("Not creating X11 window ..\n");
+		wprintf(L"Not creating X11 window ..\n");
 	}
 }
 
-void x11_window_set_text(const char* text)
+void x11_window_set_text(const wchar_t* text)
 {
 	if (x11_win)
 	{
 		XChangeProperty((Display*)x11_disp, (Window)x11_win,
 			XInternAtom((Display*)x11_disp, "WM_NAME", False),     //WM_NAME,
 			XInternAtom((Display*)x11_disp, "UTF8_STRING", False), //UTF8_STRING,
-			8, PropModeReplace, (const unsigned char *)text, strlen(text));
+			8, PropModeReplace, (const unsigned char *)text, wcslen(text));
 	}
 }
 

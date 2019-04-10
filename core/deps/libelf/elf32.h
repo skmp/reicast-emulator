@@ -102,7 +102,7 @@ struct Elf32_Header {
 	uint16_t        e_shentsize;	/* Size of one section header */
 	uint16_t        e_shnum;	/* Number of section headers */
 	uint16_t        e_shstrndx;	/* Section header index of the
-					 * string table for section header 
+					 * wstring table for section header 
 					 * * names */
 };
 

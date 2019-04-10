@@ -8,7 +8,7 @@
 #define C_CORE
 
 #if 0
-	#define arm_printf printf
+	#define arm_printf wprintf
 #else
 	void arm_printf(...) { }
 #endif
@@ -310,8 +310,8 @@ void CPUSwitchMode(int mode, bool saveState, bool breakLoop)
 			reg[17].I = reg[SPSR_UND].I;
 		break;
 	default:
-		printf("Unsupported ARM mode %02x\n", mode);
-		die("Arm error..");
+		wprintf(L"Unsupported ARM mode %02x\n", mode);
+		die(L"Arm error..");
 		break;
 	}
 	armMode = mode;
@@ -384,7 +384,7 @@ void CPUSoftwareInterrupt(int comment)
 
 void CPUUndefinedException()
 {
-	printf("arm7: CPUUndefinedException(). SOMETHING WENT WRONG\n");
+	wprintf(L"arm7: CPUUndefinedException(). SOMETHING WENT WRONG\n");
 	u32 PC = reg[R15_ARM_NEXT].I+4;
 	CPUSwitchMode(0x1b, true, false);
 	reg[14].I = PC;
@@ -742,7 +742,7 @@ u8* icPtr;
 u8* ICache;
 
 const u32 ICacheSize=1024*1024;
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 u8 ARM7_TCB[ICacheSize+4096];
 #elif HOST_OS == OS_LINUX
 
@@ -1330,7 +1330,7 @@ u32 nfb,ffb,bfb,mfb;
 
 static x86_block* x86e;
 
-void DumpRegs(const char* output)
+void DumpRegs(const wchar_t* output)
 {
 	static FILE* f=fopen(output, "w");
 	static int id=0;
@@ -1342,11 +1342,11 @@ void DumpRegs(const char* output)
 #endif
 	verify(id!=137250);
 #if 1
-	fprintf(f,"%d\n",id);
+	fwprintf(f,L"%d\n",id);
 	//for(int i=0;i<14;i++)
 	{
 		int i=R15_ARM_NEXT;
-		fprintf(f,"r%d=%08X\n",i,reg[i].I);
+		fwprintf(f,L"r%d=%08X\n",i,reg[i].I);
 	}
 #endif
 	id++;
@@ -1354,7 +1354,7 @@ void DumpRegs(const char* output)
 
 void DYNACALL PrintOp(u32 opcd)
 {
-	printf("%08X\n",opcd);
+	wprintf(L"%08X\n",opcd);
 }
 
 void armv_imm_to_reg(u32 regn, u32 imm)
@@ -1526,7 +1526,7 @@ naked void arm_exit()
 void  armEmit32(u32 emit32)
 {
 	if (icPtr >= (ICache+ICacheSize-1024))
-		die("ICache is full, invalidate old entries ...");	//ifdebug
+		die(L"ICache is full, invalidate old entries ...");	//ifdebug
 
 	*(u32*)icPtr = emit32;  
 	icPtr+=4;
@@ -2051,7 +2051,7 @@ extern "C" void CompileCode()
 			break;
 
 		default:
-			die("can't happen\n");
+			die(L"can't happen\n");
 		}
 
 		//Lets say each opcode takes 9 cycles for now ..
@@ -2107,7 +2107,7 @@ void FlushCache()
 
 
 
-#if HOST_CPU==CPU_X86 && HOST_OS == OS_WINDOWS
+#if HOST_CPU==CPU_X86 && (HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP)
 
 #include <Windows.h>
 
@@ -2120,7 +2120,7 @@ s32 ARM::imma;
 void armEmit32(u32 emit32)
 {
 	if (icPtr >= (ICache + ICacheSize - 64*1024)) {
-		die("ICache is full, invalidate old entries ...");	//ifdebug
+		die(L"ICache is full, invalidate old entries ...");	//ifdebug
 	}
 
 	x86e->Emit(op_mov32,ECX,emit32);
@@ -2149,12 +2149,12 @@ void armt_init()
 		ICache = (u8*)mmap(ICache, ICacheSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
 	#endif
 
-#if HOST_OS == OS_WINDOWS
+#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 	DWORD old;
 	VirtualProtect(ICache,ICacheSize,PAGE_EXECUTE_READWRITE,&old);
 #elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
 
-	printf("\n\t ARM7_TCB addr: %p | from: %p | addr here: %p\n", ICache, ARM7_TCB, armt_init);
+	wprintf(L"\n\t ARM7_TCB addr: %p | from: %p | addr here: %p\n", ICache, ARM7_TCB, armt_init);
 
 	if (mprotect(ICache, ICacheSize, PROT_EXEC|PROT_READ|PROT_WRITE))
 	{

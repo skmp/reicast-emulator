@@ -279,7 +279,7 @@ typedef XcmsDIConversionProc XcmsConversionProc;
 typedef XcmsConversionProc *XcmsFuncListPtr;
 
 typedef int (*XcmsParseStringProc)(	/* Color String Parsing Proc */
-    char*		/* color_string */,
+    wchar_t*		/* color_string */,
     XcmsColor*		/* color_return */
 );
 
@@ -288,7 +288,7 @@ typedef int (*XcmsParseStringProc)(	/* Color String Parsing Proc */
      *    or Device-Dependent)
      */
 typedef struct _XcmsColorSpace {
-    const char *prefix;		/* Prefix of string format.		*/
+    const char *prefix;		/* Prefix of wstring format.		*/
     XcmsColorFormat id;		/* Format ID number.			*/
     XcmsParseStringProc parseString;
 				/* String format parsing function	*/
@@ -352,7 +352,7 @@ extern Status XcmsAllocColor (
 extern Status XcmsAllocNamedColor (
     Display*		/* dpy */,
     Colormap		/* colormap */,
-    _Xconst char*	/* color_string */,
+    _Xconst wchar_t*	/* color_string */,
     XcmsColor*		/* color_scrn_return */,
     XcmsColor*		/* color_exact_return */,
     XcmsColorFormat		/* result_format */
@@ -588,7 +588,7 @@ extern Display *XcmsDisplayOfCCC (
 );
 
 extern XcmsColorFormat XcmsFormatOfPrefix (
-    char*		/* prefix */
+    wchar_t*		/* prefix */
 );
 
 extern void XcmsFreeCCC (
@@ -598,7 +598,7 @@ extern void XcmsFreeCCC (
 extern Status XcmsLookupColor (
     Display*		/* dpy */,
     Colormap		/* colormap */,
-    _Xconst char*	/* color_string */,
+    _Xconst wchar_t*	/* color_string */,
     XcmsColor*		/* pColor_exact_in_out */,
     XcmsColor*		/* pColor_scrn_in_out */,
     XcmsColorFormat		/* result_format */

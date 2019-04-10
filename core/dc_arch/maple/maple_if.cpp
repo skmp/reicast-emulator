@@ -41,11 +41,11 @@ void maple_vblank()
 		{
 			if (maple_ddt_pending_reset)
 			{
-				//printf("DDT vblank ; reset pending\n");
+				//wprintf(L"DDT vblank ; reset pending\n");
 			}
 			else
 			{
-				//printf("DDT vblank\n");
+				//wprintf(L"DDT vblank\n");
 				maple_DoDma();
 				SB_MDST = 0;
 				if ((SB_MSYS>>12)&1)
@@ -83,7 +83,7 @@ void maple_SB_MDEN_Write(u32 addr, u32 data)
 
 	if ((data & 0x1)==0  && SB_MDST)
 	{
-		die("Maple DMA abort ?\n");
+		die(L"Maple DMA abort ?\n");
 	}
 }
 
@@ -108,7 +108,7 @@ void maple_DoDma()
 	verify(SB_MDST &1)
 
 #if debug_maple
-	printf("Maple: DoMapleDma\n");
+	wprintf(L"Maple: DoMapleDma\n");
 #endif
 	u32 addr = SB_MDSTAR;
 	u32 xfer_count=0;
@@ -130,7 +130,7 @@ void maple_DoDma()
 		{
 			if (!IsOnSh4Ram(header_2))
 			{
-				printf("MAPLE ERROR : DESTINATION NOT ON SH4 RAM 0x%X\n",header_2);
+				wprintf(L"MAPLE ERROR : DESTINATION NOT ON SH4 RAM 0x%X\n",header_2);
 				header_2&=0xFFFFFF;
 				header_2|=(3<<26);
 			}
@@ -178,7 +178,7 @@ void maple_DoDma()
 		}
 	}
 
-	//printf("Maple XFER size %d bytes - %.2f ms\n",xfer_count,xfer_count*100.0f/(2*1024*1024/8));
+	//wprintf(L"Maple XFER size %d bytes - %.2f ms\n",xfer_count,xfer_count*100.0f/(2*1024*1024/8));
 	sh4_sched_request(maple_schid,xfer_count*(SH4_MAIN_CLOCK/(2*1024*1024/8)));
 }
 
@@ -191,7 +191,7 @@ int maple_schd(int tag, int c, int j)
 	}
 	else
 	{
-		printf("WARNING: MAPLE DMA ABORT\n");
+		wprintf(L"WARNING: MAPLE DMA ABORT\n");
 		SB_MDST=0; //I really wonder what this means, can the DMA be continued ?
 	}
 

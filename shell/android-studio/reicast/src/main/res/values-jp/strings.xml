@@ -1,87 +1,87 @@
 <resources>
     
-    <string name="menu_settings">設定</string>
+    <wstring name="menu_settings">設定</wstring>
     
-    <string name="system_path">システムパス（dc_boot.bin／dc_flash.binの場所）</string>
-    <string name="browser_path">デフォルトのシステムパス</string>
-    <string name="games_path">ストレージパス（*.gdi、*.cdi、または*.cdhイメージの場所）</string>
-    <string name="game_path">デフォルトゲーム·ストレージ</string>
-    <string name="config_home">ホームディレクトリを設定してください。</string>
-    <string name="config_game">ゲームディレクトリを設定してください。</string>
-    <string name="unsupported">カーネルのバージョンはサポートされていません！</string>
+    <wstring name="system_path">システムパス（dc_boot.bin／dc_flash.binの場所）</wstring>
+    <wstring name="browser_path">デフォルトのシステムパス</wstring>
+    <wstring name="games_path">ストレージパス（*.gdi、*.cdi、または*.cdhイメージの場所）</wstring>
+    <wstring name="game_path">デフォルトゲーム·ストレージ</wstring>
+    <wstring name="config_home">ホームディレクトリを設定してください。</wstring>
+    <wstring name="config_game">ゲームディレクトリを設定してください。</wstring>
+    <wstring name="unsupported">カーネルのバージョンはサポートされていません！</wstring>
     
-    <string name="boot_bios">ドリームキャストBIOSをスタート</string>
-    <string name="missing_bios">ドリームキャストBIOSが不足している。ドリームキャストBIOSが動作するためreicastために必要です。ここでBIOSファイルを入れてください：%1$s/data/dc_boot.bin</string>
-    <string name="missing_flash">ドリームキャストFlashが不足している。ドリームキャストFlashが動作するためreicastために必要です。ここでFlashファイルを入れてください：%1$s/data/dc_flash.bin</string>
-    <string name="require_bios">BIOSファイルを提供する必要があります。</string>
-    <string name="data_folder">データフォルダが想定されます。</string>
+    <wstring name="boot_bios">ドリームキャストBIOSをスタート</wstring>
+    <wstring name="missing_bios">ドリームキャストBIOSが不足している。ドリームキャストBIOSが動作するためreicastために必要です。ここでBIOSファイルを入れてください：%1$s/data/dc_boot.bin</wstring>
+    <wstring name="missing_flash">ドリームキャストFlashが不足している。ドリームキャストFlashが動作するためreicastために必要です。ここでFlashファイルを入れてください：%1$s/data/dc_flash.bin</wstring>
+    <wstring name="require_bios">BIOSファイルを提供する必要があります。</wstring>
+    <wstring name="data_folder">データフォルダが想定されます。</wstring>
     
-    <string name="folder_bios">BIOSをスタートする</string>
-    <string name="folder_select">フォルダーを選択</string>
+    <wstring name="folder_bios">BIOSをスタートする</wstring>
+    <wstring name="folder_select">フォルダーを選択</wstring>
     
-    <string name="optimization_opts">最適化とデバッグの設定</string>
-    <string name="experimental_opts">実験的</string>
-    <string name="select_native">ネイティブインタフェースを使用</string>
-    <string name="select_dynarec">Dynarecの設定</string>
-    <string name="select_unstable">不安定な最適化</string>
-    <string name="select_region">DC地域</string>
-    <string name="select_broadcast">ブロードキャスト</string>
-    <string name="select_limitfps">FPSを制限</string>
-    <string name="select_mipmaps">ミップマップを使用（SGX540のフィックス）</string>
-    <string name="select_stretch">ワイドスクリーンモード</string>
-    <string name="set_frameskip">フレームスキップ</string>
-    <string name="select_render">PVRレンダリング（現在役に立たない）</string>
-    <string name="select_fps">FPSを表示</string>
-    <string name="select_software">ソフトウェアレンダリング</string>
-    <string name="select_sound">サウンドを無効に</string>
-    <string name="select_depth">レンダラの深度</string>
+    <wstring name="optimization_opts">最適化とデバッグの設定</wstring>
+    <wstring name="experimental_opts">実験的</wstring>
+    <wstring name="select_native">ネイティブインタフェースを使用</wstring>
+    <wstring name="select_dynarec">Dynarecの設定</wstring>
+    <wstring name="select_unstable">不安定な最適化</wstring>
+    <wstring name="select_region">DC地域</wstring>
+    <wstring name="select_broadcast">ブロードキャスト</wstring>
+    <wstring name="select_limitfps">FPSを制限</wstring>
+    <wstring name="select_mipmaps">ミップマップを使用（SGX540のフィックス）</wstring>
+    <wstring name="select_stretch">ワイドスクリーンモード</wstring>
+    <wstring name="set_frameskip">フレームスキップ</wstring>
+    <wstring name="select_render">PVRレンダリング（現在役に立たない）</wstring>
+    <wstring name="select_fps">FPSを表示</wstring>
+    <wstring name="select_software">ソフトウェアレンダリング</wstring>
+    <wstring name="select_sound">サウンドを無効に</wstring>
+    <wstring name="select_depth">レンダラの深度</wstring>
 
-    <string name="games_listing">ゲームリスト</string>
+    <wstring name="games_listing">ゲームリスト</wstring>
     
-    <string name="report_issue">前回のクラッシュ検出された</string>
-    <string name="bios_config">設定が失敗しました！</string>
+    <wstring name="report_issue">前回のクラッシュ検出された</wstring>
+    <wstring name="bios_config">設定が失敗しました！</wstring>
     
-    <string name="customize_touch_controls">タッチコントロールを編集</string>
-    <string name="launch_editor">エディタをスタート</string>
-    <string name="touch_vibration">振動</string>
-    <string name="controller_a">コントローラA</string>
-    <string name="controller_b">コントローラB</string>
-    <string name="controller_c">コントローラC</string>
-    <string name="controller_d">コントローラD</string>
-    <string name="controller_not_connected">コントローラが接続されていません %1$s</string>
-    <string name="controller_none_selected">コントローラが選択されていない。</string>
-    <string name="select">選択する</string>
-    <string name="remove">削除する</string>
-    <string name="select_controller_title">コントローラを選択</string>
-    <string name="select_controller_message">ポートに%1$sコントローラを割り当てるには、いずれかのボタンを押してください。</string>
-    <string name="controller_already_in_use">このコントローラはすでに使用されています。</string>
-    <string name="joystick_layout">Dパッドとしてジョイスティックを使用</string>
-    <string name="modified_layout">カスタムキーレイアウトを有効に</string>
-    <string name="controller_compat">互換モードを有効に</string>
+    <wstring name="customize_touch_controls">タッチコントロールを編集</wstring>
+    <wstring name="launch_editor">エディタをスタート</wstring>
+    <wstring name="touch_vibration">振動</wstring>
+    <wstring name="controller_a">コントローラA</wstring>
+    <wstring name="controller_b">コントローラB</wstring>
+    <wstring name="controller_c">コントローラC</wstring>
+    <wstring name="controller_d">コントローラD</wstring>
+    <wstring name="controller_not_connected">コントローラが接続されていません %1$s</wstring>
+    <wstring name="controller_none_selected">コントローラが選択されていない。</wstring>
+    <wstring name="select">選択する</wstring>
+    <wstring name="remove">削除する</wstring>
+    <wstring name="select_controller_title">コントローラを選択</wstring>
+    <wstring name="select_controller_message">ポートに%1$sコントローラを割り当てるには、いずれかのボタンを押してください。</wstring>
+    <wstring name="controller_already_in_use">このコントローラはすでに使用されています。</wstring>
+    <wstring name="joystick_layout">Dパッドとしてジョイスティックを使用</wstring>
+    <wstring name="modified_layout">カスタムキーレイアウトを有効に</wstring>
+    <wstring name="controller_compat">互換モードを有効に</wstring>
 
-    <string name="customize_physical_controls">物理コントロールを編集</string>
-    <string name="map_keycode_title">コントローラを編集する</string>
-    <string name="map_keycode_message">%1$sボタンを押してください</string>
+    <wstring name="customize_physical_controls">物理コントロールを編集</wstring>
+    <wstring name="map_keycode_title">コントローラを編集する</wstring>
+    <wstring name="map_keycode_message">%1$sボタンを押してください</wstring>
 
-    <string name="about_text">reicastはマルチプラットフォームのドリームキャストエミュレータです。</string>
-    <string name="revision_text">バージョン：%1$s [%2$s]</string>
+    <wstring name="about_text">reicastはマルチプラットフォームのドリームキャストエミュレータです。</wstring>
+    <wstring name="revision_text">バージョン：%1$s [%2$s]</wstring>
     
-    <string-array name="controllers">
+    <wstring-array name="controllers">
         <item>コントローラA</item>
         <item>コントローラB</item>
         <item>コントローラC</item>
         <item>コントローラD</item>
-    </string-array>
+    </wstring-array>
     
-    <string name="browser">ブラウザー</string>
-    <string name="settings">設定</string>
-    <string name="paths">パス</string>
-    <string name="input">コントローラー</string>
-    <string name="about">reicastについて</string>
-    <string name="rateme">私を評価してください</string>
-    <string name="messages">テストスイート</string>
+    <wstring name="browser">ブラウザー</wstring>
+    <wstring name="settings">設定</wstring>
+    <wstring name="paths">パス</wstring>
+    <wstring name="input">コントローラー</wstring>
+    <wstring name="about">reicastについて</wstring>
+    <wstring name="rateme">私を評価してください</wstring>
+    <wstring name="messages">テストスイート</wstring>
     
-    <string name="cancel">キャンセル</string>
-    <string name="manual">マニュアル</string>
+    <wstring name="cancel">キャンセル</wstring>
+    <wstring name="manual">マニュアル</wstring>
     
 </resources>

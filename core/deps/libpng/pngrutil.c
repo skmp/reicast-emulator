@@ -1547,7 +1547,7 @@ png_handle_iCCP(png_structrp png_ptr, png_inforp info_ptr, png_uint_32 length)
                                        png_free_data(png_ptr, info_ptr,
                                            PNG_FREE_ICCP, 0);
 
-                                       info_ptr->iccp_name = png_voidcast(char*,
+                                       info_ptr->iccp_name = png_voidcast(wchar_t*,
                                            png_malloc_base(png_ptr,
                                            keyword_length+1));
                                        if (info_ptr->iccp_name != NULL)
@@ -2271,15 +2271,15 @@ png_handle_pCAL(png_structrp png_ptr, png_inforp info_ptr, png_uint_32 length)
    if (png_crc_finish(png_ptr, 0) != 0)
       return;
 
-   buffer[length] = 0; /* Null terminate the last string */
+   buffer[length] = 0; /* Null terminate the last wstring */
 
-   png_debug(3, "Finding end of pCAL purpose string");
+   png_debug(3, "Finding end of pCAL purpose wstring");
    for (buf = buffer; *buf; buf++)
       /* Empty loop */ ;
 
    endptr = buffer + length;
 
-   /* We need to have at least 12 bytes after the purpose string
+   /* We need to have at least 12 bytes after the purpose wstring
     * in order to get the parameter information.
     */
    if (endptr - buf <= 12)
@@ -2314,7 +2314,7 @@ png_handle_pCAL(png_structrp png_ptr, png_inforp info_ptr, png_uint_32 length)
    }
 
    for (buf = units; *buf; buf++)
-      /* Empty loop to move past the units string. */ ;
+      /* Empty loop to move past the units wstring. */ ;
 
    png_debug(3, "Allocating pCAL parameters array");
 
@@ -2327,15 +2327,15 @@ png_handle_pCAL(png_structrp png_ptr, png_inforp info_ptr, png_uint_32 length)
       return;
    }
 
-   /* Get pointers to the start of each parameter string. */
+   /* Get pointers to the start of each parameter wstring. */
    for (i = 0; i < nparams; i++)
    {
-      buf++; /* Skip the null string terminator from previous parameter. */
+      buf++; /* Skip the null wstring terminator from previous parameter. */
 
       png_debug1(3, "Reading pCAL parameter %d", i);
 
       for (params[i] = (png_charp)buf; buf <= endptr && *buf != 0; buf++)
-         /* Empty loop to move past each parameter string */ ;
+         /* Empty loop to move past each parameter wstring */ ;
 
       /* Make sure we haven't run out of data yet */
       if (buf > endptr)
@@ -2402,7 +2402,7 @@ png_handle_sCAL(png_structrp png_ptr, png_inforp info_ptr, png_uint_32 length)
    }
 
    png_crc_read(png_ptr, buffer, length);
-   buffer[length] = 0; /* Null terminate the last string */
+   buffer[length] = 0; /* Null terminate the last wstring */
 
    if (png_crc_finish(png_ptr, 0) != 0)
       return;
@@ -2566,7 +2566,7 @@ png_handle_tEXt(png_structrp png_ptr, png_inforp info_ptr, png_uint_32 length)
    text_info.lang_key = NULL;
    text_info.itxt_length = 0;
    text_info.text = text;
-   text_info.text_length = strlen(text);
+   text_info.text_length = wcslen(text);
 
    if (png_set_text_2(png_ptr, info_ptr, &text_info, 1) != 0)
       png_warning(png_ptr, "Insufficient memory to process text chunk");

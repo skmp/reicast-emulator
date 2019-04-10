@@ -51,7 +51,7 @@ extern u8 rt[4],lt[4];
 extern int screen_width,screen_height;
 bool rend_single_frame();
 bool gles_init();
-extern "C" int reicast_main(int argc, char* argv[]);
+extern "C" int reicast_main(int argc, wchar_t* argv[]);
 
 
 #include <mach/mach.h>
@@ -101,12 +101,12 @@ void MakeCurrentThreadRealTime()
 	P = (const char *)[self.diskImage UTF8String];
 	Args[0] = "dc";
 	Args[1] = "-config";
-	Args[2] = P&&P[0]? (char *)malloc(strlen(P)+32):0;
+	Args[2] = P&&P[0]? (char *)malloc(wcslen(P)+32):0;
 
 	if(Args[2])
 	{
 		strcpy(Args[2],"config:image=");
-		strcat(Args[2],P);
+		wcscat(Args[2],P);
 	}
 
 	MakeCurrentThreadRealTime();
@@ -173,7 +173,7 @@ void MakeCurrentThreadRealTime()
     [self setupGL];
 
     if (!gles_init())
-        die("OPENGL FAILED");
+        die(L"OPENGL FAILED");
 
 #if USE_CRT_SHADER
 	[EAGLContext setCurrentContext:self.context];
@@ -499,7 +499,7 @@ void MakeCurrentThreadRealTime()
 		return 0;
 	}
 
-	const char* shaderSourceCString = [shaderSource cStringUsingEncoding:NSASCIIStringEncoding];
+	const wchar_t* shaderSourceCString = [shaderSource cStringUsingEncoding:NSASCIIStringEncoding];
 	if ( shaderSourceCString == NULL )
 	{
 		NSLog(@"Nil shaderSourceCString");
@@ -524,9 +524,9 @@ void MakeCurrentThreadRealTime()
 		glGetShaderiv( shader, GL_INFO_LOG_LENGTH, &infoLogLength );
 		if ( infoLogLength > 1 )
 		{
-			char* infoLog = (char*)malloc( infoLogLength );
+			wchar_t* infoLog = (wchar_t*)malloc( infoLogLength );
 			glGetShaderInfoLog( shader, infoLogLength, NULL, infoLog );
-			printf( "Error compiling shader: %s", infoLog );
+			wprintf(L"Error compiling shader: %s", infoLog );
 			free( infoLog );
 		}
 
@@ -565,9 +565,9 @@ void MakeCurrentThreadRealTime()
 		glGetProgramiv( shaderProgram, GL_INFO_LOG_LENGTH, &infoLogLength );
 		if ( infoLogLength > 1 )
 		{
-			char* infoLog = (char*)malloc( infoLogLength );
+			wchar_t* infoLog = (wchar_t*)malloc( infoLogLength );
 			glGetProgramInfoLog( shaderProgram, infoLogLength, NULL, infoLog );
-			printf( "Error linking program: %s", infoLog );
+			wprintf(L"Error linking program: %s", infoLog );
 			free( infoLog );
 		}
 

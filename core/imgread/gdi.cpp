@@ -5,9 +5,9 @@
 
 // given file/name.ext or file\name.ext returns file/ or file\, depending on the platform
 // given name.ext returns ./ or .\, depending on the platform
-string OS_dirname(string file)
+wstring OS_dirname(wstring file)
 {
-	#if HOST_OS == OS_WINDOWS
+	#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 		const char sep = '\\';
 	#else
 		const char sep = '/';
@@ -15,9 +15,9 @@ string OS_dirname(string file)
 
 	size_t last_slash = file.find_last_of(sep);
 
-	if (last_slash == string::npos)
+	if (last_slash == wstring::npos)
 	{
-		string local_dir = ".";
+		wstring local_dir = L".";
 		local_dir += sep;
 		return local_dir;
 	}
@@ -27,9 +27,9 @@ string OS_dirname(string file)
 
 // On windows, transform / to \\
 // On linux, transform \\ to /
-string normalize_path_separator(string path)
+wstring normalize_path_separator(wstring path)
 {
-	#if HOST_OS == OS_WINDOWS
+	#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
 		std::replace( path.begin(), path.end(), '/', '\\');
 	#else
 		std::replace( path.begin(), path.end(), '\\', '/');
@@ -61,7 +61,7 @@ namespace {
 }
 #endif
 
-Disc* load_gdi(const char* file)
+Disc* load_gdi(const wchar_t* file)
 {
 	u32 iso_tc;
 	Disc* disc = new Disc();
@@ -88,10 +88,10 @@ Disc* load_gdi(const char* file)
 	istringstream gdi(gdi_data);
 
 	gdi >> iso_tc;
-	printf("\nGDI : %d tracks\n",iso_tc);
+	wprintf(L"\nGDI : %d tracks\n",iso_tc);
 
 	
-	string basepath = OS_dirname(file);
+	wstring basepath = OS_dirname(file);
 
 	u32 TRACK=0,FADS=0,CTRL=0,SSIZE=0;
 	s32 OFFSET=0;
@@ -130,7 +130,7 @@ Disc* load_gdi(const char* file)
 
 		gdi >> OFFSET;
 		
-		printf("file[%d] \"%s\": FAD:%d, CTRL:%d, SSIZE:%d, OFFSET:%d\n", TRACK, track_filename.c_str(), FADS, CTRL, SSIZE, OFFSET);
+		wprintf(L"file[%d] \"%s\": FAD:%d, CTRL:%d, SSIZE:%d, OFFSET:%d\n", TRACK, track_filename.c_str(), FADS, CTRL, SSIZE, OFFSET);
 
 		Track t;
 		t.ADDR=0;
@@ -140,7 +140,7 @@ Disc* load_gdi(const char* file)
 
 		if (SSIZE!=0)
 		{
-			string path = basepath + normalize_path_separator(track_filename);
+			wstring path = basepath + normalize_path_separator(toWString(track_filename));
 			t.file = new RawTrackFile(core_fopen(path.c_str()),OFFSET,t.StartFAD,SSIZE);	
 		}
 		disc->tracks.push_back(t);
@@ -152,12 +152,12 @@ Disc* load_gdi(const char* file)
 }
 
 
-Disc* gdi_parse(const char* file)
+Disc* gdi_parse(const wchar_t* file)
 {
-	size_t len=strlen(file);
+	size_t len=wcslen(file);
 	if (len>4)
 	{
-		if (stricmp( &file[len-4],".gdi")==0)
+		if (wcsicmp( &file[len-4],L".gdi")==0)
 		{
 			return load_gdi(file);
 		}

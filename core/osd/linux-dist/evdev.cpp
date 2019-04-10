@@ -14,8 +14,8 @@
 #if defined(USE_EVDEV)
 	bool libevdev_tried = false;
 	bool libevdev_available = false;
-	typedef int (*libevdev_func1_t)(int, const char*);
-	typedef const char* (*libevdev_func2_t)(int, int);
+	typedef int (*libevdev_func1_t)(int, const wchar_t*);
+	typedef const wchar_t* (*libevdev_func2_t)(int, int);
 	libevdev_func1_t libevdev_event_code_from_name;
 	libevdev_func2_t libevdev_event_code_get_name;
 
@@ -43,26 +43,26 @@
 
 		if (!lib_handle)
 		{
-			fprintf(stderr, "%s\n", dlerror());
+			fwprintf(stderr, "%s\n", dlerror());
 			failed = true;
 		}
 		else
 		{
 			libevdev_event_code_from_name = reinterpret_cast<libevdev_func1_t>(dlsym(lib_handle, "libevdev_event_code_from_name"));
 
-			const char* error1 = dlerror();
+			const wchar_t* error1 = dlerror();
 			if (error1 != NULL)
 			{
-				fprintf(stderr, "%s\n", error1);
+				fwprintf(stderr, "%s\n", error1);
 				failed = true;
 			}
 
 			libevdev_event_code_get_name = reinterpret_cast<libevdev_func2_t>(dlsym(lib_handle, "libevdev_event_code_get_name"));
 
-			const char* error2 = dlerror();
+			const wchar_t* error2 = dlerror();
 			if (error2 != NULL)
 			{
-				fprintf(stderr, "%s\n", error2);
+				fwprintf(stderr, "%s\n", error2);
 				failed = true;
 			}
 		}
@@ -96,7 +96,7 @@
 		}
 		s32 min = abs.minimum;
 		s32 max = abs.maximum;
-		printf("evdev: range of axis %d is from %d to %d\n", code, min, max);
+		wprintf(L"evdev: range of axis %d is from %d to %d\n", code, min, max);
 		if(inverted)
 		{
 			this->range = (min - max);
@@ -124,27 +124,27 @@
 		{
 			case 0:
 				#if defined(_DEBUG) || defined(DEBUG)
-				printf("Maple Device: None\n");
+				wprintf(L"Maple Device: None\n");
 				#endif
 				return MDT_None;
 			case 1:
 				#if defined(_DEBUG) || defined(DEBUG)
-				printf("Maple Device: VMU\n");
+				wprintf(L"Maple Device: VMU\n");
 				#endif
 				return MDT_SegaVMU;
 			case 2:
 				#if defined(_DEBUG) || defined(DEBUG)
-				printf("Maple Device: Microphone\n");
+				wprintf(L"Maple Device: Microphone\n");
 				#endif
 				return MDT_Microphone;
 			case 3:
 				#if defined(_DEBUG) || defined(DEBUG)
-				printf("Maple Device: PuruPuruPack\n");
+				wprintf(L"Maple Device: PuruPuruPack\n");
 				#endif
 				return MDT_PurupuruPack;
 			default:
 				MapleDeviceType result = MDT_None;
-				string result_type = "None";
+				wstring result_type = "None";
 
 				// Controller in port 0 (player1) defaults to VMU for Maple device, all other to None
 				if (port == 0)
@@ -153,35 +153,35 @@
 					result = MDT_SegaVMU;
 				}
 
-				printf("Unsupported configuration (%d) for Maple Device, using %s\n", value, result_type.c_str());
+				wprintf(L"Unsupported configuration (%d) for Maple Device, using %s\n", value, result_type.c_str());
 				return result;
 		}
 	}
 
-	std::map<std::string, EvdevControllerMapping> loaded_mappings;
+	std::map<std::wstring, EvdevControllerMapping> loaded_mappings;
 
-	int load_keycode(ConfigFile* cfg, string section, string dc_key)
+	int load_keycode(ConfigFile* cfg, wstring section, wstring dc_key)
 	{
 		int code = -1;
 
-		string keycode = cfg->get(section, dc_key, "-1");
-		if (strstr(keycode.c_str(), "KEY_") != NULL ||
-			strstr(keycode.c_str(), "BTN_") != NULL ||
-			strstr(keycode.c_str(), "ABS_") != NULL)
+		wstring keycode = cfg->get(section, dc_key, "-1");
+		if (wcsstr(keycode.c_str(), "KEY_") != NULL ||
+			wcsstr(keycode.c_str(), "BTN_") != NULL ||
+			wcsstr(keycode.c_str(), "ABS_") != NULL)
 		{
 			if (libevdev_available)
 			{
-				int type = ((strstr(keycode.c_str(), "ABS_") != NULL) ? EV_ABS : EV_KEY);
+				int type = ((wcsstr(keycode.c_str(), "ABS_") != NULL) ? EV_ABS : EV_KEY);
 				code = libevdev_event_code_from_name(type, keycode.c_str());
 			}
 
 			if (code < 0)
 			{
-				printf("evdev: failed to find keycode for '%s'\n", keycode.c_str());
+				wprintf(L"evdev: failed to find keycode for '%s'\n", keycode.c_str());
 			}
 			else
 			{
-				printf("%s = %s (%d)\n", dc_key.c_str(), keycode.c_str(), code);
+				wprintf(L"%s = %s (%d)\n", dc_key.c_str(), keycode.c_str(), code);
 			}
 		}
 		else
@@ -189,27 +189,27 @@
 			code = cfg->get_int(section, dc_key, -1);
 			if(code >= 0)
 			{
-				char* name = NULL;
+				wchar_t* name = NULL;
 
 				if (libevdev_available)
 				{
-					int type = ((strstr(dc_key.c_str(), "axis_") != NULL) ? EV_ABS : EV_KEY);
-					name = (char*)libevdev_event_code_get_name(type, code);
+					int type = ((wcsstr(dc_key.c_str(), "axis_") != NULL) ? EV_ABS : EV_KEY);
+					name = (wchar_t*)libevdev_event_code_get_name(type, code);
 				}
 
 				if (name != NULL)
 				{
-					printf("%s = %s (%d)\n", dc_key.c_str(), name, code);
+					wprintf(L"%s = %s (%d)\n", dc_key.c_str(), name, code);
 				}
 				else
 				{
-					printf("%s = %d\n", dc_key.c_str(), code);
+					wprintf(L"%s = %d\n", dc_key.c_str(), code);
 				}
 			}
 		}
 
 		if (code < 0)
-			printf("WARNING: %s/%s not configured!\n", section.c_str(), dc_key.c_str());
+			wprintf(L"WARNING: %s/%s not configured!\n", section.c_str(), dc_key.c_str());
 
 		return code;
 	}
@@ -308,13 +308,13 @@
 			|| input_evdev_button_assigned(mapping1, mapping2->Btn_Trigger_Right));
 	}
 
-	int input_evdev_init(EvdevController* controller, const char* device, const char* custom_mapping_fname = NULL)
+	int input_evdev_init(EvdevController* controller, const wchar_t* device, const wchar_t* custom_mapping_fname = NULL)
 	{
 		load_libevdev();
 
 		char name[256] = "Unknown";
 
-		printf("evdev: Trying to open device at '%s'\n", device);
+		wprintf(L"evdev: Trying to open device at '%s'\n", device);
 
 		int fd = open(device, O_RDWR);
 
@@ -328,17 +328,17 @@
 			}
 			else
 			{
-				printf("evdev: Found '%s' at '%s'\n", name, device);
+				wprintf(L"evdev: Found '%s' at '%s'\n", name, device);
 
 				controller->fd = fd;
 
-				const char* mapping_fname;
+				const wchar_t* mapping_fname;
 
 				if(custom_mapping_fname != NULL)
 				{
 					// custom mapping defined in config, use that
 					mapping_fname = custom_mapping_fname;
-					printf("evdev: user defined custom mapping found (%s)\n", custom_mapping_fname);
+					wprintf(L"evdev: user defined custom mapping found (%s)\n", custom_mapping_fname);
 				}
 				else
 				{
@@ -348,35 +348,35 @@
 						mapping_fname = "controller_gcwz.cfg";
 					#else
 						// check if a config file name <device>.cfg exists in the /mappings/ directory
-						char* name_cfg = (char*)malloc(strlen(name)+4);
+						wchar_t* name_cfg = (wchar_t*)malloc(wcslen(name)+4);
 						strcpy(name_cfg, name);
-						strcat(name_cfg, ".cfg");
+						wcscat(name_cfg, ".cfg");
 
 						size_t size_needed = snprintf(NULL, 0, EVDEV_MAPPING_PATH, name_cfg) + 1;
-                                                char* mapping_path = (char*)malloc(size_needed);
-                                                sprintf(mapping_path, EVDEV_MAPPING_PATH, name_cfg);
+                                                wchar_t* mapping_path = (wchar_t*)malloc(size_needed);
+                                                swprintf(mapping_path, EVDEV_MAPPING_PATH, name_cfg);
 
-						string dir = get_readonly_data_path(mapping_path);
+						wstring dir = get_readonly_data_path(mapping_path);
 						free(mapping_path);
 						if (file_exists(dir)) {
-							printf("evdev: found a named mapping for the device (%s)\n", name_cfg);
+							wprintf(L"evdev: found a named mapping for the device (%s)\n", name_cfg);
 							mapping_fname = name_cfg;
 						}
 						else {
 							free(name_cfg);
 
-							if (strcmp(name, "Microsoft X-Box 360 pad") == 0 ||
-								strcmp(name, "Xbox 360 Wireless Receiver") == 0 ||
-								strcmp(name, "Xbox 360 Wireless Receiver (XBOX)") == 0)
+							if (wcscmp(name, "Microsoft X-Box 360 pad") == 0 ||
+								wcscmp(name, "Xbox 360 Wireless Receiver") == 0 ||
+								wcscmp(name, "Xbox 360 Wireless Receiver (XBOX)") == 0)
 							{
 								mapping_fname = "controller_xpad.cfg";
 							}
-							else if (strstr(name, "Xbox Gamepad (userspace driver)") != NULL)
+							else if (wcsstr(name, "Xbox Gamepad (userspace driver)") != NULL)
 							{
 								mapping_fname = "controller_xboxdrv.cfg";
 							}
-							else if (strstr(name, "keyboard") != NULL ||
-									 strstr(name, "Keyboard") != NULL)
+							else if (wcsstr(name, "keyboard") != NULL ||
+									 wcsstr(name, "Keyboard") != NULL)
 							{
 								mapping_fname = "keyboard.cfg";
 							}
@@ -388,7 +388,7 @@
 					#endif
 				}
 
-				if(loaded_mappings.count(string(mapping_fname)) == 0)
+				if(loaded_mappings.count(wstring(mapping_fname)) == 0)
 				{
 					FILE* mapping_fd = NULL;
 					if(mapping_fname[0] == '/')
@@ -400,28 +400,28 @@
 					{
 						// Mapping from ~/.reicast/mappings/
 						size_t size_needed = snprintf(NULL, 0, EVDEV_MAPPING_PATH, mapping_fname) + 1;
-						char* mapping_path = (char*)malloc(size_needed);
-						sprintf(mapping_path, EVDEV_MAPPING_PATH, mapping_fname);
+						wchar_t* mapping_path = (wchar_t*)malloc(size_needed);
+						swprintf(mapping_path, EVDEV_MAPPING_PATH, mapping_fname);
 						mapping_fd = fopen(get_readonly_data_path(mapping_path).c_str(), "r");
 						free(mapping_path);
 					}
 
 					if(mapping_fd != NULL)
 					{
-						printf("evdev: reading mapping file: '%s'\n", mapping_fname);
-						loaded_mappings.insert(std::make_pair(string(mapping_fname), load_mapping(mapping_fd)));
+						wprintf(L"evdev: reading mapping file: '%s'\n", mapping_fname);
+						loaded_mappings.insert(std::make_pair(wstring(mapping_fname), load_mapping(mapping_fd)));
 						fclose(mapping_fd);
 
 					}
 					else
 					{
-						printf("evdev: unable to open mapping file '%s'\n", mapping_fname);
+						wprintf(L"evdev: unable to open mapping file '%s'\n", mapping_fname);
 						perror("evdev");
 						return -3;
 					}
 				}
-				controller->mapping = &loaded_mappings.find(string(mapping_fname))->second;
-				printf("evdev: Using '%s' mapping\n", controller->mapping->name.c_str());
+				controller->mapping = &loaded_mappings.find(wstring(mapping_fname))->second;
+				wprintf(L"evdev: Using '%s' mapping\n", controller->mapping->name.c_str());
 				controller->init();
 
 				return 0;
@@ -440,33 +440,33 @@
 		size_t size_needed;
 		int port, i;
 
-		char* evdev_device;
+		wchar_t* evdev_device;
 
 		for (port = 0; port < 4; port++)
 		{
 			size_needed = snprintf(NULL, 0, EVDEV_DEVICE_CONFIG_KEY, port+1) + 1;
-			char* evdev_config_key = (char*)malloc(size_needed);
-			sprintf(evdev_config_key, EVDEV_DEVICE_CONFIG_KEY, port+1);
-			evdev_device_id[port] = cfgLoadInt("input", evdev_config_key, EVDEV_DEFAULT_DEVICE_ID(port+1));
+			wchar_t* evdev_config_key = (wchar_t*)malloc(size_needed);
+			swprintf(evdev_config_key, EVDEV_DEVICE_CONFIG_KEY, port+1);
+			evdev_device_id[port] = cfgLoadInt(L"input", evdev_config_key, EVDEV_DEFAULT_DEVICE_ID(port+1));
 			free(evdev_config_key);
 
 			// Check if the same device is already in use on another port
 			if (evdev_device_id[port] < 0)
 			{
-				printf("evdev: Controller %d disabled by config.\n", port + 1);
+				wprintf(L"evdev: Controller %d disabled by config.\n", port + 1);
 			}
 			else
 			{
 				size_needed = snprintf(NULL, 0, EVDEV_DEVICE_STRING, evdev_device_id[port]) + 1;
-				evdev_device = (char*)malloc(size_needed);
-				sprintf(evdev_device, EVDEV_DEVICE_STRING, evdev_device_id[port]);
+				evdev_device = (wchar_t*)malloc(size_needed);
+				swprintf(evdev_device, EVDEV_DEVICE_STRING, evdev_device_id[port]);
 
 				size_needed = snprintf(NULL, 0, EVDEV_MAPPING_CONFIG_KEY, port+1) + 1;
-				evdev_config_key = (char*)malloc(size_needed);
-				sprintf(evdev_config_key, EVDEV_MAPPING_CONFIG_KEY, port+1);
+				evdev_config_key = (wchar_t*)malloc(size_needed);
+				swprintf(evdev_config_key, EVDEV_MAPPING_CONFIG_KEY, port+1);
 
-				string tmp;
-				const char* mapping = (cfgExists("input", evdev_config_key) == 2 ? (tmp = cfgLoadStr("input", evdev_config_key, "")).c_str() : NULL);
+				wstring tmp;
+				const wchar_t* mapping = (cfgExists("input", evdev_config_key) == 2 ? (tmp = cfgLoadStr("input", evdev_config_key, "")).c_str() : NULL);
 				free(evdev_config_key);
 
 				int err = input_evdev_init(&evdev_controllers[port], evdev_device, mapping);
@@ -487,7 +487,7 @@
 							// Multiple controllers with the same device, check for multiple button assignments
 							if (input_evdev_button_duplicate_button(evdev_controllers[i].mapping, evdev_controllers[port].mapping))
 							{
-								printf("WARNING: One or more button(s) of this device is also used in the configuration of input device %d (mapping: %s)\n", i,
+								wprintf(L"WARNING: One or more button(s) of this device is also used in the configuration of input device %d (mapping: %s)\n", i,
 								evdev_controllers[i].mapping->name.c_str());
 							}
 						}
@@ -525,7 +525,7 @@
 
 		while(read(controller->fd, &ie, sizeof(ie)) == sizeof(ie))
 		{
-            printf(" ------ E V D E V input::  type: %X \n", ie.type) ;
+            wprintf(L" ------ E V D E V input::  type: %X \n", ie.type) ;
             
 			switch(ie.type)
 			{
@@ -672,10 +672,10 @@
 		if (controller->fd < 0 || controller->rumble_effect_id == -2)
 		{
 			// Either the controller is not used or previous rumble effect failed
-			printf("RUMBLE: %s\n", "Skipped!");
+			wprintf(L"RUMBLE: %s\n", "Skipped!");
 			return;
 		}
-		printf("RUMBLE: %u / %u (%d)\n", pow_strong, pow_weak, controller->rumble_effect_id);
+		wprintf(L"RUMBLE: %u / %u (%d)\n", pow_strong, pow_weak, controller->rumble_effect_id);
 		struct ff_effect effect;
 		effect.type = FF_RUMBLE;
 		effect.id = controller->rumble_effect_id;

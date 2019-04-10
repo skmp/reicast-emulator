@@ -18,7 +18,7 @@ wchar_t* trim_ws(wchar_t* str)
 
 	while(*str)
 	{
-		if (!isspace(*str))
+		if (!iswspace(*str))
 			break;
 		str++;
 	}
@@ -30,7 +30,7 @@ wchar_t* trim_ws(wchar_t* str)
 
 	while(l>0)
 	{
-		if (!isspace(str[l-1]))
+		if (!iswspace(str[l-1]))
 			break;
 		str[l-1]=0;
 		l--;

@@ -17,6 +17,8 @@
 #include "naomi/naomi_cart.h"
 #include "reios/reios.h"
 
+wchar_t* trim_ws(wchar_t* str);
+
 settings_t settings;
 
 /*
@@ -350,25 +352,50 @@ void LoadSettings()
 }
 
 void LoadCustom()
-{
-	wstring reios_id = toWString(reios_disk_id());
-	wstring sw_name  = toWString(reios_software_name);
-	cfgSaveStr(reios_id.c_str(), L"software.name", sw_name.c_str());
-	settings.dynarec.Enable			= cfgLoadInt(reios_id.c_str(),L"Dynarec.Enabled",		settings.dynarec.Enable ? 1 : 0) != 0;
-	settings.dynarec.idleskip		= cfgGameInt(reios_id.c_str(),L"Dynarec.idleskip",		settings.dynarec.idleskip ? 1 : 0) != 0;
-	settings.dynarec.unstable_opt	= cfgGameInt(reios_id.c_str(),L"Dynarec.unstable-opt",	settings.dynarec.unstable_opt);
-	settings.dynarec.safemode		= cfgGameInt(reios_id.c_str(),L"Dynarec.safemode",		settings.dynarec.safemode);
-	settings.aica.DelayInterrupt	= cfgLoadInt(reios_id.c_str(),L"aica.DelayInterrupt",	settings.aica.DelayInterrupt);
-	settings.rend.ModifierVolumes	= cfgGameInt(reios_id.c_str(),L"rend.ModifierVolumes",	settings.rend.ModifierVolumes);
-	settings.rend.Clipping			= cfgGameInt(reios_id.c_str(),L"rend.Clipping",			settings.rend.Clipping);
+{	
+	const size_t maxDiskIdSize = 128;
+	const size_t maxNameSize = 128;	
 
-	settings.pvr.subdivide_transp	= cfgGameInt(reios_id.c_str(),L"pvr.Subdivide",			settings.pvr.subdivide_transp);
+	// Get reios_disk_id and reios_software-name and convert to wstring
+	const wchar_t* disk_id = (toWString(reios_disk_id())).c_str();
+	const wchar_t* software_name = (toWString(reios_software_name)).c_str();
+	
+	// create wchar_t array to copy wide chars from const wchar_t*
+	wchar_t reios_id_untrimmed[maxDiskIdSize] = { '\0' };
+	wchar_t reios_software_name_untrimmed[maxNameSize] = { '\0' };
 
-	settings.pvr.ta_skip			= cfgGameInt(reios_id.c_str(),L"ta.skip",	settings.pvr.ta_skip);
-	settings.pvr.rend				= cfgGameInt(reios_id.c_str(),L"pvr.rend",	settings.pvr.rend);
+	// determine max number of chars to copy from disk_id and software_name
+	size_t idLength = wcsnlen(disk_id, maxDiskIdSize - 1);
+	size_t nameLength = wcsnlen(software_name, maxNameSize - 1);
 
-	settings.pvr.MaxThreads			= cfgGameInt(reios_id.c_str(),L"pvr.MaxThreads", settings.pvr.MaxThreads);
-	settings.pvr.SynchronousRender	= cfgGameInt(reios_id.c_str(),L"pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+	// copy chars from const wchar_t* to wchart_t array
+	wcsncpy(reios_id_untrimmed, disk_id, idLength);
+	wcsncpy(reios_software_name_untrimmed, software_name, nameLength);
+
+	// null terminate based on length
+	reios_id_untrimmed[idLength] = '\0';
+	reios_software_name_untrimmed[nameLength] = '\0';
+
+	// All this just so we can now trim whitespace
+	wchar_t* reios_id = trim_ws(reios_id_untrimmed);
+	wchar_t* sw_name = trim_ws(reios_software_name_untrimmed);
+
+	cfgSaveStr(reios_id, L"software.name", sw_name);
+	settings.dynarec.Enable			= cfgLoadInt(reios_id,L"Dynarec.Enabled",		settings.dynarec.Enable ? 1 : 0) != 0;
+	settings.dynarec.idleskip		= cfgGameInt(reios_id,L"Dynarec.idleskip",		settings.dynarec.idleskip ? 1 : 0) != 0;
+	settings.dynarec.unstable_opt	= cfgGameInt(reios_id,L"Dynarec.unstable-opt",	settings.dynarec.unstable_opt);
+	settings.dynarec.safemode		= cfgGameInt(reios_id,L"Dynarec.safemode",		settings.dynarec.safemode);
+	settings.aica.DelayInterrupt	= cfgLoadInt(reios_id,L"aica.DelayInterrupt",	settings.aica.DelayInterrupt);
+	settings.rend.ModifierVolumes	= cfgGameInt(reios_id,L"rend.ModifierVolumes",	settings.rend.ModifierVolumes);
+	settings.rend.Clipping			= cfgGameInt(reios_id,L"rend.Clipping",			settings.rend.Clipping);
+
+	settings.pvr.subdivide_transp	= cfgGameInt(reios_id,L"pvr.Subdivide",			settings.pvr.subdivide_transp);
+
+	settings.pvr.ta_skip			= cfgGameInt(reios_id,L"ta.skip",	settings.pvr.ta_skip);
+	settings.pvr.rend				= cfgGameInt(reios_id,L"pvr.rend",	settings.pvr.rend);
+
+	settings.pvr.MaxThreads			= cfgGameInt(reios_id,L"pvr.MaxThreads", settings.pvr.MaxThreads);
+	settings.pvr.SynchronousRender	= cfgGameInt(reios_id,L"pvr.SynchronousRendering", settings.pvr.SynchronousRender);
 }
 
 void SaveSettings()

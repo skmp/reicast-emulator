@@ -97,7 +97,7 @@ void GetDriveToc(u32* to,DiskArea area);
 void GetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
 
 void GetDriveSessionInfo(u8* to,u8 session);
-int GetFile(wchar_t *szFileName, wchar_t *szParse=0,u32 flags=0);
+int GetFile(wchar_t *szFileName, wchar_t *szParse,u32 flags);
 int msgboxf(wchar_t* text,unsigned int type,...);
 void printtoc(TocInfo* toc,SessionInfo* ses);
 extern u8 q_subchannel[96];

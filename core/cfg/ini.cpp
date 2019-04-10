@@ -57,13 +57,19 @@ void ConfigSection::set(wstring name, wstring value)
 
 ConfigSection* ConfigFile::add_section(wstring name, bool is_virtual)
 {
+	const size_t maxSectionSize = 128;
+	wchar_t sectionName[maxSectionSize] = { '\0' };
+	size_t nameLength = wcsnlen(name.c_str(), maxSectionSize - 1);
+	wcsncpy(sectionName, name.c_str(), nameLength);
+	sectionName[nameLength] = '\0';
+
 	ConfigSection new_section;
 	if (is_virtual)
 	{
-		this->virtual_sections.insert(std::make_pair(name, new_section));
+		this->virtual_sections.insert(std::make_pair(trim_ws(sectionName), new_section));
 		return &this->virtual_sections[name];
 	}
-	this->sections.insert(std::make_pair(name, new_section));
+	this->sections.insert(std::make_pair(trim_ws(sectionName), new_section));
 	return &this->sections[name];
 };
 
@@ -183,16 +189,17 @@ void ConfigFile::set_bool(wstring section_name, wstring entry_name, bool value, 
 
 void ConfigFile::parse(FILE* file)
 {
+	const size_t maxlineSize = 512;
 	if(file == NULL)
 	{
 		return;
 	}
-	wchar_t line[512];
-	wchar_t current_section[512] = { '\0' };
+	wchar_t line[maxlineSize] = { '\0' };
+	wchar_t current_section[maxlineSize] = { '\0' };
 	int cline = 0;
 	while(file && !feof(file))
 	{
-		if (fgetws(line, 512, file) == NULL || feof(file))
+		if (fgetws(line, maxlineSize, file) == NULL || feof(file))
 		{
 			break;
 		}
@@ -217,8 +224,9 @@ void ConfigFile::parse(FILE* file)
 			tl[wcslen(tl)-1] = '\0';
 
 			// FIXME: Data loss if buffer is too small
-			wcsncpy(current_section, tl+1, sizeof(current_section));
-			current_section[sizeof(current_section) - 1] = '\0';
+			size_t sectionLength = wcsnlen(tl + 1, maxlineSize - 1);
+			wcsncpy(current_section, tl+1, sectionLength);
+			current_section[sectionLength] = '\0';
 
 			trim_ws(current_section);
 		}

@@ -785,7 +785,7 @@ void os_DoEvents()
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }
 
-int GetFile(wchar_t *szFileName, char *szParse, u32 flags)
+int GetFile(wchar_t *szFileName, wchar_t *szParse, u32 flags)
 {
 	cfgLoadStr(L"config", L"image", szFileName, L"null");
 

@@ -6,6 +6,7 @@ Disc* cdi_parse(const wchar_t* file);
 #if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
 Disc* ioctl_parse(const wchar_t* file);
 #endif
+wchar_t* trim_ws(wchar_t* str);
 
 u32 NullDriveDiscType;
 Disc* disc;
@@ -190,10 +191,12 @@ bool InitDrive(u32 fileflags)
 			return true;
 	}
 
+	const size_t maxImageSize = 512;
 	// FIXME: Data loss if buffer is too small
-	wchar_t fn[512];
-	wcsncpy(fn,settings.imgread.LastImage, sizeof(fn));
-	fn[sizeof(fn) - 1] = '\0';
+	wchar_t fn[maxImageSize] = { '\0' };
+	size_t lastImageLength = wcsnlen(settings.imgread.LastImage, maxImageSize - 1);
+	wcsncpy(fn,settings.imgread.LastImage, lastImageLength);
+	fn[lastImageLength] = '\0';
 
 #ifdef BUILD_DREAMCAST
 	int gfrv=GetFile(fn,0,fileflags);
@@ -215,8 +218,9 @@ bool InitDrive(u32 fileflags)
 	}
 
 	// FIXME: Data loss if buffer is too small
-	wcsncpy(settings.imgread.LastImage, fn, sizeof(settings.imgread.LastImage));
-	settings.imgread.LastImage[sizeof(settings.imgread.LastImage) - 1] = '\0';
+	size_t fnLength = wcsnlen(fn, maxImageSize - 1);
+	wcsncpy(settings.imgread.LastImage, fn, fnLength);
+	settings.imgread.LastImage[fnLength] = '\0';
 
 	SaveSettings();
 
@@ -250,10 +254,13 @@ bool DiscSwap(u32 fileflags)
 			return true;
 	}
 
+	const size_t maxImageSize = 512;
+
 	// FIXME: Data loss if buffer is too small
-	wchar_t fn[512];
-	wcsncpy(fn, settings.imgread.LastImage, sizeof(fn));
-	fn[sizeof(fn) - 1] = '\0';
+	wchar_t fn[maxImageSize] = { '\0' };
+	size_t lastImageLength = wcsnlen(settings.imgread.LastImage, maxImageSize - 1);
+	wcsncpy(fn, settings.imgread.LastImage, lastImageLength);
+	fn[lastImageLength] = '\0';
 
 
 #ifdef BUILD_DREAMCAST
@@ -279,9 +286,9 @@ bool DiscSwap(u32 fileflags)
 	}
 
 	// FIXME: Data loss if buffer is too small
-	wcsncpy(settings.imgread.LastImage, fn, sizeof(settings.imgread.LastImage));
-	settings.imgread.LastImage[sizeof(settings.imgread.LastImage) - 1] = '\0';
-
+	size_t fnLength = wcsnlen(fn, maxImageSize - 1);
+	wcsncpy(settings.imgread.LastImage, fn, fnLength);
+	settings.imgread.LastImage[fnLength] = '\0';
 
 	SaveSettings();
 

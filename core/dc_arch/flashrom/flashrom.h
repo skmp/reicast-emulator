@@ -60,13 +60,15 @@ struct MemChip
 
 	bool Load(const wstring& root,const wstring& prefix,const wstring& names_ro,const wstring& title)
 	{
-		wchar_t base[512];
-		wchar_t temp[512];
-		wchar_t names[512];
+		const size_t maxSize = 512;
+		wchar_t base[maxSize] = { '\0' };
+		wchar_t temp[maxSize] = { '\0' };
+		wchar_t names[maxSize] = { '\0' };
 
 		// FIXME: Data loss if buffer is too small
-		wcsncpy(names,names_ro.c_str(), sizeof(names));
-		names[sizeof(names) - 1] = '\0';
+		size_t namesLength = wcsnlen(names_ro.c_str(), maxSize - 1);
+		wcsncpy(names,names_ro.c_str(), namesLength);
+		names[namesLength] = '\0';
 
 		swprintf(base,L"%s",root.c_str());
 

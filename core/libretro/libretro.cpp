@@ -55,6 +55,8 @@ char nvmem_file[PATH_MAX];
 char nvmem_file2[PATH_MAX];		// AtomisWave
 bool boot_to_bios;
 
+static bool devices_need_refresh = false;
+static int device_type[4] = {-1,-1,-1,-1};
 static int astick_deadzone = 0;
 static int trigger_deadzone = 0;
 static bool digital_triggers = false;
@@ -131,6 +133,7 @@ bool rend_single_frame();
 void rend_cancel_emu_wait();
 bool acquire_mainloop_lock();
 
+static void refresh_devices(bool descriptors_only);
 static void init_disk_control_interface(const char *initial_image_path);
 
 static bool read_m3u(const char *file);
@@ -1173,6 +1176,8 @@ void retro_run (void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       update_variables(false);
 
+   refresh_devices(false);
+
 #if !defined(TARGET_NO_THREADS)
    if (settings.rend.ThreadedRendering)
    {
@@ -1814,6 +1819,7 @@ bool retro_load_game(const struct retro_game_info *game)
 	  return false;
    }
    init_disk_control_interface(game->path);
+   refresh_devices(true);
 
    return true;
 }
@@ -2077,45 +2083,59 @@ unsigned retro_get_region (void)
    return RETRO_REGION_NTSC; //TODO
 }
 
-
 // Controller
 void retro_set_controller_port_device(unsigned in_port, unsigned device)
 {
-   if (in_port < MAPLE_PORTS)
-   {
-	  switch (device)
-	  {
-	  case RETRO_DEVICE_JOYPAD:
-		 maple_devices[in_port] = MDT_SegaController;
-		 break;
-	  case RETRO_DEVICE_KEYBOARD:
-		 maple_devices[in_port] = MDT_Keyboard;
-		 break;
-	  case RETRO_DEVICE_MOUSE:
-		 maple_devices[in_port] = MDT_Mouse;
-		 break;
-	  case RETRO_DEVICE_LIGHTGUN:
-		 maple_devices[in_port] = MDT_LightGun;
-		 break;
-	  default:
-		 maple_devices[in_port] = MDT_None;
-		 break;
-	  }
-	  set_input_descriptors();
-
-	  if (settings.System == DC_PLATFORM_DREAMCAST)
-	  {
-		  maple_ReconnectDevices();
-	  }
-
-   }
-   if (rumble.set_rumble_state)
-   {
-	  rumble.set_rumble_state(in_port, RETRO_RUMBLE_STRONG, 0);
-	  rumble.set_rumble_state(in_port, RETRO_RUMBLE_WEAK,   0);
-   }
+	if (device_type[in_port] != device && in_port < MAPLE_PORTS)
+	{
+		devices_need_refresh = true;
+		device_type[in_port] = device;
+		switch (device)
+		{
+			case RETRO_DEVICE_JOYPAD:
+				maple_devices[in_port] = MDT_SegaController;
+				break;
+			case RETRO_DEVICE_KEYBOARD:
+				maple_devices[in_port] = MDT_Keyboard;
+				break;
+			case RETRO_DEVICE_MOUSE:
+				maple_devices[in_port] = MDT_Mouse;
+				break;
+			case RETRO_DEVICE_LIGHTGUN:
+				maple_devices[in_port] = MDT_LightGun;
+				break;
+			default:
+				maple_devices[in_port] = MDT_None;
+				break;
+		}
+	}
 }
 
+static void refresh_devices(bool descriptors_only)
+{
+	if (devices_need_refresh)
+	{
+		devices_need_refresh = false;
+		set_input_descriptors();
+
+		if (!descriptors_only)
+		{
+			if (settings.System == DC_PLATFORM_DREAMCAST)
+			{
+				maple_ReconnectDevices();
+			}
+
+			if (rumble.set_rumble_state)
+			{
+				for(int i = 0; i < MAPLE_PORTS; i++)
+				{
+					rumble.set_rumble_state(i, RETRO_RUMBLE_STRONG, 0);
+					rumble.set_rumble_state(i, RETRO_RUMBLE_WEAK,   0);
+				}
+			}
+		}
+	}
+}
 
 // API version (to detect version mismatch)
 unsigned retro_api_version(void)

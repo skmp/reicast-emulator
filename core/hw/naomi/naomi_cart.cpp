@@ -49,6 +49,7 @@ extern char g_roms_dir[PATH_MAX];
 
 InputDescriptors *naomi_game_inputs;
 u8 *naomi_default_eeprom;
+static RotationType game_rotation = ROT0;
 
 static bool naomi_LoadBios(const char *filename, Archive *child_archive, Archive *parent_archive, int region)
 {
@@ -333,6 +334,9 @@ static bool naomi_cart_LoadZip(char *filename)
 			delete file;
 		}
 	}
+	if (naomi_default_eeprom == NULL && game->eeprom_dump != NULL)
+		naomi_default_eeprom = game->eeprom_dump;
+	game_rotation = game->rotation_flag;
 	if (archive != NULL)
 		delete archive;
 	if (parent_archive != NULL)
@@ -389,6 +393,11 @@ int naomi_cart_GetSystemType(const char* file)
 	  return DC_PLATFORM_ATOMISWAVE;
    else
 	  return DC_PLATFORM_NAOMI;
+}
+
+int naomi_cart_GetRotation()
+{
+	return game_rotation;
 }
 
 bool naomi_cart_LoadRom(char* file, char *s, size_t len)

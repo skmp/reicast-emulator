@@ -1735,8 +1735,6 @@ bool retro_load_game(const struct retro_game_info *game)
          mkdir_norecurse(data_dir);
       }
    }
-   int rotation = rotate_screen ? 1 : 0;
-   environ_cb(RETRO_ENVIRONMENT_SET_ROTATION, &rotation);
 
    params.context_type          = RETRO_HW_CONTEXT_NONE;
 
@@ -1818,6 +1816,10 @@ bool retro_load_game(const struct retro_game_info *game)
 		 log_cb(RETRO_LOG_ERROR, "Reicast emulator initialization failed\n");
 	  return false;
    }
+   int rotation = rotate_screen ? 3 : 0;
+   if (naomi_cart_GetRotation() == 3)
+      rotation = rotate_screen ? 0 : 1;
+   environ_cb(RETRO_ENVIRONMENT_SET_ROTATION, &rotation);
    init_disk_control_interface(game->path);
    refresh_devices(true);
 
@@ -2040,21 +2042,15 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    u32 pixel_clock= spg_clks[(SPG_CONTROL.full >> 6) & 3];
 
    info->geometry.aspect_ratio = settings.rend.WideScreen ? (16.0 / 9.0) : (4.0 / 3.0);
+   if(naomi_cart_GetRotation() == 3)
+      info->geometry.aspect_ratio = 1 / info->geometry.aspect_ratio;
+   int maximum = screen_width > screen_height ? screen_width : screen_height;
+   info->geometry.base_width   = screen_height;
+   info->geometry.base_height  = screen_width;
+   info->geometry.max_width    = maximum;
+   info->geometry.max_height   = maximum;
    if (rotate_screen)
-   {
-	  info->geometry.base_width   = screen_height;
-	  info->geometry.base_height  = screen_width;
-	  info->geometry.max_width    = screen_height;
-	  info->geometry.max_height   = screen_width;
-	  info->geometry.aspect_ratio = 1 / info->geometry.aspect_ratio;
-   }
-   else
-   {
-	  info->geometry.base_width   = screen_width;
-	  info->geometry.base_height  = screen_height;
-	  info->geometry.max_width    = screen_width;
-	  info->geometry.max_height   = screen_height;
-   }
+      info->geometry.aspect_ratio = 1 / info->geometry.aspect_ratio;
 
    switch (pixel_clock)
    {

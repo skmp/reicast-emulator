@@ -24,6 +24,7 @@
  */
 #pragma once
 #include "naomi_roms_input.h"
+#include "naomi_roms_eeprom.h"
 
 #define MAX_GAME_FILES 40
 
@@ -204,6 +205,7 @@ struct Game
     } blobs[MAX_GAME_FILES];
     const char *gdrom_name;
     InputDescriptors *inputs;
+    u8 *eeprom_dump;
 }
 Games[] =
 {
@@ -4026,7 +4028,10 @@ Games[] =
             { "ic10.bin", 0x8000000, 0x4000000 },
             { "317-5132-jpn.ic3", 0, 0x800, Key },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        NULL,
+        mamonoro_eeprom_dump
     },
     // Melty Blood Actress Again Version A (Japan, Rev A)
     {

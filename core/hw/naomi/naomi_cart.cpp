@@ -333,6 +333,8 @@ static bool naomi_cart_LoadZip(char *filename)
 			delete file;
 		}
 	}
+	if (naomi_default_eeprom == NULL && game->eeprom_dump != NULL)
+		naomi_default_eeprom = game->eeprom_dump;
 	if (archive != NULL)
 		delete archive;
 	if (parent_archive != NULL)

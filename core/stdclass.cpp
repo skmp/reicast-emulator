@@ -39,8 +39,7 @@ std::string toString(std::wstring ws)
 
 FILE * fopen(const wchar_t *filename, const char * mode)
 {
-	std::string _s = toString(filename);
-	return fopen(_s.c_str(), mode);
+	return _wfopen(filename, toWString(mode).c_str());
 }
 
 

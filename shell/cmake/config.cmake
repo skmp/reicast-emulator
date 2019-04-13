@@ -88,6 +88,22 @@ set(COMPILER_INTEL 0x30000004)
 #
 
 
+message(" ----- config - in ---------------------------------")
+message(" - CMAKE_SYSTEM_NAME:      ${CMAKE_SYSTEM_NAME}     ")
+message(" - CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+message(" - CMAKE_CXX_COMPILER_ID:  ${CMAKE_CXX_COMPILER_ID} ")
+message(" ---------------------------------------------------")
+
+
+## Add ugly hack because mingw is retarded and can't follow established protocol on naming,
+### and gives no _SYSTEM_PROCESSOR
+
+if("${CMAKE_SYSTEM_NAME}" MATCHES ".*MINGW64.*")
+  set(CMAKE_SYSTEM_NAME "windows")
+  set(CMAKE_SYSTEM_PROCESSOR "x86_64")
+endif()
+
+
 
 
 ## strings are used to append to path/file names, and to filter multiple possibilities down to one 
@@ -130,6 +146,7 @@ else()
   message("Warning: Unknown Host System Processor: \"${CMAKE_SYSTEM_PROCESSOR}\"")
   set(host_arch "${CMAKE_SYSTEM_PROCESSOR}")
   set(HOST_CPU ${CPU_GENERIC})
+  set(CMAKE_HOST_WIN32 ON)
 endif()
 
 
@@ -148,7 +165,7 @@ elseif("windowsstore" STREQUAL "${host_os}")
   set(HOST_OS ${OS_UWP}) 
   set(HOST_CPU ${CPU_X64})
 
-elseif(CMAKE_HOST_WIN32)
+elseif(CMAKE_HOST_WIN32 OR "windows" MATCHES "${host_os}")
   set(HOST_OS ${OS_WINDOWS}) 
 
 elseif(CMAKE_HOST_APPLE)
@@ -265,10 +282,33 @@ endif()
 
 
 
+if(DEBUG_CMAKE)
+  message(" ---- config - out ------------------------------")
+  message(" - HOST_OS: ${HOST_OS} - HOST_CPU: ${HOST_CPU}   ")
+  message(" - host_os: ${host_os} - host_arch: ${host_arch} ")
+  message(" ------------------------------------------------")
+  message(" - BUILD_COMPILER: ${BUILD_COMPILER}             ")
+  message(" ------------------------------------------------")
+  message(" - CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+  message(" ------------------------------------------------")
+  message("  C  Flags: ${CMAKE_C_FLAGS} ")
+  message(" CXX Flags: ${CMAKE_CXX_FLAGS} ")
+  message(" LINK_DIRS: ${LINK_DIRECTORIES}")
+  message("LINK_FLAGS: ${CMAKE_EXE_LINKER_FLAGS}")
+  message(" ------------------------------------------------\n")
+endif()
+
+
+
+
+
+
 ## Setup some common flags 
 #
-if ((${BUILD_COMPILER} EQUAL ${COMPILER_VC}) OR
-	(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG}) AND (${HOST_OS} STREQUAL ${OS_WINDOWS}))
+if (("${BUILD_COMPILER}" STREQUAL "${COMPILER_VC}") OR
+	("${BUILD_COMPILER}" STREQUAL "${COMPILER_CLANG}" AND "${HOST_OS}" STREQUAL "${OS_WINDOWS}"))
+	
+  message("--@@@@@@ VC OR CLANG_WIN32 @@@@@--")
 
   if((${HOST_CPU} EQUAL ${CPU_X64}) AND (${FEAT_SHREC} EQUAL ${DYNAREC_JIT})) # AND NOT "${NINJA}" STREQUAL "")
     set(FEAT_SHREC  ${DYNAREC_CPP})
@@ -288,6 +328,8 @@ if ((${BUILD_COMPILER} EQUAL ${COMPILER_VC}) OR
 elseif ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
 		(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})) # AND NOT ${HOST_OS} EQUAL ${OS_WINDOWS}))
   
+  message("--@@@@@@ GCC OR CLANG @@@@@--")
+
   if(USE_32B OR TARGET_LINUX_X86)
     set(_C_FLAGS "${_C_FLAGS} -m32")
   endif()

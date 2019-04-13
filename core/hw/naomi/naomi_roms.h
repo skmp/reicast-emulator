@@ -1365,7 +1365,6 @@ Games[] =
             { "mpr-22118.ic19s", 0x9800000, 0x0800000 },
             { "mpr-22119.ic20s", 0xa000000, 0x0800000 },
             { "mpr-22120.ic21s", 0xa800000, 0x0800000 },
-            { "841-0003.sf", 0, 0x84, Eeprom },
             { NULL, 0, 0 },
         }
     },
@@ -1402,7 +1401,6 @@ Games[] =
             { "mpr-22118.ic19s", 0x9800000, 0x0800000 },
             { "mpr-22119.ic20s", 0xa000000, 0x0800000 },
             { "mpr-22120.ic21s", 0xa800000, 0x0800000 },
-            { "841-0003.sf", 0, 0x84, Eeprom },
             { NULL, 0, 0 },
         }
     },
@@ -1439,7 +1437,6 @@ Games[] =
             { "mpr-22118.ic19s", 0x9800000, 0x0800000 },
             { "mpr-22119.ic20s", 0xa000000, 0x0800000 },
             { "mpr-22120.ic21s", 0xa800000, 0x0800000 },
-            { "841-0003.sf", 0, 0x84, Eeprom },
             { NULL, 0, 0 },
         }
     },
@@ -4419,6 +4416,74 @@ Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0007a",
+    },
+    // Dragon Treasure (Rev B) (GDS-0030B)
+    {
+        "dragntr",
+        NULL,
+        0x4000,
+        0,
+        "naomi",
+        GD,
+        REGION_AUSTRALIA,
+        ROT0,
+        {
+            { "317-0363-com.pic", 0, 0x4000 },
+            //{ "317-0364-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0030b",
+    },
+    // Dragon Treasure (Rev A) (GDS-0030A)
+    {
+        "dragntra",
+        "dragntr",
+        0x4000,
+        0,
+        "naomi",
+        GD,
+        REGION_AUSTRALIA,
+        ROT0,
+        {
+            { "317-0363-com.pic", 0, 0x4000 },
+            //{ "317-0364-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0030a",
+    },
+    // Dragon Treasure 2 (Rev A) (GDS-0037A)
+    {
+        "dragntr2",
+        NULL,
+        0x4000,
+        0,
+        "naomi",
+        GD,
+        REGION_AUSTRALIA,
+        ROT0,
+        {
+            { "317-0389-com.pic", 0, 0x4000 },
+            //{ "317-0390-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0037a",
+    },
+    // Dragon Treasure 3 (Rev A) (GDS-0041A)
+    {
+        "dragntr3",
+        NULL,
+        0x4000,
+        0,
+        "naomi",
+        GD,
+        REGION_AUSTRALIA,
+        ROT0,
+        {
+            { "317-0426-jpn.pic", 0, 0x4000 },
+            //{ "317-0390-com.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "gds-0041a",
     },
     // Virtua Golf / Dynamic Golf (Rev A) (GDS-0009A)
     {

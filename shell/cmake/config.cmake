@@ -88,12 +88,13 @@ set(COMPILER_INTEL 0x30000004)
 #
 
 
+#[[
 message(" ----- config - in ---------------------------------")
 message(" - CMAKE_SYSTEM_NAME:      ${CMAKE_SYSTEM_NAME}     ")
 message(" - CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
 message(" - CMAKE_CXX_COMPILER_ID:  ${CMAKE_CXX_COMPILER_ID} ")
 message(" ---------------------------------------------------")
-
+]]
 
 ## Add ugly hack because mingw is retarded and can't follow established protocol on naming,
 ### and gives no _SYSTEM_PROCESSOR
@@ -281,7 +282,7 @@ else()
 endif()
 
 
-
+#[[
 if(DEBUG_CMAKE)
   message(" ---- config - out ------------------------------")
   message(" - HOST_OS: ${HOST_OS} - HOST_CPU: ${HOST_CPU}   ")
@@ -297,7 +298,7 @@ if(DEBUG_CMAKE)
   message("LINK_FLAGS: ${CMAKE_EXE_LINKER_FLAGS}")
   message(" ------------------------------------------------\n")
 endif()
-
+]]
 
 
 

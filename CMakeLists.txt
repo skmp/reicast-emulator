@@ -162,7 +162,6 @@ endif()
 
 ### libosd.cmake ################################################################################
 
-
 set(d_aout ${reicast_core_path}/oslib)
 
 include_directories ("${d_core}/khronos")
@@ -179,7 +178,11 @@ if (${HOST_OS} EQUAL ${OS_WINDOWS})
   list(APPEND osd_SRCS ${d_aout}/audiobackend_directsound.cpp)
   
   
-  link_libraries(dsound.lib winmm.lib xinput.lib wsock32.lib opengl32.lib)
+  link_libraries(-ldsound -lwinmm -lxinput -lwsock32 -lopengl32)
+
+  if("${BUILD_COMPILER}" STREQUAL "${COMPILER_GCC}")
+    link_libraries(-lstdc++)
+  endif()
 
   
 elseif (${HOST_OS} EQUAL ${OS_LINUX} OR ${HOST_OS} EQUAL ${OS_ANDROID})
@@ -287,6 +290,10 @@ if(DEBUG_CMAKE)
   message(" - BUILD_COMPILER: ${BUILD_COMPILER}             ")
   message(" ------------------------------------------------")
   message(" - CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+  message(" ------------------------------------------------")
+  message(" - FEAT_SHREC  ${FEAT_SHREC}                     ")
+  message(" - FEAT_AREC   ${FEAT_AREC}                      ")
+  message(" - FEAT_DSPREC ${FEAT_DSPREC}                    ")
   message(" ------------------------------------------------")
   message("  C  Flags: ${CMAKE_C_FLAGS} ")
   message(" CXX Flags: ${CMAKE_CXX_FLAGS} ")

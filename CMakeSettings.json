@@ -14,8 +14,8 @@
       "inheritEnvironments": [
         "msvc_x86"
       ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "buildRoot": "${projectDir}\\..\\cmake_build\\${name}",
+      "installRoot": "${projectDir}\\..\\cmake_build\\${name}\\install",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
@@ -28,8 +28,8 @@
       "inheritEnvironments": [
         "msvc_x86"
       ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "buildRoot": "${projectDir}\\..\\cmake_build\\${name}",
+      "installRoot": "${projectDir}\\..\\cmake_build\\${name}\\install",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
@@ -42,8 +42,8 @@
       "inheritEnvironments": [
         "msvc_x64_x64"
       ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "buildRoot": "${projectDir}\\..\\cmake_build\\${name}",
+      "installRoot": "${projectDir}\\..\\cmake_build\\${name}\\install",
       "cmakeCommandArgs": "-DNINJA=1",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
@@ -56,8 +56,8 @@
       "inheritEnvironments": [
         "msvc_x64_x64"
       ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "buildRoot": "${projectDir}\\..\\cmake_build\\${name}",
+      "installRoot": "${projectDir}\\..\\cmake_build\\${name}\\install",
       "cmakeCommandArgs": "-DNINJA=1",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
@@ -70,8 +70,8 @@
       "inheritEnvironments": [
         "msvc_x64_x64"
       ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "buildRoot": "${projectDir}\\..\\cmake_build\\${name}",
+      "installRoot": "${projectDir}\\..\\cmake_build\\${name}\\install",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
@@ -86,8 +86,6 @@
         }
       ]
     },
-
-    // Console SDK's
     {
       "name": "PS4 SDK",
       "generator": "Ninja",
@@ -96,8 +94,8 @@
       "inheritEnvironments": [
         "toolchain.generic"
       ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "buildRoot": "${projectDir}\\..\\cmake_build\\${name}",
+      "installRoot": "${projectDir}\\..\\cmake_build\\${name}\\install",
       "cmakeCommandArgs": "-DCMAKE_TOOLCHAIN_FILE=${projectDir}\\cmake\\ps4sdk.cmake",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
@@ -110,14 +108,12 @@
       "inheritEnvironments": [
         "toolchain.generic"
       ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "buildRoot": "${projectDir}\\..\\cmake_build\\${name}",
+      "installRoot": "${projectDir}\\..\\cmake_build\\${name}\\install",
       "cmakeCommandArgs": "-DCMAKE_TOOLCHAIN_FILE=${projectDir}\\cmake\\devkitA64.cmake",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
     },
-
-    // UWP and VS Gen (temp?)
     {
       "name": "uwp-x64-Release",
       "generator": "Visual Studio 15 2017 Win64",
@@ -126,8 +122,8 @@
       "inheritEnvironments": [
         "msvc_x64_x64"
       ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "buildRoot": "${projectDir}\\..\\cmake_build\\${name}",
+      "installRoot": "${projectDir}\\..\\cmake_build\\${name}\\install",
       "cmakeCommandArgs": "-DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10",
       "buildCommandArgs": "",
       "ctestCommandArgs": ""
@@ -140,8 +136,8 @@
       "inheritEnvironments": [
         "msvc_x64_x64"
       ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "buildRoot": "${projectDir}\\..\\cmake_build\\${name}",
+      "installRoot": "${projectDir}\\..\\cmake_build\\${name}\\install",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "",
       "ctestCommandArgs": ""
@@ -149,7 +145,6 @@
     {
       "environments": [
         {
-          //"MINGW64_ROOT": "C:\\msys64\\mingw64",
           "BIN_ROOT": "${env.MINGW64_ROOT}\\bin",
           "FLAVOR": "x86_64-w64-mingw32",
           "TOOLSET_VERSION": "7.3.0",
@@ -164,8 +159,8 @@
       "inheritEnvironments": [
         "mingw_64"
       ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "buildRoot": "${projectDir}\\..\\cmake_build\\${name}",
+      "installRoot": "${projectDir}\\..\\cmake_build\\${name}\\install",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
@@ -184,7 +179,6 @@
     {
       "environments": [
         {
-          //"MINGW64_ROOT": "C:\\msys64\\mingw64",
           "BIN_ROOT": "${env.MINGW64_ROOT}\\bin",
           "FLAVOR": "x86_64-w64-mingw32",
           "TOOLSET_VERSION": "7.3.0",
@@ -199,8 +193,8 @@
       "inheritEnvironments": [
         "mingw_64"
       ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\build\\${name}\\install",
+      "buildRoot": "${projectDir}\\..\\cmake_build\\${name}",
+      "installRoot": "${projectDir}\\..\\cmake_build\\${name}\\install",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",

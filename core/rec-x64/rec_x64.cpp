@@ -43,11 +43,11 @@ u64 guest_cpu_cycles;
 static double slice_start;
 extern "C"
 {
-static __attribute((used)) void start_slice()
+static ATTR_USED void start_slice()
 {
 	slice_start = os_GetSeconds();
 }
-static __attribute((used)) void end_slice()
+static ATTR_USED void end_slice()
 {
 	host_cpu_time += os_GetSeconds() - slice_start;
 }

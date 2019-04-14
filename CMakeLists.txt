@@ -246,7 +246,6 @@ endif()
 
 include_directories ("${reicast_core_path}")
 
-add_definitions(-D_7ZIP_ST -DCHD5_LZMA)
 
 
 

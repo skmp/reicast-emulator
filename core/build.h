@@ -141,20 +141,20 @@
 
 //HOST_CPU
 #define CPU_X86      0x20000001
-#define CPU_ARM      0x20000002
-#define CPU_MIPS     0x20000003
 #define CPU_X64      0x20000004
-#define CPU_GENERIC  0x20000005 //used for pnacl, emscripten, etc
+#define CPU_ARM      0x20000002
+#define CPU_A64      0x20000008
+#define CPU_MIPS     0x20000003
+#define CPU_MIPS64   0x20000009
 #define CPU_PPC      0x20000006
 #define CPU_PPC64    0x20000007
-#define CPU_A64      0x20000008
-#define CPU_MIPS64   0x20000009
+#define CPU_GENERIC  0x20000005 //used for pnacl, emscripten, etc
 
 //BUILD_COMPILER
 #define COMPILER_VC    0x30000001
 #define COMPILER_GCC   0x30000002
-#define COMPILER_CLANG 0x30000002
-#define COMPILER_INTEL 0x30000002
+#define COMPILER_CLANG 0x30000003
+#define COMPILER_INTEL 0x30000004
 
 //FEAT_SHREC, FEAT_AREC, FEAT_DSPREC
 #define DYNAREC_NONE   0x40000001

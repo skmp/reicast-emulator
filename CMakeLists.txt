@@ -6,7 +6,7 @@ project(${TNAME})
 
 enable_language(ASM)
 
-
+set(DEBUG_CMAKE On)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -81,28 +81,19 @@ if(TARGET_PS4)
   set(binSuffix ".elf")
 endif()
 
-if (${HOST_OS} EQUAL ${OS_UWP})
-  # Temporarily only building the UWP app because some stuff won't build right now
-  message(" FIXME/TODO: This builds ONLY the UWP frontend!")
-  
-  # Don't build anything else
-  set(reicast_SRCS "")
-  set(deps_SRCS "")
-  
-  # build UWP app that only creates a window and does nothing else
-  list(APPEND deps_SRCS ${reicast_core_path}/osd/uwp/reicastApp.cpp)
-  list(APPEND deps_SRCS ${reicast_core_path}/osd/uwp/reicastApp.h)
+if(TARGET_UWP)
+
+  list(APPEND reicast_SRCS 
+    ./shell/uwp/reicastApp.cpp ./shell/uwp/reicastApp.h)
+
 endif()
 
-add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS})
 
-if (${HOST_OS} EQUAL ${OS_UWP})
-  set_property(TARGET ${TNAME} PROPERTY VS_WINDOWS_TARGET_PLATFORM_MIN_VERSION "${MIN_PLATFORM_VERSION}")
-  # Shouldn't actually need the below but just trying things
-  #set_property(TARGET ${TNAME} PROPERTY VS_SDK_REFERENCES "Micrsoft.Universal.CRT.Debug, Version=${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
-endif()
 
-if(NOT ${HOST_OS} EQUAL ${OS_NSW_HOS})
+add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
+
+
+if(NOT ${HOST_OS} EQUAL ${OS_NSW_HOS} AND NOT TARGET_UWP)
   source_group(TREE ${PROJECT_SOURCE_DIR} PREFIX src FILES ${reicast_SRCS}) #${PROJECT_SOURCE_DIR}/core
 endif()
 
@@ -139,10 +130,19 @@ target_link_libraries(${TNAME}
 endif()
 
 
+
 if(DEBUG_CMAKE)
   message(" ------------------------------------------------")
   message(" - HOST_OS: ${HOST_OS} - HOST_CPU: ${HOST_CPU}   ")
   message(" - host_os: ${host_os} - host_arch: ${host_arch} ")
+  message(" ------------------------------------------------")
+  message(" - BUILD_COMPILER: ${BUILD_COMPILER}             ")
+  message(" ------------------------------------------------")
+  message(" - CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+  message(" ------------------------------------------------")
+  message(" - FEAT_SHREC  ${FEAT_SHREC}                     ")
+  message(" - FEAT_AREC   ${FEAT_AREC}                      ")
+  message(" - FEAT_DSPREC ${FEAT_DSPREC}                    ")
   message(" ------------------------------------------------")
   message("  C  Flags: ${CMAKE_C_FLAGS} ")
   message(" CXX Flags: ${CMAKE_CXX_FLAGS} ")
@@ -150,3 +150,8 @@ if(DEBUG_CMAKE)
   message("LINK_FLAGS: ${CMAKE_EXE_LINKER_FLAGS}")
   message(" ------------------------------------------------\n")
 endif()
+
+
+
+
+

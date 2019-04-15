@@ -40,7 +40,6 @@ set(OS_DARWIN      0x10000003)
 set(OS_IOS         0x10000004)  # todo: iOS != OS_DARWIN
 set(OS_ANDROID     0x10000005)  # todo: should be SYSTEM_ANDROID but ! OS_LINUX
 
-set(OS_UWP         0x10000011)
 set(OS_NSW_HOS     0x80000001)
 set(OS_PS4_BSD     0x80000002)
 
@@ -62,8 +61,8 @@ set(DYNAREC_CPP    0x40000003)
 
 set(COMPILER_VC    0x30000001)  # BUILD_COMPILER
 set(COMPILER_GCC   0x30000002)
-set(COMPILER_CLANG 0x30000002)
-set(COMPILER_INTEL 0x30000002)
+set(COMPILER_CLANG 0x30000003)
+set(COMPILER_INTEL 0x30000004)
 
 
 
@@ -86,6 +85,23 @@ set(COMPILER_INTEL 0x30000002)
 #	CMAKE_LIBRARY_ARCHITECTURE	CMAKE_<LANG>_LIBRARY_ARCHITECTURE	<prefix>/lib/<arch>
 #
 #
+
+
+
+message(" ----- config - in ---------------------------------")
+message(" - CMAKE_SYSTEM_NAME:      ${CMAKE_SYSTEM_NAME}     ")
+message(" - CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+message(" - CMAKE_CXX_COMPILER_ID:  ${CMAKE_CXX_COMPILER_ID} ")
+message(" ---------------------------------------------------")
+
+
+## Add ugly hack because mingw is retarded and can't follow established protocol on naming,
+### and gives no _SYSTEM_PROCESSOR
+
+if("${CMAKE_SYSTEM_NAME}" MATCHES ".*MINGW64.*")
+  set(CMAKE_SYSTEM_NAME "windows")
+  set(CMAKE_SYSTEM_PROCESSOR "x86_64")
+endif()
 
 
 
@@ -144,13 +160,11 @@ string(TOLOWER ${CMAKE_SYSTEM_NAME} host_os)
 
 if("android" STREQUAL "${host_os}"  OR ANDROID)
   set(HOST_OS ${OS_LINUX}) 	# *FIXME* we might have to keep as OS_LINUX or add to full cleanup list :|
-
-elseif("windowsstore" STREQUAL "${host_os}")
-  set(HOST_OS ${OS_UWP}) 
-
-elseif(CMAKE_HOST_WIN32)
+  
+elseif(CMAKE_HOST_WIN32 OR "windowsstore" STREQUAL "${host_os}")
+#
   set(HOST_OS ${OS_WINDOWS}) 
-
+#
 elseif(CMAKE_HOST_APPLE)
 
   if("${host_arch}" MATCHES "arm")
@@ -202,9 +216,7 @@ if(TARGET_NO_REC)
 endif()
 
 if(TARGET_NO_AREC)
-  set(FEAT_SHREC  ${DYNAREC_JIT})
   set(FEAT_AREC   ${DYNAREC_NONE})
-  set(FEAT_DSPREC ${DYNAREC_NONE})
 endif()
 
 if(TARGET_NO_JIT)
@@ -231,11 +243,6 @@ endif()
 
 
 
-if(${HOST_OS} EQUAL ${OS_LINUX})
-# option SUPPORT_X11
-# option FEAT_HAS_NIXPROF
-# option EMSCripten
-endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 #
@@ -244,8 +251,12 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   message("MSVC Toolset:  ${CMAKE_VS_PLATFORM_TOOLSET}")
   
   
-  add_definitions(-DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1)
-
+  add_definitions(/D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1)
+  
+  if(TARGET_UWP)
+    set(_CXX_FLAGS "/ZW ")
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /AppContainer")
+  endif()
 #
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") 
   set(BUILD_COMPILER ${COMPILER_GCC})
@@ -261,14 +272,56 @@ else()
 endif()
 
 
+
+
+
+if(DEBUG_CMAKE)
+  message(" ---- config - out ------------------------------")
+  message(" - HOST_OS: ${HOST_OS} - HOST_CPU: ${HOST_CPU}   ")
+  message(" - host_os: ${host_os} - host_arch: ${host_arch} ")
+  message(" ------------------------------------------------")
+  message(" - BUILD_COMPILER: ${BUILD_COMPILER}             ")
+  message(" ------------------------------------------------")
+  message(" - CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+  message(" ------------------------------------------------")
+  message("  C  Flags: ${CMAKE_C_FLAGS} ")
+  message(" CXX Flags: ${CMAKE_CXX_FLAGS} ")
+  message(" LINK_DIRS: ${LINK_DIRECTORIES}")
+  message("LINK_FLAGS: ${CMAKE_EXE_LINKER_FLAGS}")
+  message(" ------------------------------------------------\n")
+endif()
+
+
+
+
+
+
+
+
+
+
 ## Setup some common flags 
 #
-if ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
-    (${BUILD_COMPILER} EQUAL ${COMPILER_CLANG}))
+if ((${BUILD_COMPILER} EQUAL ${COMPILER_VC}) OR
+	(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG}) AND (${HOST_OS} STREQUAL ${OS_WINDOWS}))
 
-  
-  set(_C_FLAGS "-fno-operator-names")
-  
+  if((${HOST_CPU} EQUAL ${CPU_X64}) AND (${FEAT_SHREC} EQUAL ${DYNAREC_JIT})) # AND NOT "${NINJA}" STREQUAL "")
+    set(FEAT_SHREC  ${DYNAREC_CPP})
+    message("---x64 rec disabled for VC x64 via NINJA")
+  endif()
+		
+  add_definitions(/D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1)
+
+  if(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})
+    add_definitions(/DXBYAK_NO_OP_NAMES /DTARGET_NO_OPENMP)  #*FIXME* check openmp on clang-cl
+    remove_definitions(/U_HAS_STD_BYTE)
+    set(_CXX_FLAGS "/std:c++14")	# /U_HAS_STD_BYTE not working, have to use c++14 not 17 :|
+    set(_C_FLAGS "-Wno-unused-function -Wno-unused-variable")
+  endif()
+
+
+elseif ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
+		(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})) # AND NOT ${HOST_OS} EQUAL ${OS_WINDOWS}))
   
   if(USE_32B OR TARGET_LINUX_X86)
     set(_C_FLAGS "${_C_FLAGS} -m32")
@@ -283,13 +336,17 @@ if ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
   endif() # X86 family
   
     
-  set(_CXX_FLAGS "${_CXX_FLAGS} ${_C_FLAGS} -std=c++17 -fcxx-exceptions") ## xbyak needs exceptions
+  set(_CXX_FLAGS "${_CXX_FLAGS} -fno-operator-names -fpermissive -std=c++11") # -fcxx-exceptions") ## xbyak needs exceptions
+
 endif()
 
 
+set(_CXX_FLAGS "${_CXX_FLAGS} ${_C_FLAGS}")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_CXX_FLAGS}")
+
+
+set(CMAKE_C_FLAGS " ${_C_FLAGS}") # ${CMAKE_C_FLAGS}   -- these hold default VC flags for non VC Build ?
+set(CMAKE_CXX_FLAGS " ${_CXX_FLAGS}") # ${CMAKE_CXX_FLAGS}
 
 
 
@@ -311,6 +368,33 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_CXX_FLAGS}")
 #if defined(TARGET_SOFTREND)    # need -fopenmp
 	#define FEAT_HAS_SOFTREND 1
 #endif
+
+
+if (TARGET_UWP)
+#
+  message("-----------------------------------------------------")
+  message(" OS: UWP / Windows Store ")
+  message("-----------------------------------------------------")
+
+  set(COMPILER_VERSION "15")
+  set(PLATFORM STORE)
+
+  # This is the minimum Win 10 version that will allow the app to install - 15063 is current version of WP10 emulators
+  set(MIN_PLATFORM_VERSION "10.0.15063.0")
+
+
+	## setup other things / fixes here for uwp ## 
+  add_definitions(/DUWP /DGLES /DANGLE)
+  add_definitions(/DTARGET_NO_THREADS /DTARGET_NO_EXCEPTIONS /DTARGET_NO_NIXPROF)
+  add_definitions(/DTARGET_NO_COREIO_HTTP /DTARGET_NO_WEBUI /UTARGET_SOFTREND)
+  
+#if(TARGET_NO_JIT)
+  set(FEAT_SHREC  ${DYNAREC_NONE}) # will use DYNAREC_CPP to test after successful build #
+  set(FEAT_AREC   ${DYNAREC_NONE})
+  set(FEAT_DSPREC ${DYNAREC_NONE})
+#endif()
+
+endif()
 
 
 if (TARGET_NSW) # -DCMAKE_TOOLCHAIN_FILE=./cmake/devkitA64.cmake -DTARGET_NSW=ON
@@ -392,62 +476,5 @@ add_definitions(-DDEF_CONSOLE)
 
 set(RE_CMAKE_CONFIGURED 1)
 #add_definitions(-D=${})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### These were for internal testing, don't use ###
-#
-function(CpuIs CpuType Res)
-  set(${Res} OFF PARENT_SCOPE)
-  if (${HOST_CPU} EQUAL ${CpuType})
-    set(${Res} ON PARENT_SCOPE)
-  endif()
-endfunction()
-
-macro(CpuIsX86 res)
-  CpuIs(CPU_X86 ${res})
-endmacro()
-
-macro(CpuIsX64 res)
-  CpuIs(CPU_X64 ${res})
-endmacro()
-
-macro(CpuIsARM res)
-  CpuIs(CPU_ARM ${res})
-endmacro()
-
-macro(CpuIsA64 res)
-  CpuIs(CPU_A64 ${res})
-endmacro()
-
-macro(CpuIsPPC res)
-  CpuIs(CPU_PPC ${res})
-endmacro()
-
-macro(CpuIsPPC64 res)
-  CpuIs(CPU_PPC64 ${res})
-endmacro()
-
-macro(CpuIsMIPS res)
-  CpuIs(CPU_MIPS ${res})
-endmacro()
-
-macro(CpuIsMIPS64 res)
-  CpuIs(CPU_MIPS64 ${res})
-endmacro()
-
-
-
 
 

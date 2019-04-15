@@ -85,22 +85,6 @@
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
     },
-
-    // UWP and VS Gen
-    {
-      "name": "uwp-x86-Release",
-      "generator": "Visual Studio 15 2017",
-      "description": "TemplateDescription_Localize_x86Release",
-      "configurationType": "RelWithDebInfo",
-      "inheritEnvironments": [
-        "msvc_x86"
-      ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\build\\${name}\\install",
-      "cmakeCommandArgs": "-DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0",
-      "buildCommandArgs": "",
-      "ctestCommandArgs": ""
-    },
     {
       "name": "uwp-x64-Release",
       "generator": "Visual Studio 15 2017 Win64",
@@ -111,49 +95,7 @@
       ],
       "buildRoot": "${projectDir}\\build\\${name}",
       "installRoot": "${projectDir}\\build\\${name}\\install",
-      "cmakeCommandArgs": "-DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0",
-      "buildCommandArgs": "",
-      "ctestCommandArgs": ""
-    },
-    {
-      "name": "uwp-x64-Debug",
-      "generator": "Visual Studio 15 2017 Win64",
-      "description": "TemplateDescription_Localize_x64Debug",
-      "configurationType": "Debug",
-      "inheritEnvironments": [
-        "msvc_x64_x64"
-      ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\build\\${name}\\install",
-      "cmakeCommandArgs": "-DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0",
-      "buildCommandArgs": "",
-      "ctestCommandArgs": ""
-    },
-    {
-      "name": "uwp-arm-Release",
-      "generator": "Visual Studio 15 2017 ARM",
-      "description": "TemplateDescription_Localize_armDebug",
-      "configurationType": "RelWithDebInfo",
-      "inheritEnvironments": [
-        "msvc_arm"
-      ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\build\\${name}\\install",
-      "cmakeCommandArgs": "-DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0",
-      "buildCommandArgs": "",
-      "ctestCommandArgs": ""
-    },
-    {
-      "name": "win-x64-MSBuild-Release",
-      "generator": "Visual Studio 15 2017 Win64",
-      "description": "TemplateDescription_Localize_x64Release",
-      "configurationType": "RelWithDebInfo",
-      "inheritEnvironments": [
-        "msvc_x64_x64"
-      ],
-      "buildRoot": "${projectDir}\\build\\${name}",
-      "installRoot": "${projectDir}\\build\\${name}\\install",
-      "cmakeCommandArgs": "",
+      "cmakeCommandArgs": "-DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0 -DTARGET_UWP=1",
       "buildCommandArgs": "",
       "ctestCommandArgs": ""
     }

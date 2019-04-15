@@ -32,7 +32,7 @@
 #ifdef CMAKE_BUILD
 #include "lws_config.h"
 #else
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 #define inline __inline
 #else /* not WIN32 */
 #include "config.h"

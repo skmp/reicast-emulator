@@ -87,7 +87,7 @@ size_t HTTP_GET(wstring host, int port,wstring path, size_t offs, size_t len, vo
 
 	static bool init = false;
 	if (!init) {
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 		static WSADATA wsaData;
 		if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
 			die(L"WSAStartup fail");
@@ -108,7 +108,7 @@ size_t HTTP_GET(wstring host, int port,wstring path, size_t offs, size_t len, vo
     if (connect(sock, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0)
         return -1;
 
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 	BOOL v = TRUE;
 #else
 	int v = 1;
@@ -181,7 +181,7 @@ _data:
 
 	_cleanup:
     //disconnect
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
     closesocket(sock);
 #else
 	close(sock);

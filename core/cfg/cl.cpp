@@ -106,28 +106,22 @@ int setconfig(wchar_t** arg,int cl)
 #endif
 
 #if !defined(DEF_CONSOLE)
-#if defined(linux) || defined(_ANDROID)
+#if defined(linux) || defined(_ANDROID) || defined(TARGET_UWP) // UWP: we have no interested in 
 #define DEF_CONSOLE
 #endif
 #endif
 
-#if defined(_WIN32)
-#include <conio.h>
-#endif
-
 void cli_pause()
 {
-#ifdef DEF_CONSOLE
+#if defined(DEF_CONSOLE)
 	return;
+#elif defined(_WIN32)
+#include <conio.h>
+	#define getchar (char)_getch
 #endif
 
-#if defined(_WIN32)
-	wprintf(L"\nPress a key to exit.\n");
-	_getch();
-#else
 	wprintf(L"\nPress enter to exit.\n");
 	char c = getchar();
-#endif
 }
 
 

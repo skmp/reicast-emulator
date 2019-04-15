@@ -193,14 +193,14 @@ void gdrom_hle_op()
 		case GDROM_RESET:	wprintf(L"\nGDROM:\tHLE GDROM_RESET\n");	break;
 
 		case GDROM_CHECK_DRIVE:		// 
-			debugf(L"\nGDROM:\tHLE GDROM_CHECK_DRIVE r4:%X\n",r[4],r[5]);
+			debugf(L"\nGDROM:\tHLE GDROM_CHECK_DRIVE r4:%X\n",r[4]);
 			WriteMem32(r[4]+0,0x02);	// STANDBY
 			WriteMem32(r[4]+4,libGDR_GetDiscType());	// CDROM | 0x80 for GDROM
 			r[0]=0;					// RET SUCCESS
 		break;
 
 		case GDROM_ABORT_COMMAND:	// 
-			wprintf(L"\nGDROM:\tHLE GDROM_ABORT_COMMAND r4:%X\n",r[4],r[5]);
+			wprintf(L"\nGDROM:\tHLE GDROM_ABORT_COMMAND r4:%X\n",r[4]);
 			r[0]=-1;				// RET FAILURE
 		break;
 
@@ -209,7 +209,7 @@ void gdrom_hle_op()
 			wprintf(L"GDROM:\tHLE GDROM_SECTOR_MODE PTR_r4:%X\n",r[4]);
 			for(int i=0; i<4; i++) {
 				SecMode[i] = ReadMem32(r[4]+(i<<2));
-				wprintf(L"%08X%s",SecMode[i],((3==i) ? "\n" : "\t"));
+				wprintf(L"%08X%s",SecMode[i],((3==i) ? L"\n" : L"\t"));
 			}
 			r[0]=0;					// RET SUCCESS
 		break;

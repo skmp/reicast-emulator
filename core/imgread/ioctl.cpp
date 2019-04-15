@@ -1,6 +1,6 @@
 #include "types.h"
 
-#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS==OS_WINDOWS && !defined(TARGET_UWP)
 #include "common.h"
 
 #include <stddef.h>

@@ -1,10 +1,10 @@
 #include "audiobackend_directsound.h"
-#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS==OS_WINDOWS && !defined(TARGET_UWP) // *FIXME* UWP , check
 #include "oslib.h"
 #include <initguid.h>
 #include <dsound.h>
 
-#pragma comment(lib, "dsound.lib");
+#pragma comment(lib, "dsound.lib")
 
 void* SoundThread(void* param);
 #define V2_BUFFERSZ (16*1024)

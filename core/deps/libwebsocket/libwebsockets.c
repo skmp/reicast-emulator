@@ -22,7 +22,7 @@
 
 #include "private-libwebsockets.h"
 
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 	#pragma comment(lib, "Ws2_32.lib")
 #endif
 

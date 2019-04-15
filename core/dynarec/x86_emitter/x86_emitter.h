@@ -5,7 +5,10 @@
 	#include <TargetConditionals.h>
 #endif
 
+#ifndef TARGET_UWP	//  Really MSVC C++17, types.h handles this already!
 using namespace std;
+#endif
+
 //Oh god , x86 is a sooo badly designed opcode arch -_-
 
 const wchar_t* DissasmClass(x86_opcode_class opcode);

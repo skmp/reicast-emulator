@@ -37,7 +37,7 @@ void DetectCpuFeatures()
 	if (detected) return;
 	detected=true;
 
-#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS==OS_WINDOWS
 	__try
 	{
 		__asm addps xmm0,xmm0
@@ -722,7 +722,7 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 			}
 			else
 			{
-				#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+				#if HOST_OS == OS_WINDOWS
 					//on linux, we have scratch space on esp
 					x86e->Emit(op_sub32,ESP,8);
 				#endif

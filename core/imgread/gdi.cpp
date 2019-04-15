@@ -7,7 +7,7 @@
 // given name.ext returns ./ or .\, depending on the platform
 wstring OS_dirname(wstring file)
 {
-	#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+	#if HOST_OS == OS_WINDOWS
 		const char sep = '\\';
 	#else
 		const char sep = '/';
@@ -29,7 +29,7 @@ wstring OS_dirname(wstring file)
 // On linux, transform \\ to /
 wstring normalize_path_separator(wstring path)
 {
-	#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+	#if HOST_OS == OS_WINDOWS
 		std::replace( path.begin(), path.end(), '/', '\\');
 	#else
 		std::replace( path.begin(), path.end(), '\\', '/');
@@ -85,7 +85,7 @@ Disc* load_gdi(const wchar_t* file)
 	core_fread(t, gdi_data, gdi_len);
 	core_fclose(t);
 
-	istringstream gdi(gdi_data);
+	std::istringstream gdi(gdi_data);
 
 	gdi >> iso_tc;
 	wprintf(L"\nGDI : %d tracks\n",iso_tc);

@@ -3,7 +3,7 @@
 
 #include "build.h"
 
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 
 unsigned long long
 time_in_microseconds()

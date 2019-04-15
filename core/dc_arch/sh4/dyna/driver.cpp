@@ -1,6 +1,6 @@
 #include "types.h"
 
-#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS==OS_WINDOWS
 #include <windows.h>
 #elif HOST_OS==OS_LINUX
 #include <unistd.h>
@@ -30,7 +30,7 @@
 
 #if !defined(_WIN64)
 u8 SH4_TCB[CODE_SIZE+4096]
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP || FEAT_SHREC != DYNAREC_JIT
+#if HOST_OS == OS_WINDOWS || FEAT_SHREC != DYNAREC_JIT
 	;
 #elif HOST_OS == OS_LINUX || HOST_OS == OS_PS4_BSD
 	__attribute__((section(".text")));
@@ -440,7 +440,7 @@ void recSh4_Init()
     CodeCache = (u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
 #endif
 
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 	DWORD old;
 	VirtualProtect(CodeCache,CODE_SIZE,PAGE_EXECUTE_READWRITE,&old);
 #elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN

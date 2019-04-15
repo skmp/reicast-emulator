@@ -4,7 +4,7 @@
 u8* RomPtr;
 u32 RomSize;
 
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 	typedef HANDLE fd_t;
 	#define INVALID_FD INVALID_HANDLE_VALUE
 #else
@@ -103,7 +103,7 @@ bool naomi_cart_LoadRom(wchar_t* file)
 	wcscat(t, L"ndcn-composed.cache");
 
 	//Allocate space for the ram, so we are sure we have a segment of continius ram
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 	RomPtr = (u8*)VirtualAlloc(0, RomSize, MEM_RESERVE, PAGE_NOACCESS);
 #else
 	RomPtr = (u8*)mmap(0, RomSize, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
@@ -121,15 +121,17 @@ bool naomi_cart_LoadRom(wchar_t* file)
 	{
 		t[folder_pos] = 0;
 		wcscat(t, files[i].c_str());
-		fd_t RomCache;
+		fd_t RomCache = INVALID_FD;
 
 		if (wcscmp(files[i].c_str(), L"null") == 0)
 		{
 			RomCacheMap[i] = INVALID_FD;
 			continue;
 		}
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
+#ifndef TARGET_UWP // *FIXME* UWP
 		RomCache = CreateFile(t, FILE_READ_ACCESS, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+#endif
 #else
 		RomCache = open(t, O_RDONLY);
 #endif
@@ -140,7 +142,7 @@ bool naomi_cart_LoadRom(wchar_t* file)
 			continue;
 		}
 
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS && !defined(TARGET_UWP) // *FIXME* UWP
 		RomCacheMap[i] = CreateFileMapping(RomCache, 0, PAGE_READONLY, 0, fsize[i], 0);
 		verify(CloseHandle(RomCache));
 #else
@@ -154,7 +156,7 @@ bool naomi_cart_LoadRom(wchar_t* file)
 	//We have all file mapping objects, we start to map the ram
 	wprintf(L"+Mapping ROM\n");
 	//Release the segment we reserved so we can map the files there
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 	verify(VirtualFree(RomPtr, 0, MEM_RELEASE));
 #else
 	munmap(RomPtr, RomSize);
@@ -167,23 +169,27 @@ bool naomi_cart_LoadRom(wchar_t* file)
 
 		if (RomCacheMap[i] == INVALID_FD)
 		{
+			bool mapped=false;
 			wprintf(L"-Reserving ram at 0x%08X, size 0x%08X\n", fstart[i], fsize[i]);
 			
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
-			bool mapped = RomDest == VirtualAlloc(RomDest, fsize[i], MEM_RESERVE, PAGE_NOACCESS);
+#if HOST_OS == OS_WINDOWS
+			mapped = RomDest == VirtualAlloc(RomDest, fsize[i], MEM_RESERVE, PAGE_NOACCESS);
 #else
-			bool mapped = RomDest == (u8*)mmap(RomDest, RomSize, PROT_NONE, MAP_PRIVATE, 0, 0);
+			mapped = RomDest == (u8*)mmap(RomDest, RomSize, PROT_NONE, MAP_PRIVATE, 0, 0);
 #endif
 
 			verify(mapped);
 		}
 		else
 		{
+			bool mapped=false;
 			wprintf(L"-Mapping \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
-			bool mapped = RomDest != MapViewOfFileEx(RomCacheMap[i], FILE_MAP_READ, 0, 0, fsize[i], RomDest);
+#if HOST_OS == OS_WINDOWS
+#ifndef TARGET_UWP // *FIXME* UWP
+			mapped = RomDest != MapViewOfFileEx(RomCacheMap[i], FILE_MAP_READ, 0, 0, fsize[i], RomDest);
+#endif
 #else
-			bool mapped = RomDest != mmap(RomDest, fsize[i], PROT_READ, MAP_PRIVATE, RomCacheMap[i], 0 );
+			mapped = RomDest != mmap(RomDest, fsize[i], PROT_READ, MAP_PRIVATE, RomCacheMap[i], 0 );
 #endif
 			if (!mapped)
 			{
@@ -205,7 +211,7 @@ bool naomi_cart_SelectFile(void* handle)
 {
 	cfgLoadStr(L"config", L"image", SelectedFile, L"null");
 	
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS && !defined(TARGET_UWP)
 	if (wcscmp(SelectedFile, L"null") == 0) {
 		OPENFILENAME ofn = { 0 };
 		ofn.lStructSize = sizeof(OPENFILENAME);

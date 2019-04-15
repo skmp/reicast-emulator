@@ -522,7 +522,7 @@ int screen_height;
 	//destroy the gles context and free resources
 	void gl_term()
 	{
-	#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
+	#if HOST_OS==OS_WINDOWS && !defined(TARGET_UWP) // *FIXME* ? UWP ?
 		ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
 	#endif
 	#ifdef TARGET_PANDORA
@@ -544,7 +544,7 @@ int screen_height;
 	}
 #else
 
-	#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+	#if HOST_OS == OS_WINDOWS
 		#define WGL_DRAW_TO_WINDOW_ARB         0x2001
 		#define WGL_ACCELERATION_ARB           0x2003
 		#define WGL_SWAP_METHOD_ARB            0x2007
@@ -1872,7 +1872,7 @@ bool RenderFrame()
 
 	DrawStrips();
 
-	#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
+	#if HOST_OS==OS_WINDOWS
 		//Sleep(40); //to test MT stability
 	#endif
 

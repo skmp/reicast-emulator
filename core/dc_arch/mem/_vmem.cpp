@@ -440,7 +440,7 @@ void _vmem_bm_reset() {
 #define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)
 #define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)
 
-#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS==OS_WINDOWS
 #include <Windows.h>
 HANDLE mem_handle;
 
@@ -660,7 +660,7 @@ bool BM_LockedWrite(u8* address)
 	{
 		//wprintf(L"Allocated %d PAGES [%08X]\n",++pagecnt,addr);
 
-#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS==OS_WINDOWS
 		verify(VirtualAlloc(address,PAGE_SIZE,MEM_COMMIT,PAGE_READWRITE));
 #else
 		mprotect (address, PAGE_SIZE, PROT_READ | PROT_WRITE);
@@ -692,7 +692,7 @@ bool _vmem_reserve()
 	
 	p_sh4rcb=(Sh4RCB*)virt_ram_base;
 
-#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS==OS_WINDOWS
 	//verify(p_sh4rcb==VirtualAlloc(p_sh4rcb,sizeof(Sh4RCB),MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE));
 	verify(p_sh4rcb==VirtualAlloc(p_sh4rcb,sizeof(Sh4RCB),MEM_RESERVE,PAGE_NOACCESS));
 

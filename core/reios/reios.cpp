@@ -642,8 +642,9 @@ void reios_boot() {
 	}
 }
 
-map<u32, hook_fp*> hooks;
-map<hook_fp*, u32> hooks_rev;
+
+std::map<u32, hook_fp*> hooks;
+std::map<hook_fp*, u32> hooks_rev;
 
 #define SYSCALL_ADDR_MAP(addr) ((addr & 0x1FFFFFFF) | 0x80000000)
 

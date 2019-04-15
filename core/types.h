@@ -460,7 +460,14 @@ int darw_printf(const wchar_t* Text,...);
 //includes from c++rt
 #include <vector>
 #include <string>
+
+#ifndef TARGET_UWP	//  Really MSVC C++17
 using namespace std;
+#else
+#define vector std::vector
+typedef std::string string;
+typedef std::wstring wstring;
+#endif
 
 //used for asm-olny functions
 #if defined(X86) && COMPILER_VC==BUILD_COMPILER
@@ -483,13 +490,13 @@ using namespace std;
 #endif
 
 //no inline -- fixme
-#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS==OS_WINDOWS
 #define NOINLINE __declspec(noinline)
 #else
 #define NOINLINE __attribute__ ((noinline))
 #endif
 
-#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS==OS_WINDOWS
 #define likely(x) x
 #define unlikely(x) x
 #else
@@ -500,15 +507,15 @@ using namespace std;
 //basic includes
 #include "stdclass.h"
 
-#define EMUERROR(x)( wprintf(L"Error in %s:" "%s" ":%d  -> " x "\n", __FILE__,__FUNCTION__ ,__LINE__ ))
-#define EMUERROR2(x,a)(wprintf(L"Error in %s:" "%s" ":%d  -> " x "\n)",__FILE__,__FUNCTION__,__LINE__,a))
-#define EMUERROR3(x,a,b)(wprintf(L"Error in %s:" "%s" ":%d  -> " x "\n)",__FILE__,__FUNCTION__,__LINE__,a,b))
-#define EMUERROR4(x,a,b,c)(wprintf(L"Error in %s:" "%s" ":%d  -> " x "\n",__FILE__,__FUNCTION__,__LINE__,a,b,c))
+#define EMUERROR(x)( wprintf(L"Error in %hs:" "%hs" ":%d  -> " x "\n", __FILE__,__FUNCTION__ ,__LINE__ ))
+#define EMUERROR2(x,a)(wprintf(L"Error in %hs:" "%hs" ":%d  -> " x "\n)",__FILE__,__FUNCTION__,__LINE__,a))
+#define EMUERROR3(x,a,b)(wprintf(L"Error in %hs:" "%hs" ":%d  -> " x "\n)",__FILE__,__FUNCTION__,__LINE__,a,b))
+#define EMUERROR4(x,a,b,c)(wprintf(L"Error in %hs:" "%hs" ":%d  -> " x "\n",__FILE__,__FUNCTION__,__LINE__,a,b,c))
 
-#define EMUWARN(x)(wprintf(      L"Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__))
-#define EMUWARN2(x,a)(wprintf(   L"Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a))
-#define EMUWARN3(x,a,b)(wprintf( L"Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a,b))
-#define EMUWARN4(x,a,b,c)(wprintf(L"Warning in %s:" "%s" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a,b,c))
+#define EMUWARN(x)(wprintf(      L"Warning in %hs:" "%hs" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__))
+#define EMUWARN2(x,a)(wprintf(   L"Warning in %hs:" "%hs" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a))
+#define EMUWARN3(x,a,b)(wprintf( L"Warning in %hs:" "%hs" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a,b))
+#define EMUWARN4(x,a,b,c)(wprintf(L"Warning in %hs:" "%hs" ":%d  -> " x "\n"),__FILE__,__FUNCTION__,__LINE__,a,b,c))
 
 
 

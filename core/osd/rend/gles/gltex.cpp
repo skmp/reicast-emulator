@@ -365,8 +365,8 @@ struct TextureCacheData
 };
 
 #include <map>
-map<u64,TextureCacheData> TexCache;
-typedef map<u64,TextureCacheData>::iterator TexCacheIter;
+std::map<u64,TextureCacheData> TexCache;
+typedef std::map<u64,TextureCacheData>::iterator TexCacheIter;
 
 //TexCacheList<TextureCacheData> TexCache;
 

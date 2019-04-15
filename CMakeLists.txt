@@ -81,15 +81,6 @@ if(TARGET_PS4)
   set(binSuffix ".elf")
 endif()
 
-if(TARGET_UWP)
-
-  list(APPEND reicast_SRCS 
-    ${reicast_core_path}/osd/uwp/reicastApp.cpp ${reicast_core_path}/osd/uwp/reicastApp.h)
-
-endif()
-
-
-
 add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
 
 

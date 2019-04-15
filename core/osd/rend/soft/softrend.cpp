@@ -8,11 +8,6 @@
 	and does depth and color, but no alpha, texture, or pixel
 	processing. All of the pipeline is based on quads.
 */
-
-#include "oslib.h"
-
-
-
 #if FEAT_HAS_SOFTREND
 
 #include <omp.h>
@@ -817,7 +812,7 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 	}
 }
 
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 	BITMAPINFOHEADER bi = { sizeof(BITMAPINFOHEADER), 0, 0, 1, 32, BI_RGB };
 #endif
 
@@ -904,7 +899,7 @@ struct softrend : Renderer
 		return !is_rtt;
 	}
 
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 	HWND hWnd;
 	HBITMAP hBMP = 0, holdBMP;
 	HDC hmem;
@@ -917,7 +912,7 @@ struct softrend : Renderer
 		u8 ushuffle[] = { 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80};
 		memcpy(&shuffle_alpha, ushuffle, sizeof(shuffle_alpha));
 
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 		hWnd = (HWND)libPvr_GetRenderTarget();
 
 		bi.biWidth = 640;
@@ -1157,7 +1152,7 @@ struct softrend : Renderer
 	}
 
 	virtual void Term() {
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 		if (hBMP) {
 			DeleteObject(SelectObject(hmem, holdBMP));
 			DeleteDC(hmem);
@@ -1181,7 +1176,7 @@ struct softrend : Renderer
 		#define SHUFFL(v) v
 		//	#define SHUFFL(v) shuffle_pixel(v)
 
-		#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+		#if HOST_OS == OS_WINDOWS
 			#define FLIP_Y 479 -
 		#else
 			#define FLIP_Y
@@ -1199,7 +1194,7 @@ struct softrend : Renderer
 			}
 		}
 
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 		SetDIBits(hmem, hBMP, 0, 480, pixels, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
 
 		RECT clientRect;

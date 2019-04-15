@@ -1163,7 +1163,7 @@ struct maple_naomi_jamma : maple_sega_controller
 					static unsigned short coin1 = 0x0000;
 					static unsigned short coin2 = 0x0000;
 					unsigned char Key[256] = { 0 };
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS && !defined(TARGET_UWP)
 					GetKeyboardState(Key);
 #endif
 					if (keycode&NAOMI_SERVICE_KEY_1)			//Service ?

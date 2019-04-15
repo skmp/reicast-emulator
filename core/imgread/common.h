@@ -1,7 +1,10 @@
 #pragma once
 #include "gd_driver.h"
 #include <vector>
+
+#ifndef TARGET_UWP	//  Really MSVC C++17, types.h handles this already!
 using namespace std;
+#endif
 
 #include "deps/coreio/coreio.h"
 

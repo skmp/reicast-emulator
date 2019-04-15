@@ -742,7 +742,7 @@ u8* icPtr;
 u8* ICache;
 
 const u32 ICacheSize=1024*1024;
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 u8 ARM7_TCB[ICacheSize+4096];
 #elif HOST_OS == OS_LINUX
 
@@ -2107,7 +2107,7 @@ void FlushCache()
 
 
 
-#if HOST_CPU==CPU_X86 && (HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP)
+#if HOST_CPU==CPU_X86 && HOST_OS==OS_WINDOWS
 
 #include <Windows.h>
 
@@ -2149,7 +2149,7 @@ void armt_init()
 		ICache = (u8*)mmap(ICache, ICacheSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
 	#endif
 
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 	DWORD old;
 	VirtualProtect(ICache,ICacheSize,PAGE_EXECUTE_READWRITE,&old);
 #elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN

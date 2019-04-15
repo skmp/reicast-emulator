@@ -161,7 +161,7 @@ string(TOLOWER ${CMAKE_SYSTEM_NAME} host_os)
 if("android" STREQUAL "${host_os}"  OR ANDROID)
   set(HOST_OS ${OS_LINUX}) 	# *FIXME* we might have to keep as OS_LINUX or add to full cleanup list :|
   
-elseif(CMAKE_HOST_WIN32 OR "windowsstore" STREQUAL "${host_os}")
+elseif(CMAKE_HOST_WIN32 OR "windowsstore" STREQUAL "${host_os}")  # MATHCES "windows" ?
 #
   set(HOST_OS ${OS_WINDOWS}) 
 #
@@ -254,7 +254,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   add_definitions(/D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1)
   
   if(TARGET_UWP)
-    set(_CXX_FLAGS "/ZW ")
+    set(_CXX_FLAGS "/ZW /EHsc /std:c++17  /wd4146")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /AppContainer")
   endif()
 #
@@ -384,9 +384,10 @@ if (TARGET_UWP)
 
 
 	## setup other things / fixes here for uwp ## 
-  add_definitions(/DUWP /DGLES /DANGLE)
+  add_definitions(/DTARGET_UWP /DUWP /DGLES /DANGLE)
   add_definitions(/DTARGET_NO_THREADS /DTARGET_NO_EXCEPTIONS /DTARGET_NO_NIXPROF)
-  add_definitions(/DTARGET_NO_COREIO_HTTP /DTARGET_NO_WEBUI /UTARGET_SOFTREND)
+  add_definitions(/DTARGET_NO_COREIO_HTTP /DTARGET_NO_WEBUI) # /UTARGET_SOFTREND)
+  add_definitions(/DTARGET_NO_NVMEM)	## *FIXME* MapViewOfFile on mem_handle ##
   
 #if(TARGET_NO_JIT)
   set(FEAT_SHREC  ${DYNAREC_NONE}) # will use DYNAREC_CPP to test after successful build #

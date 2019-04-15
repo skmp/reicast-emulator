@@ -104,7 +104,9 @@ void palette_update()
 }
 
 
+#ifndef TARGET_UWP	//  Really MSVC C++17, types.h handles this already!
 using namespace std;
+#endif
 
 vector<vram_block*> VramLocks[VRAM_SIZE/PAGE_SIZE];
 //vram 32-64b

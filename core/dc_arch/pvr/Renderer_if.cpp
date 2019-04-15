@@ -348,7 +348,7 @@ void rend_start_render()
 			max_mvo=max(max_mvo,ctx->rend.global_param_mvo.used());
 			max_modt=max(max_modt,ctx->rend.modtrig.used());
 
-#if (HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP) && 0
+#if (HOST_OS==OS_WINDOWS) && 0
 			wprintf(L"max: idx: %d, vtx: %d, op: %d, pt: %d, tr: %d, mvo: %d, modt: %d, ov: %d\n", max_idx, max_vtx, max_op, max_pt, max_tr, max_mvo, max_modt, ovrn);
 #endif
 			if (QueueRender(ctx))
@@ -422,7 +422,7 @@ bool rend_init()
 		case 0:
 			renderer = rend_GLES2();
 			break;
-#if (HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP) && !defined(USE_QT)
+#if (HOST_OS == OS_WINDOWS) && !defined(USE_QT)
 		case 1:
 			renderer = rend_D3D11();
 			break;

@@ -1024,51 +1024,51 @@ bool UpdateSR();
 
 wstring name_reg(u32 reg)
 {
-	wstringstream ss;
+	std::wstringstream ss;
 
 	if (reg>=reg_fr_0 && reg<=reg_xf_15)
-		ss << "f" << (reg-16);
+		ss << L"f" << (reg-16);
 	else if (reg<=reg_r15)
-		ss << "r" << reg;
+		ss << L"r" << reg;
 	else if (reg == reg_sr_T)
-		ss << "sr.T";
+		ss << L"sr.T";
 	else if (reg == reg_fpscr)
-		ss << "fpscr";
+		ss << L"fpscr";
 	else if (reg == reg_sr_status)
-		ss << "sr";
+		ss << L"sr";
 	else
-		ss << "s" << reg;
+		ss << L"s" << reg;
 
 	return ss.str();
 }
 wstring dissasm_param(const shil_param& prm, bool comma)
 {
-	wstringstream ss;
+	std::wstringstream ss;
 
 	if (!prm.is_null() && comma)
-			ss << ", ";
+			ss << L", ";
 
 	if (prm.is_imm())
 	{	
 		if (prm.is_imm_s8())
 			ss  << (s32)prm._imm ;
 		else
-			ss << "0x" << hex << prm._imm;
+			ss << L"0x" << std::hex << prm._imm;
 	}
 	else if (prm.is_reg())
 	{
 		if (!prm.is_r32i())
-			ss << "f" << (prm._reg-16);
+			ss << L"f" << (prm._reg-16);
 		else if (prm._reg<=reg_r15)
-			ss << "r" << prm._reg;
+			ss << L"r" << prm._reg;
 		else if (prm._reg == reg_sr_T)
-			ss << "sr.T";
+			ss << L"sr.T";
 		else if (prm._reg == reg_fpscr)
-			ss << "fpscr";
+			ss << L"fpscr";
 		else if (prm._reg == reg_sr_status)
-			ss << "sr";
+			ss << L"sr";
 		else
-			ss << "s" << prm._reg;
+			ss << L"s" << prm._reg;
 			
 
 		if (prm.count()>1)
@@ -1082,7 +1082,7 @@ wstring dissasm_param(const shil_param& prm, bool comma)
 
 wstring shil_opcode::dissasm()
 {
-	wstringstream ss;
+	std::wstringstream ss;
 	ss << shilop_str[op] << L" " << dissasm_param(rd,false) << dissasm_param(rd2,true) << L" <= " << dissasm_param(rs1,false) << dissasm_param(rs2,true) << dissasm_param(rs3,true);
 	return ss.str();
 }

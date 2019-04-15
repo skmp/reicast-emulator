@@ -4,7 +4,7 @@
 
 #include "rec_x86_ngen.h"
 
-#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS == OS_WINDOWS
 
 naked void ngen_LinkBlock_Shared_stub()
 {

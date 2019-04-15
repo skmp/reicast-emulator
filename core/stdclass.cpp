@@ -15,8 +15,8 @@
 
 wstring user_config_dir;
 wstring user_data_dir;
-std::vector<wstring> system_config_dirs;
-std::vector<wstring> system_data_dirs;
+vector<wstring> system_config_dirs;
+vector<wstring> system_data_dirs;
 
 
 #ifdef PS4  // *FIXME* F'n annoying SCE likes to play with things //

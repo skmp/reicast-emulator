@@ -1206,7 +1206,7 @@ void AICA_Sample32()
 			mxlr[i*2+1] += oRight;
 		}
 	}
-#if HOST_OS==OS_WINDOWS || HOST_OS==OS_UWP
+#if HOST_OS==OS_WINDOWS
 	samples_gen += sg;
 #endif
 	//OK , generated all Channels  , now DSP/ect + final mix ;p

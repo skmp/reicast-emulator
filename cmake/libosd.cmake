@@ -105,7 +105,7 @@ endif()
 ## WIP ./osd/$OS$/$OS$_{osd,ui,rend?}
 #
 
-if (${HOST_OS} EQUAL ${OS_WINDOWS})
+if (${HOST_OS} EQUAL ${OS_WINDOWS} AND NOT TARGET_UWP)
 #
   message("-----------------------------------------------------")
   message(" OS: Windows ")
@@ -114,28 +114,25 @@ if (${HOST_OS} EQUAL ${OS_WINDOWS})
   
   list(APPEND libosd_SRCS ${d_osd}/audiobackend/audiobackend_directsound.cpp)
 
-  if(NOT USE_QT AND NOT USE_SDL)
+  if(NOT USE_QT AND NOT USE_SDL AND NOT TARGET_UWP)
     list(APPEND libosd_SRCS 
       ${d_osd}/windows/winmain.cpp	#win_ui
       ${d_osd}/rend/d3d11/d3d11.cpp
     )
   endif()
 #
-elseif (${HOST_OS} EQUAL ${OS_UWP}) # WIP also see CmakeLists.txt 
+elseif(TARGET_UWP)
 #
-  message("-----------------------------------------------------")
-  message(" OS: UWP / Windows Store ")
-  set(COMPILER_VERSION "15")
-  set(PLATFORM STORE)
+    message(" Subtarget: UWP / Windows Store ")
 
-  # This is the minimum Win 10 version that will allow the app to install - 15063 is current version of WP10 emulators
-  set(MIN_PLATFORM_VERSION "10.0.15063.0")
+    list(APPEND libosd_SRCS ${d_osd}/uwp/reicastApp.cpp ${d_osd}/uwp/reicastApp.h)
 
-  list(APPEND osd_SRCS ${d_osd}/uwp/reicastApp.cpp)
-  list(APPEND osd_SRCS ${d_osd}/uwp/reicastApp.h)
+    list(APPEND libosd_SRCS ${d_osd}/audiobackend/audiobackend_directsound.cpp)
+
+	# angle ?
 #
 elseif (${HOST_OS} EQUAL ${OS_LINUX}   OR  ## This should prob be if POSIX_COMPAT : ./osd/posix_base_osd
-	    	${HOST_OS} EQUAL ${OS_ANDROID} )
+	    ${HOST_OS} EQUAL ${OS_ANDROID} )
 #
   message("-----------------------------------------------------")
   message(" OS: Linux ")

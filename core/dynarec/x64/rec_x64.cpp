@@ -96,7 +96,7 @@ public:
 	vector<Xbyak::Xmm> call_regsxmm;
 
 	BlockCompiler() : Xbyak::CodeGenerator(64 * 1024, emit_GetCCPtr()) {
-		#if HOST_OS == OS_WINDOWS || HOST_OS==OS_UWP
+		#if HOST_OS == OS_WINDOWS
 			call_regs.push_back(ecx);
 			call_regs.push_back(edx);
 			call_regs.push_back(r8d);

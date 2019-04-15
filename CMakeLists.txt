@@ -84,7 +84,7 @@ endif()
 if(TARGET_UWP)
 
   list(APPEND reicast_SRCS 
-    ${reicast_core_path}//uwp/reicastApp.cpp ${reicast_core_path}//uwp/reicastApp.h)
+    ${reicast_core_path}/osd/uwp/reicastApp.cpp ${reicast_core_path}/osd/uwp/reicastApp.h)
 
 endif()
 

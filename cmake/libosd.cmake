@@ -121,6 +121,19 @@ if (${HOST_OS} EQUAL ${OS_WINDOWS})
     )
   endif()
 #
+elseif (${HOST_OS} EQUAL ${OS_UWP}) # WIP also see CmakeLists.txt 
+#
+  message("-----------------------------------------------------")
+  message(" OS: UWP / Windows Store ")
+  set(COMPILER_VERSION "15")
+  set(PLATFORM STORE)
+
+  # This is the minimum Win 10 version that will allow the app to install - 15063 is current version of WP10 emulators
+  set(MIN_PLATFORM_VERSION "10.0.15063.0")
+
+  list(APPEND osd_SRCS ${d_osd}/uwp/reicastApp.cpp)
+  list(APPEND osd_SRCS ${d_osd}/uwp/reicastApp.h)
+#
 elseif (${HOST_OS} EQUAL ${OS_LINUX}   OR  ## This should prob be if POSIX_COMPAT : ./osd/posix_base_osd
 	    	${HOST_OS} EQUAL ${OS_ANDROID} )
 #

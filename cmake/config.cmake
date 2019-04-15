@@ -40,6 +40,7 @@ set(OS_DARWIN      0x10000003)
 set(OS_IOS         0x10000004)  # todo: iOS != OS_DARWIN
 set(OS_ANDROID     0x10000005)  # todo: should be SYSTEM_ANDROID but ! OS_LINUX
 
+set(OS_UWP         0x10000011)
 set(OS_NSW_HOS     0x80000001)
 set(OS_PS4_BSD     0x80000002)
 
@@ -92,12 +93,14 @@ set(COMPILER_INTEL 0x30000002)
 ## strings are used to append to path/file names, and to filter multiple possibilities down to one 
 #		AMD64/x86_64:x64, i*86:x86, ppc/powerpc[64][b|l]e:ppc[64] etc 
 #
-if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")    # todo: check MATCHES "i.86" ?
+if(("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686") OR    # todo: check MATCHES "i.86" ?
+   ("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x86"))
   set(host_arch "x86")
   set(HOST_CPU ${CPU_X86})
 #
 elseif(("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "AMD64") OR
-       ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64"))
+       ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64") OR
+	   ("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64"))
   set(host_arch "x64")
   set(HOST_CPU ${CPU_X64})
 #
@@ -141,6 +144,9 @@ string(TOLOWER ${CMAKE_SYSTEM_NAME} host_os)
 
 if("android" STREQUAL "${host_os}"  OR ANDROID)
   set(HOST_OS ${OS_LINUX}) 	# *FIXME* we might have to keep as OS_LINUX or add to full cleanup list :|
+
+elseif("windowsstore" STREQUAL "${host_os}")
+  set(HOST_OS ${OS_UWP}) 
 
 elseif(CMAKE_HOST_WIN32)
   set(HOST_OS ${OS_WINDOWS}) 

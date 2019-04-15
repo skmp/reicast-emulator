@@ -81,8 +81,26 @@ if(TARGET_PS4)
   set(binSuffix ".elf")
 endif()
 
-add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
+if (${HOST_OS} EQUAL ${OS_UWP})
+  # Temporarily only building the UWP app because some stuff won't build right now
+  message(" FIXME/TODO: This builds ONLY the UWP frontend!")
+  
+  # Don't build anything else
+  set(reicast_SRCS "")
+  set(deps_SRCS "")
+  
+  # build UWP app that only creates a window and does nothing else
+  list(APPEND deps_SRCS ${reicast_core_path}/osd/uwp/reicastApp.cpp)
+  list(APPEND deps_SRCS ${reicast_core_path}/osd/uwp/reicastApp.h)
+endif()
 
+add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS})
+
+if (${HOST_OS} EQUAL ${OS_UWP})
+  set_property(TARGET ${TNAME} PROPERTY VS_WINDOWS_TARGET_PLATFORM_MIN_VERSION "${MIN_PLATFORM_VERSION}")
+  # Shouldn't actually need the below but just trying things
+  #set_property(TARGET ${TNAME} PROPERTY VS_SDK_REFERENCES "Micrsoft.Universal.CRT.Debug, Version=${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
+endif()
 
 if(NOT ${HOST_OS} EQUAL ${OS_NSW_HOS})
   source_group(TREE ${PROJECT_SOURCE_DIR} PREFIX src FILES ${reicast_SRCS}) #${PROJECT_SOURCE_DIR}/core

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+	xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+	xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+	IgnorableNamespaces="uap mp">
+
+	<Identity Name="AF8BD429-9BD2-3A47-9B66-9059CC4CDD5A" Publisher="CN=CMake" Version="1.0.0.0" />
+	<mp:PhoneIdentity PhoneProductId="AF8BD429-9BD2-3A47-9B66-9059CC4CDD5A" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+	<Properties>
+		<DisplayName>reicast</DisplayName>
+		<PublisherDisplayName>CMake</PublisherDisplayName>
+		<Logo>reicast.dir\StoreLogo.png</Logo>
+	</Properties>
+	<Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.0.0" MaxVersionTested="10.0.0.0"/>
+		<TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.0.0" MaxVersionTested="10.0.0.0" />
+    <!--<TargetDeviceFamily Name="Windows.Xbox" MinVersion="10.0.x.0" MaxVersionTested="10.0.y.0"/>-->
+	</Dependencies>
+	<Resources>
+		<Resource Language="x-generate" />
+	</Resources>
+	<Applications>
+		<Application Id="App" Executable="reicast.exe" EntryPoint="reicast.App">
+			<uap:VisualElements
+				DisplayName="reicast"
+				Description="reicast"
+				BackgroundColor="#336699"
+				Square150x150Logo="reicast.dir\Logo.png"
+				Square44x44Logo="reicast.dir\SmallLogo44x44.png">
+				<uap:SplashScreen Image="reicast.dir\SplashScreen.png" />
+			</uap:VisualElements>
+		</Application>
+	</Applications>
+</Package>

@@ -97,11 +97,32 @@ endif()
 
 
 if(TARGET_UWP)
-	set(angle_path "${reicast_shell_path}/angle") #   "$ENV{AngleRootPath}"
+	set(uwp_path   "${reicast_shell_path}/uwp")
+	set(angle_path "${reicast_shell_path}/angle")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LIBPATH:${angle_path}/lib")
 	
 	set_target_properties(${TNAME} PROPERTIES VS_WINRT_EXTENSIONS TRUE)
 	set_target_properties(${TNAME} PROPERTIES VS_WINRT_COMPONENT FALSE)
+
+	
+	set(appx_src_path "${uwp_path}/appx")
+
+	set(ASSET_FILES
+	    ${appx_src_path}/Logo.scale-100.png
+	    ${appx_src_path}/SmallLogo.scale-100.png
+	    ${appx_src_path}/SplashScreen.scale-100.png
+	    ${appx_src_path}/StoreLogo.scale-100.png
+	    )
+
+	set(CONTENT_FILES ${appx_src_path}/Package.appxmanifest)
+
+	set(RESOURCE_FILES ${CONTENT_FILES} ${ASSET_FILES} ${appx_src_path}/VSXaml_TemporaryKey.pfx)
+	
+
+	set_property(SOURCE ${CONTENT_FILES} PROPERTY VS_DEPLOYMENT_CONTENT 1)
+	set_property(SOURCE ${ASSET_FILES}   PROPERTY VS_DEPLOYMENT_CONTENT 1)
+	set_property(SOURCE ${ASSET_FILES}   PROPERTY VS_DEPLOYMENT_LOCATION "${appx_src_path}")
+
 #	set_target_properties(${TNAME} PROPERTIES VS_DESKTOP_EXTENSIONS_VERSION "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
 	#include_directories(${angle_path}/include)		# Not needed ? we have gles headers
 	

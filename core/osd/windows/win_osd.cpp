@@ -3,6 +3,7 @@
 
 //Windoze Code implementation of commong classes from here and after ..
 
+#if !defined(TARGET_NO_THREADS)
 //Thread class
 cThread::cThread(ThreadEntryFP* function,void* prm)
 {
@@ -22,6 +23,8 @@ void cThread::WaitToEnd()
 	WaitForSingleObject(hThread,INFINITE);
 }
 //End thread class
+#endif //TARGET_NO_THREADS
+
 
 //cResetEvent Calss
 cResetEvent::cResetEvent(bool State,bool Auto)

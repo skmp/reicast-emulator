@@ -123,13 +123,14 @@ if (${HOST_OS} EQUAL ${OS_WINDOWS} AND NOT TARGET_UWP)
 #
 elseif(TARGET_UWP)
 #
-    message(" Subtarget: UWP / Windows Store ")
+  message(" Subtarget: UWP / Windows Store ")
 
-    list(APPEND libosd_SRCS ${d_osd}/uwp/reicastApp.cpp)
+  list(APPEND libosd_SRCS ${d_osd}/uwp/reicastApp.cpp)
+  list(APPEND libosd_SRCS ${d_osd}/windows/win_osd.cpp)
 
-    list(APPEND libosd_SRCS ${d_osd}/audiobackend/audiobackend_directsound.cpp)
+  list(APPEND libosd_SRCS ${d_osd}/audiobackend/audiobackend_directsound.cpp)
 
-	# angle ?
+	# angle ? is setup elsewhere
 #
 elseif (${HOST_OS} EQUAL ${OS_LINUX}   OR  ## This should prob be if POSIX_COMPAT : ./osd/posix_base_osd
 	    ${HOST_OS} EQUAL ${OS_ANDROID} )

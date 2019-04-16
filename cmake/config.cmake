@@ -254,7 +254,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   add_definitions(/D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1)
   
   if(TARGET_UWP)
-    set(_CXX_FLAGS "/ZW /EHsc /std:c++17  /wd4146")
+    set(_CXX_FLAGS "/EHsc /std:c++17  /wd4146")  # /ZW  is for CX/WRL only , not WinRT !
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /AppContainer")
   endif()
 #
@@ -376,11 +376,9 @@ if (TARGET_UWP)
   message(" OS: UWP / Windows Store ")
   message("-----------------------------------------------------")
 
-  set(COMPILER_VERSION "15")
-  set(PLATFORM STORE)
-
-  # This is the minimum Win 10 version that will allow the app to install - 15063 is current version of WP10 emulators
-  set(MIN_PLATFORM_VERSION "10.0.15063.0")
+#  set(COMPILER_VERSION "15")
+#  set(PLATFORM STORE)
+#  set(MIN_PLATFORM_VERSION "10.0.15063.0")  # This is the minimum Win 10 version that will allow the app to install - 15063 is current version of WP10 emulators
 
 
 	## setup other things / fixes here for uwp ## 

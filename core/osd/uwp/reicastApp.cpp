@@ -1,6 +1,119 @@
 
 #include "reicastApp.h"
 
+#include <iostream>
+
+#include <winrt/Windows.Foundation.Collections.h>
+#include <winrt/Windows.Web.Syndication.h>
+
+#include "types.h"
+
+using namespace winrt;
+using namespace Windows::Foundation;
+using namespace Windows::Web::Syndication;
+
+
+
+int main()
+{
+    winrt::init_apartment();
+
+    Uri rssFeedUri{ L"https://blogs.windows.com/feed" };
+    SyndicationClient syndicationClient;
+    SyndicationFeed syndicationFeed = syndicationClient.RetrieveFeedAsync(rssFeedUri).get();
+    for (const SyndicationItem syndicationItem : syndicationFeed.Items())
+    {
+        winrt::hstring titleAsHstring = syndicationItem.Title().Text();
+        std::wcout << titleAsHstring.c_str() << std::endl;
+    }
+}
+
+
+
+
+
+
+
+
+
+u16 kcode[4];
+u32 vks[4];
+s8 joyx[4], joyy[4];
+u8 rt[4], lt[4];
+
+int get_mic_data(u8* buffer) { return 0; }
+int push_vmu_screen(u8* buffer) { return 0; }
+
+void os_DebugBreak() {}
+
+
+void os_SetWindowText(const char * text) {
+	puts(text);
+}
+
+void os_DoEvents() {
+
+}
+
+void os_SetupInput() {
+	//mcfg_CreateDevicesFromConfig();
+}
+
+//void os_DebugBreak() { return; } // SIGNAL()
+
+
+void UpdateInputState(u32 port) {
+
+}
+
+void UpdateVibration(u32 port, u32 value) {
+
+}
+
+void os_CreateWindow() { }
+
+
+int __cdecl msgboxf(const wchar_t* text, unsigned int type, ...)
+{
+	va_list args;
+
+	wchar_t temp[2048];
+	va_start(args, type);
+	vswprintf(temp, text, args);
+	va_end(args);
+
+	wprintf(L"----------------------------------------------\n");
+	wprintf(L"msgbox(\" %s \" ); \n", temp);
+	wprintf(L"----------------------------------------------\n\n");
+//	QMessageBox::information(0, "", temp, QMessageBox::Ok);
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if 0
+
 using namespace Windows::ApplicationModel::Core;
 using namespace Windows::ApplicationModel::Activation;
 using namespace Windows::Foundation;
@@ -99,3 +212,5 @@ void ReicastApplication::OnWindowClosed(CoreWindow^ sender, CoreWindowEventArgs^
 {
 	mWindowClosed = true;
 }
+
+#endif

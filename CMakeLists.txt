@@ -25,14 +25,9 @@ set(LIBRARY_OUTPUT_PATH    ${CMAKE_BINARY_DIR})
 
 
 
-set(reicast_root_path "${CMAKE_CURRENT_SOURCE_DIR}")
-set(reicast_core_path "${CMAKE_CURRENT_SOURCE_DIR}/core")
-
-set(angle_include_path "$ENV{AngleRootPath}/include")
-set(angle_lib_path "C:/Angle/lib")
-
-message("${angle_include_path}")
-message("${angle_lib_path}")
+set(reicast_root_path  "${CMAKE_CURRENT_SOURCE_DIR}")
+set(reicast_core_path  "${CMAKE_CURRENT_SOURCE_DIR}/core")
+set(reicast_shell_path "${CMAKE_CURRENT_SOURCE_DIR}/shell")
 
 
 include_directories ("${reicast_core_path}")
@@ -102,7 +97,15 @@ endif()
 
 
 if(TARGET_UWP)
-  target_link_libraries(${TNAME} "${angle_lib_path}/libGLESv2.lib" "${angle_lib_path}/libEGL.lib")
+	set(angle_path "${reicast_shell_path}/angle") #   "$ENV{AngleRootPath}"
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LIBPATH:${angle_path}/lib")
+	
+	set_target_properties(${TNAME} PROPERTIES VS_WINRT_EXTENSIONS TRUE)
+	set_target_properties(${TNAME} PROPERTIES VS_WINRT_COMPONENT FALSE)
+#	set_target_properties(${TNAME} PROPERTIES VS_DESKTOP_EXTENSIONS_VERSION "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
+	#include_directories(${angle_path}/include)		# Not needed ? we have gles headers
+	
+	#target_link_libraries(${TNAME} "${angle_lib_path}/libGLESv2.lib" "${angle_lib_path}/libEGL.lib")  #should be done already
 endif()
 
 if(APPLE)

@@ -1,5 +1,9 @@
 #pragma once
 
+
+
+#if 0
+
 #include <string>
 #include <memory>
 #include <wrl.h>
@@ -33,3 +37,5 @@ namespace Reicast
 		};
 	}
 }
+
+#endif

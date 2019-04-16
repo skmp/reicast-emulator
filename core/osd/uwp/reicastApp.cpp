@@ -1,40 +1,14 @@
 
-#include "reicastApp.h"
-
 #include <iostream>
 
 #include <winrt/Windows.Foundation.Collections.h>
-#include <winrt/Windows.Web.Syndication.h>
+#include <winrt/Windows.ApplicationModel.Core.h>
+#include <winrt/Windows.UI.Core.h>
 
 #include "types.h"
 
 using namespace winrt;
 using namespace Windows::Foundation;
-using namespace Windows::Web::Syndication;
-
-
-
-int main()
-{
-    winrt::init_apartment();
-
-    Uri rssFeedUri{ L"https://blogs.windows.com/feed" };
-    SyndicationClient syndicationClient;
-    SyndicationFeed syndicationFeed = syndicationClient.RetrieveFeedAsync(rssFeedUri).get();
-    for (const SyndicationItem syndicationItem : syndicationFeed.Items())
-    {
-        winrt::hstring titleAsHstring = syndicationItem.Title().Text();
-        std::wcout << titleAsHstring.c_str() << std::endl;
-    }
-}
-
-
-
-
-
-
-
-
 
 u16 kcode[4];
 u32 vks[4];
@@ -89,128 +63,46 @@ int __cdecl msgboxf(const wchar_t* text, unsigned int type, ...)
 	return 0;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#if 0
-
+using namespace Windows;
 using namespace Windows::ApplicationModel::Core;
-using namespace Windows::ApplicationModel::Activation;
-using namespace Windows::Foundation;
+using namespace Windows::UI;
 using namespace Windows::UI::Core;
-using namespace Windows::UI::Input;
 
-using namespace Reicast::App;
-
-// Implementation of the IFrameworkViewSource interface, necessary to run our app.
-ref class ReicastApplicationSource sealed : Windows::ApplicationModel::Core::IFrameworkViewSource
+struct App : implements<App, IFrameworkViewSource, IFrameworkView>
 {
-public:
-	virtual Windows::ApplicationModel::Core::IFrameworkView^ CreateView()
+	IFrameworkView CreateView()
 	{
-		return ref new ReicastApplication();
+		return *this;
+	}
+
+	void Initialize(CoreApplicationView const &)
+	{
+	}
+
+	void Load(hstring const&)
+	{
+	}
+
+	void Uninitialize()
+	{
+	}
+
+	void Run()
+	{
+		std::wcout << "Activating CoreWindow..." << std::endl;
+		CoreWindow window = CoreWindow::GetForCurrentThread();
+		window.Activate();
+
+		CoreDispatcher dispatcher = window.Dispatcher();
+		dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
+	}
+
+	void SetWindow(CoreWindow const & window)
+	{
 	}
 };
 
-// The main function creates an IFrameworkViewSource for our app, and runs the app.
-[Platform::MTAThread]
-int main(Platform::Array<Platform::String^>^)
+int __stdcall main(HINSTANCE, HINSTANCE, PWSTR, int)
 {
-	auto reicastApplicationSource = ref new ReicastApplicationSource();
-	CoreApplication::Run(reicastApplicationSource);
-	return 0;
+	CoreApplication::Run(make<App>());
 }
-
-ReicastApplication::ReicastApplication() :
-	mWindowClosed(false),
-	mWindowVisible(true)
-{
-}
-
-// The first method called when the IFrameworkView is being created.
-void ReicastApplication::Initialize(CoreApplicationView^ applicationView)
-{
-	// Register event handlers for app lifecycle. This example includes Activated, so that we
-	// can make the CoreWindow active and start rendering on the window.
-	applicationView->Activated +=
-		ref new TypedEventHandler<CoreApplicationView^, IActivatedEventArgs^>(this, &ReicastApplication::OnActivated);
-
-	// Logic for other event handlers could go here.
-}
-
-// Called when the CoreWindow object is created (or re-created).
-void ReicastApplication::SetWindow(CoreWindow^ window)
-{
-	window->VisibilityChanged +=
-		ref new TypedEventHandler<CoreWindow^, VisibilityChangedEventArgs^>(this, &ReicastApplication::OnVisibilityChanged);
-
-	window->Closed +=
-		ref new TypedEventHandler<CoreWindow^, CoreWindowEventArgs^>(this, &ReicastApplication::OnWindowClosed);
-}
-
-// Initializes scene resources
-void ReicastApplication::Load(Platform::String^ entryPoint)
-{
-}
-
-// This method is called after the window becomes active.
-void ReicastApplication::Run()
-{
-	while (!mWindowClosed)
-	{
-		if (mWindowVisible)
-		{
-			CoreWindow::GetForCurrentThread()->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
-		}
-		else
-		{
-			CoreWindow::GetForCurrentThread()->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);
-		}
-	}
-}
-
-// Terminate events do not cause Uninitialize to be called. It will be called if your IFrameworkView
-// class is torn down while the app is in the foreground.
-void ReicastApplication::Uninitialize()
-{
-}
-
-// Application lifecycle event handler.
-void ReicastApplication::OnActivated(CoreApplicationView^ applicationView, IActivatedEventArgs^ args)
-{
-	// Run() won't start until the CoreWindow is activated.
-	CoreWindow::GetForCurrentThread()->Activate();
-}
-
-// Window event handlers.
-void ReicastApplication::OnVisibilityChanged(CoreWindow^ sender, VisibilityChangedEventArgs^ args)
-{
-	mWindowVisible = args->Visible;
-}
-
-void ReicastApplication::OnWindowClosed(CoreWindow^ sender, CoreWindowEventArgs^ args)
-{
-	mWindowClosed = true;
-}
-
-#endif

@@ -125,7 +125,7 @@ elseif(TARGET_UWP)
 #
     message(" Subtarget: UWP / Windows Store ")
 
-    list(APPEND libosd_SRCS ${d_osd}/uwp/reicastApp.cpp ${d_osd}/uwp/reicastApp.h)
+    list(APPEND libosd_SRCS ${d_osd}/uwp/reicastApp.cpp)
 
     list(APPEND libosd_SRCS ${d_osd}/audiobackend/audiobackend_directsound.cpp)
 

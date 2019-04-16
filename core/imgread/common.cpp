@@ -3,7 +3,7 @@
 Disc* chd_parse(const wchar_t* file);
 Disc* gdi_parse(const wchar_t* file);
 Disc* cdi_parse(const wchar_t* file);
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS && !defined(TARGET_UWP)
 Disc* ioctl_parse(const wchar_t* file);
 #endif
 wchar_t* trim_ws(wchar_t* str);
@@ -16,7 +16,7 @@ Disc*(*drivers[])(const wchar_t* path)=
 	chd_parse,
 	gdi_parse,
 	cdi_parse,
-#if HOST_OS==OS_WINDOWS
+#if HOST_OS==OS_WINDOWS && !defined(TARGET_UWP)
 	ioctl_parse,
 #endif
 	0
@@ -198,7 +198,7 @@ bool InitDrive(u32 fileflags)
 	wcsncpy(fn,settings.imgread.LastImage, lastImageLength);
 	fn[lastImageLength] = '\0';
 
-#ifdef BUILD_DREAMCAST
+#if BUILD_DREAMCAST && !defined(TARGET_UWP)
 	int gfrv=GetFile(fn,0,fileflags);
 #else
 	int gfrv=0;
@@ -263,7 +263,7 @@ bool DiscSwap(u32 fileflags)
 	fn[lastImageLength] = '\0';
 
 
-#ifdef BUILD_DREAMCAST
+#if BUILD_DREAMCAST && !defined(TARGET_UWP)
 	int gfrv=GetFile(fn,0,fileflags);
 #else
 	int gfrv=0;

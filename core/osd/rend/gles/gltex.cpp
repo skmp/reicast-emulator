@@ -22,10 +22,10 @@ Compression
 
 #if FEAT_HAS_SOFTREND
 	#include <xmmintrin.h>
+    extern u32 decoded_colors[3][65536];
 #endif
 
 u16 temp_tex_buffer[1024*1024];
-extern u32 decoded_colors[3][65536];
 
 typedef void TexConvFP(PixelBuffer* pb,u8* p_in,u32 Width,u32 Height);
 

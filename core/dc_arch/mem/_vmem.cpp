@@ -430,7 +430,9 @@ void _vmem_bm_reset() {
 	}
     
     if (!virt_ram_base || HOST_OS == OS_DARWIN) {
-		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
+        #if FEAT_SHREC != DYNAREC_NONE
+		    bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
+        #endif
 	}
 }
 

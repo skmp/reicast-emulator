@@ -422,7 +422,7 @@ bool rend_init()
 		case 0:
 			renderer = rend_GLES2();
 			break;
-#if (HOST_OS == OS_WINDOWS) && !defined(USE_QT)
+#if (HOST_OS == OS_WINDOWS) && !defined(USE_QT) && !defined(TARGET_UWP)
 		case 1:
 			renderer = rend_D3D11();
 			break;

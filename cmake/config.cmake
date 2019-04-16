@@ -87,13 +87,13 @@ set(COMPILER_INTEL 0x30000004)
 #
 
 
-
+#[[
 message(" ----- config - in ---------------------------------")
 message(" - CMAKE_SYSTEM_NAME:      ${CMAKE_SYSTEM_NAME}     ")
 message(" - CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
 message(" - CMAKE_CXX_COMPILER_ID:  ${CMAKE_CXX_COMPILER_ID} ")
 message(" ---------------------------------------------------")
-
+]]
 
 ## Add ugly hack because mingw is retarded and can't follow established protocol on naming,
 ### and gives no _SYSTEM_PROCESSOR
@@ -274,7 +274,7 @@ endif()
 
 
 
-
+#[[
 if(DEBUG_CMAKE)
   message(" ---- config - out ------------------------------")
   message(" - HOST_OS: ${HOST_OS} - HOST_CPU: ${HOST_CPU}   ")
@@ -290,7 +290,7 @@ if(DEBUG_CMAKE)
   message("LINK_FLAGS: ${CMAKE_EXE_LINKER_FLAGS}")
   message(" ------------------------------------------------\n")
 endif()
-
+]]
 
 
 
@@ -370,31 +370,6 @@ set(CMAKE_CXX_FLAGS " ${_CXX_FLAGS}") # ${CMAKE_CXX_FLAGS}
 #endif
 
 
-if (TARGET_UWP)
-#
-  message("-----------------------------------------------------")
-  message(" OS: UWP / Windows Store ")
-  message("-----------------------------------------------------")
-
-#  set(COMPILER_VERSION "15")
-#  set(PLATFORM STORE)
-#  set(MIN_PLATFORM_VERSION "10.0.15063.0")  # This is the minimum Win 10 version that will allow the app to install - 15063 is current version of WP10 emulators
-
-
-	## setup other things / fixes here for uwp ## 
-  add_definitions(/DTARGET_UWP /DUWP /DGLES /DANGLE)
-  add_definitions(/DTARGET_NO_THREADS /DTARGET_NO_EXCEPTIONS /DTARGET_NO_NIXPROF)
-  add_definitions(/DTARGET_NO_COREIO_HTTP /DTARGET_NO_WEBUI) # /UTARGET_SOFTREND)
-  add_definitions(/DTARGET_NO_NVMEM)	## *FIXME* MapViewOfFile on mem_handle ##
-  
-#if(TARGET_NO_JIT)
-  set(FEAT_SHREC  ${DYNAREC_NONE}) # will use DYNAREC_CPP to test after successful build #
-  set(FEAT_AREC   ${DYNAREC_NONE})
-  set(FEAT_DSPREC ${DYNAREC_NONE})
-#endif()
-
-endif()
-
 
 if (TARGET_NSW) # -DCMAKE_TOOLCHAIN_FILE=./cmake/devkitA64.cmake -DTARGET_NSW=ON
   set(HOST_OS ${OS_NSW_HOS}) 
@@ -423,8 +398,77 @@ if (TARGET_PS4) # -DCMAKE_TOOLCHAIN_FILE=./cmake/{ps4sdk,clang_scei}.cmake -DTAR
 endif()
 
 
+if (TARGET_UWP)
+#
+  message("-----------------------------------------------------")
+  message(" OS: UWP / Windows Store ")
+  message("-----------------------------------------------------")
+
+  set(COMPILER_VERSION "15")
+  set(PLATFORM STORE) # || DESKTOP
+  set(MIN_PLATFORM_VERSION "10.0.15063.0")  # This is the minimum Win 10 version that will allow the app to install - 15063 is current version of WP10 emulators
+
+  set(SHORT_NAME ${TNAME})
+  set(PACKAGE_GUID "27121eb4-6076-11e9-ab07-4ccc6a9e79c2")
+  
+  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+  set(uwp_path		"${reicast_shell_path}/uwp")
+  set(angle_path	"${reicast_shell_path}/angle")
+  set(appx_path     "${uwp_path}/appx")
+  set(appxmanifest	"${uwp_path}/store.appxmanifest") #.in
+  
+
+  #set(appxmanifest_out	"${CMAKE_CURRENT_BINARY_DIR}/${TNAME}.dir/Package.appxmanifest") # ${TNAME}.dir/ or not ...
+
+  configure_file(${appxmanifest}.in ${appxmanifest} @ONLY)
+  # Package_vc${COMPILER_VERSION}.${PLATFORM}.
+  message("Configured file: \"${appxmanifest}.in\" to \"${appxmanifest}\"")
+  
+  set(CONTENT_FILES ${appxmanifest})
+
+  set(ASSET_FILES
+    ${appx_path}/Logo.png
+    ${appx_path}/SmallLogo.png
+	${appx_path}/SmallLogo44x44.png
+    ${appx_path}/SplashScreen.png
+    ${appx_path}/StoreLogo.png
+  )
+
+  set(UWP_RESOURCE_FILES ${CONTENT_FILES} ${ASSET_FILES} ${appx_path}/Store_TemporaryKey.pfx)
+
+  list(APPEND reicast_SRCS "${UWP_RESOURCE_FILES}")	## Note: DO NOT FORGET TO ADD THE DAMN THINGS TO THE SOURCE ##
+	
+  set_property(SOURCE ${CONTENT_FILES} PROPERTY VS_DEPLOYMENT_CONTENT 1)
+  set_property(SOURCE ${ASSET_FILES}   PROPERTY VS_DEPLOYMENT_CONTENT 1)
+  set_property(SOURCE ${ASSET_FILES}   PROPERTY VS_DEPLOYMENT_LOCATION "Assets")
+  set_property(SOURCE ${STRING_FILES}  PROPERTY VS_TOOL_OVERRIDE "PRIResource")
+
+	## setup other things / fixes here for uwp ## 
+  add_definitions(/DTARGET_UWP /DUWP /DGLES /DANGLE)
+  add_definitions(/DTARGET_NO_THREADS /DTARGET_NO_EXCEPTIONS /DTARGET_NO_NIXPROF)
+  add_definitions(/DTARGET_NO_COREIO_HTTP /DTARGET_NO_WEBUI) # /UTARGET_SOFTREND)
+  add_definitions(/DTARGET_NO_NVMEM)	## *FIXME* MapViewOfFile on mem_handle ##
+  
+#if(TARGET_NO_JIT)
+  set(FEAT_SHREC  ${DYNAREC_NONE}) # will use DYNAREC_CPP to test after successful build #
+  set(FEAT_AREC   ${DYNAREC_NONE})
+  set(FEAT_DSPREC ${DYNAREC_NONE})
+#endif()
+
+endif()
+
+
+
+
+
+
 
 if(ZBUILD)
+#
+  message("-----------------------------------------------------")
+  message(" ZBUILD SET - INTERNAL TEST VARS -Z ")
+  message("-----------------------------------------------------")
   set(DEBUG_CMAKE ON)
   add_definitions(-D_Z_)  # Get rid of some warnings and internal dev testing
   
@@ -432,6 +476,7 @@ if(ZBUILD)
      NOT TARGET_OSX AND NOT TARGET_IOS )
      set(USE_QT ON)
   endif()
+#
 endif()
 
 

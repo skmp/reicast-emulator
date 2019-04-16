@@ -5,7 +5,7 @@
 	xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
 	IgnorableNamespaces="uap mp">
 
-	<Identity Name="AF8BD429-9BD2-3A47-9B66-9059CC4CDD5A" Publisher="CN=CMake" Version="1.0.0.0" />
+	<Identity Name="ERR00420-9BD2-3A47-9B66-9059CC4CDD5A" Publisher="CN=CMake" Version="1.0.0.0" />
 	<mp:PhoneIdentity PhoneProductId="AF8BD429-9BD2-3A47-9B66-9059CC4CDD5A" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 	<Properties>
 		<DisplayName>reicast</DisplayName>

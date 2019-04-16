@@ -97,36 +97,27 @@ endif()
 
 
 if(TARGET_UWP)
-	set(uwp_path   "${reicast_shell_path}/uwp")
-	set(angle_path "${reicast_shell_path}/angle")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LIBPATH:${angle_path}/lib")
 	
-	set_target_properties(${TNAME} PROPERTIES VS_WINRT_EXTENSIONS TRUE)
-	set_target_properties(${TNAME} PROPERTIES VS_WINRT_COMPONENT FALSE)
-
-	
-	set(appx_src_path "${uwp_path}/appx")
-
-	set(ASSET_FILES
-	    ${appx_src_path}/Logo.scale-100.png
-	    ${appx_src_path}/SmallLogo.scale-100.png
-	    ${appx_src_path}/SplashScreen.scale-100.png
-	    ${appx_src_path}/StoreLogo.scale-100.png
-	    )
-
-	set(CONTENT_FILES ${appx_src_path}/Package.appxmanifest)
-
-	set(RESOURCE_FILES ${CONTENT_FILES} ${ASSET_FILES} ${appx_src_path}/VSXaml_TemporaryKey.pfx)
-	
-
-	set_property(SOURCE ${CONTENT_FILES} PROPERTY VS_DEPLOYMENT_CONTENT 1)
-	set_property(SOURCE ${ASSET_FILES}   PROPERTY VS_DEPLOYMENT_CONTENT 1)
-	set_property(SOURCE ${ASSET_FILES}   PROPERTY VS_DEPLOYMENT_LOCATION "${appx_src_path}")
-
-#	set_target_properties(${TNAME} PROPERTIES VS_DESKTOP_EXTENSIONS_VERSION "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
+	set_property(TARGET ${TNAME} PROPERTY VS_WINRT_EXTENSIONS TRUE)
+	set_property(TARGET ${TNAME} PROPERTY VS_WINRT_COMPONENT  FALSE)	# This is apparently for CX
+#	set_property(TARGET ${TNAME} PROPERTY VS_DESKTOP_EXTENSIONS_VERSION "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
 	#include_directories(${angle_path}/include)		# Not needed ? we have gles headers
-	
 	#target_link_libraries(${TNAME} "${angle_lib_path}/libGLESv2.lib" "${angle_lib_path}/libEGL.lib")  #should be done already
+	
+  string(SUBSTRING "${CMAKE_SYSTEM_VERSION}" 0, 4, SHORT_VERSION)
+
+  message(STATUS "Targeting Windows 10. Setting Extensions to version  ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
+# set_property(TARGET ${TNAME} PROPERTY VS_DESKTOP_EXTENSIONS_VERSION "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
+# set_property(TARGET ${TNAME} PROPERTY VS_MOBILE_EXTENSIONS_VERSION  "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
+
+  # The last IOT reference is on 10.0.17134.0, so only add it if supported
+  if("${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}" VERSION_LESS "10.0.17135.0")
+    set_property(TARGET ${TNAME} PROPERTY VS_IOT_EXTENSIONS_VERSION "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
+  endif()
+
+  # Add a reference to an SDK
+  set_property(TARGET ${TNAME} PROPERTY VS_SDK_REFERENCES "Microsoft.UniversalCRT.Debug, Version=${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
 endif()
 
 if(APPLE)

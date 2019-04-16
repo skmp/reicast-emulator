@@ -76,7 +76,7 @@ struct App
 
 	void Initialize(CoreApplicationView const &)
 	{
-		m_init = (0==dc_init(0,NULL));
+	//	m_init = (0==dc_init(0,NULL));
 	}
 
 	void Load(hstring const&)
@@ -91,7 +91,14 @@ struct App
 
 	void Run()	// heres where it gets fun,  dc_run will thread jack on single thread impl. , so we do this stuff in os_DoShit() or w.e it's named...?
 	{
-		if(m_init)	dc_run();
+		CoreWindow window = CoreWindow::GetForCurrentThread();
+		window.Activate();
+		
+		CoreDispatcher dispatcher = CoreWindow::GetForCurrentThread().Dispatcher();
+		dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
+		
+	std::wcout << "::Run(); finished ProcessEvents" << std::endl;
+		//if(m_init)	dc_run();
 #ifndef TARGET_NO_THREADS
 #error I hope you added the dc_*() to a thread before you enable threads!
 
@@ -112,11 +119,8 @@ struct App
 
 void os_DoEvents()
 {
-	CoreWindow window = CoreWindow::GetForCurrentThread();
-	window.Activate();
-
-	CoreDispatcher dispatcher = window.Dispatcher();
-	dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
+	//CoreDispatcher dispatcher = CoreWindow::GetForCurrentThread().Dispatcher();
+	//dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
 }
 
 void os_SetWindowText(const wchar_t * text) {

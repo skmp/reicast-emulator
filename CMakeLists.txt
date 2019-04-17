@@ -83,7 +83,13 @@ if(TARGET_PS4)
   set(binSuffix ".elf")
 endif()
 
-add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
+if(TARGET_UWP)	
+	set(content_SRCS "${angle_path}/dll/libGLESv2.dll")
+	set(content_SRCS ${content_SRCS} "${angle_path}/dll/libEGL.dll")
+	set_property(SOURCE ${content_SRCS} PROPERTY VS_DEPLOYMENT_CONTENT 1)
+endif()
+
+add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS} ${content_SRCS}) 
 
 
 if(NOT ${HOST_OS} EQUAL ${OS_NSW_HOS} AND NOT TARGET_UWP)
@@ -99,9 +105,11 @@ endif()
 if(TARGET_UWP)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LIBPATH:${angle_path}/lib")
 	
+	set(MIN_PLATFORM_VERSION "10.0.17134.706")	
 	set_property(TARGET ${TNAME} PROPERTY VS_WINRT_EXTENSIONS TRUE)
 	set_property(TARGET ${TNAME} PROPERTY VS_WINRT_COMPONENT  FALSE)	# This is apparently for CX
 #	set_property(TARGET ${TNAME} PROPERTY VS_DESKTOP_EXTENSIONS_VERSION "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
+	set_property(TARGET ${TNAME} PROPERTY VS_WINDOWS_TARGET_PLATFORM_MIN_VERSION "${MIN_PLATFORM_VERSION}")
 	#include_directories(${angle_path}/include)		# Not needed ? we have gles headers
 	#target_link_libraries(${TNAME} "${angle_lib_path}/libGLESv2.lib" "${angle_lib_path}/libEGL.lib")  #should be done already
 	

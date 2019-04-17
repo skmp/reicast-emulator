@@ -169,7 +169,8 @@ int dc_init(int argc,wchar_t* argv[])
 
 	wprintf(L"---------------------------------\n\t LoadRomFiles()\n---------------------------------\n");
 #if HOST_OS != OS_DARWIN && !defined(PS4)
-    #define DATA_PATH L"/data/"
+    // UWPTODO Point to external storage?
+	#define DATA_PATH L"./data/"
 #else
     #define DATA_PATH "/"
 #endif

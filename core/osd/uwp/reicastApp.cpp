@@ -76,7 +76,7 @@ struct App
 
 	void Initialize(CoreApplicationView const &)
 	{
-	//	m_init = (0==dc_init(0,NULL));
+		m_init = (0==dc_init(0,NULL));
 	}
 
 	void Load(hstring const&)
@@ -147,7 +147,6 @@ void* libPvr_GetRenderSurface()
 
 int __stdcall main(HINSTANCE, HINSTANCE, PWSTR, int)
 {
-	std::wcout << "CoreApplication::Run(nullptr);" << std::endl;
 	CoreApplication::Run(make<App>());
 }
 

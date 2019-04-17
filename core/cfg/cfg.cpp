@@ -78,7 +78,12 @@ void  cfgSaveStr(const wchar_t * Section, const wchar_t * Key, const wchar_t * S
 
 bool cfgOpen()
 {
-	const wchar_t* filename = L"/emu.cfg";
+	LPWSTR filename = new wchar_t[512];
+	GetEnvironmentVariable(L"LocalAppData", filename, 512);
+
+	// UWPTODO: Write and read this from UWP storage settings
+	const wchar_t* configPath = L"\\Temp\\emu.cfg";
+	wcscat(filename, configPath);
 	wstring config_path_read = get_readonly_config_path(filename);
 	cfgPath = get_writable_config_path(filename);
 

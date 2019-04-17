@@ -200,6 +200,13 @@ bool InitDrive(u32 fileflags)
 
 #if BUILD_DREAMCAST && !defined(TARGET_UWP)
 	int gfrv=GetFile(fn,0,fileflags);
+#elif defined(TARGET_UWP)
+	int gfrv = 1;
+	// UWPTODO Show Uwp FilePicker
+	const wchar_t* relative_rom_path = L".\\roms\\CHANGEME.gdi";
+	size_t rom_len = wcsnlen(relative_rom_path, maxImageSize - 1);
+	wcsncpy(fn, relative_rom_path, rom_len);
+	fn[rom_len] = '\0';
 #else
 	int gfrv=0;
 #endif

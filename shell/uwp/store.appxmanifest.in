@@ -3,7 +3,8 @@
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
-  IgnorableNamespaces="uap mp">
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap mp rescap">
 
   <Identity Name="@PACKAGE_GUID@" Publisher="CN=reicast-team" Version="1.1.0.0" />
   <mp:PhoneIdentity PhoneProductId="@PACKAGE_GUID@" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
@@ -34,4 +35,7 @@
       </uap:VisualElements>
     </Application>
   </Applications>
+  <Capabilities>
+    <rescap:Capability Name="broadFileSystemAccess" />
+  </Capabilities>
 </Package>

@@ -8,7 +8,12 @@ endif()
 set(libosd_base_path "${PROJECT_SOURCE_DIR}/core/osd")
 
 include_directories ("${libosd_base_path}")
-include_directories ("${libosd_base_path}/rend/khronos")
+
+if (TARGET_UWP)
+   include_directories ("${PROJECT_SOURCE_DIR}/../angle/include")
+else()
+   include_directories ("${libosd_base_path}/rend/khronos")
+endif()
 
 
 set(d_osd  ./core/osd)		# These help keep paths somewhat configurable during dev.

@@ -22,6 +22,8 @@ int fbdev = -1;
 #endif
 #endif
 
+EGLSurface CreateSurface(EGLDisplay display, EGLConfig config);
+
 /*
 GL|ES 2
 Slower, smaller subset of gl2
@@ -435,9 +437,12 @@ int screen_height;
 		gl.setup.native_wind=(EGLNativeWindowType)(u64)wind;
 		gl.setup.native_disp=(EGLNativeDisplayType)(u64)disp;
 
+		#if defined(TARGET_UWP)
+		gl.setup.display = (EGLDisplay)disp;
+		#else
 		//try to get a display
 		gl.setup.display = eglGetDisplay(gl.setup.native_disp);
-
+		#endif
 		//if failed, get the default display (this will not happen in win32)
 		if(gl.setup.display == EGL_NO_DISPLAY)
 			gl.setup.display = eglGetDisplay((EGLNativeDisplayType) EGL_DEFAULT_DISPLAY);
@@ -455,8 +460,11 @@ int screen_height;
 
 
 
-		EGLint pi32ConfigAttribs[]  = { EGL_SURFACE_TYPE, EGL_WINDOW_BIT, EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT , EGL_DEPTH_SIZE, 24, EGL_STENCIL_SIZE, 8, EGL_NONE };
-		EGLint pi32ContextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2 , EGL_NONE };
+        #if defined(TARGET_UWP)
+		EGLint pi32ConfigAttribs[] = { EGL_RED_SIZE, 8, EGL_GREEN_SIZE, 8, EGL_BLUE_SIZE, 8, EGL_ALPHA_SIZE, 8, EGL_DEPTH_SIZE, 8, EGL_STENCIL_SIZE, 8, EGL_NONE };
+		#else	
+		EGLint pi32ConfigAttribs[] = { EGL_SURFACE_TYPE, EGL_WINDOW_BIT, EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT , EGL_DEPTH_SIZE, 24, EGL_STENCIL_SIZE, 8, EGL_NONE };
+        #endif
 
 		int num_config;
 
@@ -467,7 +475,24 @@ int screen_height;
 			return false;
 		}
 
-		gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, (EGLNativeWindowType)wind, NULL);
+		EGLint pi32ContextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
+
+		gl.setup.context = eglCreateContext(gl.setup.display, config, EGL_NO_CONTEXT, pi32ContextAttribs);
+
+        #if defined(TARGET_UWP)
+		const EGLint surfaceAttributes[] =
+		{
+			// EGL_ANGLE_SURFACE_RENDER_TO_BACK_BUFFER is part of the same optimization as EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER (see above).
+			// If you have compilation issues with it then please update your Visual Studio templates.
+			EGL_ANGLE_SURFACE_RENDER_TO_BACK_BUFFER, EGL_TRUE,
+			EGL_NONE
+		};
+
+		gl.setup.surface = CreateSurface(gl.setup.display, config);
+        #else
+		const EGLint surfaceAttributes = NULL;
+		gl.setup.surface = eglCreateWindowSurface(gl.setup.display, config, (EGLNativeWindowType)wind, surfaceAttributes);
+        #endif
 
 		if (eglCheck())
 			return false;
@@ -476,7 +501,6 @@ int screen_height;
 		if (eglCheck())
 			return false;
 
-		gl.setup.context = eglCreateContext(gl.setup.display, config, NULL, pi32ContextAttribs);
 
 		if (eglCheck())
 			return false;
@@ -1954,7 +1978,7 @@ void png_cstd_read(png_structp png_ptr, png_bytep data, png_size_t length)
 GLuint loadPNG(const wstring& fname, int &width, int &height)
 {
 	const wchar_t* filename=fname.c_str();
-	FILE* file = fopen(filename, "rb");
+	FILE* file = _wfopen(filename, L"rb");
 	pngfile=file;
 
 	if (!file)

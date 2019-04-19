@@ -4,6 +4,17 @@
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.ApplicationModel.Core.h>
 #include <winrt/Windows.UI.Core.h>
+#include <winrt/Windows.UI.ViewManagement.h>
+
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
+#include <EGL/egl.h>
+#include <EGL/eglplatform.h>
+#include <EGL/eglext.h>
+#include <EGL/eglext_angle.h>
+
+// ANGLE include for Windows Store
+#include <angle_windowsstore.h>
 
 #include "types.h"
 
@@ -11,8 +22,10 @@ using namespace winrt;
 using namespace Windows;
 using namespace Windows::ApplicationModel::Core;
 using namespace Windows::Foundation;
+using namespace Windows::Foundation::Collections;
 using namespace Windows::UI;
 using namespace Windows::UI::Core;
+using namespace Windows::UI::ViewManagement;
 
 using namespace winrt::Windows::System;
 
@@ -76,7 +89,6 @@ struct App
 
 	void Initialize(CoreApplicationView const &)
 	{
-		m_init = (0==dc_init(0,NULL));
 	}
 
 	void Load(hstring const&)
@@ -91,14 +103,7 @@ struct App
 
 	void Run()	// heres where it gets fun,  dc_run will thread jack on single thread impl. , so we do this stuff in os_DoShit() or w.e it's named...?
 	{
-		CoreWindow window = CoreWindow::GetForCurrentThread();
-		window.Activate();
-		
-		CoreDispatcher dispatcher = CoreWindow::GetForCurrentThread().Dispatcher();
-		dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
-		
-	std::wcout << "::Run(); finished ProcessEvents" << std::endl;
-		//if(m_init)	dc_run();
+		if (m_init)	dc_run();
 #ifndef TARGET_NO_THREADS
 #error I hope you added the dc_*() to a thread before you enable threads!
 
@@ -112,37 +117,126 @@ struct App
 
 	void SetWindow(CoreWindow const & window)
 	{
+		m_init = (0 == dc_init(0, NULL));
 
+		CoreWindow::GetForCurrentThread().Activate();
+		ApplicationView::GetForCurrentView().TryResizeView(Size(640, 480));
 	}
 };
 
-
 void os_DoEvents()
 {
-	//CoreDispatcher dispatcher = CoreWindow::GetForCurrentThread().Dispatcher();
-	//dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
+	CoreDispatcher dispatcher = CoreWindow::GetForCurrentThread().Dispatcher();
+	dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessOneIfPresent);
 }
 
 void os_SetWindowText(const wchar_t * text) {
-	CoreWindow window = CoreWindow::GetForCurrentThread();
+	//CoreWindow window = CoreWindow::GetForCurrentThread();
 	//puts(text);
 }
 
-
-
 void* libPvr_GetRenderTarget()
 {
-//	CoreWindow window = CoreWindow::GetForCurrentThread();
-	return nullptr; //&render_window;
+	return nullptr;
 }
 
 void* libPvr_GetRenderSurface()
 {
-//	CoreWindow window = CoreWindow::GetForCurrentThread();
-	return nullptr; //==(void*)EGL_DEFAULT_DISPLAY;
+	const EGLint configAttributes[] =
+	{
+		EGL_RED_SIZE, 8,
+		EGL_GREEN_SIZE, 8,
+		EGL_BLUE_SIZE, 8,
+		EGL_ALPHA_SIZE, 8,
+		EGL_DEPTH_SIZE, 8,
+		EGL_STENCIL_SIZE, 8,
+		EGL_NONE
+	};
+
+	const EGLint contextAttributes[] =
+	{
+		EGL_CONTEXT_CLIENT_VERSION, 2,
+		EGL_NONE
+	};
+
+	const EGLint defaultDisplayAttributes[] =
+	{
+		// These are the default display attributes, used to request ANGLE's D3D11 renderer.
+		// eglInitialize will only succeed with these attributes if the hardware supports D3D11 Feature Level 10_0+.
+		EGL_PLATFORM_ANGLE_TYPE_ANGLE,
+		EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
+
+		// EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER is an optimization that can have large performance benefits on mobile devices.
+		// Its syntax is subject to change, though. Please update your Visual Studio templates if you experience compilation issues with it.
+		EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER,
+		EGL_TRUE,
+
+		// EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE is an option that enables ANGLE to automatically call
+		// the IDXGIDevice3::Trim method on behalf of the application when it gets suspended.
+		// Calling IDXGIDevice3::Trim when an application is suspended is a Windows Store application certification requirement.
+		EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE,
+		EGL_TRUE,
+		EGL_NONE,
+	};
+
+	// eglGetPlatformDisplayEXT is an alternative to eglGetDisplay. It allows us to pass in display attributes, used to configure D3D11.
+	PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(eglGetProcAddress("eglGetPlatformDisplayEXT"));
+	if (!eglGetPlatformDisplayEXT) {
+		throw hresult_error(E_FAIL, L"Failed to get function eglGetPlatformDisplayEXT");
+	}
+
+	//
+	// To initialize the display, we make three sets of calls to eglGetPlatformDisplayEXT and eglInitialize, with varying
+	// parameters passed to eglGetPlatformDisplayEXT:
+	// 1) The first calls uses "defaultDisplayAttributes" as a parameter. This corresponds to D3D11 Feature Level 10_0+.
+	// 2) If eglInitialize fails for step 1 (e.g. because 10_0+ isn't supported by the default GPU), then we try again
+	//    using "fl9_3DisplayAttributes". This corresponds to D3D11 Feature Level 9_3.
+	// 3) If eglInitialize fails for step 2 (e.g. because 9_3+ isn't supported by the default GPU), then we try again
+	//    using "warpDisplayAttributes".  This corresponds to D3D11 Feature Level 11_0 on WARP, a D3D11 software rasterizer.
+	//
+	// Note: On Windows Phone, we #ifdef out the first set of calls to eglPlatformDisplayEXT and eglInitialize.
+	//       Windows Phones devices only support D3D11 Feature Level 9_3, but the Windows Phone emulator supports 11_0+.
+	//       We use this #ifdef to limit the Phone emulator to Feature Level 9_3, making it behave more like
+	//       real Windows Phone devices.
+	//       If you wish to test Feature Level 10_0+ in the Windows Phone emulator then you should remove this #ifdef.
+	//
+
+	// This tries to initialize EGL to D3D11 Feature Level 10_0+. See above comment for details.
+	EGLDisplay display = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, defaultDisplayAttributes);
+
+	return display;
 }
 
+EGLSurface CreateSurface(EGLDisplay display, EGLConfig config) {
 
+	CoreWindow panel = CoreWindow::GetForCurrentThread();
+	if (!panel) {
+		throw hresult_error(E_INVALIDARG, L"SwapChainPanel parameter is invalid");
+	}
+
+	EGLSurface surface = EGL_NO_SURFACE;
+
+	const EGLint surfaceAttributes[] =
+	{
+		// EGL_ANGLE_SURFACE_RENDER_TO_BACK_BUFFER is part of the same optimization as EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER (see above).
+		// If you have compilation issues with it then please update your Visual Studio templates.
+		EGL_ANGLE_SURFACE_RENDER_TO_BACK_BUFFER, EGL_TRUE,
+		EGL_NONE
+	};
+
+	// Create a PropertySet and initialize with the EGLNativeWindowType.
+	PropertySet surfaceCreationProperties;
+	surfaceCreationProperties.Insert(hstring(EGLNativeWindowTypeProperty), panel);
+
+	auto parameters = reinterpret_cast<::IInspectable*>(winrt::get_abi(surfaceCreationProperties));
+
+	surface = eglCreateWindowSurface(display, config, parameters, surfaceAttributes);
+	if (surface == EGL_NO_SURFACE) {
+		throw hresult_error(E_FAIL, L"Failed to create EGL surface");
+	}
+
+	return surface;
+}
 
 
 int __stdcall main(HINSTANCE, HINSTANCE, PWSTR, int)

@@ -10,6 +10,11 @@
 # else
 #if !defined(TARGET_NACL32)
 #include <EGL/egl.h>
+#if defined(TARGET_UWP)
+#include <EGL/eglext.h>
+#include <EGL/eglplatform.h>
+#include <EGL/eglext_angle.h>
+#endif
 # endif
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>

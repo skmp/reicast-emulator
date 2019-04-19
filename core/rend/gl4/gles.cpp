@@ -553,6 +553,7 @@ static bool gl_create_resources(void)
 static bool RenderFrame(void)
 {
    int vmu_screen_number = 0 ;
+   int lightgun_port = 0 ;
 
    static int old_screen_width, old_screen_height;
 	if (screen_width != old_screen_width || screen_height != old_screen_height) {
@@ -932,6 +933,9 @@ static bool RenderFrame(void)
    for ( vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
       if ( vmu_screen_params[vmu_screen_number].vmu_screen_display )
          gl4DrawVmuTexture(vmu_screen_number, true) ;
+         
+   for ( lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
+         gl4DrawGunCrosshair(lightgun_port, true) ;
 
 	KillTex = false;
    

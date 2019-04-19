@@ -123,6 +123,7 @@ void co_dc_yield(void);
 void vertex_buffer_unmap();
 
 extern GLuint vmuTextureId[4];
+extern GLuint lightgunTextureId[4];
 void UpdateVmuTexture(int vmu_screen_number);
 
 extern struct ShaderUniforms_t

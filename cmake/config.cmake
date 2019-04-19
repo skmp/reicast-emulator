@@ -398,6 +398,10 @@ if (TARGET_PS4) # -DCMAKE_TOOLCHAIN_FILE=./cmake/{ps4sdk,clang_scei}.cmake -DTAR
 endif()
 
 
+
+
+
+
 if (TARGET_UWP)
 #
   message("-----------------------------------------------------")
@@ -434,7 +438,11 @@ if (TARGET_UWP)
     ${appx_path}/SplashScreen.png
     ${appx_path}/StoreLogo.png
   )
-
+  
+  set(ANGLE_BINS
+    ${angle_path}/dll/libEGL.dll^M
+    ${angle_path}/dll/libGLESv2.dll
+  )
   set(UWP_RESOURCE_FILES ${CONTENT_FILES} ${ASSET_FILES} ${appx_path}/Store_TemporaryKey.pfx)
 
   list(APPEND reicast_SRCS "${UWP_RESOURCE_FILES}")	## Note: DO NOT FORGET TO ADD THE DAMN THINGS TO THE SOURCE ##
@@ -443,6 +451,9 @@ if (TARGET_UWP)
   set_property(SOURCE ${ASSET_FILES}   PROPERTY VS_DEPLOYMENT_CONTENT 1)
   set_property(SOURCE ${ASSET_FILES}   PROPERTY VS_DEPLOYMENT_LOCATION "Assets")
   set_property(SOURCE ${STRING_FILES}  PROPERTY VS_TOOL_OVERRIDE "PRIResource")
+  
+  set_property(SOURCE ${ANGLE_BINS}   PROPERTY VS_DEPLOYMENT_CONTENT 1)
+  set_property(SOURCE ${ANGLE_BINS}   PROPERTY VS_DEPLOYMENT_LOCATION "")
 
 	## setup other things / fixes here for uwp ## 
   add_definitions(/DTARGET_UWP /DUWP /DGLES /DANGLE)
@@ -520,5 +531,7 @@ add_definitions(-DDEF_CONSOLE)
 
 set(RE_CMAKE_CONFIGURED 1)
 #add_definitions(-D=${})
+
+
 
 

@@ -84,8 +84,7 @@ if(TARGET_PS4)
 endif()
 
 if(TARGET_UWP)	
-	set(content_SRCS "${angle_path}/dll/libGLESv2.dll")
-	set(content_SRCS ${content_SRCS} "${angle_path}/dll/libEGL.dll")
+	set(content_SRCS "${angle_path}/dll/libGLESv2.dll" "${angle_path}/dll/libEGL.dll")
 	set_property(SOURCE ${content_SRCS} PROPERTY VS_DEPLOYMENT_CONTENT 1)
 endif()
 

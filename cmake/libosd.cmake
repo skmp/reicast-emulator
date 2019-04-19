@@ -10,7 +10,7 @@ set(libosd_base_path "${PROJECT_SOURCE_DIR}/core/osd")
 include_directories ("${libosd_base_path}")
 
 if (TARGET_UWP)
-   include_directories ("${PROJECT_SOURCE_DIR}/../angle/include")
+   include_directories ("${PROJECT_SOURCE_DIR}/shell/angle/include")
 else()
    include_directories ("${libosd_base_path}/rend/khronos")
 endif()

@@ -205,7 +205,8 @@ int dc_init()
 	if (reios_init_value != 0)
 		return reios_init_value;
 #else
-	LoadCustom();
+//	LoadCustom();
+	LoadSettings();
 #endif
 
 #if FEAT_SHREC != DYNAREC_NONE
@@ -357,9 +358,21 @@ void LoadCustom()
 	const size_t maxDiskIdSize = 128;
 	const size_t maxNameSize = 128;	
 
+	wprintf(L"----- LoadCustom \n");
+
+	wstring _from_cstr = toWString("_TEST_TEST_TEST_");
+	wprintf(L"----- LoadCustom : TEST: \"%s\" \n", _from_cstr.c_str());
+	
+	wstring _d_id = toWString(reios_disk_id());
+	wstring _sw_n = toWString(reios_software_name);
+	wprintf(L"----- LoadCustom : disk_id: \"%s\" \n", _d_id.c_str());
+	wprintf(L"----- LoadCustom : sw_name: \"%s\" \n", _sw_n.c_str());
+
+
+
 	// Get reios_disk_id and reios_software-name and convert to wstring
-	const wchar_t* disk_id = (toWString(reios_disk_id())).c_str();
-	const wchar_t* software_name = (toWString(reios_software_name)).c_str();
+	const wchar_t* disk_id = _d_id.c_str();
+	const wchar_t* software_name = _sw_n.c_str();
 	
 	// create wchar_t array to copy wide chars from const wchar_t*
 	wchar_t reios_id_untrimmed[maxDiskIdSize] = { '\0' };
@@ -381,7 +394,9 @@ void LoadCustom()
 	wchar_t* reios_id = trim_ws(reios_id_untrimmed);
 	wchar_t* sw_name = trim_ws(reios_software_name_untrimmed);
 
+#ifndef TARGET_UWP
 	cfgSaveStr(reios_id, L"software.name", sw_name);
+#endif
 	settings.dynarec.Enable			= cfgLoadInt(reios_id,L"Dynarec.Enabled",		settings.dynarec.Enable ? 1 : 0) != 0;
 	settings.dynarec.idleskip		= cfgGameInt(reios_id,L"Dynarec.idleskip",		settings.dynarec.idleskip ? 1 : 0) != 0;
 	settings.dynarec.unstable_opt	= cfgGameInt(reios_id,L"Dynarec.unstable-opt",	settings.dynarec.unstable_opt);

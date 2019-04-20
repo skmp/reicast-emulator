@@ -358,18 +358,9 @@ void LoadCustom()
 {	
 	const size_t maxDiskIdSize = 128;
 	const size_t maxNameSize = 128;	
-
-	wprintf(L"----- LoadCustom \n");
-
-	wstring _from_cstr = toWString("_TEST_TEST_TEST_");
-	wprintf(L"----- LoadCustom : TEST: \"%s\" \n", _from_cstr.c_str());
 	
-	wstring _d_id = toWString(reios_disk_id());
+	wstring _d_id = toWString(reios_disk_id());			// these were for testing, i'm just lazy to change below back to using temp objects -Z
 	wstring _sw_n = toWString(reios_software_name);
-	wprintf(L"----- LoadCustom : disk_id: \"%s\" \n", _d_id.c_str());
-	wprintf(L"----- LoadCustom : sw_name: \"%s\" \n", _sw_n.c_str());
-
-
 
 	// Get reios_disk_id and reios_software-name and convert to wstring
 	const wchar_t* disk_id = _d_id.c_str();

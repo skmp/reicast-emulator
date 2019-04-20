@@ -262,10 +262,11 @@ void UpdateInputState(u32 port)
 #endif //USE_XINPUT
 }
 
+#include "maple/maple_cfg.h"
 
 void os_SetupInput()
 {
-	// mooo? , srsly if we need xinput initialized maybe ... see if those fancy CoreVirtualKeyStates::Gamepad* enums work
+	mcfg_CreateDevicesFromConfig();
 }
 
 

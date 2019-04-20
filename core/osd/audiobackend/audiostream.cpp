@@ -10,6 +10,7 @@
 #include "audiobackend_coreaudio.h"
 #include "audiobackend_omx.h"
 #include "audiobackend_libao.h"
+#include "audiobackend_xaudio.h"
 
 struct SoundFrame { s16 l;s16 r; };
 #define SAMPLE_COUNT 512
@@ -73,31 +74,26 @@ bool RegisterAudioBackend(audiobackend_t *backend)
 }
 
 void RegisterAllAudioBackends() {
-		#if HOST_OS==OS_WINDOWS && !defined(TARGET_UWP)
-		RegisterAudioBackend(&audiobackend_directsound);
-		#endif
-		#if ANDROID
-		RegisterAudioBackend(&audiobackend_android);
-		#endif
-		#if USE_OMX
-		RegisterAudioBackend(&audiobackend_omx);
-		#endif
-		#if USE_ALSA
-		RegisterAudioBackend(&audiobackend_alsa);
-		#endif
-		#if USE_OSS
-		RegisterAudioBackend(&audiobackend_oss);
-		#endif
-		#if USE_PULSEAUDIO
-		RegisterAudioBackend(&audiobackend_pulseaudio);
-		#endif
-		#if USE_LIBAO
-		RegisterAudioBackend(&audiobackend_libao);
-		#endif
-        #if HOST_OS == OS_DARWIN
-        RegisterAudioBackend(&audiobackend_coreaudio);
-        #endif
-		audiobackends_registered = true;
+#if defined(TARGET_UWP)
+	RegisterAudioBackend(&audiobackend_xaudio);
+#elif HOST_OS==OS_WINDOWS
+	RegisterAudioBackend(&audiobackend_directsound);
+#elif ANDROID
+	RegisterAudioBackend(&audiobackend_android);
+#elif USE_OMX
+	RegisterAudioBackend(&audiobackend_omx);
+#elif USE_ALSA
+	RegisterAudioBackend(&audiobackend_alsa);
+#elif USE_OSS
+	RegisterAudioBackend(&audiobackend_oss);
+#elif USE_PULSEAUDIO
+	RegisterAudioBackend(&audiobackend_pulseaudio);
+#elif USE_LIBAO
+	RegisterAudioBackend(&audiobackend_libao);
+#elif HOST_OS == OS_DARWIN
+	RegisterAudioBackend(&audiobackend_coreaudio);
+#endif
+	audiobackends_registered = true;
 }
 
 static audiobackend_t* GetAudioBackend(std::wstring slug)

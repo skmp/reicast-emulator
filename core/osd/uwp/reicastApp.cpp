@@ -38,40 +38,9 @@ double  qpfd;
 double speed_load_mspdf;
 
 
-
-#if 0
-
-	ReserveBottomMemory();
-	tick_thd.Start();
-	SetupPath();
-
-	//SetUnhandledExceptionFilter(&ExeptionHandler);
-	__try
-	{
-		int dc_init(int argc,wchar_t* argv[]);
-		void dc_run();
-		void dc_term();
-		if (0 == dc_init(0,NULL))//*FIXME* wchar_t (argc, argv))
-		{
-#ifdef _WIN64
-			setup_seh();
-#endif
-			dc_run();
-			dc_term();
-		}
-	}
-	__except( ExeptionHandler(GetExceptionInformation()) )
-	{
-		wprintf(L"Unhandled exception - Emulation thread halted...\n");
-	}
-	SetUnhandledExceptionFilter(0);
-
-
-#endif
-	
-		int dc_init(int argc,wchar_t* argv[]);
-		void dc_run();
-		void dc_term();
+int dc_init(int argc,wchar_t* argv[]);
+void dc_run();
+void dc_term();
 
 
 // Wut happen to header?  ;shrug;
@@ -79,7 +48,6 @@ struct App
 	: implements<App, IFrameworkViewSource, IFrameworkView>
 {
 	bool m_init = false;
-
 
 
 	IFrameworkView CreateView()
@@ -124,91 +92,26 @@ struct App
 	}
 };
 
+int __stdcall main(HINSTANCE, HINSTANCE, PWSTR, int)
+{
+	CoreApplication::Run(make<App>());
+}
+
+
+
+
+
 void UpdateInputState(u32 port);
 
 void os_DoEvents()
 {
 	CoreDispatcher dispatcher = CoreWindow::GetForCurrentThread().Dispatcher();
 	dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessOneIfPresent);
-
-	UpdateInputState(0);	// *FIXME* emulator should call this?  from bad settings or wtf wtf wtf
 }
 
 void os_SetWindowText(const wchar_t * text) {
 	//CoreWindow window = CoreWindow::GetForCurrentThread();
 	//puts(text);
-}
-
-void* libPvr_GetRenderTarget()
-{
-	return nullptr;
-}
-
-void* libPvr_GetRenderSurface()
-{
-	const EGLint configAttributes[] =
-	{
-		EGL_RED_SIZE, 8,
-		EGL_GREEN_SIZE, 8,
-		EGL_BLUE_SIZE, 8,
-		EGL_ALPHA_SIZE, 8,
-		EGL_DEPTH_SIZE, 8,
-		EGL_STENCIL_SIZE, 8,
-		EGL_NONE
-	};
-
-	const EGLint contextAttributes[] =
-	{
-		EGL_CONTEXT_CLIENT_VERSION, 2,
-		EGL_NONE
-	};
-
-	const EGLint defaultDisplayAttributes[] =
-	{
-		// These are the default display attributes, used to request ANGLE's D3D11 renderer.
-		// eglInitialize will only succeed with these attributes if the hardware supports D3D11 Feature Level 10_0+.
-		EGL_PLATFORM_ANGLE_TYPE_ANGLE,
-		EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
-
-		// EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER is an optimization that can have large performance benefits on mobile devices.
-		// Its syntax is subject to change, though. Please update your Visual Studio templates if you experience compilation issues with it.
-		EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER,
-		EGL_TRUE,
-
-		// EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE is an option that enables ANGLE to automatically call
-		// the IDXGIDevice3::Trim method on behalf of the application when it gets suspended.
-		// Calling IDXGIDevice3::Trim when an application is suspended is a Windows Store application certification requirement.
-		EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE,
-		EGL_TRUE,
-		EGL_NONE,
-	};
-
-	// eglGetPlatformDisplayEXT is an alternative to eglGetDisplay. It allows us to pass in display attributes, used to configure D3D11.
-	PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(eglGetProcAddress("eglGetPlatformDisplayEXT"));
-	if (!eglGetPlatformDisplayEXT) {
-		throw hresult_error(E_FAIL, L"Failed to get function eglGetPlatformDisplayEXT");
-	}
-
-	//
-	// To initialize the display, we make three sets of calls to eglGetPlatformDisplayEXT and eglInitialize, with varying
-	// parameters passed to eglGetPlatformDisplayEXT:
-	// 1) The first calls uses "defaultDisplayAttributes" as a parameter. This corresponds to D3D11 Feature Level 10_0+.
-	// 2) If eglInitialize fails for step 1 (e.g. because 10_0+ isn't supported by the default GPU), then we try again
-	//    using "fl9_3DisplayAttributes". This corresponds to D3D11 Feature Level 9_3.
-	// 3) If eglInitialize fails for step 2 (e.g. because 9_3+ isn't supported by the default GPU), then we try again
-	//    using "warpDisplayAttributes".  This corresponds to D3D11 Feature Level 11_0 on WARP, a D3D11 software rasterizer.
-	//
-	// Note: On Windows Phone, we #ifdef out the first set of calls to eglPlatformDisplayEXT and eglInitialize.
-	//       Windows Phones devices only support D3D11 Feature Level 9_3, but the Windows Phone emulator supports 11_0+.
-	//       We use this #ifdef to limit the Phone emulator to Feature Level 9_3, making it behave more like
-	//       real Windows Phone devices.
-	//       If you wish to test Feature Level 10_0+ in the Windows Phone emulator then you should remove this #ifdef.
-	//
-
-	// This tries to initialize EGL to D3D11 Feature Level 10_0+. See above comment for details.
-	EGLDisplay display = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, defaultDisplayAttributes);
-
-	return display;
 }
 
 EGLSurface CreateSurface(EGLDisplay display, EGLConfig config) {
@@ -242,11 +145,6 @@ EGLSurface CreateSurface(EGLDisplay display, EGLConfig config) {
 	return surface;
 }
 
-
-int __stdcall main(HINSTANCE, HINSTANCE, PWSTR, int)
-{
-	CoreApplication::Run(make<App>());
-}
 
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }
@@ -404,4 +302,76 @@ void os_MakeExecutable(void* ptr, u32 sz)
 {
 	DWORD old;
 	VirtualProtect(ptr, sizeof(sz), PAGE_EXECUTE_READWRITE, &old);
+}
+
+void* libPvr_GetRenderTarget()
+{
+	return nullptr;
+}
+
+void* libPvr_GetRenderSurface()
+{
+	const EGLint configAttributes[] =
+	{
+		EGL_RED_SIZE, 8,
+		EGL_GREEN_SIZE, 8,
+		EGL_BLUE_SIZE, 8,
+		EGL_ALPHA_SIZE, 8,
+		EGL_DEPTH_SIZE, 8,
+		EGL_STENCIL_SIZE, 8,
+		EGL_NONE
+	};
+
+	const EGLint contextAttributes[] =
+	{
+		EGL_CONTEXT_CLIENT_VERSION, 2,
+		EGL_NONE
+	};
+
+	const EGLint defaultDisplayAttributes[] =
+	{
+		// These are the default display attributes, used to request ANGLE's D3D11 renderer.
+		// eglInitialize will only succeed with these attributes if the hardware supports D3D11 Feature Level 10_0+.
+		EGL_PLATFORM_ANGLE_TYPE_ANGLE,
+		EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
+
+		// EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER is an optimization that can have large performance benefits on mobile devices.
+		// Its syntax is subject to change, though. Please update your Visual Studio templates if you experience compilation issues with it.
+		EGL_ANGLE_DISPLAY_ALLOW_RENDER_TO_BACK_BUFFER,
+		EGL_TRUE,
+
+		// EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE is an option that enables ANGLE to automatically call
+		// the IDXGIDevice3::Trim method on behalf of the application when it gets suspended.
+		// Calling IDXGIDevice3::Trim when an application is suspended is a Windows Store application certification requirement.
+		EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE,
+		EGL_TRUE,
+		EGL_NONE,
+	};
+
+	// eglGetPlatformDisplayEXT is an alternative to eglGetDisplay. It allows us to pass in display attributes, used to configure D3D11.
+	PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(eglGetProcAddress("eglGetPlatformDisplayEXT"));
+	if (!eglGetPlatformDisplayEXT) {
+		throw hresult_error(E_FAIL, L"Failed to get function eglGetPlatformDisplayEXT");
+	}
+
+	//
+	// To initialize the display, we make three sets of calls to eglGetPlatformDisplayEXT and eglInitialize, with varying
+	// parameters passed to eglGetPlatformDisplayEXT:
+	// 1) The first calls uses "defaultDisplayAttributes" as a parameter. This corresponds to D3D11 Feature Level 10_0+.
+	// 2) If eglInitialize fails for step 1 (e.g. because 10_0+ isn't supported by the default GPU), then we try again
+	//    using "fl9_3DisplayAttributes". This corresponds to D3D11 Feature Level 9_3.
+	// 3) If eglInitialize fails for step 2 (e.g. because 9_3+ isn't supported by the default GPU), then we try again
+	//    using "warpDisplayAttributes".  This corresponds to D3D11 Feature Level 11_0 on WARP, a D3D11 software rasterizer.
+	//
+	// Note: On Windows Phone, we #ifdef out the first set of calls to eglPlatformDisplayEXT and eglInitialize.
+	//       Windows Phones devices only support D3D11 Feature Level 9_3, but the Windows Phone emulator supports 11_0+.
+	//       We use this #ifdef to limit the Phone emulator to Feature Level 9_3, making it behave more like
+	//       real Windows Phone devices.
+	//       If you wish to test Feature Level 10_0+ in the Windows Phone emulator then you should remove this #ifdef.
+	//
+
+	// This tries to initialize EGL to D3D11 Feature Level 10_0+. See above comment for details.
+	EGLDisplay display = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, defaultDisplayAttributes);
+
+	return display;
 }

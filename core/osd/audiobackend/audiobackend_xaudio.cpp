@@ -219,7 +219,7 @@ static void xaudio_term()
 	pXAudio2->Release();
 }
 
-audiobackend_t xaudio_directsound = {
+audiobackend_t audiobackend_xaudio = {
     L"XAudio2", // Slug
     L"Microsoft XAudio2", // Name
     &xaudio_init,

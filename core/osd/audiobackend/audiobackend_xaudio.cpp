@@ -202,10 +202,10 @@ static u32 xaudio_push(void* frame, u32 samples, bool wait)
 		if (ffs == 0)
 			ffs = wprintf(L"AUD WAIT %d\n", xaudio_getusedSamples());
 	*/
-
+#if 0
 	while (!xaudio_push_nw(frame, samples) && wait)
 		0 && wprintf(L"FAILED waiting on audio FAILED %d\n", xaudio_getusedSamples());
-
+#endif
 
 	return 1;
 }

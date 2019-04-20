@@ -76,7 +76,7 @@ bool RegisterAudioBackend(audiobackend_t *backend)
 void RegisterAllAudioBackends() {
 #if defined(TARGET_UWP)
 	RegisterAudioBackend(&audiobackend_xaudio);
-#elif HOST_OS==OS_WINDOWS
+#elif HOST_OS==OS_WINDOWS && !defined(TARGET_UWP)
 	RegisterAudioBackend(&audiobackend_directsound);
 #elif ANDROID
 	RegisterAudioBackend(&audiobackend_android);

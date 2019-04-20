@@ -381,7 +381,7 @@ struct RegAlloc
 		return is_fpr && (op->rd.count()>=2 || op->rd2.count()>=2 || op->rs1.count()>=2 ||  op->rs2.count()>=2 || op->rs3.count()>=2 );
 	}
 
-	void InsertRegs(set<shil_param>& l, const shil_param& regs)
+	void InsertRegs(std::set<shil_param>& l, const shil_param& regs)
 	{
 		if (!explode_spans || (regs.count()==1 || regs.count()>2))
 		{

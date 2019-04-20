@@ -124,10 +124,14 @@ struct App
 	}
 };
 
+void UpdateInputState(u32 port);
+
 void os_DoEvents()
 {
 	CoreDispatcher dispatcher = CoreWindow::GetForCurrentThread().Dispatcher();
 	dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessOneIfPresent);
+
+	UpdateInputState(0);	// *FIXME* emulator should call this?  from bad settings or wtf wtf wtf
 }
 
 void os_SetWindowText(const wchar_t * text) {
@@ -287,6 +291,7 @@ void UpdateInputState(u32 port)
 {
 	CoreWindow window = CoreWindow::GetForCurrentThread();
 
+
 	//	CoreVirtualKeyStates s; // 0:none, 1:pressed, 2:locked?
 	//window.GetAsyncKeyState(VirtualKey::A);
 		/// looks like global GetAsyncKeyState works here too,  this was prob not necessary but oh well ?
@@ -323,6 +328,11 @@ void UpdateInputState(u32 port)
 	//	if (GetAsyncKeyState(VK_F10))	DiscSwap();
 	//	if (GetAsyncKeyState(VK_ESCAPE))dc_stop();
 		
+////// DEBUG ///////
+#ifdef _DEBUG
+		if (0 != joyx[port] || 0 != joyy[port] || 0xFFFF != kcode[port])
+			wprintf(L" Btns %04X , joyx %d, joyy %d \n", kcode[port], joyx[port], joyy[port]);
+#endif
 
 #if USE_XINPUT
 	{
@@ -395,74 +405,3 @@ void os_MakeExecutable(void* ptr, u32 sz)
 	DWORD old;
 	VirtualProtect(ptr, sizeof(sz), PAGE_EXECUTE_READWRITE, &old);
 }
-
-
-
-
-
-
-
-
-
-
-#if 0	// The exercise was for you to add win_osd.cpp,  lulz,  added, delete below
-void VArray2::LockRegion(u32 offset, u32 size)
-{
-	//verify(offset+size<this->size);
-	verify(size != 0);
-	DWORD old;
-	VirtualProtect(((u8*)data) + offset, size, PAGE_READONLY, &old);
-}
-void VArray2::UnLockRegion(u32 offset, u32 size)
-{
-	//verify(offset+size<=this->size);
-	verify(size != 0);
-	DWORD old;
-	VirtualProtect(((u8*)data) + offset, size, PAGE_READWRITE, &old);
-}
-
-//cResetEvent Calss
-cResetEvent::cResetEvent(bool State, bool Auto)
-{
-	hEvent = CreateEvent(
-		NULL,             // default security attributes
-		Auto ? FALSE : TRUE,  // auto-reset event?
-		State ? TRUE : FALSE, // initial state is State
-		NULL			  // unnamed object
-	);
-}
-cResetEvent::~cResetEvent()
-{
-	//Destroy the event object ?
-	CloseHandle(hEvent);
-}
-void cResetEvent::Set()//Signal
-{
-#if defined(DEBUG_THREADS)
-	Sleep(rand() % 10);
-#endif
-	SetEvent(hEvent);
-}
-void cResetEvent::Reset()//reset
-{
-#if defined(DEBUG_THREADS)
-	Sleep(rand() % 10);
-#endif
-	ResetEvent(hEvent);
-}
-bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
-{
-#if defined(DEBUG_THREADS)
-	Sleep(rand() % 10);
-#endif
-	return WaitForSingleObject(hEvent, msec) == WAIT_OBJECT_0;
-}
-void cResetEvent::Wait()//Wait for signal , then reset
-{
-#if defined(DEBUG_THREADS)
-	Sleep(rand() % 10);
-#endif
-	WaitForSingleObject(hEvent, (u32)-1);
-}
-#endif
-

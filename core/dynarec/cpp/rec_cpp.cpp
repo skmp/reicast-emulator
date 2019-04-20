@@ -924,7 +924,7 @@ opcodeExec* createType2(const CC_pars_t& prms, void* fun) {
 }
 
 
-map<void*, int> funs;
+std::map<void*, int> funs;
 
 
 int funs_id_count;
@@ -941,7 +941,7 @@ template <> \
 opcodeExec* createType_fast<OPCODE_CC(sig)>(const CC_pars_t& prms, void* fun, shil_opcode* opcode) { \
 	typedef OPCODE_CC(sig) CTR; \
 	\
-	static map<void*, opcodeExec* (*)(const CC_pars_t& prms, void* fun)> funsf = {\
+	static std::map<void*, opcodeExec* (*)(const CC_pars_t& prms, void* fun)> funsf = {
 		
 #define FAST_gis \
 };\
@@ -1116,34 +1116,34 @@ opcodeExec* createType(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
 	return rv;
 }
 
-map< wstring, foas> unmap = {
-	{ "aBaCbC", &createType_fast<opcode_cc_aBaCbC> },
-	{ "aCaCbC", &createType<opcode_cc_aCaCbC> },
-	{ "aCbC", &createType<opcode_cc_aCbC> },
-	{ "aC", &createType<opcode_cc_aC> },
+std::map< wstring, foas> unmap = {
+	{ L"aBaCbC", &createType_fast<opcode_cc_aBaCbC> },
+	{ L"aCaCbC", &createType<opcode_cc_aCaCbC> },
+	{ L"aCbC", &createType<opcode_cc_aCbC> },
+	{ L"aC", &createType<opcode_cc_aC> },
 
-	{ "eDeDeDfD", &createType<opcode_cc_eDeDeDfD> },
-	{ "eDeDfD", &createType<opcode_cc_eDeDfD> },
+	{ L"eDeDeDfD", &createType<opcode_cc_eDeDeDfD> },
+	{ L"eDeDfD", &createType<opcode_cc_eDeDfD> },
 
-	{ "aCaCaCbC", &createType<opcode_cc_aCaCaCbC> },
-	{ "aCaCcCdC", &createType<opcode_cc_aCaCcCdC> },
-	{ "aCaCaCcCdC", &createType<opcode_cc_aCaCaCcCdC> },
+	{ L"aCaCaCbC", &createType<opcode_cc_aCaCaCbC> },
+	{ L"aCaCcCdC", &createType<opcode_cc_aCaCcCdC> },
+	{ L"aCaCaCcCdC", &createType<opcode_cc_aCaCaCcCdC> },
 
-	{ "eDbC", &createType<opcode_cc_eDbC> },
-	{ "aCfD", &createType<opcode_cc_aCfD> },
+	{ L"eDbC", &createType<opcode_cc_eDbC> },
+	{ L"aCfD", &createType<opcode_cc_aCfD> },
 
-	{ "eDeDbC", &createType<opcode_cc_eDeDbC> },
-	{ "eDfD", &createType<opcode_cc_eDfD> },
+	{ L"eDeDbC", &createType<opcode_cc_eDeDbC> },
+	{ L"eDfD", &createType<opcode_cc_eDfD> },
 
-	{ "aCgE", &createType<opcode_cc_aCgE> },
-	{ "gJgHgH", &createType<opcode_cc_gJgHgH> },
-	{ "gHgHfD", &createType<opcode_cc_gHgHfD> },
-	{ "gJgJgJgJ", &createType<opcode_cc_gJgJgJgJ> },
-	{ "vV", &createType<opcode_cc_vV> },
+	{ L"aCgE", &createType<opcode_cc_aCgE> },
+	{ L"gJgHgH", &createType<opcode_cc_gJgHgH> },
+	{ L"gHgHfD", &createType<opcode_cc_gHgHfD> },
+	{ L"gJgJgJgJ", &createType<opcode_cc_gJgJgJgJ> },
+	{ L"vV", &createType<opcode_cc_vV> },
 };
 
 wstring getCTN(foas f) {
-	auto it = find_if(unmap.begin(), unmap.end(), [f](const map< wstring, foas>::value_type& s) { return s.second == f; });
+	auto it = find_if(unmap.begin(), unmap.end(), [f](const std::map< wstring, foas>::value_type& s) { return s.second == f; });
 
 	return it->first;
 }
@@ -1496,7 +1496,7 @@ public:
 
 		//Block end opcode
 		{
-			opcodeExec* op;
+			opcodeExec* op = nullptr;
 
 			#define CASEWS(n) case n: op = (new opcode_blockend<n>())->setup(block); break
 
@@ -1540,13 +1540,13 @@ public:
 
 	void ngen_CC_Finish(shil_opcode* op)
 	{
-		wstring nm = "";
+		wstring nm = L"";
 		for (auto m : CC_pars) {
 			nm += (char)(m.type + 'a');
 			nm += (char)(m.prm->type + 'A');
 		}
 		if (!nm.size())
-			nm = "vV";
+			nm = L"vV";
 		
 		if (unmap.count(nm)) {
 			ptrsg[opcode_index] = unmap[nm](CC_pars, ccfn, op);

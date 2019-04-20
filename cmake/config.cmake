@@ -370,7 +370,8 @@ set(CMAKE_CXX_FLAGS " ${_CXX_FLAGS}") # ${CMAKE_CXX_FLAGS}
 #endif
 
 
-
+## Nintendo Switch
+#
 if (TARGET_NSW) # -DCMAKE_TOOLCHAIN_FILE=./cmake/devkitA64.cmake -DTARGET_NSW=ON
   set(HOST_OS ${OS_NSW_HOS}) 
 
@@ -384,6 +385,8 @@ if (TARGET_NSW) # -DCMAKE_TOOLCHAIN_FILE=./cmake/devkitA64.cmake -DTARGET_NSW=ON
 
 endif()
 
+## Sony Playstation4
+#
 if (TARGET_PS4) # -DCMAKE_TOOLCHAIN_FILE=./cmake/{ps4sdk,clang_scei}.cmake -DTARGET_PS4=ON
   set(HOST_OS ${OS_PS4_BSD})
   message("HOST_OS ${HOST_OS}")
@@ -398,10 +401,8 @@ if (TARGET_PS4) # -DCMAKE_TOOLCHAIN_FILE=./cmake/{ps4sdk,clang_scei}.cmake -DTAR
 endif()
 
 
-
-
-
-
+## Microsoft UniversalWindowsPlatform (Xbone included)
+#
 if (TARGET_UWP)
 #
   message("-----------------------------------------------------")
@@ -440,7 +441,7 @@ if (TARGET_UWP)
   )
   
   set(ANGLE_BINS
-    ${angle_path}/dll/libEGL.dll^M
+    ${angle_path}/dll/libEGL.dll
     ${angle_path}/dll/libGLESv2.dll
   )
   set(UWP_RESOURCE_FILES ${CONTENT_FILES} ${ASSET_FILES} ${appx_path}/Store_TemporaryKey.pfx)
@@ -462,9 +463,9 @@ if (TARGET_UWP)
   add_definitions(/DTARGET_NO_NVMEM)	## *FIXME* MapViewOfFile on mem_handle ##
   
 #if(TARGET_NO_JIT)
-  set(FEAT_SHREC  ${DYNAREC_NONE}) # will use DYNAREC_CPP to test after successful build #
-  set(FEAT_AREC   ${DYNAREC_NONE})
-  set(FEAT_DSPREC ${DYNAREC_NONE})
+#  set(FEAT_SHREC  ${DYNAREC_NONE}) # will use DYNAREC_CPP to test after successful build #
+#  set(FEAT_AREC   ${DYNAREC_NONE})
+#  set(FEAT_DSPREC ${DYNAREC_NONE})
 #endif()
 
 endif()

@@ -133,7 +133,7 @@ elseif(TARGET_UWP)
   list(APPEND libosd_SRCS ${d_osd}/uwp/reicastApp.cpp)
   list(APPEND libosd_SRCS ${d_osd}/windows/win_osd.cpp)
 
-  list(APPEND libosd_SRCS ${d_osd}/audiobackend/audiobackend_directsound.cpp)
+  list(APPEND libosd_SRCS ${d_osd}/audiobackend/audiobackend_xaudio.cpp)
 
 	# angle ? is setup elsewhere
 #

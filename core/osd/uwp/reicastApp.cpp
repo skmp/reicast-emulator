@@ -110,8 +110,8 @@ void os_DoEvents()
 }
 
 void os_SetWindowText(const wchar_t * text) {
-	//CoreWindow window = CoreWindow::GetForCurrentThread();
-	//puts(text);
+
+	ApplicationView::GetForCurrentView().Title(hstring(text));
 }
 
 EGLSurface CreateSurface(EGLDisplay display, EGLConfig config) {
@@ -298,7 +298,7 @@ int __cdecl msgboxf(const wchar_t* text, unsigned int type, ...)
 	return 0;
 }
 
-
+// Need to enable capability for code generation in appcontainer
 void os_MakeExecutable(void* ptr, u32 sz)
 {
 	DWORD old;

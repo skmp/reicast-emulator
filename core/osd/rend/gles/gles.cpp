@@ -22,7 +22,9 @@ int fbdev = -1;
 #endif
 #endif
 
+#if defined(TARGET_UWP)
 EGLSurface CreateSurface(EGLDisplay display, EGLConfig config);
+#endif
 
 /*
 GL|ES 2

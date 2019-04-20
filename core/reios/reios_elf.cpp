@@ -6,7 +6,7 @@
 
 bool reios_loadElf(const wstring& elf) {
 
-	FILE* f = fopen(elf.c_str(), "rb");
+	FILE* f = _wfopen(elf.c_str(), L"rb");
 	if (!f) {
 		return false;
 	}

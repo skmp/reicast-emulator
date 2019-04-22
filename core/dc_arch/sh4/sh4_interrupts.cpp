@@ -109,6 +109,8 @@ bool SRdecode()
 
 int UpdateINTC()
 {
+//	printf("UpdateINTC() pend: %X \n", Sh4cntx.interrupt_pend);
+
 	if (!Sh4cntx.interrupt_pend)
 		return 0;
 
@@ -155,6 +157,7 @@ bool Do_Interrupt(u32 intEvn)
 	UpdateSR();
 	next_pc = vbr + 0x600;
 
+//	printf("RaiseInterrupt: from %08X , intEvn %08X, %08X vect\n", spc, intEvn, next_pc);
 	return true;
 }
 
@@ -173,7 +176,7 @@ bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect)
 
 	next_pc = vbr + CallVect;
 
-	//printf("RaiseException: from %08X , pc errh %08X, %08X vect\n", spc, epc, next_pc);
+//	printf("RaiseException: from %08X , pc errh %08X, %08X vect\n", spc, epc, next_pc);
 	return true;
 }
 

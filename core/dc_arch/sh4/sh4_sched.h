@@ -3,6 +3,20 @@
 
 #include "types.h"
 
+
+#define SchTagGDROM	0x00000000
+#define SchTagMaple 0x01000000
+#define SchTagRend	0x02000000
+#define SchTagVbl	0x03000000
+#define SchTagSync	0x04000000
+#define SchTagAica	0x05000000
+#define SchTagRTC	0x06000000
+#define SchTagTMU	0x07000000
+
+#define SchTagTypeMask 0x07000000
+#define SchTagTMU_Mask 0x00FFFFFF
+
+
 /*
 	tag, as passed on sh4_sched_register
 	sch_cycles, the cycle duration that the callback requested (sh4_sched_request)

@@ -47,6 +47,8 @@ void ngen_mainloop(void* v_cntx)
 {
 	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
 
+//	printf("ngen_mainloop() ctx: %p\n", ctx);
+
 	cycle_counter = 0;
 
 #if !defined(TARGET_BOUNDED_EXECUTION)
@@ -57,10 +59,14 @@ void ngen_mainloop(void* v_cntx)
 		cycle_counter = SH4_TIMESLICE;
 		do {
 			DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);
+
+//			printf("ngen_mainloop() rcb: %p\n", rcb);
 			rcb();
 		} while (cycle_counter > 0);
 
+//		printf("ngen_mainloop() BBBB \n");
 		if (UpdateSystem()) {
+//			printf("ngen_mainloop() UpdateSystem() called, doInterrupts() \n");
 			rdv_DoInterrupts_pc(ctx->cntx.pc);
 		}
 	}

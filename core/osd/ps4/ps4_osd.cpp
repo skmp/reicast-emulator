@@ -3,14 +3,106 @@
 */
 #include "types.h"
 #include "cfg/cfg.h"
+#include "dc_arch/maple/maple_cfg.h"
+#include "audiobackend/audiostream.h"
+
+#include "ps4.h"
+
+#if 0
+
+// Assign 256 MiB as flexible memory
+#define TOTAL_FMEM_SIZE (4 * 1024 * 1024 * 1024UL)
+SCE_KERNEL_FLEXIBLE_MEMORY_SIZE(TOTAL_FMEM_SIZE);
+//SCE_KERNEL_MAIN_DMEM_SIZE
+
+
+//#define LIBC_HEAP_SIZE
+//#define LIBC_HEAP_SIZE_INITIAL = 
+
+#define _MB MB
+
+#if 1
+extern "C" {
+
+	size_t sceLibcHeapSize = SCE_LIBC_HEAP_SIZE_EXTENDED_ALLOC_NO_LIMIT;
+	size_t sceLibcHeapInitialSize = _MB(512);
+//	unsigned int sceLibcHeapDelayedAlloc  = 0;
+	unsigned int sceLibcHeapExtendedAlloc = 1;
+//	size_t sceLibcHeapHighAddressAlloc;
+//	unsigned int sceLibcHeapMemoryLock;
+	//unsigned int sceLibcHeapDebugFlags = SCE_LIBC_HEAP_DEBUG_SHORTAGE;
 
 
 
-#include <kernel_ex.h>
-#include <sysmodule_ex.h>
-#include <system_service_ex.h>
-#include <shellcore_util.h>
-#include <piglet.h>
+	//SceLibcMallocManagedSize m_mmsize;
+
+};
+#endif
+
+#endif // 0
+
+
+
+//int32_t sceSystemServiceGetStatus(SceSystemServiceStatus* status);
+//int32_t sceSystemServiceReceiveEvent(SceSystemServiceEvent* event);
+
+//dbgbreak __builtin_trap()
+
+void dc_stop();
+
+void os_DoEvents()
+{
+	int32_t rS = SCE_OK;
+	SceSystemServiceEvent sse; // = { 0 };
+	SceSystemServiceStatus sss = { 0 };
+
+
+	memset(&sss, 0, sizeof(SceSystemServiceStatus));
+	rS = sceSystemServiceGetStatus(&sss);
+	if (SCE_OK != rS)
+		printf("os_DoEvents(): sceSystemServiceGetStatus() Failed!");
+
+
+	/*
+	**	Polling is really the only method of finding out we're supposed to stop?
+	**		Fucked up when the emulator destroys the OS if you don't stop...
+	*/
+	if (sss.isInBackgroundExecution)
+	{
+		printf("os_DoEvents(): ! STOP \n");
+		dc_stop();
+		printf("os_DoEvents(): STOP ! \n");
+	}
+
+	do {
+		/*
+			eventNum					Number of events that can be received with sceSystemServiceReceiveEvent()
+			isSystemUiOverlaid			Flag indicating whether the system software UI is being overlaid or not
+			isInBackgroundExecution		Flag indicating whether the application is running in the background or not
+			isCpuMode7CpuNormal			Flag indicating whether the CPU mode is 7CPU(NORMAL) mode or not
+			isGameLiveStreamingOnAir	Flag indicating whether live streaming is currently being performed or not
+		*/
+
+
+		memset(&sse, 0, sizeof(SceSystemServiceEvent));
+		rS = sceSystemServiceReceiveEvent(&sse);
+		if (SCE_OK == rS) {
+
+			if (SCE_SYSTEM_SERVICE_EVENT_ON_RESUME == sse.eventType)
+				printf("SCE EVENT - RESUME!\n"); // dc_run()
+			else
+				printf("SCE EVENT - Type: %08X \n", sse.eventType);
+		}
+
+		if (sss.eventNum-- < 0) {
+			printf("SCE EVENT - OVERFLOW? \n"); break;
+		}
+	} while (SCE_OK == rS);
+
+
+
+}
+
 
 
 extern "C" int syscall(int num, ...);
@@ -38,10 +130,34 @@ extern "C" int shm_unlink(const char *path)
 
 
 
+
+
+
+
+
 u16 kcode[4];
 u32 vks[4];
 s8 joyx[4], joyy[4];
 u8 rt[4], lt[4];
+
+#define Btn_C            (1 << 0)
+#define Btn_B            (1 << 1)
+#define Btn_A            (1 << 2)
+#define Btn_START        (1 << 3)
+#define Btn_DPAD_UP      (1 << 4)
+#define Btn_DPAD_DOWN    (1 << 5)
+#define Btn_DPAD_LEFT    (1 << 6)
+#define Btn_DPAD_RIGHT   (1 << 7)
+#define Btn_Z            (1 << 8)
+#define Btn_Y            (1 << 9)
+#define Btn_X            (1 << 10)
+#define Btn_D            (1 << 11)
+#define Btn_DPAD2_UP     (1 << 12)
+#define Btn_DPAD2_DOWN   (1 << 13)
+#define Btn_DPAD2_LEFT   (1 << 14)
+#define Btn_DPAD2_RIGHT  (1 << 15)
+
+#define PARAMS16 (SCE_AUDIO_OUT_PARAM_FORMAT_S16_STEREO << SCE_AUDIO_OUT_PARAM_FORMAT_SHIFT)
 
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }
@@ -50,18 +166,166 @@ void os_SetWindowText(const char * text) {
 	puts(text);
 }
 
-void os_DoEvents() {
 
+
+SceUserServiceUserId userId = SCE_USER_SERVICE_USER_ID_SYSTEM;
+
+
+int32_t aOut_H = 0;
+int32_t pad1_H = 0;
+#if 0
+int32_t vOut_H = 0;
+#endif
+
+static void aout_init()
+{
+	verify(SCE_OK == sceAudioOutInit());
+
+	SceUserServiceUserId userId = SCE_USER_SERVICE_USER_ID_SYSTEM;
+	aOut_H = sceAudioOutOpen(userId, SCE_AUDIO_OUT_PORT_TYPE_MAIN, 0, 256, 48000, PARAMS16);
+
+	printf(" --aOut_H: %X\n", aOut_H);
 }
 
+static void aout_term() {
+	sceAudioOutClose(aOut_H);
+}
+
+static u32 aout_push(void* frame, u32 samples, bool wait)
+{
+	/* Output audio */
+	if (sceAudioOutOutput(aOut_H, frame) < 0) {
+		/* Error handling */
+	}
+
+	/* Get output process time */
+	uint64_t outputTime;
+	if (sceAudioOutGetLastOutputTime(aOut_H, &outputTime) < 0) {
+		/* Error handling */
+	}
+
+	/* Get port state */
+	SceAudioOutPortState portState;
+	if (sceAudioOutGetPortState(aOut_H, &portState) < 0) {
+		/* Error handling */
+	}
+
+	/* Get system state */
+	SceAudioOutSystemState aoss;
+	if (sceAudioOutGetSystemState(&aoss) < 0) {
+		/* Error handling */
+	}
+
+	return 1;
+}
+
+audiobackend_t audiobackend_ps4aout = {
+		"aout", // Slug
+		"PS4 AudioOut", // Name
+		&aout_init,
+		&aout_push,
+		&aout_term
+};
+
+
+
+
+
 void os_SetupInput() {
-	//mcfg_CreateDevicesFromConfig();
+
+	mcfg_CreateDevicesFromConfig();
+
+	verify(SCE_OK == scePadInit());
+	pad1_H = scePadOpen(userId, SCE_PAD_PORT_TYPE_STANDARD, 0, NULL);
+
+	printf(" --UserId: %X\n", userId);
+	printf(" --pad1_H: %X\n", pad1_H);
+
+
+#if 1 // FUCK_YOU_SONY
+	if (pad1_H >= 0) printf("pad1_H: %X\n", pad1_H); return;  // Winner Winner
+
+	SceUserServiceLoginUserIdList userIdList;
+	verify(SCE_OK == sceUserServiceGetLoginUserIdList(&userIdList));
+
+	for (int i = 0; i < SCE_USER_SERVICE_MAX_LOGIN_USERS; i++) {
+		if (userIdList.userId[i] != SCE_USER_SERVICE_USER_ID_INVALID) {
+			pad1_H = scePadOpen(userIdList.userId[i], SCE_PAD_PORT_TYPE_STANDARD, 0, NULL);
+			if (pad1_H >= 0) printf("Fixed pad1_H: %X\n", pad1_H); return;  // Winner Winner
+		}
+	}
+
+	printf("Error, No DS4 or input pad found!\n");
+#endif
 }
 
 //void os_DebugBreak() { return; } // SIGNAL()
+//#define k(c) printf("Input: '%c'\n", (c));
+#define mn(a,b) (((a)<(b))?(a):(b))
+#define mx(a,b) (((a)>(b))?(a):(b))
+
+void UpdateInputState(u32 port)
+{
+	ScePadData data;
+	
+	int ret = scePadReadState(pad1_H, &data);
+	if (ret == SCE_OK) {
+		if (!data.connected)
+			printf("Warning, Controller is not connected! \n");
+
+		data.buttons;
+		kcode[port] = 0xFFFF;
+		joyx[port] = joyy[port] = 0;
+		lt[port] = rt[port] = 0;
 
 
-void UpdateInputState(u32 port) {
+		if (data.buttons&SCE_PAD_BUTTON_CROSS)		kcode[port] &= ~Btn_A;
+		if (data.buttons&SCE_PAD_BUTTON_CIRCLE)		kcode[port] &= ~Btn_B;
+		if (data.buttons&SCE_PAD_BUTTON_SQUARE)		kcode[port] &= ~Btn_X;
+		if (data.buttons&SCE_PAD_BUTTON_TRIANGLE)	kcode[port] &= ~Btn_Y;
+		if (data.buttons&SCE_PAD_BUTTON_OPTIONS)	kcode[port] &= ~Btn_START;
+
+		if (data.buttons&SCE_PAD_BUTTON_UP)			kcode[port] &= ~Btn_DPAD_UP;
+		if (data.buttons&SCE_PAD_BUTTON_DOWN)		kcode[port] &= ~Btn_DPAD_DOWN;
+		if (data.buttons&SCE_PAD_BUTTON_LEFT)		kcode[port] &= ~Btn_DPAD_LEFT;
+		if (data.buttons&SCE_PAD_BUTTON_RIGHT)		kcode[port] &= ~Btn_DPAD_RIGHT;
+
+
+		lt[port] = (data.buttons&SCE_PAD_BUTTON_L1) ? 255 : data.analogButtons.l2;
+		rt[port] = (data.buttons&SCE_PAD_BUTTON_R1) ? 255 : data.analogButtons.r2;
+
+
+		// Sticks are u8 !
+		s8 lsX = data.leftStick.x - 128; lsX = (lsX < 0) ? mn(lsX, -8) : mx(lsX, 7);
+		s8 lsY = data.leftStick.y - 128; lsY = (lsY < 0) ? mn(lsY, -8) : mx(lsY, 7);
+
+		joyx[port] = lsX;
+		joyy[port] = lsY;
+
+		s8 rsX = data.rightStick.x - 128; rsX = (rsX < 0) ? mn(rsX, -8) : mx(rsX, 7);
+		s8 rsY = data.rightStick.y - 128; rsY = (rsY < 0) ? mn(rsY, -8) : mx(rsY, 7);
+
+		if (rsY < -120)		kcode[port] &= ~Btn_DPAD2_UP;
+		if (rsY > 119)		kcode[port] &= ~Btn_DPAD2_DOWN;
+		if (rsX < -120)		kcode[port] &= ~Btn_DPAD2_LEFT;
+		if (rsX > 119)		kcode[port] &= ~Btn_DPAD2_RIGHT;
+
+
+
+#if 0
+		data.leftStick.x,y
+		data.rightStick.x, y
+			
+		ScePadAnalogStick leftStick;
+		ScePadAnalogStick rightStick;
+		ScePadAnalogButtons analogButtons;
+
+		SCE_PAD_BUTTON_ L3, R3, OPTIONS, 
+			UP , RIGHT , DOWN ,	LEFT , L2 , R2 , L1 , R1 ,
+			TRIANGLE , CIRCLE , CROSS , SQUARE ,
+			TOUCH_PAD , INTERCEPTED 
+#endif
+	}
 
 }
 
@@ -74,8 +338,8 @@ void os_CreateWindow() { }
 
 SceWindow render_window = { 0, 1920,1080 }; // width, height };
 void* libPvr_GetRenderTarget() { return &render_window; }
-void* libPvr_GetRenderSurface() { return (void*)(u64)EGL_DEFAULT_DISPLAY; }
-
+void* libPvr_GetRenderSurface() { return (void*)EGL_DEFAULT_DISPLAY; }
+//(void*)vOut_H; } // 
 
 int __cdecl msgboxf(const char* text, unsigned int type, ...)
 {
@@ -255,9 +519,48 @@ static void cleanup(void) {
 
 
 
+#include "ps4_video.h"
+
+#define SM_AudioOut			0x80000001
+#define SM_SystemService	0x80000010
+#define SM_UserService		0x80000011
+#define SM_Pad				0x80000024
+#define SM_SysUtil			0x80000026
+
+#define SM_ContentExport	SCE_SYSMODULE_CONTENT_EXPORT
+
+static void ps4_init()
+{
+	verify(SCE_OK == sceSysmoduleLoadModuleInternal(SM_AudioOut));
+	verify(SCE_OK == sceSysmoduleLoadModuleInternal(SM_SystemService));
+	verify(SCE_OK == sceSysmoduleLoadModuleInternal(SM_UserService));
+	verify(SCE_OK == sceSysmoduleLoadModuleInternal(SM_Pad));
+	verify(SCE_OK == sceSysmoduleLoadModuleInternal(SM_SysUtil));
+
+	verify(SCE_OK == sceUserServiceInitialize(NULL));
+	sceUserServiceGetInitialUser(&userId);
 
 
 
+
+	g_sandbox_word = sceKernelGetFsSandboxRandomWord();
+	if (!g_sandbox_word) {
+		EPRINTF("sceKernelGetFsSandboxRandomWord failed.\n");
+		return;
+	}
+
+	printf("load_modules();\n");
+
+	verify(load_modules());
+	verify(do_patches());
+	verify(SCE_OK == sceSystemServiceHideSplashScreen());
+
+	
+
+	ps4_video_init();
+
+
+}
 
 
 
@@ -271,40 +574,19 @@ void dc_term();
 
 int main(int argc, char* argv[])
 {
-	printf("\n\n\n\n -- REICAST BETA -- \n\n\n\n");
-
+	printf("-- REICAST BETA -- \n");
 	atexit(&cleanup);
 
-printf("sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_SYSTEM_SERVICE);\n");
+	size_t mSize=0;
+	sceKernelAvailableFlexibleMemorySize(&mSize);
+	printf("Available Flexible Mem: %d KB \n", mSize/1024);
+	
+	off_t phy=0;
+	sceKernelAvailableDirectMemorySize(0,SCE_KERNEL_MAIN_DMEM_SIZE,0,&phy,&mSize);
+	printf("Available Direct Mem: %d KB @ %p \n", mSize/1024, (void*)phy);
 
-	int ret = sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_SYSTEM_SERVICE);
-	if (ret) {
-		EPRINTF("sceSysmoduleLoadModuleInternal(%s) failed: 0x%08X\n", "SCE_SYSMODULE_INTERNAL_SYSTEM_SERVICE", ret);
-		goto err;
-	}
+	ps4_init();
 
-	g_sandbox_word = sceKernelGetFsSandboxRandomWord();
-	if (!g_sandbox_word) {
-		EPRINTF("sceKernelGetFsSandboxRandomWord failed.\n");
-		goto err;
-	}
-
-printf("load_modules();\n");
-
-	if (!load_modules()) {
-		EPRINTF("Unable to load modules.\n");
-		goto err;
-	}
-	if (!do_patches()) {
-		EPRINTF("Unable to patch modules.\n");
-		goto err;
-	}
-
-	ret = sceSystemServiceHideSplashScreen();
-	if (ret) {
-		EPRINTF("sceSystemServiceHideSplashScreen failed: 0x%08X\n", ret);
-		goto err;
-	}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -448,3 +730,85 @@ void hexdump(const void* data, size_t size) {
 		printf("\n");
 	}
 }
+
+
+#if 0
+
+static unsigned long zmtotal = 0;
+
+void* zmalloc(unsigned long size)
+{
+	void *result = 0;
+
+	const uint32_t psMask = (0x4000 - 1);
+	int32_t mem_size = (size + psMask) & ~psMask;
+	int32_t ret = sceKernelMapFlexibleMemory(&result, mem_size, SCE_KERNEL_PROT_CPU_RW | SCE_KERNEL_PROT_GPU_RW, 0);
+	if (0 != result) {
+		zmtotal += mem_size;
+		printf("zmalloc(%d) allocated %d bytes to 0x%p :: total %d\n", size, mem_size, result, zmtotal);
+	}
+	else die("ERROR, zmalloc() : allocation failed!\n");
+	return result;
+}
+
+void  zfree(void* ptr)
+{
+	sceKernelMunmap(ptr, 1024*1024*4);	// who cares atm, fucking choke on it
+}
+
+void  zfree2(void* ptr, unsigned long size)
+{
+	const uint32_t psMask = (0x4000 - 1);
+	int32_t mem_size = (size + psMask) & ~psMask;
+	sceKernelMunmap(ptr, mem_size);	// who cares atm, fucking choke on it
+
+	zmtotal -= mem_size;
+}
+#endif
+
+
+#if 0
+
+extern "C" {
+
+	int user_malloc_init(void) { printf("VM @@@@ %s", __FUNCTION__);  return 0; }
+
+	int user_malloc_finalize(void) { printf("VM @@@@ %s", __FUNCTION__);  return 0; }
+
+	void *user_malloc(size_t size) { printf("VM @@@@ %s", __FUNCTION__);  return 0; }
+
+	void user_free(void *ptr) { printf("VM @@@@ %s", __FUNCTION__); }
+
+	void *user_calloc(size_t nelem, size_t size) { printf("VM @@@@ %s", __FUNCTION__);  return 0; }
+
+	void *user_realloc(void *ptr, size_t size) { printf("VM @@@@ %s", __FUNCTION__);  return 0; }
+
+	void *user_memalign(size_t boundary, size_t size) { printf("VM @@@@ %s", __FUNCTION__);  return 0; }
+
+	void *user_reallocalign(void *ptr, size_t size, size_t boundary) { printf("VM @@@@ %s", __FUNCTION__);  return 0; }
+
+	int user_posix_memalign(void **ptr, size_t boundary, size_t size) { printf("VM @@@@ %s", __FUNCTION__);  return 0; }
+
+	int user_malloc_stats(SceLibcMallocManagedSize *mmsize) { printf("VM @@@@ %s", __FUNCTION__);  return 0; }
+	int user_malloc_stats_fast(SceLibcMallocManagedSize *mmsize) { printf("VM @@@@ %s", __FUNCTION__);  return 0; }
+
+	size_t user_malloc_usable_size(void *ptr)
+	{
+		printf("VM @@@@ %s", __FUNCTION__);
+		return 1 << 28;
+	}
+
+
+};
+
+#endif
+
+
+
+
+
+
+
+
+
+

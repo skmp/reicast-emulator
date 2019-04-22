@@ -15,7 +15,7 @@
 #include <GLES2/gl2ext.h>
 #endif
 
-#ifndef PS4
+#ifndef TARGET_PS4
 #ifndef GL_NV_draw_path
 //IMGTEC GLES emulation
 #pragma comment(lib,"libEGL.lib")

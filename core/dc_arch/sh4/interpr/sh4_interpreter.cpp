@@ -47,6 +47,8 @@ void Sh4_int_Run()
 #if !defined(NO_MMU)
 		try {
 #endif
+		//	printf("> ");
+
 			do
 			{
 				u32 addr = next_pc;
@@ -55,9 +57,18 @@ void Sh4_int_Run()
 
 				OpPtr[op](op);
 				l -= CPU_RATIO;
+
+			//	printf(" %X ", l);
+
 			} while (l > 0);
 			l += SH4_TIMESLICE;
+
+
+
+		//	printf("< {{\r\n");
 			UpdateSystem_INTC();
+		//	printf("}} >\r\n\r\n");
+
 #if !defined(NO_MMU)
 		}
 		catch (SH4ThrownException ex) {
@@ -210,8 +221,8 @@ int AicaUpdate(int tag, int c, int j)
 		//aica_sample_cycles-=AICA_SAMPLE_CYCLES;
 	}
 
-   if (settings.aica.DelayInterrupt)
-      aica_periodical(3584);
+	if (settings.aica.DelayInterrupt)
+		aica_periodical(3584);
 
 	return AICA_TICK;
 }
@@ -249,16 +260,20 @@ int UpdateSystem()
 	//this is an optimisation (mostly for ARM)
 	//makes scheduling easier !
 	//update_fp* tmu=pUpdateTMU;
-	
+
+//	printf("UpdateSystem #1\n");
 	Sh4cntx.sh4_sched_next-=448;
 	if (Sh4cntx.sh4_sched_next<0)
 		sh4_sched_tick(448);
+//	printf("UpdateSystem #2\n");
 
 	return Sh4cntx.interrupt_pend;
 }
 
 int UpdateSystem_INTC()
 {
+//	printf("UpdateSystem_INTC()\n");
+
 	UpdateSystem();
 	return UpdateINTC();
 }
@@ -283,10 +298,10 @@ void Sh4_int_Init()
 {
 	verify(sizeof(Sh4cntx)==448);
 
-	aica_schid=sh4_sched_register(0,&AicaUpdate);
+	aica_schid=sh4_sched_register(SchTagAica,&AicaUpdate);
 	sh4_sched_request(aica_schid,AICA_TICK);
 
-	rtc_schid=sh4_sched_register(0,&DreamcastSecond);
+	rtc_schid=sh4_sched_register(SchTagRTC,&DreamcastSecond);
 	sh4_sched_request(rtc_schid,SH4_MAIN_CLOCK);
 	memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 }

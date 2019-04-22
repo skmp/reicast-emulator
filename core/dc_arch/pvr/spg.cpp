@@ -244,11 +244,12 @@ int rend_end_sch(int tag, int cycl, int jitt)
 	return 0;
 }
 
+
 bool spg_Init()
 {
-	render_end_schid=sh4_sched_register(0,&rend_end_sch);
-	vblank_schid=sh4_sched_register(0,&spg_line_sched);
-	time_sync=sh4_sched_register(0,&elapse_time);
+	render_end_schid=sh4_sched_register(SchTagRend,&rend_end_sch);
+	vblank_schid=sh4_sched_register(SchTagVbl,&spg_line_sched);
+	time_sync=sh4_sched_register(SchTagSync,&elapse_time);
 
 	sh4_sched_request(time_sync,8*1000*1000);
 

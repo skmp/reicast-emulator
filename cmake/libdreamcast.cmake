@@ -101,14 +101,15 @@ set(libdc_SRCS
 )
 
 
-if(${FEAT_SHREC} EQUAL ${DYNAREC_CPP})
+#if(${FEAT_SHREC} EQUAL ${DYNAREC_CPP})
     list(APPEND libdc_SRCS ./core/dynarec/cpp/rec_cpp.cpp)
-endif()
+#endif()
 
-if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT})
+#if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT})
 #
   if(${HOST_CPU} EQUAL ${CPU_X86})
     list(APPEND libdc_SRCS 
+	  ./core/dynarec/x86_emitter/x86_emitter.cpp
       ./core/dynarec/x86/rec_x86_driver.cpp
       ./core/dynarec/x86/rec_x86_il.cpp
       ./core/dynarec/x86/rec_x86_asm.cpp	# change for linux , rec_lin86_asm.S
@@ -125,19 +126,8 @@ if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT})
     error(" SHREC Default , prob aarch64 , add or disable rec if not avail.")
   endif()
 #
-endif()
+#endif()
 
-
-
-
-
-if(NOT ON) #DEBUG_CMAKE)
-message("Adding libdreamcast ... \n\n >> libdc_SRCS: \n{\n")
-foreach(_entry_t IN LISTS libdc_SRCS)  # see not required here 
-  message("${_entry_t}")
-endforeach()
-message("}\n >> End libdc_SRCS: \n\n")
-endif()
 
 
 

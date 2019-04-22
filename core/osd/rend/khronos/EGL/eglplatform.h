@@ -80,7 +80,7 @@ typedef HWND    EGLNativeWindowType;
 #elif defined(__ORBIS__) /* Orbis (PS4) */
 
 struct _SceWindow {
-	uint32_t id;
+	uint32_t id;		// _EGLNativeWindowType::uID is out of range: 1309737216, should be [0-7]
 	uint32_t width;
 	uint32_t height;
 };

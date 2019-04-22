@@ -119,6 +119,11 @@ if (${HOST_OS} EQUAL ${OS_WINDOWS})
       ${d_osd}/windows/winmain.cpp	#win_ui
       ${d_osd}/rend/d3d11/d3d11.cpp
     )
+
+	if(USE_GLES)
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LIBPATH:C:/Dev/SDK/GLES2angle")
+	endif()
+
   endif()
 #
 elseif (${HOST_OS} EQUAL ${OS_LINUX}   OR  ## This should prob be if POSIX_COMPAT : ./osd/posix_base_osd
@@ -188,10 +193,9 @@ elseif(${HOST_OS} EQUAL ${OS_PS4_BSD})
   list(APPEND libosd_SRCS
 	${d_osd}/ps4/ps4_util.S
 	${d_osd}/ps4/ps4_osd.cpp
-	
-    ${d_osd}/linux/common.cpp
+	${d_osd}/ps4/ps4_video.cpp
 
-  # ${d_osd}/audiobackend/audiobackend_oss.cpp
+    ${d_osd}/linux/common.cpp
   )
 
 

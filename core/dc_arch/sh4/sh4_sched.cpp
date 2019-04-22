@@ -50,11 +50,15 @@ u32 sh4_sched_remaining(int id, u32 reference)
 
 u32 sh4_sched_remaining(int id)
 {
+//	printf("sh4_sched_remaining(%X)\n",id);
+
 	return sh4_sched_remaining(id, sh4_sched_now());
 }
 
 void sh4_sched_ffts()
 {
+//	printf("sh4_sched_ffts()\n");
+
 	u32 diff=-1;
 	int slot=-1;
 
@@ -137,14 +141,24 @@ int sh4_sched_elapsed(int id)
 		return -1;
 }
 
+
+static const char* tagNames[] = {
+	"SchTagGDROM","SchTagMaple","SchTagRend","SchTagVbl","SchTagSync","SchTagAica","SchTagRTC","SchTagTMU"
+};
+
+
 void handle_cb(int id)
 {
 	int remain=list[id].end-list[id].start;
 	int elapsd=sh4_sched_elapsed(id);
 	int jitter=elapsd-remain;
-
+#if 0
+	//auto li = list[id];
+	const unat tt = (list[id].tag >> 24) & 7;
+	printf("handle_cb(TAG: %s) cb: %p \n", tagNames[tt], list[id].cb); fflush(stdout);
+#endif
 	list[id].end=-1;
-	int re_sch=list[id].cb(list[id].tag,remain,jitter);
+	int re_sch=list[id].cb(list[id].tag & SchTagTMU_Mask,remain,jitter);
 
 	if (re_sch>0)	sh4_sched_request(id,re_sch-jitter);
 }
@@ -155,7 +169,6 @@ void sh4_sched_tick(int cycles)
 	Sh4cntx.sh4_sched_time+=cycles;
 	Sh4cntx.sh4_sched_next-=cycles;
 	*/
-
 	if (Sh4cntx.sh4_sched_next<0)
 	{
 		u32 fztime=sh4_sched_now()-cycles;

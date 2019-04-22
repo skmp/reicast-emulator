@@ -515,6 +515,7 @@ void update_armintc()
 void libAICA_TimeStep();
 
 #if FEAT_AREC == DYNAREC_NONE
+
 void arm_Run(u32 CycleCount) { 
 	for (int i=0;i<32;i++)
 	{

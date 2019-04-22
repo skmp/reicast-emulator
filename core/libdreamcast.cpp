@@ -40,26 +40,31 @@ settings_t settings;
 
 s32 plugins_Init()
 {
-
+	printf("@@@ plugins_Init() PVR \n");
 	if (s32 rv = libPvr_Init())
 		return rv;
 
+	printf("@@@ plugins_Init() GDR \n");
 	if (s32 rv = libGDR_Init())
 		return rv;
+
 	#if DC_PLATFORM == DC_PLATFORM_NAOMI
 	if (!naomi_cart_SelectFile(libPvr_GetRenderTarget()))
 		return rv_serror;
 	#endif
 
+	printf("@@@ plugins_Init() AICA \n");
 	if (s32 rv = libAICA_Init())
 		return rv;
 
+	printf("@@@ plugins_Init() ARM \n");
 	if (s32 rv = libARM_Init())
 		return rv;
 
 	//if (s32 rv = libExtDevice_Init())
 	//	return rv;
 
+	printf("@@@ plugins_Init() FINI @@@\n");
 
 
 	return rv_ok;
@@ -118,9 +123,6 @@ int dc_init(int argc,wchar* argv[])
 	setbuf(stdin,0);
 	setbuf(stdout,0);
 	setbuf(stderr,0);
-
-	printf("---------------------------------\n\t_vmem_reserve()\n---------------------------------\n");
-
 	if (!_vmem_reserve())
 	{
 		printf("Failed to alloc mem\n");
@@ -146,7 +148,6 @@ int dc_init(int argc,wchar* argv[])
 #endif
 	}
 
-	printf("---------------------------------\n\t cfgOpen()\n---------------------------------\n");
 	if(!cfgOpen())
 	{
 		msgboxf("Unable to open config file",MBX_ICONERROR);
@@ -157,7 +158,7 @@ int dc_init(int argc,wchar* argv[])
 		return -4;
 #endif
 	}
-	printf("---------------------------------\n\t LoadSettings()\n---------------------------------\n");
+
 	LoadSettings();
 #ifndef _ANDROID
 	os_CreateWindow();
@@ -165,7 +166,6 @@ int dc_init(int argc,wchar* argv[])
 
 	int rv = 0;
 
-	printf("---------------------------------\n\t LoadRomFiles()\n---------------------------------\n");
 #if HOST_OS != OS_DARWIN && !defined(PS4)
     #define DATA_PATH "/data/"
 #else
@@ -190,8 +190,11 @@ int dc_init(int argc,wchar* argv[])
 			printf("Did not load bios, using reios\n");
 		}
 	}
+	int res = rv_ok;
+	if (rv_ok != (res = plugins_Init())) {
+		printf("@ ERROR:  Plugin Init Failure! rv: %X \n", res); die("! plugins_Init()");
+	}
 
-	plugins_Init();
 
 #if defined(_ANDROID)
 }
@@ -235,7 +238,7 @@ int dc_init()
 	mem_Reset(false);
 
 	sh4_cpu.Reset(false);
-	
+
 	return rv;
 }
 

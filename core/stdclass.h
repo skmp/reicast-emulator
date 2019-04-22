@@ -105,6 +105,11 @@ public:
 		else
 			data=(T*)realloc(data,size*sizeof(T));
 
+		if (0 == data) {
+			printf("ERROR: Array alloc data null!\n"); exit(-1);
+		}
+		// verify(0 != data); // types is included, this is in it,  error, wtf
+
 		//TODO : Optimise this
 		//if we allocated more , Zero it out
 		if (bZero)

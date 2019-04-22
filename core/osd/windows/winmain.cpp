@@ -779,7 +779,7 @@ void os_DoEvents()
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }
 
-int GetFile(char *szFileName, char *szParse = 0, u32 flags = 0)
+int GetFile(char *szFileName, char *szParse, u32 flags)
 {
 	cfgLoadStr("config", "image", szFileName, "null");
 	if (strcmp(szFileName, "null") == 0)

@@ -620,7 +620,7 @@ u32 DynaRBI::Relink()
 	W F32v2 B,S{,M}
 */
 
-#include "hw/sh4/sh4_mmr.h"
+#include "dc_arch/sh4/sh4_mmr.h"
 
 enum mem_op_type
 {

@@ -453,9 +453,23 @@ int screen_height;
 
 		printf("Info: EGL version %d.%d\n",maj,min);
 
-
-
+#if defined(TARGET_PS4)
+		EGLint pi32ConfigAttribs[] = {
+			EGL_RED_SIZE, 8,
+			EGL_GREEN_SIZE, 8,
+			EGL_BLUE_SIZE, 8,
+			EGL_ALPHA_SIZE, 8,
+			EGL_DEPTH_SIZE, 0,
+			EGL_STENCIL_SIZE, 0,
+			EGL_SAMPLE_BUFFERS, 0,
+			EGL_SAMPLES, 0,
+			EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+			EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+			EGL_NONE,
+		};
+#else
 		EGLint pi32ConfigAttribs[]  = { EGL_SURFACE_TYPE, EGL_WINDOW_BIT, EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT , EGL_DEPTH_SIZE, 24, EGL_STENCIL_SIZE, 8, EGL_NONE };
+#endif
 		EGLint pi32ContextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2 , EGL_NONE };
 
 		int num_config;
@@ -543,7 +557,6 @@ int screen_height;
 	#endif
 	}
 #else
-
 	#if HOST_OS == OS_WINDOWS
 		#define WGL_DRAW_TO_WINDOW_ARB         0x2001
 		#define WGL_ACCELERATION_ARB           0x2003
@@ -908,6 +921,8 @@ bool CompilePipelineShader(	PipelineShader* s)
 
 	ShaderUniforms.Set(s);
 
+	verify(glIsProgram(s->program));
+
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
@@ -936,7 +951,7 @@ bool gl_create_resources()
 
 	PipelineShader* dshader=0;
 	u32 compile=0;
-#define forl(name,max) for(u32 name=0;name<=max;name++)
+#define forl(name,mxx) for(u32 name=0;name<=mxx;name++)
 	forl(cp_AlphaTest,1)
 	{
 		forl(pp_ClipTestMode,2)
@@ -998,7 +1013,10 @@ bool gl_create_resources()
 	#endif
 
 	int w, h;
+#ifndef TARGET_PS4
 	osd_tex=loadPNG(get_readonly_data_path("/data/buttons.png"),w,h);
+#endif
+
 #ifdef TARGET_PANDORA
 	osd_font=loadPNG(get_readonly_data_path("/font2.png"),w,h);
 #endif
@@ -1032,22 +1050,23 @@ bool gles_init()
 	if (!gl_create_resources())
 		return false;
 
+
 #if defined(GLES) && HOST_OS != OS_DARWIN && !defined(TARGET_NACL32)
 	#ifdef TARGET_PANDORA
-	fbdev=open("/dev/fb0", O_RDONLY);
+		fbdev=open("/dev/fb0", O_RDONLY);
+	#elif defined(TARGET_PS4)
+		eglSwapInterval(gl.setup.display, 0);
 	#else
-	eglSwapInterval(gl.setup.display,1);
+		eglSwapInterval(gl.setup.display, 1);
 	#endif
 #endif
 
 	//clean up all buffers ...
-	for (int i=0;i<10;i++)
-	{
+	for (int i=0;i<10;i++) {
 		glClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		gl_swap();
 	}
-
 	return true;
 }
 

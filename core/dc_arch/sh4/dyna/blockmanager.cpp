@@ -25,6 +25,7 @@
 op_agent_t          oprofHandle;
 #endif
 
+
 #if FEAT_SHREC != DYNAREC_NONE
 
 
@@ -673,5 +674,5 @@ void print_blocks()
 
 	if (f) fclose(f);
 }
-#endif
 
+#endif

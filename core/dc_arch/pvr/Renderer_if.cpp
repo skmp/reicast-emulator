@@ -115,6 +115,7 @@ void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL
 
 	if (vram_ref) {
 		src_vram = (u8*)malloc(VRAM_SIZE);
+		verify(0 != src_vram);
 
 		for (int i = 0; i < VRAM_SIZE; i++) {
 			src_vram[i] = vram[i] ^ vram_ref[i];
@@ -122,6 +123,8 @@ void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL
 	}
 
 	compressed = (u8*)malloc(VRAM_SIZE+16);
+	verify(0 != compressed);
+
 	compressed_size = VRAM_SIZE;
 	verify(compress(compressed, &compressed_size, src_vram, VRAM_SIZE) == Z_OK);
 	fwrite(&compressed_size, 1, sizeof(compressed_size), fw);
@@ -133,6 +136,8 @@ void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL
 
 	fwrite(&bytes, 1, sizeof(t), fw);
 	compressed = (u8*)malloc(bytes + 16);
+	verify(0 != compressed);
+
 	compressed_size = VRAM_SIZE;
 	verify(compress(compressed, &compressed_size, ctx->tad.thd_root, bytes) == Z_OK);
 	fwrite(&compressed_size, 1, sizeof(compressed_size), fw);
@@ -178,6 +183,8 @@ TA_context* read_frame(const char* file, u8* vram_ref) {
 	fread(&t2, 1, sizeof(t), fw);
 
 	u8* gz_stream = (u8*)malloc(t2);
+	verify(0 != gz_stream);
+
 	fread(gz_stream, 1, t2, fw);
 	uncompress(vram.data, (uLongf*)&t, gz_stream, t2);
 	free(gz_stream);
@@ -186,6 +193,8 @@ TA_context* read_frame(const char* file, u8* vram_ref) {
 	fread(&t, 1, sizeof(t), fw);
 	fread(&t2, 1, sizeof(t), fw);
 	gz_stream = (u8*)malloc(t2);
+	verify(0 != gz_stream);
+
 	fread(gz_stream, 1, t2, fw);
 	uncompress(ctx->tad.thd_data, (uLongf*)&t, gz_stream, t2);
 	free(gz_stream);

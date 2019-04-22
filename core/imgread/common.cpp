@@ -178,6 +178,7 @@ bool InitDrive_(wchar* fn)
 #ifndef NOT_REICAST
 bool InitDrive(u32 fileflags)
 {
+#ifndef TARGET_PS4
 	if (settings.imgread.LoadDefaultImage)
 	{
 		printf("Loading default image \"%s\"\n",settings.imgread.DefaultImage);
@@ -234,6 +235,14 @@ bool InitDrive(u32 fileflags)
 	{
 		return true;
 	}
+#else
+	NullDriveDiscType = NoDisk;
+	gd_setdisc();
+	sns_asc = 0x29;
+	sns_ascq = 0x00;
+	sns_key = 0x6;
+	return true;
+#endif
 }
 
 bool DiscSwap(u32 fileflags)

@@ -168,13 +168,12 @@ void libAICA_TimeStep()
 		timers[i].StepTimer(1);
 
 	SCIPD->SAMPLE_DONE=1;
-
 	if (settings.aica.NoBatch)
 		AICA_Sample();
 
 	//Make sure sh4/arm interrupt system is up to date :)
 	update_arm_interrupts();
-	UpdateSh4Ints();	
+	UpdateSh4Ints();
 }
 
 //Memory i/o
@@ -250,6 +249,8 @@ template void WriteAicaReg<2>(u32 reg,u32 data);
 //misc :p
 s32 libAICA_Init()
 {
+	printf("---->>> libAICA_Init() \n"); fflush(stdout);
+
 	init_mem();
 
 	verify(sizeof(*CommonData)==0x508);
@@ -268,9 +269,12 @@ s32 libAICA_Init()
 	MCIRE=(InterruptInfo*)&aica_reg[0x28B4+8];
 
 	sgc_Init();
+
+	printf("---->>> libAICA_Init() Timer Init! \n"); fflush(stdout);
 	for (int i=0;i<3;i++)
 		timers[i].Init(aica_reg,i);
 
+	printf("---->>> libAICA_Init() FINI \n"); fflush(stdout);
 	return rv_ok;
 }
 

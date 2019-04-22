@@ -61,8 +61,8 @@ set(DYNAREC_CPP    0x40000003)
 
 set(COMPILER_VC    0x30000001)  # BUILD_COMPILER
 set(COMPILER_GCC   0x30000002)
-set(COMPILER_CLANG 0x30000002)
-set(COMPILER_INTEL 0x30000002)
+set(COMPILER_CLANG 0x30000003)
+set(COMPILER_INTEL 0x30000004)
 
 
 
@@ -134,12 +134,19 @@ endif()
 
 
 
+# *FIXME* This is a hack, local multi abi build #
+if(NOT "${TARGET_ARCH}" STREQUAL "")
+  set(HOST_CPU ${TARGET_ARCH}) 
+endif()
+
+
+
 string(TOLOWER ${CMAKE_SYSTEM_NAME} host_os)
 
 
 ## HOST_* is not TARGET_*  ;;  change ndc-e internal naming it's wrong , then change this  ;;
 
-if("Android" STREQUAL "${host_os}"  OR ANDROID)
+if("android" STREQUAL "${host_os}"  OR ANDROID)
   set(HOST_OS ${OS_LINUX}) 	# *FIXME* we might have to keep as OS_LINUX or add to full cleanup list :|
 elseif(CMAKE_HOST_WIN32)
   set(HOST_OS ${OS_WINDOWS}) 
@@ -158,96 +165,42 @@ endif()
 
 
 
-### These were for internal testing, don't use ###
-#
-function(CpuIs CpuType Res)
-  set(${Res} OFF PARENT_SCOPE)
-  if (${HOST_CPU} EQUAL ${CpuType})
-    set(${Res} ON PARENT_SCOPE)
-  endif()
-endfunction()
-
-macro(CpuIsX86 res)
-  CpuIs(CPU_X86 ${res})
-endmacro()
-
-macro(CpuIsX64 res)
-  CpuIs(CPU_X64 ${res})
-endmacro()
-
-macro(CpuIsARM res)
-  CpuIs(CPU_ARM ${res})
-endmacro()
-
-macro(CpuIsA64 res)
-  CpuIs(CPU_A64 ${res})
-endmacro()
-
-macro(CpuIsPPC res)
-  CpuIs(CPU_PPC ${res})
-endmacro()
-
-macro(CpuIsPPC64 res)
-  CpuIs(CPU_PPC64 ${res})
-endmacro()
-
-macro(CpuIsMIPS res)
-  CpuIs(CPU_MIPS ${res})
-endmacro()
-
-macro(CpuIsMIPS64 res)
-  CpuIs(CPU_MIPS64 ${res})
-endmacro()
-
-
-
-
-
-
 #option(TARGET_NO_REC  BOOL "")
 #option(TARGET_NO_AREC BOOL "")
 #option(TARGET_NO_JIT  BOOL "")
 
 
-
-
+  set(FEAT_SHREC  ${DYNAREC_NONE})
+  set(FEAT_AREC   ${DYNAREC_NONE})
+  set(FEAT_DSPREC ${DYNAREC_NONE})
 
 
 ## Dynarec avail on x86,x64,arm and aarch64 in arm.32 compat 
 #
-if((${HOST_CPU} EQUAL ${CPU_X86}) OR (${HOST_CPU} EQUAL ${CPU_X64}) OR
+if(NOT TARGET_NO_REC AND
+   (${HOST_CPU} EQUAL ${CPU_X86}) OR (${HOST_CPU} EQUAL ${CPU_X64}) OR
    (${HOST_CPU} EQUAL ${CPU_ARM}) OR (${HOST_CPU} EQUAL ${CPU_A64}))
 #
   message("Dynarec Features Available")
-  
-  set(FEAT_SHREC  ${DYNAREC_JIT})
-  set(FEAT_AREC   ${DYNAREC_NONE})
-  set(FEAT_DSPREC ${DYNAREC_NONE})
-#
-else()
-  set(FEAT_SHREC  ${DYNAREC_CPP})
-  set(FEAT_AREC   ${DYNAREC_NONE})
-  set(FEAT_DSPREC ${DYNAREC_NONE})
-endif()
 
+  if(TARGET_NO_JIT OR (${HOST_CPU} EQUAL ${CPU_X86}))  ## x86 rec broke somewhere ? 
+    set(FEAT_SHREC  ${DYNAREC_CPP})
+  else()
+    set(FEAT_SHREC  ${DYNAREC_JIT})
+  endif()
+
+  ## AREC/DSPREC FEAT
+
+endif()
 ## Handle TARGET_* to FEAT_  *FIXME* stupid use one or the other and propogate : part of build cleanup , TARGET_ will only be for platform specifics and FEAT_ as OPTIONS
 #
-if(TARGET_NO_REC)
-  set(FEAT_SHREC  ${DYNAREC_NONE})
-  set(FEAT_AREC   ${DYNAREC_NONE})
-  set(FEAT_DSPREC ${DYNAREC_NONE})
-endif()
 
 if(TARGET_NO_AREC)
-  set(FEAT_SHREC  ${DYNAREC_JIT})
   set(FEAT_AREC   ${DYNAREC_NONE})
-  set(FEAT_DSPREC ${DYNAREC_NONE})
 endif()
 
 if(TARGET_NO_JIT)
   set(FEAT_SHREC  ${DYNAREC_CPP})
-  set(FEAT_AREC   ${DYNAREC_NONE})
-  set(FEAT_DSPREC ${DYNAREC_NONE})
 endif()
 
 
@@ -255,15 +208,15 @@ endif()
 
 
 
-######## Looks like something to delete, but if we're going to handle options here and NOT in libosd/lib* #########
-
+## For simple cross to linux targets mostly ##
+#
 # FindNativeCompilers()
 ## options BUILD_COMPILER { GCC, Clang, Intel, RealView? }
-
-
-#set(CMAKE_C_COMPILER clang)
+#
+## 
+#set(CMAKE_C_COMPILER BUILD_COMPILER)
 #set(CMAKE_C_COMPILER_TARGET ${triple})
-#set(CMAKE_CXX_COMPILER clang++)
+#set(CMAKE_CXX_COMPILER BUILD_COMPILER)
 #set(CMAKE_CXX_COMPILER_TARGET ${triple})
 
 
@@ -284,11 +237,11 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1)
 
 #
-elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") 
-  set(BUILD_COMPILER ${COMPILER_GCC})
-#
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   set(BUILD_COMPILER ${COMPILER_CLANG})
+#
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") 
+  set(BUILD_COMPILER ${COMPILER_GCC})
 #
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
   set(BUILD_COMPILER ${COMPILER_INTEL})
@@ -306,8 +259,8 @@ if ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
   
   set(_C_FLAGS "-fno-operator-names -fcxx-exceptions") ## xbyak needs exceptions
   
-  
-  if(USE_32B OR TARGET_LINUX_X86)
+  # *FIXME*
+  if(USE_32B OR TARGET_X86)
     set(_C_FLAGS "${_C_FLAGS} -m32")
   endif()
   
@@ -362,12 +315,18 @@ endif()
 if (TARGET_PS4) # -DCMAKE_TOOLCHAIN_FILE=./cmake/{ps4sdk,clang_scei}.cmake -DTARGET_PS4=ON
   set(HOST_OS ${OS_PS4_BSD})
   message("HOST_OS ${HOST_OS}")
-  
 
-  add_definitions(-DPS4 -DTARGET_PS4 -DTARGET_BSD -D__ORBIS__ -DGLES -DMESA_EGL_NO_X11_HEADERS)  ## last needed for __unix__ on eglplatform.h
+  set(BUILD_COMPILER ${COMPILER_GCC}) # try lying ..
+  
+   # -DMESA_EGL_NO_X11_HEADERS)  ## last needed for __unix__ on eglplatform.h
+  add_definitions(-DPS4 -DTARGET_PS4 -DTARGET_BSD -D__ORBIS__ -DGLES)
   add_definitions(-DTARGET_NO_THREADS -DTARGET_NO_EXCEPTIONS -DTARGET_NO_NIXPROF)
   add_definitions(-DTARGET_NO_COREIO_HTTP -DTARGET_NO_WEBUI -UTARGET_SOFTREND)
-
+  add_definitions(-DTARGET_NO_NVMEM) # TARGET_BOUNDED_EXECUTION ??
+  
+  set(FEAT_AREC   ${DYNAREC_NONE})
+  set(FEAT_SHREC  ${DYNAREC_NONE}) #${DYNAREC_CPP})
+  set(FEAT_DSPREC ${DYNAREC_NONE})
 
   message("*******FIXME******** LARGE PAGES !!")
 endif()
@@ -377,9 +336,15 @@ endif()
 if(ZBUILD)
   set(DEBUG_CMAKE ON)
   add_definitions(-D_Z_)  # Get rid of some warnings and internal dev testing
-  
+ 
+ ## *FIXME* another option
+#  set(USE_GLES OFF)
+#  if(USE_GLES)
+#    add_definitions(-DGLES)
+#  endif()
+
   if(NOT TARGET_PS4 AND NOT TARGET_NSW)
-    set(USE_QT On)
+    set(USE_QT OFF)
   endif()
 endif()
 
@@ -424,3 +389,61 @@ add_definitions(-DDEF_CONSOLE)
 
 set(RE_CMAKE_CONFIGURED 1)
 #add_definitions(-D=${})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### These were for internal testing, don't use ###
+#
+function(CpuIs CpuType Res)
+  set(${Res} OFF PARENT_SCOPE)
+  if (${HOST_CPU} EQUAL ${CpuType})
+    set(${Res} ON PARENT_SCOPE)
+  endif()
+endfunction()
+
+macro(CpuIsX86 res)
+  CpuIs(CPU_X86 ${res})
+endmacro()
+
+macro(CpuIsX64 res)
+  CpuIs(CPU_X64 ${res})
+endmacro()
+
+macro(CpuIsARM res)
+  CpuIs(CPU_ARM ${res})
+endmacro()
+
+macro(CpuIsA64 res)
+  CpuIs(CPU_A64 ${res})
+endmacro()
+
+macro(CpuIsPPC res)
+  CpuIs(CPU_PPC ${res})
+endmacro()
+
+macro(CpuIsPPC64 res)
+  CpuIs(CPU_PPC64 ${res})
+endmacro()
+
+macro(CpuIsMIPS res)
+  CpuIs(CPU_MIPS ${res})
+endmacro()
+
+macro(CpuIsMIPS64 res)
+  CpuIs(CPU_MIPS64 ${res})
+endmacro()
+
+

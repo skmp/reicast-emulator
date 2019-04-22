@@ -17,7 +17,7 @@
       "inheritEnvironments": [ "msvc_x86" ],
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
-      "cmakeCommandArgs": "",
+      "cmakeCommandArgs": "-DTARGET_X86=1 -DTARGET_ARCH=0x20000001",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
     },
@@ -29,7 +29,7 @@
       "inheritEnvironments": [ "msvc_x86" ],
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
-      "cmakeCommandArgs": "",
+      "cmakeCommandArgs": "-DTARGET_X86=1 -DTARGET_ARCH=0x20000001",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
     },
@@ -41,7 +41,7 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
-      "cmakeCommandArgs": "",
+      "cmakeCommandArgs": "-DTARGET_X64=1 -DTARGET_ARCH=0x20000004",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
     },
@@ -53,7 +53,7 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
-      "cmakeCommandArgs": "",
+      "cmakeCommandArgs": "-DTARGET_X64=1 -DTARGET_ARCH=0x20000004",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
     },

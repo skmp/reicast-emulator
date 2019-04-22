@@ -395,12 +395,41 @@ void _vmem_term()
 
 u8* virt_ram_base;
 
-void* malloc_pages(size_t size) {
 
+
+
+#if 0 // defined(_Z_) || defined(TARGET_PS4)
+
+// helper for 32 byte aligned memory allocation
+static void* OS_aligned_malloc(size_t align, size_t size)
+{
+	void *result;
+#if HOST_OS == OS_WINDOWS
+	result = _aligned_malloc(size, align);
+
+#elif defined(TARGET_PS4)
+
+	const uint32_t psMask = (0x4000 - 1);
+	int32_t mem_size = (size + psMask) & ~psMask;
+	int32_t ret = sceKernelMapFlexibleMemory(&result, mem_size, SCE_KERNEL_PROT_CPU_RW | SCE_KERNEL_PROT_GPU_RW, 0);
+
+#else
+	if (posix_memalign(&result, align, size)) result = 0;
+#endif
+	return result;
+}
+
+void* malloc_pages(size_t size) {
+	return OS_aligned_malloc(PAGE_SIZE, size);
+}
+#else
+void* malloc_pages(size_t size) {
 	u8* rv = (u8*)malloc(size + PAGE_SIZE);
+	verify(0 != rv);
 
 	return rv + PAGE_SIZE - ((unat)rv % PAGE_SIZE);
 }
+#endif
 
 bool _vmem_reserve_nonvmem()
 {
@@ -420,6 +449,7 @@ bool _vmem_reserve_nonvmem()
 	return true;
 }
 
+#if FEAT_SHREC != DYNAREC_NONE
 void _vmem_bm_reset_nvmem();
 
 void _vmem_bm_reset() {
@@ -433,6 +463,8 @@ void _vmem_bm_reset() {
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
 	}
 }
+#endif
+
 
 #if !defined(TARGET_NO_NVMEM)
 
@@ -486,6 +518,80 @@ void* _nvmem_alloc_mem()
 	if (rv) VirtualFree(rv,0,MEM_RELEASE);
 	return rv;
 }
+
+
+
+
+
+#elif defined(TARGET_PS4)
+
+#error NVMEM on PS4
+
+
+void* _nvmem_map_buffer(u32 dst, u32 addrsz, u32 offset, u32 size, bool w)
+{
+
+	void *base = (void*)((u64)&virt_ram_base[dst]+offset);
+
+
+
+	u32 map_times = addrsz / size;
+	verify((addrsz%size) == 0);
+	verify(map_times >= 1);
+
+	// SCE_KERNEL_PROT_CPU_RW | SCE_KERNEL_PROT_GPU_RW
+	u32 prot = SCE_KERNEL_PROT_CPU_READ|SCE_KERNEL_PROT_GPU_READ | 
+		(w ? (SCE_KERNEL_PROT_CPU_WRITE|SCE_KERNEL_PROT_GPU_WRITE) : 0);
+
+	void *result = base;
+
+	const uint32_t psMask = (PAGE_SIZE - 1);
+	int32_t mem_size = (size + psMask) & ~psMask;
+	int32_t ret = sceKernelMapFlexibleMemory(&result, size, prot, SCE_KERNEL_MAP_FIXED);
+
+	for (u32 i = 1; i < map_times; i++)
+	{
+		dst += size;
+		base = (void*)((u64)&virt_ram_base[dst] + offset);
+		int32_t ret = sceKernelMapFlexibleMemory(&base, size, prot, SCE_KERNEL_MAP_FIXED);
+	}
+
+
+	return result;
+
+
+}
+
+
+
+void* _nvmem_unused_buffer(u32 start, u32 end)
+{
+	void *result = (void*)&virt_ram_base[start];
+
+	const uint32_t psMask = (PAGE_SIZE - 1);
+	int32_t mem_size = (end - start + psMask) & ~psMask;
+	int32_t ret = sceKernelMapFlexibleMemory(&result, end - start, 0, SCE_KERNEL_MAP_FIXED);
+	return result;
+
+}
+
+void* _nvmem_alloc_mem()
+{
+	u32 size = 512 * 1024 * 1024 + sizeof(Sh4RCB) + ARAM_SIZE + 0x10000;
+
+	void *result;
+	const uint32_t psMask = (PAGE_SIZE - 1);
+	int32_t mem_size = (size + psMask) & ~psMask;
+	int32_t ret = sceKernelMapFlexibleMemory(&result, mem_size, SCE_KERNEL_PROT_CPU_RW | SCE_KERNEL_PROT_GPU_RW, 0);
+
+	sceKernelMunmap(result, mem_size);
+	return result;
+
+}
+
+
+
+
 
 #else
 	#include <sys/mman.h>
@@ -619,15 +725,15 @@ error:
 u32 pagecnt;
 void _vmem_bm_reset_nvmem()
 {
-	#if defined(TARGET_NO_NVMEM)
-		return;
-	#endif
+#if defined(TARGET_NO_NVMEM)
+	return;
+#endif
 
-	#if (HOST_OS == OS_DARWIN)
-		//On iOS & nacl we allways allocate all of the mapping table
-		mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_READ | PROT_WRITE);
-		return;
-	#endif
+#if (HOST_OS == OS_DARWIN)
+	//On iOS & nacl we allways allocate all of the mapping table
+	mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_READ | PROT_WRITE);
+	return;
+#endif
 	pagecnt=0;
 
 #if HOST_OS==OS_WINDOWS
@@ -635,12 +741,12 @@ void _vmem_bm_reset_nvmem()
 #else
 	mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_NONE);
 	madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_DONTNEED);
-    #ifdef MADV_REMOVE
+ #ifdef MADV_REMOVE
 	madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_REMOVE);
-    #else
+ #else
     //OSX, IOS
     madvise(p_sh4rcb,sizeof(p_sh4rcb->fpcb),MADV_FREE);
-    #endif
+ #endif
 #endif
 
 	printf("Freeing fpcb\n");
@@ -679,7 +785,6 @@ die("BM_LockedWrite and NO REC");
 bool _vmem_reserve()
 {
 	void* ptr=0;
-
 	verify((sizeof(Sh4RCB)%PAGE_SIZE)==0);
 
 	if (settings.dynarec.disable_nvmem)

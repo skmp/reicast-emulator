@@ -216,7 +216,7 @@ void maple_Init()
 	sb_regs[(SB_MSHTCL_addr-SB_BASE)>>2].writeFunction=maple_SB_MSHTCL_Write;
 	*/
 
-	maple_schid=sh4_sched_register(0,&maple_schd);
+	maple_schid=sh4_sched_register(SchTagMaple,&maple_schd);
 }
 
 void maple_Reset(bool Manual)

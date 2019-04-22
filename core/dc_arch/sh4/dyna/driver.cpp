@@ -25,6 +25,11 @@
 #include "ngen.h"
 #include "decoder.h"
 
+
+u8* CodeCache;
+
+
+
 #if FEAT_SHREC != DYNAREC_NONE
 //uh uh
 
@@ -40,8 +45,6 @@ u8 SH4_TCB[CODE_SIZE+4096]
 	#error SH4_TCB ALLOC
 #endif
 #endif
-
-u8* CodeCache;
 
 
 u32 LastAddr;
@@ -495,4 +498,5 @@ void Get_Sh4Recompiler(sh4_if* rv)
 	//rv->SetRegister=Sh4_int_SetRegister;
 	rv->ResetCache = recSh4_ClearCache;
 }
+
 #endif

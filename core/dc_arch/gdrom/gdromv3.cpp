@@ -1216,7 +1216,7 @@ void gdrom_reg_Init()
 	sb_regs[(SB_GDEN_addr-SB_BASE)>>2].writeFunction=GDROM_DmaEnable;
 	*/
 
-	gdrom_schid = sh4_sched_register(0, &GDRomschd);
+	gdrom_schid = sh4_sched_register(SchTagGDROM, &GDRomschd);
 }
 void gdrom_reg_Term()
 {

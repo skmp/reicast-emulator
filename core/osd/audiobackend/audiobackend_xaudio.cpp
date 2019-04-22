@@ -1,109 +1,49 @@
 #include "audiobackend_xaudio.h"
-#if HOST_OS==OS_WINDOWS
 #include "oslib.h"
 #include <initguid.h>
 #include <xaudio2.h>
 
 #pragma comment(lib, "xaudio2.lib")
 
-void* SoundThread(void* param);
-#define V2_BUFFERSZ (16*1024)
+static const int RING_BUFFER_SIZE = 512 * 4;
+static const int MAX_BUFFER_COUNT = 16;
 
 // (/CX uses WRL::ComPtr, safe/shared_ptr should be good, do i care? no...)
 IXAudio2* pXAudio2 = nullptr;
 IXAudio2SourceVoice* pSourceVoice = nullptr;
-IXAudio2MasteringVoice* pMasterVoice = nullptr;
-
-XAUDIO2_BUFFER buffer = {0};
-
-u32 ds_ring_size;
+IXAudio2MasteringVoice* pMasteringVoice = nullptr;
+byte audioBuffers[MAX_BUFFER_COUNT][RING_BUFFER_SIZE];
+u32 currentBuffer = 0;
 
 static void xaudio_init()
 {
+	ZeroMemory(audioBuffers, sizeof(audioBuffers));
 	verifyc(XAudio2Create(&pXAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR));
-	verifyc(pXAudio2->CreateMasteringVoice(&pMasterVoice));
+
+#if defined(_DEBUG)
+	XAUDIO2_DEBUG_CONFIGURATION debugConfig = { 0 };
+	debugConfig.BreakMask = XAUDIO2_LOG_ERRORS;
+	debugConfig.TraceMask = XAUDIO2_LOG_ERRORS;
+	pXAudio2->SetDebugConfiguration(&debugConfig);
+#endif
+
+	verifyc(pXAudio2->CreateMasteringVoice(&pMasteringVoice));
 
 	WAVEFORMATEX wfx;
-	memset(&wfx, 0, sizeof(WAVEFORMATEX)); 
-	wfx.wFormatTag = WAVE_FORMAT_PCM; 
-	wfx.nChannels = 2; 
-	wfx.nSamplesPerSec = 44100; 
-	wfx.nBlockAlign = 4; 
-	wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign; 
-	wfx.wBitsPerSample = 16; 
+	memset(&wfx, 0, sizeof(WAVEFORMATEX));
+	wfx.wFormatTag = WAVE_FORMAT_PCM;
+	wfx.nChannels = 2;
+	wfx.nSamplesPerSec = 44100;
+	wfx.nBlockAlign = 4;
+	wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
+	wfx.wBitsPerSample = 16;
 
 	verifyc(pXAudio2->CreateSourceVoice(&pSourceVoice, (WAVEFORMATEX*)&wfx));
 
-	ds_ring_size=8192*wfx.nBlockAlign;
+	verifyc(pMasteringVoice->SetVolume(0.4f));
 
-
-	buffer.AudioBytes = ds_ring_size;  //buffer containing audio data
-	buffer.Flags = XAUDIO2_END_OF_STREAM; // tell the source voice not to expect any data after this buffer
-
-
-#if 0
-	verifyc(DirectSoundCreate8(NULL,&dsound,NULL));
-
-	verifyc(dsound->SetCooperativeLevel((HWND)libPvr_GetRenderTarget(),DSSCL_PRIORITY));
-	IDirectSoundBuffer* buffer_;
-
-	WAVEFORMATEX wfx; 
-	DSBUFFERDESC desc; 
-
-	// Set up WAV format structure. 
-
-	memset(&wfx, 0, sizeof(WAVEFORMATEX)); 
-	wfx.wFormatTag = WAVE_FORMAT_PCM; 
-	wfx.nChannels = 2; 
-	wfx.nSamplesPerSec = 44100; 
-	wfx.nBlockAlign = 4; 
-	wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign; 
-	wfx.wBitsPerSample = 16; 
-
-	// Set up DSBUFFERDESC structure. 
-
-	ds_ring_size=8192*wfx.nBlockAlign;
-
-	memset(&desc, 0, sizeof(DSBUFFERDESC)); 
-	desc.dwSize = sizeof(DSBUFFERDESC); 
-	desc.dwFlags = DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLPOSITIONNOTIFY;// _CTRLPAN | DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY; 
-	
-	desc.dwBufferBytes = ds_ring_size; 
-	desc.lpwfxFormat = &wfx; 
-
-	
-
-	if (settings.aica.HW_mixing==0)
-	{
-		desc.dwFlags |=DSBCAPS_LOCSOFTWARE;
-	}
-	else if (settings.aica.HW_mixing==1)
-	{
-		desc.dwFlags |=DSBCAPS_LOCHARDWARE;
-	}
-	else if (settings.aica.HW_mixing==2)
-	{
-		//auto
-	}
-	else
-	{
-		die(L"settings.HW_mixing: Invalid value");
-	}
-
-	if (settings.aica.GlobalFocus)
-		desc.dwFlags|=DSBCAPS_GLOBALFOCUS;
-
-	verifyc(dsound->CreateSoundBuffer(&desc,&buffer_,0));
-	verifyc(buffer_->QueryInterface(IID_IDirectSoundBuffer8,(void**)&buffer));
-	buffer_->Release();
-
-	//Play the buffer !
-	verifyc(buffer->Play(0,0,DSBPLAY_LOOPING));
-#endif
+	verifyc(pSourceVoice->Start(0));
 }
-
-
-DWORD wc=0;
 
 static int xaudio_getfreesz()
 {
@@ -126,56 +66,39 @@ static int xaudio_getfreesz()
 
 static int xaudio_getusedSamples()
 {
-	return (ds_ring_size-xaudio_getfreesz())/4;
+	return 0;
+	 // (ds_ring_size-xaudio_getfreesz())/4;
 }
 
 static u32 xaudio_push_nw(void* frame, u32 samplesb)
 {
-	DWORD pc,wch;
+	XAUDIO2_VOICE_STATE state;
+	u32 bytes = samplesb * 4;
 
-	u32 bytes=samplesb*4;
+	pSourceVoice->GetState(&state);
 
-	
-	//buffer.pAudioData = pDataBuffer;  //size of the audio buffer in bytes
-
-	//pSourceVoice->SubmitSourceBuffer( &buffer );
-
-
-#if 0
-	buffer->GetCurrentPosition(&pc,&wch);
-
-	int fsz=0;
-	if (wc>=pc)
-		fsz=ds_ring_size-wc+pc;
-	else
-		fsz=pc-wc;
-
-	fsz-=32;
-
-	//wprintf(L"%d: r:%d w:%d (f:%d wh:%d)\n",fsz>bytes,pc,wc,fsz,wch);
-
-	if (fsz>bytes)
+	if (state.BuffersQueued <= MAX_BUFFER_COUNT - 1)
 	{
-		void* ptr1,* ptr2;
-		DWORD ptr1sz,ptr2sz;
+		// copy frame data to current audioBuffer
+		u8* data = (u8*)frame;
+		memcpy(audioBuffers[currentBuffer], data, bytes);
 
-		u8* data=(u8*)frame;
+		// Create xaudio2 buffer to send to sourcevoice
+		XAUDIO2_BUFFER buffer = { 0 };
+		buffer.AudioBytes = bytes;
+		buffer.pAudioData = audioBuffers[currentBuffer];
+		buffer.Flags = XAUDIO2_END_OF_STREAM; // This option only supresses debug warnings for buffer queue starvation
+		buffer.pContext = 0; // No callback needed atm
 
-		buffer->Lock(wc,bytes,&ptr1,&ptr1sz,&ptr2,&ptr2sz,0);
-		memcpy(ptr1,data,ptr1sz);
-		if (ptr2sz)
-		{
-			data+=ptr1sz;
-			memcpy(ptr2,data,ptr2sz);
-		}
+		verifyc(pSourceVoice->SubmitSourceBuffer(&buffer));
 
-		buffer->Unlock(ptr1,ptr1sz,ptr2,ptr2sz);
-		wc=(wc+bytes)%ds_ring_size;
+		currentBuffer++;
+		currentBuffer %= MAX_BUFFER_COUNT;
+
 		return 1;
 	}
-#endif
+
 	return 0;
-	//ds_ring_size
 }
 
 static u32 xaudio_push(void* frame, u32 samples, bool wait)
@@ -195,28 +118,30 @@ static u32 xaudio_push(void* frame, u32 samples, bool wait)
 
 	wait &= w;
 
-	int ffs=1;
-	
-	/*
-	while (xaudio_IsAudioBufferedLots() && wait)
-		if (ffs == 0)
-			ffs = wprintf(L"AUD WAIT %d\n", xaudio_getusedSamples());
-	*/
-#if 0
 	while (!xaudio_push_nw(frame, samples) && wait)
 		0 && wprintf(L"FAILED waiting on audio FAILED %d\n", xaudio_getusedSamples());
-#endif
 
 	return 1;
 }
 
 static void xaudio_term()
 {
-#if 0
-	buffer->Stop();
-	buffer->Release();
-#endif
-	pXAudio2->Release();
+	if (pSourceVoice != nullptr)
+	{
+		pSourceVoice->DestroyVoice();
+	}
+	if (pMasteringVoice != nullptr)
+	{
+		pMasteringVoice->DestroyVoice();
+	}
+	if (pXAudio2 != nullptr)
+	{
+		pXAudio2->Release();
+	}
+
+	pSourceVoice = nullptr;
+	pMasteringVoice = nullptr;
+	pXAudio2 = nullptr;
 }
 
 audiobackend_t audiobackend_xaudio = {
@@ -226,4 +151,3 @@ audiobackend_t audiobackend_xaudio = {
     &xaudio_push,
     &xaudio_term
 };
-#endif

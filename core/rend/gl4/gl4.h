@@ -70,6 +70,7 @@ extern GLuint opaqueTexId;
 extern GLuint depthSaveTexId;
 
 void gl4DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives);
+void gl4DrawGunCrosshair(u8 port, bool draw_additional_primitives);
 
 #define SHADER_HEADER "#version 430 \n\
 \n\

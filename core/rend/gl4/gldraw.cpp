@@ -797,3 +797,121 @@ void gl4DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives)
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.bytes(), pvrrc.idx.head(), GL_STREAM_DRAW);
 	}
 }
+
+void gl4UpdateLightGunTexture(int port)
+{
+	s32 x,y ;
+	u8 temp_tex_buffer[LIGHTGUN_CROSSHAIR_SIZE*LIGHTGUN_CROSSHAIR_SIZE*4];
+	u8 *dst = temp_tex_buffer;
+	u8 *src = NULL ;
+
+	if (lightgunTextureId[port] == 0)
+	{
+		lightgunTextureId[port] = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, lightgunTextureId[port]);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+	else
+		glcache.BindTexture(GL_TEXTURE_2D, lightgunTextureId[port]);
+
+	u8* colour = &( lightgun_palette[ lightgun_params[port].colour * 3 ] );
+
+	for ( y = LIGHTGUN_CROSSHAIR_SIZE-1 ; y >= 0 ; y--)
+	{
+	   src = lightgun_img_crosshair + (y*LIGHTGUN_CROSSHAIR_SIZE) ;
+
+	   for ( x = 0 ; x < LIGHTGUN_CROSSHAIR_SIZE ; x++)
+	   {
+		   if ( src[x] )
+		   {
+			  *dst++ = colour[0] ;
+			  *dst++ = colour[1] ;
+			  *dst++ = colour[2] ;
+			  *dst++ = 0xFF ;
+		   }
+		   else
+		   {			   
+			  *dst++ = 0 ;
+			  *dst++ = 0 ;
+			  *dst++ = 0 ;
+			  *dst++ = 0 ;
+		   }
+	   }
+	}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, LIGHTGUN_CROSSHAIR_SIZE, LIGHTGUN_CROSSHAIR_SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer);
+
+	lightgun_params[port].dirty = false;
+}
+
+void gl4DrawGunCrosshair(u8 port, bool draw_additional_primitives)
+{
+	if ( lightgun_params[port].offscreen || (lightgun_params[port].colour==0) )
+		return;
+	
+	glActiveTexture(GL_TEXTURE0);
+
+	float x=0;
+	float y=0;
+	float w=LIGHTGUN_CROSSHAIR_SIZE;
+	float h=LIGHTGUN_CROSSHAIR_SIZE;
+
+	x = lightgun_params[port].x - ( LIGHTGUN_CROSSHAIR_SIZE / 2 );
+	y = lightgun_params[port].y - ( LIGHTGUN_CROSSHAIR_SIZE / 2 );
+
+	if ( lightgun_params[port].dirty )
+		gl4UpdateLightGunTexture(port);
+
+	glcache.BindTexture(GL_TEXTURE_2D, lightgunTextureId[0]);
+
+	glcache.Disable(GL_SCISSOR_TEST);
+	glcache.Disable(GL_DEPTH_TEST);
+	glcache.Disable(GL_STENCIL_TEST);
+	glcache.Disable(GL_CULL_FACE);
+    glcache.Enable(GL_BLEND);
+	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+	SetupMainVBO();
+
+	gl4ShaderUniforms.trilinear_alpha = 1.0;
+	CurrentShader = gl4GetProgram(0,
+				0,
+				1,
+				0,
+				1,
+				0,
+				0,
+				2,
+				false,
+				0,
+				false,
+				false,
+            false,
+				1);
+	glcache.UseProgram(CurrentShader->program);
+	gl4ShaderUniforms.Set(CurrentShader);
+
+	{
+		struct Vertex vertices[] = {
+				{ x,   y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
+				{ x,   y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
+				{ x+w, y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
+				{ x+w, y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+		};
+		GLushort indices[] = { 0, 1, 2, 1, 3 };
+
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+	}
+
+	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
+
+	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	if ( draw_additional_primitives )
+	{
+		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.bytes(), pvrrc.idx.head(), GL_STREAM_DRAW);
+	}
+}

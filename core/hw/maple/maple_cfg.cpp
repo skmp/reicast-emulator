@@ -99,6 +99,37 @@ const rgb_t VMU_SCREEN_COLOR_MAP[VMU_NUM_COLORS] = {
 
 vmu_screen_params_t vmu_screen_params[4] ;
 
+u8 lightgun_img_crosshair[LIGHTGUN_CROSSHAIR_SIZE*LIGHTGUN_CROSSHAIR_SIZE] =
+{
+	0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1,
+	1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,
+};
+
+u8 lightgun_palette[LIGHTGUN_COLORS_COUNT*3] =
+{
+	0xff,0xff,0xff, // LIGHTGUN_COLOR_OFF
+	0xff,0xff,0xff, // LIGHTGUN_COLOR_WHITE
+	0xff,0x10,0x10, // LIGHTGUN_COLOR_RED
+	0x10,0xff,0x10, // LIGHTGUN_COLOR_GREEN
+	0x10,0x10,0xff, // LIGHTGUN_COLOR_BLUE
+};
+
+lightgun_params_t lightgun_params[4] ;
+
 MapleDeviceType maple_devices[MAPLE_PORTS] =
    { MDT_SegaController, MDT_SegaController, MDT_SegaController, MDT_SegaController };
 bool use_lightgun = false;	// Naomi only

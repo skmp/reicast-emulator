@@ -300,6 +300,13 @@ COLORS_STRING \
 }, \
 
 
+#define LIGHTGUN_PARAMS(num)       { \
+"reicast_lightgun" #num "_crosshair", \
+"Gun Crosshair " #num " Display; disabled|White|Red|Green|Blue" \
+}, \
+
+
+
 void retro_set_environment(retro_environment_t cb)
 {
    environ_cb = cb;
@@ -425,6 +432,10 @@ void retro_set_environment(retro_environment_t cb)
          "reicast_digital_triggers",
          "Digital Triggers; disabled|enabled",
       },
+      LIGHTGUN_PARAMS(1)
+      LIGHTGUN_PARAMS(2)
+      LIGHTGUN_PARAMS(3)
+      LIGHTGUN_PARAMS(4)
       {
          "reicast_enable_dsp",
 #ifdef LOW_END
@@ -1066,6 +1077,28 @@ static void update_variables(bool first_startup)
    var.key = key ;
    for ( i = 0 ; i < 4 ; i++)
    {
+      lightgun_params[i].offscreen = true;	   
+      lightgun_params[i].x = 0;	   
+      lightgun_params[i].y = 0;	   
+      lightgun_params[i].dirty = true;	   
+      lightgun_params[i].colour = i+1;	   
+
+      snprintf(key, sizeof(key), "reicast_lightgun%d_crosshair", i+1) ;
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value  )
+      {
+         if (!strcmp("disabled", var.value))
+        	 lightgun_params[i].colour = LIGHTGUN_COLOR_OFF;
+         else if (!strcmp("White", var.value))
+        	 lightgun_params[i].colour = LIGHTGUN_COLOR_WHITE;
+         else if (!strcmp("Red", var.value))
+        	 lightgun_params[i].colour = LIGHTGUN_COLOR_RED;
+         else if (!strcmp("Green", var.value))
+        	 lightgun_params[i].colour = LIGHTGUN_COLOR_GREEN;
+         else if (!strcmp("Blue", var.value))
+        	 lightgun_params[i].colour = LIGHTGUN_COLOR_BLUE;
+      }
+	   
       vmu_screen_params[i].vmu_screen_display = false ;
       vmu_screen_params[i].vmu_screen_position = UPPER_LEFT ;
       vmu_screen_params[i].vmu_screen_size_mult = 1 ;
@@ -1989,7 +2022,10 @@ bool retro_unserialize(const void * data, size_t size)
     CalculateSync();
 
     for ( i = 0 ; i < 4 ; i++)
+    {
        vmu_screen_params[i].vmu_screen_needs_update = true ;
+       lightgun_params[i].dirty = true ;
+    }
 
     performed_serialization = true ;
 
@@ -2529,6 +2565,8 @@ void UpdateInputState(u32 port)
 		 rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, 65535 * vib_strength[port] * rem_time * vib_delta[port]);
 	  }
    }
+   
+   lightgun_params[port].offscreen = true;	   
 
    switch (maple_devices[port])
    {
@@ -2607,6 +2645,10 @@ void UpdateInputState(u32 port)
 		 {
 			mo_x_abs[port] = (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X) + 0x8000) * 640.f / 0x10000;
 			mo_y_abs[port] = (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y) + 0x8000) * 480.f / 0x10000;
+
+			lightgun_params[port].offscreen = false;
+			lightgun_params[port].x = mo_x_abs[port];
+			lightgun_params[port].y = mo_y_abs[port];
 		 }
 	  }
 	  break;

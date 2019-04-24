@@ -1,11 +1,15 @@
 #pragma once
 
-#if 0 // defined(TARGET_PS4)
+#if defined(TARGET_PS4)
 
-extern "C" void* zmalloc(unsigned long size);
+extern "C" void* zmalloc (unsigned long size);
+extern "C" void* zrealloc(void* ptr, unsigned long size);
+extern "C" int   zmemalign(void **ptr, unsigned long alignment, unsigned long size);
 extern "C" void  zfree(void* ptr);
 extern "C" void  zfree2(void* ptr, unsigned long size);
 
+#define posix_memalign zmemalign
+#define realloc zrealloc
 #define malloc zmalloc
 #define free   zfree
 
@@ -104,13 +108,44 @@ typedef char wchar;
 
 #define EXPORT extern "C" __declspec(dllexport)
 
-constexpr unat KB(unat n) { return 1024 * n; }
-constexpr unat MB(unat n) { return 1024 * KB(n); }
-constexpr unat GB(unat n) { return 1024 * MB(n); }
-
 #ifndef CDECL
 #define CDECL __cdecl
 #endif
+
+
+
+
+
+template<typename T> constexpr T KB(const T n) { return 1024 * n;  }
+template<typename T> constexpr T MB(const T n) { return 1024 * KB(n); }
+template<typename T> constexpr T GB(const T n) { return 1024 * MB(n); }
+template<typename T> constexpr T TB(const T n) { return 1024 * GB(n); }
+
+
+// Generic Alignment for non pow2, up is abuseable since it's an integer :)
+
+template<typename T> inline T Align(const T addr, const T align, unat up=0)
+{
+	return (addr / align + up) * align;
+}
+
+// Alignment for unsigned integers of any type, align must be pow2!
+
+#define _POW2_MASK (align - static_cast<T>(1))
+
+template<typename T> inline T AlignUp(const T addr, const T align)
+{
+	return (addr + _POW2_MASK) & ~_POW2_MASK;
+}
+
+template<typename T> inline T AlignDown(const T addr, const T align)
+{
+	return addr & ~_POW2_MASK;
+}
+
+//#define alignTo		Align
+#define alignUp		AlignUp
+#define alignDown	AlignDown
 
 
 

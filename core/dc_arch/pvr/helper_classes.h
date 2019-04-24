@@ -1,8 +1,5 @@
 #pragma once
 
-#if 0 //def TARGET_PS4
-#include <kernel.h>
-#endif
 
 template <class T>
 struct List
@@ -53,13 +50,7 @@ struct List
 	{
 		maxbytes-=maxbytes%sizeof(T);
 
-#if 1 //ndef TARGET_PS4
 		daty=(T*)malloc(maxbytes);
-#else
-		const uint32_t psMask = (0x4000 - 1);
-		int32_t mem_size = (maxbytes + psMask) & ~psMask;
-		int32_t ret = sceKernelMapFlexibleMemory((void**)&daty, mem_size, SCE_KERNEL_PROT_CPU_RW | SCE_KERNEL_PROT_GPU_RW, 0);
-#endif
 
 		verify(daty!=0);
 
@@ -84,12 +75,6 @@ struct List
 	void Free()
 	{
 		Clear();
-#if 1 //ndef TARGET_PS4
 		free(daty);
-#else
-		const uint32_t psMask = (0x4000 - 1);
-		int32_t mem_size = (size + psMask) & ~psMask;
-		sceKernelMunmap((void**)&daty, size);
-#endif
 	}
 };

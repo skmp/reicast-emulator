@@ -8,39 +8,52 @@
 
 #include "ps4.h"
 
-#if 0
-
-// Assign 256 MiB as flexible memory
-#define TOTAL_FMEM_SIZE (4 * 1024 * 1024 * 1024UL)
-SCE_KERNEL_FLEXIBLE_MEMORY_SIZE(TOTAL_FMEM_SIZE);
-//SCE_KERNEL_MAIN_DMEM_SIZE
 
 
-//#define LIBC_HEAP_SIZE
-//#define LIBC_HEAP_SIZE_INITIAL = 
+#if 0	// None of this does a damn thing if you need 'gde' package forces use of libcInternal.sprx //
 
-#define _MB MB
-
-#if 1
-extern "C" {
-
-	size_t sceLibcHeapSize = SCE_LIBC_HEAP_SIZE_EXTENDED_ALLOC_NO_LIMIT;
-	size_t sceLibcHeapInitialSize = _MB(512);
-//	unsigned int sceLibcHeapDelayedAlloc  = 0;
-	unsigned int sceLibcHeapExtendedAlloc = 1;
-//	size_t sceLibcHeapHighAddressAlloc;
-//	unsigned int sceLibcHeapMemoryLock;
-	//unsigned int sceLibcHeapDebugFlags = SCE_LIBC_HEAP_DEBUG_SHORTAGE;
+SCE_KERNEL_EXTENDED_DMEM_NEO_256
+SCE_KERNEL_FLEXIBLE_MEMORY_SIZE(GB(4));
 
 
+//unsigned int sceLibcHeapDelayedAlloc = 1;  /* Switch to dynamic allocation */
+unsigned int sceLibcHeapExtendedAlloc = 1;  /* Switch to dynamic allocation */
+size_t       sceLibcHeapSize = MB(200); //SCE_LIBC_HEAP_SIZE_EXTENDED_ALLOC_NO_LIMIT;
+size_t       sceLibcHeapInitialSize = MB(128);
+unsigned int sceLibcHeapDebugFlags = SCE_LIBC_HEAP_DEBUG_SHORTAGE;
 
-	//SceLibcMallocManagedSize m_mmsize;
-
-};
 #endif
 
-#endif // 0
 
+#define RENDER_WIDTH 1920
+#define RENDER_HEIGHT 1080
+
+#define PIGLET_MODULE_NAME "libScePigletv2VSH.sprx"
+#define SHCOMP_MODULE_NAME "libSceShaccVSH.sprx"
+
+
+#define PS4_PKG
+
+#ifdef PS4_PKG			// These are RO ofc, use unjailed /data for W
+# define PS4_DIR_CFG		"/app0/reicast"	
+# define PS4_DIR_DATA		"/app0/reicast/data"
+# define MODULE_PATH_PREFIX "/app0/sce_module"
+#else
+# define PS4_DIR_CFG		"/mnt/usb0/reicast/"
+# define PS4_DIR_DATA		"/mnt/usb0/reicast/data"
+# define MODULE_PATH_PREFIX "/data/self/system/common/lib"
+#endif
+
+#define EPRINTF printf
+
+
+static SceKernelModule s_piglet_module = -1;
+static SceKernelModule s_shcomp_module = -1;
+
+
+
+
+const char* g_sandbox_word = NULL;
 
 
 //int32_t sceSystemServiceGetStatus(SceSystemServiceStatus* status);
@@ -358,43 +371,13 @@ int __cdecl msgboxf(const char* text, unsigned int type, ...)
 }
 
 
-#define RENDER_WIDTH 1920
-#define RENDER_HEIGHT 1080
-
-#define PIGLET_MODULE_NAME "libScePigletv2VSH.sprx"
-#define SHCOMP_MODULE_NAME "libSceShaccVSH.sprx"
-
-
-#define PS4_PKG
-
-#ifdef PS4_PKG			// These are RO ofc, use unjailed /data for W
-
-# define PS4_DIR_CFG	"/app0/reicast"	
-# define PS4_DIR_DATA	"/app0/reicast/data"
-
-# define MODULE_PATH_PREFIX "/app0/sce_module"
-
-#else
-
-# define PS4_DIR_CFG	"/mnt/usb0/reicast/"
-# define PS4_DIR_DATA	"/mnt/usb0/reicast/data"
-
-# define MODULE_PATH_PREFIX "/data/self/system/common/lib"
-
-#endif
-
-#define EPRINTF printf
-
-
-static SceKernelModule s_piglet_module = -1;
-static SceKernelModule s_shcomp_module = -1;
 
 
 
 
-const char* g_sandbox_word = NULL;
 
-static bool load_modules(void) {
+static bool load_modules(void)
+{
 	int ret;
 
 	ret = sceKernelLoadStartModule(MODULE_PATH_PREFIX "/" PIGLET_MODULE_NAME, 0, NULL, 0, NULL, NULL);
@@ -519,7 +502,7 @@ static void cleanup(void) {
 
 
 
-#include "ps4_video.h"
+//#include "ps4_video.h"
 
 #define SM_AudioOut			0x80000001
 #define SM_SystemService	0x80000010
@@ -557,7 +540,7 @@ static void ps4_init()
 
 	
 
-	ps4_video_init();
+//	ps4_video_init();
 
 
 }
@@ -565,6 +548,55 @@ static void ps4_init()
 
 
 
+
+void _print_mem_stats()
+{
+	
+	size_t mSize=0;
+	sceKernelAvailableFlexibleMemorySize(&mSize);
+	printf("Available Flexible Mem: %d KB \n", mSize/1024);
+	
+	off_t phy=0;
+	sceKernelAvailableDirectMemorySize(0,SCE_KERNEL_MAIN_DMEM_SIZE,0,&phy,&mSize);
+	printf("Available Direct Mem: %d KB @ %p \n", mSize/1024, (void*)phy);
+
+	SceLibcMallocManagedSize mms;
+	SCE_LIBC_INIT_MALLOC_MANAGED_SIZE(mms);
+	if(!malloc_stats_fast(&mms))
+	{
+		printf("-------------------------------------------------------------------------\n");
+		printf("Malloc Stats:\n");
+		printf("-------------------------------------------------------------------------\n");
+		printf(" size: %d  \n" ,mms.size);
+		printf(" version: %d \n" ,mms.version);
+		printf(" reserved1: %d \n" ,mms.reserved1);
+		printf(" maxSystemSize: %d \n" ,mms.maxSystemSize);
+		printf(" currentSystemSize: %d \n" ,mms.currentSystemSize);
+		printf(" maxInuseSize: %d \n" ,mms.maxInuseSize);
+		printf(" currentInuseSize: %d \n" ,mms.currentInuseSize);
+		printf("-------------------------------------------------------------------------\n");
+	}
+
+}
+
+void _do_mem_tests()
+{
+	_print_mem_stats();
+
+	std::vector<void*> mlist;
+	void *pm=nullptr;
+	while(nullptr!=(pm=malloc(KB(512))))
+		mlist.push_back(pm);
+	
+	_print_mem_stats();
+
+	for(auto mi : mlist)
+		free(mi);
+	
+	_print_mem_stats();
+
+
+}
 
 
 void common_linux_setup();
@@ -577,16 +609,14 @@ int main(int argc, char* argv[])
 	printf("-- REICAST BETA -- \n");
 	atexit(&cleanup);
 
-	size_t mSize=0;
-	sceKernelAvailableFlexibleMemorySize(&mSize);
-	printf("Available Flexible Mem: %d KB \n", mSize/1024);
-	
-	off_t phy=0;
-	sceKernelAvailableDirectMemorySize(0,SCE_KERNEL_MAIN_DMEM_SIZE,0,&phy,&mSize);
-	printf("Available Direct Mem: %d KB @ %p \n", mSize/1024, (void*)phy);
+
+	//_do_mem_tests();
+	_print_mem_stats();
+
+
 
 	ps4_init();
-
+	
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -606,6 +636,8 @@ int main(int argc, char* argv[])
 
 printf("dc_init();\n");
 	dc_init(argc, argv);
+	
+	_print_mem_stats();
 
 printf("dc_run();\n");
 	dc_run();
@@ -620,8 +652,10 @@ err:
 	return 0;
 }
 
-void catchReturnFromMain(int exit_code) {
-	/* dummy */
+extern "C" void catchReturnFromMain(int exit_code)
+{
+	printf("ReturnFromMain(%d)\n",exit_code);
+	for(;1;) sceKernelSleep(1);
 }
 
 
@@ -632,13 +666,15 @@ void catchReturnFromMain(int exit_code) {
 
 
 
-SceKernelModule load_module_from_sandbox(const char* name, size_t args, const void* argp, unsigned int flags, const SceKernelLoadModuleOpt* opts, int* res) {
+SceKernelModule load_module_from_sandbox(const char* name, size_t args, const void* argp, unsigned int flags, const SceKernelLoadModuleOpt* opts, int* res)
+{
 	char file_path[SCE_KERNEL_MAX_NAME_LENGTH];
 	SceKernelModule module;
 
 	snprintf(file_path, sizeof(file_path), "/%s/common/lib/%s", g_sandbox_word, name);
 
-	module = sceKernelLoadStartModule(file_path, args, argp, flags, opts, res);
+	if(1 > (module = sceKernelLoadStartModule(file_path, args, argp, flags, opts, res)))
+		printf("Error, sceKernelLoadStartModule() failed with 0x%08X\n", (unat)module);
 
 	return module;
 }
@@ -732,12 +768,45 @@ void hexdump(const void* data, size_t size) {
 }
 
 
-#if 0
 
-static unsigned long zmtotal = 0;
 
-void* zmalloc(unsigned long size)
+
+#if 1
+
+void* pHeap = nullptr;
+off_t phyAddr = 0;
+
+unat sbrk=0;
+
+extern "C" void* zmalloc(unsigned long size)
 {
+//	printf("zmalloc(%d) \n", size);
+
+	if(nullptr==pHeap)
+	{
+		int32_t res = SCE_OK;
+		if (SCE_OK != (res = sceKernelAllocateMainDirectMemory(MB(512), KB(64), SCE_KERNEL_WB_ONION, &phyAddr))) {
+			printf("sceKernelAllocateMainDirectMemory() Failed with 0x%08X \n", (unat)res);
+			return nullptr;
+		}
+
+		if (SCE_OK != (res = sceKernelMapDirectMemory(&pHeap,MB(512),SCE_KERNEL_PROT_CPU_RW,0,phyAddr,KB(64)))) {
+			printf("sceKernelMapDirectMemory() Failed with 0x%08X \n", (unat)res);
+			return nullptr;
+		}
+
+		printf("@@@@@@@@@@@@@@@ Z HEAP INIT - %p ####################\n",pHeap);
+	}
+
+	void* res = (void*)((unat)pHeap+sbrk);
+
+	sbrk+=size;
+
+	printf("zmalloc(%d) @ %p :: total %d\n", size, res, sbrk);
+
+	return res;
+
+#if 0
 	void *result = 0;
 
 	const uint32_t psMask = (0x4000 - 1);
@@ -749,20 +818,44 @@ void* zmalloc(unsigned long size)
 	}
 	else die("ERROR, zmalloc() : allocation failed!\n");
 	return result;
+#endif
 }
 
-void  zfree(void* ptr)
+extern "C" void* zrealloc(void* ptr, unsigned long size)
 {
-	sceKernelMunmap(ptr, 1024*1024*4);	// who cares atm, fucking choke on it
+	void *pre = zmalloc(size);
+	memcpy(ptr,pre,size);		// this is fucked but should work ok unless we hit the end....
 }
 
-void  zfree2(void* ptr, unsigned long size)
+extern "C" int   zmemalign(void **ptr, unsigned long alignment, unsigned long size)
 {
+	printf("zmemalign(%d,%d) \n", alignment, size);
+
+	if(nullptr==ptr || alignment<sizeof(void*))
+		return EINVAL;
+
+	AlignUp(sbrk,alignment);
+	*ptr = malloc(size);
+	if(*ptr == nullptr)
+		return ENOMEM;
+
+	return 0;
+}
+
+extern "C" void  zfree(void* ptr)
+{
+	//sceKernelMunmap(ptr, 1024*1024*4);	// who cares atm, fucking choke on it
+}
+
+extern "C" void  zfree2(void* ptr, unsigned long size)
+{
+#if 0
 	const uint32_t psMask = (0x4000 - 1);
 	int32_t mem_size = (size + psMask) & ~psMask;
 	sceKernelMunmap(ptr, mem_size);	// who cares atm, fucking choke on it
 
 	zmtotal -= mem_size;
+#endif
 }
 #endif
 

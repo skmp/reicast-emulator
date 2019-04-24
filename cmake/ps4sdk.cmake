@@ -157,10 +157,10 @@ if(TARGET_PS4)
 link_libraries(
 
 	ScePosix_stub_weak SceUserService_stub_weak SceSystemService_stub_weak
-	SceAudioOut_stub_weak ScePad_stub_weak 
-	SceVideoOut_stub_weak SceGpuAddress SceGnm SceGnmDriver_stub_weak #SceGnmx
-	${PS4TARGET}/lib/libc_stub_weak.a
-#	${TAUON_SDK}/lib/libc_stub_weak.a
+	SceAudioOut_stub_weak SceVideoOut_stub_weak ScePad_stub_weak 
+	SceGpuAddress SceGnm SceGnmDriver_stub_weak #SceGnmx 
+#	${PS4TARGET}/lib/libc_stub_weak.a
+	${TAUON_SDK}/lib/libc_stub_weak.a
 
 
 	${TAUON_SDK}/lib/libScePigletv2VSH_tau_stub_weak.a

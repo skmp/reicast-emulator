@@ -43,13 +43,6 @@ void* OS_aligned_malloc(size_t align, size_t size)
         void *result;
         #if HOST_OS == OS_WINDOWS
                 result = _aligned_malloc(size, align);
-		/*
-		#elif defined(TARGET_PS4)
-
-			const uint32_t psMask = (0x4000 - 1);
-			int32_t mem_size = (size + psMask) & ~psMask;
-			int32_t ret = sceKernelMapFlexibleMemory(&result, mem_size, SCE_KERNEL_PROT_CPU_RW | SCE_KERNEL_PROT_GPU_RW, 0);
-			*/
         #else
                 if(posix_memalign(&result, align, size)) result = 0;
         #endif
@@ -61,8 +54,6 @@ void OS_aligned_free(void *ptr)
 {
         #if HOST_OS == OS_WINDOWS
                 _aligned_free(ptr);
-	//	#elif defined(TARGET_PS4)
-	//		sceKernelMunmap(ptr, 1024 * 1024 * 1024);  // wants len, fuck off 
         #else
                 free(ptr);
         #endif

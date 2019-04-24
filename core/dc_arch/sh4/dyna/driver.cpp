@@ -75,6 +75,7 @@ void RASDASD()
 	LastAddr=LastAddr_min;
 	memset(emit_GetCCPtr(),0xCC,emit_FreeSpace());
 }
+
 void recSh4_ClearCache()
 {
 	LastAddr=LastAddr_min;
@@ -88,7 +89,8 @@ void recSh4_Run()
 	sh4_int_bCpuRun=true;
 
 	sh4_dyna_rcb=(u8*)&Sh4cntx + sizeof(Sh4cntx);
-	printf("cntx // fpcb offset: %d // pc offset: %d // pc %08X\n",(u8*)&sh4rcb.fpcb-sh4_dyna_rcb,(u8*)&sh4rcb.cntx.pc-sh4_dyna_rcb,sh4rcb.cntx.pc);
+	printf("<<< cntx // fpcb offset: %d // pc offset: %d // pc %08X >>>\n",
+		(u8*)&sh4rcb.fpcb-sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc-sh4_dyna_rcb, sh4rcb.cntx.pc);
 	
 	verify(rcb_noffs(&next_pc)==-184);
 	ngen_mainloop(sh4_dyna_rcb);
@@ -404,6 +406,11 @@ void recSh4_Reset(bool Manual)
 #include <sys/mman.h>
 #endif
 
+
+/*
+#	-Z - This whole section needs to be rewritten, not setup for W^X / variable page size at all
+*/
+
 void recSh4_Init()
 {
 	printf("recSh4 Init\n");
@@ -424,10 +431,7 @@ void recSh4_Init()
 	
 #if defined(_WIN64)
 	for (int i = 10; i < 1300; i++) {
-
-
-		//align to next page ..
-		u8* ptr = (u8*)recSh4_Init - i * 1024 * 1024;
+		u8* ptr = (u8*)recSh4_Init - MB(i); // * 1024 * 1024;
 
 		CodeCache = (u8*)VirtualAlloc(ptr, CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);//; (u8*)(((unat)SH4_TCB+4095)& ~4095);
 
@@ -435,7 +439,7 @@ void recSh4_Init()
 			break;
 	}
 #else
-	CodeCache = (u8*)(((unat)SH4_TCB+4095)& ~4095);
+	CodeCache = (u8*)AlignUp<unat>((unat)SH4_TCB,PAGE_SIZE); //(((unat)SH4_TCB+4095)& ~4095);	// -Z : I WILL KILL <<<< USE PAGE_MASK || AlignUp(val,PAGE_SIZE) !!!
 #endif
 
 #if HOST_OS == OS_DARWIN
@@ -446,9 +450,11 @@ void recSh4_Init()
 #if HOST_OS == OS_WINDOWS
 	DWORD old;
 	VirtualProtect(CodeCache,CODE_SIZE,PAGE_EXECUTE_READWRITE,&old);
-#elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
+#elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN || HOST_OS == OS_PS4_BSD
 	
-	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
+	printf("---CC-----------------------------------------\n");
+	printf("-->> CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
+	printf("---CC-----------------------------------------\n");
 
 	#if FEAT_SHREC == DYNAREC_JIT
 		if (mprotect(CodeCache, CODE_SIZE, PROT_READ|PROT_WRITE|PROT_EXEC))

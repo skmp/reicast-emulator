@@ -410,13 +410,13 @@ int screen_height;
 		memset(&pgl_config, 0, sizeof(pgl_config));
 		{
 			pgl_config.size = sizeof(pgl_config);
-			pgl_config.flags = SCE_PGL_FLAGS_USE_COMPOSITE_EXT | SCE_PGL_FLAGS_USE_FLEXIBLE_MEMORY | 0x60;
+			pgl_config.flags = 0x60 | SCE_PGL_FLAGS_USE_COMPOSITE_EXT | SCE_PGL_FLAGS_USE_FLEXIBLE_MEMORY;// | SCE_PGL_FLAGS_SKIP_APP_INITIALIZATION; // ?
 			pgl_config.processOrder = 1;
-			pgl_config.systemSharedMemorySize = 0x200000;
-			pgl_config.videoSharedMemorySize = 0x2400000;
-			pgl_config.maxMappedFlexibleMemory = 0xAA00000;
-			pgl_config.drawCommandBufferSize = 0xC0000;
-			pgl_config.lcueResourceBufferSize = 0x10000;
+			pgl_config.systemSharedMemorySize	= MB(2);	//0x200000;
+			pgl_config.videoSharedMemorySize	= MB(36);	//0x2400000;
+			pgl_config.maxMappedFlexibleMemory	= 0xAA00000;	// MB(128);	//
+			pgl_config.drawCommandBufferSize	= KB(768);	//0xC0000;	
+			pgl_config.lcueResourceBufferSize	= KB(64);	//0x10000;
 			pgl_config.dbgPosCmd_0x40 = 1920;
 			pgl_config.dbgPosCmd_0x44 = 1080;
 			pgl_config.dbgPosCmd_0x48 = 0;

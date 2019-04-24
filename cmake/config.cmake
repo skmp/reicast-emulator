@@ -322,13 +322,13 @@ if (TARGET_PS4) # -DCMAKE_TOOLCHAIN_FILE=./cmake/{ps4sdk,clang_scei}.cmake -DTAR
   add_definitions(-DPS4 -DTARGET_PS4 -DTARGET_BSD -D__ORBIS__ -DGLES)
   add_definitions(-DTARGET_NO_THREADS -DTARGET_NO_EXCEPTIONS -DTARGET_NO_NIXPROF)
   add_definitions(-DTARGET_NO_COREIO_HTTP -DTARGET_NO_WEBUI -UTARGET_SOFTREND)
-  add_definitions(-DTARGET_NO_NVMEM) # TARGET_BOUNDED_EXECUTION ??
+  add_definitions(-DTARGET_NO_NVMEM -DPAGE_SIZE=0x4000) # TARGET_BOUNDED_EXECUTION ??
   
   set(FEAT_AREC   ${DYNAREC_NONE})
-  set(FEAT_SHREC  ${DYNAREC_NONE}) #${DYNAREC_CPP})
+  set(FEAT_SHREC  ${DYNAREC_JIT})
   set(FEAT_DSPREC ${DYNAREC_NONE})
 
-  message("*******FIXME******** LARGE PAGES !!")
+  #message("*******FIXME******** LARGE PAGES !!")
 endif()
 
 
@@ -389,61 +389,5 @@ add_definitions(-DDEF_CONSOLE)
 
 set(RE_CMAKE_CONFIGURED 1)
 #add_definitions(-D=${})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### These were for internal testing, don't use ###
-#
-function(CpuIs CpuType Res)
-  set(${Res} OFF PARENT_SCOPE)
-  if (${HOST_CPU} EQUAL ${CpuType})
-    set(${Res} ON PARENT_SCOPE)
-  endif()
-endfunction()
-
-macro(CpuIsX86 res)
-  CpuIs(CPU_X86 ${res})
-endmacro()
-
-macro(CpuIsX64 res)
-  CpuIs(CPU_X64 ${res})
-endmacro()
-
-macro(CpuIsARM res)
-  CpuIs(CPU_ARM ${res})
-endmacro()
-
-macro(CpuIsA64 res)
-  CpuIs(CPU_A64 ${res})
-endmacro()
-
-macro(CpuIsPPC res)
-  CpuIs(CPU_PPC ${res})
-endmacro()
-
-macro(CpuIsPPC64 res)
-  CpuIs(CPU_PPC64 ${res})
-endmacro()
-
-macro(CpuIsMIPS res)
-  CpuIs(CPU_MIPS ${res})
-endmacro()
-
-macro(CpuIsMIPS64 res)
-  CpuIs(CPU_MIPS64 ${res})
-endmacro()
 
 

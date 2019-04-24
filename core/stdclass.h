@@ -22,7 +22,7 @@
 #undef PAGE_MASK
 #define PAGE_MASK (PAGE_SIZE-1)
 #else
-#ifndef PAGE_SIZE
+#ifndef PAGE_SIZE			// NOTE, if page size is NOT 4096, PAGE_SIZE *MUST* be defined , PASS IT IN BUILD ! -Z
 #define PAGE_SIZE 4096
 #endif
 #define PAGE_MASK (PAGE_SIZE-1)

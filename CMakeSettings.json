@@ -3,6 +3,11 @@
     {
       "environment": "toolchain.generic",
       "TOOLCHAIN_FILE": "ps4sdk.cmake"
+    },
+    {
+      "environment": "build_path",
+      "build_root": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "install_root": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}"
     }
   ],
   "configurations": [
@@ -98,7 +103,7 @@
       ],
       "buildRoot": "${projectDir}\\build\\${name}",
       "installRoot": "${projectDir}\\build\\${name}\\install",
-      "cmakeCommandArgs": "-DCMAKE_TOOLCHAIN_FILE=${projectDir}\\cmake\\ps4sdk.cmake",
+      "cmakeCommandArgs": "-DCMAKE_TOOLCHAIN_FILE=${projectDir}\\shell\\cmake\\ps4sdk.cmake",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
     },

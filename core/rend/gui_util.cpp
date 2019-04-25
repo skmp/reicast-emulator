@@ -27,6 +27,8 @@
 #define S_ISDIR(mode) (((mode) & _S_IFMT) == _S_IFDIR)
 #define access _access
 #define R_OK   4
+#elif TARGET_PS4
+#include "ps4/ps4.h"
 #else
 #include <dirent.h>
 #include <unistd.h>

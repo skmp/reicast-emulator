@@ -137,22 +137,25 @@ endif()
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} host_os)
 
-#message(" - testing cmake host_os: \"${host_os}\"")
+message(" - testing cmake host_os: \"${host_os}\"")
 
 ## HOST_* is not TARGET_*  ;;  change ndc-e internal naming it's wrong , then change this  ;;
 
-if("android" STREQUAL "${host_os}"  OR ANDROID)
+if(TARGET_PS4)
+  set(HOST_OS OS_PS4_BSD)
+elseif(TARGET_NSW)
+  set(HOST_OS OS_NSW_HOS)
+elseif("android" STREQUAL "${host_os}"  OR ANDROID)
   set(HOST_OS ${OS_LINUX}) 	# *FIXME* we might have to keep as OS_LINUX or add to full cleanup list :|
 
 elseif("windowsstore" STREQUAL "${host_os}")
   set(HOST_OS ${OS_UWP}) 
   set(HOST_CPU ${CPU_X64})
 
-elseif(CMAKE_HOST_WIN32)
+elseif(WIN32 OR "windows" MATCHES "${host_os}")	# CMAKE_HOST_WIN32
   set(HOST_OS ${OS_WINDOWS}) 
 
-elseif(CMAKE_HOST_APPLE)
-
+elseif(UNIX AND APPLE)
   if("${host_arch}" MATCHES "arm")
     set(HOST_OS ${OS_IOS})
     set(TARGET_IOS On)
@@ -162,10 +165,14 @@ elseif(CMAKE_HOST_APPLE)
     set(TARGET_OSX On)
     add_definitions(-DTARGET_OSX)
   endif()
-  
-elseif(CMAKE_HOST_UNIX) # GP UNIX MUST BE AFTER OTHER UNIX'ish options such as APPLE , it matches both 
-
-    set(HOST_OS ${OS_LINUX})   # todo android check, just check android vars?
+#
+elseif(UNIX) # GP UNIX MUST BE AFTER OTHER UNIX'ish options such as APPLE , it matches both 
+#
+  set(HOST_OS ${OS_LINUX})
+#
+else()
+	message("Unknown OS")
+	error()
 endif()
 
 
@@ -267,14 +274,14 @@ endif()
 
 ## Setup some common flags 
 #
-if ((${BUILD_COMPILER} EQUAL ${COMPILER_VC}) OR
-	(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG}) AND (${HOST_OS} STREQUAL ${OS_WINDOWS}))
+if (("${BUILD_COMPILER}" STREQUAL "${COMPILER_VC}") OR
+	("${BUILD_COMPILER}" STREQUAL "${COMPILER_CLANG}" AND "${HOST_OS}" STREQUAL "${OS_WINDOWS}"))
 
   if((${HOST_CPU} EQUAL ${CPU_X64}) AND (${FEAT_SHREC} EQUAL ${DYNAREC_JIT})) # AND NOT "${NINJA}" STREQUAL "")
     set(FEAT_SHREC  ${DYNAREC_CPP})
     message("---x64 rec disabled for VC x64 via NINJA")
   endif()
-		
+
   add_definitions(/D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1)
 
   if(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})
@@ -353,13 +360,18 @@ if (TARGET_PS4) # -DCMAKE_TOOLCHAIN_FILE=./cmake/{ps4sdk,clang_scei}.cmake -DTAR
   set(HOST_OS ${OS_PS4_BSD})
   message("HOST_OS ${HOST_OS}")
   
+  set(BUILD_COMPILER ${COMPILER_GCC}) # try lying ..
 
-  add_definitions(-DPS4 -DTARGET_PS4 -DTARGET_BSD -D__ORBIS__ -DGLES -DMESA_EGL_NO_X11_HEADERS)  ## last needed for __unix__ on eglplatform.h
+  add_definitions(-DPS4 -DTARGET_PS4 -DTARGET_BSD -D__ORBIS__ -DGLES)
   add_definitions(-DTARGET_NO_THREADS -DTARGET_NO_EXCEPTIONS -DTARGET_NO_NIXPROF)
   add_definitions(-DTARGET_NO_COREIO_HTTP -DTARGET_NO_WEBUI -UTARGET_SOFTREND)
+  add_definitions(-DTARGET_NO_OPENMP -DTARGET_NO_NVMEM -DPAGE_SIZE=0x4000)	# ENSURE PAGE_SIZE=0x4000 is USED ! should be ok now
 
 
-  message("*******FIXME******** LARGE PAGES !!")
+  set(FEAT_AREC   ${DYNAREC_NONE})
+  set(FEAT_SHREC  ${DYNAREC_NONE}) #${DYNAREC_CPP})
+  set(FEAT_DSPREC ${DYNAREC_NONE})
+
 endif()
 
 
@@ -388,6 +400,10 @@ option(USE_QT False "Use Qt5 for UI and support OS Deps.")
 
 #option TARGET_NO_WEBUI
 
+if("${FEAT_SHREC}" STREQUAL "${DYNAREC_NONE}")
+  add_definitions(-DTARGET_NO_SSTATE)
+  message("----- SAVE STATES DISABLED BC THEY ARENT COMPATIBLE WITH INTERPRETER BUILD ------")
+endif()
 
 
 

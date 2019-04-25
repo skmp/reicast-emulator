@@ -10,14 +10,28 @@
 #include <Windows.h>
 #endif
 
+#ifndef TARGET_PS4
 
 #ifdef _ANDROID
 #include <sys/mman.h>
 #undef PAGE_MASK
 #define PAGE_MASK (PAGE_SIZE-1)
 #else
+#ifndef PAGE_SIZE			// NOTE, if page size is NOT 4096, PAGE_SIZE *MUST* be defined previously!
 #define PAGE_SIZE 4096
+#endif
 #define PAGE_MASK (PAGE_SIZE-1)
+#endif
+
+#else // TARGET_PS4/BSD machine/param.h
+
+
+#include "ps4/ps4.h"
+#include <machine/param.h>
+
+# ifndef PAGE_MASK
+# define PAGE_MASK (PAGE_SIZE-1)
+# endif
 #endif
 
 //Commonly used classes across the project

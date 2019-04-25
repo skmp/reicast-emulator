@@ -2,6 +2,25 @@
 
 #include "build.h"
 
+
+#if defined(TARGET_PS4) || USE_CUSTOM_ALLOCATORS
+
+extern "C" void* zmalloc (unsigned long size);
+extern "C" void* zrealloc(void* ptr, unsigned long size);
+extern "C" int   zmemalign(void **ptr, unsigned long alignment, unsigned long size);
+extern "C" void  zfree(void* ptr);
+extern "C" void  zfree2(void* ptr, unsigned long size);
+
+#define posix_memalign zmemalign
+#define realloc zrealloc
+#define malloc zmalloc
+#define free   zfree
+
+#endif
+
+
+
+
 #if BUILD_COMPILER==COMPILER_VC
 #define DECL_ALIGN(x) __declspec(align(x))
 #else
@@ -62,14 +81,23 @@
 #endif
 #define _CRT_SECURE_NO_DEPRECATE
 
-//Do not complain when i use enum::member
-#pragma warning( disable : 4482)
+#pragma warning(disable : 4482)		// Do not complain when i use enum::member
+#pragma warning(disable : 4201)		// unnamed struncts/unions
+#pragma warning(disable : 4100)		// unused parameters
 
-//unnamed struncts/unions
-#pragma warning( disable : 4201)
 
-//unused parameters
-#pragma warning( disable : 4100)
+#if 0 //def _Z_  // Annoying things, only disable for dev. builds in cmake so I can actually see something other than warnings easily //
+  #pragma warning(disable : 4018)	// Signed/Unsigned , these _should_ be fixed, as with many other warnings the deps do it too so i'm not going to look @ them
+  #pragma warning(disable : 4244)	// 
+  #pragma warning(disable : 4267)	// : '=' : conversion from '' to '', possible loss of data
+  #pragma warning(disable : 4312)	// ptr conv of greater size?  better than lesser ...
+  #pragma warning(disable : 4333)	// 
+  #pragma warning(disable : 4996)	// The POSIX name for this item is deprecated. Instead, use the ISO ...   << deps don't include types.h :|
+
+  #pragma warning(disable : 4313)	// 'printf' : '%X' in format string conflicts with argument 2 of type 'DynarecCodeEntryPtr'
+  #pragma warning(disable : 4477)	// 'printf' : format string '%06X' requires an argument of type 'unsigned int', but variadic argument 2 has type 'DynarecCodeEntryPtr'
+#endif
+
 #endif
 
 #include <stdint.h>
@@ -110,6 +138,44 @@ typedef char wchar;
 #ifndef CDECL
 #define CDECL __cdecl
 #endif
+
+
+
+// constexpr only !
+template<typename T> constexpr T KB(const T n) { return 1024 * n;  }
+template<typename T> constexpr T MB(const T n) { return 1024 * KB(n); }
+template<typename T> constexpr T GB(const T n) { return 1024 * MB(n); }
+template<typename T> constexpr T TB(const T n) { return 1024 * GB(n); }
+
+template<typename T> constexpr T KHz(const T n) { return 1000 * n;  }
+template<typename T> constexpr T MHz(const T n) { return 1000 * KHz(n); }
+template<typename T> constexpr T GHz(const T n) { return 1000 * MHz(n); }
+
+// using KiB=KHz, MiB=MHz, GiB=GHz //
+
+
+// Generic Alignment for non pow2, up is abusable
+
+template<typename T> inline T Align(const T addr, const T align, unat up=0)
+{
+	return (addr / align + up) * align;
+}
+
+// Alignment for unsigned integers of any type, align must be pow2!
+
+#define _POW2_MASK (align - static_cast<T>(1))
+
+template<typename T> inline T AlignUp(const T addr, const T align)
+{
+	return (addr + _POW2_MASK) & ~_POW2_MASK;
+}
+
+template<typename T> inline T AlignDown(const T addr, const T align)
+{
+	return addr & ~_POW2_MASK;
+}
+
+
 
 
 
@@ -422,6 +488,9 @@ using namespace std;
 void os_DebugBreak();
 #define dbgbreak os_DebugBreak()
 
+
+#ifndef TARGET_NO_SSTATE
+
 bool rc_serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
 bool rc_unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size);
 bool dc_serialize(void **data, unsigned int *total_size);
@@ -432,6 +501,17 @@ bool dc_unserialize(void **data, unsigned int *total_size);
 
 #define REICAST_SA(v_arr,num) rc_serialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
 #define REICAST_USA(v_arr,num) rc_unserialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
+
+#else // let me tell you how glad these are sprinkled everywhere -Z
+
+#define REICAST_S(v) __noop
+#define REICAST_US(v) __noop
+
+#define REICAST_SA(v_arr,num) __noop
+#define REICAST_USA(v_arr,num) __noop
+
+#endif //TARGET_NO_SSTATE
+
 
 enum
 {

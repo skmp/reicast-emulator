@@ -1,6 +1,8 @@
 // serialize.cpp : save states
-#if 1
 #include "types.h"
+
+#ifndef TARGET_NO_SSTATE
+
 #include "hw/aica/dsp.h"
 #include "hw/aica/aica.h"
 #include "hw/aica/sgc_if.h"

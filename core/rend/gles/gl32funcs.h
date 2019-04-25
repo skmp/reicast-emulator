@@ -1,5 +1,7 @@
 #pragma once
 
+#if 1//ndef TARGET_PS4
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1090,3 +1092,5 @@ extern const struct rglgen_sym_map rglgen_symbol_map[];
 #ifdef __cplusplus
 }
 #endif
+
+#endif // TARGET_PS4

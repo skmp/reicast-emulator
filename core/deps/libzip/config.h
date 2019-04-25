@@ -22,7 +22,7 @@
 #define HAVE_MEMORY_H 0
 
 /* Define to 1 if you have the `mkstemp' function. */
-#define HAVE_MKSTEMP 0
+//#define HAVE_MKSTEMP 0  ////// -Z: this is checked ifdef,  not if
 
 /* Define to 1 if you have the `MoveFileExA' function. */
 /* #undef HAVE_MOVEFILEEXA */
@@ -39,7 +39,7 @@
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(TARGET_PS4)
 /* Define to 1 if `tm_zone' is a member of `struct tm'. */
 #define HAVE_STRUCT_TM_TM_ZONE 1
 #endif

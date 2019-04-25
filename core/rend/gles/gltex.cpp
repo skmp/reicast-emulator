@@ -1034,7 +1034,7 @@ GLuint init_output_framebuffer(int width, int height)
 		}
 		else
 		{
-			// Use a renderbuffer and glBlitFramebuffer
+			// Use a renderbuffer and glBlitFramebuffer (GLES3+ ONLY)
 			glGenRenderbuffers(1, &gl.ofbo.colorb);
 			glBindRenderbuffer(GL_RENDERBUFFER, gl.ofbo.colorb);
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, width, height);

@@ -21,7 +21,7 @@
 
 #include "archive.h"
 #include "7zArchive.h"
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) && !defined(TARGET_PS4)
 #include "ZipArchive.h"
 #endif
 
@@ -29,7 +29,7 @@ Archive *OpenArchive(const char *path)
 {
 	std::string base_path(path);
 
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) && !defined(TARGET_PS4)
 	Archive *sz_archive = new SzArchive();
 	if (sz_archive->Open(base_path.c_str()) || sz_archive->Open((base_path + ".7z").c_str()) || sz_archive->Open((base_path + ".7Z").c_str()))
 		return sz_archive;

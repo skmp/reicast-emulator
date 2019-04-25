@@ -3,6 +3,7 @@
 #include "rend/gles/glcache.h"
 #include "rend/rend.h"
 
+#ifdef GL4
 /*
 
 Drawing and related state management
@@ -714,3 +715,4 @@ bool gl4_render_output_framebuffer()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	return true;
 }
+#endif //GL4

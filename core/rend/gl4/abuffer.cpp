@@ -4,6 +4,7 @@
  *  Created on: May 26, 2018
  *      Author: raph
  */
+#ifdef GL4
 #include <math.h>
 #include "gl4.h"
 #include "rend/gles/glcache.h"
@@ -607,3 +608,4 @@ void renderABuffer(bool sortFragments)
 
 	glCheck();
 }
+#endif

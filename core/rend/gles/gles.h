@@ -19,12 +19,14 @@
 #include <GLES32/gl2ext.h>
 #include "gl32funcs.h"
 
+#if _WIN32
 #ifndef GL_NV_draw_path
 //IMGTEC GLES emulation
 #pragma comment(lib,"libEGL.lib")
 #pragma comment(lib,"libGLESv2.lib")
 #else /* NV gles emulation*/
 #pragma comment(lib,"libGLES20.lib")
+#endif
 #endif
 
 #elif HOST_OS == OS_DARWIN
@@ -77,7 +79,7 @@ struct gl_ctx
 #ifdef USE_EGL
 	struct
 	{
-		EGLNativeWindowType native_wind;
+		EGLNativeWindowType  native_wind;
 		EGLNativeDisplayType native_disp;
 		EGLDisplay display;
 		EGLSurface surface;

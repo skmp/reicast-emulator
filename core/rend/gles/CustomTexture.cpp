@@ -24,7 +24,7 @@
 #include <sys/stat.h>
 #ifdef _MSC_VER
 #include "dirent/dirent.h"
-#else
+#elif !defined(TARGET_PS4)
 #include <dirent.h>
 #endif
 

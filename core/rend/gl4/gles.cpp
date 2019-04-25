@@ -1,3 +1,4 @@
+#ifdef GL4
 #include <math.h>
 #include "gl4.h"
 #include "rend/gles/glcache.h"
@@ -1019,3 +1020,4 @@ struct gl4rend : Renderer
 };
 
 Renderer* rend_GL4() { return new gl4rend(); }
+#endif

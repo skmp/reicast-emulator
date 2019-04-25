@@ -11,6 +11,9 @@ void load_gles_symbols()
 #endif
 }
 
+
+#if 1//ndef TARGET_PS4
+
 #define SYM(x) { "gl" #x, &(gl##x) }
 const struct rglgen_sym_map rglgen_symbol_map[] = {
     SYM(ActiveTexture),
@@ -733,3 +736,4 @@ RGLSYMGLTEXBUFFERPROC __rglgen_glTexBuffer;
 RGLSYMGLTEXBUFFERRANGEPROC __rglgen_glTexBufferRange;
 RGLSYMGLTEXSTORAGE3DMULTISAMPLEPROC __rglgen_glTexStorage3DMultisample;
 
+#endif // !TARGET_PS4

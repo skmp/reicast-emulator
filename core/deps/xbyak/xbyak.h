@@ -281,8 +281,13 @@ inline const To CastTo(From p) throw()
 	return (const To)(size_t)(p);
 }
 namespace inner {
-
-static const size_t ALIGN_PAGE_SIZE = 4096;
+	
+static const size_t ALIGN_PAGE_SIZE = //// *FIXME* this doesn't appreciate verify() macro, so PAGE_SIZE MUST BE DEFINED if NOT 4096!
+#ifdef PAGE_SIZE
+	PAGE_SIZE;
+#else
+	4096;
+#endif
 
 inline bool IsInDisp8(uint32 x) { return 0xFFFFFF80 <= x || x <= 0x7F; }
 inline bool IsInInt32(uint64 x) { return ~uint64(0x7fffffffu) <= x || x <= 0x7FFFFFFFU; }

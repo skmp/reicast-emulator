@@ -4,10 +4,12 @@
 #ifndef _WIN32
 #include <sys/types.h>
 #include <sys/socket.h>
+#if !defined(TARGET_PS4) && !defined(TARGET_BSD)
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <netinet/tcp.h>
 #include <netdb.h>
+#endif
+#include <netinet/tcp.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>

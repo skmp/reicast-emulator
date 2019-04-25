@@ -1,5 +1,7 @@
-#include <signal.h>
 #include "cfg/cfg.h"
+
+#ifdef TARGET_DISPFRAME
+#include <signal.h>
 #include "rend/TexCache.h"
 #include "rend/rend.h"
 
@@ -11,7 +13,6 @@ void SetREP(TA_context* cntx);
 TA_context* read_frame(const char* file, u8* vram_ref = NULL);
 void rend_set_fb_scale(float x,float y);
 
-#ifdef TARGET_DISPFRAME
 void dc_run()
 {
 	struct sigaction act, segv_oact;

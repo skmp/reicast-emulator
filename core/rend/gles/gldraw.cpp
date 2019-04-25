@@ -1175,9 +1175,11 @@ bool render_output_framebuffer()
 			return false;
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		glBlitFramebuffer(0, 0, gl.ofbo.width, gl.ofbo.height,
+		if (gl.gl_major >= 3) {
+			glBlitFramebuffer(0, 0, gl.ofbo.width, gl.ofbo.height,
 				0, 0, screen_width, screen_height,
 				GL_COLOR_BUFFER_BIT, GL_LINEAR);
+		}
     	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 	return true;

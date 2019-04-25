@@ -18,9 +18,11 @@
  */
 #include <algorithm>
 #include <math.h>
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 #include "dirent/dirent.h"
 #define S_ISDIR(mode) (((mode) & _S_IFMT) == _S_IFDIR)
+#elif TARGET_PS4
+#include <sys/dirent.h>
 #else
 #include <dirent.h>
 #endif
@@ -44,8 +46,12 @@
 #include "oslib/audiostream.h"
 
 
+
+#ifndef TARGET_NO_SSTATE
 extern void dc_loadstate();
 extern void dc_savestate();
+#endif
+
 extern void dc_stop();
 extern void dc_reset();
 extern void dc_resume();
@@ -311,6 +317,7 @@ static void gui_display_commands()
 
     ImGui::Begin("Reicast", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
+#ifndef TARGET_NO_SSTATE
 	ImGui::Columns(2, "buttons", false);
 	if (ImGui::Button("Load State", ImVec2(150 * scaling, 50 * scaling)))
 	{
@@ -323,6 +330,7 @@ static void gui_display_commands()
 		gui_state = ClosedNoResume;
 		dc_savestate();
 	}
+#endif
 
 	ImGui::NextColumn();
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))

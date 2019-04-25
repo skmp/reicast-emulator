@@ -36,7 +36,9 @@ static bool safemode_game;
 static bool tr_poly_depth_mask_game;
 static bool extra_depth_game;
 
+#if !defined(TARGET_NO_THREADS)
 cThread emu_thread(&dc_run, NULL);
+#endif
 
 #if HOST_OS==OS_WINDOWS
 #include <windows.h>
@@ -424,13 +426,15 @@ void* dc_run(void*)
 #endif
 
 	InitAudio();
-
+	
+#if FEAT_SHREC != DYNAREC_NONE
 	if (settings.dynarec.Enable)
 	{
 		Get_Sh4Recompiler(&sh4_cpu);
 		printf("Using Recompiler\n");
 	}
 	else
+#endif
 	{
 		Get_Sh4Interpreter(&sh4_cpu);
 		printf("Using Interpreter\n");
@@ -471,7 +475,10 @@ void dc_stop()
 {
 	sh4_cpu.Stop();
 	rend_cancel_emu_wait();
+
+#if !defined(TARGET_NO_THREADS)
 	emu_thread.WaitToEnd();
+#endif
 }
 
 // Called on the emulator thread for soft reset
@@ -776,7 +783,11 @@ void SaveSettings()
 
 void dc_resume()
 {
+#if !defined(TARGET_NO_THREADS)
 	emu_thread.Start();
+#else
+	dc_run(0);
+#endif
 }
 
 static void cleanup_serialize(void *data)
@@ -799,6 +810,10 @@ static string get_savestate_file_path()
 	state_file = state_file + ".state";
 	return get_writable_data_path("/data/") + state_file;
 }
+
+
+
+#ifndef TARGET_NO_SSTATE	// This wouldn't be necessary if one makes sure they would build for all configurations
 
 void dc_savestate()
 {
@@ -915,3 +930,5 @@ void dc_loadstate()
     cleanup_serialize(data) ;
 	printf("Loaded state from %s size %d\n", filename.c_str(), total_size) ;
 }
+
+#endif //TARGET_NO_SSTATE

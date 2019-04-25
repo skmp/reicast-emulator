@@ -439,6 +439,14 @@ void main() \n\
 	gl_FragColor = vtx_base*texture(tex,uv.st); \n\
 }";
 
+#ifdef TARGET_PS4
+#include <kernel_ex.h>
+#include <sysmodule_ex.h>
+#include <system_service_ex.h>
+#include <shellcore_util.h>
+#include <piglet.h>
+#endif
+
 GLCache glcache;
 gl_ctx gl;
 
@@ -461,11 +469,36 @@ GLuint fogTextureId;
 	// Create a basic GLES context
 	bool gl_init(void* wind, void* disp)
 	{
-		gl.setup.native_wind=(EGLNativeWindowType)wind;
-		gl.setup.native_disp=(EGLNativeDisplayType)disp;
+#ifdef TARGET_PS4
+		ScePglConfig pgl_config;
+
+		memset(&pgl_config, 0, sizeof(pgl_config));
+		{
+			pgl_config.size = sizeof(pgl_config);
+			pgl_config.flags = 0x60 | SCE_PGL_FLAGS_USE_COMPOSITE_EXT | SCE_PGL_FLAGS_USE_FLEXIBLE_MEMORY;// | SCE_PGL_FLAGS_SKIP_APP_INITIALIZATION; // ?
+			pgl_config.processOrder = 1;
+			pgl_config.systemSharedMemorySize	= MB(2);	//0x200000;
+			pgl_config.videoSharedMemorySize	= MB(36);	//0x2400000;
+			pgl_config.maxMappedFlexibleMemory	= 0xAA00000;	// MB(128);	//
+			pgl_config.drawCommandBufferSize	= KB(768);	//0xC0000;	
+			pgl_config.lcueResourceBufferSize	= KB(64);	//0x10000;
+			pgl_config.dbgPosCmd_0x40 = 1920;
+			pgl_config.dbgPosCmd_0x44 = 1080;
+			pgl_config.dbgPosCmd_0x48 = 0;
+			pgl_config.dbgPosCmd_0x4C = 0;
+			pgl_config.unk_0x5C = 2;
+		}
+
+		if (!scePigletSetConfigurationVSH(&pgl_config)) {
+			printf("scePigletSetConfigurationVSH failed.\n");
+			return false;
+		}
+#endif
+		gl.setup.native_wind=(EGLNativeWindowType) (unat)wind;
+		gl.setup.native_disp=(EGLNativeDisplayType)(unat)disp;
 
 		//try to get a display
-		gl.setup.display = eglGetDisplay(gl.setup.native_disp);
+		gl.setup.display = eglGetDisplay((EGLNativeDisplayType)gl.setup.native_disp);
 
 		//if failed, get the default display (this will not happen in win32)
 		if(gl.setup.display == EGL_NO_DISPLAY)
@@ -482,6 +515,21 @@ GLuint fogTextureId;
 
 		if (gl.setup.surface == 0)
 		{
+#if defined(TARGET_PS4)
+			EGLint pi32ConfigAttribs[] = {
+				EGL_RED_SIZE, 8,
+				EGL_GREEN_SIZE, 8,
+				EGL_BLUE_SIZE, 8,
+				EGL_ALPHA_SIZE, 8,
+				EGL_DEPTH_SIZE, 0,
+				EGL_STENCIL_SIZE, 0,
+				EGL_SAMPLE_BUFFERS, 0,
+				EGL_SAMPLES, 0,
+				EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+				EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+				EGL_NONE,
+			};
+#else
 			EGLint pi32ConfigAttribs[]  = {
 					EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_SWAP_BEHAVIOR_PRESERVED_BIT,
 					EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
@@ -489,7 +537,7 @@ GLuint fogTextureId;
 					EGL_STENCIL_SIZE, 8,
 					EGL_NONE
 			};
-
+#endif
 			int num_config;
 
 			EGLConfig config;
@@ -650,31 +698,31 @@ GLuint fogTextureId;
 	}
 
 #elif HOST_OS == OS_WINDOWS && !defined(USE_SDL)
-	#define WGL_DRAW_TO_WINDOW_ARB         0x2001
-	#define WGL_ACCELERATION_ARB           0x2003
-	#define WGL_SWAP_METHOD_ARB            0x2007
-	#define WGL_SUPPORT_OPENGL_ARB         0x2010
-	#define WGL_DOUBLE_BUFFER_ARB          0x2011
-	#define WGL_PIXEL_TYPE_ARB             0x2013
-	#define WGL_COLOR_BITS_ARB             0x2014
-	#define WGL_DEPTH_BITS_ARB             0x2022
-	#define WGL_STENCIL_BITS_ARB           0x2023
-	#define WGL_FULL_ACCELERATION_ARB      0x2027
-	#define WGL_SWAP_EXCHANGE_ARB          0x2028
-	#define WGL_TYPE_RGBA_ARB              0x202B
-	#define WGL_CONTEXT_MAJOR_VERSION_ARB  0x2091
-	#define WGL_CONTEXT_MINOR_VERSION_ARB  0x2092
-	#define WGL_CONTEXT_FLAGS_ARB              0x2094
+	#define WGL_DRAW_TO_WINDOW_ARB			0x2001
+	#define WGL_ACCELERATION_ARB			0x2003
+	#define WGL_SWAP_METHOD_ARB				0x2007
+	#define WGL_SUPPORT_OPENGL_ARB			0x2010
+	#define WGL_DOUBLE_BUFFER_ARB			0x2011
+	#define WGL_PIXEL_TYPE_ARB				0x2013
+	#define WGL_COLOR_BITS_ARB				0x2014
+	#define WGL_DEPTH_BITS_ARB				0x2022
+	#define WGL_STENCIL_BITS_ARB			0x2023
+	#define WGL_FULL_ACCELERATION_ARB		0x2027
+	#define WGL_SWAP_EXCHANGE_ARB			0x2028
+	#define WGL_TYPE_RGBA_ARB				0x202B
+	#define WGL_CONTEXT_MAJOR_VERSION_ARB	0x2091
+	#define WGL_CONTEXT_MINOR_VERSION_ARB	0x2092
+	#define WGL_CONTEXT_FLAGS_ARB			0x2094
 
-	#define		WGL_CONTEXT_PROFILE_MASK_ARB  0x9126
-	#define 	WGL_CONTEXT_MAJOR_VERSION_ARB   0x2091
-	#define 	WGL_CONTEXT_MINOR_VERSION_ARB   0x2092
-	#define 	WGL_CONTEXT_LAYER_PLANE_ARB   0x2093
-	#define 	WGL_CONTEXT_FLAGS_ARB   0x2094
-	#define 	WGL_CONTEXT_DEBUG_BIT_ARB   0x0001
-	#define 	WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB   0x0002
-	#define 	ERROR_INVALID_VERSION_ARB   0x2095
-	#define		WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001
+	#define	WGL_CONTEXT_PROFILE_MASK_ARB	0x9126
+	#define WGL_CONTEXT_MAJOR_VERSION_ARB	0x2091
+	#define WGL_CONTEXT_MINOR_VERSION_ARB	0x2092
+	#define WGL_CONTEXT_LAYER_PLANE_ARB		0x2093
+	#define WGL_CONTEXT_FLAGS_ARB			0x2094
+	#define WGL_CONTEXT_DEBUG_BIT_ARB		0x0001
+	#define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB	0x0002
+	#define ERROR_INVALID_VERSION_ARB				0x2095
+	#define	WGL_CONTEXT_CORE_PROFILE_BIT_ARB		0x00000001
 
 	typedef BOOL (WINAPI * PFNWGLCHOOSEPIXELFORMATARBPROC) (HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats,
 															int *piFormats, UINT *nNumFormats);
@@ -1242,11 +1290,13 @@ bool gles_init()
 		return false;
 
 #ifdef USE_EGL
-	#ifdef TARGET_PANDORA
+# ifdef TARGET_PANDORA
 	fbdev=open("/dev/fb0", O_RDONLY);
-	#else
-	eglSwapInterval(gl.setup.display,1);
-	#endif
+# elif defined(TARGET_PS4)
+	eglSwapInterval(gl.setup.display, 0);
+# else
+	eglSwapInterval(gl.setup.display, 1);
+# endif
 #endif
 
 	//    glEnable(GL_DEBUG_OUTPUT);

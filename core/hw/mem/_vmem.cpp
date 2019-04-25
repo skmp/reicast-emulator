@@ -427,6 +427,7 @@ bool _vmem_reserve_nonvmem()
 	return true;
 }
 
+#if FEAT_SHREC != DYNAREC_NONE
 void _vmem_bm_reset_nvmem();
 
 void _vmem_bm_reset() {
@@ -443,6 +444,7 @@ void _vmem_bm_reset() {
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
 	}
 }
+#endif
 
 static void _vmem_release_nonvmem()
 {

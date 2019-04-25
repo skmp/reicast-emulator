@@ -346,14 +346,22 @@ static void rend_create_renderer()
 #endif
 	}
 #endif
+	if(!renderer)
+		die("----------invalid renderer!-----------");
 }
 
 void rend_init_renderer()
 {
+	printf("---------rend_init_renderer A \n");
+
 	if (renderer == NULL)
 		rend_create_renderer();
+	
+	printf("---------rend_init_renderer B \n");
+
 	if (!renderer->Init())
     {
+	printf("---------rend_init_renderer renderer->Init() ... fail \n");
 		delete renderer;
     	if (fallback_renderer == NULL || !fallback_renderer->Init())
     	{
@@ -364,6 +372,7 @@ void rend_init_renderer()
     	printf("Selected renderer initialization failed. Falling back to default renderer.\n");
     	renderer  = fallback_renderer;
     }
+	printf("---------------rend_init_renderer renderer->Init() ... complete \n");
 }
 
 void rend_term_renderer()
@@ -384,7 +393,11 @@ void rend_term_renderer()
 void* rend_thread(void* p)
 {
 	rend_init_renderer();
-
+	
+#ifdef TARGET_PS4
+	printf("rend_thread->rend_init_renderer() complete! \n");
+	//renderer->Resize(1920, 1080);
+#endif
 	//we don't know if this is true, so let's not speculate here
 	//renderer->Resize(640, 480);
 

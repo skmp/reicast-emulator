@@ -46,7 +46,9 @@
 #include "blockmanager.h"
 
 
-#define CODE_SIZE   (10*1024*1024)
+#define _CODE_SIZE KB(10)
+constexpr static unat CODE_SIZE = (_CODE_SIZE+PAGE_MASK) & ~PAGE_MASK;
+
 
 
 //alternative emit ptr, set to 0 to use the main buffer

@@ -192,7 +192,11 @@ static inline uint64_t long_long_be(uint64_t le)
 #define IGNORE_PARAMETER(x)  ((void)x)
 
 #define PICO_MEM_DEFAULT_SLAB_SIZE 1600
-#define PICO_MEM_PAGE_SIZE 4096
+#ifndef PAGE_SIZE
+#define PICO_MEM_PAGE_SIZE 4096				// -Z: This is an assumption, please use PAGE_SIZE
+#else
+#define PICO_MEM_PAGE_SIZE PAGE_SIZE
+#endif
 #define PICO_MEM_PAGE_LIFETIME 100
 #define PICO_MIN_HEAP_SIZE 600
 #define PICO_MIN_SLAB_SIZE 1200

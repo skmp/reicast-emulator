@@ -58,7 +58,7 @@ set(core_SRCS
   ${cfg_SRCS}
   ${rend_SRCS}
   ${gl4_SRCS}
-  ${gles_SRCS}
+  ${gles_SRCS}		${d_core}/rend/gles/gl32funcs.c
   ${input_SRCS}
   ${reios_SRCS}
   ${imgread_SRCS}
@@ -152,7 +152,7 @@ set(deps_SRCS
   ${xbyak_H}
 )
   
-if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC})	# Add Clang if NOT WIN32 *FIXME* 
+if("${BUILD_COMPILER}" EQUAL "${COMPILER_GCC}")	# Add Clang if NOT WIN32 *FIXME* 
   list(APPEND deps_SRCS
     ${lzip_SRCS}
     ${lzma_SRCS}
@@ -163,7 +163,7 @@ endif()
 ### libosd.cmake ################################################################################
 
 
-set(d_aout ${reicast_core_path}/oslib)
+set(d_aout ${d_core}/oslib)
 
 include_directories ("${d_core}/khronos")
 
@@ -182,7 +182,8 @@ if (${HOST_OS} EQUAL ${OS_WINDOWS})
   link_libraries(dsound.lib winmm.lib xinput.lib wsock32.lib opengl32.lib)
 
   
-elseif (${HOST_OS} EQUAL ${OS_LINUX} OR ${HOST_OS} EQUAL ${OS_ANDROID})
+elseif (${HOST_OS} EQUAL ${OS_LINUX} OR
+		${HOST_OS} EQUAL ${OS_ANDROID})
 
     list(APPEND osd_SRCS 
       ${d_core}/linux/common.cpp
@@ -229,7 +230,28 @@ elseif(${HOST_OS} EQUAL ${OS_DARWIN})
     # if NOT USE_SWIFT / ObjC
     #${d_osd}/apple/osx_osd.cpp
     )
+	
+elseif(${HOST_OS} EQUAL ${OS_NSW_HOS})
+#
+  message("-----------------------------------------------------")
+  message(" OS: Switch HOS ")
+  message("-----------------------------------------------------")
+  list(APPEND osd_SRCS ${d_core}/switch/nsw_osd.cpp)
+#
+elseif(${HOST_OS} EQUAL ${OS_PS4_BSD})
+#
+  message("-----------------------------------------------------")
+  message(" OS: Playstation4 BSD ")  
+  message("-----------------------------------------------------")
+  ## This will prob use posix / linux/common.cpp as a base too *FIXME* 
+  
+  list(APPEND osd_SRCS ${d_core}/linux/common.cpp)
 
+  list(APPEND osd_SRCS ${d_core}/ps4/util.S)
+  list(APPEND osd_SRCS ${d_core}/ps4/ps4_main.cpp)
+  list(APPEND osd_SRCS ${d_core}/ps4/ps4_module.cpp)
+  list(APPEND osd_SRCS ${d_aout}/audiobackend_ps4.cpp)
+#
 else()
 #
   message("OS Unhandled")

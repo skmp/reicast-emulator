@@ -247,8 +247,10 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
             idx_buffer_offset += pcmd->ElemCount;
         }
     }
+	
     if (vao_handle != 0)
-    	glDeleteVertexArrays(1, &vao_handle);
+		if (gl.gl_major >= 3 && glDeleteVertexArrays != 0)
+    		glDeleteVertexArrays(1, &vao_handle);
 }
 
 bool ImGui_ImplOpenGL3_CreateFontsTexture()

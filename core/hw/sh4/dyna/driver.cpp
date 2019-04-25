@@ -32,7 +32,7 @@
 u8 SH4_TCB[CODE_SIZE+4096]
 #if HOST_OS == OS_WINDOWS || FEAT_SHREC != DYNAREC_JIT
 	;
-#elif HOST_OS == OS_LINUX
+#elif HOST_OS == OS_LINUX || HOST_OS == OS_PS4_BSD
 	__attribute__((section(".text")));
 #elif HOST_OS==OS_DARWIN
 	__attribute__((section("__TEXT,.text")));
@@ -474,7 +474,7 @@ void recSh4_Init()
 #endif
 	verify(CodeCache != NULL);
 #else
-	CodeCache = (u8*)(((unat)SH4_TCB+4095)& ~4095);
+	CodeCache = (u8*)AlignUp<unat>((unat)SH4_TCB,PAGE_SIZE); //(((unat)SH4_TCB+4095)& ~4095);	// -Z : I WILL KILL <<<< USE PAGE_MASK || AlignUp(val,PAGE_SIZE) !!!
 #endif
 
 #if HOST_OS == OS_DARWIN

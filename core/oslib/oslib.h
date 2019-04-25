@@ -10,13 +10,13 @@ void os_CreateWindow();
 void os_SetupInput();
 void WriteSample(s16 right, s16 left);
 
-#if BUILD_COMPILER==COMPILER_VC
+#if COMPILER_VC_OR_CLANG_WIN32
 #include <intrin.h>
 #endif
 
 u32 static INLINE bitscanrev(u32 v)
 {
-#if (BUILD_COMPILER==COMPILER_GCC)
+#if COMPILER_GNU
 	return 31-__builtin_clz(v);
 #else
 	unsigned long rv;

@@ -1,13 +1,13 @@
 #include "types.h"
 #include "cfg/cfg.h"
 
-#if HOST_OS==OS_LINUX || HOST_OS == OS_DARWIN
+#if HOST_OS==OS_LINUX || HOST_OS == OS_DARWIN || HOST_OS == OS_PS4_BSD
 #if HOST_OS == OS_DARWIN
 	#define _XOPEN_SOURCE 1
 	#define __USE_GNU 1
 	#include <TargetConditionals.h>
 #endif
-#if !defined(TARGET_NACL32)
+#if !defined(TARGET_NACL32) && !defined(TARGET_PS4)
 #include <poll.h>
 #include <termios.h>
 #endif  
@@ -15,7 +15,9 @@
 #include <fcntl.h>
 #include <semaphore.h>
 #include <stdarg.h>
+#ifndef TARGET_PS4
 #include <signal.h>
+#endif
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
@@ -237,7 +239,7 @@ void cResetEvent::Wait()//Wait for signal , then reset
 
 void VArray2::LockRegion(u32 offset,u32 size)
 {
-	#if !defined(TARGET_NO_EXCEPTIONS)
+#if !defined(TARGET_NO_EXCEPTIONS)
 	u32 inpage=offset & PAGE_MASK;
 	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ );
 	if (rv!=0)
@@ -246,9 +248,9 @@ void VArray2::LockRegion(u32 offset,u32 size)
 		die("mprotect  failed ..\n");
 	}
 
-	#else
+#else
 		//printf("VA2: LockRegion\n");
-	#endif
+#endif
 }
 
 void print_mem_addr()
@@ -288,7 +290,7 @@ void print_mem_addr()
 
 void VArray2::UnLockRegion(u32 offset,u32 size)
 {
-	#if !defined(TARGET_NO_EXCEPTIONS)
+#if !defined(TARGET_NO_EXCEPTIONS)
 	u32 inpage=offset & PAGE_MASK;
 	u32 rv=mprotect (data+offset-inpage, size+inpage, PROT_READ | PROT_WRITE);
 	if (rv!=0)
@@ -297,10 +299,11 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 		printf("mprotect(%8p,%08X,RW) failed: %d | %d\n",data+offset-inpage,size+inpage,rv,errno);
 		die("mprotect  failed ..\n");
 	}
-	#else
+#else
 		//printf("VA2: UnLockRegion\n");
-	#endif
+#endif
 }
+
 double os_GetSeconds()
 {
 	timeval a;
@@ -371,12 +374,15 @@ void common_linux_setup()
 	linux_rpi2_init();
 
 	enable_runfast();
+#if !defined(TARGET_NO_EXCEPTIONS)
 	install_fault_handler();
 	signal(SIGINT, exit);
+#endif
 	
 	settings.profile.run_counts=0;
 	
-	printf("Linux paging: %ld %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
-	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
+	printf("Linux paging: %ld %08X %08X\n", getpagesize(), PAGE_SIZE, PAGE_MASK);
+	verify(PAGE_SIZE == (getpagesize()));
+	verify(PAGE_MASK == (getpagesize()-1));
 }
 #endif

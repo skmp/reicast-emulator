@@ -244,6 +244,8 @@ if(USE_MODEM)
   add_directory(core/hw/modem)
   add_directory(core/deps/picotcp/modules)
   add_directory(core/deps/picotcp/stack)
+else()
+  add_definitions(-DDISABLE_MODEM)
 endif()
 
 # Executable

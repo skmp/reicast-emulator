@@ -783,7 +783,7 @@ void sb_Init()
 	maple_Init();
 	aica_sb_Init();
 
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST && !defined(DISABLE_MODEM)
 	ModemInit();
 #endif
 }

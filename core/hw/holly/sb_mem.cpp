@@ -217,6 +217,8 @@ T DYNACALL ReadMem_area0(u32 addr)
 	{
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 		return (T)libExtDevice_ReadMem_A0_006(addr, sz);
+#elif defined(DISABLE_MODEM)
+		return (T)0;
 #else
 		return (T)ModemReadMem_A0_006(addr, sz);
 #endif
@@ -302,7 +304,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	{
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 		libExtDevice_WriteMem_A0_006(addr, data, sz);
-#else
+#elif !defined(DISABLE_MODEM)
 		ModemWriteMem_A0_006(addr, data, sz);
 #endif
 	}

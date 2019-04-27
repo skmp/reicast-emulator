@@ -183,65 +183,7 @@ void os_SetWindowText(const char * text) {
 
 SceUserServiceUserId userId = SCE_USER_SERVICE_USER_ID_SYSTEM;
 
-
-int32_t aOut_H = 0;
 int32_t pad1_H = 0;
-#if 0
-int32_t vOut_H = 0;
-#endif
-
-static void aout_init()
-{
-	verify(SCE_OK == sceAudioOutInit());
-
-	SceUserServiceUserId userId = SCE_USER_SERVICE_USER_ID_SYSTEM;
-	aOut_H = sceAudioOutOpen(userId, SCE_AUDIO_OUT_PORT_TYPE_MAIN, 0, 256, 48000, PARAMS16);
-
-	printf(" --aOut_H: %X\n", aOut_H);
-}
-
-static void aout_term() {
-	sceAudioOutClose(aOut_H);
-}
-
-static u32 aout_push(void* frame, u32 samples, bool wait)
-{
-	/* Output audio */
-	if (sceAudioOutOutput(aOut_H, frame) < 0) {
-		/* Error handling */
-	}
-
-	/* Get output process time */
-	uint64_t outputTime;
-	if (sceAudioOutGetLastOutputTime(aOut_H, &outputTime) < 0) {
-		/* Error handling */
-	}
-
-	/* Get port state */
-	SceAudioOutPortState portState;
-	if (sceAudioOutGetPortState(aOut_H, &portState) < 0) {
-		/* Error handling */
-	}
-
-	/* Get system state */
-	SceAudioOutSystemState aoss;
-	if (sceAudioOutGetSystemState(&aoss) < 0) {
-		/* Error handling */
-	}
-
-	return 1;
-}
-
-audiobackend_t audiobackend_ps4aout = {
-		"aout", // Slug
-		"PS4 AudioOut", // Name
-		&aout_init,
-		&aout_push,
-		&aout_term
-};
-
-
-
 
 
 void os_SetupInput() {

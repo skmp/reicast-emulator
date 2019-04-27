@@ -193,7 +193,8 @@ elseif(${HOST_OS} EQUAL ${OS_PS4_BSD})
   list(APPEND libosd_SRCS
 	${d_osd}/ps4/ps4_util.S
 	${d_osd}/ps4/ps4_osd.cpp
-	${d_osd}/ps4/ps4_video.cpp
+	${d_osd}/audiobackend/audiobackend_ps4.cpp
+#   ${d_osd}/ps4/ps4_video.cpp
 
     ${d_osd}/linux/common.cpp
   )

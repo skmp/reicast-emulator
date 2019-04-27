@@ -98,8 +98,8 @@ void RegisterAllAudioBackends() {
         RegisterAudioBackend(&audiobackend_coreaudio);
         #endif
 		#if HOST_OS==OS_PS4_BSD || defined(TARGET_PS4)
-		extern audiobackend_t audiobackend_ps4aout;
-        RegisterAudioBackend(&audiobackend_ps4aout);
+		extern audiobackend_t audiobackend_ps4;
+        RegisterAudioBackend(&audiobackend_ps4);
 		#endif
 		audiobackends_registered = true;
 }

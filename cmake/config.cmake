@@ -61,8 +61,8 @@ set(DYNAREC_CPP    0x40000003)
 
 set(COMPILER_VC    0x30000001)  # BUILD_COMPILER
 set(COMPILER_GCC   0x30000002)
-set(COMPILER_CLANG 0x30000002)
-set(COMPILER_INTEL 0x30000002)
+set(COMPILER_CLANG 0x30000003)
+set(COMPILER_INTEL 0x30000004)
 
 
 
@@ -277,7 +277,12 @@ if ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
   endif() # X86 family
   
     
-  set(_CXX_FLAGS "${_CXX_FLAGS} ${_C_FLAGS} -std=c++17 -fcxx-exceptions") ## xbyak needs exceptions
+  set(_CXX_FLAGS "${_CXX_FLAGS} ${_C_FLAGS} -std=c++17")
+
+  if(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})
+    set(_CXX_FLAGS "${_CXX_FLAGS} -fcxx-exceptions") ## xbyak needs exceptions
+  endif()
+
 endif()
 
 

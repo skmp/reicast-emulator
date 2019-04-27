@@ -1,6 +1,6 @@
 #pragma once
 
-#if 1//ndef TARGET_PS4
+#ifndef TARGET_PS4	// *FIXME* this is bs, requires GLES3 dyn.link
 
 #ifdef __cplusplus
 extern "C" {

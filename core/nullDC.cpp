@@ -394,8 +394,10 @@ int dc_start_game(const char *path)
 		printf("Using Interpreter\n");
 	}
 
+	zpf("--- calling mem_Init()\n");
 	mem_Init();
-
+	
+	zpf("--- calling mem_Init()\n");
 	mem_map_default();
 
 #if DC_PLATFORM == DC_PLATFORM_NAOMI

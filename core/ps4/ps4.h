@@ -14,7 +14,7 @@
 #define PS4_PKG
 #ifdef PS4_PKG			// These are RO ofc, use unjailed /data for W
 # define PS4_DIR_CFG		"/app0/reicast"	
-# define PS4_DIR_DATA		"/app0/reicast/data"
+# define PS4_DIR_DATA		"/app0/reicast"
 # define MODULE_PATH_PREFIX	"/app0/sce_module"
 #else
 # define PS4_DIR_CFG		"/mnt/usb0/reicast/"
@@ -33,6 +33,7 @@
 
 
 
+#define zpf(...) { fprintf(stdout,__VA_ARGS__); fflush(stdout); }
 
 
 #ifdef __cplusplus

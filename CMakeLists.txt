@@ -71,7 +71,8 @@ set(core_SRCS
 )
 
   
-if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC})	# Add Clang if NOT WIN32 *FIXME* 
+if(("${BUILD_COMPILER}" STREQUAL "${COMPILER_GCC}") OR
+   ("${BUILD_COMPILER}" STREQUAL "${COMPILER_CLANG}" AND NOT WIN32)) # Add Clang if NOT WIN32 *FIXME* 
   list(APPEND core_SRCS ${archive_SRCS})
 endif()
 
@@ -152,7 +153,9 @@ set(deps_SRCS
   ${xbyak_H}
 )
   
-if("${BUILD_COMPILER}" EQUAL "${COMPILER_GCC}")	# Add Clang if NOT WIN32 *FIXME* 
+  
+if(("${BUILD_COMPILER}" STREQUAL "${COMPILER_GCC}") OR
+   ("${BUILD_COMPILER}" STREQUAL "${COMPILER_CLANG}" AND NOT WIN32))
   list(APPEND deps_SRCS
     ${lzip_SRCS}
     ${lzma_SRCS}

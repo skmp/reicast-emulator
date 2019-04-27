@@ -346,22 +346,18 @@ static void rend_create_renderer()
 #endif
 	}
 #endif
+
 	if(!renderer)
 		die("----------invalid renderer!-----------");
 }
 
 void rend_init_renderer()
 {
-	printf("---------rend_init_renderer A \n");
-
 	if (renderer == NULL)
 		rend_create_renderer();
 	
-	printf("---------rend_init_renderer B \n");
-
 	if (!renderer->Init())
     {
-	printf("---------rend_init_renderer renderer->Init() ... fail \n");
 		delete renderer;
     	if (fallback_renderer == NULL || !fallback_renderer->Init())
     	{
@@ -372,7 +368,6 @@ void rend_init_renderer()
     	printf("Selected renderer initialization failed. Falling back to default renderer.\n");
     	renderer  = fallback_renderer;
     }
-	printf("---------------rend_init_renderer renderer->Init() ... complete \n");
 }
 
 void rend_term_renderer()

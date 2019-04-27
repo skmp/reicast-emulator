@@ -5,14 +5,40 @@
 
 void load_gles_symbols()
 {
-#ifdef _ANDROID
-	for (int i = 0; rglgen_symbol_map[i].sym != NULL; i++)
+#if defined(_ANDROID)
+	for (int i = 0; rglgen_symbol_map[i].sym != NULL; i++) {
 		*(void **)rglgen_symbol_map[i].ptr = eglGetProcAddress(rglgen_symbol_map[i].sym);
+	}
 #endif
 }
 
 
-#if 1//ndef TARGET_PS4
+#ifdef TARGET_PS4		// *FIXME* all this bs is wrong //
+
+typedef void (GL_APIENTRYP RGLSYMGLGENVERTEXARRAYSPROC) (GLsizei n, GLuint *arrays);
+typedef void (GL_APIENTRYP RGLSYMGLBINDVERTEXARRAYPROC) (GLuint array);
+typedef void (GL_APIENTRYP RGLSYMGLDELETEVERTEXARRAYSPROC) (GLsizei n, const GLuint *arrays);
+
+typedef void (GL_APIENTRYP RGLSYMGLBLITFRAMEBUFFERPROC) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+typedef void (GL_APIENTRYP RGLSYMGLBINDSAMPLERPROC) (GLuint unit, GLuint sampler);
+typedef void (GL_APIENTRYP RGLSYMGLREADBUFFERPROC) (GLenum src);
+
+void glGenVertexArrays(GLsizei n, GLuint *arrays) {}
+void glBindVertexArray(GLuint array) {}
+void glDeleteVertexArrays(GLsizei n, const GLuint *arrays) {}
+
+void glBlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter){}
+void glBindSampler(GLuint unit, GLuint sampler) {}
+void glReadBuffer(GLenum src) {}
+
+
+#endif
+
+
+
+
+
+#ifndef TARGET_PS4
 
 #define SYM(x) { "gl" #x, &(gl##x) }
 const struct rglgen_sym_map rglgen_symbol_map[] = {

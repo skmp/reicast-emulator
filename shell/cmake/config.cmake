@@ -308,8 +308,11 @@ elseif ((${BUILD_COMPILER} EQUAL ${COMPILER_GCC}) OR
   endif() # X86 family
   
     
-  set(_CXX_FLAGS "${_CXX_FLAGS} -fno-operator-names -fpermissive -std=c++11") # -fcxx-exceptions") ## xbyak needs exceptions
+  set(_CXX_FLAGS "${_CXX_FLAGS} -fno-operator-names -fpermissive -std=c++11")
 
+  if(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})
+    set(_CXX_FLAGS "${_CXX_FLAGS} -fcxx-exceptions") ## xbyak needs exceptions
+  endif()
 
 endif()
 
@@ -360,7 +363,7 @@ if (TARGET_PS4) # -DCMAKE_TOOLCHAIN_FILE=./cmake/{ps4sdk,clang_scei}.cmake -DTAR
   set(HOST_OS ${OS_PS4_BSD})
   message("HOST_OS ${HOST_OS}")
   
-  set(BUILD_COMPILER ${COMPILER_GCC}) # try lying ..
+#  set(BUILD_COMPILER ${COMPILER_GCC}) # try lying ..
 
   add_definitions(-DPS4 -DTARGET_PS4 -DTARGET_BSD -D__ORBIS__ -DGLES)
   add_definitions(-DTARGET_NO_THREADS -DTARGET_NO_EXCEPTIONS -DTARGET_NO_NIXPROF)
@@ -369,7 +372,7 @@ if (TARGET_PS4) # -DCMAKE_TOOLCHAIN_FILE=./cmake/{ps4sdk,clang_scei}.cmake -DTAR
 
 
   set(FEAT_AREC   ${DYNAREC_NONE})
-  set(FEAT_SHREC  ${DYNAREC_NONE}) #${DYNAREC_CPP})
+  set(FEAT_SHREC  ${DYNAREC_JIT}) #${DYNAREC_CPP})
   set(FEAT_DSPREC ${DYNAREC_NONE})
 
 endif()

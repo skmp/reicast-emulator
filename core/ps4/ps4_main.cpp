@@ -363,7 +363,7 @@ extern "C" int   zmemalign(void **ptr, unsigned long alignment, unsigned long si
 	if(nullptr==ptr || alignment<sizeof(void*))
 		return EINVAL;
 
-	AlignUp(sbrk,alignment);
+	sbrk=AlignUp(sbrk,alignment);
 	*ptr = malloc(size);
 	if(*ptr == nullptr)
 		return ENOMEM;

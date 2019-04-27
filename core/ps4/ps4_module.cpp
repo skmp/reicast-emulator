@@ -181,8 +181,6 @@ void ps4_module_init()
 	sceUserServiceGetInitialUser(&userId);
 
 
-
-
 	g_sandbox_word = sceKernelGetFsSandboxRandomWord();
 	if (!g_sandbox_word) {
 		EPRINTF("sceKernelGetFsSandboxRandomWord failed.\n");
@@ -194,11 +192,6 @@ void ps4_module_init()
 	verify(load_modules());
 	verify(do_patches());
 	verify(SCE_OK == sceSystemServiceHideSplashScreen());
-
-	
-
-//	ps4_video_init();
-
 
 }
 

@@ -632,7 +632,7 @@ GLuint fogTextureId;
 			printf("eglMakeCurrent() failed: %x\n", eglGetError());
 			return false;
 		}
-
+		
 		EGLint w,h;
 		eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_WIDTH, &w);
 		eglQuerySurface(gl.setup.display, gl.setup.surface, EGL_HEIGHT, &h);
@@ -935,13 +935,24 @@ static void gles_term()
 void findGLVersion()
 {
 	gl.index_type = GL_UNSIGNED_INT;
-
+	
+#if 1 //ndef TARGET_PS4
 	while (true)
 		if (glGetError() == GL_NO_ERROR)
 			break;
 	glGetIntegerv(GL_MAJOR_VERSION, &gl.gl_major);
 	if (glGetError() == GL_INVALID_ENUM)
 		gl.gl_major = 2;
+#else
+			gl.gl_major = 2;
+			gl.gl_version = "GLES2";
+			gl.glsl_version_header = "";
+			gl.index_type = GL_UNSIGNED_SHORT;
+			gl.GL_OES_packed_depth_stencil_supported = false;	// *FIXME* all this bs
+			gl.GL_OES_depth24_supported = false;
+			return;	// fml
+#endif
+
 	const char *version = (const char *)glGetString(GL_VERSION);
 	printf("OpenGL version: %s\n", version);
 	if (!strncmp(version, "OpenGL ES", 9))
@@ -1241,7 +1252,7 @@ bool gl_create_resources()
 	if (gl.vbo.geometry != 0)
 		// Assume the resources have already been created
 		return true;
-
+	
 	findGLVersion();
 
 	if (gl.gl_major >= 3)
@@ -1252,17 +1263,17 @@ bool gl_create_resources()
 		//i keep updating the same one to make the es2 code work in 3.1 context
 		glGenVertexArrays(1, &gl.vbo.vao);
 	}
-
+	
 	//create vbos
 	glGenBuffers(1, &gl.vbo.geometry);
 	glGenBuffers(1, &gl.vbo.modvols);
 	glGenBuffers(1, &gl.vbo.idxs);
 	glGenBuffers(1, &gl.vbo.idxs2);
-
+	
 	create_modvol_shader();
-
+	
 	gl_load_osd_resources();
-
+	
 	gui_init();
 
 	return true;
@@ -1308,6 +1319,7 @@ bool gles_init()
 	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	gl_swap();
+
 
 #ifdef GL_GENERATE_MIPMAP_HINT
 	if (gl.is_gles)

@@ -127,7 +127,6 @@ void map_area6(u32 base)
 //set vmem to default values
 void mem_map_default()
 {
-	zpf("--- mem_map_default calling _vmem_init()\n");
 	//vmem - init/reset :)
 	_vmem_init();
 
@@ -156,33 +155,30 @@ void mem_map_default()
 	//P4
 	//0xExxx xxxx	-> internal area
 	
-	zpf("--- mem_map_default calling map_areaX_init()\n");
 	//Init Memmaps (register handlers)
-	map_area0_init(); zpf("--- mem_map_default , did area 0 !!\n");
-	map_area1_init(); zpf("--- mem_map_default , did area 1 !!\n");
-	map_area2_init(); zpf("--- mem_map_default , did area 2 !!\n");
-	map_area3_init(); zpf("--- mem_map_default , did area 3 !!\n");
-	map_area4_init(); zpf("--- mem_map_default , did area 4 !!\n");
-	map_area5_init(); zpf("--- mem_map_default , did area 5 !!\n");
-	map_area6_init(); zpf("--- mem_map_default , did area 6 !!\n");
-	map_area7_init(); zpf("--- mem_map_default , did area 7 !!\n");
+	map_area0_init();
+	map_area1_init();
+	map_area2_init();
+	map_area3_init();
+	map_area4_init();
+	map_area5_init();
+	map_area6_init();
+	map_area7_init();
 
 	//0x0-0xD : 7 times the normal memmap mirrors :)
 	//some areas can be customised :)
 	for (int i=0x0;i<0xE;i+=0x2)
 	{
-	zpf("--- mem_map_default calling map_areaX(%d <<4)\n", i);
-		map_area0(i<<4); zpf("<< %d >> --- map_area0 <<\n", i); //Bios,Flahsrom,i/f regs,Ext. Device,Sound Ram
-		map_area1(i<<4); zpf("<< %d >> --- map_area1 <<\n", i);  //VRAM
-		map_area2(i<<4); zpf("<< %d >> --- map_area2 <<\n", i);  //Unassigned
-		map_area3(i<<4); zpf("<< %d >> --- map_area3 <<\n", i);  //RAM
-		map_area4(i<<4); zpf("<< %d >> --- map_area4 <<\n", i);  //TA
-		map_area5(i<<4); zpf("<< %d >> --- map_area5 <<\n", i);  //Ext. Device
-		map_area6(i<<4); zpf("<< %d >> --- map_area6 <<\n", i);  //Unassigned
-		map_area7(i<<4); zpf("<< %d >> --- map_area7 <<\n", i);  //Sh4 Regs
+		map_area0(i<<4); //Bios,Flahsrom,i/f regs,Ext. Device,Sound Ram
+		map_area1(i<<4); //VRAM
+		map_area2(i<<4); //Unassigned
+		map_area3(i<<4); //RAM
+		map_area4(i<<4); //TA
+		map_area5(i<<4); //Ext. Device
+		map_area6(i<<4); //Unassigned
+		map_area7(i<<4); //Sh4 Regs
 	}
 	
-	zpf("--- mem_map_default calling map_p4()\n");
 	//map p4 region :)
 	map_p4();
 }

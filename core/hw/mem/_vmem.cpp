@@ -328,8 +328,6 @@ void _vmem_map_handler(_vmem_handler Handler,u32 start,u32 end)
 //map a memory block to a mem region
 void _vmem_map_block(void* base,u32 start,u32 end,u32 mask)
 {
-	zpf(" @@@@@@@@@@@@@@@@@@ _vmem_map_block(%p, %08X, %08X, %08X) \n", base,start,end,mask);
-
 	verify(start<0x100);
 	verify(end<0x100);
 	verify(start<=end);

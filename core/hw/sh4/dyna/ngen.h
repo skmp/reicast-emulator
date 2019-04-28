@@ -46,7 +46,7 @@
 #include "blockmanager.h"
 
 
-#define _CODE_SIZE KB(10)
+#define _CODE_SIZE MB(10)
 constexpr static unat CODE_SIZE = (_CODE_SIZE+PAGE_MASK) & ~PAGE_MASK;
 
 

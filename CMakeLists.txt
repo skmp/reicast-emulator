@@ -164,6 +164,7 @@ if(("${BUILD_COMPILER}" STREQUAL "${COMPILER_GCC}") OR
     ${lzma_SRCS}
     ${pico_SRCS}
   )
+  add_definitions(-D_7ZIP_ST -DCHD5_LZMA)
 endif()
 
 ### libosd.cmake ################################################################################
@@ -240,14 +241,14 @@ elseif(${HOST_OS} EQUAL ${OS_DARWIN})
 elseif(${HOST_OS} EQUAL ${OS_NSW_HOS})
 #
   message("-----------------------------------------------------")
-  message(" OS: Switch HOS ")
+  message(" OS: Nintedo Switch / Horizon ")
   message("-----------------------------------------------------")
   list(APPEND osd_SRCS ${d_core}/switch/nsw_osd.cpp)
 #
 elseif(${HOST_OS} EQUAL ${OS_PS4_BSD})
 #
   message("-----------------------------------------------------")
-  message(" OS: Playstation4 BSD ")  
+  message(" OS: Playstation4 'OrbisOS' / FreeBSD9 Variant ")  
   message("-----------------------------------------------------")
   ## This will prob use posix / linux/common.cpp as a base too *FIXME* 
   
@@ -271,7 +272,6 @@ endif()
 
 include_directories ("${reicast_core_path}")
 
-add_definitions(-D_7ZIP_ST -DCHD5_LZMA)
 
 
 

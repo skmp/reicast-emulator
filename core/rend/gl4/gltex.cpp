@@ -1,4 +1,4 @@
-#if 1//def GL4
+#ifndef NOGL4
 #include "gl4.h"
 #include "../gles/glcache.h"
 

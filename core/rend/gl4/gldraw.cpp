@@ -3,7 +3,7 @@
 #include "rend/gles/glcache.h"
 #include "rend/rend.h"
 
-#if 1//def GL4
+#ifndef NOGL4
 /*
 
 Drawing and related state management
@@ -715,4 +715,4 @@ bool gl4_render_output_framebuffer()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	return true;
 }
-#endif //GL4
+#endif //NOGL4

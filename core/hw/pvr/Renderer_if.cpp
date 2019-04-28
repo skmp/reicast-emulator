@@ -82,8 +82,7 @@ bool renderer_enabled = true;	// Signals the renderer thread to exit
 bool renderer_changed = false;	// Signals the renderer thread to switch renderer
 
 #if !defined(TARGET_NO_THREADS)
-cResetEvent rs(false,true);
-cResetEvent re(false,true);
+cResetEvent rs, re;
 #endif
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
@@ -346,16 +345,12 @@ static void rend_create_renderer()
 #endif
 	}
 #endif
-
-	if(!renderer)
-		die("----------invalid renderer!-----------");
 }
 
 void rend_init_renderer()
 {
 	if (renderer == NULL)
 		rend_create_renderer();
-	
 	if (!renderer->Init())
     {
 		delete renderer;
@@ -388,11 +383,7 @@ void rend_term_renderer()
 void* rend_thread(void* p)
 {
 	rend_init_renderer();
-	
-#ifdef TARGET_PS4
-	printf("rend_thread->rend_init_renderer() complete! \n");
-	//renderer->Resize(1920, 1080);
-#endif
+
 	//we don't know if this is true, so let's not speculate here
 	//renderer->Resize(640, 480);
 

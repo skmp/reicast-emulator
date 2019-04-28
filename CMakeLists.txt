@@ -16,6 +16,9 @@ set(reicast_root_path  "${CMAKE_CURRENT_SOURCE_DIR}")
 set(reicast_core_path  "${reicast_root_path}/core")
 set(reicast_shell_path "${reicast_root_path}/shell")
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${reicast_root_path}/bin)
+
+
 list(APPEND CMAKE_MODULE_PATH "${reicast_shell_path}/cmake")
 
 

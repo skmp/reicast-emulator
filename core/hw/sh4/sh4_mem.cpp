@@ -326,7 +326,7 @@ u8* GetMemPtr(u32 Addr,u32 size)
 		case 5:
 		case 6:
 		case 7:
-		default:
+		default: printf(">>>> ! E R R O R !  ============= GetMemPtr(%08X,%d) =============== \n", Addr,size);
 //			EMUERROR("unsupported area : addr=0x%X",Addr);
 			return 0;
 	}

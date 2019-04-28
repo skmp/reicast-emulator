@@ -331,7 +331,7 @@ extern "C" void* zmalloc(unsigned long size)
 
 	sbrk+=size;
 
-	printf("zmalloc(%d) @ %p :: total %d\n", size, res, sbrk);
+//	zpf("zmalloc(%d) @ %p :: total %d\n", size, res, sbrk);
 
 	return res;
 
@@ -358,7 +358,7 @@ extern "C" void* zrealloc(void* ptr, unsigned long size)
 
 extern "C" int   zmemalign(void **ptr, unsigned long alignment, unsigned long size)
 {
-	printf("zmemalign(%d,%d) \n", alignment, size);
+//	zpf("zmemalign(%d,%d) \n", alignment, size);
 
 	if(nullptr==ptr || alignment<sizeof(void*))
 		return EINVAL;
@@ -386,6 +386,25 @@ extern "C" void  zfree2(void* ptr, unsigned long size)
 	zmtotal -= mem_size;
 #endif
 }
+
+
+
+
+void* operator new(size_t size)
+{
+//	zpf("@@@@@?>?-----NEW-operator using malloc ... \n");
+	return zmalloc(size);
+}
+
+void operator delete(void* p)
+{
+//	zpf("@@@@@?>?-----DELETE-operator using free ... \n");
+	zfree(p);
+}
+
+
+
+
 #endif
 
 

@@ -3,7 +3,7 @@
 #include "rend/gles/glcache.h"
 #include "rend/rend.h"
 
-#ifdef GL4
+#if 1//def GL4
 /*
 
 Drawing and related state management

@@ -5,17 +5,26 @@
 
 #if defined(TARGET_PS4) || USE_CUSTOM_ALLOCATORS
 
+#include <cstdlib>
+
 extern "C" void* zmalloc (unsigned long size);
 extern "C" void* zrealloc(void* ptr, unsigned long size);
 extern "C" int   zmemalign(void **ptr, unsigned long alignment, unsigned long size);
 extern "C" void  zfree(void* ptr);
 extern "C" void  zfree2(void* ptr, unsigned long size);
 
+void* operator new(size_t size);
+void operator delete(void*);
+
 #define posix_memalign zmemalign
 #define realloc zrealloc
 #define malloc zmalloc
 #define free   zfree
 
+#endif
+
+#if !defined(TARGET_PS4)
+#define zpf() __noop
 #endif
 
 

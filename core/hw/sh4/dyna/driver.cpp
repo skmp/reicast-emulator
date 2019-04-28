@@ -240,33 +240,55 @@ void RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 
 DynarecCodeEntryPtr rdv_CompilePC()
 {
-	u32 pc=next_pc;
+	zpf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+	zpf(" rdv_CompilePC() \n");
+	zpf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
 
+	u32 pc=next_pc;
+	
+	zpf(" rdv_CompilePC() A \n");
+
+#ifndef TARGET_PS4
 	if (emit_FreeSpace()<16*1024 || pc==0x8c0000e0 || pc==0xac010000 || pc==0xac008300)
 		recSh4_ClearCache();
+#endif
+
+	zpf(" rdv_CompilePC() B \n");
 
 	RuntimeBlockInfo* rv=0;
 	do
 	{
 		RuntimeBlockInfo* rbi = ngen_AllocateBlock();
+		verify(rbi!=nullptr);
+		
+	zpf(" rdv_CompilePC() C, rbi: %p \n", rbi);
+
 		if (rv==0) rv=rbi;
 
 		rbi->Setup(pc,fpscr);
-
+		
+	zpf(" rdv_CompilePC() D \n");
 		
 		bool do_opts=((rbi->addr&0x3FFFFFFF)>0x0C010100);
 		rbi->staging_runs=do_opts?100:-100;
+
+	zpf(" rdv_CompilePC() E \n");
 		ngen_Compile(rbi,DoCheck(rbi->addr),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
 		verify(rbi->code!=0);
-
+		
 		bm_AddBlock(rbi);
-
+		
+	zpf(" rdv_CompilePC() F \n");
 		if (rbi->BlockType==BET_Cond_0 || rbi->BlockType==BET_Cond_1)
 			pc=rbi->NextBlock;
 		else
 			pc=0;
-	} while(false && pc);
 
+	} while(false && pc);
+	
+	zpf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+	zpf(" rdv_CompilePC() FINISHED, rv->code: %p \n", rv->code);
+	zpf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
 	return rv->code;
 }
 
@@ -485,14 +507,16 @@ void recSh4_Init()
 #if HOST_OS == OS_WINDOWS
 	DWORD old;
 	VirtualProtect(CodeCache,CODE_SIZE,PAGE_EXECUTE_READWRITE,&old);
-#elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
+#elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN || HOST_OS == OS_PS4_BSD || TARGET_PS4
 	
-	printf("\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);
+	zpf("---CC-----------------------------------------\n");
+	zpf("-->> CodeCache addr: %p +: %X | addr here: %p\n", CodeCache, CODE_SIZE, recSh4_Init);
+	zpf("---CC-----------------------------------------\n");
 
 	#if FEAT_SHREC == DYNAREC_JIT
 		if (mprotect(CodeCache, CODE_SIZE, PROT_READ|PROT_WRITE|PROT_EXEC))
 		{
-			perror("\n\tError,Couldn’t mprotect CodeCache!");
+			perror("<ERROR>Error,Couldn’t mprotect CodeCache!");
 			die("Couldn’t mprotect CodeCache");
 		}
 	#endif

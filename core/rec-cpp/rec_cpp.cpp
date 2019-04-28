@@ -40,6 +40,10 @@ void ngen_mainloop(void* v_cntx)
 {
 	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
 
+	zpf("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n");
+	zpf("ngen_mainloop(%p)\n", ctx);
+	zpf("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n");
+
 	cycle_counter = 0;
 
 #if !defined(TARGET_BOUNDED_EXECUTION)
@@ -49,11 +53,16 @@ void ngen_mainloop(void* v_cntx)
 #endif
 		cycle_counter = SH4_TIMESLICE;
 		do {
+			zpf(" <>< A: %08X\n", ctx->cntx.pc);
 			DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);
+			zpf(" <>< B: %p\n", (void*)rcb);
 			rcb();
 		} while (cycle_counter > 0);
 
 		if (UpdateSystem()) {
+	zpf("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n");
+	zpf("UpdateSystem() calling rdv_DoInterrupts_pc(%08X) \n", ctx->cntx.pc);
+	zpf("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n");
 			rdv_DoInterrupts_pc(ctx->cntx.pc);
 		}
 	}
@@ -808,16 +817,30 @@ struct opcode_check_block : public opcodeExec {
 	vector<u8> code;
 	void* ptr;
 
-	opcodeExec* setup(RuntimeBlockInfo* block) {
-		this->block = block;
-		ptr = GetMemPtr(block->addr, 4);
-		code.resize(sz == -1 ? block->sh4_code_size : sz);
-		memcpy(&code[0], ptr, sz == -1 ? block->sh4_code_size : sz);
+	opcodeExec* setup(RuntimeBlockInfo* block)
+	{
 
+		unat usz = sz == -1 ? block->sh4_code_size : sz;
+			
+	zpf("### opcode_check_block::setup() A , usz: %d\n",usz);
+		this->block = block;
+	zpf("### opcode_check_block::setup() B \n");
+		ptr = GetMemPtr(block->addr, 4);
+		if(nullptr != ptr) {
+			code.resize(usz);
+			memcpy(&code[0], ptr, usz); //sz == -1 ? block->sh4_code_size : sz);
+		}
+	zpf("### opcode_check_block::setup() Code: %p, ptr: %p \n", &code[0], ptr);
+		
+	zpf("### opcode_check_block::setup() Z \n");
 		return this;
 	}
 
-	void execute() {
+	void execute()
+	{
+		if(code.empty())
+			return;
+
 		switch (sz)
 		{
 		case 4:
@@ -1190,11 +1213,15 @@ public:
 
 	size_t opcode_index;
 	opcodeExec** ptrsg;
-	void compile(RuntimeBlockInfo* block,  SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise) {
+	void compile(RuntimeBlockInfo* block,  SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
+	{
 		
+	zpf(" -->compile() A \n");
+
 		//we need an extra one for the end opcode and optionally one more for block check
 		auto ptrs = fnnCtor_forreal(block->oplist.size() + 1 + (smc_checks != NoCheck ? 1 : 0))(block->guest_cycles);
-
+		
+	zpf(" -->compile() B \n");
 		ptrsg = ptrs.ptrs;
 
 		dispatchb[idxnxx].fnb = ptrs.fnb;
@@ -1205,39 +1232,40 @@ public:
 		if (getndpn_forreal(idxnxx) == 0) {
 			emit_Skip(emit_FreeSpace()-16);
 		}
-
+		
+	zpf(" -->compile() C \n");
 		size_t i = 0;
 		if (smc_checks != NoCheck)
 		{
+	zpf(" -->compile() C1 \n");
 			verify (smc_checks == FastCheck || smc_checks == FullCheck)
 			opcodeExec* op;
 			int check_size = block->sh4_code_size;
-
+			
+	zpf(" -->compile() C2 \n");
 			if (smc_checks == FastCheck) {
 				check_size = 4;
 			}
-
-			switch (block->sh4_code_size)
-			{
-			case 4:
-				op = (new opcode_check_block<4>())->setup(block);
-				break;
-			case 6:
-				op = (new opcode_check_block<6>())->setup(block);
-				break;
-			case 8:
-				op = (new opcode_check_block<8>())->setup(block);
-				break;
-			default:
-				op = (new opcode_check_block<-1>())->setup(block);
-				break;
+			
+	zpf(" -->compile() C3 (%d) \n", block->sh4_code_size);
+			switch (block->sh4_code_size) {
+			case 4:		op = (new opcode_check_block<4>())->setup(block);		break;
+			case 6:		op = (new opcode_check_block<6>())->setup(block);		break;
+			case 8:		op = (new opcode_check_block<8>())->setup(block);		break;
+			default:	op = (new opcode_check_block<-1>())->setup(block);		break;
 			}
 			ptrs.ptrs[i++] = op;
 		}
-
-		for (size_t opnum = 0; opnum < block->oplist.size(); opnum++, i++) {
+		
+	zpf(" -->compile() D \n");
+		for (size_t opnum = 0; opnum < block->oplist.size(); opnum++, i++)
+		{
 			opcode_index = i;
 			shil_opcode& op = block->oplist[opnum];
+
+			
+	zpf(" -->compile() op[%d/%d] %08X \n", opnum, block->oplist.size(), op.op);
+
 			switch (op.op) {
 
 			case shop_ifb:
@@ -1491,7 +1519,8 @@ public:
 				break;
 			}
 		}
-
+		
+	zpf(" -->compile() E \n");
 		//Block end opcode
 		{
 			opcodeExec* op;
@@ -1516,9 +1545,11 @@ public:
 		}
 
 	}
-
+	
 	CC_pars_t CC_pars;
 	void* ccfn;
+
+	//printf("zpf -->compile() F \n");
 
 	void ngen_CC_Start(shil_opcode* op)
 	{
@@ -1554,21 +1585,32 @@ public:
 			ptrsg[opcode_index] = new opcodeDie();
 		}
 	}
-
+	
+	//zpf(" -->compile() Z \n");
 };
 
 BlockCompiler* compiler;
 
 void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
 {
+	zpf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+	zpf(" ngen_Compile() \n");
+	zpf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+
 	verify(emit_FreeSpace() >= 16 * 1024);
-
+	
+	zpf("___________________ ngen_Compile() A !\n");
 	compiler = new BlockCompiler();
-
+	
+	zpf("___________________ ngen_Compile() B %p !\n", (void*)compiler);
 
 	compiler->compile(block, smc_checks, reset, staging, optimise);
+	
+	zpf("___________________ ngen_Compile() C !\n");
 
 	delete compiler;
+
+	zpf("___________________ ngen_Compile() FINISHED !\n");
 }
 
 

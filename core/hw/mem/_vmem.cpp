@@ -427,7 +427,14 @@ bool _vmem_reserve_nonvmem()
 	return true;
 }
 
+
+
+///////////////////////////////////////////////////////////////
 #if FEAT_SHREC != DYNAREC_NONE
+
+
+
+
 void _vmem_bm_reset_nvmem();
 
 void _vmem_bm_reset() {
@@ -633,8 +640,10 @@ error:
 	}
 #endif
 
+
 #define map_buffer(dsts,dste,offset,sz,w) {ptr=_nvmem_map_buffer(dsts,dste-dsts,offset,sz,w);if (!ptr) return false;}
 #define unused_buffer(start,end) {ptr=_nvmem_unused_buffer(start,end);if (!ptr) return false;}
+
 
 u32 pagecnt;
 void _vmem_bm_reset_nvmem()
@@ -696,12 +705,22 @@ die("BM_LockedWrite and NO REC");
 	return false;
 }
 
+
+
+
+#endif //FEAT_SHREC != DYNAREC_NONE
+
+
+#if !defined(TARGET_NO_NVMEM) && FEAT_SHREC != DYNAREC_NONE
+
+
+
 bool _vmem_reserve()
 {
 	void* ptr=0;
 
 	verify((sizeof(Sh4RCB)%PAGE_SIZE)==0);
-
+	
 	if (settings.dynarec.disable_nvmem)
 		return _vmem_reserve_nonvmem();
 
@@ -811,7 +830,8 @@ void _vmem_release()
 	}
 }
 
-#else
+
+#else // !defined(TARGET_NO_NVMEM) && FEAT_SHREC != DYNAREC_NONE
 
 bool _vmem_reserve()
 {

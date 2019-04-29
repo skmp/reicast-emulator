@@ -1,5 +1,6 @@
 #pragma once
 #include <unordered_map>
+#include <atomic>
 #include "rend/rend.h"
 #include <glsm/glsm.h>
 #include <glsm/glsmsym.h>
@@ -232,10 +233,10 @@ struct TextureCacheData
 	//a texture can't be both VQ and PAL at the same time
 	u32 texture_hash;			// xxhash of texture data, used for custom textures
 	u32 old_texture_hash;		// legacy hash
-	u8* custom_image_data;		// loaded custom image data
-	u32 custom_width;
-	u32 custom_height;
-	bool custom_load_in_progress;
+	u8* volatile custom_image_data;		// loaded custom image data
+	volatile u32 custom_width;
+	volatile u32 custom_height;
+	std::atomic_int custom_load_in_progress;
 
 	bool IsPaletted()
 	{

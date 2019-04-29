@@ -9,7 +9,7 @@
 #
 
 
-set(ZBUILD Off)
+set(ZBUILD On)
 
 
 
@@ -277,7 +277,8 @@ endif()
 if (("${BUILD_COMPILER}" STREQUAL "${COMPILER_VC}") OR
 	("${BUILD_COMPILER}" STREQUAL "${COMPILER_CLANG}" AND "${HOST_OS}" STREQUAL "${OS_WINDOWS}"))
 
-  if((${HOST_CPU} EQUAL ${CPU_X64}) AND (${FEAT_SHREC} EQUAL ${DYNAREC_JIT})) # AND NOT "${NINJA}" STREQUAL "")
+  if(("${BUILD_COMPILER}" STREQUAL "${COMPILER_VC}") AND 
+     (${HOST_CPU} EQUAL ${CPU_X64}) AND (${FEAT_SHREC} EQUAL ${DYNAREC_JIT})) # AND NOT "${NINJA}" STREQUAL "")
     set(FEAT_SHREC  ${DYNAREC_CPP})
     message("---x64 rec disabled for VC x64 via NINJA")
   endif()
@@ -288,7 +289,7 @@ if (("${BUILD_COMPILER}" STREQUAL "${COMPILER_VC}") OR
     add_definitions(/DXBYAK_NO_OP_NAMES /DTARGET_NO_OPENMP)  #*FIXME* check openmp on clang-cl
     remove_definitions(/U_HAS_STD_BYTE)
     set(_CXX_FLAGS "/std:c++14")	# /U_HAS_STD_BYTE not working, have to use c++14 not 17 :|
-    set(_C_FLAGS "-Wno-unused-function -Wno-unused-variable")
+    set(_C_FLAGS "-Wno-unused-function -Wno-unused-variable /GX")
   endif()
 
 
@@ -368,11 +369,11 @@ if (TARGET_PS4) # -DCMAKE_TOOLCHAIN_FILE=./cmake/{ps4sdk,clang_scei}.cmake -DTAR
   add_definitions(-DPS4 -DTARGET_PS4 -DTARGET_BSD -D__ORBIS__ -DGLES -DNOGL4)
   add_definitions(-DTARGET_NO_THREADS -DTARGET_NO_EXCEPTIONS -DTARGET_NO_NIXPROF)
   add_definitions(-DTARGET_NO_COREIO_HTTP -DTARGET_NO_WEBUI -UTARGET_SOFTREND)
-  add_definitions(-DTARGET_NO_OPENMP -DTARGET_NO_NVMEM -DPAGE_SIZE=0x4000)	# ENSURE PAGE_SIZE=0x4000 is USED ! should be ok now
+  add_definitions(-DTARGET_NO_OPENMP -DPAGE_SIZE=0x4000)	#-DTARGET_NO_NVMEM  ENSURE PAGE_SIZE=0x4000 is USED ! should be ok now
 
 
   set(FEAT_AREC   ${DYNAREC_NONE})
-  set(FEAT_SHREC  ${DYNAREC_JIT}) #${DYNAREC_CPP})
+  set(FEAT_SHREC  ${DYNAREC_CPP}) #${DYNAREC_CPP})
   set(FEAT_DSPREC ${DYNAREC_NONE})
 
 endif()
@@ -383,6 +384,22 @@ if(ZBUILD)
   set(DEBUG_CMAKE ON)
   add_definitions(-D_Z_)  # Get rid of some warnings and internal dev testing
   
+  ## FML , DEBUG PS4 issues with matching build on windows ##
+  if("${HOST_OS}" STREQUAL "${OS_WINDOWS}")
+    #add_definitions(-DPS4 -DTARGET_PS4 -DTARGET_BSD -D__ORBIS__ -DGLES -DNOGL4)
+    #add_definitions(-DTARGET_NO_THREADS -DTARGET_NO_EXCEPTIONS -DTARGET_NO_NIXPROF)
+    #add_definitions(-DTARGET_NO_COREIO_HTTP -DTARGET_NO_WEBUI -UTARGET_SOFTREND)
+    #add_definitions(-DTARGET_NO_OPENMP -DTARGET_NO_NVMEM -DPAGE_SIZE=0x4000)	# ENSURE PAGE_SIZE=0x4000 is USED ! should be ok now
+	add_definitions(-DTARGET_NO_NVMEM)
+#	set(CMAKE_CXX_FLAGS " ${CMAKE_CXX_FLAGS} /bigobj") # ${CMAKE_CXX_FLAGS}
+  endif()
+
+#  set(FEAT_AREC   ${DYNAREC_NONE})
+  set(FEAT_SHREC  ${DYNAREC_CPP}) #${DYNAREC_CPP})
+#  set(FEAT_DSPREC ${DYNAREC_NONE})
+
+
+
   if(NOT TARGET_PS4 AND NOT TARGET_NSW AND 
      NOT TARGET_OSX AND NOT TARGET_IOS )
      set(USE_QT ON)

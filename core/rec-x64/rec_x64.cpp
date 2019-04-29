@@ -78,7 +78,8 @@ static __attribute((used)) void end_slice()
 #error RAM_SIZE_MAX unknown
 #endif
 
-#ifndef _MSC_VER
+#if BUILD_COMPILER!=COMPILER_VC
+
 
 #ifdef _WIN32
         // Fully naked function in win32 for proper SEH prologue
@@ -140,6 +141,12 @@ WIN32_ONLY( ".seh_pushreg %r14              \n\t")
 			"movl " _S(PC)"(%rax), %edi     \n\t"
 #endif
 			"call " _U "bm_GetCode2         \n\t"
+		
+#ifdef _Z_	// *FIXME* we have no notification here it just stops
+			"test %rax, %rax               \n\t"
+			"jz 3f                           \n"     // end_run_loop
+#endif
+
 			"call *%rax                     \n\t"
 			"movl " _U "cycle_counter(%rip), %ecx \n\t"
 			"testl %ecx, %ecx               \n\t"

@@ -24,7 +24,7 @@ void operator delete(void*);
 #endif
 
 #if !defined(TARGET_PS4)
-#define zpf() __noop
+#define zpf(...) __noop
 #endif
 
 

@@ -281,550 +281,132 @@ void send_notify(const char* format, ...) {
 }
 
 
-#if 1 //ndef PS4_PROVIDE_DIR
 
 
-	DIR           *opendir(const char *) { return nullptr; }
-	int           closedir(DIR *) {return 0;}
-	struct dirent *readdir(DIR *) {return nullptr;}
+extern "C" int umask(int newmask) {
+	return syscall(60, newmask);
+}
+	
+//sysent[482] 0xffffffff` 9b0e58d0 "shm_open"
+extern "C" int shm_open(const char *path,	int flags, mode_t mode)
+{
+	return syscall(482, path, flags, mode);
+}
 
-	int mkstemp(char *tmplate) { return 0; }
-
-	extern "C" int umask(int newmask) {
-		return syscall(60, newmask);
-	}
-
-#else //#if 0 //PS4_PROVIDE_DIR
-
-
-
-
-#include <sys/queue.h>
-
-/*
- * One of these structures is malloced to describe the current directory
- * position each time telldir is called. It records the current magic
- * cookie returned by getdirentries and the offset within the buffer
- * associated with that return value.
- */
-struct ddloc {
-	LIST_ENTRY(ddloc) loc_lqe; /* entry in list */
-	long	loc_index;	/* key associated with structure */
-	long	loc_seek;	/* magic cookie returned by getdirentries */
-	long	loc_loc;	/* offset of entry in buffer */
-};
-
-/*
- * One of these structures is malloced for each DIR to record telldir
- * positions.
- */
-struct _telldir {
-	LIST_HEAD(, ddloc) td_locq; /* list of locations */
-	long	td_loccnt;	/* index of entry for sequential readdir's */
-};
+//sysent[483] 0xffffffff` 9b0e61c0 "shm_unlink"
+extern "C" int shm_unlink(const char *path)
+{
+	return syscall(483, path);
+}
 
 
-
-
-/*
- * Structure describing an open directory.
- *
- * NOTE. Change structure layout with care, at least dd_fd field has to
- * remain unchanged to guarantee backward compatibility.
- */
-struct _dirdesc {
-	int		dd_fd;			/* file descriptor associated with directory */
-	long	dd_loc;			/* offset in current buffer */
-	long	dd_size;		/* amount of data returned by getdirentries */
-	char	*dd_buf;		/* data buffer */
-	int		dd_len;			/* size of data buffer */
-	off_t	dd_seek;		/* magic cookie returned by getdirentries */
-	long	dd_rewind;		/* magic cookie for rewinding */
-	int		dd_flags;		/* flags for readdir */
-	struct pthread_mutex *dd_lock;	/* lock */
-	struct _telldir *dd_td;	/* telldir position recording */
-	void	*dd_compat_de;	/* compat dirent */
-};
-
-#if 0 // found 'elsewhere'
 typedef struct _dirdesc {
-	int dd_fd; /* file descriptor associated with directory */
-	long dd_loc; /* offset in current buffer */
-	long dd_size; /* amount of data returned bygetdirentries */
-	char *dd_buf; /* data buffer */
-	int dd_len; /* size of data buffer */
-	long dd_seek; /* magic cookie returned by getdirentries */
-	long dd_rewind; /* magic cookie for rewinding */
-	int dd_flags; /* flags for readdir */
+	int	dd_fd;		/* file descriptor associated with directory */
+	long	dd_loc;		/* offset in current buffer */
+	long	dd_size;	/* amount of data returned by getdirentries */
+	char	*dd_buf;	/* data buffer */
+	int	dd_len;		/* size of data buffer */
+	long	dd_seek;	/* magic cookie returned by getdirentries */
+	long	dd_rewind;	/* magic cookie for rewinding */
+	int	dd_flags;	/* flags for readdir */
+	struct pthread_mutex	*dd_lock;	/* lock */
+	struct _telldir *dd_td;	/* telldir position recording */
 } DIR;
-#endif
-
-#define	_dirfd(dirp)	((dirp)->dd_fd)
 
 
 
 
 
-#define __isthreaded 1
-#define _pthread_mutex_lock pthread_mutex_lock
-#define _pthread_mutex_unlock pthread_mutex_unlock
-
-#define _pthread_mutex_destroy pthread_mutex_destroy
 
 
-//////////////////////////////////// getdirentries
-//getdirentries(int fd, char *buf, u_int count, long *basep)
 
-#if 1
-#define _getdirentries getdirentries
-#else
-
-ssize_t _getdirentries(int fd, char *buf, size_t nbytes, off_t *basep)
+DIR * opendir (const char *name)
 {
-	char *oldbuf;
-	size_t len;
-	ssize_t rv;
+	register DIR *dirp;
+	register int fd;
+	int rc = 0;
 
-	if (__getosreldate() >= INO64_FIRST)
-		return (__sys_getdirentries(fd, buf, nbytes, basep));
+	//if ((fd = sceKernelOpen(name, SCE_KERNEL_O_RDONLY|SCE_KERNEL_O_DIRECTORY, 0)) == -1)
+	if ((fd = open(name, O_RDONLY | O_DIRECTORY, 0)) == -1)
+		return NULL;
 
-	/*
-	 * Because the old system call returns entries that are smaller than the
-	 * new, we could wind up in a situation where we have too many to fit in
-	 * the buffer with the new encoding. So sacrifice a small bit of
-	 * efficiency to ensure that never happens. We pick 1/4 the size round
-	 * up to the next DIRBLKSIZ. This will guarnatee enough room exists in
-	 * the dst buffer due to changes in efficiency in packing dirent
-	 * entries. We don't check against minimum block size to avoid a lot of
-	 * stat calls, we'll see if that's wise or not.
-	 * TBD: Will this difference matter to lseek?
-	 */
-	len = roundup(nbytes / 4, DIRBLKSIZ);
-	oldbuf = malloc(len);
-	if (oldbuf == NULL) {
-		errno = EINVAL;		/* ENOMEM not in possible list */
-		return (-1);
-	}
-	rv = getdirentries(fd, oldbuf, len, basep);
-	if (rv == -1) {
-		free(oldbuf);
-		return (rv);
-	}
-	if (rv > 0)
-		rv = __cvt_dirents_from11(oldbuf, rv, buf, nbytes);
-	free(oldbuf);
+	//rc = sceKernelFcntl(fd, F_GETFL, 1);
+	rc = fcntl(fd, F_GETFL, 1);
 
-	return (rv);
-}
-
-#endif
-
-/////////////////// freebsd readdir.c /////////////////// 
-
-
-/*
- * get next entry in a directory.
- */
-struct dirent *
-_readdir_unlocked(DIR *dirp, int skip)
-{
-	struct dirent *dp;
-
-	for (;;) {
-		if (dirp->dd_loc >= dirp->dd_size) {
-			if (dirp->dd_flags & __DTF_READALL)
-				return (NULL);
-			dirp->dd_loc = 0;
-		}
-		if (dirp->dd_loc == 0 && !(dirp->dd_flags & __DTF_READALL)) {
-			dirp->dd_size = _getdirentries(dirp->dd_fd, dirp->dd_buf, dirp->dd_len, &dirp->dd_seek);
-			if (dirp->dd_size <= 0)
-				return (NULL);
-		}
-		dp = (struct dirent *)(dirp->dd_buf + dirp->dd_loc);
-		if ((long)dp & 03L)	/* bogus pointer check */
-			return (NULL);
-		if (dp->d_reclen <= 0 ||
-		    dp->d_reclen > dirp->dd_len + 1 - dirp->dd_loc)
-			return (NULL);
-		dirp->dd_loc += dp->d_reclen;
-	//	if (dp->d_ino == 0 && skip)
-	//		continue;
-		if (dp->d_type == DT_WHT && (dirp->dd_flags & DTF_HIDEW))
-			continue;
-		return (dp);
-	}
-}
-
-struct dirent *
-readdir(DIR *dirp)
-{
-	struct dirent	*dp;
-
-	if (__isthreaded) {
-		_pthread_mutex_lock(&dirp->dd_lock);
-		dp = _readdir_unlocked(dirp, 1);
-		_pthread_mutex_unlock(&dirp->dd_lock);
-	}
-	else
-		dp = _readdir_unlocked(dirp, 1);
-	return (dp);
-}
-
-int
-readdir_r(DIR *dirp,
-	struct dirent *entry,
-	struct dirent **result)
-{
-	struct dirent *dp;
-	int saved_errno;
-
-	saved_errno = errno;
-	errno = 0;
-	if (__isthreaded) {
-		_pthread_mutex_lock(&dirp->dd_lock);
-		if ((dp = _readdir_unlocked(dirp, 1)) != NULL)
-			memcpy(entry, dp, _GENERIC_DIRSIZ(dp));
-		_pthread_mutex_unlock(&dirp->dd_lock);
-	}
-	else if ((dp = _readdir_unlocked(dirp, 1)) != NULL)
-		memcpy(entry, dp, _GENERIC_DIRSIZ(dp));
-
-	if (errno != 0) {
-		if (dp == NULL)
-			return (errno);
-	} else
-		errno = saved_errno;
-
-	if (dp != NULL)
-		*result = entry;
-	else
-		*result = NULL;
-
-	return (0);
-}
-
-
-
-/////////////////// freebsd telldir.c /////////////////// 
-
-
-
-/*
- * Reclaim memory for telldir cookies which weren't used.
- */
-void
-_reclaim_telldir(DIR *dirp)
-{
-	struct ddloc *lp;
-	struct ddloc *templp;
-
-	lp = LIST_FIRST(&dirp->dd_td->td_locq);
-	while (lp != NULL) {
-		templp = lp;
-		lp = LIST_NEXT(lp, loc_lqe);
-		free(templp);
-	}
-	LIST_INIT(&dirp->dd_td->td_locq);
-}
-
-
-
-
-/////////////////// freebsd closedir.c /////////////////// 
-
-
-
-
-/*
- * close a directory.
- */
-int
-closedir(DIR *dirp)
-{
-	int fd;
-
-	if (__isthreaded)
-		_pthread_mutex_lock(&dirp->dd_lock);
-	_seekdir(dirp, dirp->dd_rewind);	/* free seekdir storage */
-	fd = dirp->dd_fd;
-	dirp->dd_fd = -1;
-	dirp->dd_loc = 0;
-	free((void *)dirp->dd_buf);
-	_reclaim_telldir(dirp);
-	if (__isthreaded) {
-		_pthread_mutex_unlock(&dirp->dd_lock);
-		_pthread_mutex_destroy(&dirp->dd_lock);
-	}
-	free((void *)dirp);
-	return(_close(fd));
-}
-
-
-
-
-/////////////////// freebsd opendir.c ///////////////////
-
-
-
-static DIR * __opendir_common(int, const char *, int);
-
-/*
- * Open a directory.
- */
-DIR *
-opendir(const char *name)
-{
-
-	return (__opendir2(name, DTF_HIDEW|DTF_NODUP));
-}
-
-/*
- * Open a directory with existing file descriptor.
- */
-DIR *
-fdopendir(int fd)
-{
-	struct stat statb;
-
-	/* Check that fd is associated with a directory. */
-	if (_fstat(fd, &statb) != 0)
-		return (NULL);
-	if (!S_ISDIR(statb.st_mode)) {
-		errno = ENOTDIR;
-		return (NULL);
-	}
-	if (_fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
-		return (NULL);
-	return (__opendir_common(fd, NULL, DTF_HIDEW|DTF_NODUP));
-}
-
-DIR *
-__opendir2(const char *name, int flags)
-{
-	int fd;
-
-	if ((fd = _open(name,
-	    O_RDONLY | O_NONBLOCK | O_DIRECTORY | O_CLOEXEC)) == -1)
-		return (NULL);
-
-	return __opendir_common(fd, name, flags);
-}
-
-static int
-opendir_compar(const void *p1, const void *p2)
-{
-
-	return (strcmp((*(const struct dirent **)p1)->d_name,
-	    (*(const struct dirent **)p2)->d_name));
-}
-
-/*
- * Common routine for opendir(3), __opendir2(3) and fdopendir(3).
- */
-static DIR *
-__opendir_common(int fd, const char *name, int flags)
-{
-	DIR *dirp;
-	int incr;
-	int saved_errno;
-	int unionstack;
-
-	if ((dirp = malloc(sizeof(DIR) + sizeof(struct _telldir))) == NULL)
-		return (NULL);
-
-	dirp->dd_td = (struct _telldir *)((char *)dirp + sizeof(DIR));
-	LIST_INIT(&dirp->dd_td->td_locq);
-	dirp->dd_td->td_loccnt = 0;
-
-	/*
-	 * Use the system page size if that is a multiple of DIRBLKSIZ.
-	 * Hopefully this can be a big win someday by allowing page
-	 * trades to user space to be done by _getdirentries().
-	 */
-	incr = getpagesize();
-	if ((incr % DIRBLKSIZ) != 0) 
-		incr = DIRBLKSIZ;
-
-	/*
-	 * Determine whether this directory is the top of a union stack.
-	 */
-	if (flags & DTF_NODUP) {
-		struct statfs sfb;
-
-		if (_fstatfs(fd, &sfb) < 0)
-			goto fail;
-		unionstack = !strcmp(sfb.f_fstypename, "unionfs")
-		    || (sfb.f_flags & MNT_UNION);
-	} else {
-		unionstack = 0;
+	if (rc == -1 ||
+	    (dirp = (DIR *)malloc(sizeof(DIR))) == NULL) {
+		//sceKernelClose(fd);
+		close(fd);
+		return NULL;
 	}
 
-	if (unionstack) {
-		int len = 0;
-		int space = 0;
-		char *buf = 0;
-		char *ddptr = 0;
-		char *ddeptr;
-		int n;
-		struct dirent **dpv;
+	dirp->dd_buf = (char*)malloc (1024);
+	dirp->dd_len = 1024;
 
-		/*
-		 * The strategy here is to read all the directory
-		 * entries into a buffer, sort the buffer, and
-		 * remove duplicate entries by setting the inode
-		 * number to zero.
-		 */
-
-		do {
-			/*
-			 * Always make at least DIRBLKSIZ bytes
-			 * available to _getdirentries
-			 */
-			if (space < DIRBLKSIZ) {
-				space += incr;
-				len += incr;
-				buf = reallocf(buf, len);
-				if (buf == NULL)
-					goto fail;
-				ddptr = buf + (len - space);
-			}
-
-			n = _getdirentries(fd, ddptr, space, &dirp->dd_seek);
-			if (n > 0) {
-				ddptr += n;
-				space -= n;
-			}
-		} while (n > 0);
-
-		ddeptr = ddptr;
-		flags |= __DTF_READALL;
-
-		/*
-		 * Re-open the directory.
-		 * This has the effect of rewinding back to the
-		 * top of the union stack and is needed by
-		 * programs which plan to fchdir to a descriptor
-		 * which has also been read -- see fts.c.
-		 */
-		if (flags & DTF_REWIND) {
-			(void)_close(fd);
-			if ((fd = _open(name, O_RDONLY | O_DIRECTORY |
-			    O_CLOEXEC)) == -1) {
-				saved_errno = errno;
-				free(buf);
-				free(dirp);
-				errno = saved_errno;
-				return (NULL);
-			}
-		}
-
-		/*
-		 * There is now a buffer full of (possibly) duplicate
-		 * names.
-		 */
-		dirp->dd_buf = buf;
-
-		/*
-		 * Go round this loop twice...
-		 *
-		 * Scan through the buffer, counting entries.
-		 * On the second pass, save pointers to each one.
-		 * Then sort the pointers and remove duplicate names.
-		 */
-		for (dpv = 0;;) {
-			n = 0;
-			ddptr = buf;
-			while (ddptr < ddeptr) {
-				struct dirent *dp;
-
-				dp = (struct dirent *) ddptr;
-				if ((long)dp & 03L)
-					break;
-				if ((dp->d_reclen <= 0) ||
-				    (dp->d_reclen > (ddeptr + 1 - ddptr)))
-					break;
-				ddptr += dp->d_reclen;
-				if (dp->d_fileno) {
-					if (dpv)
-						dpv[n] = dp;
-					n++;
-				}
-			}
-
-			if (dpv) {
-				struct dirent *xp;
-
-				/*
-				 * This sort must be stable.
-				 */
-				mergesort(dpv, n, sizeof(*dpv),
-				    opendir_compar);
-
-				dpv[n] = NULL;
-				xp = NULL;
-
-				/*
-				 * Scan through the buffer in sort order,
-				 * zapping the inode number of any
-				 * duplicate names.
-				 */
-				for (n = 0; dpv[n]; n++) {
-					struct dirent *dp = dpv[n];
-
-					if ((xp == NULL) ||
-					    strcmp(dp->d_name, xp->d_name)) {
-						xp = dp;
-					} else {
-						dp->d_fileno = 0;
-					}
-					if (dp->d_type == DT_WHT &&
-					    (flags & DTF_HIDEW))
-						dp->d_fileno = 0;
-				}
-
-				free(dpv);
-				break;
-			} else {
-				dpv = malloc((n+1) * sizeof(struct dirent *));
-				if (dpv == NULL)
-					break;
-			}
-		}
-
-		dirp->dd_len = len;
-		dirp->dd_size = ddptr - dirp->dd_buf;
-	} else {
-		dirp->dd_len = incr;
-		dirp->dd_size = 0;
-		dirp->dd_buf = malloc(dirp->dd_len);
-		if (dirp->dd_buf == NULL)
-			goto fail;
-		dirp->dd_seek = 0;
-		flags &= ~DTF_REWIND;
+	if (dirp->dd_buf == NULL) {
+		free (dirp);
+		//sceKernelClose(fd);
+		close(fd);
+		return NULL;
 	}
-
-	dirp->dd_loc = 0;
 	dirp->dd_fd = fd;
-	dirp->dd_flags = flags;
-	dirp->dd_lock = NULL;
+	dirp->dd_loc = 0;
+	dirp->dd_seek = 0;
 
-	/*
-	 * Set up seek point for rewinddir.
-	 */
-	dirp->dd_rewind = telldir(dirp);
-
-	return (dirp);
-
-fail:
-	saved_errno = errno;
-	free(dirp);
-	(void)_close(fd);
-	errno = saved_errno;
-	return (NULL);
+	return dirp;
 }
 
-#endif // PS4_PROVIDE_DIR
+int closedir (register DIR *dirp)
+{
+	int rc;
+
+	//rc = sceKernelClose(dirp->dd_fd);
+	rc = close(dirp->dd_fd);
+	free((void *)dirp->dd_buf);
+	free((void *)dirp);
+	return rc;
+}
+
+struct dirent * readdir (register DIR *dirp)
+{
+  register struct dirent *dp;
+ 
+  for (;;) {
+    if (dirp->dd_loc == 0) {
+
+    //dirp->dd_size = sceKernelGetdents(dirp->dd_fd,
+    dirp->dd_size = getdents(dirp->dd_fd,
+				dirp->dd_buf,
+				dirp->dd_len);
+
+      if (dirp->dd_size <= 0) {
+	return NULL;
+      }
+    }
+    if (dirp->dd_loc >= dirp->dd_size) {
+      dirp->dd_loc = 0;
+      continue;
+    }
+    dp = (struct dirent *)(dirp->dd_buf + dirp->dd_loc);
+
+    if (dp->d_reclen <= 0 ||
+	dp->d_reclen > dirp->dd_len + 1 - dirp->dd_loc) {
+      return NULL;
+    }
+    dirp->dd_loc += dp->d_reclen;
+    if (dp->d_fileno == 0)
+      continue;
+    return (dp);
+  }
+}
+
+
+
+
+
+
+
+
 
 
 

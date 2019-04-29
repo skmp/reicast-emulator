@@ -137,7 +137,6 @@ int SSC_ATTR sigwait(const sigset_t *set, int *sig)
 
 
 
-
 #define PS4_PROVIDE_DIR 1
 
 #if PS4_PROVIDE_DIR

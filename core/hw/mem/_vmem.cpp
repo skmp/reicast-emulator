@@ -437,14 +437,15 @@ bool _vmem_reserve_nonvmem()
 
 void _vmem_bm_reset_nvmem();
 
-void _vmem_bm_reset() {
+void _vmem_bm_reset()
+{
+#if !defined(TARGET_NO_NVMEM)
 	if (virt_ram_base) {
-		#if !defined(TARGET_NO_NVMEM)
 			_vmem_bm_reset_nvmem();
-		#endif
 	}
+#endif
 
-#ifndef TARGET_IPHONE
+#if !defined(TARGET_IPHONE) && !defined(TARGET_NO_NVMEM)
     if (!virt_ram_base)
 #endif
     {
@@ -513,6 +514,7 @@ void* _nvmem_alloc_mem()
 	if (rv) VirtualFree(rv,0,MEM_RELEASE);
 	return rv;
 }
+
 
 #else
 	#include <sys/mman.h>
@@ -611,6 +613,24 @@ error:
         unlink(path.c_str());
         verify(ftruncate(fd, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX) == 0);
 #elif !defined(_ANDROID)
+
+
+# ifdef TARGET_PS4
+
+		fd = shm_open("/data/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
+
+		printf("^^^^^^^^^ fd for shm is : %d \n", fd);
+
+		shm_unlink("/data/dcnzorz_mem");
+		if (fd==-1)
+		{
+			fd = open("/data/dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
+			printf("^^^^^^^^^ fd for shm is now : %d \n", fd);
+
+			unlink("/data/dcnzorz_mem");
+		}
+# else
+
 		fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
 		shm_unlink("/dcnzorz_mem");
 		if (fd==-1)
@@ -618,7 +638,7 @@ error:
 			fd = open("dcnzorz_mem",O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
 			unlink("dcnzorz_mem");
 		}
-
+# endif
 		verify(ftruncate(fd, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX) == 0);
 #else
 
@@ -652,7 +672,7 @@ void _vmem_bm_reset_nvmem()
 		return;
 	#endif
 
-	#ifdef TARGET_IPHONE
+	#if defined(TARGET_IPHONE) || defined(TARGET_PS4)
 		//On iOS & nacl we allways allocate all of the mapping table
 		mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_READ | PROT_WRITE);
 		return;
@@ -798,7 +818,7 @@ bool _vmem_reserve()
 	//[0x10000000,0x20000000) -> unused
 	unused_buffer(0x10000000,0x20000000);
 
-	printf("vmem reserve: base: %08X, aram: %08x, vram: %08X, ram: %08X\n",virt_ram_base,aica_ram.data,vram.data,mem_b.data);
+	printf("vmem reserve: base: %p, aram: %p, vram: %p, ram: %p \n", virt_ram_base, aica_ram.data, vram.data, mem_b.data);
 
 	aica_ram.Zero();
 	vram.Zero();

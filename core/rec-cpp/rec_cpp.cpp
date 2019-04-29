@@ -54,7 +54,8 @@ void ngen_mainloop(void* v_cntx)
 		cycle_counter = SH4_TIMESLICE;
 		do {
 			zpf(" <>< A: %08X\n", ctx->cntx.pc);
-			DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);
+			DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);	// #define FPCA(x) ((DynarecCodeEntryPtr&)sh4rcb.fpcb[(x>>1)&FPCB_MASK])
+
 			zpf(" <>< B: %p\n", (void*)rcb);
 			rcb();
 		} while (cycle_counter > 0);

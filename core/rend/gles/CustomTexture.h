@@ -47,7 +47,7 @@ private:
 	std::set<u32> unknown_hashes;
 	cThread loader_thread;
 	cResetEvent wakeup_thread;
-	std::vector<struct TextureCacheData *> work_queue;
+	std::vector<TextureCacheData *> work_queue;
 	cMutex work_queue_mutex;
 };
 

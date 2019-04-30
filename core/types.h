@@ -8,26 +8,29 @@
 #include <cstdlib>
 
 extern "C" void* zmalloc (unsigned long size);
+extern "C" void* z_calloc(size_t nelem, size_t size);
 extern "C" void* zrealloc(void* ptr, unsigned long size);
 extern "C" int   zmemalign(void **ptr, unsigned long alignment, unsigned long size);
 extern "C" void  zfree(void* ptr);
-extern "C" void  zfree2(void* ptr, unsigned long size);
+//extern "C" void  zfree2(void* ptr, unsigned long size);
 
 void* operator new(size_t size);
 void operator delete(void*);
 
+#define memalign zmemalign
 #define posix_memalign zmemalign
 #define realloc zrealloc
 #define malloc zmalloc
+#define calloc z_calloc
 #define free   zfree
 
 #endif
 
-//#if !defined(TARGET_PS4) && !defined(_DEBUG)
-#define zpf(...) __noop
-//#else
-//#define zpf(...) { fprintf(stdout,__VA_ARGS__); fflush(stdout); }
-//#endif
+#if !defined(TARGET_PS4) //&& !defined(_DEBUG)
+# define zpf(...) __noop
+#else
+# define zpf(...) { fprintf(stdout,__VA_ARGS__); fflush(stdout); }
+#endif
 
 
 
@@ -97,7 +100,7 @@ void operator delete(void*);
 #pragma warning(disable : 4100)		// unused parameters
 
 
-#if 0 //def _Z_  // Annoying things, only disable for dev. builds in cmake so I can actually see something other than warnings easily //
+#ifdef _Z_  // Annoying things, only disable for dev. builds in cmake so I can actually see something other than warnings easily //
   #pragma warning(disable : 4018)	// Signed/Unsigned , these _should_ be fixed, as with many other warnings the deps do it too so i'm not going to look @ them
   #pragma warning(disable : 4244)	// 
   #pragma warning(disable : 4267)	// : '=' : conversion from '' to '', possible loss of data

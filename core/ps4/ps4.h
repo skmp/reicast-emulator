@@ -32,11 +32,6 @@
 #define SHCOMP_MODULE_NAME "libSceShaccVSH.sprx"
 
 
-#if 1
-#define zpf(...) { fprintf(stdout,__VA_ARGS__); fflush(stdout); }
-#else
-#define zpf(...) __noop
-#endif
 
 #ifdef __cplusplus
 extern "C" {

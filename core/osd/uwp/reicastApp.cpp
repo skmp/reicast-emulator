@@ -37,7 +37,6 @@ LARGE_INTEGER qpf;
 double  qpfd;
 double speed_load_mspdf;
 
-
 int dc_init(int argc,wchar_t* argv[]);
 void dc_run();
 void dc_term();
@@ -48,7 +47,6 @@ struct App
 	: implements<App, IFrameworkViewSource, IFrameworkView>
 {
 	bool m_init = false;
-
 
 	IFrameworkView CreateView()
 	{
@@ -86,7 +84,6 @@ struct App
 	void SetWindow(CoreWindow const & window)
 	{
 		m_init = (0 == dc_init(0, NULL));
-
 		CoreWindow::GetForCurrentThread().Activate();
 		ApplicationView::GetForCurrentView().TryResizeView(Size(640, 480));
 	}
@@ -298,11 +295,10 @@ int __cdecl msgboxf(const wchar_t* text, unsigned int type, ...)
 	return 0;
 }
 
-// Need to enable capability for code generation in appcontainer
 void os_MakeExecutable(void* ptr, u32 sz)
 {
 	DWORD old;
-	VirtualProtect(ptr, sizeof(sz), PAGE_EXECUTE_READWRITE, &old);
+	VirtualProtectFromApp(ptr, sz, PAGE_EXECUTE_READ, &old);
 }
 
 void* libPvr_GetRenderTarget()

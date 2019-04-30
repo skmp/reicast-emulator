@@ -206,8 +206,8 @@ int dc_init()
 		return reios_init_value;
 #else
 
-	LoadCustom();
-//	LoadSettings();
+//  LoadCustom();
+	LoadSettings();
 #endif
 
 #if FEAT_SHREC != DYNAREC_NONE

@@ -250,7 +250,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   message("MSVC Platform: ${CMAKE_VS_PLATFORM_NAME}")
   message("MSVC Toolset:  ${CMAKE_VS_PLATFORM_TOOLSET}")
   
-  
+
   add_definitions(/D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1)
   
   if(TARGET_UWP)
@@ -429,7 +429,7 @@ if (TARGET_UWP)
   configure_file(${appxmanifest}.in ${appxmanifest} @ONLY)
   # Package_vc${COMPILER_VERSION}.${PLATFORM}.
   message("Configured file: \"${appxmanifest}.in\" to \"${appxmanifest}\"")
-  
+ 
   set(CONTENT_FILES ${appxmanifest})
 
   set(ASSET_FILES
@@ -458,14 +458,14 @@ if (TARGET_UWP)
 
 	## setup other things / fixes here for uwp ## 
   add_definitions(/DTARGET_UWP /DUWP /DGLES /DANGLE)
-  add_definitions(/DTARGET_NO_THREADS /DTARGET_NO_EXCEPTIONS /DTARGET_NO_NIXPROF)
+  add_definitions(/DTARGET_NO_THREADS /DTARGET_NO_NIXPROF)
   add_definitions(/DTARGET_NO_COREIO_HTTP /DTARGET_NO_WEBUI) # /UTARGET_SOFTREND)
   add_definitions(/DTARGET_NO_NVMEM)	## *FIXME* MapViewOfFile on mem_handle ##
   
 #if(TARGET_NO_JIT)
-#  set(FEAT_SHREC  ${DYNAREC_NONE}) # will use DYNAREC_CPP to test after successful build #
-#  set(FEAT_AREC   ${DYNAREC_NONE})
-#  set(FEAT_DSPREC ${DYNAREC_NONE})
+  set(FEAT_SHREC  ${DYNAREC_JIT}) # will use DYNAREC_CPP to test after successful build #
+  set(FEAT_AREC   ${DYNAREC_NONE})
+  set(FEAT_DSPREC ${DYNAREC_NONE})
 #endif()
 
 endif()

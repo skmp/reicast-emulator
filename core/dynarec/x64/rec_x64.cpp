@@ -50,6 +50,9 @@ void ngen_mainloop(void* v_cntx)
 		cycle_counter = SH4_TIMESLICE;
 		do {
 			DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);
+			// UWPTODO: Investigate write access violation
+			DWORD old;
+			VirtualProtectFromApp(rcb, PAGE_SIZE, PAGE_EXECUTE_READ, &old);
 			rcb();
 		} while (cycle_counter > 0);
 
@@ -486,7 +489,7 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 
 	compiler = new BlockCompiler();
 
-	
+
 	compiler->compile(block, force_checks, reset, staging, optimise);
 
 	delete compiler;

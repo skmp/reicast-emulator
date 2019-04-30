@@ -85,5 +85,9 @@ void VArray2::UnLockRegion(u32 offset,u32 size)
 	//verify(offset+size<=this->size);
 	verify(size!=0);
 	DWORD old;
-	VirtualProtect(((u8*)data)+offset , size, PAGE_READWRITE,&old);
+#ifndef TARGET_UWP
+	VirtualProtect(((u8*)data) + offset, size, PAGE_READWRITE, &old);
+#else
+	VirtualProtectFromApp(((u8*)data)+offset , size, PAGE_READWRITE, &old);
+#endif
 }

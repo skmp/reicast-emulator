@@ -425,8 +425,13 @@ void recSh4_Init()
 
 		//align to next page ..
 		u8* ptr = (u8*)recSh4_Init - i * 1024 * 1024;
+		DWORD protectFlags = PAGE_EXECUTE_READWRITE;
 
-		CodeCache = (u8*)VirtualAlloc(ptr, CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);//; (u8*)(((unat)SH4_TCB+4095)& ~4095);
+#ifdef TARGET_UWP
+		protectFlags = PAGE_READWRITE;
+#endif	
+
+		CodeCache = (u8*)VirtualAlloc(ptr, CODE_SIZE, MEM_RESERVE | MEM_COMMIT, protectFlags);//; (u8*)(((unat)SH4_TCB+4095)& ~4095);
 
 		if (CodeCache)
 			break;
@@ -442,7 +447,11 @@ void recSh4_Init()
 
 #if HOST_OS == OS_WINDOWS
 	DWORD old;
+#ifndef TARGET_UWP
 	VirtualProtect(CodeCache,CODE_SIZE,PAGE_EXECUTE_READWRITE,&old);
+#else
+	VirtualProtectFromApp(CodeCache, CODE_SIZE, PAGE_READWRITE, &old);
+#endif
 #elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
 	
 	wprintf(L"\n\t CodeCache addr: %p | from: %p | addr here: %p\n", CodeCache, CodeCache, recSh4_Init);

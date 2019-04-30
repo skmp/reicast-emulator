@@ -24,6 +24,8 @@
 #include <iostream>
 #endif
 
+#define CODE_SIZE   (6*1024*1024)
+
 // #define XBYAK_DISABLE_AVX512
 
 //#define XBYAK_USE_MMAP_ALLOCATOR
@@ -888,7 +890,9 @@ public:
 				throw Error(ERR_CODE_IS_TOO_BIG);
 			}
 		}
-		top_[size_++] = static_cast<uint8>(code);
+		DWORD old;
+		VirtualProtectFromApp(&top_[size_++], CODE_SIZE, PAGE_READWRITE, &old);
+		top_[size_] = static_cast<uint8>(code);
 	}
 	void db(const uint8 *code, size_t codeSize)
 	{
@@ -1205,7 +1209,7 @@ class LabelManager {
 	{
 #ifndef NDEBUG
 		for (typename T::const_iterator i = list.begin(); i != list.end(); ++i) {
-			std::cerr << "undefined label:" << i->first << std::endl;
+			std::wcerr << L"undefined label:" << i->first << std::endl;
 		}
 #endif
 		return !list.empty();

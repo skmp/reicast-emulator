@@ -36,6 +36,7 @@
     </Application>
   </Applications>
   <Capabilities>
+    <Capability Name="codeGeneration" />
     <rescap:Capability Name="broadFileSystemAccess" />
   </Capabilities>
 </Package>

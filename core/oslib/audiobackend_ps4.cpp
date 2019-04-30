@@ -35,28 +35,18 @@ static void ps4aout_term() {
 
 static u32 ps4aout_push(void* frame, u32 samples, bool wait)	// ** This is not right, doesn't wait etc check outputTime
 {
-	/* Output audio */
-	if (sceAudioOutOutput(aOut_H, frame) < 0) {
-		/* Error handling */
+	int32_t res = 0;
+	for (u32 s=0; s<(samples/256); s++)	// *FIXME* better be multiples damnit
+	{
+		u16 * data = &((u16*)frame)[s*256*2];
+		
+		if ((res=sceAudioOutOutput(aOut_H, data)) < 0) {
+			printf("sceAudioOutOutput() returned: 0x%08X \n", (u32)res);
+		}
+		
+		res=sceAudioOutOutput(aOut_H, NULL);
 	}
-
-	/* Get output process time */
-	uint64_t outputTime;
-	if (sceAudioOutGetLastOutputTime(aOut_H, &outputTime) < 0) {
-		/* Error handling */
-	}
-
-	/* Get port state */
-	SceAudioOutPortState portState;
-	if (sceAudioOutGetPortState(aOut_H, &portState) < 0) {
-		/* Error handling */
-	}
-
-	/* Get system state */
-	SceAudioOutSystemState aoss;
-	if (sceAudioOutGetSystemState(&aoss) < 0) {
-		/* Error handling */
-	}
+	res=sceAudioOutOutput(aOut_H, NULL);
 
 	return 1;
 }

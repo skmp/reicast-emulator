@@ -9,7 +9,7 @@
 #
 
 
-set(ZBUILD On)
+set(ZBUILD OFF)
 
 
 
@@ -360,6 +360,8 @@ if (TARGET_NSW) # -DCMAKE_TOOLCHAIN_FILE=./cmake/devkitA64.cmake -DTARGET_NSW=ON
 
 endif()
 
+
+
 if (TARGET_PS4) # -DCMAKE_TOOLCHAIN_FILE=./cmake/{ps4sdk,clang_scei}.cmake -DTARGET_PS4=ON
   set(HOST_OS ${OS_PS4_BSD})
   message("HOST_OS ${HOST_OS}")
@@ -369,11 +371,11 @@ if (TARGET_PS4) # -DCMAKE_TOOLCHAIN_FILE=./cmake/{ps4sdk,clang_scei}.cmake -DTAR
   add_definitions(-DPS4 -DTARGET_PS4 -DTARGET_BSD -D__ORBIS__ -DGLES -DNOGL4)
   add_definitions(-DTARGET_NO_THREADS -DTARGET_NO_EXCEPTIONS -DTARGET_NO_NIXPROF)
   add_definitions(-DTARGET_NO_COREIO_HTTP -DTARGET_NO_WEBUI -UTARGET_SOFTREND)
-  add_definitions(-DTARGET_NO_OPENMP -DPAGE_SIZE=0x4000)	#-DTARGET_NO_NVMEM  ENSURE PAGE_SIZE=0x4000 is USED ! should be ok now
+  add_definitions(-DTARGET_NO_OPENMP -DTARGET_NO_NVMEM -DPAGE_SIZE=0x4000)	#  ENSURE PAGE_SIZE=0x4000 is USED ! should be ok now
 
 
   set(FEAT_AREC   ${DYNAREC_NONE})
-  set(FEAT_SHREC  ${DYNAREC_CPP}) #${DYNAREC_CPP})
+  set(FEAT_SHREC  ${DYNAREC_JIT}) #${DYNAREC_CPP})
   set(FEAT_DSPREC ${DYNAREC_NONE})
 
 endif()
@@ -391,13 +393,12 @@ if(ZBUILD)
     #add_definitions(-DTARGET_NO_COREIO_HTTP -DTARGET_NO_WEBUI -UTARGET_SOFTREND)
     #add_definitions(-DTARGET_NO_OPENMP -DTARGET_NO_NVMEM -DPAGE_SIZE=0x4000)	# ENSURE PAGE_SIZE=0x4000 is USED ! should be ok now
 	add_definitions(-DTARGET_NO_NVMEM)
-#	set(CMAKE_CXX_FLAGS " ${CMAKE_CXX_FLAGS} /bigobj") # ${CMAKE_CXX_FLAGS}
+	set(CMAKE_CXX_FLAGS " ${CMAKE_CXX_FLAGS} /bigobj") # ${CMAKE_CXX_FLAGS}
+
+#   set(FEAT_AREC   ${DYNAREC_NONE})
+    set(FEAT_SHREC  ${DYNAREC_CPP}) #${DYNAREC_CPP})
+#   set(FEAT_DSPREC ${DYNAREC_NONE})
   endif()
-
-#  set(FEAT_AREC   ${DYNAREC_NONE})
-  set(FEAT_SHREC  ${DYNAREC_CPP}) #${DYNAREC_CPP})
-#  set(FEAT_DSPREC ${DYNAREC_NONE})
-
 
 
   if(NOT TARGET_PS4 AND NOT TARGET_NSW AND 

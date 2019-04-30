@@ -302,112 +302,6 @@ void UpdateVibration(u32 port, u32 value)
 //		-- this code is meant for testing purposes ONLY, it never free's data and will overflow !
 
 
-void* pHeap = nullptr;
-off_t phyAddr = 0;
-
-unat sbrk=0;
-
-extern "C" void* zmalloc(unsigned long size)
-{
-//	printf("zmalloc(%d) \n", size);
-
-	if(nullptr==pHeap)
-	{
-		int32_t res = SCE_OK;
-		if (SCE_OK != (res = sceKernelAllocateMainDirectMemory(MB(512), KB(64), SCE_KERNEL_WB_ONION, &phyAddr))) {
-			printf("sceKernelAllocateMainDirectMemory() Failed with 0x%08X \n", (unat)res);
-			return nullptr;
-		}
-
-		if (SCE_OK != (res = sceKernelMapDirectMemory(&pHeap,MB(512),SCE_KERNEL_PROT_CPU_RW,0,phyAddr,KB(64)))) {
-			printf("sceKernelMapDirectMemory() Failed with 0x%08X \n", (unat)res);
-			return nullptr;
-		}
-
-		printf("@@@@@@@@@@@@@@@ Z HEAP INIT - %p ####################\n",pHeap);
-	}
-
-	void* res = (void*)((unat)pHeap+sbrk);
-
-	sbrk+=size;
-
-//	zpf("zmalloc(%d) @ %p :: total %d\n", size, res, sbrk);
-
-	return res;
-
-#if 0
-	void *result = 0;
-
-	const uint32_t psMask = (0x4000 - 1);
-	int32_t mem_size = (size + psMask) & ~psMask;
-	int32_t ret = sceKernelMapFlexibleMemory(&result, mem_size, SCE_KERNEL_PROT_CPU_RW | SCE_KERNEL_PROT_GPU_RW, 0);
-	if (0 != result) {
-		zmtotal += mem_size;
-		printf("zmalloc(%d) allocated %d bytes to 0x%p :: total %d\n", size, mem_size, result, zmtotal);
-	}
-	else die("ERROR, zmalloc() : allocation failed!\n");
-	return result;
-#endif
-}
-
-extern "C" void* zrealloc(void* ptr, unsigned long size)
-{
-	void *pre = zmalloc(size);
-	memcpy(ptr,pre,size);		// this is fucked but should work ok unless we hit the end....
-}
-
-extern "C" int   zmemalign(void **ptr, unsigned long alignment, unsigned long size)
-{
-//	zpf("zmemalign(%d,%d) \n", alignment, size);
-
-	if(nullptr==ptr || alignment<sizeof(void*))
-		return EINVAL;
-
-	sbrk=AlignUp(sbrk,alignment);
-	*ptr = malloc(size);
-	if(*ptr == nullptr)
-		return ENOMEM;
-
-	return 0;
-}
-
-extern "C" void  zfree(void* ptr)
-{
-	//sceKernelMunmap(ptr, 1024*1024*4);	// who cares atm, fucking choke on it
-}
-
-extern "C" void  zfree2(void* ptr, unsigned long size)
-{
-#if 0
-	const uint32_t psMask = (0x4000 - 1);
-	int32_t mem_size = (size + psMask) & ~psMask;
-	sceKernelMunmap(ptr, mem_size);	// who cares atm, fucking choke on it
-
-	zmtotal -= mem_size;
-#endif
-}
-
-
-
-
-void* operator new(size_t size)
-{
-//	zpf("@@@@@?>?-----NEW-operator using malloc ... \n");
-	return zmalloc(size);
-}
-
-void operator delete(void* p)
-{
-//	zpf("@@@@@?>?-----DELETE-operator using free ... \n");
-	zfree(p);
-}
-
-
-
-
-#endif
-
-
 #if 0	// Evidently LibcInternal doesn't handle these either ... fml
 
 extern "C" {
@@ -450,7 +344,412 @@ extern "C" {
 
 
 
+	/// Actual Implementation //
 
+
+
+/* defines a block of memory for allocator. */
+struct janitor_block {
+    size_t size;
+    struct janitor_block *next;
+    int flag;
+};
+
+typedef struct janitor_block janitor_t;
+
+#define BLOCK_SIZE sizeof(janitor_t)
+
+
+
+
+
+off_t phyAddr = 0;
+
+
+
+static size_t	maxheap=MB(512), heapsize = 0;
+static void	*heapbase=nullptr;
+
+void setheap(void *base, void *top)
+{
+    /* Align start address to 16 bytes for the malloc code. Sigh. */
+    heapbase = (void *)(((uintptr_t)base + 15) & ~15);
+    maxheap = (char *)top - (char *)heapbase;
+}
+
+void initheap()
+{
+	int32_t res = SCE_OK;
+	if (SCE_OK != (res = sceKernelAllocateMainDirectMemory(MB(512), KB(64), SCE_KERNEL_WB_ONION, &phyAddr))) {
+		die("sceKernelAllocateMainDirectMemory() Failed"); // with 0x%08X \n", (unat)res);
+		return;
+	}
+
+	if (SCE_OK != (res = sceKernelMapDirectMemory(&heapbase,MB(512),SCE_KERNEL_PROT_CPU_RW,0,phyAddr,KB(64)))) {
+		die("sceKernelMapDirectMemory() Failed"); // with 0x%08X \n", (unat)res);
+		return;
+	}
+	
+	printf("@@@@@@@@@@@@@@@ Z HEAP INIT - %p ####################\n", heapbase);
+	//setheap() not needed
+}
+
+char * sbrk(int incr)
+{
+	zpf("<< sbrk(%d) >>\n", incr);
+    char	*ret;
+    
+	if(!heapbase)
+		initheap();
+
+    if ((heapsize + incr) <= maxheap) {
+		ret = (char *)heapbase + heapsize;
+		bzero(ret, incr);
+		heapsize += incr;
+		return(ret);
+    }
+    errno = ENOMEM;
+    return((char *)-1);
+}
+
+
+
+
+/* keep a head and tail block */
+janitor_t *head, *tail;
+
+/* implement mutex lock to prevent races */
+pthread_mutex_t global_malloc_lock;
+
+
+static janitor_t * get_free_block(size_t size)
+{
+    /* set head block as current block */
+    janitor_t *current = head;
+    while (current) {
+
+        /* check if block is marked free and if ample space is provided for allocation */
+        if (current->flag && current->size >= size)
+            return current;
+
+        /* check next block */
+        current = current->next;
+    }
+    return NULL;
+}
+
+
+void * jmalloc(size_t size)
+{
+    size_t total_size;
+    void *block;
+    janitor_t *header;
+
+    /* error-check size */
+    if (!size)
+        return NULL;
+
+    /* critical section start */
+    pthread_mutex_lock(&global_malloc_lock);
+
+    /* first-fit: check if there already is a block size that meets our allocation size and immediately fill it and return */
+    header = get_free_block(size);
+    if (header) {
+        header->flag = 0;
+        pthread_mutex_unlock(&global_malloc_lock);
+        return (void *) (header + 1);
+    }
+
+    /* if not found, continue by extending the size of the heap with sbrk, extending the break to meet our allocation */
+    total_size = BLOCK_SIZE + size;
+    block = sbrk(total_size);
+    if (block == (void *) -1 ) {
+        pthread_mutex_unlock(&global_malloc_lock);
+        return NULL;
+    }
+
+    /* set struct entries with allocation specification and mark as not free */
+    header = (janitor_t *)block;
+    header->size = size;
+    header->flag = 0;
+    header->next = NULL;
+
+    /* switch context to next free block
+     * - if there is no head block for the list, set header as head
+     * - if a tail block is present, set the next element to point to header, now the new tail
+     */
+    if (!head)
+        head = header;
+    if (tail)
+        tail->next = header;
+
+    tail = header;
+
+    /* unlock critical section */
+    pthread_mutex_unlock(&global_malloc_lock);
+
+    /* returned memory after break */
+    return (void *)(header + 1);
+}
+
+
+void * jcalloc(size_t num, size_t size)
+{
+    size_t total_size;
+    void *block;
+
+    /* check if parameters were provided */
+    if (!num || !size)
+        return (void *) NULL;
+
+    /* check if size_t bounds adhere to multiplicative inverse properties */
+    total_size = num * size;
+    if (size != total_size / num)
+        return (void *) NULL;
+
+    /* perform conventional malloc with total_size */
+    block = jmalloc(total_size);
+    if (!block)
+        return (void *) NULL;
+
+    /* zero out our newly heap allocated block */
+    memset(block, 0, size);
+    return block;
+}
+
+
+void jfree(void *block)
+{
+    janitor_t *header, *tmp;
+    void * programbreak;
+
+    /* if the block is provided */
+    if (!block)
+        return (void) NULL;
+
+    /* start critical section */
+    pthread_mutex_lock(&global_malloc_lock);
+
+    /* set header as previous block */
+    header = (janitor_t *) block - 1;
+
+    /* start programbreak at byte 0 */
+    programbreak = sbrk(0);
+
+   /* start to NULL out block until break point of heap
+    * NOTE: header (previous block) size + target block should meet
+    */
+    if (( char *) block + header->size == programbreak){
+
+        /* check if block is only allocated block (since it is both head and tail), and NULL */
+        if (head == tail)
+            head = tail = NULL;
+        else {
+
+            /* copy head into tmp block, NULL each block from tail back to head */
+            tmp = head;
+            while (tmp) {
+                if (tmp->next == tail){
+                    tmp->next = NULL;
+                    tail = tmp;
+                }
+                tmp = tmp->next;
+            }
+        }
+
+        /* move break back to memory address after deallocation */
+        sbrk(0 - BLOCK_SIZE - header->size);
+
+        /* unlock critical section*/
+        pthread_mutex_unlock(&global_malloc_lock);
+
+        /* returns nothing */
+        return (void) NULL;
+    }
+
+    /* set flag to unmarked */
+    header->flag = 1;
+
+    /* unlock critical section */
+    pthread_mutex_unlock(&global_malloc_lock);
+}
+
+
+void * jrealloc(void *block, size_t size)
+{
+    janitor_t *header;
+    void *ret;
+
+    /* create a new block if parameters not set */
+    if (!block)
+        return jmalloc(size);
+
+    /* set header to be block's previous bit */
+    header = (janitor_t *) block - 1;
+
+    /* check if headers size is greater than specified paramater */
+    if (header->size >= size)
+        return block;
+
+    /* create a new block allocation */
+    ret = jmalloc(size);
+
+    /* add content from previous block to newly allocated block */
+    if (ret) {
+        memcpy(ret, block, header->size);
+        jfree(block);
+    }
+    return ret;
+}
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+extern "C" void* zmalloc(unsigned long size)
+{
+#if 1
+	void *res = jmalloc(size);
+
+	zpf("zmalloc(%d) got %p\n", size, res);
+	return res;
+
+#else
+	if(nullptr==pHeap)
+	{
+		int32_t res = SCE_OK;
+		if (SCE_OK != (res = sceKernelAllocateMainDirectMemory(MB(512), KB(64), SCE_KERNEL_WB_ONION, &phyAddr))) {
+			printf("sceKernelAllocateMainDirectMemory() Failed with 0x%08X \n", (unat)res);
+			return nullptr;
+		}
+
+		if (SCE_OK != (res = sceKernelMapDirectMemory(&pHeap,MB(512),SCE_KERNEL_PROT_CPU_RW,0,phyAddr,KB(64)))) {
+			printf("sceKernelMapDirectMemory() Failed with 0x%08X \n", (unat)res);
+			return nullptr;
+		}
+
+		printf("@@@@@@@@@@@@@@@ Z HEAP INIT - %p ####################\n",pHeap);
+	}
+
+
+	void* res = (void*)((unat)pHeap+sbrk);
+
+	sbrk+=size;
+
+	if (sbrk>MB(500)) die("BS Allocator ran out of real estate!");
+
+//	zpf("zmalloc(%d) @ %p :: total %d\n", size, res, sbrk);
+
+	return res;
+#endif
+}
+
+extern "C" void* zrealloc(void* ptr, unsigned long size)
+{
+#if 1
+	return jrealloc(ptr,size);
+#else
+	void *pre = zmalloc(size);
+	memcpy(ptr,pre,size);		// this is fucked but should work ok unless we hit the end....
+#endif
+}
+
+extern "C" int zmemalign(void **ptr, unsigned long alignment, unsigned long size)
+{
+	if(nullptr==ptr || alignment<sizeof(void*))
+		return EINVAL;
+
+	// *FIXME* 
+
+	unat _addr = (unat)sbrk(0);
+	unat diff = AlignUp(_addr, alignment) - _addr;
+	_addr = (unat)jmalloc(size+diff);
+	*ptr = (void*)AlignUp((unat)_addr, alignment);
+
+	
+	zpf("zmemalign(%d,%d) w. diff: %d , got %p \n", alignment, size, diff, *ptr);
+
+	return 0;
+
+
+//	heapsize=AlignUp(heapsize,alignment);
+//	*ptr = jmalloc(size);
+//	if(*ptr == nullptr)
+//		return ENOMEM;
+//
+//	return 0;
+}
+
+extern "C" void  zfree(void* ptr)
+{
+	zpf("zfree(%p)\n", ptr);
+	jfree(ptr);
+	zpf("zfree -finished\n");
+}
+
+extern "C" void  zfree2(void* ptr, unsigned long size)
+{
+	zpf("zfree2(%p, %d)\n", ptr, size);
+#if 1
+	jfree(ptr);	// *FIXME* ??
+#else
+	const uint32_t psMask = (0x4000 - 1);
+	int32_t mem_size = (size + psMask) & ~psMask;
+	sceKernelMunmap(ptr, mem_size);	// who cares atm, fucking choke on it
+
+	zmtotal -= mem_size;
+#endif
+}
+
+
+
+
+void* operator new(size_t size)
+{
+	return zmalloc(size);
+}
+
+void operator delete(void* p)
+{
+	zfree(p);
+}
+
+
+
+
+#if 0
+zmemalign(16384,135,266,304)	w. diff: 11720 , got 2`0000`c000
+zmemalign(16384,16,777,216)		w. diff: 16360 , got 2`0811`0000
+zmemalign(16384,8,388,608)		w. diff: 16360 , got 2`0911`4000
+zmemalign(16384,2,097,152)		w. diff: 16360 , got 2`0991`8000
+
+zmalloc(112) got 2`09b1`8030
+zmalloc(112) got 2`09b1`80b8
+zmalloc(112) got 2`09b1`8140
+
+zfree(2`09b1`8140)
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif // USE_CUSTOM_ALLOCATOR
 
 
 

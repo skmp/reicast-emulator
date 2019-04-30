@@ -445,7 +445,7 @@ void _vmem_bm_reset()
 	}
 #endif
 
-#if !defined(TARGET_IPHONE) && !defined(TARGET_NO_NVMEM)
+#if !defined(TARGET_IPHONE)
     if (!virt_ram_base)
 #endif
     {
@@ -672,7 +672,7 @@ void _vmem_bm_reset_nvmem()
 		return;
 	#endif
 
-	#if defined(TARGET_IPHONE) || defined(TARGET_PS4)
+	#if defined(TARGET_IPHONE)
 		//On iOS & nacl we allways allocate all of the mapping table
 		mprotect(p_sh4rcb, sizeof(p_sh4rcb->fpcb), PROT_READ | PROT_WRITE);
 		return;
@@ -733,7 +733,7 @@ die("BM_LockedWrite and NO REC");
 
 #if !defined(TARGET_NO_NVMEM) && FEAT_SHREC != DYNAREC_NONE
 
-
+#error WTF
 
 bool _vmem_reserve()
 {

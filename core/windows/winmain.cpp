@@ -574,13 +574,15 @@ _In_opt_ PVOID Context
 	unwind_info[0].FrameOffset = 0;
 	unwind_info[0].FrameRegister = 0;
 	/* Add the exception handler.  */
-
+	
 //		unwind_info[0].ExceptionHandler =
 	//	(DWORD)((u8 *)__gnat_SEH_error_handler - CodeCache);
 	/* Set its scope to the entire program.  */
 	Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
 	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE;
+#if FEAT_SHREC != DYNAREC_NONE	// *FIXME*
 	Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
+#endif
 	printf("TABLE CALLBACK\n");
 	//for (;;);
 	return Table;
@@ -609,9 +611,11 @@ void setup_seh() {
 	/* Set its scope to the entire program.  */
 	Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
 	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE;
+#if FEAT_SHREC != DYNAREC_NONE	// *FIXME*
 	Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
 	/* Register the unwind information.  */
 	RtlAddFunctionTable(Table, 1, (DWORD64)CodeCache);
+#endif
 #endif
 
 	//verify(RtlInstallFunctionTableCallback((unat)CodeCache | 0x3, (DWORD64)CodeCache, CODE_SIZE, seh_callback, 0, 0));

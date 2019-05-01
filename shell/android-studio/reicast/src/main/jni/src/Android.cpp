@@ -532,7 +532,7 @@ u32 androidaudio_push(void* frame, u32 amt, bool wait)
     return jvm_attacher.getEnv()->CallIntMethod(g_audioBackend, writeBufferMid, jsamples, wait);
 }
 
-void androidaudio_init()
+void androidaudio_init(audio_backend_pull_callback_t pull_callback)
 {
     // Nothing to do here...
 }

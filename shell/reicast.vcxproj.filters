@@ -637,6 +637,12 @@
     <ClCompile Include="..\core\imgread\cue.cpp">
       <Filter>imgread</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\oslib\audiobackend_xaudio.cpp">
+      <Filter>oslib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\oslib\audiobackend_sdl2.cpp">
+      <Filter>oslib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -1132,9 +1138,6 @@
     </ClInclude>
     <ClInclude Include="..\core\linux\context.h">
       <Filter>linux</Filter>
-    </ClInclude>
-    <ClInclude Include="..\core\oslib\audiobackend_directsound.h">
-      <Filter>oslib</Filter>
     </ClInclude>
     <ClInclude Include="..\core\rec-x86\rec_x86_ngen.h">
       <Filter>rec-x86</Filter>

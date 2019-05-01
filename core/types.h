@@ -26,7 +26,7 @@ void operator delete(void*);
 
 #endif
 
-#if !defined(TARGET_PS4) //&& !defined(_DEBUG)
+#if !defined(TARGET_PS4) && !defined(_DEBUG) && !defined(_Z_)
 # define zpf(...) __noop
 #else
 # define zpf(...) { fprintf(stdout,__VA_ARGS__); fflush(stdout); }

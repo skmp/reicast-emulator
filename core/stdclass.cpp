@@ -320,7 +320,7 @@ void initheap()
 	heapbase = _aligned_malloc(maxheap, PAGE_SIZE);
 	if(!heapbase) die("initheap() : malloc() failed! \n");
 	
-	printf("@@@@@@@@@@@@@@@ initheap w. address: %p ####################\n", heapbase);
+	printf("@@@@@@@@@@@@@@@ CUSTOM HEAP %p - %p ####################\n", heapbase, (void*)((unat)heapbase+maxheap));
 }
 
 char * sbrk(int incr)
@@ -341,6 +341,9 @@ char * sbrk(int incr)
 
 
 
+/// i'm pretty sure this is broken ...
+
+
 
 struct janitor_block {
     size_t size;
@@ -358,8 +361,10 @@ typedef struct janitor_block janitor_t;
 janitor_t *head, *tail;
 
 /* implement mutex lock to prevent races */
-cMutex global_malloc_lock;
 
+#if 0
+cMutex global_malloc_lock;
+#endif
 
 
 
@@ -389,15 +394,18 @@ void * jmalloc(size_t size)
     /* error-check size */
     if (!size)
         return NULL;
-
+	
+#if 0
     /* critical section start */
 	global_malloc_lock.Lock();	//   pthread_mutex_lock(&global_malloc_lock);
-
+#endif
     /* first-fit: check if there already is a block size that meets our allocation size and immediately fill it and return */
     header = get_free_block(size);
     if (header) {
         header->flag = 0;
+#if 0
         global_malloc_lock.Unlock();  //pthread_mutex_unlock(&global_malloc_lock);
+#endif
         return (void *) (header + 1);
     }
 
@@ -405,7 +413,9 @@ void * jmalloc(size_t size)
     total_size = BLOCK_SIZE + size;
     block = sbrk(total_size);
     if (block == (void *) -1 ) {
+#if 0
         global_malloc_lock.Unlock();  //pthread_mutex_unlock(&global_malloc_lock);
+#endif
         return NULL;
     }
 
@@ -425,10 +435,11 @@ void * jmalloc(size_t size)
         tail->next = header;
 
     tail = header;
-
+	
+#if 0
     /* unlock critical section */
     global_malloc_lock.Unlock();  //pthread_mutex_unlock(&global_malloc_lock);
-
+#endif
     /* returned memory after break */
     return (void *)(header + 1);
 }
@@ -459,8 +470,7 @@ void * jcalloc(size_t num, size_t size)
 }
 
 
-void
-jfree(void *block)
+void jfree(void *block)
 {
     janitor_t *header, *tmp;
     void * programbreak;
@@ -468,10 +478,11 @@ jfree(void *block)
     /* if the block is provided */
     if (!block)
         return (void) NULL;
-
+	
+#if 0
     /* start critical section */
     global_malloc_lock.Lock();  //pthread_mutex_lock(&global_malloc_lock);
-
+#endif
     /* set header as previous block */
     header = (janitor_t *) block - 1;
 
@@ -501,24 +512,26 @@ jfree(void *block)
 
         /* move break back to memory address after deallocation */
         sbrk(0 - BLOCK_SIZE - header->size);
-
+		
+#if 0
         /* unlock critical section*/
         global_malloc_lock.Unlock();  //pthread_mutex_unlock(&global_malloc_lock);
-
+#endif
         /* returns nothing */
         return (void) NULL;
     }
 
     /* set flag to unmarked */
     header->flag = 1;
-
+	
+#if 0
     /* unlock critical section */
     global_malloc_lock.Unlock();  //pthread_mutex_unlock(&global_malloc_lock);
+#endif
 }
 
 
-void *
-jrealloc(void *block, size_t size)
+void * jrealloc(void *block, size_t size)
 {
     janitor_t *header;
     void *ret;
@@ -556,14 +569,18 @@ extern "C" void* zmalloc(unsigned long size)
 {
 	if (nullptr==heapbase) initheap();
 
-	return jmalloc(size);
+	void *res = jmalloc(size);
+//	zpf("zmalloc(%d) to %p \n", size, res);
+	return res;
 }
 
 extern "C" void* z_calloc(size_t nelem, size_t size)	// libz has a zcalloc / global ns clash
 {
 	if (nullptr==heapbase) initheap();
 
-	return jcalloc(nelem, size);
+	void *res = jcalloc(nelem, size);
+	zpf("jcalloc(nelem:%d,%d) to %p \n", nelem, size, res);
+	return res;
 }
 
 
@@ -571,19 +588,22 @@ extern "C" void* zrealloc(void* ptr, unsigned long size)
 {
 	if (nullptr==heapbase) initheap();
 
-	return jrealloc(ptr, size);
+	void *res = jrealloc(ptr, size);
+	zpf("jrealloc(ptr:%p,%d) to %p \n", ptr, size, res);
+	return res;
 }
 
 extern "C" int   zmemalign(void **ptr, unsigned long alignment, unsigned long size)
 {
 	if (nullptr==heapbase) initheap();
 
+	unat diff = AlignUp<size_t>(heapsize,alignment) - heapsize;
+	void *data = zmalloc(diff+size);
+	*ptr = (void*)((unat)data+diff);
 
+	zpf("zmemalign(%d) align: %X , got %p \n", size, alignment, *ptr);
 
-	// *FIXME*
-
-	*ptr=nullptr;
-	return 0; //jmemalign(msp, ptr, alignment, size);
+	return 0;
 
 }
 
@@ -591,12 +611,11 @@ extern "C" void  zfree(void* ptr)
 {
 	////////// *FIXME* !!!!!!!!!!!!!!!!
 	/// this is a hack !
-
-	if ( ((unat)ptr >= (unat)heapbase) && ((unat)ptr < ((unat)heapbase + maxheap)) )
+	
+	if ( ((unat)ptr < (unat)heapbase) || ((unat)ptr >= ((unat)heapbase + maxheap)) )
 		zpf(" >>> zfree not in heap !!! @ %p !! \n", ptr);
 
-
-	//else free(ptr);	//// WHY can't this just work ?! - 
+	jfree(ptr);
 }
 
 

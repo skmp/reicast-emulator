@@ -129,6 +129,8 @@ void os_SetupInput()
 	GamepadDevice::Register(mouse_gamepad);
 }
 
+#if !defined(TARGET_NO_EXCEPTIONS)
+
 LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 {
 	EXCEPTION_POINTERS* ep = ExceptionInfo;
@@ -171,7 +173,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 
 	return EXCEPTION_CONTINUE_SEARCH;
 }
-
+#endif // TARGET_NO_EXCEPTIONS
 
 void SetupPath()
 {
@@ -548,6 +550,7 @@ typedef struct _UNWIND_INFO {
 static RUNTIME_FUNCTION Table[1];
 static _UNWIND_INFO unwind_info[1];
 
+#if !defined(TARGET_NO_EXCEPTIONS)
 EXCEPTION_DISPOSITION
 __gnat_SEH_error_handler(struct _EXCEPTION_RECORD* ExceptionRecord,
 void *EstablisherFrame,
@@ -621,7 +624,7 @@ void setup_seh() {
 	//verify(RtlInstallFunctionTableCallback((unat)CodeCache | 0x3, (DWORD64)CodeCache, CODE_SIZE, seh_callback, 0, 0));
 }
 #endif
-
+#endif // !defined(TARGET_NO_EXCEPTIONS)
 
 
 
@@ -673,13 +676,16 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 
 	ReserveBottomMemory();
 	SetupPath();
-
+	
+#if !defined(TARGET_NO_EXCEPTIONS)
 #ifdef _WIN64
 	AddVectoredExceptionHandler(1, ExeptionHandler);
 #else
 	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&ExeptionHandler);
 #endif
-#ifndef __GNUC__
+#endif
+
+#if !defined(__GNUC__) && !defined(TARGET_NO_EXCEPTIONS)
 	__try
 #endif
 	{
@@ -689,22 +695,25 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 
 		if (reicast_init(argc, argv) != 0)
 			die("Reicast initialization failed");
-
+		
+#if !defined(TARGET_NO_EXCEPTIONS)
 		#ifdef _WIN64
 			setup_seh();
 		#endif
+#endif
 
 		rend_thread(NULL);
 
 		dc_term();
 	}
-#ifndef __GNUC__
+#if !defined(__GNUC__) && !defined(TARGET_NO_EXCEPTIONS)
 	__except( ExeptionHandler(GetExceptionInformation()) )
 	{
 		printf("Unhandled exception - Emulation thread halted...\n");
 	}
 #endif
 	SetUnhandledExceptionFilter(0);
+
 	cfgSaveBool("windows", "maximized", window_maximized);
 	if (!window_maximized && screen_width != 0 && screen_width != 0)
 	{

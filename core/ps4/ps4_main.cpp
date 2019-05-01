@@ -330,7 +330,7 @@ void initheap()
 		return;
 	}
 	
-	printf("@@@@@@@@@@@@@@@ Z HEAP INIT - %p ####################\n", heapbase);
+	printf("@@@@@@@@@@@@@@@ CUSTOM HEAP %p - %p ####################\n", heapbase, (void*)((unat)heapbase+maxheap));
 	//setheap() not needed
 }
 

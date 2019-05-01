@@ -733,7 +733,6 @@ die("BM_LockedWrite and NO REC");
 
 #if !defined(TARGET_NO_NVMEM) && FEAT_SHREC != DYNAREC_NONE
 
-#error WTF
 
 bool _vmem_reserve()
 {

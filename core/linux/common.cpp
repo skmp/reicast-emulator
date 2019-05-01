@@ -280,7 +280,10 @@ void common_linux_setup()
 	settings.profile.run_counts=0;
 	
 	printf("Linux paging: %ld %08X %08X\n", getpagesize(), PAGE_SIZE, PAGE_MASK);
+
+#ifndef _Z_ // Internal testing of other page sizes / unix -Z
 	verify(PAGE_SIZE == (getpagesize()));
 	verify(PAGE_MASK == (getpagesize()-1));
+#endif
 }
 #endif

@@ -19,7 +19,7 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#if !defined(_MSC_VER) && !defined(TARGET_NO_THREADS)
+#if !defined(_MSC_VER) //&& !defined(TARGET_NO_THREADS)
 
 #ifdef __MINGW32__
 #define _POSIX_SOURCE

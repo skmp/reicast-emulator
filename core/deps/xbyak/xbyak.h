@@ -974,7 +974,12 @@ public:
 		DWORD oldProtect;
 		return VirtualProtect(const_cast<void*>(addr), size, canExec ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE, &oldProtect) != 0;
 #elif defined(__GNUC__)
-		size_t pageSize = PAGE_SIZE; //sysconf(_SC_PAGESIZE);
+		size_t pageSize = 
+	#ifndef PAGE_SIZE
+			sysconf(_SC_PAGESIZE);
+	#else
+			PAGE_SIZE;
+	#endif
 		size_t iaddr = reinterpret_cast<size_t>(addr);
 		size_t roundAddr = iaddr & ~(pageSize - static_cast<size_t>(1));
 		int mode = PROT_READ | PROT_WRITE | (canExec ? PROT_EXEC : 0);

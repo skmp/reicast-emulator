@@ -518,11 +518,24 @@ bool dc_unserialize(void **data, unsigned int *total_size);
 
 #else // let me tell you how glad these are sprinkled everywhere -Z
 
+#if BUILD_COMPILER==COMPILER_VC
+
 #define REICAST_S(v) __noop
 #define REICAST_US(v) __noop
 
 #define REICAST_SA(v_arr,num) __noop
 #define REICAST_USA(v_arr,num) __noop
+
+#else
+
+#define REICAST_S(v) 
+#define REICAST_US(v) 
+
+#define REICAST_SA(v_arr,num) 
+#define REICAST_USA(v_arr,num) 
+
+#endif // BUILD_COMPILER==COMPILER_VC
+
 
 #endif //TARGET_NO_SSTATE
 

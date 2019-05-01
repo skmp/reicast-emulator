@@ -196,6 +196,11 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 		}
 	}
 }
+template u8 DYNACALL _vmem_readt<u8, u8>(u32 addr);
+template u16 DYNACALL _vmem_readt<u16, u16>(u32 addr);
+template u32 DYNACALL _vmem_readt<u32, u32>(u32 addr);
+template u64 DYNACALL _vmem_readt<u64, u64>(u32 addr);
+
 template<typename T>
 INLINE void DYNACALL _vmem_writet(u32 addr,T data)
 {
@@ -238,6 +243,10 @@ INLINE void DYNACALL _vmem_writet(u32 addr,T data)
 		}
 	}
 }
+template void DYNACALL _vmem_writet<u8>(u32 addr, u8 data);
+template void DYNACALL _vmem_writet<u16>(u32 addr, u16 data);
+template void DYNACALL _vmem_writet<u32>(u32 addr, u32 data);
+template void DYNACALL _vmem_writet<u64>(u32 addr, u64 data);
 
 //ReadMem/WriteMem functions
 //ReadMem

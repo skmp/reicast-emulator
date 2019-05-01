@@ -74,6 +74,7 @@ SOURCES_CXX := \
 					$(CORE_DIR)/core/hw/sh4/modules/cpg.cpp \
 					$(CORE_DIR)/core/hw/sh4/modules/dmac.cpp \
 					$(CORE_DIR)/core/hw/sh4/modules/mmu.cpp \
+					$(CORE_DIR)/core/hw/sh4/modules/fastmmu.cpp \
 					$(CORE_DIR)/core/imgread/ImgReader.cpp \
 					$(CORE_DIR)/core/imgread/cdi.cpp \
 					$(CORE_DIR)/core/imgread/chd.cpp \

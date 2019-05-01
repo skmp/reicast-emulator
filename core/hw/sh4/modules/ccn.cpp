@@ -50,10 +50,7 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 	
 	if (temp.TI != 0)
 	{
-		for (u32 i = 0; i < 4; i++)
-			ITLB[i].Data.V = 0;
-		for (u32 i = 0; i < 64; i++)
-			UTLB[i].Data.V = 0;
+		mmu_flush_table();
 		temp.TI=0;
 	}
 	CCN_MMUCR=temp;

@@ -184,7 +184,7 @@ int spg_line_sched(int tag, int cycl, int jit)
 					mode,res,fullvbs,
 					spd_fps,fskip/ts);
 				#else
-				printf("%s/%c - %4.2f - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f\n",
+				printf("%s/%c - %4.2f - %4.2f - V: %4.2f (%.2f, %s%s@%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f\n",
 					VER_SHORTNAME,'n',mspdf,spd_cpu*100/200,spd_vbs,
 					spd_vbs/full_rps,mode,res,fullvbs,
 					spd_fps,fskip/ts

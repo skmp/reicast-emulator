@@ -54,7 +54,10 @@ static u32 ps4aout_push(void* frame, u32 samples, bool wait)	// ** This is not r
 		
 		//res=sceAudioOutOutput(aOut_H, NULL);
 	}
-	res=sceAudioOutOutput(aOut_H, NULL);
+	if (wait)
+		res=sceAudioOutOutput(aOut_H, NULL);
+//	else
+//		printf("---hey no wait!\n");
 
 	return 1;
 }

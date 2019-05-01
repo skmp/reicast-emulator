@@ -199,24 +199,16 @@ T DYNACALL ReadMem_P4(u32 addr)
 #endif
          return 0;
       case 0xF2:
-#ifndef NDEBUG
-         printf("Unhandled p4 read [Instruction TLB address array] 0x%x\n",addr);
-#endif
          {
             u32 entry=(addr>>8)&3;
             return ITLB[entry].Address.reg_data | (ITLB[entry].Data.V<<8);
          }
-         break;
 
       case 0xF3:
-#ifndef NDEBUG
-         printf("Unhandled p4 read [Instruction TLB data arrays 1 and 2] 0x%x\n",addr);
-#endif
          {
             u32 entry=(addr>>8)&3;
             return ITLB[entry].Data.reg_data;
          }
-         break;
 
       case 0xF4:
 #if 0
@@ -235,9 +227,6 @@ T DYNACALL ReadMem_P4(u32 addr)
 #endif
          return 0;
       case 0xF6:
-#ifndef NDEBUG
-         printf("Unhandled p4 read [Unified TLB address array] 0x%x\n",addr);
-#endif
          {
             u32 entry=(addr>>8)&63;
             u32 rv=UTLB[entry].Address.reg_data;
@@ -245,17 +234,12 @@ T DYNACALL ReadMem_P4(u32 addr)
             rv|=UTLB[entry].Data.V<<8;
             return rv;
          }
-         break;
 
       case 0xF7:
-#ifndef NDEBUG
-         printf("Unhandled p4 read [Unified TLB data arrays 1 and 2] 0x%x\n",addr);
-#endif
          {
             u32 entry=(addr>>8)&63;
             return UTLB[entry].Data.reg_data;
          }
-         break;
 
       case 0xFF:
 #ifndef NDEBUG
@@ -309,9 +293,6 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 #endif
          return;
       case 0xF2:
-#ifndef NDEBUG
-         printf("Unhandled p4 Write [Instruction TLB address array] 0x%x = %x\n",addr,data);
-#endif
          {
             u32 entry=(addr>>8)&3;
             ITLB[entry].Address.reg_data=data & 0xFFFFFCFF;
@@ -320,23 +301,19 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
          }
          return;
       case 0xF3:
-         if (addr&0x800000)
-         {
-#ifndef NDEBUG
-            printf("Unhandled p4 Write [Instruction TLB data array 2] 0x%x = %x\n",addr,data);
-#endif
-         }
-         else
-         {
-#ifndef NDEBUG
-            printf("Unhandled p4 Write [Instruction TLB data array 1] 0x%x = %x\n",addr,data);
-#endif
-            u32 entry=(addr>>8)&3;
-            ITLB[entry].Data.reg_data=data;
-            ITLB_Sync(entry);
-            return;
-         }
-         break;
+      {
+      	u32 entry=(addr>>8)&3;
+      	if (addr&0x800000)
+      	{
+      		ITLB[entry].Assistance.reg_data = data & 0xf;
+      	}
+      	else
+      	{
+      		ITLB[entry].Data.reg_data=data;
+      	}
+      	ITLB_Sync(entry);
+      	return;
+      }
 
       case 0xF4:
 #if 0
@@ -358,39 +335,31 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
          {
             if (addr&0x80)
             {
-#ifndef NO_MMU
-               if (!settings.MMUEnabled)
-                  printf("Unhandled p4 Write [Unified TLB address array, Associative Write] 0x%x = %x\n",addr,data);
-#endif
-
                CCN_PTEH_type t;
                t.reg_data=data;
 
                u32 va=t.VPN<<10;
 
 #ifndef NO_MMU
-               if (settings.MMUEnabled)
-               {
-                  for (int i=0;i<64;i++)
-                  {
-                     if (mmu_match(va,UTLB[i].Address,UTLB[i].Data))
-                     {
-                        UTLB[i].Data.V=((u32)data>>8)&1;
-                        UTLB[i].Data.D=((u32)data>>9)&1;
-                        UTLB_Sync(i);
-                     }
-                  }
+					for (int i=0;i<64;i++)
+					{
+						if (mmu_match(va,UTLB[i].Address,UTLB[i].Data))
+						{
+							UTLB[i].Data.V=((u32)data>>8)&1;
+							UTLB[i].Data.D=((u32)data>>9)&1;
+							UTLB_Sync(i);
+						}
+					}
 
-                  for (int i=0;i<4;i++)
-                  {
-                     if (mmu_match(va,ITLB[i].Address,ITLB[i].Data))
-                     {
-                        ITLB[i].Data.V=((u32)data>>8)&1;
-                        ITLB[i].Data.D=((u32)data>>9)&1;
-                        ITLB_Sync(i);
-                     }
-                  }
-               }
+					for (int i=0;i<4;i++)
+					{
+						if (mmu_match(va,ITLB[i].Address,ITLB[i].Data))
+						{
+							ITLB[i].Data.V=((u32)data>>8)&1;
+							ITLB[i].Data.D=((u32)data>>9)&1;
+							ITLB_Sync(i);
+						}
+					}
 #endif
             }
             else
@@ -406,23 +375,20 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
          break;
 
       case 0xF7:
-         if (addr&0x800000)
-         {
-#ifndef NDEBUG
-            printf("Unhandled p4 Write [Unified TLB data array 2] 0x%x = %x\n",addr,data);
-#endif
-         }
-         else
-         {
-#ifndef NDEBUG
-            printf("Unhandled p4 Write [Unified TLB data array 1] 0x%x = %x\n",addr,data);
-#endif
-            u32 entry=(addr>>8)&63;
-            UTLB[entry].Data.reg_data=data;
-            UTLB_Sync(entry);
-            return;
-         }
-         break;
+      {
+      	u32 entry=(addr>>8)&63;
+      	if (addr&0x800000)
+      	{
+      		UTLB[entry].Assistance.reg_data = data & 0xf;
+      	}
+      	else
+      	{
+      		UTLB[entry].Data.reg_data=data;
+      	}
+      	UTLB_Sync(entry);
+
+      	return;
+      }
 
       case 0xFF:
 #ifndef NDEBUG

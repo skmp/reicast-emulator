@@ -329,7 +329,11 @@ static void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx)
    context_from_segfault(&ctx, segfault_ctx);
 
    size_t pc     = (size_t)ctx.pc;
+#if FEAT_SHREC == DYNAREC_JIT
    bool dyna_cde = (pc > (size_t)CodeCache) && (pc < (size_t)(CodeCache + CODE_SIZE));
+#else
+	bool dyna_cde = false;
+#endif
 
    printf("SIGILL @ %p ... %p -> was not in vram, %d\n",
          pc, si->si_addr, dyna_cde);
@@ -351,7 +355,11 @@ static void signal_handler(int sn, siginfo_t * si, void *segfault_ctx)
 
    context_from_segfault(&ctx, segfault_ctx);
 
-   bool dyna_cde = ((size_t)ctx.pc > (size_t)CodeCache) && ((size_t)ctx.pc < (size_t)(CodeCache + CODE_SIZE));
+#if FEAT_SHREC == DYNAREC_JIT
+	bool dyna_cde = ((size_t)ctx.pc > (size_t)CodeCache) && ((size_t)ctx.pc < (size_t)(CodeCache + CODE_SIZE));
+#else
+	bool dyna_cde = false;
+#endif
 
 #ifdef LOG_SIGHANDLER
 printf("mprot hit @ ptr %p @@ pc: %p, %d\n", si->si_addr, ctx.pc, dyna_cde);
@@ -359,7 +367,7 @@ printf("mprot hit @ ptr %p @@ pc: %p, %d\n", si->si_addr, ctx.pc, dyna_cde);
 
    if (VramLockedWrite((u8*)si->si_addr))
       return;
-#ifndef TARGET_NO_NVMEM
+#if !defined(TARGET_NO_NVMEM) && FEAT_SHREC != DYNAREC_NONE
    if (BM_LockedWrite((u8*)si->si_addr))
       return;
 #endif

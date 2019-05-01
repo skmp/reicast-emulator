@@ -11,6 +11,7 @@ extern char reios_releasedate[17];
 extern char reios_boot_filename[17];
 extern char reios_software_company[17];
 extern char reios_software_name[129];
+extern bool reios_windows_ce;
 
 bool reios_init(u8* rom, u8* flash);
 

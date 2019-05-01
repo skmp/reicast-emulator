@@ -121,6 +121,7 @@ char reios_releasedate[17];
 char reios_boot_filename[17];
 char reios_software_company[17];
 char reios_software_name[129];
+bool reios_windows_ce = false;
 
 const char* reios_locate_ip(void)
 {
@@ -154,6 +155,7 @@ const char* reios_locate_ip(void)
    memcpy(&reios_boot_filename[0], &ip_bin[96],   16 * sizeof(char));
    memcpy(&reios_software_company[0], &ip_bin[112],   16 * sizeof(char));
    memcpy(&reios_software_name[0], &ip_bin[128],   128 * sizeof(char));
+   reios_windows_ce = memcmp("0WINCEOS.BIN", &reios_boot_filename[0], 12) == 0;
 
    printf("reios: IP.bin is '%s'\n", ip_bin);
    printf("reios: Hardware ID is: %s\n", reios_hardware_id);

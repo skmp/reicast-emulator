@@ -32,6 +32,5 @@
 
 extern u32 mmu_error_TT;
 
-void MMU_Init();
 void MMU_Reset(bool Manual);
 void MMU_Term();

@@ -9,8 +9,6 @@ INCFLAGS    += -I$(CORE_DIR)/core/libretro \
 					-I$(LIBRETRO_COMM_DIR)/include \
 					-I$(DEPS_DIR)/vixl
 
-CORE_DEFINES += -DNO_MMU
-
 SOURCES_C   :=
 SOURCES_CXX := \
 					$(CORE_DIR)/core/hw/arm7/arm_mem.cpp \

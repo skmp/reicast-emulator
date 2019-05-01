@@ -34,7 +34,65 @@ int maple_sched;
 	DMA continuation on suspect, etc ...
 */
 
-u32 dmacount=0;
+static void maple_DoDma();
+static void maple_handle_reconnect();
+
+//really hackish
+//misses delay , and stop/start implementation
+//ddt/etc are just hacked for wince to work
+//now with proper maple delayed DMA maybe its time to look into it ?
+bool maple_ddt_pending_reset=false;
+void maple_vblank()
+{
+	if (SB_MDEN &1)
+	{
+		if (SB_MDTSEL&1)
+		{
+			if (maple_ddt_pending_reset)
+			{
+				//printf("DDT vblank ; reset pending\n");
+			}
+			else
+			{
+				//printf("DDT vblank\n");
+				SB_MDST = 1;
+				maple_DoDma();
+				SB_MDST = 0;
+				if ((SB_MSYS>>12)&1)
+				{
+					maple_ddt_pending_reset=true;
+				}
+			}
+		}
+		else
+		{
+			maple_ddt_pending_reset=false;
+		}
+	}
+	maple_handle_reconnect();
+}
+
+void maple_SB_MSHTCL_Write(u32 addr, u32 data)
+{
+	if (data&1)
+		maple_ddt_pending_reset=false;
+}
+void maple_SB_MDST_Write(u32 addr, u32 data)
+{
+	if (data & 0x1)
+	{
+		if (SB_MDEN &1)
+		{
+			SB_MDST=1;
+			maple_DoDma();
+		}
+	}
+}
+
+void maple_SB_MDEN_Write(u32 addr, u32 data)
+{
+	SB_MDEN=data&1;
+}
 
 static bool IsOnSh4Ram(u32 addr)
 {
@@ -46,6 +104,8 @@ static bool IsOnSh4Ram(u32 addr)
 
 	return false;
 }
+
+u32 dmacount=0;
 
 static void maple_DoDma(void)
 {
@@ -150,59 +210,6 @@ static void maple_DoDma(void)
 
 	//printf("Maple XFER size %d bytes - %.2f ms\n",xfer_count,xfer_count*100.0f/(2*1024*1024/8));
 	sh4_sched_request(maple_sched,xfer_count*(SH4_MAIN_CLOCK/(2*1024*1024/8)));
-}
-
-static void maple_handle_reconnect();
-
-//really hackish
-//misses delay , and stop/start implementation
-//ddt/etc are just hacked for wince to work
-//now with proper maple delayed DMA maybe its time to look into it ?
-bool maple_ddt_pending_reset=false;
-void maple_vblank()
-{
-	if (SB_MDEN &1)
-	{
-		if (SB_MDTSEL&1)
-		{
-			if (!maple_ddt_pending_reset)
-			{
-				//printf("DDT vblank\n");
-				maple_DoDma();
-				SB_MDST = 0;
-				if ((SB_MSYS>>12)&1)
-				{
-					maple_ddt_pending_reset=true;
-				}
-			}
-		}
-		else
-		{
-			maple_ddt_pending_reset=false;
-		}
-	}
-	maple_handle_reconnect();
-}
-void maple_SB_MSHTCL_Write(u32 addr, u32 data)
-{
-	if (data&1)
-		maple_ddt_pending_reset=false;
-}
-void maple_SB_MDST_Write(u32 addr, u32 data)
-{
-	if (data & 0x1)
-	{
-		if (SB_MDEN &1)
-		{
-			SB_MDST=1;
-			maple_DoDma();
-		}
-	}
-}
-
-void maple_SB_MDEN_Write(u32 addr, u32 data)
-{
-	SB_MDEN=data&1;
 }
 
 int maple_schd(int tag, int c, int j)

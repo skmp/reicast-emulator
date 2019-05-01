@@ -517,7 +517,6 @@ struct RegisterStruct
 struct settings_t
 {
    unsigned System;
-   bool MMUEnabled;
 
 	struct {
 		bool UseReios;
@@ -569,6 +568,7 @@ struct settings_t
 	   u32 region;			// 0 -> JP, 1 -> USA, 2 -> EU, 3 -> default
 	   u32 broadcast;		// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 -> default
 	   u32 language;		// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default
+	   bool FullMMU;
 	} dreamcast;
 
 	struct

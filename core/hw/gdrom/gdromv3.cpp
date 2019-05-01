@@ -9,6 +9,7 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/modules/dmac.h"
 #include "hw/sh4/sh4_core.h"
+#include "hw/sh4/sh4_interpreter.h"
 
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
@@ -1093,7 +1094,7 @@ void GDROM_DmaStart(u32 addr, u32 data)
       //printf("GDROM-DMA start addr %08X len %d\n", SB_GDSTAR, SB_GDLEN);
 
       int ticks = getGDROMTicks();
-		if (ticks < 448)	// FIXME #define
+		if (ticks < SH4_TIMESLICE)
 		{
 			ticks = GDRomschd(0,0,0);
 		}

@@ -494,7 +494,6 @@ extern TLB_Entry ITLB[4];
 extern u32 sq_remap[64];
 #else
 extern u32 ITLB_LRU_USE[64];
-extern u32 mmu_error_TT;
 #endif
 
 
@@ -1144,7 +1143,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_SA(sq_remap,64);
 #else
 	LIBRETRO_SA(ITLB_LRU_USE,64);
-	LIBRETRO_S(mmu_error_TT);
 #endif
 
 
@@ -1195,13 +1193,11 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(cycle_counter);
 	LIBRETRO_S(idxnxx);
 
-
+#if FEAT_SHREC != DYNAREC_NONE
 	LIBRETRO_S(state);
 	LIBRETRO_S(div_som_reg1);
 	LIBRETRO_S(div_som_reg2);
 	LIBRETRO_S(div_som_reg3);
-
-
 
 
 	//LIBRETRO_SA(CodeCache,CODE_SIZE) ;
@@ -1209,7 +1205,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(LastAddr);
 	LIBRETRO_S(LastAddr_min);
 	LIBRETRO_SA(block_hash,1024);
-
+#endif
 
 	LIBRETRO_SA(RegisterWrite,sh4_reg_count);
 	LIBRETRO_SA(RegisterRead,sh4_reg_count);
@@ -1608,7 +1604,6 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_USA(sq_remap,64);
 #else
 	LIBRETRO_USA(ITLB_LRU_USE,64);
-	LIBRETRO_US(mmu_error_TT);
 #endif
 
 
@@ -1679,12 +1674,11 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(cycle_counter);
 	LIBRETRO_US(idxnxx);
 
-
+#if FEAT_SHREC != DYNAREC_NONE
 	LIBRETRO_US(state);
 	LIBRETRO_US(div_som_reg1);
 	LIBRETRO_US(div_som_reg2);
 	LIBRETRO_US(div_som_reg3);
-
 
 
 
@@ -1693,7 +1687,7 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(LastAddr);
 	LIBRETRO_US(LastAddr_min);
 	LIBRETRO_USA(block_hash,1024);
-
+#endif
 
 	LIBRETRO_USA(RegisterWrite,sh4_reg_count);
 	LIBRETRO_USA(RegisterRead,sh4_reg_count);

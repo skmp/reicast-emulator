@@ -113,7 +113,7 @@ void DMAC_Ch2St()
 			dst = (dst & 0xFFFFFF) | 0xa5000000;	// 32b path
 			while (len > 0)
 			{
-				u32 v = ReadMem32(src);
+				u32 v = ReadMem32_nommu(src);
 				pvr_write_area1_32(dst, v);
 				len -= 4;
 				src += 4;

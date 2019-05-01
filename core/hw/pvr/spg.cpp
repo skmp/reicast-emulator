@@ -148,6 +148,9 @@ int spg_line_sched(int tag, int cycl, int jit)
 	if (min_scanline < pvr_numscanlines)
 		min_active=min(min_active,pvr_numscanlines);
 
+	if (lightgun_line != 0xffff && min_scanline < lightgun_line)
+		min_active = min(min_active, lightgun_line);
+
 	min_active=max(min_active,min_scanline);
 
 	return (min_active-prv_cur_scanline)*Line_Cycles;

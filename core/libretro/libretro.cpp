@@ -2017,6 +2017,7 @@ bool retro_unserialize(const void * data, size_t size)
 
     result = dc_unserialize(&data_ptr, &total_size, size) ;
 
+    mmu_set_state();
     dsp.dyndirty = true;
     sh4_sched_ffts();
     CalculateSync();

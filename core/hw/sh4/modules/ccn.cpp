@@ -8,7 +8,7 @@
 #include "../sh4_core.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
-
+#include "mmu.h"
 
 //Types
 
@@ -46,20 +46,24 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 	CCN_MMUCR_type temp;
 	temp.reg_data=value;
 
-#ifdef NO_MMU
-#ifndef NDEBUG
-	if ((temp.AT!=CCN_MMUCR.AT) && (temp.AT==1))
-	{
-		printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
-	}
-#endif
-#endif
+	bool mmu_changed_state = temp.AT != CCN_MMUCR.AT;
 	
-	if (temp.TI)
+	if (temp.TI != 0)
 	{
+		for (u32 i = 0; i < 4; i++)
+			ITLB[i].Data.V = 0;
+		for (u32 i = 0; i < 64; i++)
+			UTLB[i].Data.V = 0;
 		temp.TI=0;
 	}
 	CCN_MMUCR=temp;
+
+	if (mmu_changed_state)
+	{
+		//printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
+		sh4_cpu.ResetCache();
+		mmu_set_state();
+	}
 }
 void CCN_CCR_write(u32 addr, u32 value)
 {
@@ -70,9 +74,7 @@ void CCN_CCR_write(u32 addr, u32 value)
 	//what is 0xAC13DBF8 from ?
 	if (temp.ICI && curr_pc!=0xAC13DBF8)
 	{
-#ifndef NDEBUG
-		printf("Sh4: i-cache invalidation %08X\n",curr_pc);
-#endif
+		//printf("Sh4: i-cache invalidation %08X\n",curr_pc);
 		// Shikigami No Shiro II sets ICI frequently
 		// No reason to flush the dynarec cache for this
 		//sh4_cpu.ResetCache();

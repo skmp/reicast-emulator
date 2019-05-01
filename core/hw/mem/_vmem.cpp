@@ -456,8 +456,10 @@ void _vmem_bm_reset(void)
    }
 #endif
     
-   if (!virt_ram_base)
+#if FEAT_SHREC != DYNAREC_NONE
+	if (!virt_ram_base)
       bm_vmem_pagefill((void**)p_sh4rcb->fpcb, FPCB_SIZE);
+#endif
 }
 
 #if !defined(TARGET_NO_NVMEM)

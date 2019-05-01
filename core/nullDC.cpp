@@ -148,6 +148,12 @@ static void LoadSpecialSettings(void)
 {
    unsigned i;
 
+	if (reios_windows_ce)
+	{
+		log_cb(RETRO_LOG_INFO, "Enabling Full MMU and Extra depth scaling for Windows CE game\n");
+		settings.rend.ExtraDepthScale = 0.1;
+		settings.dreamcast.FullMMU = true;
+	}
    log_cb(RETRO_LOG_INFO, "[LUT]: Product number: %s.\n", reios_product_number);
    for (i = 0; i < sizeof(lut_games)/sizeof(lut_games[0]); i++)
    {
@@ -466,6 +472,7 @@ void LoadSettings(void)
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
    settings.UpdateModeForced     = 0;
 	settings.dreamcast.RTC			= GetRTC_now();
+	settings.dreamcast.FullMMU		= false;
 	settings.aica.LimitFPS			= 0;
    settings.aica.NoSound			= 0;
 	settings.pvr.subdivide_transp	= 0;
@@ -474,9 +481,6 @@ void LoadSettings(void)
    settings.pvr.Emulation.zMin         = 0.f;
    settings.pvr.Emulation.zMax         = 1.0f;
 
-#if !defined(NO_MMU)
-   settings.MMUEnabled                  = true;
-#endif
 	settings.pvr.MaxThreads			       = 3;
 #ifndef __LIBRETRO__
    settings.pvr.Emulation.ModVol       = true;

@@ -19,7 +19,7 @@ HAVE_CHD      := 1
 HAVE_CLANG    := 0
 
 
-TARGET_NAME   := reicast
+TARGET_NAME   := reicast_wince
 
 ifeq ($(HAVE_CLANG),1)
 	CXX      = ${CC_PREFIX}clang++
@@ -132,14 +132,12 @@ ifneq (,$(findstring unix,$(platform)))
 	fpic = -fPIC
 
 	ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
-		CFLAGS += -DTARGET_LINUX_x64 -D TARGET_NO_AREC
+		CFLAGS += -DTARGET_LINUX_x64 -D TARGET_NO_REC
 		SINGLE_PREC_FLAGS=1
-		CXXFLAGS += -fexceptions
 		HAVE_GENERIC_JIT = 0
 	else ifeq ($(WITH_DYNAREC), x86)
-		CFLAGS += -m32 -D TARGET_LINUX_x86
+		CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_REC
 		SINGLE_PREC_FLAGS=1
-		CXXFLAGS += -fno-exceptions
 		MFLAGS += -m32
 		ASFLAGS += --32
 		LDFLAGS += -m32

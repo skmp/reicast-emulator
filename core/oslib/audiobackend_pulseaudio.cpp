@@ -7,7 +7,7 @@
 
 static pa_simple *pulse_stream;
 
-static void pulseaudio_init()
+static void pulseaudio_init(audio_backend_pull_callback_t pull_callback)
 {
 	pa_sample_spec ss;
 	ss.format = PA_SAMPLE_S16LE;

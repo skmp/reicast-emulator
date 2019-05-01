@@ -11,6 +11,7 @@ u32 asRingFreeCount();
 bool asRingRead(u8* dst,u32 count=0);
 void UpdateBuff(u8* pos);
 
+
 typedef std::vector<std::string> (*audio_option_callback_t)();
 enum audio_option_type
 {
@@ -34,9 +35,12 @@ typedef struct {
 
 typedef audio_option_t* (*audio_options_func_t)(int* option_count);
 
-typedef void (*audio_backend_init_func_t)();
+
+typedef u32(*audio_backend_pull_callback_t)(void* buffer, u32 buffer_size, u32 amt, u32 target_rate);
+typedef void (*audio_backend_init_func_t)(audio_backend_pull_callback_t pull_callback);
 typedef u32 (*audio_backend_push_func_t)(void*, u32, bool);
 typedef void (*audio_backend_term_func_t)();
+typedef bool (*audio_backend_prefer_pull_func_t)();
 typedef struct {
     string slug;
     string name;
@@ -44,6 +48,7 @@ typedef struct {
     audio_backend_push_func_t push;
     audio_backend_term_func_t term;
 	audio_options_func_t get_options;
+	audio_backend_prefer_pull_func_t prefer_pull;
 } audiobackend_t;
 extern bool RegisterAudioBackend(audiobackend_t* backend);
 extern void InitAudio();

@@ -164,7 +164,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 #endif
 	else
 	{
-		printf("[GPF]Unhandled access to : 0x%X\n",(unat)address);
+		//printf("[GPF]Unhandled access to : 0x%X\n",(unat)address);
 	}
 
 	return EXCEPTION_CONTINUE_SEARCH;
@@ -728,6 +728,8 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 	__try
 #endif
 	{
+		CoInitialize(nullptr);
+
 		int reicast_init(int argc, char* argv[]);
 		void *rend_thread(void *);
 		void dc_term();

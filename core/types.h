@@ -10,7 +10,11 @@
 extern "C" void* zmalloc (unsigned long size);
 extern "C" void* z_calloc(size_t nelem, size_t size);
 extern "C" void* zrealloc(void* ptr, unsigned long size);
-extern "C" int   zmemalign(void **ptr, unsigned long alignment, unsigned long size);
+
+//extern "C" void *zmemalign(size_t boundary, size_t size_arg); 
+extern "C" int zmemalign(void **ptr, size_t alignment, size_t size);
+
+
 extern "C" void  zfree(void* ptr);
 //extern "C" void  zfree2(void* ptr, unsigned long size);
 

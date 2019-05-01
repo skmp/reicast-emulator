@@ -9,7 +9,7 @@
 #
 
 
-set(ZBUILD On)
+set(ZBUILD OFF)
 
 
 
@@ -369,9 +369,17 @@ if (TARGET_PS4) # -DCMAKE_TOOLCHAIN_FILE=./cmake/{ps4sdk,clang_scei}.cmake -DTAR
 #  set(BUILD_COMPILER ${COMPILER_GCC}) # try lying ..
 
   add_definitions(-DPS4 -DTARGET_PS4 -DTARGET_BSD -D__ORBIS__ -DGLES -DNOGL4)
-  add_definitions(-DTARGET_NO_THREADS -DTARGET_NO_EXCEPTIONS -DTARGET_NO_NIXPROF)
+  add_definitions(-DTARGET_NO_EXCEPTIONS -DTARGET_NO_NIXPROF) # -DTARGET_NO_THREADS 
   add_definitions(-DTARGET_NO_COREIO_HTTP -DTARGET_NO_WEBUI -UTARGET_SOFTREND)
   add_definitions(-DTARGET_NO_OPENMP -DTARGET_NO_NVMEM -DPAGE_SIZE=0x4000)	#  ENSURE PAGE_SIZE=0x4000 is USED ! should be ok now
+
+
+#add_definitions(-Dmemalign=zmemalign)
+#add_definitions(-Dposix_memalign=zmemalign)
+add_definitions(-Drealloc=zrealloc)
+add_definitions(-Dmalloc=zmalloc)
+add_definitions(-Dcalloc=z_calloc)
+add_definitions(-Dfree=zfree)
 
 
   set(FEAT_AREC   ${DYNAREC_NONE})

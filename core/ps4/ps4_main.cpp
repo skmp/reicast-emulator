@@ -386,6 +386,12 @@ extern "C" int zmemalign(void **ptr, unsigned long alignment, unsigned long size
 
 }
 
+#ifdef free
+#undef free
+#endif
+
+extern "C" void free(void *);
+
 extern "C" void  zfree(void* ptr)
 {
 	////////// *FIXME* !!!!!!!!!!!!!!!!
@@ -394,8 +400,7 @@ extern "C" void  zfree(void* ptr)
 	if ( ((unat)ptr >= (unat)heapbase) && ((unat)ptr < ((unat)heapbase + maxheap)) )
 		sceLibcMspaceFree(msp,ptr);
 
-
-	//else free(ptr);	//// WHY can't this just work ?! - 
+	else free(ptr);	//// WHY can't this just work ?! - 
 }
 
 
@@ -406,8 +411,8 @@ void* operator new(size_t size)
 
 void operator delete(void* ptr)
 {
-	if ( ((unat)ptr < (unat)heapbase) || ((unat)ptr >= ((unat)heapbase + maxheap)) )
-		zpf(" >>> IS DELETE @ %p !! \n", ptr);
+	//if ( ((unat)ptr < (unat)heapbase) || ((unat)ptr >= ((unat)heapbase + maxheap)) )
+		//zpf(" >>> IS DELETE @ %p !! \n", ptr);
 
 	zfree(ptr);
 }

@@ -430,11 +430,18 @@ void _vmem_term()
 
 u8* virt_ram_base;
 
-static void* malloc_pages(size_t size)
-{
-	u8* rv = (u8*)malloc(size + PAGE_SIZE);
-
-	return rv + PAGE_SIZE - ((size_t)rv % PAGE_SIZE);
+void* malloc_pages(size_t size) {
+#if HOST_OS == OS_WINDOWS
+	return _aligned_malloc(size, PAGE_SIZE);
+#elif defined(_ISOC11_SOURCE)
+	return aligned_alloc(PAGE_SIZE, size);
+#else
+	void *data;
+	if (posix_memalign(&data, PAGE_SIZE, size) != 0)
+		return NULL;
+	else
+		return data;
+#endif
 }
 
 static bool _vmem_reserve_nonvmem(void)
@@ -515,9 +522,9 @@ static void* _nvmem_unused_buffer(u32 start,u32 end)
 
 static void* _nvmem_alloc_mem(void)
 {
-	mem_handle=CreateFileMapping(INVALID_HANDLE_VALUE,0,PAGE_READWRITE ,0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE,0);
+	mem_handle = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, RAM_SIZE + VRAM_SIZE + ARAM_SIZE, 0);
 
-	void* rv=(u8*)VirtualAlloc(0,512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE,MEM_RESERVE,PAGE_NOACCESS);
+	void* rv = (u8*)VirtualAlloc(0, 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE, MEM_RESERVE, PAGE_NOACCESS);
 	if (rv) VirtualFree(rv,0,MEM_RELEASE);
 	return rv;
 }
@@ -782,8 +789,6 @@ bool _vmem_reserve(void)
 	mem_b.size=RAM_SIZE;
 	mem_b.data=(u8*)ptr;
 	
-	printf("A8\n");
-
 	//Area 4
 	//Area 5
 	//Area 6
@@ -793,8 +798,6 @@ bool _vmem_reserve(void)
 	unused_buffer(0x10000000,0x20000000);
 
 	printf("vmem reserve: base: %p, aram: %p, vram: %p, ram: %p\n", virt_ram_base, aica_ram.data, vram.data, mem_b.data);
-
-	printf("Resetting mem\n");
 
    aica_ram.Zero();
    vram.Zero();

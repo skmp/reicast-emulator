@@ -259,7 +259,6 @@ void DYNACALL pvr_write_area1_32(u32 addr,u32 data)
 
 void TAWrite(u32 address,u32* data,u32 count)
 {
-   //printf("TAWrite 0x%08X %d\n",address,count);
    u32 address_w=address&0x1FFFFFF;//correct ?
    if (address_w<0x800000)//TA poly
    {

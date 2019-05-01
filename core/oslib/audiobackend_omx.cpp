@@ -75,7 +75,7 @@ static u32 omx_get_latency()
 	return param.nU32 * 1000 / OUTPUT_FREQ;
 }
 
-static void omx_init()
+static void omx_init(audio_backend_pull_callback_t pull_callback)
 {
 	OMX_ERRORTYPE error;
 

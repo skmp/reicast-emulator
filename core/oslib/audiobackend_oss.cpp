@@ -7,7 +7,7 @@
 
 static int oss_audio_fd = -1;
 
-static void oss_init()
+static void oss_init(audio_backend_pull_callback_t pull_callback)
 {
 	oss_audio_fd = open("/dev/dsp", O_WRONLY);
 	if (oss_audio_fd < 0)

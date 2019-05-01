@@ -56,7 +56,7 @@ static OSStatus coreaudio_callback(void* ctx, AudioUnitRenderActionFlags* flags,
 }
 
 // We're making these functions static - there's no need to pollute the global namespace
-static void coreaudio_init()
+static void coreaudio_init(audio_backend_pull_callback_t pull_callback)
 {
     OSStatus err;
     AURenderCallbackStruct callback_struct;

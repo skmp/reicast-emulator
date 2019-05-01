@@ -9,7 +9,7 @@
 #
 
 
-set(ZBUILD OFF)
+set(ZBUILD On)
 
 
 
@@ -385,7 +385,14 @@ endif()
 if(ZBUILD)
   set(DEBUG_CMAKE ON)
   add_definitions(-D_Z_)  # Get rid of some warnings and internal dev testing
-
+  
+#  if("${HOST_OS}" STREQUAL "${OS_WINDOWS}")
+#	add_definitions(-DCUSTOM_ALLOCATOR)
+	add_definitions(-DTARGET_NO_THREADS -DTARGET_NO_EXCEPTIONS -DTARGET_NO_NIXPROF)
+	add_definitions(-DTARGET_NO_COREIO_HTTP -DTARGET_NO_WEBUI -UTARGET_SOFTREND)
+	add_definitions(-DTARGET_NO_OPENMP -DTARGET_NO_NVMEM -DPAGE_SIZE=0x4000)
+#	set(CMAKE_CXX_FLAGS " ${CMAKE_CXX_FLAGS} /bigobj") # ${CMAKE_CXX_FLAGS}
+#  endif()
 
   if(NOT TARGET_PS4 AND NOT TARGET_NSW AND 
      NOT TARGET_OSX AND NOT TARGET_IOS )

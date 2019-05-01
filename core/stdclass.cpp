@@ -296,3 +296,333 @@ void cResetEvent::Wait()//Wait for signal , then reset
 #endif
 
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+/* This has mostly been used for PS4, and now for debug purposes */
+
+#if defined(CUSTOM_ALLOCATOR) && !defined(TARGET_PS4)
+
+
+
+
+
+
+static size_t maxheap=MB(512), heapsize=0;
+static void	*heapbase=nullptr;
+
+
+
+void initheap()
+{
+
+	heapbase = _aligned_malloc(maxheap, PAGE_SIZE);
+	if(!heapbase) die("initheap() : malloc() failed! \n");
+	
+	printf("@@@@@@@@@@@@@@@ initheap w. address: %p ####################\n", heapbase);
+}
+
+char * sbrk(int incr)
+{
+    char *ret;
+    
+    if ((heapsize + incr) <= maxheap) {
+		ret = (char *)heapbase + heapsize;
+	//	bzero(ret, incr);
+		memset(ret,0,incr);
+		heapsize += incr;
+		return(ret);
+    }
+    errno = ENOMEM;
+    return((char *)-1);
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+struct janitor_block {
+    size_t size;
+    struct janitor_block *next;
+    int flag;
+};
+
+typedef struct janitor_block janitor_t;
+
+#define BLOCK_SIZE sizeof(janitor_t)
+
+
+
+/* keep a head and tail block */
+janitor_t *head, *tail;
+
+/* implement mutex lock to prevent races */
+cMutex global_malloc_lock;
+
+
+
+
+static janitor_t * get_free_block(size_t size)
+{
+    /* set head block as current block */
+    janitor_t *current = head;
+    while (current) {
+
+        /* check if block is marked free and if ample space is provided for allocation */
+        if (current->flag && current->size >= size)
+            return current;
+
+        /* check next block */
+        current = current->next;
+    }
+    return NULL;
+}
+
+
+void * jmalloc(size_t size)
+{
+    size_t total_size;
+    void *block;
+    janitor_t *header;
+
+    /* error-check size */
+    if (!size)
+        return NULL;
+
+    /* critical section start */
+	global_malloc_lock.Lock();	//   pthread_mutex_lock(&global_malloc_lock);
+
+    /* first-fit: check if there already is a block size that meets our allocation size and immediately fill it and return */
+    header = get_free_block(size);
+    if (header) {
+        header->flag = 0;
+        global_malloc_lock.Unlock();  //pthread_mutex_unlock(&global_malloc_lock);
+        return (void *) (header + 1);
+    }
+
+    /* if not found, continue by extending the size of the heap with sbrk, extending the break to meet our allocation */
+    total_size = BLOCK_SIZE + size;
+    block = sbrk(total_size);
+    if (block == (void *) -1 ) {
+        global_malloc_lock.Unlock();  //pthread_mutex_unlock(&global_malloc_lock);
+        return NULL;
+    }
+
+    /* set struct entries with allocation specification and mark as not free */
+    header = (janitor_t*)block;
+    header->size = size;
+    header->flag = 0;
+    header->next = NULL;
+
+    /* switch context to next free block
+     * - if there is no head block for the list, set header as head
+     * - if a tail block is present, set the next element to point to header, now the new tail
+     */
+    if (!head)
+        head = header;
+    if (tail)
+        tail->next = header;
+
+    tail = header;
+
+    /* unlock critical section */
+    global_malloc_lock.Unlock();  //pthread_mutex_unlock(&global_malloc_lock);
+
+    /* returned memory after break */
+    return (void *)(header + 1);
+}
+
+
+void * jcalloc(size_t num, size_t size)
+{
+    size_t total_size;
+    void *block;
+
+    /* check if parameters were provided */
+    if (!num || !size)
+        return (void *) NULL;
+
+    /* check if size_t bounds adhere to multiplicative inverse properties */
+    total_size = num * size;
+    if (size != total_size / num)
+        return (void *) NULL;
+
+    /* perform conventional malloc with total_size */
+    block = jmalloc(total_size);
+    if (!block)
+        return (void *) NULL;
+
+    /* zero out our newly heap allocated block */
+    memset(block, 0, size);
+    return block;
+}
+
+
+void
+jfree(void *block)
+{
+    janitor_t *header, *tmp;
+    void * programbreak;
+
+    /* if the block is provided */
+    if (!block)
+        return (void) NULL;
+
+    /* start critical section */
+    global_malloc_lock.Lock();  //pthread_mutex_lock(&global_malloc_lock);
+
+    /* set header as previous block */
+    header = (janitor_t *) block - 1;
+
+    /* start programbreak at byte 0 */
+    programbreak = sbrk(0);
+
+   /* start to NULL out block until break point of heap
+    * NOTE: header (previous block) size + target block should meet
+    */
+    if (( char *) block + header->size == programbreak){
+
+        /* check if block is only allocated block (since it is both head and tail), and NULL */
+        if (head == tail)
+            head = tail = NULL;
+        else {
+
+            /* copy head into tmp block, NULL each block from tail back to head */
+            tmp = head;
+            while (tmp) {
+                if (tmp->next == tail){
+                    tmp->next = NULL;
+                    tail = tmp;
+                }
+                tmp = tmp->next;
+            }
+        }
+
+        /* move break back to memory address after deallocation */
+        sbrk(0 - BLOCK_SIZE - header->size);
+
+        /* unlock critical section*/
+        global_malloc_lock.Unlock();  //pthread_mutex_unlock(&global_malloc_lock);
+
+        /* returns nothing */
+        return (void) NULL;
+    }
+
+    /* set flag to unmarked */
+    header->flag = 1;
+
+    /* unlock critical section */
+    global_malloc_lock.Unlock();  //pthread_mutex_unlock(&global_malloc_lock);
+}
+
+
+void *
+jrealloc(void *block, size_t size)
+{
+    janitor_t *header;
+    void *ret;
+
+    /* create a new block if parameters not set */
+    if (!block)
+        return jmalloc(size);
+
+    /* set header to be block's previous bit */
+    header = (janitor_t *) block - 1;
+
+    /* check if headers size is greater than specified paramater */
+    if (header->size >= size)
+        return block;
+
+    /* create a new block allocation */
+    ret = jmalloc(size);
+
+    /* add content from previous block to newly allocated block */
+    if (ret) {
+        memcpy(ret, block, header->size);
+        jfree(block);
+    }
+    return ret;
+}
+
+
+
+
+
+
+
+
+extern "C" void* zmalloc(unsigned long size)
+{
+	if (nullptr==heapbase) initheap();
+
+	return jmalloc(size);
+}
+
+extern "C" void* z_calloc(size_t nelem, size_t size)	// libz has a zcalloc / global ns clash
+{
+	if (nullptr==heapbase) initheap();
+
+	return jcalloc(nelem, size);
+}
+
+
+extern "C" void* zrealloc(void* ptr, unsigned long size)
+{
+	if (nullptr==heapbase) initheap();
+
+	return jrealloc(ptr, size);
+}
+
+extern "C" int   zmemalign(void **ptr, unsigned long alignment, unsigned long size)
+{
+	if (nullptr==heapbase) initheap();
+
+
+
+	// *FIXME*
+
+	*ptr=nullptr;
+	return 0; //jmemalign(msp, ptr, alignment, size);
+
+}
+
+extern "C" void  zfree(void* ptr)
+{
+	////////// *FIXME* !!!!!!!!!!!!!!!!
+	/// this is a hack !
+
+	if ( ((unat)ptr >= (unat)heapbase) && ((unat)ptr < ((unat)heapbase + maxheap)) )
+		zpf(" >>> zfree not in heap !!! @ %p !! \n", ptr);
+
+
+	//else free(ptr);	//// WHY can't this just work ?! - 
+}
+
+
+void* operator new(size_t size)
+{
+	return zmalloc(size);
+}
+
+void operator delete(void* ptr)
+{
+	if ( ((unat)ptr < (unat)heapbase) || ((unat)ptr >= ((unat)heapbase + maxheap)) )
+		zpf(" >>> IS DELETE @ %p !! \n", ptr);
+
+	zfree(ptr);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif // defined(CUSTOM_ALLOCATOR)

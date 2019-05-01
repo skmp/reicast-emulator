@@ -3,7 +3,7 @@
 #include "build.h"
 
 
-#if defined(TARGET_PS4) || USE_CUSTOM_ALLOCATORS
+#if defined(TARGET_PS4) || defined(CUSTOM_ALLOCATOR)
 
 #include <cstdlib>
 

@@ -38,6 +38,7 @@ SOURCES_CXX := \
 					$(CORE_DIR)/core/hw/maple/maple_cfg.cpp \
 					\
 					$(CORE_DIR)/core/hw/mem/_vmem.cpp \
+					$(CORE_DIR)/core/hw/mem/vmem32.cpp \
 					\
 					$(CORE_DIR)/core/hw/modem/dns.cpp \
 					$(CORE_DIR)/core/hw/modem/modem.cpp \

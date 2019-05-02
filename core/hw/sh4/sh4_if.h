@@ -348,6 +348,9 @@ struct Sh4Context
 
 			int sh4_sched_next;
 			u32 interrupt_pend;
+
+			u32 exception_pc;
+			u8 *vmem32_base;
 		};
 		u64 raw[64-8];
 	};
@@ -422,3 +425,4 @@ s32 rcb_poffs(T* ptr)
 //Get an interface to sh4 interpreter
 void Get_Sh4Interpreter(sh4_if* cpu);
 void Get_Sh4Recompiler(sh4_if* cpu);
+u32* GetRegPtr(u32 reg);

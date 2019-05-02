@@ -4,7 +4,6 @@
 */
 
 #include <algorithm>
-#include <set>
 #include "blockmanager.h"
 #include "ngen.h"
 
@@ -20,6 +19,7 @@
 //#include "../intc.h"
 //#include "../tmu.h"
 #include "hw/sh4/sh4_mem.h"
+#include "hw/sh4/sh4_sched.h"
 
 
 #if HOST_OS==OS_LINUX && defined(DYNA_OPROF)
@@ -31,6 +31,7 @@ op_agent_t          oprofHandle;
 
 
 bm_List all_blocks;
+bm_List all_temp_blocks;
 bm_List del_blocks;
 #include <set>
 
@@ -41,19 +42,75 @@ blkmap_t blkmap;
 
 #define FPCA(x) ((DynarecCodeEntryPtr&)sh4rcb.fpcb[(x>>1)&FPCB_MASK])
 
+// addr must be a physical address
 DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
 	//rdv_FailedToFindBlock_pc=addr;
 	DynarecCodeEntryPtr rv=(DynarecCodeEntryPtr)FPCA(addr);
 
-	return (DynarecCodeEntryPtr)rv;
+	return rv;
 }
 
-DynarecCodeEntryPtr DYNACALL bm_GetCode2(u32 addr)
+// addr must be a virtual address
+DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 {
-	return (DynarecCodeEntryPtr)bm_GetCode(addr);
+#ifndef NO_MMU
+	if (!mmu_enabled())
+#endif
+		return bm_GetCode(addr);
+#ifndef NO_MMU
+	else
+	{
+		if (addr & 1)
+		{
+			switch (addr)
+			{
+#ifdef USE_WINCE_HACK
+			case 0xfffffde7: // GetTickCount
+				// This should make this syscall faster
+				r[0] = sh4_sched_now64() * 1000 / SH4_MAIN_CLOCK;
+				next_pc = pr;
+				break;
+
+			case 0xfffffd05: // QueryPerformanceCounter(u64 *)
+				{
+					u32 paddr;
+					if (mmu_data_translation<MMU_TT_DWRITE, u64>(r[4], paddr) == MMU_ERROR_NONE)
+					{
+						_vmem_WriteMem64(paddr, sh4_sched_now64() >> 4);
+						r[0] = 1;
+						next_pc = pr;
+					}
+					else
+					{
+						Do_Exception(addr, 0xE0, 0x100);
+					}
+				}
+				break;
+#endif
+
+			default:
+				Do_Exception(addr, 0xE0, 0x100);
+				break;
+			}
+			addr = next_pc;
+		}
+
+		u32 paddr;
+		bool shared;
+		u32 rv = mmu_instruction_translation(addr, paddr, shared);
+		if (rv != MMU_ERROR_NONE)
+		{
+			DoMMUException(addr, rv, MMU_TT_IREAD);
+			mmu_instruction_translation(next_pc, paddr, shared);
+		}
+
+		return bm_GetCode(paddr);
+	}
+#endif
 }
 
+// addr must be a physical address
 RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr)
 {
 	DynarecCodeEntryPtr cde=bm_GetCode(addr);
@@ -74,7 +131,7 @@ RuntimeBlockInfo* bm_GetBlock2(void* dynarec_code)
 	}
 	else
 	{
-		printf("bm_GetBlock(%08X) failed ..\n",dynarec_code);
+		printf("bm_GetBlock(%p) failed ..\n",dynarec_code);
 		return 0;
 	}
 }
@@ -92,10 +149,13 @@ RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code)
 
 void bm_AddBlock(RuntimeBlockInfo* blk)
 {
-	all_blocks.push_back(blk);
+	if (!blk->temp_block)
+		all_blocks.push_back(blk);
+	else
+		all_temp_blocks.push_back(blk);
 	if (blkmap.find(blk)!=blkmap.end())
 	{
-		printf("DUP: %08X %08X %08X %08X\n", (*blkmap.find(blk))->addr,(*blkmap.find(blk))->code,blk->addr,blk->code);
+		printf("DUP: %08X %p %08X %p\n", (*blkmap.find(blk))->addr,(*blkmap.find(blk))->code,blk->addr,blk->code);
 		verify(false);
 	}
 	blkmap.insert(blk);
@@ -118,6 +178,35 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 	}
 #endif
 
+}
+
+void bm_RemoveBlock(RuntimeBlockInfo* block)
+{
+	verify((void*)bm_GetCode(block->addr) != (void*)ngen_FailedToFindBlock);
+	FPCA(block->addr) = ngen_FailedToFindBlock;
+	auto it = blkmap.find(block);
+	if (it != blkmap.end())
+		blkmap.erase(it);
+	if (!block->temp_block)
+	{
+		for (auto it = all_blocks.begin(); it != all_blocks.end(); it++)
+			if (*it == block)
+			{
+				all_blocks.erase(it);
+				break;
+			}
+	}
+	else
+	{
+		for (auto it = all_temp_blocks.begin(); it != all_temp_blocks.end(); it++)
+			if (*it == block)
+			{
+				all_temp_blocks.erase(it);
+				break;
+			}
+	}
+	// FIXME need to remove refs
+	del_blocks.push_back(block);
 }
 
 /* Naomi edit - allow for max possible size */
@@ -351,6 +440,21 @@ void bm_Reset()
 #endif
 }
 
+void bm_ResetTempCache(bool full)
+{
+	if (!full)
+	{
+		for (auto block : all_temp_blocks)
+		{
+			FPCA(block->addr) = ngen_FailedToFindBlock;
+			auto it = blkmap.find(block);
+			if (it != blkmap.end())
+				blkmap.erase(it);
+		}
+	}
+	del_blocks.insert(del_blocks.begin(),all_temp_blocks.begin(),all_temp_blocks.end());
+	all_temp_blocks.clear();
+}
 
 void bm_Init()
 {
@@ -371,6 +475,10 @@ void bm_Term()
 	
 	oprofHandle=0;
 #endif
+	bm_Reset();
+	for (int i = 0; i < del_blocks.size(); i++)
+		delete del_blocks[i];
+	del_blocks.clear();
 }
 
 void bm_WriteBlockMap(const string& file)
@@ -381,9 +489,9 @@ void bm_WriteBlockMap(const string& file)
 		printf("Writing block map !\n");
 		for (size_t i=0; i<all_blocks.size(); i++)
 		{
-			fprintf(f,"block: %d:%08X:%08X:%d:%d:%d\n",all_blocks[i]->BlockType,all_blocks[i]->addr,all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes);
+			fprintf(f,"block: %d:%08X:%p:%d:%d:%d\n",all_blocks[i]->BlockType,all_blocks[i]->addr,all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes);
 			for(size_t j=0;j<all_blocks[i]->oplist.size();j++)
-				fprintf(f,"\top: %d:%d:%s\n",j,all_blocks[i]->oplist[j].guest_offs,all_blocks[i]->oplist[j].dissasm().c_str());
+				fprintf(f,"\top: %zd:%d:%s\n",j,all_blocks[i]->oplist[j].guest_offs,all_blocks[i]->oplist[j].dissasm().c_str());
 		}
 		fclose(f);
 		printf("Finished writing block map\n");
@@ -414,7 +522,7 @@ void sh4_jitsym(FILE* out)
 {
 	for (size_t i=0; i<all_blocks.size(); i++)
 	{
-		fprintf(out,"%08p %d %08X\n",all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->addr);
+		fprintf(out,"%p %d %08X\n",all_blocks[i]->code,all_blocks[i]->host_code_size,all_blocks[i]->addr);
 	}
 }
 
@@ -443,7 +551,7 @@ void bm_PrintTopBlocks()
 	double sel_hops=0;
 	for (size_t i=0;i<(all_blocks.size()/100);i++)
 	{
-		printf("Block %08X: %06X, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)\n",
+		printf("Block %08X: %p, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)\n",
 			all_blocks[i]->addr, all_blocks[i]->code,all_blocks[i]->runs,
 			all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes,all_blocks[i]->host_opcodes,
 
@@ -454,12 +562,12 @@ void bm_PrintTopBlocks()
 		sel_hops+=all_blocks[i]->host_opcodes*all_blocks[i]->runs;
 	}
 
-	printf(" >-< %.2f%% covered in top 1% blocks\n",sel_hops/total_hops);
+	printf(" >-< %.2f%% covered in top 1%% blocks\n",sel_hops/total_hops);
 
 	size_t i;
 	for (i=all_blocks.size()/100;sel_hops/total_hops<50;i++)
 	{
-		printf("Block %08X: %06X, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)\n",
+		printf("Block %08X: %p, r: %d (c: %d, s: %d, h: %d) (r: %.2f%%, c: %.2f%%, h: %.2f%%)\n",
 			all_blocks[i]->addr, all_blocks[i]->code,all_blocks[i]->runs,
 			all_blocks[i]->guest_cycles,all_blocks[i]->guest_opcodes,all_blocks[i]->host_opcodes,
 

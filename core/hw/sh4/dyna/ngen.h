@@ -45,6 +45,11 @@
 #include "decoder.h"
 #include "blockmanager.h"
 
+#ifdef NO_MMU
+#define TEMP_CODE_SIZE (0)
+#else
+#define TEMP_CODE_SIZE (1024*1024)
+#endif
 
 
 //alternative emit ptr, set to 0 to use the main buffer
@@ -62,12 +67,13 @@ void emit_SetBaseAddr();
 
 //Called from ngen_FailedToFindBlock
 DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc);
+DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock_pc();
 //Called when a block check failed, and the block needs to be invalidated
 DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc);
 //Called to compile code @pc
-DynarecCodeEntryPtr rdv_CompilePC();
+DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures);
 //Returns 0 if there is no code @pc, code ptr otherwise
-DynarecCodeEntryPtr rdv_FindCode();
+//DynarecCodeEntryPtr rdv_FindCode();
 //Finds or compiles code @pc
 DynarecCodeEntryPtr rdv_FindOrCompile();
 
@@ -94,6 +100,7 @@ void ngen_mainloop(void* cntx);
 //ngen features
 
 void ngen_GetFeatures(ngen_features* dst);
+void ngen_HandleException();
 
 //Canonical callback interface
 enum CanonicalParamType

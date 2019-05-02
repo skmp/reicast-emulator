@@ -115,9 +115,3 @@ void ngen_ResetBlocks(void)
 #endif
 	idxnxx = 0;
 }
-
-
-u32* GetRegPtr(u32 reg)
-{
-	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
-}

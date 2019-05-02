@@ -368,7 +368,8 @@ struct RegAlloc
 		verify(opid>=0 && opid<block->oplist.size());
 		shil_opcode* op=&block->oplist[opid];
 
-		return op->op == shop_sync_fpscr || op->op == shop_sync_sr || op->op == shop_ifb;
+		return op->op == shop_sync_fpscr || op->op == shop_sync_sr || op->op == shop_ifb
+				 || (mmu_enabled() && (op->op == shop_readm || op->op == shop_writem || op->op == shop_pref));
 	}
 
 	bool IsRegWallOp(RuntimeBlockInfo* block, int opid, bool is_fpr)
@@ -495,6 +496,12 @@ struct RegAlloc
 				else if (op->op==shop_sync_fpscr)
 				{
 					fp=true;
+				}
+				else
+				{
+					all = true;
+					fp = true;
+					gpr_b = true;
 				}
 
 				if (all)
@@ -706,7 +713,6 @@ struct RegAlloc
 
 			SplitSpans(cc_f,reg_cc_max_f,true,opid);
 
-#ifndef NDEBUG
 			if (false)
 			{
 				printf("After reduction ..\n");
@@ -718,7 +724,6 @@ struct RegAlloc
 						printf("\t[%c]span: %d (r%d), [%d:%d],n: %d, p: %d\n",spn->cacc(opid)?'x':' ',sid,all_spans[sid]->regstart,all_spans[sid]->start,all_spans[sid]->end,all_spans[sid]->nacc(opid),all_spans[sid]->pacc(opid));
 				}
 			}
-#endif
 		}
 
 		//Allocate the registers to the spans !
@@ -868,17 +873,13 @@ struct RegAlloc
 
 				if ( do_move)
 				{
-#ifndef NDEBUG
 					printf("Span PLD is movable by %d, moved by %d w/ %d!!\n",slack,spn->start-opid_found,opid_plc);
-#endif
 					spn->start=opid_found;
 				}
-#ifndef NDEBUG
 				else
 				{
 					printf("Span PLD is movable by %d but  %d -> not moved :(\n",slack,opid_plc);
 				}
-#endif
 			}
 		}
 #endif
@@ -959,16 +960,12 @@ struct RegAlloc
 
 	void SplitSpans(u32 cc,u32 reg_cc_max ,bool fpr,u32 opid)
 	{
-#ifndef NDEBUG
 		bool was_large=false;	//this control prints
-#endif
 
 		while (cc>reg_cc_max)
 		{
-#ifndef NDEBUG
 			if (was_large)
 				printf("Opcode: %d, %d active spans\n",opid,cc);
-#endif
 
 			RegSpan* last_pacc=0;
 			RegSpan* last_nacc=0;
@@ -987,10 +984,8 @@ struct RegAlloc
 						if (!last_pacc || spn->pacc(opid)<last_pacc->pacc(opid))
 							last_pacc=spn;
 					}
-#ifndef NDEBUG
 					if (was_large)
 						printf("\t[%c]span: %d (r%d), [%d:%d],n: %d, p: %d\n",spn->cacc(opid)?'x':' ',sid,all_spans[sid]->regstart,all_spans[sid]->start,all_spans[sid]->end,all_spans[sid]->nacc(opid),all_spans[sid]->pacc(opid));
-#endif
 				}
 			}
 
@@ -1091,14 +1086,15 @@ struct RegAlloc
 
 			if (spn->begining(current_opid) && spn->preload)
 			{
-				//printf("Op %d: Preloading r%d to %d\n",current_opid,spn->regstart,spn->nreg);
 				if (spn->fpr)
 				{
+					//printf("Op %d: Preloading f%d to %d\n",current_opid,spn->regstart,spn->nregf);
 					preload_fpu++;
 					Preload_FPU(spn->regstart,spn->nregf);
 				}
 				else
 				{
+					//printf("Op %d: Preloading r%d to %d\n",current_opid,spn->regstart,spn->nreg);
 					preload_gpr++;
 					Preload(spn->regstart,spn->nreg);
 				}
@@ -1114,14 +1110,15 @@ struct RegAlloc
 
 			if (spn->ending(current_opid) && spn->writeback)
 			{
-				//printf("Op %d: Writing back r%d to %d\n",current_opid,spn->regstart,spn->nreg);
 				if (spn->fpr)
 				{
+					//printf("Op %d: Writing back f%d from %d\n",current_opid,spn->regstart,spn->nregf);
 					writeback_fpu++;
 					Writeback_FPU(spn->regstart,spn->nregf);
 				}
 				else
 				{
+					//printf("Op %d: Writing back r%d from %d\n",current_opid,spn->regstart,spn->nreg);
 					writeback_gpr++;
 					Writeback(spn->regstart,spn->nreg);
 				}

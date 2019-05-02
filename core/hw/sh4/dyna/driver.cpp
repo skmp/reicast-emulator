@@ -1,4 +1,5 @@
 #include "types.h"
+#include <unordered_set>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -16,7 +17,9 @@
 #include "hw/sh4/sh4_interrupts.h"
 
 #include "hw/sh4/sh4_mem.h"
-#include "hw/aica/aica.h"
+#include "hw/sh4/modules/mmu.h"
+#include "hw/pvr/pvr_mem.h"
+#include "hw/aica/aica_if.h"
 #include "hw/gdrom/gdrom_if.h"
 
 #include <time.h>
@@ -30,7 +33,7 @@
 //uh uh
 
 #if !defined(_WIN64)
-u8 SH4_TCB[CODE_SIZE+4096]
+u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE + 4096]
 #if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT
 	;
 #elif defined(__linux__) || defined(__HAIKU__) || \
@@ -44,11 +47,16 @@ u8 SH4_TCB[CODE_SIZE+4096]
 #endif
 
 u8* CodeCache;
+u8* TempCodeCache;
 
 
 u32 LastAddr;
 u32 LastAddr_min;
+u32 TempLastAddr;
 u32* emit_ptr=0;
+u32* emit_ptr_limit;
+
+std::unordered_set<u32> smc_hotspots;
 
 void* emit_GetCCPtr(void)
 {
@@ -69,14 +77,22 @@ void RASDASD()
 	memset(emit_GetCCPtr(),0xCC,emit_FreeSpace());
 }
 
+void clear_temp_cache(bool full)
+{
+	//printf("recSh4:Temp Code Cache clear at %08X\n", curr_pc);
+	TempLastAddr = 0;
+	bm_ResetTempCache(full);
+}
+
 static void recSh4_ClearCache(void)
 {
-	LastAddr=LastAddr_min;
-	bm_Reset();
-
 #ifndef NDEBUG
 	printf("recSh4:Dynarec Cache clear at %08X\n",curr_pc);
 #endif
+	LastAddr=LastAddr_min;
+	bm_Reset();
+	smc_hotspots.clear();
+	clear_temp_cache(true);
 }
 
 static void recSh4_Run(void)
@@ -107,14 +123,20 @@ void emit_Write32(u32 data)
 
 void emit_Skip(u32 sz)
 {
-	LastAddr+=sz;
+	if (emit_ptr)
+		emit_ptr = (u32*)((u8*)emit_ptr + sz);
+	else
+		LastAddr+=sz;
 }
 u32 emit_FreeSpace()
 {
-	return CODE_SIZE-LastAddr;
+	if (emit_ptr)
+		return (emit_ptr_limit - emit_ptr) * sizeof(u32);
+	else
+		return CODE_SIZE-LastAddr;
 }
 
-
+// pc must be a physical address
 bool DoCheck(u32 pc)
 {
 	if (IsOnRam(pc))
@@ -189,7 +211,7 @@ const char* RuntimeBlockInfo::hash(bool full, bool relocable)
 	return block_hash;
 }
 
-void RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
+bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 {
 	staging_runs=addr=lookups=runs=host_code_size=0;
 	guest_cycles=guest_opcodes=host_opcodes=0;
@@ -198,81 +220,126 @@ void RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	has_jcond=false;
 	BranchBlock=NextBlock=csc_RetCache=0xFFFFFFFF;
 	BlockType=BET_SCL_Intr;
+	has_fpu_op = false;
+	temp_block = false;
 	
-	addr=rpc;
+	vaddr=rpc;
+	if (mmu_enabled())
+	{
+		bool shared;
+		u32 rv = mmu_instruction_translation(vaddr, addr, shared);
+		if (rv != MMU_ERROR_NONE)
+		{
+			DoMMUException(vaddr, rv, MMU_TT_IREAD);
+			return false;
+		}
+	}
+	else
+		addr = vaddr;
 	fpu_cfg=rfpu_cfg;
 	
 	oplist.clear();
 
-	dec_DecodeBlock(this,SH4_TIMESLICE/2);
+	if (!dec_DecodeBlock(this,SH4_TIMESLICE/2))
+		return false;
+
 	AnalyseBlock(this);
+
+	return true;
 }
 
-DynarecCodeEntryPtr rdv_CompilePC(void)
+DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 {
 	u32 pc=next_pc;
 
 	if (emit_FreeSpace()<16*1024 || pc==0x8c0000e0 || pc==0xac010000 || pc==0xac008300)
 		recSh4_ClearCache();
 
-	RuntimeBlockInfo* rv=0;
-	do
+	RuntimeBlockInfo* rbi = ngen_AllocateBlock();
+
+	if (!rbi->Setup(pc,fpscr))
 	{
-		RuntimeBlockInfo* rbi = ngen_AllocateBlock();
-		if (rv==0)
-         rv=rbi;
-
-		rbi->Setup(pc,fpscr);
-
-		bool do_opts=((rbi->addr&0x3FFFFFFF)>0x0C010100);
+		delete rbi;
+		return NULL;
+	}
+	rbi->blockcheck_failures = blockcheck_failures;
+	if (smc_hotspots.find(rbi->addr) != smc_hotspots.end())
+	{
+		if (TEMP_CODE_SIZE - TempLastAddr < 16 * 1024)
+			clear_temp_cache(false);
+		emit_ptr = (u32 *)(TempCodeCache + TempLastAddr);
+		emit_ptr_limit = (u32 *)(TempCodeCache + TEMP_CODE_SIZE);
+		rbi->temp_block = true;
+	}
+		bool do_opts = !rbi->temp_block; //((rbi->addr&0x3FFFFFFF)>0x0C010100);
 		rbi->staging_runs=do_opts?100:-100;
 		ngen_Compile(rbi,DoCheck(rbi->addr),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
 		verify(rbi->code!=0);
 
 		bm_AddBlock(rbi);
 
-      if (rbi->BlockType==BET_Cond_0 || rbi->BlockType==BET_Cond_1)
-			pc=rbi->NextBlock;
-		else
-			pc=0;
-	} while(false && pc);
+	if (emit_ptr != NULL)
+	{
+		TempLastAddr = (u8*)emit_ptr - TempCodeCache;
+		emit_ptr = NULL;
+		emit_ptr_limit = NULL;
+	}
 
-	return rv->code;
+	return rbi->code;
+}
+
+DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock_pc()
+{
+	return rdv_FailedToFindBlock(next_pc);
 }
 
 DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 {
 	//printf("rdv_FailedToFindBlock ~ %08X\n",pc);
 	next_pc=pc;
-
-	return rdv_CompilePC();
+	DynarecCodeEntryPtr code = rdv_CompilePC(0);
+	if (code == NULL)
+		code = bm_GetCodeByVAddr(next_pc);
+	return code;
 }
 
-extern u32 rebuild_counter;
-
-
-u32 DYNACALL rdv_DoInterrupts_pc(u32 pc)
-{
+u32 DYNACALL rdv_DoInterrupts_pc(u32 pc) {
 	next_pc = pc;
 	UpdateINTC();
 
 	return next_pc;
 }
 
-void bm_Rebuild();
 u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 {
-   RuntimeBlockInfo* rbi = bm_GetBlock2(block_cpde);
-	return rdv_DoInterrupts_pc(rbi->addr);
+	RuntimeBlockInfo* rbi = bm_GetBlock2(block_cpde);
+	return rdv_DoInterrupts_pc(rbi->vaddr);
 }
 
-DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc)
+// addr must be the physical address of the start of the block
+DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 {
-	next_pc=pc;
-	recSh4_ClearCache();
-	return rdv_CompilePC();
+	u32 blockcheck_failures = 0;
+	if (mmu_enabled())
+	{
+		RuntimeBlockInfo *block = bm_GetBlock(addr);
+		blockcheck_failures = block->blockcheck_failures + 1;
+		if (blockcheck_failures > 5)
+		{
+			bool inserted = smc_hotspots.insert(addr).second;
+			//if (inserted)
+			//	printf("rdv_BlockCheckFail SMC hotspot @ %08x fails %d\n", addr, blockcheck_failures);
+		}
+		bm_RemoveBlock(block);
+	}
+	else
+	{
+		next_pc = addr;
+		recSh4_ClearCache();
+	}
+	return rdv_CompilePC(blockcheck_failures);
 }
-
+/*
 DynarecCodeEntryPtr rdv_FindCode(void)
 {
    DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
@@ -281,12 +348,12 @@ DynarecCodeEntryPtr rdv_FindCode(void)
 	
 	return rv;
 }
-
+*/
 DynarecCodeEntryPtr rdv_FindOrCompile(void)
 {
-	DynarecCodeEntryPtr rv=bm_GetCode(next_pc);
+	DynarecCodeEntryPtr rv=bm_GetCodeByVAddr(next_pc);
 	if (rv==ngen_FailedToFindBlock)
-		rv=rdv_CompilePC();
+		rv=rdv_CompilePC(0);
 	
 	return rv;
 }
@@ -325,7 +392,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 
 	DynarecCodeEntryPtr rv=rdv_FindOrCompile();
 
-	bool do_link=bm_GetBlock2((void*)code)==rbi;
+	bool do_link = !mmu_enabled() && bm_GetBlock2((void*)code) == rbi;
 
 	if (do_link)
 	{
@@ -420,7 +487,7 @@ static void recSh4_Init(void)
 		//align to next page ..
 		u8* ptr = (u8*)recSh4_Init + i * 1024 * 1024;
 
-		CodeCache = (u8*)VirtualAlloc(ptr, CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);//; (u8*)(((size_t)SH4_TCB+4095)& ~4095);
+		CodeCache = (u8*)VirtualAlloc(ptr, CODE_SIZE + TEMP_CODE_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);//; (u8*)(((size_t)SH4_TCB+4095)& ~4095);
 
 		if (CodeCache)
 			break;
@@ -430,17 +497,17 @@ static void recSh4_Init(void)
 #endif
 
 #ifdef __MACH__
-    munmap(CodeCache, CODE_SIZE);
-    CodeCache = (u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
+    munmap(CodeCache, CODE_SIZE + TEMP_CODE_SIZE;
+    CodeCache = (u8*)mmap(CodeCache, CODE_SIZE + TEMP_CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
 #endif
 
-    protect_pages(CodeCache, CODE_SIZE, ACC_READWRITEEXEC);
+    protect_pages(CodeCache, CODE_SIZE + TEMP_CODE_SIZE, ACC_READWRITEEXEC);
 
 #if defined(__linux__) || defined(__MACH__)
 #if TARGET_IPHONE
-	memset((u8*)mmap(CodeCache, CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0),0xFF,CODE_SIZE);
+	memset((u8*)mmap(CodeCache, CODE_SIZE + TEMP_CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0),0xFF,CODE_SIZE);
 #else
-	memset(CodeCache,0xFF,CODE_SIZE);
+	memset(CodeCache,0xFF,CODE_SIZE + TEMP_CODE_SIZE);
 #endif
 #endif
 
@@ -470,8 +537,6 @@ void Get_Sh4Recompiler(sh4_if* rv)
 	rv->Init = recSh4_Init;
 	rv->Term = recSh4_Term;
 	rv->IsCpuRunning = recSh4_IsCpuRunning;
-	//rv->GetRegister=Sh4_int_GetRegister;
-	//rv->SetRegister=Sh4_int_SetRegister;
 	rv->ResetCache = recSh4_ClearCache;
 }
 #endif

@@ -148,13 +148,13 @@ static void LoadSpecialSettings(void)
 {
    unsigned i;
 
+   log_cb(RETRO_LOG_INFO, "[LUT]: Product number: %s.\n", reios_product_number);
 	if (reios_windows_ce)
 	{
 		log_cb(RETRO_LOG_INFO, "Enabling Full MMU and Extra depth scaling for Windows CE game\n");
 		settings.rend.ExtraDepthScale = 0.1;
 		settings.dreamcast.FullMMU = true;
 	}
-   log_cb(RETRO_LOG_INFO, "[LUT]: Product number: %s.\n", reios_product_number);
    for (i = 0; i < sizeof(lut_games)/sizeof(lut_games[0]); i++)
    {
       if (strstr(lut_games[i].product_number, reios_product_number))

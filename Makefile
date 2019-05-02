@@ -132,7 +132,7 @@ ifneq (,$(findstring unix,$(platform)))
 	fpic = -fPIC
 
 	ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
-		CFLAGS += -DTARGET_LINUX_x64 -D TARGET_NO_REC
+		CFLAGS += -DTARGET_LINUX_x64 -D TARGET_NO_AREC
 		SINGLE_PREC_FLAGS=1
 		HAVE_GENERIC_JIT = 0
 	else ifeq ($(WITH_DYNAREC), x86)

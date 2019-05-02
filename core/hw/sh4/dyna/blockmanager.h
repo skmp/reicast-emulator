@@ -22,8 +22,10 @@ struct RuntimeBlockInfo_Core
 
 struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 {
-	void Setup(u32 pc,fpscr_t fpu_cfg);
+	bool Setup(u32 pc,fpscr_t fpu_cfg);
 	const char* hash(bool full=true, bool reloc=false);
+
+	u32 vaddr;
 
 	u32 host_code_size;	   /* in bytes */
 	u32 sh4_code_size;      /* in bytes */
@@ -35,7 +37,9 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	u32 guest_cycles;
 	u32 guest_opcodes;
 	u32 host_opcodes;
-
+	bool has_fpu_op;
+	u32 blockcheck_failures;
+	bool temp_block;
 
 	u32 BranchBlock; /* if not 0xFFFFFFFF then jump target */
 	u32 NextBlock;   /* if not 0xFFFFFFFF then next block (by position) */
@@ -135,14 +139,19 @@ typedef std::set<RuntimeBlockInfo*,BlockMapCMP> blkmap_t;
 
 void bm_WriteBlockMap(const string& file);
 
-extern "C" __attribute__((used)) DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr);
+extern "C" {
+__attribute__((used)) DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr);
+__attribute__((used)) DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr);
+}
 
 RuntimeBlockInfo* bm_GetBlock2(void* dynarec_code);
 RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code);
 RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr);
 
 void bm_AddBlock(RuntimeBlockInfo* blk);
+void bm_RemoveBlock(RuntimeBlockInfo* block);
 void bm_Reset();
+void bm_ResetTempCache(bool full);
 void bm_Periodical_1s();
 void bm_Periodical_14k();
 

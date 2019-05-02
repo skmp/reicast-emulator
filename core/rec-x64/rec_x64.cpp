@@ -79,9 +79,7 @@ void ngen_mainloop(void* v_cntx)
 #endif
                         "pushq %rbx                                             \n\t"
 WIN32_ONLY(     ".seh_pushreg %rbx                              \n\t")
-#ifndef __MACH__	// rbp is pushed in the standard function prologue
                         "pushq %rbp                                             \n\t"
-#endif
 #ifdef _WIN32
                         ".seh_pushreg %rbp                              \n\t"
                         "pushq %rdi                                             \n\t"
@@ -111,7 +109,11 @@ WIN32_ONLY(     ".seh_pushreg %r14                              \n\t")
 #else
                         "lea " _U "jmp_env(%rip), %rdi			\n\t"
 #endif
-                        "call " _U "setjmp@PLT						\n\t"
+#ifdef __MACH__
+                        "call " _U "setjmp						\n\t"
+#else
+                        "call " _U "setjmp@PLT					\n\t"
+#endif
 
                 "1:															\n\t"   // run_loop
                         "movq " _U "p_sh4rcb(%rip), %rax       \n\t"
@@ -152,9 +154,7 @@ WIN32_ONLY(     ".seh_pushreg %r14                              \n\t")
                         "popq %rsi                                                      \n\t"
                         "popq %rdi                                                      \n\t"
 #endif
-#ifndef __MACH__
                         "popq %rbp                                                      \n\t"
-#endif
                         "popq %rbx                                                      \n\t"
 #ifdef _WIN32
                         "ret                                                            \n\t"

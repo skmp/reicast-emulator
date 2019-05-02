@@ -159,10 +159,8 @@ bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect)
 	UpdateSR();
 
 	next_pc = vbr + CallVect;
+	//printf("RaiseException: from %08X , pc errh %08X, %08X vect\n", spc, epc, next_pc);
 
-#ifndef NDEBUG
-	printf("RaiseException: from %08X , pc errh %08X, %08X vect\n", spc, epc, next_pc);
-#endif
 	return true;
 }
 

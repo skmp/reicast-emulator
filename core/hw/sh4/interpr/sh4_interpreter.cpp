@@ -122,6 +122,8 @@ void Sh4_int_Skip(void)
 		next_pc+=2;
 }
 
+extern u8 *vmem32_base;
+
 void Sh4_int_Reset(bool Manual)
 {
    if (sh4_int_bCpuRun)
@@ -142,6 +144,8 @@ void Sh4_int_Reset(bool Manual)
    fpscr.full = 0x0004001;
    old_fpscr=fpscr;
    UpdateFPSCR();
+
+   p_sh4rcb->cntx.vmem32_base = vmem32_base;
 
    //Any more registers have default value ?
    printf("Sh4 Reset\n");

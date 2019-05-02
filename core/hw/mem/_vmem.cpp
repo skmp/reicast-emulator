@@ -570,7 +570,7 @@ error:
 }
 #endif
 
-int fd;
+int vmem_fd;
 
 static void* _nvmem_unused_buffer(u32 start,u32 end)
 {
@@ -593,7 +593,7 @@ static void * _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
    verify((addrsz%size)==0);
    verify(map_times>=1);
    u32 prot=PROT_READ|(w?PROT_WRITE:0);
-   rv= mmap(&virt_ram_base[dst], size, prot, MAP_SHARED | MAP_NOSYNC | MAP_FIXED, fd, offset);
+   rv= mmap(&virt_ram_base[dst], size, prot, MAP_SHARED | MAP_NOSYNC | MAP_FIXED, vmem_fd, offset);
    if (MAP_FAILED==rv || rv!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0)) 
    {
       printf("MAP1 failed %d\n",errno);
@@ -603,7 +603,7 @@ static void * _nvmem_map_buffer(u32 dst,u32 addrsz,u32 offset,u32 size, bool w)
    for (u32 i=1;i<map_times;i++)
    {
       dst+=size;
-      ptr=mmap(&virt_ram_base[dst], size, prot , MAP_SHARED | MAP_NOSYNC | MAP_FIXED, fd, offset);
+      ptr=mmap(&virt_ram_base[dst], size, prot , MAP_SHARED | MAP_NOSYNC | MAP_FIXED, vmem_fd, offset);
       if (MAP_FAILED==ptr || ptr!=(void*)&virt_ram_base[dst] || (mprotect(rv,size,prot)!=0))
       {
          printf("MAP2 failed %d\n",errno);
@@ -618,21 +618,21 @@ static void* _nvmem_alloc_mem(void)
 {
    string path = get_writable_data_path("dcnzorz_mem");
 #ifdef __MACH__
-   fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
+   vmem_fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
    unlink(path.c_str());
 #elif defined(ANDROID)
-   fd = ashmem_create_region(0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE);
+   vmem_fd = ashmem_create_region(0,RAM_SIZE + VRAM_SIZE +ARAM_SIZE);
 #else
-   fd = shm_open(path.c_str(), O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
+   vmem_fd = shm_open(path.c_str(), O_CREAT | O_EXCL | O_RDWR,S_IREAD | S_IWRITE);
    shm_unlink(path.c_str());
-   if (fd==-1)
+   if (vmem_fd==-1)
    {
-      fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
+      vmem_fd = open(path.c_str(),O_CREAT|O_RDWR|O_TRUNC,S_IRWXU|S_IRWXG|S_IRWXO);
       unlink(path.c_str());
    }
 #endif
 #if defined(__MACH__) || !defined(ANDROID)
-   verify(ftruncate(fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
+   verify(ftruncate(vmem_fd,RAM_SIZE + VRAM_SIZE +ARAM_SIZE)==0);
 #endif
 
 
@@ -692,7 +692,7 @@ bool BM_LockedWrite(u8* address)
 		return false;
 	
 #if FEAT_SHREC != DYNAREC_NONE
-	u32 addr=address-(u8*)p_sh4rcb->fpcb;
+	size_t addr=address-(u8*)p_sh4rcb->fpcb;
 
 	address=(u8*)p_sh4rcb->fpcb+ (addr&~SH4_PAGE_MASK);
 

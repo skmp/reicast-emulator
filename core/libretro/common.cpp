@@ -31,6 +31,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
+#include "hw/mem/vmem32.h"
 
 #include "hw/sh4/dyna/ngen.h"
 
@@ -330,7 +331,7 @@ static void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx)
 
    size_t pc     = (size_t)ctx.pc;
 #if FEAT_SHREC == DYNAREC_JIT
-   bool dyna_cde = (pc > (size_t)CodeCache) && (pc < (size_t)(CodeCache + CODE_SIZE));
+   bool dyna_cde = (pc > (size_t)CodeCache) && (pc < (size_t)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
 #else
 	bool dyna_cde = false;
 #endif
@@ -356,7 +357,7 @@ static void signal_handler(int sn, siginfo_t * si, void *segfault_ctx)
    context_from_segfault(&ctx, segfault_ctx);
 
 #if FEAT_SHREC == DYNAREC_JIT
-	bool dyna_cde = ((size_t)ctx.pc > (size_t)CodeCache) && ((size_t)ctx.pc < (size_t)(CodeCache + CODE_SIZE));
+	bool dyna_cde = ((size_t)ctx.pc > (size_t)CodeCache) && ((size_t)ctx.pc < (size_t)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
 #else
 	bool dyna_cde = false;
 #endif
@@ -365,6 +366,11 @@ static void signal_handler(int sn, siginfo_t * si, void *segfault_ctx)
 printf("mprot hit @ ptr %p @@ pc: %p, %d\n", si->si_addr, ctx.pc, dyna_cde);
 #endif
 
+#if !defined(NO_MMU) && HOST_CPU == CPU_X64 && !defined(_WIN32)
+	bool write = false;	// TODO?
+	if (vmem32_handle_signal(si->si_addr, write))
+		return;
+#endif
    if (VramLockedWrite((u8*)si->si_addr))
       return;
 #if !defined(TARGET_NO_NVMEM) && FEAT_SHREC != DYNAREC_NONE
@@ -390,7 +396,10 @@ printf("mprot hit @ ptr %p @@ pc: %p, %d\n", si->si_addr, ctx.pc, dyna_cde);
       context_to_segfault(&ctx, segfault_ctx);
    }
 #elif HOST_CPU == CPU_X64
-   //x64 has no rewrite support
+	else if (dyna_cde && ngen_Rewrite((unat&)ctx.pc, 0, 0))
+	{
+		context_to_segfault(&ctx, segfault_ctx);
+	}
 #elif HOST_CPU == CPU_ARM64
 	else if (dyna_cde && ngen_Rewrite(ctx.pc, 0, 0))
 	{

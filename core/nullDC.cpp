@@ -4,6 +4,7 @@
 //initialse Emu
 #include "types.h"
 #include "hw/mem/_vmem.h"
+#include "hw/mem/vmem32.h"
 #include "stdclass.h"
 
 #include "types.h"
@@ -369,6 +370,13 @@ int dc_init(int argc,wchar* argv[])
 		log_cb(RETRO_LOG_INFO, "Failed to alloc mem\n");
 		return -1;
 	}
+#if !defined(NO_MMU) && !defined(_WIN32) && HOST_CPU == CPU_X64
+	if (!vmem32_init())
+	{
+		log_cb(RETRO_LOG_INFO, "Failed to alloc 32-bit mem space\n");
+		return -1;
+	}
+#endif
 
    LoadSettings();
 	os_CreateWindow();
@@ -470,6 +478,7 @@ void LoadSettings(void)
 	settings.dynarec.unstable_opt	= 0; 
    //settings.dynarec.DisableDivMatching       = 0;
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
+	settings.dynarec.disable_vmem32 = false;
    settings.UpdateModeForced     = 0;
 	settings.dreamcast.RTC			= GetRTC_now();
 	settings.dreamcast.FullMMU		= false;

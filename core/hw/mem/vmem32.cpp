@@ -1,4 +1,3 @@
-#if 0
 /*
  * vmem32.cpp
  *
@@ -25,6 +24,9 @@
 
 #ifndef MAP_NOSYNC
 #define MAP_NOSYNC       0
+#endif
+#ifndef PAGE_MASK
+#define PAGE_MASK (PAGE_SIZE-1)
 #endif
 
 #include "types.h"
@@ -55,7 +57,7 @@ static const u64 AREA7_ADDRESS = 0x7C000000L;
 
 u8* vmem32_base;
 std::unordered_set<u32> vram_mapped_pages;
-std::vector<vram_block*> vram_blocks[VRAM_SIZE / VRAM_PROT_SEGMENT];
+std::vector<vram_block*> vram_blocks[VRAM_SIZE_MAX / VRAM_PROT_SEGMENT];
 
 // stats
 u64 vmem32_page_faults;
@@ -320,7 +322,7 @@ static u32 vmem32_map_address(u32 address, bool write)
 	return VMEM32_ERROR_NOT_MAPPED;
 }
 
-#if !defined(NO_MMU) && defined(HOST_64BIT_CPU)
+#if !defined(NO_MMU) && HOST_CPU == CPU_X64 && !defined(_WIN32)
 bool vmem32_handle_signal(void *fault_addr, bool write)
 {
 	if ((u8*)fault_addr < vmem32_base || (u8*)fault_addr >= vmem32_base + VMEM32_SIZE)
@@ -357,18 +359,11 @@ bool vmem32_init()
 	// disabled on windows for now
 	return true;
 #endif
-#ifdef HOST_64BIT_CPU
-#if HOST_OS == OS_WINDOWS
-	void* rv = (u8 *)VirtualAlloc(0, VMEM32_SIZE, MEM_RESERVE, PAGE_NOACCESS);
-	if (rv != NULL)
-		VirtualFree(rv, 0, MEM_RELEASE);
-	vmem32_base = (u8*)rv;
-#else
+#if HOST_CPU == CPU_X64
 	void* rv = mmap(0, VMEM32_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
 	verify(rv != NULL);
 	munmap(rv, VMEM32_SIZE);
 	vmem32_base = (u8*)rv;
-#endif
 
 	vmem32_unmap_buffer(0, VMEM32_SIZE);
 	printf("vmem32_init: allocated %zx bytes from %p to %p\n", VMEM32_SIZE, vmem32_base, vmem32_base + VMEM32_SIZE);
@@ -409,5 +404,3 @@ void vmem32_term()
 		vmem32_base = NULL;
 	}
 }
-
-#endif

@@ -497,7 +497,7 @@ static void recSh4_Init(void)
 #endif
 
 #ifdef __MACH__
-    munmap(CodeCache, CODE_SIZE + TEMP_CODE_SIZE;
+    munmap(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
     CodeCache = (u8*)mmap(CodeCache, CODE_SIZE + TEMP_CODE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
 #endif
 

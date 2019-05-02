@@ -9,7 +9,7 @@
 #include "vmem32.h"
 #include "_vmem.h"
 
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 #include <Windows.h>
 #else
 #include <sys/mman.h>
@@ -36,7 +36,7 @@
 extern bool VramLockedWriteOffset(size_t offset);
 extern cMutex vramlist_lock;
 
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 extern HANDLE mem_handle;
 #else
 extern int vmem_fd;
@@ -70,7 +70,7 @@ static void* vmem32_map_buffer(u32 dst, u32 addrsz, u32 offset, u32 size, bool w
 
 	//printf("MAP32 %08X w/ %d\n",dst,offset);
 	u32 map_times = addrsz / size;
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 	rv = MapViewOfFileEx(mem_handle, FILE_MAP_READ | (write ? FILE_MAP_WRITE : 0), 0, offset, size, &vmem32_base[dst]);
 	if (rv == NULL)
 		return NULL;
@@ -107,7 +107,7 @@ static void* vmem32_map_buffer(u32 dst, u32 addrsz, u32 offset, u32 size, bool w
 
 static void vmem32_unmap_buffer(u32 start, u64 end)
 {
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 	UnmapViewOfFile(&vmem32_base[start]);
 #else
 	mmap(&vmem32_base[start], end - start, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
@@ -117,7 +117,7 @@ static void vmem32_unmap_buffer(u32 start, u64 end)
 static void vmem32_protect_buffer(u32 start, u32 size)
 {
 	verify((start & PAGE_MASK) == 0);
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 	DWORD old;
 	VirtualProtect(vmem32_base + start, size, PAGE_READONLY, &old);
 #else
@@ -128,7 +128,7 @@ static void vmem32_protect_buffer(u32 start, u32 size)
 static void vmem32_unprotect_buffer(u32 start, u32 size)
 {
 	verify((start & PAGE_MASK) == 0);
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 	DWORD old;
 	VirtualProtect(vmem32_base + start, size, PAGE_READWRITE, &old);
 #else
@@ -355,11 +355,10 @@ bool vmem32_init()
 {
 	if (!_nvmem_enabled())
 		return false;
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 	// disabled on windows for now
 	return true;
-#endif
-#if HOST_CPU == CPU_X64
+#elif HOST_CPU == CPU_X64
 	void* rv = mmap(0, VMEM32_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
 	verify(rv != NULL);
 	munmap(rv, VMEM32_SIZE);
@@ -381,7 +380,7 @@ void vmem32_term()
 {
 	if (vmem32_base != NULL)
 	{
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 		vmem32_flush_mmu();
 		// Aica ram
 		vmem32_unmap_buffer(0x80800000, 0x80800000 + 0x00800000);	// P1

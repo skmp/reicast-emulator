@@ -105,11 +105,11 @@ WIN32_ONLY(     ".seh_pushreg %r14                              \n\t")
                         "movl $" _S(SH4_TIMESLICE) "," _U "cycle_counter(%rip)  \n"
 
 #ifdef _WIN32
-                        "lea " _U "jmp_env(%rip), %rcx			\n\t"	// SETJMP
+                        "leaq " _U "jmp_env(%rip), %rcx			\n\t"	// SETJMP
 #else
-                        "lea " _U "jmp_env(%rip), %rdi			\n\t"
+                        "leaq " _U "jmp_env(%rip), %rdi			\n\t"
 #endif
-#ifdef __MACH__
+#if defined(__MACH__) || defined(_WIN32)
                         "call " _U "setjmp						\n\t"
 #else
                         "call " _U "setjmp@PLT					\n\t"
@@ -187,15 +187,18 @@ static void handle_mem_exception(u32 exception_raised, u32 pc)
 		else
 			spc = pc;
 		cycle_counter += CPU_RATIO * 2;	// probably more is needed but no easy way to find out
+#ifndef _WIN32
 		longjmp(jmp_env, 1);
+#endif
 	}
 }
+
+static u32 exception_raised;
 
 template<typename T>
 static T ReadMemNoEx(u32 addr, u32 pc)
 {
 #ifndef NO_MMU
-	u32 exception_raised;
 	T rv = mmu_ReadMemNoEx<T>(addr, &exception_raised);
 	handle_mem_exception(exception_raised, pc);
 
@@ -207,11 +210,12 @@ static T ReadMemNoEx(u32 addr, u32 pc)
 }
 
 template<typename T>
-static void WriteMemNoEx(u32 addr, T data, u32 pc)
+static u32 WriteMemNoEx(u32 addr, T data, u32 pc)
 {
 #ifndef NO_MMU
-	u32 exception_raised = mmu_WriteMemNoEx<T>(addr, data);
+	exception_raised = mmu_WriteMemNoEx<T>(addr, data);
 	handle_mem_exception(exception_raised, pc);
+	return exception_raised;
 #endif
 }
 
@@ -298,7 +302,6 @@ public:
 #else
 		sub(rsp, 0x8);		// align stack
 #endif
-		Xbyak::Label exit_block;
 
 		if (mmu_enabled() && block->has_fpu_op)
 		{
@@ -1071,7 +1074,7 @@ public:
 			die("1..8 bytes");
 		}
 
-		if (mmu_enabled())
+		if (mmu_enabled() && vmem32_enabled())
 		{
 			Xbyak::Label quick_exit;
 			if (getCurr() - start_addr <= read_mem_op_size - 6)
@@ -1081,6 +1084,13 @@ public:
 			L(quick_exit);
 			verify(getCurr() - start_addr == read_mem_op_size);
 		}
+#ifdef _WIN32
+		if (mmu_enabled())
+		{
+			test(dword[(void *)&exception_raised], 1);
+			jnz(exit_block, T_NEAR);
+		}
+#endif
 	}
 
 	void GenWriteMemorySlow(const shil_opcode& op, RuntimeBlockInfo* block)
@@ -1118,7 +1128,7 @@ public:
 		default:
 			die("1..8 bytes");
 		}
-		if (mmu_enabled())
+		if (mmu_enabled() && vmem32_enabled())
 		{
 			Xbyak::Label quick_exit;
 			if (getCurr() - start_addr <= write_mem_op_size - 6)
@@ -1128,6 +1138,13 @@ public:
 			L(quick_exit);
 			verify(getCurr() - start_addr == write_mem_op_size);
 		}
+#ifdef _WIN32
+		if (mmu_enabled())
+		{
+			test(eax, 1);
+			jnz(exit_block, T_NEAR);
+		}
+#endif
 	}
 
 	void InitializeRewrite(RuntimeBlockInfo *block, size_t opid)
@@ -1664,6 +1681,7 @@ private:
 	X64RegAlloc regalloc;
 	Xbyak::util::Cpu cpu;
 	size_t current_opid;
+	Xbyak::Label exit_block;
 	static const u32 float_sign_mask;
 	static const u32 float_abs_mask;
 	static const f32 cvtf2i_pos_saturation;

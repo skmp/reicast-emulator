@@ -407,6 +407,11 @@ int dc_init(int argc,wchar* argv[])
 	sh4_cpu.Init();
 	mem_Init();
 
+#ifdef _WIN64
+	extern void setup_seh();
+	setup_seh();
+#endif
+
 	if (plugins_Init(name, sizeof(name)))
 	   return -4;
 	

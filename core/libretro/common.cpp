@@ -130,7 +130,7 @@ static LONG ExceptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 #endif
    else
    {
-      printf("[GPF]Unhandled access to : 0x%X\n",address);
+      printf("[GPF]Unhandled access to : %p\n", address);
    }
 
    return EXCEPTION_CONTINUE_SEARCH;
@@ -199,8 +199,8 @@ seh_callback(
    //	(DWORD)((u8 *)__gnat_SEH_error_handler - CodeCache);
    /* Set its scope to the entire program.  */
    Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
-   Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE;
-   Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
+   Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE + TEMP_CODE_SIZE;
+   Table[0].UnwindData = (ULONG)((u8 *)unwind_info - CodeCache);
    printf("TABLE CALLBACK\n");
    return Table;
 }
@@ -221,12 +221,12 @@ void setup_seh(void)
 
    unwind_info[0].UnwindCode[0].CodeOffset = 0;
    unwind_info[0].UnwindCode[0].UnwindOp = 2;// UWOP_ALLOC_SMALL;
-   unwind_info[0].UnwindCode[0].OpInfo = 0x20 / 8;
+   unwind_info[0].UnwindCode[0].OpInfo = 0x20 / 8;	// OpInfo * 8 + 8 bytes -> 0x28 bytes
 
    /* Set its scope to the entire program.  */
    Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
-   Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE;
-   Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
+   Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE + TEMP_CODE_SIZE;
+   Table[0].UnwindData = (ULONG)((u8 *)unwind_info - CodeCache);
    /* Register the unwind information.  */
    RtlAddFunctionTable(Table, 1, (DWORD64)CodeCache);
 }
@@ -715,10 +715,10 @@ void common_libretro_setup(void)
 #endif
 #ifdef _WIN32
 #ifdef _WIN64
-   // setup_seh();
    AddVectoredExceptionHandler(1, ExceptionHandler);
-#endif
+#else
    SetUnhandledExceptionFilter(&ExceptionHandler);
+#endif
 #else
    exception_handler_install_platform();
    signal(SIGINT, exit);

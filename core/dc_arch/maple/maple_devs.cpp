@@ -285,11 +285,20 @@ struct maple_sega_vmu: maple_base
 
 	virtual void OnSetup()
 	{
+		LPWSTR filename = new wchar_t[512];
+
+        #if defined(TARGET_UWP)
+		GetEnvironmentVariable(L"LocalAppData", filename, 512);
+        #else
+		filename[0] = { '\0' };
+        #endif
+
 		memset(flash_data, 0, sizeof(flash_data));
 		memset(lcd_data, 0, sizeof(lcd_data));
 		wchar_t tempy[512];
-		swprintf(tempy, L"/vmu_save_%s.bin", logical_port);
-		wstring apath = get_writable_data_path(tempy);
+		swprintf(tempy, L".\\Temp\\vmu_save_%s.bin", logical_port);
+		wcscat(filename, tempy);
+		wstring apath = get_writable_data_path(filename);
 
 		file = fopen(apath.c_str(), "rb+");
 		if (!file)

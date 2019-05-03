@@ -463,6 +463,7 @@ void os_consume(double t)
 	evt_hld.Set();
 }
 
+#ifndef TARGET_NO_THREADS
 void* tick_th(void* p)
 {
 		SetThreadPriority(GetCurrentThread(),THREAD_PRIORITY_TIME_CRITICAL);
@@ -477,6 +478,7 @@ void* tick_th(void* p)
 }
 
 cThread tick_thd(&tick_th,0);
+#endif
 
 void ReserveBottomMemory()
 {
@@ -617,6 +619,7 @@ struct _CONTEXT* ContextRecord,
 	return (EXCEPTION_DISPOSITION)ExeptionHandler(&ep);
 }
 
+#if FEAT_SHREC != DYNAREC_NONE
 PRUNTIME_FUNCTION
 seh_callback(
 _In_ DWORD64 ControlPc,
@@ -642,7 +645,6 @@ _In_opt_ PVOID Context
 	return Table;
 }
 void setup_seh() {
-#if 1
 	/* Get the base of the module.  */
 	//u8* __ImageBase = (u8*)GetModuleHandle(NULL);
 	/* Current version is always 1 and we are registering an
@@ -668,10 +670,9 @@ void setup_seh() {
 	Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
 	/* Register the unwind information.  */
 	RtlAddFunctionTable(Table, 1, (DWORD64)CodeCache);
-#endif
-
 	//verify(RtlInstallFunctionTableCallback((unat)CodeCache | 0x3, (DWORD64)CodeCache, CODE_SIZE, seh_callback, 0, 0));
 }
+#endif
 #endif
 
 
@@ -714,7 +715,9 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 #endif
 
 	ReserveBottomMemory();
+#ifndef TARGET_NO_THREADS
 	tick_thd.Start();
+#endif
 	SetupPath();
 
 	//SetUnhandledExceptionFilter(&ExeptionHandler);
@@ -725,7 +728,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 		void dc_term();
 		if (0 == dc_init(0,NULL))//*FIXME* wchar_t (argc, argv))
 		{
-#ifdef _WIN64
+#if FEAT_SHREC != DYNAREC_NONE && defined(_WIN64)
 			setup_seh();
 #endif
 			dc_run();

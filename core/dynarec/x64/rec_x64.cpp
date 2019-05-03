@@ -50,9 +50,11 @@ void ngen_mainloop(void* v_cntx)
 		cycle_counter = SH4_TIMESLICE;
 		do {
 			DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);
-			// UWPTODO: Investigate write access violation
+			// UWPTODO: Investigate write access violation			
+            #ifdef TARGET_UWP
 			DWORD old;
 			VirtualProtectFromApp(rcb, PAGE_SIZE, PAGE_EXECUTE_READ, &old);
+            #endif
 			rcb();
 		} while (cycle_counter > 0);
 

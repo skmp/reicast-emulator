@@ -227,7 +227,13 @@ endif()
 
 
 
+  if (TARGET_NO_THREADS)
+    add_definitions(/DTARGET_NO_THREADS)
+  endif()
 
+  if (TARGET_NO_NVMEM)
+    add_definitions(/DTARGET_NO_NVMEM)
+  endif()
 
 
 ######## Looks like something to delete, but if we're going to handle options here and NOT in libosd/lib* #########
@@ -249,8 +255,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   set(BUILD_COMPILER ${COMPILER_VC})
   message("MSVC Platform: ${CMAKE_VS_PLATFORM_NAME}")
   message("MSVC Toolset:  ${CMAKE_VS_PLATFORM_TOOLSET}")
-  
 
+  
   add_definitions(/D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1)
   
   if(TARGET_UWP)
@@ -306,11 +312,12 @@ if ((${BUILD_COMPILER} EQUAL ${COMPILER_VC}) OR
 	(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG}) AND (${HOST_OS} STREQUAL ${OS_WINDOWS}))
 
   if((${HOST_CPU} EQUAL ${CPU_X64}) AND (${FEAT_SHREC} EQUAL ${DYNAREC_JIT})) # AND NOT "${NINJA}" STREQUAL "")
-    set(FEAT_SHREC  ${DYNAREC_CPP})
-    message("---x64 rec disabled for VC x64 via NINJA")
+    # Why? F355 works fine with DYNAREC_JIT
+	# set(FEAT_SHREC  ${DYNAREC_CPP})
+    # message("---x64 rec disabled for VC x64 via NINJA")
   endif()
-		
-  add_definitions(/D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1)
+
+  add_definitions(/D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1 /DUNICODE)
 
   if(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})
     add_definitions(/DXBYAK_NO_OP_NAMES /DTARGET_NO_OPENMP)  #*FIXME* check openmp on clang-cl

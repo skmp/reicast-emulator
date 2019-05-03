@@ -79,10 +79,15 @@ void  cfgSaveStr(const wchar_t * Section, const wchar_t * Key, const wchar_t * S
 bool cfgOpen()
 {
 	LPWSTR filename = new wchar_t[512];
+
+	#if defined(TARGET_UWP)
 	GetEnvironmentVariable(L"LocalAppData", filename, 512);
+    #else
+	filename[0] = { '\0' };
+    #endif
 
 	// UWPTODO: Write and read this from UWP storage settings
-	const wchar_t* configPath = L"\\Temp\\emu.cfg";
+	const wchar_t* configPath = L".\\Temp\\emu.cfg";
 	wcscat(filename, configPath);
 	wstring config_path_read = get_readonly_config_path(filename);
 	cfgPath = get_writable_config_path(filename);

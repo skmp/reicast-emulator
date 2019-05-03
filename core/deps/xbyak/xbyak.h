@@ -889,10 +889,12 @@ public:
 			} else {
 				throw Error(ERR_CODE_IS_TOO_BIG);
 			}
-		}
+		}		
+		#ifdef TARGET_UWP
 		DWORD old;
-		VirtualProtectFromApp(&top_[size_++], CODE_SIZE, PAGE_READWRITE, &old);
-		top_[size_] = static_cast<uint8>(code);
+		VirtualProtectFromApp(&top_[size_], CODE_SIZE, PAGE_READWRITE, &old);
+        #endif
+		top_[size_++] = static_cast<uint8>(code);
 	}
 	void db(const uint8 *code, size_t codeSize)
 	{

@@ -325,7 +325,7 @@ static u32 vmem32_map_address(u32 address, bool write)
 #if !defined(NO_MMU) && HOST_CPU == CPU_X64 && !defined(_WIN32)
 bool vmem32_handle_signal(void *fault_addr, bool write)
 {
-	if ((u8*)fault_addr < vmem32_base || (u8*)fault_addr >= vmem32_base + VMEM32_SIZE)
+	if (!vmem32_enabled() || (u8*)fault_addr < vmem32_base || (u8*)fault_addr >= vmem32_base + VMEM32_SIZE)
 		return false;
 	vmem32_page_faults++;
 	u32 guest_addr = (u8*)fault_addr - vmem32_base;

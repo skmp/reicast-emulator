@@ -104,15 +104,13 @@ WIN32_ONLY(     ".seh_pushreg %r14                              \n\t")
 #endif
                         "movl $" _S(SH4_TIMESLICE) "," _U "cycle_counter(%rip)  \n"
 
-#ifdef _WIN32
-                        "leaq " _U "jmp_env(%rip), %rcx			\n\t"	// SETJMP
-#else
+#ifndef _WIN32
                         "leaq " _U "jmp_env(%rip), %rdi			\n\t"
-#endif
-#if defined(__MACH__) || defined(_WIN32)
+#if defined(__MACH__)
                         "call " _U "setjmp						\n\t"
 #else
                         "call " _U "setjmp@PLT					\n\t"
+#endif
 #endif
 
                 "1:															\n\t"   // run_loop
@@ -229,24 +227,34 @@ static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
 	}
 	Do_Exception(pc, ex.expEvn, ex.callVect);
 	cycle_counter += CPU_RATIO * 4;	// probably more is needed
+#ifndef _WIN32
 	longjmp(jmp_env, 1);
+#endif
 }
 
-static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
+static u32 interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 {
 	try {
 		oph(op);
+#ifdef _WIN32
+		return 0;
+#endif
 	} catch (SH4ThrownException& ex) {
 		handle_sh4_exception(ex, pc);
+		return 1;
 	}
 }
 
-static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
+static u32 do_sqw_mmu_no_ex(u32 addr, u32 pc)
 {
 	try {
 		do_sqw_mmu(addr);
+#ifdef _WIN32
+		return 0;
+#endif
 	} catch (SH4ThrownException& ex) {
 		handle_sh4_exception(ex, pc);
+		return 1;
 	}
 }
 
@@ -349,7 +357,13 @@ public:
 					if (!mmu_enabled())
 						GenCall(OpDesc[op.rs3._imm]->oph);
 					else
+					{
 						GenCall(interpreter_fallback);
+#ifdef _WIN32
+						test(eax, 1);
+						jnz(exit_block, T_NEAR);
+#endif
+					}
                break;
 
             case shop_jcond:
@@ -719,6 +733,10 @@ public:
 						mov(call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
 						GenCall(do_sqw_mmu_no_ex);
+#ifdef _WIN32
+						test(eax, 1);
+						jnz(exit_block, T_NEAR);
+#endif
 					}
 					else
 					{

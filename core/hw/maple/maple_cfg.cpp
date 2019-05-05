@@ -161,8 +161,6 @@ struct MapleConfigMap : IMapleConfigMap
 	   UpdateInputState(pnum);
 
 	   pjs->kcode=kcode[pnum];
-	   if (settings.System == DC_PLATFORM_DREAMCAST)
-		  pjs->kcode |= 0xF901;
 	   pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[pnum]);
 	   pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[pnum]);
 	   pjs->joy[PJAI_X2]=GetBtFromSgn(joyrx[pnum]);
@@ -242,6 +240,12 @@ void mcfg_CreateDevices()
 			 else
 				mcfg_Create(MDT_SegaVMU, bus, 0);
 			 break;
+			 
+		case MDT_TwinStick:
+			mcfg_Create(MDT_TwinStick, bus, 5);
+			mcfg_Create(MDT_SegaVMU, bus, 0);
+			break;
+		
 		 }
 	  }
    }

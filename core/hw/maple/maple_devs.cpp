@@ -18,6 +18,7 @@
 #endif
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
+const char* maple_sega_twinstick_name = "Twin Stick";
 const char* maple_sega_vmu_name = "Visual Memory";
 const char* maple_sega_kbd_name = "Emulated Dreamcast Keyboard";
 const char* maple_sega_mouse_name = "Emulated Dreamcast Mouse";
@@ -249,7 +250,7 @@ struct maple_sega_controller: maple_base
 				{
 					//state data
 					//2 key code
-					w16(pjs.kcode);
+					w16(pjs.kcode | 0xF901); // disable unused bits (active low)
 
 				   //triggers
 				   //1 R
@@ -303,6 +304,83 @@ struct maple_sega_controller: maple_base
 		default:
 			//printf("UNKNOWN MAPLE COMMAND %d\n",cmd);
          return MDRE_UnknownCmd;
+		}
+	}	
+};
+
+
+/*
+	Sega Twin Stick Controller
+	No error checking of any kind, but works just fine
+*/
+struct maple_sega_twinstick: maple_base
+{
+	virtual MapleDeviceType get_device_type()
+	{
+		return MDT_TwinStick;
+	}
+
+	virtual u32 dma( u32 cmd )
+	{
+		//printf("maple_sega_twinstick::dma Called 0x%X;Command %d\n",device_instance->port,Command);
+		switch ( cmd )
+		{
+		
+		case MDC_DeviceRequest:
+			
+			//caps
+			//4
+			w32(MFID_0_Input);
+
+			//struct data
+			//3*4
+			w32( 0xfefe0000 );
+			w32( 0 );
+			w32( 0 );
+
+			//1	area code
+			w8(0xFF);
+
+			//1	direction
+			w8(0);
+			
+			//30
+			wstr(maple_sega_twinstick_name,30);
+
+			//60
+			wstr(maple_sega_brand,60);
+
+			//2
+			w16(0x01AE); 
+
+			//2
+			w16(0x01F4);
+
+			return MDRS_DeviceStatus;
+
+		case MDCF_GetCondition:
+			{
+				PlainJoystickState pjs;
+				config->GetInput(&pjs);
+
+				//caps
+				//4
+				w32(MFID_0_Input);
+
+				//state data
+				//2 key code
+				w16(pjs.kcode | 0x0101 ); // or with key bits
+
+				//unused/reserved, 6
+				w16(0);
+				w32(0x80808080);
+			}
+
+			return MDRS_DataTransfer;
+
+		default:
+			//printf("UNKNOWN MAPLE COMMAND %d\n",cmd);
+			return MDRE_UnknownCmd;
 		}
 	}	
 };
@@ -2558,6 +2636,10 @@ maple_device* maple_Create(MapleDeviceType type)
 	{
 	case MDT_SegaController:
 		rv=new maple_sega_controller();
+		break;
+
+	case MDT_TwinStick:
+		rv=new maple_sega_twinstick();
 		break;
 
 	case MDT_Microphone:

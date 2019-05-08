@@ -781,7 +781,7 @@ static bool RenderFrame(void)
    {
       scale_x=fb_scale_x;
       scale_y=fb_scale_y;
-		if (SCALER_CTL.interlace == 0)
+		if (SCALER_CTL.interlace == 0 && SCALER_CTL.vscalefactor >= 0x400)
 			scale_y *= SCALER_CTL.vscalefactor / 0x400;
 
       //work out scaling parameters !
@@ -976,7 +976,7 @@ static bool RenderFrame(void)
          float min_y  = pvrrc.fb_Y_CLIP.min / scale_y;
          if (!is_rtt)
          {
-				if (SCALER_CTL.interlace)
+				if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor >= 0x400)
 				{
 					// Clipping is done after scaling/filtering so account for that if enabled
 					height *= SCALER_CTL.vscalefactor / 0x400;

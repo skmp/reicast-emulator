@@ -96,7 +96,7 @@ void pvr_do_sort_dma(void)
 	u32 link_addr      = calculate_start_link_addr();
 	u32 link_base_addr = SB_SDBAAW;
 
-	while (link_addr!=1)
+	while (link_addr != 2)
 	{
 		if (SB_SDLAS==1)
 			link_addr   *= 32;
@@ -107,7 +107,7 @@ void pvr_do_sort_dma(void)
 
 		/* transfer global param */
 		ta_vtx_data(ea_ptr,ea_ptr[0x18>>2]);
-		if (link_addr==2)
+		if (link_addr == 1)
 			link_addr    = calculate_start_link_addr();
 	}
 

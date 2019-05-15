@@ -155,6 +155,7 @@ static void LoadSpecialSettings(void)
 		log_cb(RETRO_LOG_INFO, "Enabling Full MMU and Extra depth scaling for Windows CE game\n");
 		settings.rend.ExtraDepthScale = 0.1;
 		settings.dreamcast.FullMMU = true;
+		settings.aica.NoBatch = 1;
 	}
    for (i = 0; i < sizeof(lut_games)/sizeof(lut_games[0]); i++)
    {

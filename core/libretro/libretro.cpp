@@ -19,6 +19,7 @@
 #include "../hw/sh4/sh4_sched.h"
 #include "keyboard_map.h"
 #include "hw/maple/maple_if.h"
+#include "hw/maple/maple_cfg.h"
 #include "../hw/pvr/spg.h"
 #include "../hw/naomi/naomi_cart.h"
 #include "../imgread/common.h"
@@ -987,7 +988,13 @@ static void update_variables(bool first_startup)
       if (enable_purupuru != (strcmp("enabled", var.value) == 0) && settings.System == DC_PLATFORM_DREAMCAST)
       {
       	enable_purupuru = (strcmp("enabled", var.value) == 0);
-      	maple_ReconnectDevices();
+      	if (!first_startup)
+      		maple_ReconnectDevices();
+      	else
+      	{
+      		mcfg_DestroyDevices();
+      		mcfg_CreateDevices();
+      	}
       }
    }
 
@@ -1015,7 +1022,6 @@ static void update_variables(bool first_startup)
       else
       {
          settings.aica.DSPEnabled = false;
-         settings.aica.NoBatch    = 0;
       }
    }
    else if (first_run)

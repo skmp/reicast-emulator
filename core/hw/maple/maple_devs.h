@@ -10,6 +10,7 @@ enum MapleDeviceType
    MDT_Keyboard,
    MDT_Mouse,
    MDT_LightGun,
+   MDT_TwinStick,
 
    MDT_NaomiJamma,
 

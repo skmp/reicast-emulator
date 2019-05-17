@@ -93,6 +93,13 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		YUV_init();
       return;
    }
+	else if (addr == FB_R_SOF1_addr)
+	{
+		if (data == FB_W_SOF1)
+		{
+			rend_swap_frame();
+		}
+	}
 
    if (addr>=PALETTE_RAM_START_addr && PvrReg(addr,u32)!=data)
 	{

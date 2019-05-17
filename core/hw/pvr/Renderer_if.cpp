@@ -75,6 +75,8 @@ cResetEvent rs(false,true);
 cResetEvent re(false,true);
 #endif
 extern cResetEvent frame_finished;
+static bool swap_pending;
+static bool do_swap;
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 bool pend_rend = false;
@@ -165,64 +167,41 @@ bool rend_frame(TA_context* ctx, bool draw_osd)
 
 bool rend_single_frame(void)
 {
-   //wait render start only if no frame pending
-   do
-   {
+	while (true)
+	{
+		//wait render start only if no frame pending
+		do
+		{
 #if !defined(TARGET_NO_THREADS)
-      if (settings.rend.ThreadedRendering && !rs.Wait(100))
-         return false;
+			if (settings.rend.ThreadedRendering)
+			{
+				if (!rs.Wait(100))
+					return false;
+				if (do_swap)
+				{
+					do_swap = false;
+					rs.Set();	// set the semaphone in case a render is pending
+					return true;
+				}
+			}
 #endif
-      _pvrrc = DequeueRender();
-   }
-   while (!_pvrrc);
-   bool do_swp = rend_frame(_pvrrc, true);
+			_pvrrc = DequeueRender();
+		}
+		while (!_pvrrc);
+		bool do_swp = rend_frame(_pvrrc, true);
+		swap_pending = do_swp && !_pvrrc->rend.isRenderFramebuffer && FB_R_SOF1 != FB_W_SOF1;
 
-	if (settings.rend.ThreadedRendering && _pvrrc->rend.isRTT)
-		re.Set();
+		if (settings.rend.ThreadedRendering && _pvrrc->rend.isRTT)
+			re.Set();
 
-   //clear up & free data ..
-   FinishRender(_pvrrc);
-   _pvrrc=0;
+		//clear up & free data ..
+		FinishRender(_pvrrc);
+		_pvrrc=0;
 
-   return do_swp;
+		if ((do_swp && !swap_pending) || !settings.rend.ThreadedRendering)
+			return do_swp;
+	}
 }
-
-int rend_en = true;
-
-void *rend_thread(void* p)
-{
-#if SET_AFNT
-   cpu_set_t mask;
-
-   /* CPU_ZERO initializes all the bits in the mask to zero. */
-   CPU_ZERO( &mask );
-   /* CPU_SET sets only the bit corresponding to cpu. */
-   CPU_SET( 1, &mask );
-
-   /* sched_setaffinity returns 0 in success */
-
-   if( sched_setaffinity( 0, sizeof(mask), &mask ) == -1 )
-      printf("WARNING: Could not set CPU Affinity, continuing...\n");
-#endif
-
-   rend_init_renderer();
-
-   //we don't know if this is true, so let's not speculate here
-   //renderer->Resize(640, 480);
-
-   while(rend_en)
-   {
-	  if (rend_single_frame())
-		 renderer->Present();
-   }
-   rend_term_renderer();
-
-   return 0;
-}
-
-#if !defined(TARGET_NO_THREADS)
-cThread rthd(rend_thread,0);
-#endif
 
 void rend_resize(int width, int height)
 {
@@ -347,11 +326,6 @@ void rend_term(void)
 {
 }
 
-void rend_terminate(void)
-{
-   rend_en = false;
-}
-
 void rend_vblank()
 {
    if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
@@ -374,4 +348,14 @@ void check_framebuffer_write()
 	fb1_watch_addr_end = fb1_watch_addr_start + fb_size;
 	fb2_watch_addr_start = FB_R_SOF2 & VRAM_MASK;
 	fb2_watch_addr_end = fb2_watch_addr_start + fb_size;
+}
+
+void rend_swap_frame()
+{
+	if (swap_pending)
+	{
+		swap_pending = false;
+		do_swap = true;
+		rs.Set();
+	}
 }

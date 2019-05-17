@@ -389,10 +389,6 @@ void retro_set_environment(retro_environment_t cb)
          "Widescreen hack (restart); disabled|enabled",
       },
       {
-         "reicast_audio_buffer_size",
-         "Audio buffer size; 1024|2048",
-      },
-      {
          "reicast_cable_type",
 #ifdef LOW_END
          "Cable type; VGA (RGB)|TV (RGB)|TV (Composite)",	
@@ -758,16 +754,6 @@ static void update_variables(bool first_startup)
    }
    else
       settings.pvr.Emulation.ModVol      = true;
-
-
-   var.key = "reicast_audio_buffer_size";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      settings.aica.BufferSize = atoi(var.value);
-   }
-   else
-      settings.aica.BufferSize = 1024;
 
    var.key = "reicast_cable_type";
 
@@ -2198,6 +2184,11 @@ static void refresh_devices(bool descriptors_only)
 					rumble.set_rumble_state(i, RETRO_RUMBLE_WEAK,   0);
 				}
 			}
+		}
+		if (settings.System != DC_PLATFORM_DREAMCAST)
+		{
+			mcfg_DestroyDevices();
+			mcfg_CreateDevices();
 		}
 	}
 }

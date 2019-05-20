@@ -12,6 +12,8 @@ before_build:
   - cmd: >-
       if "%CONFIGURATION%"=="RelWithDebInfo" (set BUILD_PATH=build)
       
+      if "%CONFIGURATION%"=="RelWithDebInfo" (vcvars64.bat)
+
       if "%CONFIGURATION%"=="fast" (set BUILD_PATH=shell\linux)
       
       set EXTRA_PATH=C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin\

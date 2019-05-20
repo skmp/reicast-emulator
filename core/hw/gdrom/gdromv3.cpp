@@ -5,16 +5,10 @@
 
 #include "gdromv3.h"
 
-#include "types.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/sb.h"
 #include "hw/sh4/modules/dmac.h"
-#include "hw/sh4/sh4_core.h"
 #include "hw/holly/holly_intc.h"
-
-#include "hw/sh4/sh4_mmr.h"
-#include "hw/sh4/sh4_sched.h"
-
 #include "hw/sh4/sh4_sched.h"
 
 int gdrom_schid;

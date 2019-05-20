@@ -113,6 +113,11 @@ endif()
 
 add_definitions(/DFEAT_HAS_SOFTREND=0)
 
+if(${BUILD_COMPILER} EQUAL ${COMPILER_VC})
+	# appveyor heap size issue
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} "/Zm200")
+endif()
+
 
 ### deps.cmake #################################################################################
 

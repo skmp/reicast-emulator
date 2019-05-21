@@ -2096,8 +2096,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    if(naomi_cart_GetRotation() == 3)
       info->geometry.aspect_ratio = 1 / info->geometry.aspect_ratio;
    int maximum = screen_width > screen_height ? screen_width : screen_height;
-   info->geometry.base_width   = screen_height;
-   info->geometry.base_height  = screen_width;
+   info->geometry.base_width   = screen_width;
+   info->geometry.base_height  = screen_height;
    info->geometry.max_width    = maximum;
    info->geometry.max_height   = maximum;
    if (rotate_screen)

@@ -34,53 +34,7 @@ bm_List all_blocks;
 bm_List del_blocks;
 #include <set>
 
-struct BlockMapCMP
-{
-	static bool is_code(RuntimeBlockInfo* blk)
-	{
-		if ((unat)((u8*)blk-CodeCache)<CODE_SIZE)
-			return true;
-		else
-			return false;
-	}
-
-	static unat get_blkstart(RuntimeBlockInfo* blk)
-	{
-		if (is_code(blk)) 
-			return (unat)blk; 
-		else 
-			return (unat)blk->code;
-	}
-
-	static unat get_blkend(RuntimeBlockInfo* blk)
-	{
-		if (is_code(blk)) 
-			return (unat)blk; 
-		else 
-			return (unat)blk->code+blk->host_code_size-1;
-	}
-
-	//return true if blkl > blkr
-	bool operator()(RuntimeBlockInfo* blkl, RuntimeBlockInfo* blkr) const
-	{
-		if (!is_code(blkl) && !is_code(blkr))
-			return (unat)blkl->code<(unat)blkr->code;
-
-		unat blkr_start=get_blkstart(blkr),blkl_end=get_blkend(blkl);
-
-		if (blkl_end<blkr_start)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-};
-
-typedef std::set<RuntimeBlockInfo*,BlockMapCMP> blkmap_t;
-blkmap_t blkmap;
+std::map<void*, RuntimeBlockInfo*> blkmap;
 u32 bm_gc_luc,bm_gcf_luc;
 
 
@@ -114,18 +68,20 @@ RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr)
 // This takes a RX address and returns the info block ptr (RW space)
 RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
 {
-	void *dynarecrw = CC_RX2RW(dynarec_code);
-	blkmap_t::iterator iter = blkmap.find((RuntimeBlockInfo*)dynarecrw);
-	if (iter != blkmap.end())
-	{
-		verify((*iter)->contains_code((u8*)dynarecrw));
-		return *iter;
-	}
-	else
-	{
-		printf("bm_GetBlock(%p) failed ..\n", dynarec_code);
+	if (blkmap.empty())
 		return 0;
-	}
+
+	void *dynarecrw = CC_RX2RW(dynarec_code);
+	// Returns a block who's code addr is bigger than dynarec_code (or end)
+	auto iter = blkmap.upper_bound(dynarecrw);
+	iter--;  // Need to go back to find the potential candidate
+
+	// However it might be out of bounds, check for that
+	if ((char*)iter->second->code + iter->second->host_code_size < dynarec_code)
+		return 0;
+
+	verify(iter->second->contains_code((u8*)dynarecrw));
+	return iter->second;
 }
 
 // Takes RX pointer and returns a RW pointer
@@ -143,13 +99,13 @@ RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code)
 
 void bm_AddBlock(RuntimeBlockInfo* blk)
 {
-	all_blocks.push_back(blk);
-	if (blkmap.find(blk)!=blkmap.end())
-	{
-		printf("DUP: %08X %p %08X %p\n", (*blkmap.find(blk))->addr,(*blkmap.find(blk))->code,blk->addr,blk->code);
+	auto iter = blkmap.find((void*)blk->code);
+	if (iter != blkmap.end()) {
+		printf("DUP: %08X %p %08X %p\n", iter->second->addr, iter->second->code, blk->addr, blk->code);
 		verify(false);
 	}
-	blkmap.insert(blk);
+	blkmap[(void*)blk->code] = blk;
+	all_blocks.push_back(blk);
 
 	verify((void*)bm_GetCode(blk->addr)==(void*)ngen_FailedToFindBlock);
 	FPCA(blk->addr) = (DynarecCodeEntryPtr)CC_RW2RX(blk->code);
@@ -304,6 +260,7 @@ void bm_Periodical_1s()
 #endif
 }
 
+#if 0
 void constprop(RuntimeBlockInfo* blk);
 void bm_Rebuild()
 {
@@ -343,6 +300,7 @@ void bm_Rebuild()
 
 	rebuild_counter=30;
 }
+#endif
 
 void bm_vmem_pagefill(void** ptr, u32 size_bytes)
 {

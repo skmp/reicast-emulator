@@ -72,7 +72,14 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 
 	u32 memops;
 	u32 linkedmemops;
-	std::map<void*, u32> memory_accesses;	// key is host pc when access is made, value is opcode id
+	// key is a host pc for a load/store in a jit block
+	// value contains information for mem-op rewriting purposes.
+	struct memop_info {
+		uint16_t opid;
+		uint8_t  rewrite_offset;
+		uint8_t  emitted_bytes;
+	};		
+	std::map<void*, memop_info> memory_accesses;
 };
 
 struct CachedBlockInfo: RuntimeBlockInfo_Core

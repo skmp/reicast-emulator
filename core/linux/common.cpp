@@ -82,7 +82,10 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 				context_to_segfault(&ctx, segfault_ctx);
 			}
 		#elif HOST_CPU == CPU_X64
-			//x64 has no rewrite support
+			else if (dyna_cde && ngen_Rewrite((unat&)ctx.pc, 0, 0))
+			{
+				context_to_segfault(&ctx, segfault_ctx);
+			}
 		#elif HOST_CPU == CPU_ARM64
 			else if (dyna_cde && ngen_Rewrite(ctx.pc, 0, 0))
 			{

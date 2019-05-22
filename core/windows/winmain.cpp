@@ -152,7 +152,8 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
-#if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86
+#if FEAT_SHREC == DYNAREC_JIT
+	#if HOST_CPU == CPU_X86
 		else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
 		{
 			//remove the call from call stack
@@ -161,6 +162,12 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 			ep->ContextRecord->Ecx=ep->ContextRecord->Eax;
 			return EXCEPTION_CONTINUE_EXECUTION;
 		}
+	#elif HOST_CPU == CPU_X64
+		else if (ngen_Rewrite((unat&)ep->ContextRecord->Rip, 0, 0))
+		{
+			return EXCEPTION_CONTINUE_EXECUTION;
+		}
+	#endif
 #endif
 	else
 	{

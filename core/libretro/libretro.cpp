@@ -18,6 +18,7 @@
 #include "../hw/sh4/sh4_mem.h"
 #include "../hw/sh4/sh4_sched.h"
 #include "keyboard_map.h"
+#include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_if.h"
 #include "../hw/pvr/spg.h"
 #include "../hw/naomi/naomi_cart.h"
@@ -388,10 +389,6 @@ void retro_set_environment(retro_environment_t cb)
          "Widescreen hack (restart); disabled|enabled",
       },
       {
-         "reicast_audio_buffer_size",
-         "Audio buffer size; 1024|2048",
-      },
-      {
          "reicast_cable_type",
 #ifdef LOW_END
          "Cable type; VGA (RGB)|TV (RGB)|TV (Composite)",	
@@ -758,16 +755,6 @@ static void update_variables(bool first_startup)
    else
       settings.pvr.Emulation.ModVol      = true;
 
-
-   var.key = "reicast_audio_buffer_size";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      settings.aica.BufferSize = atoi(var.value);
-   }
-   else
-      settings.aica.BufferSize = 1024;
-
    var.key = "reicast_cable_type";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -991,7 +978,13 @@ static void update_variables(bool first_startup)
       if (enable_purupuru != (strcmp("enabled", var.value) == 0) && settings.System == DC_PLATFORM_DREAMCAST)
       {
       	enable_purupuru = (strcmp("enabled", var.value) == 0);
-      	maple_ReconnectDevices();
+      	if (!first_startup)
+      		maple_ReconnectDevices();
+	else
+	{
+      		mcfg_DestroyDevices();
+      		mcfg_CreateDevices();
+	}
       }
    }
 
@@ -2103,8 +2096,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    if(naomi_cart_GetRotation() == 3)
       info->geometry.aspect_ratio = 1 / info->geometry.aspect_ratio;
    int maximum = screen_width > screen_height ? screen_width : screen_height;
-   info->geometry.base_width   = screen_height;
-   info->geometry.base_height  = screen_width;
+   info->geometry.base_width   = screen_width;
+   info->geometry.base_height  = screen_height;
    info->geometry.max_width    = maximum;
    info->geometry.max_height   = maximum;
    if (rotate_screen)
@@ -2191,6 +2184,11 @@ static void refresh_devices(bool descriptors_only)
 					rumble.set_rumble_state(i, RETRO_RUMBLE_WEAK,   0);
 				}
 			}
+		}
+		if (settings.System != DC_PLATFORM_DREAMCAST)
+		{
+			mcfg_DestroyDevices();
+			mcfg_CreateDevices();
 		}
 	}
 }

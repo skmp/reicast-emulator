@@ -2683,10 +2683,30 @@ void UpdateInputState(u32 port)
 		// buttons
 		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_B,  2 ); // A
 		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_A,  1 ); // B
-		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_R,  0 ); // C
 		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_Y, 10 ); // X
 		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_X,  9 ); // Y
-		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_L,  8 ); // Z
+		
+		// Z
+		{
+		   uint32_t dc_key = 1 << 8; // Z
+		   bool is_down = input_cb(port, RETRO_DEVICE_ASCIISTICK, 0, RETRO_DEVICE_ID_JOYPAD_L) || 
+		   				  input_cb(port, RETRO_DEVICE_ASCIISTICK, 0, RETRO_DEVICE_ID_JOYPAD_L2);
+		   if (is_down)
+			  kcode[port] &= ~dc_key;
+		   else
+			  kcode[port] |= dc_key;
+		}
+
+		// C
+		{
+		   uint32_t dc_key = 1 << 0; // C
+		   bool is_down = input_cb(port, RETRO_DEVICE_ASCIISTICK, 0, RETRO_DEVICE_ID_JOYPAD_R) || 
+		   				  input_cb(port, RETRO_DEVICE_ASCIISTICK, 0, RETRO_DEVICE_ID_JOYPAD_R2);
+		   if (is_down)
+			  kcode[port] &= ~dc_key;
+		   else
+			  kcode[port] |= dc_key;
+		}
 		
 		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_START, 3 ); // Start
 		

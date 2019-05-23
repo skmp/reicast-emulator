@@ -518,10 +518,10 @@ void retro_set_environment(retro_environment_t cb)
 		 { 0 },
    };
    static const struct retro_controller_info ports[] = {
-           { ports_default,  6 },
-           { ports_default,  6 },
-           { ports_default,  6 },
-           { ports_default,  6 },
+           { ports_default,  7 },
+           { ports_default,  7 },
+           { ports_default,  7 },
+           { ports_default,  7 },
            { 0 },
    };
    environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);

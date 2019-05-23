@@ -33,6 +33,7 @@ char slash = '/';
 
 #define RETRO_DEVICE_TWINSTICK				RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 1 )
 #define RETRO_DEVICE_TWINSTICK_SATURN		RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 2 )
+#define RETRO_DEVICE_ASCIISTICK				RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 3 )
 
 #define RETRO_ENVIRONMENT_RETROARCH_START_BLOCK 0x800000
 
@@ -507,7 +508,8 @@ void retro_set_environment(retro_environment_t cb)
 
    static const struct retro_controller_description ports_default[] =
    {
-		 { "Gamepad",		RETRO_DEVICE_JOYPAD },
+		 { "Controller",	RETRO_DEVICE_JOYPAD },
+		 { "Arcade Stick",	RETRO_DEVICE_ASCIISTICK },
 		 { "Keyboard",		RETRO_DEVICE_KEYBOARD },
 		 { "Mouse",			RETRO_DEVICE_MOUSE },
 		 { "Light Gun",		RETRO_DEVICE_LIGHTGUN },
@@ -1659,6 +1661,20 @@ static void set_input_descriptors()
     		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" };
     		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,    "Special" };
     		break;
+ 
+ 		case MDT_AsciiStick:
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "Stick Left" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "Stick Up" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "Stick Down" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "Stick Right" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_L,    "C" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_R,    "Z" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" };
+    		break;
 
     	 case MDT_LightGun:
     		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT,  "D-Pad Left" };
@@ -2145,6 +2161,9 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 			case RETRO_DEVICE_TWINSTICK:
 			case RETRO_DEVICE_TWINSTICK_SATURN:
 				maple_devices[in_port] = MDT_TwinStick;
+				break;
+			case RETRO_DEVICE_ASCIISTICK:
+				maple_devices[in_port] = MDT_AsciiStick;
 				break;
 			case RETRO_DEVICE_KEYBOARD:
 				maple_devices[in_port] = MDT_Keyboard;
@@ -2650,6 +2669,34 @@ void UpdateInputState(u32 port)
 		   }
 	  }
 	  break;
+	  
+	case MDT_AsciiStick:
+	{
+		kcode[port] = 0xFFFF; // active-low
+
+		// stick
+		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_UP, 4 );
+		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_DOWN, 5 );
+		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_LEFT, 6 );
+		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_RIGHT, 7 );
+		
+		// buttons
+		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_B,  2 ); // A
+		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_A,  1 ); // B
+		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_R,  0 ); // C
+		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_Y, 10 ); // X
+		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_X,  9 ); // Y
+		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_L,  8 ); // Z
+		
+		setDeviceButtonStateDirect(port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_START, 3 ); // Start
+		
+		// unused inputs
+		lt[port]=0;
+		rt[port]=0;
+		joyx[port]=0;
+		joyy[port]=0;
+	}
+	break;
 
 	case MDT_TwinStick:
 	{

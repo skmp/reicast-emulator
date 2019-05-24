@@ -32,7 +32,7 @@ extern u8 rt[4], lt[4];
 extern s8 joyx[4], joyy[4];
 
 std::vector<std::shared_ptr<GamepadDevice>> GamepadDevice::_gamepads;
-std::mutex GamepadDevice::_gamepads_mutex;
+static cMutex _gamepads_mutex;
 
 bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 {
@@ -238,21 +238,21 @@ bool GamepadDevice::find_mapping(const char *custom_mapping /* = NULL */)
 
 int GamepadDevice::GetGamepadCount()
 {
-	_gamepads_mutex.lock();
+	_gamepads_mutex.Lock();
 	int count = _gamepads.size();
-	_gamepads_mutex.unlock();
+	_gamepads_mutex.Unlock();
 	return count;
 }
 
 std::shared_ptr<GamepadDevice> GamepadDevice::GetGamepad(int index)
 {
-	_gamepads_mutex.lock();
+	_gamepads_mutex.Lock();
 	std::shared_ptr<GamepadDevice> dev;
 	if (index >= 0 && index < _gamepads.size())
 		dev = _gamepads[index];
 	else
 		dev = NULL;
-	_gamepads_mutex.unlock();
+	_gamepads_mutex.Unlock();
 	return dev;
 }
 
@@ -295,21 +295,21 @@ void GamepadDevice::Register(std::shared_ptr<GamepadDevice> gamepad)
 	if (maple_port != 12345)
 		gamepad->set_maple_port(maple_port);
 
-	_gamepads_mutex.lock();
+	_gamepads_mutex.Lock();
 	_gamepads.push_back(gamepad);
-	_gamepads_mutex.unlock();
+	_gamepads_mutex.Unlock();
 }
 
 void GamepadDevice::Unregister(std::shared_ptr<GamepadDevice> gamepad)
 {
 	gamepad->save_mapping();
-	_gamepads_mutex.lock();
+	_gamepads_mutex.Lock();
 	for (auto it = _gamepads.begin(); it != _gamepads.end(); it++)
 		if (*it == gamepad) {
 			_gamepads.erase(it);
 			break;
 		}
-	_gamepads_mutex.unlock();
+	_gamepads_mutex.Unlock();
 }
 
 void GamepadDevice::SaveMaplePorts()

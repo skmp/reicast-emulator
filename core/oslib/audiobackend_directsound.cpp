@@ -4,19 +4,75 @@
 #include <initguid.h>
 #include <dsound.h>
 
-void* SoundThread(void* param);
-#define V2_BUFFERSZ (16*1024)
+#define SOUND_BUFFER_SIZE 8192
 
 IDirectSound8* dsound;
 IDirectSoundBuffer8* buffer;
 
-u32 ds_ring_size;
+static HANDLE *buffer_events;
+static int num_buffer_events = 0;
+static bool dsound_running = false;
+static HANDLE thread;
+static DWORD tid;
+static int chunk_size;
+static u32 writeCursor;
+static u32 bufferSize;
 
-static void directsound_init()
+static audio_backend_pull_callback_t pull_callback;
+
+DWORD CALLBACK dsound_thread(PVOID param)
 {
-	verifyc(DirectSoundCreate8(NULL,&dsound,NULL));
+	while (dsound_running) {
+		u32 rv = WaitForMultipleObjects(num_buffer_events, buffer_events, FALSE, 20);
+		if (rv == WAIT_OBJECT_0)
+			return 0;
 
-	verifyc(dsound->SetCooperativeLevel((HWND)libPvr_GetRenderTarget(),DSSCL_PRIORITY));
+		void *p1, *p2;
+		DWORD s1, s2;
+
+		DWORD read, usedBuffer, freeBuffer;
+
+		verifyc(buffer->GetCurrentPosition(&read, NULL));
+		if (writeCursor > read)
+			usedBuffer = writeCursor - read;
+		else
+			usedBuffer = bufferSize - (read - writeCursor);
+
+		freeBuffer = bufferSize - usedBuffer;
+
+		while (freeBuffer >= chunk_size)
+		{
+			verifyc(buffer->Lock(writeCursor, chunk_size, &p1, &s1, &p2, &s2, 0));
+			{
+				if (pull_callback(nullptr, 0, 0, 0) >= 512)
+				{
+					pull_callback(p1, s1 / 4, s1 / 4, 0);
+					if (p2 != nullptr)
+						pull_callback(p2, s2 / 4, s2 / 4, 0);
+				}
+				else {
+					memset(p1, 0, s1);
+					if (p2 != nullptr)
+						memset(p2, 0, s2);
+				}
+			}
+			buffer->Unlock(p1, s1, p2, s2);
+			writeCursor = (writeCursor + chunk_size) % bufferSize;
+			freeBuffer -= chunk_size;
+		}
+	}
+	return 0;
+}
+
+static void directsound_init(audio_backend_pull_callback_t pull_callback)
+{
+	::pull_callback = pull_callback;
+
+	CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+	verifyc(DirectSoundCreate8(NULL, &dsound, NULL));
+
+	verifyc(dsound->SetCooperativeLevel((HWND)libPvr_GetRenderTarget(), DSSCL_PRIORITY));
 	IDirectSoundBuffer* buffer_;
 
 	WAVEFORMATEX wfx;
@@ -34,26 +90,24 @@ static void directsound_init()
 
 	// Set up DSBUFFERDESC structure.
 
-	ds_ring_size=8192*wfx.nBlockAlign;
+	bufferSize = SOUND_BUFFER_SIZE * wfx.nBlockAlign;
 
 	memset(&desc, 0, sizeof(DSBUFFERDESC));
 	desc.dwSize = sizeof(DSBUFFERDESC);
 	desc.dwFlags = DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLPOSITIONNOTIFY;// _CTRLPAN | DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY;
 
-	desc.dwBufferBytes = ds_ring_size;
+	desc.dwBufferBytes = bufferSize;
 	desc.lpwfxFormat = &wfx;
 
-
-
-	if (settings.aica.HW_mixing==0)
+	if (settings.aica.HW_mixing == 0)
 	{
-		desc.dwFlags |=DSBCAPS_LOCSOFTWARE;
+		desc.dwFlags |= DSBCAPS_LOCSOFTWARE;
 	}
-	else if (settings.aica.HW_mixing==1)
+	else if (settings.aica.HW_mixing == 1)
 	{
-		desc.dwFlags |=DSBCAPS_LOCHARDWARE;
+		desc.dwFlags |= DSBCAPS_LOCHARDWARE;
 	}
-	else if (settings.aica.HW_mixing==2)
+	else if (settings.aica.HW_mixing == 2)
 	{
 		//auto
 	}
@@ -63,121 +117,66 @@ static void directsound_init()
 	}
 
 	if (settings.aica.GlobalFocus)
-		desc.dwFlags|=DSBCAPS_GLOBALFOCUS;
+		desc.dwFlags |= DSBCAPS_GLOBALFOCUS;
 
-	verifyc(dsound->CreateSoundBuffer(&desc,&buffer_,0));
-	verifyc(buffer_->QueryInterface(IID_IDirectSoundBuffer8,(void**)&buffer));
+	verifyc(dsound->CreateSoundBuffer(&desc, &buffer_, 0));
+	verifyc(buffer_->QueryInterface(IID_IDirectSoundBuffer8, (void**)& buffer));
 	buffer_->Release();
 
-	//Play the buffer !
-	verifyc(buffer->Play(0,0,DSBPLAY_LOOPING));
-
-}
-
-
-DWORD wc=0;
-
-
-static int directsound_getfreesz()
-{
-	DWORD pc,wch;
-
-	buffer->GetCurrentPosition(&pc,&wch);
-
-	int fsz=0;
-	if (wc>=pc)
-		fsz=ds_ring_size-wc+pc;
-	else
-		fsz=pc-wc;
-
-	fsz-=32;
-	return fsz;
-}
-
-static int directsound_getusedSamples()
-{
-	return (ds_ring_size-directsound_getfreesz())/4;
-}
-
-static u32 directsound_push_nw(void* frame, u32 samplesb)
-{
-	DWORD pc,wch;
-
-	u32 bytes=samplesb*4;
-
-	buffer->GetCurrentPosition(&pc,&wch);
-
-	int fsz=0;
-	if (wc>=pc)
-		fsz=ds_ring_size-wc+pc;
-	else
-		fsz=pc-wc;
-
-	fsz-=32;
-
-	//printf("%d: r:%d w:%d (f:%d wh:%d)\n",fsz>bytes,pc,wc,fsz,wch);
-
-	if (fsz>bytes)
+	int num_buffers = (bufferSize / wfx.nBlockAlign) / 512;
+	chunk_size = 512 * wfx.nBlockAlign;
+	num_buffer_events = num_buffers + 1;
+	buffer_events = new HANDLE[num_buffer_events];
+	DSBPOSITIONNOTIFY* notfy = new DSBPOSITIONNOTIFY[num_buffers];
+	for (int i = 0; i < num_buffers; i++)
 	{
-		void* ptr1,* ptr2;
-		DWORD ptr1sz,ptr2sz;
-
-		u8* data=(u8*)frame;
-
-		buffer->Lock(wc,bytes,&ptr1,&ptr1sz,&ptr2,&ptr2sz,0);
-		memcpy(ptr1,data,ptr1sz);
-		if (ptr2sz)
-		{
-			data+=ptr1sz;
-			memcpy(ptr2,data,ptr2sz);
-		}
-
-		buffer->Unlock(ptr1,ptr1sz,ptr2,ptr2sz);
-		wc=(wc+bytes)%ds_ring_size;
-		return 1;
+		notfy[i].dwOffset = chunk_size * i;
+		notfy[i].hEventNotify = buffer_events[i+1] = CreateEvent(NULL, FALSE, FALSE, NULL);
 	}
-	return 0;
-	//ds_ring_size
+	buffer_events[0] = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+	IDirectSoundNotify* buffer_notify;
+	verifyc(buffer->QueryInterface(IID_IDirectSoundNotify, (void**)& buffer_notify));
+	buffer_notify->SetNotificationPositions(num_buffers, notfy);
+	buffer_notify->Release();
+
+	delete[] notfy;
+
+	//Play the buffer !
+	verifyc(buffer->Play(0, 0, DSBPLAY_LOOPING));
+
+	dsound_running = true;
+	if (thread = ::CreateThread(nullptr, 0, dsound_thread, nullptr, 0, &tid))
+	{
+		::SetThreadPriority(thread, THREAD_PRIORITY_ABOVE_NORMAL);
+	}
 }
 
 static u32 directsound_push(void* frame, u32 samples, bool wait)
 {
-
-	u16* f=(u16*)frame;
-	/*
-	bool w=false;
-
-	for (u32 i = 0; i < samples*2; i++)
-	{
-		if (f[i])
-		{
-			w = true;
-			break;
-		}
-	}
-
-	wait &= w;
-	*/
-	int ffs=1;
-
-	/*
-	while (directsound_IsAudioBufferedLots() && wait)
-		if (ffs == 0)
-			ffs = printf("AUD WAIT %d\n", directsound_getusedSamples());
-	*/
-
-	while (!directsound_push_nw(frame, samples) && wait)
-		0 && printf("FAILED waiting on audio FAILED %d\n", directsound_getusedSamples());
-
-	return 1;
+	return 0;
 }
 
 static void directsound_term()
 {
+	SetEvent(buffer_events[0]);
+	dsound_running = false;
+	WaitForSingleObject(thread, INFINITE);
+	CloseHandle(thread);
+
 	buffer->Stop();
 
 	buffer->Release();
 	dsound->Release();
+
+	for (int i = 0; i < num_buffer_events; i++)
+		CloseHandle(buffer_events[i]);
+	delete[] buffer_events;
+}
+
+static bool directsound_preferpull()
+{
+	return true;
 }
 
 audiobackend_t audiobackend_directsound = {
@@ -186,7 +185,8 @@ audiobackend_t audiobackend_directsound = {
     &directsound_init,
     &directsound_push,
     &directsound_term,
-	NULL
+	NULL,
+	&directsound_preferpull
 };
 
 static bool ds = RegisterAudioBackend(&audiobackend_directsound);

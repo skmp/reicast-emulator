@@ -6,7 +6,7 @@
 static ao_device *aodevice;
 static ao_sample_format aoformat;
 
-static void libao_init()
+static void libao_init(audio_backend_pull_callback_t pull_callback)
 {
 	ao_initialize();
 	memset(&aoformat, 0, sizeof(aoformat));

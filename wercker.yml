@@ -4,10 +4,16 @@ build:
     steps:
         - script:
             name: install-dependencies
-            code: sudo apt-get clean && sudo apt-get update && sudo apt-get install -y build-essential pkgconf libasound2-dev libgl1-mesa-dev libx11-dev libudev-dev git
+            code: sudo dpkg --add-architecture i386 && sudo apt-get clean && sudo apt-get update && sudo apt-get install -y build-essential pkgconf libasound2-dev libgl1-mesa-dev libx11-dev libudev-dev git && sudo apt-get install -y libasound2-dev:i386 libgl1-mesa-dev:i386 libx11-dev:i386 libudev-dev:i386 libc6:i386 g++-multilib gcc-multilib && sudo apt-get install -y g++-mingw-w64-x86-64 mingw-w64-x86-64-dev libz-mingw-w64-dev libnpth-mingw-w64-dev
         - script:
-            name: gcc-version
-            code: gcc --version
+            name: toolchain info
+            code: gcc --version && x86_64-w64-mingw32-gcc --version
         - script:
-            name: reicast x64 build
-            code: make -C shell/linux platform=x64
+            name: reicast Linux x64 build
+            code: make -C shell/linux -j `nproc` platform=x64
+        - script:
+            name: reicast Linux x86 build
+            code: make -C shell/linux -j `nproc` platform=x86
+        - script:
+            name: reicast Windows x64 (MinGW) build
+            code: make -C shell/linux -j `nproc` platform=win32 CC_PREFIX=x86_64-w64-mingw32-

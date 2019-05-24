@@ -2274,7 +2274,10 @@ void ngen_ResetBlocks()
 	add
 	str
 */
-void ngen_init()
+
+extern "C" void ngen_mainloop(void*);
+
+MainloopFnPtr_t ngen_init()
 {
 	printf("Initializing the ARM32 dynarec\n");
     verify(FPCB_OFFSET == -0x2100000 || FPCB_OFFSET == -0x4100000);
@@ -2372,6 +2375,7 @@ void ngen_init()
 	//ccmap[shop_fseteq]=CC_EQ;
 	//ccmap[shop_fsetgt]=CC_GT;
 
+	return &ngen_mainloop;
 }
 
 

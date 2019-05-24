@@ -122,7 +122,7 @@ __asm__
 		"br x0								\n"
 );
 
-void ngen_mainloop(void* v_cntx)
+void rec_mainloop(void* v_cntx)
 {
 	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
 
@@ -202,10 +202,11 @@ void ngen_mainloop(void* v_cntx)
 	);
 }
 
-void ngen_init()
+MainloopFnPtr_t ngen_init()
 {
 	printf("Initializing the ARM64 dynarec\n");
 	ngen_FailedToFindBlock = &ngen_FailedToFindBlock_;
+	return &rec_mainloop;
 }
 
 void ngen_ResetBlocks()

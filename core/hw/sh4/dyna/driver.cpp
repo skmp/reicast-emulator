@@ -38,6 +38,7 @@ uintptr_t cc_rx_offset;
 u32 LastAddr;
 u32 LastAddr_min;
 u32* emit_ptr=0;
+MainloopFnPtr_t mainloop_function;
 
 void* emit_GetCCPtr() { return emit_ptr==0?(void*)&CodeCache[LastAddr]:(void*)emit_ptr; }
 void emit_SetBaseAddr() { LastAddr_min = LastAddr; }
@@ -88,7 +89,7 @@ void recSh4_Run()
 		printf("Warning: SMC check mode is %d\n", settings.dynarec.SmcCheckLevel);
 	
 	verify(rcb_noffs(&next_pc)==-184);
-	ngen_mainloop(sh4_dyna_rcb);
+	mainloop_function(sh4_dyna_rcb);
 
 #if !defined(TARGET_BOUNDED_EXECUTION)
 	sh4_int_bCpuRun=false;
@@ -417,10 +418,6 @@ void recSh4_Reset(bool Manual)
 	Sh4_int_Reset(Manual);
 }
 
-#if HOST_OS == OS_DARWIN
-#include <sys/mman.h>
-#endif
-
 void recSh4_Init()
 {
 	printf("recSh4 Init\n");
@@ -453,7 +450,7 @@ void recSh4_Init()
 	verify(CodeCache != NULL);
 
 	memset(CodeCache, 0xFF, CODE_SIZE);
-	ngen_init();
+	mainloop_function = ngen_init();
 	bm_Reset();
 }
 

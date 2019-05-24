@@ -743,7 +743,7 @@ unat mem_code_base=0;
 unat mem_code_end=0;
 void* mem_code[3][2][5];
 
-void ngen_init()
+MainloopFnPtr_t ngen_init()
 {
 	ngen_FailedToFindBlock = &ngen_FailedToFindBlock_;
 
@@ -779,6 +779,8 @@ void ngen_init()
 	delete x86e;
 
 	emit_SetBaseAddr();
+
+	return &ngen_mainloop;
 }
 
 void ngen_ResetBlocks()

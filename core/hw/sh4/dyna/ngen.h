@@ -95,7 +95,8 @@ u32 DYNACALL rdv_DoInterrupts_pc(u32 pc);
 
 //Stuff to be implemented per dynarec core
 
-void ngen_init();
+typedef void (*MainloopFnPtr_t) (void*);
+MainloopFnPtr_t ngen_init();
 
 //Called to compile a block
 void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging,bool optimise);
@@ -105,8 +106,6 @@ void ngen_ResetBlocks();
 //Value to be returned when the block manager failed to find a block,
 //should call rdv_FailedToFindBlock and then jump to the return value
 extern void (*ngen_FailedToFindBlock)();
-//the dynarec mainloop
-void ngen_mainloop(void* cntx);
 
 void ngen_GetFeatures(ngen_features* dst);
 

@@ -36,7 +36,7 @@ struct DynaRBI : RuntimeBlockInfo
 int cycle_counter;
 extern int mips_counter;
 
-void ngen_mainloop(void* v_cntx)
+void rec_mainloop(void* v_cntx)
 {
 	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
 
@@ -59,8 +59,9 @@ void ngen_mainloop(void* v_cntx)
 	}
 }
 
-void ngen_init()
+MainloopFnPtr_t ngen_init()
 {
+	return &rec_mainloop;
 }
 
 void ngen_GetFeatures(ngen_features* dst)

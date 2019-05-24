@@ -229,9 +229,6 @@ class Arm64Assembler : public MacroAssembler
 	typedef void (MacroAssembler::*Arm64Op_RROF)(const Register&, const Register&, const Operand&, enum FlagsUpdate);
 
 public:
-	Arm64Assembler() : Arm64Assembler(emit_GetCCPtr())
-	{
-	}
 	Arm64Assembler(void *buffer) : MacroAssembler((u8 *)buffer, 64 * 1024), regalloc(this)
 	{
 		call_regs.push_back(&w0);
@@ -1148,15 +1145,13 @@ private:
 		if (!_nvmem_enabled())
 			return false;
 
-		Instruction *start_instruction = GetCursorAddress<Instruction *>();
-
 		// WARNING: the rewrite code relies on having two ops before the memory access
 		// Update ngen_Rewrite (and perhaps read_memory_rewrite_size) if adding or removing code
+		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 		Add(w1, *call_regs[0], sizeof(Sh4Context), LeaveFlags);
 		Bfc(w1, 29, 3);		// addr &= ~0xE0000000
-
-		//printf("direct read memory access opid %d pc %p code addr %08x\n", opid, GetCursorAddress<void *>(), this->block->addr);
-		this->block->memory_accesses[GetCursorAddress<void *>()] = (u32)opid;
+		Instruction *mem_instruction = GetCursorAddress<Instruction *>();
+		unsigned prologue_size = (char*)mem_instruction - (char*)start_instruction;
 
 		u32 size = op.flags & 0x7f;
 		switch(size)
@@ -1192,7 +1187,10 @@ private:
 			Str(x1, sh4_context_mem_operand(op.rd.reg_ptr()));
 #endif
 		}
+		unsigned code_size = (unsigned)(GetCursorAddress<char*>() - (char*)start_instruction);
 		EnsureCodeSize(start_instruction, read_memory_rewrite_size);
+		verify(code_size < 256 && prologue_size < 256);
+		this->block->memory_accesses[mem_instruction] = { (uint16_t)opid, (uint8_t)prologue_size, (uint8_t)code_size };
 
 		return true;
 	}
@@ -1228,15 +1226,13 @@ private:
 		if (!_nvmem_enabled())
 			return false;
 
-		Instruction *start_instruction = GetCursorAddress<Instruction *>();
-
 		// WARNING: the rewrite code relies on having two ops before the memory access
 		// Update ngen_Rewrite (and perhaps write_memory_rewrite_size) if adding or removing code
+		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 		Add(w7, *call_regs[0], sizeof(Sh4Context), LeaveFlags);
 		Bfc(w7, 29, 3);		// addr &= ~0xE0000000
-
-		//printf("direct write memory access opid %d pc %p code addr %08x\n", opid, GetCursorAddress<void *>(), this->block->addr);
-		this->block->memory_accesses[GetCursorAddress<void *>()] = (u32)opid;
+		Instruction *mem_instruction = GetCursorAddress<Instruction *>();
+		unsigned prologue_size = (char*)mem_instruction - (char*)start_instruction;
 
 		u32 size = op.flags & 0x7f;
 		switch(size)
@@ -1257,7 +1253,11 @@ private:
 			Str(x1, MemOperand(x28, x7));
 			break;
 		}
+
+		unsigned code_size = (unsigned)(GetCursorAddress<char*>() - (char*)start_instruction);
 		EnsureCodeSize(start_instruction, write_memory_rewrite_size);
+		verify(code_size < 256 && prologue_size < 256);
+		this->block->memory_accesses[mem_instruction] = { (uint16_t)opid, (uint8_t)prologue_size, (uint8_t)code_size };
 
 		return true;
 	}
@@ -1411,7 +1411,7 @@ void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, 
 {
 	verify(emit_FreeSpace() >= 16 * 1024);
 
-	compiler = new Arm64Assembler();
+	compiler = new Arm64Assembler(emit_GetCCPtr());
 
 	compiler->ngen_Compile(block, smc_checks, reset, staging, optimise);
 
@@ -1456,7 +1456,7 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 		printf("ngen_Rewrite: memory access at %p not found (%lu entries)\n", code_ptr, block->memory_accesses.size());
 		return false;
 	}
-	u32 opid = it->second;
+	u32 opid = it->second.opid;
 	verify(opid < block->oplist.size());
 	const shil_opcode& op = block->oplist[opid];
 	Arm64Assembler *assembler = new Arm64Assembler(code_ptr - 2);	// Skip the 2 preceding ops (bic, add)

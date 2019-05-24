@@ -62,8 +62,10 @@ static __attribute((used)) void end_slice()
 
 #ifdef _WIN32
 #define WIN32_ONLY(x) x
+#define STACK_ALIGN 40  		// 32-byte shadow space + 8 byte alignment
 #else
 #define WIN32_ONLY(x)
+#define STACK_ALIGN  8
 #endif
 
 #define STRINGIFY(x) #x
@@ -155,11 +157,7 @@ WIN32_ONLY( ".seh_pushreg %r14              \n\t")
 
 		"3:                                 \n\t"   // end_run_loop
 
-#ifdef _WIN32
-			"addq $40, %rsp                 \n\t"
-#else
-			"addq $8, %rsp                  \n\t"
-#endif
+			"addq $" _S(STACK_ALIGN)", %rsp \n\t"
 			"popq %r15                      \n\t"
 			"popq %r14                      \n\t"
 			"popq %r13                      \n\t"
@@ -185,12 +183,6 @@ WIN32_ONLY( ".seh_pushreg %r14              \n\t")
 #undef _U
 #undef _S
 
-void ngen_init()
-{
-	verify(CPU_RUNNING == offsetof(Sh4RCB, cntx.CpuRunning));
-	verify(PC == offsetof(Sh4RCB, cntx.pc));
-}
-
 void ngen_ResetBlocks()
 {
 }
@@ -214,34 +206,51 @@ static void ngen_blockcheckfail(u32 pc) {
 class BlockCompiler : public Xbyak::CodeGenerator
 {
 public:
-	BlockCompiler() : Xbyak::CodeGenerator(64 * 1024, emit_GetCCPtr()), regalloc(this)
+	BlockCompiler(void *buffer) : Xbyak::CodeGenerator(64 * 1024, buffer), regalloc(this)
 	{
 		#if HOST_OS == OS_WINDOWS
 			call_regs.push_back(ecx);
 			call_regs.push_back(edx);
 			call_regs.push_back(r8d);
 			call_regs.push_back(r9d);
-
-			call_regs64.push_back(rcx);
-			call_regs64.push_back(rdx);
-			call_regs64.push_back(r8);
-			call_regs64.push_back(r9);
 		#else
 			call_regs.push_back(edi);
 			call_regs.push_back(esi);
 			call_regs.push_back(edx);
 			call_regs.push_back(ecx);
-
-			call_regs64.push_back(rdi);
-			call_regs64.push_back(rsi);
-			call_regs64.push_back(rdx);
-			call_regs64.push_back(rcx);
 		#endif
 
 		call_regsxmm.push_back(xmm0);
 		call_regsxmm.push_back(xmm1);
 		call_regsxmm.push_back(xmm2);
 		call_regsxmm.push_back(xmm3);
+	}
+
+	void InitializeRewrite(RuntimeBlockInfo *block, size_t opid)
+	{
+		regalloc.DoAlloc(block);
+		regalloc.current_opid = opid;
+	}
+
+	void compile_trampolines() {
+		// Here we emit some trampolines for Mem Read/Write functions.
+		// The purpose is making the calls smaller so that we can have rewrites.
+		// This is inspired on the 32 bit rec, that does (almost) the same.
+		// Note we need to maintain the stack 16/32 byte aligned, due to the double call.
+		typedef void (*memfn)(void);
+		void (*fnptrs[8])(void) = {
+			(memfn)&ReadMem8,  (memfn)&ReadMem16,  (memfn)&ReadMem32,  (memfn)&ReadMem64,
+			(memfn)&WriteMem8, (memfn)&WriteMem16, (memfn)&WriteMem32, (memfn)&WriteMem64,
+		};
+		for (unsigned i = 0; i < 8; i++) {
+			mem_handlers[i] = ((char*)getCode()) + getSize();
+			sub(rsp, STACK_ALIGN);
+			GenCall(fnptrs[i]);
+			add(rsp, STACK_ALIGN);
+			ret();
+		}
+		ready();
+		emit_Skip(getSize());
 	}
 
 	void compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
@@ -264,11 +273,7 @@ public:
 		mov(ecx, block->guest_cycles);
 		add(qword[rax], rcx);
 #endif
-#ifdef _WIN32
-		sub(rsp, 0x28);		// 32-byte shadow space + 8 byte alignment
-#else
-		sub(rsp, 0x8);		// align stack
-#endif
+		sub(rsp, STACK_ALIGN);
 
 		for (size_t i = 0; i < block->oplist.size(); i++)
 		{
@@ -338,143 +343,48 @@ public:
 				u32 size = op.flags & 0x7f;
 
 				if (op.rs1.is_imm())
-				{
-					bool isram = false;
-					void* ptr = _vmem_read_const(op.rs1._imm, isram, size);
-
-					if (isram)
-					{
-						// Immediate pointer to RAM: super-duper fast access
-						mov(rax, reinterpret_cast<uintptr_t>(ptr));
-						switch (size)
-						{
-						case 2:
-							movsx(regalloc.MapRegister(op.rd), word[rax]);
-							break;
-
-						case 4:
-							if (regalloc.IsAllocg(op.rd))
-								mov(regalloc.MapRegister(op.rd), dword[rax]);
-							else
-								movd(regalloc.MapXRegister(op.rd), dword[rax]);
-							break;
-
-						default:
-							die("Invalid immediate size");
-  							break;
-						}
-					}
-					else
-					{
-						// Not RAM: the returned pointer is a memory handler
-						mov(call_regs[0], op.rs1._imm);
-
-						switch(size)
-						{
-						case 2:
-							GenCall((void (*)())ptr);
-							movsx(ecx, ax);
-							break;
-
-						case 4:
-							GenCall((void (*)())ptr);
-							mov(ecx, eax);
-							break;
-
-						default:
-							die("Invalid immediate size");
-  							break;
-						}
-						host_reg_to_shil_param(op.rd, ecx);
-					}
-				}
-				else
-				{
+					// Immediate addresses allow us to know where it lands in advance.
+					GenReadMemoryImmediate(op);
+				else {
 					// Not an immediate address
-					shil_param_to_host_reg(op.rs1, call_regs[0]);
-					if (!op.rs3.is_null())
-					{
-						if (op.rs3.is_imm())
-							add(call_regs[0], op.rs3._imm);
-						else
-							add(call_regs[0], regalloc.MapRegister(op.rs3));
-					}
+					GenMemAddr(op, call_regs[0]);
 
-					if (size == 1) {
-						GenCall(ReadMem8);
-						movsx(ecx, al);
-					}
-					else if (size == 2) {
-						GenCall(ReadMem16);
-						movsx(ecx, ax);
-					}
-					else if (size == 4) {
-						GenCall(ReadMem32);
-						mov(ecx, eax);
-					}
-					else if (size == 8) {
-						GenCall(ReadMem64);
-						mov(rcx, rax);
-					}
-					else {
-						die("1..8 bytes");
-					}
-
-					if (size != 8)
-						host_reg_to_shil_param(op.rd, ecx);
-					else {
-#ifdef EXPLODE_SPANS
-						verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
-						movd(regalloc.MapXRegister(op.rd, 0), ecx);
-						shr(rcx, 32);
-						movd(regalloc.MapXRegister(op.rd, 1), ecx);
-#else
-						mov(rax, (uintptr_t)op.rd.reg_ptr());
-						mov(qword[rax], rcx);
-#endif
-					}
+					if (_nvmem_enabled())
+						GenReadMemoryFast(op, i, block);
+					else
+						// Fallback to slow path if fast is not available.
+						GenReadMemorySlow(op);
 				}
 			}
 			break;
 
 			case shop_writem:
 			{
-				u32 size = op.flags & 0x7f;
-				shil_param_to_host_reg(op.rs1, call_regs[0]);
-				if (!op.rs3.is_null())
-				{
-					if (op.rs3.is_imm())
-						add(call_regs[0], op.rs3._imm);
-					else
-						add(call_regs[0], regalloc.MapRegister(op.rs3));
-				}
+				// Gen addr to call0
+				GenMemAddr(op, call_regs[0]);
 
+				// Gen value to call1
+				u32 size = op.flags & 0x7f;
 				if (size != 8)
 					shil_param_to_host_reg(op.rs2, call_regs[1]);
 				else {
-#ifdef EXPLODE_SPANS
-					verify(op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1));
-					movd(call_regs[1], regalloc.MapXRegister(op.rs2, 1));
-					shl(call_regs64[1], 32);
-					movd(eax, regalloc.MapXRegister(op.rs2, 0));
-					or_(call_regs64[1], rax);
-#else
-					mov(rax, (uintptr_t)op.rs2.reg_ptr());
-					mov(call_regs64[1], qword[rax]);
-#endif
+					#ifdef EXPLODE_SPANS
+						verify(op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1));
+						movd(call_regs[1], regalloc.MapXRegister(op.rs2, 1));
+						shl(call_regs[1].cvt64(), 32);
+						movd(eax, regalloc.MapXRegister(op.rs2, 0));
+						or_(call_regs[1].cvt64(), rax);
+					#else
+						mov(rax, (uintptr_t)op.rs2.reg_ptr());
+						mov(call_regs[1].cvt64(), qword[rax]);
+					#endif
 				}
 
-				if (size == 1)
-					GenCall(WriteMem8);
-				else if (size == 2)
-					GenCall(WriteMem16);
-				else if (size == 4)
-					GenCall(WriteMem32);
-				else if (size == 8)
-					GenCall(WriteMem64);
-				else {
-					die("1..8 bytes");
-				}
+				if (_nvmem_enabled())
+					GenWriteMemoryFast(op, i, block);
+				else
+					// Fallback to slow path if fast is not available.
+					GenWriteMemorySlow(op);
 			}
 			break;
 
@@ -979,18 +889,229 @@ public:
 			die("Invalid block end type");
 		}
 
-#ifdef _WIN32
-		add(rsp, 0x28);
-#else
-		add(rsp, 0x8);
-#endif
+		add(rsp, STACK_ALIGN);
 		ret();
 
 		ready();
 
 		block->code = (DynarecCodeEntryPtr)getCode();
+		block->host_code_size = getSize();
 
 		emit_Skip(getSize());
+	}
+
+	void GenReadMemoryImmediate(const shil_opcode& op) {
+		bool isram = false;
+		u32 size = op.flags & 0x7f;
+		void* ptr = _vmem_read_const(op.rs1._imm, isram, size);
+
+		if (isram) {
+			// Immediate pointer to RAM: super-duper fast access
+			mov(rax, reinterpret_cast<uintptr_t>(ptr));
+			switch (size) {
+			case 2:
+				movsx(regalloc.MapRegister(op.rd), word[rax]);
+				break;
+
+			case 4:
+				if (regalloc.IsAllocg(op.rd))
+					mov(regalloc.MapRegister(op.rd), dword[rax]);
+				else
+					movd(regalloc.MapXRegister(op.rd), dword[rax]);
+				break;
+
+			default:
+				die("Invalid immediate size");
+				break;
+			}
+		}
+		else
+		{
+			// Not RAM: the returned pointer is a memory handler
+			mov(call_regs[0], op.rs1._imm);
+
+			switch(size) {
+			case 2:
+				GenCall((void (*)())ptr);
+				movsx(ecx, ax);
+				break;
+
+			case 4:
+				GenCall((void (*)())ptr);
+				mov(ecx, eax);
+				break;
+
+			default:
+				die("Invalid immediate size");
+				break;
+			}
+			host_reg_to_shil_param(op.rd, ecx);
+		}
+	}
+
+	void GenMemAddr(const shil_opcode& op, const Xbyak::Reg& raddr) {
+		shil_param_to_host_reg(op.rs1, raddr);
+		if (!op.rs3.is_null())
+		{
+			if (op.rs3.is_imm())
+				add(raddr, op.rs3._imm);
+			else
+				add(raddr, regalloc.MapRegister(op.rs3));
+		}
+	}
+
+	void GenReadMemoryFast(const shil_opcode& op, size_t opid, RuntimeBlockInfo *block) {
+		// Assuming 512MB addr space for now
+
+		auto temp_reg = call_regs[2].cvt64();
+		unsigned initial_size = (unsigned)getSize();
+		// This addr calculation is variable sized, minimum of 14 bytes it seems.
+		mov(rax, call_regs[0]);               // 3-4 bytes
+		and_(rax, 0x1fffffff);                // Min 5 bytes
+		mov(temp_reg, (uintptr_t)virt_ram_base);   // 6-10 bytes
+		add(rax, temp_reg);   // 6-10 bytes
+
+		void *inst_ptr = ((char*)getCode()) + getSize();
+		unsigned prologue_size = getSize() - initial_size;
+
+		// Memory access is at least 3 bytes long
+		u32 size = op.flags & 0x7f;
+		switch(size) {
+		case 1:
+			movsx(regalloc.MapRegister(op.rd), byte[rax]);
+			break;
+
+		case 2:
+			movsx(regalloc.MapRegister(op.rd), word[rax]);
+			break;
+
+		case 4:
+			if (!op.rd.is_r32f())
+				mov(regalloc.MapRegister(op.rd), dword[rax]);
+			else
+				movd(regalloc.MapXRegister(op.rd), dword[rax]);
+			break;
+
+		case 8:
+			mov(rax, qword[rax]);
+			break;
+		}
+
+		if (size == 8) {
+			#ifdef EXPLODE_SPANS
+				verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
+				movd(regalloc.MapXRegister(op.rd, 0), eax);
+				shr(rax, 32);
+				movd(regalloc.MapXRegister(op.rd, 1), eax);
+			#else
+				mov(rax, (uintptr_t)op.rd.reg_ptr());
+				mov(qword[rax], rax);
+			#endif
+		}
+
+		// Store ptr to start of load/store, opid and size of the whole thing in bytes.
+		unsigned code_size = getSize() - initial_size;
+		verify(code_size < 256 && prologue_size < 256);
+		block->memory_accesses[inst_ptr] = { (uint16_t)opid, (uint8_t)prologue_size, (uint8_t)code_size };
+	}
+
+	void GenReadMemorySlow(const shil_opcode& op, unsigned pad_to_bytes = 0) {
+		unsigned initial_size = getSize();
+
+		u32 size = op.flags & 0x7f;
+		if (size == 1) {
+			call(mem_handlers[0]);
+			movsx(ecx, al);
+		}
+		else if (size == 2) {
+			call(mem_handlers[1]);
+			movsx(ecx, ax);
+		}
+		else if (size == 4) {
+			call(mem_handlers[2]);
+			mov(ecx, eax);
+		}
+		else if (size == 8) {
+			call(mem_handlers[3]);
+			mov(rcx, rax);
+		}
+		else {
+			die("1..8 bytes");
+		}
+
+		if (size != 8)
+			host_reg_to_shil_param(op.rd, ecx);
+		else {
+			#ifdef EXPLODE_SPANS
+				verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
+				movd(regalloc.MapXRegister(op.rd, 0), ecx);
+				shr(rcx, 32);
+				movd(regalloc.MapXRegister(op.rd, 1), ecx);
+			#else
+				mov(rax, (uintptr_t)op.rd.reg_ptr());
+				mov(qword[rax], rcx);
+			#endif
+		}
+
+		// Emit extra nops to pad the access if necessary
+		if (pad_to_bytes > 0) {
+			verify(getSize() - initial_size <= pad_to_bytes);
+			nop(pad_to_bytes - (getSize() - initial_size));
+		}
+	}
+
+	void GenWriteMemorySlow(const shil_opcode& op, unsigned pad_to_bytes = 0) {
+		unsigned initial_size = getSize();
+		u32 size = op.flags & 0x7f;
+		if (size == 1)
+			call(mem_handlers[4]);
+		else if (size == 2)
+			call(mem_handlers[5]);
+		else if (size == 4)
+			call(mem_handlers[6]);
+		else if (size == 8)
+			call(mem_handlers[7]);
+		else {
+			die("1..8 bytes");
+		}
+
+		// Emit extra nops to pad the access if necessary
+		if (pad_to_bytes > 0) {
+			verify(getSize() - initial_size <= pad_to_bytes);
+			nop(pad_to_bytes - (getSize() - initial_size));
+		}
+	}
+
+	void GenWriteMemoryFast(const shil_opcode& op, size_t opid, RuntimeBlockInfo *block) {
+		// Assuming 512MB addr space for now
+		auto temp_reg = call_regs[2].cvt64();
+		unsigned initial_size = (unsigned)getSize();
+		// This addr calculation is variable sized, minimum of 14 bytes it seems.
+		mov(rax, call_regs[0]);               // 3-4 bytes
+		and_(rax, 0x1fffffff);                // Min 5 bytes
+		mov(temp_reg, (uintptr_t)virt_ram_base);   // 6-10 bytes
+		add(rax, temp_reg);   // 6-10 bytes
+
+		void *inst_ptr = ((char*)getCode()) + getSize();
+		unsigned prologue_size = getSize() - initial_size;
+
+		u32 size = op.flags & 0x7f;
+		if (size == 1)
+			mov(byte[rax], call_regs[1].cvt8());
+		else if (size == 2)
+			mov(word[rax], call_regs[1].cvt16());
+		else if (size == 4)
+			mov(dword[rax], call_regs[1]);
+		else if (size == 8)
+			mov(qword[rax], call_regs[1].cvt64());
+		else {
+			die("1..8 bytes");
+		}
+
+		// Store ptr to start of load/store, opid and size of the whole thing in bytes.
+		unsigned code_size = getSize() - initial_size;
+		verify(code_size < 256 && prologue_size < 256);
+		block->memory_accesses[inst_ptr] = { (uint16_t)opid, (uint8_t)prologue_size, (uint8_t)code_size };
 	}
 
 	void ngen_CC_Start(const shil_opcode& op)
@@ -1061,7 +1182,7 @@ public:
 			case CPT_ptr:
 				verify(prm.is_reg());
 
-				mov(call_regs64[regused++], (size_t)prm.reg_ptr());
+				mov(call_regs[regused++].cvt64(), (size_t)prm.reg_ptr());
 
 				break;
             default:
@@ -1258,7 +1379,6 @@ private:
 	}
 
 	vector<Xbyak::Reg32> call_regs;
-	vector<Xbyak::Reg64> call_regs64;
 	vector<Xbyak::Xmm> call_regsxmm;
 
 	struct CC_PS
@@ -1273,11 +1393,13 @@ private:
 	static const u32 float_sign_mask;
 	static const u32 float_abs_mask;
 	static const f32 cvtf2i_pos_saturation;
+	static void *mem_handlers[8]; // Read/Write handlers for every size
 };
 
 const u32 BlockCompiler::float_sign_mask = 0x80000000;
 const u32 BlockCompiler::float_abs_mask = 0x7fffffff;
 const f32 BlockCompiler::cvtf2i_pos_saturation = 2147483520.0f;		// IEEE 754: 0x4effffff;
+void *BlockCompiler::mem_handlers[8];
 
 void X64RegAlloc::Preload(u32 reg, Xbyak::Operand::Code nreg)
 {
@@ -1302,11 +1424,61 @@ void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, 
 {
 	verify(emit_FreeSpace() >= 16 * 1024);
 
-	compiler = new BlockCompiler();
-	
+	compiler = new BlockCompiler(emit_GetCCPtr());
 	compiler->compile(block, smc_checks, reset, staging, optimise);
-
 	delete compiler;
+}
+
+bool ngen_Rewrite(unat& host_pc, unat, unat)
+{
+	//printf("ngen_Rewrite pc %p\n", host_pc);
+	void *host_pc_rw = (void*)CC_RX2RW(host_pc);
+	RuntimeBlockInfo *block = bm_GetBlock((void*)host_pc);
+	if (block == NULL)
+	{
+		printf("ngen_Rewrite: Block at %p not found\n", (void *)host_pc);
+		return false;
+	}
+	char *code_ptr = (char*)host_pc_rw;
+	auto it = block->memory_accesses.find(code_ptr);
+	if (it == block->memory_accesses.end())
+	{
+		printf("ngen_Rewrite: memory access at %p not found (%lu entries)\n", code_ptr, block->memory_accesses.size());
+		return false;
+	}
+	u32 opid = it->second.opid;
+	verify(opid < block->oplist.size());
+	const shil_opcode& op = block->oplist[opid];
+
+	char *rewrite_ptr = &code_ptr[-it->second.rewrite_offset];
+	BlockCompiler comp(rewrite_ptr);
+	comp.InitializeRewrite(block, opid);
+	if (op.op == shop_readm)
+		comp.GenReadMemorySlow(op, it->second.emitted_bytes);
+	else
+		comp.GenWriteMemorySlow(op, it->second.emitted_bytes);
+
+	// Move host_pc back N bytes to the begining of the whole load/store sequence.
+	host_pc = (unat)CC_RW2RX(rewrite_ptr);
+
+	return true;
+}
+
+void ngen_init()
+{
+	verify(CPU_RUNNING == offsetof(Sh4RCB, cntx.CpuRunning));
+	verify(PC == offsetof(Sh4RCB, cntx.pc));
+
+	// Here we emit some trampolines for Mem Read/Write functions.
+	// The purpose is making the calls smaller so that we can have rewrites.
+	// This is inspired on the 32 bit rec, that does (almost) the same.
+
+	{
+		BlockCompiler comp(emit_GetCCPtr());
+		comp.compile_trampolines();
+	}
+	// To prevent code cache reset from wiping these out.
+	emit_SetBaseAddr();
 }
 
 void ngen_CC_Start(shil_opcode* op)

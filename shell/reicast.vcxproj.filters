@@ -117,6 +117,7 @@
     </ClCompile>
     <ClCompile Include="..\core\nullDC.cpp" />
     <ClCompile Include="..\core\stdclass.cpp" />
+    <ClCompile Include="..\core\oslib\windows\threading.cpp" />
     <ClCompile Include="..\core\cfg\cl.cpp">
       <Filter>cfg</Filter>
     </ClCompile>
@@ -949,6 +950,7 @@
     </ClInclude>
     <ClInclude Include="..\core\types.h" />
     <ClInclude Include="..\core\stdclass.h" />
+    <ClInclude Include="..\core\oslib\threading.h" />
     <ClInclude Include="..\core\cfg\cfg.h">
       <Filter>cfg</Filter>
     </ClInclude>

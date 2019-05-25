@@ -1,7 +1,5 @@
 
-#define _WIN32_WINNT 0x0500
 #include <windows.h>
-#include <windowsx.h>
 
 #include "hw/mem/_vmem.h"
 
@@ -61,7 +59,7 @@ void vmem_platform_reset_mem(void *ptr, unsigned size_bytes) {
 
 // Allocates a bunch of memory (page aligned and page-sized)
 void vmem_platform_ondemand_page(void *address, unsigned size_bytes) {
-	verify(VirtualAlloc(address, size_bytes, MEM_COMMIT, PAGE_READWRITE));
+	verify(NULL != VirtualAlloc(address, size_bytes, MEM_COMMIT, PAGE_READWRITE));
 }
 
 /// Creates mappings to the underlying file including mirroring sections

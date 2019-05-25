@@ -116,7 +116,7 @@ string get_game_save_prefix()
 	size_t lastindex = save_file.find_last_of("/");
 #ifdef _WIN32
 	size_t lastindex2 = save_file.find_last_of("\\");
-	lastindex = max(lastindex, lastindex2);
+	lastindex = std::max(lastindex, lastindex2);
 #endif
 	if (lastindex != -1)
 		save_file = save_file.substr(lastindex + 1);
@@ -138,7 +138,7 @@ string get_game_dir()
 	size_t lastindex = game_dir.find_last_of("/");
 #ifdef _WIN32
 	size_t lastindex2 = game_dir.find_last_of("\\");
-	lastindex = max(lastindex, lastindex2);
+	lastindex = std::max(lastindex, lastindex2);
 #endif
 	if (lastindex != -1)
 		game_dir = game_dir.substr(0, lastindex + 1);
@@ -157,146 +157,5 @@ bool make_directory(const string& path)
 	return mkdir(path.c_str(), 0755) == 0;
 #endif
 }
-
-// Thread & related platform dependant code
-#if !defined(HOST_NO_THREADS)
-
-#if HOST_OS==OS_WINDOWS
-void cThread::Start() {
-	verify(hThread == NULL);
-	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)entry, param, 0, NULL);
-	ResumeThread(hThread);
-}
-void cThread::WaitToEnd() {
-	WaitForSingleObject(hThread,INFINITE);
-	CloseHandle(hThread);
-	hThread = NULL;
-}
-#else
-void cThread::Start() {
-	verify(hThread == NULL);
-	hThread = new pthread_t;
-	if (pthread_create( hThread, NULL, entry, param))
-		die("Thread creation failed");
-}
-void cThread::WaitToEnd() {
-	if (hThread) {
-		pthread_join(*hThread,0);
-		delete hThread;
-		hThread = NULL;
-	}
-}
-#endif
-
-#endif
-
-
-#if HOST_OS==OS_WINDOWS
-cResetEvent::cResetEvent() {
-		hEvent = CreateEvent(
-		NULL,             // default security attributes
-		FALSE,            // auto-reset event?
-		FALSE,            // initial state is State
-		NULL			  // unnamed object
-		);
-}
-cResetEvent::~cResetEvent()
-{
-	//Destroy the event object ?
-	 CloseHandle(hEvent);
-}
-void cResetEvent::Set()//Signal
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	SetEvent(hEvent);
-}
-void cResetEvent::Reset()//reset
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	ResetEvent(hEvent);
-}
-bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	return WaitForSingleObject(hEvent,msec) == WAIT_OBJECT_0;
-}
-void cResetEvent::Wait()//Wait for signal , then reset
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	WaitForSingleObject(hEvent,(u32)-1);
-}
-#else
-cResetEvent::cResetEvent() {
-	pthread_mutex_init(&mutx, NULL);
-	pthread_cond_init(&cond, NULL);
-}
-cResetEvent::~cResetEvent() {
-}
-void cResetEvent::Set()//Signal
-{
-	pthread_mutex_lock( &mutx );
-	state=true;
-    pthread_cond_signal( &cond);
-	pthread_mutex_unlock( &mutx );
-}
-void cResetEvent::Reset()//reset
-{
-	pthread_mutex_lock( &mutx );
-	state=false;
-	pthread_mutex_unlock( &mutx );
-}
-bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
-{
-	pthread_mutex_lock( &mutx );
-	if (!state)
-	{
-		struct timespec ts;
-#if HOST_OS == OS_DARWIN
-		// OSX doesn't have clock_gettime.
-		clock_serv_t cclock;
-		mach_timespec_t mts;
-
-		host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
-		clock_get_time(cclock, &mts);
-		mach_port_deallocate(mach_task_self(), cclock);
-		ts.tv_sec = mts.tv_sec;
-		ts.tv_nsec = mts.tv_nsec;
-#else
-		clock_gettime(CLOCK_REALTIME, &ts);
-#endif
-		ts.tv_sec += msec / 1000;
-		ts.tv_nsec += (msec % 1000) * 1000000;
-		while (ts.tv_nsec > 1000000000)
-		{
-			ts.tv_nsec -= 1000000000;
-			ts.tv_sec++;
-		}
-		pthread_cond_timedwait( &cond, &mutx, &ts );
-	}
-	bool rc = state;
-	state=false;
-	pthread_mutex_unlock( &mutx );
-
-	return rc;
-}
-void cResetEvent::Wait()//Wait for signal , then reset
-{
-	pthread_mutex_lock( &mutx );
-	if (!state)
-	{
-		pthread_cond_wait( &cond, &mutx );
-	}
-	state=false;
-	pthread_mutex_unlock( &mutx );
-}
-#endif
 
 

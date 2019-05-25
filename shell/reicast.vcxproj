@@ -265,6 +265,7 @@
     <ClCompile Include="..\core\oslib\audiobackend_sdl2.cpp" />
     <ClCompile Include="..\core\oslib\audiobackend_xaudio.cpp" />
     <ClCompile Include="..\core\oslib\audiostream.cpp" />
+    <ClCompile Include="..\core\oslib\windows\threading.cpp" />
     <ClCompile Include="..\core\profiler\profiler.cpp" />
     <ClCompile Include="..\core\rec-ARM\rec_arm.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
@@ -518,6 +519,7 @@
     </ClInclude>
     <ClInclude Include="..\core\oslib\audiostream.h" />
     <ClInclude Include="..\core\oslib\oslib.h" />
+    <ClInclude Include="..\core\oslib\threading.h" />
     <ClInclude Include="..\core\profiler\profiler.h" />
     <ClInclude Include="..\core\windows\win_keyboard.h" />
     <ClInclude Include="..\core\windows\xinput_gamepad.h" />
@@ -716,7 +718,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
-      <PreprocessorDefinitions>WIN32;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NOMINMAX;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -755,7 +757,7 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
-      <PreprocessorDefinitions>WIN32;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;TARGET_NAOMI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NOMINMAX;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;TARGET_NAOMI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -794,7 +796,7 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
-      <PreprocessorDefinitions>WIN32;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NOMINMAX;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -835,7 +837,7 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
-      <PreprocessorDefinitions>WIN32;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;TARGET_NAOMI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NOMINMAX;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;TARGET_NAOMI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -876,7 +878,7 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NOMINMAX;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
@@ -904,7 +906,7 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;TARGET_NAOMI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NOMINMAX;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;TARGET_NAOMI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
@@ -932,7 +934,7 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;TARGET_YES_NVMEM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NOMINMAX;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;TARGET_YES_NVMEM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
@@ -963,7 +965,7 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;TARGET_NAOMI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NOMINMAX;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;TARGET_NAOMI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>

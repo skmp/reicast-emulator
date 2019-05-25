@@ -1,10 +1,8 @@
 #include <limits.h>
 #include "cfg/cfg.h"
+#include "oslib/threading.h"
 #include "oslib/oslib.h"
 #include "audiostream.h"
-#ifndef _WIN32
-#include <unistd.h>
-#endif
 
 struct SoundFrame { s16 l; s16 r; };
 
@@ -17,16 +15,6 @@ static unsigned int audiobackends_num_max = 1;
 static unsigned int audiobackends_num_registered = 0;
 static audiobackend_t **audiobackends = NULL;
 static audiobackend_t *audiobackend_current = NULL;
-
-u32 SmallCpuWait()
-{
-#if defined(_WIN32)
-	Sleep(1);
-#else // if linux?
-	usleep(1000);
-#endif
-	return 0;
-}
 
 static float InterpolateCatmull4pt3oX(float x0, float x1, float x2, float x3, float t) {
 	return 0.45f* ((2 * x1) + t * ((-x0 + x2) + t * ((2 * x0 - 5 * x1 + 4 * x2 - x3) + t * (-x0 + 3 * x1 - 3 * x2 + x3))));
@@ -133,7 +121,7 @@ public:
 			{
 				// infinite?
 				while (asRingFreeCount() < 512)
-					SmallCpuWait();
+					SleepMs(1);
 			}
 			else
 			{

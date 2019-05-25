@@ -32,6 +32,9 @@
 #include <unistd.h>
 #endif
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #include "types.h"
 #include "stdclass.h"

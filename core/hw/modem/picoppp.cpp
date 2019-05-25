@@ -40,6 +40,7 @@ extern "C" {
 #include "net_platform.h"
 
 #include "types.h"
+#include "oslib/threading.h"
 #include "cfg/cfg.h"
 #include "picoppp.h"
 

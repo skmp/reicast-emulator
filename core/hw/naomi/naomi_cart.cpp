@@ -16,6 +16,8 @@ Cartridge *CurrentCartridge;
 bool bios_loaded = false;
 
 #if HOST_OS == OS_WINDOWS
+	#define NOMINMAX
+	#include <windows.h>
 	typedef HANDLE fd_t;
 	#define INVALID_FD INVALID_HANDLE_VALUE
 #else

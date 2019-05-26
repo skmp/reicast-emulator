@@ -17,3 +17,10 @@ build:
         - script:
             name: reicast Windows x64 (MinGW) build
             code: make -C shell/linux -j `nproc` platform=win32 CC_PREFIX=x86_64-w64-mingw32-
+        - script:
+            name: reicast Linux x64 (No Exceptions) build
+            code: make -C shell/linux -j `nproc` platform="x64 noexceptions"
+        - script:
+            name: reicast Linux x64 (No RWX pages) build
+            code: make -C shell/linux -j `nproc` platform="x64 norwxpages"
+

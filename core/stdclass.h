@@ -186,13 +186,8 @@ public:
 	void *getPtr() const { return data; }
 	unsigned getSize() const { return size; }
 
-	#ifdef TARGET_NO_EXCEPTIONS
-	void LockRegion(unsigned offset, unsigned size_bytes) {}
-	void UnLockRegion(unsigned offset, unsigned size_bytes) {}
-	#else
 	void LockRegion(unsigned offset, unsigned size_bytes);
 	void UnLockRegion(unsigned offset, unsigned size_bytes);
-	#endif
 
 	void Zero() {
 		UnLockRegion(0, size);

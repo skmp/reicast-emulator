@@ -10,15 +10,19 @@
 // The implementation allows it to be empty (that is, to not lock memory).
 
 void VLockedMemory::LockRegion(unsigned offset, unsigned size) {
+	#ifndef TARGET_NO_EXCEPTIONS
 	//verify(offset + size < this->size && size != 0);
 	DWORD old;
 	VirtualProtect(&data[offset], size, PAGE_READONLY, &old);
+	#endif
 }
 
 void VLockedMemory::UnLockRegion(unsigned offset, unsigned size) {
+	#ifndef TARGET_NO_EXCEPTIONS
 	//verify(offset + size <= this->size && size != 0);
 	DWORD old;
 	VirtualProtect(&data[offset], size, PAGE_READWRITE, &old);
+	#endif
 }
 
 static HANDLE mem_handle = INVALID_HANDLE_VALUE, mem_handle2 = INVALID_HANDLE_VALUE;

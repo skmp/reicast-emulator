@@ -99,6 +99,15 @@ endif
 
 $(info Platform: $(platform))
 
+# Expand certain features via plaftorm string
+ifneq (,$(findstring noexceptions,$(platform)))
+    CFLAGS += -DTARGET_NO_EXCEPTIONS
+endif
+ifneq (,$(findstring norwxpages,$(platform)))
+    CFLAGS += -DFEAT_NO_RWX_PAGES
+endif
+
+
 # Generic 32 bit x86 (a.k.a. i386/i486/i686)
 ifneq (,$(findstring x86,$(platform)))
     X86_REC := 1

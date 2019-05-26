@@ -47,18 +47,22 @@ int ashmem_create_region(const char *name, size_t size) {
 #endif  // #ifdef _ANDROID
 
 void VLockedMemory::LockRegion(unsigned offset, unsigned size_bytes) {
+	#ifndef TARGET_NO_EXCEPTIONS
 	size_t inpage = offset & PAGE_MASK;
 	if (mprotect(&data[offset - inpage], size_bytes + inpage, PROT_READ)) {
 		die("mprotect failed ..\n");
 	}
+	#endif
 }
 
 void VLockedMemory::UnLockRegion(unsigned offset, unsigned size_bytes) {
+	#ifndef TARGET_NO_EXCEPTIONS
 	size_t inpage = offset & PAGE_MASK;
 	if (mprotect(&data[offset - inpage], size_bytes + inpage, PROT_READ|PROT_WRITE)) {
 		// Add some way to see why it failed? gdb> info proc mappings
 		die("mprotect  failed ..\n");
 	}
+	#endif
 }
 
 // Allocates memory via a fd on shmem/ahmem or even a file on disk

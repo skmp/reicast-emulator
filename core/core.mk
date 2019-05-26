@@ -58,7 +58,7 @@ ifndef NO_NIXPROF
 endif
 
 ifdef FOR_ANDROID
-    RZDCY_MODULES += android/ deps/libandroid/ linux/
+    RZDCY_MODULES += android/ deps/libandroid/ linux/ oslib/posix/
 endif
 
 ifdef USE_SDL
@@ -66,11 +66,11 @@ ifdef USE_SDL
 endif
 
 ifdef FOR_LINUX
-    RZDCY_MODULES += linux-dist/ linux/
+    RZDCY_MODULES += linux-dist/ linux/ oslib/posix/
 endif
 
 ifdef FOR_WINDOWS
-    RZDCY_MODULES += windows/
+    RZDCY_MODULES += windows/ oslib/windows/
 endif
 
 ifdef FOR_PANDORA

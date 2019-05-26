@@ -108,7 +108,7 @@ void FillReadBuffer()
 
 	if (count > 32)
 	{
-		hint = max(count - 32, (u32)32);
+		hint = std::max(count - 32, (u32)32);
 		count = 32;
 	}
 
@@ -981,7 +981,7 @@ static int getGDROMTicks()
 		if (SB_GDLEN - SB_GDLEND > 10240)
 			return 1000000;										// Large transfers: GD-ROM transfer rate 1.8 MB/s
 		else
-			return min((u32)10240, SB_GDLEN - SB_GDLEND) * 2;	// Small transfers: Max G1 bus rate: 50 MHz x 16 bits
+			return std::min((u32)10240, SB_GDLEN - SB_GDLEND) * 2;	// Small transfers: Max G1 bus rate: 50 MHz x 16 bits
 	}
 	else
 		return 0;
@@ -1013,10 +1013,10 @@ int GDRomschd(int i, int c, int j)
 	if (read_params.remaining_sectors == 0)
 	{
 		//make sure we don't underrun the cache :)
-		len = min(len, read_buff.cache_size);
+		len = std::min(len, read_buff.cache_size);
 	}
 
-	len = min(len, (u32)10240);
+	len = std::min(len, (u32)10240);
 	// do we need to do this for GDROM DMA?
 	if(0x8201 != (dmaor &DMAOR_MASK))
 	{

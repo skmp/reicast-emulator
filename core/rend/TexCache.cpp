@@ -5,6 +5,7 @@
 #endif
 
 #include "TexCache.h"
+#include "oslib/threading.h"
 #include "hw/pvr/pvr_regs.h"
 #include "hw/mem/_vmem.h"
 #include "deps/xbrz/xbrz.h"
@@ -360,7 +361,7 @@ void parallelize(const std::function<void(int,int)> &func, int start, int end, i
 	int tcount = omp_get_num_procs() - 1;
 	if (tcount < 1)
 		tcount = 1;
-	tcount = min(tcount, (int)settings.pvr.MaxThreads);
+	tcount = std::min(tcount, (int)settings.pvr.MaxThreads);
 #pragma omp parallel num_threads(tcount)
 	{
 		int num_threads = omp_get_num_threads();

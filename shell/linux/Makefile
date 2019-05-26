@@ -251,12 +251,10 @@ else ifneq (,$(findstring vero4k,$(platform)))
 # Windows
 else ifneq (,$(findstring win32,$(platform)))
     NOT_ARM := 1
-    CFLAGS += -DTARGET_NO_WEBUI -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -D TARGET_NO_AREC
+    CFLAGS += -DNOMINMAX -DTARGET_NO_WEBUI -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -D TARGET_NO_AREC
     LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows
     LIBS := -lopengl32 -lwinmm -lole32 -lgdi32 -lwsock32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi
     PLATFORM_EXT := exe
-    CC = gcc
-    CXX = g++
 ifeq ($(WITH_DYNAREC), x86)
     X86_REC := 1
     LDFLAGS += -m32

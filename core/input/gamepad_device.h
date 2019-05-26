@@ -22,6 +22,7 @@
 #include <mutex>
 #include "types.h"
 #include "mapping.h"
+#include "oslib/threading.h"
 
 class GamepadDevice
 {
@@ -89,5 +90,5 @@ private:
 	float _dead_zone = 0.1f;
 
 	static std::vector<std::shared_ptr<GamepadDevice>> _gamepads;
-	static std::mutex _gamepads_mutex;
+	static cMutex _gamepads_mutex;
 };

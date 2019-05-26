@@ -140,7 +140,7 @@ void handle_cb(int id)
 	int re_sch=sch_list[id].cb(sch_list[id].tag,remain,jitter);
 
 	if (re_sch > 0)
-		sh4_sched_request(id, max(0, re_sch - jitter));
+		sh4_sched_request(id, std::max(0, re_sch - jitter));
 }
 
 void sh4_sched_tick(int cycles)

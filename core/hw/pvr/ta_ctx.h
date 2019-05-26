@@ -1,6 +1,7 @@
 #pragma once
 #include "ta.h"
 #include "pvr_regs.h"
+#include "oslib/threading.h"
 
 // helper for 32 byte aligned memory allocation
 void* OS_aligned_malloc(size_t align, size_t size);

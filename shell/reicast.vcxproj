@@ -523,9 +523,6 @@
     <ClInclude Include="..\core\profiler\profiler.h" />
     <ClInclude Include="..\core\windows\win_keyboard.h" />
     <ClInclude Include="..\core\windows\xinput_gamepad.h" />
-    <MASM Include="..\core\rec-x64\msvc.asm">
-      <FileType>Document</FileType>
-    </MASM>
     <ClInclude Include="..\core\rec-x86\rec_x86_ngen.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>

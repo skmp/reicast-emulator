@@ -1402,7 +1402,4 @@
       <Filter>rec-x86</Filter>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <MASM Include="..\core\rec-x64\msvc.asm" />
-  </ItemGroup>
 </Project>

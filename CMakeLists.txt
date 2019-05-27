@@ -92,11 +92,6 @@ if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT})
 	)
   elseif(${HOST_CPU} EQUAL ${CPU_X64})
 
-	### FIXME: asm with cmake ninja+VC
-    if(${BUILD_COMPILER} EQUAL ${COMPILER_VC})
-	  list(APPEND core_SRCS ${d_core}/rec-x64/msvc.asm)
-	endif()
-
     list(APPEND core_SRCS ${d_core}/rec-x64/rec_x64.cpp ${d_core}/rec-x64/x64_regalloc.h)
 
   elseif(${HOST_CPU} EQUAL ${CPU_A64})

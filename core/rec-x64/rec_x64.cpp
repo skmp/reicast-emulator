@@ -54,12 +54,6 @@ static __attribute((used)) void end_slice()
 }
 #endif
 
-#ifdef __MACH__
-#define _U "_"
-#else
-#define _U
-#endif
-
 #ifdef _WIN32
 #define WIN32_ONLY(x) x
 #define STACK_ALIGN 40  		// 32-byte shadow space + 8 byte alignment
@@ -67,121 +61,6 @@ static __attribute((used)) void end_slice()
 #define WIN32_ONLY(x)
 #define STACK_ALIGN  8
 #endif
-
-#define STRINGIFY(x) #x
-#define _S(x) STRINGIFY(x)
-#if RAM_SIZE_MAX == 16*1024*1024
-#define CPU_RUNNING 68157284
-#define PC 68157256
-#elif RAM_SIZE_MAX == 32*1024*1024
-#define CPU_RUNNING 135266148
-#define PC 135266120
-#else
-#error RAM_SIZE_MAX unknown
-#endif
-
-#ifndef _MSC_VER
-
-#ifdef _WIN32
-        // Fully naked function in win32 for proper SEH prologue
-	__asm__ (
-			".text                          \n\t"
-			".p2align 4,,15                 \n\t"
-			".globl ngen_mainloop           \n\t"
-			".def   ngen_mainloop;  .scl    2;      .type   32;     .endef  \n\t"
-			".seh_proc      ngen_mainloop   \n\t"
-		"ngen_mainloop:                     \n\t"
-#else
-void ngen_mainloop(void* v_cntx)
-{
-	__asm__ (
-#endif
-			"pushq %rbx						\n\t"
-WIN32_ONLY( ".seh_pushreg %rbx				\n\t")
-#ifndef __MACH__	// rbp is pushed in the standard function prologue
-			"pushq %rbp                     \n\t"
-#endif
-#ifdef _WIN32
-			".seh_pushreg %rbp              \n\t"
-			"pushq %rdi                     \n\t"
-			".seh_pushreg %rdi              \n\t"
-			"pushq %rsi                     \n\t"
-			".seh_pushreg %rsi              \n\t"
-#endif
-			"pushq %r12                     \n\t"
-WIN32_ONLY( ".seh_pushreg %r12              \n\t")
-			"pushq %r13                     \n\t"
-WIN32_ONLY( ".seh_pushreg %r13              \n\t")
-			"pushq %r14                     \n\t"
-WIN32_ONLY( ".seh_pushreg %r14              \n\t")
-			"pushq %r15                     \n\t"
-#ifdef _WIN32
-			".seh_pushreg %r15              \n\t"
-			"subq $40, %rsp                 \n\t"   // 32-byte shadow space + 8 for stack 16-byte alignment
-			".seh_stackalloc 40             \n\t"
-			".seh_endprologue               \n\t"
-#else
-			"subq $8, %rsp                  \n\t"   // 8 for stack 16-byte alignment
-#endif
-			"movl $" _S(SH4_TIMESLICE) "," _U "cycle_counter(%rip)  \n"
-
-		"1:                                 \n\t"   // run_loop
-			"movq " _U "p_sh4rcb(%rip), %rax		\n\t"
-			"movl " _S(CPU_RUNNING) "(%rax), %edx	\n\t"
-			"testl %edx, %edx               \n\t"
-			"je 3f                          \n"     // end_run_loop
-#ifdef PROFILING
-			"call start_slice				\n\t"
-#endif
-
-		"2:                                 \n\t"   // slice_loop
-			"movq " _U "p_sh4rcb(%rip), %rax	\n\t"
-#ifdef _WIN32
-			"movl " _S(PC)"(%rax), %ecx     \n\t"
-#else
-			"movl " _S(PC)"(%rax), %edi     \n\t"
-#endif
-			"call " _U "bm_GetCode2         \n\t"
-			"call *%rax                     \n\t"
-			"movl " _U "cycle_counter(%rip), %ecx \n\t"
-			"testl %ecx, %ecx               \n\t"
-			"jg 2b                          \n\t"   // slice_loop
-
-			"addl $" _S(SH4_TIMESLICE) ", %ecx		\n\t"
-			"movl %ecx, " _U "cycle_counter(%rip)	\n\t"
-#ifdef PROFILING
-			"call end_slice					\n\t"
-#endif
-			"call " _U "UpdateSystem_INTC   \n\t"
-			"jmp 1b                         \n"     // run_loop
-
-		"3:                                 \n\t"   // end_run_loop
-
-			"addq $" _S(STACK_ALIGN)", %rsp \n\t"
-			"popq %r15                      \n\t"
-			"popq %r14                      \n\t"
-			"popq %r13                      \n\t"
-			"popq %r12                      \n\t"
-#ifdef _WIN32
-			"popq %rsi                      \n\t"
-			"popq %rdi                      \n\t"
-#endif
-#ifndef __MACH__
-			"popq %rbp                      \n\t"
-#endif
-			"popq %rbx                      \n\t"
-#ifdef _WIN32
-			"ret                            \n\t"
-			".seh_endproc                   \n"
-	);
-#else
-	);
-}
-#endif
-
-#endif	// !_MSC_VER
-#undef _U
-#undef _S
 
 void ngen_ResetBlocks()
 {
@@ -249,6 +128,69 @@ public:
 			add(rsp, STACK_ALIGN);
 			ret();
 		}
+		ready();
+		emit_Skip(getSize());
+	}
+
+	void build_mainloop() {
+		Xbyak::Label run_loop, slice_loop, end_loop;
+		// Store callee saved registers (64 bytes) + align stack
+		push(rbx);
+		push(rbp);
+		push(rdi);
+		push(rsi);
+		push(r12);
+		push(r13);
+		push(r14);
+		push(r15);
+		sub(rsp, STACK_ALIGN);
+
+		mov(dword[rip + &cycle_counter], SH4_TIMESLICE);
+
+		L(run_loop);  // -- run_loop
+			mov(rax, qword[rip + &p_sh4rcb]);
+			mov(edx, dword[rax + offsetof(Sh4RCB, cntx.CpuRunning)]);
+			test(edx, edx);                      // Load cpu run state and check cpu running
+			je(end_loop);                        // If cpu is stopped, abort it all (break run loop)
+
+			#ifdef PROFILING
+			call(start_slice);
+			#endif
+
+			L(slice_loop);  // -- slice_loop
+				mov(rax, qword[rip + &p_sh4rcb]);     // Load context pointer and then PC
+				mov(call_regs[0], dword[rax + offsetof(Sh4RCB, cntx.pc)]);
+				call(bm_GetCode2);                   // Get pointer to the code for that PC
+				call(rax);                           // Jump to executing it
+				mov(ecx, dword[rip + &cycle_counter]);
+				test(ecx, ecx);
+			jg(slice_loop);                      // Continue if the cycle counter is still >0
+
+			add(ecx, SH4_TIMESLICE);
+			mov(dword[rip + &cycle_counter], ecx);  // Update cycle counter back (+slice)
+
+			#ifdef PROFILING
+			call(end_slice);
+			#endif
+			call(UpdateSystem_INTC);          // Call interrupts handling
+		jmp(run_loop);
+
+		L(end_loop);  // -- end_loop
+		add(rsp, STACK_ALIGN); // Restore to previous state
+		pop(r15);
+		pop(r14);
+		pop(r13);
+		pop(r12);
+		pop(rsi);
+		pop(rdi);
+		pop(rbp);
+		pop(rbx);
+		ret();
+
+		// Align end for perf
+		while (getSize() & 15)
+			nop();
+
 		ready();
 		emit_Skip(getSize());
 	}
@@ -1464,11 +1406,9 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	return true;
 }
 
-void ngen_init()
+MainloopFnPtr_t ngen_init()
 {
-	verify(CPU_RUNNING == offsetof(Sh4RCB, cntx.CpuRunning));
-	verify(PC == offsetof(Sh4RCB, cntx.pc));
-
+	MainloopFnPtr_t entryp;
 	// Here we emit some trampolines for Mem Read/Write functions.
 	// The purpose is making the calls smaller so that we can have rewrites.
 	// This is inspired on the 32 bit rec, that does (almost) the same.
@@ -1477,8 +1417,22 @@ void ngen_init()
 		BlockCompiler comp(emit_GetCCPtr());
 		comp.compile_trampolines();
 	}
+
+	// Align the start to 32 bytes for perf.
+	while (((uintptr_t)emit_GetCCPtr()) & 31)
+		emit_Skip(1);
+
+	// Generate the mainloop logic here, so that it is more portable.
+	{
+		entryp = (MainloopFnPtr_t)emit_GetCCPtr();
+		BlockCompiler comp(emit_GetCCPtr());
+		comp.build_mainloop();
+	}
+
 	// To prevent code cache reset from wiping these out.
 	emit_SetBaseAddr();
+
+	return entryp;
 }
 
 void ngen_CC_Start(shil_opcode* op)

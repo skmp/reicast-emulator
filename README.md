@@ -1,6 +1,6 @@
-reicast
+Beetle DC
 ===========
-reicast is a multi-platform Sega Dreamcast emulator.
+Beetle DC is a multi-platform Sega Dreamcast emulator.
 
 Disclaimer
 ==========

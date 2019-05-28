@@ -19,7 +19,7 @@ HAVE_CHD      := 1
 HAVE_CLANG    := 0
 
 
-TARGET_NAME   := reicast_wince
+TARGET_NAME   := beetle-dc_wince
 
 ifeq ($(HAVE_CLANG),1)
 	CXX      = ${CC_PREFIX}clang++

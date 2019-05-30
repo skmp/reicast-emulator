@@ -32,6 +32,15 @@ else
 endif
 CC_AS    = ${CC_PREFIX}as
 
+MFLAGS   := 
+ASFLAGS  := 
+LDFLAGS  :=
+LDFLAGS_END :=
+INCFLAGS :=
+LIBS     :=
+CFLAGS   := 
+CXXFLAGS :=
+
 GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")
 	CXXFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"

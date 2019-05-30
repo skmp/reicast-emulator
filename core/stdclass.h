@@ -242,6 +242,7 @@ void add_system_data_dir(const string& dir);
 
 //subpath format: /data/fsca-table.bit
 string get_writable_data_path(const string& filename);
+string get_writable_vmu_path(const char *logical_port);
 
 class VArray2
 {

@@ -41,3 +41,29 @@ string get_writable_data_path(const string& filename)
 #endif
          + filename);
 }
+
+string get_writable_vmu_path(const char *logical_port)
+{
+   extern char vmu_dir_no_slash[PATH_MAX];
+   extern char content_name[PATH_MAX];
+   extern unsigned per_content_vmus;
+   wchar filename[512];
+
+   if ((per_content_vmus == 1 && !strcmp("A1", logical_port)) ||
+       (per_content_vmus == 2))
+   {
+      sprintf(filename, "%s.%s.bin", content_name, logical_port);
+      return std::string(vmu_dir_no_slash +
+#ifdef _WIN32
+         std::string("\\")
+#else
+         std::string("/")
+#endif
+         + filename);
+   }
+   else
+   {
+      sprintf(filename, "vmu_save_%s.bin", logical_port);
+      return get_writable_data_path(filename);
+   }
+}

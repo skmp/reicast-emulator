@@ -85,6 +85,8 @@ static u32 vib_stop_time[4];
 static double vib_strength[4];
 static double vib_delta[4];
 
+unsigned per_content_vmus = 0;
+
 static bool first_run = true;
 
 enum DreamcastController
@@ -150,6 +152,8 @@ char *game_data;
 char g_base_name[128];
 char game_dir[1024];
 char game_dir_no_slash[1024];
+char vmu_dir_no_slash[PATH_MAX];
+char content_name[PATH_MAX];
 char g_roms_dir[PATH_MAX];
 static bool emu_in_thread = false;
 static bool performed_serialization = false;
@@ -497,6 +501,10 @@ void retro_set_environment(retro_environment_t cb)
          "reicast_dump_textures",
          "Dump textures; disabled|enabled"
       },
+      {
+         "reicast_per_content_vmus",
+         "Per-game VMUs; disabled|VMU A1|All VMUs"
+      },
 	  VMU_SCREEN_PARAMS(1)
 	  VMU_SCREEN_PARAMS(2)
 	  VMU_SCREEN_PARAMS(3)
@@ -577,6 +585,25 @@ static void update_variables(bool first_startup)
    struct retro_variable var;
    int i ;
    char key[256] ;
+
+   var.key = "reicast_per_content_vmus";
+   unsigned previous_per_content_vmus = per_content_vmus;
+   per_content_vmus = 0;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("VMU A1", var.value))
+         per_content_vmus = 1;
+      else if (!strcmp("All VMUs", var.value))
+         per_content_vmus = 2;
+   }
+
+   if ((per_content_vmus != previous_per_content_vmus) &&
+       (settings.System == DC_PLATFORM_DREAMCAST))
+   {
+      mcfg_DestroyDevices();
+      mcfg_CreateDevices();
+   }
 
    var.key = "reicast_widescreen_hack";
 
@@ -1706,11 +1733,24 @@ static void extract_basename(char *buf, const char *path, size_t size)
    buf[size - 1] = '\0';
 }
 
+static void remove_extension(char *buf, const char *path, size_t size)
+{
+   char *base;
+   strncpy(buf, path, size - 1);
+   buf[size - 1] = '\0';
+
+   base = strrchr(buf, '.');
+
+   if (base)
+      *base = '\0';
+}
+
 // Loading/unloading games
 bool retro_load_game(const struct retro_game_info *game)
 {
    glsm_ctx_params_t params = {0};
    const char *dir = NULL;
+   const char *vmu_dir = NULL;
 #ifdef _WIN32
    char slash = '\\';
 #else
@@ -1731,6 +1771,20 @@ bool retro_load_game(const struct retro_game_info *game)
 
    snprintf(game_dir, sizeof(game_dir), "%s%cdc%c", dir, slash, slash);
    snprintf(game_dir_no_slash, sizeof(game_dir_no_slash), "%s%cdc", dir, slash);
+
+   // Per-content VMU additions START
+   // > Get save directory
+   if (!(environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &vmu_dir) && vmu_dir))
+      vmu_dir = game_dir;
+
+   snprintf(vmu_dir_no_slash, sizeof(vmu_dir_no_slash), "%s", vmu_dir);
+
+   // > Get content name
+   remove_extension(content_name, g_base_name, sizeof(content_name));
+
+   if (content_name[0] == '\0')
+      snprintf(content_name, sizeof(content_name), "vmu_save");
+   // Per-content VMU additions END
 
    settings.dreamcast.cable = 3;
    update_variables(true);

@@ -596,9 +596,7 @@ struct maple_sega_vmu: maple_base
 	{
 		memset(flash_data,0,sizeof(flash_data));
 		memset(lcd_data,0,sizeof(lcd_data));
-		wchar tempy[512];
-		sprintf(tempy,"vmu_save_%s.bin",logical_port);
-		string apath=get_writable_data_path(tempy);
+		string apath = get_writable_vmu_path(logical_port);
 
 		vmu_screen_params[bus_id].vmu_lcd_screen = lcd_data_decoded ;
 

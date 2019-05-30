@@ -598,7 +598,8 @@ static void update_variables(bool first_startup)
          per_content_vmus = 2;
    }
 
-   if (per_content_vmus != previous_per_content_vmus)
+   if ((per_content_vmus != previous_per_content_vmus) &&
+       (settings.System == DC_PLATFORM_DREAMCAST))
    {
       mcfg_DestroyDevices();
       mcfg_CreateDevices();

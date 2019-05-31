@@ -421,6 +421,8 @@ u32 mmu_QACR_SQ(u32 va)
 	va &= ~0x1f;
 	return QACR + va;
 }
+
+#ifndef FAST_MMU
 template<u32 translation_type>
 u32 mmu_full_SQ(u32 va, u32& rv)
 {
@@ -466,9 +468,8 @@ u32 mmu_full_SQ(u32 va, u32& rv)
 	}
 	return MMU_ERROR_NONE;
 }
-template u32 mmu_full_SQ<MMU_TT_DWRITE>(u32 va, u32& rv);
+template u32 mmu_full_SQ<MMU_TT_DREAD>(u32 va, u32& rv);
 
-#ifndef FAST_MMU
 template<u32 translation_type, typename T>
 u32 mmu_data_translation(u32 va, u32& rv)
 {

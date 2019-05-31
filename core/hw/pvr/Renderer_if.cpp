@@ -127,6 +127,7 @@ void rend_init_renderer()
     	}
     	printf("Selected renderer initialization failed. Falling back to default renderer.\n");
     	renderer  = fallback_renderer;
+    	fallback_renderer = NULL;	// avoid double-free
     }
 }
 

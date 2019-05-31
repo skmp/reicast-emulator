@@ -21,6 +21,7 @@ struct game_type
    int rendertotexturebuffer;       /* -1, make no decision */
    int disable_div;                 /* -1, make no decision */
    float extra_depth_scale;			/* 1, default */
+   int disable_vmem32;				/* 0 = normal, 1 = disable */
 };
 
 struct game_type_naomi
@@ -49,36 +50,45 @@ struct game_type_naomi
 static struct game_type lut_games[] = 
 {
    /* Update mode fullspeed */
-   { "T1210N    ",  1, -1, -1, -1, -1, -1,  -1, 1  },                /* Street Fighter III Double Impact */
+   { "T1210N    ",  1, -1, -1, -1, -1, -1,  -1, 1, -1 },                /* Street Fighter III Double Impact */
 
    /* Fallback to generic recompiler */
 
    /* Alpha sort mode */
-   { "MK-5100050", -1, -1, -1,  1, -1, -1,  -1, 1  },                /* Sonic Adventure */
+   { "MK-5100050", -1, -1, -1,  1, -1, -1,  -1, 1, -1 },           /* Sonic Adventure */
 
    /* Translucent Polygon Depth Mask */
-   { "RDC-0057  ", -1, -1, -1, -1,  1, -1,  -1, 1  },                /* Cosmic Smash */
-   { "HDR-0176  ", -1, -1, -1, -1,  1, -1,  -1, 1  },                /* Cosmic Smash */
+   { "RDC-0057  ", -1, -1, -1, -1,  1, -1,  -1, 1, -1 },           /* Cosmic Smash */
+   { "HDR-0176  ", -1, -1, -1, -1,  1, -1,  -1, 1, -1 },           /* Cosmic Smash */
 
    /* Render to texture buffer */
-   { "T40205N   ", -1, -1, -1, -1, -1,  1,  -1, 1  },                /* Tony Hawk's Pro Skater 1 (USA) */
-   { "T13006N   ", -1, -1, -1, -1, -1,  1,  -1, 1  },                /* Tony Hawk's Pro Skater 2 (USA) */
-   { "T13008D",    -1, -1, -1, -1, -1,  1,  -1, 1  },                /* Tony Hawk's Pro Skater 2 (USA) */
-   { "T23002N   ", -1, -1, -1, -1, -1,  1,  -1, 1  },                /* Star Wars Episode I: Jedi Power Battle (USA) */
-   { "MK-51052  ", -1, -1, -1, -1, -1,  1,  -1, 1  },                /* Skies of Arcadia */
-   { "MK-51007  ", -1, -1, -1, -1, -1,  1,  -1, 1  },                /* Flag to Flag */
+   { "T40205N   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tony Hawk's Pro Skater 1 (USA) */
+   { "T13006N   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tony Hawk's Pro Skater 2 (USA) */
+   { "T13008D",    -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tony Hawk's Pro Skater 2 (USA) */
+   { "T23002N   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Star Wars Episode I: Jedi Power Battle (USA) */
+   { "MK-51052  ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Skies of Arcadia */
+   { "MK-51007  ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Flag to Flag */
 
    /* Disable DIV matching */
-   { "T40216N   ", -1, -1, -1, -1, -1,  -1,  1, 1  },                /* Surf Rocket Racers */
-   { "T23001D   ", -1, -1, -1, -1, -1,  -1,  1, 1  },                /* Star Wars - Episode I - Racer (United Kingdom) */
-   { "T23001N   ", -1, -1, -1, -1, -1,  -1,  1, 1  },                /* Star Wars - Episode I - Racer (USA) */
-   { "T30701D50 ", -1, -1, -1, -1, -1,  -1,  1, 1  },                /* Pro Pinball Trilogy */
-   { "T15112N   ", -1, -1, -1, -1, -1,  -1,  1, 1  },                /* Demolition Racer */
-   { "T7012D    ", -1, -1, -1, -1, -1,  -1,  1, 1  },                /* Record of Lodoss War (EU) */
-   { "T40218N   ", -1, -1, -1, -1, -1,  -1,  1, 1  },                /* Record of Lodoss War (USA) */
+   { "T40216N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Surf Rocket Racers */
+   { "T23001D   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Star Wars - Episode I - Racer (United Kingdom) */
+   { "T23001N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Star Wars - Episode I - Racer (USA) */
+   { "T30701D50 ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Pro Pinball Trilogy */
+   { "T15112N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Demolition Racer */
+   { "T7012D    ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Record of Lodoss War (EU) */
+   { "T40218N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Record of Lodoss War (USA) */
 
    /* Extra depth scaling */
-   { "MK-51182  ", -1, -1, -1, -1, -1,  -1,  1, 10000.f },           /* NHL 2K2 */
+   { "MK-51182  ", -1, -1, -1, -1, -1,  -1,  1, 10000.f, -1 },     /* NHL 2K2 */
+
+   /* Disable VMEM32 (WinCE) */
+   { "T14303M   ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Super Producers */
+   { "T45401D 50", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Giant Killers */
+   { "T42101N 00", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Wild Metal (US) */
+   { "T40501D-50", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Wild Metal (EU) */
+   { "T1205N    ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Resident Evil 2 (US) */
+   { "T7004D  50", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Resident Evil 2 (EU) */
+
 };
 
 extern InputDescriptors gunsur2_inputs;

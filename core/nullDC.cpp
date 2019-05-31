@@ -205,6 +205,11 @@ static void LoadSpecialSettings(void)
             log_cb(RETRO_LOG_INFO, "[Hack]: Applying auto extra depth scale.\n");
         	settings.rend.ExtraDepthScale = lut_games[i].extra_depth_scale;
          }
+         if (lut_games[i].disable_vmem32 == 1)
+         {
+            log_cb(RETRO_LOG_INFO, "[Hack]: Disabling WinCE virtual memory.\n");
+        	settings.dynarec.disable_vmem32 = true;
+         }
 
          break;
       }

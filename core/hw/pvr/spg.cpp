@@ -102,6 +102,20 @@ int spg_line_sched(int tag, int cycl, int jit)
 		SPG_STATUS.vsync    = in_vblank;
 		SPG_STATUS.scanline = prv_cur_scanline;
 		
+		switch (SPG_HBLANK_INT.hblank_int_mode)
+		{
+		case 0x0:
+			if (prv_cur_scanline == SPG_HBLANK_INT.line_comp_val)
+				asic_RaiseInterrupt(holly_HBLank);
+			break;
+		case 0x2:
+			asic_RaiseInterrupt(holly_HBLank);
+			break;
+		default:
+			die("Unimplemented HBLANK INT mode");
+			break;
+		}
+
 		//Vblank start -- really need to test the scanline values
 		if (prv_cur_scanline==0)
 		{
@@ -112,7 +126,6 @@ int spg_line_sched(int tag, int cycl, int jit)
 
 			/* Vblank counter */
 			vblk_cnt++;
-			asic_RaiseInterrupt(holly_HBLank); /* HBlank in */
          rend_vblank(); // notify for vblank
 		}
 		if (lightgun_line != 0xffff && lightgun_line == prv_cur_scanline)

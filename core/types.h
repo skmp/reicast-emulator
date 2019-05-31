@@ -774,10 +774,6 @@ struct OnLoad
 	OnLoad(OnLoadFP* fp) { fp(); }
 };
 
-int protect_pages(void *ptr, size_t size, enum page_access access);
-
-void os_MakeExecutable(void* ptr, u32 sz);
-
 void os_DoEvents();
 void os_CreateWindow();
 double os_GetSeconds();

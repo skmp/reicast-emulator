@@ -25,65 +25,12 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/param.h>
-#ifndef _WIN32
-#include <sys/mman.h>
-#endif
 #include <sys/time.h>
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/mem/vmem32.h"
 
 #include "hw/sh4/dyna/ngen.h"
-
-static int access_to_protect_flags(enum page_access access)
-{
-   switch (access)
-   {
-      case ACC_READONLY:
-#ifdef _WIN32
-         return PAGE_READONLY;
-#else
-         return PROT_READ;
-#endif
-      case ACC_READWRITE:
-#ifdef _WIN32
-         return PAGE_READWRITE;
-#else
-         return PROT_READ | PROT_WRITE;
-#endif
-      case ACC_READWRITEEXEC:
-#ifdef _WIN32
-         return PAGE_EXECUTE_READWRITE;
-#else
-         return PROT_READ | PROT_WRITE | PROT_EXEC;
-#endif
-      default:
-         break;
-   }
-
-#ifdef _WIN32
-   return PAGE_NOACCESS;
-#else
-   return PROT_NONE;
-#endif
-}
-
-int protect_pages(void *ptr, size_t size, enum page_access access)
-{
-   int prot = access_to_protect_flags(access);
-#ifdef _WIN32
-   DWORD old_protect;
-   return VirtualProtect(ptr, size, (DWORD)prot, &old_protect) != 0;
-#else
-   return mprotect(ptr, size, prot) == 0;
-#endif
-}
-
-void os_MakeExecutable(void* ptr, u32 sz)
-{
-   protect_pages(ptr, sz, ACC_READWRITEEXEC);
-}
-
 
 #ifdef _WIN32
 #include "../imgread/common.h"

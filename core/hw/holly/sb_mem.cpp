@@ -115,7 +115,7 @@ bool LoadRomFiles(const string& root)
 		 if (settings.System == DC_PLATFORM_DREAMCAST || settings.System == DC_PLATFORM_DEV_UNIT)
 		 {
 			// Dreamcast absolutely needs a BIOS
-			msgboxf("Unable to find bios in \n%s\nExiting...", MBX_ICONERROR, root.c_str());
+			msgboxf("Unable to find bios in %s. Exiting...", MBX_ICONERROR, root.c_str());
 			return false;
 		 }
 	  }
@@ -489,6 +489,9 @@ void sh4_area0_Init(void)
 void sh4_area0_Reset(bool Manual)
 {
 	sb_Reset(Manual);
+	sys_rom.Reset();
+	sys_nvmem_sram.Reset();
+	sys_nvmem_flash.Reset();
 }
 
 void sh4_area0_Term(void)

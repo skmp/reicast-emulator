@@ -20,7 +20,7 @@ struct MemChip
       Allocate(size);
 	  this->write_protect_size = write_protect_size;
 	}
-	~MemChip() { delete[] data; }
+	virtual ~MemChip() { delete[] data; }
 
    virtual void Allocate(u32 size)
    {
@@ -120,15 +120,12 @@ struct MemChip
 
 		printf("Saved %s as %s\n\n",path,title.c_str());
 	}
+	virtual void Reset() {}
 };
 struct RomChip : MemChip
 {
 	RomChip() : MemChip() {}
 	RomChip(u32 sz, u32 write_protect_size = 0) : MemChip(sz, write_protect_size) {}
-	void Reset()
-	{
-		//nothing, its permanent read only ;p
-	}
 	void Write(u32 addr,u32 data,u32 sz)
 	{
 		die("Write to RomChip is not possible, address=%x, data=%x, size=%d");
@@ -139,10 +136,6 @@ struct SRamChip : MemChip
 	SRamChip() : MemChip() {}
 	SRamChip(u32 sz, u32 write_protect_size = 0) : MemChip(sz, write_protect_size) {}
 
-	void Reset()
-	{
-		//nothing, its battery backed up storage
-	}
 	void Write(u32 addr,u32 val,u32 sz)
 	{
 		addr&=mask;
@@ -239,7 +232,7 @@ struct DCFlashChip : MemChip
 	};
 
 	FlashState state;
-	void Reset()
+	virtual void Reset() override
 	{
 		//reset the flash chip state
 		state = FS_Normal;

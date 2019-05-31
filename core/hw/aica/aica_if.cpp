@@ -166,10 +166,13 @@ void aica_Init(void)
 
 void aica_Reset(bool Manual)
 {
+	aica_Init();
 	if (!Manual)
    {
       aica_ram.Zero();
    }
+	VREG = 0;
+	ARMRST = 0;
 }
 
 void aica_Term(void)

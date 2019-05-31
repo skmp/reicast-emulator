@@ -432,6 +432,11 @@ public:
 				Sbcs(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2)); // (C,rd) = rs1 - rs2 - ~rs3(C)
 				Cset(regalloc.MapRegister(op.rd2), cc);	// rd2 = ~C
 				break;
+			case shop_negc:
+				Cmp(wzr, regalloc.MapRegister(op.rs2));	// C = ~rs2
+				Sbcs(regalloc.MapRegister(op.rd), wzr, regalloc.MapRegister(op.rs1)); // (C,rd) = 0 - rs1 - ~rs2(C)
+				Cset(regalloc.MapRegister(op.rd2), cc);	// rd2 = ~C
+				break;
 
 			case shop_rocr:
 				Ubfx(w0, regalloc.MapRegister(op.rs1), 0, 1);										// w0 = rs1[0] (new C)
@@ -565,6 +570,12 @@ public:
 				break;
 			case shop_ext_s16:
 				Sxth(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
+				break;
+
+			case shop_xtrct:
+				Lsr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1), 16);
+				Lsl(w0, regalloc.MapRegister(op.rs2), 16);
+				Orr(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd), w0);
 				break;
 
 			//

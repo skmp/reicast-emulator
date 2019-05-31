@@ -556,7 +556,20 @@ public:
 				cmovc(regalloc.MapRegister(op.rd2), ecx);	// rd2 = C
 				break;
                 */
-            case shop_rocr:
+   			case shop_negc:
+   				{
+   					if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
+   						mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
+   					Xbyak::Reg64 rd64 = regalloc.MapRegister(op.rd).cvt64();
+   					neg(rd64);
+   					sub(rd64, regalloc.MapRegister(op.rs2).cvt64());
+   					Xbyak::Reg64 rd2_64 = regalloc.MapRegister(op.rd2).cvt64();
+   					mov(rd2_64, rd64);
+   					shr(rd2_64, 63);
+   				}
+   				break;
+
+   			case shop_rocr:
             case shop_rocl:
                if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
             	  mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
@@ -740,6 +753,15 @@ public:
             case shop_ext_s16:
                movsx(regalloc.MapRegister(op.rd), Xbyak::Reg16(regalloc.MapRegister(op.rs1).getIdx()));
                break;
+
+   			case shop_xtrct:
+   				if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
+   					mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
+   				shr(regalloc.MapRegister(op.rd), 16);
+   				mov(eax, regalloc.MapRegister(op.rs2));
+   				shl(eax, 16);
+   				or_(regalloc.MapRegister(op.rd), eax);
+   				break;
 
                //
                // FPU

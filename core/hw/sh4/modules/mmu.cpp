@@ -142,7 +142,6 @@ bool UTLB_Sync(u32 entry)
 		// Used when FullMMU is off
 		u32 vpn_sq = ((UTLB[entry].Address.VPN & 0x7FFFF) >> 10) & 0x3F;//upper bits are always known [0xE0/E1/E2/E3]
 		sq_remap[vpn_sq] = UTLB[entry].Data.PPN << 10;
-		printf_mmu("SQ remap %d : 0x%X to 0x%X\n", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
 
 		return true;
 	}
@@ -255,7 +254,7 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 
 void DoMMUException(u32 address, u32 mmu_error, u32 access_type)
 {
-	printf_mmu("DoMMUException -> pc = 0x%X : ", next_pc);
+	printf_mmu("DoMMUException -> pc = 0x%X : %d ", next_pc, access_type);
 	CCN_TEA = address;
 	CCN_PTEH.VPN = address >> 10;
 
@@ -268,7 +267,7 @@ void DoMMUException(u32 address, u32 mmu_error, u32 access_type)
 
 		//TLB miss
 	case MMU_ERROR_TLB_MISS:
-		printf_mmu("MMU_ERROR_UTLB_MISS 0x%X, handled access_type %d\n", address, access_type);
+		printf_mmu("MMU_ERROR_UTLB_MISS 0x%X, handled\n", address);
 		if (access_type == MMU_TT_DWRITE)			//WTLBMISS - Write Data TLB Miss Exception
 			Do_Exception(next_pc, 0x60, 0x400);
 		else if (access_type == MMU_TT_DREAD)		//RTLBMISS - Read Data TLB Miss Exception
@@ -323,7 +322,7 @@ void DoMMUException(u32 address, u32 mmu_error, u32 access_type)
 			Do_Exception(next_pc, 0xE0, 0x100);
 			return;
 		}
-		printf("MMU_ERROR_BADADDR(d) 0x%X, handled\n", address);
+		printf_mmu("MMU_ERROR_BADADDR(d) 0x%X, handled\n", address);
 		return;
 		break;
 
@@ -375,7 +374,6 @@ u32 mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 
 	u32 entry = -1;
 	u32 nom = 0;
-
 
 	for (u32 i = 0; i<64; i++)
 	{
@@ -484,6 +482,7 @@ u32 mmu_data_translation(u32 va, u32& rv)
 			u32 lookup = mmu_full_SQ<translation_type>(va, rv);
 			if (lookup != MMU_ERROR_NONE)
 				return lookup;
+
 			rv = va;	//SQ writes are not translated, only write backs are.
 			return MMU_ERROR_NONE;
 		}
@@ -596,6 +595,7 @@ retry_ITLB_Match:
 
 		if (lookup != MMU_ERROR_NONE)
 			return lookup;
+
 		u32 replace_index = ITLB_LRU_USE[CCN_MMUCR.LRUI];
 		verify(replace_index != 0xFFFFFFFF);
 		ITLB[replace_index] = *tlb_entry;
@@ -627,7 +627,6 @@ retry_ITLB_Match:
 	{
 		return MMU_ERROR_PROTECTED;
 	}
-
 	return MMU_ERROR_NONE;
 }
 #endif
@@ -647,6 +646,7 @@ void mmu_set_state()
 		WriteMem16 = &mmu_WriteMem<u16>;
 		WriteMem32 = &mmu_WriteMem<u32>;
 		WriteMem64 = &mmu_WriteMem<u64>;
+		_vmem_enable_mmu(true);
 		mmu_flush_table();
 	}
 	else
@@ -661,6 +661,7 @@ void mmu_set_state()
 		WriteMem16 = &_vmem_WriteMem16;
 		WriteMem32 = &_vmem_WriteMem32;
 		WriteMem64 = &_vmem_WriteMem64;
+		_vmem_enable_mmu(false);
 	}
 }
 
@@ -727,7 +728,7 @@ u16 DYNACALL mmu_IReadMem16(u32 vaddr)
 	u32 rv = mmu_instruction_translation(vaddr, addr, shared);
 	if (rv != MMU_ERROR_NONE)
 		mmu_raise_exception(rv, vaddr, MMU_TT_IREAD);
-		return _vmem_ReadMem16(addr);
+	return _vmem_ReadMem16(addr);
 }
 
 template<typename T>
@@ -742,17 +743,17 @@ void DYNACALL mmu_WriteMem(u32 adr, T data)
 
 template<typename T>
 T DYNACALL mmu_ReadMemNoEx(u32 adr, u32 *exception_occurred)
-	{
+{
 	u32 addr;
 	u32 rv = mmu_data_translation<MMU_TT_DREAD, T>(adr, addr);
 	if (rv != MMU_ERROR_NONE)
-{
+	{
 		DoMMUException(adr, rv, MMU_TT_DREAD);
 		*exception_occurred = 1;
 		return 0;
 	}
 	else
-{
+	{
 		*exception_occurred = 0;
 		return _vmem_readt<T, T>(addr);
 	}
@@ -763,7 +764,7 @@ template u32 mmu_ReadMemNoEx<u32>(u32 adr, u32 *exception_occurred);
 template u64 mmu_ReadMemNoEx<u64>(u32 adr, u32 *exception_occurred);
 
 u16 DYNACALL mmu_IReadMem16NoEx(u32 vaddr, u32 *exception_occurred)
-	{
+{
 	u32 addr;
 	bool shared;
 	u32 rv = mmu_instruction_translation(vaddr, addr, shared);
@@ -774,11 +775,11 @@ u16 DYNACALL mmu_IReadMem16NoEx(u32 vaddr, u32 *exception_occurred)
 		return 0;
 	}
 	else
-{
+	{
 		*exception_occurred = 0;
 		return _vmem_ReadMem16(addr);
 	}
-	}
+}
 
 template<typename T>
 u32 DYNACALL mmu_WriteMemNoEx(u32 adr, T data)
@@ -804,6 +805,7 @@ bool mmu_TranslateSQW(u32 adr, u32* out)
 	{
 		//This will only work for 1 mb pages .. hopefully nothing else is used
 		//*FIXME* to work for all page sizes ?
+
 		*out = sq_remap[(adr >> 20) & 0x3F] | (adr & 0xFFFE0);
 	}
 	else

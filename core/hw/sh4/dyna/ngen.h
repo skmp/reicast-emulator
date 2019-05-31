@@ -45,12 +45,6 @@
 #include "decoder.h"
 #include "blockmanager.h"
 
-#ifdef NO_MMU
-#define TEMP_CODE_SIZE (0)
-#else
-#define TEMP_CODE_SIZE (1024*1024)
-#endif
-
 // When NO_RWX is enabled there's two address-spaces, one executable and
 // one writtable. The emitter and most of the code in rec-* will work with
 // the RW pointer. However the fpcb table and other pointers during execution
@@ -85,8 +79,6 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock_pc();
 DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc);
 //Called to compile code @pc
 DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures);
-//Returns 0 if there is no code @pc, code ptr otherwise
-//DynarecCodeEntryPtr rdv_FindCode();
 //Finds or compiles code @pc
 DynarecCodeEntryPtr rdv_FindOrCompile();
 

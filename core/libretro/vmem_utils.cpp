@@ -217,8 +217,7 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 		// Ignore unmapped stuff, it is already reserved as PROT_NONE
 		if (!vmem_maps[i].memsize)
 			continue;
-printf("vmem_platform_create_mappings: start %lx end %lx size %lx\n",
-	  vmem_maps[i].start_address, vmem_maps[i].end_address, vmem_maps[i].memsize);
+
 		// Calculate the number of mirrors
 		u64 address_range_size = vmem_maps[i].end_address - vmem_maps[i].start_address;
 		unsigned num_mirrors = (address_range_size) / vmem_maps[i].memsize;

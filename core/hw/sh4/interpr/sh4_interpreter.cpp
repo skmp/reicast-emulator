@@ -52,8 +52,10 @@ int UpdateSystem(void)
 
 int UpdateSystem_INTC(void)
 {
-	UpdateSystem();
-	return UpdateINTC();
+	if (UpdateSystem())
+		return UpdateINTC();
+	else
+		return 0;
 }
 
 void Sh4_int_Stop(void)
@@ -144,8 +146,6 @@ void Sh4_int_Reset(bool Manual)
    fpscr.full = 0x0004001;
    old_fpscr=fpscr;
    UpdateFPSCR();
-
-   p_sh4rcb->cntx.vmem32_base = virt_ram_base;
 
    //Any more registers have default value ?
    printf("Sh4 Reset\n");

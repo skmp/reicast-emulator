@@ -2038,7 +2038,6 @@ bool retro_unserialize(const void * data, size_t size)
     }
 #endif
 
-    sh4_cpu.ResetCache();
 #if FEAT_AREC == DYNAREC_JIT
     FlushCache();
 #endif
@@ -2046,6 +2045,7 @@ bool retro_unserialize(const void * data, size_t size)
     result = dc_unserialize(&data_ptr, &total_size, size) ;
 
     mmu_set_state();
+    sh4_cpu.ResetCache();
     dsp.dyndirty = true;
     sh4_sched_ffts();
     CalculateSync();

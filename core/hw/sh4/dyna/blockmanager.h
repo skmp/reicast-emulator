@@ -11,6 +11,12 @@
 #define CODE_SIZE   (16*1024*1024)
 typedef void (*DynarecCodeEntryPtr)();
 
+#ifdef NO_MMU
+#define TEMP_CODE_SIZE (0)
+#else
+#define TEMP_CODE_SIZE (1024*1024)
+#endif
+
 extern u8* CodeCache;
 
 struct RuntimeBlockInfo_Core
@@ -94,7 +100,7 @@ struct BlockMapCMP
 {
 	static bool is_code(RuntimeBlockInfo* blk)
 	{
-		if ((unat)((u8*)blk-CodeCache)<CODE_SIZE)
+		if ((unat)((u8*)blk - CodeCache) < CODE_SIZE + TEMP_CODE_SIZE)
 			return true;
 		else
 			return false;

@@ -522,7 +522,7 @@ bool _vmem_reserve(void)
 		// Map the different parts of the memory file into the new memory range we got.
 		if (vmemstatus == MemType512MB)
 		{
-			vmem_mapping mem_mappings[] = {
+			const vmem_mapping mem_mappings[] = {
 				{0x00000000, 0x00800000,                               0,         0, false},  // Area 0 -> unused
 				{0x00800000, 0x01000000,           MAP_ARAM_START_OFFSET, ARAM_SIZE, false},  // Aica
 				{0x20000000, 0x20000000+ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE,  true},

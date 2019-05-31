@@ -350,7 +350,6 @@ struct Sh4Context
 			u32 interrupt_pend;
 
 			u32 exception_pc;
-			u8 *vmem32_base;
 		};
 		u64 raw[64-8];
 	};
@@ -368,16 +367,14 @@ void DYNACALL do_sqw_nommu_full(u32 dst, u8* sqb);
 typedef void DYNACALL sqw_fp(u32 dst,u8* sqb);
 typedef void DYNACALL TaListVoidFP(void* data);
 
-// Naomi edit: was RAM_SIZE/2
-#define FPCB_SIZE (32*1024*1024/2)
+#define FPCB_SIZE (RAM_SIZE_MAX/2)
 #define FPCB_MASK (FPCB_SIZE -1)
 //#defeine FPCB_PAD 0x40000
 #define FPCB_PAD 0x100000
 #define FPCB_OFFSET (-(FPCB_SIZE*sizeof(void*) + FPCB_PAD)) 
 struct Sh4RCB
 {
-   /* Naomi edit - allow for max possible RAM_SIZE here */
-	void* fpcb[((32*1024*1024)/*RAM_SIZE*//2)];
+	void* fpcb[FPCB_SIZE];
 	u64 _pad[(FPCB_PAD-sizeof(Sh4Context)-64-sizeof(void*)*2)/8];
 	TaListVoidFP* tacmd_voud; //*TODO* remove (not used)
 	sqw_fp* do_sqw_nommu;

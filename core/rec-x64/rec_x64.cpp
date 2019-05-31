@@ -540,8 +540,7 @@ public:
                cmp(regalloc.MapRegister(op.rs3), 1);	// C = ~rs3
                cmc();		// C = rs3
                adc(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs2)); // (C,rd)=rs1+rs2+rs3(C)
-               setc(al);
-               movzx(regalloc.MapRegister(op.rd2), al);	// rd2 = C
+				setc(regalloc.MapRegister(op.rd2).cvt8());	// rd2 = C
                break;
             /* FIXME buggy
 			case shop_sbc:
@@ -1133,9 +1132,6 @@ public:
 
 	void InitializeRewrite(RuntimeBlockInfo *block, size_t opid)
 	{
-		// shouldn't be necessary since all regs are flushed before mem access when mmu is enabled
-		//regalloc.DoAlloc(block);
-		regalloc.current_opid = opid;
 	}
 
 	void FinalizeRewrite()
@@ -1346,7 +1342,7 @@ private:
 		mov(rax, (uintptr_t)&p_sh4rcb->cntx.exception_pc);
 		mov(dword[rax], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));
 
-		mov(rax, (uintptr_t)p_sh4rcb->cntx.vmem32_base);
+		mov(rax, (uintptr_t)virt_ram_base);
 
 		u32 size = op.flags & 0x7f;
 		//verify(getCurr() - start_addr == 26);
@@ -1394,7 +1390,7 @@ private:
 		mov(rax, (uintptr_t)&p_sh4rcb->cntx.exception_pc);
 		mov(dword[rax], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));
 
-		mov(rax, (uintptr_t)p_sh4rcb->cntx.vmem32_base);
+		mov(rax, (uintptr_t)virt_ram_base);
 
 		u32 size = op.flags & 0x7f;
 		//verify(getCurr() - start_addr == 26);

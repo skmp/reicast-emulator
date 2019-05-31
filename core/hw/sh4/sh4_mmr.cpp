@@ -478,7 +478,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	switch (map_base & 0x1FFF)
 	{
 	case A7_REG_HASH(CCN_BASE_addr):
-		if (addr<=0x1F00003C)
+		if (addr<=0x1F000044)
 		{
 			return (T)sh4_rio_read<sz>(CCN,addr & 0xFF);
 		}
@@ -560,7 +560,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 		break;
 
 	case A7_REG_HASH(INTC_BASE_addr):
-		if (addr<=0x1FD0000C)
+		if (addr<=0x1FD00010)
 		{
 			return (T)sh4_rio_read<sz>(INTC,addr & 0xFF);
 		}
@@ -891,7 +891,7 @@ void sh4_mmr_init(void)
 
 void sh4_mmr_reset(void)
 {
-   memset(OnChipRAM.data, 0, sizeof(u8) * OnChipRAM.Size);
+	OnChipRAM.Zero();
 	//Reset register values
 	bsc_reset();
 	ccn_reset();

@@ -311,7 +311,8 @@ endif
 
 SOURCES_CXX += $(CORE_DIR)/core/libretro/libretro.cpp \
 					$(CORE_DIR)/core/libretro/audiostream.cpp \
-					$(CORE_DIR)/core/libretro/common.cpp
+					$(CORE_DIR)/core/libretro/common.cpp \
+					$(CORE_DIR)/core/libretro/vmem_utils.cpp
 
 SOURCES_C +=   $(LIBRETRO_COMM_DIR)/memmap/memalign.c \
 					$(LIBRETRO_COMM_DIR)/file/retro_stat.c

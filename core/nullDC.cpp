@@ -376,15 +376,8 @@ int dc_init(int argc,wchar* argv[])
 		log_cb(RETRO_LOG_INFO, "Failed to alloc mem\n");
 		return -1;
 	}
-#if !defined(NO_MMU) && !defined(_WIN32) && HOST_CPU == CPU_X64
-	if (!vmem32_init())
-	{
-		log_cb(RETRO_LOG_INFO, "Failed to alloc 32-bit mem space\n");
-		return -1;
-	}
-#endif
 
-   LoadSettings();
+	LoadSettings();
 	os_CreateWindow();
 
 	int rv= 0;

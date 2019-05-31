@@ -245,6 +245,8 @@ struct rei_host_context_t
 	u32 esp;
 #elif HOST_CPU == CPU_ARM
 	u32 r[15];
+#elif HOST_CPU == CPU_ARM64
+	u64 x27;
 #endif
 };
 
@@ -278,6 +280,7 @@ static void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, boo
 #endif
 #elif HOST_CPU == CPU_ARM64
 	bicopy(reictx->pc, MCTX(.pc), to_segfault);
+	bicopy(reictx->x27, MCTX(.regs[27]), to_segfault);
 #elif HOST_CPU == CPU_X86
 #ifdef __linux__
    bicopy(reictx->pc, MCTX(.gregs[REG_EIP]), to_segfault);
@@ -357,7 +360,7 @@ static void signal_handler(int sn, siginfo_t * si, void *segfault_ctx)
    context_from_segfault(&ctx, segfault_ctx);
 
 #if FEAT_SHREC == DYNAREC_JIT
-	bool dyna_cde = ((size_t)ctx.pc > (size_t)CodeCache) && ((size_t)ctx.pc < (size_t)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
+	bool dyna_cde = ((unat)CC_RX2RW(ctx.pc) > (unat)CodeCache) && ((unat)CC_RX2RW(ctx.pc) < (unat)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
 #else
 	bool dyna_cde = false;
 #endif
@@ -366,9 +369,16 @@ static void signal_handler(int sn, siginfo_t * si, void *segfault_ctx)
 printf("mprot hit @ ptr %p @@ pc: %p, %d\n", si->si_addr, ctx.pc, dyna_cde);
 #endif
 
-#if !defined(NO_MMU) && HOST_CPU == CPU_X64 && !defined(_WIN32)
+#if !defined(NO_MMU) && defined(HOST_64BIT_CPU)
+#if HOST_CPU == CPU_ARM64
+	u32 op = *(u32*)ctx.pc;
+	bool write = (op & 0x00400000) == 0;
+	u32 exception_pc = ctx.x27;
+#elif HOST_CPU == CPU_X64
 	bool write = false;	// TODO?
-	if (vmem32_handle_signal(si->si_addr, write))
+	u32 exception_pc = 0;
+#endif
+	if (vmem32_handle_signal(si->si_addr, write, exception_pc))
 		return;
 #endif
    if (VramLockedWrite((u8*)si->si_addr))
@@ -583,32 +593,17 @@ void cResetEvent::Wait()//Wait for signal , then reset
 }
 
 //End AutoResetEvent
-
-void VArray2::LockRegion(u32 offset,u32 size)
+#ifndef TARGET_NO_EXCEPTIONS
+void VArray2::LockRegion(u32 offset,u32 size_bytes)
 {
-#ifdef _WIN32
-   protect_pages(((u8*)data)+offset, size, ACC_READONLY);
-#elif !defined(TARGET_NO_EXCEPTIONS)
-   u32 inpage=offset & SH4_PAGE_MASK;
-   if (!protect_pages(data + offset - inpage, size + inpage, ACC_READONLY))
-      die("protect_pages  failed ..\n");
-#endif
+   mem_region_lock(&data[offset], size_bytes);
 }
 
-void VArray2::UnLockRegion(u32 offset,u32 size)
+void VArray2::UnLockRegion(u32 offset,u32 size_bytes)
 {
-#ifdef _WIN32
-   protect_pages(((u8*)data)+offset, size, ACC_READWRITE);
-#elif !defined(TARGET_NO_EXCEPTIONS)
-   u32 inpage=offset & SH4_PAGE_MASK;
-
-   if (!protect_pages(data + offset - inpage, size + inpage, ACC_READWRITE))
-   {
-      print_mem_addr();
-      die("protect_pages  failed ..\n");
-   }
-#endif
+   mem_region_unlock(&data[offset], size_bytes);
 }
+#endif
 
 #if defined(_WIN64) && defined(_DEBUG)
 static void ReserveBottomMemory(void)
@@ -725,7 +720,7 @@ void common_libretro_setup(void)
 #endif
 
 #if defined(__MACH__) || defined(__linux__)
-   printf("Linux paging: %08X %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,SH4_PAGE_MASK);
-   verify(SH4_PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
+   printf("Linux paging: %08X %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
+   verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
 #endif
 }

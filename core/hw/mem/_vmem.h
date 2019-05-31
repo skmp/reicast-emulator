@@ -1,9 +1,40 @@
 #pragma once
 #include "types.h"
 
-#if defined(__HAIKU__)
-#include <posix/sys/mman.h>
-#endif
+enum VMemType {
+	MemType4GB,
+	MemType512MB,
+	MemTypeError
+};
+
+struct vmem_mapping {
+	u64 start_address, end_address;
+	u64 memoffset, memsize;
+	bool allow_writes;
+};
+
+// Platform specific vmemory API
+// To initialize (maybe) the vmem subsystem
+VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr);
+// To reset the on-demand allocated pages.
+void vmem_platform_reset_mem(void *ptr, unsigned size_bytes);
+// To handle a fault&allocate an ondemand page.
+void vmem_platform_ondemand_page(void *address, unsigned size_bytes);
+// To create the mappings in the address space.
+void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned nummaps);
+// Just tries to wipe as much as possible in the relevant area.
+void vmem_platform_destroy();
+// Given a block of data in the .text section, prepares it for JIT action.
+// both code_area and size are page aligned. Returns success.
+bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx);
+// Same as above but uses two address spaces one with RX and RW protections.
+// Note: this function doesnt have to be implemented, it's a fallback for the above one.
+bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rw, uintptr_t *rx_offset);
+// This might not need an implementation (ie x86/64 cpus).
+void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end);
+
+// Note: if you want to disable vmem magic in any given platform, implement the
+// above functions as empty functions and make vmem_platform_init return MemTypeError.
 
 //Typedef's
 //ReadMem 
@@ -71,9 +102,17 @@ void* _vmem_get_ptr2(u32 addr,u32& mask);
 void* _vmem_read_const(u32 addr,bool& ismem,u32 sz);
 
 extern u8* virt_ram_base;
+extern bool vmem_4gb_space;
 
 static inline bool _nvmem_enabled() {
 	return virt_ram_base != 0;
 }
-
+static inline bool _nvmem_4gb_space() {
+	return vmem_4gb_space;
+}
 void _vmem_bm_reset();
+void _vmem_enable_mmu(bool enable);
+
+#define MAP_RAM_START_OFFSET  0
+#define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)
+#define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)

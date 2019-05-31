@@ -213,8 +213,6 @@ extern unsigned ARAM_SIZE;
 extern unsigned VRAM_MASK;
 extern unsigned ARAM_MASK;
 
-#define VRAM_SIZE_MAX (16 * 1024 * 1024)
-
 #define GD_CLOCK 33868800				//GDROM XTAL -- 768fs
 
 #define AICA_CORE_CLOCK (GD_CLOCK*4/3)		//[45158400]  GD->PLL 3:4 -> AICA CORE	 -- 1024fs

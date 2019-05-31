@@ -27,7 +27,7 @@
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
 
-extern void Arm64CacheFlush(void* start, void* end);
+extern void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end);
 
 class DSPAssembler : public MacroAssembler
 {
@@ -53,10 +53,9 @@ public:
 			Stp(xzr, xzr, MemOperand(x0, 48));
 			Ret();
 			FinalizeCode();
-#ifdef _ANDROID
-			Arm64CacheFlush(GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
-#endif
-
+			vmem_platform_flush_cache(
+							GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>(),
+							GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 			return;
 		}
 
@@ -367,7 +366,9 @@ public:
 
 		FinalizeCode();
 
-		Arm64CacheFlush(GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
+		vmem_platform_flush_cache(
+						GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>(),
+						GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 	}
 
 private:

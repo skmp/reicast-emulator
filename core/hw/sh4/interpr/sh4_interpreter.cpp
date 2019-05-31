@@ -145,7 +145,7 @@ void Sh4_int_Reset(bool Manual)
    old_fpscr=fpscr;
    UpdateFPSCR();
 
-   p_sh4rcb->cntx.vmem32_base = vmem32_base;
+   p_sh4rcb->cntx.vmem32_base = virt_ram_base;
 
    //Any more registers have default value ?
    printf("Sh4 Reset\n");

@@ -1,6 +1,6 @@
-Beetle DC
+Flycast
 ===========
-Beetle DC is a multi-platform Sega Dreamcast emulator.
+Flycast is a multi-platform Sega Dreamcast emulator.
 
 Disclaimer
 ==========

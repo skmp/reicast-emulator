@@ -19,7 +19,7 @@ HAVE_CHD      := 1
 HAVE_CLANG    := 0
 
 
-TARGET_NAME   := beetledc
+TARGET_NAME   := flycast
 
 ifeq ($(HAVE_CLANG),1)
 	CXX      = ${CC_PREFIX}clang++

@@ -738,6 +738,12 @@ struct settings_t
 		int maple_expansion_devices[4][2];
 		int VirtualGamepadVibration;
 	} input;
+
+
+	struct {
+		bool HideCallToAction;
+	} social;
+
 };
 
 extern settings_t settings;

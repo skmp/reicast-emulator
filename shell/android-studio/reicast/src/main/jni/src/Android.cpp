@@ -156,6 +156,7 @@ extern bool print_stats;
 //stuff for saving prefs
 jobject g_emulator;
 jmethodID saveAndroidSettingsMid;
+jmethodID launchFromUrlMid;
 static ANativeWindow *g_window = 0;
 
 void os_DoEvents()
@@ -217,6 +218,7 @@ JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JN
     if (g_emulator == NULL) {
         g_emulator = env->NewGlobalRef(emulator);
         saveAndroidSettingsMid = env->GetMethodID(env->GetObjectClass(emulator), "SaveAndroidSettings", "(Ljava/lang/String;)V");
+        launchFromUrlMid  = env->GetMethodID(env->GetObjectClass(emulator), "LaunchFromUrl", "(Ljava/lang/String;)V");
     }
     // Set home directory based on User config
     const char* path = homeDirectory != NULL ? env->GetStringUTFChars(homeDirectory, 0) : "";
@@ -604,6 +606,14 @@ void SaveAndroidSettings()
 
     jvm_attacher.getEnv()->CallVoidMethod(g_emulator, saveAndroidSettingsMid, homeDirectory);
     jvm_attacher.getEnv()->DeleteLocalRef(homeDirectory);
+}
+
+void os_LaunchFromURL(const string& url)
+{
+    jstring jurl = jvm_attacher.getEnv()->NewStringUTF(url.c_str());
+
+    jvm_attacher.getEnv()->CallVoidMethod(g_emulator, launchFromUrlMid, jurl);
+    jvm_attacher.getEnv()->DeleteLocalRef(jurl);
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_init(JNIEnv *env, jobject obj)

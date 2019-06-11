@@ -654,6 +654,8 @@ void LoadSettings(bool game_specific)
 	settings.omx.Audio_HDMI		= cfgLoadBool(game_specific ? cfgGetGameId() : "omx", "audio_hdmi", settings.omx.Audio_HDMI);
 #endif
 
+	settings.social.HideCallToAction = cfgLoadBool(config_section, "Social.HideCallToAction", settings.social.HideCallToAction);
+	
 	if (!game_specific)
 	{
 		settings.dreamcast.ContentPath.clear();
@@ -787,6 +789,8 @@ void SaveSettings()
 	cfgSaveStr("config", "Dreamcast.ContentPath", paths.c_str());
 
 	GamepadDevice::SaveMaplePorts();
+
+	cfgSaveBool("config", "Social.HideCallToAction", settings.social.HideCallToAction);
 
 #ifdef _ANDROID
 	void SaveAndroidSettings();

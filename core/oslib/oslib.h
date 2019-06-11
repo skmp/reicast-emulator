@@ -29,3 +29,5 @@ u32 static INLINE bitscanrev(u32 v)
 #define __assume(x)
 
 void os_DebugBreak();
+
+void os_LaunchFromURL(const string& url);

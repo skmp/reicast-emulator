@@ -1208,6 +1208,42 @@ static void gui_display_settings()
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 		}
+		
+		if (ImGui::BeginTabItem("Social"))
+		{
+			ImGui::Checkbox("Hide Social links from games list", &settings.social.HideCallToAction);
+		
+			ImGui::Separator();
+
+			if (ImGui::Button("Donate / Support Reicast (via emudev.org)")) {
+		    	os_LaunchFromURL("http://donate.emudev.org");
+		    }
+
+			if (ImGui::Button("Patreon (emudev.org)")) {
+		    	os_LaunchFromURL("http://patreon.emudev.org");
+		    }
+
+			ImGui::Separator();
+
+			if (ImGui::Button("Discord")) {
+		    	os_LaunchFromURL("http://chat.reicast.com");
+		    }
+
+			if (ImGui::Button("Facebook")) {
+		    	os_LaunchFromURL("http://facebook.com/reicastdc");
+		    }
+
+			if (ImGui::Button("Twitter")) {
+		    	os_LaunchFromURL("https://twitter.com/reicastdc");
+		    }
+
+			if (ImGui::Button("Homepage")) {
+		    	os_LaunchFromURL("http://reicast.com");
+		    }
+
+			ImGui::EndTabItem();
+		}
+
 		if (ImGui::BeginTabItem("About"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
@@ -1448,6 +1484,18 @@ static void gui_display_content()
     {
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
 
+		if (!settings.social.HideCallToAction)
+		{
+			ImGui::PushID("discord");
+			if (ImGui::Selectable("Join our Discord Server!"))
+			{
+				os_LaunchFromURL("http://chat.reicast.com");
+			}
+			ImGui::PopID();	
+
+			ImGui::Separator();
+		}
+		
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 		ImGui::PushID("bios");
 		if (ImGui::Selectable("Dreamcast BIOS"))

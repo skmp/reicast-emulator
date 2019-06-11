@@ -15,6 +15,8 @@
 #include "hw/maple/maple_cfg.h"
 #pragma comment(lib, "XInput9_1_0.lib")
 
+#include <process.h>
+
 PCHAR*
 	CommandLineToArgvA(
 	PCHAR CmdLine,
@@ -810,3 +812,9 @@ void os_DoEvents()
 
 int get_mic_data(u8* buffer) { return 0; }
 int push_vmu_screen(u8* buffer) { return 0; }
+
+void os_LaunchFromURL(const string& url)
+{
+	auto cmd = "start " + url; 
+	system(cmd.c_str());
+}

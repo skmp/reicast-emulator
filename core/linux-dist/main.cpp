@@ -151,6 +151,12 @@ void os_SetWindowText(const char * text)
 	#endif
 }
 
+void os_LaunchFromURL(const string& url)
+{
+	auto cmd = "xdg-open " + url; 
+	system(cmd.c_str());
+}
+
 void os_CreateWindow()
 {
 	#if defined(SUPPORT_DISPMANX)

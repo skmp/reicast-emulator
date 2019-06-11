@@ -6,6 +6,8 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
+import android.net.Uri;
+import android.content.Intent;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.AudioBackend;
@@ -65,6 +67,11 @@ public class Emulator extends Application {
         if (micPluggedIn() && currentActivity instanceof BaseGLActivity) {
             ((BaseGLActivity)currentActivity).requestRecordAudioPermission();
         }
+    }
+
+    public void LaunchFromUrl(String url) {
+        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        startActivity(i);
     }
 
     public static boolean micPluggedIn() {

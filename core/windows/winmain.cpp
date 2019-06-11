@@ -815,6 +815,5 @@ int push_vmu_screen(u8* buffer) { return 0; }
 
 void os_LaunchFromURL(const string& url)
 {
-	auto cmd = "start " + url; 
-	system(cmd.c_str());
+	ShellExecuteA((HWND)window_win, "open", url.c_str(), nullptr, nullptr, SW_SHOW);
 }

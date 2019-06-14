@@ -1,4 +1,5 @@
 #include "aica.h"
+#include "aica_if.h"
 #include "aica_mem.h"
 #include <time.h>
 #include <math.h>
@@ -177,6 +178,7 @@ template void WriteAicaReg<2>(u32 reg,u32 data);
 s32 libAICA_Init(void)
 {
 	init_mem();
+	aica_Init();
 
 	verify(sizeof(*CommonData)==0x508);
 	verify(sizeof(*DSPData)==0x15C8);
@@ -200,9 +202,12 @@ s32 libAICA_Init(void)
 	return rv_ok;
 }
 
-void libAICA_Reset(bool m)
+void libAICA_Reset(bool manual)
 {
+	if (!manual)
+		init_mem();
 	sgc_Init();
+	aica_Reset(manual);
 }
 
 void libAICA_Term(void)

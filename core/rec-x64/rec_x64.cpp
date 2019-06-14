@@ -2,7 +2,7 @@
 
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64
 #include <setjmp.h>
-#define EXPLODE_SPANS
+//#define EXPLODE_SPANS
 
 #include "deps/xbyak/xbyak.h"
 #include "deps/xbyak/xbyak_util.h"
@@ -313,11 +313,13 @@ public:
 			jmp(exit_block, T_NEAR);
 			L(fpu_enabled);
 		}
+#ifdef FEAT_NO_RWX_PAGES
+		// Use absolute addressing for this one
+		// TODO(davidgfnet) remove the ifsef using CC_RX2RW/CC_RW2RX
+		mov(rax, (uintptr_t)&cycle_counter);
+		sub(dword[rax], block->guest_cycles);
+#else
 		sub(dword[rip + &cycle_counter], block->guest_cycles);
-#ifdef PROFILING
-		mov(rax, (uintptr_t)&guest_cpu_cycles);
-		mov(ecx, block->guest_cycles);
-		add(qword[rax], rcx);
 #endif
 		regalloc.DoAlloc(block);
 
@@ -352,27 +354,27 @@ public:
 
             case shop_jcond:
             case shop_jdyn:
-				  if (op.rs2.is_imm())
-				  {
-					  mov(ecx, regalloc.MapRegister(op.rs1));
-					  add(ecx, op.rs2._imm);
-					  mov(regalloc.MapRegister(op.rd), ecx);
-				  }
-				  else
-					  mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
-				  break;
+					{
+						Xbyak::Reg32 rd = regalloc.MapRegister(op.rd);
+						Xbyak::Reg32 rs1 = regalloc.MapRegister(op.rs1);
+						if (rd != rs1)
+							mov(rd, rs1);
+						if (op.rs2.is_imm())
+							add(rd, op.rs2._imm);
+					}
+					break;
 
             case shop_mov32:
-               {
-                  verify(op.rd.is_reg());
+            	{
+            		verify(op.rd.is_reg());
 
-                  verify(op.rs1.is_reg() || op.rs1.is_imm());
+            		verify(op.rs1.is_reg() || op.rs1.is_imm());
 
-				  if (regalloc.IsAllocf(op.rd))
-					 shil_param_to_host_reg(op.rs1, regalloc.MapXRegister(op.rd));
-				  else
-					 shil_param_to_host_reg(op.rs1, regalloc.MapRegister(op.rd));
-               }
+            		if (regalloc.IsAllocf(op.rd))
+            			shil_param_to_host_reg(op.rs1, regalloc.MapXRegister(op.rd));
+            		else
+            			shil_param_to_host_reg(op.rs1, regalloc.MapRegister(op.rd));
+            	}
                break;
 
             case shop_mov64:
@@ -414,20 +416,20 @@ public:
 
 						u32 size = op.flags & 0x7f;
 						if (size != 8)
-							host_reg_to_shil_param(op.rd, ecx);
+						host_reg_to_shil_param(op.rd, eax);
 						else {
 #ifdef EXPLODE_SPANS
 							if (op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1))
 							{
-								movd(regalloc.MapXRegister(op.rd, 0), ecx);
-								shr(rcx, 32);
-								movd(regalloc.MapXRegister(op.rd, 1), ecx);
+							movd(regalloc.MapXRegister(op.rd, 0), eax);
+							shr(rax, 32);
+							movd(regalloc.MapXRegister(op.rd, 1), eax);
 							}
 							else
 #endif
 							{
-								mov(rax, (uintptr_t)op.rd.reg_ptr());
-								mov(qword[rax], rcx);
+								mov(rcx, (uintptr_t)op.rd.reg_ptr());
+								mov(qword[rcx], rax);
 							}
 						}
                }
@@ -435,41 +437,44 @@ public:
 
             case shop_writem:
                {
-               	shil_param_to_host_reg(op.rs1, call_regs[0]);
-						if (!op.rs3.is_null())
+						if (!GenWriteMemImmediate(op, block))
 						{
-							if (op.rs3.is_imm())
-								add(call_regs[0], op.rs3._imm);
-							else if (regalloc.IsAllocg(op.rs3))
-								add(call_regs[0], regalloc.MapRegister(op.rs3));
-							else
+							shil_param_to_host_reg(op.rs1, call_regs[0]);
+							if (!op.rs3.is_null())
 							{
-								mov(rax, (uintptr_t)op.rs3.reg_ptr());
-								add(call_regs[0], dword[rax]);
+								if (op.rs3.is_imm())
+									add(call_regs[0], op.rs3._imm);
+								else if (regalloc.IsAllocg(op.rs3))
+									add(call_regs[0], regalloc.MapRegister(op.rs3));
+								else
+								{
+									mov(rax, (uintptr_t)op.rs3.reg_ptr());
+									add(call_regs[0], dword[rax]);
+								}
 							}
-						}
 
-						u32 size = op.flags & 0x7f;
-						if (size != 8)
-							shil_param_to_host_reg(op.rs2, call_regs[1]);
-						else {
+							u32 size = op.flags & 0x7f;
+							if (size != 8)
+								shil_param_to_host_reg(op.rs2, call_regs[1]);
+							else {
 #ifdef EXPLODE_SPANS
-							if (op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1))
-							{
-								movd(call_regs[1], regalloc.MapXRegister(op.rs2, 1));
-								shl(call_regs64[1], 32);
-								movd(eax, regalloc.MapXRegister(op.rs2, 0));
-								or_(call_regs64[1], rax);
-							}
-							else
+								if (op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1))
+								{
+									movd(call_regs[1], regalloc.MapXRegister(op.rs2, 1));
+									shl(call_regs64[1], 32);
+									movd(eax, regalloc.MapXRegister(op.rs2, 0));
+									or_(call_regs64[1], rax);
+								}
+								else
 #endif
-							{
-								mov(rax, (uintptr_t)op.rs2.reg_ptr());
-								mov(call_regs64[1], qword[rax]);
+								{
+									mov(rax, (uintptr_t)op.rs2.reg_ptr());
+									mov(call_regs64[1], qword[rax]);
+								}
 							}
+							if (!optimise || !GenWriteMemoryFast(op, block))
+								GenWriteMemorySlow(op, block);
 						}
-						if (!optimise || !GenWriteMemoryFast(op, block))
-							GenWriteMemorySlow(op, block);
                }
                break;
 
@@ -484,7 +489,7 @@ public:
             case shop_swaplb:
                if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
             	  mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
-               ror(Xbyak::Reg16(regalloc.MapRegister(op.rd).getIdx()), 8);
+               ror(regalloc.MapRegister(op.rd).cvt16(), 8);
                break;
 
             case shop_neg:
@@ -495,7 +500,7 @@ public:
             case shop_not:
                if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
             	  mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
- 				not_(regalloc.MapRegister(op.rd));
+               not_(regalloc.MapRegister(op.rd));
               break;
 
             case shop_and:
@@ -535,13 +540,31 @@ public:
                break;
 
             case shop_adc:
-               if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
-            	  mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
+				{
                cmp(regalloc.MapRegister(op.rs3), 1);	// C = ~rs3
+					Xbyak::Reg32 rs2;
+					Xbyak::Reg32 rd = regalloc.MapRegister(op.rd);
+					if (op.rs2.is_reg())
+					{
+						rs2 = regalloc.MapRegister(op.rs2);
+						if (regalloc.mapg(op.rd) == regalloc.mapg(op.rs2))
+						{
+							mov(ecx, rs2);
+							rs2 = ecx;
+						}
+					}
+					if (op.rs1.is_imm())
+						mov(rd, op.rs1.imm_value());
+					else if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
+						mov(rd, regalloc.MapRegister(op.rs1));
                cmc();		// C = rs3
-               adc(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs2)); // (C,rd)=rs1+rs2+rs3(C)
-				setc(regalloc.MapRegister(op.rd2).cvt8());	// rd2 = C
-               break;
+					if (op.rs2.is_reg())
+						adc(rd, rs2); 							// (C,rd)=rs1+rs2+rs3(C)
+					else
+						adc(rd, op.rs2.imm_value());
+					setc(regalloc.MapRegister(op.rd2).cvt8());	// rd2 = C
+				}
+				break;
             /* FIXME buggy
 			case shop_sbc:
 				if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
@@ -558,64 +581,92 @@ public:
                 */
    			case shop_negc:
    				{
-   					if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
-   						mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
-   					Xbyak::Reg64 rd64 = regalloc.MapRegister(op.rd).cvt64();
-   					neg(rd64);
-   					sub(rd64, regalloc.MapRegister(op.rs2).cvt64());
-   					Xbyak::Reg64 rd2_64 = regalloc.MapRegister(op.rd2).cvt64();
-   					mov(rd2_64, rd64);
-   					shr(rd2_64, 63);
+   					Xbyak::Reg32 rs2;
+						if (op.rs2.is_reg())
+						{
+							rs2 = regalloc.MapRegister(op.rs2);
+							if (regalloc.mapg(op.rd) == regalloc.mapg(op.rs2))
+							{
+								mov(ecx, rs2);
+								rs2 = ecx;
+							}
+						}
+						Xbyak::Reg32 rd = regalloc.MapRegister(op.rd);
+						if (op.rs1.is_imm())
+							mov(rd, op.rs1.imm_value());
+						else if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
+							mov(rd, regalloc.MapRegister(op.rs1));
+						Xbyak::Reg64 rd64 = rd.cvt64();
+							neg(rd64);
+						if (op.rs2.is_imm())
+							sub(rd64, op.rs2.imm_value());
+						else
+							sub(rd64, rs2.cvt64());
+						Xbyak::Reg64 rd2_64 = regalloc.MapRegister(op.rd2).cvt64();
+						mov(rd2_64, rd64);
+						shr(rd2_64, 63);
    				}
    				break;
 
    			case shop_rocr:
             case shop_rocl:
-               if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
-            	  mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
-               cmp(regalloc.MapRegister(op.rs2), 1);	// C = ~rs2
-               cmc();		// C = rs2
-               if (op.op == shop_rocr)
-            	  rcr(regalloc.MapRegister(op.rd), 1);
-               else
-            	  rcl(regalloc.MapRegister(op.rd), 1);
-               setc(al);
-               movzx(regalloc.MapRegister(op.rd2), al);	// rd2 = C
+					{
+						Xbyak::Reg32 rd = regalloc.MapRegister(op.rd);
+						cmp(regalloc.MapRegister(op.rs2), 1);	// C = ~rs2
+						if (op.rs1.is_imm())
+							mov(rd, op.rs1.imm_value());
+						else if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
+							mov(rd, regalloc.MapRegister(op.rs1));
+						cmc();		// C = rs2
+						if (op.op == shop_rocr)
+							rcr(rd, 1);
+						else
+							rcl(rd, 1);
+						setc(al);
+						movzx(regalloc.MapRegister(op.rd2), al);	// rd2 = C
+					}
                break;
 
             case shop_shld:
             case shop_shad:
-            {
-               if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
-            	  mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
-               Xbyak::Label negative_shift;
-               Xbyak::Label non_zero;
-               Xbyak::Label exit;
+					{
+						if (op.rs2.is_reg())
+							mov(ecx, regalloc.MapRegister(op.rs2));
+						else
+							// This shouldn't happen. If arg is imm -> shop_shl/shr/sar
+							mov(ecx, op.rs2.imm_value());
+						Xbyak::Reg32 rd = regalloc.MapRegister(op.rd);
+						if (op.rs1.is_imm())
+							mov(rd, op.rs1.imm_value());
+						else if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
+							mov(rd, regalloc.MapRegister(op.rs1));
+						Xbyak::Label negative_shift;
+						Xbyak::Label non_zero;
+						Xbyak::Label exit;
 
-               mov(ecx, regalloc.MapRegister(op.rs2));
-               cmp(ecx, 0);
-               js(negative_shift);
-               shl(regalloc.MapRegister(op.rd), cl);
-               jmp(exit);
+						cmp(ecx, 0);
+						js(negative_shift);
+						shl(rd, cl);
+						jmp(exit);
 
-               L(negative_shift);
-               test(ecx, 0x1f);
-               jnz(non_zero);
-               if (op.op == shop_shld)
-            	  xor_(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rd));
-               else
-            	  sar(regalloc.MapRegister(op.rd), 31);
-               jmp(exit);
+						L(negative_shift);
+						test(ecx, 0x1f);
+						jnz(non_zero);
+						if (op.op == shop_shld)
+							xor_(rd, rd);
+						else
+							sar(rd, 31);
+						jmp(exit);
 
-               L(non_zero);
-               neg(ecx);
-               if (op.op == shop_shld)
-            	  shr(regalloc.MapRegister(op.rd), cl);
-               else
-            	  sar(regalloc.MapRegister(op.rd), cl);
-               L(exit);
-            }
-            break;
+						L(non_zero);
+						neg(ecx);
+						if (op.op == shop_shld)
+							shr(rd, cl);
+						else
+							sar(rd, cl);
+						L(exit);
+					}
+					break;
 
             case shop_test:
             case shop_seteq:
@@ -623,46 +674,46 @@ public:
             case shop_setgt:
             case shop_setae:
             case shop_setab:
-            {
-               if (op.op == shop_test)
-               {
-            	  if (op.rs2.is_imm())
-            		 test(regalloc.MapRegister(op.rs1), op.rs2._imm);
-            	  else
-            		 test(regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
-               }
-               else
-               {
-            	  if (op.rs2.is_imm())
-            		 cmp(regalloc.MapRegister(op.rs1), op.rs2._imm);
-            	  else
-            		 cmp(regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
-               }
-               switch (op.op)
-               {
-               case shop_test:
-               case shop_seteq:
-            	  sete(al);
-            	  break;
-               case shop_setge:
-            	  setge(al);
-            	  break;
-               case shop_setgt:
-            	  setg(al);
-            	  break;
-               case shop_setae:
-            	  setae(al);
-            	  break;
-               case shop_setab:
-            	  seta(al);
-            	  break;
-               default:
-            	  die("invalid case");
-            	  break;
-               }
-               movzx(regalloc.MapRegister(op.rd), al);
-            }
-            break;
+					{
+						if (op.op == shop_test)
+						{
+							if (op.rs2.is_imm())
+								test(regalloc.MapRegister(op.rs1), op.rs2._imm);
+							else
+								test(regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
+						}
+						else
+						{
+							if (op.rs2.is_imm())
+								cmp(regalloc.MapRegister(op.rs1), op.rs2._imm);
+							else
+								cmp(regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs2));
+						}
+						switch (op.op)
+						{
+						case shop_test:
+						case shop_seteq:
+							sete(al);
+							break;
+						case shop_setge:
+							setge(al);
+							break;
+						case shop_setgt:
+							setg(al);
+							break;
+						case shop_setae:
+							setae(al);
+							break;
+						case shop_setab:
+							seta(al);
+							break;
+						default:
+							die("invalid case");
+							break;
+						}
+						movzx(regalloc.MapRegister(op.rd), al);
+					}
+					break;
 
             /*
 			case shop_setpeq:
@@ -671,25 +722,40 @@ public:
              */
 
             case shop_mul_u16:
-               movzx(eax, Xbyak::Reg16(regalloc.MapRegister(op.rs1).getIdx()));
-               movzx(ecx, Xbyak::Reg16(regalloc.MapRegister(op.rs2).getIdx()));
-               mul(ecx);
-               mov(regalloc.MapRegister(op.rd), eax);
-               break;
+            	movzx(eax, regalloc.MapRegister(op.rs1).cvt16());
+            	if (op.rs2.is_reg())
+            		movzx(ecx, regalloc.MapRegister(op.rs2).cvt16());
+            	else
+						mov(ecx, op.rs2._imm & 0xFFFF);
+            	mul(ecx);
+            	mov(regalloc.MapRegister(op.rd), eax);
+            	break;
             case shop_mul_s16:
-               movsx(eax, Xbyak::Reg16(regalloc.MapRegister(op.rs1).getIdx()));
-               movsx(ecx, Xbyak::Reg16(regalloc.MapRegister(op.rs2).getIdx()));
-               mul(ecx);
-               mov(regalloc.MapRegister(op.rd), eax);
+					movsx(eax, regalloc.MapRegister(op.rs1).cvt16());
+					if (op.rs2.is_reg())
+						movsx(ecx, regalloc.MapRegister(op.rs2).cvt16());
+					else
+						mov(ecx, (s32)(s16)op.rs2._imm);
+					mul(ecx);
+					mov(regalloc.MapRegister(op.rd), eax);
                break;
             case shop_mul_i32:
                mov(eax, regalloc.MapRegister(op.rs1));
-               mul(regalloc.MapRegister(op.rs2));
+					if (op.rs2.is_reg())
+						mul(regalloc.MapRegister(op.rs2));
+					else
+					{
+						mov(ecx, op.rs2._imm);
+						mul(ecx);
+					}
                mov(regalloc.MapRegister(op.rd), eax);
                break;
             case shop_mul_u64:
                mov(eax, regalloc.MapRegister(op.rs1));
-               mov(ecx, regalloc.MapRegister(op.rs2));
+					if (op.rs2.is_reg())
+						mov(ecx, regalloc.MapRegister(op.rs2));
+					else
+						mov(ecx, op.rs2._imm);
                mul(rcx);
                mov(regalloc.MapRegister(op.rd), eax);
                shr(rax, 32);
@@ -697,7 +763,10 @@ public:
                break;
             case shop_mul_s64:
                movsxd(rax, regalloc.MapRegister(op.rs1));
-               movsxd(rcx, regalloc.MapRegister(op.rs2));
+					if (op.rs2.is_reg())
+						movsxd(rcx, regalloc.MapRegister(op.rs2));
+					else
+						mov(rcx, (s64)(s32)op.rs2._imm);
                mul(rcx);
                mov(regalloc.MapRegister(op.rd), eax);
                shr(rax, 32);
@@ -705,6 +774,33 @@ public:
                break;
 
 			case shop_pref:
+				if (op.rs1.is_imm())
+				{
+					// this test shouldn't be necessary
+					if ((op.rs1._imm & 0xFC000000) == 0xE0000000)
+					{
+						mov(call_regs[0], op.rs1._imm);
+						if (mmu_enabled())
+						{
+							mov(call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));      // pc
+
+							GenCall(do_sqw_mmu_no_ex);
+						}
+						else
+						{
+							if (CCN_MMUCR.AT == 1)
+							{
+								GenCall(do_sqw_mmu);
+							}
+							else
+							{
+								mov(call_regs64[1], (uintptr_t)sq_both);
+								GenCall(&do_sqw_nommu_local);
+							}
+						}
+					}
+				}
+				else
 				{
 					Xbyak::Reg32 rn;
 					if (regalloc.IsAllocg(op.rs1))
@@ -751,16 +847,31 @@ public:
                movsx(regalloc.MapRegister(op.rd), al);
                break;
             case shop_ext_s16:
-               movsx(regalloc.MapRegister(op.rd), Xbyak::Reg16(regalloc.MapRegister(op.rs1).getIdx()));
+            	movsx(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1).cvt16());
                break;
 
    			case shop_xtrct:
-   				if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
-   					mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
-   				shr(regalloc.MapRegister(op.rd), 16);
-   				mov(eax, regalloc.MapRegister(op.rs2));
-   				shl(eax, 16);
-   				or_(regalloc.MapRegister(op.rd), eax);
+					{
+						Xbyak::Reg32 rd = regalloc.MapRegister(op.rd);
+						Xbyak::Reg32 rs1 = regalloc.MapRegister(op.rs1);
+						Xbyak::Reg32 rs2 = regalloc.MapRegister(op.rs2);
+						if (regalloc.mapg(op.rd) == regalloc.mapg(op.rs2))
+						{
+							shl(rd, 16);
+							mov(eax, rs1);
+							shr(eax, 16);
+							or_(rd, eax);
+							break;
+						}
+						else if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
+						{
+							mov(rd, rs1);
+						}
+						shr(rd, 16);
+						mov(eax, rs2);
+						shl(eax, 16);
+						or_(rd, eax);
+					}
    				break;
 
                //
@@ -800,15 +911,38 @@ public:
                break;
 
             case shop_fmac:
-               if (regalloc.mapf(op.rd) != regalloc.mapf(op.rs1))
-               	movss(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs1));
-               if (cpu.has(Xbyak::util::Cpu::tFMA))
-               	vfmadd231ss(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs2), regalloc.MapXRegister(op.rs3));
-					else
 					{
-						movss(xmm0, regalloc.MapXRegister(op.rs2));
-						mulss(xmm0, regalloc.MapXRegister(op.rs3));
-						addss(regalloc.MapXRegister(op.rd), xmm0);
+						Xbyak::Xmm rs1 = regalloc.MapXRegister(op.rs1);
+						Xbyak::Xmm rs2 = regalloc.MapXRegister(op.rs2);
+						Xbyak::Xmm rs3 = regalloc.MapXRegister(op.rs3);
+						Xbyak::Xmm rd = regalloc.MapXRegister(op.rd);
+						if (rd == rs2)
+						{
+							movss(xmm1, rs2);
+							rs2 = xmm1;
+						}
+						if (rd == rs3)
+						{
+							movss(xmm2, rs3);
+							rs3 = xmm2;
+						}
+						if (op.rs1.is_imm())
+						{
+							mov(eax, op.rs1._imm);
+							movd(rd, eax);
+						}
+						else if (rd != rs1)
+						{
+							movss(rd, rs1);
+						}
+						if (cpu.has(Xbyak::util::Cpu::tFMA))
+							vfmadd231ss(rd, rs2, rs3);
+						else
+						{
+							movss(xmm0, rs2);
+							mulss(xmm0, rs3);
+							addss(rd, xmm0);
+						}
 					}
                break;
 
@@ -839,7 +973,7 @@ public:
                break;
 
             case shop_fsca:
-               movzx(rax, Xbyak::Reg16(regalloc.MapRegister(op.rs1).getIdx()));
+            	movzx(rax, regalloc.MapRegister(op.rs1).cvt16());
                mov(rcx, (uintptr_t)&sin_table);
 #ifdef EXPLODE_SPANS
                movss(regalloc.MapXRegister(op.rd, 0), dword[rcx + rax * 8]);
@@ -852,28 +986,28 @@ public:
                break;
 
             case shop_fipr:
-				{
-					mov(rax, (size_t)op.rs1.reg_ptr());
-					movaps(regalloc.MapXRegister(op.rd), dword[rax]);
-					mov(rax, (size_t)op.rs2.reg_ptr());
-					mulps(regalloc.MapXRegister(op.rd), dword[rax]);
-					const Xbyak::Xmm &rd = regalloc.MapXRegister(op.rd);
-					// Only first-generation 64-bit CPUs lack SSE3 support
-					if (cpu.has(Xbyak::util::Cpu::tSSE3))
 					{
-						haddps(rd, rd);
-						haddps(rd, rd);
+						mov(rax, (size_t)op.rs1.reg_ptr());
+						movaps(regalloc.MapXRegister(op.rd), dword[rax]);
+						mov(rax, (size_t)op.rs2.reg_ptr());
+						mulps(regalloc.MapXRegister(op.rd), dword[rax]);
+						const Xbyak::Xmm &rd = regalloc.MapXRegister(op.rd);
+						// Only first-generation 64-bit CPUs lack SSE3 support
+						if (cpu.has(Xbyak::util::Cpu::tSSE3))
+						{
+							haddps(rd, rd);
+							haddps(rd, rd);
+						}
+						else
+						{
+							movhlps(xmm1, rd);
+							addps(rd, xmm1);
+							movaps(xmm1, rd);
+							shufps(xmm1, xmm1,1);
+							addss(rd, xmm1);
+						}
 					}
-					else
-					{
-						movhlps(xmm1, rd);
-						addps(rd, xmm1);
-						movaps(xmm1, rd);
-						shufps(xmm1, xmm1,1);
-						addss(rd, xmm1);
-					}
-				}
-            break;
+					break;
 
             case shop_ftrv:
             	mov(rax, (uintptr_t)op.rs1.reg_ptr());
@@ -1065,14 +1199,14 @@ public:
 				GenCall(ReadMem8);
 			else
 				GenCall(ReadMemNoEx<u8>, true);
-			movsx(ecx, al);
+			movsx(eax, al);
 			break;
 		case 2:
 			if (!mmu_enabled())
 				GenCall(ReadMem16);
 			else
 				GenCall(ReadMemNoEx<u16>, true);
-			movsx(ecx, ax);
+			movsx(eax, ax);
 			break;
 
 		case 4:
@@ -1080,14 +1214,12 @@ public:
 				GenCall(ReadMem32);
 			else
 				GenCall(ReadMemNoEx<u32>, true);
-			mov(ecx, eax);
 			break;
 		case 8:
 			if (!mmu_enabled())
 				GenCall(ReadMem64);
 			else
 				GenCall(ReadMemNoEx<u64>, true);
-			mov(rcx, rax);
 			break;
 		default:
 			die("1..8 bytes");
@@ -1299,6 +1431,17 @@ private:
 			mov(rax, reinterpret_cast<uintptr_t>(ptr));
 			switch (size)
 			{
+			case 1:
+				if (regalloc.IsAllocg(op.rd))
+					movsx(regalloc.MapRegister(op.rd), byte[rax]);
+				else
+				{
+					movsx(eax, byte[rax]);
+					mov(rcx, (uintptr_t)op.rd.reg_ptr());
+					mov(dword[rcx], eax);
+				}
+				break;
+
 			case 2:
 				if (regalloc.IsAllocg(op.rd))
 					movsx(regalloc.MapRegister(op.rd), word[rax]);
@@ -1323,6 +1466,23 @@ private:
 				}
 				break;
 
+			case 8:
+				mov(rcx, qword[rax]);
+#ifdef EXPLODE_SPANS
+				if (op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1))
+				{
+					movd(regalloc.MapXRegister(op.rd, 0), ecx);
+					shr(rcx, 32);
+					movd(regalloc.MapXRegister(op.rd, 1), ecx);
+				}
+				else
+#endif
+				{
+					mov(rax, (uintptr_t)op.rd.reg_ptr());
+					mov(qword[rax], rcx);
+				}
+				break;
+
 			default:
 				die("Invalid immediate size");
 					break;
@@ -1335,21 +1495,141 @@ private:
 
 			switch(size)
 			{
+			case 1:
+				GenCall((void (*)())ptr);
+				movsx(eax, al);
+				break;
+
 			case 2:
 				GenCall((void (*)())ptr);
-				movsx(ecx, ax);
+				movsx(eax, ax);
 				break;
 
 			case 4:
 				GenCall((void (*)())ptr);
-				mov(ecx, eax);
 				break;
 
 			default:
 				die("Invalid immediate size");
 					break;
 			}
-			host_reg_to_shil_param(op.rd, ecx);
+			host_reg_to_shil_param(op.rd, eax);
+		}
+
+		return true;
+	}
+
+	bool GenWriteMemImmediate(const shil_opcode& op, RuntimeBlockInfo* block)
+	{
+		if (!op.rs1.is_imm())
+			return false;
+		u32 size = op.flags & 0x7f;
+		u32 addr = op.rs1._imm;
+		if (mmu_enabled())
+		{
+			if ((addr >> 12) != (block->vaddr >> 12))
+				// When full mmu is on, only consider addresses in the same 4k page
+				return false;
+
+			u32 paddr;
+			u32 rv;
+			switch (size)
+			{
+			case 1:
+				rv = mmu_data_translation<MMU_TT_DWRITE, u8>(addr, paddr);
+				break;
+			case 2:
+				rv = mmu_data_translation<MMU_TT_DWRITE, u16>(addr, paddr);
+				break;
+			case 4:
+			case 8:
+				rv = mmu_data_translation<MMU_TT_DWRITE, u32>(addr, paddr);
+				break;
+			}
+			if (rv != MMU_ERROR_NONE)
+				return false;
+
+			addr = paddr;
+		}
+		bool isram = false;
+		void* ptr = _vmem_write_const(addr, isram, size);
+
+		if (isram)
+		{
+			// Immediate pointer to RAM: super-duper fast access
+			mov(rax, reinterpret_cast<uintptr_t>(ptr));
+			switch (size)
+			{
+			case 1:
+				if (regalloc.IsAllocg(op.rs2))
+					mov(byte[rax], regalloc.MapRegister(op.rs2));
+				else if (op.rs2.is_imm())
+					mov(byte[rax], op.rs2._imm);
+				else
+				{
+					mov(rcx, (uintptr_t)op.rs2.reg_ptr());
+					mov(ecx, dword[rcx]);
+					mov(byte[rax], ecx);
+				}
+				break;
+
+			case 2:
+				if (regalloc.IsAllocg(op.rs2))
+					mov(word[rax], regalloc.MapRegister(op.rs2));
+				else if (op.rs2.is_imm())
+					mov(word[rax], op.rs2._imm);
+				else
+				{
+					mov(rcx, (uintptr_t)op.rs2.reg_ptr());
+					mov(ecx, dword[rcx]);
+					mov(word[rax], ecx);
+				}
+				break;
+
+			case 4:
+				if (regalloc.IsAllocg(op.rs2))
+					mov(dword[rax], regalloc.MapRegister(op.rs2));
+				else if (regalloc.IsAllocf(op.rs2))
+					movd(dword[rax], regalloc.MapXRegister(op.rs2));
+				else if (op.rs2.is_imm())
+					mov(dword[rax], op.rs2._imm);
+				else
+				{
+					mov(rcx, (uintptr_t)op.rd.reg_ptr());
+					mov(ecx, dword[rcx]);
+					mov(dword[rax], ecx);
+				}
+				break;
+
+			case 8:
+#ifdef EXPLODE_SPANS
+				if (op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1))
+				{
+					movd(call_regs[1], regalloc.MapXRegister(op.rs2, 1));
+					shl(call_regs64[1], 32);
+					movd(eax, regalloc.MapXRegister(op.rs2, 0));
+					or_(call_regs64[1], rax);
+				}
+				else
+#endif
+				{
+					mov(rcx, (uintptr_t)op.rd.reg_ptr());
+					mov(rcx, qword[rcx]);
+					mov(qword[rax], rcx);
+				}
+
+			default:
+				die("Invalid immediate size");
+				break;
+			}
+		}
+		else
+		{
+			// Not RAM: the returned pointer is a memory handler
+			mov(call_regs[0], addr);
+			shil_param_to_host_reg(op.rs2, call_regs[1]);
+
+			GenCall((void (*)())ptr);
 		}
 
 		return true;
@@ -1377,19 +1657,19 @@ private:
 		switch (size)
 		{
 		case 1:
-			movsx(ecx, byte[rax + call_regs64[0]]);
+			movsx(eax, byte[rax + call_regs64[0]]);
 			break;
 
 		case 2:
-			movsx(ecx, word[rax + call_regs64[0]]);
+			movsx(eax, word[rax + call_regs64[0]]);
 			break;
 
 		case 4:
-			mov(ecx, dword[rax + call_regs64[0]]);
+			mov(eax, dword[rax + call_regs64[0]]);
 			break;
 
 		case 8:
-			mov(rcx, qword[rax + call_regs64[0]]);
+			mov(rax, qword[rax + call_regs64[0]]);
 			break;
 
 		default:
@@ -1425,11 +1705,11 @@ private:
 		switch (size)
 		{
 		case 1:
-			mov(byte[rax + call_regs64[0] + 0], Xbyak::Reg8(call_regs[1].getIdx(), call_regs[1] == edi || call_regs[1] == esi));
+			mov(byte[rax + call_regs64[0] + 0], call_regs[1].cvt8());
 			break;
 
 		case 2:
-			mov(word[rax + call_regs64[0]], Xbyak::Reg16(call_regs[1].getIdx()));
+			mov(word[rax + call_regs64[0]], call_regs[1].cvt16());
 			break;
 
 		case 4:
@@ -1496,27 +1776,71 @@ private:
 			 jne(reinterpret_cast<const void*>(&ngen_blockcheckfail));
 		  }
 	   }
-
 	}
 
 	void GenBinaryOp(const shil_opcode &op, X64BinaryOp natop)
 	{
+		Xbyak::Reg32 rd = regalloc.MapRegister(op.rd);
+		const shil_param *rs2 = &op.rs2;
 	   if (regalloc.mapg(op.rd) != regalloc.mapg(op.rs1))
-		  mov(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs1));
+		{
+			if (op.rs2.is_reg() && regalloc.mapg(op.rd) == regalloc.mapg(op.rs2))
+			{
+				if (op.op == shop_sub)
+				{
+					// This op isn't commutative
+					mov(ecx, regalloc.MapRegister(op.rs2));
+					mov(rd, regalloc.MapRegister(op.rs1));
+					(this->*natop)(rd, ecx);
+
+					return;
+				}
+				// otherwise just swap the operands
+				rs2 = &op.rs1;
+			}
+			else
+				mov(rd, regalloc.MapRegister(op.rs1));
+		}
 	   if (op.rs2.is_imm())
 	   {
-		  mov(ecx, op.rs2._imm);
-		  (this->*natop)(regalloc.MapRegister(op.rd), ecx);
+	   	mov(ecx, op.rs2._imm);
+			(this->*natop)(rd, ecx);
 	   }
 	   else
-		  (this->*natop)(regalloc.MapRegister(op.rd), regalloc.MapRegister(op.rs2));
+			(this->*natop)(rd, regalloc.MapRegister(*rs2));
 	}
 
 	void GenBinaryFOp(const shil_opcode &op, X64BinaryFOp natop)
 	{
+		Xbyak::Xmm rd = regalloc.MapXRegister(op.rd);
+		const shil_param *rs2 = &op.rs2;
 	   if (regalloc.mapf(op.rd) != regalloc.mapf(op.rs1))
-		  movss(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs1));
-	   (this->*natop)(regalloc.MapXRegister(op.rd), regalloc.MapXRegister(op.rs2));
+		{
+			if (op.rs2.is_reg() && regalloc.mapf(op.rd) == regalloc.mapf(op.rs2))
+			{
+				if (op.op == shop_fsub || op.op == shop_fdiv)
+				{
+					// these ops aren't commutative so we need a scratch reg
+					movss(xmm0, regalloc.MapXRegister(op.rs2));
+					movss(rd, regalloc.MapXRegister(op.rs1));
+					(this->*natop)(rd, xmm0);
+
+					return;
+				}
+				// otherwise just swap the operands
+				rs2 = &op.rs1;
+			}
+			else
+				movss(rd, regalloc.MapXRegister(op.rs1));
+		}
+		if (op.rs2.is_imm())
+		{
+			mov(eax, op.rs2._imm);
+			movd(xmm0, eax);
+			(this->*natop)(rd, xmm0);
+		}
+		else
+			(this->*natop)(rd, regalloc.MapXRegister(*rs2));
 	}
 
 	template<class Ret, class... Params>
@@ -1556,7 +1880,7 @@ private:
 		}
 #endif
 
-	   call(function);
+		call(CC_RX2RW(function));
 
 #ifndef _WIN32
 		if (xmm8_mapped || xmm9_mapped || xmm10_mapped || xmm11_mapped)
@@ -1589,30 +1913,31 @@ private:
 	// uses eax/rax
 	void shil_param_to_host_reg(const shil_param& param, const Xbyak::Reg& reg)
 	{
-	   if (param.is_imm())
+		if (param.is_imm())
 	   {
-		  if (!reg.isXMM())
-			 mov(reg, param._imm);
-		  else
-		  {
-			 mov(eax, param._imm);
-			 movd((const Xbyak::Xmm &)reg, eax);
-		  }
+			if (!reg.isXMM())
+				mov(reg, param._imm);
+			else
+			{
+				mov(eax, param._imm);
+				movd((const Xbyak::Xmm &)reg, eax);
+			}
 	   }
 	   else if (param.is_reg())
 	   {
-		  if (param.is_r32f())
-		  {
-				if (regalloc.IsAllocf(param))
+	   	if (param.is_r32f())
+	   	{
+	   		if (regalloc.IsAllocf(param))
 				{
-			 if (!reg.isXMM())
-				movd((const Xbyak::Reg32 &)reg, regalloc.MapXRegister(param));
-			 else
-				movss((const Xbyak::Xmm &)reg, regalloc.MapXRegister(param));
-		  }
-		  else
-		  {
-					mov(rax, (size_t)param.reg_ptr());
+					Xbyak::Xmm sreg = regalloc.MapXRegister(param);
+					if (!reg.isXMM())
+						movd((const Xbyak::Reg32 &)reg, sreg);
+					else if (reg != sreg)
+						movss((const Xbyak::Xmm &)reg, sreg);
+				}
+	   		else
+	   		{
+	   			mov(rax, (size_t)param.reg_ptr());
 					verify(!reg.isXMM());
 					mov((const Xbyak::Reg32 &)reg, dword[rax]);
 				}
@@ -1621,11 +1946,12 @@ private:
 			{
 				if (regalloc.IsAllocg(param))
 				{
-			 if (!reg.isXMM())
-				mov((const Xbyak::Reg32 &)reg, regalloc.MapRegister(param));
-			 else
-				movd((const Xbyak::Xmm &)reg, regalloc.MapRegister(param));
-		  }
+					Xbyak::Reg32 sreg = regalloc.MapRegister(param);
+					if (reg.isXMM())
+						movd((const Xbyak::Xmm &)reg, sreg);
+					else if (reg != sreg)
+						mov((const Xbyak::Reg32 &)reg, sreg);
+				}
 				else
 				{
 					mov(rax, (size_t)param.reg_ptr());
@@ -1634,11 +1960,11 @@ private:
 					else
 						movss((const Xbyak::Xmm &)reg, dword[rax]);
 				}
-	   }
+			}
 		}
 	   else
 	   {
-		  verify(param.is_null());
+	   	verify(param.is_null());
 	   }
 	}
 
@@ -1647,17 +1973,19 @@ private:
 	{
 	   if (regalloc.IsAllocg(param))
 	   {
-		  if (!reg.isXMM())
-			 mov(regalloc.MapRegister(param), (const Xbyak::Reg32 &)reg);
-		  else
-			 movd(regalloc.MapRegister(param), (const Xbyak::Xmm &)reg);
+	   	Xbyak::Reg32 sreg = regalloc.MapRegister(param);
+	   	if (!reg.isXMM())
+				mov(sreg, (const Xbyak::Reg32 &)reg);
+			else if (reg != sreg)
+				movd(sreg, (const Xbyak::Xmm &)reg);
 	   }
 		else if (regalloc.IsAllocf(param))
 	   {
-		  if (!reg.isXMM())
-			 movd(regalloc.MapXRegister(param), (const Xbyak::Reg32 &)reg);
-		  else
-			 movss(regalloc.MapXRegister(param), (const Xbyak::Xmm &)reg);
+			Xbyak::Xmm sreg = regalloc.MapXRegister(param);
+			if (!reg.isXMM())
+				movd(sreg, (const Xbyak::Reg32 &)reg);
+			else if (reg != sreg)
+				movss(sreg, (const Xbyak::Xmm &)reg);
 	   }
 		else
 		{

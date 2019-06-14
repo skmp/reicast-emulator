@@ -98,6 +98,46 @@ void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 	return 0;
 }
 
+void* _vmem_write_const(u32 addr,bool& ismem,u32 sz)
+{
+	u32   page=addr>>24;
+	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
+	void* ptr=(void*)(iirf&~HANDLER_MAX);
+
+	if (ptr==0)
+	{
+		ismem=false;
+		const unat id=iirf;
+		if (sz==1)
+		{
+			return (void*)_vmem_WF8[id/4];
+		}
+		else if (sz==2)
+		{
+			return (void*)_vmem_WF16[id/4];
+		}
+		else if (sz==4)
+		{
+			return (void*)_vmem_WF32[id/4];
+		}
+		else
+		{
+			die("Invalid size");
+		}
+	}
+	else
+	{
+		ismem=true;
+		addr<<=iirf;
+		addr>>=iirf;
+
+		return &(((u8*)ptr)[addr]);
+	}
+	die("Invalid memory size");
+
+	return 0;
+}
+
 void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
 {
 	u32   page=addr>>24;
@@ -471,10 +511,10 @@ static void _vmem_set_p0_mappings()
 	const vmem_mapping mem_mappings[] = {
 		// P0/U0
 		{0x00000000, 0x00800000,                               0,         0, false},  // Area 0 -> unused
-		{0x00800000, 0x00800000 + ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE, true}, // Aica
-		{0x00800000 + ARAM_SIZE, 0x02800000,                   0,         0, false},  // unused
-		{0x02800000, 0x02800000 + ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE, true}, // Aica mirror
-		{0x02800000 + ARAM_SIZE, 0x04000000,                   0,         0, false},  // unused
+		{0x00800000, 0x01000000,            MAP_ARAM_START_OFFSET, ARAM_SIZE, true},  // Aica
+		{0x01000000, 0x02800000,                               0,         0, false},  // unused
+		{0x02800000, 0x03000000,            MAP_ARAM_START_OFFSET, ARAM_SIZE, true},  // Aica mirror
+		{0x03000000, 0x04000000,                               0,         0, false},  // unused
 		{0x04000000, 0x05000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // Area 1 (vram, 16MB, wrapped on DC as 2x8MB)
 		{0x05000000, 0x06000000,                               0,         0, false},  // 32 bit path (unused)
 		{0x06000000, 0x07000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // VRAM mirror
@@ -548,10 +588,10 @@ bool _vmem_reserve(void)
 			const vmem_mapping mem_mappings[] = {
 				// P1
 				{0x80000000, 0x80800000,                               0,         0, false},  // Area 0 -> unused
-				{0x80800000, 0x80800000 + ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE, true}, // Aica
-				{0x80800000 + ARAM_SIZE, 0x82800000,                   0,         0, false},  // unused
-				{0x82800000, 0x82800000 + ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE, true}, // Aica mirror
-				{0x82800000 + ARAM_SIZE, 0x84000000,                   0,         0, false},  // unused
+				{0x80800000, 0x81000000,           MAP_ARAM_START_OFFSET,  ARAM_SIZE, true},  // Aica
+				{0x81000000, 0x82800000,                               0,         0, false},  // unused
+				{0x82800000, 0x83000000,            MAP_ARAM_START_OFFSET, ARAM_SIZE, true},  // Aica mirror
+				{0x83000000, 0x84000000,                               0,         0, false},  // unused
 				{0x84000000, 0x85000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // Area 1 (vram, 16MB, wrapped on DC as 2x8MB)
 				{0x85000000, 0x86000000,                               0,         0, false},  // 32 bit path (unused)
 				{0x86000000, 0x87000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // VRAM mirror
@@ -561,10 +601,10 @@ bool _vmem_reserve(void)
 				{0x90000000, 0xA0000000,                               0,         0, false},  // Area 4-7 (unused)
 				// P2
 				{0xA0000000, 0xA0800000,                               0,         0, false},  // Area 0 -> unused
-				{0xA0800000, 0xA0800000 + ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE, true}, // Aica
-				{0xA0800000 + ARAM_SIZE, 0xA2800000,                   0,         0, false},  // unused
-				{0xA2800000, 0xA2800000 + ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE, true}, // Aica mirror
-				{0xA2800000 + ARAM_SIZE, 0xA4000000,                   0,         0, false},  // unused
+				{0xA0800000, 0xA1000000,            MAP_ARAM_START_OFFSET, ARAM_SIZE, true},  // Aica
+				{0xA1000000, 0xA2800000,                               0,         0, false},  // unused
+				{0xA2800000, 0xA3000000,            MAP_ARAM_START_OFFSET, ARAM_SIZE, true},  // Aica mirror
+				{0xA3000000, 0xA4000000,                               0,         0, false},  // unused
 				{0xA4000000, 0xA5000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // Area 1 (vram, 16MB, wrapped on DC as 2x8MB)
 				{0xA5000000, 0xA6000000,                               0,         0, false},  // 32 bit path (unused)
 				{0xA6000000, 0xA7000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // VRAM mirror
@@ -574,10 +614,10 @@ bool _vmem_reserve(void)
 				{0xB0000000, 0xC0000000,                               0,         0, false},  // Area 4-7 (unused)
 				// P3
 				{0xC0000000, 0xC0800000,                               0,         0, false},  // Area 0 -> unused
-				{0xC0800000, 0xC0800000 + ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE, true}, // Aica
-				{0xC0800000 + ARAM_SIZE, 0xC2800000,                   0,         0, false},  // unused
-				{0xC2800000, 0xC2800000 + ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE, true}, // Aica mirror
-				{0xC2800000 + ARAM_SIZE, 0xC4000000,                   0,         0, false},  // unused
+				{0xC0800000, 0xC1000000,            MAP_ARAM_START_OFFSET, ARAM_SIZE, true},  // Aica
+				{0xC1000000, 0xC2800000,                               0,         0, false},  // unused
+				{0xC2800000, 0xC3000000,            MAP_ARAM_START_OFFSET, ARAM_SIZE, true},  // Aica mirror
+				{0xC3000000, 0xC4000000,                               0,         0, false},  // unused
 				{0xC4000000, 0xC5000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // Area 1 (vram, 16MB, wrapped on DC as 2x8MB)
 				{0xC5000000, 0xC6000000,                               0,         0, false},  // 32 bit path (unused)
 				{0xC6000000, 0xC7000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // VRAM mirror
@@ -633,6 +673,7 @@ void _vmem_enable_mmu(bool enable)
 	{
 		// Restore P0/U0 mem mappings
 		vmem32_term();
-		_vmem_set_p0_mappings();
+		if (_nvmem_4gb_space())
+			_vmem_set_p0_mappings();
 	}
 }

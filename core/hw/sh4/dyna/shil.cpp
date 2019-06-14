@@ -908,9 +908,9 @@ void srt_waw(RuntimeBlockInfo* blk)
 //Seems to be working
 void AnalyseBlock(RuntimeBlockInfo* blk)
 {
-	//SSAOptimizer optim(blk);
-	//optim.Optimize();
-	//return;
+	SSAOptimizer optim(blk);
+	optim.Optimize();
+	return;
 
 	u32 st[sh4_reg_count]={0};
 	/*

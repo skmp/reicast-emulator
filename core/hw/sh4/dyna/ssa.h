@@ -48,11 +48,9 @@ public:
 		DeadRegisterPass();
 		IdentityMovePass();
 
-#if 1//DEBUG
-//		if (block->vaddr == 0x0c077af0 || block->vaddr == 0x0c081494)
-//		if (stats.prop_constants > 0 || stats.dead_code_ops > 0 || stats.constant_ops_replaced > 0
-//				|| stats.dead_registers > 0 || stats.dyn_to_stat_blocks > 0)
-		if (stats.waw_blocks > 0)
+#if DEBUG
+		if (stats.prop_constants > 0 || stats.dead_code_ops > 0 || stats.constant_ops_replaced > 0
+				|| stats.dead_registers > 0 || stats.dyn_to_stat_blocks > 0 || stats.waw_blocks > 0)
 		{
 			printf("AFTER %08x\n", block->vaddr);
 			PrintBlock();
@@ -621,7 +619,7 @@ private:
 					&& op.rs3.version[0] == next_op.rs3.version[0]
 					&& op.rs2.count() == next_op.rs2.count())
 			{
-				printf("%08x DEAD %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
+				//printf("%08x DEAD %s\n", block->vaddr + op.guest_offs, op.dissasm().c_str());
 				block->oplist.erase(block->oplist.begin() + opnum);
 				opnum--;
 				stats.dead_code_ops++;

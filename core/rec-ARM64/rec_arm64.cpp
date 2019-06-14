@@ -537,31 +537,25 @@ public:
 				break;
 
 			case shop_pref:
-				Mov(w0, regalloc.MapRegister(op.rs1));
-				if (op.flags != 0x1337)
 				{
 					Lsr(w1, regalloc.MapRegister(op.rs1), 26);
 					Cmp(w1, 0x38);
-				}
+					Label not_sqw;
+					B(&not_sqw, ne);
+					Mov(w0, regalloc.MapRegister(op.rs1));
 
-				if (CCN_MMUCR.AT)
-				{
-					Ldr(x9, reinterpret_cast<uintptr_t>(&do_sqw_mmu));
-				}
-				else
-				{
-					Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
-					Ldr(x9, MemOperand(x9));
-					Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
-				}
-				if (op.flags == 0x1337)
+					if (CCN_MMUCR.AT)
+					{
+						Ldr(x9, reinterpret_cast<uintptr_t>(&do_sqw_mmu));
+					}
+					else
+					{
+						Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
+						Ldr(x9, MemOperand(x9));
+						Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
+					}
 					Blr(x9);
-				else
-				{
-					Label no_branch;
-					B(&no_branch, ne);
-					Blr(x9);
-					Bind(&no_branch);
+					Bind(&not_sqw);
 				}
 				break;
 
@@ -1385,7 +1379,7 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 {
 	//printf("ngen_Rewrite pc %p\n", host_pc);
 	void *host_pc_rw = (void*)CC_RX2RW(host_pc);
-	RuntimeBlockInfo *block = bm_GetBlock((void*)host_pc);
+	RuntimeBlockInfo *block = bm_GetBlock2((void*)host_pc);
 	if (block == NULL)
 	{
 		printf("ngen_Rewrite: Block at %p not found\n", (void *)host_pc);
@@ -1412,6 +1406,11 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	host_pc = (unat)CC_RW2RX(code_ptr - 2);
 
 	return true;
+}
+
+void ngen_HandleException()
+{
+	// TODO longjmp(jmp_env, 1);
 }
 
 u32 DynaRBI::Relink()

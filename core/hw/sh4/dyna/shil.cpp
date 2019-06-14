@@ -512,11 +512,11 @@ void constprop(RuntimeBlockInfo* blk)
 									
 				if (op->rs2.is_imm())
 				{
-					op->rs1.type=1;
+					op->rs1.type = FMT_IMM;
 					op->rs1._imm= op->op==shop_add ? 
 						(rv[op->rs1._reg]+op->rs2._imm):
 						(rv[op->rs1._reg]-op->rs2._imm);
-					op->rs2.type=0;
+					op->rs2.type = FMT_NULL;
 #ifndef NDEBUG
 					printf("%s -> mov32!\n",op->op==shop_add?"shop_add":"shop_sub");
 #endif
@@ -527,7 +527,7 @@ void constprop(RuntimeBlockInfo* blk)
 				{
 					u32 immy=rv[op->rs1._reg];
 					op->rs1=op->rs2;
-					op->rs2.type=1;
+					op->rs2.type = FMT_IMM;
 					op->rs2._imm=immy;
 #ifndef NDEBUG
 					printf("%s -> imm prm (%08X)!\n",op->op==shop_add?"shop_add":"shop_sub",immy);
@@ -902,10 +902,15 @@ void srt_waw(RuntimeBlockInfo* blk)
 
 }
 
+#include "ssa.h"
+
 //Simplistic Write after Write without read pass to remove (a few) dead opcodes
 //Seems to be working
 void AnalyseBlock(RuntimeBlockInfo* blk)
 {
+	//SSAOptimizer optim(blk);
+	//optim.Optimize();
+	//return;
 
 	u32 st[sh4_reg_count]={0};
 	/*
@@ -1060,22 +1065,64 @@ bool UpdateSR();
 #include "shil_canonical.h"
 #endif
 
-string name_reg(u32 reg)
+string name_reg(Sh4RegType reg)
 {
 	stringstream ss;
 
 	if (reg>=reg_fr_0 && reg<=reg_xf_15)
-		ss << "f" << (reg-16);
+		ss << "f" << (reg - reg_fr_0);
 	else if (reg<=reg_r15)
 		ss << "r" << reg;
-	else if (reg == reg_sr_T)
-		ss << "sr.T";
-	else if (reg == reg_fpscr)
-		ss << "fpscr";
-	else if (reg == reg_sr_status)
-		ss << "sr";
+	else if (reg <= reg_r7_Bank)
+		ss << "r" << (reg - reg_r0_Bank) << "b";
 	else
+	{
+		switch (reg)
+		{
+		case reg_sr_T:
+		ss << "sr.T";
+			break;
+		case reg_fpscr:
+		ss << "fpscr";
+			break;
+		case reg_sr_status:
+		ss << "sr";
+			break;
+		case reg_pc_dyn:
+			ss << "pc_dyn";
+			break;
+		case reg_macl:
+			ss << "macl";
+			break;
+		case reg_mach:
+			ss << "mach";
+			break;
+		case reg_pr:
+			ss << "pr";
+			break;
+		case reg_gbr:
+			ss << "gbr";
+			break;
+		case reg_nextpc:
+			ss << "pc";
+			break;
+		case reg_fpul:
+			ss << "fpul";
+			break;
+		case reg_old_fpscr:
+			ss << "old_fpscr";
+			break;
+		case reg_old_sr_status:
+			ss << "old_sr_status";
+			break;
+		case reg_ssr:
+			ss << "ssr";
+			break;
+		default:
 		ss << "s" << reg;
+			break;
+		}
+	}
 
 	return ss.str();
 }
@@ -1095,33 +1142,22 @@ string dissasm_param(const shil_param& prm, bool comma)
 	}
 	else if (prm.is_reg())
 	{
-		if (!prm.is_r32i())
-			ss << "f" << (prm._reg-16);
-		else if (prm._reg<=reg_r15)
-			ss << "r" << prm._reg;
-		else if (prm._reg == reg_sr_T)
-			ss << "sr.T";
-		else if (prm._reg == reg_fpscr)
-			ss << "fpscr";
-		else if (prm._reg == reg_sr_status)
-			ss << "sr";
-		else
-			ss << "s" << prm._reg;
-			
+		ss << name_reg(prm._reg);
 
 		if (prm.count()>1)
 		{
 			ss << "v" << prm.count();
 		}
+		ss << "." << prm.version[0];
 	}
 
 	return ss.str();
 }
 
-string shil_opcode::dissasm()
+string shil_opcode::dissasm() const
 {
 	stringstream ss;
-	ss << shilop_str[op] << " " << dissasm_param(rd,false) << dissasm_param(rd2,true) << " <= " << dissasm_param(rs1,false) << dissasm_param(rs2,true) << dissasm_param(rs3,true);
+	ss << shilop_str[op] << " " << dissasm_param(rd,false) << dissasm_param(rd2,true) << " <- " << dissasm_param(rs1,false) << dissasm_param(rs2,true) << dissasm_param(rs3,true);
 	return ss.str();
 }
 

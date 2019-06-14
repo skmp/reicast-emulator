@@ -1,3 +1,21 @@
+/*
+	Copyright 2019 flyinghead
+
+	This file is part of reicast.
+
+    reicast is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    reicast is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with reicast.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "mmu.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_interrupts.h"
@@ -35,9 +53,9 @@ struct TLB_LinkedEntry {
 	TLB_LinkedEntry *next_entry;
 };
 #define NBUCKETS 65536
-TLB_LinkedEntry full_table[65536];
-u32 full_table_size;
-TLB_LinkedEntry *entry_buckets[NBUCKETS];
+static TLB_LinkedEntry full_table[65536];
+static u32 full_table_size;
+static TLB_LinkedEntry *entry_buckets[NBUCKETS];
 
 static u16 bucket_index(u32 address, int size)
 {

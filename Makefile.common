@@ -305,7 +305,8 @@ SOURCES_CXX += $(CORE_DIR)/core/rec.cpp
 SOURCES_CXX += $(CORE_DIR)/core/hw/sh4/dyna/decoder.cpp \
 					$(CORE_DIR)/core/hw/sh4/dyna/driver.cpp \
 					$(CORE_DIR)/core/hw/sh4/dyna/blockmanager.cpp \
-					$(CORE_DIR)/core/hw/sh4/dyna/shil.cpp 
+					$(CORE_DIR)/core/hw/sh4/dyna/shil.cpp \
+					$(CORE_DIR)/core/hw/sh4/dyna/ssa.cpp 
 
 endif
 

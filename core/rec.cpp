@@ -3,11 +3,14 @@
 
 int cycle_counter;
 
+static void ngen_ResetBlocksNop() { }
+
 void (*ngen_Compile)(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise);
 void (*ngen_CC_Start)(shil_opcode* op);
 void (*ngen_CC_Call)(shil_opcode*op, void* function);
 void (*ngen_CC_Param)(shil_opcode* op, shil_param* par, CanonicalParamType tp);
 void (*ngen_CC_Finish)(shil_opcode* op);
+void (*ngen_ResetBlocks)() = &ngen_ResetBlocksNop;
 
 void ngen_init(void)
 {
@@ -53,6 +56,7 @@ void ngen_init(void)
          extern void ngen_CC_Call_arm64(shil_opcode* op,void* function);
          extern void ngen_CC_Param_arm64(shil_opcode* op,shil_param* par,CanonicalParamType tp);
          extern void ngen_CC_Finish_arm64(shil_opcode* op);
+         extern void ngen_ResetBlocks_arm64();
 
          ngen_init_arm64();
          ngen_Compile = ngen_Compile_arm64;
@@ -60,6 +64,7 @@ void ngen_init(void)
          ngen_CC_Call = ngen_CC_Call_arm64;
          ngen_CC_Param = ngen_CC_Param_arm64;
          ngen_CC_Finish = ngen_CC_Finish_arm64;
+         ngen_ResetBlocks = ngen_ResetBlocks_arm64;
 
          break;
 #elif FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64
@@ -89,12 +94,14 @@ void ngen_init(void)
     	 extern void ngen_CC_Call_cpp(shil_opcode*op, void* function);
     	 extern void ngen_CC_Param_cpp(shil_opcode* op,shil_param* par,CanonicalParamType tp);
     	 extern void ngen_CC_Finish_cpp(shil_opcode* op);
+    	 extern void ngen_ResetBlocks_cpp();
 
          ngen_Compile = ngen_Compile_cpp;
          ngen_CC_Start = ngen_CC_Start_cpp;
          ngen_CC_Call = ngen_CC_Call_cpp;
          ngen_CC_Param = ngen_CC_Param_cpp;
          ngen_CC_Finish = ngen_CC_Finish_cpp;
+         ngen_ResetBlocks = ngen_ResetBlocks_cpp;
 #endif
          break;
    }
@@ -104,14 +111,4 @@ void ngen_GetFeatures(ngen_features* dst)
 {
 	dst->InterpreterFallback = false;
 	dst->OnlyDynamicEnds = false;
-}
-
-int idxnxx = 0;
-
-void ngen_ResetBlocks(void)
-{
-#ifndef NDEBUG
-   printf("@@\tngen_ResetBlocks()\n");
-#endif
-	idxnxx = 0;
 }

@@ -675,7 +675,7 @@ extern u32 NAOMI_COMM_DATA;
 
 //./core/rec.o
 extern int cycle_counter;
-extern int idxnxx;
+//extern int idxnxx;
 
 
 
@@ -1191,7 +1191,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(NaomiDataRead);
 
 	LIBRETRO_S(cycle_counter);
-	LIBRETRO_S(idxnxx);
+	LIBRETRO_S(i);	// idxnxx
 
 #if FEAT_SHREC != DYNAREC_NONE
 	LIBRETRO_S(state);
@@ -1672,7 +1672,7 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	}
 
 	LIBRETRO_US(cycle_counter);
-	LIBRETRO_US(idxnxx);
+	LIBRETRO_US(dummy_int);	// idxnxx
 
 #if FEAT_SHREC != DYNAREC_NONE
 	LIBRETRO_US(state);

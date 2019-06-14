@@ -96,7 +96,7 @@ void ngen_init();
 extern void (*ngen_Compile)(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise);
 
 //Called when blocks are reseted
-void ngen_ResetBlocks();
+extern void (*ngen_ResetBlocks)();
 //Value to be returned when the block manager failed to find a block,
 //should call rdv_FailedToFindBlock and then jump to the return value
 extern void (*ngen_FailedToFindBlock)();

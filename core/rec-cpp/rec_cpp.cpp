@@ -26,6 +26,12 @@ void ngen_blockcheckfail_CC(u32 pc) {
 	printf("REC CPP: SMC invalidation at %08X\n", pc);
 	rdv_BlockCheckFail(pc);
 }
+int idxnxx = 0;
+
+void ngen_ResetBlocks_cpp(void)
+{
+	idxnxx = 0;
+}
 
 class opcodeExec {
 	public:

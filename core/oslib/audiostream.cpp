@@ -56,7 +56,7 @@ private:
 		return RingBufferSampleCount - asRingUsedCount();
 	}
 
-	SoundFrame Status[4] = { 0 };
+	SoundFrame Status[4] = { { 0 } };
 	float current_partial_pos = 0;
 public:
 	u32 ReadAudioResampling(void* buffer, u32 buffer_size, u32 amt, u32 target_rate)

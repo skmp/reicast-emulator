@@ -191,8 +191,7 @@ GLuint gl_CompileShader(const char* shader, GLuint type);
 GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader);
 bool CompilePipelineShader(PipelineShader* s);
 #define TEXTURE_LOAD_ERROR 0
-u8* loadPNGData(const string& subpath, int &width, int &height);
-GLuint loadPNG(const string& subpath, int &width, int &height);
+GLuint loadTextureFromFile(const string& subpath, int &width, int &height);
 
 extern struct ShaderUniforms_t
 {

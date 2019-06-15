@@ -441,4 +441,6 @@
 #if defined(GLES) && !defined(GLES3)
 // Only use GL ES 2.0 API functions
 #define GLES2
+// but define this unneeded function, called from the same compilation unit as some GLES2 functions
+#define glBlitFramebuffer __rglgen_glBlitFramebuffer
 #endif

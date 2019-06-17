@@ -101,6 +101,8 @@ RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code);
 RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr);
 
 void bm_AddBlock(RuntimeBlockInfo* blk);
+void bm_DiscardBlock(RuntimeBlockInfo* blk);
+
 void bm_Reset();
 void bm_Periodical_1s();
 void bm_Periodical_14k();

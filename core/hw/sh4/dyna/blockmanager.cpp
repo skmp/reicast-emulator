@@ -104,13 +104,33 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 	auto iter = blkmap.find((void*)blk->code);
 	if (iter != blkmap.end()) {
 		printf("DUP: %08X %p %08X %p\n", iter->second->addr, iter->second->code, blk->addr, blk->code);
-		verify(false);
+		die("bm_AddBlock: dupplicate");
 	}
 	blkmap[(void*)blk->code] = blk;
 	all_blocks.insert(blk);
 
 	verify((void*)bm_GetCode(blk->addr)==(void*)ngen_FailedToFindBlock);
 	FPCA(blk->addr) = (DynarecCodeEntryPtr)CC_RW2RX(blk->code);
+}
+
+void bm_DiscardBlock(RuntimeBlockInfo* blk)
+{
+	auto iter = blkmap.find((void*)blk->code);
+	if (iter == blkmap.end()) {
+		printf("Missing: %p\n", blk->code);
+		die("bm_DiscardBlock: missing");
+	}
+
+	blkmap.erase((void*)blk->code);
+	all_blocks.erase(blk);
+	
+	blk->Discard();
+
+	del_blocks.insert(blk);
+
+	verify((void*)bm_GetCode(blk->addr)==(void*)blk->code);
+	FPCA(blk->addr) = (DynarecCodeEntryPtr)&ngen_FailedToFindBlock;
+	verify((void*)bm_GetCode(blk->addr)==(void*)ngen_FailedToFindBlock);
 }
 
 void bm_Periodical_1s()
@@ -161,7 +181,6 @@ RuntimeBlockInfo::~RuntimeBlockInfo()
 {
 
 }
-#include <algorithm>
 
 void RuntimeBlockInfo::AddRef(RuntimeBlockInfo* other) 
 { 
@@ -171,6 +190,11 @@ void RuntimeBlockInfo::AddRef(RuntimeBlockInfo* other)
 void RuntimeBlockInfo::RemRef(RuntimeBlockInfo* other) 
 { 
 	pre_refs.erase(find(pre_refs.begin(),pre_refs.end(),other)); 
+}
+
+void RuntimeBlockInfo::Discard()
+{
+	die("Discard not implemented");
 }
 
 bool print_stats;

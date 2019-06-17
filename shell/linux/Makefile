@@ -155,6 +155,22 @@ else ifneq (,$(findstring armv7h,$(platform)))
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
     USE_GLES := 1
 
+# sun8i Allwinner H2+ / H3 
+# like Orange PI, Nano PI, Banana PI, Tritium
+else ifneq (,$(findstring sun8i,$(platform)))
+    MFLAGS += -marm -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+    ASFLAGS += -marm -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -funsafe-math-optimizations
+    CC = gcc -std=gnu99
+    CXX = g++ -std=gnu++11
+    ifneq (,$(findstring sdl,$(platform)))
+    	CFLAGS += -D GL_GLEXT_PROTOTYPES
+        USE_SDL := 1
+        USE_GLES := 1
+    else
+        USE_GLES := 1
+    endif
+
 # LinCPP
 else ifneq (,$(findstring lincpp,$(platform)))
     CPP_REC := 1

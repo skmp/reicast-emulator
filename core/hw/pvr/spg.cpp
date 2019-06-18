@@ -180,19 +180,15 @@ int spg_line_sched(int tag, int cycl, int jit)
 
 				full_rps=(spd_fps+fskip/ts);
 
-				#ifdef TARGET_PANDORA
-				printf("CPU: %4.2f V: %4.2f (%s%s%4.2f) R: %4.2f+%4.2f\n",
-					spd_cpu*100/200,spd_vbs,
-					mode,res,fullvbs,
-					spd_fps,fskip/ts);
-				#else
-				printf("%s/%c - %4.2f - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f\n",
+				char temp[2048];
+				snprintf(temp, 2048, "%s/%c - %4.2f - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f",
 					VER_SHORTNAME,'n',mspdf,spd_cpu*100/200,spd_vbs,
 					spd_vbs/full_rps,mode,res,fullvbs,
 					spd_fps,fskip/ts
 					, mv, mv_c, mips_counter/ 1024.0 / 1024.0);
 					mips_counter = 0;
-				#endif
+
+				os_SetWindowText(temp);
 				
 				fskip=0;
 				last_fps=os_GetSeconds();

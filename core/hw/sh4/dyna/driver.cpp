@@ -122,7 +122,11 @@ u32 emit_FreeSpace()
 
 SmcCheckEnum DoCheck(u32 pc)
 {
+	// no need for checks if fault based discard is used for this block
+	if (!bm_RamPageHasData(pc))
+		return NoCheck;
 
+	// if no fault based discards, use whatever options
 	switch (settings.dynarec.SmcCheckLevel) {
 
 		// Heuristic-elimintaed FastChecks

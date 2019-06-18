@@ -22,6 +22,7 @@
 //#include "../tmu.h"
 #include "hw/sh4/sh4_mem.h"
 
+#define printf_bm printf
 
 #if FEAT_SHREC != DYNAREC_NONE
 
@@ -301,7 +302,7 @@ bool bm_LockedWrite(u8* addy)
 {
 	ptrdiff_t offset=addy-virt_ram_base;
 
-	printf("BM_LW: Pagefault @ %p %08X\n", addy, offset);
+	printf_bm("BM_LW: Pagefault @ %p %08X\n", addy, offset);
 
 
 	if (offset > 0 && offset <= 0xFFFFFFFF && IsOnRam((u32)offset))
@@ -310,7 +311,7 @@ bool bm_LockedWrite(u8* addy)
 		u32 ram_page = ram_offset / PAGE_SIZE;
 		u32 ram_obase = ram_page * PAGE_SIZE; 
 
-		printf("BM_LW: Pagefault @ %p %08X %08X\n", addy, ram_offset, ram_page);
+		printf_bm("BM_LW: Pagefault @ %p %08X %08X\n", addy, ram_offset, ram_page);
 
 
 		for (auto it=page_blocks[ram_page].begin(); it != page_blocks[ram_page].end(); it++)

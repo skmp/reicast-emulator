@@ -106,3 +106,4 @@ static inline bool _nvmem_enabled() {
 }
 
 void _vmem_bm_reset();
+bool _vmem_bm_LockedWrite(u8* address);

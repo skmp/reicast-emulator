@@ -131,3 +131,6 @@ RuntimeBlockInfo* ngen_AllocateBlock();
 #ifdef __cplusplus
 }
 #endif
+
+bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
+u32* ngen_readm_fail_v2(u32* ptr,u32* regs,u32 saddr);

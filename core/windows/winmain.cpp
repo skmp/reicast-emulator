@@ -17,6 +17,10 @@
 
 #include <process.h>
 
+#include "hw/sh4/dyna/ngen.h"
+#include "hw/mem/_vmem.h"
+#include "rend/TexCache.h"
+
 PCHAR*
 	CommandLineToArgvA(
 	PCHAR CmdLine,
@@ -113,9 +117,6 @@ PCHAR*
 
 void dc_exit(void);
 
-bool VramLockedWrite(u8* address);
-bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
-bool BM_LockedWrite(u8* address);
 
 static std::shared_ptr<WinKbGamepadDevice> kb_gamepad;
 static std::shared_ptr<WinMouseGamepadDevice> mouse_gamepad;
@@ -151,7 +152,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
-	else if (BM_LockedWrite(address))
+	else if (_vmem_bm_LockedWrite(address))
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}

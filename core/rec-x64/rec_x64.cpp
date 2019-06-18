@@ -82,6 +82,12 @@ static void ngen_blockcheckfail(u32 pc) {
 	rdv_BlockCheckFail(pc);
 }
 
+static void ngen_blockcheckfail2(u32 pc) {
+	printf("****** ERROR********* X64 JIT: SMC invalidation at %08X\n", pc);
+	rdv_BlockCheckFail(pc);
+	die("ngen_blockcheckfail2")
+}
+
 class BlockCompiler : public Xbyak::CodeGenerator
 {
 public:
@@ -1163,6 +1169,7 @@ private:
 	void CheckBlock(SmcCheckEnum smc_checks, RuntimeBlockInfo* block) {
 
 		switch (smc_checks) {
+			case FaultCheck:
 			case NoCheck:
 				return;
 
@@ -1179,6 +1186,7 @@ private:
 		 	}
 		 	break;
 
+		 	case ValidationCheck:
 		 	case FullCheck: {
 		 		s32 sz=block->sh4_code_size;
 				u32 sa=block->addr;
@@ -1210,7 +1218,12 @@ private:
 							sz -= 2;
 							sa += 2;
 						}
-						jne(reinterpret_cast<const void*>(CC_RX2RW(&ngen_blockcheckfail)));
+						
+						if (smc_checks == FullCheck)
+							jne(reinterpret_cast<const void*>(CC_RX2RW(&ngen_blockcheckfail)));
+						else
+							jne(reinterpret_cast<const void*>(CC_RX2RW(&ngen_blockcheckfail2)));
+
 						ptr = (void*)GetMemPtr(sa, sz > 8 ? 8 : sz);
 					}
 		 		}

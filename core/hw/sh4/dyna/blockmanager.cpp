@@ -116,12 +116,11 @@ void bm_AddBlock(RuntimeBlockInfo* blk, bool lockRam)
 	verify((void*)bm_GetCode(blk->addr)==(void*)ngen_FailedToFindBlock);
 	FPCA(blk->addr) = (DynarecCodeEntryPtr)CC_RW2RX(blk->code);
 
-	u32 code_ram_page = (blk->addr&RAM_MASK)/PAGE_SIZE;
-	u32 code_ram_offs = blk->addr&PAGE_MASK;
+	u32 code_ram_page_base = (blk->addr&RAM_MASK)/PAGE_SIZE;
+	u32 code_ram_page_top = ((blk->addr+blk->sh4_code_size-1)&RAM_MASK)/PAGE_SIZE;
 
-	for (u32 offset = code_ram_offs; offset <= (code_ram_offs + blk->sh4_code_size); offset=(offset & ~(PAGE_MASK)) + PAGE_SIZE)
+	for (u32 ram_page=code_ram_page_base; ram_page<=code_ram_page_top; ram_page++)
 	{
-		u32 ram_page = code_ram_page + (offset/PAGE_SIZE);
 		page_blocks[ram_page].insert(blk);
 
 		if (lockRam)
@@ -150,12 +149,11 @@ void bm_DiscardBlock(RuntimeBlockInfo* blk)
 	FPCA(blk->addr) = (DynarecCodeEntryPtr)ngen_FailedToFindBlock;
 	verify((void*)bm_GetCode(blk->addr)==(void*)ngen_FailedToFindBlock);
 
-	u32 code_ram_page = (blk->addr&RAM_MASK)/PAGE_SIZE;
-	u32 code_ram_offs = blk->addr&PAGE_MASK;
+	u32 code_ram_page_base = (blk->addr&RAM_MASK)/PAGE_SIZE;
+	u32 code_ram_page_top = ((blk->addr+blk->sh4_code_size-1)&RAM_MASK)/PAGE_SIZE;
 
-	for (u32 offset = code_ram_offs; offset <= (code_ram_offs + blk->sh4_code_size); offset=(offset & ~(PAGE_MASK)) + PAGE_SIZE)
+	for (u32 ram_page=code_ram_page_base; ram_page<=code_ram_page_top; ram_page++)
 	{
-		u32 ram_page = code_ram_page + (offset/PAGE_SIZE);
 		page_blocks[ram_page].erase(blk);
 	}
 }
@@ -198,6 +196,11 @@ void bm_Reset()
 
 	for (auto i=0; i<RAM_SIZE/PAGE_SIZE; i++)
 	{
+		if (i * PAGE_SIZE < 65536)
+		{
+			page_has_data[i] = true;
+		}
+
 		page_blocks[i].clear();
 	}
 
@@ -262,6 +265,11 @@ void RuntimeBlockInfo::Discard()
 
 		(*it)->Relink();
 	}
+
+	pBranchBlock = nullptr;
+	pNextBlock = nullptr;
+
+	Relink();
 	//die("Discard not implemented");
 }
 
@@ -302,7 +310,7 @@ bool bm_LockedWrite(u8* addy)
 {
 	ptrdiff_t offset=addy-virt_ram_base;
 
-	printf_bm("BM_LW: Checking @ %p %08X\n", addy, offset);
+	//printf_bm("BM_LW: Checking @ %p %08X\n", addy, offset);
 
 
 	if (offset > 0 && offset <= 0xFFFFFFFF && IsOnRam((u32)offset))
@@ -313,14 +321,14 @@ bool bm_LockedWrite(u8* addy)
 
 		printf_bm("BM_LW: Pagefault @ %p %08X %08X\n", addy, ram_offset, ram_page);
 
+		page_has_data[ram_page] = true;
 
 		for (auto it=page_blocks[ram_page].begin(); it != page_blocks[ram_page].end(); it++)
 		{
-			(*it)->Discard();
+			bm_DiscardBlock(*it);
 		}
 
-		page_has_data[ram_page] = true;
-		page_blocks[ram_page].clear();
+
 		mem_b.UnLockRegion(ram_obase, PAGE_SIZE);
 
 		return true;
@@ -329,10 +337,19 @@ bool bm_LockedWrite(u8* addy)
 		return false;
 }
 
-bool bm_RamPageHasData(u32 guest_addr)
+bool bm_RamPageHasData(u32 guest_addr, u32 len)
 {
-	auto page = (guest_addr & RAM_MASK)/PAGE_SIZE;
-	return page_has_data[page];
+	auto page_base = (guest_addr & RAM_MASK)/PAGE_SIZE;
+	auto page_top = ((guest_addr + len - 1) & RAM_MASK)/PAGE_SIZE;
+
+	bool rv = false;
+	
+	for (auto i = page_base; i <= page_top; i++)
+	{
+		rv |= page_has_data[i];
+	}
+
+	return rv;
 }
 
 #endif

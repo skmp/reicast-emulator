@@ -178,7 +178,7 @@ static u32 alsa_push(void* frame, u32 samples, bool wait)
 	}
 	else if (rc < 0)
 	{
-		fprintf(stderr, "ALSA: error from writei: %s\n", snd_strerror(rc));
+		//fprintf(stderr, "ALSA: error from writei: %s\n", snd_strerror(rc));
 	}
 	else if (rc != samples)
 	{

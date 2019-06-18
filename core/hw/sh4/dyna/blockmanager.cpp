@@ -133,6 +133,17 @@ void bm_DiscardBlock(RuntimeBlockInfo* blk)
 	verify((void*)bm_GetCode(blk->addr)==(void*)ngen_FailedToFindBlock);
 }
 
+void bm_DiscardAddress(u32 codeaddr)
+{
+	for (auto it=all_blocks.begin(); it!=all_blocks.end(); it++)
+	{
+		if ( ((*it)->addr <= codeaddr) && ((*it)->addr + (*it)->sh4_code_size) > codeaddr )
+		{
+			bm_DiscardBlock(*it);
+		}
+	}
+}
+
 void bm_Periodical_1s()
 {
 	bm_CleanupDeletedBlocks();

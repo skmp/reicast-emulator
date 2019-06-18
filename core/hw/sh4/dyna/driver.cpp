@@ -234,9 +234,10 @@ DynarecCodeEntryPtr rdv_CompilePC()
 {
 	u32 pc=next_pc;
 
+/*
 	if (emit_FreeSpace()<16*1024 || pc==0x8c0000e0 || pc==0xac010000 || pc==0xac008300)
 		recSh4_ClearCache();
-
+*/
 	RuntimeBlockInfo* rv=0;
 	do
 	{
@@ -305,7 +306,11 @@ u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc)
 {
 	next_pc=pc;
-	recSh4_ClearCache();
+	auto block = bm_GetBlock(pc);
+
+	printf("Discard: %08X, %p\n", pc, block);
+
+	bm_DiscardBlock(block);
 	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC());
 }
 

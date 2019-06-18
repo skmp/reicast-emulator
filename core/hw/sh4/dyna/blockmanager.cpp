@@ -302,7 +302,7 @@ bool bm_LockedWrite(u8* addy)
 {
 	ptrdiff_t offset=addy-virt_ram_base;
 
-	printf_bm("BM_LW: Pagefault @ %p %08X\n", addy, offset);
+	printf_bm("BM_LW: Checking @ %p %08X\n", addy, offset);
 
 
 	if (offset > 0 && offset <= 0xFFFFFFFF && IsOnRam((u32)offset))

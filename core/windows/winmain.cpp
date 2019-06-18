@@ -1,7 +1,9 @@
+#define NOMINMAX 1
 
-#define _WIN32_WINNT 0x0502
 #include <windows.h>
 #include <windowsx.h>
+
+#include "rend/TexCache.h"
 
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
@@ -11,15 +13,17 @@
 #include "xinput_gamepad.h"
 #include "win_keyboard.h"
 
-#include <xinput.h>
 #include "hw/maple/maple_cfg.h"
-#pragma comment(lib, "XInput9_1_0.lib")
 
 #include <process.h>
 
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/mem/_vmem.h"
-#include "rend/TexCache.h"
+
+
+#include <xinput.h>
+#pragma comment(lib, "XInput9_1_0.lib")
+
 
 PCHAR*
 	CommandLineToArgvA(

@@ -129,7 +129,7 @@ void bm_DiscardBlock(RuntimeBlockInfo* blk)
 	del_blocks.insert(blk);
 
 	verify((void*)bm_GetCode(blk->addr)==(void*)blk->code);
-	FPCA(blk->addr) = (DynarecCodeEntryPtr)&ngen_FailedToFindBlock;
+	FPCA(blk->addr) = (DynarecCodeEntryPtr)ngen_FailedToFindBlock;
 	verify((void*)bm_GetCode(blk->addr)==(void*)ngen_FailedToFindBlock);
 }
 
@@ -205,7 +205,23 @@ void RuntimeBlockInfo::RemRef(RuntimeBlockInfo* other)
 
 void RuntimeBlockInfo::Discard()
 {
-	die("Discard not implemented");
+	for (auto it = pre_refs.begin(); it != pre_refs.end(); it++)
+	{
+		if ((*it)->pBranchBlock == this)
+		{
+			(*it)->pBranchBlock = nullptr;
+		}
+
+		if ((*it)->pNextBlock == this)
+		{
+			(*it)->pNextBlock = nullptr;
+		}
+
+		(*it)->RemRef(this);
+
+		(*it)->Relink();
+	}
+	//die("Discard not implemented");
 }
 
 bool print_stats;

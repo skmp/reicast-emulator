@@ -3,7 +3,7 @@
 #include "rend/TexCache.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
-#include "deps/stb/image_functions.h"
+#include "deps/libpng/png.h"
 #include "deps/xxhash/xxhash.h"
 #include "CustomTexture.h"
 
@@ -78,12 +78,42 @@ CustomTexture custom_texture;
 static void dumpRtTexture(u32 name, u32 w, u32 h) {
 	char sname[256];
 	sprintf(sname, "texdump/%x-%d.png", name, FrameCount);
+	FILE *fp = fopen(sname, "wb");
+    if (fp == NULL)
+    	return;
 
-	void *pixels = malloc(w * h * 4);	// 32-bit per pixel
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-	writePngImageRGBA(sname, w, h, pixels);
-	free(pixels);
+
+	png_bytepp rows = (png_bytepp)malloc(h * sizeof(png_bytep));
+	for (int y = 0; y < h; y++) {
+		rows[y] = (png_bytep)malloc(w * 4);	// 32-bit per pixel
+		glReadPixels(0, y, w, 1, GL_RGBA, GL_UNSIGNED_BYTE, rows[y]);
+	}
+
+    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    png_infop info_ptr = png_create_info_struct(png_ptr);
+
+    png_init_io(png_ptr, fp);
+
+
+    /* write header */
+    png_set_IHDR(png_ptr, info_ptr, w, h,
+                         8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
+                         PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+    png_write_info(png_ptr, info_ptr);
+
+
+            /* write bytes */
+    png_write_image(png_ptr, rows);
+
+    /* end write */
+    png_write_end(png_ptr, NULL);
+    fclose(fp);
+
+	for (int y = 0; y < h; y++)
+		free(rows[y]);
+	free(rows);
 }
 
 //Texture Cache :)

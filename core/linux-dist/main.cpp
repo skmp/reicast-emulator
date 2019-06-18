@@ -145,9 +145,10 @@ void os_SetWindowText(const char * text)
 {
 	#if defined(SUPPORT_X11)
 		x11_window_set_text(text);
-	#endif
-	#if defined(USE_SDL)
+	#elif defined(USE_SDL)
 		sdl_window_set_text(text);
+	#else
+		printf("Status: %s\n", text);
 	#endif
 }
 

@@ -252,7 +252,9 @@ DynarecCodeEntryPtr rdv_CompilePC()
 		ngen_Compile(rbi,DoCheck(rbi->addr),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
 		verify(rbi->code!=0);
 
-		bm_AddBlock(rbi);
+		bool doLock = !bm_RamPageHasData(rbi->addr); // && maybe some setting?
+
+		bm_AddBlock(rbi, doLock);
 
 		if (rbi->BlockType==BET_Cond_0 || rbi->BlockType==BET_Cond_1)
 			pc=rbi->NextBlock;

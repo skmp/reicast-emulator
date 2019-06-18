@@ -10,7 +10,7 @@ VERSION_HEADER := $(RZDCY_SRC_DIR)/version.h
 RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
  hw/extdev/ hw/arm/ hw/naomi/ imgread/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
- deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/stb/ deps/xbrz/ \
+ deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/ deps/xbrz/ \
  deps/xxhash/ deps/libzip/ deps/imgui/ archive/ input/
 
 ifdef WEBUI

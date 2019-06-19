@@ -1,7 +1,9 @@
+#define NOMINMAX 1
 
-#define _WIN32_WINNT 0x0502
 #include <windows.h>
 #include <windowsx.h>
+
+#include "rend/TexCache.h"
 
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
@@ -11,11 +13,17 @@
 #include "xinput_gamepad.h"
 #include "win_keyboard.h"
 
-#include <xinput.h>
 #include "hw/maple/maple_cfg.h"
-#pragma comment(lib, "XInput9_1_0.lib")
 
 #include <process.h>
+
+#include "hw/sh4/dyna/ngen.h"
+#include "hw/mem/_vmem.h"
+
+
+#include <xinput.h>
+#pragma comment(lib, "XInput9_1_0.lib")
+
 
 PCHAR*
 	CommandLineToArgvA(
@@ -113,9 +121,6 @@ PCHAR*
 
 void dc_exit(void);
 
-bool VramLockedWrite(u8* address);
-bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
-bool BM_LockedWrite(u8* address);
 
 static std::shared_ptr<WinKbGamepadDevice> kb_gamepad;
 static std::shared_ptr<WinMouseGamepadDevice> mouse_gamepad;
@@ -151,7 +156,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
-	else if (BM_LockedWrite(address))
+	else if (_vmem_bm_LockedWrite(address))
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}

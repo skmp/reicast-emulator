@@ -228,8 +228,6 @@ static int str_ends_with(const char * str, const char * suffix)
 	return 0 == strncmp(str + str_len - suffix_len, suffix, suffix_len);
 }
 
-void sh4_jitsym(FILE* out);
-
 static void* profiler_main(void *ptr)
 {
 	FILE* prof_out;
@@ -282,7 +280,7 @@ static void* profiler_main(void *ptr)
 		prof_head(prof_out, "jitsym", "SH4");
 		
 		#if FEAT_SHREC != DYNAREC_NONE
-		sh4_jitsym(prof_out);
+		bm_sh4_jitsym(prof_out);
 		#endif
 
 		//Write arm7rec syms file ! -> to do

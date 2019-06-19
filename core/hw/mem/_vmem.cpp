@@ -419,7 +419,7 @@ void _vmem_bm_reset() {
 // This gets called whenever there is a pagefault, it is possible that it lands
 // on the fpcb memory range, which is allocated on miss. Returning true tells the
 // fault handler this was us, and that the page is resolved and can continue the execution.
-bool BM_LockedWrite(u8* address) {
+bool _vmem_bm_LockedWrite(u8* address) {
 	if (!virt_ram_base)
 		return false;  // No vmem, therefore not us who caused this.
 

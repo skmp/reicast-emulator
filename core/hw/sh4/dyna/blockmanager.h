@@ -101,6 +101,8 @@ RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code);
 RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr);
 
 void bm_AddBlock(RuntimeBlockInfo* blk);
+void bm_DiscardBlock(RuntimeBlockInfo* blk);
+
 void bm_Reset();
 void bm_Periodical_1s();
 void bm_Periodical_14k();
@@ -110,3 +112,5 @@ void bm_Init();
 void bm_Term();
 
 void bm_vmem_pagefill(void** ptr,u32 PAGE_SZ);
+
+void bm_sh4_jitsym(FILE* out);

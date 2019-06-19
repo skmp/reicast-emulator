@@ -29,12 +29,10 @@
 #include "linux/context.h"
 
 #include "hw/sh4/dyna/ngen.h"
+#include "hw/mem/_vmem.h"
+#include "rend/TexCache.h"
 
 #if !defined(TARGET_NO_EXCEPTIONS)
-bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
-u32* ngen_readm_fail_v2(u32* ptr,u32* regs,u32 saddr);
-bool VramLockedWrite(u8* address);
-bool BM_LockedWrite(u8* address);
 
 #if HOST_OS == OS_DARWIN
 void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
@@ -61,7 +59,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 
 	bool dyna_cde = ((unat)CC_RX2RW(ctx.pc) > (unat)CodeCache) && ((unat)CC_RX2RW(ctx.pc) < (unat)(CodeCache + CODE_SIZE));
 
-	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
+	if (VramLockedWrite((u8*)si->si_addr) || _vmem_bm_LockedWrite((u8*)si->si_addr))
 		return;
 	#if FEAT_SHREC == DYNAREC_JIT
 		#if HOST_CPU==CPU_ARM

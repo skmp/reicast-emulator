@@ -559,6 +559,8 @@ struct ChannelEx
 	// implement KRS.RE * OCT.FNS
 	u32 AEG_EffRate2(u32 re)
 	{
+		if (re == 0)
+			return 0;
 
 		// OCT/KRS is 0 .. 7, -16..-8
 		// -> 8..15, 0..7

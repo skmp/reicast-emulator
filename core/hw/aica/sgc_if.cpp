@@ -559,34 +559,13 @@ struct ChannelEx
 	// implement KRS.RE * OCT.FNS
 	u32 AEG_EffRate2(u32 re)
 	{
-		if (re == 0)
-			return 0;
 
-		// OCT/KRS is 0 .. 7, -16..-8
-		// -> 8..15, 0..7
+		// KRS == 0xF == off -> only 15 bits of update rate
+		u32 aeg_rate = (update_rate/2 >> ccd->KRS);
 
-		u32 oct = ccd->OCT ^ 8;
-		u32 krs = ccd->KRS ^ 8;
+		aeg_rate += re<<5;
 
-		// re is 5 bits
-		// KRS == 15 is always 0
-		// ( Z.1RRR RR00 << krs )>> 6
-
-		u32 KRS_rate = (((1<<6) + re) << krs) >> 6;
-		
-
-		// ( Z.1FF FFFF FFFF << OCT ) >> 11
-
-
-		u32 OCT_rate = (((1 << 10) + ccd->FNS) << oct) >> 11;
-		
-		// KRS_rate max: 6 + 15 - 6 = 15 bits
-		// OCT_rate max: 11 + 15 - 11 = 15 bits
-		// safe for u32 math
-
-		u32 rate_raw = (KRS_rate * OCT_rate);
-
-		return rate_raw / 16384.0f * (1 << AEG_STEP_BITS);
+		return aeg_rate * 32;
 	}
 
 	//D2R,D1R,AR,DL,RR,KRS, [OCT,FNS] for now

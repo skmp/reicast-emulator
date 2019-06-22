@@ -555,14 +555,61 @@ struct ChannelEx
 			rv=0x3f;
 		return rv;
 	}
+
+	// implement KRS.RE * OCT.FNS
+	u32 AEG_EffRate2(u32 re)
+	{
+
+		// OCT/KRS is 0 .. 7, -16..-8
+		// -> 8..15, 0..7
+
+		u32 oct = ccd->OCT ^ 8;
+		u32 krs = ccd->KRS ^ 8;
+
+		// re is 5 bits
+		// KRS == 15 is always 0
+		// ( Z.1RRR RR00 << krs )>> 6
+
+		u32 KRS_rate = (((1<<6) + re) << krs) >> 6;
+		
+
+		// ( Z.1FF FFFF FFFF << OCT ) >> 11
+
+
+		u32 OCT_rate = (((1 << 10) + ccd->FNS) << oct) >> 11;
+		
+		// KRS_rate max: 6 + 15 - 6 = 15 bits
+		// OCT_rate max: 11 + 15 - 11 = 15 bits
+		// safe for u32 math
+
+		u32 rate_raw = (KRS_rate * OCT_rate);
+
+		return rate_raw / 16384.0f * (1 << AEG_STEP_BITS);
+	}
+
 	//D2R,D1R,AR,DL,RR,KRS, [OCT,FNS] for now
 	void UpdateAEG()
 	{
-		AEG.AttackRate = AEG_ATT_SPS[AEG_EffRate(ccd->AR)];
-		AEG.Decay1Rate = AEG_DSR_SPS[AEG_EffRate(ccd->D1R)];
+		auto arer2 = AEG_EffRate2(ccd->AR);
+		auto d1rer2 = AEG_EffRate2(ccd->D1R) / 16;
+		auto d2rer2 = AEG_EffRate2(ccd->D2R) / 16;
+		auto rrer2 = AEG_EffRate2(ccd->RR) / 16;
+
+		auto arer = AEG_ATT_SPS[AEG_EffRate(ccd->AR)];
+		auto d1rer = AEG_ATT_SPS[AEG_EffRate(ccd->D1R)];
+		auto d2rer = AEG_ATT_SPS[AEG_EffRate(ccd->D2R)];
+		auto rrer = AEG_ATT_SPS[AEG_EffRate(ccd->RR)];
+
+		printf ("ARER: 1: %d - 2: %d, o.f: %d.%d k.r: %d.%d\n", arer, arer2, ccd->OCT, ccd->FNS, ccd->KRS, ccd->AR);
+		printf ("D1RER: 1: %d - 2: %d, o.f: %d.%d k.r: %d.%d\n", d1rer, d1rer2, ccd->OCT, ccd->FNS, ccd->KRS, ccd->D1R);
+		printf ("D2RER: 1: %d - 2: %d, o.f: %d.%d k.r: %d.%d\n", d2rer, d2rer2, ccd->OCT, ccd->FNS, ccd->KRS, ccd->D2R);
+		printf ("RER: 1: %d - 2: %d, o.f: %d.%d k.r: %d.%d\n", rrer, rrer2, ccd->OCT, ccd->FNS, ccd->KRS, ccd->RR);
+
+		AEG.AttackRate = AEG_EffRate2(ccd->AR);  //AEG_ATT_SPS[AEG_EffRate(ccd->AR)];
+		AEG.Decay1Rate = AEG_EffRate2(ccd->D1R) / 16;  //AEG_DSR_SPS[AEG_EffRate(ccd->D1R)];
 		AEG.Decay2Value = ccd->DL<<5;
-		AEG.Decay2Rate = AEG_DSR_SPS[AEG_EffRate(ccd->D2R)];
-		AEG.ReleaseRate = AEG_DSR_SPS[AEG_EffRate(ccd->RR)];
+		AEG.Decay2Rate = AEG_EffRate2(ccd->D2R) / 16;  //AEG_DSR_SPS[AEG_EffRate(ccd->D2R)];
+		AEG.ReleaseRate = AEG_EffRate2(ccd->RR) / 16; //AEG_DSR_SPS[AEG_EffRate(ccd->RR)];
 	}
 	//OCT,FNS
 	void UpdatePitch()

@@ -41,7 +41,6 @@ double AEG_DSR_Time[]=
 	28.0,25.0,22.0,18.0,14.0,12.0,11.0,8.5,7.1,6.1,5.4,4.3,3.6,3.1
 };
 
-#define AEG_STEP_BITS (16)
 //Steps per sample
 u32 AEG_ATT_SPS[64];
 u32 AEG_DSR_SPS[64];
@@ -321,8 +320,8 @@ struct ChannelEx
 	struct
 	{
 		s32 val;
-		__forceinline s32 GetValue() { return val>>AEG_STEP_BITS;}
-		void SetValue(u32 aegb) { val=aegb<<AEG_STEP_BITS; }
+		__forceinline s32 GetValue() { return val;}
+		void SetValue(u32 aegb) { val=aegb; }
 
 		_EG_state state=EG_Attack;
 
@@ -556,16 +555,19 @@ struct ChannelEx
 		return rv;
 	}
 
-	// implement KRS.RE * OCT.FNS
+	//
+	// AEG is 10 bits on readout. 10 bits internal, too? 
 	u32 AEG_EffRate2(u32 re)
 	{
 
-		// KRS == 0xF == off -> only 15 bits of update rate
-		u32 aeg_rate = (update_rate/2 >> ccd->KRS);
+		u32 aeg_rate = re<<9; // 9 + 5 = 14
 
-		aeg_rate += re<<5;
+		if (re != 0) {
+			// KRS == 0xF == off -> only 15 bits of update rate?
+			aeg_rate += update_rate >> ccd->KRS;
+		}
 
-		return aeg_rate * 32;
+		return aeg_rate >> 4;
 	}
 
 	//D2R,D1R,AR,DL,RR,KRS, [OCT,FNS] for now
@@ -581,17 +583,18 @@ struct ChannelEx
 		auto d2rer = AEG_ATT_SPS[AEG_EffRate(ccd->D2R)];
 		auto rrer = AEG_ATT_SPS[AEG_EffRate(ccd->RR)];
 
-		printf ("ARER: 1: %d - 2: %d, o.f: %d.%d k.r: %d.%d\n", arer, arer2, ccd->OCT, ccd->FNS, ccd->KRS, ccd->AR);
-		printf ("D1RER: 1: %d - 2: %d, o.f: %d.%d k.r: %d.%d\n", d1rer, d1rer2, ccd->OCT, ccd->FNS, ccd->KRS, ccd->D1R);
-		printf ("D2RER: 1: %d - 2: %d, o.f: %d.%d k.r: %d.%d\n", d2rer, d2rer2, ccd->OCT, ccd->FNS, ccd->KRS, ccd->D2R);
-		printf ("RER: 1: %d - 2: %d, o.f: %d.%d k.r: %d.%d\n", rrer, rrer2, ccd->OCT, ccd->FNS, ccd->KRS, ccd->RR);
+		aeg_printf ("ARER: 1: %d - 2: %d, o.f: %d.%d k.r: %d.%d\n", arer, arer2, ccd->OCT, ccd->FNS, ccd->KRS, ccd->AR);
+		aeg_printf ("D1RER: 1: %d - 2: %d, o.f: %d.%d k.r: %d.%d\n", d1rer, d1rer2, ccd->OCT, ccd->FNS, ccd->KRS, ccd->D1R);
+		aeg_printf ("D2RER: 1: %d - 2: %d, o.f: %d.%d k.r: %d.%d\n", d2rer, d2rer2, ccd->OCT, ccd->FNS, ccd->KRS, ccd->D2R);
+		aeg_printf ("RER: 1: %d - 2: %d, o.f: %d.%d k.r: %d.%d\n", rrer, rrer2, ccd->OCT, ccd->FNS, ccd->KRS, ccd->RR);
 
-		AEG.AttackRate = AEG_EffRate2(ccd->AR);  //AEG_ATT_SPS[AEG_EffRate(ccd->AR)];
-		AEG.Decay1Rate = AEG_EffRate2(ccd->D1R) / 16;  //AEG_DSR_SPS[AEG_EffRate(ccd->D1R)];
+		AEG.AttackRate = arer2;
+		AEG.Decay1Rate = d1rer2;
 		AEG.Decay2Value = ccd->DL<<5;
-		AEG.Decay2Rate = AEG_EffRate2(ccd->D2R) / 16;  //AEG_DSR_SPS[AEG_EffRate(ccd->D2R)];
-		AEG.ReleaseRate = AEG_EffRate2(ccd->RR) / 16; //AEG_DSR_SPS[AEG_EffRate(ccd->RR)];
+		AEG.Decay2Rate = d2rer2;
+		AEG.ReleaseRate = rrer2;
 	}
+
 	//OCT,FNS
 	void UpdatePitch()
 	{
@@ -1103,7 +1106,7 @@ double dbToval(double db)
 }
 u32 CalcAegSteps(float t)
 {
-	const double aeg_allsteps=1024*(1<<AEG_STEP_BITS)-1;
+	const double aeg_allsteps=1024-1;
 
 	if (t<0)
 		return 0;

@@ -9,7 +9,7 @@ using namespace std;
 
 //#define CLIP_WARN
 #define key_printf(...)
-#define aeg_printf(...)
+#define aeg_printf printf
 #define step_printf(...)
 
 #ifdef CLIP_WARN
@@ -44,6 +44,11 @@ double AEG_DSR_Time[]=
 //Steps per sample
 u32 AEG_ATT_SPS[64];
 u32 AEG_DSR_SPS[64];
+
+// total bits: 19
+// per measurable bit: 19-10 = 9
+#define AEG_STEP_BITS (19-10)
+#define AEG_STEP_SCALE (1<<AEG_STEP_BITS)
 
 const char* stream_names[]=
 {
@@ -320,8 +325,8 @@ struct ChannelEx
 	struct
 	{
 		s32 val;
-		__forceinline s32 GetValue() { return val;}
-		void SetValue(u32 aegb) { val=aegb; }
+		__forceinline s32 GetValue() { return val >> AEG_STEP_BITS;}
+		void SetValue(u32 aegb) { val=aegb << AEG_STEP_BITS; }
 
 		_EG_state state=EG_Attack;
 
@@ -567,7 +572,7 @@ struct ChannelEx
 			aeg_rate += update_rate >> ccd->KRS;
 		}
 
-		return aeg_rate >> 4;
+		return aeg_rate << 5;
 	}
 
 	//D2R,D1R,AR,DL,RR,KRS, [OCT,FNS] for now
@@ -579,9 +584,9 @@ struct ChannelEx
 		auto rrer2 = AEG_EffRate2(ccd->RR) / 16;
 
 		auto arer = AEG_ATT_SPS[AEG_EffRate(ccd->AR)];
-		auto d1rer = AEG_ATT_SPS[AEG_EffRate(ccd->D1R)];
-		auto d2rer = AEG_ATT_SPS[AEG_EffRate(ccd->D2R)];
-		auto rrer = AEG_ATT_SPS[AEG_EffRate(ccd->RR)];
+		auto d1rer = AEG_DSR_SPS[AEG_EffRate(ccd->D1R)];
+		auto d2rer = AEG_DSR_SPS[AEG_EffRate(ccd->D2R)];
+		auto rrer = AEG_DSR_SPS[AEG_EffRate(ccd->RR)];
 
 		aeg_printf ("ARER: 1: %d - 2: %d, o.f: %d.%d k.r: %d.%d\n", arer, arer2, ccd->OCT, ccd->FNS, ccd->KRS, ccd->AR);
 		aeg_printf ("D1RER: 1: %d - 2: %d, o.f: %d.%d k.r: %d.%d\n", d1rer, d1rer2, ccd->OCT, ccd->FNS, ccd->KRS, ccd->D1R);
@@ -1106,7 +1111,7 @@ double dbToval(double db)
 }
 u32 CalcAegSteps(float t)
 {
-	const double aeg_allsteps=1024-1;
+	const double aeg_allsteps=1024*AEG_STEP_SCALE-1;
 
 	if (t<0)
 		return 0;

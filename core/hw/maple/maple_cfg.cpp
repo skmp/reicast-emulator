@@ -245,6 +245,11 @@ void mcfg_CreateDevices()
 			mcfg_Create(MDT_TwinStick, bus, 5);
 			mcfg_Create(MDT_SegaVMU, bus, 0);
 			break;
+			 
+		case MDT_AsciiStick:
+			mcfg_Create(MDT_AsciiStick, bus, 5);
+			mcfg_Create(MDT_SegaVMU, bus, 0);
+			break;
 		
 		 }
 	  }

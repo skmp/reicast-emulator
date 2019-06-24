@@ -18,6 +18,7 @@
 #include "../hw/sh4/sh4_mem.h"
 #include "../hw/sh4/sh4_sched.h"
 #include "keyboard_map.h"
+#include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_if.h"
 #include "hw/maple/maple_cfg.h"
 #include "../hw/pvr/spg.h"
@@ -33,6 +34,7 @@ char slash = '/';
 
 #define RETRO_DEVICE_TWINSTICK				RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 1 )
 #define RETRO_DEVICE_TWINSTICK_SATURN		RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 2 )
+#define RETRO_DEVICE_ASCIISTICK				RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 3 )
 
 #define RETRO_ENVIRONMENT_RETROARCH_START_BLOCK 0x800000
 
@@ -66,6 +68,8 @@ static int trigger_deadzone = 0;
 static bool digital_triggers = false;
 static bool allow_service_buttons = false;
 
+static bool libretro_supports_bitmasks = false;
+
 u32 kcode[4] = {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
 u8 rt[4] = {0, 0, 0, 0};
 u8 lt[4] = {0, 0, 0, 0};
@@ -83,6 +87,8 @@ bool enable_purupuru = true;
 static u32 vib_stop_time[4];
 static double vib_strength[4];
 static double vib_delta[4];
+
+unsigned per_content_vmus = 0;
 
 static bool first_run = true;
 
@@ -149,6 +155,8 @@ char *game_data;
 char g_base_name[128];
 char game_dir[1024];
 char game_dir_no_slash[1024];
+char vmu_dir_no_slash[PATH_MAX];
+char content_name[PATH_MAX];
 char g_roms_dir[PATH_MAX];
 static bool emu_in_thread = false;
 static bool performed_serialization = false;
@@ -389,10 +397,6 @@ void retro_set_environment(retro_environment_t cb)
          "Widescreen hack (restart); disabled|enabled",
       },
       {
-         "reicast_audio_buffer_size",
-         "Audio buffer size; 1024|2048",
-      },
-      {
          "reicast_cable_type",
 #ifdef LOW_END
          "Cable type; VGA (RGB)|TV (RGB)|TV (Composite)",	
@@ -500,6 +504,10 @@ void retro_set_environment(retro_environment_t cb)
          "reicast_dump_textures",
          "Dump textures; disabled|enabled"
       },
+      {
+         "reicast_per_content_vmus",
+         "Per-game VMUs; disabled|VMU A1|All VMUs"
+      },
 	  VMU_SCREEN_PARAMS(1)
 	  VMU_SCREEN_PARAMS(2)
 	  VMU_SCREEN_PARAMS(3)
@@ -511,7 +519,8 @@ void retro_set_environment(retro_environment_t cb)
 
    static const struct retro_controller_description ports_default[] =
    {
-		 { "Gamepad",		RETRO_DEVICE_JOYPAD },
+		 { "Controller",	RETRO_DEVICE_JOYPAD },
+		 { "Arcade Stick",	RETRO_DEVICE_ASCIISTICK },
 		 { "Keyboard",		RETRO_DEVICE_KEYBOARD },
 		 { "Mouse",			RETRO_DEVICE_MOUSE },
 		 { "Light Gun",		RETRO_DEVICE_LIGHTGUN },
@@ -520,10 +529,10 @@ void retro_set_environment(retro_environment_t cb)
 		 { 0 },
    };
    static const struct retro_controller_info ports[] = {
-           { ports_default,  6 },
-           { ports_default,  6 },
-           { ports_default,  6 },
-           { ports_default,  6 },
+           { ports_default,  7 },
+           { ports_default,  7 },
+           { ports_default,  7 },
+           { ports_default,  7 },
            { 0 },
    };
    environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
@@ -557,6 +566,9 @@ void retro_init(void)
    init_kb_map();
    struct retro_keyboard_callback kb_callback = { &retro_keyboard_event };
    environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &kb_callback);
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))
+      libretro_supports_bitmasks = true;
 }
 
 void retro_deinit(void)
@@ -568,6 +580,7 @@ void retro_deinit(void)
    mtx_serialization.Lock() ;
    mtx_serialization.Unlock() ;
 
+   libretro_supports_bitmasks = false;
 }
 
 static bool is_dupe = false;
@@ -579,6 +592,25 @@ static void update_variables(bool first_startup)
    struct retro_variable var;
    int i ;
    char key[256] ;
+
+   var.key = "reicast_per_content_vmus";
+   unsigned previous_per_content_vmus = per_content_vmus;
+   per_content_vmus = 0;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("VMU A1", var.value))
+         per_content_vmus = 1;
+      else if (!strcmp("All VMUs", var.value))
+         per_content_vmus = 2;
+   }
+
+   if ((per_content_vmus != previous_per_content_vmus) &&
+       (settings.System == DC_PLATFORM_DREAMCAST))
+   {
+      mcfg_DestroyDevices();
+      mcfg_CreateDevices();
+   }
 
    var.key = "reicast_widescreen_hack";
 
@@ -758,16 +790,6 @@ static void update_variables(bool first_startup)
    }
    else
       settings.pvr.Emulation.ModVol      = true;
-
-
-   var.key = "reicast_audio_buffer_size";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      settings.aica.BufferSize = atoi(var.value);
-   }
-   else
-      settings.aica.BufferSize = 1024;
 
    var.key = "reicast_cable_type";
 
@@ -1672,6 +1694,20 @@ static void set_input_descriptors()
     		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" };
     		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,    "Special" };
     		break;
+ 
+ 		case MDT_AsciiStick:
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "Stick Left" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "Stick Up" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "Stick Down" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "Stick Right" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_L,    "C" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_R,    "Z" };
+    		desc[descriptor_index++] = { i, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" };
+    		break;
 
     	 case MDT_LightGun:
     		desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT,  "D-Pad Left" };
@@ -1703,11 +1739,24 @@ static void extract_basename(char *buf, const char *path, size_t size)
    buf[size - 1] = '\0';
 }
 
+static void remove_extension(char *buf, const char *path, size_t size)
+{
+   char *base;
+   strncpy(buf, path, size - 1);
+   buf[size - 1] = '\0';
+
+   base = strrchr(buf, '.');
+
+   if (base)
+      *base = '\0';
+}
+
 // Loading/unloading games
 bool retro_load_game(const struct retro_game_info *game)
 {
    glsm_ctx_params_t params = {0};
    const char *dir = NULL;
+   const char *vmu_dir = NULL;
 #ifdef _WIN32
    char slash = '\\';
 #else
@@ -1728,6 +1777,20 @@ bool retro_load_game(const struct retro_game_info *game)
 
    snprintf(game_dir, sizeof(game_dir), "%s%cdc%c", dir, slash, slash);
    snprintf(game_dir_no_slash, sizeof(game_dir_no_slash), "%s%cdc", dir, slash);
+
+   // Per-content VMU additions START
+   // > Get save directory
+   if (!(environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &vmu_dir) && vmu_dir))
+      vmu_dir = game_dir;
+
+   snprintf(vmu_dir_no_slash, sizeof(vmu_dir_no_slash), "%s", vmu_dir);
+
+   // > Get content name
+   remove_extension(content_name, g_base_name, sizeof(content_name));
+
+   if (content_name[0] == '\0')
+      snprintf(content_name, sizeof(content_name), "vmu_save");
+   // Per-content VMU additions END
 
    settings.dreamcast.cable = 3;
    update_variables(true);
@@ -2110,8 +2173,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    if(naomi_cart_GetRotation() == 3)
       info->geometry.aspect_ratio = 1 / info->geometry.aspect_ratio;
    int maximum = screen_width > screen_height ? screen_width : screen_height;
-   info->geometry.base_width   = screen_height;
-   info->geometry.base_height  = screen_width;
+   info->geometry.base_width   = screen_width;
+   info->geometry.base_height  = screen_height;
    info->geometry.max_width    = maximum;
    info->geometry.max_height   = maximum;
    if (rotate_screen)
@@ -2160,6 +2223,9 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 			case RETRO_DEVICE_TWINSTICK_SATURN:
 				maple_devices[in_port] = MDT_TwinStick;
 				break;
+			case RETRO_DEVICE_ASCIISTICK:
+				maple_devices[in_port] = MDT_AsciiStick;
+				break;
 			case RETRO_DEVICE_KEYBOARD:
 				maple_devices[in_port] = MDT_Keyboard;
 				break;
@@ -2198,6 +2264,11 @@ static void refresh_devices(bool descriptors_only)
 					rumble.set_rumble_state(i, RETRO_RUMBLE_WEAK,   0);
 				}
 			}
+		}
+		if (settings.System != DC_PLATFORM_DREAMCAST)
+		{
+			mcfg_DestroyDevices();
+			mcfg_CreateDevices();
 		}
 	}
 }
@@ -2317,39 +2388,35 @@ static uint16_t apply_trigger_deadzone( uint16_t input )
 {
    if ( trigger_deadzone > 0 )
    {
-      static const int TRIGGER_MAX = 0x8000;
-      const float scale = ((float)TRIGGER_MAX/(float)(TRIGGER_MAX - trigger_deadzone));
-
       if ( input > trigger_deadzone )
       {
          // Re-scale analog range
-         float scaled = (input - trigger_deadzone)*scale;
+         static const int TRIGGER_MAX = 0x8000;
+         const float scale = ((float)TRIGGER_MAX/(float)(TRIGGER_MAX - trigger_deadzone));
+         float scaled      = (input - trigger_deadzone)*scale;
 
          input = (int)round(scaled);
-         if (input > +32767) {
+         if (input > +32767)
             input = +32767;
-         }
       }
       else
-      {
          input = 0;
-      }
    }
 
    return input;
 }
 
-static uint16_t get_analog_trigger( retro_input_state_t input_state_cb,
-                           int player_index,
-                           int id )
+static uint16_t get_analog_trigger(
+      int16_t ret,
+      retro_input_state_t input_state_cb,
+      int player_index,
+      int id )
 {
-   uint16_t trigger;
-
    // NOTE: Analog triggers were added Nov 2017. Not all front-ends support this
    // feature (or pre-date it) so we need to handle this in a graceful way.
 
    // First, try and get an analog value using the new libretro API constant
-   trigger = input_state_cb( player_index,
+   uint16_t trigger = input_state_cb( player_index,
                        RETRO_DEVICE_ANALOG,
                        RETRO_DEVICE_INDEX_ANALOG_BUTTON,
                        id );
@@ -2362,10 +2429,7 @@ static uint16_t get_analog_trigger( retro_input_state_t input_state_cb,
 
       // NOTE: If we're really just not holding the trigger, we're still going to get zero.
 
-      trigger = input_state_cb( player_index,
-                          RETRO_DEVICE_JOYPAD,
-                          0,
-                          id ) ? 0x7FFF : 0;
+      trigger = (ret & (1 << id)) ? 0x7FFF : 0;
    }
    else
    {
@@ -2378,25 +2442,35 @@ static uint16_t get_analog_trigger( retro_input_state_t input_state_cb,
    return trigger;
 }
 
-static void setDeviceButtonState(u32 port, int deviceType, int btnId)
-{
-   uint32_t dc_key = map_gamepad_button(deviceType, btnId);
-   bool is_down = input_cb(port, deviceType, 0, btnId);
-   if (is_down)
-	  kcode[port] &= ~dc_key;
-   else
-	  kcode[port] |= dc_key;
+#define setDeviceButtonState(port, deviceType, btnId) \
+{ \
+   uint32_t dc_key = map_gamepad_button(deviceType, btnId); \
+   bool is_down = input_cb(port, deviceType, 0, btnId); \
+   if (is_down) \
+	  kcode[port] &= ~dc_key; \
+   else \
+	  kcode[port] |= dc_key; \
+}
+
+#define setDeviceButtonStateMacro(ret, port, deviceType, btnId) \
+{ \
+   uint32_t dc_key = map_gamepad_button(deviceType, btnId); \
+   bool is_down    = ret & (1 << btnId); \
+   if (is_down) \
+	  kcode[port] &= ~dc_key; \
+   else \
+	  kcode[port] |= dc_key; \
 }
 
 // don't call map_gamepad_button, we supply the DC bit directly.
-static void setDeviceButtonStateDirect(u32 port, int deviceType, int btnId, uint32_t dc_bit)
-{
-   uint32_t dc_key = 1 << dc_bit;
-   bool is_down = input_cb(port, deviceType, 0, btnId);
-   if (is_down)
-	  kcode[port] &= ~dc_key;
-   else
-	  kcode[port] |= dc_key;
+#define setDeviceButtonStateDirectMacro(ret, port, deviceType, btnId, dc_bit) \
+{ \
+   uint32_t dc_key = 1 << dc_bit; \
+   bool is_down    = ret & (1 << btnId); \
+   if (is_down) \
+	  kcode[port] &= ~dc_key; \
+   else \
+	  kcode[port] |= dc_key; \
 }
 
 static void updateMouseState(u32 port)
@@ -2404,7 +2478,7 @@ static void updateMouseState(u32 port)
    mo_x_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
    mo_y_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
 
-   bool btn_state = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
+   bool btn_state   = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
    if (btn_state)
 	  mo_buttons[port] &= ~(1 << 2);
    else
@@ -2474,33 +2548,44 @@ static void UpdateInputStateNaomi(u32 port)
 	  break;
 
    default:
+     int16_t ret = 0;
 	  //
 	  // -- buttons
+     {
+        if (libretro_supports_bitmasks)
+           ret = input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+        else
+        {
+           for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_R3; ++id)
+              if (input_cb(port, RETRO_DEVICE_JOYPAD, 0, id))
+                 ret |= (1 << id);
+        }
 
-	  for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_R3; ++id)
-	  {
-		 switch (id)
-		 {
-		 case RETRO_DEVICE_ID_JOYPAD_L3:
-			if (allow_service_buttons)
-			   setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, id);
-			break;
-		 case RETRO_DEVICE_ID_JOYPAD_R3:
-			if (settings.System == DC_PLATFORM_NAOMI || allow_service_buttons)
-			   setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, id);
-			break;
-		 default:
-			setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, id);
-			break;
-		 }
-	  }
+        for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_R3; ++id)
+        {
+           switch (id)
+           {
+              case RETRO_DEVICE_ID_JOYPAD_L3:
+                 if (allow_service_buttons)
+                    setDeviceButtonStateMacro(ret, port, RETRO_DEVICE_JOYPAD, id);
+                 break;
+              case RETRO_DEVICE_ID_JOYPAD_R3:
+                 if (settings.System == DC_PLATFORM_NAOMI || allow_service_buttons)
+                    setDeviceButtonStateMacro(ret, port, RETRO_DEVICE_JOYPAD, id);
+                 break;
+              default:
+                 setDeviceButtonStateMacro(ret, port, RETRO_DEVICE_JOYPAD, id);
+                 break;
+           }
+        }
+     }
 	  //
 	  // -- analog stick
 
 	  get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[port]), &(joyy[port]) );
 	  get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_RIGHT, &(joyrx[port]), &(joyry[port]));
-	  lt[port] = get_analog_trigger(input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2) / 128;
-	  rt[port] = get_analog_trigger(input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2) / 128;
+	  lt[port] = get_analog_trigger(ret, input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2) / 128;
+	  rt[port] = get_analog_trigger(ret, input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2) / 128;
 
 	  if (naomi_game_inputs != NULL)
 	  {
@@ -2617,13 +2702,21 @@ void UpdateInputState(u32 port)
 	  case MDT_SegaController:
 	  {
 		   int id;
+         int16_t ret = 0;
 		   //
 		   // -- buttons
+         
+         if (libretro_supports_bitmasks)
+            ret = input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+         else
+         {
+            for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_R3; ++id)
+               if (input_cb(port, RETRO_DEVICE_JOYPAD, 0, id))
+                  ret |= (1 << id);
+         }
 
 		   for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_X; ++id)
-		   {
-			  setDeviceButtonState(port, RETRO_DEVICE_JOYPAD, id);
-		   }
+			  setDeviceButtonStateMacro(ret, port, RETRO_DEVICE_JOYPAD, id);
 
 		   //
 		   // -- analog stick
@@ -2637,16 +2730,16 @@ void UpdateInputState(u32 port)
 		   if ( digital_triggers )
 		   {
 		      // -- digital left trigger
-		      if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L) )
+            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L))
 		         lt[port]=0xFF;
-		      else if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2) )
+            else if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L2))
 		         lt[port]=0x7F;
 		      else
 		         lt[port]=0;
 		      // -- digital right trigger
-		      if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R) )
+            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R))
 		         rt[port]=0xFF;
-		      else if ( input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2) )
+            else if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R2))
 		         rt[port]=0x7F;
 		      else
 		         rt[port]=0;
@@ -2654,15 +2747,78 @@ void UpdateInputState(u32 port)
 		   else
 		   {
 			   // -- analog triggers
-			   lt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2 ) / 128;
-			   rt[port] = get_analog_trigger( input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2 ) / 128;
+			   lt[port] = get_analog_trigger(ret, input_cb, port, RETRO_DEVICE_ID_JOYPAD_L2 ) / 128;
+			   rt[port] = get_analog_trigger(ret, input_cb, port, RETRO_DEVICE_ID_JOYPAD_R2 ) / 128;
 		   }
 	  }
 	  break;
+	  
+	case MDT_AsciiStick:
+	{
+      int16_t ret = 0;
+
+      if (libretro_supports_bitmasks)
+         ret = input_cb(port, RETRO_DEVICE_ASCIISTICK, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+      else
+      {
+         unsigned id;
+         for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_R3; ++id)
+            if (input_cb(port, RETRO_DEVICE_ASCIISTICK, 0, id))
+               ret |= (1 << id);
+      }
+
+		kcode[port] = 0xFFFF; // active-low
+
+		// stick
+		setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_UP, 4 );
+		setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_DOWN, 5 );
+		setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_LEFT, 6 );
+		setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_RIGHT, 7 );
+		
+		// buttons
+		setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_B,  2 ); // A
+		setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_A,  1 ); // B
+		setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_Y, 10 ); // X
+		setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_X,  9 ); // Y
+		
+		// Z
+		{
+		   uint32_t dc_key = 1 << 8; // Z
+		   bool is_down = (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L )) || 
+		   				   (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L2));
+		   if (is_down)
+			  kcode[port] &= ~dc_key;
+		   else
+			  kcode[port] |= dc_key;
+		}
+
+		// C
+		{
+		   uint32_t dc_key = 1 << 0; // C
+		   bool is_down = (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R)) || 
+		   				   (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R2));
+		   if (is_down)
+			  kcode[port] &= ~dc_key;
+		   else
+			  kcode[port] |= dc_key;
+		}
+		
+		setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_ASCIISTICK, RETRO_DEVICE_ID_JOYPAD_START, 3 ); // Start
+		
+		// unused inputs
+		lt[port]=0;
+		rt[port]=0;
+		joyx[port]=0;
+		joyy[port]=0;
+	}
+	break;
 
 	case MDT_TwinStick:
 	{
+      int16_t ret = 0;
+
 		kcode[port] = 0xFFFF; // active-low
+
 		
 		if ( device_type[port] == RETRO_DEVICE_TWINSTICK_SATURN )
 		{
@@ -2676,32 +2832,52 @@ void UpdateInputState(u32 port)
 			// Hope that makes sense!!
 			
 			// NOTE: the dc_bits below are the same, only the retro id values have been rearranged.
+         
+         if (libretro_supports_bitmasks)
+            ret = input_cb(port, RETRO_DEVICE_TWINSTICK_SATURN, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+         else
+         {
+            unsigned id;
+            for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_R3; ++id)
+               if (input_cb(port, RETRO_DEVICE_TWINSTICK_SATURN, 0, id))
+                  ret |= (1 << id);
+         }
 			
 			// left-stick
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_UP, 4 );
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_DOWN, 5 );
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_LEFT, 6 );
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_RIGHT, 7 );
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_L2, 10 ); // left-trigger
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_R2, 9 ); // left-turbo
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_UP, 4 );
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_DOWN, 5 );
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_LEFT, 6 );
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_RIGHT, 7 );
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_L2, 10 ); // left-trigger
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_R2, 9 ); // left-turbo
 
 			// right-stick
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_X, 12 ); // up
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_L, 15 ); // right
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_A, 13 ); // down
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_Y, 14 ); // left
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_B, 2 ); // right-trigger
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_R, 1 ); // right-turbo
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_X, 12 ); // up
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_L, 15 ); // right
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_A, 13 ); // down
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_Y, 14 ); // left
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_B, 2 ); // right-trigger
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_R, 1 ); // right-turbo
 
 			// misc control
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_START, 3 );
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_SELECT, 11 ); //D
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_START, 3 );
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK_SATURN, RETRO_DEVICE_ID_JOYPAD_SELECT, 11 ); //D
 		}
 		else
 		{	
 			int analog;
 			
 			const int thresh = 11000; // about 33%, allows for 8-way movement
+
+         if (libretro_supports_bitmasks)
+            ret = input_cb(port, RETRO_DEVICE_TWINSTICK, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+         else
+         {
+            unsigned id;
+            for (id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_R3; ++id)
+               if (input_cb(port, RETRO_DEVICE_TWINSTICK, 0, id))
+                  ret |= (1 << id);
+         }
 
 			// LX
 			analog = input_cb( port, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X );
@@ -2712,8 +2888,8 @@ void UpdateInputState(u32 port)
 			else
 			{
 				// digital
-				setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_LEFT, 6 );
-				setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_RIGHT, 7 );
+				setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_LEFT, 6 );
+				setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_RIGHT, 7 );
 			}
 			
 			// LY
@@ -2725,8 +2901,8 @@ void UpdateInputState(u32 port)
 			else
 			{
 				// digital
-				setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_UP, 4 );
-				setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_DOWN, 5 );
+				setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_UP, 4 );
+				setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_DOWN, 5 );
 			}
 
 			// RX
@@ -2738,8 +2914,8 @@ void UpdateInputState(u32 port)
 			else
 			{
 				// digital
-				setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_Y, 14 ); // left
-				setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_A, 15 ); // right
+				setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_Y, 14 ); // left
+				setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_A, 15 ); // right
 			}
 			
 			// RY
@@ -2751,21 +2927,21 @@ void UpdateInputState(u32 port)
 			else
 			{
 				// digital
-				setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_X, 12 ); // up
-				setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_B, 13 ); // down
+				setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_X, 12 ); // up
+				setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_B, 13 ); // down
 			}
 
 			// left-stick buttons
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_L2, 10 ); // left-trigger
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_L, 9 ); // left-turbo
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_L2, 10 ); // left-trigger
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_L, 9 ); // left-turbo
 
 			// right-stick buttons
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_R2, 2 ); // right-trigger
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_R, 1 ); // right-turbo
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_R2, 2 ); // right-trigger
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_R, 1 ); // right-turbo
 
 			// misc control
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_START, 3 );
-			setDeviceButtonStateDirect(port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_SELECT, 11 ); //D
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_START, 3 );
+			setDeviceButtonStateDirectMacro(ret, port, RETRO_DEVICE_TWINSTICK, RETRO_DEVICE_ID_JOYPAD_SELECT, 11 ); //D
 		}
 		
 		// unused inputs

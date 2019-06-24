@@ -1,5 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 
+platform      := android
+
 CORE_DIR      := $(LOCAL_PATH)/..
 ROOT_DIR      := $(LOCAL_PATH)/..
 LIBRETRO_DIR  := $(ROOT_DIR)/libretro
@@ -24,11 +26,11 @@ HOST_CPU_X86=0x20000001
 HOST_CPU_ARM=0x20000002
 HOST_CPU_MIPS=0x20000003
 HOST_CPU_X64=0x20000004
+HOST_CPU_GENERIC=0x20000005
 HOST_CPU_ARM64=0x20000006
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
   WITH_DYNAREC := arm64
-#  HAVE_GENERIC_JIT := 1
 else ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
   WITH_DYNAREC := arm
   HAVE_NEON := 1
@@ -48,22 +50,19 @@ COREFLAGS += -DTARGET_NO_THREADS
 endif
 
 ifeq ($(HAVE_GENERIC_JIT),1)
-COREFLAGS += -DTARGET_NO_JIT
+COREFLAGS += -DTARGET_NO_JIT -DFEAT_SHREC=0x40000003
 endif
 
 ifeq ($(TARGET_ARCH_ABI),x86_64)
-COREFLAGS += -fno-operator-names
-endif
-
-ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
+	COREFLAGS += -fno-operator-names
 	COREFLAGS += -DHOST_CPU=$(HOST_CPU_X64)
 endif
 
-ifeq ($(WITH_DYNAREC), x86)
+ifeq ($(TARGET_ARCH_ABI), x86)
 	COREFLAGS += -DHOST_CPU=$(HOST_CPU_X86)
 endif
 
-ifeq ($(WITH_DYNAREC), arm)
+ifeq ($(TARGET_ARCH_ABI), armeabi-v7a)
 	COREFLAGS += -DHOST_CPU=$(HOST_CPU_ARM)
 endif
 
@@ -71,7 +70,7 @@ ifeq ($(TARGET_ARCH_ABI), arm64-v8a)
 	COREFLAGS += -DHOST_CPU=$(HOST_CPU_ARM64)
 endif
 
-ifeq ($(WITH_DYNAREC), mips)
+ifeq ($(TARGET_ARCH_ABI), mips)
 	COREFLAGS += -DHOST_CPU=$(HOST_CPU_MIPS)
 endif
 

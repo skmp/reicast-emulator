@@ -247,12 +247,12 @@ endif
 
 # Recompiler (x64)
 
-ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
+ifneq ($(filter $(WITH_DYNAREC), x86_64 x64),)
 DYNAREC_USED = 1
 SOURCES_CXX += $(CORE_DIR)/core/rec-x64/rec_x64.cpp 
 # Recompiler (x86 32bit)
 #
-else ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), i386 i686 x86))
+else ifneq ($(filter $(WITH_DYNAREC), i386 i686 x86),)
 DYNAREC_USED = 1
 ifeq ($(platform), unix)
 SOURCES_ASM += $(CORE_DIR)/core/rec-x86/rec_lin86_asm.S

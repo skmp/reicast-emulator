@@ -1937,7 +1937,7 @@ bool retro_load_game(const struct retro_game_info *game)
    if (dc_init(co_argc,co_argv))
    {
 	  if (log_cb)
-		 log_cb(RETRO_LOG_ERROR, "Reicast emulator initialization failed\n");
+		 log_cb(RETRO_LOG_ERROR, "Flycast emulator initialization failed\n");
 	  return false;
    }
    int rotation = rotate_screen ? 3 : 0;
@@ -2153,7 +2153,7 @@ const char* retro_get_system_directory(void)
 
 void retro_get_system_info(struct retro_system_info *info)
 {
-   info->library_name = "Reicast";
+   info->library_name = "Flycast";
 #ifndef GIT_VERSION
 #define GIT_VERSION ""
 #endif

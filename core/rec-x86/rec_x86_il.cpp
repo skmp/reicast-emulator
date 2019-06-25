@@ -511,21 +511,21 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 						switch(size)
 						{
 						case 1:
-							if (!fuct) fuct=ReadMem8;
+							if (!fuct) fuct=(void*)ReadMem8;
 							x86e->Emit(op_call,x86_ptr_imm(fuct));
 							x86e->Emit(op_movsx8to32,EAX,EAX);
 							break;
 						case 2:
-							if (!fuct) fuct=ReadMem16;
+							if (!fuct) fuct=(void*)ReadMem16;
 							x86e->Emit(op_call,x86_ptr_imm(fuct));
 							x86e->Emit(op_movsx16to32,EAX,EAX);
 							break;
 						case 4:
-							if (!fuct) fuct=ReadMem32;
+							if (!fuct) fuct=(void*)ReadMem32;
 							x86e->Emit(op_call,x86_ptr_imm(fuct));
 							break;
 						case 8:
-							if (!fuct) fuct=ReadMem64;
+							if (!fuct) fuct=(void*)ReadMem64;
 							x86e->Emit(op_call,x86_ptr_imm(fuct));
 							break;
 						default:

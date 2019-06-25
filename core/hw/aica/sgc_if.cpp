@@ -572,7 +572,7 @@ struct ChannelEx
 			aeg_rate += update_rate >> ccd->KRS;
 		}
 
-		return aeg_rate << 5;
+		return aeg_rate / 16;
 	}
 
 	//D2R,D1R,AR,DL,RR,KRS, [OCT,FNS] for now

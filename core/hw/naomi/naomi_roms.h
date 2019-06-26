@@ -539,6 +539,61 @@ Games[] =
         NULL,
         &vtenis2c_inputs
     },
+    // Star Horse 2002
+    {
+        "shors2k2",
+        NULL,
+        0x04000000,
+        0x403431d2,
+        NULL,
+        M1,
+        REGION_AUSTRALIA,
+        ROT0,
+        {
+            { "epr-23964.ic11",  0x0000000, 0x400000 },
+            { "opr-23965.ic17s", 0x1000000, 0x800000, InterleavedWord },
+            { "opr-23966.ic18",  0x1000002, 0x800000, InterleavedWord },
+            { "opr-23967.ic19s", 0x2000000, 0x800000, InterleavedWord },
+            { "opr-23968.ic20",  0x2000002, 0x800000, InterleavedWord },
+            { "opr-23969.ic21s", 0x3000000, 0x800000, InterleavedWord },
+            { "opr-23970.ic22",  0x3000002, 0x800000, InterleavedWord },
+            { NULL, 0, 0 },
+        }
+    },
+    // Mushiking The King Of Beetle (2K3 2ND Ver. 1.002-, World)
+    {
+        "mushikeo",
+        "mushike",
+        0x04000000,
+        0x3892fb3a,
+        NULL,
+        M1,
+        REGION_AUSTRALIA,
+        ROT0,
+        {
+            { "epr-24217-1002.ic11", 0x0000000, 0x0400000 },
+            { "mpr-24218.ic17s",     0x1000000, 0x0800000, InterleavedWord },
+            { "mpr-24219.ic18",      0x1000002, 0x0800000, InterleavedWord },
+            { "mpr-24220.ic19s",     0x2000000, 0x0800000, InterleavedWord },
+            { "mpr-24221.ic20",      0x2000002, 0x0800000, InterleavedWord },
+            { "mpr-24222.ic21s",     0x3000000, 0x0800000, InterleavedWord },
+            { "mpr-24223.ic22",      0x3000002, 0x0800000, InterleavedWord },
+            { "copy",                0x400000,  0xc00000,  Copy, 0x1000000 },
+            
+            //ROM_REGION(0x200, "some_eeprom", 0)
+            //{ "25lc040.ic13s", 0, 0x200, CRC(9adb86c2) SHA1(682d06b2004809c3c7ff2f4f9bc0bde0e51885c0) )
+            
+            // MUSHIKING
+            // The King of Beetle
+            // TYPE-1
+            // 800
+            // note: this dump from "empty/dead" Management Chip with no game run count left
+            //ROM_REGION( 0x80, "rf_tag", 0 )
+            //{ "mushi_type1.bin", 0, 0x80, CRC(8f36572b) SHA1(87e00e56d07a961e9180c7da02e35f7fd216dbae) )
+            
+            { NULL, 0, 0 },
+        }
+    },
     // Naomi M2/M3 Roms
     // 18 Wheeler (deluxe) (Rev A)
     {
@@ -5371,6 +5426,23 @@ Games[] =
             { NULL, 0, 0 },
         },
         "gds-0010",
+    },
+    // Sega Yonin Uchi Mahjong MJ (セガ四人打ち麻雀MJ), "Sega The 4Players Mah-Jong"
+    // uses CRP-1231 card RW connected via 838-13661 RS422/RS232C converter BD, and 2x JVS I/O boards (or one special I/O ?).
+    {
+        "mj1",
+        NULL,
+        0x4000,
+        0,
+        "naomi",
+        GD,
+        REGION_AUSTRALIA,
+        ROT0,
+        {
+            { "317-0352-jpn.pic", 0, 0x4000 },
+            { NULL, 0, 0 },
+        },
+        "cdp-10002b",
     },
     // AtomisWave Roms
     // Animal Basket (24 Jan 2005)

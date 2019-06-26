@@ -285,36 +285,38 @@ static void input_set_deadzone_trigger( int percent )
 		"LIGHT_YELLOW_2 27|" \
 		"WHITE 28" \
 
+#define CORE_OPTION_NAME "reicast"
+
 #define VMU_SCREEN_PARAMS(num)       { \
-"reicast_vmu" #num "_screen_display", \
+CORE_OPTION_NAME "_vmu" #num "_screen_display", \
 "VMU Screen " #num " Display; disabled|enabled" \
 }, \
 { \
-"reicast_vmu" #num "_screen_position", \
+CORE_OPTION_NAME "_vmu" #num "_screen_position", \
 "VMU Screen " #num " Position; Upper Left|Upper Right|Lower Left|Lower Right" \
 }, \
 { \
-"reicast_vmu" #num "_screen_size_mult", \
+CORE_OPTION_NAME "_vmu" #num "_screen_size_mult", \
 "VMU Screen " #num " Size; 1x|2x|3x|4x|5x" \
 }, \
 { \
-"reicast_vmu" #num "_pixel_on_color", \
+CORE_OPTION_NAME "_vmu" #num "_pixel_on_color", \
 "VMU Screen " #num " Pixel On Color; " "DEFAULT_ON 00|DEFAULT_OFF 01|" \
 COLORS_STRING \
 }, \
 { \
-"reicast_vmu" #num "_pixel_off_color", \
+CORE_OPTION_NAME "_vmu" #num "_pixel_off_color", \
 "VMU Screen " #num " Pixel Off Color; " "DEFAULT_OFF 01|DEFAULT_ON 00|" \
 COLORS_STRING \
 }, \
 { \
-"reicast_vmu" #num "_screen_opacity", \
+CORE_OPTION_NAME "_vmu" #num "_screen_opacity", \
 "VMU Screen " #num " Opacity; 100%|90%|80%|70%|60%|50%|40%|30%|20%|10%" \
 }, \
 
 
 #define LIGHTGUN_PARAMS(num)       { \
-"reicast_lightgun" #num "_crosshair", \
+CORE_OPTION_NAME "_lightgun" #num "_crosshair", \
 "Gun Crosshair " #num " Display; disabled|White|Red|Green|Blue" \
 }, \
 
@@ -327,7 +329,7 @@ void retro_set_environment(retro_environment_t cb)
    struct retro_variable variables[] = {
 #if ((FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86) || (HOST_CPU == CPU_ARM) || (HOST_CPU == CPU_ARM64) || (HOST_CPU == CPU_X64) || TARGET_NO_JIT)
       {
-         "reicast_cpu_mode",
+         CORE_OPTION_NAME "_cpu_mode",
          "CPU Mode (restart); "
 #if (FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86) || (HOST_CPU == CPU_ARM) || (HOST_CPU == CPU_ARM64) || (HOST_CPU == CPU_X64)
             "dynamic_recompiler"
@@ -340,21 +342,21 @@ void retro_set_environment(retro_environment_t cb)
       },
 #endif
       {
-         "reicast_boot_to_bios",
+         CORE_OPTION_NAME "_boot_to_bios",
          "Boot to BIOS (restart); disabled|enabled",
       },
       {
-         "reicast_system",
+         CORE_OPTION_NAME "_system",
          "System type (restart); auto|dreamcast|naomi|atomiswave",
       },
 #ifdef HAVE_OIT
       {
-         "reicast_oit_abuffer_size",
+         CORE_OPTION_NAME "_oit_abuffer_size",
          "Accumulation pixel buffer size (restart); 512MB|1GB|2GB",
       },
 #endif
       {
-         "reicast_internal_resolution",
+         CORE_OPTION_NAME "_internal_resolution",
 #ifdef LOW_RES
          "Internal resolution (restart); 320x240|640x480|1280x960|1440x1080|1920x1440|2560x1920|2880x2160|3200x2400|3840x2880|4480x3360|5120x3840|5760x4320|6400x4800|7040x5280|7680x5760|8320x6240|8960x6720|9600x7200|10240x7680|10880x8160|11520x8640|12160x9120|12800x9600",
 #else
@@ -362,11 +364,11 @@ void retro_set_environment(retro_environment_t cb)
 #endif
       },
       {
-         "reicast_screen_rotation",
+         CORE_OPTION_NAME "_screen_rotation",
          "Screen orientation; horizontal|vertical",
       },
       {
-    	 "reicast_alpha_sorting",
+    	 CORE_OPTION_NAME "_alpha_sorting",
 #ifdef LOW_END
          "Alpha sorting; per-strip (fast, least accurate)|per-triangle (normal)",
 #else
@@ -378,7 +380,7 @@ void retro_set_environment(retro_environment_t cb)
 #endif
       },
       {
-         "reicast_gdrom_fast_loading",
+         CORE_OPTION_NAME "_gdrom_fast_loading",
 #ifdef LOW_END
          "GDROM Fast Loading (inaccurate); enabled|disabled",
 #else
@@ -386,19 +388,19 @@ void retro_set_environment(retro_environment_t cb)
 #endif
       },
       {
-         "reicast_mipmapping",
+         CORE_OPTION_NAME "_mipmapping",
          "Mipmapping; enabled|disabled",
       },
       {
-         "reicast_volume_modifier_enable",
+         CORE_OPTION_NAME "_volume_modifier_enable",
          "Volume modifier; enabled|disabled",
       },
       {
-         "reicast_widescreen_hack",
+         CORE_OPTION_NAME "_widescreen_hack",
          "Widescreen hack (restart); disabled|enabled",
       },
       {
-         "reicast_cable_type",
+         CORE_OPTION_NAME "_cable_type",
 #ifdef LOW_END
          "Cable type; VGA (RGB)|TV (RGB)|TV (Composite)",	
 #else
@@ -406,23 +408,23 @@ void retro_set_environment(retro_environment_t cb)
 #endif
       },
       {
-         "reicast_broadcast",
+         CORE_OPTION_NAME "_broadcast",
          "Broadcast; Default|PAL_M|PAL_N|NTSC|PAL",
       },
       {
-         "reicast_framerate",
+         CORE_OPTION_NAME "_framerate",
          "Framerate; fullspeed|normal",
       },
       {
-         "reicast_region",
+         CORE_OPTION_NAME "_region",
          "Region; Default|Japan|USA|Europe",
       },
       {
-         "reicast_language",
+         CORE_OPTION_NAME "_language",
          "Language; Default|Japanese|English|German|French|Spanish|Italian",
       },
       {
-         "reicast_div_matching",
+         CORE_OPTION_NAME "_div_matching",
 #ifdef LOW_END
          "DIV matching (performance, less accurate); enabled|disabled|auto",
 #else
@@ -430,15 +432,15 @@ void retro_set_environment(retro_environment_t cb)
 #endif
       },
       {
-         "reicast_analog_stick_deadzone",
+         CORE_OPTION_NAME "_analog_stick_deadzone",
          "Analog Stick Deadzone; 15%|20%|25%|30%|0%|5%|10%"
       },
       {
-         "reicast_trigger_deadzone",
+         CORE_OPTION_NAME "_trigger_deadzone",
          "Trigger Deadzone; 0%|5%|10%|15%|20%|25%|30%"
       },
       {
-         "reicast_digital_triggers",
+         CORE_OPTION_NAME "_digital_triggers",
          "Digital Triggers; disabled|enabled",
       },
       LIGHTGUN_PARAMS(1)
@@ -446,7 +448,7 @@ void retro_set_environment(retro_environment_t cb)
       LIGHTGUN_PARAMS(3)
       LIGHTGUN_PARAMS(4)
       {
-         "reicast_enable_dsp",
+         CORE_OPTION_NAME "_enable_dsp",
 #ifdef LOW_END
          "Enable DSP; disabled|enabled",
 #else
@@ -455,58 +457,62 @@ void retro_set_environment(retro_environment_t cb)
       },
 #ifdef HAVE_TEXUPSCALE
       {
-         "reicast_texupscale",
+         CORE_OPTION_NAME "_texupscale",
          "Texture upscaling (xBRZ); off|2x|4x|6x",
       },
       {
-         "reicast_texupscale_max_filtered_texture_size",
+         CORE_OPTION_NAME "_texupscale_max_filtered_texture_size",
          "Texture upscaling max filtered size; 256|512|1024",
       },
 #endif
       {
-         "reicast_enable_rtt",
+         CORE_OPTION_NAME "_enable_rtt",
          "Enable RTT (Render To Texture); enabled|disabled",
       },
       {
-         "reicast_enable_rttb",
+         CORE_OPTION_NAME "_enable_rttb",
          "Enable RTT (Render To Texture) Buffer; disabled|enabled",
       },
       {
-         "reicast_render_to_texture_upscaling",
+         CORE_OPTION_NAME "_render_to_texture_upscaling",
          "Render To Texture Upscaling; 1x|2x|3x|4x|8x",
       },
 #if !defined(TARGET_NO_THREADS)
       {
-         "reicast_threaded_rendering",
+         CORE_OPTION_NAME "_threaded_rendering",
          "Threaded rendering (restart); enabled|disabled",
       },
       {
-         "reicast_synchronous_rendering",
+         CORE_OPTION_NAME "_synchronous_rendering",
          "Synchronous rendering; disabled|enabled",
       },
 #endif
       {
-         "reicast_frame_skipping",
+         CORE_OPTION_NAME "_frame_skipping",
          "Frame skipping; disabled|1|2|3|4|5|6",
       },
       {
-         "reicast_enable_purupuru",
+         CORE_OPTION_NAME "_enable_purupuru",
          "Purupuru Pack; enabled|disabled"
       },
       {
-         "reicast_allow_service_buttons",
+         CORE_OPTION_NAME "_allow_service_buttons",
          "Allow Naomi service buttons; disabled|enabled"
       },
       {
-         "reicast_custom_textures",
+         CORE_OPTION_NAME "_enable_naomi_15khz_dipswitch",
+         "Enable Naomi 15khz dipswitch (480i); disabled|enabled"
+      },
+      {
+         CORE_OPTION_NAME "_custom_textures",
          "Load custom textures; disabled|enabled"
       },
       {
-         "reicast_dump_textures",
+         CORE_OPTION_NAME "_dump_textures",
          "Dump textures; disabled|enabled"
       },
       {
-         "reicast_per_content_vmus",
+         CORE_OPTION_NAME "_per_content_vmus",
          "Per-game VMUs; disabled|VMU A1|All VMUs"
       },
 	  VMU_SCREEN_PARAMS(1)
@@ -594,7 +600,7 @@ static void update_variables(bool first_startup)
    int i ;
    char key[256] ;
 
-   var.key = "reicast_per_content_vmus";
+   var.key = CORE_OPTION_NAME "_per_content_vmus";
    unsigned previous_per_content_vmus = per_content_vmus;
    per_content_vmus = 0;
 
@@ -613,7 +619,7 @@ static void update_variables(bool first_startup)
       mcfg_CreateDevices();
    }
 
-   var.key = "reicast_widescreen_hack";
+   var.key = CORE_OPTION_NAME "_widescreen_hack";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -625,14 +631,14 @@ static void update_variables(bool first_startup)
    else
       settings.rend.WideScreen = 0;
 
-   var.key = "reicast_screen_rotation";
+   var.key = CORE_OPTION_NAME "_screen_rotation";
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !strcmp("vertical", var.value))
    {
 	  rotate_screen = true;
 	  settings.rend.WideScreen = 0;
    }
 
-   var.key = "reicast_internal_resolution";
+   var.key = CORE_OPTION_NAME "_internal_resolution";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -667,7 +673,7 @@ static void update_variables(bool first_startup)
    }
 
 
-   var.key = "reicast_cpu_mode";
+   var.key = CORE_OPTION_NAME "_cpu_mode";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -677,7 +683,7 @@ static void update_variables(bool first_startup)
          settings.dynarec.Type = 1;
    }
 
-   var.key = "reicast_boot_to_bios";
+   var.key = CORE_OPTION_NAME "_boot_to_bios";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -689,7 +695,7 @@ static void update_variables(bool first_startup)
    else
       boot_to_bios = false;
 
-   var.key = "reicast_gdrom_fast_loading";
+   var.key = CORE_OPTION_NAME "_gdrom_fast_loading";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -701,7 +707,7 @@ static void update_variables(bool first_startup)
    else
       GDROM_TICK      = 1500000;
 
-   var.key = "reicast_alpha_sorting";
+   var.key = CORE_OPTION_NAME "_alpha_sorting";
    int previous_renderer = settings.pvr.rend;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -730,7 +736,7 @@ static void update_variables(bool first_startup)
    if (!first_startup && previous_renderer != settings.pvr.rend)
 	  renderer_changed = true;
 
-   var.key = "reicast_mipmapping";
+   var.key = CORE_OPTION_NAME "_mipmapping";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -744,7 +750,7 @@ static void update_variables(bool first_startup)
 
    if (first_startup)
    {
-      var.key = "reicast_system";
+      var.key = CORE_OPTION_NAME "_system";
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
       {
@@ -762,7 +768,7 @@ static void update_variables(bool first_startup)
 
 #ifdef HAVE_OIT
       extern GLuint pixel_buffer_size;
-      var.key = "reicast_oit_abuffer_size";
+      var.key = CORE_OPTION_NAME "_oit_abuffer_size";
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
       {
@@ -780,7 +786,7 @@ static void update_variables(bool first_startup)
 #endif
    }
 
-   var.key = "reicast_volume_modifier_enable";
+   var.key = CORE_OPTION_NAME "_volume_modifier_enable";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -792,7 +798,7 @@ static void update_variables(bool first_startup)
    else
       settings.pvr.Emulation.ModVol      = true;
 
-   var.key = "reicast_cable_type";
+   var.key = CORE_OPTION_NAME "_cable_type";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -804,7 +810,7 @@ static void update_variables(bool first_startup)
          settings.dreamcast.cable = 3;
    }
 
-   var.key = "reicast_broadcast";
+   var.key = CORE_OPTION_NAME "_broadcast";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -822,7 +828,7 @@ static void update_variables(bool first_startup)
    else
          settings.dreamcast.broadcast = 4;
 
-   var.key = "reicast_framerate";
+   var.key = CORE_OPTION_NAME "_framerate";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -834,7 +840,7 @@ static void update_variables(bool first_startup)
    else
       settings.UpdateMode = 0;
 
-   var.key = "reicast_region";
+   var.key = CORE_OPTION_NAME "_region";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -850,7 +856,7 @@ static void update_variables(bool first_startup)
    else
          settings.dreamcast.region = 3;
 
-   var.key = "reicast_language";
+   var.key = CORE_OPTION_NAME "_language";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -872,7 +878,7 @@ static void update_variables(bool first_startup)
    else
          settings.dreamcast.language = 6;
 
-   var.key = "reicast_div_matching";
+   var.key = CORE_OPTION_NAME "_div_matching";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -894,7 +900,7 @@ static void update_variables(bool first_startup)
    }
 
 #ifdef HAVE_TEXUPSCALE
-   var.key = "reicast_texupscale";
+   var.key = CORE_OPTION_NAME "_texupscale";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -910,7 +916,7 @@ static void update_variables(bool first_startup)
    else if (first_startup)
       settings.rend.TextureUpscale = 1;
 
-   var.key = "reicast_texupscale_max_filtered_texture_size";
+   var.key = CORE_OPTION_NAME "_texupscale_max_filtered_texture_size";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -925,7 +931,7 @@ static void update_variables(bool first_startup)
       settings.rend.MaxFilteredTextureSize = 256;
 #endif
 
-   var.key = "reicast_enable_rtt";
+   var.key = CORE_OPTION_NAME "_enable_rtt";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -937,7 +943,7 @@ static void update_variables(bool first_startup)
    else
          settings.rend.RenderToTexture = true;
 
-   var.key = "reicast_enable_rttb";
+   var.key = CORE_OPTION_NAME "_enable_rttb";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -949,7 +955,7 @@ static void update_variables(bool first_startup)
    else
       settings.rend.RenderToTextureBuffer = false;
 
-   var.key = "reicast_render_to_texture_upscaling";
+   var.key = CORE_OPTION_NAME "_render_to_texture_upscaling";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -968,7 +974,7 @@ static void update_variables(bool first_startup)
    if (first_startup)
    {
 	   bool save_state_in_background = true ;
-	   var.key = "reicast_threaded_rendering";
+	   var.key = CORE_OPTION_NAME "_threaded_rendering";
 
 	   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
 	   {
@@ -986,7 +992,7 @@ static void update_variables(bool first_startup)
    }
 #endif
 
-   var.key = "reicast_synchronous_rendering";
+   var.key = CORE_OPTION_NAME "_synchronous_rendering";
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
 	   if (!strcmp("enabled", var.value))
@@ -997,7 +1003,7 @@ static void update_variables(bool first_startup)
    else
 	   settings.pvr.SynchronousRendering = 0;
 
-   var.key = "reicast_frame_skipping";
+   var.key = CORE_OPTION_NAME "_frame_skipping";
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
 	   if (!strcmp("disabled", var.value))
@@ -1009,7 +1015,7 @@ static void update_variables(bool first_startup)
    else
 	   settings.pvr.ta_skip = 0;
 
-   var.key = "reicast_enable_purupuru";
+   var.key = CORE_OPTION_NAME "_enable_purupuru";
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (enable_purupuru != (strcmp("enabled", var.value) == 0) && settings.System == DC_PLATFORM_DREAMCAST)
@@ -1025,19 +1031,19 @@ static void update_variables(bool first_startup)
       }
    }
 
-   var.key = "reicast_analog_stick_deadzone";
+   var.key = CORE_OPTION_NAME "_analog_stick_deadzone";
    var.value = NULL;
 
    if ( environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value )
       input_set_deadzone_stick( atoi( var.value ) );
 
-   var.key = "reicast_trigger_deadzone";
+   var.key = CORE_OPTION_NAME "_trigger_deadzone";
    var.value = NULL;
 
    if ( environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value )
       input_set_deadzone_trigger( atoi( var.value ) );
 
-   var.key = "reicast_enable_dsp";
+   var.key = CORE_OPTION_NAME "_enable_dsp";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -1057,7 +1063,7 @@ static void update_variables(bool first_startup)
       settings.aica.NoBatch    = 1;
    }
 
-   var.key = "reicast_digital_triggers";
+   var.key = CORE_OPTION_NAME "_digital_triggers";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -1069,7 +1075,7 @@ static void update_variables(bool first_startup)
    else
       digital_triggers = false;
 
-   var.key = "reicast_allow_service_buttons";
+   var.key = CORE_OPTION_NAME "_allow_service_buttons";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -1081,7 +1087,19 @@ static void update_variables(bool first_startup)
    else
       allow_service_buttons = false;
 
-   var.key = "reicast_custom_textures";
+   var.key = CORE_OPTION_NAME "_enable_naomi_15khz_dipswitch";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("enabled", var.value))
+         enable_naomi_15khz_dipswitch = true;
+      else
+         enable_naomi_15khz_dipswitch = false;
+   }
+   else
+      enable_naomi_15khz_dipswitch = false;
+
+   var.key = CORE_OPTION_NAME "_custom_textures";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -1093,7 +1111,7 @@ static void update_variables(bool first_startup)
    else
 	  settings.rend.CustomTextures = false;
 
-   var.key = "reicast_dump_textures";
+   var.key = CORE_OPTION_NAME "_dump_textures";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -1116,7 +1134,7 @@ static void update_variables(bool first_startup)
       lightgun_params[i].dirty = true;	   
       lightgun_params[i].colour = i+1;	   
 
-      snprintf(key, sizeof(key), "reicast_lightgun%d_crosshair", i+1) ;
+      snprintf(key, sizeof(key), CORE_OPTION_NAME "_lightgun%d_crosshair", i+1) ;
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value  )
       {
@@ -1144,13 +1162,13 @@ static void update_variables(bool first_startup)
       vmu_screen_params[i].vmu_screen_opacity = 0xFF ;
       vmu_screen_params[i].vmu_screen_needs_update = true ;
 
-      snprintf(key, sizeof(key), "reicast_vmu%d_screen_display", i+1) ;
+      snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_screen_display", i+1) ;
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !strcmp("enabled", var.value) )
        	 vmu_screen_params[i].vmu_screen_display = true ;
 
 
-      snprintf(key, sizeof(key), "reicast_vmu%d_screen_position", i+1) ;
+      snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_screen_position", i+1) ;
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value  )
       {
@@ -1164,7 +1182,7 @@ static void update_variables(bool first_startup)
         	 vmu_screen_params[i].vmu_screen_position = LOWER_RIGHT;
       }
 
-      snprintf(key, sizeof(key), "reicast_vmu%d_screen_size_mult", i+1) ;
+      snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_screen_size_mult", i+1) ;
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value  )
       {
@@ -1180,7 +1198,7 @@ static void update_variables(bool first_startup)
         	 vmu_screen_params[i].vmu_screen_size_mult = 5;
       }
 
-      snprintf(key, sizeof(key), "reicast_vmu%d_screen_opacity", i+1) ;
+      snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_screen_opacity", i+1) ;
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value  )
       {
@@ -1206,7 +1224,7 @@ static void update_variables(bool first_startup)
         	 vmu_screen_params[i].vmu_screen_opacity = 1*25.5;
       }
 
-      snprintf(key, sizeof(key), "reicast_vmu%d_pixel_on_color", i+1) ;
+      snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_pixel_on_color", i+1) ;
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && strlen(var.value)>1 )
       {
@@ -1216,7 +1234,7 @@ static void update_variables(bool first_startup)
     	  vmu_screen_params[i].vmu_pixel_on_B = VMU_SCREEN_COLOR_MAP[color_idx].b ;
       }
 
-      snprintf(key, sizeof(key), "reicast_vmu%d_pixel_off_color", i+1) ;
+      snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_pixel_off_color", i+1) ;
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && strlen(var.value)>1 )
       {

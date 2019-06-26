@@ -99,3 +99,5 @@ int push_vmu_screen(u8* buffer); //implemented in Android.cpp
 
 #define MAPLE_PORTS 4
 extern MapleDeviceType maple_devices[MAPLE_PORTS];	// Maple device configuration for mcfg_CreateDevices()
+
+extern bool enable_naomi_15khz_dipswitch;

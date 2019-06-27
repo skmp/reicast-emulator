@@ -31,6 +31,8 @@ const char* maple_sega_lightgun_name = "Dreamcast Gun";
 
 const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRISES,LTD.";
 
+bool enable_naomi_15khz_dipswitch = false;
+
 enum MapleFunctionID
 {
 	MFID_0_Input       = 0x01000000, //DC Controller, Lightgun buttons, arcade stick .. stuff like that
@@ -2094,7 +2096,7 @@ struct maple_naomi_jamma : maple_sega_controller
 
 				w8(0x00);
 				w8(0xff);		// in(4)
-				w8(0xff);		// in(5) bit0: 1=VGA, 0=NTSCi
+				w8(enable_naomi_15khz_dipswitch ? 0x00 : 0xff);		// in(5) bit0: 1=VGA, 0=NTSCi
 				w8(0xff);		// in(6)
 
 				w32(0x00);

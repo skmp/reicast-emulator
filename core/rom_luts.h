@@ -71,6 +71,8 @@ static struct game_type lut_games[] =
 
    /* Disable DIV matching */
    { "T15112N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Demolition Racer */
+   { "T-8113N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Ducati World - Racing Challenge (NTSC) */
+   { "T-8121D-50", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Ducati World (PAL) */
 
    /* Extra depth scaling */
    { "MK-51182  ", -1, -1, -1, -1, -1,  -1,  1, 10000.f, -1 },     /* NHL 2K2 */

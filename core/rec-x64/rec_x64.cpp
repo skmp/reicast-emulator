@@ -2158,7 +2158,7 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 		return false;
 
 	//printf("ngen_Rewrite pc %p\n", host_pc);
-	RuntimeBlockInfo *block = bm_GetBlock2((void *)host_pc);
+	RuntimeBlockInfoPtr block = bm_GetBlock2((void *)host_pc);
 	if (block == NULL)
 	{
 		printf("ngen_Rewrite: Block at %p not found\n", (void *)host_pc);
@@ -2176,11 +2176,11 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	const shil_opcode& op = block->oplist[opid];
 
 	BlockCompilerx64 *assembler = new BlockCompilerx64(code_ptr - BlockCompilerx64::mem_access_offset);
-	assembler->InitializeRewrite(block, opid);
+	assembler->InitializeRewrite(block.get(), opid);
 	if (op.op == shop_readm)
-		assembler->GenReadMemorySlow(op, block);
+		assembler->GenReadMemorySlow(op, block.get());
 	else
-		assembler->GenWriteMemorySlow(op, block);
+		assembler->GenWriteMemorySlow(op, block.get());
 	assembler->FinalizeRewrite();
 	verify(block->host_code_size >= assembler->getSize());
 	delete assembler;

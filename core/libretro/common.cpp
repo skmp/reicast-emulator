@@ -59,7 +59,11 @@ static LONG ExceptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 
    //printf("[EXC] During access to : 0x%X\n", address);
 
-   if (VramLockedWrite(address))
+	if (bm_RamWriteAccess(address))
+	{
+		return EXCEPTION_CONTINUE_EXECUTION;
+	}
+	else if (VramLockedWrite(address))
       return EXCEPTION_CONTINUE_EXECUTION;
 #ifndef TARGET_NO_NVMEM
    if (BM_LockedWrite(address))
@@ -328,7 +332,9 @@ printf("mprot hit @ ptr %p @@ pc: %p, %d\n", si->si_addr, ctx.pc, dyna_cde);
 	if (vmem32_handle_signal(si->si_addr, write, exception_pc))
 		return;
 #endif
-   if (VramLockedWrite((u8*)si->si_addr))
+	if (bm_RamWriteAccess(si->si_addr))
+		return;
+	if (VramLockedWrite((u8*)si->si_addr))
       return;
 #if !defined(TARGET_NO_NVMEM) && FEAT_SHREC != DYNAREC_NONE
    if (BM_LockedWrite((u8*)si->si_addr))

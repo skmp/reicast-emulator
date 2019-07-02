@@ -17,6 +17,7 @@
 #include "../rend/rend.h"
 #include "../hw/sh4/sh4_mem.h"
 #include "../hw/sh4/sh4_sched.h"
+#include "../hw/sh4/dyna/blockmanager.h"
 #include "keyboard_map.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_if.h"
@@ -2108,6 +2109,7 @@ bool retro_unserialize(const void * data, size_t size)
     result = dc_unserialize(&data_ptr, &total_size, size) ;
 
     mmu_set_state();
+    bm_Reset();
     sh4_cpu.ResetCache();
     dsp.dyndirty = true;
     sh4_sched_ffts();

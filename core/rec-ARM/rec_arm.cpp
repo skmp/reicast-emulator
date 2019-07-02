@@ -1712,6 +1712,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			break;
 		}
 
+		/* TODO Update this to use quotient sign as well
 		case shop_div32p2:
 		{
 			if (reg.mapg(op->rs1)!=reg.mapg(op->rd))
@@ -1721,6 +1722,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			SUB(reg.mapg(op->rd),reg.mapg(op->rd),reg.mapg(op->rs2),CC_EQ);
 		}
 		break;
+		*/
 
 		case shop_test:
 		case shop_seteq:

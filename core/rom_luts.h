@@ -70,13 +70,7 @@ static struct game_type lut_games[] =
    { "MK-51007  ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Flag to Flag */
 
    /* Disable DIV matching */
-   { "T40216N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Surf Rocket Racers */
-   { "T23001D   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Star Wars - Episode I - Racer (United Kingdom) */
-   { "T23001N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Star Wars - Episode I - Racer (USA) */
-   { "T30701D50 ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Pro Pinball Trilogy */
    { "T15112N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Demolition Racer */
-   { "T7012D    ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Record of Lodoss War (EU) */
-   { "T40218N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Record of Lodoss War (USA) */
 
    /* Extra depth scaling */
    { "MK-51182  ", -1, -1, -1, -1, -1,  -1,  1, 10000.f, -1 },     /* NHL 2K2 */

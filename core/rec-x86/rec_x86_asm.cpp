@@ -7,6 +7,7 @@
 u32 gas_offs=offsetof(Sh4RCB,cntx.jdyn);
 
 u32 cpurun_offset=offsetof(Sh4RCB,cntx.CpuRunning);
+u32 nextpc_offset=offsetof(Sh4RCB,cntx.pc);
 
 void (*ngen_FailedToFindBlock)()=&ngen_FailedToFindBlock_;
 #endif

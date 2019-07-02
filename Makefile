@@ -137,7 +137,7 @@ ifneq (,$(findstring unix,$(platform)))
 		SINGLE_PREC_FLAGS=1
 		HAVE_GENERIC_JIT = 0
 	else ifeq ($(WITH_DYNAREC), x86)
-		CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_REC
+		CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC
 		SINGLE_PREC_FLAGS=1
 		MFLAGS += -m32
 		ASFLAGS += --32

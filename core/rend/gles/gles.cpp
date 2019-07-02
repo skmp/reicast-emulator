@@ -782,7 +782,7 @@ static bool RenderFrame(void)
       scale_x=fb_scale_x;
       scale_y=fb_scale_y;
 		if (SCALER_CTL.interlace == 0 && SCALER_CTL.vscalefactor >= 0x400)
-			scale_y *= SCALER_CTL.vscalefactor / 0x400;
+			scale_y *= (float)SCALER_CTL.vscalefactor / 0x400;
 
       //work out scaling parameters !
       //Pixel doubling is on VO, so it does not affect any pixel operations
@@ -979,8 +979,8 @@ static bool RenderFrame(void)
 				if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor >= 0x400)
 				{
 					// Clipping is done after scaling/filtering so account for that if enabled
-					height *= SCALER_CTL.vscalefactor / 0x400;
-					min_y *= SCALER_CTL.vscalefactor / 0x400;
+					height *= (float)SCALER_CTL.vscalefactor / 0x400;
+					min_y *= (float)SCALER_CTL.vscalefactor / 0x400;
 				}
             // Add x offset for aspect ratio > 4/3
             min_x   = min_x * dc2s_scale_h + ds2s_offs_x;

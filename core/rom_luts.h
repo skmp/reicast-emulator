@@ -63,11 +63,17 @@ static struct game_type lut_games[] =
 
    /* Render to texture buffer */
    { "T40205N   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tony Hawk's Pro Skater 1 (USA) */
-   { "T13006N   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tony Hawk's Pro Skater 2 (USA) */
-   { "T13008D",    -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tony Hawk's Pro Skater 2 (USA) */
+   { "T40204D   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tony Hawk's Skateboarding (EU) */
+   { "T13006N   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tony Hawk's Pro Skater 2 */
+   { "T13008D   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tony Hawk's Pro Skater 2 */
    { "T23002N   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Star Wars Episode I: Jedi Power Battle (USA) */
    { "MK-51052  ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Skies of Arcadia */
+   { "HDR-0076  ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Eternal Arcadia */
    { "MK-51007  ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Flag to Flag */
+   { "HDR-0013  ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Super Speed Racing (JP) */
+   { "6108099   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Yu Suzuki Game Works Vol. 1 */
+   { "T2106M    ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* L.O.L */
+   { "T18702M   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Miss Moonlight */
 
    /* Disable DIV matching */
    { "T15112N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Demolition Racer */
@@ -84,7 +90,9 @@ static struct game_type lut_games[] =
    { "T40501D-50", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Wild Metal (EU) */
    { "T1205N    ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Resident Evil 2 (US) */
    { "T7004D  50", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Resident Evil 2 (EU) */
-
+   { "T14304M   ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Rune Jade */
+   { "T5202M    ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Marionette Company */
+   { "T5203M    ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Marionette Company 2 */
 };
 
 extern InputDescriptors gunsur2_inputs;

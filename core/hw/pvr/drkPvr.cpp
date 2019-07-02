@@ -20,7 +20,11 @@
 
 void libPvr_LockedBlockWrite (vram_block* block,u32 addr)
 {
+#if 1
+	renderer->Invalidate(block);
+#else
 	rend_text_invl(block);
+#endif
 }
 
 

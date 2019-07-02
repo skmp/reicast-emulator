@@ -27,9 +27,8 @@
 class CustomTexture {
 public:
 	CustomTexture()
-		:
 #ifndef TARGET_NO_THREADS
-		loader_thread(loader_thread_func, this)
+		: loader_thread(loader_thread_func, this)
 #endif
 		{}
 	~CustomTexture() { Terminate(); }

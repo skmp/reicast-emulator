@@ -11,6 +11,7 @@
 // This implements the VLockedMemory interface, as defined in _vmem.h
 // The implementation allows it to be empty (that is, to not lock memory).
 
+#ifndef TARGET_NO_EXCEPTIONS
 void VLockedMemory::LockRegion(unsigned offset, unsigned size) {
 	//verify(offset + size < this->size && size != 0);
 	DWORD old;
@@ -22,6 +23,7 @@ void VLockedMemory::UnLockRegion(unsigned offset, unsigned size) {
 	DWORD old;
 	VirtualProtect(&data[offset], size, PAGE_READWRITE, &old);
 }
+#endif
 
 static HANDLE mem_handle = INVALID_HANDLE_VALUE, mem_handle2 = INVALID_HANDLE_VALUE;
 static char * base_alloc = NULL;

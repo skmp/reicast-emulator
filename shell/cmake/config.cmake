@@ -9,7 +9,7 @@
 #
 
 
-set(ZBUILD Off)
+set(ZBUILD ON)
 
 
 
@@ -274,10 +274,12 @@ if ((${BUILD_COMPILER} EQUAL ${COMPILER_VC}) OR
   add_definitions(/D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1)
 
   if(${BUILD_COMPILER} EQUAL ${COMPILER_CLANG})
-    add_definitions(/DXBYAK_NO_OP_NAMES /DTARGET_NO_OPENMP)  #*FIXME* check openmp on clang-cl
+	add_definitions(/DXBYAK_NO_OP_NAMES /DTARGET_NO_OPENMP)  #*FIXME* check openmp on clang-cl
     remove_definitions(/U_HAS_STD_BYTE)
     set(_CXX_FLAGS "/std:c++14")	# /U_HAS_STD_BYTE not working, have to use c++14 not 17 :|
     set(_C_FLAGS "-Wno-unused-function -Wno-unused-variable")
+  else()
+	set(_CXX_FLAGS "/EHsc /std:c++14")
   endif()
 
 
@@ -310,6 +312,15 @@ set(_CXX_FLAGS "${_CXX_FLAGS} ${_C_FLAGS}")
 set(CMAKE_C_FLAGS " ${_C_FLAGS}") # ${CMAKE_C_FLAGS}   -- these hold default VC flags for non VC Build ?
 set(CMAKE_CXX_FLAGS " ${_CXX_FLAGS}") # ${CMAKE_CXX_FLAGS}
 
+
+
+#if(ENABLE_LTO)
+#  check_and_add_flag(LTO -flto)
+#endif()
+
+#if(CMAKE_GENERATOR MATCHES "Ninja")
+#  check_and_add_flag(DIAGNOSTICS_COLOR -fdiagnostics-color)
+#endif()
 
 
 #if defined(TARGET_NAOMI)
@@ -368,6 +379,16 @@ if(ZBUILD)
      NOT TARGET_OSX AND NOT TARGET_IOS )
      set(USE_QT ON)
   endif()
+  
+	add_definitions(-DTARGET_NO_THREADS)
+#	add_definitions(-DTARGET_NO_EXCEPTIONS)
+#	add_definitions(-DTARGET_NO_COREIO_HTTP -DTARGET_NO_WEBUI -DTARGET_NO_NIXPROF)
+	set(FEAT_SHREC  ${DYNAREC_NONE})
+	set(FEAT_AREC   ${DYNAREC_NONE})
+	set(FEAT_DSPREC ${DYNAREC_NONE})
+
+  set(NO_IMGUI ON)
+  add_definitions(-DNO_IMGUI)
 endif()
 
 
@@ -375,20 +396,35 @@ endif()
 # configure options for osd/ui 
 # osd_default, osd_qt
 # ui_default, ui_sdl, ui_qt
-# USE_NATIVE , USE_SDL , USE_QT  -- these (can) define multiple
 
-option(USE_QT False "Use Qt5 for UI and support OS Deps.")
+### see main CMakeLists.txt for this now ###
+
+## *FIXME*  select from OSD list instead of checks in checks below ##
+#option(OSD_BASE)
+#option(UI_)
 
 
+option(ENABLE_QT  "Enable Qt OSD" OFF)
+
+if(ENABLE_QT OR USE_QT)
+	set(USE_QT ON)
+	add_definitions(-DUSE_QT)
+endif()
+
+
+option(ENABLE_SDL "Enable SDL OSD" OFF)
+
+if(ENABLE_SDL OR USE_SDL)
+	set(USE_SDL ON)
+	add_definitions(-DUSE_SDL)
+endif()
+
+
+
+	
 
 
 #option TARGET_NO_WEBUI
-
-
-
-
-
-#option(BUILD_TESTS "Build tests" OFF)	# todo: luserx0 this is your arena, you want tests add em
 
 
 add_definitions(-DCMAKE_BUILD)

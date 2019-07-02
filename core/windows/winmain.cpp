@@ -129,6 +129,7 @@ void os_SetupInput()
 	GamepadDevice::Register(mouse_gamepad);
 }
 
+#if !defined(TARGET_NO_EXCEPTIONS)
 LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 {
 	EXCEPTION_POINTERS* ep = ExceptionInfo;
@@ -176,7 +177,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 
 	return EXCEPTION_CONTINUE_SEARCH;
 }
-
+#endif
 
 void SetupPath()
 {
@@ -572,7 +573,8 @@ void ReserveBottomMemory()
 #endif
 }
 
-#ifdef _WIN64
+#if !defined(TARGET_NO_EXCEPTIONS) && defined(_WIN64)
+
 #include "hw/sh4/dyna/ngen.h"
 
 typedef union _UNWIND_CODE {
@@ -677,6 +679,9 @@ void setup_seh() {
 
 
 
+#include "Renderer_if.h"
+
+
 // DEF_CONSOLE allows you to override linker subsystem and therefore default console //
 //	: pragma isn't pretty but def's are configurable 
 #ifdef DEF_CONSOLE
@@ -687,6 +692,7 @@ int main(int argc, char **argv)
 
 #else
 #pragma comment(linker, "/subsystem:windows")
+
 
 int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShowCmd)
 
@@ -726,12 +732,15 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 	ReserveBottomMemory();
 	SetupPath();
 
+#ifndef TARGET_NO_EXCEPTIONS
 #ifdef _WIN64
 	AddVectoredExceptionHandler(1, ExeptionHandler);
 #else
 	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&ExeptionHandler);
 #endif
-#ifndef __GNUC__
+#endif
+
+#if !defined(TARGET_NO_EXCEPTIONS) && !defined(__GNUC__)
 	__try
 #endif
 	{
@@ -744,21 +753,38 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 		if (reicast_init(argc, argv) != 0)
 			die("Reicast initialization failed");
 
-		#ifdef _WIN64
+#if !defined(TARGET_NO_EXCEPTIONS) && defined(_WIN64)
 			setup_seh();
-		#endif
+#endif
 
+#ifdef _Z_
+
+			void* dc_run(void*);
+			void dc_reset();
+			int dc_start_game(const char* path);
+
+			bool LoadRomFiles(const string & root);
+
+
+			rend_init_renderer(R_GL4);
+			dc_start_game(NULL);
+
+#else
 		rend_thread(NULL);
-
+#endif
 		dc_term();
 	}
-#ifndef __GNUC__
+#if !defined(TARGET_NO_EXCEPTIONS) && !defined(__GNUC__)
 	__except( ExeptionHandler(GetExceptionInformation()) )
 	{
 		printf("Unhandled exception - Emulation thread halted...\n");
 	}
 #endif
+#if !defined(TARGET_NO_EXCEPTIONS)
 	SetUnhandledExceptionFilter(0);
+#endif
+
+
 	cfgSaveBool("windows", "maximized", window_maximized);
 	if (!window_maximized && screen_width != 0 && screen_width != 0)
 	{
@@ -808,4 +834,6 @@ void os_DoEvents()
 }
 
 int get_mic_data(u8* buffer) { return 0; }
-int push_vmu_screen(u8* buffer) { return 0; }
+//int push_vmu_screen(u8* buffer) { return 0; }
+
+void push_vmu_screen(int bus_id, int bus_port, u8* buffer) { }

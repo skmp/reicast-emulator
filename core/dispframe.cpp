@@ -9,7 +9,7 @@ extern TA_context* rqueue;
 
 void SetREP(TA_context* cntx);
 TA_context* read_frame(const char* file, u8* vram_ref = NULL);
-void rend_set_fb_scale(float x,float y);
+//void rend_set_fb_scale(float x,float y);
 
 #ifdef TARGET_DISPFRAME
 void dc_run()
@@ -20,7 +20,7 @@ void dc_run()
     act.sa_sigaction = SIG_IGN;
     sigaction(SIGUSR1, &act, &segv_oact);
 
-    rend_set_fb_scale(1.0, 1.0);
+//	rend_set_fb_scale(1.0, 1.0);
 
     char frame_path[512];
     cfgLoadStr("config", "image", frame_path, "null");

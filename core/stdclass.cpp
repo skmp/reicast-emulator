@@ -159,7 +159,7 @@ bool make_directory(const string& path)
 }
 
 // Thread & related platform dependant code
-#if !defined(HOST_NO_THREADS)
+#if !defined(TARGET_NO_THREADS)
 
 #if HOST_OS==OS_WINDOWS
 void cThread::Start() {

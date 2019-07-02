@@ -405,13 +405,16 @@ void* malloc_pages(size_t size) {
 #endif
 }
 
+#if FEAT_SHREC != DYNAREC_NONE	// Don't add BM functions for interpreter build //
+
 // Resets the FPCB table (by either clearing it to the default val
 // or by flushing it and making it fault on access again.
 void _vmem_bm_reset() {
 	// If we allocated it via vmem:
-	if (virt_ram_base)
+	if (virt_ram_base) {
 		vmem_platform_reset_mem(p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
-	else
+		return;
+	}
 		// We allocated it via a regular malloc/new/whatever on the heap
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
 }
@@ -436,6 +439,7 @@ bool BM_LockedWrite(u8* address) {
 	}
 	return false;
 }
+#endif
 
 bool _vmem_reserve() {
 	// TODO: Static assert?
@@ -456,7 +460,10 @@ bool _vmem_reserve() {
 
 		// Allocate it all and initialize it.
 		p_sh4rcb = (Sh4RCB*)malloc_pages(sizeof(Sh4RCB));
+
+#if FEAT_SHREC != DYNAREC_NONE	
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
+#endif
 
 		mem_b.size = RAM_SIZE;
 		mem_b.data = (u8*)malloc_pages(RAM_SIZE);

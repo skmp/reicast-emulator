@@ -20,9 +20,36 @@
 #include "hw/pvr/spg.h"
 #include "hw/aica/dsp.h"
 #include "imgread/common.h"
-#include "rend/gui.h"
 #include "profiler/profiler.h"
 #include "input/gamepad_device.h"
+
+#ifndef NO_IMGUI
+#include "rend/gui.h"
+
+#else
+
+int msgboxf(const wchar* text, unsigned int type, ...)
+{
+	va_list args;
+
+	wchar temp[2048];
+	va_start(args, type);
+	vsnprintf(temp, sizeof(temp), text, args);
+	va_end(args);
+	printf("/^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\ \n");
+	printf("| %s \n", temp);
+	printf("\\___________________________________________________________/ \n");
+
+	return 1;
+}
+
+void gui_display_notification(const char* msg, int duration)
+{
+	msgboxf(msg, 0);
+}
+
+#endif
+
 
 void FlushCache();
 void LoadCustom();
@@ -36,7 +63,9 @@ static bool safemode_game;
 static bool tr_poly_depth_mask_game;
 static bool extra_depth_game;
 
+#if !defined(TARGET_NO_THREADS)
 cThread emu_thread(&dc_run, NULL);
+#endif
 
 #if HOST_OS==OS_WINDOWS
 #include <windows.h>
@@ -281,7 +310,9 @@ int reicast_init(int argc, char* argv[])
 	if (!cfgOpen())
 	{
 		printf("Config directory is not set. Starting onboarding\n");
+#ifndef NO_IMGUI
 		gui_open_onboarding();
+#endif
 	}
 	else
 		LoadSettings(false);
@@ -308,6 +339,8 @@ int dc_start_game(const char *path)
 {
 	if (path != NULL)
 		cfgSetVirtual("config", "image", path);
+
+
 
 	if (init_done)
 	{
@@ -425,12 +458,14 @@ void* dc_run(void*)
 
 	InitAudio();
 
+#if FEAT_SHREC != DYNAREC_NONE
 	if (settings.dynarec.Enable)
 	{
 		Get_Sh4Recompiler(&sh4_cpu);
 		printf("Using Recompiler\n");
 	}
 	else
+#endif
 	{
 		Get_Sh4Interpreter(&sh4_cpu);
 		printf("Using Interpreter\n");
@@ -471,7 +506,10 @@ void dc_stop()
 {
 	sh4_cpu.Stop();
 	rend_cancel_emu_wait();
+
+#if !defined(TARGET_NO_THREADS)
 	emu_thread.WaitToEnd();
+#endif
 }
 
 // Called on the emulator thread for soft reset
@@ -796,7 +834,11 @@ void SaveSettings()
 
 void dc_resume()
 {
+#if !defined(TARGET_NO_THREADS)
 	emu_thread.Start();
+#else
+	dc_run(NULL);
+#endif
 }
 
 static void cleanup_serialize(void *data)

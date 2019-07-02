@@ -816,7 +816,8 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 #endif
 
 
-struct softrend : Renderer
+class softrend
+	: Renderer
 {
 	virtual bool Process(TA_context* ctx) {
 		//disable RTTs for now ..
@@ -1231,6 +1232,8 @@ struct softrend : Renderer
 	}
 };
 
+#if 0
 Renderer* rend_softrend() {
 	return new(_mm_malloc(sizeof(softrend), 32)) softrend();
 }
+#endif

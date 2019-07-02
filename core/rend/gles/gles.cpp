@@ -17,11 +17,13 @@ int fbdev = -1;
 #endif
 
 #ifndef GLES
-#if HOST_OS != OS_DARWIN
+
+#if HOST_OS != OS_DARWIN //&& !defined(USE_QT)
 #undef ARRAY_SIZE	// macros are evil
 #include <GL4/gl3w.c>
 #pragma comment(lib,"Opengl32.lib")
 #endif
+
 #else
 #ifndef GL_RED
 #define GL_RED                            0x1903
@@ -70,7 +72,8 @@ Tile clip
 #include "rend/rend.h"
 #include "input/gamepad.h"
 
-float fb_scale_x,fb_scale_y;
+extern float fb_scale_x,fb_scale_y;
+
 float scale_x, scale_y;
 
 //Fragment and vertex shaders code
@@ -650,7 +653,13 @@ GLuint fogTextureId;
 		gl.setup.display = EGL_NO_DISPLAY;
 	}
 
-#elif HOST_OS == OS_WINDOWS && !defined(USE_SDL)
+#elif HOST_OS == OS_WINDOWS && !defined(USE_SDL) // && !defined(USE_QT)
+
+
+#if defined(USE_QT)
+#include "../qt/OpenGLWindow.h"
+#endif
+
 	#define WGL_DRAW_TO_WINDOW_ARB         0x2001
 	#define WGL_ACCELERATION_ARB           0x2003
 	#define WGL_SWAP_METHOD_ARB            0x2007
@@ -770,6 +779,11 @@ GLuint fogTextureId;
 			else
 				rv = false;
 
+#if defined(USE_QT)
+		QWGLNativeContext nativeContext(m_hrc, (HWND)hwnd);
+		OpenGLWindow::Get()->nativeCtx = QVariant::fromValue(nativeContext);
+#endif
+
 			wglDeleteContext(ourOpenGLRenderingContext);
 		}
 
@@ -781,6 +795,7 @@ GLuint fogTextureId;
 		GetClientRect((HWND)hwnd, &r);
 		screen_width = r.right - r.left;
 		screen_height = r.bottom - r.top;
+
 
 		return rv;
 	}
@@ -794,7 +809,7 @@ GLuint fogTextureId;
 	void gl_term()
 	{
 	}
-#elif defined(SUPPORT_X11) && !defined(USE_SDL)
+#elif defined(SUPPORT_X11) && !defined(USE_SDL) && !defined(USE_QT)
 	//! windows && X11
 	//let's assume glx for now
 
@@ -850,8 +865,65 @@ GLuint fogTextureId;
 	void gl_term()
 	{
 	}
+#if 0
+#elif defined(USE_QT)
+
+#include "qt/Application.h"
+
+bool gl_init(void* wind, void* disp)
+{
+	// It going to want the context i'd imagine //
+	OpenGLWindow* gl = reiApp->mainWindow()->glWindow();
+
+
+	int rv = gl3wInit() != -1 && gl3wIsSupported(3, 1);
+	if (!rv) {
+		printf("gl_init() (QT) gl3wInit() failed or not supported!\n");
+		return false;
+	}
+
+#if 0
+	gl->makeCurrent();
+	if (!gl->isValid()) {
+		printf("gl_init() !gl->isValid()\n");
+		return false;
+	}
+#endif
+	return true;
+}
+void gl_term() {}
+
+void gl_swap()
+{
+	OpenGLWindow* gl = reiApp->mainWindow()->glWindow();
+	if (!gl) {
+		printf("--------ERROR------ gl_swap() and can't get qt gl window!\n");
+		return;
+	}
+
+
+#if 0
+	gl->update();
+#else
+	QOpenGLContext* ctx = QOpenGLContext::currentContext(); //  gl->shareContext();
+
+	ctx->makeCurrent(ctx->surface());
+
+	if (ctx)
+		ctx->swapBuffers(gl);
+	else
+		printf("--------ERROR------ gl_swap() and no context!\n");
+//	gl->makeCurrent();
+#endif
+}
+#endif
+
+
+
+
 
 #else
+
 extern void gl_term();
 #endif
 
@@ -1218,8 +1290,6 @@ bool gl_create_resources()
 
 	gl_load_osd_resources();
 
-	gui_init();
-
 	return true;
 }
 
@@ -1235,14 +1305,19 @@ bool gl_create_resources();
 
 bool gles_init()
 {
+	printf("@@@@@@ gles_init() A \n");
+
 	if (!gl_init((void*)libPvr_GetRenderTarget(),
 		         (void*)libPvr_GetRenderSurface()))
 			return false;
+
+	printf("@@@@@@ gles_init() B \n");
 
 	glcache.EnableCache();
 
 	if (!gl_create_resources())
 		return false;
+	printf("@@@@@@ gles_init() C \n");
 
 #ifdef USE_EGL
 	#ifdef TARGET_PANDORA
@@ -1258,10 +1333,11 @@ bool gles_init()
 	//    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 
 	//clean up the buffer
-	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+	glcache.ClearColor(1.f, 0.f, 0.f, 0.f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	gl_swap();
 
+	printf("@@@@@@ gles_init() D \n");
 #ifdef GL_GENERATE_MIPMAP_HINT
 	if (gl.is_gles)
 		glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
@@ -1276,6 +1352,7 @@ bool gles_init()
 	}
 	fog_needs_update = true;
 
+	printf("@@@@@@ gles_init() Z \n");
 	return true;
 }
 
@@ -1485,7 +1562,9 @@ void OSD_DRAW(bool clear_screen)
 			glDrawArrays(GL_TRIANGLE_STRIP, i * 4, 4);
 	}
 #endif
+#ifndef NO_IMGUI
 	gui_display_osd();
+#endif
 }
 
 bool ProcessFrame(TA_context* ctx)
@@ -1986,7 +2065,8 @@ void rend_set_fb_scale(float x,float y)
 	fb_scale_y=y;
 }
 
-struct glesrend : Renderer
+struct glesrend
+	: Renderer
 {
 	bool Init() { return gles_init(); }
 	void Resize(int w, int h) { screen_width=w; screen_height=h; }
@@ -1994,6 +2074,7 @@ struct glesrend : Renderer
 	{
 		if (KillTex)
 			killtex();
+
 		gles_term();
 	}
 
@@ -2024,8 +2105,18 @@ struct glesrend : Renderer
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
 		return gl_GetTexture(tsp, tcw);
 	}
+	void Invalidate(vram_block* bl)
+	{
+		void rend_text_invl(vram_block * bl);
+		rend_text_invl(bl);
+	}
+	static Renderer* createInstance() {
+		printf("gles create\n");
+		return new glesrend;
+	}
 };
 
+static bool rr_gl4 = Renderer::Register(R_GLES, &glesrend::createInstance);
 
 #include "deps/libpng/png.h"
 

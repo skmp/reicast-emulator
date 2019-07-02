@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5.0 FATAL_ERROR)
 
 set(TNAME reicast)
 
-project(${TNAME})
+project(reicast)
 
 enable_language(ASM)
 enable_language(ASM_MASM)
@@ -12,6 +12,7 @@ set(DEBUG_CMAKE ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
 set(reicast_root_path  "${CMAKE_CURRENT_SOURCE_DIR}")
 set(reicast_core_path  "${reicast_root_path}/core")
@@ -43,16 +44,12 @@ set(d_core ${reicast_core_path})
 file(GLOB_RECURSE hw_SRCS	${d_core}/hw/*.cpp			${d_core}/hw/*.h)
 
 file(GLOB cfg_SRCS			${d_core}/cfg/*.cpp			${d_core}/cfg/*.h)
-file(GLOB rend_SRCS			${d_core}/rend/*.cpp		${d_core}/rend/*.h)
+
 file(GLOB input_SRCS		${d_core}/input/*.cpp		${d_core}/input/*.h)
 file(GLOB reios_SRCS		${d_core}/reios/*.cpp		${d_core}/reios/*.h)
 file(GLOB imgread_SRCS		${d_core}/imgread/*.cpp		${d_core}/imgread/*.h)
 file(GLOB profiler_SRCS		${d_core}/profiler/*.cpp	${d_core}/profiler/*.h)
 file(GLOB archive_SRCS		${d_core}/archive/*.cpp		${d_core}/archive/*.h)
-
-#### option(rend)
-file(GLOB gl4_SRCS			${d_core}/rend/gl4/*.cpp	${d_core}/rend/gl4/*.h)
-file(GLOB gles_SRCS			${d_core}/rend/gles/*.cpp	${d_core}/rend/gles/*.h)
 
 set(core_SRCS
   ${hw_SRCS}
@@ -71,12 +68,77 @@ set(core_SRCS
   ${d_core}/serialize.cpp
 )
 
+
+
+#### option(rend) ###############################################################################
+
+if (NOT NO_IMGUI)
+	file(GLOB rend_SRCS		${d_core}/rend/*.cpp		${d_core}/rend/*.h)
+else()
+	set(rend_SRCS			${d_core}/rend/TexCache.cpp)
+endif()
+file(GLOB soft_SRCS			${d_core}/rend/soft/*.cpp	${d_core}/rend/soft/*.h)
+file(GLOB d3d11_SRCS		${d_core}/rend/d3d11/*.cpp	${d_core}/rend/d3d11/*.h)
+file(GLOB norend_SRCS		${d_core}/rend/norend/*.cpp	${d_core}/rend/norend/*.h)
+
+
+file(GLOB gl4_SRCS			${d_core}/rend/gl4/*.cpp	${d_core}/rend/gl4/*.h)
+file(GLOB gles_SRCS			${d_core}/rend/gles/*.cpp	${d_core}/rend/gles/*.h)
+
+
+
+list(APPEND core_SRCS ${rend_SRCS} ${norend_SRCS})
+
+
+#set(renderers gl4_SRCS;gles_SRCS;vk_SRCS)
+
+
+### Vulkan support ###
+#
+set(USE_VULKAN On)
+if(USE_VULKAN)
+
+	add_definitions(-DUSE_VULKAN)
+	include(${d_core}/rend/vulkan/CMakeLists.txt)
+	#add_subdirectory(${d_core}/rend/vulkan)
+
+	list(APPEND core_SRCS ${vk_SRCS})
+
+	include(vktools)
+
+	compile_shaders(${d_core}/rend/vulkan/shaders ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+	
+endif()
+
+set(USE_GL4 On)
+if(USE_GL4) # option
+#	add_definitions(-DGL4 -DUSE_GL4)
+	list(APPEND core_SRCS ${gl4_SRCS})
+endif()
+
+set(USE_GLES OFF)
+if(USE_GLES OR USE_GL4) # option
+#	add_definitions(-DGLES -DUSE_GLES)
+	list(APPEND core_SRCS ${gles_SRCS})
+endif()
+
+
+set(USE_D3D OFF)
+set(USE_SOFT OFF)
+if(USE_SOFT)
+	list(APPEND core_SRCS ${soft_SRCS}) # ${d3d11_SRCS})
+endif()
+
+
+############################################
+
+
   
 if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC})	# Add Clang if NOT WIN32 *FIXME* 
   list(APPEND core_SRCS ${archive_SRCS})
 endif()
 
-if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT})
+if(NOT ${FEAT_SHREC} EQUAL ${DYNAREC_NONE})
 #
   if(${HOST_CPU} EQUAL ${CPU_X86})
     list(APPEND core_SRCS 
@@ -169,16 +231,60 @@ set(d_aout ${reicast_core_path}/oslib)
 
 include_directories ("${d_core}/khronos")
 
-## I really should just glob all of the dirs and ;shrug; if guards don't do it all ##
+set(osd_SRCS ${d_aout}/audiostream.cpp)
 
-set(osd_SRCS "")
 
-list(APPEND osd_SRCS ${d_aout}/audiostream.cpp)
+if(USE_QT)
+
+	if (NOT Qt5_DIR) # AND MSVC)
+		set(Qt5_DIR $ENV{QT_CMAKE_PATH}) # "${CMAKE_SOURCE_DIR}/Externals/Qt5.11.1/5.11.1/msvc2017_64/lib/cmake/Qt5")
+	endif()
+
+	message(" Q T D I R B ${Qt5_DIR} ******************************************")
+
+	find_package(Qt5 5.12 REQUIRED COMPONENTS Gui Widgets OpenGL Concurrent) # Vulkan)
+
+	set_property(TARGET Qt5::Core PROPERTY INTERFACE_COMPILE_FEATURES "")
+	message(STATUS "Found Qt version ${Qt5Core_VERSION}")
+
+	set(CMAKE_AUTOMOC ON)
+	
+	set(d_qt ${d_core}/qt)
+	list(APPEND osd_SRCS ${d_qt}/main.cpp 
+			${d_qt}/Application.h
+			${d_qt}/MainWindow.h
+			${d_qt}/OpenGLWindow.h   ${d_qt}/OpenGLWindow.cpp
+			${d_qt}/VulkanWindow.h  #${d_qt}/VulkanWindow.cpp
+			${d_qt}/VulkanRenderer.h ${d_qt}/VulkanRenderer.cpp
+		)
+	#compile_definitions(reicast -DQT_USE_QSTRINGBUILDER -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII)
+
+
+	include_directories(${CMAKE_CURRENT_BINARY_DIR} ${Qt5Gui_PRIVATE_INCLUDE_DIRS})
+
+
+	#### TEMP ####
+	
+
+	link_libraries(Qt5::Widgets Qt5::Gui Qt5::Core Qt5::Concurrent)
+
+
+elseif (USE_SDL)
+
+  list(APPEND osd_SRCS ${d_core}/sdl/sdl.cpp)
+
+endif()
+
+
 
 if (${HOST_OS} EQUAL ${OS_WINDOWS})
 
+if(NOT USE_QT AND NOT USE_SDL)
   list(APPEND osd_SRCS ${d_core}/windows/winmain.cpp)
+endif()
+
   list(APPEND osd_SRCS ${d_core}/windows/win_vmem.cpp)
+  list(APPEND osd_SRCS ${d_aout}/audiobackend_xaudio.cpp)
   list(APPEND osd_SRCS ${d_aout}/audiobackend_directsound.cpp)
   
   
@@ -195,7 +301,8 @@ elseif (${HOST_OS} EQUAL ${OS_LINUX} OR ${HOST_OS} EQUAL ${OS_ANDROID})
       ${d_aout}/audiobackend_oss.cpp # add option
     ) # todo: configure linux audio lib options
   
-    if(NOT ANDROID)
+    if	(NOT ANDROID AND
+		(NOT USE_QT AND NOT USE_SDL))
       list(APPEND osd_SRCS 
 		${d_core}/linux-dist/x11.cpp
 		${d_core}/linux-dist/main.cpp
@@ -251,17 +358,22 @@ include_directories ("${reicast_core_path}")
 
 set(reicast_SRCS ${core_SRCS} ${deps_SRCS} ${osd_SRCS})
 
-add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
+add_executable(reicast ${reicast_SRCS} ${SHADER_BINARY_FILES}) 
 
+#if (USE_VULKAN) # *FIXME*
+	add_dependencies(reicast Shaders ${SHADER_BINARY_FILES})
+#endif()
+
+set_target_properties(reicast PROPERTIES OUTPUT_NAME reicast${binSuffix})
 
 
 
 
 if(APPLE)
   enable_language(Swift)
-  set_property(TARGET ${TNAME} PROPERTY XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "./shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h")
+  set_property(TARGET reicast PROPERTY XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "./shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h")
 
-  target_link_libraries(${TNAME}
+  target_link_libraries(reicast
 # "-framework Cocoa"
 # "-framework AppKit"
   "-framework CoreData"

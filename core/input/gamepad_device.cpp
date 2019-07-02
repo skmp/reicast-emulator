@@ -19,7 +19,9 @@
 #include <algorithm>
 #include <limits.h>
 #include "gamepad_device.h"
+#ifndef NO_IMGUI
 #include "rend/gui.h"
+#endif
 #include "oslib/oslib.h"
 #include "cfg/cfg.h"
 
@@ -96,8 +98,10 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 				dc_exit();
 			break;
 		case EMU_BTN_MENU:
+#ifndef NO_IMGUI
 			if (pressed)
 				gui_open_settings();
+#endif
 			break;
 		case EMU_BTN_TRIGGER_LEFT:
 			lt[_maple_port] = pressed ? 255 : 0;

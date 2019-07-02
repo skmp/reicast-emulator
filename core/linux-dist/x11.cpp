@@ -14,8 +14,10 @@
 #include "cfg/cfg.h"
 #include "linux-dist/x11.h"
 #include "linux-dist/main.h"
-#include "rend/gui.h"
 #include "input/gamepad.h"
+#ifndef NO_IMGUI
+#include "rend/gui.h"
+#endif
 
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"

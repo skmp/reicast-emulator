@@ -29,11 +29,17 @@
 #pragma comment(lib,"libGLES20.lib")
 #endif
 
-#elif HOST_OS == OS_DARWIN
+#else	// !GLES
+
+#if HOST_OS == OS_DARWIN
     #include <OpenGL/gl3.h>
+//#elif defined(USE_QT)
+//	#include <QtOpenGL/QtOpenGL>
 #else
 	#include <GL4/gl3w.h>
 #endif
+
+#endif // ~GLES
 
 #define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
 #define eglCheck() false

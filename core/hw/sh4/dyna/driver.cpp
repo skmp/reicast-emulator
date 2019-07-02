@@ -19,6 +19,13 @@
 #include "ngen.h"
 #include "decoder.h"
 
+
+// req for sstates
+u32 LastAddr;
+u32 LastAddr_min;
+
+char block_hash[1024];
+
 #if FEAT_SHREC != DYNAREC_NONE
 
 u8 SH4_TCB[CODE_SIZE+4096]
@@ -35,8 +42,6 @@ u8 SH4_TCB[CODE_SIZE+4096]
 u8* CodeCache;
 uintptr_t cc_rx_offset;
 
-u32 LastAddr;
-u32 LastAddr_min;
 u32* emit_ptr=0;
 
 void* emit_GetCCPtr() { return emit_ptr==0?(void*)&CodeCache[LastAddr]:(void*)emit_ptr; }
@@ -168,7 +173,6 @@ SmcCheckEnum DoCheck(u32 pc)
 
 void AnalyseBlock(RuntimeBlockInfo* blk);
 
-char block_hash[1024];
 
 #include "deps/crypto/sha1.h"
 

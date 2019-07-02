@@ -2,7 +2,10 @@
 #include "ta.h"
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
+
+#ifndef NO_IMGUI
 #include "rend/gui.h"
+#endif
 
 #include "deps/zlib/zlib.h"
 
@@ -73,11 +76,39 @@ FILE* fCheckFrames;
 	- wait and block for parse/texcache. Render is async
 */
 
+
+
+
+
+Renderer* Renderer::m_renderer = nullptr;
+Renderer* Renderer::m_fallback = nullptr;
+
+map<eRenderer, std::function<Renderer* ()>> Renderer::m_map;
+//void Renderer::Register(eRenderer rID, const Renderer* rPtr){}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 u32 VertexCount=0;
 u32 FrameCount=1;
 
-Renderer* renderer;
-static Renderer* fallback_renderer;
 bool renderer_enabled = true;	// Signals the renderer thread to exit
 bool renderer_changed = false;	// Signals the renderer thread to switch renderer
 
@@ -96,9 +127,9 @@ bool fb_dirty;
 
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
-void killtex();
+
 bool render_output_framebuffer();
-static void rend_create_renderer();
+//static void rend_create_renderer(eRenderer rID = R_Auto);
 
 void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {
 	FILE* fw = fopen(file, "wb");
@@ -267,6 +298,7 @@ bool rend_frame(TA_context* ctx, bool draw_osd) {
 
 bool rend_single_frame()
 {
+#if 0	// *FIXME*
 	if (renderer_changed)
 	{
 		renderer_changed = false;
@@ -274,12 +306,14 @@ bool rend_single_frame()
 		rend_create_renderer();
 		rend_init_renderer();
 	}
+#endif
 	//wait render start only if no frame pending
 	do
 	{
 		// FIXME not here
 		os_DoEvents();
 #if !defined(TARGET_NO_THREADS)
+#ifndef NO_IMGUI
 		if (gui_is_open() || gui_state == VJoyEdit)
 		{
 			gui_display_ui();
@@ -292,6 +326,7 @@ bool rend_single_frame()
 			return true;
 		}
 		else
+#endif
 		{
 			if (renderer != NULL)
 				renderer->RenderLastFrame();
@@ -300,14 +335,17 @@ bool rend_single_frame()
 				return false;
 		}
 #else
+#ifndef NO_IMGUI
 		if (gui_is_open())
 		{
 			gui_display_ui();
 			FinishRender(NULL);
 			return true;
 		}
-		if (renderer != NULL)
+#endif
+		if (renderer != NULL) {
 			renderer->RenderLastFrame();
+		}
 #endif
 		if (!renderer_enabled)
 			return false;
@@ -329,36 +367,56 @@ bool rend_single_frame()
 	return do_swp;
 }
 
-static void rend_create_renderer()
+#if 0
+static void rend_create_renderer(eRenderer rID)
 {
+
+	printf("%s(%d)\n", __FUNCTION__,(u32)rID);
 #ifdef NO_REND
 	renderer	 = rend_norend();
 #else
-	switch (settings.pvr.rend)
-	{
-	default:
+	switch(rID) {
+	case R_None:	//renderer = rend_norend();	break;
 	case 0:
-		renderer = rend_GLES2();
-		break;
-#if FEAT_HAS_SOFTREND
-	case 2:
-		renderer = rend_softrend();
-		break;
-#endif
+	default:
+	case R_GNM:
+	case R_GLES:	renderer = rend_GLES2();	break;
 #if !defined(GLES) && HOST_OS != OS_DARWIN
 	case 3:
-		renderer = rend_GL4();
-		fallback_renderer = rend_GLES2();
-		break;
+	case R_GL4:		renderer = rend_GL4();		break;
 #endif
+#if 0
+	case R_D3D11:	renderer = rend_d3d11();	break;
+#endif
+#if FEAT_HAS_SOFTREND
+	case 2:
+	case R_Soft:	renderer = rend_softrend();	break;
+#endif
+
+	case R_Vulkan:	renderer = vk_renderer();	break;
+
 	}
 #endif
 }
+#endif
 
-void rend_init_renderer()
+void rend_init_renderer(eRenderer rID)
 {
+	auto setRID = (R_Auto!=rID) ? rID :	(eRenderer)settings.pvr.rend;
+
+#if 1
+	if(!Renderer::Create(setRID) || !renderer->Init())
+	{
+		printf("Failed to create renderer, attempting fallback...\n");
+
+		if (R_Auto != setRID) {
+			if (!Renderer::Create(R_Auto, true) || !fallback_renderer->Init())
+				die("failed to create renderer!");
+		}
+	}
+#else
 	if (renderer == NULL)
-		rend_create_renderer();
+		rend_create_renderer(setRID);
 	if (!renderer->Init())
     {
 		delete renderer;
@@ -369,15 +427,24 @@ void rend_init_renderer()
     		die("Renderer initialization failed\n");
     	}
     	printf("Selected renderer initialization failed. Falling back to default renderer.\n");
+
     	renderer  = fallback_renderer;
     	fallback_renderer = NULL;	// avoid double-free
     }
+#endif
 }
 
 void rend_term_renderer()
 {
-	killtex();
+	//killtex();	// add this to you're Term()
+
+#ifndef NO_IMGUI
 	gui_term();
+#endif
+
+#if 1
+	Renderer::Destroy();
+#else
 	renderer->Term();
 	delete renderer;
 	renderer = NULL;
@@ -386,11 +453,16 @@ void rend_term_renderer()
 		delete fallback_renderer;
 		fallback_renderer = NULL;
 	}
+#endif
 }
 
 void* rend_thread(void* p)
 {
-	rend_init_renderer();
+#if 0 //def USE_VULKAN
+	rend_init_renderer(R_Vulkan);
+#else
+	rend_init_renderer(R_GL4);
+#endif
 
 	//we don't know if this is true, so let's not speculate here
 	//renderer->Resize(640, 480);
@@ -399,6 +471,10 @@ void* rend_thread(void* p)
 	{
 		if (rend_single_frame())
 			renderer->Present();
+
+#ifdef _Z_
+		os_DoEvents();
+#endif
 	}
 
 	rend_term_renderer();
@@ -534,6 +610,9 @@ void rend_end_render()
 			renderer->Present();
 #endif
 	}
+#ifdef _Z_
+	os_DoEvents();
+#endif
 }
 
 void rend_stop_renderer()

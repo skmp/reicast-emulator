@@ -545,9 +545,9 @@ static bool gl_create_resources()
 	create_modvol_shader();
 
 	gl_load_osd_resources();
-
+#ifndef _Z_
 	gui_init();
-
+#endif
 	// Create the buffer for Translucent poly params
 	glGenBuffers(1, &gl4.vbo.tr_poly_params);
 	// Bind it
@@ -564,10 +564,13 @@ extern void initABuffer();
 
 static bool gles_init()
 {
+	printf("@@@@@@ gl4es_init() A \n");
 
 	if (!gl_init((void*)libPvr_GetRenderTarget(),
 		         (void*)libPvr_GetRenderSurface()))
 			return false;
+
+	printf("@@@@@@ gl4es_init() B \n");
 
 	int major = 0;
 	int minor = 0;
@@ -584,6 +587,7 @@ static bool gles_init()
 
 	if (!gl_create_resources())
 		return false;
+	printf("@@@@@@ gl4es_init() C \n");
 
 //    glEnable(GL_DEBUG_OUTPUT);
 //    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -607,6 +611,7 @@ static bool gles_init()
 	}
 	fog_needs_update = true;
 
+	printf("@@@@@@ gl4es_init() Z \n");
 	return true;
 }
 
@@ -1021,9 +1026,21 @@ struct gl4rend : Renderer
 		OSD_DRAW(clear_screen);
 	}
 
+	void Invalidate(vram_block* bl)
+	{
+		void rend_text_invl(vram_block * bl);
+		rend_text_invl(bl);
+	}
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
 		return gl_GetTexture(tsp, tcw);
 	}
+	static Renderer* createInstance() {
+		printf("gl4 create\n");
+		return new gl4rend;
+	}
 };
+static bool rr_gl4 = Renderer::Register(R_GL4, &gl4rend::createInstance);
 
+#if 0
 Renderer* rend_GL4() { return new gl4rend(); }
+#endif

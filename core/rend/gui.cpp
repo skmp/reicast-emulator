@@ -68,7 +68,7 @@ int screen_dpi = 96;
 
 static bool inited = false;
 static float scaling = 1;
-GuiState gui_state = Main;
+GuiState gui_state = Closed;
 static bool settings_opening;
 static bool touch_up;
 
@@ -80,12 +80,15 @@ void gui_init()
 {
 	if (inited)
 		return;
+
+	gui_state = Main;
+
 	inited = true;
 
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGuiIO& io = ImGui::GetIO();
 
 	io.IniFilename = NULL;
 

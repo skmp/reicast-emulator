@@ -113,6 +113,44 @@ typedef char wchar;
 
 
 
+// constexpr only !
+template<typename T> constexpr T KB(const T n) { return 1024 * n; }
+template<typename T> constexpr T MB(const T n) { return 1024 * KB(n); }
+template<typename T> constexpr T GB(const T n) { return 1024 * MB(n); }
+template<typename T> constexpr T TB(const T n) { return 1024 * GB(n); }
+
+template<typename T> constexpr T KHz(const T n) { return 1000 * n; }
+template<typename T> constexpr T MHz(const T n) { return 1000 * KHz(n); }
+template<typename T> constexpr T GHz(const T n) { return 1000 * MHz(n); }
+
+// using KiB=KHz, MiB=MHz, GiB=GHz //
+
+
+// Generic Alignment for non pow2, up is abusable
+
+template<typename T> inline T Align(const T addr, const T align, unat up = 0)
+{
+	return (addr / align + up) * align;
+}
+
+// Alignment for unsigned integers of any type, align must be pow2!
+
+#define _POW2_MASK (align - static_cast<T>(1))
+
+template<typename T> inline T AlignUp(const T addr, const T align)
+{
+	return (addr + _POW2_MASK) & ~_POW2_MASK;
+}
+
+template<typename T> inline T AlignDown(const T addr, const T align)
+{
+	return addr & ~_POW2_MASK;
+}
+
+
+
+
+
 
 //intc function pointer and enums
 enum HollyInterruptType

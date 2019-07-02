@@ -1711,11 +1711,11 @@ void FillBGP(TA_context* ctx)
 	bgpp->isp.DepthMode=7;// -> this makes things AWFULLY slow .. sometimes
 	bgpp->isp.CullMode=0;// -> so that its not culled, or somehow else hidden !
 	//Set some pcw bits .. I should really get rid of pcw ..
-	bgpp->pcw.UV_16bit=bgpp->isp.UV_16b;
-	bgpp->pcw.Gouraud=bgpp->isp.Gouraud;
-	bgpp->pcw.Offset=bgpp->isp.Offset;
-	bgpp->pcw.Texture=bgpp->isp.Texture;
-	bgpp->pcw.Shadow = ISP_BACKGND_T.shadow;
+	bgpp->pcw.UV_16bit= bgpp->isp.UV_16b;
+	bgpp->pcw.Gouraud = bgpp->isp.Gouraud;
+	bgpp->pcw.Offset  = bgpp->isp.Offset;
+	bgpp->pcw.Texture = bgpp->isp.Texture;
+	bgpp->pcw.Shadow  = ISP_BACKGND_T.shadow;
 
 	float scale_x= (SCALER_CTL.hscale) ? 2.f:1.f;	//if AA hack the hacked pos value hacks
 	for (int i=0;i<3;i++)

@@ -4,16 +4,22 @@
 */
 
 #include "types.h"
-
-#if FEAT_SHREC != DYNAREC_NONE
-
 #include "decoder.h"
+
 #include "shil.h"
 #include "ngen.h"
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_mem.h"
 #include "decoder_opcodes.h"
+
+state_t state;
+
+Sh4RegType div_som_reg1;
+Sh4RegType div_som_reg2;
+Sh4RegType div_som_reg3;
+
+#if FEAT_SHREC != DYNAREC_NONE
 
 #define BLOCK_MAX_SH_OPS_SOFT 500
 #define BLOCK_MAX_SH_OPS_HARD 511
@@ -69,7 +75,6 @@ shil_param mk_regi(int reg)
 	return mk_reg((Sh4RegType)reg);
 }
 
-state_t state ;
 
 void Emit(shilop op,shil_param rd=shil_param(),shil_param rs1=shil_param(),shil_param rs2=shil_param(),u32 flags=0,shil_param rs3=shil_param(),shil_param rd2=shil_param())
 {
@@ -583,9 +588,6 @@ void dec_param(DecParam p,shil_param& r1,shil_param& r2, u32 op)
 #define DIV1_KEY 0x3004
 #define ROTCL_KEY 0x4024
 
-Sh4RegType div_som_reg1;
-Sh4RegType div_som_reg2;
-Sh4RegType div_som_reg3;
 
 u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 {

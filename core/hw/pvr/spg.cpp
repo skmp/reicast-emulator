@@ -24,10 +24,12 @@ int render_end_schid;
 int vblank_schid;
 int time_sync;
 
+
+float fb_scale_x = 1, fb_scale_y = 1;
+
 void CalculateSync()
 {
 	u32 pixel_clock;
-	float scale_x=1,scale_y=1;
 
 	pixel_clock=PIXEL_CLOCK / (FB_R_CTRL.vclk_div?1:2);
 
@@ -47,21 +49,21 @@ void CalculateSync()
 		//if (interl_mode==2)//3 will be funny =P
 		//  scale_y=0.5f;//single interlace
 		//else
-			scale_y=1;
+			fb_scale_y=1;
 	}
 	else
 	{
 		if (FB_R_CTRL.vclk_div)
 		{
-			scale_y = 1.0f;//non interlaced VGA mode has full resolution :)
+			fb_scale_y = 1.0f;//non interlaced VGA mode has full resolution :)
 		}
 		else
 		{
-			scale_y = 0.5f;//non interlaced modes have half resolution
+			fb_scale_y = 0.5f;//non interlaced modes have half resolution
 		}
 	}
 
-	rend_set_fb_scale(scale_x,scale_y);
+//	rend_set_fb_scale(scale_x,scale_y);
 	
 	//Frame_Cycles=(u64)DCclock*(u64)sync_cycles/(u64)pixel_clock;
 	

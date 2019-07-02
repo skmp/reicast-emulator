@@ -1,7 +1,8 @@
 #include <xinput.h>
 #include "input/gamepad_device.h"
+#ifndef NO_IMGUI
 #include "rend/gui.h"
-
+#endif
 class XInputMapping : public InputMapping
 {
 public:
@@ -267,12 +268,14 @@ public:
 	virtual ~WinMouseGamepadDevice() {}
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
+#ifndef NO_IMGUI
 		if (gui_is_open())
 			// Don't register mouse clicks as gamepad presses when gui is open
 			// This makes the gamepad presses to be handled first and the mouse position to be ignored
 			// TODO Make this generic
 			return false;
 		else
+#endif
 			return GamepadDevice::gamepad_btn_input(code, pressed);
 	}
 };

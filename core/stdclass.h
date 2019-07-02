@@ -163,7 +163,7 @@ public:
 //Windoze code
 //Threads
 
-#if !defined(HOST_NO_THREADS)
+#if !defined(TARGET_NO_THREADS)
 typedef  void* ThreadEntryFP(void* param);
 
 class cThread {

@@ -152,7 +152,14 @@ bool rend_frame(TA_context* ctx, bool draw_osd)
 	  rend_init_renderer();
    }
    bool proc = renderer->Process(ctx);
-
+	if ((ctx->rend.isRTT || ctx->rend.isRenderFramebuffer) && swap_pending)
+	{
+		// If there is a frame swap pending, we want to do it now.
+		// The current frame "swapping" detection mechanism (using FB_R_SOF1) doesn't work
+		// if a RTT frame is rendered in between.
+		renderer->Present();
+		swap_pending = false;
+	}
 #if !defined(TARGET_NO_THREADS)
    if (settings.rend.ThreadedRendering && (!proc || (!ctx->rend.isRenderFramebuffer && !ctx->rend.isRTT)))
 	   // If rendering to texture, continue locking until the frame is rendered

@@ -56,14 +56,18 @@ extern int vmem_fd;
 #define VMEM32_ERROR_NOT_MAPPED 0x100
 
 static const u64 VMEM32_SIZE = 0x100000000L;
-static const u64 KERNEL_SPACE = 0x80000000L;
+static const u64 USER_SPACE = 0x80000000L;
 static const u64 AREA7_ADDRESS = 0x7C000000L;
 
 #define VRAM_PROT_SEGMENT (1024 * 1024)	// vram protection regions are grouped by 1MB segment
 
 static std::unordered_set<u32> vram_mapped_pages;
-static std::vector<vram_block*> vram_blocks[VRAM_SIZE_MAX / VRAM_PROT_SEGMENT];
-static u8 sram_mapped_pages[KERNEL_SPACE / PAGE_SIZE / 8];	// bit set to 1 if page is mapped
+struct vram_lock {
+	u32 start;
+	u32 end;
+};
+static std::vector<vram_lock> vram_blocks[VRAM_SIZE_MAX / VRAM_PROT_SEGMENT];
+static u8 sram_mapped_pages[USER_SPACE / PAGE_SIZE / 8];	// bit set to 1 if page is mapped
 
 bool vmem32_inited;
 
@@ -144,26 +148,28 @@ static void vmem32_unprotect_buffer(u32 start, u32 size)
 #endif
 }
 
-void vmem32_protect_vram(vram_block *block)
+void vmem32_protect_vram(u32 addr, u32 size)
 {
 	if (!vmem32_inited)
 		return;
-	for (int i = block->start / VRAM_PROT_SEGMENT; i <= block->end / VRAM_PROT_SEGMENT; i++)
+	for (int page = (addr & VRAM_MASK) / VRAM_PROT_SEGMENT; page <= ((addr & VRAM_MASK) + size - 1) / VRAM_PROT_SEGMENT; page++)
 	{
-		vram_blocks[i].push_back(block);
+		vram_blocks[page].push_back({ addr, addr + size - 1 });
 	}
 }
-void vmem32_unprotect_vram(vram_block *block)
+void vmem32_unprotect_vram(u32 addr, u32 size)
 {
 	if (!vmem32_inited)
 		return;
-	for (int page = block->start / VRAM_PROT_SEGMENT; page <= block->end / VRAM_PROT_SEGMENT; page++)
+	for (int page = (addr & VRAM_MASK) / VRAM_PROT_SEGMENT; page <= ((addr & VRAM_MASK) + size - 1) / VRAM_PROT_SEGMENT; page++)
 	{
-		for (int i = 0; i < vram_blocks[page].size(); i++)
-			if (vram_blocks[page][i] == block)
+		std::vector<vram_lock>& block_list = vram_blocks[page];
+		for (auto it = block_list.begin(); it != block_list.end(); )
 			{
-				vram_blocks[page].erase(vram_blocks[page].begin() + i);
-				break;
+			if (it->start >= addr && it->end < addr + size)
+				it = block_list.erase(it);
+			else
+				it++;
 			}
 	}
 }
@@ -243,6 +249,7 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 		if (offset == -1)
 			return VMEM32_ERROR_NOT_MAPPED;
 
+		bool allow_write = (entry->Data.PR & 1) != 0;
 		if (offset >= MAP_VRAM_START_OFFSET && offset < MAP_VRAM_START_OFFSET + VRAM_SIZE)
 		{
 			// Check vram protected regions
@@ -256,17 +263,17 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 
 				return MMU_ERROR_NONE;
 			}
-			verify(vmem32_map_buffer(vpn, page_size, offset, page_size, (entry->Data.PR & 1) != 0) != NULL);
+			verify(vmem32_map_buffer(vpn, page_size, offset, page_size, allow_write) != NULL);
 			u32 end = start + page_size;
-			const vector<vram_block *>& blocks = vram_blocks[start / VRAM_PROT_SEGMENT];
+			const vector<vram_lock>& blocks = vram_blocks[start / VRAM_PROT_SEGMENT];
 
 			vramlist_lock.Lock();
 			for (int i = blocks.size() - 1; i >= 0; i--)
 			{
-				if (blocks[i]->start < end && blocks[i]->end >= start)
+				if (blocks[i].start < end && blocks[i].end >= start)
 				{
-					u32 prot_start = max(start, blocks[i]->start);
-					u32 prot_size = min(end, blocks[i]->end + 1) - prot_start;
+					u32 prot_start = max(start, blocks[i].start);
+					u32 prot_size = min(end, blocks[i].end + 1) - prot_start;
 					prot_size += prot_start % PAGE_SIZE;
 					prot_start &= ~PAGE_MASK;
 					vmem32_protect_buffer(vpn + (prot_start & (page_size - 1)), prot_size);
@@ -274,12 +281,14 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 			}
 			vramlist_lock.Unlock();
 		}
-		else if (offset >= MAP_VRAM_START_OFFSET && offset < MAP_VRAM_START_OFFSET + VRAM_SIZE)
+		else if (offset >= MAP_RAM_START_OFFSET && offset < MAP_RAM_START_OFFSET + RAM_SIZE)
 		{
 			// Check system RAM protected pages
-			if (bm_IsRamPageProtected(ppn))
+			u32 start = offset - MAP_RAM_START_OFFSET;
+
+			if (bm_IsRamPageProtected(start) && allow_write)
 			{
-				if (sram_mapped_pages[ppn >> 15] & (1 << ((ppn >> 12) & 7)))
+				if (sram_mapped_pages[start >> 15] & (1 << ((start >> 12) & 7)))
 				{
 					// Already mapped => write access
 					vmem32_unprotect_buffer(address & ~PAGE_MASK, PAGE_SIZE);
@@ -287,16 +296,16 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 				}
 				else
 				{
-					sram_mapped_pages[ppn >> 15] |= (1 << ((ppn >> 12) & 7));
+					sram_mapped_pages[start >> 15] |= (1 << ((start >> 12) & 7));
 					verify(vmem32_map_buffer(vpn, page_size, offset, page_size, false) != NULL);
 				}
 			}
 			else
-				verify(vmem32_map_buffer(vpn, page_size, offset, page_size, (entry->Data.PR & 1) != 0) != NULL);
+				verify(vmem32_map_buffer(vpn, page_size, offset, page_size, allow_write) != NULL);
 		}
 		else
 			// Not vram or system ram
-			verify(vmem32_map_buffer(vpn, page_size, offset, page_size, (entry->Data.PR & 1) != 0) != NULL);
+			verify(vmem32_map_buffer(vpn, page_size, offset, page_size, allow_write) != NULL);
 
 		return MMU_ERROR_NONE;
 	}
@@ -358,7 +367,7 @@ void vmem32_flush_mmu()
 	//vmem32_flush++;
 	vram_mapped_pages.clear();
 	memset(sram_mapped_pages, 0, sizeof(sram_mapped_pages));
-	vmem32_unmap_buffer(0, KERNEL_SPACE);
+	vmem32_unmap_buffer(0, USER_SPACE);
 	// TODO flush P3?
 }
 
@@ -371,6 +380,7 @@ bool vmem32_init()
 		return false;
 
 	vmem32_inited = true;
+	vmem32_flush_mmu();
 	return true;
 #endif
 }

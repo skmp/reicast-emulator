@@ -57,6 +57,7 @@ file(GLOB gl4_SRCS			${d_core}/rend/gl4/*.cpp	${d_core}/rend/gl4/*.h)
 file(GLOB gles_SRCS			${d_core}/rend/gles/*.cpp	${d_core}/rend/gles/*.h)
 file(GLOB norend_SRCS		${d_core}/rend/norend/*.cpp	${d_core}/rend/norend/*.h)
 file(GLOB softrend_SRCS		${d_core}/rend/soft/*.cpp	${d_core}/rend/soft/*.h)
+file(GLOB d3d11_SRCS		${d_core}/rend/d3d11/*.cpp	${d_core}/rend/d3d11/*.h)
 
 set(core_SRCS
   ${hw_SRCS}
@@ -66,6 +67,7 @@ set(core_SRCS
   ${gles_SRCS}
   ${norend_SRCS}
   ${softrend_SRCS}
+  ${d3d11_SRCS}
   ${input_SRCS}
   ${reios_SRCS}
   ${imgread_SRCS}

@@ -73,6 +73,7 @@ struct d3d11 : Renderer
 		return true;
 	}
 
+	void SetFBScale(float x, float y) { }
 	void Resize(int w, int h) { }
 	void Term() { }
 
@@ -99,4 +100,4 @@ struct d3d11 : Renderer
 };
 
 
-static auto d3d11rend = RegisterRendererBackend(rendererbackend_t{ "none", "No PVR Rendering", -2, [] { return  new d3d11(); } });
+static auto d3d11rend = RegisterRendererBackend(rendererbackend_t{ "d3d11", "Direct3D 11", -3, [] { return (Renderer*) new ::d3d11(); } });

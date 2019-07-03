@@ -14,7 +14,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 
 set(reicast_root_path  "${CMAKE_CURRENT_SOURCE_DIR}")
-set(reicast_core_path  "${reicast_root_path}/libfantasticast")
+set(reicast_core_path  "${reicast_root_path}/libdragoncast")
 set(reicast_shell_path "${reicast_root_path}/reicast")
 
 list(APPEND CMAKE_MODULE_PATH "${reicast_shell_path}/cmake")

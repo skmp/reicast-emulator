@@ -633,7 +633,7 @@ static void gui_display_settings()
     ImGui::NewFrame();
 
 	int dynarec_enabled = settings.dynarec.Enable;
-	u32 renderer = settings.pvr.rend;
+	auto backend = settings.pvr.backend;
 
     if (!settings_opening)
     	ImGui_ImplOpenGL3_DrawBackground();
@@ -946,11 +946,11 @@ static void gui_display_settings()
 		    if (!gl.is_gles && gl.gl_major >= 4 && ImGui::CollapsingHeader("Transparent Sorting", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 		    	ImGui::Columns(2, "renderers", false);
-		    	ImGui::RadioButton("Per Triangle", (int *)&settings.pvr.rend, 0);
+		    	//ImGui::RadioButton("Per Triangle", (int *)&settings.pvr.rend, 0);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Sort transparent polygons per triangle. Fast but may produce graphical glitches");
 		    	ImGui::NextColumn();
-		    	ImGui::RadioButton("Per Pixel", (int *)&settings.pvr.rend, 3);
+		    	//ImGui::RadioButton("Per Pixel", (int *)&settings.pvr.rend, 3);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Sort transparent polygons per pixel. Slower but accurate");
 		    	ImGui::Columns(1, NULL, false);
@@ -1325,7 +1325,7 @@ static void gui_display_settings()
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
 
-   	if (renderer != settings.pvr.rend)
+   	if (backend != settings.pvr.backend)
    		renderer_changed = true;
    	settings.dynarec.Enable = (bool)dynarec_enabled;
 }

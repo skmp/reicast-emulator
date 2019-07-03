@@ -1980,15 +1980,15 @@ bool RenderFrame()
 	return !is_rtt;
 }
 
-void rend_set_fb_scale(float x,float y)
-{
-	fb_scale_x=x;
-	fb_scale_y=y;
-}
-
 struct glesrend : Renderer
 {
 	bool Init() { return gles_init(); }
+	void SetFBScale(float x, float y)
+	{
+		fb_scale_x = x;
+		fb_scale_y = y;
+	}
+
 	void Resize(int w, int h) { screen_width=w; screen_height=h; }
 	void Term()
 	{
@@ -2186,4 +2186,6 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 }
 
 
-Renderer* rend_GLES2() { return new glesrend(); }
+#include "hw/pvr/Renderer_if.h"
+
+static auto gles2rend = RegisterRendererBackend(rendererbackend_t{ "gles", "OpenGL ES 2/PC41", 1, []() { return (Renderer*) new glesrend(); } });

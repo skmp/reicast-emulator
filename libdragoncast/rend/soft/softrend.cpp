@@ -818,6 +818,12 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex &v1, con
 
 struct softrend : Renderer
 {
+	void SetFBScale(float x, float y)
+	{
+		fb_scale_x = x;
+		fb_scale_y = y;
+	}
+
 	virtual bool Process(TA_context* ctx) {
 		//disable RTTs for now ..
 		if (ctx->rend.isRTT)
@@ -1232,5 +1238,7 @@ struct softrend : Renderer
 };
 
 Renderer* rend_softrend() {
-	return new(_mm_malloc(sizeof(softrend), 32)) softrend();
+	return new(_mm_malloc(sizeof(softrend), 32)) ::softrend();
 }
+
+static auto softrend = RegisterRendererBackend(rendererbackend_t{ "soft", "Fast Software Renderer", 0, rend_softrend });

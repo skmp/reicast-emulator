@@ -974,6 +974,13 @@ struct gl4rend : Renderer
 		}
 		reshapeABuffer(w, h);
 	}
+
+	void SetFBScale(float x, float y)
+	{
+		fb_scale_x = x;
+		fb_scale_y = y;
+	}
+
 	void Term()
 	{
 		termABuffer();
@@ -1026,4 +1033,6 @@ struct gl4rend : Renderer
 	}
 };
 
-Renderer* rend_GL4() { return new gl4rend(); }
+#include "hw/pvr/Renderer_if.h"
+
+static auto gl41rend = RegisterRendererBackend(rendererbackend_t{ "gl41", "OpenGL 4.1", 2, [](){ return (Renderer*) new gl4rend(); } });

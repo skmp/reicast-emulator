@@ -99,7 +99,4 @@ struct d3d11 : Renderer
 };
 
 
-Renderer* rend_D3D11()
-{
-	return new d3d11();
-}
+static auto d3d11rend = RegisterRendererBackend(rendererbackend_t{ "none", "No PVR Rendering", -2, [] { return  new d3d11(); } });

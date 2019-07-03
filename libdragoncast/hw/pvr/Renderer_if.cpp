@@ -329,30 +329,31 @@ bool rend_single_frame()
 	return do_swp;
 }
 
+// auto or slug
+//vulkan
+//gl41
+//gles2
+//soft
+//softref
+//none
+static std::map<const string, rendererbackend_t> backends;
+
 static void rend_create_renderer()
 {
-#ifdef NO_REND
-	renderer	 = rend_norend();
-#else
-	switch (settings.pvr.rend)
+	if (backends.count(settings.pvr.backend))
 	{
-	default:
-	case 0:
-		renderer = rend_GLES2();
-		break;
-#if FEAT_HAS_SOFTREND
-	case 2:
-		renderer = rend_softrend();
-		break;
-#endif
-#if !defined(GLES) && HOST_OS != OS_DARWIN
-	case 3:
-		renderer = rend_GL4();
-		fallback_renderer = rend_GLES2();
-		break;
-#endif
+		renderer = backends[settings.pvr.backend].create();
 	}
-#endif
+	else
+	{
+		vector<rendererbackend_t> vec;
+		transform(backends.begin(), backends.end(), back_inserter(vec), [](auto x) { return x.second; });
+		
+		sort(vec.begin(), vec.end(), [](auto a, auto b) { return a.priority > b.priority; });
+
+		renderer = vec.begin()->create();
+		fallback_renderer = (++vec.begin())->create();
+	}
 }
 
 void rend_init_renderer()
@@ -572,3 +573,13 @@ void rend_cancel_emu_wait()
 #endif
 }
 
+void rend_set_fb_scale(float x, float y)
+{
+	renderer->SetFBScale(x, y);
+}
+
+bool RegisterRendererBackend(const rendererbackend_t& backend)
+{
+	backends[backend.slug] = backend;
+	return true;
+}

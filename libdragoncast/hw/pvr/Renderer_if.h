@@ -18,13 +18,6 @@ void rend_set_fb_scale(float x,float y);
 void rend_resize(int width, int height);
 void rend_text_invl(vram_block* bl);
 
-#ifdef GLuint
-GLuint
-#else
-u32
-#endif
-GetTexture(TSP tsp,TCW tcw);
-
 
 ///////
 extern TA_context* _pvrrc;
@@ -36,6 +29,7 @@ struct Renderer
 	virtual bool Init()=0;
 	
 	virtual void Resize(int w, int h)=0;
+	virtual void SetFBScale(float x, float y) = 0;
 
 	virtual void Term()=0;
 
@@ -54,13 +48,6 @@ extern Renderer* renderer;
 extern bool renderer_enabled;	// Signals the renderer thread to exit
 extern bool renderer_changed;	// Signals the renderer thread to switch renderer
 
-Renderer* rend_GLES2();
-#if !defined(GLES) && HOST_OS != OS_DARWIN
-Renderer* rend_GL4();
-#endif
-Renderer* rend_norend();
-Renderer* rend_softrend();
-
 extern u32 fb1_watch_addr_start;
 extern u32 fb1_watch_addr_end;
 extern u32 fb2_watch_addr_start;
@@ -68,3 +55,11 @@ extern u32 fb2_watch_addr_end;
 extern bool fb_dirty;
 
 void check_framebuffer_write();
+
+typedef struct {
+	string slug;
+	string name;
+	int priority;
+	Renderer* (*create)();
+} rendererbackend_t;
+extern bool RegisterRendererBackend(const rendererbackend_t& backend);

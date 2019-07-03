@@ -2,23 +2,20 @@
 #include "hw/pvr/Renderer_if.h"
 #include "oslib/oslib.h"
 
-void rend_set_fb_scale(float x,float y) { }
-void rend_text_invl(vram_block* bl) { }
-
 struct norend : Renderer
 {
 	bool Init()
 	{
 		return true;
 	}
-
+	void SetFBScale(float x, float y) { }
 	void Resize(int w, int h) { }
 	void Term() { }
 
 
-        bool Process(TA_context* ctx) { return true; }
+    bool Process(TA_context* ctx) { return true; }
 
-        void DrawOSD() {  }
+    void DrawOSD() {  }
 
 	bool Render()
 	{
@@ -28,7 +25,8 @@ struct norend : Renderer
 	void Present() { }
 };
 
+#include "hw/pvr/Renderer_if.h"
 
-Renderer* rend_norend() { return new norend(); }
+Renderer* rend_norend() { return new ::norend(); }
 
-u32 GetTexture(TSP tsp,TCW tcw) { return 0; }
+static auto norend = RegisterRendererBackend(rendererbackend_t{ "none", "No PVR Rendering", -2, rend_norend });

@@ -716,7 +716,7 @@ struct settings_t
 	struct
 	{
 		u32 ta_skip;
-		u32 rend;
+		string backend;
 
 		u32 MaxThreads;
 		bool SynchronousRender;

@@ -159,11 +159,8 @@ endif()
 
 # Graphic stuffs:
 
-if(USE_REND)
-  add_directory(core/rend/gles)
-else()
-  add_directory(core/rend/norend)
-endif()
+add_directory(core/rend/gles)
+add_directory(core/rend/norend)
 
 if(USE_GLES)
   add_definitions(-DGLES)

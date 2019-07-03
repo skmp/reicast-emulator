@@ -523,7 +523,7 @@ void InitSettings()
 	settings.rend.Rotate90			= false;
 
 	settings.pvr.ta_skip			= 0;
-	settings.pvr.rend				= 0;
+	settings.pvr.backend			= "auto";
 
 	settings.pvr.MaxThreads		    = 3;
 	settings.pvr.SynchronousRender	= true;
@@ -611,7 +611,7 @@ void LoadSettings(bool game_specific)
 	settings.rend.Rotate90			= cfgLoadBool(config_section, "rend.Rotate90", settings.rend.Rotate90);
 
 	settings.pvr.ta_skip			= cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
-	settings.pvr.rend				= cfgLoadInt(config_section, "pvr.rend", settings.pvr.rend);
+	settings.pvr.backend			= cfgLoadStr(config_section, "pvr.backend", settings.pvr.backend.c_str());
 
 	settings.pvr.MaxThreads		    = cfgLoadInt(config_section, "pvr.MaxThreads", settings.pvr.MaxThreads);
 	settings.pvr.SynchronousRender	= cfgLoadBool(config_section, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
@@ -760,7 +760,7 @@ void SaveSettings()
 	cfgSaveBool("config", "rend.FloatVMUs", settings.rend.FloatVMUs);
 	cfgSaveBool("config", "rend.Rotate90", settings.rend.Rotate90);
 	cfgSaveInt("config", "ta.skip", settings.pvr.ta_skip);
-	cfgSaveInt("config", "pvr.rend", settings.pvr.rend);
+	cfgSaveStr("config", "pvr.backend", settings.pvr.backend.c_str());
 
 	cfgSaveInt("config", "pvr.MaxThreads", settings.pvr.MaxThreads);
 	cfgSaveBool("config", "pvr.SynchronousRendering", settings.pvr.SynchronousRender);

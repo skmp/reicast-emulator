@@ -131,6 +131,39 @@
     <ClCompile Include="..\core\deps\libwebsocket\server.c" />
     <ClCompile Include="..\core\deps\libwebsocket\service.c" />
     <ClCompile Include="..\core\deps\libwebsocket\sha-1.c" />
+    <ClCompile Include="..\core\deps\lua\lapi.c" />
+    <ClCompile Include="..\core\deps\lua\lauxlib.c" />
+    <ClCompile Include="..\core\deps\lua\lbaselib.c" />
+    <ClCompile Include="..\core\deps\lua\lbitlib.c" />
+    <ClCompile Include="..\core\deps\lua\lcode.c" />
+    <ClCompile Include="..\core\deps\lua\lcorolib.c" />
+    <ClCompile Include="..\core\deps\lua\lctype.c" />
+    <ClCompile Include="..\core\deps\lua\ldblib.c" />
+    <ClCompile Include="..\core\deps\lua\ldebug.c" />
+    <ClCompile Include="..\core\deps\lua\ldo.c" />
+    <ClCompile Include="..\core\deps\lua\ldump.c" />
+    <ClCompile Include="..\core\deps\lua\lfunc.c" />
+    <ClCompile Include="..\core\deps\lua\lgc.c" />
+    <ClCompile Include="..\core\deps\lua\linit.c" />
+    <ClCompile Include="..\core\deps\lua\liolib.c" />
+    <ClCompile Include="..\core\deps\lua\llex.c" />
+    <ClCompile Include="..\core\deps\lua\lmathlib.c" />
+    <ClCompile Include="..\core\deps\lua\lmem.c" />
+    <ClCompile Include="..\core\deps\lua\loadlib.c" />
+    <ClCompile Include="..\core\deps\lua\lobject.c" />
+    <ClCompile Include="..\core\deps\lua\lopcodes.c" />
+    <ClCompile Include="..\core\deps\lua\loslib.c" />
+    <ClCompile Include="..\core\deps\lua\lparser.c" />
+    <ClCompile Include="..\core\deps\lua\lstate.c" />
+    <ClCompile Include="..\core\deps\lua\lstring.c" />
+    <ClCompile Include="..\core\deps\lua\lstrlib.c" />
+    <ClCompile Include="..\core\deps\lua\ltable.c" />
+    <ClCompile Include="..\core\deps\lua\ltablib.c" />
+    <ClCompile Include="..\core\deps\lua\ltm.c" />
+    <ClCompile Include="..\core\deps\lua\lundump.c" />
+    <ClCompile Include="..\core\deps\lua\lutf8lib.c" />
+    <ClCompile Include="..\core\deps\lua\lvm.c" />
+    <ClCompile Include="..\core\deps\lua\lzio.c" />
     <ClCompile Include="..\core\deps\lzma\Alloc.c" />
     <ClCompile Include="..\core\deps\lzma\Bra.c" />
     <ClCompile Include="..\core\deps\lzma\Bra86.c" />
@@ -321,6 +354,8 @@
     <ClCompile Include="..\core\rend\gui_util.cpp" />
     <ClCompile Include="..\core\rend\soft\softrend.cpp" />
     <ClCompile Include="..\core\rend\TexCache.cpp" />
+    <ClCompile Include="..\core\scripting\lua_bindings.cpp" />
+    <ClCompile Include="..\core\scripting\lua_loader.cpp" />
     <ClCompile Include="..\core\serialize.cpp" />
     <ClCompile Include="..\core\stdclass.cpp" />
     <ClCompile Include="..\core\webui\server.cpp" />
@@ -381,6 +416,32 @@
     <ClInclude Include="..\core\deps\libwebsocket\libwebsockets.h" />
     <ClInclude Include="..\core\deps\libwebsocket\lws_config.h" />
     <ClInclude Include="..\core\deps\libwebsocket\private-libwebsockets.h" />
+    <ClInclude Include="..\core\deps\lua\lapi.h" />
+    <ClInclude Include="..\core\deps\lua\lauxlib.h" />
+    <ClInclude Include="..\core\deps\lua\lcode.h" />
+    <ClInclude Include="..\core\deps\lua\lctype.h" />
+    <ClInclude Include="..\core\deps\lua\ldebug.h" />
+    <ClInclude Include="..\core\deps\lua\ldo.h" />
+    <ClInclude Include="..\core\deps\lua\lfunc.h" />
+    <ClInclude Include="..\core\deps\lua\lgc.h" />
+    <ClInclude Include="..\core\deps\lua\llex.h" />
+    <ClInclude Include="..\core\deps\lua\llimits.h" />
+    <ClInclude Include="..\core\deps\lua\lmem.h" />
+    <ClInclude Include="..\core\deps\lua\lobject.h" />
+    <ClInclude Include="..\core\deps\lua\lopcodes.h" />
+    <ClInclude Include="..\core\deps\lua\lparser.h" />
+    <ClInclude Include="..\core\deps\lua\lprefix.h" />
+    <ClInclude Include="..\core\deps\lua\lstate.h" />
+    <ClInclude Include="..\core\deps\lua\lstring.h" />
+    <ClInclude Include="..\core\deps\lua\ltable.h" />
+    <ClInclude Include="..\core\deps\lua\ltm.h" />
+    <ClInclude Include="..\core\deps\lua\lua.h" />
+    <ClInclude Include="..\core\deps\lua\lua.hpp" />
+    <ClInclude Include="..\core\deps\lua\luaconf.h" />
+    <ClInclude Include="..\core\deps\lua\lualib.h" />
+    <ClInclude Include="..\core\deps\lua\lundump.h" />
+    <ClInclude Include="..\core\deps\lua\lvm.h" />
+    <ClInclude Include="..\core\deps\lua\lzio.h" />
     <ClInclude Include="..\core\deps\lzma\7zTypes.h" />
     <ClInclude Include="..\core\deps\lzma\Alloc.h" />
     <ClInclude Include="..\core\deps\lzma\Bra.h" />
@@ -521,6 +582,7 @@
     <ClInclude Include="..\core\oslib\oslib.h" />
     <ClInclude Include="..\core\oslib\threading.h" />
     <ClInclude Include="..\core\profiler\profiler.h" />
+    <ClInclude Include="..\core\scripting\lua_bindings.h" />
     <ClInclude Include="..\core\windows\win_keyboard.h" />
     <ClInclude Include="..\core\windows\xinput_gamepad.h" />
     <ClInclude Include="..\core\rec-x86\rec_x86_ngen.h">
@@ -931,7 +993,7 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;NOMINMAX;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;TARGET_YES_NVMEM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NOMINMAX;CHD5_FLAC;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;HAVE_LROUND;HAVE_STDINT_H;HAVE_STDLIB_H;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;TARGET_YES_NVMEM;SCRIPTING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>

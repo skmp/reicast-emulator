@@ -13,6 +13,11 @@ RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  deps/libelf/ deps/cdipsr/ arm_emitter/ rend/ reios/ deps/libpng/ deps/xbrz/ \
  deps/xxhash/ deps/libzip/ deps/imgui/ archive/ input/ glwrap/
 
+ifdef SCRIPTING
+	RZDCY_MODULES += scripting/
+	RZDCY_MODULES += deps/lua/
+endif
+
 ifdef _NO_WEBUI
 	RZDCY_MODULES += webui/
 	RZDCY_MODULES += deps/libwebsocket/

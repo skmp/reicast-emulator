@@ -22,6 +22,12 @@
 #include "hw/mem/_vmem.h"
 
 #include "hw/pvr/Renderer_if.h"
+#include <io.h>
+#include <stdlib.h>
+#include <fcntl.h>     /* for _O_TEXT and _O_BINARY */
+#include <stdio.h>
+#include <iostream>
+#include <fstream>
 
 #include "glwrap/gl3w.h"
 
@@ -842,9 +848,6 @@ void setup_seh() {
 }
 #endif
 
-
-
-
 // DEF_CONSOLE allows you to override linker subsystem and therefore default console //
 //	: pragma isn't pretty but def's are configurable 
 #ifdef DEF_CONSOLE
@@ -893,7 +896,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 
 	ReserveBottomMemory();
 	SetupPath();
-
+	
 #ifdef _WIN64
 	AddVectoredExceptionHandler(1, ExeptionHandler);
 #else

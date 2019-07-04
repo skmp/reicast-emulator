@@ -23,7 +23,7 @@ ifdef _NO_WEBUI
 endif
 
 ifndef NOT_ARM
-    RZDCY_MODULES += jit/backend/arm32 jit/emitter/arm/
+    RZDCY_MODULES += jit/backend/arm32/ jit/emitter/arm/
 endif
 
 ifdef X86_REC

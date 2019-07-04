@@ -608,6 +608,12 @@ void GDCartridge::device_reset()
 }
 void *GDCartridge::GetDmaPtr(u32 &size)
 {
+	if (dimm_data == NULL)
+	{
+		size = 0;
+		return NULL;
+	}
+
 	dimm_cur_address = DmaOffset & (dimm_data_size-1);
 	size = min(size, dimm_data_size - dimm_cur_address);
 	return dimm_data + dimm_cur_address;
@@ -622,6 +628,11 @@ void GDCartridge::AdvancePtr(u32 size)
 
 bool GDCartridge::Read(u32 offset, u32 size, void *dst)
 {
+	if (dimm_data == NULL)
+	{
+		*(u32 *)dst = 0;
+		return true;
+	}
 	u32 addr = offset & (dimm_data_size-1);
 	memcpy(dst, &dimm_data[addr], min(size, dimm_data_size - addr));
 	return true;

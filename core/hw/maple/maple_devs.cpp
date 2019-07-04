@@ -1719,6 +1719,10 @@ struct maple_naomi_jamma : maple_sega_controller
 	maple_naomi_jamma()
 	{
 	}
+	virtual ~maple_naomi_jamma()
+	{
+		EEPROM_loaded = false;
+	}
 
 	void create_io_boards()
 	{

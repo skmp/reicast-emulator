@@ -204,7 +204,7 @@ void AWCartridge::WriteMem(u32 address, u32 data, u32 size)
 		break;
 
 	case AW_EPR_OFFSETL_addr:
-		epr_offset = (epr_offset & 0xffff0000) | data;
+		epr_offset = (epr_offset & 0xffff0000) | (u16)data;
 		recalc_dma_offset(EPR);
 		break;
 
@@ -224,7 +224,7 @@ void AWCartridge::WriteMem(u32 address, u32 data, u32 size)
 		break;
 
 	case AW_MPR_FILE_OFFSETL_addr:
-		mpr_file_offset = (mpr_file_offset & 0xffff0000) | data;
+		mpr_file_offset = (mpr_file_offset & 0xffff0000) | (u16)data;
 		recalc_dma_offset(MPR_FILE);
 		break;
 
@@ -384,10 +384,11 @@ void AWCartridge::recalc_dma_offset(int mode)
 
 void *AWCartridge::GetDmaPtr(u32 &limit)
 {
+	limit = std::min(std::min(limit, (u32)32), dma_limit - dma_offset);
 	u32 offset = dma_offset / 2;
-	for (int i = 0; i < 16; i++)
+	for (int i = 0; i < limit / 2; i++)
 		decrypted_buf[i] = decrypt16(offset + i);
-	limit = min(limit, (u32)32);
+
 //	printf("AWCART Decrypted data @ %08x:\n", dma_offset);
 //	for (int i = 0; i < 16; i++)
 //	{

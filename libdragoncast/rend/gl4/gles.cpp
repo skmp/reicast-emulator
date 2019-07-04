@@ -480,8 +480,6 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, bool rotate_90, const char 
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
-void gl_term();
-
 void gl4_delete_shaders()
 {
 	for (auto it : gl4.shaders)
@@ -506,7 +504,7 @@ static void gles_term(void)
 	glDeleteVertexArrays(1, &gl4.vbo.main_vao);
 	glDeleteVertexArrays(1, &gl4.vbo.modvol_vao);
 
-	gl_term();
+	os_gl_term();
 }
 
 static void create_modvol_shader()
@@ -565,7 +563,7 @@ extern void initABuffer();
 static bool gles_init()
 {
 
-	if (!gl_init((void*)libPvr_GetRenderTarget(),
+	if (!os_gl_init((void*)libPvr_GetRenderTarget(),
 		         (void*)libPvr_GetRenderSurface()))
 			return false;
 
@@ -594,7 +592,7 @@ static bool gles_init()
 	//clean up the buffer
 	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 	glClear(GL_COLOR_BUFFER_BIT);
-	gl_swap();
+	os_gl_swap();
 
 	initABuffer();
 
@@ -1018,7 +1016,7 @@ struct gl4rend : Renderer
 	bool Render() { return RenderFrame(); }
 	bool RenderLastFrame() { return gl4_render_output_framebuffer(); }
 
-	void Present() { gl_swap(); }
+	void Present() { os_gl_swap(); }
 
 	void DrawOSD(bool clear_screen)
 	{

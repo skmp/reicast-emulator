@@ -269,7 +269,7 @@ void sdl_window_create()
 	printf("Created SDL Window (%ix%i) and GL Context successfully\n", window_width, window_height);
 }
 
-bool gl_init(void* wind, void* disp)
+bool os_gl_init(void* wind, void* disp)
 {
 	SDL_GL_MakeCurrent(window, glcontext);
 	#ifdef GLES
@@ -279,7 +279,7 @@ bool gl_init(void* wind, void* disp)
 	#endif
 }
 
-void gl_swap()
+void os_gl_swap()
 {
 	SDL_GL_SwapWindow(window);
 
@@ -287,7 +287,7 @@ void gl_swap()
 	SDL_GL_GetDrawableSize(window, &screen_width, &screen_height);
 }
 
-void gl_term()
+void os_gl_term()
 {
 	SDL_GL_DeleteContext(glcontext);
 }

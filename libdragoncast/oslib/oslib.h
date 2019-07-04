@@ -31,3 +31,7 @@ u32 static INLINE bitscanrev(u32 v)
 void os_DebugBreak();
 
 void os_LaunchFromURL(const string& url);
+
+bool os_gl_init(void* hwnd, void* hdc);
+void os_gl_swap();
+void os_gl_term();

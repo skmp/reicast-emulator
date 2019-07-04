@@ -807,10 +807,30 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
 		EMUERROR("naomi GD? READ: %X, %d", address, size);
 		return reg_dimm_4c;
 
-	case 0x18:
-		printf("naomi reg 0x18 : returning random data\n");
-		return 0x4000^rand();
-		break;
+	case NAOMI_COMM2_CTRL_addr & 255:
+		return comm_ctrl;
+
+	case NAOMI_COMM2_OFFSET_addr & 255:
+		return comm_offset;
+
+	case NAOMI_COMM2_DATA_addr & 255:
+		{
+			u16 value;
+			if (comm_ctrl & 1)
+				value = m68k_ram[comm_offset / 2];
+			else {
+				// TODO u16 *commram = (u16*)membank("comm_ram")->base();
+				value = comm_ram[comm_offset / 2];
+			}
+			comm_offset += 2;
+			return value;
+		}
+
+	case NAOMI_COMM2_STATUS0_addr & 255:
+		return comm_offset_status0;
+
+	case NAOMI_COMM2_STATUS1_addr & 255:
+		return comm_offset_status1;
 
 	default: break;
 	}
@@ -931,7 +951,34 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 		EMUERROR("naomi WriteMem: %X <= %X, %d", address, data, size);
 		return;
 
-	default: break;
+	case NAOMI_COMM2_CTRL_addr & 255:
+		comm_ctrl = (u16)data;
+		return;
+
+	case NAOMI_COMM2_OFFSET_addr & 255:
+		comm_offset = (u16)data;
+		return;
+
+	case NAOMI_COMM2_DATA_addr & 255:
+		if (comm_ctrl & 1)
+			m68k_ram[comm_offset / 2] = (u16)data;
+		else {
+			// TODO u16 *commram = (u16*)membank("comm_ram")->base();
+			comm_ram[comm_offset / 2] = (u16)data;
+		}
+		comm_offset += 2;
+		return;
+
+	case NAOMI_COMM2_STATUS0_addr & 255:
+		comm_offset_status0 = (u16)data;
+		return;
+
+	case NAOMI_COMM2_STATUS1_addr & 255:
+		comm_offset_status1 = (u16)data;
+		return;
+
+	default:
+		break;
 	}
 	EMUERROR("naomi?WTF? WriteMem: %X <= %X, %d", address, data, size);
 }

@@ -24,6 +24,8 @@ int BControl=0,BCmd=0,BLastCmd=0;
 int GControl=0,GCmd=0,GLastCmd=0;
 int SerStep=0,SerStep2=0;
 
+static bool aw_ram_test_skipped = false;
+
 #ifdef NAOMI_COMM
 	u32 CommOffset;
 	u32* CommSharedMem;
@@ -461,7 +463,16 @@ void Naomi_DmaStart(u32 addr, u32 data)
 			{
 				u32 block_len = len;
 				void* ptr = CurrentCartridge->GetDmaPtr(block_len);
-				WriteMemBlock_nommu_ptr(SB_GDSTAR + offset, (u32*)ptr, block_len);
+				if (block_len == 0)
+				{
+					// empty or end of cart?
+					SB_GDLEND -= len;
+					SB_GDSTARD -= len;
+					break;
+				}
+
+				if (ptr != NULL)
+					WriteMemBlock_nommu_ptr(SB_GDSTAR + offset, (u32*)ptr, block_len);
 				CurrentCartridge->AdvancePtr(block_len);
 				len -= block_len;
 				offset += block_len;
@@ -552,6 +563,23 @@ void naomi_reg_Term()
 void naomi_reg_Reset(bool Manual)
 {
 	NaomiDataRead = false;
+	aw_ram_test_skipped = false;
+	GSerialBuffer = 0;
+	BSerialBuffer = 0;
+	GBufPos = 0;
+	BBufPos = 0;
+	GState = 0;
+	BState = 0;
+	GOldClk = 0;
+	BOldClk = 0;
+	BControl = 0;
+	BCmd = 0;
+	BLastCmd = 0;
+	GControl = 0;
+	GCmd = 0;
+	GLastCmd = 0;
+	SerStep = 0;
+	SerStep2 = 0;
 }
 
 void Update_naomi()
@@ -631,7 +659,6 @@ void Update_naomi()
 }
 static u8 aw_maple_devs;
 extern u32 kcode[4];
-static bool once;
 static int coin_chute[4];
 
 u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
@@ -646,10 +673,10 @@ u32 libExtDevice_ReadMem_A0_006(u32 addr,u32 size) {
 		  //	c/d - 3P/4P coin inputs (EX. IO board), active low
 		  //
 		  //	(ab == 0) -> BIOS skip RAM test
-		  if (!once)
+		  if (!aw_ram_test_skipped)
 		  {
 			 // Skip the RAM test. Also fixes Dolphin Blue in-game freeze
-			 once = true;
+			  aw_ram_test_skipped = true;
 			 return 0;
 		  }
 		  u8 coins = 0xF;

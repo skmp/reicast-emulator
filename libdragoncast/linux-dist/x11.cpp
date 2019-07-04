@@ -5,6 +5,10 @@
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 
+#include "rend/gles/glcache.h"
+
+#include <GL4/gl3w.c>
+
 #if !defined(GLES)
 	#include <GL/gl.h>
 	#include <GL/glx.h>
@@ -609,6 +613,8 @@ void x11_window_destroy()
 	}
 }
 
+//#include <GL4/gl3w.h>
+
 //! windows && X11
 //let's assume glx for now
 
@@ -616,6 +622,9 @@ void x11_window_destroy()
 #include <X11/Xlib.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
+
+#include <hw/pvr/Renderer_if.h>
+
 
 
 bool os_gl_init(void* wind, void* disp)
@@ -626,8 +635,7 @@ bool os_gl_init(void* wind, void* disp)
 		(GLXDrawable)libPvr_GetRenderTarget(),
 		(GLXContext)x11_glc);
 
-	screen_width = 640;
-	screen_height = 480;
+	rend_resize(640, 480);
 	return gl3wInit() != -1 && gl3wIsSupported(3, 1);
 }
 
@@ -642,10 +650,8 @@ void os_gl_swap()
 		&win, &temp, &temp, &new_w, &new_h, &tempu, &tempu);
 
 	//if resized, clear up the draw buffers, to avoid out-of-draw-area junk data
-	if (new_w != screen_width || new_h != screen_height) {
-		screen_width = new_w;
-		screen_height = new_h;
-	}
+
+	rend_resize(new_w, new_h);
 
 #if 0
 	//handy to debug really stupid render-not-working issues ...

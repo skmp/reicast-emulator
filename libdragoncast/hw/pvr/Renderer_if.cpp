@@ -347,9 +347,9 @@ static void rend_create_renderer()
 	else
 	{
 		vector<rendererbackend_t> vec;
-		transform(backends.begin(), backends.end(), back_inserter(vec), [](auto x) { return x.second; });
+		transform(backends.begin(), backends.end(), back_inserter(vec), [](const std::pair<string, rendererbackend_t>& x) { return x.second; });
 		
-		sort(vec.begin(), vec.end(), [](auto a, auto b) { return a.priority > b.priority; });
+		sort(vec.begin(), vec.end(), [](const rendererbackend_t& a, const rendererbackend_t& b) { return a.priority > b.priority; });
 
 		printf("renderer: %s fallback: %s\n", vec.begin()->slug.c_str(), (++vec.begin())->slug.c_str());
 		renderer = vec.begin()->create();

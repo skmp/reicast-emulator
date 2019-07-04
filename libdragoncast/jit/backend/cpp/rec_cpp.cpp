@@ -59,22 +59,6 @@ void rec_mainloop(void* v_cntx)
 	}
 }
 
-MainloopFnPtr_t ngen_init()
-{
-	return &rec_mainloop;
-}
-
-void ngen_GetFeatures(ngen_features* dst)
-{
-	dst->InterpreterFallback = false;
-	dst->OnlyDynamicEnds = false;
-}
-
-RuntimeBlockInfo* ngen_AllocateBlock()
-{
-	return new DynaRBI();
-}
-
 static void ngen_blockcheckfail(u32 pc) {
 	printf("REC CPP: SMC invalidation at %08X\n", pc);
 	rdv_BlockCheckFail(pc);
@@ -1560,47 +1544,91 @@ public:
 
 BlockCompiler* compiler;
 
-void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
+static void ngen_FailedToFindBlock_cpp() {
+	rdv_FailedToFindBlock(Sh4cntx.pc);
+}
+
+struct CPPNGenBackend: NGenBackend
 {
-	verify(emit_FreeSpace() >= 16 * 1024);
+	bool Init()
+	{
+		this->Mainloop = &rec_mainloop;
+		this->FailedToFindBlock = &ngen_FailedToFindBlock_cpp;
+		return true;
+	}
 
-	compiler = new BlockCompiler();
+	void GetFeatures(ngen_features* dst)
+	{
+		dst->InterpreterFallback = false;
+		dst->OnlyDynamicEnds = false;
+	}
+
+	RuntimeBlockInfo* AllocateBlock()
+	{
+		return new DynaRBI();
+	}
+
+	u32* ReadmFail(u32* ptr, u32* regs, u32 saddr)
+	{
+		die("Not implemented");
+		return nullptr;
+	}
 
 
-	compiler->compile(block, smc_checks, reset, staging, optimise);
+	void Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
+	{
+		verify(emit_FreeSpace() >= 16 * 1024);
 
-	delete compiler;
+		compiler = new BlockCompiler();
+
+
+		compiler->compile(block, smc_checks, reset, staging, optimise);
+
+		delete compiler;
+	}
+
+	bool Rewrite(unat& host_pc, unat, unat)
+	{
+		die("Not implemented");
+		return false;
+	}
+
+
+	void CC_Start(shil_opcode* op)
+	{
+		compiler->ngen_CC_Start(op);
+	}
+
+	void CC_Param(shil_opcode* op, shil_param* par, CanonicalParamType tp)
+	{
+		compiler->ngen_CC_param(*op, *par, tp);
+	}
+
+	void CC_Call(shil_opcode*op, void* function)
+	{
+		compiler->ngen_CC_Call(op, function);
+	}
+
+	void CC_Finish(shil_opcode* op)
+	{
+		compiler->ngen_CC_Finish(op);
+	}
+
+	void OnResetBlocks()
+	{
+		idxnxx = 0;
+		int id = 0;
+		/*
+		while (dispatchb[id].fnb)
+			delete dispatchb[id].fnb;
+		*/
+	}
+};
+
+static NGenBackend* create_ngen_cpp() {
+	return new CPPNGenBackend();
 }
 
 
-
-void ngen_CC_Start(shil_opcode* op)
-{
-	compiler->ngen_CC_Start(op);
-}
-
-void ngen_CC_Param(shil_opcode* op, shil_param* par, CanonicalParamType tp)
-{
-	compiler->ngen_CC_param(*op, *par, tp);
-}
-
-void ngen_CC_Call(shil_opcode*op, void* function)
-{
-	compiler->ngen_CC_Call(op, function);
-}
-
-void ngen_CC_Finish(shil_opcode* op)
-{
-	compiler->ngen_CC_Finish(op);
-}
-
-void ngen_ResetBlocks()
-{
-	idxnxx = 0;
-	int id = 0;
-	/*
-	while (dispatchb[id].fnb)
-		delete dispatchb[id].fnb;
-	*/
-}
+static auto rec_cpp = rdv_RegisterShilBackend(ngen_backend_t{"cpp", "Cached Shil Interpreter", &create_ngen_cpp });
 #endif

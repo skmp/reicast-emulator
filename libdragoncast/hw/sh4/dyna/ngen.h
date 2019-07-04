@@ -93,21 +93,14 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc);
 u32 DYNACALL rdv_DoInterrupts(void* block_cpde);
 u32 DYNACALL rdv_DoInterrupts_pc(u32 pc);
 
+#ifdef __cplusplus
+}
+#endif
+
+
 //Stuff to be implemented per dynarec core
 
 typedef void (*MainloopFnPtr_t) (void*);
-MainloopFnPtr_t ngen_init();
-
-//Called to compile a block
-void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging,bool optimise);
-
-//Called when blocks are reseted
-void ngen_ResetBlocks();
-//Value to be returned when the block manager failed to find a block,
-//should call rdv_FailedToFindBlock and then jump to the return value
-extern void (*ngen_FailedToFindBlock)();
-
-void ngen_GetFeatures(ngen_features* dst);
 
 //Canonical callback interface
 enum CanonicalParamType
@@ -121,16 +114,47 @@ enum CanonicalParamType
 	CPT_ptr,
 };
 
-void ngen_CC_Start(shil_opcode* op);
-void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp);
-void ngen_CC_Call(shil_opcode* op,void* function);
-void ngen_CC_Finish(shil_opcode* op);
+struct NGenBackend
+{
+	virtual bool Init() = 0;
 
-RuntimeBlockInfo* ngen_AllocateBlock();
+	//Called to compile a block
+	virtual void Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise) = 0;
 
-#ifdef __cplusplus
-}
-#endif
+	//Called when blocks are reseted
+	virtual void OnResetBlocks() = 0;
 
-bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
-u32* ngen_readm_fail_v2(u32* ptr,u32* regs,u32 saddr);
+	virtual void GetFeatures(ngen_features* dst) = 0;
+
+	// Canonical interface
+	virtual void CC_Start(shil_opcode* op) = 0;
+	virtual void CC_Param(shil_opcode* op, shil_param* par, CanonicalParamType tp) = 0;
+	virtual void CC_Call(shil_opcode* op, void* function) = 0;
+	virtual void CC_Finish(shil_opcode* op) = 0;
+
+	// Alloc block, null return if out of blocks
+	virtual RuntimeBlockInfo* AllocateBlock() = 0;
+
+	virtual bool Rewrite(unat& addr, unat retadr, unat acc) = 0;
+	virtual u32* ReadmFail(u32* ptr, u32* regs, u32 saddr) = 0;
+
+	// assembly exports
+
+	MainloopFnPtr_t Mainloop;
+
+	//Value to be returned when the block manager failed to find a block,
+	//should call rdv_FailedToFindBlock and then jump to the return value
+	void (*FailedToFindBlock)();
+};
+
+struct ngen_backend_t
+{
+	string slug;
+	string name;
+
+	NGenBackend* (*Create)();
+};
+
+bool rdv_RegisterShilBackend(const ngen_backend_t& backend);
+
+extern NGenBackend* rdv_ngen;

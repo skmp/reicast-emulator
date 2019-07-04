@@ -38,7 +38,7 @@ uintptr_t cc_rx_offset;
 u32 LastAddr;
 u32 LastAddr_min;
 u32* emit_ptr=0;
-MainloopFnPtr_t mainloop_function;
+NGenBackend* rdv_ngen;
 
 void* emit_GetCCPtr() { return emit_ptr==0?(void*)&CodeCache[LastAddr]:(void*)emit_ptr; }
 void emit_SetBaseAddr() { LastAddr_min = LastAddr; }
@@ -89,7 +89,7 @@ void recSh4_Run()
 		printf("Warning: SMC check mode is %d\n", settings.dynarec.SmcCheckLevel);
 	
 	verify(rcb_noffs(&next_pc)==-184);
-	mainloop_function(sh4_dyna_rcb);
+	rdv_ngen->Mainloop(sh4_dyna_rcb);
 
 #if !defined(TARGET_BOUNDED_EXECUTION)
 	sh4_int_bCpuRun=false;
@@ -253,7 +253,7 @@ DynarecCodeEntryPtr rdv_CompilePC()
 	RuntimeBlockInfo* rv=0;
 	do
 	{
-		RuntimeBlockInfo* rbi = ngen_AllocateBlock();
+		RuntimeBlockInfo* rbi = rdv_ngen->AllocateBlock();
 		if (rv==0) rv=rbi;
 
 		rbi->Setup(pc,fpscr);
@@ -261,7 +261,9 @@ DynarecCodeEntryPtr rdv_CompilePC()
 		
 		bool do_opts=((rbi->addr&0x3FFFFFFF)>0x0C010100);
 		rbi->staging_runs=do_opts?100:-100;
-		ngen_Compile(rbi,DoCheck(rbi->addr, rbi->sh4_code_size),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
+
+		rdv_ngen->Compile(rbi,DoCheck(rbi->addr, rbi->sh4_code_size),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
+
 		verify(rbi->code!=0);
 
 		bool doLock = !bm_RamPageHasData(rbi->addr, rbi->sh4_code_size); // && maybe some setting?
@@ -284,12 +286,6 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 
 	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC());
 }
-
-static void ngen_FailedToFindBlock_internal() {
-	rdv_FailedToFindBlock(Sh4cntx.pc);
-}
-
-void (*ngen_FailedToFindBlock)() = &ngen_FailedToFindBlock_internal;
 
 extern u32 rebuild_counter;
 
@@ -331,7 +327,7 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc)
 DynarecCodeEntryPtr rdv_FindOrCompile()
 {
 	DynarecCodeEntryPtr rv = bm_GetCode(next_pc);  // Returns exec addr
-	if (rv == ngen_FailedToFindBlock)
+	if (rv == rdv_ngen->FailedToFindBlock)
 		rv = (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC());  // Returns rw addr
 	
 	return rv;
@@ -469,7 +465,8 @@ void recSh4_Init()
 	verify(CodeCache != NULL);
 
 	memset(CodeCache, 0xFF, CODE_SIZE);
-	mainloop_function = ngen_init();
+	verify(rdv_ngen->Init());
+
 	bm_Reset();
 }
 
@@ -498,5 +495,14 @@ void Get_Sh4Recompiler(sh4_if* rv)
 	rv->IsCpuRunning = recSh4_IsCpuRunning;
 	rv->ResetCache = recSh4_ClearCache;
 }
+
+bool rdv_RegisterShilBackend(const ngen_backend_t& backend)
+{
+	verify(rdv_ngen == nullptr);
+
+	rdv_ngen = backend.Create();
+	
+	return true;
+};
 
 #endif  // FEAT_SHREC != DYNAREC_NONE

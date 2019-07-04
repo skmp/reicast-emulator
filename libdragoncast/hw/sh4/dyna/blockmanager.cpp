@@ -60,7 +60,7 @@ RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr)
 {
 	DynarecCodeEntryPtr cde = bm_GetCode(addr);  // Returns RX ptr
 
-	if (cde == ngen_FailedToFindBlock)
+	if (cde == rdv_ngen->FailedToFindBlock)
 		return 0;
 	else
 		return bm_GetBlock((void*)cde);  // Returns RX pointer
@@ -113,7 +113,7 @@ void bm_AddBlock(RuntimeBlockInfo* blk, bool lockRam)
 	blkmap[(void*)blk->code] = blk;
 	all_blocks.insert(blk);
 
-	verify((void*)bm_GetCode(blk->addr)==(void*)ngen_FailedToFindBlock);
+	verify((void*)bm_GetCode(blk->addr)==(void*)rdv_ngen->FailedToFindBlock);
 	FPCA(blk->addr) = (DynarecCodeEntryPtr)CC_RW2RX(blk->code);
 
 	u32 code_ram_page_base = (blk->addr&RAM_MASK)/PAGE_SIZE;
@@ -146,8 +146,9 @@ void bm_DiscardBlock(RuntimeBlockInfo* blk)
 	del_blocks.insert(blk);
 
 	verify((void*)bm_GetCode(blk->addr)==(void*)blk->code);
-	FPCA(blk->addr) = (DynarecCodeEntryPtr)ngen_FailedToFindBlock;
-	verify((void*)bm_GetCode(blk->addr)==(void*)ngen_FailedToFindBlock);
+
+	FPCA(blk->addr) = (DynarecCodeEntryPtr)rdv_ngen->FailedToFindBlock;
+	verify((void*)bm_GetCode(blk->addr)==(void*)rdv_ngen->FailedToFindBlock);
 
 	u32 code_ram_page_base = (blk->addr&RAM_MASK)/PAGE_SIZE;
 	u32 code_ram_page_top = ((blk->addr+blk->sh4_code_size-1)&RAM_MASK)/PAGE_SIZE;
@@ -178,14 +179,14 @@ void bm_vmem_pagefill(void** ptr, u32 size_bytes)
 {
 	for (size_t i=0; i < size_bytes / sizeof(ptr[0]); i++)
 	{
-		ptr[i]=(void*)ngen_FailedToFindBlock;
+		ptr[i]=(void*)rdv_ngen->FailedToFindBlock;
 	}
 }
 
 void bm_Reset()
 {
 	// reset ngen
-	ngen_ResetBlocks();
+	rdv_ngen->OnResetBlocks();
 
 	// reset lookup table via vmem
 	_vmem_bm_reset();

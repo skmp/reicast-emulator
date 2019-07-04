@@ -324,7 +324,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 			return EXCEPTION_CONTINUE_EXECUTION;
 		}
 	#elif HOST_CPU == CPU_X64
-		else if (ngen_Rewrite((unat&)ep->ContextRecord->Rip, 0, 0))
+		else if (rdv_ngen->Rewrite((unat&)ep->ContextRecord->Rip, 0, 0))
 		{
 			return EXCEPTION_CONTINUE_EXECUTION;
 		}

@@ -1015,7 +1015,7 @@ void dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 {
 	blk=rbi;
 	state_Setup(blk->addr,blk->fpu_cfg);
-	ngen_GetFeatures(&state.ngen);
+	rdv_ngen->GetFeatures(&state.ngen);
 	
 	blk->guest_opcodes=0;
 	

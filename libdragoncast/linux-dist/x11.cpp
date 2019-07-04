@@ -608,4 +608,60 @@ void x11_window_destroy()
 		x11_disp = NULL;
 	}
 }
+
+//! windows && X11
+//let's assume glx for now
+
+#include <X11/X.h>
+#include <X11/Xlib.h>
+#include <GL/gl.h>
+#include <GL/glx.h>
+
+
+bool os_gl_init(void* wind, void* disp)
+{
+	extern void* x11_glc;
+
+	glXMakeCurrent((Display*)libPvr_GetRenderSurface(),
+		(GLXDrawable)libPvr_GetRenderTarget(),
+		(GLXContext)x11_glc);
+
+	screen_width = 640;
+	screen_height = 480;
+	return gl3wInit() != -1 && gl3wIsSupported(3, 1);
+}
+
+void os_gl_swap()
+{
+	glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
+
+	Window win;
+	int temp;
+	unsigned int tempu, new_w, new_h;
+	XGetGeometry((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget(),
+		&win, &temp, &temp, &new_w, &new_h, &tempu, &tempu);
+
+	//if resized, clear up the draw buffers, to avoid out-of-draw-area junk data
+	if (new_w != screen_width || new_h != screen_height) {
+		screen_width = new_w;
+		screen_height = new_h;
+	}
+
+#if 0
+	//handy to debug really stupid render-not-working issues ...
+
+	glcache.ClearColor(0, 0.5, 1, 1);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
+
+
+	glcache.ClearColor(1, 0.5, 0, 1);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
+#endif
+}
+
+void os_gl_term()
+{
+}
 #endif

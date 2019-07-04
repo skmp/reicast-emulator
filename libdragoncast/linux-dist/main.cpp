@@ -177,7 +177,6 @@ void dc_term();
 void* rend_thread(void* p);
 
 #ifdef TARGET_PANDORA
-	void gl_term();
 
 	void clean_exit(int sig_num)
 	{

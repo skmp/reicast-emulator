@@ -61,21 +61,6 @@ static __attribute((used)) void end_slice()
 #define STACK_ALIGN  8
 #endif
 
-void ngen_ResetBlocks()
-{
-}
-
-void ngen_GetFeatures(ngen_features* dst)
-{
-	dst->InterpreterFallback = false;
-	dst->OnlyDynamicEnds = false;
-}
-
-RuntimeBlockInfo* ngen_AllocateBlock()
-{
-	return new DynaRBI();
-}
-
 static void ngen_blockcheckfail(u32 pc) {
 	printf("X64 JIT: SMC invalidation at %08X\n", pc);
 	rdv_BlockCheckFail(pc);
@@ -1359,97 +1344,133 @@ void X64RegAlloc::Writeback_FPU(u32 reg, s8 nreg)
 	compiler->RegWriteback_FPU(reg, nreg);
 }
 
-static BlockCompiler* compiler;
-
-void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
-{
-	verify(emit_FreeSpace() >= 16 * 1024);
-
-	compiler = new BlockCompiler(emit_GetCCPtr());
-	compiler->compile(block, smc_checks, reset, staging, optimise);
-	delete compiler;
+static void ngen_FailedToFindBlock_cpp() {
+	rdv_FailedToFindBlock(Sh4cntx.pc);
 }
 
-bool ngen_Rewrite(unat& host_pc, unat, unat)
+struct X64NGenBackend : NGenBackend
 {
-	//printf("ngen_Rewrite pc %p\n", host_pc);
-	void *host_pc_rw = (void*)CC_RX2RW(host_pc);
-	RuntimeBlockInfo *block = bm_GetBlock((void*)host_pc);
-	if (block == NULL)
+	BlockCompiler* compiler;
+
+	void Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
 	{
-		printf("ngen_Rewrite: Block at %p not found\n", (void *)host_pc);
-		return false;
-	}
-	char *code_ptr = (char*)host_pc_rw;
-	auto it = block->memory_accesses.find(code_ptr);
-	if (it == block->memory_accesses.end())
-	{
-		printf("ngen_Rewrite: memory access at %p not found (%lu entries)\n", code_ptr, block->memory_accesses.size());
-		return false;
-	}
-	u32 opid = it->second.opid;
-	verify(opid < block->oplist.size());
-	const shil_opcode& op = block->oplist[opid];
+		verify(emit_FreeSpace() >= 16 * 1024);
 
-	char *rewrite_ptr = &code_ptr[-it->second.rewrite_offset];
-	BlockCompiler comp(rewrite_ptr);
-	comp.InitializeRewrite(block, opid);
-	if (op.op == shop_readm)
-		comp.GenReadMemorySlow(op, it->second.emitted_bytes);
-	else
-		comp.GenWriteMemorySlow(op, it->second.emitted_bytes);
-
-	// Move host_pc back N bytes to the begining of the whole load/store sequence.
-	host_pc = (unat)CC_RW2RX(rewrite_ptr);
-
-	return true;
-}
-
-MainloopFnPtr_t ngen_init()
-{
-	MainloopFnPtr_t entryp;
-	// Here we emit some trampolines for Mem Read/Write functions.
-	// The purpose is making the calls smaller so that we can have rewrites.
-	// This is inspired on the 32 bit rec, that does (almost) the same.
-
-	{
-		BlockCompiler comp(emit_GetCCPtr());
-		comp.compile_trampolines();
+		compiler = new BlockCompiler(emit_GetCCPtr());
+		compiler->compile(block, smc_checks, reset, staging, optimise);
+		delete compiler;
 	}
 
-	// Align the start to 32 bytes for perf.
-	while (((uintptr_t)emit_GetCCPtr()) & 31)
-		emit_Skip(1);
-
-	// Generate the mainloop logic here, so that it is more portable.
+	bool Rewrite(unat& host_pc, unat, unat)
 	{
-		entryp = (MainloopFnPtr_t)emit_GetCCPtr();
-		BlockCompiler comp(emit_GetCCPtr());
-		comp.build_mainloop();
+		//printf("ngen_Rewrite pc %p\n", host_pc);
+		void *host_pc_rw = (void*)CC_RX2RW(host_pc);
+		RuntimeBlockInfo *block = bm_GetBlock((void*)host_pc);
+		if (block == NULL)
+		{
+			printf("ngen_Rewrite: Block at %p not found\n", (void *)host_pc);
+			return false;
+		}
+		char *code_ptr = (char*)host_pc_rw;
+		auto it = block->memory_accesses.find(code_ptr);
+		if (it == block->memory_accesses.end())
+		{
+			printf("ngen_Rewrite: memory access at %p not found (%lu entries)\n", code_ptr, block->memory_accesses.size());
+			return false;
+		}
+		u32 opid = it->second.opid;
+		verify(opid < block->oplist.size());
+		const shil_opcode& op = block->oplist[opid];
+
+		char *rewrite_ptr = &code_ptr[-it->second.rewrite_offset];
+		BlockCompiler comp(rewrite_ptr);
+		comp.InitializeRewrite(block, opid);
+		if (op.op == shop_readm)
+			comp.GenReadMemorySlow(op, it->second.emitted_bytes);
+		else
+			comp.GenWriteMemorySlow(op, it->second.emitted_bytes);
+
+		// Move host_pc back N bytes to the begining of the whole load/store sequence.
+		host_pc = (unat)CC_RW2RX(rewrite_ptr);
+
+		return true;
 	}
 
-	// To prevent code cache reset from wiping these out.
-	emit_SetBaseAddr();
+	bool Init()
+	{
+		// Here we emit some trampolines for Mem Read/Write functions.
+		// The purpose is making the calls smaller so that we can have rewrites.
+		// This is inspired on the 32 bit rec, that does (almost) the same.
 
-	return entryp;
+		{
+			BlockCompiler comp(emit_GetCCPtr());
+			comp.compile_trampolines();
+		}
+
+		// Align the start to 32 bytes for perf.
+		while (((uintptr_t)emit_GetCCPtr()) & 31)
+			emit_Skip(1);
+
+		// Generate the mainloop logic here, so that it is more portable.
+		{
+			this->Mainloop = (MainloopFnPtr_t)emit_GetCCPtr();
+			BlockCompiler comp(emit_GetCCPtr());
+			comp.build_mainloop();
+		}
+
+		// To prevent code cache reset from wiping these out.
+		emit_SetBaseAddr();
+
+		this->FailedToFindBlock = &ngen_FailedToFindBlock_cpp;
+
+		return true;
+	}
+
+	void CC_Start(shil_opcode* op)
+	{
+		compiler->ngen_CC_Start(*op);
+	}
+
+	void CC_Param(shil_opcode* op, shil_param* par, CanonicalParamType tp)
+	{
+		compiler->ngen_CC_param(*op, *par, tp);
+	}
+
+	void CC_Call(shil_opcode* op, void* function)
+	{
+		compiler->ngen_CC_Call(*op, function);
+	}
+
+	void CC_Finish(shil_opcode* op)
+	{
+	}
+
+	RuntimeBlockInfo* AllocateBlock()
+	{
+		return new DynaRBI();
+	}
+
+	u32* ReadmFail(u32* ptr, u32* regs, u32 saddr)
+	{
+		die("Not implemented");
+		return nullptr;
+	}
+
+	void OnResetBlocks()
+	{
+	}
+
+	void GetFeatures(ngen_features* dst)
+	{
+		dst->InterpreterFallback = false;
+		dst->OnlyDynamicEnds = false;
+	}
+	
+};
+
+static NGenBackend* create_ngen_x64() {
+	return new X64NGenBackend();
 }
 
-void ngen_CC_Start(shil_opcode* op)
-{
-	compiler->ngen_CC_Start(*op);
-}
-
-void ngen_CC_Param(shil_opcode* op, shil_param* par, CanonicalParamType tp)
-{
-	compiler->ngen_CC_param(*op, *par, tp);
-}
-
-void ngen_CC_Call(shil_opcode* op, void* function)
-{
-	compiler->ngen_CC_Call(*op, function);
-}
-
-void ngen_CC_Finish(shil_opcode* op)
-{
-}
+static auto rec_x64 = rdv_RegisterShilBackend(ngen_backend_t{"x64", "x64 slow jit", &create_ngen_x64 });
 #endif

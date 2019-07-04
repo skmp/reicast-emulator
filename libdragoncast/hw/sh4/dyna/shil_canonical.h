@@ -45,16 +45,16 @@ extern "C" f32 fipr_asm(float* fn, float* fm);
 
 	#define shil_canonical(rv,name,args,code) struct name { static rv impl args { code } };
 	
-	#define shil_cf_arg_u32(x) ngen_CC_Param(op,&op->x,CPT_u32);
-	#define shil_cf_arg_f32(x) ngen_CC_Param(op,&op->x,CPT_f32);
-	#define shil_cf_arg_ptr(x) ngen_CC_Param(op,&op->x,CPT_ptr);
-	#define shil_cf_rv_u32(x) ngen_CC_Param(op,&op->x,CPT_u32rv);
-	#define shil_cf_rv_f32(x) ngen_CC_Param(op,&op->x,CPT_f32rv);
-	#define shil_cf_rv_u64(x) ngen_CC_Param(op,&op->rd,CPT_u64rvL); ngen_CC_Param(op,&op->rd2,CPT_u64rvH);
-	#define shil_cf_ext(x) ngen_CC_Call(op,(void*)&x);
+	#define shil_cf_arg_u32(x) rdv_ngen->CC_Param(op,&op->x,CPT_u32);
+	#define shil_cf_arg_f32(x) rdv_ngen->CC_Param(op,&op->x,CPT_f32);
+	#define shil_cf_arg_ptr(x) rdv_ngen->CC_Param(op,&op->x,CPT_ptr);
+	#define shil_cf_rv_u32(x) rdv_ngen->CC_Param(op,&op->x,CPT_u32rv);
+	#define shil_cf_rv_f32(x) rdv_ngen->CC_Param(op,&op->x,CPT_f32rv);
+	#define shil_cf_rv_u64(x) rdv_ngen->CC_Param(op,&op->rd,CPT_u64rvL); rdv_ngen->CC_Param(op,&op->rd2,CPT_u64rvH);
+	#define shil_cf_ext(x) rdv_ngen->CC_Call(op,(void*)&x);
 	#define shil_cf(x) shil_cf_ext(x::impl)
 
-	#define shil_compile(code) static void compile(shil_opcode* op) { ngen_CC_Start(op); code ngen_CC_Finish(op); }
+	#define shil_compile(code) static void compile(shil_opcode* op) { rdv_ngen->CC_Start(op); code rdv_ngen->CC_Finish(op); }
 #elif  SHIL_MODE==2
 	//generate struct declarations ...
 	#define SHIL_START

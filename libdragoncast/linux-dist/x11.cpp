@@ -635,8 +635,13 @@ bool os_gl_init(void* wind, void* disp)
 		(GLXDrawable)libPvr_GetRenderTarget(),
 		(GLXContext)x11_glc);
 
-	rend_resize(640, 480);
-	return gl3wInit() != -1 && gl3wIsSupported(3, 1);
+	auto init_ok = gl3wInit() != -1 && gl3wIsSupported(3, 1);
+	if (init_ok)
+	{
+		rend_resize(640, 480);
+	}
+
+	return init_ok;
 }
 
 void os_gl_swap()

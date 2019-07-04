@@ -65,12 +65,12 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 		#if HOST_CPU==CPU_ARM
 			else if (dyna_cde)
 			{
-				ctx.pc = (u32)ngen_readm_fail_v2((u32*)ctx.pc, ctx.r, (unat)si->si_addr);
+				ctx.pc = (u32)rdv_ngen->ReadmFail((u32*)ctx.pc, ctx.r, (unat)si->si_addr);
 
 				context_to_segfault(&ctx, segfault_ctx);
 			}
 		#elif HOST_CPU==CPU_X86
-			else if (ngen_Rewrite((unat&)ctx.pc, *(unat*)ctx.esp, ctx.eax))
+			else if (rdv_ngen->Rewrite((unat&)ctx.pc, *(unat*)ctx.esp, ctx.eax))
 			{
 				//remove the call from call stack
 				ctx.esp += 4;
@@ -80,12 +80,12 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 				context_to_segfault(&ctx, segfault_ctx);
 			}
 		#elif HOST_CPU == CPU_X64
-			else if (dyna_cde && ngen_Rewrite((unat&)ctx.pc, 0, 0))
+			else if (dyna_cde && rdv_ngen->Rewrite((unat&)ctx.pc, 0, 0))
 			{
 				context_to_segfault(&ctx, segfault_ctx);
 			}
 		#elif HOST_CPU == CPU_ARM64
-			else if (dyna_cde && ngen_Rewrite(ctx.pc, 0, 0))
+			else if (dyna_cde && rdv_ngen->Rewrite(ctx.pc, 0, 0))
 			{
 				context_to_segfault(&ctx, segfault_ctx);
 			}

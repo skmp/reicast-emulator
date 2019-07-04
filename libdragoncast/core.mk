@@ -10,10 +10,10 @@ VERSION_HEADER := $(RZDCY_SRC_DIR)/version.h
 RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
  hw/extdev/ hw/arm/ hw/naomi/ imgread/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
- deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/ deps/xbrz/ \
+ deps/libelf/ deps/cdipsr/ arm_emitter/ rend/ reios/ deps/libpng/ deps/xbrz/ \
  deps/xxhash/ deps/libzip/ deps/imgui/ archive/ input/
 
-ifdef WEBUI
+ifdef _NO_WEBUI
 	RZDCY_MODULES += webui/
 	RZDCY_MODULES += deps/libwebsocket/
 
@@ -23,23 +23,23 @@ ifdef WEBUI
 endif
 
 ifndef NOT_ARM
-    RZDCY_MODULES += rec-ARM/
+    RZDCY_MODULES += jit/backend/arm32 jit/emitter/arm
 endif
 
 ifdef X86_REC
-    RZDCY_MODULES += rec-x86/ emitter/
+    RZDCY_MODULES += jit/backend/x86/ jit/emitter/x86
 endif
 
 ifdef X64_REC
-    RZDCY_MODULES += rec-x64/
+    RZDCY_MODULES += jit/backend/x64/
 endif
 
 ifdef CPP_REC
-    RZDCY_MODULES += rec-cpp/
+    RZDCY_MODULES += jit/backend/cpp/
 endif
 
 ifdef ARM64_REC
-    RZDCY_MODULES += rec-ARM64/ deps/vixl/ deps/vixl/aarch64/
+    RZDCY_MODULES += jit/backend/arm64/ deps/vixl/ deps/vixl/aarch64/
 endif
 
 ifndef NO_REND

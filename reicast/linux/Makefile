@@ -164,7 +164,7 @@ else ifneq (,$(findstring sun8i,$(platform)))
     ASFLAGS += -marm -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -funsafe-math-optimizations
     CC = gcc -std=gnu99
-    CXX = g++ -std=gnu++11
+    CXX = g++ -std=gnu++14
     ifneq (,$(findstring sdl,$(platform)))
     	CFLAGS += -D GL_GLEXT_PROTOTYPES
         USE_SDL := 1
@@ -179,7 +179,7 @@ else ifneq (,$(findstring lincpp,$(platform)))
     NOT_ARM := 1
     USE_X11 := 1
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_JIT
-    CXXFLAGS += -fexceptions -std=gnu++11
+    CXXFLAGS += -fexceptions -std=gnu++14
 
 # Raspberry Pi 4
 else ifneq (,$(findstring rpi4,$(platform)))
@@ -314,7 +314,7 @@ else
     $(error Unknown platform)
 endif
 
-RZDCY_SRC_DIR = $(LOCAL_PATH)/../../core
+RZDCY_SRC_DIR = $(LOCAL_PATH)/../../libdragoncast
 include $(RZDCY_SRC_DIR)/core.mk
 
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common -fopenmp
@@ -323,7 +323,7 @@ CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D RELEASE -c -D USES_HOMEDIR -fopenmp #-D NO_R
 CFLAGS += -frename-registers -fno-strict-aliasing
 CFLAGS += -ffast-math -ftree-vectorize
 
-CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++11
+CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++14
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 

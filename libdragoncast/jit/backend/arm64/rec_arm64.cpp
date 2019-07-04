@@ -202,28 +202,6 @@ void rec_mainloop(void* v_cntx)
 	);
 }
 
-MainloopFnPtr_t ngen_init()
-{
-	printf("Initializing the ARM64 dynarec\n");
-	ngen_FailedToFindBlock = &ngen_FailedToFindBlock_;
-	return &rec_mainloop;
-}
-
-void ngen_ResetBlocks()
-{
-}
-
-void ngen_GetFeatures(ngen_features* dst)
-{
-	dst->InterpreterFallback = false;
-	dst->OnlyDynamicEnds = false;
-}
-
-RuntimeBlockInfo* ngen_AllocateBlock()
-{
-	return new DynaRBI();
-}
-
 class Arm64Assembler : public MacroAssembler
 {
 	typedef void (MacroAssembler::*Arm64Op_RRO)(const Register&, const Register&, const Operand&);
@@ -1406,73 +1384,6 @@ private:
 	#endif
 };
 
-static Arm64Assembler* compiler;
-
-void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
-{
-	verify(emit_FreeSpace() >= 16 * 1024);
-
-	compiler = new Arm64Assembler(emit_GetCCPtr());
-
-	compiler->ngen_Compile(block, smc_checks, reset, staging, optimise);
-
-	delete compiler;
-	compiler = NULL;
-}
-
-void ngen_CC_Start(shil_opcode* op)
-{
-	compiler->ngen_CC_Start(op);
-}
-
-void ngen_CC_Param(shil_opcode* op, shil_param* par, CanonicalParamType tp)
-{
-	compiler->ngen_CC_Param(*op, *par, tp);
-}
-
-void ngen_CC_Call(shil_opcode*op, void* function)
-{
-	compiler->ngen_CC_Call(op, function);
-}
-
-void ngen_CC_Finish(shil_opcode* op)
-{
-
-}
-
-bool ngen_Rewrite(unat& host_pc, unat, unat)
-{
-	//printf("ngen_Rewrite pc %p\n", host_pc);
-	void *host_pc_rw = (void*)CC_RX2RW(host_pc);
-	RuntimeBlockInfo *block = bm_GetBlock((void*)host_pc);
-	if (block == NULL)
-	{
-		printf("ngen_Rewrite: Block at %p not found\n", (void *)host_pc);
-		return false;
-	}
-	u32 *code_ptr = (u32*)host_pc_rw;
-	auto it = block->memory_accesses.find(code_ptr);
-	if (it == block->memory_accesses.end())
-	{
-		printf("ngen_Rewrite: memory access at %p not found (%lu entries)\n", code_ptr, block->memory_accesses.size());
-		return false;
-	}
-	u32 opid = it->second.opid;
-	verify(opid < block->oplist.size());
-	const shil_opcode& op = block->oplist[opid];
-	Arm64Assembler *assembler = new Arm64Assembler(code_ptr - 2);	// Skip the 2 preceding ops (bic, add)
-	assembler->InitializeRewrite(block, opid);
-	if (op.op == shop_readm)
-		assembler->GenReadMemorySlow(op);
-	else
-		assembler->GenWriteMemorySlow(op);
-	assembler->Finalize(true);
-	delete assembler;
-	host_pc = (unat)CC_RW2RX(code_ptr - 2);
-
-	return true;
-}
-
 u32 DynaRBI::Relink()
 {
 	//printf("DynaRBI::Relink %08x\n", this->addr);
@@ -1521,4 +1432,114 @@ extern "C" void do_sqw_nommu_area_3(u32 dst, u8* sqb)
 		: : : "memory"
 	);
 }
+
+static Arm64Assembler* compiler;
+
+struct Arm64NGenBackend: NGenBackend
+{
+	bool Init()
+	{
+		printf("Initializing the ARM64 dynarec\n");
+		
+		this->FailedToFindBlock = &ngen_FailedToFindBlock_;
+		this->Mainloop = &rec_mainloop;
+
+		return true;
+	}
+
+	void OnResetBlocks()
+	{
+	}
+
+	void GetFeatures(ngen_features* dst)
+	{
+		dst->InterpreterFallback = false;
+		dst->OnlyDynamicEnds = false;
+	}
+
+	RuntimeBlockInfo* AllocateBlock()
+	{
+		return new DynaRBI();
+	}
+
+
+	void Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
+	{
+		verify(emit_FreeSpace() >= 16 * 1024);
+
+		compiler = new Arm64Assembler(emit_GetCCPtr());
+
+		compiler->ngen_Compile(block, smc_checks, reset, staging, optimise);
+
+		delete compiler;
+		compiler = NULL;
+	}
+
+	void CC_Start(shil_opcode* op)
+	{
+		compiler->ngen_CC_Start(op);
+	}
+
+	void CC_Param(shil_opcode* op, shil_param* par, CanonicalParamType tp)
+	{
+		compiler->ngen_CC_Param(*op, *par, tp);
+	}
+
+	void CC_Call(shil_opcode*op, void* function)
+	{
+		compiler->ngen_CC_Call(op, function);
+	}
+
+	void CC_Finish(shil_opcode* op)
+	{
+
+	}
+
+	bool Rewrite(unat& host_pc, unat, unat)
+	{
+		//printf("ngen_Rewrite pc %p\n", host_pc);
+		void *host_pc_rw = (void*)CC_RX2RW(host_pc);
+		RuntimeBlockInfo *block = bm_GetBlock((void*)host_pc);
+		if (block == NULL)
+		{
+			printf("ngen_Rewrite: Block at %p not found\n", (void *)host_pc);
+			return false;
+		}
+		u32 *code_ptr = (u32*)host_pc_rw;
+		auto it = block->memory_accesses.find(code_ptr);
+		if (it == block->memory_accesses.end())
+		{
+			printf("ngen_Rewrite: memory access at %p not found (%lu entries)\n", code_ptr, block->memory_accesses.size());
+			return false;
+		}
+		u32 opid = it->second.opid;
+		verify(opid < block->oplist.size());
+		const shil_opcode& op = block->oplist[opid];
+		Arm64Assembler *assembler = new Arm64Assembler(code_ptr - 2);	// Skip the 2 preceding ops (bic, add)
+		assembler->InitializeRewrite(block, opid);
+		if (op.op == shop_readm)
+			assembler->GenReadMemorySlow(op);
+		else
+			assembler->GenWriteMemorySlow(op);
+		assembler->Finalize(true);
+		delete assembler;
+		host_pc = (unat)CC_RW2RX(code_ptr - 2);
+
+		return true;
+	}
+
+	u32* ReadmFail(u32* ptr, u32* regs, u32 saddr)
+	{
+		die("not implemented")
+		return nullptr;
+	}
+};
+
+static NGenBackend* create_ngen_arm64() {
+	return new Arm64NGenBackend();
+}
+
+
+static auto rec_cpp = rdv_RegisterShilBackend(ngen_backend_t{"arm64", "Slow arm64 jit", &create_ngen_arm64 });
+
 #endif	// FEAT_SHREC == DYNAREC_JIT

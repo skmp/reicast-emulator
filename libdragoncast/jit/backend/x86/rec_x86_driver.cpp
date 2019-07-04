@@ -271,147 +271,6 @@ void CheckBlock(SmcCheckEnum smc_checks, RuntimeBlockInfo* block)
 	}
 }
 
-
-void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging,bool optimise)
-{
-	//initialise stuff
-	DetectCpuFeatures();
-
-	((DynaRBI*)block)->reloc_info=0;
-
-	//Setup emitter
-	x86e = new x86_block();
-	x86e->Init(0,0);
-	x86e->x86_buff=(u8*)emit_GetCCPtr();
-	x86e->x86_size=emit_FreeSpace();
-	x86e->do_realloc=false;
-
-	block->code=(DynarecCodeEntryPtr)emit_GetCCPtr();
-
-	x86e->Emit(op_add32,&memops_t,block->memops);
-	x86e->Emit(op_add32,&memops_l,block->linkedmemops);
-
-#ifdef MIPS_COUNTER
-	x86e->Emit(op_add32, &mips_counter, block->oplist.size());
-#endif
-
-	//run register allocator
-	reg.DoAlloc(block,alloc_regs,xmm_alloc_regs);
-	
-	//block header//
-
-	//block invl. checks
-	x86e->Emit(op_mov32,ECX,block->addr);
-
-	CheckBlock(smc_checks, block);
-
-	//Scheduler
-	x86_Label* no_up=x86e->CreateLabel(false,8);
-
-	x86e->Emit(op_sub32,&cycle_counter,block->guest_cycles);
-
-	x86e->Emit(op_jns,no_up);
-	{
-		x86e->Emit(op_call,x86_ptr_imm(intc_sched));
-	}
-
-	x86e->MarkLabel(no_up);
-
-	//stating counter
-	if (staging) x86e->Emit(op_sub32,&block->staging_runs,1);
-
-	//profiler
-	if (prof.enable || 1)
-		x86e->Emit(op_add32,&block->runs,1);
-
-	if (prof.enable)
-	{
-		//if (force_checks)
-		//	x86e->Emit(op_add32,&prof.counters.blkrun.force_check,1);
-
-		x86e->Emit(op_add32,&prof.counters.blkrun.cycles[block->guest_cycles],1);
-	}
-
-	for (size_t i=0;i<block->oplist.size();i++)
-	{
-		shil_opcode* op=&block->oplist[i];
-
-		u32 opcd_start=x86e->opcode_count;
-		if (prof.enable) 
-		{
-			x86e->Emit(op_add32,&prof.counters.shil.executed[op->op],1);
-		}
-
-		op->host_offs=x86e->x86_indx;
-		
-		if (prof.enable)
-		{
-			set<int> reg_wt;
-			set<int> reg_rd;
-
-			for (int z=0;op->rd.is_reg() && z<op->rd.count();z++)
-				reg_wt.insert(op->rd._reg+z);
-
-			for (int z=0;op->rd2.is_reg() && z<op->rd2.count();z++)
-				reg_wt.insert(op->rd2._reg+z);
-
-			for (int z=0;op->rs1.is_reg() && z<op->rs1.count();z++)
-				reg_rd.insert(op->rs1._reg+z);
-
-			for (int z=0;op->rs2.is_reg() && z<op->rs2.count();z++)
-				reg_rd.insert(op->rs2._reg+z);
-
-			for (int z=0;op->rs3.is_reg() && z<op->rs3.count();z++)
-				reg_rd.insert(op->rs3._reg+z);
-
-			set<int>::iterator iter=reg_wt.begin();
-			while( iter != reg_wt.end() ) 
-			{
-				if (reg_rd.count(*iter))
-				{
-					reg_rd.erase(*iter);
-					x86e->Emit(op_add32, &prof.counters.ralloc.reg_rw[*iter], 1);
-				}
-				else
-				{
-					x86e->Emit(op_add32, &prof.counters.ralloc.reg_w[*iter], 1);
-				}
-
-				++iter;
-			}
-
-			iter=reg_rd.begin();
-			while( iter != reg_rd.end() ) 
-			{
-				x86e->Emit(op_add32,&prof.counters.ralloc.reg_r[*iter],1);
-				++iter;
-			}
-		}
-		
-		reg.OpBegin(op,i);
-			
-		ngen_opcode(block,op,x86e,staging,optimise);
-
-		if (prof.enable) x86e->Emit(op_add32,&prof.counters.shil.host_ops[op->op],x86e->opcode_count-opcd_start);
-
-		reg.OpEnd(op);
-	}
-
-	block->relink_offset=x86e->x86_indx;
-	block->relink_data=0;
-
-	x86e->x86_indx+=block->Relink();
-
-	x86e->Generate();
-	block->host_code_size=x86e->x86_indx;
-	block->host_opcodes=x86e->opcode_count;
-
-	emit_Skip(block->host_code_size);
-
-	delete x86e;
-	x86e=0;
-}
-
 u32 DynaRBI::Relink()
 {
 	x86_block* x86e=new x86_block();
@@ -743,115 +602,283 @@ unat mem_code_base=0;
 unat mem_code_end=0;
 void* mem_code[3][2][5];
 
-MainloopFnPtr_t ngen_init()
+struct X86NGenBackend : NGenBackend
 {
-	ngen_FailedToFindBlock = &ngen_FailedToFindBlock_;
 
-	//Setup emitter
-	x86e = new x86_block();
-	x86e->Init(0,0);
-	x86e->x86_buff=(u8*)emit_GetCCPtr();
-	x86e->x86_size=emit_FreeSpace();
-	x86e->do_realloc=false;
-
-
-	mem_code_base=(unat)emit_GetCCPtr();
-
-	for (int sz=0;sz<5;sz++)
+	bool Init()
 	{
-		for (int w=0;w<2;w++)
-		{
-			for (int m=0;m<3;m++)
-			{
-				if (m==1 && (sz<=SZ_16 || w==0))
-					continue;
+		this->FailedToFindBlock = &ngen_FailedToFindBlock_;
 
-				mem_code[m][w][sz]=emit_GetCCPtr();
-				gen_hande(w,sz,m);
-			}
-		}
-	}
-
-	mem_code_end=(unat)emit_GetCCPtr();
-
-	x86e->Generate();
-
-	delete x86e;
-
-	emit_SetBaseAddr();
-
-	return &ngen_mainloop;
-}
-
-void ngen_ResetBlocks()
-{
-}
-
-void ngen_GetFeatures(ngen_features* dst)
-{
-	dst->InterpreterFallback=false;
-	dst->OnlyDynamicEnds=false;
-}
-
-
-RuntimeBlockInfo* ngen_AllocateBlock()
-{
-	return new DynaRBI();
-}
-
-
-bool ngen_Rewrite(unat& addr,unat retadr,unat acc)
-{
-	if (addr>=mem_code_base && addr<mem_code_end)
-	{
-		u32 ca=*(u32*)(retadr-4)+retadr;
-
+		//Setup emitter
 		x86e = new x86_block();
 		x86e->Init(0,0);
-		x86e->x86_buff=(u8*)retadr-5;
+		x86e->x86_buff=(u8*)emit_GetCCPtr();
 		x86e->x86_size=emit_FreeSpace();
 		x86e->do_realloc=false;
 
-		for (int i=0;i<5;i++)
+
+		mem_code_base=(unat)emit_GetCCPtr();
+
+		for (int sz=0;sz<5;sz++)
 		{
 			for (int w=0;w<2;w++)
 			{
-				if ((u32)mem_code[0][w][i]==ca)
+				for (int m=0;m<3;m++)
 				{
-					//found !
+					if (m==1 && (sz<=SZ_16 || w==0))
+						continue;
 
-					if ((acc >> 26) == 0x38 && !w) {
-						printf("WARNING: SQ AREA READ, %08X from sh4:%08X. THIS IS UNDEFINED ON A REAL DREACMAST.\n", acc, bm_GetBlock(x86e->x86_buff)->addr);
-					}
-
-					if ((acc >> 26) == 0x38) //sq ?
-					{
-						verify(w == 1);
-						x86e->Emit(op_call, x86_ptr_imm(mem_code[1][w][i]));
-					}
-					else
-					{
-						x86e->Emit(op_call, x86_ptr_imm(mem_code[2][w][i]));
-					}
-
-					x86e->Generate();
-					delete x86e;
-
-					addr=retadr-5;
-
-					//printf("Patched: %08X for access @ %08X\n",addr,acc);
-					return true;
+					mem_code[m][w][sz]=emit_GetCCPtr();
+					gen_hande(w,sz,m);
 				}
 			}
 		}
-		
-		die("Failed to match the code :(\n");
 
-		return false;
+		mem_code_end=(unat)emit_GetCCPtr();
+
+		x86e->Generate();
+
+		delete x86e;
+
+		emit_SetBaseAddr();
+
+		this->Mainloop = &ngen_mainloop;
+		
+		return true;
 	}
-	else
+
+
+	void GetFeatures(ngen_features* dst)
 	{
-		return false;
+		dst->InterpreterFallback=false;
+		dst->OnlyDynamicEnds=false;
 	}
+
+
+	RuntimeBlockInfo* AllocateBlock()
+	{
+		return new DynaRBI();
+	}
+
+	void Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging,bool optimise)
+	{
+		//initialise stuff
+		DetectCpuFeatures();
+
+		((DynaRBI*)block)->reloc_info=0;
+
+		//Setup emitter
+		x86e = new x86_block();
+		x86e->Init(0,0);
+		x86e->x86_buff=(u8*)emit_GetCCPtr();
+		x86e->x86_size=emit_FreeSpace();
+		x86e->do_realloc=false;
+
+		block->code=(DynarecCodeEntryPtr)emit_GetCCPtr();
+
+		x86e->Emit(op_add32,&memops_t,block->memops);
+		x86e->Emit(op_add32,&memops_l,block->linkedmemops);
+
+	#ifdef MIPS_COUNTER
+		x86e->Emit(op_add32, &mips_counter, block->oplist.size());
+	#endif
+
+		//run register allocator
+		reg.DoAlloc(block,alloc_regs,xmm_alloc_regs);
+		
+		//block header//
+
+		//block invl. checks
+		x86e->Emit(op_mov32,ECX,block->addr);
+
+		CheckBlock(smc_checks, block);
+
+		//Scheduler
+		x86_Label* no_up=x86e->CreateLabel(false,8);
+
+		x86e->Emit(op_sub32,&cycle_counter,block->guest_cycles);
+
+		x86e->Emit(op_jns,no_up);
+		{
+			x86e->Emit(op_call,x86_ptr_imm(intc_sched));
+		}
+
+		x86e->MarkLabel(no_up);
+
+		//stating counter
+		if (staging) x86e->Emit(op_sub32,&block->staging_runs,1);
+
+		//profiler
+		if (prof.enable || 1)
+			x86e->Emit(op_add32,&block->runs,1);
+
+		if (prof.enable)
+		{
+			//if (force_checks)
+			//	x86e->Emit(op_add32,&prof.counters.blkrun.force_check,1);
+
+			x86e->Emit(op_add32,&prof.counters.blkrun.cycles[block->guest_cycles],1);
+		}
+
+		for (size_t i=0;i<block->oplist.size();i++)
+		{
+			shil_opcode* op=&block->oplist[i];
+
+			u32 opcd_start=x86e->opcode_count;
+			if (prof.enable) 
+			{
+				x86e->Emit(op_add32,&prof.counters.shil.executed[op->op],1);
+			}
+
+			op->host_offs=x86e->x86_indx;
+			
+			if (prof.enable)
+			{
+				set<int> reg_wt;
+				set<int> reg_rd;
+
+				for (int z=0;op->rd.is_reg() && z<op->rd.count();z++)
+					reg_wt.insert(op->rd._reg+z);
+
+				for (int z=0;op->rd2.is_reg() && z<op->rd2.count();z++)
+					reg_wt.insert(op->rd2._reg+z);
+
+				for (int z=0;op->rs1.is_reg() && z<op->rs1.count();z++)
+					reg_rd.insert(op->rs1._reg+z);
+
+				for (int z=0;op->rs2.is_reg() && z<op->rs2.count();z++)
+					reg_rd.insert(op->rs2._reg+z);
+
+				for (int z=0;op->rs3.is_reg() && z<op->rs3.count();z++)
+					reg_rd.insert(op->rs3._reg+z);
+
+				set<int>::iterator iter=reg_wt.begin();
+				while( iter != reg_wt.end() ) 
+				{
+					if (reg_rd.count(*iter))
+					{
+						reg_rd.erase(*iter);
+						x86e->Emit(op_add32, &prof.counters.ralloc.reg_rw[*iter], 1);
+					}
+					else
+					{
+						x86e->Emit(op_add32, &prof.counters.ralloc.reg_w[*iter], 1);
+					}
+
+					++iter;
+				}
+
+				iter=reg_rd.begin();
+				while( iter != reg_rd.end() ) 
+				{
+					x86e->Emit(op_add32,&prof.counters.ralloc.reg_r[*iter],1);
+					++iter;
+				}
+			}
+			
+			reg.OpBegin(op,i);
+				
+			ngen_opcode(block,op,x86e,staging,optimise);
+
+			if (prof.enable) x86e->Emit(op_add32,&prof.counters.shil.host_ops[op->op],x86e->opcode_count-opcd_start);
+
+			reg.OpEnd(op);
+		}
+
+		block->relink_offset=x86e->x86_indx;
+		block->relink_data=0;
+
+		x86e->x86_indx+=block->Relink();
+
+		x86e->Generate();
+		block->host_code_size=x86e->x86_indx;
+		block->host_opcodes=x86e->opcode_count;
+
+		emit_Skip(block->host_code_size);
+
+		delete x86e;
+		x86e=0;
+	}
+
+
+	bool Rewrite(unat& addr,unat retadr,unat acc)
+	{
+		if (addr>=mem_code_base && addr<mem_code_end)
+		{
+			u32 ca=*(u32*)(retadr-4)+retadr;
+
+			x86e = new x86_block();
+			x86e->Init(0,0);
+			x86e->x86_buff=(u8*)retadr-5;
+			x86e->x86_size=emit_FreeSpace();
+			x86e->do_realloc=false;
+
+			for (int i=0;i<5;i++)
+			{
+				for (int w=0;w<2;w++)
+				{
+					if ((u32)mem_code[0][w][i]==ca)
+					{
+						//found !
+
+						if ((acc >> 26) == 0x38 && !w) {
+							printf("WARNING: SQ AREA READ, %08X from sh4:%08X. THIS IS UNDEFINED ON A REAL DREACMAST.\n", acc, bm_GetBlock(x86e->x86_buff)->addr);
+						}
+
+						if ((acc >> 26) == 0x38) //sq ?
+						{
+							verify(w == 1);
+							x86e->Emit(op_call, x86_ptr_imm(mem_code[1][w][i]));
+						}
+						else
+						{
+							x86e->Emit(op_call, x86_ptr_imm(mem_code[2][w][i]));
+						}
+
+						x86e->Generate();
+						delete x86e;
+
+						addr=retadr-5;
+
+						//printf("Patched: %08X for access @ %08X\n",addr,acc);
+						return true;
+					}
+				}
+			}
+			
+			die("Failed to match the code :(\n");
+
+			return false;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	u32* ReadmFail(u32* ptr, u32* regs, u32 saddr)
+	{
+		die("Not implemented");
+		return nullptr;
+	}
+
+	void OnResetBlocks()
+	{
+	}
+
+	void CC_Start(shil_opcode* op);
+	void CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp);
+	void CC_Call(shil_opcode*op,void* function);
+	void CC_Finish(shil_opcode* op);
+};
+
+static NGenBackend* create_ngen_x86() {
+	return new X86NGenBackend();
 }
+
+
+static auto rec_x86 = rdv_RegisterShilBackend(ngen_backend_t{"x86", "x86 slow jit", &create_ngen_x86 });
+
+
+#include "rec_x86_il.inl"
 #endif

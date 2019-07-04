@@ -171,7 +171,7 @@ asm void CacheFlush(void* code, void* pEnd)
 
 #define _DEVEL 1
 
-#include "arm_emitter/arm_emitter.h"
+#include "jit/emitter/arm32/arm_emitter.h"
 using namespace ARM;
 
 
@@ -578,132 +578,6 @@ struct CC_PS
 	shil_param* par;
 };
 vector<CC_PS> CC_pars;
-void ngen_CC_Start(shil_opcode* op) 
-{ 
-	CC_pars.clear();
-}
-void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp) 
-{ 
-	switch(tp)
-	{
-		case CPT_f32rv:
-		#ifdef ARM_HARDFP
-			{
-				if (reg.IsAllocg(*par))
-				{
-					//printf("MOV(reg.map(*par),r0); %d\n",reg.map(*par));
-					VMOV(reg.mapg(*par),f0);
-				}
-				else if (reg.IsAllocf(*par))
-				{
-					//VMOV(reg.mapf(*par),0,r0); %d\n",reg.map(*par));
-					VMOV(reg.mapfs(*par),f0);
-				}
-			}
-			break;
-		#endif
-
-		case CPT_u32rv:
-		case CPT_u64rvL:
-			{
-				if (reg.IsAllocg(*par))
-				{
-					//printf("MOV(reg.map(*par),r0); %d\n",reg.map(*par));
-					MOV(reg.mapg(*par),r0);
-				}
-				else if (reg.IsAllocf(*par))
-				{
-					//VMOV(reg.mapf(*par),0,r0); %d\n",reg.map(*par));
-					VMOV(reg.mapfs(*par),r0);
-				}
-			}
-			break;
-
-		case CPT_u64rvH:
-			{
-				verify(reg.IsAllocg(*par));
-
-				MOV(reg.mapg(*par),r1);
-			}
-			break;
-
-		case CPT_u32:
-		case CPT_ptr:
-		case CPT_f32:
-			{
-				CC_PS t={tp,par};
-				CC_pars.push_back(t);
-			}
-			break;
-
-		default:
-			die("invalid tp");
-	}
-}
-
-void ngen_CC_Call(shil_opcode* op,void* function) 
-{
-	u32 rd=r0;
-	u32 fd=f0;
-
-	for (int i=CC_pars.size();i-->0;)
-	{
-		if (CC_pars[i].type==CPT_ptr)
-		{
-			MOV32((eReg)rd, (u32)CC_pars[i].par->reg_ptr());
-		}
-		else
-		{
-			if (CC_pars[i].par->is_reg())
-			{
-				#ifdef ARM_HARDFP
-				if (CC_pars[i].type == CPT_f32) 
-				{
-					if (reg.IsAllocg(*CC_pars[i].par))
-					{
-						//printf("MOV((eReg)rd,reg.map(*CC_pars[i].par)); %d %d\n",rd,reg.map(*CC_pars[i].par));
-						VMOV((eFSReg)fd,reg.mapg(*CC_pars[i].par));
-					}
-					else if (reg.IsAllocf(*CC_pars[i].par))
-					{
-						//printf("LoadSh4Reg_mem((eReg)rd, *CC_pars[i].par); %d\n",rd);
-						VMOV((eFSReg)fd,reg.mapfs(*CC_pars[i].par));
-					}
-					else
-						die("Must not happen!\n");
-					continue;
-				}
-				#endif
-
-				if (reg.IsAllocg(*CC_pars[i].par))
-				{
-					//printf("MOV((eReg)rd,reg.map(*CC_pars[i].par)); %d %d\n",rd,reg.map(*CC_pars[i].par));
-					MOV((eReg)rd,reg.mapg(*CC_pars[i].par));
-				}
-				else if (reg.IsAllocf(*CC_pars[i].par))
-				{
-					//printf("LoadSh4Reg_mem((eReg)rd, *CC_pars[i].par); %d\n",rd);
-					VMOV((eReg)rd,reg.mapfs(*CC_pars[i].par));
-				}
-				else
-					die("Must not happen!\n");
-			}
-			else
-			{
-				verify(CC_pars[i].type != CPT_f32);
-				//printf("MOV32((eReg)rd, CC_pars[i].par->_imm); %d\n",rd);
-				MOV32((eReg)rd, CC_pars[i].par->_imm);
-			}
-		}
-		rd++;
-	}
-	//printf("used reg r0 to r%d, %d params, calling %08X\n",rd-1,CC_pars.size(),function);
-	CALL((u32)function);
-}
-void ngen_CC_Finish(shil_opcode* op) 
-{ 
-	CC_pars.clear(); 
-}
 
 void* _vmem_read_const(u32 addr,bool& ismem,u32 sz);
 void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz, bool rw);
@@ -871,163 +745,6 @@ void vmem_slowpath(eReg raddr, eReg rt, eFSReg ft, eFDReg fd, mem_op_type optp, 
 	}
 }
 
-u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
-{
-	arm_mem_op* ptr=(arm_mem_op*)ptrv;
-
-	verify(sizeof(*ptr)==4);
-
-	mem_op_type optp;
-	u32 read=0;
-	s32 offs=-1;
-
-	u32 fop=ptr[0].full;
-
-	for (int i=0;op_table[i].mask;i++)
-	{
-		if ((fop&op_table[i].mask)==op_table[i].key)
-		{
-			optp=op_table[i].optp;
-			read=op_table[i].read;
-			offs=op_table[i].offs;
-		}
-	}
-
-	if (offs==-1)
-	{
-		printf("%08X : invalid size\n",ptr[0]);
-		die("can't decode opcode\n");
-	}
-
-	ptr -= offs;
-
-	eReg raddr,rt;
-	eFSReg ft;
-	eFDReg fd;
-
-	//Get used regs from opcodes ..
-	
-	if ((ptr[0].full & 0x0FE00070)==0x07E00050)
-	{
-		//from ubfx !
-		raddr=(eReg)(ptr[0].Ra);
-	}
-	else if ((ptr[0].full & 0x0FE00000)==0x03C00000)
-	{
-		raddr=(eReg)(ptr[0].Rn);
-	}
-	else
-	{
-		printf("fail raddr %08X {@%08X}:(\n",ptr[0].full,regs[1]);
-		die("Invalid opcode: vmem fixup\n");
-	}
-	//from mem op
-	rt=(eReg)(ptr[offs].Rt);
-	ft=(eFSReg)(ptr[offs].Rt*2 + ptr[offs].D);
-	fd=(eFDReg)(ptr[offs].D*16 + ptr[offs].Rt);
-
-	//get some other relevant data
-	u32 sh4_addr=regs[raddr];
-	u32 fault_offs=fault_addr-regs[8];
-	u8* sh4_ctr=(u8*)regs[8];
-	bool is_sq=(sh4_addr>>26)==0x38;
-
-	verify(emit_ptr==0);
-	emit_ptr=(u32*)ptr;
-
-
-	/*
-			mov r0,raddr
-
-		8/16/32I:
-			call _mem_hdlp[read][optp][rt]
-		32F/64F:
-	32F,r:	vmov r1,ft
-	64F,r:	vmov [r3:r2],fd
-			call _mem_hdlp[read][optp][0]
-	32F,w:	vmov ft,r0
-	64F,w:	vmov fd,[r1:r0]
-	*/
-	
-	
-	//printf("Failed %08X:%08X (%d,%d,%d,r%d, r%d,f%d,d%d) code %08X, addr %08X, native %08X (%08X), fixing via %s\n",ptr->full,fop,optp,read,offs,raddr,rt,ft,fd,ptr,sh4_addr,fault_addr,fault_offs,is_sq?"SQ":"MR");
-
-	//fault offset must always be the addr from ubfx (sanity check)
-	verify((fault_offs==0) || fault_offs==(0x1FFFFFFF&sh4_addr));
-
-	if (settings.dynarec.unstable_opt && is_sq) //THPS2 uses cross area SZ_32F so this is disabled for now
-	{
-		//SQ !
-		s32 sq_offs=sq_both-sh4_ctr;
-		verify(sq_offs==rcb_noffs(sq_both));
-		
-		verify(!read && optp>=SZ_32I);
-
-		if (optp==SZ_32I)
-		{
-			MOV(r1,rt);
-
-			CALL((unat)_mem_hndl_SQ32[raddr]);
-		}
-		else
-		{
-			//UBFX(r1,raddr,0,6);
-			AND(r1,raddr,0x3F);
-			ADD(r1,r1,r8);
-
-			if (optp==SZ_32I) STR(rt,r1,sq_offs); // cross writes are possible, so this can't be assumed
-			else if (optp==SZ_32F) VSTR(ft,r1,sq_offs/4);
-			else if (optp==SZ_64F) VSTR(fd,r1,sq_offs/4);
-		}
-	}
-	else
-	{
-		//Fallback to function !
-
-		if (offs==2)
-		{
-			if (raddr!=r0)
-				MOV(r0,(eReg)raddr);
-			else
-				NOP();
-		}
-
-		if (!read)
-		{
-			if (optp<=SZ_32I) MOV(r1,rt);
-			else if (optp==SZ_32F) VMOV(r1,ft);
-			else if (optp==SZ_64F) VMOV(r2,r3,fd);
-		}
-
-		if (fd!=d0 && optp==SZ_64F)
-		{
-			die("BLAH");
-		}
-
-		u32 funct=0;
-
-		if (offs==1)
-			funct=_mem_hndl[read][optp][raddr];
-		else if (offs==2)
-			funct=_mem_func[read][optp];
-
-		verify(funct!=0);
-		CALL(funct);
-
-		if (read)
-		{
-			if (optp<=SZ_32I) MOV(rt,r0);
-			else if (optp==SZ_32F) VMOV(ft,r0);
-			else if (optp==SZ_64F) VMOV(fd,r0,r1);
-		}
-	}
-
-
-	CacheFlush((void*)ptr, (void*)emit_ptr);
-	emit_ptr=0;
-
-	return (u32*)ptr;
-}
 
 extern u8* virt_ram_base;
 
@@ -2082,312 +1799,602 @@ __default:
 }
 
 
-void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging,bool optimise)
+extern "C" void ngen_mainloop(void*);
+
+struct Arm32NGenBackend: NGenBackend
 {
-	//printf("Compile: %08X, %d, %d\n",block->addr,staging,optimise);
-	block->code=(DynarecCodeEntryPtr)EMIT_GET_PTR();
 
-	//StoreImms(r0,r1,(u32)&last_run_block,(u32)code); //useful when code jumps to random locations ...
-	++blockno;
-
-	if (settings.profile.run_counts)
+	bool Init()
 	{
-		MOV32(r1,(u32)&block->runs);
-		LDR(r0,r1);
-		ADD(r0,r0,1);
-		STR(r0,r1);
-	}
+		printf("Initializing the ARM32 dynarec\n");
+	    verify(FPCB_OFFSET == -0x2100000 || FPCB_OFFSET == -0x4100000);
+	    verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
+	   	
+	    for (int s=0;s<6;s++)
+		{
+			void* fn=s==0?(void*)_vmem_ReadMem8SX32:
+					 s==1?(void*)_vmem_ReadMem16SX32:
+					 s==2?(void*)_vmem_ReadMem32:
+					 s==3?(void*)_vmem_WriteMem8:
+					 s==4?(void*)_vmem_WriteMem16:
+					 s==5?(void*)_vmem_WriteMem32:
+					 0;
 
-	//reg alloc
-	reg.DoAlloc(block,alloc_regs,alloc_fpu);
+			bool read=s<=2;
 
-	u8* blk_start=(u8*)EMIT_GET_PTR();
-
-	if (staging)
-	{
-		MOV32(r0,(u32)&block->staging_runs);
-		LDR(r1,r0);
-		SUB(r1,r1,1);
-		STR(r1,r0);
-	}
-	//pre-load the first reg alloc operations, for better efficiency ..
-	reg.OpBegin(&block->oplist[0],0);
-
-	//scheduler
-	switch (smc_checks) {
-		case NoCheck:
-			break;
-
-		case FastCheck: {
-			MOV32(r0,block->addr);
-			u32* ptr=(u32*)GetMemPtr(block->addr,4);
-			if (ptr != NULL)
+			//r0 to r13
+			for (int i=0;i<=13;i++)
 			{
-				MOV32(r2,(u32)ptr);
-				LDR(r2,r2,0);
-				MOV32(r1,*ptr);
-				CMP(r1,r2);
-				JUMP((u32)ngen_blockcheckfail, CC_NE);
-			}
-		}
-		break;
+				if (i==1 || i ==2 || i == 3 || i == 4 || i==12 || i==13)
+					continue;
 
-		case FullCheck: {
-			s32 sz = block->sh4_code_size;
-			u32 addr = block->addr;
-			MOV32(r0,addr);
-
-			while (sz > 0)
-			{
-				if (sz > 2)
+				unat v;
+				if (read)
 				{
-					u32* ptr=(u32*)GetMemPtr(addr,4);
-					if (ptr != NULL)
+					if (i==0)
+						v=(unat)fn;
+					else
 					{
-						MOV32(r2,(u32)ptr);
-						LDR(r2,r2,0);
-						MOV32(r1,*ptr);
-						CMP(r1,r2);
-
-						JUMP((u32)ngen_blockcheckfail, CC_NE);
+						v=(unat)EMIT_GET_PTR();
+						MOV(r0,(eReg)(i));
+						JUMP((u32)fn);
 					}
-					addr += 4;
-					sz -= 4;
 				}
 				else
 				{
-					u16* ptr = (u16 *)GetMemPtr(addr, 2);
-					if (ptr != NULL)
+					if (i==0)
+						v=(unat)fn;
+					else
 					{
-						MOV32(r2, (u32)ptr);
-						LDRH(r2, r2, 0, AL);
-						MOVW(r1, *ptr, AL);
-						CMP(r1, r2);
-
-						JUMP((u32)ngen_blockcheckfail, CC_NE);
+						v=(unat)EMIT_GET_PTR();
+						MOV(r0,(eReg)(i));
+						JUMP((u32)fn);
 					}
-					addr += 2;
-					sz -= 2;
 				}
+
+				_mem_hndl[read][s%3][i]=v;
 			}
 		}
-		break;
 
-		default: {
-			die("unhandled smc_checks");
-		}
-	}
-
-	u32 cyc=block->guest_cycles;
-	if (!is_i8r4(cyc))
-	{
-		cyc&=~3;
-	}
-
-#if HOST_OS == OS_DARWIN
-	SUB(r11,r11,cyc,true,CC_AL);
-#else
-	SUB(rfp_r9,rfp_r9,cyc,true,CC_AL);
-#endif
-	CALL((u32)intc_sched, CC_LE);
-
-	//compile the block's opcodes
-	shil_opcode* op;
-	for (size_t i=0;i<block->oplist.size();i++)
-	{
-		op=&block->oplist[i];
-		
-		op->host_offs=(u8*)EMIT_GET_PTR()-blk_start;
-
-		if (i!=0)
-			reg.OpBegin(op,i);
-
-		ngen_compile_opcode(block,op,staging,optimise);
-
-		reg.OpEnd(op);
-	}
-
-	/*
-
-	extern u32 ralst[4];
-
-	MOV32(r0,(u32)&ralst[0]);
-	
-	LDR(r1,r0,0);
-	ADD(r1,r1,reg.preload_gpr);
-	STR(r1,r0,0);
-
-	LDR(r1,r0,4);
-	ADD(r1,r1,reg.preload_fpu);
-	STR(r1,r0,4);
-
-	LDR(r1,r0,8);
-	ADD(r1,r1,reg.writeback_gpr);
-	STR(r1,r0,8);
-
-	LDR(r1,r0,12);
-	ADD(r1,r1,reg.writeback_fpu);
-	STR(r1,r0,12);
-	*/
-
-	/*
-		//try to early-lookup the blocks -- to avoid rewrites in case they exist ...
-		//this isn't enabled for now, as I'm not quite solid on the state of block referrals ..
-
-		block->pBranchBlock=bm_GetBlock(block->BranchBlock);
-		block->pNextBlock=bm_GetBlock(block->NextBlock);
-		if (block->pNextBlock) block->pNextBlock->AddRef(block);
-		if (block->pBranchBlock) block->pBranchBlock->AddRef(block);
-	*/
-
-	
-	//Relink written bytes must be added to the count !
-
-	block->relink_offset=(u8*)EMIT_GET_PTR()-(u8*)block->code;
-	block->relink_data=0;
-
-	emit_Skip(block->Relink());
-	u8* pEnd = (u8*)EMIT_GET_PTR();
-
-	// Clear the area we've written to for cache
-	CacheFlush((void*)block->code, pEnd);
-
-	//blk_start might not be the same, due to profiling counters ..
-	block->host_opcodes=(pEnd-blk_start)/4;
-
-	//host code size needs to cover the entire range of the block
-	block->host_code_size=(pEnd-(u8*)block->code);
-
-	void emit_WriteCodeCache();
-//	emit_WriteCodeCache();
-}
-
-void ngen_ResetBlocks()
-{
-	printf("@@\tngen_ResetBlocks()\n");
-}
-/*
-	SHR ..
-	CMP ..
-	j plc
-	ext
-	add
-	str
-*/
-
-extern "C" void ngen_mainloop(void*);
-
-MainloopFnPtr_t ngen_init()
-{
-	printf("Initializing the ARM32 dynarec\n");
-    verify(FPCB_OFFSET == -0x2100000 || FPCB_OFFSET == -0x4100000);
-    verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
-    
-    ngen_FailedToFindBlock = &ngen_FailedToFindBlock_;
-
-    for (int s=0;s<6;s++)
-	{
-		void* fn=s==0?(void*)_vmem_ReadMem8SX32:
-				 s==1?(void*)_vmem_ReadMem16SX32:
-				 s==2?(void*)_vmem_ReadMem32:
-				 s==3?(void*)_vmem_WriteMem8:
-				 s==4?(void*)_vmem_WriteMem16:
-				 s==5?(void*)_vmem_WriteMem32:
-				 0;
-
-		bool read=s<=2;
-
-		//r0 to r13
 		for (int i=0;i<=13;i++)
 		{
 			if (i==1 || i ==2 || i == 3 || i == 4 || i==12 || i==13)
 				continue;
 
-			unat v;
-			if (read)
-			{
-				if (i==0)
-					v=(unat)fn;
-				else
+			_mem_hndl_SQ32[i]=(unat)EMIT_GET_PTR();
+
+			//UBFX(r3,(eReg)i,0,6);
+			AND(r3,(eReg)i,0x3F);
+			LSR(r2,(eReg)i,26);
+			MOV(r0,(eReg)i);
+			ADD(r3,r3,r8);
+			CMP(r2,0x38);
+			JUMP((unat)&WriteMem32,CC_NE);
+			STR(r1,r3,rcb_noffs(sq_both));
+			BX(LR);
+		}
+
+		printf("readm helpers: up to %08X\n",EMIT_GET_PTR());
+		emit_SetBaseAddr();
+
+
+		ccmap[shop_test]=CC_EQ;
+		ccnmap[shop_test]=CC_NE;
+
+		ccmap[shop_seteq]=CC_EQ;
+		ccnmap[shop_seteq]=CC_NE;
+		
+		
+		ccmap[shop_setge]=CC_GE;
+		ccnmap[shop_setge]=CC_LT;
+		
+		ccmap[shop_setgt]=CC_GT;
+		ccnmap[shop_setgt]=CC_LE;
+
+		ccmap[shop_setae]=CC_HS;
+		ccnmap[shop_setae]=CC_LO;
+
+		ccmap[shop_setab]=CC_HI;
+		ccnmap[shop_setab]=CC_LS;
+
+		//ccmap[shop_fseteq]=CC_EQ;
+		//ccmap[shop_fsetgt]=CC_GT;
+
+		this->Mainloop = &ngen_mainloop;
+		this->FailedToFindBlock = &ngen_FailedToFindBlock_;
+
+		return true;
+	}
+
+
+	void GetFeatures(ngen_features* dst)
+	{
+		dst->InterpreterFallback=false;
+		dst->OnlyDynamicEnds=false;
+	}
+
+	RuntimeBlockInfo* AllocateBlock()
+	{
+		return new DynaRBI();
+	};
+
+
+	void Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging,bool optimise)
+	{
+		//printf("Compile: %08X, %d, %d\n",block->addr,staging,optimise);
+		block->code=(DynarecCodeEntryPtr)EMIT_GET_PTR();
+
+		//StoreImms(r0,r1,(u32)&last_run_block,(u32)code); //useful when code jumps to random locations ...
+		++blockno;
+
+		if (settings.profile.run_counts)
+		{
+			MOV32(r1,(u32)&block->runs);
+			LDR(r0,r1);
+			ADD(r0,r0,1);
+			STR(r0,r1);
+		}
+
+		//reg alloc
+		reg.DoAlloc(block,alloc_regs,alloc_fpu);
+
+		u8* blk_start=(u8*)EMIT_GET_PTR();
+
+		if (staging)
+		{
+			MOV32(r0,(u32)&block->staging_runs);
+			LDR(r1,r0);
+			SUB(r1,r1,1);
+			STR(r1,r0);
+		}
+		//pre-load the first reg alloc operations, for better efficiency ..
+		reg.OpBegin(&block->oplist[0],0);
+
+		//scheduler
+		switch (smc_checks) {
+			case NoCheck:
+				break;
+
+			case FastCheck: {
+				MOV32(r0,block->addr);
+				u32* ptr=(u32*)GetMemPtr(block->addr,4);
+				if (ptr != NULL)
 				{
-					v=(unat)EMIT_GET_PTR();
-					MOV(r0,(eReg)(i));
-					JUMP((u32)fn);
+					MOV32(r2,(u32)ptr);
+					LDR(r2,r2,0);
+					MOV32(r1,*ptr);
+					CMP(r1,r2);
+					JUMP((u32)ngen_blockcheckfail, CC_NE);
 				}
+			}
+			break;
+
+			case FullCheck: {
+				s32 sz = block->sh4_code_size;
+				u32 addr = block->addr;
+				MOV32(r0,addr);
+
+				while (sz > 0)
+				{
+					if (sz > 2)
+					{
+						u32* ptr=(u32*)GetMemPtr(addr,4);
+						if (ptr != NULL)
+						{
+							MOV32(r2,(u32)ptr);
+							LDR(r2,r2,0);
+							MOV32(r1,*ptr);
+							CMP(r1,r2);
+
+							JUMP((u32)ngen_blockcheckfail, CC_NE);
+						}
+						addr += 4;
+						sz -= 4;
+					}
+					else
+					{
+						u16* ptr = (u16 *)GetMemPtr(addr, 2);
+						if (ptr != NULL)
+						{
+							MOV32(r2, (u32)ptr);
+							LDRH(r2, r2, 0, AL);
+							MOVW(r1, *ptr, AL);
+							CMP(r1, r2);
+
+							JUMP((u32)ngen_blockcheckfail, CC_NE);
+						}
+						addr += 2;
+						sz -= 2;
+					}
+				}
+			}
+			break;
+
+			default: {
+				die("unhandled smc_checks");
+			}
+		}
+
+		u32 cyc=block->guest_cycles;
+		if (!is_i8r4(cyc))
+		{
+			cyc&=~3;
+		}
+
+	#if HOST_OS == OS_DARWIN
+		SUB(r11,r11,cyc,true,CC_AL);
+	#else
+		SUB(rfp_r9,rfp_r9,cyc,true,CC_AL);
+	#endif
+		CALL((u32)intc_sched, CC_LE);
+
+		//compile the block's opcodes
+		shil_opcode* op;
+		for (size_t i=0;i<block->oplist.size();i++)
+		{
+			op=&block->oplist[i];
+			
+			op->host_offs=(u8*)EMIT_GET_PTR()-blk_start;
+
+			if (i!=0)
+				reg.OpBegin(op,i);
+
+			ngen_compile_opcode(block,op,staging,optimise);
+
+			reg.OpEnd(op);
+		}
+
+		/*
+
+		extern u32 ralst[4];
+
+		MOV32(r0,(u32)&ralst[0]);
+		
+		LDR(r1,r0,0);
+		ADD(r1,r1,reg.preload_gpr);
+		STR(r1,r0,0);
+
+		LDR(r1,r0,4);
+		ADD(r1,r1,reg.preload_fpu);
+		STR(r1,r0,4);
+
+		LDR(r1,r0,8);
+		ADD(r1,r1,reg.writeback_gpr);
+		STR(r1,r0,8);
+
+		LDR(r1,r0,12);
+		ADD(r1,r1,reg.writeback_fpu);
+		STR(r1,r0,12);
+		*/
+
+		/*
+			//try to early-lookup the blocks -- to avoid rewrites in case they exist ...
+			//this isn't enabled for now, as I'm not quite solid on the state of block referrals ..
+
+			block->pBranchBlock=bm_GetBlock(block->BranchBlock);
+			block->pNextBlock=bm_GetBlock(block->NextBlock);
+			if (block->pNextBlock) block->pNextBlock->AddRef(block);
+			if (block->pBranchBlock) block->pBranchBlock->AddRef(block);
+		*/
+
+		
+		//Relink written bytes must be added to the count !
+
+		block->relink_offset=(u8*)EMIT_GET_PTR()-(u8*)block->code;
+		block->relink_data=0;
+
+		emit_Skip(block->Relink());
+		u8* pEnd = (u8*)EMIT_GET_PTR();
+
+		// Clear the area we've written to for cache
+		CacheFlush((void*)block->code, pEnd);
+
+		//blk_start might not be the same, due to profiling counters ..
+		block->host_opcodes=(pEnd-blk_start)/4;
+
+		//host code size needs to cover the entire range of the block
+		block->host_code_size=(pEnd-(u8*)block->code);
+
+		void emit_WriteCodeCache();
+	//	emit_WriteCodeCache();
+	}
+
+	void OnResetBlocks()
+	{
+		printf("@@\tngen_ResetBlocks()\n");
+	}
+
+	bool Rewrite(unat& host_pc, unat, unat)
+	{
+		die("Not implemented");
+		return false;
+	}
+
+	u32* ReadmFail(u32* ptrv,u32* regs,u32 fault_addr)
+	{
+		arm_mem_op* ptr=(arm_mem_op*)ptrv;
+
+		verify(sizeof(*ptr)==4);
+
+		mem_op_type optp;
+		u32 read=0;
+		s32 offs=-1;
+
+		u32 fop=ptr[0].full;
+
+		for (int i=0;op_table[i].mask;i++)
+		{
+			if ((fop&op_table[i].mask)==op_table[i].key)
+			{
+				optp=op_table[i].optp;
+				read=op_table[i].read;
+				offs=op_table[i].offs;
+			}
+		}
+
+		if (offs==-1)
+		{
+			printf("%08X : invalid size\n",ptr[0]);
+			die("can't decode opcode\n");
+		}
+
+		ptr -= offs;
+
+		eReg raddr,rt;
+		eFSReg ft;
+		eFDReg fd;
+
+		//Get used regs from opcodes ..
+		
+		if ((ptr[0].full & 0x0FE00070)==0x07E00050)
+		{
+			//from ubfx !
+			raddr=(eReg)(ptr[0].Ra);
+		}
+		else if ((ptr[0].full & 0x0FE00000)==0x03C00000)
+		{
+			raddr=(eReg)(ptr[0].Rn);
+		}
+		else
+		{
+			printf("fail raddr %08X {@%08X}:(\n",ptr[0].full,regs[1]);
+			die("Invalid opcode: vmem fixup\n");
+		}
+		//from mem op
+		rt=(eReg)(ptr[offs].Rt);
+		ft=(eFSReg)(ptr[offs].Rt*2 + ptr[offs].D);
+		fd=(eFDReg)(ptr[offs].D*16 + ptr[offs].Rt);
+
+		//get some other relevant data
+		u32 sh4_addr=regs[raddr];
+		u32 fault_offs=fault_addr-regs[8];
+		u8* sh4_ctr=(u8*)regs[8];
+		bool is_sq=(sh4_addr>>26)==0x38;
+
+		verify(emit_ptr==0);
+		emit_ptr=(u32*)ptr;
+
+
+		/*
+				mov r0,raddr
+
+			8/16/32I:
+				call _mem_hdlp[read][optp][rt]
+			32F/64F:
+		32F,r:	vmov r1,ft
+		64F,r:	vmov [r3:r2],fd
+				call _mem_hdlp[read][optp][0]
+		32F,w:	vmov ft,r0
+		64F,w:	vmov fd,[r1:r0]
+		*/
+		
+		
+		//printf("Failed %08X:%08X (%d,%d,%d,r%d, r%d,f%d,d%d) code %08X, addr %08X, native %08X (%08X), fixing via %s\n",ptr->full,fop,optp,read,offs,raddr,rt,ft,fd,ptr,sh4_addr,fault_addr,fault_offs,is_sq?"SQ":"MR");
+
+		//fault offset must always be the addr from ubfx (sanity check)
+		verify((fault_offs==0) || fault_offs==(0x1FFFFFFF&sh4_addr));
+
+		if (settings.dynarec.unstable_opt && is_sq) //THPS2 uses cross area SZ_32F so this is disabled for now
+		{
+			//SQ !
+			s32 sq_offs=sq_both-sh4_ctr;
+			verify(sq_offs==rcb_noffs(sq_both));
+			
+			verify(!read && optp>=SZ_32I);
+
+			if (optp==SZ_32I)
+			{
+				MOV(r1,rt);
+
+				CALL((unat)_mem_hndl_SQ32[raddr]);
 			}
 			else
 			{
-				if (i==0)
-					v=(unat)fn;
+				//UBFX(r1,raddr,0,6);
+				AND(r1,raddr,0x3F);
+				ADD(r1,r1,r8);
+
+				if (optp==SZ_32I) STR(rt,r1,sq_offs); // cross writes are possible, so this can't be assumed
+				else if (optp==SZ_32F) VSTR(ft,r1,sq_offs/4);
+				else if (optp==SZ_64F) VSTR(fd,r1,sq_offs/4);
+			}
+		}
+		else
+		{
+			//Fallback to function !
+
+			if (offs==2)
+			{
+				if (raddr!=r0)
+					MOV(r0,(eReg)raddr);
 				else
-				{
-					v=(unat)EMIT_GET_PTR();
-					MOV(r0,(eReg)(i));
-					JUMP((u32)fn);
-				}
+					NOP();
 			}
 
-			_mem_hndl[read][s%3][i]=v;
+			if (!read)
+			{
+				if (optp<=SZ_32I) MOV(r1,rt);
+				else if (optp==SZ_32F) VMOV(r1,ft);
+				else if (optp==SZ_64F) VMOV(r2,r3,fd);
+			}
+
+			if (fd!=d0 && optp==SZ_64F)
+			{
+				die("BLAH");
+			}
+
+			u32 funct=0;
+
+			if (offs==1)
+				funct=_mem_hndl[read][optp][raddr];
+			else if (offs==2)
+				funct=_mem_func[read][optp];
+
+			verify(funct!=0);
+			CALL(funct);
+
+			if (read)
+			{
+				if (optp<=SZ_32I) MOV(rt,r0);
+				else if (optp==SZ_32F) VMOV(ft,r0);
+				else if (optp==SZ_64F) VMOV(fd,r0,r1);
+			}
+		}
+
+
+		CacheFlush((void*)ptr, (void*)emit_ptr);
+		emit_ptr=0;
+
+		return (u32*)ptr;
+	}
+
+	void CC_Start(shil_opcode* op) 
+	{ 
+		CC_pars.clear();
+	}
+	void CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp) 
+	{ 
+		switch(tp)
+		{
+			case CPT_f32rv:
+			#ifdef ARM_HARDFP
+				{
+					if (reg.IsAllocg(*par))
+					{
+						//printf("MOV(reg.map(*par),r0); %d\n",reg.map(*par));
+						VMOV(reg.mapg(*par),f0);
+					}
+					else if (reg.IsAllocf(*par))
+					{
+						//VMOV(reg.mapf(*par),0,r0); %d\n",reg.map(*par));
+						VMOV(reg.mapfs(*par),f0);
+					}
+				}
+				break;
+			#endif
+
+			case CPT_u32rv:
+			case CPT_u64rvL:
+				{
+					if (reg.IsAllocg(*par))
+					{
+						//printf("MOV(reg.map(*par),r0); %d\n",reg.map(*par));
+						MOV(reg.mapg(*par),r0);
+					}
+					else if (reg.IsAllocf(*par))
+					{
+						//VMOV(reg.mapf(*par),0,r0); %d\n",reg.map(*par));
+						VMOV(reg.mapfs(*par),r0);
+					}
+				}
+				break;
+
+			case CPT_u64rvH:
+				{
+					verify(reg.IsAllocg(*par));
+
+					MOV(reg.mapg(*par),r1);
+				}
+				break;
+
+			case CPT_u32:
+			case CPT_ptr:
+			case CPT_f32:
+				{
+					CC_PS t={tp,par};
+					CC_pars.push_back(t);
+				}
+				break;
+
+			default:
+				die("invalid tp");
 		}
 	}
 
-	for (int i=0;i<=13;i++)
+	void CC_Call(shil_opcode* op,void* function) 
 	{
-		if (i==1 || i ==2 || i == 3 || i == 4 || i==12 || i==13)
-			continue;
+		u32 rd=r0;
+		u32 fd=f0;
 
-		_mem_hndl_SQ32[i]=(unat)EMIT_GET_PTR();
+		for (int i=CC_pars.size();i-->0;)
+		{
+			if (CC_pars[i].type==CPT_ptr)
+			{
+				MOV32((eReg)rd, (u32)CC_pars[i].par->reg_ptr());
+			}
+			else
+			{
+				if (CC_pars[i].par->is_reg())
+				{
+					#ifdef ARM_HARDFP
+					if (CC_pars[i].type == CPT_f32) 
+					{
+						if (reg.IsAllocg(*CC_pars[i].par))
+						{
+							//printf("MOV((eReg)rd,reg.map(*CC_pars[i].par)); %d %d\n",rd,reg.map(*CC_pars[i].par));
+							VMOV((eFSReg)fd,reg.mapg(*CC_pars[i].par));
+						}
+						else if (reg.IsAllocf(*CC_pars[i].par))
+						{
+							//printf("LoadSh4Reg_mem((eReg)rd, *CC_pars[i].par); %d\n",rd);
+							VMOV((eFSReg)fd,reg.mapfs(*CC_pars[i].par));
+						}
+						else
+							die("Must not happen!\n");
+						continue;
+					}
+					#endif
 
-		//UBFX(r3,(eReg)i,0,6);
-		AND(r3,(eReg)i,0x3F);
-		LSR(r2,(eReg)i,26);
-		MOV(r0,(eReg)i);
-		ADD(r3,r3,r8);
-		CMP(r2,0x38);
-		JUMP((unat)&WriteMem32,CC_NE);
-		STR(r1,r3,rcb_noffs(sq_both));
-		BX(LR);
+					if (reg.IsAllocg(*CC_pars[i].par))
+					{
+						//printf("MOV((eReg)rd,reg.map(*CC_pars[i].par)); %d %d\n",rd,reg.map(*CC_pars[i].par));
+						MOV((eReg)rd,reg.mapg(*CC_pars[i].par));
+					}
+					else if (reg.IsAllocf(*CC_pars[i].par))
+					{
+						//printf("LoadSh4Reg_mem((eReg)rd, *CC_pars[i].par); %d\n",rd);
+						VMOV((eReg)rd,reg.mapfs(*CC_pars[i].par));
+					}
+					else
+						die("Must not happen!\n");
+				}
+				else
+				{
+					verify(CC_pars[i].type != CPT_f32);
+					//printf("MOV32((eReg)rd, CC_pars[i].par->_imm); %d\n",rd);
+					MOV32((eReg)rd, CC_pars[i].par->_imm);
+				}
+			}
+			rd++;
+		}
+		//printf("used reg r0 to r%d, %d params, calling %08X\n",rd-1,CC_pars.size(),function);
+		CALL((u32)function);
 	}
 
-	printf("readm helpers: up to %08X\n",EMIT_GET_PTR());
-	emit_SetBaseAddr();
-
-
-	ccmap[shop_test]=CC_EQ;
-	ccnmap[shop_test]=CC_NE;
-
-	ccmap[shop_seteq]=CC_EQ;
-	ccnmap[shop_seteq]=CC_NE;
-	
-	
-	ccmap[shop_setge]=CC_GE;
-	ccnmap[shop_setge]=CC_LT;
-	
-	ccmap[shop_setgt]=CC_GT;
-	ccnmap[shop_setgt]=CC_LE;
-
-	ccmap[shop_setae]=CC_HS;
-	ccnmap[shop_setae]=CC_LO;
-
-	ccmap[shop_setab]=CC_HI;
-	ccnmap[shop_setab]=CC_LS;
-
-	//ccmap[shop_fseteq]=CC_EQ;
-	//ccmap[shop_fsetgt]=CC_GT;
-
-	return &ngen_mainloop;
-}
-
-
-void ngen_GetFeatures(ngen_features* dst)
-{
-	dst->InterpreterFallback=false;
-	dst->OnlyDynamicEnds=false;
-}
-
-RuntimeBlockInfo* ngen_AllocateBlock()
-{
-	return new DynaRBI();
+	void CC_Finish(shil_opcode* op) 
+	{ 
+		CC_pars.clear(); 
+	}
 };
 
 void CacheFlush()
@@ -2395,4 +2402,14 @@ void CacheFlush()
 	printf("Flushing cache from %08x to %08x\n", &CodeCache[0], &CodeCache[CODE_SIZE - 1]);
 	//CacheFlush(&CodeCache[0], &CodeCache[CODE_SIZE - 1]);
 }
+
+
+
+static NGenBackend* create_ngen_arm32() {
+	return new Arm32NGenBackend();
+}
+
+
+static auto rec_cpp = rdv_RegisterShilBackend(ngen_backend_t{"arm32", "Fast arm32 jit", &create_ngen_arm32 });
+
 #endif

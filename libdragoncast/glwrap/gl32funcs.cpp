@@ -6,8 +6,10 @@
 
 void load_gles_symbols()
 {
-	for (int i = 0; rglgen_symbol_map[i].sym != NULL; i++)
-		*(void **)rglgen_symbol_map[i].ptr = eglGetProcAddress(rglgen_symbol_map[i].sym);
+	#if GLES
+		for (int i = 0; rglgen_symbol_map[i].sym != NULL; i++)
+			*(void **)rglgen_symbol_map[i].ptr = eglGetProcAddress(rglgen_symbol_map[i].sym);
+	#endif
 }
 
 #define SYM(x) { "gl" #x, &(gl##x) }

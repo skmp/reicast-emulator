@@ -195,7 +195,7 @@ void* rend_thread(void* p);
 		// Close EGL context ???
 		if (sig_num!=0)
 		{
-			gl_term();
+			os_gl_term();
 		}
 
 		x11_window_destroy():

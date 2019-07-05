@@ -3,37 +3,15 @@
 #include <atomic>
 #include "rend/rend.h"
 
-#if (defined(GLES) && !defined(TARGET_NACL32) && HOST_OS != OS_DARWIN && !defined(USE_SDL)) || defined(_ANDROID)
-#define USE_EGL
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
+#if 0
+	#if (defined(GLES) && !defined(TARGET_NACL32) && HOST_OS != OS_DARWIN && !defined(USE_SDL)) || defined(_ANDROID)
+	#define USE_EGL
+	#include <EGL/egl.h>
+	#include <EGL/eglext.h>
+	#endif
 #endif
 
-#ifdef GLES
-#if defined(TARGET_IPHONE) //apple-specific ogles2 headers
-//#include <APPLE/egl.h>
-#include <OpenGLES/ES2/gl.h>
-#include <OpenGLES/ES2/glext.h>
-#endif
-#include <GLES32/gl32.h>
-#include <GLES32/gl2ext.h>
-#ifndef GLES2
-#include "gl32funcs.h"
-#endif
-
-#ifndef GL_NV_draw_path
-//IMGTEC GLES emulation
-#pragma comment(lib,"libEGL.lib")
-#pragma comment(lib,"libGLESv2.lib")
-#else /* NV gles emulation*/
-#pragma comment(lib,"libGLES20.lib")
-#endif
-
-#elif HOST_OS == OS_DARWIN
-    #include <OpenGL/gl3.h>
-#else
-	#include <GL4/gl3w.h>
-#endif
+#include "glwrap/GLES.h"
 
 #define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
 #define eglCheck() false

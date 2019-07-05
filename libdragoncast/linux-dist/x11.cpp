@@ -7,8 +7,6 @@
 
 #include "rend/gles/glcache.h"
 
-#include <GL4/gl3w.c>
-
 #if !defined(GLES)
 	#include <GL/gl.h>
 	#include <GL/glx.h>

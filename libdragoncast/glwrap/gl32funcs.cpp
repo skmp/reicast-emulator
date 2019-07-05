@@ -1,6 +1,6 @@
 #include <stddef.h>
-#include <GLES32/gl32.h>
-#include <EGL/egl.h>
+#include "khronos/GLES32/gl32.h"
+#include "khronos/EGL/egl.h"
 #include "gl32funcs.h"
 #include "build.h"
 

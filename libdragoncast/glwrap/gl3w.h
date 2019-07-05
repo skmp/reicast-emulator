@@ -29,7 +29,7 @@
 #ifndef __gl3w_h_
 #define __gl3w_h_
 
-#include <GL4/glcorearb.h>
+#include "khronos/GL4/glcorearb.h"
 
 #ifndef __gl_h_
 #define __gl_h_

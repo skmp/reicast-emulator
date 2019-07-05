@@ -30,11 +30,15 @@ bool egl_makecurrent()
 // Create a basic GLES context
 bool os_gl_init(void* wind, void* disp)
 {
+	printf("EGL: wind: %p, disp: %p\n", wind, disp);
+
 	egl_setup.native_wind = (EGLNativeWindowType)wind;
 	egl_setup.native_disp = (EGLNativeDisplayType)disp;
 
 	//try to get a display
 	egl_setup.display = eglGetDisplay(egl_setup.native_disp);
+
+	printf("EGL: Got display\n");
 
 	//if failed, get the default display (this will not happen in win32)
 	if (egl_setup.display == EGL_NO_DISPLAY)

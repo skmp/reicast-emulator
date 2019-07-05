@@ -203,13 +203,10 @@ else ifneq (,$(findstring rpi,$(platform)))
     else ifneq (,$(findstring rpi3,$(platform)))
         MFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
         ASFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
-    else ifneq (,$(findstring rpi4,$(platform)))
-        MFLAGS += -march=armv8-a+crc -mtune=cortex-a72 -mfpu=neon-fp-armv8 -mfloat-abi=hard
-        ASFLAGS += -march=armv8-a+crc -mtune=cortex-a72 -mfpu=neon-fp-armv8 -mfloat-abi=hard
     endif
 
     ifneq (,$(findstring mesa,$(platform)))
-        #USE_SDL := 1
+        USE_SDL := 1
         USE_GLES := 1
     else
         INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
@@ -219,10 +216,7 @@ else ifneq (,$(findstring rpi,$(platform)))
         USE_OMX := 1
         USE_DISPMANX := 1
     endif
-
-    USE_GLES := 1
-    USE_X11 := 1
-    #undefine USE_X11
+    undefine USE_X11
 
 # BeagleBone Black
 else ifneq (,$(findstring beagle,$(platform)))
@@ -335,7 +329,7 @@ CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fpermissive -fno-operator-names -D_GLIBCX
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
-LIBS += -lm -lpthread
+LIBS += -lm -lpthread -ldl
 ifdef FOR_LINUX
 LIBS += -lrt
 endif

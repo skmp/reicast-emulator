@@ -185,7 +185,6 @@ else ifneq (,$(findstring lincpp,$(platform)))
 else ifneq (,$(findstring rpi4,$(platform)))
 
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
-    CFLAGS += -DGLES3
 
     USE_X11 := 1
     USE_GLES := 1
@@ -248,7 +247,6 @@ else ifneq (,$(findstring odroid,$(platform)))
     ifneq (,$(findstring odroidxu3,$(platform)))
         MFLAGS += -march=armv7ve -mtune=cortex-a15.cortex-a7
         ASFLAGS += -march=armv7ve
-		CFLAGS += -DGLES3
     # Other ODROIDs
     else
         MFLAGS += -march=armv7-a

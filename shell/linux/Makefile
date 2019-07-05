@@ -61,6 +61,8 @@ ifeq (,$(platform))
         HARDWARE = $(shell grep Hardware /proc/cpuinfo)
         ifneq (,$(findstring BCM2709,$(HARDWARE)))
             platform = rpi2
+        else ifneq (,$(findstring BCM2835,$(HARDWARE)))
+            platform = rpi4
         else ifneq (,$(findstring AM33XX,$(HARDWARE)))
             platform = beagle
         else ifneq (,$(findstring Pandora,$(HARDWARE)))
@@ -179,7 +181,19 @@ else ifneq (,$(findstring lincpp,$(platform)))
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_JIT
     CXXFLAGS += -fexceptions -std=gnu++11
 
-# Raspberry Pi 2
+# Raspberry Pi 4
+else ifneq (,$(findstring rpi4,$(platform)))
+
+    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+    CFLAGS += -DGLES3
+
+    USE_X11 := 1
+    USE_GLES := 1
+
+    MFLAGS += -march=armv8-a+crc -mtune=cortex-a72 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+    ASFLAGS += -march=armv8-a+crc -mtune=cortex-a72 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+
+# Raspberry Pi 2/3
 else ifneq (,$(findstring rpi,$(platform)))
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
     ifneq (,$(findstring rpi2,$(platform)))

@@ -11,8 +11,8 @@
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
 #endif
-#include <GLES32/gl32.h>
-#include <GLES32/gl2ext.h>
+#include "khronos/GLES32/gl32.h"
+#include "khronos/GLES32/gl2ext.h"
 #ifndef GLES2
 #include "gl32funcs.h"
 #endif

@@ -59,7 +59,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 
 	bool dyna_cde = ((unat)CC_RX2RW(ctx.pc) > (unat)CodeCache) && ((unat)CC_RX2RW(ctx.pc) < (unat)(CodeCache + CODE_SIZE));
 
-	if (VramLockedWrite((u8*)si->si_addr) || _vmem_bm_LockedWrite((u8*)si->si_addr))
+	if (VramLockedWrite((u8*)si->si_addr) || _vmem_bm_LockedWrite((u8*)si->si_addr) || bm_LockedWrite((u8*)si->si_addr))
 		return;
 	#if FEAT_SHREC == DYNAREC_JIT
 		#if HOST_CPU==CPU_ARM

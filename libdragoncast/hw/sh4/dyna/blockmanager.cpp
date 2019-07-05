@@ -22,6 +22,7 @@
 //#include "../tmu.h"
 #include "hw/sh4/sh4_mem.h"
 
+#define printf_bm printf
 
 #if FEAT_SHREC != DYNAREC_NONE
 
@@ -30,6 +31,9 @@ typedef set<RuntimeBlockInfo*> bm_List;
 
 bm_List all_blocks;
 bm_List del_blocks;
+
+bm_List page_blocks[RAM_SIZE/PAGE_SIZE];
+bool	page_has_data[RAM_SIZE/PAGE_SIZE];
 
 std::map<void*, RuntimeBlockInfo*> blkmap;
 u32 bm_gc_luc,bm_gcf_luc;
@@ -99,7 +103,7 @@ RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code)
 	return 0;
 }
 
-void bm_AddBlock(RuntimeBlockInfo* blk)
+void bm_AddBlock(RuntimeBlockInfo* blk, bool lockRam)
 {
 	auto iter = blkmap.find((void*)blk->code);
 	if (iter != blkmap.end()) {
@@ -111,6 +115,19 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 
 	verify((void*)bm_GetCode(blk->addr)==(void*)rdv_ngen->FailedToFindBlock);
 	FPCA(blk->addr) = (DynarecCodeEntryPtr)CC_RW2RX(blk->code);
+
+	u32 code_ram_page_base = (blk->addr&RAM_MASK)/PAGE_SIZE;
+	u32 code_ram_page_top = ((blk->addr+blk->sh4_code_size-1)&RAM_MASK)/PAGE_SIZE;
+
+	for (u32 ram_page=code_ram_page_base; ram_page<=code_ram_page_top; ram_page++)
+	{
+		page_blocks[ram_page].insert(blk);
+
+		if (lockRam)
+		{
+			mem_b.LockRegion(ram_page * PAGE_SIZE, PAGE_SIZE);
+		}
+	}
 }
 
 void bm_DiscardBlock(RuntimeBlockInfo* blk)
@@ -131,6 +148,14 @@ void bm_DiscardBlock(RuntimeBlockInfo* blk)
 	verify((void*)bm_GetCode(blk->addr)==(void*)blk->code);
 	FPCA(blk->addr) = (DynarecCodeEntryPtr)rdv_ngen->FailedToFindBlock;
 	verify((void*)bm_GetCode(blk->addr)==(void*)rdv_ngen->FailedToFindBlock);
+
+	u32 code_ram_page_base = (blk->addr&RAM_MASK)/PAGE_SIZE;
+	u32 code_ram_page_top = ((blk->addr+blk->sh4_code_size-1)&RAM_MASK)/PAGE_SIZE;
+
+	for (u32 ram_page=code_ram_page_base; ram_page<=code_ram_page_top; ram_page++)
+	{
+		page_blocks[ram_page].erase(blk);
+	}
 }
 
 void bm_DiscardAddress(u32 codeaddr)
@@ -160,8 +185,25 @@ void bm_vmem_pagefill(void** ptr, u32 size_bytes)
 void bm_Reset()
 {
 	rdv_ngen->OnResetBlocks();
+
+	// reset lookup table via vmem
 	_vmem_bm_reset();
 
+
+	// clear page/block lists
+	memset(page_has_data, 0, sizeof(page_has_data));
+
+	for (auto i=0; i<RAM_SIZE/PAGE_SIZE; i++)
+	{
+		if (i * PAGE_SIZE < 65536)
+		{
+			page_has_data[i] = true;
+		}
+
+		page_blocks[i].clear();
+	}
+
+	// clear all blocks
 	for (auto it=all_blocks.begin(); it!=all_blocks.end(); it++)
 	{
 		(*it)->relink_data=0;
@@ -170,12 +212,13 @@ void bm_Reset()
 		(*it)->Relink();
 	}
 
+	// mark blocks for deletion
 	del_blocks.insert(all_blocks.begin(),all_blocks.end());
 
+	// clear all remaining block lists
 	all_blocks.clear();
 	blkmap.clear();
 }
-
 
 void bm_Init()
 {
@@ -221,6 +264,11 @@ void RuntimeBlockInfo::Discard()
 
 		(*it)->Relink();
 	}
+
+	pBranchBlock = nullptr;
+	pNextBlock = nullptr;
+
+	Relink();
 	//die("Discard not implemented");
 }
 
@@ -255,6 +303,52 @@ void bm_WriteBlockMap(const string& file)
 void bm_sh4_jitsym(FILE* out)
 {
 	die("bm_sh4_jitsym is noop");
+}
+
+bool bm_LockedWrite(u8* addy)
+{
+	ptrdiff_t offset=addy-virt_ram_base;
+
+	//printf_bm("BM_LW: Checking @ %p %08X\n", addy, offset);
+
+
+	if (offset > 0 && offset <= 0xFFFFFFFF && IsOnRam((u32)offset))
+	{
+		u32 ram_offset = offset & RAM_MASK;
+		u32 ram_page = ram_offset / PAGE_SIZE;
+		u32 ram_obase = ram_page * PAGE_SIZE; 
+
+		printf_bm("BM_LW: Pagefault @ %p %08X %08X\n", addy, ram_offset, ram_page);
+
+		page_has_data[ram_page] = true;
+
+		for (auto it=page_blocks[ram_page].begin(); it != page_blocks[ram_page].end(); it++)
+		{
+			bm_DiscardBlock(*it);
+		}
+
+
+		mem_b.UnLockRegion(ram_obase, PAGE_SIZE);
+
+		return true;
+	}
+	else
+		return false;
+}
+
+bool bm_RamPageHasData(u32 guest_addr, u32 len)
+{
+	auto page_base = (guest_addr & RAM_MASK)/PAGE_SIZE;
+	auto page_top = ((guest_addr + len - 1) & RAM_MASK)/PAGE_SIZE;
+
+	bool rv = false;
+	
+	for (auto i = page_base; i <= page_top; i++)
+	{
+		rv |= page_has_data[i];
+	}
+
+	return rv;
 }
 
 #endif

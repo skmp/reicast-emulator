@@ -603,9 +603,11 @@ struct RegisterStruct
 };
 
 enum SmcCheckEnum {
+	NoCheck = -1,
 	FullCheck = 0,
 	FastCheck = 1,
-	NoCheck = 2
+	FaultCheck = 2,
+	ValidationCheck = 3,
 };
 
 struct settings_t

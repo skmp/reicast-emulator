@@ -18,6 +18,7 @@
 #include <process.h>
 
 #include "hw/sh4/dyna/ngen.h"
+#include "hw/sh4/dyna/blockmanager.h"
 #include "hw/mem/_vmem.h"
 
 #include "hw/pvr/Renderer_if.h"
@@ -306,6 +307,10 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}
 	else if (_vmem_bm_LockedWrite(address))
+	{
+		return EXCEPTION_CONTINUE_EXECUTION;
+	}
+	else if (bm_LockedWrite(address))
 	{
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}

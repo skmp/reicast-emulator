@@ -572,8 +572,10 @@ void x11_window_set_text(const char* text)
 
 void x11_gl_context_destroy()
 {
-	glXMakeCurrent((Display*)x11_disp, None, NULL);
-	glXDestroyContext((Display*)x11_disp, (GLXContext)x11_glc);
+	#if !defined(GLES)
+		glXMakeCurrent((Display*)x11_disp, None, NULL);
+		glXDestroyContext((Display*)x11_disp, (GLXContext)x11_glc);
+	#endif
 }
 
 void x11_window_destroy()

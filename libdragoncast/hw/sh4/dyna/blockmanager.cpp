@@ -322,7 +322,10 @@ bool bm_LockedWrite(u8* addy)
 
 		page_has_data[ram_page] = true;
 
-		for (auto it=page_blocks[ram_page].begin(); it != page_blocks[ram_page].end(); it++)
+		// Make a local copy so we can remove from the page_blocks list while iterating
+		auto list = page_blocks[ram_page];
+
+		for (auto it = list.begin(); it != list.end(); it++)
 		{
 			bm_DiscardBlock(*it);
 		}

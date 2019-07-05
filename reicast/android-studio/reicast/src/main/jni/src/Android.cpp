@@ -403,7 +403,6 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env, job
     return 0;
 }
 
-extern void gl_swap();
 extern void egl_stealcntx();
 volatile static bool render_running;
 volatile static bool render_reinit;
@@ -426,7 +425,7 @@ void *render_thread_func(void *)
 
         bool ret = rend_single_frame();
         if (ret)
-            gl_swap();
+            os_gl_swap();
     }
     egl_makecurrent();
     rend_term_renderer();

@@ -457,7 +457,7 @@ GLuint fogTextureId;
 	}
 
 	// Create a basic GLES context
-	bool gl_init(void* wind, void* disp)
+	bool os_gl_init(void* wind, void* disp)
 	{
 		gl.setup.native_wind=(EGLNativeWindowType)wind;
 		gl.setup.native_disp=(EGLNativeDisplayType)disp;

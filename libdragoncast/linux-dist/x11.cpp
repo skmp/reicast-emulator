@@ -611,14 +611,13 @@ void x11_window_destroy()
 	}
 }
 
-//#include <GL4/gl3w.h>
+#if !defined(GLES)
 
 //! windows && X11
 //let's assume glx for now
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
-#include <GL/gl.h>
 #include <GL/glx.h>
 
 #include <hw/pvr/Renderer_if.h>
@@ -673,4 +672,7 @@ void os_gl_swap()
 void os_gl_term()
 {
 }
+
+#endif
+
 #endif

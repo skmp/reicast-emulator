@@ -48,6 +48,8 @@ ifndef NO_REND
 	ifndef USE_DISPMANX
 	    RZDCY_MODULES += rend/gl4/
 	endif
+    else
+	RZDCY_MODULES += egl/
     endif
 else
     RZDCY_MODULES += rend/norend/

@@ -196,15 +196,20 @@ else ifneq (,$(findstring rpi4,$(platform)))
 # Raspberry Pi 2/3
 else ifneq (,$(findstring rpi,$(platform)))
     CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+
     ifneq (,$(findstring rpi2,$(platform)))
         MFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
         ASFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
     else ifneq (,$(findstring rpi3,$(platform)))
         MFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
         ASFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+    else ifneq (,$(findstring rpi4,$(platform)))
+        MFLAGS += -march=armv8-a+crc -mtune=cortex-a72 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+        ASFLAGS += -march=armv8-a+crc -mtune=cortex-a72 -mfpu=neon-fp-armv8 -mfloat-abi=hard
     endif
+
     ifneq (,$(findstring mesa,$(platform)))
-        USE_SDL := 1
+        #USE_SDL := 1
         USE_GLES := 1
     else
         INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
@@ -214,7 +219,10 @@ else ifneq (,$(findstring rpi,$(platform)))
         USE_OMX := 1
         USE_DISPMANX := 1
     endif
-    undefine USE_X11
+
+    USE_GLES := 1
+    USE_X11 := 1
+    #undefine USE_X11
 
 # BeagleBone Black
 else ifneq (,$(findstring beagle,$(platform)))
@@ -421,7 +429,7 @@ ifdef USE_GLES
     CFLAGS += -DGLES
     LIBS += -lEGL -lGLESv2
 else ifdef FOR_LINUX
-    LIBS += -ldl -lGL #for desktop gl
+    LIBS += -ldl  #for desktop gl
 endif
 
 #softrend?

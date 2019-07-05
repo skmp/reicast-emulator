@@ -351,9 +351,17 @@ static void rend_create_renderer()
 		
 		sort(vec.begin(), vec.end(), [](const rendererbackend_t& a, const rendererbackend_t& b) { return a.priority > b.priority; });
 
-		printf("renderer: %s fallback: %s\n", vec.begin()->slug.c_str(), (++vec.begin())->slug.c_str());
 		renderer = vec.begin()->create();
-		fallback_renderer = (++vec.begin())->create();
+
+		if ((++vec.begin()) != vec.end())
+		{
+			fallback_renderer = (++vec.begin())->create();
+		}
+
+		printf("renderer: %s\n",(vec.begin())->slug.c_str());
+		if (fallback_renderer)
+			printf("fallback: %s\n", (++vec.begin())->slug.c_str());
+
 	}
 }
 

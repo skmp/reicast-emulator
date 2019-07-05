@@ -318,6 +318,7 @@ union modemreg_t
 		} reg1f;
 	};
 };
+#pragma pack(pop)
 
 u8 regs_write_mask[] = {
 		//00 Receive Data Buffer (RBUFFER)/Voice Receive Data Buffer (VBUFR)

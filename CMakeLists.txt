@@ -51,6 +51,7 @@ file(GLOB reios_SRCS		${d_core}/reios/*.cpp		${d_core}/reios/*.h)
 file(GLOB imgread_SRCS		${d_core}/imgread/*.cpp		${d_core}/imgread/*.h)
 file(GLOB profiler_SRCS		${d_core}/profiler/*.cpp	${d_core}/profiler/*.h)
 file(GLOB archive_SRCS		${d_core}/archive/*.cpp		${d_core}/archive/*.h)
+file(GLOB glwrap_SRCS		${d_core}/glwrap/*.cpp		${d_core}/glwrap/*.h)
 
 #### option(rend)
 file(GLOB gl4_SRCS			${d_core}/rend/gl4/*.cpp	${d_core}/rend/gl4/*.h)
@@ -63,6 +64,7 @@ set(core_SRCS
   ${hw_SRCS}
   ${cfg_SRCS}
   ${rend_SRCS}
+  ${glwrap_SRCS}
   ${gl4_SRCS}
   ${gles_SRCS}
   ${norend_SRCS}

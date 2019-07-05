@@ -22,8 +22,9 @@
 
 #include "hw/pvr/Renderer_if.h"
 
+#include "glwrap/gl3w.h"
+
 #undef ARRAY_SIZE	// macros are evil
-#include <GL4/gl3w.c>
 #pragma comment(lib,"Opengl32.lib")
 
 #include <xinput.h>

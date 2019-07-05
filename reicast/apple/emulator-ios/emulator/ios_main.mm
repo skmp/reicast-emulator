@@ -111,14 +111,14 @@ void* libPvr_GetRenderSurface() {
 
 }
 
-bool gl_init(void*, void*) {
+bool os_gl_init(void*, void*) {
     return true;
 }
 
-void gl_term() {
+void os_gl_term() {
 
 }
 
-void gl_swap() {
+void os_gl_swap() {
 
 }

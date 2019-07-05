@@ -12,6 +12,8 @@
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/sh4/sh4_mem.h"
 
+#include "ngen_arm.h"
+
 /*
 
 	ARM ABI
@@ -324,18 +326,6 @@ arm_reg_alloc reg;
 
 
 u32 blockno=0;
-
-
-extern "C" void no_update();
-extern "C" void intc_sched();
-extern "C" void ngen_blockcheckfail();
-
-
-extern "C" void ngen_LinkBlock_Generic_stub();
-extern "C" void ngen_LinkBlock_cond_Branch_stub();
-extern "C" void ngen_LinkBlock_cond_Next_stub();
-
-extern "C" void ngen_FailedToFindBlock_();
 
 #include <map>
 
@@ -1797,9 +1787,6 @@ __default:
 			break;
 		}
 }
-
-
-extern "C" void ngen_mainloop(void*);
 
 struct Arm32NGenBackend: NGenBackend
 {

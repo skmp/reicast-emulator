@@ -148,8 +148,8 @@ else ifneq (,$(findstring arm64,$(platform)))
 
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)
 else ifneq (,$(findstring armv7h,$(platform)))
-    MFLAGS += -marm -mfloat-abi=hard -march=armv7-a -funroll-loops
-    ASFLAGS += -mfloat-abi=hard -march=armv7-a
+    MFLAGS += -marm -mfloat-abi=hard -march=armv7-a -funroll-loops -mfpu=neon-fp16
+    ASFLAGS += -mfloat-abi=hard -march=armv7-a -mfpu=neon-fp16
     ifneq (,$(findstring neon,$(platform)))
         MFLAGS += -mfpu=neon
         ASFLAGS += -mfpu=neon

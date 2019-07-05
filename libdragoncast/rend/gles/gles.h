@@ -54,17 +54,6 @@ struct PipelineShader
 
 struct gl_ctx
 {
-#ifdef USE_EGL
-	struct
-	{
-		EGLNativeWindowType native_wind;
-		EGLNativeDisplayType native_disp;
-		EGLDisplay display;
-		EGLSurface surface;
-		EGLContext context;
-	} setup;
-#endif
-
 	struct
 	{
 		GLuint program;

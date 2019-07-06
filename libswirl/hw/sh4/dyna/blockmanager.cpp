@@ -34,8 +34,8 @@ typedef set<RuntimeBlockInfo*> bm_List;
 bm_List all_blocks;
 bm_List del_blocks;
 
-bm_List page_blocks[RAM_SIZE/PAGE_SIZE];
-bool	page_has_data[RAM_SIZE/PAGE_SIZE];
+bm_List page_blocks[RAM_SIZE_MAX/PAGE_SIZE];
+bool	page_has_data[RAM_SIZE_MAX/PAGE_SIZE];
 
 std::map<void*, RuntimeBlockInfo*> blkmap;
 u32 bm_gc_luc,bm_gcf_luc;

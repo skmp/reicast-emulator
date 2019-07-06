@@ -403,18 +403,7 @@ using namespace std;
 #endif
 
 
-#if DC_PLATFORM==DC_PLATFORM_DREAMCAST
-	#define VER_EMUNAME		"reicast"
-#elif DC_PLATFORM==DC_PLATFORM_DEV_UNIT
-	#define VER_EMUNAME		"reicast-DevKit-SET5.21"
-#elif DC_PLATFORM==DC_PLATFORM_NAOMI
-	#define VER_EMUNAME		"reicast-Naomi"
-#elif DC_PLATFORM==DC_PLATFORM_ATOMISWAVE
-	#define VER_EMUNAME		"reicast-AtomisWave"
-#else
-	#error unknown target platform
-#endif
-
+#define VER_EMUNAME		"reicast"
 
 #define VER_FULLNAME	VER_EMUNAME " git" _X_x_X_MMU_VER_STR " (built " __DATE__ "@" __TIME__ ")"
 #define VER_SHORTNAME	VER_EMUNAME " git" _X_x_X_MMU_VER_STR
@@ -903,3 +892,4 @@ struct OnLoad
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #endif
 
+#include "libswirl.h"

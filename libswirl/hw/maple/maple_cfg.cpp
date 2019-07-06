@@ -78,33 +78,36 @@ struct MapleConfigMap : IMapleConfigMap
 		UpdateInputState(player_num);
 
 		pjs->kcode=kcode[player_num];
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-		pjs->kcode |= 0xF901;		// mask off DPad2, C, D and Z
-		pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[player_num]);
-		pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[player_num]);
-		pjs->trigger[PJTI_R]=rt[player_num];
-		pjs->trigger[PJTI_L]=lt[player_num];
-#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		pjs->kcode = 0xFFFF;
-		for (int i = 0; i < 16; i++)
+		if (dc_console.platform == DCP_DREAMCAST)
 		{
-			if ((kcode[player_num] & (1 << i)) == 0)
-				pjs->kcode &= ~awave_button_mapping[i];
-		}
-		pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
-		if (NaomiGameInputs != NULL && NaomiGameInputs->axes[1].name != NULL && NaomiGameInputs->axes[1].type == Half)
-		{
-			// Driving games: put axis 2 on RT (accel) and axis 3 on LT (brake)
-			pjs->joy[PJAI_Y1] = rt[player_num];
-			pjs->joy[PJAI_X2] = lt[player_num];
-		}
-		else
-		{
+			pjs->kcode |= 0xF901;		// mask off DPad2, C, D and Z
+			pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
 			pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
-			pjs->joy[PJAI_X2] = rt[player_num];
-			pjs->joy[PJAI_Y2] = lt[player_num];
+			pjs->trigger[PJTI_R] = rt[player_num];
+			pjs->trigger[PJTI_L] = lt[player_num];
 		}
-#endif
+		else if (dc_console.platform == DCP_ATOMISWAVE)
+		{
+			pjs->kcode = 0xFFFF;
+			for (int i = 0; i < 16; i++)
+			{
+				if ((kcode[player_num] & (1 << i)) == 0)
+					pjs->kcode &= ~awave_button_mapping[i];
+			}
+			pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
+			if (NaomiGameInputs != NULL && NaomiGameInputs->axes[1].name != NULL && NaomiGameInputs->axes[1].type == Half)
+			{
+				// Driving games: put axis 2 on RT (accel) and axis 3 on LT (brake)
+				pjs->joy[PJAI_Y1] = rt[player_num];
+				pjs->joy[PJAI_X2] = lt[player_num];
+			}
+			else
+			{
+				pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
+				pjs->joy[PJAI_X2] = rt[player_num];
+				pjs->joy[PJAI_Y2] = lt[player_num];
+			}
+		}
 	}
 	void SetImage(void* img)
 	{

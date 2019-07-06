@@ -4,6 +4,7 @@
 #include "hw/aica/aica_if.h"
 #include <math.h>
 #include <algorithm>
+
 using namespace std;
 #undef FAR
 

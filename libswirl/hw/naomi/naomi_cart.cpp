@@ -37,8 +37,6 @@ char naomi_game_id[33];
 InputDescriptors *NaomiGameInputs;
 u8 *naomi_default_eeprom;
 
-extern RomChip sys_rom;
-
 static bool naomi_LoadBios(const char *filename, Archive *child_archive, Archive *parent_archive, int region)
 {
 	int biosid = 0;
@@ -76,7 +74,8 @@ static bool naomi_LoadBios(const char *filename, Archive *child_archive, Archive
 		{
 			verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
 			verify(bios->blobs[romid].src_offset + bios->blobs[romid].length <= BIOS_SIZE);
-			memcpy(sys_rom.data + bios->blobs[romid].offset, sys_rom.data + bios->blobs[romid].src_offset, bios->blobs[romid].length);
+			die("todo: fix this");
+			//			memcpy(sys_rom.data + bios->blobs[romid].offset, sys_rom.data + bios->blobs[romid].src_offset, bios->blobs[romid].length);
 			printf("Copied: %x bytes from %07x to %07x\n", bios->blobs[romid].length, bios->blobs[romid].src_offset, bios->blobs[romid].offset);
 		}
 		else
@@ -95,8 +94,9 @@ static bool naomi_LoadBios(const char *filename, Archive *child_archive, Archive
 			if (bios->blobs[romid].blob_type == Normal)
 			{
 				verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
-				u32 read = file->Read(sys_rom.data + bios->blobs[romid].offset, bios->blobs[romid].length);
-				printf("Mapped %s: %x bytes at %07x\n", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
+				die("TODO: fix this");
+				//u32 read = file->Read(sys_rom.data + bios->blobs[romid].offset, bios->blobs[romid].length);
+				//printf("Mapped %s: %x bytes at %07x\n", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
 			}
 			else if (bios->blobs[romid].blob_type == InterleavedWord)
 			{
@@ -109,10 +109,11 @@ static bool naomi_LoadBios(const char *filename, Archive *child_archive, Archive
 				}
 				verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
 				u32 read = file->Read(buf, bios->blobs[romid].length);
-				u16 *to = (u16 *)(sys_rom.data + bios->blobs[romid].offset);
-				u16 *from = (u16 *)buf;
-				for (int i = bios->blobs[romid].length / 2; --i >= 0; to++)
-					*to++ = *from++;
+				die("todo: fix this");
+//				u16 *to = (u16 *)(sys_rom.data + bios->blobs[romid].offset);
+	//			u16 *from = (u16 *)buf;
+		//		for (int i = bios->blobs[romid].length / 2; --i >= 0; to++)
+			//		*to++ = *from++;
 				free(buf);
 				printf("Mapped %s: %x bytes (interleaved word) at %07x\n", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
 			}
@@ -125,10 +126,13 @@ static bool naomi_LoadBios(const char *filename, Archive *child_archive, Archive
 	if (bios_archive != NULL)
 		delete bios_archive;
 
-#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-	// Reload the writeable portion of the FlashROM
-	sys_rom.Reload();
-#endif
+	if (dc_console.platform != DCP_ATOMISWAVE)
+	{
+		// Reload the writeable portion of the FlashROM
+		//TODOD: FIX THIS
+		//sys_rom.Reload();
+		die("unsupported");
+	}
 
 	return found_region;
 
@@ -166,19 +170,23 @@ static bool naomi_cart_LoadZip(char *filename)
 	}
 
 	struct Game *game = &Games[gameid];
-#if DC_PLATFORM == DC_PLATFORM_NAOMI
-	if (game->cart_type == AW)
+
+	if (dc_console.platform == DCP_NAOMI)
 	{
-		msgboxf("Atomiswave cartridges are not supported by NAOMI", 0);
-		return false;
+		if (game->cart_type == AW)
+		{
+			msgboxf("Atomiswave cartridges are not supported by NAOMI", 0);
+			return false;
+		}
 	}
-#else
-	if (game->cart_type != AW)
+	else
 	{
-		msgboxf("NAOMI cartridges are not supported by Atomiswave", 0);
-		return false;
+		if (game->cart_type != AW)
+		{
+			msgboxf("NAOMI cartridges are not supported by Atomiswave", 0);
+			return false;
+		}
 	}
-#endif
 	Archive *archive = OpenArchive(filename);
 	if (archive != NULL)
 		printf("Opened %s\n", filename);

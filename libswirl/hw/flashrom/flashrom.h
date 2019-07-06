@@ -242,27 +242,28 @@ struct DCFlashChip : MemChip
 	
 	virtual u8 Read8(u32 addr)
 	{
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-		switch (addr)
-		{
-		case 0x1A002:
-		case 0x1A0A2:
-			if (settings.dreamcast.region <= 2)
-				return '0' + settings.dreamcast.region;
-			break;
-		case 0x1A003:
-		case 0x1A0A3:
-			if (settings.dreamcast.language <= 5)
-				return '0' + settings.dreamcast.language;
-			break;
-		case 0x1A004:
-		case 0x1A0A4:
-			if (settings.dreamcast.broadcast <= 3)
-				return '0' + settings.dreamcast.broadcast;
-			break;
-		}
-#endif
 
+		if (dc_console.platform == DCP_DREAMCAST)
+		{
+			switch (addr)
+			{
+			case 0x1A002:
+			case 0x1A0A2:
+				if (settings.dreamcast.region <= 2)
+					return '0' + settings.dreamcast.region;
+				break;
+			case 0x1A003:
+			case 0x1A0A3:
+				if (settings.dreamcast.language <= 5)
+					return '0' + settings.dreamcast.language;
+				break;
+			case 0x1A004:
+			case 0x1A0A4:
+				if (settings.dreamcast.broadcast <= 3)
+					return '0' + settings.dreamcast.broadcast;
+				break;
+			}
+		}
 		u32 rv=MemChip::Read8(addr);
 
 		return rv;
@@ -364,15 +365,21 @@ struct DCFlashChip : MemChip
 			{
 				// chip erase
 				printf("Erasing Chip!\n");
-#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 				u8 save[0x2000];
-				// this area is write-protected on AW
-				memcpy(save, data + 0x1a000, 0x2000);
-#endif
+
+				if (dc_console.platform == DCP_ATOMISWAVE)
+				{	
+					// this area is write-protected on AW
+					memcpy(save, data + 0x1a000, 0x2000);
+				}
+				
 				memset(data + write_protect_size, 0xff, size - write_protect_size);
-#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-				memcpy(data + 0x1a000, save, 0x2000);
-#endif
+				
+				if (dc_console.platform == DCP_ATOMISWAVE)
+				{
+					memcpy(data + 0x1a000, save, 0x2000);
+				}
+
 				state = FS_Normal;
 			}
 			else if ((val & 0xff) == 0x30)
@@ -380,16 +387,21 @@ struct DCFlashChip : MemChip
 				// sector erase
 				if (addr >= write_protect_size)
 				{
-#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+
 					u8 save[0x2000];
-					// this area is write-protected on AW
-					memcpy(save, data + 0x1a000, 0x2000);
-#endif
+					if (dc_console.platform == DCP_ATOMISWAVE)
+					{
+						// this area is write-protected on AW
+						memcpy(save, data + 0x1a000, 0x2000);
+					}
+
 					printf("Erase Sector %08X! (%08X)\n",addr,addr&(~0x3FFF));
 					memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
-#if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-					memcpy(data + 0x1a000, save, 0x2000);
-#endif
+					
+					if (dc_console.platform == DCP_ATOMISWAVE)
+					{
+						memcpy(data + 0x1a000, save, 0x2000);
+					}
 				}
 				state = FS_Normal;
 			}

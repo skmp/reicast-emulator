@@ -648,10 +648,11 @@ static void gui_display_settings()
     	if (maple_devices_changed)
     	{
     		maple_devices_changed = false;
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-    		maple_ReconnectDevices();
-    		reset_vmus();
-#endif
+			if (dc_console.platform == DCP_DREAMCAST)
+			{
+    			maple_ReconnectDevices();
+    			reset_vmus();
+			}
     	}
        	SaveSettings();
     }
@@ -806,14 +807,15 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Controls"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		    if (ImGui::CollapsingHeader("Dreamcast Devices", ImGuiTreeNodeFlags_DefaultOpen))
+
+			if (ImGui::CollapsingHeader("Dreamcast Devices", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 				for (int bus = 0; bus < MAPLE_PORTS; bus++)
 				{
 					ImGui::Text("Device %c", bus + 'A');
 					ImGui::SameLine();
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+
+					// dreamcast
 					char device_name[32];
 					sprintf(device_name, "##device%d", bus);
 					float w = ImGui::CalcItemWidth() / 3;
@@ -857,14 +859,14 @@ static void gui_display_settings()
 						ImGui::PopID();
 					}
 					ImGui::PopItemWidth();
-#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+
 					if (MapleDevices[bus][5] != NULL)
 						ImGui::Text("%s", maple_device_name(MapleDevices[bus][5]->get_device_type()));
-#endif
+
 				}
 				ImGui::Spacing();
 		    }
-#endif
+
 		    if (ImGui::CollapsingHeader("Physical Devices", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 				ImGui::Columns(4, "renderers", false);
@@ -1256,17 +1258,7 @@ static void gui_display_settings()
 				ImGui::Text("Version: %s", REICAST_VERSION);
 				ImGui::Text("Git Hash: %s", GIT_HASH);
 				ImGui::Text("Build Date: %s", BUILD_DATE);
-				ImGui::Text("Target: %s",
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-						"Dreamcast"
-#elif DC_PLATFORM == DC_PLATFORM_NAOMI
-						"Naomi"
-#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-						"Atomiswave"
-#else
-						"Unknown"
-#endif
-						);
+				ImGui::Text("Target: all");
 		    }
 		    if (ImGui::CollapsingHeader("Platform", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
@@ -1383,7 +1375,7 @@ static void add_game_directory(const std::string& path, std::vector<GameMedia>& 
 		}
 		else
 		{
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+			// dreamcast
 			if (name.size() >= 4)
 			{
 				std::string extension = name.substr(name.size() - 4).c_str();
@@ -1392,7 +1384,8 @@ static void add_game_directory(const std::string& path, std::vector<GameMedia>& 
 					continue;
 				game_list.push_back({ name, child_path });
 			}
-#else
+
+			// others
 			std::string::size_type dotpos = name.find_last_of(".");
 			if (dotpos == std::string::npos || dotpos == name.size() - 1)
 				continue;
@@ -1401,7 +1394,7 @@ static void add_game_directory(const std::string& path, std::vector<GameMedia>& 
 					 && stricmp(extension.c_str(), ".lst") && stricmp(extension.c_str(), ".dat"))
 				continue;
 			game_list.push_back({ name, child_path });
-#endif
+
 		}
 	}
 	closedir(dir);
@@ -1432,7 +1425,8 @@ static void gui_display_demo()
 
 static void gui_start_game(const std::string& path)
 {
-	int rc = dc_start_game(path.empty() ? NULL : path.c_str());
+	//TODO: Auto detect dcp
+	int rc = dc_start_game(DCP_DREAMCAST, path.empty() ? NULL : path.c_str());
 	if (rc != 0)
 	{
 		gui_state = Main;
@@ -1500,7 +1494,6 @@ static void gui_display_content()
 			ImGui::Separator();
 		}
 		
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 		ImGui::PushID("bios");
 		if (ImGui::Selectable("Dreamcast BIOS"))
 		{
@@ -1509,7 +1502,6 @@ static void gui_display_content()
 			gui_start_game("");
 		}
 		ImGui::PopID();
-#endif
 
         for (auto game : game_list)
         	if (filter.PassFilter(game.name.c_str()))

@@ -127,8 +127,10 @@ void map_area6(u32 base)
 //set vmem to default values
 void mem_map_default()
 {
+	// TODO: FIX THIS. VMEM should init() here, not in dc_console.
+
 	//vmem - init/reset :)
-	_vmem_init();
+	// _vmem_init();
 
 	
 	//*TEMP*

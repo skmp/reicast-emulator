@@ -147,12 +147,8 @@ bool ParseCommandLine(int argc,wchar* argv[])
 			}
 			else
 			{
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 				printf("Using '%s' as rom\n", *arg);
 				cfgSetVirtual("config", "image", *arg);
-#else
-				printf("wtf %s is supposed to do ?\n",*arg);
-#endif
 			}
 		}
 		arg++;

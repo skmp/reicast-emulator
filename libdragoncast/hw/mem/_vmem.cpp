@@ -356,11 +356,8 @@ void _vmem_mirror_mapping(u32 new_region,u32 start,u32 size)
 	}
 }
 
-//init/reset/term
-void _vmem_init()
-{
-	_vmem_reset();
-}
+VMemType vmemstatus = MemTypeError;
+
 
 void _vmem_reset()
 {
@@ -440,8 +437,9 @@ bool _vmem_bm_LockedWrite(u8* address) {
 bool _vmem_reserve() {
 	// TODO: Static assert?
 	verify((sizeof(Sh4RCB)%PAGE_SIZE)==0);
+	
+	vmemstatus = MemTypeError;
 
-	VMemType vmemstatus = MemTypeError;
 
 	// Use vmem only if settings mandate so, and if we have proper exception handlers.
 	#ifndef TARGET_NO_EXCEPTIONS
@@ -449,6 +447,12 @@ bool _vmem_reserve() {
 		vmemstatus = vmem_platform_init((void**)&virt_ram_base, (void**)&p_sh4rcb);
 	#endif
 
+	return true;
+}
+
+//init/reset/term
+void _vmem_init()
+{
 	// Fallback to statically allocated buffers, this results in slow-ops being generated.
 	if (vmemstatus == MemTypeError) {
 		printf("Warning! nvmem is DISABLED (due to failure or not being built-in\n");
@@ -471,13 +475,13 @@ bool _vmem_reserve() {
 		printf("Info: nvmem is enabled, with addr space of size %s\n", vmemstatus == MemType4GB ? "4GB" : "512MB");
 		printf("Info: p_sh4rcb: %p virt_ram_base: %p\n", p_sh4rcb, virt_ram_base);
 		// Map the different parts of the memory file into the new memory range we got.
-		#define MAP_RAM_START_OFFSET  0
-		#define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)
-		#define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)
+#define MAP_RAM_START_OFFSET  0
+#define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)
+#define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)
 		const vmem_mapping mem_mappings[] = {
 			{0x00000000, 0x00800000,                               0,         0, false},  // Area 0 -> unused
 			{0x00800000, 0x01000000,           MAP_ARAM_START_OFFSET, ARAM_SIZE, false},  // Aica, wraps too
-			{0x20000000, 0x20000000+ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE,  true},
+			{0x20000000, 0x20000000 + ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE,  true},
 			{0x01000000, 0x04000000,                               0,         0, false},  // More unused
 			{0x04000000, 0x05000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // Area 1 (vram, 16MB, wrapped on DC as 2x8MB)
 			{0x05000000, 0x06000000,                               0,         0, false},  // 32 bit path (unused)
@@ -505,8 +509,9 @@ bool _vmem_reserve() {
 	vram.Zero();
 	mem_b.Zero();
 
-	return true;
+	_vmem_reset();
 }
+
 
 #define freedefptr(x) \
 	if (x) { free(x); x = NULL; }

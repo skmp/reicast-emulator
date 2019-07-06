@@ -600,13 +600,13 @@ void reios_boot() {
 		reios_setup_state(0x8C010000);
 	}
 	else {
-		if (DC_PLATFORM == DC_PLATFORM_DREAMCAST) {
+		if (dc_console.platform == DCP_DREAMCAST) {
 			if (!bootfile_inited)
 				msgboxf("Failed to locate bootfile", MBX_ICONERROR);
 			reios_setup_state(0xac008300);
 		}
 		else {
-			verify(DC_PLATFORM == DC_PLATFORM_NAOMI);
+			verify(dc_console.platform == DCP_NAOMI);
 			if (CurrentCartridge == NULL)
 			{
 				printf("No cartridge loaded\n");

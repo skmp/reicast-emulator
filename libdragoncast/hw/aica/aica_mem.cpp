@@ -2,6 +2,7 @@
 #include "dsp.h"
 #include "sgc_if.h"
 #include "hw/aica/aica_if.h"
+#include "dc_console.h"
 
 u8 aica_reg[0x8000];
 

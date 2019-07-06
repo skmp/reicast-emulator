@@ -1,6 +1,7 @@
 #include "arm7.h"
 #include "arm_mem.h"
 #include "virt_arm.h"
+#include "dc_console.h"
 
 #include <map>
 

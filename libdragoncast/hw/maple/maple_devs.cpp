@@ -2625,11 +2625,12 @@ maple_device* maple_Create(MapleDeviceType type)
 	switch(type)
 	{
 	case MDT_SegaController:
-#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
-		rv = new maple_sega_controller();
-#else
-		rv = new maple_atomiswave_controller();
-#endif
+
+		if (dc_console.platform != DCP_ATOMISWAVE)
+			rv = new maple_sega_controller();
+		else
+			rv = new maple_atomiswave_controller();
+
 		break;
 
 	case MDT_Microphone:
@@ -2653,11 +2654,11 @@ maple_device* maple_Create(MapleDeviceType type)
 		break;
 
 	case MDT_LightGun:
-#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
-		rv = new maple_lightgun();
-#else
-		rv = new atomiswave_lightgun();
-#endif
+		if (dc_console.platform != DCP_ATOMISWAVE)
+			rv = new maple_lightgun();
+		else
+			rv = new atomiswave_lightgun();
+
 		break;
 
 	case MDT_NaomiJamma:

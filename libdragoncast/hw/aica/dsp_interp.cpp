@@ -7,6 +7,7 @@
 #include "dsp.h"
 #include "aica_if.h"
 #include "aica_mem.h"
+#include "dc_console.h"
 
 #if FEAT_DSPREC != DYNAREC_JIT
 

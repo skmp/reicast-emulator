@@ -11,11 +11,10 @@ BSC_PDTRA_type BSC_PDTRA;
 void write_BSC_PCTRA(u32 addr, u32 data)
 {
 	BSC_PCTRA.full=(u16)data;
-	#if DC_PLATFORM == DC_PLATFORM_NAOMI
+	if (dc_console.platform == DCP_NAOMI)
+	{
 		NaomiBoardIDWriteControl((u16)data);
-	#else
-	//printf("C:BSC_PCTRA = %08X\n",data);
-	#endif
+	}
 }
 //u32 port_out_data;
 void write_BSC_PDTRA(u32 addr, u32 data)
@@ -23,42 +22,42 @@ void write_BSC_PDTRA(u32 addr, u32 data)
 	BSC_PDTRA.full=(u16)data;
 	//printf("D:BSC_PDTRA = %08X\n",data);
 
-	#if DC_PLATFORM == DC_PLATFORM_NAOMI
+	if (dc_console.platform == DCP_NAOMI)
+	{
 		NaomiBoardIDWrite((u16)data);
-	#endif
+	}
 }
 
 u32 read_BSC_PDTRA(u32 addr)
 {
-	#if DC_PLATFORM == DC_PLATFORM_NAOMI
-
+	if (dc_console.platform == DCP_NAOMI)
+	{
 		return NaomiBoardIDRead();
-
-	#else
-	
+	}
+	else
+	{
 		/* as seen on chankast */
 		u32 tpctra = BSC_PCTRA.full;
 		u32 tpdtra = BSC_PDTRA.full;
-		
-		u32 tfinal=0;
+
+		u32 tfinal = 0;
 		// magic values
-		if ((tpctra&0xf) == 0x8)
+		if ((tpctra & 0xf) == 0x8)
 			tfinal = 3;
-		else if ((tpctra&0xf) == 0xB)
+		else if ((tpctra & 0xf) == 0xB)
 			tfinal = 3;
-		else			
+		else
 			tfinal = 0;
 
-		if ((tpctra&0xf) == 0xB && (tpdtra&0xf) == 2)
+		if ((tpctra & 0xf) == 0xB && (tpdtra & 0xf) == 2)
 			tfinal = 0;
-		else if ((tpctra&0xf) == 0xC && (tpdtra&0xf) == 2)
-			tfinal = 3;      
+		else if ((tpctra & 0xf) == 0xC && (tpdtra & 0xf) == 2)
+			tfinal = 3;
 
-		tfinal |= settings.dreamcast.cable <<8;  
+		tfinal |= settings.dreamcast.cable << 8;
 
 		return tfinal;
-
-	#endif
+	}
 }
 
 //Init term res
@@ -113,10 +112,12 @@ void bsc_init()
 	sh4_rio_reg(BSC,BSC_GPIOIC_addr,RIO_DATA,16);
 
 	//note: naomi//aw might depend on rfcr
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-	sh4_rio_reg(BSC, BSC_RFCR_addr, RIO_RO, 16);
-	BSC_RFCR.full = 17;
-#endif
+
+	if (dc_console.platform == DCP_NAOMI || dc_console.platform == DCP_ATOMISWAVE)
+	{
+		sh4_rio_reg(BSC, BSC_RFCR_addr, RIO_RO, 16);
+		BSC_RFCR.full = 17;
+	}
 }
 
 

@@ -75,7 +75,7 @@ set(core_SRCS
   ${imgread_SRCS}
   ${profiler_SRCS}
   ${d_core}/archive/archive.cpp ${d_core}/archive/archive.h
-  ${d_core}/nullDC.cpp
+  ${d_core}/dc_console.cpp
   ${d_core}/stdclass.cpp
   ${d_core}/dispframe.cpp
   ${d_core}/serialize.cpp

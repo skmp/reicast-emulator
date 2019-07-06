@@ -4,6 +4,8 @@
 #include "hw/aica/aica_if.h"
 #include <math.h>
 #include <algorithm>
+#include "dc_console.h"
+
 using namespace std;
 #undef FAR
 

@@ -162,13 +162,8 @@ extern u32 SB_FFST;
 
 //this is one-time init, no updates - don't need to serialize
 //extern RomChip sys_rom;
-#ifdef FLASH_SIZE
-extern DCFlashChip sys_nvmem;
-#endif
 
-#ifdef BBSRAM_SIZE
-extern SRamChip sys_nvmem;
-#endif
+
 //this is one-time init, no updates - don't need to serialize
 //extern _vmem_handler area0_handler;
 
@@ -854,7 +849,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(SB_FFST_rc);
 	REICAST_S(SB_FFST);
 
-
+#if 0 // Savestates don't contain nvmem
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern RomChip sys_rom;
@@ -864,6 +859,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(sys_nvmem.state);
 #endif
 	REICAST_SA(sys_nvmem.data,sys_nvmem.size);
+
+#endif
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern _vmem_handler area0_handler;
@@ -1218,6 +1215,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(i); //LIBRETRO_S(sys_nvmem_sram.mask);
 	//LIBRETRO_SA(sys_nvmem_sram.data,sys_nvmem_sram.size);
 
+#if 0 // Savestates don't contain nvmem
 	REICAST_US(sys_nvmem.size);
 	REICAST_US(sys_nvmem.mask);
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
@@ -1227,7 +1225,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	die("Naomi/Atomiswave libretro savestates are not supported");
 #endif
 	REICAST_USA(sys_nvmem.data,sys_nvmem.size);
-
+#endif
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern _vmem_handler area0_handler;
@@ -1600,6 +1598,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(SB_FFST_rc);
 	REICAST_US(SB_FFST);
 
+#if 0 // Savestates don't contain nvmem
 	//this is one-time init, no updates - don't need to serialize
 	//extern RomChip sys_rom;
 	REICAST_US(sys_nvmem.size);
@@ -1608,7 +1607,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(sys_nvmem.state);
 #endif
 	REICAST_USA(sys_nvmem.data,sys_nvmem.size);
-
+#endif
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern _vmem_handler area0_handler;

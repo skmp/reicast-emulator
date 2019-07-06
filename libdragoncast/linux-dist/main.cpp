@@ -108,10 +108,6 @@ void os_SetupInput()
 #if defined(USE_SDL)
 	input_sdl_init();
 #endif
-
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	mcfg_CreateDevices();
-#endif
 }
 
 void UpdateInputState(u32 port)

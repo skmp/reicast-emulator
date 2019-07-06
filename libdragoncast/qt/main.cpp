@@ -41,9 +41,6 @@ int main(int argc, char* argv[])
 
 	int reicast_init(int argc, char* argv[]);
 	void* rend_thread(void*);
-	void* dc_run(void*);
-	void dc_term();
-	int dc_start_game(const char* path);
 
 	set_user_data_dir( QString(QDir::currentPath()).toUtf8().cbegin() );	//  + "/data"  stupid data dir replication bs
 	set_user_config_dir("./");

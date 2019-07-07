@@ -421,7 +421,7 @@ ifdef USE_GLES
     CFLAGS += -DGLES
     LIBS += -lEGL -lGLESv2
 else ifdef FOR_LINUX
-    LIBS += -ldl  #for desktop gl
+    LIBS += -ldl -lGL  #for desktop gl, GLX is in lGL
 endif
 
 #softrend?

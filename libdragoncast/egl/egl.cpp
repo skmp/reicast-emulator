@@ -26,6 +26,9 @@ bool egl_makecurrent()
 		return false;
 	return eglMakeCurrent(egl_setup.display, egl_setup.surface, egl_setup.surface, egl_setup.context);
 }
+#ifdef _ANDROID
+#include <android/native_window.h>
+#endif
 
 // Create a basic GLES context
 bool os_gl_init(void* wind, void* disp)

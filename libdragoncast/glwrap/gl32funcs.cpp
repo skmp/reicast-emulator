@@ -8,7 +8,7 @@ void load_gles_symbols()
 {
 	#if GLES
 		for (int i = 0; rglgen_symbol_map[i].sym != NULL; i++)
-			*(void **)rglgen_symbol_map[i].ptr = eglGetProcAddress(rglgen_symbol_map[i].sym);
+			*(void **)rglgen_symbol_map[i].ptr = (void*)eglGetProcAddress(rglgen_symbol_map[i].sym);
 	#endif
 }
 

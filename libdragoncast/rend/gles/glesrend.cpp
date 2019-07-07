@@ -28,9 +28,6 @@ int fbdev = -1;
 #define GL_MAJOR_VERSION                  0x821B
 #endif
 #endif
-#ifdef _ANDROID
-#include <android/native_window.h> // requires ndk r5 or newer
-#endif
 
 /*
 GL|ES 2

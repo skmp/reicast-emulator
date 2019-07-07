@@ -367,6 +367,10 @@ ifdef USE_X11
     CFLAGS += `pkg-config --cflags x11` -D SUPPORT_X11
     CXXFLAGS += `pkg-config --cflags x11` -D SUPPORT_X11
     LIBS += `pkg-config --libs x11`
+
+    ifndef USE_GLES
+        LIBS += -lGL
+    endif
 endif
 
 ifdef USE_EVDEV
@@ -421,7 +425,7 @@ ifdef USE_GLES
     CFLAGS += -DGLES
     LIBS += -lEGL -lGLESv2
 else ifdef FOR_LINUX
-    LIBS += -ldl -lGL  #for desktop gl, GLX is in lGL
+    LIBS += -ldl  #for desktop gl, GLX is in lGL
 endif
 
 #softrend?

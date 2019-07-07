@@ -93,6 +93,9 @@ static struct game_type lut_games[] =
    { "T14304M   ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Rune Jade */
    { "T5202M    ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Marionette Company */
    { "T5203M    ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Marionette Company 2 */
+   { "T11010N   ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Maximum Pool (online support) */
+   { "T40209N   ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* StarLancer (US) (online support)  */
+   { "T17723D 05", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* StarLancer (EU) (online support)  */
 };
 
 extern InputDescriptors gunsur2_inputs;

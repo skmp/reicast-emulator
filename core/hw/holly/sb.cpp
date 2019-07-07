@@ -790,6 +790,8 @@ void sb_Init(void)
 
 void sb_Reset(bool Manual)
 {
+   if (settings.System == DC_PLATFORM_DREAMCAST)
+   	ModemTerm();
 	asic_reg_Reset(Manual);
    if (settings.System != DC_PLATFORM_DREAMCAST)
       naomi_reg_Reset(Manual);
@@ -802,6 +804,8 @@ void sb_Reset(bool Manual)
 
 void sb_Term(void)
 {
+   if (settings.System == DC_PLATFORM_DREAMCAST)
+   	ModemTerm();
 	aica_sb_Term();
 	maple_Term();
 	pvr_sb_Term();

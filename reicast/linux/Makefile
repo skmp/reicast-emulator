@@ -327,9 +327,9 @@ CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fpermissive -fno-operator-names -D_GLIBCX
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
-LIBS += -lm -lpthread -ldl
+LIBS += -lm -lpthread 
 ifdef FOR_LINUX
-LIBS += -lrt
+LIBS += -lrt -ldl # dl is the dynamic linker
 endif
 
 PREFIX ?= /usr/local
@@ -424,8 +424,6 @@ endif
 ifdef USE_GLES
     CFLAGS += -DGLES
     LIBS += -lEGL -lGLESv2
-else ifdef FOR_LINUX
-    LIBS += -ldl  #for desktop gl, GLX is in lGL
 endif
 
 #softrend?

@@ -12,7 +12,7 @@ before_build:
   - cmd: >-
       if "%CONFIGURATION%"=="RelWithDebInfo" (set BUILD_PATH=build)
       
-      if "%CONFIGURATION%"=="fast" (set BUILD_PATH=shell\linux)
+      if "%CONFIGURATION%"=="fast" (set BUILD_PATH=reicast\linux)
       
       set EXTRA_PATH=C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin\
       
@@ -34,7 +34,7 @@ after_build:
   - cmd: >-      
       if "%CONFIGURATION%"=="RelWithDebInfo" (cd .. && set EXE_PATH=build\RelWithDebInfo\reicast.exe)
       
-      if "%CONFIGURATION%"=="fast" (cd ..\.. && set EXE_PATH=shell\linux\nosym-reicast.exe)
+      if "%CONFIGURATION%"=="fast" (cd ..\.. && set EXE_PATH=reicast\linux\nosym-reicast.exe)
       
       mkdir artifacts
       

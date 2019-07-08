@@ -1033,4 +1033,4 @@ struct gl4rend : Renderer
 
 #include "hw/pvr/Renderer_if.h"
 
-static auto gl41rend = RegisterRendererBackend(rendererbackend_t{ "gl41", "OpenGL 4.1", 2, [](){ return (Renderer*) new gl4rend(); } });
+static auto gl41rend = RegisterRendererBackend(rendererbackend_t{ "gl41", "OpenGL 4.1 (Per Pixel Sort)", 2, [](){ return (Renderer*) new gl4rend(); } });

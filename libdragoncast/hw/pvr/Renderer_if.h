@@ -18,7 +18,6 @@ void rend_set_fb_scale(float x,float y);
 void rend_resize(int width, int height);
 void rend_text_invl(vram_block* bl);
 
-
 ///////
 extern TA_context* _pvrrc;
 
@@ -58,8 +57,9 @@ void check_framebuffer_write();
 
 typedef struct {
 	string slug;
-	string name;
+	string desc;
 	int priority;
 	Renderer* (*create)();
 } rendererbackend_t;
 extern bool RegisterRendererBackend(const rendererbackend_t& backend);
+vector<rendererbackend_t> rend_get_backends();

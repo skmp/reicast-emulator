@@ -42,7 +42,7 @@
 
 #include "version.h"
 #include "oslib/audiostream.h"
-
+#include "hw/pvr/Renderer_if.h"
 
 extern void dc_loadstate();
 extern void dc_savestate();
@@ -633,7 +633,7 @@ static void gui_display_settings()
     ImGui::NewFrame();
 
 	int dynarec_enabled = settings.dynarec.Enable;
-	auto backend = settings.pvr.backend;
+	auto pvr_backend = settings.pvr.backend;
 
     if (!settings_opening)
     	ImGui_ImplOpenGL3_DrawBackground();
@@ -942,20 +942,30 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Video"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-#if !defined(GLES) && HOST_OS != OS_DARWIN
-		    if (!gl.is_gles && gl.gl_major >= 4 && ImGui::CollapsingHeader("Transparent Sorting", ImGuiTreeNodeFlags_DefaultOpen))
-		    {
-		    	ImGui::Columns(2, "renderers", false);
-		    	//ImGui::RadioButton("Per Triangle", (int *)&settings.pvr.rend, 0);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Sort transparent polygons per triangle. Fast but may produce graphical glitches");
-		    	ImGui::NextColumn();
-		    	//ImGui::RadioButton("Per Pixel", (int *)&settings.pvr.rend, 3);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Sort transparent polygons per pixel. Slower but accurate");
-		    	ImGui::Columns(1, NULL, false);
-		    }
-#endif
+
+			if (ImGui::BeginCombo("Rendering Backend", settings.pvr.backend.c_str(), ImGuiComboFlags_None))
+			{
+				{
+					bool is_selected = (settings.pvr.backend == "auto");
+					if (ImGui::Selectable("auto", &is_selected))
+						settings.pvr.backend = "auto";
+					ImGui::SameLine(); ImGui::Text("-");
+					ImGui::SameLine(); ImGui::Text("Autoselect rendering backend");
+				}
+
+				auto backends = rend_get_backends();
+
+				for (auto backend: backends)
+				{
+					bool is_selected = (settings.pvr.backend == backend.slug);
+					if (ImGui::Selectable(backend.slug.c_str(), &is_selected))
+						settings.pvr.backend = backend.slug;
+					ImGui::SameLine(); ImGui::Text("-");
+					ImGui::SameLine(); ImGui::Text(backend.desc.c_str());
+				}
+
+				ImGui::EndCombo();
+			}
 		    if (ImGui::CollapsingHeader("Rendering Options", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
 		    	ImGui::Checkbox("Synchronous Rendering", &settings.pvr.SynchronousRender);
@@ -1325,7 +1335,7 @@ static void gui_display_settings()
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
 
-   	if (backend != settings.pvr.backend)
+   	if (pvr_backend != settings.pvr.backend)
    		renderer_changed = true;
    	settings.dynarec.Enable = (bool)dynarec_enabled;
 }

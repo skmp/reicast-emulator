@@ -342,14 +342,12 @@ static void rend_create_renderer()
 {
 	if (backends.count(settings.pvr.backend))
 	{
+		printf("renderer: %s\n", settings.pvr.backend);
 		renderer = backends[settings.pvr.backend].create();
 	}
 	else
 	{
-		vector<rendererbackend_t> vec;
-		transform(backends.begin(), backends.end(), back_inserter(vec), [](const std::pair<string, rendererbackend_t>& x) { return x.second; });
-		
-		sort(vec.begin(), vec.end(), [](const rendererbackend_t& a, const rendererbackend_t& b) { return a.priority > b.priority; });
+		vector<rendererbackend_t> vec = rend_get_backends();
 
 		renderer = vec.begin()->create();
 
@@ -358,10 +356,11 @@ static void rend_create_renderer()
 			fallback_renderer = (++vec.begin())->create();
 		}
 
-		printf("renderer: %s\n",(vec.begin())->slug.c_str());
+		printf("renderer (auto): ");
+		printf("main: %s",(vec.begin())->slug.c_str());
 		if (fallback_renderer)
-			printf("fallback: %s\n", (++vec.begin())->slug.c_str());
-
+			printf(" fallback: %s", (++vec.begin())->slug.c_str());
+		printf("\n");
 	}
 }
 
@@ -591,4 +590,14 @@ bool RegisterRendererBackend(const rendererbackend_t& backend)
 {
 	backends[backend.slug] = backend;
 	return true;
+}
+
+vector<rendererbackend_t> rend_get_backends()
+{
+	vector<rendererbackend_t> vec;
+	transform(backends.begin(), backends.end(), back_inserter(vec), [](const std::pair<string, rendererbackend_t>& x) { return x.second; });
+	
+	sort(vec.begin(), vec.end(), [](const rendererbackend_t& a, const rendererbackend_t& b) { return a.priority > b.priority; });
+
+	return vec;
 }

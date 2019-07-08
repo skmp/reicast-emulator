@@ -239,7 +239,13 @@ __forceinline static void SetGPState(const PolyParam* gp, u32 cflip)
    if (SortingEnabled && settings.pvr.Emulation.AlphaSortMode == 0)
       glcache.DepthMask(GL_FALSE);
    else
-      glcache.DepthMask(!gp->isp.ZWriteDis);
+   {
+   	// Ignore ZWriteDis for punch-through. Fixes Worms World Party and Bust-A-Move 4
+   	if (Type == ListType_Punch_Through)
+   		glcache.DepthMask(GL_TRUE);
+   	else
+   		glcache.DepthMask(!gp->isp.ZWriteDis);
+   }
 }
 
 template <u32 Type, bool SortingEnabled>

@@ -238,9 +238,15 @@ __forceinline static void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
 
    // Depth buffer is updated in pass 0 (and also in pass 1 for OP PT)
    if (pass < 2)
-      glcache.DepthMask(!gp->isp.ZWriteDis);
+   {
+   	// Ignore ZWriteDis for punch-through. Fixes Worms World Party and Bust-A-Move 4
+   	if (Type == ListType_Punch_Through)
+   		glcache.DepthMask(GL_TRUE);
+   	else
+   		glcache.DepthMask(!gp->isp.ZWriteDis);
+   }
    else
-      glcache.DepthMask(GL_FALSE);
+   	glcache.DepthMask(GL_FALSE);
 }
 
 template <u32 Type, bool SortingEnabled>

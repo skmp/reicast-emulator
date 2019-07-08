@@ -342,7 +342,7 @@ static void rend_create_renderer()
 {
 	if (backends.count(settings.pvr.backend))
 	{
-		printf("renderer: %s\n", settings.pvr.backend);
+		printf("renderer: %s\n", settings.pvr.backend.c_str());
 		renderer = backends[settings.pvr.backend].create();
 	}
 	else

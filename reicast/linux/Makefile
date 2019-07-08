@@ -314,7 +314,7 @@ else
     $(error Unknown platform)
 endif
 
-RZDCY_SRC_DIR = $(LOCAL_PATH)/../../libdragoncast
+RZDCY_SRC_DIR = $(LOCAL_PATH)/../../libswirl
 include $(RZDCY_SRC_DIR)/core.mk
 
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common -fopenmp

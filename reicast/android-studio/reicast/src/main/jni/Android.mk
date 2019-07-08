@@ -56,7 +56,7 @@ endif
 
 $(info $$TARGET_ARCH_ABI is [${TARGET_ARCH_ABI}])
 
-include $(LOCAL_PATH)/../../../../../libdragoncast/core.mk
+include $(LOCAL_PATH)/../../../../../libswirl/core.mk
 
 LOCAL_SRC_FILES := $(RZDCY_FILES)
 LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/Android.cpp)

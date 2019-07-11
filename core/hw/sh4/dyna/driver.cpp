@@ -120,9 +120,21 @@ u32 emit_FreeSpace()
 }
 
 
-SmcCheckEnum DoCheck(u32 pc)
+SmcCheckEnum DoCheck(u32 pc, u32 len)
 {
+	// no need for checks if fault based discard is used for this block
+	if (!bm_RamPageHasData(pc, len))
+	{
+		// printf("FAST CHECK %08X, %d\n", pc, len);
 
+		return NoCheck; //FaultCheck; //ValidationCheck;
+	}
+	else
+	{
+		// printf("SLOW CHECK %08X, %d\n", pc, len);		
+	}
+
+	// if no fault based discards, use whatever options
 	switch (settings.dynarec.SmcCheckLevel) {
 
 		// Heuristic-elimintaed FastChecks
@@ -249,10 +261,12 @@ DynarecCodeEntryPtr rdv_CompilePC()
 		
 		bool do_opts=((rbi->addr&0x3FFFFFFF)>0x0C010100);
 		rbi->staging_runs=do_opts?100:-100;
-		ngen_Compile(rbi,DoCheck(rbi->addr),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
+		ngen_Compile(rbi,DoCheck(rbi->addr, rbi->sh4_code_size),(pc&0xFFFFFF)==0x08300 || (pc&0xFFFFFF)==0x10000,false,do_opts);
 		verify(rbi->code!=0);
 
-		bm_AddBlock(rbi);
+		bool doLock = !bm_RamPageHasData(rbi->addr, rbi->sh4_code_size); // && maybe some setting?
+
+		bm_AddBlock(rbi, doLock);
 
 		if (rbi->BlockType==BET_Cond_0 || rbi->BlockType==BET_Cond_1)
 			pc=rbi->NextBlock;

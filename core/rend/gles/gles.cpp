@@ -372,6 +372,20 @@ PipelineShader *GetProgram(
    	shader->trilinear = trilinear;
    	CompilePipelineShader(shader);
    }
+#ifdef RPI4_SET_UNIFORM_ATTRIBUTES_BUG
+    // rpi 4 has a bug where it does not save uniform and attribute state with
+    // the program, so they have to be reinit each time you reuse the program
+    glcache.UseProgram(shader->program);
+    //setup texture 0 as the input for the shader
+    GLuint gu=glGetUniformLocation(shader->program, "tex");
+    if (shader->pp_Texture==1)
+        glUniform1i(gu,0);
+    // Setup texture 1 as the fog table
+    gu = glGetUniformLocation(shader->program, "fog_table");
+    if (gu != -1)
+        glUniform1i(gu, 1);
+    ShaderUniforms.Set(shader);
+#endif
 
    return shader;
 }
@@ -576,7 +590,6 @@ bool CompilePipelineShader(PipelineShader *s)
 	}
 
    ShaderUniforms.Set(s);
-
 	return glIsProgram(s->program)==GL_TRUE;
 }
 

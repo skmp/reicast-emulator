@@ -159,27 +159,39 @@ else ifneq (,$(findstring rpi,$(platform)))
 	ARM_FLOAT_ABI_HARD = 1
 	SINGLE_PREC_FLAGS = 1
 	
-	ifeq (,$(findstring mesa,$(platform)))
-		GLES = 1
-		GL_LIB := -L/opt/vc/lib -lbrcmGLESv2
-		INCFLAGS += -I/opt/vc/include
-		CFLAGS += -DTARGET_NO_STENCIL
-	else
+	ifneq (,$(findstring rpi4,$(platform)))
+		# rpi4 flags are taken from rockpro64
+		CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
+		CPUFLAGS += -DRPI4_SET_UNIFORM_ATTRIBUTES_BUG
+                CFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=neon-vfpv4 $(CPUFLAGS)
+                CXXFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=neon-vfpv4 $(CPUFLAGS)
+		ifeq ($(HAVE_CLANG),0)
+			CFLAGS += -mvectorize-with-neon-quad
+			CXXFLAGS += -mvectorize-with-neon-quad
+		endif
+		ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
 		FORCE_GLES = 1
+	else
+		ifeq (,$(findstring mesa,$(platform)))
+			GLES = 1
+			GL_LIB := -L/opt/vc/lib -lbrcmGLESv2
+			INCFLAGS += -I/opt/vc/include
+			CFLAGS += -DTARGET_NO_STENCIL
+		else
+			FORCE_GLES = 1
+		endif
+		ifneq (,$(findstring rpi2,$(platform)))
+			CFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+			CXXFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+		else ifneq (,$(findstring rpi3,$(platform)))
+			CFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+			CXXFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+		endif
+		CORE_DEFINES += -DLOW_END
 	endif
-
-	ifneq (,$(findstring rpi2,$(platform)))
-		CFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
-		CXXFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
-	else ifneq (,$(findstring rpi3,$(platform)))
-		CFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
-		CXXFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
-	endif
-
 	PLATFORM_EXT := unix
 	WITH_DYNAREC=arm
 	HAVE_GENERIC_JIT = 0
-	CORE_DEFINES += -DLOW_END
 
 # Classic Platforms #####################
 # Platform affix = classic_<ISA>_<µARCH>

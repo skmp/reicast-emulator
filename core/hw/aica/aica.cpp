@@ -213,4 +213,5 @@ void libAICA_Reset(bool manual)
 void libAICA_Term(void)
 {
 	sgc_Term();
+	term_mem();
 }

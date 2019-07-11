@@ -353,10 +353,10 @@ void dc_prepare_system(void)
 
 void dc_reset()
 {
-	plugins_Reset(false);
-	mem_Reset(false);
+	plugins_Reset(true);
+	mem_Reset(true);
 
-	sh4_cpu.Reset(false);
+	sh4_cpu.Reset(true);
 }
 
 int dc_init(int argc,wchar* argv[])
@@ -378,7 +378,6 @@ int dc_init(int argc,wchar* argv[])
 	}
 
 	LoadSettings();
-	os_CreateWindow();
 
 	int rv= 0;
 
@@ -445,11 +444,12 @@ void dc_run(void)
 
 void dc_term(void)
 {
-	sh4_cpu.Term();
-	plugins_Term();
-	_vmem_release();
-
 	SaveRomFiles(get_writable_data_path(""));
+	sh4_cpu.Term();
+	naomi_cart_Close();
+	plugins_Term();
+	mem_Term();
+	_vmem_release();
 }
 
 void dc_stop()

@@ -586,7 +586,6 @@ struct settings_t
 		bool PatchRegion;
 		bool LoadDefaultImage;
 		char DefaultImage[512];
-		char LastImage[512];
 	} imgread;
 
 	struct
@@ -770,7 +769,6 @@ struct OnLoad
 };
 
 void os_DoEvents();
-void os_CreateWindow();
 double os_GetSeconds();
 
 #ifdef _MSC_VER

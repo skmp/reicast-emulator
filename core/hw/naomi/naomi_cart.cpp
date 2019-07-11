@@ -400,16 +400,37 @@ int naomi_cart_GetRotation()
 	return game_rotation;
 }
 
-bool naomi_cart_LoadRom(char* file, char *s, size_t len)
-{
-	printf("nullDC-Naomi rom loader v1.2\n");
-	printf("File: %s\n", file);
+#ifdef _WIN32
+#define CloseFile(f)	CloseHandle(f)
+#else
+#define CloseFile(f)	close(f)
+#endif
 
+void naomi_cart_Close()
+{
 	if (CurrentCartridge != NULL)
 	{
 		delete CurrentCartridge;
 		CurrentCartridge = NULL;
 	}
+	if (RomCacheMap != NULL)
+	{
+		for (int i = 0; i < RomCacheMapCount; i++)
+			if (RomCacheMap[i] != INVALID_FD)
+				CloseFile(RomCacheMap[i]);
+		RomCacheMapCount = 0;
+		delete[] RomCacheMap;
+		RomCacheMap = NULL;
+	}
+	bios_loaded = false;
+}
+
+bool naomi_cart_LoadRom(char* file, char *s, size_t len)
+{
+	printf("nullDC-Naomi rom loader v1.2\n");
+	printf("File: %s\n", file);
+
+	naomi_cart_Close();
 
 	size_t folder_pos = strlen(file) - 1;
 	while (folder_pos>1 && (file[folder_pos] != '\\' && file[folder_pos] != '/'))

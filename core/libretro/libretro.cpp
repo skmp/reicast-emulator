@@ -2299,11 +2299,6 @@ void os_DoEvents(void)
 	}
 }
 
-void os_CreateWindow()
-{
-   // Nothing to do here
-}
-
 static uint32_t get_time_ms()
 {
    return (uint32_t)(os_GetSeconds() * 1000.0);

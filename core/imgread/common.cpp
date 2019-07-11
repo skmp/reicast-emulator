@@ -165,7 +165,7 @@ bool InitDrive(u32 fileflags)
 	}
 
 	wchar fn[512];
-	strcpy(fn,settings.imgread.LastImage);
+	fn[0] = '\0';
    int gfrv = 0;
    if (settings.System == DC_PLATFORM_DREAMCAST)
       gfrv=GetFile(fn,0,fileflags);
@@ -182,9 +182,6 @@ bool InitDrive(u32 fileflags)
       case -1:
          return false;
    }
-
-	strcpy(settings.imgread.LastImage,fn);
-	SaveSettings();
 
 	if (!InitDrive_(fn))
 	{
@@ -227,7 +224,7 @@ bool DiscSwap(u32 fileflags)
 	}
 
 	wchar fn[512];
-	strcpy(fn,settings.imgread.LastImage);
+	fn[0] = '\0';
    int gfrv = 0;
    if (settings.System == DC_PLATFORM_DREAMCAST)
       gfrv=GetFile(fn,0,fileflags);
@@ -241,9 +238,6 @@ bool DiscSwap(u32 fileflags)
 	{
 		return false;
 	}
-
-	strcpy(settings.imgread.LastImage,fn);
-	SaveSettings();
 
 	if (!InitDrive_(fn))
 	{
@@ -261,10 +255,10 @@ bool DiscSwap(u32 fileflags)
 
 void TermDrive()
 {
-	if (disc!=0)
+	if (disc != NULL)
 		delete disc;
 
-	disc=0;
+	disc = NULL;
 }
 
 

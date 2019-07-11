@@ -213,9 +213,6 @@ void mem_Term()
 	MMU_term();
 	sh4_mmr_term();
 	sh4_area0_Term();
-
-	//write back Flash/SRAM
-	SaveRomFiles(get_writable_data_path("/data/"));
 	
 	//mem_b.Term(); // handled by vmem
 

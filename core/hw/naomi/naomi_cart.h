@@ -88,6 +88,7 @@ private:
 bool naomi_cart_SelectFile(char *s, size_t len);
 int naomi_cart_GetSystemType(const char* file);
 int naomi_cart_GetRotation();
+void naomi_cart_Close();
 
 extern char naomi_game_id[];
 extern u8 *naomi_default_eeprom;

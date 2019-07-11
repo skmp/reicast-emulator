@@ -74,6 +74,8 @@ static struct game_type lut_games[] =
    { "6108099   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Yu Suzuki Game Works Vol. 1 */
    { "T2106M    ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* L.O.L */
    { "T18702M   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Miss Moonlight */
+   { "T40401N   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tom Clancy's Rainbow Six (US) */
+   { "T-45001D05", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tom Clancy's Rainbow Six incl. Eagle Watch Missions (EU) */
 
    /* Disable DIV matching */
    { "T15112N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Demolition Racer */
@@ -82,6 +84,8 @@ static struct game_type lut_games[] =
 
    /* Extra depth scaling */
    { "MK-51182  ", -1, -1, -1, -1, -1,  -1,  1, 10000.f, -1 },     /* NHL 2K2 */
+   { "T-8109N   ", -1, -1, -1, -1, -1,  -1,  1, 100.f, -1 },       /* Re-Volt (US) */
+   { "T8107D  50", -1, -1, -1, -1, -1,  -1,  1, 100.f, -1 },       /* Re-Volt (EU) */
 
    /* Disable VMEM32 (WinCE) */
    { "T14303M   ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Super Producers */

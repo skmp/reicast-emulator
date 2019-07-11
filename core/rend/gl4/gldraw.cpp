@@ -98,7 +98,7 @@ static void SetTextureRepeatMode(int index, GLuint dir, u32 clamp, u32 mirror)
 }
 
 template <u32 Type, bool SortingEnabled>
-__forceinline static void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
+__forceinline static void SetGPState(const PolyParam* gp, int pass)
 {
    if (gp->pcw.Texture && gp->tsp.FilterMode > 1)
 	{
@@ -224,14 +224,14 @@ __forceinline static void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
    //set cull mode !
    //cflip is required when exploding triangles for triangle sorting
    //gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
-   SetCull(gp->isp.CullMode ^ cflip ^ gcflip);
+   SetCull(gp->isp.CullMode ^ gcflip);
 
    /* Set Z mode, only if required */
-   if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
-   {
-      glcache.DepthFunc(Zfunction[6]);	// Greater or equal
-   }
-   else
+	if (Type == ListType_Punch_Through || (pass == 0 && SortingEnabled))
+	{
+		glcache.DepthFunc(Zfunction[6]);	// Greater or equal
+	}
+	else if (Type == ListType_Opaque || (pass == 0 && !SortingEnabled))
    {
       glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
    }
@@ -239,17 +239,18 @@ __forceinline static void SetGPState(const PolyParam* gp, int pass, u32 cflip=0)
    // Depth buffer is updated in pass 0 (and also in pass 1 for OP PT)
    if (pass < 2)
    {
-   	// Ignore ZWriteDis for punch-through. Fixes Worms World Party and Bust-A-Move 4
-   	if (Type == ListType_Punch_Through)
-   		glcache.DepthMask(GL_TRUE);
-   	else
-   		glcache.DepthMask(!gp->isp.ZWriteDis);
+		// Z Write Disable seems to be ignored for punch-through polys
+		// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
+		if (Type == ListType_Punch_Through)
+			glcache.DepthMask(GL_TRUE);
+		else
+			glcache.DepthMask(!gp->isp.ZWriteDis);
    }
    else
    	glcache.DepthMask(GL_FALSE);
 }
 
-template <u32 Type, bool SortingEnabled>
+template <u32 Type, bool SortingEnabled, bool OnlyAlwaysDepth>
 static void DrawList(const List<PolyParam>& gply, int first, int count, int pass)
 {
    PolyParam* params= &gply.head()[first];
@@ -271,7 +272,7 @@ static void DrawList(const List<PolyParam>& gply, int first, int count, int pass
                continue;
             }
          }
-         else if (Type == ListType_Translucent && (params->isp.DepthMode != 7 || params->isp.ZWriteDis))
+         if (OnlyAlwaysDepth && (params->isp.DepthMode != 7 || params->isp.ZWriteDis))
 			{
 				params++;
 				continue;
@@ -286,8 +287,10 @@ static void DrawList(const List<PolyParam>& gply, int first, int count, int pass
    }
 }
 
-static void SetupMainVBO(void)
+void gl4SetupMainVBO()
 {
+	glBindVertexArray(gl4.vbo.main_vao);
+
 	glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs);
 
@@ -316,18 +319,13 @@ static void SetupMainVBO(void)
 
 void gl4SetupModvolVBO(void)
 {
+	glBindVertexArray(gl4.vbo.modvol_vao);
+
 	glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.modvols);
 
 	//setup vertex buffers attrib pointers
-	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
-	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, (void*)0);
-
-	glDisableVertexAttribArray(VERTEX_UV_ARRAY);
-	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
-	glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
-   glDisableVertexAttribArray(VERTEX_UV1_ARRAY);
-	glDisableVertexAttribArray(VERTEX_COL_OFFS1_ARRAY);
-	glDisableVertexAttribArray(VERTEX_COL_BASE1_ARRAY);
+	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, (void*)0); glCheck();
 }
 
 static void DrawModVols(int first, int count)
@@ -340,7 +338,7 @@ static void DrawModVols(int first, int count)
    if (count == 0 || !settings.pvr.Emulation.ModVol)
       return;
 
-   gl4SetupModvolVBO();
+	glBindVertexArray(gl4.vbo.modvol_vao);
 
    glcache.UseProgram(gl4.modvol_shader.program);
 
@@ -384,11 +382,10 @@ static void DrawModVols(int first, int count)
             mod_base = -1;
          }
       }
-
-      SetupMainVBO();
    }
 
    //restore states
+	glBindVertexArray(gl4.vbo.main_vao);
 	glcache.Enable(GL_DEPTH_TEST);
 	glcache.DepthMask(GL_TRUE);
 }
@@ -397,62 +394,56 @@ void renderABuffer(bool sortFragments);
 void DrawTranslucentModVols(int first, int count);
 void checkOverflowAndReset();
 
-static GLuint CreateColorFBOTexture()
+static GLuint CreateColorFBOTexture(int width, int height)
 {
 	GLuint texId = glcache.GenTexture();
 	glcache.BindTexture(GL_TEXTURE_2D, texId);
 	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width, screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId, 0);
 	glCheck();
 
 	return texId;
 }
 
-static void CreateTextures()
+void gl4CreateTextures(int width, int height)
 {
-	stencilTexId = glcache.GenTexture();
-	glcache.BindTexture(GL_TEXTURE_2D, stencilTexId);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);		// OpenGL >= 4.3
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	// Using glTexStorage2D instead of glTexImage2D to satisfy requirement GL_TEXTURE_IMMUTABLE_FORMAT=true, needed for glTextureView below
-	glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH32F_STENCIL8, screen_width, screen_height);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0); glCheck();
-   glCheck();
+	if (geom_fbo == 0)
+	{
+		glGenFramebuffers(1, &geom_fbo);
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
 
-   opaqueTexId = CreateColorFBOTexture();
+	stencilTexId = glcache.GenTexture();
+	glBindTexture(GL_TEXTURE_2D, stencilTexId); glCheck();
+	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);		// OpenGL >= 4.3
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	// Using glTexStorage2D instead of glTexImage2D to satisfy requirement GL_TEXTURE_IMMUTABLE_FORMAT=true, needed for glTextureView below
+	glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH32F_STENCIL8, width, height);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0); glCheck();
+
+	opaqueTexId = CreateColorFBOTexture(width, height);
 
 	depthTexId = glcache.GenTexture();
 	glTextureView(depthTexId, GL_TEXTURE_2D, stencilTexId, GL_DEPTH32F_STENCIL8, 0, 1, 0, 1);
-	glcache.BindTexture(GL_TEXTURE_2D, depthTexId);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-}
-
-void gl4DrawStrips(GLuint output_fbo)
-{
-   checkOverflowAndReset();
-
-   if (geom_fbo == 0)
-   {
-      glGenFramebuffers(1, &geom_fbo);
-      glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
-
-      CreateTextures();
+	glCheck();
+	glBindTexture(GL_TEXTURE_2D, depthTexId);
+	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glCheck();
 
 		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
 		verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
    }
-   else
-   {
-      glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
-		if (stencilTexId == 0)
-         CreateTextures();
-   }
+
+void gl4DrawStrips(GLuint output_fbo, int width, int height)
+{
+	checkOverflowAndReset();
+   glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
    if (texSamplers[0] == 0)
 		glGenSamplers(2, texSamplers);
 
@@ -460,7 +451,6 @@ void gl4DrawStrips(GLuint output_fbo)
    glStencilMask(0xFF);
    glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 
-	SetupMainVBO();
 	//Draw the strips !
 
 
@@ -501,6 +491,7 @@ void gl4DrawStrips(GLuint output_fbo)
 			previous_pass = current_pass;
 			continue;
 		}
+		glBindVertexArray(gl4.vbo.main_vao);
 
 		if (!skip_op_pt)
 		{
@@ -516,18 +507,18 @@ void gl4DrawStrips(GLuint output_fbo)
 				if (depthSaveTexId == 0)
 				{
 					depthSaveTexId = glcache.GenTexture();
-					glcache.BindTexture(GL_TEXTURE_2D, depthSaveTexId);
-					glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
-					glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-					glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-					glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, screen_width, screen_height, 0, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, NULL); glCheck();
+					glBindTexture(GL_TEXTURE_2D, depthSaveTexId);
+					glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+					glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, max_image_width, max_image_height, 0, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, NULL); glCheck();
 					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthSaveTexId, 0); glCheck();
 				}
 				GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 				verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
 
 				glBindFramebuffer(GL_READ_FRAMEBUFFER, geom_fbo);
-				glBlitFramebuffer(0, 0, screen_width, screen_height, 0, 0, screen_width, screen_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+				glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 				glCheck();
 
 				glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
@@ -538,8 +529,8 @@ void gl4DrawStrips(GLuint output_fbo)
 			glcache.Enable(GL_STENCIL_TEST);
 			glcache.StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-			DrawList<ListType_Opaque, false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count, 0);
-			DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count, 0);
+			DrawList<ListType_Opaque, false, false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count, 0);
+			DrawList<ListType_Punch_Through, false, false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count, 0);
 
 			// Modifier volumes
          if (settings.rend.ModifierVolumes)
@@ -559,7 +550,7 @@ void gl4DrawStrips(GLuint output_fbo)
 				// FIXME This is pretty slow apparently (CS)
 				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, geom_fbo);
 				glBindFramebuffer(GL_READ_FRAMEBUFFER, depth_fbo);
-				glBlitFramebuffer(0, 0, screen_width, screen_height, 0, 0, screen_width, screen_height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+				glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 				glCheck();
 				glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
 			}
@@ -574,10 +565,10 @@ void gl4DrawStrips(GLuint output_fbo)
 			glCheck();
 
 			//Opaque
-			DrawList<ListType_Opaque, false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count, 1);
+			DrawList<ListType_Opaque, false, false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count, 1);
 
 			//Alpha tested
-			DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count, 1);
+			DrawList<ListType_Punch_Through, false, false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count, 1);
 
 			// Unbind stencil
 			glActiveTexture(GL_TEXTURE3);
@@ -601,7 +592,7 @@ void gl4DrawStrips(GLuint output_fbo)
 				glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 				glcache.Enable(GL_DEPTH_TEST);
 				glcache.DepthMask(GL_TRUE);
-				DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
+				DrawList<ListType_Translucent, false, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
 			}
 			//
 			// PASS 3: Render TR to a-buffers
@@ -615,9 +606,9 @@ void gl4DrawStrips(GLuint output_fbo)
 
 			//Alpha blended
          if (current_pass.autosort)
-				DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3); // 3 because pass 2 is no more
+				DrawList<ListType_Translucent, true, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3); // 3 because pass 2 is no more
 			else
-				DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3); // 3 because pass 2 is no more
+				DrawList<ListType_Translucent, false, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3); // 3 because pass 2 is no more
 			glCheck();
 
 			// Translucent modifier volumes
@@ -636,14 +627,14 @@ void gl4DrawStrips(GLuint output_fbo)
 
 				glcache.Enable(GL_DEPTH_TEST);
             if (current_pass.autosort)
-					DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
+					DrawList<ListType_Translucent, true, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
 				else
-					DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
+					DrawList<ListType_Translucent, false, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
 
 				//
 				// PASS 3c: Render a-buffer to temporary texture
 				//
-				GLuint texId = CreateColorFBOTexture();
+				GLuint texId = CreateColorFBOTexture(max_image_width, max_image_height);
 
 				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
@@ -652,7 +643,6 @@ void gl4DrawStrips(GLuint output_fbo)
 				glBindTexture(GL_TEXTURE_2D, opaqueTexId);
 
 				renderABuffer(current_pass.autosort);
-				SetupMainVBO();
 
 				glcache.DeleteTextures(1, &opaqueTexId);
 				opaqueTexId = texId;
@@ -681,26 +671,17 @@ void gl4DrawStrips(GLuint output_fbo)
    glBindSampler(0, 0);
 	glBindTexture(GL_TEXTURE_2D, opaqueTexId);
 	renderABuffer(previous_pass.autosort);
-   SetupMainVBO();
-   
-   vertex_buffer_unmap();
 }
 
-void gl4DrawFramebuffer(float w, float h)
+static void gl4_draw_quad_texture(GLuint texture, float w, float h)
 {
-	struct Vertex vertices[] = {
-		{ 0, h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
-		{ 0, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-		{ w, h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-		{ w, 0, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
-	};
-	GLushort indices[] = { 0, 1, 2, 1, 3 };
  	glcache.Disable(GL_SCISSOR_TEST);
 	glcache.Disable(GL_DEPTH_TEST);
 	glcache.Disable(GL_STENCIL_TEST);
 	glcache.Disable(GL_CULL_FACE);
 	glcache.Disable(GL_BLEND);
- 	gl4ShaderUniforms.trilinear_alpha = 1.0;
+
+	ShaderUniforms.trilinear_alpha = 1.0;
 
  	CurrentShader = gl4GetProgram(0,
 				0,
@@ -720,21 +701,34 @@ void gl4DrawFramebuffer(float w, float h)
 	gl4ShaderUniforms.Set(CurrentShader);
 
  	glActiveTexture(GL_TEXTURE0);
-	glcache.BindTexture(GL_TEXTURE_2D, fbTextureId);
+	glBindTexture(GL_TEXTURE_2D, texture);
 
-   SetupMainVBO();
+
+	struct Vertex vertices[] = {
+		{ 0,     0 + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
+		{ 0,     0,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
+		{ 0 + w, 0 + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
+		{ 0 + w, 0,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+	};
+	GLushort indices[] = { 0, 1, 2, 1, 3 };
+
+	glBindVertexArray(gl4.vbo.main_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
-   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
 
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
- 	glcache.DeleteTextures(1, &fbTextureId);
-	fbTextureId = 0;
-
-   glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.bytes(), pvrrc.idx.head(), GL_STREAM_DRAW);
 }
 
-void gl4DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives)
+void gl4DrawFramebuffer(float w, float h)
+{
+	gl4_draw_quad_texture(fbTextureId, w, h);
+	glcache.DeleteTextures(1, &fbTextureId);
+	fbTextureId = 0;
+}
+
+void gl4DrawVmuTexture(u8 vmu_screen_number)
 {
 	glActiveTexture(GL_TEXTURE0);
 
@@ -783,7 +777,7 @@ void gl4DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives)
     glcache.Enable(GL_BLEND);
     glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	SetupMainVBO();
+    glBindVertexArray(gl4.vbo.main_vao);
 
 	gl4ShaderUniforms.trilinear_alpha = 1.0;
 	CurrentShader = gl4GetProgram(0,
@@ -812,17 +806,13 @@ void gl4DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives)
 		};
 		GLushort indices[] = { 0, 1, 2, 1, 3 };
 
+		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
 	}
 
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
-
-	if ( draw_additional_primitives )
-	{
-		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.bytes(), pvrrc.idx.head(), GL_STREAM_DRAW);
-	}
 }
 
 void gl4UpdateLightGunTexture(int port)
@@ -872,7 +862,7 @@ void gl4UpdateLightGunTexture(int port)
 	lightgun_params[port].dirty = false;
 }
 
-void gl4DrawGunCrosshair(u8 port, bool draw_additional_primitives)
+void gl4DrawGunCrosshair(u8 port)
 {
 	if ( lightgun_params[port].offscreen || (lightgun_params[port].colour==0) )
 		return;
@@ -899,7 +889,7 @@ void gl4DrawGunCrosshair(u8 port, bool draw_additional_primitives)
     glcache.Enable(GL_BLEND);
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-	SetupMainVBO();
+	glBindVertexArray(gl4.vbo.main_vao);
 
 	gl4ShaderUniforms.trilinear_alpha = 1.0;
 	CurrentShader = gl4GetProgram(0,
@@ -928,17 +918,13 @@ void gl4DrawGunCrosshair(u8 port, bool draw_additional_primitives)
 		};
 		GLushort indices[] = { 0, 1, 2, 1, 3 };
 
+		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
 	}
 
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
 
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	if ( draw_additional_primitives )
-	{
-		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, pvrrc.idx.bytes(), pvrrc.idx.head(), GL_STREAM_DRAW);
-	}
 }

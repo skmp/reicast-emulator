@@ -2,7 +2,7 @@
 #include "rend/gles/gles.h"
 #include <unordered_map>
 
-void gl4DrawStrips(GLuint output_fbo);
+void gl4DrawStrips(GLuint output_fbo, int width, int height);
 
 struct gl4PipelineShader
 {
@@ -44,11 +44,13 @@ struct gl4_ctx
 		GLuint extra_depth_scale;
 	} modvol_shader;
 
-	std::unordered_map<int, gl4PipelineShader> shaders;
+	std::unordered_map<u32, gl4PipelineShader> shaders;
 
 	struct
 	{
 		GLuint geometry,modvols,idxs,idxs2;
+		GLuint main_vao;
+		GLuint modvol_vao;
 		GLuint tr_poly_params;
 	} vbo;
 };
@@ -57,20 +59,22 @@ extern gl4_ctx gl4;
 
 extern int screen_width;
 extern int screen_height;
+extern int max_image_width;
+extern int max_image_height;
 
 GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void gl4DrawFramebuffer(float w, float h);
 
 extern const char *gl4PixelPipelineShader;
-bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *source = gl4PixelPipelineShader);
+bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *pixel_source = gl4PixelPipelineShader, const char *vertex_source = NULL);
 
 extern GLuint stencilTexId;
 extern GLuint depthTexId;
 extern GLuint opaqueTexId;
 extern GLuint depthSaveTexId;
 
-void gl4DrawVmuTexture(u8 vmu_screen_number, bool draw_additional_primitives);
-void gl4DrawGunCrosshair(u8 port, bool draw_additional_primitives);
+void gl4DrawVmuTexture(u8 vmu_screen_number);
+void gl4DrawGunCrosshair(u8 port);
 
 #define SHADER_HEADER "#version 430 \n\
 \n\
@@ -214,6 +218,7 @@ bool isTwoVolumes(const PolyParam pp) \n\
  \n\
 "
 
+void gl4SetupMainVBO();
 void gl4SetupModvolVBO();
 
 extern struct gl4ShaderUniforms_t

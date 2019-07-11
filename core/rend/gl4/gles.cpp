@@ -40,13 +40,13 @@ static const char* VertexShaderSource =
 uniform highp vec4      scale; \n\
 uniform highp float     extra_depth_scale; \n\
 /* Vertex input */ \n\
-" "in highp vec4    in_pos; \n\
-" "in lowp vec4     in_base; \n\
-" "in lowp vec4     in_offs; \n\
-" "in mediump vec2  in_uv; \n\
-" "in lowp vec4     in_base1; \n\
-" "in lowp vec4     in_offs1; \n\
-" "in mediump vec2  in_uv1; \n\
+in highp vec4    in_pos; \n\
+in lowp vec4     in_base; \n\
+in lowp vec4     in_offs; \n\
+in mediump vec2  in_uv; \n\
+in lowp vec4     in_base1; \n\
+in lowp vec4     in_offs1; \n\
+in mediump vec2  in_uv1; \n\
 /* output */ \n\
 INTERPOLATION out lowp vec4 vtx_base; \n\
 INTERPOLATION out lowp vec4 vtx_offs; \n\
@@ -125,7 +125,6 @@ uniform sampler2D DepthTex; \n\
 uniform lowp float trilinear_alpha; \n\
 uniform lowp vec4 fog_clamp_min; \n\
 uniform lowp vec4 fog_clamp_max; \n\
-uniform highp float extra_depth_scale; \n\
 \n\
 uniform ivec2 blend_mode[2]; \n\
 #if pp_TwoVolumes == 1 \n\
@@ -135,6 +134,7 @@ uniform int shading_instr[2]; \n\
 uniform int fog_control[2]; \n\
 #endif \n\
  \n\
+uniform highp float extra_depth_scale; \n\
 /* Vertex input*/ \n\
 INTERPOLATION in lowp vec4 vtx_base; \n\
 INTERPOLATION in lowp vec4 vtx_offs; \n\
@@ -383,6 +383,7 @@ void main() \n\
 		\n\
       ivec2 coords = ivec2(gl_FragCoord.xy); \n\
       uint idx =  getNextPixelIndex(); \n\
+       \n\
       Pixel pixel; \n\
       pixel.color = color; \n\
       pixel.depth = gl_FragDepth; \n\
@@ -404,14 +405,17 @@ void main() \n\
       \n\
 }";
 
-bool gl4CompilePipelineShader(gl4PipelineShader *s, const char *source /* = PixelPipelineShader */)
+int max_image_width;
+int max_image_height;
+
+bool gl4CompilePipelineShader(gl4PipelineShader *s, const char *pixel_source /* = PixelPipelineShader */, const char *vertex_source /* = NULL */)
 {
    char vshader[16384];
 
-	sprintf(vshader, VertexShaderSource, s->pp_Gouraud);
+	sprintf(vshader, vertex_source == NULL ? VertexShaderSource : vertex_source, s->pp_Gouraud);
 	char pshader[16384];
 
-	sprintf(pshader, source,
+	sprintf(pshader, pixel_source,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
                 s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_TwoVolumes, s->pp_DepthFunc, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, s->pass);
 
@@ -520,11 +524,18 @@ static bool gl_create_resources(void)
    u32 pp_Offset;
    u32 pp_ShadInstr;
 
-	/* create VBOs */
+	// Create VAOs
+	glGenVertexArrays(1, &gl4.vbo.main_vao);
+	glGenVertexArrays(1, &gl4.vbo.modvol_vao);
+
+	// Create VBOs
 	glGenBuffers(1, &gl4.vbo.geometry);
 	glGenBuffers(1, &gl4.vbo.modvols);
 	glGenBuffers(1, &gl4.vbo.idxs);
 	glGenBuffers(1, &gl4.vbo.idxs2);
+
+	gl4SetupMainVBO();
+	gl4SetupModvolVBO();
 
    char vshader[16384];
 	sprintf(vshader, VertexShaderSource, 1);
@@ -544,6 +555,44 @@ static bool gl_create_resources(void)
 	return true;
 }
 
+extern void initABuffer();
+void reshapeABuffer(int width, int height);
+extern void gl4CreateTextures(int width, int height);
+
+static void resize(int w, int h)
+{
+	if (w > max_image_width || h > max_image_height || stencilTexId == 0)
+	{
+		if (w > max_image_width)
+			max_image_width = w;
+		if (h > max_image_height)
+			max_image_height = h;
+
+		if (stencilTexId != 0)
+		{
+			glcache.DeleteTextures(1, &stencilTexId);
+			stencilTexId = 0;
+		}
+		if (depthTexId != 0)
+		{
+			glcache.DeleteTextures(1, &depthTexId);
+			depthTexId = 0;
+		}
+		if (opaqueTexId != 0)
+		{
+			glcache.DeleteTextures(1, &opaqueTexId);
+			opaqueTexId = 0;
+		}
+		if (depthSaveTexId != 0)
+		{
+			glcache.DeleteTextures(1, &depthSaveTexId);
+			depthSaveTexId = 0;
+		}
+		gl4CreateTextures(max_image_width, max_image_height);
+		reshapeABuffer(max_image_width, max_image_height);
+	}
+}
+
 #ifdef MSB_FIRST
 #define INDEX_GET(a) (a^3)
 #else
@@ -555,99 +604,11 @@ static bool RenderFrame(void)
    int vmu_screen_number = 0 ;
    int lightgun_port = 0 ;
 
-   static int old_screen_width, old_screen_height;
-	if (screen_width != old_screen_width || screen_height != old_screen_height) {
-		rend_resize(screen_width, screen_height);
-		old_screen_width = screen_width;
-		old_screen_height = screen_height;
-	}
    DoCleanup();
 
 	bool is_rtt=pvrrc.isRTT;
 
 	//if (FrameCount&7) return;
-
-	//Setup the matrix
-   float vtx_min_fZ = 0.f;
-	float vtx_max_fZ = pvrrc.fZ_max;
-   //printf("Zmin %g Zmax %g\n", pvrrc.fZ_min, pvrrc.fZ_max);
-	//sanitise the values, now with NaN detection (for omap)
-	//0x49800000 is 1024*1024. Using integer math to avoid issues w/ infs and nans
-	if ((s32&)vtx_max_fZ<0 || (u32&)vtx_max_fZ>0x49800000)
-		vtx_max_fZ=10*1024;
-
-
-	//add some extra range to avoid clipping border cases
-	vtx_min_fZ*=0.98f;
-	vtx_max_fZ*=1.001f;
-
-	//calculate a projection so that it matches the pvr x,y setup, and
-	//a) Z is linearly scaled between 0 ... 1
-	//b) W is passed though for proper perspective calculations
-
-	/*
-	PowerVR coords:
-	fx, fy (pixel coordinates)
-	fz=1/w
-
-	(as a note, fx=x*fz;fy=y*fz)
-
-	Clip space
-	-Wc .. Wc, xyz
-	x: left-right, y: bottom-top
-	NDC space
-	-1 .. 1, xyz
-	Window space:
-	translated NDC (viewport, glDepth)
-
-	Attributes:
-	//this needs to be cleared up, been some time since I wrote my rasteriser and i'm starting
-	//to forget/mixup stuff
-	vaX         -> VS output
-	iaX=vaX*W   -> value to be interpolated
-	iaX',W'     -> interpolated values
-	paX=iaX'/W' -> Per pixel interpolated value for attribute
-
-
-	Proper mappings:
-	Output from shader:
-	W=1/fz
-	x=fx*W -> maps to fx after perspective divide
-	y=fy*W ->         fy   -//-
-	z=-W for min, W for max. Needs to be linear.
-
-
-
-	umodified W, perfect mapping:
-	Z mapping:
-	pz=z/W
-	pz=z/(1/fz)
-	pz=z*fz
-	z=zt_s+zt_o
-	pz=(zt_s+zt_o)*fz
-	pz=zt_s*fz+zt_o*fz
-	zt_s=scale
-	zt_s=2/(max_fz-min_fz)
-	zt_o*fz=-min_fz-1
-	zt_o=(-min_fz-1)/fz == (-min_fz-1)*W
-
-
-	x=fx/(fx_range/2)-1		//0 to max -> -1 to 1
-	y=fy/(-fy_range/2)+1	//0 to max -> 1 to -1
-	z=-min_fz*W + (zt_s-1)  //0 to +inf -> -1 to 1
-
-	o=a*z+c
-	1=a*z_max+c
-	-1=a*z_min+c
-
-	c=-a*z_min-1
-	1=a*z_max-a*z_min-1
-	2=a*(z_max-z_min)
-	a=2/(z_max-z_min)
-	*/
-
-	//float B=2/(min_invW-max_invW);
-	//float A=-B*max_invW+vnear;
 
 	//these should be adjusted based on the current PVR scaling etc params
 	float dc_width=640;
@@ -739,6 +700,22 @@ static bool RenderFrame(void)
 	gl4ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
 	gl4ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
 
+	int rendering_width;
+	int rendering_height;
+	if (is_rtt)
+	{
+		int scaling = settings.rend.RenderToTextureBuffer ? 1 : settings.rend.RenderToTextureUpscale;
+		resize(dc_width * scaling, dc_height * scaling);
+		rendering_width = dc_width * scaling;
+		rendering_height = dc_height * scaling;
+	}
+	else
+	{
+		rendering_width = screen_width;
+		rendering_height = screen_height;
+	}
+	resize(rendering_width, rendering_height);
+	
 	gl4ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
 
 	//printf("scale: %f, %f, %f, %f\n", ShaderUniforms.scale_coefs[0],scale_coefs[1], ShaderUniforms.scale_coefs[2], ShaderUniforms.scale_coefs[3]);
@@ -781,12 +758,10 @@ static bool RenderFrame(void)
       UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE5, GL_RED);
    }
 
-	glUseProgram(gl4.modvol_shader.program);
+	glcache.UseProgram(gl4.modvol_shader.program);
 
 	glUniform4fv(gl4.modvol_shader.scale, 1, gl4ShaderUniforms.scale_coefs);
 	glUniform1f(gl4.modvol_shader.extra_depth_scale, gl4ShaderUniforms.extra_depth_scale);
-
-	GLfloat td[4]={0.5,0,0,0};
 
 	gl4ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
@@ -839,9 +814,9 @@ static bool RenderFrame(void)
 
    bool wide_screen_on = !is_rtt && settings.rend.WideScreen
 			&& pvrrc.fb_X_CLIP.min == 0
-			&& (pvrrc.fb_X_CLIP.max + 1) / scale_x == 640
+			&& int((pvrrc.fb_X_CLIP.max + 1) / scale_x + 0.5f) == 640
 			&& pvrrc.fb_Y_CLIP.min == 0
-			&& (pvrrc.fb_Y_CLIP.max + 1) / scale_y == 480;
+			&& int((pvrrc.fb_Y_CLIP.max + 1) / scale_y + 0.5f) == 480;
 
    // Color is cleared by the background plane
 
@@ -851,6 +826,7 @@ static bool RenderFrame(void)
    if (!pvrrc.isRenderFramebuffer)
    {
       //Main VBO
+			glBindVertexArray(gl4.vbo.main_vao);
 	   glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
 	   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs); glCheck();
 
@@ -861,6 +837,7 @@ static bool RenderFrame(void)
       //Modvol VBO
       if (pvrrc.modtrig.used())
 	   {
+			glBindVertexArray(gl4.vbo.modvol_vao);
          glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.modvols); glCheck();
          glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
       }
@@ -927,32 +904,37 @@ static bool RenderFrame(void)
 
       //restore scale_x
       scale_x /= scissoring_scale_x;
-      gl4DrawStrips(output_fbo);
+		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
    }
    else
    {
-	  glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+   	glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
       glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
       glClear(GL_COLOR_BUFFER_BIT);
       gl4DrawFramebuffer(dc_width, dc_height);
    }
 
 
-   for ( vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
-      if ( vmu_screen_params[vmu_screen_number].vmu_screen_display )
-         gl4DrawVmuTexture(vmu_screen_number, true) ;
-         
-   for ( lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
-         gl4DrawGunCrosshair(lightgun_port, true) ;
+   if (!is_rtt)
+   {
+		for ( vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
+			if ( vmu_screen_params[vmu_screen_number].vmu_screen_display )
+				gl4DrawVmuTexture(vmu_screen_number);
+
+		for ( lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
+				gl4DrawGunCrosshair(lightgun_port);
+   }
 
 	KillTex = false;
    
    if (is_rtt)
       ReadRTTBuffer();
 
+   glBindVertexArray(0);
+
 	return !is_rtt;
 }
-extern void initABuffer();
+
 void termABuffer();
 
 void gl_DebugOutput(GLenum source,
@@ -1051,27 +1033,7 @@ struct gl4rend : Renderer
 	{
 		screen_width=w;
 		screen_height=h;
-		if (stencilTexId != 0)
-		{
-			glcache.DeleteTextures(1, &stencilTexId);
-			stencilTexId = 0;
-		}
-      if (depthTexId != 0)
-		{
-			glcache.DeleteTextures(1, &depthTexId);
-			depthTexId = 0;
-		}
-		if (opaqueTexId != 0)
-		{
-			glcache.DeleteTextures(1, &opaqueTexId);
-			opaqueTexId = 0;
-		}
-      if (depthSaveTexId != 0)
-		{
-			glcache.DeleteTextures(1, &depthSaveTexId);
-			depthSaveTexId = 0;
-		}
-      reshapeABuffer(w, h);
+		resize(w, h);
 	}
 	void Term()
 	{
@@ -1096,7 +1058,8 @@ struct gl4rend : Renderer
 		  glcache.DeleteTextures(1, &depthSaveTexId);
 		  depthSaveTexId = 0;
 	   }
-	   killtex();
+		if (KillTex)
+			killtex();
 
 	   gl_term();
    }

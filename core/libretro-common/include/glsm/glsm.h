@@ -32,7 +32,9 @@
 RETRO_BEGIN_DECLS
 
 #ifdef HAVE_OPENGLES2
+#if !defined(ANDROID)
 typedef GLfloat GLdouble;
+#endif
 typedef GLclampf GLclampd;
 #endif
 

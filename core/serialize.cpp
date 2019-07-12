@@ -34,7 +34,8 @@ enum serialize_version_enum {
 	V2,
 	V3,
 	V4,
-	V5
+	V5,
+	V6
 } ;
 
 //./core/hw/arm7/arm_mem.cpp
@@ -815,7 +816,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
-	serialize_version_enum version = V5 ;
+	serialize_version_enum version = V6 ;
 
 	*total_size = 0 ;
 
@@ -1600,10 +1601,24 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_USA(CCN_QACR_TR,2);
 
 
-
-
-	LIBRETRO_USA(UTLB,64);
-	LIBRETRO_USA(ITLB,4);
+	if (version < V6)
+	{
+		for (int i = 0; i < 64; i++)
+		{
+			LIBRETRO_US(UTLB[i].Address);
+			LIBRETRO_US(UTLB[i].Data);
+		}
+		for (int i = 0; i < 4; i++)
+		{
+			LIBRETRO_US(ITLB[i].Address);
+			LIBRETRO_US(ITLB[i].Data);
+		}
+	}
+	else
+	{
+		LIBRETRO_USA(UTLB,64);
+		LIBRETRO_USA(ITLB,4);
+	}
 #if defined(NO_MMU)
 	LIBRETRO_USA(sq_remap,64);
 #else

@@ -565,7 +565,6 @@ bool _vmem_reserve(void)
 			const vmem_mapping mem_mappings[] = {
 				{0x00000000, 0x00800000,                               0,         0, false},  // Area 0 -> unused
 				{0x00800000, 0x01000000,           MAP_ARAM_START_OFFSET, ARAM_SIZE, false},  // Aica
-				{0x20000000, 0x20000000+ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE,  true},
 				{0x01000000, 0x04000000,                               0,         0, false},  // More unused
 				{0x04000000, 0x05000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // Area 1 (vram, 16MB, wrapped on DC as 2x8MB)
 				{0x05000000, 0x06000000,                               0,         0, false},  // 32 bit path (unused)
@@ -574,6 +573,8 @@ bool _vmem_reserve(void)
 				{0x08000000, 0x0C000000,                               0,         0, false},  // Area 2
 				{0x0C000000, 0x10000000,            MAP_RAM_START_OFFSET,  RAM_SIZE,  true},  // Area 3 (main RAM + 3 mirrors)
 				{0x10000000, 0x20000000,                               0,         0, false},  // Area 4-7 (unused)
+				// This is outside of the 512MB addr space. We map 8MB in all cases to help some games read past the end of aica ram
+				{0x20000000, 0x20800000,           MAP_ARAM_START_OFFSET, ARAM_SIZE,  true},  // writable aica ram
 			};
 			vmem_platform_create_mappings(&mem_mappings[0], ARRAY_SIZE(mem_mappings));
 

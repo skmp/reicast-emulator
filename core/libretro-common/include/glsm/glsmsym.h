@@ -25,6 +25,10 @@
 
 #include <glsm/glsm.h>
 
+#ifdef HAVE_GLSYM_PRIVATE
+#include "glsym_private.h"
+#endif
+
 #include <retro_common_api.h>
 
 #ifdef HAVE_GLSYM_PRIVATE

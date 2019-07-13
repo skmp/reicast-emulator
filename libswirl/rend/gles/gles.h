@@ -3,14 +3,6 @@
 #include <atomic>
 #include "rend/rend.h"
 
-#if 0
-	#if (defined(GLES) && !defined(TARGET_NACL32) && HOST_OS != OS_DARWIN && !defined(USE_SDL)) || defined(_ANDROID)
-	#define USE_EGL
-	#include <EGL/egl.h>
-	#include <EGL/eglext.h>
-	#endif
-#endif
-
 #include "glwrap/GLES.h"
 
 #define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)

@@ -2,6 +2,7 @@
 #include "khronos/GLES32/gl32.h"
 #include "khronos/EGL/egl.h"
 #include "gl32funcs.h"
+#include "gl32defs.h"
 #include "build.h"
 
 void load_gles_symbols()

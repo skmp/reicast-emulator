@@ -86,8 +86,10 @@
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
 
+#ifndef PACKAGE_VERSION
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "0.9.3"
+#endif
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1

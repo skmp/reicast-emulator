@@ -487,7 +487,7 @@ else ifneq (,$(findstring osx,$(platform)))
         fpic += -mmacosx-version-min=10.7
 	LDFLAGS += -stdlib=libc++
 	fpic = -fPIC
-	CFLAGS += -D TARGET_NO_AREC
+	CFLAGS += -D TARGET_NO_AREC -DHAVE_GLSYM_PRIVATE
 	SINGLE_PREC_FLAGS=1
 	PLATCFLAGS += -D__MACOSX__ -DOSX
 	GL_LIB := -framework OpenGL

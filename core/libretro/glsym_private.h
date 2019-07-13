@@ -8,6 +8,10 @@ extern "C" {
 typedef double GLdouble;
 #endif
 
+#ifndef GL_STENCIL_BITS
+#define GL_STENCIL_BITS 0x0D57
+#endif
+
 #ifdef __cplusplus
 }
 #endif

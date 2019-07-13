@@ -23,7 +23,7 @@
 
 #include "deps/libpng/png.h"
 #include "reios/reios.h"
-#include "retro_stat.h"
+#include "file/file_path.h"
 
 extern const char *retro_get_system_directory();
 
@@ -291,14 +291,14 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 {
 	std::string base_dump_dir = get_writable_data_path("/texdump/");
 	if (!path_is_valid(base_dump_dir.c_str()))
-		mkdir_norecurse(base_dump_dir.c_str());
+		path_mkdir(base_dump_dir.c_str());
 	std::string game_id = GetGameId();
 	if (game_id.length() == 0)
 	   return;
 
 	base_dump_dir += game_id + "/";
 	if (!path_is_valid(base_dump_dir.c_str()))
-		mkdir_norecurse(base_dump_dir.c_str());
+		path_mkdir(base_dump_dir.c_str());
 
 	std::stringstream path;
 	path << base_dump_dir << std::hex << hash << ".png";

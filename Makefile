@@ -94,7 +94,7 @@ endif
 CORE_DIR := .
 
 DYNAREC_USED = 0
-CORE_DEFINES   := -D__LIBRETRO__
+CORE_DEFINES   := -D__LIBRETRO__  -DHAVE_GLSYM_PRIVATE
 
 ifeq ($(NO_VERIFY),1)
 	CORE_DEFINES += -DNO_VERIFY
@@ -162,9 +162,9 @@ else ifneq (,$(findstring rpi,$(platform)))
 	ifneq (,$(findstring rpi4,$(platform)))
 		# rpi4 flags are taken from rockpro64
 		CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
-		CPUFLAGS += -DRPI4_SET_UNIFORM_ATTRIBUTES_BUG
-                CFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=neon-vfpv4 $(CPUFLAGS)
-                CXXFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=neon-vfpv4 $(CPUFLAGS)
+		CORE_DEFINES += -DRPI4_SET_UNIFORM_ATTRIBUTES_BUG -DFIX_MISSING_GLDOUBLE_BUG
+		CFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=neon-vfpv4 $(CPUFLAGS)
+		CXXFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=neon-vfpv4 $(CPUFLAGS)
 		ifeq ($(HAVE_CLANG),0)
 			CFLAGS += -mvectorize-with-neon-quad
 			CXXFLAGS += -mvectorize-with-neon-quad

@@ -67,15 +67,35 @@ android {
         }
     }
 
-    flavorDimensions "systemtype"
+    flavorDimensions "systemtype", "releasetype"
     productFlavors {
         dreamcast {
+	    dimension "systemtype"
         }
         naomi {
+	    dimension "systemtype"
             applicationId = "com.reicast.emulator.naomi"
             versionNameSuffix " Naomi"
             externalNativeBuild { ndkBuild { arguments "NAOMI=1" } }
         }
+	alpha {
+	    dimension "releasetype"
+	    play {
+		track = 'alpha'
+	    }
+	}
+	beta {
+	    dimension "releasetype"
+	    play {
+		track = 'beta'
+	    }
+	}
+	stable {
+	    dimension "releasetype"
+	    play {
+		track = 'production'
+	    }
+	}
     }
 
     externalNativeBuild {
@@ -99,7 +119,6 @@ afterEvaluate {
 }
 
 play {
-    track = 'beta'
     serviceAccountEmail = 'reicast-beta-cd@api-7801059239587459896-777757.iam.gserviceaccount.com'
     pk12File = file('../reicast-beta-cd.p12')
 }

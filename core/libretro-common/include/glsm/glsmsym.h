@@ -27,6 +27,10 @@
 
 #include <retro_common_api.h>
 
+#ifdef HAVE_GLSYM_PRIVATE
+#include "glsym_private.h"
+#endif
+
 RETRO_BEGIN_DECLS
 
 /* deprecated old FF-style GL symbols */

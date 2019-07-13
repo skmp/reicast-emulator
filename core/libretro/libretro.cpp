@@ -7,7 +7,7 @@
 #endif
 
 #include <sys/stat.h>
-#include <retro_stat.h>
+#include <file/file_path.h>
 
 #include <libretro.h>
 
@@ -1875,7 +1875,7 @@ bool retro_load_game(const struct retro_game_info *game)
       struct stat buf;
       if (stat(data_dir, &buf) < 0)
       {
-         mkdir_norecurse(data_dir);
+         path_mkdir(data_dir);
       }
    }
 
@@ -1940,7 +1940,7 @@ bool retro_load_game(const struct retro_game_info *game)
          if (stat(save_dir, &buf) < 0)
          {
             log_cb(RETRO_LOG_INFO, "Creating dir: %s\n", save_dir);
-            mkdir_norecurse(save_dir);
+            path_mkdir(save_dir);
          }
       } else {
          strncpy(save_dir, g_roms_dir, sizeof(save_dir));

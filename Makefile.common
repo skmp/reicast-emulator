@@ -316,7 +316,10 @@ SOURCES_CXX += $(CORE_DIR)/core/libretro/libretro.cpp \
 					$(CORE_DIR)/core/libretro/vmem_utils.cpp
 
 SOURCES_C +=   $(LIBRETRO_COMM_DIR)/memmap/memalign.c \
-					$(LIBRETRO_COMM_DIR)/file/retro_stat.c
+					$(LIBRETRO_COMM_DIR)/file/file_path.c \
+					$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
+					$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
+					$(LIBRETRO_COMM_DIR)/compat/compat_strcasestr.c
 
 ifeq ($(NO_THREADS),1)
 else

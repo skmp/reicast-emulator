@@ -156,11 +156,12 @@ else ifneq (,$(findstring rpi,$(platform)))
 	LIBS += -lrt
 	ARM_FLOAT_ABI_HARD = 1
 	SINGLE_PREC_FLAGS = 1
+	CORE_DEFINES += -DFIX_MISSING_GLDOUBLE_BUG
 	
 	ifneq (,$(findstring rpi4,$(platform)))
 		# rpi4 flags are taken from rockpro64
 		CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
-		CORE_DEFINES += -DRPI4_SET_UNIFORM_ATTRIBUTES_BUG -DFIX_MISSING_GLDOUBLE_BUG
+		CORE_DEFINES += -DRPI4_SET_UNIFORM_ATTRIBUTES_BUG
 		CFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=neon-vfpv4 $(CPUFLAGS)
 		CXXFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=neon-vfpv4 $(CPUFLAGS)
 		ifeq ($(HAVE_CLANG),0)

@@ -849,7 +849,7 @@ struct X86NGenBackend : NGenBackend
 						#if HOST_OS == OS_LINUX
 							ctx->esp += 4;
 							//restore the addr from eax to ecx so it's valid again
-							ctx->ecx = ctx.eax;
+							ctx->ecx = ctx->eax;
 						#endif
 
 						//printf("Patched: %08X for access @ %08X\n",addr,acc);

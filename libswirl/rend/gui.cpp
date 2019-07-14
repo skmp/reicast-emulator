@@ -43,14 +43,8 @@
 #include "version.h"
 #include "oslib/audiostream.h"
 #include "hw/pvr/Renderer_if.h"
+#include "libswirl.h"
 
-extern void dc_loadstate();
-extern void dc_savestate();
-extern void dc_stop();
-extern void dc_reset();
-extern void dc_resume();
-extern int dc_start_game(const char *path);
-extern void UpdateInputState(u32 port);
 extern bool game_started;
 
 extern int screen_width, screen_height;

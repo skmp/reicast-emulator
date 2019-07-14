@@ -25,6 +25,11 @@
 
 #include "glwrap/gl3w.h"
 
+
+#include "libswirl.h"
+#include "hw/pvr/Renderer_if.h"
+
+
 #undef ARRAY_SIZE	// macros are evil
 #pragma comment(lib,"Opengl32.lib")
 
@@ -898,10 +903,6 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 #endif
 	{
 		CoInitialize(nullptr);
-
-		int reicast_init(int argc, char* argv[]);
-		void *rend_thread(void *);
-		void dc_term();
 
 		if (reicast_init(argc, argv) != 0)
 			die("Reicast initialization failed");

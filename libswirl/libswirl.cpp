@@ -1,15 +1,15 @@
-// nullDC.cpp : Makes magic cookies
+// libswirl.cpp: this is not nullDC anymore. Not that anyone has noticed.
 //
 
 //initialse Emu
 #include "types.h"
+#include "libswirl.h"
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
 #include "hw/mem/_vmem.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
 
-#include "types.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_mem.h"
 
@@ -26,8 +26,6 @@
 
 void FlushCache();
 void LoadCustom();
-void* dc_run(void*);
-void dc_resume();
 
 settings_t settings;
 // Set if game has corresponding option by default, so that it's not saved in the config

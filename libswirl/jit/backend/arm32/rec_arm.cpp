@@ -2094,7 +2094,8 @@ struct Arm32NGenBackend: NGenBackend
 	
 	bool Rewrite(rei_host_context_t* ctx)
 	{
-		arm_mem_op* ptr=(arm_mem_op*)ptrv;
+		arm_mem_op* ptr=(arm_mem_op*)ctx->pc;
+		auto regs = ctx->regs;
 
 		verify(sizeof(*ptr)==4);
 
@@ -2149,7 +2150,7 @@ struct Arm32NGenBackend: NGenBackend
 
 		//get some other relevant data
 		u32 sh4_addr=regs[raddr];
-		u32 fault_offs=fault_addr-regs[8];
+		
 		u8* sh4_ctr=(u8*)regs[8];
 		bool is_sq=(sh4_addr>>26)==0x38;
 
@@ -2174,7 +2175,13 @@ struct Arm32NGenBackend: NGenBackend
 		//printf("Failed %08X:%08X (%d,%d,%d,r%d, r%d,f%d,d%d) code %08X, addr %08X, native %08X (%08X), fixing via %s\n",ptr->full,fop,optp,read,offs,raddr,rt,ft,fd,ptr,sh4_addr,fault_addr,fault_offs,is_sq?"SQ":"MR");
 
 		//fault offset must always be the addr from ubfx (sanity check)
-		verify((fault_offs==0) || fault_offs==(0x1FFFFFFF&sh4_addr));
+
+		// TODO: Reimplement this sanity check, it needs the fault mem address
+		
+		#if 0 && TODO
+			u32 fault_offs=fault_addr-regs[8];
+			verify((fault_offs==0) || fault_offs==(0x1FFFFFFF&sh4_addr));
+		#endif
 
 		if (settings.dynarec.unstable_opt && is_sq) //THPS2 uses cross area SZ_32F so this is disabled for now
 		{
@@ -2247,7 +2254,7 @@ struct Arm32NGenBackend: NGenBackend
 		CacheFlush((void*)ptr, (void*)emit_ptr);
 		emit_ptr=0;
 
-		//return (unat)ptr;
+		ctx->pc = (unat)ptr;
 
 		return true;
 	}

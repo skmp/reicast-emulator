@@ -204,9 +204,10 @@ else ifneq (,$(findstring rpi,$(platform)))
         ASFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
     endif
 
+    USE_GLES := 1
+
     ifneq (,$(findstring mesa,$(platform)))
         USE_SDL := 1
-        USE_GLES := 1
     else
         INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
         LIBS += -L/opt/vc/lib/ -lbcm_host -ldl

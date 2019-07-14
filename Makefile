@@ -17,6 +17,7 @@ HAVE_TEXUPSCALE := 1
 HAVE_OPENMP   := 1
 HAVE_CHD      := 1
 HAVE_CLANG    := 0
+HAVE_CDROM    := 0
 
 
 TARGET_NAME   := flycast
@@ -130,6 +131,7 @@ ifneq (,$(findstring unix,$(platform)))
 		endif
 	endif
 
+	HAVE_CDROM = 1
 	fpic = -fPIC
 
 	ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
@@ -655,6 +657,7 @@ else
 	endif
 	EXT       ?= dll
 	HAVE_GENERIC_JIT = 0
+	HAVE_CDROM = 1
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	LDFLAGS += -shared -static-libgcc -static-libstdc++ -Wl,--version-script=link.T -lwinmm -lgdi32
 	GL_LIB := -lopengl32

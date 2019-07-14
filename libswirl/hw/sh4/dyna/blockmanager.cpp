@@ -93,12 +93,15 @@ void bm_CleanupDeletedBlocks()
 	del_blocks.clear();
 }
 
-// Takes RX pointer and returns a RW pointer
+// takes RX pointer and returns stale RBI
 RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code)
 {
-	void *dynarecrw = CC_RX2RW(dynarec_code);
-	
-	bm_CleanupDeletedBlocks();
+
+	for (auto it = del_blocks.begin(); it != del_blocks.end(); it++)
+	{
+		if ((*it)->contains_code((u8*)dynarec_code))
+			return (*it);
+	}
 
 	return 0;
 }

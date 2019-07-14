@@ -65,7 +65,7 @@ Tools required:
  - http://developer.android.com/sdk/index.html
 * NDK r8b or newer
  - https://developer.android.com/tools/sdk/ndk/index.html
- - If are not using r9c+, comment the "NDK_TOOLCHAIN_VERSION := 4.8" in reicast/android/jni/Application.mk and reicast/android/xperia/jni/Application.mk
+ - If are not using r9c+, comment the "NDK_TOOLCHAIN_VERSION := 4.8" in shell/android/jni/Application.mk and shell/android/xperia/jni/Application.mk
 * Android 5.0.1 (API 21) & Android 2.3.1 (API 9)
  - http://developer.android.com/sdk/installing/adding-packages.html
  - note that API 9 is hidden (you must check to show obsolete in SDK manager)
@@ -76,7 +76,7 @@ From project root directory:
 ```
 export ANDROID_NDK=/ # Type the full path to your NDK here
 
-cd reicast/android/
+cd shell/android/
 
 android update project -p . --target "android-21"
 
@@ -101,7 +101,7 @@ From project root directory:
 
 | iOS             | Mac                           |
 | --------------- | ----------------------------- |
-| `cd reicast/ios/` | `cd reicast/apple/emulator-osx` |
+| `cd shell/ios/` | `cd shell/apple/emulator-osx` |
 
 `xcodebuild -configuration Release`
 
@@ -121,7 +121,7 @@ Building for Linux
 
 - From project root directory:
 ```
-cd reicast/linux
+cd shell/linux
 
 make
 ```

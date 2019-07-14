@@ -93,12 +93,15 @@ void bm_CleanupDeletedBlocks()
 	del_blocks.clear();
 }
 
-// Takes RX pointer and returns a RW pointer
+// takes RX pointer and returns stale RBI
 RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code)
 {
-	void *dynarecrw = CC_RX2RW(dynarec_code);
-	
-	bm_CleanupDeletedBlocks();
+
+	for (auto it = del_blocks.begin(); it != del_blocks.end(); it++)
+	{
+		if ((*it)->contains_code((u8*)dynarec_code))
+			return (*it);
+	}
 
 	return 0;
 }
@@ -343,6 +346,9 @@ bool bm_LockedWrite(u8* addy)
 
 bool bm_RamPageHasData(u32 guest_addr, u32 len)
 {
+	#if 1 // Disabled because of missing segfault marshaling
+		return true;
+	#else
 	auto page_base = (guest_addr & RAM_MASK)/PAGE_SIZE;
 	auto page_top = ((guest_addr + len - 1) & RAM_MASK)/PAGE_SIZE;
 
@@ -354,6 +360,7 @@ bool bm_RamPageHasData(u32 guest_addr, u32 len)
 	}
 
 	return rv;
+	#endif
 }
 
 #endif

@@ -14,8 +14,8 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 
 set(reicast_root_path  "${CMAKE_CURRENT_SOURCE_DIR}")
-set(reicast_core_path  "${reicast_root_path}/core")
-set(reicast_shell_path "${reicast_root_path}/shell")
+set(reicast_core_path  "${reicast_root_path}/libswirl")
+set(reicast_shell_path "${reicast_root_path}/reicast")
 
 list(APPEND CMAKE_MODULE_PATH "${reicast_shell_path}/cmake")
 
@@ -40,6 +40,8 @@ include(config)			# configure build settings, must be first
 
 set(d_core ${reicast_core_path})
 
+message(${d_core})
+
 file(GLOB_RECURSE hw_SRCS	${d_core}/hw/*.cpp			${d_core}/hw/*.h)
 
 file(GLOB cfg_SRCS			${d_core}/cfg/*.cpp			${d_core}/cfg/*.h)
@@ -49,17 +51,25 @@ file(GLOB reios_SRCS		${d_core}/reios/*.cpp		${d_core}/reios/*.h)
 file(GLOB imgread_SRCS		${d_core}/imgread/*.cpp		${d_core}/imgread/*.h)
 file(GLOB profiler_SRCS		${d_core}/profiler/*.cpp	${d_core}/profiler/*.h)
 file(GLOB archive_SRCS		${d_core}/archive/*.cpp		${d_core}/archive/*.h)
+file(GLOB glwrap_SRCS		${d_core}/glwrap/*.cpp		${d_core}/glwrap/*.h)
 
 #### option(rend)
 file(GLOB gl4_SRCS			${d_core}/rend/gl4/*.cpp	${d_core}/rend/gl4/*.h)
 file(GLOB gles_SRCS			${d_core}/rend/gles/*.cpp	${d_core}/rend/gles/*.h)
+file(GLOB norend_SRCS		${d_core}/rend/norend/*.cpp	${d_core}/rend/norend/*.h)
+file(GLOB softrend_SRCS		${d_core}/rend/soft/*.cpp	${d_core}/rend/soft/*.h)
+file(GLOB d3d11_SRCS		${d_core}/rend/d3d11/*.cpp	${d_core}/rend/d3d11/*.h)
 
 set(core_SRCS
   ${hw_SRCS}
   ${cfg_SRCS}
   ${rend_SRCS}
+  ${glwrap_SRCS}
   ${gl4_SRCS}
   ${gles_SRCS}
+  ${norend_SRCS}
+  ${softrend_SRCS}
+  ${d3d11_SRCS}
   ${input_SRCS}
   ${reios_SRCS}
   ${imgread_SRCS}
@@ -80,10 +90,10 @@ if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT})
 #
   if(${HOST_CPU} EQUAL ${CPU_X86})
     list(APPEND core_SRCS 
-      ${d_core}/rec-x86/rec_x86_driver.cpp
-      ${d_core}/rec-x86/rec_x86_il.cpp
-      ${d_core}/rec-x86/rec_x86_asm.cpp	# change for linux , rec_lin86_asm.S
-	  ${d_core}/rec-x86/rec_x86_ngen.h
+      ${d_core}/jit/backend/x86/rec_x86_driver.cpp
+      ${d_core}/jit/backend/x86/rec_x86_il.cpp
+      ${d_core}/jit/backend/x86/rec_x86_asm.cpp	# change for linux , rec_lin86_asm.S
+	  ${d_core}/jit/backend/x86/rec_x86_ngen.h
      )
   elseif(${HOST_CPU} EQUAL ${CPU_ARM})
     list(APPEND core_SRCS 
@@ -92,7 +102,7 @@ if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT})
 	)
   elseif(${HOST_CPU} EQUAL ${CPU_X64})
 
-    list(APPEND core_SRCS ${d_core}/rec-x64/rec_x64.cpp ${d_core}/rec-x64/x64_regalloc.h)
+    list(APPEND core_SRCS ${d_core}/jit/backend/x64/rec_x64.cpp ${d_core}/jit/backend/x64/x64_regalloc.h)
 
   elseif(${HOST_CPU} EQUAL ${CPU_A64})
     list(APPEND core_SRCS ${d_core}/rec-ARM64/rec_arm64.cpp ${d_core}/rec-ARM64/arm64_regalloc.h)
@@ -126,7 +136,6 @@ file(GLOB lpng_SRCS  ${d_deps}/libpng/*.c)
 file(GLOB lelf_SRCS  ${d_deps}/libelf/el*.cpp)
 file(GLOB crypt_SRCS ${d_deps}/crypto/*.cpp)
 file(GLOB imgui_SRCS ${d_deps}/imgui/*.cpp)
-file(GLOB lws_SRCS   ${d_deps}/libwebsocket/*.c)
 
 file(GLOB picoModS   ${d_deps}/picotcp/modules/*.c)
 file(GLOB picoStkS   ${d_deps}/picotcp/stack/*.c)
@@ -142,9 +151,8 @@ set(deps_SRCS
   ${d_deps}/xbrz/xbrz.cpp
   ${d_deps}/dirent/dirent.c
   ${d_deps}/xxhash/xxhash.c
-  ${d_deps}/chdpsr/cdipsr.cpp  # sigh,  this dir is named chdpsr for some reason ...
+  ${d_deps}/cdipsr/cdipsr.cpp
   ${d_deps}/coreio/coreio.cpp
-# ${d_deps}/ifaddrs/ifaddrs.c
   ${xbyak_H}
 )
   

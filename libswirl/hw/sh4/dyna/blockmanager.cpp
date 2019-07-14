@@ -346,6 +346,9 @@ bool bm_LockedWrite(u8* addy)
 
 bool bm_RamPageHasData(u32 guest_addr, u32 len)
 {
+	#if 1 // Disabled because of missing segfault marshaling
+		return true;
+	#else
 	auto page_base = (guest_addr & RAM_MASK)/PAGE_SIZE;
 	auto page_top = ((guest_addr + len - 1) & RAM_MASK)/PAGE_SIZE;
 
@@ -357,6 +360,7 @@ bool bm_RamPageHasData(u32 guest_addr, u32 len)
 	}
 
 	return rv;
+	#endif
 }
 
 #endif

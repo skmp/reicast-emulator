@@ -801,8 +801,14 @@ struct X86NGenBackend : NGenBackend
 	}
 
 
-	bool Rewrite(unat& addr,unat retadr,unat acc)
+	//bool Rewrite(unat& addr,unat retadr,unat acc)
+	bool Rewrite(rei_host_context_t* ctx)
 	{
+		auto& addr = ctx->pc;
+
+		u32 retadr = *(u32*)ctx->esp;
+		u32 acc = ctx->eax;
+
 		if (addr>=mem_code_base && addr<mem_code_end)
 		{
 			u32 ca=*(u32*)(retadr-4)+retadr;
@@ -840,6 +846,12 @@ struct X86NGenBackend : NGenBackend
 
 						addr=retadr-5;
 
+						#if HOST_OS == OS_LINUX
+							ctx->esp += 4;
+							//restore the addr from eax to ecx so it's valid again
+							ctx->ecx = ctx.eax;
+						#endif
+
 						//printf("Patched: %08X for access @ %08X\n",addr,acc);
 						return true;
 					}
@@ -854,12 +866,6 @@ struct X86NGenBackend : NGenBackend
 		{
 			return false;
 		}
-	}
-
-	u32* ReadmFail(u32* ptr, u32* regs, u32 saddr)
-	{
-		die("Not implemented");
-		return nullptr;
 	}
 
 	void OnResetBlocks()

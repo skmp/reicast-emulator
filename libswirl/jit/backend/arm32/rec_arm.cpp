@@ -2091,13 +2091,8 @@ struct Arm32NGenBackend: NGenBackend
 		printf("@@\tngen_ResetBlocks()\n");
 	}
 
-	bool Rewrite(unat& host_pc, unat, unat)
-	{
-		die("Not implemented");
-		return false;
-	}
-
-	u32* ReadmFail(u32* ptrv,u32* regs,u32 fault_addr)
+	
+	bool Rewrite(rei_host_context_t* ctx)
 	{
 		arm_mem_op* ptr=(arm_mem_op*)ptrv;
 
@@ -2252,7 +2247,9 @@ struct Arm32NGenBackend: NGenBackend
 		CacheFlush((void*)ptr, (void*)emit_ptr);
 		emit_ptr=0;
 
-		return (u32*)ptr;
+		//return (unat)ptr;
+
+		return true;
 	}
 
 	void CC_Start(shil_opcode* op) 

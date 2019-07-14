@@ -13,8 +13,7 @@
 #include "hw/modem/modem.h"
 
 #include "hw/naomi/naomi.h"
-
-extern void dc_request_reset();
+#include "libswirl.h"
 
 Array<RegisterStruct> sb_regs(0x540);
 

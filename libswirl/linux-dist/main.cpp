@@ -16,6 +16,9 @@
 #include "hw/maple/maple_cfg.h"
 #include <unistd.h>
 
+#include "libswirl.h"
+#include "hw/pvr/Renderer_if.h"
+
 #if defined(TARGET_EMSCRIPTEN)
 	#include <emscripten.h>
 #endif
@@ -155,7 +158,7 @@ void os_SetWindowText(const char * text)
 void os_LaunchFromURL(const string& url)
 {
 	auto cmd = "xdg-open " + url; 
-	system(cmd.c_str());
+	auto rv = system(cmd.c_str());
 }
 
 void os_CreateWindow()
@@ -172,9 +175,6 @@ void os_CreateWindow()
 }
 
 void common_linux_setup();
-int reicast_init(int argc, char* argv[]);
-void dc_term();
-void* rend_thread(void* p);
 
 #ifdef TARGET_PANDORA
 

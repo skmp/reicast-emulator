@@ -1568,12 +1568,6 @@ struct CPPNGenBackend: NGenBackend
 		return new DynaRBI();
 	}
 
-	u32* ReadmFail(u32* ptr, u32* regs, u32 saddr)
-	{
-		die("Not implemented");
-		return nullptr;
-	}
-
 
 	void Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
 	{
@@ -1587,7 +1581,7 @@ struct CPPNGenBackend: NGenBackend
 		delete compiler;
 	}
 
-	bool Rewrite(unat& host_pc, unat, unat)
+	bool Rewrite(rei_host_context_t* ctx)
 	{
 		die("Not implemented");
 		return false;

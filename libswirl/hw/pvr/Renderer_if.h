@@ -63,3 +63,5 @@ typedef struct {
 } rendererbackend_t;
 extern bool RegisterRendererBackend(const rendererbackend_t& backend);
 vector<rendererbackend_t> rend_get_backends();
+
+void* rend_thread(void* p);

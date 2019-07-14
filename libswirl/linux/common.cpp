@@ -32,6 +32,8 @@
 #include "hw/mem/_vmem.h"
 #include "rend/TexCache.h"
 
+#include "libswirl.h"
+
 #if !defined(TARGET_NO_EXCEPTIONS)
 
 #if HOST_OS == OS_DARWIN
@@ -57,46 +59,16 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 
 	context_from_segfault(&ctx, segfault_ctx);
 
-	bool dyna_cde = ((unat)CC_RX2RW(ctx.pc) > (unat)CodeCache) && ((unat)CC_RX2RW(ctx.pc) < (unat)(CodeCache + CODE_SIZE));
-
-	if (VramLockedWrite((u8*)si->si_addr) || _vmem_bm_LockedWrite((u8*)si->si_addr) || bm_LockedWrite((u8*)si->si_addr))
-		return;
-	#if FEAT_SHREC == DYNAREC_JIT
-		#if HOST_CPU==CPU_ARM
-			else if (dyna_cde)
-			{
-				ctx.pc = (u32)rdv_ngen->ReadmFail((u32*)ctx.pc, ctx.r, (unat)si->si_addr);
-
-				context_to_segfault(&ctx, segfault_ctx);
-			}
-		#elif HOST_CPU==CPU_X86
-			else if (rdv_ngen->Rewrite((unat&)ctx.pc, *(unat*)ctx.esp, ctx.eax))
-			{
-				//remove the call from call stack
-				ctx.esp += 4;
-				//restore the addr from eax to ecx so it's valid again
-				ctx.ecx = ctx.eax;
-
-				context_to_segfault(&ctx, segfault_ctx);
-			}
-		#elif HOST_CPU == CPU_X64
-			else if (dyna_cde && rdv_ngen->Rewrite((unat&)ctx.pc, 0, 0))
-			{
-				context_to_segfault(&ctx, segfault_ctx);
-			}
-		#elif HOST_CPU == CPU_ARM64
-			else if (dyna_cde && rdv_ngen->Rewrite(ctx.pc, 0, 0))
-			{
-				context_to_segfault(&ctx, segfault_ctx);
-			}
-		#else
-			#error JIT: Not supported arch
-		#endif
-	#endif
+	unat addr = (unat)si->si_addr;
+	
+	if (dc_handle_fault(addr, &ctx))
+	{
+		context_to_segfault(&ctx, segfault_ctx);
+	}
 	else
 	{
-		printf("SIGSEGV @ %lx -> %p was not in vram, dynacode:%d\n", ctx.pc, si->si_addr, dyna_cde);
-		die("segfault");
+		printf("SIGSEGV @ %lx -> %p was not in handled\n", ctx.pc, si->si_addr);
+		printf("Restoring default SIGSEGV handler\n");
 		signal(SIGSEGV, SIG_DFL);
 	}
 }

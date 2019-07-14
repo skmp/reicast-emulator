@@ -1495,14 +1495,14 @@ struct Arm64NGenBackend: NGenBackend
 
 	}
 
-	bool Rewrite(unat& host_pc, unat, unat)
+	bool Rewrite(rei_host_context_t* ctx)
 	{
 		//printf("ngen_Rewrite pc %p\n", host_pc);
-		void *host_pc_rw = (void*)CC_RX2RW(host_pc);
-		RuntimeBlockInfo *block = bm_GetBlock((void*)host_pc);
+		void *host_pc_rw = (void*)CC_RX2RW(ctx->pc);
+		RuntimeBlockInfo *block = bm_GetBlock((void*)ctx->pc);
 		if (block == NULL)
 		{
-			printf("ngen_Rewrite: Block at %p not found\n", (void *)host_pc);
+			printf("ngen_Rewrite: Block at %p not found\n", (void *)ctx->pc);
 			return false;
 		}
 		u32 *code_ptr = (u32*)host_pc_rw;
@@ -1523,15 +1523,9 @@ struct Arm64NGenBackend: NGenBackend
 			assembler->GenWriteMemorySlow(op);
 		assembler->Finalize(true);
 		delete assembler;
-		host_pc = (unat)CC_RW2RX(code_ptr - 2);
+		ctx->pc = (unat)CC_RW2RX(code_ptr - 2);
 
 		return true;
-	}
-
-	u32* ReadmFail(u32* ptr, u32* regs, u32 saddr)
-	{
-		die("not implemented")
-		return nullptr;
 	}
 };
 

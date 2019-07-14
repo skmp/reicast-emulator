@@ -1,17 +1,18 @@
-// nullDC.cpp : Makes magic cookies
+// libswirl.cpp: this is not nullDC anymore. Not that anyone has noticed.
 //
 
 //initialse Emu
 #include "types.h"
+#include "libswirl.h"
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
 #include "hw/mem/_vmem.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
 
-#include "types.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_mem.h"
+#include "hw/sh4/dyna/ngen.h"
 
 #include "hw/naomi/naomi_cart.h"
 #include "reios/reios.h"
@@ -23,11 +24,10 @@
 #include "rend/gui.h"
 #include "profiler/profiler.h"
 #include "input/gamepad_device.h"
+#include "rend/TexCache.h"
 
 void FlushCache();
 void LoadCustom();
-void* dc_run(void*);
-void dc_resume();
 
 settings_t settings;
 // Set if game has corresponding option by default, so that it's not saved in the config
@@ -938,4 +938,33 @@ void dc_loadstate()
 
     cleanup_serialize(data) ;
 	printf("Loaded state from %s size %d\n", filename.c_str(), total_size) ;
+}
+
+
+bool dc_handle_fault(unat addr, rei_host_context_t* ctx)
+{
+	bool dyna_cde = ((unat)CC_RX2RW(ctx->pc) > (unat)CodeCache) && ((unat)CC_RX2RW(ctx->pc) < (unat)(CodeCache + CODE_SIZE));
+
+	u8* address = (u8*)addr;
+
+	if (VramLockedWrite(address))
+	{
+		return true;
+	}
+	else if (_vmem_bm_LockedWrite(address))
+	{
+		return true;
+	}
+	else if (bm_LockedWrite(address))
+	{
+		return true;
+	}
+	else if (dyna_cde && rdv_ngen && rdv_ngen->Rewrite(ctx))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }

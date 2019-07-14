@@ -1374,14 +1374,14 @@ struct X64NGenBackend : NGenBackend
 		delete compiler;
 	}
 
-	bool Rewrite(unat& host_pc, unat, unat)
+	bool Rewrite(rei_host_context_t* ctx)
 	{
 		//printf("ngen_Rewrite pc %p\n", host_pc);
-		void *host_pc_rw = (void*)CC_RX2RW(host_pc);
-		RuntimeBlockInfo *block = bm_GetBlock((void*)host_pc);
+		void *host_pc_rw = (void*)CC_RX2RW(ctx->pc);
+		RuntimeBlockInfo *block = bm_GetBlock((void*)ctx->pc);
 		if (block == NULL)
 		{
-			printf("ngen_Rewrite: Block at %p not found\n", (void *)host_pc);
+			printf("ngen_Rewrite: Block at %p not found\n", (void *)ctx->pc);
 			return false;
 		}
 		char *code_ptr = (char*)host_pc_rw;
@@ -1404,7 +1404,7 @@ struct X64NGenBackend : NGenBackend
 			comp.GenWriteMemorySlow(op, it->second.emitted_bytes);
 
 		// Move host_pc back N bytes to the begining of the whole load/store sequence.
-		host_pc = (unat)CC_RW2RX(rewrite_ptr);
+		ctx->pc = (unat)CC_RW2RX(rewrite_ptr);
 
 		return true;
 	}
@@ -1461,12 +1461,6 @@ struct X64NGenBackend : NGenBackend
 	RuntimeBlockInfo* AllocateBlock()
 	{
 		return new DynaRBI();
-	}
-
-	u32* ReadmFail(u32* ptr, u32* regs, u32 saddr)
-	{
-		die("Not implemented");
-		return nullptr;
 	}
 
 	void OnResetBlocks()

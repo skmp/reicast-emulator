@@ -25,6 +25,11 @@
 
 #include "glwrap/gl3w.h"
 
+
+#include "libswirl.h"
+#include "hw/pvr/Renderer_if.h"
+
+
 #undef ARRAY_SIZE	// macros are evil
 #pragma comment(lib,"Opengl32.lib")
 
@@ -298,47 +303,48 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	if (dwCode != EXCEPTION_ACCESS_VIOLATION)
 		return EXCEPTION_CONTINUE_SEARCH;
 
-	u8* address=(u8*)pExceptionRecord->ExceptionInformation[1];
+	unat address=(unat)pExceptionRecord->ExceptionInformation[1];
 
-	//printf("[EXC] During access to : 0x%X\n", address);
+	rei_host_context_t ctx = { 0 };
 
-	if (VramLockedWrite(address))
-	{
-		return EXCEPTION_CONTINUE_EXECUTION;
-	}
-	else if (_vmem_bm_LockedWrite(address))
-	{
-		return EXCEPTION_CONTINUE_EXECUTION;
-	}
-	else if (bm_LockedWrite(address))
-	{
-		return EXCEPTION_CONTINUE_EXECUTION;
-	}
-#if FEAT_SHREC == DYNAREC_JIT
+	// TODO: Implement context abstraction for windows
 	#if HOST_CPU == CPU_X86
-		else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
-		{
-			//remove the call from call stack
-			ep->ContextRecord->Esp+=4;
-			//restore the addr from eax to ecx so its valid again
-			ep->ContextRecord->Ecx=ep->ContextRecord->Eax;
-			return EXCEPTION_CONTINUE_EXECUTION;
-		}
+		ctx.pc = (unat&)ep->ContextRecord->Eip;
+
+		ctx.eax = (unat&)ep->ContextRecord->Eax;
+		ctx.ecx = (unat&)ep->ContextRecord->Ecx;
+		ctx.esp = (unat&)ep->ContextRecord->Esp;
+		
 	#elif HOST_CPU == CPU_X64
-		else if (rdv_ngen->Rewrite((unat&)ep->ContextRecord->Rip, 0, 0))
-		{
-			return EXCEPTION_CONTINUE_EXECUTION;
-		}
+		ctx.pc = (unat&)ep->ContextRecord->Rip;
+	#else
+		#error missing arch for windows
 	#endif
-#endif
+
+	if (dc_handle_fault(address, &ctx))
+	{
+		// TODO: Implement context abstraction for windows
+		#if HOST_CPU == CPU_X86
+			(unat&)ep->ContextRecord->Eip = ctx.pc;
+
+			(unat&)ep->ContextRecord->Eax = ctx.eax;
+			(unat&)ep->ContextRecord->Ecx = ctx.ecx;
+			(unat&)ep->ContextRecord->Esp = ctx.esp;
+			
+		#elif HOST_CPU == CPU_X64
+			(unat&)ep->ContextRecord->Rip = ctx.pc;
+		#else
+			#error missing arch for windows
+		#endif
+
+		return EXCEPTION_CONTINUE_EXECUTION;
+	}
 	else
 	{
-		//printf("[GPF]Unhandled access to : 0x%X\n",(unat)address);
+		//printf("[GPF] Unhandled access to : 0x%X\n",(unat)address);
+		return EXCEPTION_CONTINUE_SEARCH;
 	}
-
-	return EXCEPTION_CONTINUE_SEARCH;
 }
-
 
 void SetupPath()
 {
@@ -898,10 +904,6 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 #endif
 	{
 		CoInitialize(nullptr);
-
-		int reicast_init(int argc, char* argv[]);
-		void *rend_thread(void *);
-		void dc_term();
 
 		if (reicast_init(argc, argv) != 0)
 			die("Reicast initialization failed");

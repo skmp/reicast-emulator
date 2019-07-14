@@ -35,3 +35,6 @@ void os_LaunchFromURL(const string& url);
 bool os_gl_init(void* hwnd, void* hdc);
 void os_gl_swap();
 void os_gl_term();
+
+// FIXME 2 - this needs to be os_*
+void UpdateInputState(u32 port);

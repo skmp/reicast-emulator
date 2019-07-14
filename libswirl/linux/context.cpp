@@ -35,19 +35,19 @@ void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_se
 		bicopy(reictx->pc, MCTX(.__gregs[_REG_PC]), to_segfault);
 
 		for (int i = 0; i < 15; i++)
-			bicopy(reictx->r[i], MCTX(.__gregs[i]), to_segfault);
+			bicopy(reictx->regs[i], MCTX(.__gregs[i]), to_segfault);
 	#elif HOST_OS == OS_LINUX
 		bicopy(reictx->pc, MCTX(.arm_pc), to_segfault);
 		u32* r =(u32*) &MCTX(.arm_r0);
 
 		for (int i = 0; i < 15; i++)
-			bicopy(reictx->r[i], r[i], to_segfault);
+			bicopy(reictx->regs[i], r[i], to_segfault);
 
 	#elif HOST_OS == OS_DARWIN
 		bicopy(reictx->pc, MCTX(->__ss.__pc), to_segfault);
 
 		for (int i = 0; i < 15; i++)
-			bicopy(reictx->r[i], MCTX(->__ss.__r[i]), to_segfault);
+			bicopy(reictx->regs[i], MCTX(->__ss.__r[i]), to_segfault);
 	#else
 		#error HOST_OS
 	#endif

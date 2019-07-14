@@ -44,6 +44,7 @@
 #include "rec_config.h"
 #include "decoder.h"
 #include "blockmanager.h"
+#include "oslib/context.h"
 
 
 #define CODE_SIZE   (10*1024*1024)
@@ -135,8 +136,7 @@ struct NGenBackend
 	// Alloc block, null return if out of blocks
 	virtual RuntimeBlockInfo* AllocateBlock() = 0;
 
-	virtual bool Rewrite(unat& addr, unat retadr, unat acc) = 0;
-	virtual u32* ReadmFail(u32* ptr, u32* regs, u32 saddr) = 0;
+	virtual bool Rewrite(rei_host_context_t* ctx) = 0;
 
 	// assembly exports
 

@@ -156,7 +156,6 @@ else ifneq (,$(findstring rpi,$(platform)))
 	LIBS += -lrt
 	ARM_FLOAT_ABI_HARD = 1
 	SINGLE_PREC_FLAGS = 1
-	CORE_DEFINES += -DFIX_MISSING_GLDOUBLE_BUG
 	
 	ifneq (,$(findstring rpi4,$(platform)))
 		# rpi4 flags are taken from rockpro64
@@ -355,7 +354,6 @@ else ifeq ($(platform), odroid-n2)
 	FORCE_GLES = 1
 	SINGLE_PREC_FLAGS = 1
 	CPUFLAGS += -DHOST_CPU=0x20000006 -DTARGET_LINUX_ARMv8 -frename-registers
-	CORE_DEFINES += -DFIX_MISSING_GLDOUBLE_BUG
 	CFLAGS += -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 $(CPUFLAGS)
 	CXXFLAGS += -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53 $(CPUFLAGS)
 	ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
@@ -375,7 +373,6 @@ else ifeq ($(platform), rockpro64)
 	FORCE_GLES = 1
 	SINGLE_PREC_FLAGS = 1
 	CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
-	CORE_DEFINES += -DFIX_MISSING_GLDOUBLE_BUG
 	CFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72.cortex-a53 -mfpu=neon-fp-armv8 $(CPUFLAGS)
 	CXXFLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a72 -mtune=cortex-a72.cortex-a53 -mfpu=neon-fp-armv8 $(CPUFLAGS)
 	ifeq ($(HAVE_CLANG),0)
@@ -398,7 +395,6 @@ else ifeq ($(platform), tinkerboard)
     FORCE_GLES = 1
     SINGLE_PREC_FLAGS = 1
     CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
-    CORE_DEFINES += -DFIX_MISSING_GLDOUBLE_BUG
     CFLAGS += -marm -mfpu=neon-vfpv4 -mtune=cortex-a17 -mfloat-abi=hard $(CPUFLAGS)
     CXXFLAGS += -marm -mfpu=neon-vfpv4 -mtune=cortex-a17 -mfloat-abi=hard $(CPUFLAGS)
     ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
@@ -419,7 +415,6 @@ else ifneq (,$(findstring odroid,$(platform)))
 	SINGLE_PREC_FLAGS = 1
 
 	CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
-	CORE_DEFINES += -DFIX_MISSING_GLDOUBLE_BUG
 	CFLAGS += -marm -mfloat-abi=hard $(CPUFLAGS)
 	CXXFLAGS += -marm -mfloat-abi=hard $(CPUFLAGS)
 

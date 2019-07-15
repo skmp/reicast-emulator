@@ -21,6 +21,7 @@
 //#include "../intc.h"
 //#include "../tmu.h"
 #include "hw/sh4/sh4_mem.h"
+#include "oslib/threading.h"
 
 #define printf_bm printf
 
@@ -38,6 +39,7 @@ bool	page_has_data[RAM_SIZE/PAGE_SIZE];
 std::map<void*, RuntimeBlockInfo*> blkmap;
 u32 bm_gc_luc,bm_gcf_luc;
 
+cMutex blocklist_lock;
 
 #define FPCA(x) ((DynarecCodeEntryPtr&)sh4rcb.fpcb[(x>>1)&FPCB_MASK])
 
@@ -87,27 +89,31 @@ RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
 
 void bm_CleanupDeletedBlocks()
 {
+	blocklist_lock.Lock();
 	for (auto it = del_blocks.begin(); it != del_blocks.end(); it++)
 		delete *it;
 
 	del_blocks.clear();
+	blocklist_lock.Unlock();
 }
 
 // takes RX pointer and returns stale RBI
 RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code)
 {
-
+	blocklist_lock.Lock();
 	for (auto it = del_blocks.begin(); it != del_blocks.end(); it++)
 	{
 		if ((*it)->contains_code((u8*)dynarec_code))
 			return (*it);
 	}
-
+	blocklist_lock.Unlock();
 	return 0;
 }
 
 void bm_AddBlock(RuntimeBlockInfo* blk, bool lockRam)
 {
+    blocklist_lock.Lock();
+
 	auto iter = blkmap.find((void*)blk->code);
 	if (iter != blkmap.end()) {
 		printf("DUP: %08X %p %08X %p\n", iter->second->addr, iter->second->code, blk->addr, blk->code);
@@ -131,6 +137,8 @@ void bm_AddBlock(RuntimeBlockInfo* blk, bool lockRam)
 			mem_b.LockRegion(ram_page * PAGE_SIZE, PAGE_SIZE);
 		}
 	}
+
+    blocklist_lock.Unlock();
 }
 
 void bm_DiscardBlock(RuntimeBlockInfo* blk)
@@ -243,16 +251,18 @@ RuntimeBlockInfo::~RuntimeBlockInfo()
 
 void RuntimeBlockInfo::AddRef(RuntimeBlockInfo* other) 
 { 
-	pre_refs.push_back(other); 
+	pre_refs.insert(other);
 }
 
 void RuntimeBlockInfo::RemRef(RuntimeBlockInfo* other) 
 { 
-	pre_refs.erase(find(pre_refs.begin(),pre_refs.end(),other)); 
+	pre_refs.erase(other);
 }
 
 void RuntimeBlockInfo::Discard()
 {
+	// Make a local copy so we can remove from the pre_refs list while RemRef (looping blocks)
+    set<RuntimeBlockInfo*> removed_blocks;
 	for (auto it = pre_refs.begin(); it != pre_refs.end(); it++)
 	{
 		if ((*it)->pBranchBlock == this)
@@ -265,13 +275,20 @@ void RuntimeBlockInfo::Discard()
 			(*it)->pNextBlock = nullptr;
 		}
 
-		(*it)->RemRef(this);
-
-		(*it)->Relink();
+        removed_blocks.insert(*it);
 	}
 
 	pBranchBlock = nullptr;
 	pNextBlock = nullptr;
+
+	// now mass remove and remref
+    for (auto it = removed_blocks.begin(); it != removed_blocks.end(); it++)
+    {
+
+        (*it)->RemRef(this);
+
+        (*it)->Relink();
+    }
 
 	Relink();
 	//die("Discard not implemented");
@@ -321,8 +338,9 @@ bool bm_LockedWrite(u8* addy)
 	{
 		u32 ram_offset = offset & RAM_MASK;
 		u32 ram_page = ram_offset / PAGE_SIZE;
-		u32 ram_obase = ram_page * PAGE_SIZE; 
+		u32 ram_obase = ram_page * PAGE_SIZE;
 
+        blocklist_lock.Lock();
 		printf_bm("BM_LW: Pagefault @ %p %08X %08X\n", addy, ram_offset, ram_page);
 
 		page_has_data[ram_page] = true;
@@ -338,6 +356,7 @@ bool bm_LockedWrite(u8* addy)
 
 		mem_b.UnLockRegion(ram_obase, PAGE_SIZE);
 
+        blocklist_lock.Unlock();
 		return true;
 	}
 	else

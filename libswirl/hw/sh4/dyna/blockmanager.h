@@ -5,6 +5,7 @@
 #include "types.h"
 #include "decoder.h"
 #pragma once
+#include <set>
 
 typedef void (*DynarecCodeEntryPtr)();
 
@@ -62,7 +63,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	virtual void Relocate(void* dst)=0;
 	
 	//predecessors references
-	vector<RuntimeBlockInfo*> pre_refs;
+	set<RuntimeBlockInfo*> pre_refs;
 
 	void AddRef(RuntimeBlockInfo* other);
 	void RemRef(RuntimeBlockInfo* other);

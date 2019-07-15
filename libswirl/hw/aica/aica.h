@@ -17,6 +17,8 @@
 #define REG_L (0x2D00)
 #define REG_M (0x2D04)
 #define entry(name,sz) u32 name:sz;
+
+#pragma pack(push, 1)
 struct CommonData_struct
 {
 	//+0
@@ -290,6 +292,24 @@ union InterruptInfo
 	};
 	u32 full;
 };
+
+struct AicaTimerData
+{
+	union
+	{
+		struct
+		{
+			u32 count:8;
+			u32 md:3;
+			u32 nil:5;
+			u32 pad:16;
+		};
+		u32 data;
+	};
+};
+
+#pragma pack(pop)
+
 extern InterruptInfo* MCIEB;
 extern InterruptInfo* MCIPD;
 extern InterruptInfo* MCIRE;
@@ -315,20 +335,7 @@ void WriteAicaReg(u32 reg,u32 data);
 
 ////
 //Timers :)
-struct AicaTimerData
-{
-	union
-	{
-		struct
-		{
-			u32 count:8;
-			u32 md:3;
-			u32 nil:5;
-			u32 pad:16;
-		};
-		u32 data;
-	};
-};
+
 class AicaTimer
 {
 public:

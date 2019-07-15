@@ -103,7 +103,7 @@ bool os_gl_init(void* wind, void* disp)
 		}
 
 
-		bool try_full_gl = true;
+		bool try_full_gl = false;
 		if (!eglBindAPI(EGL_OPENGL_API))
 		{
 			printf("eglBindAPI(EGL_OPENGL_API) failed: %x\n", eglGetError());

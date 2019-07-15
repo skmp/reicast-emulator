@@ -4,5 +4,10 @@
 
 #include "oslib/context.h"
 
-void context_from_segfault(rei_host_context_t* reictx, void* segfault_ctx);
-void context_to_segfault(rei_host_context_t* reictx, void* segfault_ctx);
+void segfault_store(void* segfault_ctx);
+void segfault_load(void* segfault_ctx);
+void segfault_set_pc(void* segfault_ctx, unat new_pc, unat* old_pc);
+
+void context_from_segfault(rei_host_context_t* reictx);
+void context_to_segfault(rei_host_context_t* reictx);
+

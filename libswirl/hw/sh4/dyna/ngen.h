@@ -81,12 +81,8 @@ void emit_SetBaseAddr();
 DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc);
 //Called when a block check failed, and the block needs to be invalidated
 DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc);
-//Called to compile code @pc
-DynarecCodeEntryPtr rdv_CompilePC();
 //Returns 0 if there is no code @pc, code ptr otherwise
 DynarecCodeEntryPtr rdv_FindCode();
-//Finds or compiles code @pc
-DynarecCodeEntryPtr rdv_FindOrCompile();
 
 //code -> pointer to code of block, dpc -> if dynamic block, pc. if cond, 0 for next, 1 for branch
 void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc);

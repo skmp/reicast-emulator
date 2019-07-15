@@ -138,7 +138,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	{
 		if (!trap_handled)
 		{
-			fault_printf("fault_handler: Blocking before restoring default SIGSEGV handler\n");
+			printf("fault_handler: Blocking before restoring default SIGSEGV handler\n");
 
 			for (;;) sleep(1);
 

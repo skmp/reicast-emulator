@@ -117,3 +117,5 @@ void bm_vmem_pagefill(void** ptr,u32 PAGE_SZ);
 void bm_sh4_jitsym(FILE* out);
 bool bm_LockedWrite(u8* addy);
 bool bm_RamPageHasData(u32 guest_addr, u32 len);
+
+void bm_CleanupDeletedBlocks();

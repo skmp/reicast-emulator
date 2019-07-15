@@ -3,6 +3,8 @@
 	Its based on a simple hashed-lists idea
 */
 
+#include "oslib/threading.h"
+
 #include <algorithm>
 #include <set>
 #include <map>
@@ -21,9 +23,8 @@
 //#include "../intc.h"
 //#include "../tmu.h"
 #include "hw/sh4/sh4_mem.h"
-#include "oslib/threading.h"
 
-#define printf_bm printf
+#define printf_bm(...)
 
 #if FEAT_SHREC != DYNAREC_NONE
 
@@ -39,7 +40,6 @@ bool	page_has_data[RAM_SIZE/PAGE_SIZE];
 std::map<void*, RuntimeBlockInfo*> blkmap;
 u32 bm_gc_luc,bm_gcf_luc;
 
-cMutex blocklist_lock;
 
 #define FPCA(x) ((DynarecCodeEntryPtr&)sh4rcb.fpcb[(x>>1)&FPCB_MASK])
 
@@ -77,7 +77,9 @@ RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
 	void *dynarecrw = CC_RX2RW(dynarec_code);
 	// Returns a block who's code addr is bigger than dynarec_code (or end)
 	auto iter = blkmap.upper_bound(dynarecrw);
-	iter--;  // Need to go back to find the potential candidate
+	
+	if (iter != blkmap.begin())
+		iter--;  // Need to go back to find the potential candidate
 
 	// However it might be out of bounds, check for that
 	if ((char*)iter->second->code + iter->second->host_code_size < dynarec_code)
@@ -89,30 +91,30 @@ RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
 
 void bm_CleanupDeletedBlocks()
 {
-	blocklist_lock.Lock();
+	printf_bm("bm_CleanupDeletedBlocks() start\n");
 	for (auto it = del_blocks.begin(); it != del_blocks.end(); it++)
 		delete *it;
 
 	del_blocks.clear();
-	blocklist_lock.Unlock();
+	printf_bm("bm_CleanupDeletedBlocks() end\n");
 }
 
 // takes RX pointer and returns stale RBI
 RuntimeBlockInfo* bm_GetStaleBlock(void* dynarec_code)
 {
-	blocklist_lock.Lock();
 	for (auto it = del_blocks.begin(); it != del_blocks.end(); it++)
 	{
 		if ((*it)->contains_code((u8*)dynarec_code))
 			return (*it);
 	}
-	blocklist_lock.Unlock();
 	return 0;
 }
 
 void bm_AddBlock(RuntimeBlockInfo* blk, bool lockRam)
 {
-    blocklist_lock.Lock();
+	printf_bm("bm_AddBlock()\n");
+	bm_CleanupDeletedBlocks();
+    
 
 	auto iter = blkmap.find((void*)blk->code);
 	if (iter != blkmap.end()) {
@@ -138,7 +140,6 @@ void bm_AddBlock(RuntimeBlockInfo* blk, bool lockRam)
 		}
 	}
 
-    blocklist_lock.Unlock();
 }
 
 void bm_DiscardBlock(RuntimeBlockInfo* blk)
@@ -183,6 +184,7 @@ void bm_DiscardAddress(u32 codeaddr)
 
 void bm_Periodical_1s()
 {
+	printf_bm("bm_Periodical_1s\n");
 	bm_CleanupDeletedBlocks();
 }
 
@@ -196,6 +198,13 @@ void bm_vmem_pagefill(void** ptr, u32 size_bytes)
 
 void bm_Reset()
 {
+	// discard all blocks
+	auto blocks = all_blocks;
+	for (auto it=blocks.begin(); it!=blocks.end(); it++)
+	{
+		bm_DiscardBlock(*it);
+	}
+
 	// reset ngen
 	rdv_ngen->OnResetBlocks();
 
@@ -216,21 +225,10 @@ void bm_Reset()
 		page_blocks[i].clear();
 	}
 
-	// clear all blocks
-	for (auto it=all_blocks.begin(); it!=all_blocks.end(); it++)
-	{
-		(*it)->relink_data=0;
-		(*it)->pNextBlock=0;
-		(*it)->pBranchBlock=0;
-		(*it)->Relink();
-	}
-
-	// mark blocks for deletion
-	del_blocks.insert(all_blocks.begin(),all_blocks.end());
 
 	// clear all remaining block lists
-	all_blocks.clear();
-	blkmap.clear();
+	verify(all_blocks.empty());
+	verify(blkmap.empty());
 }
 
 void bm_Init()
@@ -240,7 +238,9 @@ void bm_Init()
 
 void bm_Term()
 {
+	printf_bm("bm_Term 1\n");
 	bm_Reset();
+	printf_bm("bm_Term 2\n");
 	bm_CleanupDeletedBlocks();
 }
 
@@ -261,6 +261,7 @@ void RuntimeBlockInfo::RemRef(RuntimeBlockInfo* other)
 
 void RuntimeBlockInfo::Discard()
 {
+
 	// Make a local copy so we can remove from the pre_refs list while RemRef (looping blocks)
     set<RuntimeBlockInfo*> removed_blocks;
 	for (auto it = pre_refs.begin(); it != pre_refs.end(); it++)
@@ -278,8 +279,17 @@ void RuntimeBlockInfo::Discard()
         removed_blocks.insert(*it);
 	}
 
-	pBranchBlock = nullptr;
-	pNextBlock = nullptr;
+	if (pBranchBlock)
+	{
+		removed_blocks.insert(pBranchBlock);
+		pBranchBlock = nullptr;
+	}
+
+	if (pNextBlock)
+	{
+		removed_blocks.insert(pNextBlock);
+		pNextBlock = nullptr;
+	}
 
 	// now mass remove and remref
     for (auto it = removed_blocks.begin(); it != removed_blocks.end(); it++)
@@ -340,7 +350,6 @@ bool bm_LockedWrite(u8* addy)
 		u32 ram_page = ram_offset / PAGE_SIZE;
 		u32 ram_obase = ram_page * PAGE_SIZE;
 
-        blocklist_lock.Lock();
 		printf_bm("BM_LW: Pagefault @ %p %08X %08X\n", addy, ram_offset, ram_page);
 
 		page_has_data[ram_page] = true;
@@ -356,7 +365,6 @@ bool bm_LockedWrite(u8* addy)
 
 		mem_b.UnLockRegion(ram_obase, PAGE_SIZE);
 
-        blocklist_lock.Unlock();
 		return true;
 	}
 	else

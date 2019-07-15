@@ -34,6 +34,8 @@
 
 #include "libswirl.h"
 
+#define fault_printf(...)
+
 #if !defined(TARGET_NO_EXCEPTIONS)
 
 #if HOST_OS == OS_DARWIN
@@ -53,28 +55,100 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 }
 #endif
 
-void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
+u8* trap_ptr_fault;
+static thread_local unat trap_si_addr;
+static thread_local unat trap_pc;
+
+extern "C" u8* generic_fault_handler ()
 {
+	fault_printf("generic_fault_handler\n");
 	rei_host_context_t ctx;
 
-	context_from_segfault(&ctx, segfault_ctx);
+	fault_printf("generic_fault_handler\n");
+	context_from_segfault(&ctx);
 
-	unat addr = (unat)si->si_addr;
+	fault_printf("generic_fault_handler: original ptr: %p, trap ptr: %p\n", ctx.pc, trap_pc);
+	ctx.pc = trap_pc;
+
+	fault_printf("generic_fault_handler\n");
 	
-	if (dc_handle_fault(addr, &ctx))
+	if (dc_handle_fault(trap_si_addr, &ctx))
 	{
-		context_to_segfault(&ctx, segfault_ctx);
+		fault_printf("generic_fault_handler: final ptr: %p, trap ptr: %p\n", ctx.pc, trap_pc);
+		context_to_segfault(&ctx);
+		fault_printf("generic_fault_handler2\n");
 	}
 	else
 	{
-		printf("SIGSEGV @ %lx -> %p was not in handled\n", ctx.pc, si->si_addr);
-		printf("Restoring default SIGSEGV handler\n");
+		fault_printf("SIGSEGV @ %lx -> %p was not in handled\n", ctx.pc, (void*)trap_si_addr);
+		fault_printf("Restoring default SIGSEGV handler\n");
 		signal(SIGSEGV, SIG_DFL);
 	}
+
+	fault_printf("generic_fault_handler end\n");
+	return trap_ptr_fault;
+}
+
+
+
+void re_raise_fault()
+{
+	__asm__ __volatile__(
+		#if HOST_CPU == CPU_X86
+			"sub $8192, %esp\n"
+	        "and $-32, %esp\n"
+	        "call generic_fault_handler\n"
+	        "movb $0, (%eax)"
+		#elif HOST_CPU == CPU_X64
+	        "subq $8192, %rsp\n"
+	        "andq $-32, %rsp\n"
+	        "call generic_fault_handler\n"
+	        "movb $0, (%rax)"
+        #elif HOST_CPU == CPU_ARM
+			"sub sp, 8192\n"
+	        "and sp, -32\n"
+	        "bl generic_fault_handler\n"
+	        "ldr r1, [r0]"
+	    #elif HOST_CPU == CPU_ARM64
+	        "sub x0, sp, #8192\n"
+	        "and sp, x0, #-32\n"
+	        "bl generic_fault_handler\n"
+	        "ldr w1, [x0]"
+	    #else
+	    	#error missing cpu
+        #endif
+    );
+}
+
+void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
+{
+	fault_printf("fault_handler %p %p\n", si->si_addr, trap_ptr_fault);
+
+	if ((unat)si->si_addr == (unat)trap_ptr_fault)
+	{
+		segfault_load(segfault_ctx);
+		rei_host_context_t ctx;
+		context_from_segfault(&ctx);
+
+		fault_printf("fault_handler:resume %p\n", ctx.pc);
+	}
+	else
+	{
+		fault_printf("fault_handler:catch -> thunking to %p\n", trap_pc);
+		trap_si_addr = (unat)si->si_addr;
+		segfault_store(segfault_ctx);
+		segfault_set_pc(segfault_ctx, (unat)&re_raise_fault, &trap_pc);
+	}
+
+	fault_printf("fault_handler exit\n");
 }
 
 void install_fault_handler(void)
 {
+	trap_ptr_fault = (u8*)mmap(0, PAGE_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+
+	fault_printf("trap_ptr_fault %p\n", trap_ptr_fault);
+
 	struct sigaction act, segv_oact;
 	memset(&act, 0, sizeof(act));
 	act.sa_sigaction = fault_handler;

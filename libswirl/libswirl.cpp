@@ -26,6 +26,8 @@
 #include "input/gamepad_device.h"
 #include "rend/TexCache.h"
 
+#define fault_printf(...)
+
 void FlushCache();
 void LoadCustom();
 
@@ -943,28 +945,37 @@ void dc_loadstate()
 
 bool dc_handle_fault(unat addr, rei_host_context_t* ctx)
 {
+	fault_printf("dc_handle_fault: %p from %p\n", (u8*)addr, (u8*)ctx->pc);
+
 	bool dyna_cde = ((unat)CC_RX2RW(ctx->pc) > (unat)CodeCache) && ((unat)CC_RX2RW(ctx->pc) < (unat)(CodeCache + CODE_SIZE));
 
 	u8* address = (u8*)addr;
 
 	if (VramLockedWrite(address))
 	{
+		fault_printf("VramLockedWrite!\n");
+
 		return true;
 	}
 	else if (_vmem_bm_LockedWrite(address))
 	{
+		fault_printf("dc_handle_fault: _vmem_bm_LockedWrite!\n");
+
 		return true;
 	}
 	else if (bm_LockedWrite(address))
 	{
+		fault_printf("dc_handle_fault: bm_LockedWrite!\n");
 		return true;
 	}
 	else if (dyna_cde && rdv_ngen && rdv_ngen->Rewrite(ctx))
 	{
+		fault_printf("dc_handle_fault: rdv_ngen->Rewrite!\n");
 		return true;
 	}
 	else
 	{
+		fault_printf("dc_handle_fault: not handled!\n");
 		return false;
 	}
 }

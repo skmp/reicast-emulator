@@ -1,5 +1,7 @@
 #include "context.h"
 
+#define fault_printf(...)
+
 #if defined(_ANDROID)
 	#include <asm/sigcontext.h>
 #else
@@ -16,7 +18,16 @@
 
 //////
 
-#define MCTX(p) (((ucontext_t *)(segfault_ctx))->uc_mcontext p)
+#define UCTX(p) (((ucontext_t *)(segfault_ctx))->uc_mcontext p)
+
+#if HOST_OS == OS_DARWIN
+	#define UCTX_type mcontext_t
+	#define UCTX_data (UCTX())
+#else
+	#define UCTX_type mcontext_t
+	#define UCTX_data (&UCTX())
+#endif
+
 template <typename Ta, typename Tb>
 void bicopy(Ta& rei, Tb& seg, bool to_segfault) {
 	if (to_segfault) {
@@ -26,8 +37,29 @@ void bicopy(Ta& rei, Tb& seg, bool to_segfault) {
 		rei = seg;
 	}
 }
+#if !defined(TARGET_NO_EXCEPTIONS)
+	static thread_local UCTX_type segfault_copy;
+#endif
 
-void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_segfault) {
+void segfault_store(void* segfault_ctx) {
+#if !defined(TARGET_NO_EXCEPTIONS)
+	memcpy(&segfault_copy, UCTX_data, sizeof(segfault_copy));
+
+	fault_printf("sgctx stored, %d pc: %p\n", sizeof(segfault_copy), segfault_copy.gregs[REG_RIP]);
+#endif
+}
+
+void segfault_load(void* segfault_ctx) {
+#if !defined(TARGET_NO_EXCEPTIONS)
+	memcpy(UCTX_data, &segfault_copy, sizeof(*UCTX_data));
+
+	fault_printf("sgctx loaded, %d pc: %p\n", sizeof(*UCTX_data), UCTX_data->gregs[REG_RIP]);
+#endif
+}
+
+#define MCTX(p) ((*(UCTX_type*)segfault_ctx) p)
+
+void context_segfault_bicopy(rei_host_context_t* reictx, void* segfault_ctx, bool to_segfault) {
 
 #if !defined(TARGET_NO_EXCEPTIONS)
 #if HOST_CPU == CPU_ARM
@@ -78,7 +110,9 @@ void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_se
 	#elif defined(__NetBSD__)
 		bicopy(reictx->pc, MCTX(.__gregs[_REG_RIP]), to_segfault);
 	#elif HOST_OS == OS_LINUX
+		fault_printf("pc set: %d, value: %p %p\n", to_segfault, reictx->pc, MCTX(.gregs[REG_RIP]));
 		bicopy(reictx->pc, MCTX(.gregs[REG_RIP]), to_segfault);
+		fault_printf("pc set: %d, value: %p %p\n", to_segfault, reictx->pc, MCTX(.gregs[REG_RIP]));
     #elif HOST_OS == OS_DARWIN
         bicopy(reictx->pc, MCTX(->__ss.__rip), to_segfault);
     #else
@@ -95,10 +129,36 @@ void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_se
 	
 }
 
-void context_from_segfault(rei_host_context_t* reictx, void* segfault_ctx) {
-	context_segfault(reictx, segfault_ctx, false);
+
+void segfault_set_pc(void* segfault_ctx, unat new_pc, unat* old_pc)
+{
+#if !defined(TARGET_NO_EXCEPTIONS)
+	rei_host_context_t ctx;
+
+	context_segfault_bicopy(&ctx, UCTX_data, false);
+	fault_printf("segfault_set_pc: old pc: %lx\n", ctx.pc);
+
+	*old_pc = ctx.pc;
+	ctx.pc = new_pc;
+
+	context_segfault_bicopy(&ctx, UCTX_data, true);
+	fault_printf("segfault_set_pc: new pc: %lx\n", ctx.pc);
+#endif
 }
 
-void context_to_segfault(rei_host_context_t* reictx, void* segfault_ctx) {
-	context_segfault(reictx, segfault_ctx, true);
+
+void context_from_segfault(rei_host_context_t* reictx) {
+#if !defined(TARGET_NO_EXCEPTIONS)
+	fault_printf("context from segfault pc: %p, %p\n",reictx->pc, segfault_copy.gregs[REG_RIP]);
+	context_segfault_bicopy(reictx, &segfault_copy, false);
+	fault_printf("context from segfault pc: %p, %p\n",reictx->pc, segfault_copy.gregs[REG_RIP]);
+#endif
+}
+
+void context_to_segfault(rei_host_context_t* reictx) {
+#if !defined(TARGET_NO_EXCEPTIONS)
+	fault_printf("context to segfault pc: %p, %p\n",reictx->pc, segfault_copy.gregs[REG_RIP]);
+	context_segfault_bicopy(reictx, &segfault_copy, true);
+	fault_printf("context to segfault pc: %p, %p\n",reictx->pc, segfault_copy.gregs[REG_RIP]);
+#endif
 }

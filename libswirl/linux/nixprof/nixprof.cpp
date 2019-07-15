@@ -66,7 +66,8 @@ void sample_Syms(u8* data,u32 len)
 void prof_handler (int sn, siginfo_t * si, void *ctxr)
 {
 	rei_host_context_t ctx;
-	context_from_segfault(&ctx, ctxr);
+	segfault_store(ctxr);
+	context_from_segfault(&ctx);
 	
 	int thd=-1;
 	if (pthread_self()==thread[0]) thd=0;

@@ -22,7 +22,7 @@
  */
 #pragma once
 
-#pragma pack(1)
+#pragma pack(push,1)
 union modemreg_t
 {
 	u8 ptr[0x21];

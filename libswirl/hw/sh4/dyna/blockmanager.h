@@ -5,6 +5,7 @@
 #include "types.h"
 #include "decoder.h"
 #pragma once
+#include <set>
 
 typedef void (*DynarecCodeEntryPtr)();
 
@@ -62,7 +63,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	virtual void Relocate(void* dst)=0;
 	
 	//predecessors references
-	vector<RuntimeBlockInfo*> pre_refs;
+	set<RuntimeBlockInfo*> pre_refs;
 
 	void AddRef(RuntimeBlockInfo* other);
 	void RemRef(RuntimeBlockInfo* other);
@@ -116,3 +117,5 @@ void bm_vmem_pagefill(void** ptr,u32 PAGE_SZ);
 void bm_sh4_jitsym(FILE* out);
 bool bm_LockedWrite(u8* addy);
 bool bm_RamPageHasData(u32 guest_addr, u32 len);
+
+void bm_CleanupDeletedBlocks();

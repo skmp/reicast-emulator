@@ -58,6 +58,7 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 u8* trap_ptr_fault;
 static thread_local unat trap_si_addr;
 static thread_local unat trap_pc;
+static thread_local unat trap_handled = true;
 
 extern "C" u8* generic_fault_handler ()
 {
@@ -76,16 +77,17 @@ extern "C" u8* generic_fault_handler ()
 	{
 		fault_printf("generic_fault_handler: final ptr: %p, trap ptr: %p\n", ctx.pc, trap_pc);
 		context_to_segfault(&ctx);
-		fault_printf("generic_fault_handler2\n");
+		fault_printf("generic_fault_handler: handled\n");
+
+		trap_handled = true;
 	}
 	else
 	{
-		fault_printf("SIGSEGV @ %lx -> %p was not in handled\n", ctx.pc, (void*)trap_si_addr);
-		fault_printf("Restoring default SIGSEGV handler\n");
-		signal(SIGSEGV, SIG_DFL);
+		fault_printf("generic_fault_handler: not in handled SIGSEGV code: %lx addr:%p\n", ctx.pc, (void*)trap_si_addr);
+		trap_handled = false;
 	}
 
-	fault_printf("generic_fault_handler end\n");
+	fault_printf("generic_fault_handler: end\n");
 	return trap_ptr_fault;
 }
 
@@ -134,10 +136,22 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	}
 	else
 	{
-		fault_printf("fault_handler:catch -> thunking to %p\n", trap_pc);
-		trap_si_addr = (unat)si->si_addr;
-		segfault_store(segfault_ctx);
-		segfault_set_pc(segfault_ctx, (unat)&re_raise_fault, &trap_pc);
+		if (!trap_handled)
+		{
+			printf("fault_handler: Blocking before restoring default SIGSEGV handler\n");
+
+			for (;;) sleep(1);
+
+
+			signal(SIGSEGV, SIG_DFL);
+		}
+		else
+		{
+			fault_printf("fault_handler:catch -> thunking to %p\n", trap_pc);
+			trap_si_addr = (unat)si->si_addr;
+			segfault_store(segfault_ctx);
+			segfault_set_pc(segfault_ctx, (unat)&re_raise_fault, &trap_pc);
+		}
 	}
 
 	fault_printf("fault_handler exit\n");
@@ -145,6 +159,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 
 void install_fault_handler(void)
 {
+	// initialize trap state
 	trap_ptr_fault = (u8*)mmap(0, PAGE_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
 
 	fault_printf("trap_ptr_fault %p\n", trap_ptr_fault);

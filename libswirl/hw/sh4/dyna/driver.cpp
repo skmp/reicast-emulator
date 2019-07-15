@@ -19,6 +19,8 @@
 #include "ngen.h"
 #include "decoder.h"
 
+#define bm_printf(...)
+
 #if FEAT_SHREC != DYNAREC_NONE
 
 u8 SH4_TCB[CODE_SIZE+4096]
@@ -242,13 +244,27 @@ void RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	AnalyseBlock(this);
 }
 
-DynarecCodeEntryPtr rdv_CompilePC()
+DynarecCodeEntryPtr rdv_CompilePC_OrFail(bool soft_resets)
 {
 	u32 pc=next_pc;
 
+	bm_printf("rdv_CompilePC: %08X\n", next_pc);
 
-	if (emit_FreeSpace()<16*1024 || pc==0x8c0000e0 || pc==0xac010000 || pc==0xac008300)
-		recSh4_ClearCache();
+
+	if (soft_resets)
+	{
+		if (pc==0x8c0000e0 || pc==0xac010000 || pc==0xac008300)
+		{
+			bm_printf("rdv_CompilePC: failed (soft jit reset) %08X\n", next_pc);	 	
+			return nullptr;
+		}
+	}
+
+	if (emit_FreeSpace()<16*1024)
+	{
+		bm_printf("rdv_CompilePC: failed out of mem %08X\n", next_pc);
+		return nullptr;
+	}
 
 	RuntimeBlockInfo* rv=0;
 	do
@@ -276,7 +292,41 @@ DynarecCodeEntryPtr rdv_CompilePC()
 			pc=0;
 	} while(false && pc);
 
+	bm_printf("rdv_CompilePC: end %08X\n", next_pc);
+
 	return rv->code;
+}
+
+DynarecCodeEntryPtr rdv_FindOrCompile_OrFail()
+{
+        DynarecCodeEntryPtr rv = bm_GetCode(next_pc);  // Returns exec addr
+        if (rv == rdv_ngen->FailedToFindBlock)
+        {
+        	rv = rdv_CompilePC_OrFail(true);
+        	
+        	if (rv == nullptr)
+        		return nullptr;
+
+            rv = (DynarecCodeEntryPtr)CC_RW2RX(rv);  // Returns rw addr
+        }
+       
+        return rv;
+}
+
+DynarecCodeEntryPtr rdv_CompilePC_OrClearCache()
+{
+	auto rv = rdv_CompilePC_OrFail(true);
+
+	if (!rv)
+	{
+		recSh4_ClearCache();
+
+		rv = rdv_CompilePC_OrFail(false);
+
+		verify(rv != nullptr);
+	}
+
+	return rv;
 }
 
 DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
@@ -284,7 +334,7 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 	//printf("rdv_FailedToFindBlock ~ %08X\n",pc);
 	next_pc=pc;
 
-	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC());
+	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC_OrClearCache());
 }
 
 extern u32 rebuild_counter;
@@ -321,27 +371,23 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc)
 	printf("Discard: %08X, %p\n", pc, block);
 
 	bm_DiscardBlock(block);
-	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC());
-}
-
-DynarecCodeEntryPtr rdv_FindOrCompile()
-{
-	DynarecCodeEntryPtr rv = bm_GetCode(next_pc);  // Returns exec addr
-	if (rv == rdv_ngen->FailedToFindBlock)
-		rv = (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC());  // Returns rw addr
-	
-	return rv;
+	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC_OrClearCache());
 }
 
 void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 {
+	bm_printf("rdv_LinkBlock()\n");
 	// code is the RX addr to return after, however bm_GetBlock returns RW
 	RuntimeBlockInfo* rbi = bm_GetBlock(code);
 
+
+	bool do_link = true;
+
 	if (!rbi)
 	{
-		printf("Stale block ..");
+		printf("Stale block ..\n");
 		rbi = bm_GetStaleBlock(code);
+		do_link = false;
 	}
 	
 	verify(rbi != NULL);
@@ -364,48 +410,62 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 			next_pc=rbi->NextBlock;
 	}
 
-	DynarecCodeEntryPtr rv = rdv_FindOrCompile();  // Returns rx ptr
+	DynarecCodeEntryPtr rv = rdv_FindOrCompile_OrFail();  // Returns rx ptr or NULL
 
-	bool do_link=bm_GetBlock(code)==rbi;
-
-	if (do_link)
+	if (rv != nullptr)
 	{
-		if (bcls==BET_CLS_Dynamic)
-		{
-			verify(rbi->relink_data==0 || rbi->pBranchBlock==0);
+		RuntimeBlockInfo* nxt=bm_GetBlock(next_pc);
 
-			if (rbi->pBranchBlock!=0)
+		if (nxt)
+		{
+			if (do_link)
 			{
-				rbi->pBranchBlock->RemRef(rbi);
-				rbi->pBranchBlock=0;
-				rbi->relink_data=1;
+				if (bcls==BET_CLS_Dynamic)
+				{
+					// this is broken for now, I don't think it is used
+					verify(rbi->relink_data==0 || rbi->pBranchBlock==0);
+
+					if (rbi->pBranchBlock!=0)
+					{
+						rbi->pBranchBlock->RemRef(rbi);
+						rbi->pBranchBlock=0;
+						rbi->relink_data=1;
+					}
+					else if (rbi->relink_data==0)
+					{
+						rbi->pBranchBlock=nxt;
+						nxt->AddRef(rbi);
+					}
+				}
+				else
+				{
+				
+					if (rbi->BranchBlock==next_pc)
+						rbi->pBranchBlock=nxt;
+					if (rbi->NextBlock==next_pc)
+						rbi->pNextBlock=nxt;
+
+					nxt->AddRef(rbi);
+				}
+				u32 ncs=rbi->relink_offset+rbi->Relink();
+				verify(rbi->host_code_size>=ncs);
+				rbi->host_code_size=ncs;
 			}
-			else if (rbi->relink_data==0)
+			else
 			{
-				rbi->pBranchBlock=bm_GetBlock(next_pc);
-				rbi->pBranchBlock->AddRef(rbi);
+				printf(" .. null RBI: %08X -- unlinked stale block\n",next_pc);
 			}
 		}
-		else
-		{
-			RuntimeBlockInfo* nxt=bm_GetBlock(next_pc);
-
-			if (rbi->BranchBlock==next_pc)
-				rbi->pBranchBlock=nxt;
-			if (rbi->NextBlock==next_pc)
-				rbi->pNextBlock=nxt;
-
-			nxt->AddRef(rbi);
-		}
-		u32 ncs=rbi->relink_offset+rbi->Relink();
-		verify(rbi->host_code_size>=ncs);
-		rbi->host_code_size=ncs;
 	}
 	else
 	{
-		printf(" .. null RBI: %08X -- unlinked stale block\n",next_pc);
+		rv = rdv_CompilePC_OrClearCache();
 	}
+
+	bm_printf("rdv_LinkBlock() 2\n");
+	bm_CleanupDeletedBlocks();	// get rid of the old RBI, it is not needed any more
 	
+	bm_printf("rdv_LinkBlock() end\n");
 	return (void*)rv;
 }
 void recSh4_Stop()

@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.reicast.emulator"
     xmlns:tools="http://schemas.android.com/tools">
-    <application android:name="com.reicast.emulator.Emulator">
+    <application android:name="com.reicast.emulator.Emulator" android:banner="@drawable/ic_banner">
 	    <activity
 		    android:name="com.reicast.emulator.NativeGLActivity"/>
 		<activity-alias

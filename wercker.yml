@@ -1,6 +1,6 @@
 box: ubuntu
 
-build:
+setup:
     steps:
         - script:
             name: install-dependencies
@@ -8,18 +8,33 @@ build:
         - script:
             name: toolchain info
             code: gcc --version && x86_64-w64-mingw32-gcc --version
+
+linux-x64:
+    steps:
         - script:
             name: reicast Linux x64 build
             code: make -C reicast/linux -j `nproc` platform=x64
+
+linux-x86:
+    steps:
         - script:
             name: reicast Linux x86 build
             code: make -C reicast/linux -j `nproc` platform=x86
+
+mingw-x64:
+    steps:
         - script:
             name: reicast Windows x64 (MinGW) build
             code: make -C reicast/linux -j `nproc` platform=win32 CC_PREFIX=x86_64-w64-mingw32-
+
+linux-noexc:
+    steps:
         - script:
             name: reicast Linux x64 (No Exceptions) build
             code: make -C reicast/linux -j `nproc` platform="x64 noexceptions"
+
+linux-norwx:
+    steps:
         - script:
             name: reicast Linux x64 (No RWX pages) build
             code: make -C reicast/linux -j `nproc` platform="x64 norwxpages"

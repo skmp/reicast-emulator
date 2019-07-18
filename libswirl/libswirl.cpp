@@ -134,9 +134,9 @@ void plugins_Reset(bool Manual)
 
 void LoadSpecialSettings()
 {
-	auto dcp = dc_console.platform;
+	auto dcp = dc_console.flavor;
 
-	if (dcp == DCP_DREAMCAST)
+	if (dcp == DCF_DREAMCAST)
 	{
 	printf("Game ID is [%s]\n", reios_product_number);
 	rtt_to_buffer_game = false;
@@ -198,7 +198,7 @@ void LoadSpecialSettings()
 		extra_depth_game = true;
 	}
 }
-	else if (dcp == DCP_NAOMI || dcp == DCP_ATOMISWAVE)
+	else if (dcp == DCF_NAOMI || dcp == DCF_ATOMISWAVE)
 	{
 	printf("Game ID is [%s]\n", naomi_game_id);
 
@@ -311,9 +311,9 @@ int reicast_init(int argc, char* argv[])
 
 bool game_started;
 
-bool setup_platform(DreamcastPlatform dcp)
+bool setup_platform(DreamcastFlavor dcp)
 {
-	if (dcp == DCP_DREAMCAST)
+	if (dcp == DCF_DREAMCAST)
 	{
 		//DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
 
@@ -327,7 +327,7 @@ bool setup_platform(DreamcastPlatform dcp)
 		dc_console.rom_names = "";
 		dc_console.nvr_optional = false;
 	}
-	else if (dcp == DCP_DEV_UNIT)
+	else if (dcp == DCF_DEV_UNIT)
 	{
 		//Devkit : 32 mb ram, 8? mb vram, 2? mb aram, 2? mb bios, ? flash
 		dc_console.ram_size = 32 * 1024 * 1024;
@@ -340,7 +340,7 @@ bool setup_platform(DreamcastPlatform dcp)
 		dc_console.rom_names = "";
 		dc_console.nvr_optional = false;
 	}
-	else if (dcp == DCP_NAOMI)
+	else if (dcp == DCF_NAOMI)
 	{
 		//Naomi : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
 		dc_console.ram_size = 32 * 1024 * 1024;
@@ -353,7 +353,7 @@ bool setup_platform(DreamcastPlatform dcp)
 		dc_console.rom_names = ";epr-21576d.bin";
 		dc_console.nvr_optional = true;
 	}
-	else if (dcp == DCP_NAOMI2)
+	else if (dcp == DCF_NAOMI2)
 	{
 		//Naomi2 : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
 		dc_console.ram_size = 32 * 1024 * 1024;
@@ -366,7 +366,7 @@ bool setup_platform(DreamcastPlatform dcp)
 		dc_console.rom_names = "";
 		dc_console.nvr_optional = true;
 	}
-	else if (dcp == DCP_ATOMISWAVE)
+	else if (dcp == DCF_ATOMISWAVE)
 	{
 		//Atomiswave : 16 mb ram, 8 mb vram, 8 mb aram, 128kb bios on flash, 128kb battery-backed ram
 		dc_console.ram_size = 16 * 1024 * 1024;
@@ -391,7 +391,7 @@ bool setup_platform(DreamcastPlatform dcp)
 	return true;
 }
 
-int dc_start_game(DreamcastPlatform dcp, const char *path)
+int dc_start_game(DreamcastFlavor dcp, const char *path)
 {
 	setup_platform(dcp);
 
@@ -409,13 +409,13 @@ int dc_start_game(DreamcastPlatform dcp, const char *path)
 	{
 		InitSettings();
 		LoadSettings(false);
-		if (dcp != DCP_DREAMCAST || !settings.bios.UseReios)
+		if (dcp != DCF_DREAMCAST || !settings.bios.UseReios)
 		{
 			if (!LoadRomFiles(get_readonly_data_path(DATA_PATH)))
 				return -5;
 		}
 
-		if (dcp == DCP_DREAMCAST)
+		if (dcp == DCF_DREAMCAST)
 		{
 			mcfg_CreateDevices();
 
@@ -432,14 +432,14 @@ int dc_start_game(DreamcastPlatform dcp, const char *path)
 					LoadCustom();
 			}
 		}
-		else if (dcp == DCP_NAOMI || dcp == DCP_ATOMISWAVE)
+		else if (dcp == DCF_NAOMI || dcp == DCF_ATOMISWAVE)
 		{
 			if (!naomi_cart_SelectFile())
 				return -6;
 			LoadCustom();
-			if (dcp == DCP_NAOMI)
+			if (dcp == DCF_NAOMI)
 				mcfg_CreateNAOMIJamma();
-			else if (dcp == DCP_ATOMISWAVE)
+			else if (dcp == DCF_ATOMISWAVE)
 				mcfg_CreateAtomisWaveControllers();
 		}
 		dc_reset();
@@ -470,7 +470,7 @@ int dc_start_game(DreamcastPlatform dcp, const char *path)
 	if (plugins_Init())
 		return -3;
 
-	if (dcp == DCP_NAOMI || dcp == DCP_ATOMISWAVE)
+	if (dcp == DCF_NAOMI || dcp == DCF_ATOMISWAVE)
 	{
 		if (!naomi_cart_SelectFile())
 			return -6;
@@ -497,11 +497,11 @@ int dc_start_game(DreamcastPlatform dcp, const char *path)
 
 	mem_map_default();
 
-	if (dcp == DCP_NAOMI)
+	if (dcp == DCF_NAOMI)
 	{
 		mcfg_CreateNAOMIJamma();
 	}
-	else if (dcp == DCP_ATOMISWAVE)
+	else if (dcp == DCF_ATOMISWAVE)
 	{
 		mcfg_CreateAtomisWaveControllers();
 	}
@@ -565,7 +565,7 @@ void dc_term()
 {
 	sh4_cpu.Term();
 
-	if (dc_console.platform != DCP_DREAMCAST)
+	if (dc_console.flavor != DCF_DREAMCAST)
 	{
 		naomi_cart_Close();
 	}
@@ -797,7 +797,7 @@ void LoadCustom()
 	char* reios_id;
 	char* reios_software_name;
 
-	if (dc_console.platform == DCP_DREAMCAST)
+	if (dc_console.flavor == DCF_DREAMCAST)
 	{
 		reios_id = reios_disk_id();
 
@@ -807,7 +807,7 @@ void LoadCustom()
 		if (*p == '\0')
 			return;
 	}
-	else if (dc_console.platform == DCP_NAOMI || dc_console.platform == DCP_ATOMISWAVE)
+	else if (dc_console.flavor == DCF_NAOMI || dc_console.flavor == DCF_ATOMISWAVE)
 	{
 		reios_id = naomi_game_id;
 		reios_software_name = naomi_game_id;

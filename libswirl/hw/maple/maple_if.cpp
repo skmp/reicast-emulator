@@ -72,7 +72,7 @@ void maple_vblank()
 		}
 	}
 
-	if (dc_console.platform == DCP_DREAMCAST)
+	if (dc_console.flavor == DCF_DREAMCAST)
 	{
 		maple_handle_reconnect();
 	}

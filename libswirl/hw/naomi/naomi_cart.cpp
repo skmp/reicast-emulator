@@ -126,7 +126,7 @@ static bool naomi_LoadBios(const char *filename, Archive *child_archive, Archive
 	if (bios_archive != NULL)
 		delete bios_archive;
 
-	if (dc_console.platform != DCP_ATOMISWAVE)
+	if (dc_console.flavor != DCF_ATOMISWAVE)
 	{
 		// Reload the writeable portion of the FlashROM
 		//TODOD: FIX THIS
@@ -171,7 +171,7 @@ static bool naomi_cart_LoadZip(char *filename)
 
 	struct Game *game = &Games[gameid];
 
-	if (dc_console.platform == DCP_NAOMI)
+	if (dc_console.flavor == DCF_NAOMI)
 	{
 		if (game->cart_type == AW)
 		{

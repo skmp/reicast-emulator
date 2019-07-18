@@ -772,7 +772,7 @@ void sb_Init()
 
 	asic_reg_Init();
 
-	if (dc_console.platform == DCP_DREAMCAST)
+	if (dc_console.flavor == DCF_DREAMCAST)
 	{
 		gdrom_reg_Init();
 	}
@@ -786,7 +786,7 @@ void sb_Init()
 	maple_Init();
 	aica_sb_Init();
 
-	if (dc_console.platform == DCP_DREAMCAST)
+	if (dc_console.flavor == DCF_DREAMCAST)
 	{
 		ModemInit();
 	}
@@ -796,7 +796,7 @@ void sb_Reset(bool Manual)
 {
 	asic_reg_Reset(Manual);
 
-	if (dc_console.platform == DCP_DREAMCAST)
+	if (dc_console.flavor == DCF_DREAMCAST)
 		gdrom_reg_Reset(Manual);
 	else
 		naomi_reg_Reset(Manual);
@@ -812,7 +812,7 @@ void sb_Term()
 	maple_Term();
 	pvr_sb_Term();
 
-	if (dc_console.platform == DCP_DREAMCAST)
+	if (dc_console.flavor == DCF_DREAMCAST)
 		gdrom_reg_Term();
 	else
 		naomi_reg_Term();

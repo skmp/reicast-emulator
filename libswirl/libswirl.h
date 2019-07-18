@@ -4,15 +4,15 @@
 #include "oslib/context.h"
 
 
-enum DreamcastPlatform
+enum DreamcastFlavor
 {
-	DCP_DREAMCAST,		/* Works, for the most part */
-	DCP_DEV_UNIT,		/* This is missing hardware */
-	DCP_NAOMI,			/* Works, for the most part */
-	DCP_NAOMI2,			/* Needs to be done, 2xsh4 + 2xpvr + custom TNL */
-	DCP_ATOMISWAVE,		/* Needs to be done, DC-like hardware with possibly more ram */
-	DCP_HIKARU,			/* Needs to be done, 2xsh4, 2x aica , custom vpu */
-	DCP_AURORA			/* Needs to be done, Uses newer 300 mhz sh4 + 150 mhz pvr mbx SoC */
+	DCF_DREAMCAST,		/* Works, for the most part */
+	DCF_DEV_UNIT,		/* This is missing hardware */
+	DCF_NAOMI,			/* Works, for the most part */
+	DCF_NAOMI2,			/* Needs to be done, 2xsh4 + 2xpvr + custom TNL */
+	DCF_ATOMISWAVE,		/* Needs to be done, DC-like hardware with possibly more ram */
+	DCF_HIKARU,			/* Needs to be done, 2xsh4, 2x aica , custom vpu */
+	DCF_AURORA			/* Needs to be done, Uses newer 300 mhz sh4 + 150 mhz pvr mbx SoC */
 };
 
 struct dreamcast_console_t
@@ -20,7 +20,7 @@ struct dreamcast_console_t
 	u32 ram_mask;
 	u32 vram_mask;
 	u32 aram_mask;
-	DreamcastPlatform platform;
+	DreamcastFlavor flavor;
 
 	u32 ram_size;
 	u32 vram_size;
@@ -43,7 +43,7 @@ void dc_stop();
 void dc_reset();
 void dc_resume();
 void dc_term();
-int dc_start_game(DreamcastPlatform dcp, const char* path);
+int dc_start_game(DreamcastFlavor dcp, const char* path);
 
 void* dc_run(void*);
 

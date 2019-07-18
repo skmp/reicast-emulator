@@ -78,7 +78,7 @@ struct MapleConfigMap : IMapleConfigMap
 		UpdateInputState(player_num);
 
 		pjs->kcode=kcode[player_num];
-		if (dc_console.platform == DCP_DREAMCAST)
+		if (dc_console.flavor == DCF_DREAMCAST)
 		{
 			pjs->kcode |= 0xF901;		// mask off DPad2, C, D and Z
 			pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
@@ -86,7 +86,7 @@ struct MapleConfigMap : IMapleConfigMap
 			pjs->trigger[PJTI_R] = rt[player_num];
 			pjs->trigger[PJTI_L] = lt[player_num];
 		}
-		else if (dc_console.platform == DCP_ATOMISWAVE)
+		else if (dc_console.flavor == DCF_ATOMISWAVE)
 		{
 			pjs->kcode = 0xFFFF;
 			for (int i = 0; i < 16; i++)

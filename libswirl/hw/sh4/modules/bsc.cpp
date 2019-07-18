@@ -11,7 +11,7 @@ BSC_PDTRA_type BSC_PDTRA;
 void write_BSC_PCTRA(u32 addr, u32 data)
 {
 	BSC_PCTRA.full=(u16)data;
-	if (dc_console.platform == DCP_NAOMI)
+	if (dc_console.flavor == DCF_NAOMI)
 	{
 		NaomiBoardIDWriteControl((u16)data);
 	}
@@ -22,7 +22,7 @@ void write_BSC_PDTRA(u32 addr, u32 data)
 	BSC_PDTRA.full=(u16)data;
 	//printf("D:BSC_PDTRA = %08X\n",data);
 
-	if (dc_console.platform == DCP_NAOMI)
+	if (dc_console.flavor == DCF_NAOMI)
 	{
 		NaomiBoardIDWrite((u16)data);
 	}
@@ -30,7 +30,7 @@ void write_BSC_PDTRA(u32 addr, u32 data)
 
 u32 read_BSC_PDTRA(u32 addr)
 {
-	if (dc_console.platform == DCP_NAOMI)
+	if (dc_console.flavor == DCF_NAOMI)
 	{
 		return NaomiBoardIDRead();
 	}
@@ -113,7 +113,7 @@ void bsc_init()
 
 	//note: naomi//aw might depend on rfcr
 
-	if (dc_console.platform == DCP_NAOMI || dc_console.platform == DCP_ATOMISWAVE)
+	if (dc_console.flavor == DCF_NAOMI || dc_console.flavor == DCF_ATOMISWAVE)
 	{
 		sh4_rio_reg(BSC, BSC_RFCR_addr, RIO_RO, 16);
 		BSC_RFCR.full = 17;

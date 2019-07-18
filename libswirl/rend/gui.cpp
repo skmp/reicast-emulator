@@ -648,7 +648,7 @@ static void gui_display_settings()
     	if (maple_devices_changed)
     	{
     		maple_devices_changed = false;
-			if (dc_console.platform == DCP_DREAMCAST)
+			if (dc_console.flavor == DCF_DREAMCAST)
 			{
     			maple_ReconnectDevices();
     			reset_vmus();
@@ -1426,7 +1426,7 @@ static void gui_display_demo()
 static void gui_start_game(const std::string& path)
 {
 	//TODO: Auto detect dcp
-	int rc = dc_start_game(DCP_DREAMCAST, path.empty() ? NULL : path.c_str());
+	int rc = dc_start_game(DCF_DREAMCAST, path.empty() ? NULL : path.c_str());
 	if (rc != 0)
 	{
 		gui_state = Main;

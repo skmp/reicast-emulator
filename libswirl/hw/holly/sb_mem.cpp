@@ -49,14 +49,14 @@ extern bool bios_loaded;
 
 bool LoadRomFiles(const string& root)
 {
-	DreamcastPlatform dcp = dc_console.platform;
+	DreamcastFlavor dcp = dc_console.flavor;
 	romfiles.init();
 
-	if (dcp != DCP_ATOMISWAVE)
+	if (dcp != DCF_ATOMISWAVE)
 	{
 		if (!romfiles.sys_rom->Load(root, ROM_PREFIX, "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin" + ROM_NAMES, "bootrom"))
 		{
-			if (dcp == DCP_DREAMCAST)
+			if (dcp == DCF_DREAMCAST)
 			{
 				// Dreamcast absolutely needs a BIOS
 				msgboxf("Unable to find bios in \n%s\nExiting...", MBX_ICONERROR, root.c_str());
@@ -69,7 +69,7 @@ bool LoadRomFiles(const string& root)
 
 	bool nvmem_loaded = false;
 
-	if (dcp == DCP_DREAMCAST)
+	if (dcp == DCF_DREAMCAST)
 		nvmem_loaded = romfiles.sys_flash->Load(root, ROM_PREFIX, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram");
 	else
 		nvmem_loaded = romfiles.sys_bbsram->Load(get_game_save_prefix() + ".nvmem");
@@ -87,7 +87,7 @@ bool LoadRomFiles(const string& root)
 		}
 	}
 
-	if (dcp == DCP_DREAMCAST)
+	if (dcp == DCF_DREAMCAST)
 	{
 		struct flash_syscfg_block syscfg;
 		int res = romfiles.sys_flash->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
@@ -111,7 +111,7 @@ bool LoadRomFiles(const string& root)
 		romfiles.sys_flash->WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
 	}
 
-	if (dcp == DCP_ATOMISWAVE)
+	if (dcp == DCF_ATOMISWAVE)
 	{
 		romfiles.sys_rom->Load(get_game_save_prefix() + ".nvmem2");
 	}
@@ -121,9 +121,9 @@ bool LoadRomFiles(const string& root)
 
 void SaveRomFiles(const string& root)
 {
-	DreamcastPlatform dcp = dc_console.platform;
+	DreamcastFlavor dcp = dc_console.flavor;
 
-	if (dcp == DCP_DREAMCAST)
+	if (dcp == DCF_DREAMCAST)
 	{
 		romfiles.sys_flash->Save(root, ROM_PREFIX, "nvmem.bin", "nvmem");
 	}
@@ -132,7 +132,7 @@ void SaveRomFiles(const string& root)
 		romfiles.sys_bbsram->Save(get_game_save_prefix() + ".nvmem");
 	}
 
-	if (dcp == DCP_ATOMISWAVE)
+	if (dcp == DCF_ATOMISWAVE)
 	{
 		romfiles.aw_rom->Save(get_game_save_prefix() + ".nvmem2");
 	}
@@ -148,7 +148,7 @@ bool LoadHle(const string& root) {
 
 u32 ReadNVMEM(u32 addr,u32 sz)
 {
-	if (dc_console.platform == DCP_DREAMCAST)
+	if (dc_console.flavor == DCF_DREAMCAST)
 		return romfiles.sys_flash->Read(addr, sz);
 	else
 		return romfiles.sys_bbsram->Read(addr,sz);
@@ -156,7 +156,7 @@ u32 ReadNVMEM(u32 addr,u32 sz)
 
 void WriteNVMEM(u32 addr, u32 data, u32 sz)
 {
-	if (dc_console.platform == DCP_DREAMCAST)
+	if (dc_console.flavor == DCF_DREAMCAST)
 		return romfiles.sys_flash->Write(addr, data, sz);
 	else
 		return romfiles.sys_bbsram->Write(addr, data, sz);
@@ -164,7 +164,7 @@ void WriteNVMEM(u32 addr, u32 data, u32 sz)
 
 u32 ReadBios(u32 addr, u32 sz)
 {
-	if (dc_console.platform == DCP_ATOMISWAVE)
+	if (dc_console.flavor == DCF_ATOMISWAVE)
 		return romfiles.aw_rom->Read(addr, sz);
 	else
 		return romfiles.sys_rom->Read(addr, sz);
@@ -174,7 +174,7 @@ u32 ReadBios(u32 addr, u32 sz)
 
 void WriteBios(u32 addr, u32 data, u32 sz)
 {
-	if (dc_console.platform == DCP_ATOMISWAVE)
+	if (dc_console.flavor == DCF_ATOMISWAVE)
 	{
 		if (sz != 1)
 		{
@@ -237,7 +237,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
-			if (dc_console.platform == DCP_NAOMI || dc_console.platform == DCP_ATOMISWAVE)
+			if (dc_console.flavor == DCF_NAOMI || dc_console.flavor == DCF_ATOMISWAVE)
 				return (T)ReadMem_naomi(addr, sz);
 			else
 				return (T)ReadMem_gdrom(addr, sz);
@@ -259,7 +259,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 	{
 		//TODO: Modem selection
 
-		if (dc_console.platform == DCP_NAOMI || dc_console.platform == DCP_ATOMISWAVE)
+		if (dc_console.flavor == DCF_NAOMI || dc_console.flavor == DCF_ATOMISWAVE)
 			return (T)libExtDevice_ReadMem_A0_006(addr, sz);
 		else
 			return (T)ModemReadMem_A0_006(addr, sz);
@@ -307,7 +307,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 		//TODO: Check AW
 		//if (base <= 0x0001) // Only 128k BIOS on AtomisWave
 
-		if (dc_console.platform != DCP_ATOMISWAVE )
+		if (dc_console.flavor != DCF_ATOMISWAVE )
 			WriteBios(addr,data,sz);
 		else if (base <= 0x0001)
 			WriteBios(addr, data, sz);
@@ -327,7 +327,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
-			if (dc_console.platform == DCP_NAOMI || dc_console.platform == DCP_ATOMISWAVE)
+			if (dc_console.flavor == DCF_NAOMI || dc_console.flavor == DCF_ATOMISWAVE)
 			{
 				WriteMem_naomi(addr, data, sz);
 			}
@@ -349,7 +349,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) // MODEM
 	{
-		if (dc_console.platform == DCP_NAOMI || dc_console.platform == DCP_ATOMISWAVE)
+		if (dc_console.flavor == DCF_NAOMI || dc_console.flavor == DCF_ATOMISWAVE)
 			libExtDevice_WriteMem_A0_006(addr, data, sz);
 		else
 			ModemWriteMem_A0_006(addr, data, sz);

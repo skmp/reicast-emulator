@@ -243,7 +243,7 @@ struct DCFlashChip : MemChip
 	virtual u8 Read8(u32 addr)
 	{
 
-		if (dc_console.platform == DCP_DREAMCAST)
+		if (dc_console.flavor == DCF_DREAMCAST)
 		{
 			switch (addr)
 			{
@@ -367,7 +367,7 @@ struct DCFlashChip : MemChip
 				printf("Erasing Chip!\n");
 				u8 save[0x2000];
 
-				if (dc_console.platform == DCP_ATOMISWAVE)
+				if (dc_console.flavor == DCF_ATOMISWAVE)
 				{	
 					// this area is write-protected on AW
 					memcpy(save, data + 0x1a000, 0x2000);
@@ -375,7 +375,7 @@ struct DCFlashChip : MemChip
 				
 				memset(data + write_protect_size, 0xff, size - write_protect_size);
 				
-				if (dc_console.platform == DCP_ATOMISWAVE)
+				if (dc_console.flavor == DCF_ATOMISWAVE)
 				{
 					memcpy(data + 0x1a000, save, 0x2000);
 				}
@@ -389,7 +389,7 @@ struct DCFlashChip : MemChip
 				{
 
 					u8 save[0x2000];
-					if (dc_console.platform == DCP_ATOMISWAVE)
+					if (dc_console.flavor == DCF_ATOMISWAVE)
 					{
 						// this area is write-protected on AW
 						memcpy(save, data + 0x1a000, 0x2000);
@@ -398,7 +398,7 @@ struct DCFlashChip : MemChip
 					printf("Erase Sector %08X! (%08X)\n",addr,addr&(~0x3FFF));
 					memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
 					
-					if (dc_console.platform == DCP_ATOMISWAVE)
+					if (dc_console.flavor == DCF_ATOMISWAVE)
 					{
 						memcpy(data + 0x1a000, save, 0x2000);
 					}

@@ -3,7 +3,6 @@ image: Visual Studio 2017
 
 configuration:
 - RelWithDebInfo
-- fast
 
 platform:
 - x64
@@ -11,12 +10,6 @@ platform:
 before_build:
   - cmd: >-
       if "%CONFIGURATION%"=="RelWithDebInfo" (set BUILD_PATH=build)
-      
-      if "%CONFIGURATION%"=="fast" (set BUILD_PATH=reicast\linux)
-      
-      set EXTRA_PATH=C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin\
-      
-      set PATH=%EXTRA_PATH%;%PATH%
       
       if not exist %BUILD_PATH% (mkdir %BUILD_PATH%)
      
@@ -28,20 +21,15 @@ build_script:
   - cmd: >-
       if "%CONFIGURATION%"=="RelWithDebInfo" (msbuild reicast.sln /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
       
-      if "%CONFIGURATION%"=="fast" (mingw32-make platform=win32)
 
 after_build:
   - cmd: >-      
       if "%CONFIGURATION%"=="RelWithDebInfo" (cd .. && set EXE_PATH=build\RelWithDebInfo\reicast.exe)
       
-      if "%CONFIGURATION%"=="fast" (cd ..\.. && set EXE_PATH=reicast\linux\nosym-reicast.exe)
-      
       mkdir artifacts
       
       move %EXE_PATH% artifacts\reicast-win_%PLATFORM%-%CONFIGURATION%-%APPVEYOR_REPO_COMMIT%.exe
       
-      if "%CONFIGURATION%"=="fast" (copy %EXTRA_PATH%\libgcc_s_seh-1.dll artifacts && copy %EXTRA_PATH%\libwinpthread-1.dll artifacts && copy %EXTRA_PATH%\libgomp-1.dll artifacts)
-
 artifacts:
   - path: artifacts
     name: reicast-win_$(PLATFORM)-$(CONFIGURATION)-$(APPVEYOR_REPO_COMMIT)

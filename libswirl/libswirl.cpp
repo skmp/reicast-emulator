@@ -311,7 +311,7 @@ int reicast_init(int argc, char* argv[])
 
 bool game_started;
 
-bool setup_platform(DreamcastFlavor dcp)
+bool dc_set_flavor(DreamcastFlavor dcp)
 {
 	if (dcp == DCF_DREAMCAST)
 	{
@@ -388,12 +388,17 @@ bool setup_platform(DreamcastFlavor dcp)
 	dc_console.vram_mask = dc_console.vram_size - 1;
 	dc_console.aram_mask = dc_console.aram_size - 1;
 	
+	dc_console.flavor = dcp;
+	dc_console.flavor_set = true;
+
 	return true;
 }
 
-int dc_start_game(DreamcastFlavor dcp, const char *path)
+int dc_start_game(const char *path)
 {
-	setup_platform(dcp);
+	assert(dc_console.flavor_set);
+
+	auto dcp = dc_console.flavor;
 
 	// TODO: Proper vmem init
 	_vmem_init(); // this is a hack

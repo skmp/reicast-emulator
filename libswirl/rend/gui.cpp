@@ -76,6 +76,8 @@ void gui_init()
 		return;
 	inited = true;
 
+	dc_set_flavor(DCF_DREAMCAST);
+
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -1375,26 +1377,30 @@ static void add_game_directory(const std::string& path, std::vector<GameMedia>& 
 		}
 		else
 		{
-			// dreamcast
-			if (name.size() >= 4)
+			if (dc_console.flavor == DCF_DREAMCAST)
 			{
-				std::string extension = name.substr(name.size() - 4).c_str();
-				//printf("  found game %s ext %s\n", entry->d_name, extension.c_str());
-				if (stricmp(extension.c_str(), ".cdi") && stricmp(extension.c_str(), ".gdi") && stricmp(extension.c_str(), ".chd") && stricmp(extension.c_str(), ".cue"))
+				// dreamcast
+				if (name.size() >= 4)
+				{
+					std::string extension = name.substr(name.size() - 4).c_str();
+					//printf("  found game %s ext %s\n", entry->d_name, extension.c_str());
+					if (stricmp(extension.c_str(), ".cdi") && stricmp(extension.c_str(), ".gdi") && stricmp(extension.c_str(), ".chd") && stricmp(extension.c_str(), ".cue"))
+						continue;
+					game_list.push_back({ name, child_path });
+				}
+			}
+			else
+			{
+				// others
+				std::string::size_type dotpos = name.find_last_of(".");
+				if (dotpos == std::string::npos || dotpos == name.size() - 1)
+					continue;
+				std::string extension = name.substr(dotpos);
+				if (stricmp(extension.c_str(), ".zip") && stricmp(extension.c_str(), ".7z") && stricmp(extension.c_str(), ".bin")
+					&& stricmp(extension.c_str(), ".lst") && stricmp(extension.c_str(), ".dat"))
 					continue;
 				game_list.push_back({ name, child_path });
 			}
-
-			// others
-			std::string::size_type dotpos = name.find_last_of(".");
-			if (dotpos == std::string::npos || dotpos == name.size() - 1)
-				continue;
-			std::string extension = name.substr(dotpos);
-			if (stricmp(extension.c_str(), ".zip") && stricmp(extension.c_str(), ".7z") && stricmp(extension.c_str(), ".bin")
-					 && stricmp(extension.c_str(), ".lst") && stricmp(extension.c_str(), ".dat"))
-				continue;
-			game_list.push_back({ name, child_path });
-
 		}
 	}
 	closedir(dir);
@@ -1426,7 +1432,7 @@ static void gui_display_demo()
 static void gui_start_game(const std::string& path)
 {
 	//TODO: Auto detect dcp
-	int rc = dc_start_game(DCF_DREAMCAST, path.empty() ? NULL : path.c_str());
+	int rc = dc_start_game(path.empty() ? NULL : path.c_str());
 	if (rc != 0)
 	{
 		gui_state = Main;
@@ -1459,8 +1465,27 @@ static void gui_display_content()
 
     ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 8 * scaling));		// from 8, 4
-    ImGui::AlignTextToFramePadding();
+	// Show flavor option
+	{
+		int flavor = dc_console.flavor;
+
+		ImGui::RadioButton("Dreamcast", &flavor, DCF_DREAMCAST);
+		ImGui::SameLine();
+		ImGui::RadioButton("NAOMI", &flavor, DCF_NAOMI);
+		ImGui::SameLine();
+		ImGui::RadioButton("AtomisWave", &flavor, DCF_ATOMISWAVE);
+
+
+		if (flavor != dc_console.flavor)
+		{
+			dc_set_flavor((DreamcastFlavor)flavor);
+			gui_refresh_files();
+		}
+	}
+
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 8 * scaling));		// from 8, 4
+	ImGui::AlignTextToFramePadding();
+
     ImGui::Text("GAMES");
 
     static ImGuiTextFilter filter;
@@ -1473,6 +1498,7 @@ static void gui_display_content()
     ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
     if (ImGui::Button("Settings"))//, ImVec2(0, 30 * scaling)))
     	gui_state = Settings;
+
     ImGui::PopStyleVar();
 
     fetch_game_list();
@@ -1495,7 +1521,7 @@ static void gui_display_content()
 		}
 		
 		ImGui::PushID("bios");
-		if (ImGui::Selectable("Dreamcast BIOS"))
+		if (ImGui::Selectable("Run the BIOS"))
 		{
 			gui_state = ClosedNoResume;
 			cfgSetVirtual("config", "image", "");

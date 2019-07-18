@@ -33,6 +33,8 @@ struct dreamcast_console_t
 
 	bool has_flash;
 	bool nvr_optional;
+
+	bool flavor_set;
 };
 
 extern dreamcast_console_t dc_console;
@@ -43,13 +45,15 @@ void dc_stop();
 void dc_reset();
 void dc_resume();
 void dc_term();
-int dc_start_game(DreamcastFlavor dcp, const char* path);
+int dc_start_game(const char* path);
 
 void* dc_run(void*);
 
 void dc_request_reset();
 
 bool dc_handle_fault(unat addr, rei_host_context_t* ctx);
+
+bool dc_set_flavor(DreamcastFlavor dcp);
 
 // TODO: rename these
 int reicast_init(int argc, char* argv[]);

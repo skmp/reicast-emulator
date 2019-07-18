@@ -23,16 +23,6 @@ set(BUILD_SHARED_LIBS OFF)  ## Scope:CMAKE If type is not specified in add_libra
 ## Build flags ##
 #
 
-set(DC_PLATFORM_MASK        7)  # Z: Uh, not a bitset
-set(DC_PLATFORM_DREAMCAST   0)  # /* Works, for the most part */
-set(DC_PLATFORM_DEV_UNIT    1)  # /* This is missing hardware */
-set(DC_PLATFORM_NAOMI       2)  # /* Works, for the most part */ 
-set(DC_PLATFORM_NAOMI2      3)  # /* Needs to be done, 2xsh4 + 2xpvr + custom TNL */
-set(DC_PLATFORM_ATOMISWAVE  4)  # /* Needs to be done, DC-like hardware with possibly more ram */
-set(DC_PLATFORM_HIKARU      5)  # /* Needs to be done, 2xsh4, 2x aica , custom vpu */
-set(DC_PLATFORM_AURORA      6)  # /* Needs to be done, Uses newer 300 mhz sh4 + 150 mhz pvr mbx SoC */
-
-
 
 set(OS_WINDOWS     0x10000001)  # HOST_OS
 set(OS_LINUX       0x10000002)

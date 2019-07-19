@@ -12,6 +12,7 @@ USE_EVDEV := 1
 USE_UDEV := 1
 USE_MODEM := 1
 PLATFORM_EXT := elf
+SCRIPTING := 1
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
@@ -417,6 +418,10 @@ endif
 
 ifdef HAS_SOFTREND
     CFLAGS += -msse4.1
+endif
+
+ifdef SCRIPTING
+    CXXFLAGS += -D SCRIPTING
 endif
 
 # these are also handled on core.mk, but ignored here

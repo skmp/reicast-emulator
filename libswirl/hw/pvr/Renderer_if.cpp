@@ -8,6 +8,8 @@
 
 #include "deps/crypto/md5.h"
 
+#include "scripting/lua_bindings.h"
+
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"
 #endif
@@ -279,6 +281,9 @@ bool rend_single_frame()
 	{
 		// FIXME not here
 		os_DoEvents();
+
+		luabindings_onframe();
+
 #if !defined(TARGET_NO_THREADS)
 		if (gui_is_open() || gui_state == VJoyEdit)
 		{

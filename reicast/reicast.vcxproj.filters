@@ -644,6 +644,114 @@
     <ClCompile Include="..\core\oslib\audiobackend_sdl2.cpp">
       <Filter>oslib</Filter>
     </ClCompile>
+    <ClCompile Include="..\core\hw\sh4\dyna\blockmanager-extras.cpp">
+      <Filter>hw\sh4\dyna</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\scripting\lua_bindings.cpp">
+      <Filter>scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\scripting\lua_loader.cpp">
+      <Filter>scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lapi.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lauxlib.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lbaselib.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lbitlib.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lcode.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lcorolib.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lctype.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\ldblib.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\ldebug.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\ldo.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\ldump.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lfunc.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lgc.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\linit.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\liolib.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\llex.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lmathlib.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lmem.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\loadlib.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lobject.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lopcodes.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\loslib.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lparser.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lstate.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lstring.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lstrlib.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\ltable.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\ltablib.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\ltm.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lundump.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lutf8lib.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lvm.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\deps\lua\lzio.c">
+      <Filter>deps\lua</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hw">
@@ -810,6 +918,12 @@
     </Filter>
     <Filter Include="input">
       <UniqueIdentifier>{8fea504f-a313-4ab2-b25b-74e80fe449c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\lua">
+      <UniqueIdentifier>{e903702d-f096-40f3-a1f5-649c24bb49be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="scripting">
+      <UniqueIdentifier>{92d25ee3-a617-48e0-b787-dea49fb07e46}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -1389,6 +1503,87 @@
     </ClInclude>
     <ClInclude Include="..\core\windows\xinput_gamepad.h">
       <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\scripting\lua_bindings.h">
+      <Filter>scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lapi.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lauxlib.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lcode.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lctype.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\ldebug.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\ldo.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lfunc.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lgc.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\llex.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\llimits.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lmem.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lobject.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lopcodes.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lparser.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lprefix.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lstate.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lstring.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\ltable.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\ltm.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lua.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lua.hpp">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\luaconf.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lualib.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lundump.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lvm.h">
+      <Filter>deps\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\deps\lua\lzio.h">
+      <Filter>deps\lua</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

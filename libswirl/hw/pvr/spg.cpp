@@ -13,6 +13,7 @@ u32 clc_pvr_scanline;
 u32 pvr_numscanlines=512;
 u32 prv_cur_scanline=-1;
 u32 vblk_cnt=0;
+u32 vblank_count_monotonic = 0;
 
 float last_fps=0;
 
@@ -129,6 +130,7 @@ int spg_line_sched(int tag, int cycl, int jit)
 
 			//Vblank counter
 			vblk_cnt++;
+			vblank_count_monotonic++;
 			asic_RaiseInterrupt(holly_HBLank);// -> This turned out to be HBlank btw , needs to be emulated ;(
 			//TODO : rend_if_VBlank();
 			rend_vblank();//notify for vblank :)
@@ -265,6 +267,8 @@ bool spg_Init()
 
 	sh4_sched_request(time_sync,8*1000*1000);
 
+	vblank_count_monotonic = 0;
+
 	return true;
 }
 
@@ -275,6 +279,8 @@ void spg_Term()
 void spg_Reset(bool Manual)
 {
 	CalculateSync();
+
+	vblank_count_monotonic = 0;
 }
 
 

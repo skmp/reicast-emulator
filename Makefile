@@ -364,6 +364,84 @@ else ifeq ($(platform), odroid-n2)
 	HAVE_GENERIC_JIT = 0
 	HAVE_LTCG = 0
 
+# Amlogic S905/S905X/S912 (AMLGXBB/AMLGXL/AMLGXM) e.g. Khadas VIM1/2 / S905X2 (AMLG12A) & S922X/A311D (AMLG12B) e.g. Khadas VIM3 - 32-bit userspace
+else ifneq (,$(findstring AMLG,$(platform)))
+  EXT ?= so
+  TARGET := $(TARGET_NAME)_libretro.$(EXT)
+  SHARED += -shared -Wl,--version-script=link.T
+  LDFLAGS +=  -Wl,--no-undefined
+  fpic = -fPIC
+  LIBS += -lrt
+  ARM_FLOAT_ABI_HARD = 1
+  FORCE_GLES = 1
+  SINGLE_PREC_FLAGS = 1
+
+  CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
+  CFLAGS += -march=armv8-a+crc -mfloat-abi=hard -mfpu=neon-fp-armv8 $(CPUFLAGS)
+  CXXFLAGS += -march=armv8-a+crc -mfloat-abi=hard -mfpu=neon-fp-armv8 $(CPUFLAGS)
+
+  ifneq (,$(findstring AMLG12,$(platform)))
+    ifneq (,$(findstring AMLG12B,$(platform)))
+      CFLAGS += -mtune=cortex-a73.cortex-a53
+      CXXFLAGS += -mtune=cortex-a73.cortex-a53
+    else
+      CFLAGS += -mtune=cortex-a53
+      CXXFLAGS += -mtune=cortex-a53
+    endif
+  else ifneq (,$(findstring AMLGX,$(platform)))
+    CFLAGS += -mtune=cortex-a53
+    CXXFLAGS += -mtune=cortex-a53
+    CORE_DEFINES += -DLOW_END
+  endif
+
+  ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
+
+  PLATFORM_EXT := unix
+  WITH_DYNAREC=arm
+  HAVE_GENERIC_JIT = 0
+
+# Rockchip RK3288 e.g. Asus Tinker Board / RK3328 e.g. PINE64 Rock64 / RK3399 e.g. PINE64 RockPro64 - 32-bit userspace
+else ifneq (,$(findstring RK,$(platform)))
+  EXT ?= so
+  TARGET := $(TARGET_NAME)_libretro.$(EXT)
+  SHARED += -shared -Wl,--version-script=link.T
+  fpic = -fPIC
+  LIBS += -lrt
+  ARM_FLOAT_ABI_HARD = 1
+  FORCE_GLES = 1
+  SINGLE_PREC_FLAGS = 1
+  CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
+
+  ifneq (,$(findstring RK33,$(platform)))
+    CFLAGS += -march=armv8-a+crc -mfpu=neon-fp-armv8
+    CXXFLAGS += -march=armv8-a+crc -mfpu=neon-fp-armv8
+
+    ifneq (,$(findstring RK3399,$(platform)))
+      CFLAGS += -mtune=cortex-a72.cortex-a53
+      CXXFLAGS += -mtune=cortex-a72.cortex-a53
+    else ifneq (,$(findstring RK3328,$(platform)))
+      CFLAGS += -mtune=cortex-a53
+      CXXFLAGS += -mtune=cortex-a53
+      CORE_DEFINES += -DLOW_END
+    endif
+
+    ifeq ($(HAVE_CLANG),0)
+      CFLAGS += -mvectorize-with-neon-quad
+      CXXFLAGS += -mvectorize-with-neon-quad
+    endif
+  else ifneq (,$(findstring RK3288,$(platform)))
+    CFLAGS += -march=armv7ve -mtune=cortex-a17 -mfpu=neon-vfpv4
+    CXXFLAGS += -march=armv7ve -mtune=cortex-a17 -mfpu=neon-vfpv4
+  endif
+
+  CFLAGS += -mfloat-abi=hard $(CPUFLAGS)
+  CXXFLAGS += -mfloat-abi=hard $(CPUFLAGS)
+
+  ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
+  PLATFORM_EXT := unix
+  WITH_DYNAREC=arm
+  HAVE_GENERIC_JIT = 0
+
 # RockPro64
 else ifeq ($(platform), rockpro64)
 	EXT ?= so

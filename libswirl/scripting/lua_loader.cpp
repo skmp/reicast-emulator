@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "types.h"
 #include "stdclass.h"
 
 #ifdef SCRIPTING

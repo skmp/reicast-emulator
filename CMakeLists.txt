@@ -34,7 +34,8 @@ set(reicast_SRCS "")
 
 include(config)			# configure build settings, must be first
 
-
+# FIXME: some better way?
+add_definitions(/DSCRIPTING)
 
 ### libdreamcast.cmake #########################################################################
 
@@ -52,6 +53,7 @@ file(GLOB imgread_SRCS		${d_core}/imgread/*.cpp		${d_core}/imgread/*.h)
 file(GLOB profiler_SRCS		${d_core}/profiler/*.cpp	${d_core}/profiler/*.h)
 file(GLOB archive_SRCS		${d_core}/archive/*.cpp		${d_core}/archive/*.h)
 file(GLOB glwrap_SRCS		${d_core}/glwrap/*.cpp		${d_core}/glwrap/*.h)
+file(GLOB scripting_SRCS	${d_core}/scripting/*.cpp	${d_core}/scripting/*.h)
 
 #### option(rend)
 file(GLOB gl4_SRCS			${d_core}/rend/gl4/*.cpp	${d_core}/rend/gl4/*.h)
@@ -74,6 +76,7 @@ set(core_SRCS
   ${reios_SRCS}
   ${imgread_SRCS}
   ${profiler_SRCS}
+  ${scripting_SRCS}
   ${d_core}/archive/archive.cpp ${d_core}/archive/archive.h
   ${d_core}/libswirl.cpp
   ${d_core}/stdclass.cpp
@@ -118,7 +121,6 @@ endif()
 
 add_definitions(/DFEAT_HAS_SOFTREND=0)
 
-
 ### deps.cmake #################################################################################
 
 set(d_deps ${reicast_core_path}/deps)
@@ -136,6 +138,7 @@ file(GLOB lpng_SRCS  ${d_deps}/libpng/*.c)
 file(GLOB lelf_SRCS  ${d_deps}/libelf/el*.cpp)
 file(GLOB crypt_SRCS ${d_deps}/crypto/*.cpp)
 file(GLOB imgui_SRCS ${d_deps}/imgui/*.cpp)
+file(GLOB lua_SRCS   ${d_deps}/lua/*.c)
 
 file(GLOB picoModS   ${d_deps}/picotcp/modules/*.c)
 file(GLOB picoStkS   ${d_deps}/picotcp/stack/*.c)
@@ -148,6 +151,7 @@ set(deps_SRCS
   ${chdr_SRCS}
   ${crypt_SRCS}
   ${imgui_SRCS}
+  ${lua_SRCS}
   ${d_deps}/xbrz/xbrz.cpp
   ${d_deps}/dirent/dirent.c
   ${d_deps}/xxhash/xxhash.c

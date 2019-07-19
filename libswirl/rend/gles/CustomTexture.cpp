@@ -31,9 +31,7 @@
 #include "deps/libpng/png.h"
 #include "reios/reios.h"
 
-#ifdef SCRIPTING
 #include "scripting/lua_bindings.h"
-#endif
 
 void CustomTexture::LoaderThread()
 {
@@ -115,13 +113,7 @@ bool CustomTexture::Init()
 				closedir(dir);
 				loader_thread.Start();
 
-#ifdef SCRIPTING
-				std::string lua_path = textures_path + "/main.lua";
-				if (file_exists(lua_path))
-				{
-					luabindings_run(lua_path.c_str());
-				}
-#endif
+				luabindings_findscripts(textures_path);
 			}
 		}
 #endif
@@ -143,9 +135,7 @@ void CustomTexture::Terminate()
 #endif
 	}
 
-#ifdef SCRIPTING
 	luabindings_close();
-#endif
 }
 
 u8* CustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)

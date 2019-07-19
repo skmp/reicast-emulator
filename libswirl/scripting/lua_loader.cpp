@@ -1,7 +1,11 @@
 #include "lua_bindings.h"
 
+#include <string>
 #include <vector>
 
+#include "stdclass.h"
+
+#ifdef SCRIPTING
 // TODO: Allow more than one script
 class LuaScript {
 	lua_State* L;
@@ -90,49 +94,71 @@ public:
 };
 
 std::vector<LuaScript*> loaded_scripts;
+#endif
+
+void luabindings_findscripts(std::string path)
+{
+	std::string lua_path = path + "/main.lua";
+	if (file_exists(lua_path))
+	{
+		luabindings_run(lua_path.c_str());
+	}
+}
 
 void luabindings_run(const char* fn)
 {
+#ifdef SCRIPTING
 	loaded_scripts.push_back(new LuaScript(fn));
+#endif
 }
 
 void luabindings_close()
 {
+#ifdef SCRIPTING
 	for (auto script : loaded_scripts)
 	{
 		delete script;
 	}
 	loaded_scripts.clear();
+#endif
 }
 
 void luabindings_onframe()
 {
+#ifdef SCRIPTING
 	for (auto script : loaded_scripts)
 	{
 		script->onframe();
 	}
+#endif
 }
 
 void luabindings_onstart()
 {
+#ifdef SCRIPTING
 	for (auto script : loaded_scripts)
 	{
 		script->onstart();
 	}
+#endif
 }
 
 void luabindings_onstop()
 {
+#ifdef SCRIPTING
 	for (auto script : loaded_scripts)
 	{
 		script->onstop();
 	}
+#endif
 }
 
 void luabindings_onreset()
 {
+#ifdef SCRIPTING
 	for (auto script : loaded_scripts)
 	{
 		script->onreset();
 	}
+#endif
 }

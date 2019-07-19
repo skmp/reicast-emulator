@@ -337,7 +337,7 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC_OrClearCache());
 }
 
-//extern u32 rebuild_counter;
+extern u32 rebuild_counter;
 
 
 u32 DYNACALL rdv_DoInterrupts_pc(u32 pc) {
@@ -347,7 +347,7 @@ u32 DYNACALL rdv_DoInterrupts_pc(u32 pc) {
 	//We can only safely relocate/etc stuff here, as in other generic update cases
 	//There's a RET, meaning the code can't move around
 	//Interrupts happen at least 50 times/second, so its not a problem ..
-	//if (rebuild_counter == 0)
+	if (rebuild_counter == 0)
 	{
 		// TODO: Why is this commented, etc.
 		//bm_Rebuild();

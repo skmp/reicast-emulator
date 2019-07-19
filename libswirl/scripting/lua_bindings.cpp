@@ -3,13 +3,8 @@
 #include "rend/gui.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/arm7/arm_mem.h"
+#include "libswirl.h"
 
-extern void dc_loadstate();
-extern void dc_savestate();
-extern void dc_stop();
-extern void dc_reset();
-extern void dc_resume();
-extern int dc_start_game(const char* path);
 extern u32 vblank_count_monotonic;
 
 static int emu_status(lua_State* L) {

@@ -98,8 +98,16 @@ afterEvaluate {
     }
 }
 
+def playReleaseTrack = "internal"
+
+task(runProgram){
+   if(project.hasProperty("releaseTrack")){
+       playReleaseTrack = releaseTrack;
+   }
+}
+
 play {
-    track = 'beta'
+    track = playReleaseTrack
     serviceAccountEmail = 'reicast-beta-cd@api-7801059239587459896-777757.iam.gserviceaccount.com'
     pk12File = file('../reicast-beta-cd.p12')
 }

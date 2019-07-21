@@ -1464,6 +1464,209 @@ static void gui_start_game(const std::string& path)
 	}
 }
 
+enum RomStatus
+{
+	RS_MISSING,
+	RS_DOWNLOADING,
+	RS_DOWNLOADED
+};
+
+struct OnlineRomInfo
+{
+	RomStatus status = RS_MISSING;
+
+	string id;
+	string name;
+	string filename;
+};
+
+class OnlineRomsProvider
+{
+	bool loggedIn = false;
+	string user;
+
+	vector<OnlineRomInfo> roms;
+
+	OnlineRomInfo* findRom(string id)
+	{
+		for (auto it = roms.begin(); it != roms.end(); it++)
+		{
+			if (it->id == id)
+				return &(*it);
+		}
+
+		return nullptr;
+	}
+
+public:
+	bool isLoggedIn()
+	{
+		return loggedIn;
+	}
+
+	string getUser()
+	{
+		return user;
+	}
+
+	void login(string user, string password)
+	{
+		this->user = user;
+		loggedIn = true;
+
+		roms.push_back(OnlineRomInfo {RS_MISSING, "Drill001.cdi", "Drill (freeware)"});
+		roms.push_back(OnlineRomInfo {RS_MISSING, "jump_n_blob.cdi", "Jump n Blob (freeware)"});
+	}
+
+	void logout()
+	{
+		this->user = "";
+		loggedIn = false;
+		roms.clear();
+	}
+
+	vector<OnlineRomInfo> getRoms()
+	{
+		return roms;
+	}
+
+
+	void download(string id)
+	{
+		auto rom = findRom(id);
+
+		if (rom)
+		{
+			printf("Downloading %s\n", rom->name.c_str());
+			rom->status = RS_DOWNLOADED;
+			printf("Downloaded %s\n", rom->name.c_str());
+		}
+	}
+
+	void remove(string id)
+	{
+		auto rom = findRom(id);
+
+		if (rom)
+		{
+			printf("Removing %s\n", rom->name.c_str());
+			rom->status = RS_MISSING;
+			printf("Removed %s\n", rom->name.c_str());
+		}
+	}
+};
+
+OnlineRomsProvider onlineRoms;
+
+
+static bool show_login_popup = false;
+
+static void login_popup()
+{
+	if (show_login_popup)
+	{
+		if (ImGui::BeginPopupModal("Login", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+		{
+			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+			ImGui::TextWrapped("Please login");
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+			float currentwidth = ImGui::GetContentRegionAvailWidth();
+			ImGui::SetCursorPosX((currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+			if (ImGui::Button("OK", ImVec2(80.f * scaling, 0.f)))
+			{
+				onlineRoms.login("test", "test");
+				show_login_popup = false;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SetItemDefaultFocus();
+			ImGui::PopStyleVar();
+			ImGui::EndPopup();
+		}
+		ImGui::OpenPopup("Login");
+	}
+}
+
+static bool show_downloading_popup = false;
+static float download_percent = 10.3;
+static string download_id;
+
+static void downloading_popup()
+{
+	if (show_downloading_popup)
+	{
+		if (ImGui::BeginPopupModal("Downloading", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+		{
+			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+			ImGui::TextWrapped("%.2f", download_percent);
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+			float currentwidth = ImGui::GetContentRegionAvailWidth();
+			ImGui::SetCursorPosX((currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+			if (ImGui::Button("Done", ImVec2(80.f * scaling, 0.f)))
+			{
+				show_downloading_popup = false;
+				onlineRoms.download(download_id);
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SetItemDefaultFocus();
+			ImGui::PopStyleVar();
+			ImGui::EndPopup();
+		}
+		ImGui::OpenPopup("Downloading");
+	}
+}
+
+
+static void gui_display_online_roms()
+{
+	ImGui::TextColored(ImVec4(1, 1, 1, 0.7), "ONLINE ROMS");
+	ImGui::SameLine();
+
+	if (onlineRoms.isLoggedIn())
+	{
+		ImGui::TextColored(ImVec4(1, 1, 1, 0.7), "(%s)", onlineRoms.getUser().c_str());
+		ImGui::SameLine();
+		if (ImGui::Button("Logout"))
+		{
+			onlineRoms.logout();
+		}
+	}
+	else
+	{
+		if (ImGui::Button("Login"))
+		{
+			show_login_popup = true;
+		}
+	}
+
+	auto roms = onlineRoms.getRoms();
+
+	for (auto it = roms.begin(); roms.end() != it; it++)
+	{
+		ImGui::PushID(it->id.c_str());
+		ImGui::Text("%s", it->name.c_str()); ImGui::SameLine(); 
+
+		if (it->status == RS_DOWNLOADED)
+		{
+			if (ImGui::Button("Delete"))
+			{
+				onlineRoms.remove(it->id);
+			}
+		}
+		else
+		{
+			if (it->status == RS_MISSING)
+			{
+				if (ImGui::Button("Download"))
+				{
+					show_downloading_popup = true;
+					download_id = it->id;
+				}
+			}
+		}
+		ImGui::PopID();
+	}
+}
+
 static void gui_display_content()
 {
 	ImGui_Impl_NewFrame();
@@ -1521,6 +1724,9 @@ static void gui_display_content()
 		ImGui::PopID();
 #endif
 
+		ImGui::Text("");
+		ImGui::TextColored(ImVec4(1, 1, 1, 0.7), "LOCAL ROMS");
+
         for (auto game : game_list)
         	if (filter.PassFilter(game.name.c_str()))
         	{
@@ -1532,6 +1738,12 @@ static void gui_display_content()
 				}
 				ImGui::PopID();
         	}
+
+
+		ImGui::Text("");
+
+		gui_display_online_roms();
+
         ImGui::PopStyleVar();
     }
 	ImGui::EndChild();
@@ -1539,6 +1751,8 @@ static void gui_display_content()
     ImGui::PopStyleVar();
 
 	error_popup();
+	login_popup();
+	downloading_popup();
 
 	ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);

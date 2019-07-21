@@ -45,9 +45,9 @@ InputDescriptors _18wheelr_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "HANDLE", Full },
-			{ "ACCEL", Half },
-			{ "BRAKE", Half },
+			{ "HANDLE", Full, 0 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -63,9 +63,9 @@ InputDescriptors alienfnt_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "WHEEL", Full },
-			{ "RIGHT PEDAL", Half },
-			{ "LEFT PEDAL", Half },
+			{ "WHEEL", Full, 0 },
+			{ "RIGHT PEDAL", Half, 4 },
+			{ "LEFT PEDAL", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -80,12 +80,12 @@ InputDescriptors alpilot_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "ELEVATOR", Full },
-			{ "AILERON", Full },
-			{ "", Full },
-			{ "RUDDER PEDAL", Full },
-			{ "THRUST LEVER L", Half },
-			{ "THRUST LEVER R", Half },
+			{ "ELEVATOR", Full, 0 },
+			{ "AILERON", Full, 1 },
+			{ "", Full, 2 },
+			{ "RUDDER PEDAL", Full, 3 },
+			{ "THRUST LEVER L", Half, 4 },
+			{ "THRUST LEVER R", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -118,9 +118,9 @@ InputDescriptors crzytaxi_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "HANDLE", Full },
-			{ "ACCEL", Half },
-			{ "BRAKE", Half },
+			{ "HANDLE", Full, 0 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -167,9 +167,9 @@ InputDescriptors gunsur2_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "ROLL", Full },
-			{ "PITCH", Full },
-			{ "YAW", Full },
+			{ "ROLL", Full, 0 },
+			{ "PITCH", Full, 1 },
+			{ "YAW", Full, 2 },
 			{ NULL },
 	  },
 };
@@ -183,9 +183,9 @@ InputDescriptors jambo_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "HANDLE", Full },
-			{ "ACCEL", Half },
-			{ "BRAKE", Half },
+			{ "HANDLE", Full, 0 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -290,9 +290,9 @@ InputDescriptors ftspeed_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "STEERING WHEEL", Full },
-			{ "GAS PEDAL", Half },
-			{ "BRAKE PEDAL", Half },
+			{ "STEERING WHEEL", Full, 0 },
+			{ "GAS PEDAL", Half, 4 },
+			{ "BRAKE PEDAL", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -305,9 +305,9 @@ InputDescriptors maxspeed_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "STEERING", Full },
-			{ "ACCELERATOR", Half },
-			{ "BRAKE", Half },
+			{ "STEERING", Full, 0 },
+			{ "ACCELERATOR", Half, 4 },
+			{ "BRAKE", Half, 5 },
 			{ NULL },
 	  },
 };

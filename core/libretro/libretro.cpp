@@ -1552,7 +1552,7 @@ static const char *get_axis_name(unsigned index, const char *default_name)
    if (naomi_game_inputs == NULL)
 	  return default_name;
    for (int i = 0; naomi_game_inputs->axes[i].name != NULL; i++)
-	  if (i == index)
+	  if (naomi_game_inputs->axes[i].axis == index)
 		 return naomi_game_inputs->axes[i].name;
    return NULL;
 }
@@ -2604,12 +2604,10 @@ static void UpdateInputStateNaomi(u32 port)
 
 	  if (naomi_game_inputs != NULL)
 	  {
-		 for (int i = 0; i < 4; i++)
+		 for (int i = 0; naomi_game_inputs->axes[i].name != NULL; i++)
 		 {
-			if (naomi_game_inputs->axes[i].name == NULL)
-			   break;
 			AxisType axis_type = naomi_game_inputs->axes[i].type;
-			switch (i)
+			switch (naomi_game_inputs->axes[i].axis)
 			{
 			case 0:
 			   if (axis_type == Half)

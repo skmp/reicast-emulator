@@ -111,6 +111,7 @@ struct AxisDescriptor
 {
    const char *name;
    AxisType type;
+   u32 axis;
 };
 
 struct InputDescriptors

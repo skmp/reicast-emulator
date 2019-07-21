@@ -1,6 +1,7 @@
 notifications:
   irc: chat.freenode.net#reicast
 language: android
+dist: trusty
 android:
   components:
   - platform-tools

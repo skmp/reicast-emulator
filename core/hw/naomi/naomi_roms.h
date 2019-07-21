@@ -4666,7 +4666,7 @@ Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
+        REGION_USA,
         ROT0,
         {
             { "317-5079-com.pic", 0, 0x4000 },

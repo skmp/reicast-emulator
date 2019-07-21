@@ -343,6 +343,11 @@ static void gui_display_commands()
 		game_started = false;
 		cfgSetVirtual("config", "image", "");
 	}
+	ImGui::NextColumn();
+	if (ImGui::Button("Report a game bug", ImVec2(150 * scaling, 50 * scaling)))
+	{
+		os_LaunchFromURL("http://report-games.reicast.com");
+	}
 
 #if 0
 	ImGui::NextColumn();

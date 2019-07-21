@@ -916,7 +916,8 @@ Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &alienfnt_inputs
+        &alienfnt_inputs,
+        alienfnt_eeprom_dump
     },
     // Alien Front (Rev A)
     {
@@ -938,7 +939,8 @@ Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &alienfnt_inputs
+        &alienfnt_inputs,
+        alienfnt_eeprom_dump
     },
     // Capcom Vs. SNK Millennium Fight 2000 (JPN, USA, EXP, KOR, AUS) (Rev C)
     {

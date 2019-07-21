@@ -1246,6 +1246,11 @@ static void gui_display_settings()
 		    	os_LaunchFromURL("https://twitter.com/reicastdc");
 		    }
 
+			if (ImGui::Button("Official Forum")) {
+		    	os_LaunchFromURL("http://forum.reicast.com");
+		    }
+
+
 			if (ImGui::Button("Homepage")) {
 		    	os_LaunchFromURL("http://reicast.com");
 		    }

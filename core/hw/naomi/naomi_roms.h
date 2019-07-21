@@ -1797,7 +1797,10 @@ Games[] =
             { "mpr-23636.ic9",  0x8800000, 0x1000000 },
             { "mpr-23637.ic10", 0x9800000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        NULL,
+        gundmct_eeprom_dump
     },
     // Gun Survivor 2 Biohazard Code: Veronica (BHF2 Ver. E)
     {

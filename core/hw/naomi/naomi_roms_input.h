@@ -291,8 +291,8 @@ InputDescriptors ftspeed_inputs = {
 	  },
 	  {
 			{ "STEERING WHEEL", Full, 0 },
-			{ "GAS PEDAL", Half, 4 },
-			{ "BRAKE PEDAL", Half, 5 },
+			{ "GAS PEDAL", Half, 1 },
+			{ "BRAKE PEDAL", Half, 2 },
 			{ NULL },
 	  },
 };
@@ -306,8 +306,8 @@ InputDescriptors maxspeed_inputs = {
 	  },
 	  {
 			{ "STEERING", Full, 0 },
-			{ "ACCELERATOR", Half, 4 },
-			{ "BRAKE", Half, 5 },
+			{ "ACCELERATOR", Half, 1 },
+			{ "BRAKE", Half, 2 },
 			{ NULL },
 	  },
 };

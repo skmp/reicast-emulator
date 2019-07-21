@@ -2551,7 +2551,9 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						   u16 axis_value = 0x8000;
 						   if (player_num < 4)
 						   {
-							  switch (naomi_game_inputs->axes[player_axis].axis)
+							  if (naomi_game_inputs != NULL)
+							     player_axis = naomi_game_inputs->axes[player_axis].axis;
+							  switch (player_axis)
 							  {
 								 case 0:
 									axis_value = joyx[player_num] << 8;

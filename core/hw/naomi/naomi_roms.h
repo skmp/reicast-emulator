@@ -1726,7 +1726,7 @@ Games[] =
         0x28074a61,
         NULL,
         M2,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         ROT0,
         {
             { "epr-21820.ic22", 0x0000000, 0x0200000 },

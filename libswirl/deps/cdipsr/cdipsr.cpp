@@ -121,7 +121,7 @@ bool CDI_init (FILE *fsource, image_s *image, const char *fsourcename)
 
 	if (image->length < 8)
 	{
-		printf("%s: Image file is too short\n", fsourcename);
+		printf("CDI: %s: Image file is too short\n", fsourcename);
 		return false;
 	}
 
@@ -132,9 +132,11 @@ bool CDI_init (FILE *fsource, image_s *image, const char *fsourcename)
 	if ((image->version != CDI_V2 && image->version != CDI_V3 && image->version != CDI_V35)
 			|| image->header_offset == 0)
 	{
-		printf("%s: Bad image format\n", fsourcename);
+		printf("CDI: %s: Bad image format\n", fsourcename);
 		return false;
 	}
+
+    printf("CDI: opened %s\n", fsourcename);
 	return true;
 }
 

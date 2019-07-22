@@ -42,7 +42,7 @@ string url_encode(const string &value) {
 	return escaped.str();
 }
 
-size_t HTTP(HTTP_METHOD method, string host, int port, string path, size_t offs, size_t len, std::function<void(void* data, size_t len)> cb)
+size_t HTTP(HTTP_METHOD method, string host, int port, string path, size_t offs, size_t len, std::function<bool(void* data, size_t len)> cb)
 {
     string request;
     string response;
@@ -193,7 +193,8 @@ _data:
 			}
 			while (chunk_remaining >0);
 
-			cb(pdata, ptr - pdata);
+			if (!cb(pdata, ptr - pdata))
+				break;
 
 		} while (len >0);
 
@@ -223,6 +224,8 @@ size_t HTTP(HTTP_METHOD method, string host, int port, string path, size_t offs,
 	return HTTP(method, host, port, path, offs, len, [&pdata](void* data, size_t len) {
 		memcpy(pdata, data, len);
 		(u8*&)pdata += len;
+
+		return true;
 	});
 }
 

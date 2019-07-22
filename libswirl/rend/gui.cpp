@@ -44,6 +44,7 @@
 #include "oslib/audiostream.h"
 #include "hw/pvr/Renderer_if.h"
 #include "libswirl.h"
+#include "utils/cloudrom.h"
 
 extern bool game_started;
 
@@ -1464,6 +1465,111 @@ static void gui_start_game(const std::string& path)
 	}
 }
 
+static OnlineRomsProvider onlineRoms;
+static bool show_downloading_popup = false;
+
+static void downloading_popup()
+{
+	if (show_downloading_popup)
+	{
+		if (ImGui::BeginPopupModal("Downloading", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+		{
+			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+
+			if (onlineRoms.hasDownloadErrored())
+			{
+				ImGui::TextWrapped("Download failed");
+			}
+			else
+			{
+				ImGui::TextWrapped("%s\n\n%.2f %%", onlineRoms.getDownloadName().c_str(), onlineRoms.getDownloadPercent());
+			}
+
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+			float currentwidth = ImGui::GetContentRegionAvailWidth();
+			ImGui::SetCursorPosX((currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+			if (ImGui::Button(onlineRoms.hasDownloadErrored() ? "Close" : "Cancel", ImVec2(80.f * scaling, 0.f)))
+			{
+				if (onlineRoms.hasDownloadErrored())
+				{
+					show_downloading_popup = false;
+					onlineRoms.remove(onlineRoms.getDownloadId());
+					gui_refresh_files();
+					ImGui::CloseCurrentPopup();
+				}
+				else
+				{
+					onlineRoms.downloadCancel();
+				}
+			}
+
+			if (onlineRoms.hasDownloadFinished())
+			{
+				show_downloading_popup = false;
+				onlineRoms.downloaded(onlineRoms.getDownloadId());
+				gui_refresh_files();
+				ImGui::CloseCurrentPopup();	
+			}
+
+			ImGui::SetItemDefaultFocus();
+			ImGui::PopStyleVar();
+			ImGui::EndPopup();
+		}
+		ImGui::OpenPopup("Downloading");
+	}
+}
+
+
+static void gui_display_online_roms()
+{
+	ImGui::TextColored(ImVec4(1, 1, 1, 0.7), "CLOUD ROMS");
+	ImGui::SameLine();
+
+	auto status = onlineRoms.getStatus();
+
+	if (status.length())
+	{
+		ImGui::TextColored(ImVec4(1, 1, 1, 0.7), "(%s)", status.c_str());
+		ImGui::SameLine();
+	}
+
+	if (ImGui::Button("Load List"))
+	{
+		onlineRoms.fetchRomList();
+	}
+
+	auto roms = onlineRoms.getRoms();
+
+	for (auto it = roms.begin(); roms.end() != it; it++)
+	{
+		ImGui::PushID(it->id.c_str());
+		ImGui::Text("%s (%s)", it->name.c_str(), it->type.c_str()); ImGui::SameLine(); 
+
+		if (it->status == RS_DOWNLOADED)
+		{
+			if (ImGui::Button("Delete"))
+			{
+				onlineRoms.remove(it->id);
+				gui_refresh_files();
+			}
+		}
+		else if (it->status == RS_MISSING)
+		{
+			if (ImGui::Button("Download"))
+			{
+				show_downloading_popup = true;
+				onlineRoms.download(it->id);
+				gui_refresh_files();
+			}
+		}
+		else
+		{
+			ImGui::Text("(Downloading...)");
+		}
+		ImGui::PopID();
+	}
+}
+
 static void gui_display_content()
 {
 	ImGui_Impl_NewFrame();
@@ -1521,6 +1627,9 @@ static void gui_display_content()
 		ImGui::PopID();
 #endif
 
+		ImGui::Text("");
+		ImGui::TextColored(ImVec4(1, 1, 1, 0.7), "LOCAL ROMS");
+
         for (auto game : game_list)
         	if (filter.PassFilter(game.name.c_str()))
         	{
@@ -1532,6 +1641,12 @@ static void gui_display_content()
 				}
 				ImGui::PopID();
         	}
+
+
+		ImGui::Text("");
+
+		gui_display_online_roms();
+
         ImGui::PopStyleVar();
     }
 	ImGui::EndChild();
@@ -1539,6 +1654,7 @@ static void gui_display_content()
     ImGui::PopStyleVar();
 
 	error_popup();
+	downloading_popup();
 
 	ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);

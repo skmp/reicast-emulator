@@ -302,12 +302,6 @@ int reicast_init(int argc, char* argv[])
 	return 0;
 }
 
-#if HOST_OS != OS_DARWIN
-#define DATA_PATH "/data/"
-#else
-#define DATA_PATH "/"
-#endif
-
 bool game_started;
 
 int dc_start_game(const char *path)
@@ -450,7 +444,7 @@ void* dc_run(void*)
 
 		sh4_cpu.Run();
 
-   		SaveRomFiles(get_writable_data_path("/data/"));
+   		SaveRomFiles(get_writable_data_path(DATA_PATH));
    		if (reset_requested)
    		{
    			dc_reset();
@@ -838,7 +832,7 @@ static string get_savestate_file_path()
 	if (lastindex != -1)
 		state_file = state_file.substr(0, lastindex);
 	state_file = state_file + ".state";
-	return get_writable_data_path("/data/") + state_file;
+	return get_writable_data_path(DATA_PATH) + state_file;
 }
 
 void dc_savestate()

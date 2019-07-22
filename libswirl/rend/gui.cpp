@@ -1443,6 +1443,9 @@ static void gui_display_demo()
 
 static void gui_start_game(const std::string& path)
 {
+
+	auto bios_path = get_readonly_data_path(DATA_PATH);
+
 	int rc = dc_start_game(path.empty() ? NULL : path.c_str());
 	if (rc != 0)
 	{
@@ -1454,7 +1457,7 @@ static void gui_start_game(const std::string& path)
 			error_msg = "Audio/video initialization failed";
 			break;
 		case -5:
-			error_msg = "Cannot find BIOS files";
+			error_msg = "Please put Dreamcast BIOS in " + bios_path;
 			break;
 		case -6:
 			error_msg = "Cannot load NAOMI rom or BIOS";

@@ -1950,7 +1950,7 @@ Games[] =
     // The House of the Dead 2
     {
         "hotd2o",
-        NULL,
+        "hotd2",
         0xa800000,
         0xfffffff, // not populated
         "hod2bios",
@@ -1986,7 +1986,7 @@ Games[] =
     // The House of the Dead 2 (Export)
     {
         "hotd2e",
-        NULL,
+        "hotd2",
         0xa800000,
         0xfffffff, // not populated
         "hod2bios",
@@ -2022,7 +2022,7 @@ Games[] =
     // The House of the Dead 2 (prototype)
     {
         "hotd2p",
-        NULL,
+        "hotd2",
         0xa800000,
         0xfffffff, // not populated
         "hod2bios",

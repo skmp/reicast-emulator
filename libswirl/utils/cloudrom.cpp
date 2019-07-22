@@ -23,7 +23,6 @@ void* download_thread_func(void *p)
 
 	printf("Download thread\n");
 	FILE* f = fopen(dfile.c_str(), "wb");
-	u8* buffer = nullptr;
 
 	if (!f)
 	{
@@ -31,59 +30,39 @@ void* download_thread_func(void *p)
 		return nullptr;
 	}
 
-	auto size = HTTP_GET(onlimeRomsHost, onlimeRomsPort, http_path, 0, 0, 0);
+	auto size = HTTP(HM_HEAD, onlimeRomsHost, onlimeRomsPort, http_path, 0, 0, nullptr);
 
 	if (size == 0)
 	{
 		download_error = true;
-		goto cleanup;
+
+		fclose(f);
+		return nullptr;
 	}
 
-	{
-		auto chunk_size = size / 200;
+	auto xfer = HTTP(HM_GET, onlimeRomsHost, onlimeRomsPort, http_path, 0, size, [f, size](void* data, size_t len){
+		fwrite(data, 1, len, f);
+		download_percent += 100.0f * len / size;
 
-		if (chunk_size > 1024 * 1024)
-			chunk_size = 1024 * 1024;
-		else if (chunk_size < 64 * 1024)
-			chunk_size = 64 * 1024;
-
-		buffer = new u8[chunk_size];
-
-		for (int offs = 0; offs < size; offs += chunk_size)
+		if (download_cancel)
 		{
-			if (download_cancel)
-			{
-				download_error = true;
-				goto cleanup;
-			}
-
-			auto len = chunk_size;
-			auto rem = size - offs;
-
-			if (len > rem)
-				len = rem;
-
-			auto xfer = HTTP_GET(onlimeRomsHost, onlimeRomsPort, http_path, offs, len, buffer);
-
-			if (xfer != len)
-			{
-				download_error = true;
-				goto cleanup;
-			}
-
-			download_percent = 100.0f * offs / size;
-
-			fwrite(buffer, 1, len, f);
+			download_error = true;
+			return false;
 		}
-		
+		else
+			return true;
+	});
 
+	if (xfer != 0 && !download_error)
+	{
 		download_done = true;
 	}
+	else
+	{
+		download_error = true;
+	}
 
-cleanup:
 	fclose(f);
-	if (buffer) delete[] buffer;
-
 	return nullptr;
 }
 
@@ -149,7 +128,7 @@ void OnlineRomsProvider::fetchRomList()
 	status = "Loading list ...";
 	roms.clear();
 
-	auto list = HTTP_GET(onlimeRomsHost, onlimeRomsPort, onlimeRomsList);
+	auto list = HTTP(HM_GET, onlimeRomsHost, onlimeRomsPort, onlimeRomsList);
 
 	if (list.size() == 0)
 		return;

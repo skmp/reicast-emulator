@@ -3,6 +3,8 @@
 #define TRUE 1
 #define FALSE 0
 
+#include "http.h"
+
 #include <sstream>
 #include <iomanip>
 #include <cctype>
@@ -40,7 +42,7 @@ string url_encode(const string &value) {
 	return escaped.str();
 }
 
-size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void* pdata)
+size_t HTTP(HTTP_METHOD method, string host, int port, string path, size_t offs, size_t len, std::function<void(void* data, size_t len)> cb)
 {
     string request;
     string response;
@@ -50,21 +52,33 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
 
     std::stringstream request2;
 
-	if (len) {
+    //printf("HTTP: %d\n", method);
+
+	if (method == HM_GET)
+	{
 		request2 << "GET " << path << " HTTP/1.1"<<endl;
 		request2 << "User-Agent: reicastdc" << endl;
-		//request2 << "" << endl;
 		request2 << "Host: " << host << endl;
 		request2 << "Accept: */*" << endl;
-		request2 << "Range: bytes=" << offs << "-" << (offs + len-1) << endl;
+		if (offs != 0 || len != 0)
+		{
+			//printf("HTTP: Range Request");
+			request2 << "Range: bytes=" << offs << "-" << (offs + len-1) << endl;	
+		}
 		request2 << endl;
 	}
-	else {
+	else if (method == HM_HEAD)
+	{
+		verify(offs == 0 && len == 0);
+
 		request2 << "HEAD " << path << " HTTP/1.1"<<endl;
 		request2 << "User-Agent: reicastdc" << endl;
-		//request2 << "" << endl;
 		request2 << "Host: " << host << endl;
 		request2 << endl;
+	}
+	else
+	{
+		die("HTTP: Unsupported method\n");
 	}
 
 	request = request2.str();
@@ -146,20 +160,44 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
 
 _data:
 
-	if (len == 0) {
+	if (len == 0)
+	{
 		rv = content_length;
 	}
-	else {
+	else
+	{
+		//printf("%d vs %d\n", len, content_length);
 		verify(len == content_length); //crash is a bit too harsh here perhaps?
-		u8* ptr = (u8*)pdata;
+
+		u32 chunk_max = 64 * 1024;
+
+		u8* pdata = new u8[chunk_max];
+
 		do
 		{
-			int rcv = recv(sock, (char*)ptr, len, 0);
-			verify(rcv > 0 && len>= rcv);
-			len -= rcv;
-			ptr += rcv;
-		}
-		while (len >0);
+			u32 chunk_remaining = chunk_max;
+
+			if (chunk_remaining > len)
+				chunk_remaining = len;
+
+			u8* ptr = pdata;
+			do
+			{
+				int rcv = recv(sock, (char*)ptr, chunk_remaining, 0);
+				//printf("%d > %d\n", chunk_remaining, rcv);
+				verify(rcv >= 0);
+				verify(chunk_remaining > 0 && chunk_remaining>= rcv);
+				chunk_remaining -= rcv;
+				len -= rcv;
+				ptr += rcv;
+			}
+			while (chunk_remaining >0);
+
+			cb(pdata, ptr - pdata);
+
+		} while (len >0);
+
+		delete[] pdata;
 
 		rv = content_length;
 	}
@@ -180,16 +218,24 @@ _data:
     return  rv;
 }
 
-string HTTP_GET(string host, int port, string path)
+size_t HTTP(HTTP_METHOD method, string host, int port, string path, size_t offs, size_t len, void* pdata)
 {
-	auto size = HTTP_GET(host, port, path, 0, 0, nullptr);
+	return HTTP(method, host, port, path, offs, len, [&pdata](void* data, size_t len) {
+		memcpy(pdata, data, len);
+		(u8*&)pdata += len;
+	});
+}
+
+string HTTP(HTTP_METHOD method, string host, int port, string path)
+{
+	auto size = HTTP(method, host, port, path, 0, 0, (void*)nullptr);
 	
 	if (size == 0)
 		return "";
 
 	char* data = new char[size];
 
-	auto size2 = HTTP_GET(host, port, path, 0, size, data);
+	auto size2 = HTTP(method, host, port, path, 0, size, data);
 
 	verify(size2 == size);
 

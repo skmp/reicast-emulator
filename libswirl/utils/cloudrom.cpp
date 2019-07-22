@@ -31,7 +31,7 @@ void* download_thread_func(void *p)
 		return nullptr;
 	}
 
-	auto size = HTTP_GET(onlimeRomsHost, onlimeRomsPort, http_path, 0, 0, 0);
+	auto size = HTTP(HM_HEAD, onlimeRomsHost, onlimeRomsPort, http_path, 0, 0, 0);
 
 	if (size == 0)
 	{
@@ -63,7 +63,7 @@ void* download_thread_func(void *p)
 			if (len > rem)
 				len = rem;
 
-			auto xfer = HTTP_GET(onlimeRomsHost, onlimeRomsPort, http_path, offs, len, buffer);
+			auto xfer = HTTP(HM_GET, onlimeRomsHost, onlimeRomsPort, http_path, offs, len, buffer);
 
 			if (xfer != len)
 			{
@@ -149,7 +149,7 @@ void OnlineRomsProvider::fetchRomList()
 	status = "Loading list ...";
 	roms.clear();
 
-	auto list = HTTP_GET(onlimeRomsHost, onlimeRomsPort, onlimeRomsList);
+	auto list = HTTP(HM_GET, onlimeRomsHost, onlimeRomsPort, onlimeRomsList);
 
 	if (list.size() == 0)
 		return;

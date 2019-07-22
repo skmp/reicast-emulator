@@ -89,14 +89,14 @@ struct CoreFileHTTP: CoreFile
 
 	size_t read(void* buff, size_t len)
 	{
-		return HTTP_GET(host, port, path, seek_ptr, len, buff);
+		return HTTP(HM_GET, host, port, path, seek_ptr, len, buff);
 	}
 
 	void seek() { }
 
 	size_t size()
 	{
-		return HTTP_GET(host, port, path, 0, 0,0);
+		return HTTP(HM_HEAD, host, port, path, 0, 0,0);
 	}
 
 	~CoreFileHTTP() { }

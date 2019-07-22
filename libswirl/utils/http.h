@@ -1,4 +1,4 @@
-
+#pragma once
 #include "types.h"
 
 string url_encode(const string &value);

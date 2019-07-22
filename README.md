@@ -121,7 +121,7 @@ Building for Linux
 
 - From project root directory:
 ```
-cd shell/linux
+cd reicast/linux
 
 make
 ```

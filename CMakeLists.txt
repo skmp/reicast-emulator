@@ -54,6 +54,7 @@ file(GLOB profiler_SRCS		${d_core}/profiler/*.cpp	${d_core}/profiler/*.h)
 file(GLOB archive_SRCS		${d_core}/archive/*.cpp		${d_core}/archive/*.h)
 file(GLOB glwrap_SRCS		${d_core}/glwrap/*.cpp		${d_core}/glwrap/*.h)
 file(GLOB scripting_SRCS	${d_core}/scripting/*.cpp	${d_core}/scripting/*.h)
+file(GLOB utils_SRCS	${d_core}/utils/*.cpp	${d_core}/utils/*.h)
 
 #### option(rend)
 file(GLOB gl4_SRCS			${d_core}/rend/gl4/*.cpp	${d_core}/rend/gl4/*.h)
@@ -77,6 +78,7 @@ set(core_SRCS
   ${imgread_SRCS}
   ${profiler_SRCS}
   ${scripting_SRCS}
+  ${utils_SRCS}
   ${d_core}/archive/archive.cpp ${d_core}/archive/archive.h
   ${d_core}/libswirl.cpp
   ${d_core}/stdclass.cpp

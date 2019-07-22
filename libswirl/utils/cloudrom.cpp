@@ -177,7 +177,15 @@ void OnlineRomsProvider::fetchRomList()
 
 				auto status = romExists(id) ? RS_DOWNLOADED : RS_MISSING;
 
-				roms.push_back(OnlineRomInfo { status, type, id, name, sha256 });
+				OnlineRomInfo rom;
+				
+				rom.status = status;
+				rom.type = type;
+				rom.id = id;
+				rom.name = name;
+				rom.sha256 = sha256;
+
+				roms.push_back(rom);
 			}
 		}
 	}

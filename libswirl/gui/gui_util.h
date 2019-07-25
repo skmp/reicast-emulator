@@ -21,3 +21,4 @@
 typedef void (*StringCallback)(bool cancelled, std::string selection);
 
 void select_directory_popup(const char *prompt, float scaling, StringCallback callback);
+void gui_ShowHelpMarker(const char* desc);

@@ -21,7 +21,7 @@
 #include "hw/pvr/spg.h"
 #include "hw/aica/dsp.h"
 #include "imgread/common.h"
-#include "rend/gui.h"
+#include "gui/gui.h"
 #include "profiler/profiler.h"
 #include "input/gamepad_device.h"
 #include "rend/TexCache.h"

@@ -31,9 +31,9 @@
 #include "cfg/cfg.h"
 #include "hw/maple/maple_if.h"
 #include "imgui/imgui.h"
-#include "gles/imgui_impl_opengl3.h"
+#include "rend/gles/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
-#include "gles/gles.h"
+#include "rend/gles/gles.h"
 #include "input/gamepad_device.h"
 #include "input/keyboard_device.h"
 #include "linux-dist/main.h"	// FIXME for kcode[]

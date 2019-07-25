@@ -16,7 +16,7 @@
 #include "cfg/cfg.h"
 #include "linux-dist/x11.h"
 #include "linux-dist/main.h"
-#include "rend/gui.h"
+#include "gui/gui.h"
 #include "input/gamepad.h"
 
 #if FEAT_HAS_NIXPROF

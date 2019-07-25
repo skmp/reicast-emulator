@@ -6,7 +6,7 @@
 
 #include "oslib/oslib.h"
 #include "rend/rend.h"
-#include "rend/gui.h"
+#include "gui/gui.h"
 
 //Fragment and vertex shaders code
 

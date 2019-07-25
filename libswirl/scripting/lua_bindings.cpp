@@ -1,6 +1,6 @@
 #include "lua_bindings.h"
 #include "hw/pvr/Renderer_if.h"
-#include "rend/gui.h"
+#include "gui/gui.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/arm7/arm_mem.h"
 #include "libswirl.h"

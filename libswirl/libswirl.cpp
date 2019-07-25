@@ -25,12 +25,9 @@
 #include "profiler/profiler.h"
 #include "input/gamepad_device.h"
 #include "rend/TexCache.h"
+#include "scripting/mods.h"
 
 #define fault_printf(...)
-
-#ifdef SCRIPTING
-#include "scripting/lua_bindings.h"
-#endif
 
 void FlushCache();
 void LoadCustom();
@@ -403,6 +400,8 @@ int dc_start_game(const char *path)
 #endif
 	init_done = true;
 
+	modpack_gamestart();
+
 	dc_reset();
 
 	game_started = true;
@@ -425,9 +424,7 @@ void* dc_run(void*)
 
 	InitAudio();
 
-#ifdef SCRIPTING
-	luabindings_onstart();
-#endif
+	modpack_onstart();
 
 	if (settings.dynarec.Enable)
 	{
@@ -448,15 +445,11 @@ void* dc_run(void*)
    		if (reset_requested)
    		{
    			dc_reset();
-#ifdef SCRIPTING
-			luabindings_onreset();
-#endif
+			modpack_onreset();
    		}
 	} while (reset_requested);
 
-#ifdef SCRIPTING
-	luabindings_onstop();
-#endif
+	modpack_onstop();
 
     TermAudio();
 

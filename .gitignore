@@ -72,3 +72,9 @@ ant.properties
 .externalNativeBuild
 gradle.properties
 shell/android-studio/reicast/src/main/assets/build
+
+# CMake
+/CMakeFiles
+/reicast.dir
+/ALL_BUILD.*
+/ZERO_CHECK.*

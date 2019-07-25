@@ -6,7 +6,8 @@
 #include "types.h"
 #include "stdclass.h"
 
-#ifdef SCRIPTING
+#include "mods.h"
+
 // TODO: Allow more than one script
 class LuaScript {
 	lua_State* L;
@@ -95,71 +96,74 @@ public:
 };
 
 std::vector<LuaScript*> loaded_scripts;
-#endif
 
-void luabindings_findscripts(std::string path)
+static void luabindings_run(const char* fn)
 {
+	loaded_scripts.push_back(new LuaScript(fn));
+}
+
+static bool luabindings_findscripts(std::string path)
+{
+	// TODO: config option to disable LUA loading
+
 	std::string lua_path = path + "/main.lua";
 	if (file_exists(lua_path))
 	{
 		luabindings_run(lua_path.c_str());
+		return true;
 	}
+	return false;
 }
 
-void luabindings_run(const char* fn)
+static void luabindings_close()
 {
-#ifdef SCRIPTING
-	loaded_scripts.push_back(new LuaScript(fn));
-#endif
-}
-
-void luabindings_close()
-{
-#ifdef SCRIPTING
-	for (auto script : loaded_scripts)
+	for (auto& script : loaded_scripts)
 	{
 		delete script;
 	}
 	loaded_scripts.clear();
-#endif
 }
 
-void luabindings_onframe()
+static void luabindings_onframe()
 {
-#ifdef SCRIPTING
-	for (auto script : loaded_scripts)
+	for (auto& script : loaded_scripts)
 	{
 		script->onframe();
 	}
-#endif
 }
 
-void luabindings_onstart()
+static void luabindings_onstart()
 {
-#ifdef SCRIPTING
-	for (auto script : loaded_scripts)
+	for (auto& script : loaded_scripts)
 	{
 		script->onstart();
 	}
-#endif
 }
 
-void luabindings_onstop()
+static void luabindings_onstop()
 {
-#ifdef SCRIPTING
-	for (auto script : loaded_scripts)
+	for (auto& script : loaded_scripts)
 	{
 		script->onstop();
 	}
-#endif
 }
 
-void luabindings_onreset()
+static void luabindings_onreset()
 {
-#ifdef SCRIPTING
-	for (auto script : loaded_scripts)
+	for (auto& script : loaded_scripts)
 	{
 		script->onreset();
 	}
-#endif
 }
+
+static mod_handlers luamod = {
+	luabindings_findscripts,
+	luabindings_close,
+	luabindings_onframe,
+	luabindings_onstart,
+	luabindings_onstop,
+	luabindings_onreset
+};
+#ifdef SCRIPTING
+static bool registered = mod_handler_register(luamod);
+#endif

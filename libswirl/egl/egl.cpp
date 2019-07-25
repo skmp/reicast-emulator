@@ -17,7 +17,6 @@ struct
 } egl_setup;
 
 
-void load_gles_symbols();
 static bool created_context;
 
 bool egl_makecurrent()
@@ -103,7 +102,7 @@ bool os_gl_init(void* wind, void* disp)
 		}
 
 
-		bool try_full_gl = false;
+		bool try_full_gl = true;
 		if (!eglBindAPI(EGL_OPENGL_API))
 		{
 			printf("eglBindAPI(EGL_OPENGL_API) failed: %x\n", eglGetError());
@@ -139,14 +138,10 @@ bool os_gl_init(void* wind, void* disp)
 				printf("eglCreateContext() failed: %x\n", eglGetError());
 				return false;
 			}
-#ifdef GLES
-			// EGL only supports runtime loading with android? TDB
-			load_gles_symbols();
-#else
-			egl_makecurrent();
-			if (gl3wInit())
-				printf("gl3wInit() failed\n");
-#endif
+
+			// Load gles symbols only
+			if (!load_gles_symbols())
+				die("Failed to load symbols");
 		}
 		created_context = true;
 	}

@@ -47,6 +47,9 @@ extern "C" {
 typedef void (*GL3WglProc)(void);
 typedef GL3WglProc (*GL3WGetProcAddressProc)(const char *proc);
 
+/* gles api */
+bool load_gles_symbols();
+
 /* gl3w api */
 int gl3wInit(void);
 int gl3wInit2(GL3WGetProcAddressProc proc);
@@ -714,10 +717,18 @@ union GL3WProcs {
 		PFNGLVIEWPORTINDEXEDFPROC                               ViewportIndexedf;
 		PFNGLVIEWPORTINDEXEDFVPROC                              ViewportIndexedfv;
 		PFNGLWAITSYNCPROC                                       WaitSync;
+
+		// modifications
+		PFNGLBLENDBARRIERKHRPROC								BlendBarrier;
+		PFNGLPRIMITIVEBOUNDINGBOXARBPROC						PrimitiveBoundingBox;
 	} gl;
 };
 
 extern union GL3WProcs gl3wProcs;
+
+// modifications
+#define glBlendBarrier                                   gl3wProcs.gl.BlendBarrier
+#define glPrimitiveBoundingBox                           gl3wProcs.gl.PrimitiveBoundingBox
 
 /* OpenGL functions */
 #define glActiveShaderProgram                            gl3wProcs.gl.ActiveShaderProgram

@@ -12,7 +12,7 @@
 
 #include "types.h"
 #include "hw/maple/maple_cfg.h"
-#include "rend/gui.h"
+#include "gui/gui.h"
 #include "osx_keyboard.h"
 #include "osx_gamepad.h"
 

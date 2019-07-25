@@ -2,7 +2,7 @@
 #include "glcache.h"
 #include "rend/TexCache.h"
 #include "cfg/cfg.h"
-#include "rend/gui.h"
+#include "gui/gui.h"
 
 #ifdef TARGET_PANDORA
 #include <unistd.h>

@@ -1,7 +1,7 @@
 #include <xinput.h>
 #include <windows.h>
 #include "input/gamepad_device.h"
-#include "rend/gui.h"
+#include "gui/gui.h"
 
 class XInputMapping : public InputMapping
 {

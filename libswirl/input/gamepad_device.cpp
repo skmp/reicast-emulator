@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <limits.h>
 #include "gamepad_device.h"
-#include "rend/gui.h"
+#include "gui/gui.h"
 #include "oslib/oslib.h"
 #include "cfg/cfg.h"
 

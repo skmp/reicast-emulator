@@ -24,7 +24,7 @@
 #include "types.h"
 #include "stdclass.h"
 #include "imgui/imgui.h"
-#include "gles/imgui_impl_opengl3.h"
+#include "rend/gles/imgui_impl_opengl3.h"
 
 extern bool settings_opening;
 

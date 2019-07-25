@@ -5,7 +5,7 @@
 #include "cfg/cfg.h"
 #include "linux-dist/main.h"
 #include "sdl/sdl.h"
-#include "rend/gui.h"
+#include "gui/gui.h"
 #ifndef GLES
 #include "khronos/GL3/gl3w.h"
 #endif

@@ -2,7 +2,7 @@
 #include "ta.h"
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
-#include "rend/gui.h"
+#include "gui/gui.h"
 
 #include "deps/zlib/zlib.h"
 

@@ -22,7 +22,7 @@
 #include "hw/naomi/naomi_cart.h"
 #include "oslib/audiostream.h"
 #include "imgread/common.h"
-#include "rend/gui.h"
+#include "gui/gui.h"
 #include "cfg/cfg.h"
 
 #include "libswirl.h"

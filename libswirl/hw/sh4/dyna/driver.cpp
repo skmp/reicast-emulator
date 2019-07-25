@@ -91,11 +91,10 @@ void recSh4_Run()
 		printf("Warning: SMC check mode is %d\n", settings.dynarec.SmcCheckLevel);
 	
 	verify(rcb_noffs(&next_pc)==-184);
+	
 	rdv_ngen->Mainloop(sh4_dyna_rcb);
-
-#if !defined(TARGET_BOUNDED_EXECUTION)
+	
 	sh4_int_bCpuRun=false;
-#endif
 }
 
 void emit_Write32(u32 data)

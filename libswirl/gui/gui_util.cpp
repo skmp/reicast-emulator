@@ -274,3 +274,19 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 	}
 	ImGui::PopStyleVar();
 }
+
+
+
+// Helper to display a little (?) mark which shows a tooltip when hovered.
+void gui_ShowHelpMarker(const char* desc)
+{
+    ImGui::TextDisabled("(?)");
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(desc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}

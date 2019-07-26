@@ -16,8 +16,11 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#pragma once;
+
 #include <string>
 
 typedef void (*StringCallback)(bool cancelled, std::string selection);
 
 void select_directory_popup(const char *prompt, float scaling, StringCallback callback);
+void gui_ShowHelpMarker(const char* desc);

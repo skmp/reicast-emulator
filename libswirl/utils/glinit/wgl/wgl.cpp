@@ -10,8 +10,6 @@
 #include "imgread/common.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
-#include "xinput_gamepad.h"
-#include "win_keyboard.h"
 
 #include "hw/maple/maple_cfg.h"
 
@@ -33,7 +31,6 @@
 
 #undef ARRAY_SIZE	// macros are evil
 
-#include <xinput.h>
 
 #define WGL_DRAW_TO_WINDOW_ARB         0x2001
 #define WGL_ACCELERATION_ARB           0x2003

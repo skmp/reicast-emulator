@@ -300,7 +300,9 @@ else ifneq (,$(findstring vero4k,$(platform)))
 
 # Windows
 else ifneq (,$(findstring win32,$(platform)))
-    NOT_ARM := 1
+    PLATFORM_WINDOWS := 1
+    SUPPORT_WGL := 1
+    
     CFLAGS += -DNOMINMAX -DTARGET_NO_WEBUI -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -D TARGET_NO_AREC
     LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows
     LIBS := -lopengl32 -lwinmm -lole32 -lgdi32 -lwsock32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi
@@ -312,6 +314,7 @@ else ifneq (,$(findstring win32,$(platform)))
     else
         X64_REC := 1
     endif
+
     undefine USE_X11
     undefine USE_ALSA
     undefine USE_OSS
@@ -320,7 +323,6 @@ else ifneq (,$(findstring win32,$(platform)))
     undefine FOR_LINUX
     undefine WEBUI
     NO_NIXPROF := 1
-    FOR_WINDOWS := 1
 else
     $(error Unknown platform)
 endif
@@ -483,7 +485,7 @@ OBJECTS:=$(OBJECTS:.c=.build_obj)
 OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
-ifdef FOR_WINDOWS
+ifdef PLATFORM_WINDOWS
 OBJECTS+=$(BUILDDIR)/reicastres.build_obj
 $(BUILDDIR)/reicastres.build_obj: $(LOCAL_PATH)/../windows/reicast.rc $(LOCAL_PATH)/../windows/reicast.ico $(RZDCY_SRC_DIR)/version.h
 	$(WINDRES) $< $@

@@ -115,6 +115,7 @@ ifneq (,$(findstring x86,$(platform)))
     X86_REC := 1
     USE_X11 := 1
     SUPPORT_GLX := 1
+    SUPPORT_EGL := 1
 
     MFLAGS += -m32
     ASFLAGS += --32
@@ -131,7 +132,8 @@ else ifneq (,$(findstring x64,$(platform)))
     PLATFORM_LINUX := 1
     X64_REC := 1
     USE_X11 := 1
-    SUPPORT_GLX := 1
+    #SUPPORT_GLX := 1
+    SUPPORT_EGL := 1
     
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions

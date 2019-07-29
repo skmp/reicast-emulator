@@ -68,18 +68,22 @@ endif
 
 # glinit options
 ifdef SUPPORT_EGL
+	RZDCY_CFLAGS  += -D SUPPORT_EGL
 	RZDCY_MODULES += utils/glinit/egl/
 endif
 
 ifdef SUPPORT_GLX
+	RZDCY_CFLAGS  += -D SUPPORT_GLX
 	RZDCY_MODULES += utils/glinit/glx/
 endif
 
 ifdef SUPPORT_WGL
+	RZDCY_CFLAGS  += -D SUPPORT_WGL
 	RZDCY_MODULES += utils/glinit/wgl/
 endif
     
 ifdef SUPPORT_SDL
+	RZDCY_CFLAGS  += -D SUPPORT_SDL
 	RZDCY_MODULES += utils/glinit/sdl/
 endif
 

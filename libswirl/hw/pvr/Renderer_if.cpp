@@ -347,21 +347,27 @@ static void rend_create_renderer()
 {
 	if (backends.count(settings.pvr.backend))
 	{
-		printf("renderer: %s\n", settings.pvr.backend.c_str());
+		printf("RendIF: renderer: %s\n", settings.pvr.backend.c_str());
 		renderer = backends[settings.pvr.backend].create();
+		renderer->backendInfo = backends[settings.pvr.backend];
 	}
 	else
 	{
 		vector<rendererbackend_t> vec = rend_get_backends();
 
-		renderer = vec.begin()->create();
+		auto main = (*vec.begin());
+
+		renderer = main.create();
+		renderer->backendInfo = main;
 
 		if ((++vec.begin()) != vec.end())
 		{
-			fallback_renderer = (++vec.begin())->create();
+			auto fallback = (*(++vec.begin()));
+			fallback_renderer = fallback.create();
+			fallback_renderer->backendInfo = fallback;
 		}
 
-		printf("renderer (auto): ");
+		printf("RendIF: renderer (auto): ");
 		printf("main: %s",(vec.begin())->slug.c_str());
 		if (fallback_renderer)
 			printf(" fallback: %s", (++vec.begin())->slug.c_str());
@@ -375,15 +381,22 @@ void rend_init_renderer()
 		rend_create_renderer();
 	if (!renderer->Init())
     {
+    	printf("RendIF: Renderer %s did not initialize. Falling back to %s.\n", 
+    		renderer->backendInfo.slug.c_str(),
+    		fallback_renderer->backendInfo.slug.c_str()
+    	);
+		
 		delete renderer;
+
+		renderer = fallback_renderer;
+
     	if (fallback_renderer == NULL || !fallback_renderer->Init())
     	{
     		if (fallback_renderer != NULL)
     			delete fallback_renderer;
-    		die("Renderer initialization failed\n");
+    		die("RendIF: Renderer initialization failed\n");
     	}
-    	printf("Selected renderer initialization failed. Falling back to default renderer.\n");
-    	renderer  = fallback_renderer;
+    	
     	fallback_renderer = NULL;	// avoid double-free
     }
 }

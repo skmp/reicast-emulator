@@ -786,8 +786,6 @@ bool gl_create_resources()
 		// Assume the resources have already been created
 		return true;
 
-	findGLVersion();
-
 	if (gl.gl_major >= 3)
 	{
 		verify(glGenVertexArrays != NULL);
@@ -827,6 +825,8 @@ bool gles_init()
 	if (!os_gl_init((void*)libPvr_GetRenderTarget(),
 		         (void*)libPvr_GetRenderSurface()))
 			return false;
+
+	findGLVersion();
 
 	glcache.EnableCache();
 

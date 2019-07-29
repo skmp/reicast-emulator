@@ -17,42 +17,34 @@ LOCAL_PATH:= $(call my-dir)/..
 
 include $(CLEAR_VARS)
 
-FOR_ANDROID := 1
-WEBUI := 1
-USE_GLES := 1
 CHD5_LZMA := 1
 CHD5_FLAC := 1
 USE_MODEM := 1
 SCRIPTING := 1
 
-ifneq ($(TARGET_ARCH_ABI),armeabi-v7a)
-  NOT_ARM := 1
-else
-  NOT_ARM := 
+PLATFORM_ANDROID := 1
+SUPPORT_EGL := 1
+
+LOCAL_CFLAGS := -O3 -D _ANDROID
+
+ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
+  ARM32_REC := 1
+  LOCAL_CFLAGS += -D TARGET_LINUX_ARMELv7
 endif
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-#  CPP_REC := 1
   ARM64_REC := 1
-  ISARM64 := 1
-else
-#  CPP_REC :=
-  ARM64_REC :=
-  ISARM64 :=
+  LOCAL_CFLAGS += -D TARGET_LINUX_ARMv8
 endif
 
 ifeq ($(TARGET_ARCH_ABI),x86)
   X86_REC := 1
-else
-  X86_REC := 
+  LOCAL_CFLAGS += -D TARGET_LINUX_X86
 endif
 
 ifeq ($(TARGET_ARCH_ABI),mips)
-  ISMIPS := 1
-  NO_REC := 1
-else
-  ISMIPS :=
-  NO_REC :=
+  CPP_REC := 1
+  LOCAL_CFLAGS += -D TARGET_LINUX_MIPS
 endif
 
 $(info $$TARGET_ARCH_ABI is [${TARGET_ARCH_ABI}])
@@ -62,9 +54,11 @@ include $(LOCAL_PATH)/../../../../../libswirl/core.mk
 LOCAL_SRC_FILES := $(RZDCY_FILES)
 LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/Android.cpp)
 LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/utils.cpp)
-LOCAL_CFLAGS  := $(RZDCY_CFLAGS) -fPIC -fvisibility=hidden -ffunction-sections -fdata-sections
+LOCAL_CFLAGS    += $(RZDCY_CFLAGS) -fPIC -fvisibility=hidden -ffunction-sections -fdata-sections
 LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
 LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
+
+
 
 # 7-Zip/LZMA settings (CHDv5)
 ifdef CHD5_LZMA

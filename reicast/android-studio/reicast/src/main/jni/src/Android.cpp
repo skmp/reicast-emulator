@@ -26,6 +26,8 @@
 #include "cfg/cfg.h"
 
 #include "libswirl.h"
+#include "utils/glinit/egl/egl.h"
+
 JavaVM* g_jvm;
 
 // Convenience class to get the java environment for the current thread.
@@ -131,8 +133,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env
     screen_dpi = screenDpi;
 }
 
-
-bool egl_makecurrent();
 
 extern int screen_width,screen_height;
 
@@ -400,7 +400,6 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env, job
     return 0;
 }
 
-extern void egl_stealcntx();
 volatile static bool render_running;
 volatile static bool render_reinit;
 
@@ -417,14 +416,14 @@ void *render_thread_func(void *)
         	rend_init_renderer();
         }
         else
-            if (!egl_makecurrent())
+            if (!egl_MakeCurrent())
                 break;;
 
         bool ret = rend_single_frame();
         if (ret)
             os_gl_swap();
     }
-    egl_makecurrent();
+    egl_MakeCurrent();
     rend_term_renderer();
     ANativeWindow_release(g_window);
     g_window = NULL;
@@ -458,19 +457,19 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitJava(JNIEnv *
 {
     screen_width = width;
     screen_height = height;
-    egl_stealcntx();
+    egl_GetCurrent();
     rend_init_renderer();
 }
 
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframeJava(JNIEnv *env,jobject obj)
 {
-    egl_stealcntx();
+    egl_GetCurrent();
     return (jboolean)rend_single_frame();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendtermJava(JNIEnv * env, jobject obj)
 {
-    egl_stealcntx();
+    egl_GetCurrent();
     rend_term_renderer();
 }
 
@@ -723,4 +722,19 @@ void android_send_logs()
     JNIEnv *env = jvm_attacher.getEnv();
     jmethodID generateErrorLogMID = env->GetMethodID(env->GetObjectClass(g_activity), "generateErrorLog", "()V");
     env->CallVoidMethod(g_activity, generateErrorLogMID);
+}
+
+bool os_gl_init(void* a, void* b)
+{
+    return egl_Init(a, b);
+}
+
+void os_gl_swap()
+{
+    return egl_Swap();
+}
+
+void os_gl_term()
+{
+    return egl_Term();
 }

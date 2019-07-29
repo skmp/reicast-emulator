@@ -27,8 +27,9 @@ ifdef _NO_WEBUI
 	endif
 endif
 
-ifndef NOT_ARM
-    RZDCY_MODULES += jit/backend/arm32/ jit/emitter/arm/
+
+ifdef CPP_REC
+    RZDCY_MODULES += jit/backend/cpp/
 endif
 
 ifdef X86_REC
@@ -39,82 +40,68 @@ ifdef X64_REC
     RZDCY_MODULES += jit/backend/x64/
 endif
 
-ifdef CPP_REC
-    RZDCY_MODULES += jit/backend/cpp/
+ifdef ARM32_REC
+    RZDCY_MODULES += jit/backend/arm32/ jit/emitter/arm/
 endif
 
 ifdef ARM64_REC
     RZDCY_MODULES += jit/backend/arm64/ deps/vixl/ deps/vixl/aarch64/
 endif
 
-ifndef NO_REND
+# rend options
+ifndef NO_REND_GLES
     RZDCY_MODULES += rend/gles/
-    ifndef USE_GLES
-	ifndef USE_DISPMANX
-	    RZDCY_MODULES += rend/gl4/
-	endif
-    else
-	RZDCY_MODULES += egl/
-    endif
-else
-    RZDCY_MODULES += rend/norend/
+endif
+
+ifndef NO_REND_GL4
+	RZDCY_MODULES += rend/gl4/
+endif
+
+ifndef NO_REND_NONE
+	RZDCY_MODULES += rend/norend/
+endif
+
+ifdef HAS_SOFTREND
+	RZDCY_CFLAGS += -DTARGET_SOFTREND
+	RZDCY_MODULES += rend/soft/
+endif
+
+# glinit options
+ifdef SUPPORT_EGL
+	RZDCY_MODULES += utils/glinit/egl/
+endif
+
+ifdef SUPPORT_GLX
+	RZDCY_MODULES += utils/glinit/glx/
+endif
+
+ifdef SUPPORT_WGL
+	RZDCY_MODULES += utils/glinit/wgl/
+endif
+    
+ifdef SUPPORT_SDL
+	RZDCY_MODULES += utils/glinit/sdl/
 endif
 
 ifndef NO_NIXPROF
     RZDCY_MODULES += linux/nixprof/
 endif
 
-ifdef FOR_ANDROID
+# platform selection
+ifdef PLATFORM_ANDROID
     RZDCY_MODULES += android/ deps/libandroid/ linux/ oslib/posix/
 endif
 
-ifdef USE_SDL
+ifdef PLATFORM_SDL
     RZDCY_MODULES += sdl/
 endif
 
-ifdef FOR_LINUX
+ifdef PLATFORM_LINUX
     RZDCY_MODULES += linux-dist/ linux/ oslib/posix/
 endif
 
-ifdef FOR_WINDOWS
+ifdef PLATFORM_WINDOWS
     RZDCY_MODULES += windows/ oslib/windows/
-endif
-
-ifdef FOR_PANDORA
-RZDCY_CFLAGS	:= \
-	$(CFLAGS) -c -O3 \
-	-DRELEASE -DPANDORA\
-	-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp \
-	-frename-registers -fsingle-precision-constant -ffast-math \
-	-ftree-vectorize -fomit-frame-pointer
-	RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a8 -mfpu=neon
-	RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
-else
-	ifdef FOR_ANDROID
-RZDCY_CFLAGS	:= \
-		$(CFLAGS) -c -O3 \
-		-D_ANDROID -DRELEASE \
-		-frename-registers -fsingle-precision-constant -ffast-math \
-		-ftree-vectorize -fomit-frame-pointer
-
-		ifndef NOT_ARM
-			RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
-			RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
-		else
-			ifdef ISARM64
-				RZDCY_CFLAGS += -march=armv8-a
-				RZDCY_CFLAGS += -DTARGET_LINUX_ARMv8
-			else
-				ifdef ISMIPS
-					RZDCY_CFLAGS += -DTARGET_LINUX_MIPS
-				else
-					RZDCY_CFLAGS += -DTARGET_LINUX_x86
-				endif
-			endif
-		endif
-	else
-RZDCY_CFLAGS := 
-	endif
 endif
 
 RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/rend/gles -I$(RZDCY_SRC_DIR)/deps \
@@ -133,11 +120,6 @@ endif
 
 ifdef USE_GLES
   RZDCY_CFLAGS += -DGLES -fPIC
-endif
-
-ifdef HAS_SOFTREND
-	RZDCY_CFLAGS += -DTARGET_SOFTREND
-	RZDCY_MODULES += rend/soft/
 endif
 
 ifdef CHD5_FLAC

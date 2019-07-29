@@ -1,11 +1,5 @@
-#ifndef __gl3w_h_
-#define __gl3w_h_
-
-#include <GL3/gl3.h>
-
-#ifndef __gl_h_
-#define __gl_h_
-#endif
+#pragma once
+#include "kronos/GL3/gl3.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -1229,6 +1223,4 @@ extern PFNGLTEXTURESTORAGE3DMULTISAMPLEEXTPROC gl3wTextureStorage3DMultisampleEX
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

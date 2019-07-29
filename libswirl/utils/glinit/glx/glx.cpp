@@ -125,7 +125,6 @@ bool glx_Init(void* wind, void* disp)
 	if (init_ok)
 	{
 		printf("GLX: init OK\n");
-		rend_resize(640, 480);
 	}
 
 	return init_ok;

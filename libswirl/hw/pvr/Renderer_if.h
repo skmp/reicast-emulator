@@ -23,8 +23,19 @@ extern TA_context* _pvrrc;
 
 #define pvrrc (_pvrrc->rend)
 
+struct Renderer;
+
+struct rendererbackend_t {
+	string slug;
+	string desc;
+	int priority;
+	Renderer* (*create)();
+};
+
 struct Renderer
 {
+	rendererbackend_t backendInfo;	// gets filled by renderer_if
+
 	virtual bool Init()=0;
 	
 	virtual void Resize(int w, int h)=0;
@@ -57,12 +68,6 @@ extern bool fb_dirty;
 
 void check_framebuffer_write();
 
-typedef struct {
-	string slug;
-	string desc;
-	int priority;
-	Renderer* (*create)();
-} rendererbackend_t;
 extern bool RegisterRendererBackend(const rendererbackend_t& backend);
 vector<rendererbackend_t> rend_get_backends();
 

@@ -132,6 +132,7 @@ else ifneq (,$(findstring x64,$(platform)))
     X64_REC := 1
     USE_X11 := 1
     SUPPORT_GLX := 1
+    #SUPPORT_EGL := 1
     
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions

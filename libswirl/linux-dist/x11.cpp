@@ -395,7 +395,7 @@ void x11_window_create()
 
 		int depth = CopyFromParent;
 
-		#if !defined(GLES)
+		#if SUPPORT_GLX
 			if (!glx_ChooseVisual(x11Display, x11Screen, &x11Visual, &depth))
 			{
 				printf("Error: Unable to acquire visual\n");

@@ -124,7 +124,7 @@ bool egl_Init(void* wind, void* disp)
 			egl_setup.context = eglCreateContext(egl_setup.display, config, NULL, contextAttrs);
 			if (egl_setup.context != EGL_NO_CONTEXT)
 			{
-				egl_makecurrent();
+				egl_MakeCurrent();
 				if (gl3wInit())
 					printf("gl3wInit() failed\n");
 			}
@@ -159,17 +159,11 @@ bool egl_Init(void* wind, void* disp)
 		load_gles_symbols();
 	}
 
-	if (!egl_makecurrent())
+	if (!egl_MakeCurrent())
 	{
 		printf("eglMakeCurrent() failed: %x\n", eglGetError());
 		return false;
 	}
-
-	EGLint w, h;
-	eglQuerySurface(egl_setup.display, egl_setup.surface, EGL_WIDTH, &w);
-	eglQuerySurface(egl_setup.display, egl_setup.surface, EGL_HEIGHT, &h);
-
-	rend_resize(w, h);
 
 	// Required when doing partial redraws
 	if (!eglSurfaceAttrib(egl_setup.display, egl_setup.surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED))
@@ -178,7 +172,7 @@ bool egl_Init(void* wind, void* disp)
 		gl.swap_buffer_not_preserved = true;
 	}
 
-	printf("EGL config: %p, %p, %p %dx%d\n", egl_setup.context, egl_setup.display, egl_setup.surface, w, h);
+	printf("EGL: config %p, %p, %p\n", egl_setup.context, egl_setup.display, egl_setup.surface);
 	return true;
 }
 
@@ -193,6 +187,12 @@ void egl_Swap()
 	}
 #endif
 	eglSwapBuffers(egl_setup.display, egl_setup.surface);
+
+	EGLint w, h;
+	eglQuerySurface(egl_setup.display, egl_setup.surface, EGL_WIDTH, &w);
+	eglQuerySurface(egl_setup.display, egl_setup.surface, EGL_HEIGHT, &h);
+
+	rend_resize(w, h);
 }
 
 void egl_Term()

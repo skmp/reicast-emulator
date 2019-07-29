@@ -6,7 +6,7 @@ extern const struct rglgen_sym_map rglgen_symbol_map[];
 
 bool load_gles_symbols()
 {
-	#if GLES
+	#if defined(SUPPORT_EGL)
 		for (int i = 0; rglgen_symbol_map[i].sym != NULL; i++)
 			*(void **)rglgen_symbol_map[i].ptr = (void*)eglGetProcAddress(rglgen_symbol_map[i].sym);
 	

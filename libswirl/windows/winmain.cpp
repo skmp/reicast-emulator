@@ -40,7 +40,7 @@
 
 bool os_gl_init(void* hwnd, void* hdc)
 {
-	wgl_Init(hwnd, hdc);
+	return wgl_Init(hwnd, hdc);
 }
 
 void os_gl_swap()

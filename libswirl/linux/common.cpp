@@ -107,8 +107,8 @@ void re_raise_fault()
 	        "call generic_fault_handler\n"
 	        "movb $0, (%rax)"
         #elif HOST_CPU == CPU_ARM
-			"sub sp, 8192\n"
-	        "and sp, -32\n"
+			"sub sp, #8192\n"
+	        "and sp, #-32\n"
 	        "bl generic_fault_handler\n"
 	        "ldr r1, [r0]"
 	    #elif HOST_CPU == CPU_ARM64

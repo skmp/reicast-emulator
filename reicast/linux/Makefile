@@ -1,6 +1,5 @@
 .DEFAULT_GOAL := all
 LOCAL_PATH := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-FOR_LINUX :=1
 #NO_REC := 1
 #NO_REND := 1
 WEBUI :=1
@@ -9,7 +8,6 @@ USE_OSS := 1
 #USE_SDLAUDIO := 1
 #USE_LIBAO := 1
 USE_EVDEV := 1
-USE_UDEV := 1
 USE_MODEM := 1
 PLATFORM_EXT := elf
 SCRIPTING := 1
@@ -33,8 +31,8 @@ CXXFLAGS :=
 
 ifneq (, $(filter $(shell uname -s), FreeBSD OpenBSD NetBSD DragonFly))
     CFLAGS += -DTARGET_BSD
-    undefine USE_UDEV
 else
+    USE_UDEV := 1
     USE_ALSA := 1
 #    USE_JOYSTICK := 1
 endif
@@ -113,9 +111,11 @@ endif
 
 # Generic 32 bit x86 (a.k.a. i386/i486/i686)
 ifneq (,$(findstring x86,$(platform)))
+    PLATFORM_LINUX := 1
     X86_REC := 1
-    NOT_ARM := 1
     USE_X11 := 1
+    SUPPORT_GLX := 1
+
     MFLAGS += -m32
     ASFLAGS += --32
     LDFLAGS += -m32
@@ -128,9 +128,11 @@ ifneq (,$(findstring x86,$(platform)))
 
 # Generic 64 bit x86 (a.k.a. x64/AMD64/x86_64/Intel64/EM64T)
 else ifneq (,$(findstring x64,$(platform)))
+    PLATFORM_LINUX := 1
     X64_REC := 1
-    NOT_ARM := 1
     USE_X11 := 1
+    SUPPORT_GLX := 1
+    
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
 
@@ -140,30 +142,36 @@ else ifneq (,$(findstring x64,$(platform)))
 
 # Generic 64 bit ARM (armv8) Linux
 else ifneq (,$(findstring arm64,$(platform)))
-    NOT_ARM := 1
-    USE_X11 := 1
+    PLATFORM_LINUX := 1
     ARM64_REC := 1
-    ISARM64 := 1
-    CFLAGS += -D TARGET_LINUX_ARMv8 -D TARGET_NO_AREC -fno-builtin-sqrtf
+    USE_X11 := 1
+    SUPPORT_GLX := 1
+
+    CFLAGS += -march=armv8-a -D TARGET_LINUX_ARMv8 -D TARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
 
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)
 else ifneq (,$(findstring armv7h,$(platform)))
+    PLATFORM_LINUX := 1
+    ARM32_REC := 1
+    USE_X11 := 1
+    SUPPORT_GLX := 1
+
     MFLAGS += -marm -mfloat-abi=hard -march=armv7-a -funroll-loops -mfpu=neon
     ASFLAGS += -mfloat-abi=hard -march=armv7-a -mfpu=neon
     ifneq (,$(findstring neon,$(platform)))
         MFLAGS += -mfpu=neon
         ASFLAGS += -mfpu=neon
     endif
-    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
-    USE_GLES := 1
+    CFLAGS += -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
 
 # sun8i Allwinner H2+ / H3 
 # like Orange PI, Nano PI, Banana PI, Tritium
 else ifneq (,$(findstring sun8i,$(platform)))
+
     MFLAGS += -marm -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
     ASFLAGS += -marm -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
-    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -funsafe-math-optimizations
+    CFLAGS +=  -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -funsafe-math-optimizations
     CC = gcc -std=gnu99
     CXX = g++ -std=gnu++14
     ifneq (,$(findstring sdl,$(platform)))
@@ -184,18 +192,20 @@ else ifneq (,$(findstring lincpp,$(platform)))
 
 # Raspberry Pi 4
 else ifneq (,$(findstring rpi4,$(platform)))
-
-    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
-
+    PLATFORM_LINUX := 1
+    ARM32_REC := 1
     USE_X11 := 1
-    USE_GLES := 1
+    SUPPORT_GLX := 1
+
+    CFLAGS +=  -D TARGET_LINUX_ARMv8 -DARM_HARDFP -fsingle-precision-constant
+
 
     MFLAGS += -march=armv8-a+crc -mtune=cortex-a72 -mfpu=neon-fp-armv8 -mfloat-abi=hard
     ASFLAGS += -march=armv8-a+crc -mtune=cortex-a72 -mfpu=neon-fp-armv8 -mfloat-abi=hard
 
 # Raspberry Pi 2/3
 else ifneq (,$(findstring rpi,$(platform)))
-    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+    CFLAGS +=  -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
 
     ifneq (,$(findstring rpi2,$(platform)))
         MFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
@@ -217,14 +227,13 @@ else ifneq (,$(findstring rpi,$(platform)))
         USE_OMX := 1
         USE_DISPMANX := 1
     endif
-    undefine USE_X11
 
 # BeagleBone Black
 else ifneq (,$(findstring beagle,$(platform)))
     CC_PREFIX ?= arm-none-linux-gnueabi-
     MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp -funroll-loops
     ASFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=softfp
-    CFLAGS += -D TARGET_BEAGLE -fsingle-precision-constant
+    CFLAGS += -fsingle-precision-constant
     USE_GLES := 1
 
 # Pandora
@@ -242,7 +251,7 @@ else ifneq (,$(findstring pandora,$(platform)))
 else ifneq (,$(findstring odroid,$(platform)))
     MFLAGS += -marm -mfpu=neon -mfloat-abi=hard -funroll-loops
     ASFLAGS += -mfpu=neon -mfloat-abi=hard
-    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+    CFLAGS += -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
     USE_GLES := 1
 
     # ODROID-XU3, -XU3 Lite & -XU4
@@ -283,7 +292,7 @@ else ifneq (,$(findstring vero4k,$(platform)))
         MFLAGS += -mfpu=neon
         ASFLAGS += -mfpu=neon
     endif
-    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+    CFLAGS += -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
     INCS += -I/opt/vero3/include/
     LIBS += -L/opt/vero3/lib/ -lEGL -lGLESv2
     USE_GLES := 1
@@ -296,13 +305,13 @@ else ifneq (,$(findstring win32,$(platform)))
     LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows
     LIBS := -lopengl32 -lwinmm -lole32 -lgdi32 -lwsock32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi
     PLATFORM_EXT := exe
-ifeq ($(WITH_DYNAREC), x86)
-    X86_REC := 1
-    LDFLAGS += -m32
-    CFLAGS += -m32
-else
-    X64_REC := 1
-endif
+    ifeq ($(WITH_DYNAREC), x86)
+        X86_REC := 1
+        LDFLAGS += -m32
+        CFLAGS += -m32
+    else
+        X64_REC := 1
+    endif
     undefine USE_X11
     undefine USE_ALSA
     undefine USE_OSS
@@ -329,8 +338,8 @@ CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fpermissive -fno-operator-names -D_GLIBCX
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
-LIBS += -lm -lpthread 
-ifdef FOR_LINUX
+LIBS += -lm -lpthread
+ifdef PLATFORM_LINUX
 LIBS += -lrt -ldl # dl is the dynamic linker
 endif
 
@@ -369,10 +378,6 @@ ifdef USE_X11
     CFLAGS += `pkg-config --cflags x11` -D SUPPORT_X11
     CXXFLAGS += `pkg-config --cflags x11` -D SUPPORT_X11
     LIBS += `pkg-config --libs x11`
-
-    ifndef USE_GLES
-        LIBS += -lGL
-    endif
 endif
 
 ifdef USE_EVDEV
@@ -427,9 +432,13 @@ endif
 # these are also handled on core.mk, but ignored here
 
 # GLES on x11?
-ifdef USE_GLES
-    CFLAGS += -DGLES
-    LIBS += -lEGL -lGLESv2
+ifdef SUPPORT_EGL
+    CFLAGS += -DGLES # TODO: Fix this
+    LIBS += -lEGL
+endif
+
+ifdef SUPPORT_GLX
+    LIBS += -lGL
 endif
 
 #softrend?

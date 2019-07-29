@@ -19,18 +19,26 @@ struct
 
 static bool created_context;
 
-bool egl_makecurrent()
+bool egl_MakeCurrent()
 {
 	if (egl_setup.surface == EGL_NO_SURFACE || egl_setup.context == EGL_NO_CONTEXT)
 		return false;
 	return eglMakeCurrent(egl_setup.display, egl_setup.surface, egl_setup.surface, egl_setup.context);
 }
+
+void egl_GetCurrent()
+{
+	egl_setup.context = eglGetCurrentContext();
+	egl_setup.display = eglGetCurrentDisplay();
+	egl_setup.surface = eglGetCurrentSurface(EGL_DRAW);
+}
+
 #ifdef _ANDROID
 #include <android/native_window.h>
 #endif
 
 // Create a basic GLES context
-bool os_gl_init(void* wind, void* disp)
+bool egl_Init(void* wind, void* disp)
 {
 	printf("EGL: wind: %p, disp: %p\n", wind, disp);
 
@@ -174,15 +182,8 @@ bool os_gl_init(void* wind, void* disp)
 	return true;
 }
 
-void egl_stealcntx()
-{
-	egl_setup.context = eglGetCurrentContext();
-	egl_setup.display = eglGetCurrentDisplay();
-	egl_setup.surface = eglGetCurrentSurface(EGL_DRAW);
-}
-
 //swap buffers
-void os_gl_swap()
+void egl_Swap()
 {
 #ifdef TARGET_PANDORA0
 	if (fbdev >= 0)
@@ -194,7 +195,7 @@ void os_gl_swap()
 	eglSwapBuffers(egl_setup.display, egl_setup.surface);
 }
 
-void os_gl_term()
+void egl_Term()
 {
 	if (!created_context)
 		return;

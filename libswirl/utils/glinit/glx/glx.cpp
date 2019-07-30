@@ -1,6 +1,6 @@
 
 // for gl binding before GLX
-#include "glwrap/gl3w.h"
+#include "utils/glwrap/gl3w.h"
 
 #include <GL/glx.h>
 #include <X11/Xlib.h>

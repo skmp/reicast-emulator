@@ -5,7 +5,7 @@
 #include "gui_partials.h"
 #include "gui_util.h"
 #include "version.h"
-#include "glwrap/GLES.h"
+#include "utils/glwrap/GLES.h"
 
 void gui_settings_about()
 {

@@ -5,7 +5,8 @@
 #include "hw/mem/_vmem.h"
 #include "deps/libpng/png.h"
 #include "deps/xxhash/xxhash.h"
-#include "CustomTexture.h"
+#include "mods/CustomTexture.h"
+#include "texture_dump.h"
 
 /*
 Textures
@@ -72,8 +73,6 @@ const u32 MipPoint[8] =
 
 const GLuint PAL_TYPE[4]=
 {GL_UNSIGNED_SHORT_5_5_5_1,GL_UNSIGNED_SHORT_5_6_5,GL_UNSIGNED_SHORT_4_4_4_4, GL_UNSIGNED_BYTE};
-
-CustomTexture custom_texture;
 
 static void dumpRtTexture(u32 name, u32 w, u32 h) {
 	char sname[256];
@@ -379,7 +378,7 @@ void TextureCacheData::Update()
 		if (settings.rend.DumpTextures)
 		{
 			ComputeHash();
-			custom_texture.DumpTexture(texture_hash, upscaled_w, upscaled_h, textype, temp_tex_buffer);
+			gles_dump_texture(texture_hash, upscaled_w, upscaled_h, textype, temp_tex_buffer);
 		}
 	}
 	else {

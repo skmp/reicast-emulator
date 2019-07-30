@@ -6,9 +6,6 @@
 #include "linux-dist/main.h"
 #include "sdl/sdl.h"
 #include "gui/gui.h"
-#ifndef GLES
-#include "khronos/GL3/gl3w.h"
-#endif
 #endif
 #include "hw/maple/maple_devs.h"
 #include "sdl_gamepad.h"

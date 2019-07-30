@@ -130,35 +130,35 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
     // Backup GL state
     glActiveTexture(GL_TEXTURE0);
     bool clip_origin_lower_left = true;
-#ifdef GL_CLIP_ORIGIN
+
     if (gl.gl_major >= 4 && glClipControl != NULL)
     {
 		GLenum last_clip_origin = 0; glGetIntegerv(GL_CLIP_ORIGIN, (GLint*)&last_clip_origin); // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
 		if (last_clip_origin == GL_UPPER_LEFT)
 			clip_origin_lower_left = false;
     }
-#endif
 
     if (save_background)
     {
-#ifndef GLES2
-    	if (!gl.is_gles && glReadBuffer != NULL)
-    		glReadBuffer(GL_FRONT);
+        if (gl.gl_major >= 3)
+        {
+        	if (!gl.is_gles && glReadBuffer != NULL)
+        		glReadBuffer(GL_FRONT);
 
-		// (Re-)create the background texture and reserve space for it
-		if (g_BackgroundTexture != 0)
-			glcache.DeleteTextures(1, &g_BackgroundTexture);
-		g_BackgroundTexture = glcache.GenTexture();
-		glcache.BindTexture(GL_TEXTURE_2D, g_BackgroundTexture);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, fb_width, fb_height, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)NULL);
+    		// (Re-)create the background texture and reserve space for it
+    		if (g_BackgroundTexture != 0)
+    			glcache.DeleteTextures(1, &g_BackgroundTexture);
+    		g_BackgroundTexture = glcache.GenTexture();
+    		glcache.BindTexture(GL_TEXTURE_2D, g_BackgroundTexture);
+    		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, fb_width, fb_height, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)NULL);
 
-		// Copy the current framebuffer into it
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, fb_width, fb_height);
-#endif
+    		// Copy the current framebuffer into it
+    		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, fb_width, fb_height);
+        }
     }
 
     // Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled, polygon fill
@@ -168,10 +168,10 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
     glcache.Disable(GL_CULL_FACE);
     glcache.Disable(GL_DEPTH_TEST);
     glcache.Enable(GL_SCISSOR_TEST);
-#ifdef GL_POLYGON_MODE
+
     if (glPolygonMode != NULL)
     	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-#endif
+
 
     // Setup viewport, orthographic projection matrix
     // Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right). DisplayMin is typically (0,0) for single viewport apps.
@@ -190,12 +190,12 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
     glcache.UseProgram(g_ShaderHandle);
     glUniform1i(g_AttribLocationTex, 0);
     glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
-#ifndef GLES2
+
     if (gl.gl_major >= 3 && glBindSampler != NULL)
     	glBindSampler(0, 0); // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
-#endif
+
     GLuint vao_handle = 0;
-#ifndef GLES2
+
     if (gl.gl_major >= 3)
     {
 		// Recreate the VAO every time
@@ -203,7 +203,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
 		glGenVertexArrays(1, &vao_handle);
 		glBindVertexArray(vao_handle);
     }
-#endif
+
     glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
     glEnableVertexAttribArray(g_AttribLocationPosition);
     glEnableVertexAttribArray(g_AttribLocationUV);
@@ -252,10 +252,9 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
             idx_buffer_offset += pcmd->ElemCount;
         }
     }
-#ifndef GLES2
+
     if (vao_handle != 0)
     	glDeleteVertexArrays(1, &vao_handle);
-#endif
 }
 
 bool ImGui_ImplOpenGL3_CreateFontsTexture()

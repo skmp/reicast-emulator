@@ -160,7 +160,6 @@ ifdef USE_DISPMANX
 endif
 
 ifdef SUPPORT_EGL
-    CFLAGS += -DGLES # TODO: Fix this
     LIBS += -lEGL
 endif
 

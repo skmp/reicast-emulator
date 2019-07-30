@@ -5,29 +5,17 @@
 #include "gui/gui.h"
 
 #ifdef TARGET_PANDORA
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <linux/fb.h>
+	#include <unistd.h>
+	#include <fcntl.h>
+	#include <sys/ioctl.h>
+	#include <linux/fb.h>
 
-#ifndef FBIO_WAITFORVSYNC
-	#define FBIO_WAITFORVSYNC _IOW('F', 0x20, __u32)
-#endif
-int fbdev = -1;
+		#ifndef FBIO_WAITFORVSYNC
+			#define FBIO_WAITFORVSYNC _IOW('F', 0x20, __u32)
+		#endif
+	int fbdev = -1;
 #endif
 
-#ifndef GLES
-#if HOST_OS != OS_DARWIN
-
-#endif
-#else
-#ifndef GL_RED
-#define GL_RED                            0x1903
-#endif
-#ifndef GL_MAJOR_VERSION
-#define GL_MAJOR_VERSION                  0x821B
-#endif
-#endif
 
 /*
 GL|ES 2
@@ -792,9 +780,8 @@ bool gl_create_resources()
 		//create vao
 		//This is really not "proper", vaos are supposed to be defined once
 		//i keep updating the same one to make the es2 code work in 3.1 context
-#ifndef GLES2
+
 		glGenVertexArrays(1, &gl.vbo.vao);
-#endif
 	}
 
 	//create vbos
@@ -1593,10 +1580,10 @@ struct glesrend : Renderer
 
 	void DrawOSD(bool clear_screen)
 	{
-#ifndef GLES2
+
 		if (gl.gl_major >= 3)
 			glBindVertexArray(gl.vbo.vao);
-#endif
+
 		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
 		glEnableVertexAttribArray(VERTEX_POS_ARRAY);
 		glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x));

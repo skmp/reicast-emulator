@@ -113,8 +113,8 @@ else ifneq (,$(findstring rpi,$(platform)))
     else
         INCS += -I/opt/vc/include/ -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
         LIBS += -L/opt/vc/lib/ -lbcm_host -ldl
-        LIBS += -lbrcmEGL -lbrcmGLESv2
-        CFLAGS += -D TARGET_VIDEOCORE -DGLES
+        LIBS += -lbrcmEGL
+        CFLAGS += -D TARGET_VIDEOCORE
         USE_OMX := 1
         USE_DISPMANX := 1
     endif
@@ -185,7 +185,7 @@ else ifneq (,$(findstring vero4k,$(platform)))
     endif
     CFLAGS += -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
     INCS += -I/opt/vero3/include/
-    LIBS += -L/opt/vero3/lib/ -lEGL -lGLESv2
+    LIBS += -L/opt/vero3/lib/ -lEGL
     USE_GLES := 1
     USE_SDL := 1
 

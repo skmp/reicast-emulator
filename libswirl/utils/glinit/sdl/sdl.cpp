@@ -4,16 +4,17 @@
 #include "linux-dist/main.h"
 #include "sdl/sdl.h"
 #include "gui/gui.h"
-#ifndef GLES
-#include "khronos/GL3/gl3w.h"
-#endif
 #endif
 #include "hw/maple/maple_devs.h"
 #include "sdl_gamepad.h"
 #include "sdl_keyboard.h"
 
+static bool sdl_gles;
+
 void sdlgl_CreateWindow(bool gles)
 {
+	sdl_gles = gles;
+
 	if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
 	{
 		if(SDL_InitSubSystem(SDL_INIT_VIDEO) != 0)
@@ -78,11 +79,15 @@ void sdlgl_CreateWindow(bool gles)
 bool sdlgl_Init(void* wind, void* disp)
 {
 	SDL_GL_MakeCurrent(window, glcontext);
-	#ifdef GLES
-		return true;
-	#else
+
+	if (sdl_gles)
+	{
+		return load_gles_symbols();
+	}
+	else
+	{
 		return gl3wInit() != -1 && gl3wIsSupported(3, 1);
-	#endif
+	}
 }
 
 void sdlgl_Swap()

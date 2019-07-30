@@ -3,9 +3,6 @@
 #include <string>
 #include <vector>
 
-#include "types.h"
-#include "stdclass.h"
-
 #include "mods.h"
 
 // TODO: Allow more than one script

@@ -2,7 +2,9 @@
 
 #include <string>
 #include <vector>
-#include <stdclass.h>
+
+#include "types.h"
+#include "stdclass.h"
 
 struct mod_handlers {
 	// required

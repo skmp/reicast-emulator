@@ -1584,7 +1584,7 @@ extern "C" void armFlushICache(void *code, void *pEnd) {
 }
 #else
 extern "C" void armFlushICache(void *bgn, void *end) {
-	__builtin___clear_cache(bgn, end);
+	__builtin___clear_cache((char*)bgn, (char*)end);
 }
 #endif
 

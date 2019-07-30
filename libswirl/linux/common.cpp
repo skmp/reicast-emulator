@@ -21,7 +21,7 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
-#if !defined(TARGET_BSD) && !defined(_ANDROID) && !defined(TARGET_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX) && !defined(TARGET_OSX_X64)
+#if !defined(TARGET_BSD) && !defined(TARGET_IPHONE) && !defined(TARGET_NACL32) && !defined(TARGET_EMSCRIPTEN) && !defined(TARGET_OSX) && !defined(TARGET_OSX_X64)
   #include <sys/personality.h>
   #include <dlfcn.h>
 #endif
@@ -188,6 +188,31 @@ static void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	fault_printf("fault_handler exit\n");
 }
 
+typedef int sigaction_fn(int signum, const struct sigaction *act,
+                     struct sigaction *oldact);
+
+static sigaction_fn* get_sigaction()
+{
+
+	void* libc;
+	sigaction_fn* rv = nullptr;
+
+	libc = dlopen("libc.so", RTLD_NOLOAD);
+	
+	if (libc)
+	{
+		printf("get_sigaction: found libc.so\n");
+		*(void**) (&rv) = dlsym(libc, "sigaction");
+
+		if (rv && rv != sigaction) {
+			printf("get_sigaction: libc override detected, working around...\n");
+			return rv;
+		}
+	}
+
+	return &sigaction;
+}
+
 static void install_fault_handler(void)
 {
 	// initialize trap state
@@ -202,13 +227,16 @@ static void install_fault_handler(void)
 	act.sa_sigaction = fault_handler;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_SIGINFO;
-	sigaction(SIGSEGV, &act, &segv_oact);
+
+	auto libc_sigaction = get_sigaction();
+
+	libc_sigaction(SIGSEGV, &act, &segv_oact);
 #if HOST_OS == OS_DARWIN
     //this is broken on osx/ios/mach in general
-    sigaction(SIGBUS, &act, &segv_oact);
+    libc_sigaction(SIGBUS, &act, &segv_oact);
     
     act.sa_sigaction = sigill_handler;
-    sigaction(SIGILL, &act, &segv_oact);
+    libc_sigaction(SIGILL, &act, &segv_oact);
 #endif
 }
 #else  // !defined(TARGET_NO_EXCEPTIONS)

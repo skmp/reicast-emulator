@@ -381,7 +381,9 @@ public:
 			case shop_writem:
 				GenWriteMemory(op, i);
 				break;
+#define CANONICAL_FALLBACK 0
 
+#if CANONICAL_FALLBACK
 			case shop_sync_sr:
 				GenCallRuntime(UpdateSR);
 				break;
@@ -683,7 +685,7 @@ public:
 			case shop_cvt_i2f_z:
 				Scvtf(regalloc.MapVRegister(op.rd), regalloc.MapRegister(op.rs1));
 				break;
-
+#endif
 			default:
 				shil_chf[op.op](&op);
 				break;

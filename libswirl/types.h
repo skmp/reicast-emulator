@@ -351,7 +351,7 @@ using namespace std;
 #if defined(X86) && COMPILER_VC==BUILD_COMPILER
 #define naked   __declspec( naked )
 #else
-#define naked
+#define naked __attribute__((naked))
 #endif
 
 

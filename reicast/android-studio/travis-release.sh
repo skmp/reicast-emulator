@@ -8,4 +8,7 @@ if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
   if [ "${TRAVIS_BRANCH}" == "beta" ]; then
     ./gradlew publishApkDreamcastRelease -PreleaseTrack=beta
   fi
+  if [ "${TRAVIS_BRANCH}" == "stable" ]; then
+    ./gradlew publishApkDreamcastRelease -PreleaseTrack=production
+  fi
 fi

@@ -129,17 +129,18 @@ naked void re_raise_fault()
 }
 
 
-void fatal_error()
+static void fatal_error()
 {
-    for (;;) {
+    for (;;)
+    {
         printf("fault_handler: Blocking before restoring default SIGSEGV handler\n");
-    sleep(1);
-
+        sleep(1);
     }
+
     signal(SIGSEGV, SIG_DFL);
 }
 
-void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
+static void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 {
 	fault_printf("fault_handler: thread: %p si_addr:%p trap_ptr_fault: %p\n", (void*)pthread_self(), si->si_addr, trap_ptr_fault);
 
@@ -187,7 +188,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	fault_printf("fault_handler exit\n");
 }
 
-void install_fault_handler(void)
+static void install_fault_handler(void)
 {
 	// initialize trap state
 	trap_ptr_fault = (u8*)mmap(0, PAGE_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);

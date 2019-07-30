@@ -25,7 +25,7 @@
 #include "profiler/profiler.h"
 #include "input/gamepad_device.h"
 #include "rend/TexCache.h"
-#include "scripting/mods.h"
+#include "mods/mods.h"
 
 #define fault_printf(...)
 

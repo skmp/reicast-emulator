@@ -22,7 +22,8 @@
 
 #include <string>
 #include <set>
-#include "gles.h"
+#include "types.h"
+#include "rend/gles/gles.h"
 
 class CustomTexture {
 public:
@@ -35,13 +36,12 @@ public:
 	~CustomTexture() { Terminate(); }
 	u8* LoadCustomTexture(u32 hash, int& width, int& height);
 	void LoadCustomTextureAsync(TextureCacheData *texture_data);
-	void DumpTexture(u32 hash, int w, int h, GLuint textype, void *temp_tex_buffer);
+
+	bool Init(std::string path);
+	void Terminate();
 
 private:
-	bool Init();
-	void Terminate();
 	void LoaderThread();
-	std::string GetGameId();
 	
 	static void *loader_thread_func(void *param) { ((CustomTexture *)param)->LoaderThread(); return NULL; }
 	
@@ -56,5 +56,7 @@ private:
 	std::vector<TextureCacheData *> work_queue;
 	cMutex work_queue_mutex;
 };
+
+extern CustomTexture custom_texture;
 
 #endif /* CORE_REND_GLES_CUSTOMTEXTURE_H_ */

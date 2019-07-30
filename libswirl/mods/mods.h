@@ -25,3 +25,5 @@ void modpack_onframe();
 void modpack_onstart();
 void modpack_onstop();
 void modpack_onreset();
+
+std::string get_game_id();

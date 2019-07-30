@@ -8,7 +8,7 @@
 
 #include "deps/crypto/md5.h"
 
-#include "scripting/mods.h"
+#include "mods/mods.h"
 
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"

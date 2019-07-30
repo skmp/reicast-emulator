@@ -9,7 +9,7 @@
 std::string mods_path;
 std::vector<mod_handlers>* modhandlers;
 
-static std::string _getGameId()
+std::string get_game_id()
 {
 	std::string game_id = reios_product_number;
 	const size_t str_end = game_id.find_last_not_of(" ");
@@ -39,7 +39,7 @@ void modpack_detect_mods(std::string path)
 
 void modpack_gamestart()
 {
-	std::string game_id = _getGameId();
+	std::string game_id = get_game_id();
 	if (game_id.length() > 0)
 	{
 		mods_path = get_readonly_data_path(DATA_PATH) + "mods/" + game_id + "/";

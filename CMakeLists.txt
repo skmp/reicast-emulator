@@ -26,7 +26,6 @@ configure_file(${reicast_core_path}/version.h.in ${reicast_core_path}/version.h 
 
 
 
-
 ## reicast build modules #
 #
 
@@ -53,9 +52,9 @@ file(GLOB imgread_SRCS		${d_core}/imgread/*.cpp		${d_core}/imgread/*.h)
 file(GLOB profiler_SRCS		${d_core}/profiler/*.cpp	${d_core}/profiler/*.h)
 file(GLOB archive_SRCS		${d_core}/archive/*.cpp		${d_core}/archive/*.h)
 file(GLOB glwrap_SRCS		${d_core}/glwrap/*.cpp		${d_core}/glwrap/*.h)
-file(GLOB scripting_SRCS	${d_core}/scripting/*.cpp	${d_core}/scripting/*.h)
-file(GLOB utils_SRCS	${d_core}/utils/*.cpp	${d_core}/utils/*.h)
-file(GLOB gui_SRCS  ${d_core}/gui/*.cpp ${d_core}/gui/*.h)
+file(GLOB mods_SRCS			${d_core}/mods/*.cpp		${d_core}/mods/*.h)
+file(GLOB utils_SRCS		${d_core}/utils/*.cpp		${d_core}/utils/*.h)
+file(GLOB gui_SRCS			${d_core}/gui/*.cpp			${d_core}/gui/*.h)
 file(GLOB wgl_SRCS  ${d_core}/utils/glinit/wgl/*.cpp )
 
 #### option(rend)
@@ -79,7 +78,7 @@ set(core_SRCS
   ${reios_SRCS}
   ${imgread_SRCS}
   ${profiler_SRCS}
-  ${scripting_SRCS}
+  ${mods_SRCS}
   ${utils_SRCS}
   ${gui_SRCS}
   ${wgl_SRCS}

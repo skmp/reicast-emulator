@@ -164,6 +164,4 @@ static mod_handlers luamod = {
 	luabindings_onstop,
 	luabindings_onreset
 };
-#ifdef SCRIPTING
 static bool registered = mod_handler_register(luamod);
-#endif

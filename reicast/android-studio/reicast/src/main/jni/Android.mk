@@ -74,7 +74,7 @@ ifdef NAOMI
     LOCAL_CFLAGS += -DTARGET_NAOMI=1
 endif
 
-LOCAL_CFLAGS += -DGLES3
+LOCAL_CFLAGS +=
 LOCAL_CXXFLAGS += -std=c++11 -fopenmp
 LOCAL_LDFLAGS  += -fopenmp
 

@@ -14,9 +14,11 @@ void gui_settings_social()
 	
 		ImGui::Separator();
 
-		if (ImGui::Button("Donate / Support Reicast (via emudev.org)")) {
-	    	os_LaunchFromURL("http://donate.emudev.org");
-	    }
+		#if !defined(_ANDROID) // Google doesn't like us having donate links
+			if (ImGui::Button("Donate / Support Reicast (via emudev.org)")) {
+		    	os_LaunchFromURL("http://donate.emudev.org");
+		    }
+	    #endif
 
 		if (ImGui::Button("Patreon (emudev.org)")) {
 	    	os_LaunchFromURL("http://patreon.emudev.org");

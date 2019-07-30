@@ -1,6 +1,8 @@
 #include "types.h"
 #include "cfg/cfg.h"
 
+#include <pthread.h>
+
 #if HOST_OS==OS_LINUX || HOST_OS == OS_DARWIN
 #if HOST_OS == OS_DARWIN
 	#define _XOPEN_SOURCE 1
@@ -55,10 +57,16 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 }
 #endif
 
-u8* trap_ptr_fault;
-static thread_local unat trap_si_addr;
-static thread_local unat trap_pc;
-static thread_local unat trap_handled = true;
+#define TRAP_STACK_SIZE (1024 * 1024)
+
+static u8* trap_ptr_fault;
+static u8* trap_ptr_stack;
+static u8* trap_ptr_stack_top;
+
+static unat trap_si_addr;
+static unat trap_pc;
+static bool trap_handled = true;
+static bool in_handler = false;
 
 extern "C" u8* generic_fault_handler ()
 {
@@ -68,14 +76,14 @@ extern "C" u8* generic_fault_handler ()
 	fault_printf("generic_fault_handler\n");
 	context_from_segfault(&ctx);
 
-	fault_printf("generic_fault_handler: original ptr: %p, trap ptr: %p\n", ctx.pc, trap_pc);
+	fault_printf("generic_fault_handler: original pc: %p, trap pc: %p\n", ctx.pc, trap_pc);
 	ctx.pc = trap_pc;
 
 	fault_printf("generic_fault_handler\n");
 	
 	if (dc_handle_fault(trap_si_addr, &ctx))
 	{
-		fault_printf("generic_fault_handler: final ptr: %p, trap ptr: %p\n", ctx.pc, trap_pc);
+		fault_printf("generic_fault_handler: final pc: %p, trap pc: %p\n", ctx.pc, trap_pc);
 		context_to_segfault(&ctx);
 		fault_printf("generic_fault_handler: handled\n");
 
@@ -83,7 +91,7 @@ extern "C" u8* generic_fault_handler ()
 	}
 	else
 	{
-		fault_printf("generic_fault_handler: not in handled SIGSEGV code: %lx addr:%p\n", ctx.pc, (void*)trap_si_addr);
+		fault_printf("generic_fault_handler: not in handled SIGSEGV pc: %lx addr:%p\n", ctx.pc, (void*)trap_si_addr);
 		trap_handled = false;
 	}
 
@@ -93,59 +101,81 @@ extern "C" u8* generic_fault_handler ()
 
 
 
-void re_raise_fault()
+naked void re_raise_fault()
 {
 	__asm__ __volatile__(
 		#if HOST_CPU == CPU_X86
-			"sub $8192, %esp\n"
-	        "and $-32, %esp\n"
+	        "movl %0, %%esp\n"
 	        "call generic_fault_handler\n"
-	        "movb $0, (%eax)"
+	        "movb $0, (%%eax)"
 		#elif HOST_CPU == CPU_X64
-	        "subq $8192, %rsp\n"
-	        "andq $-32, %rsp\n"
+	        "movq %0, %%rsp\n"
 	        "call generic_fault_handler\n"
-	        "movb $0, (%rax)"
+	        "movb $0, (%%rax)"
         #elif HOST_CPU == CPU_ARM
-			"sub sp, #8192\n"
-	        "and sp, #-32\n"
+			"mov sp, %0\n"
 	        "bl generic_fault_handler\n"
 	        "ldr r1, [r0]"
 	    #elif HOST_CPU == CPU_ARM64
-	        "sub x0, sp, #8192\n"
-	        "and sp, x0, #-32\n"
+	        "mov sp, %0\n"
 	        "bl generic_fault_handler\n"
 	        "ldr w1, [x0]"
 	    #else
 	    	#error missing cpu
         #endif
+	        : : "r"(trap_ptr_stack_top) : "memory"
+
     );
+}
+
+
+void fatal_error()
+{
+    for (;;) {
+        printf("fault_handler: Blocking before restoring default SIGSEGV handler\n");
+    sleep(1);
+
+    }
+    signal(SIGSEGV, SIG_DFL);
 }
 
 void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 {
-	fault_printf("fault_handler %p %p\n", si->si_addr, trap_ptr_fault);
+	fault_printf("fault_handler: thread: %p si_addr:%p trap_ptr_fault: %p\n", (void*)pthread_self(), si->si_addr, trap_ptr_fault);
 
 	if ((unat)si->si_addr == (unat)trap_ptr_fault)
 	{
+		if (!in_handler) {
+			fault_printf("fault_handler: !in_handler\n");
+
+            fatal_error();
+		}
+
 		segfault_load(segfault_ctx);
 		rei_host_context_t ctx;
 		context_from_segfault(&ctx);
 
+		in_handler = false;
 		fault_printf("fault_handler:resume %p\n", ctx.pc);
 	}
 	else
 	{
+		if (in_handler)
+		{
+			fault_printf("fault_handler: double fault\n");
+
+            fatal_error();
+		}
+		
+		in_handler = true;
+
 		if (!trap_handled)
 		{
-			printf("fault_handler: Blocking before restoring default SIGSEGV handler\n");
+			fault_printf("fault_handler: trap not handled\n");
 
-			for (;;) sleep(1);
-
-
-			signal(SIGSEGV, SIG_DFL);
+            fatal_error();
 		}
-		else
+		else 
 		{
 			fault_printf("fault_handler:catch -> thunking to %p\n", trap_pc);
 			trap_si_addr = (unat)si->si_addr;
@@ -161,6 +191,8 @@ void install_fault_handler(void)
 {
 	// initialize trap state
 	trap_ptr_fault = (u8*)mmap(0, PAGE_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+    trap_ptr_stack = (u8*)mmap(0, TRAP_STACK_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+    trap_ptr_stack_top = trap_ptr_stack + TRAP_STACK_SIZE - 128;
 
 	fault_printf("trap_ptr_fault %p\n", trap_ptr_fault);
 

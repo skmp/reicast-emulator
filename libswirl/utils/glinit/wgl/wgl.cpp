@@ -21,7 +21,7 @@
 
 #include "hw/pvr/Renderer_if.h"
 
-#include "glwrap/gl3w.h"
+#include "utils/glwrap/gl3w.h"
 
 
 #include "libswirl.h"

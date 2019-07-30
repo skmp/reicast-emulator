@@ -3,7 +3,7 @@
 #include <EGL/egl.h>
 #include "deps/khronos/EGL/eglext.h"
 
-#include "glwrap/gl3w.h"
+#include "utils/glwrap/gl3w.h"
 
 
 

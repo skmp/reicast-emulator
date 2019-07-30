@@ -3,7 +3,7 @@
 #include <atomic>
 #include "rend/rend.h"
 
-#include "glwrap/GLES.h"
+#include "utils/glwrap/GLES.h"
 
 #define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
 #define eglCheck() false

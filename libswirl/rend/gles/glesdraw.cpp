@@ -206,6 +206,22 @@ __forceinline
 								  ShaderUniforms.trilinear_alpha != 1.f);
 	
 	glcache.UseProgram(CurrentShader->program);
+
+	if (gl.rpi4_workaround)
+	{
+		if (CurrentShader->tex != -1)
+		{
+			glUniform1i(CurrentShader->tex, 0);
+		}
+
+		if (CurrentShader->fog_table != -1)
+		{
+			glUniform1i(CurrentShader->fog_table, 1);
+		}
+
+		ShaderUniforms.Set(CurrentShader);
+	}
+	
 	if (CurrentShader->trilinear_alpha != -1)
 		glUniform1f(CurrentShader->trilinear_alpha, ShaderUniforms.trilinear_alpha);
 

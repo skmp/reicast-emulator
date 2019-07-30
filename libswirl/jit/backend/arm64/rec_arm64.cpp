@@ -19,6 +19,7 @@
 
 #include "types.h"
 
+
 #if FEAT_SHREC == DYNAREC_JIT
 
 #include <unistd.h>
@@ -1414,7 +1415,7 @@ void Arm64RegAlloc::Writeback_FPU(u32 reg, eFReg nreg)
 }
 
 
-extern "C" void do_sqw_nommu_area_3(u32 dst, u8* sqb)
+extern "C" naked void do_sqw_nommu_area_3(u32 dst, u8* sqb)
 {
 	__asm__
 	(

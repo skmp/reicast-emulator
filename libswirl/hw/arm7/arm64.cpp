@@ -206,7 +206,7 @@ class android_buf : public std::stringbuf
 {
 public:
     virtual int sync() override {
-    	LOGI("ARM7: %s\n", this->str().c_str());
+    	printf("ARM7: %s\n", this->str().c_str());
     	str("");
 
     	return 0;

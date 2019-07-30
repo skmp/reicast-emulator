@@ -5,13 +5,6 @@
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 
-#include "rend/gles/glcache.h"
-
-#if !defined(GLES)
-	#include <GL/gl.h>
-	#include <GL/glx.h>
-#endif
-
 #include "types.h"
 #include "cfg/cfg.h"
 #include "linux-dist/x11.h"
@@ -23,6 +16,8 @@
 #include "profiler/profiler.h"
 #endif
 #include "x11_keyboard.h"
+
+#include "utils/glinit/glx/glx.h"
 
 #if defined(TARGET_PANDORA)
 	#define DEFAULT_FULLSCREEN    true
@@ -79,7 +74,7 @@ int x11_width;
 int x11_height;
 
 int ndcid = 0;
-void* x11_glc = NULL;
+
 bool x11_fullscreen = false;
 Atom wmDeleteMessage;
 
@@ -363,11 +358,6 @@ void input_x11_init()
 		printf("X11 Keyboard input disabled by config.\n");
 }
 
-static int x11_error_handler(Display *, XErrorEvent *)
-{
-	return 0;
-}
-
 void x11_window_create()
 {
 	if (cfgLoadInt("pvr", "nox11", 0) == 0)
@@ -405,57 +395,12 @@ void x11_window_create()
 
 		int depth = CopyFromParent;
 
-		#if !defined(GLES)
-			// Get a matching FB config
-			static int visual_attribs[] =
+		#if SUPPORT_GLX
+			if (!glx_ChooseVisual(x11Display, x11Screen, &x11Visual, &depth))
 			{
-				GLX_X_RENDERABLE    , True,
-				GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
-				GLX_RENDER_TYPE     , GLX_RGBA_BIT,
-				GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
-				GLX_RED_SIZE        , 8,
-				GLX_GREEN_SIZE      , 8,
-				GLX_BLUE_SIZE       , 8,
-				GLX_ALPHA_SIZE      , 8,
-				GLX_DEPTH_SIZE      , 24,
-				GLX_STENCIL_SIZE    , 8,
-				GLX_DOUBLEBUFFER    , True,
-				//GLX_SAMPLE_BUFFERS  , 1,
-				//GLX_SAMPLES         , 4,
-				None
-			};
-
-			int glx_major, glx_minor;
-
-			// FBConfigs were added in GLX version 1.3.
-			if (!glXQueryVersion(x11Display, &glx_major, &glx_minor) ||
-					((glx_major == 1) && (glx_minor < 3)) || (glx_major < 1))
-			{
-				printf("Invalid GLX version");
-				exit(1);
+				printf("Error: Unable to acquire visual\n");
+				return;	
 			}
-
-			int fbcount;
-			GLXFBConfig* fbc = glXChooseFBConfig(x11Display, x11Screen, visual_attribs, &fbcount);
-			if (!fbc)
-			{
-				printf("Failed to retrieve a framebuffer config\n");
-				exit(1);
-			}
-			printf("Found %d matching FB configs.\n", fbcount);
-
-			GLXFBConfig bestFbc = fbc[0];
-			XFree(fbc);
-
-			// Get a visual
-			XVisualInfo *vi = glXGetVisualFromFBConfig(x11Display, bestFbc);
-			printf("Chosen visual ID = 0x%lx\n", vi->visualid);
-
-
-			depth = vi->depth;
-			x11Visual = vi;
-
-			x11Colormap = XCreateColormap(x11Display, RootWindow(x11Display, x11Screen), vi->visual, AllocNone);
 		#else
 			i32Depth = DefaultDepth(x11Display, x11Screen);
 			x11Visual = new XVisualInfo;
@@ -465,8 +410,9 @@ void x11_window_create()
 				printf("Error: Unable to acquire visual\n");
 				return;
 			}
-			x11Colormap = XCreateColormap(x11Display, sRootWindow, x11Visual->visual, AllocNone);
 		#endif
+
+		x11Colormap = XCreateColormap(x11Display, sRootWindow, x11Visual->visual, AllocNone);
 
 		sWA.colormap = x11Colormap;
 
@@ -508,44 +454,6 @@ void x11_window_create()
 			XMapWindow(x11Display, x11Window);
 		}
 
-		#if !defined(GLES)
-			#define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
-			#define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
-			typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
-
-			glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
-			glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddressARB((const GLubyte*)"glXCreateContextAttribsARB");
-			verify(glXCreateContextAttribsARB != 0);
-			int context_attribs[] =
-			{
-				GLX_CONTEXT_MAJOR_VERSION_ARB, 4,
-				GLX_CONTEXT_MINOR_VERSION_ARB, 3,
-#ifndef RELEASE
-				GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_DEBUG_BIT_ARB,
-#endif
-				GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
-				None
-			};
-			int (*old_handler)(Display *, XErrorEvent *) = XSetErrorHandler(&x11_error_handler);
-
-			x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
-			if (!x11_glc)
-			{
-				printf("Open GL 4.3 not supported\n");
-				// Try GL 3.0
-				context_attribs[1] = 3;
-				context_attribs[3] = 0;
-				x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
-				if (!x11_glc)
-				{
-					die("Open GL 3.0 not supported\n");
-				}
-			}
-			XSetErrorHandler(old_handler);
-			XSync(x11Display, False);
-
-		#endif
-
 		XFlush(x11Display);
 
 		//(EGLNativeDisplayType)x11Display;
@@ -572,14 +480,6 @@ void x11_window_set_text(const char* text)
 	}
 }
 
-void x11_gl_context_destroy()
-{
-	#if !defined(GLES)
-		glXMakeCurrent((Display*)x11_disp, None, NULL);
-		glXDestroyContext((Display*)x11_disp, (GLXContext)x11_glc);
-	#endif
-}
-
 void x11_window_destroy()
 {
 	destroy_empty_cursor();
@@ -598,81 +498,9 @@ void x11_window_destroy()
 	}
 	if (x11_disp)
 	{
-#if !defined(GLES)
-		if (x11_glc)
-		{
-			glXMakeCurrent((Display*)x11_disp, None, NULL);
-			glXDestroyContext((Display*)x11_disp, (GLXContext)x11_glc);
-			x11_glc = NULL;
-		}
-#endif
 		XCloseDisplay((Display*)x11_disp);
 		x11_disp = NULL;
 	}
 }
-
-#if !defined(GLES)
-
-//! windows && X11
-//let's assume glx for now
-
-#include <X11/X.h>
-#include <X11/Xlib.h>
-#include <GL/glx.h>
-
-#include <hw/pvr/Renderer_if.h>
-
-
-
-bool os_gl_init(void* wind, void* disp)
-{
-	extern void* x11_glc;
-
-	glXMakeCurrent((Display*)libPvr_GetRenderSurface(),
-		(GLXDrawable)libPvr_GetRenderTarget(),
-		(GLXContext)x11_glc);
-
-	auto init_ok = gl3wInit() != -1 && gl3wIsSupported(3, 1);
-	if (init_ok)
-	{
-		rend_resize(640, 480);
-	}
-
-	return init_ok;
-}
-
-void os_gl_swap()
-{
-	glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
-
-	Window win;
-	int temp;
-	unsigned int tempu, new_w, new_h;
-	XGetGeometry((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget(),
-		&win, &temp, &temp, &new_w, &new_h, &tempu, &tempu);
-
-	//if resized, clear up the draw buffers, to avoid out-of-draw-area junk data
-
-	rend_resize(new_w, new_h);
-
-#if 0
-	//handy to debug really stupid render-not-working issues ...
-
-	glcache.ClearColor(0, 0.5, 1, 1);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
-
-
-	glcache.ClearColor(1, 0.5, 0, 1);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glXSwapBuffers((Display*)libPvr_GetRenderSurface(), (GLXDrawable)libPvr_GetRenderTarget());
-#endif
-}
-
-void os_gl_term()
-{
-}
-
-#endif
 
 #endif

@@ -57,6 +57,9 @@
 #include "profiler/profiler.h"
 #endif
 
+#include "utils/glinit/glx/glx.h"
+#include "utils/glinit/egl/egl.h"
+
 void* x11_win = 0;
 void* x11_disp = 0;
 
@@ -346,6 +349,40 @@ std::vector<string> find_system_data_dirs()
 		dirs.push_back("/usr/share/reicast");
 	}
 	return dirs;
+}
+
+bool os_gl_init(void* hwnd, void* hdc)
+{
+	#if defined(SUPPORT_GLX)
+		return glx_Init(x11_win, x11_disp);
+	#elif defined(SUPPORT_EGL)
+		return egl_Init(x11_win, x11_disp);
+	#else
+		#error "only x11 supported"
+		return true;
+	#endif
+}
+
+void os_gl_swap()
+{
+	#if defined(SUPPORT_GLX)
+		glx_Swap();
+	#elif defined(SUPPORT_EGL)
+		egl_Swap(); 
+	#else
+		#error "only x11 supported"
+	#endif
+}
+
+void os_gl_term()
+{
+	#if defined(SUPPORT_GLX)
+		glx_Term();
+	#elif defined(SUPPORT_EGL)
+		egl_Term();
+	#else
+		#error "only x11 supported"
+	#endif
 }
 
 int main(int argc, wchar* argv[])

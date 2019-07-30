@@ -28,6 +28,9 @@ struct PipelineShader
 {
 	GLuint program;
 
+	GLuint tex;
+	GLuint fog_table;
+
 	GLuint scale,depth_scale;
 	GLuint extra_depth_scale;
 	GLuint pp_ClipTest,cp_AlphaTestValue;
@@ -93,6 +96,8 @@ struct gl_ctx
 	const char *glsl_version_header;
 	int gl_major;
 	bool is_gles;
+	bool rpi4_workaround;
+
 	GLuint fog_image_format;
 	GLenum index_type;
 	bool swap_buffer_not_preserved;

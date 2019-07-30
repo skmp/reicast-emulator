@@ -467,6 +467,7 @@ static void gles_term()
 void findGLVersion()
 {
 	gl.index_type = GL_UNSIGNED_INT;
+	gl.rpi4_workaround = false;
 
 	while (true)
 		if (glGetError() == GL_NO_ERROR)
@@ -518,6 +519,18 @@ void findGLVersion()
 			gl.glsl_version_header = "#version 120";
 			gl.fog_image_format = GL_ALPHA;
 		}
+	}
+
+
+	// workarounds
+
+	auto renderer = (const char*)glGetString(GL_RENDERER);
+
+	if (renderer && strstr(renderer, "V3D 4.2"))
+	{
+		printf("glesrend: Enabling rpi4_workaround\n");
+
+		gl.rpi4_workaround = true;
 	}
 }
 
@@ -671,9 +684,18 @@ bool CompilePipelineShader(	PipelineShader* s)
 
 
 	//setup texture 0 as the input for the shader
-	GLuint gu=glGetUniformLocation(s->program, "tex");
-	if (s->pp_Texture==1)
-		glUniform1i(gu,0);
+	s->tex = glGetUniformLocation(s->program, "tex");
+	if (s->pp_Texture == 1)
+	{
+		glUniform1i(s->tex, 0);
+	}
+
+	// Setup texture 1 as the fog table
+	s->fog_table = glGetUniformLocation(s->program, "fog_table");
+	if (s->fog_table != -1)
+	{
+		glUniform1i(s->fog_table, 1);
+	}
 
 	//get the uniform locations
 	s->scale	            = glGetUniformLocation(s->program, "scale");
@@ -699,10 +721,7 @@ bool CompilePipelineShader(	PipelineShader* s)
 	{
 		s->sp_FOG_COL_RAM=-1;
 	}
-	// Setup texture 1 as the fog table
-	gu = glGetUniformLocation(s->program, "fog_table");
-	if (gu != -1)
-		glUniform1i(gu, 1);
+	
 	s->trilinear_alpha = glGetUniformLocation(s->program, "trilinear_alpha");
 	
 	if (s->fog_clamping)

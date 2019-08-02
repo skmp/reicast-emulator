@@ -183,7 +183,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       CORE_OPTION_NAME "_boot_to_bios",
       "Boot to BIOS (Restart)",
-      "",
+      "Boot directly into the Dreamcast BIOS menu.",
       {
          { "disabled",  NULL },
          { "enabled",  NULL },
@@ -221,7 +221,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       CORE_OPTION_NAME "_internal_resolution",
       "Internal Resolution (Restart)",
-      "",
+      "Modify the resolution. Requires a restart.",
       {
          { "320x240",    NULL },
          { "640x480",    NULL },
@@ -324,7 +324,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       CORE_OPTION_NAME "_volume_modifier_enable",
       "Volume modifier",
-      "",
+      "A Dreamcast GPU feature that is typically used by games to draw shadows of objects. You should typically leave this on - performance impact should be minimal to negligible.",
       {
          { "enabled",  NULL },
          { "disabled",  NULL },
@@ -475,7 +475,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       CORE_OPTION_NAME "_enable_dsp",
       "Enable DSP",
-      "",
+      "Enable the Dreamcast's audio DSP. This will emulate the sound output more accurately at the expense of performance.",
       {
          { "disabled",  NULL },
          { "enabled",  NULL },

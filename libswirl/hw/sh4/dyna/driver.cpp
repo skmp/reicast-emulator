@@ -336,6 +336,7 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC_OrClearCache());
 }
 
+
 u32 DYNACALL rdv_DoInterrupts_pc(u32 pc) {
 	next_pc = pc;
 	UpdateINTC();

@@ -14,6 +14,8 @@
 #include "sh4_core.h"
 #include "sh4_mmr.h"
 #include "oslib/oslib.h"
+#include "sh4_mem.h"
+
 
 /*
 
@@ -105,10 +107,18 @@ bool SRdecode()
 	return Sh4cntx.interrupt_pend;
 }
 
-
+bool dump_syscalls = false;
 
 int UpdateINTC()
 {
+	if (dump_syscalls) {
+		FILE* f = fopen("c:\\reicast-emulator\\syscalls.bin", "wb");
+
+		fwrite(mem_b.data, 1, 64 * 1024, f);
+
+		fclose(f);
+	}
+
 	if (!Sh4cntx.interrupt_pend)
 		return 0;
 

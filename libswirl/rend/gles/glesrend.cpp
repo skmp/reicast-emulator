@@ -429,11 +429,6 @@ int screen_width;
 int screen_height;
 GLuint fogTextureId;
 
-#ifdef USE_EGL
-
-	
-#endif
-
 static void gl_delete_shaders()
 {
 	for (auto it : gl.shaders)
@@ -581,10 +576,8 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	glBindAttribLocation(program, VERTEX_COL_OFFS1_ARRAY, "in_offs1");
 	glBindAttribLocation(program, VERTEX_UV1_ARRAY,       "in_uv1");
 
-#ifdef glBindFragDataLocation
 	if (!gl.is_gles && gl.gl_major >= 3)
 		glBindFragDataLocation(program, 0, "FragColor");
-#endif
 
 	glLinkProgram(program);
 
@@ -839,14 +832,6 @@ bool gles_init()
 	if (!gl_create_resources())
 		return false;
 
-#ifdef USE_EGL
-	#ifdef TARGET_PANDORA
-	fbdev=open("/dev/fb0", O_RDONLY);
-	#else
-	eglSwapInterval(gl.setup.display,1);
-	#endif
-#endif
-
 	//    glEnable(GL_DEBUG_OUTPUT);
 	//    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	//    glDebugMessageCallback(gl_DebugOutput, NULL);
@@ -857,10 +842,8 @@ bool gles_init()
 	glClear(GL_COLOR_BUFFER_BIT);
 	os_gl_swap();
 
-#ifdef GL_GENERATE_MIPMAP_HINT
 	if (gl.is_gles)
 		glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
-#endif
 
 	if (settings.rend.TextureUpscale > 1)
 	{

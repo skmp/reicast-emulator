@@ -152,6 +152,13 @@ bool egl_Init(void* wind, void* disp)
 				die("Failed to load symbols");
 		}
 		created_context = true;
+
+
+	#ifdef TARGET_PANDORA
+			fbdev = open("/dev/fb0", O_RDONLY);
+	#endif
+			eglSwapInterval(gl.setup.display, 1);
+
 	}
 	else if (glGetError == NULL)
 	{

@@ -56,14 +56,23 @@ file(GLOB glwrap_SRCS		${d_core}/utils/glwrap/*.cpp )
 file(GLOB scripting_SRCS	${d_core}/scripting/*.cpp	${d_core}/scripting/*.h)
 file(GLOB utils_SRCS	${d_core}/utils/*.cpp	${d_core}/utils/*.h)
 file(GLOB gui_SRCS  ${d_core}/gui/*.cpp ${d_core}/gui/*.h)
-file(GLOB wgl_SRCS  ${d_core}/utils/glinit/wgl/*.cpp )
+
+if(${HOST_OS} EQUAL ${OS_LINUX})
+  file(GLOB egl_SRCS  ${d_core}/utils/glinit/egl/*.cpp )
+endif()
+
+if(${HOST_OS} EQUAL ${OS_WINDOWS})
+  file(GLOB wgl_SRCS  ${d_core}/utils/glinit/wgl/*.cpp )
+endif()
 
 #### option(rend)
 file(GLOB gl4_SRCS			${d_core}/rend/gl4/*.cpp	${d_core}/rend/gl4/*.h)
 file(GLOB gles_SRCS			${d_core}/rend/gles/*.cpp	${d_core}/rend/gles/*.h)
 file(GLOB norend_SRCS		${d_core}/rend/norend/*.cpp	${d_core}/rend/norend/*.h)
 file(GLOB softrend_SRCS		${d_core}/rend/soft/*.cpp	${d_core}/rend/soft/*.h)
-file(GLOB d3d11_SRCS		${d_core}/rend/d3d11/*.cpp	${d_core}/rend/d3d11/*.h)
+if(${HOST_OS} EQUAL ${OS_WINDOWS})
+  file(GLOB d3d11_SRCS		${d_core}/rend/d3d11/*.cpp	${d_core}/rend/d3d11/*.h)
+endif()
 
 set(core_SRCS
   ${hw_SRCS}
@@ -82,6 +91,7 @@ set(core_SRCS
   ${scripting_SRCS}
   ${utils_SRCS}
   ${gui_SRCS}
+  ${egl_SRCS}
   ${wgl_SRCS}
   ${d_core}/archive/archive.cpp ${d_core}/archive/archive.h
   ${d_core}/libswirl.cpp
@@ -127,6 +137,10 @@ endif()
 
 add_definitions(/DFEAT_HAS_SOFTREND=0)
 
+if(${HOST_OS} EQUAL ${OS_LINUX})
+  add_definitions(-DLUA_USE_LINUX)
+endif()
+
 ### deps.cmake #################################################################################
 
 set(d_deps ${reicast_core_path}/deps)
@@ -137,6 +151,9 @@ include_directories ("${d_deps}/picotcp/modules")
 file(GLOB xbyak_H	${d_deps}/xbyak/*.h)		# include headers into cmake target/project view 
 
 file(GLOB chdr_SRCS  ${d_deps}/chdr/*.c)
+if(${HOST_OS} EQUAL ${OS_WINDOWS})
+  file(GLOB dirent_SRCS  ${d_deps}/dirent/*.c)
+endif()
 file(GLOB lzma_SRCS  ${d_deps}/lzma/*.c)
 file(GLOB lz_SRCS    ${d_deps}/zlib/*.c)
 file(GLOB lzip_SRCS  ${d_deps}/libzip/*.c)
@@ -151,6 +168,7 @@ file(GLOB picoStkS   ${d_deps}/picotcp/stack/*.c)
 set(pico_SRCS ${picoModS} ${picoStkS})
 
 set(deps_SRCS
+  ${dirent_SRCS}
   ${lz_SRCS}
   ${lpng_SRCS}
   ${lelf_SRCS}
@@ -159,7 +177,6 @@ set(deps_SRCS
   ${imgui_SRCS}
   ${lua_SRCS}
   ${d_deps}/xbrz/xbrz.cpp
-  ${d_deps}/dirent/dirent.c
   ${d_deps}/xxhash/xxhash.c
   ${d_deps}/cdipsr/cdipsr.cpp
   ${d_deps}/coreio/coreio.cpp
@@ -204,8 +221,9 @@ elseif (${HOST_OS} EQUAL ${OS_LINUX} OR ${HOST_OS} EQUAL ${OS_ANDROID})
     list(APPEND osd_SRCS 
       ${d_core}/linux/common.cpp
       ${d_core}/linux/context.cpp
-      ${d_core}/linux/oslib/posix/threading.cpp
+      ${d_core}/linux/posix_vmem.cpp
       ${d_core}/linux/nixprof/nixprof.cpp
+      ${d_core}/oslib/posix/threading.cpp
 
       ${d_aout}/audiobackend_oss.cpp # add option
     ) # todo: configure linux audio lib options
@@ -215,9 +233,15 @@ elseif (${HOST_OS} EQUAL ${OS_LINUX} OR ${HOST_OS} EQUAL ${OS_ANDROID})
 		${d_core}/linux-dist/x11.cpp
 		${d_core}/linux-dist/main.cpp
 		${d_core}/linux-dist/evdev.cpp)
-	
+
       add_definitions(-DSUPPORT_X11)  ## don't use GLES ?
       link_libraries(X11)
+
+      find_package(PkgConfig)
+      pkg_check_modules(EGL egl)
+      if(EGL_FOUND)
+        add_definitions(-DSUPPORT_EGL)
+      endif()
     else()
       list(APPEND osd_SRCS 
         .//android-studio/reicast/src/main/jni/src/Android.cpp

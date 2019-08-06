@@ -13,7 +13,11 @@
 # limitations under the License.
 #
 
-LOCAL_PATH:= $(call my-dir)/..
+# Relative to reicast-emulator/reicast/android-studio/reicast/
+LOCAL_PATH:= .
+
+#lib swirl path
+RZDCY_SRC_DIR := ../../../libswirl
 
 include $(CLEAR_VARS)
 
@@ -49,11 +53,9 @@ endif
 
 $(info $$TARGET_ARCH_ABI is [${TARGET_ARCH_ABI}])
 
-include $(LOCAL_PATH)/../../../../../libswirl/core.mk
+include $(RZDCY_SRC_DIR)/core.mk
 
 LOCAL_SRC_FILES := $(RZDCY_FILES)
-LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/Android.cpp)
-LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/utils.cpp)
 LOCAL_CFLAGS    += $(RZDCY_CFLAGS) -fPIC -fvisibility=hidden -ffunction-sections -fdata-sections
 LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
 LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
@@ -105,23 +107,5 @@ else
 endif
 
 $(LOCAL_SRC_FILES): $(VERSION_HEADER)
-
-#
-# android has poor support for hardfp calling.
-# r9b+ is required, and it only works for internal calls
-# the opengl drivers would really benefit from this, but they are still using softfp
-# the header files tell gcc to automatically use aapcs for calling system/etc
-# so there is no real perfomance difference
-#
-# The way this is implemented is a huge hack on the android/linux side
-# (but then again, which part of android isn't a huge hack?)
-
-#ifneq ($(filter %armeabi-v7a,$(TARGET_ARCH_ABI)),)
-#LOCAL_CFLAGS += -mhard-float -D_NDK_MATH_NO_SOFTFP=1 -DARM_HARDFP
-#LOCAL_LDLIBS += -lm_hard
-#ifeq (,$(filter -fuse-ld=mcld,$(APP_LDFLAGS) $(LOCAL_LDFLAGS)))
-#LOCAL_LDFLAGS += -Wl,--no-warn-mismatch
-#endif
-#endif
 
 include $(BUILD_SHARED_LIBRARY)

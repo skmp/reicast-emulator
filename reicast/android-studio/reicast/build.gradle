@@ -72,11 +72,12 @@ android {
         dreamcast {
             externalNativeBuild { ndkBuild { arguments ("-j" + Runtime.runtime.availableProcessors()) } }
         }
+        /*
         naomi {
             applicationId = "com.reicast.emulator.naomi"
             versionNameSuffix " Naomi"
             externalNativeBuild { ndkBuild { arguments ("NAOMI=1 -j" + Runtime.runtime.availableProcessors()) } }
-        }
+        }*/
     }
 
     externalNativeBuild {

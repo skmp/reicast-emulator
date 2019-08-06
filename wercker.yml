@@ -12,6 +12,9 @@ build:
             name: reicast Linux x64 build
             code: make -C reicast/linux -j `nproc` platform=x64
         - script:
+            name: reicast Linux naomi x64 build
+            code: make -C reicast/linux -j `nproc` platform=x64 NAOMI=1
+        - script:
             name: reicast Linux x86 build
             code: make -C reicast/linux -j `nproc` platform=x86
         - script:

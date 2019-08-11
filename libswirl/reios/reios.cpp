@@ -19,6 +19,7 @@
 #include "hw/naomi/naomi_cart.h"
 
 #include <map>
+#include "imgread/common.h"
 
 //#define debugf printf
 
@@ -37,8 +38,7 @@
 
 u8* biosrom;
 u8* flashrom;
-u32 base_fad = 45150;
-bool descrambl = false;
+
 
 //Read 32 bit 'bi-endian' integer
 //Uses big-endian bytes, that's what the dc bios does too
@@ -101,41 +101,53 @@ bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN") {
 	return false;
 }
 
-char ip_bin[256];
-char reios_hardware_id[17];
-char reios_maker_id[17];
-char reios_device_info[17];
-char reios_area_symbols[9];
-char reios_peripherals[9];
-char reios_product_number[11];
-char reios_product_version[7];
-char reios_releasedate[17];
-char reios_boot_filename[17];
-char reios_software_company[17];
-char reios_software_name[129];
-char reios_bootfile[32];
-bool reios_windows_ce = false;
-
-bool pre_init = false;
-
-void reios_pre_init()
+struct DreamcastRomInfo
 {
-	if (libGDR_GetDiscType() == GdRom) {
-		base_fad = 45150;
-		descrambl = false;
-	} else {
-		u8 ses[6];
-		libGDR_GetSessionInfo(ses, 0);
-		libGDR_GetSessionInfo(ses, ses[2]);
-		base_fad = (ses[3] << 16) | (ses[4] << 8) | (ses[5] << 0);
-		descrambl = true;
+	u32 base_fad = 45150;
+	bool descrambl = false;
+
+	char ip_bin[256];
+	char reios_hardware_id[17];
+	char reios_maker_id[17];
+	char reios_device_info[17];
+	char reios_area_symbols[9];
+	char reios_peripherals[9];
+	char reios_product_number[11];
+	char reios_product_version[7];
+	char reios_releasedate[17];
+	char reios_boot_filename[17];
+	char reios_software_company[17];
+	char reios_software_name[129];
+	char reios_bootfile[32];
+	bool reios_windows_ce = false;
+};
+
+
+void reios_GetDreamcastRomInfo(Disc* disc, DreamcastRomInfo* info)
+{
+	verify(disc != nullptr);
+	verify(info != nullptr);
+
+	memset(info, 0, sizeof(*info));
+
+	if (disc->type == GdRom)
+	{
+		info->base_fad = 45150;
+		info->descrambl = false;
 	}
-	pre_init = true;
+	else
+	{
+		info->base_fad = disc->sessions.back().StartFAD;
+		info->descrambl = true;
+	}
+
+	u8 ip_bin[2048];
+
+	disc->ReadSectors(info->base_fad, 1, ip_bin, 2048);
 }
 
-char* reios_disk_id() {
 
-	if (!pre_init) reios_pre_init();
+char* reios_disk_id() {
 
 	libGDR_ReadSector(GetMemPtr(0x8c008000, 0), base_fad, 256, 2048);
 	memset(ip_bin, 0, sizeof(ip_bin));

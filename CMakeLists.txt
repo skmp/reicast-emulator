@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 
 set(TNAME reicast)
 
@@ -56,10 +56,6 @@ file(GLOB glwrap_SRCS		${d_core}/utils/glwrap/*.cpp )
 file(GLOB scripting_SRCS	${d_core}/scripting/*.cpp	${d_core}/scripting/*.h)
 file(GLOB utils_SRCS	${d_core}/utils/*.cpp	${d_core}/utils/*.h)
 file(GLOB gui_SRCS  ${d_core}/gui/*.cpp ${d_core}/gui/*.h)
-
-if(${HOST_OS} EQUAL ${OS_LINUX})
-  file(GLOB egl_SRCS  ${d_core}/utils/glinit/egl/*.cpp )
-endif()
 
 if(${HOST_OS} EQUAL ${OS_WINDOWS})
   file(GLOB wgl_SRCS  ${d_core}/utils/glinit/wgl/*.cpp )
@@ -218,7 +214,8 @@ if (${HOST_OS} EQUAL ${OS_WINDOWS})
   
 elseif (${HOST_OS} EQUAL ${OS_LINUX} OR ${HOST_OS} EQUAL ${OS_ANDROID})
 
-    list(APPEND osd_SRCS 
+    list(APPEND osd_SRCS
+      ${d_core}/linux-dist/main.cpp
       ${d_core}/linux/common.cpp
       ${d_core}/linux/context.cpp
       ${d_core}/linux/posix_vmem.cpp
@@ -227,32 +224,6 @@ elseif (${HOST_OS} EQUAL ${OS_LINUX} OR ${HOST_OS} EQUAL ${OS_ANDROID})
 
       ${d_aout}/audiobackend_oss.cpp # add option
     ) # todo: configure linux audio lib options
-  
-    if(NOT ANDROID)
-      list(APPEND osd_SRCS 
-		${d_core}/linux-dist/x11.cpp
-		${d_core}/linux-dist/main.cpp
-		${d_core}/linux-dist/evdev.cpp)
-
-      add_definitions(-DSUPPORT_X11)  ## don't use GLES ?
-      link_libraries(X11)
-
-      find_package(PkgConfig)
-      pkg_check_modules(EGL egl)
-      if(EGL_FOUND)
-        add_definitions(-DSUPPORT_EGL)
-      endif()
-    else()
-      list(APPEND osd_SRCS 
-        .//android-studio/reicast/src/main/jni/src/Android.cpp
-        .//android-studio/reicast/src/main/jni/src/utils.cpp
-    #   .//android-studio/reicast/src/main/jni/src/XperiaPlay.c
-      )
-    endif() # ANDROID
-	
-  add_definitions(-DGLES -DUSE_EVDEV)
-  
-  link_libraries(pthread dl rt asound Xext GLESv2 EGL)
 
 elseif(${HOST_OS} EQUAL ${OS_DARWIN})
 #
@@ -292,9 +263,75 @@ set(reicast_SRCS ${core_SRCS} ${deps_SRCS} ${osd_SRCS})
 
 add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
 
+if(${HOST_OS} EQUAL ${OS_LINUX})
+  find_package(ALSA)
+  if(ALSA_FOUND)
+    target_compile_definitions(${TNAME} PUBLIC USE_ALSA)
+    target_sources(${TNAME} PUBLIC ${d_aout}/audiobackend_alsa.cpp)
+    target_include_directories(${TNAME} PUBLIC ${ALSA_INCLUDE_DIRS})
+    target_link_libraries(${TNAME} ${ALSA_LIBRARIES})
+  endif()
 
+  find_package(OpenGL REQUIRED)
+  if(OpenGL_EGL_FOUND)
+    target_compile_definitions(${TNAME} PUBLIC SUPPORT_EGL)
+    target_sources(${TNAME} PUBLIC ${d_core}/utils/glinit/egl/egl.cpp)
+    target_link_libraries(${TNAME} OpenGL::EGL)
+  elseif(OpenGL_GLX_FOUND)
+    target_compile_definitions(${TNAME} PUBLIC SUPPORT_GLX)
+    target_sources(${TNAME} PUBLIC ${d_core}/utils/glinit/glx/glx.cpp)
+    target_link_libraries(${TNAME} OpenGL::GLX)
+  else()
+    message(FATAL_ERROR "EGL or GLX required")
+  endif()
 
+  find_package(PkgConfig)
+  if(PKG_CONFIG_FOUND)
+    pkg_check_modules(AO ao)
+    if(AO_FOUND)
+      target_compile_definitions(${TNAME} PUBLIC USE_LIBAO)
+      target_sources(${TNAME} PUBLIC ${d_aout}/audiobackend_libao.cpp)
+      target_include_directories(${TNAME} PUBLIC ${AO_INCLUDE_DIRS})
+      target_link_libraries(${TNAME} ${AO_LIBRARIES})
+    endif()
 
+    pkg_check_modules(LIBEVDEV libevdev)
+    if(LIBEVDEV_FOUND)
+      target_compile_definitions(${TNAME} PUBLIC USE_EVDEV)
+      target_sources(${TNAME} PUBLIC ${d_core}/linux-dist/evdev.cpp)
+      target_include_directories(${TNAME} PUBLIC ${LIBEVDEV_INCLUDE_DIRS})
+      target_link_libraries(${TNAME} ${LIBEVDEV_LIBRARIES})
+
+      pkg_check_modules(LIBUDEV libudev)
+      if(LIBUDEV_FOUND)
+        target_compile_definitions(${TNAME} PUBLIC USE_UDEV)
+        target_include_directories(${TNAME} PUBLIC ${LIBUDEV_INCLUDE_DIRS})
+        target_link_libraries(${TNAME} ${LIBUDEV_LIBRARIES})
+      endif()
+    endif()
+
+    pkg_check_modules(LIBPULSE_SIMPLE libpulse-simple)
+    if(LIBPULSE_SIMPLE_FOUND)
+      target_compile_definitions(${TNAME} PUBLIC USE_PULSEAUDIO)
+      target_sources(${TNAME} PUBLIC ${d_aout}/audiobackend_pulseaudio.cpp)
+      target_include_directories(${TNAME} PUBLIC ${LIBPULSE_SIMPLE_INCLUDE_DIRS})
+      target_link_libraries(${TNAME} ${LIBPULSE_SIMPLE_LIBRARIES})
+    endif()
+  endif()
+
+  find_package(Threads REQUIRED)
+  target_link_libraries(${TNAME} Threads::Threads)
+
+  find_package(X11 REQUIRED)
+  if(X11_FOUND)
+    target_sources(${TNAME} PUBLIC ${d_core}/linux-dist/x11.cpp)
+    target_compile_definitions(${TNAME} PUBLIC SUPPORT_X11)
+    target_include_directories(${TNAME} PUBLIC ${X11_INCLUDE_DIR})
+    target_link_libraries(${TNAME} ${X11_LIBRARIES})
+  endif()
+
+  target_link_libraries(${TNAME} ${CMAKE_DL_LIBS} rt)
+endif()
 
 if(APPLE)
   enable_language(Swift)

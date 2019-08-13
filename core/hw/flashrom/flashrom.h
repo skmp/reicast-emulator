@@ -29,7 +29,7 @@ struct MemChip
       this->mask=size-1;//must be power of 2
    }
 
-	virtual u8 Read8(u32 addr)
+	u8 Read8(u32 addr)
 	{
 		return data[addr&mask];
 	}
@@ -44,6 +44,11 @@ struct MemChip
 			rv|=Read8(addr+i)<<(i*8);
 
 		return rv;
+	}
+
+	virtual void Write(u32 addr, u32 data, u32 size)
+	{
+		die("Method not supported");
 	}
 
 	bool Load(const string& file)
@@ -121,22 +126,20 @@ struct MemChip
 		printf("Saved %s as %s\n\n",path,title.c_str());
 	}
 	virtual void Reset() {}
+	virtual bool Serialize(void **data, unsigned int *total_size) { return true; }
+	virtual bool Unserialize(void **data, unsigned int *total_size) { return true; }
 };
 struct RomChip : MemChip
 {
 	RomChip() : MemChip() {}
 	RomChip(u32 sz, u32 write_protect_size = 0) : MemChip(sz, write_protect_size) {}
-	void Write(u32 addr,u32 data,u32 sz)
-	{
-		die("Write to RomChip is not possible, address=%x, data=%x, size=%d");
-	}
 };
 struct SRamChip : MemChip
 {
 	SRamChip() : MemChip() {}
 	SRamChip(u32 sz, u32 write_protect_size = 0) : MemChip(sz, write_protect_size) {}
 
-	void Write(u32 addr,u32 val,u32 sz)
+	void Write(u32 addr,u32 val,u32 sz) override
 	{
 		addr&=mask;
 		if (addr < write_protect_size)
@@ -145,16 +148,28 @@ struct SRamChip : MemChip
       {
          case 1:
             data[addr]=(u8)val;
-            break;
+			return;
          case 2:
             *(u16*)&data[addr]=(u16)val;
-            break;
+			return;
          case 4:
             *(u32*)&data[addr]=val;
-            break;
+			return;
          default:
             die("invalid access size");
       }
+	}
+
+	virtual bool Serialize(void **data, unsigned int *total_size) override
+	{
+		LIBRETRO_SA(&this->data[write_protect_size], size - write_protect_size);
+		return true;
+	}
+
+	virtual bool Unserialize(void **data, unsigned int *total_size) override
+	{
+		LIBRETRO_USA(&this->data[write_protect_size], size - write_protect_size);
+		return true;
 	}
 };
 
@@ -238,35 +253,7 @@ struct DCFlashChip : MemChip
 		state = FS_Normal;
 	}
 	
-	virtual u8 Read8(u32 addr) override
-	{
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-		switch (addr)
-		{
-		case 0x1A002:
-		case 0x1A0A2:
-			if (settings.dreamcast.region <= 2)
-				return '0' + settings.dreamcast.region;
-			break;
-		case 0x1A003:
-		case 0x1A0A3:
-			if (settings.dreamcast.language <= 5)
-				return '0' + settings.dreamcast.language;
-			break;
-		case 0x1A004:
-		case 0x1A0A4:
-			if (settings.dreamcast.broadcast <= 3)
-				return '0' + settings.dreamcast.broadcast;
-			break;
-		}
-#endif
-
-		u32 rv=MemChip::Read8(addr);
-
-		return rv;
-	}
-
-	void Write(u32 addr,u32 val,u32 sz)
+	void Write(u32 addr,u32 val,u32 sz) override
 	{
 		if (sz != 1)
 			die("invalid access size");
@@ -293,7 +280,7 @@ struct DCFlashChip : MemChip
             break;
 
 		case FS_ReadAMDID1:
-			if ((addr & 0xffff) == 0x2aa && (val & 0xff) == 0x55)
+			if ((addr & 0xffff) == 0x02aa && (val & 0xff) == 0x55)
 				state = FS_ReadAMDID2;
 			else if ((addr & 0xffff) == 0x2aaa && (val & 0xff) == 0x55)
 				state = FS_ReadAMDID2;
@@ -307,13 +294,13 @@ struct DCFlashChip : MemChip
             break;
 
 		case FS_ReadAMDID2:
-			if ((addr & 0xffff) == 0x555 && (val & 0xff) == 0x80)
+			if ((addr & 0xffff) == 0x0555 && (val & 0xff) == 0x80)
 				state = FS_EraseAMD1;
 			else if ((addr & 0xffff) == 0x5555 && (val & 0xff) == 0x80)
 				state = FS_EraseAMD1;
 			else if ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0x80)
 				state = FS_EraseAMD1;
-			else if ((addr & 0xffff) == 0x555 && (val & 0xff) == 0xa0)
+			else if ((addr & 0xffff) == 0x0555 && (val & 0xff) == 0xa0)
 				state = FS_ByteProgram;
 			else if ((addr & 0xffff) == 0x5555 && (val & 0xff) == 0xa0)
 				state = FS_ByteProgram;
@@ -343,7 +330,7 @@ struct DCFlashChip : MemChip
                   break;
 
 		case FS_EraseAMD2:
-			if ((addr & 0xffff) == 0x2aa && (val & 0xff) == 0x55)
+			if ((addr & 0xffff) == 0x02aa && (val & 0xff) == 0x55)
 				state = FS_EraseAMD3;
 			else if ((addr & 0xffff) == 0x2aaa && (val & 0xff) == 0x55)
 				state = FS_EraseAMD3;
@@ -402,7 +389,7 @@ struct DCFlashChip : MemChip
 	int WriteBlock(u32 part_id, u32 block_id, const void *data)
 	{
 		int offset, size;
-		partition_info(part_id, &offset, &size);
+		GetPartitionInfo(part_id, &offset, &size);
 
 		if (!validate_header(offset, part_id))
 			return 0;
@@ -439,7 +426,7 @@ struct DCFlashChip : MemChip
 	int ReadBlock(u32 part_id, u32 block_id, void *data)
 	{
 		int offset, size;
-		partition_info(part_id, &offset, &size);
+		GetPartitionInfo(part_id, &offset, &size);
 
 		if (!validate_header(offset, part_id))
 			return 0;
@@ -453,8 +440,7 @@ struct DCFlashChip : MemChip
 		return 1;
 	}
 
-private:
-	void partition_info(int part_id, int *offset, int *size)
+	void GetPartitionInfo(int part_id, int *offset, int *size)
 	{
 		switch (part_id)
 		{
@@ -484,6 +470,62 @@ private:
 		}
 	}
 
+	void Validate()
+	{
+		// validate partition 0 (factory settings)
+		bool valid = true;
+		char sysinfo[16];
+
+		for (int i = 0; i < sizeof(sysinfo); i++)
+			sysinfo[i] = Read8(0x1a000 + i);
+		valid = valid && memcmp(&sysinfo[5], "Dreamcast  ", 11) == 0;
+
+		for (int i = 0; i < sizeof(sysinfo); i++)
+			sysinfo[i] = Read8(0x1a0a0 + i);
+		valid = valid && memcmp(&sysinfo[5], "Dreamcast  ", 11) == 0;
+
+		if (!valid)
+		{
+			printf("DCFlashChip::Validate resetting FLASH_PT_FACTORY\n");
+
+			memcpy(sysinfo, "00000Dreamcast  ", sizeof(sysinfo));
+			erase_partition(FLASH_PT_FACTORY);
+			memcpy(data + 0x1a000, sysinfo, sizeof(sysinfo));
+			memcpy(data + 0x1a0a0, sysinfo, sizeof(sysinfo));
+		}
+
+		// validate partition 1 (reserved)
+		erase_partition(FLASH_PT_RESERVED);
+
+		// validate partition 2 (user settings, block allocated)
+		if (!validate_header(FLASH_PT_USER))
+		{
+			printf("DCFlashChip::Validate resetting FLASH_PT_USER\n");
+
+			erase_partition(FLASH_PT_USER);
+			write_header(FLASH_PT_USER);
+		}
+
+		// validate partition 3 (game settings, block allocated)
+		if (!validate_header(FLASH_PT_GAME))
+		{
+			printf("DCFlashChip::Validate resetting FLASH_PT_GAME\n");
+
+			erase_partition(FLASH_PT_GAME);
+			write_header(FLASH_PT_GAME);
+		}
+
+		// validate partition 4 (unknown, block allocated)
+		if (!validate_header(FLASH_PT_UNKNOWN))
+		{
+			printf("DCFlashChip::Validate resetting FLASH_PT_UNKNOWN\n");
+
+			erase_partition(FLASH_PT_UNKNOWN);
+			write_header(FLASH_PT_UNKNOWN);
+		}
+	}
+
+private:
 	int crc_block(struct flash_user_block *block)
 	{
 		const u8 *buf = (const u8 *)block;
@@ -561,6 +603,14 @@ private:
 		return 1;
 	}
 
+	int validate_header(u32 part_id)
+	{
+		int offset, size;
+		GetPartitionInfo(part_id, &offset, &size);
+
+		return validate_header(offset, part_id);
+	}
+
 	int alloc_block(u32 offset, u32 size)
 	{
 		u8 bitmap[FLASH_BLOCK_SIZE];
@@ -631,5 +681,41 @@ private:
 		}
 
  		return result;
+	}
+
+	virtual bool Serialize(void **data, unsigned int *total_size) override
+	{
+		LIBRETRO_S(state);
+		LIBRETRO_SA(&this->data[write_protect_size], size - write_protect_size);
+		return true;
+	}
+
+	virtual bool Unserialize(void **data, unsigned int *total_size) override
+	{
+		LIBRETRO_US(state);
+		LIBRETRO_USA(&this->data[write_protect_size], size - write_protect_size);
+		return true;
+	}
+
+	void erase_partition(u32 part_id)
+	{
+		int offset, size;
+		GetPartitionInfo(part_id, &offset, &size);
+
+		memset(data + offset, 0xFF, size);
+	}
+
+	void write_header(int part_id)
+	{
+		int offset, size;
+		GetPartitionInfo(part_id, &offset, &size);
+
+		struct flash_header_block header;
+		memset(&header, 0xff, sizeof(header));
+		memcpy(header.magic, FLASH_MAGIC_COOKIE, sizeof(header.magic));
+		header.part_id = part_id;
+		header.version = 0;
+
+		write_physical_block(offset, 0, &header);
 	}
 };

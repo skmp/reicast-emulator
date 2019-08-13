@@ -11,37 +11,37 @@
 extern "C" {
 #endif
 
-#define COLORS_STRING \
-      {"BLACK 02",      NULL}, \
-      {"BLUE 03",       NULL }, \
-      {"LIGHT_BLUE 04", NULL }, \
-      {"GREEN 05",      NULL }, \
-      {"CYAN 06",       NULL }, \
-      {"CYAN_BLUE 07",  NULL }, \
-      {"LIGHT_GREEN 08",NULL }, \
-      {"CYAN_GREEN 09", NULL }, \
-      {"LIGHT_CYAN 10", NULL }, \
-      {"RED 11",        NULL }, \
-      {"PURPLE 12",     NULL }, \
-      {"LIGHT_PURPLE 13",NULL}, \
-      {"YELLOW 14",     NULL }, \
-      {"GRAY 15",       NULL }, \
-      {"LIGHT_PURPLE_2 16", NULL }, \
-      {"LIGHT_GREEN_2 17",  NULL }, \
-      {"LIGHT_GREEN_3 18",  NULL }, \
-      {"LIGHT_CYAN_2 19",   NULL }, \
-      {"LIGHT_RED_2 20",    NULL }, \
-      {"MAGENTA 21",        NULL }, \
-      {"LIGHT_PURPLE_2 22", NULL }, \
-      {"LIGHT_ORANGE 23",   NULL }, \
-      {"ORANGE 24",         NULL }, \
-      {"LIGHT_PURPLE_3 25", NULL }, \
-      {"LIGHT_YELLOW 26",   NULL }, \
-      {"LIGHT_YELLOW_2 27", NULL }, \
-      {"WHITE 28",          NULL }, \
-      { NULL, NULL },
-
 #define CORE_OPTION_NAME "reicast"
+
+#define COLORS_STRING \
+      {"BLACK 02",          "Black" }, \
+      {"BLUE 03",           "Blue" }, \
+      {"LIGHT_BLUE 04",     "Light Blue" }, \
+      {"GREEN 05",          "Green" }, \
+      {"CYAN 06",           "Cyan" }, \
+      {"CYAN_BLUE 07",      "Cyan Blue" }, \
+      {"LIGHT_GREEN 08",    "Light Green" }, \
+      {"CYAN_GREEN 09",     "Cyan Green" }, \
+      {"LIGHT_CYAN 10",     "Light Cyan" }, \
+      {"RED 11",            "Red" }, \
+      {"PURPLE 12",         "Purple" }, \
+      {"LIGHT_PURPLE 13",   "Light Purple" }, \
+      {"YELLOW 14",         "Yellow" }, \
+      {"GRAY 15",           "Gray" }, \
+      {"LIGHT_PURPLE_2 16", "Light Purple (2)" }, \
+      {"LIGHT_GREEN_2 17",  "Light Green (2)" }, \
+      {"LIGHT_GREEN_3 18",  "Light Green (3)" }, \
+      {"LIGHT_CYAN_2 19",   "Light Cyan (2)" }, \
+      {"LIGHT_RED_2 20",    "Light Red (2)" }, \
+      {"MAGENTA 21",        "Magenta" }, \
+      {"LIGHT_PURPLE_2 22", "Light Purple (2)" }, \
+      {"LIGHT_ORANGE 23",   "Light Orange" }, \
+      {"ORANGE 24",         "Orange" }, \
+      {"LIGHT_PURPLE_3 25", "Light Purple (3)" }, \
+      {"LIGHT_YELLOW 26",   "Light Yellow" }, \
+      {"LIGHT_YELLOW_2 27", "Light Yellow (2)" }, \
+      {"WHITE 28",          "White" }, \
+      { NULL, NULL },
 
 #define VMU_SCREEN_PARAMS(num) \
 { \
@@ -87,8 +87,8 @@ CORE_OPTION_NAME "_vmu" #num "_pixel_on_color", \
 "VMU Screen " #num " Pixel On Color", \
 "", \
 { \
-   { "DEFAULT_ON 00", NULL }, \
-   { "DEFAULT_OFF 01", NULL }, \
+   { "DEFAULT_ON 00",  "Default ON" }, \
+   { "DEFAULT_OFF 01", "Default OFF" }, \
 COLORS_STRING \
 }, \
    "DEFAULT_ON 00", \
@@ -98,8 +98,8 @@ CORE_OPTION_NAME "_vmu" #num "_pixel_off_color", \
 "VMU Screen " #num " Pixel Off Color", \
 "", \
 { \
-   { "DEFAULT_OFF 01", NULL }, \
-   { "DEFAULT_ON 00",  NULL }, \
+   { "DEFAULT_OFF 01", "Default OFF" }, \
+   { "DEFAULT_ON 00",  "Default ON" }, \
 COLORS_STRING \
 }, \
    "DEFAULT_OFF 01", \
@@ -109,17 +109,17 @@ CORE_OPTION_NAME "_vmu" #num "_screen_opacity", \
 "VMU Screen " #num " Opacity", \
 "", \
 { \
-   {"10%",  NULL}, \
-   {"20%",  NULL}, \
-   {"30%",  NULL}, \
-   {"40%",  NULL}, \
-   {"50%",  NULL}, \
-   {"60%",  NULL}, \
-   {"70%",  NULL}, \
-   {"80%",  NULL}, \
-   {"90%",  NULL}, \
-   {"100%", NULL}, \
-   {NULL,   NULL}, \
+   { "10%",  NULL }, \
+   { "20%",  NULL }, \
+   { "30%",  NULL }, \
+   { "40%",  NULL }, \
+   { "50%",  NULL }, \
+   { "60%",  NULL }, \
+   { "70%",  NULL }, \
+   { "80%",  NULL }, \
+   { "90%",  NULL }, \
+   { "100%", NULL }, \
+   { NULL,   NULL }, \
 }, \
    "100%", \
 },
@@ -139,9 +139,6 @@ CORE_OPTION_NAME "_lightgun" #num "_crosshair", \
 }, \
    "disabled", \
 },
-
-
-
 
 /*
  ********************************
@@ -166,12 +163,12 @@ struct retro_core_option_definition option_defs_us[] = {
       "",
       {
 #if (FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86) || (HOST_CPU == CPU_ARM) || (HOST_CPU == CPU_ARM64) || (HOST_CPU == CPU_X64)
-         {"dynamic_recompiler", NULL},
+         { "dynamic_recompiler", "Dynamic Recompiler" },
 #endif
 #ifdef TARGET_NO_JIT
-         {"generic_recompiler", NULL},
+         { "generic_recompiler", "Generic Recompiler" },
 #endif
-         { NULL, NULL},
+         { NULL, NULL },
       },
 #if (FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86) || (HOST_CPU == CPU_ARM) || (HOST_CPU == CPU_ARM64) || (HOST_CPU == CPU_X64)
       "dynamic_recompiler",
@@ -185,35 +182,35 @@ struct retro_core_option_definition option_defs_us[] = {
       "Boot to BIOS (Restart)",
       "Boot directly into the Dreamcast BIOS menu.",
       {
-         { "disabled",  NULL },
+         { "disabled", NULL },
          { "enabled",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
       "disabled",
    },
    {
       CORE_OPTION_NAME "_system",
-      "System type (Restart)",
+      "System Type (Restart)",
       "",
       {
-         { "auto",  NULL },
-         { "dreamcast",  NULL },
-         { "naomi",  NULL },
-         { "atomiswave",  NULL },
-         { NULL, NULL},
+         { "auto",       "Auto" },
+         { "dreamcast",  "Dreamcast" },
+         { "naomi",      "NAOMI" },
+         { "atomiswave", "Atomiswave" },
+         { NULL, NULL },
       },
       "auto",
    },
 #ifdef HAVE_OIT
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
-      "Accumulation pixel buffer size (Restart)",
+      "Accumulation Pixel Buffer Size (Restart)",
       "",
       {
-         { "512MB",  NULL },
-         { "1GB",  NULL },
-         { "2GB",  NULL },
-         { NULL, NULL},
+         { "512MB", NULL },
+         { "1GB",   NULL },
+         { "2GB",   NULL },
+         { NULL, NULL },
       },
       "512MB",
    },
@@ -221,7 +218,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       CORE_OPTION_NAME "_internal_resolution",
       "Internal Resolution (Restart)",
-      "Modify the resolution. Requires a restart.",
+      "Modify rendering resolution. Requires a restart.",
       {
          { "320x240",    NULL },
          { "640x480",    NULL },
@@ -253,12 +250,12 @@ struct retro_core_option_definition option_defs_us[] = {
          { "8320x6240",  NULL },
          { "8960x6720",  NULL },
          { "9600x7200",  NULL },
-         { "10240x7680",  NULL },
-         { "10880x8160",  NULL },
-         { "11520x8640",  NULL },
-         { "12160x9120",  NULL },
-         { "12800x9600",  NULL },
-         { NULL, NULL},
+         { "10240x7680", NULL },
+         { "10880x8160", NULL },
+         { "11520x8640", NULL },
+         { "12160x9120", NULL },
+         { "12800x9600", NULL },
+         { NULL, NULL },
       },
 #ifdef LOW_RES
       "320x240",
@@ -268,26 +265,26 @@ struct retro_core_option_definition option_defs_us[] = {
    },
    {
       CORE_OPTION_NAME "_screen_rotation",
-      "Screen orientation",
+      "Screen Orientation",
       "",
       {
-         { "horizontal",  NULL },
-         { "vertical",  NULL },
-         { NULL, NULL},
+         { "horizontal", "Horizontal" },
+         { "vertical",   "Vertical" },
+         { NULL, NULL },
       },
       "horizontal",
    },
    {
       CORE_OPTION_NAME "_alpha_sorting",
-      "Alpha sorting",
+      "Alpha Sorting",
       "",
       {
-         { "per-strip (fast, least accurate)",  "Per-strip (fast, least accurate)" },
-         { "per-triangle (normal)",  "Per-triangle (normal)" },
+         { "per-strip (fast, least accurate)", "Per-Strip (fast, least accurate)" },
+         { "per-triangle (normal)",            "Per-Triangle (normal)" },
 #ifdef HAVE_OIT
-         { "per-pixel (accurate)",  "Per-pixel (accurate, but slowest)" },
+         { "per-pixel (accurate)",             "Per-Pixel (accurate, but slowest)" },
 #endif
-         { NULL, NULL},
+         { NULL, NULL },
       },
 #if defined(LOW_END)
       "per-strip (fast, least accurate)",
@@ -300,9 +297,9 @@ struct retro_core_option_definition option_defs_us[] = {
       "GDROM Fast Loading (inaccurate)",
       "",
       {
-         { "disabled",  NULL },
+         { "disabled", NULL },
          { "enabled",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
 #ifdef LOW_END
       "enabled",
@@ -316,19 +313,19 @@ struct retro_core_option_definition option_defs_us[] = {
       "",
       {
          { "enabled",  NULL },
-         { "disabled",  NULL },
-         { NULL, NULL},
+         { "disabled", NULL },
+         { NULL, NULL },
       },
       "enabled",
    },
    {
       CORE_OPTION_NAME "_volume_modifier_enable",
-      "Volume modifier",
-      "A Dreamcast GPU feature that is typically used by games to draw shadows of objects. You should typically leave this on - performance impact should be minimal to negligible.",
+      "Volume Modifier",
+      "A Dreamcast GPU feature that is typically used by games to draw object shadows. This should normally be enabled - the performance impact is usually minimal to negligible.",
       {
          { "enabled",  NULL },
-         { "disabled",  NULL },
-         { NULL, NULL},
+         { "disabled", NULL },
+         { NULL, NULL },
       },
       "enabled",
    },
@@ -337,21 +334,21 @@ struct retro_core_option_definition option_defs_us[] = {
       "Widescreen hack (Restart)",
       "",
       {
-         { "disabled",  NULL },
+         { "disabled", NULL },
          { "enabled",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
       "disabled",
    },
    {
       CORE_OPTION_NAME "_cable_type",
-      "Cable type",
+      "Cable Type",
       "",
       {
-         { "TV (RGB)",  NULL },
-         { "TV (Composite)",  NULL },
-         { "VGA (RGB)",  NULL },
-         { NULL, NULL},
+         { "TV (RGB)",       NULL },
+         { "TV (Composite)", NULL },
+         { "VGA (RGB)",      NULL },
+         { NULL, NULL },
       },
 #ifdef LOW_END
       "VGA (RGB)",
@@ -364,23 +361,23 @@ struct retro_core_option_definition option_defs_us[] = {
       "Broadcast",
       "",
       {
-         { "Default",  NULL },
-         { "PAL_M",  NULL },
-         { "PAL_N",  NULL },
-         { "NTSC",  NULL },
-         { "PAL",  NULL },
-         { NULL, NULL},
+         { "Default", NULL },
+         { "PAL_M",   "PAL-M (Brazil)" },
+         { "PAL_N",   "PAL-N (Argentina, Paraguay, Uruguay)" },
+         { "NTSC",    NULL },
+         { "PAL",     "PAL (World)" },
+         { NULL, NULL },
       },
       "Default",
    },
    {
       CORE_OPTION_NAME "_framerate",
       "Framerate",
-      "",
+      "Affects how emulator interacts with frontend. 'Full Speed' - emulator returns control to RetroArch each time a frame has been rendered. 'Normal' - emulator returns control to RetroArch each time a V-blank interrupt is generated. 'Full Speed' should be used in most cases. 'Normal' may improve frame pacing on some systems, but can cause unresponsive input when screen is static (e.g. loading/pause screens).",
       {
-         { "fullspeed",  NULL },
-         { "normal",  NULL },
-         { NULL, NULL},
+         { "fullspeed", "Full Speed" },
+         { "normal",    "Normal" },
+         { NULL, NULL },
       },
       "fullspeed",
    },
@@ -389,11 +386,11 @@ struct retro_core_option_definition option_defs_us[] = {
       "Region",
       "",
       {
-         { "Default",  NULL },
-         { "Japan",  NULL },
-         { "USA",  NULL },
+         { "Default", NULL },
+         { "Japan",   NULL },
+         { "USA",     NULL },
          { "Europe",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
       "Default",
    },
@@ -403,25 +400,25 @@ struct retro_core_option_definition option_defs_us[] = {
       "",
       {
          { "Default",  NULL },
-         { "Japanese",  NULL },
+         { "Japanese", NULL },
          { "English",  NULL },
-         { "German",  NULL },
-         { "French",  NULL },
+         { "German",   NULL },
+         { "French",   NULL },
          { "Spanish",  NULL },
          { "Italian",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
       "Default",
    },
    {
       CORE_OPTION_NAME "_div_matching",
-      "DIV matching (performance, less accurate)",
+      "DIV Matching (performance, less accurate)",
       "",
       {
-         { "disabled",  NULL },
+         { "disabled", NULL },
          { "enabled",  NULL },
-         { "auto",  NULL },
-         { NULL, NULL},
+         { "auto",     "Auto" },
+         { NULL, NULL },
       },
 #ifdef LOW_END
       "enabled",
@@ -436,12 +433,12 @@ struct retro_core_option_definition option_defs_us[] = {
       {
          { "0%",  NULL },
          { "5%",  NULL },
-         { "10%",  NULL },
-         { "15%",  NULL },
-         { "20%",  NULL },
-         { "25%",  NULL },
-         { "30%",  NULL },
-         { NULL, NULL},
+         { "10%", NULL },
+         { "15%", NULL },
+         { "20%", NULL },
+         { "25%", NULL },
+         { "30%", NULL },
+         { NULL, NULL },
       },
       "15%",
    },
@@ -452,12 +449,12 @@ struct retro_core_option_definition option_defs_us[] = {
       {
          { "0%",  NULL },
          { "5%",  NULL },
-         { "10%",  NULL },
-         { "15%",  NULL },
-         { "20%",  NULL },
-         { "25%",  NULL },
-         { "30%",  NULL },
-         { NULL, NULL},
+         { "10%", NULL },
+         { "15%", NULL },
+         { "20%", NULL },
+         { "25%", NULL },
+         { "30%", NULL },
+         { NULL, NULL },
       },
       "0%",
    },
@@ -466,20 +463,20 @@ struct retro_core_option_definition option_defs_us[] = {
       "Digital Triggers",
       "",
       {
-         { "disabled",  NULL },
+         { "disabled", NULL },
          { "enabled",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
       "disabled",
    },
    {
       CORE_OPTION_NAME "_enable_dsp",
       "Enable DSP",
-      "Enable the Dreamcast's audio DSP. This will emulate the sound output more accurately at the expense of performance.",
+      "Enable emulation of the Dreamcast's audio DSP (digital signal processor). Improves the accuracy of generated sound, but increases performance requirements.",
       {
-         { "disabled",  NULL },
+         { "disabled", NULL },
          { "enabled",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
 #ifdef LOW_END
       "disabled",
@@ -490,26 +487,26 @@ struct retro_core_option_definition option_defs_us[] = {
 #ifdef HAVE_TEXUPSCALE
    {
       CORE_OPTION_NAME "_texupscale",
-      "Texture upscaling (xBRZ)",
+      "Texture Upscaling (xBRZ)",
       "",
       {
-         { "off",  NULL },
+         { "off", "disabled" },
          { "2x",  NULL },
          { "4x",  NULL },
          { "6x",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
       "off",
    },
    {
       CORE_OPTION_NAME "_texupscale_max_filtered_texture_size",
-      "Texture upscaling max filtered size",
+      "Texture Upscaling Max. Filtered Size",
       "",
       {
          { "256",  NULL },
          { "512",  NULL },
-         { "1024",  NULL },
-         { NULL, NULL},
+         { "1024", NULL },
+         { NULL, NULL },
       },
       "256",
    },
@@ -519,9 +516,9 @@ struct retro_core_option_definition option_defs_us[] = {
       "Enable RTT (Render To Texture)",
       "",
       {
-         { "disabled",  NULL },
+         { "disabled", NULL },
          { "enabled",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
       "enabled",
    },
@@ -530,9 +527,9 @@ struct retro_core_option_definition option_defs_us[] = {
       "Enable RTT (Render To Texture) Buffer",
       "",
       {
-         { "disabled",  NULL },
+         { "disabled", NULL },
          { "enabled",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
       "disabled",
    },
@@ -541,131 +538,131 @@ struct retro_core_option_definition option_defs_us[] = {
       "Render To Texture Upscaling",
       "",
       {
-         { "1x",  NULL },
-         { "2x",  NULL },
-         { "3x",  NULL },
-         { "4x",  NULL },
-         { "8x",  NULL },
-         { NULL, NULL},
+         { "1x", NULL },
+         { "2x", NULL },
+         { "3x", NULL },
+         { "4x", NULL },
+         { "8x", NULL },
+         { NULL, NULL },
       },
       "1x",
    },
 #if !defined(TARGET_NO_THREADS)
    {
       CORE_OPTION_NAME "_threaded_rendering",
-      "Threaded rendering (Restart)",
+      "Threaded Rendering (Restart)",
       "",
       {
-         { "disabled",  NULL },
+         { "disabled", NULL },
          { "enabled",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
       "disabled",
    },
    {
       CORE_OPTION_NAME "_synchronous_rendering",
-      "Synchronous rendering",
+      "Synchronous Rendering",
       "",
       {
-         { "disabled",  NULL },
+         { "disabled", NULL },
          { "enabled",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
       "disabled",
    },
 #endif
    {
       CORE_OPTION_NAME "_frame_skipping",
-      "Frame skipping",
+      "Frame Skipping",
       "",
       {
          { "disabled",  NULL },
-         { "1",  NULL },
-         { "2",  NULL },
-         { "3",  NULL },
-         { "4",  NULL },
-         { "5",  NULL },
-         { "6",  NULL },
-         { NULL, NULL},
+         { "1",         NULL },
+         { "2",         NULL },
+         { "3",         NULL },
+         { "4",         NULL },
+         { "5",         NULL },
+         { "6",         NULL },
+         { NULL, NULL },
       },
       "disabled",
    },
    {
       CORE_OPTION_NAME "_enable_purupuru",
       "Purupuru Pack/Vibration Pack",
-      "",
+      "Enables controller force feedback.",
       {
-         { "disabled",  NULL },
+         { "disabled", NULL },
          { "enabled",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
       "enabled",
    },
    {
       CORE_OPTION_NAME "_allow_service_buttons",
-      "Allow NAOMI service buttons",
+      "Allow NAOMI Service Buttons",
       "",
       {
-         { "disabled",  NULL },
+         { "disabled", NULL },
          { "enabled",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
       "disabled",
    },
    {
       CORE_OPTION_NAME "_enable_naomi_15khz_dipswitch",
-      "Enable NAOMI 15KHz dipswitch (480i)",
+      "Enable NAOMI 15KHz Dipswitch (480i)",
       "",
       {
-         { "disabled",  NULL },
+         { "disabled", NULL },
          { "enabled",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
       "disabled",
    },
    {
       CORE_OPTION_NAME "_custom_textures",
-      "Load custom textures",
+      "Load Custom Textures",
       "",
       {
-         { "disabled",  NULL },
+         { "disabled", NULL },
          { "enabled",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
       "disabled",
    },
    {
       CORE_OPTION_NAME "_dump_textures",
-      "Dump textures",
+      "Dump Textures",
       "",
       {
-         { "disabled",  NULL },
+         { "disabled", NULL },
          { "enabled",  NULL },
-         { NULL, NULL},
+         { NULL, NULL },
       },
       "disabled",
    },
    {
       CORE_OPTION_NAME "_per_content_vmus",
-      "Per-game VMUs",
-      "",
+      "Per-Game VMUs",
+      "When disabled, all games share 4 VMU save files (A1, B1, C1, D1) located in RetroArch's system directory. The 'VMU A1' setting creates a unique VMU 'A1' file in RetroArch's save directory for each game that is launched. The 'All VMUs' setting creates 4 unique VMU files (A1, B1, C1, D1) for each game that is launched.",
       {
-         { "disabled",  NULL },
-         { "VMU A1",  NULL },
-         { "All VMUs",  NULL },
+         { "disabled", NULL },
+         { "VMU A1",   NULL },
+         { "All VMUs", NULL },
          { NULL, NULL},
       },
       "disabled",
    },
-	  VMU_SCREEN_PARAMS(1)
-	  VMU_SCREEN_PARAMS(2)
-	  VMU_SCREEN_PARAMS(3)
-	  VMU_SCREEN_PARAMS(4)
-     LIGHTGUN_PARAMS(1)
-     LIGHTGUN_PARAMS(2)
-     LIGHTGUN_PARAMS(3)
-     LIGHTGUN_PARAMS(4)
-   { NULL, NULL, NULL, { NULL, NULL }, NULL },
+   VMU_SCREEN_PARAMS(1)
+   VMU_SCREEN_PARAMS(2)
+   VMU_SCREEN_PARAMS(3)
+   VMU_SCREEN_PARAMS(4)
+   LIGHTGUN_PARAMS(1)
+   LIGHTGUN_PARAMS(2)
+   LIGHTGUN_PARAMS(3)
+   LIGHTGUN_PARAMS(4)
+   { NULL, NULL, NULL, {{0}}, NULL },
 };
 
 /* RETRO_LANGUAGE_JAPANESE */
@@ -739,7 +736,8 @@ struct retro_core_option_definition *option_defs_intl[RETRO_LANGUAGE_LAST] = {
 */
 
 /* Handles configuration/setting of core options.
- * Should only be called inside retro_set_environment().
+ * Should be called as early as possible - ideally inside
+ * retro_set_environment(), and no later than retro_load_game()
  * > We place the function body in the header to avoid the
  *   necessity of adding more .c files (i.e. want this to
  *   be as painless as possible for core devs)
@@ -769,17 +767,11 @@ static INLINE void libretro_set_core_options(retro_environment_t environ_cb)
    else
    {
       size_t i;
-      size_t option_index              = 0;
       size_t num_options               = 0;
       struct retro_variable *variables = NULL;
       char **values_buf                = NULL;
 
-      /* Determine number of options
-       * > Note: We are going to skip a number of irrelevant
-       *   core options when building the retro_variable array,
-       *   but we'll allocate space for all of them. The difference
-       *   in resource usage is negligible, and this allows us to
-       *   keep the code 'cleaner' */
+      /* Determine number of options */
       while (true)
       {
          if (option_defs_us[num_options].key)
@@ -807,11 +799,6 @@ static INLINE void libretro_set_core_options(retro_environment_t environ_cb)
 
          values_buf[i] = NULL;
 
-         /* Skip options that are irrelevant when using the
-          * old style core options interface */
-         if ((strcmp(key, "fceumm_advance_sound_options") == 0))
-            continue;
-
          if (desc)
          {
             size_t num_values = 0;
@@ -833,8 +820,12 @@ static INLINE void libretro_set_core_options(retro_environment_t environ_cb)
                   break;
             }
 
-            /* Build values string */
-            if (num_values > 1)
+            /* Build values string
+             * > Note: flycast is unusual in that we have to
+             *   support core options with only one value
+             *   (the number of '_cpu_mode' options depends
+             *   upon compiler flags...) */
+            if (num_values > 0)
             {
                size_t j;
 
@@ -863,11 +854,10 @@ static INLINE void libretro_set_core_options(retro_environment_t environ_cb)
             }
          }
 
-         variables[option_index].key   = key;
-         variables[option_index].value = values_buf[i];
-         option_index++;
+         variables[i].key   = key;
+         variables[i].value = values_buf[i];
       }
-
+      
       /* Set variables */
       environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
 

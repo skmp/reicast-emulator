@@ -711,7 +711,8 @@ void libGDR_ReadSubChannel(u8 * buff, u32 format, u32 len);
 void libGDR_GetToc(u32* toc,u32 area);
 u32 libGDR_GetDiscType(void);
 void libGDR_GetSessionInfo(u8* pout,u8 session);
-
+u32 libGDR_GetTrackNumber(u32 sector, u32& elapsed);
+bool libGDR_GetTrack(u32 track_num, u32& start_fad, u32& end_fad);
 
 //ExtDev
 s32 libExtDevice_Init(void);
@@ -801,8 +802,9 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 #define LIBRETRO_S(v) ra_serialize(&(v), sizeof(v), data, total_size)
 #define LIBRETRO_US(v) ra_unserialize(&(v), sizeof(v), data, total_size)
 
-#define LIBRETRO_SA(v_arr,num) ra_serialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
-#define LIBRETRO_USA(v_arr,num) ra_unserialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
+// FIXME breaks savestates compat
+#define LIBRETRO_SA(v_arr,num) ra_serialize((v_arr), sizeof((v_arr)[0]) * (num), data, total_size)
+#define LIBRETRO_USA(v_arr,num) ra_unserialize((v_arr), sizeof((v_arr)[0]) * (num), data, total_size)
 
 
 enum

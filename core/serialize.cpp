@@ -167,15 +167,6 @@ extern DCFlashChip sys_nvmem_flash;
 //this is one-time init, no updates - don't need to serialize
 //extern _vmem_handler area0_handler;
 
-
-
-
-//./core/hw/gdrom/gdrom_response.o
-extern u16 reply_11[] ;
-
-
-
-
 //./core/hw/gdrom/gdromv3.o
 extern int gdrom_sched;
 extern signed int sns_asc;
@@ -899,7 +890,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 
 
-	LIBRETRO_SA(reply_11,16) ;
+	LIBRETRO_S(GD_HardwareInfo) ;
 
 
 
@@ -1322,7 +1313,7 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 
 
 
-	LIBRETRO_USA(reply_11,16) ;
+	LIBRETRO_US(GD_HardwareInfo) ;
 
 	if (version < V3)
 	   LIBRETRO_US(dummy_int);	//gdrom_sched

@@ -402,15 +402,12 @@ int dc_init(int argc,wchar* argv[])
 
 	dc_reset();
 
-   const char* bootfile = reios_locate_ip();
-   if (!bootfile || !reios_locate_bootfile("1ST_READ.BIN"))
-      log_cb(RETRO_LOG_ERROR, "Failed to locate bootfile.\n");
-
    switch (settings.System)
    {
       case DC_PLATFORM_DREAMCAST:
-         LoadSpecialSettings();
-         break;
+		reios_disk_id();
+		LoadSpecialSettings();
+		break;
       case DC_PLATFORM_ATOMISWAVE:
       case DC_PLATFORM_NAOMI:
          LoadSpecialSettingsNaomi(naomi_game_id);
@@ -500,8 +497,6 @@ void LoadSettings(void)
 	settings.reios.ElfFile               = "";
 
 	settings.validate.OpenGlChecks      = 0;
-
-	settings.bios.UseReios              = 0;
 }
 
 void SaveSettings(void)

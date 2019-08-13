@@ -11,6 +11,8 @@ void gdrom_reg_Reset(bool Manual);
 u32 ReadMem_gdrom(u32 Addr, u32 sz);
 void WriteMem_gdrom(u32 Addr, u32 data, u32 sz);
 
+u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info);
+
 enum gd_states
 {
 	//Generic
@@ -213,6 +215,7 @@ struct packet_cmd_t
       }GDReadBlock;
 	};
 };
+extern GD_SecNumbT SecNumber;
 
 struct read_params_t
 {
@@ -252,6 +255,7 @@ struct cdda_t
 		};
 	}CurrAddr,EndAddr,StartAddr;
 } ;
+extern cdda_t cdda;
 
 union ByteCount_t
 {
@@ -264,11 +268,37 @@ union ByteCount_t
 	u16 full;
 } ;
 
+// REQ_MODE / SET_MODE
+struct GD_HardwareInfo_t
+{
+  u8 _res0[2];
+  u8 speed;
+  u8 _res1;
+  u8 standby_hi;
+  u8 standby_lo;
+  u8 read_flags;
+  u8 _res2[2];
+  u8 read_retry;
+  char drive_info[8];
+  char system_version[8];
+  char system_date[6];
+};
+extern GD_HardwareInfo_t GD_HardwareInfo;
+
+#define GD_BUSY    0x00 // State transition
+#define GD_PAUSE   0x01 // Pause
+#define GD_STANDBY 0x02 // Standby (drive stop)
+#define GD_PLAY    0x03 // CD playback
+#define GD_SEEK    0x04 // Seeking
+#define GD_SCAN    0x05 // Scanning
+#define GD_OPEN    0x06 // Tray is open
+#define GD_NODISC  0x07 // No disc
+#define GD_RETRY   0x08 // Read retry in progress (option)
+#define GD_ERROR   0x09 // Reading of disc TOC failed (state does not allow access)
+
 //Response strings
 extern u16 reply_a1[];
-extern u16 reply_11[];
 extern u16 reply_71[];
-extern char szExDT[8][32];
 
 #define GD_IMPEDHI0_Read  0x005F7000 // (R) These are all 
 #define GD_IMPEDHI4_Read  0x005F7004 // (R) RData bus high imped

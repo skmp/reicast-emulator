@@ -78,7 +78,50 @@ static bool nvmem_load(const string& root,
    {
       case DC_PLATFORM_DREAMCAST:
       case DC_PLATFORM_DEV_UNIT:
-         return sys_nvmem_flash.Load(root, get_rom_prefix(), s1.c_str(), s2);
+      {
+         sys_nvmem_flash.Load(root, get_rom_prefix(), s1.c_str(), s2);
+        	sys_nvmem_flash.Validate();
+        	// overwrite factory flash settings
+        	if (settings.dreamcast.region <= 2)
+        	{
+        		sys_nvmem_flash.data[0x1a002] = '0' + settings.dreamcast.region;
+        		sys_nvmem_flash.data[0x1a0a2] = '0' + settings.dreamcast.region;
+        	}
+        	if (settings.dreamcast.language <= 5)
+        	{
+        		sys_nvmem_flash.data[0x1a003] = '0' + settings.dreamcast.language;
+        		sys_nvmem_flash.data[0x1a0a3] = '0' + settings.dreamcast.language;
+        	}
+        	if (settings.dreamcast.broadcast <= 3)
+        	{
+        		sys_nvmem_flash.data[0x1a004] = '0' + settings.dreamcast.broadcast;
+        		sys_nvmem_flash.data[0x1a0a4] = '0' + settings.dreamcast.broadcast;
+        	}
+        	// overwrite user settings
+        	struct flash_syscfg_block syscfg;
+        	int res = sys_nvmem_flash.ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
+
+        	if (!res)
+        	{
+        		// write out default settings
+        		memset(&syscfg, 0xff, sizeof(syscfg));
+        		syscfg.time_lo = 0;
+        		syscfg.time_hi = 0;
+        		syscfg.lang = 0;
+        		syscfg.mono = 0;
+        		syscfg.autostart = 1;
+        	}
+        	u32 time = GetRTC_now();
+        	syscfg.time_lo = time & 0xffff;
+        	syscfg.time_hi = time >> 16;
+        	if (settings.dreamcast.language <= 5)
+        		syscfg.lang = settings.dreamcast.language;
+
+        	if (sys_nvmem_flash.WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
+        		printf("Failed to save time and language to flash RAM\n");
+
+        	return true;
+      }
       case DC_PLATFORM_ATOMISWAVE:
          return sys_nvmem_sram.Load(nvmem_file) && sys_nvmem_flash.Load(nvmem_file2);
       case DC_PLATFORM_NAOMI:
@@ -88,23 +131,6 @@ static bool nvmem_load(const string& root,
 
    return false;
 }
-
-static bool nvr_is_optional(void)
-{
-   switch (settings.System)
-   {
-      case DC_PLATFORM_ATOMISWAVE:
-      case DC_PLATFORM_NAOMI:
-      case DC_PLATFORM_NAOMI2:
-         return true;
-      case DC_PLATFORM_DREAMCAST:
-      case DC_PLATFORM_DEV_UNIT:
-         break;
-   }
-
-   return false;
-}
-
 
 bool LoadRomFiles(const string& root)
 {
@@ -122,41 +148,7 @@ bool LoadRomFiles(const string& root)
 	  else
 		 bios_loaded = true;
    }
-   if (!nvmem_load(root, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram"))
-   {
-	  if (nvr_is_optional())
-	  {
-		 printf("flash/nvmem is missing, will create new file...\n");
-	  }
-	  else
-	  {
-		 msgboxf("Unable to find flash/nvmem in \n%s\nExiting...", MBX_ICONERROR, root.c_str());
-		 return false;
-	  }
-   }
-   if (settings.System == DC_PLATFORM_DREAMCAST)
-   {
-	  struct flash_syscfg_block syscfg;
-	  int res = sys_nvmem_flash.ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
-
-	  if (!res)
-	  {
-		 // write out default settings
-		 memset(&syscfg, 0xff, sizeof(syscfg));
-		 syscfg.time_lo = 0;
-		 syscfg.time_hi = 0;
-		 syscfg.lang = 0;
-		 syscfg.mono = 0;
-		 syscfg.autostart = 1;
-	  }
-	  u32 time = GetRTC_now();
-	  syscfg.time_lo = time & 0xffff;
-	  syscfg.time_hi = time >> 16;
-	  if (settings.dreamcast.language <= 5)
-		 syscfg.lang = settings.dreamcast.language;
-
-	  sys_nvmem_flash.WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
-   }
+   nvmem_load(root, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram");
 
    return true;
 }
@@ -201,10 +193,7 @@ bool LoadHle(const string& root) {
 		printf("No nvmem loaded\n");
 	}
 
-	if (settings.System != DC_PLATFORM_ATOMISWAVE)
-	   return reios_init(sys_rom.data, get_nvmem_data());
-	else
-	   return reios_init(sys_nvmem_flash.data, get_nvmem_data());
+   return reios_init(sys_rom.data, &sys_nvmem_flash);
 }
 
 u32 ReadFlash(u32 addr,u32 sz)

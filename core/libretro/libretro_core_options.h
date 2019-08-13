@@ -156,7 +156,7 @@ CORE_OPTION_NAME "_lightgun" #num "_crosshair", \
  *   frontend language definition */
 
 struct retro_core_option_definition option_defs_us[] = {
-#if ((FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86) || (HOST_CPU == CPU_ARM) || (HOST_CPU == CPU_ARM64) || (HOST_CPU == CPU_X64) || TARGET_NO_JIT)
+#if ((FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86) || (HOST_CPU == CPU_ARM) || (HOST_CPU == CPU_ARM64) || (HOST_CPU == CPU_X64)) && defined(TARGET_NO_JIT)
    {
       CORE_OPTION_NAME "_cpu_mode",
       "CPU Mode (Restart)",
@@ -200,6 +200,17 @@ struct retro_core_option_definition option_defs_us[] = {
          { NULL, NULL },
       },
       "auto",
+   },
+   {
+      CORE_OPTION_NAME "_hle_bios",
+      "HLE BIOS",
+      "Force use of high-level emulation BIOS.",
+      {
+         { "disabled",  NULL },
+         { "enabled",  NULL },
+         { NULL, NULL},
+      },
+      "disabled",
    },
 #ifdef HAVE_OIT
    {

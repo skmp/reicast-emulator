@@ -505,6 +505,13 @@ static void update_variables(bool first_startup)
       else
          settings.System = DC_PLATFORM_DREAMCAST;
 
+      var.key = CORE_OPTION_NAME "_hle_bios";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      	settings.bios.UseReios = !strcmp(var.value, "enabled");
+      else
+      	settings.bios.UseReios = false;
+
 #ifdef HAVE_OIT
       extern GLuint pixel_buffer_size;
       var.key = CORE_OPTION_NAME "_oit_abuffer_size";
@@ -2880,6 +2887,7 @@ int msgboxf(const char* text, unsigned int type, ...)
       va_start(args, type);
       vsprintf(temp, text, args);
       va_end(args);
+      strcat(temp, "\n");
 
       log_cb(RETRO_LOG_INFO, temp);
    }

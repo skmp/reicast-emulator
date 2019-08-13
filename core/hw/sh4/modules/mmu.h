@@ -17,6 +17,11 @@ extern u32 sq_remap[64];
 bool UTLB_Sync(u32 entry);
 void ITLB_Sync(u32 entry);
 
+static INLINE bool mmu_enabled()
+{
+   return false;
+}
+
 bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data);
 
 #if defined(NO_MMU)

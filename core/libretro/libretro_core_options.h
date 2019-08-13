@@ -210,7 +210,7 @@ struct retro_core_option_definition option_defs_us[] = {
          { "enabled",  NULL },
          { NULL, NULL},
       },
-      "enabled",
+      "disabled",
    },
 #ifdef HAVE_OIT
    {

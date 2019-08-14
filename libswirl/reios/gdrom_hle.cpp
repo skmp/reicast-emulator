@@ -193,14 +193,14 @@ void gdrom_hle_op()
 		case GDROM_RESET:	printf("\nGDROM:\tHLE GDROM_RESET\n");	break;
 
 		case GDROM_CHECK_DRIVE:		// 
-			debugf("\nGDROM:\tHLE GDROM_CHECK_DRIVE r4:%X\n",r[4],r[5]);
+			debugf("\nGDROM:\tHLE GDROM_CHECK_DRIVE r4:%X\n",r[4]);
 			WriteMem32(r[4]+0,0x02);	// STANDBY
 			WriteMem32(r[4]+4,libGDR_GetDiscType());	// CDROM | 0x80 for GDROM
 			r[0]=0;					// RET SUCCESS
 		break;
 
 		case GDROM_ABORT_COMMAND:	// 
-			printf("\nGDROM:\tHLE GDROM_ABORT_COMMAND r4:%X\n",r[4],r[5]);
+			printf("\nGDROM:\tHLE GDROM_ABORT_COMMAND r4:%X\n",r[4]);
 			r[0]=-1;				// RET FAILURE
 		break;
 

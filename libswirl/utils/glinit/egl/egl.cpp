@@ -118,10 +118,22 @@ bool egl_Init(void* wind, void* disp)
 		}
 		if (try_full_gl)
 		{
-			EGLint contextAttrs[] = { EGL_CONTEXT_MAJOR_VERSION_KHR, 3,
-									  EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR, EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT_KHR,
+			EGLint contextAttrs[] = { EGL_CONTEXT_MAJOR_VERSION_KHR, 4,
+									  EGL_CONTEXT_MINOR_VERSION_KHR, 3,
+#ifndef NDEBUG
+									  EGL_CONTEXT_FLAGS_KHR, EGL_CONTEXT_OPENGL_DEBUG_BIT_KHR,
+#endif
+									  EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR, EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT_KHR,
 									  EGL_NONE };
 			egl_setup.context = eglCreateContext(egl_setup.display, config, NULL, contextAttrs);
+			if (egl_setup.context == EGL_NO_CONTEXT) {
+				printf("EGL: Open GL 4.3 not supported\n");
+				// Try GL 3.0
+				contextAttrs[1] = 3;
+				contextAttrs[3] = 0;
+				egl_setup.context = eglCreateContext(egl_setup.display, config, NULL, contextAttrs);
+			}
+
 			if (egl_setup.context != EGL_NO_CONTEXT)
 			{
 				egl_MakeCurrent();

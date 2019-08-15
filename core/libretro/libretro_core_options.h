@@ -568,7 +568,11 @@ struct retro_core_option_definition option_defs_us[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
+#ifdef THREADED_RENDERING_DEFAULT
+      "enabled",
+#else
       "disabled",
+#endif
    },
    {
       CORE_OPTION_NAME "_synchronous_rendering",

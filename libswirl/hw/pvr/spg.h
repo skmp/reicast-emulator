@@ -11,8 +11,5 @@ void spg_Reset(bool Manual);
 //#define Line_Cycles (Frame_Cycles/511)
 
 void spgUpdatePvr(u32 cycles);
-bool spg_Init();
-void spg_Term();
-void spg_Reset(bool Manual);
 void CalculateSync();
 void read_lightgun_position(int x, int y);

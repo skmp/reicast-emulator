@@ -75,8 +75,6 @@ void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 		rtc_EN=data&1;
 		return;
 	}
-
-	return;
 }
 u32 ReadMem_aica_reg(u32 addr,u32 sz)
 {

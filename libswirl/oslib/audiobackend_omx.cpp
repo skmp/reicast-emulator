@@ -187,8 +187,7 @@ static void omx_init(audio_backend_pull_callback_t pull_callback)
 		fprintf(stderr, "OMX: failed to do OMX_CommandPortEnable. Error 0x%X\n", error);
 
 	// Free audio buffers if they're allocated
-	if(audio_buffers != NULL)
-		delete[] audio_buffers;
+	delete[] audio_buffers;
 
 	// Allocate buffers
 	audio_buffers = new OMX_BUFFERHEADERTYPE*[buffer_count];

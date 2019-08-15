@@ -119,8 +119,7 @@ static bool naomi_LoadBios(const char *filename, Archive *child_archive, Archive
 		}
 	}
 
-	if (bios_archive != NULL)
-		delete bios_archive;
+	delete bios_archive;
 
 #if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 	// Reload the writeable portion of the FlashROM
@@ -130,8 +129,7 @@ static bool naomi_LoadBios(const char *filename, Archive *child_archive, Archive
 	return found_region;
 
 error:
-	if (bios_archive != NULL)
-		delete bios_archive;
+	delete bios_archive;
 	return false;
 }
 
@@ -326,10 +324,8 @@ static bool naomi_cart_LoadZip(char *filename)
 			delete file;
 		}
 	}
-	if (archive != NULL)
-		delete archive;
-	if (parent_archive != NULL)
-		delete parent_archive;
+	delete archive;
+	delete parent_archive;
 
 	CurrentCartridge->Init();
 
@@ -339,10 +335,8 @@ static bool naomi_cart_LoadZip(char *filename)
 	return true;
 
 error:
-	if (archive != NULL)
-		delete archive;
-	if (parent_archive != NULL)
-		delete parent_archive;
+	delete archive;
+	delete parent_archive;
 	delete CurrentCartridge;
 	CurrentCartridge = NULL;
 	return false;

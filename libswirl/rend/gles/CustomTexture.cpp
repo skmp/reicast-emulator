@@ -53,11 +53,10 @@ void CustomTexture::LoaderThread()
 			if (texture != NULL)
 			{
 				texture->ComputeHash();
-				if (texture->custom_image_data != NULL)
-				{
-					delete [] texture->custom_image_data;
-					texture->custom_image_data = NULL;
-				}
+
+				delete[] texture->custom_image_data;
+				texture->custom_image_data = NULL;
+
 				if (!texture->dirty)
 				{
 					int width, height;

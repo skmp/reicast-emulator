@@ -392,8 +392,7 @@ void rend_init_renderer()
 
     	if (fallback_renderer == NULL || !fallback_renderer->Init())
     	{
-    		if (fallback_renderer != NULL)
-    			delete fallback_renderer;
+    		delete fallback_renderer;
     		die("RendIF: Renderer initialization failed\n");
     	}
     	
@@ -408,11 +407,8 @@ void rend_term_renderer()
 	renderer->Term();
 	delete renderer;
 	renderer = NULL;
-	if (fallback_renderer != NULL)
-	{
-		delete fallback_renderer;
-		fallback_renderer = NULL;
-	}
+	delete fallback_renderer;
+	fallback_renderer = NULL;
 }
 
 void* rend_thread(void* p)

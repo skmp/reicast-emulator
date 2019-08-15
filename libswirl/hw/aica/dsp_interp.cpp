@@ -19,7 +19,7 @@ void AICADSP_Init(struct dsp_t *DSP)
 {
 	memset(DSP, 0, sizeof(*DSP));
 	DSP->RBL = 0x8000 - 1;
-	DSP->Stopped = 1;
+	DSP->Stopped = true;
 	dsp.regs.MDEC_CT = 1;
 }
 
@@ -306,14 +306,14 @@ void AICADSP_Step(struct dsp_t *DSP)
 
 void AICADSP_Start(struct dsp_t *DSP)
 {
-	dsp.Stopped = 1;
+	dsp.Stopped = true;
 	for (int i = 127; i >= 0; --i)
 	{
 		u32 *IPtr = DSPData->MPRO + i * 4;
 
 		if (IPtr[0] != 0 || IPtr[1] != 0 || IPtr[2 ]!= 0 || IPtr[3] != 0)
 		{
-			DSP->Stopped = 0;
+			DSP->Stopped = false;
 			//printf("DSP: starting %d steps\n", i + 1);
 
 			break;
@@ -329,7 +329,7 @@ void dsp_init()
 
 void dsp_term()
 {
-	dsp.Stopped = 1;
+	dsp.Stopped = true;
 }
 
 void dsp_step()

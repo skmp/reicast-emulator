@@ -639,14 +639,14 @@ void gd_process_spi_cmd()
 			printf("param_type=%d\n",param_type);
 			if (param_type==1)
 			{
-				cdda.StartAddr.FAD=cdda.CurrAddr.FAD=GetFAD(&packet_cmd.data_8[2],0);
-				cdda.EndAddr.FAD=GetFAD(&packet_cmd.data_8[8],0);
+				cdda.StartAddr.FAD=cdda.CurrAddr.FAD=GetFAD(&packet_cmd.data_8[2],false);
+				cdda.EndAddr.FAD=GetFAD(&packet_cmd.data_8[8],false);
 				GDStatus.DSC=1;	//we did the seek xD lol
 			}
 			else if (param_type==2)
 			{
-				cdda.StartAddr.FAD=cdda.CurrAddr.FAD=GetFAD(&packet_cmd.data_8[2],1);
-				cdda.EndAddr.FAD=GetFAD(&packet_cmd.data_8[8],1);
+				cdda.StartAddr.FAD=cdda.CurrAddr.FAD=GetFAD(&packet_cmd.data_8[2],true);
+				cdda.EndAddr.FAD=GetFAD(&packet_cmd.data_8[8],true);
 				GDStatus.DSC=1;	//we did the seek xD lol
 			}
 			else if (param_type==7)
@@ -680,12 +680,12 @@ void gd_process_spi_cmd()
 			printf("param_type=%d\n",param_type);
 			if (param_type==1)
 			{
-				cdda.StartAddr.FAD=cdda.CurrAddr.FAD=GetFAD(&packet_cmd.data_8[2],0);
+				cdda.StartAddr.FAD=cdda.CurrAddr.FAD=GetFAD(&packet_cmd.data_8[2],false);
 				GDStatus.DSC=1;	//we did the seek xD lol
 			}
 			else if (param_type==2)
 			{
-				cdda.StartAddr.FAD=cdda.CurrAddr.FAD=GetFAD(&packet_cmd.data_8[2],1);
+				cdda.StartAddr.FAD=cdda.CurrAddr.FAD=GetFAD(&packet_cmd.data_8[2],true);
 				GDStatus.DSC=1;	//we did the seek xD lol
 			}
 			else if (param_type==3)

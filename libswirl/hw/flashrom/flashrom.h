@@ -21,7 +21,7 @@ struct MemChip
 		this->mask=size-1;//must be power of 2
 		this->write_protect_size = write_protect_size;
 	}
-	~MemChip() { delete[] data; }
+	virtual ~MemChip() { delete[] data; }
 
 	virtual u8 Read8(u32 addr)
 	{

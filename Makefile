@@ -18,6 +18,7 @@ HAVE_OPENMP   := 1
 HAVE_CHD      := 1
 HAVE_CLANG    := 0
 HAVE_CDROM    := 0
+THREADED_RENDERING_DEFAULT := 0
 
 
 TARGET_NAME   := flycast
@@ -160,6 +161,7 @@ else ifneq (,$(findstring rpi,$(platform)))
 	LIBS += -lrt
 	ARM_FLOAT_ABI_HARD = 1
 	SINGLE_PREC_FLAGS = 1
+	THREADED_RENDERING_DEFAULT = 1
 	
 	ifneq (,$(findstring rpi4,$(platform)))
 		# rpi4 flags are taken from rockpro64
@@ -593,6 +595,7 @@ else ifneq (,$(findstring ios,$(platform)))
 	GLES = 1
 	WITH_DYNAREC=
 	PLATFORM_EXT := unix
+	THREADED_RENDERING_DEFAULT = 1
 	#HOST_CPU_FLAGS = -DHOST_CPU=$(HOST_CPU_ARM)
 
 	PLATCFLAGS += -DHAVE_POSIX_MEMALIGN -DNO_ASM
@@ -634,6 +637,7 @@ else ifneq (,$(findstring theos_ios,$(platform)))
 	FORCE_GLES = 1
 	WITH_DYNAREC=arm
 	HAVE_GENERIC_JIT = 0
+	THREADED_RENDERING_DEFAULT = 1
 
 	PLATCFLAGS += -DHAVE_POSIX_MEMALIGN -DNO_ASM
 	PLATCFLAGS += -DIOS -marm
@@ -675,6 +679,7 @@ else ifeq ($(platform), qnx)
 	PLATCFLAGS += -DNO_ASM -D__BLACKBERRY_QNX__
 	CPUFLAGS += -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp -D__arm__ -DARM_ASM -D__NEON_OPT
 	CFLAGS += -D__QNX__
+	THREADED_RENDERING_DEFAULT = 1
 
 	PLATFORM_EXT := unix
 
@@ -688,6 +693,7 @@ else ifneq (,$(findstring armv,$(platform)))
 	WITH_DYNAREC=arm
 	HAVE_GENERIC_JIT = 0
 	PLATCFLAGS += -DARM
+	THREADED_RENDERING_DEFAULT = 1
 	ifneq (,$(findstring gles,$(platform)))
 		FORCE_GLES = 1
 	endif

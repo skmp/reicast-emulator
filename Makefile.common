@@ -11,6 +11,10 @@ INCFLAGS    += -I$(CORE_DIR)/core/libretro \
 
 CORE_DEFINES += -DNO_MMU
 
+ifeq ($(THREADED_RENDERING_DEFAULT), 1)
+CORE_DEFINES += -DTHREADED_RENDERING_DEFAULT
+endif
+
 SOURCES_C   :=
 SOURCES_CXX := \
 					$(CORE_DIR)/core/hw/arm7/arm_mem.cpp \

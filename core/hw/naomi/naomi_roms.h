@@ -4459,6 +4459,7 @@ Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0008",
+        &cvs2_inputs,
     },
     // Capcom Vs. SNK 2 Millionaire Fighting 2001 (Rev A) (GDL-0007A)
     // ver 010705
@@ -4476,6 +4477,7 @@ Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0007a",
+        &cvs2_inputs,
     },
     // Dragon Treasure (Rev B) (GDS-0030B)
     {

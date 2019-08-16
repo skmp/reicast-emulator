@@ -284,6 +284,27 @@ InputDescriptors monkeyba_inputs = {
 	  },
 };
 
+InputDescriptors cvs2_inputs = {
+	  {
+			{ NAOMI_BTN0_KEY, "WEAK PUNCH" },
+			{ NAOMI_BTN1_KEY, "MEDIUM PUNCH" },
+			{ NAOMI_BTN2_KEY, "STRONG PUNCH" },
+			{ NAOMI_BTN3_KEY, "WEAK KICK" },
+			{ NAOMI_BTN4_KEY, "MEDIUM KICK" },
+			{ NAOMI_BTN5_KEY, "STRONG KICK" },
+			{ NAOMI_UP_KEY, "UP" },
+			{ NAOMI_DOWN_KEY, "DOWN" },
+			{ NAOMI_LEFT_KEY, "LEFT" },
+			{ NAOMI_RIGHT_KEY, "RIGHT" },
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ NULL },
+	  },
+};
+
 //
 // AtomisWave games
 //

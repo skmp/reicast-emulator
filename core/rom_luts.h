@@ -105,6 +105,7 @@ static struct game_type lut_games[] =
 extern InputDescriptors gunsur2_inputs;
 extern InputDescriptors ftspeed_inputs;
 extern InputDescriptors maxspeed_inputs;
+extern InputDescriptors monkeyba_inputs;
 
 static struct game_type_naomi lut_games_naomi[] = 
 {
@@ -141,4 +142,5 @@ static struct game_type_naomi lut_games_naomi[] =
 
    /* Input descriptors */
    { " BIOHAZARD  GUN SURVIVOR2"         , -1, -1, -1, -1, -1, -1,  -1, -1, 1, &gunsur2_inputs }, /* Gun Survivor 2 Biohazard Code: Veronica */
+   { "MONKEY BALL JAPAN VERSION"         , -1, -1, -1, -1, -1, -1,  -1, -1, 1, &monkeyba_inputs }, /* Monkey Ball */
 };

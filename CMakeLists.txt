@@ -291,6 +291,13 @@ if(${HOST_OS} EQUAL ${OS_LINUX})
     message(FATAL_ERROR "EGL or GLX required")
   endif()
 
+  find_package(OpenMP)
+  if(OpenMP_FOUND)
+    target_link_libraries(${TNAME} OpenMP::OpenMP_CXX)
+  else()
+    target_compile_definitions(${TNAME} PUBLIC TARGET_NO_OPENMP)
+  endif()
+
   find_package(PkgConfig)
   if(PKG_CONFIG_FOUND)
     pkg_check_modules(AO ao)

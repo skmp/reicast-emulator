@@ -616,7 +616,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       CORE_OPTION_NAME "_allow_service_buttons",
       "Allow NAOMI Service Buttons",
-      "Enables SERVICE button for NAOMI, to enter cabinet settings",
+      "Enables SERVICE button for NAOMI, to enter cabinet settings.",
       {
          { "disabled", NULL },
          { "enabled",  NULL },
@@ -627,7 +627,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       CORE_OPTION_NAME "_enable_naomi_15khz_dipswitch",
       "Enable NAOMI 15KHz Dipswitch",
-      "This can force display in 240p, 480i or no effect at all depending of the game.",
+      "This can force display in 240p, 480i or no effect at all depending on the game.",
       {
          { "disabled", NULL },
          { "enabled",  NULL },

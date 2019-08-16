@@ -271,6 +271,19 @@ InputDescriptors vtenis2c_inputs = {
 	  },
 };
 
+InputDescriptors monkeyba_inputs = {
+	  {
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ "STICK V", Full, 1 },
+			{ "STICK H", Full, 0 },
+			{ NULL },
+	  },
+};
+
 //
 // AtomisWave games
 //

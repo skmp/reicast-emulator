@@ -27,7 +27,7 @@ LDFLAGS := -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
 INCS :=
 LIBS := -lm -lpthread #defaults
 
-CFLAGS := -g -O3 -D RELEASE -c -D USES_HOMEDIR -fopenmp # defaults
+CFLAGS := -g -O3 -D RELEASE -c -fopenmp # defaults
 CFLAGS += -frename-registers -fno-strict-aliasing
 CFLAGS += -ffast-math -ftree-vectorize
 

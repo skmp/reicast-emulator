@@ -12,6 +12,7 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/maple/maple_cfg.h"
 #include <unistd.h>
@@ -33,10 +34,6 @@
 
 #if defined(USE_SDL)
 	#include "sdl/sdl.h"
-#endif
-
-#if defined(USES_HOMEDIR)
-	#include <sys/stat.h>
 #endif
 
 #if defined(USE_EVDEV)
@@ -217,41 +214,39 @@ void common_linux_setup();
 
 string find_user_config_dir()
 {
-	#ifdef USES_HOMEDIR
-		struct stat info;
-		string home = "";
-		if(getenv("HOME") != NULL)
+	struct stat info;
+	string home = "";
+	if(getenv("HOME") != NULL)
+	{
+		// Support for the legacy config dir at "$HOME/.reicast"
+		string legacy_home = (string)getenv("HOME") + "/.reicast";
+		if((stat(legacy_home.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
 		{
-			// Support for the legacy config dir at "$HOME/.reicast"
-			string legacy_home = (string)getenv("HOME") + "/.reicast";
-			if((stat(legacy_home.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
-			{
-				// "$HOME/.reicast" already exists, let's use it!
-				return legacy_home;
-			}
-
-			/* If $XDG_CONFIG_HOME is not set, we're supposed to use "$HOME/.config" instead.
-			 * Consult the XDG Base Directory Specification for details:
-			 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
-			 */
-			home = (string)getenv("HOME") + "/.config/reicast";
-		}
-		if(getenv("XDG_CONFIG_HOME") != NULL)
-		{
-			// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
-			home = (string)getenv("XDG_CONFIG_HOME") + "/reicast";
+			// "$HOME/.reicast" already exists, let's use it!
+			return legacy_home;
 		}
 
-		if(!home.empty())
+		/* If $XDG_CONFIG_HOME is not set, we're supposed to use "$HOME/.config" instead.
+		 * Consult the XDG Base Directory Specification for details:
+		 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
+		 */
+		home = (string)getenv("HOME") + "/.config/reicast";
+	}
+	if(getenv("XDG_CONFIG_HOME") != NULL)
+	{
+		// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
+		home = (string)getenv("XDG_CONFIG_HOME") + "/reicast";
+	}
+
+	if(!home.empty())
+	{
+		if((stat(home.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
 		{
-			if((stat(home.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
-			{
-				// If the directory doesn't exist yet, create it!
-				mkdir(home.c_str(), 0755);
-			}
-			return home;
+			// If the directory doesn't exist yet, create it!
+			mkdir(home.c_str(), 0755);
 		}
-	#endif
+		return home;
+	}
 
 	// Unable to detect config dir, use the current folder
 	return ".";
@@ -259,41 +254,39 @@ string find_user_config_dir()
 
 string find_user_data_dir()
 {
-	#ifdef USES_HOMEDIR
-		struct stat info;
-		string data = "";
-		if(getenv("HOME") != NULL)
+	struct stat info;
+	string data = "";
+	if(getenv("HOME") != NULL)
+	{
+		// Support for the legacy config dir at "$HOME/.reicast"
+		string legacy_data = (string)getenv("HOME") + "/.reicast";
+		if((stat(legacy_data.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
 		{
-			// Support for the legacy config dir at "$HOME/.reicast"
-			string legacy_data = (string)getenv("HOME") + "/.reicast";
-			if((stat(legacy_data.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
-			{
-				// "$HOME/.reicast" already exists, let's use it!
-				return legacy_data;
-			}
-
-			/* If $XDG_DATA_HOME is not set, we're supposed to use "$HOME/.local/share" instead.
-			 * Consult the XDG Base Directory Specification for details:
-			 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
-			 */
-			data = (string)getenv("HOME") + "/.local/share/reicast";
-		}
-		if(getenv("XDG_DATA_HOME") != NULL)
-		{
-			// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.config
-			data = (string)getenv("XDG_DATA_HOME") + "/reicast";
+			// "$HOME/.reicast" already exists, let's use it!
+			return legacy_data;
 		}
 
-		if(!data.empty())
+		/* If $XDG_DATA_HOME is not set, we're supposed to use "$HOME/.local/share" instead.
+		 * Consult the XDG Base Directory Specification for details:
+		 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
+		 */
+		data = (string)getenv("HOME") + "/.local/share/reicast";
+	}
+	if(getenv("XDG_DATA_HOME") != NULL)
+	{
+		// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.config
+		data = (string)getenv("XDG_DATA_HOME") + "/reicast";
+	}
+
+	if(!data.empty())
+	{
+		if((stat(data.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
 		{
-			if((stat(data.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
-			{
-				// If the directory doesn't exist yet, create it!
-				mkdir(data.c_str(), 0755);
-			}
-			return data;
+			// If the directory doesn't exist yet, create it!
+			mkdir(data.c_str(), 0755);
 		}
-	#endif
+		return data;
+	}
 
 	// Unable to detect config dir, use the current folder
 	return ".";

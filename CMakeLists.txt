@@ -110,31 +110,61 @@ endif()
 if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT})
 #
   if(${HOST_CPU} EQUAL ${CPU_X86})
-    list(APPEND core_SRCS 
-      ${d_core}/jit/backend/x86/rec_x86_driver.cpp
-      ${d_core}/jit/backend/x86/rec_x86_il.cpp
-      ${d_core}/jit/backend/x86/rec_x86_asm.cpp	# change for linux , rec_lin86_asm.S
-	  ${d_core}/jit/backend/x86/rec_x86_ngen.h
-     )
+    list(APPEND core_SRCS ${d_core}/jit/backend/x86/rec_x86_asm.cpp
+                          ${d_core}/jit/backend/x86/rec_x86_driver.cpp
+                          ${d_core}/jit/backend/x86/rec_x86_il.inl
+                          ${d_core}/jit/backend/x86/rec_x86_ngen.h
+                          ${d_core}/jit/emitter/x86/generated_class_names.h
+                          ${d_core}/jit/emitter/x86/generated_class_names_string.h
+                          ${d_core}/jit/emitter/x86/generated_descriptors.h
+                          ${d_core}/jit/emitter/x86/generated_indexes.h
+                          ${d_core}/jit/emitter/x86/types.h
+                          ${d_core}/jit/emitter/x86/x86_emitter.cpp
+                          ${d_core}/jit/emitter/x86/x86_emitter.h
+                          ${d_core}/jit/emitter/x86/x86_matcher.h
+                          ${d_core}/jit/emitter/x86/x86_op_classes.h
+                          ${d_core}/jit/emitter/x86/x86_op_encoder.h
+                          ${d_core}/jit/emitter/x86/x86_op_table.h)
+    if(${HOST_OS} EQUAL ${OS_LINUX})
+      list(APPEND core_SRCS ${d_core}/jit/backend/x86/rec_lin86_asm.S)
+    endif()
   elseif(${HOST_CPU} EQUAL ${CPU_ARM})
-    list(APPEND core_SRCS 
-      ${d_core}/rec-ARM/ngen_arm.S
-      ${d_core}/rec-ARM/rec_arm.cpp
-	)
+    list(APPEND core_SRCS ${d_core}/jit/backend/arm32/ngen_arm.h
+                          ${d_core}/jit/backend/arm32/ngen_arm.S
+                          ${d_core}/jit/backend/arm32/rec_arm.cpp
+                          ${d_core}/jit/emitter/arm32/arm_coding.h
+                          ${d_core}/jit/emitter/arm32/arm_disasm.h
+                          ${d_core}/jit/emitter/arm32/arm_emitter.h
+                          ${d_core}/jit/emitter/arm32/arm_registers.h
+                          ${d_core}/jit/emitter/arm32/E_Branches.h
+                          ${d_core}/jit/emitter/arm32/E_DataOp.h
+                          ${d_core}/jit/emitter/arm32/E_Extend.h
+                          ${d_core}/jit/emitter/arm32/E_LoadStore.h
+                          ${d_core}/jit/emitter/arm32/E_Misc.h
+                          ${d_core}/jit/emitter/arm32/E_Multiply.h
+                          ${d_core}/jit/emitter/arm32/E_Parallel.h
+                          ${d_core}/jit/emitter/arm32/E_Special.h
+                          ${d_core}/jit/emitter/arm32/E_Status.h
+                          ${d_core}/jit/emitter/arm32/E_VDataOp.h
+                          ${d_core}/jit/emitter/arm32/E_VLoadStore.h
+                          ${d_core}/jit/emitter/arm32/E_VRegXfer.h
+                          ${d_core}/jit/emitter/arm32/H_Branches.h
+                          ${d_core}/jit/emitter/arm32/H_fp.h
+                          ${d_core}/jit/emitter/arm32/H_LoadStore.h
+                          ${d_core}/jit/emitter/arm32/H_psuedo.h
+                          ${d_core}/jit/emitter/arm32/H_state.h)
   elseif(${HOST_CPU} EQUAL ${CPU_X64})
-
-    list(APPEND core_SRCS ${d_core}/jit/backend/x64/rec_x64.cpp ${d_core}/jit/backend/x64/x64_regalloc.h)
-
+    list(APPEND core_SRCS ${d_core}/jit/backend/x64/rec_x64.cpp
+                          ${d_core}/jit/backend/x64/x64_regalloc.h)
   elseif(${HOST_CPU} EQUAL ${CPU_A64})
-    list(APPEND core_SRCS ${d_core}/rec-ARM64/rec_arm64.cpp ${d_core}/rec-ARM64/arm64_regalloc.h)
-
+    list(APPEND core_SRCS ${d_core}/jit/backend/arm64/arm64_regalloc.h
+                          ${d_core}/jit/backend/arm64/rec_arm64.cpp)
   else()
-    message(" FEAT_SHREC==DYNAREC_JIT && HOST_CPU Unknown Default add arch or disable rec if not avail.")
-	error()
+    message(FATAL_ERROR "FEAT_SHREC==DYNAREC_JIT && HOST_CPU Unknown Default add arch or disable rec if not avail.")
   endif()
 #
 elseif(${FEAT_SHREC} EQUAL ${DYNAREC_CPP})
-    list(APPEND core_SRCS ${d_core}/rec-cpp/rec_cpp.cpp)
+  list(APPEND core_SRCS ${d_core}/jit/backend/cpp/rec_cpp.cpp)
 endif()
 
 add_definitions(/DFEAT_HAS_SOFTREND=0)
@@ -218,7 +248,7 @@ if (${HOST_OS} EQUAL ${OS_WINDOWS})
   link_libraries(dsound.lib winmm.lib xinput.lib wsock32.lib opengl32.lib)
 
   
-elseif (${HOST_OS} EQUAL ${OS_LINUX} OR ${HOST_OS} EQUAL ${OS_ANDROID})
+elseif (${HOST_OS} EQUAL ${OS_LINUX})
 
     list(APPEND osd_SRCS
       ${d_core}/linux-dist/main.cpp
@@ -267,7 +297,7 @@ include_directories ("${reicast_core_path}")
 
 set(reicast_SRCS ${core_SRCS} ${deps_SRCS} ${osd_SRCS})
 
-add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
+add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS})
 
 if(${HOST_OS} EQUAL ${OS_LINUX})
   find_package(ALSA)

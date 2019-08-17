@@ -94,18 +94,24 @@ size_t HTTP(HTTP_METHOD method, string host, int port, string path, size_t offs,
 		init = true;
 	}
 
+	// resolve the ip address
+	auto host_ip = gethostbyname(host.c_str());
+
+	if (!host_ip)
+		return 0;
+
     //open socket
     if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
-        return -1;
+        return 0;
 
 	
     //connect
     memset(&serveraddr, 0, sizeof(serveraddr));
     serveraddr.sin_family      = AF_INET;
-	serveraddr.sin_addr.s_addr = *(int*)gethostbyname( host.c_str() )->h_addr_list[0];
+	serveraddr.sin_addr.s_addr = *(int*)host_ip->h_addr_list[0];
     serveraddr.sin_port        = htons((unsigned short) port);
     if (connect(sock, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0)
-        return -1;
+        return 0;
 
 #if HOST_OS == OS_WINDOWS
 	BOOL v = TRUE;
@@ -116,7 +122,7 @@ size_t HTTP(HTTP_METHOD method, string host, int port, string path, size_t offs,
 	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const char*)&v, sizeof(v));
     //send request
     if (send(sock, request.c_str(), request.length(), 0) != request.length())
-        return -1;
+        return 0;
 
 	/*
     //get response

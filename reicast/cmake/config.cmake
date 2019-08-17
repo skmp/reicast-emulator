@@ -330,7 +330,7 @@ set(CMAKE_CXX_FLAGS " ${_CXX_FLAGS}") # ${CMAKE_CXX_FLAGS}
 #endif
 
 
-if (TARGET_NSW) # -DCMAKE_TOOLCHAIN_FILE=./cmake/devkitA64.cmake -DTARGET_NSW=ON
+if(SWITCH_LIBNX)
   set(HOST_OS ${OS_NSW_HOS}) 
 
   message(" DEVKITA64: ${DEVKITA64} ")
@@ -362,7 +362,7 @@ if(ZBUILD)
   set(DEBUG_CMAKE ON)
   add_definitions(-D_Z_)  # Get rid of some warnings and internal dev testing
   
-  if(NOT TARGET_PS4 AND NOT TARGET_NSW AND 
+  if(NOT TARGET_PS4 AND NOT SWITCH_LIBNX AND
      NOT TARGET_OSX AND NOT TARGET_IOS )
      set(USE_QT ON)
   endif()

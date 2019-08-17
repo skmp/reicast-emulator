@@ -131,7 +131,10 @@ void OnlineRomsProvider::fetchRomList()
 	auto list = HTTP(HM_GET, onlimeRomsHost, onlimeRomsPort, onlimeRomsList);
 
 	if (list.size() == 0)
+	{
+		status = "Cannot reach server";
 		return;
+	}
 
 	auto lines = SplitString(list, "\n");
 

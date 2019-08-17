@@ -1208,7 +1208,7 @@ Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &trigger_inputs
+        &deathcox_inputs
     },
     // Death Crimson OX
     {
@@ -1235,7 +1235,7 @@ Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &trigger_inputs
+        &deathcox_inputs
     },
     // Derby Owners Club 2000 (Rev A)
     {

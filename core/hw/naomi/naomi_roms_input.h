@@ -156,6 +156,20 @@ InputDescriptors trigger_inputs = {
 	  },
 };
 
+InputDescriptors deathcox_inputs = {
+	  {
+			{ NAOMI_BTN0_KEY, "TRIGGER" },
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ "GUN-X", Full, 0 },
+			{ "GUN-Y", Full, 1 },
+			{ NULL },
+	  },
+};
+
 InputDescriptors gunsur2_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "GUN BUTTON" },

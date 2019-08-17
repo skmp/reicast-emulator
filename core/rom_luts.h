@@ -107,6 +107,7 @@ extern InputDescriptors ftspeed_inputs;
 extern InputDescriptors maxspeed_inputs;
 extern InputDescriptors monkeyba_inputs;
 extern InputDescriptors cvs2_inputs;
+extern InputDescriptors deathcox_inputs;
 
 static struct game_type_naomi lut_games_naomi[] = 
 {
@@ -142,7 +143,8 @@ static struct game_type_naomi lut_games_naomi[] =
    { "NINJA ASSAULT"                     , -1, -1, -1, -1, -1, -1,  -1,  7, 1 },                /* Ninja Assault */
 
    /* Input descriptors */
-   { " BIOHAZARD  GUN SURVIVOR2"         , -1, -1, -1, -1, -1, -1,  -1, -1, 1, &gunsur2_inputs }, /* Gun Survivor 2 Biohazard Code: Veronica */
+   { " BIOHAZARD  GUN SURVIVOR2"         , -1, -1, -1, -1, -1, -1,  -1, -1, 1, &gunsur2_inputs },  /* Gun Survivor 2 Biohazard Code: Veronica */
    { "MONKEY BALL JAPAN VERSION"         , -1, -1, -1, -1, -1, -1,  -1, -1, 1, &monkeyba_inputs }, /* Monkey Ball */
-   { "CAPCOM VS SNK 2  JAPAN"            , -1, -1, -1, -1, -1, -1,  -1, -1, 1, &cvs2_inputs }, /* Capcom Vs. SNK 2 Mark Of The Millennium 2001 */
+   { "CAPCOM VS SNK 2  JAPAN"            , -1, -1, -1, -1, -1, -1,  -1, -1, 1, &cvs2_inputs },     /* Capcom Vs. SNK 2 Mark Of The Millennium 2001 */
+   { "DEATH CRIMSON OX"                  , -1, -1, -1, -1, -1, -1,  -1, -1, 1, &deathcox_inputs }, /* Death Crimson OX */
 };

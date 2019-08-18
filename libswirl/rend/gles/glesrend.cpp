@@ -754,7 +754,7 @@ void gl_load_osd_resources()
 	gl.OSD_SHADER.scale = glGetUniformLocation(gl.OSD_SHADER.program, "scale");
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"), 0);		//bind osd texture to slot 0
 
-#ifdef _ANDROID
+#ifdef __ANDROID__
 	int w, h;
 	if (osd_tex == 0)
 		osd_tex = loadPNG(get_readonly_data_path(DATA_PATH "buttons.png"), w, h);
@@ -907,7 +907,7 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 extern u16 kcode[4];
 extern u8 rt[4],lt[4];
 
-#if defined(_ANDROID)
+#if __ANDROID__
 extern float vjoy_pos[14][8];
 #else
 
@@ -1011,7 +1011,7 @@ static void osd_gen_vertices()
 
 void OSD_DRAW(bool clear_screen)
 {
-#ifdef _ANDROID
+#ifdef __ANDROID__
 	if (osd_tex == 0)
 		gl_load_osd_resources();
 	if (osd_tex != 0)

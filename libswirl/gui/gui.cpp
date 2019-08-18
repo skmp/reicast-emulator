@@ -105,7 +105,7 @@ void gui_init()
     ImGui::GetStyle().ItemSpacing = ImVec2(8, 8);		// from 8,4
     ImGui::GetStyle().ItemInnerSpacing = ImVec2(4, 6);	// from 4,4
     //ImGui::GetStyle().WindowRounding = 0;
-#ifdef _ANDROID
+#ifdef __ANDROID__
     ImGui::GetStyle().GrabMinSize = 20.0f;				// from 10
     ImGui::GetStyle().ScrollbarSize = 24.0f;			// from 16
     ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
@@ -167,7 +167,7 @@ void ImGui_Impl_NewFrame()
 		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	else
 		io.MousePos = ImVec2(real_x, real_y);
-#ifdef _ANDROID
+#ifdef __ANDROID__
 	// Put the "mouse" outside the screen one frame after a touch up
 	// This avoids buttons and the like to stay selected
 	if ((mo_buttons & 0xf) == 0xf)
@@ -373,7 +373,7 @@ bool maple_devices_changed;
 ImVec2 normal_padding;
 int dynarec_enabled;
 
-#ifdef _ANDROID
+#ifdef __ANDROID__
 static std::string current_library_path("/storage/emulated/0/Download");
 #else
 static std::string current_library_path("/home/raph/RetroPie/roms/dreamcast/");
@@ -753,7 +753,7 @@ void gui_display_ui()
 	case VJoyEdit:
 		break;
 	case VJoyEditCommands:
-#ifdef _ANDROID
+#ifdef __ANDROID__
 		gui_display_vjoy_commands(screen_width, screen_height, scaling);
 #endif
 		break;

@@ -33,7 +33,7 @@ void egl_GetCurrent()
 	egl_setup.surface = eglGetCurrentSurface(EGL_DRAW);
 }
 
-#ifdef _ANDROID
+#ifdef __ANDROID__
 #include <android/native_window.h>
 #endif
 
@@ -92,7 +92,7 @@ bool egl_Init(void* wind, void* disp)
 				return false;
 			}
 		}
-#ifdef _ANDROID
+#ifdef __ANDROID__
 		EGLint format;
 		if (!eglGetConfigAttrib(egl_setup.display, config, EGL_NATIVE_VISUAL_ID, &format))
 		{

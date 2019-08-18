@@ -343,7 +343,7 @@ void gui_settings_controls()
 
 				controller_mapping_popup(gamepad);
 
-#ifdef _ANDROID
+#ifdef __ANDROID__
 				if (gamepad->is_virtual_gamepad())
 				{
 					if (ImGui::Button("Edit"))

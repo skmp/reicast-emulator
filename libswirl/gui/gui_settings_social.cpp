@@ -14,7 +14,7 @@ void gui_settings_social()
 	
 		ImGui::Separator();
 
-		#if !defined(_ANDROID) // Google doesn't like us having donate links
+		#if !defined(__ANDROID__) // Google doesn't like us having donate links
 			if (ImGui::Button("Donate / Support Reicast (via emudev.org)")) {
 		    	os_LaunchFromURL("http://donate.emudev.org");
 		    }

@@ -17,7 +17,9 @@
 #endif
 #include "x11_keyboard.h"
 
+#ifdef SUPPORT_GLX
 #include "utils/glinit/glx/glx.h"
+#endif
 
 #if defined(TARGET_PANDORA)
 	#define DEFAULT_FULLSCREEN    true

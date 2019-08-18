@@ -127,7 +127,7 @@ void gui_settings_general()
         	ImGui::AlignTextToFramePadding();
             ImGui::Text("%s", get_writable_config_path("").c_str());
 		}
-#ifdef _ANDROID
+#ifdef __ANDROID__
         ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Change").x - ImGui::GetStyle().FramePadding.x);
         if (ImGui::Button("Change"))
         {

@@ -58,7 +58,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 {
 	if (select_current_directory.empty())
 	{
-#if defined(_ANDROID)
+#if defined(__ANDROID__)
 		const char *home = getenv("REICAST_HOME");
 		if (home != NULL)
 		{
@@ -120,7 +120,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 						select_subfolders.push_back(std::string(1, (char)('A' + i)) + ":\\");
 			}
 			else
-#elif _ANDROID
+#elif __ANDROID__
 			if (select_current_directory == PSEUDO_ROOT)
 			{
 				error_message = "Storage Locations";
@@ -182,7 +182,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 						}
 					}
 					closedir(dir);
-#if defined(_WIN32) || defined(_ANDROID)
+#if defined(_WIN32) || defined(__ANDROID__)
 					if (!dotdot_seen)
 						select_subfolders.push_back("..");
 #endif
@@ -234,14 +234,14 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 						child_path += native_separator;
 #endif
 				}
-#ifdef _ANDROID
+#ifdef __ANDROID__
 				if (access(child_path.c_str(), R_OK) != 0)
 					child_path = PSEUDO_ROOT;
 #endif
 			}
 			else
 			{
-#if defined(_WIN32) || defined(_ANDROID)
+#if defined(_WIN32) || defined(__ANDROID__)
 				if (path == PSEUDO_ROOT)
 					child_path = name;
 				else

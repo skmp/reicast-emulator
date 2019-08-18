@@ -57,8 +57,13 @@
 #include "profiler/profiler.h"
 #endif
 
+#ifdef SUPPORT_GLX
 #include "utils/glinit/glx/glx.h"
+#endif
+
+#ifdef SUPPORT_EGL
 #include "utils/glinit/egl/egl.h"
+#endif
 
 void* x11_win = 0;
 void* x11_disp = 0;

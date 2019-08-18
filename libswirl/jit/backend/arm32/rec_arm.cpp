@@ -54,7 +54,7 @@ struct DynaRBI: RuntimeBlockInfo
 };
 
 
-#ifdef _ANDROID
+#ifdef __ANDROID__
 #include <sys/syscall.h>  // for cache flushing.
 #endif
 
@@ -68,7 +68,7 @@ void CacheFlush(void* code, void* pEnd)
 #elif !defined(ARMCC)
 void CacheFlush(void* code, void* pEnd)
 {
-#if !defined(_ANDROID) && HOST_OS!=OS_DARWIN
+#if !defined(__ANDROID__) && HOST_OS!=OS_DARWIN
 	__builtin___clear_cache((char*)code, (char*)pEnd);
 #else
 	void* start=code;
@@ -95,20 +95,20 @@ void CacheFlush(void* code, void* pEnd)
     #else
       // r7 is reserved by the EABI in thumb mode.
       asm volatile(
-      "@   Enter ARM Mode  \n\t"
-          "adr r3, 1f      \n\t"
-          "bx  r3          \n\t"
-          ".ALIGN 4        \n\t"
-          ".ARM            \n"
-      "1:  push {r7}       \n\t"
-          "mov r7, %4      \n\t"
-          "svc 0x0         \n\t"
-          "pop {r7}        \n\t"
-      "@   Enter THUMB Mode\n\t"
-          "adr r3, 2f+1    \n\t"
-          "bx  r3          \n\t"
-          ".THUMB          \n"
-      "2:                  \n\t"
+      "@   Enter ARM Mode  "
+          "adr r3, 1f      "
+          "bx  r3          "
+          ".ALIGN 4        "
+          ".ARM            "
+      "1:  push {r7}       "
+          "mov r7, %4      "
+          "svc 0x0         "
+          "pop {r7}        "
+      "@   Enter THUMB Mode"
+          "adr r3, 2f+1    "
+          "bx  r3          "
+          ".THUMB          "
+      "2:                  "
           : "=r" (beg)
           : "0" (beg), "r" (end), "r" (flg), "r" (__ARM_NR_cacheflush)
           : "r3");
@@ -125,17 +125,17 @@ void CacheFlush(void* code, void* pEnd)
       // below, because the thumb mode value would be used, which would be
       // wrong, since we switch to ARM mode before executing the svc instruction
       asm volatile(
-      "@   Enter ARM Mode  \n\t"
-          "adr r3, 1f      \n\t"
-          "bx  r3          \n\t"
-          ".ALIGN 4        \n\t"
-          ".ARM            \n"
-      "1:  svc 0x9f0002    \n"
-      "@   Enter THUMB Mode\n\t"
-          "adr r3, 2f+1    \n\t"
-          "bx  r3          \n\t"
-          ".THUMB          \n"
-      "2:                  \n\t"
+      "@   Enter ARM Mode  "
+          "adr r3, 1f      "
+          "bx  r3          "
+          ".ALIGN 4        "
+          ".ARM            "
+      "1:  svc 0x9f0002    "
+      "@   Enter THUMB Mode"
+          "adr r3, 2f+1    "
+          "bx  r3          "
+          ".THUMB          "
+      "2:                  "
           : "=r" (beg)
           : "0" (beg), "r" (end), "r" (flg)
           : "r3");

@@ -18,12 +18,15 @@
 #include "hw/sh4/modules/mmu.h"
 #include "imgread/common.h"
 #include "reios/reios.h"
+#include "reios/gdrom_hle.h"
 #include <map>
 #include <set>
 #include "rend/gles/gles.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/naomi/naomi_cart.h"
+
+#define LIBRETRO_SKIP(size) do { *(u8**)data += (size); *total_size += (size); } while (false)
 
 /*
  * search for "maybe" to find items that were left out that may be needed
@@ -35,7 +38,8 @@ enum serialize_version_enum {
 	V3,
 	V4,
 	V5,
-	V6
+	V6,
+	V7
 } ;
 
 //./core/hw/arm7/arm_mem.cpp
@@ -117,12 +121,6 @@ extern u8 aica_reg[0x8000];
 //./core/hw/aica/sgc_if.o
 struct ChannelEx;
 #define AicaChannel ChannelEx
-extern s32 volume_lut[16];
-extern s32 tl_lut[256 + 768];	//xx.15 format. >=255 is muted
-extern u32 AEG_ATT_SPS[64];
-extern u32 AEG_DSR_SPS[64];
-extern s16 pl;
-extern s16 pr;
 //this is just a pointer to aica_reg
 //extern DSP_OUT_VOL_REG* dsp_out_vol;
 //not needed - one-time init
@@ -806,7 +804,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
-	serialize_version_enum version = V6 ;
+	serialize_version_enum version = V7 ;
 
 	*total_size = 0 ;
 
@@ -846,15 +844,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(rtc_EN);
 
 	LIBRETRO_SA(aica_reg,0x8000);
-
-
-
-	LIBRETRO_SA(volume_lut,16);
-	LIBRETRO_SA(tl_lut,256 + 768);
-	LIBRETRO_SA(AEG_ATT_SPS,64);
-	LIBRETRO_SA(AEG_DSR_SPS,64);
-	LIBRETRO_S(pl);
-	LIBRETRO_S(pr);
 
 	channel_serialize(data, total_size) ;
 
@@ -1212,6 +1201,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	if (CurrentCartridge != NULL)
 	   CurrentCartridge->Serialize(data, total_size);
+	gd_hle_state.Serialize(data, total_size);
 
 	return true ;
 }
@@ -1268,14 +1258,15 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_USA(aica_reg,0x8000);
 
 
-
-	LIBRETRO_USA(volume_lut,16);
-	LIBRETRO_USA(tl_lut,256 + 768);
-	LIBRETRO_USA(AEG_ATT_SPS,64);
-	LIBRETRO_USA(AEG_DSR_SPS,64);
-	LIBRETRO_US(pl);
-	LIBRETRO_US(pr);
-
+	if (version < V7)
+	{
+		LIBRETRO_SKIP(4 * 16); 			// volume_lut
+		LIBRETRO_SKIP(4 * 256 + 768);	// tl_lut. Due to a previous bug this is not 4 * (256 + 768)
+		LIBRETRO_SKIP(4 * 64);			// AEG_ATT_SPS
+		LIBRETRO_SKIP(4 * 64);			// AEG_DSR_SPS
+		LIBRETRO_SKIP(2);					// pl
+		LIBRETRO_SKIP(2);					// pr
+	}
 	channel_unserialize(data, total_size) ;
 
 	LIBRETRO_USA(cdda_sector,CDDA_SIZE);
@@ -1725,7 +1716,8 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	{
 	   CurrentCartridge->Unserialize(data, total_size);
 	}
-
+	if (version >= V7)
+		gd_hle_state.Unserialize(data, total_size);
 
 	return true ;
 }

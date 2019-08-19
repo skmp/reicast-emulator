@@ -20,26 +20,6 @@
 
 #define debugf(...) //printf(__VA_ARGS__)
 
-// FIXME Serialize
-typedef enum { BIOS_ERROR = -1, BIOS_INACTIVE, BIOS_ACTIVE, BIOS_COMPLETED, BIOS_DATA_AVAIL } gd_bios_status;
-struct gdrom_hle_state_t
-{
-	u32 last_request_id;
-	u32 next_request_id;
-	gd_bios_status status;
-	u32 command;
-	u32 params[4];
-	u32 result[4];
-	u32 cur_sector;
-	u32 multi_read_sector;
-	u32 multi_read_offset;
-	u32 multi_read_count;
-	u32 multi_read_total;
-	u32 multi_callback;
-	u32 multi_callback_arg;
-	bool dma_trans_ended;
-	u64 xfer_end_time;
-};
 gdrom_hle_state_t gd_hle_state = { 0xffffffff, 2, BIOS_INACTIVE };
 
 static void GDROM_HLE_ReadSES()

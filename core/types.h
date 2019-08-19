@@ -797,7 +797,6 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 #define LIBRETRO_S(v) ra_serialize(&(v), sizeof(v), data, total_size)
 #define LIBRETRO_US(v) ra_unserialize(&(v), sizeof(v), data, total_size)
 
-// FIXME breaks savestates compat
 #define LIBRETRO_SA(v_arr,num) ra_serialize((v_arr), sizeof((v_arr)[0]) * (num), data, total_size)
 #define LIBRETRO_USA(v_arr,num) ra_unserialize((v_arr), sizeof((v_arr)[0]) * (num), data, total_size)
 

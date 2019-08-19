@@ -263,11 +263,11 @@ elseif (${HOST_OS} EQUAL ${OS_LINUX})
 
 elseif(${HOST_OS} EQUAL ${OS_DARWIN})
 #
-  list(APPEND objc_SRCS
-    ./shell/apple/emulator-osx/emulator-osx/osx-main.mm
-    ./shell/apple/emulator-osx/emulator-osx/AppDelegate.swift
-    ./shell/apple/emulator-osx/emulator-osx/EmuGLView.swift
-  )
+  list(APPEND objc_SRCS ./reicast/apple/emulator-osx/emulator-osx/AppDelegate.swift
+                        ./reicast/apple/emulator-osx/emulator-osx/EmuGLView.swift
+                        ./reicast/apple/emulator-osx/emulator-osx/osx-main.mm
+                        ./reicast/apple/emulator-osx/emulator-osx/osx_gamepad.h
+                        ./reicast/apple/emulator-osx/emulator-osx/osx_keyboard.h)
 
   set_source_files_properties(${objc_SRCS} PROPERTIES COMPILE_FLAGS "-x objective-c++")
   
@@ -378,7 +378,8 @@ endif()
 
 if(APPLE)
   enable_language(Swift)
-  set_property(TARGET ${TNAME} PROPERTY XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "./shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h")
+  set_property(TARGET ${TNAME} PROPERTY XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "./reicast/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h")
+  set_target_properties(${TNAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ./reicast/apple/emulator-osx/emulator-osx/Info.plist)
 
   target_link_libraries(${TNAME}
 # "-framework Cocoa"

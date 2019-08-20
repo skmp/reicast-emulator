@@ -15,26 +15,28 @@ tad_context ta_tad;
 TA_context*  vd_ctx;
 rend_context vd_rc;
 
-#if ANDROID
-#include <errno.h>
-#include <malloc.h>
+#ifdef __ANDROID__
+	#if __ANDROID_API__ <= 16
+	#include <errno.h>
+	#include <malloc.h>
 
-int posix_memalign(void** memptr, size_t alignment, size_t size) {
-  if ((alignment & (alignment - 1)) != 0 || alignment == 0) {
-    return EINVAL;
-  }
+	int posix_memalign(void** memptr, size_t alignment, size_t size) {
+	  if ((alignment & (alignment - 1)) != 0 || alignment == 0) {
+		return EINVAL;
+	  }
 
-  if (alignment % sizeof(void*) != 0) {
-    return EINVAL;
-  }
+	  if (alignment % sizeof(void*) != 0) {
+		return EINVAL;
+	  }
 
-  *memptr = memalign(alignment, size);
-  if (*memptr == NULL) {
-    return errno;
-  }
+	  *memptr = memalign(alignment, size);
+	  if (*memptr == NULL) {
+		return errno;
+	  }
 
-  return 0;
-}
+	  return 0;
+	}
+	#endif
 #endif
 
 // helper for 32 byte aligned memory allocation

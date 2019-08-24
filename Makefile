@@ -674,6 +674,7 @@ else ifeq ($(platform), qnx)
 	WITH_DYNAREC=arm
 	HAVE_GENERIC_JIT = 0
 	FORCE_GLES = 1
+	DEFINES += -DTHREADED_RENDERING_DEFAULT
 	PLATCFLAGS += -DNO_ASM -D__BLACKBERRY_QNX__
 	THREADED_RENDERING_DEFAULT = 1
 	CPUFLAGS += -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp -D__arm__ -DARM_ASM -D__NEON_OPT
@@ -713,6 +714,7 @@ else ifneq (,$(findstring armv,$(platform)))
 	else ifneq (,$(findstring hardfloat,$(platform)))
 		CPUFLAGS += -mfloat-abi=hard
 	endif
+	DEFINES += -DTHREADED_RENDERING_DEFAULT
 
 # emscripten
 else ifeq ($(platform), emscripten)

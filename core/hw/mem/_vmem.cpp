@@ -681,7 +681,7 @@ void _vmem_enable_mmu(bool enable)
 void _vmem_protect_vram(u32 addr, u32 size)
 {
 	addr &= VRAM_MASK;
-	if (!mmu_enabled())
+	if (!mmu_enabled() || !_nvmem_4gb_space())
 	{
 		mem_region_lock(virt_ram_base + 0x04000000 + addr, size);	// P0
 		//mem_region_lock(virt_ram_base + 0x06000000 + addr, size);	// P0 - mirror
@@ -715,7 +715,7 @@ void _vmem_protect_vram(u32 addr, u32 size)
 void _vmem_unprotect_vram(u32 addr, u32 size)
 {
 	addr &= VRAM_MASK;
-	if (!mmu_enabled())
+	if (!mmu_enabled() || !_nvmem_4gb_space())
 	{
 		mem_region_unlock(virt_ram_base + 0x04000000 + addr, size);		// P0
 		//mem_region_unlock(virt_ram_base + 0x06000000 + addr, size);	// P0 - mirror

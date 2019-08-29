@@ -347,7 +347,7 @@ using namespace std;
 #if defined(X86) && defined(_MSC_VER)
 #define naked   __declspec( naked )
 #else
-#define naked
+#define naked __attribute__((naked))
 #endif
 
 

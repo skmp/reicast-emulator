@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include "build.h"
+#include "log/Log.h"
 
 #ifdef _MSC_VER
 #define DECL_ALIGN(x) __declspec(align(x))

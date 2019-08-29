@@ -81,7 +81,7 @@ static LONG ExceptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 #endif
    else
    {
-      printf("[GPF]Unhandled access to : %p\n", address);
+   	ERROR_LOG(COMMON, "[GPF]Unhandled access to : %p", address);
    }
 
    return EXCEPTION_CONTINUE_SEARCH;
@@ -290,13 +290,11 @@ static void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx)
 	bool dyna_cde = false;
 #endif
 
-   printf("SIGILL @ %p ... %p -> was not in vram, %d\n",
+	ERROR_LOG(COMMON, "SIGILL @ %p ... %p -> was not in vram, %d",
          pc, si->si_addr, dyna_cde);
 
-   printf("Entering infiniloop");
-
+	ERROR_LOG(COMMON, "Entering infiniloop");
    for (;;);
-   printf("PC is used here %08X\n", pc);
 }
 #endif
 
@@ -316,9 +314,7 @@ static void signal_handler(int sn, siginfo_t * si, void *segfault_ctx)
 	bool dyna_cde = false;
 #endif
 
-#ifdef LOG_SIGHANDLER
-printf("mprot hit @ ptr %p @@ pc: %p, %d\n", si->si_addr, ctx.pc, dyna_cde);
-#endif
+	DEBUG_LOG(COMMON, "mprot hit @ ptr %p @@ pc: %zx, %d", si->si_addr, ctx.pc, dyna_cde);
 
 #if !defined(NO_MMU) && defined(HOST_64BIT_CPU)
 #if HOST_CPU == CPU_ARM64
@@ -374,7 +370,7 @@ printf("mprot hit @ ptr %p @@ pc: %p, %d\n", si->si_addr, ctx.pc, dyna_cde);
 #endif
    else
    {
-      printf("SIGSEGV @ %zx ... %p -> was not in vram (dyna code %d)\n", ctx.pc, si->si_addr, dyna_cde);
+   	ERROR_LOG(COMMON, "SIGSEGV @ %zx ... %p -> was not in vram (dyna code %d)", ctx.pc, si->si_addr, dyna_cde);
       die("segfault");
       signal(SIGSEGV, SIG_DFL);
    }
@@ -453,7 +449,7 @@ static void enable_runfast(void)
          : "r"(x), "r"(y)
          );
 
-   printf("ARM VFP-Run Fast (NFP) enabled !\n");
+   DEBUG_LOG(BOOT, "ARM VFP-Run Fast (NFP) enabled !");
 #endif
 }
 
@@ -673,7 +669,7 @@ void common_libretro_setup(void)
 #endif
 
 #if defined(__MACH__) || defined(__linux__)
-   printf("Linux paging: %08lX %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
+   DEBUG_LOG(BOOT, "Linux paging: %08lX %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
    verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
 #endif
 }

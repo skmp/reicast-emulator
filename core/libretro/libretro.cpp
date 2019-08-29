@@ -26,6 +26,7 @@
 #include "../hw/naomi/naomi_cart.h"
 #include "../imgread/common.h"
 #include "../hw/aica/dsp.h"
+#include "log/LogManager.h"
 
 #if defined(_XBOX) || defined(_WIN32)
 char slash = '\\';
@@ -313,6 +314,7 @@ void retro_init(void)
       log_cb = log.log;
    else
       log_cb = NULL;
+   LogManager::Init((void *)log_cb);
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_PERF_INTERFACE, &perf_cb))
       perf_get_cpu_features_cb = perf_cb.get_cpu_features;
@@ -343,6 +345,7 @@ void retro_deinit(void)
    mtx_serialization.Unlock() ;
 
    libretro_supports_bitmasks = false;
+   LogManager::Shutdown();
 }
 
 static bool is_dupe = false;
@@ -424,7 +427,7 @@ static void update_variables(bool first_startup)
             screen_width = 3200;
       }
 
-      fprintf(stderr, "[reicast]: Got size: %u x %u.\n", screen_width, screen_height);
+      DEBUG_LOG(COMMON, "Got size: %u x %u.\n", screen_width, screen_height);
    }
 
 
@@ -1094,7 +1097,7 @@ void retro_reset (void)
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 static void context_reset(void)
 {
-   printf("context_reset.\n");
+	INFO_LOG(RENDERER, "context_reset.");
    gl_ctx_resetting = false;
    glsm_ctl(GLSM_CTL_STATE_CONTEXT_RESET, NULL);
    glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
@@ -1636,7 +1639,7 @@ bool retro_load_game(const struct retro_game_info *game)
 
       snprintf(data_dir, sizeof(data_dir), "%s%s", game_dir, "data");
 
-      printf("Creating dir: %s\n", data_dir);
+      INFO_LOG(COMMON, "Creating dir: %s", data_dir);
       struct stat buf;
       if (stat(data_dir, &buf) < 0)
       {
@@ -1704,13 +1707,13 @@ bool retro_load_game(const struct retro_game_info *game)
          struct stat buf;
          if (stat(save_dir, &buf) < 0)
          {
-            log_cb(RETRO_LOG_INFO, "Creating dir: %s\n", save_dir);
+            DEBUG_LOG(BOOT, "Creating dir: %s", save_dir);
             path_mkdir(save_dir);
          }
       } else {
          strncpy(save_dir, g_roms_dir, sizeof(save_dir));
       }
-      log_cb(RETRO_LOG_INFO, "Setting save dir to %s\n", save_dir);
+      INFO_LOG(BOOT, "Setting save dir to %s", save_dir);
       snprintf(eeprom_file, sizeof(eeprom_file), "%s%s.eeprom", save_dir, g_base_name);
       snprintf(nvmem_file, sizeof(nvmem_file), "%s%s.nvmem", save_dir, g_base_name);
       snprintf(nvmem_file2, sizeof(nvmem_file2), "%s%s.nvmem2", save_dir, g_base_name);
@@ -1720,9 +1723,8 @@ bool retro_load_game(const struct retro_game_info *game)
 
    if (dc_init(co_argc,co_argv))
    {
-	  if (log_cb)
-		 log_cb(RETRO_LOG_ERROR, "Flycast emulator initialization failed\n");
-	  return false;
+   	ERROR_LOG(BOOT, "Flycast emulator initialization failed");
+   	return false;
    }
    int rotation = rotate_screen ? 3 : 0;
    if (naomi_cart_GetRotation() == 3)
@@ -1741,7 +1743,7 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 
 void retro_unload_game(void)
 {
-	printf("reicast unloading game\n") ;
+	INFO_LOG(COMMON, "Flycast unloading game");
    if (game_data)
       free(game_data);
    game_data = NULL;
@@ -1751,15 +1753,15 @@ void retro_unload_game(void)
    if (settings.rend.ThreadedRendering)
    {
 	   rend_cancel_emu_wait();
-	   printf("Waiting for emu thread......\n");
+	   DEBUG_LOG(COMMON, "Waiting for emu thread......");
 	   if ( emu_in_thread )
 	   {
 		   frontend_clear_thread_waits_cb(1,NULL) ;
-		   printf("Waiting for emu thread to end...\n");
+		   DEBUG_LOG(COMMON, "Waiting for emu thread to end...");
 		   emu_thread.WaitToEnd();
 		   frontend_clear_thread_waits_cb(0,NULL) ;
 	   }
-	   printf("...Done\n");
+	   DEBUG_LOG(COMMON, "...Done");
    }
    else
 #endif
@@ -2112,12 +2114,14 @@ double os_GetSeconds()
    /*converting file time to unix epoch*/
    tmpres -= DELTA_EPOCH_IN_MICROSECS;
 
-   return (double)tmpres / 1000000.0;	// microsecond -> second
+   static u64 time_base = tmpres;
+
+   return (double)(tmpres - time_base) / 1000000.0;	// microsecond -> second
 #else
    struct timeval t;
    gettimeofday(&t, NULL);
-
-   return (double)t.tv_sec + (double)t.tv_usec / 1000000.0;
+	static u64 tvs_base = t.tv_sec;
+	return t.tv_sec - tvs_base + t.tv_usec / 1000000.0;
 #endif
 }
 
@@ -2917,7 +2921,7 @@ int push_vmu_screen(u8* buffer) { return 0; }
 
 void os_DebugBreak(void)
 {
-   printf("DEBUGBREAK!\n");
+	ERROR_LOG(COMMON, "DEBUGBREAK!");
    //exit(-1);
    __builtin_trap();
 }

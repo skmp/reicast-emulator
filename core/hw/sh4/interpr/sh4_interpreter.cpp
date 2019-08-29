@@ -7,22 +7,11 @@
 #include "../sh4_interpreter.h"
 #include "../sh4_opcode_list.h"
 #include "../sh4_core.h"
-#include "../sh4_rom.h"
-#include "../sh4_if.h"
-#include "hw/pvr/pvr_mem.h"
 #include "hw/aica/aica_if.h"
-#include "../modules/dmac.h"
-#include "hw/gdrom/gdrom_if.h"
-#include "hw/maple/maple_if.h"
 #include "../sh4_interrupts.h"
-#include "../modules/tmu.h"
 #include "hw/sh4/sh4_mem.h"
-#include "../modules/ccn.h"
 #include "../dyna/blockmanager.h"
 #include "../sh4_sched.h"
-
-#include <time.h>
-#include <float.h>
 
 #define CPU_RATIO      (8)
 
@@ -36,41 +25,7 @@ static void ExecuteOpcode(u16 op)
 	l -= CPU_RATIO;
 }
 
-//every SH4_TIMESLICE Cycles (fixed)
-int UpdateSystem(void)
-{
-	//this is an optimisation (mostly for ARM)
-	//makes scheduling easier !
-	//update_fp* tmu=pUpdateTMU;
-	
-	Sh4cntx.sh4_sched_next -= SH4_TIMESLICE;
-	if (Sh4cntx.sh4_sched_next<0)
-		sh4_sched_tick(SH4_TIMESLICE);
-
-	return Sh4cntx.interrupt_pend;
-}
-
-int UpdateSystem_INTC(void)
-{
-	if (UpdateSystem())
-		return UpdateINTC();
-	else
-		return 0;
-}
-
-void Sh4_int_Stop(void)
-{
-	if (sh4_int_bCpuRun)
-		sh4_int_bCpuRun=false;
-}
-
-void Sh4_int_Start(void)
-{
-	if (!sh4_int_bCpuRun)
-		sh4_int_bCpuRun=true;
-}
-
-void Sh4_int_Run(void)
+void Sh4_int_Run()
 {
 	sh4_int_bCpuRun=true;
 
@@ -103,12 +58,24 @@ void Sh4_int_Run(void)
    sh4_int_bCpuRun=false;
 }
 
+void Sh4_int_Stop()
+{
+	if (sh4_int_bCpuRun)
+		sh4_int_bCpuRun=false;
+}
 
-void Sh4_int_Step(void)
+void Sh4_int_Start()
+{
+	if (!sh4_int_bCpuRun)
+		sh4_int_bCpuRun=true;
+}
+
+
+void Sh4_int_Step()
 {
 	if (sh4_int_bCpuRun)
 	{
-		printf("Sh4 Is running , can't step\n");
+		WARN_LOG(INTERPRETER, "Sh4 Is running , can't step");
 	}
 	else
 	{
@@ -118,7 +85,7 @@ void Sh4_int_Step(void)
 	}
 }
 
-void Sh4_int_Skip(void)
+void Sh4_int_Skip()
 {
 	if (!sh4_int_bCpuRun)
 		next_pc+=2;
@@ -146,16 +113,16 @@ void Sh4_int_Reset(bool Manual)
    UpdateFPSCR();
 
    //Any more registers have default value ?
-   printf("Sh4 Reset\n");
+   INFO_LOG(INTERPRETER, "Sh4 Reset");
 }
 
-bool Sh4_int_IsCpuRunning(void)
+bool Sh4_int_IsCpuRunning()
 {
 	return sh4_int_bCpuRun;
 }
 
 //TODO : Check for valid delayslot instruction
-void ExecuteDelayslot(void)
+void ExecuteDelayslot()
 {
 #if !defined(NO_MMU)
    try {
@@ -176,7 +143,7 @@ void ExecuteDelayslot(void)
 #endif
 }
 
-void ExecuteDelayslot_RTE(void)
+void ExecuteDelayslot_RTE()
 {
 #if !defined(NO_MMU)
    try {
@@ -185,7 +152,7 @@ void ExecuteDelayslot_RTE(void)
 #if !defined(NO_MMU)
    }
    catch (SH4ThrownException& ex) {
-      printf("Exception in RTE delay slot\n");
+      ERROR_LOG(INTERPRETER, "Exception in RTE delay slot");
    }
 #endif
 }
@@ -218,13 +185,33 @@ static int DreamcastSecond(int tag, int c, int j)
 	bm_Periodical_1s();
 #endif
 
-	//printf("%d ticks\n",sh4_sched_intr);
 	sh4_sched_intr=0;
 	return SH4_MAIN_CLOCK;
 }
 
+// every SH4_TIMESLICE Cycles (fixed)
+int UpdateSystem()
+{
+	//this is an optimisation (mostly for ARM)
+	//makes scheduling easier !
+	//update_fp* tmu=pUpdateTMU;
+	
+	Sh4cntx.sh4_sched_next -= SH4_TIMESLICE;
+	if (Sh4cntx.sh4_sched_next<0)
+		sh4_sched_tick(SH4_TIMESLICE);
 
-static void sh4_int_resetcache(void)
+	return Sh4cntx.interrupt_pend;
+}
+
+int UpdateSystem_INTC()
+{
+	if (UpdateSystem())
+		return UpdateINTC();
+	else
+		return 0;
+}
+
+static void sh4_int_resetcache()
 {
 }
 
@@ -259,8 +246,8 @@ void Sh4_int_Init()
 	memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 }
 
-void Sh4_int_Term(void)
+void Sh4_int_Term()
 {
 	Sh4_int_Stop();
-	printf("Sh4 Term\n");
+	INFO_LOG(INTERPRETER, "Sh4 Term");
 }

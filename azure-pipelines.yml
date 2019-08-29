@@ -26,6 +26,7 @@ stages:
         inputs:
           actions: 'build'
           configuration: 'Release'
+          sdk: 'macosx10.14'
           xcWorkspacePath: 'reicast/apple/emulator-osx'
           scheme: 'macOSApp'
           packageApp: false

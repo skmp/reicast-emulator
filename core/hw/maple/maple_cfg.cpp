@@ -250,7 +250,13 @@ void mcfg_CreateDevices()
 			mcfg_Create(MDT_AsciiStick, bus, 5);
 			mcfg_Create(MDT_SegaVMU, bus, 0);
 			break;
-		
+
+		case MDT_None:
+			break;
+
+		default:
+			WARN_LOG(MAPLE, "Invalid device type %d for port %d", maple_devices[bus], bus);
+			break;
 		 }
 	  }
    }

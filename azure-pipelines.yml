@@ -23,12 +23,9 @@ stages:
 
     steps:
       - task: Xcode@5
-        displayName: 'Use Xcode'
         inputs:
           actions: 'build'
+          configuration: 'Release'
+          xcWorkspacePath: 'reicast/apple/emulator-osx'
           packageApp: false
           destinationPlatformOption: 'macOS'
-          workingDirectory: 'reicast/apple/emulator-osx'
-          
-      - script: "cd reicast/apple/emulator-osx && xcodebuild -configuration Release"
-        displayName: 'Build it'

@@ -30,4 +30,3 @@ stages:
           xcWorkspacePath: '**/*reicast-osx.xcodeproj/project.xcworkspace'
           scheme: 'macOSApp'
           destinationPlatformOption: 'macOS'
-          workingDirectory: 'reicast/apple/emulator-osx'

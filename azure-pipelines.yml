@@ -13,8 +13,6 @@ stages:
 
       - script: "cd reicast/linux && make"
         displayName: 'Build it'
-
-stages:
 - stage: "Mac"
   jobs:
   - job: "Build"

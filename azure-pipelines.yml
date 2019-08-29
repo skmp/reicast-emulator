@@ -14,6 +14,7 @@ stages:
       - script: "cd reicast/linux && make"
         displayName: 'Build it'
 - stage: "Mac"
+  dependsOn: []
   jobs:
   - job: "Build"
     pool:

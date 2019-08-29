@@ -36,6 +36,7 @@ public:
 	void Compile(struct dsp_t *DSP)
 	{
 		this->DSP = DSP;
+		DEBUG_LOG(AICA_ARM, "DSPAssembler::DSPCompile recompiling for arm64 at %p", GetBuffer()->GetStartAddress<void*>());
 
 		if (DSP->Stopped)
 		{
@@ -465,7 +466,7 @@ private:
 		Instruction* instr;
 		for (instr = instr_start; instr < instr_end; instr += kInstructionSize) {
 			decoder.Decode(instr);
-			printf("\t %p:\t%s\n",
+			DEBUG_LOG(AICA_ARM, "    %p:\t%s",
 					   reinterpret_cast<void*>(instr),
 					   disasm.GetOutput());
 		}

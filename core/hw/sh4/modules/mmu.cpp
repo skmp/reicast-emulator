@@ -749,7 +749,7 @@ bool mmu_TranslateSQW(u32 adr, u32* out)
 	{
 		u32 addr;
 		u32 tv = mmu_full_SQ<MMU_TT_DREAD>(adr, addr);
-		if (tv != 0)
+		if (tv != MMU_ERROR_NONE)
 		{
 			mmu_raise_exception(tv, adr, MMU_TT_DREAD);
 			return false;

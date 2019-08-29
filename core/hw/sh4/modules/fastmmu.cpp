@@ -299,10 +299,6 @@ u32 mmu_data_translation(u32 va, u32& rv)
 	{
 		if ((va & 0xFC000000) == 0xE0000000)
 		{
-			u32 lookup = mmu_full_SQ<translation_type>(va, rv);
-			if (lookup != MMU_ERROR_NONE)
-				return lookup;
-
 			rv = va;	//SQ writes are not translated, only write backs are.
 			return MMU_ERROR_NONE;
 		}

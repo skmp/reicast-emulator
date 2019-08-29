@@ -154,6 +154,8 @@ void bsc_reset()
 	BSC_PCTRB.full=0x0;
 	//BSC_PDTRB.full; undef
 	BSC_GPIOIC.full=0x0;
+
+	BSC_RFCR.full = 17;
 }
 void bsc_term()
 {

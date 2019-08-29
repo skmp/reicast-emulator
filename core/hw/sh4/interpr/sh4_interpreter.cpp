@@ -124,8 +124,6 @@ void Sh4_int_Skip(void)
 		next_pc+=2;
 }
 
-extern u8 *vmem32_base;
-
 void Sh4_int_Reset(bool Manual)
 {
    if (sh4_int_bCpuRun)

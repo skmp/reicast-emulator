@@ -708,20 +708,8 @@ extern char block_hash[1024];
 //extern u32 PAGE_STATE[(32*1024*1024)/*RAM_SIZE*//32];
 //never read
 //extern u32 total_saved;
-//counter with no real controlling logic behind it
-//extern u32 rebuild_counter;
 //just printf output
 //extern bool print_stats;
-
-
-
-
-//./core/hw/sh4/dyna/shil.o
-extern u32 RegisterWrite[sh4_reg_count];
-extern u32 RegisterRead[sh4_reg_count];
-extern u32 fallback_blocks;
-extern u32 total_blocks;
-extern u32 REMOVED_OPS;
 
 
 
@@ -1188,11 +1176,15 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_SA(block_hash,1024);
 #endif
 
-	LIBRETRO_SA(RegisterWrite,sh4_reg_count);
-	LIBRETRO_SA(RegisterRead,sh4_reg_count);
-	LIBRETRO_S(fallback_blocks);
-	LIBRETRO_S(total_blocks);
-	LIBRETRO_S(REMOVED_OPS);
+	// RegisterWrite, RegisterRead
+	for (int i = 0; i < sh4_reg_count; i++)
+	{
+		LIBRETRO_S(i);
+		LIBRETRO_S(i);
+	}
+	LIBRETRO_S(i); // fallback_blocks
+	LIBRETRO_S(i); // total_blocks
+	LIBRETRO_S(i);	// REMOVED_OPS
 
 
 	LIBRETRO_S(settings.dreamcast.broadcast);
@@ -1686,11 +1678,15 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_USA(block_hash,1024);
 #endif
 
-	LIBRETRO_USA(RegisterWrite,sh4_reg_count);
-	LIBRETRO_USA(RegisterRead,sh4_reg_count);
-	LIBRETRO_US(fallback_blocks);
-	LIBRETRO_US(total_blocks);
-	LIBRETRO_US(REMOVED_OPS);
+	// RegisterRead, RegisterWrite
+	for (int i = 0; i < sh4_reg_count; i++)
+	{
+		LIBRETRO_US(dummy_int);
+		LIBRETRO_US(dummy_int);
+	}
+	LIBRETRO_US(dummy_int); // fallback_blocks
+	LIBRETRO_US(dummy_int); // total_blocks
+	LIBRETRO_US(dummy_int); // REMOVED_OPS
 
 	if (version < V5)
 	{

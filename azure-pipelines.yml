@@ -13,6 +13,7 @@ stages:
 
       - script: "cd reicast/linux && make"
         displayName: 'Build it'
+
 - stage: "Mac"
   dependsOn: []
   jobs:
@@ -20,5 +21,5 @@ stages:
     pool:
       vmImage: 'macos-latest'
     steps:
-      - script: "cd shell/apple/emulator-osx && xcodebuild -configuration Release"
+      - script: "cd reicast/apple/emulator-osx && xcodebuild -configuration Release"
         displayName: 'Build it'

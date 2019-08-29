@@ -27,5 +27,7 @@ stages:
           actions: 'build'
           configuration: 'Release'
           xcWorkspacePath: 'reicast/apple/emulator-osx'
+          scheme: 'macOSApp'
           packageApp: false
           destinationPlatformOption: 'macOS'
+          workingDirectory: 'reicast/apple/emulator-osx'

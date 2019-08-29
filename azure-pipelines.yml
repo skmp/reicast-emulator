@@ -22,12 +22,4 @@ stages:
       vmImage: 'macos-latest'
 
     steps:
-      - task: Xcode@5
-        inputs:
-          actions: 'build'
-          configuration: 'Release'
-          sdk: 'macosx10.14'
-          xcWorkspacePath: false
-          scheme: false
-          destinationPlatformOption: false
-          workingDirectory: 'reicast/apple/emulator-osx'
+    - script: "cd reicast/apple/emulator-osx && xcodebuild -configuration Release"

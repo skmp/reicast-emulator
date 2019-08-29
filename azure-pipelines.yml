@@ -1,17 +1,25 @@
 trigger:
-- master
+- alpha
 
-strategy:
-  matrix:
-    Ubuntu:
-      imageName: 'ubuntu-latest'
+stages:
+- stage: "Linux"
+  jobs:
+  - job: "Build"
+    pool:
+      vmImage: 'ubuntu-16.04'
+    steps:
+      - script: "sudo apt-get -y install libudev-dev build-essential libasound2 libegl1-mesa-dev libgles2-mesa-dev libasound2-dev mesa-common-dev libgl1-mesa-dev"
+        displayName: 'Install dependencies'
 
-pool:
-  vmImage: $(imageName)
+      - script: "cd reicast/linux && make"
+        displayName: 'Build it'
 
-steps:
-  - script: "sudo apt-get -y install build-essential libasound2 libegl1-mesa-dev libgles2-mesa-dev libasound2-dev mesa-common-dev libgl1-mesa-dev"
-    displayName: 'Install dependencies'
-
-  - script: "cd reicast/linux && make"
-    displayName: 'Build it'
+stages:
+- stage: "Mac"
+  jobs:
+  - job: "Build"
+    pool:
+      vmImage: 'macos-latest'
+    steps:
+      - script: "cd shell/apple/emulator-osx && xcodebuild -configuration Release"
+        displayName: 'Build it'

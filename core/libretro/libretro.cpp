@@ -1888,11 +1888,14 @@ bool retro_unserialize(const void * data, size_t size)
 #if FEAT_AREC == DYNAREC_JIT
     FlushCache();
 #endif
+#ifndef NO_MMU
+    mmu_flush_table();
+#endif
+    bm_Reset();
 
     result = dc_unserialize(&data_ptr, &total_size, size) ;
 
     mmu_set_state();
-    bm_Reset();
     sh4_cpu.ResetCache();
     dsp.dyndirty = true;
     sh4_sched_ffts();

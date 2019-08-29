@@ -118,7 +118,7 @@ static bool nvmem_load(const string& root,
         		syscfg.lang = settings.dreamcast.language;
 
         	if (sys_nvmem_flash.WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
-        		printf("Failed to save time and language to flash RAM\n");
+        		WARN_LOG(FLASHROM, "Failed to save time and language to flash RAM");
 
         	return true;
       }
@@ -190,7 +190,7 @@ u8 *get_nvmem_data(void)
 
 bool LoadHle(const string& root) {
 	if (!nvmem_load(root, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram")) {
-		printf("No nvmem loaded\n");
+		WARN_LOG(FLASHROM, "No nvmem loaded\n");
 	}
 
    return reios_init(sys_rom.data, &sys_nvmem_flash);
@@ -251,14 +251,12 @@ void WriteBios(u32 addr,u32 data,u32 sz)
       case DC_PLATFORM_DEV_UNIT:
       case DC_PLATFORM_NAOMI:
       case DC_PLATFORM_NAOMI2:
-#ifndef NDEBUG
-         EMUERROR4("Write to [Boot ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz);
-#endif
+         INFO_LOG(MEMORY, "Write to [Boot ROM] is not possible, addr=%x, data=%x, size=%d", addr, data, sz);
          break;
       case DC_PLATFORM_ATOMISWAVE:
     	 if (sz != 1)
     	 {
- 			EMUERROR("Invalid access size @%5x data %x sz %d\n", addr, data, sz);
+ 			INFO_LOG(MEMORY, "Invalid access size @%08x data %x sz %d", addr, data, sz);
  			return;
     	 }
     	 sys_nvmem_flash.Write(addr, data, sz);
@@ -310,9 +308,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 	{
 		if ( /*&& (addr>= 0x00400000)*/ (addr<= 0x005F67FF)) // :Unassigned
 		{
-#ifndef NDEBUG
-			EMUERROR2("Read from area0_32 not implemented [Unassigned], addr=%x",addr);
-#endif
+			INFO_LOG(MEMORY, "Read from area0_32 not implemented [Unassigned], addr=%x", addr);
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{

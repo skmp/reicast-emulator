@@ -503,7 +503,7 @@ struct ChannelEx
 	{
 		if (AEG.state!=EG_Release)
 		{
-			key_printf("[%p] KEY_OFF -> Release\n", this);
+			key_printf("[%p] KEY_OFF -> Release", this);
 			SetAegState(EG_Release);
 			//switch to release state
 		}
@@ -864,7 +864,7 @@ void StreamStep(ChannelEx* ch)
 			if ((ch->AEG.state==EG_Attack) && (CA>=ch->loop.LSA))
 			{
 				
-				step_printf("[%p]LPSLNK : Switching to EG_Decay1 %X\n", ch, ch->AEG.GetValue());
+				step_printf("[%p]LPSLNK : Switching to EG_Decay1 %X", ch, ch->AEG.GetValue());
 				ch->SetAegState(EG_Decay1);
 			}
 		}
@@ -965,7 +965,7 @@ void AegStep(ChannelEx* ch)
 				ch->AEG.SetValue(0);
 				if (!ch->ccd->LPSLNK)
 				{
-					aeg_printf("[%p]AEG_step : Switching to EG_Decay1 %d\n", ch, ch->AEG.GetValue());
+					aeg_printf("[%p]AEG_step : Switching to EG_Decay1 %d", ch, ch->AEG.GetValue());
 					ch->SetAegState(EG_Decay1);
 				}
 			}
@@ -977,7 +977,7 @@ void AegStep(ChannelEx* ch)
 			ch->AEG.val+=ch->AEG.Decay1Rate;
 			if (((u32)ch->AEG.GetValue())>=ch->AEG.Decay2Value)
 			{
-				aeg_printf("[%p]AEG_step : Switching to EG_Decay2 @ %x\n", ch, ch->AEG.GetValue());
+				aeg_printf("[%p]AEG_step : Switching to EG_Decay2 @ %x", ch, ch->AEG.GetValue());
 				ch->SetAegState(EG_Decay2);
 			}
 		}
@@ -988,7 +988,7 @@ void AegStep(ChannelEx* ch)
 			ch->AEG.val+=ch->AEG.Decay2Rate;
 			if (ch->AEG.GetValue()>=0x3FF)
 			{
-				aeg_printf("[%p]AEG_step : Switching to EG_Release @ %x\n", ch, ch->AEG.GetValue());
+				aeg_printf("[%p]AEG_step : Switching to EG_Release @ %x", ch, ch->AEG.GetValue());
 				ch->AEG.SetValue(0x3FF);
 				ch->SetAegState(EG_Release);
 			}
@@ -1000,7 +1000,7 @@ void AegStep(ChannelEx* ch)
 			
 			if (ch->AEG.GetValue()>=0x3FF)
 			{
-				aeg_printf("[%p]AEG_step : EG_Release End @ %x\n", ch, ch->AEG.GetValue());
+				aeg_printf("[%p]AEG_step : EG_Release End @ %x", ch, ch->AEG.GetValue());
 				ch->AEG.SetValue(0x3FF); // TODO: mnn, should we do anything about it running wild ?
 				ch->disable(); // TODO: Is this ok here? It's a speed optimisation (since the channel is muted)
 			}

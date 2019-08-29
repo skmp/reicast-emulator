@@ -28,11 +28,11 @@ ifeq ($(HAVE_CLANG),1)
 	CC       = ${CC_PREFIX}clang
 	SHARED   := -fuse-ld=lld
 else
-	CXX      = ${CC_PREFIX}g++
-	CC       = ${CC_PREFIX}gcc
+	CXX      ?= ${CC_PREFIX}g++
+	CC       ?= ${CC_PREFIX}gcc
 	SHARED   :=
 endif
-CC_AS    = ${CC_PREFIX}as
+CC_AS    ?= ${CC_PREFIX}as
 
 MFLAGS   := 
 ASFLAGS  := 
@@ -679,6 +679,7 @@ else ifeq ($(platform), qnx)
 	THREADED_RENDERING_DEFAULT = 1
 	CPUFLAGS += -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp -D__arm__ -DARM_ASM -D__NEON_OPT
 	CFLAGS += -D__QNX__
+	THREADED_RENDERING_DEFAULT = 1
 
 	PLATFORM_EXT := unix
 
@@ -692,6 +693,7 @@ else ifneq (,$(findstring armv,$(platform)))
 	WITH_DYNAREC=arm
 	HAVE_GENERIC_JIT = 0
 	PLATCFLAGS += -DARM
+	THREADED_RENDERING_DEFAULT = 1
 	ifneq (,$(findstring gles,$(platform)))
 		FORCE_GLES = 1
 	endif
@@ -744,10 +746,11 @@ else
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	LDFLAGS += -shared -static-libgcc -static-libstdc++ -Wl,--version-script=link.T -lwinmm -lgdi32
 	GL_LIB := -lopengl32
+	LIBS := -lws2_32
 	PLATFORM_EXT := win32
 	SINGLE_PREC_FLAGS=1
-	CC = gcc
-	CXX = g++
+	CC ?= gcc
+	CXX ?= g++
 ifeq ($(WITH_DYNAREC), x86)
 	LDFLAGS += -m32
 	CFLAGS += -m32

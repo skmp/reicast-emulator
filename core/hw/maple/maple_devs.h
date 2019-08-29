@@ -1,6 +1,7 @@
 #pragma once
 #include "types.h"
 
+// WARNING: changing the order of this enum or inserting new values will break savestates compatibility
 enum MapleDeviceType
 {
    MDT_SegaController,
@@ -17,6 +18,10 @@ enum MapleDeviceType
    MDT_NaomiJamma,
 
    MDT_None,
+
+   //
+   // Add new device types before this comment
+   //
    MDT_Count,
 };
 

@@ -2099,7 +2099,7 @@ void FlushCache()
 
 #if HOST_CPU==CPU_X86 && HOST_OS == OS_WINDOWS
 
-#include <Windows.h>
+#include <windows.h>
 
 // These have to be declared somewhere or linker dies
 u8* ARM::emit_opt=0;

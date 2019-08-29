@@ -197,7 +197,7 @@ struct rei_host_context_t
 #elif HOST_CPU == CPU_ARM
 	u32 r[15];
 #elif HOST_CPU == CPU_ARM64
-	u64 x27;
+	u64 x2;
 #endif
 };
 
@@ -231,7 +231,7 @@ static void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, boo
 #endif
 #elif HOST_CPU == CPU_ARM64
 	bicopy(reictx->pc, MCTX(.pc), to_segfault);
-	bicopy(reictx->x27, MCTX(.regs[27]), to_segfault);
+	bicopy(reictx->x2, MCTX(.regs[2]), to_segfault);
 #elif HOST_CPU == CPU_X86
 #ifdef __linux__
    bicopy(reictx->pc, MCTX(.gregs[REG_EIP]), to_segfault);
@@ -324,7 +324,7 @@ printf("mprot hit @ ptr %p @@ pc: %p, %d\n", si->si_addr, ctx.pc, dyna_cde);
 #if HOST_CPU == CPU_ARM64
 	u32 op = *(u32*)ctx.pc;
 	bool write = (op & 0x00400000) == 0;
-	u32 exception_pc = ctx.x27;
+	u32 exception_pc = ctx.x2;
 #elif HOST_CPU == CPU_X64
 	bool write = false;	// TODO?
 	u32 exception_pc = 0;
@@ -374,7 +374,7 @@ printf("mprot hit @ ptr %p @@ pc: %p, %d\n", si->si_addr, ctx.pc, dyna_cde);
 #endif
    else
    {
-      printf("SIGSEGV @ %p ... %p -> was not in vram (dyna code %d)\n", ctx.pc, si->si_addr, dyna_cde);
+      printf("SIGSEGV @ %zx ... %p -> was not in vram (dyna code %d)\n", ctx.pc, si->si_addr, dyna_cde);
       die("segfault");
       signal(SIGSEGV, SIG_DFL);
    }
@@ -673,7 +673,7 @@ void common_libretro_setup(void)
 #endif
 
 #if defined(__MACH__) || defined(__linux__)
-   printf("Linux paging: %08X %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
+   printf("Linux paging: %08lX %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
    verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
 #endif
 }

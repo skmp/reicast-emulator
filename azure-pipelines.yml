@@ -22,8 +22,7 @@ stages:
       vmImage: 'macos-latest'
 
     steps:
-    - script: "sudo xcode-select -s /Applications/Xcode_10.3.app/Contents/Developer"
-      displayName: "Select xcode"
-
-    - script: "cd reicast/apple/emulator-osx && xcodebuild -configuration Release"
-      displayName: "Build"
+    - script: |
+        sudo xcode-select -s /Applications/Xcode_10.3.app/Contents/Developer
+        cd reicast/apple/emulator-osx && xcodebuild -configuration Release
+      displayName: "Select xcode and Build"

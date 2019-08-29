@@ -24,7 +24,7 @@
 #include "_vmem.h"
 
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #else
 #include <sys/mman.h>
 #include <sys/stat.h>        /* For mode constants */

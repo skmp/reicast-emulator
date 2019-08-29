@@ -27,6 +27,7 @@ stages:
           actions: 'build'
           configuration: 'Release'
           sdk: 'macosx10.14'
-          xcWorkspacePath: '**/*reicast-osx.xcodeproj/project.xcworkspace'
-          scheme: 'macOSApp'
-          destinationPlatformOption: 'macOS'
+          xcWorkspacePath: false
+          scheme: false
+          destinationPlatformOption: false
+          workingDirectory: 'reicast/apple/emulator-osx'

@@ -490,7 +490,7 @@ static void GD_HLE_Command(u32 cc)
 		break;
 
 	default:
-		printf("GDROM: Unknown GDROM CC:%X", cc);
+		WARN_LOG(REIOS, "GDROM: Unknown GDROM CC:%X", cc);
 		break;
 	}
 	if (gd_hle_state.status == BIOS_ACTIVE)

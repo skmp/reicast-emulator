@@ -25,6 +25,7 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/naomi/naomi_cart.h"
+#include "hw/naomi/naomi.h"
 
 #define LIBRETRO_SKIP(size) do { *(u8**)data += (size); *total_size += (size); } while (false)
 
@@ -607,7 +608,6 @@ extern unsigned VRAM_MASK;
 
 //./core/hw/naomi/naomi.o
 extern u32 naomi_updates;
-extern u32 BoardID;
 extern u32 GSerialBuffer;
 extern u32 BSerialBuffer;
 extern int GBufPos;
@@ -626,11 +626,7 @@ extern int SerStep;
 extern int SerStep2;
 extern unsigned char BSerial[];
 extern unsigned char GSerial[];
-extern u32 reg_dimm_3c;	//IO window ! writen, 0x1E03 some flag ?
-extern u32 reg_dimm_40;	//parameters
-extern u32 reg_dimm_44;	//parameters
-extern u32 reg_dimm_48;	//parameters
-extern u32 reg_dimm_4c;	//status/control reg ?
+
 extern bool NaomiDataRead;
 extern u32 NAOMI_ROM_OFFSETH;
 extern u32 NAOMI_ROM_OFFSETL;
@@ -1133,7 +1129,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 
 	LIBRETRO_S(naomi_updates);
-	LIBRETRO_S(BoardID);
+	LIBRETRO_S(i); // BoardID
 	LIBRETRO_S(GSerialBuffer);
 	LIBRETRO_S(BSerialBuffer);
 	LIBRETRO_S(GBufPos);
@@ -1152,11 +1148,11 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(SerStep2);
 	LIBRETRO_SA(BSerial,69);
 	LIBRETRO_SA(GSerial,69);
-	LIBRETRO_S(reg_dimm_3c);
-	LIBRETRO_S(reg_dimm_40);
-	LIBRETRO_S(reg_dimm_44);
-	LIBRETRO_S(reg_dimm_48);
-	LIBRETRO_S(reg_dimm_4c);
+	LIBRETRO_S(reg_dimm_command);
+	LIBRETRO_S(reg_dimm_offsetl);
+	LIBRETRO_S(reg_dimm_parameterl);
+	LIBRETRO_S(reg_dimm_parameterh);
+	LIBRETRO_S(reg_dimm_status);
 	LIBRETRO_S(NaomiDataRead);
 
 	LIBRETRO_S(cycle_counter);
@@ -1621,7 +1617,7 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	   LIBRETRO_US(dummy_int);			// DmaOffset
 	   LIBRETRO_US(dummy_int);			// DmaCount
 	}
-	LIBRETRO_US(BoardID);
+	LIBRETRO_US(dummy_int);		// BoardID
 	LIBRETRO_US(GSerialBuffer);
 	LIBRETRO_US(BSerialBuffer);
 	LIBRETRO_US(GBufPos);
@@ -1640,11 +1636,11 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(SerStep2);
 	LIBRETRO_USA(BSerial,69);
 	LIBRETRO_USA(GSerial,69);
-	LIBRETRO_US(reg_dimm_3c);
-	LIBRETRO_US(reg_dimm_40);
-	LIBRETRO_US(reg_dimm_44);
-	LIBRETRO_US(reg_dimm_48);
-	LIBRETRO_US(reg_dimm_4c);
+	LIBRETRO_US(reg_dimm_command);
+	LIBRETRO_US(reg_dimm_offsetl);
+	LIBRETRO_US(reg_dimm_parameterl);
+	LIBRETRO_US(reg_dimm_parameterh);
+	LIBRETRO_US(reg_dimm_status);
 	LIBRETRO_US(NaomiDataRead);
 	if (version < V4)
 	{

@@ -185,11 +185,11 @@ u32 AWCartridge::ReadMem(u32 address, u32 size) {
 			if (roffset >= (mpr_offset / 2))
 				roffset += mpr_bank * 0x4000000;
 			u16 retval = (RomSize > (roffset * 2)) ? ((u16 *)RomPtr)[roffset] : 0; // not endian-safe?
-			//printf("AWCART ReadMem %08x: %x\n", address, retval);
+			DEBUG_LOG(NAOMI, "AWCART ReadMem %08x: %x", address, retval);
 			return retval;
 		}
 	default:
-		EMUERROR("%X, %d", address, size);
+		INFO_LOG(NAOMI, "Unhandled awcart read %X, %d", address, size);
 		return 0xffff;
 	}
 }
@@ -230,12 +230,13 @@ void AWCartridge::WriteMem(u32 address, u32 data, u32 size)
 
 	case AW_PIO_DATA_addr:
 		// write to ROM board address space, including FlashROM programming using CFI (TODO)
+		DEBUG_LOG(NAOMI, "Write to AW_PIO_DATA: %x", data);
 		if (epr_offset == 0x7fffff)
 			mpr_bank = data & 3;
 		break;
 
 	default:
-		EMUERROR("%X: %d sz %d", address, data, size);
+		INFO_LOG(NAOMI, "Unhandled awcart write %X: %d sz %d", address, data, size);
 		break;
 	}
 }
@@ -331,7 +332,7 @@ u16 AWCartridge::decrypt(u16 cipherText, u32 address, const u32 key)
 void AWCartridge::Init()
 {
 	mpr_offset = decrypt16(0x58/2) | (decrypt16(0x5a/2) << 16);
-	printf("AWCartridge::SetKey rombd_key %08x mpr_offset %08x\n", rombd_key, mpr_offset);
+	INFO_LOG(NAOMI, "AWCartridge::SetKey rombd_key %08x mpr_offset %08x", rombd_key, mpr_offset);
 	device_reset();
 }
 

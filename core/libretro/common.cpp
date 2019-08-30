@@ -152,7 +152,7 @@ seh_callback(
    Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
    Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE + TEMP_CODE_SIZE;
    Table[0].UnwindData = (ULONG)((u8 *)unwind_info - CodeCache);
-   printf("TABLE CALLBACK\n");
+   DEBUG_LOG(COMMON, "TABLE CALLBACK");
    return Table;
 }
 

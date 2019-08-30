@@ -68,7 +68,7 @@ struct PvrTexInfo
 PvrTexInfo format[8]=
 {
    // name     bpp GL format                  Planar      Twiddled    VQ				Planar(32b)    Twiddled(32b)  VQ (32b)
-    {"1555",    16, GL_UNSIGNED_SHORT_5_5_5_1, tex1555_PL, tex1555_TW, tex1555_VQ,	tex1555_PL32,  tex1555_TW32,  tex1555_VQ32 }, //1555
+   {"1555",    16, GL_UNSIGNED_SHORT_5_5_5_1, tex1555_PL, tex1555_TW, tex1555_VQ,	tex1555_PL32,  tex1555_TW32,  tex1555_VQ32 }, //1555
 	{"565",     16, GL_UNSIGNED_SHORT_5_6_5,   tex565_PL,  tex565_TW,  tex565_VQ, 	tex565_PL32,   tex565_TW32,   tex565_VQ32 },  //565
 	{"4444", 	16, GL_UNSIGNED_SHORT_4_4_4_4, tex4444_PL, tex4444_TW, tex4444_VQ, 	tex4444_PL32,  tex4444_TW32,  tex4444_VQ32 }, //4444
 	{"yuv",     16, GL_UNSIGNED_INT_8_8_8_8,   NULL,       NULL,       NULL,         texYUV422_PL,  texYUV422_TW,  texYUV422_VQ }, //yuv
@@ -148,7 +148,7 @@ void TextureCacheData::Create(bool isGL)
 		 //verify(tcw.VQ_Comp==0);
 #ifndef NDEBUG
 		 if (tcw.VQ_Comp != 0)
-			printf("Warning: planar texture with VQ set (invalid)\n");
+			 WARN_LOG(RENDERER, "Warning: planar texture with VQ set (invalid)");
 #endif
 
 		 /* Planar textures support stride selection,
@@ -188,7 +188,7 @@ void TextureCacheData::Create(bool isGL)
 	  }
 	  break;
    default:
-	  printf("Unhandled texture %d\n",tcw.PixelFmt);
+   	WARN_LOG(RENDERER, "Unhandled texture format %d", tcw.PixelFmt);
 	  size=w*h*2;
 	  texconv = NULL;
 	  texconv32 = NULL;
@@ -251,7 +251,7 @@ void TextureCacheData::Update(void)
 	  }
 	  else
 	  {
-		 printf("Warning: invalid texture. Address %08X %08X size %d\n", sa_tex, sa, size);
+		  WARN_LOG(RENDERER, "Warning: invalid texture. Address %08X %08X size %d", sa_tex, sa, size);
 		 return;
 	  }
    }
@@ -325,7 +325,7 @@ void TextureCacheData::Update(void)
    else
    {
 	  /* fill it in with a temporary color. */
-	  printf("UNHANDLED TEXTURE\n");
+     WARN_LOG(RENDERER, "UNHANDLED TEXTURE");
 	  pb16.init(w, h);
 	  memset(pb16.data(), 0x80, w * h * 2);
 	  temp_tex_buffer = pb16.data();
@@ -806,6 +806,7 @@ void killtex(void)
 		i->second.Delete();
 
 	TexCache.clear();
+	INFO_LOG(RENDERER, "Texture cache cleared");
 }
 
 void rend_text_invl(vram_block* bl)

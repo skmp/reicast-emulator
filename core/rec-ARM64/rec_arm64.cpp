@@ -134,7 +134,7 @@ void ngen_mainloop(void* v_cntx)
 
 void ngen_init_arm64()
 {
-	printf("Initializing the ARM64 dynarec\n");
+	INFO_LOG(DYNAREC, "Initializing the ARM64 dynarec");
 	ngen_FailedToFindBlock = &ngen_FailedToFindBlock_nommu;
 }
 
@@ -1347,6 +1347,7 @@ public:
 #if 0
 		if (rewrite && block != NULL)
 		{
+			INFO_LOG(DYNAREC, "BLOCK %08x", block->vaddr);
 			Instruction* instr_start = (Instruction*)block->code;
 //			Instruction* instr_end = GetLabelAddress<Instruction*>(&code_end);
 			Instruction* instr_end = (Instruction*)((u8 *)block->code + block->host_code_size);
@@ -1356,7 +1357,7 @@ public:
 			Instruction* instr;
 			for (instr = instr_start; instr < instr_end; instr += kInstructionSize) {
 				decoder.Decode(instr);
-				printf("VIXL\t %p:\t%s\n",
+				INFO_LOG(DYNAREC, "VIXL  %p:  %s",
 						   reinterpret_cast<void*>(instr),
 						   disasm.GetOutput());
 			}

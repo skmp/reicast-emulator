@@ -24,7 +24,7 @@
 
 #include <map>
 
-#define debugf(...) //printf(__VA_ARGS__)
+#define debugf(...) DEBUG_LOG(REIOS, __VA_ARGS__)
 
 #define dc_bios_syscall_system				0x8C0000B0
 #define dc_bios_syscall_font				0x8C0000B4
@@ -60,6 +60,14 @@ static void reios_pre_init()
 	}
 }
 
+static u32 decode_iso733(iso733_t v)
+{
+	return ((v >> 56) & 0x000000FF)
+			| ((v >> 40) & 0x0000FF00)
+			| ((v >> 24) & 0x00FF0000)
+			| ((v >> 8) & 0xFF000000);
+}
+
 static bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN")
 {
 	reios_pre_init();
@@ -75,13 +83,13 @@ static bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN")
 
 	if (pvd->type == 1 && !memcmp(pvd->id, ISO_STANDARD_ID, strlen(ISO_STANDARD_ID)) && pvd->version == 1)
 	{
-		debugf("iso9660 PVD found\n");
-		u32 lba = pvd->root_directory_record.extent & 0xffffffff;
-		u32 len = pvd->root_directory_record.size & 0xffffffff;
+		INFO_LOG(REIOS, "iso9660 PVD found");
+		u32 lba = decode_iso733(pvd->root_directory_record.extent);
+		u32 len = decode_iso733(pvd->root_directory_record.size);
 
 		data_len = ((len + 2047) / 2048) * 2048;
 
-		debugf("iso9660 root_directory, FAD: %d, len: %d\n", 150 + lba, data_len);
+		INFO_LOG(REIOS, "iso9660 root_directory, FAD: %d, len: %d", 150 + lba, data_len);
 		libGDR_ReadSector(temp, 150 + lba, data_len / 2048, 2048);
 	}
 	else {
@@ -99,10 +107,10 @@ static bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN")
 
 		if ((dir->file_flags & ISO_DIRECTORY) == 0 && memcmp(dir->filename.str + 1, bootfile, bootfile_len) == 0)
 		{
-			debugf("Found %.*s at offset %X\n", bootfile_len, bootfile, i);
+			INFO_LOG(REIOS, "Found %.*s at offset %X", bootfile_len, bootfile, i);
 
-			u32 lba = dir->extent & 0xffffffff;
-			u32 len = dir->size & 0xffffffff;
+			u32 lba = decode_iso733(dir->extent);
+			u32 len = decode_iso733(dir->size);
 
 			if (!memcmp(bootfile, "0WINCEOS.BIN", 12))
 			{
@@ -110,8 +118,8 @@ static bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN")
 				len -= 2048;
 			}
 
-			debugf("file LBA: %d\n", lba);
-			debugf("file LEN: %d\n", len);
+			INFO_LOG(REIOS, "file LBA: %d", lba);
+			INFO_LOG(REIOS, "file LEN: %d", len);
 
 			if (descrambl)
 				descrambl_file(lba + 150, len, GetMemPtr(0x8c010000, 0));
@@ -177,6 +185,10 @@ char* reios_disk_id() {
 	memcpy(&reios_software_company[0], &buf[112],   16 * sizeof(char));
 	memcpy(&reios_software_name[0], &buf[128],   128 * sizeof(char));
 	reios_windows_ce = memcmp("0WINCEOS.BIN", &reios_boot_filename[0], 12) == 0;
+	INFO_LOG(REIOS, "hardware %.16s maker %.16s device %.16s area %.8s periph %.8s product %.10s version %.6s date %.16s boot %.16s softco %.16s name %.128s",
+			reios_hardware_id, reios_maker_id, reios_device_info, reios_area_symbols,
+			reios_peripherals, reios_product_number, reios_product_version,
+			reios_releasedate, reios_boot_filename, reios_software_company, reios_software_name);
 
 	return reios_product_number;
 }
@@ -188,7 +200,7 @@ static void reios_sys_system() {
 	{
 	case 0:	//SYSINFO_INIT
 		{
-			debugf("reios_sys_system: SYSINFO_INIT\n");
+			debugf("reios_sys_system: SYSINFO_INIT");
 			// 0x00-0x07: system_id
 			// 0x08-0x0c: system_props
 			// 0x0d-0x0f: padding (zeroed out)
@@ -215,19 +227,19 @@ static void reios_sys_system() {
 		break;
 
 	case 2: //SYSINFO_ICON
-		debugf("reios_sys_system: SYSINFO_ICON\n");
+		debugf("reios_sys_system: SYSINFO_ICON");
 		// r4 = icon number (0-9, but only 5-9 seems to really be icons)
 		// r5 = destination buffer (704 bytes in size)
 		r[0] = 704;
 		break;
 
 	case 3: //SYSINFO_ID
-		debugf("reios_sys_system: SYSINFO_ID\n");
+		debugf("reios_sys_system: SYSINFO_ID");
 		r[0] = 0x8c000068;
 		break;
 
 	default:
-		printf("reios_sys_system: unhandled cmd %d\n", cmd);
+		WARN_LOG(REIOS, "reios_sys_system: unhandled cmd %d", cmd);
 		break;
 	}
 }
@@ -238,22 +250,22 @@ static void reios_sys_font() {
 	switch (cmd)
 	{
 	case 0:		// FONTROM_ADDRESS
-		debugf("FONTROM_ADDRESS\n");
+		debugf("FONTROM_ADDRESS");
 		r[0] = FONT_TABLE_ADDR;	// in ROM
 		break;
 
 	case 1:		// FONTROM_LOCK
-		debugf("FONTROM_LOCK\n");
+		debugf("FONTROM_LOCK");
 		r[0] = 0;
 		break;
 
 	case 2:		// FONTROM_UNLOCK
-		debugf("FONTROM_UNLOCK\n");
+		debugf("FONTROM_UNLOCK");
 		r[0] = 0;
 		break;
 
 	default:
-		printf("reios_sys_font cmd %x\n", cmd);
+		WARN_LOG(REIOS, "reios_sys_font cmd %x", cmd);
 		break;
 	}
 }
@@ -276,7 +288,7 @@ static void reios_sys_flashrom() {
 
 				u32 part = r[4];
 				u32 dest = r[5];
-				debugf("reios_sys_flashrom: FLASHROM_INFO part %d dest %08x\n", part, dest);
+				debugf("reios_sys_flashrom: FLASHROM_INFO part %d dest %08x", part, dest);
 
 				if (part < FLASH_PT_NUM)
 				{
@@ -306,7 +318,7 @@ static void reios_sys_flashrom() {
 				u32 dest = r[5];
 				u32 size = r[6];
 
-				debugf("reios_sys_flashrom: FLASHROM_READ offs %x dest %08x size %x\n", offset, dest, size);
+				debugf("reios_sys_flashrom: FLASHROM_READ offs %x dest %08x size %x", offset, dest, size);
 				for (int i = 0; i < size; i++)
 					WriteMem8(dest++, flashrom->Read8(offset + i));
 
@@ -329,7 +341,7 @@ static void reios_sys_flashrom() {
 				u32 src = r[5];
 				u32 size = r[6];
 
-				debugf("reios_sys_flashrom: FLASHROM_WRITE offs %x src %08x size %x\n", offs, src, size);
+				debugf("reios_sys_flashrom: FLASHROM_WRITE offs %x src %08x size %x", offs, src, size);
 
 				for (int i = 0; i < size; i++)
 					flashrom->data[offs + i] &= ReadMem8(src + i);
@@ -347,7 +359,7 @@ static void reios_sys_flashrom() {
 				*/
 				u32 offset = r[4];
 
-				debugf("reios_sys_flashrom: FLASHROM_DELETE offs %x\n", offset);
+				debugf("reios_sys_flashrom: FLASHROM_DELETE offs %x", offset);
 
 				bool found = false;
 
@@ -368,7 +380,7 @@ static void reios_sys_flashrom() {
 			break;
 
 		default:
-			printf("reios_sys_flashrom: not handled, %d\n", cmd);
+			WARN_LOG(REIOS, "reios_sys_flashrom: not handled, %d", cmd);
 			break;
 	}
 }
@@ -385,7 +397,7 @@ static void reios_sys_gd2()
 
 static void reios_sys_misc()
 {
-	debugf("reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X\n", r[7], r[4], r[5], r[6]);
+	debugf("reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X", r[7], r[4], r[5], r[6]);
 	switch (r[4])
 	{
 	case 2:	// check disk
@@ -404,8 +416,8 @@ static void setup_syscall(u32 hook_addr, u32 syscall_addr) {
 	WriteMem32(syscall_addr, hook_addr);
 	WriteMem16(hook_addr, REIOS_OPCODE);
 
-	debugf("Patching syscall vector %08X, points to %08X\n", syscall_addr, hook_addr);
-	debugf(" - address %08X: data %04X [%04X]\n", hook_addr, ReadMem16(hook_addr), REIOS_OPCODE);
+	debugf("Patching syscall vector %08X, points to %08X", syscall_addr, hook_addr);
+	debugf(" - address %08X: data %04X [%04X]", hook_addr, ReadMem16(hook_addr), REIOS_OPCODE);
 }
 
 static void reios_setup_state(u32 boot_addr) {
@@ -602,9 +614,9 @@ static void reios_setup_naomi(u32 boot_addr) {
 
 static void reios_boot()
 {
-	printf("-----------------\n");
-	printf("REIOS: Booting up\n");
-	printf("-----------------\n");
+	NOTICE_LOG(REIOS, "-----------------");
+	NOTICE_LOG(REIOS, "REIOS: Booting up");
+	NOTICE_LOG(REIOS, "-----------------");
 	//setup syscalls
 	//find boot file
 	//boot it
@@ -637,7 +649,7 @@ static void reios_boot()
 			verify(settings.System == DC_PLATFORM_NAOMI);
 			if (CurrentCartridge == NULL)
 			{
-				printf("No cartridge loaded\n");
+				WARN_LOG(REIOS, "No cartridge loaded");
 				return;
 			}
 			u32 data_size = 4;
@@ -688,7 +700,7 @@ static u32 hook_addr(hook_fp* fn) {
 	if (hooks_rev.count(fn))
 		return hooks_rev[fn];
 	else {
-		printf("hook_addr: Failed to reverse lookup %p\n", fn);
+		ERROR_LOG(REIOS, "hook_addr: Failed to reverse lookup %p", fn);
 		verify(false);
 		return 0;
 	}
@@ -696,7 +708,7 @@ static u32 hook_addr(hook_fp* fn) {
 
 bool reios_init(u8* rom, MemChip* flash) {
 
-	debugf("reios: Init\n");
+	INFO_LOG(REIOS, "reios: Init");
 
 	biosrom = rom;
 	flashrom = flash;
@@ -729,7 +741,7 @@ bool reios_init(u8* rom, MemChip* flash) {
 	FILE *font = fopen(font_file.c_str(), "rb");
 	if (font == NULL)
 	{
-		debugf("font.bin not found. Using built-in font\n");
+		INFO_LOG(REIOS, "font.bin not found. Using built-in font");
 		memcpy(pFont, builtin_font, sizeof(builtin_font));
 	}
 	else
@@ -740,9 +752,9 @@ bool reios_init(u8* rom, MemChip* flash) {
 		size_t nread = fread(pFont, 1, size, font);
 		fclose(font);
 		if (nread != size)
-			printf("font.bin: read truncated\n");
+			WARN_LOG(REIOS, "font.bin: read truncated");
 		else
-			debugf("font.bin: loaded %zd bytes\n", size);
+			INFO_LOG(REIOS, "font.bin: loaded %zd bytes", size);
 	}
 
 	return true;

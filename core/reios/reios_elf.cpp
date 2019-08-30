@@ -46,6 +46,12 @@ bool reios_loadElf(const string& elf)
 		src = (uint64_t)(uintptr_t)elfFile + elf_getProgramHeaderOffset(elfFile, i);
 		
 		u8* ptr = GetMemPtr(dest, len);
+		if (ptr == NULL)
+		{
+			WARN_LOG(REIOS, "Invalid load address for section %d: %08lx", i, dest);
+			continue;
+		}
+		DEBUG_LOG(REIOS, "Loading section %d to %08lx - %08lx", i, dest, dest + len - 1);
 
 		memcpy((void*)ptr, (void*)(uintptr_t)src, len);
 		ptr += len;

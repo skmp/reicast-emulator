@@ -664,6 +664,14 @@ static void update_variables(bool first_startup)
       }
    }
 
+   var.key = CORE_OPTION_NAME "_force_wince";
+
+   settings.dreamcast.ForceWinCE = false;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+   	settings.dreamcast.ForceWinCE = !strcmp("enabled", var.value);
+   }
+
 #ifdef HAVE_TEXUPSCALE
    var.key = CORE_OPTION_NAME "_texupscale";
 

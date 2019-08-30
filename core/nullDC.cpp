@@ -147,7 +147,8 @@ static void LoadSpecialSettings(void)
    unsigned i;
 
    NOTICE_LOG(BOOT, "[LUT]: Product number: %s.", reios_product_number);
-	if (reios_windows_ce || !strncmp("T26702N", reios_product_number, 7)) // PBA Tour Bowling 2001
+	if (reios_windows_ce || settings.dreamcast.ForceWinCE
+			|| !strncmp("T26702N", reios_product_number, 7)) // PBA Tour Bowling 2001
 	{
 		NOTICE_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
 		settings.rend.ExtraDepthScale = 0.1;

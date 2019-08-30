@@ -26,7 +26,7 @@
 #include "hw/sh4/modules/mmu.h"
 #include "ssa.h"
 
-#define ssa_printf(...)
+#define ssa_printf(...) DEBUG_LOG(DYNAREC, __VA_ARGS__)
 
 template<typename nreg_t, typename nregf_t, bool explode_spans = true>
 class RegAlloc
@@ -120,7 +120,7 @@ public:
 			AllocDestReg(op->rd);
 			AllocDestReg(op->rd2);
 		}
-		ssa_printf("%08x  %s gregs %ld fregs %ld\n", block->vaddr + op->guest_offs, op->dissasm().c_str(), host_gregs.size(), host_fregs.size());
+		ssa_printf("%08x  %s gregs %zd fregs %zd", block->vaddr + op->guest_offs, op->dissasm().c_str(), host_gregs.size(), host_fregs.size());
 	}
 
 	void OpEnd(shil_opcode* op)
@@ -310,7 +310,7 @@ private:
 		{
 			if (!fast_forwarding)
 			{
-				ssa_printf("WB %s.%d <- %cx\n", name_reg(reg_num).c_str(), reg_alloc.version, 'a' + reg_alloc.host_reg);
+				ssa_printf("WB %s.%d <- %cx", name_reg(reg_num).c_str(), reg_alloc.version, 'a' + reg_alloc.host_reg);
 				if (IsFloat(reg_num))
 					Writeback_FPU(reg_num, (nregf_t)reg_alloc.host_reg);
 				else
@@ -384,7 +384,7 @@ private:
 				reg_alloced[param._reg] = { host_reg, param.version[0], false, false };
 				if (!fast_forwarding)
 				{
-					ssa_printf("PL %s.%d -> %cx\n", name_reg(param._reg).c_str(), param.version[0], 'a' + host_reg);
+					ssa_printf("PL %s.%d -> %cx", name_reg(param._reg).c_str(), param.version[0], 'a' + host_reg);
 					if (IsFloat(param._reg))
 						Preload_FPU(param._reg, (nregf_t)host_reg);
 					else
@@ -450,7 +450,7 @@ private:
 					host_fregs.pop_back();
 				}
 				reg_alloced[param._reg] = { host_reg, param.version[0], NeedsWriteBack(param._reg, param.version[0]), true };
-				ssa_printf("   %s.%d -> %cx %s\n", name_reg(param._reg).c_str(), param.version[0], 'a' + host_reg, reg_alloced[param._reg].write_back ? "(wb)" : "");
+				ssa_printf("   %s.%d -> %cx %s", name_reg(param._reg).c_str(), param.version[0], 'a' + host_reg, reg_alloced[param._reg].write_back ? "(wb)" : "");
 			}
 			else
 			{
@@ -515,7 +515,7 @@ private:
 		}
 		if (latest_use != -1)
 		{
-			ssa_printf("RegAlloc: non optimal alloc? reg %s used in op %d\n", name_reg(spilled_reg).c_str(), latest_use);
+			ssa_printf("RegAlloc: non optimal alloc? reg %s used in op %d", name_reg(spilled_reg).c_str(), latest_use);
 			spills++;
 			// need to write-back if dirty so reload works
 			if (reg_alloced[spilled_reg].dirty)

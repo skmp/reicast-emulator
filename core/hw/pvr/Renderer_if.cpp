@@ -98,12 +98,12 @@ void rend_create_renderer()
 	{
 	default:
 	case 0:
-		printf("Creating per-triangle/strip renderer\n");
+		NOTICE_LOG(PVR, "Creating per-triangle/strip renderer");
 		renderer = rend_GLES2();
 		break;
 #if defined(HAVE_OIT)
 	case 3:
-		printf("Creating per-pixel renderer\n");
+		NOTICE_LOG(PVR, "Creating per-pixel renderer");
 		renderer = rend_GL4();
 		fallback_renderer = rend_GLES2();
 		break;
@@ -123,7 +123,7 @@ void rend_init_renderer()
     			delete fallback_renderer;
     		die("Renderer initialization failed\n");
     	}
-    	printf("Selected renderer initialization failed. Falling back to default renderer.\n");
+    	INFO_LOG(PVR, "Selected renderer initialization failed. Falling back to default renderer.");
     	renderer  = fallback_renderer;
     	fallback_renderer = NULL;	// avoid double-free
     }
@@ -266,7 +266,7 @@ void rend_start_render(void)
       else
       {
          ovrn++;
-         printf("WARNING: Rendering context is overrun (%d), aborting frame\n",ovrn);
+         INFO_LOG(PVR, "WARNING: Rendering context is overrun (%d), aborting frame", ovrn);
          tactx_Recycle(ctx);
       }
    }
@@ -322,7 +322,7 @@ bool rend_init(void)
 	/* sched_setaffinity returns 0 in success */
 
 	if( sched_setaffinity( 0, sizeof(mask), &mask ) == -1 )
-		printf("WARNING: Could not set CPU Affinity, continuing...\n");
+		WARN_LOG(PVR, "WARNING: Could not set CPU Affinity, continuing...");
 #endif
 
 	return true;
@@ -336,6 +336,7 @@ void rend_vblank()
 {
    if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
 	{
+		DEBUG_LOG(PVR, "Direct framebuffer write detected");
 		SetCurrentTARC(CORE_CURRENT_CTX);
 		ta_ctx->rend.isRenderFramebuffer = true;
 		rend_start_render();

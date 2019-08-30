@@ -44,11 +44,7 @@
 
 #define MODEM_DEVICE_TYPE_336K 0
 
-#ifdef RELEASE
-#define LOG(...)
-#else
-#define LOG(...) do { printf("[%d.%03d] MODEM ", (int)PICO_TIME(), (int)(PICO_TIME_MS() % 1000)); printf(__VA_ARGS__); putchar('\n'); } while (false);
-#endif
+#define LOG(...) DEBUG_LOG(MODEM, __VA_ARGS__)
 
 const static u32 MODEM_ID[2] =
 {
@@ -144,7 +140,9 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 	{
 		if (last_comm_stats != 0)
 		{
-			printf("Stats sent %d received %d TDBE %d RDBF %d\n", sent_bytes, recvd_bytes, modem_regs.reg1e.TDBE, modem_regs.reg1e.RDBF);
+			DEBUG_LOG(MODEM, "Stats sent %d (%.2f kB/s) received %d (%.2f kB/s) TDBE %d RDBF %d\n", sent_bytes, sent_bytes / 2000.0,
+					recvd_bytes, recvd_bytes / 2000.0,
+					modem_regs.reg1e.TDBE, modem_regs.reg1e.RDBF);
 			sent_bytes = 0;
 			recvd_bytes = 0;
 		}
@@ -211,7 +209,7 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 			break;
 
 		case PRE_CONNECTED:
-			printf("MODEM Connected\n");
+			INFO_LOG(MODEM, "MODEM Connected");
 			if (modem_regs.reg03.RLSDE)
 				SET_STATUS_BIT(0x0f, modem_regs.reg0f.RLSD, 1);
 			if (modem_regs.reg12 == 0xAA)
@@ -440,7 +438,7 @@ static void modem_reset(u32 v)
 		state=MS_RESETING;
 		modem_regs.ptr[0x20]=1;
 		ControllerTestStart();
-		printf("MODEM Reset\n");
+		INFO_LOG(MODEM, "MODEM Reset");
 	}
 }
 
@@ -507,7 +505,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 			//LOG("ModemNormalWrite : TBUFFER = %X", data);
 			if (connect_state == DISCONNECTED)
 			{
-				printf("MODEM Dialing\n");
+				INFO_LOG(MODEM, "MODEM Dialing");
 				connect_state = DIALING;
 			}
 			schedule_callback(100);
@@ -583,10 +581,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 			u32 dspram_addr = modem_regs.reg1c_1d.MEMADD_l | (modem_regs.reg1c_1d.MEMADD_h << 8);
 			if (modem_regs.reg1c_1d.MEMW)
 			{
-				//LOG("DSP mem Write%s address %08x = %x",
-				//		word_dspram_write ? " (w)" : "",
-				//		dspram_addr,
-				//		modem_regs.reg18_19 );
+				LOG("DSP mem Write%s address %08x = %x", word_dspram_write ? " (w)" : "", dspram_addr, modem_regs.reg18_19);
 				if (word_dspram_write)
 				{
 					if (dspram_addr & 1)
@@ -606,9 +601,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 					modem_regs.reg18_19 = dspram[dspram_addr] | (dspram[dspram_addr + 1] << 8);
 				else
 					modem_regs.reg18_19 = *(u16*)&dspram[dspram_addr];
-				//LOG("DSP mem Read address %08x == %x",
-				//		dspram_addr,
-				//		modem_regs.reg18_19 );
+				LOG("DSP mem Read address %08x == %x", dspram_addr, modem_regs.reg18_19 );
 			}
 		}
 		break;
@@ -642,7 +635,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		break;
 
 	default:
-		//printf("ModemNormalWrite : undef %03X=%X\n",reg,data);
+		//LOG("ModemNormalWrite : undef %03X = %X", reg, data);
 		break;
 	}
 	update_interrupt();

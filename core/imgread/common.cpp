@@ -93,25 +93,21 @@ bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
          memcpy(out_buff,&in_buff[0x10],2336);
          break;
       case 2048:
+         verify(from>=2048);
+         verify((from==2448) || (from==2352) || (from==2336));
+         if ((from == 2352) || (from == 2448))
          {
-            verify(from>=2048);
-            verify((from==2448) || (from==2352) || (from==2336));
-            if ((from == 2352) || (from == 2448))
-            {
-               if (in_buff[15]==1)
-                  memcpy(out_buff,&in_buff[0x10],2048); //0x10 -> mode1
-               else
-                  memcpy(out_buff,&in_buff[0x18],2048); //0x18 -> mode2 (all forms ?)
-            }
+            if (in_buff[15]==1)
+               memcpy(out_buff,&in_buff[0x10],2048); //0x10 -> mode1
             else
-               memcpy(out_buff,&in_buff[0x8],2048);	//hmm only possible on mode2.Skip the mode2 header
+               memcpy(out_buff,&in_buff[0x18],2048); //0x18 -> mode2 (all forms ?)
          }
+         else
+            memcpy(out_buff,&in_buff[0x8],2048);	//hmm only possible on mode2.Skip the mode2 header
          break;
       case 2352:
          //if (from >= 2352)
-         {
-            memcpy(out_buff,&in_buff[0],2352);
-         }
+         memcpy(out_buff,&in_buff[0],2352);
          break;
       default :
 		INFO_LOG(GDROM, "Sector conversion from %d to %d not supported \n", from , to);
@@ -160,7 +156,7 @@ bool InitDrive(u32 fileflags)
 		INFO_LOG(GDROM, "Loading default image \"%s\"", settings.imgread.DefaultImage);
 		if (!InitDrive_(settings.imgread.DefaultImage))
 		{
-			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR);
+			msgboxf("Default image \"%s\" failed to load", MBX_ICONERROR, settings.imgread.DefaultImage);
 			return false;
 		}
       return true;
@@ -219,7 +215,7 @@ bool DiscSwap(u32 fileflags)
 		INFO_LOG(GDROM, "Loading default image \"%s\"", settings.imgread.DefaultImage);
 		if (!InitDrive_(settings.imgread.DefaultImage))
 		{
-			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR);
+			msgboxf("Default image \"%s\" failed to load", MBX_ICONERROR, settings.imgread.DefaultImage);
 			return false;
 		}
       return true;

@@ -55,8 +55,6 @@ void YUV_init(void)
    YUV_index = 0;
 }
 
-#define TA_YUV420_MACROBLOCK_SIZE 384
-#define TA_YUV422_MACROBLOCK_SIZE 512
 
 static INLINE u8 GetY420(int x, int y,u8* base)
 {

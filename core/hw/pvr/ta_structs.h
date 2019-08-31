@@ -30,12 +30,12 @@ union PCW
 		u32 Col_Type    : 2; //00
 		u32 Texture     : 1; //1
 		u32 Offset      : 1; //1
-		u32 Gouraud     : 1; //0
+		u32 Gouraud     : 1; //1
 		u32 UV_16bit    : 1; //0
 #else
 		//Obj Control        //affects drawing ?
 		u32 UV_16bit    : 1; //0
-		u32 Gouraud     : 1; //0
+		u32 Gouraud     : 1; //1
 		u32 Offset      : 1; //1
 		u32 Texture     : 1; //1
 		u32 Col_Type    : 2; //00
@@ -803,6 +803,3 @@ enum PixelFormat
 	PixelReserved = 7
 };
 
-typedef Ta_Dma* DYNACALL TaListFP(Ta_Dma* data,Ta_Dma* data_end);
-#define TACALL DYNACALL
-typedef void TACALL TaPolyParamFP(void* ptr);

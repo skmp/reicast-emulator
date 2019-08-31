@@ -16,6 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
+extern const u32 mmu_mask[4];
+
 static bool wince_resolve_address(u32 va, TLB_Entry &entry)
 {
 	// WinCE hack

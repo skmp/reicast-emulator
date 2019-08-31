@@ -71,8 +71,8 @@ static Renderer* fallback_renderer;
 bool renderer_changed = false;	// Signals the renderer interface to switch renderer
 
 #if !defined(TARGET_NO_THREADS)
-cResetEvent rs(false,true);
-cResetEvent re(false,true);
+cResetEvent rs;
+cResetEvent re;
 #endif
 extern cResetEvent frame_finished;
 static bool swap_pending;

@@ -220,9 +220,6 @@ void _dsp_debug_step_end()
 #define nwtn(x) verify(!dsp.regs_init.x)
 #define wtn(x) nwtn(x);dsp.regs_init.x=true;
 
-#include "aica_if.h"
-#include "aica_mem.h"
-
 //sign extend to 32 bits
 void dsp_rec_se(x86_block& x86e,x86_gpr_reg reg,u32 src_sz,u32 dst_sz=0xFF)
 {
@@ -249,7 +246,7 @@ void dsp_rec_DRAM_CI(x86_block& x86e,_INST& prev_op,u32 step,x86_gpr_reg MEM_RD_
 	{
 		//Get and mask ram address :)
 		x86e.Emit(op_mov32,EAX,&dsp.regs.MEM_ADDR);
-		x86e.Emit(op_and32,EAX,AICA_RAM_MASK);
+		x86e.Emit(op_and32, EAX, ARAM_MASK);
 
 		x86e.Emit(op_add32,EAX,(unat)aica_ram.data);
 

@@ -60,12 +60,6 @@ void emit_SetBaseAddr(void)
    LastAddr_min = LastAddr;
 }
 
-void RASDASD()
-{
-	LastAddr=LastAddr_min;
-	memset(emit_GetCCPtr(),0xCC,emit_FreeSpace());
-}
-
 void clear_temp_cache(bool full)
 {
 	//printf("recSh4:Temp Code Cache clear at %08X\n", curr_pc);
@@ -124,7 +118,7 @@ u32 emit_FreeSpace()
 }
 
 // pc must be a physical address
-bool DoCheck(u32 pc)
+static bool DoCheck(u32 pc)
 {
 	if (IsOnRam(pc))
 	{

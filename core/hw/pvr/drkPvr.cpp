@@ -28,8 +28,7 @@ void libPvr_LockedBlockWrite (vram_block* block,u32 addr)
 void libPvr_Reset(bool Manual)
 {
    Regs_Reset(Manual);
-	CalculateSync();
-	//rend_reset(); //*TODO* wtf ?
+   spg_Reset(Manual);
 }
 
 
@@ -40,11 +39,6 @@ s32 libPvr_Init(void)
       //failed
       return rv_error;
    }
-//	if (!rend_init())
-//   {
-//      //failed
-//		return rv_error;
-//   }
 
 	return rv_ok;
 }

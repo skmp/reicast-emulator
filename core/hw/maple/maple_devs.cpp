@@ -144,7 +144,7 @@ struct maple_base: maple_device
 	u8 r8()	  { u8  rv=*((u8*)dma_buffer_in);dma_buffer_in+=1;dma_count_in-=1; return rv; }
 	u16 r16() { u16 rv=*((u16*)dma_buffer_in);dma_buffer_in+=2;dma_count_in-=2; return rv; }
 	u32 r32() { u32 rv=*(u32*)dma_buffer_in;dma_buffer_in+=4;dma_count_in-=4; return rv; }
-	void rptr(const void* dst,u32 len)
+	void rptr(void* dst, u32 len)
 	{
 		u8* dst8=(u8*)dst;
 		while(len--)
@@ -1299,7 +1299,7 @@ struct maple_keyboard : maple_base
 			{
 				w8((u8)maple_sega_kbd_name[i]);
 			}
-			//ptr_out += 30;
+
          // License (60)
 			for (u32 i = 0; i < 60; i++)
 			{
@@ -1358,12 +1358,13 @@ struct maple_mouse : maple_base
 
 	static u16 mo_cvt(f32 delta)
 	{
-		delta+=0x200 + 0.5;
+		delta += 0x200;
 		if (delta<=0)
 			delta=0;
 		else if (delta>0x3FF)
 			delta=0x3FF;
- 		return (u16) delta;
+
+		return (u16)lroundf(delta);
 	}
  	virtual u32 dma(u32 cmd)
 	{

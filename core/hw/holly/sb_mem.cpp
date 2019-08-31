@@ -13,11 +13,6 @@
 #include "hw/flashrom/flashrom.h"
 #include "reios/reios.h"
 
-
-static HollyInterruptID dmatmp1;
-static HollyInterruptID dmatmp2;
-static HollyInterruptID OldDmaId;
-
 /*
 	Dreamcast 'area 0' emulation
 	Pretty much all peripheral registers are mapped here

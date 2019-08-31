@@ -109,8 +109,6 @@ u32 sh4_rio_read(Array<RegisterStruct>& sb_regs, u32 addr)
 		INFO_LOG(SH4, "ERROR [wrong size read on register]");
 	}
 #endif
-//	if ((sb_regs[offset].flags& REG_NOT_IMPL))
-//		EMUERROR2("Read from System Control Regs , not  implemented , addr=%x",addr);
 	return 0;
 }
 

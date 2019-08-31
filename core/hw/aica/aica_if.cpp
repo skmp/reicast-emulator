@@ -48,7 +48,7 @@ u32 ReadMem_aica_rtc(u32 addr,u32 sz)
 		return 0;
 	}
 
-	WARN_LOG(AICA, "ReadMem_aica_rtc : invalid address");
+	WARN_LOG(AICA, "ReadMem_aica_rtc : invalid address %x sz %d", addr, sz);
 	return 0;
 }
 
@@ -207,8 +207,6 @@ void Write_SB_ADST(u32 addr, u32 data)
          u32 src=SB_ADSTAR;
          u32 dst=SB_ADSTAG;
          u32 len=SB_ADLEN & 0x7FFFFFFF;
-
-         u32 total_bytes=0;
 
          if ((SB_ADDIR&1)==1)
          {

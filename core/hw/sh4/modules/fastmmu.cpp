@@ -34,8 +34,6 @@ extern TLB_Entry UTLB[64];
 // Used when FullMMU is off
 extern u32 sq_remap[64];
 
-extern const u32 mmu_mask[4];
-
 #include "wince.h"
 
 const TLB_Entry *lru_entry = NULL;

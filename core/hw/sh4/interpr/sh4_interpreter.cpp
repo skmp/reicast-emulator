@@ -185,7 +185,6 @@ static int DreamcastSecond(int tag, int c, int j)
 	bm_Periodical_1s();
 #endif
 
-	sh4_sched_intr=0;
 	return SH4_MAIN_CLOCK;
 }
 

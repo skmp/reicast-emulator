@@ -1,7 +1,7 @@
 #include "aica.h"
 #include "aica_if.h"
+#include "sgc_if.h"
 #include "aica_mem.h"
-#include <time.h>
 #include <math.h>
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"

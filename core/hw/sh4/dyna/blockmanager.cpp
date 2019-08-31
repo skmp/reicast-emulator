@@ -33,7 +33,6 @@ bool unprotected_pages[RAM_SIZE_MAX/PAGE_SIZE];
 static std::set<RuntimeBlockInfo*> blocks_per_page[RAM_SIZE_MAX/PAGE_SIZE];
 
 bm_Map blkmap;
-//u32 bm_gc_luc,bm_gcf_luc;
 // Stats
 u32 protected_blocks;
 u32 unprotected_blocks;
@@ -589,7 +588,7 @@ void bm_RamWriteAccess(u32 addr)
 	if (!list_copy.empty())
 		DEBUG_LOG(DYNAREC, "bm_RamWriteAccess write access to %08x pc %08x", addr, next_pc);
 	for (auto& block : list_copy)
-	{ 
+	{
 		bm_DiscardBlock(block);
 	}
 	verify(block_list.empty());
@@ -603,7 +602,7 @@ bool bm_RamWriteAccess(void *p)
 			return false;
 	}
 	else
-	{ 
+	{
 		if ((u8 *)p < virt_ram_base || (u8 *)p >= virt_ram_base + 0x20000000)
 			return false;
 	}

@@ -502,12 +502,11 @@ __asm__ (
 		".globl arm_dispatch					\n\t"
 		".hidden arm_dispatch				\n"
 	"arm_dispatch:								\n\t"
-		"ldp w0, w1, [x28, #184]			\n\t"	// load Next PC, interrupt
+		"ldp w0, w1, [x28, #184]				\n\t"	// load Next PC, interrupt
+		"ubfx w2, w0, #2, #21					\n\t"	// w2 = pc >> 2. Note: assuming address space == 8 MB (23 bits)
+		"cbnz w1, arm_dofiq						\n\t"	// if interrupt pending, handle it
 
-		"ubfx w2, w0, #2, #21				\n\t"
-		"cbnz w1, arm_dofiq					\n\t"
-
-		"add x2, x26, x2, lsl #3			\n\t"
+		"add x2, x26, x2, lsl #3				\n\t"	// x2 = EntryPoints + pc << 1
 		"ldr x3, [x2]							\n\t"
 		"br x3									\n"
 

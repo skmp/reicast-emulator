@@ -59,9 +59,6 @@ extern bool armFiqEnable;
 extern int armMode;
 extern bool Arm7Enabled;
 extern u8 cpuBitsSet[256];
-extern bool intState ;
-extern bool stopState ;
-extern bool holdState ;
 /*
 	if AREC dynarec enabled:
 	vector<ArmDPOP> ops;
@@ -138,7 +135,6 @@ struct ChannelEx;
 #define CDDA_SIZE  (2352/2)
 extern s16 cdda_sector[CDDA_SIZE];
 extern u32 cdda_index;
-extern SampleType mxlr[64];
 extern u32 samples_gen;
 
 
@@ -432,8 +428,7 @@ extern u32 old_dn;
 
 //./core/hw/sh4/sh4_sched.o
 extern u64 sh4_sched_ffb;
-extern u32 sh4_sched_intr;
-extern vector<sched_list> list;
+extern vector<sched_list> sch_list;
 //extern int sh4_sched_next_id;
 
 
@@ -809,9 +804,10 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(armMode);
 	LIBRETRO_S(Arm7Enabled);
 	LIBRETRO_SA(cpuBitsSet,256);
-	LIBRETRO_S(intState);
-	LIBRETRO_S(stopState);
-	LIBRETRO_S(holdState);
+	bool dummybool;
+	LIBRETRO_S(dummybool); // intState
+	LIBRETRO_S(dummybool); // stopState
+	LIBRETRO_S(dummybool); // holdState
 
 	LIBRETRO_S(dsp);
 
@@ -833,7 +829,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	LIBRETRO_SA(cdda_sector,CDDA_SIZE);
 	LIBRETRO_S(cdda_index);
-	LIBRETRO_SA(mxlr,64);
+	for (int i = 0; i < 64; i++)
+		LIBRETRO_S(i);	// mxlr
 	LIBRETRO_S(samples_gen);
 
 
@@ -1029,52 +1026,52 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 
 	LIBRETRO_S(sh4_sched_ffb);
-	LIBRETRO_S(sh4_sched_intr);
+	LIBRETRO_S(i); // sh4_sched_intr
 
 	//extern vector<sched_list> list;
 
-	LIBRETRO_S(list[aica_sched].tag) ;
-	LIBRETRO_S(list[aica_sched].start) ;
-	LIBRETRO_S(list[aica_sched].end) ;
+	LIBRETRO_S(sch_list[aica_sched].tag) ;
+	LIBRETRO_S(sch_list[aica_sched].start) ;
+	LIBRETRO_S(sch_list[aica_sched].end) ;
 
-	LIBRETRO_S(list[rtc_sched].tag) ;
-	LIBRETRO_S(list[rtc_sched].start) ;
-	LIBRETRO_S(list[rtc_sched].end) ;
+	LIBRETRO_S(sch_list[rtc_sched].tag) ;
+	LIBRETRO_S(sch_list[rtc_sched].start) ;
+	LIBRETRO_S(sch_list[rtc_sched].end) ;
 
-	LIBRETRO_S(list[gdrom_sched].tag) ;
-	LIBRETRO_S(list[gdrom_sched].start) ;
-	LIBRETRO_S(list[gdrom_sched].end) ;
+	LIBRETRO_S(sch_list[gdrom_sched].tag) ;
+	LIBRETRO_S(sch_list[gdrom_sched].start) ;
+	LIBRETRO_S(sch_list[gdrom_sched].end) ;
 
-	LIBRETRO_S(list[maple_sched].tag) ;
-	LIBRETRO_S(list[maple_sched].start) ;
-	LIBRETRO_S(list[maple_sched].end) ;
+	LIBRETRO_S(sch_list[maple_sched].tag) ;
+	LIBRETRO_S(sch_list[maple_sched].start) ;
+	LIBRETRO_S(sch_list[maple_sched].end) ;
 
-	LIBRETRO_S(list[dma_sched_id].tag) ;
-	LIBRETRO_S(list[dma_sched_id].start) ;
-	LIBRETRO_S(list[dma_sched_id].end) ;
+	LIBRETRO_S(sch_list[dma_sched_id].tag) ;
+	LIBRETRO_S(sch_list[dma_sched_id].start) ;
+	LIBRETRO_S(sch_list[dma_sched_id].end) ;
 
 	for (int i = 0; i < 3; i++)
 	{
-	   LIBRETRO_S(list[tmu_sched[i]].tag) ;
-	   LIBRETRO_S(list[tmu_sched[i]].start) ;
-	   LIBRETRO_S(list[tmu_sched[i]].end) ;
+	   LIBRETRO_S(sch_list[tmu_sched[i]].tag) ;
+	   LIBRETRO_S(sch_list[tmu_sched[i]].start) ;
+	   LIBRETRO_S(sch_list[tmu_sched[i]].end) ;
 	}
 
-	LIBRETRO_S(list[render_end_sched].tag) ;
-	LIBRETRO_S(list[render_end_sched].start) ;
-	LIBRETRO_S(list[render_end_sched].end) ;
+	LIBRETRO_S(sch_list[render_end_sched].tag) ;
+	LIBRETRO_S(sch_list[render_end_sched].start) ;
+	LIBRETRO_S(sch_list[render_end_sched].end) ;
 
-	LIBRETRO_S(list[vblank_sched].tag) ;
-	LIBRETRO_S(list[vblank_sched].start) ;
-	LIBRETRO_S(list[vblank_sched].end) ;
+	LIBRETRO_S(sch_list[vblank_sched].tag) ;
+	LIBRETRO_S(sch_list[vblank_sched].start) ;
+	LIBRETRO_S(sch_list[vblank_sched].end) ;
 
-	LIBRETRO_S(list[time_sync].tag) ;
-	LIBRETRO_S(list[time_sync].start) ;
-	LIBRETRO_S(list[time_sync].end) ;
+	LIBRETRO_S(sch_list[time_sync].tag) ;
+	LIBRETRO_S(sch_list[time_sync].start) ;
+	LIBRETRO_S(sch_list[time_sync].end) ;
 
-    LIBRETRO_S(list[modem_sched].tag) ;
-    LIBRETRO_S(list[modem_sched].start) ;
-    LIBRETRO_S(list[modem_sched].end) ;
+    LIBRETRO_S(sch_list[modem_sched].tag) ;
+    LIBRETRO_S(sch_list[modem_sched].start) ;
+    LIBRETRO_S(sch_list[modem_sched].end) ;
 
 
 	LIBRETRO_S(SCIF_SCFSR2);
@@ -1223,9 +1220,9 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(armMode);
 	LIBRETRO_US(Arm7Enabled);
 	LIBRETRO_USA(cpuBitsSet,256);
-	LIBRETRO_US(intState);
-	LIBRETRO_US(stopState);
-	LIBRETRO_US(holdState);
+	LIBRETRO_SKIP(1); // intState
+	LIBRETRO_SKIP(1); // stopState
+	LIBRETRO_SKIP(1); // holdState
 
 	LIBRETRO_US(dsp);
 
@@ -1259,7 +1256,7 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 
 	LIBRETRO_USA(cdda_sector,CDDA_SIZE);
 	LIBRETRO_US(cdda_index);
-	LIBRETRO_USA(mxlr,64);
+	LIBRETRO_SKIP(4 * 64); // mxlr
 	LIBRETRO_US(samples_gen);
 
 
@@ -1478,56 +1475,56 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 
 
 	LIBRETRO_US(sh4_sched_ffb);
-	LIBRETRO_US(sh4_sched_intr);
+	LIBRETRO_SKIP(4); // sh4_sched_intr
 	if (version < V3)
 	   LIBRETRO_US(dummy_int);	// sh4_sched_next_id
 
 	//extern vector<sched_list> list;
 
-	LIBRETRO_US(list[aica_sched].tag) ;
-	LIBRETRO_US(list[aica_sched].start) ;
-	LIBRETRO_US(list[aica_sched].end) ;
+	LIBRETRO_US(sch_list[aica_sched].tag) ;
+	LIBRETRO_US(sch_list[aica_sched].start) ;
+	LIBRETRO_US(sch_list[aica_sched].end) ;
 
-	LIBRETRO_US(list[rtc_sched].tag) ;
-	LIBRETRO_US(list[rtc_sched].start) ;
-	LIBRETRO_US(list[rtc_sched].end) ;
+	LIBRETRO_US(sch_list[rtc_sched].tag) ;
+	LIBRETRO_US(sch_list[rtc_sched].start) ;
+	LIBRETRO_US(sch_list[rtc_sched].end) ;
 
-	LIBRETRO_US(list[gdrom_sched].tag) ;
-	LIBRETRO_US(list[gdrom_sched].start) ;
-	LIBRETRO_US(list[gdrom_sched].end) ;
+	LIBRETRO_US(sch_list[gdrom_sched].tag) ;
+	LIBRETRO_US(sch_list[gdrom_sched].start) ;
+	LIBRETRO_US(sch_list[gdrom_sched].end) ;
 
-	LIBRETRO_US(list[maple_sched].tag) ;
-	LIBRETRO_US(list[maple_sched].start) ;
-	LIBRETRO_US(list[maple_sched].end) ;
+	LIBRETRO_US(sch_list[maple_sched].tag) ;
+	LIBRETRO_US(sch_list[maple_sched].start) ;
+	LIBRETRO_US(sch_list[maple_sched].end) ;
 
-	LIBRETRO_US(list[dma_sched_id].tag) ;
-	LIBRETRO_US(list[dma_sched_id].start) ;
-	LIBRETRO_US(list[dma_sched_id].end) ;
+	LIBRETRO_US(sch_list[dma_sched_id].tag) ;
+	LIBRETRO_US(sch_list[dma_sched_id].start) ;
+	LIBRETRO_US(sch_list[dma_sched_id].end) ;
 
 	for (int i = 0; i < 3; i++)
 	{
-	   LIBRETRO_US(list[tmu_sched[i]].tag) ;
-	   LIBRETRO_US(list[tmu_sched[i]].start) ;
-	   LIBRETRO_US(list[tmu_sched[i]].end) ;
+	   LIBRETRO_US(sch_list[tmu_sched[i]].tag) ;
+	   LIBRETRO_US(sch_list[tmu_sched[i]].start) ;
+	   LIBRETRO_US(sch_list[tmu_sched[i]].end) ;
 	}
 
-	LIBRETRO_US(list[render_end_sched].tag) ;
-	LIBRETRO_US(list[render_end_sched].start) ;
-	LIBRETRO_US(list[render_end_sched].end) ;
+	LIBRETRO_US(sch_list[render_end_sched].tag) ;
+	LIBRETRO_US(sch_list[render_end_sched].start) ;
+	LIBRETRO_US(sch_list[render_end_sched].end) ;
 
-	LIBRETRO_US(list[vblank_sched].tag) ;
-	LIBRETRO_US(list[vblank_sched].start) ;
-	LIBRETRO_US(list[vblank_sched].end) ;
+	LIBRETRO_US(sch_list[vblank_sched].tag) ;
+	LIBRETRO_US(sch_list[vblank_sched].start) ;
+	LIBRETRO_US(sch_list[vblank_sched].end) ;
 
-	LIBRETRO_US(list[time_sync].tag) ;
-	LIBRETRO_US(list[time_sync].start) ;
-	LIBRETRO_US(list[time_sync].end) ;
+	LIBRETRO_US(sch_list[time_sync].tag) ;
+	LIBRETRO_US(sch_list[time_sync].start) ;
+	LIBRETRO_US(sch_list[time_sync].end) ;
 
 	if ( version >= V2 )
 	{
-		LIBRETRO_US(list[modem_sched].tag) ;
-		LIBRETRO_US(list[modem_sched].start) ;
-		LIBRETRO_US(list[modem_sched].end) ;
+		LIBRETRO_US(sch_list[modem_sched].tag) ;
+		LIBRETRO_US(sch_list[modem_sched].start) ;
+		LIBRETRO_US(sch_list[modem_sched].end) ;
 	}
 
 	if (version < V3)

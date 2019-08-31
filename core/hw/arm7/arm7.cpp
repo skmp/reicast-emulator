@@ -1,11 +1,8 @@
 #include "arm7.h"
 #include "arm_mem.h"
 
-#define C_CORE
-
 #define arm_printf(...) DEBUG_LOG(AICA_ARM, __VA_ARGS__)
 
-//#define CPUReadHalfWordQuick(addr) arm_ReadMem16(addr & 0x7FFFFF)
 #define CPUReadMemoryQuick(addr) (*(u32*)&aica_ram[addr&ARAM_MASK])
 #define CPUReadByte arm_ReadMem8
 #define CPUReadMemory arm_ReadMem32
@@ -41,12 +38,6 @@ void CPUSwap(u32 *a, u32 *b)
 	*a = c;
 }
 
-/*
-bool N_FLAG;
-bool Z_FLAG;
-bool C_FLAG;
-bool V_FLAG;
-*/
 #define N_FLAG (reg[RN_PSR_FLAGS].FLG.N)
 #define Z_FLAG (reg[RN_PSR_FLAGS].FLG.Z)
 #define C_FLAG (reg[RN_PSR_FLAGS].FLG.C)
@@ -54,18 +45,11 @@ bool V_FLAG;
 
 bool armIrqEnable;
 bool armFiqEnable;
-//bool armState;
 int armMode;
 
 bool Arm7Enabled=false;
 
 u8 cpuBitsSet[256];
-
-bool intState = false;
-bool stopState = false;
-bool holdState = false;
-
-
 
 void CPUSwitchMode(int mode, bool saveState, bool breakLoop=true);
 extern "C" void CPUFiq();
@@ -76,6 +60,9 @@ void CPUUndefinedException();
 
 #if FEAT_AREC == DYNAREC_NONE
 
+//
+// ARM7 interpreter
+//
 void arm_Run_(u32 CycleCount)
 {
 	if (!Arm7Enabled)
@@ -96,13 +83,12 @@ void arm_Run_(u32 CycleCount)
 #endif
 
 void armt_init();
-//void CreateTables();
+
 void arm_Init()
 {
 #if FEAT_AREC != DYNAREC_NONE
 	armt_init();
 #endif
-	//CreateTables();
 	arm_Reset();
 
 	for (int i = 0; i < 256; i++)
@@ -236,19 +222,6 @@ void CPUUpdateCPSR()
 
 	CPSR.I = reg[RN_CPSR].I & 0x40;
 
-	/*
-	if(N_FLAG)
-		CPSR |= 0x80000000;
-	if(Z_FLAG)
-		CPSR |= 0x40000000;
-	if(C_FLAG)
-		CPSR |= 0x20000000;
-	if(V_FLAG)
-		CPSR |= 0x10000000;
-	if(!armState)
-		CPSR |= 0x00000020;
-	*/
-
 	CPSR.PSR.NZCV=reg[RN_PSR_FLAGS].FLG.NZCV;
 
 
@@ -268,13 +241,6 @@ void CPUUpdateFlags()
 
 	reg[RN_PSR_FLAGS].FLG.NZCV=reg[16].PSR.NZCV;
 
-	/*
-	N_FLAG = (CPSR & 0x80000000) ? true: false;
-	Z_FLAG = (CPSR & 0x40000000) ? true: false;
-	C_FLAG = (CPSR & 0x20000000) ? true: false;
-	V_FLAG = (CPSR & 0x10000000) ? true: false;
-	*/
-	//armState = (CPSR & 0x20) ? false : true;
 	armIrqEnable = (CPSR & 0x80) ? false : true;
 	armFiqEnable = (CPSR & 0x40) ? false : true;
 	update_armintc();
@@ -283,14 +249,11 @@ void CPUUpdateFlags()
 void CPUSoftwareInterrupt(int comment)
 {
 	u32 PC = reg[R15_ARM_NEXT].I+4;
-	//bool savedArmState = armState;
 	CPUSwitchMode(0x13, true, false);
 	reg[14].I = PC;
-//	reg[15].I = 0x08;
 	
 	armIrqEnable = false;
 	armNextPC = 0x08;
-//	reg[15].I += 4;
 }
 
 void CPUUndefinedException()
@@ -299,10 +262,8 @@ void CPUUndefinedException()
 	u32 PC = reg[R15_ARM_NEXT].I+4;
 	CPUSwitchMode(0x1b, true, false);
 	reg[14].I = PC;
-//	reg[15].I = 0x04;
 	armIrqEnable = false;
 	armNextPC = 0x04;
-//	reg[15].I += 4;  
 }
 
 void FlushCache();
@@ -312,6 +273,12 @@ void arm_Reset()
 #if FEAT_AREC != DYNAREC_NONE
 	FlushCache();
 #endif
+	aica_interr = false;
+	aica_reg_L = 0;
+	e68k_out = false;
+	e68k_reg_L = 0;
+	e68k_reg_M = 0;
+
 	Arm7Enabled = false;
 	// clean registers
 	memset(&arm_Reg[0], 0, sizeof(arm_Reg));
@@ -327,7 +294,6 @@ void arm_Reset()
 	armFiqEnable = false;
 	update_armintc();
 
-	//armState = true;
 	C_FLAG = V_FLAG = N_FLAG = Z_FLAG = false;
 
 	// disable FIQ
@@ -339,45 +305,18 @@ void arm_Reset()
 	reg[15].I += 4;
 }
 
-/*
-
-//NO IRQ on aica ..
-void CPUInterrupt()
-{
-	u32 PC = reg[15].I;
-	//bool savedState = armState;
-	CPUSwitchMode(0x12, true, false);
-	reg[14].I = PC;
-	//if(!savedState)
-	//	reg[14].I += 2;
-	reg[15].I = 0x18;
-	//armState = true;
-	armIrqEnable = false;
-
-	armNextPC = reg[15].I;
-	reg[15].I += 4;
-}
-
-*/
-
 extern "C"
 NOINLINE
 void CPUFiq()
 {
 	u32 PC = reg[R15_ARM_NEXT].I+4;
-	//bool savedState = armState;
 	CPUSwitchMode(0x11, true, false);
 	reg[14].I = PC;
-	//if(!savedState)
-	//	reg[14].I += 2;
-	//reg[15].I = 0x1c;
-	//armState = true;
 	armIrqEnable = false;
 	armFiqEnable = false;
 	update_armintc();
 
 	armNextPC = 0x1c;
-	//reg[15].I += 4;
 }
 
 
@@ -1471,7 +1410,7 @@ naked void arm_dispatch()
 	{
 arm_disp:
 		mov eax,reg[R15_ARM_NEXT*4].I
-		and eax,0x1FFFFC
+		and eax,0x7FFFFC
 		cmp reg[INTR_PEND*4].I,0
 		jne arm_dofiq
 		jmp [EntryPoints+eax]
@@ -2087,7 +2026,7 @@ extern "C" void CompileCode()
 void FlushCache()
 {
 	icPtr=ICache;
-	for (u32 i=0;i<ARAM_SIZE/4;i++)
+	for (u32 i = 0; i < ARRAY_SIZE(EntryPoints); i++)
 		EntryPoints[i]=(void*)&arm_compilecode;
 }
 

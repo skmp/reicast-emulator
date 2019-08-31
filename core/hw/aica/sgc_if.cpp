@@ -389,7 +389,7 @@ struct ChannelEx
 
 		return rv;
 	}
-	__forceinline bool Step(SampleType& oLeft, SampleType& oRight, SampleType& oDsp, int32_t mixl, int32_t mixr)
+	__forceinline bool Step(SampleType& oLeft, SampleType& oRight, SampleType& oDsp)
 	{
 		if (!enabled)
 		{
@@ -440,7 +440,7 @@ struct ChannelEx
 	{
 		SampleType oLeft,oRight,oDsp;
 
-		Step(oLeft, oRight, oDsp, mixl, mixr);
+		Step(oLeft, oRight, oDsp);
 
 		*VolMix.DSPOut+=oDsp;
 		mixl+=oLeft;
@@ -1087,7 +1087,7 @@ u32 CalcAegSteps(float t)
 	//44.1*ms = samples
 	double scnt=44.1*t;
 	double steps=aeg_allsteps/scnt;
-	return (u32)(steps+0.5);
+	return (u32)lroundf(steps);
 }
 void sgc_Init()
 {
@@ -1172,7 +1172,7 @@ void WriteCommonReg8(u32 reg,u32 data)
 	if (reg==0x2804 || reg==0x2805)
 	{
 		dsp.RBL=(8192<<CommonData->RBL)-1;
-		dsp.RBP=( CommonData->RBP*2048&AICA_RAM_MASK);
+		dsp.RBP = (CommonData->RBP * 2048) & ARAM_MASK;
 		dsp.dyndirty=true;
 	}
 }
@@ -1180,9 +1180,6 @@ void WriteCommonReg8(u32 reg,u32 data)
 #define CDDA_SIZE  (2352/2)
 s16 cdda_sector[CDDA_SIZE]={0};
 u32 cdda_index=CDDA_SIZE<<1;
-
-
-SampleType mxlr[64];
 
 u32 samples_gen;
 
@@ -1194,6 +1191,7 @@ void AICA_Sample32()
 		return;
 	}
 
+	SampleType mxlr[64];
 	memset(mxlr,0,sizeof(mxlr));
 
 	//Generate 32 samples for each channel, before moving to next channel
@@ -1205,7 +1203,7 @@ void AICA_Sample32()
 		{
 			SampleType oLeft,oRight,oDsp;
 			//stop working on this channel if its turned off ...
-			if (!Chans[ch].Step(oLeft, oRight, oDsp, mxlr[i * 2 + 0], mxlr[i * 2 + 1]))
+			if (!Chans[ch].Step(oLeft, oRight, oDsp))
 				break;
 
 			sg++;

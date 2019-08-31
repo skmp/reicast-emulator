@@ -169,6 +169,7 @@ private:
 public :
 	sthread_t *hThread;
 	cThread(ThreadEntryFP* function,void* param);
+	~cThread() { WaitToEnd(); }
 	
 	void Start();
 	void WaitToEnd();
@@ -185,7 +186,7 @@ class cResetEvent
 
 public :
    bool state;
-	cResetEvent(bool State,bool Auto);
+	cResetEvent();
 	~cResetEvent();
 	void Set();		//Set state to signaled
 	void Reset();	//Set state to non signaled

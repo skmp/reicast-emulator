@@ -274,7 +274,7 @@ struct DCFlashChip : MemChip
 					state = FS_ReadAMDID1;
 				break;
 			default:
-				WARN_LOG(FLASHROM, "Unknown FlashWrite mode: %x", val);
+				INFO_LOG(FLASHROM, "Unknown FlashWrite mode: %x", val);
 				break;
 			}
 			break;

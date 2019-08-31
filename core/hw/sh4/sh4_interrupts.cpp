@@ -28,6 +28,14 @@ u16 IRLPriority=0x0246;
 #define GIPB(p) &INTC_IPRB.reg_data,4*p
 #define GIPC(p) &INTC_IPRC.reg_data,4*p
 
+struct InterptSourceList_Entry
+{
+	const u16* PrioReg;
+	u32 Shift;
+	u32 IntEvnCode;
+
+	u32 GetPrLvl() const { return ((*PrioReg)>>Shift)&0xF; }
+};
 
 //Can't be statically initialised because registers are dynamically allocated
 InterptSourceList_Entry InterruptSourceList[28];
@@ -39,35 +47,18 @@ DECL_ALIGN(64) u32 InterruptBit[32] = { 0 };
 //Maps sh4 interrupt level to inclusive bitfield
 DECL_ALIGN(64) u32 InterruptLevelBit[16] = { 0 };
 
+bool Do_Interrupt(u32 intEvn);
 bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect);
 
 u32 interrupt_vpend; // Vector of pending interrupts
 u32 interrupt_vmask; // Vector of masked interrupts             (-1 inhibits all interrupts)
 u32 decoded_srimask; // Vector of interrupts allowed by SR.IMSK (-1 inhibits all interrupts)
 
-static bool Do_Interrupt(u32 intEvn)
-{
-	CCN_INTEVT = intEvn;
-
-	ssr = sh4_sr_GetFull();
-	spc = next_pc;
-	sgr = r[15];
-	sr.BL = 1;
-	sr.MD = 1;
-	sr.RB = 1;
-	UpdateSR();
-	next_pc = vbr + 0x600;
-
-	return true;
-}
-
 //bit 0 ~ 27 : interrupt source 27:0. 0 = lowest level, 27 = highest level.
 static void recalc_pending_itrs(void)
 {
 	Sh4cntx.interrupt_pend=interrupt_vpend&interrupt_vmask&decoded_srimask;
 }
-
-#define GET_PRIO_LEVEL(intr) (((*intr.PrioReg) >> intr.Shift)&0xF)
 
 //Rebuild sorted interrupt id table (priorities were updated)
 void SIIDRebuild(void)
@@ -80,23 +71,22 @@ void SIIDRebuild(void)
 	//rebuild interrupt table
 	for (u32 ilevel=0;ilevel<16;ilevel++)
 	{
-		for (u32 isrc=0;isrc<28;isrc++)
-      {
-         if (GET_PRIO_LEVEL(InterruptSourceList[isrc]) != ilevel)
-            continue;
-
-         InterruptEnvId[cnt]=InterruptSourceList[isrc].IntEvnCode;
-         u32 p=InterruptBit[isrc]&vpend;
-         u32 m=InterruptBit[isrc]&vmask;
-         InterruptBit[isrc]=1<<cnt;
-         if (p)
-            interrupt_vpend|=InterruptBit[isrc];
-         if (m)
-            interrupt_vmask|=InterruptBit[isrc];
-         cnt++;
+	   for (u32 isrc=0;isrc<28;isrc++)
+       {
+	      if (InterruptSourceList[isrc].GetPrLvl()==ilevel)
+	      {
+             InterruptEnvId[cnt]=InterruptSourceList[isrc].IntEvnCode;
+             u32 p=InterruptBit[isrc]&vpend;
+             u32 m=InterruptBit[isrc]&vmask;
+             InterruptBit[isrc]=1<<cnt;
+             if (p)
+                interrupt_vpend|=InterruptBit[isrc];
+             if (m)
+                interrupt_vmask|=InterruptBit[isrc];
+             cnt++;
+          }
       }
-
-		InterruptLevelBit[ilevel]=(1<<cnt)-1;
+      InterruptLevelBit[ilevel]=(1<<cnt)-1;
 	}
 
 	SRdecode();
@@ -144,6 +134,22 @@ void ResetInterruptMask(InterruptID intr)
 	recalc_pending_itrs();
 }
 
+
+bool Do_Interrupt(u32 intEvn)
+{
+	CCN_INTEVT = intEvn;
+
+	ssr = sh4_sr_GetFull();
+	spc = next_pc;
+	sgr = r[15];
+	sr.BL = 1;
+	sr.MD = 1;
+	sr.RB = 1;
+	UpdateSR();
+	next_pc = vbr + 0x600;
+
+	return true;
+}
 
 bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect)
 {

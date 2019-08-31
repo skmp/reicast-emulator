@@ -105,8 +105,6 @@ static bool IsOnSh4Ram(u32 addr)
 	return false;
 }
 
-u32 dmacount=0;
-
 static void maple_DoDma(void)
 {
 	verify(SB_MDEN &1)
@@ -118,7 +116,6 @@ static void maple_DoDma(void)
 	bool last = false;
 	while (last != true)
 	{
-		dmacount++;
 		u32 header_1 = ReadMem32_nommu(addr);
 		u32 header_2 = ReadMem32_nommu(addr + 4) &0x1FFFFFE0;
 

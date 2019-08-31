@@ -11,9 +11,6 @@ u32 ta_type_lut[256];
 	Render/TA thread -> ta data -> draw lists -> draw
 */
 
-#define SQWC(x)
-#define DMAWC(x)
-
 #if HOST_CPU == CPU_X86
 #include <xmmintrin.h>
 struct simd256_t
@@ -307,13 +304,11 @@ INLINE void DYNACALL ta_thd_data32_i(void *data)
 
 void DYNACALL ta_vtx_data32(void* data)
 {
-	SQWC(1);
 	ta_thd_data32_i(data);
 }
 
 void ta_vtx_data(u32* data, u32 size)
 {
-   DMAWC(size);
 	while(size>4)
 	{
 		ta_thd_data32_i(data);

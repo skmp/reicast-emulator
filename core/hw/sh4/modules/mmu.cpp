@@ -77,8 +77,7 @@ defining NO_MMU disables the full mmu emulation
 template<bool internal = false>
 u32 mmu_full_lookup(u32 va, u32& idx, u32& rv);
 
-#define printf_mmu(...)
-#define printf_win32(...)
+#define printf_mmu(...) DEBUG_LOG(SH4, __VA_ARGS__)
 
 ReadMem8Func ReadMem8;
 ReadMem16Func ReadMem16;

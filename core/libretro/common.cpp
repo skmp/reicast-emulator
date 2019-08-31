@@ -456,7 +456,7 @@ static void enable_runfast(void)
 #if !defined(TARGET_NO_THREADS)
 
 //Thread class
-cThread::cThread(ThreadEntryFP* function,void* prm)
+cThread::cThread(ThreadEntryFP* function,void* prm) : hThread(NULL)
 {
 	Entry=function;
 	param=prm;
@@ -464,26 +464,30 @@ cThread::cThread(ThreadEntryFP* function,void* prm)
 
 void cThread::Start()
 {
+	verify(hThread == NULL);
    hThread = sthread_create((void (*)(void *))Entry, param);
 }
 
 void cThread::WaitToEnd()
 {
-   sthread_join(hThread);
+	if (hThread != NULL)
+	{
+		sthread_join(hThread);
+		hThread = NULL;
+	}
 }
 
 //End thread class
 #endif
 
 //cResetEvent Class
-cResetEvent::cResetEvent(bool State,bool Auto)
+cResetEvent::cResetEvent()
 {
-	//sem_init((sem_t*)hEvent, 0, State?1:0);
-	verify(State==false&&Auto==true);
 #if !defined(TARGET_NO_THREADS)
    mutx = slock_new();
    cond = scond_new();
 #endif
+   state = false;
 }
 
 cResetEvent::~cResetEvent()

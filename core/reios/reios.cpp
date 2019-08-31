@@ -397,14 +397,16 @@ static void reios_sys_gd2()
 
 static void reios_sys_misc()
 {
-	debugf("reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X", r[7], r[4], r[5], r[6]);
+	INFO_LOG(REIOS, "reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X", r[7], r[4], r[5], r[6]);
 	switch (r[4])
 	{
 	case 2:	// check disk
 		r[0] = 0;
+		// Reload part of IP.BIN bootstrap
+		libGDR_ReadSector(GetMemPtr(0x8c008100, 0), base_fad, 7, 2048);
 		break;
+
 	default:
-		r[0] = 0;
 		break;
 	}
 }

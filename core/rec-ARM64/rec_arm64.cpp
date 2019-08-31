@@ -353,8 +353,7 @@ public:
 	{
 		//printf("REC-ARM64 compiling %08x\n", block->addr);
 		this->block = block;
-		if (force_checks)
-			CheckBlock(block);
+		CheckBlock(force_checks, block);
 
 		// run register allocator
 		regalloc.DoAlloc(block);
@@ -1953,12 +1952,12 @@ private:
 		verify (GetCursorAddress<Instruction *>() - start_instruction == code_size * kInstructionSize);
 	}
 
-	void CheckBlock(RuntimeBlockInfo* block)
+	void CheckBlock(bool force_checks, RuntimeBlockInfo* block)
 	{
-		s32 sz = block->sh4_code_size;
+		if (!mmu_enabled() && !force_checks)
+			return;
 
 		Label blockcheck_fail;
-		Label blockcheck_success;
 
 		if (mmu_enabled())
 		{
@@ -1967,42 +1966,46 @@ private:
 			Cmp(w10, w11);
 			B(ne, &blockcheck_fail);
 		}
-		u8* ptr = GetMemPtr(block->addr, sz);
-		if (ptr == NULL)
-			return;
-
-		Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
-
-		while (sz > 0)
+		if (force_checks)
 		{
-			if (sz >= 8)
+			s32 sz = block->sh4_code_size;
+			u8* ptr = GetMemPtr(block->addr, sz);
+			if (ptr != NULL)
 			{
-				Ldr(x10, MemOperand(x9, 8, PostIndex));
-				Ldr(x11, *(u64*)ptr);
-				Cmp(x10, x11);
-				sz -= 8;
-				ptr += 8;
-			}
-			else if (sz >= 4)
-			{
-				Ldr(w10, MemOperand(x9, 4, PostIndex));
-				Ldr(w11, *(u32*)ptr);
-				Cmp(w10, w11);
-				sz -= 4;
-				ptr += 4;
-			}
-			else
-			{
-				Ldrh(w10, MemOperand(x9, 2, PostIndex));
-				Mov(w11, *(u16*)ptr);
-				Cmp(w10, w11);
-				sz -= 2;
-				ptr += 2;
-			}
-			B(ne, &blockcheck_fail);
-		}
-		B(&blockcheck_success);
+				Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
 
+				while (sz > 0)
+				{
+					if (sz >= 8)
+					{
+						Ldr(x10, MemOperand(x9, 8, PostIndex));
+						Ldr(x11, *(u64*)ptr);
+						Cmp(x10, x11);
+						sz -= 8;
+						ptr += 8;
+					}
+					else if (sz >= 4)
+					{
+						Ldr(w10, MemOperand(x9, 4, PostIndex));
+						Ldr(w11, *(u32*)ptr);
+						Cmp(w10, w11);
+						sz -= 4;
+						ptr += 4;
+					}
+					else
+					{
+						Ldrh(w10, MemOperand(x9, 2, PostIndex));
+						Mov(w11, *(u16*)ptr);
+						Cmp(w10, w11);
+						sz -= 2;
+						ptr += 2;
+					}
+					B(ne, &blockcheck_fail);
+				}
+			}
+		}
+		Label blockcheck_success;
+		B(&blockcheck_success);
 		Bind(&blockcheck_fail);
 		Ldr(w0, block->addr);
 		TailCallRuntime(ngen_blockcheckfail);
@@ -2023,7 +2026,7 @@ private:
 			GenBranch(*arm64_no_update);
 
 			Bind(&fpu_enabled);
-	}
+		}
 	}
 
 	void shil_param_to_host_reg(const shil_param& param, const Register& reg)

@@ -152,14 +152,6 @@ bool rend_frame(TA_context* ctx, bool draw_osd)
 	  rend_init_renderer();
    }
    bool proc = renderer->Process(ctx);
-	if ((ctx->rend.isRTT || ctx->rend.isRenderFramebuffer) && swap_pending)
-	{
-		// If there is a frame swap pending, we want to do it now.
-		// The current frame "swapping" detection mechanism (using FB_R_SOF1) doesn't work
-		// if a RTT frame is rendered in between.
-		renderer->Present();
-		swap_pending = false;
-	}
 #if !defined(TARGET_NO_THREADS)
    if (settings.rend.ThreadedRendering && (!proc || (!ctx->rend.isRenderFramebuffer && !ctx->rend.isRTT)))
 	   // If rendering to texture, continue locking until the frame is rendered
@@ -176,26 +168,39 @@ bool rend_single_frame(void)
 	while (true)
 	{
 		//wait render start only if no frame pending
-		do
+		if (_pvrrc == NULL)
 		{
-#if !defined(TARGET_NO_THREADS)
-			if (settings.rend.ThreadedRendering)
+			do
 			{
-				if (!rs.Wait(100))
-					return false;
-				if (do_swap)
+#if !defined(TARGET_NO_THREADS)
+				if (settings.rend.ThreadedRendering)
 				{
-					do_swap = false;
-					rs.Set();	// set the semaphone in case a render is pending
-					return true;
+					if (!rs.Wait(100))
+						return false;
+					if (do_swap)
+					{
+						do_swap = false;
+						rs.Set();	// set the semaphore in case a render is pending
+						return true;
+					}
 				}
-			}
 #endif
-			_pvrrc = DequeueRender();
+				_pvrrc = DequeueRender();
+			}
+			while (!_pvrrc);
 		}
-		while (!_pvrrc);
+		if ((_pvrrc->rend.isRTT || _pvrrc->rend.isRenderFramebuffer) && swap_pending)
+		{
+			// If there is a frame swap pending, we want to do it now.
+			// The current frame "swapping" detection mechanism (using FB_R_SOF1) doesn't work
+			// if a RTT frame is rendered in between.
+			swap_pending = false;
+			return true;
+		}
+
 		bool do_swp = rend_frame(_pvrrc, true);
-		swap_pending = do_swp && !_pvrrc->rend.isRenderFramebuffer && FB_R_SOF1 != FB_W_SOF1;
+		swap_pending = do_swp && !_pvrrc->rend.isRenderFramebuffer && FB_R_SOF1 != FB_W_SOF1
+				 && settings.rend.ThreadedRendering;
 
 		if (settings.rend.ThreadedRendering && _pvrrc->rend.isRTT)
 			re.Set();
@@ -204,8 +209,8 @@ bool rend_single_frame(void)
 		FinishRender(_pvrrc);
 		_pvrrc=0;
 
-		if ((do_swp && !swap_pending) || !settings.rend.ThreadedRendering)
-			return do_swp;
+		if (do_swp && !swap_pending)
+			return true;
 	}
 }
 

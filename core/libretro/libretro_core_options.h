@@ -7,138 +7,33 @@
 #include <libretro.h>
 #include <retro_inline.h>
 
+#include "libretro_core_option_defines.h"
+
+#ifndef HAVE_NO_LANGEXTRA
+#include "libretro_core_options_intl.h"
+#endif
+
+/*
+ ********************************
+ * VERSION: 1.3
+ ********************************
+ *
+ * - 1.3: Move translations to libretro_core_options_intl.h
+ *        - libretro_core_options_intl.h includes BOM and utf-8
+ *          fix for MSVC 2010-2013
+ *        - Added HAVE_NO_LANGEXTRA flag to disable translations
+ *          on platforms/compilers without BOM support
+ * - 1.2: Use core options v1 interface when
+ *        RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION is >= 1
+ *        (previously required RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION == 1)
+ * - 1.1: Support generation of core options v0 retro_core_option_value
+ *        arrays containing options with a single value
+ * - 1.0: First commit
+*/
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define CORE_OPTION_NAME "reicast"
-
-#define COLORS_STRING \
-      {"BLACK 02",          "Black" }, \
-      {"BLUE 03",           "Blue" }, \
-      {"LIGHT_BLUE 04",     "Light Blue" }, \
-      {"GREEN 05",          "Green" }, \
-      {"CYAN 06",           "Cyan" }, \
-      {"CYAN_BLUE 07",      "Cyan Blue" }, \
-      {"LIGHT_GREEN 08",    "Light Green" }, \
-      {"CYAN_GREEN 09",     "Cyan Green" }, \
-      {"LIGHT_CYAN 10",     "Light Cyan" }, \
-      {"RED 11",            "Red" }, \
-      {"PURPLE 12",         "Purple" }, \
-      {"LIGHT_PURPLE 13",   "Light Purple" }, \
-      {"YELLOW 14",         "Yellow" }, \
-      {"GRAY 15",           "Gray" }, \
-      {"LIGHT_PURPLE_2 16", "Light Purple (2)" }, \
-      {"LIGHT_GREEN_2 17",  "Light Green (2)" }, \
-      {"LIGHT_GREEN_3 18",  "Light Green (3)" }, \
-      {"LIGHT_CYAN_2 19",   "Light Cyan (2)" }, \
-      {"LIGHT_RED_2 20",    "Light Red (2)" }, \
-      {"MAGENTA 21",        "Magenta" }, \
-      {"LIGHT_PURPLE_2 22", "Light Purple (2)" }, \
-      {"LIGHT_ORANGE 23",   "Light Orange" }, \
-      {"ORANGE 24",         "Orange" }, \
-      {"LIGHT_PURPLE_3 25", "Light Purple (3)" }, \
-      {"LIGHT_YELLOW 26",   "Light Yellow" }, \
-      {"LIGHT_YELLOW_2 27", "Light Yellow (2)" }, \
-      {"WHITE 28",          "White" }, \
-      { NULL, NULL },
-
-#define VMU_SCREEN_PARAMS(num) \
-{ \
-   CORE_OPTION_NAME "_vmu" #num "_screen_display", \
-   "VMU Screen " #num " Display", \
-   "", \
-   { \
-      { "disabled", NULL }, \
-      { "enabled",  NULL }, \
-      { NULL, NULL }, \
-   }, \
-   "disabled", \
-}, \
-{ \
-CORE_OPTION_NAME "_vmu" #num "_screen_position", \
-"VMU Screen " #num " Position", \
-"", \
-{ \
-   { "Upper Left",  NULL }, \
-   { "Upper Right", NULL }, \
-   { "Lower Left",  NULL }, \
-   { "Lower Right", NULL }, \
-   { NULL, NULL }, \
-}, \
-   "Upper Left", \
-}, \
-{ \
-CORE_OPTION_NAME "_vmu" #num "_screen_size_mult", \
-"VMU Screen " #num " Size", \
-"", \
-{ \
-   { "1x", NULL }, \
-   { "2x", NULL }, \
-   { "3x", NULL }, \
-   { "4x", NULL }, \
-   { "5x", NULL }, \
-   { NULL, NULL }, \
-}, \
-   "1x", \
-}, \
-{ \
-CORE_OPTION_NAME "_vmu" #num "_pixel_on_color", \
-"VMU Screen " #num " Pixel On Color", \
-"", \
-{ \
-   { "DEFAULT_ON 00",  "Default ON" }, \
-   { "DEFAULT_OFF 01", "Default OFF" }, \
-COLORS_STRING \
-}, \
-   "DEFAULT_ON 00", \
-}, \
-{ \
-CORE_OPTION_NAME "_vmu" #num "_pixel_off_color", \
-"VMU Screen " #num " Pixel Off Color", \
-"", \
-{ \
-   { "DEFAULT_OFF 01", "Default OFF" }, \
-   { "DEFAULT_ON 00",  "Default ON" }, \
-COLORS_STRING \
-}, \
-   "DEFAULT_OFF 01", \
-}, \
-{ \
-CORE_OPTION_NAME "_vmu" #num "_screen_opacity", \
-"VMU Screen " #num " Opacity", \
-"", \
-{ \
-   { "10%",  NULL }, \
-   { "20%",  NULL }, \
-   { "30%",  NULL }, \
-   { "40%",  NULL }, \
-   { "50%",  NULL }, \
-   { "60%",  NULL }, \
-   { "70%",  NULL }, \
-   { "80%",  NULL }, \
-   { "90%",  NULL }, \
-   { "100%", NULL }, \
-   { NULL,   NULL }, \
-}, \
-   "100%", \
-},
-
-#define LIGHTGUN_PARAMS(num) \
-{ \
-CORE_OPTION_NAME "_lightgun" #num "_crosshair", \
-"Gun Crosshair " #num " Display", \
-"", \
-{ \
-   { "disabled", NULL }, \
-   { "White",    NULL }, \
-   { "Red",      NULL }, \
-   { "Green",    NULL }, \
-   { "Blue",     NULL }, \
-   { NULL,       NULL }, \
-}, \
-   "disabled", \
-},
 
 /*
  ********************************
@@ -154,6 +49,133 @@ CORE_OPTION_NAME "_lightgun" #num "_crosshair", \
  *   is not available
  * - Will be used as a fallback for any missing entries in
  *   frontend language definition */
+
+#define COLORS_STRING \
+      { "BLACK 02",          "Black" }, \
+      { "BLUE 03",           "Blue" }, \
+      { "LIGHT_BLUE 04",     "Light Blue" }, \
+      { "GREEN 05",          "Green" }, \
+      { "CYAN 06",           "Cyan" }, \
+      { "CYAN_BLUE 07",      "Cyan Blue" }, \
+      { "LIGHT_GREEN 08",    "Light Green" }, \
+      { "CYAN_GREEN 09",     "Cyan Green" }, \
+      { "LIGHT_CYAN 10",     "Light Cyan" }, \
+      { "RED 11",            "Red" }, \
+      { "PURPLE 12",         "Purple" }, \
+      { "LIGHT_PURPLE 13",   "Light Purple" }, \
+      { "YELLOW 14",         "Yellow" }, \
+      { "GRAY 15",           "Gray" }, \
+      { "LIGHT_PURPLE_2 16", "Light Purple (2)" }, \
+      { "LIGHT_GREEN_2 17",  "Light Green (2)" }, \
+      { "LIGHT_GREEN_3 18",  "Light Green (3)" }, \
+      { "LIGHT_CYAN_2 19",   "Light Cyan (2)" }, \
+      { "LIGHT_RED_2 20",    "Light Red (2)" }, \
+      { "MAGENTA 21",        "Magenta" }, \
+      { "LIGHT_PURPLE_2 22", "Light Purple (2)" }, \
+      { "LIGHT_ORANGE 23",   "Light Orange" }, \
+      { "ORANGE 24",         "Orange" }, \
+      { "LIGHT_PURPLE_3 25", "Light Purple (3)" }, \
+      { "LIGHT_YELLOW 26",   "Light Yellow" }, \
+      { "LIGHT_YELLOW_2 27", "Light Yellow (2)" }, \
+      { "WHITE 28",          "White" }, \
+      { NULL, NULL },
+
+#define VMU_SCREEN_PARAMS(num) \
+{ \
+   CORE_OPTION_NAME "_vmu" #num "_screen_display", \
+   "VMU Screen " #num " Display", \
+   "", \
+   { \
+      { "disabled", NULL }, \
+      { "enabled",  NULL }, \
+      { NULL, NULL }, \
+   }, \
+   "disabled", \
+}, \
+{ \
+   CORE_OPTION_NAME "_vmu" #num "_screen_position", \
+   "VMU Screen " #num " Position", \
+   "", \
+   { \
+      { "Upper Left",  NULL }, \
+      { "Upper Right", NULL }, \
+      { "Lower Left",  NULL }, \
+      { "Lower Right", NULL }, \
+      { NULL, NULL }, \
+   }, \
+   "Upper Left", \
+}, \
+{ \
+   CORE_OPTION_NAME "_vmu" #num "_screen_size_mult", \
+   "VMU Screen " #num " Size", \
+   "", \
+   { \
+      { "1x", NULL }, \
+      { "2x", NULL }, \
+      { "3x", NULL }, \
+      { "4x", NULL }, \
+      { "5x", NULL }, \
+      { NULL, NULL }, \
+   }, \
+   "1x", \
+}, \
+{ \
+   CORE_OPTION_NAME "_vmu" #num "_pixel_on_color", \
+   "VMU Screen " #num " Pixel On Color", \
+   "", \
+   { \
+      { "DEFAULT_ON 00",  "Default ON" }, \
+      { "DEFAULT_OFF 01", "Default OFF" }, \
+      COLORS_STRING \
+   }, \
+   "DEFAULT_ON 00", \
+}, \
+{ \
+   CORE_OPTION_NAME "_vmu" #num "_pixel_off_color", \
+   "VMU Screen " #num " Pixel Off Color", \
+   "", \
+   { \
+      { "DEFAULT_OFF 01", "Default OFF" }, \
+      { "DEFAULT_ON 00",  "Default ON" }, \
+      COLORS_STRING \
+   }, \
+   "DEFAULT_OFF 01", \
+}, \
+{ \
+   CORE_OPTION_NAME "_vmu" #num "_screen_opacity", \
+   "VMU Screen " #num " Opacity", \
+   "", \
+   { \
+      { "10%",  NULL }, \
+      { "20%",  NULL }, \
+      { "30%",  NULL }, \
+      { "40%",  NULL }, \
+      { "50%",  NULL }, \
+      { "60%",  NULL }, \
+      { "70%",  NULL }, \
+      { "80%",  NULL }, \
+      { "90%",  NULL }, \
+      { "100%", NULL }, \
+      { NULL,   NULL }, \
+   }, \
+   "100%", \
+},
+
+#define LIGHTGUN_PARAMS(num) \
+{ \
+   CORE_OPTION_NAME "_lightgun" #num "_crosshair", \
+   "Gun Crosshair " #num " Display", \
+   "", \
+   { \
+      { "disabled", NULL }, \
+      { "White",    NULL }, \
+      { "Red",      NULL }, \
+      { "Green",    NULL }, \
+      { "Blue",     NULL }, \
+      { NULL,       NULL }, \
+   }, \
+   "disabled", \
+},
 
 struct retro_core_option_definition option_defs_us[] = {
 #if ((FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86) || (HOST_CPU == CPU_ARM) || (HOST_CPU == CPU_ARM64) || (HOST_CPU == CPU_X64)) && defined(TARGET_NO_JIT)
@@ -680,48 +702,13 @@ struct retro_core_option_definition option_defs_us[] = {
    { NULL, NULL, NULL, {{0}}, NULL },
 };
 
-/* RETRO_LANGUAGE_JAPANESE */
-
-/* RETRO_LANGUAGE_FRENCH */
-
-/* RETRO_LANGUAGE_SPANISH */
-
-/* RETRO_LANGUAGE_GERMAN */
-
-/* RETRO_LANGUAGE_ITALIAN */
-
-/* RETRO_LANGUAGE_DUTCH */
-
-/* RETRO_LANGUAGE_PORTUGUESE_BRAZIL */
-
-/* RETRO_LANGUAGE_PORTUGUESE_PORTUGAL */
-
-/* RETRO_LANGUAGE_RUSSIAN */
-
-/* RETRO_LANGUAGE_KOREAN */
-
-/* RETRO_LANGUAGE_CHINESE_TRADITIONAL */
-
-/* RETRO_LANGUAGE_CHINESE_SIMPLIFIED */
-
-/* RETRO_LANGUAGE_ESPERANTO */
-
-/* RETRO_LANGUAGE_POLISH */
-
-/* RETRO_LANGUAGE_VIETNAMESE */
-
-/* RETRO_LANGUAGE_ARABIC */
-
-/* RETRO_LANGUAGE_GREEK */
-
-/* RETRO_LANGUAGE_TURKISH */
-
 /*
  ********************************
  * Language Mapping
  ********************************
 */
 
+#ifndef HAVE_NO_LANGEXTRA
 struct retro_core_option_definition *option_defs_intl[RETRO_LANGUAGE_LAST] = {
    option_defs_us, /* RETRO_LANGUAGE_ENGLISH */
    NULL,           /* RETRO_LANGUAGE_JAPANESE */
@@ -741,8 +728,9 @@ struct retro_core_option_definition *option_defs_intl[RETRO_LANGUAGE_LAST] = {
    NULL,           /* RETRO_LANGUAGE_VIETNAMESE */
    NULL,           /* RETRO_LANGUAGE_ARABIC */
    NULL,           /* RETRO_LANGUAGE_GREEK */
-   NULL,           /* RETRO_LANGUAGE_TURKISH */
+   option_defs_tr, /* RETRO_LANGUAGE_TURKISH */
 };
+#endif
 
 /*
  ********************************
@@ -765,8 +753,9 @@ static INLINE void libretro_set_core_options(retro_environment_t environ_cb)
    if (!environ_cb)
       return;
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION, &version) && (version == 1))
+   if (environ_cb(RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION, &version) && (version >= 1))
    {
+#ifndef HAVE_NO_LANGEXTRA
       struct retro_core_options_intl core_options_intl;
       unsigned language = 0;
 
@@ -778,6 +767,9 @@ static INLINE void libretro_set_core_options(retro_environment_t environ_cb)
          core_options_intl.local = option_defs_intl[language];
 
       environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL, &core_options_intl);
+#else
+      environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS, &option_defs_us);
+#endif
    }
    else
    {
@@ -835,11 +827,7 @@ static INLINE void libretro_set_core_options(retro_environment_t environ_cb)
                   break;
             }
 
-            /* Build values string
-             * > Note: flycast is unusual in that we have to
-             *   support core options with only one value
-             *   (the number of '_cpu_mode' options depends
-             *   upon compiler flags...) */
+            /* Build values string */
             if (num_values > 0)
             {
                size_t j;
@@ -872,7 +860,7 @@ static INLINE void libretro_set_core_options(retro_environment_t environ_cb)
          variables[i].key   = key;
          variables[i].value = values_buf[i];
       }
-      
+
       /* Set variables */
       environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
 

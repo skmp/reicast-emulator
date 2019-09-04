@@ -393,7 +393,9 @@ int naomi_cart_GetSystemType(const char* file)
 
    const char *p = strrchr(file, '/');
 #ifdef _WIN32
-   p = strrchr(p == NULL ? file : p, '\\');
+   const char *p2 = strrchr(file, '\\');
+   if (p2 > p)
+   	p = p2;
 #endif
    if (p == NULL)
 	  p = file;

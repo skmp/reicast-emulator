@@ -199,7 +199,7 @@ s32 libAICA_Init(void)
    for (int i=0;i<3;i++)
 		timers[i].Init(aica_reg,i);
 
-	return rv_ok;
+	return 0;
 }
 
 void libAICA_Reset(bool manual)

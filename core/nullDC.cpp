@@ -81,7 +81,7 @@ s32 plugins_Init(char *s, size_t len)
    if (settings.System != DC_PLATFORM_DREAMCAST)
    {
       if (!naomi_cart_SelectFile(s, len))
-         return rv_serror;
+         return -1;
    }
 
    if (s32 rv = libAICA_Init())
@@ -95,7 +95,7 @@ s32 plugins_Init(char *s, size_t len)
 
 
 
-   return rv_ok;
+   return 0;
 }
 
 void plugins_Term(void)
@@ -417,17 +417,17 @@ int dc_init(int argc,wchar* argv[])
 
 	dc_reset();
 
-   switch (settings.System)
-   {
-      case DC_PLATFORM_DREAMCAST:
-		reios_disk_id();
-		LoadSpecialSettings();
-		break;
-      case DC_PLATFORM_ATOMISWAVE:
-      case DC_PLATFORM_NAOMI:
-         LoadSpecialSettingsNaomi(naomi_game_id);
-         break;
-   }
+	switch (settings.System)
+	{
+		case DC_PLATFORM_DREAMCAST:
+			reios_disk_id();
+			LoadSpecialSettings();
+			break;
+		case DC_PLATFORM_ATOMISWAVE:
+		case DC_PLATFORM_NAOMI:
+			LoadSpecialSettingsNaomi(naomi_game_id);
+			break;
+	}
 
 	return rv;
 }

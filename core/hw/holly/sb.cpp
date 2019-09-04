@@ -752,7 +752,15 @@ void sb_Init(void)
 
 void sb_Reset(bool Manual)
 {
-   if (settings.System == DC_PLATFORM_DREAMCAST)
+	if (!Manual)
+	{
+		for (u32 i = 0; i < sb_regs.Size; i++)
+			sb_regs[i].reset();
+	}
+	SB_ISTNRM = 0;
+	SB_FFST_rc = 0;
+	SB_FFST = 0;
+	if (settings.System == DC_PLATFORM_DREAMCAST)
    	ModemTerm();
 	asic_reg_Reset(Manual);
    if (settings.System != DC_PLATFORM_DREAMCAST)

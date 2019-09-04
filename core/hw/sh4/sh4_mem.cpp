@@ -204,7 +204,7 @@ void mem_Reset(bool Manual)
 
 	//Reset registers
 	sh4_area0_Reset(Manual);
-	sh4_mmr_reset();
+	sh4_mmr_reset(Manual);
 	MMU_reset();
 }
 

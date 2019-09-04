@@ -77,11 +77,11 @@ void libGDR_Reset(bool Manual)
 s32 libGDR_Init()
 {
 	if (!InitDrive())
-		return rv_serror;
+		return -1;
 	libCore_gdrom_disc_change();
 	LoadSettings();
 	settings.imgread.PatchRegion=true;
-	return rv_ok;
+	return 0;
 }
 
 //called when exiting from sh4 thread , from the new thread context (for any thread specific init) :P

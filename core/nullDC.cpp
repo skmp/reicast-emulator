@@ -146,9 +146,12 @@ static void LoadSpecialSettings(void)
 {
    unsigned i;
 
-   NOTICE_LOG(BOOT, "[LUT]: Product number: %s.", reios_product_number);
-	if (reios_windows_ce || settings.dreamcast.ForceWinCE
-			|| !strncmp("T26702N", reios_product_number, 7)) // PBA Tour Bowling 2001
+   char prod_id[sizeof(ip_meta.product_number) + 1] = {0};
+   memcpy(prod_id, ip_meta.product_number, sizeof(ip_meta.product_number));
+
+   NOTICE_LOG(BOOT, "[LUT]: Product number: %s.", prod_id);
+	if (ip_meta.isWindowsCE() || settings.dreamcast.ForceWinCE
+			|| !strncmp("T26702N", prod_id, 7)) // PBA Tour Bowling 2001
 	{
 		NOTICE_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
 		settings.rend.ExtraDepthScale = 0.1;
@@ -157,7 +160,7 @@ static void LoadSpecialSettings(void)
 	}
    for (i = 0; i < sizeof(lut_games)/sizeof(lut_games[0]); i++)
    {
-      if (strstr(lut_games[i].product_number, reios_product_number))
+      if (!strncmp(lut_games[i].product_number, prod_id, sizeof(prod_id) - 1))
       {
       	INFO_LOG(BOOT, "[LUT]: Found game in LUT database..");
 
@@ -212,6 +215,52 @@ static void LoadSpecialSettings(void)
          break;
       }
    }
+	std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
+	bool region_usa = areas.find('U') != std::string::npos;
+	bool region_eu = areas.find('E') != std::string::npos;
+	bool region_japan = areas.find('J') != std::string::npos;
+	if (region_usa || region_eu || region_japan)
+	{
+		switch (settings.dreamcast.region)
+		{
+		case 0: // Japan
+			if (!region_japan)
+			{
+				NOTICE_LOG(BOOT, "Japan region not supported. Using %s instead", region_usa ? "USA" : "Europe");
+				settings.dreamcast.region = region_usa ? 1 : 2;
+			}
+			break;
+		case 1: // USA
+			if (!region_usa)
+			{
+				NOTICE_LOG(BOOT, "USA region not supported. Using %s instead", region_eu ? "Europe" : "Japan");
+				settings.dreamcast.region = region_eu ? 2 : 0;
+			}
+			break;
+		case 2: // Europe
+			if (!region_eu)
+			{
+				NOTICE_LOG(BOOT, "Europe region not supported. Using %s instead", region_usa ? "USA" : "Japan");
+				settings.dreamcast.region = region_usa ? 1 : 0;
+			}
+			break;
+		case 3: // Default
+			if (region_usa)
+				settings.dreamcast.region = 1;
+			else if (region_eu)
+				settings.dreamcast.region = 2;
+			else
+				settings.dreamcast.region = 0;
+				break;
+		}
+	}
+	else
+		WARN_LOG(BOOT, "No region specified in IP.BIN");
+	if (settings.dreamcast.cable <= 1 && !ip_meta.supportsVGA())
+	{
+		NOTICE_LOG(BOOT, "Game doesn't support VGA. Using TV Composite instead");
+		settings.dreamcast.cable = 3;
+	}
 }
 
 static void LoadSpecialSettingsNaomi(const char *name)
@@ -428,6 +477,7 @@ int dc_init(int argc,wchar* argv[])
 			LoadSpecialSettingsNaomi(naomi_game_id);
 			break;
 	}
+	FixUpFlash();
 
 	return rv;
 }

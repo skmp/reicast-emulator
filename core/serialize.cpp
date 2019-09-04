@@ -521,19 +521,6 @@ extern unsigned VRAM_MASK;
 //extern bool descrambl;
 //one time init
 //extern bool bootfile_inited;
-//all these reios_?? are one-time inits
-//extern char reios_bootfile[32];
-//extern char reios_hardware_id[17];
-//extern char reios_maker_id[17];
-//extern char reios_device_info[17];
-//extern char reios_area_symbols[9];
-//extern char reios_peripherals[9];
-//extern char reios_product_number[11];
-//extern char reios_product_version[7];
-//extern char reios_releasedate[17];
-//extern char reios_boot_filename[17];
-//extern char reios_software_company[17];
-//extern char reios_software_name[129];
 //one time init
 //extern map<u32, hook_fp*> hooks;
 //one time init

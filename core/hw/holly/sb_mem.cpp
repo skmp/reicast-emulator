@@ -66,6 +66,118 @@ static const char *get_rom_names(void)
    return NULL; 
 }
 
+static void add_isp_to_nvmem(DCFlashChip *flash)
+{
+	u8 block[64];
+	if (!flash->ReadBlock(FLASH_PT_USER, FLASH_USER_INET, block))
+	{
+		memset(block, 0, sizeof(block));
+		strcpy((char *)block + 2, "PWBrowser");
+		block[12] = 0x1c;
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET, block);
+
+		memset(block, 0, sizeof(block));
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET + 1, block);
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET + 2, block);
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET + 3, block);
+		memset(block + 27, 0xFF, sizeof(block) - 27);
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET + 4, block);
+		memset(block, 0xFF, sizeof(block));
+		for (u32 i = FLASH_USER_INET + 5; i <= 0xbf; i++)
+			flash->WriteBlock(FLASH_PT_USER, i, block);
+
+		flash_isp1_block isp1;
+		memset(&isp1, 0, sizeof(isp1));
+		isp1._unknown[0] = 0xFF;
+		isp1._unknown[1] = 0xFE;
+		isp1._unknown[2] = 0xFF;
+		isp1._unknown[3] = 0xFF;
+		memcpy(isp1.sega, "SEGA", 4);
+		strcpy(isp1.username, "flycast1");
+		strcpy(isp1.password, "password");
+		strcpy(isp1.phone, "1234567");
+		if (flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1, &isp1) != 1)
+			WARN_LOG(FLASHROM, "Failed to save ISP information to flash RAM");
+
+		memset(block, 0xFF, sizeof(block));
+		block[34] = 0;
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 1, block);
+		memset(block, 0xFF, sizeof(block));
+		block[9] = 0;
+		memset(block + 49, 0, 13);
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 2, block);
+		memset(block, 0xFF, sizeof(block));
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 3, block);
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 4, block);
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 5, block);
+
+		flash_isp2_block isp2;
+		memset(&isp2, 0, sizeof(isp2));
+		memcpy(isp2.sega, "SEGA", 4);
+		strcpy(isp2.username, "flycast2");
+		strcpy(isp2.password, "password");
+		strcpy(isp2.phone, "1234567");
+		if (flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP2, &isp2) != 1)
+			WARN_LOG(FLASHROM, "Failed to save ISP information to flash RAM");
+		u8 block[64];
+		memset(block, 0xFF, sizeof(block));
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP2 + 1, block);
+		block[9] = 0;
+		memset(block + 49, 0, 13);
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP2 + 2, block);
+		for (u32 i = FLASH_USER_ISP2 + 3; i <= 0xEA; i++)
+			flash->WriteBlock(FLASH_PT_USER, i, block);
+	}
+}
+
+void FixUpFlash()
+{
+	if (settings.System == DC_PLATFORM_DREAMCAST || settings.System == DC_PLATFORM_DEV_UNIT)
+	{
+     	sys_nvmem_flash.Validate();
+     	// overwrite factory flash settings
+     	if (settings.dreamcast.region <= 2)
+     	{
+     		sys_nvmem_flash.data[0x1a002] = '0' + settings.dreamcast.region;
+     		sys_nvmem_flash.data[0x1a0a2] = '0' + settings.dreamcast.region;
+     	}
+     	if (settings.dreamcast.language <= 5)
+     	{
+     		sys_nvmem_flash.data[0x1a003] = '0' + settings.dreamcast.language;
+     		sys_nvmem_flash.data[0x1a0a3] = '0' + settings.dreamcast.language;
+     	}
+     	if (settings.dreamcast.broadcast <= 3)
+     	{
+     		sys_nvmem_flash.data[0x1a004] = '0' + settings.dreamcast.broadcast;
+     		sys_nvmem_flash.data[0x1a0a4] = '0' + settings.dreamcast.broadcast;
+     	}
+     	// overwrite user settings
+     	struct flash_syscfg_block syscfg;
+     	int res = sys_nvmem_flash.ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
+
+     	if (!res)
+     	{
+     		// write out default settings
+     		memset(&syscfg, 0xff, sizeof(syscfg));
+     		syscfg.time_lo = 0;
+     		syscfg.time_hi = 0;
+     		syscfg.lang = 0;
+     		syscfg.mono = 0;
+     		syscfg.autostart = 1;
+     	}
+     	u32 time = GetRTC_now();
+     	syscfg.time_lo = time & 0xffff;
+     	syscfg.time_hi = time >> 16;
+     	if (settings.dreamcast.language <= 5)
+     		syscfg.lang = settings.dreamcast.language;
+
+     	if (sys_nvmem_flash.WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
+     		WARN_LOG(FLASHROM, "Failed to save time and language to flash RAM");
+
+     	add_isp_to_nvmem(&sys_nvmem_flash);
+	}
+}
+
 static bool nvmem_load(const string& root,
       const string& s1, const char *s2)
 {
@@ -73,50 +185,8 @@ static bool nvmem_load(const string& root,
    {
       case DC_PLATFORM_DREAMCAST:
       case DC_PLATFORM_DEV_UNIT:
-      {
          sys_nvmem_flash.Load(root, get_rom_prefix(), s1.c_str(), s2);
-        	sys_nvmem_flash.Validate();
-        	// overwrite factory flash settings
-        	if (settings.dreamcast.region <= 2)
-        	{
-        		sys_nvmem_flash.data[0x1a002] = '0' + settings.dreamcast.region;
-        		sys_nvmem_flash.data[0x1a0a2] = '0' + settings.dreamcast.region;
-        	}
-        	if (settings.dreamcast.language <= 5)
-        	{
-        		sys_nvmem_flash.data[0x1a003] = '0' + settings.dreamcast.language;
-        		sys_nvmem_flash.data[0x1a0a3] = '0' + settings.dreamcast.language;
-        	}
-        	if (settings.dreamcast.broadcast <= 3)
-        	{
-        		sys_nvmem_flash.data[0x1a004] = '0' + settings.dreamcast.broadcast;
-        		sys_nvmem_flash.data[0x1a0a4] = '0' + settings.dreamcast.broadcast;
-        	}
-        	// overwrite user settings
-        	struct flash_syscfg_block syscfg;
-        	int res = sys_nvmem_flash.ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
-
-        	if (!res)
-        	{
-        		// write out default settings
-        		memset(&syscfg, 0xff, sizeof(syscfg));
-        		syscfg.time_lo = 0;
-        		syscfg.time_hi = 0;
-        		syscfg.lang = 0;
-        		syscfg.mono = 0;
-        		syscfg.autostart = 1;
-        	}
-        	u32 time = GetRTC_now();
-        	syscfg.time_lo = time & 0xffff;
-        	syscfg.time_hi = time >> 16;
-        	if (settings.dreamcast.language <= 5)
-        		syscfg.lang = settings.dreamcast.language;
-
-        	if (sys_nvmem_flash.WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
-        		WARN_LOG(FLASHROM, "Failed to save time and language to flash RAM");
-
         	return true;
-      }
       case DC_PLATFORM_ATOMISWAVE:
          return sys_nvmem_sram.Load(nvmem_file) && sys_nvmem_flash.Load(nvmem_file2);
       case DC_PLATFORM_NAOMI:

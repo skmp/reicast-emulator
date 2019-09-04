@@ -68,7 +68,7 @@ static u32 decode_iso733(iso733_t v)
 			| ((v >> 8) & 0xFF000000);
 }
 
-static bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN")
+static bool reios_locate_bootfile(const char* bootfile)
 {
 	reios_pre_init();
 
@@ -153,44 +153,21 @@ static bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN")
 	return false;
 }
 
-char reios_hardware_id[17];
-char reios_maker_id[17];
-char reios_device_info[17];
-char reios_area_symbols[9];
-char reios_peripherals[9];
-char reios_product_number[11];
-char reios_product_version[7];
-char reios_releasedate[17];
-char reios_boot_filename[17];
-char reios_software_company[17];
-char reios_software_name[129];
-char reios_bootfile[32];
-bool reios_windows_ce = false;
+ip_meta_t ip_meta;
 
-char* reios_disk_id() {
+void reios_disk_id() {
 
 	reios_pre_init();
 
 	u8 buf[2048];
 	libGDR_ReadSector(buf, base_fad, 1, sizeof(buf));
-	memcpy(&reios_hardware_id[0], &buf[0], 16 * sizeof(char));
-	memcpy(&reios_maker_id[0], &buf[16],   16 * sizeof(char));
-	memcpy(&reios_device_info[0], &buf[32],   16 * sizeof(char));
-	memcpy(&reios_area_symbols[0], &buf[48],   8 * sizeof(char));
-	memcpy(&reios_peripherals[0], &buf[56],   8 * sizeof(char));
-	memcpy(&reios_product_number[0], &buf[64],   10 * sizeof(char));
-	memcpy(&reios_product_version[0], &buf[74],   6 * sizeof(char));
-	memcpy(&reios_releasedate[0], &buf[80],   16 * sizeof(char));
-	memcpy(&reios_boot_filename[0], &buf[96],   16 * sizeof(char));
-	memcpy(&reios_software_company[0], &buf[112],   16 * sizeof(char));
-	memcpy(&reios_software_name[0], &buf[128],   128 * sizeof(char));
-	reios_windows_ce = memcmp("0WINCEOS.BIN", &reios_boot_filename[0], 12) == 0;
-	INFO_LOG(REIOS, "hardware %.16s maker %.16s device %.16s area %.8s periph %.8s product %.10s version %.6s date %.16s boot %.16s softco %.16s name %.128s",
-			reios_hardware_id, reios_maker_id, reios_device_info, reios_area_symbols,
-			reios_peripherals, reios_product_number, reios_product_version,
-			reios_releasedate, reios_boot_filename, reios_software_company, reios_software_name);
-
-	return reios_product_number;
+	memcpy(&ip_meta, buf, sizeof(ip_meta));
+	INFO_LOG(REIOS, "hardware %.16s maker %.16s ks %.5s type %.6s num %.5s area %.8s ctrl %.4s dev %c vga %c wince %c "
+			"product %.10s version %.6s date %.8s boot %.16s softco %.16s name %.128s",
+			ip_meta.hardware_id, ip_meta.maker_id, ip_meta.ks, ip_meta.disk_type, ip_meta.disk_num, ip_meta.area_symbols,
+			ip_meta.ctrl, ip_meta.dev, ip_meta.vga, ip_meta.wince,
+			ip_meta.product_number, ip_meta.product_version,
+			ip_meta.release_date, ip_meta.boot_filename, ip_meta.software_company, ip_meta.software_name);
 }
 
 static void reios_sys_system() {
@@ -471,7 +448,7 @@ static void reios_setup_state(u32 boot_addr) {
 
 	*/
 
-	//Setup registers to immitate a normal boot
+	//Setup registers to imitate a normal boot
 	r[15] = 0x8d000000;
 
 	gbr = 0x8c000000;
@@ -577,7 +554,7 @@ static void reios_setup_naomi(u32 boot_addr) {
 
 	*/
 
-	//Setup registers to immitate a normal boot
+	//Setup registers to imitate a normal boot
 	r[0] = 0x0c021000;
 	r[1] = 0x0c01f820;
 	r[2] = 0xa0710004;
@@ -632,7 +609,7 @@ static void reios_boot()
 	setup_syscall(hook_addr(&reios_sys_gd2), dc_bios_syscall_gd2);
 	setup_syscall(hook_addr(&reios_sys_misc), dc_bios_syscall_misc);
 
-	//Infinitive loop for arm !
+	//Infinite loop for arm !
 	WriteMem32(0x80800000, 0xEAFFFFFE);
 
 	if (settings.reios.ElfFile.size()) {
@@ -643,8 +620,10 @@ static void reios_boot()
 	}
 	else {
 		if (settings.System == DC_PLATFORM_DREAMCAST) {
-			if (reios_boot_filename[0] == '\0' || !reios_locate_bootfile(reios_boot_filename))
-				msgboxf("Failed to locate bootfile %s", MBX_ICONERROR, reios_boot_filename);
+			char bootfile[sizeof(ip_meta.boot_filename) + 1] = {0};
+			memcpy(bootfile, ip_meta.boot_filename, sizeof(ip_meta.boot_filename));
+			if (bootfile[0] == '\0' || !reios_locate_bootfile(bootfile))
+				msgboxf("Failed to locate bootfile %s", MBX_ICONERROR, bootfile);
 			reios_setup_state(0xac008300);
 		}
 		else {

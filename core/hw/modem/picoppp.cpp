@@ -39,6 +39,7 @@ extern "C" {
 
 #define RESOLVER1_OPENDNS_COM "208.67.222.222"
 #define AFO_ORIG_IP 0x83f2fb3f		// 63.251.242.131 in network order
+#define IGP_ORIG_IP 0xef2bd2cc		// 204.210.43.239 in network order
 
 static struct pico_device *ppp;
 
@@ -253,8 +254,9 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 				memset(&serveraddr, 0, sizeof(serveraddr));
 				serveraddr.sin_family = AF_INET;
 				serveraddr.sin_addr.s_addr = sock_a->local_addr.ip4.addr;
-		        if (serveraddr.sin_addr.s_addr == AFO_ORIG_IP)			// Alien Front Online
-		        	serveraddr.sin_addr.s_addr = afo_ip.addr;
+		        if (serveraddr.sin_addr.s_addr == AFO_ORIG_IP			// Alien Front Online
+		      	  || serveraddr.sin_addr.s_addr == IGP_ORIG_IP)		// Internet Game Pack
+		        	serveraddr.sin_addr.s_addr = afo_ip.addr;				// same ip for both for now
 
 				serveraddr.sin_port = sock_a->local_port;
 				set_non_blocking(sockfd);

@@ -433,7 +433,9 @@ private:
 		Instruction* instr;
 		for (instr = instr_start; instr < instr_end; instr += kInstructionSize) {
 			decoder.Decode(instr);
-			DEBUG_LOG(AICA_ARM, "    %p:\t%s", reinterpret_cast<void*>(instr), disasm.GetOutput());
+			printf("\t %p:\t%s\n",
+					reinterpret_cast<void*>(instr),
+					disasm.GetOutput());
 		}
 	}
 

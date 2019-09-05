@@ -1924,7 +1924,7 @@ Games[] =
         0xfffffff, // not populated
         "hod2bios",
         M2,
-        REGION_USA,
+        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-21585.ic22",  0x0000000, 0x200000 },
@@ -1960,7 +1960,7 @@ Games[] =
         0xfffffff, // not populated
         "hod2bios",
         M2,
-        REGION_USA,
+        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-21385.ic22",  0x0000000, 0x200000 },
@@ -2032,7 +2032,7 @@ Games[] =
         0xfffffff, // not populated
         "hod2bios",
         M2,
-        REGION_USA,
+        REGION_AUSTRALIA,
         ROT0,
         {
             { "hotd2proto.ic22", 0x000000,  0x200000 },

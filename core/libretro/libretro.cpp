@@ -67,7 +67,7 @@ char slash = '/';
                                             * 3 - Late
                                             */
 
-
+#include "libretro_core_option_defines.h"
 #include "libretro_core_options.h"
 
 u32 fskip;

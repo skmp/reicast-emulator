@@ -186,6 +186,9 @@ bool rend_single_frame(void)
 				}
 #endif
 				_pvrrc = DequeueRender();
+
+				if (!settings.rend.ThreadedRendering && _pvrrc == NULL)
+					return false;
 			}
 			while (!_pvrrc);
 		}

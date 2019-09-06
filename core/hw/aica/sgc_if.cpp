@@ -775,7 +775,7 @@ __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
 	s16* sptr16=(s16*)ch->SA;
 	s8* sptr8=(s8*)sptr16;
 	u8* uptr8=(u8*)sptr16;
-	u32 next_addr = CA + 1 > ch->loop.LEA ? ch->loop.LSA + 1 : CA + 1;
+	u32 next_addr = CA + 1 >= ch->loop.LEA ? ch->loop.LSA : CA + 1;
 
 	SampleType s0,s1;
 	switch(PCMS)
@@ -869,10 +869,10 @@ void StreamStep(ChannelEx* ch)
 			}
 		}
 
-		if (ca_t > ch->loop.LEA)
+		if (ca_t>=ch->loop.LEA)
 		{
 			ch->loop.looped=1;
-			CA = ch->loop.LSA + 1;
+			CA=ch->loop.LSA;
 			if (LPCTL == 0)
 				ch->disable();
 		}

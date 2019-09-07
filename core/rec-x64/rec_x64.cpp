@@ -1128,13 +1128,20 @@ public:
                break;
 
             case shop_cvt_f2i_t:
-				{
-					Xbyak::Reg32 rd = regalloc.MapRegister(op.rd);
-					cvttss2si(rd, regalloc.MapXRegister(op.rs1));
-					mov(eax, 0x7fffffff);
-					cmp(rd, 0x7fffff80);	// 2147483520.0f
-					cmovge(rd, eax);
-				}
+					{
+						Xbyak::Reg32 rd = regalloc.MapRegister(op.rd);
+						cvttss2si(rd, regalloc.MapXRegister(op.rs1));
+						mov(eax, 0x7fffffff);
+						cmp(rd, 0x7fffff80);	// 2147483520.0f
+						cmovge(rd, eax);
+						cmp(rd, 0x80000000);	// indefinite integer
+						Xbyak::Label done;
+						jne(done, T_SHORT);
+						movd(ecx, regalloc.MapXRegister(op.rs1));
+						cmp(ecx, 0);
+						cmovge(rd, eax);		// restore the correct sign
+						L(done);
+					}
                break;
             case shop_cvt_i2f_n:
             case shop_cvt_i2f_z:

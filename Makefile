@@ -270,7 +270,7 @@ else ifeq ($(platform), classic_armv8_a35)
 #########################################
 
 # sun8i Allwinner H2+ / H3 
-# like Orange PI, Nano PI, Banana PI, Tritium
+# like Orange PI, Nano PI, Banana PI, Tritium, AlphaCore2, MPCORE-HUB
 else ifeq ($(platform), sun8i)
 	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
@@ -282,17 +282,15 @@ else ifeq ($(platform), sun8i)
 	SINGLE_PREC_FLAGS = 1
 	HAVE_LTCG = 0
 	HAVE_OPENMP = 0
+	THREADED_RENDERING_DEFAULT = 1
 	CFLAGS += -Ofast \
-	-flto=4 -fwhole-program -fuse-linker-plugin \
-	-fdata-sections -ffunction-sections -Wl,--gc-sections \
+	-flto -fuse-linker-plugin \
 	-fno-stack-protector -fno-ident -fomit-frame-pointer \
-	-falign-functions=1 -falign-jumps=1 -falign-loops=1 \
-	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-unroll-loops \
-	-fmerge-all-constants -fno-math-errno \
+	-fmerge-all-constants -ffast-math -funroll-all-loops \
 	-marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
 	CXXFLAGS += $(CFLAGS)
 	ASFLAGS += $(CFLAGS)
-	LDFLAGS += -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+	LDFLAGS += -marm -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -Ofast -flto -fuse-linker-plugin
 	ifeq ($(shell echo `$(CC) -dumpversion` "< 4.9" | bc -l), 1)
 		CFLAGS += -march=armv7-a
 		LDFLAGS += -march=armv7-a

@@ -878,3 +878,14 @@ struct lightgun_params_t {
 extern u8 lightgun_palette[LIGHTGUN_COLORS_COUNT*3];
 extern u8 lightgun_img_crosshair[LIGHTGUN_CROSSHAIR_SIZE*LIGHTGUN_CROSSHAIR_SIZE];
 extern lightgun_params_t lightgun_params[4] ;
+
+enum serialize_version_enum {
+	V1,
+	V2,
+	V3,
+	V4,
+	V5,
+	V6,
+	V7,
+	V8
+};

@@ -34,16 +34,6 @@
  * search for "maybe" to find items that were left out that may be needed
  */
 
-enum serialize_version_enum {
-	V1,
-	V2,
-	V3,
-	V4,
-	V5,
-	V6,
-	V7
-} ;
-
 //./core/hw/arm7/arm_mem.cpp
 extern bool aica_interr;
 extern u32 aica_reg_L;
@@ -771,7 +761,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
-	serialize_version_enum version = V7 ;
+	serialize_version_enum version = V8;
 
 	*total_size = 0 ;
 
@@ -1240,7 +1230,7 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 		LIBRETRO_SKIP(2);					// pl
 		LIBRETRO_SKIP(2);					// pr
 	}
-	channel_unserialize(data, total_size) ;
+	channel_unserialize(data, total_size, version);
 
 	LIBRETRO_USA(cdda_sector,CDDA_SIZE);
 	LIBRETRO_US(cdda_index);

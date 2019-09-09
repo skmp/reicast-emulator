@@ -595,7 +595,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       CORE_OPTION_NAME "_threaded_rendering",
       "Threaded Rendering (Restart)",
-      "",
+      "Runs the GPU and CPU on different threads. Highly recommended.",
       {
          { "disabled", NULL },
          { "enabled",  NULL },
@@ -610,7 +610,18 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       CORE_OPTION_NAME "_synchronous_rendering",
       "Synchronous Rendering",
-      "",
+      "Waits for the GPU to finish rendering the previous frame instead of dropping the current one.",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_delay_frame_swapping",
+      "Delay Frame Swapping",
+      "Useful to avoid flashing screens or glitchy videos. Not recommended on slow platforms.",
       {
          { "disabled", NULL },
          { "enabled",  NULL },
@@ -622,7 +633,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       CORE_OPTION_NAME "_frame_skipping",
       "Frame Skipping",
-      "",
+      "Sets the number of frames to skip between each displayed frame.",
       {
          { "disabled",  NULL },
          { "1",         NULL },

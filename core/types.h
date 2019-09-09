@@ -523,6 +523,7 @@ struct settings_t
 		bool ThreadedRendering;
 		bool CustomTextures;
 		bool DumpTextures;
+		bool DelayFrameSwapping; // Delay swapping frame until FB_R_SOF matches FB_W_SOF
 	} rend;
 
 	struct

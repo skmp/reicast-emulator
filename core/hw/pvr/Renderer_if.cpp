@@ -203,7 +203,7 @@ bool rend_single_frame(void)
 
 		bool do_swp = rend_frame(_pvrrc, true);
 		swap_pending = do_swp && !_pvrrc->rend.isRenderFramebuffer && FB_R_SOF1 != FB_W_SOF1
-				 && settings.rend.ThreadedRendering;
+				 && settings.rend.ThreadedRendering && settings.rend.DelayFrameSwapping;
 
 		if (settings.rend.ThreadedRendering && _pvrrc->rend.isRTT)
 			re.Set();

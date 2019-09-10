@@ -126,9 +126,6 @@ struct ChannelEx;
 #define CDDA_SIZE  (2352/2)
 extern s16 cdda_sector[CDDA_SIZE];
 extern u32 cdda_index;
-extern u32 samples_gen;
-
-
 
 
 
@@ -809,7 +806,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(cdda_index);
 	for (int i = 0; i < 64; i++)
 		LIBRETRO_S(i);	// mxlr
-	LIBRETRO_S(samples_gen);
+	LIBRETRO_S(i);		// samples_gen
 
 
 	register_serialize(sb_regs, data, total_size) ;
@@ -1234,8 +1231,8 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 
 	LIBRETRO_USA(cdda_sector,CDDA_SIZE);
 	LIBRETRO_US(cdda_index);
-	LIBRETRO_SKIP(4 * 64); // mxlr
-	LIBRETRO_US(samples_gen);
+	LIBRETRO_SKIP(4 * 64); 	// mxlr
+	LIBRETRO_SKIP(4);			// samples_gen
 
 
 	register_unserialize(sb_regs, data, total_size) ;

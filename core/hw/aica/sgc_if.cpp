@@ -54,15 +54,16 @@ static const u32 SendLevel[16] =
 s32 tl_lut[256 + 768];	//xx.15 format. >=255 is muted
 
 //in ms :)
-static const double AEG_Attack_Time[]=
+static const double AEG_Attack_Time[64] =
 {
 	-1,-1,8100.0,6900.0,6000.0,4800.0,4000.0,3400.0,3000.0,2400.0,2000.0,1700.0,1500.0,
 	1200.0,1000.0,860.0,760.0,600.0,500.0,430.0,380.0,300.0,250.0,220.0,190.0,150.0,130.0,110.0,95.0,
 	76.0,63.0,55.0,47.0,38.0,31.0,27.0,24.0,19.0,15.0,13.0,12.0,9.4,7.9,6.8,6.0,4.7,3.8,3.4,3.0,2.4,
 	2.0,1.8,1.6,1.3,1.1,0.93,0.85,0.65,0.53,0.44,0.40,0.35,0.0,0.0
 };
-static const double AEG_DSR_Time[]=
-{	-1,-1,118200.0,101300.0,88600.0,70900.0,59100.0,50700.0,44300.0,35500.0,29600.0,25300.0,22200.0,17700.0,
+static const double AEG_DSR_Time[64] =
+{
+	-1,-1,118200.0,101300.0,88600.0,70900.0,59100.0,50700.0,44300.0,35500.0,29600.0,25300.0,22200.0,17700.0,
 	14800.0,12700.0,11100.0,8900.0,7400.0,6300.0,5500.0,4400.0,3700.0,3200.0,2800.0,2200.0,1800.0,1600.0,1400.0,1100.0,
 	920.0,790.0,690.0,550.0,460.0,390.0,340.0,270.0,230.0,200.0,170.0,140.0,110.0,98.0,85.0,68.0,57.0,49.0,43.0,34.0,
 	28.0,25.0,22.0,18.0,14.0,12.0,11.0,8.5,7.1,6.1,5.4,4.3,3.6,3.1
@@ -70,10 +71,13 @@ static const double AEG_DSR_Time[]=
 static const float PLFOS_Scale[8] = { 0.f, 3.61f, 7.22f, 14.44f, 28.88f, 57.75f, 115.5f, 231.f };
 static int PLFO_Scales[8][256];
 
-#define AEG_STEP_BITS (16)
+#define EG_STEP_BITS (16)
+#define AEG_ATTACK_SHIFT 16
+
 //Steps per sample
 u32 AEG_ATT_SPS[64];
 u32 AEG_DSR_SPS[64];
+u32 FEG_SPS[64];
 
 static const char* stream_names[]=
 {
@@ -366,8 +370,8 @@ struct ChannelEx
 	struct
 	{
 		s32 val;
-		__forceinline s32 GetValue() { return val>>AEG_STEP_BITS;}
-		void SetValue(u32 aegb) { val=aegb<<AEG_STEP_BITS; }
+		__forceinline s32 GetValue() { return val>>EG_STEP_BITS;}
+		void SetValue(u32 aegb) { val=aegb<<EG_STEP_BITS; }
 
 		_EG_state state=EG_Attack;
 
@@ -381,8 +385,8 @@ struct ChannelEx
 	struct
 	{
 		u32 value;
-		__forceinline u32 GetValue() { return value >> AEG_STEP_BITS;}
-		void SetValue(u32 fegb) { value = fegb << AEG_STEP_BITS; }
+		__forceinline u32 GetValue() { return value >> EG_STEP_BITS;}
+		void SetValue(u32 fegb) { value = fegb << EG_STEP_BITS; }
 
 		_EG_state state=EG_Attack;
 	
@@ -555,7 +559,7 @@ struct ChannelEx
 
 			// reset AEG
 			SetAegState(EG_Attack);
-			AEG.SetValue(0x3FF);//start from 0x3FF ? .. it seems so !
+			AEG.SetValue(0x280);	// start value taken from HT
 
 			//reset FEG
 			SetFegState(EG_Attack);
@@ -622,19 +626,20 @@ struct ChannelEx
 		loop.LEA=ccd->LEA;
 	}
 
-	u32 EG_BaseRate()
+	s32 EG_BaseRate()
 	{
-		s32 rv=ccd->KRS+(ccd->FNS>>9);
-		if (ccd->KRS==0xF)
-			rv-=0xF;
-		if (ccd->OCT&8)
-			rv-=(16-ccd->OCT)*2;
-		else
-			rv+=ccd->OCT*2;
-		return rv;
+		s32 effrate = 0;
+		if (ccd->KRS < 0xF)
+	{
+		    effrate += (ccd->FNS >> 9) & 1;
+		    effrate += ccd->KRS * 2;
+		    effrate += (ccd->OCT ^ 8) - 8;
+		}
+
+		return effrate;
 	}
 
-	u32 EG_EffRate(u32 base_rate, u32 rate)
+	u32 EG_EffRate(s32 base_rate, u32 rate)
 	{
 		s32 rv = base_rate + rate * 2;
 
@@ -740,10 +745,10 @@ struct ChannelEx
 				ccd->FAR, ccd->FD1R, ccd->FD2R, ccd->FRR);
 		FEG.q = qtable[ccd->Q];
 		s32 base_rate = EG_BaseRate();
-		FEG.AttackRate = AEG_DSR_SPS[EG_EffRate(base_rate, ccd->FAR)];
-		FEG.Decay1Rate = AEG_DSR_SPS[EG_EffRate(base_rate, ccd->FD1R)];
-		FEG.Decay2Rate = AEG_DSR_SPS[EG_EffRate(base_rate, ccd->FD2R)];
-		FEG.ReleaseRate = AEG_DSR_SPS[EG_EffRate(base_rate, ccd->FRR)];
+		FEG.AttackRate = FEG_SPS[EG_EffRate(base_rate, ccd->FAR)];
+		FEG.Decay1Rate = FEG_SPS[EG_EffRate(base_rate, ccd->FD1R)];
+		FEG.Decay2Rate = FEG_SPS[EG_EffRate(base_rate, ccd->FD2R)];
+		FEG.ReleaseRate = FEG_SPS[EG_EffRate(base_rate, ccd->FRR)];
 	}
 	
 	//WHEE :D!
@@ -842,7 +847,7 @@ struct ChannelEx
 	} 
 };
 
-__forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
+static __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
 {
 	s32 sign=1-2*(sample/8);
 
@@ -994,7 +999,7 @@ void StreamStep(ChannelEx* ch)
 			if (LPCTL == 0)
 				ch->disable();
 			else
-				step_printf("[%d]LPCTL : Looping LSA %x LEA %x", ch->ChannelNumber, ch->loop.LSA, ch->loop.LEA);
+				key_printf("[%d]LPCTL : Looping LSA %x LEA %x", ch->ChannelNumber, ch->loop.LSA, ch->loop.LEA);
 		}
 
 		ch->CA=CA;
@@ -1067,14 +1072,14 @@ void AegStep(ChannelEx* ch)
 	switch(state)
 	{
 	case EG_Attack:
+		if (ch->AEG.AttackRate != 0)
 		{
-			//wii
-			ch->AEG.val-=ch->AEG.AttackRate;
+			ch->AEG.val -= (((u64)ch->AEG.val << AEG_ATTACK_SHIFT) / ch->AEG.AttackRate) + 1;
 			if (ch->AEG.GetValue()<=0)
 			{
 				if (!ch->ccd->LPSLNK)
 				{
-					aeg_printf("[%d]AEG_step : Switching to EG_Decay1 %d", ch->ChannelNumber, ch->AEG.GetValue());
+					aeg_printf("[%d]AEG_step : Switching to EG_Decay1", ch->ChannelNumber);
 					ch->SetAegState(EG_Decay1);
 				}
 				ch->AEG.SetValue(0);
@@ -1082,30 +1087,23 @@ void AegStep(ChannelEx* ch)
 		}
 		break;
 	case EG_Decay1:
-		{
-			//x2
 			ch->AEG.val+=ch->AEG.Decay1Rate;
 			if (((u32)ch->AEG.GetValue())>=ch->AEG.Decay2Value)
 			{
-				aeg_printf("[%d]AEG_step : Switching to EG_Decay2 @ %x", ch->ChannelNumber, ch->AEG.GetValue());
+			aeg_printf("[%d]AEG_step : Switching to EG_Decay2", ch->ChannelNumber);
 				ch->SetAegState(EG_Decay2);
 			}
-		}
 		break;
 	case EG_Decay2:
-		{
-			//x3
 			ch->AEG.val+=ch->AEG.Decay2Rate;
 			if (ch->AEG.GetValue()>=0x3FF)
 			{
-				aeg_printf("[%d]AEG_step : Switching to EG_Release @ %x", ch->ChannelNumber, ch->AEG.GetValue());
+			aeg_printf("[%d]AEG_step : Switching to EG_Release", ch->ChannelNumber);
 				ch->AEG.SetValue(0x3FF);
 				ch->SetAegState(EG_Release);
 			}
-		}
 		break;
-	case EG_Release: //only on key_off ?
-		{
+	case EG_Release: //only on key_off
 			ch->AEG.val+=ch->AEG.ReleaseRate;
 			
 			if (ch->AEG.GetValue()>=0x3FF)
@@ -1114,7 +1112,6 @@ void AegStep(ChannelEx* ch)
 				ch->AEG.SetValue(0x3FF); // TODO: mnn, should we do anything about it running wild ?
 				ch->disable(); // TODO: Is this ok here? It's a speed optimisation (since the channel is muted)
 			}
-		}
 		break;
 	}
 }
@@ -1144,7 +1141,7 @@ void FegStep(ChannelEx* ch)
 		target = ch->ccd->FLV4;
 		break;
 	}
-	target <<= AEG_STEP_BITS;
+	target <<= EG_STEP_BITS;
 	if (ch->FEG.value < target)
 	{
 		u32 maxd = target - ch->FEG.value;
@@ -1163,13 +1160,13 @@ void FegStep(ChannelEx* ch)
 	{
 		if (ch->FEG.state < EG_Decay2)
 		{
-			feg_printf("[%d]FEG_step : Switching to next state: %d Freq %x", ch->ChannelNumber, (int)ch->FEG.state + 1, target >> AEG_STEP_BITS);
+			feg_printf("[%d]FEG_step : Switching to next state: %d Freq %x", ch->ChannelNumber, (int)ch->FEG.state + 1, target >> EG_STEP_BITS);
 			ch->SetFegState((_EG_state)((int)ch->FEG.state + 1));
 		}
 	}
 }
 
-void staticinitialise()
+static void staticinitialise()
 {
 	STREAM_STEP_LUT[0][0][0]=&StreamStep<0,0,0>;
 	STREAM_STEP_LUT[1][0][0]=&StreamStep<1,0,0>;
@@ -1221,29 +1218,37 @@ void staticinitialise()
 	PLFOWS_CALC[2]=&CalcPlfo<2>;
 	PLFOWS_CALC[3]=&CalcPlfo<3>;
 }
-#define AicaChannel ChannelEx
 
+ChannelEx ChannelEx::Chans[64];
 
-AicaChannel AicaChannel::Chans[64];
+#define Chans ChannelEx::Chans
 
-#define Chans AicaChannel::Chans 
-double dbToval(double db)
+static u32 CalcEgSteps(float t)
 {
-	return pow(10,db/20.0);
+	const double eg_allsteps = 1024 * (1 << EG_STEP_BITS) - 1;
+
+	if (t < 0)
+		return 0;
+	if (t == 0)
+		return (u32)eg_allsteps;
+
+	//44.1*ms = samples
+	double scnt = 44.1 * t;
+	double steps = eg_allsteps / scnt;
+	return (u32)lround(steps);
 }
-u32 CalcAegSteps(float t)
+static u32 CalcAttackEgSteps(float t)
 {
-	const double aeg_allsteps=1024*(1<<AEG_STEP_BITS)-1;
-
 	if (t<0)
 		return 0;
 	if (t==0)
-		return (u32)aeg_allsteps;
+		return 1 << AEG_ATTACK_SHIFT;
 
 	//44.1*ms = samples
 	double scnt=44.1*t;
-	double steps=aeg_allsteps/scnt;
-	return (u32)lround(steps);
+	double factor = (1.0 / (1.0 - 1.0 / pow(0x280, 1.0 / scnt))) * (1 << AEG_ATTACK_SHIFT);
+
+	return (u32)lround(factor);
 }
 void sgc_Init()
 {
@@ -1267,8 +1272,9 @@ void sgc_Init()
 
 	for (int i=0;i<64;i++)
 	{
-		AEG_ATT_SPS[i]=CalcAegSteps(AEG_Attack_Time[i]);
-		AEG_DSR_SPS[i]=CalcAegSteps(AEG_DSR_Time[i]);
+		AEG_ATT_SPS[i] = CalcAttackEgSteps(AEG_Attack_Time[i]);
+		AEG_DSR_SPS[i]=CalcEgSteps(AEG_DSR_Time[i]);
+		FEG_SPS[i] = CalcEgSteps(AEG_DSR_Time[i]);
 	}
 	for (int i=0;i<64;i++)
 		Chans[i].Init(i,aica_reg);
@@ -1346,8 +1352,6 @@ void WriteCommonReg8(u32 reg,u32 data)
 s16 cdda_sector[CDDA_SIZE]={0};
 u32 cdda_index=CDDA_SIZE<<1;
 
-u32 samples_gen;
-
 //no DSP for now in this version
 void AICA_Sample32()
 {
@@ -1382,9 +1386,6 @@ void AICA_Sample32()
 			mxlr[i*2+1] += oRight;
 		}
 	}
-#if HOST_OS==OS_WINDOWS
-	samples_gen += sg;
-#endif
 	//OK , generated all Channels  , now DSP/ect + final mix ;p
 	//CDDA EXTS input
 	

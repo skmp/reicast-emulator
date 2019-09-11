@@ -352,6 +352,115 @@ static bool is_dupe = false;
 extern int GDROM_TICK;
 static bool rotate_screen = false;
 
+static void set_variable_visibility(void)
+{
+   struct retro_core_option_display option_display;
+   struct retro_variable var;
+   char key[256];
+   unsigned i;
+
+   /* Show/hide NAOMI/Atomiswave options */
+   option_display.visible = ((settings.System == DC_PLATFORM_NAOMI) ||
+                             (settings.System == DC_PLATFORM_ATOMISWAVE));
+
+   option_display.key = CORE_OPTION_NAME "_allow_service_buttons";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = CORE_OPTION_NAME "_enable_naomi_15khz_dipswitch";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   /* Show/hide Dreamcast options */
+   option_display.visible = (settings.System == DC_PLATFORM_DREAMCAST);
+
+   option_display.key = CORE_OPTION_NAME "_boot_to_bios";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = CORE_OPTION_NAME "_hle_bios";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = CORE_OPTION_NAME "_gdrom_fast_loading";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = CORE_OPTION_NAME "_cable_type";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = CORE_OPTION_NAME "_broadcast";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = CORE_OPTION_NAME "_language";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = CORE_OPTION_NAME "_force_wince";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = CORE_OPTION_NAME "_enable_purupuru";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = CORE_OPTION_NAME "_per_content_vmus";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = CORE_OPTION_NAME "_show_vmu_screen_settings";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   /* Show/hide settings-dependent options */
+   option_display.visible = !settings.rend.ThreadedRendering;
+
+   option_display.key = CORE_OPTION_NAME "_framerate";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   option_display.visible = settings.rend.ThreadedRendering;
+
+   option_display.key = CORE_OPTION_NAME "_synchronous_rendering";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   option_display.key = CORE_OPTION_NAME "_delay_frame_swapping";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   /* Show/hide VMU screen options */
+   if (settings.System == DC_PLATFORM_DREAMCAST)
+   {
+      option_display.visible = true;
+      var.key = CORE_OPTION_NAME "_show_vmu_screen_settings";
+
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+         if (!strcmp(var.value, "disabled"))
+            option_display.visible = false;
+   }
+   else
+      option_display.visible = false;
+
+   for (i = 0; i < 4; i++)
+   {
+      option_display.key = key;
+
+      key[0] = '\0';
+      snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_display");
+      environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+      key[0] = '\0';
+      snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_position");
+      environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+      key[0] = '\0';
+      snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_size_mult");
+      environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+      key[0] = '\0';
+      snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_pixel_on_color");
+      environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+      key[0] = '\0';
+      snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_pixel_off_color");
+      environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+      key[0] = '\0';
+      snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_opacity");
+      environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   }
+
+   /* Show/hide light gun options */
+   option_display.visible = true;
+   var.key = CORE_OPTION_NAME "_show_lightgun_settings";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      if (!strcmp(var.value, "disabled"))
+         option_display.visible = false;
+
+   for (i = 0; i < 4; i++)
+   {
+      option_display.key = key;
+
+      key[0] = '\0';
+      snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_lightgun", i + 1, "_crosshair");
+      environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   }
+}
+
 static void update_variables(bool first_startup)
 {
    struct retro_variable var;
@@ -1030,10 +1139,9 @@ static void update_variables(bool first_startup)
     	  vmu_screen_params[i].vmu_pixel_off_G = VMU_SCREEN_COLOR_MAP[color_idx].g ;
     	  vmu_screen_params[i].vmu_pixel_off_B = VMU_SCREEN_COLOR_MAP[color_idx].b ;
       }
-
-
    }
 
+   set_variable_visibility();
 }
 
 void retro_run (void)
@@ -1616,6 +1724,9 @@ bool retro_load_game(const struct retro_game_info *game)
         	   || !strcmp(".7z", ext) || !strcmp(".7Z", ext))
          {
             settings.System = naomi_cart_GetSystemType(game->path);
+            /* System may have changed - have to update
+             * hidden core options */
+            set_variable_visibility();
          }
          // If m3u playlist found load the paths into array
          else if (!strcmp(".m3u", ext) || !strcmp(".M3U", ext))

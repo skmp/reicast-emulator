@@ -406,7 +406,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       CORE_OPTION_NAME "_framerate",
       "Framerate",
-      "Affects how emulator interacts with frontend. 'Full Speed' - emulator returns control to RetroArch each time a frame has been rendered. 'Normal' - emulator returns control to RetroArch each time a V-blank interrupt is generated. 'Full Speed' should be used in most cases. 'Normal' may improve frame pacing on some systems, but can cause unresponsive input when screen is static (e.g. loading/pause screens).",
+      "Affects how emulator interacts with frontend. 'Full Speed' - emulator returns control to RetroArch each time a frame has been rendered. 'Normal' - emulator returns control to RetroArch each time a V-blank interrupt is generated. 'Full Speed' should be used in most cases. 'Normal' may improve frame pacing on some systems, but can cause unresponsive input when screen is static (e.g. loading/pause screens). Note: This setting only applies when 'Threaded Rendering' is disabled.",
       {
          { "fullspeed", "Full Speed" },
          { "normal",    "Normal" },
@@ -610,7 +610,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       CORE_OPTION_NAME "_synchronous_rendering",
       "Synchronous Rendering",
-      "Waits for the GPU to finish rendering the previous frame instead of dropping the current one.",
+      "Waits for the GPU to finish rendering the previous frame instead of dropping the current one. Note: This setting only applies when 'Threaded Rendering' is enabled.",
       {
          { "disabled", NULL },
          { "enabled",  NULL },
@@ -621,7 +621,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       CORE_OPTION_NAME "_delay_frame_swapping",
       "Delay Frame Swapping",
-      "Useful to avoid flashing screens or glitchy videos. Not recommended on slow platforms.",
+      "Useful to avoid flashing screens or glitchy videos. Not recommended on slow platforms. Note: This setting only applies when 'Threaded Rendering' is enabled.",
       {
          { "disabled", NULL },
          { "enabled",  NULL },
@@ -713,10 +713,32 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "disabled",
    },
+   {
+      CORE_OPTION_NAME "_show_vmu_screen_settings",
+      "Show VMU Display Settings",
+      "Enable configuration of emulated VMU LCD screen visibility, size, position and color. NOTE: Quick Menu must be toggled for this setting to take effect.",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
    VMU_SCREEN_PARAMS(1)
    VMU_SCREEN_PARAMS(2)
    VMU_SCREEN_PARAMS(3)
    VMU_SCREEN_PARAMS(4)
+   {
+      CORE_OPTION_NAME "_show_lightgun_settings",
+      "Show Light Gun Settings",
+      "Enable configuration of light gun crosshair display options. NOTE: Quick Menu must be toggled for this setting to take effect.",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
    LIGHTGUN_PARAMS(1)
    LIGHTGUN_PARAMS(2)
    LIGHTGUN_PARAMS(3)
@@ -796,11 +818,17 @@ static INLINE void libretro_set_core_options(retro_environment_t environ_cb)
    else
    {
       size_t i;
+      size_t option_index              = 0;
       size_t num_options               = 0;
       struct retro_variable *variables = NULL;
       char **values_buf                = NULL;
 
-      /* Determine number of options */
+      /* Determine number of options
+       * > Note: We are going to skip a number of irrelevant
+       *   core options when building the retro_variable array,
+       *   but we'll allocate space for all of them. The difference
+       *   in resource usage is negligible, and this allows us to
+       *   keep the code 'cleaner' */
       while (true)
       {
          if (option_defs_us[num_options].key)
@@ -827,6 +855,12 @@ static INLINE void libretro_set_core_options(retro_environment_t environ_cb)
          size_t default_index                   = 0;
 
          values_buf[i] = NULL;
+
+         /* Skip options that are irrelevant when using the
+          * old style core options interface */
+         if ((strcmp(key, CORE_OPTION_NAME "_show_vmu_screen_settings") == 0) ||
+             (strcmp(key, CORE_OPTION_NAME "_show_lightgun_settings") == 0))
+            continue;
 
          if (desc)
          {
@@ -879,8 +913,9 @@ static INLINE void libretro_set_core_options(retro_environment_t environ_cb)
             }
          }
 
-         variables[i].key   = key;
-         variables[i].value = values_buf[i];
+         variables[option_index].key   = key;
+         variables[option_index].value = values_buf[i];
+         option_index++;
       }
 
       /* Set variables */

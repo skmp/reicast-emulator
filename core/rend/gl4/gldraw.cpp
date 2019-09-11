@@ -41,7 +41,7 @@ GLuint depthSaveTexId;
 
 static gl4PipelineShader *gl4GetProgram(
       u32 cp_AlphaTest,
-      u32 pp_ClipTestMode,
+      s32 pp_ClipTestMode,
       u32 pp_Texture,
       u32 pp_UseAlpha,
       u32 pp_IgnoreTexA,
@@ -51,7 +51,7 @@ static gl4PipelineShader *gl4GetProgram(
 {
 	u32 rv=0;
 
-	rv|=pp_ClipTestMode;
+	rv |= (pp_ClipTestMode + 1);
 	rv<<=1; rv|=cp_AlphaTest;
 	rv<<=1; rv|=pp_Texture;
 	rv<<=1; rv|=pp_UseAlpha;
@@ -681,7 +681,7 @@ static void gl4_draw_quad_texture(GLuint texture, float w, float h)
 	glcache.Disable(GL_CULL_FACE);
 	glcache.Disable(GL_BLEND);
 
-	ShaderUniforms.trilinear_alpha = 1.0;
+	gl4ShaderUniforms.trilinear_alpha = 1.0;
 
  	CurrentShader = gl4GetProgram(0,
 				0,

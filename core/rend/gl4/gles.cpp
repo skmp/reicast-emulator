@@ -812,14 +812,6 @@ static bool RenderFrame(void)
       output_fbo = hw_render.get_current_framebuffer();
    }
 
-   bool wide_screen_on = !is_rtt && settings.rend.WideScreen
-			&& pvrrc.fb_X_CLIP.min == 0
-			&& int((pvrrc.fb_X_CLIP.max + 1) / scale_x + 0.5f) == 640
-			&& pvrrc.fb_Y_CLIP.min == 0
-			&& int((pvrrc.fb_Y_CLIP.max + 1) / scale_y + 0.5f) == 480;
-
-   // Color is cleared by the background plane
-
    glcache.Disable(GL_SCISSOR_TEST);
 
 	//move vertex to gpu
@@ -856,6 +848,12 @@ static bool RenderFrame(void)
       DEBUG_LOG(RENDERER, "SCI: %d, %f", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
       DEBUG_LOG(RENDERER, "SCI: %f, %f, %f, %f", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 #endif
+
+      bool wide_screen_on = !is_rtt && settings.rend.WideScreen
+   			&& pvrrc.fb_X_CLIP.min == 0
+   			&& int((pvrrc.fb_X_CLIP.max + 1) / scale_x + 0.5f) == 640
+   			&& pvrrc.fb_Y_CLIP.min == 0
+   			&& int((pvrrc.fb_Y_CLIP.max + 1) / scale_y + 0.5f) == 480;
 
       if (!wide_screen_on)
       {
@@ -909,6 +907,7 @@ static bool RenderFrame(void)
    else
    {
    	glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+   	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
       glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
       glClear(GL_COLOR_BUFFER_BIT);
       gl4DrawFramebuffer(dc_width, dc_height);

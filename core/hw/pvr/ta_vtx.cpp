@@ -61,10 +61,8 @@ static u8 float_to_satu8_math(float val)
 
 //vdec state variables
 ModTriangle* lmr=0;
-PolyParam nullPP;
 
-
-PolyParam* CurrentPP=&nullPP;
+PolyParam* CurrentPP;
 List<PolyParam>* CurrentPPlist;
 
 //TA state vars	
@@ -716,37 +714,32 @@ public:
 		else if (ListType==ListType_Translucent)
 			CurrentPPlist=&vdrc.global_param_tr;
 
-		CurrentPP=&nullPP;
+		CurrentPP = NULL;
 	}
 
 	__forceinline
 		static void EndList(u32 ListType)
 	{
-		CurrentPP=&nullPP;
-		CurrentPPlist=0;
-      if ( ListType == ListType_Opaque_Modifier_Volume
-            || ListType == ListType_Translucent_Modifier_Volume
-         )
+		CurrentPP = NULL;
+		CurrentPPlist = NULL;
+
+      if (ListType == ListType_Opaque_Modifier_Volume
+            || ListType == ListType_Translucent_Modifier_Volume)
          EndModVol();
 	}
 
-	/*
-	if (CurrentPP==0 || CurrentPP->pcw.full!=pp->pcw.full || \
-	CurrentPP->tcw.full!=pp->tcw.full || \
-	CurrentPP->tsp.full!=pp->tsp.full || \
-	CurrentPP->isp.full!=pp->isp.full	) \
-	*/
 	//Polys  -- update code on sprites if that gets updated too --
 	template<class T>
 	static void glob_param_bdc_(T* pp)
 	{
-		if (CurrentPP->pcw.full!=pp->pcw.full || 
-			CurrentPP->tcw.full!=pp->tcw.full || 
-			CurrentPP->tsp.full!=pp->tsp.full || 
-			CurrentPP->isp.full!=pp->isp.full	) 
+		if (CurrentPP == NULL
+			|| CurrentPP->pcw.full != pp->pcw.full
+			|| CurrentPP->tcw.full != pp->tcw.full
+			|| CurrentPP->tsp.full != pp->tsp.full
+			|| CurrentPP->isp.full != pp->isp.full)
 		{
 			PolyParam* d_pp=CurrentPP;
-			if (CurrentPP->count!=0)
+			if (d_pp == NULL || d_pp->count != 0)
 			{
 				d_pp=CurrentPPlist->Append(); 
 				CurrentPP=d_pp;

@@ -438,9 +438,8 @@ int dc_init(int argc,wchar* argv[])
    sprintf(new_system_dir, "%s/", game_dir_no_slash);
 #endif
 
-   if (
-         settings.bios.UseReios || !LoadRomFiles(new_system_dir)
-      )
+   if (settings.System == DC_PLATFORM_DREAMCAST
+   		&& (settings.bios.UseReios || !LoadRomFiles(new_system_dir)))
 	{
       if (!LoadHle(new_system_dir))
 			return -3;

@@ -2453,6 +2453,7 @@ static void UpdateInputStateNaomi(u32 port)
 		 {
 			mo_x_abs[port] = -1;
 			mo_y_abs[port] = -1;
+			lightgun_params[port].offscreen = true;
 		 }
 		 else
 		 {
@@ -2460,6 +2461,10 @@ static void UpdateInputStateNaomi(u32 port)
 			int y = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y);
 			mo_x_abs[port] = (x + 0x8000) * 640.f / 0x10000;
 			mo_y_abs[port] = (y + 0x8000) * 480.f / 0x10000;
+
+			lightgun_params[port].offscreen = false;
+			lightgun_params[port].x = mo_x_abs[port];
+			lightgun_params[port].y = mo_y_abs[port];
 		 }
 	  }
 	  break;
@@ -2892,6 +2897,7 @@ void UpdateInputState(u32 port)
 		 {
 			mo_x_abs[port] = -1;
 			mo_y_abs[port] = -1;
+			lightgun_params[port].offscreen = true;
 		 }
 		 else
 		 {

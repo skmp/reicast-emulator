@@ -21,7 +21,7 @@ HAVE_CDROM    := 0
 THREADED_RENDERING_DEFAULT := 0
 
 
-TARGET_NAME   := flycast_wince
+TARGET_NAME   := flycast
 
 ifeq ($(HAVE_CLANG),1)
 	CXX      = ${CC_PREFIX}clang++

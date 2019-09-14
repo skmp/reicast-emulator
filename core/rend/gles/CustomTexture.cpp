@@ -78,7 +78,7 @@ void CustomTexture::LoaderThread()
 
 std::string CustomTexture::GetGameId()
 {
-   std::string game_id = reios_product_number;
+   std::string game_id(ip_meta.product_number, sizeof(ip_meta.product_number));
    const size_t str_end = game_id.find_last_not_of(" ");
    if (str_end == std::string::npos)
 	  return "";
@@ -101,7 +101,7 @@ bool CustomTexture::Init()
 
 			if (path_is_directory(textures_path.c_str()))
 			{
-				printf("Found custom textures directory: %s\n", textures_path.c_str());
+				INFO_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
 				custom_textures_available = true;
 				loader_thread.Start();
 			}
@@ -164,7 +164,7 @@ u8* CustomTexture::LoadPNG(const std::string& fname, int &width, int &height)
 
 	if (!file)
 	{
-		EMUERROR("Error opening %s\n", filename);
+		WARN_LOG(RENDERER, "Error opening %s", filename);
 		return NULL;
 	}
 
@@ -179,7 +179,7 @@ u8* CustomTexture::LoadPNG(const std::string& fname, int &width, int &height)
 	if (!is_png)
 	{
 		fclose(file);
-		printf("Not a PNG file : %s\n", filename);
+		WARN_LOG(RENDERER, "Not a PNG file : %s", filename);
 		return NULL;
 	}
 
@@ -189,7 +189,7 @@ u8* CustomTexture::LoadPNG(const std::string& fname, int &width, int &height)
 	if (!png_ptr)
 	{
 		fclose(file);
-		printf("Unable to create PNG struct : %s\n", filename);
+		WARN_LOG(RENDERER, "Unable to create PNG struct : %s", filename);
 		return (NULL);
 	}
 
@@ -198,7 +198,7 @@ u8* CustomTexture::LoadPNG(const std::string& fname, int &width, int &height)
 	if (!info_ptr)
 	{
 		png_destroy_read_struct(&png_ptr, (png_infopp) NULL, (png_infopp) NULL);
-		printf("Unable to create PNG info : %s\n", filename);
+		WARN_LOG(RENDERER, "Unable to create PNG info : %s", filename);
 		fclose(file);
 		return (NULL);
 	}
@@ -208,7 +208,7 @@ u8* CustomTexture::LoadPNG(const std::string& fname, int &width, int &height)
 	if (!end_info)
 	{
 		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp) NULL);
-		printf("Unable to create PNG end info : %s\n", filename);
+		WARN_LOG(RENDERER, "Unable to create PNG end info : %s", filename);
 		fclose(file);
 		return (NULL);
 	}
@@ -217,7 +217,7 @@ u8* CustomTexture::LoadPNG(const std::string& fname, int &width, int &height)
 	if (setjmp(png_jmpbuf(png_ptr)))
 	{
 		fclose(file);
-		printf("Error during setjmp : %s\n", filename);
+		WARN_LOG(RENDERER, "Error during setjmp : %s", filename);
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 		return (NULL);
 	}
@@ -256,7 +256,7 @@ u8* CustomTexture::LoadPNG(const std::string& fname, int &width, int &height)
 	{
 		//clean up memory and close stuff
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-		printf("Unable to allocate image_data while loading %s\n", filename);
+		WARN_LOG(RENDERER, "Unable to allocate image_data while loading %s", filename);
 		fclose(file);
 		return NULL;
 	}
@@ -268,7 +268,7 @@ u8* CustomTexture::LoadPNG(const std::string& fname, int &width, int &height)
 		//clean up memory and close stuff
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 		delete[] image_data;
-		printf("Unable to allocate row_pointer while loading %s\n", filename);
+		WARN_LOG(RENDERER, "Unable to allocate row_pointer while loading %s", filename);
 		fclose(file);
 		return NULL;
 	}
@@ -305,7 +305,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 	FILE *fp = fopen(path.str().c_str(), "wb");
 	if (fp == NULL)
 	{
-		printf("Failed to open %s for writing\n", path.str().c_str());
+		WARN_LOG(RENDERER, "Failed to open %s for writing", path.str().c_str());
 		return;
 	}
 
@@ -364,7 +364,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 			}
 			break;
 		default:
-			printf("dumpTexture: unsupported picture format %x\n", textype);
+			WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", textype);
 			fclose(fp);
 			free(rows[0]);
 			free(rows);

@@ -26,7 +26,7 @@
 
 class CustomTexture {
 public:
-	CustomTexture() : loader_thread(loader_thread_func, this), wakeup_thread(false, true) {}
+	CustomTexture() : loader_thread(loader_thread_func, this) {}
 	~CustomTexture() { Terminate(); }
 	u8* LoadCustomTexture(u32 hash, int& width, int& height);
 	void LoadCustomTextureAsync(TextureCacheData *texture_data);

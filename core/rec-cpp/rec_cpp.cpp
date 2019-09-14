@@ -23,8 +23,14 @@ extern int mips_counter;
 extern int cycle_counter;
 
 void ngen_blockcheckfail_CC(u32 pc) {
-	printf("REC CPP: SMC invalidation at %08X\n", pc);
+	INFO_LOG(DYNAREC, "REC CPP: SMC invalidation at %08X", pc);
 	rdv_BlockCheckFail(pc);
+}
+int idxnxx = 0;
+
+void ngen_ResetBlocks_cpp(void)
+{
+	idxnxx = 0;
 }
 
 class opcodeExec {
@@ -759,13 +765,18 @@ struct opcode_check_block : public opcodeExec {
 	opcodeExec* setup(RuntimeBlockInfo* block) {
 		this->block = block;
 		ptr = GetMemPtr(block->addr, 4);
-      code.resize(sz == -1 ? block->sh4_code_size : sz);
-		memcpy(&code[0], ptr, sz == -1 ? block->sh4_code_size : sz);
+		if (ptr != NULL)
+		{
+			code.resize(sz == -1 ? block->sh4_code_size : sz);
+			memcpy(&code[0], ptr, sz == -1 ? block->sh4_code_size : sz);
+		}
 
 		return this;
 	}
 
 	void execute() {
+		if (code.empty())
+			return;
       switch (sz)
 		{
 		case 4:
@@ -1039,7 +1050,7 @@ opcodeExec* createType(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
 	if (!funs.count(fun)) {
 		funs[fun] = funs_id_count++;
 
-		printf("DEFINE %s: FAST_po(%s)\n", getCTN(&createType<CTR>).c_str(), shil_opcode_name(opcode->op));
+		INFO_LOG(DYNAREC, "DEFINE %s: FAST_po(%s)", getCTN(&createType<CTR>).c_str(), shil_opcode_name(opcode->op));
 	}
 
 	typedef typename CTR::opex thetype;
@@ -1670,7 +1681,7 @@ public:
 			ptrsg[opcode_index] = unmap[nm](CC_pars, ccfn, op);
 		else
       {
-			printf("IMPLEMENT CC_CALL CLASS: %s\n", nm.c_str());
+			INFO_LOG(DYNAREC, "IMPLEMENT CC_CALL CLASS: %s", nm.c_str());
 			ptrsg[opcode_index] = new opcodeDie();
 		}
 	}

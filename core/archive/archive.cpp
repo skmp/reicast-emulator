@@ -37,7 +37,7 @@ Archive *OpenArchive(const char *path)
 		return zip_archive;
 	delete zip_archive;
 
-	printf("OpenArchive: failed to open %s\n", path);
+	INFO_LOG(COMMON, "OpenArchive: failed to open %s", path);
 	return NULL;
 }
 

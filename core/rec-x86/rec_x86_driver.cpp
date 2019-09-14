@@ -541,13 +541,31 @@ enum mem_op_type
 	SZ_64F,
 };
 
+static DYNACALL s32 ReadMem8SX32(u32 addr)
+{
+	return (s32)(s8)ReadMem8(addr);
+}
+
+static DYNACALL s32 ReadMem16SX32(u32 addr)
+{
+	return (s32)(s16)ReadMem16(addr);
+}
+
 void gen_hande(u32 w, u32 sz, u32 mode)
 {
+#ifdef NO_MMU
 	static const x86_ptr_imm rwm[2][5]=
 	{
-		{x86_ptr_imm(&_vmem_ReadMem8SX32),x86_ptr_imm(&_vmem_ReadMem16SX32),x86_ptr_imm(&ReadMem32),x86_ptr_imm(&ReadMem32),x86_ptr_imm(&ReadMem64),},
-		{x86_ptr_imm(&WriteMem8),x86_ptr_imm(&WriteMem16),x86_ptr_imm(&WriteMem32),x86_ptr_imm(&WriteMem32),x86_ptr_imm(&WriteMem64),}
+		{x86_ptr_imm(&_vmem_ReadMem8SX32),x86_ptr_imm(&_vmem_ReadMem16SX32),x86_ptr_imm(&_vmem_ReadMem32),x86_ptr_imm(&_vmem_ReadMem32),x86_ptr_imm(&_vmem_ReadMem64),},
+		{x86_ptr_imm(&_vmem_WriteMem8),x86_ptr_imm(&_vmem_WriteMem16),x86_ptr_imm(&_vmem_WriteMem32),x86_ptr_imm(&_vmem_WriteMem32),x86_ptr_imm(&_vmem_WriteMem64),}
 	};
+#else
+	x86_ptr_imm rwm[2][5]=
+	{
+		{x86_ptr_imm(&ReadMem8SX32),x86_ptr_imm(&ReadMem16SX32),x86_ptr_imm(ReadMem32),x86_ptr_imm(ReadMem32),x86_ptr_imm(ReadMem64),},
+		{x86_ptr_imm(WriteMem8),x86_ptr_imm(WriteMem16),x86_ptr_imm(WriteMem32),x86_ptr_imm(WriteMem32),x86_ptr_imm(WriteMem64),}
+	};
+#endif
 
 	static const x86_opcode_class opcl_i[2][3]=
 	{
@@ -673,6 +691,9 @@ void* mem_code[3][2][5];
 
 void ngen_init_x86_32bit(void)
 {
+	if (mem_code_end != 0)
+		return;
+
 	//Setup emitter
 	x86e = new x86_block();
 	x86e->Init(0,0);

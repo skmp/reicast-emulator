@@ -17,13 +17,16 @@
 #include "../rend/rend.h"
 #include "../hw/sh4/sh4_mem.h"
 #include "../hw/sh4/sh4_sched.h"
+#include "../hw/sh4/dyna/blockmanager.h"
 #include "keyboard_map.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_if.h"
+#include "hw/maple/maple_cfg.h"
 #include "../hw/pvr/spg.h"
 #include "../hw/naomi/naomi_cart.h"
 #include "../imgread/common.h"
 #include "../hw/aica/dsp.h"
+#include "log/LogManager.h"
 
 #if defined(_XBOX) || defined(_WIN32)
 char slash = '\\';
@@ -311,6 +314,7 @@ void retro_init(void)
       log_cb = log.log;
    else
       log_cb = NULL;
+   LogManager::Init((void *)log_cb);
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_PERF_INTERFACE, &perf_cb))
       perf_get_cpu_features_cb = perf_cb.get_cpu_features;
@@ -341,6 +345,7 @@ void retro_deinit(void)
    mtx_serialization.Unlock() ;
 
    libretro_supports_bitmasks = false;
+   LogManager::Shutdown();
 }
 
 static bool is_dupe = false;
@@ -378,6 +383,8 @@ static void set_variable_visibility(void)
    environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
    option_display.key = CORE_OPTION_NAME "_language";
    environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = CORE_OPTION_NAME "_force_wince";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
    option_display.key = CORE_OPTION_NAME "_enable_purupuru";
    environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
    option_display.key = CORE_OPTION_NAME "_per_content_vmus";
@@ -394,6 +401,9 @@ static void set_variable_visibility(void)
    option_display.visible = settings.rend.ThreadedRendering;
 
    option_display.key = CORE_OPTION_NAME "_synchronous_rendering";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   option_display.key = CORE_OPTION_NAME "_delay_frame_swapping";
    environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
    /* Show/hide VMU screen options */
@@ -526,7 +536,7 @@ static void update_variables(bool first_startup)
             screen_width = 3200;
       }
 
-      fprintf(stderr, "[reicast]: Got size: %u x %u.\n", screen_width, screen_height);
+      DEBUG_LOG(COMMON, "Got size: %u x %u.\n", screen_width, screen_height);
    }
 
 
@@ -763,6 +773,14 @@ static void update_variables(bool first_startup)
       }
    }
 
+   var.key = CORE_OPTION_NAME "_force_wince";
+
+   settings.dreamcast.ForceWinCE = false;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+   	settings.dreamcast.ForceWinCE = !strcmp("enabled", var.value);
+   }
+
 #ifdef HAVE_TEXUPSCALE
    var.key = CORE_OPTION_NAME "_texupscale";
 
@@ -870,6 +888,17 @@ static void update_variables(bool first_startup)
    else
 	   settings.pvr.SynchronousRendering = 0;
 
+   var.key = CORE_OPTION_NAME "_delay_frame_swapping";
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+	   if (!strcmp("enabled", var.value))
+		   settings.rend.DelayFrameSwapping = true;
+	   else
+		   settings.rend.DelayFrameSwapping = false;
+   }
+   else
+   	settings.rend.DelayFrameSwapping = false;
+
    var.key = CORE_OPTION_NAME "_frame_skipping";
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -890,11 +919,11 @@ static void update_variables(bool first_startup)
       	enable_purupuru = (strcmp("enabled", var.value) == 0);
       	if (!first_startup)
       		maple_ReconnectDevices();
-	else
-	{
+      	else
+      	{
       		mcfg_DestroyDevices();
       		mcfg_CreateDevices();
-	}
+      	}
       }
    }
 
@@ -922,7 +951,6 @@ static void update_variables(bool first_startup)
       else
       {
          settings.aica.DSPEnabled = false;
-         settings.aica.NoBatch    = 0;
       }
    }
    else if (first_run)
@@ -1196,7 +1224,7 @@ void retro_reset (void)
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 static void context_reset(void)
 {
-   printf("context_reset.\n");
+	INFO_LOG(RENDERER, "context_reset.");
    gl_ctx_resetting = false;
    glsm_ctl(GLSM_CTL_STATE_CONTEXT_RESET, NULL);
    glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
@@ -1741,7 +1769,7 @@ bool retro_load_game(const struct retro_game_info *game)
 
       snprintf(data_dir, sizeof(data_dir), "%s%s", game_dir, "data");
 
-      printf("Creating dir: %s\n", data_dir);
+      INFO_LOG(COMMON, "Creating dir: %s", data_dir);
       struct stat buf;
       if (stat(data_dir, &buf) < 0)
       {
@@ -1809,13 +1837,13 @@ bool retro_load_game(const struct retro_game_info *game)
          struct stat buf;
          if (stat(save_dir, &buf) < 0)
          {
-            log_cb(RETRO_LOG_INFO, "Creating dir: %s\n", save_dir);
+            DEBUG_LOG(BOOT, "Creating dir: %s", save_dir);
             path_mkdir(save_dir);
          }
       } else {
          strncpy(save_dir, g_roms_dir, sizeof(save_dir));
       }
-      log_cb(RETRO_LOG_INFO, "Setting save dir to %s\n", save_dir);
+      INFO_LOG(BOOT, "Setting save dir to %s", save_dir);
       snprintf(eeprom_file, sizeof(eeprom_file), "%s%s.eeprom", save_dir, g_base_name);
       snprintf(nvmem_file, sizeof(nvmem_file), "%s%s.nvmem", save_dir, g_base_name);
       snprintf(nvmem_file2, sizeof(nvmem_file2), "%s%s.nvmem2", save_dir, g_base_name);
@@ -1825,9 +1853,8 @@ bool retro_load_game(const struct retro_game_info *game)
 
    if (dc_init(co_argc,co_argv))
    {
-	  if (log_cb)
-		 log_cb(RETRO_LOG_ERROR, "Flycast emulator initialization failed\n");
-	  return false;
+   	ERROR_LOG(BOOT, "Flycast emulator initialization failed");
+   	return false;
    }
    int rotation = rotate_screen ? 3 : 0;
    if (naomi_cart_GetRotation() == 3)
@@ -1846,7 +1873,7 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 
 void retro_unload_game(void)
 {
-	printf("reicast unloading game\n") ;
+	INFO_LOG(COMMON, "Flycast unloading game");
    if (game_data)
       free(game_data);
    game_data = NULL;
@@ -1856,15 +1883,15 @@ void retro_unload_game(void)
    if (settings.rend.ThreadedRendering)
    {
 	   rend_cancel_emu_wait();
-	   printf("Waiting for emu thread......\n");
+	   DEBUG_LOG(COMMON, "Waiting for emu thread......");
 	   if ( emu_in_thread )
 	   {
 		   frontend_clear_thread_waits_cb(1,NULL) ;
-		   printf("Waiting for emu thread to end...\n");
+		   DEBUG_LOG(COMMON, "Waiting for emu thread to end...");
 		   emu_thread.WaitToEnd();
 		   frontend_clear_thread_waits_cb(0,NULL) ;
 	   }
-	   printf("...Done\n");
+	   DEBUG_LOG(COMMON, "...Done");
    }
    else
 #endif
@@ -1990,13 +2017,18 @@ bool retro_unserialize(const void * data, size_t size)
     }
 #endif
 
-    sh4_cpu.ResetCache();
 #if FEAT_AREC == DYNAREC_JIT
     FlushCache();
 #endif
+#ifndef NO_MMU
+    mmu_flush_table();
+#endif
+    bm_Reset();
 
     result = dc_unserialize(&data_ptr, &total_size, size) ;
 
+    mmu_set_state();
+    sh4_cpu.ResetCache();
     dsp.dyndirty = true;
     sh4_sched_ffts();
     CalculateSync();
@@ -2185,11 +2217,6 @@ void os_DoEvents(void)
 	}
 }
 
-void os_CreateWindow()
-{
-   // Nothing to do here
-}
-
 static uint32_t get_time_ms()
 {
    return (uint32_t)(os_GetSeconds() * 1000.0);
@@ -2217,12 +2244,14 @@ double os_GetSeconds()
    /*converting file time to unix epoch*/
    tmpres -= DELTA_EPOCH_IN_MICROSECS;
 
-   return (double)tmpres / 1000000.0;	// microsecond -> second
+   static u64 time_base = tmpres;
+
+   return (double)(tmpres - time_base) / 1000000.0;	// microsecond -> second
 #else
    struct timeval t;
    gettimeofday(&t, NULL);
-
-   return (double)t.tv_sec + (double)t.tv_usec / 1000000.0;
+	static u64 tvs_base = t.tv_sec;
+	return t.tv_sec - tvs_base + t.tv_usec / 1000000.0;
 #endif
 }
 
@@ -2424,6 +2453,7 @@ static void UpdateInputStateNaomi(u32 port)
 		 {
 			mo_x_abs[port] = -1;
 			mo_y_abs[port] = -1;
+			lightgun_params[port].offscreen = true;
 		 }
 		 else
 		 {
@@ -2431,6 +2461,10 @@ static void UpdateInputStateNaomi(u32 port)
 			int y = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y);
 			mo_x_abs[port] = (x + 0x8000) * 640.f / 0x10000;
 			mo_y_abs[port] = (y + 0x8000) * 480.f / 0x10000;
+
+			lightgun_params[port].offscreen = false;
+			lightgun_params[port].x = mo_x_abs[port];
+			lightgun_params[port].y = mo_y_abs[port];
 		 }
 	  }
 	  break;
@@ -2863,6 +2897,7 @@ void UpdateInputState(u32 port)
 		 {
 			mo_x_abs[port] = -1;
 			mo_y_abs[port] = -1;
+			lightgun_params[port].offscreen = true;
 		 }
 		 else
 		 {
@@ -3022,7 +3057,7 @@ int push_vmu_screen(u8* buffer) { return 0; }
 
 void os_DebugBreak(void)
 {
-   printf("DEBUGBREAK!\n");
+	ERROR_LOG(COMMON, "DEBUGBREAK!");
    //exit(-1);
    __builtin_trap();
 }

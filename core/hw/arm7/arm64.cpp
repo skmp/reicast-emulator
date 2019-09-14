@@ -28,7 +28,7 @@
 using namespace vixl::aarch64;
 //#include "deps/vixl/aarch32/disasm-aarch32.h"
 
-extern void Arm64CacheFlush(void* start, void* end);
+extern void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end);
 extern u32 arm_single_op(u32 opcode);
 extern "C" void arm_dispatch();
 extern "C" void arm_exit();
@@ -41,7 +41,7 @@ extern reg_pair arm_Reg[RN_ARM_REG_COUNT];
 MacroAssembler *assembler;
 
 extern "C" void armFlushICache(void *bgn, void *end) {
-	Arm64CacheFlush(bgn, end);
+   vmem_platform_flush_cache(bgn, end, bgn, end);
 }
 
 static MemOperand arm_reg_operand(u32 regn)
@@ -143,7 +143,9 @@ void armv_end(void* codestart, u32 cycl)
 
 	assembler->FinalizeCode();
 	verify(assembler->GetBuffer()->GetCursorOffset() <= assembler->GetBuffer()->GetCapacity());
-	Arm64CacheFlush(codestart, assembler->GetBuffer()->GetEndAddress<void*>());
+	vmem_platform_flush_cache(
+		codestart, assembler->GetBuffer()->GetEndAddress<void*>(),
+		codestart, assembler->GetBuffer()->GetEndAddress<void*>());
 	icPtr += assembler->GetBuffer()->GetSizeInBytes();
 
 #if 0
@@ -155,7 +157,7 @@ void armv_end(void* codestart, u32 cycl)
 	Instruction* instr;
 	for (instr = instr_start; instr < instr_end; instr += kInstructionSize) {
 		decoder.Decode(instr);
-		printf("arm64 arec\t %p:\t%s\n",
+		DEBUG_LOG(AICA_ARM, "arm64 arec\t %p:\t%s",
 				reinterpret_cast<void*>(instr),
 				disasm.GetOutput());
 	}
@@ -205,7 +207,7 @@ class android_buf : public std::stringbuf
 {
 public:
 	virtual int sync() override {
-		LOGI("ARM7: %s\n", this->str().c_str());
+		DEBUG_LOG(AICA_ARM, "ARM7: %s", this->str().c_str());
 		str("");
 
 		return 0;
@@ -500,12 +502,11 @@ __asm__ (
 		".globl arm_dispatch					\n\t"
 		".hidden arm_dispatch				\n"
 	"arm_dispatch:								\n\t"
-		"ldp w0, w1, [x28, #184]			\n\t"	// load Next PC, interrupt
+		"ldp w0, w1, [x28, #184]				\n\t"	// load Next PC, interrupt
+		"ubfx w2, w0, #2, #21					\n\t"	// w2 = pc >> 2. Note: assuming address space == 8 MB (23 bits)
+		"cbnz w1, arm_dofiq						\n\t"	// if interrupt pending, handle it
 
-		"ubfx w2, w0, #2, #21				\n\t"
-		"cbnz w1, arm_dofiq					\n\t"
-
-		"add x2, x26, x2, lsl #3			\n\t"
+		"add x2, x26, x2, lsl #3				\n\t"	// x2 = EntryPoints + pc << 1
 		"ldr x3, [x2]							\n\t"
 		"br x3									\n"
 

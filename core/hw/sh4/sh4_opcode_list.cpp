@@ -106,7 +106,7 @@ u64 dec_rz(...) { return 0; }
 sh4_opcodelistentry missing_opcode = {0,iNotImplemented,0,0,ReadWritePC,"missing",0,0,CO,fix_none };
 
 #define R_GP (NO_SP|NO_FP)          //only general
-#define R_FP (NO_SP|NO_FP)          //only float
+#define R_FP (NO_SP|NO_GP)          //only float
 #define R_SP (NO_GP|NO_FP)          //only special
 #define R_GSP (NO_FP)               //general + special
 #define R_GFP (NO_SP)               //general + float
@@ -152,7 +152,7 @@ sh4_opcodelistentry opcodes[]=
 	{0                          ,i0010_nnnn_mmmm_1010   ,Mask_n_m       ,0x200A ,Normal         ,"xor <REG_M>,<REG_N>"                  ,1,1,EX,fix_none    ,dec_Bin_rNrM(shop_xor)},   //xor <REG_M>,<REG_N>
 	{0                          ,i0010_nnnn_mmmm_1011   ,Mask_n_m       ,0x200B ,Normal         ,"or <REG_M>,<REG_N>"                   ,1,1,EX,fix_none    ,dec_Bin_rNrM(shop_or)},    //or <REG_M>,<REG_N>
 	{0                          ,i0010_nnnn_mmmm_1100   ,Mask_n_m       ,0x200C ,Normal   |NO_FP,"cmp/str <REG_M>,<REG_N>"              ,1,1,MT,fix_none    ,dec_cmp(shop_setpeq,PRM_RN,PRM_RM)},   //cmp/str <REG_M>,<REG_N>
-	{0                          ,i0010_nnnn_mmmm_1101   ,Mask_n_m       ,0x200D ,Normal   |NO_FP,"xtrct <REG_M>,<REG_N>"                ,1,1,EX,fix_none},  //xtrct <REG_M>,<REG_N>
+	{0                          ,i0010_nnnn_mmmm_1101   ,Mask_n_m       ,0x200D ,Normal   |NO_FP,"xtrct <REG_M>,<REG_N>"                ,1,1,EX,fix_none    ,dec_Bin_rNrM(shop_xtrct)},  //xtrct <REG_M>,<REG_N>
 	{0                          ,i0010_nnnn_mmmm_1110   ,Mask_n_m       ,0x200E ,Normal         ,"mulu.w <REG_M>,<REG_N>"               ,1,4,CO,fix_none    ,dec_mul(16)},  //mulu.w <REG_M>,<REG_N>
 	{0                          ,i0010_nnnn_mmmm_1111   ,Mask_n_m       ,0x200F ,Normal         ,"muls.w <REG_M>,<REG_N>"               ,1,4,CO,fix_none    ,dec_mul(-16)}, //muls.w <REG_M>,<REG_N>
 	{0                          ,i0011_nnnn_mmmm_0000   ,Mask_n_m       ,0x3000 ,Normal         ,"cmp/eq <REG_M>,<REG_N>"               ,1,1,MT,fix_none    ,dec_cmp(shop_seteq,PRM_RN,PRM_RM)},    // cmp/eq <REG_M>,<REG_N>
@@ -215,8 +215,8 @@ sh4_opcodelistentry opcodes[]=
 	//Special register readm/writem/movs
 
 	//sts : @-rn
-	{0                          ,i0100_nnnn_0101_0010   ,Mask_n         ,0x4052 ,Normal         ,"sts.l FPUL,@-<REG_N>"                 ,1,1,CO,rn_4        ,dec_STM(PRM_SREG)},    //sts.l FPUL,@-<REG_N>
-	{0                          ,i0100_nnnn_0110_0010   ,Mask_n         ,0x4062 ,Normal         ,"sts.l FPSCR,@-<REG_N>"                ,1,2,CO,rn_4        ,dec_STM(PRM_SREG)},    //sts.l FPSCR,@-<REG_N>
+	{0                          ,i0100_nnnn_0101_0010   ,Mask_n         ,0x4052 ,UsesFPU        ,"sts.l FPUL,@-<REG_N>"                 ,1,1,CO,rn_4        ,dec_STM(PRM_SREG)},    //sts.l FPUL,@-<REG_N>
+	{0                          ,i0100_nnnn_0110_0010   ,Mask_n         ,0x4062 ,UsesFPU        ,"sts.l FPSCR,@-<REG_N>"                ,1,2,CO,rn_4        ,dec_STM(PRM_SREG)},    //sts.l FPSCR,@-<REG_N>
 	{0                          ,i0100_nnnn_0000_0010   ,Mask_n         ,0x4002 ,Normal         ,"sts.l MACH,@-<REG_N>"                 ,1,3,CO,rn_4        ,dec_STM(PRM_SREG)},    //sts.l MACH,@-<REG_N>
 	{0                          ,i0100_nnnn_0001_0010   ,Mask_n         ,0x4012 ,Normal         ,"sts.l MACL,@-<REG_N>"                 ,1,3,CO,rn_4        ,dec_STM(PRM_SREG)},    //sts.l MACL,@-<REG_N>
 	{0                          ,i0100_nnnn_0010_0010   ,Mask_n         ,0x4022 ,Normal         ,"sts.l PR,@-<REG_N>"                   ,1,1,CO,rn_4        ,dec_STM(PRM_SREG)},    //sts.l PR,@-<REG_N>
@@ -236,8 +236,8 @@ sh4_opcodelistentry opcodes[]=
 	{0                          ,i0100_nnnn_0001_0110   ,Mask_n         ,0x4016 ,Normal         ,"lds.l @<REG_N>+,MAC"                  ,1,1,CO,fix_none    ,dec_LDM(PRM_SREG)},    //lds.l @<REG_N>+,MACL
 	{0                          ,i0100_nnnn_0010_0110   ,Mask_n         ,0x4026 ,Normal         ,"lds.l @<REG_N>+,PR"                   ,1,2,CO,fix_none    ,dec_LDM(PRM_SREG)},    //lds.l @<REG_N>+,PR
 	{0                          ,i0100_nnnn_0011_0110   ,Mask_n         ,0x4036 ,Normal         ,"ldc.l @<REG_N>+,SGR"                  ,3,3,CO,fix_none    ,dec_LDM(PRM_SREG)},    //lds.l @<REG_N>+,SGR
-	{0                          ,i0100_nnnn_0101_0110   ,Mask_n         ,0x4056 ,Normal         ,"lds.l @<REG_N>+,FPUL"                 ,1,1,CO,fix_none    ,dec_LDM(PRM_SREG)},    //lds.l @<REG_N>+,FPUL
-	{0                          ,i0100_nnnn_0110_0110   ,Mask_n         ,0x4066 ,WritesFPSCR    ,"lds.l @<REG_N>+,FPSCR"                ,1,1,CO,fix_none},  //lds.l @<REG_N>+,FPSCR
+	{0                          ,i0100_nnnn_0101_0110   ,Mask_n         ,0x4056 ,UsesFPU        ,"lds.l @<REG_N>+,FPUL"                 ,1,1,CO,fix_none    ,dec_LDM(PRM_SREG)},    //lds.l @<REG_N>+,FPUL
+	{0                          ,i0100_nnnn_0110_0110   ,Mask_n         ,0x4066 ,FWritesFPSCR   ,"lds.l @<REG_N>+,FPSCR"                ,1,1,CO,fix_none},  //lds.l @<REG_N>+,FPSCR
 	{0                          ,i0100_nnnn_1111_0110   ,Mask_n         ,0x40F6 ,Normal         ,"ldc.l @<REG_N>+,DBR"                  ,1,3,CO,fix_none    ,dec_LDM(PRM_SREG)},    //lds.l @<REG_N>+,DBR
 
 	//ldc : @rn+
@@ -262,8 +262,8 @@ sh4_opcodelistentry opcodes[]=
 	{0                          ,i0000_nnnn_0001_1010   ,Mask_n         ,0x001A ,Normal         ,"sts MACL,<REG_N>"                     ,1,3,CO,fix_none    ,dec_ST(PRM_SREG)}, //sts MACL,<REG_N>
 	{0                          ,i0000_nnnn_0010_1010   ,Mask_n         ,0x002A ,Normal         ,"sts PR,<REG_N>"                       ,2,2,CO,fix_none    ,dec_ST(PRM_SREG)}, //sts PR,<REG_N>
 	{0                          ,i0000_nnnn_0011_1010   ,Mask_n         ,0x003A ,Normal         ,"sts SGR,<REG_N>"                      ,3,3,CO,fix_none    ,dec_ST(PRM_SREG)}, //sts SGR,<REG_N>
-	{0                          ,i0000_nnnn_0101_1010   ,Mask_n         ,0x005A ,Normal         ,"sts FPUL,<REG_N>"                     ,1,3,LS,fix_none    ,dec_ST(PRM_SREG)}, //sts FPUL,<REG_N>
-	{0                          ,i0000_nnnn_0110_1010   ,Mask_n         ,0x006A ,Normal         ,"sts FPSCR,<REG_N>"                    ,1,3,CO,fix_none    ,dec_ST(PRM_SREG)}, //sts FPSCR,<REG_N>
+	{0                          ,i0000_nnnn_0101_1010   ,Mask_n         ,0x005A ,UsesFPU        ,"sts FPUL,<REG_N>"                     ,1,3,LS,fix_none    ,dec_ST(PRM_SREG)}, //sts FPUL,<REG_N>
+	{0                          ,i0000_nnnn_0110_1010   ,Mask_n         ,0x006A ,UsesFPU        ,"sts FPSCR,<REG_N>"                    ,1,3,CO,fix_none    ,dec_ST(PRM_SREG)}, //sts FPSCR,<REG_N>
 	{0                          ,i0000_nnnn_1111_1010   ,Mask_n         ,0x00FA ,Normal         ,"sts DBR,<REG_N>"                      ,1,2,CO,fix_none    ,dec_ST(PRM_SREG)}, //sts DBR,<REG_N>
 
 	//lds : rn
@@ -271,8 +271,8 @@ sh4_opcodelistentry opcodes[]=
 	{0                          ,i0100_nnnn_0001_1010   ,Mask_n         ,0x401A ,Normal         ,"lds <REG_N>,MAC"                      ,1,3,CO,fix_none    ,dec_LD(PRM_SREG)}, //lds <REG_N>,MACL
 	{0                          ,i0100_nnnn_0010_1010   ,Mask_n         ,0x402A ,Normal         ,"lds <REG_N>,PR"                       ,1,2,CO,fix_none    ,dec_LD(PRM_SREG)}, //lds <REG_N>,PR
 	{0                          ,i0100_nnnn_0011_1010   ,Mask_n         ,0x403A ,Normal         ,"ldc <REG_N>,SGR"                      ,3,3,CO,fix_none    ,dec_LD(PRM_SREG)}, //lds <REG_N>,SGR
-	{0                          ,i0100_nnnn_0101_1010   ,Mask_n         ,0x405A ,Normal         ,"lds <REG_N>,FPUL"                     ,1,1,CO,fix_none    ,dec_LD(PRM_SREG)}, //lds <REG_N>,FPUL
-	{0                          ,i0100_nnnn_0110_1010   ,Mask_n         ,0x406A ,WritesFPSCR    ,"lds <REG_N>,FPSCR"                    ,1,1,CO,fix_none},  //lds <REG_N>,FPSCR
+	{0                          ,i0100_nnnn_0101_1010   ,Mask_n         ,0x405A ,UsesFPU        ,"lds <REG_N>,FPUL"                     ,1,1,CO,fix_none    ,dec_LD(PRM_SREG)}, //lds <REG_N>,FPUL
+	{0                          ,i0100_nnnn_0110_1010   ,Mask_n         ,0x406A ,FWritesFPSCR   ,"lds <REG_N>,FPSCR"                    ,1,1,CO,fix_none},  //lds <REG_N>,FPSCR
 	{0                          ,i0100_nnnn_1111_1010   ,Mask_n         ,0x40FA ,Normal         ,"ldc <REG_N>,DBR"                      ,1,1,CO,fix_none    ,dec_LD(PRM_SREG)}, //lds <REG_N>,DBR
 
 	//ldc : rn
@@ -310,7 +310,7 @@ sh4_opcodelistentry opcodes[]=
 	{0                          ,i0110_nnnn_mmmm_0111   ,Mask_n_m       ,0x6007 ,Normal         ,"not <REG_M>,<REG_N>"                  ,1,1,EX,fix_none    ,dec_Un_rNrM(shop_not)},    //not <REG_M>,<REG_N>
 	{0                          ,i0110_nnnn_mmmm_1000   ,Mask_n_m       ,0x6008 ,Normal         ,"swap.b <REG_M>,<REG_N>"               ,1,1,EX,fix_none    ,dec_Un_rNrM(shop_swaplb)}, //swap.b <REG_M>,<REG_N>
 	{0                          ,i0110_nnnn_mmmm_1001   ,Mask_n_m       ,0x6009 ,Normal         ,"swap.w <REG_M>,<REG_N>"               ,1,1,EX,fix_none    ,dec_Fill(DM_Rot,PRM_RN,PRM_RM,shop_ror,16|0x1000)},    //swap.w <REG_M>,<REG_N>
-	{0                          ,i0110_nnnn_mmmm_1010   ,Mask_n_m       ,0x600A ,Normal         ,"negc <REG_M>,<REG_N>"                 ,1,1,EX,fix_none},  //negc <REG_M>,<REG_N>
+	{0                          ,i0110_nnnn_mmmm_1010   ,Mask_n_m       ,0x600A ,Normal         ,"negc <REG_M>,<REG_N>"                 ,1,1,EX,fix_none    ,dec_Fill(DM_NEGC,PRM_RN,PRM_RM,shop_negc)},  //negc <REG_M>,<REG_N>
 	{0                          ,i0110_nnnn_mmmm_1011   ,Mask_n_m       ,0x600B ,Normal         ,"neg <REG_M>,<REG_N>"                  ,1,1,EX,fix_none    ,dec_Un_rNrM(shop_neg)},    //neg <REG_M>,<REG_N>
 	{0                          ,i0110_nnnn_mmmm_1100   ,Mask_n_m       ,0x600C ,Normal         ,"extu.b <REG_M>,<REG_N>"               ,1,1,EX,fix_none    ,dec_Fill(DM_EXTOP,PRM_RN,PRM_RM,shop_and,1)},  //extu.b <REG_M>,<REG_N>
 	{0                          ,i0110_nnnn_mmmm_1101   ,Mask_n_m       ,0x600D ,Normal         ,"extu.w <REG_M>,<REG_N>"               ,1,1,EX,fix_none    ,dec_Fill(DM_EXTOP,PRM_RN,PRM_RM,shop_and,2)},  //extu.w <REG_M>,<REG_N>
@@ -338,37 +338,37 @@ sh4_opcodelistentry opcodes[]=
 	{0                          ,i1100_1111_iiii_iiii   ,Mask_imm8      ,0xCF00 ,Normal         ,"or.b #<imm8>,@(R0,GBR)"               ,4,4,CO,fix_none},  // or.b #<imm>,@(R0,GBR)
 
 	//and here are the new ones :D
-	{0                          ,i1111_nnnn_mmmm_0000   ,Mask_n_m       ,0xF000,Normal          ,"fadd <FREG_M_SD_F>,<FREG_N_SD_F>"     ,1,3,FE,fix_none    ,dec_Bin_frNfrM(shop_fadd)},    //fadd <FREG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_0001   ,Mask_n_m       ,0xF001,Normal          ,"fsub <FREG_M_SD_F>,<FREG_N_SD_F>"     ,1,3,FE,fix_none    ,dec_Bin_frNfrM(shop_fsub)},    //fsub <FREG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_0010   ,Mask_n_m       ,0xF002,Normal          ,"fmul <FREG_M_SD_F>,<FREG_N_SD_F>"     ,1,3,FE,fix_none    ,dec_Bin_frNfrM(shop_fmul)},    //fmul <FREG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_0011   ,Mask_n_m       ,0xF003,Normal          ,"fdiv <FREG_M_SD_F>,<FREG_N_SD_F>"     ,1,12,FE,fix_none   ,dec_Bin_frNfrM(shop_fdiv)},//fdiv <FREG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_0100   ,Mask_n_m       ,0xF004,Normal          ,"fcmp/eq <FREG_M_SD_F>,<FREG_N>_SD_F"  ,1,4,FE,fix_none    ,dec_cmp(shop_fseteq,PRM_FRN,PRM_FRM)}, //fcmp/eq <FREG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_0101   ,Mask_n_m       ,0xF005,Normal          ,"fcmp/gt <FREG_M_SD_F>,<FREG_N_SD_F>"  ,1,4,FE,fix_none    ,dec_cmp(shop_fsetgt,PRM_FRN,PRM_FRM)}, //fcmp/gt <FREG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_0110   ,Mask_n_m       ,0xF006,Normal          ,"fmov.s @(R0,<REG_M>),<FREG_N_SD_A>"   ,1,2,LS,fix_none    ,dec_MRd(PRM_FRN_SZ,PRM_RM_R0,4)},  //fmov.s @(R0,<REG_M>),<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_0111   ,Mask_n_m       ,0xF007,Normal          ,"fmov.s <FREG_M_SD_A>,@(R0,<REG_N>)"   ,1,1,LS,fix_none    ,dec_MWt(PRM_RN_R0,PRM_FRM_SZ,4)},  //fmov.s <FREG_M>,@(R0,<REG_N>)
-	{0                          ,i1111_nnnn_mmmm_1000   ,Mask_n_m       ,0xF008,Normal          ,"fmov.s @<REG_M>,<FREG_N_SD_A>"        ,1,2,LS,fix_none    ,dec_MRd(PRM_FRN_SZ,PRM_RM,4)}, //fmov.s @<REG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_1001   ,Mask_n_m       ,0xF009,Normal          ,"fmov.s @<REG_M>+,<FREG_N_SD_A>"       ,1,2,LS,fix_none    ,dec_MRd(PRM_FRN_SZ,PRM_RM,-4)},    //fmov.s @<REG_M>+,<FREG_N>
-	{0                          ,i1111_nnnn_mmmm_1010   ,Mask_n_m       ,0xF00A,Normal          ,"fmov.s <FREG_M_SD_A>,@<REG_N>"        ,1,1,LS,fix_none    ,dec_MWt(PRM_RN,PRM_FRM_SZ,4)}, //fmov.s <FREG_M>,@<REG_N>
-	{0                          ,i1111_nnnn_mmmm_1011   ,Mask_n_m       ,0xF00B,Normal          ,"fmov.s <FREG_M_SD_A>,@-<REG_N>"       ,1,1,LS,rn_fpu_4    ,dec_MWt(PRM_RN,PRM_FRM_SZ,-4)},    //fmov.s <FREG_M>,@-<REG_N>
-	{0                          ,i1111_nnnn_mmmm_1100   ,Mask_n_m       ,0xF00C,Normal          ,"fmov <FREG_M_SD_A>,<FREG_N_SD_A>"     ,1,0,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FRN_SZ,PRM_FRM_SZ,shop_mov32)},    //fmov <FREG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_0101_1101   ,Mask_n         ,0xF05D,Normal          ,"fabs <FREG_N_SD_F>"                   ,1,0,LS,fix_none    ,dec_Un_frNfrN(shop_fabs)}, //fabs <FREG_N>
-	{0                          ,i1111_nnn0_1111_1101   ,Mask_nh3bit    ,0xF0FD,Normal          ,"FSCA FPUL, <DR_N>"                    ,1,4,FE,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FPN,PRM_FPUL,shop_fsca)},  //FSCA FPUL, DRn//F0FD//1111_nnnn_1111_1101
-	{0                          ,i1111_nnnn_1011_1101   ,Mask_n         ,0xF0BD,Normal          ,"fcnvds <DR_N>,FPUL"                   ,1,4,FE,fix_none},  //fcnvds <DR_N>,FPUL
-	{0                          ,i1111_nnnn_1010_1101   ,Mask_n         ,0xF0AD,Normal          ,"fcnvsd FPUL,<DR_N>"                   ,1,4,FE,fix_none},  //fcnvsd FPUL,<DR_N>
-	{0                          ,i1111_nnmm_1110_1101   ,Mask_n         ,0xF0ED,Normal          ,"fipr <FV_M>,<FV_N>"                   ,1,4,FE,fix_none    ,dec_Fill(DM_fiprOp,PRM_FVN,PRM_FVM,shop_fipr)},    //fipr <FV_M>,<FV_N>
-	{0                          ,i1111_nnnn_1000_1101   ,Mask_n         ,0xF08D,Normal          ,"fldi0 <FREG_N>"                       ,1,0,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FRN,PRM_ZERO,shop_mov32)}, //fldi0 <FREG_N>
-	{0                          ,i1111_nnnn_1001_1101   ,Mask_n         ,0xF09D,Normal          ,"fldi1 <FREG_N>"                       ,1,0,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FRN,PRM_ONE_F32,shop_mov32)},  //fldi1 <FREG_N>
-	{0                          ,i1111_nnnn_0001_1101   ,Mask_n         ,0xF01D,Normal          ,"flds <FREG_N>,FPUL"                   ,1,0,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FPUL,PRM_FRN,shop_mov32)}, //flds <FREG_N>,FPUL
-	{0                          ,i1111_nnnn_0010_1101   ,Mask_n         ,0xF02D,Normal          ,"float FPUL,<FREG_N_SD_F>"             ,1,3,FE,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FRN,PRM_FPUL,shop_cvt_i2f_n)}, //float FPUL,<FREG_N>
-	{0                          ,i1111_nnnn_0100_1101   ,Mask_n         ,0xF04D,Normal          ,"fneg <FREG_N_SD_F> "                  ,1,0,LS,fix_none    ,dec_Un_frNfrN(shop_fneg)}, //fneg <FREG_N>
-	{dec_i1111_1011_1111_1101   ,i1111_1011_1111_1101   ,Mask_none      ,0xFBFD,WritesFPSCR     ,"frchg"                                ,1,2,FE,fix_none},  //frchg
-	{dec_i1111_0011_1111_1101   ,i1111_0011_1111_1101   ,Mask_none      ,0xF3FD,WritesFPSCR     ,"fschg"                                ,1,2,FE,fix_none},  //fschg
-	{0                          ,i1111_nnnn_0110_1101   ,Mask_n         ,0xF06D,Normal          ,"fsqrt <FREG_N>"                       ,1,12,FE,fix_none   ,dec_Un_frNfrN(shop_fsqrt)},//fsqrt <FREG_N>
-	{0                          ,i1111_nnnn_0011_1101   ,Mask_n         ,0xF03D,Normal          ,"ftrc <FREG_N>, FPUL"                  ,1,4,FE,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FPUL,PRM_FRN,shop_cvt_f2i_t)},  //ftrc <FREG_N>, FPUL  //  ,dec_Fill(DM_UnaryOp,PRM_FPUL,PRM_FRN,shop_cvt)
-	{0                          ,i1111_nnnn_0000_1101   ,Mask_n         ,0xF00D,Normal          ,"fsts FPUL,<FREG_N>"                   ,1,0,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FRN,PRM_FPUL,shop_mov32)}, //fsts FPUL,<FREG_N>
-	{0                          ,i1111_nn01_1111_1101   ,Mask_nh2bit    ,0xF1FD,Normal          ,"ftrv xmtrx,<FV_N>"                    ,1,6,FE,fix_none    ,dec_Fill(DM_BinaryOp,PRM_FVN,PRM_XMTRX,shop_ftrv,1)},  //ftrv xmtrx,<FV_N>
-	{0                          ,i1111_nnnn_mmmm_1110   ,Mask_n_m       ,0xF00E,Normal          ,"fmac <FREG_0>,<FREG_M>,<FREG_N>"      ,1,4,FE,fix_none    ,dec_Fill(DM_BinaryOp,PRM_FRN,PRM_FRM_FR0,shop_fmac,1)},    //fmac <FREG_0>,<FREG_M>,<FREG_N>
-	{0                          ,i1111_nnnn_0111_1101   ,Mask_n         ,0xF07D,Normal          ,"FSRRA <FREG_N>"                       ,1,4,FE,fix_none    ,dec_Un_frNfrN(shop_fsrra)},    //FSRRA <FREG_N> (1111nnnn 01111101)
+	{0                          ,i1111_nnnn_mmmm_0000   ,Mask_n_m       ,0xF000,UsesFPU         ,"fadd <FREG_M_SD_F>,<FREG_N_SD_F>"     ,1,3,FE,fix_none    ,dec_Bin_frNfrM(shop_fadd)},    //fadd <FREG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_0001   ,Mask_n_m       ,0xF001,UsesFPU         ,"fsub <FREG_M_SD_F>,<FREG_N_SD_F>"     ,1,3,FE,fix_none    ,dec_Bin_frNfrM(shop_fsub)},    //fsub <FREG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_0010   ,Mask_n_m       ,0xF002,UsesFPU         ,"fmul <FREG_M_SD_F>,<FREG_N_SD_F>"     ,1,3,FE,fix_none    ,dec_Bin_frNfrM(shop_fmul)},    //fmul <FREG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_0011   ,Mask_n_m       ,0xF003,UsesFPU         ,"fdiv <FREG_M_SD_F>,<FREG_N_SD_F>"     ,1,12,FE,fix_none   ,dec_Bin_frNfrM(shop_fdiv)},//fdiv <FREG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_0100   ,Mask_n_m       ,0xF004,UsesFPU         ,"fcmp/eq <FREG_M_SD_F>,<FREG_N>_SD_F"  ,1,4,FE,fix_none    ,dec_cmp(shop_fseteq,PRM_FRN,PRM_FRM)}, //fcmp/eq <FREG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_0101   ,Mask_n_m       ,0xF005,UsesFPU         ,"fcmp/gt <FREG_M_SD_F>,<FREG_N_SD_F>"  ,1,4,FE,fix_none    ,dec_cmp(shop_fsetgt,PRM_FRN,PRM_FRM)}, //fcmp/gt <FREG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_0110   ,Mask_n_m       ,0xF006,UsesFPU         ,"fmov.s @(R0,<REG_M>),<FREG_N_SD_A>"   ,1,2,LS,fix_none    ,dec_MRd(PRM_FRN_SZ,PRM_RM_R0,4)},  //fmov.s @(R0,<REG_M>),<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_0111   ,Mask_n_m       ,0xF007,UsesFPU         ,"fmov.s <FREG_M_SD_A>,@(R0,<REG_N>)"   ,1,1,LS,fix_none    ,dec_MWt(PRM_RN_R0,PRM_FRM_SZ,4)},  //fmov.s <FREG_M>,@(R0,<REG_N>)
+	{0                          ,i1111_nnnn_mmmm_1000   ,Mask_n_m       ,0xF008,UsesFPU         ,"fmov.s @<REG_M>,<FREG_N_SD_A>"        ,1,2,LS,fix_none    ,dec_MRd(PRM_FRN_SZ,PRM_RM,4)}, //fmov.s @<REG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_1001   ,Mask_n_m       ,0xF009,UsesFPU         ,"fmov.s @<REG_M>+,<FREG_N_SD_A>"       ,1,2,LS,fix_none    ,dec_MRd(PRM_FRN_SZ,PRM_RM,-4)},    //fmov.s @<REG_M>+,<FREG_N>
+	{0                          ,i1111_nnnn_mmmm_1010   ,Mask_n_m       ,0xF00A,UsesFPU         ,"fmov.s <FREG_M_SD_A>,@<REG_N>"        ,1,1,LS,fix_none    ,dec_MWt(PRM_RN,PRM_FRM_SZ,4)}, //fmov.s <FREG_M>,@<REG_N>
+	{0                          ,i1111_nnnn_mmmm_1011   ,Mask_n_m       ,0xF00B,UsesFPU         ,"fmov.s <FREG_M_SD_A>,@-<REG_N>"       ,1,1,LS,rn_fpu_4    ,dec_MWt(PRM_RN,PRM_FRM_SZ,-4)},    //fmov.s <FREG_M>,@-<REG_N>
+	{0                          ,i1111_nnnn_mmmm_1100   ,Mask_n_m       ,0xF00C,UsesFPU         ,"fmov <FREG_M_SD_A>,<FREG_N_SD_A>"     ,1,0,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FRN_SZ,PRM_FRM_SZ,shop_mov32)},    //fmov <FREG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_0101_1101   ,Mask_n         ,0xF05D,UsesFPU         ,"fabs <FREG_N_SD_F>"                   ,1,0,LS,fix_none    ,dec_Un_frNfrN(shop_fabs)}, //fabs <FREG_N>
+	{0                          ,i1111_nnn0_1111_1101   ,Mask_nh3bit    ,0xF0FD,UsesFPU         ,"FSCA FPUL, <DR_N>"                    ,1,4,FE,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FPN,PRM_FPUL,shop_fsca)},  //FSCA FPUL, DRn//F0FD//1111_nnnn_1111_1101
+	{0                          ,i1111_nnnn_1011_1101   ,Mask_n         ,0xF0BD,UsesFPU         ,"fcnvds <DR_N>,FPUL"                   ,1,4,FE,fix_none},  //fcnvds <DR_N>,FPUL
+	{0                          ,i1111_nnnn_1010_1101   ,Mask_n         ,0xF0AD,UsesFPU         ,"fcnvsd FPUL,<DR_N>"                   ,1,4,FE,fix_none},  //fcnvsd FPUL,<DR_N>
+	{0                          ,i1111_nnmm_1110_1101   ,Mask_n         ,0xF0ED,UsesFPU         ,"fipr <FV_M>,<FV_N>"                   ,1,4,FE,fix_none    ,dec_Fill(DM_fiprOp,PRM_FVN,PRM_FVM,shop_fipr)},    //fipr <FV_M>,<FV_N>
+	{0                          ,i1111_nnnn_1000_1101   ,Mask_n         ,0xF08D,UsesFPU         ,"fldi0 <FREG_N>"                       ,1,0,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FRN,PRM_ZERO,shop_mov32)}, //fldi0 <FREG_N>
+	{0                          ,i1111_nnnn_1001_1101   ,Mask_n         ,0xF09D,UsesFPU         ,"fldi1 <FREG_N>"                       ,1,0,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FRN,PRM_ONE_F32,shop_mov32)},  //fldi1 <FREG_N>
+	{0                          ,i1111_nnnn_0001_1101   ,Mask_n         ,0xF01D,UsesFPU         ,"flds <FREG_N>,FPUL"                   ,1,0,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FPUL,PRM_FRN,shop_mov32)}, //flds <FREG_N>,FPUL
+	{0                          ,i1111_nnnn_0010_1101   ,Mask_n         ,0xF02D,UsesFPU         ,"float FPUL,<FREG_N_SD_F>"             ,1,3,FE,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FRN,PRM_FPUL,shop_cvt_i2f_n)}, //float FPUL,<FREG_N>
+	{0                          ,i1111_nnnn_0100_1101   ,Mask_n         ,0xF04D,UsesFPU         ,"fneg <FREG_N_SD_F> "                  ,1,0,LS,fix_none    ,dec_Un_frNfrN(shop_fneg)}, //fneg <FREG_N>
+	{dec_i1111_1011_1111_1101   ,i1111_1011_1111_1101   ,Mask_none      ,0xFBFD,FWritesFPSCR    ,"frchg"                                ,1,2,FE,fix_none},  //frchg
+	{dec_i1111_0011_1111_1101   ,i1111_0011_1111_1101   ,Mask_none      ,0xF3FD,FWritesFPSCR    ,"fschg"                                ,1,2,FE,fix_none},  //fschg
+	{0                          ,i1111_nnnn_0110_1101   ,Mask_n         ,0xF06D,UsesFPU         ,"fsqrt <FREG_N>"                       ,1,12,FE,fix_none   ,dec_Un_frNfrN(shop_fsqrt)},//fsqrt <FREG_N>
+	{0                          ,i1111_nnnn_0011_1101   ,Mask_n         ,0xF03D,UsesFPU         ,"ftrc <FREG_N>, FPUL"                  ,1,4,FE,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FPUL,PRM_FRN,shop_cvt_f2i_t)},  //ftrc <FREG_N>, FPUL  //  ,dec_Fill(DM_UnaryOp,PRM_FPUL,PRM_FRN,shop_cvt)
+	{0                          ,i1111_nnnn_0000_1101   ,Mask_n         ,0xF00D,UsesFPU         ,"fsts FPUL,<FREG_N>"                   ,1,0,LS,fix_none    ,dec_Fill(DM_UnaryOp,PRM_FRN,PRM_FPUL,shop_mov32)}, //fsts FPUL,<FREG_N>
+	{0                          ,i1111_nn01_1111_1101   ,Mask_nh2bit    ,0xF1FD,UsesFPU         ,"ftrv xmtrx,<FV_N>"                    ,1,6,FE,fix_none    ,dec_Fill(DM_BinaryOp,PRM_FVN,PRM_XMTRX,shop_ftrv,1)},  //ftrv xmtrx,<FV_N>
+	{0                          ,i1111_nnnn_mmmm_1110   ,Mask_n_m       ,0xF00E,UsesFPU         ,"fmac <FREG_0>,<FREG_M>,<FREG_N>"      ,1,4,FE,fix_none    ,dec_Fill(DM_BinaryOp,PRM_FRN,PRM_FRM_FR0,shop_fmac,1)},    //fmac <FREG_0>,<FREG_M>,<FREG_N>
+	{0                          ,i1111_nnnn_0111_1101   ,Mask_n         ,0xF07D,UsesFPU         ,"FSRRA <FREG_N>"                       ,1,4,FE,fix_none    ,dec_Un_frNfrN(shop_fsrra)},    //FSRRA <FREG_N> (1111nnnn 01111101)
 
 	//HLE ops
 

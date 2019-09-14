@@ -4,121 +4,78 @@
 
 #include "types.h"
 
-#include <set>
 #include "../sh4_interpreter.h"
 #include "../sh4_opcode_list.h"
 #include "../sh4_core.h"
-#include "../sh4_rom.h"
-#include "../sh4_if.h"
-#include "hw/pvr/pvr_mem.h"
 #include "hw/aica/aica_if.h"
-#include "../modules/dmac.h"
-#include "hw/gdrom/gdrom_if.h"
-#include "hw/maple/maple_if.h"
 #include "../sh4_interrupts.h"
-#include "../modules/tmu.h"
 #include "hw/sh4/sh4_mem.h"
-#include "../modules/ccn.h"
 #include "../dyna/blockmanager.h"
 #include "../sh4_sched.h"
 
-#include <time.h>
-#include <float.h>
-
-#define SH4_TIMESLICE (448)
 #define CPU_RATIO      (8)
 
-//448 Cycles (fixed)
-int UpdateSystem(void)
-{
-	//this is an optimisation (mostly for ARM)
-	//makes scheduling easier !
-	//update_fp* tmu=pUpdateTMU;
-	
-	Sh4cntx.sh4_sched_next-=448;
-	if (Sh4cntx.sh4_sched_next<0)
-		sh4_sched_tick(448);
+static s32 l;
 
-	return Sh4cntx.interrupt_pend;
+static void ExecuteOpcode(u16 op)
+{
+	if (sr.FD == 1 && OpDesc[op]->IsFloatingPoint())
+		RaiseFPUDisableException();
+	OpPtr[op](op);
+	l -= CPU_RATIO;
 }
 
-int UpdateSystem_INTC(void)
+void Sh4_int_Run()
 {
-	UpdateSystem();
-	return UpdateINTC();
+	sh4_int_bCpuRun=true;
+
+	l = SH4_TIMESLICE;
+
+   do
+   {
+#if !defined(NO_MMU)
+      try {
+#endif
+         do
+         {
+            u32 addr = next_pc;
+            next_pc += 2;
+            u32 op = IReadMem16(addr);
+
+            ExecuteOpcode(op);
+         } while (l > 0);
+         l += SH4_TIMESLICE;
+         UpdateSystem_INTC();
+#if !defined(NO_MMU)
+      }
+      catch (SH4ThrownException& ex) {
+         Do_Exception(ex.epc, ex.expEvn, ex.callVect);
+         l -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
+      }
+#endif
+   } while(sh4_int_bCpuRun);
+   
+   sh4_int_bCpuRun=false;
 }
 
-void Sh4_int_Stop(void)
+void Sh4_int_Stop()
 {
 	if (sh4_int_bCpuRun)
 		sh4_int_bCpuRun=false;
 }
 
-void Sh4_int_Start(void)
+void Sh4_int_Start()
 {
 	if (!sh4_int_bCpuRun)
 		sh4_int_bCpuRun=true;
 }
 
-void Sh4_int_Run(void)
-{
-	sh4_int_bCpuRun=true;
 
-	s32 l=SH4_TIMESLICE;
-
-#if !defined(NO_MMU)
-   if (settings.MMUEnabled)
-   {
-      for (int i=0; i<10000; i++)
-      {
-         try
-         {
-            do
-            {
-               u32 addr = next_pc;
-               next_pc += 2;
-               u32 op = ReadMem16(addr);
-
-               OpPtr[op](op);
-               l -= CPU_RATIO;
-            } while (l > 0);
-            l += SH4_TIMESLICE;
-            UpdateSystem_INTC();
-         }
-         catch (SH4ThrownException ex)
-         {
-            Do_Exception(ex.epc, ex.expEvn, ex.callVect);
-            l -= CPU_RATIO * 5;
-         }
-      }
-   }
-   else
-#endif
-   {
-      for (int i=0; i<10000; i++)
-      {
-         do
-         {
-            u32 addr = next_pc;
-            next_pc += 2;
-            u32 op = ReadMem16(addr);
-
-            OpPtr[op](op);
-            l -= CPU_RATIO;
-         } while (l > 0);
-         l += SH4_TIMESLICE;
-         UpdateSystem_INTC();
-      }
-   }
-   sh4_int_bCpuRun=false;
-}
-
-
-void Sh4_int_Step(void)
+void Sh4_int_Step()
 {
 	if (sh4_int_bCpuRun)
 	{
-		printf("Sh4 Is running , can't step\n");
+		WARN_LOG(INTERPRETER, "Sh4 Is running , can't step");
 	}
 	else
 	{
@@ -128,7 +85,7 @@ void Sh4_int_Step(void)
 	}
 }
 
-void Sh4_int_Skip(void)
+void Sh4_int_Skip()
 {
 	if (!sh4_int_bCpuRun)
 		next_pc+=2;
@@ -156,67 +113,48 @@ void Sh4_int_Reset(bool Manual)
    UpdateFPSCR();
 
    //Any more registers have default value ?
-   printf("Sh4 Reset\n");
+   INFO_LOG(INTERPRETER, "Sh4 Reset");
 }
 
-bool Sh4_int_IsCpuRunning(void)
+bool Sh4_int_IsCpuRunning()
 {
 	return sh4_int_bCpuRun;
 }
 
 //TODO : Check for valid delayslot instruction
-void ExecuteDelayslot(void)
+void ExecuteDelayslot()
 {
 #if !defined(NO_MMU)
-   if (settings.MMUEnabled)
-   {
-      try {
-         u32 addr = next_pc;
-         next_pc += 2;
-         u32 op = IReadMem16(addr);
-         if (op != 0)
-            ExecuteOpcode(op);
-      }
-      catch (SH4ThrownException ex)
-      {
-         ex.epc -= 2;
-         //printf("Delay slot exception\n");
-         throw ex;
-      }
-   }
-   else
+   try {
 #endif
-   {
       u32 addr = next_pc;
       next_pc += 2;
       u32 op = IReadMem16(addr);
+
       if (op != 0)
-         ExecuteOpcode(op);
+            ExecuteOpcode(op);
+#if !defined(NO_MMU)
    }
+   catch (SH4ThrownException& ex) {
+		AdjustDelaySlotException(ex);
+      //printf("Delay slot exception\n");
+      throw ex;
+   }
+#endif
 }
 
-void ExecuteDelayslot_RTE(void)
+void ExecuteDelayslot_RTE()
 {
-	u32 oldsr = sh4_sr_GetFull();
-
 #if !defined(NO_MMU)
-   if (settings.MMUEnabled)
-   {
-      try {
-    	 sh4_sr_SetFull(ssr);
-         ExecuteDelayslot();
-      }
-      catch (SH4ThrownException ex)
-      {
-         printf("RTE Exception\n");
-      }
-   }
-   else
+   try {
 #endif
-   {
-	  sh4_sr_SetFull(ssr);
       ExecuteDelayslot();
+#if !defined(NO_MMU)
    }
+   catch (SH4ThrownException& ex) {
+      ERROR_LOG(INTERPRETER, "Exception in RTE delay slot");
+   }
+#endif
 }
 
 //General update
@@ -225,8 +163,8 @@ void ExecuteDelayslot_RTE(void)
 #define AICA_SAMPLE_GCM 441
 #define AICA_SAMPLE_CYCLES (SH4_MAIN_CLOCK/(44100/AICA_SAMPLE_GCM)*32)
 
-int aica_sched;
-int rtc_sched;
+int aica_sched = -1;
+int rtc_sched = -1;
 
 //14336 Cycles
 
@@ -247,13 +185,32 @@ static int DreamcastSecond(int tag, int c, int j)
 	bm_Periodical_1s();
 #endif
 
-	//printf("%d ticks\n",sh4_sched_intr);
-	sh4_sched_intr=0;
 	return SH4_MAIN_CLOCK;
 }
 
+// every SH4_TIMESLICE Cycles (fixed)
+int UpdateSystem()
+{
+	//this is an optimisation (mostly for ARM)
+	//makes scheduling easier !
+	//update_fp* tmu=pUpdateTMU;
+	
+	Sh4cntx.sh4_sched_next -= SH4_TIMESLICE;
+	if (Sh4cntx.sh4_sched_next<0)
+		sh4_sched_tick(SH4_TIMESLICE);
 
-static void sh4_int_resetcache(void)
+	return Sh4cntx.interrupt_pend;
+}
+
+int UpdateSystem_INTC()
+{
+	if (UpdateSystem())
+		return UpdateINTC();
+	else
+		return 0;
+}
+
+static void sh4_int_resetcache()
 {
 }
 
@@ -277,16 +234,19 @@ void Sh4_int_Init()
 {
 	verify(sizeof(Sh4cntx)==448);
 
-	aica_sched=sh4_sched_register(0,&AicaUpdate);
-	sh4_sched_request(aica_sched,AICA_TICK);
+	if (aica_sched == -1)
+	{
+		aica_sched=sh4_sched_register(0,&AicaUpdate);
+		sh4_sched_request(aica_sched,AICA_TICK);
 
-	rtc_sched=sh4_sched_register(0,&DreamcastSecond);
-	sh4_sched_request(rtc_sched,SH4_MAIN_CLOCK);
+		rtc_sched=sh4_sched_register(0,&DreamcastSecond);
+		sh4_sched_request(rtc_sched,SH4_MAIN_CLOCK);
+	}
 	memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 }
 
-void Sh4_int_Term(void)
+void Sh4_int_Term()
 {
 	Sh4_int_Stop();
-	printf("Sh4 Term\n");
+	INFO_LOG(INTERPRETER, "Sh4 Term");
 }

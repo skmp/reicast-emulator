@@ -9,7 +9,9 @@ INCFLAGS    += -I$(CORE_DIR)/core/libretro \
 					-I$(LIBRETRO_COMM_DIR)/include \
 					-I$(DEPS_DIR)/vixl
 
-CORE_DEFINES += -DNO_MMU
+ifeq ($(THREADED_RENDERING_DEFAULT), 1)
+CORE_DEFINES += -DTHREADED_RENDERING_DEFAULT
+endif
 
 ifeq ($(THREADED_RENDERING_DEFAULT), 1)
 CORE_DEFINES += -DTHREADED_RENDERING_DEFAULT
@@ -44,6 +46,7 @@ SOURCES_CXX := \
 					$(CORE_DIR)/core/hw/maple/maple_cfg.cpp \
 					\
 					$(CORE_DIR)/core/hw/mem/_vmem.cpp \
+					$(CORE_DIR)/core/hw/mem/vmem32.cpp \
 					\
 					$(CORE_DIR)/core/hw/modem/dns.cpp \
 					$(CORE_DIR)/core/hw/modem/modem.cpp \
@@ -80,12 +83,15 @@ SOURCES_CXX := \
 					$(CORE_DIR)/core/hw/sh4/modules/cpg.cpp \
 					$(CORE_DIR)/core/hw/sh4/modules/dmac.cpp \
 					$(CORE_DIR)/core/hw/sh4/modules/mmu.cpp \
+					$(CORE_DIR)/core/hw/sh4/modules/fastmmu.cpp \
 					$(CORE_DIR)/core/imgread/ImgReader.cpp \
 					$(CORE_DIR)/core/imgread/cdi.cpp \
 					$(CORE_DIR)/core/imgread/chd.cpp \
 					$(CORE_DIR)/core/imgread/common.cpp \
 					$(CORE_DIR)/core/imgread/cue.cpp \
 					$(CORE_DIR)/core/imgread/gdi.cpp \
+					$(CORE_DIR)/core/log/ConsoleListener.cpp \
+					$(CORE_DIR)/core/log/LogManager.cpp \
 					\
 					$(CORE_DIR)/core/nullDC.cpp \
 					$(CORE_DIR)/core/serialize.cpp \
@@ -309,13 +315,15 @@ SOURCES_CXX += $(CORE_DIR)/core/rec.cpp
 SOURCES_CXX += $(CORE_DIR)/core/hw/sh4/dyna/decoder.cpp \
 					$(CORE_DIR)/core/hw/sh4/dyna/driver.cpp \
 					$(CORE_DIR)/core/hw/sh4/dyna/blockmanager.cpp \
-					$(CORE_DIR)/core/hw/sh4/dyna/shil.cpp 
+					$(CORE_DIR)/core/hw/sh4/dyna/shil.cpp \
+					$(CORE_DIR)/core/hw/sh4/dyna/ssa.cpp 
 
 endif
 
 SOURCES_CXX += $(CORE_DIR)/core/libretro/libretro.cpp \
 					$(CORE_DIR)/core/libretro/audiostream.cpp \
-					$(CORE_DIR)/core/libretro/common.cpp
+					$(CORE_DIR)/core/libretro/common.cpp \
+					$(CORE_DIR)/core/libretro/vmem_utils.cpp
 
 SOURCES_C +=   $(LIBRETRO_COMM_DIR)/memmap/memalign.c \
 					$(LIBRETRO_COMM_DIR)/file/file_path.c \

@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include "build.h"
+#include "log/Log.h"
 
 #ifdef _MSC_VER
 #define DECL_ALIGN(x) __declspec(align(x))
@@ -14,7 +15,6 @@
 
 
 #if HOST_CPU == CPU_X86
-
 #ifdef _MSC_VER
 #define DYNACALL  __fastcall
 #else
@@ -43,9 +43,7 @@
 
 //unused parameters
 #pragma warning( disable : 4100)
-#endif
 
-#ifdef _MSC_VER
 //SHUT UP M$ COMPILER !@#!@$#
 #ifdef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
 #undef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
@@ -94,8 +92,6 @@ typedef size_t unat;
 #endif
 
 typedef char wchar;
-
-#define EXPORT extern "C" __declspec(dllexport)
 
 #ifndef CDECL
 #define CDECL __cdecl
@@ -224,15 +220,6 @@ extern unsigned ARAM_MASK;
 #define G2_BUS_CLOCK (25*1000*1000)			//[25000000]  from Holly, from SH4_RAM_CLOCK w/ 2 2:1 plls
 
 
-enum ndc_error_codes
-{
-	rv_ok = 0,		//no error
-
-	rv_error=-2,	//error
-	rv_serror=-1	//silent error , it has been reported to the user
-};
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //******************************************************
@@ -266,11 +253,6 @@ enum DiskArea
 {
 	SingleDensity,
 	DoubleDensity
-};
-
-enum DriveEvent
-{
-	DiskChange=1	//disk ejected/changed
 };
 
 //******************************************************
@@ -347,7 +329,7 @@ using namespace std;
 #if defined(X86) && defined(_MSC_VER)
 #define naked   __declspec( naked )
 #else
-#define naked
+#define naked __attribute__((naked))
 #endif
 
 
@@ -444,15 +426,12 @@ void os_DebugBreak(void);
 #endif
 
 #define die(reason) { msgboxf("Fatal error : %s\n in %s -> %s : %d \n",MBX_ICONERROR,(reason),(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
-#define fverify verify
 
 
 //will be removed sometime soon
 //This shit needs to be moved to proper headers
-typedef u32  RegReadFP(void);
 typedef u32  RegReadAddrFP(u32 addr);
 
-typedef void RegWriteFP(u32 data);
 typedef void RegWriteAddrFP(u32 addr, u32 data);
 
 /*
@@ -500,24 +479,24 @@ struct RegisterStruct
 		u16 data16;					//stores data of reg variable [if used] 16b
 		u8  data8;					//stores data of reg variable [if used]	8b
 
-		RegReadFP* readFunction;	//stored pointer to reg read function
-		RegReadAddrFP* readFunctionAddr;
+		RegReadAddrFP* readFunctionAddr;	//stored pointer to reg read function
 	};
 
-	union
-	{
-		RegWriteFP* writeFunction;	//stored pointer to reg write function
-		RegWriteAddrFP* writeFunctionAddr;
-	};
+	RegWriteAddrFP* writeFunctionAddr;
 
 	u32 flags;					//Access flags !
+
+	void reset()
+	{
+		if (!(flags & (REG_RO | REG_RF)))
+			data32 = 0;
+	}
 };
 
 
 struct settings_t
 {
    unsigned System;
-   bool MMUEnabled;
 
 	struct {
 		bool UseReios;
@@ -544,6 +523,7 @@ struct settings_t
 		bool ThreadedRendering;
 		bool CustomTextures;
 		bool DumpTextures;
+		bool DelayFrameSwapping; // Delay swapping frame until FB_R_SOF matches FB_W_SOF
 	} rend;
 
 	struct
@@ -553,6 +533,7 @@ struct settings_t
 		bool idleskip;
 		bool unstable_opt;
 		bool disable_nvmem;
+		bool disable_vmem32;
       bool DisableDivMatching;
       bool AutoDivMatching;
 	} dynarec;
@@ -569,6 +550,8 @@ struct settings_t
 	   u32 region;			// 0 -> JP, 1 -> USA, 2 -> EU, 3 -> default
 	   u32 broadcast;		// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 -> default
 	   u32 language;		// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default
+	   bool FullMMU;
+	   bool ForceWinCE;
 	} dreamcast;
 
 	struct
@@ -585,7 +568,6 @@ struct settings_t
 		bool PatchRegion;
 		bool LoadDefaultImage;
 		char DefaultImage[512];
-		char LastImage[512];
 	} imgread;
 
 	struct
@@ -649,14 +631,11 @@ extern settings_t settings;
 void LoadSettings(void);
 void SaveSettings(void);
 u32 GetRTC_now(void);
-extern u32 patchRB;
 
 static inline bool is_s8(u32 v) { return (s8)v==(s32)v; }
 static inline bool is_u8(u32 v) { return (u8)v==(s32)v; }
 static inline bool is_s16(u32 v) { return (s16)v==(s32)v; }
 static inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
-
-#define verifyc(x) verify(!FAILED(x))
 
 #include "hw/sh4/sh4_if.h"
 
@@ -674,11 +653,6 @@ s32 libPvr_Init(void);
 void libPvr_Reset(bool Manual);
 void libPvr_Term(void);
 
-
-//void DYNACALL libPvr_TaSQ(u32* data);				//size is 32 byte transfer counts
-u32 libPvr_ReadReg(u32 addr,u32 size);
-void libPvr_WriteReg(u32 addr,u32 data,u32 size);
-
 void libPvr_LockedBlockWrite(vram_block* block,u32 addr);	//set to 0 if not used
 
 void* libPvr_GetRenderTarget(void);
@@ -692,9 +666,6 @@ void libAICA_Term(void);
 
 u32  libAICA_ReadReg(u32 addr,u32 size);
 void libAICA_WriteReg(u32 addr,u32 data,u32 size);
-
-u32  libAICA_ReadMem_aica_ram(u32 addr,u32 size);
-void libAICA_WriteMem_aica_ram(u32 addr,u32 data,u32 size);
 void libAICA_Update(u32 cycles);				//called every ~1800 cycles, set to 0 if not used
 
 
@@ -769,12 +740,7 @@ struct OnLoad
 	OnLoad(OnLoadFP* fp) { fp(); }
 };
 
-int protect_pages(void *ptr, size_t size, enum page_access access);
-
-void os_MakeExecutable(void* ptr, u32 sz);
-
 void os_DoEvents();
-void os_CreateWindow();
 double os_GetSeconds();
 
 #ifdef _MSC_VER
@@ -802,92 +768,9 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 #define LIBRETRO_S(v) ra_serialize(&(v), sizeof(v), data, total_size)
 #define LIBRETRO_US(v) ra_unserialize(&(v), sizeof(v), data, total_size)
 
-// FIXME breaks savestates compat
 #define LIBRETRO_SA(v_arr,num) ra_serialize((v_arr), sizeof((v_arr)[0]) * (num), data, total_size)
 #define LIBRETRO_USA(v_arr,num) ra_unserialize((v_arr), sizeof((v_arr)[0]) * (num), data, total_size)
 
-
-enum
-{
-	RN_CPSR      = 16,
-	RN_SPSR      = 17,
-
-	R13_IRQ      = 18,
-	R14_IRQ      = 19,
-	SPSR_IRQ     = 20,
-	R13_USR      = 26,
-	R14_USR      = 27,
-	R13_SVC      = 28,
-	R14_SVC      = 29,
-	SPSR_SVC     = 30,
-	R13_ABT      = 31,
-	R14_ABT      = 32,
-	SPSR_ABT     = 33,
-	R13_UND      = 34,
-	R14_UND      = 35,
-	SPSR_UND     = 36,
-	R8_FIQ       = 37,
-	R9_FIQ       = 38,
-	R10_FIQ      = 39,
-	R11_FIQ      = 40,
-	R12_FIQ      = 41,
-	R13_FIQ      = 42,
-	R14_FIQ      = 43,
-	SPSR_FIQ     = 44,
-	RN_PSR_FLAGS = 45,
-	R15_ARM_NEXT = 46,
-	INTR_PEND    = 47,
-	CYCL_CNT     = 48,
-
-	RN_ARM_REG_COUNT,
-};
-
-typedef union
-{
-	struct
-	{
-		u8 B0;
-		u8 B1;
-		u8 B2;
-		u8 B3;
-	} B;
-
-	struct
-	{
-		u16 W0;
-		u16 W1;
-	} W;
-
-	union
-	{
-		struct
-		{
-			u32 _pad0 : 28;
-			u32 V     : 1; //Bit 28
-			u32 C     : 1; //Bit 29
-			u32 Z     : 1; //Bit 30
-			u32 N     : 1; //Bit 31
-		};
-
-		struct
-		{
-			u32 _pad1 : 28;
-			u32 NZCV  : 4; //Bits [31:28]
-		};
-	} FLG;
-
-	struct
-	{
-		u32 M     : 5;  //mode, PSR[4:0]
-		u32 _pad0 : 1;  //not used / zero
-		u32 F     : 1;  //FIQ disable, PSR[6]
-		u32 I     : 1;  //IRQ disable, PSR[7]
-		u32 _pad1 : 20; //not used / zero
-		u32 NZCV  : 4;  //Bits [31:28]
-	} PSR;
-
-	u32 I;
-} reg_pair;
 
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb) ;
 
@@ -996,3 +879,14 @@ struct lightgun_params_t {
 extern u8 lightgun_palette[LIGHTGUN_COLORS_COUNT*3];
 extern u8 lightgun_img_crosshair[LIGHTGUN_CROSSHAIR_SIZE*LIGHTGUN_CROSSHAIR_SIZE];
 extern lightgun_params_t lightgun_params[4] ;
+
+enum serialize_version_enum {
+	V1,
+	V2,
+	V3,
+	V4,
+	V5,
+	V6,
+	V7,
+	V8
+};

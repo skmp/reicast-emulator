@@ -394,6 +394,17 @@ struct retro_core_option_definition option_defs_tr[] = {
       NULL,
    },
    {
+      CORE_OPTION_NAME "_force_wince",
+      "Force Windows CE Mode",
+      "Enable full MMU emulation and other settings for Windows CE games",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      NULL,
+   },
+   {
       CORE_OPTION_NAME "_analog_stick_deadzone",
       "Analog Çubuğu Ölü Bölge",
       "",

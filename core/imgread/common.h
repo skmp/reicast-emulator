@@ -72,6 +72,7 @@ enum SectorFormat
 	SECFMT_2048_MODE1,			//2048 user byte, form1 sector
 	SECFMT_2048_MODE2_FORM1,	//2048 user bytes, form2m1 sector
 	SECFMT_2336_MODE2,			//2336 user bytes, 
+	SECFMT_2448_MODE2,			//2048 user bytes, ? SYNC (12) | HEAD (4) | sub-head (8) | data (2048) | edc (4) | ecc (276) + subcodes (96) ?
 };
 
 enum SubcodeFormat
@@ -165,7 +166,7 @@ struct Disc
 
 	void ReadSectors(u32 FAD,u32 count,u8* dst,u32 fmt)
 	{
-		u8 temp[2352];
+		u8 temp[2448];
 		SectorFormat secfmt;
 		SubcodeFormat subfmt;
 
@@ -186,18 +187,23 @@ struct Disc
 				}
 				else if (fmt==2352 && (secfmt==SECFMT_2048_MODE1 || secfmt==SECFMT_2048_MODE2_FORM1 ))
 				{
-					printf("GDR:fmt=2352;secfmt=2048\n");
+					INFO_LOG(GDROM, "GDR:fmt=2352;secfmt=2048");
 					memcpy(dst,temp,2048);
+				}
+				else if (fmt==2048 && secfmt==SECFMT_2448_MODE2)
+				{
+					// Pier Solar and the Great Architects
+					ConvertSector(temp, dst, 2448, fmt, FAD);
 				}
 				else
 				{
-					printf("ERROR: UNABLE TO CONVERT SECTOR. THIS IS FATAL.");
+					WARN_LOG(GDROM, "ERROR: UNABLE TO CONVERT SECTOR. THIS IS FATAL. Format: %d Sector format: %d", fmt, secfmt);
 					//verify(false);
 				}
 			}
 			else
 			{
-				printf("Sector Read miss FAD: %d\n", FAD);
+				INFO_LOG(GDROM, "Sector Read miss FAD: %d", FAD);
 			}
 			dst+=fmt;
 			FAD++;
@@ -221,7 +227,7 @@ struct Disc
 
 		//session 2 : start @ track 3, and its fad
 		ses.FirstTrack=3;
-		ses.StartFAD=tracks[0].StartFAD;
+		ses.StartFAD=tracks[2].StartFAD;
 		sessions.push_back(ses);
 
 		//this isn't always true for gdroms, depends on area look @ the get-toc code
@@ -287,6 +293,9 @@ struct RawTrackFile : TrackFile
             break;
          case 2336:
             *sector_type=SECFMT_2336_MODE2;
+            break;
+         case 2448:
+            *sector_type=SECFMT_2448_MODE2;
             break;
          default:
             verify(false);

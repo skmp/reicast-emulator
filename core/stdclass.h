@@ -12,7 +12,8 @@
 #define PAGE_SIZE 4096
 #endif
 
-#define SH4_PAGE_MASK (PAGE_SIZE-1)
+#undef PAGE_MASK
+#define PAGE_MASK (PAGE_SIZE-1)
 
 //Commonly used classes across the project
 //Simple Array class for helping me out ;P
@@ -168,6 +169,7 @@ private:
 public :
 	sthread_t *hThread;
 	cThread(ThreadEntryFP* function,void* param);
+	~cThread() { WaitToEnd(); }
 	
 	void Start();
 	void WaitToEnd();
@@ -184,7 +186,7 @@ class cResetEvent
 
 public :
    bool state;
-	cResetEvent(bool State,bool Auto);
+	cResetEvent();
 	~cResetEvent();
 	void Set();		//Set state to signaled
 	void Reset();	//Set state to non signaled
@@ -244,6 +246,14 @@ void add_system_data_dir(const string& dir);
 string get_writable_data_path(const string& filename);
 string get_writable_vmu_path(const char *logical_port);
 
+bool mem_region_lock(void *start, size_t len);
+bool mem_region_unlock(void *start, size_t len);
+bool mem_region_set_exec(void *start, size_t len);
+void *mem_region_reserve(void *start, size_t len);
+bool mem_region_release(void *start, size_t len);
+void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite);
+bool mem_region_unmap_file(void *start, size_t len);
+
 class VArray2
 {
 public:
@@ -252,8 +262,13 @@ public:
 	u32 size;
 	//void Init(void* data,u32 sz);
 	//void Term();
+#ifdef TARGET_NO_EXCEPTIONS
+	void LockRegion(u32 offset,u32 size) {}
+	void UnLockRegion(u32 offset,u32 size) {}
+#else
 	void LockRegion(u32 offset,u32 size);
 	void UnLockRegion(u32 offset,u32 size);
+#endif
 
 	void Zero()
 	{

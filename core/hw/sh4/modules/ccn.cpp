@@ -8,7 +8,8 @@
 #include "../sh4_core.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
-
+#include "hw/mem/vmem32.h"
+#include "mmu.h"
 
 //Types
 
@@ -41,25 +42,38 @@ void CCN_QACR_write(u32 addr, u32 value)
 	}
 }
 
+void CCN_PTEH_write(u32 addr, u32 value)
+{
+	CCN_PTEH_type temp;
+	temp.reg_data = value;
+	if (temp.ASID != CCN_PTEH.ASID && vmem32_enabled())
+		vmem32_flush_mmu();
+
+	CCN_PTEH = temp;
+}
+
 void CCN_MMUCR_write(u32 addr, u32 value)
 {
 	CCN_MMUCR_type temp;
 	temp.reg_data=value;
 
-#ifdef NO_MMU
-#ifndef NDEBUG
-	if ((temp.AT!=CCN_MMUCR.AT) && (temp.AT==1))
-	{
-		printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
-	}
-#endif
-#endif
+	bool mmu_changed_state = temp.AT != CCN_MMUCR.AT;
 	
-	if (temp.TI)
+	if (temp.TI != 0)
 	{
+		mmu_flush_table();
+		if (vmem32_enabled())
+			vmem32_flush_mmu();
 		temp.TI=0;
 	}
 	CCN_MMUCR=temp;
+
+	if (mmu_changed_state)
+	{
+		//printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
+		sh4_cpu.ResetCache();
+		mmu_set_state();
+	}
 }
 void CCN_CCR_write(u32 addr, u32 value)
 {
@@ -70,9 +84,7 @@ void CCN_CCR_write(u32 addr, u32 value)
 	//what is 0xAC13DBF8 from ?
 	if (temp.ICI && curr_pc!=0xAC13DBF8)
 	{
-#ifndef NDEBUG
-		printf("Sh4: i-cache invalidation %08X\n",curr_pc);
-#endif
+		DEBUG_LOG(SH4, "Sh4: i-cache invalidation %08X", curr_pc);
 		// Shikigami No Shiro II sets ICI frequently
 		// No reason to flush the dynarec cache for this
 		//sh4_cpu.ResetCache();
@@ -98,7 +110,7 @@ static u32 CCN_PRR_read(u32 addr)
 void ccn_init()
 {
 	//CCN PTEH 0xFF000000 0x1F000000 32 Undefined Undefined Held Held Iclk
-	sh4_rio_reg(CCN,CCN_PTEH_addr,RIO_DATA,32);
+	sh4_rio_reg(CCN,CCN_PTEH_addr,RIO_WF,32,0,&CCN_PTEH_write);
 
 	//CCN PTEL 0xFF000004 0x1F000004 32 Undefined Undefined Held Held Iclk
 	sh4_rio_reg(CCN,CCN_PTEL_addr,RIO_DATA,32);

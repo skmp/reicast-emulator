@@ -4,6 +4,7 @@
 #include "hw/aica/dsp.h"
 #include "hw/aica/aica.h"
 #include "hw/aica/sgc_if.h"
+#include "hw/arm7/arm7.h"
 #include "hw/holly/sb_mem.h"
 #include "hw/flashrom/flashrom.h"
 #include "hw/mem/_vmem.h"
@@ -18,25 +19,20 @@
 #include "hw/sh4/modules/mmu.h"
 #include "imgread/common.h"
 #include "reios/reios.h"
+#include "reios/gdrom_hle.h"
 #include <map>
 #include <set>
 #include "rend/gles/gles.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/naomi/naomi_cart.h"
+#include "hw/naomi/naomi.h"
+
+#define LIBRETRO_SKIP(size) do { *(u8**)data += (size); *total_size += (size); } while (false)
 
 /*
  * search for "maybe" to find items that were left out that may be needed
  */
-
-enum serialize_version_enum {
-	V1,
-	V2,
-	V3,
-	V4,
-	V5,
-	V6
-} ;
 
 //./core/hw/arm7/arm_mem.cpp
 extern bool aica_interr;
@@ -54,9 +50,6 @@ extern bool armFiqEnable;
 extern int armMode;
 extern bool Arm7Enabled;
 extern u8 cpuBitsSet[256];
-extern bool intState ;
-extern bool stopState ;
-extern bool holdState ;
 /*
 	if AREC dynarec enabled:
 	vector<ArmDPOP> ops;
@@ -117,12 +110,6 @@ extern u8 aica_reg[0x8000];
 //./core/hw/aica/sgc_if.o
 struct ChannelEx;
 #define AicaChannel ChannelEx
-extern s32 volume_lut[16];
-extern s32 tl_lut[256 + 768];	//xx.15 format. >=255 is muted
-extern u32 AEG_ATT_SPS[64];
-extern u32 AEG_DSR_SPS[64];
-extern s16 pl;
-extern s16 pr;
 //this is just a pointer to aica_reg
 //extern DSP_OUT_VOL_REG* dsp_out_vol;
 //not needed - one-time init
@@ -139,10 +126,6 @@ extern s16 pr;
 #define CDDA_SIZE  (2352/2)
 extern s16 cdda_sector[CDDA_SIZE];
 extern u32 cdda_index;
-extern SampleType mxlr[64];
-extern u32 samples_gen;
-
-
 
 
 
@@ -433,8 +416,7 @@ extern u32 old_dn;
 
 //./core/hw/sh4/sh4_sched.o
 extern u64 sh4_sched_ffb;
-extern u32 sh4_sched_intr;
-extern vector<sched_list> list;
+extern vector<sched_list> sch_list;
 //extern int sh4_sched_next_id;
 
 
@@ -486,7 +468,6 @@ extern TLB_Entry ITLB[4];
 extern u32 sq_remap[64];
 #else
 extern u32 ITLB_LRU_USE[64];
-extern u32 mmu_error_TT;
 #endif
 
 
@@ -527,19 +508,6 @@ extern unsigned VRAM_MASK;
 //extern bool descrambl;
 //one time init
 //extern bool bootfile_inited;
-//all these reios_?? are one-time inits
-//extern char reios_bootfile[32];
-//extern char reios_hardware_id[17];
-//extern char reios_maker_id[17];
-//extern char reios_device_info[17];
-//extern char reios_area_symbols[9];
-//extern char reios_peripherals[9];
-//extern char reios_product_number[11];
-//extern char reios_product_version[7];
-//extern char reios_releasedate[17];
-//extern char reios_boot_filename[17];
-//extern char reios_software_company[17];
-//extern char reios_software_name[129];
 //one time init
 //extern map<u32, hook_fp*> hooks;
 //one time init
@@ -610,7 +578,6 @@ extern unsigned VRAM_MASK;
 
 //./core/hw/naomi/naomi.o
 extern u32 naomi_updates;
-extern u32 BoardID;
 extern u32 GSerialBuffer;
 extern u32 BSerialBuffer;
 extern int GBufPos;
@@ -629,11 +596,7 @@ extern int SerStep;
 extern int SerStep2;
 extern unsigned char BSerial[];
 extern unsigned char GSerial[];
-extern u32 reg_dimm_3c;	//IO window ! writen, 0x1E03 some flag ?
-extern u32 reg_dimm_40;	//parameters
-extern u32 reg_dimm_44;	//parameters
-extern u32 reg_dimm_48;	//parameters
-extern u32 reg_dimm_4c;	//status/control reg ?
+
 extern bool NaomiDataRead;
 extern u32 NAOMI_ROM_OFFSETH;
 extern u32 NAOMI_ROM_OFFSETL;
@@ -668,7 +631,7 @@ extern u32 NAOMI_COMM_DATA;
 
 //./core/rec.o
 extern int cycle_counter;
-extern int idxnxx;
+//extern int idxnxx;
 
 
 
@@ -711,20 +674,8 @@ extern char block_hash[1024];
 //extern u32 PAGE_STATE[(32*1024*1024)/*RAM_SIZE*//32];
 //never read
 //extern u32 total_saved;
-//counter with no real controlling logic behind it
-//extern u32 rebuild_counter;
 //just printf output
 //extern bool print_stats;
-
-
-
-
-//./core/hw/sh4/dyna/shil.o
-extern u32 RegisterWrite[sh4_reg_count];
-extern u32 RegisterRead[sh4_reg_count];
-extern u32 fallback_blocks;
-extern u32 total_blocks;
-extern u32 REMOVED_OPS;
 
 
 
@@ -807,7 +758,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
-	serialize_version_enum version = V6 ;
+	serialize_version_enum version = V8;
 
 	*total_size = 0 ;
 
@@ -828,9 +779,10 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(armMode);
 	LIBRETRO_S(Arm7Enabled);
 	LIBRETRO_SA(cpuBitsSet,256);
-	LIBRETRO_S(intState);
-	LIBRETRO_S(stopState);
-	LIBRETRO_S(holdState);
+	bool dummybool;
+	LIBRETRO_S(dummybool); // intState
+	LIBRETRO_S(dummybool); // stopState
+	LIBRETRO_S(dummybool); // holdState
 
 	LIBRETRO_S(dsp);
 
@@ -848,21 +800,13 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	LIBRETRO_SA(aica_reg,0x8000);
 
-
-
-	LIBRETRO_SA(volume_lut,16);
-	LIBRETRO_SA(tl_lut,256 + 768);
-	LIBRETRO_SA(AEG_ATT_SPS,64);
-	LIBRETRO_SA(AEG_DSR_SPS,64);
-	LIBRETRO_S(pl);
-	LIBRETRO_S(pr);
-
 	channel_serialize(data, total_size) ;
 
 	LIBRETRO_SA(cdda_sector,CDDA_SIZE);
 	LIBRETRO_S(cdda_index);
-	LIBRETRO_SA(mxlr,64);
-	LIBRETRO_S(samples_gen);
+	for (int i = 0; i < 64; i++)
+		LIBRETRO_S(i);	// mxlr
+	LIBRETRO_S(i);		// samples_gen
 
 
 	register_serialize(sb_regs, data, total_size) ;
@@ -1057,52 +1001,52 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 
 	LIBRETRO_S(sh4_sched_ffb);
-	LIBRETRO_S(sh4_sched_intr);
+	LIBRETRO_S(i); // sh4_sched_intr
 
 	//extern vector<sched_list> list;
 
-	LIBRETRO_S(list[aica_sched].tag) ;
-	LIBRETRO_S(list[aica_sched].start) ;
-	LIBRETRO_S(list[aica_sched].end) ;
+	LIBRETRO_S(sch_list[aica_sched].tag) ;
+	LIBRETRO_S(sch_list[aica_sched].start) ;
+	LIBRETRO_S(sch_list[aica_sched].end) ;
 
-	LIBRETRO_S(list[rtc_sched].tag) ;
-	LIBRETRO_S(list[rtc_sched].start) ;
-	LIBRETRO_S(list[rtc_sched].end) ;
+	LIBRETRO_S(sch_list[rtc_sched].tag) ;
+	LIBRETRO_S(sch_list[rtc_sched].start) ;
+	LIBRETRO_S(sch_list[rtc_sched].end) ;
 
-	LIBRETRO_S(list[gdrom_sched].tag) ;
-	LIBRETRO_S(list[gdrom_sched].start) ;
-	LIBRETRO_S(list[gdrom_sched].end) ;
+	LIBRETRO_S(sch_list[gdrom_sched].tag) ;
+	LIBRETRO_S(sch_list[gdrom_sched].start) ;
+	LIBRETRO_S(sch_list[gdrom_sched].end) ;
 
-	LIBRETRO_S(list[maple_sched].tag) ;
-	LIBRETRO_S(list[maple_sched].start) ;
-	LIBRETRO_S(list[maple_sched].end) ;
+	LIBRETRO_S(sch_list[maple_sched].tag) ;
+	LIBRETRO_S(sch_list[maple_sched].start) ;
+	LIBRETRO_S(sch_list[maple_sched].end) ;
 
-	LIBRETRO_S(list[dma_sched_id].tag) ;
-	LIBRETRO_S(list[dma_sched_id].start) ;
-	LIBRETRO_S(list[dma_sched_id].end) ;
+	LIBRETRO_S(sch_list[dma_sched_id].tag) ;
+	LIBRETRO_S(sch_list[dma_sched_id].start) ;
+	LIBRETRO_S(sch_list[dma_sched_id].end) ;
 
 	for (int i = 0; i < 3; i++)
 	{
-	   LIBRETRO_S(list[tmu_sched[i]].tag) ;
-	   LIBRETRO_S(list[tmu_sched[i]].start) ;
-	   LIBRETRO_S(list[tmu_sched[i]].end) ;
+	   LIBRETRO_S(sch_list[tmu_sched[i]].tag) ;
+	   LIBRETRO_S(sch_list[tmu_sched[i]].start) ;
+	   LIBRETRO_S(sch_list[tmu_sched[i]].end) ;
 	}
 
-	LIBRETRO_S(list[render_end_sched].tag) ;
-	LIBRETRO_S(list[render_end_sched].start) ;
-	LIBRETRO_S(list[render_end_sched].end) ;
+	LIBRETRO_S(sch_list[render_end_sched].tag) ;
+	LIBRETRO_S(sch_list[render_end_sched].start) ;
+	LIBRETRO_S(sch_list[render_end_sched].end) ;
 
-	LIBRETRO_S(list[vblank_sched].tag) ;
-	LIBRETRO_S(list[vblank_sched].start) ;
-	LIBRETRO_S(list[vblank_sched].end) ;
+	LIBRETRO_S(sch_list[vblank_sched].tag) ;
+	LIBRETRO_S(sch_list[vblank_sched].start) ;
+	LIBRETRO_S(sch_list[vblank_sched].end) ;
 
-	LIBRETRO_S(list[time_sync].tag) ;
-	LIBRETRO_S(list[time_sync].start) ;
-	LIBRETRO_S(list[time_sync].end) ;
+	LIBRETRO_S(sch_list[time_sync].tag) ;
+	LIBRETRO_S(sch_list[time_sync].start) ;
+	LIBRETRO_S(sch_list[time_sync].end) ;
 
-    LIBRETRO_S(list[modem_sched].tag) ;
-    LIBRETRO_S(list[modem_sched].start) ;
-    LIBRETRO_S(list[modem_sched].end) ;
+    LIBRETRO_S(sch_list[modem_sched].tag) ;
+    LIBRETRO_S(sch_list[modem_sched].start) ;
+    LIBRETRO_S(sch_list[modem_sched].end) ;
 
 
 	LIBRETRO_S(SCIF_SCFSR2);
@@ -1136,7 +1080,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_SA(sq_remap,64);
 #else
 	LIBRETRO_SA(ITLB_LRU_USE,64);
-	LIBRETRO_S(mmu_error_TT);
 #endif
 
 
@@ -1158,7 +1101,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 
 	LIBRETRO_S(naomi_updates);
-	LIBRETRO_S(BoardID);
+	LIBRETRO_S(i); // BoardID
 	LIBRETRO_S(GSerialBuffer);
 	LIBRETRO_S(BSerialBuffer);
 	LIBRETRO_S(GBufPos);
@@ -1177,23 +1120,21 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(SerStep2);
 	LIBRETRO_SA(BSerial,69);
 	LIBRETRO_SA(GSerial,69);
-	LIBRETRO_S(reg_dimm_3c);
-	LIBRETRO_S(reg_dimm_40);
-	LIBRETRO_S(reg_dimm_44);
-	LIBRETRO_S(reg_dimm_48);
-	LIBRETRO_S(reg_dimm_4c);
+	LIBRETRO_S(reg_dimm_command);
+	LIBRETRO_S(reg_dimm_offsetl);
+	LIBRETRO_S(reg_dimm_parameterl);
+	LIBRETRO_S(reg_dimm_parameterh);
+	LIBRETRO_S(reg_dimm_status);
 	LIBRETRO_S(NaomiDataRead);
 
 	LIBRETRO_S(cycle_counter);
-	LIBRETRO_S(idxnxx);
+	LIBRETRO_S(i);	// idxnxx
 
-
+#if FEAT_SHREC != DYNAREC_NONE
 	LIBRETRO_S(state);
 	LIBRETRO_S(div_som_reg1);
 	LIBRETRO_S(div_som_reg2);
 	LIBRETRO_S(div_som_reg3);
-
-
 
 
 	//LIBRETRO_SA(CodeCache,CODE_SIZE) ;
@@ -1201,13 +1142,17 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(LastAddr);
 	LIBRETRO_S(LastAddr_min);
 	LIBRETRO_SA(block_hash,1024);
+#endif
 
-
-	LIBRETRO_SA(RegisterWrite,sh4_reg_count);
-	LIBRETRO_SA(RegisterRead,sh4_reg_count);
-	LIBRETRO_S(fallback_blocks);
-	LIBRETRO_S(total_blocks);
-	LIBRETRO_S(REMOVED_OPS);
+	// RegisterWrite, RegisterRead
+	for (int i = 0; i < sh4_reg_count; i++)
+	{
+		LIBRETRO_S(i);
+		LIBRETRO_S(i);
+	}
+	LIBRETRO_S(i); // fallback_blocks
+	LIBRETRO_S(i); // total_blocks
+	LIBRETRO_S(i);	// REMOVED_OPS
 
 
 	LIBRETRO_S(settings.dreamcast.broadcast);
@@ -1216,6 +1161,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	if (CurrentCartridge != NULL)
 	   CurrentCartridge->Serialize(data, total_size);
+	gd_hle_state.Serialize(data, total_size);
 
 	return true ;
 }
@@ -1249,9 +1195,9 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(armMode);
 	LIBRETRO_US(Arm7Enabled);
 	LIBRETRO_USA(cpuBitsSet,256);
-	LIBRETRO_US(intState);
-	LIBRETRO_US(stopState);
-	LIBRETRO_US(holdState);
+	LIBRETRO_SKIP(1); // intState
+	LIBRETRO_SKIP(1); // stopState
+	LIBRETRO_SKIP(1); // holdState
 
 	LIBRETRO_US(dsp);
 
@@ -1272,20 +1218,21 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_USA(aica_reg,0x8000);
 
 
-
-	LIBRETRO_USA(volume_lut,16);
-	LIBRETRO_USA(tl_lut,256 + 768);
-	LIBRETRO_USA(AEG_ATT_SPS,64);
-	LIBRETRO_USA(AEG_DSR_SPS,64);
-	LIBRETRO_US(pl);
-	LIBRETRO_US(pr);
-
-	channel_unserialize(data, total_size) ;
+	if (version < V7)
+	{
+		LIBRETRO_SKIP(4 * 16); 			// volume_lut
+		LIBRETRO_SKIP(4 * 256 + 768);	// tl_lut. Due to a previous bug this is not 4 * (256 + 768)
+		LIBRETRO_SKIP(4 * 64);			// AEG_ATT_SPS
+		LIBRETRO_SKIP(4 * 64);			// AEG_DSR_SPS
+		LIBRETRO_SKIP(2);					// pl
+		LIBRETRO_SKIP(2);					// pr
+	}
+	channel_unserialize(data, total_size, version);
 
 	LIBRETRO_USA(cdda_sector,CDDA_SIZE);
 	LIBRETRO_US(cdda_index);
-	LIBRETRO_USA(mxlr,64);
-	LIBRETRO_US(samples_gen);
+	LIBRETRO_SKIP(4 * 64); 	// mxlr
+	LIBRETRO_SKIP(4);			// samples_gen
 
 
 	register_unserialize(sb_regs, data, total_size) ;
@@ -1503,56 +1450,56 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 
 
 	LIBRETRO_US(sh4_sched_ffb);
-	LIBRETRO_US(sh4_sched_intr);
+	LIBRETRO_SKIP(4); // sh4_sched_intr
 	if (version < V3)
 	   LIBRETRO_US(dummy_int);	// sh4_sched_next_id
 
 	//extern vector<sched_list> list;
 
-	LIBRETRO_US(list[aica_sched].tag) ;
-	LIBRETRO_US(list[aica_sched].start) ;
-	LIBRETRO_US(list[aica_sched].end) ;
+	LIBRETRO_US(sch_list[aica_sched].tag) ;
+	LIBRETRO_US(sch_list[aica_sched].start) ;
+	LIBRETRO_US(sch_list[aica_sched].end) ;
 
-	LIBRETRO_US(list[rtc_sched].tag) ;
-	LIBRETRO_US(list[rtc_sched].start) ;
-	LIBRETRO_US(list[rtc_sched].end) ;
+	LIBRETRO_US(sch_list[rtc_sched].tag) ;
+	LIBRETRO_US(sch_list[rtc_sched].start) ;
+	LIBRETRO_US(sch_list[rtc_sched].end) ;
 
-	LIBRETRO_US(list[gdrom_sched].tag) ;
-	LIBRETRO_US(list[gdrom_sched].start) ;
-	LIBRETRO_US(list[gdrom_sched].end) ;
+	LIBRETRO_US(sch_list[gdrom_sched].tag) ;
+	LIBRETRO_US(sch_list[gdrom_sched].start) ;
+	LIBRETRO_US(sch_list[gdrom_sched].end) ;
 
-	LIBRETRO_US(list[maple_sched].tag) ;
-	LIBRETRO_US(list[maple_sched].start) ;
-	LIBRETRO_US(list[maple_sched].end) ;
+	LIBRETRO_US(sch_list[maple_sched].tag) ;
+	LIBRETRO_US(sch_list[maple_sched].start) ;
+	LIBRETRO_US(sch_list[maple_sched].end) ;
 
-	LIBRETRO_US(list[dma_sched_id].tag) ;
-	LIBRETRO_US(list[dma_sched_id].start) ;
-	LIBRETRO_US(list[dma_sched_id].end) ;
+	LIBRETRO_US(sch_list[dma_sched_id].tag) ;
+	LIBRETRO_US(sch_list[dma_sched_id].start) ;
+	LIBRETRO_US(sch_list[dma_sched_id].end) ;
 
 	for (int i = 0; i < 3; i++)
 	{
-	   LIBRETRO_US(list[tmu_sched[i]].tag) ;
-	   LIBRETRO_US(list[tmu_sched[i]].start) ;
-	   LIBRETRO_US(list[tmu_sched[i]].end) ;
+	   LIBRETRO_US(sch_list[tmu_sched[i]].tag) ;
+	   LIBRETRO_US(sch_list[tmu_sched[i]].start) ;
+	   LIBRETRO_US(sch_list[tmu_sched[i]].end) ;
 	}
 
-	LIBRETRO_US(list[render_end_sched].tag) ;
-	LIBRETRO_US(list[render_end_sched].start) ;
-	LIBRETRO_US(list[render_end_sched].end) ;
+	LIBRETRO_US(sch_list[render_end_sched].tag) ;
+	LIBRETRO_US(sch_list[render_end_sched].start) ;
+	LIBRETRO_US(sch_list[render_end_sched].end) ;
 
-	LIBRETRO_US(list[vblank_sched].tag) ;
-	LIBRETRO_US(list[vblank_sched].start) ;
-	LIBRETRO_US(list[vblank_sched].end) ;
+	LIBRETRO_US(sch_list[vblank_sched].tag) ;
+	LIBRETRO_US(sch_list[vblank_sched].start) ;
+	LIBRETRO_US(sch_list[vblank_sched].end) ;
 
-	LIBRETRO_US(list[time_sync].tag) ;
-	LIBRETRO_US(list[time_sync].start) ;
-	LIBRETRO_US(list[time_sync].end) ;
+	LIBRETRO_US(sch_list[time_sync].tag) ;
+	LIBRETRO_US(sch_list[time_sync].start) ;
+	LIBRETRO_US(sch_list[time_sync].end) ;
 
 	if ( version >= V2 )
 	{
-		LIBRETRO_US(list[modem_sched].tag) ;
-		LIBRETRO_US(list[modem_sched].start) ;
-		LIBRETRO_US(list[modem_sched].end) ;
+		LIBRETRO_US(sch_list[modem_sched].tag) ;
+		LIBRETRO_US(sch_list[modem_sched].start) ;
+		LIBRETRO_US(sch_list[modem_sched].end) ;
 	}
 
 	if (version < V3)
@@ -1614,7 +1561,6 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_USA(sq_remap,64);
 #else
 	LIBRETRO_USA(ITLB_LRU_USE,64);
-	LIBRETRO_US(mmu_error_TT);
 #endif
 
 
@@ -1643,7 +1589,7 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	   LIBRETRO_US(dummy_int);			// DmaOffset
 	   LIBRETRO_US(dummy_int);			// DmaCount
 	}
-	LIBRETRO_US(BoardID);
+	LIBRETRO_US(dummy_int);		// BoardID
 	LIBRETRO_US(GSerialBuffer);
 	LIBRETRO_US(BSerialBuffer);
 	LIBRETRO_US(GBufPos);
@@ -1662,11 +1608,11 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(SerStep2);
 	LIBRETRO_USA(BSerial,69);
 	LIBRETRO_USA(GSerial,69);
-	LIBRETRO_US(reg_dimm_3c);
-	LIBRETRO_US(reg_dimm_40);
-	LIBRETRO_US(reg_dimm_44);
-	LIBRETRO_US(reg_dimm_48);
-	LIBRETRO_US(reg_dimm_4c);
+	LIBRETRO_US(reg_dimm_command);
+	LIBRETRO_US(reg_dimm_offsetl);
+	LIBRETRO_US(reg_dimm_parameterl);
+	LIBRETRO_US(reg_dimm_parameterh);
+	LIBRETRO_US(reg_dimm_status);
 	LIBRETRO_US(NaomiDataRead);
 	if (version < V4)
 	{
@@ -1683,14 +1629,13 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	}
 
 	LIBRETRO_US(cycle_counter);
-	LIBRETRO_US(idxnxx);
+	LIBRETRO_US(dummy_int);	// idxnxx
 
-
+#if FEAT_SHREC != DYNAREC_NONE
 	LIBRETRO_US(state);
 	LIBRETRO_US(div_som_reg1);
 	LIBRETRO_US(div_som_reg2);
 	LIBRETRO_US(div_som_reg3);
-
 
 
 
@@ -1699,13 +1644,17 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(LastAddr);
 	LIBRETRO_US(LastAddr_min);
 	LIBRETRO_USA(block_hash,1024);
+#endif
 
-
-	LIBRETRO_USA(RegisterWrite,sh4_reg_count);
-	LIBRETRO_USA(RegisterRead,sh4_reg_count);
-	LIBRETRO_US(fallback_blocks);
-	LIBRETRO_US(total_blocks);
-	LIBRETRO_US(REMOVED_OPS);
+	// RegisterRead, RegisterWrite
+	for (int i = 0; i < sh4_reg_count; i++)
+	{
+		LIBRETRO_US(dummy_int);
+		LIBRETRO_US(dummy_int);
+	}
+	LIBRETRO_US(dummy_int); // fallback_blocks
+	LIBRETRO_US(dummy_int); // total_blocks
+	LIBRETRO_US(dummy_int); // REMOVED_OPS
 
 	if (version < V5)
 	{
@@ -1731,7 +1680,8 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	{
 	   CurrentCartridge->Unserialize(data, total_size);
 	}
-
+	if (version >= V7)
+		gd_hle_state.Unserialize(data, total_size);
 
 	return true ;
 }

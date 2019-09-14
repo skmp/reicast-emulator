@@ -34,7 +34,65 @@ int maple_sched;
 	DMA continuation on suspect, etc ...
 */
 
-u32 dmacount=0;
+static void maple_DoDma();
+static void maple_handle_reconnect();
+
+//really hackish
+//misses delay , and stop/start implementation
+//ddt/etc are just hacked for wince to work
+//now with proper maple delayed DMA maybe its time to look into it ?
+bool maple_ddt_pending_reset=false;
+void maple_vblank()
+{
+	if (SB_MDEN &1)
+	{
+		if (SB_MDTSEL&1)
+		{
+			if (maple_ddt_pending_reset)
+			{
+				DEBUG_LOG(MAPLE, "DDT vblank ; reset pending");
+			}
+			else
+			{
+				DEBUG_LOG(MAPLE, "DDT vblank");
+				SB_MDST = 1;
+				maple_DoDma();
+				SB_MDST = 0;
+				if ((SB_MSYS>>12)&1)
+				{
+					maple_ddt_pending_reset=true;
+				}
+			}
+		}
+		else
+		{
+			maple_ddt_pending_reset=false;
+		}
+	}
+	maple_handle_reconnect();
+}
+
+void maple_SB_MSHTCL_Write(u32 addr, u32 data)
+{
+	if (data&1)
+		maple_ddt_pending_reset=false;
+}
+void maple_SB_MDST_Write(u32 addr, u32 data)
+{
+	if (data & 0x1)
+	{
+		if (SB_MDEN &1)
+		{
+			SB_MDST=1;
+			maple_DoDma();
+		}
+	}
+}
+
+void maple_SB_MDEN_Write(u32 addr, u32 data)
+{
+	SB_MDEN=data&1;
+}
 
 static bool IsOnSh4Ram(u32 addr)
 {
@@ -52,12 +110,12 @@ static void maple_DoDma(void)
 	verify(SB_MDEN &1)
 	verify(SB_MDST &1)
 
+	DEBUG_LOG(MAPLE, "Maple: DoMapleDma SB_MDSTAR=%x", SB_MDSTAR);
 	u32 addr = SB_MDSTAR;
 	u32 xfer_count=0;
 	bool last = false;
 	while (last != true)
 	{
-		dmacount++;
 		u32 header_1 = ReadMem32_nommu(addr);
 		u32 header_2 = ReadMem32_nommu(addr + 4) &0x1FFFFFE0;
 
@@ -74,7 +132,7 @@ static void maple_DoDma(void)
 		{
 			if (!IsOnSh4Ram(header_2))
 			{
-				printf("MAPLE ERROR : DESTINATION NOT ON SH4 RAM 0x%X\n",header_2);
+				INFO_LOG(MAPLE, "MAPLE ERROR : DESTINATION NOT ON SH4 RAM 0x%X", header_2);
 				header_2&=0xFFFFFF;
 				header_2|=(3<<26);
 			}
@@ -84,7 +142,7 @@ static void maple_DoDma(void)
 			u32* p_data =(u32*) GetMemPtr(addr + 8,(plen)*sizeof(u32));
 			if (p_data == NULL)
 			{
-				printf("MAPLE ERROR : INVALID SB_MDSTAR value 0x%X\n", addr);
+				INFO_LOG(MAPLE, "MAPLE ERROR : INVALID SB_MDSTAR value 0x%X", addr);
 				SB_MDST=0;
 				return;
 			}
@@ -110,7 +168,7 @@ static void maple_DoDma(void)
 			else
 			{
 				if (port != 5 && command != 1)
-					printf("MAPLE: Unknown device bus %d port %d cmd %d\n", bus, port, command);
+					INFO_LOG(MAPLE, "MAPLE: Unknown device bus %d port %d cmd %d", bus, port, command);
 				outlen=4;
 				p_out[0]=0xFFFFFFFF;
 			}
@@ -143,66 +201,13 @@ static void maple_DoDma(void)
 			break;
 
 		default:
-			printf("MAPLE: Unknown maple_op == %d length %d\n", maple_op, plen * 4);
+			INFO_LOG(MAPLE, "MAPLE: Unknown maple_op == %d length %d", maple_op, plen * 4);
 			addr += 1 * 4;
 		}
 	}
 
 	//printf("Maple XFER size %d bytes - %.2f ms\n",xfer_count,xfer_count*100.0f/(2*1024*1024/8));
 	sh4_sched_request(maple_sched,xfer_count*(SH4_MAIN_CLOCK/(2*1024*1024/8)));
-}
-
-static void maple_handle_reconnect();
-
-//really hackish
-//misses delay , and stop/start implementation
-//ddt/etc are just hacked for wince to work
-//now with proper maple delayed DMA maybe its time to look into it ?
-bool maple_ddt_pending_reset=false;
-void maple_vblank()
-{
-	if (SB_MDEN &1)
-	{
-		if (SB_MDTSEL&1)
-		{
-			if (!maple_ddt_pending_reset)
-			{
-				//printf("DDT vblank\n");
-				maple_DoDma();
-				SB_MDST = 0;
-				if ((SB_MSYS>>12)&1)
-				{
-					maple_ddt_pending_reset=true;
-				}
-			}
-		}
-		else
-		{
-			maple_ddt_pending_reset=false;
-		}
-	}
-	maple_handle_reconnect();
-}
-void maple_SB_MSHTCL_Write(u32 addr, u32 data)
-{
-	if (data&1)
-		maple_ddt_pending_reset=false;
-}
-void maple_SB_MDST_Write(u32 addr, u32 data)
-{
-	if (data & 0x1)
-	{
-		if (SB_MDEN &1)
-		{
-			SB_MDST=1;
-			maple_DoDma();
-		}
-	}
-}
-
-void maple_SB_MDEN_Write(u32 addr, u32 data)
-{
-	SB_MDEN=data&1;
 }
 
 int maple_schd(int tag, int c, int j)
@@ -214,7 +219,7 @@ int maple_schd(int tag, int c, int j)
 	}
 	else
 	{
-		printf("WARNING: MAPLE DMA ABORT\n");
+		INFO_LOG(MAPLE, "WARNING: MAPLE DMA ABORT");
 		SB_MDST=0; //I really wonder what this means, can the DMA be continued ?
 	}
 
@@ -226,18 +231,7 @@ void maple_Init()
 {
 	sb_rio_register(SB_MDST_addr,RIO_WF,0,&maple_SB_MDST_Write);
 	sb_rio_register(SB_MDEN_addr,RIO_WF,0,&maple_SB_MDEN_Write);
-
-	/*
-	sb_regs[(SB_MDST_addr-SB_BASE)>>2].flags=REG_32BIT_READWRITE | REG_READ_DATA;
-	sb_regs[(SB_MDST_addr-SB_BASE)>>2].writeFunction=maple_SB_MDST_Write;
-	*/
-
 	sb_rio_register(SB_MSHTCL_addr,RIO_WF,0,&maple_SB_MSHTCL_Write);
-	
-	/*
-	sb_regs[(SB_MSHTCL_addr-SB_BASE)>>2].flags=REG_32BIT_READWRITE;
-	sb_regs[(SB_MSHTCL_addr-SB_BASE)>>2].writeFunction=maple_SB_MSHTCL_Write;
-	*/
 
 	maple_sched=sh4_sched_register(0,&maple_schd);
 }

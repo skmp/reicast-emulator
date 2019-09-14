@@ -13,11 +13,6 @@
 #include "hw/flashrom/flashrom.h"
 #include "reios/reios.h"
 
-
-static HollyInterruptID dmatmp1;
-static HollyInterruptID dmatmp2;
-static HollyInterruptID OldDmaId;
-
 /*
 	Dreamcast 'area 0' emulation
 	Pretty much all peripheral registers are mapped here
@@ -71,6 +66,118 @@ static const char *get_rom_names(void)
    return NULL; 
 }
 
+static void add_isp_to_nvmem(DCFlashChip *flash)
+{
+	u8 block[64];
+	if (!flash->ReadBlock(FLASH_PT_USER, FLASH_USER_INET, block))
+	{
+		memset(block, 0, sizeof(block));
+		strcpy((char *)block + 2, "PWBrowser");
+		block[12] = 0x1c;
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET, block);
+
+		memset(block, 0, sizeof(block));
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET + 1, block);
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET + 2, block);
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET + 3, block);
+		memset(block + 27, 0xFF, sizeof(block) - 27);
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_INET + 4, block);
+		memset(block, 0xFF, sizeof(block));
+		for (u32 i = FLASH_USER_INET + 5; i <= 0xbf; i++)
+			flash->WriteBlock(FLASH_PT_USER, i, block);
+
+		flash_isp1_block isp1;
+		memset(&isp1, 0, sizeof(isp1));
+		isp1._unknown[0] = 0xFF;
+		isp1._unknown[1] = 0xFE;
+		isp1._unknown[2] = 0xFF;
+		isp1._unknown[3] = 0xFF;
+		memcpy(isp1.sega, "SEGA", 4);
+		strcpy(isp1.username, "flycast1");
+		strcpy(isp1.password, "password");
+		strcpy(isp1.phone, "1234567");
+		if (flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1, &isp1) != 1)
+			WARN_LOG(FLASHROM, "Failed to save ISP information to flash RAM");
+
+		memset(block, 0xFF, sizeof(block));
+		block[34] = 0;
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 1, block);
+		memset(block, 0xFF, sizeof(block));
+		block[9] = 0;
+		memset(block + 49, 0, 13);
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 2, block);
+		memset(block, 0xFF, sizeof(block));
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 3, block);
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 4, block);
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 5, block);
+
+		flash_isp2_block isp2;
+		memset(&isp2, 0, sizeof(isp2));
+		memcpy(isp2.sega, "SEGA", 4);
+		strcpy(isp2.username, "flycast2");
+		strcpy(isp2.password, "password");
+		strcpy(isp2.phone, "1234567");
+		if (flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP2, &isp2) != 1)
+			WARN_LOG(FLASHROM, "Failed to save ISP information to flash RAM");
+		u8 block[64];
+		memset(block, 0xFF, sizeof(block));
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP2 + 1, block);
+		block[9] = 0;
+		memset(block + 49, 0, 13);
+		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP2 + 2, block);
+		for (u32 i = FLASH_USER_ISP2 + 3; i <= 0xEA; i++)
+			flash->WriteBlock(FLASH_PT_USER, i, block);
+	}
+}
+
+void FixUpFlash()
+{
+	if (settings.System == DC_PLATFORM_DREAMCAST || settings.System == DC_PLATFORM_DEV_UNIT)
+	{
+     	sys_nvmem_flash.Validate();
+     	// overwrite factory flash settings
+     	if (settings.dreamcast.region <= 2)
+     	{
+     		sys_nvmem_flash.data[0x1a002] = '0' + settings.dreamcast.region;
+     		sys_nvmem_flash.data[0x1a0a2] = '0' + settings.dreamcast.region;
+     	}
+     	if (settings.dreamcast.language <= 5)
+     	{
+     		sys_nvmem_flash.data[0x1a003] = '0' + settings.dreamcast.language;
+     		sys_nvmem_flash.data[0x1a0a3] = '0' + settings.dreamcast.language;
+     	}
+     	if (settings.dreamcast.broadcast <= 3)
+     	{
+     		sys_nvmem_flash.data[0x1a004] = '0' + settings.dreamcast.broadcast;
+     		sys_nvmem_flash.data[0x1a0a4] = '0' + settings.dreamcast.broadcast;
+     	}
+     	// overwrite user settings
+     	struct flash_syscfg_block syscfg;
+     	int res = sys_nvmem_flash.ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
+
+     	if (!res)
+     	{
+     		// write out default settings
+     		memset(&syscfg, 0xff, sizeof(syscfg));
+     		syscfg.time_lo = 0;
+     		syscfg.time_hi = 0;
+     		syscfg.lang = 0;
+     		syscfg.mono = 0;
+     		syscfg.autostart = 1;
+     	}
+     	u32 time = GetRTC_now();
+     	syscfg.time_lo = time & 0xffff;
+     	syscfg.time_hi = time >> 16;
+     	if (settings.dreamcast.language <= 5)
+     		syscfg.lang = settings.dreamcast.language;
+
+     	if (sys_nvmem_flash.WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
+     		WARN_LOG(FLASHROM, "Failed to save time and language to flash RAM");
+
+     	add_isp_to_nvmem(&sys_nvmem_flash);
+	}
+}
+
 static bool nvmem_load(const string& root,
       const string& s1, const char *s2)
 {
@@ -78,50 +185,8 @@ static bool nvmem_load(const string& root,
    {
       case DC_PLATFORM_DREAMCAST:
       case DC_PLATFORM_DEV_UNIT:
-      {
          sys_nvmem_flash.Load(root, get_rom_prefix(), s1.c_str(), s2);
-        	sys_nvmem_flash.Validate();
-        	// overwrite factory flash settings
-        	if (settings.dreamcast.region <= 2)
-        	{
-        		sys_nvmem_flash.data[0x1a002] = '0' + settings.dreamcast.region;
-        		sys_nvmem_flash.data[0x1a0a2] = '0' + settings.dreamcast.region;
-        	}
-        	if (settings.dreamcast.language <= 5)
-        	{
-        		sys_nvmem_flash.data[0x1a003] = '0' + settings.dreamcast.language;
-        		sys_nvmem_flash.data[0x1a0a3] = '0' + settings.dreamcast.language;
-        	}
-        	if (settings.dreamcast.broadcast <= 3)
-        	{
-        		sys_nvmem_flash.data[0x1a004] = '0' + settings.dreamcast.broadcast;
-        		sys_nvmem_flash.data[0x1a0a4] = '0' + settings.dreamcast.broadcast;
-        	}
-        	// overwrite user settings
-        	struct flash_syscfg_block syscfg;
-        	int res = sys_nvmem_flash.ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
-
-        	if (!res)
-        	{
-        		// write out default settings
-        		memset(&syscfg, 0xff, sizeof(syscfg));
-        		syscfg.time_lo = 0;
-        		syscfg.time_hi = 0;
-        		syscfg.lang = 0;
-        		syscfg.mono = 0;
-        		syscfg.autostart = 1;
-        	}
-        	u32 time = GetRTC_now();
-        	syscfg.time_lo = time & 0xffff;
-        	syscfg.time_hi = time >> 16;
-        	if (settings.dreamcast.language <= 5)
-        		syscfg.lang = settings.dreamcast.language;
-
-        	if (sys_nvmem_flash.WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
-        		printf("Failed to save time and language to flash RAM\n");
-
         	return true;
-      }
       case DC_PLATFORM_ATOMISWAVE:
          return sys_nvmem_sram.Load(nvmem_file) && sys_nvmem_flash.Load(nvmem_file2);
       case DC_PLATFORM_NAOMI:
@@ -141,7 +206,7 @@ bool LoadRomFiles(const string& root)
 		 if (settings.System == DC_PLATFORM_DREAMCAST || settings.System == DC_PLATFORM_DEV_UNIT)
 		 {
 			// Dreamcast absolutely needs a BIOS
-			msgboxf("Unable to find bios in \n%s\nExiting...", MBX_ICONERROR, root.c_str());
+			msgboxf("Unable to find bios in %s. Exiting...", MBX_ICONERROR, root.c_str());
 			return false;
 		 }
 	  }
@@ -190,7 +255,7 @@ u8 *get_nvmem_data(void)
 
 bool LoadHle(const string& root) {
 	if (!nvmem_load(root, "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram")) {
-		printf("No nvmem loaded\n");
+		WARN_LOG(FLASHROM, "No nvmem loaded\n");
 	}
 
    return reios_init(sys_rom.data, &sys_nvmem_flash);
@@ -251,14 +316,12 @@ void WriteBios(u32 addr,u32 data,u32 sz)
       case DC_PLATFORM_DEV_UNIT:
       case DC_PLATFORM_NAOMI:
       case DC_PLATFORM_NAOMI2:
-#ifndef NDEBUG
-         EMUERROR4("Write to [Boot ROM] is not possible, addr=%x,data=%x,size=%d",addr,data,sz);
-#endif
+         INFO_LOG(MEMORY, "Write to [Boot ROM] is not possible, addr=%x, data=%x, size=%d", addr, data, sz);
          break;
       case DC_PLATFORM_ATOMISWAVE:
     	 if (sz != 1)
     	 {
- 			EMUERROR("Invalid access size @%5x data %x sz %d\n", addr, data, sz);
+ 			INFO_LOG(MEMORY, "Invalid access size @%08x data %x sz %d", addr, data, sz);
  			return;
     	 }
     	 sys_nvmem_flash.Write(addr, data, sz);
@@ -310,25 +373,20 @@ T DYNACALL ReadMem_area0(u32 addr)
 	{
 		if ( /*&& (addr>= 0x00400000)*/ (addr<= 0x005F67FF)) // :Unassigned
 		{
-#ifndef NDEBUG
-			EMUERROR2("Read from area0_32 not implemented [Unassigned], addr=%x",addr);
-#endif
+			INFO_LOG(MEMORY, "Read from area0_32 not implemented [Unassigned], addr=%x", addr);
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
-			//EMUERROR3("Read from area0_32 not implemented [GD-ROM], addr=%x,size=%d",addr,sz);
          if (settings.System == DC_PLATFORM_NAOMI || settings.System == DC_PLATFORM_ATOMISWAVE)
             return (T)ReadMem_naomi(addr,sz);
          return (T)ReadMem_gdrom(addr,sz);
 		}
 		else if (likely((addr>= 0x005F6800) && (addr<=0x005F7CFF))) //	/*:PVR i/f Control Reg.*/ -> ALL SB registers now
 		{
-			//EMUERROR2("Read from area0_32 not implemented [PVR i/f Control Reg], addr=%x",addr);
 			return (T)sb_ReadMem(addr,sz);
 		}
 		else if (likely((addr>= 0x005F8000) && (addr<=0x005F9FFF))) //	:TA / PVR Core Reg.
 		{
-			//EMUERROR2("Read from area0_32 not implemented [TA / PVR Core Reg], addr=%x",addr);
          if (sz != 4) return 0;		// House of the Dead 2
 			return (T)PvrReg(addr, u32);
 		}
@@ -349,20 +407,16 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0070 to 0x0070
 	else if ((base ==0x0070) /*&& (addr>= 0x00700000)*/ && (addr<=0x00707FFF)) //	:AICA- Sound Cntr. Reg.
 	{
-		//EMUERROR2("Read from area0_32 not implemented [AICA- Sound Cntr. Reg], addr=%x",addr);
 		return (T) ReadMem_aica_reg(addr,sz);//libAICA_ReadReg(addr,sz);
 	}
 	//map 0x0071 to 0x0071
 	else if ((base ==0x0071) /*&& (addr>= 0x00710000)*/ && (addr<= 0x0071000B)) //	:AICA- RTC Cntr. Reg.
 	{
-		//EMUERROR2("Read from area0_32 not implemented [AICA- RTC Cntr. Reg], addr=%x",addr);
       return (T)ReadMem_aica_rtc(addr,sz);
 	}
 	//map 0x0080 to 0x00FF
 	else if ((base >=0x0080) && (base <=0x00FF) /*&& (addr>= 0x00800000) && (addr<=0x00FFFFFF)*/) //	:AICA- Wave Memory
 	{
-		//EMUERROR2("Read from area0_32 not implemented [AICA- Wave Memory], addr=%x",addr);
-		//return (T)libAICA_ReadMem_aica_ram(addr,sz);
       switch (sz)
       {
          case 1:
@@ -376,7 +430,6 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0100 to 0x01FF
 	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) //	:Ext. Device
 	{
-	//	EMUERROR2("Read from area0_32 not implemented [Ext. Device], addr=%x",addr);
 		return (T)libExtDevice_ReadMem_A0_010(addr,sz);
 	}
 	return 0;
@@ -486,6 +539,9 @@ void sh4_area0_Init(void)
 void sh4_area0_Reset(bool Manual)
 {
 	sb_Reset(Manual);
+	sys_rom.Reset();
+	sys_nvmem_sram.Reset();
+	sys_nvmem_flash.Reset();
 }
 
 void sh4_area0_Term(void)

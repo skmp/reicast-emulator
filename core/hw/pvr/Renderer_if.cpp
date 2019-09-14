@@ -71,10 +71,12 @@ static Renderer* fallback_renderer;
 bool renderer_changed = false;	// Signals the renderer interface to switch renderer
 
 #if !defined(TARGET_NO_THREADS)
-cResetEvent rs(false,true);
-cResetEvent re(false,true);
+cResetEvent rs;
+cResetEvent re;
 #endif
 extern cResetEvent frame_finished;
+static bool swap_pending;
+static bool do_swap;
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 bool pend_rend = false;
@@ -96,12 +98,12 @@ void rend_create_renderer()
 	{
 	default:
 	case 0:
-		printf("Creating per-triangle/strip renderer\n");
+		NOTICE_LOG(PVR, "Creating per-triangle/strip renderer");
 		renderer = rend_GLES2();
 		break;
 #if defined(HAVE_OIT)
 	case 3:
-		printf("Creating per-pixel renderer\n");
+		NOTICE_LOG(PVR, "Creating per-pixel renderer");
 		renderer = rend_GL4();
 		fallback_renderer = rend_GLES2();
 		break;
@@ -121,8 +123,9 @@ void rend_init_renderer()
     			delete fallback_renderer;
     		die("Renderer initialization failed\n");
     	}
-    	printf("Selected renderer initialization failed. Falling back to default renderer.\n");
+    	INFO_LOG(PVR, "Selected renderer initialization failed. Falling back to default renderer.");
     	renderer  = fallback_renderer;
+    	fallback_renderer = NULL;	// avoid double-free
     }
 }
 
@@ -149,7 +152,6 @@ bool rend_frame(TA_context* ctx, bool draw_osd)
 	  rend_init_renderer();
    }
    bool proc = renderer->Process(ctx);
-
 #if !defined(TARGET_NO_THREADS)
    if (settings.rend.ThreadedRendering && (!proc || (!ctx->rend.isRenderFramebuffer && !ctx->rend.isRTT)))
 	   // If rendering to texture, continue locking until the frame is rendered
@@ -163,64 +165,57 @@ bool rend_frame(TA_context* ctx, bool draw_osd)
 
 bool rend_single_frame(void)
 {
-   //wait render start only if no frame pending
-   do
-   {
+	while (true)
+	{
+		//wait render start only if no frame pending
+		if (_pvrrc == NULL)
+		{
+			do
+			{
 #if !defined(TARGET_NO_THREADS)
-      if (settings.rend.ThreadedRendering && !rs.Wait(100))
-         return false;
+				if (settings.rend.ThreadedRendering)
+				{
+					if (!rs.Wait(100))
+						return false;
+					if (do_swap)
+					{
+						do_swap = false;
+						rs.Set();	// set the semaphore in case a render is pending
+						return true;
+					}
+				}
 #endif
-      _pvrrc = DequeueRender();
-   }
-   while (!_pvrrc);
-   bool do_swp = rend_frame(_pvrrc, true);
+				_pvrrc = DequeueRender();
 
-	if (settings.rend.ThreadedRendering && _pvrrc->rend.isRTT)
-		re.Set();
+				if (!settings.rend.ThreadedRendering && _pvrrc == NULL)
+					return false;
+			}
+			while (!_pvrrc);
+		}
+		if ((_pvrrc->rend.isRTT || _pvrrc->rend.isRenderFramebuffer) && swap_pending)
+		{
+			// If there is a frame swap pending, we want to do it now.
+			// The current frame "swapping" detection mechanism (using FB_R_SOF1) doesn't work
+			// if a RTT frame is rendered in between.
+			swap_pending = false;
+			return true;
+		}
 
-   //clear up & free data ..
-   FinishRender(_pvrrc);
-   _pvrrc=0;
+		bool do_swp = rend_frame(_pvrrc, true);
+		swap_pending = do_swp && !_pvrrc->rend.isRenderFramebuffer && FB_R_SOF1 != FB_W_SOF1
+				 && settings.rend.ThreadedRendering && settings.rend.DelayFrameSwapping;
 
-   return do_swp;
+		if (settings.rend.ThreadedRendering && _pvrrc->rend.isRTT)
+			re.Set();
+
+		//clear up & free data ..
+		FinishRender(_pvrrc);
+		_pvrrc=0;
+
+		if (do_swp && !swap_pending)
+			return true;
+	}
 }
-
-int rend_en = true;
-
-void *rend_thread(void* p)
-{
-#if SET_AFNT
-   cpu_set_t mask;
-
-   /* CPU_ZERO initializes all the bits in the mask to zero. */
-   CPU_ZERO( &mask );
-   /* CPU_SET sets only the bit corresponding to cpu. */
-   CPU_SET( 1, &mask );
-
-   /* sched_setaffinity returns 0 in success */
-
-   if( sched_setaffinity( 0, sizeof(mask), &mask ) == -1 )
-      printf("WARNING: Could not set CPU Affinity, continuing...\n");
-#endif
-
-   rend_init_renderer();
-
-   //we don't know if this is true, so let's not speculate here
-   //renderer->Resize(640, 480);
-
-   while(rend_en)
-   {
-	  if (rend_single_frame())
-		 renderer->Present();
-   }
-   rend_term_renderer();
-
-   return 0;
-}
-
-#if !defined(TARGET_NO_THREADS)
-cThread rthd(rend_thread,0);
-#endif
 
 void rend_resize(int width, int height)
 {
@@ -279,7 +274,7 @@ void rend_start_render(void)
       else
       {
          ovrn++;
-         printf("WARNING: Rendering context is overrun (%d), aborting frame\n",ovrn);
+         INFO_LOG(PVR, "WARNING: Rendering context is overrun (%d), aborting frame", ovrn);
          tactx_Recycle(ctx);
       }
    }
@@ -335,7 +330,7 @@ bool rend_init(void)
 	/* sched_setaffinity returns 0 in success */
 
 	if( sched_setaffinity( 0, sizeof(mask), &mask ) == -1 )
-		printf("WARNING: Could not set CPU Affinity, continuing...\n");
+		WARN_LOG(PVR, "WARNING: Could not set CPU Affinity, continuing...");
 #endif
 
 	return true;
@@ -345,18 +340,20 @@ void rend_term(void)
 {
 }
 
-void rend_terminate(void)
-{
-   rend_en = false;
-}
-
 void rend_vblank()
 {
    if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
 	{
+		DEBUG_LOG(PVR, "Direct framebuffer write detected");
+		u32 saved_ctx_addr = PARAM_BASE;
+		bool restore_ctx = ta_ctx != NULL;
+		PARAM_BASE = 0xF00000;
 		SetCurrentTARC(CORE_CURRENT_CTX);
 		ta_ctx->rend.isRenderFramebuffer = true;
 		rend_start_render();
+		PARAM_BASE = saved_ctx_addr;
+		if (restore_ctx)
+			SetCurrentTARC(CORE_CURRENT_CTX);
 		fb_dirty = false;
 	}
 	render_called = false;
@@ -370,4 +367,14 @@ void check_framebuffer_write()
    u32 fb_size = (FB_R_SIZE.fb_y_size + 1) * (FB_R_SIZE.fb_x_size + FB_R_SIZE.fb_modulus) * 4;
 	fb_watch_addr_start = (SPG_CONTROL.interlace ? FB_R_SOF2 : FB_R_SOF1) & VRAM_MASK;
 	fb_watch_addr_end = fb_watch_addr_start + fb_size;
+}
+
+void rend_swap_frame()
+{
+	if (swap_pending)
+	{
+		swap_pending = false;
+		do_swap = true;
+		rs.Set();
+	}
 }

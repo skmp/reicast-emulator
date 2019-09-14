@@ -36,7 +36,7 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 #ifdef TRACE
 	if (offset & 3/*(size-1)*/) //4 is min align size
 	{
-		EMUERROR("Unaligned System Bus register read");
+		INFO_LOG(HOLLY, "Unaligned System Bus register read");
 	}
 #endif
 
@@ -46,7 +46,7 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 	if (sb_regs[offset].flags & sz)
 	{
 #endif
-		if (!(sb_regs[offset].flags & REG_RF) )
+		if (!(sb_regs[offset].flags & (REG_RF|REG_WO)))
 		{
 			if (sz==4)
 				return sb_regs[offset].data32;
@@ -58,18 +58,20 @@ u32 sb_ReadMem(u32 addr,u32 sz)
 		else
 		{
 			//printf("SB: %08X\n",addr);
+			if ((sb_regs[offset].flags & REG_WO) || sb_regs[offset].readFunctionAddr == NULL)
+			{
+				INFO_LOG(HOLLY, "sb_ReadMem write-only reg %08x %d", addr, sz);
+				return 0;
+			}
 			return sb_regs[offset].readFunctionAddr(addr);
 		}
 #ifdef TRACE
 	}
 	else
 	{
-		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR("ERROR [wrong size read on register]");
+		INFO_LOG(HOLLY, "ERROR [wrong size read on register]");
 	}
 #endif
-//  if ((sb_regs[offset].flags& REG_NOT_IMPL))
-//      EMUERROR2("Read from System Control Regs , not  implemented , addr=%x",addr);
 	return 0;
 }
 
@@ -79,7 +81,7 @@ void sb_WriteMem(u32 addr,u32 data,u32 sz)
 #ifdef TRACE
 	if (offset & 3/*(size-1)*/) //4 is min align size
 	{
-		EMUERROR("Unaligned System bus register write");
+		INFO_LOG(HOLLY, "Unaligned System bus register write");
 	}
 #endif
 offset>>=2;
@@ -101,33 +103,14 @@ offset>>=2;
 		{
 			//printf("SBW: %08X\n",addr);
 			sb_regs[offset].writeFunctionAddr(addr,data);
-			/*
-			if (sb_regs[offset].flags & REG_CONST)
-				EMUERROR("Error [Write to read only register , const]");
-			else
-			{
-				if ()
-				{
-					sb_regs[offset].writeFunction(data);
-					return;
-				}
-				else
-				{
-					if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-						EMUERROR("ERROR [Write to read only register]");
-				}
-			}*/
 			return;
 		}
 #ifdef TRACE
 	}
 	else
 	{
-		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR4("ERROR :wrong size write on register ; offset=%x , data=%x,sz=%d",offset,data,sz);
+		INFO_LOG(HOLLY, "ERROR: wrong size write on register; offset=%x, data=%x, sz=%d", offset, data, sz);
 	}
-	if ((sb_regs[offset].flags& REG_NOT_IMPL))
-		EMUERROR3("Write to System Control Regs , not  implemented , addr=%x,data=%x",addr,data);
 #endif
 
 }
@@ -137,7 +120,8 @@ void sbio_write_noacc(u32 addr, u32 data) { verify(false); }
 void sbio_write_const(u32 addr, u32 data) { verify(false); }
 
 void sb_write_zero(u32 addr, u32 data) { verify(data==0); }
-void sb_write_gdrom_unlock(u32 addr, u32 data) { verify(data==0 || data==0x001fffff || data==0x42fe || data == 0xa677); } /* CS writes 0x42fe, AtomisWave 0xa677 */
+void sb_write_gdrom_unlock(u32 addr, u32 data) { verify(data==0 || data==0x001fffff || data==0x42fe || data == 0xa677
+														|| data == 0x3ff); } /* CS writes 0x42fe, AtomisWave 0xa677, Naomi Dev BIOS 0x3ff  */
 
 
 void sb_rio_register(u32 reg_addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrFP* wf)
@@ -184,26 +168,25 @@ u32 RegRead_SB_FFST(u32 addr)
    {
 		SB_FFST^=31;
    }
-	return 0; //SB_FFST -> does the fifo status has really to be faked ?
+	return SB_FFST; //SB_FFST -> does the fifo status has really to be faked ?
 }
 
 void SB_SFRES_write32(u32 addr, u32 data)
 {
 	if ((u16)data==0x7611)
 	{
-		printf("SB/HOLLY: System reset requested\n");
+		INFO_LOG(SH4, "SB/HOLLY: System reset requested");
 		dc_request_reset();
 	}
 }
 
 void sb_Init(void)
 {
-   memset(sb_regs.data, 0, sizeof(RegisterStruct) * sb_regs.Size);
+	sb_regs.Zero();
 
 	for (u32 i=0;i<sb_regs.Size;i++)
 	{
 		sb_rio_register(SB_BASE+i*4,RIO_NO_ACCESS);
-		//sb_regs[i].flags=REG_NOT_IMPL;
 	}
 
 	//0x005F6800    SB_C2DSTAT  RW  ch2-DMA destination address
@@ -236,7 +219,6 @@ void sb_Init(void)
 
 	//0x005F6860 SB_SDDIV R(?) Sort-DMA LAT index (guess)
 	sb_rio_register(SB_SDDIV_addr,RIO_RO);
-	//sb_regs[((SB_SDDIV_addr-SB_BASE))>>2].flags=REG_32BIT_READWRITE | REG_READ_DATA;
 
 	//0x005F6840    SB_DBREQM   RW  DBREQ# signal mask control
 	sb_rio_register(SB_DBREQM_addr,RIO_DATA);
@@ -261,27 +243,13 @@ void sb_Init(void)
 
 	//0x005F688C    SB_FFST     R   FIFO status
 	sb_rio_register(SB_FFST_addr,RIO_RO_FUNC,RegRead_SB_FFST);
-	/*
-	sb_regs[((SB_FFST_addr-SB_BASE))>>2].flags=REG_32BIT_READWRITE ;
-	sb_regs[((SB_FFST_addr-SB_BASE))>>2].readFunction=RegRead_SB_FFST;
-	sb_regs[((SB_FFST_addr-SB_BASE))>>2].writeFunction=0;
-	sb_regs[((SB_FFST_addr-SB_BASE))>>2].data32=0;*/
 
 
 	//0x005F6890    SB_SFRES    W   System reset
 	sb_rio_register(SB_SFRES_addr,RIO_WO_FUNC,0,SB_SFRES_write32);
 
-	/*
-	sb_regs[((SB_SFRES_addr-SB_BASE))>>2].flags=REG_32BIT_READWRITE ;
-	sb_regs[((SB_SFRES_addr-SB_BASE))>>2].readFunction=0;
-	sb_regs[((SB_SFRES_addr-SB_BASE))>>2].writeFunction=SB_SFRES_write32;
-	sb_regs[((SB_SFRES_addr-SB_BASE))>>2].data32=&SB_SFRES;
-	*/
-
-
 	//0x005F689C    SB_SBREV    R   System bus revision number
 	sb_rio_register(SB_SBREV_addr,RIO_CONST);
-	//sb_regs[((SB_SBREV_addr-SB_BASE))>>2].flags=REG_32BIT_READWRITE | REG_READ_DATA | REG_CONST ;
 
 
 	//0x005F68A0    SB_RBSPLT   RW  SH4 Root Bus split enable
@@ -765,6 +733,7 @@ void sb_Init(void)
 	SB_SBREV=0xB;
 	SB_G2ID=0x12;
 	SB_G1SYSM=((0x0<<4) | (0x1));
+	SB_TFREM = 8;
 
 	asic_reg_Init();
 
@@ -783,6 +752,16 @@ void sb_Init(void)
 
 void sb_Reset(bool Manual)
 {
+	if (!Manual)
+	{
+		for (u32 i = 0; i < sb_regs.Size; i++)
+			sb_regs[i].reset();
+	}
+	SB_ISTNRM = 0;
+	SB_FFST_rc = 0;
+	SB_FFST = 0;
+	if (settings.System == DC_PLATFORM_DREAMCAST)
+   	ModemTerm();
 	asic_reg_Reset(Manual);
    if (settings.System != DC_PLATFORM_DREAMCAST)
       naomi_reg_Reset(Manual);
@@ -795,6 +774,8 @@ void sb_Reset(bool Manual)
 
 void sb_Term(void)
 {
+   if (settings.System == DC_PLATFORM_DREAMCAST)
+   	ModemTerm();
 	aica_sb_Term();
 	maple_Term();
 	pvr_sb_Term();

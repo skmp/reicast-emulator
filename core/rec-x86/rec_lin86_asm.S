@@ -9,7 +9,7 @@
 .globl cycle_counter
 .globl loop_no_update
 .globl intc_sched
-.globl bm_GetCode
+.globl bm_GetCodeByVAddr
 .globl cycle_counter
 .globl UpdateSystem
 .globl rdv_DoInterrupts
@@ -93,10 +93,13 @@ ngen_mainloop:
 	push ebp
 	push ebx
 
-	mov ecx,[0xA0000000]	# PC
+	mov ecx, [p_sh4rcb]
+	add ecx, [nextpc_offset]
+	mov ecx, [ecx]
+
 	mov dword ptr cycle_counter, 448 #SH4_TIMESLICE
 
-	lea eax, no_update
+    lea eax, no_update
 	mov dword ptr loop_no_update, eax
 	lea eax, intc_sched_offs
 	mov dword ptr intc_sched, eax
@@ -106,7 +109,7 @@ ngen_mainloop:
 #	next_pc _MUST_ be on ecx
 no_update:
 	mov esi,ecx
-	call bm_GetCode #bm_GetCode
+	call bm_GetCodeByVAddr
 	jmp eax
 
 intc_sched_offs:

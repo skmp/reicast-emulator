@@ -238,7 +238,7 @@ CSYM(arm_dispatch):
 	ldrd r0,[r8,#184]		@load: Next PC, interrupt
 	#endif
 
-	ubfx r2,r0,#2,#19
+	ubfx r2,r0,#2,#21
 	cmp r1,#0
 	bne arm_dofiq
 

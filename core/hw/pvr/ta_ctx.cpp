@@ -34,7 +34,7 @@ void OS_aligned_free(void *ptr)
 {
 #ifdef __MINGW32__
    __mingw_aligned_free(ptr);
-#elif defined(_MSC_VER)
+#elif defined(_WIN32)
    _aligned_free(ptr);
 #else
    free(ptr);
@@ -101,7 +101,7 @@ void VDecEnd(void)
 
 cMutex mtx_rqueue;
 TA_context* rqueue;
-cResetEvent frame_finished(false, true);
+cResetEvent frame_finished;
 
 double last_frame = 0;
 u64 last_cycles = 0;
@@ -120,7 +120,7 @@ bool QueueRender(TA_context* ctx)
 	//Try to limit speed to a "sane" level
 	//Speed is also limited via audio, but audio
 	//is sometimes not accurate enough (android, vista+)
-	u32 cycle_span = sh4_sched_now64() - last_cycles;
+	u32 cycle_span = (u32)(sh4_sched_now64() - last_cycles);
 	last_cycles = sh4_sched_now64();
 	double time_span = os_GetSeconds() - last_frame;
 	last_frame = os_GetSeconds();
@@ -133,7 +133,6 @@ bool QueueRender(TA_context* ctx)
 		//  sh4 run at > 120% on the last slice
 		//  and SynchronousRendering is enabled
 		frame_finished.Wait();
-		verify(!rqueue);
 	}
 
 	if (rqueue)
@@ -176,13 +175,16 @@ bool rend_framePending(void)
 
 void FinishRender(TA_context* ctx)
 {
-   verify(rqueue == ctx);
-   mtx_rqueue.Lock();
-	rqueue = 0;
-   mtx_rqueue.Unlock();
+	if (ctx != NULL)
+	{
+		verify(rqueue == ctx);
+		mtx_rqueue.Lock();
+		rqueue = NULL;
+		mtx_rqueue.Unlock();
 
-	tactx_Recycle(ctx);
-   frame_finished.Set();
+		tactx_Recycle(ctx);
+	}
+	frame_finished.Set();
 }
 
 cMutex mtx_pool;
@@ -207,7 +209,6 @@ TA_context* tactx_Alloc(void)
    {
       rv = new TA_context();
       rv->Alloc();
-      printf("new tactx\n");
    }
 
    return rv;

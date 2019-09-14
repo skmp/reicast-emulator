@@ -138,12 +138,10 @@ ifneq (,$(findstring unix,$(platform)))
 	ifeq ($(WITH_DYNAREC), $(filter $(WITH_DYNAREC), x86_64 x64))
 		CFLAGS += -DTARGET_LINUX_x64 -D TARGET_NO_AREC
 		SINGLE_PREC_FLAGS=1
-		CXXFLAGS += -fexceptions
 		HAVE_GENERIC_JIT = 0
 	else ifeq ($(WITH_DYNAREC), x86)
-		CFLAGS += -m32 -D TARGET_LINUX_x86
+		CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC
 		SINGLE_PREC_FLAGS=1
-		CXXFLAGS += -fno-exceptions
 		MFLAGS += -m32
 		ASFLAGS += --32
 		LDFLAGS += -m32
@@ -662,6 +660,7 @@ else ifeq ($(platform), qnx)
 	FORCE_GLES = 1
 	DEFINES += -DTHREADED_RENDERING_DEFAULT
 	PLATCFLAGS += -DNO_ASM -D__BLACKBERRY_QNX__
+	THREADED_RENDERING_DEFAULT = 1
 	CPUFLAGS += -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp -D__arm__ -DARM_ASM -D__NEON_OPT
 	CFLAGS += -D__QNX__
 	THREADED_RENDERING_DEFAULT = 1

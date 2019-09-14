@@ -1,7 +1,6 @@
 #pragma once
 #include "types.h"
 #include "assert.h"
-#include "../arm7/arm7.h"
 
 #define SCIEB_addr 0x289C
 #define SCIPD_addr (0x289C+4)
@@ -307,17 +306,11 @@ void UpdateAICA(u32 Cycles);
 void AICA_Init();
 void AICA_Term();
 
-void AICA_Sample();
-void AICA_Sample32();
-
 //u32 ReadAicaReg(u32 reg);
 void WriteAicaReg8(u32 reg,u32 data);
 
 template<u32 sz>
 void WriteAicaReg(u32 reg,u32 data);
-
-void sgc_Init();
-void sgc_Term();
 
 ////
 //Timers :)

@@ -289,8 +289,6 @@ typedef void InitFP();
 typedef void TermFP();
 typedef bool IsCpuRunningFP();
 
-typedef void sh4_int_RaiseExeptionFP(u32 ExeptionCode,u32 VectorAddress);
-
 /*
 	The interface stuff should be replaced with something nicer
 */
@@ -348,6 +346,8 @@ struct Sh4Context
 
 			int sh4_sched_next;
 			u32 interrupt_pend;
+
+			u32 exception_pc;
 		};
 		u64 raw[64-8];
 	};
@@ -365,16 +365,14 @@ void DYNACALL do_sqw_nommu_full(u32 dst, u8* sqb);
 typedef void DYNACALL sqw_fp(u32 dst,u8* sqb);
 typedef void DYNACALL TaListVoidFP(void* data);
 
-// Naomi edit: was RAM_SIZE/2
-#define FPCB_SIZE (32*1024*1024/2)
+#define FPCB_SIZE (RAM_SIZE_MAX/2)
 #define FPCB_MASK (FPCB_SIZE -1)
 //#defeine FPCB_PAD 0x40000
 #define FPCB_PAD 0x100000
 #define FPCB_OFFSET (-(FPCB_SIZE*sizeof(void*) + FPCB_PAD)) 
 struct Sh4RCB
 {
-   /* Naomi edit - allow for max possible RAM_SIZE here */
-	void* fpcb[((32*1024*1024)/*RAM_SIZE*//2)];
+	void* fpcb[FPCB_SIZE];
 	u64 _pad[(FPCB_PAD-sizeof(Sh4Context)-64-sizeof(void*)*2)/8];
 	TaListVoidFP* tacmd_voud; //*TODO* remove (not used)
 	sqw_fp* do_sqw_nommu;
@@ -422,3 +420,4 @@ s32 rcb_poffs(T* ptr)
 //Get an interface to sh4 interpreter
 void Get_Sh4Interpreter(sh4_if* cpu);
 void Get_Sh4Recompiler(sh4_if* cpu);
+u32* GetRegPtr(u32 reg);

@@ -36,7 +36,7 @@ _arm_dispatch:
 
 arm_disp:
    mov eax,reg[R15_ARM_NEXT*4].I
-   and eax,0x1FFFFC
+   and eax,0x7FFFFC
 	cmp reg[INTR_PEND*4].I,0
 	jne arm_dofiq
 	jmp [_EntryPoints+eax]

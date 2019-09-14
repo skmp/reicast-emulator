@@ -460,6 +460,17 @@ struct retro_core_option_definition option_defs_us[] = {
 #endif
    },
    {
+      CORE_OPTION_NAME "_force_wince",
+      "Force Windows CE Mode",
+      "Enable full MMU emulation and other settings for Windows CE games",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_analog_stick_deadzone",
       "Analog Stick Deadzone",
       "",
@@ -600,6 +611,17 @@ struct retro_core_option_definition option_defs_us[] = {
       CORE_OPTION_NAME "_synchronous_rendering",
       "Synchronous Rendering",
       "Waits for the GPU to finish rendering the previous frame instead of dropping the current one. Note: This setting only applies when 'Threaded Rendering' is enabled.",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_delay_frame_swapping",
+      "Delay Frame Swapping",
+      "Useful to avoid flashing screens or glitchy videos. Not recommended on slow platforms. Note: This setting only applies when 'Threaded Rendering' is enabled.",
       {
          { "disabled", NULL },
          { "enabled",  NULL },

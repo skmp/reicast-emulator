@@ -402,6 +402,7 @@ void findGLVersion()
    if (glGetError() == GL_INVALID_ENUM)
       gl.gl_major = 2;
    const char *version = (const char *)glGetString(GL_VERSION);
+   NOTICE_LOG(RENDERER, "OpenGL version: %s", version);
    if (!strncmp(version, "OpenGL ES", 9))
    {
       gl.is_gles = true;
@@ -461,7 +462,7 @@ GLuint gl_CompileShader(const char* shader,GLuint type)
 		*compile_log=0;
 
 		glGetShaderInfoLog(rv, compile_log_len, &compile_log_len, compile_log);
-		printf("Shader: %s \n%s\n",result?"compiled!":"failed to compile",compile_log);
+		WARN_LOG(RENDERER, "Shader: %s \n%s\n", result ? "compiled!" : "failed to compile", compile_log);
 
 		free(compile_log);
 	}
@@ -509,8 +510,8 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 		*compile_log       = 0;
 
 		glGetProgramInfoLog(program, compile_log_len, &compile_log_len, compile_log);
-		printf("Shader linking: %s \n (%d bytes), - %s -\n",result?"linked":"failed to link", compile_log_len,compile_log);
-		printf("VERTEX:\n%s\nFRAGMENT:\n%s\n", VertexShader, FragmentShader);
+		WARN_LOG(RENDERER, "Shader linking: %s \n (%d bytes), - %s -\n", result ? "linked" : "failed to link", compile_log_len, compile_log);
+		WARN_LOG(RENDERER, "VERTEX:\n%s\nFRAGMENT:\n%s\n", VertexShader, FragmentShader);
 
 		free(compile_log);
 		die("shader compile fail\n");
@@ -795,7 +796,7 @@ static bool RenderFrame(void)
       scale_x=fb_scale_x;
       scale_y=fb_scale_y;
 		if (SCALER_CTL.interlace == 0 && SCALER_CTL.vscalefactor >= 0x400)
-			scale_y *= SCALER_CTL.vscalefactor / 0x400;
+			scale_y *= (float)SCALER_CTL.vscalefactor / 0x400;
 
       //work out scaling parameters !
       //Pixel doubling is on VO, so it does not affect any pixel operations
@@ -836,7 +837,7 @@ static bool RenderFrame(void)
 
    ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
 
-	//printf("scale: %f, %f, %f, %f\n", ShaderUniforms.scale_coefs[0],scale_coefs[1], ShaderUniforms.scale_coefs[2], ShaderUniforms.scale_coefs[3]);
+   DEBUG_LOG(RENDERER, "scale: %f, %f, %f, %f", ShaderUniforms.scale_coefs[0], ShaderUniforms.scale_coefs[1], ShaderUniforms.scale_coefs[2], ShaderUniforms.scale_coefs[3]);
 
 
 	//VERT and RAM fog color constants
@@ -923,14 +924,14 @@ static bool RenderFrame(void)
 		case 4: //0x4   888 RGB 24 bit packed
 		case 5: //0x5   0888 KRGB 32 bit    K is the value of fk_kval.
 		case 6: //0x6   8888 ARGB 32 bit
-         fprintf(stderr, "Unsupported render to texture format: %d\n", FB_W_CTRL.fb_packmode);
+			WARN_LOG(RENDERER, "Unsupported render to texture format: %d", FB_W_CTRL.fb_packmode);
          return false;
 		case 7: //7     invalid
 			die("7 is not valid");
 			break;
 		}
-      //printf("RTT packmode=%d stride=%d - %d,%d -> %d,%d\n", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
- 		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);	 		//		FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
+		DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d,%d -> %d,%d\n", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
+ 				FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
 		BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels,format);
 	}
    else
@@ -976,9 +977,9 @@ static bool RenderFrame(void)
 
 #if 0
       //handy to debug really stupid render-not-working issues ...
-      printf("SS: %dx%d\n", screen_width, screen_height);
-      printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
-      printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
+      DEBUG_LOG(RENDERER, "SS: %dx%d", screen_width, screen_height);
+      DEBUG_LOG(RENDERER, "SCI: %d, %f", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
+      DEBUG_LOG(RENDERER, "SCI: %f, %f, %f, %f", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 #endif
 
       if (!wide_screen_on)
@@ -992,8 +993,8 @@ static bool RenderFrame(void)
 				if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor >= 0x400)
 				{
 					// Clipping is done after scaling/filtering so account for that if enabled
-					height *= SCALER_CTL.vscalefactor / 0x400;
-					min_y *= SCALER_CTL.vscalefactor / 0x400;
+					height *= (float)SCALER_CTL.vscalefactor / 0x400;
+					min_y *= (float)SCALER_CTL.vscalefactor / 0x400;
 				}
             // Add x offset for aspect ratio > 4/3
             min_x   = min_x * dc2s_scale_h + ds2s_offs_x;
@@ -1071,7 +1072,7 @@ bool ProcessFrame(TA_context* ctx)
    {
       void killtex();
       killtex();
-      printf("Texture cache cleared\n");
+      INFO_LOG(RENDERER, "Texture cache cleared");
    }
 
    if (ctx->rend.isRenderFramebuffer)

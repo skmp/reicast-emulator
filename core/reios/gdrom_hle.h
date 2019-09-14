@@ -50,3 +50,65 @@
 #define CTOC_TRACK(n) (n<<16)
 
 void gdrom_hle_op();
+
+typedef enum { BIOS_ERROR = -1, BIOS_INACTIVE, BIOS_ACTIVE, BIOS_COMPLETED, BIOS_DATA_AVAIL } gd_bios_status;
+struct gdrom_hle_state_t
+{
+	u32 last_request_id;
+	u32 next_request_id;
+	gd_bios_status status;
+	u32 command;
+	u32 params[4];
+	u32 result[4];
+	u32 cur_sector;
+	u32 multi_read_sector;
+	u32 multi_read_offset;
+	u32 multi_read_count;
+	u32 multi_read_total;
+	u32 multi_callback;
+	u32 multi_callback_arg;
+	bool dma_trans_ended;
+	u64 xfer_end_time;
+
+	bool Serialize(void **data, unsigned int *total_size)
+	{
+		LIBRETRO_S(last_request_id);
+		LIBRETRO_S(next_request_id);
+		LIBRETRO_S(status);
+		LIBRETRO_S(command);
+		LIBRETRO_S(params);
+		LIBRETRO_S(result);
+		LIBRETRO_S(cur_sector);
+		LIBRETRO_S(multi_read_sector);
+		LIBRETRO_S(multi_read_offset);
+		LIBRETRO_S(multi_read_count);
+		LIBRETRO_S(multi_read_total);
+		LIBRETRO_S(multi_callback);
+		LIBRETRO_S(multi_callback_arg);
+		LIBRETRO_S(dma_trans_ended);
+		LIBRETRO_S(xfer_end_time);
+
+		return true;
+	}
+	bool Unserialize(void **data, unsigned int *total_size)
+	{
+		LIBRETRO_US(last_request_id);
+		LIBRETRO_US(next_request_id);
+		LIBRETRO_US(status);
+		LIBRETRO_US(command);
+		LIBRETRO_US(params);
+		LIBRETRO_US(result);
+		LIBRETRO_US(cur_sector);
+		LIBRETRO_US(multi_read_sector);
+		LIBRETRO_US(multi_read_offset);
+		LIBRETRO_US(multi_read_count);
+		LIBRETRO_US(multi_read_total);
+		LIBRETRO_US(multi_callback);
+		LIBRETRO_US(multi_callback_arg);
+		LIBRETRO_US(dma_trans_ended);
+		LIBRETRO_US(xfer_end_time);
+
+		return true;
+	}
+};
+extern gdrom_hle_state_t gd_hle_state;

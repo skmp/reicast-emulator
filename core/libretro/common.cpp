@@ -25,64 +25,12 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/param.h>
-#ifndef _WIN32
-#include <sys/mman.h>
-#endif
 #include <sys/time.h>
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
+#include "hw/mem/vmem32.h"
 
 #include "hw/sh4/dyna/ngen.h"
-
-static int access_to_protect_flags(enum page_access access)
-{
-   switch (access)
-   {
-      case ACC_READONLY:
-#ifdef _WIN32
-         return PAGE_READONLY;
-#else
-         return PROT_READ;
-#endif
-      case ACC_READWRITE:
-#ifdef _WIN32
-         return PAGE_READWRITE;
-#else
-         return PROT_READ | PROT_WRITE;
-#endif
-      case ACC_READWRITEEXEC:
-#ifdef _WIN32
-         return PAGE_EXECUTE_READWRITE;
-#else
-         return PROT_READ | PROT_WRITE | PROT_EXEC;
-#endif
-      default:
-         break;
-   }
-
-#ifdef _WIN32
-   return PAGE_NOACCESS;
-#else
-   return PROT_NONE;
-#endif
-}
-
-int protect_pages(void *ptr, size_t size, enum page_access access)
-{
-   int prot = access_to_protect_flags(access);
-#ifdef _WIN32
-   DWORD old_protect;
-   return VirtualProtect(ptr, size, (DWORD)prot, &old_protect) != 0;
-#else
-   return mprotect(ptr, size, prot) == 0;
-#endif
-}
-
-void os_MakeExecutable(void* ptr, u32 sz)
-{
-   protect_pages(ptr, sz, ACC_READWRITEEXEC);
-}
-
 
 #ifdef _WIN32
 #include "../imgread/common.h"
@@ -111,7 +59,11 @@ static LONG ExceptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 
    //printf("[EXC] During access to : 0x%X\n", address);
 
-   if (VramLockedWrite(address))
+	if (bm_RamWriteAccess(address))
+	{
+		return EXCEPTION_CONTINUE_EXECUTION;
+	}
+	else if (VramLockedWrite(address))
       return EXCEPTION_CONTINUE_EXECUTION;
 #ifndef TARGET_NO_NVMEM
    if (BM_LockedWrite(address))
@@ -129,7 +81,7 @@ static LONG ExceptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 #endif
    else
    {
-      printf("[GPF]Unhandled access to : 0x%X\n",address);
+   	ERROR_LOG(COMMON, "[GPF]Unhandled access to : %p", address);
    }
 
    return EXCEPTION_CONTINUE_SEARCH;
@@ -198,9 +150,9 @@ seh_callback(
    //	(DWORD)((u8 *)__gnat_SEH_error_handler - CodeCache);
    /* Set its scope to the entire program.  */
    Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
-   Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE;
-   Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
-   printf("TABLE CALLBACK\n");
+   Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE + TEMP_CODE_SIZE;
+   Table[0].UnwindData = (ULONG)((u8 *)unwind_info - CodeCache);
+   DEBUG_LOG(COMMON, "TABLE CALLBACK");
    return Table;
 }
 
@@ -220,12 +172,12 @@ void setup_seh(void)
 
    unwind_info[0].UnwindCode[0].CodeOffset = 0;
    unwind_info[0].UnwindCode[0].UnwindOp = 2;// UWOP_ALLOC_SMALL;
-   unwind_info[0].UnwindCode[0].OpInfo = 0x20 / 8;
+   unwind_info[0].UnwindCode[0].OpInfo = 0x20 / 8;	// OpInfo * 8 + 8 bytes -> 0x28 bytes
 
    /* Set its scope to the entire program.  */
    Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
-   Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE;
-   Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
+   Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE + TEMP_CODE_SIZE;
+   Table[0].UnwindData = (ULONG)((u8 *)unwind_info - CodeCache);
    /* Register the unwind information.  */
    RtlAddFunctionTable(Table, 1, (DWORD64)CodeCache);
 }
@@ -244,6 +196,8 @@ struct rei_host_context_t
 	u32 esp;
 #elif HOST_CPU == CPU_ARM
 	u32 r[15];
+#elif HOST_CPU == CPU_ARM64
+	u64 x2;
 #endif
 };
 
@@ -277,6 +231,7 @@ static void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, boo
 #endif
 #elif HOST_CPU == CPU_ARM64
 	bicopy(reictx->pc, MCTX(.pc), to_segfault);
+	bicopy(reictx->x2, MCTX(.regs[2]), to_segfault);
 #elif HOST_CPU == CPU_X86
 #ifdef __linux__
    bicopy(reictx->pc, MCTX(.gregs[REG_EIP]), to_segfault);
@@ -329,15 +284,17 @@ static void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx)
    context_from_segfault(&ctx, segfault_ctx);
 
    size_t pc     = (size_t)ctx.pc;
-   bool dyna_cde = (pc > (size_t)CodeCache) && (pc < (size_t)(CodeCache + CODE_SIZE));
+#if FEAT_SHREC == DYNAREC_JIT
+   bool dyna_cde = (pc > (size_t)CodeCache) && (pc < (size_t)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
+#else
+	bool dyna_cde = false;
+#endif
 
-   printf("SIGILL @ %p ... %p -> was not in vram, %d\n",
+	ERROR_LOG(COMMON, "SIGILL @ %p ... %p -> was not in vram, %d",
          pc, si->si_addr, dyna_cde);
 
-   printf("Entering infiniloop");
-
+	ERROR_LOG(COMMON, "Entering infiniloop");
    for (;;);
-   printf("PC is used here %08X\n", pc);
 }
 #endif
 
@@ -351,15 +308,31 @@ static void signal_handler(int sn, siginfo_t * si, void *segfault_ctx)
 
    context_from_segfault(&ctx, segfault_ctx);
 
-   bool dyna_cde = ((size_t)ctx.pc > (size_t)CodeCache) && ((size_t)ctx.pc < (size_t)(CodeCache + CODE_SIZE));
-
-#ifdef LOG_SIGHANDLER
-printf("mprot hit @ ptr %p @@ pc: %p, %d\n", si->si_addr, ctx.pc, dyna_cde);
+#if FEAT_SHREC == DYNAREC_JIT
+	bool dyna_cde = ((unat)CC_RX2RW(ctx.pc) > (unat)CodeCache) && ((unat)CC_RX2RW(ctx.pc) < (unat)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
+#else
+	bool dyna_cde = false;
 #endif
 
-   if (VramLockedWrite((u8*)si->si_addr))
+	DEBUG_LOG(COMMON, "mprot hit @ ptr %p @@ pc: %zx, %d", si->si_addr, ctx.pc, dyna_cde);
+
+#if !defined(NO_MMU) && defined(HOST_64BIT_CPU)
+#if HOST_CPU == CPU_ARM64
+	u32 op = *(u32*)ctx.pc;
+	bool write = (op & 0x00400000) == 0;
+	u32 exception_pc = ctx.x2;
+#elif HOST_CPU == CPU_X64
+	bool write = false;	// TODO?
+	u32 exception_pc = 0;
+#endif
+	if (vmem32_handle_signal(si->si_addr, write, exception_pc))
+		return;
+#endif
+	if (bm_RamWriteAccess(si->si_addr))
+		return;
+	if (VramLockedWrite((u8*)si->si_addr))
       return;
-#ifndef TARGET_NO_NVMEM
+#if !defined(TARGET_NO_NVMEM) && FEAT_SHREC != DYNAREC_NONE
    if (BM_LockedWrite((u8*)si->si_addr))
       return;
 #endif
@@ -382,7 +355,10 @@ printf("mprot hit @ ptr %p @@ pc: %p, %d\n", si->si_addr, ctx.pc, dyna_cde);
       context_to_segfault(&ctx, segfault_ctx);
    }
 #elif HOST_CPU == CPU_X64
-   //x64 has no rewrite support
+	else if (dyna_cde && ngen_Rewrite((unat&)ctx.pc, 0, 0))
+	{
+		context_to_segfault(&ctx, segfault_ctx);
+	}
 #elif HOST_CPU == CPU_ARM64
 	else if (dyna_cde && ngen_Rewrite(ctx.pc, 0, 0))
 	{
@@ -394,7 +370,7 @@ printf("mprot hit @ ptr %p @@ pc: %p, %d\n", si->si_addr, ctx.pc, dyna_cde);
 #endif
    else
    {
-      printf("SIGSEGV @ %p ... %p -> was not in vram (dyna code %d)\n", ctx.pc, si->si_addr, dyna_cde);
+   	ERROR_LOG(COMMON, "SIGSEGV @ %zx ... %p -> was not in vram (dyna code %d)", ctx.pc, si->si_addr, dyna_cde);
       die("segfault");
       signal(SIGSEGV, SIG_DFL);
    }
@@ -473,14 +449,14 @@ static void enable_runfast(void)
          : "r"(x), "r"(y)
          );
 
-   printf("ARM VFP-Run Fast (NFP) enabled !\n");
+   DEBUG_LOG(BOOT, "ARM VFP-Run Fast (NFP) enabled !");
 #endif
 }
 
 #if !defined(TARGET_NO_THREADS)
 
 //Thread class
-cThread::cThread(ThreadEntryFP* function,void* prm)
+cThread::cThread(ThreadEntryFP* function,void* prm) : hThread(NULL)
 {
 	Entry=function;
 	param=prm;
@@ -488,26 +464,30 @@ cThread::cThread(ThreadEntryFP* function,void* prm)
 
 void cThread::Start()
 {
+	verify(hThread == NULL);
    hThread = sthread_create((void (*)(void *))Entry, param);
 }
 
 void cThread::WaitToEnd()
 {
-   sthread_join(hThread);
+	if (hThread != NULL)
+	{
+		sthread_join(hThread);
+		hThread = NULL;
+	}
 }
 
 //End thread class
 #endif
 
 //cResetEvent Class
-cResetEvent::cResetEvent(bool State,bool Auto)
+cResetEvent::cResetEvent()
 {
-	//sem_init((sem_t*)hEvent, 0, State?1:0);
-	verify(State==false&&Auto==true);
 #if !defined(TARGET_NO_THREADS)
    mutx = slock_new();
    cond = scond_new();
 #endif
+   state = false;
 }
 
 cResetEvent::~cResetEvent()
@@ -566,32 +546,17 @@ void cResetEvent::Wait()//Wait for signal , then reset
 }
 
 //End AutoResetEvent
-
-void VArray2::LockRegion(u32 offset,u32 size)
+#ifndef TARGET_NO_EXCEPTIONS
+void VArray2::LockRegion(u32 offset,u32 size_bytes)
 {
-#ifdef _WIN32
-   protect_pages(((u8*)data)+offset, size, ACC_READONLY);
-#elif !defined(TARGET_NO_EXCEPTIONS)
-   u32 inpage=offset & SH4_PAGE_MASK;
-   if (!protect_pages(data + offset - inpage, size + inpage, ACC_READONLY))
-      die("protect_pages  failed ..\n");
-#endif
+   mem_region_lock(&data[offset], size_bytes);
 }
 
-void VArray2::UnLockRegion(u32 offset,u32 size)
+void VArray2::UnLockRegion(u32 offset,u32 size_bytes)
 {
-#ifdef _WIN32
-   protect_pages(((u8*)data)+offset, size, ACC_READWRITE);
-#elif !defined(TARGET_NO_EXCEPTIONS)
-   u32 inpage=offset & SH4_PAGE_MASK;
-
-   if (!protect_pages(data + offset - inpage, size + inpage, ACC_READWRITE))
-   {
-      print_mem_addr();
-      die("protect_pages  failed ..\n");
-   }
-#endif
+   mem_region_unlock(&data[offset], size_bytes);
 }
+#endif
 
 #if defined(_WIN64) && defined(_DEBUG)
 static void ReserveBottomMemory(void)
@@ -698,17 +663,17 @@ void common_libretro_setup(void)
 #endif
 #ifdef _WIN32
 #ifdef _WIN64
-   // setup_seh();
    AddVectoredExceptionHandler(1, ExceptionHandler);
-#endif
+#else
    SetUnhandledExceptionFilter(&ExceptionHandler);
+#endif
 #else
    exception_handler_install_platform();
    signal(SIGINT, exit);
 #endif
 
 #if defined(__MACH__) || defined(__linux__)
-   printf("Linux paging: %08X %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,SH4_PAGE_MASK);
-   verify(SH4_PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
+   DEBUG_LOG(BOOT, "Linux paging: %08lX %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
+   verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
 #endif
 }

@@ -115,6 +115,9 @@
 
 */
 
+#define FAST_MMU
+#define USE_WINCE_HACK
+
 #define DC_PLATFORM_MASK        7
 #define DC_PLATFORM_DREAMCAST   0   /* Works, for the most part */
 #define DC_PLATFORM_DEV_UNIT    1   /* This is missing hardware */
@@ -240,6 +243,10 @@
 	#endif
 #endif
 
+#if HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64
+#define HOST_64BIT_CPU
+#endif
+
 //Depricated build configs
 #ifdef HOST_NO_REC
 #error Dont use HOST_NO_REC
@@ -248,3 +255,15 @@
 #ifdef HOST_NO_AREC
 #error Dont use HOST_NO_AREC
 #endif
+
+// Some restrictions on FEAT_NO_RWX_PAGES
+#if defined(FEAT_NO_RWX_PAGES) && FEAT_SHREC == DYNAREC_JIT
+#if HOST_CPU != CPU_X64 && HOST_CPU != CPU_ARM64
+#error "FEAT_NO_RWX_PAGES Only implemented for X64 and ARMv8"
+#endif
+#endif
+
+
+#define RAM_SIZE_MAX (32*1024*1024)
+#define VRAM_SIZE_MAX (16*1024*1024)
+#define ARAM_SIZE_MAX (8*1024*1024)

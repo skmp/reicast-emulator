@@ -21,6 +21,7 @@ struct game_type
    int rendertotexturebuffer;       /* -1, make no decision */
    int disable_div;                 /* -1, make no decision */
    float extra_depth_scale;			/* 1, default */
+   int disable_vmem32;				/* 0 = normal, 1 = disable */
 };
 
 struct game_type_naomi
@@ -49,36 +50,56 @@ struct game_type_naomi
 static struct game_type lut_games[] = 
 {
    /* Update mode fullspeed */
-   { "T1210N    ",  1, -1, -1, -1, -1, -1,  -1, 1  },                /* Street Fighter III Double Impact */
+   { "T1210N    ",  1, -1, -1, -1, -1, -1,  -1, 1, -1 },                /* Street Fighter III Double Impact */
 
    /* Fallback to generic recompiler */
 
    /* Alpha sort mode */
-   { "MK-5100050", -1, -1, -1,  1, -1, -1,  -1, 1  },                /* Sonic Adventure */
+   { "MK-5100050", -1, -1, -1,  1, -1, -1,  -1, 1, -1 },           /* Sonic Adventure */
 
    /* Translucent Polygon Depth Mask */
-   { "RDC-0057  ", -1, -1, -1, -1,  1, -1,  -1, 1  },                /* Cosmic Smash */
-   { "HDR-0176  ", -1, -1, -1, -1,  1, -1,  -1, 1  },                /* Cosmic Smash */
+   { "RDC-0057  ", -1, -1, -1, -1,  1, -1,  -1, 1, -1 },           /* Cosmic Smash */
+   { "HDR-0176  ", -1, -1, -1, -1,  1, -1,  -1, 1, -1 },           /* Cosmic Smash */
 
    /* Render to texture buffer */
-   { "T40205N   ", -1, -1, -1, -1, -1,  1,  -1, 1  },                /* Tony Hawk's Pro Skater 1 (USA) */
-   { "T13006N   ", -1, -1, -1, -1, -1,  1,  -1, 1  },                /* Tony Hawk's Pro Skater 2 (USA) */
-   { "T13008D",    -1, -1, -1, -1, -1,  1,  -1, 1  },                /* Tony Hawk's Pro Skater 2 (USA) */
-   { "T23002N   ", -1, -1, -1, -1, -1,  1,  -1, 1  },                /* Star Wars Episode I: Jedi Power Battle (USA) */
-   { "MK-51052  ", -1, -1, -1, -1, -1,  1,  -1, 1  },                /* Skies of Arcadia */
-   { "MK-51007  ", -1, -1, -1, -1, -1,  1,  -1, 1  },                /* Flag to Flag */
+   { "T40205N   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tony Hawk's Pro Skater 1 (USA) */
+   { "T40204D   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tony Hawk's Skateboarding (EU) */
+   { "T13006N   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tony Hawk's Pro Skater 2 */
+   { "T13008D   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tony Hawk's Pro Skater 2 */
+   { "T23002N   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Star Wars Episode I: Jedi Power Battle (USA) */
+   { "MK-51052  ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Skies of Arcadia */
+   { "HDR-0076  ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Eternal Arcadia */
+   { "MK-51007  ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Flag to Flag */
+   { "HDR-0013  ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Super Speed Racing (JP) */
+   { "6108099   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Yu Suzuki Game Works Vol. 1 */
+   { "T2106M    ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* L.O.L */
+   { "T18702M   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Miss Moonlight */
+   { "T40401N   ", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tom Clancy's Rainbow Six (US) */
+   { "T-45001D05", -1, -1, -1, -1, -1,  1,  -1, 1, -1 },           /* Tom Clancy's Rainbow Six incl. Eagle Watch Missions (EU) */
 
    /* Disable DIV matching */
-   { "T40216N   ", -1, -1, -1, -1, -1,  -1,  1, 1  },                /* Surf Rocket Racers */
-   { "T23001D   ", -1, -1, -1, -1, -1,  -1,  1, 1  },                /* Star Wars - Episode I - Racer (United Kingdom) */
-   { "T23001N   ", -1, -1, -1, -1, -1,  -1,  1, 1  },                /* Star Wars - Episode I - Racer (USA) */
-   { "T30701D50 ", -1, -1, -1, -1, -1,  -1,  1, 1  },                /* Pro Pinball Trilogy */
-   { "T15112N   ", -1, -1, -1, -1, -1,  -1,  1, 1  },                /* Demolition Racer */
-   { "T7012D    ", -1, -1, -1, -1, -1,  -1,  1, 1  },                /* Record of Lodoss War (EU) */
-   { "T40218N   ", -1, -1, -1, -1, -1,  -1,  1, 1  },                /* Record of Lodoss War (USA) */
+   { "T15112N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Demolition Racer */
+   { "T-8113N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Ducati World - Racing Challenge (NTSC) */
+   { "T-8121D-50", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Ducati World (PAL) */
 
    /* Extra depth scaling */
-   { "MK-51182  ", -1, -1, -1, -1, -1,  -1,  1, 10000.f },           /* NHL 2K2 */
+   { "MK-51182  ", -1, -1, -1, -1, -1,  -1,  1, 10000.f, -1 },     /* NHL 2K2 */
+   { "T-8109N   ", -1, -1, -1, -1, -1,  -1,  1, 100.f, -1 },       /* Re-Volt (US) */
+   { "T8107D  50", -1, -1, -1, -1, -1,  -1,  1, 100.f, -1 },       /* Re-Volt (EU) */
+
+   /* Disable VMEM32 (WinCE) */
+   { "T14303M   ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Super Producers */
+   { "T45401D 50", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Giant Killers */
+   { "T42101N 00", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Wild Metal (US) */
+   { "T40501D-50", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Wild Metal (EU) */
+   { "T1205N    ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Resident Evil 2 (US) */
+   { "T7004D  50", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Resident Evil 2 (EU) */
+   { "T14304M   ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Rune Jade */
+   { "T5202M    ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Marionette Company */
+   { "T5203M    ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Marionette Company 2 */
+   { "T11010N   ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* Maximum Pool (online support) */
+   { "T40209N   ", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* StarLancer (US) (online support)  */
+   { "T17723D 05", -1, -1, -1, -1, -1,  -1, -1, 1,  1 },           /* StarLancer (EU) (online support)  */
 };
 
 extern InputDescriptors gunsur2_inputs;

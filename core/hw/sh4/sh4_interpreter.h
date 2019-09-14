@@ -22,6 +22,9 @@ enum OpcodeType
 	NO_GP        = 512,
 	NO_SP        = 1024,
 
+	UsesFPU      = 2048, // Floating point op
+	FWritesFPSCR = UsesFPU | WritesFPSCR,
+
 	ReadWritePC  = ReadsPC|WritesPC,     /* Read and writes PC */
 	WritesSRRWPC = WritesSR|ReadsPC|WritesPC,
 
@@ -51,6 +54,7 @@ void Sh4_int_SetRegister(Sh4RegType reg,u32 regdata);
 void ExecuteDelayslot(void);
 void ExecuteDelayslot_RTE(void);
 
+#define SH4_TIMESLICE (448)
 
 #ifdef __cplusplus
 extern "C" {

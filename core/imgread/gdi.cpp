@@ -29,7 +29,7 @@ Disc* load_gdi(const char* file)
 	istringstream gdi(gdi_data);
 
 	gdi >> iso_tc;
-	printf("\nGDI : %d tracks\n",iso_tc);
+	INFO_LOG(GDROM, "GDI : %d tracks", iso_tc);
 
 	char path[512];
 	strcpy(path,file);
@@ -79,13 +79,14 @@ Disc* load_gdi(const char* file)
 
 		gdi >> OFFSET;
 		
-		printf("file[%d] \"%s\": FAD:%d, CTRL:%d, SSIZE:%d, OFFSET:%d\n", TRACK, track_filename.c_str(), FADS, CTRL, SSIZE, OFFSET);
+		DEBUG_LOG(GDROM, "file[%d] \"%s\": FAD:%d, CTRL:%d, SSIZE:%d, OFFSET:%d", TRACK, track_filename.c_str(), FADS, CTRL, SSIZE, OFFSET);
 
 		Track t;
 		t.ADDR=0;
 		t.StartFAD=FADS+150;
 		t.EndFAD=0;		//fill it in
 		t.file=0;
+		t.CTRL = CTRL;
 
 		if (SSIZE!=0)
 		{

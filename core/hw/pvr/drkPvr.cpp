@@ -28,8 +28,7 @@ void libPvr_LockedBlockWrite (vram_block* block,u32 addr)
 void libPvr_Reset(bool Manual)
 {
    Regs_Reset(Manual);
-	CalculateSync();
-	//rend_reset(); //*TODO* wtf ?
+   spg_Reset(Manual);
 }
 
 
@@ -38,15 +37,10 @@ s32 libPvr_Init(void)
    if (!spg_Init())
    {
       //failed
-      return rv_error;
+      return -1;
    }
-//	if (!rend_init())
-//   {
-//      //failed
-//		return rv_error;
-//   }
 
-	return rv_ok;
+	return 0;
 }
 
 //called when exiting from sh4 thread , from the new thread context (for any thread specific de init) :P

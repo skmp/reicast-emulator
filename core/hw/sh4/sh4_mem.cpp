@@ -19,14 +19,6 @@
 //main system mem
 VArray2 mem_b;
 
-u8 DYNACALL ReadMem8_i(u32 addr);
-u16 DYNACALL ReadMem16_i(u32 addr);
-u32 DYNACALL ReadMem32_i(u32 addr);
-
-void DYNACALL WriteMem8_i(u32 addr,u8 data);
-void DYNACALL WriteMem16_i(u32 addr,u16 data);
-void DYNACALL WriteMem32_i(u32 addr,u32 data);
-
 void _vmem_init();
 void _vmem_reset();
 void _vmem_term();
@@ -212,7 +204,7 @@ void mem_Reset(bool Manual)
 
 	//Reset registers
 	sh4_area0_Reset(Manual);
-	sh4_mmr_reset();
+	sh4_mmr_reset(Manual);
 	MMU_reset();
 }
 
@@ -221,9 +213,6 @@ void mem_Term()
 	MMU_term();
 	sh4_mmr_term();
 	sh4_area0_Term();
-
-	//write back Flash/SRAM
-	SaveRomFiles(get_writable_data_path("/data/"));
 	
 	//mem_b.Term(); // handled by vmem
 

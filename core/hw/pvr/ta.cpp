@@ -11,9 +11,6 @@ u32 ta_type_lut[256];
 	Render/TA thread -> ta data -> draw lists -> draw
 */
 
-#define SQWC(x)
-#define DMAWC(x)
-
 #if HOST_CPU == CPU_X86
 #include <xmmintrin.h>
 struct simd256_t
@@ -243,7 +240,7 @@ NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
          if (ta_fsm_cl==7)
 				ta_fsm_cl=dat->pcw.ListType;
 
-			verify(!IsModVolList(ta_fsm_cl));
+			//verify(!IsModVolList(ta_fsm_cl));	// fails with "F1 World Grand Prix for Dreamcast" and only with dynarec...
 			trans=TAS_PLV32;
       }
    }
@@ -278,10 +275,10 @@ void ta_vtx_SoftReset(void)
 INLINE void DYNACALL ta_thd_data32_i(void *data)
 {
    if (ta_ctx == NULL)
-	{
-		printf("Warning: data sent to TA prior to ListInit. Implied\n");
-      ta_vtx_ListInit();
-	}
+   {
+   	INFO_LOG(PVR, "Warning: data sent to TA prior to ListInit. Ignored");
+		return;
+   }
 
    simd256_t *dst = (simd256_t*)ta_tad.thd_data;
    simd256_t *src = (simd256_t*)data; 
@@ -307,13 +304,11 @@ INLINE void DYNACALL ta_thd_data32_i(void *data)
 
 void DYNACALL ta_vtx_data32(void* data)
 {
-	SQWC(1);
 	ta_thd_data32_i(data);
 }
 
 void ta_vtx_data(u32* data, u32 size)
 {
-   DMAWC(size);
 	while(size>4)
 	{
 		ta_thd_data32_i(data);

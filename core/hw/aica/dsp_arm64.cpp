@@ -21,13 +21,12 @@
 
 #if HOST_CPU == CPU_ARM64 && FEAT_DSPREC != DYNAREC_NONE
 
-#include <sys/mman.h>
 #include "dsp.h"
 #include "hw/aica/aica_if.h"
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
 
-extern void Arm64CacheFlush(void* start, void* end);
+extern void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end);
 
 class DSPAssembler : public MacroAssembler
 {
@@ -37,6 +36,7 @@ public:
 	void Compile(struct dsp_t *DSP)
 	{
 		this->DSP = DSP;
+		DEBUG_LOG(AICA_ARM, "DSPAssembler::DSPCompile recompiling for arm64 at %p", GetBuffer()->GetStartAddress<void*>());
 
 		if (DSP->Stopped)
 		{
@@ -53,8 +53,9 @@ public:
 			Stp(xzr, xzr, MemOperand(x0, 48));
 			Ret();
 			FinalizeCode();
-			Arm64CacheFlush(GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
-
+			vmem_platform_flush_cache(
+							GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>(),
+							GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 			return;
 		}
 
@@ -335,7 +336,9 @@ public:
 
 		FinalizeCode();
 
-		Arm64CacheFlush(GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
+		vmem_platform_flush_cache(
+						GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>(),
+						GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 	}
 
 private:
@@ -433,9 +436,9 @@ private:
 		Instruction* instr;
 		for (instr = instr_start; instr < instr_end; instr += kInstructionSize) {
 			decoder.Decode(instr);
-			printf("\t %p:\t%s\n",
-					reinterpret_cast<void*>(instr),
-					disasm.GetOutput());
+			DEBUG_LOG(AICA_ARM, "    %p:\t%s",
+					   reinterpret_cast<void*>(instr),
+					   disasm.GetOutput());
 		}
 	}
 
@@ -468,7 +471,7 @@ void dsp_init()
 	dsp.regs.MDEC_CT = 1;
 	dsp.dyndirty = true;
 
-	if (mprotect(dsp.DynCode, sizeof(dsp.DynCode), PROT_EXEC | PROT_READ | PROT_WRITE))
+	if (!mem_region_set_exec(dsp.DynCode, sizeof(dsp.DynCode)))
 	{
 		perror("Couldn’t mprotect DSP code");
 		die("mprotect failed in arm64 dsp");

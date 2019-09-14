@@ -31,6 +31,8 @@ u32 YUV_y_curr;
 u32 YUV_x_size;
 u32 YUV_y_size;
 
+static u32 YUV_index = 0;
+
 void YUV_init(void)
 {
    YUV_x_curr     = 0;
@@ -50,10 +52,9 @@ void YUV_init(void)
       YUV_x_size = (TA_YUV_TEX_CTRL.yuv_u_size + 1) * 16;
       YUV_y_size = (TA_YUV_TEX_CTRL.yuv_v_size + 1) * 16;
    }
+   YUV_index = 0;
 }
 
-#define TA_YUV420_MACROBLOCK_SIZE 384
-#define TA_YUV422_MACROBLOCK_SIZE 512
 
 static INLINE u8 GetY420(int x, int y,u8* base)
 {
@@ -174,13 +175,33 @@ void YUV_data(u32* data , u32 count)
 	
 	count*=32;
 
-	while(count>=block_size)
+	while (count > 0)
 	{
-		YUV_ConvertMacroBlock((u8*)data); //convert block
-		data+=block_size>>2;
-		count-=block_size;
+		if (YUV_index + count >= block_size)
+		{
+			//more or exactly one block remaining
+			u32 dr = block_size - YUV_index;				//remaining bytes til block end
+			if (YUV_index == 0)
+			{
+				// Avoid copy
+				YUV_ConvertMacroBlock((u8 *)data);				//convert block
+			}
+			else
+			{
+				memcpy(&YUV_tempdata[YUV_index >> 2], data, dr);//copy em
+				YUV_ConvertMacroBlock((u8 *)&YUV_tempdata[0]);	//convert block
+				YUV_index = 0;
+			}
+			data += dr >> 2;									//count em
+			count -= dr;
+		}
+		else
+		{	//less that a whole block remaining
+			memcpy(&YUV_tempdata[YUV_index >> 2], data, count);	//append it
+			YUV_index += count;
+			count = 0;
+		}
 	}
-
 	verify(count==0);
 }
 
@@ -191,7 +212,7 @@ void YUV_data(u32* data , u32 count)
 //read
 u8 DYNACALL pvr_read_area1_8(u32 addr)
 {
-   printf("8-bit VRAM reads are not possible\n");
+   INFO_LOG(MEMORY, "%08x: 8-bit VRAM reads are not possible", addr);
    return 0;
 }
 
@@ -207,7 +228,7 @@ u32 DYNACALL pvr_read_area1_32(u32 addr)
 //write
 void DYNACALL pvr_write_area1_8(u32 addr,u8 data)
 {
-   printf("8-bit VRAM writes are not possible\n");
+   INFO_LOG(MEMORY, "%08x: 8-bit VRAM writes are not possible", addr);
 }
 
 void DYNACALL pvr_write_area1_16(u32 addr,u16 data)
@@ -232,7 +253,6 @@ void DYNACALL pvr_write_area1_32(u32 addr,u32 data)
 
 void TAWrite(u32 address,u32* data,u32 count)
 {
-   //printf("TAWrite 0x%08X %d\n",address,count);
    u32 address_w=address&0x1FFFFFF;//correct ?
    if (address_w<0x800000)//TA poly
    {
@@ -244,9 +264,10 @@ void TAWrite(u32 address,u32* data,u32 count)
    }
    else //Vram Writef
    {
-      //shouldn't really get here (?) -> works on dc :D need to handle lmmodes
-      //printf("Vram Write 0x%X , size %d\n",address,count*32);
-      memcpy(&vram.data[address & VRAM_MASK],data,count*32);
+		//shouldn't really get here (?) -> works on dc :D need to handle lmmodes
+		DEBUG_LOG(MEMORY, "Vram TAWrite 0x%X , bkls %d\n", address, count);
+		verify(SB_LMMODE0 == 0);
+		memcpy(&vram.data[address & VRAM_MASK],data,count * 32);
    }
 }
 
@@ -274,11 +295,10 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
    else //Vram Writef
    {
 		// Used by WinCE
-		//printf("Vram TAWriteSQ 0x%X SB_LMMODE0 %d\n",address, SB_LMMODE0);
+		DEBUG_LOG(MEMORY, "Vram TAWriteSQ 0x%X SB_LMMODE0 %d", address, SB_LMMODE0);
 		if (SB_LMMODE0 == 0)
 		{
 			// 64b path
-			u8* vram=sqb+512+0x04000000;
 			MemWrite32(&vram[address_w&(VRAM_MASK-0x1F)],sq);
 		}
 		else

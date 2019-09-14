@@ -7,15 +7,6 @@
 */
 typedef int sh4_sched_callback(int tag, int sch_cycl, int jitter);
 
-struct sched_list
-{
-	sh4_sched_callback* cb;
-	int tag;
-	int start;
-	int end;
-};
-
-
 /*
 	Registed a callback to the scheduler. The returned id 
 	is used for sh4_sched_request and sh4_sched_elapsed calls
@@ -50,4 +41,10 @@ void sh4_sched_tick(int cycles);
 
 void sh4_sched_ffts();
 
-extern u32 sh4_sched_intr;
+struct sched_list
+{
+	sh4_sched_callback* cb;
+	int tag;
+	int start;
+	int end;
+};

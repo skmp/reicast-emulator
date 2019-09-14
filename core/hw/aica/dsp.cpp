@@ -1,5 +1,6 @@
 #include "dsp.h"
 #include "aica.h"
+#include "aica_if.h"
 
 /*
 	DSP rec_v1
@@ -185,14 +186,9 @@ void dsp_init()
 	dsp.RBP=0;
 	dsp.regs.MDEC_CT=1;
 
-
-	//os_MakeExecutable(dsp.DynCode,sizeof(dsp.DynCode));
-#if HOST_OS == OS_WINDOWS
-	DWORD old;
-	VirtualProtect(dsp.DynCode, sizeof(dsp.DynCode), PAGE_EXECUTE_READWRITE, &old);
-#endif
-
+	mem_region_set_exec(dsp.DynCode, sizeof(dsp.DynCode));
 }
+
 void dsp_recompile();
 
 void* dyna_realloc(void*ptr,u32 oldsize,u32 newsize)
@@ -226,9 +222,6 @@ void _dsp_debug_step_end()
 #define nwtn(x) verify(!dsp.regs_init.x)
 #define wtn(x) nwtn(x);dsp.regs_init.x=true;
 
-#include "aica_if.h"
-#include "aica_mem.h"
-
 //sign extend to 32 bits
 void dsp_rec_se(x86_block& x86e,x86_gpr_reg reg,u32 src_sz,u32 dst_sz=0xFF)
 {
@@ -255,7 +248,7 @@ void dsp_rec_DRAM_CI(x86_block& x86e,_INST& prev_op,u32 step,x86_gpr_reg MEM_RD_
 	{
 		//Get and mask ram address :)
 		x86e.Emit(op_mov32,EAX,&dsp.regs.MEM_ADDR);
-		x86e.Emit(op_and32,EAX,AICA_RAM_MASK);
+		x86e.Emit(op_and32, EAX, ARAM_MASK);
 
 		x86e.Emit(op_add32,EAX,(unat)aica_ram.data);
 

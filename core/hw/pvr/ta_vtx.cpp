@@ -87,6 +87,8 @@ const u32 SZ64=2;
 
 #include "ta_structs.h"
 
+typedef Ta_Dma* DYNACALL TaListFP(Ta_Dma* data,Ta_Dma* data_end);
+typedef void TACALL TaPolyParamFP(void* ptr);
 
 TaListFP* TaCmd;
 	
@@ -120,7 +122,7 @@ public:
 
 	static Ta_Dma* DYNACALL NullVertexData(Ta_Dma* data,Ta_Dma* data_end)
 	{
-		printf("TA: Invalid state, ignoring VTX data\n");
+		INFO_LOG(PVR, "TA: Invalid state, ignoring VTX data");
 		return data+SZ32;
 	}
 
@@ -385,7 +387,7 @@ public:
 				//32B
 			case ParamType_Object_List_Set:
 				{
-					printf("Unsupported list type: ParamType_Object_List_Set\n");
+					INFO_LOG(PVR, "Unsupported list type: ParamType_Object_List_Set");	// NAOMI Virtual on Oratorio Tangram
 
 					// *cough* ignore it :p
 					data+=SZ32;
@@ -1496,9 +1498,9 @@ bool ta_parse_vdrc(TA_context* ctx)
          render_pass->mvo_count = vd_rc.global_param_mvo.used();
          render_pass->pt_count = vd_rc.global_param_pt.used();
          render_pass->tr_count = vd_rc.global_param_tr.used();
+         render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
          render_pass->autosort = UsingAutoSort(pass);
          render_pass->z_clear = ClearZBeforePass(pass);
-         render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
       }
 
       bool empty_context = true;
@@ -1549,7 +1551,7 @@ static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 	//Base Col
 	//Offset Col
 
-	//XYZ are _allways_ there :)
+	//XYZ are _always_ there :)
 	cv->x=vrf(ptr);
    ptr+=4;
 	cv->y=vrf(ptr);

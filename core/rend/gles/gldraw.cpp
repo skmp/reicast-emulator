@@ -239,7 +239,14 @@ __forceinline static void SetGPState(const PolyParam* gp, u32 cflip)
    if (SortingEnabled && settings.pvr.Emulation.AlphaSortMode == 0)
       glcache.DepthMask(GL_FALSE);
    else
-      glcache.DepthMask(!gp->isp.ZWriteDis);
+   {
+		// Z Write Disable seems to be ignored for punch-through polys
+		// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
+   	if (Type == ListType_Punch_Through)
+   		glcache.DepthMask(GL_TRUE);
+   	else
+   		glcache.DepthMask(!gp->isp.ZWriteDis);
+   }
 }
 
 template <u32 Type, bool SortingEnabled>

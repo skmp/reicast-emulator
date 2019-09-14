@@ -35,13 +35,13 @@ void do_pvr_dma(void)
 
 	if((dmaor &DMAOR_MASK) != 0x8201)
 	{
-		printf("\n!\tDMAC: DMAOR has invalid settings (%X) !\n", dmaor);
+		INFO_LOG(PVR, "DMAC: DMAOR has invalid settings (%X) !", dmaor);
 		return;
 	}
 
 	if (len & 0x1F)
 	{
-		printf("\n!\tDMAC: SB_C2DLEN has invalid size (%X) !\n", len);
+		INFO_LOG(PVR, "DMAC: SB_C2DLEN has invalid size (%X) !", len);
 		return;
 	}
 
@@ -57,7 +57,7 @@ void do_pvr_dma(void)
 	}
 
 	DMAC_SAR(0)        = (src + len);
-	DMAC_CHCR(0).full &= 0xFFFFFFFE;
+	DMAC_CHCR(0).TE = 1;
 	DMAC_DMATCR(0)     = 0x00000000;
 
 	SB_PDST            = 0x00000000;
@@ -78,7 +78,7 @@ void RegWrite_SB_PDST(u32 addr, u32 data)
 u32 calculate_start_link_addr(void)
 {
 	u32 rv;
-	u8* base=&mem_b.data[SB_SDSTAW & RAM_MASK];
+	u8* base = &mem_b[SB_SDSTAW & (RAM_MASK - 31)];
 
 	if (SB_SDWLT==0) /* 16b width */
 		rv=((u16*)base)[SB_SDDIV];
@@ -94,9 +94,9 @@ void pvr_do_sort_dma(void)
 {
 	SB_SDDIV           = 0; //index is 0 now :)
 	u32 link_addr      = calculate_start_link_addr();
-	u32 link_base_addr = SB_SDBAAW;
+	u32 link_base_addr = SB_SDBAAW & ~31;
 
-	while (link_addr!=1)
+	while (link_addr != 2)
 	{
 		if (SB_SDLAS==1)
 			link_addr   *= 32;
@@ -107,12 +107,13 @@ void pvr_do_sort_dma(void)
 
 		/* transfer global param */
 		ta_vtx_data(ea_ptr,ea_ptr[0x18>>2]);
-		if (link_addr==2)
+		if (link_addr == 1)
 			link_addr    = calculate_start_link_addr();
 	}
 
 	// End of DMA :)
-	SB_SDST            = 0;
+	SB_SDST = 0;
+	SB_SDSTAW += 32;
 	asic_RaiseInterrupt(holly_PVR_SortDMA);
 }
 

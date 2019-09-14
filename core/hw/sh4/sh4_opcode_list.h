@@ -51,11 +51,15 @@ struct sh4_opcodelistentry
 	sh4_exept_fixup ex_fixup;
 	u64 decode;
 	u64 fallbacks;
+
+	inline bool IsFloatingPoint() const
+	{
+		return (type & UsesFPU) != 0;
+	}
 };
 
 extern sh4_opcodelistentry* OpDesc[0x10000];
 extern sh4_opcodelistentry opcodes[];
-#define ExecuteOpcode(op) {OpPtr[op](op);}
 
 void DissasembleOpcode(u16 opcode,u32 pc,char* Dissasm);
 enum DecParam
@@ -124,5 +128,6 @@ enum DecMode
 	DM_EXTOP,
 	DM_MUL,
 	DM_DIV0,
-	DM_ADC
+	DM_ADC,
+	DM_NEGC,
 };

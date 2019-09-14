@@ -65,7 +65,7 @@ class DecryptedCartridge : public NaomiCartridge
 {
 public:
 	DecryptedCartridge(u8 *rom_ptr, u32 size) : NaomiCartridge(size) { RomPtr = rom_ptr; }
-	// FIXME Must do a munmap and close for each segment
+	virtual ~DecryptedCartridge() override;
 };
 
 class M2Cartridge : public NaomiCartridge
@@ -88,6 +88,7 @@ private:
 bool naomi_cart_SelectFile(char *s, size_t len);
 int naomi_cart_GetSystemType(const char* file);
 int naomi_cart_GetRotation();
+void naomi_cart_Close();
 
 extern char naomi_game_id[];
 extern u8 *naomi_default_eeprom;

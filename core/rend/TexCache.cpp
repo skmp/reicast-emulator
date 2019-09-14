@@ -9,6 +9,8 @@
 #include "hw/pvr/pvr_regs.h"
 #include "hw/pvr/ta.h"
 #include "hw/mem/_vmem.h"
+#include "hw/mem/vmem32.h"
+#include "hw/sh4/modules/mmu.h"
 #ifdef HAVE_TEXUPSCALE
 #include "deps/xbrz/xbrz.h"
 #endif
@@ -188,13 +190,13 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,
 
 	if (end_offset64>(VRAM_SIZE-1))
 	{
-		msgboxf("vramlock_Lock_64: end_offset64>(VRAM_SIZE-1) \n Tried to lock area out of vram , possibly bug on the pvr plugin",MBX_OK);
+		WARN_LOG(PVR, "vramlock_Lock_64: end_offset64>(VRAM_SIZE-1) \n Tried to lock area out of vram , possibly bug on the pvr plugin");
 		end_offset64=(VRAM_SIZE-1);
 	}
 
 	if (start_offset64>end_offset64)
 	{
-		msgboxf("vramlock_Lock_64: start_offset64>end_offset64 \n Tried to lock negative block , possibly bug on the pvr plugin",MBX_OK);
+		WARN_LOG(PVR, "vramlock_Lock_64: start_offset64>end_offset64 \n Tried to lock negative block , possibly bug on the pvr plugin");
 		start_offset64=0;
 	}
 
@@ -207,13 +209,7 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,
    {
       vramlist_lock.Lock();
 
-      vram.LockRegion(block->start,block->len);
-
-      //TODO: Fix this for 32M wrap as well
-      if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-         vram.LockRegion(block->start + VRAM_SIZE, block->len);
-      }
-
+      _vmem_protect_vram(block->start, block->len);
       vramlock_list_add(block);
 
       vramlist_lock.Unlock();
@@ -222,10 +218,8 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,
 	return block;
 }
 
-bool VramLockedWrite(u8* address)
+bool VramLockedWriteOffset(size_t offset)
 {
-   size_t offset=address-vram.data;
-
    if (offset<VRAM_SIZE)
    {
 
@@ -243,7 +237,7 @@ bool VramLockedWrite(u8* address)
 
                if ((*list)[i])
                {
-                  msgboxf("Error : pvr is supposed to remove lock",MBX_OK);
+               	ERROR_LOG(PVR, "Error : pvr is supposed to remove lock");
                   dbgbreak;
                }
 
@@ -251,12 +245,8 @@ bool VramLockedWrite(u8* address)
          }
          list->clear();
 
-         vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)),PAGE_SIZE);
+			_vmem_unprotect_vram((u32)(offset & ~PAGE_MASK), PAGE_SIZE);
 
-         //TODO: Fix this for 32M wrap as well
-         if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-            vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
-         }
 
          vramlist_lock.Unlock();
       }
@@ -265,6 +255,14 @@ bool VramLockedWrite(u8* address)
    }
    else
       return false;
+}
+
+bool VramLockedWrite(u8* address)
+{
+	u32 offset = _vmem_get_vram_offset(address);
+	if (offset == -1)
+		return false;
+	return VramLockedWriteOffset(offset);
 }
 
 //unlocks mem
@@ -279,9 +277,11 @@ void libCore_vramlock_Unlock_block(vram_block* block)
 void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {
    if (block->end>VRAM_SIZE)
-		msgboxf("Error : block end is after vram , skipping unlock",MBX_OK);
+   	WARN_LOG(PVR, "Error : block end is after vram , skipping unlock");
    else
 	{
+		if (mmu_enabled())
+			vmem32_unprotect_vram(block->start, block->len);
 		vramlock_list_remove(block);
 		//more work needed
 		free(block);
@@ -391,7 +391,6 @@ void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool
 	parallelize(
 			std::bind(&xbrz::scale, factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB, xbrz_cfg,
 					std::placeholders::_1, std::placeholders::_2), 0, height, width);
-//	xbrz::scale(factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB, xbrz_cfg);
 #else
    xbrz::scale(factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB, xbrz_cfg);
 #endif

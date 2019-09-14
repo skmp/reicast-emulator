@@ -45,7 +45,19 @@
 #include "decoder.h"
 #include "blockmanager.h"
 
-
+// When NO_RWX is enabled there's two address-spaces, one executable and
+// one writtable. The emitter and most of the code in rec-* will work with
+// the RW pointer. However the fpcb table and other pointers during execution
+// (ie. exceptions) are RX pointers. These two macros convert between them by
+// sub/add the pointer offset. CodeCache will point to the RW pointer for simplicity.
+#ifdef FEAT_NO_RWX_PAGES
+	extern uintptr_t cc_rx_offset;
+	#define CC_RW2RX(ptr) (void*)(((uintptr_t)(ptr)) + cc_rx_offset)
+	#define CC_RX2RW(ptr) (void*)(((uintptr_t)(ptr)) - cc_rx_offset)
+#else
+	#define CC_RW2RX(ptr) (ptr)
+	#define CC_RX2RW(ptr) (ptr)
+#endif
 
 //alternative emit ptr, set to 0 to use the main buffer
 extern u32* emit_ptr;
@@ -62,12 +74,11 @@ void emit_SetBaseAddr();
 
 //Called from ngen_FailedToFindBlock
 DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc);
+DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock_pc();
 //Called when a block check failed, and the block needs to be invalidated
 DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 pc);
 //Called to compile code @pc
-DynarecCodeEntryPtr rdv_CompilePC();
-//Returns 0 if there is no code @pc, code ptr otherwise
-DynarecCodeEntryPtr rdv_FindCode();
+DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures);
 //Finds or compiles code @pc
 DynarecCodeEntryPtr rdv_FindOrCompile();
 
@@ -85,7 +96,7 @@ void ngen_init();
 extern void (*ngen_Compile)(RuntimeBlockInfo* block,bool force_checks, bool reset, bool staging,bool optimise);
 
 //Called when blocks are reseted
-void ngen_ResetBlocks();
+extern void (*ngen_ResetBlocks)();
 //Value to be returned when the block manager failed to find a block,
 //should call rdv_FailedToFindBlock and then jump to the return value
 extern void (*ngen_FailedToFindBlock)();
@@ -94,6 +105,7 @@ void ngen_mainloop(void* cntx);
 //ngen features
 
 void ngen_GetFeatures(ngen_features* dst);
+void ngen_HandleException();
 
 //Canonical callback interface
 enum CanonicalParamType

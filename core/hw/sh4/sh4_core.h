@@ -90,6 +90,28 @@ struct SH4ThrownException {
 	u32 callVect;
 };
 
+static INLINE void RaiseFPUDisableException()
+{
+#if !defined(NO_MMU)
+	if (settings.dreamcast.FullMMU)
+	{
+		SH4ThrownException ex = { next_pc - 2, 0x800, 0x100 };
+		throw ex;
+	}
+#else
+	msgboxf("Full MMU support needed", MBX_ICONERROR);
+#endif
+}
+
+static INLINE void AdjustDelaySlotException(SH4ThrownException& ex)
+{
+	ex.epc -= 2;
+	if (ex.expEvn == 0x800)	// FPU disable exception
+		ex.expEvn = 0x820;	// Slot FPU disable exception
+	else if (ex.expEvn == 0x180)	// Illegal instruction exception
+		ex.expEvn = 0x1A0;			// Slot illegal instruction exception
+}
+
 // The SH4 sets the signaling bit to 0 for qNaN (unlike all recent CPUs). Some games relies on this.
 static INLINE float fixNaN(f32 f)
 {

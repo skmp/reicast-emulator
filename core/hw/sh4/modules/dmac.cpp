@@ -36,17 +36,17 @@ void DMAC_Ch2St()
 
 	if(0x8201 != (dmaor &DMAOR_MASK))
 	{
-		printf("\n!\tDMAC: DMAOR has invalid settings (%X) !\n", dmaor);
+		INFO_LOG(SH4, "DMAC: DMAOR has invalid settings (%X) !", dmaor);
 		return;
 	}
 
 	if (len & 0x1F)
 	{
-		printf("\n!\tDMAC: SB_C2DLEN has invalid size (%X) !\n", len);
+		INFO_LOG(SH4, "DMAC: SB_C2DLEN has invalid size (%X) !", len);
 		return;
 	}
 
-//	printf(">>\tDMAC: Ch2 DMA SRC=%X DST=%X LEN=%X\n", src, dst, len );
+	DEBUG_LOG(SH4, ">> DMAC: Ch2 DMA SRC=%X DST=%X LEN=%X", src, dst, len);
 
 	// Direct DList DMA (Ch2)
 
@@ -79,19 +79,17 @@ void DMAC_Ch2St()
 	// If SB_C2DSTAT reg is inrange from 0x11000000 to 0x11FFFFE0,	 set 1 in SB_LMMODE0 reg.
 	else if((dst >= 0x11000000) && (dst <= 0x11FFFFE0))
 	{
-		//printf(">>\tDMAC: TEX LNMODE0 Ch2 DMA SRC=%X DST=%X LEN=%X | LN(%X::%X)\n", src, dst, len, *pSB_LMMODE0, *pSB_LMMODE1 );
+		//printf(">>\tDMAC: TEX LNMODE0 Ch2 DMA SRC=%X DST=%X LEN=%X SB_LMMODE0 %d\n", src, dst, len, SB_LMMODE0);
 
 		if (SB_LMMODE0 == 0)
 		{
+			// 64-bit path
 			dst=(dst&0xFFFFFF) |0xa4000000;
-			/*WriteMemBlock_nommu_ptr(dst,(u32*)GetMemPtr(src,len),len);
-			src+=len;*/
 			u32 p_addr=src & RAM_MASK;
 			while(len)
 			{
 				if ((p_addr+len)>RAM_SIZE)
 				{
-					//u32 *sys_buf=(u32 *)GetMemPtr(src,len);//(&mem_b[src&RAM_MASK]);
 					u32 new_len=RAM_SIZE-p_addr;
 					WriteMemBlock_nommu_dma(dst,src,new_len);
 					len-=new_len;
@@ -100,8 +98,6 @@ void DMAC_Ch2St()
 				}
 				else
 				{
-					//u32 *sys_buf=(u32 *)GetMemPtr(src,len);//(&mem_b[src&RAM_MASK]);
-					//WriteMemBlock_nommu_ptr(dst,sys_buf,len);
 					WriteMemBlock_nommu_dma(dst,src,len);
 					src+=len;
 					break;
@@ -110,30 +106,28 @@ void DMAC_Ch2St()
 		}
 		else
 		{
-			dst = (dst & 0xFFFFFF) | 0xa5000000;	// 32b path
+			// 32-bit path
+			dst = (dst & 0xFFFFFF) | 0xa5000000;
 			while (len > 0)
 			{
-				u32 v = ReadMem32(src);
+				u32 v = ReadMem32_nommu(src);
 				pvr_write_area1_32(dst, v);
 				len -= 4;
 				src += 4;
 				dst += 4;
 			}
 		}
-	//	*pSB_LMMODE0 = 1;           // this prob was done by system already
-	//	WriteMem(SB_LMMODE1, 0, 4); // should this be done ?
+		SB_C2DSTAT = dst;
 	}
 	// If SB_C2DSTAT reg is in range from 0x13000000 to 0x13FFFFE0, set 1 in SB_LMMODE1 reg.
 	else if((dst >= 0x13000000) && (dst <= 0x13FFFFE0))
 	{
 		die(".\tPVR DList DMA LNMODE1\n\n");
 		src+=len;
-	//	*pSB_LMMODE1 = 1;           // this prob was done by system already
-	//	WriteMem(SB_LMMODE0, 0, 4); // should this be done ?
 	}
 	else 
 	{ 
-		printf("\n!\tDMAC: SB_C2DSTAT has invalid address (%X) !\n", dst); 
+		INFO_LOG(SH4, "DMAC: SB_C2DSTAT has invalid address (%X) !", dst);
 		src+=len;
 	}
 
@@ -141,12 +135,11 @@ void DMAC_Ch2St()
 	// Setup some of the regs so it thinks we've finished DMA
 
 	DMAC_SAR(2) = (src);
-	DMAC_CHCR(2).full &= 0xFFFFFFFE;
-	DMAC_DMATCR(2) = 0x00000000;
+	DMAC_CHCR(2).TE = 1;
+	DMAC_DMATCR(2) = 0;
 
-	SB_C2DST = 0x00000000;
-	SB_C2DLEN = 0x00000000;
-	SB_C2DSTAT = (src );
+	SB_C2DST = 0;
+	SB_C2DLEN = 0;
 
 	// The DMA end interrupt flag (SB_ISTNRM - bit 19: DTDE2INT) is set to "1."
 	//-> fixed , holly_PVR_DMA is for different use now (fixed the interrupts enum too)

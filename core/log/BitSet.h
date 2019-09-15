@@ -42,12 +42,14 @@ inline int LeastSignificantSetBit(u32 val)
   _BitScanForward(&index, val);
   return (int)index;
 }
+#if HOST_CPU != CPU_X86
 inline int LeastSignificantSetBit(u64 val)
 {
   unsigned long index;
   _BitScanForward64(&index, val);
   return (int)index;
 }
+#endif
 #else
 namespace Common
 {

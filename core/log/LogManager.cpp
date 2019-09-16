@@ -112,7 +112,7 @@ LogManager::LogManager(void *log_cb)
 	m_log[LogTypes::SAVESTATE] = {"SAVESTATE", "Save States"};
 	m_log[LogTypes::SH4] = {"SH4", "SH4 Modules"};
 
-	RegisterListener(LogListener::FILE_LISTENER, new FileLogListener("flycast.log"));
+	//	RegisterListener(LogListener::FILE_LISTENER, new FileLogListener("flycast.log"));
 	RegisterListener(LogListener::CONSOLE_LISTENER, new ConsoleListener(log_cb));
 
 	// Set up log listeners
@@ -125,9 +125,9 @@ LogManager::LogManager(void *log_cb)
 		verbosity = MAX_LOGLEVEL;
 
 	SetLogLevel(static_cast<LogTypes::LOG_LEVELS>(verbosity));
-	EnableListener(LogListener::FILE_LISTENER, false);
+	//	EnableListener(LogListener::FILE_LISTENER, false);
 	EnableListener(LogListener::CONSOLE_LISTENER, true);
-	//  EnableListener(LogListener::LOG_WINDOW_LISTENER, Config::Get(LOGGER_WRITE_TO_WINDOW));
+	// EnableListener(LogListener::LOG_WINDOW_LISTENER, Config::Get(LOGGER_WRITE_TO_WINDOW));
 
 	for (LogContainer& container : m_log)
 	{
@@ -141,7 +141,7 @@ LogManager::~LogManager()
 {
 	// The log window listener pointer is owned by the GUI code.
 	delete m_listeners[LogListener::CONSOLE_LISTENER];
-	delete m_listeners[LogListener::FILE_LISTENER];
+	// delete m_listeners[LogListener::FILE_LISTENER];
 }
 
 // Return the current time formatted as Minutes:Seconds:Milliseconds

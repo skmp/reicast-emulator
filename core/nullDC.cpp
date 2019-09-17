@@ -438,14 +438,19 @@ int dc_init(int argc,wchar* argv[])
    sprintf(new_system_dir, "%s/", game_dir_no_slash);
 #endif
 
-   if (settings.System == DC_PLATFORM_DREAMCAST
-   		&& (settings.bios.UseReios || !LoadRomFiles(new_system_dir)))
-	{
-      if (!LoadHle(new_system_dir))
-			return -3;
-		WARN_LOG(COMMON, "Did not load bios, using reios");
-	}
-
+   if (settings.System == DC_PLATFORM_DREAMCAST)
+   {
+      if (settings.bios.UseReios || !LoadRomFiles(new_system_dir))
+      {
+         if (!LoadHle(new_system_dir))
+            return -3;
+         WARN_LOG(COMMON, "Did not load bios, using reios");
+      }
+   }
+   else
+   {
+   	LoadRomFiles(new_system_dir);
+   }
    LoadSpecialSettingsCPU();
 
 	sh4_cpu.Init();

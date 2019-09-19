@@ -5814,7 +5814,9 @@ Games[] =
             { "ax3207m01.mrom7", 0x12000000, 0x2000000 },
             { "ax3201f01.bin", 0, 4, Key },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &kofxi_inputs
     },
     // Knights of Valour - The Seven Spirits
     {
@@ -5903,7 +5905,9 @@ Games[] =
             { "ax3307m01.mrom7",    0x12000000, 0x2000000 },
             { "ax3301f01.bin", 0, 4, Key },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &ngbc_inputs
     },
     // NeoGeo Battle Coliseum (Japan)
     {
@@ -5926,7 +5930,9 @@ Games[] =
             { "ax3307m01.mrom7", 0x12000000, 0x2000000 },
             { "ax3301f01.bin", 0, 4, Key },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &ngbc_inputs
     },
     // Ranger Mission
     {

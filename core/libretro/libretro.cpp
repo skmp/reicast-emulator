@@ -567,7 +567,7 @@ static void update_variables(bool first_startup)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (!strcmp(var.value, "enabled"))
-         GDROM_TICK      = 0001000;
+         GDROM_TICK      = 512;
       else if (!strcmp(var.value, "disabled"))
          GDROM_TICK      = 1500000;
    }
@@ -1028,7 +1028,7 @@ static void update_variables(bool first_startup)
       lightgun_params[i].x = 0;	   
       lightgun_params[i].y = 0;	   
       lightgun_params[i].dirty = true;	   
-      lightgun_params[i].colour = i+1;	   
+      lightgun_params[i].colour = LIGHTGUN_COLOR_OFF;
 
       snprintf(key, sizeof(key), CORE_OPTION_NAME "_lightgun%d_crosshair", i+1) ;
 

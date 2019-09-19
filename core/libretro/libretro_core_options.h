@@ -328,7 +328,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       CORE_OPTION_NAME "_gdrom_fast_loading",
       "GDROM Fast Loading (inaccurate)",
-      "Speeds up GD-ROM loading. NOTE: This option doesn't work with the HLE BIOS for now.",
+      "Speeds up GD-ROM loading.",
       {
          { "disabled", NULL },
          { "enabled",  NULL },

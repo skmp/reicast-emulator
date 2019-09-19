@@ -258,7 +258,9 @@ bool LoadHle(const string& root) {
 		WARN_LOG(FLASHROM, "No nvmem loaded\n");
 	}
 
-   return reios_init(sys_rom.data, &sys_nvmem_flash);
+   reios_reset(sys_rom.data, &sys_nvmem_flash);
+
+   return true;
 }
 
 u32 ReadFlash(u32 addr,u32 sz)

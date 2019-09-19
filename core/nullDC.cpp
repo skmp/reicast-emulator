@@ -423,6 +423,7 @@ int dc_init(int argc,wchar* argv[])
 		ERROR_LOG(VMEM, "Failed to alloc mem");
 		return -1;
 	}
+	reios_init();
 
 	LoadSettings();
 

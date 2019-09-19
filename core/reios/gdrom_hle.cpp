@@ -29,7 +29,7 @@ static void GDROM_HLE_ReadSES()
 	u32 ba = gd_hle_state.params[2];
 	u32 bb = gd_hle_state.params[3];
 
-	WARN_LOG(REIOS, "GDROM_HLE_ReadSES: doing nothing w/ %d, %d, %d, %d", s, b, ba, bb);
+	INFO_LOG(REIOS, "GDROM_HLE_ReadSES: doing nothing w/ %d, %d, %d, %d", s, b, ba, bb);
 }
 
 static void GDROM_HLE_ReadTOC()
@@ -140,7 +140,7 @@ static void GDCC_HLE_GETSCD() {
 	u32 size = gd_hle_state.params[1];
 	u32 dest = gd_hle_state.params[2];
 
-	INFO_LOG(REIOS, "GDROM: GETSCD format %x size %x dest %08x", format, size, dest);
+	DEBUG_LOG(REIOS, "GDROM: GETSCD format %x size %x dest %08x", format, size, dest);
 
 	if (cdda.playing)
 		gd_hle_state.cur_sector = cdda.CurrAddr.FAD;
@@ -281,11 +281,23 @@ static void GD_HLE_Command(u32 cc)
 
 
 	case GDCC_PLAY_SECTOR:
-		debugf("GDROM: CMD PLAYSEC?");
+		{
+			u32 start_fad = gd_hle_state.params[0];
+			u32 end_fad = gd_hle_state.params[1];
+			DEBUG_LOG(REIOS, "GDROM: CMD PLAYSEC from %d to %d repeats %d", start_fad, end_fad, gd_hle_state.params[2]);
+			cdda.playing = true;
+			cdda.StartAddr.FAD = start_fad;
+			cdda.EndAddr.FAD = end_fad;
+			cdda.repeats = gd_hle_state.params[2];
+			cdda.CurrAddr.FAD = start_fad;
+			SecNumber.Status = GD_PLAY;
+		}
 		break;
 
 	case GDCC_RELEASE:
-		debugf("GDROM: CMD RELEASE?");
+		debugf("GDROM: CMD RELEASE");
+		cdda.playing = true;
+		SecNumber.Status = GD_PLAY;
 		break;
 
 	case GDCC_STOP:

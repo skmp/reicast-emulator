@@ -5768,7 +5768,9 @@ Games[] =
             { "ax2206m01.ic16",    0x6000000, 0x1000000 },
             { "ax2201f01.bin", 0, 4, Key },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &kofnw_inputs
     },
     // The King of Fighters Neowave (Japan)
     {
@@ -5791,7 +5793,9 @@ Games[] =
             { "ax2206m01.ic16", 0x6000000, 0x1000000 },
             { "ax2201f01.bin", 0, 4, Key },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &kofnw_inputs
     },
     // The King of Fighters XI
     {
@@ -6105,7 +6109,9 @@ Games[] =
             { "ax2907m01.mrom7", 0x12000000, 0x2000000 },
             { "ax2901f01.bin", 0, 4, Key },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &samsptk_inputs
     },
     // Sports Shooting USA
     {

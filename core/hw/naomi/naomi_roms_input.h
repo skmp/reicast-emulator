@@ -345,6 +345,23 @@ InputDescriptors ftspeed_inputs = {
 	  },
 };
 
+InputDescriptors kofnw_inputs = {
+	  {
+			{ AWAVE_BTN0_KEY, "LIGHT PUNCH" },
+			{ AWAVE_BTN1_KEY, "STRONG PUNCH" },
+			{ AWAVE_BTN2_KEY, "HEAT MODE" },
+			{ AWAVE_BTN3_KEY, "LIGHT KICK" },
+			{ AWAVE_BTN4_KEY, "STRONG KICK" },
+			{ AWAVE_UP_KEY, "UP" },
+			{ AWAVE_DOWN_KEY, "DOWN" },
+			{ AWAVE_LEFT_KEY, "LEFT" },
+			{ AWAVE_RIGHT_KEY, "RIGHT" },
+			AW_START_DESC
+			AW_BASE_BTN_DESC
+			{ 0 },
+	  }
+};
+
 InputDescriptors kofxi_inputs = {
 	  {
 			{ AWAVE_BTN0_KEY, "LIGHT PUNCH" },
@@ -361,7 +378,6 @@ InputDescriptors kofxi_inputs = {
 			{ 0 },
 	  }
 };
-
 
 InputDescriptors maxspeed_inputs = {
 	  {
@@ -386,6 +402,23 @@ InputDescriptors ngbc_inputs = {
 			{ AWAVE_BTN2_KEY, "SWAP CHARACTERS" },
 			{ AWAVE_BTN3_KEY, "LIGHT KICK" },
 			{ AWAVE_BTN4_KEY, "STRONG KICK" },
+			{ AWAVE_UP_KEY, "UP" },
+			{ AWAVE_DOWN_KEY, "DOWN" },
+			{ AWAVE_LEFT_KEY, "LEFT" },
+			{ AWAVE_RIGHT_KEY, "RIGHT" },
+			AW_START_DESC
+			AW_BASE_BTN_DESC
+			{ 0 },
+	  }
+};
+
+InputDescriptors samsptk_inputs = {
+	  {
+			{ AWAVE_BTN0_KEY, "LIGHT SLASH" },
+			{ AWAVE_BTN1_KEY, "MEDIUM SLASH" },
+			{ AWAVE_BTN2_KEY, "STRONG SLASH" },
+			{ AWAVE_BTN3_KEY, "KICK" },
+			{ AWAVE_BTN4_KEY, "SPECIAL EVASION" },
 			{ AWAVE_UP_KEY, "UP" },
 			{ AWAVE_DOWN_KEY, "DOWN" },
 			{ AWAVE_LEFT_KEY, "LEFT" },

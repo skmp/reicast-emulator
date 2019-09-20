@@ -239,51 +239,72 @@ void bm_Reset()
 	protected_blocks = 0;
 	unprotected_blocks = 0;
 
-	// Windows cannot lock/unlock a region spanning more than one VirtualAlloc or MapViewOfFile
-	// so we have to unlock each region individually
-	// No need for this mess in 4GB mode since windows doesn't use it
-	if (RAM_SIZE == 16 * 1024 * 1024)
+	if (_nvmem_enabled())
 	{
-		mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
-		mem_region_unlock(virt_ram_base + 0x0D000000, RAM_SIZE);
-		mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
-		mem_region_unlock(virt_ram_base + 0x0F000000, RAM_SIZE);
+		// Windows cannot lock/unlock a region spanning more than one VirtualAlloc or MapViewOfFile
+		// so we have to unlock each region individually
+		// No need for this mess in 4GB mode since windows doesn't use it
+		if (RAM_SIZE == 16 * 1024 * 1024)
+		{
+			mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
+			mem_region_unlock(virt_ram_base + 0x0D000000, RAM_SIZE);
+			mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
+			mem_region_unlock(virt_ram_base + 0x0F000000, RAM_SIZE);
+		}
+		else
+		{
+			mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
+			mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
+		}
+		if (_nvmem_4gb_space())
+		{
+			mem_region_unlock(virt_ram_base + 0x8C000000, 0x90000000 - 0x8C000000);
+			mem_region_unlock(virt_ram_base + 0xAC000000, 0xB0000000 - 0xAC000000);
+		}
 	}
 	else
 	{
-		mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
-		mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
-	}
-	if (_nvmem_4gb_space())
-	{
-		mem_region_unlock(virt_ram_base + 0x8C000000, 0x90000000 - 0x8C000000);
-		mem_region_unlock(virt_ram_base + 0xAC000000, 0xB0000000 - 0xAC000000);
+		mem_region_unlock(&mem_b[0], RAM_SIZE);
 	}
 }
 
 static void bm_LockPage(u32 addr)
 {
 	addr = addr & (RAM_MASK - PAGE_MASK);
-	if (!mmu_enabled() || !_nvmem_4gb_space())
-		mem_region_lock(virt_ram_base + 0x0C000000 + addr, PAGE_SIZE);
-	if (_nvmem_4gb_space())
+	if (_nvmem_enabled())
 	{
-		mem_region_lock(virt_ram_base + 0x8C000000 + addr, PAGE_SIZE);
-		mem_region_lock(virt_ram_base + 0xAC000000 + addr, PAGE_SIZE);
-		// TODO wraps
+		if (!mmu_enabled() || !_nvmem_4gb_space())
+			mem_region_lock(virt_ram_base + 0x0C000000 + addr, PAGE_SIZE);
+		if (_nvmem_4gb_space())
+		{
+			mem_region_lock(virt_ram_base + 0x8C000000 + addr, PAGE_SIZE);
+			mem_region_lock(virt_ram_base + 0xAC000000 + addr, PAGE_SIZE);
+			// TODO wraps
+		}
+	}
+	else
+	{
+		mem_region_lock(&mem_b[addr], PAGE_SIZE);
 	}
 }
 
 static void bm_UnlockPage(u32 addr)
 {
 	addr = addr & (RAM_MASK - PAGE_MASK);
-	if (!mmu_enabled() || !_nvmem_4gb_space())
-		mem_region_unlock(virt_ram_base + 0x0C000000 + addr, PAGE_SIZE);
-	if (_nvmem_4gb_space())
+	if (_nvmem_enabled())
 	{
-		mem_region_unlock(virt_ram_base + 0x8C000000 + addr, PAGE_SIZE);
-		mem_region_unlock(virt_ram_base + 0xAC000000 + addr, PAGE_SIZE);
-		// TODO wraps
+		if (!mmu_enabled() || !_nvmem_4gb_space())
+			mem_region_unlock(virt_ram_base + 0x0C000000 + addr, PAGE_SIZE);
+		if (_nvmem_4gb_space())
+		{
+			mem_region_unlock(virt_ram_base + 0x8C000000 + addr, PAGE_SIZE);
+			mem_region_unlock(virt_ram_base + 0xAC000000 + addr, PAGE_SIZE);
+			// TODO wraps
+		}
+	}
+	else
+	{
+		mem_region_unlock(&mem_b[addr], PAGE_SIZE);
 	}
 }
 
@@ -598,24 +619,33 @@ void bm_RamWriteAccess(u32 addr)
 
 bool bm_RamWriteAccess(void *p)
 {
-	if (_nvmem_4gb_space())
+	if (_nvmem_enabled())
 	{
-		if ((u8 *)p < virt_ram_base || (u8 *)p >= virt_ram_base + 0x100000000L)
+		if (_nvmem_4gb_space())
+		{
+			if ((u8 *)p < virt_ram_base || (u8 *)p >= virt_ram_base + 0x100000000L)
+				return false;
+		}
+		else
+		{
+			if ((u8 *)p < virt_ram_base || (u8 *)p >= virt_ram_base + 0x20000000)
+				return false;
+		}
+		u32 addr = (u8*)p - virt_ram_base;
+		if (mmu_enabled() && _nvmem_4gb_space() && (addr & 0x80000000) == 0)
+			// If mmu enabled, let vmem32 manage user space
+			// shouldn't be necessary since it's called first
 			return false;
+		if (!IsOnRam(addr) || ((addr >> 29) > 0 && (addr >> 29) < 4))	// system RAM is not mapped to 20, 40 and 60 because of laziness
+			return false;
+		bm_RamWriteAccess(addr);
 	}
 	else
 	{
-		if ((u8 *)p < virt_ram_base || (u8 *)p >= virt_ram_base + 0x20000000)
+		if ((u8 *)p < &mem_b[0] || (u8 *)p >= &mem_b[RAM_SIZE])
 			return false;
+		bm_RamWriteAccess((u32)((u8 *)p - &mem_b[0]));
 	}
-	u32 addr = (u8*)p - virt_ram_base;
-	if (mmu_enabled() && _nvmem_4gb_space() && (addr & 0x80000000) == 0)
-		// If mmu enabled, let vmem32 manage user space
-		// shouldn't be necessary since it's called first
-		return false;
-	if (!IsOnRam(addr) || ((addr >> 29) > 0 && (addr >> 29) < 4))	// system RAM is not mapped to 20, 40 and 60 because of laziness
-		return false;
-	bm_RamWriteAccess(addr);
 
 	return true;
 }

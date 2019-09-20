@@ -5754,7 +5754,9 @@ Games[] =
             { "ax2205m01.ic15",    0x5000000, 0x1000000 },
             { "ax2206m01.ic16",    0x6000000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &kofnw_inputs
     },
     // The King of Fighters Neowave (Japan)
     {
@@ -5776,7 +5778,9 @@ Games[] =
             { "ax2205m01.ic15", 0x5000000, 0x1000000 },
             { "ax2206m01.ic16", 0x6000000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &kofnw_inputs
     },
     // The King of Fighters XI
     {
@@ -5798,7 +5802,9 @@ Games[] =
             { "ax3206m01.mrom6", 0x0e000000, 0x2000000 },
             { "ax3207m01.mrom7", 0x12000000, 0x2000000 },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &kofxi_inputs
     },
     // Knights of Valour - The Seven Spirits
     {
@@ -5883,7 +5889,9 @@ Games[] =
             { "ax3306m01.mrom6",    0x0e000000, 0x2000000 },
             { "ax3307m01.mrom7",    0x12000000, 0x2000000 },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &ngbc_inputs
     },
     // NeoGeo Battle Coliseum (Japan)
     {
@@ -5905,7 +5913,9 @@ Games[] =
             { "ax3306m01.mrom6", 0x0e000000, 0x2000000 },
             { "ax3307m01.mrom7", 0x12000000, 0x2000000 },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &ngbc_inputs
     },
     // Ranger Mission
     {
@@ -6071,7 +6081,9 @@ Games[] =
             { "ax2906m01.mrom6", 0x0e000000, 0x2000000 },
             { "ax2907m01.mrom7", 0x12000000, 0x2000000 },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &samsptk_inputs
     },
     // Sports Shooting USA
     {

@@ -92,10 +92,10 @@ InputDescriptors alpilot_inputs = {
 
 InputDescriptors capsnk_inputs = {
 	  {
-			{ NAOMI_BTN0_KEY, "SHOT1" },
-			{ NAOMI_BTN1_KEY, "SHOT2" },
-			{ NAOMI_BTN3_KEY, "SHOT4" },
-			{ NAOMI_BTN4_KEY, "SHOT5" },
+			{ NAOMI_BTN0_KEY, "LIGHT PUNCH" },
+			{ NAOMI_BTN1_KEY, "STRONG PUNCH" },
+			{ NAOMI_BTN3_KEY, "LIGHT KICK" },
+			{ NAOMI_BTN4_KEY, "STRONG KICK" },
 			{ NAOMI_UP_KEY, "UP" },
 			{ NAOMI_DOWN_KEY, "DOWN" },
 			{ NAOMI_LEFT_KEY, "LEFT" },
@@ -206,12 +206,12 @@ InputDescriptors jambo_inputs = {
 
 InputDescriptors mvsc2_inputs = {
 	  {
-			{ NAOMI_BTN0_KEY, "SHOT1" },
-			{ NAOMI_BTN1_KEY, "SHOT2" },
-			{ NAOMI_BTN2_KEY, "SHOT3" },
-			{ NAOMI_BTN3_KEY, "SHOT4" },
-			{ NAOMI_BTN4_KEY, "SHOT5" },
-			{ NAOMI_BTN5_KEY, "SHOT6" },
+			{ NAOMI_BTN0_KEY, "LIGHT PUNCH" },
+			{ NAOMI_BTN1_KEY, "STRONG PUNCH" },
+			{ NAOMI_BTN2_KEY, "ASSIST A" },
+			{ NAOMI_BTN3_KEY, "LIGHT KICK" },
+			{ NAOMI_BTN4_KEY, "STRONG KICK" },
+			{ NAOMI_BTN5_KEY, "ASSIST B" },
 			{ NAOMI_UP_KEY, "UP" },
 			{ NAOMI_DOWN_KEY, "DOWN" },
 			{ NAOMI_LEFT_KEY, "LEFT" },
@@ -300,10 +300,10 @@ InputDescriptors monkeyba_inputs = {
 
 InputDescriptors cvs2_inputs = {
 	  {
-			{ NAOMI_BTN0_KEY, "WEAK PUNCH" },
+			{ NAOMI_BTN0_KEY, "LIGHT PUNCH" },
 			{ NAOMI_BTN1_KEY, "MEDIUM PUNCH" },
 			{ NAOMI_BTN2_KEY, "STRONG PUNCH" },
-			{ NAOMI_BTN3_KEY, "WEAK KICK" },
+			{ NAOMI_BTN3_KEY, "LIGHT KICK" },
 			{ NAOMI_BTN4_KEY, "MEDIUM KICK" },
 			{ NAOMI_BTN5_KEY, "STRONG KICK" },
 			{ NAOMI_UP_KEY, "UP" },
@@ -344,6 +344,41 @@ InputDescriptors ftspeed_inputs = {
 			{ NULL },
 	  },
 };
+
+InputDescriptors kofnw_inputs = {
+	  {
+			{ AWAVE_BTN0_KEY, "LIGHT PUNCH" },
+			{ AWAVE_BTN1_KEY, "STRONG PUNCH" },
+			{ AWAVE_BTN2_KEY, "HEAT MODE" },
+			{ AWAVE_BTN3_KEY, "LIGHT KICK" },
+			{ AWAVE_BTN4_KEY, "STRONG KICK" },
+			{ AWAVE_UP_KEY, "UP" },
+			{ AWAVE_DOWN_KEY, "DOWN" },
+			{ AWAVE_LEFT_KEY, "LEFT" },
+			{ AWAVE_RIGHT_KEY, "RIGHT" },
+			AW_START_DESC
+			AW_BASE_BTN_DESC
+			{ 0 },
+	  }
+};
+
+InputDescriptors kofxi_inputs = {
+	  {
+			{ AWAVE_BTN0_KEY, "LIGHT PUNCH" },
+			{ AWAVE_BTN1_KEY, "STRONG PUNCH" },
+			{ AWAVE_BTN2_KEY, "LIGHT KICK" },
+			{ AWAVE_BTN3_KEY, "STRONG KICK" },
+			{ AWAVE_BTN4_KEY, "SPECIAL ATTACK" },
+			{ AWAVE_UP_KEY, "UP" },
+			{ AWAVE_DOWN_KEY, "DOWN" },
+			{ AWAVE_LEFT_KEY, "LEFT" },
+			{ AWAVE_RIGHT_KEY, "RIGHT" },
+			AW_START_DESC
+			AW_BASE_BTN_DESC
+			{ 0 },
+	  }
+};
+
 InputDescriptors maxspeed_inputs = {
 	  {
 			{ AWAVE_UP_KEY, "HIGH SHIFT" },
@@ -358,6 +393,40 @@ InputDescriptors maxspeed_inputs = {
 			{ "BRAKE", Half, 2 },
 			{ NULL },
 	  },
+};
+
+InputDescriptors ngbc_inputs = {
+	  {
+			{ AWAVE_BTN0_KEY, "LIGHT PUNCH" },
+			{ AWAVE_BTN1_KEY, "STRONG PUNCH" },
+			{ AWAVE_BTN2_KEY, "SWAP CHARACTERS" },
+			{ AWAVE_BTN3_KEY, "LIGHT KICK" },
+			{ AWAVE_BTN4_KEY, "STRONG KICK" },
+			{ AWAVE_UP_KEY, "UP" },
+			{ AWAVE_DOWN_KEY, "DOWN" },
+			{ AWAVE_LEFT_KEY, "LEFT" },
+			{ AWAVE_RIGHT_KEY, "RIGHT" },
+			AW_START_DESC
+			AW_BASE_BTN_DESC
+			{ 0 },
+	  }
+};
+
+InputDescriptors samsptk_inputs = {
+	  {
+			{ AWAVE_BTN0_KEY, "LIGHT SLASH" },
+			{ AWAVE_BTN1_KEY, "MEDIUM SLASH" },
+			{ AWAVE_BTN2_KEY, "STRONG SLASH" },
+			{ AWAVE_BTN3_KEY, "KICK" },
+			{ AWAVE_BTN4_KEY, "SPECIAL EVASION" },
+			{ AWAVE_UP_KEY, "UP" },
+			{ AWAVE_DOWN_KEY, "DOWN" },
+			{ AWAVE_LEFT_KEY, "LEFT" },
+			{ AWAVE_RIGHT_KEY, "RIGHT" },
+			AW_START_DESC
+			AW_BASE_BTN_DESC
+			{ 0 },
+	  }
 };
 
 #endif /* CORE_HW_NAOMI_NAOMI_ROMS_INPUT_H_ */

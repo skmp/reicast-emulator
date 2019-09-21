@@ -33,7 +33,7 @@ extern rend_context vd_rc;
 #define TA_V64H
 
 //cache state vars
-u32 tileclip_val=0;
+u32 tileclip_val = 0;
 
 u8 f32_su8_tbl[65536];
 #define float_to_satu8(val) f32_su8_tbl[((u32&)val)>>16]
@@ -42,7 +42,7 @@ u8 f32_su8_tbl[65536];
 	This uses just 1k of lookup, but does more calcs
 	The full 64k table will be much faster -- as only a small sub-part of it will be used anyway (the same 1k)
 */
-u8 float_to_satu8_2(float val)
+static u8 float_to_satu8_2(float val)
 {
 	s32 vl=(s32&)val>>16;
 	u32 m1=(vl-0x3b80)>>31;	//1 if smaller 0x3b80 or negative
@@ -60,10 +60,10 @@ static u8 float_to_satu8_math(float val)
 }
 
 //vdec state variables
-ModTriangle* lmr=0;
+static ModTriangle* lmr;
 
-PolyParam* CurrentPP;
-List<PolyParam>* CurrentPPlist;
+static PolyParam* CurrentPP;
+static List<PolyParam>* CurrentPPlist;
 
 //TA state vars	
 DECL_ALIGN(4) u8 FaceBaseColor[4];
@@ -76,25 +76,21 @@ DECL_ALIGN(4) u32 SFaceOffsColor;
 //splitter function lookup
 extern u32 ta_type_lut[256];
 
-//hehe
-//as it seems, bit 1,2 are type, bit 0 is mod volume :p
-
 //misc ones
-const u32 ListType_None=-1;
-
-const u32 SZ32=1;
-const u32 SZ64=2;
+static const u32 ListType_None = -1;
+static const u32 SZ32 = 1;
+static const u32 SZ64 = 2;
 
 #include "ta_structs.h"
 
 typedef Ta_Dma* DYNACALL TaListFP(Ta_Dma* data,Ta_Dma* data_end);
 typedef void TACALL TaPolyParamFP(void* ptr);
 
-TaListFP* TaCmd;
+static TaListFP* TaCmd;
 	
-u32 CurrentList;
-TaListFP* VertexDataFP;
-bool ListIsFinished[5];
+static u32 CurrentList;
+static TaListFP* VertexDataFP;
+static bool ListIsFinished[5];
 
 static INLINE f32 f16(u16 v)
 {
@@ -681,9 +677,20 @@ public:
 	void vdec_init()
 	{
 		VDECInit();
-		TaCmd=ta_main;
+		TaCmd = ta_main;
 		CurrentList = ListType_None;
-		ListIsFinished[0]=ListIsFinished[1]=ListIsFinished[2]=ListIsFinished[3]=ListIsFinished[4]=false;
+		ListIsFinished[0] = ListIsFinished[1] = ListIsFinished[2] = ListIsFinished[3] = ListIsFinished[4] = false;
+		tileclip_val = 0;
+		VertexDataFP = NullVertexData;
+		memset(FaceBaseColor, 0, sizeof(FaceBaseColor));
+		memset(FaceOffsColor, 0, sizeof(FaceOffsColor));
+		memset(FaceBaseColor1, 0, sizeof(FaceBaseColor1));
+		memset(FaceOffsColor1, 0, sizeof(FaceOffsColor1));
+		SFaceBaseColor = 0;
+		SFaceOffsColor = 0;
+		lmr = NULL;
+		CurrentPP = NULL;
+		CurrentPPlist = NULL;
 	}
 		
 	__forceinline
@@ -776,14 +783,20 @@ public:
 	#define poly_float_color(to,src) \
 		poly_float_color_(to,pp->src##A,pp->src##R,pp->src##G,pp->src##B)
 
-	//poly param handling
+	// Poly param handling
+
+	// Packed/Floating Color
 	__forceinline
 		static void TACALL AppendPolyParam0(void* vpp)
 	{
 		TA_PolyParam0* pp=(TA_PolyParam0*)vpp;
 
 		glob_param_bdc(pp);
+		memset(FaceBaseColor, 0xff, sizeof(FaceBaseColor));
+		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
 	}
+
+	// Intensity, no Offset Color
 	__forceinline
 		static void TACALL AppendPolyParam1(void* vpp)
 	{
@@ -791,7 +804,10 @@ public:
 
 		glob_param_bdc(pp);
 		poly_float_color(FaceBaseColor,FaceColor);
+		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
 	}
+
+	// Intensity, use Offset Color
 	__forceinline
 		static void TACALL AppendPolyParam2A(void* vpp)
 	{
@@ -807,18 +823,26 @@ public:
 		poly_float_color(FaceBaseColor,FaceColor);
 		poly_float_color(FaceOffsColor,FaceOffset);
 	}
+
+	// Packed Color, with Two Volumes
 	__forceinline
 		static void TACALL AppendPolyParam3(void* vpp)
 	{
 		TA_PolyParam3* pp=(TA_PolyParam3*)vpp;
 
 		glob_param_bdc(pp);
+		memset(FaceBaseColor, 0xff, sizeof(FaceBaseColor));
+		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
+		memset(FaceBaseColor1, 0xff, sizeof(FaceBaseColor1));
+		memset(FaceOffsColor1, 0xff, sizeof(FaceOffsColor1));
 
 		CurrentPP->tsp1.full = pp->tsp1.full;
 		CurrentPP->tcw1.full = pp->tcw1.full;
 		if (pp->pcw.Texture)
 		   CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
 	}
+
+	// Intensity, with Two Volumes
 	__forceinline
 		static void TACALL AppendPolyParam4A(void* vpp)
 	{
@@ -838,6 +862,8 @@ public:
 
 		poly_float_color(FaceBaseColor,FaceColor0);
 		poly_float_color(FaceBaseColor1, FaceColor1);
+		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
+		memset(FaceOffsColor1, 0xff, sizeof(FaceOffsColor1));
 	}
 
 	//Poly Strip handling

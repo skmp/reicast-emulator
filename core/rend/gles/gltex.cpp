@@ -65,7 +65,7 @@ struct PvrTexInfo
 	TexConvFP32 *VQ32;
 };
 
-PvrTexInfo format[8]=
+static const PvrTexInfo format[8] =
 {
    // name     bpp GL format                  Planar      Twiddled    VQ				Planar(32b)    Twiddled(32b)  VQ (32b)
    {"1555",    16, GL_UNSIGNED_SHORT_5_5_5_1, tex1555_PL, tex1555_TW, tex1555_VQ,	tex1555_PL32,  tex1555_TW32,  tex1555_VQ32 }, //1555
@@ -78,7 +78,7 @@ PvrTexInfo format[8]=
 	{"ns/1555", 0},
 };
 
-const u32 MipPoint[8] =
+static const u32 MipPoint[8] =
 {
 	0x00006, /*    8  x 8*/
 	0x00016, /*   16  x 16*/
@@ -90,7 +90,7 @@ const u32 MipPoint[8] =
 	0x15556  /* 1024  x 1024 */
 };
 
-const GLuint PAL_TYPE[4]=
+static const GLuint PAL_TYPE[4]=
 {GL_UNSIGNED_SHORT_5_5_5_1,GL_UNSIGNED_SHORT_5_6_5,GL_UNSIGNED_SHORT_4_4_4_4, GL_UNSIGNED_INT_8_8_8_8};
 
 CustomTexture custom_texture;
@@ -446,11 +446,10 @@ bool TextureCacheData::Delete()
 	return true;
 }
 
-#include <map>
-map<u64,TextureCacheData> TexCache;
+static map<u64,TextureCacheData> TexCache;
 typedef map<u64,TextureCacheData>::iterator TexCacheIter;
 
-TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw);
+static TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw);
 
 
 FBT fb_rtt;
@@ -677,10 +676,10 @@ static int TexCacheHits;
 static float LastTexCacheStats;
 
 // Only use TexU and TexV from TSP in the cache key
-const TSP TSPTextureCacheMask = { { TexV : 7, TexU : 7 } };
-const TCW TCWTextureCacheMask = { { TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1 } };
+static const TSP TSPTextureCacheMask = { { TexV : 7, TexU : 7 } };
+static const TCW TCWTextureCacheMask = { { TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1 } };
 
-TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
+static TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
    u64 key = tsp.full & TSPTextureCacheMask.full;
 
    if (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)

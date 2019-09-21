@@ -197,7 +197,7 @@ static void fill_fsm(void)
 	fill_fsm(TAS_MLV64_H,-1,-1,TAS_MLV64); //64 MH -> expect M64
 }
 
-const HollyInterruptID ListEndInterrupt[5]=
+static const HollyInterruptID ListEndInterrupt[5]=
 {
 	holly_OPAQUE,
 	holly_OPAQUEMOD,
@@ -206,7 +206,8 @@ const HollyInterruptID ListEndInterrupt[5]=
 	holly_PUNCHTHRU
 };
 
-NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
+
+static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 {
    Ta_Dma* dat=(Ta_Dma*)(ta_tad.thd_data-32);
 
@@ -258,6 +259,7 @@ void ta_vtx_ListCont(void)
    ta_tad.Continue();
 
 	ta_cur_state=TAS_NS;
+	ta_fsm_cl = 7;
 }
 
 void ta_vtx_ListInit(void)
@@ -266,13 +268,15 @@ void ta_vtx_ListInit(void)
    ta_tad.ClearPartial();
 
 	ta_cur_state=TAS_NS;
+	ta_fsm_cl = 7;
 }
 void ta_vtx_SoftReset(void)
 {
 	ta_cur_state=TAS_NS;
 }
 
-INLINE void DYNACALL ta_thd_data32_i(void *data)
+static INLINE
+void DYNACALL ta_thd_data32_i(void* data)
 {
    if (ta_ctx == NULL)
    {

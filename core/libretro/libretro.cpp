@@ -1727,6 +1727,17 @@ bool retro_load_game(const struct retro_game_info *game)
             /* System may have changed - have to update
              * hidden core options */
             set_variable_visibility();
+			// Users should use the superior format instead, let's warn them
+			if (!strcmp(".lst", ext)
+				   || !strcmp(".bin", ext) || !strcmp(".BIN", ext)
+				   || !strcmp(".dat", ext) || !strcmp(".DAT", ext))
+			{
+				struct retro_message msg;
+				// Sadly, this callback is only able to display short messages, so we can't give proper explanations...
+				msg.msg = "Please upgrade to MAME romsets or expect issues";
+				msg.frames = 6000;
+				environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
+			}
          }
          // If m3u playlist found load the paths into array
          else if (!strcmp(".m3u", ext) || !strcmp(".M3U", ext))

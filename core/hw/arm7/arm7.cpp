@@ -594,7 +594,7 @@ u8* ICache;
 extern const u32 ICacheSize=1024*1024;
 #ifdef _WIN32
 u8 ARM7_TCB[ICacheSize+4096];
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(HAVE_LIBNX)
 
 u8 ARM7_TCB[ICacheSize+4096] __attribute__((section(".text")));
 

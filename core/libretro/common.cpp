@@ -19,7 +19,6 @@
 #include <asm/sigcontext.h>
 #endif
 
-
 #include <fcntl.h>
 #include <semaphore.h>
 #include <stdarg.h>
@@ -299,8 +298,12 @@ static void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx)
 #endif
 
 #if defined(__MACH__) || defined(__linux__) || defined(__HAIKU__) || \
-   defined(__FreeBSD__) || defined(__DragonFly__)
+   defined(__FreeBSD__) || defined(__DragonFly__) || defined(HAVE_LIBNX)
 //#define LOG_SIGHANDLER
+
+#ifdef HAVE_LIBNX
+extern "C" char __start__;
+#endif // HAVE_LIBNX
 
 static void signal_handler(int sn, siginfo_t * si, void *segfault_ctx)
 {
@@ -309,7 +312,7 @@ static void signal_handler(int sn, siginfo_t * si, void *segfault_ctx)
    context_from_segfault(&ctx, segfault_ctx);
 
 #if FEAT_SHREC == DYNAREC_JIT
-	bool dyna_cde = ((unat)CC_RX2RW(ctx.pc) > (unat)CodeCache) && ((unat)CC_RX2RW(ctx.pc) < (unat)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
+	bool dyna_cde = ((uintptr_t)CC_RX2RW(ctx.pc) > (uintptr_t)CodeCache) && ((uintptr_t)CC_RX2RW(ctx.pc) < (uintptr_t)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
 #else
 	bool dyna_cde = false;
 #endif
@@ -371,8 +374,14 @@ static void signal_handler(int sn, siginfo_t * si, void *segfault_ctx)
    else
    {
    	ERROR_LOG(COMMON, "SIGSEGV @ %zx ... %p -> was not in vram (dyna code %d)", ctx.pc, si->si_addr, dyna_cde);
-      die("segfault");
-      signal(SIGSEGV, SIG_DFL);
+#ifdef HAVE_LIBNX
+    MemoryInfo meminfo;
+    u32 pageinfo;
+    svcQueryMemory(&meminfo, &pageinfo, (u64)&__start__);
+   	ERROR_LOG(COMMON, ".text base: %p", meminfo.addr);
+#endif // HAVE_LIBNX
+   	die("segfault");
+   	signal(SIGSEGV, SIG_DFL);
    }
 }
 #endif
@@ -387,7 +396,9 @@ static struct sigaction old_sigill;
 
 static int exception_handler_install_platform(void)
 {
-#if !defined(TARGET_NO_EXCEPTIONS)
+#if defined(HAVE_LIBNX)
+   return 0;
+#elif !defined(TARGET_NO_EXCEPTIONS)
    struct sigaction new_sa;
    new_sa.sa_flags = SA_SIGINFO;
    sigemptyset(&new_sa.sa_mask);
@@ -677,3 +688,85 @@ void common_libretro_setup(void)
    verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
 #endif
 }
+
+#if !defined(TARGET_NO_EXCEPTIONS) && defined(HAVE_LIBNX)
+extern "C"
+{
+
+alignas(16) u8 __nx_exception_stack[0x1000];
+u64 __nx_exception_stack_size = sizeof(__nx_exception_stack);
+#include <malloc.h>
+extern void context_switch_aarch64(void* context);
+
+void __libnx_exception_handler(ThreadExceptionDump *ctx)
+{   
+   mcontext_t m_ctx;
+
+   m_ctx.pc = ctx->pc.x;
+
+   for(int i=0; i<29; i++)
+   {
+      // printf("X%d: %p\n", i, ctx->cpu_gprs[i].x);
+      m_ctx.regs[i] = ctx->cpu_gprs[i].x;
+   }
+
+   /*
+   printf("PC: %p\n", ctx->pc.x);
+   printf("FP: %p\n", ctx->fp.x);
+   printf("LR: %p\n", ctx->lr.x);
+   printf("SP: %p\n", ctx->sp.x);
+   */
+
+   ucontext_t u_ctx;
+   u_ctx.uc_mcontext = m_ctx;
+
+   siginfo_t sig_info;
+
+   sig_info.si_addr = (void*)ctx->far.x;
+
+   signal_handler(0, &sig_info, (void*) &u_ctx);
+
+   uint64_t handle[64] = { 0 };
+
+   uint64_t *ptr = (uint64_t*)handle;
+   ptr[0]  = m_ctx.regs[0]; /* x0 0  */
+   ptr[1]  = m_ctx.regs[1]; /* x1 8 */
+   ptr[2]  = m_ctx.regs[2]; /* x2 16 */
+   ptr[3]  = m_ctx.regs[3]; /* x3 24 */
+   ptr[4]  = m_ctx.regs[4]; /* x4 32 */
+   ptr[5]  = m_ctx.regs[5]; /* x5 40 */
+   ptr[6]  = m_ctx.regs[6]; /* x6 48 */
+   ptr[7]  = m_ctx.regs[7]; /* x7 56 */
+   /* Non-volatiles.  */
+   ptr[8]  = m_ctx.regs[8]; /* x8 64 */
+   ptr[9]  = m_ctx.regs[9]; /* x9 72 */
+   ptr[10]  = m_ctx.regs[10]; /* x10 80 */
+   ptr[11]  = m_ctx.regs[11]; /* x11 88 */
+   ptr[12]  = m_ctx.regs[12]; /* x12 96 */
+   ptr[13]  = m_ctx.regs[13]; /* x13 104 */
+   ptr[14]  = m_ctx.regs[14]; /* x14 112 */
+   ptr[15]  = m_ctx.regs[15]; /* x15 120 */
+   ptr[16]  = m_ctx.regs[16]; /* x16 128 */
+   ptr[17]  = m_ctx.regs[17]; /* x17 136 */
+   ptr[18]  = m_ctx.regs[18]; /* x18 144 */
+   ptr[19]  = m_ctx.regs[19]; /* x19 152 */
+   ptr[20] = m_ctx.regs[20]; /* x20 160 */
+   ptr[21] = m_ctx.regs[21]; /* x21 168 */
+   ptr[22] = m_ctx.regs[22]; /* x22 176 */
+   ptr[23] = m_ctx.regs[23]; /* x23 184 */
+   ptr[24] = m_ctx.regs[24]; /* x24 192 */
+   ptr[25] = m_ctx.regs[25]; /* x25 200 */
+   ptr[26] = m_ctx.regs[26]; /* x26 208 */
+   ptr[27] = m_ctx.regs[27]; /* x27 216 */
+   ptr[28] = m_ctx.regs[28]; /* x28 224 */
+   /* Special regs */
+   ptr[29] = ctx->fp.x; /* frame pointer 232 */
+   ptr[30] = ctx->lr.x; /* link register 240 */
+   ptr[31] = ctx->sp.x; /* stack pointer 248 */
+   ptr[32] = (uintptr_t)ctx->pc.x; /* PC 256 */
+
+   context_switch_aarch64(ptr);
+}
+}
+
+#endif

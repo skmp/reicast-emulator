@@ -3,6 +3,10 @@
 
 #include "hw/sh4/sh4_sched.h"
 
+#if defined(HAVE_LIBNX)
+#include <malloc.h>
+#endif
+
 extern u32 fskip;
 extern u32 FrameCount;
 
@@ -22,6 +26,8 @@ void* OS_aligned_malloc(size_t align, size_t size)
    return __mingw_aligned_malloc(size, align);
 #elif defined(_WIN32)
    return _aligned_malloc(size, align);
+#elif defined(HAVE_LIBNX)
+   return memalign(align, size);
 #else
    void *p = NULL;
    int ret = posix_memalign(&p, align, size);

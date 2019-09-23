@@ -746,8 +746,10 @@ void sb_Init(void)
 	maple_Init();
 	aica_sb_Init();
 
+#ifdef HAVE_MODEM
    if (settings.System == DC_PLATFORM_DREAMCAST)
       ModemInit();
+#endif
 }
 
 void sb_Reset(bool Manual)
@@ -761,7 +763,9 @@ void sb_Reset(bool Manual)
 	SB_FFST_rc = 0;
 	SB_FFST = 0;
 	if (settings.System == DC_PLATFORM_DREAMCAST)
+#ifdef HAVE_MODEM
    	ModemTerm();
+#endif
 	asic_reg_Reset(Manual);
    if (settings.System != DC_PLATFORM_DREAMCAST)
       naomi_reg_Reset(Manual);
@@ -775,7 +779,9 @@ void sb_Reset(bool Manual)
 void sb_Term(void)
 {
    if (settings.System == DC_PLATFORM_DREAMCAST)
+#ifdef HAVE_MODEM
    	ModemTerm();
+#endif
 	aica_sb_Term();
 	maple_Term();
 	pvr_sb_Term();

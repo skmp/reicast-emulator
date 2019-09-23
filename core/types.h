@@ -4,6 +4,10 @@
 #include "build.h"
 #include "log/Log.h"
 
+#ifdef HAVE_LIBNX
+#include <strings.h>
+#endif
+
 #ifdef _MSC_VER
 #define DECL_ALIGN(x) __declspec(align(x))
 #else

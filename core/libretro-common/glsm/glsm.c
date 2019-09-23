@@ -233,6 +233,22 @@ void rglProvokingVertex(	GLenum provokeMode)
 /*
  *
  * Core in:
+ * OpenGL    : 2.0
+ * OpenGLES  : 2.0
+ */
+void rglGetIntegerv(GLenum pname, GLint * data)
+{
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetIntegerv.\n");
+#endif
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
+   glGetIntegerv(pname, data);
+#endif
+}
+
+/*
+ *
+ * Core in:
  * OpenGL    : 3.2
  * OpenGLES  : 3.0
  */
@@ -240,6 +256,22 @@ void rglGetInteger64v(	GLenum pname, int64_t *data)
 {
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
    glGetInteger64v(pname, (GLint64*)data);
+#endif
+}
+
+/*
+ *
+ * Core in:
+ * OpenGL    : 2.0
+ * OpenGLES  : 2.0
+ */
+const GLubyte* rglGetString(GLenum name)
+{
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetString.\n");
+#endif
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
+   glGetString(name);
 #endif
 }
 
@@ -2074,6 +2106,69 @@ void *rglMapBufferRange( 	GLenum target,
 /*
  *
  * Core in:
+ * OpenGL    : 2.0
+ * OpenGLES  : 2.0
+ */
+void rglTexParameteri(GLenum target, GLenum pname, GLint param)
+{
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glTexParameteri.\n");
+#endif
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
+   glTexParameteri(target, pname, param);
+#endif
+}
+
+void rglTexParameterf(GLenum target, GLenum pname, GLfloat param)
+{
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glTexParameterf.\n");
+#endif
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
+   glTexParameterf(target, pname, param);
+#endif
+}
+
+void rglGetFloatv(GLenum pname, GLfloat* params)
+{
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glGetFloatv.\n");
+#endif
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
+   glGetFloatv(pname, params);
+#endif
+}
+
+void rglClearStencil(GLint s)
+{
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glClearStencil.\n");
+#endif
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
+   glClearStencil(s);
+#endif
+}
+
+/*
+ *
+ * Core in:
+ * OpenGL    : 2.0
+ * OpenGLES  : 2.0
+ */
+void rglTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width,
+	GLsizei height,GLint border, GLenum format,	GLenum type, const GLvoid * data)
+{
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glTexImage2D.\n");
+#endif
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
+   glTexImage2D(target, level, internalformat, width, height, border, format, type, data);
+#endif
+}
+
+/*
+ *
+ * Core in:
  * OpenGL    : 4.3
  * OpenGLES  : 3.1
  */
@@ -2573,6 +2668,23 @@ void rglDrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
 #endif
 #if defined(HAVE_OPENGL)
    glDrawElementsBaseVertex(mode, count, type, indices, basevertex);
+#endif
+}
+
+/*
+ *
+ * Core in:
+ * OpenGL    : 2.0
+ * OpenGLES  : 2.0
+ */
+void rglReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
+   GLenum format, GLenum type, GLvoid * data)
+{
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glFinish.\n");
+#endif
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
+   glReadPixels(x, y, width, height, format, type, data);
 #endif
 }
 

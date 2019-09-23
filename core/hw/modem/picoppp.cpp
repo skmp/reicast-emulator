@@ -783,7 +783,11 @@ static void *pico_thread_func(void *)
     	read_native_sockets();
     	pico_stack_tick();
     	check_dns_entries();
+#ifdef HAVE_LIBNX
+    	svcSleepThread(1000000);
+#else
     	usleep(1000);
+#endif // HAVE_LIBNX
     }
 
     for (auto it = tcp_listening_sockets.begin(); it != tcp_listening_sockets.end(); it++)

@@ -53,3 +53,6 @@ shell/linux/reicast.elf
 reicast-ios.xccheckout
 *.o
 *.dll
+*.a
+.vscode/c_cpp_properties.json
+

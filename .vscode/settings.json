@@ -1,0 +1,16 @@
+{
+    "files.associations": {
+        "*.php": "php",
+        "*.libnx": "makefile",
+        "*.common": "makefile",
+        "*.v": "vhdl",
+        "*.ucf": "vhdl",
+        "array": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp",
+        "utility": "cpp",
+        "*.in": "cpp",
+        "future": "cpp",
+        "system_error": "cpp"
+    }
+}

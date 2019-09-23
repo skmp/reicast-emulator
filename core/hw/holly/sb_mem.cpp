@@ -409,7 +409,11 @@ T DYNACALL ReadMem_area0(u32 addr)
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) //	:MODEM
 	{
 	   if (settings.System == DC_PLATFORM_DREAMCAST)
+#ifdef HAVE_MODEM
 		  return (T)ModemReadMem_A0_006(addr, sz);
+#else
+		  return (T)0;
+#endif
 	   else
 		  return (T)libExtDevice_ReadMem_A0_006(addr,sz);
 	}
@@ -496,9 +500,13 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) // MODEM
 	{
+#ifdef HAVE_MODEM
 	   if (settings.System == DC_PLATFORM_DREAMCAST)
 		  ModemWriteMem_A0_006(addr, data, sz);
 	   else
+#else
+	   if (settings.System != DC_PLATFORM_DREAMCAST)
+#endif
 		  libExtDevice_WriteMem_A0_006(addr,data,sz);
 	}
 	//map 0x0060 to 0x006F

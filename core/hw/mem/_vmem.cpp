@@ -3,6 +3,10 @@
 #include "hw/aica/aica_if.h"
 #include "hw/sh4/dyna/blockmanager.h"
 
+#if defined(HAVE_LIBNX)
+#include <malloc.h>
+#endif
+
 #define HANDLER_MAX 0x1F
 #define HANDLER_COUNT (HANDLER_MAX+1)
 
@@ -451,6 +455,8 @@ void* malloc_pages(size_t size) {
 	return _aligned_malloc(size, PAGE_SIZE);
 #elif defined(_ISOC11_SOURCE)
 	return aligned_alloc(PAGE_SIZE, size);
+#elif defined(HAVE_LIBNX)
+   return memalign(PAGE_SIZE, size);
 #else
 	void *data;
 	if (posix_memalign(&data, PAGE_SIZE, size) != 0)
@@ -520,14 +526,17 @@ bool _vmem_reserve(void)
 	VMemType vmemstatus = MemTypeError;
 
 	// Use vmem only if settings mandate so, and if we have proper exception handlers.
-	#ifndef TARGET_NO_EXCEPTIONS
+#ifndef TARGET_NO_EXCEPTIONS
+#ifdef HAVE_LIBNX
+	settings.dynarec.disable_nvmem = 1;
+#endif // HAVE_LIBNX
 	if (!settings.dynarec.disable_nvmem)
 		vmemstatus = vmem_platform_init((void**)&virt_ram_base, (void**)&p_sh4rcb);
-	#endif
+#endif
 	
 	// Fallback to statically allocated buffers, this results in slow-ops being generated.
 	if (vmemstatus == MemTypeError) {
-		WARN_LOG(VMEM, "Warning! nvmem is DISABLED (due to failure or not being built-in");
+		WARN_LOG(VMEM, "Warning! nvmem is DISABLED (due to failure or not being built-in)");
 		virt_ram_base = 0;
 
 		// Allocate it all and initialize it.

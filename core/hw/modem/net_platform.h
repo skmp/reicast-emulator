@@ -5,7 +5,15 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+
+#ifdef HAVE_LIBNX
+#include <switch.h>
+#include <arpa/inet.h>
+#define SOL_TCP 6 // Shrug
+#else
 #include <netinet/ip.h>
+#endif // HAVE_LIBNX
+
 #include <netinet/tcp.h>
 #include <netdb.h>
 #include <unistd.h>

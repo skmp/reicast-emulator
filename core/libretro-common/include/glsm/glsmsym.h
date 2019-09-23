@@ -188,6 +188,14 @@ RETRO_BEGIN_DECLS
 #define glFlushMappedBufferRange    rglFlushMappedBufferRange
 #define glClientWaitSync            rglClientWaitSync
 #define glDrawElementsBaseVertex    rglDrawElementsBaseVertex
+#define glTexParameteri             rglTexParameteri
+#define glTexParameterf             rglTexParameterf
+#define glGetFloatv                 rglGetFloatv
+#define glClearStencil              rglClearStencil
+#define glTexImage2D                rglTexImage2D
+#define glReadPixels                rglReadPixels
+#define glGetIntegerv               rglGetIntegerv
+#define glGetString                 rglGetString
 
 const GLubyte* rglGetStringi(GLenum name, GLuint index);
 void rglTexBuffer(GLenum target, GLenum internalFormat, GLuint buffer);
@@ -484,6 +492,14 @@ void rglUniform2iv(	GLint location,
  	const GLint *value);
 void rglProvokingVertex(	GLenum provokeMode);
 void rglDrawRangeElementsBaseVertex(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, GLvoid *indices, GLint basevertex);
+void rglTexParameteri(GLenum target, GLenum pname, GLint param);
+void rglTexParameterf(GLenum target, GLenum pname, GLfloat param);
+void rglGetFloatv(GLenum pname, GLfloat* params);
+void rglClearStencil(GLint s);
+void rglTexImage2D(GLenum target,GLint level, GLint internalformat, GLsizei width, GLsizei height,GLint border, GLenum format,	GLenum type, const GLvoid * data);
+void rglReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid * data);
+void rglGetIntegerv(GLenum pname, GLint * data);
+const GLubyte* rglGetString(GLenum name);
 
 RETRO_END_DECLS
 

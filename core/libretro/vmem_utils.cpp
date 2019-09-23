@@ -17,6 +17,11 @@
 #define MAP_NOSYNC       0 //missing from linux :/ -- could be the cause of android slowness ?
 #endif
 
+#if defined(HAVE_LIBNX)
+#include <switch.h>
+FILE *	fmemopen (void *__restrict, size_t, const char *__restrict);
+#endif
+
 #ifdef _ANDROID
 	#include <linux/ashmem.h>
 	#ifndef ASHMEM_DEVICE
@@ -43,33 +48,93 @@ int ashmem_create_region(const char *name, size_t size) {
 }
 #endif  // #ifdef _ANDROID
 
+#ifdef HAVE_LIBNX
+uintptr_t vmem_fd = -1;
+uintptr_t vmem_fd_page = -1;
+uintptr_t vmem_fd_codememory = -1;
+
+static uintptr_t shmem_fd2 = -1;
+static uintptr_t shmem_fd2_page = -1;
+static uintptr_t shmem_fd2_codememory = -1;
+#else
+int vmem_fd = -1;
+static int shmem_fd2 = -1;
+#endif // HAVE_LIBNX
+
+static void *reserved_base;
+static size_t reserved_size;
+
 bool mem_region_lock(void *start, size_t len)
 {
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
+
+#ifdef HAVE_LIBNX
+    len += inpage;
+
+    size_t inlen = len & PAGE_MASK;
+
+    if(inlen)
+        len = (len + PAGE_SIZE) & (~(PAGE_SIZE-1));
+
+	Result rc;
+	rc = svcSetMemoryPermission((void*)((uintptr_t)start - inpage), len, Perm_R);
+	if(R_FAILED(rc))
+	{
+		printf("Failed to SetPerm Perm_R on %p len 0x%x rc 0x%x\n", (void*)((uintptr_t)start - inpage), len, rc);
+	}
+#else
 	if (mprotect((u8*)start - inpage, len + inpage, PROT_READ))
 		die("mprotect failed...");
+#endif // HAVE_LIBNX
+
 	return true;
 }
 
 bool mem_region_unlock(void *start, size_t len)
 {
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
+
+#ifdef HAVE_LIBNX
+    len += inpage;
+
+    size_t inlen = len & PAGE_MASK;
+
+    if(inlen)
+        len = (len + PAGE_SIZE) & (~(PAGE_SIZE-1));
+        
+	Result rc;
+	rc = svcSetMemoryPermission((void*)((uintptr_t)start - inpage), len, Perm_Rw);
+	if(R_FAILED(rc))
+	{
+		printf("Failed to SetPerm Perm_Rw on %p len 0x%x rc 0x%x\n", (void*)((uintptr_t)start - inpage), len, rc);
+	}
+#else
 	if (mprotect((u8*)start - inpage, len + inpage, PROT_READ | PROT_WRITE))
 		// Add some way to see why it failed? gdb> info proc mappings
 		die("mprotect  failed...");
+#endif // HAVE_LIBNX
+
 	return true;
 }
 
 bool mem_region_set_exec(void *start, size_t len)
 {
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
+	
+#ifdef HAVE_LIBNX
+	svcSetMemoryPermission((void*)((uintptr_t)start - inpage), len + inpage, Perm_R); // *shrugs*
+#else
 	if (mprotect((u8*)start - inpage, len + inpage, PROT_READ | PROT_WRITE | PROT_EXEC))
 		die("mprotect  failed...");
+#endif // HAVE_LIBNX
 	return true;
 }
 
 void *mem_region_reserve(void *start, size_t len)
 {
+#ifdef HAVE_LIBNX
+	return virtmemReserve(len);
+#else
 	void *p = mmap(start, len, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
 	if (p == MAP_FAILED)
 	{
@@ -78,15 +143,31 @@ void *mem_region_reserve(void *start, size_t len)
 	}
 	else
 		return p;
+#endif // HAVE_LIBNX
 }
 
 bool mem_region_release(void *start, size_t len)
 {
+#ifdef HAVE_LIBNX
+	return true;
+#else
 	return munmap(start, len) == 0;
+#endif // HAVE_LIBNX
 }
 
 void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite)
 {
+#ifdef HAVE_LIBNX
+	Result rc = svcMapProcessMemory(dest, envGetOwnProcessHandle(), (u64)(vmem_fd_codememory + offset), len);
+	if(R_FAILED(rc))
+	{
+		printf("Fatal error creating the view... base: %p offset: 0x%x size: 0x%x src: %p err: 0x%x\n", vmem_fd, offset, len, vmem_fd_codememory + offset, rc);
+	} else {
+		printf("Created the view... base: %p offset: 0x%x size: 0x%x src: %p err: 0x%x\n", vmem_fd, offset, len, vmem_fd_codememory + offset, rc);
+	}
+
+	return dest;
+#else
 	int flags = MAP_SHARED | MAP_NOSYNC | (dest != NULL ? MAP_FIXED : 0);
 	void *p = mmap(dest, len, PROT_READ | (readwrite ? PROT_WRITE : 0), flags, (int)(uintptr_t)file_handle, offset);
 	if (p == MAP_FAILED)
@@ -96,6 +177,7 @@ void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offs
 	}
 	else
 		return p;
+#endif // HAVE_LIBNX
 }
 
 bool mem_region_unmap_file(void *start, size_t len)
@@ -104,11 +186,20 @@ bool mem_region_unmap_file(void *start, size_t len)
 }
 
 // Allocates memory via a fd on shmem/ahmem or even a file on disk
-static int allocate_shared_filemem(unsigned size) {
+static
+#ifdef HAVE_LIBNX
+uintptr_t
+#else
+int
+#endif // HAVE_LIBNX
+allocate_shared_filemem(unsigned size) {
 	int fd = -1;
 	#if defined(_ANDROID)
 	// Use Android's specific shmem stuff.
 	fd = ashmem_create_region(0, size);
+	#elif defined(HAVE_LIBNX)
+	void* mem = memalign(0x1000, size);
+	return (uintptr_t)mem;
 	#else
 		#if HOST_OS != OS_DARWIN
 		fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR, S_IREAD | S_IWRITE);
@@ -138,35 +229,45 @@ static int allocate_shared_filemem(unsigned size) {
 
 // Implement vmem initialization for RAM, ARAM, VRAM and SH4 context, fpcb etc.
 // The function supports allocating 512MB or 4GB addr spaces.
-
-int vmem_fd = -1;
-static int shmem_fd2 = -1;
-static void *reserved_base;
-static size_t reserved_size;
-
 // vmem_base_addr points to an address space of 512MB (or 4GB) that can be used for fast memory ops.
 // In negative offsets of the pointer (up to FPCB size, usually 65/129MB) the context and jump table
 // can be found. If the platform init returns error, the user is responsible for initializing the
 // memory using a fallback (that is, regular mallocs and falling back to slow memory JIT).
 VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
+#ifdef HAVE_LIBNX
+	const unsigned size_aligned = ((RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX + PAGE_SIZE) & (~(PAGE_SIZE-1)));
+	vmem_fd_page = allocate_shared_filemem(size_aligned);
+	if (vmem_fd_page < 0)
+		return MemTypeError;
+
+	vmem_fd_codememory = (uintptr_t)virtmemReserve(size_aligned);
+	
+	if(R_FAILED(svcMapProcessCodeMemory(envGetOwnProcessHandle(), (u64) vmem_fd_codememory, (u64) vmem_fd_page, size_aligned)))
+		printf("Failed to Map memory (platform_int)...\n");
+
+	if(R_FAILED(svcSetProcessMemoryPermission(envGetOwnProcessHandle(), vmem_fd_codememory, size_aligned, Perm_Rx)))
+		printf("Failed to set perms (platform_int)...\n");
+#else
 	// Firt let's try to allocate the shm-backed memory
 	vmem_fd = allocate_shared_filemem(RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX);
 	if (vmem_fd < 0)
 		return MemTypeError;
-
+#endif // HAVE_LIBNX
 	// Now try to allocate a contiguous piece of memory.
 	VMemType rv;
-#ifdef HOST_64BIT_CPU
+#if defined(HOST_64BIT_CPU) && !defined(HAVE_LIBNX)
 	reserved_size = 0x100000000L + sizeof(Sh4RCB) + 0x10000;	// 4GB + context size + 64K padding
 	reserved_base = mem_region_reserve(NULL, reserved_size);
 	rv = MemType4GB;
-#endif
+#endif // defined(HOST_64BIT_CPU) && !defined(HAVE_LIBNX)
 	if (reserved_base == NULL)
 	{
 		reserved_size = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
 		reserved_base = mem_region_reserve(NULL, reserved_size);
 		if (!reserved_base) {
+#ifndef HAVE_LIBNX
 			close(vmem_fd);
+#endif // HAVE_LIBNX
 			return MemTypeError;
 		}
 		rv = MemType512MB;
@@ -194,6 +295,7 @@ void vmem_platform_destroy() {
 
 // Resets a chunk of memory by deleting its data and setting its protection back.
 void vmem_platform_reset_mem(void *ptr, unsigned size_bytes) {
+#ifndef HAVE_LIBNX
 	// Mark them as non accessible.
 	mprotect(ptr, size_bytes, PROT_NONE);
 	// Tell the kernel to flush'em all (FIXME: perhaps unmap+mmap 'd be better?)
@@ -208,6 +310,9 @@ void vmem_platform_reset_mem(void *ptr, unsigned size_bytes) {
 	#elif defined(MADV_FREE)
 	madvise(ptr, size_bytes, MADV_FREE);
 	#endif
+#else
+	svcSetMemoryPermission(ptr, size_bytes, Perm_None);
+#endif // HAVE_LIBNX
 }
 
 // Allocates a bunch of memory (page aligned and page-sized)
@@ -257,6 +362,7 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 
 // Use two addr spaces: need to remap something twice, therefore use allocate_shared_filemem()
 bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rw, uintptr_t *rx_offset) {
+#ifndef HAVE_LIBNX
 	shmem_fd2 = allocate_shared_filemem(size);
 	if (shmem_fd2 < 0)
 		return false;
@@ -267,13 +373,22 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 	// Map the RX bits on the code_area, for proximity, as usual.
 	void *ptr_rx = mmap(code_area, size, PROT_READ | PROT_EXEC,
 	                    MAP_SHARED | MAP_NOSYNC | MAP_FIXED, shmem_fd2, 0);
+#else
+	const unsigned size_aligned = ((size + PAGE_SIZE) & (~(PAGE_SIZE-1)));
+	void *ptr_rx = code_area;
+#endif // HAVE_LIBNX
 	if (ptr_rx != code_area)
 		return false;
 
+#ifndef HAVE_LIBNX
 	// Now remap the same memory as RW in some location we don't really care at all.
 	void *ptr_rw = mmap(NULL, size, PROT_READ | PROT_WRITE,
 	                    MAP_SHARED | MAP_NOSYNC, shmem_fd2, 0);
-
+#else
+	void* ptr_rw = virtmemReserve(size_aligned);
+	if(R_FAILED(svcMapProcessMemory(ptr_rw, envGetOwnProcessHandle(), (u64)code_area, size_aligned)))
+		printf("Failed to map jit rw block...\n");
+#endif // HAVE_LIBNX
 	*code_area_rw = ptr_rw;
 	*rx_offset = (char*)ptr_rx - (char*)ptr_rw;
 	INFO_LOG(DYNAREC, "Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %lu\n", ptr_rx, ptr_rw, (unsigned long)*rx_offset);

@@ -68,55 +68,6 @@ static void (*mainloop)(void *context);
 static void (*arm64_intc_sched)();
 static void (*arm64_no_update)();
 
-
-__asm__
-(
-		".hidden ngen_LinkBlock_cond_Branch_stub	\n\t"
-		".globl ngen_LinkBlock_cond_Branch_stub		\n\t"
-	"ngen_LinkBlock_cond_Branch_stub:		\n\t"
-		"mov w1, #1							\n\t"
-		"b ngen_LinkBlock_Shared_stub		\n"
-
-		".hidden ngen_LinkBlock_cond_Next_stub	\n\t"
-		".globl ngen_LinkBlock_cond_Next_stub	\n\t"
-	"ngen_LinkBlock_cond_Next_stub:			\n\t"
-		"mov w1, #0							\n\t"
-		"b ngen_LinkBlock_Shared_stub		\n"
-
-		".hidden ngen_LinkBlock_Generic_stub	\n\t"
-		".globl ngen_LinkBlock_Generic_stub	\n\t"
-	"ngen_LinkBlock_Generic_stub:			\n\t"
-		"mov w1, w29						\n\t"	// djump/pc -> in case we need it ..
-		//"b ngen_LinkBlock_Shared_stub		\n"
-
-		".hidden ngen_LinkBlock_Shared_stub	\n\t"
-		".globl ngen_LinkBlock_Shared_stub	\n\t"
-	"ngen_LinkBlock_Shared_stub:			\n\t"
-		"mov x0, lr							\n\t"
-		"sub x0, x0, #4						\n\t"	// go before the call
-		"bl rdv_LinkBlock					\n\t"   // returns an RX addr
-		"br x0								\n"
-
-		".hidden ngen_FailedToFindBlock_nommu	\n\t"
-		".globl ngen_FailedToFindBlock_nommu	\n\t"
-	"ngen_FailedToFindBlock_nommu:			\n\t"
-		"mov w0, w29						\n\t"
-		"bl rdv_FailedToFindBlock			\n\t"
-		"br x0								\n"
-
-		".hidden ngen_FailedToFindBlock_mmu	\n\t"
-		".globl ngen_FailedToFindBlock_mmu	\n\t"
-	"ngen_FailedToFindBlock_mmu:			\n\t"
-		"bl rdv_FailedToFindBlock_pc		\n\t"
-		"br x0								\n"
-
-		".hidden ngen_blockcheckfail		\n\t"
-		".globl ngen_blockcheckfail			\n\t"
-	"ngen_blockcheckfail:					\n\t"
-		"bl rdv_BlockCheckFail				\n\t"
-		"br x0								\n"
-);
-
 void(*ngen_FailedToFindBlock)();
 static bool restarting;
 
@@ -1410,7 +1361,7 @@ public:
 		Br(x0);
 
 		// void mainloop(void *context)
-		mainloop = (void (*)(void *))CC_RW2RX(GetCursorAddress<uintptr_t>());
+		mainloop = (void (*)(void *)) CC_RW2RX(GetCursorAddress<uintptr_t>());
 
 		// Save registers
 		Stp(x19, x20, MemOperand(sp, -160, PreIndex));
@@ -1594,6 +1545,7 @@ private:
 
 		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
+#ifndef NO_MMU
 		if (mmu_enabled())
 		{
 			if ((addr >> 12) != (block->vaddr >> 12))
@@ -1621,6 +1573,7 @@ private:
 				return false;
 			addr = paddr;
 		}
+#endif // NO_MMU
 		bool isram = false;
 		void* ptr = _vmem_read_const(addr, isram, size > 4 ? 4 : size);
 
@@ -1815,6 +1768,7 @@ private:
 
 		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
+#ifndef NO_MMU
 		if (mmu_enabled())
 		{
 			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
@@ -1842,6 +1796,7 @@ private:
 				return false;
 			addr = paddr;
 		}
+#endif // NO_MMU
 		bool isram = false;
 		void* ptr = _vmem_write_const(addr, isram, size > 4 ? 4 : size);
 

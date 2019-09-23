@@ -50,7 +50,11 @@ extern cMutex vramlist_lock;
 #ifdef _WIN32
 extern HANDLE mem_handle;
 #else
+#ifdef HAVE_LIBNX
+extern uintptr_t vmem_fd;
+#else
 extern int vmem_fd;
+#endif // HAVE_LIBNX
 #endif
 
 #define VMEM32_ERROR_NOT_MAPPED 0x100

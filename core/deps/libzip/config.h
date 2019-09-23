@@ -40,7 +40,9 @@
 #define HAVE_STRING_H 1
 
 /* Define to 1 if `tm_zone' is a member of `struct tm'. */
+#ifndef HAVE_LIBNX
 #define HAVE_STRUCT_TM_TM_ZONE 1
+#endif
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1

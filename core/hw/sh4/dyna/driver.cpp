@@ -28,7 +28,8 @@ u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE + 4096]
 #if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT
 	;
 #elif defined(__linux__) || defined(__HAIKU__) || \
-      defined(__FreeBSD__) || defined(__DragonFly__)
+      defined(__FreeBSD__) || defined(__DragonFly__) || \
+	  defined(HAVE_LIBNX)
 	__attribute__((section(".text")));
 #elif defined(__MACH__)
 	__attribute__((section("__TEXT,.text")));
@@ -40,11 +41,11 @@ u8* CodeCache;
 u8* TempCodeCache;
 uintptr_t cc_rx_offset;
 
-u32 LastAddr;
-u32 LastAddr_min;
-u32 TempLastAddr;
-u32* emit_ptr=0;
-u32* emit_ptr_limit;
+u32 LastAddr = 0;
+u32 LastAddr_min = 0;
+u32 TempLastAddr = 0;
+u32* emit_ptr = nullptr;
+u32* emit_ptr_limit = nullptr;
 
 std::unordered_set<u32> smc_hotspots;
 
@@ -164,6 +165,7 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	temp_block = false;
 	
 	vaddr=rpc;
+#ifndef NO_MMU
 	if (mmu_enabled())
 	{
 		u32 rv = mmu_instruction_translation(vaddr, addr);
@@ -174,6 +176,7 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 		}
 	}
 	else
+#endif // NO_MMU
 		addr = vaddr;
 	fpu_cfg=rfpu_cfg;
 	
@@ -202,6 +205,7 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 {
 	u32 pc=next_pc;
+	//printf("rdv_CompilePC next_pc %p\n", next_pc);
 
 	if (emit_FreeSpace()<16*1024 || pc==0x8c0000e0 || pc==0xac010000 || pc==0xac008300)
 		recSh4_ClearCache();

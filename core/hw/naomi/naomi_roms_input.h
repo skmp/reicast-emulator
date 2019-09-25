@@ -46,8 +46,8 @@ InputDescriptors _18wheelr_inputs = {
 	  },
 	  {
 			{ "HANDLE", Full, 0 },
-			{ "ACCEL", Full, 4 },
-			{ "BRAKE", Full, 5 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -64,8 +64,8 @@ InputDescriptors alienfnt_inputs = {
 	  },
 	  {
 			{ "WHEEL", Full, 0 },
-			{ "RIGHT PEDAL", Full, 4 },
-			{ "LEFT PEDAL", Full, 5 },
+			{ "RIGHT PEDAL", Half, 4 },
+			{ "LEFT PEDAL", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -84,8 +84,8 @@ InputDescriptors alpilot_inputs = {
 			{ "AILERON", Full, 1 },
 			{ "", Full, 2 },
 			{ "RUDDER PEDAL", Full, 3 },
-			{ "THRUST LEVER L", Full, 4 },
-			{ "THRUST LEVER R", Full, 5 },
+			{ "THRUST LEVER L", Half, 4 },
+			{ "THRUST LEVER R", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -119,8 +119,8 @@ InputDescriptors crzytaxi_inputs = {
 	  },
 	  {
 			{ "HANDLE", Full, 0 },
-			{ "ACCEL", Full, 4 },
-			{ "BRAKE", Full, 5 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -198,8 +198,8 @@ InputDescriptors jambo_inputs = {
 	  },
 	  {
 			{ "HANDLE", Full, 0 },
-			{ "ACCEL", Full, 4 },
-			{ "BRAKE", Full, 5 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
 			{ NULL },
 	  },
 };

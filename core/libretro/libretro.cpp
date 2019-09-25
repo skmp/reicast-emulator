@@ -2558,26 +2558,10 @@ static void UpdateInputStateNaomi(u32 port)
 			   else
 				  joyry[port] += 128;
 			   break;
-			case 4:
-			   /* Right trigger: [0, 255]
-			    * - Triggers are always 'Full'
-			    * - 'Half' is an odd case, since it has no real
-			    *   parallel with normal stick input. 'Half' therefore
-			    *   does what it says on the tin - divides input by 2
-			    *   (should never be required) */
-			   if (axis_type == Half)
-					rt[port] = rt[port] >> 1;
-			   break;
-			case 5:
-			   /* Left trigger: [0, 255]
-			    * - Triggers are always 'Full'
-			    * - 'Half' is an odd case, since it has no real
-			    *   parallel with normal stick input. 'Half' therefore
-			    *   does what it says on the tin - divides input by 2
-			    *   (should never be required) */
-			   if (axis_type == Half)
-					lt[port] = lt[port] >> 1;
-			   break;
+			/* Case 4/5 correspond to right/left trigger.
+			 * These inputs are always classified as 'Half',
+			 * and already have the correct range - so no
+			 * further action is required */
 			}
 		 }
 	  }
@@ -2588,7 +2572,7 @@ static void UpdateInputStateNaomi(u32 port)
 		 joyy[port] += 128;
 		 joyrx[port] += 128;
 		 joyry[port] += 128;
-		 /* Left/right trigger are always full by default,
+		 /* Left/right trigger are always classified as 'Half',
 		  * so no ajustment required */
 	  }
 

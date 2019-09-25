@@ -2525,43 +2525,58 @@ static void UpdateInputStateNaomi(u32 port)
 		 for (int i = 0; naomi_game_inputs->axes[i].name != NULL; i++)
 		 {
 			AxisType axis_type = naomi_game_inputs->axes[i].type;
+			/* Note:
+			 * - Analog stick axes have a range of [-128, 127]
+			 * - Analog triggers have a range of [0, 255] */
 			switch (naomi_game_inputs->axes[i].axis)
 			{
 			case 0:
+			   /* Left stick X: [-128, 127] */
 			   if (axis_type == Half)
 				  joyx[port] = max((int)joyx[port], 0) * 2;
 			   else
 				  joyx[port] += 128;
 			   break;
 			case 1:
+			   /* Left stick Y: [-128, 127] */
 			   if (axis_type == Half)
 				  joyy[port] = max((int)joyy[port], 0) * 2;
 			   else
 				  joyy[port] += 128;
 			   break;
 			case 2:
+			   /* Right stick X: [-128, 127] */
 			   if (axis_type == Half)
 				  joyrx[port] = max((int)joyrx[port], 0) * 2;
 			   else
 				  joyrx[port] += 128;
 			   break;
 			case 3:
+			   /* Right stick Y: [-128, 127] */
 			   if (axis_type == Half)
 				  joyry[port] = max((int)joyry[port], 0) * 2;
 			   else
 				  joyry[port] += 128;
 			   break;
 			case 4:
+			   /* Right trigger: [0, 255]
+			    * - Triggers are always 'Full'
+			    * - 'Half' is an odd case, since it has no real
+			    *   parallel with normal stick input. 'Half' therefore
+			    *   does what it says on the tin - divides input by 2
+			    *   (should never be required) */
 			   if (axis_type == Half)
-				  rt[port] = max((int)rt[port], 0) * 2;
-			   else
-				  rt[port] += 128;
+					rt[port] = rt[port] >> 1;
 			   break;
 			case 5:
+			   /* Left trigger: [0, 255]
+			    * - Triggers are always 'Full'
+			    * - 'Half' is an odd case, since it has no real
+			    *   parallel with normal stick input. 'Half' therefore
+			    *   does what it says on the tin - divides input by 2
+			    *   (should never be required) */
 			   if (axis_type == Half)
-				  lt[port] = max((int)lt[port], 0) * 2;
-			   else
-				  lt[port] += 128;
+					lt[port] = lt[port] >> 1;
 			   break;
 			}
 		 }
@@ -2573,8 +2588,8 @@ static void UpdateInputStateNaomi(u32 port)
 		 joyy[port] += 128;
 		 joyrx[port] += 128;
 		 joyry[port] += 128;
-		 rt[port] += 128;
-		 lt[port] += 128;
+		 /* Left/right trigger are always full by default,
+		  * so no ajustment required */
 	  }
 
 	  // -- mouse, for rotary encoders

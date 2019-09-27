@@ -94,7 +94,7 @@ __asm__
 	"ngen_LinkBlock_Shared_stub:			\n\t"
 		"mov x0, lr							\n\t"
 		"sub x0, x0, #4						\n\t"	// go before the call
-		"bl rdv_LinkBlock					\n\t"		// returns an RX addr
+		"bl rdv_LinkBlock					\n\t"   // returns an RX addr
 		"br x0								\n"
 
 		".hidden ngen_FailedToFindBlock_nommu	\n\t"
@@ -161,7 +161,7 @@ static T ReadMemNoEx(u32 addr, u32, u32 pc)
 	T rv = mmu_ReadMemNoEx<T>(addr, &ex);
 	if (ex)
 	{
-			spc = pc;
+		spc = pc;
 		longjmp(jmp_env, 1);
 	}
 	return rv;
@@ -177,7 +177,7 @@ static void WriteMemNoEx(u32 addr, T data, u32 pc)
 	u32 ex = mmu_WriteMemNoEx<T>(addr, data);
 	if (ex)
 	{
-			spc = pc;
+		spc = pc;
 		longjmp(jmp_env, 1);
 	}
 #endif
@@ -189,11 +189,11 @@ static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 		oph(op);
 	} catch (SH4ThrownException& ex) {
 		if (pc & 1)
-{
+		{
 			// Delay slot
 			AdjustDelaySlotException(ex);
 			pc--;
-}
+		}
 		Do_Exception(pc, ex.expEvn, ex.callVect);
 		longjmp(jmp_env, 1);
 	}
@@ -205,7 +205,7 @@ static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
 		do_sqw_mmu(addr);
 	} catch (SH4ThrownException& ex) {
 		if (pc & 1)
-{
+		{
 			// Delay slot
 			AdjustDelaySlotException(ex);
 			pc--;
@@ -304,17 +304,17 @@ public:
 		if (op.rs3.is_imm())
 		{
 			if (regalloc.IsAllocg(op.rs1))
-			Add(*ret_reg, regalloc.MapRegister(op.rs1), op.rs3._imm);
+				Add(*ret_reg, regalloc.MapRegister(op.rs1), op.rs3._imm);
 			else
 			{
 				Ldr(*ret_reg, sh4_context_mem_operand(op.rs1.reg_ptr()));
 				Add(*ret_reg, *ret_reg, op.rs3._imm);
-		}
+			}
 		}
 		else if (op.rs3.is_r32i())
 		{
 			if (regalloc.IsAllocg(op.rs1) && regalloc.IsAllocg(op.rs3))
-			Add(*ret_reg, regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs3));
+				Add(*ret_reg, regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs3));
 			else
 			{
 				Ldr(*ret_reg, sh4_context_mem_operand(op.rs1.reg_ptr()));
@@ -329,12 +329,12 @@ public:
 		else if (op.rs1.is_reg())
 		{
 			if (regalloc.IsAllocg(op.rs1))
-		{
-			if (raddr == NULL)
-				ret_reg = &regalloc.MapRegister(op.rs1);
-			else
-				Mov(*ret_reg, regalloc.MapRegister(op.rs1));
-		}
+			{
+				if (raddr == NULL)
+					ret_reg = &regalloc.MapRegister(op.rs1);
+				else
+					Mov(*ret_reg, regalloc.MapRegister(op.rs1));
+			}
 			else
 			{
 				Ldr(*ret_reg, sh4_context_mem_operand(op.rs1.reg_ptr()));
@@ -368,7 +368,7 @@ public:
 		}
 		else
 		{
-		Subs(w27, w27, block->guest_cycles);
+			Subs(w27, w27, block->guest_cycles);
 		}
 		Label cycles_remaining;
 		B(&cycles_remaining, pl);
@@ -392,7 +392,7 @@ public:
 
 				if (!mmu_enabled())
 				{
-				GenCallRuntime(OpDesc[op.rs3._imm]->oph);
+					GenCallRuntime(OpDesc[op.rs3._imm]->oph);
 				}
 				else
 				{
@@ -408,11 +408,11 @@ public:
 			case shop_jdyn:
 				{
 					const Register rd = regalloc.MapRegister(op.rd);
-				if (op.rs2.is_imm())
+					if (op.rs2.is_imm())
 						Add(rd, regalloc.MapRegister(op.rs1), op.rs2._imm);
-				else
+					else
 						Mov(rd, regalloc.MapRegister(op.rs1));
-				// Save it for the branching at the end of the block
+					// Save it for the branching at the end of the block
 					Mov(w29, rd);
 				}
 				break;
@@ -458,11 +458,11 @@ public:
 
 			case shop_readm:
 				GenReadMemory(op, i, optimise);
-			break;
+				break;
 
 			case shop_writem:
 				GenWriteMemory(op, i, optimise);
-					break;
+				break;
 
 			case shop_sync_sr:
 				GenCallRuntime(UpdateSR);
@@ -557,7 +557,7 @@ public:
 					}
 					Cmp(reg3, 1);	// C = rs3
 					Adcs(regalloc.MapRegister(op.rd), reg1, op2); // (C,rd)=rs1+rs2+rs3(C)
-				Cset(regalloc.MapRegister(op.rd2), cs);	// rd2 = C
+					Cset(regalloc.MapRegister(op.rd2), cs);	// rd2 = C
 				}
 				break;
 			case shop_sbc:
@@ -584,7 +584,7 @@ public:
 						op3 = regalloc.MapRegister(op.rs3);
 					Cmp(wzr, op3);	// C = ~rs3
 					Sbcs(regalloc.MapRegister(op.rd), reg1, op2); // (C,rd) = rs1 - rs2 - ~rs3(C)
-				Cset(regalloc.MapRegister(op.rd2), cc);	// rd2 = ~C
+					Cset(regalloc.MapRegister(op.rd2), cc);	// rd2 = ~C
 				}
 				break;
 			case shop_negc:
@@ -601,7 +601,7 @@ public:
 						op2 = regalloc.MapRegister(op.rs2);
 					Cmp(wzr, op2);	// C = ~rs2
 					Sbcs(regalloc.MapRegister(op.rd), wzr, op1);	// (C,rd) = 0 - rs1 - ~rs2(C)
-				Cset(regalloc.MapRegister(op.rd2), cc);	// rd2 = ~C
+					Cset(regalloc.MapRegister(op.rd2), cc);			// rd2 = ~C
 				}
 				break;
 
@@ -631,7 +631,7 @@ public:
 					const Register rd = regalloc.MapRegister(op.rd);
 					Mov(rd, Operand(reg1, LSR, 1));	// rd = rs1 >> 1
 					Bfi(rd, reg2, 31, 1);				// rd |= C << 31
-				Mov(regalloc.MapRegister(op.rd2), w0);												// rd2 = w0 (new C)
+					Mov(regalloc.MapRegister(op.rd2), w0);						// rd2 = w0 (new C)
 				}
 				break;
 			case shop_rocl:
@@ -658,7 +658,7 @@ public:
 					}
 					Tst(reg1, 0x80000000);						// Z = ~rs1[31]
 					Orr(regalloc.MapRegister(op.rd), reg2, Operand(reg1, LSL, 1)); // rd = rs1 << 1 | rs2(C)
-				Cset(regalloc.MapRegister(op.rd2), ne);			// rd2 = ~Z(C)
+					Cset(regalloc.MapRegister(op.rd2), ne);		// rd2 = ~Z(C)
 				}
 				break;
 
@@ -700,10 +700,10 @@ public:
 					// rs2 < 0 => right shift
 					Neg(w1, rs2);
 					if (op.op == shop_shld)
-					// Logical shift
+						// Logical shift
 						Lsr(rd, reg1, w1);
-				else
-					// Arithmetic shift
+					else
+						// Arithmetic shift
 						Asr(rd, reg1, w1);
 					Bind(&end);
 				}
@@ -762,14 +762,14 @@ public:
 					Eor(w1, reg1, reg2);
 					const Register rd = regalloc.MapRegister(op.rd);
 					Mov(rd, wzr);
-				Mov(w2, wzr);	// wzr not supported by csinc (?!)
-				Tst(w1, 0xFF000000);
+					Mov(w2, wzr);	// wzr not supported by csinc (?!)
+					Tst(w1, 0xFF000000);
 					Csinc(rd, rd, w2, ne);
-				Tst(w1, 0x00FF0000);
+					Tst(w1, 0x00FF0000);
 					Csinc(rd, rd, w2, ne);
-				Tst(w1, 0x0000FF00);
+					Tst(w1, 0x0000FF00);
 					Csinc(rd, rd, w2, ne);
-				Tst(w1, 0x000000FF);
+					Tst(w1, 0x000000FF);
 					Csinc(rd, rd, w2, ne);
 				}
 				break;
@@ -786,9 +786,9 @@ public:
 					{
 						reg2 = regalloc.MapRegister(op.rs2);
 					}
-				Uxth(w10, regalloc.MapRegister(op.rs1));
+					Uxth(w10, regalloc.MapRegister(op.rs1));
 					Uxth(w11, reg2);
-				Mul(regalloc.MapRegister(op.rd), w10, w11);
+					Mul(regalloc.MapRegister(op.rd), w10, w11);
 				}
 				break;
 			case shop_mul_s16:
@@ -803,9 +803,9 @@ public:
 					{
 						reg2 = regalloc.MapRegister(op.rs2);
 					}
-				Sxth(w10, regalloc.MapRegister(op.rs1));
+					Sxth(w10, regalloc.MapRegister(op.rs1));
 					Sxth(w11, reg2);
-				Mul(regalloc.MapRegister(op.rd), w10, w11);
+					Mul(regalloc.MapRegister(op.rd), w10, w11);
 				}
 				break;
 			case shop_mul_i32:
@@ -854,16 +854,16 @@ public:
 					else
 					{
 						if (regalloc.IsAllocg(op.rs1))
-					Lsr(w1, regalloc.MapRegister(op.rs1), 26);
+							Lsr(w1, regalloc.MapRegister(op.rs1), 26);
 						else
 						{
 							Ldr(w0, sh4_context_mem_operand(op.rs1.reg_ptr()));
 							Lsr(w1, w0, 26);
 						}
-					Cmp(w1, 0x38);
-					B(&not_sqw, ne);
+						Cmp(w1, 0x38);
+						B(&not_sqw, ne);
 						if (regalloc.IsAllocg(op.rs1))
-					Mov(w0, regalloc.MapRegister(op.rs1));
+							Mov(w0, regalloc.MapRegister(op.rs1));
 					}
 
 					if (mmu_enabled())
@@ -874,17 +874,17 @@ public:
 					}
 					else
 					{
-					if (CCN_MMUCR.AT)
-					{
-						Ldr(x9, reinterpret_cast<uintptr_t>(&do_sqw_mmu));
-					}
-					else
-					{
-						Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
-						Ldr(x9, MemOperand(x9));
-						Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
-					}
-					Blr(x9);
+						if (CCN_MMUCR.AT)
+						{
+							Ldr(x9, reinterpret_cast<uintptr_t>(&do_sqw_mmu));
+						}
+						else
+						{
+							Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
+							Ldr(x9, MemOperand(x9));
+							Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
+						}
+						Blr(x9);
 					}
 					Bind(&not_sqw);
 				}
@@ -901,7 +901,7 @@ public:
 				{
 					const Register rd = regalloc.MapRegister(op.rd);
 					Lsr(rd, regalloc.MapRegister(op.rs1), 16);
-				Lsl(w0, regalloc.MapRegister(op.rs2), 16);
+					Lsl(w0, regalloc.MapRegister(op.rs2), 16);
 					Orr(rd, rd, w0);
 				}
 				break;
@@ -1124,7 +1124,7 @@ public:
 		{
 		case 1:
 			if (!mmu_enabled())
-			GenCallRuntime(ReadMem8);
+				GenCallRuntime(ReadMem8);
 			else
 				GenCallRuntime(ReadMemNoEx<u8>);
 			Sxtb(w0, w0);
@@ -1132,7 +1132,7 @@ public:
 
 		case 2:
 			if (!mmu_enabled())
-			GenCallRuntime(ReadMem16);
+				GenCallRuntime(ReadMem16);
 			else
 				GenCallRuntime(ReadMemNoEx<u16>);
 			Sxth(w0, w0);
@@ -1140,14 +1140,14 @@ public:
 
 		case 4:
 			if (!mmu_enabled())
-			GenCallRuntime(ReadMem32);
+				GenCallRuntime(ReadMem32);
 			else
 				GenCallRuntime(ReadMemNoEx<u32>);
 			break;
 
 		case 8:
 			if (!mmu_enabled())
-			GenCallRuntime(ReadMem64);
+				GenCallRuntime(ReadMem64);
 			else
 				GenCallRuntime(ReadMemNoEx<u64>);
 			break;
@@ -1213,8 +1213,8 @@ public:
 			if (block->pBranchBlock == NULL)
 			{
 				if (!mmu_enabled())
-				GenCallRuntime(ngen_LinkBlock_Generic_stub);
-			else
+					GenCallRuntime(ngen_LinkBlock_Generic_stub);
+				else
 				{
 					Mov(w29, block->BranchBlock);
 					Str(w29, sh4_context_mem_operand(&next_pc));
@@ -1247,7 +1247,7 @@ public:
 				else
 				{
 					if (!mmu_enabled())
-					GenCallRuntime(ngen_LinkBlock_cond_Branch_stub);
+						GenCallRuntime(ngen_LinkBlock_cond_Branch_stub);
 					else
 					{
 						Mov(w29, block->BranchBlock);
@@ -1263,13 +1263,13 @@ public:
 				else
 				{
 					if (!mmu_enabled())
-					GenCallRuntime(ngen_LinkBlock_cond_Next_stub);
+						GenCallRuntime(ngen_LinkBlock_cond_Next_stub);
 					else
 					{
 						Mov(w29, block->NextBlock);
 						Str(w29, sh4_context_mem_operand(&next_pc));
 						GenBranch(*arm64_no_update);
-			}
+					}
 				}
 			}
 			break;
@@ -1282,17 +1282,17 @@ public:
 			Str(w29, sh4_context_mem_operand(&next_pc));
 			if (!mmu_enabled())
 			{
-			// TODO Call no_update instead (and check CpuRunning less frequently?)
-			Mov(x2, sizeof(Sh4RCB));
-			Sub(x2, x28, x2);
-			Add(x2, x2, sizeof(Sh4Context));		// x2 now points to FPCB
+				// TODO Call no_update instead (and check CpuRunning less frequently?)
+				Mov(x2, sizeof(Sh4RCB));
+				Sub(x2, x28, x2);
+				Add(x2, x2, sizeof(Sh4Context));		// x2 now points to FPCB
 #if RAM_SIZE_MAX == 33554432
-			Ubfx(w1, w29, 1, 24);
+				Ubfx(w1, w29, 1, 24);
 #else
 				Ubfx(w1, w29, 1, 23);
 #endif
-			Ldr(x15, MemOperand(x2, x1, LSL, 3));	// Get block entry point
-			Br(x15);
+				Ldr(x15, MemOperand(x2, x1, LSL, 3));	// Get block entry point
+				Br(x15);
 			}
 			else
 			{
@@ -1339,6 +1339,7 @@ public:
 
 			emit_Skip(block->host_code_size);
 		}
+
 		// Flush and invalidate caches
 		vmem_platform_flush_cache(
 			CC_RW2RX(GetBuffer()->GetStartAddress<void*>()), CC_RW2RX(GetBuffer()->GetEndAddress<void*>()),
@@ -1398,7 +1399,7 @@ public:
 		Br(x0);
 
 		// void mainloop(void *context)
-		mainloop = GetCursorAddress<void (*)(void *)>();
+		mainloop = (void (*)(void *))CC_RW2RX(GetCursorAddress<uintptr_t>());
 
 		// Save registers
 		Stp(x19, x20, MemOperand(sp, -160, PreIndex));
@@ -1617,30 +1618,30 @@ private:
 			Ldr(x1, reinterpret_cast<uintptr_t>(ptr));	// faster than Mov
 			if (regalloc.IsAllocAny(op.rd))
 			{
-			switch (size)
-			{
+				switch (size)
+				{
 				case 1:
 					Ldrsb(regalloc.MapRegister(op.rd), MemOperand(x1));
 					break;
 
-			case 2:
+				case 2:
 					Ldrsh(regalloc.MapRegister(op.rd), MemOperand(x1));
-				break;
+					break;
 
-			case 4:
-				if (op.rd.is_r32f())
-					Ldr(regalloc.MapVRegister(op.rd), MemOperand(x1));
-				else
-					Ldr(regalloc.MapRegister(op.rd), MemOperand(x1));
-				break;
+				case 4:
+					if (op.rd.is_r32f())
+						Ldr(regalloc.MapVRegister(op.rd), MemOperand(x1));
+					else
+						Ldr(regalloc.MapRegister(op.rd), MemOperand(x1));
+					break;
 
-			default:
-				die("Invalid size");
-				break;
+				default:
+					die("Invalid size");
+					break;
+				}
 			}
-		}
-		else
-		{
+			else
+			{
 				switch (size)
 				{
 				case 1:
@@ -1834,37 +1835,51 @@ private:
 		void* ptr = _vmem_write_const(addr, isram, size > 4 ? 4 : size);
 
 		Register reg2;
-		if (op.rs2.is_imm())
+		if (size != 8)
 		{
-			Mov(w0, op.rs2._imm);
-			reg2 = w0;
+			if (op.rs2.is_imm())
+			{
+				Mov(w1, op.rs2._imm);
+				reg2 = w1;
+			}
+			else if (regalloc.IsAllocg(op.rs2))
+			{
+				reg2 = regalloc.MapRegister(op.rs2);
+			}
+			else if (regalloc.IsAllocf(op.rs2))
+			{
+				Fmov(w1, regalloc.MapVRegister(op.rs2));
+				reg2 = w1;
+			}
+			else
+				die("Invalid rs2 param");
 		}
-		else if (regalloc.IsAllocg(op.rs2))
-		{
-			reg2 = regalloc.MapRegister(op.rs2);
-		}
-		else if (regalloc.IsAllocf(op.rs2))
-		{
-			Fmov(w0, regalloc.MapVRegister(op.rs2));
-			reg2 = w0;
-		}
-		else
-			die("Invalid rs2 param");
 		if (isram)
 		{
-			Ldr(x1, reinterpret_cast<uintptr_t>(ptr));
+			Ldr(x0, reinterpret_cast<uintptr_t>(ptr));
 			switch (size)
 			{
 			case 1:
-				Strb(reg2, MemOperand(x1));
+				Strb(reg2, MemOperand(x0));
 				break;
 
 			case 2:
-				Strh(reg2, MemOperand(x1));
+				Strh(reg2, MemOperand(x0));
 				break;
 
 			case 4:
-				Str(reg2, MemOperand(x1));
+				Str(reg2, MemOperand(x0));
+				break;
+
+			case 8:
+#ifdef EXPLODE_SPANS
+				verify(op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1));
+				Str(regalloc.MapVRegister(op.rs2, 0),  MemOperand(x1));
+				Str(regalloc.MapVRegister(op.rs2, 1),  MemOperand(x1, 4));
+#else
+				shil_param_to_host_reg(op.rs2, x1);
+				Str(x1, MemOperand(x0));
+#endif
 				break;
 
 			default:
@@ -1875,26 +1890,40 @@ private:
 		else
 		{
 			// Not RAM
-			Mov(w1, reg2);
 			Mov(w0, addr);
-
-			switch(size)
+			if (size == 8)
 			{
-			case 1:
+				// Need to call the handler twice
+				shil_param_to_host_reg(op.rs2, x1);
 				GenCallRuntime((void (*)())ptr);
-				break;
 
-			case 2:
+				Mov(w0, addr + 4);
+				shil_param_to_host_reg(op.rs2, x1);
+				Lsr(x1, x1, 32);
 				GenCallRuntime((void (*)())ptr);
-				break;
+			}
+			else
+			{
+				Mov(w1, reg2);
 
-			case 4:
-				GenCallRuntime((void (*)())ptr);
-				break;
+				switch(size)
+				{
+				case 1:
+					GenCallRuntime((void (*)())ptr);
+					break;
 
-			case 8:
-				die("SZ_64F not supported");
-				break;
+				case 2:
+					GenCallRuntime((void (*)())ptr);
+					break;
+
+				case 4:
+					GenCallRuntime((void (*)())ptr);
+					break;
+
+				default:
+					die("Invalid size");
+					break;
+				}
 			}
 		}
 
@@ -2042,17 +2071,17 @@ private:
 			else if (param.is_r32f())
 			{
 				if (regalloc.IsAllocf(param))
-				Fmov(reg, regalloc.MapVRegister(param));
-			else
+					Fmov(reg, regalloc.MapVRegister(param));
+				else
 					Ldr(reg, sh4_context_mem_operand(param.reg_ptr()));
 			}
 			else
 			{
 				if (regalloc.IsAllocg(param))
-				Mov(reg, regalloc.MapRegister(param));
+					Mov(reg, regalloc.MapRegister(param));
 				else
 					Ldr(reg, sh4_context_mem_operand(param.reg_ptr()));
-		}
+			}
 		}
 		else
 		{
@@ -2179,7 +2208,7 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	for (int i = 0; i < ARRAY_SIZE(armv8_mem_ops); i++)
 	{
 		if (masked == armv8_mem_ops[i])
-	{
+		{
 			size = op_sizes[i];
 			is_read = read_ops[i];
 			found = true;

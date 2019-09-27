@@ -30,7 +30,7 @@ u32 detwiddle[2][8][1024];
 //U : x resolution , V : y resolution
 //twiddle works on 64b words
 
-u32 twiddle_slow(u32 x,u32 y,u32 x_sz,u32 y_sz)
+static u32 twiddle_slow(u32 x,u32 y,u32 x_sz,u32 y_sz)
 {
 	u32 sh=0;
 	u32 rv=0;//low 2 bits are directly passed  -> needs some misc stuff to work.However
@@ -62,7 +62,7 @@ u32 twiddle_slow(u32 x,u32 y,u32 x_sz,u32 y_sz)
 	return rv;
 }
 
-void BuildTwiddleTables(void)
+static void BuildTwiddleTables()
 {
 	for (u32 s=0;s<8;s++)
 	{
@@ -126,8 +126,7 @@ void palette_update(void)
 
 using namespace std;
 
-/* Naomi edit - allow for max possible VRAM_SIZE here */
-vector<vram_block*> VramLocks[/*VRAM_SIZE*/(16*1024*1024)/PAGE_SIZE];
+vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
 //vram 32-64b
 VArray2 vram;
 
@@ -176,12 +175,6 @@ added_it:
 }
  
 cMutex vramlist_lock;
-
-//simple IsInRange test
-static INLINE bool IsInRange(vram_block* block,u32 offset)
-{
-	return (block->start<=offset) && (block->end>=offset);
-}
 
 vram_block* libCore_vramlock_Lock(u32 start_offset64,
       u32 end_offset64,void* userdata)

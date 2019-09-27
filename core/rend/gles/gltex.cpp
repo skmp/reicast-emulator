@@ -71,7 +71,7 @@ static const PvrTexInfo format[8] =
    {"1555",    16, GL_UNSIGNED_SHORT_5_5_5_1, tex1555_PL, tex1555_TW, tex1555_VQ,	tex1555_PL32,  tex1555_TW32,  tex1555_VQ32 }, //1555
 	{"565",     16, GL_UNSIGNED_SHORT_5_6_5,   tex565_PL,  tex565_TW,  tex565_VQ, 	tex565_PL32,   tex565_TW32,   tex565_VQ32 },  //565
 	{"4444", 	16, GL_UNSIGNED_SHORT_4_4_4_4, tex4444_PL, tex4444_TW, tex4444_VQ, 	tex4444_PL32,  tex4444_TW32,  tex4444_VQ32 }, //4444
-	{"yuv",     16, GL_UNSIGNED_INT_8_8_8_8,   NULL,       NULL,       NULL,         texYUV422_PL,  texYUV422_TW,  texYUV422_VQ }, //yuv
+	{"yuv",     16, GL_UNSIGNED_BYTE,          NULL,       NULL,       NULL,         texYUV422_PL,  texYUV422_TW,  texYUV422_VQ }, //yuv
 	{"bumpmap", 16, GL_UNSIGNED_SHORT_4_4_4_4, texBMP_PL,  texBMP_TW,  texBMP_VQ,    NULL},                                        //bump map
 	{"pal4", 	4,  0,                         0,          texPAL4_TW, texPAL4_VQ, 	NULL, 		   texPAL4_TW32,  texPAL4_VQ32 }, //pal4
 	{"pal8", 	8,  0,                         0,          texPAL8_TW, texPAL8_VQ, 	NULL, 		   texPAL8_TW32,  texPAL8_VQ32 }, //pal8
@@ -91,7 +91,7 @@ static const u32 MipPoint[8] =
 };
 
 static const GLuint PAL_TYPE[4]=
-{GL_UNSIGNED_SHORT_5_5_5_1,GL_UNSIGNED_SHORT_5_6_5,GL_UNSIGNED_SHORT_4_4_4_4, GL_UNSIGNED_INT_8_8_8_8};
+{GL_UNSIGNED_SHORT_5_5_5_1,GL_UNSIGNED_SHORT_5_6_5,GL_UNSIGNED_SHORT_4_4_4_4, GL_UNSIGNED_BYTE};
 
 CustomTexture custom_texture;
 
@@ -217,7 +217,7 @@ void TextureCacheData::Update(void)
    if (IsPaletted())
    {
 	  textype         = PAL_TYPE[PAL_RAM_CTRL&3];
-	  if (textype == GL_UNSIGNED_INT_8_8_8_8)
+      if (textype == GL_UNSIGNED_BYTE)
 		 has_alpha = true;
 
 	  // Get the palette hash to check for future updates
@@ -272,7 +272,7 @@ void TextureCacheData::Update(void)
 			|| w * h > settings.rend.MaxFilteredTextureSize
 			   * settings.rend.MaxFilteredTextureSize		// Don't process textures that are too big
 			|| tcw.PixelFmt == PixelYUV)					// Don't process YUV textures
-		 && (!IsPaletted() || textype != GL_UNSIGNED_INT_8_8_8_8)
+		 && (!IsPaletted() || textype != GL_UNSIGNED_BYTE)
 		 && texconv != NULL)
 	  need_32bit_buffer = false;
    // TODO avoid upscaling/depost. textures that change too often
@@ -280,7 +280,7 @@ void TextureCacheData::Update(void)
    if (texconv32 != NULL && need_32bit_buffer)
    {
 	  // Force the texture type since that's the only 32-bit one we know
-	  textype = GL_UNSIGNED_INT_8_8_8_8;
+	  textype = GL_UNSIGNED_BYTE;
 
 	  pb32.init(w, h);
 
@@ -391,13 +391,7 @@ void TextureCacheData::UploadToGPU(GLuint textype, int width, int height, u8 *te
    //upload to OpenGL !
    glcache.BindTexture(GL_TEXTURE_2D, texID);
    GLuint comps=textype == GL_UNSIGNED_SHORT_5_6_5 ? GL_RGB : GL_RGBA;
-#ifdef HAVE_OPENGLES
-   GLuint actual_textype = textype == GL_UNSIGNED_INT_8_8_8_8 ? GL_UNSIGNED_BYTE : textype;
-   glTexImage2D(GL_TEXTURE_2D, 0, comps, width, height, 0, comps, actual_textype,
-		 temp_tex_buffer);
-#else
    glTexImage2D(GL_TEXTURE_2D, 0,comps, width, height, 0, comps, textype, temp_tex_buffer);
-#endif
    if (tcw.MipMapped && settings.rend.UseMipmaps)
 	  glGenerateMipmap(GL_TEXTURE_2D);
 }

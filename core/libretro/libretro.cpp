@@ -27,6 +27,7 @@
 #include "../imgread/common.h"
 #include "../hw/aica/dsp.h"
 #include "log/LogManager.h"
+#include "cheats.h"
 
 #if defined(_XBOX) || defined(_WIN32)
 char slash = '\\';
@@ -498,6 +499,18 @@ static void update_variables(bool first_startup)
    else
       settings.rend.WideScreen = 0;
 
+   var.key = CORE_OPTION_NAME "_widescreen_cheats";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "enabled"))
+         settings.rend.WidescreenGameHacks = true;
+      else
+         settings.rend.WidescreenGameHacks = false;
+   }
+   else
+      settings.rend.WidescreenGameHacks = false;
+
    var.key = CORE_OPTION_NAME "_screen_rotation";
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !strcmp("vertical", var.value))
    {
@@ -519,22 +532,6 @@ static void update_variables(bool first_startup)
       pch = strtok(NULL, "x");
       if (pch)
          screen_height = strtoul(pch, NULL, 0);
-
-      if (settings.rend.WideScreen)
-      {
-         if (!strcmp(var.value, "640x480"))
-         {
-            screen_width  = 854;
-         }
-         else if (!strcmp(var.value, "1280x960"))
-         {
-            screen_width  = 1536;
-         }
-         else if (!strcmp(var.value, "1920x1440"))
-            screen_height = 1200;
-         else if (!strcmp(var.value, "2560x1920"))
-            screen_width = 3200;
-      }
 
       DEBUG_LOG(COMMON, "Got size: %u x %u.\n", screen_width, screen_height);
    }
@@ -2100,7 +2097,31 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    const int spg_clks[4] = { 26944080, 13458568, 13462800, 26944080 };
    u32 pixel_clock= spg_clks[(SPG_CONTROL.full >> 6) & 3];
 
-   info->geometry.aspect_ratio = settings.rend.WideScreen ? (16.0 / 9.0) : (4.0 / 3.0);
+   if (cheatManager.Reset())
+   {
+      info->geometry.aspect_ratio = 16.0 / 9.0;
+		struct retro_message msg;
+		msg.msg = "Widescreen cheat activated";
+		msg.frames = 120;
+		environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
+   }
+   else
+   {
+      if (settings.rend.WideScreen)
+      {
+         if (screen_width == 640)
+            screen_width  = 854;
+         else if (screen_width == 1280)
+            screen_width  = 1536;
+         else if (screen_width == 1920)
+            screen_height = 1200;
+         else if (screen_width == 2560)
+            screen_width = 3200;
+         info->geometry.aspect_ratio = 16.0 / 9.0;
+      }
+      else
+      	info->geometry.aspect_ratio = 4.0 / 3.0;
+   }
    if(naomi_cart_GetRotation() == 3)
       info->geometry.aspect_ratio = 1 / info->geometry.aspect_ratio;
    int maximum = screen_width > screen_height ? screen_width : screen_height;

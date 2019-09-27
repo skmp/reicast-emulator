@@ -2,6 +2,7 @@
 #include "ta.h"
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
+#include "cheats.h"
 
 /*
 
@@ -358,6 +359,7 @@ void rend_vblank()
 	}
 	render_called = false;
 	check_framebuffer_write();
+	cheatManager.Apply();
 
    os_DoEvents();
 }

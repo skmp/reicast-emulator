@@ -364,8 +364,19 @@ struct retro_core_option_definition option_defs_us[] = {
    },
    {
       CORE_OPTION_NAME "_widescreen_hack",
-      "Widescreen hack (Restart)",
+      "Widescreen Hack (Restart)",
       "",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_widescreen_cheats",
+      "Widescreen Cheats (Restart)",
+      "Activates cheats that allow certain games to display in widescreen format.",
       {
          { "disabled", NULL },
          { "enabled",  NULL },

@@ -524,6 +524,7 @@ struct settings_t
 		bool CustomTextures;
 		bool DumpTextures;
 		bool DelayFrameSwapping; // Delay swapping frame until FB_R_SOF matches FB_W_SOF
+		bool WidescreenGameHacks;
 	} rend;
 
 	struct

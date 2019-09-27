@@ -93,6 +93,7 @@ SOURCES_CXX := \
 					$(CORE_DIR)/core/log/ConsoleListener.cpp \
 					$(CORE_DIR)/core/log/LogManager.cpp \
 					\
+					$(CORE_DIR)/core/cheats.cpp \
 					$(CORE_DIR)/core/nullDC.cpp \
 					$(CORE_DIR)/core/serialize.cpp \
 					$(CORE_DIR)/core/stdclass.cpp \

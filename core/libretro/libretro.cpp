@@ -2109,14 +2109,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    {
       if (settings.rend.WideScreen)
       {
-         if (screen_width == 640)
-            screen_width  = 854;
-         else if (screen_width == 1280)
-            screen_width  = 1536;
-         else if (screen_width == 1920)
-            screen_height = 1200;
-         else if (screen_width == 2560)
-            screen_width = 3200;
+         screen_width = (int)lround(screen_width * 4.0 / 3.0);
          info->geometry.aspect_ratio = 16.0 / 9.0;
       }
       else

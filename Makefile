@@ -330,6 +330,29 @@ else ifeq ($(platform), arm64)
 	CXXFLAGS := $(filter-out -flto, $(CXXFLAGS))
 #######################################
 
+# nvidia developer jetson nano kit (jetson-nano)
+else ifeq ($(platform), jetson-nano)
+	EXT ?= so
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+	SHARED += -shared -Wl,--version-script=link.T
+	LDFLAGS +=  -Wl,--no-undefined
+	fpic = -fPIC
+	LIBS += -lrt
+	ARM_FLOAT_ABI_HARD = 0
+	SINGLE_PREC_FLAGS = 1
+	CPUFLAGS += -DHOST_CPU=0x20000006 -DTARGET_LINUX_ARMv8 -frename-registers
+	CFLAGS += $(CPUFLAGS)
+	CXXFLAGS += -mcpu=cortex-a57 -mtune=cortex-a57 $(CPUFLAGS)
+	ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
+	PLATFORM_EXT := unix
+	WITH_DYNAREC=arm64
+	HAVE_GENERIC_JIT = 0
+	HAVE_LTCG = 0
+	LDFLAGS := $(filter-out -flto, $(LDFLAGS))
+	CFLAGS := $(filter-out -flto, $(CFLAGS))
+	CXXFLAGS := $(filter-out -flto, $(CXXFLAGS))
+#######################################
+
 # Odroid-N2
 else ifeq ($(platform), odroid-n2)
 	EXT ?= so

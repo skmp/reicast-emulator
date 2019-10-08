@@ -10,7 +10,7 @@ void genode_free_secondary_stack(void *stack);
 #endif
 
 #if defined _MSC_VER
-  #include <Windows.h>
+  #include <windows.h>
   #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
     #include "fiber.c"
   #elif defined _M_IX86

@@ -1076,7 +1076,7 @@ bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool staging
 
 	mem_op_type optp=memop_type(op);
 	bool isram=false;
-	void* ptr=_vmem_read_const(op->rs1._imm,isram,memop_bytes(optp));
+	void* ptr = _vmem_read_const(op->rs1._imm, isram, max(4u, memop_bytes(optp)));
 	eReg rd = (optp != SZ_32F && optp != SZ_64F) ? reg.mapg(op->rd) : r0;
 				
 	if (isram)
@@ -1148,7 +1148,7 @@ bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool stag
 
 	mem_op_type optp = memop_type(op);
 	bool isram = false;
-	void* ptr = _vmem_write_const(op->rs1._imm, isram, memop_bytes(optp));
+	void* ptr = _vmem_write_const(op->rs1._imm, isram, max(4u, memop_bytes(optp)));
 
 	eReg rs2 = r1;
 	eFSReg rs2f = f0;
@@ -1156,7 +1156,7 @@ bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool stag
 		MOV32(rs2, op->rs2._imm);
 	else if (optp == SZ_32F)
 		rs2f = reg.mapf(op->rs2);
-	else
+	else if (optp != SZ_64F)
 		rs2 = reg.mapg(op->rs2);
 
 	if (isram)
@@ -1178,6 +1178,11 @@ bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool stag
 
 		case SZ_32F:
 			VSTR(rs2f, r0, 0);
+			break;
+
+		case SZ_64F:
+			VLDR(d0, r8, op->rs2.reg_nofs() / 4);
+			VSTR(d0, r0, 0);
 			break;
 
 		default:
@@ -1677,7 +1682,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				}
 				else
 				{
-					printf("ngen_Bin ??? %d \n",op->rs2.type);
+					ERROR_LOG(DYNAREC, "ngen_Bin ??? %d", op->rs2.type);
 					verify(false);
 				}
 

@@ -350,7 +350,9 @@ void rend_vblank()
 		bool restore_ctx = ta_ctx != NULL;
 		PARAM_BASE = 0xF00000;
 		SetCurrentTARC(CORE_CURRENT_CTX);
+		ta_ctx->Reset();
 		ta_ctx->rend.isRenderFramebuffer = true;
+		ta_ctx->rend.isRTT = false;
 		rend_start_render();
 		PARAM_BASE = saved_ctx_addr;
 		if (restore_ctx)

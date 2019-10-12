@@ -8,7 +8,7 @@ NO_THREADS    := 0
 NO_EXCEPTIONS := 0
 NO_NVMEM      := 0
 NO_VERIFY     := 1
-HAVE_LTCG     := 1
+HAVE_LTCG     ?= 1
 HAVE_GENERIC_JIT := 1
 HAVE_GL3      := 0
 FORCE_GLES    := 0
@@ -16,7 +16,7 @@ STATIC_LINKING:= 0
 HAVE_TEXUPSCALE := 1
 HAVE_OPENMP   := 1
 HAVE_CHD      := 1
-HAVE_CLANG    := 0
+HAVE_CLANG    ?= 0
 HAVE_CDROM    := 0
 THREADED_RENDERING_DEFAULT := 0
 
@@ -32,6 +32,10 @@ else
 	CC       ?= ${CC_PREFIX}gcc
 	SHARED   :=
 endif
+ifeq ($(HAVE_LTCG),1)
+	SHARED   += -flto
+endif
+
 CC_AS    ?= ${CC_PREFIX}as
 
 MFLAGS   := 
@@ -495,7 +499,7 @@ else ifeq ($(platform), tinkerboard)
 else ifneq (,$(findstring odroid,$(platform)))
 	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
-	BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
+	BOARD ?= $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
 	SHARED += -shared -Wl,--version-script=link.T
 	fpic = -fPIC
 	LIBS += -lrt
@@ -864,7 +868,7 @@ RZDCY_CFLAGS	+= $(CFLAGS) -c $(OPTFLAGS) -frename-registers -ffast-math -ftree-v
 
 ifeq ($(WITH_DYNAREC), arm)
 	ifneq (,$(findstring odroid,$(platform)))
-		BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
+		BOARD ?= $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
 		ifneq (,$(findstring ODROIDC,$(BOARD)))
 			# ODROID-C1
 			RZDCY_CFLAGS += -marm -mcpu=cortex-a5

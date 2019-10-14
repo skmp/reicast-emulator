@@ -198,7 +198,12 @@ void vmem_platform_reset_mem(void *ptr, unsigned size_bytes) {
 	// Mark them as non accessible.
 	mprotect(ptr, size_bytes, PROT_NONE);
 	// Tell the kernel to flush'em all (FIXME: perhaps unmap+mmap 'd be better?)
+	#if defined(_SYS_MMAN_H)
+	// Posix function for Haiku
+	posix_madvise(ptr, size_bytes, POSIX_MADV_DONTNEED);
+	#else
 	madvise(ptr, size_bytes, MADV_DONTNEED);
+	#endif
 	#if defined(MADV_REMOVE)
 	madvise(ptr, size_bytes, MADV_REMOVE);
 	#elif defined(MADV_FREE)

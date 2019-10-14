@@ -217,7 +217,7 @@ void TextureCacheData::Update(void)
    if (IsPaletted())
    {
 	  textype         = PAL_TYPE[PAL_RAM_CTRL&3];
-      if (textype == GL_UNSIGNED_BYTE)
+      if (textype != GL_UNSIGNED_SHORT_5_6_5)
 		 has_alpha = true;
 
 	  // Get the palette hash to check for future updates

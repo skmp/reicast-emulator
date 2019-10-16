@@ -170,13 +170,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 	}
 
 	if (total_frames!=549300 || tracks.size()<3)
-	{
 		WARN_LOG(GDROM, "WARNING: chd: Total frames is wrong: %u frames in %zu tracks", total_frames, tracks.size());
-#ifndef NOT_REICAST
-		msgboxf("This is an improper dump!",MBX_ICONEXCLAMATION);
-#endif
-		return false;
-	}
 
 	FillGDSession();
 

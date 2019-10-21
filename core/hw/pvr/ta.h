@@ -27,11 +27,6 @@ enum
 
 struct TA_context;
 
-void ta_init();
-void ta_reset();
-void ta_term();
-
-
 void ta_vtx_ListCont();
 void ta_vtx_ListInit();
 void ta_vtx_SoftReset();

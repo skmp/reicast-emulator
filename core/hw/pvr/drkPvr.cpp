@@ -15,7 +15,7 @@
 #include "pvr_regs.h"
 #include "pvr_mem.h"
 #include "Renderer_if.h"
-#include "rend/gles/CustomTexture.h"
+#include "rend/CustomTexture.h"
 
 extern CustomTexture custom_texture;
 

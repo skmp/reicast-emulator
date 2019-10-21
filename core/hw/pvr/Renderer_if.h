@@ -46,7 +46,7 @@ struct Renderer
 
 	virtual void DrawOSD() { }
 
-	virtual u32 GetTexture(TSP tsp, TCW tcw) { return 0; }
+	virtual u64 GetTexture(TSP tsp, TCW tcw) { return 0; }
 };
 
 extern Renderer* renderer;

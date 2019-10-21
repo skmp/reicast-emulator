@@ -61,6 +61,8 @@ SOURCES_CXX := \
 					$(CORE_DIR)/core/hw/pvr/ta.cpp \
 					$(CORE_DIR)/core/hw/pvr/ta_ctx.cpp \
 					$(CORE_DIR)/core/hw/pvr/ta_vtx.cpp \
+					$(CORE_DIR)/core/rend/CustomTexture.cpp \
+					$(CORE_DIR)/core/rend/sorter.cpp \
 					$(CORE_DIR)/core/rend/TexCache.cpp \
 					\
 					$(CORE_DIR)/core/hw/sh4/sh4_mmr.cpp \
@@ -228,8 +230,7 @@ ifeq ($(HAVE_GL), 1)
 
 SOURCES_CXX += $(CORE_DIR)/core/rend/gles/gles.cpp \
 					$(CORE_DIR)/core/rend/gles/gldraw.cpp \
-					$(CORE_DIR)/core/rend/gles/gltex.cpp \
-					$(CORE_DIR)/core/rend/gles/CustomTexture.cpp
+					$(CORE_DIR)/core/rend/gles/gltex.cpp
 ifeq ($(HAVE_OIT), 1)
 SOURCES_CXX += $(CORE_DIR)/core/rend/gl4/gles.cpp \
 					$(CORE_DIR)/core/rend/gl4/gldraw.cpp \

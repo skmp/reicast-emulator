@@ -1,7 +1,6 @@
 #include "gles.h"
-#include "../rend.h"
-
-#include <algorithm>
+#include "rend/rend.h"
+#include "rend/sorter.h"
 
 /*
 
@@ -194,7 +193,7 @@ __forceinline static void SetGPState(const PolyParam* gp, u32 cflip)
    const u32 stencil = (gp->pcw.Shadow!=0)?0x80:0;
    glcache.StencilFunc(GL_ALWAYS, stencil, stencil);
 
-   glcache.BindTexture(GL_TEXTURE_2D, gp->texid == -1 ? 0 : gp->texid);
+   glcache.BindTexture(GL_TEXTURE_2D, gp->texid == -1 ? 0 : (GLuint)gp->texid);
    SetTextureRepeatMode(GL_TEXTURE_WRAP_S, gp->tsp.ClampU, gp->tsp.FlipU);
    SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
 
@@ -213,7 +212,8 @@ __forceinline static void SetGPState(const PolyParam* gp, u32 cflip)
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 
-   if (Type== ListType_Translucent)
+	// Apparently punch-through polys support blending, or at least some combinations
+	if (Type == ListType_Translucent || Type == ListType_Punch_Through)
    {
       glcache.Enable(GL_BLEND);
       glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr], DstBlendGL[gp->tsp.DstInstr]);
@@ -276,326 +276,18 @@ static void DrawList(const List<PolyParam>& gply, int first, int count)
    }
 }
 
-bool operator<(const PolyParam &left, const PolyParam &right)
-{
-   /* put any condition you want to sort on here */
-	return left.zvZ  < right.zvZ;
-#if 0
-	return left.zMin < right.zMax;
-#endif
-}
-
-//Sort based on min-z of each strip
-void SortPParams(int first, int count)
-{
-   u32 *idx_base      = NULL;
-   Vertex *vtx_base   = NULL;
-   PolyParam *pp      = NULL;
-   PolyParam *pp_end  = NULL;
-
-   if (pvrrc.verts.used()==0 || count <=1)
-      return;
-
-   vtx_base          = pvrrc.verts.head();
-   idx_base          = pvrrc.idx.head();
-   pp                = &pvrrc.global_param_tr.head()[first];
-   pp_end            = pp + count;
-
-   while(pp!=pp_end)
-   {
-      if (pp->count<2)
-         pp->zvZ=0;
-      else
-      {
-         u32*      idx   = idx_base+pp->first;
-         Vertex*   vtx   = vtx_base+idx[0];
-         Vertex* vtx_end = vtx_base + idx[pp->count-1]+1;
-         u32 zv          = 0xFFFFFFFF;
-
-         while(vtx!=vtx_end)
-         {
-            zv = min(zv,(u32&)vtx->z);
-            vtx++;
-         }
-
-         pp->zvZ=(f32&)zv;
-      }
-      pp++;
-   }
-
-   std::stable_sort(pvrrc.global_param_tr.head() + first,
-         pvrrc.global_param_tr.head() + first + count);
-}
-
-Vertex* vtx_sort_base;
-
-float min3(float v0,float v1,float v2)
-{
-	return min(min(v0,v1),v2);
-}
-
-float max3(float v0,float v1,float v2)
-{
-	return max(max(v0,v1),v2);
-}
-
-float minZ(Vertex* v, u32* mod)
-{
-	return min(min(v[mod[0]].z,v[mod[1]].z),v[mod[2]].z);
-}
-
-bool operator<(const IndexTrig &left, const IndexTrig &right)
-{
-	return left.z<right.z;
-}
-
-//are two poly params the same?
-bool PP_EQ(PolyParam* pp0, PolyParam* pp1)
-{
-   return 
-      (pp0->pcw.full&PCW_DRAW_MASK)==(pp1->pcw.full&PCW_DRAW_MASK) 
-      && pp0->isp.full==pp1->isp.full 
-      && pp0->tcw.full==pp1->tcw.full
-      && pp0->tsp.full==pp1->tsp.full
-      && pp0->tileclip==pp1->tileclip;
-}
-
 static vector<SortTrigDrawParam>	pidx_sort;
 
-void fill_id(u32* d, Vertex* v0, Vertex* v1, Vertex* v2,  Vertex* vb)
+static void SortTriangles(int first, int count)
 {
-	d[0]=v0-vb;
-	d[1]=v1-vb;
-	d[2]=v2-vb;
-}
+	vector<u32> vidx_sort;
+	GenSorted(first, count, pidx_sort, vidx_sort);
 
-void GenSorted(int first, int count)
-{
-   static vector<IndexTrig> lst;
-   static vector<u32> vidx_sort;
-
-   static u32 vtx_cnt;
-   int idx            = -1;
-   int pfsti          =  0;
-
-   pidx_sort.clear();
-
-   if (pvrrc.verts.used()==0 || count <=1)
-      return;
-
-   Vertex* vtx_base=pvrrc.verts.head();
-   u32* idx_base = pvrrc.idx.head();
-
-   PolyParam* pp_base= &pvrrc.global_param_tr.head()[first];
-   PolyParam* pp=pp_base;
-   PolyParam* pp_end= pp + count;
-
-   Vertex* vtx_arr=vtx_base+idx_base[pp->first];
-   vtx_sort_base=vtx_base;
-   int vtx_count=idx_base[pp_end[-1].first+pp_end[-1].count-1]-idx_base[pp->first];
-   if (vtx_count>vtx_cnt)
-      vtx_cnt=vtx_count;
-
-#if PRINT_SORT_STATS
-   printf("TVTX: %d || %d\n",vtx_cnt,vtx_count);
-#endif
-
-   if (vtx_count<=0)
-      return;
-
-   /* Make lists of all triangles, with their PID and VID */
-
-   lst.resize(vtx_count*4);
-
-   while(pp != pp_end)
-   {
-      Vertex *vtx     = NULL;
-      Vertex *vtx_end = NULL;
-      u32 *idx        = NULL;
-      u32 flip        = 0;
-      u32 ppid        = (pp-pp_base);
-
-      if (pp->count <= 2)
-      {
-         pp++;
-         continue;
-      }
-
-      idx             = idx_base + pp->first;
-      vtx             = vtx_base+idx[0];
-      vtx_end         = vtx_base + idx[pp->count-1]-1;
-
-      while(vtx != vtx_end)
-      {
-         Vertex* v0, * v1, * v2, * v3, * v4, * v5;
-
-         if (flip)
-         {
-            v0=&vtx[1];
-            v1=&vtx[0];
-            v2=&vtx[2];
-         }
-         else
-         {
-            v0=&vtx[0];
-            v1=&vtx[1];
-            v2=&vtx[2];
-         }
-
-#if 0
-         if (settings.pvr.subdivide_transp)
-         {
-            u32 tess_x=(max3(v0->x,v1->x,v2->x)-min3(v0->x,v1->x,v2->x))/32;
-            u32 tess_y=(max3(v0->y,v1->y,v2->y)-min3(v0->y,v1->y,v2->y))/32;
-
-            if (tess_x==1) tess_x=0;
-            if (tess_y==1) tess_y=0;
-
-            //bool tess=(maxZ(v0,v1,v2)/minZ(v0,v1,v2))>=1.2;
-
-            if (tess_x + tess_y)
-            {
-               v3=pvrrc.verts.Append(3);
-               v4=v3+1;
-               v5=v4+1;
-
-               //xyz
-               for (int i=0;i<3;i++)
-               {
-                  ((float*)&v3->x)[i]=((float*)&v0->x)[i]*0.5f+((float*)&v2->x)[i]*0.5f;
-                  ((float*)&v4->x)[i]=((float*)&v0->x)[i]*0.5f+((float*)&v1->x)[i]*0.5f;
-                  ((float*)&v5->x)[i]=((float*)&v1->x)[i]*0.5f+((float*)&v2->x)[i]*0.5f;
-               }
-
-               //*TODO* Make it perspective correct
-
-               //uv
-               for (int i=0;i<2;i++)
-               {
-                  ((float*)&v3->u)[i]=((float*)&v0->u)[i]*0.5f+((float*)&v2->u)[i]*0.5f;
-                  ((float*)&v4->u)[i]=((float*)&v0->u)[i]*0.5f+((float*)&v1->u)[i]*0.5f;
-                  ((float*)&v5->u)[i]=((float*)&v1->u)[i]*0.5f+((float*)&v2->u)[i]*0.5f;
-               }
-
-               //color
-               for (int i=0;i<4;i++)
-               {
-                  v3->col[i]=v0->col[i]/2+v2->col[i]/2;
-                  v4->col[i]=v0->col[i]/2+v1->col[i]/2;
-                  v5->col[i]=v1->col[i]/2+v2->col[i]/2;
-               }
-
-               fill_id(lst[pfsti].id,v0,v3,v4,vtx_base);
-               lst[pfsti].pid= ppid ;
-               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-               pfsti++;
-
-               fill_id(lst[pfsti].id,v2,v3,v5,vtx_base);
-               lst[pfsti].pid= ppid ;
-               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-               pfsti++;
-
-               fill_id(lst[pfsti].id,v3,v4,v5,vtx_base);
-               lst[pfsti].pid= ppid ;
-               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-               pfsti++;
-
-               fill_id(lst[pfsti].id,v5,v4,v1,vtx_base);
-               lst[pfsti].pid= ppid ;
-               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-               pfsti++;
-
-               tess_gen+=3;
-            }
-            else
-            {
-               fill_id(lst[pfsti].id,v0,v1,v2,vtx_base);
-               lst[pfsti].pid= ppid ;
-               lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-               pfsti++;
-            }
-         }
-         else
-#endif
-         {
-            fill_id(lst[pfsti].id,v0,v1,v2,vtx_base);
-            lst[pfsti].pid= ppid ;
-            lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-            pfsti++;
-         }
-
-         flip ^= 1;
-
-         vtx++;
-      }
-      pp++;
-   }
-
-   u32 aused=pfsti;
-
-   lst.resize(aused);
-
-   /* sort them */
-   std::stable_sort(lst.begin(),lst.end());
-
-   /* Merge PIDs/draw commands if two different PIDs are actually equal */
-
-   for (u32 k = 1; k < aused; k++)
-   {
-      if (lst[k].pid == lst[k-1].pid)
-         continue;
-
-      if (PP_EQ(&pp_base[lst[k].pid],&pp_base[lst[k-1].pid]))
-         lst[k].pid=lst[k-1].pid;
-   }
-
-   /* Reassemble vertex indices into drawing commands */
-
-   vidx_sort.resize(aused*3);
-
-   for (u32 i=0; i<aused; i++)
-   {
-      SortTrigDrawParam stdp;
-      int   pid          = lst[i].pid;
-      u32* midx          = lst[i].id;
-
-      vidx_sort[i*3 + 0] = midx[0];
-      vidx_sort[i*3 + 1] = midx[1];
-      vidx_sort[i*3 + 2] = midx[2];
-
-      if (idx == pid)
-         continue;
-
-      stdp.ppid  = pp_base + pid;
-      stdp.first = i * 3;
-      stdp.count = 0;
-
-      if (idx!=-1)
-      {
-         SortTrigDrawParam *last = &pidx_sort[pidx_sort.size()-1];
-
-         if (last)
-            last->count=stdp.first-last->first;
-      }
-
-      pidx_sort.push_back(stdp);
-      idx=pid;
-   }
-
-   SortTrigDrawParam *stdp = &pidx_sort[pidx_sort.size()-1];
-
-   if (stdp)
-      stdp->count=aused*3-stdp->first;
-
-#if PRINT_SORT_STATS
-   printf("Reassembled into %d from %d\n",pidx_sort.size(),pp_end-pp_base);
-#endif
-
-   /* Upload to GPU if needed, otherwise return */
+	//Upload to GPU if needed
    if (pidx_sort.size())
    {
-      /* Bind and upload sorted index buffer */
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2);
+      //Bind and upload sorted index buffer
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
       if (gl.index_type == GL_UNSIGNED_SHORT)
       {
     	 static bool overrun;
@@ -750,14 +442,6 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 			// if (1<=st) st=1; else st=0;
          glcache.StencilFunc(GL_LEQUAL, 1, 3);
          glcache.StencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
-
-			/*
-			//if !=0 -> set to 10
-			verifyc(dev->SetRenderState(D3DRS_STENCILFUNC,D3DCMP_LESSEQUAL));
-			verifyc(dev->SetRenderState(D3DRS_STENCILREF,1));					
-			verifyc(dev->SetRenderState(D3DRS_STENCILPASS,D3DSTENCILOP_REPLACE));
-			verifyc(dev->SetRenderState(D3DRS_STENCILFAIL,D3DSTENCILOP_ZERO));
-			*/
 		}
 		else
 		{
@@ -831,6 +515,7 @@ static void DrawModVols(int first, int count)
    glcache.UseProgram(gl.modvol_shader.program);
    glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
 
+   glcache.Enable(GL_DEPTH_TEST);
    glcache.DepthMask(GL_FALSE);
    glcache.DepthFunc(Zfunction[4]);
 
@@ -891,9 +576,6 @@ static void DrawModVols(int first, int count)
 
       SetupMainVBO();
       glDrawArrays(GL_TRIANGLE_STRIP,0,4);
-
-      //Draw and blend
-      //glDrawArrays(GL_TRIANGLES, count, 2);
    }
 
    //restore states
@@ -908,10 +590,16 @@ void DrawStrips(void)
    //We use sampler 0
    glActiveTexture(GL_TEXTURE0);
 
-   RenderPass previous_pass = {0};
+   RenderPass previous_pass = {};
    for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
    {
       const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+
+      DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d", render_pass + 1,
+      		current_pass.op_count - previous_pass.op_count,
+			current_pass.pt_count - previous_pass.pt_count,
+			current_pass.tr_count - previous_pass.tr_count,
+			current_pass.mvo_count - previous_pass.mvo_count);
 
       //initial state
       glcache.Enable(GL_DEPTH_TEST);
@@ -934,7 +622,7 @@ void DrawStrips(void)
       {
          if (current_pass.autosort)
          {
-            GenSorted(previous_pass.tr_count,
+            SortTriangles(previous_pass.tr_count,
                        current_pass.tr_count - previous_pass.tr_count);
             DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
          }
@@ -973,6 +661,9 @@ void DrawFramebuffer(float w, float h)
 	glcache.Disable(GL_STENCIL_TEST);
 	glcache.Disable(GL_CULL_FACE);
 	glcache.Disable(GL_BLEND);
+
+	ShaderUniforms.trilinear_alpha = 1.0;
+
  	PipelineShader *shader = GetProgram(0, 1, 1, 0, 1, 0, 0, 2, false, false, false, false);
 	glcache.UseProgram(shader->program);
 

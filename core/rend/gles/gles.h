@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <atomic>
 #include "rend/rend.h"
+#include "rend/TexCache.h"
 #include <glsm/glsm.h>
 #include <glsm/glsmsym.h>
 #include "glcache.h"
@@ -72,7 +73,11 @@ struct gl_ctx
    size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };
 
-GLuint gl_GetTexture(TSP tsp,TCW tcw);
+extern gl_ctx gl;
+extern GLuint fbTextureId;
+extern float fb_scale_x, fb_scale_y;
+
+u64 gl_GetTexture(TSP tsp,TCW tcw);
 struct text_info {
 	u16* pdata;
 	u32 width;
@@ -80,23 +85,17 @@ struct text_info {
 	u32 textype; // 0 565, 1 1555, 2 4444
 };
 
-extern gl_ctx gl;
-extern GLuint fbTextureId;
-extern float fb_scale_x, fb_scale_y;
-
 enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
 bool ProcessFrame(TA_context* ctx);
 void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
 text_info raw_GetTexture(TSP tsp, TCW tcw);
-void CollectCleanup();
 void DoCleanup();
 void SortPParams(int first, int count);
 void SetCull(u32 CullMode);
 s32 SetTileClip(u32 val, GLint uniform);
 void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
 
-void killtex();
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();
 void RenderFramebuffer();
@@ -161,20 +160,6 @@ extern struct ShaderUniforms_t
 
 } ShaderUniforms;
 
-struct IndexTrig
-{
-	u32 id[3];
-	u16 pid;
-	f32 z;
-};
-
-struct SortTrigDrawParam
-{
-	PolyParam* ppid;
-	u32 first;
-	u32 count;
-};
-
 // Render to texture
 struct FBT
 {
@@ -185,59 +170,16 @@ struct FBT
 };
 extern FBT fb_rtt;
 
-struct PvrTexInfo;
-template <class pixel_type> class PixelBuffer;
-typedef void TexConvFP(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
-typedef void TexConvFP32(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
-
-struct TextureCacheData
+struct TextureCacheData : BaseTextureCacheData
 {
-	TSP tsp;        //dreamcast texture parameters
-	TCW tcw;
-
 	GLuint texID;   //gl texture
 	u16* pData;
-	int tex_type;
-
-	u32 Lookups;
-
-	//decoded texture info
-	u32 sa;         //pixel data start address in vram (might be offset for mipmaps/etc)
-	u32 sa_tex;		//texture data start address in vram
-	u32 w,h;        //width & height of the texture
-	u32 size;       //size, in bytes, in vram
-
-	const PvrTexInfo* tex;
-	TexConvFP*  texconv;
-	TexConvFP32*  texconv32;
-
-	u32 dirty;
-	vram_block* lock_block;
-
-	u32 Updates;
-
-	u32 palette_index;
-	//used for palette updates
-	u32 palette_hash;			// Palette hash at time of last update
-	u32 vq_codebook;			// VQ quantizers table for compressed textures
-	u32 texture_hash;			// xxhash of texture data, used for custom textures
-	u32 old_texture_hash;		// legacy hash
-	u8* volatile custom_image_data;		// loaded custom image data
-	volatile u32 custom_width;
-	volatile u32 custom_height;
-	std::atomic_int custom_load_in_progress;
-
-	bool IsPaletted()
-	{
-		return tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8;
-	}
-
-	void Create(bool isGL);
-	void ComputeHash();
-	void Update();
-	void UploadToGPU(GLuint textype, int width, int height, u8 *temp_tex_buffer);
-	void CheckCustomTexture();
-	//true if : dirty or paletted texture and hashes don't match
-	bool NeedsUpdate();
-	bool Delete();
+	virtual std::string GetId() override { return std::to_string(texID); }
+	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer) override;
+	virtual bool Delete() override;
 };
+
+class TextureCache : public BaseTextureCache<TextureCacheData>
+{
+};
+extern TextureCache TexCache;

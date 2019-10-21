@@ -31,12 +31,12 @@ const static u32 Zfunction[]=
 
 static gl4PipelineShader* CurrentShader;
 extern u32 gcflip;
-static GLuint geom_fbo;
+GLuint geom_fbo;
 GLuint stencilTexId;
 GLuint opaqueTexId;
 GLuint depthTexId;
-static GLuint texSamplers[2];
-static GLuint depth_fbo;
+GLuint texSamplers[2];
+GLuint depth_fbo;
 GLuint depthSaveTexId;
 
 static gl4PipelineShader *gl4GetProgram(
@@ -189,7 +189,7 @@ __forceinline static void SetGPState(const PolyParam* gp, int pass)
       for (int i = 0; i < 2; i++)
 		{
 			glActiveTexture(GL_TEXTURE0 + i);
-			GLuint texid = i == 0 ? gp->texid : gp->texid1;
+			GLuint texid = (GLuint)(i == 0 ? gp->texid : gp->texid1);
 
 			glBindTexture(GL_TEXTURE_2D, texid == -1 ? 0 : texid);
 
@@ -342,6 +342,7 @@ static void DrawModVols(int first, int count)
 
    glcache.UseProgram(gl4.modvol_shader.program);
 
+   glcache.Enable(GL_DEPTH_TEST);
    glcache.DepthMask(GL_FALSE);
    glcache.DepthFunc(Zfunction[4]);
 
@@ -459,7 +460,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
    glcache.Disable(GL_BLEND);
    glProvokingVertex(GL_LAST_VERTEX_CONVENTION);
 
-   RenderPass previous_pass = {0};
+   RenderPass previous_pass = {};
    int render_pass_count = pvrrc.render_passes.used();
 
 
@@ -491,6 +492,11 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			previous_pass = current_pass;
 			continue;
 		}
+        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d", render_pass + 1,
+        		current_pass.op_count - previous_pass.op_count,
+				current_pass.pt_count - previous_pass.pt_count,
+				current_pass.tr_count - previous_pass.tr_count);
+
 		glBindVertexArray(gl4.vbo.main_vao);
 
 		if (!skip_op_pt)
@@ -720,8 +726,8 @@ static void gl4_draw_quad_texture(GLuint texture, float w, float h)
 
 	glBindVertexArray(gl4.vbo.main_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
 
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);

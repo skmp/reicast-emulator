@@ -266,6 +266,14 @@ void rglGenSamplers(	GLsizei n,
 #endif
 }
 
+void rglDeleteSamplers(    GLsizei n,
+    GLuint *samplers)
+{
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
+   glDeleteSamplers(n, samplers);
+#endif
+}
+
 void rglBindSampler(	GLuint unit,
  	GLuint sampler)
 {

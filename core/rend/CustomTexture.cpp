@@ -1,5 +1,5 @@
 /*
-	 Copyright 2019 flyinghead
+	 Copyright 2018 flyinghead
  
 	 This file is part of reicast.
  
@@ -31,7 +31,7 @@ void CustomTexture::LoaderThread()
 {
 	while (initialized)
 	{
-		TextureCacheData *texture;
+		BaseTextureCacheData *texture;
 		
 		do {
 			texture = NULL;
@@ -79,9 +79,9 @@ void CustomTexture::LoaderThread()
 std::string CustomTexture::GetGameId()
 {
    std::string game_id(ip_meta.product_number, sizeof(ip_meta.product_number));
-   const size_t str_end = game_id.find_last_not_of(" ");
+   const size_t str_end = game_id.find_last_not_of(' ');
    if (str_end == std::string::npos)
-	  return "";
+	   return "";
    game_id = game_id.substr(0, str_end + 1);
    std::replace(game_id.begin(), game_id.end(), ' ', '_');
 
@@ -137,7 +137,7 @@ u8* CustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)
 	return image_data;
 }
 
-void CustomTexture::LoadCustomTextureAsync(TextureCacheData *texture_data)
+void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
 {
 	if (!Init())
 		return;
@@ -287,7 +287,7 @@ u8* CustomTexture::LoadPNG(const std::string& fname, int &width, int &height)
 	return image_data;
 }
 
-void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *temp_tex_buffer)
+void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, void *temp_tex_buffer)
 {
 	std::string base_dump_dir = get_writable_data_path("/texdump/");
 	if (!path_is_valid(base_dump_dir.c_str()))
@@ -318,7 +318,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 		u8 *dst = (u8 *)rows[h - y - 1];
 		switch (textype)
 		{
-		case GL_UNSIGNED_SHORT_4_4_4_4:
+		case TextureType::_4444:
 			for (int x = 0; x < w; x++)
 			{
 				*dst++ = ((*src >> 12) & 0xF) << 4;
@@ -328,7 +328,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 				src++;
 			}
 			break;
-		case GL_UNSIGNED_SHORT_5_6_5:
+		case TextureType::_565:
 			for (int x = 0; x < w; x++)
 			{
 				*dst++ = ((*src >> 11) & 0x1F) << 3;
@@ -338,7 +338,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 				src++;
 			}
 			break;
-		case GL_UNSIGNED_SHORT_5_5_5_1:
+		case TextureType::_5551:
 			for (int x = 0; x < w; x++)
 			{
 				*dst++ = ((*src >> 11) & 0x1F) << 3;
@@ -348,7 +348,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 				src++;
 			}
 			break;
-		case GL_UNSIGNED_BYTE:
+		case TextureType::_8888:
 			for (int x = 0; x < w; x++)
 			{
 				*(u32 *)dst = *(u32 *)src;
@@ -357,7 +357,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 			}
 			break;
 		default:
-			WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", textype);
+			WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", (u32)textype);
 			fclose(fp);
 			free(rows[0]);
 			free(rows);

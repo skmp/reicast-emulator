@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <math.h>
 #include "glcache.h"
 #include "rend/TexCache.h"
 #include "hw/pvr/pvr_mem.h"

@@ -36,6 +36,7 @@ class Archive
 public:
 	virtual ~Archive() {}
 	virtual ArchiveFile *OpenFile(const char *name) = 0;
+	virtual ArchiveFile *OpenFileByCrc(u32 crc) = 0;
 
 	friend Archive *OpenArchive(const char *path);
 

@@ -31,6 +31,7 @@ public:
 	virtual ~ZipArchive();
 
 	virtual ArchiveFile* OpenFile(const char* name) override;
+	virtual ArchiveFile* OpenFileByCrc(u32 crc) override;
 
 private:
 	virtual bool Open(const char* path) override;

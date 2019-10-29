@@ -25,7 +25,7 @@
 #include <time.h>
 #include <float.h>
 
-#define CPU_RATIO      (8)
+#define CPU_RATIO      (1)
 
 //uh uh
 #define GetN(str) ((str>>8) & 0xf)

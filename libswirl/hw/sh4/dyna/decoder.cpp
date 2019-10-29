@@ -998,7 +998,7 @@ void state_Setup(u32 rpc,fpscr_t fpu_cfg)
 	state.cpu.FPR64=fpu_cfg.PR;
 	state.cpu.FSZ64=fpu_cfg.SZ;
 	state.cpu.RoundToZero=fpu_cfg.RM==1;
-	verify(fpu_cfg.RM<2);
+	//verify(fpu_cfg.RM<2);
 	//what about fp/fs ?
 
 	state.NextOp=NDO_NextOp;

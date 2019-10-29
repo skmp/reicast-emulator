@@ -165,17 +165,21 @@ enum HollyInterruptID
 		//bit 0 = RENDER : ISP out of Cache(Buffer over flow)
 		//bit 1 = RENDER : Hazard Processing of Strip Buffer
 		holly_PRIM_NOMEM = holly_err | 0x02,	//bit 2 = TA : ISP/TSP Parameter Overflow
-		holly_MATR_NOMEM = holly_err | 0x03		//bit 3 = TA : Object List Pointer Overflow
+		holly_MATR_NOMEM = holly_err | 0x03,		//bit 3 = TA : Object List Pointer Overflow
 		//bit 4 = TA : Illegal Parameter
 		//bit 5 = TA : FIFO Overflow
 		//bit 6 = PVRIF : Illegal Address set
+        holly_PVR_ILLADDR = holly_err | 0x06,
 		//bit 7 = PVRIF : DMA over run
+        holly_PVR_OVERRUN = holly_err | 0x07,
 		//bit 8 = MAPLE : Illegal Address set
 		//bit 9 = MAPLE : DMA over run
 		//bit 10 = MAPLE : Write FIFO over flow
 		//bit 11 = MAPLE : Illegal command
 		//bit 12 = G1 : Illegal Address set
+        holly_G1_ILLADDR = holly_err | 12,
 		//bit 13 = G1 : GD-DMA over run
+        holly_G1_OVERRUN = holly_err | 13,
 		//bit 14 = G1 : ROM/FLASH access at GD-DMA
 		//bit 15 = G2 : AICA-DMA Illegal Address set
 		//bit 16 = G2 : Ext-DMA1 Illegal Address set
@@ -190,6 +194,8 @@ enum HollyInterruptID
 		//bit 25 = G2 : Ext-DMA2 Time out
 		//bit 26 = G2 : Dev-DMA Time out
 		//bit 27 = G2 : Time out in CPU accessing
+        //bit 28 = sort-dma error
+        holly_PVR_SortDMA_Error = holly_err | 28
 };
 
 

@@ -98,7 +98,7 @@ void maple_SB_MDEN_Write(u32 addr, u32 data)
 
 	if ((data & 0x1)==0  && SB_MDST)
 	{
-		printf("Maple DMA abort ?\n");
+		//printf("Maple DMA abort ?\n");
 	}
 }
 
@@ -182,8 +182,8 @@ void maple_DoDma()
 			}
 			else
 			{
-				if (port != 5 && command != 1)
-					printf("MAPLE: Unknown device bus %d port %d cmd %d\n", bus, port, command);
+				//if (port != 5 && command != 1)
+				//	printf("MAPLE: Unknown device bus %d port %d cmd %d\n", bus, port, command);
 				outlen=4;
 				p_out[0]=0xFFFFFFFF;
 			}
@@ -234,7 +234,7 @@ int maple_schd(int tag, int c, int j)
 	}
 	else
 	{
-		printf("WARNING: MAPLE DMA ABORT\n");
+		//printf("WARNING: MAPLE DMA ABORT\n");
 		SB_MDST=0; //I really wonder what this means, can the DMA be continued ?
 	}
 

@@ -396,6 +396,13 @@ void gd_process_ata_cmd()
 	case ATA_EXEC_DIAG:
 		printf_ata("ATA_EXEC_DIAG\n");
 		printf("ATA_EXEC_DIAG -- not implemented\n");
+        Error.ABRT = 1;
+        Error.Sense = sns_key;
+        GDStatus.BSY = 0;
+        GDStatus.CHECK = 1;
+
+        asic_RaiseInterrupt(holly_GDROM_CMD);
+        gd_set_state(gds_waitcmd);
 		break;
 
 	case ATA_SPI_PACKET:
@@ -655,7 +662,7 @@ void gd_process_spi_cmd()
 			}
 			else
 			{
-				die("SPI_CD_SEEK  : not known parameter..");
+				die("SPI_CD_PLAY  : not known parameter..");
 			}
 			cdda.repeats=packet_cmd.data_8[6]&0xF;
 			printf("cdda.StartAddr=%d\n",cdda.StartAddr.FAD);
@@ -951,7 +958,7 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 		break;
 
 	case GD_SECTCNT_Write:
-		printf("GDROM: Write to SecCount = %X\n", data);
+        printf_rm("GDROM: Write to SecCount = %X\n", data);
 		SecCount.full =(u8) data;
 		break;
 
@@ -1008,6 +1015,13 @@ int GDRomschd(int i, int c, int j)
 		die("\n!\tGDROM: SB_GDLEN has invalid size !\n");
 		return 0;
 	}
+    
+    if (src < 0xC000000 || src > 0x0FFFFFE0)
+    {
+        asic_RaiseInterrupt(holly_G1_OVERRUN);
+        SB_GDST = 0;
+        return 0;
+    }
 
 	//if we don't have any more sectors to read
 	if (read_params.remaining_sectors == 0)
@@ -1094,11 +1108,21 @@ void GDROM_DmaStart(u32 addr, u32 data)
 		printf("Invalid GD-DMA start, SB_GDEN=0.Ingoring it.\n");
 		return;
 	}
+
+    u32 src = SB_GDSTAR & 0xFFFFFFF;
+
+    
+    if (src < 0xC000000 || src > 0x0FFFFFE0)
+    {
+        asic_RaiseInterrupt(holly_G1_ILLADDR);
+        return;
+    }
+
 	SB_GDST|=data&1;
 
 	if (SB_GDST==1)
 	{
-		SB_GDSTARD=SB_GDSTAR;
+		SB_GDSTARD=SB_GDSTAR & 0xFFFFFFF;
 		SB_GDLEND=0;
 		//printf("GDROM-DMA start addr %08X len %d\n", SB_GDSTAR, SB_GDLEN);
 

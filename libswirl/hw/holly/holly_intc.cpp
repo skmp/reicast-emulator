@@ -38,6 +38,8 @@ void asic_RL2Pending()
 	InterruptPend(sh4_IRL_13,t1|t2|t3);
 }
 
+void RegWrite_SB_PDST(u32 addr, u32 data);
+
 //Raise interrupt interface
 void RaiseAsicNormal(HollyInterruptID inter)
 {
@@ -46,6 +48,15 @@ void RaiseAsicNormal(HollyInterruptID inter)
 
 	u32 Interrupt = 1<<(u8)inter;
 	SB_ISTNRM |= Interrupt;
+
+    if (SB_ISTNRM & SB_PDTNRM)
+    {
+        printf("SB_PDTNRM: intr trigger\n");
+        if (SB_PDST == 0)
+        {
+            RegWrite_SB_PDST(0, 1);
+        }
+    }
 
 	asic_RL2Pending();
 	asic_RL4Pending();
@@ -56,6 +67,11 @@ void RaiseAsicExt(HollyInterruptID inter)
 {
 	u32 Interrupt = 1<<(u8)inter;
 	SB_ISTEXT |= Interrupt;
+
+    if (SB_ISTEXT & SB_PDTEXT)
+    {
+        printf("SB_PDTNRM: intr trigger\n");
+    }
 
 	asic_RL2Pending();
 	asic_RL4Pending();

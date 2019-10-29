@@ -142,7 +142,7 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 		{
 			VREG=(data>>8)&0xFF;
 			ARMRST=data&0xFF;
-			printf("VREG = %02X ARMRST %02X\n",VREG,ARMRST);
+			//printf("VREG = %02X ARMRST %02X\n",VREG,ARMRST);
 			ArmSetRST();
 		}
 		else
@@ -339,8 +339,37 @@ void Write_SB_E2ST(u32 addr, u32 data)
 
 void Write_SB_DDST(u32 addr, u32 data)
 {
-	if (data & 1)
-		die("SB_DDST DMA not implemented");
+    if ((data & 1) && (SB_DDEN & 1))
+    {
+        u32 src = SB_DDSTAR;
+        u32 dst = SB_DDSTAG;
+        u32 len = SB_DDLEN & 0x7FFFFFFF;
+
+        if (SB_DDDIR == 1)
+        {
+            u32 t = src;
+            src = dst;
+            dst = t;
+            printf("G2-EXT2 DMA : SB_DDDIR==1 DMA Read to 0x%X from 0x%X %d bytes\n", dst, src, len);
+        }
+        else
+            printf("G2-EXT2 DMA : SB_DDDIR==0:DMA Write to 0x%X from 0x%X %d bytes\n", dst, src, len);
+
+        WriteMemBlock_nommu_dma(dst, src, len);
+
+        if (SB_DDLEN & 0x80000000)
+            SB_DDEN = 1;
+        else
+            SB_DDEN = 0;
+
+        SB_DDSTAR += len;
+        SB_DDSTAG += len;
+        SB_DDST = 0x00000000;//dma done
+        SB_DDLEN = 0x00000000;
+
+
+        asic_RaiseInterrupt(holly_DEV_DMA);
+    }
 }
 
 void aica_sb_Init()

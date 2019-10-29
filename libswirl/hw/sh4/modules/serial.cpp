@@ -4,10 +4,12 @@
 */
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
+#include "hw/sh4/sh4_interrupts.h"
 
 SCIF_SCFSR2_type SCIF_SCFSR2;
 u8 SCIF_SCFRDR2;
 SCIF_SCFDR2_type SCIF_SCFDR2;
+SCIF_SCFCR2_type SCIF_SCFCR2;
 
 /*
 //SCIF SCSMR2 0xFFE80000 0x1FE80000 16 0x0000 0x0000 Held Held Pclk
@@ -43,23 +45,42 @@ SCSPTR2_type SCIF_SCSPTR2;
 SCLSR2_type SCIF_SCLSR2;
 */
 
+SCIF_SCFSR2_type SCFSR2;
+SCIF_SCSCR2_type SCIF_SCSCR2;
+
+void Serial_UpdateInterrupts()
+{
+    InterruptPend(sh4_SCIF_TXI, SCFSR2.TDFE);
+    InterruptMask(sh4_SCIF_TXI, SCIF_SCSCR2.TIE);
+
+    InterruptPend(sh4_SCIF_RXI, SCFSR2.RDF);
+    InterruptMask(sh4_SCIF_RXI, SCIF_SCSCR2.RIE);
+}
+
 void SerialWrite(u32 addr, u32 data)
 {
 	if (settings.debug.SerialConsole) {
 		putc(data, stdout);
 	}
+
+    SCFSR2.TDFE = 1;
+    SCFSR2.TEND = 1;
+
+    Serial_UpdateInterrupts();
 }
 
 //SCIF_SCFSR2 read
+
+
 u32 ReadSerialStatus(u32 addr)
 {
 	if (false /*PendingSerialData()*/)
 	{
-		return 0x60 | 2;
+		return SCFSR2.full | 2;
 	}
 	else
 	{
-		return 0x60| 0;
+		return SCFSR2.full | 0;
 	}
 	/*
 	//TODO : Add status for serial input
@@ -69,6 +90,15 @@ u32 ReadSerialStatus(u32 addr)
 
 void WriteSerialStatus(u32 addr,u32 data)
 {
+    if (!SCFSR2.BRK)
+        data &= ~0x10;
+
+    SCFSR2.full = data & ~ 3;
+
+    SCFSR2.TDFE = 1;
+    SCFSR2.TEND = 1;
+
+    Serial_UpdateInterrupts();
 	/*
 	//TODO : do something ?
 	*/
@@ -86,6 +116,32 @@ u32 ReadSerialData(u32 addr)
 	return (u8)rd ;
 }
 
+
+//SCSCR2
+
+
+u32 SCSCR2_read(u32 addr)
+{
+    return SCIF_SCSCR2.full;
+}
+
+void SCSCR2_write(u32 addr, u32 data)
+{
+    SCIF_SCSCR2.full = data;
+
+    Serial_UpdateInterrupts();
+}
+
+u32 SCIF_SCFCR2_read(u32 addr)
+{
+    return SCIF_SCFCR2.full;
+}
+
+void SCIF_SCFCR2_write(u32 a, u32 data)
+{
+    SCIF_SCFCR2.full = data;
+}
+
 //Init term res
 void serial_init()
 {
@@ -96,7 +152,7 @@ void serial_init()
 	sh4_rio_reg(SCIF,SCIF_SCBRR2_addr,RIO_DATA,8);
 
 	//SCIF SCSCR2 0xFFE80008 0x1FE80008 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCSCR2_addr,RIO_DATA,16);
+	sh4_rio_reg(SCIF,SCIF_SCSCR2_addr,RIO_FUNC,16, &SCSCR2_read, &SCSCR2_write);
 
 	//Write only 
 	//SCIF SCFTDR2 0xFFE8000C 0x1FE8000C 8 Undefined Undefined Held Held Pclk
@@ -110,7 +166,7 @@ void serial_init()
 	sh4_rio_reg(SCIF,SCIF_SCFRDR2_addr,RIO_RO_FUNC,8,&ReadSerialData);
 
 	//SCIF SCFCR2 0xFFE80018 0x1FE80018 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCFCR2_addr,RIO_DATA,16);
+	sh4_rio_reg(SCIF,SCIF_SCFCR2_addr,RIO_FUNC,16, &SCIF_SCFCR2_read, &SCIF_SCFCR2_write);
 
 	//Read only
 	//SCIF SCFDR2 0xFFE8001C 0x1FE8001C 16 0x0000 0x0000 Held Held Pclk

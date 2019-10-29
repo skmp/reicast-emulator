@@ -216,11 +216,17 @@ struct flash_user_block {
   u16 crc;
 };
 
+/*
+    Flash PROT command - 0x90 then 0xAA and stuff, and finally a read from 0x<protect range>2
+    Flash Vendor Id - 0x90 then 0xAA and stuff, then read from 0x0
+    Flash Device Id - 0x90 then 0xAA and stuff, then read from 0x1
+*/
+
 // Macronix 29LV160TMC
 // AtomisWave uses a custom 29L001mc model
 struct DCFlashChip : MemChip
 {
-	DCFlashChip(u32 sz, u32 write_protect_size = 0): MemChip(sz, write_protect_size), state(FS_Normal) { }
+	DCFlashChip(u32 sz, u32 write_protect_size = 0): MemChip(sz, write_protect_size), state(FS_Normal), flashlog(false) { }
 
 	enum FlashState
 	{
@@ -233,6 +239,8 @@ struct DCFlashChip : MemChip
 		FS_EraseAMD3
 	};
 
+    bool flashlog ;
+
 	FlashState state;
 	void Reset()
 	{
@@ -242,6 +250,9 @@ struct DCFlashChip : MemChip
 	
 	virtual u8 Read8(u32 addr)
 	{
+        if (flashlog) {        
+            printf("FREAD: %X\n", addr);
+        }
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
 		switch (addr)
 		{
@@ -271,6 +282,10 @@ struct DCFlashChip : MemChip
 
 	void Write(u32 addr,u32 val,u32 sz)
 	{
+        if (flashlog) {
+            printf("FWRITE: %X %X\n", addr, val);
+        }
+
 		if (sz != 1)
 			die("invalid access size");
 
@@ -322,6 +337,10 @@ struct DCFlashChip : MemChip
 				state = FS_ByteProgram;
 			else if ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0xa0)
 				state = FS_ByteProgram;
+            else if ((addr & 0xffff) == 0x5555 && (val & 0xff) == 0x90)
+                flashlog = 1;
+            else if ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0x90)
+                flashlog = 1;
 			else
 			{
 				printf("FlashRom: ReadAMDID2 unexpected write @ %x: %x\n", addr, val);

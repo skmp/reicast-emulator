@@ -199,6 +199,24 @@ void SB_SFRES_write32(u32 addr, u32 data)
 		dc_request_reset();
 	}
 }
+
+u32 SB_PDSTAR;
+
+u32 SB_PDSTAR_read(u32 addr)
+{
+    return SB_PDSTAR;
+}
+
+void SB_PDSTAR_write(u32 addr, u32 data)
+{
+    SB_PDSTAR = data;
+
+    if (SB_PDSTAR == 0x4000000)
+    {
+        asic_RaiseInterrupt(holly_PVR_ILLADDR);
+    }
+}
+
 void sb_Init()
 {
 	sb_regs.Zero();
@@ -708,7 +726,7 @@ void sb_Init()
 
 
 	//0x005F7C04    SB_PDSTAR   RW  PVR-DMA system memory start address
-	sb_rio_register(SB_PDSTAR_addr,RIO_DATA);
+	sb_rio_register(SB_PDSTAR_addr, RIO_FUNC, &SB_PDSTAR_read, &SB_PDSTAR_write);
 
 
 	//0x005F7C08    SB_PDLEN    RW  PVR-DMA length

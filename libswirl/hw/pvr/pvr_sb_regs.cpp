@@ -31,6 +31,8 @@ void do_pvr_dma()
 	u32 dst = SB_PDSTAP;	// VRAM address
 	u32 len = SB_PDLEN;
 
+    printf("PVR-DMA: src: %08X dst: %08X len: %08X\n", src, dst, len);
+
 	if(0x8201 != (dmaor &DMAOR_MASK))
 	{
 		printf("\n!\tDMAC: DMAOR has invalid settings (%X) !\n", dmaor);
@@ -43,25 +45,41 @@ void do_pvr_dma()
 		return;
 	}
 
-	if (SB_PDDIR)
-	{
-		//PVR -> System
-		WriteMemBlock_nommu_dma(src, dst, len);
-	}
-	else
-	{
-		//System -> PVR
-		WriteMemBlock_nommu_dma(dst,src,len);
-	}
+    if (src == 0x4000000)
+    {
+        asic_RaiseInterrupt(holly_PVR_ILLADDR);
+    }
+    else if (src == 0x0C4FFE00)
+    {
+        asic_RaiseInterrupt(holly_PVR_OVERRUN);
 
-	DMAC_SAR(0) = (src + len);
-	DMAC_CHCR(0).full &= 0xFFFFFFFE;
-	DMAC_DMATCR(0) = 0x00000000;
+        DMAC_CHCR(0).full &= 0xFFFFFFFE;
+        DMAC_DMATCR(0) = 0x00000000;
+    }
+    else
+    {
+        if (SB_PDDIR)
+        {
+            //PVR -> System
+            WriteMemBlock_nommu_dma(src, dst, len);
+        }
+        else
+        {
+            //System -> PVR
+            WriteMemBlock_nommu_dma(dst, src, len);
+        }
 
-	SB_PDST = 0x00000000;
+        DMAC_SAR(0) = (src + len);
 
-	//TODO : *CHECKME* is that ok here ? the docs don't say here it's used [PVR-DMA , bit 11]
-	asic_RaiseInterrupt(holly_PVR_DMA);
+        //TODO : *CHECKME* is that ok here ? the docs don't say here it's used [PVR-DMA , bit 11]
+        asic_RaiseInterrupt(holly_PVR_DMA);
+    
+        DMAC_CHCR(0).full &= 0xFFFFFFFE;
+        DMAC_DMATCR(0) = 0x00000000;
+    }
+
+
+    SB_PDST = 0x00000000;
 }
 void RegWrite_SB_PDST(u32 addr, u32 data)
 {
@@ -101,7 +119,11 @@ void pvr_do_sort_dma()
 		if (SB_SDLAS==1)
 			link_addr*=32;
 
-		u32 ea=(link_base_addr+link_addr) & RAM_MASK;
+		u32 ea=(link_base_addr+link_addr);
+        printf("SortDMA: ea: %08X\n", ea);
+
+        ea = ea & RAM_MASK;
+
 		u32* ea_ptr=(u32*)&mem_b[ea];
 
 		link_addr=ea_ptr[0x1C>>2];//Next link
@@ -122,6 +144,7 @@ void RegWrite_SB_SDST(u32 addr, u32 data)
 {
 	if(1&data)
 	{
+        printf("Sort DMA start\n");
 		pvr_do_sort_dma();
 	}
 }

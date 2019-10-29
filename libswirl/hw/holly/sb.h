@@ -592,7 +592,8 @@ extern u32 SB_ISTNRM;
 //0x005F7C00    SB_PDSTAP   RW  PVR-DMA PVR start address
 #define SB_PDSTAP SB_REG_32(PDSTAP)
 //0x005F7C04    SB_PDSTAR   RW  PVR-DMA system memory start address
-#define SB_PDSTAR SB_REG_32(PDSTAR)
+//#define SB_PDSTAR SB_REG_32(PDSTAR)
+extern u32 SB_PDSTAR;
 //0x005F7C08    SB_PDLEN    RW  PVR-DMA length
 #define SB_PDLEN SB_REG_32(PDLEN)
 //0x005F7C0C    SB_PDDIR    RW  PVR-DMA direction

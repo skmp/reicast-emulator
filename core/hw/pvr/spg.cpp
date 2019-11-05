@@ -9,28 +9,27 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_sched.h"
 
-u32 in_vblank=0;
+u32 in_vblank;
 u32 clc_pvr_scanline;
-u32 pvr_numscanlines=512;
-u32 prv_cur_scanline=-1;
-u32 vblk_cnt=0;
+static u32 pvr_numscanlines = 512;
+static u32 prv_cur_scanline = -1;
+static u32 vblk_cnt;
 
-u32 Line_Cycles=0;
-u32 Frame_Cycles=0;
+#define PIXEL_CLOCK (54*1000*1000/2)
+
+static u32 Line_Cycles;
+static u32 Frame_Cycles;
 int render_end_sched;
 int vblank_sched;
-int time_sync;
 
 void CalculateSync(void)
 {
-   /*                          00=VGA    01=NTSC   10=PAL,   11=illegal/undocumented */
-   const int spg_clks[4]   = { 26944080, 13458568, 13462800, 26944080 };
-	float scale_x           = 1;
-   float scale_y           = 1;
-	u32 pixel_clock         = spg_clks[(SPG_CONTROL.full >> 6) & 3];
-	pvr_numscanlines        = SPG_LOAD.vcount+1;
-	Line_Cycles             = (u32)((u64)SH4_MAIN_CLOCK*(u64)(SPG_LOAD.hcount+1)/(u64)pixel_clock);
+	u32 pixel_clock = PIXEL_CLOCK / (FB_R_CTRL.vclk_div ? 1 : 2);
+	pvr_numscanlines = SPG_LOAD.vcount + 1;
+	Line_Cycles = (u32)((u64)SH4_MAIN_CLOCK * (u64)(SPG_LOAD.hcount + 1) / (u64)pixel_clock);
 	
+	float scale_x = 1;
+	float scale_y = 1;
 	if (SPG_CONTROL.interlace)
 	{
 		//this is a temp hack
@@ -58,16 +57,7 @@ void CalculateSync(void)
 	sh4_sched_request(vblank_sched, Line_Cycles);
 }
 
-int elapse_time(int tag, int cycl, int jit)
-{
-	return min(max(Frame_Cycles,(u32)1*1000*1000),(u32)8*1000*1000);
-}
-
-double speed_load_mspdf;
-
 int mips_counter;
-
-double full_rps;
 
 static u32 lightgun_line = 0xffff;
 static u32 lightgun_hpos;
@@ -200,9 +190,6 @@ bool spg_Init()
 {
    render_end_sched = sh4_sched_register(0,&rend_end_sch);
    vblank_sched     = sh4_sched_register(0,&spg_line_sched);
-   time_sync        = sh4_sched_register(0,&elapse_time);
-
-   sh4_sched_request(time_sync,8*1000*1000);
 
    return true;
 }

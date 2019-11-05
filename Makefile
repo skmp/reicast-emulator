@@ -269,11 +269,53 @@ else ifeq ($(platform), classic_armv8_a35)
 	WITH_DYNAREC = arm
 	HAVE_GENERIC_JIT = 0
 	CORE_DEFINES += -DLOW_END -DLOW_RES
+	
 #########################################
 
-# sun8i Allwinner H2+ / H3 
-# like Orange PI, Nano PI, Banana PI, Tritium, AlphaCore2, MPCORE-HUB
+# sun8i Allwinner H2+ / H3 for mainline Builds
+# like Orange PI, Nano PI, Banana PI, Tritium, Sunvell R69, AlphaCore2
+# by MPCORE-HUB/Liontek1985
+
 else ifeq ($(platform), sun8i)
+	EXT ?= so
+	TARGET := $(TARGET_NAME)_libretro.$(EXT)
+	SHARED += -shared -Wl,--version-script=link.T
+	fpic = -fPIC
+	LIBS += -lrt
+	ARM_FLOAT_ABI_HARD = 1
+	FORCE_GLES = 1
+	SINGLE_PREC_FLAGS = 1
+	CPUFLAGS += -DNO_ASM -DARM_ASM -frename-registers -ftree-vectorize
+	CFLAGS += -marm -mfloat-abi=hard -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard $(CPUFLAGS)
+	CXXFLAGS += -marm -mfloat-abi=hard -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard $(CPUFLAGS)
+	ifeq ($(HAVE_CLANG),0)
+		CFLAGS += -mvectorize-with-neon-quad
+		CXXFLAGS += -mvectorize-with-neon-quad
+	endif
+	ifeq ($(shell echo `$(CC) -dumpversion` "< 4.9" | bc -l), 1)
+		CFLAGS += -march=armv7-a
+		CXXFLAGS += -march=armv7-a
+	else
+		CFLAGS += -march=armv7ve
+		CXXFLAGS += -march=armv7ve
+		# If gcc is 5.0 or later
+		ifeq ($(shell echo `$(CC) -dumpversion` ">= 5" | bc -l), 1)
+			CXXFLAGS += -static-libgcc -static-libstdc++
+		endif
+	endif
+	ASFLAGS += $(CFLAGS) -c -frename-registers -fno-strict-aliasing -ffast-math -ftree-vectorize
+	PLATFORM_EXT := unix
+	WITH_DYNAREC=arm
+	HAVE_GENERIC_JIT = 0
+	CORE_DEFINES += -DLOW_END
+	
+#########################################
+
+# sun8i Allwinner H2+ / H3 for Legacy Builds
+# like Orange PI, Nano PI, Banana PI, Tritium, Sunvell R69, AlphaCore2
+# by MPCORE-HUB/Liontek1985
+
+else ifeq ($(platform), sun8i_legacy)
 	EXT    ?= so
 	TARGET := $(TARGET_NAME)_libretro.$(EXT)
 	SHARED += -shared -Wl,--version-script=link.T
@@ -308,6 +350,7 @@ else ifeq ($(platform), sun8i)
 	WITH_DYNAREC = arm
 	HAVE_GENERIC_JIT = 0
 	CORE_DEFINES += -DLOW_END
+	
 #######################################
 
 # ARM64 (switch-lakka)

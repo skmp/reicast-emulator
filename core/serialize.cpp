@@ -262,17 +262,8 @@ extern u8 pvr_regs[pvr_RegSize];
 //./core/hw/pvr/spg.o
 extern u32 in_vblank;
 extern u32 clc_pvr_scanline;
-extern u32 pvr_numscanlines;
-extern u32 prv_cur_scanline;
-extern u32 vblk_cnt;
-extern u32 Line_Cycles;
-extern u32 Frame_Cycles;
 extern int render_end_sched;
 extern int vblank_sched;
-extern int time_sync;
-extern double speed_load_mspdf;
-extern int mips_counter;
-extern double full_rps;
 
 
 
@@ -897,15 +888,16 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	LIBRETRO_S(in_vblank);
 	LIBRETRO_S(clc_pvr_scanline);
-	LIBRETRO_S(pvr_numscanlines);
-	LIBRETRO_S(prv_cur_scanline);
-	LIBRETRO_S(vblk_cnt);
-	LIBRETRO_S(Line_Cycles);
-	LIBRETRO_S(Frame_Cycles);
-	LIBRETRO_S(speed_load_mspdf);
-	LIBRETRO_S(mips_counter);
-	LIBRETRO_S(full_rps);
-
+	LIBRETRO_S(i); 	// pvr_numscanlines
+	LIBRETRO_S(i); 	// prv_cur_scanline
+	LIBRETRO_S(i); 	// vblk_cnt
+	LIBRETRO_S(i); 	// Line_Cycles
+	LIBRETRO_S(i); 	// Frame_Cycles
+	LIBRETRO_S(i);		// speed_load_mspdf
+	LIBRETRO_S(i);		// ...
+	LIBRETRO_S(i); 	// mips_counter
+	LIBRETRO_S(i);		// full_rps
+	LIBRETRO_S(i);		// ...
 
 
 	LIBRETRO_SA(ta_type_lut,256);
@@ -1040,9 +1032,9 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(sch_list[vblank_sched].start) ;
 	LIBRETRO_S(sch_list[vblank_sched].end) ;
 
-	LIBRETRO_S(sch_list[time_sync].tag) ;
-	LIBRETRO_S(sch_list[time_sync].start) ;
-	LIBRETRO_S(sch_list[time_sync].end) ;
+	LIBRETRO_S(i); // sch_list[time_sync].tag
+	LIBRETRO_S(i); // sch_list[time_sync].start
+	LIBRETRO_S(i); // sch_list[time_sync].end
 
     LIBRETRO_S(sch_list[modem_sched].tag) ;
     LIBRETRO_S(sch_list[modem_sched].start) ;
@@ -1342,20 +1334,20 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 
 	LIBRETRO_US(in_vblank);
 	LIBRETRO_US(clc_pvr_scanline);
-	LIBRETRO_US(pvr_numscanlines);
-	LIBRETRO_US(prv_cur_scanline);
-	LIBRETRO_US(vblk_cnt);
-	LIBRETRO_US(Line_Cycles);
-	LIBRETRO_US(Frame_Cycles);
+	LIBRETRO_US(i); 			// pvr_numscanlines
+	LIBRETRO_US(i); 			// prv_cur_scanline
+	LIBRETRO_US(i); 			// vblk_cnt
+	LIBRETRO_US(i); 			// Line_Cycles
+	LIBRETRO_US(i); 			// Frame_Cycles
 	if (version < V3)
 	{
 	   LIBRETRO_US(dummy_int);	//render_end_sched
 	   LIBRETRO_US(dummy_int);	//vblank_sched
 	   LIBRETRO_US(dummy_int);	//time_sync
 	}
-	LIBRETRO_US(speed_load_mspdf);
-	LIBRETRO_US(mips_counter);
-	LIBRETRO_US(full_rps);
+	LIBRETRO_SKIP(8); 		// speed_load_mspdf
+	LIBRETRO_US(dummy_int); // mips_counter
+	LIBRETRO_SKIP(8); 		// full_rps
 
 
 
@@ -1491,9 +1483,9 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(sch_list[vblank_sched].start) ;
 	LIBRETRO_US(sch_list[vblank_sched].end) ;
 
-	LIBRETRO_US(sch_list[time_sync].tag) ;
-	LIBRETRO_US(sch_list[time_sync].start) ;
-	LIBRETRO_US(sch_list[time_sync].end) ;
+	LIBRETRO_US(dummy_int); // sch_list[time_sync].tag
+	LIBRETRO_US(dummy_int); // sch_list[time_sync].start
+	LIBRETRO_US(dummy_int); // sch_list[time_sync].end
 
 	if ( version >= V2 )
 	{

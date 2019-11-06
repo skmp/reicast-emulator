@@ -878,14 +878,12 @@ static bool RenderFrame(void)
       UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE1, gl.fog_image_format);
 	}
 
-	glUseProgram(gl.modvol_shader.program);
+	glcache.UseProgram(gl.modvol_shader.program);
 
 	glUniform4fv(gl.modvol_shader.scale, 1, ShaderUniforms.scale_coefs);
 	glUniform4fv(gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
 
    glUniform1f(gl.modvol_shader.extra_depth_scale, ShaderUniforms.extra_depth_scale);
-
-	GLfloat td[4]={0.5,0,0,0};
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 

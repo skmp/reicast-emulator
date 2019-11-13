@@ -53,30 +53,6 @@ union m128i {
     uint32_t m128i_u32[4];
 };
 
-static __m128 _mm_load_scaled_float(float v, float s)
-{
-    return _mm_setr_ps(v, v + s, v + s + s, v + s + s + s);
-}
-static __m128 _mm_broadcast_float(float v)
-{
-    return _mm_setr_ps(v, v, v, v);
-}
-static __m128i _mm_broadcast_int(int v)
-{
-    __m128i rv = _mm_cvtsi32_si128(v);
-    return _mm_shuffle_epi32(rv, 0);
-}
-static __m128 _mm_load_ps_r(float a, float b, float c, float d)
-{
-    DECL_ALIGN(128) float v[4];
-    v[0] = a;
-    v[1] = b;
-    v[2] = c;
-    v[3] = d;
-
-    return _mm_load_ps(v);
-}
-
 static __forceinline int iround(float x)
 {
     return _mm_cvtt_ss2si(_mm_load_ss(&x));
@@ -96,56 +72,16 @@ static float mmax(float a, float b, float c, float d)
     return min(d, rv);
 }
 
-//i think this gives false positives ...
-//yup, if ANY of the 3 tests fail the ANY tests fails.
-static __forceinline void EvalHalfSpace(bool& all, bool& any, float cp, float sv, float lv)
-{
-    //bool a00 = C1 + DX12 * y0 - DY12 * x0 > 0;
-    //bool a10 = C1 + DX12 * y0 - DY12 * x0 > qDY12;
-    //bool a01 = C1 + DX12 * y0 - DY12 * x0 > -qDX12;
-    //bool a11 = C1 + DX12 * y0 - DY12 * x0 > (qDY12-qDX12);
-
-    //C1 + DX12 * y0 - DY12 * x0 > 0
-    // + DX12 * y0 - DY12 * x0 > 0 - C1
-    //int pd=DX * y0 - DY * x0;
-
-    bool a = cp > sv;	//needed for ANY
-    bool b = cp > lv;	//needed for ALL
-
-    any &= a;
-    all &= b;
-}
-
 //return true if any is positive
-static __forceinline bool EvalHalfSpaceFAny(float cp12, float cp23, float cp31)
+static __forceinline bool EvalHalfSpaceAll(float cp12, float cp23, float cp31)
 {
-    bool svt = cp12 > 0; //needed for ANY
-    svt &= cp23 > 0;
-    svt &= cp31 > 0;
+    bool svt = cp12 >= 0; //needed for ANY
+    svt &= cp23 >= 0;
+    svt &= cp31 >= 0;
 
     return svt;
 }
 
-static __forceinline bool EvalHalfSpaceFAll(float cp12, float cp23, float cp31, float lv12, float lv23, float lv31)
-{
-    bool lvt = (cp12 - lv12) > 0;
-    lvt &= (cp23 - lv23) > 0;
-    lvt &= (cp31 - lv31) > 0;	//needed for all
-
-    return lvt;
-}
-
-static __forceinline void PlaneMinMax(float& MIN, float& MAX, float DX, float DY, float q)
-{
-    float q_fp = (q - 1);
-    float v1 = 0;
-    float v2 = q_fp * DY;
-    float v3 = -q_fp * DX;
-    float v4 = q_fp * (DY - DX);
-
-    MIN = min(v1, min(v2, min(v3, v4)));
-    MAX = max(v1, max(v2, max(v3, v4)));
-}
 
 struct PlaneStepper2
 {
@@ -154,24 +90,15 @@ struct PlaneStepper2
 
     void Setup(const Vertex& v1, const Vertex& v2, const Vertex& v3, float v1_a, float v2_a, float v3_a)
     {
-        //			float v1_z=v1.z,v2_z=v2.z,v3_z=v3.z;
         float Aa = ((v3_a - v1_a) * (v2.y - v1.y) - (v2_a - v1_a) * (v3.y - v1.y));
         float Ba = ((v3.x - v1.x) * (v2_a - v1_a) - (v2.x - v1.x) * (v3_a - v1_a));
 
         float C = ((v2.x - v1.x) * (v3.y - v1.y) - (v3.x - v1.x) * (v2.y - v1.y));
         
-        float ddx_s_a = -Aa / C;
-        float ddy_s_a = -Ba / C;
+        ddx = -Aa / C;
+        ddy = -Ba / C;
 
-        ddx = ddx_s_a;
-        ddy = ddy_s_a;
-
-        float c_s_a = (v1_a - ddx_s_a * v1.x - ddy_s_a * v1.y);
-        
-        c = c_s_a;
-
-        //z = z1 + dzdx * (minx - v1.x) + dzdy * (minx - v1.y);
-        //z = (z1 - dzdx * v1.x - v1.y*dzdy) +  dzdx*inx + dzdy *iny;
+        c = (v1_a - ddx * v1.x - ddy * v1.y);
     }
 
     __forceinline float Ip(float x, float y) const
@@ -191,6 +118,7 @@ struct IPs2
     PlaneStepper2 U;
     PlaneStepper2 V;
     PlaneStepper2 Col[4];
+    PlaneStepper2 Ofs[4];
 
     void Setup(PolyParam* pp, text_info* texture, const Vertex& v1, const Vertex& v2, const Vertex& v3)
     {
@@ -206,6 +134,9 @@ struct IPs2
         
         for (int i = 0; i < 4; i++)
             Col[i].Setup(v1, v2, v3, v1.col[i], v2.col[i], v3.col[i]);
+
+        for (int i = 0; i < 4; i++)
+            Ofs[i].Setup(v1, v2, v3, v1.spc[i], v2.spc[i], v3.spc[i]);
     }
 };
 
@@ -221,12 +152,6 @@ struct IPs2
 typedef void(*RendtriangleFn)(PolyParam* pp, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area);
 static RendtriangleFn RendtriangleFns[3][2][2][2][4][2];
 
-
-static __m128i const_setAlpha;
-
-static __m128i shuffle_alpha;
-
-
 TPL_DECL_pixel
 static void PixelFlush(PolyParam* pp, text_info* texture, float x, float y, u8* cb, IPs2& ip)
 {
@@ -239,9 +164,8 @@ static void PixelFlush(PolyParam* pp, text_info* texture, float x, float y, u8* 
 
     float* zb = (float*)&cb[Z_BUFFER_PIXEL_OFFSET * 4];
 
-    bool ZMask = invW > *zb;
-    
-    if (!ZMask)
+    // Z test
+    if (invW < * zb)
         return;
 
     u8 rv[4];
@@ -319,6 +243,11 @@ static void PixelFlush(PolyParam* pp, text_info* texture, float x, float y, u8* 
 
             if (pp_Offset) {
                 //add offset
+
+                rv[0] += ip.Ofs[2].Ip(x, y);
+                rv[1] += ip.Ofs[1].Ip(x, y);
+                rv[2] += ip.Ofs[0].Ip(x, y);
+                rv[3] += ip.Ofs[3].Ip(x, y);
             }
         }
     }
@@ -472,10 +401,10 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex& v1, con
             x_ps = x_ps + 1;
 
             // Corners of block
-            bool any = EvalHalfSpaceFAny(Xhs12, Xhs23, Xhs31);
+            bool inTriangle = EvalHalfSpaceAll(Xhs12, Xhs23, Xhs31);
 
             // Skip block when outside an edge
-            if (any)
+            if (inTriangle)
             {
                 PixelFlush TPL_PRMS_pixel (pp, &texture, x_ps, y_ps, cb_x, ip);
                 cb_x += 4;
@@ -576,16 +505,6 @@ struct slowsoftrend : Renderer
             RenderParamList<2>(&pvrrc.global_param_tr, &area);
         }
 
-
-
-
-        /*
-        for (int y = 0; y < 480; y++) {
-            for (int x = 0; x < 640; x++) {
-                color_buffer[x + y * 640] = rand();
-            }
-        } */
-
         return !is_rtt;
     }
 
@@ -599,10 +518,6 @@ struct slowsoftrend : Renderer
     virtual bool Init() {
 
         gles_init();
-
-        const_setAlpha = _mm_set1_epi32(0xFF000000);
-        u8 ushuffle[] = { 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x0E, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80, 0x06, 0x80 };
-        memcpy(&shuffle_alpha, ushuffle, sizeof(shuffle_alpha));
 
 #if HOST_OS == OS_WINDOWS
         hWnd = (HWND)libPvr_GetRenderTarget();
@@ -852,14 +767,6 @@ struct slowsoftrend : Renderer
             DeleteDC(hmem);
         }
 #endif
-    }
-
-#define RR(x, a, b, c, d) (x + a), (x + b), (x + c), (x + d)
-#define R(a, b, c, d) RR(12, a, b, c, d), RR(8, a, b, c, d), RR(4, a, b, c, d),  RR(0, a, b, c, d)
-
-    //R coefs should be adjusted to match pixel format
-    INLINE __m128 shuffle_pixel(__m128 v) {
-        return _mm_cvtepi32_ps(_mm_shuffle_epi8(_mm_cvtps_epi32(v), _mm_set_epi8(R(0x80, 2, 1, 0))));
     }
 
     virtual void Present() {

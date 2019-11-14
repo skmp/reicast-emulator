@@ -71,6 +71,8 @@ static const char* VertexShaderSource =
 uniform highp vec4      scale; \n\
 uniform highp vec4      depth_scale; \n\
 uniform highp float     extra_depth_scale; \n\
+uniform highp float sp_FOG_DENSITY; \n\
+ \n\
 /* Vertex input */ \n\
 in highp vec4    in_pos; \n\
 in lowp  vec4     in_base; \n\
@@ -80,6 +82,10 @@ in mediump vec2  in_uv; \n\
 INTERPOLATION out lowp vec4 vtx_base; \n\
 INTERPOLATION out lowp vec4 vtx_offs; \n\
               out mediump vec2 vtx_uv; \n\
+#if TARGET_GL == GLES2 \n\
+              out highp float fog_depth; \n\
+#endif  \n\
+\n\
 void main() \n\
 { \n\
 	vtx_base=in_base; \n\
@@ -96,6 +102,7 @@ void main() \n\
 #if TARGET_GL != GLES2 \n\
    vpos.z = vpos.w; \n\
 #else \n\
+   fog_depth = vpos.z * sp_FOG_DENSITY; \n\
    vpos.z=depth_scale.x+depth_scale.y*vpos.w;  \n\
 #endif \n\
 	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
@@ -146,7 +153,6 @@ out highp vec4 FragColor; \n\
 #define FOG_CHANNEL a \n\
 #endif \n\
  \n\
- \n\
 #if TARGET_GL == GL3 || TARGET_GL == GLES3 \n\
 #if pp_Gouraud == 0 \n\
 #define INTERPOLATION flat \n\
@@ -167,18 +173,24 @@ uniform sampler2D tex,fog_table; \n\
 uniform lowp float trilinear_alpha; \n\
 uniform lowp vec4 fog_clamp_min; \n\
 uniform lowp vec4 fog_clamp_max; \n\
-uniform highp float extra_depth_scale; \n\
 /* Vertex input*/ \n\
 INTERPOLATION in lowp vec4 vtx_base; \n\
 INTERPOLATION in lowp vec4 vtx_offs; \n\
 in mediump vec2 vtx_uv; \n\
+#if TARGET_GL == GLES2 \n\
+in highp float fog_depth; \n\
+#endif \n\
  \n\
 lowp float fog_mode2(highp float w) \n\
 { \n\
-	highp float z = clamp(w * extra_depth_scale * sp_FOG_DENSITY, 1.0, 255.9999); \n\
-	highp float exp = floor(log2(z)); \n\
+#if TARGET_GL == GLES2 \n\
+	highp float z = clamp(fog_depth, 1.0, 255.9999); \n\
+#else \n\
+	highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999); \n\
+#endif \n\
+	mediump float exp = floor(log2(z)); \n\
 	highp float m = z * 16.0 / pow(2.0, exp) - 16.0; \n\
-	lowp float idx = floor(m) + exp * 16.0 + 0.5; \n\
+	mediump float idx = floor(m) + exp * 16.0 + 0.5; \n\
 	highp vec4 fog_coef = texture(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0)); \n\
 	return fog_coef.FOG_CHANNEL; \n\
 } \n\

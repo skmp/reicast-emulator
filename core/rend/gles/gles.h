@@ -151,7 +151,7 @@ extern struct ShaderUniforms_t
 			glUniform1f(s->extra_depth_scale, extra_depth_scale);
 
 		if (s->sp_FOG_DENSITY!=-1)
-			glUniform1f( s->sp_FOG_DENSITY,fog_den_float);
+			glUniform1f(s->sp_FOG_DENSITY, fog_den_float * extra_depth_scale);
 
 		if (s->sp_FOG_COL_RAM!=-1)
 			glUniform3fv( s->sp_FOG_COL_RAM, 1, ps_FOG_COL_RAM);

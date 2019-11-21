@@ -75,7 +75,8 @@ static float mmax(float a, float b, float c, float d)
 //return true if any is positive
 static __forceinline bool EvalHalfSpaceAll(float cp12, float cp23, float cp31)
 {
-    bool svt = cp12 >= 0; //needed for ANY
+    // test all line equations
+    bool svt = cp12 >= 0;
     svt &= cp23 >= 0;
     svt &= cp31 >= 0;
 
@@ -124,8 +125,8 @@ struct IPs2
     {
         u32 w = 0, h = 0;
         if (texture) {
-            w = texture->width;
-            h = texture->height;
+            w = texture->width - 1;
+            h = texture->height - 1;
         }
 
         Z.Setup(v1, v2, v3, v1.z, v2.z, v3.z);
@@ -252,8 +253,6 @@ static void PixelFlush(PolyParam* pp, text_info* texture, float x, float y, u8* 
         }
     }
 
-    //__m128i rv=ip.col;//_mm_xor_si128(_mm_cvtps_epi32(_mm_mul_ps(x,Z.c)),_mm_cvtps_epi32(y));
-
     if (alpha_mode == 1) {
         if (rv[3] < PT_ALPHA_REF) {
             *zb = invW;
@@ -340,22 +339,12 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex& v1, con
     const float DY23 = sgn * (Y2 - Y3);
     const float DY31 = sgn * (Y3 - Y1);
 
-    // Fixed-point deltas
-    const float FDX12 = DX12;
-    const float FDX23 = DX23;
-    const float FDX31 = DX31;
-
-    const float FDY12 = DY12;
-    const float FDY23 = DY23;
-    const float FDY31 = DY31;
-
-
     // Bounding rectangle
     int minx = iround(mmin(X1, X2, X3, area->left));
     int miny = iround(mmin(Y1, Y2, Y3, area->top));
 
-    int spanx = iround(mmax(X1 + 0.5f, X2 + 0.5f, X3 + 0.5f, area->right)) - minx;
-    int spany = iround(mmax(Y1 + 0.5f, Y2 + 0.5f, Y3 + 0.5f, area->bottom)) - miny;
+    int spanx = iround(mmax(X1, X2, X3, area->right-1)) - minx + 1;
+    int spany = iround(mmax(Y1, Y2, Y3, area->bottom-1)) - miny + 1;
 
     //Inside scissor area?
     if (spanx < 0 || spany < 0)
@@ -368,9 +357,9 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex& v1, con
     float C3 = DY31 * X3 - DX31 * Y3;
 
 
-    float hs12 = C1 + FDX12 * miny - FDY12 * minx;
-    float hs23 = C2 + FDX23 * miny - FDY23 * minx;
-    float hs31 = C3 + FDX31 * miny - FDY31 * minx;
+    float hs12 = C1 + DX12 * miny - DY12 * minx;
+    float hs23 = C2 + DX23 * miny - DY23 * minx;
+    float hs31 = C3 + DX31 * miny - DY31 * minx;
 
     
     u8* cb_y = (u8*)colorBuffer;
@@ -394,11 +383,9 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex& v1, con
         float x_ps = minx_ps;
         for (int x = spanx; x > 0; x -= 1)
         {
-            Xhs12 -= FDY12;
-            Xhs23 -= FDY23;
-            Xhs31 -= FDY31;
-
-            x_ps = x_ps + 1;
+            Xhs12 -= DY12;
+            Xhs23 -= DY23;
+            Xhs31 -= DY31;
 
             // Corners of block
             bool inTriangle = EvalHalfSpaceAll(Xhs12, Xhs23, Xhs31);
@@ -407,19 +394,15 @@ static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex& v1, con
             if (inTriangle)
             {
                 PixelFlush TPL_PRMS_pixel (pp, &texture, x_ps, y_ps, cb_x, ip);
-                cb_x += 4;
             }
-            else
-            {
-                cb_x += 4;
-                continue;
-            }
-
+            
+            cb_x += 4;
+            x_ps = x_ps + 1;
         }
     next_y:
-        hs12 += FDX12;
-        hs23 += FDX23;
-        hs31 += FDX31;
+        hs12 += DX12;
+        hs23 += DX23;
+        hs31 += DX31;
         cb_y += stride_bytes;
         y_ps = y_ps + 1;
     }

@@ -1125,6 +1125,7 @@ struct glesrend : Renderer
       }
 #endif
       fog_needs_update = true;
+      killtex();
 
       return true;
    }

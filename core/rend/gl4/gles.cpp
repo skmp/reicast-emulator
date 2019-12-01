@@ -407,6 +407,7 @@ void main() \n\
 
 int max_image_width;
 int max_image_height;
+extern GLuint fogTextureId;
 
 bool gl4CompilePipelineShader(gl4PipelineShader *s, const char *pixel_source /* = PixelPipelineShader */, const char *vertex_source /* = NULL */)
 {
@@ -510,6 +511,8 @@ static void gl_term(void)
    gl4.shaders.clear();
    glDeleteTextures(1, &fbTextureId);
    fbTextureId = 0;
+   glDeleteTextures(1, &fogTextureId);
+   fogTextureId = 0;
 }
 
 static bool gl_create_resources(void)
@@ -1025,6 +1028,7 @@ struct gl4rend : Renderer
       }
 #endif
       fog_needs_update = true;
+      killtex();
 
       return true;
    }
@@ -1057,8 +1061,7 @@ struct gl4rend : Renderer
 		  glcache.DeleteTextures(1, &depthSaveTexId);
 		  depthSaveTexId = 0;
 	   }
-		if (KillTex)
-			killtex();
+	   killtex();
 
 	   gl_term();
    }

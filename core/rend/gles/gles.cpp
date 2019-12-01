@@ -647,6 +647,8 @@ static void gl_term(void)
 	glDeleteBuffers(1, &gl.vbo.idxs2);
 	glDeleteTextures(1, &fbTextureId);
 	fbTextureId = 0;
+	glDeleteTextures(1, &fogTextureId);
+	fogTextureId = 0;
 
 	gl.shaders.clear();
 }

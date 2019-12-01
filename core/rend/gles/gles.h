@@ -84,12 +84,6 @@ extern gl_ctx gl;
 extern GLuint fbTextureId;
 extern float fb_scale_x, fb_scale_y;
 
-struct modvol_shader_type
-{
-   GLuint program;
-   GLuint scale;
-   GLuint sp_ShaderColor;
-};
 enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
 bool ProcessFrame(TA_context* ctx);

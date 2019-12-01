@@ -638,9 +638,20 @@ Tile clip
 
 */
 
+static void gl_delete_shaders()
+{
+	for (const auto& it : gl.shaders)
+	{
+		if (it.second.program != 0)
+			glDeleteProgram(it.second.program);
+	}
+	gl.shaders.clear();
+	glDeleteProgram(gl.modvol_shader.program);
+	gl.modvol_shader.program = 0;
+}
+
 static void gl_term(void)
 {
-   glDeleteProgram(gl.modvol_shader.program);
 	glDeleteBuffers(1, &gl.vbo.geometry);
 	glDeleteBuffers(1, &gl.vbo.modvols);
 	glDeleteBuffers(1, &gl.vbo.idxs);
@@ -650,26 +661,11 @@ static void gl_term(void)
 	glDeleteTextures(1, &fogTextureId);
 	fogTextureId = 0;
 
-	gl.shaders.clear();
+	gl_delete_shaders();
 }
 
 static bool gl_create_resources(void)
 {
-   u32 i;
-   u32 cp_AlphaTest;
-   u32 pp_ClipTestMode;
-   u32 pp_UseAlpha;
-   u32 pp_Texture;
-   u32 pp_FogCtrl;
-   u32 pp_IgnoreTexA;
-   u32 pp_Offset;
-   u32 pp_ShadInstr;
-   u32 pp_Gouraud;
-   u32 pp_BumpMap;
-   u32 fog_clamping;
-	PipelineShader* dshader  = 0;
-   u32 compile              = 0;
-
 	/* create VBOs */
 	glGenBuffers(1, &gl.vbo.geometry);
 	glGenBuffers(1, &gl.vbo.modvols);

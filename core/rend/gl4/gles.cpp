@@ -517,16 +517,6 @@ static void gl_term(void)
 
 static bool gl_create_resources(void)
 {
-   u32 i;
-   u32 cp_AlphaTest;
-   u32 pp_ClipTestMode;
-   u32 pp_UseAlpha;
-   u32 pp_Texture;
-   u32 pp_FogCtrl;
-   u32 pp_IgnoreTexA;
-   u32 pp_Offset;
-   u32 pp_ShadInstr;
-
 	// Create VAOs
 	glGenVertexArrays(1, &gl4.vbo.main_vao);
 	glGenVertexArrays(1, &gl4.vbo.modvol_vao);

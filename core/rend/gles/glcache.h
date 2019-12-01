@@ -209,6 +209,7 @@ void TexParameteri(GLenum target,  GLenum pname,  GLint param) {
 
 	void Reset() {
 		_texture = 0xFFFFFFFFu;
+		_texture_params.clear();
 		_src_blend_factor = 0xFFFFFFFFu;
 		_dst_blend_factor = 0xFFFFFFFFu;
 		_clear_r = -1.f;

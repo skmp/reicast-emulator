@@ -17,7 +17,7 @@ gl4PipelineShader g_abuffer_tr_modvol_shaders[ModeCount];
 static GLuint g_quadBuffer = 0;
 static GLuint g_quadVertexArray = 0;
 
-GLuint pixel_buffer_size = 512 * 1024 * 1024;	// Initial size 512 MB
+extern GLuint pixel_buffer_size;
 
 #define MAX_PIXELS_PER_FRAGMENT "32"
 

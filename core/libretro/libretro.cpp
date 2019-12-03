@@ -160,14 +160,12 @@ void dc_stop();
 void dc_start();
 void FlushCache();	// Arm dynarec (arm and x86 only)
 bool dc_is_running();
-extern Renderer* renderer;
 bool rend_single_frame();
 void rend_cancel_emu_wait();
 bool acquire_mainloop_lock();
 
 static void refresh_devices(bool descriptors_only);
 static void init_disk_control_interface(const char *initial_image_path);
-
 static bool read_m3u(const char *file);
 
 static int co_argc;
@@ -195,6 +193,8 @@ static struct retro_disk_control_callback retro_disk_control_cb;
 static unsigned disk_index = 0;
 static std::vector<std::string> disk_paths;
 static bool disc_tray_open = false;
+
+GLuint pixel_buffer_size = 512 * 1024 * 1024;	// Initial size 512 MB
 
 static void *emu_thread_func(void *)
 {
@@ -652,8 +652,7 @@ static void update_variables(bool first_startup)
       else
       	settings.bios.UseReios = false;
 
-#ifdef HAVE_OIT
-      extern GLuint pixel_buffer_size;
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
       var.key = CORE_OPTION_NAME "_oit_abuffer_size";
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)

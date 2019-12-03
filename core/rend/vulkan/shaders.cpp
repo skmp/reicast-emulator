@@ -22,9 +22,7 @@
 #include "shaders.h"
 #include "compiler.h"
 
-static const char VertexShaderSource[] = R"(#version 400
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
+static const char VertexShaderSource[] = R"(#version 450
 
 #define pp_Gouraud %d
 
@@ -67,9 +65,7 @@ void main()
 }
 )";
 
-static const char FragmentShaderSource[] = R"(#version 400
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
+static const char FragmentShaderSource[] = R"(#version 450
 
 #define cp_AlphaTest %d
 #define pp_ClipInside %d
@@ -236,9 +232,7 @@ void main()
 }
 )";
 
-static const char ModVolVertexShaderSource[] = R"(#version 400
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
+extern const char ModVolVertexShaderSource[] = R"(#version 450
 
 layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
 {
@@ -264,9 +258,7 @@ void main()
 }
 )";
 
-static const char ModVolFragmentShaderSource[] = R"(#version 400
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
+static const char ModVolFragmentShaderSource[] = R"(#version 450
 
 layout (location = 0) out vec4 FragColor;
 
@@ -283,9 +275,7 @@ void main()
 }
 )";
 
-static const char QuadVertexShaderSource[] = R"(#version 400 
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
+static const char QuadVertexShaderSource[] = R"(#version 450
 
 layout (location = 0) in vec3 in_pos;
 layout (location = 1) in vec2 in_uv;
@@ -299,9 +289,7 @@ void main()
 }
 )";
 
-static const char QuadFragmentShaderSource[] = R"(#version 400 
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
+static const char QuadFragmentShaderSource[] = R"(#version 450
 
 layout (binding = 0) uniform sampler2D tex;
 layout (location = 0) in vec2 inUV;

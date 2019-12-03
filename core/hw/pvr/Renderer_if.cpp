@@ -115,8 +115,8 @@ void rend_create_renderer()
 		renderer = rend_Vulkan();
 		break;
 	case 5:
-		ERROR_LOG(PVR, "Creating Vulkan per-pixel renderer (not implemented)");
-//		renderer = rend_OITVulkan();
+		NOTICE_LOG(PVR, "Creating Vulkan per-pixel renderer");
+		renderer = rend_OITVulkan();
 		break;
 #endif
 	}

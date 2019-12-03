@@ -170,7 +170,7 @@ void Texture::Init(u32 width, u32 height, vk::Format format)
 	this->extent = vk::Extent2D(width, height);
 	this->format = format;
 	mipmapLevels = 1;
-	if (tcw.MipMapped)
+	if (tcw.MipMapped && settings.rend.UseMipmaps)
 		mipmapLevels += floor(log2(std::max(width, height)));
 
 	vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(format);

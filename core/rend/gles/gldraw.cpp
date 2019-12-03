@@ -504,7 +504,7 @@ static void DrawModVols(int first, int count)
     * volume, and then AND or OR it against the overall 1-bit tile stencil at 
     * the end of the volume. */
 
-   if (count == 0 || !settings.pvr.Emulation.ModVol)
+   if (count == 0)
       return;
 
    SetupModvolVBO();
@@ -614,7 +614,7 @@ void DrawStrips(void)
             previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
       // Modifier volumes
-      if (gl.stencil_present)
+      if (gl.stencil_present && settings.rend.ModifierVolumes)
     	 DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
       //Alpha blended

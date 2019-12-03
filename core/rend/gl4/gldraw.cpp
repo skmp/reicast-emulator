@@ -335,7 +335,7 @@ static void DrawModVols(int first, int count)
     * volume, and then AND or OR it against the overall 1-bit tile stencil at 
     * the end of the volume. */
 
-   if (count == 0 || !settings.pvr.Emulation.ModVol)
+   if (count == 0)
       return;
 
 	glBindVertexArray(gl4.vbo.modvol_vao);

@@ -303,7 +303,12 @@ ifeq ($(HAVE_VULKAN), 1)
 					$(CORE_DIR)/core/rend/vulkan/quad.cpp \
 					$(CORE_DIR)/core/rend/vulkan/shaders.cpp \
 					$(CORE_DIR)/core/rend/vulkan/texture.cpp \
-					$(CORE_DIR)/core/rend/vulkan/vulkan_renderer.cpp
+					$(CORE_DIR)/core/rend/vulkan/vulkan_renderer.cpp \
+					$(CORE_DIR)/core/rend/vulkan/oit/oit_drawer.cpp \
+					$(CORE_DIR)/core/rend/vulkan/oit/oit_pipeline.cpp \
+					$(CORE_DIR)/core/rend/vulkan/oit/oit_renderer.cpp \
+					$(CORE_DIR)/core/rend/vulkan/oit/oit_renderpass.cpp \
+					$(CORE_DIR)/core/rend/vulkan/oit/oit_shaders.cpp
 					
 	INCFLAGS += -I$(DEPS_DIR)/khronos -I$(DEPS_DIR)/glslang
 endif

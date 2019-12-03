@@ -677,12 +677,12 @@ static void update_variables(bool first_startup)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (!strcmp(var.value, "disabled"))
-         settings.pvr.Emulation.ModVol      = false;
+      	settings.rend.ModifierVolumes      = false;
       else if (!strcmp(var.value, "enabled"))
-         settings.pvr.Emulation.ModVol      = true;
+      	settings.rend.ModifierVolumes      = true;
    }
    else
-      settings.pvr.Emulation.ModVol      = true;
+   	settings.rend.ModifierVolumes      = true;
 
    var.key = CORE_OPTION_NAME "_cable_type";
 

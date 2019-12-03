@@ -705,7 +705,7 @@ struct BaseTextureCacheData
 	void ComputeHash();
 	void Update();
 	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer) = 0;
-	virtual bool Force32BitTexture(TextureType type) { return false; }
+	virtual bool Force32BitTexture(TextureType type) const { return false; }
 	void CheckCustomTexture();
 	//true if : dirty or paletted texture and hashes don't match
 	bool NeedsUpdate();
@@ -806,3 +806,4 @@ static inline void MakeFogTexture(u8 *tex_data)
 		tex_data[i + 128] = fog_table[i * 4 + 1];
 	}
 }
+#undef clamp

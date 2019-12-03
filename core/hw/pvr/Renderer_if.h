@@ -33,6 +33,8 @@ extern TA_context* _pvrrc;
 
 struct Renderer
 {
+	virtual ~Renderer() = default;
+
 	virtual bool Init()=0;
 	
 	virtual void Resize(int w, int h)=0;
@@ -58,6 +60,8 @@ Renderer* rend_GLES2();
 Renderer* rend_GL4();
 Renderer* rend_norend();
 Renderer* rend_softrend();
+Renderer* rend_Vulkan();
+Renderer* rend_OITVulkan();
 
 extern u32 fb_watch_addr_start;
 extern u32 fb_watch_addr_end;

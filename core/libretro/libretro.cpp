@@ -14,6 +14,9 @@
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 #include <glsm/glsm.h>
 #endif
+#ifdef HAVE_VULKAN
+#include "rend/vulkan/vulkan_context.h"
+#endif
 #include "../rend/rend.h"
 #include "../hw/sh4/sh4_mem.h"
 #include "../hw/sh4/sh4_sched.h"
@@ -578,23 +581,35 @@ static void update_variables(bool first_startup)
    {
       if (!strcmp(var.value, "per-strip (fast, least accurate)"))
       {
-    	 settings.pvr.rend = 0;
+      	if (settings.pvr.rend == 5)
+      		settings.pvr.rend = 4;
+      	else if (settings.pvr.rend == 3)
+      		settings.pvr.rend = 0;
          settings.pvr.Emulation.AlphaSortMode = 1;
       }
       else if (!strcmp(var.value, "per-triangle (normal)"))
       {
-    	 settings.pvr.rend = 0;
+      	if (settings.pvr.rend == 5)
+      		settings.pvr.rend = 4;
+      	else if (settings.pvr.rend == 3)
+      		settings.pvr.rend = 0;
          settings.pvr.Emulation.AlphaSortMode = 0;
       }
       else if (!strcmp(var.value, "per-pixel (accurate)"))
       {
-    	 settings.pvr.rend = 3;
+      	if (settings.pvr.rend == 4)
+      		settings.pvr.rend = 5;
+      	else if (settings.pvr.rend == 0)
+      		settings.pvr.rend = 3;
          settings.pvr.Emulation.AlphaSortMode = 0;	// Not used
       }
    }
    else
    {
-	  settings.pvr.rend = 0;
+   	if (settings.pvr.rend == 5)
+   		settings.pvr.rend = 4;
+   	else if (settings.pvr.rend == 3)
+   		settings.pvr.rend = 0;
       settings.pvr.Emulation.AlphaSortMode = 0;
    }
    if (!first_startup && previous_renderer != settings.pvr.rend)
@@ -1166,19 +1181,21 @@ void retro_run (void)
 
 	   poll_cb();
 
-	   glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
+	   if (settings.pvr.rend == 0 || settings.pvr.rend == 3)
+	   	glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
 
 	   // Render
 	   is_dupe = !rend_single_frame();
 
-	   glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
+	   if (settings.pvr.rend == 0 || settings.pvr.rend == 3)
+	   	glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
    }
    else
 #endif
    {
 	   dc_run();
    }
-#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) || defined(HAVE_VULKAN)
    video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, screen_width, screen_height, 0);
 #endif
 #if !defined(TARGET_NO_THREADS)
@@ -1662,10 +1679,108 @@ static void remove_extension(char *buf, const char *path, size_t size)
       *base = '\0';
 }
 
+#ifdef HAVE_VULKAN
+static VulkanContext theVulkanContext;
+
+static void retro_vk_context_reset()
+{
+   retro_hw_render_interface* vulkan;
+   if (!environ_cb(RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE, (void**)&vulkan) || !vulkan)
+   {
+   	ERROR_LOG(RENDERER, "Get Vulkan HW interface failed");
+   	return;
+   }
+   theVulkanContext.SetWindowSize(screen_width, screen_height);
+   theVulkanContext.Init((retro_hw_render_interface_vulkan *)vulkan);
+}
+
+static void retro_vk_context_destroy()
+{
+	theVulkanContext.Term();
+}
+
+static bool set_vulkan_hw_render()
+{
+	retro_hw_render_callback hw_render;
+	hw_render.context_type = RETRO_HW_CONTEXT_VULKAN;
+	hw_render.version_major = VK_API_VERSION_1_0;
+	hw_render.version_minor = 0;
+	hw_render.context_reset = retro_vk_context_reset;
+	hw_render.context_destroy = retro_vk_context_destroy;
+	hw_render.debug_context = false;
+
+	if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
+		return false;
+
+	if (settings.pvr.rend == 0)
+		settings.pvr.rend = 4;
+	else if (settings.pvr.rend == 3)
+		settings.pvr.rend = 5;
+	renderer_changed = true;
+	return true;
+}
+#else
+static bool set_vulkan_hw_render()
+{
+	return false;
+}
+#endif
+
+static bool set_opengl_hw_render(u32 preferred)
+{
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
+	glsm_ctx_params_t params = {0};
+
+	params.context_reset         = context_reset;
+	params.context_destroy       = context_destroy;
+	params.environ_cb            = environ_cb;
+#ifdef TARGET_NO_STENCIL
+	params.stencil               = false;
+#else
+	params.stencil               = true;
+#endif
+	params.imm_vbo_draw          = NULL;
+	params.imm_vbo_disable       = NULL;
+#ifdef HAVE_OIT
+	if (settings.pvr.rend == 3)
+	{
+	  params.context_type          = RETRO_HW_CONTEXT_OPENGL_CORE;
+	  params.major                 = 4;
+	  params.minor                 = 3;
+	}
+	else
+	{
+		params.context_type          = RETRO_HW_CONTEXT_OPENGL_CORE;
+		params.major                 = 3;
+		params.minor                 = 0;
+	}
+#elif defined(HAVE_GL3)
+	params.context_type          = RETRO_HW_CONTEXT_OPENGL_CORE;
+	params.major                 = 3;
+	params.minor                 = 0;
+#endif
+
+	if (glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
+		return true;
+
+#if defined(HAVE_GL3)
+	params.context_type       = RETRO_HW_CONTEXT_OPENGL_CORE;
+	params.major              = 3;
+	params.minor              = 0;
+#else
+	params.context_type       = RETRO_HW_CONTEXT_OPENGL;
+	params.major              = 0;
+	params.minor              = 0;
+#endif
+   return glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params);
+#else
+   return false;
+#endif
+}
+
 // Loading/unloading games
 bool retro_load_game(const struct retro_game_info *game)
 {
-   glsm_ctx_params_t params = {0};
    const char *dir = NULL;
    const char *vmu_dir = NULL;
 #ifdef _WIN32
@@ -1785,53 +1900,26 @@ bool retro_load_game(const struct retro_game_info *game)
       }
    }
 
-   params.context_type          = RETRO_HW_CONTEXT_NONE;
+   u32 preferred;
+   if (!environ_cb(RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER, &preferred))
+   	preferred = 0xFFFFFFFF;
+   bool foundRenderApi = false;
 
-#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
-   params.context_reset         = context_reset;
-   params.context_destroy       = context_destroy;
-   params.environ_cb            = environ_cb;
-#ifdef TARGET_NO_STENCIL
-   params.stencil               = false;
-#else
-   params.stencil               = true;
-#endif
-   params.imm_vbo_draw          = NULL;
-   params.imm_vbo_disable       = NULL;
-#ifdef HAVE_OIT
-   if (settings.pvr.rend == 3)
+   if (preferred == RETRO_HW_CONTEXT_OPENGL || preferred == RETRO_HW_CONTEXT_OPENGL_CORE || preferred == 0xFFFFFFFF)
    {
-	  params.context_type          = RETRO_HW_CONTEXT_OPENGL_CORE;
-	  params.major                 = 4;
-	  params.minor                 = 3;
+   	foundRenderApi = set_opengl_hw_render(preferred);
+   	if (!foundRenderApi)
+   		foundRenderApi = set_vulkan_hw_render();
    }
    else
    {
-	   params.context_type          = RETRO_HW_CONTEXT_OPENGL_CORE;
-	   params.major                 = 3;
-	   params.minor                 = 0;
+		foundRenderApi = set_vulkan_hw_render();
+		if (!foundRenderApi)
+      	foundRenderApi = set_opengl_hw_render(0xFFFFFFFF);
    }
-#elif defined(HAVE_GL3)
-   params.context_type          = RETRO_HW_CONTEXT_OPENGL_CORE;
-   params.major                 = 3;
-   params.minor                 = 0;
-#endif
 
-   if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
-   {
-#if defined(HAVE_GL3)
-      params.context_type       = RETRO_HW_CONTEXT_OPENGL_CORE;
-      params.major              = 3;
-      params.minor              = 0;
-#else
-      params.context_type       = RETRO_HW_CONTEXT_OPENGL;
-      params.major              = 0;
-      params.minor              = 0;
-#endif
-      if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
-         return false;
-   }
-#endif
+   if (!foundRenderApi)
+   	return false;
 
    if (settings.System != DC_PLATFORM_DREAMCAST)
    {

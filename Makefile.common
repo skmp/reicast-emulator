@@ -246,6 +246,68 @@ else
 endif
 endif
 
+ifeq ($(HAVE_VULKAN), 1)
+	ifeq ($(platform), win)
+		SOURCES_CXX += $(DEPS_DIR)/glslang/glslang/OSDependent/Windows/ossource.cpp
+	else
+		SOURCES_CXX += $(DEPS_DIR)/glslang/glslang/OSDependent/Unix/ossource.cpp
+	endif
+	SOURCES_C += $(LIBRETRO_COMM_DIR)/vulkan/vulkan_symbol_wrapper.c
+	SOURCES_CXX += $(DEPS_DIR)/glslang/glslang/glslang.js.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/ParseContextBase.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/Versions.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/RemoveTree.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/parseConst.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/Intermediate.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/limits.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/attribute.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/InfoSink.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/Constant.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/SymbolTable.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/Scan.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/IntermTraverse.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/intermOut.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/glslang_tab.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/propagateNoContraction.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/ShaderLang.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/reflection.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/ParseHelper.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/iomapper.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/linkValidate.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/Initialize.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/PoolAlloc.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/preprocessor/Pp.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp \
+					$(DEPS_DIR)/glslang/glslang/MachineIndependent/pch.cpp \
+					$(DEPS_DIR)/glslang/glslang/GenericCodeGen/CodeGen.cpp \
+					$(DEPS_DIR)/glslang/glslang/GenericCodeGen/Link.cpp \
+					$(DEPS_DIR)/glslang/OGLCompilersDLL/InitializeDll.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/SpvTools.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/disassemble.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/GlslangToSpv.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/SPVRemapper.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/Logger.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/SpvPostProcess.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/InReadableOrder.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/SpvBuilder.cpp \
+					$(DEPS_DIR)/glslang/SPIRV/doc.cpp \
+					$(CORE_DIR)/core/rend/vulkan/vulkan_context.cpp \
+					$(CORE_DIR)/core/rend/vulkan/vmallocator.cpp \
+					$(CORE_DIR)/core/rend/vulkan/buffer.cpp \
+					$(CORE_DIR)/core/rend/vulkan/compiler.cpp \
+					$(CORE_DIR)/core/rend/vulkan/drawer.cpp \
+					$(CORE_DIR)/core/rend/vulkan/pipeline.cpp \
+					$(CORE_DIR)/core/rend/vulkan/quad.cpp \
+					$(CORE_DIR)/core/rend/vulkan/shaders.cpp \
+					$(CORE_DIR)/core/rend/vulkan/texture.cpp \
+					$(CORE_DIR)/core/rend/vulkan/vulkan_renderer.cpp
+					
+	INCFLAGS += -I$(DEPS_DIR)/khronos -I$(DEPS_DIR)/glslang
+endif
+
 SOURCES_CXX += $(CORE_DIR)/core/hw/naomi/naomi.cpp \
 					$(CORE_DIR)/core/hw/naomi/naomi_cart.cpp \
 					$(CORE_DIR)/core/hw/naomi/decrypt.cpp \

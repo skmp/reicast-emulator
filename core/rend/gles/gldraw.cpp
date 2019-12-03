@@ -320,7 +320,7 @@ void DrawSorted(u32 count)
 
          for (u32 p=0; p<count; p++)
          {
-            PolyParam* params = pidx_sort[p].ppid;
+            const PolyParam* params = pidx_sort[p].ppid;
             if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
             {
                SetGPState<ListType_Translucent, true>(params, 0);
@@ -347,7 +347,7 @@ void DrawSorted(u32 count)
 
 				for (u32 p = 0; p < count; p++)
 				{
-					PolyParam* params = pidx_sort[p].ppid;
+					const PolyParam* params = pidx_sort[p].ppid;
 					if (pidx_sort[p].count > 2 && !params->isp.ZWriteDis) {
 						// FIXME no clipping in modvol shader
 						//SetTileClip(gp->tileclip,true);

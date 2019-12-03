@@ -3,6 +3,7 @@ NO_REND       := 0
 HAVE_GL       := 1
 HAVE_GL2      := 0
 HAVE_OIT      := 0
+HAVE_VULKAN   := 0
 HAVE_CORE     := 0
 NO_THREADS    := 0
 NO_EXCEPTIONS := 0
@@ -151,7 +152,7 @@ ifneq (,$(findstring unix,$(platform)))
 		LDFLAGS += -m32
 		HAVE_GENERIC_JIT = 0
 	endif
-
+	HAVE_VULKAN = 1
 	PLATFORM_EXT := unix
 
 # Raspberry Pi
@@ -713,6 +714,7 @@ else ifneq (,$(findstring android,$(platform)))
 	CFLAGS += -DANDROID
 
 	PLATFORM_EXT := unix
+	HAVE_VULKAN = 1
 
 # QNX
 else ifeq ($(platform), qnx)
@@ -811,6 +813,7 @@ ifeq ($(WITH_DYNAREC), x86)
 else
 	CFLAGS += -D TARGET_NO_AREC
 endif
+	HAVE_VULKAN = 1
 
 endif
 
@@ -1005,6 +1008,10 @@ ifeq ($(HAVE_GL), 1)
 	else
 		CORE_DEFINES += -DHAVE_OPENGL
 	endif
+endif
+
+ifeq ($(HAVE_VULKAN), 1)
+	CORE_DEFINES += -DHAVE_VULKAN
 endif
 
 ifeq ($(DEBUG), 1)

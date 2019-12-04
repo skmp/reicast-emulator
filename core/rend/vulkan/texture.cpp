@@ -325,8 +325,7 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, vk::I
 				vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst));
 	}
 	vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, format, vk::Extent3D(extent, 1), 1, 1, vk::SampleCountFlagBits::e1,
-			(usage & vk::ImageUsageFlagBits::eStorage) ? vk::ImageTiling::eLinear : vk::ImageTiling::eOptimal,
-			usage,
+			vk::ImageTiling::eOptimal, usage,
 			vk::SharingMode::eExclusive, 0, nullptr, vk::ImageLayout::eUndefined);
 	image = device.createImageUnique(imageCreateInfo);
 

@@ -224,8 +224,6 @@ private:
 	std::vector<TextureDrawer> textureDrawer;
 	std::vector<std::unique_ptr<Texture>> framebufferTextures;
 	QuadPipeline quadPipeline;
-	std::unique_ptr<Texture> vjoyTexture;
-	std::unique_ptr<BufferData> osdBuffer;
 	TextureCache textureCache;
 };
 

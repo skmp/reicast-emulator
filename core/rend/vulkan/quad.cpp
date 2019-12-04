@@ -124,14 +124,10 @@ void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass)
 		vk::DescriptorSetLayoutBinding bindings[] = {
 				{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment }, // texture
 		};
-		descSetLayout =
-				GetContext()->GetDevice().createDescriptorSetLayoutUnique(
-						vk::DescriptorSetLayoutCreateInfo(
-								vk::DescriptorSetLayoutCreateFlags(),
-								ARRAY_SIZE(bindings), bindings));
+		descSetLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
+				vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(bindings), bindings));
 		pipelineLayout = GetContext()->GetDevice().createPipelineLayoutUnique(
-				vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), 1,
-						&descSetLayout.get()));
+				vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), 1, &descSetLayout.get()));
 	}
 	if (!sampler)
 	{

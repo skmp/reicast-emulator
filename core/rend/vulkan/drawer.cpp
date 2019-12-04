@@ -210,6 +210,7 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 
 	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
 	cmdBuffer.bindVertexBuffers(0, 1, &buffer, &offsets.modVolOffset);
+	SetScissor(cmdBuffer, baseScissor);
 
 	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
 
@@ -453,7 +454,6 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 		else
 		{
 			colorImageCurrentLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-			setImageLayout(commandBuffer, *texture->image, vk::Format::eR8G8B8A8Unorm, 1, colorImageCurrentLayout, vk::ImageLayout::eColorAttachmentOptimal);
 		}
 		colorImage = *texture->image;
 		colorImageView = texture->GetImageView();
@@ -475,6 +475,8 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	}
 	width = widthPow2;
 	height = heightPow2;
+
+	setImageLayout(commandBuffer, *texture->image, vk::Format::eR8G8B8A8Unorm, 1, colorImageCurrentLayout, vk::ImageLayout::eColorAttachmentOptimal);
 
 	vk::ImageView imageViews[] = {
 		colorImageView,
@@ -546,10 +548,19 @@ void TextureDrawer::EndRenderPass()
 void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderManager)
 {
 	this->shaderManager = shaderManager;
+	if (viewport != GetContext()->GetViewPort())
+	{
+		colorAttachments.clear();
+		framebuffers.clear();
+		depthAttachment.reset();
+	}
 	viewport = GetContext()->GetViewPort();
-	depthAttachment = std::unique_ptr<FramebufferAttachment>(
+	if (!depthAttachment)
+	{
+		depthAttachment = std::unique_ptr<FramebufferAttachment>(
 			new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
-	depthAttachment->Init(viewport.width, viewport.height, GetContext()->GetDepthFormat(), vk::ImageUsageFlagBits::eDepthStencilAttachment);
+		depthAttachment->Init(viewport.width, viewport.height, GetContext()->GetDepthFormat(), vk::ImageUsageFlagBits::eDepthStencilAttachment);
+	}
 
 	if (!renderPass)
 	{

@@ -1732,7 +1732,7 @@ bool retro_load_game(const struct retro_game_info *game)
 				struct retro_message msg;
 				// Sadly, this callback is only able to display short messages, so we can't give proper explanations...
 				msg.msg = "Please upgrade to MAME romsets or expect issues";
-				msg.frames = 6000;
+				msg.frames = 1200;
 				environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
 			}
          }

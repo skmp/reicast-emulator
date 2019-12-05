@@ -53,7 +53,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 
 	// Depth and stencil
 	vk::CompareOp depthOp;
-	if (pass == 1)
+	if (pass == 1 && !pp.isp.ZWriteDis)
 		depthOp = vk::CompareOp::eEqual;
 	else if (listType == ListType_Punch_Through || autosort)
 		depthOp = vk::CompareOp::eGreaterOrEqual;

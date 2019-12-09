@@ -44,8 +44,12 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 	bool twoVolumes = poly.tsp1.full != -1 || poly.tcw1.full != -1;
 
 	OITDescriptorSets::PushConstants pushConstants = {
-			{ (float)scissorRect.offset.x, (float)scissorRect.offset.y,
-					(float)scissorRect.extent.width, (float)scissorRect.extent.height },
+			{
+				(float)scissorRect.offset.x,
+				(float)scissorRect.offset.y,
+				(float)scissorRect.offset.x + (float)scissorRect.extent.width,
+				(float)scissorRect.offset.y + (float)scissorRect.extent.height
+			},
 			{ getBlendFactor(poly.tsp.SrcInstr, true), getBlendFactor(poly.tsp.DstInstr, false), 0, 0 },
 			trilinearAlpha,
 			(int)(&poly - (listType == ListType_Opaque ? pvrrc.global_param_op.head()

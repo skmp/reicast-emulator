@@ -172,8 +172,13 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 
 	if (tileClip == TileClipping::Inside || trilinearAlpha != 1.f)
 	{
-		std::array<float, 5> pushConstants = { (float)scissorRect.offset.x, (float)scissorRect.offset.y,
-				(float)scissorRect.extent.width, (float)scissorRect.extent.height, trilinearAlpha };
+		std::array<float, 5> pushConstants = {
+			(float)scissorRect.offset.x,
+			(float)scissorRect.offset.y,
+			(float)scissorRect.offset.x + (float)scissorRect.extent.width,
+			(float)scissorRect.offset.y + (float)scissorRect.extent.height,
+			trilinearAlpha
+		};
 		cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 	}
 

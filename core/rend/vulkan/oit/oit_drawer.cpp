@@ -216,9 +216,22 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 	chunks.push_back(nullptr);
 	chunkSizes.push_back(padding);
 
-	chunks.push_back(pvrrc.global_param_tr.head());
-	chunkSizes.push_back(pvrrc.global_param_tr.bytes());
-	u32 totalSize = offsets.polyParamsOffset + pvrrc.global_param_tr.bytes();
+	std::vector<u32> trPolyParams(pvrrc.global_param_tr.used() * 2);
+	if (pvrrc.global_param_tr.used() == 0)
+		trPolyParams.push_back(0);	// makes the validation layers happy
+	else
+	{
+		for (int i = 0; i < pvrrc.global_param_tr.used(); i++)
+		{
+			const PolyParam& pp = pvrrc.global_param_tr.head()[i];
+			trPolyParams[i * 2] = (pp.tsp.full & 0xffff00c0) | ((pp.isp.full >> 16) & 0xe400) | ((pp.pcw.full >> 7) & 1);
+			trPolyParams[i * 2 + 1] = pp.tsp1.full;
+		}
+	}
+	offsets.polyParamsSize = trPolyParams.size() * 4;
+	chunks.push_back(trPolyParams.data());
+	chunkSizes.push_back(offsets.polyParamsSize);
+	u32 totalSize = offsets.polyParamsOffset + offsets.polyParamsSize;
 
 	BufferData *buffer = GetMainBuffer(totalSize);
 	buffer->upload(chunks.size(), &chunkSizes[0], &chunks[0]);
@@ -227,6 +240,13 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 bool OITDrawer::Draw(const Texture *fogTexture)
 {
 	vk::CommandBuffer cmdBuffer = NewFrame();
+
+	if (needDepthTransition)
+	{
+		needDepthTransition = false;
+		// Not convinced that this is really needed but it makes validation layers happy
+		setImageLayout(cmdBuffer, depthAttachment->GetImage(), GetContext()->GetDepthFormat(), 1, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
+	}
 
 	OITDescriptorSets::VertexShaderUniforms vtxUniforms;
 	vtxUniforms.normal_matrix = matrices.GetNormalMatrix();
@@ -247,7 +267,7 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 	const vk::Buffer mainBuffer = GetMainBuffer(0)->buffer.get();
 	GetCurrentDescSet().UpdateUniforms(mainBuffer, offsets.vertexUniformOffset, offsets.fragmentUniformOffset,
 			fogTexture->GetImageView(), offsets.polyParamsOffset,
-			pvrrc.global_param_tr.bytes(), depthAttachment->GetStencilView(),
+			offsets.polyParamsSize, depthAttachment->GetStencilView(),
 			depthAttachment->GetImageView());
 	GetCurrentDescSet().BindPerFrameDescriptorSets(cmdBuffer);
 	GetCurrentDescSet().UpdateColorInputDescSet(0, colorAttachments[0]->GetImageView());
@@ -273,11 +293,12 @@ bool OITDrawer::Draw(const Texture *fogTexture)
     {
         const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
 
-        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d autosort %d", render_pass + 1,
+        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d TrMV %d autosort %d", render_pass + 1,
         		current_pass.op_count - previous_pass.op_count,
 				current_pass.pt_count - previous_pass.pt_count,
 				current_pass.tr_count - previous_pass.tr_count,
-				current_pass.mvo_count - previous_pass.mvo_count, current_pass.autosort);
+				current_pass.mvo_count - previous_pass.mvo_count,
+				current_pass.mvo_tr_count - previous_pass.mvo_tr_count, current_pass.autosort);
 
         // Reset the pixel counter
     	oitBuffers->ResetPixelCounter(cmdBuffer);
@@ -363,6 +384,7 @@ void OITDrawer::MakeBuffers(int width, int height)
 	maxWidth = std::max(maxWidth, width);
 	maxHeight = std::max(maxHeight, height);
 
+	GetContext()->WaitIdle();
 	for (auto& attachment : colorAttachments)
 	{
 		attachment.reset();
@@ -377,6 +399,7 @@ void OITDrawer::MakeBuffers(int width, int height)
 			new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
 	depthAttachment->Init(maxWidth, maxHeight, GetContext()->GetDepthFormat(),
 			vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment);
+	needDepthTransition = true;
 
 	vk::ImageView attachments[] = {
 			colorAttachments[1]->GetImageView(),
@@ -411,7 +434,7 @@ void OITScreenDrawer::MakeFramebuffers()
 				colorAttachments[0]->GetImageView(),
 				depthAttachment->GetImageView(),
 		};
-		vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), pipelineManager->GetRenderPass(true, true),
+		vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), screenPipelineManager->GetRenderPass(true, true),
 				ARRAY_SIZE(attachments), attachments, viewport.extent.width, viewport.extent.height, 1);
 		framebuffers.push_back(GetContext()->GetDevice().createFramebufferUnique(createInfo));
 	}
@@ -421,6 +444,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 {
 	DEBUG_LOG(RENDERER, "RenderToTexture packmode=%d stride=%d - %d,%d -> %d,%d", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
 			FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
+	NewImage();
 
 	matrices.CalcMatrices(&pvrrc);
 
@@ -444,7 +468,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 		heightPow2 *= settings.rend.RenderToTextureUpscale;
 	}
 
-	static_cast<RttOITPipelineManager*>(pipelineManager)->CheckSettingsChange();
+	rttPipelineManager->CheckSettingsChange();
 	VulkanContext *context = GetContext();
 	vk::Device device = context->GetDevice();
 
@@ -484,7 +508,12 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 			texture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
 			texture->SetDevice(device);
 		}
-		if (texture->format != vk::Format::eR8G8B8A8Unorm)
+		else if (textureCache->IsInFlight(texture))
+		{
+			texture->readOnlyImageView = *texture->imageView;
+			textureCache->DestroyLater(texture);
+		}
+		if (texture->format != vk::Format::eR8G8B8A8Unorm || texture->extent.width != widthPow2 || texture->extent.height != heightPow2)
 		{
 			texture->extent = vk::Extent2D(widthPow2, heightPow2);
 			texture->format = vk::Format::eR8G8B8A8Unorm;
@@ -495,38 +524,42 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 		else
 		{
 			colorImageCurrentLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-			setImageLayout(commandBuffer, *texture->image, vk::Format::eR8G8B8A8Unorm, 1, colorImageCurrentLayout, vk::ImageLayout::eColorAttachmentOptimal);
 		}
 		colorImage = *texture->image;
 		colorImageView = texture->GetImageView();
 	}
 	else
 	{
-		if (widthPow2 != viewport.extent.width || heightPow2 != viewport.extent.height || !colorAttachment)
+		if (!colorAttachment || widthPow2 > colorAttachment->getExtent().width || heightPow2 > colorAttachment->getExtent().height)
 		{
 			if (!colorAttachment)
-			{
 				colorAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device));
-			}
+			else
+				GetContext()->WaitIdle();
 			colorAttachment->Init(widthPow2, heightPow2, vk::Format::eR8G8B8A8Unorm,
 					vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc);
+			colorImageCurrentLayout = vk::ImageLayout::eUndefined;
 		}
+		else
+			colorImageCurrentLayout = vk::ImageLayout::eTransferSrcOptimal;
 		colorImage = colorAttachment->GetImage();
 		colorImageView = colorAttachment->GetImageView();
-		colorImageCurrentLayout = vk::ImageLayout::eUndefined;
 	}
 	viewport.offset.x = 0;
 	viewport.offset.y = 0;
 	viewport.extent.width = widthPow2;
 	viewport.extent.height = heightPow2;
 
+	setImageLayout(commandBuffer, colorImage, vk::Format::eR8G8B8A8Unorm, 1, colorImageCurrentLayout, vk::ImageLayout::eColorAttachmentOptimal);
+
 	vk::ImageView imageViews[] = {
 		colorImageView,
 		colorAttachments[0]->GetImageView(),
 		depthAttachment->GetImageView(),
 	};
-	framebuffer = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
-			pipelineManager->GetRenderPass(true, true), ARRAY_SIZE(imageViews), imageViews, widthPow2, heightPow2, 1));
+	framebuffers.resize(GetContext()->GetSwapChainSize());
+	framebuffers[GetCurrentImage()] = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
+			rttPipelineManager->GetRenderPass(true, true), ARRAY_SIZE(imageViews), imageViews, widthPow2, heightPow2, 1));
 
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight, 1.0f, 0.0f));
 	baseScissor = vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(upscaledWidth, upscaledHeight));
@@ -588,7 +621,7 @@ void OITTextureDrawer::EndFrame()
 
 vk::CommandBuffer OITScreenDrawer::NewFrame()
 {
-	imageIndex = (imageIndex + 1) % GetContext()->GetSwapChainSize();
+	NewImage();
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 

@@ -29,4 +29,4 @@ extern PFN_vkGetInstanceProcAddr vulkan_symbol_wrapper_vkGetInstanceProcAddr;
 #undef VK_NO_PROTOTYPES
 #include "vulkan/vulkan.hpp"
 
-#define VK_DEBUG
+//#define VK_DEBUG

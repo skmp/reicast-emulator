@@ -45,10 +45,15 @@ bool VulkanContext::Init(retro_hw_render_interface_vulkan *retro_render_if)
 	vulkan_symbol_wrapper_load_core_symbols(instance);
 	vulkan_symbol_wrapper_load_core_device_symbols(device);
 
-	vk::PhysicalDeviceProperties properties;
-	physicalDevice.getProperties(&properties);
+	vk::PhysicalDeviceProperties2 properties2;
+	vk::PhysicalDeviceMaintenance3Properties properties3;
+	properties2.pNext = &properties3;
+	physicalDevice.getProperties2(&properties2);
+	const vk::PhysicalDeviceProperties& properties = properties2.properties;
 	uniformBufferAlignment = properties.limits.minUniformBufferOffsetAlignment;
 	storageBufferAlignment = properties.limits.minStorageBufferOffsetAlignment;
+	maxStorageBufferRange = properties.limits.maxStorageBufferRange;
+	maxMemoryAllocationSize = properties3.maxMemoryAllocationSize;
 
 	vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(vk::Format::eR5G5B5A1UnormPack16);
 	if ((formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)

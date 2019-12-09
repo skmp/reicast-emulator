@@ -39,8 +39,7 @@ public:
 		texCommandPool.Init();
 
 		oitBuffers.Init(0, 0);
-		rttPipelineManager.Init(&shaderManager, &oitBuffers);
-		textureDrawer.Init(&samplerManager, &rttPipelineManager, &textureCache, &oitBuffers);
+		textureDrawer.Init(&samplerManager, &shaderManager, &textureCache, &oitBuffers);
 		textureDrawer.SetCommandPool(&texCommandPool);
 
 		screenDrawer.Init(&samplerManager, &shaderManager, &oitBuffers);
@@ -106,6 +105,7 @@ public:
 	bool Process(TA_context* ctx) override
 	{
 		texCommandPool.BeginFrame();
+		textureCache.SetCurrentIndex(texCommandPool.GetIndex());
 
 		if (ctx->rend.isRenderFramebuffer)
 		{
@@ -172,6 +172,8 @@ public:
 		//update if needed
 		if (tf->NeedsUpdate())
 		{
+			textureCache.DestroyLater(tf);
+
 			tf->SetCommandBuffer(texCommandPool.Allocate());
 			tf->Update();
 			tf->SetCommandBuffer(nullptr);
@@ -216,7 +218,6 @@ private:
 	OITShaderManager shaderManager;
 	ShaderManager normalShaderManager;
 	OITScreenDrawer screenDrawer;
-	RttOITPipelineManager rttPipelineManager;
 	OITTextureDrawer textureDrawer;
 	std::vector<std::unique_ptr<Texture>> framebufferTextures;
 	TextureCache textureCache;

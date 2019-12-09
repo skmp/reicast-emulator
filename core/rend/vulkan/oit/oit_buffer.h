@@ -23,7 +23,7 @@
 #include "../buffer.h"
 #include "../texture.h"
 
-extern u32 pixel_buffer_size;
+extern u64 pixel_buffer_size;
 
 class OITBuffers
 {
@@ -50,8 +50,7 @@ public:
 
 		if (!pixelBuffer)
 		{
-			pixelBuffer.reset();
-			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(pixel_buffer_size,
+			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(std::min(pixel_buffer_size, context->GetMaxMemoryAllocationSize()),
 					vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal));
 		}
 		if (!pixelCounter)
@@ -75,7 +74,7 @@ public:
 			descSet = std::move(context->GetDevice().allocateDescriptorSetsUnique(
 					vk::DescriptorSetAllocateInfo(context->GetDescriptorPool(), 1, &descSetLayout.get())).front());
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		vk::DescriptorBufferInfo pixelBufferInfo(*pixelBuffer->buffer, 0, pixel_buffer_size);
+		vk::DescriptorBufferInfo pixelBufferInfo(*pixelBuffer->buffer, 0, VK_WHOLE_SIZE);
 		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*descSet, 0, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelBufferInfo, nullptr));
 		vk::DescriptorBufferInfo pixelCounterBufferInfo(*pixelCounter->buffer, 0, 4);
 		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*descSet, 1, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelCounterBufferInfo, nullptr));

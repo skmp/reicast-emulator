@@ -50,7 +50,8 @@ enum RegionType {
     REGION_USA = 1,
     REGION_EXPORT = 2,
     REGION_KOREA = 3,
-    REGION_AUSTRALIA = 4
+    REGION_AUSTRALIA = 4,
+    REGION_EXPORT_ONLY = 5
 };
 
 enum RotationType {
@@ -260,7 +261,7 @@ Games[] =
         0x820857c9,
         "naomi",    // Needs Export BIOS
         M1,
-        REGION_AUSTRALIA,
+        REGION_EXPORT_ONLY,
         ROT0,
         {
             { "epr-24212.ic11",   0x0000000, 0x400000, 0x00000000 },
@@ -290,7 +291,10 @@ Games[] =
             //ROM_LOAD( "6372a.ic3",       0x0200000, 0x020000, CRC(f30839ad) SHA1(ea1a32c4da1ed9745300bcdd7964a7c0964e3221) ) // FPGA config
             
             { NULL, 0, 0, 0x00000000 },
-        }
+        },
+        NULL,
+        NULL,
+        kick4csh_eeprom_dump
     },
     // Marvel Vs. Capcom 2 New Age of Heroes (Export, Korea, Rev A)    
     {

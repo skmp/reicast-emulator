@@ -1713,6 +1713,15 @@ static bool set_vulkan_hw_render()
 	if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
 		return false;
 
+	static const struct retro_hw_render_context_negotiation_interface_vulkan negotiation_interface = {
+			RETRO_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE_VULKAN,
+         RETRO_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE_VULKAN_VERSION,
+			VkGetApplicationInfo,
+         VkCreateDevice,
+         nullptr,
+	};
+	environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE, (void *)&negotiation_interface);
+
 	if (settings.pvr.rend == 0)
 		settings.pvr.rend = 4;
 	else if (settings.pvr.rend == 3)

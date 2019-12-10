@@ -23,9 +23,149 @@
 #include "compiler.h"
 
 VulkanContext *VulkanContext::contextInstance;
-PFN_vkGetInstanceProcAddr vulkan_symbol_wrapper_vkGetInstanceProcAddr;
 
 static const char *PipelineCacheFileName = "vulkan_pipeline.cache";
+
+const VkApplicationInfo* VkGetApplicationInfo()
+{
+	// FIXME How to figure out if vulkan 1.1 is supported?
+	static vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, VK_API_VERSION_1_1);
+	return &(VkApplicationInfo&)applicationInfo;
+}
+
+bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysicalDevice gpu,
+                         VkSurfaceKHR surface, PFN_vkGetInstanceProcAddr get_instance_proc_addr,
+                         const char** required_device_extensions,
+                         unsigned num_required_device_extensions,
+                         const char** required_device_layers, unsigned num_required_device_layers,
+                         const VkPhysicalDeviceFeatures* required_features)
+{
+	vulkan_symbol_wrapper_init(get_instance_proc_addr);
+	vulkan_symbol_wrapper_load_global_symbols();
+	vulkan_symbol_wrapper_load_core_symbols(instance);
+	VULKAN_SYMBOL_WRAPPER_LOAD_INSTANCE_EXTENSION_SYMBOL(instance, vkGetPhysicalDeviceSurfaceSupportKHR);
+
+	vk::PhysicalDevice physicalDevice;
+	if (gpu == VK_NULL_HANDLE)
+	{
+		// Choose a discrete gpu if there's one, otherwise just pick the first one
+		vk::Instance vkinstance(instance);
+		const auto devices = vkinstance.enumeratePhysicalDevices();
+		for (const auto& phyDev : devices)
+		{
+			vk::PhysicalDeviceProperties props;
+			phyDev.getProperties(&props);
+			if (props.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
+			{
+				physicalDevice = phyDev;
+				break;
+			}
+		}
+		if (!physicalDevice)
+			physicalDevice = vkinstance.enumeratePhysicalDevices().front();
+	}
+	context->gpu = physicalDevice;
+	std::vector<vk::QueueFamilyProperties> queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
+
+	// get the first index into queueFamilyProperties which supports graphics and compute
+	context->queue_family_index = (u32)std::distance(queueFamilyProperties.begin(),
+			std::find_if(queueFamilyProperties.begin(), queueFamilyProperties.end(),
+					[](vk::QueueFamilyProperties const& qfp) { return (qfp.queueFlags & (vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute))
+							== (vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute); }));
+	verify(context->queue_family_index < queueFamilyProperties.size());
+
+	if (surface != VK_NULL_HANDLE)
+	{
+		// determine a queue family index that supports present
+		// first check if the queue_family_index is good enough
+		context->presentation_queue_family_index = physicalDevice.getSurfaceSupportKHR(context->queue_family_index, surface) ? context->queue_family_index : queueFamilyProperties.size();
+		if (context->presentation_queue_family_index == queueFamilyProperties.size())
+		{
+			// the queue_family_index doesn't support present -> look for an other family index that supports both graphics, compute and present
+			for (size_t i = 0; i < queueFamilyProperties.size(); i++)
+			{
+				if ((queueFamilyProperties[i].queueFlags & (vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute)) == (vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute)
+						&& physicalDevice.getSurfaceSupportKHR((u32)i, surface))
+				{
+					context->queue_family_index = (u32)i;
+					context->presentation_queue_family_index = (u32)i;
+					break;
+				}
+			}
+			if (context->presentation_queue_family_index == queueFamilyProperties.size())
+			{
+				// there's nothing like a single family index that supports both graphics/compute and present -> look for an other family index that supports present
+				DEBUG_LOG(RENDERER, "Using separate Graphics and Present queue families");
+				for (size_t i = 0; i < queueFamilyProperties.size(); i++)
+				{
+					if (physicalDevice.getSurfaceSupportKHR((u32)i, surface))
+					{
+						context->presentation_queue_family_index = (u32)i;
+						break;
+					}
+				}
+			}
+		}
+		if (context->queue_family_index == queueFamilyProperties.size() || context->presentation_queue_family_index == queueFamilyProperties.size())
+		{
+			ERROR_LOG(RENDERER, "Could not find a queue for graphics or present");
+			return false;
+		}
+		if (context->queue_family_index == context->presentation_queue_family_index)
+			DEBUG_LOG(RENDERER, "Using Graphics+Present queue family");
+		else
+			DEBUG_LOG(RENDERER, "Using distinct Graphics and Present queue families");
+	}
+
+	vk::PhysicalDeviceFeatures supportedFeatures;
+	physicalDevice.getFeatures(&supportedFeatures);
+	bool fragmentStoresAndAtomics = supportedFeatures.fragmentStoresAndAtomics;
+	VulkanContext::Instance()->samplerAnisotropy = supportedFeatures.samplerAnisotropy;
+
+	// Enable VK_KHR_dedicated_allocation if available
+	bool getMemReq2Supported = false;
+	VulkanContext::Instance()->dedicatedAllocationSupported = false;
+	std::vector<const char *> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+	for (int i = 0; i < num_required_device_extensions; i++)
+		deviceExtensions.push_back(required_device_extensions[i]);
+	for (const auto& property : physicalDevice.enumerateDeviceExtensionProperties())
+	{
+		if (!strcmp(property.extensionName, VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
+		{
+			deviceExtensions.push_back(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+			getMemReq2Supported = true;
+		}
+		else if (!strcmp(property.extensionName, VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME))
+		{
+			deviceExtensions.push_back(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
+			VulkanContext::Instance()->dedicatedAllocationSupported = true;
+		}
+	}
+	VulkanContext::Instance()->dedicatedAllocationSupported &= getMemReq2Supported;
+
+	// create a Device
+	float queuePriority = 1.0f;
+	vk::DeviceQueueCreateInfo deviceQueueCreateInfos[] = {
+			vk::DeviceQueueCreateInfo(vk::DeviceQueueCreateFlags(), context->queue_family_index, 1, &queuePriority),
+			vk::DeviceQueueCreateInfo(vk::DeviceQueueCreateFlags(), context->presentation_queue_family_index, 1, &queuePriority),
+	};
+	vk::PhysicalDeviceFeatures features(*required_features);
+	if (fragmentStoresAndAtomics)
+		features.fragmentStoresAndAtomics = true;
+	if (VulkanContext::Instance()->samplerAnisotropy)
+		features.samplerAnisotropy = true;
+	vk::Device device = physicalDevice.createDevice(vk::DeviceCreateInfo(vk::DeviceCreateFlags(),
+			context->queue_family_index == context->presentation_queue_family_index ? 1 : 2, deviceQueueCreateInfos,
+			num_required_device_layers, required_device_layers, deviceExtensions.size(), &deviceExtensions[0], &features));
+	context->device = device;
+	vulkan_symbol_wrapper_load_core_device_symbols(device);
+
+	// Queues
+	context->queue = device.getQueue(context->queue_family_index, 0);
+	context->presentation_queue = device.getQueue(context->presentation_queue_family_index, 0);
+
+	return true;
+}
 
 bool VulkanContext::Init(retro_hw_render_interface_vulkan *retro_render_if)
 {
@@ -38,12 +178,6 @@ bool VulkanContext::Init(retro_hw_render_interface_vulkan *retro_render_if)
 	physicalDevice = retro_render_if->gpu;
 	device = retro_render_if->device;
 	queue = retro_render_if->queue;
-
-	vulkan_symbol_wrapper_vkGetInstanceProcAddr = retro_render_if->get_instance_proc_addr;
-	vulkan_symbol_wrapper_init(retro_render_if->get_instance_proc_addr);
-	vulkan_symbol_wrapper_load_global_symbols();
-	vulkan_symbol_wrapper_load_core_symbols(instance);
-	vulkan_symbol_wrapper_load_core_device_symbols(device);
 
 	vk::PhysicalDeviceProperties2 properties2;
 	vk::PhysicalDeviceMaintenance3Properties properties3;
@@ -76,11 +210,6 @@ bool VulkanContext::Init(retro_hw_render_interface_vulkan *retro_render_if)
 		optimalTilingSupported4444 = true;
 	else
 		NOTICE_LOG(RENDERER, "eR4G4B4A4UnormPack16 not supported for optimal tiling");
-	vk::PhysicalDeviceFeatures features;
-	physicalDevice.getFeatures(&features);
-	fragmentStoresAndAtomics = features.fragmentStoresAndAtomics;
-	samplerAnisotropy = features.samplerAnisotropy;
-	unifiedMemory = properties.deviceType == vk::PhysicalDeviceType::eIntegratedGpu;
 
 	ShaderCompiler::Init();
 

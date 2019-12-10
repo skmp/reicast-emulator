@@ -30,6 +30,9 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 	case vk::ImageLayout::eTransferDstOptimal:
 		sourceAccessMask = vk::AccessFlagBits::eTransferWrite;
 		break;
+	case vk::ImageLayout::eTransferSrcOptimal:
+		sourceAccessMask = vk::AccessFlagBits::eTransferRead;
+		break;
 	case vk::ImageLayout::ePreinitialized:
 		sourceAccessMask = vk::AccessFlagBits::eHostWrite;
 		break;
@@ -52,6 +55,7 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 		sourceStage = vk::PipelineStageFlagBits::eHost;
 		break;
 	case vk::ImageLayout::eTransferDstOptimal:
+	case vk::ImageLayout::eTransferSrcOptimal:
 		sourceStage = vk::PipelineStageFlagBits::eTransfer;
 		break;
 	case vk::ImageLayout::eUndefined:

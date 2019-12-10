@@ -194,7 +194,7 @@ static unsigned disk_index = 0;
 static std::vector<std::string> disk_paths;
 static bool disc_tray_open = false;
 
-GLuint pixel_buffer_size = 512 * 1024 * 1024;	// Initial size 512 MB
+u64 pixel_buffer_size = 512 * 1024 * 1024;	// Initial size 512 MB
 
 static void *emu_thread_func(void *)
 {
@@ -663,6 +663,8 @@ static void update_variables(bool first_startup)
             pixel_buffer_size = 0x40000000u;
          else if (!strcmp(var.value, "2GB"))
             pixel_buffer_size = 0x80000000u;
+         else if (!strcmp(var.value, "4GB"))
+            pixel_buffer_size = 0xFFFFFFFFu;
          else
             pixel_buffer_size = 0x20000000u;
       }

@@ -1,19 +1,13 @@
 #include <math.h>
 
-#include <memalign.h>
-
-#ifdef __SSE4_1__
-#include <xmmintrin.h>
-#endif
-
 #include <libretro.h>
 
 #include "gles.h"
 #include "rend/rend.h"
-#include "../TexCache.h"
+#include "rend/TexCache.h"
 
 #include "hw/pvr/Renderer_if.h"
-#include "../../hw/mem/_vmem.h"
+#include "hw/mem/_vmem.h"
 
 #ifndef GL_RED
 #define GL_RED                            0x1903
@@ -241,7 +235,8 @@ void main() \n\
 			#endif\n\
 			\n\
 			#if cp_AlphaTest == 1 \n\
-				if (cp_AlphaTestValue>texcol.a) discard;\n\
+				if (cp_AlphaTestValue > texcol.a) \n\
+					discard; \n\
 			#endif  \n\
 		#endif \n\
 		#if pp_ShadInstr==0 \n\
@@ -704,11 +699,8 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 		glcache.BindTexture(GL_TEXTURE_2D, fogTextureId);
 
 	u8 temp_tex_buffer[256];
-	for (int i = 0; i < 128; i++)
-	{
-		temp_tex_buffer[i] = fog_table[i * 4];
-		temp_tex_buffer[i + 128] = fog_table[i * 4 + 1];
-	}
+	MakeFogTexture(temp_tex_buffer);
+
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glTexImage2D(GL_TEXTURE_2D, 0, fog_image_format, 128, 2, 0, fog_image_format, GL_UNSIGNED_BYTE, temp_tex_buffer);
 
@@ -1031,7 +1023,7 @@ static bool RenderFrame(void)
             height *= settings.rend.RenderToTextureUpscale;
          }
 
-         glScissor(min_x + 0.5f, min_y + 0.5f, width + 0.5f, height + 0.5f);
+         glScissor((GLint)lroundf(min_x), (GLint)lroundf(min_y), (GLsizei)lroundf(width), (GLsizei)lroundf(height));
          glcache.Enable(GL_SCISSOR_TEST);
       }
 
@@ -1078,8 +1070,7 @@ bool ProcessFrame(TA_context* ctx)
 
    if (KillTex)
    {
-      void killtex();
-      killtex();
+      TexCache.Clear();
       INFO_LOG(RENDERER, "Texture cache cleared");
    }
 
@@ -1093,14 +1084,14 @@ bool ProcessFrame(TA_context* ctx)
 		if (!ta_parse_vdrc(ctx))
 			return false;
 	}
-   CollectCleanup();
+   TexCache.CollectCleanup();
 
    return !ctx->rend.Overrun;
 }
 
 struct glesrend : Renderer
 {
-   bool Init()
+   bool Init() override
    {
       if (!gl_create_resources())
          return false;
@@ -1121,19 +1112,19 @@ struct glesrend : Renderer
       }
 #endif
       fog_needs_update = true;
-      killtex();
+      TexCache.Clear();
 
       return true;
    }
-	void Resize(int w, int h) { screen_width=w; screen_height=h; }
-	void Term()
+	void Resize(int w, int h) override { screen_width=w; screen_height=h; }
+	void Term() override
    {
-	   killtex();
+	   TexCache.Clear();
 
 	   gl_term();
    }
 
-	bool Process(TA_context* ctx)
+	bool Process(TA_context* ctx) override
    {
 #if !defined(TARGET_NO_THREADS)
       if (!settings.rend.ThreadedRendering)
@@ -1141,7 +1132,7 @@ struct glesrend : Renderer
          glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
       return ProcessFrame(ctx);
    }
-	bool Render()
+	bool Render() override
    {
       bool ret = RenderFrame();
 #if !defined(TARGET_NO_THREADS)
@@ -1151,12 +1142,12 @@ struct glesrend : Renderer
       return ret;
    }
 
-	void Present()
+	void Present() override
    {
       co_dc_yield();
    }
 
-	virtual u32 GetTexture(TSP tsp, TCW tcw) {
+	virtual u64 GetTexture(TSP tsp, TCW tcw) override {
 		return gl_GetTexture(tsp, tcw);
 	}
 };

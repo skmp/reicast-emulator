@@ -234,7 +234,7 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "disabled",
    },
-#ifdef HAVE_OIT
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
    {
       CORE_OPTION_NAME "_oit_abuffer_size",
       "Accumulation Pixel Buffer Size (Restart)",
@@ -243,6 +243,7 @@ struct retro_core_option_definition option_defs_us[] = {
          { "512MB", NULL },
          { "1GB",   NULL },
          { "2GB",   NULL },
+         { "4GB",   NULL },
          { NULL, NULL },
       },
       "512MB",

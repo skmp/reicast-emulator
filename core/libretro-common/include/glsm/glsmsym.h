@@ -41,6 +41,7 @@ RETRO_BEGIN_DECLS
 #define glProvokingVertex           rglProvokingVertex
 #define glGetInteger64v             rglGetInteger64v
 #define glGenSamplers               rglGenSamplers
+#define glDeleteSamplers            rglDeleteSamplers
 #define glBindSampler               rglBindSampler
 #define glSamplerParameteri         rglSamplerParameteri
 #define glGetBufferSubData          rglGetBufferSubData
@@ -470,6 +471,8 @@ void rglBindSampler(	GLuint unit,
  	GLuint sampler);
 void rglGenSamplers(	GLsizei n,
  	GLuint *samplers);
+void rglDeleteSamplers( GLsizei n,
+    GLuint *samplers);
 void rglGetInteger64v(	GLenum pname,
  	int64_t * data);
 void rglUniform2iv(	GLint location,

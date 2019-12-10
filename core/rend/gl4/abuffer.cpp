@@ -17,7 +17,7 @@ gl4PipelineShader g_abuffer_tr_modvol_shaders[ModeCount];
 static GLuint g_quadBuffer = 0;
 static GLuint g_quadVertexArray = 0;
 
-GLuint pixel_buffer_size = 512 * 1024 * 1024;	// Initial size 512 MB
+extern u64 pixel_buffer_size;
 
 #define MAX_PIXELS_PER_FRAGMENT "32"
 
@@ -313,14 +313,14 @@ void initABuffer()
 		// get the max buffer size
 		GLint64 size;
 		glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &size);
-		pixel_buffer_size = (GLuint)min((GLint64)pixel_buffer_size, size);
+		size = min((GLint64)pixel_buffer_size, size);
 
 		// Create the buffer
 		glGenBuffers(1, &pixels_buffer);
 		// Bind it
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, pixels_buffer);
 		// Declare storage
-		glBufferData(GL_SHADER_STORAGE_BUFFER, pixel_buffer_size, NULL, GL_DYNAMIC_COPY);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, size, NULL, GL_DYNAMIC_COPY);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, pixels_buffer);
 		glCheck();
 	}

@@ -99,14 +99,24 @@ void rend_create_renderer()
 	{
 	default:
 	case 0:
-		NOTICE_LOG(PVR, "Creating per-triangle/strip renderer");
+		NOTICE_LOG(PVR, "Creating Open GL per-triangle/strip renderer");
 		renderer = rend_GLES2();
 		break;
 #if defined(HAVE_OIT)
 	case 3:
-		NOTICE_LOG(PVR, "Creating per-pixel renderer");
+		NOTICE_LOG(PVR, "Creating Open GL per-pixel renderer");
 		renderer = rend_GL4();
 		fallback_renderer = rend_GLES2();
+		break;
+#endif
+#ifdef HAVE_VULKAN
+	case 4:
+		NOTICE_LOG(PVR, "Creating Vulkan per-triangle/strip renderer");
+		renderer = rend_Vulkan();
+		break;
+	case 5:
+		NOTICE_LOG(PVR, "Creating Vulkan per-pixel renderer");
+		renderer = rend_OITVulkan();
 		break;
 #endif
 	}

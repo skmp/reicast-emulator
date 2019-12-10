@@ -68,10 +68,13 @@ void gl4DrawFramebuffer(float w, float h);
 extern const char *gl4PixelPipelineShader;
 bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *pixel_source = gl4PixelPipelineShader, const char *vertex_source = NULL);
 
+extern GLuint geom_fbo;
+extern GLuint depth_fbo;
 extern GLuint stencilTexId;
 extern GLuint depthTexId;
 extern GLuint opaqueTexId;
 extern GLuint depthSaveTexId;
+extern GLuint texSamplers[2];
 
 void gl4DrawVmuTexture(u8 vmu_screen_number);
 void gl4DrawGunCrosshair(u8 port);
@@ -118,7 +121,8 @@ void setFragDepth(void) \n\
 struct PolyParam { \n\
 	int first; \n\
 	int count; \n\
-	int texid; \n\
+	int texid_low; \n\
+	int texid_high; \n\
 	int tsp; \n\
 	int tcw; \n\
 	int pcw; \n\
@@ -127,7 +131,8 @@ struct PolyParam { \n\
 	int tileclip; \n\
 	int tsp1; \n\
 	int tcw1; \n\
-	int texid1; \n\
+	int texid1_low; \n\
+	int texid1_high; \n\
 }; \n\
 layout (binding = 1, std430) readonly buffer TrPolyParamBuffer { \n\
 	PolyParam tr_poly_params[]; \n\

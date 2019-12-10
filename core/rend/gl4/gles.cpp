@@ -1,19 +1,11 @@
 #include <math.h>
 
-#include <memalign.h>
-
-#ifdef __SSE4_1__
-#include <xmmintrin.h>
-#endif
-
 #include <libretro.h>
 
 #include "gl4.h"
-#include "../rend.h"
-#include "../TexCache.h"
-
-#include "../../hw/pvr/pvr_mem.h"
-#include "../../hw/mem/_vmem.h"
+#include "rend/gles/glcache.h"
+#include "rend/rend.h"
+#include "rend/TexCache.h"
 
 extern "C" struct retro_hw_render_callback hw_render;
 gl4_ctx gl4;
@@ -111,7 +103,6 @@ const char* gl4PixelPipelineShader = SHADER_HEADER
 #endif \n\
  \n\
 /* Shader program params*/ \n\
-/* gles has no alpha test stage, so its emulated on the shader */ \n\
 uniform lowp float cp_AlphaTestValue; \n\
 uniform lowp vec4 pp_ClipTest; \n\
 uniform lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT; \n\
@@ -498,6 +489,8 @@ bool gl4CompilePipelineShader(gl4PipelineShader *s, const char *pixel_source /* 
 static void gl_term(void)
 {
    glDeleteProgram(gl4.modvol_shader.program);
+   glDeleteVertexArrays(1, &gl4.vbo.main_vao);
+   glDeleteVertexArrays(1, &gl4.vbo.modvol_vao);
    glDeleteBuffers(1, &gl4.vbo.geometry);
    glDeleteBuffers(1, &gl4.vbo.modvols);
    glDeleteBuffers(1, &gl4.vbo.idxs);
@@ -657,41 +650,16 @@ static bool RenderFrame(void)
 	dc_height *= scale_y;
 
 	/*
-
-	float vnear=0;
-	float vfar =1;
-
-	float max_invW=1/vtx_min_fZ;
-	float min_invW=1/vtx_max_fZ;
-
-	float B=vfar/(min_invW-max_invW);
-	float A=-B*max_invW+vnear;
-
-
-	GLfloat dmatrix[16] =
-	{
-		(2.f/dc_width)  ,0                ,-(640/dc_width)              ,0  ,
-		0               ,-(2.f/dc_height) ,(480/dc_height)              ,0  ,
-		0               ,0                ,A                            ,B  ,
-		0               ,0                ,1                            ,0
-	};
-
-	glUniformMatrix4fv(matrix, 1, GL_FALSE, dmatrix);
-
-	*/
-
-	/*
 		Handle Dc to screen scaling
 	*/
 	float dc2s_scale_h = is_rtt ? (screen_width / dc_width) : (screen_height/480.0);
 	float ds2s_offs_x  = is_rtt ? 0 : ((screen_width-dc2s_scale_h*640)/2);
 
 	//-1 -> too much to left
-	gl4ShaderUniforms.scale_coefs[0]=2.0f/(screen_width/dc2s_scale_h*scale_x);
-	gl4ShaderUniforms.scale_coefs[1]= (is_rtt?2:-2) / dc_height;
-   // FIXME CT2 needs 480 here instead of dc_height=512
-	gl4ShaderUniforms.scale_coefs[2]=1-2*ds2s_offs_x/(screen_width);
-	gl4ShaderUniforms.scale_coefs[3]=(is_rtt?1:-1);
+	gl4ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x);
+	gl4ShaderUniforms.scale_coefs[1] = (is_rtt ? 2 : -2) / dc_height;
+	gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
+	gl4ShaderUniforms.scale_coefs[3] = is_rtt ? 1 : -1;
 
 	int rendering_width;
 	int rendering_height;
@@ -811,7 +779,7 @@ static bool RenderFrame(void)
    if (!pvrrc.isRenderFramebuffer)
    {
       //Main VBO
-			glBindVertexArray(gl4.vbo.main_vao);
+	   glBindVertexArray(gl4.vbo.main_vao);
 	   glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
 	   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs); glCheck();
 
@@ -822,7 +790,7 @@ static bool RenderFrame(void)
       //Modvol VBO
       if (pvrrc.modtrig.used())
 	   {
-			glBindVertexArray(gl4.vbo.modvol_vao);
+         glBindVertexArray(gl4.vbo.modvol_vao);
          glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.modvols); glCheck();
          glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
       }
@@ -844,9 +812,9 @@ static bool RenderFrame(void)
 
       bool wide_screen_on = !is_rtt && settings.rend.WideScreen
    			&& pvrrc.fb_X_CLIP.min == 0
-   			&& int((pvrrc.fb_X_CLIP.max + 1) / scale_x + 0.5f) == 640
+   			&& lroundf((pvrrc.fb_X_CLIP.max + 1) / scale_x) == 640L
    			&& pvrrc.fb_Y_CLIP.min == 0
-   			&& int((pvrrc.fb_Y_CLIP.max + 1) / scale_y + 0.5f) == 480;
+   			&& lroundf((pvrrc.fb_Y_CLIP.max + 1) / scale_y) == 480L;
 
       if (!wide_screen_on)
       {
@@ -889,7 +857,7 @@ static bool RenderFrame(void)
             height *= settings.rend.RenderToTextureUpscale;
          }
 
-         glScissor(min_x + 0.5f, min_y + 0.5f, width + 0.5f, height + 0.5f);
+         glScissor((GLint)lroundf(min_x), (GLint)lroundf(min_y), (GLsizei)lroundf(width), (GLsizei)lroundf(height));
          glcache.Enable(GL_SCISSOR_TEST);
       }
 
@@ -984,8 +952,9 @@ void reshapeABuffer(int w, int h);
 
 struct gl4rend : Renderer
 {
-   bool Init()
+   bool Init() override
    {
+   	WARN_LOG(RENDERER, "Renderer inited");
 	  int major = 0;
 	  int minor = 0;
 	  glGetIntegerv(GL_MAJOR_VERSION, &major);
@@ -1018,18 +987,19 @@ struct gl4rend : Renderer
       }
 #endif
       fog_needs_update = true;
-      killtex();
+      TexCache.Clear();
 
       return true;
    }
-   void Resize(int w, int h)
+   void Resize(int w, int h) override
 	{
 		screen_width=w;
 		screen_height=h;
 		resize(w, h);
 	}
-	void Term()
+	void Term() override
 	{
+   	WARN_LOG(RENDERER, "Renderer terminated");
 	   termABuffer();
 	   if (stencilTexId != 0)
 	   {
@@ -1051,12 +1021,27 @@ struct gl4rend : Renderer
 		  glcache.DeleteTextures(1, &depthSaveTexId);
 		  depthSaveTexId = 0;
 	   }
-	   killtex();
+	   TexCache.Clear();
+	   if (geom_fbo != 0)
+	   {
+	   	glDeleteFramebuffers(1, &geom_fbo);
+	   	geom_fbo = 0;
+	   }
+	   if (depth_fbo != 0)
+	   {
+	   	glDeleteFramebuffers(1, &depth_fbo);
+	   	depth_fbo = 0;
+	   }
+	   if (texSamplers[0] != 0)
+	   {
+	   	glDeleteSamplers(2, texSamplers);
+	   	texSamplers[0] = 0;
+	   }
 
 	   gl_term();
    }
 
-	bool Process(TA_context* ctx)
+	bool Process(TA_context* ctx) override
    {
 #if !defined(TARGET_NO_THREADS)
       if (!settings.rend.ThreadedRendering)
@@ -1064,7 +1049,7 @@ struct gl4rend : Renderer
          glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
       return ProcessFrame(ctx);
    }
-	bool Render()
+	bool Render() override
    {
       bool ret = RenderFrame();
 #if !defined(TARGET_NO_THREADS)
@@ -1074,12 +1059,12 @@ struct gl4rend : Renderer
       return ret;
    }
 
-	void Present()
+	void Present() override
    {
       co_dc_yield();
    }
 
-	virtual u32 GetTexture(TSP tsp, TCW tcw) {
+	virtual u64 GetTexture(TSP tsp, TCW tcw) override {
 		return gl_GetTexture(tsp, tcw);
 	}
 };

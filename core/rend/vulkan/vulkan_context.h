@@ -82,11 +82,9 @@ public:
 	vk::Format GetColorFormat() const { return colorFormat; }
 	vk::Format GetDepthFormat() const { return depthFormat; }
 	static VulkanContext *Instance() { return contextInstance; }
-	bool SupportsFragmentShaderStoresAndAtomics() const { return fragmentStoresAndAtomics; }
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
 	const VMAllocator& GetAllocator() const { return allocator; }
-	bool IsUnifiedMemory() const { return unifiedMemory; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 
 private:
@@ -103,11 +101,10 @@ private:
 	bool optimalTilingSupported565 = false;
 	bool optimalTilingSupported1555 = false;
 	bool optimalTilingSupported4444 = false;
-	bool fragmentStoresAndAtomics = false;
+public:
 	bool samplerAnisotropy = false;
 	bool dedicatedAllocationSupported = false;
-	bool unifiedMemory = false;
-
+private:
 	vk::Format colorFormat = vk::Format::eR8G8B8A8Unorm;
 
 	vk::UniqueDescriptorPool descriptorPool;
@@ -126,3 +123,11 @@ private:
 
 	static VulkanContext *contextInstance;
 };
+
+const VkApplicationInfo* VkGetApplicationInfo();
+bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysicalDevice gpu,
+                         VkSurfaceKHR surface, PFN_vkGetInstanceProcAddr get_instance_proc_addr,
+                         const char** required_device_extensions,
+                         unsigned num_required_device_extensions,
+                         const char** required_device_layers, unsigned num_required_device_layers,
+                         const VkPhysicalDeviceFeatures* required_features);

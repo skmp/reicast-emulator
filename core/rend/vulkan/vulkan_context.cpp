@@ -64,7 +64,7 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 		if (!physicalDevice)
 			physicalDevice = vkinstance.enumeratePhysicalDevices().front();
 	}
-	context->gpu = physicalDevice;
+	context->gpu = (VkPhysicalDevice)physicalDevice;
 	std::vector<vk::QueueFamilyProperties> queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
 
 	// get the first index into queueFamilyProperties which supports graphics and compute
@@ -78,14 +78,15 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 	{
 		// determine a queue family index that supports present
 		// first check if the queue_family_index is good enough
-		context->presentation_queue_family_index = physicalDevice.getSurfaceSupportKHR(context->queue_family_index, surface) ? context->queue_family_index : queueFamilyProperties.size();
+		vk::SurfaceKHR vksurface(surface);
+		context->presentation_queue_family_index = physicalDevice.getSurfaceSupportKHR(context->queue_family_index, vksurface) ? context->queue_family_index : queueFamilyProperties.size();
 		if (context->presentation_queue_family_index == queueFamilyProperties.size())
 		{
 			// the queue_family_index doesn't support present -> look for an other family index that supports both graphics, compute and present
 			for (size_t i = 0; i < queueFamilyProperties.size(); i++)
 			{
 				if ((queueFamilyProperties[i].queueFlags & (vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute)) == (vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute)
-						&& physicalDevice.getSurfaceSupportKHR((u32)i, surface))
+						&& physicalDevice.getSurfaceSupportKHR((u32)i, vksurface))
 				{
 					context->queue_family_index = (u32)i;
 					context->presentation_queue_family_index = (u32)i;
@@ -98,7 +99,7 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 				DEBUG_LOG(RENDERER, "Using separate Graphics and Present queue families");
 				for (size_t i = 0; i < queueFamilyProperties.size(); i++)
 				{
-					if (physicalDevice.getSurfaceSupportKHR((u32)i, surface))
+					if (physicalDevice.getSurfaceSupportKHR((u32)i, vksurface))
 					{
 						context->presentation_queue_family_index = (u32)i;
 						break;
@@ -157,12 +158,12 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 	vk::Device device = physicalDevice.createDevice(vk::DeviceCreateInfo(vk::DeviceCreateFlags(),
 			context->queue_family_index == context->presentation_queue_family_index ? 1 : 2, deviceQueueCreateInfos,
 			num_required_device_layers, required_device_layers, deviceExtensions.size(), &deviceExtensions[0], &features));
-	context->device = device;
-	vulkan_symbol_wrapper_load_core_device_symbols(device);
+	context->device = (VkDevice)device;
+	vulkan_symbol_wrapper_load_core_device_symbols(context->device);
 
 	// Queues
-	context->queue = device.getQueue(context->queue_family_index, 0);
-	context->presentation_queue = device.getQueue(context->presentation_queue_family_index, 0);
+	context->queue = (VkQueue)device.getQueue(context->queue_family_index, 0);
+	context->presentation_queue = (VkQueue)device.getQueue(context->presentation_queue_family_index, 0);
 
 	return true;
 }
@@ -174,10 +175,10 @@ bool VulkanContext::Init(retro_hw_render_interface_vulkan *retro_render_if)
 		return false;
 	this->retro_render_if = retro_render_if;
 
-	instance = retro_render_if->instance;
-	physicalDevice = retro_render_if->gpu;
-	device = retro_render_if->device;
-	queue = retro_render_if->queue;
+	instance = vk::Instance(retro_render_if->instance);
+	physicalDevice = vk::PhysicalDevice(retro_render_if->gpu);
+	device = vk::Device(retro_render_if->device);
+	queue = vk::Queue(retro_render_if->queue);
 
 	if (::vkGetPhysicalDeviceFormatProperties2 != nullptr)
 	{

@@ -272,7 +272,7 @@ struct retro_core_option_definition option_defs_tr[] = {
       {
          { "per-strip (fast, least accurate)", "Şerit Başına (hızlı, en az doğru)" },
          { "per-triangle (normal)",            "Üçgen Başına (normal)" },
-#ifdef HAVE_OIT
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
          { "per-pixel (accurate)",             "Piksel Başına (doğru, ancak en yavaş)" },
 #endif
          { NULL, NULL },

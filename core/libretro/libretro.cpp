@@ -1697,6 +1697,8 @@ static void retro_vk_context_reset()
 
 static void retro_vk_context_destroy()
 {
+	rend_term_renderer();
+	renderer_changed = true;
 	theVulkanContext.Term();
 }
 

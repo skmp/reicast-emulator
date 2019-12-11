@@ -666,6 +666,7 @@ void BaseTextureCacheData::Update()
 		}
 #endif
 
+#ifdef HAVE_TEXUPSCALE
 		// xBRZ scaling
 		if (settings.rend.TextureUpscale > 1)
 		{
@@ -680,6 +681,7 @@ void BaseTextureCacheData::Update()
 			upscaled_w *= settings.rend.TextureUpscale;
 			upscaled_h *= settings.rend.TextureUpscale;
 		}
+#endif
 		temp_tex_buffer = pb32.data();
 	}
 	else if (texconv != NULL)

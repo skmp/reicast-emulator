@@ -375,13 +375,17 @@ bool Drawer::Draw(const Texture *fogTexture)
 	cmdBuffer.bindVertexBuffers(0, 1, &buffer, zeroOffset);
 	cmdBuffer.bindIndexBuffer(buffer, offsets.indexOffset, vk::IndexType::eUint32);
 
-	RenderPass previous_pass = {};
-    for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
-    {
-        const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+	// Make sure to push constants even if not used
+	std::array<float, 5> pushConstants = { 0, 0, 0, 0, 0 };
+	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
-        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d autosort %d", render_pass + 1,
-        		current_pass.op_count - previous_pass.op_count,
+	RenderPass previous_pass = {};
+	for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
+	{
+		const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+
+		DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d autosort %d", render_pass + 1,
+				current_pass.op_count - previous_pass.op_count,
 				current_pass.pt_count - previous_pass.pt_count,
 				current_pass.tr_count - previous_pass.tr_count,
 				current_pass.mvo_count - previous_pass.mvo_count, current_pass.autosort);
@@ -389,7 +393,7 @@ bool Drawer::Draw(const Texture *fogTexture)
 		DrawList(cmdBuffer, ListType_Punch_Through, false, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
 		DrawModVols(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 		if (current_pass.autosort)
-        {
+		{
 			if (!settings.pvr.Emulation.AlphaSortMode)
 			{
 				DrawSorted(cmdBuffer, sortedPolys[render_pass]);
@@ -399,11 +403,11 @@ bool Drawer::Draw(const Texture *fogTexture)
 				SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 				DrawList(cmdBuffer, ListType_Translucent, true, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
 			}
-        }
+		}
 		else
 			DrawList(cmdBuffer, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
 		previous_pass = current_pass;
-    }
+	}
 
 	return !pvrrc.isRTT;
 }

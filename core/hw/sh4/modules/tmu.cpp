@@ -11,24 +11,23 @@
 
 #define tmu_underflow 0x0100
 #define tmu_UNIE      0x0020
-/*
-u32 tmu_prescaler[3];
-u32 tmu_prescaler_shift[3];
-u32 tmu_prescaler_mask[3];
-*/
 
 u32 tmu_shift[3];
 u32 tmu_mask[3];
 u64 tmu_mask64[3];
 
-const u32 tmu_ch_bit[3]={1,2,4};
-
 u32 old_mode[3] = {0xFFFF,0xFFFF,0xFFFF};
 
-const InterruptID tmu_intID[3]={sh4_TMU0_TUNI0,sh4_TMU1_TUNI1,sh4_TMU2_TUNI2};
+static const InterruptID tmu_intID[3]={sh4_TMU0_TUNI0,sh4_TMU1_TUNI1,sh4_TMU2_TUNI2};
 int tmu_sched[3];
 
 #if 0
+const u32 tmu_ch_bit[3]={1,2,4};
+
+u32 tmu_prescaler[3];
+u32 tmu_prescaler_shift[3];
+u32 tmu_prescaler_mask[3];
+
 //Accurate counts for the channel ch
 template<u32 ch>
 void UpdateTMU_chan(u32 clc)

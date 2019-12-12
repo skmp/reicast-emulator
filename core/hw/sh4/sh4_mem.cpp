@@ -297,14 +297,6 @@ void WriteMemBlock_nommu_sq(u32 dst,u32* src)
 	}
 }
 
-void WriteMemBlock_ptr(u32 addr,u32* data,u32 size)
-{
-#ifndef NO_MMU
-	die("failed\n");
-#endif
-	WriteMemBlock_nommu_ptr(addr,data,size);
-}
-
 //Get pointer to ram area , 0 if error
 //For debugger(gdb) - dynarec
 u8* GetMemPtr(u32 Addr,u32 size)
@@ -328,13 +320,6 @@ u8* GetMemPtr(u32 Addr,u32 size)
 	}
 }
 
-//Get information about an area , eg ram /size /anything
-//For dynarec - needs to be done
-void GetMemInfo(u32 addr,u32 size)
-{
-	//needs to be done
-}
-
 bool IsOnRam(u32 addr)
 {
 	if (((addr>>26)&0x7)==3)
@@ -346,10 +331,4 @@ bool IsOnRam(u32 addr)
 	}
 
 	return false;
-}
-
-u32 GetRamPageFromAddress(u32 RamAddress)
-{
-	verify(IsOnRam(RamAddress));
-	return (RamAddress & RAM_MASK)/PAGE_SIZE;
 }

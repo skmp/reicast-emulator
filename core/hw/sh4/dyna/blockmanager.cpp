@@ -26,13 +26,13 @@ typedef std::vector<RuntimeBlockInfoPtr> bm_List;
 typedef std::set<RuntimeBlockInfoPtr> bm_Set;
 typedef std::map<void*, RuntimeBlockInfoPtr> bm_Map;
 
-bm_Set all_temp_blocks;
-bm_List del_blocks;
+static bm_Set all_temp_blocks;
+static bm_List del_blocks;
 
 bool unprotected_pages[RAM_SIZE_MAX/PAGE_SIZE];
 static std::set<RuntimeBlockInfo*> blocks_per_page[RAM_SIZE_MAX/PAGE_SIZE];
 
-bm_Map blkmap;
+static bm_Map blkmap;
 // Stats
 u32 protected_blocks;
 u32 unprotected_blocks;
@@ -140,7 +140,7 @@ RuntimeBlockInfoPtr bm_GetBlock2(void* dynarec_code)
 	return iter->second;
 }
 
-void bm_CleanupDeletedBlocks()
+static void bm_CleanupDeletedBlocks()
 {
 	del_blocks.clear();
 }
@@ -292,7 +292,7 @@ void bm_ResetCache()
 	ngen_ResetBlocks();
 	_vmem_bm_reset();
 
-	for (auto it : blkmap)
+	for (const auto& it : blkmap)
 	{
 		RuntimeBlockInfoPtr block = it.second;
 		block->relink_data = 0;
@@ -332,7 +332,7 @@ void bm_ResetTempCache(bool full)
 {
 	if (!full)
 	{
-		for (auto& block : all_temp_blocks)
+		for (const auto& block : all_temp_blocks)
 		{
 			FPCA(block->addr) = ngen_FailedToFindBlock;
 			blkmap.erase((void*)block->code);
@@ -567,8 +567,10 @@ void RuntimeBlockInfo::SetProtectedFlags()
 	protected_blocks++;
 	for (u32 addr = this->addr & ~PAGE_MASK; addr < this->addr + sh4_code_size; addr += PAGE_SIZE)
 	{
-		blocks_per_page[(addr & RAM_MASK) / PAGE_SIZE].insert(this);
-		bm_LockPage(addr);
+		auto& block_list = blocks_per_page[(addr & RAM_MASK) / PAGE_SIZE];
+		if (block_list.empty())
+			bm_LockPage(addr);
+		block_list.insert(this);
 	}
 }
 
@@ -664,7 +666,7 @@ void print_blocks()
 			fprintf(f,"vaddr: %08X\n",blk->vaddr);
 			fprintf(f,"paddr: %08X\n",blk->addr);
 			fprintf(f,"hash: %s\n",blk->hash());
-			fprintf(f,"hash_rloc: %s\n",blk->hash(false,true));
+			fprintf(f,"hash_rloc: %s\n",blk->hash());
 			fprintf(f,"code: %p\n",blk->code);
 			fprintf(f,"runs: %d\n",blk->runs);
 			fprintf(f,"BlockType: %d\n",blk->BlockType);

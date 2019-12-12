@@ -24,6 +24,7 @@
 #include "deps/libpng/png.h"
 #include "reios/reios.h"
 #include "file/file_path.h"
+#include "hw/naomi/naomi_cart.h"
 
 extern const char *retro_get_system_directory();
 
@@ -78,7 +79,11 @@ void CustomTexture::LoaderThread()
 
 std::string CustomTexture::GetGameId()
 {
-   std::string game_id(ip_meta.product_number, sizeof(ip_meta.product_number));
+   std::string game_id;
+	if (settings.System == DC_PLATFORM_DREAMCAST)
+	   game_id = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
+	else
+		game_id = naomi_game_id;
    const size_t str_end = game_id.find_last_not_of(' ');
    if (str_end == std::string::npos)
 	   return "";

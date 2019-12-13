@@ -45,7 +45,7 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 	vulkan_symbol_wrapper_load_core_symbols(instance);
 	VULKAN_SYMBOL_WRAPPER_LOAD_INSTANCE_EXTENSION_SYMBOL(instance, vkGetPhysicalDeviceSurfaceSupportKHR);
 
-	vk::PhysicalDevice physicalDevice;
+	vk::PhysicalDevice physicalDevice(gpu);
 	if (gpu == VK_NULL_HANDLE)
 	{
 		// Choose a discrete gpu if there's one, otherwise just pick the first one

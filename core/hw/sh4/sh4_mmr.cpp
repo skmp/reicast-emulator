@@ -26,6 +26,8 @@ Array<RegisterStruct> TMU(12,true);  //TMU  : 12 registers
 Array<RegisterStruct> SCI(8,true);   //SCI  : 8 registers
 Array<RegisterStruct> SCIF(10,true); //SCIF : 10 registers
 
+Array<RegisterStruct> * const AllRegisters[] = { &CCN, &UBC, &BSC, &DMAC, &CPG, &RTC, &INTC, &TMU, &SCI, &SCIF };
+
 u32 sh4io_read_noacc(u32 addr) 
 { 
 	INFO_LOG(SH4, "sh4io: Invalid read access @@ %08X", addr);
@@ -822,29 +824,9 @@ void sh4_mmr_reset(bool Manual)
 {
 	if (!Manual)
 	{
-		for (int i = 0; i < 30; i++)
-		{
-			if (i < CCN.Size)
-				CCN[i].reset();
-			if (i < UBC.Size)
-				UBC[i].reset();
-			if (i 	< BSC.Size)
-				BSC[i].reset();
-			if (i < DMAC.Size)
-				DMAC[i].reset();
-			if (i < CPG.Size)
-				CPG[i].reset();
-			if (i < RTC.Size)
-				RTC[i].reset();
-			if (i < INTC.Size)
-				INTC[i].reset();
-			if (i < TMU.Size)
-				TMU[i].reset();
-			if (i < SCI.Size)
-				SCI[i].reset();
-			if (i < SCIF.Size)
-				SCIF[i].reset();
-		}
+		for (int i = 0; i < ARRAY_SIZE(AllRegisters); i++)
+			for (int j = 0; j < AllRegisters[i]->Size; j++)
+				(*AllRegisters[i])[j].reset();
 	}
 	OnChipRAM.Zero();
 	//Reset register values

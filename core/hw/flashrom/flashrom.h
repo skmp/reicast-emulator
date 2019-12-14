@@ -278,7 +278,11 @@ struct DCFlashChip : MemChip
 	void Write(u32 addr,u32 val,u32 sz) override
 	{
 		if (sz != 1)
-			die("invalid access size");
+		{
+			INFO_LOG(FLASHROM, "invalid access size %d", sz);
+			return;
+		}
+
 
 		addr &= mask;
 		

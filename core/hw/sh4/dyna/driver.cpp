@@ -1,6 +1,7 @@
 #include "types.h"
 #include <unordered_set>
 
+#include "deps/xxhash/xxhash.h"
 #include "../sh4_interpreter.h"
 #include "../sh4_opcode_list.h"
 #include "../sh4_core.h"
@@ -117,54 +118,20 @@ u32 emit_FreeSpace()
 		return CODE_SIZE-LastAddr;
 }
 
-// pc must be a physical address
-static bool DoCheck(u32 pc)
-{
-	if (IsOnRam(pc))
-	{
-		if (!settings.dynarec.unstable_opt)
-			return true;
-
-		pc&=0xFFFFFF;
-		switch(pc)
-		{
-			//DOA2LE
-			case 0x3DAFC6:
-			case 0x3C83F8:
-
-			//Shenmue 2
-			case 0x348000:
-				
-			//Shenmue
-			case 0x41860e:
-			
-
-				return true;
-
-			default:
-            break;
-		}
-	}
-	return false;
-}
-
 void AnalyseBlock(RuntimeBlockInfo* blk);
 
-char block_hash[1024];
+static char block_hash[1024];
 
-#include "deps/crypto/sha1.h"
-
-const char* RuntimeBlockInfo::hash(bool full, bool relocable)
+const char* RuntimeBlockInfo::hash()
 {
-	sha1_ctx ctx;
-	sha1_init(&ctx);
+	XXH32_hash_t hash = 0;
 
 	u8* ptr = GetMemPtr(this->addr, this->sh4_code_size);
 
 	if (ptr)
 	{
-		if (relocable)
-		{
+		XXH32_state_t *state = XXH32_createState();
+		XXH32_reset(state, 7);
 			for (u32 i=0; i<this->guest_opcodes; i++)
 			{
 				u16 data=ptr[i];
@@ -172,23 +139,14 @@ const char* RuntimeBlockInfo::hash(bool full, bool relocable)
 				if ((ptr[i]>>12)==0xD)
 					data=0xD000;
 
-				sha1_update(&ctx,2,(u8*)&data);
+			XXH32_update(state, &data, 2);
 			}
+		hash = XXH32_digest(state);
+		XXH32_freeState(state);
 		}
-		else
-		{
-			sha1_update(&ctx, this->sh4_code_size, ptr);
-		}
-	}
 
-	sha1_final(&ctx);
+	sprintf(block_hash, ">:1:%02X:%08X", this->guest_opcodes, hash);
 
-	if (full)
-		sprintf(block_hash,">:%d:%08X:%02X:%08X:%08X:%08X:%08X:%08X",relocable,this->addr,this->guest_opcodes,ctx.digest[0],ctx.digest[1],ctx.digest[2],ctx.digest[3],ctx.digest[4]);
-	else
-		sprintf(block_hash,">:%d:%02X:%08X:%08X:%08X:%08X:%08X",relocable,this->guest_opcodes,ctx.digest[0],ctx.digest[1],ctx.digest[2],ctx.digest[3],ctx.digest[4]);
-
-	//return ctx
 	return block_hash;
 }
 
@@ -268,11 +226,7 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 	}
 		bool do_opts = !rbi->temp_block;
 		rbi->staging_runs=do_opts?100:-100;
-		bool block_check;
-		if (rbi->read_only)
-			block_check = false;
-		else
-			block_check = DoCheck(rbi->addr);
+		bool block_check = rbi->read_only ? false : IsOnRam(pc);
 		ngen_Compile(rbi, block_check, (pc & 0xFFFFFF) == 0x08300 || (pc & 0xFFFFFF) == 0x10000, false, do_opts);
 		verify(rbi->code!=0);
 

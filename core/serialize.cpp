@@ -28,7 +28,7 @@
 #include "hw/naomi/naomi_cart.h"
 #include "hw/naomi/naomi.h"
 
-#define LIBRETRO_SKIP(size) do { *(u8**)data += (size); *total_size += (size); } while (false)
+#define LIBRETRO_SKIP(size) do { if (*data) *(u8**)data += (size); *total_size += (size); } while (false)
 
 /*
  * search for "maybe" to find items that were left out that may be needed
@@ -380,9 +380,6 @@ extern VArray2 mem_b;
 
 
 //./core/hw/sh4/sh4_interrupts.o
-extern u16 IRLPriority;
-//one-time init
-//extern InterptSourceList_Entry InterruptSourceList[28];
 extern DECL_ALIGN(64) u16 InterruptEnvId[32];
 extern DECL_ALIGN(64) u32 InterruptBit[32];
 extern DECL_ALIGN(64) u32 InterruptLevelBit[16];
@@ -422,8 +419,6 @@ extern int rtc_sched;
 
 //./core/hw/sh4/modules/serial.o
 extern SCIF_SCFSR2_type SCIF_SCFSR2;
-extern u8 SCIF_SCFRDR2;
-extern SCIF_SCFDR2_type SCIF_SCFDR2;
 
 
 
@@ -627,17 +622,6 @@ extern int cycle_counter;
 
 
 
-//./core/hw/sh4/dyna/decoder.o
-//temp storage only
-//extern RuntimeBlockInfo* blk;
-extern state_t state;
-extern Sh4RegType div_som_reg1;
-extern Sh4RegType div_som_reg2;
-extern Sh4RegType div_som_reg3;
-
-
-
-
 //./core/hw/sh4/dyna/driver.o
 extern u8 SH4_TCB[CODE_SIZE+4096];
 //one time ptr set
@@ -646,7 +630,6 @@ extern u32 LastAddr;
 extern u32 LastAddr_min;
 //temp storage only
 //extern u32* emit_ptr;
-extern char block_hash[1024];
 
 
 
@@ -955,7 +938,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 
 
-	LIBRETRO_S(IRLPriority);
+	u16 dum16;
+	LIBRETRO_S(dum16); // IRLPriority
 	LIBRETRO_SA(InterruptEnvId,32);
 	LIBRETRO_SA(InterruptBit,32);
 	LIBRETRO_SA(InterruptLevelBit,16);
@@ -1042,8 +1026,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 
 	LIBRETRO_S(SCIF_SCFSR2);
-	LIBRETRO_S(SCIF_SCFRDR2);
-	LIBRETRO_S(SCIF_SCFDR2);
+	LIBRETRO_S(dummybool); // SCIF_SCFRDR2
+	LIBRETRO_S(i); // SCIF_SCFDR2
 
 
 	LIBRETRO_S(BSC_PDTRA);
@@ -1123,17 +1107,17 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(i);	// idxnxx
 
 #if FEAT_SHREC != DYNAREC_NONE
-	LIBRETRO_S(state);
-	LIBRETRO_S(div_som_reg1);
-	LIBRETRO_S(div_som_reg2);
-	LIBRETRO_S(div_som_reg3);
+	LIBRETRO_SKIP(sizeof(state_t));	// state
+	LIBRETRO_S(i); // div_som_reg1
+	LIBRETRO_S(i); // div_som_reg2
+	LIBRETRO_S(i); // div_som_reg3
 
 
 	//LIBRETRO_SA(CodeCache,CODE_SIZE) ;
 	//LIBRETRO_SA(SH4_TCB,CODE_SIZE+4096);
 	LIBRETRO_S(LastAddr);
 	LIBRETRO_S(LastAddr_min);
-	LIBRETRO_SA(block_hash,1024);
+	LIBRETRO_SKIP(1024); // block_hash
 #endif
 
 	// RegisterWrite, RegisterRead
@@ -1404,8 +1388,8 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_USA(mem_b.data, mem_b.size);
 
 
-
-	LIBRETRO_US(IRLPriority);
+	u16 dum16;
+	LIBRETRO_US(dum16); // IRLPriority
 	LIBRETRO_USA(InterruptEnvId,32);
 	LIBRETRO_USA(InterruptBit,32);
 	LIBRETRO_USA(InterruptLevelBit,16);
@@ -1502,8 +1486,8 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 
 
 	LIBRETRO_US(SCIF_SCFSR2);
-	LIBRETRO_US(SCIF_SCFRDR2);
-	LIBRETRO_US(SCIF_SCFDR2);
+	LIBRETRO_SKIP(1); // SCIF_SCFRDR2
+	LIBRETRO_US(i); // SCIF_SCFDR2
 
 
 	LIBRETRO_US(BSC_PDTRA);
@@ -1624,10 +1608,10 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(dummy_int);	// idxnxx
 
 #if FEAT_SHREC != DYNAREC_NONE
-	LIBRETRO_US(state);
-	LIBRETRO_US(div_som_reg1);
-	LIBRETRO_US(div_som_reg2);
-	LIBRETRO_US(div_som_reg3);
+	LIBRETRO_SKIP(sizeof(state_t)); // state
+	LIBRETRO_US(i); // div_som_reg1
+	LIBRETRO_US(i); // div_som_reg2
+	LIBRETRO_US(i); // div_som_reg3
 
 
 
@@ -1635,7 +1619,7 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	//LIBRETRO_USA(SH4_TCB,CODE_SIZE+4096);
 	LIBRETRO_US(LastAddr);
 	LIBRETRO_US(LastAddr_min);
-	LIBRETRO_USA(block_hash,1024);
+	LIBRETRO_SKIP(1024); // block_hash
 #endif
 
 	// RegisterRead, RegisterWrite

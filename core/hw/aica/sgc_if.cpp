@@ -699,8 +699,6 @@ struct ChannelEx
 			lfo.alfo_calc(this);
 			lfo.plfo_calc(this);
 		}
-
-		ccd->LFORE=0;
 	}
 
 	//ISEL

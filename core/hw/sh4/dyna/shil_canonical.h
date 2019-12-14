@@ -718,29 +718,34 @@ shil_opc_end()
 
 //shop_cvt_f2i_t	//float to integer : truncate
 shil_opc(cvt_f2i_t)
+
+#if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
 shil_canonical
 (
 u32,f1,(f32 f1),
    if (f1 > 2147483520.0f)	// IEEE 754: 0x4effffff
 		return 0x7fffffff;
 	else
-		return (s32)f1;
+	{
+		s32 res = (s32)f1;
 
-// No fast-math
-//	if (f1 != f1)					// NaN
-//		return 0x80000000;
-//	else if (f1 > 2147483520.0f)	// IEEE 754: 0x4effffff
-//		return 0x7fffffff;
-//	else
-//	{
-//		u32 res = (s32)f1;
-//		// Fix result sign for Intel CPUs
-//		if (res == 0x80000000 && *(s32 *)&f1 > 0)
-//			res = 0x7fffffff;
-//
-//		return res;
-//	}
+		// Fix result sign for Intel CPUs
+		if (res == 0x80000000 && *(s32 *)&f1 > 0)
+			res = 0x7fffffff;
+
+		return res;
+	}
 )
+#else
+shil_canonical
+(
+u32,f1,(f32 f1),
+	if (f1 > 2147483520.0f) // IEEE 754: 0x4effffff
+		return 0x7fffffff;
+	else
+		return (s32)f1;
+)
+#endif
 
 shil_compile
 (

@@ -226,7 +226,7 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 	}
 		bool do_opts = !rbi->temp_block;
 		rbi->staging_runs=do_opts?100:-100;
-		bool block_check = rbi->read_only ? false : IsOnRam(pc);
+		bool block_check = rbi->read_only ? false : IsOnRam(rbi->addr);
 		ngen_Compile(rbi, block_check, (pc & 0xFFFFFF) == 0x08300 || (pc & 0xFFFFFF) == 0x10000, false, do_opts);
 		verify(rbi->code!=0);
 

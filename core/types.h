@@ -510,7 +510,6 @@ struct settings_t
 	{
 		bool UseMipmaps;
 		bool WideScreen;
-      bool RenderToTexture;
       bool RenderToTextureBuffer;
       int RenderToTextureUpscale;
       bool TranslucentPolygonDepthMask;
@@ -525,6 +524,7 @@ struct settings_t
 		bool DumpTextures;
 		bool DelayFrameSwapping; // Delay swapping frame until FB_R_SOF matches FB_W_SOF
 		bool WidescreenGameHacks;
+		int AnisotropicFiltering;
 	} rend;
 
 	struct

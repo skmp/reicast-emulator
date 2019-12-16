@@ -180,27 +180,27 @@ bool VulkanContext::Init(retro_hw_render_interface_vulkan *retro_render_if)
 	device = vk::Device(retro_render_if->device);
 	queue = vk::Queue(retro_render_if->queue);
 
+	vk::PhysicalDeviceProperties *properties;
 	if (::vkGetPhysicalDeviceFormatProperties2 != nullptr)
 	{
-		vk::PhysicalDeviceProperties2 properties2;
+		static vk::PhysicalDeviceProperties2 properties2;
 		vk::PhysicalDeviceMaintenance3Properties properties3;
 		properties2.pNext = &properties3;
 		physicalDevice.getProperties2(&properties2);
-		const vk::PhysicalDeviceProperties& properties = properties2.properties;
-		uniformBufferAlignment = properties.limits.minUniformBufferOffsetAlignment;
-		storageBufferAlignment = properties.limits.minStorageBufferOffsetAlignment;
-		maxStorageBufferRange = properties.limits.maxStorageBufferRange;
+		properties = &properties2.properties;
 		maxMemoryAllocationSize = properties3.maxMemoryAllocationSize;
 	}
 	else
 	{
-		vk::PhysicalDeviceProperties properties;
-		physicalDevice.getProperties(&properties);
-		uniformBufferAlignment = properties.limits.minUniformBufferOffsetAlignment;
-		storageBufferAlignment = properties.limits.minStorageBufferOffsetAlignment;
-		maxStorageBufferRange = properties.limits.maxStorageBufferRange;
+		static vk::PhysicalDeviceProperties props;
+		physicalDevice.getProperties(&props);
+		properties = &props;
 		maxMemoryAllocationSize = 0xFFFFFFFFu;
 	}
+	uniformBufferAlignment = properties->limits.minUniformBufferOffsetAlignment;
+	storageBufferAlignment = properties->limits.minStorageBufferOffsetAlignment;
+	maxStorageBufferRange = properties->limits.maxStorageBufferRange;
+	maxSamplerAnisotropy =  properties->limits.maxSamplerAnisotropy;
 
 	vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(vk::Format::eR5G5B5A1UnormPack16);
 	if ((formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)

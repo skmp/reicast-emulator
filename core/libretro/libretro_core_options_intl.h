@@ -465,15 +465,6 @@ struct retro_core_option_definition option_defs_tr[] = {
    },
 #endif
    {
-      CORE_OPTION_NAME "_enable_rtt",
-      "RTT'yi etkinleştir (Dokuya Render'i)",
-      "",
-      {
-         { NULL, NULL },
-      },
-      NULL,
-   },
-   {
       CORE_OPTION_NAME "_enable_rttb",
       "RTT'yi etkinleştirme (Dokuya Render'i) ara belleği",
       "",

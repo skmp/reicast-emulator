@@ -532,6 +532,20 @@ struct retro_core_option_definition option_defs_us[] = {
       "enabled",
 #endif
    },
+   {
+      CORE_OPTION_NAME "_anisotropic_filtering",
+      "Anisotropic Filtering",
+      "Enhance the quality of textures on surfaces that are at oblique viewing angles with respect to the camera. Vulkan only.",
+      {
+         { "off", "disabled" },
+         { "2",  NULL },
+         { "4",  NULL },
+         { "8",  NULL },
+         { "16",  NULL },
+         { NULL, NULL },
+      },
+      "4",
+   },
 #ifdef HAVE_TEXUPSCALE
    {
       CORE_OPTION_NAME "_texupscale",
@@ -559,17 +573,6 @@ struct retro_core_option_definition option_defs_us[] = {
       "256",
    },
 #endif
-   {
-      CORE_OPTION_NAME "_enable_rtt",
-      "Enable RTT (Render To Texture)",
-      "",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "enabled",
-   },
    {
       CORE_OPTION_NAME "_enable_rttb",
       "Enable RTT (Render To Texture) Buffer",

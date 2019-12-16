@@ -86,6 +86,7 @@ public:
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
 	const VMAllocator& GetAllocator() const { return allocator; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
+	f32 GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
 
 private:
 	vk::Format FindDepthFormat();
@@ -103,6 +104,7 @@ private:
 	bool optimalTilingSupported4444 = false;
 public:
 	bool samplerAnisotropy = false;
+	f32 maxSamplerAnisotropy = 0.f;
 	bool dedicatedAllocationSupported = false;
 private:
 	vk::Format colorFormat = vk::Format::eR8G8B8A8Unorm;

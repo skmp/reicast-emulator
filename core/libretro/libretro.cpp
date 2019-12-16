@@ -410,6 +410,21 @@ static void set_variable_visibility(void)
    option_display.key = CORE_OPTION_NAME "_delay_frame_swapping";
    environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
+   // Only for per-pixel renderers
+   option_display.visible = settings.pvr.rend == 3 || settings.pvr.rend == 5;
+   option_display.key = CORE_OPTION_NAME "_oit_abuffer_size";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   // Only if texture upscaling is enabled
+   option_display.visible = settings.rend.TextureUpscale > 1;
+   option_display.key = CORE_OPTION_NAME "_texupscale_max_filtered_texture_size";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   // Only for Vulkan. TODO Unfortunately, at startup the graphic context hasn't been determined yet.
+   //option_display.visible = settings.pvr.rend == 4 || settings.pvr.rend == 5;
+   //option_display.key = CORE_OPTION_NAME "_anisotropic_filtering";
+   //environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
    /* Show/hide VMU screen options */
    if (settings.System == DC_PLATFORM_DREAMCAST)
    {
@@ -794,6 +809,17 @@ static void update_variables(bool first_startup)
    	settings.dreamcast.ForceWinCE = !strcmp("enabled", var.value);
    }
 
+   var.key = CORE_OPTION_NAME "_anisotropic_filtering";
+
+   settings.rend.AnisotropicFiltering = 4;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp("off", var.value))
+      	settings.rend.AnisotropicFiltering = 1;
+      else
+      	settings.rend.AnisotropicFiltering = std::max(1, std::min(16, atoi(var.value)));
+   }
+
 #ifdef HAVE_TEXUPSCALE
    var.key = CORE_OPTION_NAME "_texupscale";
 
@@ -825,18 +851,6 @@ static void update_variables(bool first_startup)
    else
       settings.rend.MaxFilteredTextureSize = 256;
 #endif
-
-   var.key = CORE_OPTION_NAME "_enable_rtt";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (!strcmp("enabled", var.value))
-         settings.rend.RenderToTexture = true;
-      else
-         settings.rend.RenderToTexture = false;
-   }
-   else
-         settings.rend.RenderToTexture = true;
 
    var.key = CORE_OPTION_NAME "_enable_rttb";
 
@@ -1917,7 +1931,9 @@ bool retro_load_game(const struct retro_game_info *game)
    	preferred = 0xFFFFFFFF;
    bool foundRenderApi = false;
 
-   if (preferred == RETRO_HW_CONTEXT_OPENGL || preferred == RETRO_HW_CONTEXT_OPENGL_CORE || preferred == 0xFFFFFFFF)
+   if (preferred == RETRO_HW_CONTEXT_OPENGL || preferred == RETRO_HW_CONTEXT_OPENGL_CORE
+   		|| preferred == RETRO_HW_CONTEXT_OPENGLES2 || preferred == RETRO_HW_CONTEXT_OPENGLES3
+			|| preferred == RETRO_HW_CONTEXT_OPENGLES_VERSION || preferred == 0xFFFFFFFF)
    {
    	foundRenderApi = set_opengl_hw_render(preferred);
    	if (!foundRenderApi)

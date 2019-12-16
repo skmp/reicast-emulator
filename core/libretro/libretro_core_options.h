@@ -390,7 +390,7 @@ struct retro_core_option_definition option_defs_us[] = {
 #ifdef LOW_END
       "VGA (RGB)",
 #else
-      "TV (RGB)",
+      "TV (Composite)",
 #endif
    },
    {

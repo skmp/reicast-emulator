@@ -224,6 +224,9 @@ bool VulkanContext::Init(retro_hw_render_interface_vulkan *retro_render_if)
 	else
 		NOTICE_LOG(RENDERER, "eR4G4B4A4UnormPack16 not supported for optimal tiling");
 
+	if (strstr(GetDriverName().c_str(), "Adreno"))
+		adrenoGpu = true;
+
 	ShaderCompiler::Init();
 
    // Descriptor pool

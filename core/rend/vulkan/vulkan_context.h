@@ -87,6 +87,7 @@ public:
 	const VMAllocator& GetAllocator() const { return allocator; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 	f32 GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
+	bool isAdrenoGpu() const { return adrenoGpu; }
 
 private:
 	vk::Format FindDepthFormat();
@@ -107,6 +108,7 @@ public:
 	f32 maxSamplerAnisotropy = 0.f;
 	bool dedicatedAllocationSupported = false;
 private:
+	bool adrenoGpu = false;
 	vk::Format colorFormat = vk::Format::eR8G8B8A8Unorm;
 
 	vk::UniqueDescriptorPool descriptorPool;

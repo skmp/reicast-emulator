@@ -27,6 +27,12 @@
 
 extern int screen_width, screen_height;
 
+#define VENDOR_AMD 0x1022
+#define VENDOR_ARM 0x13B5
+#define VENDOR_INTEL 0x8086
+#define VENDOR_NVIDIA 0x10DE
+#define VENDOR_QUALCOMM 0x5143
+
 class VulkanContext
 {
 public:
@@ -87,7 +93,7 @@ public:
 	const VMAllocator& GetAllocator() const { return allocator; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 	f32 GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
-	bool isAdrenoGpu() const { return adrenoGpu; }
+	u32 GetVendorID() const { return vendorID; }
 
 private:
 	vk::Format FindDepthFormat();
@@ -108,7 +114,7 @@ public:
 	f32 maxSamplerAnisotropy = 0.f;
 	bool dedicatedAllocationSupported = false;
 private:
-	bool adrenoGpu = false;
+	u32 vendorID = 0;
 	vk::Format colorFormat = vk::Format::eR8G8B8A8Unorm;
 
 	vk::UniqueDescriptorPool descriptorPool;

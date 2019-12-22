@@ -205,7 +205,8 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 		depthOp = depthOps[pp.isp.DepthMode];
 	bool depthWriteEnable;
 	if (sortTriangles && !settings.pvr.Emulation.AlphaSortMode)
-		depthWriteEnable = false;
+		// FIXME temporary work-around for intel driver bug
+		depthWriteEnable = GetContext()->GetVendorID() == VENDOR_INTEL;
 	else
 	{
 		// Z Write Disable seems to be ignored for punch-through.

@@ -201,6 +201,7 @@ bool VulkanContext::Init(retro_hw_render_interface_vulkan *retro_render_if)
 	storageBufferAlignment = properties->limits.minStorageBufferOffsetAlignment;
 	maxStorageBufferRange = properties->limits.maxStorageBufferRange;
 	maxSamplerAnisotropy =  properties->limits.maxSamplerAnisotropy;
+	vendorID = properties->vendorID;
 
 	vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(vk::Format::eR5G5B5A1UnormPack16);
 	if ((formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
@@ -223,9 +224,6 @@ bool VulkanContext::Init(retro_hw_render_interface_vulkan *retro_render_if)
 		optimalTilingSupported4444 = true;
 	else
 		NOTICE_LOG(RENDERER, "eR4G4B4A4UnormPack16 not supported for optimal tiling");
-
-	if (strstr(GetDriverName().c_str(), "Adreno"))
-		adrenoGpu = true;
 
 	ShaderCompiler::Init();
 

@@ -154,6 +154,8 @@ struct rend_context
 	}
 };
 
+#define TA_DATA_SIZE (8 * 1024 * 1024)
+
 //vertex lists
 struct TA_context
 {
@@ -196,7 +198,7 @@ struct TA_context
 	{
       unsigned modtrig_size = 16384;
       unsigned    vert_size = 4*1024*1024; //up to 4 mb of vtx data/frame = ~ 96k vtx/frame
-      tad.Reset((u8*)OS_aligned_malloc(32, 8*1024*1024));
+      tad.Reset((u8*)OS_aligned_malloc(32, TA_DATA_SIZE));
 
 		rend.verts.InitBytes(vert_size,&rend.Overrun, "verts"); 
 		rend.idx.Init(120*1024,&rend.Overrun, "idx"); // up to 120K indices (idx have stripification overhead)

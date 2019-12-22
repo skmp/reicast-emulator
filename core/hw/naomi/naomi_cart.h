@@ -85,7 +85,7 @@ private:
 	u8 naomi_cart_ram[64 * 1024];
 };
 
-bool naomi_cart_SelectFile(char *s, size_t len);
+bool naomi_cart_SelectFile();
 int naomi_cart_GetSystemType(const char* file);
 int naomi_cart_GetRotation();
 void naomi_cart_Close();

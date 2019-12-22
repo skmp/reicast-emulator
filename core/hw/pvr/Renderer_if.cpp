@@ -142,9 +142,12 @@ void rend_init_renderer()
 
 void rend_term_renderer()
 {
-	renderer->Term();
-	delete renderer;
-	renderer = NULL;
+	if (renderer != NULL)
+	{
+		renderer->Term();
+		delete renderer;
+		renderer = NULL;
+	}
 	if (fallback_renderer != NULL)
 	{
 		delete fallback_renderer;

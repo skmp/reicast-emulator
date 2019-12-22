@@ -71,7 +71,7 @@ int GetFile(char *szFileName, char *szParse=0,u32 flags=0)
 }
 
 
-s32 plugins_Init(char *s, size_t len)
+s32 plugins_Init()
 {
    if (s32 rv = libPvr_Init())
       return rv;
@@ -80,7 +80,7 @@ s32 plugins_Init(char *s, size_t len)
       return rv;
    if (settings.System != DC_PLATFORM_DREAMCAST)
    {
-      if (!naomi_cart_SelectFile(s, len))
+      if (!naomi_cart_SelectFile())
          return -1;
    }
 
@@ -408,10 +408,6 @@ void dc_reset()
 
 int dc_init(int argc,wchar* argv[])
 {
-   char name[128];
-
-   name[0] = '\0';
-
 	setbuf(stdin,0);
 	setbuf(stdout,0);
 	setbuf(stderr,0);
@@ -462,7 +458,7 @@ int dc_init(int argc,wchar* argv[])
 	setup_seh();
 #endif
 
-	if (plugins_Init(name, sizeof(name)))
+	if (plugins_Init())
 	   return -4;
 	
 	mem_map_default();

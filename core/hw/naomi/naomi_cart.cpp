@@ -32,6 +32,7 @@
 #include "awcartridge.h"
 #include "gdcartridge.h"
 #include "archive/archive.h"
+#include "file/file_path.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -57,8 +58,8 @@ typedef int fd_t;
 #endif
 #include <unistd.h>
 
-fd_t*	RomCacheMap;
-u32		RomCacheMapCount;
+fd_t *RomCacheMap;
+u32 RomCacheMapCount;
 
 char naomi_game_id[33];
 char g_parent_name[128];
@@ -94,7 +95,7 @@ static bool naomi_LoadBios(const char *filename, Archive *child_archive, Archive
 	struct BIOS_t *bios = &BIOS[biosid];
 
 	std::string basepath(game_dir_no_slash);
-	basepath += "/";
+	basepath += path_default_slash();
 
 	Archive *bios_archive = OpenArchive((basepath + filename).c_str());
 
@@ -179,22 +180,12 @@ error:
 	return false;
 }
 
-static bool naomi_cart_LoadZip(char *filename)
+static bool naomi_cart_LoadZip(const char *filename)
 {
-	char *p = strrchr(filename, '/');
-#ifdef _WIN32
-	p = strrchr(p == NULL ? filename : p, '\\');
-#endif
-	if (p == NULL)
-		p = filename;
-	else
-		p++;
 	char game_name[128];
-	strncpy(game_name, p, sizeof(game_name) - 1);
-	game_name[sizeof(game_name) - 1] = 0;
-	char *dot = strrchr(game_name, '.');
-	if (dot != NULL)
-		*dot = 0;
+	strncpy(game_name, path_basename(filename), sizeof(game_name) - 1);
+	game_name[sizeof(game_name) - 1] = '\0';
+	path_remove_extension(game_name);
 
 	int gameid = 0;
 	for (; Games[gameid].name != NULL; gameid++)
@@ -202,7 +193,7 @@ static bool naomi_cart_LoadZip(char *filename)
 			break;
 	if (Games[gameid].name == NULL)
 	{
-		WARN_LOG(NAOMI, "Unknown game %s", filename);
+		WARN_LOG(NAOMI, "Unknown game %s", game_name);
 		return false;
 	}
 
@@ -217,7 +208,7 @@ static bool naomi_cart_LoadZip(char *filename)
 	{
 	   strncpy(g_parent_name, game->parent_name, sizeof(game->parent_name));
 	   std::string parent_path(g_roms_dir);
-	   parent_path += "/";
+	   parent_path += path_default_slash();
 	   parent_path += game->parent_name;
 	   parent_archive = OpenArchive(parent_path.c_str());
 	   if (parent_archive != NULL)
@@ -393,27 +384,16 @@ error:
 
 int naomi_cart_GetSystemType(const char* file)
 {
-   const char *pdot = strrchr(file, '.');
+	const char *ext = path_get_extension(file);
 
-   if (pdot == NULL
-		 || (strcmp(pdot, ".zip") && strcmp(pdot, ".ZIP")
-			 && strcmp(pdot, ".7z") && strcmp(pdot, ".7Z")))
-	  // Not a ZIP file so it has to be a Naomi game
+   if (strcasecmp(ext, "zip") && strcasecmp(ext, "7z"))
+	  // Not a ZIP or 7z file so it has to be a Naomi game
 	  return DC_PLATFORM_NAOMI;
 
-   const char *p = strrchr(file, '/');
-#ifdef _WIN32
-   const char *p2 = strrchr(file, '\\');
-   if (p2 > p)
-   	p = p2;
-#endif
-   if (p == NULL)
-	  p = file;
-   else
-	  p++;
-   char game_name[128];
-   strncpy(game_name, p, pdot - p);
-   game_name[pdot - p] = 0;
+	char game_name[128];
+	strncpy(game_name, path_basename(file), sizeof(game_name) - 1);
+	game_name[sizeof(game_name) - 1] = '\0';
+	path_remove_extension(game_name);
 
    int gameid = 0;
    for (; Games[gameid].name != NULL; gameid++)
@@ -459,7 +439,7 @@ void naomi_cart_Close()
 	bios_loaded = false;
 }
 
-bool naomi_cart_LoadRom(char* file, char *s, size_t len)
+static bool naomi_cart_LoadRom(const char* file)
 {
 	INFO_LOG(NAOMI, "nullDC-Naomi rom loader v1.2");
 
@@ -481,11 +461,9 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 	char t[512];
 	strcpy(t, file);
 
-	char *pdot = strrchr(file, '.');
+	const char *ext = path_get_extension(file);
 
-	if (pdot != NULL
-			&& (!strcmp(pdot, ".zip") || !strcmp(pdot, ".ZIP")
-				|| !strcmp(pdot, ".7z") || !strcmp(pdot, ".7Z")))
+	if (!strcasecmp(ext, "zip")	|| !strcasecmp(ext, "7z"))
 		return naomi_cart_LoadZip(file);
 
 	// Try to load BIOS from naomi.zip
@@ -505,7 +483,7 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 	u8* RomPtr;
 	u32 RomSize;
 
-	if (pdot != NULL && (!strcmp(pdot, ".lst") || !strcmp(pdot, ".LST")))
+	if (!strcasecmp(ext, "lst"))
 	{
 	   FILE* fl = fopen(t, "r");
 	   if (!fl)
@@ -534,8 +512,6 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 		   *eon = 0;
 
 	   DEBUG_LOG(NAOMI, "+Loading naomi rom : %s", line);
-
-	   strcpy(s, line);
 
 	   line = fgets(t, 512, fl);
 	   if (!line)
@@ -702,9 +678,9 @@ bool naomi_cart_LoadRom(char* file, char *s, size_t len)
 extern char *game_data;
 extern char eeprom_file[PATH_MAX];
 
-bool naomi_cart_SelectFile(char *s, size_t len)
+bool naomi_cart_SelectFile()
 {
-	if (!naomi_cart_LoadRom(game_data, s, len))
+	if (!naomi_cart_LoadRom(game_data))
 	{
 	   ERROR_LOG(NAOMI, "Cannot load %s: error %d", game_data, errno);
 	   return false;

@@ -60,6 +60,7 @@ public:
 		DEBUG_LOG(RENDERER, "VulkanRenderer::Term");
 		GetContext()->WaitIdle();
 		quadBuffer = nullptr;
+		quadPipeline.Term();
 		textureCache.Clear();
 		fogTexture = nullptr;
 		texCommandPool.Term();

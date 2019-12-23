@@ -286,6 +286,7 @@ void DYNACALL ta_thd_data32_i(void* data)
 	if (ta_tad.End() - ta_tad.thd_root >= TA_DATA_SIZE)
 	{
 		INFO_LOG(PVR, "Warning: TA data buffer overflow");
+		asic_RaiseInterrupt(holly_MATR_NOMEM);
 		return;
 	}
 

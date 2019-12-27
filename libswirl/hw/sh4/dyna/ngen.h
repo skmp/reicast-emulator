@@ -47,7 +47,7 @@
 #include "oslib/context.h"
 
 
-#define CODE_SIZE   (10*1024*1024)
+#define CODE_SIZE   (1*1024*1024)
 
 // When NO_RWX is enabled there's two address-spaces, one executable and
 // one writtable. The emitter and most of the code in rec-* will work with

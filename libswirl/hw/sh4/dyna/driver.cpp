@@ -38,6 +38,8 @@ u8* CodeCache;
 uintptr_t cc_rx_offset;
 
 u32 LastAddr;
+u32 CodeSizeTop;
+
 u32 LastAddr_min;
 u32* emit_ptr=0;
 NGenBackend* rdv_ngen;
@@ -65,6 +67,26 @@ void RASDASD()
 {
 	LastAddr=LastAddr_min;
 	memset(emit_GetCCPtr(),0xCC,emit_FreeSpace());
+}
+
+void bm_DiscardHostRange(void* code_start, void* code_end);
+void recSh4_ReclaimCache()
+{
+    auto alloc = 256 * 1024;
+    
+    if (CodeSizeTop + alloc > CODE_SIZE)
+    {
+        CodeSizeTop = alloc;
+        LastAddr = LastAddr_min;
+    }
+    else
+    {
+        CodeSizeTop += alloc;
+    }
+
+    bm_DiscardHostRange(CodeCache + LastAddr, CodeCache + CodeSizeTop);
+
+    printf("RECLAIMED CACHE\n");
 }
 void recSh4_ClearCache()
 {
@@ -117,7 +139,7 @@ void emit_Skip(u32 sz)
 }
 u32 emit_FreeSpace()
 {
-	return CODE_SIZE-LastAddr;
+	return CodeSizeTop-LastAddr;
 }
 
 
@@ -318,7 +340,7 @@ DynarecCodeEntryPtr rdv_CompilePC_OrClearCache()
 
 	if (!rv)
 	{
-		recSh4_ClearCache();
+        recSh4_ReclaimCache();
 
 		rv = rdv_CompilePC_OrFail(false);
 
@@ -525,6 +547,8 @@ void recSh4_Init()
 
 	memset(CodeCache, 0xFF, CODE_SIZE);
 	verify(rdv_ngen->Init());
+
+    CodeSizeTop = CODE_SIZE;
 
 	bm_Reset();
 }

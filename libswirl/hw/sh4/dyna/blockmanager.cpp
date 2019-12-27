@@ -182,6 +182,33 @@ void bm_DiscardAddress(u32 codeaddr)
 	}
 }
 
+void bm_DiscardHostRange(void* code_start, void* code_end)
+{
+    if (blkmap.empty())
+        return;
+
+    vector<RuntimeBlockInfo*> toDiscard;
+
+    void* dynarecrw = CC_RX2RW(code_start);
+    // Returns a block who's code addr is bigger than dynarec_code (or end)
+    auto iter = blkmap.upper_bound(dynarecrw);
+
+    if (iter != blkmap.begin())
+        iter--;  // Need to go back to find the potential candidate
+
+    while (iter != blkmap.end() && (char*)iter->second->code <= code_end)
+    {
+        toDiscard.push_back(iter->second);
+        iter++;
+    }
+
+    for (auto block : toDiscard)
+    {
+        bm_DiscardBlock(block);
+
+    }
+}
+
 void bm_Periodical_1s()
 {
 	printf_bm("bm_Periodical_1s\n");

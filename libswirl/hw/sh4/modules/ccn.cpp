@@ -9,6 +9,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
 #include "mmu.h"
+#include "../sh4_interpreter.h"
 
 //Types
 
@@ -83,7 +84,7 @@ void CCN_CCR_write(u32 addr, u32 value)
 			if (curr_pc != 0xAC13DBF8)
 			{
 				printf("Sh4: code cache clear (ICI) pc: %08X\n",curr_pc);
-				sh4_cpu.ResetCache();
+				sh4_backend->ClearCache();
 			}
 		}
 	}

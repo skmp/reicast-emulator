@@ -262,7 +262,7 @@ void dc_reset()
 	plugins_Reset(false);
 	mem_Reset(false);
 
-	sh4_cpu.Reset(false);
+	sh4_cpu->Reset(false);
 }
 
 static bool init_done;
@@ -294,10 +294,6 @@ int reicast_init(int argc, char* argv[])
 
 	os_CreateWindow();
 	os_SetupInput();
-
-	// Needed to avoid crash calling dc_is_running() in gui
-	Get_Sh4Interpreter(&sh4_cpu);
-	sh4_cpu.Init();
 
 	return 0;
 }
@@ -377,21 +373,6 @@ int dc_start_game(const char *path)
 
 	LoadCustom();
 
-#if FEAT_SHREC != DYNAREC_NONE
-	Get_Sh4Recompiler(&sh4_cpu);
-	sh4_cpu.Init();		// Also initialize the interpreter
-	if(settings.dynarec.Enable)
-	{
-		printf("Using Recompiler\n");
-	}
-	else
-#endif
-	{
-		Get_Sh4Interpreter(&sh4_cpu);
-		sh4_cpu.Init();
-		printf("Using Interpreter\n");
-	}
-
 	mem_Init();
 
 	mem_map_default();
@@ -413,7 +394,7 @@ int dc_start_game(const char *path)
 
 bool dc_is_running()
 {
-	return sh4_cpu.IsCpuRunning();
+	return sh4_cpu && sh4_cpu->IsRunning();
 }
 
 #ifndef TARGET_DISPFRAME
@@ -431,18 +412,18 @@ void* dc_run(void*)
 
 	if (settings.dynarec.Enable)
 	{
-		Get_Sh4Recompiler(&sh4_cpu);
+        sh4_cpu->setBackend(SH4BE_DYNAREC);
 		printf("Using Recompiler\n");
 	}
 	else
 	{
-		Get_Sh4Interpreter(&sh4_cpu);
+        sh4_cpu->setBackend(SH4BE_INTERPRETER);
 		printf("Using Interpreter\n");
 	}
 	do {
 		reset_requested = false;
 
-		sh4_cpu.Run();
+		sh4_cpu->Run();
 
    		SaveRomFiles(get_writable_data_path(DATA_PATH));
    		if (reset_requested)
@@ -464,9 +445,37 @@ void* dc_run(void*)
 }
 #endif
 
+MMIODevice* Create_BiosDevice();
+MMIODevice* Create_FlashDevice();
+MMIODevice* Create_GDRomOrNaomiDevice();
+MMIODevice* Create_SBDevice();
+MMIODevice* Create_PVRDevice();
+MMIODevice* Create_ExtDevice();
+MMIODevice* Create_AicaDevice();
+MMIODevice* Create_RTCDevice();
+
+bool dc_init()
+{
+
+    MMIODevice* biosDevice = Create_BiosDevice();
+    MMIODevice* flashDevice = Create_FlashDevice();
+    MMIODevice* gdromOrNaomiDevice = Create_GDRomOrNaomiDevice();
+
+    MMIODevice* sbDevice = Create_SBDevice();
+    MMIODevice* pvrDevice = Create_PVRDevice();
+    MMIODevice* extDevice = Create_ExtDevice();
+    MMIODevice* aicaDevice = Create_AicaDevice();
+    MMIODevice* rtcDevice = Create_RTCDevice();
+
+    sh4_cpu = SuperH4::Create(biosDevice, flashDevice, gdromOrNaomiDevice, sbDevice, pvrDevice, extDevice, aicaDevice, rtcDevice);
+
+    return sh4_cpu->Init();
+}
+
+
 void dc_term()
 {
-	sh4_cpu.Term();
+	sh4_cpu->Term();
 #if DC_PLATFORM != DC_PLATFORM_DREAMCAST
 	naomi_cart_Close();
 #endif
@@ -480,7 +489,7 @@ void dc_term()
 
 void dc_stop()
 {
-	sh4_cpu.Stop();
+	sh4_cpu->Stop();
 	rend_cancel_emu_wait();
 	emu_thread.WaitToEnd();
 }
@@ -489,7 +498,7 @@ void dc_stop()
 void dc_request_reset()
 {
 	reset_requested = true;
-	sh4_cpu.Stop();
+	sh4_cpu->Stop();
 }
 
 void dc_exit()
@@ -929,7 +938,7 @@ void dc_loadstate()
 
 	data_ptr = data ;
 
-	sh4_cpu.ResetCache();
+	sh4_cpu->ResetCache();
 #if FEAT_AREC == DYNAREC_JIT
     FlushCache();
 #endif

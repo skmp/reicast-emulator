@@ -423,6 +423,8 @@ int main(int argc, wchar* argv[])
 	if (reicast_init(argc, argv))
 		die("Reicast initialization failed\n");
 
+    dc_init();
+
 	#if !defined(TARGET_EMSCRIPTEN)
 		#if FEAT_HAS_NIXPROF
 		install_prof_handler(1);

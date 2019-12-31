@@ -781,6 +781,8 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 		if (reicast_init(argc, argv) != 0)
 			die("Reicast initialization failed");
 
+        dc_init();
+
 		#ifdef _WIN64
 			setup_seh();
 		#endif

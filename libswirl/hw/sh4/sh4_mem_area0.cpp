@@ -266,15 +266,54 @@ struct RTCDevice : MMIODevice {
 
 
 
-MMIODevice* biosDevice = new BiosDevice();
-MMIODevice* flashDevice = new FlashDevice();
-MMIODevice* gdromOrNaomiDevice = new GDRomOrNaomiDevice();
+static MMIODevice* biosDevice = new BiosDevice();
+static MMIODevice* flashDevice = new FlashDevice();
+static MMIODevice* gdromOrNaomiDevice = new GDRomOrNaomiDevice();
 
-MMIODevice* sbDevice = new SBDevice();
-MMIODevice* pvrDevice = new PVRDevice();
-MMIODevice* extDevice = new ExtDevice();
-MMIODevice* aicaDevice = new AicaDevice();
-MMIODevice* rtcDevice = new RTCDevice();
+static MMIODevice* sbDevice = new SBDevice();
+static MMIODevice* pvrDevice = new PVRDevice();
+static MMIODevice* extDevice = new ExtDevice();
+static MMIODevice* aicaDevice = new AicaDevice();
+static MMIODevice* rtcDevice = new RTCDevice();
+
+MMIODevice* Create_BiosDevice() {
+    return new BiosDevice();
+}
+MMIODevice* Create_FlashDevice() {
+    return new FlashDevice();
+}
+MMIODevice* Create_GDRomOrNaomiDevice() {
+    return new GDRomOrNaomiDevice();
+}
+MMIODevice* Create_SBDevice() { return new SBDevice(); }
+MMIODevice* Create_PVRDevice() {
+    return new PVRDevice();
+}
+MMIODevice* Create_ExtDevice() {
+    return new ExtDevice();
+}
+MMIODevice* Create_AicaDevice() {
+    return new AicaDevice();
+}
+MMIODevice* Create_RTCDevice() {
+    return new RTCDevice();
+}
+
+SuperH4* SuperH4_impl_Create();
+
+SuperH4* SuperH4::Create(MMIODevice* biosDevice, MMIODevice* flashDevice, MMIODevice* gdromOrNaomiDevice, MMIODevice* sbDevice, MMIODevice* pvrDevice, MMIODevice* extDevice, MMIODevice* aicaDevice, MMIODevice* rtcDevice) {
+    
+    ::biosDevice = biosDevice;
+    ::flashDevice = flashDevice;
+    ::gdromOrNaomiDevice = gdromOrNaomiDevice;
+    ::sbDevice = sbDevice;
+    ::pvrDevice = pvrDevice;
+    ::extDevice = extDevice;
+    ::aicaDevice = aicaDevice;
+    ::rtcDevice = rtcDevice;
+
+    return SuperH4_impl_Create();
+}
 
 #if 0
 

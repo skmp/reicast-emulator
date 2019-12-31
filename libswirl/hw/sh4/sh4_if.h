@@ -223,28 +223,39 @@ typedef void InitFP();
 typedef void TermFP();
 typedef bool IsCpuRunningFP();
 
-typedef void sh4_int_RaiseExeptionFP(u32 ExeptionCode,u32 VectorAddress);
-
 /*
 	The interface stuff should be replaced with something nicer
 */
 //sh4 interface
-struct sh4_if
-{
-	RunFP* Run;
-	StopFP* Stop;
-	StepFP* Step;
-	SkipFP* Skip;
-	ResetFP* Reset;
-	InitFP* Init;
-	TermFP* Term;
 
-	TermFP* ResetCache;
+struct MMIODevice;
 
-	IsCpuRunningFP* IsCpuRunning;
-	StartFP* Start;
+enum SuperH4Backends {
+    SH4BE_INTERPRETER,
+    SH4BE_DYNAREC
 };
 
+struct SuperH4 {
+    static SuperH4* Create(MMIODevice* biosDevice, MMIODevice* flashDevice, MMIODevice* gdromOrNaomiDevice, MMIODevice* sbDevice, MMIODevice* pvrDevice, MMIODevice* extDevice, MMIODevice* aicaDevice, MMIODevice* rtcDevice);
+
+    virtual bool setBackend(SuperH4Backends backend) = 0;
+
+    virtual bool Init() = 0;
+    virtual void Reset(bool Manual) = 0;
+    virtual void Term() = 0;
+
+    virtual void Run() = 0;
+    virtual void Stop() = 0;
+    virtual void Start() = 0;
+    virtual void Step() = 0;
+    virtual void Skip() = 0;
+
+    virtual bool IsRunning() = 0;
+
+    virtual void ResetCache() = 0;
+
+    //virtual void RaiseExeption(u32 ExeptionCode, u32 VectorAddress) = 0;
+};
 
 struct Sh4Context
 {
@@ -351,8 +362,15 @@ s32 rcb_poffs(T* ptr)
 #define sh4rcb (*p_sh4rcb)
 #define Sh4cntx (sh4rcb.cntx)
 
+struct SuperH4Backend {
+    virtual bool Init() = 0;
+    virtual void Term() = 0;
+    virtual void Loop() = 0;
+    virtual void ClearCache() = 0;
+};
+
 //Get an interface to sh4 interpreter
-void Get_Sh4Interpreter(sh4_if* cpu);
-void Get_Sh4Recompiler(sh4_if* cpu);
+SuperH4Backend* Get_Sh4Interpreter();
+SuperH4Backend* Get_Sh4Recompiler();
 
 u32* GetRegPtr(u32 reg);

@@ -797,7 +797,7 @@ static inline void do_nada(...) { }
 
 //more to come
 
-extern sh4_if				  sh4_cpu;
+extern SuperH4* sh4_cpu;
 
 //sh4 thread
 s32 plugins_Init();

@@ -8,6 +8,7 @@ void dc_savestate();
 void dc_stop();
 void dc_reset();
 void dc_resume();
+bool dc_init();
 void dc_term();
 int dc_start_game(const char *path);
 

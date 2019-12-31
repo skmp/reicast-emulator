@@ -1918,7 +1918,10 @@ Games[] =
             { "mpr-23714.ic10",  0x5000000, 0x0800000, 0x00000000 },
             { "mpr-23715.ic11",  0x5800000, 0x0800000, 0x00000000 },
             { NULL, 0, 0, 0x00000000 },
-        }
+        },
+        NULL,
+        NULL,
+        hmgeo_eeprom_dump
     },
     // House of the Dead 2
     {

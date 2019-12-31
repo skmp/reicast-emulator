@@ -107,14 +107,15 @@ if(${BUILD_COMPILER} EQUAL ${COMPILER_GCC})	# Add Clang if NOT WIN32 *FIXME*
   list(APPEND core_SRCS ${archive_SRCS})
 endif()
 
-if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT})
+if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT}) 
 #
   if(${HOST_CPU} EQUAL ${CPU_X86})
     list(APPEND core_SRCS 
       ${d_core}/jit/backend/x86/rec_x86_driver.cpp
-      ${d_core}/jit/backend/x86/rec_x86_il.cpp
       ${d_core}/jit/backend/x86/rec_x86_asm.cpp	# change for linux , rec_lin86_asm.S
 	  ${d_core}/jit/backend/x86/rec_x86_ngen.h
+
+      ${d_core}/jit/emitter/x86/x86_emitter.cpp
      )
   elseif(${HOST_CPU} EQUAL ${CPU_ARM})
     list(APPEND core_SRCS 
@@ -134,7 +135,7 @@ if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT})
   endif()
 #
 elseif(${FEAT_SHREC} EQUAL ${DYNAREC_CPP})
-    list(APPEND core_SRCS ${d_core}/rec-cpp/rec_cpp.cpp)
+    list(APPEND core_SRCS ${d_core}/jit/backend/cpp/rec_cpp.cpp)
 endif()
 
 add_definitions(/DFEAT_HAS_SOFTREND=0)

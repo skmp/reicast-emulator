@@ -348,7 +348,7 @@ int darw_printf(const wchar* Text,...);
 using namespace std;
 
 //used for asm-olny functions
-#if defined(X86) && COMPILER_VC==BUILD_COMPILER
+#if COMPILER_VC==BUILD_COMPILER
 #define naked   __declspec( naked )
 #else
 #define naked __attribute__((naked))

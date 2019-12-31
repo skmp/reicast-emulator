@@ -2208,7 +2208,7 @@ Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         ROT0,
         {
             { "epr-24241.ic22", 0x00000000, 0x00400000, 0x00000000 },

@@ -230,6 +230,8 @@ static bool naomi_cart_LoadZip(const char *filename)
 	u32 region_flag = settings.dreamcast.region;
 	if (region_flag > game->region_flag)
 	   region_flag = game->region_flag;
+	if (game->region_flag == REGION_EXPORT_ONLY)
+	   region_flag = REGION_EXPORT;
 	if (!naomi_LoadBios(bios, archive, parent_archive, region_flag))
 	{
 	   WARN_LOG(NAOMI, "Warning: Region %d bios not found in %s", settings.dreamcast.region, bios);

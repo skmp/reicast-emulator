@@ -4,7 +4,7 @@
 #include "hw/aica/dsp.h"
 #include "hw/aica/aica.h"
 #include "hw/aica/sgc_if.h"
-#include "hw/holly/sb_mem.h"
+#include "hw/sh4/sh4_mem_area0.h"
 #include "hw/flashrom/flashrom.h"
 #include "hw/mem/_vmem.h"
 #include "hw/gdrom/gdromv3.h"

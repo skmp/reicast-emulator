@@ -5,7 +5,7 @@
 #include "types.h"
 
 #include "sh4_mem.h"
-#include "hw/holly/sb_mem.h"
+#include "hw/sh4/sh4_mem_area0.h"
 #include "sh4_mmr.h"
 #include "modules/modules.h"
 #include "hw/pvr/pvr_mem.h"

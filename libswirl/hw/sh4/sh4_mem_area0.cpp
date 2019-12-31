@@ -7,8 +7,8 @@
 #include "types.h"
 #include "hw/sh4/sh4_mem.h"
 
-#include "sb_mem.h"
-#include "sb.h"
+#include "hw/sh4/sh4_mem_area0.h"
+#include "hw/holly/sb.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/aica/aica_if.h"
@@ -309,11 +309,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0000 to 0x01FF to Default handler
 	//mirror 0x0200 to 0x03FF , from 0x0000 to 0x03FFF
 	//map 0x0000 to 0x001F
-#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
 	if (base<=0x001F)//	:MPX	System/Boot ROM
-#else
-	if (base<=0x0001)		// Only 128k BIOS on AtomisWave
-#endif
 	{
 		return biosDevice->Read(addr, sz);
 	}
@@ -383,12 +379,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	const u32 base=(addr>>16);
 
 	//map 0x0000 to 0x001F
-#if DC_PLATFORM != DC_PLATFORM_ATOMISWAVE
 	if ((base <=0x001F) /*&& (addr<=0x001FFFFF)*/)// :MPX System/Boot ROM
-#else
-
-	if (base <= 0x0001) // Only 128k BIOS on AtomisWave
-#endif
 	{
         biosDevice->Write(addr,data,sz);
 	}

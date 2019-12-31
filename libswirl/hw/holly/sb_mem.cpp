@@ -143,6 +143,143 @@ void WriteBios(u32 addr,u32 data,u32 sz) { EMUERROR4("Write to [Boot ROM] is not
 #error unknown flash
 #endif
 
+struct MMIODevice
+{
+    virtual bool Init() { return true; }
+    virtual void Reset(bool m) { }
+    virtual void Term() { }
+
+    virtual u32 Read(u32 addr, u32 sz) = 0;
+    virtual void Write(u32 addr, u32 data, u32 sz) = 0;
+};
+
+struct BiosDevice : MMIODevice {
+    u32 Read(u32 addr, u32 sz) {
+        return ReadBios(addr, sz);
+    }
+    void Write(u32 addr, u32 data, u32 sz) {
+        WriteBios(addr, data, sz);
+    }
+};
+
+struct FlashDevice : MMIODevice {
+    u32 Read(u32 addr, u32 sz) {
+        return ReadFlash(addr, sz);
+    }
+    void Write(u32 addr, u32 data, u32 sz) {
+        WriteFlash(addr, data, sz);
+    }
+};
+
+struct GDRomOrNaomiDevice : MMIODevice {
+    u32 Read(u32 addr, u32 sz) {
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+        return ReadMem_naomi(addr, sz);
+#else
+        return ReadMem_gdrom(addr, sz);
+#endif
+    }
+    
+    void Write(u32 addr, u32 data, u32 sz) {
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+        WriteMem_naomi(addr, data, sz);
+#else
+        WriteMem_gdrom(addr, data, sz);
+#endif
+    }
+};
+
+
+struct SBDevice : MMIODevice {
+    bool Init() { sb_Init(); return true; }
+    void Reset(bool m) { sb_Reset(m); }
+    void Term() { sb_Term(); }
+
+    u32 Read(u32 addr, u32 sz) {
+        return sb_ReadMem(addr, sz);
+    }
+    void Write(u32 addr, u32 data, u32 sz) {
+        sb_WriteMem(addr, data, sz);
+    }
+};
+
+
+struct PVRDevice : MMIODevice {
+    u32 Read(u32 addr, u32 sz) {
+        verify(sz == 4);
+        return pvr_ReadReg(addr);
+    }
+    void Write(u32 addr, u32 data, u32 sz) {
+        verify(sz == 4);
+        pvr_WriteReg(addr, data);
+    }
+};
+
+
+struct ExtDevice : MMIODevice {
+    u32 Read(u32 addr, u32 sz) {
+        if (addr >> 16 == 0x0060) {
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+            return libExtDevice_ReadMem_A0_006(addr, sz);
+#elif defined(ENABLE_MODEM)
+            return ModemReadMem_A0_006(addr, sz);
+#else
+            return 0;
+#endif
+        }
+        else {
+            return libExtDevice_ReadMem_A0_010(addr, sz);
+        }
+    }
+
+    void Write(u32 addr, u32 data, u32 sz) {
+        if (addr >> 16 == 0x0060) {
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+            libExtDevice_WriteMem_A0_006(addr, data, sz);
+#elif defined(ENABLE_MODEM)
+            ModemWriteMem_A0_006(addr, data, sz);
+#endif
+        }
+        else {
+            libExtDevice_WriteMem_A0_010(addr, data, sz);
+        }
+    }
+};
+
+struct AicaDevice : MMIODevice {
+    u32 Read(u32 addr, u32 sz) {
+        return ReadMem_aica_reg(addr, sz);
+    }
+    void Write(u32 addr, u32 data, u32 sz) {
+        WriteMem_aica_reg(addr, data, sz);
+    }
+};
+
+struct RTCDevice : MMIODevice {
+    u32 Read(u32 addr, u32 sz) {
+        return ReadMem_aica_rtc(addr, sz);
+    }
+    void Write(u32 addr, u32 data, u32 sz) {
+        WriteMem_aica_rtc(addr, data, sz);
+    }
+};
+
+
+
+MMIODevice* biosDevice = new BiosDevice();
+MMIODevice* flashDevice = new FlashDevice();
+MMIODevice* gdromOrNaomiDevice = new GDRomOrNaomiDevice();
+
+MMIODevice* sbDevice = new SBDevice();
+MMIODevice* pvrDevice = new PVRDevice();
+MMIODevice* extDevice = new ExtDevice();
+MMIODevice* aicaDevice = new AicaDevice();
+MMIODevice* rtcDevice = new RTCDevice();
+
+#if 0
+
+#endif///////////
+
 //Area 0 mem map
 //0x00000000- 0x001FFFFF	:MPX	System/Boot ROM
 //0x00200000- 0x0021FFFF	:Flash Memory
@@ -178,12 +315,12 @@ T DYNACALL ReadMem_area0(u32 addr)
 	if (base<=0x0001)		// Only 128k BIOS on AtomisWave
 #endif
 	{
-		return ReadBios(addr,sz);
+		return biosDevice->Read(addr, sz);
 	}
 	//map 0x0020 to 0x0021
 	else if ((base>= 0x0020) && (base<= 0x0021)) // :Flash Memory
 	{
-		return ReadFlash(addr&0x1FFFF,sz);
+		return flashDevice->Read(addr&0x1FFFF,sz);
 	}
 	//map 0x005F to 0x005F
 	else if (likely(base==0x005F))
@@ -194,34 +331,21 @@ T DYNACALL ReadMem_area0(u32 addr)
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-			return (T)ReadMem_naomi(addr,sz);
-#else
-			return (T)ReadMem_gdrom(addr,sz);
-#endif
+            return gdromOrNaomiDevice->Read(addr, sz);
 		}
 		else if (likely((addr>= 0x005F6800) && (addr<=0x005F7CFF))) //	/*:PVR i/f Control Reg.*/ -> ALL SB registers now
 		{
-			return (T)sb_ReadMem(addr,sz);
+            return sbDevice->Read(addr, sz);
 		}
 		else if (likely((addr>= 0x005F8000) && (addr<=0x005F9FFF))) //	:TA / PVR Core Reg.
 		{
-			if (sz != 4)
-				// House of the Dead 2
-				return 0;
-			return (T)pvr_ReadReg(addr);
+			return pvrDevice->Read(addr, sz);
 		}
 	}
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) //	:MODEM
 	{
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		return (T)libExtDevice_ReadMem_A0_006(addr, sz);
-#elif defined(ENABLE_MODEM)
-		return (T)ModemReadMem_A0_006(addr, sz);
-#else
-		return (T)0;
-#endif
+        extDevice->Read(addr, sz);
 	}
 	//map 0x0060 to 0x006F
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) //	:G2 (Reserved)
@@ -231,12 +355,12 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0070 to 0x0070
 	else if ((base ==0x0070) /*&& (addr>= 0x00700000)*/ && (addr<=0x00707FFF)) //	:AICA- Sound Cntr. Reg.
 	{
-		return (T) ReadMem_aica_reg(addr,sz);//libAICA_ReadReg(addr,sz);
+		return aicaDevice->Read(addr,sz);//libAICA_ReadReg(addr,sz);
 	}
 	//map 0x0071 to 0x0071
 	else if ((base ==0x0071) /*&& (addr>= 0x00710000)*/ && (addr<= 0x0071000B)) //	:AICA- RTC Cntr. Reg.
 	{
-		return (T)ReadMem_aica_rtc(addr,sz);
+		return rtcDevice->Read(addr,sz);
 	}
 	//map 0x0080 to 0x00FF
 	else if ((base >=0x0080) && (base <=0x00FF) /*&& (addr>= 0x00800000) && (addr<=0x00FFFFFF)*/) //	:AICA- Wave Memory
@@ -246,7 +370,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0100 to 0x01FF
 	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) //	:Ext. Device
 	{
-		return (T)libExtDevice_ReadMem_A0_010(addr,sz);
+        extDevice->Read(addr, sz);
 	}
 	return 0;
 }
@@ -266,12 +390,12 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	if (base <= 0x0001) // Only 128k BIOS on AtomisWave
 #endif
 	{
-		WriteBios(addr,data,sz);
+        biosDevice->Write(addr,data,sz);
 	}
 	//map 0x0020 to 0x0021
 	else if ((base >=0x0020) && (base <=0x0021) /*&& (addr>= 0x00200000) && (addr<= 0x0021FFFF)*/) // Flash Memory
 	{
-		WriteFlash(addr,data,sz);
+        flashDevice->Write(addr,data,sz);
 	}
 	//map 0x0040 to 0x005F -> actually, I'll only map 0x005F to 0x005F, b/c the rest of it is unspammed (left to default handler)
 	//map 0x005F to 0x005F
@@ -283,30 +407,21 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-			WriteMem_naomi(addr,data,sz);
-#else
-			WriteMem_gdrom(addr,data,sz);
-#endif
+            gdromOrNaomiDevice->Write(addr, data, sz);
 		}
 		else if ( likely((addr>= 0x005F6800) && (addr<=0x005F7CFF)) ) // /*:PVR i/f Control Reg.*/ -> ALL SB registers
 		{
-			sb_WriteMem(addr,data,sz);
+            sbDevice->Write(addr, data, sz);
 		}
 		else if ( likely((addr>= 0x005F8000) && (addr<=0x005F9FFF)) ) // TA / PVR Core Reg.
 		{
-			verify(sz==4);
-			pvr_WriteReg(addr,data);
+            pvrDevice->Write(addr, data, sz);
 		}
 	}
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) // MODEM
 	{
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-		libExtDevice_WriteMem_A0_006(addr, data, sz);
-#elif defined(ENABLE_MODEM)
-		ModemWriteMem_A0_006(addr, data, sz);
-#endif
+        extDevice->Write(addr, data, sz);
 	}
 	//map 0x0060 to 0x006F
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) // G2 (Reserved)
@@ -316,13 +431,13 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0070 to 0x0070
 	else if ((base >=0x0070) && (base <=0x0070) /*&& (addr>= 0x00700000)*/ && (addr<=0x00707FFF)) // AICA- Sound Cntr. Reg.
 	{
-		WriteMem_aica_reg(addr,data,sz);
+        aicaDevice->Write(addr, data, sz);
 		return;
 	}
 	//map 0x0071 to 0x0071
 	else if ((base >=0x0071) && (base <=0x0071) /*&& (addr>= 0x00710000)*/ && (addr<= 0x0071000B)) // AICA- RTC Cntr. Reg.
 	{
-		WriteMem_aica_rtc(addr,data,sz);
+        rtcDevice->Write(addr, data, sz);
 		return;
 	}
 	//map 0x0080 to 0x00FF
@@ -334,7 +449,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0100 to 0x01FF
 	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) // Ext. Device
 	{
-		libExtDevice_WriteMem_A0_010(addr,data,sz);
+        extDevice->Write(addr, data, sz);
 	}
 	return;
 }
@@ -342,17 +457,17 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 //Init/Res/Term
 void sh4_area0_Init()
 {
-	sb_Init();
+	sbDevice->Init();
 }
 
 void sh4_area0_Reset(bool Manual)
 {
-	sb_Reset(Manual);
+    sbDevice->Reset(Manual);
 }
 
 void sh4_area0_Term()
 {
-	sb_Term();
+    sbDevice->Term();
 }
 
 

@@ -6,6 +6,7 @@
 #include <X11/Xutil.h>
 
 #include "types.h"
+#include "libswirl.h"
 #include "cfg/cfg.h"
 #include "linux-dist/x11.h"
 #include "linux-dist/main.h"
@@ -116,7 +117,7 @@ void event_x11_handle()
 
 		if (event.type == ClientMessage &&
 				event.xclient.data.l[0] == wmDeleteMessage)
-			dc_exit();
+			virtualDreamcast->Exit();
 		else if (event.type == ConfigureNotify)
 		{
 			x11_width = event.xconfigure.width;

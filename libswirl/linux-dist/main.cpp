@@ -423,7 +423,7 @@ int main(int argc, wchar* argv[])
 	if (reicast_init(argc, argv))
 		die("Reicast initialization failed\n");
 
-    dc_init();
+    	virtualDreamcast->Init();
 
 	#if !defined(TARGET_EMSCRIPTEN)
 		#if FEAT_HAS_NIXPROF
@@ -438,7 +438,7 @@ int main(int argc, wchar* argv[])
 		clean_exit(0);
 	#endif
 
-	dc_term();
+	virtualDreamcast->Term();
 
 	#if defined(USE_EVDEV)
 		input_evdev_close();

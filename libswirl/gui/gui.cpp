@@ -48,6 +48,9 @@
 #include "input/keyboard_device.h"
 #include "hw/maple/maple_if.h"
 
+
+bool game_started;
+
 int screen_dpi = 96;
 
 static bool inited = false;
@@ -266,7 +269,7 @@ void gui_open_settings()
 
 static void gui_display_commands()
 {
-	dc_stop();
+    virtualDreamcast->Stop();
 
 	ImGui_Impl_NewFrame();
     ImGui::NewFrame();
@@ -286,13 +289,13 @@ static void gui_display_commands()
 	if (ImGui::Button("Load State", ImVec2(150 * scaling, 50 * scaling)))
 	{
 		gui_state = ClosedNoResume;
-		dc_loadstate();
+        virtualDreamcast->LoadState();
 	}
 	ImGui::NextColumn();
 	if (ImGui::Button("Save State", ImVec2(150 * scaling, 50 * scaling)))
 	{
 		gui_state = ClosedNoResume;
-		dc_savestate();
+        virtualDreamcast->SaveState();
 	}
 
 	ImGui::NextColumn();
@@ -309,7 +312,7 @@ static void gui_display_commands()
 	ImGui::NextColumn();
 	if (ImGui::Button("Restart", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		dc_reset();
+        virtualDreamcast->Reset();
 		gui_state = Closed;
 	}
 	ImGui::NextColumn();
@@ -475,7 +478,7 @@ static void gui_start_game(const std::string& path)
 
 	auto bios_path = get_readonly_data_path(DATA_PATH);
 
-	int rc = dc_start_game(path.empty() ? NULL : path.c_str());
+	int rc = virtualDreamcast->StartGame(path.empty() ? NULL : path.c_str());
 	if (rc != 0)
 	{
 		gui_state = Main;
@@ -495,6 +498,10 @@ static void gui_start_game(const std::string& path)
 			break;
 		}
 	}
+    else
+    {
+        game_started = true;
+    }
 }
 
 static OnlineRomsProvider onlineRoms;
@@ -760,7 +767,7 @@ void gui_display_ui()
 	}
 
 	if (gui_state == Closed)
-		dc_resume();
+        virtualDreamcast->Resume();
 	else if (gui_state == ClosedNoResume)
 		gui_state = Closed;
 }

@@ -147,9 +147,6 @@ PCHAR*
 	return argv;
 }
 
-void dc_exit(void);
-
-
 static std::shared_ptr<WinKbGamepadDevice> kb_gamepad;
 static std::shared_ptr<WinMouseGamepadDevice> mouse_gamepad;
 
@@ -194,7 +191,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 		#error missing arch for windows
 	#endif
 
-	if (dc_handle_fault(address, &ctx))
+	if (virtualDreamcast && virtualDreamcast->HandleFault(address, &ctx))
 	{
 		// TODO: Implement context abstraction for windows
 		#if HOST_CPU == CPU_X86
@@ -781,7 +778,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 		if (reicast_init(argc, argv) != 0)
 			die("Reicast initialization failed");
 
-        dc_init();
+        virtualDreamcast->Init();
 
 		#ifdef _WIN64
 			setup_seh();
@@ -789,7 +786,7 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 
 		rend_thread(NULL);
 
-		dc_term();
+        virtualDreamcast->Term();
 	}
 #ifndef __GNUC__
 	__except( ExeptionHandler(GetExceptionInformation()) )
@@ -837,7 +834,7 @@ void os_DoEvents()
 		// If the message is WM_QUIT, exit the while loop
 		if (msg.message == WM_QUIT)
 		{
-			dc_exit();
+			virtualDreamcast->Exit();
 		}
 
 		// Translate the message and dispatch it to WindowProc()

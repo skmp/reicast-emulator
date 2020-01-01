@@ -196,7 +196,7 @@ void SB_SFRES_write32(u32 addr, u32 data)
 	if ((u16)data==0x7611)
 	{
 		printf("SB/HOLLY: System reset requested\n");
-		dc_request_reset();
+        virtualDreamcast->RequestReset();
 	}
 }
 void sb_Init()

@@ -22,10 +22,9 @@
 #include "gui/gui.h"
 #include "oslib/oslib.h"
 #include "cfg/cfg.h"
+#include "libswirl.h"
 
 #define MAPLE_PORT_CFG_PREFIX "maple_"
-
-extern void dc_exit();
 
 extern u16 kcode[4];
 extern u8 rt[4], lt[4];
@@ -92,8 +91,8 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		switch (key)
 		{
 		case EMU_BTN_ESCAPE:
-			if (pressed)
-				dc_exit();
+            if (pressed)
+                virtualDreamcast->Exit();
 			break;
 		case EMU_BTN_MENU:
 			if (pressed)

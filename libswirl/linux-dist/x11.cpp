@@ -82,8 +82,6 @@ void* x11_vis;
 
 extern bool dump_frame_switch;
 
-void dc_exit(void);
-
 enum
 {
 	_NET_WM_STATE_REMOVE =0,

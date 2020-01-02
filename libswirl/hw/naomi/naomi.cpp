@@ -539,7 +539,7 @@ void naomi_sb_init(SBDevice* sb)
     sb->RegisterRIO(SB_GDEN_addr, RIO_WF, 0, &Naomi_DmaEnable);
 }
 
-void naomi_reg_Term()
+void naomi_sb_Term()
 {
 	#ifdef NAOMI_COMM
 	if (CommSharedMem)
@@ -552,7 +552,7 @@ void naomi_reg_Term()
 	}
 	#endif
 }
-void naomi_reg_Reset(bool Manual)
+void naomi_sb_Reset(bool Manual)
 {
 	NaomiDataRead = false;
 	aw_ram_test_skipped = false;

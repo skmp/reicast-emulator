@@ -273,7 +273,24 @@ bool rend_single_frame()
 		rend_create_renderer();
 		rend_init_renderer();
 	}
-	//wait render start only if no frame pending
+
+    if (g_GUI->IsOpen() || g_GUI->IsVJoyEdit())
+    {
+        os_DoEvents();
+
+        g_GUI->RenderUI();
+
+        if (g_GUI->IsVJoyEdit() && renderer != NULL)
+            renderer->DrawOSD(true);
+
+        FinishRender(NULL);
+        // Use the rendering start event to wait between two frames but save its value
+        if (rs.Wait(17))
+            rs.Set();
+        return true;
+    }
+
+    //wait render start only if no frame pending
 	do
 	{
 		// FIXME not here
@@ -281,25 +298,11 @@ bool rend_single_frame()
 
 		luabindings_onframe();
 
-		if (g_GUI->IsOpen() || g_GUI->IsVJoyEdit())
-		{
-            g_GUI->RenderUI();
-			
-			if (g_GUI->IsVJoyEdit() && renderer != NULL)
-				renderer->DrawOSD(true);
-			
-            FinishRender(NULL);
-			// Use the rendering start event to wait between two frames but save its value
-			if (rs.Wait(17))
-				rs.Set();
-			return true;
-		}
-		else
 		{
 			if (renderer != NULL)
 				renderer->RenderLastFrame();
 
-			if (!rs.Wait(100))
+			if (!rs.Wait(1))
 				return false;
 		}
 

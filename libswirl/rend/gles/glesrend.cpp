@@ -1080,7 +1080,7 @@ void OSD_DRAW(bool clear_screen)
 			glDrawArrays(GL_TRIANGLE_STRIP, i * 4, 4);
 	}
 #endif
-	gui_display_osd();
+	gui_render_osd();
 }
 
 bool ProcessFrame(TA_context* ctx)

@@ -60,7 +60,7 @@ GuiState gui_state = Main;
 bool settings_opening;
 static bool touch_up;
 
-static void display_vmus();
+static void render_vmus();
 static void term_vmus();
 
 void gui_init()
@@ -267,7 +267,7 @@ void gui_open_settings()
 	}
 }
 
-static void gui_display_commands()
+static void gui_render_commands()
 {
     virtualDreamcast->Stop();
 
@@ -278,7 +278,7 @@ static void gui_display_commands()
 
     if (!settings.rend.FloatVMUs)
     	// If floating VMUs, they are already visible on the background
-    	display_vmus();
+    	render_vmus();
 
     ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
@@ -465,7 +465,7 @@ static void fetch_game_list()
 	game_list_done = true;
 }
 
-static void gui_display_demo()
+static void gui_render_demo()
 {
 	ImGui_Impl_NewFrame();
     ImGui::NewFrame();
@@ -567,7 +567,7 @@ static void downloading_popup()
 }
 
 
-static void gui_display_online_roms()
+static void gui_render_online_roms()
 {
 	ImGui::TextColored(ImVec4(1, 1, 1, 0.7), "CLOUD ROMS");
 	ImGui::SameLine();
@@ -617,7 +617,7 @@ static void gui_display_online_roms()
 	}
 }
 
-static void gui_display_content()
+static void gui_render_content()
 {
 	ImGui_Impl_NewFrame();
     ImGui::NewFrame();
@@ -692,7 +692,7 @@ static void gui_display_content()
 
 		ImGui::Text("");
 
-		gui_display_online_roms();
+		gui_render_online_roms();
 
         ImGui::PopStyleVar();
     }
@@ -724,7 +724,7 @@ void systemdir_selected_callback(bool cancelled, std::string selection)
 	}
 }
 
-void gui_display_onboarding()
+void gui_render_onboarding()
 {
 	ImGui_Impl_NewFrame();
     ImGui::NewFrame();
@@ -736,7 +736,7 @@ void gui_display_onboarding()
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
-void gui_display_ui()
+void gui_render_ui()
 {
 	switch (gui_state)
 	{
@@ -744,7 +744,7 @@ void gui_display_ui()
 		gui_settings();
 		break;
 	case Commands:
-		gui_display_commands();
+		gui_render_commands();
 		break;
 	case Main:
 		//gui_display_demo();
@@ -756,14 +756,14 @@ void gui_display_ui()
 				gui_start_game(game_file);
 			}
 			else
-				gui_display_content();
+				gui_render_content();
 		}
 		break;
 	case Closed:
 	case ClosedNoResume:
 		break;
 	case Onboarding:
-		gui_display_onboarding();
+		gui_render_onboarding();
 		break;
 	case VJoyEdit:
 		break;
@@ -813,7 +813,7 @@ static std::string getFPSNotification()
 	return std::string("");
 }
 
-void gui_display_osd()
+void gui_render_osd()
 {
 	if (gui_state == VJoyEdit)
 		return;
@@ -848,7 +848,7 @@ void gui_display_osd()
 			ImGui::End();
 		}
 		if (settings.rend.FloatVMUs)
-			display_vmus();
+			render_vmus();
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -919,7 +919,7 @@ static const int vmu_coords[8][2] = {
 		{ 1 , 1 },
 };
 
-static void display_vmus()
+static void render_vmus()
 {
 	if (!game_started)
 		return;

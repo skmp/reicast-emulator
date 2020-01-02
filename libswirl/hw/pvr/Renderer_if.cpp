@@ -287,7 +287,7 @@ bool rend_single_frame()
 #if !defined(TARGET_NO_THREADS)
 		if (gui_is_open() || gui_state == VJoyEdit)
 		{
-			gui_display_ui();
+			gui_render_ui();
 			if (gui_state == VJoyEdit && renderer != NULL)
 				renderer->DrawOSD(true);
 			FinishRender(NULL);

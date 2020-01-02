@@ -830,6 +830,7 @@ void os_DoEvents()
 		// If the message is WM_QUIT, exit the while loop
 		if (msg.message == WM_QUIT)
 		{
+            verify(virtualDreamcast);
 			virtualDreamcast->Exit();
 		}
 

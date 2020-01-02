@@ -99,7 +99,7 @@ bool CustomTexture::Init()
 	if (!initialized)
 	{
 		initialized = true;
-#ifndef TARGET_NO_THREADS
+
 		std::string game_id = GetGameId();
 		if (game_id.length() > 0)
 		{
@@ -116,7 +116,6 @@ bool CustomTexture::Init()
 				luabindings_findscripts(textures_path);
 			}
 		}
-#endif
 	}
 	return custom_textures_available;
 }
@@ -130,9 +129,8 @@ void CustomTexture::Terminate()
 		work_queue.clear();
 		work_queue_mutex.Unlock();
 		wakeup_thread.Set();
-#ifndef TARGET_NO_THREADS
+
 		loader_thread.WaitToEnd();
-#endif
 	}
 
 	luabindings_close();

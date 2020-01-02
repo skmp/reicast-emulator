@@ -83,9 +83,7 @@ static Renderer* fallback_renderer;
 bool renderer_enabled = true;	// Signals the renderer thread to exit
 bool renderer_changed = false;	// Signals the renderer thread to switch renderer
 
-#if !defined(TARGET_NO_THREADS)
 cResetEvent rs, re;
-#endif
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 
@@ -253,11 +251,10 @@ bool rend_frame(TA_context* ctx, bool draw_osd) {
 		dump_frame_switch = false;
 	}
 	bool proc = renderer->Process(ctx);
-#if !defined(TARGET_NO_THREADS)
+
 	if (!proc || (!ctx->rend.isRTT && !ctx->rend.isRenderFramebuffer))
 		// If rendering to texture, continue locking until the frame is rendered
 		re.Set();
-#endif
 
 	bool do_swp = proc && renderer->Render();
 
@@ -284,7 +281,6 @@ bool rend_single_frame()
 
 		luabindings_onframe();
 
-#if !defined(TARGET_NO_THREADS)
 		if (g_GUI->IsOpen() || g_GUI->IsVJoyEdit())
 		{
             g_GUI->RenderUI();
@@ -306,17 +302,8 @@ bool rend_single_frame()
 			if (!rs.Wait(100))
 				return false;
 		}
-#else
-		if (gui_is_open())
-		{
-			gui_display_ui();
-			FinishRender(NULL);
-			return true;
-		}
-		if (renderer != NULL)
-			renderer->RenderLastFrame();
-#endif
-		if (!renderer_enabled)
+
+        if (!renderer_enabled)
 			return false;
 
 		_pvrrc = DequeueRender();
@@ -324,10 +311,8 @@ bool rend_single_frame()
 	while (!_pvrrc);
 	bool do_swp = rend_frame(_pvrrc, true);
 
-#if !defined(TARGET_NO_THREADS)
 	if (_pvrrc->rend.isRTT)
 		re.Set();
-#endif
 
 	//clear up & free data ..
 	FinishRender(_pvrrc);
@@ -530,11 +515,9 @@ void rend_start_render()
 			if (QueueRender(ctx))
 			{
 				palette_update();
-#if !defined(TARGET_NO_THREADS)
+
 				rs.Set();
-#else
-				rend_single_frame();
-#endif
+
 				pend_rend = true;
 			}
 		}
@@ -559,12 +542,7 @@ void rend_end_render()
 #endif
 
 	if (pend_rend) {
-#if !defined(TARGET_NO_THREADS)
 		re.Wait();
-#else
-		if (renderer != NULL)
-			renderer->Present();
-#endif
 	}
 }
 
@@ -599,9 +577,8 @@ void check_framebuffer_write()
 void rend_cancel_emu_wait()
 {
 	FinishRender(NULL);
-#if !defined(TARGET_NO_THREADS)
+
 	re.Set();
-#endif
 }
 
 void rend_set_fb_scale(float x, float y)

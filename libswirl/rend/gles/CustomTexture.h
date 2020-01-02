@@ -28,9 +28,7 @@ class CustomTexture {
 public:
 	CustomTexture()
 		:
-#ifndef TARGET_NO_THREADS
 		loader_thread(loader_thread_func, this)
-#endif
 		{}
 	~CustomTexture() { Terminate(); }
 	u8* LoadCustomTexture(u32 hash, int& width, int& height);
@@ -49,9 +47,7 @@ private:
 	bool custom_textures_available;
 	std::string textures_path;
 	std::set<u32> unknown_hashes;
-#ifndef TARGET_NO_THREADS
 	cThread loader_thread;
-#endif
 	cResetEvent wakeup_thread;
 	std::vector<TextureCacheData *> work_queue;
 	cMutex work_queue_mutex;

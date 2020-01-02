@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "hw/holly/sb.h"
 
 extern u32 VREG;
 extern VLockedMemory aica_ram;
@@ -16,6 +17,6 @@ void aica_Term();
 #define UpdateAica(clc) libAICA_Update(clc)
 #define UpdateArm(clc) libARM_Update(clc)
 
-void aica_sb_Init();
+void aica_sb_Init(SBDevice* sb);
 void aica_sb_Reset(bool Manual);
 void aica_sb_Term();

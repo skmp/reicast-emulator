@@ -484,7 +484,8 @@ void Naomi_DmaEnable(u32 addr, u32 data)
 		SB_GDST=0;
 	}
 }
-void naomi_reg_Init()
+
+void naomi_sb_init(SBDevice* sb)
 {
 	#ifdef NAOMI_COMM
 	CommMapFile = CreateFileMapping(
@@ -533,9 +534,9 @@ void naomi_reg_Init()
 	#endif
 	NaomiInit();
 
-	sb_rio_register(SB_GDST_addr, RIO_WF, 0, &Naomi_DmaStart);
+    sb->RegisterRIO(SB_GDST_addr, RIO_WF, 0, &Naomi_DmaStart);
 
-	sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &Naomi_DmaEnable);
+    sb->RegisterRIO(SB_GDEN_addr, RIO_WF, 0, &Naomi_DmaEnable);
 }
 
 void naomi_reg_Term()

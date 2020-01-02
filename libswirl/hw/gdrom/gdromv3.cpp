@@ -1124,28 +1124,20 @@ void GDROM_DmaEnable(u32 addr, u32 data)
 }
 
 //Init/Term/Res
-void gdrom_reg_Init()
+void gdrom_sb_Init(SBDevice* sb)
 {
-	sb_rio_register(SB_GDST_addr, RIO_WF, 0, &GDROM_DmaStart);
-	/*
-	sb_regs[(SB_GDST_addr-SB_BASE)>>2].flags=REG_32BIT_READWRITE | REG_READ_DATA;
-	sb_regs[(SB_GDST_addr-SB_BASE)>>2].writeFunction=GDROM_DmaStart;
-	*/
+	sb->RegisterRIO(SB_GDST_addr, RIO_WF, 0, &GDROM_DmaStart);
 
-	sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &GDROM_DmaEnable);
-	/*
-	sb_regs[(SB_GDEN_addr-SB_BASE)>>2].flags=REG_32BIT_READWRITE | REG_READ_DATA;
-	sb_regs[(SB_GDEN_addr-SB_BASE)>>2].writeFunction=GDROM_DmaEnable;
-	*/
+    sb->RegisterRIO(SB_GDEN_addr, RIO_WF, 0, &GDROM_DmaEnable);
 
 	gdrom_schid = sh4_sched_register(0, &GDRomschd);
 }
-void gdrom_reg_Term()
+void gdrom_sb_Term()
 {
 	
 }
 
-void gdrom_reg_Reset(bool Manual)
+void gdrom_sb_Reset(bool Manual)
 {
 	SB_GDST = 0;
 	SB_GDEN = 0;

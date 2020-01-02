@@ -3,10 +3,11 @@
 	Handy register definitions and other minor stuff
 */
 #include "types.h"
+#include "hw/holly/sb.h"
 
-void gdrom_reg_Init();
-void gdrom_reg_Term();
-void gdrom_reg_Reset(bool Manual);
+void gdrom_sb_Init(SBDevice* sb);
+void gdrom_sb_Term();
+void gdrom_sb_Reset(bool Manual);
 
 u32 ReadMem_gdrom(u32 Addr, u32 sz);
 void WriteMem_gdrom(u32 Addr, u32 data, u32 sz);

@@ -242,17 +242,17 @@ int maple_schd(int tag, int c, int j)
 }
 
 //Init registers :)
-void maple_Init()
+void maple_Init(SBDevice* sb)
 {
-	sb_rio_register(SB_MDST_addr,RIO_WF,0,&maple_SB_MDST_Write);
-	sb_rio_register(SB_MDEN_addr,RIO_WF,0,&maple_SB_MDEN_Write);
+	sb->RegisterRIO(SB_MDST_addr,RIO_WF,0,&maple_SB_MDST_Write);
+	sb->RegisterRIO(SB_MDEN_addr,RIO_WF,0,&maple_SB_MDEN_Write);
 
 	/*
 	sb_regs[(SB_MDST_addr-SB_BASE)>>2].flags=REG_32BIT_READWRITE | REG_READ_DATA;
 	sb_regs[(SB_MDST_addr-SB_BASE)>>2].writeFunction=maple_SB_MDST_Write;
 	*/
 
-	sb_rio_register(SB_MSHTCL_addr,RIO_WF,0,&maple_SB_MSHTCL_Write);
+	sb->RegisterRIO(SB_MSHTCL_addr,RIO_WF,0,&maple_SB_MSHTCL_Write);
 	
 	/*
 	sb_regs[(SB_MSHTCL_addr-SB_BASE)>>2].flags=REG_32BIT_READWRITE;

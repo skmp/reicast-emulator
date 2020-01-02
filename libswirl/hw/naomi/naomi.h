@@ -3,10 +3,10 @@
 */
 
 #pragma once
-
-void naomi_reg_Init();
-void naomi_reg_Term();
-void naomi_reg_Reset(bool Manual);
+struct SBDevice;
+void naomi_sb_Init(SBDevice* sb);
+void naomi_sb_Term();
+void naomi_sb_Reset(bool Manual);
 
 void Update_naomi();
 

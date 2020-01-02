@@ -180,21 +180,6 @@ struct GDRomOrNaomiDevice : MMIODevice {
     }
 };
 
-
-struct SBDevice : MMIODevice {
-    bool Init() { sb_Init(); return true; }
-    void Reset(bool m) { sb_Reset(m); }
-    void Term() { sb_Term(); }
-
-    u32 Read(u32 addr, u32 sz) {
-        return sb_ReadMem(addr, sz);
-    }
-    void Write(u32 addr, u32 data, u32 sz) {
-        sb_WriteMem(addr, data, sz);
-    }
-};
-
-
 struct PVRDevice : MMIODevice {
     u32 Read(u32 addr, u32 sz) {
         verify(sz == 4);
@@ -267,7 +252,7 @@ MMIODevice* Create_FlashDevice() {
 MMIODevice* Create_GDRomOrNaomiDevice() {
     return new GDRomOrNaomiDevice();
 }
-MMIODevice* Create_SBDevice() { return new SBDevice(); }
+
 MMIODevice* Create_PVRDevice() {
     return new PVRDevice();
 }

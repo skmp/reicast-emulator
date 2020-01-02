@@ -144,7 +144,7 @@ void sb_write_gdrom_unlock(u32 addr, u32 data) { verify(data==0 || data==0x001ff
 		 	 	 	 	 	 	 	 	 	 	 	 	 || data == 0x3ff); } /* CS writes 0x42fe, AtomisWave 0xa677, Naomi Dev BIOS 0x3ff */
 
 
-void sb_rio_register(u32 reg_addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrFP* wf)
+void sb_rio_register(u32 reg_addr, RegIO flags, RegReadAddrFP* rf = nullptr, RegWriteAddrFP* wf = nullptr)
 {
 	u32 idx=(reg_addr-SB_BASE)/4;
 
@@ -199,7 +199,7 @@ void SB_SFRES_write32(u32 addr, u32 data)
         virtualDreamcast->RequestReset();
 	}
 }
-void sb_Init()
+void sb_Init(SBDevice* sb)
 {
 	sb_regs.Zero();
 
@@ -642,30 +642,30 @@ void sb_Init()
 	SB_G1SYSM=((0x0<<4) | (0x1));
 	SB_TFREM = 8;
 
-	asic_reg_Init();
+	asic_sb_Init(sb);
 
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	gdrom_reg_Init();
+	gdrom_sb_Init(sb);
 #else
-	naomi_reg_Init();
+	naomi_sb_Init(sb);
 #endif
 
-	pvr_sb_Init();
-	maple_Init();
-	aica_sb_Init();
+	pvr_sb_Init(sb);
+	maple_Init(sb);
+	aica_sb_Init(sb);
 
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
-	ModemInit();
+	ModemInit(sb);
 #endif
 }
 
 void sb_Reset(bool Manual)
 {
-	asic_reg_Reset(Manual);
+	asic_sb_Reset(Manual);
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	gdrom_reg_Reset(Manual);
+	gdrom_sb_Reset(Manual);
 #else
-	naomi_reg_Reset(Manual);
+	naomi_sb_Reset(Manual);
 #endif
 	pvr_sb_Reset(Manual);
 	maple_Reset(Manual);
@@ -678,9 +678,31 @@ void sb_Term()
 	maple_Term();
 	pvr_sb_Term();
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	gdrom_reg_Term();
+	gdrom_sb_Term();
 #else
-	naomi_reg_Term();
+	naomi_sb_Term();
 #endif
-	asic_reg_Term();
+	asic_sb_Term();
+}
+
+struct SBDevice_impl : SBDevice {
+    bool Init() { sb_Init(this); return true; }
+    void Reset(bool m) { sb_Reset(m); }
+    void Term() { sb_Term(); }
+
+    u32 Read(u32 addr, u32 sz) {
+        return sb_ReadMem(addr, sz);
+    }
+    void Write(u32 addr, u32 data, u32 sz) {
+        sb_WriteMem(addr, data, sz);
+    }
+
+    void RegisterRIO(u32 reg_addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrFP * wf) {
+        sb_rio_register(reg_addr, flags, rf, wf);
+    }
+};
+
+
+MMIODevice* Create_SBDevice() {
+    return new SBDevice_impl();
 }

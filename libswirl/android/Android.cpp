@@ -330,24 +330,24 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)
 {
     if (game_started)
-        dc_stop();
+        virtualDreamcast->Stop();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)
 {
     if (game_started)
-        dc_resume();
+        virtualDreamcast->Resume();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
 {
     if (game_started)
-        dc_stop();
+        virtualDreamcast->Stop();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)
 {
-    dc_term();
+    virtualDreamcast->Term();
 }
 
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobject obj,jint cmd, jint param)

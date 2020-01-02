@@ -257,7 +257,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setExternalStorageDir
         env->DeleteLocalRef(dir);
     }
     setenv("REICAST_HOME", paths.c_str(), 1);
-    gui_refresh_files();
+    g_GUI->RefreshFiles();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk) {
@@ -507,17 +507,17 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_getControllers(JNIEnv
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_guiOpenSettings(JNIEnv *env, jobject obj)
 {
-    gui_open_settings();
+    g_GUI->OpenSettings();
 }
 
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_guiIsOpen(JNIEnv *env, jobject obj)
 {
-    return gui_is_open();
+    return g_GUI->IsOpen();
 }
 
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_guiIsContentBrowser(JNIEnv *env,jobject obj)
 {
-    return gui_is_content_browser();
+    return g_GUI->IsContentBrowser();
 }
 
 // Audio Stuff

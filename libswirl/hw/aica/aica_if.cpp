@@ -3,6 +3,8 @@
 		Handles RTC, Display mode reg && arm reset reg !
 	arm7 is handled on a separate arm plugin now
 */
+#include "hw/sh4/sh4_mmio.h"
+
 #include "types.h"
 #include "aica_if.h"
 #include "hw/sh4/sh4_mem.h"
@@ -167,6 +169,18 @@ void aica_Term()
 
 }
 
+struct AicaDevice : MMIODevice {
+    u32 Read(u32 addr, u32 sz) {
+        return ReadMem_aica_reg(addr, sz);
+    }
+    void Write(u32 addr, u32 data, u32 sz) {
+        WriteMem_aica_reg(addr, data, sz);
+    }
+};
+
+MMIODevice* Create_AicaDevice() {
+    return new AicaDevice();
+}
 int dma_end_sched(int tag, int cycl, int jitt)
 {
 	u32 len=SB_ADLEN & 0x7FFFFFFF;

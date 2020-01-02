@@ -17,6 +17,7 @@
 
 #include "hw/flashrom/flashrom.h"
 #include "reios/reios.h"
+#include "sh4_mmio.h"
 
 #if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 DCFlashChip sys_rom(BIOS_SIZE, BIOS_SIZE / 2);
@@ -143,16 +144,6 @@ void WriteBios(u32 addr,u32 data,u32 sz) { EMUERROR4("Write to [Boot ROM] is not
 #error unknown flash
 #endif
 
-struct MMIODevice
-{
-    virtual bool Init() { return true; }
-    virtual void Reset(bool m) { }
-    virtual void Term() { }
-
-    virtual u32 Read(u32 addr, u32 sz) = 0;
-    virtual void Write(u32 addr, u32 data, u32 sz) = 0;
-};
-
 struct BiosDevice : MMIODevice {
     u32 Read(u32 addr, u32 sz) {
         return ReadBios(addr, sz);
@@ -246,15 +237,6 @@ struct ExtDevice : MMIODevice {
     }
 };
 
-struct AicaDevice : MMIODevice {
-    u32 Read(u32 addr, u32 sz) {
-        return ReadMem_aica_reg(addr, sz);
-    }
-    void Write(u32 addr, u32 data, u32 sz) {
-        WriteMem_aica_reg(addr, data, sz);
-    }
-};
-
 struct RTCDevice : MMIODevice {
     u32 Read(u32 addr, u32 sz) {
         return ReadMem_aica_rtc(addr, sz);
@@ -266,15 +248,15 @@ struct RTCDevice : MMIODevice {
 
 
 
-static MMIODevice* biosDevice = new BiosDevice();
-static MMIODevice* flashDevice = new FlashDevice();
-static MMIODevice* gdromOrNaomiDevice = new GDRomOrNaomiDevice();
+static MMIODevice* biosDevice;
+static MMIODevice* flashDevice;
+static MMIODevice* gdromOrNaomiDevice;
 
-static MMIODevice* sbDevice = new SBDevice();
-static MMIODevice* pvrDevice = new PVRDevice();
-static MMIODevice* extDevice = new ExtDevice();
-static MMIODevice* aicaDevice = new AicaDevice();
-static MMIODevice* rtcDevice = new RTCDevice();
+static MMIODevice* sbDevice;
+static MMIODevice* pvrDevice;
+static MMIODevice* extDevice;
+static MMIODevice* aicaDevice;
+static MMIODevice* rtcDevice;
 
 MMIODevice* Create_BiosDevice() {
     return new BiosDevice();
@@ -292,9 +274,7 @@ MMIODevice* Create_PVRDevice() {
 MMIODevice* Create_ExtDevice() {
     return new ExtDevice();
 }
-MMIODevice* Create_AicaDevice() {
-    return new AicaDevice();
-}
+
 MMIODevice* Create_RTCDevice() {
     return new RTCDevice();
 }

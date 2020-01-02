@@ -26,6 +26,8 @@
 #include "imgui/imgui.h"
 #include "rend/gles/imgui_impl_opengl3.h"
 
+#include "gui_partials.h"
+
 extern bool settings_opening;
 
 void vjoy_reset_editing();

@@ -35,3 +35,12 @@ extern f32 mo_y_delta;
 extern f32 mo_wheel_delta;
 
 //
+
+
+/// ALSO MOVE THESE ////
+
+extern int screen_dpi;
+
+typedef enum { Closed, Commands, Settings, ClosedNoResume, Main, Onboarding, VJoyEdit, VJoyEditCommands } GuiState;
+extern GuiState gui_state;
+void ImGui_Impl_NewFrame();

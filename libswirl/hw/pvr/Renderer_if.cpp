@@ -285,12 +285,14 @@ bool rend_single_frame()
 		luabindings_onframe();
 
 #if !defined(TARGET_NO_THREADS)
-		if (gui_is_open() || gui_state == VJoyEdit)
+		if (g_GUI->IsOpen() || g_GUI->IsVJoyEdit())
 		{
-			gui_render_ui();
-			if (gui_state == VJoyEdit && renderer != NULL)
+            g_GUI->RenderUI();
+			
+			if (g_GUI->IsVJoyEdit() && renderer != NULL)
 				renderer->DrawOSD(true);
-			FinishRender(NULL);
+			
+            FinishRender(NULL);
 			// Use the rendering start event to wait between two frames but save its value
 			if (rs.Wait(17))
 				rs.Set();
@@ -399,12 +401,15 @@ void rend_init_renderer()
     	
     	fallback_renderer = NULL;	// avoid double-free
     }
+
+    g_GUI.reset(GUI::Create());
+    g_GUI->Init();
 }
 
 void rend_term_renderer()
 {
 	killtex();
-	gui_term();
+    g_GUI->Term();
 	renderer->Term();
 	delete renderer;
 	renderer = NULL;

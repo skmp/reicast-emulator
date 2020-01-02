@@ -654,7 +654,7 @@ int reicast_init(int argc, char* argv[])
     if (!cfgOpen())
     {
         printf("Config directory is not set. Starting onboarding\n");
-        gui_open_onboarding();
+        g_GUI->OpenOnboarding();
     }
     else
         LoadSettings(false);
@@ -863,7 +863,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         if (!dc_serialize(&data, &total_size))
         {
             printf("Failed to save state - could not initialize total size\n");
-            gui_display_notification("Save state failed", 2000);
+            g_GUI->DisplayNotification("Save state failed", 2000);
             cleanup_serialize(data);
             return;
         }
@@ -872,7 +872,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         if (data == NULL)
         {
             printf("Failed to save state - could not malloc %d bytes", total_size);
-            gui_display_notification("Save state failed - memory full", 2000);
+            g_GUI->DisplayNotification("Save state failed - memory full", 2000);
             cleanup_serialize(data);
             return;
         }
@@ -882,7 +882,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         if (!dc_serialize(&data_ptr, &total_size))
         {
             printf("Failed to save state - could not serialize data\n");
-            gui_display_notification("Save state failed", 2000);
+            g_GUI->DisplayNotification("Save state failed", 2000);
             cleanup_serialize(data);
             return;
         }
@@ -893,7 +893,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         if (f == NULL)
         {
             printf("Failed to save state - could not open %s for writing\n", filename.c_str());
-            gui_display_notification("Cannot open save file", 2000);
+            g_GUI->DisplayNotification("Cannot open save file", 2000);
             cleanup_serialize(data);
             return;
         }
@@ -903,7 +903,7 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         cleanup_serialize(data);
         printf("Saved state to %s\n size %d", filename.c_str(), total_size);
-        gui_display_notification("State saved", 1000);
+        g_GUI->DisplayNotification("State saved", 1000);
     }
 
     void LoadState()
@@ -922,7 +922,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         if (f == NULL)
         {
             printf("Failed to load state - could not open %s for reading\n", filename.c_str());
-            gui_display_notification("Save state not found", 2000);
+            g_GUI->DisplayNotification("Save state not found", 2000);
             cleanup_serialize(data);
             return;
         }
@@ -933,7 +933,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         if (data == NULL)
         {
             printf("Failed to load state - could not malloc %d bytes", total_size);
-            gui_display_notification("Failed to load state - memory full", 2000);
+            g_GUI->DisplayNotification("Failed to load state - memory full", 2000);
             cleanup_serialize(data);
             return;
         }
@@ -952,7 +952,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         if (!dc_unserialize(&data_ptr, &total_size))
         {
             printf("Failed to load state - could not unserialize data\n");
-            gui_display_notification("Invalid save state", 2000);
+            g_GUI->DisplayNotification("Invalid save state", 2000);
             cleanup_serialize(data);
             return;
         }

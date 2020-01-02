@@ -813,8 +813,6 @@ bool gl_create_resources()
 
 	gl_load_osd_resources();
 
-	gui_init();
-
 	return true;
 }
 
@@ -1080,7 +1078,7 @@ void OSD_DRAW(bool clear_screen)
 			glDrawArrays(GL_TRIANGLE_STRIP, i * 4, 4);
 	}
 #endif
-	gui_render_osd();
+    g_GUI->RenderOSD();
 }
 
 bool ProcessFrame(TA_context* ctx)

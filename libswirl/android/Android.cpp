@@ -8,6 +8,11 @@
 #include <stdlib.h>
 
 #include "types.h"
+
+#include <imgui/imgui.h>
+
+#include "gui/gui_partials.h"
+
 #include <android/native_window.h>
 #include <android/native_window_jni.h>
 #include <types.h>

@@ -8,7 +8,7 @@
 extern u32 vblank_count_monotonic;
 
 static int emu_status(lua_State* L) {
-	if (gui_is_open())
+	if (g_GUI->IsOpen())
 		lua_pushliteral(L, "menu");
 	else
 		lua_pushliteral(L, "ingame");

@@ -778,15 +778,11 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 		if (reicast_init(argc, argv) != 0)
 			die("Reicast initialization failed");
 
-        virtualDreamcast->Init();
-
 		#ifdef _WIN64
 			setup_seh();
 		#endif
 
 		rend_thread(NULL);
-
-        virtualDreamcast->Term();
 	}
 #ifndef __GNUC__
 	__except( ExeptionHandler(GetExceptionInformation()) )

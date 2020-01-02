@@ -662,8 +662,6 @@ int reicast_init(int argc, char* argv[])
     os_CreateWindow();
     os_SetupInput();
 
-    virtualDreamcast.reset(VirtualDreamcast::Create());
-
     return 0;
 }
 

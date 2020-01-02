@@ -321,6 +321,8 @@ static void gui_display_commands()
 		// Exit to main menu
 		gui_state = Main;
 		game_started = false;
+        virtualDreamcast.release();
+
 		cfgSetVirtual("config", "image", "");
 	}
 	ImGui::NextColumn();
@@ -478,11 +480,17 @@ static void gui_start_game(const std::string& path)
 
 	auto bios_path = get_readonly_data_path(DATA_PATH);
 
+    virtualDreamcast.reset(VirtualDreamcast::Create());
+
+    virtualDreamcast->Init();
+
 	int rc = virtualDreamcast->StartGame(path.empty() ? NULL : path.c_str());
 	if (rc != 0)
 	{
 		gui_state = Main;
 		game_started = false;
+        virtualDreamcast.release();
+
 		cfgSetVirtual("config", "image", "");
 		switch (rc) {
 		case -3:

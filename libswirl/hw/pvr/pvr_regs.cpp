@@ -4,6 +4,7 @@
 #include "ta.h"
 #include "spg.h"
 
+#include "hw/sh4/sh4_mmio.h"
 bool pal_needs_update=true;
 bool fog_needs_update=true;
 
@@ -126,4 +127,20 @@ void Regs_Reset(bool Manual)
 	SCALER_CTL.full     = 0x00000400;
 	FB_BURSTCTRL        = 0x00090639;
 	PT_ALPHA_REF        = 0x000000FF;
+}
+
+
+struct PVRDevice : MMIODevice {
+    u32 Read(u32 addr, u32 sz) {
+        verify(sz == 4);
+        return pvr_ReadReg(addr);
+    }
+    void Write(u32 addr, u32 data, u32 sz) {
+        verify(sz == 4);
+        pvr_WriteReg(addr, data);
+    }
+};
+
+MMIODevice* Create_PVRDevice() {
+    return new PVRDevice();
 }

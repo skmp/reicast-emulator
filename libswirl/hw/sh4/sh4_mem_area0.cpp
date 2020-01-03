@@ -180,17 +180,6 @@ struct GDRomOrNaomiDevice : MMIODevice {
     }
 };
 
-struct PVRDevice : MMIODevice {
-    u32 Read(u32 addr, u32 sz) {
-        verify(sz == 4);
-        return pvr_ReadReg(addr);
-    }
-    void Write(u32 addr, u32 data, u32 sz) {
-        verify(sz == 4);
-        pvr_WriteReg(addr, data);
-    }
-};
-
 
 struct ExtDevice : MMIODevice {
     u32 Read(u32 addr, u32 sz) {
@@ -253,9 +242,6 @@ MMIODevice* Create_GDRomOrNaomiDevice() {
     return new GDRomOrNaomiDevice();
 }
 
-MMIODevice* Create_PVRDevice() {
-    return new PVRDevice();
-}
 MMIODevice* Create_ExtDevice() {
     return new ExtDevice();
 }

@@ -3175,7 +3175,10 @@ Games[] =
             { "mpr-22975.ic9",   0x4800000, 0x0800000, 0x00000000 },
             { "mpr-22976.ic10",  0x5000000, 0x0800000, 0x00000000 },
             { NULL, 0, 0, 0x00000000 },
-        }
+        },
+        NULL,
+        NULL,
+        spawn_eeprom_dump
     },
     // Sega Strike Fighter (Rev A)
     {

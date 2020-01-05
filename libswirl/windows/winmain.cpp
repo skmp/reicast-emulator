@@ -31,6 +31,8 @@
 
 #include "utils/glinit/wgl/wgl.h"
 
+#include "gui/gui.h"
+#include "gui/gui_renderer.h"
 
 #undef ARRAY_SIZE	// macros are evil
 
@@ -782,7 +784,9 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 			setup_seh();
 		#endif
 
-		rend_thread(NULL);
+        reicast_ui_loop();
+
+        reicast_term();
 	}
 #ifndef __GNUC__
 	__except( ExeptionHandler(GetExceptionInformation()) )

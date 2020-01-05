@@ -525,8 +525,6 @@ static bool gl_create_resources()
 		// Assume the resources have already been created
 		return true;
 
-	findGLVersion();
-
 	//create vao
 	glGenVertexArrays(1, &gl4.vbo.main_vao);
 	glGenVertexArrays(1, &gl4.vbo.modvol_vao);
@@ -606,7 +604,7 @@ static bool gles_init()
 	return true;
 }
 
-static bool RenderFrame()
+static bool RenderFrame(bool isRenderFramebuffer)
 {
 	static int old_screen_width, old_screen_height, old_screen_scaling;
 	if (screen_width != old_screen_width || screen_height != old_screen_height || settings.rend.ScreenScaling != old_screen_scaling) {
@@ -648,7 +646,7 @@ static bool RenderFrame()
 
 	float scissoring_scale_x = 1;
 
-	if (!is_rtt && !pvrrc.isRenderFramebuffer)
+	if (!is_rtt && isRenderFramebuffer)
 	{
 		scale_x=fb_scale_x;
 		scale_y=fb_scale_y;
@@ -826,7 +824,7 @@ static bool RenderFrame()
 
 	//move vertex to gpu
 
-	if (!pvrrc.isRenderFramebuffer)
+	if (!isRenderFramebuffer)
 	{
 		//Main VBO
 		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
@@ -918,6 +916,7 @@ static bool RenderFrame()
 	}
 	else
 	{
+        RenderFramebuffer();
 		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
@@ -1011,7 +1010,7 @@ struct gl4rend : Renderer
 	}
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
-	bool Render() { return RenderFrame(); }
+	bool Render(bool framebuffer) { return RenderFrame(framebuffer); }
 	bool RenderLastFrame() { return gl4_render_output_framebuffer(); }
 
 	void Present() { os_gl_swap(); }

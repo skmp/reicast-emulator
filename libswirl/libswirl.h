@@ -25,3 +25,5 @@ extern unique_ptr<VirtualDreamcast> virtualDreamcast;
 
 // TODO: rename these
 int reicast_init(int argc, char* argv[]);
+void reicast_ui_loop();
+void reicast_term();

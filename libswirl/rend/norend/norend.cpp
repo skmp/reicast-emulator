@@ -17,7 +17,7 @@ struct norend : Renderer
 
     void DrawOSD() {  }
 
-	bool Render()
+	bool Render(bool framebuffer)
 	{
 		return true;//!pvrrc.isRTT;
 	}

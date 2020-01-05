@@ -22,6 +22,7 @@
 #include "hw/aica/dsp.h"
 #include "imgread/common.h"
 #include "gui/gui.h"
+#include "gui/gui_renderer.h"
 #include "profiler/profiler.h"
 #include "input/gamepad_device.h"
 #include "rend/TexCache.h"
@@ -662,7 +663,24 @@ int reicast_init(int argc, char* argv[])
     os_CreateWindow();
     os_SetupInput();
 
+    g_GUI.reset(GUI::Create());
+    g_GUIRenderer.reset(GUIRenderer::Create(g_GUI.get()));
+
+    g_GUI->Init();
+
     return 0;
+}
+
+void reicast_ui_loop() {
+    g_GUIRenderer->UILoop();
+}
+
+void reicast_term() {
+    g_GUIRenderer->Stop();
+
+    g_GUIRenderer.release();
+
+    g_GUI.release();
 }
 
 struct Dreamcast_impl : VirtualDreamcast {
@@ -807,7 +825,6 @@ struct Dreamcast_impl : VirtualDreamcast {
     void Stop()
     {
         sh4_cpu->Stop();
-        rend_cancel_emu_wait();
         emu_thread.WaitToEnd();
     }
 
@@ -821,7 +838,7 @@ struct Dreamcast_impl : VirtualDreamcast {
     void Exit()
     {
         Stop();
-        rend_stop_renderer();
+        g_GUIRenderer->FlushEmulatorQueue();
     }
 
     void Resume()

@@ -209,6 +209,22 @@ void YUV_data(u32* data , u32 count)
 
 //vram 32-64b
 
+u32 fb1_watch_addr_start;
+u32 fb1_watch_addr_end;
+u32 fb2_watch_addr_start;
+u32 fb2_watch_addr_end;
+bool fb_dirty;
+
+void pvr_update_framebuffer_watches()
+{
+    u32 fb_size = (FB_R_SIZE.fb_y_size + 1) * (FB_R_SIZE.fb_x_size + FB_R_SIZE.fb_modulus) * 4;
+    fb1_watch_addr_start = FB_R_SOF1 & VRAM_MASK;
+    fb1_watch_addr_end = fb1_watch_addr_start + fb_size;
+    fb2_watch_addr_start = FB_R_SOF2 & VRAM_MASK;
+    fb2_watch_addr_end = fb2_watch_addr_start + fb_size;
+}
+
+
 //read
 u8 DYNACALL pvr_read_area1_8(u32 addr)
 {

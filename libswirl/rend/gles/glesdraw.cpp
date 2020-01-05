@@ -1159,6 +1159,7 @@ static void DrawQuad(GLuint texId, float x, float y, float w, float h, float u0,
 
 	PipelineShader *shader = GetProgram(0, 1, 1, 0, 1, 0, 0, 2, false, false, false, false);
 	glcache.UseProgram(shader->program);
+    ShaderUniforms.Set(shader);
 
 	glActiveTexture(GL_TEXTURE0);
 	glcache.BindTexture(GL_TEXTURE_2D, texId);

@@ -464,76 +464,6 @@ static void gles_term()
 	os_gl_term();
 }
 
-void findGLVersion()
-{
-	gl.index_type = GL_UNSIGNED_INT;
-	gl.rpi4_workaround = false;
-
-	while (true)
-		if (glGetError() == GL_NO_ERROR)
-			break;
-	glGetIntegerv(GL_MAJOR_VERSION, &gl.gl_major);
-	if (glGetError() == GL_INVALID_ENUM)
-		gl.gl_major = 2;
-	const char *version = (const char *)glGetString(GL_VERSION);
-	printf("OpenGL version: %s\n", version);
-	if (!strncmp(version, "OpenGL ES", 9))
-	{
-		gl.is_gles = true;
-		if (gl.gl_major >= 3)
-		{
-			gl.gl_version = "GLES3";
-			gl.glsl_version_header = "#version 300 es";
-		}
-		else
-		{
-			gl.gl_version = "GLES2";
-			gl.glsl_version_header = "";
-			gl.index_type = GL_UNSIGNED_SHORT;
-		}
-		gl.fog_image_format = GL_ALPHA;
-		const char *extensions = (const char *)glGetString(GL_EXTENSIONS);
-		if (strstr(extensions, "GL_OES_packed_depth_stencil") != NULL)
-			gl.GL_OES_packed_depth_stencil_supported = true;
-		if (strstr(extensions, "GL_OES_depth24") != NULL)
-			gl.GL_OES_depth24_supported = true;
-		if (!gl.GL_OES_packed_depth_stencil_supported)
-			printf("Packed depth/stencil not supported: no modifier volumes when rendering to a texture\n");
-	}
-	else
-	{
-		gl.is_gles = false;
-    	if (gl.gl_major >= 3)
-    	{
-			gl.gl_version = "GL3";
-#if HOST_OS == OS_DARWIN
-			gl.glsl_version_header = "#version 150";
-#else
-			gl.glsl_version_header = "#version 130";
-#endif
-			gl.fog_image_format = GL_RED;
-		}
-		else
-		{
-			gl.gl_version = "GL2";
-			gl.glsl_version_header = "#version 120";
-			gl.fog_image_format = GL_ALPHA;
-		}
-	}
-
-
-	// workarounds
-
-	auto renderer = (const char*)glGetString(GL_RENDERER);
-
-	if (renderer && strstr(renderer, "V3D 4.2"))
-	{
-		printf("glesrend: Enabling rpi4_workaround\n");
-
-		gl.rpi4_workaround = true;
-	}
-}
-
 struct ShaderUniforms_t ShaderUniforms;
 
 GLuint gl_CompileShader(const char* shader,GLuint type)
@@ -826,12 +756,6 @@ bool gl_create_resources();
 
 bool gles_init()
 {
-	if (!os_gl_init((void*)libPvr_GetRenderTarget(),
-		         (void*)libPvr_GetRenderSurface()))
-			return false;
-
-	findGLVersion();
-
 	glcache.EnableCache();
 
 	if (!gl_create_resources())
@@ -1088,16 +1012,9 @@ bool ProcessFrame(TA_context* ctx)
 	if (KillTex)
 		killtex();
 
-	if (ctx->rend.isRenderFramebuffer)
-	{
-		RenderFramebuffer();
-		ctx->rend_inuse.Unlock();
-	}
-	else
-	{
-		if (!ta_parse_vdrc(ctx))
-			return false;
-	}
+	if (!ta_parse_vdrc(ctx))
+		return false;
+
 	CollectCleanup();
 
 	if (ctx->rend.Overrun)
@@ -1124,12 +1041,19 @@ static void upload_vertex_indices()
 	glCheck();
 }
 
-bool RenderFrame()
+bool RenderFrame(bool isRenderFramebuffer)
 {
+    if (isRenderFramebuffer) {
+        RenderFramebuffer();
+        glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        DrawFramebuffer(640, 480);
+        return true;
+    }
 	DoCleanup();
 	create_modvol_shader();
 
-	bool is_rtt=pvrrc.isRTT;
+	bool is_rtt = pvrrc.isRTT;
 
 	//if (FrameCount&7) return;
 
@@ -1243,7 +1167,7 @@ bool RenderFrame()
 
 	float scissoring_scale_x = 1;
 
-	if (!is_rtt && !pvrrc.isRenderFramebuffer)
+	if (!is_rtt && !isRenderFramebuffer)
 	{
 		scale_x=fb_scale_x;
 		scale_y=fb_scale_y;
@@ -1463,7 +1387,7 @@ bool RenderFrame()
 
 	//move vertex to gpu
 
-	if (!pvrrc.isRenderFramebuffer)
+	if (!isRenderFramebuffer)
 	{
 		//Main VBO
 		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
@@ -1551,9 +1475,6 @@ bool RenderFrame()
 	}
 	else
 	{
-		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		DrawFramebuffer(dc_width, dc_height);
 		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
 		upload_vertex_indices();
 	}
@@ -1591,7 +1512,7 @@ struct glesrend : Renderer
 	}
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
-	bool Render() { return RenderFrame(); }
+	bool Render(bool framebuffer) { return RenderFrame(framebuffer); }
 	bool RenderLastFrame() { return render_output_framebuffer(); }
 	void Present() { os_gl_swap(); glViewport(0, 0, screen_width, screen_height); }
 

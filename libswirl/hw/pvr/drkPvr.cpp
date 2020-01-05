@@ -32,6 +32,7 @@ void libPvr_Reset(bool Manual)
 
 s32 libPvr_Init()
 {
+    rend_init_renderer();
 	if (!spg_Init())
 	{
 		//failed
@@ -45,4 +46,5 @@ s32 libPvr_Init()
 void libPvr_Term()
 {
 	spg_Term();
+    rend_term_renderer();
 }

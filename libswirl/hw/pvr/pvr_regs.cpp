@@ -81,7 +81,7 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		{
 			PvrReg(addr, u32) = data;
 			fb_dirty = false;
-			check_framebuffer_write();
+            pvr_update_framebuffer_watches();
 		}
 		return;
 	}

@@ -121,7 +121,6 @@ struct rend_context
 
 	bool Overrun;
 	bool isRTT;
-	bool isRenderFramebuffer;
 	
 	double early;
 
@@ -157,7 +156,6 @@ struct rend_context
 		Overrun=false;
 		fZ_min= 1000000.0f;
 		fZ_max= 1.0f;
-		isRenderFramebuffer = false;
 	}
 };
 
@@ -277,3 +275,7 @@ void VDecEnd();
 void FillBGP(TA_context* ctx);
 bool UsingAutoSort(int pass_number);
 bool rend_framePending();
+
+
+void tactx_write_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL);
+TA_context* tactx_read_frame(const char* file, u8* vram_ref = NULL);

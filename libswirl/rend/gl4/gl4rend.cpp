@@ -1010,7 +1010,8 @@ struct gl4rend : Renderer
 	}
 
 	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
-	bool Render(bool framebuffer) { return RenderFrame(framebuffer); }
+	bool RenderPVR() { return RenderFrame(false); }
+    bool RenderFramebuffer() { return RenderFrame(true); }
 	bool RenderLastFrame() { return gl4_render_output_framebuffer(); }
 
 	void Present() { os_gl_swap(); }

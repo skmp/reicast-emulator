@@ -862,7 +862,12 @@ struct softrend : Renderer
 			}
 		}
 	}
-	virtual bool Render(bool framebuffer) {
+
+    virtual bool RenderFramebuffer() {
+        return true;
+    }
+
+	virtual bool RenderPVR() {
 		bool is_rtt = pvrrc.isRTT;
 
 		memset(render_buffer, 0, sizeof(render_buffer));

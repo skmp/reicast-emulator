@@ -43,7 +43,8 @@ struct Renderer
 	virtual void Term()=0;
 
 	virtual bool Process(TA_context* ctx)=0;
-	virtual bool Render(bool framebuffer)=0;
+	virtual bool RenderPVR()=0;
+    virtual bool RenderFramebuffer() = 0;
 	virtual bool RenderLastFrame() { return false; }
 
 	virtual void Present()=0;

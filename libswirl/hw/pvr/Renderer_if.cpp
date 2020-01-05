@@ -207,7 +207,7 @@ static bool rend_frame(TA_context* ctx, bool draw_osd) {
         // If rendering to texture, continue locking until the frame is rendered
         re.Set();
 
-    bool do_swp = proc && renderer->Render(false);
+    bool do_swp = proc && renderer->RenderPVR();
 
     if (do_swp && draw_osd)
         renderer->DrawOSD(false);
@@ -472,7 +472,7 @@ void rend_vblank()
 
         g_GUIRenderer->QueueEmulatorFrame([] (bool canceled) {
             if (!canceled) {
-                renderer->Render(true);
+                renderer->RenderFramebuffer();
             }
             return true;
         });

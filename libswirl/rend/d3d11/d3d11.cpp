@@ -82,7 +82,7 @@ struct d3d11 : Renderer
 		return true;
 	}
 
-	bool Render(bool framebuffer)
+	bool RenderPVR()
 	{
 		if (!pvrrc.isRTT)
 		{
@@ -92,6 +92,11 @@ struct d3d11 : Renderer
 
 		return !pvrrc.isRTT;
 	}
+
+    bool RenderFramebuffer()
+    {
+        return true;
+    }
 
 	void Present()
 	{

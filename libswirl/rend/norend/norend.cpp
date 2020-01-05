@@ -17,10 +17,15 @@ struct norend : Renderer
 
     void DrawOSD() {  }
 
-	bool Render(bool framebuffer)
+	bool RenderPVR()
 	{
 		return true;//!pvrrc.isRTT;
 	}
+
+    bool RenderFramebuffer()
+    {
+        return true;
+    }
 
 	void Present() { }
 };

@@ -1536,12 +1536,10 @@ void armv_MOV32(eReg regn, u32 imm)
 //CycleCount is pretty much fixed to (512*32) for now (might change to a diff constant, but will be constant)
 void arm_Run(u32 CycleCount)
 {
-	if (!Arm7Enabled)
-		return;
-
-	for (int i=0;i<32;i++)
+	for (int i = 0; i < 32; i++)
 	{
-		arm_mainloop(CycleCount/32, arm_Reg, EntryPoints);
+		if (Arm7Enabled)
+			arm_mainloop(CycleCount / 32, arm_Reg, EntryPoints);
 		libAICA_TimeStep();
 	}
 

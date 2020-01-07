@@ -888,5 +888,6 @@ enum serialize_version_enum {
 	V5,
 	V6,
 	V7,
-	V8
+	V8,
+	V9
 };

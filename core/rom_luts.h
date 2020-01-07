@@ -133,6 +133,7 @@ static struct game_type_naomi lut_games_naomi[] =
    { "RINGOUT 4X4 JAPAN"                 , -1, -1, -1, -1, -1, -1,  -1,  4, 1 },                /* Ring Out 4x4 (4 players, also needs to be set in service menu) */
    { "Sports Shooting USA"               , -1, -1, -1, -1, -1, -1,  -1,  6, 1 },                /* Sports Shooting USA (light guns) */
    { "SEGA CLAY CHALLENGE"               , -1, -1, -1, -1, -1, -1,  -1,  6, 1 },                /* Sega Clay Challenge (light guns) */
+   { "RANGER MISSION"                    , -1, -1, -1, -1, -1, -1,  -1,  6, 1 },                /* Ranger Mission (light guns) */
    { "EXTREME HUNTING"                   , -1, -1, -1, -1, -1, -1,  -1,  6, 1 },                /* Extreme Hunting (light guns) */
    { "FASTER THAN SPEED"                 , -1, -1, -1, -1, -1, -1,  -1,  5, 1, &ftspeed_inputs },/* Faster Than Speed (analog axes) */
    { "MAXIMUM SPEED"                     , -1, -1, -1, -1, -1, -1,  -1,  5, 1, &maxspeed_inputs },/* Maximum Speed (analog axes) */

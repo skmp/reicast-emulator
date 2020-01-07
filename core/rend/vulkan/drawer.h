@@ -182,6 +182,7 @@ public:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager);
 	vk::RenderPass GetRenderPass() const { return *renderPass; }
 	virtual void EndRenderPass() override;
+	vk::CommandBuffer GetCurrentCommandBuffer() const { return currentCommandBuffer; }
 
 protected:
 	virtual vk::CommandBuffer BeginRenderPass() override;

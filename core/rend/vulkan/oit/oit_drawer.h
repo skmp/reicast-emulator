@@ -176,6 +176,8 @@ public:
 				finalColorAttachments[GetCurrentImage()]->GetImageView(),
 				vk::Offset2D(viewport.extent.width, viewport.extent.height));
 	}
+	vk::RenderPass GetRenderPass() const { return screenPipelineManager->GetRenderPass(false, true); }
+	vk::CommandBuffer GetCurrentCommandBuffer() const { return currentCommandBuffer; }
 
 protected:
 	virtual vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }

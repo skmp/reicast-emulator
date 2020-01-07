@@ -108,6 +108,11 @@ protected:
 	void NewImage()
 	{
 		imageIndex = (imageIndex + 1) % GetContext()->GetSwapChainSize();
+		if (alphaSortMode != settings.pvr.Emulation.AlphaSortMode)
+		{
+			alphaSortMode = settings.pvr.Emulation.AlphaSortMode;
+			pipelineManager->Reset();
+		}
 	}
 
 	void Init(SamplerManager *samplerManager, PipelineManager *pipelineManager)
@@ -174,6 +179,7 @@ private:
 	std::vector<std::vector<SortTrigDrawParam>> sortedPolys;
 	std::vector<std::vector<u32>> sortedIndexes;
 	u32 sortedIndexCount = 0;
+	bool alphaSortMode = false;
 };
 
 class ScreenDrawer : public Drawer

@@ -17,25 +17,16 @@ const static u32 CullMode[]=
 	GL_FRONT, //2   Cull if Negative    Cull if ( |det| < 0 ) or ( |det| < fpu_cull_val )
 	GL_BACK,  //3   Cull if Positive    Cull if ( |det| > 0 ) or ( |det| < fpu_cull_val )
 };
-const static u32 Zfunction[]=
+const u32 Zfunction[] =
 {
-	GL_NEVER,      //GL_NEVER,              //0 Never
-#ifndef INVERT_DEPTH_FUNC
-	GL_LESS,        //GL_LESS/*EQUAL*/,     //1 Less
-	GL_EQUAL,       //GL_EQUAL,             //2 Equal
-	GL_LEQUAL,      //GL_LEQUAL,            //3 Less Or Equal
-	GL_GREATER,     //GL_GREATER/*EQUAL*/,  //4 Greater
-	GL_NOTEQUAL,    //GL_NOTEQUAL,          //5 Not Equal
-	GL_GEQUAL,      //GL_GEQUAL,            //6 Greater Or Equal
-#else
-   GL_GREATER,     //GL_LESS/*EQUAL*/,     //1 Less
-   GL_EQUAL,       //GL_EQUAL,             //2 Equal
-   GL_GEQUAL,      //GL_LEQUAL,            //3 Less Or Equal
-   GL_LESS,        //GL_GREATER/*EQUAL*/,  //4 Greater
-   GL_NOTEQUAL,    //GL_NOTEQUAL,          //5 Not Equal
-   GL_LEQUAL,      //GL_GEQUAL,            //6 Greater Or Equal
-#endif
-	GL_ALWAYS,      //GL_ALWAYS,            //7 Always
+	GL_NEVER,       //0 Never
+	GL_LESS,        //1 Less
+	GL_EQUAL,       //2 Equal
+	GL_LEQUAL,      //3 Less Or Equal
+	GL_GREATER,     //4 Greater
+	GL_NOTEQUAL,    //5 Not Equal
+	GL_GEQUAL,      //6 Greater Or Equal
+	GL_ALWAYS,      //7 Always
 };
 
 /*
@@ -49,7 +40,7 @@ const static u32 Zfunction[]=
 7   Inverse DST Alpha     (1-DA, 1-DA, 1-DA, 1-DA)
 */
 
-const static u32 DstBlendGL[] =
+const u32 DstBlendGL[] =
 {
 	GL_ZERO,
 	GL_ONE,
@@ -61,7 +52,7 @@ const static u32 DstBlendGL[] =
 	GL_ONE_MINUS_DST_ALPHA
 };
 
-const static u32 SrcBlendGL[] =
+const u32 SrcBlendGL[] =
 {
 	GL_ZERO,
 	GL_ONE,
@@ -83,7 +74,6 @@ GLuint lightgunTextureId[4]={0,0,0,0};
 
 s32 SetTileClip(u32 val, GLint uniform)
 {
-	float csx=0,csy=0,cex=0,cey=0;
 	u32 clipmode=val>>28;
 	s32 clip_mode;
 	if (clipmode<2)
@@ -93,10 +83,10 @@ s32 SetTileClip(u32 val, GLint uniform)
 	else
 		clip_mode=1;    //render stuff inside the region
 
-	csx=(float)(val&63);
-	cex=(float)((val>>6)&63);
-	csy=(float)((val>>12)&31);
-	cey=(float)((val>>17)&31);
+	float csx = val & 63;
+	float cex = (val >> 6) & 63;
+	float csy = (val >> 12) & 31;
+	float cey = (val >> 17) & 31;
 	csx=csx*32;
 	cex=cex*32 +32;
 	csy=csy*32;
@@ -156,9 +146,9 @@ static void SetTextureRepeatMode(GLuint dir, u32 clamp, u32 mirror)
 }
 
 template <u32 Type, bool SortingEnabled>
-__forceinline static void SetGPState(const PolyParam* gp, u32 cflip)
+__forceinline static void SetGPState(const PolyParam* gp,u32 cflip=0)
 {
-   if (gp->pcw.Texture && gp->tsp.FilterMode > 1)
+	if (gp->pcw.Texture && gp->tsp.FilterMode > 1 && Type != ListType_Punch_Through)
 	{
 		ShaderUniforms.trilinear_alpha = 0.25 * (gp->tsp.MipMapD & 0x3);
 		if (gp->tsp.FilterMode == 2)
@@ -267,7 +257,7 @@ static void DrawList(const List<PolyParam>& gply, int first, int count)
    {
       if (params->count>2) /* this actually happens for some games. No idea why .. */
       {
-         SetGPState<Type,SortingEnabled>(params, 0);
+         SetGPState<Type,SortingEnabled>(params);
          glDrawElements(GL_TRIANGLE_STRIP, params->count, gl.index_type,
          					(GLvoid*)(gl.get_index_size() * params->first));
       }
@@ -304,7 +294,7 @@ static void SortTriangles(int first, int count)
    }
 }
 
-void DrawSorted(u32 count)
+void DrawSorted(bool multipass)
 {
    //if any drawing commands, draw them
 	if (pidx_sort.size())
@@ -323,14 +313,14 @@ void DrawSorted(u32 count)
             const PolyParam* params = pidx_sort[p].ppid;
             if (pidx_sort[p].count>2) //this actually happens for some games. No idea why ..
             {
-               SetGPState<ListType_Translucent, true>(params, 0);
+               SetGPState<ListType_Translucent, true>(params);
                glDrawElements(GL_TRIANGLES, pidx_sort[p].count, gl.index_type,
             		 (GLvoid*)(gl.get_index_size() * pidx_sort[p].first));
             }
             params++;
          }
 
-         if (settings.rend.TranslucentPolygonDepthMask)
+			if (multipass && settings.rend.TranslucentPolygonDepthMask)
 			{
 				// Write to the depth buffer now. The next render pass might need it. (Cosmic Smash)
 				glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -509,74 +499,68 @@ static void DrawModVols(int first, int count)
 
    SetupModvolVBO();
 
-   glcache.Enable(GL_BLEND);
-   glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glcache.Disable(GL_BLEND);
 
    glcache.UseProgram(gl.modvol_shader.program);
    glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
 
    glcache.Enable(GL_DEPTH_TEST);
    glcache.DepthMask(GL_FALSE);
-   glcache.DepthFunc(Zfunction[4]);
+   glcache.DepthFunc(GL_GREATER);
 
-   {
-      //Full emulation
-      //
-      glcache.Enable(GL_STENCIL_TEST);
-      glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-      ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
+	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
 
-      int mod_base = -1;
+	int mod_base = -1;
 
-      for (u32 cmv = 0; cmv < count; cmv++)
-      {
-         ModifierVolumeParam& param = params[cmv];
+	for (u32 cmv = 0; cmv < count; cmv++)
+	{
+		ModifierVolumeParam& param = params[cmv];
 
-         if (param.count == 0)
-            continue;
+		if (param.count == 0)
+			continue;
 
-         u32 mv_mode = param.isp.DepthMode;
+		u32 mv_mode = param.isp.DepthMode;
 
-         if (mod_base == -1)
-				mod_base = param.first;
+		if (mod_base == -1)
+			mod_base = param.first;
 
-         if (!param.isp.VolumeLast && mv_mode > 0)
-            SetMVS_Mode(Or, param.isp);		// OR'ing (open volume or quad)
-         else
-            SetMVS_Mode(Xor, param.isp);	// XOR'ing (closed volume)
-         glDrawArrays(GL_TRIANGLES, param.first * 3, param.count * 3);
+		if (!param.isp.VolumeLast && mv_mode > 0)
+			SetMVS_Mode(Or, param.isp);		// OR'ing (open volume or quad)
+		else
+			SetMVS_Mode(Xor, param.isp);	// XOR'ing (closed volume)
+		glDrawArrays(GL_TRIANGLES, param.first * 3, param.count * 3);
 
-         if (mv_mode == 1 || mv_mode == 2)
-         {
-            // Sum the area
-            SetMVS_Mode(mv_mode == 1 ? Inclusion : Exclusion, param.isp);
-            glDrawArrays(GL_TRIANGLES, mod_base * 3, (param.first + param.count - mod_base) * 3);
-            mod_base = -1;
-         }
-      }
-      //disable culling
-      SetCull(0);
-      //enable color writes
-      glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+		if (mv_mode == 1 || mv_mode == 2)
+		{
+			// Sum the area
+			SetMVS_Mode(mv_mode == 1 ? Inclusion : Exclusion, param.isp);
+			glDrawArrays(GL_TRIANGLES, mod_base * 3, (param.first + param.count - mod_base) * 3);
+			mod_base = -1;
+		}
+	}
+	//disable culling
+	SetCull(0);
+	//enable color writes
+	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 
-      //black out any stencil with '1'
-      glcache.Enable(GL_BLEND);
-      glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//black out any stencil with '1'
+	glcache.Enable(GL_BLEND);
+	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-      glcache.Enable(GL_STENCIL_TEST);
-      glcache.StencilFunc(GL_EQUAL, 0x81, 0x81); //only pixels that are Modvol enabled, and in area 1
+	glcache.Enable(GL_STENCIL_TEST);
+	glcache.StencilFunc(GL_EQUAL, 0x81, 0x81); //only pixels that are Modvol enabled, and in area 1
 
-      //clear the stencil result bit
-      glcache.StencilMask(0x3); /* write to LSB */
-      glcache.StencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
+	//clear the stencil result bit
+	glcache.StencilMask(0x3); /* write to LSB */
+	glcache.StencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
 
-      //don't do depth testing
-      glcache.Disable(GL_DEPTH_TEST);
+	//don't do depth testing
+	glcache.Disable(GL_DEPTH_TEST);
 
-      SetupMainVBO();
-      glDrawArrays(GL_TRIANGLE_STRIP,0,4);
-   }
+	SetupMainVBO();
+	glDrawArrays(GL_TRIANGLE_STRIP,0,4);
 
    //restore states
    glcache.Enable(GL_DEPTH_TEST);
@@ -618,24 +602,19 @@ void DrawStrips(void)
     	 DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
       //Alpha blended
-      if (settings.pvr.Emulation.AlphaSortMode == 0)
       {
          if (current_pass.autosort)
          {
-            SortTriangles(previous_pass.tr_count,
-                       current_pass.tr_count - previous_pass.tr_count);
-            DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
-         }
-         else
-            DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-      }
-      else if (settings.pvr.Emulation.AlphaSortMode == 1)
-      {
-         if (current_pass.autosort)
-         {
-            SortPParams(previous_pass.tr_count,
-                  current_pass.tr_count - previous_pass.tr_count);
-            DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count );
+				if (settings.pvr.Emulation.AlphaSortMode == 0)
+				{
+					SortTriangles(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+					DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
+				}
+				else
+				{
+					SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+					DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count );
+				}
          }
          else
              DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);

@@ -4,6 +4,8 @@
 
 void gl4DrawStrips(GLuint output_fbo, int width, int height);
 
+enum class Pass { Depth, Color, OIT };
+
 struct gl4PipelineShader
 {
 	GLuint program;
@@ -22,11 +24,10 @@ struct gl4PipelineShader
 	GLuint trilinear_alpha;
 	GLuint fog_clamp_min, fog_clamp_max;
 
-	//
-	u32 cp_AlphaTest; s32 pp_ClipTestMode;
+	u32 cp_AlphaTest;
+	s32 pp_ClipTestMode;
 	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
-	u32 pp_DepthFunc;
-	int pass;
+	Pass pass;
 	bool pp_TwoVolumes;
 	bool pp_Gouraud;
 	bool pp_BumpMap;
@@ -64,17 +65,18 @@ extern int max_image_height;
 
 GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void gl4DrawFramebuffer(float w, float h);
+void abufferDrawQuad();
 
 extern const char *gl4PixelPipelineShader;
 bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *pixel_source = gl4PixelPipelineShader, const char *vertex_source = NULL);
 
-extern GLuint geom_fbo;
-extern GLuint depth_fbo;
 extern GLuint stencilTexId;
 extern GLuint depthTexId;
 extern GLuint opaqueTexId;
 extern GLuint depthSaveTexId;
+extern GLuint geom_fbo;
 extern GLuint texSamplers[2];
+extern GLuint depth_fbo;
 
 void gl4DrawVmuTexture(u8 vmu_screen_number);
 void gl4DrawGunCrosshair(u8 port);
@@ -116,7 +118,7 @@ uint getNextPixelIndex() \n\
 void setFragDepth(void) \n\
 { \n\
 	highp float w = 100000.0 * gl_FragCoord.w; \n\
-	gl_FragDepth = 1.0 - log2(1.0 + w) / 34.0; \n\
+	gl_FragDepth = log2(1.0 + w) / 34.0; \n\
 } \n\
 struct PolyParam { \n\
 	int first; \n\

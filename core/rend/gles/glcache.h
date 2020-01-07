@@ -8,9 +8,11 @@ public:
 	GLCache() { Reset(); }
 
 	void BindTexture(GLenum target,  GLuint texture) {
-      if ((target == GL_TEXTURE_2D && texture != _texture && !_disable_cache) || _disable_cache) {
+      if (target == GL_TEXTURE_2D && !_disable_cache) {
+      	if (texture != _texture) {
 			glBindTexture(target, texture);
 			_texture = texture;
+		}
 		}
 		else
 			glBindTexture(target, texture);
@@ -52,7 +54,7 @@ public:
 	}
 
 	void DepthFunc(GLenum func) {
-		if (func != _depth_func) {
+		if (func != _depth_func || _disable_cache) {
 			_depth_func = func;
 			glDepthFunc(func);
 		}
@@ -169,7 +171,8 @@ public:
 		}
 	}
 
-void TexParameteri(GLenum target,  GLenum pname,  GLint param) {
+	void TexParameteri(GLenum target,  GLenum pname,  GLint param)
+	{
       if (target == GL_TEXTURE_2D && !_disable_cache)
 		{
 			TextureParameters &cur_params = _texture_params[_texture];

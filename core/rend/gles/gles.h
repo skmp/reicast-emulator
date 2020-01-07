@@ -62,6 +62,14 @@ struct gl_ctx
 		GLuint geometry,modvols,idxs,idxs2;
 	} vbo;
 
+	struct
+	{
+		u32 TexAddr;
+		GLuint depthb;
+		GLuint tex;
+		GLuint fbo;
+	} rtt;
+
    const char *gl_version;
    const char *glsl_version_header;
    int gl_major;
@@ -129,7 +137,7 @@ extern struct ShaderUniforms_t
    float fog_clamp_min[4];
 	float fog_clamp_max[4];
 
-	void Set(PipelineShader* s)
+	void Set(const PipelineShader* s)
 	{
 		if (s->cp_AlphaTestValue!=-1)
 			glUniform1f(s->cp_AlphaTestValue,PT_ALPHA);
@@ -144,7 +152,7 @@ extern struct ShaderUniforms_t
 			glUniform1f(s->extra_depth_scale, extra_depth_scale);
 
 		if (s->sp_FOG_DENSITY!=-1)
-			glUniform1f(s->sp_FOG_DENSITY, fog_den_float * extra_depth_scale);
+			glUniform1f(s->sp_FOG_DENSITY, fog_den_float);
 
 		if (s->sp_FOG_COL_RAM!=-1)
 			glUniform3fv( s->sp_FOG_COL_RAM, 1, ps_FOG_COL_RAM);
@@ -160,16 +168,6 @@ extern struct ShaderUniforms_t
 
 } ShaderUniforms;
 
-// Render to texture
-struct FBT
-{
-	u32 TexAddr;
-	GLuint depthb,stencilb;
-	GLuint tex;
-	GLuint fbo;
-};
-extern FBT fb_rtt;
-
 struct TextureCacheData : BaseTextureCacheData
 {
 	GLuint texID;   //gl texture
@@ -179,7 +177,10 @@ struct TextureCacheData : BaseTextureCacheData
 	virtual bool Delete() override;
 };
 
-class TextureCache : public BaseTextureCache<TextureCacheData>
+class GlTextureCache : public BaseTextureCache<TextureCacheData>
 {
 };
-extern TextureCache TexCache;
+extern GlTextureCache TexCache;
+
+extern const u32 Zfunction[8];
+extern const u32 SrcBlendGL[], DstBlendGL[];

@@ -127,6 +127,9 @@ extern bool maple_ddt_pending_reset;
 //./core/hw/modem/modem.cpp
 extern int modem_sched;
 
+//./core/hw/pvr/Renderer_if.o
+extern bool pend_rend;
+
 //./core/hw/pvr/pvr_mem.o
 extern u32 YUV_tempdata[512/4];//512 bytes
 extern u32 YUV_dest;

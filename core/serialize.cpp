@@ -41,57 +41,18 @@ extern bool e68k_out;
 extern u32 e68k_reg_L;
 extern u32 e68k_reg_M;
 
-
-
 //./core/hw/arm7/arm7.cpp
 extern DECL_ALIGN(8) reg_pair arm_Reg[RN_ARM_REG_COUNT];
 extern bool armIrqEnable;
 extern bool armFiqEnable;
 extern int armMode;
 extern bool Arm7Enabled;
-extern u8 cpuBitsSet[256];
-/*
-	if AREC dynarec enabled:
-	vector<ArmDPOP> ops;
-	u8* icPtr;
-	u8* ICache;
-	u8 ARM7_TCB[ICacheSize+4096];
-	void* EntryPoints[8*1024*1024/4];
-	map<u32,u32> renamed_regs;
-	u32 rename_reg_base;
-	u32 nfb,ffb,bfb,mfb;
-	static x86_block* x86e;
-	x86_Label* end_lbl;
-	u8* ARM::emit_opt=0;
-	eReg ARM::reg_addr;
-	eReg ARM::reg_dst;
-	s32 ARM::imma;
-*/
-
-
-
 
 //./core/hw/aica/dsp.o
 extern DECL_ALIGN(4096) dsp_t dsp;
-//recheck dsp.cpp if FEAT_DSPREC == DYNAREC_JIT
-
-
-
 
 //./core/hw/aica/aica.o
-//these are all just pointers into aica_reg
-//extern CommonData_struct* CommonData;
-//extern DSPData_struct* DSPData;
-//extern InterruptInfo* MCIEB;
-//extern InterruptInfo* MCIPD;
-//extern InterruptInfo* MCIRE;
-//extern InterruptInfo* SCIEB;
-//extern InterruptInfo* SCIPD;
-//extern InterruptInfo* SCIRE;
-
 extern AicaTimer timers[3];
-
-
 
 //./core/hw/aica/aica_if.o
 extern VArray2 aica_ram;
@@ -100,26 +61,12 @@ extern u32 ARMRST;//arm reset reg
 extern u32 rtc_EN;
 extern int dma_sched_id;
 
-
-
 //./core/hw/aica/aica_mem.o
 extern u8 aica_reg[0x8000];
-
-
 
 //./core/hw/aica/sgc_if.o
 struct ChannelEx;
 #define AicaChannel ChannelEx
-//this is just a pointer to aica_reg
-//extern DSP_OUT_VOL_REG* dsp_out_vol;
-//not needed - one-time init
-//void(* 	STREAM_STEP_LUT [5][2][2])(ChannelEx *ch)
-//void(* 	STREAM_INITAL_STEP_LUT [5])(ChannelEx *ch)
-//void(* 	AEG_STEP_LUT [4])(ChannelEx *ch)
-//void(* 	FEG_STEP_LUT [4])(ChannelEx *ch)
-//void(* 	ALFOWS_CALC [4])(ChannelEx *ch)
-//void(* 	PLFOWS_CALC [4])(ChannelEx *ch)
-
 //special handling
 //extern AicaChannel AicaChannel::Chans[64];
 #define Chans AicaChannel::Chans
@@ -127,28 +74,15 @@ struct ChannelEx;
 extern s16 cdda_sector[CDDA_SIZE];
 extern u32 cdda_index;
 
-
-
 //./core/hw/holly/sb.o
 extern Array<RegisterStruct> sb_regs;
 extern u32 SB_ISTNRM;
 extern u32 SB_FFST_rc;
 extern u32 SB_FFST;
 
-
-
 //./core/hw/holly/sb_mem.o
-//unused
-//static HollyInterruptID dmatmp1;
-//static HollyInterruptID dmatmp2;
-//static HollyInterruptID OldDmaId;
-
-//this is one-time init, no updates - don't need to serialize
-//extern RomChip sys_rom;
 extern SRamChip sys_nvmem_sram;
 extern DCFlashChip sys_nvmem_flash;
-//this is one-time init, no updates - don't need to serialize
-//extern _vmem_handler area0_handler;
 
 //./core/hw/gdrom/gdromv3.o
 extern int gdrom_sched;
@@ -180,10 +114,6 @@ extern GD_StatusT GDStatus;
 extern ByteCount_t ByteCount ;
 extern int GDROM_TICK;
 
-
-
-
-
 //./core/hw/maple/maple_devs.o
 extern char EEPROM[0x100];
 extern bool EEPROM_loaded;
@@ -191,54 +121,11 @@ extern bool EEPROM_loaded;
 //./core/hw/maple/maple_if.o
 //needs special handler
 extern maple_device* MapleDevices[4][6];
-//one time set
 extern int maple_sched;
-//incremented but never read
-//extern u32 dmacount;
 extern bool maple_ddt_pending_reset;
-
 
 //./core/hw/modem/modem.cpp
 extern int modem_sched;
-
-
-
-//./core/hw/pvr/Renderer_if.o
-//only written - not read
-//extern u32 VertexCount;
-extern u32 FrameCount;
-//one-time init
-//extern Renderer* renderer;
-//these are just mutexes used during rendering
-//extern cResetEvent rs;
-//extern cResetEvent re;
-//these max_?? through ovrn are written and not read
-//extern int max_idx;
-//extern int max_mvo;
-//extern int max_op;
-//extern int max_pt;
-//extern int max_tr;
-//extern int max_vtx;
-//extern int max_modt;
-//extern int ovrn;
-//seems safe to omit this - gets refreshed every frame from a pool
-//extern TA_context* _pvrrc;
-//just a flag indiating the rendering thread is running
-//extern int rend_en ;
-//the renderer thread - one time set
-//extern cThread rthd;
-extern bool pend_rend;
-
-//these will all get cleared out after a few frames - no need to serialize
-//static bool render_called = false;
-//u32 fb1_watch_addr_start;
-//u32 fb1_watch_addr_end;
-//u32 fb2_watch_addr_start;
-//u32 fb2_watch_addr_end;
-//bool fb_dirty;
-
-
-
 
 //./core/hw/pvr/pvr_mem.o
 extern u32 YUV_tempdata[512/4];//512 bytes
@@ -249,15 +136,9 @@ extern u32 YUV_y_curr;
 extern u32 YUV_x_size;
 extern u32 YUV_y_size;
 
-
-
-
 //./core/hw/pvr/pvr_regs.o
 extern bool fog_needs_update;
 extern u8 pvr_regs[pvr_RegSize];
-
-
-
 
 //./core/hw/pvr/spg.o
 extern u32 in_vblank;
@@ -265,93 +146,15 @@ extern u32 clc_pvr_scanline;
 extern int render_end_sched;
 extern int vblank_sched;
 
-
-
-
 //./core/hw/pvr/ta.o
-extern u32 ta_type_lut[256];
 extern u8 ta_fsm[2049];	//[2048] stores the current state
 extern u32 ta_fsm_cl;
 
-
-
-
-//./core/hw/pvr/ta_ctx.o
-//these frameskipping don't need to be saved
-//extern int frameskip;
-//extern bool FrameSkipping;		// global switch to enable/disable frameskip
-//maybe need these - but hopefully not
-//extern TA_context* ta_ctx;
-//extern tad_context ta_tad;
-//extern TA_context*  vd_ctx;
-//extern rend_context vd_rc;
-//extern cMutex mtx_rqueue;
-//extern TA_context* rqueue;
-//extern cResetEvent frame_finished;
-//extern cMutex mtx_pool;
-//extern vector<TA_context*> ctx_pool;
-//extern vector<TA_context*> ctx_list;
-//end maybe
-
-
-
 //./core/hw/pvr/ta_vtx.o
 extern bool pal_needs_update;
-extern u32 _pal_rev_256[4];
-extern u32 _pal_rev_16[64];
-extern u32 pal_rev_256[4];
-extern u32 pal_rev_16[64];
-//extern u32 palette_ram[1024];
-extern u32 decoded_colors[3][65536];
-extern u32 tileclip_val;
-extern u8 f32_su8_tbl[65536];
-//written but never read
-//extern ModTriangle* lmr;
-//never changed
-//extern PolyParam nullPP;
-//maybe
-//extern PolyParam* CurrentPP;
-//maybe
-//extern List<PolyParam>* CurrentPPlist;
-//TA state vars
-extern DECL_ALIGN(4) u8 FaceBaseColor[4];
-extern DECL_ALIGN(4) u8 FaceOffsColor[4];
-extern DECL_ALIGN(4) u8 FaceBaseColor1[4];
-extern DECL_ALIGN(4) u8 FaceOffsColor1[4];
-extern DECL_ALIGN(4) u32 SFaceBaseColor;
-extern DECL_ALIGN(4) u32 SFaceOffsColor;
-//maybe
-//extern TaListFP* TaCmd;
-//maybe
-//extern u32 CurrentList;
-//maybe
-//extern TaListFP* VertexDataFP;
-//written but never read
-//extern bool ListIsFinished[5];
-//maybe ; need special handler
-//FifoSplitter<0> TAFifo0;
-//counter for frameskipping - doesn't need to be saved
-//extern int ta_parse_cnt;
-
-
-
 
 //./core/rend/TexCache.o
-//maybe
-//extern u8* vq_codebook;
-extern u32 palette_index;
-extern bool KillTex;
-extern u32 palette16_ram[1024];
-extern u32 palette32_ram[1024];
-extern u32 detwiddle[2][8][1024];
-//maybe
-//extern vector<vram_block*> VramLocks[/*VRAM_SIZE*/(16*1024*1024)/PAGE_SIZE];
-//maybe - probably not - just a locking mechanism
-//extern cMutex vramlist_lock;
 extern VArray2 vram;
-
-
-
 
 //./core/hw/sh4/sh4_mmr.o
 extern Array<u8> OnChipRAM;
@@ -366,18 +169,8 @@ extern Array<RegisterStruct> TMU;  //TMU  : 12 registers
 extern Array<RegisterStruct> SCI;   //SCI  : 8 registers
 extern Array<RegisterStruct> SCIF; //SCIF : 10 registers
 
-
-
-
 //./core/hw/sh4/sh4_mem.o
 extern VArray2 mem_b;
-//one-time init
-//extern _vmem_handler area1_32b;
-//one-time init
-//extern _vmem_handler area5_handler;
-
-
-
 
 //./core/hw/sh4/sh4_interrupts.o
 extern DECL_ALIGN(64) u16 InterruptEnvId[32];
@@ -387,47 +180,22 @@ extern u32 interrupt_vpend; // Vector of pending interrupts
 extern u32 interrupt_vmask; // Vector of masked interrupts             (-1 inhibits all interrupts)
 extern u32 decoded_srimask; // Vector of interrupts allowed by SR.IMSK (-1 inhibits all interrupts)
 
-
-
-
 //./core/hw/sh4/sh4_core_regs.o
 extern Sh4RCB* p_sh4rcb;
-//just method pointers
-//extern sh4_if  sh4_cpu;
-//one-time set
-//extern u8* sh4_dyna_rcb;
-extern u32 old_rm;
-extern u32 old_dn;
-
-
-
 
 //./core/hw/sh4/sh4_sched.o
 extern u64 sh4_sched_ffb;
 extern vector<sched_list> sch_list;
-//extern int sh4_sched_next_id;
-
-
-
 
 //./core/hw/sh4/interpr/sh4_interpreter.o
 extern int aica_sched;
 extern int rtc_sched;
 
-
-
-
 //./core/hw/sh4/modules/serial.o
 extern SCIF_SCFSR2_type SCIF_SCFSR2;
 
-
-
-
 //./core/hw/sh4/modules/bsc.o
 extern BSC_PDTRA_type BSC_PDTRA;
-
-
-
 
 //./core/hw/sh4/modules/tmu.o
 extern u32 tmu_shift[3];
@@ -438,14 +206,8 @@ extern int tmu_sched[3];
 extern u32 tmu_ch_base[3];
 extern u64 tmu_ch_base64[3];
 
-
-
-
 //./core/hw/sh4/modules/ccn.o
 extern u32 CCN_QACR_TR[2];
-
-
-
 
 //./core/hw/sh4/modules/mmu.o
 extern TLB_Entry UTLB[64];
@@ -456,16 +218,9 @@ extern u32 sq_remap[64];
 extern u32 ITLB_LRU_USE[64];
 #endif
 
-
-
 //./core/imgread/common.o
 extern u32 NullDriveDiscType;
-//maybe - seems to all be one-time inits ;    needs special handler
-//extern Disc* disc;
 extern u8 q_subchannel[96];
-
-
-
 
 //./core/nullDC.o
 extern unsigned FLASH_SIZE;
@@ -477,93 +232,8 @@ extern unsigned VRAM_SIZE;
 extern unsigned RAM_MASK;
 extern unsigned ARAM_MASK;
 extern unsigned VRAM_MASK;
-//settings can be dynamic
-//extern settings_t settings;
-
-
-
-
-//./core/reios/reios.o
-//never used
-//extern u8* biosrom;
-//one time init
-//extern u8* flashrom;
-//one time init
-//extern u32 base_fad ;
-//one time init
-//extern bool descrambl;
-//one time init
-//extern bool bootfile_inited;
-//one time init
-//extern map<u32, hook_fp*> hooks;
-//one time init
-//extern map<hook_fp*, u32> hooks_rev;
-
-
-
-
-//./core/reios/gdrom_hle.o
-//never used in any meaningful way
-//extern u32 SecMode[4];
-
-
-
-
-//./core/reios/descrambl.o
-//random seeds can be...random
-//extern unsigned int seed;
-
-
-
-//./core/rend/gles/gles.o
-//maybe
-//extern GLCache glcache;
-//maybe
-//extern gl_ctx gl;
-//maybe
-//extern struct ShaderUniforms_t ShaderUniforms;
-//maybe
-//extern u32 gcflip;
-//maybe
-//extern float fb_scale_x;
-//extern float fb_scale_y;
-//extern float scale_x;
-//extern float scale_y;
-//extern int screen_width;
-//extern int screen_height;
-//extern GLuint fogTextureId;
-//end maybe
-
-
-
-//./core/rend/gles/gldraw.o
-//maybe
-//extern PipelineShader* CurrentShader;
-//written, but never used
-//extern Vertex* vtx_sort_base;
-//maybe
-//extern vector<SortTrigDrawParam>	pidx_sort;
-
-
-
-
-//./core/rend/gles/gltex.o
-//maybe ; special handler
-//extern map<u64,TextureCacheData> TexCache;
-//maybe
-//extern FBT fb_rtt;
-//not used
-//static int TexCacheLookups;
-//static int TexCacheHits;
-//static float LastTexCacheStats;
-//maybe should get reset naturally if needed
-//GLuint fbTextureId;
-
-
-
 
 //./core/hw/naomi/naomi.o
-extern u32 naomi_updates;
 extern u32 GSerialBuffer;
 extern u32 BSerialBuffer;
 extern int GBufPos;
@@ -582,96 +252,7 @@ extern int SerStep;
 extern int SerStep2;
 extern unsigned char BSerial[];
 extern unsigned char GSerial[];
-
 extern bool NaomiDataRead;
-extern u32 NAOMI_ROM_OFFSETH;
-extern u32 NAOMI_ROM_OFFSETL;
-extern u32 NAOMI_ROM_DATA;
-extern u32 NAOMI_DMA_OFFSETH;
-extern u32 NAOMI_DMA_OFFSETL;
-extern u32 NAOMI_DMA_COUNT;
-extern u32 NAOMI_BOARDID_WRITE;
-extern u32 NAOMI_BOARDID_READ;
-extern u32 NAOMI_COMM_OFFSET;
-extern u32 NAOMI_COMM_DATA;
-
-
-
-
-//./core/hw/naomi/naomi_cart.o
-//all one-time loads
-//u8* RomPtr;
-//u32 RomSize;
-//fd_t*	RomCacheMap;
-//u32		RomCacheMapCount;
-
-
-
-
-//./core/rec-x64/rec_x64.o
-//maybe need special handler
-//extern BlockCompilerx64 *compilerx64_data;
-
-
-
-
-//./core/rec.o
-extern int cycle_counter;
-//extern int idxnxx;
-
-
-
-
-//./core/hw/sh4/dyna/driver.o
-extern u8 SH4_TCB[CODE_SIZE+4096];
-//one time ptr set
-//extern u8* CodeCache;
-extern u32 LastAddr;
-extern u32 LastAddr_min;
-//temp storage only
-//extern u32* emit_ptr;
-
-
-
-
-//./core/hw/sh4/dyna/blockmanager.o
-//cleared but never read
-//extern bm_List blocks_page[/*BLOCKS_IN_PAGE_LIST_COUNT*/(32*1024*1024)/4096];
-//maybe - the next three seem to be list of precompiled blocks of code - but if not found will populate
-//extern bm_List all_blocks;
-//extern bm_List del_blocks;
-//extern blkmap_t blkmap;
-//these two are never referenced
-//extern u32 bm_gc_luc;
-//extern u32 bm_gcf_luc;
-//data is never written to this
-//extern u32 PAGE_STATE[(32*1024*1024)/*RAM_SIZE*//32];
-//never read
-//extern u32 total_saved;
-//just printf output
-//extern bool print_stats;
-
-
-
-
-//./core/libretro/libretro.o
-//extern u32 kcode[4];
-//extern u8 rt[4];
-//extern u8 lt[4];
-//extern u32 vks[4];
-//extern s8 joyx[4];
-//extern s8 joyy[4];
-
-
-
-//./core/libretro-common/glsm/glsm.o
-//one time setup
-//extern GLint glsm_max_textures;
-//one time setup
-//extern struct retro_hw_render_callback hw_render;
-//maybe
-//extern struct gl_cached_state gl_state;
-
 
 bool ra_serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size)
 {
@@ -732,7 +313,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
-	serialize_version_enum version = V8;
+	serialize_version_enum version = V9;
 
 	*total_size = 0 ;
 
@@ -752,11 +333,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(armFiqEnable);
 	LIBRETRO_S(armMode);
 	LIBRETRO_S(Arm7Enabled);
-	LIBRETRO_SA(cpuBitsSet,256);
-	bool dummybool;
-	LIBRETRO_S(dummybool); // intState
-	LIBRETRO_S(dummybool); // stopState
-	LIBRETRO_S(dummybool); // holdState
 
 	LIBRETRO_S(dsp);
 
@@ -765,7 +341,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 		LIBRETRO_S(timers[i].c_step);
 		LIBRETRO_S(timers[i].m_step);
 	}
-
 
 	LIBRETRO_SA(aica_ram.data,aica_ram.size) ;
 	LIBRETRO_S(VREG);
@@ -778,20 +353,11 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	LIBRETRO_SA(cdda_sector,CDDA_SIZE);
 	LIBRETRO_S(cdda_index);
-	for (int i = 0; i < 64; i++)
-		LIBRETRO_S(i);	// mxlr
-	LIBRETRO_S(i);		// samples_gen
-
 
 	register_serialize(sb_regs, data, total_size) ;
 	LIBRETRO_S(SB_ISTNRM);
 	LIBRETRO_S(SB_FFST_rc);
 	LIBRETRO_S(SB_FFST);
-
-
-
-	//this is one-time init, no updates - don't need to serialize
-	//extern RomChip sys_rom;
 
 	LIBRETRO_S(sys_nvmem_sram.size);
 	LIBRETRO_S(sys_nvmem_sram.mask);
@@ -802,14 +368,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(sys_nvmem_flash.state);
 	LIBRETRO_SA(sys_nvmem_flash.data,sys_nvmem_flash.size);
 
-	//this is one-time init, no updates - don't need to serialize
-	//extern _vmem_handler area0_handler;
-
-
-
-
 	LIBRETRO_S(GD_HardwareInfo) ;
-
 
 
 	LIBRETRO_S(sns_asc);
@@ -820,7 +379,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(set_mode_offset);
 	LIBRETRO_S(read_params);
 	LIBRETRO_S(packet_cmd);
-	LIBRETRO_S(read_buff);
 	LIBRETRO_S(pio_buff);
 	LIBRETRO_S(set_mode_offset);
 	LIBRETRO_S(ata_cmd);
@@ -830,6 +388,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(data_write_mode);
 	LIBRETRO_S(DriveSel);
 	LIBRETRO_S(Error);
+
 	LIBRETRO_S(IntReason);
 	LIBRETRO_S(Features);
 	LIBRETRO_S(SecCount);
@@ -847,11 +406,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	mcfg_SerializeDevices(data, total_size);
 
-
-	LIBRETRO_S(FrameCount);
-	LIBRETRO_S(pend_rend);
-
-
 	LIBRETRO_SA(YUV_tempdata,512/4);
 	LIBRETRO_S(YUV_dest);
 	LIBRETRO_S(YUV_blockcount);
@@ -860,66 +414,15 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(YUV_x_size);
 	LIBRETRO_S(YUV_y_size);
 
-
-
-
-	LIBRETRO_S(fog_needs_update);
 	LIBRETRO_SA(pvr_regs,pvr_RegSize);
-
-
-
 
 	LIBRETRO_S(in_vblank);
 	LIBRETRO_S(clc_pvr_scanline);
-	LIBRETRO_S(i); 	// pvr_numscanlines
-	LIBRETRO_S(i); 	// prv_cur_scanline
-	LIBRETRO_S(i); 	// vblk_cnt
-	LIBRETRO_S(i); 	// Line_Cycles
-	LIBRETRO_S(i); 	// Frame_Cycles
-	LIBRETRO_S(i);		// speed_load_mspdf
-	LIBRETRO_S(i);		// ...
-	LIBRETRO_S(i); 	// mips_counter
-	LIBRETRO_S(i);		// full_rps
-	LIBRETRO_S(i);		// ...
 
-
-	LIBRETRO_SA(ta_type_lut,256);
-	LIBRETRO_SA(ta_fsm,2049);
+	LIBRETRO_S(ta_fsm[2048]);
 	LIBRETRO_S(ta_fsm_cl);
 
-
-	LIBRETRO_S(pal_needs_update);
-	LIBRETRO_SA(_pal_rev_256,4);
-	LIBRETRO_SA(_pal_rev_16,64);
-	LIBRETRO_SA(pal_rev_256,4);
-	LIBRETRO_SA(pal_rev_16,64);
-	for ( i = 0 ; i < 3 ; i++ )
-	{
-		u32 *ptr = decoded_colors[i] ;
-		LIBRETRO_SA(ptr,65536);
-	}
-	LIBRETRO_S(tileclip_val);
-	LIBRETRO_SA(f32_su8_tbl,65536);
-	LIBRETRO_SA(FaceBaseColor,4);
-	LIBRETRO_SA(FaceOffsColor,4);
-	LIBRETRO_S(SFaceBaseColor);
-	LIBRETRO_S(SFaceOffsColor);
-
-
-	LIBRETRO_S(palette_index);
-	LIBRETRO_S(KillTex);
-	LIBRETRO_SA(palette16_ram,1024);
-	LIBRETRO_SA(palette32_ram,1024);
-	for (i = 0 ; i < 2 ; i++)
-		for (j = 0 ; j < 8 ; j++)
-		{
-			u32 *ptr = detwiddle[i][j] ;
-			LIBRETRO_SA(ptr,1024);
-		}
 	LIBRETRO_SA(vram.data, vram.size);
-
-
-
 
 	LIBRETRO_SA(OnChipRAM.data,OnChipRAM_SIZE);
 
@@ -936,18 +439,12 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	LIBRETRO_SA(mem_b.data, mem_b.size);
 
-
-
-	u16 dum16;
-	LIBRETRO_S(dum16); // IRLPriority
 	LIBRETRO_SA(InterruptEnvId,32);
 	LIBRETRO_SA(InterruptBit,32);
 	LIBRETRO_SA(InterruptLevelBit,16);
 	LIBRETRO_S(interrupt_vpend);
 	LIBRETRO_S(interrupt_vmask);
 	LIBRETRO_S(decoded_srimask);
-
-
 
 
 	//default to nommu_full
@@ -970,16 +467,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	//void *setptr = &((*p_sh4rcb).cntx.sr.SetFull) ;
 	LIBRETRO_S((*p_sh4rcb).cntx);
 
-	LIBRETRO_S(old_rm);
-	LIBRETRO_S(old_dn);
-
-
-
 
 	LIBRETRO_S(sh4_sched_ffb);
-	LIBRETRO_S(i); // sh4_sched_intr
-
-	//extern vector<sched_list> list;
 
 	LIBRETRO_S(sch_list[aica_sched].tag) ;
 	LIBRETRO_S(sch_list[aica_sched].start) ;
@@ -1016,24 +505,13 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(sch_list[vblank_sched].start) ;
 	LIBRETRO_S(sch_list[vblank_sched].end) ;
 
-	LIBRETRO_S(i); // sch_list[time_sync].tag
-	LIBRETRO_S(i); // sch_list[time_sync].start
-	LIBRETRO_S(i); // sch_list[time_sync].end
-
     LIBRETRO_S(sch_list[modem_sched].tag) ;
     LIBRETRO_S(sch_list[modem_sched].start) ;
     LIBRETRO_S(sch_list[modem_sched].end) ;
 
 
 	LIBRETRO_S(SCIF_SCFSR2);
-	LIBRETRO_S(dummybool); // SCIF_SCFRDR2
-	LIBRETRO_S(i); // SCIF_SCFDR2
-
-
 	LIBRETRO_S(BSC_PDTRA);
-
-
-
 
 	LIBRETRO_SA(tmu_shift,3);
 	LIBRETRO_SA(tmu_mask,3);
@@ -1042,13 +520,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_SA(tmu_ch_base,3);
 	LIBRETRO_SA(tmu_ch_base64,3);
 
-
-
-
 	LIBRETRO_SA(CCN_QACR_TR,2);
-
-
-
 
 	LIBRETRO_SA(UTLB,64);
 	LIBRETRO_SA(ITLB,4);
@@ -1057,8 +529,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 #else
 	LIBRETRO_SA(ITLB_LRU_USE,64);
 #endif
-
-
 
 	LIBRETRO_S(NullDriveDiscType);
 	LIBRETRO_SA(q_subchannel,96);
@@ -1074,10 +544,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(ARAM_MASK);
 	LIBRETRO_S(VRAM_MASK);
 
-
-
-	LIBRETRO_S(naomi_updates);
-	LIBRETRO_S(i); // BoardID
 	LIBRETRO_S(GSerialBuffer);
 	LIBRETRO_S(BSerialBuffer);
 	LIBRETRO_S(GBufPos);
@@ -1102,34 +568,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(reg_dimm_parameterh);
 	LIBRETRO_S(reg_dimm_status);
 	LIBRETRO_S(NaomiDataRead);
-
-	LIBRETRO_S(cycle_counter);
-	LIBRETRO_S(i);	// idxnxx
-
-#if FEAT_SHREC != DYNAREC_NONE
-	LIBRETRO_SKIP(sizeof(state_t));	// state
-	LIBRETRO_S(i); // div_som_reg1
-	LIBRETRO_S(i); // div_som_reg2
-	LIBRETRO_S(i); // div_som_reg3
-
-
-	//LIBRETRO_SA(CodeCache,CODE_SIZE) ;
-	//LIBRETRO_SA(SH4_TCB,CODE_SIZE+4096);
-	LIBRETRO_S(LastAddr);
-	LIBRETRO_S(LastAddr_min);
-	LIBRETRO_SKIP(1024); // block_hash
-#endif
-
-	// RegisterWrite, RegisterRead
-	for (int i = 0; i < sh4_reg_count; i++)
-	{
-		LIBRETRO_S(i);
-		LIBRETRO_S(i);
-	}
-	LIBRETRO_S(i); // fallback_blocks
-	LIBRETRO_S(i); // total_blocks
-	LIBRETRO_S(i);	// REMOVED_OPS
-
 
 	LIBRETRO_S(settings.dreamcast.broadcast);
 	LIBRETRO_S(settings.dreamcast.cable);
@@ -1170,10 +608,13 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(armFiqEnable);
 	LIBRETRO_US(armMode);
 	LIBRETRO_US(Arm7Enabled);
-	LIBRETRO_USA(cpuBitsSet,256);
-	LIBRETRO_SKIP(1); // intState
-	LIBRETRO_SKIP(1); // stopState
-	LIBRETRO_SKIP(1); // holdState
+	if (version < V9)
+	{
+		LIBRETRO_SKIP(256); // cpuBitsSet
+		LIBRETRO_SKIP(1); // intState
+		LIBRETRO_SKIP(1); // stopState
+		LIBRETRO_SKIP(1); // holdState
+	}
 
 	LIBRETRO_US(dsp);
 
@@ -1207,19 +648,17 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 
 	LIBRETRO_USA(cdda_sector,CDDA_SIZE);
 	LIBRETRO_US(cdda_index);
-	LIBRETRO_SKIP(4 * 64); 	// mxlr
-	LIBRETRO_SKIP(4);			// samples_gen
-
+	if (version < V9)
+	{
+		LIBRETRO_SKIP(4 * 64); 	// mxlr
+		LIBRETRO_SKIP(4);			// samples_gen
+	}
 
 	register_unserialize(sb_regs, data, total_size) ;
 	LIBRETRO_US(SB_ISTNRM);
 	LIBRETRO_US(SB_FFST_rc);
 	LIBRETRO_US(SB_FFST);
 
-
-
-	//this is one-time init, no updates - don't need to serialize
-	//extern RomChip sys_rom;
 
 	LIBRETRO_US(sys_nvmem_sram.size);
 	LIBRETRO_US(sys_nvmem_sram.mask);
@@ -1229,11 +668,6 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(sys_nvmem_flash.mask);
 	LIBRETRO_US(sys_nvmem_flash.state);
 	LIBRETRO_USA(sys_nvmem_flash.data,sys_nvmem_flash.size);
-
-	//this is one-time init, no updates - don't need to serialize
-	//extern _vmem_handler area0_handler;
-
-
 
 
 	LIBRETRO_US(GD_HardwareInfo) ;
@@ -1248,7 +682,10 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(set_mode_offset);
 	LIBRETRO_US(read_params);
 	LIBRETRO_US(packet_cmd);
-	LIBRETRO_US(read_buff);
+	// read_buff
+	read_buff.cache_size = 0;
+	if (version < V9)
+		LIBRETRO_SKIP(4 + 4 + 2352 * 8192);
 	LIBRETRO_US(pio_buff);
 	LIBRETRO_US(set_mode_offset);
 	LIBRETRO_US(ata_cmd);
@@ -1295,10 +732,12 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	else
 		mcfg_UnserializeDevices(data, total_size);
 
-
-	LIBRETRO_US(FrameCount);
-	LIBRETRO_US(pend_rend);
-
+	if (version < V9)
+	{
+		LIBRETRO_SKIP(4);	// FrameCOunt
+		LIBRETRO_SKIP(1); // pend_rend
+	}
+	pend_rend = false;
 
 	LIBRETRO_USA(YUV_tempdata,512/4);
 	LIBRETRO_US(YUV_dest);
@@ -1310,67 +749,62 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 
 
 
-
-	LIBRETRO_US(fog_needs_update);
+	if (version < V9)
+		LIBRETRO_SKIP(1); // fog_needs_update
 	LIBRETRO_USA(pvr_regs,pvr_RegSize);
 	fog_needs_update = true ;
 
 
 	LIBRETRO_US(in_vblank);
 	LIBRETRO_US(clc_pvr_scanline);
-	LIBRETRO_US(i); 			// pvr_numscanlines
-	LIBRETRO_US(i); 			// prv_cur_scanline
-	LIBRETRO_US(i); 			// vblk_cnt
-	LIBRETRO_US(i); 			// Line_Cycles
-	LIBRETRO_US(i); 			// Frame_Cycles
-	if (version < V3)
+	if (version < V9)
 	{
-	   LIBRETRO_US(dummy_int);	//render_end_sched
-	   LIBRETRO_US(dummy_int);	//vblank_sched
-	   LIBRETRO_US(dummy_int);	//time_sync
+		LIBRETRO_US(i); 			// pvr_numscanlines
+		LIBRETRO_US(i); 			// prv_cur_scanline
+		LIBRETRO_US(i); 			// vblk_cnt
+		LIBRETRO_US(i); 			// Line_Cycles
+		LIBRETRO_US(i); 			// Frame_Cycles
+		if (version < V3)
+		{
+			LIBRETRO_US(dummy_int);	//render_end_sched
+			LIBRETRO_US(dummy_int);	//vblank_sched
+			LIBRETRO_US(dummy_int);	//time_sync
+		}
+		LIBRETRO_SKIP(8); 		// speed_load_mspdf
+		LIBRETRO_US(dummy_int); // mips_counter
+		LIBRETRO_SKIP(8); 		// full_rps
+
+		LIBRETRO_SKIP(4 * 256); // ta_type_lut
+		LIBRETRO_SKIP(2048); // ta_fsm
 	}
-	LIBRETRO_SKIP(8); 		// speed_load_mspdf
-	LIBRETRO_US(dummy_int); // mips_counter
-	LIBRETRO_SKIP(8); 		// full_rps
-
-
-
-	LIBRETRO_USA(ta_type_lut,256);
-	LIBRETRO_USA(ta_fsm,2049);
+	LIBRETRO_US(ta_fsm[2048]);
 	LIBRETRO_US(ta_fsm_cl);
 
-
-	LIBRETRO_US(pal_needs_update);
-	LIBRETRO_USA(_pal_rev_256,4);
-	LIBRETRO_USA(_pal_rev_16,64);
-	LIBRETRO_USA(pal_rev_256,4);
-	LIBRETRO_USA(pal_rev_16,64);
-	for ( i = 0 ; i < 3 ; i++ )
+	if (version < V9)
 	{
-		u32 *ptr = decoded_colors[i] ;
-		LIBRETRO_USA(ptr,65536);
+		LIBRETRO_SKIP(1); // pal_needs_update
+		LIBRETRO_SKIP(4 * 4); // _pal_rev_256
+		LIBRETRO_SKIP(4 * 64); // _pal_rev_16
+		LIBRETRO_SKIP(4 * 4); // pal_rev_256
+		LIBRETRO_SKIP(4 * 64); // pal_rev_16
+		LIBRETRO_SKIP(4 * 65536 * 3); // decoded_colors
+		LIBRETRO_US(i); // tileclip_val
+		LIBRETRO_SKIP(65536); // f32_su8_tbl
+		LIBRETRO_US(i); // FaceBaseColor
+		LIBRETRO_US(i); // FaceOffsColor
+		LIBRETRO_US(i); // SFaceBaseColor
+		LIBRETRO_US(i); // SFaceOffsColor
+
+
+		LIBRETRO_US(i); // palette_index
+		LIBRETRO_US(dummy); // KillTex
+		LIBRETRO_SKIP(4 * 1024); // palette16_ram
+		LIBRETRO_SKIP(4 * 1024); // palette32_ram
+		LIBRETRO_SKIP(4 * 1024 * 8 * 2); // detwiddle
 	}
-	LIBRETRO_US(tileclip_val);
-	LIBRETRO_USA(f32_su8_tbl,65536);
-	LIBRETRO_USA(FaceBaseColor,4);
-	LIBRETRO_USA(FaceOffsColor,4);
-	LIBRETRO_US(SFaceBaseColor);
-	LIBRETRO_US(SFaceOffsColor);
-
-
-	LIBRETRO_US(palette_index);
-	LIBRETRO_US(KillTex);
-	LIBRETRO_USA(palette16_ram,1024);
-	LIBRETRO_USA(palette32_ram,1024);
-	for (i = 0 ; i < 2 ; i++)
-		for (j = 0 ; j < 8 ; j++)
-		{
-			u32 *ptr = detwiddle[i][j] ;
-			LIBRETRO_USA(ptr,1024);
-		}
+	KillTex = true;
+	pal_needs_update = true;
 	LIBRETRO_USA(vram.data, vram.size);
-
-
 
 	LIBRETRO_USA(OnChipRAM.data,OnChipRAM_SIZE);
 
@@ -1387,18 +821,17 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 
 	LIBRETRO_USA(mem_b.data, mem_b.size);
 
-
-	u16 dum16;
-	LIBRETRO_US(dum16); // IRLPriority
+	if (version < V9)
+	{
+		u16 dum16;
+		LIBRETRO_US(dum16); // IRLPriority
+	}
 	LIBRETRO_USA(InterruptEnvId,32);
 	LIBRETRO_USA(InterruptBit,32);
 	LIBRETRO_USA(InterruptLevelBit,16);
 	LIBRETRO_US(interrupt_vpend);
 	LIBRETRO_US(interrupt_vmask);
 	LIBRETRO_US(decoded_srimask);
-
-
-
 
 	LIBRETRO_US(i) ;
 	if ( i == 0 )
@@ -1410,27 +843,23 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	else if ( i == 3 )
 		do_sqw_nommu = &do_sqw_nommu_full ;
 
-
-
 	LIBRETRO_USA((*p_sh4rcb).sq_buffer,64/8);
 
-	//store these before unserializing and then restore after
-	//void *getptr = &((*p_sh4rcb).cntx.sr.GetFull) ;
-	//void *setptr = &((*p_sh4rcb).cntx.sr.SetFull) ;
 	LIBRETRO_US((*p_sh4rcb).cntx);
-	//(*p_sh4rcb).cntx.sr.GetFull = getptr ;
-	//(*p_sh4rcb).cntx.sr.SetFull = setptr ;
 
-	LIBRETRO_US(old_rm);
-	LIBRETRO_US(old_dn);
-
+	if (version < V9)
+	{
+		LIBRETRO_US(dummy_int); // old_rm
+		LIBRETRO_US(dummy_int); // old_dn
+	}
 
 	LIBRETRO_US(sh4_sched_ffb);
-	LIBRETRO_SKIP(4); // sh4_sched_intr
-	if (version < V3)
-	   LIBRETRO_US(dummy_int);	// sh4_sched_next_id
-
-	//extern vector<sched_list> list;
+	if (version < V9)
+	{
+		LIBRETRO_SKIP(4); // sh4_sched_intr
+		if (version < V3)
+		   LIBRETRO_US(dummy_int);	// sh4_sched_next_id
+	}
 
 	LIBRETRO_US(sch_list[aica_sched].tag) ;
 	LIBRETRO_US(sch_list[aica_sched].start) ;
@@ -1467,9 +896,12 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(sch_list[vblank_sched].start) ;
 	LIBRETRO_US(sch_list[vblank_sched].end) ;
 
-	LIBRETRO_US(dummy_int); // sch_list[time_sync].tag
-	LIBRETRO_US(dummy_int); // sch_list[time_sync].start
-	LIBRETRO_US(dummy_int); // sch_list[time_sync].end
+	if (version < V9)
+	{
+		LIBRETRO_US(dummy_int); // sch_list[time_sync].tag
+		LIBRETRO_US(dummy_int); // sch_list[time_sync].start
+		LIBRETRO_US(dummy_int); // sch_list[time_sync].end
+	}
 
 	if ( version >= V2 )
 	{
@@ -1484,16 +916,13 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	   LIBRETRO_US(dummy_int);	//rtc_sched
 	}
 
-
 	LIBRETRO_US(SCIF_SCFSR2);
-	LIBRETRO_SKIP(1); // SCIF_SCFRDR2
-	LIBRETRO_US(i); // SCIF_SCFDR2
-
-
+	if (version < V9)
+	{
+		LIBRETRO_SKIP(1); // SCIF_SCFRDR2
+		LIBRETRO_US(dummy_int); // SCIF_SCFDR2
+	}
 	LIBRETRO_US(BSC_PDTRA);
-
-
-
 
 	LIBRETRO_USA(tmu_shift,3);
 	LIBRETRO_USA(tmu_mask,3);
@@ -1509,11 +938,7 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_USA(tmu_ch_base,3);
 	LIBRETRO_USA(tmu_ch_base64,3);
 
-
-
-
 	LIBRETRO_USA(CCN_QACR_TR,2);
-
 
 	if (version < V6)
 	{
@@ -1539,12 +964,8 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_USA(ITLB_LRU_USE,64);
 #endif
 
-
-
-
 	LIBRETRO_US(NullDriveDiscType);
 	LIBRETRO_USA(q_subchannel,96);
-
 
 	LIBRETRO_US(FLASH_SIZE);
 	LIBRETRO_US(BBSRAM_SIZE);
@@ -1556,16 +977,17 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(ARAM_MASK);
 	LIBRETRO_US(VRAM_MASK);
 
-
-
-	LIBRETRO_US(naomi_updates);
-	if (version < V4)
+	if (version < V9)
 	{
-	   LIBRETRO_US(dummy_int);			// RomPioOffset
-	   LIBRETRO_US(dummy_int);			// DmaOffset
-	   LIBRETRO_US(dummy_int);			// DmaCount
+		LIBRETRO_US(dummy_int); // naomi_updates
+		if (version < V4)
+		{
+		   LIBRETRO_US(dummy_int);			// RomPioOffset
+		   LIBRETRO_US(dummy_int);			// DmaOffset
+		   LIBRETRO_US(dummy_int);			// DmaCount
+		}
+		LIBRETRO_US(dummy_int);		// BoardID
 	}
-	LIBRETRO_US(dummy_int);		// BoardID
 	LIBRETRO_US(GSerialBuffer);
 	LIBRETRO_US(BSerialBuffer);
 	LIBRETRO_US(GBufPos);
@@ -1604,54 +1026,53 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	   LIBRETRO_US(dummy_int);		// NAOMI_COMM_DATA
 	}
 
-	LIBRETRO_US(cycle_counter);
-	LIBRETRO_US(dummy_int);	// idxnxx
+	if (version < V9)
+	{
+		LIBRETRO_US(dummy_int);	// cycle_counter
+		LIBRETRO_US(dummy_int);	// idxnxx
 
 #if FEAT_SHREC != DYNAREC_NONE
-	LIBRETRO_SKIP(sizeof(state_t)); // state
-	LIBRETRO_US(i); // div_som_reg1
-	LIBRETRO_US(i); // div_som_reg2
-	LIBRETRO_US(i); // div_som_reg3
+		LIBRETRO_SKIP(sizeof(state_t)); // state
+		LIBRETRO_US(dummy_int); // div_som_reg1
+		LIBRETRO_US(dummy_int); // div_som_reg2
+		LIBRETRO_US(dummy_int); // div_som_reg3
 
-
-
-	//LIBRETRO_USA(CodeCache,CODE_SIZE) ;
-	//LIBRETRO_USA(SH4_TCB,CODE_SIZE+4096);
-	LIBRETRO_US(LastAddr);
-	LIBRETRO_US(LastAddr_min);
-	LIBRETRO_SKIP(1024); // block_hash
+		LIBRETRO_US(dummy_int);	// LastAddr
+		LIBRETRO_US(dummy_int);	// LastAddr_min
+		LIBRETRO_SKIP(1024); // block_hash
 #endif
 
-	// RegisterRead, RegisterWrite
-	for (int i = 0; i < sh4_reg_count; i++)
-	{
-		LIBRETRO_US(dummy_int);
-		LIBRETRO_US(dummy_int);
-	}
-	LIBRETRO_US(dummy_int); // fallback_blocks
-	LIBRETRO_US(dummy_int); // total_blocks
-	LIBRETRO_US(dummy_int); // REMOVED_OPS
+		// RegisterRead, RegisterWrite
+		for (int i = 0; i < sh4_reg_count; i++)
+		{
+			LIBRETRO_US(dummy_int);
+			LIBRETRO_US(dummy_int);
+		}
+		LIBRETRO_US(dummy_int); // fallback_blocks
+		LIBRETRO_US(dummy_int); // total_blocks
+		LIBRETRO_US(dummy_int); // REMOVED_OPS
 
-	if (version < V5)
-	{
-	   LIBRETRO_US(dummy_int);	// u16 kcode[4]
-	   LIBRETRO_US(dummy_int);
-	   LIBRETRO_US(dummy_int);	// u8 rt[4]
-	   LIBRETRO_US(dummy_int);	// u8 lt[4]
-	   LIBRETRO_US(dummy_int);	// u32 vks[4]
-	   LIBRETRO_US(dummy_int);
-	   LIBRETRO_US(dummy_int);
-	   LIBRETRO_US(dummy_int);
-	   LIBRETRO_US(dummy_int);	// s8 joyx[4]
-	   LIBRETRO_US(dummy_int);	// s8 joyy[4]
+		if (version < V5)
+		{
+			LIBRETRO_US(dummy_int);	// u16 kcode[4]
+			LIBRETRO_US(dummy_int);
+			LIBRETRO_US(dummy_int);	// u8 rt[4]
+			LIBRETRO_US(dummy_int);	// u8 lt[4]
+			LIBRETRO_US(dummy_int);	// u32 vks[4]
+			LIBRETRO_US(dummy_int);
+			LIBRETRO_US(dummy_int);
+			LIBRETRO_US(dummy_int);
+			LIBRETRO_US(dummy_int);	// s8 joyx[4]
+			LIBRETRO_US(dummy_int);	// s8 joyy[4]
+		}
 	}
-
 	if (version >= V3)
 	{
 	   LIBRETRO_US(settings.dreamcast.broadcast);
 	   LIBRETRO_US(settings.dreamcast.cable);
 	   LIBRETRO_US(settings.dreamcast.region);
 	}
+
 	if (version >= V4 && CurrentCartridge != NULL)
 	{
 	   CurrentCartridge->Unserialize(data, total_size);

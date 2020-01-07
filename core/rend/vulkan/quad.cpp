@@ -46,7 +46,7 @@ vk::PipelineVertexInputStateCreateInfo GetQuadInputStateCreateInfo(bool uv)
 			vertexInputAttributeDescriptions);
 }
 
-void QuadPipeline::CreatePipeline()
+void QuadPipeline::CreatePipeline(bool alpha)
 {
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetQuadInputStateCreateInfo(true);
 
@@ -67,11 +67,11 @@ void QuadPipeline::CreatePipeline()
 	// Color flags and blending
 	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState(
 			true,								// blendEnable
-			vk::BlendFactor::eConstantAlpha,	// srcColorBlendFactor
-			vk::BlendFactor::eOneMinusConstantAlpha, // dstColorBlendFactor
+			alpha ? vk::BlendFactor::eSrcAlpha : vk::BlendFactor::eConstantAlpha,	// srcColorBlendFactor
+			alpha ? vk::BlendFactor::eOneMinusSrcAlpha : vk::BlendFactor::eOneMinusConstantAlpha, // dstColorBlendFactor
 			vk::BlendOp::eAdd,					// colorBlendOp
-			vk::BlendFactor::eConstantAlpha,	// srcAlphaBlendFactor
-			vk::BlendFactor::eOneMinusConstantAlpha, // dstAlphaBlendFactor
+			alpha ? vk::BlendFactor::eSrcAlpha : vk::BlendFactor::eConstantAlpha,	// srcAlphaBlendFactor
+					alpha ? vk::BlendFactor::eOneMinusSrcAlpha : vk::BlendFactor::eOneMinusConstantAlpha, // dstAlphaBlendFactor
 			vk::BlendOp::eAdd,					// alphaBlendOp
 			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
 						| vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
@@ -109,13 +109,14 @@ void QuadPipeline::CreatePipeline()
 	  &pipelineColorBlendStateCreateInfo,         // pColorBlendState
 	  &pipelineDynamicStateCreateInfo,            // pDynamicState
 	  *pipelineLayout,                            // layout
-	  renderPass                                  // renderPass
+	  renderPass,                                 // renderPass
+	  subpass                                     // subpass
 	);
 
-	pipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
+	(alpha ? alphaPipeline : pipeline) = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
 }
 
-void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass)
+void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass, int subpass)
 {
 	this->shaderManager = shaderManager;
 
@@ -129,9 +130,9 @@ void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass)
 		pipelineLayout = GetContext()->GetDevice().createPipelineLayoutUnique(
 				vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), 1, &descSetLayout.get()));
 	}
-	if (!sampler)
+	if (!linearSampler)
 	{
-		sampler = GetContext()->GetDevice().createSamplerUnique(
+		linearSampler = GetContext()->GetDevice().createSamplerUnique(
 				vk::SamplerCreateInfo(vk::SamplerCreateFlags(),
 						vk::Filter::eLinear, vk::Filter::eLinear,
 						vk::SamplerMipmapMode::eLinear,
@@ -141,35 +142,51 @@ void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass)
 						16.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f,
 						vk::BorderColor::eFloatOpaqueBlack));
 	}
-	if (this->renderPass != renderPass)
+	if (!nearestSampler)
+	{
+		nearestSampler = GetContext()->GetDevice().createSamplerUnique(
+				vk::SamplerCreateInfo(vk::SamplerCreateFlags(),
+						vk::Filter::eNearest, vk::Filter::eNearest,
+						vk::SamplerMipmapMode::eNearest,
+						vk::SamplerAddressMode::eClampToBorder,
+						vk::SamplerAddressMode::eClampToBorder,
+						vk::SamplerAddressMode::eClampToBorder, 0.0f, false,
+						16.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f,
+						vk::BorderColor::eFloatOpaqueBlack));
+	}
+	if (this->renderPass != renderPass || this->subpass != subpass)
 	{
 		this->renderPass = renderPass;
+		this->subpass = subpass;
 		pipeline.reset();
 	}
-	descriptorSets.resize(GetContext()->GetSwapChainSize());
 }
 
-void QuadPipeline::SetTexture(vk::ImageView imageView)
+void QuadDrawer::Init(QuadPipeline *pipeline)
 {
-	vk::UniqueDescriptorSet &descriptorSet = descriptorSets[GetContext()->GetCurrentImageIndex()];
-	if (!descriptorSet)
+	this->pipeline = pipeline;
+	buffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
+	descriptorSets.resize(VulkanContext::Instance()->GetSwapChainSize());
+}
+
+void QuadDrawer::Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, QuadVertex vertices[], bool nearestFilter)
+{
+	VulkanContext *context = GetContext();
+	auto &descSet = descriptorSets[context->GetCurrentImageIndex()];
+	if (!descSet)
 	{
-		descriptorSet = std::move(
-				GetContext()->GetDevice().allocateDescriptorSetsUnique(
-						vk::DescriptorSetAllocateInfo(
-								GetContext()->GetDescriptorPool(), 1,
-								&descSetLayout.get())).front());
+		vk::DescriptorSetLayout layout = pipeline->GetDescSetLayout();
+		descSet = std::move(context->GetDevice().allocateDescriptorSetsUnique(
+				vk::DescriptorSetAllocateInfo(context->GetDescriptorPool(), 1, &layout)).front());
 	}
-	vk::DescriptorImageInfo imageInfo(*sampler, imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+	vk::DescriptorImageInfo imageInfo(nearestFilter ? pipeline->GetNearestSampler() : pipeline->GetLinearSampler(), imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
 	std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 	writeDescriptorSets.push_back(
-			vk::WriteDescriptorSet(*descriptorSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo,
-					nullptr, nullptr));
-	GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
-}
+			vk::WriteDescriptorSet(*descSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
+	context->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
+	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 0, 1, &descSet.get(), 0, nullptr);
 
-void QuadPipeline::BindDescriptorSets(vk::CommandBuffer cmdBuffer)
-{
-	cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *pipelineLayout, 0, 1,
-			&descriptorSets[GetContext()->GetCurrentImageIndex()].get(), 0, nullptr);
+	buffer->Update(vertices);
+	buffer->Bind(commandBuffer);
+	buffer->Draw(commandBuffer);
 }

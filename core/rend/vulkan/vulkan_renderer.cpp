@@ -26,6 +26,7 @@
 #include "drawer.h"
 #include "shaders.h"
 #include "quad.h"
+#include "vmu.h"
 
 void co_dc_yield();
 
@@ -43,7 +44,8 @@ public:
 		screenDrawer.Init(&samplerManager, &shaderManager);
 		screenDrawer.SetCommandPool(&texCommandPool);
 		quadPipeline.Init(&shaderManager, screenDrawer.GetRenderPass());
-		quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
+		vmus = std::unique_ptr<VulkanOSD>(new VulkanOSD());
+		vmus->Init(&quadPipeline);
 
 		return true;
 	}
@@ -53,13 +55,14 @@ public:
 		texCommandPool.Init();
 		screenDrawer.Init(&samplerManager, &shaderManager);
 		quadPipeline.Init(&shaderManager, screenDrawer.GetRenderPass());
+		vmus->Init(&quadPipeline);
 	}
 
 	void Term() override
 	{
 		DEBUG_LOG(RENDERER, "VulkanRenderer::Term");
 		GetContext()->WaitIdle();
-		quadBuffer = nullptr;
+		vmus.reset();
 		quadPipeline.Term();
 		textureCache.Clear();
 		fogTexture = nullptr;
@@ -104,6 +107,9 @@ public:
 		texCommandPool.BeginFrame();
 		textureCache.SetCurrentIndex(texCommandPool.GetIndex());
 
+		if (!ctx->rend.isRTT)
+			vmus->PrepareOSD(&texCommandPool);
+
 		if (ctx->rend.isRenderFramebuffer)
 		{
 			return RenderFramebuffer();
@@ -144,6 +150,9 @@ public:
 			drawer = &screenDrawer;
 
 		drawer->Draw(fogTexture.get());
+
+		if (!pvrrc.isRTT)
+			vmus->DrawOSD(screenDrawer.GetCurrentCommandBuffer(), vk::Extent2D(screen_width, screen_height));
 
 		drawer->EndRenderPass();
 
@@ -206,7 +215,6 @@ private:
 		fogTexture->SetCommandBuffer(nullptr);
 	}
 
-	std::unique_ptr<QuadBuffer> quadBuffer;
 	std::unique_ptr<Texture> fogTexture;
 	CommandPool texCommandPool;
 
@@ -217,6 +225,7 @@ private:
 	std::vector<std::unique_ptr<Texture>> framebufferTextures;
 	QuadPipeline quadPipeline;
 	TextureCache textureCache;
+	std::unique_ptr<VulkanOSD> vmus;
 };
 
 Renderer* rend_Vulkan()

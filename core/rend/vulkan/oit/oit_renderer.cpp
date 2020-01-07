@@ -27,6 +27,7 @@
 #include "oit_shaders.h"
 #include "../pipeline.h"
 #include "oit_buffer.h"
+#include "../vmu.h"
 
 void co_dc_yield();
 
@@ -44,7 +45,9 @@ public:
 
 		screenDrawer.Init(&samplerManager, &shaderManager, &oitBuffers);
 		screenDrawer.SetCommandPool(&texCommandPool);
-		quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
+		quadPipeline.Init(&regularShaderManager, screenDrawer.GetRenderPass(), 2);
+		vmus = std::unique_ptr<VulkanOSD>(new VulkanOSD());
+		vmus->Init(&quadPipeline);
 
 		return true;
 	}
@@ -54,16 +57,18 @@ public:
 		NOTICE_LOG(RENDERER, "OIT Resize %d x %d", w, h);
 		texCommandPool.Init();
 		screenDrawer.Init(&samplerManager, &shaderManager, &oitBuffers);
+		quadPipeline.Init(&regularShaderManager, screenDrawer.GetRenderPass(), 2);
+		vmus->Init(&quadPipeline);
 	}
 
 	void Term() override
 	{
 		DEBUG_LOG(RENDERER, "VulkanRenderer::Term");
 		GetContext()->WaitIdle();
+		vmus.reset();
 		screenDrawer.Term();
 		textureDrawer.Term();
 		oitBuffers.Term();
-		quadBuffer = nullptr;
 		textureCache.Clear();
 		fogTexture = nullptr;
 		texCommandPool.Term();
@@ -107,6 +112,9 @@ public:
 		texCommandPool.BeginFrame();
 		textureCache.SetCurrentIndex(texCommandPool.GetIndex());
 
+		if (!ctx->rend.isRTT)
+			vmus->PrepareOSD(&texCommandPool);
+
 		if (ctx->rend.isRenderFramebuffer)
 		{
 			return RenderFramebuffer();
@@ -147,6 +155,9 @@ public:
 			drawer = &screenDrawer;
 
 		drawer->Draw(fogTexture.get());
+
+		if (!pvrrc.isRTT)
+			vmus->DrawOSD(screenDrawer.GetCurrentCommandBuffer(), vk::Extent2D(screen_width, screen_height));
 
 		drawer->EndFrame();
 
@@ -210,7 +221,6 @@ private:
 	}
 
 	OITBuffers oitBuffers;
-	std::unique_ptr<QuadBuffer> quadBuffer;
 	std::unique_ptr<Texture> fogTexture;
 	CommandPool texCommandPool;
 
@@ -221,6 +231,9 @@ private:
 	OITTextureDrawer textureDrawer;
 	std::vector<std::unique_ptr<Texture>> framebufferTextures;
 	TextureCache textureCache;
+	ShaderManager regularShaderManager;
+	QuadPipeline quadPipeline;
+	std::unique_ptr<VulkanOSD> vmus;
 };
 
 Renderer* rend_OITVulkan()

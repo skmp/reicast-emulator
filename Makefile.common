@@ -303,6 +303,7 @@ ifeq ($(HAVE_VULKAN), 1)
 					$(CORE_DIR)/core/rend/vulkan/quad.cpp \
 					$(CORE_DIR)/core/rend/vulkan/shaders.cpp \
 					$(CORE_DIR)/core/rend/vulkan/texture.cpp \
+					$(CORE_DIR)/core/rend/vulkan/vmu.cpp \
 					$(CORE_DIR)/core/rend/vulkan/vulkan_renderer.cpp \
 					$(CORE_DIR)/core/rend/vulkan/oit/oit_drawer.cpp \
 					$(CORE_DIR)/core/rend/vulkan/oit/oit_pipeline.cpp \

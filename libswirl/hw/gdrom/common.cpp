@@ -74,7 +74,7 @@ bool InitDrive_(wchar* fn)
 	return false;
 }
 
-bool InitDrive(u32 fileflags)
+bool InitDrive()
 {
 	if (settings.imgread.LoadDefaultImage)
 	{
@@ -93,11 +93,8 @@ bool InitDrive(u32 fileflags)
 	strncpy(fn,settings.imgread.LastImage, sizeof(fn));
 	fn[sizeof(fn) - 1] = '\0';
 
-#ifdef BUILD_DREAMCAST
-	int gfrv=GetFile(fn,0,fileflags);
-#else
-	int gfrv=0;
-#endif
+	int gfrv=GetFile(fn);
+
 	if (gfrv == 0)
 	{
 		NullDriveDiscType=NoDisk;
@@ -133,7 +130,7 @@ bool InitDrive(u32 fileflags)
 		return true;
 	}
 }
-bool DiscSwap(u32 fileflags)
+bool DiscSwap()
 {
 	// These Additional Sense Codes mean "The lid was closed"
 	sns_asc = 0x28;
@@ -157,11 +154,9 @@ bool DiscSwap(u32 fileflags)
 	fn[sizeof(fn) - 1] = '\0';
 
 
-#ifdef BUILD_DREAMCAST
-	int gfrv=GetFile(fn,0,fileflags);
-#else
-	int gfrv=0;
-#endif
+
+	int gfrv=GetFile(fn);
+
 	if (gfrv == 0)
 	{
 		NullDriveDiscType=Open;

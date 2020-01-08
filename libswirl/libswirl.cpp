@@ -98,7 +98,7 @@ int64_t get_time_usec(void)
 }
 
 
-int GetFile(char* szFileName, char* szParse /* = 0 */, u32 flags /* = 0 */)
+int GetFile(char* szFileName)
 {
     cfgLoadStr("config", "image", szFileName, "");
 

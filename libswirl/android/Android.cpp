@@ -296,6 +296,10 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri(JNIEnv *en
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj,jstring disk)
 {
+#ifndef BUILD_DREAMCAST
+    die("only dreamcast has swaps")
+#endif
+
     if (settings.imgread.LoadDefaultImage) {
         strncpy(settings.imgread.DefaultImage, gamedisk, sizeof(settings.imgread.DefaultImage));
         settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';

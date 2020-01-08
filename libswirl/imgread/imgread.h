@@ -237,7 +237,7 @@ struct Disc
 	}
 
 	private:
-		bool ConvertSector(u8* in_buff, u8* out_buff, int from, int to, int sector, extern u8* q_subchannel)
+		bool ConvertSector(u8* in_buff, u8* out_buff, int from, int to, int sector, u8* q_subchannel)
 		{
 			//get subchannel data, if any
 			if (from == 2448)

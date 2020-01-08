@@ -288,7 +288,7 @@ struct ReicastUI_impl : GUI {
 #endif
 
     // Setup Platform/Renderer bindings
-        ImGui_ImplOpenGL3_Init();
+        // ImGui_ImplOpenGL3_Init(); -> this is donwe on the thread now
 
         // Load Fonts
         // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -428,7 +428,7 @@ struct ReicastUI_impl : GUI {
     {
         inited = false;
         term_vmus();
-        ImGui_ImplOpenGL3_Shutdown();
+        //ImGui_ImplOpenGL3_Shutdown(); // -> this is done on GUI_RENDERER now
         ImGui::DestroyContext();
     }
 

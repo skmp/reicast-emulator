@@ -655,10 +655,11 @@ int reicast_init(int argc, char* argv[])
         return 69;
     }
     InitSettings();
+    bool showOnboarding = false;
     if (!cfgOpen())
     {
         printf("Config directory is not set. Starting onboarding\n");
-        g_GUI->OpenOnboarding();
+        showOnboarding = true;
     }
     else
         LoadSettings(false);
@@ -670,6 +671,9 @@ int reicast_init(int argc, char* argv[])
     g_GUIRenderer.reset(GUIRenderer::Create(g_GUI.get()));
 
     g_GUI->Init();
+
+    if (showOnboarding)
+        g_GUI->OpenOnboarding();
 
     return 0;
 }

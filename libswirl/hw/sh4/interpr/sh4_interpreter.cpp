@@ -216,7 +216,7 @@ struct SuperH4_impl : SuperH4 {
             return false;
         
         }
-        sh4_backend->Init();
+        return sh4_backend->Init();
     }
 
     virtual void Run() {

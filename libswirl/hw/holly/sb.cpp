@@ -655,7 +655,7 @@ void sb_Init(SBDevice* sb)
 	aica_sb_Init(sb);
 
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
-	ModemInit(sb);
+	ModemInit();
 #endif
 }
 

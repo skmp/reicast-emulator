@@ -1,12 +1,17 @@
 #include <atomic>
 #include <mutex>
 
+#include "imgui/imgui.h"
+#include "rend/gles/imgui_impl_opengl3.h"
+
 #include "gui_renderer.h"
 #include "oslib/oslib.h"
 
 std::unique_ptr<GUIRenderer> g_GUIRenderer;
 
 #include "rend/gles/gles.h"
+
+
 
 static void findGLVersion()
 {
@@ -79,11 +84,15 @@ static void findGLVersion()
 }
 
 struct GUIRenderer_impl : GUIRenderer {
-    std::atomic<bool> keepRunning = true;
+    std::atomic<bool> keepRunning;
     std::mutex callback_mutex;
     cResetEvent pendingCallback;
 
     std::function<bool(bool canceled)> callback;
+
+    GUIRenderer_impl() { 
+        keepRunning = true; 
+    }
 
     virtual void Stop() {
         keepRunning = false;
@@ -95,6 +104,8 @@ struct GUIRenderer_impl : GUIRenderer {
             return;
         
         findGLVersion();
+        ImGui_ImplOpenGL3_Init();
+
 
         while (keepRunning) {
             if (g_GUI->IsOpen() || g_GUI->IsVJoyEdit())
@@ -125,6 +136,7 @@ struct GUIRenderer_impl : GUIRenderer {
             }
         }
 
+        ImGui_ImplOpenGL3_Shutdown();
         os_gl_term();
     }
 

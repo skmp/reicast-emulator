@@ -525,13 +525,8 @@ typedef union
 #define stricmp strcasecmp
 #endif
 
-#ifndef STRIP_TEXT
 #define verify(x) if((x)==false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d \n",MBX_ICONERROR,(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
 #define die(reason) { msgboxf("Fatal error : %s\n in %s -> %s : %d \n",MBX_ICONERROR,(reason),(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
-#else
-#define verify(x) if((x)==false) { dbgbreak; }
-#define die(reason) { dbgbreak; }
-#endif
 
 #define fverify verify
 
@@ -781,13 +776,9 @@ static inline void do_nada(...) { }
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
-	#ifdef STRIP_TEXT
-		#define puts do_nada
-		#define printf do_nada
-	#else
-		#define puts      LOGI
-		#define printf    LOGI
-	#endif
+
+#define puts      LOGI
+#define printf    LOGI
 #define putinf    LOGI
 #endif
 

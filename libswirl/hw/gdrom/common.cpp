@@ -1,29 +1,8 @@
 #include "common.h"
 
-Disc* chd_parse(const wchar* file);
-Disc* gdi_parse(const wchar* file);
-Disc* cdi_parse(const wchar* file);
-Disc* cue_parse(const wchar* file);
-#if HOST_OS==OS_WINDOWS
-Disc* ioctl_parse(const wchar* file);
-#endif
 
-u32 NullDriveDiscType;
-Disc* disc;
+u8 q_subchannel[96];		//latest q subcode
 
-Disc*(*drivers[])(const wchar* path)=
-{
-	chd_parse,
-	gdi_parse,
-	cdi_parse,
-	cue_parse,
-#if HOST_OS==OS_WINDOWS
-	ioctl_parse,
-#endif
-	0
-};
-
-u8 q_subchannel[96];
 
 void PatchRegion_0(u8* sector,int size)
 {
@@ -67,88 +46,6 @@ void PatchRegion_6(u8* sector,int size)
 	memcpy(&p_area_text[4 + 32],"For USA and CANADA.         ",28);
 	memcpy(&p_area_text[4 + 32 + 32],"For EUROPE.                 ",28);
 }
-bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
-{
-	//get subchannel data, if any
-	if (from==2448)
-	{
-		memcpy(q_subchannel,in_buff+2352,96);
-		from-=96;
-	}
-	//if no conversion
-	if (to==from)
-	{
-		memcpy(out_buff,in_buff,to);
-		return true;
-	}
-	switch (to)
-	{
-	case 2340:
-		{
-			verify((from==2352));
-			memcpy(out_buff,&in_buff[12],2340);
-		}
-		break;
-	case 2328:
-		{
-			verify((from==2352));
-			memcpy(out_buff,&in_buff[24],2328);
-		}
-		break;
-	case 2336:
-		verify(from>=2336);
-		verify((from==2352));
-		memcpy(out_buff,&in_buff[0x10],2336);
-		break;
-	case 2048:
-		{
-			verify(from>=2048);
-			verify((from==2448) || (from==2352) || (from==2336));
-			if ((from == 2352) || (from == 2448))
-			{
-				if (in_buff[15]==1)
-				{
-					memcpy(out_buff,&in_buff[0x10],2048); //0x10 -> mode1
-				}
-				else
-					memcpy(out_buff,&in_buff[0x18],2048); //0x18 -> mode2 (all forms ?)
-			}
-			else
-				memcpy(out_buff,&in_buff[0x8],2048);	//hmm only possible on mode2.Skip the mode2 header
-		}
-		break;
-	case 2352:
-		//if (from >= 2352)
-		{
-			memcpy(out_buff,&in_buff[0],2352);
-		}
-		break;
-	default :
-		printf("Sector conversion from %d to %d not supported \n", from , to);
-		break;
-	}
-
-	return true;
-}
-
-Disc* OpenDisc(const wchar* fn)
-{
-	Disc* rv = NULL;
-
-	for (unat i=0; drivers[i] && !rv; i++) {  // ;drivers[i] && !(rv=drivers[i](fn));
-		rv = drivers[i](fn);
-
-		if (rv && cdi_parse == drivers[i]) {
-			const wchar warn_str[] = "Warning: CDI Image Loaded!\n  Many CDI images are known to be defective, GDI, CUE or CHD format is preferred. "
-					"Please only file bug reports when using images known to be good (GDI, CUE or CHD).";
-			printf("%s\n", warn_str);
-
-			break;
-		}
-	}
-
-	return rv;
-}
 
 bool InitDrive_(wchar* fn)
 {
@@ -175,7 +72,6 @@ bool InitDrive_(wchar* fn)
 	return false;
 }
 
-#ifndef NOT_REICAST
 bool InitDrive(u32 fileflags)
 {
 	if (settings.imgread.LoadDefaultImage)
@@ -235,7 +131,6 @@ bool InitDrive(u32 fileflags)
 		return true;
 	}
 }
-
 bool DiscSwap(u32 fileflags)
 {
 	// These Additional Sense Codes mean "The lid was closed"
@@ -292,7 +187,7 @@ bool DiscSwap(u32 fileflags)
 
 	return true;
 }
-#endif
+
 
 void TermDrive()
 {
@@ -332,7 +227,7 @@ void GetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz)
 	//printf("GD: read %08X, %d\n",StartSector,SectorCount);
 	if (disc)
 	{
-		disc->ReadSectors(StartSector,SectorCount,buff,secsz);
+		disc->ReadSectors(StartSector,SectorCount,buff,secsz, q_subchannel);
 		if (disc->type == GdRom && StartSector==45150 && SectorCount==7)
 		{
 			PatchRegion_0(buff,secsz);
@@ -424,14 +319,3 @@ void printtoc(TocInfo* toc,SessionInfo* ses)
 	printf("Session END: FAD END %d\n",ses->SessionsEndFAD);
 }
 
-DiscType GuessDiscType(bool m1, bool m2, bool da)
-{
-	if ((m1==true) && (da==false) && (m2==false))
-		return  CdRom;
-	else if (m2)
-		return  CdRom_XA;
-	else if (da && m1)
-		return CdRom_Extra;
-	else
-		return CdRom;
-}

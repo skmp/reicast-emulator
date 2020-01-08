@@ -1,4 +1,4 @@
-#include "common.h"
+#include "imgread_common.h"
 
 #include "deps/chdr/chd.h"
 

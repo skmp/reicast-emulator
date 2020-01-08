@@ -14,7 +14,7 @@
 #define CORE_HW_NAOMI_GDCARTRIDGE_H_
 
 #include "naomi_cart.h"
-#include "imgread/common.h"
+#include "imgread/imgread.h"
 
 class GDCartridge: public NaomiCartridge {
 public:

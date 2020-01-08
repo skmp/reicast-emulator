@@ -7,7 +7,6 @@
 
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
-#include "imgread/common.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
 #include "xinput_gamepad.h"

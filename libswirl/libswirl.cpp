@@ -20,7 +20,7 @@
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/spg.h"
 #include "hw/aica/dsp.h"
-#include "imgread/common.h"
+#include "hw/gdrom/common.h"
 #include "gui/gui.h"
 #include "gui/gui_renderer.h"
 #include "profiler/profiler.h"

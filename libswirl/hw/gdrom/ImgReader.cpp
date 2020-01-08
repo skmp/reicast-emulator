@@ -5,6 +5,7 @@
 //Get a copy of the operators for structs ... ugly , but works :)
 #include "common.h"
 
+
 void GetSessionInfo(u8* out,u8 ses);
 
 void libGDR_ReadSubChannel(u8 * buff, u32 format, u32 len)

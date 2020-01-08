@@ -19,7 +19,7 @@
 
 #include <sstream>
 #include "types.h"
-#include "common.h"
+#include "imgread_common.h"
 
 extern string OS_dirname(string file);
 extern string normalize_path_separator(string path);

@@ -60,6 +60,12 @@ bool DiscInit_(wchar* fn)
 
 	if (disc!=0)
 	{
+		if (disc->type != GdRom)
+		{
+			const wchar warn_str[] = "Warning: CD Image Loaded!\n  Many CD/CDI/NRG images are known to be defective, GDI, CUE or CHD format is preferred. "
+				"Please only file bug reports when using images known to be good (GDI, CUE or CHD).";
+			printf("%s\n", warn_str);
+		}
 		printf("gdrom: Opened image \"%s\"\n",fn);
 		NullDriveDiscType=Busy;
 

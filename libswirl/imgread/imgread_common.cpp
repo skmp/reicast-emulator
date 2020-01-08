@@ -39,14 +39,6 @@ Disc* OpenDisc(const wchar* fn)
 
 	for (unat i = 0; imgread_drivers[i] && !rv; i++) {  // ;drivers[i] && !(rv=drivers[i](fn));
 		rv = imgread_drivers[i](fn);
-
-		if (rv && cdi_parse == imgread_drivers[i]) {
-			const wchar warn_str[] = "Warning: CDI Image Loaded!\n  Many CDI images are known to be defective, GDI, CUE or CHD format is preferred. "
-				"Please only file bug reports when using images known to be good (GDI, CUE or CHD).";
-			printf("%s\n", warn_str);
-
-			break;
-		}
 	}
 
 	return rv;

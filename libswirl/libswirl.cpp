@@ -20,7 +20,6 @@
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/spg.h"
 #include "hw/aica/dsp.h"
-#include "hw/gdrom/common.h"
 #include "gui/gui.h"
 #include "gui/gui_renderer.h"
 #include "profiler/profiler.h"
@@ -715,13 +714,14 @@ struct Dreamcast_impl : VirtualDreamcast {
             {
                 // Boot BIOS
                 settings.imgread.LastImage[0] = 0;
-                TermDrive();
-                InitDrive();
+                libGDR_Term();
+                libGDR_Init();
             }
             else
             {
-                if (DiscSwap())
-                    LoadCustom();
+                libGDR_Term();
+                libGDR_Init();
+                LoadCustom();
             }
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
             if (!naomi_cart_SelectFile())

@@ -11,7 +11,6 @@
  */
 
 #include "gdcartridge.h"
-#include "hw/gdrom/common.h"
 
 /*
 

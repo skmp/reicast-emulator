@@ -15,7 +15,7 @@
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/modules/mmu.h"
-#include "hw/gdrom/common.h"
+#include "hw/gdrom/disc_common.h"
 #include "reios/reios.h"
 #include <map>
 #include <set>

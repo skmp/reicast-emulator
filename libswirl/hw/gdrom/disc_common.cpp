@@ -1,4 +1,8 @@
-#include "common.h"
+#include "disc_common.h"
+
+extern signed int sns_asc;
+extern signed int sns_ascq;
+extern signed int sns_key;
 
 
 u8 q_subchannel[96];		//latest q subcode
@@ -8,12 +12,8 @@ Disc* disc;
 
 void PatchRegion_0(u8* sector,int size)
 {
-#ifndef NOT_REICAST
 	if (settings.imgread.PatchRegion==0)
 		return;
-#else
-	return;
-#endif
 
 	u8* usersect=sector;
 
@@ -49,9 +49,11 @@ void PatchRegion_6(u8* sector,int size)
 	memcpy(&p_area_text[4 + 32 + 32],"For EUROPE.                 ",28);
 }
 
-bool InitDrive_(wchar* fn)
+void DiscTerm();
+
+bool DiscInit_(wchar* fn)
 {
-	TermDrive();
+	DiscTerm();
 
 	//try all drivers
 	disc = OpenDisc(fn);
@@ -60,9 +62,9 @@ bool InitDrive_(wchar* fn)
 	{
 		printf("gdrom: Opened image \"%s\"\n",fn);
 		NullDriveDiscType=Busy;
-#ifndef NOT_REICAST
+
 		libCore_gdrom_disc_change();
-#endif
+
 //		Sleep(400); //busy for a bit // what, really ?
 		return true;
 	}
@@ -74,12 +76,12 @@ bool InitDrive_(wchar* fn)
 	return false;
 }
 
-bool InitDrive()
+bool DiscInit()
 {
 	if (settings.imgread.LoadDefaultImage)
 	{
 		printf("Loading default image \"%s\"\n",settings.imgread.DefaultImage);
-		if (!InitDrive_(settings.imgread.DefaultImage))
+		if (!DiscInit_(settings.imgread.DefaultImage))
 		{
 			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR,settings.imgread.DefaultImage);
 			return false;
@@ -115,7 +117,7 @@ bool InitDrive()
 
 	SaveSettings();
 
-	if (!InitDrive_(fn))
+	if (!DiscInit_(fn))
 	{
 		//msgboxf("Selected image failed to load",MBX_ICONERROR);
 			NullDriveDiscType=NoDisk;
@@ -139,7 +141,7 @@ bool DiscSwap()
 	if (settings.imgread.LoadDefaultImage)
 	{
 		printf("Loading default image \"%s\"\n",settings.imgread.DefaultImage);
-		if (!InitDrive_(settings.imgread.DefaultImage))
+		if (!DiscInit_(settings.imgread.DefaultImage))
 		{
 			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR,settings.imgread.DefaultImage);
 			return false;
@@ -175,7 +177,7 @@ bool DiscSwap()
 
 	SaveSettings();
 
-	if (!InitDrive_(fn))
+	if (!DiscInit_(fn))
 	{
 		//msgboxf("Selected image failed to load",MBX_ICONERROR);
 		NullDriveDiscType=Open;
@@ -186,7 +188,7 @@ bool DiscSwap()
 }
 
 
-void TermDrive()
+void DiscTerm()
 {
 	if (disc!=0)
 		delete disc;
@@ -219,7 +221,7 @@ u32 CreateTrackInfo_se(u32 ctrl,u32 addr,u32 tracknum)
 }
 
 
-void GetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz)
+void DiscGetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz)
 {
 	//printf("GD: read %08X, %d\n",StartSector,SectorCount);
 	if (disc)
@@ -232,7 +234,7 @@ void GetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz)
 		}
 	}
 }
-void GetDriveToc(u32* to,DiskArea area)
+void DiscGetDriveToc(u32* to,DiskArea area)
 {
 	if (!disc)
 		return;
@@ -276,7 +278,7 @@ void GetDriveToc(u32* to,DiskArea area)
 	}
 }
 
-void GetDriveSessionInfo(u8* to,u8 session)
+void DiscGetDriveSessionInfo(u8* to,u8 session)
 {
 	if (!disc)
 		return;
@@ -316,3 +318,58 @@ void printtoc(TocInfo* toc,SessionInfo* ses)
 	printf("Session END: FAD END %d\n",ses->SessionsEndFAD);
 }
 
+
+void libGDR_ReadSubChannel(u8* buff, u32 format, u32 len)
+{
+	if (format == 0)
+	{
+		memcpy(buff, q_subchannel, len);
+	}
+}
+
+void libGDR_ReadSector(u8* buff, u32 StartSector, u32 SectorCount, u32 secsz)
+{
+	DiscGetDriveSector(buff, StartSector, SectorCount, secsz);
+	//if (CurrDrive)
+	//	CurrDrive->ReadSector(buff,StartSector,SectorCount,secsz);
+}
+
+void libGDR_GetToc(u32* toc, u32 area)
+{
+	DiscGetDriveToc(toc, (DiskArea)area);
+}
+//TODO : fix up
+u32 libGDR_GetDiscType()
+{
+	if (disc)
+		return disc->type;
+	else
+		return NullDriveDiscType;
+}
+
+void libGDR_GetSessionInfo(u8* out, u8 ses)
+{
+	DiscGetDriveSessionInfo(out, ses);
+}
+
+//It's supposed to reset everything (if not a manual reset)
+void libGDR_Reset(bool Manual)
+{
+	libCore_gdrom_disc_change();
+}
+
+//called when entering sh4 thread , from the new thread context (for any thread specific init)
+s32 libGDR_Init()
+{
+	if (!DiscInit())
+		return rv_serror;
+	libCore_gdrom_disc_change();
+	settings.imgread.PatchRegion = true;
+	return rv_ok;
+}
+
+//called when exiting from sh4 thread , from the new thread context (for any thread specific init) :P
+void libGDR_Term()
+{
+	DiscTerm();
+}

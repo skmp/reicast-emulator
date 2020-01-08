@@ -145,6 +145,8 @@ Disc* cue_parse(const wchar* file)
 				t.ADDR = 0;
 				t.StartFAD = current_fad;
 				t.EndFAD = 0;
+				t.CTRL = (track_type == "AUDIO" || track_type == "CDG") ? 0 : 4;
+
 				strcpy(pathptr, track_filename.c_str());
 
 				core_file* track_file = core_fopen(path);

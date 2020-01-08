@@ -7,7 +7,7 @@
 #include "TexCache.h"
 #include "oslib/threading.h"
 #include "hw/pvr/pvr_regs.h"
-#include "hw/pvr/renderer_if.h"
+#include "hw/pvr/Renderer_if.h"
 #include "hw/mem/_vmem.h"
 #include "deps/xbrz/xbrz.h"
 #include "deps/xxhash/xxhash.h"

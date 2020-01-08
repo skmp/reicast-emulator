@@ -818,8 +818,7 @@ void libAICA_Term();
 u32  libAICA_ReadReg(u32 addr,u32 size);
 void libAICA_WriteReg(u32 addr,u32 data,u32 size);
 
-u32  libAICA_ReadMem_aica_ram(u32 addr,u32 size);
-void libAICA_WriteMem_aica_ram(u32 addr,u32 data,u32 size);
+
 void libAICA_Update(u32 cycles);				//called every ~1800 cycles, set to 0 if not used
 
 

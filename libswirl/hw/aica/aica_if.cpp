@@ -80,79 +80,13 @@ void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 
 	return;
 }
-u32 ReadMem_aica_reg(u32 addr,u32 sz)
-{
-	addr&=0x7FFF;
-	if (sz==1)
-	{
-		if (addr==0x2C01)
-		{
-			return VREG;
-		}
-		else if (addr==0x2C00)
-		{
-			return ARMRST;
-		}
-		else
-		{
-			return libAICA_ReadReg(addr, sz);
-		}
-	}
-	else
-	{
-		if (addr==0x2C00)
-		{
-			return (VREG<<8) | ARMRST;
-		}
-		else
-		{
-			return libAICA_ReadReg(addr, sz);
-		}
-	}
-}
 
 void ArmSetRST()
 {
 	ARMRST&=1;
 	libARM_SetResetState(ARMRST);
 }
-void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
-{
-	addr&=0x7FFF;
 
-	if (sz==1)
-	{
-		if (addr==0x2C01)
-		{
-			VREG=data;
-			printf("VREG = %02X\n",VREG);
-		}
-		else if (addr==0x2C00)
-		{
-			ARMRST=data;
-			printf("ARMRST = %02X\n",ARMRST);
-			ArmSetRST();
-		}
-		else
-		{
-			libAICA_WriteReg(addr,data,sz);
-		}
-	}
-	else
-	{
-		if (addr==0x2C00)
-		{
-			VREG=(data>>8)&0xFF;
-			ARMRST=data&0xFF;
-			printf("VREG = %02X ARMRST %02X\n",VREG,ARMRST);
-			ArmSetRST();
-		}
-		else
-		{
-			libAICA_WriteReg(addr,data,sz);
-		}
-	}
-}
 //Init/res/term
 void aica_Init()
 {
@@ -171,10 +105,69 @@ void aica_Term()
 
 struct AicaDevice : MMIODevice {
     u32 Read(u32 addr, u32 sz) {
-        return ReadMem_aica_reg(addr, sz);
+		addr &= 0x7FFF;
+		if (sz == 1)
+		{
+			if (addr == 0x2C01)
+			{
+				return VREG;
+			}
+			else if (addr == 0x2C00)
+			{
+				return ARMRST;
+			}
+			else
+			{
+				return libAICA_ReadReg(addr, sz);
+			}
+		}
+		else
+		{
+			if (addr == 0x2C00)
+			{
+				return (VREG << 8) | ARMRST;
+			}
+			else
+			{
+				return libAICA_ReadReg(addr, sz);
+			}
+		}
     }
     void Write(u32 addr, u32 data, u32 sz) {
-        WriteMem_aica_reg(addr, data, sz);
+		addr &= 0x7FFF;
+
+		if (sz == 1)
+		{
+			if (addr == 0x2C01)
+			{
+				VREG = data;
+				printf("VREG = %02X\n", VREG);
+			}
+			else if (addr == 0x2C00)
+			{
+				ARMRST = data;
+				printf("ARMRST = %02X\n", ARMRST);
+				ArmSetRST();
+			}
+			else
+			{
+				libAICA_WriteReg(addr, data, sz);
+			}
+		}
+		else
+		{
+			if (addr == 0x2C00)
+			{
+				VREG = (data >> 8) & 0xFF;
+				ARMRST = data & 0xFF;
+				printf("VREG = %02X ARMRST %02X\n", VREG, ARMRST);
+				ArmSetRST();
+			}
+			else
+			{
+				libAICA_WriteReg(addr, data, sz);
+			}
+		}
     }
 };
 

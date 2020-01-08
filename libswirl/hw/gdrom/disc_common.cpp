@@ -141,20 +141,11 @@ bool DiscInit()
 bool DiscSwap()
 {
 	// These Additional Sense Codes mean "The lid was closed"
+
+		// TODO: rewrite all of this logic
 	sns_asc = 0x28;
 	sns_ascq = 0x00;
 	sns_key = 0x6;
-	if (settings.imgread.LoadDefaultImage)
-	{
-		printf("Loading default image \"%s\"\n",settings.imgread.DefaultImage);
-		if (!DiscInit_(settings.imgread.DefaultImage))
-		{
-			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR,settings.imgread.DefaultImage);
-			return false;
-		}
-		else
-			return true;
-	}
 
 	// FIXME: Data loss if buffer is too small
 	wchar fn[512];

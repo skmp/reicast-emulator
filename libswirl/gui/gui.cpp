@@ -52,6 +52,9 @@
 
 #include "libswirl.h"
 
+
+#include "hw/gdrom/disc_common.h" // TODO: Do this proper 
+
 bool game_started;
 
 int screen_dpi = 96;
@@ -567,6 +570,12 @@ struct ReicastUI_impl : GUI {
             os_LaunchFromURL("http://report-games.reicast.com");
         }
 
+        ImGui::NextColumn();
+        if (ImGui::Button("Swap Disc", ImVec2(150 * scaling, 50 * scaling)))
+        {
+            gui_state = Main;
+        }
+
 #if 0
         ImGui::NextColumn();
         if (ImGui::Button("RenderDone Int", ImVec2(150 * scaling, 50 * scaling)))
@@ -689,6 +698,15 @@ struct ReicastUI_impl : GUI {
 
     void gui_start_game(const std::string& path)
     {
+        // do disc swap
+        if (game_started)
+        {
+            cfgSetVirtual("config", "image", path.c_str());
+            DiscSwap();
+
+            virtualDreamcast->Resume();
+            return;
+        }
 
         auto bios_path = get_readonly_data_path(DATA_PATH);
 

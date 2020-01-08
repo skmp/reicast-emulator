@@ -8,6 +8,7 @@ using namespace std;
 
 extern u32 NullDriveDiscType;
 
+bool DiscSwap();
 
 int GetFile(char *szFileName);
 

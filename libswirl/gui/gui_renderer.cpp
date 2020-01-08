@@ -79,8 +79,9 @@ static void findGLVersion()
 }
 
 struct GUIRenderer_impl : GUIRenderer {
-    std::atomic<bool> keepRunning;
+    std::atomic<bool> keepRunning = true;
     std::mutex callback_mutex;
+    cResetEvent pendingCallback;
 
     std::function<bool(bool canceled)> callback;
 
@@ -95,7 +96,7 @@ struct GUIRenderer_impl : GUIRenderer {
         
         findGLVersion();
 
-        for (;;) {
+        while (keepRunning) {
             if (g_GUI->IsOpen() || g_GUI->IsVJoyEdit())
             {
                 os_DoEvents();

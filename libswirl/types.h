@@ -805,16 +805,15 @@ void plugins_Term();
 void plugins_Reset(bool Manual);
 
 //PVR
-s32 libPvr_Init();
-void libPvr_Reset(bool Manual);
-void libPvr_Term();
+struct PowerVR {
+	virtual s32 Init() = 0;
+	virtual void Reset(bool Manual) = 0;
+	virtual void Term() = 0;
 
+	virtual ~PowerVR() { }
 
-//void DYNACALL libPvr_TaSQ(u32* data);				//size is 32 byte transfer counts
-u32 libPvr_ReadReg(u32 addr,u32 size);
-void libPvr_WriteReg(u32 addr,u32 data,u32 size);
-
-void libPvr_LockedBlockWrite(vram_block* block,u32 addr);	//set to 0 if not used
+	static PowerVR* Create();
+};
 
 void* libPvr_GetRenderTarget();
 void* libPvr_GetRenderSurface();

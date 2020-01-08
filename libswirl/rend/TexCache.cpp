@@ -7,6 +7,7 @@
 #include "TexCache.h"
 #include "oslib/threading.h"
 #include "hw/pvr/pvr_regs.h"
+#include "hw/pvr/renderer_if.h"
 #include "hw/mem/_vmem.h"
 #include "deps/xbrz/xbrz.h"
 #include "deps/xxhash/xxhash.h"
@@ -240,7 +241,7 @@ bool VramLockedWrite(u8* address)
 			{
 				if ((*list)[i])
 				{
-					libPvr_LockedBlockWrite((*list)[i],(u32)offset);
+					rend_text_invl((*list)[i]);
 				
 					if ((*list)[i])
 					{

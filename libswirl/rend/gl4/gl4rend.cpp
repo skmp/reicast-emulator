@@ -504,7 +504,6 @@ static void gles_term(void)
 	glDeleteVertexArrays(1, &gl4.vbo.main_vao);
 	glDeleteVertexArrays(1, &gl4.vbo.modvol_vao);
 
-	os_gl_term();
 }
 
 static void create_modvol_shader()
@@ -558,11 +557,6 @@ extern void initABuffer();
 
 static bool gles_init()
 {
-
-	if (!os_gl_init((void*)libPvr_GetRenderTarget(),
-		         (void*)libPvr_GetRenderSurface()))
-			return false;
-
 	int major = 0;
 	int minor = 0;
 	glGetIntegerv(GL_MAJOR_VERSION, &major);

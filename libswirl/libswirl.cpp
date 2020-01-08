@@ -34,6 +34,7 @@
 #endif
 
 unique_ptr<VirtualDreamcast> virtualDreamcast;
+static unique_ptr<PowerVR> powerVR;
 
 void FlushCache();
 void LoadCustom();
@@ -107,8 +108,9 @@ int GetFile(char* szFileName, char* szParse /* = 0 */, u32 flags /* = 0 */)
 
 s32 plugins_Init()
 {
+    powerVR.reset(PowerVR::Create());
 
-    if (s32 rv = libPvr_Init())
+    if (s32 rv = powerVR->Init())
         return rv;
 
 #ifndef TARGET_DISPFRAME
@@ -131,13 +133,15 @@ void plugins_Term()
     libARM_Term();
     libAICA_Term();
     libGDR_Term();
-    libPvr_Term();
+
+    powerVR->Term();
+    powerVR.reset(nullptr);
 }
 
 void plugins_Reset(bool Manual)
 {
     reios_reset();
-    libPvr_Reset(Manual);
+    powerVR->Reset(Manual);
     libGDR_Reset(Manual);
     libAICA_Reset(Manual);
     libARM_Reset(Manual);
@@ -676,8 +680,6 @@ void reicast_ui_loop() {
 }
 
 void reicast_term() {
-    g_GUIRenderer->Stop();
-
     g_GUIRenderer.release();
 
     g_GUI.release();

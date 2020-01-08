@@ -8,7 +8,7 @@ template <u32 sz,class T>
 void arm_WriteReg(u32 addr,T data);
 
 template<int sz,typename T>
-static inline T DYNACALL ReadMemArm(u32 addr)
+static inline T DYNACALL scpu_ReadMemArm(u32 addr)
 {
 	addr&=0x00FFFFFF;
 	if (addr<0x800000)
@@ -30,7 +30,7 @@ static inline T DYNACALL ReadMemArm(u32 addr)
 }
 
 template<int sz,typename T>
-static inline void DYNACALL WriteMemArm(u32 addr,T data)
+static inline void DYNACALL scpu_WriteMemArm(u32 addr,T data)
 {
 	addr&=0x00FFFFFF;
 	if (addr<0x800000)
@@ -43,24 +43,16 @@ static inline void DYNACALL WriteMemArm(u32 addr,T data)
 	}
 }
 
-#define arm_ReadMem8 ReadMemArm<1,u8>
-#define arm_ReadMem16 ReadMemArm<2,u16>
-#define arm_ReadMem32 ReadMemArm<4,u32>
+#define arm_ReadMem8 scpu_ReadMemArm<1,u8>
+#define arm_ReadMem16 scpu_ReadMemArm<2,u16>
+#define arm_ReadMem32 scpu_ReadMemArm<4,u32>
 
-#define arm_WriteMem8 WriteMemArm<1,u8>
-#define arm_WriteMem16 WriteMemArm<2,u16>
-#define arm_WriteMem32 WriteMemArm<4,u32>
-
-u32 sh4_ReadMem_reg(u32 addr,u32 size);
-void sh4_WriteMem_reg(u32 addr,u32 data,u32 size);
+#define arm_WriteMem8 scpu_WriteMemArm<1,u8>
+#define arm_WriteMem16 scpu_WriteMemArm<2,u16>
+#define arm_WriteMem32 scpu_WriteMemArm<4,u32>
 
 void init_mem();
 void term_mem();
-
-#define aica_reg_16 ((u16*)aica_reg)
-
-#define AICA_RAM_SIZE (ARAM_SIZE)
-#define AICA_RAM_MASK (ARAM_MASK)
 
 extern bool e68k_out;
 

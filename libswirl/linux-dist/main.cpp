@@ -423,16 +423,14 @@ int main(int argc, wchar* argv[])
 	if (reicast_init(argc, argv))
 		die("Reicast initialization failed\n");
 
-    	virtualDreamcast->Init();
-
-	#if !defined(TARGET_EMSCRIPTEN)
-		#if FEAT_HAS_NIXPROF
-		install_prof_handler(1);
-		#endif
-		rend_thread(NULL);
-	#else
-		emscripten_set_main_loop(&dc_run, 100, false);
+	
+	#if FEAT_HAS_NIXPROF
+	install_prof_handler(1);
 	#endif
+	
+	reicast_ui_loop();
+
+	reicast_term();
 
 	#ifdef TARGET_PANDORA
 		clean_exit(0);

@@ -1,6 +1,6 @@
 #pragma once
 #include "imgread/imgread.h"
-#include "gd_driver.h"
+
 #include <vector>
 using namespace std;
 

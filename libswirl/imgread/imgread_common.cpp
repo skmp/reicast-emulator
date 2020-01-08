@@ -8,9 +8,6 @@ Disc* cue_parse(const wchar* file);
 Disc* ioctl_parse(const wchar* file);
 #endif
 
-u32 NullDriveDiscType;
-Disc* disc;
-
 Disc* (*imgread_drivers[])(const wchar* path) =
 {
 	chd_parse,

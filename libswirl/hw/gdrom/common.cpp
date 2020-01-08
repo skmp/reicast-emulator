@@ -3,6 +3,8 @@
 
 u8 q_subchannel[96];		//latest q subcode
 
+u32 NullDriveDiscType;
+Disc* disc;
 
 void PatchRegion_0(u8* sector,int size)
 {

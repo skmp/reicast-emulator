@@ -1240,6 +1240,10 @@ struct softrend : Renderer
 	#error Cannot use softrend without X11
 #endif
 	}
+
+	void operator delete(void* p) {
+		_mm_free(p);
+	}
 };
 
 Renderer* rend_softrend() {

@@ -573,6 +573,7 @@ struct ReicastUI_impl : GUI {
         ImGui::NextColumn();
         if (ImGui::Button("Swap Disc", ImVec2(150 * scaling, 50 * scaling)))
         {
+            cfgSetVirtual("config", "image", "");
             gui_state = Main;
         }
 

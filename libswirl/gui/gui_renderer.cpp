@@ -1,5 +1,4 @@
 #include <atomic>
-#include <mutex>
 
 #include "imgui/imgui.h"
 #include "rend/gles/imgui_impl_opengl3.h"
@@ -85,7 +84,7 @@ static void findGLVersion()
 
 struct GUIRenderer_impl : GUIRenderer {
     std::atomic<bool> keepRunning;
-    std::mutex callback_mutex;
+    cMutex callback_mutex;
     cResetEvent pendingCallback;
 
     std::function<bool(bool canceled)> callback;
@@ -119,12 +118,12 @@ struct GUIRenderer_impl : GUIRenderer {
             else {
                 auto cb = callback;
 
-                callback_mutex.lock();
+                callback_mutex.Lock();
                 {
                     cb = callback;
                     callback = nullptr;
                 }
-                callback_mutex.unlock();
+                callback_mutex.Unlock();
 
                 if (cb) {
                     if (cb(false)) {
@@ -141,21 +140,21 @@ struct GUIRenderer_impl : GUIRenderer {
     }
 
     virtual void QueueEmulatorFrame(std::function<bool(bool canceled)> cb) {
-        callback_mutex.lock();
+        callback_mutex.Lock();
         callback = cb;
-        callback_mutex.unlock();
+        callback_mutex.Unlock();
     }
 
     virtual void FlushEmulatorQueue() {
 
         auto cb = callback;
         
-        callback_mutex.lock();
+        callback_mutex.Lock();
         {
             cb = callback;
             callback = nullptr;
         }
-        callback_mutex.unlock();
+        callback_mutex.Unlock();
 
         if (cb) {
             cb(true);

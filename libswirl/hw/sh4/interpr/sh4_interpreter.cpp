@@ -22,6 +22,8 @@
 #include "../dyna/blockmanager.h"
 #include "../sh4_sched.h"
 
+#include "libswirl.h"
+
 #include <time.h>
 #include <float.h>
 
@@ -104,7 +106,7 @@ int AicaUpdate(int tag, int c, int j)
 
     //if (aica_sample_cycles>=AICA_SAMPLE_CYCLES)
     {
-        UpdateArm(512 * 32);
+        g_SoundCPU->Update(512 * 32);
         UpdateAica(1 * 32);
         //aica_sample_cycles-=AICA_SAMPLE_CYCLES;
     }

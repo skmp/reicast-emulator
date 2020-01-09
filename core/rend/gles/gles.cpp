@@ -646,6 +646,11 @@ static void gl_delete_shaders()
 
 static void gl_term(void)
 {
+	glcache.DeleteTextures(ARRAY_SIZE(vmuTextureId), vmuTextureId);
+	memset(vmuTextureId, 0, sizeof(vmuTextureId));
+	glcache.DeleteTextures(ARRAY_SIZE(lightgunTextureId), lightgunTextureId);
+	memset(lightgunTextureId, 0, sizeof(lightgunTextureId));
+
 	glDeleteBuffers(1, &gl.vbo.geometry);
 	glDeleteBuffers(1, &gl.vbo.modvols);
 	glDeleteBuffers(1, &gl.vbo.idxs);

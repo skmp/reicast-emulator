@@ -971,7 +971,12 @@ struct gl4rend : Renderer
 	}
 	void Term() override
 	{
-	   termABuffer();
+		glcache.DeleteTextures(ARRAY_SIZE(vmuTextureId), vmuTextureId);
+		memset(vmuTextureId, 0, sizeof(vmuTextureId));
+		glcache.DeleteTextures(ARRAY_SIZE(lightgunTextureId), lightgunTextureId);
+		memset(lightgunTextureId, 0, sizeof(lightgunTextureId));
+
+		termABuffer();
 	   if (stencilTexId != 0)
 	   {
 		  glcache.DeleteTextures(1, &stencilTexId);

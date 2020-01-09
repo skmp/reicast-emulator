@@ -699,7 +699,7 @@ void gl4DrawVmuTexture(u8 vmu_screen_number)
 	float w=VMU_SCREEN_WIDTH*vmu_screen_params[vmu_screen_number].vmu_screen_size_mult ;
 	float h=VMU_SCREEN_HEIGHT*vmu_screen_params[vmu_screen_number].vmu_screen_size_mult ;
 
-	if ( vmu_screen_params[vmu_screen_number].vmu_screen_needs_update  )
+	if (vmu_screen_params[vmu_screen_number].vmu_screen_needs_update || vmuTextureId[vmu_screen_number] == 0)
 		UpdateVmuTexture(vmu_screen_number) ;
 
 	switch ( vmu_screen_params[vmu_screen_number].vmu_screen_position )
@@ -745,8 +745,8 @@ void gl4DrawVmuTexture(u8 vmu_screen_number)
 	CurrentShader = gl4GetProgram(0,
 				0,
 				1,
-				0,
 				1,
+				0,
 				0,
 				0,
 				2,
@@ -838,10 +838,10 @@ void gl4DrawGunCrosshair(u8 port)
 	x = lightgun_params[port].x - ( LIGHTGUN_CROSSHAIR_SIZE / 2 );
 	y = lightgun_params[port].y - ( LIGHTGUN_CROSSHAIR_SIZE / 2 );
 
-	if ( lightgun_params[port].dirty )
+	if (lightgun_params[port].dirty || lightgunTextureId[port] == 0)
 		gl4UpdateLightGunTexture(port);
 
-	glcache.BindTexture(GL_TEXTURE_2D, lightgunTextureId[0]);
+	glcache.BindTexture(GL_TEXTURE_2D, lightgunTextureId[port]);
 
 	glcache.Disable(GL_SCISSOR_TEST);
 	glcache.Disable(GL_DEPTH_TEST);
@@ -856,8 +856,8 @@ void gl4DrawGunCrosshair(u8 port)
 	CurrentShader = gl4GetProgram(0,
 				0,
 				1,
-				0,
 				1,
+				0,
 				0,
 				0,
 				2,

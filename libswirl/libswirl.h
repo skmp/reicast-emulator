@@ -22,6 +22,8 @@ struct VirtualDreamcast {
 
 extern unique_ptr<VirtualDreamcast> virtualDreamcast;
 extern unique_ptr<GDRomDisc> g_GDRDisc;
+extern unique_ptr<SoundCPU> g_SoundCPU;
+extern unique_ptr<AICA> g_AICA;
 
 
 // TODO: rename these

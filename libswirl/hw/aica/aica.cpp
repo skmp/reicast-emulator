@@ -86,11 +86,6 @@ void UpdateSh4Ints()
 
 
 AicaTimer timers[3];
-//Mainloop
-void libAICA_Update(u32 Samples)
-{
-	AICA_Sample32();
-}
 
 void libAICA_TimeStep()
 {
@@ -177,43 +172,64 @@ void WriteAicaReg(u32 reg,u32 data)
 template void WriteAicaReg<1>(u32 reg,u32 data);
 template void WriteAicaReg<2>(u32 reg,u32 data);
 
-//misc :p
-s32 libAICA_Init()
-{
-	init_mem();
-	aica_Init();
+struct AICA_impl : AICA {
 
-	verify(sizeof(*CommonData)==0x508);
-	verify(sizeof(*DSPData)==0x15C8);
-
-	CommonData=(CommonData_struct*)&aica_reg[0x2800];
-	DSPData=(DSPData_struct*)&aica_reg[0x3000];
-	//slave cpu (arm7)
-
-	SCIEB=(InterruptInfo*)&aica_reg[0x289C];
-	SCIPD=(InterruptInfo*)&aica_reg[0x289C+4];
-	SCIRE=(InterruptInfo*)&aica_reg[0x289C+8];
-	//Main cpu (sh4)
-	MCIEB=(InterruptInfo*)&aica_reg[0x28B4];
-	MCIPD=(InterruptInfo*)&aica_reg[0x28B4+4];
-	MCIRE=(InterruptInfo*)&aica_reg[0x28B4+8];
-
-	sgc_Init();
-	for (int i=0;i<3;i++)
-		timers[i].Init(aica_reg,i);
-
-	return rv_ok;
-}
-
-void libAICA_Reset(bool manual)
-{
-	if (!manual)
+	s32 Init()
+	{
 		init_mem();
-	sgc_Init();
-	aica_Reset(manual);
-}
+		aica_Init();
 
-void libAICA_Term()
-{
-	sgc_Term();
+		verify(sizeof(*CommonData) == 0x508);
+		verify(sizeof(*DSPData) == 0x15C8);
+
+		CommonData = (CommonData_struct*)&aica_reg[0x2800];
+		DSPData = (DSPData_struct*)&aica_reg[0x3000];
+		//slave cpu (arm7)
+
+		SCIEB = (InterruptInfo*)&aica_reg[0x289C];
+		SCIPD = (InterruptInfo*)&aica_reg[0x289C + 4];
+		SCIRE = (InterruptInfo*)&aica_reg[0x289C + 8];
+		//Main cpu (sh4)
+		MCIEB = (InterruptInfo*)&aica_reg[0x28B4];
+		MCIPD = (InterruptInfo*)&aica_reg[0x28B4 + 4];
+		MCIRE = (InterruptInfo*)&aica_reg[0x28B4 + 8];
+
+		sgc_Init();
+		for (int i = 0; i < 3; i++)
+			timers[i].Init(aica_reg, i);
+
+		return rv_ok;
+	}
+
+	void Reset(bool manual)
+	{
+		if (!manual)
+			init_mem();
+		sgc_Init();
+		aica_Reset(manual);
+	}
+
+	void Term()
+	{
+		sgc_Term();
+	}
+
+	//Mainloop
+	void Update(u32 Samples)
+	{
+		AICA_Sample32();
+	}
+
+	//Aica reads (both sh4&arm)
+	u32 ReadReg(u32 addr, u32 size) {
+		return libAICA_ReadReg(addr, size);
+	}
+
+	void WriteReg(u32 addr, u32 data, u32 size) {
+		libAICA_WriteReg(addr, data, size);
+	}
+};
+
+AICA* AICA::Create() {
+	return new AICA_impl();
 }

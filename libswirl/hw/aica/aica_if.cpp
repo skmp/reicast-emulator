@@ -13,6 +13,8 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_sched.h"
 
+#include "libswirl.h"
+
 #include <time.h>
 
 VLockedMemory aica_ram;
@@ -84,7 +86,7 @@ void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 void ArmSetRST()
 {
 	ARMRST&=1;
-	libARM_SetResetState(ARMRST);
+	g_SoundCPU->SetResetState(ARMRST);
 }
 
 //Init/res/term
@@ -118,7 +120,7 @@ struct AicaDevice : MMIODevice {
 			}
 			else
 			{
-				return libAICA_ReadReg(addr, sz);
+				return g_AICA->ReadReg(addr, sz);
 			}
 		}
 		else
@@ -129,7 +131,7 @@ struct AicaDevice : MMIODevice {
 			}
 			else
 			{
-				return libAICA_ReadReg(addr, sz);
+				return g_AICA->ReadReg(addr, sz);
 			}
 		}
     }
@@ -151,7 +153,7 @@ struct AicaDevice : MMIODevice {
 			}
 			else
 			{
-				libAICA_WriteReg(addr, data, sz);
+				g_AICA->WriteReg(addr, data, sz);
 			}
 		}
 		else
@@ -165,7 +167,7 @@ struct AicaDevice : MMIODevice {
 			}
 			else
 			{
-				libAICA_WriteReg(addr, data, sz);
+				g_AICA->WriteReg(addr, data, sz);
 			}
 		}
     }

@@ -34,6 +34,9 @@
 
 unique_ptr<VirtualDreamcast> virtualDreamcast;
 unique_ptr<GDRomDisc> g_GDRDisc;
+unique_ptr<SoundCPU> g_SoundCPU;
+unique_ptr<AICA> g_AICA;
+
 
 static unique_ptr<PowerVR> powerVR;
 
@@ -121,10 +124,14 @@ s32 plugins_Init()
         return rv;
 #endif
 
-    if (s32 rv = libAICA_Init())
+    g_AICA.reset(AICA::Create());
+
+    if (s32 rv = g_AICA->Init())
         return rv;
 
-    if (s32 rv = libARM_Init())
+    g_SoundCPU.reset(SoundCPU::Create());
+
+    if (s32 rv = g_SoundCPU->Init())
         return rv;
 
     return rv_ok;
@@ -133,8 +140,11 @@ s32 plugins_Init()
 void plugins_Term()
 {
     //term all plugins
-    libARM_Term();
-    libAICA_Term();
+    g_SoundCPU->Term();
+    g_SoundCPU.reset(nullptr);
+
+    g_AICA->Term();
+
     g_GDRDisc->Term();
     g_GDRDisc.reset(nullptr);
 
@@ -147,8 +157,8 @@ void plugins_Reset(bool Manual)
     reios_reset();
     powerVR->Reset(Manual);
     g_GDRDisc->Reset(Manual);
-    libAICA_Reset(Manual);
-    libARM_Reset(Manual);
+    g_AICA->Reset(Manual);
+    g_SoundCPU->Reset(Manual);
     //libExtDevice_Reset(Manual);
 }
 

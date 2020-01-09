@@ -810,16 +810,18 @@ void* libPvr_GetRenderTarget();
 void* libPvr_GetRenderSurface();
 
 //AICA
-s32 libAICA_Init();
-void libAICA_Reset(bool Manual);
-void libAICA_Term();
+struct AICA {
+	virtual s32 Init() = 0;
+	virtual void Reset(bool Manual) = 0;
+	virtual void Term() = 0;
 
+	virtual u32 ReadReg(u32 addr, u32 size) = 0;
+	virtual void WriteReg(u32 addr, u32 data, u32 size) = 0;
 
-u32  libAICA_ReadReg(u32 addr,u32 size);
-void libAICA_WriteReg(u32 addr,u32 data,u32 size);
+	virtual void Update(u32 cycles) = 0;				//called every ~1800 cycles, set to 0 if not used
 
-
-void libAICA_Update(u32 cycles);				//called every ~1800 cycles, set to 0 if not used
+	static AICA* Create();
+};
 
 
 //GDR
@@ -856,13 +858,16 @@ static u32 libExtDevice_ReadMem_A5(u32 addr,u32 size){ return 0; }
 static void libExtDevice_WriteMem_A5(u32 addr,u32 data,u32 size) { }
 
 //ARM
-s32 libARM_Init();
-void libARM_Reset(bool M);
-void libARM_Term();
+struct SoundCPU {
+	virtual s32 Init() = 0;
+	virtual void Reset(bool M) = 0;
+	virtual void Term() = 0;
 
-void libARM_SetResetState(u32 State);
-void libARM_Update(u32 cycles);
+	virtual void SetResetState(u32 State) = 0;
+	virtual void Update(u32 cycles) = 0;
 
+	static SoundCPU* Create();
+};
 
 #define 	ReadMemArrRet(arr,addr,sz)				\
 			{if (sz==1)								\

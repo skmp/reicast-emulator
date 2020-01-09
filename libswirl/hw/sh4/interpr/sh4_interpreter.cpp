@@ -107,7 +107,7 @@ int AicaUpdate(int tag, int c, int j)
     //if (aica_sample_cycles>=AICA_SAMPLE_CYCLES)
     {
         g_SoundCPU->Update(512 * 32);
-        UpdateAica(1 * 32);
+        g_AICA->Update(1 * 32);
         //aica_sample_cycles-=AICA_SAMPLE_CYCLES;
     }
 

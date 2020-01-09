@@ -823,18 +823,24 @@ void libAICA_Update(u32 cycles);				//called every ~1800 cycles, set to 0 if not
 
 
 //GDR
-s32 libGDR_Init();
-void libGDR_Reset(bool M);
-void libGDR_Term();
-
 void libCore_gdrom_disc_change();
 
-//IO
-void libGDR_ReadSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
-void libGDR_ReadSubChannel(u8 * buff, u32 format, u32 len);
-void libGDR_GetToc(u32* toc,u32 area);
-u32 libGDR_GetDiscType();
-void libGDR_GetSessionInfo(u8* pout,u8 session);
+struct GDRomDisc {
+	virtual s32 Init() = 0;
+	virtual void Reset(bool M) = 0;
+	virtual void Term() = 0;
+
+	//IO
+	virtual void ReadSector(u8* buff, u32 StartSector, u32 SectorCount, u32 secsz) = 0;
+	virtual void ReadSubChannel(u8* buff, u32 format, u32 len) = 0;
+	virtual void GetToc(u32* toc, u32 area) = 0;
+	virtual u32 GetDiscType() = 0;
+	virtual void GetSessionInfo(u8* pout, u8 session) = 0;
+	virtual void Swap() = 0;
+
+	static GDRomDisc* Create();
+};
+
 
 
 // 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)

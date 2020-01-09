@@ -8,14 +8,10 @@ using namespace std;
 
 extern u32 NullDriveDiscType;
 
-bool DiscSwap();
-
 int GetFile(char *szFileName);
 
 void printtoc(TocInfo* toc,SessionInfo* ses);
 extern u8 q_subchannel[96];
-
-extern Disc* disc;
 
 
 extern void gd_setdisc();

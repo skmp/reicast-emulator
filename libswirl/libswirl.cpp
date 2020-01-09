@@ -33,6 +33,8 @@
 #endif
 
 unique_ptr<VirtualDreamcast> virtualDreamcast;
+unique_ptr<GDRomDisc> g_GDRDisc;
+
 static unique_ptr<PowerVR> powerVR;
 
 void FlushCache();
@@ -113,7 +115,9 @@ s32 plugins_Init()
         return rv;
 
 #ifndef TARGET_DISPFRAME
-    if (s32 rv = libGDR_Init())
+    g_GDRDisc.reset(GDRomDisc::Create());
+
+    if (s32 rv = g_GDRDisc->Init())
         return rv;
 #endif
 
@@ -131,7 +135,8 @@ void plugins_Term()
     //term all plugins
     libARM_Term();
     libAICA_Term();
-    libGDR_Term();
+    g_GDRDisc->Term();
+    g_GDRDisc.reset(nullptr);
 
     powerVR->Term();
     powerVR.reset(nullptr);
@@ -141,7 +146,7 @@ void plugins_Reset(bool Manual)
 {
     reios_reset();
     powerVR->Reset(Manual);
-    libGDR_Reset(Manual);
+    g_GDRDisc->Reset(Manual);
     libAICA_Reset(Manual);
     libARM_Reset(Manual);
     //libExtDevice_Reset(Manual);
@@ -718,13 +723,13 @@ struct Dreamcast_impl : VirtualDreamcast {
             {
                 // Boot BIOS
                 settings.imgread.LastImage[0] = 0;
-                libGDR_Term();
-                libGDR_Init();
+                g_GDRDisc->Term();
+                g_GDRDisc->Init();
             }
             else
             {
-                libGDR_Term();
-                libGDR_Init();
+                g_GDRDisc->Term();
+                g_GDRDisc->Init();
                 LoadCustom();
             }
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE

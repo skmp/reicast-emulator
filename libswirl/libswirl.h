@@ -21,6 +21,7 @@ struct VirtualDreamcast {
 };
 
 extern unique_ptr<VirtualDreamcast> virtualDreamcast;
+extern unique_ptr<GDRomDisc> g_GDRDisc;
 
 
 // TODO: rename these

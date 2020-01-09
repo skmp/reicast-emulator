@@ -703,7 +703,7 @@ struct ReicastUI_impl : GUI {
         if (game_started)
         {
             cfgSetVirtual("config", "image", path.c_str());
-            DiscSwap();
+            g_GDRDisc->Swap();
 
             virtualDreamcast->Resume();
             return;

@@ -8,9 +8,9 @@ extern signed int sns_key;
 u8 q_subchannel[96];		//latest q subcode
 
 u32 NullDriveDiscType;
-Disc* disc;
+static Disc* disc;
 
-void PatchRegion_0(u8* sector,int size)
+static void PatchRegion_0(u8* sector,int size)
 {
 	if (settings.imgread.PatchRegion==0)
 		return;
@@ -26,7 +26,7 @@ void PatchRegion_0(u8* sector,int size)
 	u8* p_area_symbol=&usersect[0x30];
 	memcpy(p_area_symbol,"JUE     ",8);
 }
-void PatchRegion_6(u8* sector,int size)
+static void PatchRegion_6(u8* sector,int size)
 {
 #ifndef NOT_REICAST
 	if (settings.imgread.PatchRegion==0)
@@ -49,9 +49,9 @@ void PatchRegion_6(u8* sector,int size)
 	memcpy(&p_area_text[4 + 32 + 32],"For EUROPE.                 ",28);
 }
 
-void DiscTerm();
+static void DiscTerm();
 
-bool DiscInit_(wchar* fn)
+static bool DiscInit_(wchar* fn)
 {
 	DiscTerm();
 
@@ -82,7 +82,7 @@ bool DiscInit_(wchar* fn)
 	return false;
 }
 
-bool DiscInit()
+static bool DiscInit()
 {
 	if (settings.imgread.LoadDefaultImage)
 	{
@@ -138,7 +138,7 @@ bool DiscInit()
 		return true;
 	}
 }
-bool DiscSwap()
+static bool DiscSwap()
 {
 	// These Additional Sense Codes mean "The lid was closed"
 
@@ -185,7 +185,7 @@ bool DiscSwap()
 }
 
 
-void DiscTerm()
+static void DiscTerm()
 {
 	if (disc!=0)
 		delete disc;
@@ -197,7 +197,7 @@ void DiscTerm()
 //
 //convert our nice toc struct to dc's native one :)
 
-u32 CreateTrackInfo(u32 ctrl,u32 addr,u32 fad)
+static u32 CreateTrackInfo(u32 ctrl,u32 addr,u32 fad)
 {
 	u8 p[4];
 	p[0]=(ctrl<<4)|(addr<<0);
@@ -207,7 +207,7 @@ u32 CreateTrackInfo(u32 ctrl,u32 addr,u32 fad)
 
 	return *(u32*)p;
 }
-u32 CreateTrackInfo_se(u32 ctrl,u32 addr,u32 tracknum)
+static u32 CreateTrackInfo_se(u32 ctrl,u32 addr,u32 tracknum)
 {
 	u8 p[4];
 	p[0]=(ctrl<<4)|(addr<<0);
@@ -218,7 +218,7 @@ u32 CreateTrackInfo_se(u32 ctrl,u32 addr,u32 tracknum)
 }
 
 
-void DiscGetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz)
+static void DiscGetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz)
 {
 	//printf("GD: read %08X, %d\n",StartSector,SectorCount);
 	if (disc)
@@ -231,7 +231,7 @@ void DiscGetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz)
 		}
 	}
 }
-void DiscGetDriveToc(u32* to,DiskArea area)
+static void DiscGetDriveToc(u32* to,DiskArea area)
 {
 	if (!disc)
 		return;
@@ -275,7 +275,7 @@ void DiscGetDriveToc(u32* to,DiskArea area)
 	}
 }
 
-void DiscGetDriveSessionInfo(u8* to,u8 session)
+static void DiscGetDriveSessionInfo(u8* to,u8 session)
 {
 	if (!disc)
 		return;
@@ -316,57 +316,68 @@ void printtoc(TocInfo* toc,SessionInfo* ses)
 }
 
 
-void libGDR_ReadSubChannel(u8* buff, u32 format, u32 len)
-{
-	if (format == 0)
+struct GDRomDisc_impl : GDRomDisc {
+	void ReadSubChannel(u8* buff, u32 format, u32 len)
 	{
-		memcpy(buff, q_subchannel, len);
+		if (format == 0)
+		{
+			memcpy(buff, q_subchannel, len);
+		}
 	}
-}
 
-void libGDR_ReadSector(u8* buff, u32 StartSector, u32 SectorCount, u32 secsz)
-{
-	DiscGetDriveSector(buff, StartSector, SectorCount, secsz);
-	//if (CurrDrive)
-	//	CurrDrive->ReadSector(buff,StartSector,SectorCount,secsz);
-}
+	void ReadSector(u8* buff, u32 StartSector, u32 SectorCount, u32 secsz)
+	{
+		DiscGetDriveSector(buff, StartSector, SectorCount, secsz);
+		//if (CurrDrive)
+		//	CurrDrive->ReadSector(buff,StartSector,SectorCount,secsz);
+	}
 
-void libGDR_GetToc(u32* toc, u32 area)
-{
-	DiscGetDriveToc(toc, (DiskArea)area);
-}
-//TODO : fix up
-u32 libGDR_GetDiscType()
-{
-	if (disc)
-		return disc->type;
-	else
-		return NullDriveDiscType;
-}
+	void GetToc(u32* toc, u32 area)
+	{
+		DiscGetDriveToc(toc, (DiskArea)area);
+	}
+	//TODO : fix up
+	u32 GetDiscType()
+	{
+		if (disc)
+			return disc->type;
+		else
+			return NullDriveDiscType;
+	}
 
-void libGDR_GetSessionInfo(u8* out, u8 ses)
-{
-	DiscGetDriveSessionInfo(out, ses);
-}
+	void GetSessionInfo(u8* out, u8 ses)
+	{
+		DiscGetDriveSessionInfo(out, ses);
+	}
 
-//It's supposed to reset everything (if not a manual reset)
-void libGDR_Reset(bool Manual)
-{
-	libCore_gdrom_disc_change();
-}
+	//It's supposed to reset everything (if not a manual reset)
+	void Reset(bool Manual)
+	{
+		libCore_gdrom_disc_change();
+	}
 
-//called when entering sh4 thread , from the new thread context (for any thread specific init)
-s32 libGDR_Init()
-{
-	if (!DiscInit())
-		return rv_serror;
-	libCore_gdrom_disc_change();
-	settings.imgread.PatchRegion = true;
-	return rv_ok;
-}
+	//called when entering sh4 thread , from the new thread context (for any thread specific init)
+	s32 Init()
+	{
+		if (!DiscInit())
+			return rv_serror;
+		libCore_gdrom_disc_change();
+		settings.imgread.PatchRegion = true;
+		return rv_ok;
+	}
 
-//called when exiting from sh4 thread , from the new thread context (for any thread specific init) :P
-void libGDR_Term()
-{
-	DiscTerm();
+	//called when exiting from sh4 thread , from the new thread context (for any thread specific init) :P
+	void Term()
+	{
+		DiscTerm();
+	}
+
+	void Swap()
+	{
+		DiscSwap();
+	}
+};
+
+GDRomDisc* GDRomDisc::Create() {
+	return new GDRomDisc_impl();
 }

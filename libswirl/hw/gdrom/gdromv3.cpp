@@ -6,6 +6,7 @@
 #include "gdromv3.h"
 
 #include "types.h"
+#include "libswirl.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/sb.h"
 #include "hw/sh4/modules/dmac.h"
@@ -72,7 +73,7 @@ void libCore_CDDA_Sector(s16* sector)
 	//silence ! :p
 	if (cdda.playing)
 	{
-		libGDR_ReadSector((u8*)sector,cdda.CurrAddr.FAD,1,2352);
+		g_GDRDisc->ReadSector((u8*)sector,cdda.CurrAddr.FAD,1,2352);
 		cdda.CurrAddr.FAD++;
 		if (cdda.CurrAddr.FAD==cdda.EndAddr.FAD)
 		{
@@ -114,7 +115,7 @@ void FillReadBuffer()
 
 	read_buff.cache_size=count*read_params.sector_type;
 
-	libGDR_ReadSector(read_buff.cache,read_params.start_sector,count,read_params.sector_type);
+	g_GDRDisc->ReadSector(read_buff.cache,read_params.start_sector,count,read_params.sector_type);
 	read_params.start_sector+=count;
 	read_params.remaining_sectors-=count;
 }
@@ -201,7 +202,7 @@ void gd_set_state(gd_states state)
 					next_state = gds_readsector_pio;
 				}
 
-				libGDR_ReadSector((u8*)&pio_buff.data[0],read_params.start_sector,sector_count, read_params.sector_type);
+				g_GDRDisc->ReadSector((u8*)&pio_buff.data[0],read_params.start_sector,sector_count, read_params.sector_type);
 				read_params.start_sector+=sector_count;
 				read_params.remaining_sectors-=sector_count;
 
@@ -257,7 +258,7 @@ void gd_set_state(gd_states state)
 void gd_setdisc()
 {
 	cdda.playing = false;
-	DiscType newd = (DiscType)libGDR_GetDiscType();
+	DiscType newd = (DiscType)g_GDRDisc->GetDiscType();
 	
 	switch(newd)
 	{
@@ -498,7 +499,7 @@ void gd_process_spi_cmd()
 			u32 toc_gd[102];
 			
 			//toc - dd/sd
-			libGDR_GetToc(&toc_gd[0],packet_cmd.data_8[1]&0x1);
+			g_GDRDisc->GetToc(&toc_gd[0],packet_cmd.data_8[1]&0x1);
 			 
 			gd_spi_pio_end((u8*)&toc_gd[0], (packet_cmd.data_8[4]) | (packet_cmd.data_8[3]<<8) );
 		}
@@ -530,7 +531,7 @@ void gd_process_spi_cmd()
 			gd_spi_pio_end((u8*)&reply_71[0],reply_71_sz);//uCount
 
 
-			if (libGDR_GetDiscType()==GdRom || libGDR_GetDiscType()==CdRom_XA)
+			if (g_GDRDisc->GetDiscType()==GdRom || g_GDRDisc->GetDiscType()==CdRom_XA)
 				SecNumber.Status=GD_PAUSE;
 			else
 				SecNumber.Status=GD_STANDBY;
@@ -613,7 +614,7 @@ void gd_process_spi_cmd()
 		printf_spicmd("SPI_REQ_SES\n");
 
 		u8 ses_inf[6];
-		libGDR_GetSessionInfo(ses_inf,packet_cmd.data_8[2]);
+		g_GDRDisc->GetSessionInfo(ses_inf,packet_cmd.data_8[2]);
 		ses_inf[0]=SecNumber.Status;
 		gd_spi_pio_end((u8*)&ses_inf[0],packet_cmd.data_8[4]);
 		break;
@@ -767,7 +768,7 @@ void gd_process_spi_cmd()
 				sz=100;
 				subc_info[2]=0;
 				subc_info[3]=100;
-				libGDR_ReadSubChannel(subc_info+4,0,96);
+				g_GDRDisc->ReadSubChannel(subc_info+4,0,96);
 			}
 			else
 			{

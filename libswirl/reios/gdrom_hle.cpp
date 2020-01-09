@@ -9,6 +9,7 @@
 #include "hw/sh4/sh4_mem.h"
 
 #include "gdrom_hle.h"
+#include "libswirl.h"
 
 #define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
 
@@ -34,7 +35,7 @@ void GDROM_HLE_ReadTOC(u32 Addr)
 	//
 	debugf("GDROM READ TOC : %X %X \n\n", s, b);
 
-	libGDR_GetToc(pDst, s);
+	g_GDRDisc->GetToc(pDst, s);
 
 	//The syscall swaps to LE it seems
 	for (int i = 0; i < 102; i++) {
@@ -46,13 +47,13 @@ void read_sectors_to(u32 addr, u32 sector, u32 count) {
 	u8 * pDst = GetMemPtr(addr, 0);
 
 	if (pDst) {
-		libGDR_ReadSector(pDst, sector, count, 2048);
+		g_GDRDisc->ReadSector(pDst, sector, count, 2048);
 	}
 	else {
 		u8 temp[2048];
 
 		while (count > 0) {
-			libGDR_ReadSector(temp, sector, 1, 2048);
+			g_GDRDisc->ReadSector(temp, sector, 1, 2048);
 
 			for (int i = 0; i < 2048 / 4; i += 4) {
 				WriteMem32(addr, temp[i]);
@@ -195,7 +196,7 @@ void gdrom_hle_op()
 		case GDROM_CHECK_DRIVE:		// 
 			debugf("\nGDROM:\tHLE GDROM_CHECK_DRIVE r4:%X\n",r[4]);
 			WriteMem32(r[4]+0,0x02);	// STANDBY
-			WriteMem32(r[4]+4,libGDR_GetDiscType());	// CDROM | 0x80 for GDROM
+			WriteMem32(r[4]+4,g_GDRDisc->GetDiscType());	// CDROM | 0x80 for GDROM
 			r[0]=0;					// RET SUCCESS
 		break;
 

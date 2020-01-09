@@ -52,9 +52,6 @@
 
 #include "libswirl.h"
 
-
-#include "hw/gdrom/disc_common.h" // TODO: Do this proper 
-
 bool game_started;
 
 int screen_dpi = 96;

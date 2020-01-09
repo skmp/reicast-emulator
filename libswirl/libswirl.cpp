@@ -723,13 +723,11 @@ struct Dreamcast_impl : VirtualDreamcast {
             {
                 // Boot BIOS
                 settings.imgread.LastImage[0] = 0;
-                g_GDRDisc->Term();
-                g_GDRDisc->Init();
+                g_GDRDisc->Swap(); // reload the gdrom file
             }
             else
             {
-                g_GDRDisc->Term();
-                g_GDRDisc->Init();
+                g_GDRDisc->Swap(); // reload the gdrom file
                 LoadCustom();
             }
 #elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE

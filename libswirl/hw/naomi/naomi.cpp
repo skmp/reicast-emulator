@@ -485,7 +485,7 @@ void Naomi_DmaEnable(u32 addr, u32 data)
 	}
 }
 
-void naomi_sb_init(SBDevice* sb)
+void naomi_sb_Init(SBDevice* sb)
 {
 	#ifdef NAOMI_COMM
 	CommMapFile = CreateFileMapping(

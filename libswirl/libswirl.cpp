@@ -811,6 +811,7 @@ struct Dreamcast_impl : VirtualDreamcast {
 
     bool Init()
     {
+        sh4_cpu = SuperH4::Create();
 
         MMIODevice* biosDevice = Create_BiosDevice();
         MMIODevice* flashDevice = Create_FlashDevice();
@@ -822,7 +823,15 @@ struct Dreamcast_impl : VirtualDreamcast {
         MMIODevice* aicaDevice = Create_AicaDevice();
         MMIODevice* rtcDevice = Create_RTCDevice();
 
-        sh4_cpu = SuperH4::Create(biosDevice, flashDevice, gdromOrNaomiDevice, sbDevice, pvrDevice, extDevice, aicaDevice, rtcDevice);
+        sh4_cpu->SetA0Handler(A0H_BIOS, biosDevice);
+        sh4_cpu->SetA0Handler(A0H_FLASH, flashDevice);
+        sh4_cpu->SetA0Handler(A0H_GDROM, gdromOrNaomiDevice);
+        sh4_cpu->SetA0Handler(A0H_SB, sbDevice);
+        sh4_cpu->SetA0Handler(A0H_PVR, pvrDevice);
+        sh4_cpu->SetA0Handler(A0H_MODEM, extDevice);
+        sh4_cpu->SetA0Handler(A0H_AICA, aicaDevice);
+        sh4_cpu->SetA0Handler(A0H_RTC, rtcDevice);
+        sh4_cpu->SetA0Handler(A0H_EXT, extDevice);
 
         return sh4_cpu->Init();
     }

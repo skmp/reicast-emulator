@@ -235,8 +235,25 @@ enum SuperH4Backends {
     SH4BE_DYNAREC
 };
 
+
+enum Area0Hanlders {
+	A0H_BIOS,
+	A0H_FLASH,
+	A0H_GDROM,
+	A0H_SB,
+	A0H_PVR,
+	A0H_MODEM,
+	A0H_AICA,
+	A0H_RTC,
+	A0H_EXT,
+
+	A0H_MAX
+};
+
 struct SuperH4 {
-    static SuperH4* Create(MMIODevice* biosDevice, MMIODevice* flashDevice, MMIODevice* gdromOrNaomiDevice, MMIODevice* sbDevice, MMIODevice* pvrDevice, MMIODevice* extDevice, MMIODevice* aicaDevice, MMIODevice* rtcDevice);
+    static SuperH4* Create();
+
+	virtual void SetA0Handler(Area0Hanlders slot, MMIODevice* dev) = 0;
 
     virtual bool setBackend(SuperH4Backends backend) = 0;
 

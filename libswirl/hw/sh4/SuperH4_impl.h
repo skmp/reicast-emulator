@@ -6,19 +6,6 @@
 
 #include <memory>
 
-enum Area0Hanlders {
-    A0H_BIOS,
-    A0H_FLASH,
-    A0H_GDROM,
-    A0H_SB,
-    A0H_PVR,
-    A0H_MODEM,
-    A0H_AICA,
-    A0H_RTC,
-    A0H_EXT,
-
-    A0H_MAX
-};
 
 
 struct SuperH4_impl final : SuperH4 {

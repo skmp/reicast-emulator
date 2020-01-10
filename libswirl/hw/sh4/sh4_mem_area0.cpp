@@ -245,19 +245,9 @@ MMIODevice* Create_RTCDevice() {
 
 
 
-SuperH4* SuperH4::Create(MMIODevice* biosDevice, MMIODevice* flashDevice, MMIODevice* gdromOrNaomiDevice, MMIODevice* sbDevice, MMIODevice* pvrDevice, MMIODevice* extDevice, MMIODevice* aicaDevice, MMIODevice* rtcDevice) {
+SuperH4* SuperH4::Create() {
 
 	auto rv = new SuperH4_impl();
-
-	rv->SetA0Handler(A0H_BIOS, biosDevice);
-	rv->SetA0Handler(A0H_FLASH, flashDevice);
-	rv->SetA0Handler(A0H_GDROM, gdromOrNaomiDevice);
-	rv->SetA0Handler(A0H_SB, sbDevice);
-	rv->SetA0Handler(A0H_PVR, pvrDevice);
-	rv->SetA0Handler(A0H_MODEM, extDevice);
-	rv->SetA0Handler(A0H_AICA, aicaDevice);
-	rv->SetA0Handler(A0H_RTC, rtcDevice);
-	rv->SetA0Handler(A0H_EXT, extDevice);
 
     return rv;
 }

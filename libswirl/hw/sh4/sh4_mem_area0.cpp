@@ -11,7 +11,8 @@
 #include "hw/holly/sb.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/gdrom/gdrom_if.h"
-#include "hw/aica/aica_if.h"
+#include "hw/aica/aica_mmio.h"
+#include "hw/aica/aica_mem.h"
 #include "hw/naomi/naomi.h"
 #include "hw/modem/modem.h"
 

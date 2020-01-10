@@ -1,6 +1,6 @@
 #pragma once
 #include "types.h"
-#include "hw/aica/aica_if.h"
+#include "hw/aica/aica_mem.h"
 
 template <u32 sz,class T>
 T arm_ReadReg(u32 addr);
@@ -51,8 +51,6 @@ static inline void DYNACALL scpu_WriteMemArm(u32 addr,T data)
 #define arm_WriteMem16 scpu_WriteMemArm<2,u16>
 #define arm_WriteMem32 scpu_WriteMemArm<4,u32>
 
-void init_mem();
-void term_mem();
 
 extern bool e68k_out;
 

@@ -6,15 +6,16 @@
 #include "hw/sh4/sh4_mmio.h"
 
 #include "types.h"
-#include "aica_if.h"
+#include "aica_mmio.h"
+#include "sgc_if.h"
+#include "dsp.h"
+
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/sb.h"
-#include "types.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_sched.h"
 
 #include "libswirl.h"
-
 #include <time.h>
 
 VLockedMemory aica_ram;
@@ -23,6 +24,126 @@ u32 ARMRST;//arm reset reg
 u32 rtc_EN=0;
 int dma_sched_id;
 u32 RealTimeClock;
+
+
+u8 aica_reg[0x8000];
+
+//00000000~007FFFFF @DRAM_AREA* 
+//00800000~008027FF @CHANNEL_DATA 
+//00802800~00802FFF @COMMON_DATA 
+//00803000~00807FFF @DSP_DATA 
+template<u32 sz>
+u32 ReadReg(u32 addr)
+{
+	if (addr < 0x2800)
+	{
+		ReadMemArrRet(aica_reg, addr, sz);
+	}
+	if (addr < 0x2818)
+	{
+		if (sz == 1)
+		{
+			ReadCommonReg(addr, true);
+			ReadMemArrRet(aica_reg, addr, 1);
+		}
+		else
+		{
+			ReadCommonReg(addr, false);
+			//ReadCommonReg8(addr+1);
+			ReadMemArrRet(aica_reg, addr, 2);
+		}
+	}
+
+	ReadMemArrRet(aica_reg, addr, sz);
+}
+template<u32 sz>
+void WriteReg(u32 addr, u32 data)
+{
+	if (addr < 0x2000)
+	{
+		//Channel data
+		u32 chan = addr >> 7;
+		u32 reg = addr & 0x7F;
+		if (sz == 1)
+		{
+			WriteMemArr(aica_reg, addr, data, 1);
+			WriteChannelReg8(chan, reg);
+		}
+		else
+		{
+			WriteMemArr(aica_reg, addr, data, 2);
+			WriteChannelReg8(chan, reg);
+			WriteChannelReg8(chan, reg + 1);
+		}
+		return;
+	}
+
+	if (addr < 0x2800)
+	{
+		if (sz == 1)
+		{
+			WriteMemArr(aica_reg, addr, data, 1);
+		}
+		else
+		{
+			WriteMemArr(aica_reg, addr, data, 2);
+		}
+		return;
+	}
+
+	if (addr < 0x2818)
+	{
+		if (sz == 1)
+		{
+			WriteCommonReg8(addr, data);
+		}
+		else
+		{
+			WriteCommonReg8(addr, data & 0xFF);
+			WriteCommonReg8(addr + 1, data >> 8);
+		}
+		return;
+	}
+
+	if (addr >= 0x3000)
+	{
+		if (sz == 1)
+		{
+			WriteMemArr(aica_reg, addr, data, 1);
+			dsp_writenmem(addr);
+		}
+		else
+		{
+			WriteMemArr(aica_reg, addr, data, 2);
+			dsp_writenmem(addr);
+			dsp_writenmem(addr + 1);
+		}
+	}
+	if (sz == 1)
+		WriteAicaReg<1>(addr, data);
+	else
+		WriteAicaReg<2>(addr, data);
+}
+//Aica reads (both sh4&arm)
+u32 libAICA_ReadReg(u32 addr, u32 size)
+{
+	if (size == 1)
+		return ReadReg<1>(addr & 0x7FFF);
+	else
+		return ReadReg<2>(addr & 0x7FFF);
+
+	//must never come here
+	return 0;
+}
+
+void libAICA_WriteReg(u32 addr, u32 data, u32 size)
+{
+	if (size == 1)
+		WriteReg<1>(addr & 0x7FFF, data);
+	else
+		WriteReg<2>(addr & 0x7FFF, data);
+}
+
 
 u32 GetRTC_now()
 {
@@ -90,17 +211,17 @@ void ArmSetRST()
 }
 
 //Init/res/term
-void aica_Init()
+void aica_mmio_Init()
 {
 	RealTimeClock = GetRTC_now();
 }
 
-void aica_Reset(bool Manual)
+void aica_mmio_Reset(bool Manual)
 {
-	aica_Init();
+	aica_mmio_Init();
 }
 
-void aica_Term()
+void aica_mmio_Term()
 {
 
 }

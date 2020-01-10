@@ -17,11 +17,7 @@
 #include "../sh4_core.h"
 #include "../sh4_if.h"
 #include "hw/pvr/pvr_mem.h"
-#include "hw/aica/aica_if.h"
-//#include "../dmac.h"
 #include "hw/gdrom/gdrom_if.h"
-//#include "../intc.h"
-//#include "../tmu.h"
 #include "hw/sh4/sh4_mem.h"
 
 #define printf_bm(...)

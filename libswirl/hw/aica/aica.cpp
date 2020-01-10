@@ -1,6 +1,6 @@
 #include "aica.h"
-#include "aica_if.h"
 #include "sgc_if.h"
+#include "aica_mmio.h"
 #include "aica_mem.h"
 #include <math.h>
 #include "hw/holly/holly_intc.h"
@@ -176,8 +176,8 @@ struct AICA_impl : AICA {
 
 	s32 Init()
 	{
-		init_mem();
-		aica_Init();
+		aica_init_mem();
+		aica_mmio_Init();
 
 		verify(sizeof(*CommonData) == 0x508);
 		verify(sizeof(*DSPData) == 0x15C8);
@@ -204,9 +204,9 @@ struct AICA_impl : AICA {
 	void Reset(bool manual)
 	{
 		if (!manual)
-			init_mem();
+			aica_init_mem();
 		sgc_Init();
-		aica_Reset(manual);
+		aica_mmio_Reset(manual);
 	}
 
 	void Term()

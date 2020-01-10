@@ -10,7 +10,6 @@ struct SoundCPU_impl : SoundCPU {
 	//called when plugin is used by emu (you should do first time init here)
 	s32 Init()
 	{
-		init_mem();
 		arm_Init();
 
 		return rv_ok;
@@ -19,7 +18,6 @@ struct SoundCPU_impl : SoundCPU {
 	//called when plugin is unloaded by emu, only if dcInit is called (eg, not called to enumerate plugins)
 	void Term()
 	{
-		term_mem();
 		//arm7_Term ?
 	}
 

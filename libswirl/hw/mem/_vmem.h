@@ -49,10 +49,12 @@ typedef void DYNACALL _vmem_WriteMem32FP(u32 Address,u32 data);
 //our own handle type :)
 typedef u32 _vmem_handler;
 
+struct SuperH4;
+
 //Functions
 
 //init/reset/term
-void _vmem_init();
+void _vmem_init(SuperH4* sh4);
 void _vmem_reset();
 void _vmem_term();
 

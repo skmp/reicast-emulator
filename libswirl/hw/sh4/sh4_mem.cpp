@@ -19,10 +19,6 @@
 //main system mem
 VLockedMemory mem_b;
 
-void _vmem_init();
-void _vmem_reset();
-void _vmem_term();
-
 //MEM MAPPINNGG
 
 //AREA 1
@@ -128,7 +124,7 @@ void map_area6(u32 base)
 void mem_map_default(SuperH4_impl* sh4)
 {
 	//vmem - init/reset :)
-	_vmem_init();
+	_vmem_init((SuperH4*)sh4);
 
 	
 	//*TEMP*

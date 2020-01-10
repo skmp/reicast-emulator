@@ -18,6 +18,8 @@ _vmem_WriteMem16FP* _vmem_WF16[HANDLER_COUNT];
 _vmem_ReadMem32FP*  _vmem_RF32[HANDLER_COUNT];
 _vmem_WriteMem32FP* _vmem_WF32[HANDLER_COUNT];
 
+SuperH4* _vmem_SuperH4;
+
 //upper 8b of the address
 void* _vmem_MemInfo_ptr[0x100];
 
@@ -357,8 +359,9 @@ void _vmem_mirror_mapping(u32 new_region,u32 start,u32 size)
 }
 
 //init/reset/term
-void _vmem_init()
+void _vmem_init(SuperH4* sh4)
 {
+	_vmem_SuperH4 = sh4;
 	_vmem_reset();
 }
 

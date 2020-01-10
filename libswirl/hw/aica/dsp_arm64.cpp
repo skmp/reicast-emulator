@@ -23,7 +23,7 @@
 
 #include <sys/mman.h>
 #include "dsp.h"
-#include "hw/aica/aica_if.h"
+#include "hw/aica/aica_mem.h"
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
 

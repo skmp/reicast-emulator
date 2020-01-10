@@ -197,150 +197,147 @@ SuperH4Backend* Get_Sh4Interpreter()
     return new SH4IInterpreter();
 }
 
+#include "../SuperH4_impl.h"
+/// SuperH4_impl
 
-struct SuperH4_impl : SuperH4 {
-  
 
-    virtual bool setBackend(SuperH4Backends backend) {
-        if (sh4_backend) { sh4_backend->Term(); delete sh4_backend; sh4_backend = nullptr; }
 
-        switch (backend)
-        {
-        case SH4BE_INTERPRETER:
-            sh4_backend = Get_Sh4Interpreter();
-            break;
+void SuperH4_impl::SetA0Handler(Area0Hanlders slot, MMIODevice* dev) {
+    devices[slot].reset(dev);
+}
 
-        case SH4BE_DYNAREC:
-            sh4_backend = Get_Sh4Recompiler();
-            break;
-        
-        default:
-            return false;
-        
-        }
-        return sh4_backend->Init();
+bool SuperH4_impl::setBackend(SuperH4Backends backend) {
+    if (sh4_backend) { sh4_backend->Term(); delete sh4_backend; sh4_backend = nullptr; }
+
+    switch (backend)
+    {
+    case SH4BE_INTERPRETER:
+        sh4_backend = Get_Sh4Interpreter();
+        break;
+
+    case SH4BE_DYNAREC:
+        sh4_backend = Get_Sh4Recompiler();
+        break;
+
+    default:
+        return false;
+
     }
+    return sh4_backend->Init();
+}
 
-    virtual void Run() {
-        sh4_int_bCpuRun = true;
+void SuperH4_impl::Run() {
+    sh4_int_bCpuRun = true;
 
-        sh4_backend->Loop();
+    sh4_backend->Loop();
 
+    sh4_int_bCpuRun = false;
+}
+
+void SuperH4_impl::Stop()
+{
+    if (sh4_int_bCpuRun)
+    {
         sh4_int_bCpuRun = false;
     }
+}
 
-    virtual void Stop()
+void SuperH4_impl::Start()
+{
+    if (!sh4_int_bCpuRun)
     {
-	    if (sh4_int_bCpuRun)
-	    {
-		    sh4_int_bCpuRun=false;
-	    }
+        sh4_int_bCpuRun = true;
     }
+}
 
-    virtual void Start()
+void SuperH4_impl::Step()
+{
+    if (sh4_int_bCpuRun)
     {
-	    if (!sh4_int_bCpuRun)
-	    {
-		    sh4_int_bCpuRun=true;
-	    }
+        printf("Sh4 Is running , can't step\n");
     }
-
-    virtual void Step()
+    else
     {
-	    if (sh4_int_bCpuRun)
-	    {
-		    printf("Sh4 Is running , can't step\n");
-	    }
-	    else
-	    {
-		    u32 op=ReadMem16(next_pc);
-		    next_pc+=2;
-		    ExecuteOpcode(op);
-	    }
+        u32 op = ReadMem16(next_pc);
+        next_pc += 2;
+        ExecuteOpcode(op);
     }
+}
 
-    virtual void Skip()
+void SuperH4_impl::Skip()
+{
+    if (sh4_int_bCpuRun)
     {
-	    if (sh4_int_bCpuRun)
-	    {
-		    printf("Sh4 Is running, can't Skip\n");
-	    }
-	    else
-	    {
-		    next_pc+=2;
-	    }
+        printf("Sh4 Is running, can't Skip\n");
     }
-
-    virtual void Reset(bool Manual)
+    else
     {
-	    if (sh4_int_bCpuRun)
-	    {
-		    printf("Sh4 Is running, can't Reset\n");
-	    }
-	    else
-	    {
-		    next_pc = 0xA0000000;
-
-		    memset(r,0,sizeof(r));
-		    memset(r_bank,0,sizeof(r_bank));
-
-		    gbr=ssr=spc=sgr=dbr=vbr=0;
-		    mac.full=pr=fpul=0;
-
-		    sh4_sr_SetFull(0x700000F0);
-		    old_sr.status=sr.status;
-		    UpdateSR();
-
-		    fpscr.full = 0x0004001;
-		    old_fpscr=fpscr;
-		    UpdateFPSCR();
-
-		    //Any more registers have default value ?
-		    printf("Sh4 Reset\n");
-
-            //Clear cache
-            sh4_backend->ClearCache();
-	    }
+        next_pc += 2;
     }
+}
 
-    virtual bool IsRunning()
+void SuperH4_impl::Reset(bool Manual)
+{
+    if (sh4_int_bCpuRun)
     {
-	    return sh4_int_bCpuRun;
+        printf("Sh4 Is running, can't Reset\n");
     }
-
-
-    virtual bool Init()
+    else
     {
-        verify(sizeof(Sh4cntx) == 448);
+        next_pc = 0xA0000000;
 
-        if (aica_schid == -1)
-        {
-            aica_schid = sh4_sched_register(0, &AicaUpdate);
-            sh4_sched_request(aica_schid, AICA_TICK);
+        memset(r, 0, sizeof(r));
+        memset(r_bank, 0, sizeof(r_bank));
 
-            rtc_schid = sh4_sched_register(0, &DreamcastSecond);
-            sh4_sched_request(rtc_schid, SH4_MAIN_CLOCK);
-        }
-        memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
+        gbr = ssr = spc = sgr = dbr = vbr = 0;
+        mac.full = pr = fpul = 0;
 
-        setBackend(SH4BE_INTERPRETER);
+        sh4_sr_SetFull(0x700000F0);
+        old_sr.status = sr.status;
+        UpdateSR();
 
-        return true;
-    }
+        fpscr.full = 0x0004001;
+        old_fpscr = fpscr;
+        UpdateFPSCR();
 
-    virtual void Term()
-    {
-        Stop();
-        printf("Sh4 Term\n");
-    }
+        //Any more registers have default value ?
+        printf("Sh4 Reset\n");
 
-    void ResetCache() {
+        //Clear cache
         sh4_backend->ClearCache();
     }
-};
+}
 
-
-SuperH4* SuperH4_impl_Create()
+bool SuperH4_impl::IsRunning()
 {
-    return new SuperH4_impl();
+    return sh4_int_bCpuRun;
+}
+
+bool SuperH4_impl::Init()
+{
+    verify(sizeof(Sh4cntx) == 448);
+
+    if (aica_schid == -1)
+    {
+        aica_schid = sh4_sched_register(0, &AicaUpdate);
+        sh4_sched_request(aica_schid, AICA_TICK);
+
+        rtc_schid = sh4_sched_register(0, &DreamcastSecond);
+        sh4_sched_request(rtc_schid, SH4_MAIN_CLOCK);
+    }
+    memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
+
+    setBackend(SH4BE_INTERPRETER);
+
+    return true;
+}
+
+void SuperH4_impl::Term()
+{
+    Stop();
+    printf("Sh4 Term\n");
+}
+
+void SuperH4_impl::ResetCache() {
+    sh4_backend->ClearCache();
 }

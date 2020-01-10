@@ -19,6 +19,9 @@
 #include "hw/flashrom/flashrom.h"
 #include "reios/reios.h"
 #include "sh4_mmio.h"
+#include "hw/sh4/SuperH4_impl.h"
+
+#include <memory>
 
 #if DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
 DCFlashChip sys_rom(BIOS_SIZE, BIOS_SIZE / 2);
@@ -222,55 +225,44 @@ struct RTCDevice : MMIODevice {
 };
 
 
-
-static MMIODevice* biosDevice;
-static MMIODevice* flashDevice;
-static MMIODevice* gdromOrNaomiDevice;
-
-static MMIODevice* sbDevice;
-static MMIODevice* pvrDevice;
-static MMIODevice* extDevice;
-static MMIODevice* aicaDevice;
-static MMIODevice* rtcDevice;
-
 MMIODevice* Create_BiosDevice() {
-    return new BiosDevice();
+	return new BiosDevice();
 }
 MMIODevice* Create_FlashDevice() {
-    return new FlashDevice();
+	return new FlashDevice();
 }
 MMIODevice* Create_GDRomOrNaomiDevice() {
-    return new GDRomOrNaomiDevice();
+	return new GDRomOrNaomiDevice();
 }
 
 MMIODevice* Create_ExtDevice() {
-    return new ExtDevice();
+	return new ExtDevice();
 }
 
 MMIODevice* Create_RTCDevice() {
-    return new RTCDevice();
+	return new RTCDevice();
 }
 
-SuperH4* SuperH4_impl_Create();
+
 
 SuperH4* SuperH4::Create(MMIODevice* biosDevice, MMIODevice* flashDevice, MMIODevice* gdromOrNaomiDevice, MMIODevice* sbDevice, MMIODevice* pvrDevice, MMIODevice* extDevice, MMIODevice* aicaDevice, MMIODevice* rtcDevice) {
-    
-    ::biosDevice = biosDevice;
-    ::flashDevice = flashDevice;
-    ::gdromOrNaomiDevice = gdromOrNaomiDevice;
-    ::sbDevice = sbDevice;
-    ::pvrDevice = pvrDevice;
-    ::extDevice = extDevice;
-    ::aicaDevice = aicaDevice;
-    ::rtcDevice = rtcDevice;
 
-    return SuperH4_impl_Create();
+	auto rv = new SuperH4_impl();
+
+	rv->SetA0Handler(A0H_BIOS, biosDevice);
+	rv->SetA0Handler(A0H_FLASH, flashDevice);
+	rv->SetA0Handler(A0H_GDROM, gdromOrNaomiDevice);
+	rv->SetA0Handler(A0H_SB, sbDevice);
+	rv->SetA0Handler(A0H_PVR, pvrDevice);
+	rv->SetA0Handler(A0H_MODEM, extDevice);
+	rv->SetA0Handler(A0H_AICA, aicaDevice);
+	rv->SetA0Handler(A0H_RTC, rtcDevice);
+	rv->SetA0Handler(A0H_EXT, extDevice);
+
+    return rv;
 }
 
-#if 0
-
-#endif///////////
-
+SuperH4_impl* g_SuperH4_impl;
 //Area 0 mem map
 //0x00000000- 0x001FFFFF	:MPX	System/Boot ROM
 //0x00200000- 0x0021FFFF	:Flash Memory
@@ -302,12 +294,12 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0000 to 0x001F
 	if (base<=0x001F)//	:MPX	System/Boot ROM
 	{
-		return biosDevice->Read(addr, sz);
+		return g_SuperH4_impl->devices[A0H_BIOS]->Read(addr, sz);
 	}
 	//map 0x0020 to 0x0021
 	else if ((base>= 0x0020) && (base<= 0x0021)) // :Flash Memory
 	{
-		return flashDevice->Read(addr&0x1FFFF,sz);
+		return g_SuperH4_impl->devices[A0H_FLASH]->Read(addr&0x1FFFF,sz);
 	}
 	//map 0x005F to 0x005F
 	else if (likely(base==0x005F))
@@ -318,21 +310,21 @@ T DYNACALL ReadMem_area0(u32 addr)
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
-            return gdromOrNaomiDevice->Read(addr, sz);
+            return g_SuperH4_impl->devices[A0H_GDROM]->Read(addr, sz);
 		}
 		else if (likely((addr>= 0x005F6800) && (addr<=0x005F7CFF))) //	/*:PVR i/f Control Reg.*/ -> ALL SB registers now
 		{
-            return sbDevice->Read(addr, sz);
+            return g_SuperH4_impl->devices[A0H_SB]->Read(addr, sz);
 		}
 		else if (likely((addr>= 0x005F8000) && (addr<=0x005F9FFF))) //	:TA / PVR Core Reg.
 		{
-			return pvrDevice->Read(addr, sz);
+			return g_SuperH4_impl->devices[A0H_PVR]->Read(addr, sz);
 		}
 	}
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) //	:MODEM
 	{
-        extDevice->Read(addr, sz);
+        g_SuperH4_impl->devices[A0H_MODEM]->Read(addr, sz);
 	}
 	//map 0x0060 to 0x006F
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) //	:G2 (Reserved)
@@ -342,12 +334,12 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0070 to 0x0070
 	else if ((base ==0x0070) /*&& (addr>= 0x00700000)*/ && (addr<=0x00707FFF)) //	:AICA- Sound Cntr. Reg.
 	{
-		return aicaDevice->Read(addr,sz);
+		return g_SuperH4_impl->devices[A0H_AICA]->Read(addr,sz);
 	}
 	//map 0x0071 to 0x0071
 	else if ((base ==0x0071) /*&& (addr>= 0x00710000)*/ && (addr<= 0x0071000B)) //	:AICA- RTC Cntr. Reg.
 	{
-		return rtcDevice->Read(addr,sz);
+		return g_SuperH4_impl->devices[A0H_RTC]->Read(addr,sz);
 	}
 	//map 0x0080 to 0x00FF
 	else if ((base >=0x0080) && (base <=0x00FF) /*&& (addr>= 0x00800000) && (addr<=0x00FFFFFF)*/) //	:AICA- Wave Memory
@@ -357,7 +349,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0100 to 0x01FF
 	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) //	:Ext. Device
 	{
-        extDevice->Read(addr, sz);
+        g_SuperH4_impl->devices[A0H_EXT]->Read(addr, sz);
 	}
 	return 0;
 }
@@ -372,12 +364,12 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0000 to 0x001F
 	if ((base <=0x001F) /*&& (addr<=0x001FFFFF)*/)// :MPX System/Boot ROM
 	{
-        biosDevice->Write(addr,data,sz);
+        g_SuperH4_impl->devices[A0H_BIOS]->Write(addr,data,sz);
 	}
 	//map 0x0020 to 0x0021
 	else if ((base >=0x0020) && (base <=0x0021) /*&& (addr>= 0x00200000) && (addr<= 0x0021FFFF)*/) // Flash Memory
 	{
-        flashDevice->Write(addr,data,sz);
+        g_SuperH4_impl->devices[A0H_FLASH]->Write(addr,data,sz);
 	}
 	//map 0x0040 to 0x005F -> actually, I'll only map 0x005F to 0x005F, b/c the rest of it is unspammed (left to default handler)
 	//map 0x005F to 0x005F
@@ -389,21 +381,21 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
-            gdromOrNaomiDevice->Write(addr, data, sz);
+            g_SuperH4_impl->devices[A0H_GDROM]->Write(addr, data, sz);
 		}
 		else if ( likely((addr>= 0x005F6800) && (addr<=0x005F7CFF)) ) // /*:PVR i/f Control Reg.*/ -> ALL SB registers
 		{
-            sbDevice->Write(addr, data, sz);
+            g_SuperH4_impl->devices[A0H_SB]->Write(addr, data, sz);
 		}
 		else if ( likely((addr>= 0x005F8000) && (addr<=0x005F9FFF)) ) // TA / PVR Core Reg.
 		{
-            pvrDevice->Write(addr, data, sz);
+            g_SuperH4_impl->devices[A0H_PVR]->Write(addr, data, sz);
 		}
 	}
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) // MODEM
 	{
-        extDevice->Write(addr, data, sz);
+        g_SuperH4_impl->devices[A0H_MODEM]->Write(addr, data, sz);
 	}
 	//map 0x0060 to 0x006F
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) // G2 (Reserved)
@@ -413,13 +405,13 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0070 to 0x0070
 	else if ((base >=0x0070) && (base <=0x0070) /*&& (addr>= 0x00700000)*/ && (addr<=0x00707FFF)) // AICA- Sound Cntr. Reg.
 	{
-        aicaDevice->Write(addr, data, sz);
+        g_SuperH4_impl->devices[A0H_AICA]->Write(addr, data, sz);
 		return;
 	}
 	//map 0x0071 to 0x0071
 	else if ((base >=0x0071) && (base <=0x0071) /*&& (addr>= 0x00710000)*/ && (addr<= 0x0071000B)) // AICA- RTC Cntr. Reg.
 	{
-        rtcDevice->Write(addr, data, sz);
+        g_SuperH4_impl->devices[A0H_RTC]->Write(addr, data, sz);
 		return;
 	}
 	//map 0x0080 to 0x00FF
@@ -431,25 +423,26 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0100 to 0x01FF
 	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) // Ext. Device
 	{
-        extDevice->Write(addr, data, sz);
+        g_SuperH4_impl->devices[A0H_EXT]->Write(addr, data, sz);
 	}
 	return;
 }
 
 //Init/Res/Term
-void sh4_area0_Init()
+void sh4_area0_Init(SuperH4_impl* sh4)
 {
-	sbDevice->Init();
+	g_SuperH4_impl = sh4;
+	sh4->devices[A0H_SB]->Init();
 }
 
-void sh4_area0_Reset(bool Manual)
+void sh4_area0_Reset(SuperH4_impl* sh4, bool Manual)
 {
-    sbDevice->Reset(Manual);
+	sh4->devices[A0H_SB]->Reset(Manual);
 }
 
-void sh4_area0_Term()
+void sh4_area0_Term(SuperH4_impl* sh4)
 {
-    sbDevice->Term();
+	sh4->devices[A0H_SB]->Term();
 }
 
 

@@ -708,7 +708,8 @@ struct Dreamcast_impl : VirtualDreamcast {
     void Reset()
     {
         plugins_Reset(false);
-        mem_Reset(false);
+
+        mem_Reset((SuperH4_impl*)sh4_cpu, false);
 
         sh4_cpu->Reset(false);
     }
@@ -785,9 +786,9 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         LoadCustom();
 
-        mem_Init();
+        mem_Init((SuperH4_impl*)sh4_cpu);
 
-        mem_map_default();
+        mem_map_default((SuperH4_impl*)sh4_cpu);
 
 #if DC_PLATFORM == DC_PLATFORM_NAOMI
         mcfg_CreateNAOMIJamma();

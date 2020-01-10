@@ -59,11 +59,13 @@ void WriteMemBlock_ptr(u32 dst,u32* src,u32 size);
 void WriteMemBlock_nommu_ptr(u32 dst,u32* src,u32 size);
 void WriteMemBlock_nommu_sq(u32 dst,u32* src);
 void WriteMemBlock_nommu_dma(u32 dst,u32 src,u32 size);
+struct SuperH4_impl;
+
 //Init/Res/Term
-void mem_Init();
-void mem_Term();
-void mem_Reset(bool Manual);
-void mem_map_default();
+void mem_Init(SuperH4_impl* sh4);
+void mem_Term(SuperH4_impl* sh4);
+void mem_Reset(SuperH4_impl* sh4, bool Manual);
+void mem_map_default(SuperH4_impl* sh4);
 
 //Generic read/write functions for debugger
 bool ReadMem_DB(u32 addr,u32& data,u32 size );

@@ -125,7 +125,7 @@ void map_area6(u32 base)
 
 
 //set vmem to default values
-void mem_map_default()
+void mem_map_default(SuperH4_impl* sh4)
 {
 	//vmem - init/reset :)
 	_vmem_init();
@@ -182,18 +182,18 @@ void mem_map_default()
 	//map p4 region :)
 	map_p4();
 }
-void mem_Init()
+void mem_Init(SuperH4_impl* sh4)
 {
 	//Allocate mem for memory/bios/flash
 	//mem_b.Init(&sh4_reserved_mem[0x0C000000],RAM_SIZE);
 
-	sh4_area0_Init();
+	sh4_area0_Init(sh4);
 	sh4_mmr_init();
 	MMU_init();
 }
 
 //Reset Sysmem/Regs -- Pvr is not changed , bios/flash are not zeroed out
-void mem_Reset(bool Manual)
+void mem_Reset(SuperH4_impl* sh4, bool Manual)
 {
 	//mem is reseted on hard restart(power on) , not manual...
 	if (!Manual)
@@ -203,16 +203,16 @@ void mem_Reset(bool Manual)
 	}
 
 	//Reset registers
-	sh4_area0_Reset(Manual);
+	sh4_area0_Reset(sh4, Manual);
 	sh4_mmr_reset();
 	MMU_reset();
 }
 
-void mem_Term()
+void mem_Term(SuperH4_impl* sh4)
 {
 	MMU_term();
 	sh4_mmr_term();
-	sh4_area0_Term();
+	sh4_area0_Term(sh4);
 
 	//write back Flash/SRAM
 	SaveRomFiles(get_writable_data_path(DATA_PATH));

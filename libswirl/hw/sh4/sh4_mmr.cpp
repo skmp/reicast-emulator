@@ -176,7 +176,7 @@ offset>>=2;
 //Region P4
 //Read P4
 template <u32 sz,class T>
-T DYNACALL ReadMem_P4(u32 addr)
+T DYNACALL ReadMem_P4(SuperH4* sh4, u32 addr)
 {
 	/*if (((addr>>26)&0x7)==7)
 	{
@@ -264,7 +264,7 @@ T DYNACALL ReadMem_P4(u32 addr)
 
 //Write P4
 template <u32 sz,class T>
-void DYNACALL WriteMem_P4(u32 addr,T data)
+void DYNACALL WriteMem_P4(SuperH4* sh4, u32 addr,T data)
 {
 	/*if (((addr>>26)&0x7)==7)
 	{
@@ -416,7 +416,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 //TODO : replace w/ mem mapped array
 //Read SQ
 template <u32 sz,class T>
-T DYNACALL ReadMem_sq(u32 addr)
+T DYNACALL ReadMem_sq(SuperH4* sh4, u32 addr)
 {
 	if (sz!=4)
 	{
@@ -432,7 +432,7 @@ T DYNACALL ReadMem_sq(u32 addr)
 
 //Write SQ
 template <u32 sz,class T>
-void DYNACALL WriteMem_sq(u32 addr,T data)
+void DYNACALL WriteMem_sq(SuperH4* sh4, u32 addr,T data)
 {
 	if (sz!=4)
 		EMUERROR("Store Queue Error - only 4 byte writes are possible[x%X=0x%X]",addr,data);
@@ -448,7 +448,7 @@ void DYNACALL WriteMem_sq(u32 addr,T data)
 //***********
 //Read Area7
 template <u32 sz,class T>
-T DYNACALL ReadMem_area7(u32 addr)
+T DYNACALL ReadMem_area7(SuperH4* sh4, u32 addr)
 {
 	/*
 	if (likely(addr==0xffd80024))
@@ -619,7 +619,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 
 //Write Area7
 template <u32 sz,class T>
-void DYNACALL WriteMem_area7(u32 addr,T data)
+void DYNACALL WriteMem_area7(SuperH4* sh4, u32 addr,T data)
 {
 	if (likely(addr==0xFF000038))
 	{
@@ -796,7 +796,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 //***********
 //Read OCR
 template <u32 sz,class T>
-T DYNACALL ReadMem_area7_OCR_T(u32 addr)
+T DYNACALL ReadMem_area7_OCR_T(SuperH4* sh4, u32 addr)
 {
 	if (CCN_CCR.ORA)
 	{
@@ -821,7 +821,7 @@ T DYNACALL ReadMem_area7_OCR_T(u32 addr)
 
 //Write OCR
 template <u32 sz,class T>
-void DYNACALL WriteMem_area7_OCR_T(u32 addr,T data)
+void DYNACALL WriteMem_area7_OCR_T(SuperH4* sh4, u32 addr,T data)
 {
 	if (CCN_CCR.ORA)
 	{

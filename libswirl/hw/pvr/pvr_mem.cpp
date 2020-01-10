@@ -226,27 +226,27 @@ void pvr_update_framebuffer_watches()
 
 
 //read
-u8 DYNACALL pvr_read_area1_8(u32 addr)
+u8 DYNACALL pvr_read_area1_8(SuperH4* sh4, u32 addr)
 {
 	printf("8-bit VRAM reads are not possible\n");
 	return 0;
 }
 
-u16 DYNACALL pvr_read_area1_16(u32 addr)
+u16 DYNACALL pvr_read_area1_16(SuperH4* sh4, u32 addr)
 {
 	return *(u16*)&vram[pvr_map32(addr)];
 }
-u32 DYNACALL pvr_read_area1_32(u32 addr)
+u32 DYNACALL pvr_read_area1_32(SuperH4* sh4, u32 addr)
 {
 	return *(u32*)&vram[pvr_map32(addr)];
 }
 
 //write
-void DYNACALL pvr_write_area1_8(u32 addr,u8 data)
+void DYNACALL pvr_write_area1_8(SuperH4* sh4, u32 addr,u8 data)
 {
 	printf("8-bit VRAM writes are not possible\n");
 }
-void DYNACALL pvr_write_area1_16(u32 addr,u16 data)
+void DYNACALL pvr_write_area1_16(SuperH4* sh4, u32 addr,u16 data)
 {
     u32 vaddr = addr & VRAM_MASK;
     if (!fb_dirty
@@ -257,7 +257,7 @@ void DYNACALL pvr_write_area1_16(u32 addr,u16 data)
     }
 	*(u16*)&vram[pvr_map32(addr)]=data;
 }
-void DYNACALL pvr_write_area1_32(u32 addr,u32 data)
+void DYNACALL pvr_write_area1_32(SuperH4* sh4, u32 addr,u32 data)
 {
     u32 vaddr = addr & VRAM_MASK;
     if (!fb_dirty
@@ -325,7 +325,7 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
 			// 32b path
 			for (int i = 0; i < 8; i++, address_w += 4)
 			{
-				pvr_write_area1_32(address_w, ((u32 *)sq)[i]);
+				pvr_write_area1_32(sh4_cpu, address_w, ((u32 *)sq)[i]);
 			}
 		}
 	}

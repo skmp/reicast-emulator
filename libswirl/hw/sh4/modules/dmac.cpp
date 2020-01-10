@@ -112,7 +112,7 @@ void DMAC_Ch2St()
 			while (len > 0)
 			{
 				u32 v = ReadMem32(src);
-				pvr_write_area1_32(dst, v);
+				pvr_write_area1_32(sh4_cpu, dst, v);
 				len -= 4;
 				src += 4;
 				dst += 4;

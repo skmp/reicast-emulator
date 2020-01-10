@@ -262,7 +262,6 @@ SuperH4* SuperH4::Create(MMIODevice* biosDevice, MMIODevice* flashDevice, MMIODe
     return rv;
 }
 
-SuperH4_impl* g_SuperH4_impl;
 //Area 0 mem map
 //0x00000000- 0x001FFFFF	:MPX	System/Boot ROM
 //0x00200000- 0x0021FFFF	:Flash Memory
@@ -285,8 +284,9 @@ SuperH4_impl* g_SuperH4_impl;
 //use unified size handler for registers
 //it really makes no sense to use different size handlers on em -> especially when we can use templates :p
 template<u32 sz, class T>
-T DYNACALL ReadMem_area0(u32 addr)
+T DYNACALL ReadMem_area0(SuperH4* psh4, u32 addr)
 {
+	auto sh4 = (SuperH4_impl*)psh4;
 	addr &= 0x01FFFFFF;//to get rid of non needed bits
 	const u32 base=(addr>>16);
 	//map 0x0000 to 0x01FF to Default handler
@@ -294,12 +294,12 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0000 to 0x001F
 	if (base<=0x001F)//	:MPX	System/Boot ROM
 	{
-		return g_SuperH4_impl->devices[A0H_BIOS]->Read(addr, sz);
+		return sh4->devices[A0H_BIOS]->Read(addr, sz);
 	}
 	//map 0x0020 to 0x0021
 	else if ((base>= 0x0020) && (base<= 0x0021)) // :Flash Memory
 	{
-		return g_SuperH4_impl->devices[A0H_FLASH]->Read(addr&0x1FFFF,sz);
+		return sh4->devices[A0H_FLASH]->Read(addr&0x1FFFF,sz);
 	}
 	//map 0x005F to 0x005F
 	else if (likely(base==0x005F))
@@ -310,21 +310,21 @@ T DYNACALL ReadMem_area0(u32 addr)
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
-            return g_SuperH4_impl->devices[A0H_GDROM]->Read(addr, sz);
+            return sh4->devices[A0H_GDROM]->Read(addr, sz);
 		}
 		else if (likely((addr>= 0x005F6800) && (addr<=0x005F7CFF))) //	/*:PVR i/f Control Reg.*/ -> ALL SB registers now
 		{
-            return g_SuperH4_impl->devices[A0H_SB]->Read(addr, sz);
+            return sh4->devices[A0H_SB]->Read(addr, sz);
 		}
 		else if (likely((addr>= 0x005F8000) && (addr<=0x005F9FFF))) //	:TA / PVR Core Reg.
 		{
-			return g_SuperH4_impl->devices[A0H_PVR]->Read(addr, sz);
+			return sh4->devices[A0H_PVR]->Read(addr, sz);
 		}
 	}
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) //	:MODEM
 	{
-        g_SuperH4_impl->devices[A0H_MODEM]->Read(addr, sz);
+        sh4->devices[A0H_MODEM]->Read(addr, sz);
 	}
 	//map 0x0060 to 0x006F
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) //	:G2 (Reserved)
@@ -334,12 +334,12 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0070 to 0x0070
 	else if ((base ==0x0070) /*&& (addr>= 0x00700000)*/ && (addr<=0x00707FFF)) //	:AICA- Sound Cntr. Reg.
 	{
-		return g_SuperH4_impl->devices[A0H_AICA]->Read(addr,sz);
+		return sh4->devices[A0H_AICA]->Read(addr,sz);
 	}
 	//map 0x0071 to 0x0071
 	else if ((base ==0x0071) /*&& (addr>= 0x00710000)*/ && (addr<= 0x0071000B)) //	:AICA- RTC Cntr. Reg.
 	{
-		return g_SuperH4_impl->devices[A0H_RTC]->Read(addr,sz);
+		return sh4->devices[A0H_RTC]->Read(addr,sz);
 	}
 	//map 0x0080 to 0x00FF
 	else if ((base >=0x0080) && (base <=0x00FF) /*&& (addr>= 0x00800000) && (addr<=0x00FFFFFF)*/) //	:AICA- Wave Memory
@@ -349,14 +349,15 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0100 to 0x01FF
 	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) //	:Ext. Device
 	{
-        g_SuperH4_impl->devices[A0H_EXT]->Read(addr, sz);
+        sh4->devices[A0H_EXT]->Read(addr, sz);
 	}
 	return 0;
 }
 
 template<u32 sz, class T>
-void  DYNACALL WriteMem_area0(u32 addr,T data)
+void  DYNACALL WriteMem_area0(SuperH4* psh4, u32 addr,T data)
 {
+	auto sh4 = (SuperH4_impl*)psh4;
 	addr &= 0x01FFFFFF;//to get rid of non needed bits
 
 	const u32 base=(addr>>16);
@@ -364,12 +365,12 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0000 to 0x001F
 	if ((base <=0x001F) /*&& (addr<=0x001FFFFF)*/)// :MPX System/Boot ROM
 	{
-        g_SuperH4_impl->devices[A0H_BIOS]->Write(addr,data,sz);
+        sh4->devices[A0H_BIOS]->Write(addr,data,sz);
 	}
 	//map 0x0020 to 0x0021
 	else if ((base >=0x0020) && (base <=0x0021) /*&& (addr>= 0x00200000) && (addr<= 0x0021FFFF)*/) // Flash Memory
 	{
-        g_SuperH4_impl->devices[A0H_FLASH]->Write(addr,data,sz);
+        sh4->devices[A0H_FLASH]->Write(addr,data,sz);
 	}
 	//map 0x0040 to 0x005F -> actually, I'll only map 0x005F to 0x005F, b/c the rest of it is unspammed (left to default handler)
 	//map 0x005F to 0x005F
@@ -381,21 +382,21 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 		}
 		else if ((addr>= 0x005F7000) && (addr<= 0x005F70FF)) // GD-ROM
 		{
-            g_SuperH4_impl->devices[A0H_GDROM]->Write(addr, data, sz);
+            sh4->devices[A0H_GDROM]->Write(addr, data, sz);
 		}
 		else if ( likely((addr>= 0x005F6800) && (addr<=0x005F7CFF)) ) // /*:PVR i/f Control Reg.*/ -> ALL SB registers
 		{
-            g_SuperH4_impl->devices[A0H_SB]->Write(addr, data, sz);
+            sh4->devices[A0H_SB]->Write(addr, data, sz);
 		}
 		else if ( likely((addr>= 0x005F8000) && (addr<=0x005F9FFF)) ) // TA / PVR Core Reg.
 		{
-            g_SuperH4_impl->devices[A0H_PVR]->Write(addr, data, sz);
+            sh4->devices[A0H_PVR]->Write(addr, data, sz);
 		}
 	}
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) // MODEM
 	{
-        g_SuperH4_impl->devices[A0H_MODEM]->Write(addr, data, sz);
+        sh4->devices[A0H_MODEM]->Write(addr, data, sz);
 	}
 	//map 0x0060 to 0x006F
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) // G2 (Reserved)
@@ -405,13 +406,13 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0070 to 0x0070
 	else if ((base >=0x0070) && (base <=0x0070) /*&& (addr>= 0x00700000)*/ && (addr<=0x00707FFF)) // AICA- Sound Cntr. Reg.
 	{
-        g_SuperH4_impl->devices[A0H_AICA]->Write(addr, data, sz);
+        sh4->devices[A0H_AICA]->Write(addr, data, sz);
 		return;
 	}
 	//map 0x0071 to 0x0071
 	else if ((base >=0x0071) && (base <=0x0071) /*&& (addr>= 0x00710000)*/ && (addr<= 0x0071000B)) // AICA- RTC Cntr. Reg.
 	{
-        g_SuperH4_impl->devices[A0H_RTC]->Write(addr, data, sz);
+        sh4->devices[A0H_RTC]->Write(addr, data, sz);
 		return;
 	}
 	//map 0x0080 to 0x00FF
@@ -423,7 +424,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0100 to 0x01FF
 	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) // Ext. Device
 	{
-        g_SuperH4_impl->devices[A0H_EXT]->Write(addr, data, sz);
+        sh4->devices[A0H_EXT]->Write(addr, data, sz);
 	}
 	return;
 }
@@ -431,7 +432,6 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 //Init/Res/Term
 void sh4_area0_Init(SuperH4_impl* sh4)
 {
-	g_SuperH4_impl = sh4;
 	sh4->devices[A0H_SB]->Init();
 }
 

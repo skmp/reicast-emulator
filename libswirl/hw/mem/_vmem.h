@@ -37,19 +37,21 @@ void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcach
 // above functions as empty functions and make vmem_platform_init return MemTypeError.
 
 //Typedef's
+
+struct SuperH4;
+
 //ReadMem 
-typedef u8 DYNACALL _vmem_ReadMem8FP(u32 Address);
-typedef u16 DYNACALL _vmem_ReadMem16FP(u32 Address);
-typedef u32 DYNACALL _vmem_ReadMem32FP(u32 Address);
+typedef u8 DYNACALL _vmem_ReadMem8FP(SuperH4* core, u32 Address);
+typedef u16 DYNACALL _vmem_ReadMem16FP(SuperH4* core, u32 Address);
+typedef u32 DYNACALL _vmem_ReadMem32FP(SuperH4* core, u32 Address);
 //WriteMem
-typedef void DYNACALL _vmem_WriteMem8FP(u32 Address,u8 data);
-typedef void DYNACALL _vmem_WriteMem16FP(u32 Address,u16 data);
-typedef void DYNACALL _vmem_WriteMem32FP(u32 Address,u32 data);
+typedef void DYNACALL _vmem_WriteMem8FP(SuperH4* core, u32 Address, u8 data);
+typedef void DYNACALL _vmem_WriteMem16FP(SuperH4* core, u32 Address, u16 data);
+typedef void DYNACALL _vmem_WriteMem32FP(SuperH4* core, u32 Address, u32 data);
 
 //our own handle type :)
 typedef u32 _vmem_handler;
 
-struct SuperH4;
 
 //Functions
 

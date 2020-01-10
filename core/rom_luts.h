@@ -81,6 +81,7 @@ static struct game_type lut_games[] =
    { "T15112N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Demolition Racer */
    { "T-8113N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Ducati World - Racing Challenge (NTSC) */
    { "T-8121D-50", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Ducati World (PAL) */
+   { "T40509D 50", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Aqua GT */
 
    /* Extra depth scaling */
    { "MK-51182  ", -1, -1, -1, -1, -1,  -1,  1, 10000.f, -1 },     /* NHL 2K2 */
@@ -142,6 +143,7 @@ static struct game_type_naomi lut_games_naomi[] =
    { "DRIVE"                             , -1, -1, -1, -1, -1, -1,  -1,  2, 1 },                /* WaiWai Drive */
    { "KICK '4' CASH"                     , -1, -1, -1, -1, -1, -1,  -1,  2, 1 },                /* Kick '4' Cash */
    { "NINJA ASSAULT"                     , -1, -1, -1, -1, -1, -1,  -1,  7, 1 },                /* Ninja Assault */
+   { "MAZAN"                             , -1, -1, -1, -1, -1, -1,  -1,  8, 1 },                /* Mazan */
 
    /* Input descriptors */
    { " BIOHAZARD  GUN SURVIVOR2"         , -1, -1, -1, -1, -1, -1,  -1, -1, 1, &gunsur2_inputs },  /* Gun Survivor 2 Biohazard Code: Veronica */

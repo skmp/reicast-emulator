@@ -44,7 +44,7 @@ struct RECT {
 #include     <X11/Xlib.h>
 #endif
 
-union m128i {
+union mem128i {
     int8_t m128i_u8[16];
     int8_t m128i_i8[16];
     int16_t m128i_i16[8];
@@ -183,7 +183,7 @@ static void PixelFlush(PolyParam* pp, text_info* texture, float x, float y, u8* 
 
             int ui = u * 256;
             int vi = v * 256;
-            __m128i px = ((__m128i*)texture->pdata)[((ui >> 8) % texture->width + (vi >> 8) % texture->height * texture->width)];
+            mem128i px = ((mem128i*)texture->pdata)[((ui >> 8) % texture->width + (vi >> 8) % texture->height * texture->width)];
 
             int ublend = ui & 255;
             int vblend =  vi & 255;

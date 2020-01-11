@@ -26,28 +26,29 @@ Array<RegisterStruct> TMU(12,true);  //TMU  : 12 registers
 Array<RegisterStruct> SCI(8,true);   //SCI  : 8 registers
 Array<RegisterStruct> SCIF(10,true); //SCIF : 10 registers
 
-u32 sh4io_read_noacc(u32 addr) 
+u32 sh4io_read_noacc(void* psh4, u32 addr) 
 { 
 	EMUERROR("sh4io: Invalid read access @@ %08X",addr);
 	return 0; 
 } 
-void sh4io_write_noacc(u32 addr, u32 data) 
+void sh4io_write_noacc(void* psh4, u32 addr, u32 data)
 { 
 	EMUERROR("sh4io: Invalid write access @@ %08X %08X",addr,data);
 	//verify(false); 
 }
-void sh4io_write_const(u32 addr, u32 data) 
+void sh4io_write_const(void* psh4, u32 addr, u32 data)
 { 
 	EMUERROR("sh4io: Const write ignored @@ %08X <- %08X",addr,data);
 }
 
-void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf)
+void sh4_rio_reg(void* context, Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf)
 {
 	u32 idx=(addr&255)/4;
 
 	verify(idx<arr.Size);
 
 	arr[idx].flags = flags | REG_ACCESS_32;
+	arr[idx].context = context;
 
 	if (flags == RIO_NO_ACCESS)
 	{
@@ -98,7 +99,7 @@ u32 sh4_rio_read(Array<RegisterStruct>& sb_regs, u32 addr)
 		}
 		else
 		{
-			return sb_regs[offset].readFunctionAddr(addr);
+			return sb_regs[offset].readFunctionAddr(sb_regs[offset].context, addr);
 		}
 #ifdef TRACE
 	}
@@ -141,7 +142,7 @@ offset>>=2;
 		else
 		{
 			//printf("RSW: %08X\n",addr);
-			sb_regs[offset].writeFunctionAddr(addr,data);
+			sb_regs[offset].writeFunctionAddr(sb_regs[offset].context, addr,data);
 			/*
 			if (sb_regs[offset].flags & REG_CONST)
 				EMUERROR("Error [Write to read only register , const]");
@@ -623,12 +624,12 @@ void DYNACALL WriteMem_area7(SuperH4* sh4, u32 addr,T data)
 {
 	if (likely(addr==0xFF000038))
 	{
-		CCN_QACR_write<0>(addr,data);
+		CCN_QACR_write<0>(sh4, addr,data);
 		return;
 	}
 	else if (likely(addr==0xFF00003C))
 	{
-		CCN_QACR_write<1>(addr,data);
+		CCN_QACR_write<1>(sh4, addr,data);
 		return;
 	}	
 
@@ -844,22 +845,22 @@ void DYNACALL WriteMem_area7_OCR_T(SuperH4* sh4, u32 addr,T data)
 
 
 //Init/Res/Term
-void sh4_mmr_init()
+void sh4_mmr_init(SuperH4* psh)
 {
 	OnChipRAM.Resize(OnChipRAM_SIZE,false);
 
 	for (u32 i=0;i<30;i++)
 	{
-		if (i<CCN.Size)  sh4_rio_reg(CCN,CCN_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(16,true);    //CCN  : 14 registers
-		if (i<UBC.Size)  sh4_rio_reg(UBC,UBC_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(9,true);     //UBC  : 9 registers
-		if (i<BSC.Size)  sh4_rio_reg(BSC,BSC_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(19,true);    //BSC  : 18 registers
-		if (i<DMAC.Size) sh4_rio_reg(DMAC,DMAC_BASE_addr+i*4,RIO_NO_ACCESS,32); //(17,true);    //DMAC : 17 registers
-		if (i<CPG.Size)  sh4_rio_reg(CPG,CPG_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(5,true);     //CPG  : 5 registers
-		if (i<RTC.Size)  sh4_rio_reg(RTC,RTC_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(16,true);    //RTC  : 16 registers
-		if (i<INTC.Size) sh4_rio_reg(INTC,INTC_BASE_addr+i*4,RIO_NO_ACCESS,32); //(4,true);     //INTC : 4 registers
-		if (i<TMU.Size)  sh4_rio_reg(TMU,TMU_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(12,true);    //TMU  : 12 registers
-		if (i<SCI.Size)  sh4_rio_reg(SCI,SCI_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(8,true);     //SCI  : 8 registers
-		if (i<SCIF.Size) sh4_rio_reg(SCIF,SCIF_BASE_addr+i*4,RIO_NO_ACCESS,32); //(10,true);    //SCIF : 10 registers
+		if (i<CCN.Size)  sh4_rio_reg(psh, CCN,CCN_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(16,true);    //CCN  : 14 registers
+		if (i<UBC.Size)  sh4_rio_reg(psh, UBC,UBC_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(9,true);     //UBC  : 9 registers
+		if (i<BSC.Size)  sh4_rio_reg(psh, BSC,BSC_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(19,true);    //BSC  : 18 registers
+		if (i<DMAC.Size) sh4_rio_reg(psh, DMAC,DMAC_BASE_addr+i*4,RIO_NO_ACCESS,32); //(17,true);    //DMAC : 17 registers
+		if (i<CPG.Size)  sh4_rio_reg(psh, CPG,CPG_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(5,true);     //CPG  : 5 registers
+		if (i<RTC.Size)  sh4_rio_reg(psh, RTC,RTC_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(16,true);    //RTC  : 16 registers
+		if (i<INTC.Size) sh4_rio_reg(psh, INTC,INTC_BASE_addr+i*4,RIO_NO_ACCESS,32); //(4,true);     //INTC : 4 registers
+		if (i<TMU.Size)  sh4_rio_reg(psh, TMU,TMU_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(12,true);    //TMU  : 12 registers
+		if (i<SCI.Size)  sh4_rio_reg(psh, SCI,SCI_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(8,true);     //SCI  : 8 registers
+		if (i<SCIF.Size) sh4_rio_reg(psh, SCIF,SCIF_BASE_addr+i*4,RIO_NO_ACCESS,32); //(10,true);    //SCIF : 10 registers
 	}
 
 	//initialise Register structs

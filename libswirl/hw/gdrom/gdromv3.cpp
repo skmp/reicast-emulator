@@ -1088,7 +1088,7 @@ int GDRomschd(int i, int c, int j)
 }
 
 //DMA Start
-void GDROM_DmaStart(u32 addr, u32 data)
+void GDROM_DmaStart(void* that, u32 addr, u32 data)
 {
 	if (SB_GDEN==0)
 	{
@@ -1114,7 +1114,7 @@ void GDROM_DmaStart(u32 addr, u32 data)
 	}
 }
 
-void GDROM_DmaEnable(u32 addr, u32 data)
+void GDROM_DmaEnable(void* that, u32 addr, u32 data)
 {
 	SB_GDEN = (data & 1);
 	if (SB_GDEN == 0 && SB_GDST == 1)
@@ -1127,9 +1127,9 @@ void GDROM_DmaEnable(u32 addr, u32 data)
 //Init/Term/Res
 void gdrom_sb_Init(SBDevice* sb)
 {
-	sb->RegisterRIO(SB_GDST_addr, RIO_WF, 0, &GDROM_DmaStart);
+	sb->RegisterRIO(sh4_cpu, SB_GDST_addr, RIO_WF, 0, &GDROM_DmaStart);
 
-    sb->RegisterRIO(SB_GDEN_addr, RIO_WF, 0, &GDROM_DmaEnable);
+    sb->RegisterRIO(sh4_cpu, SB_GDEN_addr, RIO_WF, 0, &GDROM_DmaEnable);
 
 	gdrom_schid = sh4_sched_register(0, &GDRomschd);
 }

@@ -78,12 +78,12 @@ void UpdateTMU_i(u32 Cycles)
 u32 tmu_ch_base[3];
 u64 tmu_ch_base64[3];
 
-u32 read_TMU_TCNTch(u32 ch)
+u32 read_TMU_TCNTch(void* psh4, u32 ch)
 {
 	return tmu_ch_base[ch] - ((sh4_sched_now64() >> tmu_shift[ch])&tmu_mask[ch]);
 }
 
-s64 read_TMU_TCNTch64(u32 ch)
+s64 read_TMU_TCNTch64(void* psh4, u32 ch)
 {
 	return tmu_ch_base64[ch] - ((sh4_sched_now64() >> tmu_shift[ch])&tmu_mask64[ch]);
 }
@@ -93,7 +93,7 @@ void sched_chan_tick(int ch)
 	//schedule next interrupt
 	//return TMU_TCOR(ch) << tmu_shift[ch];
 
-	u32 togo = read_TMU_TCNTch(ch);
+	u32 togo = read_TMU_TCNTch(sh4_cpu, ch);
 
 	if (togo > SH4_MAIN_CLOCK)
 		togo = SH4_MAIN_CLOCK;
@@ -110,7 +110,7 @@ void sched_chan_tick(int ch)
 	//sched_tmu_cb
 }
 
-void write_TMU_TCNTch(u32 ch, u32 data)
+void write_TMU_TCNTch(void* psh4, u32 ch, u32 data)
 {
 	//u32 TCNT=read_TMU_TCNTch(ch);
 	tmu_ch_base[ch]=data+((sh4_sched_now64()>>tmu_shift[ch])&tmu_mask[ch]);
@@ -120,29 +120,29 @@ void write_TMU_TCNTch(u32 ch, u32 data)
 }
 
 template<u32 ch>
-u32 read_TMU_TCNT(u32 addr)
+u32 read_TMU_TCNT(void* psh4, u32 addr)
 {
-	return read_TMU_TCNTch(ch);
+	return read_TMU_TCNTch(psh4, ch);
 }
 
 template<u32 ch>
-void write_TMU_TCNT(u32 addr, u32 data)
+void write_TMU_TCNT(void* psh4, u32 addr, u32 data)
 {
-	write_TMU_TCNTch(ch,data);
+	write_TMU_TCNTch(psh4, ch,data);
 }
 
-void turn_on_off_ch(u32 ch, bool on)
+void turn_on_off_ch(void* psh4, u32 ch, bool on)
 {
-	u32 TCNT=read_TMU_TCNTch(ch);
+	u32 TCNT=read_TMU_TCNTch(psh4, ch);
 	tmu_mask[ch]=on?0xFFFFFFFF:0x00000000;
 	tmu_mask64[ch] = on ? 0xFFFFFFFFFFFFFFFF : 0x0000000000000000;
-	write_TMU_TCNTch(ch,TCNT);
+	write_TMU_TCNTch(psh4, ch,TCNT);
 
 	sched_chan_tick(ch);
 }
 
 //Update internal counter registers
-void UpdateTMUCounts(u32 reg)
+void UpdateTMUCounts(void* psh4, u32 reg)
 {
 	InterruptPend(tmu_intID[reg],TMU_TCR(reg) & tmu_underflow);
 	InterruptMask(tmu_intID[reg],TMU_TCR(reg) & tmu_UNIE);
@@ -152,7 +152,7 @@ void UpdateTMUCounts(u32 reg)
 	else
 		old_mode[reg]=(TMU_TCR(reg) & 0x7);
 
-	u32 TCNT=read_TMU_TCNTch(reg);
+	u32 TCNT=read_TMU_TCNTch(psh4, reg);
 	switch(TMU_TCR(reg) & 0x7)
 	{
 		case 0: //4
@@ -188,46 +188,46 @@ void UpdateTMUCounts(u32 reg)
 			break;
 	}
 	tmu_shift[reg]+=2;
-	write_TMU_TCNTch(reg,TCNT);
+	write_TMU_TCNTch(psh4, reg,TCNT);
 	sched_chan_tick(reg);
 }
 
 //Write to status registers
 template<int ch>
-void TMU_TCR_write(u32 addr, u32 data)
+void TMU_TCR_write(void* psh4, u32 addr, u32 data)
 {
 	TMU_TCR(ch)=(u16)data;
-	UpdateTMUCounts(ch);
+	UpdateTMUCounts(psh4, ch);
 }
 
 //Chan 2 not used functions
-u32 TMU_TCPR2_read(u32 addr)
+u32 TMU_TCPR2_read(void* psh4, u32 addr)
 {
 	EMUERROR("Read from TMU_TCPR2 - this register should be not used on Dreamcast according to docs");
 	return 0;
 }
 
-void TMU_TCPR2_write(u32 addr, u32 data)
+void TMU_TCPR2_write(void* psh4, u32 addr, u32 data)
 {
 	EMUERROR2("Write to TMU_TCPR2 - this register should be not used on Dreamcast according to docs, data=%d",data);
 }
 
-void write_TMU_TSTR(u32 addr, u32 data)
+void write_TMU_TSTR(void* psh4, u32 addr, u32 data)
 {
 	TMU_TSTR=data;
 	//?
 
 	for (int i=0;i<3;i++)
-		turn_on_off_ch(i,data&(1<<i));
+		turn_on_off_ch(psh4, i,data&(1<<i));
 }
 
 int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 {
 	if (tmu_mask[ch]) {
 		
-		u32 tcnt = read_TMU_TCNTch(ch);
+		u32 tcnt = read_TMU_TCNTch(sh4_cpu, ch);
 		
-		s64 tcnt64 = (s64)read_TMU_TCNTch64(ch);
+		s64 tcnt64 = (s64)read_TMU_TCNTch64(sh4_cpu, ch);
 
 		u32 tcor = TMU_TCOR(ch);
 
@@ -242,12 +242,12 @@ int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 			//printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
 
 			//schedule next trigger by writing the TCNT register
-			write_TMU_TCNTch(ch, tcor + tcnt);
+			write_TMU_TCNTch(sh4_cpu, ch, tcor + tcnt);
 		}
 		else {
 			
 			//schedule next trigger by writing the TCNT register
-			write_TMU_TCNTch(ch, tcnt);
+			write_TMU_TCNTch(sh4_cpu, ch, tcnt);
 		}
 
 		return 0;	//has already been scheduled by TCNT write
@@ -261,40 +261,40 @@ int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 void tmu_init()
 {
 	//TMU TOCR 0xFFD80000 0x1FD80000 8 0x00 0x00 Held Held Pclk
-	sh4_rio_reg(TMU,TMU_TOCR_addr,RIO_DATA,8);
+	sh4_rio_reg(sh4_cpu, TMU,TMU_TOCR_addr,RIO_DATA,8);
 
 	//TMU TSTR 0xFFD80004 0x1FD80004 8 0x00 0x00 Held 0x00 Pclk
-	sh4_rio_reg(TMU,TMU_TSTR_addr,RIO_WF,8,0,&write_TMU_TSTR);
+	sh4_rio_reg(sh4_cpu, TMU,TMU_TSTR_addr,RIO_WF,8,0,&write_TMU_TSTR);
 
 	//TMU TCOR0 0xFFD80008 0x1FD80008 32 0xFFFFFFFF 0xFFFFFFFF Held Held Pclk
-	sh4_rio_reg(TMU,TMU_TCOR0_addr,RIO_DATA,32);
+	sh4_rio_reg(sh4_cpu, TMU,TMU_TCOR0_addr,RIO_DATA,32);
 
 	//TMU TCNT0 0xFFD8000C 0x1FD8000C 32 0xFFFFFFFF 0xFFFFFFFF Held Held Pclk
-	sh4_rio_reg(TMU,TMU_TCNT0_addr,RIO_FUNC,32,&read_TMU_TCNT<0>,&write_TMU_TCNT<0>);
+	sh4_rio_reg(sh4_cpu, TMU,TMU_TCNT0_addr,RIO_FUNC,32,&read_TMU_TCNT<0>,&write_TMU_TCNT<0>);
 
 	//TMU TCR0 0xFFD80010 0x1FD80010 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(TMU,TMU_TCR0_addr,RIO_WF,16,0,&TMU_TCR_write<0>);
+	sh4_rio_reg(sh4_cpu, TMU,TMU_TCR0_addr,RIO_WF,16,0,&TMU_TCR_write<0>);
 
 	//TMU TCOR1 0xFFD80014 0x1FD80014 32 0xFFFFFFFF 0xFFFFFFFF Held Held Pclk
-	sh4_rio_reg(TMU,TMU_TCOR1_addr,RIO_DATA,32);
+	sh4_rio_reg(sh4_cpu, TMU,TMU_TCOR1_addr,RIO_DATA,32);
 
 	//TMU TCNT1 0xFFD80018 0x1FD80018 32 0xFFFFFFFF 0xFFFFFFFF Held Held Pclk
-	sh4_rio_reg(TMU,TMU_TCNT1_addr,RIO_FUNC,32,&read_TMU_TCNT<1>,&write_TMU_TCNT<1>);
+	sh4_rio_reg(sh4_cpu, TMU,TMU_TCNT1_addr,RIO_FUNC,32,&read_TMU_TCNT<1>,&write_TMU_TCNT<1>);
 
 	//TMU TCR1 0xFFD8001C 0x1FD8001C 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(TMU,TMU_TCR1_addr,RIO_WF,16,0,&TMU_TCR_write<1>);
+	sh4_rio_reg(sh4_cpu, TMU,TMU_TCR1_addr,RIO_WF,16,0,&TMU_TCR_write<1>);
 
 	//TMU TCOR2 0xFFD80020 0x1FD80020 32 0xFFFFFFFF 0xFFFFFFFF Held Held Pclk
-	sh4_rio_reg(TMU,TMU_TCOR2_addr,RIO_DATA,32);
+	sh4_rio_reg(sh4_cpu, TMU,TMU_TCOR2_addr,RIO_DATA,32);
 
 	//TMU TCNT2 0xFFD80024 0x1FD80024 32 0xFFFFFFFF 0xFFFFFFFF Held Held Pclk
-	sh4_rio_reg(TMU,TMU_TCNT2_addr,RIO_FUNC,32,&read_TMU_TCNT<2>,&write_TMU_TCNT<2>);
+	sh4_rio_reg(sh4_cpu, TMU,TMU_TCNT2_addr,RIO_FUNC,32,&read_TMU_TCNT<2>,&write_TMU_TCNT<2>);
 	
 	//TMU TCR2 0xFFD80028 0x1FD80028 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(TMU,TMU_TCR2_addr,RIO_WF,16,0,&TMU_TCR_write<2>);
+	sh4_rio_reg(sh4_cpu, TMU,TMU_TCR2_addr,RIO_WF,16,0,&TMU_TCR_write<2>);
 
 	//TMU TCPR2 0xFFD8002C 0x1FD8002C 32 Held Held Held Held Pclk
-	sh4_rio_reg(TMU,TMU_TCPR2_addr,RIO_FUNC,32,&TMU_TCPR2_read,&TMU_TCPR2_write);
+	sh4_rio_reg(sh4_cpu, TMU,TMU_TCPR2_addr,RIO_FUNC,32,&TMU_TCPR2_read,&TMU_TCPR2_write);
 
 	for (int i = 0; i < 3; i++) {
 		tmu_sched[i] = sh4_sched_register(i, &sched_tmu_cb);
@@ -310,14 +310,14 @@ void tmu_reset()
 //	TMU_TCNT(0) = TMU_TCNT(1) = TMU_TCNT(2) = 0xffffffff;
 	TMU_TCR(0) = TMU_TCR(1) = TMU_TCR(2) = 0;
 
-	UpdateTMUCounts(0);
-	UpdateTMUCounts(1);
-	UpdateTMUCounts(2);
+	UpdateTMUCounts(sh4_cpu, 0);
+	UpdateTMUCounts(sh4_cpu, 1);
+	UpdateTMUCounts(sh4_cpu, 2);
 
-	write_TMU_TSTR(0,0);
+	write_TMU_TSTR(sh4_cpu, 0,0);
 
 	for (int i=0;i<3;i++)
-		write_TMU_TCNTch(i,0xffffffff);
+		write_TMU_TCNTch(sh4_cpu, i,0xffffffff);
 }
 
 void tmu_term()

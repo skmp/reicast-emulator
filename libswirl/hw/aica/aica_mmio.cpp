@@ -319,7 +319,7 @@ int dma_end_sched(int tag, int cycl, int jitt)
 	return 0;
 }
 
-void Write_SB_ADST(u32 addr, u32 data)
+void Write_SB_ADST(void* that, u32 addr, u32 data)
 {
 	//0x005F7800	SB_ADSTAG	RW	AICA:G2-DMA G2 start address 
 	//0x005F7804	SB_ADSTAR	RW	AICA:G2-DMA system memory start address 
@@ -377,7 +377,7 @@ void Write_SB_ADST(u32 addr, u32 data)
 	}
 }
 
-void Write_SB_E1ST(u32 addr, u32 data)
+void Write_SB_E1ST(void* that, u32 addr, u32 data)
 {
 	//0x005F7800	SB_ADSTAG	RW	AICA:G2-DMA G2 start address 
 	//0x005F7804	SB_ADSTAR	RW	AICA:G2-DMA system memory start address 
@@ -431,7 +431,7 @@ void Write_SB_E1ST(u32 addr, u32 data)
 	}
 }
 
-void Write_SB_E2ST(u32 addr, u32 data)
+void Write_SB_E2ST(void* that, u32 addr, u32 data)
 {
 	if ((data & 1) && (SB_E2EN & 1))
 	{
@@ -467,7 +467,7 @@ void Write_SB_E2ST(u32 addr, u32 data)
 }
 
 
-void Write_SB_DDST(u32 addr, u32 data)
+void Write_SB_DDST(void* that, u32 addr, u32 data)
 {
 	if (data & 1)
 		die("SB_DDST DMA not implemented");
@@ -477,16 +477,16 @@ void aica_sb_Init(SBDevice* sb)
 {
 	//NRM
 	//6
-    sb->RegisterRIO(SB_ADST_addr,RIO_WF,0,&Write_SB_ADST);
+    sb->RegisterRIO(sh4_cpu, SB_ADST_addr,RIO_WF,0,&Write_SB_ADST);
 	//sb_regs[((SB_ADST_addr-SB_BASE)>>2)].flags=REG_32BIT_READWRITE | REG_READ_DATA;
 	//sb_regs[((SB_ADST_addr-SB_BASE)>>2)].writeFunction=Write_SB_ADST;
 
 	//I really need to implement G2 dma (and rest dmas actually) properly
 	//THIS IS NOT AICA, its G2-EXT (BBA)
 
-    sb->RegisterRIO(SB_E1ST_addr,RIO_WF,0,&Write_SB_E1ST);
-    sb->RegisterRIO(SB_E2ST_addr,RIO_WF,0,&Write_SB_E2ST);
-    sb->RegisterRIO(SB_DDST_addr,RIO_WF,0,&Write_SB_DDST);
+    sb->RegisterRIO(sh4_cpu, SB_E1ST_addr,RIO_WF,0,&Write_SB_E1ST);
+    sb->RegisterRIO(sh4_cpu, SB_E2ST_addr,RIO_WF,0,&Write_SB_E2ST);
+    sb->RegisterRIO(sh4_cpu, SB_DDST_addr,RIO_WF,0,&Write_SB_DDST);
 
 	//sb_regs[((SB_E1ST_addr-SB_BASE)>>2)].flags=REG_32BIT_READWRITE | REG_READ_DATA;
 	//sb_regs[((SB_E1ST_addr-SB_BASE)>>2)].writeFunction=Write_SB_E1ST;

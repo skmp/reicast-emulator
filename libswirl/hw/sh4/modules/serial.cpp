@@ -43,7 +43,7 @@ SCSPTR2_type SCIF_SCSPTR2;
 SCLSR2_type SCIF_SCLSR2;
 */
 
-void SerialWrite(u32 addr, u32 data)
+void SerialWrite(void* psh4, u32 addr, u32 data)
 {
 	if (settings.debug.SerialConsole) {
 		putc(data, stdout);
@@ -51,7 +51,7 @@ void SerialWrite(u32 addr, u32 data)
 }
 
 //SCIF_SCFSR2 read
-u32 ReadSerialStatus(u32 addr)
+u32 ReadSerialStatus(void* psh4, u32 addr)
 {
 	if (false /*PendingSerialData()*/)
 	{
@@ -67,7 +67,7 @@ u32 ReadSerialStatus(u32 addr)
 	*/
 }
 
-void WriteSerialStatus(u32 addr,u32 data)
+void WriteSerialStatus(void* psh4, u32 addr,u32 data)
 {
 	/*
 	//TODO : do something ?
@@ -75,12 +75,12 @@ void WriteSerialStatus(u32 addr,u32 data)
 }
 
 //SCIF_SCFDR2 - 16b
-u32 Read_SCFDR2(u32 addr)
+u32 Read_SCFDR2(void* psh4, u32 addr)
 {
 	return 0;
 }
 //SCIF_SCFRDR2
-u32 ReadSerialData(u32 addr)
+u32 ReadSerialData(void* psh4, u32 addr)
 {
 	s32 rd=0;//ReadSerial();
 	return (u8)rd ;
@@ -90,37 +90,37 @@ u32 ReadSerialData(u32 addr)
 void serial_init()
 {
 	//SCIF SCSMR2 0xFFE80000 0x1FE80000 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCSMR2_addr,RIO_DATA,16);
+	sh4_rio_reg(sh4_cpu, SCIF,SCIF_SCSMR2_addr,RIO_DATA,16);
 
 	//SCIF SCBRR2 0xFFE80004 0x1FE80004 8 0xFF 0xFF Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCBRR2_addr,RIO_DATA,8);
+	sh4_rio_reg(sh4_cpu, SCIF,SCIF_SCBRR2_addr,RIO_DATA,8);
 
 	//SCIF SCSCR2 0xFFE80008 0x1FE80008 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCSCR2_addr,RIO_DATA,16);
+	sh4_rio_reg(sh4_cpu, SCIF,SCIF_SCSCR2_addr,RIO_DATA,16);
 
 	//Write only 
 	//SCIF SCFTDR2 0xFFE8000C 0x1FE8000C 8 Undefined Undefined Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCFTDR2_addr,RIO_WF,8,0,&SerialWrite);
+	sh4_rio_reg(sh4_cpu, SCIF,SCIF_SCFTDR2_addr,RIO_WF,8,0,&SerialWrite);
 
 	//SCIF SCFSR2 0xFFE80010 0x1FE80010 16 0x0060 0x0060 Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCFSR2_addr,RIO_FUNC,16,&ReadSerialStatus,&WriteSerialStatus);
+	sh4_rio_reg(sh4_cpu, SCIF,SCIF_SCFSR2_addr,RIO_FUNC,16,&ReadSerialStatus,&WriteSerialStatus);
 
 	//READ only
 	//SCIF SCFRDR2 0xFFE80014 0x1FE80014 8 Undefined Undefined Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCFRDR2_addr,RIO_RO_FUNC,8,&ReadSerialData);
+	sh4_rio_reg(sh4_cpu, SCIF,SCIF_SCFRDR2_addr,RIO_RO_FUNC,8,&ReadSerialData);
 
 	//SCIF SCFCR2 0xFFE80018 0x1FE80018 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCFCR2_addr,RIO_DATA,16);
+	sh4_rio_reg(sh4_cpu, SCIF,SCIF_SCFCR2_addr,RIO_DATA,16);
 
 	//Read only
 	//SCIF SCFDR2 0xFFE8001C 0x1FE8001C 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCFDR2_addr,RIO_RO_FUNC,16,&Read_SCFDR2);
+	sh4_rio_reg(sh4_cpu, SCIF,SCIF_SCFDR2_addr,RIO_RO_FUNC,16,&Read_SCFDR2);
 
 	//SCIF SCSPTR2 0xFFE80020 0x1FE80020 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCSPTR2_addr,RIO_DATA,16);
+	sh4_rio_reg(sh4_cpu, SCIF,SCIF_SCSPTR2_addr,RIO_DATA,16);
 
 	//SCIF SCLSR2 0xFFE80024 0x1FE80024 16 0x0000 0x0000 Held Held Pclk
-	sh4_rio_reg(SCIF,SCIF_SCLSR2_addr,RIO_DATA,16);
+	sh4_rio_reg(sh4_cpu, SCIF,SCIF_SCLSR2_addr,RIO_DATA,16);
 }
 void serial_reset()
 {

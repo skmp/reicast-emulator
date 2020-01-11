@@ -12,7 +12,7 @@
 #include "hw/sh4/sh4_mmr.h"
 #include "ta.h"
 
-void RegWrite_SB_C2DST(u32 addr, u32 data)
+void RegWrite_SB_C2DST(void* that, u32 addr, u32 data)
 {
 	if(1&data)
 	{
@@ -63,7 +63,7 @@ void do_pvr_dma()
 	//TODO : *CHECKME* is that ok here ? the docs don't say here it's used [PVR-DMA , bit 11]
 	asic_RaiseInterrupt(holly_PVR_DMA);
 }
-void RegWrite_SB_PDST(u32 addr, u32 data)
+void RegWrite_SB_PDST(void* that, u32 addr, u32 data)
 {
 	if(1&data)
 	{
@@ -118,7 +118,7 @@ void pvr_do_sort_dma()
 	asic_RaiseInterrupt(holly_PVR_SortDMA);
 }
 // Auto sort DMA :|
-void RegWrite_SB_SDST(u32 addr, u32 data)
+void RegWrite_SB_SDST(void* that, u32 addr, u32 data)
 {
 	if(1&data)
 	{
@@ -131,13 +131,13 @@ void RegWrite_SB_SDST(u32 addr, u32 data)
 void pvr_sb_Init(SBDevice* sb)
 {
 	//0x005F7C18    SB_PDST RW  PVR-DMA start
-    sb->RegisterRIO(SB_PDST_addr,RIO_WF,0,&RegWrite_SB_PDST);
+    sb->RegisterRIO(sh4_cpu, SB_PDST_addr,RIO_WF,0,&RegWrite_SB_PDST);
 
 	//0x005F6808    SB_C2DST RW  ch2-DMA start 
-    sb->RegisterRIO(SB_C2DST_addr,RIO_WF,0,&RegWrite_SB_C2DST);
+    sb->RegisterRIO(sh4_cpu, SB_C2DST_addr,RIO_WF,0,&RegWrite_SB_C2DST);
 
 	//0x005F6820    SB_SDST RW  Sort-DMA start
-    sb->RegisterRIO(SB_SDST_addr,RIO_WF,0,&RegWrite_SB_SDST);
+    sb->RegisterRIO(sh4_cpu, SB_SDST_addr,RIO_WF,0,&RegWrite_SB_SDST);
 }
 void pvr_sb_Term()
 {

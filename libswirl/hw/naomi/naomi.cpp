@@ -436,7 +436,7 @@ void WriteMem_naomi(u32 Addr, u32 data, u32 sz)
 }
 
 //Dma Start
-void Naomi_DmaStart(u32 addr, u32 data)
+void Naomi_DmaStart(void* that, u32 addr, u32 data)
 {
 	if (SB_GDEN==0)
 	{
@@ -475,7 +475,7 @@ void Naomi_DmaStart(u32 addr, u32 data)
 }
 
 
-void Naomi_DmaEnable(u32 addr, u32 data)
+void Naomi_DmaEnable(void* that, u32 addr, u32 data)
 {
 	SB_GDEN=data&1;
 	if (SB_GDEN==0 && SB_GDST==1)
@@ -534,9 +534,9 @@ void naomi_sb_Init(SBDevice* sb)
 	#endif
 	NaomiInit();
 
-    sb->RegisterRIO(SB_GDST_addr, RIO_WF, 0, &Naomi_DmaStart);
+    sb->RegisterRIO(sh4_cpu, SB_GDST_addr, RIO_WF, 0, &Naomi_DmaStart);
 
-    sb->RegisterRIO(SB_GDEN_addr, RIO_WF, 0, &Naomi_DmaEnable);
+    sb->RegisterRIO(sh4_cpu, SB_GDEN_addr, RIO_WF, 0, &Naomi_DmaEnable);
 }
 
 void naomi_sb_Term()

@@ -184,7 +184,7 @@ void mem_Init(SuperH4_impl* sh4)
 	//mem_b.Init(&sh4_reserved_mem[0x0C000000],RAM_SIZE);
 
 	sh4_area0_Init(sh4);
-	sh4_mmr_init();
+	sh4_mmr_init(sh4);
 	MMU_init();
 }
 

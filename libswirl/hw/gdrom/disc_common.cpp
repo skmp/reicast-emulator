@@ -1,10 +1,5 @@
 #include "disc_common.h"
 
-extern signed int sns_asc;
-extern signed int sns_ascq;
-extern signed int sns_key;
-
-
 u8 q_subchannel[96];		//latest q subcode
 
 u32 NullDriveDiscType;
@@ -106,10 +101,8 @@ static bool DiscInit()
 	if (gfrv == 0)
 	{
 		NullDriveDiscType=NoDisk;
-		gd_setdisc();
-		sns_asc=0x29;
-		sns_ascq=0x00;
-		sns_key=0x6;
+		libCore_gdrom_disc_change();
+		
 		return true;
 	}
 	else if (gfrv == -1)
@@ -127,10 +120,8 @@ static bool DiscInit()
 	{
 		//msgboxf("Selected image failed to load",MBX_ICONERROR);
 			NullDriveDiscType=NoDisk;
-			gd_setdisc();
-			sns_asc=0x29;
-			sns_ascq=0x00;
-			sns_key=0x6;
+			libCore_gdrom_disc_change();
+
 		return true;
 	}
 	else
@@ -143,10 +134,7 @@ static bool DiscSwap()
 	// These Additional Sense Codes mean "The lid was closed"
 
 		// TODO: rewrite all of this logic
-	sns_asc = 0x28;
-	sns_ascq = 0x00;
-	sns_key = 0x6;
-
+	
 	// FIXME: Data loss if buffer is too small
 	wchar fn[512];
 	strncpy(fn, settings.imgread.LastImage, sizeof(fn));
@@ -159,7 +147,7 @@ static bool DiscSwap()
 	if (gfrv == 0)
 	{
 		NullDriveDiscType=Open;
-		gd_setdisc();
+		libCore_gdrom_disc_change();
 		return true;
 	}
 	else if (gfrv == -1)
@@ -178,7 +166,7 @@ static bool DiscSwap()
 	{
 		//msgboxf("Selected image failed to load",MBX_ICONERROR);
 		NullDriveDiscType=Open;
-		gd_setdisc();
+		libCore_gdrom_disc_change();
 	}
 
 	return true;

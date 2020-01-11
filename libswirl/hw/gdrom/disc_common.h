@@ -12,6 +12,3 @@ int GetFile(char *szFileName);
 
 void printtoc(TocInfo* toc,SessionInfo* ses);
 extern u8 q_subchannel[96];
-
-
-extern void gd_setdisc();

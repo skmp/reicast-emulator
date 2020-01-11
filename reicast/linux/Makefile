@@ -31,7 +31,7 @@ CFLAGS := -g -O3 -D RELEASE -c -D USES_HOMEDIR -fopenmp # defaults
 CFLAGS += -frename-registers -fno-strict-aliasing
 CFLAGS += -ffast-math -ftree-vectorize
 
-CXXFLAGS :=  -fno-rtti -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=c++14 # defaults
+CXXFLAGS :=  -fpermissive -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=c++14 # defaults
 
 
 

@@ -1,30 +1,33 @@
 version: git-{branch}-{build}
-image: Visual Studio 2017
+image: Visual Studio 2019
 
 configuration:
 - RelWithDebInfo
 
 platform:
+- Win32
 - x64
 
 before_build:
   - cmd: >-
-      if "%CONFIGURATION%"=="RelWithDebInfo" (set BUILD_PATH=build)
+      set BUILD_PATH=build
       
       if not exist %BUILD_PATH% (mkdir %BUILD_PATH%)
-     
-      if "%CONFIGURATION%"=="RelWithDebInfo" (cmake -B %BUILD_PATH% -G "Visual Studio 15 2017 Win64" -DCMAKE_CONFIGURATION_TYPES=RelWithDebInfo)
+      
+      echo "%PLATFORM%"
+      
+      cmake -B %BUILD_PATH% -G "Visual Studio 16 2019" -A "%PLATFORM%" -DCMAKE_CONFIGURATION_TYPES=RelWithDebInfo
       
       cd %BUILD_PATH%
       
 build_script:
   - cmd: >-
-      if "%CONFIGURATION%"=="RelWithDebInfo" (msbuild reicast.sln /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
+      msbuild reicast.sln /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
       
 
 after_build:
   - cmd: >-      
-      if "%CONFIGURATION%"=="RelWithDebInfo" (cd .. && set EXE_PATH=build\RelWithDebInfo\reicast.exe)
+      cd .. && set EXE_PATH=build\RelWithDebInfo\reicast.exe
       
       mkdir artifacts
       

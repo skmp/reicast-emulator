@@ -96,7 +96,7 @@ void ExecuteDelayslot_RTE()
 #endif
 }
 
-int AicaUpdate(int tag, int c, int j)
+int AicaUpdate(void* psh4, int tag, int c, int j)
 {
     //gpc_counter=0;
     //bm_Periodical_14k();
@@ -115,7 +115,7 @@ int AicaUpdate(int tag, int c, int j)
 }
 
 
-int DreamcastSecond(int tag, int c, int j)
+int DreamcastSecond(void* psh4, int tag, int c, int j)
 {
     RealTimeClock++;
 
@@ -319,10 +319,10 @@ bool SuperH4_impl::Init()
 
     if (aica_schid == -1)
     {
-        aica_schid = sh4_sched_register(0, &AicaUpdate);
+        aica_schid = sh4_sched_register(sh4_cpu, 0, &AicaUpdate);
         sh4_sched_request(aica_schid, AICA_TICK);
 
-        rtc_schid = sh4_sched_register(0, &DreamcastSecond);
+        rtc_schid = sh4_sched_register(sh4_cpu, 0, &DreamcastSecond);
         sh4_sched_request(rtc_schid, SH4_MAIN_CLOCK);
     }
     memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));

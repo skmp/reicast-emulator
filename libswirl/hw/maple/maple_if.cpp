@@ -227,7 +227,7 @@ void maple_DoDma()
 	sh4_sched_request(maple_schid,xfer_count*(SH4_MAIN_CLOCK/(2*1024*1024/8)));
 }
 
-int maple_schd(int tag, int c, int j)
+int maple_schd(void* psh4, int tag, int c, int j)
 {
 	if (SB_MDEN&1)
 	{
@@ -252,7 +252,7 @@ void maple_Init(SBDevice* sb)
 
 	sb->RegisterRIO(sh4_cpu, SB_MSHTCL_addr,RIO_WF,0,&maple_SB_MSHTCL_Write);
 
-	maple_schid=sh4_sched_register(0,&maple_schd);
+	maple_schid=sh4_sched_register(sh4_cpu, 0,&maple_schd);
 }
 
 void maple_Reset(bool Manual)

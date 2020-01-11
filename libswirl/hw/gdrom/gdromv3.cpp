@@ -989,7 +989,7 @@ static int getGDROMTicks()
 }
 
 //is this needed ?
-int GDRomschd(int i, int c, int j)
+int GDRomschd(void* psh4, int i, int c, int j)
 {
 	if(!(SB_GDST&1) || !(SB_GDEN &1) || (read_buff.cache_size==0 && read_params.remaining_sectors==0))
 	{
@@ -1088,7 +1088,7 @@ int GDRomschd(int i, int c, int j)
 }
 
 //DMA Start
-void GDROM_DmaStart(void* that, u32 addr, u32 data)
+void GDROM_DmaStart(void* psh4, u32 addr, u32 data)
 {
 	if (SB_GDEN==0)
 	{
@@ -1106,7 +1106,7 @@ void GDROM_DmaStart(void* that, u32 addr, u32 data)
 		int ticks = getGDROMTicks();
 		if (ticks < 448)	// FIXME #define
 		{
-			ticks = GDRomschd(0,0,0);
+			ticks = GDRomschd(psh4, 0,0,0);
 		}
 
 		if (ticks)
@@ -1131,7 +1131,7 @@ void gdrom_sb_Init(SBDevice* sb)
 
     sb->RegisterRIO(sh4_cpu, SB_GDEN_addr, RIO_WF, 0, &GDROM_DmaEnable);
 
-	gdrom_schid = sh4_sched_register(0, &GDRomschd);
+	gdrom_schid = sh4_sched_register(sh4_cpu, 0, &GDRomschd);
 }
 void gdrom_sb_Term()
 {

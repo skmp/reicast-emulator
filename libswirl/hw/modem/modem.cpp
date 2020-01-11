@@ -135,7 +135,7 @@ static FILE *recv_fp;
 static FILE *sent_fp;
 #endif
 
-static int modem_sched_func(int tag, int c, int j)
+static int modem_sched_func(void* psh4, int tag, int c, int j)
 {
 #ifndef RELEASE
 	if (os_GetSeconds() - last_comm_stats >= 2)
@@ -316,7 +316,7 @@ static int modem_sched_func(int tag, int c, int j)
 
 void ModemInit()
 {
-	modem_sched = sh4_sched_register(0, &modem_sched_func);
+	modem_sched = sh4_sched_register(sh4_cpu, 0, &modem_sched_func);
 }
 
 static void schedule_callback(int ms)

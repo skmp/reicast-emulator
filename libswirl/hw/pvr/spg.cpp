@@ -72,7 +72,7 @@ void CalculateSync()
 	sh4_sched_request(vblank_schid,Line_Cycles);
 }
 
-int elapse_time(int tag, int cycl, int jit)
+int elapse_time(void* sh4, int tag, int cycl, int jit)
 {
 #if HOST_OS==OS_WINDOWS
 	//os_wait_cycl(cycl);
@@ -93,7 +93,7 @@ double mspdf;
 
 u32 fskip=0;
 //called from sh4 context , should update pvr/ta state and everything else
-int spg_line_sched(int tag, int cycl, int jit)
+int spg_line_sched(void* sh4, int tag, int cycl, int jit)
 {
 	clc_pvr_scanline += cycl;
 
@@ -250,7 +250,7 @@ void read_lightgun_position(int x, int y)
 	}
 }
 
-int rend_end_sch(int tag, int cycl, int jitt)
+int rend_end_sch(void* sh4, int tag, int cycl, int jitt)
 {
 	asic_RaiseInterrupt(holly_RENDER_DONE);
 	asic_RaiseInterrupt(holly_RENDER_DONE_isp);
@@ -261,9 +261,9 @@ int rend_end_sch(int tag, int cycl, int jitt)
 
 bool spg_Init()
 {
-	render_end_schid=sh4_sched_register(0,&rend_end_sch);
-	vblank_schid=sh4_sched_register(0,&spg_line_sched);
-	time_sync=sh4_sched_register(0,&elapse_time);
+	render_end_schid=sh4_sched_register(sh4_cpu, 0,&rend_end_sch);
+	vblank_schid=sh4_sched_register(sh4_cpu, 0,&spg_line_sched);
+	time_sync=sh4_sched_register(sh4_cpu, 0,&elapse_time);
 
 	sh4_sched_request(time_sync,8*1000*1000);
 

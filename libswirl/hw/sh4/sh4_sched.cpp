@@ -75,9 +75,9 @@ void sh4_sched_ffts()
 	sh4_sched_ffb+=Sh4cntx.sh4_sched_next;
 }
 
-int sh4_sched_register(int tag, sh4_sched_callback* ssc)
+int sh4_sched_register(void* context, int tag, sh4_sched_callback* ssc)
 {
-	sched_list t={ssc,tag,-1,-1};
+	sched_list t={ssc,context, tag,-1,-1};
 
 	sch_list.push_back(t);
 
@@ -137,7 +137,7 @@ void handle_cb(int id)
 	int jitter=elapsd-remain;
 
 	sch_list[id].end=-1;
-	int re_sch=sch_list[id].cb(sch_list[id].tag,remain,jitter);
+	int re_sch=sch_list[id].cb(sch_list[id].context, sch_list[id].tag,remain,jitter);
 
 	if (re_sch > 0)
 		sh4_sched_request(id, std::max(0, re_sch - jitter));

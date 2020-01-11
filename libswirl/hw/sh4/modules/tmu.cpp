@@ -88,12 +88,12 @@ s64 read_TMU_TCNTch64(void* psh4, u32 ch)
 	return tmu_ch_base64[ch] - ((sh4_sched_now64() >> tmu_shift[ch])&tmu_mask64[ch]);
 }
 
-void sched_chan_tick(int ch)
+void sched_chan_tick(void* psh4, int ch)
 {
 	//schedule next interrupt
 	//return TMU_TCOR(ch) << tmu_shift[ch];
 
-	u32 togo = read_TMU_TCNTch(sh4_cpu, ch);
+	u32 togo = read_TMU_TCNTch(psh4, ch);
 
 	if (togo > SH4_MAIN_CLOCK)
 		togo = SH4_MAIN_CLOCK;
@@ -107,7 +107,6 @@ void sched_chan_tick(int ch)
 		sh4_sched_request(tmu_sched[ch], cycles );
 	else
 		sh4_sched_request(tmu_sched[ch], -1);
-	//sched_tmu_cb
 }
 
 void write_TMU_TCNTch(void* psh4, u32 ch, u32 data)
@@ -116,7 +115,7 @@ void write_TMU_TCNTch(void* psh4, u32 ch, u32 data)
 	tmu_ch_base[ch]=data+((sh4_sched_now64()>>tmu_shift[ch])&tmu_mask[ch]);
 	tmu_ch_base64[ch] = data + ((sh4_sched_now64() >> tmu_shift[ch])&tmu_mask64[ch]);
 
-	sched_chan_tick(ch);
+	sched_chan_tick(psh4, ch);
 }
 
 template<u32 ch>
@@ -138,7 +137,7 @@ void turn_on_off_ch(void* psh4, u32 ch, bool on)
 	tmu_mask64[ch] = on ? 0xFFFFFFFFFFFFFFFF : 0x0000000000000000;
 	write_TMU_TCNTch(psh4, ch,TCNT);
 
-	sched_chan_tick(ch);
+	sched_chan_tick(psh4, ch);
 }
 
 //Update internal counter registers
@@ -189,7 +188,7 @@ void UpdateTMUCounts(void* psh4, u32 reg)
 	}
 	tmu_shift[reg]+=2;
 	write_TMU_TCNTch(psh4, reg,TCNT);
-	sched_chan_tick(reg);
+	sched_chan_tick(psh4, reg);
 }
 
 //Write to status registers
@@ -221,13 +220,13 @@ void write_TMU_TSTR(void* psh4, u32 addr, u32 data)
 		turn_on_off_ch(psh4, i,data&(1<<i));
 }
 
-int sched_tmu_cb(int ch, int sch_cycl, int jitter)
+int sched_tmu_cb(void* psh4, int ch, int sch_cycl, int jitter)
 {
 	if (tmu_mask[ch]) {
 		
-		u32 tcnt = read_TMU_TCNTch(sh4_cpu, ch);
+		u32 tcnt = read_TMU_TCNTch(psh4, ch);
 		
-		s64 tcnt64 = (s64)read_TMU_TCNTch64(sh4_cpu, ch);
+		s64 tcnt64 = (s64)read_TMU_TCNTch64(psh4, ch);
 
 		u32 tcor = TMU_TCOR(ch);
 
@@ -242,12 +241,12 @@ int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 			//printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
 
 			//schedule next trigger by writing the TCNT register
-			write_TMU_TCNTch(sh4_cpu, ch, tcor + tcnt);
+			write_TMU_TCNTch(psh4, ch, tcor + tcnt);
 		}
 		else {
 			
 			//schedule next trigger by writing the TCNT register
-			write_TMU_TCNTch(sh4_cpu, ch, tcnt);
+			write_TMU_TCNTch(psh4, ch, tcnt);
 		}
 
 		return 0;	//has already been scheduled by TCNT write
@@ -297,7 +296,7 @@ void tmu_init()
 	sh4_rio_reg(sh4_cpu, TMU,TMU_TCPR2_addr,RIO_FUNC,32,&TMU_TCPR2_read,&TMU_TCPR2_write);
 
 	for (int i = 0; i < 3; i++) {
-		tmu_sched[i] = sh4_sched_register(i, &sched_tmu_cb);
+		tmu_sched[i] = sh4_sched_register(sh4_cpu, i, &sched_tmu_cb);
 		sh4_sched_request(tmu_sched[i], -1);
 	}
 }

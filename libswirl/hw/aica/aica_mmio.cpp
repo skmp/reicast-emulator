@@ -297,7 +297,7 @@ struct AicaDevice : MMIODevice {
 MMIODevice* Create_AicaDevice() {
     return new AicaDevice();
 }
-int dma_end_sched(int tag, int cycl, int jitt)
+int dma_end_sched(void* psh4, int tag, int cycl, int jitt)
 {
 	u32 len=SB_ADLEN & 0x7FFFFFFF;
 
@@ -319,7 +319,7 @@ int dma_end_sched(int tag, int cycl, int jitt)
 	return 0;
 }
 
-void Write_SB_ADST(void* that, u32 addr, u32 data)
+void Write_SB_ADST(void* psh4, u32 addr, u32 data)
 {
 	//0x005F7800	SB_ADSTAG	RW	AICA:G2-DMA G2 start address 
 	//0x005F7804	SB_ADSTAR	RW	AICA:G2-DMA system memory start address 
@@ -365,13 +365,13 @@ void Write_SB_ADST(void* that, u32 addr, u32 data)
 				// Schedule the end of DMA transfer interrupt
 				int cycles = len * (SH4_MAIN_CLOCK / 2 / 25000000);       // 16 bits @ 25 MHz
 				if (cycles < 4096)
-					dma_end_sched(0, 0, 0);
+					dma_end_sched(psh4, 0, 0, 0);
 				else
 					sh4_sched_request(dma_sched_id, cycles);
 			}
 			else
 			{
-				dma_end_sched(0, 0, 0);
+				dma_end_sched(psh4, 0, 0, 0);
 			}
 		}
 	}
@@ -490,7 +490,7 @@ void aica_sb_Init(SBDevice* sb)
 
 	//sb_regs[((SB_E1ST_addr-SB_BASE)>>2)].flags=REG_32BIT_READWRITE | REG_READ_DATA;
 	//sb_regs[((SB_E1ST_addr-SB_BASE)>>2)].writeFunction=Write_SB_E1ST;
-	dma_sched_id = sh4_sched_register(0, &dma_end_sched);
+	dma_sched_id = sh4_sched_register(sh4_cpu, 0, &dma_end_sched);
 }
 
 void aica_sb_Reset(bool Manual)

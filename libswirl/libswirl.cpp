@@ -26,6 +26,8 @@
 #include "input/gamepad_device.h"
 #include "rend/TexCache.h"
 
+#include "hw/gdrom/gdromv3.h"
+
 #define fault_printf(...)
 
 #ifdef SCRIPTING
@@ -36,6 +38,7 @@ unique_ptr<VirtualDreamcast> virtualDreamcast;
 unique_ptr<GDRomDisc> g_GDRDisc;
 unique_ptr<SoundCPU> g_SoundCPU;
 unique_ptr<AICA> g_AICA;
+MMIODevice* g_GDRomDrive;
 
 
 static unique_ptr<PowerVR> powerVR;
@@ -53,8 +56,8 @@ static bool extra_depth_game;
 
 MMIODevice* Create_BiosDevice();
 MMIODevice* Create_FlashDevice();
-MMIODevice* Create_GDRomOrNaomiDevice();
-MMIODevice* Create_SBDevice();
+MMIODevice* Create_NaomiDevice();
+SBDevice* Create_SBDevice();
 MMIODevice* Create_PVRDevice();
 MMIODevice* Create_ExtDevice();
 MMIODevice* Create_AicaDevice();
@@ -815,9 +818,22 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         MMIODevice* biosDevice = Create_BiosDevice();
         MMIODevice* flashDevice = Create_FlashDevice();
-        MMIODevice* gdromOrNaomiDevice = Create_GDRomOrNaomiDevice();
+        
+        SBDevice* sbDevice = Create_SBDevice();
 
-        MMIODevice* sbDevice = Create_SBDevice();
+        MMIODevice* gdromOrNaomiDevice =
+        
+#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
+            Create_NaomiDevice()
+#else
+            (g_GDRomDrive = Create_GDRomDevice(sbDevice))
+#endif
+        ;
+
+
+        
+
+        
         MMIODevice* pvrDevice = Create_PVRDevice();
         MMIODevice* extDevice = Create_ExtDevice();
         MMIODevice* aicaDevice = Create_AicaDevice();
@@ -840,6 +856,9 @@ struct Dreamcast_impl : VirtualDreamcast {
     void Term()
     {
         sh4_cpu->Term();
+        
+        g_GDRomDrive = nullptr;
+
 #if DC_PLATFORM != DC_PLATFORM_DREAMCAST
         naomi_cart_Close();
 #endif

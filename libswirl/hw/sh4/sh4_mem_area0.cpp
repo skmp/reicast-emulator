@@ -166,21 +166,13 @@ struct FlashDevice : MMIODevice {
     }
 };
 
-struct GDRomOrNaomiDevice : MMIODevice {
+struct NaomiDevice : MMIODevice {
     u32 Read(u32 addr, u32 sz) {
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
         return ReadMem_naomi(addr, sz);
-#else
-        return ReadMem_gdrom(addr, sz);
-#endif
     }
     
     void Write(u32 addr, u32 data, u32 sz) {
-#if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
         WriteMem_naomi(addr, data, sz);
-#else
-        WriteMem_gdrom(addr, data, sz);
-#endif
     }
 };
 
@@ -231,8 +223,8 @@ MMIODevice* Create_BiosDevice() {
 MMIODevice* Create_FlashDevice() {
 	return new FlashDevice();
 }
-MMIODevice* Create_GDRomOrNaomiDevice() {
-	return new GDRomOrNaomiDevice();
+MMIODevice* Create_NaomiDevice() {
+	return new NaomiDevice();
 }
 
 MMIODevice* Create_ExtDevice() {
@@ -420,19 +412,25 @@ void  DYNACALL WriteMem_area0(SuperH4* psh4, u32 addr,T data)
 }
 
 //Init/Res/Term
-void sh4_area0_Init(SuperH4_impl* sh4)
+bool sh4_area0_Init(SuperH4_impl* sh4)
 {
-	sh4->devices[A0H_SB]->Init();
+	for (const auto& dev : sh4->devices)
+		if (!dev->Init())
+			return false;
+
+	return true;
 }
 
 void sh4_area0_Reset(SuperH4_impl* sh4, bool Manual)
 {
-	sh4->devices[A0H_SB]->Reset(Manual);
+	for (const auto& dev : sh4->devices)
+		dev->Reset(Manual);
 }
 
 void sh4_area0_Term(SuperH4_impl* sh4)
 {
-	sh4->devices[A0H_SB]->Term();
+	for (const auto& dev : sh4->devices)
+		dev->Term();
 }
 
 

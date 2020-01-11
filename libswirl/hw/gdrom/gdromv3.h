@@ -5,13 +5,6 @@
 #include "types.h"
 #include "hw/holly/sb.h"
 
-void gdrom_sb_Init(SBDevice* sb);
-void gdrom_sb_Term();
-void gdrom_sb_Reset(bool Manual);
-
-u32 ReadMem_gdrom(u32 Addr, u32 sz);
-void WriteMem_gdrom(u32 Addr, u32 data, u32 sz);
-
 enum gd_states
 {
 	//Generic
@@ -295,3 +288,5 @@ extern char szExDT[8][32];
 #define SPI_CD_READ   0x30 // 
 #define SPI_CD_READ2  0x31 // 
 #define SPI_GET_SCD   0x40 // 
+
+MMIODevice* Create_GDRomDevice(SBDevice* sb);

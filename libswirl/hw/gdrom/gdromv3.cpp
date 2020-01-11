@@ -30,7 +30,7 @@ static int GDRomschd(void* pgdd, int i, int c, int j);
 static void GDROM_DmaStart(void* pgdd, u32 addr, u32 data);
 static void GDROM_DmaEnable(void* pgdd, u32 addr, u32 data);
 
-struct GDRomV3_impl {
+struct GDRomV3_impl final : MMIODevice {
     int gdrom_schid;
 
     //Sense: ASC - ASCQ - Key
@@ -39,16 +39,16 @@ struct GDRomV3_impl {
     signed int sns_key = 0;
 
 
-    u32 set_mode_offset;
-    read_params_t read_params;
-    packet_cmd_t packet_cmd;
-    read_buff_t read_buff;
-    pio_buff_t pio_buff;
-    ata_cmd_t ata_cmd;
-    cdda_t cdda;
+    u32 set_mode_offset = 0;
+    read_params_t read_params = { 0 };
+    packet_cmd_t packet_cmd = { 0 };
+    read_buff_t read_buff = { 0 };
+    pio_buff_t pio_buff = { gds_waitcmd, 0 };
+    ata_cmd_t ata_cmd = { 0 };
+    cdda_t cdda = { 0 };
 
-    gd_states gd_state;
-    DiscType gd_disk_type;
+    gd_states gd_state = gds_waitcmd;
+    DiscType gd_disk_type = NoDisk;
     /*
         GD rom reset -> GDS_WAITCMD
 
@@ -60,16 +60,16 @@ struct GDRomV3_impl {
     u32 data_write_mode = 0;
 
     //Registers
-    u32 DriveSel;
-    GD_ErrRegT Error;
-    GD_InterruptReasonT IntReason;
-    GD_FeaturesT Features;
-    GD_SecCountT SecCount;
-    GD_SecNumbT SecNumber;
+    u32 DriveSel = 0;
+    GD_ErrRegT Error = { 0 };
+    GD_InterruptReasonT IntReason = { 0 };
+    GD_FeaturesT Features = { 0 };
+    GD_SecCountT SecCount = { 0 };
+    GD_SecNumbT SecNumber = { 0 };
 
-    GD_StatusT GDStatus;
+    GD_StatusT GDStatus = { 0 };
 
-    ByteCount_t ByteCount;
+    ByteCount_t ByteCount = { 0 };
 
     //end
     void FillReadBuffer()
@@ -229,7 +229,10 @@ struct GDRomV3_impl {
     void gd_setdisc()
     {
         cdda.playing = false;
-        DiscType newd = (DiscType)g_GDRDisc->GetDiscType();
+
+        DiscType newd = NoDisk;
+        
+        if (g_GDRDisc) (DiscType)g_GDRDisc->GetDiscType();
 
         if (newd == NoDisk) {
             sns_asc = 0x29;
@@ -788,7 +791,7 @@ struct GDRomV3_impl {
         }
     }
     //Read handler
-    u32 ReadMem_gdrom(u32 Addr, u32 sz)
+    u32 Read(u32 Addr, u32 sz)
     {
         switch (Addr)
         {
@@ -864,7 +867,7 @@ struct GDRomV3_impl {
     }
 
     //Write Handler
-    void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
+    void Write(u32 Addr, u32 data, u32 sz)
     {
         switch (Addr)
         {
@@ -956,13 +959,13 @@ struct GDRomV3_impl {
     }
 
     GDRomV3_impl(SBDevice* sb) {
-        memset(this,0, sizeof(*this));
-
         sb->RegisterRIO(this, SB_GDST_addr, RIO_WF, 0, &GDROM_DmaStart);
 
         sb->RegisterRIO(this, SB_GDEN_addr, RIO_WF, 0, &GDROM_DmaEnable);
 
         gdrom_schid = sh4_sched_register(this, 0, &GDRomschd);
+
+        gd_setdisc();
     }
 
     int getGDROMTicks()
@@ -1209,49 +1212,36 @@ static void GDROM_DmaEnable(void* pgdd, u32 addr, u32 data)
 
 #include <memory>
 
-unique_ptr<GDRomV3_impl> g_GDRomDrive;
-
+MMIODevice* Create_GDRomDevice(SBDevice* sb) {
+    return new GDRomV3_impl(sb);
+}
 //Init/Term/Res
-void gdrom_sb_Init(SBDevice* sb)
-{
-    g_GDRomDrive.reset(new GDRomV3_impl(sb));
 
-    libCore_gdrom_disc_change();
-}
-void gdrom_sb_Term()
-{
-    g_GDRomDrive.reset(nullptr);
-}
-
-void gdrom_sb_Reset(bool Manual)
-{
-    g_GDRomDrive->Reset();
-}
 
 //disk changes etc
 void libCore_gdrom_disc_change()
 {
-    if (g_GDRomDrive) g_GDRomDrive->gd_setdisc();
+    if (g_GDRomDrive) dynamic_cast<GDRomV3_impl*>(g_GDRomDrive)->gd_setdisc();
 }
 
 void libCore_CDDA_Sector(s16* sector)
 {
-    g_GDRomDrive->ReadCDDA(sector);
+    dynamic_cast<GDRomV3_impl*>(g_GDRomDrive)->ReadCDDA(sector);
 }
 
 u32 ReadMem_gdrom(u32 Addr, u32 sz)
 {
-    return g_GDRomDrive->ReadMem_gdrom(Addr, sz);
+    return dynamic_cast<GDRomV3_impl*>(g_GDRomDrive)->Read(Addr, sz);
 }
 void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 {
-    g_GDRomDrive->WriteMem_gdrom(Addr, data, sz);
+    dynamic_cast<GDRomV3_impl*>(g_GDRomDrive)->Write(Addr, data, sz);
 }
 
 void gdrom_serialize(void** data, unsigned int* total_size) {
-    g_GDRomDrive->gdrom_serialize(data, total_size);
+    dynamic_cast<GDRomV3_impl*>(g_GDRomDrive)->gdrom_serialize(data, total_size);
 }
 
 bool gdrom_unserialize(void** data, unsigned int* total_size) {
-    return g_GDRomDrive->gdrom_unserialize(data, total_size);
+    return dynamic_cast<GDRomV3_impl*>(g_GDRomDrive)->gdrom_unserialize(data, total_size);
 }

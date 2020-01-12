@@ -670,8 +670,6 @@ void sb_Init(SBDevice* sb)
 	SB_TFREM = 8;
 
 	asic_sb_Init(sb);
-
-	maple_Init(sb);
 	
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
 	ModemInit();
@@ -681,14 +679,10 @@ void sb_Init(SBDevice* sb)
 void sb_Reset(bool Manual)
 {
 	asic_sb_Reset(Manual);
-
-	maple_Reset(Manual);
 }
 
 void sb_Term()
 {
-	maple_Term();
-
 	asic_sb_Term();
 }
 

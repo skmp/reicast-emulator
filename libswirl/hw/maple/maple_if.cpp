@@ -227,7 +227,7 @@ void maple_DoDma()
 	sh4_sched_request(maple_schid,xfer_count*(SH4_MAIN_CLOCK/(2*1024*1024/8)));
 }
 
-int maple_schd(void* psh4, int tag, int c, int j)
+int maple_schd(void* that, int tag, int c, int j)
 {
 	if (SB_MDEN&1)
 	{
@@ -243,33 +243,45 @@ int maple_schd(void* psh4, int tag, int c, int j)
 	return 0;
 }
 
-//Init registers :)
-void maple_Init(SBDevice* sb)
-{
-	sb->RegisterRIO(sh4_cpu, SB_MDST_addr,RIO_WF,0,&maple_SB_MDST_Write);
-	
-	sb->RegisterRIO(sh4_cpu, SB_MDEN_addr,RIO_WF,0,&maple_SB_MDEN_Write);
+struct MapleDevice : MMIODevice {
+	SBDevice* sb;
 
-	sb->RegisterRIO(sh4_cpu, SB_MSHTCL_addr,RIO_WF,0,&maple_SB_MSHTCL_Write);
+	MapleDevice(SBDevice* sb) : sb(sb) { }
 
-	maple_schid=sh4_sched_register(sh4_cpu, 0,&maple_schd);
-}
+	//Init registers :)
+	bool Init()
+	{
+		sb->RegisterRIO(this, SB_MDST_addr, RIO_WF, 0, &maple_SB_MDST_Write);
 
-void maple_Reset(bool Manual)
-{
-	maple_ddt_pending_reset=false;
-	SB_MDTSEL = 0x00000000;
-	SB_MDEN   = 0x00000000;
-	SB_MDST   = 0x00000000;
-	SB_MSYS   = 0x3A980000;
-	SB_MSHTCL = 0x00000000;
-	SB_MDAPRO = 0x00007F00;
-	SB_MMSEL  = 0x00000001;
-}
+		sb->RegisterRIO(this, SB_MDEN_addr, RIO_WF, 0, &maple_SB_MDEN_Write);
 
-void maple_Term()
-{
-	
+		sb->RegisterRIO(this, SB_MSHTCL_addr, RIO_WF, 0, &maple_SB_MSHTCL_Write);
+
+		maple_schid = sh4_sched_register(this, 0, &maple_schd);
+
+		return true;
+	}
+
+	void Reset(bool Manual)
+	{
+		maple_ddt_pending_reset = false;
+		SB_MDTSEL = 0x00000000;
+		SB_MDEN = 0x00000000;
+		SB_MDST = 0x00000000;
+		SB_MSYS = 0x3A980000;
+		SB_MSHTCL = 0x00000000;
+		SB_MDAPRO = 0x00007F00;
+		SB_MMSEL = 0x00000001;
+	}
+
+	void Term()
+	{
+
+	}
+};
+
+MMIODevice* Create_MapleDevice(SBDevice* sb) {
+	return new MapleDevice(sb);
 }
 
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST

@@ -247,6 +247,8 @@ enum Area0Hanlders {
 	A0H_RTC,
 	A0H_EXT,
 
+	A0H_MAPLE,
+
 	A0H_MAX
 };
 

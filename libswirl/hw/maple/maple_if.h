@@ -6,9 +6,8 @@
 extern maple_device* MapleDevices[4][6];
 
 struct SBDevice;
-void maple_Init(SBDevice* sb);
-void maple_Reset(bool Manual);
-void maple_Term();
+MMIODevice* Create_MapleDevice(SBDevice* sb);
+
 void maple_ReconnectDevices();
 
 void maple_vblank();

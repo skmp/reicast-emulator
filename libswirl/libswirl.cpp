@@ -28,6 +28,8 @@
 
 #include "hw/gdrom/gdromv3.h"
 
+#include "hw/maple/maple_if.h"
+
 #define fault_printf(...)
 
 #ifdef SCRIPTING
@@ -832,6 +834,7 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         MMIODevice* pvrDevice = Create_PVRDevice(sbDevice);
         MMIODevice* aicaDevice = Create_AicaDevice(sbDevice);
+        MMIODevice* mapleDevice = Create_MapleDevice(sbDevice);
         
         MMIODevice* extDevice = Create_ExtDevice();
         MMIODevice* rtcDevice = Create_RTCDevice();
@@ -845,6 +848,8 @@ struct Dreamcast_impl : VirtualDreamcast {
         sh4_cpu->SetA0Handler(A0H_AICA, aicaDevice);
         sh4_cpu->SetA0Handler(A0H_RTC, rtcDevice);
         sh4_cpu->SetA0Handler(A0H_EXT, extDevice);
+
+        sh4_cpu->SetA0Handler(A0H_MAPLE, mapleDevice);
 
         return sh4_cpu->Init();
     }

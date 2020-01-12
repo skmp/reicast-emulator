@@ -3,8 +3,6 @@
 */
 
 #pragma once
-struct SBDevice;
-
 
 void NaomiBoardIDWrite(const u16 Data);
 void NaomiBoardIDWriteControl(const u16 Data);

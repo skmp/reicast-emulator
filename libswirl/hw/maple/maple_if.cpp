@@ -244,9 +244,9 @@ int maple_schd(void* that, int tag, int c, int j)
 }
 
 struct MapleDevice : MMIODevice {
-	SBDevice* sb;
+	SystemBus* sb;
 
-	MapleDevice(SBDevice* sb) : sb(sb) { }
+	MapleDevice(SystemBus* sb) : sb(sb) { }
 
 	//Init registers :)
 	bool Init()
@@ -280,7 +280,7 @@ struct MapleDevice : MMIODevice {
 	}
 };
 
-MMIODevice* Create_MapleDevice(SBDevice* sb) {
+MMIODevice* Create_MapleDevice(SystemBus* sb) {
 	return new MapleDevice(sb);
 }
 

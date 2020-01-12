@@ -289,4 +289,4 @@ extern char szExDT[8][32];
 #define SPI_CD_READ2  0x31 // 
 #define SPI_GET_SCD   0x40 // 
 
-MMIODevice* Create_GDRomDevice(SBDevice* sb);
+MMIODevice* Create_GDRomDevice(SystemBus* sb);

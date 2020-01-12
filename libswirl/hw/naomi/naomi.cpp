@@ -404,9 +404,9 @@ void Naomi_DmaStart(void* that, u32 addr, u32 data);
 void Naomi_DmaEnable(void* that, u32 addr, u32 data);
 
 struct NaomiDevice_impl : MMIODevice {
-	SBDevice* sb;
+	SystemBus* sb;
 
-	NaomiDevice_impl(SBDevice* sb) : sb(sb) { }
+	NaomiDevice_impl(SystemBus* sb) : sb(sb) { }
 
 	u32 Read(u32 Addr, u32 sz)
 	{
@@ -646,7 +646,7 @@ void Naomi_DmaEnable(void* that, u32 addr, u32 data)
 }
 
 
-MMIODevice* Create_NaomiDevice(SBDevice* sb) {
+MMIODevice* Create_NaomiDevice(SystemBus* sb) {
 	return new NaomiDevice_impl(sb);
 }
 

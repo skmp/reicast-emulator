@@ -972,8 +972,8 @@ struct GDRomV3_impl final : MMIODevice {
         SB_GDEN = 0;
     }
 
-    SBDevice* sb;
-    GDRomV3_impl(SBDevice* sb) : sb(sb) {
+    SystemBus* sb;
+    GDRomV3_impl(SystemBus* sb) : sb(sb) {
        
     }
 
@@ -1217,7 +1217,7 @@ struct GDRomV3_impl final : MMIODevice {
 
 #include <memory>
 
-MMIODevice* Create_GDRomDevice(SBDevice* sb) {
+MMIODevice* Create_GDRomDevice(SystemBus* sb) {
     return new GDRomV3_impl(sb);
 }
 //Init/Term/Res

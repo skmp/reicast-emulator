@@ -31,7 +31,7 @@ Array<RegisterStruct> sb_regs(0x540);
 u32 SB_FFST_rc;
 u32 SB_FFST;
 
-struct SBDevice_impl : SBDevice {
+struct SystemBus_impl : SystemBus {
 
 	u32 sbio_read_noacc(u32 addr) {
 		verify(false); 
@@ -81,7 +81,7 @@ struct SBDevice_impl : SBDevice {
 		}
 	}
 
-	SBDevice_impl() {
+	SystemBus_impl() {
 		sb_regs.Zero();
 
 		for (u32 i = 0; i < sb_regs.Size; i++)
@@ -144,10 +144,10 @@ struct SBDevice_impl : SBDevice {
 		RegisterRIO(this, SB_LMMODE1_addr, RIO_DATA);
 
 		//0x005F688C    SB_FFST     R   FIFO status
-		RegisterRIO(this, SB_FFST_addr, RIO_RO_FUNC, STATIC_FORWARD1(SBDevice_impl, SB_FFST_read));
+		RegisterRIO(this, SB_FFST_addr, RIO_RO_FUNC, STATIC_FORWARD1(SystemBus_impl, SB_FFST_read));
 
 		//0x005F6890    SB_SFRES    W   System reset
-		RegisterRIO(this, SB_SFRES_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, SB_SFRES_write32));
+		RegisterRIO(this, SB_SFRES_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, SB_SFRES_write32));
 
 		//0x005F689C    SB_SBREV    R   System bus revision number
 		RegisterRIO(this, SB_SBREV_addr, RIO_CONST);
@@ -227,10 +227,10 @@ struct SBDevice_impl : SBDevice {
 		RegisterRIO(this, SB_MST_addr, RIO_RO);
 
 		//0x005F6C88    SB_MSHTCL   W   Maple-DMA hard trigger clear
-		RegisterRIO(this, SB_MSHTCL_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_MSHTCL_addr>));
+		RegisterRIO(this, SB_MSHTCL_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_writeonly<SB_MSHTCL_addr>));
 
 		//0x005F6C8C    SB_MDAPRO   W   Maple-DMA address range
-		RegisterRIO(this, SB_MDAPRO_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_MDAPRO_addr>));
+		RegisterRIO(this, SB_MDAPRO_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_writeonly<SB_MDAPRO_addr>));
 
 
 		//0x005F6CE8    SB_MMSEL    RW  Maple MSB selection
@@ -264,39 +264,39 @@ struct SBDevice_impl : SBDevice {
 
 
 		//0x005F7480    SB_G1RRC    W   System ROM read access timing
-		RegisterRIO(this, SB_G1RRC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1RRC_addr>));
+		RegisterRIO(this, SB_G1RRC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_writeonly<SB_G1RRC_addr>));
 
 		//0x005F7484    SB_G1RWC    W   System ROM write access timing
-		RegisterRIO(this, SB_G1RWC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1RWC_addr>));
+		RegisterRIO(this, SB_G1RWC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_writeonly<SB_G1RWC_addr>));
 
 		//0x005F7488    SB_G1FRC    W   Flash ROM read access timing
-		RegisterRIO(this, SB_G1FRC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1FRC_addr>));
+		RegisterRIO(this, SB_G1FRC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_writeonly<SB_G1FRC_addr>));
 
 		//0x005F748C    SB_G1FWC    W   Flash ROM write access timing
-		RegisterRIO(this, SB_G1FWC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1FWC_addr>));
+		RegisterRIO(this, SB_G1FWC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_writeonly<SB_G1FWC_addr>));
 
 		//0x005F7490    SB_G1CRC    W   GD PIO read access timing
-		RegisterRIO(this, SB_G1CRC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1CRC_addr>));
+		RegisterRIO(this, SB_G1CRC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_writeonly<SB_G1CRC_addr>));
 
 		//0x005F7494    SB_G1CWC    W   GD PIO write access timing
-		RegisterRIO(this, SB_G1CWC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1CWC_addr>));
+		RegisterRIO(this, SB_G1CWC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_writeonly<SB_G1CWC_addr>));
 
 
 		//0x005F74A0    SB_G1GDRC   W   GD-DMA read access timing
-		RegisterRIO(this, SB_G1GDRC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1GDRC_addr>));
+		RegisterRIO(this, SB_G1GDRC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_writeonly<SB_G1GDRC_addr>));
 
 		//0x005F74A4    SB_G1GDWC   W   GD-DMA write access timing
-		RegisterRIO(this, SB_G1GDWC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1GDWC_addr>));
+		RegisterRIO(this, SB_G1GDWC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_writeonly<SB_G1GDWC_addr>));
 
 
 		//0x005F74B0    SB_G1SYSM   R   System mode
 		RegisterRIO(this, SB_G1SYSM_addr, RIO_RO);
 
 		//0x005F74B4    SB_G1CRDYC  W   G1IORDY signal control
-		RegisterRIO(this, SB_G1CRDYC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1CRDYC_addr>));
+		RegisterRIO(this, SB_G1CRDYC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_writeonly<SB_G1CRDYC_addr>));
 
 		//0x005F74B8    SB_GDAPRO   W   GD-DMA address range
-		RegisterRIO(this, SB_GDAPRO_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_GDAPRO_addr>));
+		RegisterRIO(this, SB_GDAPRO_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_writeonly<SB_GDAPRO_addr>));
 
 
 		//0x005F74F4    SB_GDSTARD  R   GD-DMA address count (on Root Bus)
@@ -425,7 +425,7 @@ struct SBDevice_impl : SBDevice {
 
 
 		//0x005F78BC    SB_G2APRO   W   G2-DMA address range
-		RegisterRIO(this, SB_G2APRO_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G2APRO_addr>));
+		RegisterRIO(this, SB_G2APRO_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_writeonly<SB_G2APRO_addr>));
 
 
 		//0x005F78C0    SB_ADSTAGD  R   AICA-DMA address counter (on AICA)
@@ -491,7 +491,7 @@ struct SBDevice_impl : SBDevice {
 
 
 		//0x005F7C80    SB_PDAPRO   W   PVR-DMA address range
-		RegisterRIO(this, SB_PDAPRO_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_PDAPRO_addr>));
+		RegisterRIO(this, SB_PDAPRO_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_writeonly<SB_PDAPRO_addr>));
 
 
 		//0x005F7CF0    SB_PDSTAPD  R   PVR-DMA address counter (on Ext)
@@ -505,18 +505,18 @@ struct SBDevice_impl : SBDevice {
 
 		//GDROM unlock register (bios checksumming, etc)
 		//0x005f74e4
-		RegisterRIO(this, 0x005f74e4, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_gdrom_unlock));
+		RegisterRIO(this, 0x005f74e4, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_write_gdrom_unlock));
 
 		//0x005f68a4, 0x005f68ac, 0x005f78a0,0x005f78a4, 0x005f78a8, 0x005f78b0, 0x005f78b4, 0x005f78b8
-		RegisterRIO(this, 0x005f68a4, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
-		RegisterRIO(this, 0x005f68ac, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
-		RegisterRIO(this, 0x005f78a0, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
-		RegisterRIO(this, 0x005f78a4, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
-		RegisterRIO(this, 0x005f78a8, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
-		RegisterRIO(this, 0x005f78ac, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
-		RegisterRIO(this, 0x005f78b0, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
-		RegisterRIO(this, 0x005f78b4, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
-		RegisterRIO(this, 0x005f78b8, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f68a4, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f68ac, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f78a0, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f78a4, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f78a8, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f78ac, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f78b0, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f78b4, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f78b8, RIO_WO_FUNC, 0, STATIC_FORWARD2(SystemBus_impl, sbio_write_zero));
 	}
 
     bool Init() {
@@ -662,12 +662,12 @@ struct SBDevice_impl : SBDevice {
 
 		if (flags == RIO_NO_ACCESS)
 		{
-			sb_regs[idx].readFunctionAddr = STATIC_FORWARD1(SBDevice_impl, sbio_read_noacc);
-			sb_regs[idx].writeFunctionAddr = STATIC_FORWARD2(SBDevice_impl, sbio_write_noacc);
+			sb_regs[idx].readFunctionAddr = STATIC_FORWARD1(SystemBus_impl, sbio_read_noacc);
+			sb_regs[idx].writeFunctionAddr = STATIC_FORWARD2(SystemBus_impl, sbio_write_noacc);
 		}
 		else if (flags == RIO_CONST)
 		{
-			sb_regs[idx].writeFunctionAddr = STATIC_FORWARD2(SBDevice_impl, sbio_write_const);
+			sb_regs[idx].writeFunctionAddr = STATIC_FORWARD2(SystemBus_impl, sbio_write_const);
 		}
 		else
 		{
@@ -677,12 +677,12 @@ struct SBDevice_impl : SBDevice {
 				sb_regs[idx].readFunctionAddr = rf;
 
 			if (flags & REG_WF)
-				sb_regs[idx].writeFunctionAddr = wf == 0 ? STATIC_FORWARD2(SBDevice_impl, sbio_write_noacc) : wf;
+				sb_regs[idx].writeFunctionAddr = wf == 0 ? STATIC_FORWARD2(SystemBus_impl, sbio_write_noacc) : wf;
 		}
 	}
 };
 
 
-SBDevice* Create_SBDevice() {
-    return new SBDevice_impl();
+SystemBus* Create_SystemBus() {
+    return new SystemBus_impl();
 }

@@ -198,7 +198,7 @@ void Write_SB_IML2ERR(void* that, u32 addr, u32 data)
 	asic_RL2Pending();
 }
 
-void asic_sb_Init(SBDevice* sb)
+void asic_sb_Init(SystemBus* sb)
 {
 	sb->RegisterRIO(sh4_cpu, SB_ISTNRM_addr,RIO_FUNC,&Read_SB_ISTNRM, &Write_SB_ISTNRM);
 	

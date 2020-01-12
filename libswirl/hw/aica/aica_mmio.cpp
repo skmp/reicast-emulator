@@ -403,9 +403,9 @@ void Write_SB_DDST(void* that, u32 addr, u32 data)
 }
 
 struct AicaDevice : MMIODevice {
-	SBDevice* sb;
+	SystemBus* sb;
 
-	AicaDevice(SBDevice* sb) : sb(sb) { }
+	AicaDevice(SystemBus* sb) : sb(sb) { }
 
 	u32 Read(u32 addr, u32 sz) {
 		addr &= 0x7FFF;
@@ -505,6 +505,6 @@ struct AicaDevice : MMIODevice {
 
 };
 
-MMIODevice* Create_AicaDevice(SBDevice* sb) {
+MMIODevice* Create_AicaDevice(SystemBus* sb) {
 	return new AicaDevice(sb);
 }

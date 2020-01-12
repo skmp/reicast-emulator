@@ -58,11 +58,11 @@ static bool extra_depth_game;
 
 MMIODevice* Create_BiosDevice();
 MMIODevice* Create_FlashDevice();
-MMIODevice* Create_NaomiDevice(SBDevice* sb);
-SBDevice* Create_SBDevice();
-MMIODevice* Create_PVRDevice(SBDevice* sb);
+MMIODevice* Create_NaomiDevice(SystemBus* sb);
+SystemBus* Create_SystemBus();
+MMIODevice* Create_PVRDevice(SystemBus* sb);
 MMIODevice* Create_ExtDevice();
-MMIODevice* Create_AicaDevice(SBDevice* sb);
+MMIODevice* Create_AicaDevice(SystemBus* sb);
 MMIODevice* Create_RTCDevice();
 
 
@@ -821,20 +821,20 @@ struct Dreamcast_impl : VirtualDreamcast {
         MMIODevice* biosDevice = Create_BiosDevice();
         MMIODevice* flashDevice = Create_FlashDevice();
         
-        SBDevice* sbDevice = Create_SBDevice();
+        SystemBus* SystemBus = Create_SystemBus();
 
         MMIODevice* gdromOrNaomiDevice =
         
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-            Create_NaomiDevice(sbDevice)
+            Create_NaomiDevice(SystemBus)
 #else
-            (g_GDRomDrive = Create_GDRomDevice(sbDevice))
+            (g_GDRomDrive = Create_GDRomDevice(SystemBus))
 #endif
         ;
 
-        MMIODevice* pvrDevice = Create_PVRDevice(sbDevice);
-        MMIODevice* aicaDevice = Create_AicaDevice(sbDevice);
-        MMIODevice* mapleDevice = Create_MapleDevice(sbDevice);
+        MMIODevice* pvrDevice = Create_PVRDevice(SystemBus);
+        MMIODevice* aicaDevice = Create_AicaDevice(SystemBus);
+        MMIODevice* mapleDevice = Create_MapleDevice(SystemBus);
         
         MMIODevice* extDevice = Create_ExtDevice();
         MMIODevice* rtcDevice = Create_RTCDevice();
@@ -842,7 +842,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         sh4_cpu->SetA0Handler(A0H_BIOS, biosDevice);
         sh4_cpu->SetA0Handler(A0H_FLASH, flashDevice);
         sh4_cpu->SetA0Handler(A0H_GDROM, gdromOrNaomiDevice);
-        sh4_cpu->SetA0Handler(A0H_SB, sbDevice);
+        sh4_cpu->SetA0Handler(A0H_SB, SystemBus);
         sh4_cpu->SetA0Handler(A0H_PVR, pvrDevice);
         sh4_cpu->SetA0Handler(A0H_MODEM, extDevice);
         sh4_cpu->SetA0Handler(A0H_AICA, aicaDevice);

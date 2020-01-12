@@ -235,9 +235,9 @@ void RegWrite_SB_SDST(void* that, u32 addr, u32 data)
 
 
 struct PVRDevice : MMIODevice {
-	SBDevice* sb;
+	SystemBus* sb;
 	
-	PVRDevice(SBDevice* sb) : sb(sb) { }
+	PVRDevice(SystemBus* sb) : sb(sb) { }
 
 	u32 Read(u32 addr, u32 sz) {
 		verify(sz == 4);
@@ -295,6 +295,6 @@ struct PVRDevice : MMIODevice {
 
 };
 
-MMIODevice* Create_PVRDevice(SBDevice* sb) {
+MMIODevice* Create_PVRDevice(SystemBus* sb) {
 	return new PVRDevice(sb);
 }

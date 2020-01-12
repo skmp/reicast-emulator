@@ -72,7 +72,7 @@ struct RegisterStruct
 	u32 flags;					//Access flags !
 };
 
-struct SBDevice : MMIODevice {
+struct SystemBus : MMIODevice {
     virtual void RegisterRIO(void* context, u32 reg_addr, RegIO flags, RegReadAddrFP* rf = nullptr, RegWriteAddrFP* wf = nullptr) = 0;
 };
 

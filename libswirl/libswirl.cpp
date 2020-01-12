@@ -56,11 +56,11 @@ static bool extra_depth_game;
 
 MMIODevice* Create_BiosDevice();
 MMIODevice* Create_FlashDevice();
-MMIODevice* Create_NaomiDevice();
+MMIODevice* Create_NaomiDevice(SBDevice* sb);
 SBDevice* Create_SBDevice();
-MMIODevice* Create_PVRDevice();
+MMIODevice* Create_PVRDevice(SBDevice* sb);
 MMIODevice* Create_ExtDevice();
-MMIODevice* Create_AicaDevice();
+MMIODevice* Create_AicaDevice(SBDevice* sb);
 MMIODevice* Create_RTCDevice();
 
 
@@ -824,19 +824,16 @@ struct Dreamcast_impl : VirtualDreamcast {
         MMIODevice* gdromOrNaomiDevice =
         
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-            Create_NaomiDevice()
+            Create_NaomiDevice(sbDevice)
 #else
             (g_GDRomDrive = Create_GDRomDevice(sbDevice))
 #endif
         ;
 
-
+        MMIODevice* pvrDevice = Create_PVRDevice(sbDevice);
+        MMIODevice* aicaDevice = Create_AicaDevice(sbDevice);
         
-
-        
-        MMIODevice* pvrDevice = Create_PVRDevice();
         MMIODevice* extDevice = Create_ExtDevice();
-        MMIODevice* aicaDevice = Create_AicaDevice();
         MMIODevice* rtcDevice = Create_RTCDevice();
 
         sh4_cpu->SetA0Handler(A0H_BIOS, biosDevice);

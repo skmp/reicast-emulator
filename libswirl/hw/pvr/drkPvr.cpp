@@ -22,7 +22,6 @@ struct PowerVR_impl : PowerVR {
 
     void Reset(bool Manual)
     {
-        Regs_Reset(Manual);
         spg_Reset(Manual);
     }
 

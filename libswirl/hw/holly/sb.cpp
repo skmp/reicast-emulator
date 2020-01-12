@@ -671,11 +671,6 @@ void sb_Init(SBDevice* sb)
 
 	asic_sb_Init(sb);
 
-#if DC_PLATFORM != DC_PLATFORM_DREAMCAST
-	naomi_sb_Init(sb);
-#endif
-
-	pvr_sb_Init(sb);
 	maple_Init(sb);
 	aica_sb_Init(sb);
 
@@ -687,10 +682,7 @@ void sb_Init(SBDevice* sb)
 void sb_Reset(bool Manual)
 {
 	asic_sb_Reset(Manual);
-#if DC_PLATFORM != DC_PLATFORM_DREAMCAST
-	naomi_sb_Reset(Manual);
-#endif
-	pvr_sb_Reset(Manual);
+
 	maple_Reset(Manual);
 	aica_sb_Reset(Manual);
 }
@@ -699,10 +691,7 @@ void sb_Term()
 {
 	aica_sb_Term();
 	maple_Term();
-	pvr_sb_Term();
-#if DC_PLATFORM != DC_PLATFORM_DREAMCAST
-	naomi_sb_Term();
-#endif
+
 	asic_sb_Term();
 }
 

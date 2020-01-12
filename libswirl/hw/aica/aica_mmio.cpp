@@ -294,7 +294,7 @@ struct AicaDevice : MMIODevice {
     }
 };
 
-MMIODevice* Create_AicaDevice() {
+MMIODevice* Create_AicaDevice(SBDevice* sb) {
     return new AicaDevice();
 }
 int dma_end_sched(void* psh4, int tag, int cycl, int jitt)

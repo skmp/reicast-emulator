@@ -8,9 +8,6 @@
 
 extern u8 pvr_regs[pvr_RegSize];
 
-void Regs_Reset(bool Manual);
-
-
 #define ID_addr                 0x00000000 // R   Device ID
 #define REVISION_addr           0x00000004 // R   Revision number
 #define SOFTRESET_addr          0x00000008 // RW  CORE & TA software reset

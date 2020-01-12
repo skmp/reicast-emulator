@@ -16,6 +16,7 @@ struct VirtualDreamcast {
     virtual int StartGame(const char* path) = 0;
     virtual void RequestReset() = 0;
     virtual bool HandleFault(unat addr, rei_host_context_t* ctx) = 0;
+    virtual ~VirtualDreamcast() { }
 
     static VirtualDreamcast* Create();
 };

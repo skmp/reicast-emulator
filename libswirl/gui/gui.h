@@ -32,6 +32,7 @@ struct GUI {
     virtual bool IsOpen() = 0;
     virtual bool IsVJoyEdit() = 0;
     virtual bool IsContentBrowser() = 0;
+    virtual ~GUI() { }
 
     static GUI* Create();
 };

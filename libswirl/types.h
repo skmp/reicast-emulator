@@ -756,6 +756,7 @@ struct AICA {
 	virtual void WriteReg(u32 addr, u32 data, u32 size) = 0;
 
 	virtual void Update(u32 cycles) = 0;				//called every ~1800 cycles, set to 0 if not used
+	virtual ~AICA() { }
 
 	static AICA* Create();
 };
@@ -776,6 +777,7 @@ struct GDRomDisc {
 	virtual u32 GetDiscType() = 0;
 	virtual void GetSessionInfo(u8* pout, u8 session) = 0;
 	virtual void Swap() = 0;
+	virtual ~GDRomDisc() { }
 
 	static GDRomDisc* Create();
 };
@@ -802,6 +804,7 @@ struct SoundCPU {
 
 	virtual void SetResetState(u32 State) = 0;
 	virtual void Update(u32 cycles) = 0;
+	virtual ~SoundCPU() { }
 
 	static SoundCPU* Create();
 };

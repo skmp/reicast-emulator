@@ -571,10 +571,10 @@ PipelineShader *GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 	rv<<=2; rv|=pp_ShadInstr;
 	rv<<=1; rv|=pp_Offset;
 	rv<<=2; rv|=pp_FogCtrl;
-	rv<<=1; rv|=pp_Gouraud;
-	rv<<=1; rv|=pp_BumpMap;
-	rv<<=1; rv|=fog_clamping;
-	rv<<=1; rv|=trilinear;
+	rv<<=1; rv|= (int)pp_Gouraud;
+	rv<<=1; rv|= (int)pp_BumpMap;
+	rv<<=1; rv|= (int)fog_clamping;
+	rv<<=1; rv|= (int)trilinear;
 
 	PipelineShader *shader = &gl.shaders[rv];
 	if (shader->program == 0)

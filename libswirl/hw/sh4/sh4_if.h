@@ -272,6 +272,8 @@ struct SuperH4 {
     virtual void ResetCache() = 0;
 
     //virtual void RaiseExeption(u32 ExeptionCode, u32 VectorAddress) = 0;
+
+	virtual ~SuperH4() { }
 };
 
 struct Sh4Context
@@ -384,6 +386,8 @@ struct SuperH4Backend {
     virtual void Term() = 0;
     virtual void Loop() = 0;
     virtual void ClearCache() = 0;
+
+	virtual ~SuperH4Backend() { }
 };
 
 //Get an interface to sh4 interpreter

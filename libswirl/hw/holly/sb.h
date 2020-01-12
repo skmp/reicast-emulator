@@ -79,3 +79,7 @@ struct SBDevice : MMIODevice {
 extern Array<RegisterStruct> sb_regs;
 
 #include "sb_regs.h"
+
+#define STATIC_FORWARD1(class, function) [](void* ctx, u32 a) { auto that = reinterpret_cast<class*>(ctx); return that->function(a); }
+#define STATIC_FORWARD2(class, function) [](void* ctx, u32 a, u32 b) { auto that = reinterpret_cast<class*>(ctx); return that->function(a, b); }
+#define STATIC_FORWARD3(class, function) [](void* ctx, int i, int c, int j) { auto that = reinterpret_cast<class*>(ctx); return that->function(i, c, j); }

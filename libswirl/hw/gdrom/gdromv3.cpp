@@ -26,10 +26,6 @@ void nilprintf(...) {}
 #define printf_subcode nilprintf 
 
 
-static int GDRomschd(void* pgdd, int i, int c, int j);
-static void GDROM_DmaStart(void* pgdd, u32 addr, u32 data);
-static void GDROM_DmaEnable(void* pgdd, u32 addr, u32 data);
-
 //// TOPO: FIX THIS <<<
 //// Hotfix for android / travis CI
 #define dynamic_cast reinterpret_cast
@@ -236,7 +232,9 @@ struct GDRomV3_impl final : MMIODevice {
 
         DiscType newd = NoDisk;
         
-        if (g_GDRDisc) (DiscType)g_GDRDisc->GetDiscType();
+        if (g_GDRDisc) {
+            newd = (DiscType)g_GDRDisc->GetDiscType();
+        }
 
         if (newd == NoDisk) {
             sns_asc = 0x29;
@@ -957,19 +955,26 @@ struct GDRomV3_impl final : MMIODevice {
         }
     }
 
+    bool Init() {
+        sb->RegisterRIO(this, SB_GDST_addr, RIO_WF, 0, STATIC_FORWARD2(GDRomV3_impl, DmaStart));
+
+        sb->RegisterRIO(this, SB_GDEN_addr, RIO_WF, 0, STATIC_FORWARD2(GDRomV3_impl, DmaEnable));
+
+        gdrom_schid = sh4_sched_register(this, 0, STATIC_FORWARD3(GDRomV3_impl, Update));
+
+        gd_setdisc();
+
+        return true;
+    }
+
     void Reset() {
         SB_GDST = 0;
         SB_GDEN = 0;
     }
 
-    GDRomV3_impl(SBDevice* sb) {
-        sb->RegisterRIO(this, SB_GDST_addr, RIO_WF, 0, &GDROM_DmaStart);
-
-        sb->RegisterRIO(this, SB_GDEN_addr, RIO_WF, 0, &GDROM_DmaEnable);
-
-        gdrom_schid = sh4_sched_register(this, 0, &GDRomschd);
-
-        gd_setdisc();
+    SBDevice* sb;
+    GDRomV3_impl(SBDevice* sb) : sb(sb) {
+       
     }
 
     int getGDROMTicks()
@@ -1072,147 +1077,143 @@ struct GDRomV3_impl final : MMIODevice {
 
         return true;
     }
+
+    int Update(int i, int c, int j)
+    {
+        if (!(SB_GDST & 1) || !(SB_GDEN & 1) || (read_buff.cache_size == 0 && read_params.remaining_sectors == 0))
+        {
+            return 0;
+        }
+
+        //SB_GDST=0;
+
+        //TODO : Fix dmaor
+        u32 dmaor = DMAC_DMAOR.full;
+
+        u32 src = SB_GDSTARD,
+            len = SB_GDLEN - SB_GDLEND;
+
+        if (SB_GDLEN & 0x1F)
+        {
+            die("\n!\tGDROM: SB_GDLEN has invalid size !\n");
+            return 0;
+        }
+
+        //if we don't have any more sectors to read
+        if (read_params.remaining_sectors == 0)
+        {
+            //make sure we don't underrun the cache :)
+            len = std::min(len, read_buff.cache_size);
+        }
+
+        len = std::min(len, (u32)10240);
+        // do we need to do this for GDROM DMA?
+        if (0x8201 != (dmaor & DMAOR_MASK))
+        {
+            printf("\n!\tGDROM: DMAOR has invalid settings (%X) !\n", dmaor);
+            //return;
+        }
+
+        if (len == 0)
+        {
+            printf("\n!\tGDROM: Len: %X, Abnormal Termination !\n", len);
+        }
+
+        u32 len_backup = len;
+        if (1 == SB_GDDIR)
+        {
+            while (len)
+            {
+                u32 buff_size = read_buff.cache_size;
+                if (buff_size == 0)
+                {
+                    verify(read_params.remaining_sectors > 0);
+                    //buffer is empty , fill it :)
+                    FillReadBuffer();
+                }
+
+                //transfer up to len bytes
+                if (buff_size > len)
+                {
+                    buff_size = len;
+                }
+                WriteMemBlock_nommu_ptr(src, (u32*)&read_buff.cache[read_buff.cache_index], buff_size);
+                read_buff.cache_index += buff_size;
+                read_buff.cache_size -= buff_size;
+                src += buff_size;
+                len -= buff_size;
+            }
+        }
+        else
+        {
+            msgboxf("GDROM: SB_GDDIR %X (TO AICA WAVE MEM?)", MBX_ICONERROR, SB_GDDIR);
+        }
+
+        //SB_GDLEN = 0x00000000; //13/5/2k7 -> according to docs these regs are not updated by hardware
+        //SB_GDSTAR = (src + len_backup);
+
+        SB_GDLEND += len_backup;
+        SB_GDSTARD += len_backup;//(src + len_backup)&0x1FFFFFFF;
+
+        if (SB_GDLEND == SB_GDLEN)
+        {
+            //printf("Streamed GDMA end - %d bytes transferred\n",SB_GDLEND);
+            SB_GDST = 0;//done
+            // The DMA end interrupt flag
+            asic_RaiseInterrupt(holly_GDROM_DMA);
+        }
+        //Read ALL sectors
+        if (read_params.remaining_sectors == 0)
+        {
+            //And all buffer :p
+            if (read_buff.cache_size == 0)
+            {
+                //verify(!SB_GDST&1) -> dc can do multi read dma
+                gd_set_state(gds_procpacketdone);
+            }
+        }
+
+        return getGDROMTicks();
+    }
+
+    //DMA Start
+    void DmaStart(u32 addr, u32 data)
+    {
+        if (SB_GDEN == 0)
+        {
+            printf("Invalid GD-DMA start, SB_GDEN=0.Ingoring it.\n");
+            return;
+        }
+        SB_GDST |= data & 1;
+
+        if (SB_GDST == 1)
+        {
+            SB_GDSTARD = SB_GDSTAR;
+            SB_GDLEND = 0;
+            //printf("GDROM-DMA start addr %08X len %d\n", SB_GDSTAR, SB_GDLEN);
+
+            int ticks = getGDROMTicks();
+            if (ticks < 448)	// FIXME #define
+            {
+                ticks = Update(0, 0, 0);
+            }
+
+            if (ticks)
+                sh4_sched_request(gdrom_schid, ticks);
+        }
+    }
+
+    void DmaEnable(u32 addr, u32 data)
+    {
+        SB_GDEN = (data & 1);
+        if (SB_GDEN == 0 && SB_GDST == 1)
+        {
+            printf_spi("GD-DMA aborted\n");
+            SB_GDST = 0;
+        }
+    }
 };
 
-//is this needed ?
-static int GDRomschd(void* pgdd, int i, int c, int j)
-{
-    auto gdd = reinterpret_cast<GDRomV3_impl*>(pgdd);
-
-	if(!(SB_GDST&1) || !(SB_GDEN &1) || (gdd->read_buff.cache_size==0 && gdd->read_params.remaining_sectors==0))
-	{
-		return 0;
-	}
-
-	//SB_GDST=0;
-
-	//TODO : Fix dmaor
-	u32 dmaor = DMAC_DMAOR.full;
-
-	u32 src = SB_GDSTARD,
-		len = SB_GDLEN-SB_GDLEND ;
-	
-	if(SB_GDLEN & 0x1F) 
-	{
-		die("\n!\tGDROM: SB_GDLEN has invalid size !\n");
-		return 0;
-	}
-
-	//if we don't have any more sectors to read
-	if (gdd->read_params.remaining_sectors == 0)
-	{
-		//make sure we don't underrun the cache :)
-		len = std::min(len, gdd->read_buff.cache_size);
-	}
-
-	len = std::min(len, (u32)10240);
-	// do we need to do this for GDROM DMA?
-	if(0x8201 != (dmaor &DMAOR_MASK))
-	{
-		printf("\n!\tGDROM: DMAOR has invalid settings (%X) !\n", dmaor);
-		//return;
-	}
-
-	if(len == 0)
-	{
-		printf("\n!\tGDROM: Len: %X, Abnormal Termination !\n", len);
-	}
-
-	u32 len_backup = len;
-	if(1 == SB_GDDIR) 
-	{
-		while(len)
-		{
-			u32 buff_size = gdd->read_buff.cache_size;
-			if (buff_size==0)
-			{
-				verify(gdd->read_params.remaining_sectors>0);
-				//buffer is empty , fill it :)
-                gdd->FillReadBuffer();
-			}
-
-			//transfer up to len bytes
-			if (buff_size>len)
-			{
-				buff_size=len;
-			}
-			WriteMemBlock_nommu_ptr(src,(u32*)&gdd->read_buff.cache[gdd->read_buff.cache_index], buff_size);
-            gdd->read_buff.cache_index+=buff_size;
-            gdd->read_buff.cache_size-=buff_size;
-			src+=buff_size;
-			len-=buff_size;
-		}
-	}
-	else
-	{
-		msgboxf("GDROM: SB_GDDIR %X (TO AICA WAVE MEM?)", MBX_ICONERROR, SB_GDDIR);
-	}
-
-	//SB_GDLEN = 0x00000000; //13/5/2k7 -> according to docs these regs are not updated by hardware
-	//SB_GDSTAR = (src + len_backup);
-
-	SB_GDLEND+= len_backup;
-	SB_GDSTARD+= len_backup;//(src + len_backup)&0x1FFFFFFF;
-
-	if (SB_GDLEND==SB_GDLEN)
-	{
-		//printf("Streamed GDMA end - %d bytes transferred\n",SB_GDLEND);
-		SB_GDST=0;//done
-		// The DMA end interrupt flag
-		asic_RaiseInterrupt(holly_GDROM_DMA);
-	}
-	//Read ALL sectors
-	if (gdd->read_params.remaining_sectors==0)
-	{
-		//And all buffer :p
-		if (gdd->read_buff.cache_size==0)
-		{
-			//verify(!SB_GDST&1) -> dc can do multi read dma
-            gdd->gd_set_state(gds_procpacketdone);
-		}
-	}
-
-	return gdd->getGDROMTicks();
-}
-
-//DMA Start
-static void GDROM_DmaStart(void* pgdd, u32 addr, u32 data)
-{
-    auto gdd = reinterpret_cast<GDRomV3_impl*>(pgdd);
-
-	if (SB_GDEN==0)
-	{
-		printf("Invalid GD-DMA start, SB_GDEN=0.Ingoring it.\n");
-		return;
-	}
-	SB_GDST|=data&1;
-
-	if (SB_GDST==1)
-	{
-		SB_GDSTARD=SB_GDSTAR;
-		SB_GDLEND=0;
-		//printf("GDROM-DMA start addr %08X len %d\n", SB_GDSTAR, SB_GDLEN);
-
-		int ticks = gdd->getGDROMTicks();
-		if (ticks < 448)	// FIXME #define
-		{
-			ticks = GDRomschd(gdd, 0,0,0);
-		}
-
-		if (ticks)
-			sh4_sched_request(gdd->gdrom_schid, ticks);
-	}
-}
-
-static void GDROM_DmaEnable(void* pgdd, u32 addr, u32 data)
-{
-	SB_GDEN = (data & 1);
-	if (SB_GDEN == 0 && SB_GDST == 1)
-	{
-		printf_spi("GD-DMA aborted\n");
-		SB_GDST = 0;
-	}
-}
 
 #include <memory>
 

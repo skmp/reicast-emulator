@@ -672,8 +672,7 @@ void sb_Init(SBDevice* sb)
 	asic_sb_Init(sb);
 
 	maple_Init(sb);
-	aica_sb_Init(sb);
-
+	
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
 	ModemInit();
 #endif
@@ -684,12 +683,10 @@ void sb_Reset(bool Manual)
 	asic_sb_Reset(Manual);
 
 	maple_Reset(Manual);
-	aica_sb_Reset(Manual);
 }
 
 void sb_Term()
 {
-	aica_sb_Term();
 	maple_Term();
 
 	asic_sb_Term();

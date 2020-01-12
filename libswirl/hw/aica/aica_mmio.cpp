@@ -226,77 +226,6 @@ void aica_mmio_Term()
 
 }
 
-struct AicaDevice : MMIODevice {
-    u32 Read(u32 addr, u32 sz) {
-		addr &= 0x7FFF;
-		if (sz == 1)
-		{
-			if (addr == 0x2C01)
-			{
-				return VREG;
-			}
-			else if (addr == 0x2C00)
-			{
-				return ARMRST;
-			}
-			else
-			{
-				return g_AICA->ReadReg(addr, sz);
-			}
-		}
-		else
-		{
-			if (addr == 0x2C00)
-			{
-				return (VREG << 8) | ARMRST;
-			}
-			else
-			{
-				return g_AICA->ReadReg(addr, sz);
-			}
-		}
-    }
-    void Write(u32 addr, u32 data, u32 sz) {
-		addr &= 0x7FFF;
-
-		if (sz == 1)
-		{
-			if (addr == 0x2C01)
-			{
-				VREG = data;
-				printf("VREG = %02X\n", VREG);
-			}
-			else if (addr == 0x2C00)
-			{
-				ARMRST = data;
-				printf("ARMRST = %02X\n", ARMRST);
-				ArmSetRST();
-			}
-			else
-			{
-				g_AICA->WriteReg(addr, data, sz);
-			}
-		}
-		else
-		{
-			if (addr == 0x2C00)
-			{
-				VREG = (data >> 8) & 0xFF;
-				ARMRST = data & 0xFF;
-				printf("VREG = %02X ARMRST %02X\n", VREG, ARMRST);
-				ArmSetRST();
-			}
-			else
-			{
-				g_AICA->WriteReg(addr, data, sz);
-			}
-		}
-    }
-};
-
-MMIODevice* Create_AicaDevice(SBDevice* sb) {
-    return new AicaDevice();
-}
 int dma_end_sched(void* psh4, int tag, int cycl, int jitt)
 {
 	u32 len=SB_ADLEN & 0x7FFFFFFF;
@@ -473,30 +402,109 @@ void Write_SB_DDST(void* that, u32 addr, u32 data)
 		die("SB_DDST DMA not implemented");
 }
 
-void aica_sb_Init(SBDevice* sb)
-{
-	//NRM
-	//6
-    sb->RegisterRIO(sh4_cpu, SB_ADST_addr,RIO_WF,0,&Write_SB_ADST);
-	//sb_regs[((SB_ADST_addr-SB_BASE)>>2)].flags=REG_32BIT_READWRITE | REG_READ_DATA;
-	//sb_regs[((SB_ADST_addr-SB_BASE)>>2)].writeFunction=Write_SB_ADST;
+struct AicaDevice : MMIODevice {
+	SBDevice* sb;
 
-	//I really need to implement G2 dma (and rest dmas actually) properly
-	//THIS IS NOT AICA, its G2-EXT (BBA)
+	AicaDevice(SBDevice* sb) : sb(sb) { }
 
-    sb->RegisterRIO(sh4_cpu, SB_E1ST_addr,RIO_WF,0,&Write_SB_E1ST);
-    sb->RegisterRIO(sh4_cpu, SB_E2ST_addr,RIO_WF,0,&Write_SB_E2ST);
-    sb->RegisterRIO(sh4_cpu, SB_DDST_addr,RIO_WF,0,&Write_SB_DDST);
+	u32 Read(u32 addr, u32 sz) {
+		addr &= 0x7FFF;
+		if (sz == 1)
+		{
+			if (addr == 0x2C01)
+			{
+				return VREG;
+			}
+			else if (addr == 0x2C00)
+			{
+				return ARMRST;
+			}
+			else
+			{
+				return g_AICA->ReadReg(addr, sz);
+			}
+		}
+		else
+		{
+			if (addr == 0x2C00)
+			{
+				return (VREG << 8) | ARMRST;
+			}
+			else
+			{
+				return g_AICA->ReadReg(addr, sz);
+			}
+		}
+	}
+	void Write(u32 addr, u32 data, u32 sz) {
+		addr &= 0x7FFF;
 
-	//sb_regs[((SB_E1ST_addr-SB_BASE)>>2)].flags=REG_32BIT_READWRITE | REG_READ_DATA;
-	//sb_regs[((SB_E1ST_addr-SB_BASE)>>2)].writeFunction=Write_SB_E1ST;
-	dma_sched_id = sh4_sched_register(sh4_cpu, 0, &dma_end_sched);
-}
+		if (sz == 1)
+		{
+			if (addr == 0x2C01)
+			{
+				VREG = data;
+				printf("VREG = %02X\n", VREG);
+			}
+			else if (addr == 0x2C00)
+			{
+				ARMRST = data;
+				printf("ARMRST = %02X\n", ARMRST);
+				ArmSetRST();
+			}
+			else
+			{
+				g_AICA->WriteReg(addr, data, sz);
+			}
+		}
+		else
+		{
+			if (addr == 0x2C00)
+			{
+				VREG = (data >> 8) & 0xFF;
+				ARMRST = data & 0xFF;
+				printf("VREG = %02X ARMRST %02X\n", VREG, ARMRST);
+				ArmSetRST();
+			}
+			else
+			{
+				g_AICA->WriteReg(addr, data, sz);
+			}
+		}
+	}
 
-void aica_sb_Reset(bool Manual)
-{
-}
+	bool Init()
+	{
+		//NRM
+		//6
+		sb->RegisterRIO(sh4_cpu, SB_ADST_addr, RIO_WF, 0, &Write_SB_ADST);
+		//sb_regs[((SB_ADST_addr-SB_BASE)>>2)].flags=REG_32BIT_READWRITE | REG_READ_DATA;
+		//sb_regs[((SB_ADST_addr-SB_BASE)>>2)].writeFunction=Write_SB_ADST;
 
-void aica_sb_Term()
-{
+		//I really need to implement G2 dma (and rest dmas actually) properly
+		//THIS IS NOT AICA, its G2-EXT (BBA)
+
+		sb->RegisterRIO(sh4_cpu, SB_E1ST_addr, RIO_WF, 0, &Write_SB_E1ST);
+		sb->RegisterRIO(sh4_cpu, SB_E2ST_addr, RIO_WF, 0, &Write_SB_E2ST);
+		sb->RegisterRIO(sh4_cpu, SB_DDST_addr, RIO_WF, 0, &Write_SB_DDST);
+
+		//sb_regs[((SB_E1ST_addr-SB_BASE)>>2)].flags=REG_32BIT_READWRITE | REG_READ_DATA;
+		//sb_regs[((SB_E1ST_addr-SB_BASE)>>2)].writeFunction=Write_SB_E1ST;
+		dma_sched_id = sh4_sched_register(sh4_cpu, 0, &dma_end_sched);
+
+		return true;
+	}
+
+	void Reset(bool Manual)
+	{
+	}
+
+	void Term()
+	{
+	}
+
+};
+
+MMIODevice* Create_AicaDevice(SBDevice* sb) {
+	return new AicaDevice(sb);
 }

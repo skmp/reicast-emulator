@@ -30,6 +30,10 @@ static int GDRomschd(void* pgdd, int i, int c, int j);
 static void GDROM_DmaStart(void* pgdd, u32 addr, u32 data);
 static void GDROM_DmaEnable(void* pgdd, u32 addr, u32 data);
 
+//// TOPO: FIX THIS <<<
+//// Hotfix for android / travis CI
+#define dynamic_cast reinterpret_cast
+
 struct GDRomV3_impl final : MMIODevice {
     int gdrom_schid;
 

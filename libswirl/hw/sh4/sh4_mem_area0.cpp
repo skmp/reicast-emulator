@@ -166,17 +166,6 @@ struct FlashDevice : MMIODevice {
     }
 };
 
-struct NaomiDevice : MMIODevice {
-    u32 Read(u32 addr, u32 sz) {
-        return ReadMem_naomi(addr, sz);
-    }
-    
-    void Write(u32 addr, u32 data, u32 sz) {
-        WriteMem_naomi(addr, data, sz);
-    }
-};
-
-
 struct ExtDevice : MMIODevice {
     u32 Read(u32 addr, u32 sz) {
         if (addr >> 16 == 0x0060) {
@@ -223,9 +212,7 @@ MMIODevice* Create_BiosDevice() {
 MMIODevice* Create_FlashDevice() {
 	return new FlashDevice();
 }
-MMIODevice* Create_NaomiDevice() {
-	return new NaomiDevice();
-}
+
 
 MMIODevice* Create_ExtDevice() {
 	return new ExtDevice();

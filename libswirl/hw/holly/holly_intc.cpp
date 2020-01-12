@@ -10,6 +10,8 @@
 	part of the holly block on dc
 */
 
+u32 SB_ISTNRM;
+
 //asic_RLXXPending: Update the intc flags for pending interrupts
 void asic_RL6Pending()
 {

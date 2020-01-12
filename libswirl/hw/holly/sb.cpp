@@ -26,214 +26,60 @@ Array<RegisterStruct> sb_regs(0x540);
 // PVR i/f Control Reg.  //0x100 bytes
 // much empty space
 
-struct SBDevice_impl;
 
-void sb_Init(SBDevice* sb);
-void sb_Reset(bool Manual);
-void sb_Term();
-u32 sb_ReadMem(SBDevice_impl* psh4, u32 addr, u32 sz);
-void sb_WriteMem(SBDevice_impl* psh4, u32 addr, u32 data, u32 sz);
-void sb_rio_register(void* context, u32 reg_addr, RegIO flags, RegReadAddrFP* rf = nullptr, RegWriteAddrFP* wf = nullptr);
-u32 SB_ISTNRM;
-
-u32 sb_ReadMem(SBDevice_impl* psh4, u32 addr,u32 sz)
-{
-	u32 offset = addr-SB_BASE;
-#ifdef TRACE
-	if (offset & 3/*(size-1)*/) //4 is min align size
-	{
-		EMUERROR("Unaligned System Bus register read");
-	}
-#endif
-
-	offset>>=2;
-
-#ifdef TRACE
-	if (sb_regs[offset].flags & sz)
-	{
-#endif
-		if (!(sb_regs[offset].flags & (REG_RF|REG_WO)))
-		{
-			if (sz==4)
-				return sb_regs[offset].data32;
-			else if (sz==2)
-				return sb_regs[offset].data16;
-			else
-				return sb_regs[offset].data8;
-		}
-		else
-		{
-			//printf("SB: %08X\n",addr);
-			if ((sb_regs[offset].flags & REG_WO) || sb_regs[offset].readFunctionAddr == NULL)
-			{
-				EMUERROR("sb_ReadMem write-only reg %08x %d\n", addr, sz);
-				return 0;
-			}
-			return sb_regs[offset].readFunctionAddr(sb_regs[offset].context, addr);
-		}
-#ifdef TRACE
-	}
-	else
-	{
-		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR("ERROR [wrong size read on register]");
-	}
-#endif
-//  if ((sb_regs[offset].flags& REG_NOT_IMPL))
-//      EMUERROR2("Read from System Control Regs , not  implemented , addr=%x",addr);
-	return 0;
-}
-
-void sb_WriteMem(SBDevice_impl* psh4, u32 addr,u32 data,u32 sz)
-{
-	u32 offset = addr-SB_BASE;
-#ifdef TRACE
-	if (offset & 3/*(size-1)*/) //4 is min align size
-	{
-		EMUERROR("Unaligned System bus register write");
-	}
-#endif
-offset>>=2;
-#ifdef TRACE
-	if (sb_regs[offset].flags & sz)
-	{
-#endif
-		if (!(sb_regs[offset].flags & REG_WF) )
-		{
-			if (sz==4)
-				sb_regs[offset].data32=data;
-			else if (sz==2)
-				sb_regs[offset].data16=(u16)data;
-			else
-				sb_regs[offset].data8=(u8)data;
-			return;
-		}
-		else
-		{
-			//printf("SBW: %08X\n",addr);
-			sb_regs[offset].writeFunctionAddr(sb_regs[offset].context, addr,data);
-			/*
-			if (sb_regs[offset].flags & REG_CONST)
-				EMUERROR("Error [Write to read only register , const]");
-			else
-			{
-				if ()
-				{
-					sb_regs[offset].writeFunction(data);
-					return;
-				}
-				else
-				{
-					if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-						EMUERROR("ERROR [Write to read only register]");
-				}
-			}*/
-			return;
-		}
-#ifdef TRACE
-	}
-	else
-	{
-		if (!(sb_regs[offset].flags& REG_NOT_IMPL))
-			EMUERROR4("ERROR :wrong size write on register ; offset=%x , data=%x,sz=%d",offset,data,sz);
-	}
-	if ((sb_regs[offset].flags& REG_NOT_IMPL))
-		EMUERROR3("Write to System Control Regs , not  implemented , addr=%x,data=%x",addr,data);
-#endif
-
-}
-
-u32 sbio_read_noacc(void* that, u32 addr) { verify(false); return 0; }
-void sbio_write_noacc(void* that, u32 addr, u32 data) { verify(false); }
-void sbio_write_const(void* that, u32 addr, u32 data) { verify(false); }
-
-void sb_write_zero(void* that, u32 addr, u32 data) { verify(data==0); }
-void sb_write_gdrom_unlock(void* that, u32 addr, u32 data) { verify(data==0 || data==0x001fffff || data==0x42fe || data == 0xa677
-		 	 	 	 	 	 	 	 	 	 	 	 	 || data == 0x3ff); } /* CS writes 0x42fe, AtomisWave 0xa677, Naomi Dev BIOS 0x3ff */
-
-
-void sb_rio_register(void* context, u32 reg_addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrFP* wf)
-{
-	u32 idx=(reg_addr-SB_BASE)/4;
-
-	verify(idx<sb_regs.Size);
-
-	sb_regs[idx].flags = flags | REG_ACCESS_32;
-	sb_regs[idx].context = context;
-
-	if (flags == RIO_NO_ACCESS)
-	{
-		sb_regs[idx].readFunctionAddr=&sbio_read_noacc;
-		sb_regs[idx].writeFunctionAddr=&sbio_write_noacc;
-	}
-	else if (flags == RIO_CONST)
-	{
-		sb_regs[idx].writeFunctionAddr=&sbio_write_const;
-	}
-	else
-	{
-		sb_regs[idx].data32=0;
-
-		if (flags & REG_RF)
-			sb_regs[idx].readFunctionAddr=rf;
-
-		if (flags & REG_WF)
-			sb_regs[idx].writeFunctionAddr=wf==0?&sbio_write_noacc:wf;
-	}
-}
-
-template <u32 reg_addr>
-void sb_writeonly(void* that, u32 addr, u32 data)
-{
-	SB_REGN_32(reg_addr)=data;
-}
-
+// TODO: MOVE THESE!!! 
 u32 SB_FFST_rc;
 u32 SB_FFST;
-u32 RegRead_SB_FFST(void* that, u32 addr)
-{
-	SB_FFST_rc++;
-	if (SB_FFST_rc & 0x8)
-	{
-		SB_FFST^=31;
-	}
-	return SB_FFST; // does the fifo status has really to be faked ?
-}
-
-void SB_SFRES_write32(void* that, u32 addr, u32 data)
-{
-	if ((u16)data==0x7611)
-	{
-		printf("SB/HOLLY: System reset requested\n");
-        virtualDreamcast->RequestReset();
-	}
-}
-void sb_Init(SBDevice* sb)
-{
-	asic_sb_Init(sb);
-	
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
-	ModemInit();
-#endif
-}
-
-void sb_Reset(bool Manual)
-{
-	SB_SBREV = 0xB;
-	SB_G2ID = 0x12;
-	SB_G1SYSM = ((0x0 << 4) | (0x1));
-	SB_TFREM = 8;
-
-	asic_sb_Reset(Manual);
-}
-
-void sb_Term()
-{
-	asic_sb_Term();
-}
-
 
 struct SBDevice_impl : SBDevice {
+
+	u32 sbio_read_noacc(u32 addr) {
+		verify(false); 
+		return 0;
+	}
+
+	void sbio_write_noacc(u32 addr, u32 data) { 
+		verify(false); 
+	}
+
+	void sbio_write_const(u32 addr, u32 data) { 
+		verify(false); 
+	}
+
+	void sbio_write_zero(u32 addr, u32 data) {
+		verify(data == 0);
+	}
+
+	void sbio_write_gdrom_unlock(u32 addr, u32 data) {
+		verify(data == 0 || data == 0x001fffff || data == 0x42fe || data == 0xa677
+			|| data == 0x3ff);
+	} /* CS writes 0x42fe, AtomisWave 0xa677, Naomi Dev BIOS 0x3ff */
+
+
+	template <u32 reg_addr>
+	void sbio_writeonly(u32 addr, u32 data)
+	{
+		SB_REGN_32(reg_addr) = data;
+	}
+
+	u32 SB_FFST_read(u32 addr)
+	{
+		SB_FFST_rc++;
+		if (SB_FFST_rc & 0x8)
+		{
+			SB_FFST ^= 31;
+		}
+		return SB_FFST; // does the fifo status has really to be faked ?
+	}
+
+	void SB_SFRES_write32(u32 addr, u32 data)
+	{
+		if ((u16)data == 0x7611)
+		{
+			printf("SB/HOLLY: System reset requested\n");
+			virtualDreamcast->RequestReset();
+		}
+	}
 
 	SBDevice_impl() {
 		sb_regs.Zero();
@@ -298,10 +144,10 @@ struct SBDevice_impl : SBDevice {
 		RegisterRIO(this, SB_LMMODE1_addr, RIO_DATA);
 
 		//0x005F688C    SB_FFST     R   FIFO status
-		RegisterRIO(this, SB_FFST_addr, RIO_RO_FUNC, RegRead_SB_FFST);
+		RegisterRIO(this, SB_FFST_addr, RIO_RO_FUNC, STATIC_FORWARD1(SBDevice_impl, SB_FFST_read));
 
 		//0x005F6890    SB_SFRES    W   System reset
-		RegisterRIO(this, SB_SFRES_addr, RIO_WO_FUNC, 0, SB_SFRES_write32);
+		RegisterRIO(this, SB_SFRES_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, SB_SFRES_write32));
 
 		//0x005F689C    SB_SBREV    R   System bus revision number
 		RegisterRIO(this, SB_SBREV_addr, RIO_CONST);
@@ -381,10 +227,10 @@ struct SBDevice_impl : SBDevice {
 		RegisterRIO(this, SB_MST_addr, RIO_RO);
 
 		//0x005F6C88    SB_MSHTCL   W   Maple-DMA hard trigger clear
-		RegisterRIO(this, SB_MSHTCL_addr, RIO_WO_FUNC, 0, sb_writeonly<SB_MSHTCL_addr>);
+		RegisterRIO(this, SB_MSHTCL_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_MSHTCL_addr>));
 
 		//0x005F6C8C    SB_MDAPRO   W   Maple-DMA address range
-		RegisterRIO(this, SB_MDAPRO_addr, RIO_WO_FUNC, 0, sb_writeonly<SB_MDAPRO_addr>);
+		RegisterRIO(this, SB_MDAPRO_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_MDAPRO_addr>));
 
 
 		//0x005F6CE8    SB_MMSEL    RW  Maple MSB selection
@@ -418,39 +264,39 @@ struct SBDevice_impl : SBDevice {
 
 
 		//0x005F7480    SB_G1RRC    W   System ROM read access timing
-		RegisterRIO(this, SB_G1RRC_addr, RIO_WO_FUNC, 0, sb_writeonly<SB_G1RRC_addr>);
+		RegisterRIO(this, SB_G1RRC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1RRC_addr>));
 
 		//0x005F7484    SB_G1RWC    W   System ROM write access timing
-		RegisterRIO(this, SB_G1RWC_addr, RIO_WO_FUNC, 0, sb_writeonly<SB_G1RWC_addr>);
+		RegisterRIO(this, SB_G1RWC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1RWC_addr>));
 
 		//0x005F7488    SB_G1FRC    W   Flash ROM read access timing
-		RegisterRIO(this, SB_G1FRC_addr, RIO_WO_FUNC, 0, sb_writeonly<SB_G1FRC_addr>);
+		RegisterRIO(this, SB_G1FRC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1FRC_addr>));
 
 		//0x005F748C    SB_G1FWC    W   Flash ROM write access timing
-		RegisterRIO(this, SB_G1FWC_addr, RIO_WO_FUNC, 0, sb_writeonly<SB_G1FWC_addr>);
+		RegisterRIO(this, SB_G1FWC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1FWC_addr>));
 
 		//0x005F7490    SB_G1CRC    W   GD PIO read access timing
-		RegisterRIO(this, SB_G1CRC_addr, RIO_WO_FUNC, 0, sb_writeonly<SB_G1CRC_addr>);
+		RegisterRIO(this, SB_G1CRC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1CRC_addr>));
 
 		//0x005F7494    SB_G1CWC    W   GD PIO write access timing
-		RegisterRIO(this, SB_G1CWC_addr, RIO_WO_FUNC, 0, sb_writeonly<SB_G1CWC_addr>);
+		RegisterRIO(this, SB_G1CWC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1CWC_addr>));
 
 
 		//0x005F74A0    SB_G1GDRC   W   GD-DMA read access timing
-		RegisterRIO(this, SB_G1GDRC_addr, RIO_WO_FUNC, 0, sb_writeonly<SB_G1GDRC_addr>);
+		RegisterRIO(this, SB_G1GDRC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1GDRC_addr>));
 
 		//0x005F74A4    SB_G1GDWC   W   GD-DMA write access timing
-		RegisterRIO(this, SB_G1GDWC_addr, RIO_WO_FUNC, 0, sb_writeonly<SB_G1GDWC_addr>);
+		RegisterRIO(this, SB_G1GDWC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1GDWC_addr>));
 
 
 		//0x005F74B0    SB_G1SYSM   R   System mode
 		RegisterRIO(this, SB_G1SYSM_addr, RIO_RO);
 
 		//0x005F74B4    SB_G1CRDYC  W   G1IORDY signal control
-		RegisterRIO(this, SB_G1CRDYC_addr, RIO_WO_FUNC, 0, sb_writeonly<SB_G1CRDYC_addr>);
+		RegisterRIO(this, SB_G1CRDYC_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G1CRDYC_addr>));
 
 		//0x005F74B8    SB_GDAPRO   W   GD-DMA address range
-		RegisterRIO(this, SB_GDAPRO_addr, RIO_WO_FUNC, 0, sb_writeonly<SB_GDAPRO_addr>);
+		RegisterRIO(this, SB_GDAPRO_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_GDAPRO_addr>));
 
 
 		//0x005F74F4    SB_GDSTARD  R   GD-DMA address count (on Root Bus)
@@ -579,7 +425,7 @@ struct SBDevice_impl : SBDevice {
 
 
 		//0x005F78BC    SB_G2APRO   W   G2-DMA address range
-		RegisterRIO(this, SB_G2APRO_addr, RIO_WO_FUNC, 0, sb_writeonly<SB_G2APRO_addr>);
+		RegisterRIO(this, SB_G2APRO_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_G2APRO_addr>));
 
 
 		//0x005F78C0    SB_ADSTAGD  R   AICA-DMA address counter (on AICA)
@@ -645,7 +491,7 @@ struct SBDevice_impl : SBDevice {
 
 
 		//0x005F7C80    SB_PDAPRO   W   PVR-DMA address range
-		RegisterRIO(this, SB_PDAPRO_addr, RIO_WO_FUNC, 0, sb_writeonly<SB_PDAPRO_addr>);
+		RegisterRIO(this, SB_PDAPRO_addr, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_writeonly<SB_PDAPRO_addr>));
 
 
 		//0x005F7CF0    SB_PDSTAPD  R   PVR-DMA address counter (on Ext)
@@ -659,33 +505,180 @@ struct SBDevice_impl : SBDevice {
 
 		//GDROM unlock register (bios checksumming, etc)
 		//0x005f74e4
-		RegisterRIO(this, 0x005f74e4, RIO_WO_FUNC, 0, sb_write_gdrom_unlock);
+		RegisterRIO(this, 0x005f74e4, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_gdrom_unlock));
 
 		//0x005f68a4, 0x005f68ac, 0x005f78a0,0x005f78a4, 0x005f78a8, 0x005f78b0, 0x005f78b4, 0x005f78b8
-		RegisterRIO(this, 0x005f68a4, RIO_WO_FUNC, 0, sb_write_zero);
-		RegisterRIO(this, 0x005f68ac, RIO_WO_FUNC, 0, sb_write_zero);
-		RegisterRIO(this, 0x005f78a0, RIO_WO_FUNC, 0, sb_write_zero);
-		RegisterRIO(this, 0x005f78a4, RIO_WO_FUNC, 0, sb_write_zero);
-		RegisterRIO(this, 0x005f78a8, RIO_WO_FUNC, 0, sb_write_zero);
-		RegisterRIO(this, 0x005f78ac, RIO_WO_FUNC, 0, sb_write_zero);
-		RegisterRIO(this, 0x005f78b0, RIO_WO_FUNC, 0, sb_write_zero);
-		RegisterRIO(this, 0x005f78b4, RIO_WO_FUNC, 0, sb_write_zero);
-		RegisterRIO(this, 0x005f78b8, RIO_WO_FUNC, 0, sb_write_zero);
+		RegisterRIO(this, 0x005f68a4, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f68ac, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f78a0, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f78a4, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f78a8, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f78ac, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f78b0, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f78b4, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
+		RegisterRIO(this, 0x005f78b8, RIO_WO_FUNC, 0, STATIC_FORWARD2(SBDevice_impl, sbio_write_zero));
 	}
 
-	bool Init() { sb_Init(this); return true; }
-	void Reset(bool m) { sb_Reset(m); }
-	void Term() { sb_Term(); }
+    bool Init() {
+		asic_sb_Init(this);
 
-	u32 Read(u32 addr, u32 sz) {
-		return sb_ReadMem(this, addr, sz);
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
+		ModemInit();
+#endif 
+		
+		return true;
+    }
+
+	void Reset(bool m) { 
+		SB_SBREV = 0xB;
+		SB_G2ID = 0x12;
+		SB_G1SYSM = ((0x0 << 4) | (0x1));
+		SB_TFREM = 8;
+
+		SB_FFST_rc = 0;
+		SB_FFST = 0;
+
+		asic_sb_Reset(m);
 	}
-	void Write(u32 addr, u32 data, u32 sz) {
-		sb_WriteMem(this, addr, data, sz);
+
+	void Term() { 
+		asic_sb_Term();
+	}
+
+	u32 Read(u32 addr, u32 sz)
+	{
+		u32 offset = addr - SB_BASE;
+#ifdef TRACE
+		if (offset & 3/*(size-1)*/) //4 is min align size
+		{
+			EMUERROR("Unaligned System Bus register read");
+		}
+#endif
+
+		offset >>= 2;
+
+#ifdef TRACE
+		if (sb_regs[offset].flags & sz)
+		{
+#endif
+			if (!(sb_regs[offset].flags & (REG_RF | REG_WO)))
+			{
+				if (sz == 4)
+					return sb_regs[offset].data32;
+				else if (sz == 2)
+					return sb_regs[offset].data16;
+				else
+					return sb_regs[offset].data8;
+			}
+			else
+			{
+				//printf("SB: %08X\n",addr);
+				if ((sb_regs[offset].flags & REG_WO) || sb_regs[offset].readFunctionAddr == NULL)
+				{
+					EMUERROR("sb_ReadMem write-only reg %08x %d\n", addr, sz);
+					return 0;
+				}
+				return sb_regs[offset].readFunctionAddr(sb_regs[offset].context, addr);
+			}
+#ifdef TRACE
+		}
+		else
+		{
+			if (!(sb_regs[offset].flags & REG_NOT_IMPL))
+				EMUERROR("ERROR [wrong size read on register]");
+		}
+#endif
+		//  if ((sb_regs[offset].flags& REG_NOT_IMPL))
+		//      EMUERROR2("Read from System Control Regs , not  implemented , addr=%x",addr);
+		return 0;
+	}
+
+	void Write(u32 addr, u32 data, u32 sz)
+	{
+		u32 offset = addr - SB_BASE;
+#ifdef TRACE
+		if (offset & 3/*(size-1)*/) //4 is min align size
+		{
+			EMUERROR("Unaligned System bus register write");
+		}
+#endif
+		offset >>= 2;
+#ifdef TRACE
+		if (sb_regs[offset].flags & sz)
+		{
+#endif
+			if (!(sb_regs[offset].flags & REG_WF))
+			{
+				if (sz == 4)
+					sb_regs[offset].data32 = data;
+				else if (sz == 2)
+					sb_regs[offset].data16 = (u16)data;
+				else
+					sb_regs[offset].data8 = (u8)data;
+				return;
+			}
+			else
+			{
+				//printf("SBW: %08X\n",addr);
+				sb_regs[offset].writeFunctionAddr(sb_regs[offset].context, addr, data);
+				/*
+				if (sb_regs[offset].flags & REG_CONST)
+					EMUERROR("Error [Write to read only register , const]");
+				else
+				{
+					if ()
+					{
+						sb_regs[offset].writeFunction(data);
+						return;
+					}
+					else
+					{
+						if (!(sb_regs[offset].flags& REG_NOT_IMPL))
+							EMUERROR("ERROR [Write to read only register]");
+					}
+				}*/
+				return;
+			}
+#ifdef TRACE
+		}
+		else
+		{
+			if (!(sb_regs[offset].flags & REG_NOT_IMPL))
+				EMUERROR4("ERROR :wrong size write on register ; offset=%x , data=%x,sz=%d", offset, data, sz);
+		}
+		if ((sb_regs[offset].flags & REG_NOT_IMPL))
+			EMUERROR3("Write to System Control Regs , not  implemented , addr=%x,data=%x", addr, data);
+#endif
+
 	}
 
 	void RegisterRIO(void* context, u32 reg_addr, RegIO flags, RegReadAddrFP* rf = nullptr, RegWriteAddrFP* wf = nullptr) {
-		sb_rio_register(context, reg_addr, flags, rf, wf);
+		u32 idx = (reg_addr - SB_BASE) / 4;
+
+		verify(idx < sb_regs.Size);
+
+		sb_regs[idx].flags = flags | REG_ACCESS_32;
+		sb_regs[idx].context = context;
+
+		if (flags == RIO_NO_ACCESS)
+		{
+			sb_regs[idx].readFunctionAddr = STATIC_FORWARD1(SBDevice_impl, sbio_read_noacc);
+			sb_regs[idx].writeFunctionAddr = STATIC_FORWARD2(SBDevice_impl, sbio_write_noacc);
+		}
+		else if (flags == RIO_CONST)
+		{
+			sb_regs[idx].writeFunctionAddr = STATIC_FORWARD2(SBDevice_impl, sbio_write_const);
+		}
+		else
+		{
+			sb_regs[idx].data32 = 0;
+
+			if (flags & REG_RF)
+				sb_regs[idx].readFunctionAddr = rf;
+
+			if (flags & REG_WF)
+				sb_regs[idx].writeFunctionAddr = wf == 0 ? STATIC_FORWARD2(SBDevice_impl, sbio_write_noacc) : wf;
+		}
 	}
 };
 

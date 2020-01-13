@@ -30,6 +30,7 @@
 
 #include "hw/maple/maple_if.h"
 #include "hw/modem/modem.h"
+#include "hw/holly/holly_intc.h"
 
 #define fault_printf(...)
 
@@ -822,20 +823,21 @@ struct Dreamcast_impl : VirtualDreamcast {
         MMIODevice* biosDevice = Create_BiosDevice();
         MMIODevice* flashDevice = Create_FlashDevice();
         
-        SystemBus* SystemBus = Create_SystemBus();
+        SystemBus* systemBus = Create_SystemBus();
+        ASIC* asic = Create_ASIC(systemBus);
 
         MMIODevice* gdromOrNaomiDevice =
         
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
             Create_NaomiDevice(SystemBus)
 #else
-            (g_GDRomDrive = Create_GDRomDevice(SystemBus))
+            (g_GDRomDrive = Create_GDRomDevice(systemBus, asic))
 #endif
         ;
 
-        MMIODevice* pvrDevice = Create_PVRDevice(SystemBus);
-        MMIODevice* aicaDevice = Create_AicaDevice(SystemBus);
-        MMIODevice* mapleDevice = Create_MapleDevice(SystemBus);
+        MMIODevice* pvrDevice = Create_PVRDevice(systemBus);
+        MMIODevice* aicaDevice = Create_AicaDevice(systemBus);
+        MMIODevice* mapleDevice = Create_MapleDevice(systemBus);
         
         MMIODevice* extDevice = Create_ExtDevice(); // or Create_Modem();
 
@@ -850,7 +852,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         sh4_cpu->SetA0Handler(A0H_BIOS, biosDevice);
         sh4_cpu->SetA0Handler(A0H_FLASH, flashDevice);
         sh4_cpu->SetA0Handler(A0H_GDROM, gdromOrNaomiDevice);
-        sh4_cpu->SetA0Handler(A0H_SB, SystemBus);
+        sh4_cpu->SetA0Handler(A0H_SB, systemBus);
         sh4_cpu->SetA0Handler(A0H_PVR, pvrDevice);
         sh4_cpu->SetA0Handler(A0H_MODEM, modemDevice);
         sh4_cpu->SetA0Handler(A0H_AICA, aicaDevice);
@@ -858,6 +860,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         sh4_cpu->SetA0Handler(A0H_EXT, extDevice);
 
         sh4_cpu->SetA0Handler(A0H_MAPLE, mapleDevice);
+        sh4_cpu->SetA0Handler(A0H_ASIC, asic);
 
         return sh4_cpu->Init();
     }

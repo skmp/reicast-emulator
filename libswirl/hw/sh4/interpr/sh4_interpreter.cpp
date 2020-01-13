@@ -206,6 +206,10 @@ void SuperH4_impl::SetA0Handler(Area0Hanlders slot, MMIODevice* dev) {
     devices[slot].reset(dev);
 }
 
+MMIODevice* SuperH4_impl::GetA0Handler(Area0Hanlders slot) {
+    return devices[slot].get();
+}
+
 bool SuperH4_impl::setBackend(SuperH4Backends backend) {
     if (sh4_backend) { sh4_backend->Term(); delete sh4_backend; sh4_backend = nullptr; }
 

@@ -148,7 +148,7 @@ struct GDRomV3_impl final : MMIODevice {
             GDStatus.DRQ = 1;
             GDStatus.BSY = 0;
             //(4)   INTRQ is set, and a host interrupt is issued.
-            asic_RaiseInterrupt(holly_GDROM_CMD);
+            asic->RaiseInterrupt(holly_GDROM_CMD);
             /*
             The number of bytes normally is the byte number in the register at the time of receiving
             the command, but it may also be the total of several devices handled by the buffer at that point.
@@ -206,7 +206,7 @@ struct GDRomV3_impl final : MMIODevice {
             GDStatus.DRQ = 0;
             GDStatus.BSY = 0;
             //Make INTRQ valid
-            asic_RaiseInterrupt(holly_GDROM_CMD);
+            asic->RaiseInterrupt(holly_GDROM_CMD);
 
             //command finished !
             gd_set_state(gds_waitcmd);
@@ -361,7 +361,7 @@ struct GDRomV3_impl final : MMIODevice {
             GDStatus.BSY = 0;
             GDStatus.CHECK = 1;
 
-            asic_RaiseInterrupt(holly_GDROM_CMD);
+            asic->RaiseInterrupt(holly_GDROM_CMD);
             gd_set_state(gds_waitcmd);
             break;
 
@@ -400,7 +400,7 @@ struct GDRomV3_impl final : MMIODevice {
             GDStatus.DSC = 0;
             GDStatus.DF = 0;
             GDStatus.CHECK = 0;
-            asic_RaiseInterrupt(holly_GDROM_CMD);  //???
+            asic->RaiseInterrupt(holly_GDROM_CMD);  //???
             gd_set_state(gds_waitcmd);
             break;
 
@@ -798,7 +798,7 @@ struct GDRomV3_impl final : MMIODevice {
         {
             //cancel interrupt
         case GD_STATUS_Read:
-            asic_CancelInterrupt(holly_GDROM_CMD);	//Clear INTRQ signal
+            asic->CancelInterrupt(holly_GDROM_CMD);	//Clear INTRQ signal
             printf_rm("GDROM: STATUS [cancel int](v=%X)\n", GDStatus.full);
             return GDStatus.full | (1 << 4);
 
@@ -973,7 +973,8 @@ struct GDRomV3_impl final : MMIODevice {
     }
 
     SystemBus* sb;
-    GDRomV3_impl(SystemBus* sb) : sb(sb) {
+    ASIC* asic;
+    GDRomV3_impl(SystemBus* sb, ASIC* asic) : sb(sb), asic(asic) {
        
     }
 
@@ -1160,7 +1161,7 @@ struct GDRomV3_impl final : MMIODevice {
             //printf("Streamed GDMA end - %d bytes transferred\n",SB_GDLEND);
             SB_GDST = 0;//done
             // The DMA end interrupt flag
-            asic_RaiseInterrupt(holly_GDROM_DMA);
+            asic->RaiseInterrupt(holly_GDROM_DMA);
         }
         //Read ALL sectors
         if (read_params.remaining_sectors == 0)
@@ -1217,8 +1218,8 @@ struct GDRomV3_impl final : MMIODevice {
 
 #include <memory>
 
-MMIODevice* Create_GDRomDevice(SystemBus* sb) {
-    return new GDRomV3_impl(sb);
+MMIODevice* Create_GDRomDevice(SystemBus* sb, ASIC* asic) {
+    return new GDRomV3_impl(sb, asic);
 }
 //Init/Term/Res
 
@@ -1233,7 +1234,7 @@ void libCore_CDDA_Sector(s16* sector)
 {
     dynamic_cast<GDRomV3_impl*>(g_GDRomDrive)->ReadCDDA(sector);
 }
-
+/*
 u32 ReadMem_gdrom(u32 Addr, u32 sz)
 {
     return dynamic_cast<GDRomV3_impl*>(g_GDRomDrive)->Read(Addr, sz);
@@ -1242,7 +1243,7 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 {
     dynamic_cast<GDRomV3_impl*>(g_GDRomDrive)->Write(Addr, data, sz);
 }
-
+*/
 void gdrom_serialize(void** data, unsigned int* total_size) {
     dynamic_cast<GDRomV3_impl*>(g_GDRomDrive)->gdrom_serialize(data, total_size);
 }

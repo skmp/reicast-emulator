@@ -248,6 +248,7 @@ enum Area0Hanlders {
 	A0H_EXT,
 
 	A0H_MAPLE,
+	A0H_ASIC,
 
 	A0H_MAX
 };
@@ -256,6 +257,7 @@ struct SuperH4 {
     static SuperH4* Create();
 
 	virtual void SetA0Handler(Area0Hanlders slot, MMIODevice* dev) = 0;
+	virtual MMIODevice* GetA0Handler(Area0Hanlders slot) = 0;
 
     virtual bool setBackend(SuperH4Backends backend) = 0;
 

@@ -13,6 +13,7 @@ struct SuperH4_impl final : SuperH4 {
     unique_ptr<MMIODevice> devices[A0H_MAX];
 
     void SetA0Handler(Area0Hanlders slot, MMIODevice* dev);
+    MMIODevice* GetA0Handler(Area0Hanlders slot);
 
     bool setBackend(SuperH4Backends backend);
 

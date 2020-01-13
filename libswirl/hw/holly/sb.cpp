@@ -520,8 +520,6 @@ struct SystemBus_impl : SystemBus {
 	}
 
     bool Init() {
-		asic_sb_Init(this);
-		
 		return true;
     }
 
@@ -533,12 +531,10 @@ struct SystemBus_impl : SystemBus {
 
 		SB_FFST_rc = 0;
 		SB_FFST = 0;
-
-		asic_sb_Reset(m);
 	}
 
 	void Term() { 
-		asic_sb_Term();
+
 	}
 
 	u32 Read(u32 addr, u32 sz)

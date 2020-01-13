@@ -28,7 +28,6 @@ void nilprintf(...) {}
 
 //// TOPO: FIX THIS <<<
 //// Hotfix for android / travis CI
-#define dynamic_cast reinterpret_cast
 
 struct GDRomV3_impl final : MMIODevice {
     int gdrom_schid;

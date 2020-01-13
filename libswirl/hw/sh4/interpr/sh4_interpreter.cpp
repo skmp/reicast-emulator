@@ -21,6 +21,7 @@
 #include "profiler/profiler.h"
 #include "../dyna/blockmanager.h"
 #include "../sh4_sched.h"
+#include "hw/arm7/SoundCPU.h"
 
 #include "libswirl.h"
 
@@ -106,7 +107,7 @@ int AicaUpdate(void* psh4, int tag, int c, int j)
 
     //if (aica_sample_cycles>=AICA_SAMPLE_CYCLES)
     {
-        g_SoundCPU->Update(512 * 32);
+        sh4_cpu->GetA0H<SoundCPU>(A0H_SCPU)->Update(512 * 32);
         sh4_cpu->GetA0H<AICA>(A0H_AICA)->Update(1 * 32);
         //aica_sample_cycles-=AICA_SAMPLE_CYCLES;
     }

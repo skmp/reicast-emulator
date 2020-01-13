@@ -1,18 +1,18 @@
 // nullAICA.cpp : Defines the entry point for the DLL application.
 //
 
-#include "types.h"
+#include "SoundCPU.h"
 #include "arm7.h"
 #include "arm_mem.h"
 
 struct SoundCPU_impl : SoundCPU {
 
 	//called when plugin is used by emu (you should do first time init here)
-	s32 Init()
+	bool Init()
 	{
 		arm_Init();
 
-		return rv_ok;
+		return true;
 	}
 
 	//called when plugin is unloaded by emu, only if dcInit is called (eg, not called to enumerate plugins)

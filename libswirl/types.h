@@ -773,17 +773,7 @@ static u32 libExtDevice_ReadMem_A5(u32 addr,u32 size){ return 0; }
 static void libExtDevice_WriteMem_A5(u32 addr,u32 data,u32 size) { }
 
 //ARM
-struct SoundCPU {
-	virtual s32 Init() = 0;
-	virtual void Reset(bool M) = 0;
-	virtual void Term() = 0;
 
-	virtual void SetResetState(u32 State) = 0;
-	virtual void Update(u32 cycles) = 0;
-	virtual ~SoundCPU() { }
-
-	static SoundCPU* Create();
-};
 
 #define 	ReadMemArrRet(arr,addr,sz)				\
 			{if (sz==1)								\

@@ -32,6 +32,7 @@
 #include "hw/modem/modem.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/aica/aica_mmio.h"
+#include "hw/arm7/SoundCPU.h"
 
 #define fault_printf(...)
 
@@ -41,7 +42,7 @@
 
 unique_ptr<VirtualDreamcast> virtualDreamcast;
 unique_ptr<GDRomDisc> g_GDRDisc;
-unique_ptr<SoundCPU> g_SoundCPU;
+
 MMIODevice* g_GDRomDrive;
 
 
@@ -125,21 +126,11 @@ s32 plugins_Init()
         return rv;
 #endif
 
-
-    g_SoundCPU.reset(SoundCPU::Create());
-
-    if (s32 rv = g_SoundCPU->Init())
-        return rv;
-
     return rv_ok;
 }
 
 void plugins_Term()
 {
-    //term all plugins
-    g_SoundCPU->Term();
-    g_SoundCPU.reset(nullptr);
-
     g_GDRDisc->Term();
     g_GDRDisc.reset(nullptr);
 }
@@ -148,7 +139,6 @@ void plugins_Reset(bool Manual)
 {
     reios_reset();
     g_GDRDisc->Reset(Manual);
-    g_SoundCPU->Reset(Manual);
     //libExtDevice_Reset(Manual);
 }
 
@@ -823,6 +813,8 @@ struct Dreamcast_impl : VirtualDreamcast {
         SPG* spg = SPG::Create(asic);
         MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic, spg);
         MMIODevice* aicaDevice = Create_AicaDevice(systemBus, asic);
+        SoundCPU* soundCPU = SoundCPU::Create();
+
         MMIODevice* mapleDevice = Create_MapleDevice(systemBus, asic);
         
         MMIODevice* extDevice = Create_ExtDevice(); // or Create_Modem();
@@ -848,7 +840,8 @@ struct Dreamcast_impl : VirtualDreamcast {
         sh4_cpu->SetA0Handler(A0H_MAPLE, mapleDevice);
         sh4_cpu->SetA0Handler(A0H_ASIC, asic);
         sh4_cpu->SetA0Handler(A0H_SPG, spg);
-
+        sh4_cpu->SetA0Handler(A0H_SCPU, soundCPU);
+        
         return sh4_cpu->Init();
     }
 

@@ -10,6 +10,7 @@
 #include <math.h>
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
+#include "hw/arm7/SoundCPU.h"
 
 #define SH4_IRQ_BIT (1<<(holly_SPU_IRQ&255))
 
@@ -381,7 +382,7 @@ void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 void ArmSetRST()
 {
 	ARMRST&=1;
-	g_SoundCPU->SetResetState(ARMRST);
+	sh4_cpu->GetA0H<SoundCPU>(A0H_SCPU)->SetResetState(ARMRST);
 }
 
 //Init/res/term

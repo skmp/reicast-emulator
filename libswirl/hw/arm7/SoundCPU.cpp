@@ -38,6 +38,8 @@ struct SoundCPU_impl : SoundCPU {
 	{
 		arm_Run(Cycles / arm_sh4_bias);
 	}
+
+	bool setBackend(Arm7Backends backend) { return true; }
 };
 
 SoundCPU* SoundCPU::Create() {

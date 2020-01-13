@@ -171,8 +171,6 @@ struct ExtDevice : MMIODevice {
         if (addr >> 16 == 0x0060) {
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
             return libExtDevice_ReadMem_A0_006(addr, sz);
-#elif defined(ENABLE_MODEM)
-            return ModemReadMem_A0_006(addr, sz);
 #else
             return 0;
 #endif
@@ -186,8 +184,6 @@ struct ExtDevice : MMIODevice {
         if (addr >> 16 == 0x0060) {
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
             libExtDevice_WriteMem_A0_006(addr, data, sz);
-#elif defined(ENABLE_MODEM)
-            ModemWriteMem_A0_006(addr, data, sz);
 #endif
         }
         else {

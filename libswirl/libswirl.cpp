@@ -29,6 +29,7 @@
 #include "hw/gdrom/gdromv3.h"
 
 #include "hw/maple/maple_if.h"
+#include "hw/modem/modem.h"
 
 #define fault_printf(...)
 
@@ -836,7 +837,14 @@ struct Dreamcast_impl : VirtualDreamcast {
         MMIODevice* aicaDevice = Create_AicaDevice(SystemBus);
         MMIODevice* mapleDevice = Create_MapleDevice(SystemBus);
         
-        MMIODevice* extDevice = Create_ExtDevice();
+        MMIODevice* extDevice = Create_ExtDevice(); // or Create_Modem();
+
+        MMIODevice* modemDevice = extDevice;
+
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
+        modemDevice = Create_Modem();
+#endif
+
         MMIODevice* rtcDevice = Create_RTCDevice();
 
         sh4_cpu->SetA0Handler(A0H_BIOS, biosDevice);
@@ -844,7 +852,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         sh4_cpu->SetA0Handler(A0H_GDROM, gdromOrNaomiDevice);
         sh4_cpu->SetA0Handler(A0H_SB, SystemBus);
         sh4_cpu->SetA0Handler(A0H_PVR, pvrDevice);
-        sh4_cpu->SetA0Handler(A0H_MODEM, extDevice);
+        sh4_cpu->SetA0Handler(A0H_MODEM, modemDevice);
         sh4_cpu->SetA0Handler(A0H_AICA, aicaDevice);
         sh4_cpu->SetA0Handler(A0H_RTC, rtcDevice);
         sh4_cpu->SetA0Handler(A0H_EXT, extDevice);

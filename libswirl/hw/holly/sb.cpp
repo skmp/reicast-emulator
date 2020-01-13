@@ -521,10 +521,6 @@ struct SystemBus_impl : SystemBus {
 
     bool Init() {
 		asic_sb_Init(this);
-
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
-		ModemInit();
-#endif 
 		
 		return true;
     }

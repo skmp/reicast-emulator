@@ -24,6 +24,4 @@
 #pragma once
 #include "types.h"
 
-void ModemInit();
-u32 ModemReadMem_A0_006(u32 addr,u32 size);
-void ModemWriteMem_A0_006(u32 addr,u32 data,u32 size);
+MMIODevice* Create_Modem();

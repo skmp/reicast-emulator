@@ -26,13 +26,13 @@ def getVersionName = { ->
 }
 
 android {
-    compileSdkVersion 26
+    compileSdkVersion 28
     buildToolsVersion "28.0.3"
 
     defaultConfig {
         applicationId "com.reicast.emulator"
         minSdkVersion 16
-        targetSdkVersion 26
+        targetSdkVersion 29
         versionCode getBuildId()
         versionName getVersionName()
         vectorDrawables.useSupportLibrary = true

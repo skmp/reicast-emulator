@@ -17,27 +17,24 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include <memory>
 
-void gui_init();
-void gui_open_settings();
-void gui_display_ui();
-void gui_display_notification(const char *msg, int duration);
-void gui_display_osd();
-void gui_open_onboarding();
-void gui_term();
-void gui_refresh_files();
+struct GUI {
+    virtual void Init() = 0;
+    virtual void OpenSettings() = 0;
+    virtual void RenderUI() = 0;
+    virtual void DisplayNotification(const char* msg, int duration) = 0;
+    virtual void RenderOSD() = 0;
+    virtual void OpenOnboarding() = 0;
+    virtual void Term() = 0;
+    virtual void RefreshFiles() = 0;
 
-extern int screen_dpi;
+    virtual bool IsOpen() = 0;
+    virtual bool IsVJoyEdit() = 0;
+    virtual bool IsContentBrowser() = 0;
+    virtual ~GUI() { }
 
-typedef enum { Closed, Commands, Settings, ClosedNoResume, Main, Onboarding, VJoyEdit, VJoyEditCommands } GuiState;
-extern GuiState gui_state;
-void ImGui_Impl_NewFrame();
+    static GUI* Create();
+};
 
-static inline bool gui_is_open()
-{
-	return gui_state != Closed && gui_state != VJoyEdit;
-}
-static inline bool gui_is_content_browser()
-{
-	return gui_state == Main;
-}
+extern std::unique_ptr<GUI> g_GUI;

@@ -4,7 +4,7 @@
 #include "hw/aica/dsp.h"
 #include "hw/aica/aica.h"
 #include "hw/aica/sgc_if.h"
-#include "hw/holly/sb_mem.h"
+#include "hw/sh4/sh4_mem_area0.h"
 #include "hw/flashrom/flashrom.h"
 #include "hw/mem/_vmem.h"
 #include "hw/gdrom/gdromv3.h"
@@ -15,7 +15,7 @@
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/modules/mmu.h"
-#include "imgread/common.h"
+#include "hw/gdrom/disc_common.h"
 #include "reios/reios.h"
 #include <map>
 #include <set>
@@ -37,6 +37,10 @@ enum serialize_version_enum {
 	V4,
 	V5_LIBRETRO
 } ;
+
+//gdrom
+void gdrom_serialize(void** data, unsigned int* total_size);
+bool gdrom_unserialize(void** data, unsigned int* total_size);
 
 //./core/hw/arm7/arm_mem.cpp
 extern bool aica_interr;
@@ -180,40 +184,6 @@ extern u16 reply_11[] ;
 
 
 
-
-//./core/hw/gdrom/gdromv3.o
-extern int gdrom_schid;
-extern signed int sns_asc;
-extern signed int sns_ascq;
-extern signed int sns_key;
-extern packet_cmd_t packet_cmd;
-extern u32 set_mode_offset;
-extern read_params_t read_params ;
-extern packet_cmd_t packet_cmd;
-//Buffer for sector reads [dma]
-extern read_buff_t read_buff ;
-//pio buffer
-extern pio_buff_t pio_buff ;
-extern u32 set_mode_offset;
-extern ata_cmd_t ata_cmd ;
-extern cdda_t cdda ;
-extern gd_states gd_state;
-extern DiscType gd_disk_type;
-extern u32 data_write_mode;
-//Registers
-extern u32 DriveSel;
-extern GD_ErrRegT Error;
-extern GD_InterruptReasonT IntReason;
-extern GD_FeaturesT Features;
-extern GD_SecCountT SecCount;
-extern GD_SecNumbT SecNumber;
-extern GD_StatusT GDStatus;
-extern ByteCount_t ByteCount ;
-
-
-
-
-
 //./core/hw/maple/maple_devs.o
 extern char EEPROM[0x100];
 extern bool EEPROM_loaded;
@@ -227,9 +197,6 @@ extern bool maple_ddt_pending_reset;
 
 
 //./core/hw/modem/modem.cpp
-extern int modem_sched;
-
-
 
 //./core/hw/pvr/Renderer_if.o
 //only written - not read
@@ -873,31 +840,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	REICAST_SA(reply_11,16) ;
 
-
-	REICAST_S(sns_asc);
-	REICAST_S(sns_ascq);
-	REICAST_S(sns_key);
-
-	REICAST_S(packet_cmd);
-	REICAST_S(set_mode_offset);
-	REICAST_S(read_params);
-	REICAST_S(packet_cmd);
-	REICAST_S(read_buff);
-	REICAST_S(pio_buff);
-	REICAST_S(set_mode_offset);
-	REICAST_S(ata_cmd);
-	REICAST_S(cdda);
-	REICAST_S(gd_state);
-	REICAST_S(gd_disk_type);
-	REICAST_S(data_write_mode);
-	REICAST_S(DriveSel);
-	REICAST_S(Error);
-	REICAST_S(IntReason);
-	REICAST_S(Features);
-	REICAST_S(SecCount);
-	REICAST_S(SecNumber);
-	REICAST_S(GDStatus);
-	REICAST_S(ByteCount);
+	gdrom_serialize(data, total_size);
 
 
 	REICAST_SA(EEPROM,0x100);
@@ -1015,10 +958,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(sch_list[rtc_schid].start) ;
 	REICAST_S(sch_list[rtc_schid].end) ;
 
-	REICAST_S(sch_list[gdrom_schid].tag) ;
-	REICAST_S(sch_list[gdrom_schid].start) ;
-	REICAST_S(sch_list[gdrom_schid].end) ;
-
 	REICAST_S(sch_list[maple_schid].tag) ;
 	REICAST_S(sch_list[maple_schid].start) ;
 	REICAST_S(sch_list[maple_schid].end) ;
@@ -1045,17 +984,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(sch_list[time_sync].tag) ;
 	REICAST_S(sch_list[time_sync].start) ;
 	REICAST_S(sch_list[time_sync].end) ;
-
-	#ifdef ENABLE_MODEM
-	REICAST_S(sch_list[modem_sched].tag) ;
-    REICAST_S(sch_list[modem_sched].start) ;
-    REICAST_S(sch_list[modem_sched].end) ;
-	#else
-	int modem_dummy = 0;
-	REICAST_S(modem_dummy);
-	REICAST_S(modem_dummy);
-	REICAST_S(modem_dummy);
-	#endif
 
 	REICAST_S(SCIF_SCFSR2);
 	REICAST_S(SCIF_SCFRDR2);
@@ -1234,30 +1162,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_USA(reply_11,16);
 
-	REICAST_US(sns_asc);
-	REICAST_US(sns_ascq);
-	REICAST_US(sns_key);
-
-	REICAST_US(packet_cmd);
-	REICAST_US(set_mode_offset);
-	REICAST_US(read_params);
-	REICAST_US(packet_cmd);
-	REICAST_US(read_buff);
-	REICAST_US(pio_buff);
-	REICAST_US(set_mode_offset);
-	REICAST_US(ata_cmd);
-	REICAST_US(cdda);
-	REICAST_US(gd_state);
-	REICAST_US(gd_disk_type);
-	REICAST_US(data_write_mode);
-	REICAST_US(DriveSel);
-	REICAST_US(Error);
-	REICAST_US(IntReason);
-	REICAST_US(Features);
-	REICAST_US(SecCount);
-	REICAST_US(SecNumber);
-	REICAST_US(GDStatus);
-	REICAST_US(ByteCount);
+	gdrom_unserialize(data, total_size);
 	REICAST_US(i); //LIBRETRO_S(GDROM_TICK);
 
 	REICAST_USA(EEPROM,0x100);
@@ -1391,10 +1296,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(sch_list[rtc_schid].start) ;
 	REICAST_US(sch_list[rtc_schid].end) ;
 
-	REICAST_US(sch_list[gdrom_schid].tag) ;
-	REICAST_US(sch_list[gdrom_schid].start) ;
-	REICAST_US(sch_list[gdrom_schid].end) ;
-
 	REICAST_US(sch_list[maple_schid].tag) ;
 	REICAST_US(sch_list[maple_schid].start) ;
 	REICAST_US(sch_list[maple_schid].end) ;
@@ -1421,17 +1322,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(sch_list[time_sync].tag) ;
 	REICAST_US(sch_list[time_sync].start) ;
 	REICAST_US(sch_list[time_sync].end) ;
-
-	#ifdef ENABLE_MODEM
-	REICAST_US(sch_list[modem_sched].tag) ;
-    REICAST_US(sch_list[modem_sched].start) ;
-    REICAST_US(sch_list[modem_sched].end) ;
-	#else
-	int modem_dummy;
-	REICAST_US(modem_dummy);
-	REICAST_US(modem_dummy);
-	REICAST_US(modem_dummy);
-	#endif
 
 	REICAST_US(SCIF_SCFSR2);
 	REICAST_US(SCIF_SCFRDR2);
@@ -1618,32 +1508,9 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	REICAST_USA(reply_11,16) ;
 
+	gdrom_unserialize(data, total_size);
 
-
-	REICAST_US(sns_asc);
-	REICAST_US(sns_ascq);
-	REICAST_US(sns_key);
-
-	REICAST_US(packet_cmd);
-	REICAST_US(set_mode_offset);
-	REICAST_US(read_params);
-	REICAST_US(packet_cmd);
-	REICAST_US(read_buff);
-	REICAST_US(pio_buff);
-	REICAST_US(set_mode_offset);
-	REICAST_US(ata_cmd);
-	REICAST_US(cdda);
-	REICAST_US(gd_state);
-	REICAST_US(gd_disk_type);
-	REICAST_US(data_write_mode);
-	REICAST_US(DriveSel);
-	REICAST_US(Error);
-	REICAST_US(IntReason);
-	REICAST_US(Features);
-	REICAST_US(SecCount);
-	REICAST_US(SecNumber);
-	REICAST_US(GDStatus);
-	REICAST_US(ByteCount);
+	
 
 
 	REICAST_USA(EEPROM,0x100);
@@ -1759,10 +1626,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(sch_list[rtc_schid].start) ;
 	REICAST_US(sch_list[rtc_schid].end) ;
 
-	REICAST_US(sch_list[gdrom_schid].tag) ;
-	REICAST_US(sch_list[gdrom_schid].start) ;
-	REICAST_US(sch_list[gdrom_schid].end) ;
-
 	REICAST_US(sch_list[maple_schid].tag) ;
 	REICAST_US(sch_list[maple_schid].start) ;
 	REICAST_US(sch_list[maple_schid].end) ;
@@ -1789,17 +1652,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(sch_list[time_sync].tag) ;
 	REICAST_US(sch_list[time_sync].start) ;
 	REICAST_US(sch_list[time_sync].end) ;
-
-	#ifdef ENABLE_MODEM
-	REICAST_US(sch_list[modem_sched].tag) ;
-    REICAST_US(sch_list[modem_sched].start) ;
-    REICAST_US(sch_list[modem_sched].end) ;
-	#else
-	int modem_dummy;
-	REICAST_US(modem_dummy);
-	REICAST_US(modem_dummy);
-	REICAST_US(modem_dummy);
-	#endif
 
 	REICAST_US(SCIF_SCFSR2);
 	REICAST_US(SCIF_SCFRDR2);

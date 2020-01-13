@@ -5,7 +5,7 @@
 #include "types.h"
 
 #include "sh4_mem.h"
-#include "hw/holly/sb_mem.h"
+#include "hw/sh4/sh4_mem_area0.h"
 #include "sh4_mmr.h"
 #include "modules/modules.h"
 #include "hw/pvr/pvr_mem.h"
@@ -18,10 +18,6 @@
 
 //main system mem
 VLockedMemory mem_b;
-
-void _vmem_init();
-void _vmem_reset();
-void _vmem_term();
 
 //MEM MAPPINNGG
 
@@ -89,14 +85,14 @@ void map_area4(u32 base)
 //AREA 5	--	Ext. Device
 //Read Ext.Device
 template <u32 sz,class T>
-T DYNACALL ReadMem_extdev_T(u32 addr)
+T DYNACALL ReadMem_extdev_T(SuperH4* sh4, u32 addr)
 {
 	return (T)libExtDevice_ReadMem_A5(addr,sz);
 }
 
 //Write Ext.Device
 template <u32 sz,class T>
-void DYNACALL WriteMem_extdev_T(u32 addr,T data)
+void DYNACALL WriteMem_extdev_T(SuperH4* sh4, u32 addr,T data)
 {
 	libExtDevice_WriteMem_A5(addr,data,sz);
 }
@@ -125,10 +121,10 @@ void map_area6(u32 base)
 
 
 //set vmem to default values
-void mem_map_default()
+void mem_map_default(SuperH4_impl* sh4)
 {
 	//vmem - init/reset :)
-	_vmem_init();
+	_vmem_init((SuperH4*)sh4);
 
 	
 	//*TEMP*
@@ -182,18 +178,18 @@ void mem_map_default()
 	//map p4 region :)
 	map_p4();
 }
-void mem_Init()
+void mem_Init(SuperH4_impl* sh4)
 {
 	//Allocate mem for memory/bios/flash
 	//mem_b.Init(&sh4_reserved_mem[0x0C000000],RAM_SIZE);
 
-	sh4_area0_Init();
-	sh4_mmr_init();
+	sh4_area0_Init(sh4);
+	sh4_mmr_init(sh4);
 	MMU_init();
 }
 
 //Reset Sysmem/Regs -- Pvr is not changed , bios/flash are not zeroed out
-void mem_Reset(bool Manual)
+void mem_Reset(SuperH4_impl* sh4, bool Manual)
 {
 	//mem is reseted on hard restart(power on) , not manual...
 	if (!Manual)
@@ -203,16 +199,16 @@ void mem_Reset(bool Manual)
 	}
 
 	//Reset registers
-	sh4_area0_Reset(Manual);
+	sh4_area0_Reset(sh4, Manual);
 	sh4_mmr_reset();
 	MMU_reset();
 }
 
-void mem_Term()
+void mem_Term(SuperH4_impl* sh4)
 {
 	MMU_term();
 	sh4_mmr_term();
-	sh4_area0_Term();
+	sh4_area0_Term(sh4);
 
 	//write back Flash/SRAM
 	SaveRomFiles(get_writable_data_path(DATA_PATH));

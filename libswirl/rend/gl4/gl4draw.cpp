@@ -67,8 +67,8 @@ static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 	rv <<= 1; rv |= (int)pp_TwoVolumes;
 	rv <<= 3; rv |= pp_DepthFunc;
 	rv <<= 1; rv |= (int)pp_Gouraud;
-	rv <<= 1; rv |= pp_BumpMap;
-	rv <<= 1; rv |= fog_clamping;
+	rv <<= 1; rv |= (int)pp_BumpMap;
+	rv <<= 1; rv |= (int)fog_clamping;
 	rv <<= 2; rv |= pass;
 
 	gl4PipelineShader *shader = &gl4.shaders[rv];

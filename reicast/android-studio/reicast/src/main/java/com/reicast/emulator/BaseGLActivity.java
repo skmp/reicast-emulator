@@ -16,6 +16,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -65,6 +66,10 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         OuyaController.init(this);
 
         String home_directory = prefs.getString(Config.pref_home, "");
+
+        DisplayMetrics dm = getApplicationContext().getResources().getDisplayMetrics();
+        JNIdc.screenDpi((int)Math.max(dm.xdpi, dm.ydpi));
+
         String result = JNIdc.initEnvironment((Emulator)getApplicationContext(), home_directory);
         if (result != null) {
             AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(this);

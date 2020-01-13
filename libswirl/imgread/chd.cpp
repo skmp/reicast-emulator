@@ -1,4 +1,4 @@
-#include "common.h"
+#include "imgread_common.h"
 
 #include "deps/chdr/chd.h"
 
@@ -174,9 +174,9 @@ bool CHDDisc::TryOpen(const wchar* file)
 	if (total_frames!=549300 || tracks.size()<3)
 	{
 		printf("WARNING: chd: Total frames is wrong: %u frames in %u tracks\n",total_frames,tracks.size());
-#ifndef NOT_REICAST
+
 		msgboxf("This is an improper dump!",MBX_ICONEXCLAMATION);
-#endif
+
 		return false;
 	}
 

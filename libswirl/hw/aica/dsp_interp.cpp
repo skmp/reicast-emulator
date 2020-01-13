@@ -5,7 +5,6 @@
 // All rights reserved.
 //
 #include "dsp.h"
-#include "aica_if.h"
 #include "aica_mem.h"
 
 #if FEAT_DSPREC != DYNAREC_JIT

@@ -342,20 +342,6 @@ u16 NaomiGameIDRead()
 
 
 
-u32  _ReadMem_naomi(u32 Addr, u32 sz)
-{
-	verify(sz!=1);
-
-	EMUERROR("naomi?WTF? ReadMem: %X, %d", Addr, sz);
-	return 1;
-
-}
-void _WriteMem_naomi(u32 Addr, u32 data, u32 sz)
-{
-	EMUERROR("naomi?WTF? WriteMem: %X <= %X, %d", Addr, data, sz);
-}
-
-
 //DIMM board
 //Uses interrupt ext#3  (holly_EXT_PCI)
 
@@ -414,224 +400,237 @@ void naomi_process(u32 r3c,u32 r40,u32 r44, u32 r48)
 	}
 }
 
-u32 ReadMem_naomi(u32 Addr, u32 sz)
-{
-	verify(sz!=1);
-	if (unlikely(CurrentCartridge == NULL))
-	{
-		EMUERROR("called without cartridge\n");
-		return 0xFFFF;
-	}
-	return CurrentCartridge->ReadMem(Addr, sz);
-}
+struct NaomiDevice_impl : MMIODevice {
+	SystemBus* sb;
 
-void WriteMem_naomi(u32 Addr, u32 data, u32 sz)
-{
-	if (unlikely(CurrentCartridge == NULL))
-	{
-		EMUERROR("called without cartridge\n");
-		return;
-	}
-	CurrentCartridge->WriteMem(Addr, data, sz);
-}
+	NaomiDevice_impl(SystemBus* sb) : sb(sb) { }
 
-//Dma Start
-void Naomi_DmaStart(u32 addr, u32 data)
-{
-	if (SB_GDEN==0)
+	u32 Read(u32 Addr, u32 sz)
 	{
-		printf("Invalid (NAOMI)GD-DMA start, SB_GDEN=0.Ingoring it.\n");
-		return;
-	}
-	
-	NaomiDataRead = true;
-	SB_GDST|=data&1;
-
-	if (SB_GDST==1)
-	{
-		verify(1 == SB_GDDIR );
-	
-		SB_GDSTARD=SB_GDSTAR+SB_GDLEN;
-		
-		SB_GDLEND=SB_GDLEN;
-		SB_GDST=0;
-		if (CurrentCartridge != NULL)
+		verify(sz != 1);
+		if (unlikely(CurrentCartridge == NULL))
 		{
-			u32 len = SB_GDLEN;
-			u32 offset = 0;
-			while (len > 0)
-			{
-				u32 block_len = len;
-				void* ptr = CurrentCartridge->GetDmaPtr(block_len);
-				WriteMemBlock_nommu_ptr(SB_GDSTAR + offset, (u32*)ptr, block_len);
-				CurrentCartridge->AdvancePtr(block_len);
-				len -= block_len;
-				offset += block_len;
-			}
+			EMUERROR("called without cartridge\n");
+			return 0xFFFF;
+		}
+		return CurrentCartridge->ReadMem(Addr, sz);
+	}
+
+	void Write(u32 Addr, u32 data, u32 sz)
+	{
+		if (unlikely(CurrentCartridge == NULL))
+		{
+			EMUERROR("called without cartridge\n");
+			return;
+		}
+		CurrentCartridge->WriteMem(Addr, data, sz);
+	}
+
+	//Dma Start
+	void DmaStart(u32 addr, u32 data)
+	{
+		if (SB_GDEN == 0)
+		{
+			printf("Invalid (NAOMI)GD-DMA start, SB_GDEN=0.Ingoring it.\n");
+			return;
 		}
 
-		asic_RaiseInterrupt(holly_GDROM_DMA);
+		NaomiDataRead = true;
+		SB_GDST |= data & 1;
+
+		if (SB_GDST == 1)
+		{
+			verify(1 == SB_GDDIR);
+
+			SB_GDSTARD = SB_GDSTAR + SB_GDLEN;
+
+			SB_GDLEND = SB_GDLEN;
+			SB_GDST = 0;
+			if (CurrentCartridge != NULL)
+			{
+				u32 len = SB_GDLEN;
+				u32 offset = 0;
+				while (len > 0)
+				{
+					u32 block_len = len;
+					void* ptr = CurrentCartridge->GetDmaPtr(block_len);
+					WriteMemBlock_nommu_ptr(SB_GDSTAR + offset, (u32*)ptr, block_len);
+					CurrentCartridge->AdvancePtr(block_len);
+					len -= block_len;
+					offset += block_len;
+				}
+			}
+
+			asic_RaiseInterrupt(holly_GDROM_DMA);
+		}
 	}
-}
 
 
-void Naomi_DmaEnable(u32 addr, u32 data)
-{
-	SB_GDEN=data&1;
-	if (SB_GDEN==0 && SB_GDST==1)
+	void DmaEnable(u32 addr, u32 data)
 	{
-		printf("(NAOMI)GD-DMA aborted\n");
-		SB_GDST=0;
+		SB_GDEN = data & 1;
+		if (SB_GDEN == 0 && SB_GDST == 1)
+		{
+			printf("(NAOMI)GD-DMA aborted\n");
+			SB_GDST = 0;
+		}
 	}
-}
-void naomi_reg_Init()
-{
-	#ifdef NAOMI_COMM
-	CommMapFile = CreateFileMapping(
-		INVALID_HANDLE_VALUE,    // use paging file
-		NULL,                    // default security 
-		PAGE_READWRITE,          // read/write access
-		0,                       // max. object size 
-		0x1000*4,                // buffer size  
-		L"Global\\nullDC_103_naomi_comm");                 // name of mapping object
 
-	if (CommMapFile == NULL || CommMapFile==INVALID_HANDLE_VALUE) 
-	{ 
-		_tprintf(TEXT("Could not create file mapping object (%d).\nTrying to open existing one\n"), 	GetLastError());
-		
-		CommMapFile=OpenFileMapping(
-                   FILE_MAP_ALL_ACCESS,   // read/write access
-                   FALSE,                 // do not inherit the name
-                   L"Global\\nullDC_103_naomi_comm");               // name of mapping object 
-	}
-	
-	if (CommMapFile == NULL || CommMapFile==INVALID_HANDLE_VALUE) 
-	{ 
-		_tprintf(TEXT("Could not open existing file either\n"), 	GetLastError());
-		CommMapFile=INVALID_HANDLE_VALUE;
-	}
-	else
+	bool Init()
 	{
-		printf("NAOMI: Created \"Global\\nullDC_103_naomi_comm\"\n");
-		CommSharedMem = (u32*) MapViewOfFile(CommMapFile,   // handle to map object
-			FILE_MAP_ALL_ACCESS, // read/write permission
-			0,                   
-			0,                   
-			0x1000*4);           
+#ifdef NAOMI_COMM
+		CommMapFile = CreateFileMapping(
+			INVALID_HANDLE_VALUE,    // use paging file
+			NULL,                    // default security 
+			PAGE_READWRITE,          // read/write access
+			0,                       // max. object size 
+			0x1000 * 4,                // buffer size  
+			L"Global\\nullDC_103_naomi_comm");                 // name of mapping object
 
-		if (CommSharedMem == NULL) 
-		{ 
-			_tprintf(TEXT("Could not map view of file (%d).\n"), 
-				GetLastError()); 
+		if (CommMapFile == NULL || CommMapFile == INVALID_HANDLE_VALUE)
+		{
+			_tprintf(TEXT("Could not create file mapping object (%d).\nTrying to open existing one\n"), GetLastError());
 
-			CloseHandle(CommMapFile);
-			CommMapFile=INVALID_HANDLE_VALUE;
+			CommMapFile = OpenFileMapping(
+				FILE_MAP_ALL_ACCESS,   // read/write access
+				FALSE,                 // do not inherit the name
+				L"Global\\nullDC_103_naomi_comm");               // name of mapping object 
+		}
+
+		if (CommMapFile == NULL || CommMapFile == INVALID_HANDLE_VALUE)
+		{
+			_tprintf(TEXT("Could not open existing file either\n"), GetLastError());
+			CommMapFile = INVALID_HANDLE_VALUE;
 		}
 		else
-			printf("NAOMI: Mapped CommSharedMem\n");
-	}
-	#endif
-	NaomiInit();
-
-	sb_rio_register(SB_GDST_addr, RIO_WF, 0, &Naomi_DmaStart);
-
-	sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &Naomi_DmaEnable);
-}
-
-void naomi_reg_Term()
-{
-	#ifdef NAOMI_COMM
-	if (CommSharedMem)
-	{
-		UnmapViewOfFile(CommSharedMem);
-	}
-	if (CommMapFile!=INVALID_HANDLE_VALUE)
-	{
-		CloseHandle(CommMapFile);
-	}
-	#endif
-}
-void naomi_reg_Reset(bool Manual)
-{
-	NaomiDataRead = false;
-	aw_ram_test_skipped = false;
-	BLastCmd = 0;
-}
-
-void Update_naomi()
-{
-	/*
-	if (naomi_updates>1)
-	{
-		naomi_updates--;
-	}
-	else if (naomi_updates==1)
-	{
-		naomi_updates=0;
-		asic_RaiseInterrupt(holly_EXP_PCI);
-	}*/
-#if 0
-	if(!(SB_GDST&1) || !(SB_GDEN &1))
-		return;
-
-	//SB_GDST=0;
-
-	//TODO : Fix dmaor
-	u32 dmaor	= DMAC_DMAOR.full;
-
-	u32	src		= SB_GDSTARD,
-		len		= SB_GDLEN-SB_GDLEND ;
-
-	//len=min(len,(u32)32);
-	// do we need to do this for gdrom dma ?
-	if(0x8201 != (dmaor &DMAOR_MASK)) {
-		printf("\n!\tGDROM: DMAOR has invalid settings (%X) !\n", dmaor);
-		//return;
-	}
-	if(len & 0x1F) {
-		printf("\n!\tGDROM: SB_GDLEN has invalid size (%X) !\n", len);
-		return;
-	}
-
-	if(0 == len) 
-	{
-		printf("\n!\tGDROM: Len: %X, Abnormal Termination !\n", len);
-	}
-	u32 len_backup=len;
-	if( 1 == SB_GDDIR ) 
-	{
-		WriteMemBlock_nommu_ptr(dst,NaomiRom+(DmaOffset&0x7ffffff),size);
-
-		DmaCount=0xffff;
-	}
-	else
-		msgboxf(L"GDROM: SB_GDDIR %X (TO AICA WAVE MEM?)",MBX_ICONERROR, SB_GDDIR);
-
-	//SB_GDLEN = 0x00000000; //13/5/2k7 -> acording to docs these regs are not updated by hardware
-	//SB_GDSTAR = (src + len_backup);
-
-	SB_GDLEND+= len_backup;
-	SB_GDSTARD+= len_backup;//(src + len_backup)&0x1FFFFFFF;
-
-	if (SB_GDLEND==SB_GDLEN)
-	{
-		//printf("Streamed GDMA end - %d bytes trasnfered\n",SB_GDLEND);
-		SB_GDST=0;//done
-		// The DMA end interrupt flag
-		asic_RaiseInterrupt(holly_GDROM_DMA);
-	}
-	//Readed ALL sectors
-	if (read_params.remaining_sectors==0)
-	{
-		u32 buff_size =read_buff.cache_size - read_buff.cache_index;
-		//And all buffer :p
-		if (buff_size==0)
 		{
-			verify(!SB_GDST&1)		
-			gd_set_state(gds_procpacketdone);
+			printf("NAOMI: Created \"Global\\nullDC_103_naomi_comm\"\n");
+			CommSharedMem = (u32*)MapViewOfFile(CommMapFile,   // handle to map object
+				FILE_MAP_ALL_ACCESS, // read/write permission
+				0,
+				0,
+				0x1000 * 4);
+
+			if (CommSharedMem == NULL)
+			{
+				_tprintf(TEXT("Could not map view of file (%d).\n"),
+					GetLastError());
+
+				CloseHandle(CommMapFile);
+				CommMapFile = INVALID_HANDLE_VALUE;
+			}
+			else
+				printf("NAOMI: Mapped CommSharedMem\n");
 		}
-	}
 #endif
+		NaomiInit();
+
+		sb->RegisterRIO(this, SB_GDST_addr, RIO_WF, 0, STATIC_FORWARD(NaomiDevice_impl, DmaStart));
+
+		sb->RegisterRIO(this, SB_GDEN_addr, RIO_WF, 0, STATIC_FORWARD(NaomiDevice_impl, DmaEnable));
+
+		return true;
+	}
+
+	void Term()
+	{
+#ifdef NAOMI_COMM
+		if (CommSharedMem)
+		{
+			UnmapViewOfFile(CommSharedMem);
+		}
+		if (CommMapFile != INVALID_HANDLE_VALUE)
+		{
+			CloseHandle(CommMapFile);
+		}
+#endif
+	}
+	void Reset(bool Manual)
+	{
+		NaomiDataRead = false;
+		aw_ram_test_skipped = false;
+		BLastCmd = 0;
+	}
+
+	void Update()
+	{
+		/*
+		if (naomi_updates>1)
+		{
+			naomi_updates--;
+		}
+		else if (naomi_updates==1)
+		{
+			naomi_updates=0;
+			asic_RaiseInterrupt(holly_EXP_PCI);
+		}*/
+#if 0
+		if (!(SB_GDST & 1) || !(SB_GDEN & 1))
+			return;
+
+		//SB_GDST=0;
+
+		//TODO : Fix dmaor
+		u32 dmaor = DMAC_DMAOR.full;
+
+		u32	src = SB_GDSTARD,
+			len = SB_GDLEN - SB_GDLEND;
+
+		//len=min(len,(u32)32);
+		// do we need to do this for gdrom dma ?
+		if (0x8201 != (dmaor & DMAOR_MASK)) {
+			printf("\n!\tGDROM: DMAOR has invalid settings (%X) !\n", dmaor);
+			//return;
+		}
+		if (len & 0x1F) {
+			printf("\n!\tGDROM: SB_GDLEN has invalid size (%X) !\n", len);
+			return;
+		}
+
+		if (0 == len)
+		{
+			printf("\n!\tGDROM: Len: %X, Abnormal Termination !\n", len);
+		}
+		u32 len_backup = len;
+		if (1 == SB_GDDIR)
+		{
+			WriteMemBlock_nommu_ptr(dst, NaomiRom + (DmaOffset & 0x7ffffff), size);
+
+			DmaCount = 0xffff;
+		}
+		else
+			msgboxf(L"GDROM: SB_GDDIR %X (TO AICA WAVE MEM?)", MBX_ICONERROR, SB_GDDIR);
+
+		//SB_GDLEN = 0x00000000; //13/5/2k7 -> acording to docs these regs are not updated by hardware
+		//SB_GDSTAR = (src + len_backup);
+
+		SB_GDLEND += len_backup;
+		SB_GDSTARD += len_backup;//(src + len_backup)&0x1FFFFFFF;
+
+		if (SB_GDLEND == SB_GDLEN)
+		{
+			//printf("Streamed GDMA end - %d bytes trasnfered\n",SB_GDLEND);
+			SB_GDST = 0;//done
+			// The DMA end interrupt flag
+			asic_RaiseInterrupt(holly_GDROM_DMA);
+		}
+		//Readed ALL sectors
+		if (read_params.remaining_sectors == 0)
+		{
+			u32 buff_size = read_buff.cache_size - read_buff.cache_index;
+			//And all buffer :p
+			if (buff_size == 0)
+			{
+				verify(!SB_GDST & 1)
+					gd_set_state(gds_procpacketdone);
+			}
+		}
+#endif
+	}
+};
+
+MMIODevice* Create_NaomiDevice(SystemBus* sb) {
+	return new NaomiDevice_impl(sb);
 }
 
 static u8 aw_maple_devs;

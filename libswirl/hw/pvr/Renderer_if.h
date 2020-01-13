@@ -5,14 +5,13 @@
 extern u32 VertexCount;
 extern u32 FrameCount;
 
+
 void rend_init_renderer();
 void rend_term_renderer();
-void rend_stop_renderer();
 void rend_vblank();
+
 void rend_start_render();
 void rend_end_render();
-void rend_cancel_emu_wait();
-bool rend_single_frame();
 
 void rend_set_fb_scale(float x,float y);
 void rend_resize(int width, int height);
@@ -44,7 +43,8 @@ struct Renderer
 	virtual void Term()=0;
 
 	virtual bool Process(TA_context* ctx)=0;
-	virtual bool Render()=0;
+	virtual bool RenderPVR()=0;
+    virtual bool RenderFramebuffer() = 0;
 	virtual bool RenderLastFrame() { return false; }
 
 	virtual void Present()=0;
@@ -59,14 +59,6 @@ struct Renderer
 extern Renderer* renderer;
 extern bool renderer_enabled;	// Signals the renderer thread to exit
 extern bool renderer_changed;	// Signals the renderer thread to switch renderer
-
-extern u32 fb1_watch_addr_start;
-extern u32 fb1_watch_addr_end;
-extern u32 fb2_watch_addr_start;
-extern u32 fb2_watch_addr_end;
-extern bool fb_dirty;
-
-void check_framebuffer_write();
 
 extern bool RegisterRendererBackend(const rendererbackend_t& backend);
 vector<rendererbackend_t> rend_get_backends();

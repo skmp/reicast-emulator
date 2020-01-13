@@ -10,18 +10,21 @@ u32 vri(u32 addr);
 
 //vram 32-64b
 extern VLockedMemory vram;
+
+extern bool fb_dirty;
+
+void pvr_update_framebuffer_watches();
+
 //read
-u8 DYNACALL pvr_read_area1_8(u32 addr);
-u16 DYNACALL pvr_read_area1_16(u32 addr);
-u32 DYNACALL pvr_read_area1_32(u32 addr);
+u8 DYNACALL pvr_read_area1_8(SuperH4*, u32 addr);
+u16 DYNACALL pvr_read_area1_16(SuperH4*, u32 addr);
+u32 DYNACALL pvr_read_area1_32(SuperH4*, u32 addr);
 //write
-void DYNACALL pvr_write_area1_8(u32 addr,u8 data);
-void DYNACALL pvr_write_area1_16(u32 addr,u16 data);
-void DYNACALL pvr_write_area1_32(u32 addr,u32 data);
+void DYNACALL pvr_write_area1_8(SuperH4*, u32 addr,u8 data);
+void DYNACALL pvr_write_area1_16(SuperH4*, u32 addr,u16 data);
+void DYNACALL pvr_write_area1_32(SuperH4*, u32 addr,u32 data);
 
 //regs
-u32 pvr_ReadReg(u32 addr);
-void pvr_WriteReg(u32 paddr,u32 data);
 
 void pvr_Update(u32 cycles);
 

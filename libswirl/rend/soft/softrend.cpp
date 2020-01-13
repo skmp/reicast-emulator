@@ -862,7 +862,12 @@ struct softrend : Renderer
 			}
 		}
 	}
-	virtual bool Render() {
+
+    virtual bool RenderFramebuffer() {
+        return true;
+    }
+
+	virtual bool RenderPVR() {
 		bool is_rtt = pvrrc.isRTT;
 
 		memset(render_buffer, 0, sizeof(render_buffer));
@@ -1234,6 +1239,10 @@ struct softrend : Renderer
 	// TODO softrend without X11 (SDL f.e.)
 	#error Cannot use softrend without X11
 #endif
+	}
+
+	void operator delete(void* p) {
+		_mm_free(p);
 	}
 };
 

@@ -3,13 +3,8 @@
 	Handy register definitions and other minor stuff
 */
 #include "types.h"
-
-void gdrom_reg_Init();
-void gdrom_reg_Term();
-void gdrom_reg_Reset(bool Manual);
-
-u32 ReadMem_gdrom(u32 Addr, u32 sz);
-void WriteMem_gdrom(u32 Addr, u32 data, u32 sz);
+#include "hw/holly/sb.h"
+#include "hw/holly/holly_intc.h"
 
 enum gd_states
 {
@@ -294,3 +289,5 @@ extern char szExDT[8][32];
 #define SPI_CD_READ   0x30 // 
 #define SPI_CD_READ2  0x31 // 
 #define SPI_GET_SCD   0x40 // 
+
+MMIODevice* Create_GDRomDevice(SystemBus* sb, ASIC* asic);

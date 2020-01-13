@@ -1,7 +1,7 @@
 #include "types.h"
 
 #if HOST_OS==OS_WINDOWS
-#include "common.h"
+#include "imgread_common.h"
 
 #include <stddef.h>
 #include <windows.h>

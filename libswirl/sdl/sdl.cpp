@@ -25,8 +25,6 @@ static std::shared_ptr<SDLMouseGamepadDevice> sdl_mouse_gamepad;
 static std::shared_ptr<SDLKbGamepadDevice> sdl_kb_gamepad;
 static SDLKeyboardDevice* sdl_keyboard = NULL;
 
-extern void dc_exit();
-
 #ifdef TARGET_PANDORA
 	extern char OSD_Info[128];
 	extern int OSD_Delay;

@@ -29,7 +29,7 @@ SCRIPTING := 1
 PLATFORM_ANDROID := 1
 SUPPORT_EGL := 1
 
-LOCAL_CFLAGS := -O3 -D _ANDROID
+LOCAL_CFLAGS += -O3 -D _ANDROID
 
 ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
   ARM32_REC := 1
@@ -57,10 +57,7 @@ include $(RZDCY_SRC_DIR)/core.mk
 
 LOCAL_SRC_FILES := $(RZDCY_FILES)
 LOCAL_CFLAGS    += $(RZDCY_CFLAGS) -fPIC -fvisibility=hidden -ffunction-sections -fdata-sections
-LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
-LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
-
-
+LOCAL_CPPFLAGS  += -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections
 
 # 7-Zip/LZMA settings (CHDv5)
 ifdef CHD5_LZMA
@@ -77,21 +74,17 @@ ifdef NAOMI
 endif
 
 LOCAL_CFLAGS +=
-LOCAL_CXXFLAGS += -std=c++11 -fopenmp
-LOCAL_LDFLAGS  += -fopenmp
 
 ifeq ($(TARGET_ARCH_ABI),x86)
   LOCAL_CFLAGS+= -DTARGET_NO_AREC -DTARGET_NO_OPENMP
 endif
 
-LOCAL_CPP_FEATURES := 
-# LOCAL_SHARED_LIBRARIES:= libcutils libutils
 LOCAL_PRELINK_MODULE  := false
 
 LOCAL_MODULE	:= dc
 LOCAL_DISABLE_FORMAT_STRING_CHECKS=true
-LOCAL_ASFLAGS := -fPIC -fvisibility=hidden
-LOCAL_LDLIBS	:= -llog -lEGL -lz -landroid
+LOCAL_ASFLAGS += -fPIC -fvisibility=hidden
+LOCAL_LDLIBS  += -llog -lEGL -lz -landroid  -fopenmp
 #-Wl,-Map,./res/raw/syms.mp3
 LOCAL_ARM_MODE	:= arm
 

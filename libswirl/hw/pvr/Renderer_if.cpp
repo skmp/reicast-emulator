@@ -1,10 +1,13 @@
+#include <imgui/imgui.h>
+#include "types.h"
+#include "gui/gui_partials.h"
+
 #include "Renderer_if.h"
 #include "ta.h"
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
 #include "gui/gui.h"
-
-#include "deps/zlib/zlib.h"
+#include "gui/gui_renderer.h"
 
 #include "deps/crypto/md5.h"
 
@@ -80,259 +83,23 @@ u32 FrameCount=1;
 
 Renderer* renderer;
 static Renderer* fallback_renderer;
-bool renderer_enabled = true;	// Signals the renderer thread to exit
+//bool renderer_enabled = true;	// Signals the renderer thread to exit
 bool renderer_changed = false;	// Signals the renderer thread to switch renderer
 
-#if !defined(TARGET_NO_THREADS)
 cResetEvent rs, re;
-#endif
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 
 static bool render_called = false;
-u32 fb1_watch_addr_start;
-u32 fb1_watch_addr_end;
-u32 fb2_watch_addr_start;
-u32 fb2_watch_addr_end;
-bool fb_dirty;
 
 TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
 void killtex();
 bool render_output_framebuffer();
-static void rend_create_renderer();
-
-void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {
-	FILE* fw = fopen(file, "wb");
-
-	//append to it
-	fseek(fw, 0, SEEK_END);
-
-	u32 bytes = ctx->tad.End() - ctx->tad.thd_root;
-
-	fwrite("TAFRAME4", 1, 8, fw);
-
-	fwrite(&ctx->rend.isRTT, 1, sizeof(ctx->rend.isRTT), fw);
-	u32 zero = 0;
-	fwrite(&zero, 1, sizeof(bool), fw);	// Was autosort
-	fwrite(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw);
-	fwrite(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw);
-
-	fwrite(ctx->rend.global_param_op.head(), 1, sizeof(PolyParam), fw);
-	fwrite(ctx->rend.verts.head(), 1, 4 * sizeof(Vertex), fw);
-
-	u32 t = VRAM_SIZE;
-	fwrite(&t, 1, sizeof(t), fw);
-	
-	u8* compressed;
-	uLongf compressed_size;
-	u8* src_vram = vram;
-
-	if (vram_ref) {
-		src_vram = (u8*)malloc(VRAM_SIZE);
-
-		for (int i = 0; i < VRAM_SIZE; i++) {
-			src_vram[i] = vram[i] ^ vram_ref[i];
-		}
-	}
-
-	compressed = (u8*)malloc(VRAM_SIZE+16);
-	compressed_size = VRAM_SIZE;
-	verify(compress(compressed, &compressed_size, src_vram, VRAM_SIZE) == Z_OK);
-	fwrite(&compressed_size, 1, sizeof(compressed_size), fw);
-	fwrite(compressed, 1, compressed_size, fw);
-	free(compressed);
-
-	if (src_vram != vram)
-		free(src_vram);
-
-	fwrite(&bytes, 1, sizeof(t), fw);
-	compressed = (u8*)malloc(bytes + 16);
-	compressed_size = VRAM_SIZE;
-	verify(compress(compressed, &compressed_size, ctx->tad.thd_root, bytes) == Z_OK);
-	fwrite(&compressed_size, 1, sizeof(compressed_size), fw);
-	fwrite(compressed, 1, compressed_size, fw);
-	free(compressed);
-
-	fwrite(&ctx->tad.render_pass_count, 1, sizeof(u32), fw);
-	for (int i = 0; i < ctx->tad.render_pass_count; i++) {
-		u32 offset = ctx->tad.render_passes[i] - ctx->tad.thd_root;
-		fwrite(&offset, 1, sizeof(offset), fw);
-	}
-
-	fwrite(pvr_regs, 1, sizeof(pvr_regs), fw);
-
-	fclose(fw);
-}
-
-TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
-	
-	FILE* fw = fopen(file, "rb");
-	if (fw == NULL)
-		die("Cannot open frame to display");
-	char id0[8] = { 0 };
-	u32 t = 0;
-
-	fread(id0, 1, 8, fw);
-
-	if (memcmp(id0, "TAFRAME", 7) != 0 || (id0[7] != '3' && id0[7] != '4')) {
-		fclose(fw);
-		return 0;
-	}
-	int sizeofPolyParam = sizeof(PolyParam);
-	int sizeofVertex = sizeof(Vertex);
-	if (id0[7] == '3')
-	{
-		sizeofPolyParam -= 12;
-		sizeofVertex -= 16;
-	}
-
-	TA_context* ctx = tactx_Alloc();
-
-	ctx->Reset();
-
-	ctx->tad.Clear();
-
-	fread(&ctx->rend.isRTT, 1, sizeof(ctx->rend.isRTT), fw);
-	fread(&t, 1, sizeof(bool), fw);	// Was autosort
-	fread(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw);
-	fread(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw);
-
-	fread(ctx->rend.global_param_op.Append(), 1, sizeofPolyParam, fw);
-	Vertex *vtx = ctx->rend.verts.Append(4);
-	for (int i = 0; i < 4; i++)
-		fread(vtx + i, 1, sizeofVertex, fw);
-
-	fread(&t, 1, sizeof(t), fw);
-	verify(t == VRAM_SIZE);
-
-	vram.UnLockRegion(0, VRAM_SIZE);
-
-	uLongf compressed_size;
-
-	fread(&compressed_size, 1, sizeof(compressed_size), fw);
-
-	u8* gz_stream = (u8*)malloc(compressed_size);
-	fread(gz_stream, 1, compressed_size, fw);
-	uLongf tl = t;
-	verify(uncompress(vram.data, &tl, gz_stream, compressed_size) == Z_OK);
-	free(gz_stream);
-
-	fread(&t, 1, sizeof(t), fw);
-	fread(&compressed_size, 1, sizeof(compressed_size), fw);
-	gz_stream = (u8*)malloc(compressed_size);
-	fread(gz_stream, 1, compressed_size, fw);
-	tl = t;
-	verify(uncompress(ctx->tad.thd_data, &tl, gz_stream, compressed_size) == Z_OK);
-	free(gz_stream);
-
-	ctx->tad.thd_data += t;
-
-	if (fread(&t, 1, sizeof(t), fw) > 0) {
-		ctx->tad.render_pass_count = t;
-		for (int i = 0; i < t; i++) {
-			u32 offset;
-			fread(&offset, 1, sizeof(offset), fw);
-			ctx->tad.render_passes[i] = ctx->tad.thd_root + offset;
-		}
-	}
-	fread(pvr_regs, 1, sizeof(pvr_regs), fw);
-
-	fclose(fw);
-    
-    return ctx;
-}
 
 bool dump_frame_switch = false;
+bool pend_rend = false;
 
-bool rend_frame(TA_context* ctx, bool draw_osd) {
-	if (dump_frame_switch) {
-		char name[32];
-		sprintf(name, "dcframe-%d", FrameCount);
-		dump_frame(name, _pvrrc, &vram[0]);
-		dump_frame_switch = false;
-	}
-	bool proc = renderer->Process(ctx);
-#if !defined(TARGET_NO_THREADS)
-	if (!proc || (!ctx->rend.isRTT && !ctx->rend.isRenderFramebuffer))
-		// If rendering to texture, continue locking until the frame is rendered
-		re.Set();
-#endif
-
-	bool do_swp = proc && renderer->Render();
-
-	if (do_swp && draw_osd)
-		renderer->DrawOSD(false);
-
-	return do_swp;
-}
-
-bool rend_single_frame()
-{
-	if (renderer_changed)
-	{
-		renderer_changed = false;
-		rend_term_renderer();
-		rend_create_renderer();
-		rend_init_renderer();
-	}
-	//wait render start only if no frame pending
-	do
-	{
-		// FIXME not here
-		os_DoEvents();
-
-		luabindings_onframe();
-
-#if !defined(TARGET_NO_THREADS)
-		if (gui_is_open() || gui_state == VJoyEdit)
-		{
-			gui_display_ui();
-			if (gui_state == VJoyEdit && renderer != NULL)
-				renderer->DrawOSD(true);
-			FinishRender(NULL);
-			// Use the rendering start event to wait between two frames but save its value
-			if (rs.Wait(17))
-				rs.Set();
-			return true;
-		}
-		else
-		{
-			if (renderer != NULL)
-				renderer->RenderLastFrame();
-
-			if (!rs.Wait(100))
-				return false;
-		}
-#else
-		if (gui_is_open())
-		{
-			gui_display_ui();
-			FinishRender(NULL);
-			return true;
-		}
-		if (renderer != NULL)
-			renderer->RenderLastFrame();
-#endif
-		if (!renderer_enabled)
-			return false;
-
-		_pvrrc = DequeueRender();
-	}
-	while (!_pvrrc);
-	bool do_swp = rend_frame(_pvrrc, true);
-
-#if !defined(TARGET_NO_THREADS)
-	if (_pvrrc->rend.isRTT)
-		re.Set();
-#endif
-
-	//clear up & free data ..
-	FinishRender(_pvrrc);
-	_pvrrc=0;
-
-	return do_swp;
-}
 
 // auto or slug
 //vulkan
@@ -343,79 +110,182 @@ bool rend_single_frame()
 //none
 static std::map<const string, rendererbackend_t> backends;
 
+
 static void rend_create_renderer()
 {
-	if (backends.count(settings.pvr.backend))
-	{
-		printf("RendIF: renderer: %s\n", settings.pvr.backend.c_str());
-		renderer = backends[settings.pvr.backend].create();
-		renderer->backendInfo = backends[settings.pvr.backend];
-	}
-	else
-	{
-		vector<rendererbackend_t> vec = rend_get_backends();
+    if (backends.count(settings.pvr.backend))
+    {
+        printf("RendIF: renderer: %s\n", settings.pvr.backend.c_str());
+        renderer = backends[settings.pvr.backend].create();
+        renderer->backendInfo = backends[settings.pvr.backend];
+    }
+    else
+    {
+        vector<rendererbackend_t> vec = rend_get_backends();
 
-		auto main = (*vec.begin());
+        auto main = (*vec.begin());
 
-		renderer = main.create();
-		renderer->backendInfo = main;
+        renderer = main.create();
+        renderer->backendInfo = main;
 
-		if ((++vec.begin()) != vec.end())
-		{
-			auto fallback = (*(++vec.begin()));
-			fallback_renderer = fallback.create();
-			fallback_renderer->backendInfo = fallback;
-		}
+        if ((++vec.begin()) != vec.end())
+        {
+            auto fallback = (*(++vec.begin()));
+            fallback_renderer = fallback.create();
+            fallback_renderer->backendInfo = fallback;
+        }
 
-		printf("RendIF: renderer (auto): ");
-		printf("main: %s",(vec.begin())->slug.c_str());
-		if (fallback_renderer)
-			printf(" fallback: %s", (++vec.begin())->slug.c_str());
-		printf("\n");
-	}
+        printf("RendIF: renderer (auto): ");
+        printf("main: %s", (vec.begin())->slug.c_str());
+        if (fallback_renderer)
+            printf(" fallback: %s", (++vec.begin())->slug.c_str());
+        printf("\n");
+    }
 }
 
 void rend_init_renderer()
 {
-	if (renderer == NULL)
-		rend_create_renderer();
-	if (!renderer->Init())
+    if (renderer == NULL)
+        rend_create_renderer();
+    if (!renderer->Init())
     {
-    	printf("RendIF: Renderer %s did not initialize. Falling back to %s.\n", 
-    		renderer->backendInfo.slug.c_str(),
-    		fallback_renderer->backendInfo.slug.c_str()
-    	);
-		
-		delete renderer;
+        printf("RendIF: Renderer %s did not initialize. Falling back to %s.\n",
+            renderer->backendInfo.slug.c_str(),
+            fallback_renderer->backendInfo.slug.c_str()
+        );
 
-		renderer = fallback_renderer;
+        delete renderer;
 
-    	if (fallback_renderer == NULL || !fallback_renderer->Init())
-    	{
-    		if (fallback_renderer != NULL)
-    			delete fallback_renderer;
-    		die("RendIF: Renderer initialization failed\n");
-    	}
-    	
-    	fallback_renderer = NULL;	// avoid double-free
+        renderer = fallback_renderer;
+
+        if (fallback_renderer == NULL || !fallback_renderer->Init())
+        {
+            if (fallback_renderer != NULL)
+                delete fallback_renderer;
+            die("RendIF: Renderer initialization failed\n");
+        }
+
+        fallback_renderer = NULL;	// avoid double-free
     }
 }
 
 void rend_term_renderer()
 {
-	killtex();
-	gui_term();
-	renderer->Term();
-	delete renderer;
-	renderer = NULL;
-	if (fallback_renderer != NULL)
-	{
-		delete fallback_renderer;
-		fallback_renderer = NULL;
-	}
+    killtex();
+
+    renderer->Term();
+    delete renderer;
+    renderer = NULL;
+    if (fallback_renderer != NULL)
+    {
+        delete fallback_renderer;
+        fallback_renderer = NULL;
+    }
 }
 
-void* rend_thread(void* p)
+static bool rend_frame(TA_context* ctx, bool draw_osd) {
+    if (dump_frame_switch) {
+        char name[32];
+        sprintf(name, "dcframe-%d", FrameCount);
+        tactx_write_frame(name, _pvrrc, &vram[0]);
+        dump_frame_switch = false;
+    }
+
+    if (renderer_changed)
+    {
+        renderer_changed = false;
+        rend_term_renderer();
+    }
+
+    if (renderer == nullptr) {
+        rend_init_renderer();
+    }
+
+    bool proc = renderer->Process(ctx);
+
+    if (!proc || !ctx->rend.isRTT)
+        // If rendering to texture, continue locking until the frame is rendered
+        re.Set();
+
+    bool do_swp = proc && renderer->RenderPVR();
+
+    if (do_swp && draw_osd)
+        renderer->DrawOSD(false);
+
+    return do_swp;
+}
+
+namespace {
+
+
+    
+#if 0
+static bool rend_single_frame()
+{
+	if (renderer_changed)
+	{
+		renderer_changed = false;
+		rend_term_renderer();
+	}
+
+    if (renderer == null) {
+        rend_create_renderer();
+        rend_init_renderer();
+    }
+
+    if (g_GUI->IsOpen() || g_GUI->IsVJoyEdit())
+    {
+        os_DoEvents();
+
+        g_GUI->RenderUI();
+
+        if (g_GUI->IsVJoyEdit() && renderer != NULL)
+            renderer->DrawOSD(true);
+
+        FinishRender(NULL);
+        // Use the rendering start event to wait between two frames but save its value
+        if (rs.Wait(17))
+            rs.Set();
+        return true;
+    }
+
+    //wait render start only if no frame pending
+	do
+	{
+		// FIXME not here
+		os_DoEvents();
+
+		luabindings_onframe();
+
+		{
+			if (renderer != NULL)
+				renderer->RenderLastFrame();
+
+			if (!rs.Wait(1))
+				return false;
+		}
+
+        if (!renderer_enabled)
+			return false;
+
+		_pvrrc = DequeueRender();
+	}
+	while (!_pvrrc);
+	bool do_swp = rend_frame(_pvrrc, true);
+
+	if (_pvrrc->rend.isRTT)
+		re.Set();
+
+	//clear up & free data ..
+	FinishRender(_pvrrc);
+	_pvrrc=0;
+
+	return do_swp;
+}
+#endif
+
+#if 0
+static void* rend_thread(void* p)
 {
 	rend_init_renderer();
 
@@ -433,10 +303,28 @@ void* rend_thread(void* p)
 	return NULL;
 }
 
-bool pend_rend = false;
+
+static void rend_stop_renderer()
+{
+    renderer_enabled = false;
+    tactx_Term();
+}
+
+
+static void rend_cancel_emu_wait()
+{
+    FinishRender(NULL);
+
+    re.Set();
+}
+#endif
+
+}
 
 void rend_resize(int width, int height) {
-	renderer->Resize(width, height);
+    screen_width = width;
+    screen_height = height;
+	//renderer->Resize(width, height);
 }
 
 
@@ -446,13 +334,10 @@ void rend_start_render()
 	pend_rend = false;
 	TA_context* ctx = tactx_Pop(CORE_CURRENT_CTX);
 
-	// No end of render interrupt when rendering the framebuffer
-	if (!ctx || !ctx->rend.isRenderFramebuffer)
-		SetREP(ctx);
-
 	if (ctx)
 	{
-		bool is_rtt=(FB_W_SOF1& 0x1000000)!=0 && !ctx->rend.isRenderFramebuffer;
+        SetREP(ctx);
+		bool is_rtt=(FB_W_SOF1& 0x1000000)!=0;
 		
 		if (fLogFrames || fCheckFrames) {
 			MD5Context md5;
@@ -499,8 +384,8 @@ void rend_start_render()
 		{
 			//tactx_Recycle(ctx); ctx = read_frame("frames/dcframe-SoA-intro-tr-autosort");
 			//printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
-			if (!ctx->rend.isRenderFramebuffer)
-				FillBGP(ctx);
+			
+			FillBGP(ctx);
 			
 			ctx->rend.isRTT=is_rtt;
 
@@ -525,11 +410,32 @@ void rend_start_render()
 			if (QueueRender(ctx))
 			{
 				palette_update();
-#if !defined(TARGET_NO_THREADS)
+
+                g_GUIRenderer->QueueEmulatorFrame([=](bool canceled){
+
+                    if (canceled) {
+                        re.Set();
+                        return false;
+                    }
+
+                    _pvrrc = DequeueRender();
+                    
+                    verify(_pvrrc == ctx);
+                    
+                    bool do_swp = rend_frame(_pvrrc, true);
+
+                    if (_pvrrc->rend.isRTT)
+                        re.Set();
+
+                    //clear up & free data ..
+                    FinishRender(_pvrrc);
+                    _pvrrc = 0;
+
+                    return do_swp;
+                });
+
 				rs.Set();
-#else
-				rend_single_frame();
-#endif
+
 				pend_rend = true;
 			}
 		}
@@ -542,7 +448,6 @@ void rend_start_render()
 	}
 }
 
-
 void rend_end_render()
 {
 #if 1 //also disabled the printf, it takes quite some time ...
@@ -554,50 +459,28 @@ void rend_end_render()
 #endif
 
 	if (pend_rend) {
-#if !defined(TARGET_NO_THREADS)
 		re.Wait();
-#else
-		if (renderer != NULL)
-			renderer->Present();
-#endif
 	}
 }
 
-void rend_stop_renderer()
-{
-	renderer_enabled = false;
-	tactx_Term();
-}
 
 void rend_vblank()
 {
 	if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
 	{
-		SetCurrentTARC(CORE_CURRENT_CTX);
-		ta_ctx->rend.isRenderFramebuffer = true;
-		rend_start_render();
-		fb_dirty = false;
+        fb_dirty = false;
+
+        g_GUIRenderer->QueueEmulatorFrame([] (bool canceled) {
+            if (!canceled) {
+                renderer->RenderFramebuffer();
+            }
+            return true;
+        });
 	}
 	render_called = false;
-	check_framebuffer_write();
+    pvr_update_framebuffer_watches();
 }
 
-void check_framebuffer_write()
-{
-	u32 fb_size = (FB_R_SIZE.fb_y_size + 1) * (FB_R_SIZE.fb_x_size + FB_R_SIZE.fb_modulus) * 4;
-	fb1_watch_addr_start = FB_R_SOF1 & VRAM_MASK;
-	fb1_watch_addr_end = fb1_watch_addr_start + fb_size;
-	fb2_watch_addr_start = FB_R_SOF2 & VRAM_MASK;
-	fb2_watch_addr_end = fb2_watch_addr_start + fb_size;
-}
-
-void rend_cancel_emu_wait()
-{
-	FinishRender(NULL);
-#if !defined(TARGET_NO_THREADS)
-	re.Set();
-#endif
-}
 
 void rend_set_fb_scale(float x, float y)
 {

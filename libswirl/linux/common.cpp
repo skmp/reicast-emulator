@@ -81,7 +81,7 @@ extern "C" u8* generic_fault_handler ()
 
 	fault_printf("generic_fault_handler\n");
 	
-	if (dc_handle_fault(trap_si_addr, &ctx))
+	if (virtualDreamcast->HandleFault(trap_si_addr, &ctx))
 	{
 		fault_printf("generic_fault_handler: final pc: %p, trap pc: %p\n", ctx.pc, trap_pc);
 		context_to_segfault(&ctx);

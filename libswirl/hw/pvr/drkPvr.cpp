@@ -17,32 +17,34 @@
 #include "pvr_mem.h"
 #include "Renderer_if.h"
 
-
-void libPvr_LockedBlockWrite (vram_block* block,u32 addr)
-{
-	rend_text_invl(block);
-}
+struct PowerVR_impl : PowerVR {
 
 
-void libPvr_Reset(bool Manual)
-{
-	Regs_Reset(Manual);
-	spg_Reset(Manual);
-}
+    void Reset(bool Manual)
+    {
+        spg_Reset(Manual);
+    }
 
-s32 libPvr_Init()
-{
-	if (!spg_Init())
-	{
-		//failed
-		return rv_error;
-	}
+    s32 Init()
+    {
+        rend_init_renderer();
+        if (!spg_Init())
+        {
+            //failed
+            return rv_error;
+        }
 
-	return rv_ok;
-}
+        return rv_ok;
+    }
 
-//called when exiting from sh4 thread , from the new thread context (for any thread specific de init) :P
-void libPvr_Term()
-{
-	spg_Term();
+    //called when exiting from sh4 thread , from the new thread context (for any thread specific de init) :P
+    void Term()
+    {
+        spg_Term();
+        rend_term_renderer();
+    }
+};
+
+PowerVR* PowerVR::Create() {
+    return new PowerVR_impl();
 }

@@ -2,20 +2,33 @@
 
 #include "types.h"
 #include "oslib/context.h"
+#include <memory>
 
-void dc_loadstate();
-void dc_savestate();
-void dc_stop();
-void dc_reset();
-void dc_resume();
-void dc_term();
-int dc_start_game(const char *path);
+struct VirtualDreamcast {
+    virtual void LoadState() = 0;
+    virtual void SaveState() = 0;
+    virtual void Stop() = 0;
+    virtual void Exit() = 0;
+    virtual void Reset() = 0;
+    virtual void Resume() = 0;
+    virtual bool Init() = 0;
+    virtual void Term() = 0;
+    virtual int StartGame(const char* path) = 0;
+    virtual void RequestReset() = 0;
+    virtual bool HandleFault(unat addr, rei_host_context_t* ctx) = 0;
+    virtual ~VirtualDreamcast() { }
 
-void* dc_run(void*);
+    static VirtualDreamcast* Create();
+};
 
-void dc_request_reset();
+extern unique_ptr<VirtualDreamcast> virtualDreamcast;
+extern unique_ptr<GDRomDisc> g_GDRDisc;
+extern unique_ptr<SoundCPU> g_SoundCPU;
+extern unique_ptr<AICA> g_AICA;
+extern MMIODevice* g_GDRomDrive;
 
-bool dc_handle_fault(unat addr, rei_host_context_t* ctx);
 
 // TODO: rename these
 int reicast_init(int argc, char* argv[]);
+void reicast_ui_loop();
+void reicast_term();

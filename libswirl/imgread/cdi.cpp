@@ -2,7 +2,7 @@
 
 
 
-#include "common.h"
+#include "imgread_common.h"
 
 #include "deps/cdipsr/cdipsr.h"
 

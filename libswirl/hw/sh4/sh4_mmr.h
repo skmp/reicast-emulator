@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "../holly/sb.h"
 #include "../sh4/sh4_if.h"
 
 //For mem mapping
@@ -34,11 +35,11 @@ void WriteMem_area7(u32 addr,u32 data,u32 sz);
 void DYNACALL WriteMem_sq_32(u32 address,u32 data);*/
 
 //Init/Res/Term
-void sh4_mmr_init();
+void sh4_mmr_init(SuperH4* psh);
 void sh4_mmr_reset();
 void sh4_mmr_term();
 
-void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rp=0, RegWriteAddrFP* wp=0);
+void sh4_rio_reg(void* context, Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rp=0, RegWriteAddrFP* wp=0);
 
 #define A7_REG_HASH(addr) ((addr>>16)&0x1FFF)
 

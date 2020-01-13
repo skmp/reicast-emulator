@@ -92,7 +92,7 @@ void gl_swap() {
 
 void common_linux_setup();
 int reicast_init(int argc, char* argv[]);
-void dc_exit();
+
 void dc_resume();
 void rend_init_renderer();
 

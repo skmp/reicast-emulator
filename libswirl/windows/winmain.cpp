@@ -7,7 +7,6 @@
 
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
-#include "imgread/common.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
 #include "xinput_gamepad.h"
@@ -31,6 +30,8 @@
 
 #include "utils/glinit/wgl/wgl.h"
 
+#include "gui/gui.h"
+#include "gui/gui_renderer.h"
 
 #undef ARRAY_SIZE	// macros are evil
 
@@ -147,9 +148,6 @@ PCHAR*
 	return argv;
 }
 
-void dc_exit(void);
-
-
 static std::shared_ptr<WinKbGamepadDevice> kb_gamepad;
 static std::shared_ptr<WinMouseGamepadDevice> mouse_gamepad;
 
@@ -194,7 +192,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 		#error missing arch for windows
 	#endif
 
-	if (dc_handle_fault(address, &ctx))
+	if (virtualDreamcast && virtualDreamcast->HandleFault(address, &ctx))
 	{
 		// TODO: Implement context abstraction for windows
 		#if HOST_CPU == CPU_X86
@@ -785,9 +783,9 @@ int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 			setup_seh();
 		#endif
 
-		rend_thread(NULL);
+        reicast_ui_loop();
 
-		dc_term();
+        reicast_term();
 	}
 #ifndef __GNUC__
 	__except( ExeptionHandler(GetExceptionInformation()) )
@@ -835,7 +833,10 @@ void os_DoEvents()
 		// If the message is WM_QUIT, exit the while loop
 		if (msg.message == WM_QUIT)
 		{
-			dc_exit();
+            if (virtualDreamcast) {
+                virtualDreamcast->Exit();
+            }
+            g_GUIRenderer->Stop();
 		}
 
 		// Translate the message and dispatch it to WindowProc()

@@ -8,7 +8,9 @@
 
 
 Sh4RCB* p_sh4rcb;
-sh4_if  sh4_cpu;
+SuperH4* sh4_cpu;
+SuperH4Backend* sh4_backend;
+
 u8* sh4_dyna_rcb;
 
 INLINE void ChangeGPR()

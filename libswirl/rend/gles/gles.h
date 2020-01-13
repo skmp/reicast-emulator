@@ -124,7 +124,6 @@ void gl_load_osd_resources();
 void gl_free_osd_resources();
 bool ProcessFrame(TA_context* ctx);
 void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
-void findGLVersion();
 
 text_info raw_GetTexture(TSP tsp, TCW tcw);
 void killtex();

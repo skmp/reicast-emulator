@@ -829,7 +829,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         MMIODevice* gdromOrNaomiDevice =
         
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-            Create_NaomiDevice(SystemBus)
+            Create_NaomiDevice(systemBus)
 #else
             (g_GDRomDrive = Create_GDRomDevice(systemBus, asic))
 #endif

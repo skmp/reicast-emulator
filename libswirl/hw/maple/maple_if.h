@@ -6,7 +6,8 @@
 extern maple_device* MapleDevices[4][6];
 
 struct SystemBus;
-MMIODevice* Create_MapleDevice(SystemBus* sb);
+struct ASIC;
+MMIODevice* Create_MapleDevice(SystemBus* sb, ASIC* asic);
 
 void maple_ReconnectDevices();
 

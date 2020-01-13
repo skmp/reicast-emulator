@@ -64,7 +64,7 @@ MMIODevice* Create_NaomiDevice(SystemBus* sb);
 SystemBus* Create_SystemBus();
 MMIODevice* Create_PVRDevice(SystemBus* sb);
 MMIODevice* Create_ExtDevice();
-MMIODevice* Create_AicaDevice(SystemBus* sb);
+MMIODevice* Create_AicaDevice(SystemBus* sb, ASIC* asic);
 MMIODevice* Create_RTCDevice();
 
 
@@ -836,8 +836,8 @@ struct Dreamcast_impl : VirtualDreamcast {
         ;
 
         MMIODevice* pvrDevice = Create_PVRDevice(systemBus);
-        MMIODevice* aicaDevice = Create_AicaDevice(systemBus);
-        MMIODevice* mapleDevice = Create_MapleDevice(systemBus);
+        MMIODevice* aicaDevice = Create_AicaDevice(systemBus, asic);
+        MMIODevice* mapleDevice = Create_MapleDevice(systemBus, asic);
         
         MMIODevice* extDevice = Create_ExtDevice(); // or Create_Modem();
 

@@ -844,7 +844,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         MMIODevice* modemDevice = extDevice;
 
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
-        modemDevice = Create_Modem();
+        modemDevice = Create_Modem(asic);
 #endif
 
         MMIODevice* rtcDevice = Create_RTCDevice();

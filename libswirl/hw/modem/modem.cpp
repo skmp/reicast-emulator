@@ -97,7 +97,7 @@ struct ModemDevice_impl : MMIODevice {
 		if (modem_regs.reg1f.NCIA || modem_regs.reg1f.NSIA || modem_regs.reg1e.RDBIA || modem_regs.reg1e.TDBIA)
 			asic_RaiseInterrupt(holly_EXP_8BIT);
 		else
-			asic_CancelInterrupt(holly_EXP_8BIT);
+			asic->CancelInterrupt(holly_EXP_8BIT);
 	}
 
 	u32 get_masked_status(u32 reg)
@@ -757,8 +757,12 @@ struct ModemDevice_impl : MMIODevice {
 			}
 		}
 	}
+
+	ASIC* asic;
+
+	ModemDevice_impl(ASIC* asic) : asic(asic) { }
 };
 
-MMIODevice* Create_Modem() {
-	return new ModemDevice_impl();
+MMIODevice* Create_Modem(ASIC* asic) {
+	return new ModemDevice_impl(asic);
 }

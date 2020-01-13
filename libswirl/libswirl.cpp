@@ -62,7 +62,7 @@ MMIODevice* Create_BiosDevice();
 MMIODevice* Create_FlashDevice();
 MMIODevice* Create_NaomiDevice(SystemBus* sb);
 SystemBus* Create_SystemBus();
-MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic);
+MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg);
 MMIODevice* Create_ExtDevice();
 MMIODevice* Create_AicaDevice(SystemBus* sb, ASIC* asic);
 MMIODevice* Create_RTCDevice();
@@ -835,7 +835,8 @@ struct Dreamcast_impl : VirtualDreamcast {
 #endif
         ;
 
-        MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic);
+        SPG* spg = SPG::Create(asic);
+        MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic, spg);
         MMIODevice* aicaDevice = Create_AicaDevice(systemBus, asic);
         MMIODevice* mapleDevice = Create_MapleDevice(systemBus, asic);
         
@@ -861,6 +862,7 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         sh4_cpu->SetA0Handler(A0H_MAPLE, mapleDevice);
         sh4_cpu->SetA0Handler(A0H_ASIC, asic);
+        sh4_cpu->SetA0Handler(A0H_SPG, spg);
 
         return sh4_cpu->Init();
     }
@@ -1038,7 +1040,9 @@ struct Dreamcast_impl : VirtualDreamcast {
         mmu_set_state();
         dsp.dyndirty = true;
         sh4_sched_ffts();
-        CalculateSync();
+
+        // TODO: save state fix this
+        dynamic_cast<SPG*>(sh4_cpu->GetA0Handler(A0H_SPG))->CalculateSync();
 
         cleanup_serialize(data);
         printf("Loaded state from %s size %d\n", filename.c_str(), total_size);

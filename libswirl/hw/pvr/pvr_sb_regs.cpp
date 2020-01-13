@@ -145,8 +145,9 @@ struct PVRDevice : MMIODevice {
 
     SystemBus* sb;
     ASIC* asic;
+    SPG* spg;
 
-    PVRDevice(SystemBus* sb, ASIC* asic) : sb(sb), asic(asic) { }
+    PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg) : sb(sb), asic(asic), spg(spg) { }
 
     u32 Read(u32 addr, u32 sz)
     {
@@ -204,7 +205,7 @@ struct PVRDevice : MMIODevice {
             if (PvrReg(addr, u32) != data)
             {
                 PvrReg(addr, u32) = data;
-                CalculateSync();
+                spg->CalculateSync();
             }
             return;
         }
@@ -213,7 +214,7 @@ struct PVRDevice : MMIODevice {
             bool vclk_div_changed = (PvrReg(addr, u32) ^ data) & (1 << 23);
             PvrReg(addr, u32) = data;
             if (vclk_div_changed)
-                CalculateSync();
+                spg->CalculateSync();
             return;
         }
         if (addr == FB_R_SIZE_addr)
@@ -292,6 +293,6 @@ struct PVRDevice : MMIODevice {
 
 };
 
-MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic) {
-    return new PVRDevice(sb, asic);
+MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg) {
+    return new PVRDevice(sb, asic, spg);
 }

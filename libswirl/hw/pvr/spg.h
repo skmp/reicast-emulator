@@ -1,20 +1,19 @@
 #pragma once
 #include "drkPvr.h"
+#include "hw/sh4/sh4_mmio.h"
 
-/*
-struct SPG {
-    virtual bool spg_Init() = 0;
-    virtual void spg_Term() = 0;
-    virtual void spg_Reset(bool Manual) = 0;
-
+struct ASIC;
+struct SPG : MMIODevice {
+    
     virtual void CalculateSync() = 0;
     virtual void read_lightgun_position(int x, int y) = 0;
-    virtual void spgUpdatePvr(u32 cycles) = 0;
-
+    
     virtual ~SPG() { }
-};
-*/
 
+    static SPG* Create(ASIC* asic);
+};
+
+#if 0
 bool spg_Init();
 void spg_Term();
 void spg_Reset(bool Manual);
@@ -29,4 +28,6 @@ bool spg_Init();
 void spg_Term();
 void spg_Reset(bool Manual);
 void CalculateSync();
+#endif
+
 void read_lightgun_position(int x, int y);

@@ -19,20 +19,14 @@
 
 struct PowerVR_impl : PowerVR {
 
-
     void Reset(bool Manual)
     {
-        spg_Reset(Manual);
+
     }
 
     s32 Init()
     {
         rend_init_renderer();
-        if (!spg_Init())
-        {
-            //failed
-            return rv_error;
-        }
 
         return rv_ok;
     }
@@ -40,7 +34,6 @@ struct PowerVR_impl : PowerVR {
     //called when exiting from sh4 thread , from the new thread context (for any thread specific de init) :P
     void Term()
     {
-        spg_Term();
         rend_term_renderer();
     }
 };

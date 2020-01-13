@@ -1,6 +1,7 @@
 #pragma once
 #include "ta.h"
 #include "pvr_regs.h"
+#include "helper_classes.h"
 #include "oslib/threading.h"
 
 // helper for 32 byte aligned memory allocation

@@ -45,8 +45,6 @@ unique_ptr<AICA> g_AICA;
 MMIODevice* g_GDRomDrive;
 
 
-static unique_ptr<PowerVR> powerVR;
-
 void FlushCache();
 void LoadCustom();
 
@@ -119,10 +117,6 @@ int GetFile(char* szFileName)
 
 s32 plugins_Init()
 {
-    powerVR.reset(PowerVR::Create());
-
-    if (s32 rv = powerVR->Init())
-        return rv;
 
 #ifndef TARGET_DISPFRAME
     g_GDRDisc.reset(GDRomDisc::Create());
@@ -154,15 +148,11 @@ void plugins_Term()
 
     g_GDRDisc->Term();
     g_GDRDisc.reset(nullptr);
-
-    powerVR->Term();
-    powerVR.reset(nullptr);
 }
 
 void plugins_Reset(bool Manual)
 {
     reios_reset();
-    powerVR->Reset(Manual);
     g_GDRDisc->Reset(Manual);
     g_AICA->Reset(Manual);
     g_SoundCPU->Reset(Manual);
@@ -783,6 +773,8 @@ struct Dreamcast_impl : VirtualDreamcast {
 #endif
         }
 
+        rend_init_renderer();
+
         if (plugins_Init())
             return -3;
 
@@ -878,6 +870,8 @@ struct Dreamcast_impl : VirtualDreamcast {
         naomi_cart_Close();
 #endif
         plugins_Term();
+        rend_term_renderer();
+
         _vmem_release();
 
         mcfg_DestroyDevices();

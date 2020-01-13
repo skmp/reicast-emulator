@@ -733,15 +733,6 @@ void plugins_Term();
 void plugins_Reset(bool Manual);
 
 //PVR
-struct PowerVR {
-	virtual s32 Init() = 0;
-	virtual void Reset(bool Manual) = 0;
-	virtual void Term() = 0;
-
-	virtual ~PowerVR() { }
-
-	static PowerVR* Create();
-};
 
 void* libPvr_GetRenderTarget();
 void* libPvr_GetRenderSurface();

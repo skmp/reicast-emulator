@@ -3,6 +3,7 @@
 #include "types.h"
 
 #include "libswirl.h"
+#include "hw/aica/aica_mmio.h"
 
 #define REG_L (0x2D00)
 #define REG_M (0x2D04)
@@ -53,7 +54,7 @@ T arm_ReadReg(u32 addr)
 	else if(addr==REG_M)
 		return e68k_reg_M;	//shouldn't really happen
 	else
-		return g_AICA->ReadReg(addr,sz);
+		return sh4_cpu->GetA0H<AICA>(A0H_AICA)->ReadReg(addr,sz);
 }		
 template <u32 sz,class T>
 void arm_WriteReg(u32 addr,T data)
@@ -71,7 +72,7 @@ void arm_WriteReg(u32 addr,T data)
 	}
 	else
 	{
-		return g_AICA->WriteReg(addr, data, sz);
+		return sh4_cpu->GetA0H<AICA>(A0H_AICA)->WriteReg(addr, data, sz);
 	}
 }
 

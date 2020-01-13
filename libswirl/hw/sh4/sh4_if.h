@@ -260,6 +260,11 @@ struct SuperH4 {
 	virtual void SetA0Handler(Area0Hanlders slot, MMIODevice* dev) = 0;
 	virtual MMIODevice* GetA0Handler(Area0Hanlders slot) = 0;
 
+	template<class T>
+	T* GetA0H(Area0Hanlders slot) {
+		return dynamic_cast<T*>(GetA0Handler(slot));
+	}
+
     virtual bool setBackend(SuperH4Backends backend) = 0;
 
     virtual bool Init() = 0;

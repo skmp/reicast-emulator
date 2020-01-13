@@ -737,21 +737,6 @@ void plugins_Reset(bool Manual);
 void* libPvr_GetRenderTarget();
 void* libPvr_GetRenderSurface();
 
-//AICA
-struct AICA {
-	virtual s32 Init() = 0;
-	virtual void Reset(bool Manual) = 0;
-	virtual void Term() = 0;
-
-	virtual u32 ReadReg(u32 addr, u32 size) = 0;
-	virtual void WriteReg(u32 addr, u32 data, u32 size) = 0;
-
-	virtual void Update(u32 cycles) = 0;				//called every ~1800 cycles, set to 0 if not used
-	virtual ~AICA() { }
-
-	static AICA* Create();
-};
-
 
 //GDR
 void libCore_gdrom_disc_change();

@@ -31,6 +31,7 @@
 #include "hw/maple/maple_if.h"
 #include "hw/modem/modem.h"
 #include "hw/holly/holly_intc.h"
+#include "hw/aica/aica_mmio.h"
 
 #define fault_printf(...)
 
@@ -41,7 +42,6 @@
 unique_ptr<VirtualDreamcast> virtualDreamcast;
 unique_ptr<GDRomDisc> g_GDRDisc;
 unique_ptr<SoundCPU> g_SoundCPU;
-unique_ptr<AICA> g_AICA;
 MMIODevice* g_GDRomDrive;
 
 
@@ -62,7 +62,7 @@ MMIODevice* Create_NaomiDevice(SystemBus* sb);
 SystemBus* Create_SystemBus();
 MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg);
 MMIODevice* Create_ExtDevice();
-MMIODevice* Create_AicaDevice(SystemBus* sb, ASIC* asic);
+AICA* Create_AicaDevice(SystemBus* sb, ASIC* asic);
 MMIODevice* Create_RTCDevice();
 
 
@@ -125,10 +125,6 @@ s32 plugins_Init()
         return rv;
 #endif
 
-    g_AICA.reset(AICA::Create());
-
-    if (s32 rv = g_AICA->Init())
-        return rv;
 
     g_SoundCPU.reset(SoundCPU::Create());
 
@@ -144,8 +140,6 @@ void plugins_Term()
     g_SoundCPU->Term();
     g_SoundCPU.reset(nullptr);
 
-    g_AICA->Term();
-
     g_GDRDisc->Term();
     g_GDRDisc.reset(nullptr);
 }
@@ -154,7 +148,6 @@ void plugins_Reset(bool Manual)
 {
     reios_reset();
     g_GDRDisc->Reset(Manual);
-    g_AICA->Reset(Manual);
     g_SoundCPU->Reset(Manual);
     //libExtDevice_Reset(Manual);
 }

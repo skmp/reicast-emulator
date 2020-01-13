@@ -107,7 +107,7 @@ int AicaUpdate(void* psh4, int tag, int c, int j)
     //if (aica_sample_cycles>=AICA_SAMPLE_CYCLES)
     {
         g_SoundCPU->Update(512 * 32);
-        g_AICA->Update(1 * 32);
+        sh4_cpu->GetA0H<AICA>(A0H_AICA)->Update(1 * 32);
         //aica_sample_cycles-=AICA_SAMPLE_CYCLES;
     }
 

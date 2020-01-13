@@ -481,16 +481,16 @@ struct AicaDevice : MMIODevice {
 	{
 		//NRM
 		//6
-		sb->RegisterRIO(sh4_cpu, SB_ADST_addr, RIO_WF, 0, STATIC_FORWARD(AicaDevice, Write_SB_ADST));
+		sb->RegisterRIO(this, SB_ADST_addr, RIO_WF, 0, STATIC_FORWARD(AicaDevice, Write_SB_ADST));
 		
 		//I really need to implement G2 dma (and rest dmas actually) properly
 		//THIS IS NOT AICA, its G2-EXT (BBA)
 
-		sb->RegisterRIO(sh4_cpu, SB_E1ST_addr, RIO_WF, 0, STATIC_FORWARD(AicaDevice, Write_SB_E1ST));
-		sb->RegisterRIO(sh4_cpu, SB_E2ST_addr, RIO_WF, 0, STATIC_FORWARD(AicaDevice, Write_SB_E2ST));
-		sb->RegisterRIO(sh4_cpu, SB_DDST_addr, RIO_WF, 0, STATIC_FORWARD(AicaDevice, Write_SB_DDST));
+		sb->RegisterRIO(this, SB_E1ST_addr, RIO_WF, 0, STATIC_FORWARD(AicaDevice, Write_SB_E1ST));
+		sb->RegisterRIO(this, SB_E2ST_addr, RIO_WF, 0, STATIC_FORWARD(AicaDevice, Write_SB_E2ST));
+		sb->RegisterRIO(this, SB_DDST_addr, RIO_WF, 0, STATIC_FORWARD(AicaDevice, Write_SB_DDST));
 
-		dma_sched_id = sh4_sched_register(sh4_cpu, 0, STATIC_FORWARD(AicaDevice, dma_end_sched));
+		dma_sched_id = sh4_sched_register(this, 0, STATIC_FORWARD(AicaDevice, dma_end_sched));
 
 		return true;
 	}

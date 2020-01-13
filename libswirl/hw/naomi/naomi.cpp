@@ -400,9 +400,6 @@ void naomi_process(u32 r3c,u32 r40,u32 r44, u32 r48)
 	}
 }
 
-void Naomi_DmaStart(void* that, u32 addr, u32 data);
-void Naomi_DmaEnable(void* that, u32 addr, u32 data);
-
 struct NaomiDevice_impl : MMIODevice {
 	SystemBus* sb;
 
@@ -528,9 +525,9 @@ struct NaomiDevice_impl : MMIODevice {
 #endif
 		NaomiInit();
 
-		sb->RegisterRIO(sh4_cpu, SB_GDST_addr, RIO_WF, 0, &Naomi_DmaStart);
+		sb->RegisterRIO(this, SB_GDST_addr, RIO_WF, 0, STATIC_FORWARD(NaomiDevice_impl, DmaStart));
 
-		sb->RegisterRIO(sh4_cpu, SB_GDEN_addr, RIO_WF, 0, &Naomi_DmaEnable);
+		sb->RegisterRIO(this, SB_GDEN_addr, RIO_WF, 0, STATIC_FORWARD(NaomiDevice_impl, DmaEnable));
 
 		return true;
 	}
@@ -631,20 +628,6 @@ struct NaomiDevice_impl : MMIODevice {
 #endif
 	}
 };
-
-void Naomi_DmaStart(void* that, u32 addr, u32 data)
-{
-	auto naomi = reinterpret_cast<NaomiDevice_impl*>(that);
-
-	naomi->DmaStart(addr, data);
-}
-void Naomi_DmaEnable(void* that, u32 addr, u32 data)
-{
-	auto naomi = reinterpret_cast<NaomiDevice_impl*>(that);
-
-	naomi->DmaEnable(addr, data);
-}
-
 
 MMIODevice* Create_NaomiDevice(SystemBus* sb) {
 	return new NaomiDevice_impl(sb);

@@ -197,9 +197,6 @@ extern bool maple_ddt_pending_reset;
 
 
 //./core/hw/modem/modem.cpp
-extern int modem_sched;
-
-
 
 //./core/hw/pvr/Renderer_if.o
 //only written - not read
@@ -988,17 +985,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(sch_list[time_sync].start) ;
 	REICAST_S(sch_list[time_sync].end) ;
 
-	#ifdef ENABLE_MODEM
-	REICAST_S(sch_list[modem_sched].tag) ;
-    REICAST_S(sch_list[modem_sched].start) ;
-    REICAST_S(sch_list[modem_sched].end) ;
-	#else
-	int modem_dummy = 0;
-	REICAST_S(modem_dummy);
-	REICAST_S(modem_dummy);
-	REICAST_S(modem_dummy);
-	#endif
-
 	REICAST_S(SCIF_SCFSR2);
 	REICAST_S(SCIF_SCFRDR2);
 	REICAST_S(SCIF_SCFDR2);
@@ -1337,17 +1323,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(sch_list[time_sync].start) ;
 	REICAST_US(sch_list[time_sync].end) ;
 
-	#ifdef ENABLE_MODEM
-	REICAST_US(sch_list[modem_sched].tag) ;
-    REICAST_US(sch_list[modem_sched].start) ;
-    REICAST_US(sch_list[modem_sched].end) ;
-	#else
-	int modem_dummy;
-	REICAST_US(modem_dummy);
-	REICAST_US(modem_dummy);
-	REICAST_US(modem_dummy);
-	#endif
-
 	REICAST_US(SCIF_SCFSR2);
 	REICAST_US(SCIF_SCFRDR2);
 	REICAST_US(SCIF_SCFDR2);
@@ -1677,17 +1652,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(sch_list[time_sync].tag) ;
 	REICAST_US(sch_list[time_sync].start) ;
 	REICAST_US(sch_list[time_sync].end) ;
-
-	#ifdef ENABLE_MODEM
-	REICAST_US(sch_list[modem_sched].tag) ;
-    REICAST_US(sch_list[modem_sched].start) ;
-    REICAST_US(sch_list[modem_sched].end) ;
-	#else
-	int modem_dummy;
-	REICAST_US(modem_dummy);
-	REICAST_US(modem_dummy);
-	REICAST_US(modem_dummy);
-	#endif
 
 	REICAST_US(SCIF_SCFSR2);
 	REICAST_US(SCIF_SCFRDR2);

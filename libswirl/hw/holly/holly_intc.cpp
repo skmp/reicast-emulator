@@ -206,41 +206,41 @@ struct ASICDevice_impl : ASIC {
 
 	bool Init()
 	{
-		sb->RegisterRIO(sh4_cpu, SB_ISTNRM_addr, RIO_FUNC, STATIC_FORWARD(ASICDevice_impl, Read_SB_ISTNRM), STATIC_FORWARD(ASICDevice_impl, Write_SB_ISTNRM));
+		sb->RegisterRIO(this, SB_ISTNRM_addr, RIO_FUNC, STATIC_FORWARD(ASICDevice_impl, Read_SB_ISTNRM), STATIC_FORWARD(ASICDevice_impl, Write_SB_ISTNRM));
 
-		sb->RegisterRIO(sh4_cpu, SB_ISTEXT_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_ISTEXT));
+		sb->RegisterRIO(this, SB_ISTEXT_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_ISTEXT));
 
-		sb->RegisterRIO(sh4_cpu, SB_ISTERR_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_ISTERR));
+		sb->RegisterRIO(this, SB_ISTERR_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_ISTERR));
 
 		//NRM
 		//6
-		sb->RegisterRIO(sh4_cpu, SB_IML6NRM_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML6NRM));
+		sb->RegisterRIO(this, SB_IML6NRM_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML6NRM));
 
 		//4
-		sb->RegisterRIO(sh4_cpu, SB_IML4NRM_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML4NRM));
+		sb->RegisterRIO(this, SB_IML4NRM_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML4NRM));
 
 		//2
-		sb->RegisterRIO(sh4_cpu, SB_IML2NRM_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML2NRM));
+		sb->RegisterRIO(this, SB_IML2NRM_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML2NRM));
 
 		//EXT
 		//6
-		sb->RegisterRIO(sh4_cpu, SB_IML6EXT_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML6EXT));
+		sb->RegisterRIO(this, SB_IML6EXT_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML6EXT));
 
 		//4
-		sb->RegisterRIO(sh4_cpu, SB_IML4EXT_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML4EXT));
+		sb->RegisterRIO(this, SB_IML4EXT_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML4EXT));
 
 		//2
-		sb->RegisterRIO(sh4_cpu, SB_IML2EXT_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML2EXT));
+		sb->RegisterRIO(this, SB_IML2EXT_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML2EXT));
 
 		//ERR
 		//6
-		sb->RegisterRIO(sh4_cpu, SB_IML6ERR_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML6ERR));
+		sb->RegisterRIO(this, SB_IML6ERR_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML6ERR));
 
 		//4
-		sb->RegisterRIO(sh4_cpu, SB_IML4ERR_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML4ERR));
+		sb->RegisterRIO(this, SB_IML4ERR_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML4ERR));
 
 		//2
-		sb->RegisterRIO(sh4_cpu, SB_IML2ERR_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML2ERR));
+		sb->RegisterRIO(this, SB_IML2ERR_addr, RIO_WF, 0, STATIC_FORWARD(ASICDevice_impl, Write_SB_IML2ERR));
 
 		return true;
 	}

@@ -80,6 +80,22 @@ extern Array<RegisterStruct> sb_regs;
 
 #include "sb_regs.h"
 
-#define STATIC_FORWARD1(class, function) [](void* ctx, u32 a) { auto that = reinterpret_cast<class*>(ctx); return that->function(a); }
-#define STATIC_FORWARD2(class, function) [](void* ctx, u32 a, u32 b) { auto that = reinterpret_cast<class*>(ctx); return that->function(a, b); }
-#define STATIC_FORWARD3(class, function) [](void* ctx, int i, int c, int j) { auto that = reinterpret_cast<class*>(ctx); return that->function(i, c, j); }
+// Template magic for STATIC_FORWARD
+template <class T>
+class FI {
+
+};
+
+template<typename R, typename C, typename... Args>
+struct FI<R(C::*)(Args...)> {
+	using r_type = R;
+	using c_type = C;
+
+	static R(*forward(R(*fn)(void* context, Args...)))(void* ctx, Args...) {
+		return fn;
+	}
+};
+
+#define STATIC_FORWARD(klass, function)  FI<decltype(&klass::function)>::forward([](void* ctx, auto... args) { \
+                                auto that = reinterpret_cast<klass*>(ctx); return that->function(args...); \
+                            })

@@ -92,7 +92,7 @@ public:
 void palette_update();
 
 template<class pixel_type>
-__forceinline pixel_type clamp(pixel_type minv, pixel_type maxv, pixel_type x) {
+__forceinline pixel_type cclamp(pixel_type minv, pixel_type maxv, pixel_type x) {
 	return std::min(maxv, std::max(minv, x));
 }
 
@@ -130,7 +130,7 @@ __forceinline u32 YUV422(s32 Y,s32 Yu,s32 Yv)
 	s32 G = Y - (Yu*11 + Yv*22)/32; // Y - (Yu-128) * (11/8) * 0.25 - (Yv-128) * (11/8) * 0.5 ?
 	s32 B = Y + Yu*110/64;          // Y + (Yu-128) * (11/8) * 1.25 ?
 
-	return PixelPacker::packRGB(clamp<s32>(0, 255, R),clamp<s32>(0, 255, G),clamp<s32>(0, 255, B));
+	return PixelPacker::packRGB(cclamp<s32>(0, 255, R),cclamp<s32>(0, 255, G),cclamp<s32>(0, 255, B));
 }
 
 #define twop(x,y,bcx,bcy) (detwiddle[0][bcy][x]+detwiddle[1][bcx][y])

@@ -1,10 +1,20 @@
 #pragma once
 #include "types.h"
+struct ARM7Backend {
+    virtual bool Init() = 0;
+    virtual void Reset() = 0;
 
-void arm_Init();
-void arm_Reset();
-void arm_Run(u32 uNumCycles);
-void arm_SetEnabled(bool enabled);
+    virtual void Run(u32 uNumCycles) = 0;
+    virtual void SetEnabled(bool enabled) = 0;
+    virtual void InterruptChange(u32 bits, u32 L) = 0;
+
+    virtual void serialize(void** data, unsigned int* total_size) = 0;
+    virtual void unserialize(void** data, unsigned int* total_size) = 0;
+};
+
+void libARM_InterruptChange(u32 bits, u32 L);
+
+ARM7Backend* Create_ARM7Interpreter();
 
 #define arm_sh4_bias (2)
 

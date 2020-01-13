@@ -96,16 +96,12 @@ inline static void _write_main(u32 addr, T value) {
 
 template<class T>
 inline static T _read_sound(u32 addr) {
-	if (sizeof(T) == 1) return (T)arm_ReadMem8(addr);
-	else if (sizeof(T) == 2) return (T)arm_ReadMem16(addr);
-	else return (T)arm_ReadMem32(addr);
+	return (T)0;
 }
 
 template<class T>
 inline static void _write_sound(u32 addr, T value) {
-	if (sizeof(T) == 1) arm_WriteMem8(addr, (u8)value);
-	else if (sizeof(T) == 2) arm_WriteMem16(addr, (u16)value);
-	else arm_WriteMem32(addr, (u32)value);
+
 }
 
 template<class T>

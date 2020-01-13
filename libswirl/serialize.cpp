@@ -4,6 +4,7 @@
 #include "hw/aica/dsp.h"
 #include "hw/aica/aica.h"
 #include "hw/aica/sgc_if.h"
+#include "hw/arm7/arm7.h"
 #include "hw/sh4/sh4_mem_area0.h"
 #include "hw/flashrom/flashrom.h"
 #include "hw/mem/_vmem.h"
@@ -43,24 +44,10 @@ void gdrom_serialize(void** data, unsigned int* total_size);
 bool gdrom_unserialize(void** data, unsigned int* total_size);
 
 //./core/hw/arm7/arm_mem.cpp
-extern bool aica_interr;
-extern u32 aica_reg_L;
-extern bool e68k_out;
-extern u32 e68k_reg_L;
-extern u32 e68k_reg_M;
-
 
 
 //./core/hw/arm7/arm7.cpp
-extern DECL_ALIGN(8) reg_pair arm_Reg[RN_ARM_REG_COUNT];
-extern bool armIrqEnable;
-extern bool armFiqEnable;
-extern int armMode;
-extern bool Arm7Enabled;
-extern u8 cpuBitsSet[256];
-extern bool intState ;
-extern bool stopState ;
-extern bool holdState ;
+
 /*
 	if AREC dynarec enabled:
 	vector<ArmDPOP> ops;
@@ -767,21 +754,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 		return false ;
 
 	REICAST_S(version) ;
-	REICAST_S(aica_interr) ;
-	REICAST_S(aica_reg_L) ;
-	REICAST_S(e68k_out) ;
-	REICAST_S(e68k_reg_L) ;
-	REICAST_S(e68k_reg_M) ;
-
-	REICAST_SA(arm_Reg,RN_ARM_REG_COUNT);
-	REICAST_S(armIrqEnable);
-	REICAST_S(armFiqEnable);
-	REICAST_S(armMode);
-	REICAST_S(Arm7Enabled);
-	REICAST_SA(cpuBitsSet,256);
-	REICAST_S(intState);
-	REICAST_S(stopState);
-	REICAST_S(holdState);
+	sh4_cpu->GetA0H<ARM7Backend>(A0H_SCPU)->serialize(data, total_size);
 
 	REICAST_S(dsp);
 
@@ -1082,21 +1055,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	int i = 0;
 	int j = 0;
 
-	REICAST_US(aica_interr) ;
-	REICAST_US(aica_reg_L) ;
-	REICAST_US(e68k_out) ;
-	REICAST_US(e68k_reg_L) ;
-	REICAST_US(e68k_reg_M) ;
-
-	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT);
-	REICAST_US(armIrqEnable);
-	REICAST_US(armFiqEnable);
-	REICAST_US(armMode);
-	REICAST_US(Arm7Enabled);
-	REICAST_USA(cpuBitsSet,256);
-	REICAST_US(intState);
-	REICAST_US(stopState);
-	REICAST_US(holdState);
+	sh4_cpu->GetA0H<ARM7Backend>(A0H_SCPU)->serialize(data, total_size);
 
 	REICAST_US(dsp);
 
@@ -1440,21 +1399,8 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		fprintf(stderr, "Save State version not supported: %d\n", version);
 		return false;
 	}
-	REICAST_US(aica_interr) ;
-	REICAST_US(aica_reg_L) ;
-	REICAST_US(e68k_out) ;
-	REICAST_US(e68k_reg_L) ;
-	REICAST_US(e68k_reg_M) ;
 
-	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT);
-	REICAST_US(armIrqEnable);
-	REICAST_US(armFiqEnable);
-	REICAST_US(armMode);
-	REICAST_US(Arm7Enabled);
-	REICAST_USA(cpuBitsSet,256);
-	REICAST_US(intState);
-	REICAST_US(stopState);
-	REICAST_US(holdState);
+	sh4_cpu->GetA0H<ARM7Backend>(A0H_SCPU)->unserialize(data, total_size);
 
 	REICAST_US(dsp);
 

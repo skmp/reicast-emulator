@@ -11,6 +11,7 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
 #include "hw/arm7/SoundCPU.h"
+#include "hw/arm7/arm7.h"
 
 #define SH4_IRQ_BIT (1<<(holly_SPU_IRQ&255))
 

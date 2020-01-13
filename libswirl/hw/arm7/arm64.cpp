@@ -18,7 +18,7 @@
  */
 
 #include "build.h"
-
+#if FIXME_ARM7JIT
 #if	HOST_CPU == CPU_ARM64 && FEAT_AREC != DYNAREC_NONE
 
 #include <sstream>
@@ -528,3 +528,4 @@ __asm__ (
 		"ret								\n"
 );
 #endif // ARM64
+#endif

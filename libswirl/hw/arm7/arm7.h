@@ -10,6 +10,8 @@ struct ARM7Backend {
 
     virtual void serialize(void** data, unsigned int* total_size) = 0;
     virtual void unserialize(void** data, unsigned int* total_size) = 0;
+
+    virtual ~ARM7Backend() { }
 };
 
 void libARM_InterruptChange(u32 bits, u32 L);

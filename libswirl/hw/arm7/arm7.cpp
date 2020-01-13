@@ -84,10 +84,7 @@ void CPUUpdateFlags();
 void CPUSoftwareInterrupt(int comment);
 void CPUUndefinedException();
 */
-#if FEAT_AREC == DYNAREC_NONE
 
-
-#endif
 
 void armt_init();
 void FlushCache();
@@ -220,7 +217,7 @@ struct Arm7Interpreter_impl : ARM7Backend {
 	//void CreateTables();
 	bool Init()
 	{
-#if FEAT_AREC != DYNAREC_NONE
+#if FIXME_JIT
 		armt_init();
 #endif
 		//CreateTables();
@@ -432,7 +429,7 @@ struct Arm7Interpreter_impl : ARM7Backend {
 
 	void Reset()
 	{
-#if FEAT_AREC != DYNAREC_NONE
+#if FIXME_JIT
 		FlushCache();
 #endif
 		Arm7Enabled = false;
@@ -599,6 +596,18 @@ ARM7Backend* Create_ARM7Interpreter() {
 	return new Arm7Interpreter_impl();
 }
 
+void FlushCache()
+{
+
+}
+extern "C" void CPUFiq() {
+	die("stub")
+}
+extern "C" void CompileCode() {
+	die("stub")
+}
+
+#if FIXME_ARM7JIT
 #if FEAT_AREC == DYNAREC_NONE
 
 #else	// FEAT_AREC != DYNAREC_NONE
@@ -2389,4 +2398,5 @@ void armt_init()
 }
 
 
+#endif
 #endif

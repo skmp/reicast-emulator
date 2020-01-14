@@ -358,11 +358,14 @@ struct ChannelEx
 
 	bool enabled;	//set to false to 'freeze' the channel
 	int ChanelNumber;
+	
+	void Setup(int cn, u8* ccd_raw) {
+		ccd = (ChannelCommonData*)&ccd_raw[cn * 0x80];
+		ChanelNumber = cn;
+	}
 
-	void Init(int cn,u8* ccd_raw)
+	void Init()
 	{
-		ccd=(ChannelCommonData*)&ccd_raw[cn*0x80];
-		ChanelNumber=cn;
 		for (u32 i=0;i<0x80;i++)
 			RegWrite(i);
 		disable();
@@ -1086,8 +1089,10 @@ u32 CalcAegSteps(float t)
 	double steps=aeg_allsteps/scnt;
 	return (u32)(steps+0.5);
 }
-void sgc_Init()
+static u8* aica_reg;
+void sgc_Init(u8* aica_reg)
 {
+	::aica_reg = aica_reg;
 	staticinitialise();
 
 	for (int i=0;i<16;i++)
@@ -1111,8 +1116,12 @@ void sgc_Init()
 		AEG_ATT_SPS[i]=CalcAegSteps(AEG_Attack_Time[i]);
 		AEG_DSR_SPS[i]=CalcAegSteps(AEG_DSR_Time[i]);
 	}
-	for (int i=0;i<64;i++)
-		Chans[i].Init(i,aica_reg);
+	for (int i = 0; i < 64; i++)
+		Chans[i].Setup(i, aica_reg);
+
+	for (int i = 0; i < 64; i++)
+		Chans[i].Init();
+
 	dsp_out_vol=(DSP_OUT_VOL_REG*)&aica_reg[0x2000];
 
 	dsp_init();

@@ -42,8 +42,7 @@ static s32 l;
 #define AICA_SAMPLE_CYCLES (SH4_MAIN_CLOCK/(44100/AICA_SAMPLE_GCM)*32)
 
 int aica_schid = -1;
-int rtc_schid = -1;
-
+int ds_schid = -1;
 //14336 Cycles
 
 const int AICA_TICK = 145124;
@@ -118,8 +117,6 @@ int AicaUpdate(void* psh4, int tag, int c, int j)
 
 int DreamcastSecond(void* psh4, int tag, int c, int j)
 {
-    RealTimeClock++;
-
 #if 1 //HOST_OS==OS_WINDOWS
     prof_periodical();
 #endif
@@ -327,8 +324,8 @@ bool SuperH4_impl::Init()
         aica_schid = sh4_sched_register(sh4_cpu, 0, &AicaUpdate);
         sh4_sched_request(aica_schid, AICA_TICK);
 
-        rtc_schid = sh4_sched_register(sh4_cpu, 0, &DreamcastSecond);
-        sh4_sched_request(rtc_schid, SH4_MAIN_CLOCK);
+        ds_schid = sh4_sched_register(sh4_cpu, 0, &DreamcastSecond);
+        sh4_sched_request(ds_schid, SH4_MAIN_CLOCK);
     }
     memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 

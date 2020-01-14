@@ -63,8 +63,7 @@ MMIODevice* Create_NaomiDevice(SystemBus* sb);
 SystemBus* Create_SystemBus();
 MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg);
 MMIODevice* Create_ExtDevice();
-AICA* Create_AicaDevice(SystemBus* sb, ASIC* asic);
-MMIODevice* Create_RTCDevice();
+
 
 
 #if HOST_OS==OS_WINDOWS

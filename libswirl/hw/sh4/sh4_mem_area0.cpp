@@ -84,7 +84,8 @@ bool LoadRomFiles(const string& root)
 		syscfg.mono = 0;
 		syscfg.autostart = 1;
 	}
-	u32 time = GetRTC_now();
+	
+	u32 time = libAICA_GetRTC_now();
 	syscfg.time_lo = time & 0xffff;
 	syscfg.time_hi = time >> 16;
 	if (settings.dreamcast.language <= 5)
@@ -192,15 +193,6 @@ struct ExtDevice : MMIODevice {
     }
 };
 
-struct RTCDevice : MMIODevice {
-    u32 Read(u32 addr, u32 sz) {
-        return ReadMem_aica_rtc(addr, sz);
-    }
-    void Write(u32 addr, u32 data, u32 sz) {
-        WriteMem_aica_rtc(addr, data, sz);
-    }
-};
-
 
 MMIODevice* Create_BiosDevice() {
 	return new BiosDevice();
@@ -213,11 +205,6 @@ MMIODevice* Create_FlashDevice() {
 MMIODevice* Create_ExtDevice() {
 	return new ExtDevice();
 }
-
-MMIODevice* Create_RTCDevice() {
-	return new RTCDevice();
-}
-
 
 
 SuperH4* SuperH4::Create() {

@@ -87,22 +87,13 @@ extern DECL_ALIGN(4096) dsp_t dsp;
 //extern InterruptInfo* SCIPD;
 //extern InterruptInfo* SCIRE;
 
-extern AicaTimer timers[3];
-
-
 
 //./core/hw/aica/aica_if.o
 extern VLockedMemory aica_ram;
-extern u32 VREG;//video reg =P
-extern u32 ARMRST;//arm reset reg
-extern u32 rtc_EN;
-//extern s32 aica_pending_dma ;
-extern int dma_sched_id;
 
+//extern s32 aica_pending_dma ;
 
 //./core/hw/aica/aica_mem.o
-extern u8 aica_reg[0x8000];
-
 
 
 //./core/hw/aica/sgc_if.o
@@ -403,8 +394,6 @@ extern vector<sched_list> sch_list;
 
 //./core/hw/sh4/interpr/sh4_interpreter.o
 extern int aica_schid;
-extern int rtc_schid;
-
 
 
 
@@ -754,23 +743,14 @@ bool dc_serialize(void **data, unsigned int *total_size)
 		return false ;
 
 	REICAST_S(version) ;
-	sh4_cpu->GetA0H<ARM7Backend>(A0H_SCPU)->serialize(data, total_size);
+	
+	for (int i = 0; i < A0H_MAX; i++) {
+		sh4_cpu->GetA0Handler((Area0Hanlders)i)->serialize(data, total_size);
+	}
 
 	REICAST_S(dsp);
 
-	for ( i = 0 ; i < 3 ; i++)
-	{
-		REICAST_S(timers[i].c_step);
-		REICAST_S(timers[i].m_step);
-	}
-
-
 	REICAST_SA(aica_ram.data,aica_ram.size) ;
-	REICAST_S(VREG);
-	REICAST_S(ARMRST);
-	REICAST_S(rtc_EN);
-
-	REICAST_SA(aica_reg,0x8000);
 
 
 
@@ -927,17 +907,9 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(sch_list[aica_schid].start) ;
 	REICAST_S(sch_list[aica_schid].end) ;
 
-	REICAST_S(sch_list[rtc_schid].tag) ;
-	REICAST_S(sch_list[rtc_schid].start) ;
-	REICAST_S(sch_list[rtc_schid].end) ;
-
 	REICAST_S(sch_list[maple_schid].tag) ;
 	REICAST_S(sch_list[maple_schid].start) ;
 	REICAST_S(sch_list[maple_schid].end) ;
-
-	REICAST_S(sch_list[dma_sched_id].tag) ;
-	REICAST_S(sch_list[dma_sched_id].start) ;
-	REICAST_S(sch_list[dma_sched_id].end) ;
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -1055,25 +1027,13 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	int i = 0;
 	int j = 0;
 
-	sh4_cpu->GetA0H<ARM7Backend>(A0H_SCPU)->serialize(data, total_size);
+	for (int i = 0; i < A0H_MAX; i++) {
+		sh4_cpu->GetA0Handler((Area0Hanlders)i)->unserialize(data, total_size);
+	}
 
 	REICAST_US(dsp);
 
-	for ( i = 0 ; i < 3 ; i++)
-	{
-		REICAST_US(timers[i].c_step);
-		REICAST_US(timers[i].m_step);
-	}
-
-
 	REICAST_USA(aica_ram.data,aica_ram.size) ;
-	REICAST_US(VREG);
-	REICAST_US(ARMRST);
-	REICAST_US(rtc_EN);
-
-	REICAST_USA(aica_reg,0x8000);
-
-
 
 	REICAST_USA(volume_lut,16);
 	REICAST_USA(tl_lut,256 + 768);
@@ -1251,17 +1211,9 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(sch_list[aica_schid].start) ;
 	REICAST_US(sch_list[aica_schid].end) ;
 
-	REICAST_US(sch_list[rtc_schid].tag) ;
-	REICAST_US(sch_list[rtc_schid].start) ;
-	REICAST_US(sch_list[rtc_schid].end) ;
-
 	REICAST_US(sch_list[maple_schid].tag) ;
 	REICAST_US(sch_list[maple_schid].start) ;
 	REICAST_US(sch_list[maple_schid].end) ;
-
-	REICAST_US(sch_list[dma_sched_id].tag) ;
-	REICAST_US(sch_list[dma_sched_id].start) ;
-	REICAST_US(sch_list[dma_sched_id].end) ;
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -1400,23 +1352,14 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		return false;
 	}
 
-	sh4_cpu->GetA0H<ARM7Backend>(A0H_SCPU)->unserialize(data, total_size);
+	for (int i = 0; i < A0H_MAX; i++) {
+		sh4_cpu->GetA0Handler((Area0Hanlders)i)->unserialize(data, total_size);
+	}
 
 	REICAST_US(dsp);
 
-	for ( i = 0 ; i < 3 ; i++)
-	{
-		REICAST_US(timers[i].c_step);
-		REICAST_US(timers[i].m_step);
-	}
-
 	REICAST_USA(aica_ram.data,aica_ram.size) ;
-	REICAST_US(VREG);
-	REICAST_US(ARMRST);
-	REICAST_US(rtc_EN);
-
-	REICAST_USA(aica_reg,0x8000);
-
+	
 	REICAST_USA(volume_lut,16);
 	REICAST_USA(tl_lut,256 + 768);
 	REICAST_USA(AEG_ATT_SPS,64);
@@ -1568,17 +1511,9 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(sch_list[aica_schid].start) ;
 	REICAST_US(sch_list[aica_schid].end) ;
 
-	REICAST_US(sch_list[rtc_schid].tag) ;
-	REICAST_US(sch_list[rtc_schid].start) ;
-	REICAST_US(sch_list[rtc_schid].end) ;
-
 	REICAST_US(sch_list[maple_schid].tag) ;
 	REICAST_US(sch_list[maple_schid].start) ;
 	REICAST_US(sch_list[maple_schid].end) ;
-
-	REICAST_US(sch_list[dma_sched_id].tag) ;
-	REICAST_US(sch_list[dma_sched_id].start) ;
-	REICAST_US(sch_list[dma_sched_id].end) ;
 
 	for (int i = 0; i < 3; i++)
 	{

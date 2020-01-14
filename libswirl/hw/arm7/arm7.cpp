@@ -89,8 +89,6 @@ void CPUUndefinedException();
 void armt_init();
 void FlushCache();
 
-void libAICA_TimeStep();
-
 struct Arm7Interpreter_impl : ARM7Backend {
 
 #define REG_L (0x2D00)

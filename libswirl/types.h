@@ -684,7 +684,7 @@ extern settings_t settings;
 void InitSettings();
 void LoadSettings(bool game_specific);
 void SaveSettings();
-u32 GetRTC_now();
+
 extern u32 patchRB;
 
 inline bool is_s8(u32 v) { return (s8)v==(s32)v; }

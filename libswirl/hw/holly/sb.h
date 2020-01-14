@@ -80,6 +80,8 @@ extern Array<RegisterStruct> sb_regs;
 
 #include "sb_regs.h"
 
+#include <type_traits>
+
 // Template magic for STATIC_FORWARD
 template <class T>
 class FI {
@@ -88,14 +90,14 @@ class FI {
 
 template<typename R, typename C, typename... Args>
 struct FI<R(C::*)(Args...)> {
-	using r_type = R;
-	using c_type = C;
-
-	static R(*forward(R(*fn)(void* context, Args...)))(void* ctx, Args...) {
-		return fn;
+	// a bit ugly as the function pointer is reinterpret_cast
+	// this assumes void* is ABI compitable with C*
+	static R(*forward(R(*fn)(C* context, Args...)))(void* ctx, Args...) {
+		return reinterpret_cast<R(*)(void * context, Args...)>(fn);
 	}
 };
 
-#define STATIC_FORWARD(klass, function)  FI<decltype(&klass::function)>::forward([](void* ctx, auto... args) { \
-                                auto that = reinterpret_cast<klass*>(ctx); return that->function(args...); \
+// cannot use dynamic_cast because it comes from void*
+#define STATIC_FORWARD(function)  FI<decltype(&remove_pointer<decltype(this)>::type::function)>::forward([](auto* ctx, auto... args) { \
+                                auto that = reinterpret_cast<decltype(ctx)>((void*)ctx); return that->function(args...); \
                             })

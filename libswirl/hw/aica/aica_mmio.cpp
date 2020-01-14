@@ -131,7 +131,7 @@ struct AICARTC_impl : MMIODevice
 	}
 
 	bool Init() {
-		rtc_schid = sh4_sched_register(this, 0, STATIC_FORWARD(AICARTC_impl, Update));
+		rtc_schid = sh4_sched_register(this, 0, STATIC_FORWARD(Update));
 		sh4_sched_request(rtc_schid, SH4_MAIN_CLOCK);
 
 		return true;
@@ -684,16 +684,16 @@ struct AicaDevice final : AICA {
 
 		//NRM
 		//6
-		sb->RegisterRIO(this, SB_ADST_addr, RIO_WF, 0, STATIC_FORWARD(AicaDevice, Write_SB_ADST));
+		sb->RegisterRIO(this, SB_ADST_addr, RIO_WF, 0, STATIC_FORWARD(Write_SB_ADST));
 		
 		//I really need to implement G2 dma (and rest dmas actually) properly
 		//THIS IS NOT AICA, its G2-EXT (BBA)
 
-		sb->RegisterRIO(this, SB_E1ST_addr, RIO_WF, 0, STATIC_FORWARD(AicaDevice, Write_SB_E1ST));
-		sb->RegisterRIO(this, SB_E2ST_addr, RIO_WF, 0, STATIC_FORWARD(AicaDevice, Write_SB_E2ST));
-		sb->RegisterRIO(this, SB_DDST_addr, RIO_WF, 0, STATIC_FORWARD(AicaDevice, Write_SB_DDST));
+		sb->RegisterRIO(this, SB_E1ST_addr, RIO_WF, 0, STATIC_FORWARD(Write_SB_E1ST));
+		sb->RegisterRIO(this, SB_E2ST_addr, RIO_WF, 0, STATIC_FORWARD(Write_SB_E2ST));
+		sb->RegisterRIO(this, SB_DDST_addr, RIO_WF, 0, STATIC_FORWARD(Write_SB_DDST));
 
-		dma_sched_id = sh4_sched_register(this, 0, STATIC_FORWARD(AicaDevice, dma_end_sched));
+		dma_sched_id = sh4_sched_register(this, 0, STATIC_FORWARD(dma_end_sched));
 
 		return true;
 	}

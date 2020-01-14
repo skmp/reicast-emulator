@@ -250,13 +250,13 @@ struct PVRDevice : MMIODevice {
     bool Init()
     {
         //0x005F7C18    SB_PDST RW  PVR-DMA start
-        sb->RegisterRIO(this, SB_PDST_addr, RIO_WF, 0, STATIC_FORWARD(PVRDevice, SB_PDST_write));
+        sb->RegisterRIO(this, SB_PDST_addr, RIO_WF, 0, STATIC_FORWARD(SB_PDST_write));
 
         //0x005F6808    SB_C2DST RW  ch2-DMA start 
-        sb->RegisterRIO(this, SB_C2DST_addr, RIO_WF, 0, STATIC_FORWARD(PVRDevice, SB_C2DST_write));
+        sb->RegisterRIO(this, SB_C2DST_addr, RIO_WF, 0, STATIC_FORWARD(SB_C2DST_write));
 
         //0x005F6820    SB_SDST RW  Sort-DMA start
-        sb->RegisterRIO(this, SB_SDST_addr, RIO_WF, 0, STATIC_FORWARD(PVRDevice, SB_SDST_write));
+        sb->RegisterRIO(this, SB_SDST_addr, RIO_WF, 0, STATIC_FORWARD(SB_SDST_write));
 
         return true;
     }

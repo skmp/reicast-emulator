@@ -956,11 +956,11 @@ struct GDRomV3_impl final : MMIODevice {
 
     bool Init() {
         
-        sb->RegisterRIO(this, SB_GDST_addr, RIO_WF, 0, STATIC_FORWARD(GDRomV3_impl, DmaStart));
+        sb->RegisterRIO(this, SB_GDST_addr, RIO_WF, 0, STATIC_FORWARD(DmaStart));
 
-        sb->RegisterRIO(this, SB_GDEN_addr, RIO_WF, 0, STATIC_FORWARD(GDRomV3_impl, DmaEnable));
+        sb->RegisterRIO(this, SB_GDEN_addr, RIO_WF, 0, STATIC_FORWARD(DmaEnable));
 
-        gdrom_schid = sh4_sched_register(this, 0, STATIC_FORWARD(GDRomV3_impl, Update));
+        gdrom_schid = sh4_sched_register(this, 0, STATIC_FORWARD(Update));
 
         gd_setdisc();
 

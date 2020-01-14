@@ -525,9 +525,9 @@ struct NaomiDevice_impl : MMIODevice {
 #endif
 		NaomiInit();
 
-		sb->RegisterRIO(this, SB_GDST_addr, RIO_WF, 0, STATIC_FORWARD(NaomiDevice_impl, DmaStart));
+		sb->RegisterRIO(this, SB_GDST_addr, RIO_WF, 0, STATIC_FORWARD(DmaStart));
 
-		sb->RegisterRIO(this, SB_GDEN_addr, RIO_WF, 0, STATIC_FORWARD(NaomiDevice_impl, DmaEnable));
+		sb->RegisterRIO(this, SB_GDEN_addr, RIO_WF, 0, STATIC_FORWARD(DmaEnable));
 
 		return true;
 	}

@@ -286,9 +286,9 @@ struct SPG_impl final : SPG {
 
     bool Init()
     {
-        render_end_schid = sh4_sched_register(this, 0, STATIC_FORWARD(SPG_impl, rend_end_sch));
-        vblank_schid = sh4_sched_register(this, 0, STATIC_FORWARD(SPG_impl, spg_line_sched));
-        time_sync = sh4_sched_register(this, 0, STATIC_FORWARD(SPG_impl, elapse_time));
+        render_end_schid = sh4_sched_register(this, 0, STATIC_FORWARD(rend_end_sch));
+        vblank_schid = sh4_sched_register(this, 0, STATIC_FORWARD(spg_line_sched));
+        time_sync = sh4_sched_register(this, 0, STATIC_FORWARD(elapse_time));
 
         sh4_sched_request(time_sync, 8 * 1000 * 1000);
 

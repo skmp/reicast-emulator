@@ -220,13 +220,13 @@ struct MapleDevice : MMIODevice {
 	//Init registers :)
 	bool Init()
 	{
-		sb->RegisterRIO(this, SB_MDST_addr, RIO_WF, 0, STATIC_FORWARD(MapleDevice, SB_MDST_Write));
+		sb->RegisterRIO(this, SB_MDST_addr, RIO_WF, 0, STATIC_FORWARD(SB_MDST_Write));
 
-		sb->RegisterRIO(this, SB_MDEN_addr, RIO_WF, 0, STATIC_FORWARD(MapleDevice, SB_MDEN_Write));
+		sb->RegisterRIO(this, SB_MDEN_addr, RIO_WF, 0, STATIC_FORWARD(SB_MDEN_Write));
 
-		sb->RegisterRIO(this, SB_MSHTCL_addr, RIO_WF, 0, STATIC_FORWARD(MapleDevice, SB_MSHTCL_Write));
+		sb->RegisterRIO(this, SB_MSHTCL_addr, RIO_WF, 0, STATIC_FORWARD(SB_MSHTCL_Write));
 
-		maple_schid = sh4_sched_register(this, 0, STATIC_FORWARD(MapleDevice, Update));
+		maple_schid = sh4_sched_register(this, 0, STATIC_FORWARD(Update));
 
 		return true;
 	}

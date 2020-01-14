@@ -314,7 +314,7 @@ struct ModemDevice_impl : MMIODevice {
 
 	bool Init()
 	{
-		modem_sched = sh4_sched_register(sh4_cpu, 0, STATIC_FORWARD(ModemDevice_impl, modem_sched_func));
+		modem_sched = sh4_sched_register(sh4_cpu, 0, STATIC_FORWARD(modem_sched_func));
 
 		return true;
 	}

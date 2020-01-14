@@ -14,6 +14,7 @@ struct ARM7Backend {
     virtual ~ARM7Backend() { }
 };
 
+void libARM_SetResetState(bool Reset);
 void libARM_InterruptChange(u32 bits, u32 L);
 
 ARM7Backend* Create_ARM7Interpreter();

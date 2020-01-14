@@ -19,3 +19,6 @@ struct AICA : MMIODevice {
 	virtual u32 ReadReg(u32 addr, u32 size) = 0;
 	virtual void WriteReg(u32 addr, u32 data, u32 size) = 0;
 };
+
+u32 libAICA_ReadReg(u32 addr, u32 sz);
+void libAICA_WriteReg(u32 addr, u32 data, u32 sz);

@@ -142,7 +142,7 @@ struct Arm7Interpreter_impl : ARM7Backend {
 		else if (addr == REG_M)
 			return e68k_reg_M;	//shouldn't really happen
 		else
-			return sh4_cpu->GetA0H<AICA>(A0H_AICA)->ReadReg(addr, sz);
+			return libAICA_ReadReg(addr, sz);
 	}
 	template <u32 sz, class T>
 	void arm_WriteReg(u32 addr, T data)
@@ -160,7 +160,7 @@ struct Arm7Interpreter_impl : ARM7Backend {
 		}
 		else
 		{
-			return sh4_cpu->GetA0H<AICA>(A0H_AICA)->WriteReg(addr, data, sz);
+			return libAICA_WriteReg(addr, data, sz);
 		}
 	}
 

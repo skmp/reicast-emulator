@@ -209,7 +209,7 @@ u8 aica_reg[0x8000];
 //00802800~00802FFF @COMMON_DATA 
 //00803000~00807FFF @DSP_DATA 
 template<u32 sz>
-u32 ReadReg(u32 addr)
+u32 ReadReg_internal(u32 addr)
 {
 	if (addr < 0x2800)
 	{
@@ -233,7 +233,7 @@ u32 ReadReg(u32 addr)
 	ReadMemArrRet(aica_reg, addr, sz);
 }
 template<u32 sz>
-void WriteReg(u32 addr, u32 data)
+void WriteReg_internal(u32 addr, u32 data)
 {
 	if (addr < 0x2000)
 	{
@@ -300,25 +300,6 @@ void WriteReg(u32 addr, u32 data)
 	else
 		WriteAicaReg<2>(addr, data);
 }
-//Aica reads (both sh4&arm)
-u32 libAICA_ReadReg(u32 addr, u32 size)
-{
-	if (size == 1)
-		return ReadReg<1>(addr & 0x7FFF);
-	else
-		return ReadReg<2>(addr & 0x7FFF);
-
-	//must never come here
-	return 0;
-}
-
-void libAICA_WriteReg(u32 addr, u32 data, u32 size)
-{
-	if (size == 1)
-		WriteReg<1>(addr & 0x7FFF, data);
-	else
-		WriteReg<2>(addr & 0x7FFF, data);
-}
 
 
 u32 GetRTC_now()
@@ -383,7 +364,7 @@ void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 void ArmSetRST()
 {
 	ARMRST&=1;
-	sh4_cpu->GetA0H<SoundCPU>(A0H_SCPU)->SetResetState(ARMRST);
+	libARM_SetResetState(ARMRST);
 }
 
 //Init/res/term
@@ -404,6 +385,25 @@ void aica_mmio_Term()
 
 
 struct AicaDevice : AICA {
+	//Aica reads (both sh4&arm)
+	u32 AICA_ReadReg(u32 addr, u32 size)
+	{
+		if (size == 1)
+			return ReadReg_internal<1>(addr & 0x7FFF);
+		else
+			return ReadReg_internal<2>(addr & 0x7FFF);
+
+		//must never come here
+		return 0;
+	}
+
+	void AICA_WriteReg(u32 addr, u32 data, u32 size)
+	{
+		if (size == 1)
+			WriteReg_internal<1>(addr & 0x7FFF, data);
+		else
+			WriteReg_internal<2>(addr & 0x7FFF, data);
+	}
 
 
 	int dma_end_sched(int tag, int cycl, int jitt)
@@ -601,7 +601,7 @@ struct AicaDevice : AICA {
 			}
 			else
 			{
-				return libAICA_ReadReg(addr, sz);
+				return AICA_ReadReg(addr, sz);
 			}
 		}
 		else
@@ -612,7 +612,7 @@ struct AicaDevice : AICA {
 			}
 			else
 			{
-				return libAICA_ReadReg(addr, sz);
+				return AICA_ReadReg(addr, sz);
 			}
 		}
 	}
@@ -714,15 +714,23 @@ struct AicaDevice : AICA {
 
 	//Aica reads (both sh4&arm)
 	u32 ReadReg(u32 addr, u32 size) {
-		return libAICA_ReadReg(addr, size);
+		return AICA_ReadReg(addr, size);
 	}
 
 	void WriteReg(u32 addr, u32 data, u32 size) {
-		libAICA_WriteReg(addr, data, size);
+		AICA_WriteReg(addr, data, size);
 	}
 
 };
 
 AICA* Create_AicaDevice(SystemBus* sb, ASIC* asic) {
 	return new AicaDevice(sb, asic);
+}
+
+u32 libAICA_ReadReg(u32 addr, u32 sz) {
+	return sh4_cpu->GetA0H<AICA>(A0H_AICA)->ReadReg(addr, sz);
+}
+
+void libAICA_WriteReg(u32 addr, u32 data, u32 sz) {
+	sh4_cpu->GetA0H<AICA>(A0H_AICA)->WriteReg(addr, data, sz);
 }

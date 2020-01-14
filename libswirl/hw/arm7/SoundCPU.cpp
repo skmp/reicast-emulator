@@ -57,6 +57,9 @@ SoundCPU* SoundCPU::Create() {
 	return new SoundCPU_impl();
 }
 
+void libARM_SetResetState(bool Reset) {
+	sh4_cpu->GetA0H<SoundCPU_impl>(A0H_SCPU)->SetResetState(Reset);
+}
 void libARM_InterruptChange(u32 bits, u32 L) {
 	sh4_cpu->GetA0H<SoundCPU_impl>(A0H_SCPU)->arm->InterruptChange(bits, L);
 }

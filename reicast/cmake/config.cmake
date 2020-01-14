@@ -190,7 +190,7 @@ if((${HOST_CPU} EQUAL ${CPU_X86}) OR (${HOST_CPU} EQUAL ${CPU_X64}) OR
   
   set(FEAT_SHREC  ${DYNAREC_JIT})
   set(FEAT_AREC   ${DYNAREC_NONE})
-  set(FEAT_DSPREC ${DYNAREC_NONE})
+  set(FEAT_DSPREC ${DYNAREC_JIT})
 #
 else()
 message("Dynarec Features Missing")

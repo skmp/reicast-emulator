@@ -1123,13 +1123,11 @@ void sgc_Init(u8* aica_reg)
 		Chans[i].Init();
 
 	dsp_out_vol=(DSP_OUT_VOL_REG*)&aica_reg[0x2000];
-
-	dsp_init();
 }
 
 void sgc_Term()
 {
-	dsp_term();
+
 }
 
 void WriteChannelReg8(u32 channel,u32 reg)
@@ -1354,7 +1352,7 @@ void AICA_Sample()
 	}
 	//if (settings.aica.DSPEnabled)
 	{
-		dsp_step();
+		libDSP_Step();
 
 		for (int i=0;i<16;i++)
 		{

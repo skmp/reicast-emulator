@@ -251,6 +251,7 @@ enum Area0Hanlders {
 	A0H_ASIC,
 	A0H_SPG,
 	A0H_SCPU,
+	A0H_DSP,
 
 	A0H_MAX
 };

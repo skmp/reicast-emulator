@@ -1,7 +1,8 @@
 #pragma once
 #include "aica.h"
+#include "hw/sh4/sh4_mmio.h"
 
-struct dsp_t
+struct dsp_context_t
 {
 	//Dynarec
 	u8 DynCode[4096*8];	//32 kb, 8 pages
@@ -86,12 +87,7 @@ struct dsp_t
 };
 
 DECL_ALIGN(4096)
-extern dsp_t dsp;
-
-void dsp_init();
-void dsp_term();
-void dsp_step();
-void dsp_writenmem(u32 addr);
+extern dsp_context_t dsp;
 
 struct _INST
 {
@@ -124,6 +120,21 @@ struct _INST
 	unsigned int NXADR; //MRQ set
 };
 
-void DecodeInst(u32 *IPtr,_INST *i);
-u16 DYNACALL PACK(s32 val);
-s32 DYNACALL UNPACK(u16 val);
+
+
+struct DSP : MMIODevice {
+	static u16 DYNACALL PACK(s32 val);
+	static s32 DYNACALL UNPACK(u16 val);
+	static void DecodeInst(u32* IPtr, _INST* i);
+
+	virtual void Step() = 0;
+	virtual void WritenMem(u32 addr) = 0;
+
+	static DSP* CreateInterpreter();
+	static DSP* CreateJIT();
+};
+
+static void libDSP_Step() {
+	sh4_cpu->GetA0H<DSP>(A0H_DSP)->Step();
+}
+

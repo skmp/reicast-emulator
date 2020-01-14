@@ -34,7 +34,7 @@ class DSPAssembler : public MacroAssembler
 public:
 	DSPAssembler(u8 *code_buffer, size_t size) : MacroAssembler(code_buffer, size), aica_ram_lit(NULL) {}
 
-	void Compile(struct dsp_t *DSP)
+	void Compile(struct dsp_context_t *DSP)
 	{
 		this->DSP = DSP;
 		//printf("DSPAssembler::DSPCompile recompiling for arm64 at %p\n", GetBuffer()->GetStartAddress<void*>());
@@ -110,7 +110,7 @@ public:
 		{
 			u32 *mpro = &DSPData->MPRO[step * 4];
 			_INST op;
-			DecodeInst(mpro, &op);
+			DSP::DecodeInst(mpro, &op);
 			const u32 COEF = step;
 
 			if (op.XSEL || op.YRL || (op.ADRL && op.SHIFT != 3))
@@ -319,7 +319,7 @@ public:
 					Ldr(x1, GetAicaRam());
 					MemOperand aram_op(x1, Register::GetXRegFromCode(ADDR.GetCode()));
 					Ldrh(w0, aram_op);
-					GenCallRuntime(UNPACK);
+					GenCallRuntime(DSP::UNPACK);
 					Mov(w2, w0);
 					Str(w2, dsp_operand(DSP->MEMVAL, (step + 2) & 3));
 				}
@@ -327,7 +327,7 @@ public:
 				{
 					// *(u16 *)&aica_ram[ADDR & ARAM_MASK] = PACK(SHIFTED);
 					Mov(w0, SHIFTED);
-					GenCallRuntime(PACK);
+					GenCallRuntime(DSP::PACK);
 					Mov(w2, w0);
 
 					CalculateADDR(ADDR, op, ADRS_REG, MDEC_CT);
@@ -395,7 +395,7 @@ public:
 private:
 	MemOperand dsp_operand(void *data, int index = 0, u32 element_size = 4)
 	{
-		ptrdiff_t offset = ((u8*)data - (u8*)DSP) - offsetof(dsp_t, TEMP) + index  * element_size;
+		ptrdiff_t offset = ((u8*)data - (u8*)DSP) - offsetof(dsp_context_t, TEMP) + index  * element_size;
 		if (offset < 16384)
 			return MemOperand(x28, offset);
 		Mov(x0, offset);
@@ -404,7 +404,7 @@ private:
 
 	MemOperand dsp_operand(void *data, const Register& offset_reg, u32 element_size = 4)
 	{
-		ptrdiff_t offset = ((u8*)data - (u8*)DSP) - offsetof(dsp_t, TEMP);
+		ptrdiff_t offset = ((u8*)data - (u8*)DSP) - offsetof(dsp_context_t, TEMP);
 		if (offset == 0)
 			return MemOperand(x28, offset_reg, LSL, element_size == 4 ? 2 : element_size == 2 ? 1 : 0);
 
@@ -493,7 +493,7 @@ private:
 		}
 	}
 
-	struct dsp_t *DSP;
+	struct dsp_context_t* DSP;
 	Literal<u8*> *aica_ram_lit;
 };
 
@@ -514,53 +514,62 @@ void dsp_recompile()
 	assembler.Compile(&dsp);
 }
 
-void dsp_init()
-{
-	memset(&dsp, 0, sizeof(dsp));
-	dsp.RBL = 0x8000 - 1;
-	dsp.RBP=0;
-	dsp.regs.MDEC_CT = 1;
-	dsp.dyndirty = true;
+struct DSPJITArm64 : DSP {
 
-	if (mprotect(dsp.DynCode, sizeof(dsp.DynCode), PROT_EXEC | PROT_READ | PROT_WRITE))
-	{
-		perror("Couldn’t mprotect DSP code");
-		die("mprotect failed in arm64 dsp");
-	}
-}
+    bool Init()
+    {
+        memset(&dsp, 0, sizeof(dsp));
+        dsp.RBL = 0x8000 - 1;
+        dsp.RBP = 0;
+        dsp.regs.MDEC_CT = 1;
+        dsp.dyndirty = true;
 
-void dsp_step()
-{
-	if (dsp.dyndirty)
-	{
-		dsp.dyndirty = false;
-		dsp_recompile();
-	}
+        if (mprotect(dsp.DynCode, sizeof(dsp.DynCode), PROT_EXEC | PROT_READ | PROT_WRITE))
+        {
+            perror("Couldn’t mprotect DSP code");
+            die("mprotect failed in arm64 dsp");
+        }
+
+		return true;
+    }
+
+    void Step()
+    {
+        if (dsp.dyndirty)
+        {
+            dsp.dyndirty = false;
+            dsp_recompile();
+        }
 
 #ifdef _ANDROID
-	((void (*)())&dsp.DynCode)();
+        ((void (*)()) & dsp.DynCode)();
 #endif
-}
+    }
 
-void dsp_writenmem(u32 addr)
-{
-	if (addr >= 0x3400 && addr < 0x3C00)
-	{
-		dsp.dyndirty = true;
-	}
-	else if (addr >= 0x4000 && addr < 0x4400)
-	{
-		// TODO proper sharing of memory with sh4 through DSPData
-		memset(dsp.TEMP, 0, sizeof(dsp.TEMP));
-	}
-	else if (addr >= 0x4400 && addr < 0x4500)
-	{
-		// TODO proper sharing of memory with sh4 through DSPData
-		memset(dsp.MEMS, 0, sizeof(dsp.MEMS));
-	}
-}
+    void WritenMem(u32 addr)
+    {
+        if (addr >= 0x3400 && addr < 0x3C00)
+        {
+            dsp.dyndirty = true;
+        }
+        else if (addr >= 0x4000 && addr < 0x4400)
+        {
+            // TODO proper sharing of memory with sh4 through DSPData
+            memset(dsp.TEMP, 0, sizeof(dsp.TEMP));
+        }
+        else if (addr >= 0x4400 && addr < 0x4500)
+        {
+            // TODO proper sharing of memory with sh4 through DSPData
+            memset(dsp.MEMS, 0, sizeof(dsp.MEMS));
+        }
+    }
 
-void dsp_term()
-{
+    void Term()
+    {
+    }
+};
+
+DSP* DSP::CreateJIT() {
+	return new DSPJITArm64();
 }
 #endif

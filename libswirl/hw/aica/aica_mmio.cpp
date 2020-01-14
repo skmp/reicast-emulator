@@ -369,13 +369,13 @@ struct AicaDevice final : AICA {
 			if (sz == 1)
 			{
 				WriteMemArr(aica_reg, addr, data, 1);
-				dsp_writenmem(addr);
+				dsp->WritenMem(addr);
 			}
 			else
 			{
 				WriteMemArr(aica_reg, addr, data, 2);
-				dsp_writenmem(addr);
-				dsp_writenmem(addr + 1);
+				dsp->WritenMem(addr);
+				dsp->WritenMem(addr + 1);
 			}
 		}
 		if (sz == 1)
@@ -589,8 +589,9 @@ struct AicaDevice final : AICA {
 
 	SystemBus* sb;
 	ASIC* asic;
+	DSP* dsp;
 
-	AicaDevice(SystemBus* sb, ASIC* asic) : sb(sb), asic(asic) { }
+	AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp) : sb(sb), asic(asic), dsp(dsp) { }
 
 	u32 Read(u32 addr, u32 sz) {
 		addr &= 0x7FFF;
@@ -659,9 +660,7 @@ struct AicaDevice final : AICA {
 	}
 
 	bool Init()
-	{
-		aica_init_mem();
-		
+	{	
 		verify(sizeof(*CommonData) == 0x508);
 		verify(sizeof(*DSPData) == 0x15C8);
 
@@ -700,10 +699,14 @@ struct AicaDevice final : AICA {
 
 	void Reset(bool Manual)
 	{
-		if (!Manual) {
-			memset(aica_reg, 0, sizeof(aica_reg));
-			aica_init_mem();
-		}
+		memset(aica_reg, 0, sizeof(aica_reg));
+		aica_ram.data[ARAM_SIZE - 1] = 1;
+		aica_ram.Zero();
+
+		ARMRST = 0;
+		VREG = 0;
+
+		ArmSetRST();
 	}
 
 	void Term()
@@ -770,8 +773,8 @@ struct AicaDevice final : AICA {
 
 };
 
-AICA* Create_AicaDevice(SystemBus* sb, ASIC* asic) {
-	return new AicaDevice(sb, asic);
+AICA* Create_AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp) {
+	return new AicaDevice(sb, asic, dsp);
 }
 
 u32 libAICA_ReadReg(u32 addr, u32 sz) {

@@ -70,7 +70,7 @@ bool gdrom_unserialize(void** data, unsigned int* total_size);
 
 
 //./core/hw/aica/dsp.o
-extern DECL_ALIGN(4096) dsp_t dsp;
+
 //recheck dsp.cpp if FEAT_DSPREC == DYNAREC_JIT
 
 

@@ -811,7 +811,8 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         SPG* spg = SPG::Create(asic);
         MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic, spg);
-        MMIODevice* aicaDevice = Create_AicaDevice(systemBus, asic);
+        DSP* dsp = DSP::CreateInterpreter();
+        MMIODevice* aicaDevice = Create_AicaDevice(systemBus, asic, dsp);
         SoundCPU* soundCPU = SoundCPU::Create();
 
         MMIODevice* mapleDevice = Create_MapleDevice(systemBus, asic);
@@ -840,6 +841,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         sh4_cpu->SetA0Handler(A0H_ASIC, asic);
         sh4_cpu->SetA0Handler(A0H_SPG, spg);
         sh4_cpu->SetA0Handler(A0H_SCPU, soundCPU);
+        sh4_cpu->SetA0Handler(A0H_DSP, dsp);
         
         return sh4_cpu->Init();
     }

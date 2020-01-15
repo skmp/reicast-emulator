@@ -184,7 +184,7 @@ struct DSPJitX86: DSP {
             x86e.Emit(op_mov32, EAX, &dsp.regs.MEM_ADDR);
             x86e.Emit(op_and32, EAX, aram_mask);
 
-            x86e.Emit(op_add32, EAX, (unat)aica_ram.data);
+            x86e.Emit(op_add32, EAX, (unat)aica_ram);
 
             //prev. opcode did a mem read request ?
             if (prev_op.MRD)
@@ -774,6 +774,6 @@ struct DSPJitX86: DSP {
 };
 
 DSP* DSP::CreateJIT(u8* aica_ram, u32 aram_size) {
-    return new DSPJitX86(u8 * aica_ram, aram_size);
+    return new DSPJitX86(aica_ram, aram_size);
 }
 #endif

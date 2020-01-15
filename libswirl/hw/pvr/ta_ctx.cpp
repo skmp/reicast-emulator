@@ -379,7 +379,7 @@ void tactx_write_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref
     fclose(fw);
 }
 
-TA_context* tactx_read_frame(const char* file, u8* vram_ref) {
+TA_context* tactx_read_frame(const char* file, u8* vram, u8* vram_ref) {
 
     FILE* fw = fopen(file, "rb");
     if (fw == NULL)
@@ -420,8 +420,6 @@ TA_context* tactx_read_frame(const char* file, u8* vram_ref) {
     fread(&t, 1, sizeof(t), fw);
     verify(t == VRAM_SIZE);
 
-    vram.UnLockRegion(0, VRAM_SIZE);
-
     uLongf compressed_size;
 
     fread(&compressed_size, 1, sizeof(compressed_size), fw);
@@ -429,7 +427,7 @@ TA_context* tactx_read_frame(const char* file, u8* vram_ref) {
     u8* gz_stream = (u8*)malloc(compressed_size);
     fread(gz_stream, 1, compressed_size, fw);
     uLongf tl = t;
-    verify(uncompress(vram.data, &tl, gz_stream, compressed_size) == Z_OK);
+    verify(uncompress(vram, &tl, gz_stream, compressed_size) == Z_OK);
     free(gz_stream);
 
     fread(&t, 1, sizeof(t), fw);

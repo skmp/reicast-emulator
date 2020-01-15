@@ -413,7 +413,7 @@ void map_area0_init()
 
 	area0_handler = _vmem_register_handler_Template(ReadMem_area0,WriteMem_area0);
 }
-void map_area0(u32 base)
+void map_area0(SuperH4* sh4, u32 base)
 {
 	verify(base<0xE0);
 

@@ -273,8 +273,8 @@ bool TryDecodeTARC();
 void VDecEnd();
 
 //must be moved to proper header
-void FillBGP(TA_context* ctx);
-bool UsingAutoSort(int pass_number);
+void FillBGP(u8* vram, TA_context* ctx);
+bool UsingAutoSort(u8* vram, int pass_number);
 bool rend_framePending();
 
 

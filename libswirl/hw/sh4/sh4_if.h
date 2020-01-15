@@ -257,6 +257,7 @@ enum Area0Hanlders {
 };
 
 struct SuperH4 {
+	VLockedMemory vram;
 	VLockedMemory aica_ram;
 
 	virtual void SetA0Handler(Area0Hanlders slot, MMIODevice* dev) = 0;

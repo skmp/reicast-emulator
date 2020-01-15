@@ -59,7 +59,7 @@ MMIODevice* Create_BiosDevice();
 MMIODevice* Create_FlashDevice();
 MMIODevice* Create_NaomiDevice(SystemBus* sb);
 SystemBus* Create_SystemBus();
-MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg);
+MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg, u8* vram);
 MMIODevice* Create_ExtDevice();
 
 
@@ -687,6 +687,7 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         sh4_cpu->Reset(false);
 
+        sh4_cpu->vram.Zero();
         sh4_cpu->aica_ram.Zero();
     }
 
@@ -752,7 +753,7 @@ struct Dreamcast_impl : VirtualDreamcast {
 #endif
         }
 
-        rend_init_renderer();
+        rend_init_renderer(sh4_cpu->vram.data);
 
         if (plugins_Init())
             return -3;
@@ -791,7 +792,7 @@ struct Dreamcast_impl : VirtualDreamcast {
     {
         sh4_cpu = SuperH4::Create();
 
-        if (!_vmem_reserve(&sh4_cpu->aica_ram, INTERNAL_ARAM_SIZE))
+        if (!_vmem_reserve(&sh4_cpu->vram , &sh4_cpu->aica_ram, INTERNAL_ARAM_SIZE))
         {
             printf("Failed to alloc mem\n");
             return false;
@@ -813,7 +814,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         ;
 
         SPG* spg = SPG::Create(asic);
-        MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic, spg);
+        MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic, spg, sh4_cpu->vram.data);
         DSP* dsp = DSP::CreateInterpreter(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
         MMIODevice* aicaDevice = Create_AicaDevice(systemBus, asic, dsp, sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
         SoundCPU* soundCPU = SoundCPU::Create(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
@@ -860,7 +861,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         plugins_Term();
         rend_term_renderer();
 
-        _vmem_release(&sh4_cpu->aica_ram);
+        _vmem_release(&sh4_cpu->vram, &sh4_cpu->aica_ram);
 
         mcfg_DestroyDevices();
 
@@ -1042,7 +1043,7 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         u8* address = (u8*)addr;
 
-        if (VramLockedWrite(address))
+        if (VramLockedWrite(sh4_cpu->vram.data, address))
         {
             fault_printf("VramLockedWrite!\n");
 

@@ -24,7 +24,7 @@ DMAC_DMAOR_type DMAC_DMAOR;
 
 */
 
-void DMAC_Ch2St()
+void DMAC_Ch2St(u8* vram)
 {
 	u32 chcr = DMAC_CHCR(2).full;
 	u32 dmaor = DMAC_DMAOR.full;
@@ -61,7 +61,7 @@ void DMAC_Ch2St()
 			{
 				u32 *sys_buf=(u32 *)GetMemPtr(src,len);//(&mem_b[src&RAM_MASK]);
 				u32 new_len=RAM_SIZE-p_addr;
-				TAWrite(dst,sys_buf,(new_len/32));
+				TAWrite(dst,sys_buf,(new_len/32), vram);
 				len-=new_len;
 				src+=new_len;
 				//dst+=new_len;
@@ -69,7 +69,7 @@ void DMAC_Ch2St()
 			else
 			{
 				u32 *sys_buf=(u32 *)GetMemPtr(src,len);//(&mem_b[src&RAM_MASK]);
-				TAWrite(dst,sys_buf,(len/32));
+				TAWrite(dst,sys_buf,(len/32), vram);
 				src+=len;
 				break;
 			}

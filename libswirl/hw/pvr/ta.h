@@ -19,6 +19,6 @@ void ta_vtx_SoftReset();
 void DYNACALL ta_vtx_data32(void* data);
 void ta_vtx_data(u32* data, u32 size);
 
-bool ta_parse_vdrc(TA_context* ctx);
+bool ta_parse_vdrc(u8* vram, TA_context* ctx);
 
 #define TRIG_SORT 1

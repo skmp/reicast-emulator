@@ -5,11 +5,11 @@
 
 
 u32 pvr_map32(u32 offset32);
-f32 vrf(u32 addr);
-u32 vri(u32 addr);
+f32 vrf(u8* vram, u32 addr);
+u32 vri(u8* vram, u32 addr);
 
 //vram 32-64b
-extern VLockedMemory vram;
+
 
 extern bool fb_dirty;
 
@@ -34,7 +34,7 @@ void pvr_Term();
 //Reset -> Reset - Initialise
 void pvr_Reset(bool Manual);
 
-void TAWrite(u32 address,u32* data,u32 count);
+void TAWrite(u32 address,u32* data,u32 count, u8* vram);
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
 
 void YUV_init();

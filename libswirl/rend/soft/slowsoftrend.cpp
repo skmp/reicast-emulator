@@ -147,9 +147,10 @@ struct IPs2
 #define TPL_PRMS_pixel <alpha_mode, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
 #define TPL_PRMS_triangle <alpha_mode, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
 
+struct slowsoftrend;
 
 //<alpha_blend, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
-typedef void(*RendtriangleFn)(PolyParam* pp, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area);
+typedef void(slowsoftrend::*RendtriangleFn)(PolyParam* pp, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area);
 static RendtriangleFn RendtriangleFns[3][2][2][2][4][2];
 
 TPL_DECL_pixel
@@ -275,137 +276,6 @@ static void PixelFlush(PolyParam* pp, text_info* texture, float x, float y, u8* 
     }
 }
 
-//u32 nok,fok;
-TPL_DECL_triangle
-static void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area)
-{
-    text_info texture = { 0 };
-
-    if (pp_Texture) {
-
-#pragma omp critical (texture_lookup)
-        {
-            texture = raw_GetTexture(pp->tsp, pp->tcw);
-        }
-
-    }
-
-    const int stride_bytes = STRIDE_PIXEL_OFFSET * 4;
-    //Plane equation
-
-
-    const float Y1 = v1.y;
-    const float Y2 = v2.y;
-    const float Y3 = v3.y;
-
-    const float X1 = v1.x;
-    const float X2 = v2.x;
-    const float X3 = v3.x;
-
-    int sgn = 1;
-
-    // Deltas
-    {
-        //area: (X1-X3)*(Y2-Y3)-(Y1-Y3)*(X2-X3)
-        float area = ((X1 - X3) * (Y2 - Y3) - (Y1 - Y3) * (X2 - X3));
-
-        if (area > 0)
-            sgn = -1;
-
-        if (pp->isp.CullMode != 0) {
-            float abs_area = fabsf(area);
-
-            if (abs_area < FPU_CULL_VAL)
-                return;
-
-            if (pp->isp.CullMode >= 2) {
-                u32 mode = vertex_offset ^ pp->isp.CullMode & 1;
-
-                if (
-                    (mode == 0 && area < 0) ||
-                    (mode == 1 && area > 0)) {
-                    return;
-                }
-            }
-        }
-    }
-
-    const float DX12 = sgn * (X1 - X2);
-    const float DX23 = sgn * (X2 - X3);
-    const float DX31 = sgn * (X3 - X1);
-
-    const float DY12 = sgn * (Y1 - Y2);
-    const float DY23 = sgn * (Y2 - Y3);
-    const float DY31 = sgn * (Y3 - Y1);
-
-    // Bounding rectangle
-    int minx = iround(mmin(X1, X2, X3, area->left));
-    int miny = iround(mmin(Y1, Y2, Y3, area->top));
-
-    int spanx = iround(mmax(X1, X2, X3, area->right-1)) - minx + 1;
-    int spany = iround(mmax(Y1, Y2, Y3, area->bottom-1)) - miny + 1;
-
-    //Inside scissor area?
-    if (spanx < 0 || spany < 0)
-        return;
-
-
-    // Half-edge constants
-    float C1 = DY12 * X1 - DX12 * Y1;
-    float C2 = DY23 * X2 - DX23 * Y2;
-    float C3 = DY31 * X3 - DX31 * Y3;
-
-
-    float hs12 = C1 + DX12 * miny - DY12 * minx;
-    float hs23 = C2 + DX23 * miny - DY23 * minx;
-    float hs31 = C3 + DX31 * miny - DY31 * minx;
-
-    
-    u8* cb_y = (u8*)colorBuffer;
-    cb_y += miny * stride_bytes + minx * 4;
-
-    DECL_ALIGN(64) IPs2 ip;
-
-    ip.Setup(pp, &texture, v1, v2, v3);
-
-
-    float y_ps = miny;
-    float minx_ps = minx;
-    
-    // Loop through blocks
-    for (int y = spany; y > 0; y -= 1)
-    {
-        float Xhs12 = hs12;
-        float Xhs23 = hs23;
-        float Xhs31 = hs31;
-        u8* cb_x = cb_y;
-        float x_ps = minx_ps;
-        for (int x = spanx; x > 0; x -= 1)
-        {
-            Xhs12 -= DY12;
-            Xhs23 -= DY23;
-            Xhs31 -= DY31;
-
-            // Corners of block
-            bool inTriangle = EvalHalfSpaceAll(Xhs12, Xhs23, Xhs31);
-
-            // Skip block when outside an edge
-            if (inTriangle)
-            {
-                PixelFlush TPL_PRMS_pixel (pp, &texture, x_ps, y_ps, cb_x, ip);
-            }
-            
-            cb_x += 4;
-            x_ps = x_ps + 1;
-        }
-    next_y:
-        hs12 += DX12;
-        hs23 += DX23;
-        hs31 += DX31;
-        cb_y += stride_bytes;
-        y_ps = y_ps + 1;
-    }
-}
 
 #if HOST_OS == OS_WINDOWS
 static BITMAPINFOHEADER bi = { sizeof(BITMAPINFOHEADER), 0, 0, 1, 32, BI_RGB };
@@ -415,6 +285,142 @@ bool gles_init();
 
 struct slowsoftrend : Renderer
 {
+    u8* vram;
+
+    slowsoftrend(u8* vram) : vram(vram) { }
+
+    //u32 nok,fok;
+    TPL_DECL_triangle
+    void Rendtriangle(PolyParam* pp, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area)
+    {
+        text_info texture = { 0 };
+
+        if (pp_Texture) {
+
+#pragma omp critical (texture_lookup)
+            {
+                texture = raw_GetTexture(vram, pp->tsp, pp->tcw);
+            }
+
+        }
+
+        const int stride_bytes = STRIDE_PIXEL_OFFSET * 4;
+        //Plane equation
+
+
+        const float Y1 = v1.y;
+        const float Y2 = v2.y;
+        const float Y3 = v3.y;
+
+        const float X1 = v1.x;
+        const float X2 = v2.x;
+        const float X3 = v3.x;
+
+        int sgn = 1;
+
+        // Deltas
+        {
+            //area: (X1-X3)*(Y2-Y3)-(Y1-Y3)*(X2-X3)
+            float area = ((X1 - X3) * (Y2 - Y3) - (Y1 - Y3) * (X2 - X3));
+
+            if (area > 0)
+                sgn = -1;
+
+            if (pp->isp.CullMode != 0) {
+                float abs_area = fabsf(area);
+
+                if (abs_area < FPU_CULL_VAL)
+                    return;
+
+                if (pp->isp.CullMode >= 2) {
+                    u32 mode = vertex_offset ^ pp->isp.CullMode & 1;
+
+                    if (
+                        (mode == 0 && area < 0) ||
+                        (mode == 1 && area > 0)) {
+                        return;
+                    }
+                }
+            }
+        }
+
+        const float DX12 = sgn * (X1 - X2);
+        const float DX23 = sgn * (X2 - X3);
+        const float DX31 = sgn * (X3 - X1);
+
+        const float DY12 = sgn * (Y1 - Y2);
+        const float DY23 = sgn * (Y2 - Y3);
+        const float DY31 = sgn * (Y3 - Y1);
+
+        // Bounding rectangle
+        int minx = iround(mmin(X1, X2, X3, area->left));
+        int miny = iround(mmin(Y1, Y2, Y3, area->top));
+
+        int spanx = iround(mmax(X1, X2, X3, area->right - 1)) - minx + 1;
+        int spany = iround(mmax(Y1, Y2, Y3, area->bottom - 1)) - miny + 1;
+
+        //Inside scissor area?
+        if (spanx < 0 || spany < 0)
+            return;
+
+
+        // Half-edge constants
+        float C1 = DY12 * X1 - DX12 * Y1;
+        float C2 = DY23 * X2 - DX23 * Y2;
+        float C3 = DY31 * X3 - DX31 * Y3;
+
+
+        float hs12 = C1 + DX12 * miny - DY12 * minx;
+        float hs23 = C2 + DX23 * miny - DY23 * minx;
+        float hs31 = C3 + DX31 * miny - DY31 * minx;
+
+
+        u8* cb_y = (u8*)colorBuffer;
+        cb_y += miny * stride_bytes + minx * 4;
+
+        DECL_ALIGN(64) IPs2 ip;
+
+        ip.Setup(pp, &texture, v1, v2, v3);
+
+
+        float y_ps = miny;
+        float minx_ps = minx;
+
+        // Loop through blocks
+        for (int y = spany; y > 0; y -= 1)
+        {
+            float Xhs12 = hs12;
+            float Xhs23 = hs23;
+            float Xhs31 = hs31;
+            u8* cb_x = cb_y;
+            float x_ps = minx_ps;
+            for (int x = spanx; x > 0; x -= 1)
+            {
+                Xhs12 -= DY12;
+                Xhs23 -= DY23;
+                Xhs31 -= DY31;
+
+                // Corners of block
+                bool inTriangle = EvalHalfSpaceAll(Xhs12, Xhs23, Xhs31);
+
+                // Skip block when outside an edge
+                if (inTriangle)
+                {
+                    PixelFlush TPL_PRMS_pixel(pp, &texture, x_ps, y_ps, cb_x, ip);
+                }
+
+                cb_x += 4;
+                x_ps = x_ps + 1;
+            }
+        next_y:
+            hs12 += DX12;
+            hs23 += DX23;
+            hs31 += DX31;
+            cb_y += stride_bytes;
+            y_ps = y_ps + 1;
+        }
+    }
+
     void SetFBScale(float x, float y)
     {
         fb_scale_x = x;
@@ -428,7 +434,7 @@ struct slowsoftrend : Renderer
 
         ctx->rend_inuse.Lock();
 
-        if (!ta_parse_vdrc(ctx))
+        if (!ta_parse_vdrc(vram, ctx))
             return false;
 
         return true;
@@ -455,7 +461,7 @@ struct slowsoftrend : Renderer
                 ////<alpha_blend, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
                 RendtriangleFn fn = RendtriangleFns[alpha_mode][params[i].tsp.UseAlpha][params[i].pcw.Texture][params[i].tsp.IgnoreTexA][params[i].tsp.ShadInstr][params[i].pcw.Offset];
 
-                fn(&params[i], v, verts[poly_idx[v]], verts[poly_idx[v + 1]], verts[poly_idx[v + 2]], render_buffer, area);
+                (this->*fn)(&params[i], v, verts[poly_idx[v]], verts[poly_idx[v + 1]], verts[poly_idx[v + 2]], render_buffer, area);
             }
         }
     }
@@ -542,6 +548,7 @@ struct slowsoftrend : Renderer
             decoded_colors[2][c] = (REP_16((c >> 0) % 16) << 24) | (REP_16((c >> 12) % 16) << 16) | (REP_16((c >> 8) % 16) << 8) | (REP_16((c >> 4) % 16) << 0);
         }
 
+#define Rendtriangle slowsoftrend::Rendtriangle
         {
             RendtriangleFns[0][0][1][0][0][0] = &Rendtriangle<0, 0, 1, 0, 0, 0>;
             RendtriangleFns[0][0][1][0][0][1] = &Rendtriangle<0, 0, 1, 0, 0, 1>;
@@ -738,6 +745,7 @@ struct slowsoftrend : Renderer
             RendtriangleFns[2][1][0][1][3][0] = &Rendtriangle<2, 1, 0, 1, 3, 0>;
             RendtriangleFns[2][1][0][1][3][1] = &Rendtriangle<2, 1, 0, 1, 3, 1>;
         }
+#undef Rendtriangle
 
         return true;
     }
@@ -806,8 +814,8 @@ struct slowsoftrend : Renderer
     }
 };
 
-Renderer* rend_slowsoftrend() {
-    return new(_mm_malloc(sizeof(slowsoftrend), 32)) ::slowsoftrend();
+Renderer* rend_slowsoftrend(u8* vram) {
+    return new(_mm_malloc(sizeof(slowsoftrend), 32)) ::slowsoftrend(vram);
 }
 
 static auto slowsoftrend = RegisterRendererBackend(rendererbackend_t{ "slow", "Slow Software Renderer", 0, rend_slowsoftrend });

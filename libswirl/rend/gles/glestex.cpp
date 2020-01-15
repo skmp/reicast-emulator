@@ -472,7 +472,7 @@ bool TextureCacheData::Delete()
 map<u64,TextureCacheData> TexCache;
 typedef map<u64,TextureCacheData>::iterator TexCacheIter;
 
-TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw);
+TextureCacheData *getTextureCacheData(u8* vram, TSP tsp, TCW tcw);
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
@@ -554,7 +554,7 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	glViewport(0, 0, fbw, fbh);		// TODO CLIP_X/Y min?
 }
 
-void ReadRTTBuffer() {
+void ReadRTTBuffer(u8* vram) {
 	u32 w = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
 	u32 h = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 
@@ -585,7 +585,6 @@ void ReadRTTBuffer() {
 				}
 			}
 		}
-		vram.UnLockRegion(0, 2 * vram.size);
 
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 		u16 *dst = (u16 *)&vram[tex_addr];
@@ -640,19 +639,6 @@ void ReadRTTBuffer() {
 				dst += (stride - w * 2) / 2;
 			}
 		}
-
-		// Restore VRAM locks
-		for (TexCacheIter i = TexCache.begin(); i != TexCache.end(); i++)
-		{
-				if (i->second.lock_block != NULL) {
-						vram.LockRegion(i->second.sa_tex, i->second.sa + i->second.size - i->second.sa_tex);
-
-						//TODO: Fix this for 32M wrap as well
-						if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-								vram.LockRegion(i->second.sa_tex + VRAM_SIZE, i->second.sa + i->second.size - i->second.sa_tex);
-						}
-				}
-		}
 	}
 	else
 	{
@@ -684,7 +670,7 @@ void ReadRTTBuffer() {
     	for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < w; tsp.TexU++);
     	for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < h; tsp.TexV++);
 
-    	TextureCacheData *texture_data = getTextureCacheData(tsp, tcw);
+    	TextureCacheData *texture_data = getTextureCacheData(vram, tsp, tcw);
     	if (texture_data->texID != 0)
     		glcache.DeleteTextures(1, &texture_data->texID);
     	else
@@ -711,7 +697,7 @@ const TSP TSPTextureCacheMask = { { 7, 7 } };
 //     TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
 const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
 
-TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
+TextureCacheData *getTextureCacheData(u8* vram, TSP tsp, TCW tcw) {
 	u64 key = tsp.full & TSPTextureCacheMask.full;
 	if (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
 		// Paletted textures have a palette selection that must be part of the key
@@ -737,17 +723,18 @@ TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
 
 		tf->tsp = tsp;
 		tf->tcw = tcw;
+		tf->vram = vram;
 	}
 
 	return tf;
 }
 
-GLuint gl_GetTexture(TSP tsp, TCW tcw)
+GLuint gl_GetTexture(u8* vram, TSP tsp, TCW tcw)
 {
 	TexCacheLookups++;
 
 	//lookup texture
-	TextureCacheData* tf = getTextureCacheData(tsp, tcw);
+	TextureCacheData* tf = getTextureCacheData(vram, tsp, tcw);
 
 	if (tf->texID == 0)
 		tf->Create(true);
@@ -777,7 +764,7 @@ GLuint gl_GetTexture(TSP tsp, TCW tcw)
 }
 
 
-text_info raw_GetTexture(TSP tsp, TCW tcw)
+text_info raw_GetTexture(u8* vram, TSP tsp, TCW tcw)
 {
 	text_info rv = { 0 };
 
@@ -797,6 +784,7 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 
 		tf->tsp = tsp;
 		tf->tcw = tcw;
+		tf->vram = vram;
 		tf->Create(false);
 	}
 

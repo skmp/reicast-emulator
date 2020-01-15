@@ -323,7 +323,6 @@ extern DECL_ALIGN(4) u32 SFaceOffsColor;
 //extern vector<vram_block*> VramLocks[/*VRAM_SIZE*/(16*1024*1024)/PAGE_SIZE];
 //maybe - probably not - just a locking mechanism
 //extern cMutex vramlist_lock;
-extern VLockedMemory vram;
 
 
 
@@ -838,7 +837,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(SFaceBaseColor);
 	REICAST_S(SFaceOffsColor);
 
-	REICAST_SA(vram.data, vram.size);
+	REICAST_SA(sh4_cpu->vram.data, sh4_cpu->vram.size);
 
 	REICAST_SA(OnChipRAM.data,OnChipRAM_SIZE);
 
@@ -1147,7 +1146,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 			u32 buf[1024]; //u32 *ptr = detwiddle[i][j] ;
 			REICAST_US(buf); //LIBRETRO_SA(ptr,1024);
 		}
-	REICAST_USA(vram.data, vram.size);
+	REICAST_USA(sh4_cpu->vram.data, sh4_cpu->vram.size);
 
 	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
 
@@ -1440,7 +1439,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	pal_needs_update = true;
 
-	REICAST_USA(vram.data, vram.size);
+	REICAST_USA(sh4_cpu->vram.data, sh4_cpu->vram.size);
 
 	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
 

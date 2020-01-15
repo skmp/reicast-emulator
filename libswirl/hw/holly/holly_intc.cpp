@@ -13,7 +13,7 @@
 //TODO: MOVE THIS
 u32 SB_ISTNRM;
 
-struct ASICDevice_impl : ASIC {
+struct ASICDevice_impl final : ASIC {
 	SystemBus* sb;
 	ASICDevice_impl(SystemBus* sb) : sb(sb) { }
 

@@ -1021,7 +1021,7 @@ struct GDRomV3_impl final : MMIODevice {
         }
     }
 
-    void gdrom_serialize(void** data, unsigned int* total_size) {
+    void serialize(void** data, unsigned int* total_size) {
 
         REICAST_S(sns_asc);
         REICAST_S(sns_ascq);
@@ -1049,7 +1049,7 @@ struct GDRomV3_impl final : MMIODevice {
         REICAST_S(ByteCount);
     }
 
-    bool gdrom_unserialize(void** data, unsigned int* total_size) {
+    void unserialize(void** data, unsigned int* total_size) {
         
         REICAST_US(sns_asc);
         REICAST_US(sns_ascq);
@@ -1075,8 +1075,6 @@ struct GDRomV3_impl final : MMIODevice {
         REICAST_US(SecNumber);
         REICAST_US(GDStatus);
         REICAST_US(ByteCount);
-
-        return true;
     }
 
     int Update(int i, int c, int j)
@@ -1227,27 +1225,13 @@ MMIODevice* Create_GDRomDevice(SystemBus* sb, ASIC* asic) {
 //disk changes etc
 void libCore_gdrom_disc_change()
 {
-    if (g_GDRomDrive) dynamic_cast<GDRomV3_impl*>(g_GDRomDrive)->gd_setdisc();
+    if (sh4_cpu) {
+        auto gdd = sh4_cpu->GetA0H<GDRomV3_impl>(A0H_GDROM);
+        if (gdd) gdd->gd_setdisc();
+    }
 }
 
 void libCore_CDDA_Sector(s16* sector)
 {
-    dynamic_cast<GDRomV3_impl*>(g_GDRomDrive)->ReadCDDA(sector);
-}
-/*
-u32 ReadMem_gdrom(u32 Addr, u32 sz)
-{
-    return dynamic_cast<GDRomV3_impl*>(g_GDRomDrive)->Read(Addr, sz);
-}
-void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
-{
-    dynamic_cast<GDRomV3_impl*>(g_GDRomDrive)->Write(Addr, data, sz);
-}
-*/
-void gdrom_serialize(void** data, unsigned int* total_size) {
-    dynamic_cast<GDRomV3_impl*>(g_GDRomDrive)->gdrom_serialize(data, total_size);
-}
-
-bool gdrom_unserialize(void** data, unsigned int* total_size) {
-    return dynamic_cast<GDRomV3_impl*>(g_GDRomDrive)->gdrom_unserialize(data, total_size);
+    sh4_cpu->GetA0H<GDRomV3_impl>(A0H_GDROM)->ReadCDDA(sector);
 }

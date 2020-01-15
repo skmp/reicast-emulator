@@ -24,8 +24,6 @@ struct VirtualDreamcast {
 extern unique_ptr<VirtualDreamcast> virtualDreamcast;
 extern unique_ptr<GDRomDisc> g_GDRDisc;
 
-extern MMIODevice* g_GDRomDrive;
-
 
 // TODO: rename these
 int reicast_init(int argc, char* argv[]);

@@ -43,8 +43,6 @@
 unique_ptr<VirtualDreamcast> virtualDreamcast;
 unique_ptr<GDRomDisc> g_GDRDisc;
 
-MMIODevice* g_GDRomDrive;
-
 
 void FlushCache();
 void LoadCustom();
@@ -805,7 +803,7 @@ struct Dreamcast_impl : VirtualDreamcast {
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
             Create_NaomiDevice(systemBus)
 #else
-            (g_GDRomDrive = Create_GDRomDevice(systemBus, asic))
+            Create_GDRomDevice(systemBus, asic)
 #endif
         ;
 
@@ -851,8 +849,6 @@ struct Dreamcast_impl : VirtualDreamcast {
     {
         sh4_cpu->Term();
         
-        g_GDRomDrive = nullptr;
-
 #if DC_PLATFORM != DC_PLATFORM_DREAMCAST
         naomi_cart_Close();
 #endif
@@ -864,6 +860,9 @@ struct Dreamcast_impl : VirtualDreamcast {
         mcfg_DestroyDevices();
 
         SaveSettings();
+
+        delete sh4_cpu;
+        sh4_cpu = nullptr;
     }
 
     void Stop()

@@ -40,8 +40,6 @@ enum serialize_version_enum {
 } ;
 
 //gdrom
-void gdrom_serialize(void** data, unsigned int* total_size);
-bool gdrom_unserialize(void** data, unsigned int* total_size);
 
 //./core/hw/arm7/arm_mem.cpp
 
@@ -793,8 +791,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	REICAST_SA(reply_11,16) ;
 
-	gdrom_serialize(data, total_size);
-
 
 	REICAST_SA(EEPROM,0x100);
 	REICAST_S(EEPROM_loaded);
@@ -1081,7 +1077,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_USA(reply_11,16);
 
-	gdrom_unserialize(data, total_size);
 	REICAST_US(i); //LIBRETRO_S(GDROM_TICK);
 
 	REICAST_USA(EEPROM,0x100);
@@ -1396,10 +1391,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 
 	REICAST_USA(reply_11,16) ;
-
-	gdrom_unserialize(data, total_size);
-
-	
 
 
 	REICAST_USA(EEPROM,0x100);

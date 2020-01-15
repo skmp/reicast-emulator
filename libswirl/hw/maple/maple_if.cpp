@@ -59,7 +59,7 @@ bool IsOnSh4Ram(u32 addr)
 
 u32 dmacount=0;
 
-struct MapleDevice : MMIODevice {
+struct MapleDevice final : MMIODevice {
 
 	void SB_MSHTCL_Write(u32 addr, u32 data)
 	{

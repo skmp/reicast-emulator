@@ -15,5 +15,5 @@ struct SoundCPU : MMIODevice {
 	
 	virtual ~SoundCPU() { }
 
-	static SoundCPU* Create();
+	static SoundCPU* Create(u8* aica_ram);
 };

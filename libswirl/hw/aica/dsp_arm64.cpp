@@ -34,7 +34,7 @@ class DSPAssembler : public MacroAssembler
 public:
 	DSPAssembler(u8 *code_buffer, size_t size) : MacroAssembler(code_buffer, size), aica_ram_lit(NULL) {}
 
-	void Compile(struct dsp_context_t *DSP)
+	void Compile(u8* aica_ram, dsp_context_t *DSP)
 	{
 		this->DSP = DSP;
 		//printf("DSPAssembler::DSPCompile recompiling for arm64 at %p\n", GetBuffer()->GetStartAddress<void*>());
@@ -316,7 +316,7 @@ public:
 				{
 					//MEMVAL[(step + 2) & 3] = UNPACK(*(u16 *)&aica_ram[ADDR & ARAM_MASK]);
 					CalculateADDR(ADDR, op, ADRS_REG, MDEC_CT);
-					Ldr(x1, GetAicaRam());
+					Ldr(x1, GetAicaRam(aica_ram));
 					MemOperand aram_op(x1, Register::GetXRegFromCode(ADDR.GetCode()));
 					Ldrh(w0, aram_op);
 					GenCallRuntime(DSP::UNPACK);
@@ -331,7 +331,7 @@ public:
 					Mov(w2, w0);
 
 					CalculateADDR(ADDR, op, ADRS_REG, MDEC_CT);
-					Ldr(x1, GetAicaRam());
+					Ldr(x1, GetAicaRam(aica_ram));
 					MemOperand aram_op(x1, Register::GetXRegFromCode(ADDR.GetCode()));
 					Strh(w2, aram_op);
 				}
@@ -472,7 +472,7 @@ private:
 			die("Unsupported ARAM_SIZE");
 	}
 
-	Literal<u8*> *GetAicaRam()
+	Literal<u8*> *GetAicaRam(u8* aica_ram)
 	{
 		if (aica_ram_lit == NULL)
 			aica_ram_lit = new Literal<u8*>(&aica_ram[0], GetLiteralPool(), RawLiteral::kDeletedOnPoolDestruction);
@@ -497,24 +497,10 @@ private:
 	Literal<u8*> *aica_ram_lit;
 };
 
-void dsp_recompile()
-{
-	dsp.Stopped = true;
-	for (int i = 127; i >= 0; --i)
-	{
-		u32 *IPtr = DSPData->MPRO + i * 4;
-
-		if (IPtr[0] != 0 || IPtr[1] != 0 || IPtr[2 ]!= 0 || IPtr[3] != 0)
-		{
-			dsp.Stopped = false;
-			break;
-		}
-	}
-	DSPAssembler assembler(&dsp.DynCode[0], sizeof(dsp.DynCode));
-	assembler.Compile(&dsp);
-}
-
 struct DSPJITArm64 : DSP {
+	u8* aica_ram;
+
+	DSPJITArm64(u8* aica_ram) : aica_ram(aica_ram) {}
 
     bool Init()
     {
@@ -532,6 +518,23 @@ struct DSPJITArm64 : DSP {
 
 		return true;
     }
+
+	void dsp_recompile()
+	{
+		dsp.Stopped = true;
+		for (int i = 127; i >= 0; --i)
+		{
+			u32* IPtr = DSPData->MPRO + i * 4;
+
+			if (IPtr[0] != 0 || IPtr[1] != 0 || IPtr[2] != 0 || IPtr[3] != 0)
+			{
+				dsp.Stopped = false;
+				break;
+			}
+		}
+		DSPAssembler assembler(&dsp.DynCode[0], sizeof(dsp.DynCode));
+		assembler.Compile(aica_ram, &dsp);
+	}
 
     void Step()
     {
@@ -569,7 +572,7 @@ struct DSPJITArm64 : DSP {
     }
 };
 
-DSP* DSP::CreateJIT() {
-	return new DSPJITArm64();
+DSP* DSP::CreateJIT(u8* aica_ram) {
+	return new DSPJITArm64(aica_ram);
 }
 #endif

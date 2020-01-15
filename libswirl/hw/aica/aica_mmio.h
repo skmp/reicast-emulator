@@ -3,9 +3,6 @@
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mmio.h"
 
-
-extern VLockedMemory aica_ram;
-
 struct AICA : MMIODevice {
 	//Mainloop
 	virtual void Update(u32 Samples) = 0;
@@ -20,7 +17,7 @@ struct AICA : MMIODevice {
 struct ASIC;
 struct DSP;
 
-AICA* Create_AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp);
+AICA* Create_AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_ram);
 
 MMIODevice* Create_RTCDevice();
 

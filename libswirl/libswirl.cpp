@@ -637,11 +637,8 @@ int reicast_init(int argc, char* argv[])
     setbuf(stdout, 0);
     setbuf(stderr, 0);
 #endif
-    if (!_vmem_reserve())
-    {
-        printf("Failed to alloc mem\n");
-        return -1;
-    }
+
+    // TODO: Move vmem_reserve back here
     if (ParseCommandLine(argc, argv))
     {
         return 69;
@@ -689,6 +686,8 @@ struct Dreamcast_impl : VirtualDreamcast {
         mem_Reset((SuperH4_impl*)sh4_cpu, false);
 
         sh4_cpu->Reset(false);
+
+        sh4_cpu->aica_ram.Zero();
     }
 
     int StartGame(const char* path)
@@ -792,6 +791,12 @@ struct Dreamcast_impl : VirtualDreamcast {
     {
         sh4_cpu = SuperH4::Create();
 
+        if (!_vmem_reserve(&sh4_cpu->aica_ram))
+        {
+            printf("Failed to alloc mem\n");
+            return false;
+        }
+
         MMIODevice* biosDevice = Create_BiosDevice();
         MMIODevice* flashDevice = Create_FlashDevice();
         
@@ -809,9 +814,9 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         SPG* spg = SPG::Create(asic);
         MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic, spg);
-        DSP* dsp = DSP::CreateInterpreter();
-        MMIODevice* aicaDevice = Create_AicaDevice(systemBus, asic, dsp);
-        SoundCPU* soundCPU = SoundCPU::Create();
+        DSP* dsp = DSP::CreateInterpreter(sh4_cpu->aica_ram.data);
+        MMIODevice* aicaDevice = Create_AicaDevice(systemBus, asic, dsp, sh4_cpu->aica_ram.data);
+        SoundCPU* soundCPU = SoundCPU::Create(sh4_cpu->aica_ram.data);
 
         MMIODevice* mapleDevice = Create_MapleDevice(systemBus, asic);
         
@@ -855,7 +860,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         plugins_Term();
         rend_term_renderer();
 
-        _vmem_release();
+        _vmem_release(&sh4_cpu->aica_ram);
 
         mcfg_DestroyDevices();
 

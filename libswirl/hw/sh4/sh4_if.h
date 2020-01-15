@@ -257,7 +257,7 @@ enum Area0Hanlders {
 };
 
 struct SuperH4 {
-    static SuperH4* Create();
+	VLockedMemory aica_ram;
 
 	virtual void SetA0Handler(Area0Hanlders slot, MMIODevice* dev) = 0;
 	virtual MMIODevice* GetA0Handler(Area0Hanlders slot) = 0;
@@ -283,9 +283,9 @@ struct SuperH4 {
 
     virtual void ResetCache() = 0;
 
-    //virtual void RaiseExeption(u32 ExeptionCode, u32 VectorAddress) = 0;
-
 	virtual ~SuperH4() { }
+
+	static SuperH4* Create();
 };
 
 struct Sh4Context

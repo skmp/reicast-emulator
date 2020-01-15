@@ -269,6 +269,7 @@ struct ChannelEx
 	static ChannelEx Chans[64];
 
 	ChannelCommonData* ccd;
+	u8* aica_ram;
 
 	u8* SA;
 	u32 CA;
@@ -359,9 +360,10 @@ struct ChannelEx
 	bool enabled;	//set to false to 'freeze' the channel
 	int ChanelNumber;
 	
-	void Setup(int cn, u8* ccd_raw) {
+	void Setup(int cn, u8* ccd_raw, u8* aica_ram) {
 		ccd = (ChannelCommonData*)&ccd_raw[cn * 0x80];
 		ChanelNumber = cn;
+		this->aica_ram = aica_ram;
 	}
 
 	void Init()
@@ -532,7 +534,7 @@ struct ChannelEx
 		if (ccd->PCMS==0)
 			addr&=~1; //0: 16 bit
 		
-		SA=&aica_ram.data[addr];
+		SA=&aica_ram[addr];
 	}
 	//LSA,LEA
 	void UpdateLoop()
@@ -1090,7 +1092,7 @@ u32 CalcAegSteps(float t)
 	return (u32)(steps+0.5);
 }
 static u8* aica_reg;
-void sgc_Init(u8* aica_reg)
+void sgc_Init(u8* aica_reg, u8* aica_ram)
 {
 	::aica_reg = aica_reg;
 	staticinitialise();
@@ -1117,7 +1119,7 @@ void sgc_Init(u8* aica_reg)
 		AEG_DSR_SPS[i]=CalcAegSteps(AEG_DSR_Time[i]);
 	}
 	for (int i = 0; i < 64; i++)
-		Chans[i].Setup(i, aica_reg);
+		Chans[i].Setup(i, aica_reg, aica_ram);
 
 	for (int i = 0; i < 64; i++)
 		Chans[i].Init();
@@ -1413,7 +1415,7 @@ bool channel_serialize(void **data, unsigned int *total_size)
 
 	for ( i = 0 ; i < 64 ; i++)
 	{
-		addr = Chans[i].SA - (&(aica_ram.data[0])) ;
+		addr = Chans[i].SA - Chans[i].aica_ram ;
 		REICAST_S(addr);
 
 		REICAST_S(Chans[i].CA) ;
@@ -1468,7 +1470,7 @@ bool channel_unserialize(void **data, unsigned int *total_size)
 	for ( i = 0 ; i < 64 ; i++)
 	{
 		REICAST_US(addr);
-		Chans[i].SA = addr + (&(aica_ram.data[0])) ;
+		Chans[i].SA = addr + Chans[i].aica_ram;
 
 		REICAST_US(Chans[i].CA) ;
 		REICAST_US(Chans[i].step) ;

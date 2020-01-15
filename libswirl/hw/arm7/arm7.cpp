@@ -90,6 +90,9 @@ void armt_init();
 void FlushCache();
 
 struct Arm7Interpreter_impl : ARM7Backend {
+	u8* aica_ram;
+	
+	Arm7Interpreter_impl(u8* aica_ram) : aica_ram(aica_ram) { }
 
 #define REG_L (0x2D00)
 #define REG_M (0x2D04)
@@ -590,8 +593,8 @@ struct Arm7Interpreter_impl : ARM7Backend {
 	}
 };
 
-ARM7Backend* Create_ARM7Interpreter() {
-	return new Arm7Interpreter_impl();
+ARM7Backend* Create_ARM7Interpreter(u8* aica_ram) {
+	return new Arm7Interpreter_impl(aica_ram);
 }
 
 void FlushCache()

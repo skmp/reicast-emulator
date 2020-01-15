@@ -28,7 +28,9 @@
 #include "jit/emitter/x86/x86_emitter.h"
 
 struct DSPJitX86: DSP {
+    u8* aica_ram;
 
+    DSPJitX86(u8* aica_ram) : aica_ram(aica_ram) {}
 
     const bool SUPPORT_NOFL = false;
 
@@ -770,7 +772,7 @@ struct DSPJitX86: DSP {
     }
 };
 
-DSP* DSP::CreateJIT() {
-    return new DSPJitX86();
+DSP* DSP::CreateJIT(u8* aica_ram) {
+    return new DSPJitX86(u8 * aica_ram);
 }
 #endif

@@ -87,7 +87,6 @@ enum serialize_version_enum {
 
 
 //./core/hw/aica/aica_if.o
-extern VLockedMemory aica_ram;
 
 //extern s32 aica_pending_dma ;
 
@@ -748,7 +747,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	REICAST_S(dsp);
 
-	REICAST_SA(aica_ram.data,aica_ram.size) ;
+	REICAST_SA(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 
 
 
@@ -1029,7 +1028,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_US(dsp);
 
-	REICAST_USA(aica_ram.data,aica_ram.size) ;
+	REICAST_USA(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 
 	REICAST_USA(volume_lut,16);
 	REICAST_USA(tl_lut,256 + 768);
@@ -1353,7 +1352,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	REICAST_US(dsp);
 
-	REICAST_USA(aica_ram.data,aica_ram.size) ;
+	REICAST_USA(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 	
 	REICAST_USA(volume_lut,16);
 	REICAST_USA(tl_lut,256 + 768);

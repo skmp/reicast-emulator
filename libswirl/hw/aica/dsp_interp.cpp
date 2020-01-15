@@ -13,6 +13,9 @@
 #endif
 
 struct DSPInterpreter_impl : DSP {
+	u8* aica_ram;
+
+	DSPInterpreter_impl(u8* aica_ram) : aica_ram(aica_ram) { }
 
 	void AICADSP_Init(struct dsp_context_t* DSP)
 	{
@@ -357,6 +360,6 @@ struct DSPInterpreter_impl : DSP {
 	}
 };
 
-DSP* DSP::CreateInterpreter() {
-	return new DSPInterpreter_impl();
+DSP* DSP::CreateInterpreter(u8* aica_ram) {
+	return new DSPInterpreter_impl(aica_ram);
 }

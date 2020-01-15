@@ -440,7 +440,7 @@ bool _vmem_bm_LockedWrite(u8* address) {
 	return false;
 }
 
-bool _vmem_reserve() {
+bool _vmem_reserve(VLockedMemory* aica_ram) {
 	// TODO: Static assert?
 	verify((sizeof(Sh4RCB)%PAGE_SIZE)==0);
 
@@ -467,8 +467,8 @@ bool _vmem_reserve() {
 		vram.size = VRAM_SIZE;
 		vram.data = (u8*)malloc_pages(VRAM_SIZE);
 
-		aica_ram.size = ARAM_SIZE;
-		aica_ram.data = (u8*)malloc_pages(ARAM_SIZE);
+		aica_ram->size = ARAM_SIZE;
+		aica_ram->data = (u8*)malloc_pages(ARAM_SIZE);
 	}
 	else {
 		printf("Info: nvmem is enabled, with addr space of size %s\n", vmemstatus == MemType4GB ? "4GB" : "512MB");
@@ -493,8 +493,8 @@ bool _vmem_reserve() {
 		vmem_platform_create_mappings(&mem_mappings[0], sizeof(mem_mappings) / sizeof(mem_mappings[0]));
 
 		// Point buffers to actual data pointers
-		aica_ram.size = ARAM_SIZE;
-		aica_ram.data = &virt_ram_base[0x20000000];  // Points to the writtable AICA addrspace
+		aica_ram->size = ARAM_SIZE;
+		aica_ram->data = &virt_ram_base[0x20000000];  // Points to the writtable AICA addrspace
 
 		vram.size = VRAM_SIZE;
 		vram.data = &virt_ram_base[0x04000000];   // Points to first vram mirror (writtable and lockable)
@@ -504,7 +504,7 @@ bool _vmem_reserve() {
 	}
 
 	// Clear out memory
-	aica_ram.Zero();
+	aica_ram->Zero();
 	vram.Zero();
 	mem_b.Zero();
 
@@ -514,13 +514,13 @@ bool _vmem_reserve() {
 #define freedefptr(x) \
 	if (x) { free(x); x = NULL; }
 
-void _vmem_release() {
+void _vmem_release(VLockedMemory* aica_ram) {
 	if (virt_ram_base)
 		vmem_platform_destroy();
 	else {
 		freedefptr(p_sh4rcb);
 		freedefptr(vram.data);
-		freedefptr(aica_ram.data);
+		freedefptr(aica_ram->data);
 		freedefptr(mem_b.data);
 	}
 }

@@ -8,9 +8,10 @@
 
 struct SoundCPU_impl : SoundCPU {
 	u8* aica_ram;
+	u32 aram_size;
 	unique_ptr<ARM7Backend> arm;
 
-	SoundCPU_impl(u8* aica_ram) : aica_ram(aica_ram){
+	SoundCPU_impl(u8* aica_ram, u32 aram_size) : aica_ram(aica_ram), aram_size(aram_size){
 		setBackend(ARM7BE_INTERPRETER);
 	}
 
@@ -48,14 +49,14 @@ struct SoundCPU_impl : SoundCPU {
 
 	bool setBackend(Arm7Backends backend) {
 
-		arm.reset(Create_ARM7Interpreter(aica_ram));
+		arm.reset(Create_ARM7Interpreter(aica_ram, aram_size));
 
 		return true; 
 	}
 };
 
-SoundCPU* SoundCPU::Create(u8* aica_ram) {
-	return new SoundCPU_impl(aica_ram);
+SoundCPU* SoundCPU::Create(u8* aica_ram, u32 aram_size) {
+	return new SoundCPU_impl(aica_ram, aram_size);
 }
 
 void libARM_SetResetState(bool Reset) {

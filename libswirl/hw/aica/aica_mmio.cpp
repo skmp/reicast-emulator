@@ -589,8 +589,9 @@ struct AicaDevice final : AICA {
 	ASIC* asic;
 	DSP* dsp;
 	u8* aica_ram;
+	u32 aram_size;
 
-	AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_ram) : sb(sb), asic(asic), dsp(dsp), aica_ram(aica_ram) { }
+	AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_ram, u32 aram_size) : sb(sb), asic(asic), dsp(dsp), aica_ram(aica_ram), aram_size(aram_size) { }
 
 	u32 Read(u32 addr, u32 sz) {
 		addr &= 0x7FFF;
@@ -675,7 +676,7 @@ struct AicaDevice final : AICA {
 		MCIPD = (InterruptInfo*)&aica_reg[0x28B4 + 4];
 		MCIRE = (InterruptInfo*)&aica_reg[0x28B4 + 8];
 
-		sgc_Init(aica_reg, aica_ram);
+		sgc_Init(aica_reg, aica_ram, aram_size);
 
 		for (int i = 0; i < 3; i++)
 			timers[i].Init(aica_reg, i);
@@ -699,7 +700,6 @@ struct AicaDevice final : AICA {
 	void Reset(bool Manual)
 	{
 		memset(aica_reg, 0, sizeof(aica_reg));
-		aica_ram[ARAM_SIZE - 1] = 1;
 		
 		ARMRST = 0;
 		VREG = 0;
@@ -771,8 +771,8 @@ struct AicaDevice final : AICA {
 
 };
 
-AICA* Create_AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_ram) {
-	return new AicaDevice(sb, asic, dsp, aica_ram);
+AICA* Create_AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_ram, u32 aram_size) {
+	return new AicaDevice(sb, asic, dsp, aica_ram, aram_size);
 }
 
 u32 libAICA_ReadReg(u32 addr, u32 sz) {

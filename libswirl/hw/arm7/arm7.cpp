@@ -16,7 +16,7 @@
 #endif
 
 //#define CPUReadHalfWordQuick(addr) arm_ReadMem16(addr & 0x7FFFFF)
-#define CPUReadMemoryQuick(addr) (*(u32*)&aica_ram[addr&ARAM_MASK])
+#define CPUReadMemoryQuick(addr) (*(u32*)&aica_ram[addr&aram_mask])
 #define CPUReadByte arm_ReadMem8
 #define CPUReadMemory arm_ReadMem32
 #define CPUReadHalfWord arm_ReadMem16
@@ -91,8 +91,9 @@ void FlushCache();
 
 struct Arm7Interpreter_impl : ARM7Backend {
 	u8* aica_ram;
+	u32 aram_mask;
 	
-	Arm7Interpreter_impl(u8* aica_ram) : aica_ram(aica_ram) { }
+	Arm7Interpreter_impl(u8* aica_ram, u32 aram_size) : aica_ram(aica_ram), aram_mask(aram_size-1){ }
 
 #define REG_L (0x2D00)
 #define REG_M (0x2D04)
@@ -177,7 +178,7 @@ struct Arm7Interpreter_impl : ARM7Backend {
 		addr &= 0x00FFFFFF;
 		if (addr < 0x800000)
 		{
-			T rv = *(T*)&aica_ram[addr & (ARAM_MASK - (sz - 1))];
+			T rv = *(T*)&aica_ram[addr & (aram_mask - (sz - 1))];
 
 			if (unlikely(sz == 4 && addr & 3))
 			{
@@ -199,7 +200,7 @@ struct Arm7Interpreter_impl : ARM7Backend {
 		addr &= 0x00FFFFFF;
 		if (addr < 0x800000)
 		{
-			*(T*)&aica_ram[addr & (ARAM_MASK - (sz - 1))] = data;
+			*(T*)&aica_ram[addr & (aram_mask - (sz - 1))] = data;
 		}
 		else
 		{
@@ -593,8 +594,8 @@ struct Arm7Interpreter_impl : ARM7Backend {
 	}
 };
 
-ARM7Backend* Create_ARM7Interpreter(u8* aica_ram) {
-	return new Arm7Interpreter_impl(aica_ram);
+ARM7Backend* Create_ARM7Interpreter(u8* aica_ram, u32 aram_size) {
+	return new Arm7Interpreter_impl(aica_ram, aram_size);
 }
 
 void FlushCache()

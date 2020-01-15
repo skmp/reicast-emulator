@@ -791,7 +791,7 @@ struct Dreamcast_impl : VirtualDreamcast {
     {
         sh4_cpu = SuperH4::Create();
 
-        if (!_vmem_reserve(&sh4_cpu->aica_ram))
+        if (!_vmem_reserve(&sh4_cpu->aica_ram, INTERNAL_ARAM_SIZE))
         {
             printf("Failed to alloc mem\n");
             return false;
@@ -814,9 +814,9 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         SPG* spg = SPG::Create(asic);
         MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic, spg);
-        DSP* dsp = DSP::CreateInterpreter(sh4_cpu->aica_ram.data);
-        MMIODevice* aicaDevice = Create_AicaDevice(systemBus, asic, dsp, sh4_cpu->aica_ram.data);
-        SoundCPU* soundCPU = SoundCPU::Create(sh4_cpu->aica_ram.data);
+        DSP* dsp = DSP::CreateInterpreter(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
+        MMIODevice* aicaDevice = Create_AicaDevice(systemBus, asic, dsp, sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
+        SoundCPU* soundCPU = SoundCPU::Create(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 
         MMIODevice* mapleDevice = Create_MapleDevice(systemBus, asic);
         

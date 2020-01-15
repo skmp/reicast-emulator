@@ -440,7 +440,7 @@ bool _vmem_bm_LockedWrite(u8* address) {
 	return false;
 }
 
-bool _vmem_reserve(VLockedMemory* aica_ram) {
+bool _vmem_reserve(VLockedMemory* aica_ram, u32 aram_size) {
 	// TODO: Static assert?
 	verify((sizeof(Sh4RCB)%PAGE_SIZE)==0);
 
@@ -467,8 +467,8 @@ bool _vmem_reserve(VLockedMemory* aica_ram) {
 		vram.size = VRAM_SIZE;
 		vram.data = (u8*)malloc_pages(VRAM_SIZE);
 
-		aica_ram->size = ARAM_SIZE;
-		aica_ram->data = (u8*)malloc_pages(ARAM_SIZE);
+		aica_ram->size = aram_size;
+		aica_ram->data = (u8*)malloc_pages(aram_size);
 	}
 	else {
 		printf("Info: nvmem is enabled, with addr space of size %s\n", vmemstatus == MemType4GB ? "4GB" : "512MB");
@@ -479,8 +479,8 @@ bool _vmem_reserve(VLockedMemory* aica_ram) {
 		#define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)
 		const vmem_mapping mem_mappings[] = {
 			{0x00000000, 0x00800000,                               0,         0, false},  // Area 0 -> unused
-			{0x00800000, 0x01000000,           MAP_ARAM_START_OFFSET, ARAM_SIZE, false},  // Aica, wraps too
-			{0x20000000, 0x20000000+ARAM_SIZE, MAP_ARAM_START_OFFSET, ARAM_SIZE,  true},
+			{0x00800000, 0x01000000,           MAP_ARAM_START_OFFSET, aram_size, false},  // Aica, wraps too
+			{0x20000000, 0x20000000+aram_size, MAP_ARAM_START_OFFSET, aram_size,  true},
 			{0x01000000, 0x04000000,                               0,         0, false},  // More unused
 			{0x04000000, 0x05000000,           MAP_VRAM_START_OFFSET, VRAM_SIZE,  true},  // Area 1 (vram, 16MB, wrapped on DC as 2x8MB)
 			{0x05000000, 0x06000000,                               0,         0, false},  // 32 bit path (unused)
@@ -493,7 +493,7 @@ bool _vmem_reserve(VLockedMemory* aica_ram) {
 		vmem_platform_create_mappings(&mem_mappings[0], sizeof(mem_mappings) / sizeof(mem_mappings[0]));
 
 		// Point buffers to actual data pointers
-		aica_ram->size = ARAM_SIZE;
+		aica_ram->size = aram_size;
 		aica_ram->data = &virt_ram_base[0x20000000];  // Points to the writtable AICA addrspace
 
 		vram.size = VRAM_SIZE;

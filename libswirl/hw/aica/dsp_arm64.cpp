@@ -34,7 +34,7 @@ class DSPAssembler : public MacroAssembler
 public:
 	DSPAssembler(u8 *code_buffer, size_t size) : MacroAssembler(code_buffer, size), aica_ram_lit(NULL) {}
 
-	void Compile(u8* aica_ram, dsp_context_t *DSP)
+	void Compile(u8* aica_ram, u32 aram_size, dsp_context_t *DSP)
 	{
 		this->DSP = DSP;
 		//printf("DSPAssembler::DSPCompile recompiling for arm64 at %p\n", GetBuffer()->GetStartAddress<void*>());
@@ -315,7 +315,7 @@ public:
 				if (op.MRD)			// memory only allowed on odd. DoA inserts NOPs on even
 				{
 					//MEMVAL[(step + 2) & 3] = UNPACK(*(u16 *)&aica_ram[ADDR & ARAM_MASK]);
-					CalculateADDR(ADDR, op, ADRS_REG, MDEC_CT);
+					CalculateADDR(aram_size, ADDR, op, ADRS_REG, MDEC_CT);
 					Ldr(x1, GetAicaRam(aica_ram));
 					MemOperand aram_op(x1, Register::GetXRegFromCode(ADDR.GetCode()));
 					Ldrh(w0, aram_op);
@@ -330,7 +330,7 @@ public:
 					GenCallRuntime(DSP::PACK);
 					Mov(w2, w0);
 
-					CalculateADDR(ADDR, op, ADRS_REG, MDEC_CT);
+					CalculateADDR(aram_size, ADDR, op, ADRS_REG, MDEC_CT);
 					Ldr(x1, GetAicaRam(aica_ram));
 					MemOperand aram_op(x1, Register::GetXRegFromCode(ADDR.GetCode()));
 					Strh(w2, aram_op);
@@ -433,7 +433,7 @@ private:
 		Bl(&function_label);
 	}
 
-	void CalculateADDR(const Register& ADDR, const _INST& op, const Register& ADRS_REG, const Register& MDEC_CT)
+	void CalculateADDR(u32 aram_size, const Register& ADDR, const _INST& op, const Register& ADRS_REG, const Register& MDEC_CT)
 	{
 		//u32 ADDR = DSPData->MADRS[op.MASA];
 		Ldr(ADDR, dspdata_operand(DSPData->MADRS, op.MASA));
@@ -464,9 +464,9 @@ private:
 		// RBP is constant for this program
 		Add(ADDR, ADDR, DSP->RBP);
 		// ADDR & ARAM_MASK
-		if (ARAM_SIZE == 2*1024*1024)
+		if (aram_size == 2*1024*1024)
 			Bfc(ADDR, 21, 11);
-		else if (ARAM_SIZE == 8*1024*1024)
+		else if (aram_size == 8*1024*1024)
 			Bfc(ADDR, 23, 9);
 		else
 			die("Unsupported ARAM_SIZE");
@@ -499,8 +499,9 @@ private:
 
 struct DSPJITArm64 : DSP {
 	u8* aica_ram;
+	u32 aram_size;
 
-	DSPJITArm64(u8* aica_ram) : aica_ram(aica_ram) {}
+	DSPJITArm64(u8* aica_ram, u32 aram_size) : aica_ram(aica_ram), aram_size(aram_size) {}
 
     bool Init()
     {
@@ -533,7 +534,7 @@ struct DSPJITArm64 : DSP {
 			}
 		}
 		DSPAssembler assembler(&dsp.DynCode[0], sizeof(dsp.DynCode));
-		assembler.Compile(aica_ram, &dsp);
+		assembler.Compile(aica_ram, aram_size, &dsp);
 	}
 
     void Step()
@@ -572,7 +573,7 @@ struct DSPJITArm64 : DSP {
     }
 };
 
-DSP* DSP::CreateJIT(u8* aica_ram) {
-	return new DSPJITArm64(aica_ram);
+DSP* DSP::CreateJIT(u8* aica_ram, u32 aram_size) {
+	return new DSPJITArm64(aica_ram, aram_size);
 }
 #endif

@@ -296,7 +296,7 @@ T DYNACALL ReadMem_area0(SuperH4* psh4, u32 addr)
 	//map 0x0080 to 0x00FF
 	else if ((base >=0x0080) && (base <=0x00FF) /*&& (addr>= 0x00800000) && (addr<=0x00FFFFFF)*/) //	:AICA- Wave Memory
 	{
-		ReadMemArrRet(sh4->aica_ram.data,addr&ARAM_MASK,sz);
+		ReadMemArrRet(sh4->aica_ram.data, addr & (sh4->aica_ram.size - 1), sz);
 	}
 	//map 0x0100 to 0x01FF
 	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) //	:Ext. Device
@@ -370,7 +370,7 @@ void  DYNACALL WriteMem_area0(SuperH4* psh4, u32 addr,T data)
 	//map 0x0080 to 0x00FF
 	else if ((base >=0x0080) && (base <=0x00FF) /*&& (addr>= 0x00800000) && (addr<=0x00FFFFFF)*/) // AICA- Wave Memory
 	{
-		WriteMemArrRet(sh4->aica_ram.data,addr&ARAM_MASK,data,sz);
+		WriteMemArrRet(sh4->aica_ram.data, addr & (sh4->aica_ram.size - 1), data, sz);
 		return;
 	}
 	//map 0x0100 to 0x01FF

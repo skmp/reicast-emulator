@@ -17,7 +17,7 @@ struct AICA : MMIODevice {
 struct ASIC;
 struct DSP;
 
-AICA* Create_AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_ram);
+AICA* Create_AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_ram, u32 aram_size);
 
 MMIODevice* Create_RTCDevice();
 

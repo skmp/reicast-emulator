@@ -29,8 +29,9 @@
 
 struct DSPJitX86: DSP {
     u8* aica_ram;
+    u32 aram_mask;
 
-    DSPJitX86(u8* aica_ram) : aica_ram(aica_ram) {}
+    DSPJitX86(u8* aica_ram, u32 aram_size) : aica_ram(aica_ram), aram_mask(aram_size-1) {}
 
     const bool SUPPORT_NOFL = false;
 
@@ -181,7 +182,7 @@ struct DSPJitX86: DSP {
         {
             //Get and mask ram address :)
             x86e.Emit(op_mov32, EAX, &dsp.regs.MEM_ADDR);
-            x86e.Emit(op_and32, EAX, AICA_RAM_MASK);
+            x86e.Emit(op_and32, EAX, aram_mask);
 
             x86e.Emit(op_add32, EAX, (unat)aica_ram.data);
 
@@ -772,7 +773,7 @@ struct DSPJitX86: DSP {
     }
 };
 
-DSP* DSP::CreateJIT(u8* aica_ram) {
-    return new DSPJitX86(u8 * aica_ram);
+DSP* DSP::CreateJIT(u8* aica_ram, u32 aram_size) {
+    return new DSPJitX86(u8 * aica_ram, aram_size);
 }
 #endif

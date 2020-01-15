@@ -14,8 +14,9 @@
 
 struct DSPInterpreter_impl : DSP {
 	u8* aica_ram;
+	u32 aram_mask;
 
-	DSPInterpreter_impl(u8* aica_ram) : aica_ram(aica_ram) { }
+	DSPInterpreter_impl(u8* aica_ram, u32 aram_size) : aica_ram(aica_ram), aram_mask(aram_size - 1) { }
 
 	void AICADSP_Init(struct dsp_context_t* DSP)
 	{
@@ -268,7 +269,7 @@ struct DSPInterpreter_impl : DSP {
 						//if (NOFL)
 						//	MEMVAL[(step + 2) & 3] = (*(s16 *)&aica_ram[ADDR]) << 8;
 						//else
-						MEMVAL[(step + 2) & 3] = UNPACK(*(u16*)&aica_ram[ADDR & ARAM_MASK]);
+						MEMVAL[(step + 2) & 3] = UNPACK(*(u16*)&aica_ram[ADDR & aram_mask]);
 					}
 					if (MWT)
 					{
@@ -276,7 +277,7 @@ struct DSPInterpreter_impl : DSP {
 						//if (NOFL)
 						//	*(s16 *)&aica_ram[ADDR] = SHIFTED >> 8;
 						//else
-						*(u16*)&aica_ram[ADDR & ARAM_MASK] = PACK(SHIFTED);
+						*(u16*)&aica_ram[ADDR & aram_mask] = PACK(SHIFTED);
 					}
 				}
 			}
@@ -360,6 +361,6 @@ struct DSPInterpreter_impl : DSP {
 	}
 };
 
-DSP* DSP::CreateInterpreter(u8* aica_ram) {
-	return new DSPInterpreter_impl(aica_ram);
+DSP* DSP::CreateInterpreter(u8* aica_ram, u32 aram_size) {
+	return new DSPInterpreter_impl(aica_ram, aram_size);
 }

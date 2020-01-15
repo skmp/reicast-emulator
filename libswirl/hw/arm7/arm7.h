@@ -17,7 +17,7 @@ struct ARM7Backend {
 void libARM_SetResetState(bool Reset);
 void libARM_InterruptChange(u32 bits, u32 L);
 
-ARM7Backend* Create_ARM7Interpreter(u8* aica_ram);
+ARM7Backend* Create_ARM7Interpreter(u8* aica_ram, u32 aram_size);
 
 #define arm_sh4_bias (2)
 

@@ -130,8 +130,8 @@ struct DSP : MMIODevice {
 	virtual void Step() = 0;
 	virtual void WritenMem(u32 addr) = 0;
 
-	static DSP* CreateInterpreter(u8* aica_ram);
-	static DSP* CreateJIT(u8* aica_ram);
+	static DSP* CreateInterpreter(u8* aica_ram, u32 aram_size);
+	static DSP* CreateJIT(u8* aica_ram, u32 aram_size);
 };
 
 static void libDSP_Step() {

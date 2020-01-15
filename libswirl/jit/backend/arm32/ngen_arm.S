@@ -243,9 +243,10 @@ HIDDEN(arm_dispatch)
 CSYM(arm_dispatch):
 	ldrd r0,r1,[r8,#184]		@load: Next PC, interrupt
 
-#if ARAM_SIZE == 2*1024*1024
+	@ TODO: FIX THIS TO NOT BE STATIC / CODEGEN on INIT
+#if INTERNAL_ARAM_SIZE == 2*1024*1024
 	ubfx r2,r0,#2,#19		@ assuming 2 MB address space max (21 bits)
-#elif ARAM_SIZE == 8*1024*1024
+#elif INTERNAL_ARAM_SIZE == 8*1024*1024
 	ubfx r2,r0,#2,#21		@ assuming 8 MB address space max (23 bits)
 #else
 #error Unsupported AICA RAM size

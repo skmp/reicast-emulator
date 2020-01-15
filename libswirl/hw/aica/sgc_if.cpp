@@ -1092,9 +1092,12 @@ u32 CalcAegSteps(float t)
 	return (u32)(steps+0.5);
 }
 static u8* aica_reg;
-void sgc_Init(u8* aica_reg, u8* aica_ram)
+static u32 aram_mask;
+void sgc_Init(u8* aica_reg, u8* aica_ram, u32 aram_size)
 {
 	::aica_reg = aica_reg;
+	::aram_mask = aram_size - 1;
+
 	staticinitialise();
 
 	for (int i=0;i<16;i++)
@@ -1178,7 +1181,7 @@ void WriteCommonReg8(u32 reg,u32 data)
 	if (reg==0x2804 || reg==0x2805)
 	{
 		dsp.RBL=(8192<<CommonData->RBL)-1;
-		dsp.RBP=( CommonData->RBP*2048&AICA_RAM_MASK);
+		dsp.RBP=( (CommonData->RBP*2048) & aram_mask);
 		dsp.dyndirty=true;
 	}
 }

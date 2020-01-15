@@ -110,11 +110,20 @@ void palette_update(void);
 
 // Unpack to 32-bit word
 
-#define ARGB1555_32( word )    ( ((word & 0x8000) ? 0xFF000000 : 0) | (((word>>10) & 0x1F)<<3)  | (((word>>5) & 0x1F)<<11)  | (((word>>0) & 0x1F)<<19) )
+#define ARGB1555_32( word )    ( ((word & 0x8000) ? 0xFF000000 : 0) | \
+								(((word >> 10) & 0x1F) << 3) | (((word >> 12) & 0x7) << 0) | \
+								(((word >> 5) & 0x1F) << 11) | (((word >> 7) & 0x7) << 8) | \
+								(((word >> 0) & 0x1F) << 19) | (((word >> 2) & 0x7) << 16) )
 
-#define ARGB565_32( word )     ( (((word>>11)&0x1F)<<3) | (((word>>5)&0x3F)<<10) | (((word>>0)&0x1F)<<19) | 0xFF000000 )
+#define ARGB565_32( word )     ( (((word >> 11) & 0x1F) << 3) | (((word >> 13) & 0x7) << 0) | \
+								(((word >> 5) & 0x3F) << 10) | (((word >> 9) & 0x3) << 8) | \
+								(((word >> 0) & 0x1F) << 19) | (((word >> 2) & 0x7) << 16) | \
+								0xFF000000 )
 
-#define ARGB4444_32( word ) ( (((word>>12)&0xF)<<28) | (((word>>8)&0xF)<<4) | (((word>>4)&0xF)<<12) | (((word>>0)&0xF)<<20) )
+#define ARGB4444_32( word ) ( (((word >> 12) & 0xF) << 28) | (((word >> 12) & 0xF) << 24) | \
+								(((word >> 8) & 0xF) << 4) | (((word >> 8) & 0xF) << 0) | \
+								(((word >> 4) & 0xF) << 12) | (((word >> 4) & 0xF) << 8) | \
+								(((word >> 0) & 0xF) << 20) | (((word >> 0) & 0xF) << 16) )
 
 #define ARGB8888_32( word ) ( ((word >> 0) & 0xFF000000) | (((word >> 16) & 0xFF) << 0) | (((word >> 8) & 0xFF) << 8) | ((word & 0xFF) << 16) )
 
@@ -550,10 +559,6 @@ template void texture_PL<conv1555_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in
 template void texture_PL<conv4444_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_PL<convYUV_PL<pp_8888>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
 
-#define tex565_PL32 texture_PL<conv565_PL32<pp_8888>, u32>
-#define tex1555_PL32 texture_PL<conv1555_PL32<pp_8888>, u32>
-#define tex4444_PL32 texture_PL<conv4444_PL32<pp_8888>, u32>
-
 //twiddled formats !
 template void texture_TW<conv565_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_TW<conv1555_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
@@ -577,6 +582,10 @@ template void texture_VQ<convYUV_TW<pp_8888>, u32>(PixelBuffer<u32>* pb,u8* p_in
 #define tex4444_PL texture_PL<conv4444_PL<pp_565>, u16>
 #define texYUV422_PL texture_PL<convYUV_PL<pp_8888>, u32>
 #define texBMP_PL tex4444_PL
+
+#define tex565_PL32 texture_PL<conv565_PL32<pp_8888>, u32>
+#define tex1555_PL32 texture_PL<conv1555_PL32<pp_8888>, u32>
+#define tex4444_PL32 texture_PL<conv4444_PL32<pp_8888>, u32>
 
 //Twiddle
 #define tex565_TW texture_TW<conv565_TW<pp_565>, u16>

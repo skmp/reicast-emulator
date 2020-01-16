@@ -82,6 +82,16 @@ static struct game_type lut_games[] =
    { "T-8113N   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Ducati World - Racing Challenge (NTSC) */
    { "T-8121D-50", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Ducati World (PAL) */
    { "T40509D 50", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Aqua GT */
+   { "17707N    ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Rayman 2 (NTSC) */
+   { "17707D    ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Rayman 2 (PAL) */
+   { "T20116M   ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Elysion */
+   { "T9507N    ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Silent Scope (NTSC) */
+   { "T9505D    ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Silent Scope (PAL) */
+   { "T1201N    ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Power Stone (US) */
+   { "T1201M    ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Power Stone (JP) */
+   { "T36801D 50", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Power Stone (PAL) */
+   { "MK-51012  ", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Metropolis Street Racer (NTSC) */
+   { "MK-5102250", -1, -1, -1, -1, -1,  -1,  1, 1, -1 },           /* Metropolis Street Racer (PAL) */
 
    /* Extra depth scaling */
    { "MK-51182  ", -1, -1, -1, -1, -1,  -1,  1, 10000.f, -1 },     /* NHL 2K2 */
@@ -115,6 +125,7 @@ static struct game_type_naomi lut_games_naomi[] =
    /* Div matching disabled */
    { "METAL SLUG 6"                      , -1, -1, -1, -1, -1, -1,  1, -1,  1 },                /* Metal Slug 6 */
    { "WAVE RUNNER GP"                    , -1, -1, -1, -1, -1, -1,  1, -1,  1 },                /* WaveRunner GP */
+   { "STREET FIGHTER ZERO3 UPPER"        , -1, -1, -1, -1, -1, -1,  1, -1,  1 },                /* Street Fighter Zero 3 Upper */
 
    /* Extra Depth Scaling */
    { "SAMURAI SPIRITS 6"                 , -1, -1, -1, -1, -1, -1,  -1, -1, 1e26 },             /* Samurai Shodown VI */

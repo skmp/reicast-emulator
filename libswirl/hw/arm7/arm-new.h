@@ -17,6 +17,31 @@
 // along with this program; if not, write to the Free Software Foundation,
 // Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
+/*
+table generated via:
+
+    #include <stdio.h>
+
+    int main()
+    {
+        for (int i = 0; i < 256; i++)
+        {
+            int count = 0;
+            for (int j = 0; j < 8; j++)
+                if (i & (1 << j))
+                    count++;
+
+           printf("%d, ", count);
+        }
+
+
+        return 0;
+    }
+*/
+
+static const u8 cpuBitsSet[256] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8 };
+
+
 
 #ifdef BKPT_SUPPORT
 #define CONSOLE_OUTPUT(a,b) \
@@ -1433,7 +1458,7 @@ if(cond_res) {
         clockTicks += 5;
     }
     break;
-	/*
+#if 0 // not in ARM7DI
   case 0x00b:
   case 0x02b:
     {
@@ -1725,7 +1750,8 @@ if(cond_res) {
       if(dest != base)
         reg[base].I = address;
     }
-    break;*/
+    break;
+#endif
   case 0x01d:
   case 0x03d:
     {
@@ -1878,6 +1904,7 @@ if(cond_res) {
         reg[base].I = address;
     }
     break;
+#if 0 // not in ARM7DI
   case 0x01f:
   case 0x03f:
     {
@@ -2030,6 +2057,7 @@ if(cond_res) {
         reg[base].I = address;
     }
     break;
+#endif
     LOGICAL_DATA_OPCODE_WITHOUT_base(OP_EOR,  OP_EOR, 0x020);
     LOGICAL_DATA_OPCODE_WITHOUT_base(OP_EORS, OP_EOR, 0x030);
   case 0x029:

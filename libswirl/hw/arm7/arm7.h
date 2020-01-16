@@ -1,19 +1,22 @@
 #pragma once
 #include "types.h"
+
+struct Arm7Context;
+
 struct ARM7Backend {
-    virtual bool Init() = 0;
-    virtual void Reset() = 0;
+
+    static u32 Step(Arm7Context* ctx);
+    static u32 StepMany(Arm7Context* ctx, u32 minCycles);
+
+    static void UpdateInterrupts(Arm7Context* ctx);
 
     virtual void Run(u32 uNumCycles) = 0;
-    virtual void SetEnabled(bool enabled) = 0;
-    virtual void InterruptChange(u32 bits, u32 L) = 0;
-
-    virtual void serialize(void** data, unsigned int* total_size) = 0;
-    virtual void unserialize(void** data, unsigned int* total_size) = 0;
+    virtual void UpdateInterrupts() = 0;
+    virtual void InvalidateICache() { }
 
     virtual ~ARM7Backend() { }
 
-    static ARM7Backend* CreateInterpreter(u8* aica_ram, u32 aram_size);
+    static ARM7Backend* CreateInterpreter(Arm7Context* ctx);
 };
 
 void libARM_SetResetState(bool Reset);

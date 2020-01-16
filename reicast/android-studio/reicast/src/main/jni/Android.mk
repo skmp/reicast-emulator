@@ -76,15 +76,17 @@ endif
 LOCAL_CFLAGS +=
 
 ifeq ($(TARGET_ARCH_ABI),x86)
-  LOCAL_CFLAGS+= -DTARGET_NO_AREC -DTARGET_NO_OPENMP
+  LOCAL_CFLAGS+= -DTARGET_NO_AREC
 endif
+
+LOCAL_CFLAGS += -DTARGET_NO_OPENMP
 
 LOCAL_PRELINK_MODULE  := false
 
 LOCAL_MODULE	:= dc
 LOCAL_DISABLE_FORMAT_STRING_CHECKS=true
 LOCAL_ASFLAGS += -fPIC -fvisibility=hidden
-LOCAL_LDLIBS  += -llog -lEGL -lz -landroid  -fopenmp
+LOCAL_LDLIBS  += -llog -lEGL -lz -landroid
 #-Wl,-Map,./res/raw/syms.mp3
 LOCAL_ARM_MODE	:= arm
 

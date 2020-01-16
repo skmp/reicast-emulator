@@ -271,6 +271,9 @@ void InitSettings()
     settings.dynarec.idleskip = true;
     settings.dynarec.unstable_opt = false;
     settings.dynarec.safemode = true;
+    settings.dynarec.ScpuEnable = true;
+    settings.dynarec.DspEnable = true;
+
     settings.dreamcast.cable = 3;	// TV composite
     settings.dreamcast.region = 3;	// default
     settings.dreamcast.broadcast = 4;	// default
@@ -352,6 +355,9 @@ void LoadSettings(bool game_specific)
     settings.dynarec.unstable_opt = cfgLoadBool(config_section, "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
     settings.dynarec.safemode = cfgLoadBool(config_section, "Dynarec.safe-mode", settings.dynarec.safemode);
     settings.dynarec.SmcCheckLevel = (SmcCheckEnum)cfgLoadInt(config_section, "Dynarec.SmcCheckLevel", settings.dynarec.SmcCheckLevel);
+    settings.dynarec.ScpuEnable = cfgLoadInt(config_section, "Dynarec.ScpuEnabled", settings.dynarec.ScpuEnable);
+    settings.dynarec.DspEnable = cfgLoadInt(config_section, "Dynarec.DspEnabled", settings.dynarec.DspEnable);
+
     //disable_nvmem can't be loaded, because nvmem init is before cfg load
     settings.dreamcast.cable = cfgLoadInt(config_section, "Dreamcast.Cable", settings.dreamcast.cable);
     settings.dreamcast.region = cfgLoadInt(config_section, "Dreamcast.Region", settings.dreamcast.region);
@@ -486,6 +492,8 @@ void LoadCustom()
 void SaveSettings()
 {
     cfgSaveBool("config", "Dynarec.Enabled", settings.dynarec.Enable);
+    cfgSaveInt("config", "Dynarec.ScpuEnabled", settings.dynarec.ScpuEnable);
+    cfgSaveInt("config", "Dynarec.DspEnabled", settings.dynarec.DspEnable);
     cfgSaveInt("config", "Dreamcast.Cable", settings.dreamcast.cable);
     cfgSaveInt("config", "Dreamcast.Region", settings.dreamcast.region);
     cfgSaveInt("config", "Dreamcast.Broadcast", settings.dreamcast.broadcast);
@@ -591,16 +599,40 @@ void* dc_run(void*)
     luabindings_onstart();
 #endif
 
-    if (settings.dynarec.Enable)
+    if (settings.dynarec.Enable && sh4_cpu->setBackend(SH4BE_DYNAREC))
     {
-        sh4_cpu->setBackend(SH4BE_DYNAREC);
-        printf("Using Recompiler\n");
+        printf("Using MCPU Recompiler\n");
     }
     else
     {
         sh4_cpu->setBackend(SH4BE_INTERPRETER);
-        printf("Using Interpreter\n");
+        printf("Using MCPU Interpreter\n");
     }
+
+    auto scpu = sh4_cpu->GetA0H<SoundCPU>(A0H_SCPU);
+
+    if (settings.dynarec.ScpuEnable && scpu->setBackend(ARM7BE_DYNAREC))
+    {
+        printf("Using SCPU Recompiler\n");
+    }
+    else
+    {
+        scpu->setBackend(ARM7BE_INTERPRETER);
+        printf("Using SCPU Interpreter\n");
+    }
+
+    auto dsp = sh4_cpu->GetA0H<DSP>(A0H_DSP);
+
+    if (settings.dynarec.DspEnable && dsp->setBackend(DSPBE_DYNAREC))
+    {
+        printf("Using DSP Recompiler\n");
+    }
+    else
+    {
+        dsp->setBackend(DSPBE_INTERPRETER);
+        printf("Using DSP Interpreter\n");
+    }
+
     do {
         reset_requested = false;
 
@@ -815,7 +847,7 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         SPG* spg = SPG::Create(asic);
         MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic, spg, sh4_cpu->vram.data);
-        DSP* dsp = DSP::CreateInterpreter(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
+        DSP* dsp = DSP::Create(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
         MMIODevice* aicaDevice = Create_AicaDevice(systemBus, asic, dsp, sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
         SoundCPU* soundCPU = SoundCPU::Create(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 
@@ -1024,7 +1056,6 @@ struct Dreamcast_impl : VirtualDreamcast {
         }
 
         mmu_set_state();
-        dsp.dyndirty = true;
         sh4_sched_ffts();
 
         // TODO: save state fix this

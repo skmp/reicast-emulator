@@ -12,12 +12,12 @@ struct ARM7Backend {
     virtual void unserialize(void** data, unsigned int* total_size) = 0;
 
     virtual ~ARM7Backend() { }
+
+    static ARM7Backend* CreateInterpreter(u8* aica_ram, u32 aram_size);
 };
 
 void libARM_SetResetState(bool Reset);
 void libARM_InterruptChange(u32 bits, u32 L);
-
-ARM7Backend* Create_ARM7Interpreter(u8* aica_ram, u32 aram_size);
 
 #define arm_sh4_bias (2)
 

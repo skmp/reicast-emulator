@@ -594,7 +594,7 @@ struct Arm7Interpreter_impl : ARM7Backend {
 	}
 };
 
-ARM7Backend* Create_ARM7Interpreter(u8* aica_ram, u32 aram_size) {
+ARM7Backend* ARM7Backend::CreateInterpreter(u8* aica_ram, u32 aram_size) {
 	return new Arm7Interpreter_impl(aica_ram, aram_size);
 }
 

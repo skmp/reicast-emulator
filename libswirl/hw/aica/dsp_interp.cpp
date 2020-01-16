@@ -4,7 +4,7 @@
 // Copyright (c) 2007-2009 R. Belmont and Richard Bannister, and others.
 // All rights reserved.
 //
-#include "dsp.h"
+#include "dsp_backend.h"
 #include "aica_mem.h"
 
 #ifdef RELEASE
@@ -12,19 +12,11 @@
 #define verify(...)
 #endif
 
-struct DSPInterpreter_impl : DSP {
+struct DSPInterpreter_impl : DSPBackend {
 	u8* aica_ram;
 	u32 aram_mask;
 
 	DSPInterpreter_impl(u8* aica_ram, u32 aram_size) : aica_ram(aica_ram), aram_mask(aram_size - 1) { }
-
-	void AICADSP_Init(struct dsp_context_t* DSP)
-	{
-		memset(DSP, 0, sizeof(*DSP));
-		DSP->RBL = 0x8000 - 1;
-		DSP->Stopped = 1;
-		dsp.regs.MDEC_CT = 1;
-	}
 
 	void AICADSP_Step(struct dsp_context_t* DSP)
 	{
@@ -307,7 +299,7 @@ struct DSPInterpreter_impl : DSP {
 	//      fclose(f);
 	}
 
-	void AICADSP_Start(struct dsp_context_t* DSP)
+	void Recompile ()
 	{
 		dsp.Stopped = 1;
 		for (int i = 127; i >= 0; --i)
@@ -316,7 +308,7 @@ struct DSPInterpreter_impl : DSP {
 
 			if (IPtr[0] != 0 || IPtr[1] != 0 || IPtr[2] != 0 || IPtr[3] != 0)
 			{
-				DSP->Stopped = 0;
+				dsp.Stopped = 0;
 				//printf("DSP: starting %d steps\n", i + 1);
 
 				break;
@@ -324,43 +316,12 @@ struct DSPInterpreter_impl : DSP {
 		}
 	}
 
-	bool Init()
-	{
-		AICADSP_Init(&dsp);
-		AICADSP_Start(&dsp);
-
-		return true;
-	}
-
-	void Term()
-	{
-		dsp.Stopped = 1;
-	}
-
 	void Step()
 	{
 		AICADSP_Step(&dsp);
 	}
-
-	void WritenMem(u32 addr)
-	{
-		if (addr >= 0x3400 && addr < 0x3C00)
-		{
-			AICADSP_Start(&dsp);
-		}
-		else if (addr >= 0x4000 && addr < 0x4400)
-		{
-			// TODO proper sharing of memory with sh4 through DSPData
-			memset(dsp.TEMP, 0, sizeof(dsp.TEMP));
-		}
-		else if (addr >= 0x4400 && addr < 0x4500)
-		{
-			// TODO proper sharing of memory with sh4 through DSPData
-			memset(dsp.MEMS, 0, sizeof(dsp.MEMS));
-		}
-	}
 };
 
-DSP* DSP::CreateInterpreter(u8* aica_ram, u32 aram_size) {
+DSPBackend* DSPBackend::CreateInterpreter(u8* aica_ram, u32 aram_size) {
 	return new DSPInterpreter_impl(aica_ram, aram_size);
 }

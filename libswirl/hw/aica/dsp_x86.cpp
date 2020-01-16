@@ -1,4 +1,4 @@
-#include "dsp.h"
+#include "dsp_backend.h"
 #include "aica_mem.h"
 #include "oslib/oslib.h"
 
@@ -27,11 +27,16 @@
 
 #include "jit/emitter/x86/x86_emitter.h"
 
-struct DSPJitX86: DSP {
+struct DSPJitX86: DSPBackend {
     u8* aica_ram;
     u32 aram_mask;
 
-    DSPJitX86(u8* aica_ram, u32 aram_size) : aica_ram(aica_ram), aram_mask(aram_size-1) {}
+    DSPJitX86(u8* aica_ram, u32 aram_size) : aica_ram(aica_ram), aram_mask(aram_size-1) {
+#if HOST_OS == OS_WINDOWS
+        DWORD old;
+        VirtualProtect(dsp.DynCode, sizeof(dsp.DynCode), PAGE_EXECUTE_READWRITE, &old);
+#endif
+    }
 
     const bool SUPPORT_NOFL = false;
 
@@ -101,25 +106,6 @@ struct DSPJitX86: DSP {
 
         }
     }*/
-
-    bool Init()
-    {
-        memset(&dsp, 0, sizeof(dsp));
-        memset(DSPData, 0, sizeof(*DSPData));
-
-        dsp.dyndirty = true;
-        dsp.RBL = 0x2000 - 1;
-        dsp.RBP = 0;
-        dsp.regs.MDEC_CT = 1;
-
-
-        //os_MakeExecutable(dsp.DynCode,sizeof(dsp.DynCode));
-#if HOST_OS == OS_WINDOWS
-        DWORD old;
-        VirtualProtect(dsp.DynCode, sizeof(dsp.DynCode), PAGE_EXECUTE_READWRITE, &old);
-#endif
-        return true;
-    }
 
     static void* dyna_realloc(void* ptr, u32 oldsize, u32 newsize)
     {
@@ -589,10 +575,8 @@ struct DSPJitX86: DSP {
         wtn(MEM_WT_DATA);
     }
 
-    void dsp_recompile()
+    void Recompile()
     {
-        dsp.dyndirty = false;
-
         x86_block x86e;
         x86e.Init(dyna_realloc, dyna_realloc);
 
@@ -727,17 +711,11 @@ struct DSPJitX86: DSP {
         //clear output reg
         memset(DSPData->EFREG, 0, sizeof(DSPData->EFREG));
 
-        if (dsp.dyndirty)
-        {
-            dsp.dyndirty = false;
-            //dsp_print_mame();
-            dsp_recompile();
-        }
         //dsp_step_mame();
         //dsp_emu_grandia();
 
         //run the code :p
-        ((void (*)()) & dsp.DynCode)();
+        ((void (*)()) &dsp.DynCode[0])();
 
         dsp.regs.MDEC_CT--;
         if (dsp.regs.MDEC_CT == 0)
@@ -745,35 +723,9 @@ struct DSPJitX86: DSP {
         //here ? or before ?
         //memset(DSP->MIXS,0,4*16);
     }
-
-    void WritenMem(u32 addr)
-    {
-        addr -= 0x3000;
-        //COEF : native
-        //MEMS : native
-        //MPRO : native
-        if (addr >= 0x400 && addr < 0xC00)
-        {
-            dsp.dyndirty = true;
-        }
-
-        /*
-        //buffered DSP state
-        //24 bit wide
-        u32 TEMP[128];
-        //24 bit wide
-        u32 MEMS[32];
-        //20 bit wide
-        s32 MIXS[16];
-        */
-    }
-
-    void Term()
-    {
-    }
 };
 
-DSP* DSP::CreateJIT(u8* aica_ram, u32 aram_size) {
+DSPBackend* DSPBackend::CreateJIT(u8* aica_ram, u32 aram_size) {
     return new DSPJitX86(aica_ram, aram_size);
 }
 #endif

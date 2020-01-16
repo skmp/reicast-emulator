@@ -581,7 +581,10 @@ struct settings_t
 		bool safemode;
 		bool disable_nvmem;
 		SmcCheckEnum SmcCheckLevel;
+		int ScpuEnable;
+		int DspEnable;
 	} dynarec;
+
 
 	struct
 	{

@@ -22,7 +22,7 @@
 #if HOST_CPU == CPU_ARM64 && FEAT_DSPREC != DYNAREC_NONE
 
 #include <sys/mman.h>
-#include "dsp.h"
+#include "dsp_backend.h"
 #include "hw/aica/aica_mem.h"
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
@@ -110,7 +110,7 @@ public:
 		{
 			u32 *mpro = &DSPData->MPRO[step * 4];
 			_INST op;
-			DSP::DecodeInst(mpro, &op);
+			DSPBackend::DecodeInst(mpro, &op);
 			const u32 COEF = step;
 
 			if (op.XSEL || op.YRL || (op.ADRL && op.SHIFT != 3))
@@ -319,7 +319,7 @@ public:
 					Ldr(x1, GetAicaRam(aica_ram));
 					MemOperand aram_op(x1, Register::GetXRegFromCode(ADDR.GetCode()));
 					Ldrh(w0, aram_op);
-					GenCallRuntime(DSP::UNPACK);
+					GenCallRuntime(DSPBackend::UNPACK);
 					Mov(w2, w0);
 					Str(w2, dsp_operand(DSP->MEMVAL, (step + 2) & 3));
 				}
@@ -327,7 +327,7 @@ public:
 				{
 					// *(u16 *)&aica_ram[ADDR & ARAM_MASK] = PACK(SHIFTED);
 					Mov(w0, SHIFTED);
-					GenCallRuntime(DSP::PACK);
+					GenCallRuntime(DSPBackend::PACK);
 					Mov(w2, w0);
 
 					CalculateADDR(aram_size, ADDR, op, ADRS_REG, MDEC_CT);
@@ -497,30 +497,19 @@ private:
 	Literal<u8*> *aica_ram_lit;
 };
 
-struct DSPJITArm64 : DSP {
+struct DSPJITArm64 : DSPBackend {
 	u8* aica_ram;
 	u32 aram_size;
 
-	DSPJITArm64(u8* aica_ram, u32 aram_size) : aica_ram(aica_ram), aram_size(aram_size) {}
+	DSPJITArm64(u8* aica_ram, u32 aram_size) : aica_ram(aica_ram), aram_size(aram_size) {
+		if (mprotect(dsp.DynCode, sizeof(dsp.DynCode), PROT_EXEC | PROT_READ | PROT_WRITE))
+		{
+			perror("Couldn’t mprotect DSP code");
+			die("mprotect failed in arm64 dsp");
+		}
+	}
 
-    bool Init()
-    {
-        memset(&dsp, 0, sizeof(dsp));
-        dsp.RBL = 0x8000 - 1;
-        dsp.RBP = 0;
-        dsp.regs.MDEC_CT = 1;
-        dsp.dyndirty = true;
-
-        if (mprotect(dsp.DynCode, sizeof(dsp.DynCode), PROT_EXEC | PROT_READ | PROT_WRITE))
-        {
-            perror("Couldn’t mprotect DSP code");
-            die("mprotect failed in arm64 dsp");
-        }
-
-		return true;
-    }
-
-	void dsp_recompile()
+	void Recompile()
 	{
 		dsp.Stopped = true;
 		for (int i = 127; i >= 0; --i)
@@ -538,42 +527,12 @@ struct DSPJITArm64 : DSP {
 	}
 
     void Step()
-    {
-        if (dsp.dyndirty)
-        {
-            dsp.dyndirty = false;
-            dsp_recompile();
-        }
-
-#ifdef _ANDROID
-        ((void (*)()) & dsp.DynCode)();
-#endif
-    }
-
-    void WritenMem(u32 addr)
-    {
-        if (addr >= 0x3400 && addr < 0x3C00)
-        {
-            dsp.dyndirty = true;
-        }
-        else if (addr >= 0x4000 && addr < 0x4400)
-        {
-            // TODO proper sharing of memory with sh4 through DSPData
-            memset(dsp.TEMP, 0, sizeof(dsp.TEMP));
-        }
-        else if (addr >= 0x4400 && addr < 0x4500)
-        {
-            // TODO proper sharing of memory with sh4 through DSPData
-            memset(dsp.MEMS, 0, sizeof(dsp.MEMS));
-        }
-    }
-
-    void Term()
-    {
+    { 
+		((void (*)())&dsp.DynCode[0])();
     }
 };
 
-DSP* DSP::CreateJIT(u8* aica_ram, u32 aram_size) {
+DSPBackend* DSPBackend::CreateJIT(u8* aica_ram, u32 aram_size) {
 	return new DSPJITArm64(aica_ram, aram_size);
 }
 #endif

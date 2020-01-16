@@ -49,9 +49,12 @@ struct SoundCPU_impl : SoundCPU {
 
 	bool setBackend(Arm7Backends backend) {
 
-		arm.reset(Create_ARM7Interpreter(aica_ram, aram_size));
+		if (backend == ARM7BE_INTERPRETER) {
+			arm.reset(ARM7Backend::CreateInterpreter(aica_ram, aram_size));
+			return true;
+		}
 
-		return true; 
+		return false;
 	}
 };
 

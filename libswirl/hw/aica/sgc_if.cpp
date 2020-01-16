@@ -1,5 +1,6 @@
 #include "sgc_if.h"
 #include "dsp.h"
+#include "dsp_backend.h"
 #include "aica_mem.h"
 #include <math.h>
 #include <algorithm>

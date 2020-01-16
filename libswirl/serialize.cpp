@@ -1,7 +1,7 @@
 // serialize.cpp : save states
 #if 1
 #include "types.h"
-#include "hw/aica/dsp.h"
+#include "hw/aica/dsp_backend.h"
 #include "hw/aica/aica.h"
 #include "hw/aica/sgc_if.h"
 #include "hw/arm7/arm7.h"

@@ -10,19 +10,19 @@ void gui_settings_advanced()
 	if (ImGui::BeginTabItem("Advanced"))
 	{
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-	    if (ImGui::CollapsingHeader("CPU Mode", ImGuiTreeNodeFlags_DefaultOpen))
+	    if (ImGui::CollapsingHeader("MCPU Mode", ImGuiTreeNodeFlags_DefaultOpen))
 	    {
-			ImGui::Columns(2, "cpu_modes", false);
-			ImGui::RadioButton("Dynarec", &dynarec_enabled, 1);
+			ImGui::Columns(2, "sh4_modes", false);
+			ImGui::RadioButton("MCPU Dynarec", &dynarec_enabled, 1);
             ImGui::SameLine();
             gui_ShowHelpMarker("Use the dynamic recompiler. Recommended in most cases");
 			ImGui::NextColumn();
-			ImGui::RadioButton("Interpreter", &dynarec_enabled, 0);
+			ImGui::RadioButton("MCPU Interpreter", &dynarec_enabled, 0);
             ImGui::SameLine();
             gui_ShowHelpMarker("Use the interpreter. Very slow but may help in case of a dynarec problem");
 			ImGui::Columns(1, NULL, false);
 	    }
-	    if (ImGui::CollapsingHeader("Dynarec Options", dynarec_enabled ? ImGuiTreeNodeFlags_DefaultOpen : ImGuiTreeNodeFlags_None))
+	    if (ImGui::CollapsingHeader("SH4 Dynarec Options", dynarec_enabled ? ImGuiTreeNodeFlags_DefaultOpen : ImGuiTreeNodeFlags_None))
 	    {
 	    	ImGui::Checkbox("Safe Mode", &settings.dynarec.safemode);
             ImGui::SameLine();
@@ -57,7 +57,31 @@ void gui_settings_advanced()
             ImGui::SameLine();
             gui_ShowHelpMarker("How to detect self-modifying code. Full check recommended");
 	    }
-	    if (ImGui::CollapsingHeader("Other", ImGuiTreeNodeFlags_DefaultOpen))
+		if (ImGui::CollapsingHeader("SCPU Mode", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ImGui::Columns(2, "arm7_modes", false);
+			ImGui::RadioButton("SCPU Dynarec", &settings.dynarec.ScpuEnable, 1);
+			ImGui::SameLine();
+			gui_ShowHelpMarker("Use the ARM7 dynamic recompiler. Recommended in most cases");
+			ImGui::NextColumn();
+			ImGui::RadioButton("SCPU Interpreter", &settings.dynarec.ScpuEnable, 0);
+			ImGui::SameLine();
+			gui_ShowHelpMarker("Use the ARM7 interpreter. Very slow but may help in case of a dynarec problem");
+			ImGui::Columns(1, NULL, false);
+		}
+		if (ImGui::CollapsingHeader("DSP Mode", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ImGui::Columns(2, "dsp_modes", false);
+			ImGui::RadioButton("DSP Dynarec", &settings.dynarec.DspEnable, 1);
+			ImGui::SameLine();
+			gui_ShowHelpMarker("Use the DSP dynamic recompiler. Recommended in most cases");
+			ImGui::NextColumn();
+			ImGui::RadioButton("DSP Interpreter", &settings.dynarec.DspEnable, 0);
+			ImGui::SameLine();
+			gui_ShowHelpMarker("Use the DSP interpreter. Very slow but may help in case of a DSP dynarec problem");
+			ImGui::Columns(1, NULL, false);
+		}
+		if (ImGui::CollapsingHeader("Other", ImGuiTreeNodeFlags_DefaultOpen))
 	    {
 #ifndef _ANDROID
 			ImGui::Checkbox("Serial Console", &settings.debug.SerialConsole);

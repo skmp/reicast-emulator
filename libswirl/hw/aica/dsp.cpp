@@ -1,11 +1,13 @@
 #include "dsp.h"
+#include "dsp_backend.h"
 #include "aica_mem.h"
 #include "oslib/oslib.h"
+#include <memory>
 
 DECL_ALIGN(4096) dsp_context_t dsp;
 
 //float format is ?
-u16 DYNACALL DSP::PACK(s32 val)
+u16 DYNACALL DSPBackend::PACK(s32 val)
 {
 	u32 temp;
 	int sign, exponent, k;
@@ -31,7 +33,7 @@ u16 DYNACALL DSP::PACK(s32 val)
 	return (u16)val;
 }
 
-s32 DYNACALL DSP::UNPACK(u16 val)
+s32 DYNACALL DSPBackend::UNPACK(u16 val)
 {
 	int sign, exponent, mantissa;
 	s32 uval;
@@ -52,7 +54,7 @@ s32 DYNACALL DSP::UNPACK(u16 val)
 	return uval;
 }
 
-void DSP::DecodeInst(u32* IPtr, _INST* i)
+void DSPBackend::DecodeInst(u32* IPtr, _INST* i)
 {
 	i->TRA = (IPtr[0] >> 9) & 0x7F;
 	i->TWT = (IPtr[0] >> 8) & 0x01;
@@ -83,4 +85,77 @@ void DSP::DecodeInst(u32* IPtr, _INST* i)
 	i->MASA = (IPtr[3] >> 9) & 0x3f;	//???
 	i->ADREB = (IPtr[3] >> 8) & 0x1;
 	i->NXADR = (IPtr[3] >> 7) & 0x1;
+}
+
+struct DSP_impl final : DSP {
+	u8* aica_ram;
+	u32 aram_size;
+
+	unique_ptr<DSPBackend> backend;
+
+	DSP_impl(u8* aica_ram, u32 aram_size) : aica_ram(aica_ram), aram_size(aram_size) {
+		setBackend(DSPBE_INTERPRETER);
+	}
+
+	bool Init() {
+		// XX is this the right place for this?
+		memset(DSPData, 0, sizeof(*DSPData));
+
+		memset(&dsp, 0, sizeof(dsp));
+		dsp.RBL = 0x8000 - 1;
+		dsp.Stopped = 1;
+		dsp.regs.MDEC_CT = 1;
+		dsp.dyndirty = true;
+
+
+		return true;
+	}
+
+	void WritenMem(u32 addr)
+	{
+		if (addr >= 0x3400 && addr < 0x3C00)
+		{
+			dsp.dyndirty = true;
+		}
+		else if (addr >= 0x4000 && addr < 0x4400)
+		{
+			// TODO proper sharing of memory with sh4 through DSPData
+			memset(dsp.TEMP, 0, sizeof(dsp.TEMP));
+		}
+		else if (addr >= 0x4400 && addr < 0x4500)
+		{
+			// TODO proper sharing of memory with sh4 through DSPData
+			memset(dsp.MEMS, 0, sizeof(dsp.MEMS));
+		}
+	}
+
+	void Step() {
+		if (dsp.dyndirty) {
+			backend->Recompile();
+			dsp.dyndirty = false;
+		}
+
+		backend->Step();
+	}
+
+	bool setBackend(DspBackends type) {
+		dsp.dyndirty = true;
+
+		if (type == DSPBE_INTERPRETER) {
+			backend.reset(DSPBackend::CreateInterpreter(aica_ram, aram_size));
+			return true;
+		}
+#if FEAT_DSPREC == DYNAREC_JIT
+		else if (type == DSPBE_DYNAREC) {
+			backend.reset(DSPBackend::CreateJIT(aica_ram, aram_size));
+			return true;
+		}
+#endif
+
+		return false;
+	}
+};
+
+DSP* DSP::Create(u8* aica_ram, u32 aram_size) {
+	return new DSP_impl(aica_ram, aram_size);
 }

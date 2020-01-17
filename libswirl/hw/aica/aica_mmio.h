@@ -21,8 +21,6 @@ AICA* Create_AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_ram, u32 a
 
 MMIODevice* Create_RTCDevice();
 
-u32 libAICA_ReadReg(u32 addr, u32 sz);
-void libAICA_WriteReg(u32 addr, u32 data, u32 sz);
 void libAICA_TimeStep();
 
 u32 libAICA_GetRTC_now();

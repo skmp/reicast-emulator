@@ -213,7 +213,7 @@ public:
     }
 };
 
-void armEmit32(u32 opcode)
+void armv_Emit32(u32 opcode)
 {
 #if 0
 	if (opcode != 0x00011001)

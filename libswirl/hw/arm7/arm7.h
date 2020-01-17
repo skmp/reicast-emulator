@@ -5,18 +5,23 @@ struct Arm7Context;
 
 struct ARM7Backend {
 
-    static u32 Step(Arm7Context* ctx);
-    static u32 StepMany(Arm7Context* ctx, u32 minCycles);
+    static u32 DYNACALL Step(Arm7Context* ctx);
+    static u32 DYNACALL StepMany(Arm7Context* ctx, u32 minCycles);
 
-    static void UpdateInterrupts(Arm7Context* ctx);
+    static void DYNACALL CPUSwitchMode(Arm7Context* ctx, int mode, bool saveState);
+    static void DYNACALL CPUUpdateFlags(Arm7Context* ctx);
+    static void DYNACALL UpdateInterrupts(Arm7Context* ctx);
+    static void DYNACALL CPUUpdateCPSR(Arm7Context* ctx);
+    static void DYNACALL CPUFiq(Arm7Context* ctx);
 
     virtual void Run(u32 uNumCycles) = 0;
     virtual void UpdateInterrupts() = 0;
-    virtual void InvalidateICache() { }
+    virtual void InvalidateJitCache() = 0;
 
     virtual ~ARM7Backend() { }
 
     static ARM7Backend* CreateInterpreter(Arm7Context* ctx);
+    static ARM7Backend* ARM7Backend::CreateJit(Arm7Context* ctx);
 };
 
 void libARM_SetResetState(bool Reset);

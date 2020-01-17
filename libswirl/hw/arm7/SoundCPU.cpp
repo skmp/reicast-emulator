@@ -177,13 +177,13 @@ struct SoundCPU_impl : SoundCPU {
 		// disable FIQ
 		ctx.regs[16].I |= 0x40;
 
-		ctx.CPUUpdateCPSR();
+		ARM7Backend::CPUUpdateCPSR(&ctx);
 
 		ctx.regs[R15_ARM_NEXT].I = ctx.regs[15].I;
 		ctx.regs[15].I += 4;
 
 		arm->UpdateInterrupts();
-		arm->InvalidateICache();
+		arm->InvalidateJitCache();
 	}
 
 	void SetResetState(u32 state)
@@ -216,6 +216,14 @@ struct SoundCPU_impl : SoundCPU {
 
 			return true;
 		}
+#if FEAT_AREC != DYNAREC_NONE
+		else if (backend == ARM7BE_DYNAREC) {
+			arm.reset(ARM7Backend::CreateJit(&ctx));
+			ctx.backend = arm.get();
+
+			return true;
+		}
+#endif
 
 		return false;
 	}
@@ -226,6 +234,10 @@ struct SoundCPU_impl : SoundCPU {
 		if (ctx.aica_interr)
 			ctx.aica_reg_L = L;
 		update_e68k(&ctx);
+	}
+
+	void InvalidateJitCache() {
+		arm->InvalidateJitCache();
 	}
 
 	void serialize(void** data, unsigned int* total_size)

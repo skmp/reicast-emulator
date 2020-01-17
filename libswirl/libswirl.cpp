@@ -44,7 +44,6 @@ unique_ptr<VirtualDreamcast> virtualDreamcast;
 unique_ptr<GDRomDisc> g_GDRDisc;
 
 
-void FlushCache();
 void LoadCustom();
 
 settings_t settings;
@@ -848,8 +847,8 @@ struct Dreamcast_impl : VirtualDreamcast {
         SPG* spg = SPG::Create(asic);
         MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic, spg, sh4_cpu->vram.data);
         DSP* dsp = DSP::Create(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
-        MMIODevice* aicaDevice = Create_AicaDevice(systemBus, asic, dsp, sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
-        SoundCPU* soundCPU = SoundCPU::Create(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
+        AICA* aicaDevice = Create_AicaDevice(systemBus, asic, dsp, sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
+        SoundCPU* soundCPU = SoundCPU::Create(aicaDevice, sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 
         MMIODevice* mapleDevice = Create_MapleDevice(systemBus, asic);
         
@@ -1043,9 +1042,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         data_ptr = data;
 
         sh4_cpu->ResetCache();
-#if FEAT_AREC == DYNAREC_JIT
-        FlushCache();
-#endif
+        sh4_cpu->GetA0H<SoundCPU>(A0H_SCPU)->InvalidateJitCache();
 
         if (!dc_unserialize(&data_ptr, &total_size))
         {

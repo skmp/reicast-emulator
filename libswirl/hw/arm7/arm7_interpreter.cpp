@@ -26,6 +26,10 @@ struct Arm7Interpreter_impl : ARM7Backend {
 	{
 		StepMany(ctx, CycleCount);
 	}
+
+	void InvalidateJitCache() {
+
+	}
 };
 
 ARM7Backend* ARM7Backend::CreateInterpreter(Arm7Context* ctx) {

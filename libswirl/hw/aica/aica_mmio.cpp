@@ -607,7 +607,7 @@ struct AicaDevice final : AICA {
 			}
 			else
 			{
-				return AICA_ReadReg(addr, sz);
+				return ReadReg(addr, sz);
 			}
 		}
 		else
@@ -618,7 +618,7 @@ struct AicaDevice final : AICA {
 			}
 			else
 			{
-				return AICA_ReadReg(addr, sz);
+				return ReadReg(addr, sz);
 			}
 		}
 	}
@@ -640,7 +640,7 @@ struct AicaDevice final : AICA {
 			}
 			else
 			{
-				libAICA_WriteReg(addr, data, sz);
+				WriteReg(addr, data, sz);
 			}
 		}
 		else
@@ -654,7 +654,7 @@ struct AicaDevice final : AICA {
 			}
 			else
 			{
-				libAICA_WriteReg(addr, data, sz);
+				WriteReg(addr, data, sz);
 			}
 		}
 	}

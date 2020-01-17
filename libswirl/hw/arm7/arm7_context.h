@@ -115,23 +115,4 @@ struct Arm7Context
 
 	ARM7Backend* backend;
 	AICA* aica;
-
-	void CPUUpdateCPSR()
-	{
-		arm7_reg CPSR;
-
-		CPSR.I = regs[RN_CPSR].I & 0x40;
-
-		CPSR.PSR.NZCV = regs[RN_PSR_FLAGS].FLG.NZCV;
-
-
-		if (!armFiqEnable)
-			CPSR.I |= 0x40;
-		if (!armIrqEnable)
-			CPSR.I |= 0x80;
-
-		CPSR.PSR.M = armMode;
-
-		regs[16].I = CPSR.I;
-	}
 };

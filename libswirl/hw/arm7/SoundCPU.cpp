@@ -57,7 +57,7 @@ static T arm_ReadReg(Arm7Context* ctx, u32 addr)
 	else if (addr == REG_M)
 		return ctx->e68k_reg_M;	//shouldn't really happen
 	else
-		return libAICA_ReadReg(addr, sz);
+		return ctx->aica->ReadReg(addr, sz);
 }
 
 template <u32 sz, class T>
@@ -76,7 +76,7 @@ static void arm_WriteReg(Arm7Context* ctx, u32 addr, T data)
 	}
 	else
 	{
-		return libAICA_WriteReg(addr, data, sz);
+		return ctx->aica->WriteReg(addr, data, sz);
 	}
 }
 
@@ -128,9 +128,10 @@ struct SoundCPU_impl : SoundCPU {
 	Arm7Context ctx;
 	unique_ptr<ARM7Backend> arm;
 
-	SoundCPU_impl(u8* aica_ram, u32 aram_size) {
+	SoundCPU_impl(AICA* aica, u8* aica_ram, u32 aram_size) {
 		ctx.aica_ram = aica_ram;
 		ctx.aram_mask = aram_size - 1;
+		ctx.aica = aica;
 
 		ctx.read8 = &scpu_ReadMemArm<1, u8>;
 		ctx.read32 = &scpu_ReadMemArm<4, u32>;
@@ -258,8 +259,8 @@ struct SoundCPU_impl : SoundCPU {
 	}
 };
 
-SoundCPU* SoundCPU::Create(u8* aica_ram, u32 aram_size) {
-	return new SoundCPU_impl(aica_ram, aram_size);
+SoundCPU* SoundCPU::Create(AICA* aica, u8* aica_ram, u32 aram_size) {
+	return new SoundCPU_impl(aica, aica_ram, aram_size);
 }
 
 void libARM_SetResetState(bool Reset) {

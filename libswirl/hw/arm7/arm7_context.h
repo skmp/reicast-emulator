@@ -84,6 +84,8 @@ typedef union
 } arm7_reg;
 
 struct ARM7Backend;
+struct AICA;
+
 struct Arm7Context
 {
 	DECL_ALIGN(8) arm7_reg regs[RN_ARM_REG_COUNT];
@@ -105,13 +107,14 @@ struct Arm7Context
 	u32 e68k_reg_M = 0; //constant ?
 	bool enabled;
 
-	u8 (*read8)(Arm7Context* ctx, u32 addr);
-	u32 (*read32)(Arm7Context* ctx, u32 addr);
+	u8 (DYNACALL*read8)(Arm7Context* ctx, u32 addr);
+	u32 (DYNACALL*read32)(Arm7Context* ctx, u32 addr);
 	
-	void (*write8)(Arm7Context* ctx, u32 addr, u8 data);
-	void (*write32)(Arm7Context* ctx, u32 addr, u32 data);
+	void (DYNACALL*write8)(Arm7Context* ctx, u32 addr, u8 data);
+	void (DYNACALL*write32)(Arm7Context* ctx, u32 addr, u32 data);
 
 	ARM7Backend* backend;
+	AICA* aica;
 
 	void CPUUpdateCPSR()
 	{

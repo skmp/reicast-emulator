@@ -11,10 +11,6 @@ void CPUSoftwareInterrupt(int comment);
 void CPUUndefinedException();
 */
 
-
-void armt_init();
-void FlushCache();
-
 struct Arm7Interpreter_impl : ARM7Backend {
 
 	Arm7Context* ctx;

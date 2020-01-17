@@ -6,6 +6,8 @@ enum Arm7Backends {
 	ARM7BE_DYNAREC
 };
 
+struct AICA;
+
 struct SoundCPU : MMIODevice {
 	
 	virtual bool setBackend(Arm7Backends backend) = 0;
@@ -16,5 +18,5 @@ struct SoundCPU : MMIODevice {
 
 	virtual ~SoundCPU() { }
 
-	static SoundCPU* Create(u8* aica_ram, u32 aram_size);
+	static SoundCPU* Create(AICA* aica, u8* aica_ram, u32 aram_size);
 };

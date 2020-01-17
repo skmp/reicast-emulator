@@ -127,7 +127,6 @@ uniform int shading_instr[2];
 uniform int fog_control[2];
 #endif
 
-uniform highp float extra_depth_scale;
 /* Vertex input*/
 INTERPOLATION in lowp vec4 vtx_base;
 INTERPOLATION in lowp vec4 vtx_offs;
@@ -138,7 +137,7 @@ INTERPOLATION in lowp vec4 vtx_offs1;
 
 lowp float fog_mode2(highp float w)
 {
-   highp float z = clamp(w * extra_depth_scale * sp_FOG_DENSITY, 1.0, 255.9999);
+   highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999);
    uint i = uint(floor(log2(z)));
    highp float m = z * 16 / pow(2, i) - 16;
    float idx = floor(m) + i * 16 + 0.5;

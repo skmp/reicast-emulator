@@ -7,11 +7,11 @@
 
 //#define CPUReadHalfWordQuick(addr) arm_ReadMem16(addr & 0x7FFFFF)
 #define CPUReadMemoryQuick(addr) (*(u32*)&ctx->aica_ram[addr&ctx->aram_mask])
-#define CPUReadByte(a) arm_ReadMem8(ctx, a)
-#define CPUReadMemory(a) arm_ReadMem32(ctx, a)
+#define CPUReadByte(a) arm_ReadMem8(a, ctx)
+#define CPUReadMemory(a) arm_ReadMem32(a, ctx)
 
-#define CPUWriteMemory(a, d) arm_WriteMem32(ctx, a, d)
-#define CPUWriteByte(a, d) arm_WriteMem8(ctx, a, d)
+#define CPUWriteMemory(a, d) arm_WriteMem32(a, d, ctx)
+#define CPUWriteByte(a, d) arm_WriteMem8(a, d, ctx)
 
 #define armMode ctx->armMode
 #define armIrqEnable ctx->armIrqEnable
@@ -261,6 +261,18 @@ void DYNACALL ARM7Backend::CPUFiq(Arm7Context* ctx)
 #define CPUSoftwareInterrupt(comment) CPUSoftwareInterrupt(ctx, comment)
 #define CPUUndefinedException() CPUUndefinedException(ctx)
 #define CPUUpdateCPSR() CPUUpdateCPSR(ctx)
+
+u32 DYNACALL ARM7Backend::singleOp(Arm7Context* ctx, u32 opcode) {
+	u32 clockTicks = 0;
+
+#define NO_OPCODE_READ
+
+#include "arm-new.h"
+
+#undef NO_OPCODE_READ
+
+	return clockTicks;
+}
 
 u32 DYNACALL ARM7Backend::Step(Arm7Context* ctx) {
 	u32 clockTicks = 0;

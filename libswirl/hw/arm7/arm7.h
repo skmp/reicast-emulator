@@ -5,6 +5,7 @@ struct Arm7Context;
 
 struct ARM7Backend {
 
+    static u32 DYNACALL singleOp(Arm7Context* ctx, u32 opcode);
     static u32 DYNACALL Step(Arm7Context* ctx);
     static u32 DYNACALL StepMany(Arm7Context* ctx, u32 minCycles);
 

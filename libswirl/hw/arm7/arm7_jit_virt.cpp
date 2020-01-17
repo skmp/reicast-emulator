@@ -5,7 +5,7 @@
 #include "hw/aica/aica_mmio.h"
 #include <memory>
 
-#define arm_printf(...)
+#define arm_printf printf
 
 #define arm_reg ctx->regs
 #define armMode ctx->armMode
@@ -403,6 +403,18 @@ struct Arm7VirtBackend {
         MOV(regd, regn);
     }
 
+    void sxtb(ARM::eReg regd, ARM::eReg regs)
+    {
+        x86e->Emit(op_movsx8to32, EAX, &virt_arm_reg(regs));
+        x86e->Emit(op_mov32, &virt_arm_reg(regd), EAX);
+    }
+
+    void zxtb(ARM::eReg regd, ARM::eReg regs)
+    {
+        x86e->Emit(op_movzx8to32, EAX, &virt_arm_reg(regs));
+        x86e->Emit(op_mov32, &virt_arm_reg(regd), EAX);
+    }
+
     void add(ARM::eReg regd, ARM::eReg regn, ARM::eReg regm)
     {
         ADD(regd, regn, regm);
@@ -503,9 +515,9 @@ struct Arm7VirtBackend {
     void intpr(u32 opcd)
     {
         //Call interpreter
-        x86e->Emit(op_mov32, ECX, ctx);
+        x86e->Emit(op_mov32, ECX, (uintptr_t)ctx);
         x86e->Emit(op_mov32, EDX, opcd);
-        x86e->Emit(op_call, x86_ptr_imm(&ARM7Backend::Step));
+        x86e->Emit(op_call, x86_ptr_imm(&ARM7Backend::singleOp));
     }
 
     void end(Looppoints* lp, void* codestart, u32 cycles)
@@ -741,16 +753,16 @@ struct Arm7JitVirt_impl : ARM7Backend {
         if (L)
         {
             if (B)
-                return (void*)(u32(DYNACALL*)(Arm7Context*, u32)) ctx->read8;
+                return (void*)(u32(DYNACALL*)(u32, Arm7Context*)) ctx->read8;
             else
-                return (void*)(u32(DYNACALL*)(Arm7Context*, u32)) ctx->read32;
+                return (void*)(u32(DYNACALL*)(u32, Arm7Context*)) ctx->read32;
         }
         else
         {
             if (B)
-                return (void*)(u32(DYNACALL*)(Arm7Context*, u32, u32)) ctx->write8;
+                return (void*)(u32(DYNACALL*)(u32, u32, Arm7Context*)) ctx->write8;
             else
-                return (void*)(u32(DYNACALL*)(Arm7Context*, u32, u32)) ctx->write32;
+                return (void*)(u32(DYNACALL*)(u32, u32, Arm7Context*)) ctx->write32;
         }
     }
 
@@ -1363,26 +1375,27 @@ struct Arm7JitVirt_impl : ARM7Backend {
                 //AGU
                 if (Rn != 15)
                 {
-                    armv->LoadReg(r1, Rn);
+                    armv->LoadReg(r0, Rn);
 
                     if (DoAdd)
                     {
-                        eReg dst = Pre ? r1 : r9;
+                        eReg dst = Pre ? r0 : r9;
+                        armv->LoadReg(dst, Rn);
 
                         if (I == false && is_i8r4(offs))
                         {
                             if (U)
-                                armv->add(dst, r1, offs);
+                                armv->add(dst, r0, offs);
                             else
-                                armv->add(dst, r1, -offs);
+                                armv->add(dst, r0, -offs);
                         }
                         else
                         {
                             MemOperand2(dst, I, U, offs, opcd);
                         }
 
-                        if (DoWB && dst == r1)
-                            armv->mov(r9, r1);
+                        if (DoWB && dst == r0)
+                            armv->mov(r9, r0);
                     }
                 }
                 else
@@ -1394,12 +1407,12 @@ struct Arm7JitVirt_impl : ARM7Backend {
                         addr += U ? offs : -offs;
                     }
 
-                    armv->MOV32(r1, addr);
+                    armv->MOV32(r0, addr);
 
                     if (Pre && I == true)
                     {
-                        MemOperand2(r2, I, U, offs, opcd);
-                        armv->add(r1, r1, r2);
+                        MemOperand2(r1, I, U, offs, opcd);
+                        armv->add(r0, r0, r1);
                     }
                 }
 
@@ -1407,24 +1420,31 @@ struct Arm7JitVirt_impl : ARM7Backend {
                 {
                     if (Rd == 15)
                     {
-                        armv->MOV32(r2, pc + 12);
+                        armv->MOV32(r1, pc + 12);
                     }
                     else
                     {
-                        armv->LoadReg(r2, Rd);
+                        armv->LoadReg(r1, Rd);
                     }
                 }
-                //Call handler
 
-                //FIXME param 0
-                armv->MOV32(r0, (uintptr_t)ctx);
-                if (CHK_BTS(1, 20, 1))
+                //Call handler
+                if (CHK_BTS(1, 20, 1)) {
+                    armv->MOV32(r1, (uintptr_t)ctx);
                     armv->call(GetMemOp(CHK_BTS(1, 20, 1), CHK_BTS(1, 22, 1)), 2, 1);
+                }
                 else
+                {
+                    armv->MOV32(r2, (uintptr_t)ctx);
                     armv->call(GetMemOp(CHK_BTS(1, 20, 1), CHK_BTS(1, 22, 1)), 3, 0);
+                }
 
                 if (CHK_BTS(1, 20, 1))
                 {
+                    if (CHK_BTS(1, 22, 1)) {
+                        armv->zxtb(r0, r0);
+                    }
+
                     if (Rd == 15)
                     {
                         verify(op_flags & OP_SETS_PC);

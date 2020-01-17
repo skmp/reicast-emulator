@@ -87,7 +87,7 @@ static void arm_WriteReg(Arm7Context* ctx, u32 addr, T data)
 
 
 template<int sz, typename T>
-static T DYNACALL scpu_ReadMemArm(Arm7Context* ctx, u32 addr)
+static T DYNACALL scpu_ReadMemArm(u32 addr, Arm7Context* ctx)
 {
 	T rv;
 
@@ -111,7 +111,7 @@ static T DYNACALL scpu_ReadMemArm(Arm7Context* ctx, u32 addr)
 }
 
 template<int sz, typename T>
-static void DYNACALL scpu_WriteMemArm(Arm7Context* ctx, u32 addr, T data)
+static void DYNACALL scpu_WriteMemArm(u32 addr, T data, Arm7Context* ctx)
 {
 	addr &= 0x00FFFFFF;
 	if (addr < 0x800000)

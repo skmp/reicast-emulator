@@ -1751,7 +1751,7 @@ if(cond_res) {
         reg[base].I = address;
     }
     break;
-#endif
+
   case 0x01d:
   case 0x03d:
     {
@@ -1904,7 +1904,7 @@ if(cond_res) {
         reg[base].I = address;
     }
     break;
-#if 0 // not in ARM7DI
+
   case 0x01f:
   case 0x03f:
     {

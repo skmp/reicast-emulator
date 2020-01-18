@@ -360,10 +360,16 @@ struct Arm7JitArm7VirtBackendArm64 : Arm7VirtBackend {
     }
 
     //Hook cus varm misses this, so x86 needs special code
+    void MOVPTR(ARM::eReg regn, uintptr_t imm)
+    {
+        assembler->Mov(Register::GetXRegFromCode(regn), imm);
+    }
+
     void MOV32(ARM::eReg regn, u32 imm)
     {
         assembler->Mov(Register::GetWRegFromCode(regn), imm);
     }
+
 
     void mov(ARM::eReg regd, ARM::eReg regn)
     {

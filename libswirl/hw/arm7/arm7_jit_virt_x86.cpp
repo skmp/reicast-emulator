@@ -104,7 +104,7 @@ struct Arm7VirtBackendX86 : Arm7VirtBackend {
 
         if (mprotect(ICache, ICacheSize, PROT_EXEC | PROT_READ | PROT_WRITE))
         {
-            perror("\n\tError - Couldn’t mprotect ARM7_TCB!");
+            perror("\n\tError - Couldnï¿½t mprotect ARM7_TCB!");
             verify(false);
         }
 
@@ -278,6 +278,11 @@ struct Arm7VirtBackendX86 : Arm7VirtBackend {
         x86e->Emit(op_mov32, &arm_reg[regn].I, imm);
     }
 
+    void MOVPTR(eReg regn, uintptr_t imm)
+    {
+        x86e->Emit(op_mov32, &virt_arm_reg(regn), imm);
+    }
+
     void MOV32(eReg regn, u32 imm)
     {
         x86e->Emit(op_mov32, &virt_arm_reg(regn), imm);
@@ -314,10 +319,6 @@ struct Arm7VirtBackendX86 : Arm7VirtBackend {
         if (icPtr >= (ICache + ICacheSize - 64 * 1024)) {
             return false;
         }
-
-        verify(virtBackend == nullptr);
-
-        virtBackend = this;
 
         //Setup emitter
         x86e = new x86_block();
@@ -372,9 +373,6 @@ struct Arm7VirtBackendX86 : Arm7VirtBackend {
 
         //Delete the x86 emitter ...
         delete x86e;
-
-        verify(virtBackend == this);
-        virtBackend = nullptr;
     }
 
     //sanity check: non branch doesn't set pc

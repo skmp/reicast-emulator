@@ -90,6 +90,7 @@ struct Arm7VirtBackend {
     virtual void imm_to_reg(u32 regn, u32 imm) = 0;
 
     virtual void MOV32(ARM::eReg regn, u32 imm) = 0;
+    virtual void MOVPTR(ARM::eReg regn, uintptr_t imm) = 0;
 
     virtual void call(void* loc, int params, int returns) = 0;
 
@@ -112,8 +113,6 @@ struct Arm7VirtBackend {
 
     virtual void InvalidateJitCache() = 0;
 };
-
-extern Arm7VirtBackend* virtBackend;
 
 struct Arm7JitVirt_impl;
 void DYNACALL CompileCode(Arm7JitVirt_impl* arm);

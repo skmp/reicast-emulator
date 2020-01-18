@@ -791,6 +791,10 @@ struct Arm7JitVirt_impl : ARM7Backend {
 
         arm_printf("ARM7: Compiling block @ %08X\n", pc);
 
+        verify(virtBackend == nullptr);
+
+        virtBackend = armv.get();
+
         //Get the code ptr
         void* rv = armv->armGetEmitPtr();
 
@@ -989,12 +993,12 @@ struct Arm7JitVirt_impl : ARM7Backend {
 
                 //Call handler
                 if (CHK_BTS(1, 20, 1)) {
-                    armv->MOV32(r1, (uintptr_t)ctx);
+                    armv->MOVPTR(r1, (uintptr_t)ctx);
                     armv->call(GetMemOp(CHK_BTS(1, 20, 1), CHK_BTS(1, 22, 1)), 2, 1);
                 }
                 else
                 {
-                    armv->MOV32(r2, (uintptr_t)ctx);
+                    armv->MOVPTR(r2, (uintptr_t)ctx);
                     armv->call(GetMemOp(CHK_BTS(1, 20, 1), CHK_BTS(1, 22, 1)), 3, 0);
                 }
 
@@ -1027,7 +1031,7 @@ struct Arm7JitVirt_impl : ARM7Backend {
             {
                 u32 Rd = (opcd >> 12) & 15;
 
-                armv->MOV32(r0, (uintptr_t)ctx);
+                armv->MOVPTR(r0, (uintptr_t)ctx);
                 armv->call((void*)ARM7Backend::CPUUpdateCPSR, 1, 0);
 
                 if (opcd & (1 << 22))
@@ -1048,7 +1052,7 @@ struct Arm7JitVirt_impl : ARM7Backend {
                 u32 Rm = (opcd >> 0) & 15;
 
                 //FIXME PARAM 0
-                armv->MOV32(r0, (uintptr_t)ctx);
+                armv->MOVPTR(r0, (uintptr_t)ctx);
                 armv->LoadReg(r1, Rm);
                 if (opcd & (1 << 22))
                     armv->call((void*)(void (DYNACALL*)(u32)) & MSR_do<1>, 2, 0);
@@ -1137,6 +1141,9 @@ struct Arm7JitVirt_impl : ARM7Backend {
         }
 
         armv->end(&lps, (void*)rv, Cycles);
+
+        verify(virtBackend == armv.get());
+        virtBackend = nullptr;
     }
 
 

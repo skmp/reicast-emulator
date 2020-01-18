@@ -789,7 +789,7 @@ struct Arm7JitVirt_impl : ARM7Backend {
             return;
         }
 
-        printf("ARM7: Compiling block @ %08X\n", pc);
+        arm_printf("ARM7: Compiling block @ %08X\n", pc);
 
         //Get the code ptr
         void* rv = armv->armGetEmitPtr();

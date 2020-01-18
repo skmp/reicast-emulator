@@ -161,7 +161,7 @@ struct SoundCPU_impl : SoundCPU {
 		// clean registers
 		memset(&ctx.regs[0], 0, sizeof(ctx.regs));
 
-		ctx.armMode = 0x1F;
+		ctx.armMode = 0x13;
 
 		ctx.regs[13].I = 0x03007F00;
 		ctx.regs[15].I = 0x0000000;

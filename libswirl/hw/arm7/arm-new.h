@@ -2106,6 +2106,7 @@ if(cond_res) {
     ARITHMETIC_DATA_OPCODE(OP_RSBS, OP_RSB, 0x070);
     ARITHMETIC_DATA_OPCODE(OP_ADD,  OP_ADD, 0x080);
     ARITHMETIC_DATA_OPCODE(OP_ADDS, OP_ADD, 0x090);
+#if 0 // only on arm7tm
   case 0x089:
     {
       // UMULL RdLo, RdHi, Rn, Rs
@@ -2148,8 +2149,10 @@ if(cond_res) {
         clockTicks += 5;
     }
     break;
+#endif
     ARITHMETIC_DATA_OPCODE(OP_ADC,  OP_ADC, 0x0a0);
     ARITHMETIC_DATA_OPCODE(OP_ADCS, OP_ADC, 0x0b0);
+#if 0 // only on arm7tm
   case 0x0a9:
     {
       // UMLAL RdLo, RdHi, Rn, Rs
@@ -2198,8 +2201,10 @@ if(cond_res) {
         clockTicks += 6;
     }
     break;
+#endif
     ARITHMETIC_DATA_OPCODE(OP_SBC,  OP_SBC, 0x0c0);
     ARITHMETIC_DATA_OPCODE(OP_SBCS, OP_SBC, 0x0d0);
+#if 0
   case 0x0c9:
     {
       // SMULL RdLo, RdHi, Rm, Rs
@@ -2248,8 +2253,10 @@ if(cond_res) {
         clockTicks += 5;
     }
     break;
+#endif
     ARITHMETIC_DATA_OPCODE(OP_RSC,  OP_RSC, 0x0e0);
     ARITHMETIC_DATA_OPCODE(OP_RSCS, OP_RSC, 0x0f0);
+#if 0
   case 0x0e9:
     {
       // SMLAL RdLo, RdHi, Rm, Rs
@@ -2304,6 +2311,7 @@ if(cond_res) {
         clockTicks += 6;
     }
     break;
+#endif
     LOGICAL_DATA_OPCODE(OP_TST, OP_TST, 0x110);
   case 0x100:
     // MRS Rd, CPSR

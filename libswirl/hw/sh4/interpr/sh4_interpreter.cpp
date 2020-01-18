@@ -338,6 +338,7 @@ void SuperH4_impl::Term()
 {
     Stop();
     
+    sh4_sched_cleanup();
     if (sh4_backend) { delete sh4_backend; sh4_backend = nullptr; }
 
     printf("Sh4 Term\n");

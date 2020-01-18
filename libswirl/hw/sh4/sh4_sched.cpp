@@ -168,3 +168,7 @@ void sh4_sched_tick(int cycles)
 		sh4_sched_ffts();
 	}
 }
+
+void sh4_sched_cleanup() {
+	sch_list.clear();
+}

@@ -49,6 +49,8 @@ void sh4_sched_tick(int cycles);
 
 void sh4_sched_ffts();
 
+void sh4_sched_cleanup();
+
 extern u32 sh4_sched_intr;
 
 struct sched_list

@@ -112,6 +112,8 @@ struct Arm7VirtBackend {
     virtual void Emit32(u32 emit32) = 0;
 
     virtual void InvalidateJitCache() = 0;
+
+    virtual ARM::eReg GetSafeReg() = 0;
 };
 
 struct Arm7JitVirt_impl;

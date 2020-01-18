@@ -470,6 +470,7 @@ struct Arm7JitVirt_impl : ARM7Backend {
 
             CCCC 01 0 P UBW L Rn Rd Offset	-- LDR/STR (I=0)
         */
+        
         if ((opcd >> 25) == (0xE4 / 2))
         {
             /*
@@ -942,7 +943,7 @@ struct Arm7JitVirt_impl : ARM7Backend {
 
                     if (DoAdd)
                     {
-                        eReg dst = Pre ? r0 : r9;
+                        eReg dst = Pre ? r0 : armv->GetSafeReg();
                         armv->LoadReg(dst, Rn);
 
                         if (I == false && is_i8r4(offs))
@@ -958,7 +959,7 @@ struct Arm7JitVirt_impl : ARM7Backend {
                         }
 
                         if (DoWB && dst == r0)
-                            armv->mov(r9, r0);
+                            armv->mov(armv->GetSafeReg(), r0);
                     }
                 }
                 else
@@ -1022,7 +1023,7 @@ struct Arm7JitVirt_impl : ARM7Backend {
                 //Write back from AGU, if any
                 if (DoWB && Rn != Rd)
                 {
-                    armv->StoreReg(r9, Rn);
+                    armv->StoreReg(armv->GetSafeReg(), Rn);
                 }
             }
             break;

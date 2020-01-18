@@ -106,6 +106,10 @@ struct Arm7JitArm7VirtBackendArm64 : Arm7VirtBackend {
         icPtr = ICache;
     }
 
+    ARM::eReg GetSafeReg() {
+        return (ARM::eReg)25;
+    }
+
     void GenerateLooppoints(Looppoints* lp) {
         void* codestart = icPtr;
         assembler = new MacroAssembler(icPtr, ICache + ICacheSize - icPtr);

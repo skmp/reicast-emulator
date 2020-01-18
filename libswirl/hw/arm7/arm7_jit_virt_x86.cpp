@@ -119,6 +119,10 @@ struct Arm7VirtBackendX86 : Arm7VirtBackend {
         icPtr = ICache;
     }
 
+    ARM::eReg GetSafeReg() {
+        return r3;
+    }
+
     void GenerateLooppoints(Looppoints* lp) {
         x86e = new x86_block();
 

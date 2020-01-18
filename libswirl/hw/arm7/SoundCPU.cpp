@@ -216,7 +216,7 @@ struct SoundCPU_impl : SoundCPU {
 
 			return true;
 		}
-#if FEAT_AREC != DYNAREC_NONE
+#if FEAT_AREC != DYNAREC_NONE && HOST_CPU == CPU_X86
 		else if (backend == ARM7BE_DYNAREC) {
 			arm.reset(ARM7Backend::CreateJit(&ctx));
 			ctx.backend = arm.get();

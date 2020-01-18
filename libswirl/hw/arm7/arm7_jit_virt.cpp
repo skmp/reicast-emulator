@@ -1016,7 +1016,7 @@ struct Arm7JitVirt_impl : ARM7Backend {
                 }
 
                 //Write back from AGU, if any
-                if (DoWB)
+                if (DoWB && Rn != Rd)
                 {
                     armv->StoreReg(r9, Rn);
                 }

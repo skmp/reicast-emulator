@@ -161,11 +161,11 @@ struct Arm7JitArm7VirtBackendArm64 : Arm7VirtBackend {
         // arm_mainloop
         {
             //"stp x25, x26, [sp, #-48]!			\n\t"
-            assembler->Stp(x25, x26, MemOperand(sp, -48, PostIndex));
+            assembler->Stp(x25, x26, MemOperand(sp, -48, PreIndex));
             //"stp x27, x28, [sp, #16]			\n\t"
-            assembler->Stp(x25, x26, MemOperand(sp, 16));
+            assembler->Stp(x27, x28, MemOperand(sp, 16));
             //"stp x29, x30, [sp, #32]			\n\t"
-            assembler->Stp(x25, x26, MemOperand(sp, 32));
+            assembler->Stp(x29, x30, MemOperand(sp, 32));
 
             //"mov x28, x1						\n\t"	// arm7 registers
             assembler->Mov(x28, (uintptr_t)ctx);
@@ -201,10 +201,16 @@ struct Arm7JitArm7VirtBackendArm64 : Arm7VirtBackend {
         lp->exit = assembler->GetCursorAddress<void*>();
         // arm_exit
         {
+            //assembler->Brk(0);
+            //"str w27, [x28, #192]				\n\t"	// if timeslice is over, save remaining cycles
             assembler->Str(w27, MemOperand(x28, 192));
+            //"ldp x29, x30, [sp, #32]			\n\t"
             assembler->Ldp(x29, x30, MemOperand(sp, 32));
+            //"ldp x27, x28, [sp, #16]			\n\t"
             assembler->Ldp(x27, x28, MemOperand(sp, 16));
-            assembler->Ldp(x25, x26, MemOperand(sp));
+            //"ldp x25, x26, [sp], #48			\n\t"
+            assembler->Ldp(x25, x26, MemOperand(sp, 48, PostIndex));
+            //"ret								\n"
             assembler->Ret();
         }
 
@@ -313,7 +319,8 @@ struct Arm7JitArm7VirtBackendArm64 : Arm7VirtBackend {
     void intpr(u32 opcd)
     {
         //Call interpreter
-        assembler->Mov(w0, opcd);
+        assembler->Mov(x0, ctx);
+        assembler->Mov(w1, opcd);
         call((void*)&ARM7Backend::singleOp, 1, 1);
     }
 

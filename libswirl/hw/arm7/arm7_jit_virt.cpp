@@ -12,7 +12,7 @@
 
 using namespace ARM;
 
-#define arm_printf(...)
+#define arm_printf printf
 
 #define arm_reg ctx->regs
 #define armMode ctx->armMode

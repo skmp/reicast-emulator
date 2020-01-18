@@ -30,6 +30,10 @@ struct Arm7Interpreter_impl : ARM7Backend {
 	void InvalidateJitCache() {
 
 	}
+
+	void* GetEntrypointBase() {
+		return nullptr;
+	}
 };
 
 ARM7Backend* ARM7Backend::CreateInterpreter(Arm7Context* ctx) {

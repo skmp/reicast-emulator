@@ -121,8 +121,4 @@ namespace ARM
 //#include "H_fp.h"
 
 
-
-
-
-
-
+#undef I

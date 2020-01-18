@@ -18,11 +18,12 @@ struct ARM7Backend {
     virtual void Run(u32 uNumCycles) = 0;
     virtual void UpdateInterrupts() = 0;
     virtual void InvalidateJitCache() = 0;
+    virtual void* GetEntrypointBase() = 0;
 
     virtual ~ARM7Backend() { }
 
     static ARM7Backend* CreateInterpreter(Arm7Context* ctx);
-    static ARM7Backend* ARM7Backend::CreateJit(Arm7Context* ctx);
+    static ARM7Backend* CreateJit(Arm7Context* ctx);
 };
 
 void libARM_SetResetState(bool Reset);

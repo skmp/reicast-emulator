@@ -144,7 +144,7 @@ struct Arm7JitArm7VirtBackendArm64 : Arm7VirtBackend {
             assembler->Bind(&arm_dofiq);
             //"arm_dofiq:								\n\t"
             // mov x0, ctx
-            assembler->Mov(x0, (uintptr_t)arm);
+            assembler->Mov(x0, (uintptr_t)ctx);
             //"bl CPUFiq							\n\t"
             ptrdiff_t offset = reinterpret_cast<uintptr_t>(&ARM7Backend::CPUFiq) - assembler->GetBuffer()->GetStartAddress<uintptr_t>();
             Label CPUFiq_label;

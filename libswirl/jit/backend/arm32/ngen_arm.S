@@ -205,6 +205,8 @@ bx lr
 end_ngen_mainloop:
 @@@@@@@@@@ ngen_mainloop @@@@@@@@@@
 
+@ to be moved to vixl codegen
+#if 0 
 #if FEAT_AREC == DYNAREC_JIT
 .global CSYM(arm_compilecode)
 HIDDEN(arm_compilecode)
@@ -271,6 +273,8 @@ CSYM(arm_exit):
 	pop {r4,r5,r8,r11,pc}
 #else
 	pop {r4,r5,r8,r9,pc}
+#endif
+
 #endif
 
 @@@@@@

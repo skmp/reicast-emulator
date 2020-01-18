@@ -1,5 +1,6 @@
 #pragma once
 
+#include "types.h"
 #include "jit/emitter/arm32/arm_coding.h"
 
 enum OpType
@@ -92,7 +93,7 @@ struct Arm7VirtBackend {
 
     virtual void call(void* loc, int params, int returns) = 0;
 
-    virtual void setup() = 0;
+    virtual bool setup() = 0;
 
     virtual void intpr(u32 opcd) = 0;
 

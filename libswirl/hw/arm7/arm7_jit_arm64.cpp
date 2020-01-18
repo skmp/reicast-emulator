@@ -118,11 +118,14 @@ struct Arm7JitArm7VirtBackendArm64 : Arm7VirtBackend {
             
             //"arm_dispatch:							\n\t"
             //"ldp w0, w1, [x28, #184]			\n\t"	// load Next PC, interrupt
+            assembler->Ldp(w0, w1, MemOperand(x28, 184));
             if ((ctx->aram_mask + 1) == 2 * 1024 * 1024) {
                 //"ubfx w2, w0, #2, #19				\n\t"	// w2 = pc >> 2. Note: assuming address space == 2 MB (21 bits)
+                assembler->Ubfx(w2, w0, 2, 19);
             }
             else if ((ctx->aram_mask + 1) == 8 * 1024 * 1024) {
                 //"ubfx w2, w0, #2, #21				\n\t"	// w2 = pc >> 2. Note: assuming address space == 8 MB (23 bits)
+                assembler->Ubfx(w2, w0, 2, 21);
             }
             else {
                 die("Unsupported AICA RAM size");
@@ -296,9 +299,15 @@ struct Arm7JitArm7VirtBackendArm64 : Arm7VirtBackend {
         assembler->Bl(&function_label);
     }
 
-    void setup()
+    bool setup()
     {
+        if (icPtr >= (ICache + ICacheSize - 64 * 1024)) {
+            return false;
+        }
+
         assembler = new MacroAssembler(icPtr, ICache + ICacheSize - icPtr);
+
+        return true;
     }
 
     void intpr(u32 opcd)

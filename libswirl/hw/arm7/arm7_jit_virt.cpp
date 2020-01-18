@@ -674,12 +674,14 @@ struct Arm7JitVirt_impl : ARM7Backend {
             armv->LoadFlags();
         }
 
+        auto pc_pipeline_offset = (flag & OP_HAS_RS_8) ? 12 : 8;
+
         if (flag & OP_HAS_RS_0)
-            LoadAndRename(opcd, 0, true, pc + 8);
+            LoadAndRename(opcd, 0, true, pc + pc_pipeline_offset); //8 or 12
         if (flag & OP_HAS_RS_8)
-            LoadAndRename(opcd, 8, true, pc + 8);
+            LoadAndRename(opcd, 8, true, pc + 8);   // always 8
         if (flag & OP_HAS_RS_16)
-            LoadAndRename(opcd, 16, true, pc + 8);
+            LoadAndRename(opcd, 16, true, pc + pc_pipeline_offset); // 8 or 12
 
         if (flag & OP_HAS_RD_12)
             LoadAndRename(opcd, 12, flag & OP_HAS_RD_READ, pc + 4);
@@ -777,17 +779,25 @@ struct Arm7JitVirt_impl : ARM7Backend {
     //Compile & run block of code, starting armNextPC
     void CompileCode()
     {
+        //setup local pc counter
+        u32 pc = armNextPC;
+
         //emitter/block setup
-        armv->setup();
+        if (!armv->setup()) {
+            printf("ARM7: ICache is full, invalidate old entries ... (%08X)\n", pc);	//ifdebug
+            InvalidateJitCache();
+            return;
+        }
+
+        printf("ARM7: Compiling block @ %08X\n", pc);
 
         //Get the code ptr
         void* rv = armv->armGetEmitPtr();
 
         //update the block table
-        EntryPoints[(armNextPC & ctx->aram_mask) / 4] = rv;
+        verify(EntryPoints[(armNextPC & ctx->aram_mask) / 4] == lps.compilecode);
 
-        //setup local pc counter
-        u32 pc = armNextPC;
+        EntryPoints[(armNextPC & ctx->aram_mask) / 4] = rv;
 
         //the ops counter is used to terminate the block (max op count for a single block is 32 currently)
         //We don't want too long blocks for timing accuracy

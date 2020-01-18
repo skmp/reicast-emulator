@@ -131,7 +131,7 @@ struct Arm7VirtBackendX86 : Arm7VirtBackend {
         // arm_dispatch
         {
             x86e->Emit(op_mov32, EAX, &arm_reg[R15_ARM_NEXT].I);
-            x86e->Emit(op_and32, EAX, 0x7FFFFC);
+            x86e->Emit(op_and32, EAX, ctx->aram_mask);
             x86e->Emit(op_cmp32, &arm_reg[INTR_PEND].I, 0);
 
             x86_Label* dofiq = x86e->CreateLabel(false, 8);
@@ -309,8 +309,12 @@ struct Arm7VirtBackendX86 : Arm7VirtBackend {
 
     x86_Label* end_lbl;
 
-    void setup()
+    bool setup()
     {
+        if (icPtr >= (ICache + ICacheSize - 64 * 1024)) {
+            return false;
+        }
+
         verify(virtBackend == nullptr);
 
         virtBackend = this;
@@ -331,6 +335,8 @@ struct Arm7VirtBackendX86 : Arm7VirtBackend {
 
         //the "end" label is used to exit from the block, if a code modification (expected opcode // actual opcode in ram) is detected
         end_lbl = x86e->CreateLabel(false, 0);
+
+        return true;
     }
 
     void intpr(u32 opcd)
@@ -411,9 +417,8 @@ struct Arm7VirtBackendX86 : Arm7VirtBackend {
 
     void Emit32(u32 emit32)
     {
-        if (icPtr >= (ICache + ICacheSize - 64 * 1024)) {
+        if (icPtr >= (ICache + ICacheSize - 1024)) {
             die("ICache is full, invalidate old entries ...");	//ifdebug
-            arm->InvalidateJitCache();
         }
 
         x86e->Emit(op_mov32, ECX, emit32);

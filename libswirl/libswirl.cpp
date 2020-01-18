@@ -660,8 +660,6 @@ void* dc_run(void*)
 cThread emu_thread(&dc_run, NULL);
 
 
-static bool init_done;
-
 int reicast_init(int argc, char* argv[])
 {
 #ifdef _WIN32
@@ -731,46 +729,6 @@ struct Dreamcast_impl : VirtualDreamcast {
         if (path != NULL)
             cfgSetVirtual("config", "image", path);
 
-        if (init_done)
-        {
-            InitSettings();
-            LoadSettings(false);
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-            if (!settings.bios.UseReios)
-#endif
-                if (!LoadRomFiles(get_readonly_data_path(DATA_PATH)))
-                    return -5;
-
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-            if (path == NULL)
-            {
-                // Boot BIOS
-                settings.imgread.LastImage[0] = 0;
-                g_GDRDisc->Swap(); // reload the gdrom file
-            }
-            else
-            {
-                g_GDRDisc->Swap(); // reload the gdrom file
-                LoadCustom();
-            }
-#elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-            if (!naomi_cart_SelectFile())
-                return -6;
-            LoadCustom();
-#if DC_PLATFORM == DC_PLATFORM_NAOMI
-            mcfg_CreateNAOMIJamma();
-#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-            mcfg_CreateAtomisWaveControllers();
-#endif
-#endif
-
-            Reset();
-
-            Resume();
-
-            return 0;
-        }
-
         if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
         {
 #ifdef USE_REIOS
@@ -809,7 +767,6 @@ struct Dreamcast_impl : VirtualDreamcast {
 #elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
         mcfg_CreateAtomisWaveControllers();
 #endif
-        init_done = true;
 
         Reset();
 

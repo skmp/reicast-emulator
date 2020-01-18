@@ -396,11 +396,10 @@ s32 rcb_poffs(T* ptr)
 
 struct SuperH4Backend {
     virtual bool Init() = 0;
-    virtual void Term() = 0;
     virtual void Loop() = 0;
     virtual void ClearCache() = 0;
 
-	virtual ~SuperH4Backend() { }
+	virtual ~SuperH4Backend() {  }
 };
 
 //Get an interface to sh4 interpreter

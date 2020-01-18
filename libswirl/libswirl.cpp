@@ -703,12 +703,16 @@ void reicast_ui_loop() {
 }
 
 void reicast_term() {
-    g_GUIRenderer.release();
+    g_GUIRenderer.reset();
 
-    g_GUI.release();
+    g_GUI.reset();
 }
 
 struct Dreamcast_impl : VirtualDreamcast {
+
+    ~Dreamcast_impl() {
+        Term();
+    }
 
     void Reset()
     {
@@ -854,7 +858,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         
         MMIODevice* extDevice = Create_ExtDevice(); // or Create_Modem();
 
-        MMIODevice* modemDevice = extDevice;
+        MMIODevice* modemDevice = Create_ExtDevice(); // FIXME this is hacky
 
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
         modemDevice = Create_Modem(asic);

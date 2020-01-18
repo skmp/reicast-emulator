@@ -153,7 +153,7 @@ int UpdateSystem_INTC()
 }
 
 struct SH4IInterpreter : SuperH4Backend {
-
+    ~SH4IInterpreter() { Term(); }
     void Loop()
     {
         l = SH4_TIMESLICE;
@@ -209,7 +209,7 @@ MMIODevice* SuperH4_impl::GetA0Handler(Area0Hanlders slot) {
 }
 
 bool SuperH4_impl::setBackend(SuperH4Backends backend) {
-    if (sh4_backend) { sh4_backend->Term(); delete sh4_backend; sh4_backend = nullptr; }
+    if (sh4_backend) { delete sh4_backend; sh4_backend = nullptr; }
 
     switch (backend)
     {
@@ -337,6 +337,9 @@ bool SuperH4_impl::Init()
 void SuperH4_impl::Term()
 {
     Stop();
+    
+    if (sh4_backend) { delete sh4_backend; sh4_backend = nullptr; }
+
     printf("Sh4 Term\n");
 }
 

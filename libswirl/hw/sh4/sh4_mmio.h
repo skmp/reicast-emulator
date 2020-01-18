@@ -14,5 +14,5 @@ struct MMIODevice
     virtual void serialize(void** data, unsigned int* total_size) { }
     virtual void unserialize(void** data, unsigned int* total_size) { }
 
-    virtual ~MMIODevice() { }
+    virtual ~MMIODevice() { Term(); }
 };

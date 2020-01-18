@@ -323,7 +323,7 @@ struct Arm7JitArm7VirtBackendArm64 : Arm7VirtBackend {
     void intpr(u32 opcd)
     {
         //Call interpreter
-        assembler->Mov(x0, ctx);
+        assembler->Mov(x0, (uintptr_t)ctx);
         assembler->Mov(w1, opcd);
         call((void*)&ARM7Backend::singleOp, 1, 1);
     }

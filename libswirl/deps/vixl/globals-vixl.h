@@ -271,6 +271,8 @@ inline void USE(const T1&, const T2&, const T3&, const T4&) {}
 #define VIXL_INCLUDE_TARGET_AARCH64
 #endif
 
+#define VIXL_INCLUDE_TARGET_A32
+
 #if defined(VIXL_INCLUDE_TARGET_A32) && defined(VIXL_INCLUDE_TARGET_T32)
 #define VIXL_INCLUDE_TARGET_AARCH32
 #elif defined(VIXL_INCLUDE_TARGET_A32)

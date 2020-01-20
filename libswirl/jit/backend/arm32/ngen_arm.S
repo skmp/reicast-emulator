@@ -49,8 +49,8 @@ CSYM(TAWriteSQ_yuv):
 CMP     R3, #0x1000000	@Yuv write ?
 BCS     CSYM(TAWriteSQ_vram)
 # calculate vram ptr from sq
-ADD     R2, R1, 512
-ADD     R2, R1, 0x04000000
+ADD     R2, R1, #512
+ADD     R2, R1, #0x04000000
 MOV     R1, #1
 B       CSYM(_Z8YUV_dataPjjPh)
 

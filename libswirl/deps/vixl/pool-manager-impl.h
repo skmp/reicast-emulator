@@ -452,15 +452,17 @@ T PoolManager<T>::Bind(MacroAssemblerInterface* masm,
     min_location = existing_object->min_location_;
   }
 
-  // Align if needed, and add necessary padding to reach the min_location_.
-  T aligned_location = AlignUp(location, alignment);
-  masm->EmitNopBytes(aligned_location - location);
-  location = aligned_location;
-  while (location < min_location) {
-    masm->EmitNopBytes(alignment);
-    location += alignment;
+  if (alignment != 1) {
+    // Align if needed, and add necessary padding to reach the min_location_.
+    T aligned_location = AlignUp(location, alignment);
+    masm->EmitNopBytes(aligned_location - location);
+    location = aligned_location;
+    while (location < min_location) {
+      masm->EmitNopBytes(alignment);
+      location += alignment;
+    }
   }
-
+  
   object->SetLocation(masm->AsAssemblerBase(), location);
   object->MarkBound();
 

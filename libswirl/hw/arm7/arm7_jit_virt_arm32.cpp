@@ -52,7 +52,7 @@ extern "C" void armFlushICache(void* code, void* pEnd) {
 }
 #else
 extern "C" void armFlushICache(void* bgn, void* end) {
-    __clear_cache(bgn, end);
+    __builtin___clear_cache(bgn, end);
 }
 #endif
 
@@ -86,8 +86,11 @@ struct Arm7VirtBackendArm32 : Arm7VirtBackend {
 #elif HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
 
         printf("\n\t ARM7_TCB addr: %p | from: %p | addr here: %p\n", ICache, ARM7_TCB, &ARM7Backend::singleOp);
+        munmap(ICache, ICacheSize);
+        ICache = (u8*)mmap(ICache, ICacheSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
 
-        if (mprotect(ICache, ICacheSize, PROT_EXEC | PROT_READ | PROT_WRITE))
+//mprotect(ICache, ICacheSize, PROT_EXEC | PROT_READ | PROT_WRITE)
+        if (!ICache)
         {
             perror("\n\tError - Couldn�t mprotect ARM7_TCB!");
             verify(false);
@@ -114,10 +117,12 @@ struct Arm7VirtBackendArm32 : Arm7VirtBackend {
 
     void GenerateLooppoints(Looppoints* lp) {
         void* codestart = icPtr;
-        assembler = new MacroAssembler(icPtr, ICache + ICacheSize - icPtr);
+        assembler = new MacroAssembler(icPtr, ICache + ICacheSize - icPtr, A32);
 
         // generate the loop points here
 
+        Label dispatch;
+        assembler->Bind(&dispatch);
         lp->dispatch = assembler->GetCursorAddress<void*>();
         // arm_dispatch
         {
@@ -152,8 +157,9 @@ bne arm_dofiq
 ldr pc, [r4, r2, lsl #2]
 */
             Label arm_dofiq;
-            assembler->Cbnz(r1, &arm_dofiq);
-            assembler->Add(r2, r4, Operand(r2, LSL, 3));
+            assembler->Cmp(r1, 0);
+            assembler->B(ne, &arm_dofiq);
+            assembler->Add(r2, r4, Operand(r2, LSL, 2));
             assembler->Ldr(pc, MemOperand(r2));
 
 
@@ -168,10 +174,7 @@ ldr pc, [r4, r2, lsl #2]
             Label CPUFiq_label;
             assembler->BindToOffset(&CPUFiq_label, offset);
             assembler->Bl(&CPUFiq_label);
-            offset = reinterpret_cast<uintptr_t>(lp->dispatch) - assembler->GetBuffer()->GetStartAddress<uintptr_t>();
-            Label arm_dispatch_label;
-            assembler->BindToOffset(&arm_dispatch_label, offset);
-            assembler->B(&arm_dispatch_label);
+            assembler->B(&dispatch);
         }
 
         lp->mainloop = assembler->GetCursorAddress<void*>();
@@ -212,10 +215,7 @@ ldr pc, [r4, r2, lsl #2]
             assembler->Add(r5, r5, r0);
 
             //b CSYM(arm_dispatch)
-            ptrdiff_t offset = reinterpret_cast<uintptr_t>(lp->dispatch) - assembler->GetBuffer()->GetStartAddress<uintptr_t>();
-            Label arm_dispatch_label;
-            assembler->BindToOffset(&arm_dispatch_label, offset);
-            assembler->B(&arm_dispatch_label);
+            assembler->B(&dispatch);
         }
 
         lp->compilecode = assembler->GetCursorAddress<void*>();
@@ -226,10 +226,8 @@ ldr pc, [r4, r2, lsl #2]
             Label CompileCode_label;
             assembler->BindToOffset(&CompileCode_label, offset);
             assembler->Bl(&CompileCode_label);
-            offset = reinterpret_cast<uintptr_t>(lp->dispatch) - assembler->GetBuffer()->GetStartAddress<uintptr_t>();
-            Label arm_dispatch_label;
-            assembler->BindToOffset(&arm_dispatch_label, offset);
-            assembler->B(&arm_dispatch_label);
+
+            assembler->B(&dispatch);
         }
 
         lp->exit = assembler->GetCursorAddress<void*>();
@@ -280,34 +278,22 @@ ldr pc, [r4, r2, lsl #2]
     //helpers ...
     void LoadReg(ARM::eReg rd, u32 regn, ARM::ConditionCode cc = ARM::CC_AL)
     {
-        assembler->Ldr(Register(rd), arm_reg_operand(regn));
+        assembler->Ldr(Condition(cc), Register(rd), arm_reg_operand(regn));
     }
 
     void StoreReg(ARM::eReg rd, u32 regn, ARM::ConditionCode cc = ARM::CC_AL)
     {
-        assembler->Str(Register(rd), arm_reg_operand(regn));
+        assembler->Str(Condition(cc), Register(rd), arm_reg_operand(regn));
     }
 
     void* start_conditional(ARM::ConditionCode cc)
     {
-        if (cc == ARM::CC_AL)
-            return NULL;
-        Label* label = new Label();
-        verify(cc <= ARM::CC_LE);
-        Condition condition = (Condition)((u32)cc ^ 1);
-        assembler->B(condition, label);
-
-        return label;
+        return nullptr;
     }
 
     void end_conditional(void* ref)
     {
-        if (ref != NULL)
-        {
-            Label* label = (Label*)ref;
-            assembler->Bind(label);
-            delete label;
-        }
+
     }
 
     // FIXME IMPL
@@ -324,7 +310,7 @@ ldr pc, [r4, r2, lsl #2]
     void StoreFlags()
     {
         //get results from flags register
-        assembler->Mrs(r1, SpecialRegister(APSR_nzcvq));
+        assembler->Mrs(r1, SpecialRegister(APSR));
         //Store flags
         StoreReg(ARM::r1, RN_PSR_FLAGS);
     }
@@ -350,7 +336,7 @@ ldr pc, [r4, r2, lsl #2]
             return false;
         }
 
-        assembler = new MacroAssembler(icPtr, ICache + ICacheSize - icPtr);
+        assembler = new MacroAssembler(icPtr, ICache + ICacheSize - icPtr, A32);
 
         return true;
     }

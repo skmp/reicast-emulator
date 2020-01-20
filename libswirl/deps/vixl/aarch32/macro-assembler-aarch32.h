@@ -420,7 +420,7 @@ class MacroAssembler : public Assembler, public MacroAssemblerInterface {
           VIXL_ASSERT(GetBuffer()->Is32bitAligned());
       }
       
-      pool_manager_.Bind(this, label, GetCursorOffset() + offset);
+      pool_manager_.Bind(this, label, offset);
   }
 
   void RegisterLiteralReference(RawLiteral* literal) {

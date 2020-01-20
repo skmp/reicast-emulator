@@ -224,8 +224,8 @@ struct Arm7JitArm7VirtBackendArm64 : Arm7VirtBackend {
         assembler->FinalizeCode();
         verify(assembler->GetBuffer()->GetCursorOffset() <= assembler->GetBuffer()->GetCapacity());
         vmem_platform_flush_cache(
-            codestart, assembler->GetBuffer()->GetEndAddress<void*>(),
-            codestart, assembler->GetBuffer()->GetEndAddress<void*>());
+            codestart, assembler->GetCursorAddress<void*>(),
+            codestart, assembler->GetCursorAddress<void*>());
         
         icPtr += assembler->GetBuffer()->GetSizeInBytes();
         icPtr_Base = icPtr;
@@ -348,13 +348,13 @@ struct Arm7JitArm7VirtBackendArm64 : Arm7VirtBackend {
         assembler->FinalizeCode();
         verify(assembler->GetBuffer()->GetCursorOffset() <= assembler->GetBuffer()->GetCapacity());
         vmem_platform_flush_cache(
-            codestart, assembler->GetBuffer()->GetEndAddress<void*>(),
-            codestart, assembler->GetBuffer()->GetEndAddress<void*>());
+            codestart, assembler->GetCursorAddress<void*>(),
+            codestart, assembler->GetCursorAddress<void*>());
         icPtr += assembler->GetBuffer()->GetSizeInBytes();
 
 #if 0
         Instruction* instr_start = (Instruction*)codestart;
-        Instruction* instr_end = assembler->GetBuffer()->GetEndAddress<Instruction*>();
+        Instruction* instr_end = assembler->GetCursorAddress<void*>();
         Decoder decoder;
         Disassembler disasm;
         decoder.AppendVisitor(&disasm);

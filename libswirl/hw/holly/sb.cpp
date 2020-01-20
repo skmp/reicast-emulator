@@ -31,7 +31,7 @@ Array<RegisterStruct> sb_regs(0x540);
 u32 SB_FFST_rc;
 u32 SB_FFST;
 
-struct SystemBus_impl : SystemBus {
+struct SystemBus_impl final : SystemBus {
 
 	u32 sbio_read_noacc(u32 addr) {
 		verify(false); 

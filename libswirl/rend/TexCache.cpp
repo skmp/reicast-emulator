@@ -126,7 +126,6 @@ void palette_update()
 using namespace std;
 
 vector<vram_block*> VramLocks[VRAM_SIZE/PAGE_SIZE];
-VLockedMemory vram;  // vram 32-64b
 
 //List functions
 //
@@ -208,11 +207,11 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 	{
 		vramlist_lock.Lock();
 	
-		vram.LockRegion(block->start, block->len);
+		sh4_cpu->vram.LockRegion(block->start, block->len);
 
 		//TODO: Fix this for 32M wrap as well
 		if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-			vram.LockRegion(block->start + VRAM_SIZE, block->len);
+			sh4_cpu->vram.LockRegion(block->start + VRAM_SIZE, block->len);
 		}
 		
 		vramlock_list_add(block);
@@ -224,9 +223,9 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 }
 
 
-bool VramLockedWrite(u8* address)
+bool VramLockedWrite(u8* vram, u8* address)
 {
-	size_t offset=address-vram.data;
+	size_t offset=address-vram;
 
 	if (offset<VRAM_SIZE)
 	{
@@ -253,11 +252,12 @@ bool VramLockedWrite(u8* address)
 			}
 			list->clear();
 
-			vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)),PAGE_SIZE);
+			
+			sh4_cpu->vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)),PAGE_SIZE);
 
 			//TODO: Fix this for 32M wrap as well
 			if (_nvmem_enabled() && VRAM_SIZE == 0x800000) {
-				vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
+				sh4_cpu->vram.UnLockRegion((u32)offset&(~(PAGE_SIZE-1)) + VRAM_SIZE,PAGE_SIZE);
 			}
 			
 			vramlist_lock.Unlock();

@@ -29,13 +29,13 @@ void map_area1_init()
 									pvr_write_area1_8,pvr_write_area1_16,pvr_write_area1_32);
 }
 
-void map_area1(u32 base)
+void map_area1(SuperH4* sh4, u32 base)
 {
 	//map vram
 	
 	//Lower 32 mb map
 	//64b interface
-	_vmem_map_block(vram.data,0x04 | base,0x04 | base,VRAM_SIZE-1);
+	_vmem_map_block(sh4->vram.data,0x04 | base,0x04 | base,VRAM_SIZE-1);
 	//32b interface
 	_vmem_map_handler(area1_32b,0x05 | base,0x05 | base);
 	
@@ -50,7 +50,7 @@ void map_area2_init()
 	//nothing to map :p
 }
 
-void map_area2(u32 base)
+void map_area2(SuperH4* sh4, u32 base)
 {
 	//nothing to map :p
 }
@@ -61,7 +61,7 @@ void map_area3_init()
 {
 }
 
-void map_area3(u32 base)
+void map_area3(SuperH4* sh4, u32 base)
 {
 	//32x2 or 16x4
 	_vmem_map_block_mirror(mem_b.data,0x0C | base,0x0F | base,RAM_SIZE);
@@ -73,7 +73,7 @@ void map_area4_init()
 	
 }
 
-void map_area4(u32 base)
+void map_area4(SuperH4* sh4, u32 base)
 {
 	//TODO : map later
 
@@ -103,7 +103,7 @@ void map_area5_init()
 	area5_handler = _vmem_register_handler_Template(ReadMem_extdev_T,WriteMem_extdev_T);
 }
 
-void map_area5(u32 base)
+void map_area5(SuperH4* sh4, u32 base)
 {
 	//map whole region to plugin handler :)
 	_vmem_map_handler(area5_handler,base|0x14,base|0x17);
@@ -114,7 +114,7 @@ void map_area6_init()
 {
 	//nothing to map :p
 }
-void map_area6(u32 base)
+void map_area6(SuperH4* sh4, u32 base)
 {
 	//nothing to map :p
 }
@@ -165,18 +165,18 @@ void mem_map_default(SuperH4_impl* sh4)
 	//some areas can be customised :)
 	for (int i=0x0;i<0xE;i+=0x2)
 	{
-		map_area0(i<<4); //Bios,Flahsrom,i/f regs,Ext. Device,Sound Ram
-		map_area1(i<<4); //VRAM
-		map_area2(i<<4); //Unassigned
-		map_area3(i<<4); //RAM
-		map_area4(i<<4); //TA
-		map_area5(i<<4); //Ext. Device
-		map_area6(i<<4); //Unassigned
-		map_area7(i<<4); //Sh4 Regs
+		map_area0(sh4, i<<4); //Bios,Flahsrom,i/f regs,Ext. Device,Sound Ram
+		map_area1(sh4, i<<4); //VRAM
+		map_area2(sh4, i<<4); //Unassigned
+		map_area3(sh4, i<<4); //RAM
+		map_area4(sh4, i<<4); //TA
+		map_area5(sh4, i<<4); //Ext. Device
+		map_area6(sh4, i<<4); //Unassigned
+		map_area7(sh4, i<<4); //Sh4 Regs
 	}
 
 	//map p4 region :)
-	map_p4();
+	map_p4(sh4);
 }
 void mem_Init(SuperH4_impl* sh4)
 {

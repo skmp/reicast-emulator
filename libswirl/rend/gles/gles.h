@@ -111,7 +111,7 @@ extern gl_ctx gl;
 extern GLuint fbTextureId;
 extern float fb_scale_x, fb_scale_y;
 
-GLuint gl_GetTexture(TSP tsp,TCW tcw);
+GLuint gl_GetTexture(u8* vram, TSP tsp,TCW tcw);
 struct text_info {
 	u16* pdata;
 	u32 width;
@@ -122,10 +122,10 @@ enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
 void gl_load_osd_resources();
 void gl_free_osd_resources();
-bool ProcessFrame(TA_context* ctx);
+bool ProcessFrame(u8* vram, TA_context* ctx);
 void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
 
-text_info raw_GetTexture(TSP tsp, TCW tcw);
+text_info raw_GetTexture(u8* vram, TSP tsp, TCW tcw);
 void killtex();
 void CollectCleanup();
 void DoCleanup();
@@ -135,7 +135,7 @@ s32 SetTileClip(u32 val, GLint uniform);
 void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
-void ReadRTTBuffer();
+void ReadRTTBuffer(u8* vram);
 void RenderFramebuffer();
 void DrawFramebuffer(float w, float h);
 GLuint init_output_framebuffer(int width, int height);
@@ -208,6 +208,7 @@ struct TextureCacheData
 {
 	TSP tsp;        //dreamcast texture parameters
 	TCW tcw;
+	u8* vram;
 	
 	GLuint texID;   //gl texture
 	u16* pData;

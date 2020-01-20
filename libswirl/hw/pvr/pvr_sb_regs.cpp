@@ -31,7 +31,7 @@ struct PVRDevice : MMIODevice {
         if (1 & data)
         {
             SB_C2DST = 1;
-            DMAC_Ch2St();
+            DMAC_Ch2St(vram);
         }
     }
     //PVR-DMA
@@ -146,8 +146,9 @@ struct PVRDevice : MMIODevice {
     SystemBus* sb;
     ASIC* asic;
     SPG* spg;
+    u8* vram;
 
-    PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg) : sb(sb), asic(asic), spg(spg) { }
+    PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg, u8* vram) : sb(sb), asic(asic), spg(spg), vram(vram) { }
 
     u32 Read(u32 addr, u32 sz)
     {
@@ -171,7 +172,7 @@ struct PVRDevice : MMIODevice {
         if (addr == STARTRENDER_addr)
         {
             //start render
-            rend_start_render();
+            rend_start_render(vram);
             return;
         }
 
@@ -293,6 +294,6 @@ struct PVRDevice : MMIODevice {
 
 };
 
-MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg) {
-    return new PVRDevice(sb, asic, spg);
+MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg, u8* vram) {
+    return new PVRDevice(sb, asic, spg, vram);
 }

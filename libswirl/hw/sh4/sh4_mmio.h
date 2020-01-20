@@ -11,5 +11,8 @@ struct MMIODevice
     virtual u32 Read(u32 addr, u32 sz) { die("not implemented"); return 0; };
     virtual void Write(u32 addr, u32 data, u32 sz) { die("not implemented"); };
 
-    virtual ~MMIODevice() { }
+    virtual void serialize(void** data, unsigned int* total_size) { }
+    virtual void unserialize(void** data, unsigned int* total_size) { }
+
+    virtual ~MMIODevice() { Term(); }
 };

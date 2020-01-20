@@ -921,7 +921,7 @@ void map_area7_init()
 
 	area7_orc_handler= _vmem_register_handler_Template(ReadMem_area7_OCR_T,WriteMem_area7_OCR_T);
 }
-void map_area7(u32 base)
+void map_area7(SuperH4* sh4, u32 base)
 {
 	//OCR @
 	//((addr>=0x7C000000) && (addr<=0x7FFFFFFF))
@@ -934,7 +934,7 @@ void map_area7(u32 base)
 }
 
 //P4
-void map_p4()
+void map_p4(SuperH4* sh4)
 {
 	//P4 Region :
 	_vmem_handler p4_handler = _vmem_register_handler_Template(ReadMem_P4,WriteMem_P4);
@@ -950,5 +950,5 @@ void map_p4()
 	_vmem_map_block(sq_both,0xE2,0xE2,63);
 	_vmem_map_block(sq_both,0xE3,0xE3,63);
 
-	map_area7(0xE0);
+	map_area7(sh4, 0xE0);
 }

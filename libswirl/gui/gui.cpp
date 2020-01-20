@@ -557,7 +557,7 @@ struct ReicastUI_impl : GUI {
             // Exit to main menu
             gui_state = Main;
             game_started = false;
-            virtualDreamcast.release();
+            virtualDreamcast.reset();
 
             cfgSetVirtual("config", "image", "");
         }
@@ -717,7 +717,7 @@ struct ReicastUI_impl : GUI {
         {
             gui_state = Main;
             game_started = false;
-            virtualDreamcast.release();
+            virtualDreamcast.reset();
 
             cfgSetVirtual("config", "image", "");
             switch (rc) {

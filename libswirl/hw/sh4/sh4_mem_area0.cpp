@@ -84,7 +84,8 @@ bool LoadRomFiles(const string& root)
 		syscfg.mono = 0;
 		syscfg.autostart = 1;
 	}
-	u32 time = GetRTC_now();
+	
+	u32 time = libAICA_GetRTC_now();
 	syscfg.time_lo = time & 0xffff;
 	syscfg.time_hi = time >> 16;
 	if (settings.dreamcast.language <= 5)
@@ -192,15 +193,6 @@ struct ExtDevice : MMIODevice {
     }
 };
 
-struct RTCDevice : MMIODevice {
-    u32 Read(u32 addr, u32 sz) {
-        return ReadMem_aica_rtc(addr, sz);
-    }
-    void Write(u32 addr, u32 data, u32 sz) {
-        WriteMem_aica_rtc(addr, data, sz);
-    }
-};
-
 
 MMIODevice* Create_BiosDevice() {
 	return new BiosDevice();
@@ -213,11 +205,6 @@ MMIODevice* Create_FlashDevice() {
 MMIODevice* Create_ExtDevice() {
 	return new ExtDevice();
 }
-
-MMIODevice* Create_RTCDevice() {
-	return new RTCDevice();
-}
-
 
 
 SuperH4* SuperH4::Create() {
@@ -309,7 +296,7 @@ T DYNACALL ReadMem_area0(SuperH4* psh4, u32 addr)
 	//map 0x0080 to 0x00FF
 	else if ((base >=0x0080) && (base <=0x00FF) /*&& (addr>= 0x00800000) && (addr<=0x00FFFFFF)*/) //	:AICA- Wave Memory
 	{
-		ReadMemArrRet(aica_ram.data,addr&ARAM_MASK,sz);
+		ReadMemArrRet(sh4->aica_ram.data, addr & (sh4->aica_ram.size - 1), sz);
 	}
 	//map 0x0100 to 0x01FF
 	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) //	:Ext. Device
@@ -383,7 +370,7 @@ void  DYNACALL WriteMem_area0(SuperH4* psh4, u32 addr,T data)
 	//map 0x0080 to 0x00FF
 	else if ((base >=0x0080) && (base <=0x00FF) /*&& (addr>= 0x00800000) && (addr<=0x00FFFFFF)*/) // AICA- Wave Memory
 	{
-		WriteMemArrRet(aica_ram.data,addr&ARAM_MASK,data,sz);
+		WriteMemArrRet(sh4->aica_ram.data, addr & (sh4->aica_ram.size - 1), data, sz);
 		return;
 	}
 	//map 0x0100 to 0x01FF
@@ -426,7 +413,7 @@ void map_area0_init()
 
 	area0_handler = _vmem_register_handler_Template(ReadMem_area0,WriteMem_area0);
 }
-void map_area0(u32 base)
+void map_area0(SuperH4* sh4, u32 base)
 {
 	verify(base<0xE0);
 

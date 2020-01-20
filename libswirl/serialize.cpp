@@ -1,9 +1,10 @@
 // serialize.cpp : save states
 #if 1
 #include "types.h"
-#include "hw/aica/dsp.h"
+#include "hw/aica/dsp_backend.h"
 #include "hw/aica/aica.h"
 #include "hw/aica/sgc_if.h"
+#include "hw/arm7/arm7.h"
 #include "hw/sh4/sh4_mem_area0.h"
 #include "hw/flashrom/flashrom.h"
 #include "hw/mem/_vmem.h"
@@ -39,28 +40,12 @@ enum serialize_version_enum {
 } ;
 
 //gdrom
-void gdrom_serialize(void** data, unsigned int* total_size);
-bool gdrom_unserialize(void** data, unsigned int* total_size);
 
 //./core/hw/arm7/arm_mem.cpp
-extern bool aica_interr;
-extern u32 aica_reg_L;
-extern bool e68k_out;
-extern u32 e68k_reg_L;
-extern u32 e68k_reg_M;
-
 
 
 //./core/hw/arm7/arm7.cpp
-extern DECL_ALIGN(8) reg_pair arm_Reg[RN_ARM_REG_COUNT];
-extern bool armIrqEnable;
-extern bool armFiqEnable;
-extern int armMode;
-extern bool Arm7Enabled;
-extern u8 cpuBitsSet[256];
-extern bool intState ;
-extern bool stopState ;
-extern bool holdState ;
+
 /*
 	if AREC dynarec enabled:
 	vector<ArmDPOP> ops;
@@ -83,7 +68,7 @@ extern bool holdState ;
 
 
 //./core/hw/aica/dsp.o
-extern DECL_ALIGN(4096) dsp_t dsp;
+
 //recheck dsp.cpp if FEAT_DSPREC == DYNAREC_JIT
 
 
@@ -100,22 +85,12 @@ extern DECL_ALIGN(4096) dsp_t dsp;
 //extern InterruptInfo* SCIPD;
 //extern InterruptInfo* SCIRE;
 
-extern AicaTimer timers[3];
-
-
 
 //./core/hw/aica/aica_if.o
-extern VLockedMemory aica_ram;
-extern u32 VREG;//video reg =P
-extern u32 ARMRST;//arm reset reg
-extern u32 rtc_EN;
-//extern s32 aica_pending_dma ;
-extern int dma_sched_id;
 
+//extern s32 aica_pending_dma ;
 
 //./core/hw/aica/aica_mem.o
-extern u8 aica_reg[0x8000];
-
 
 
 //./core/hw/aica/sgc_if.o
@@ -348,7 +323,6 @@ extern DECL_ALIGN(4) u32 SFaceOffsColor;
 //extern vector<vram_block*> VramLocks[/*VRAM_SIZE*/(16*1024*1024)/PAGE_SIZE];
 //maybe - probably not - just a locking mechanism
 //extern cMutex vramlist_lock;
-extern VLockedMemory vram;
 
 
 
@@ -416,8 +390,6 @@ extern vector<sched_list> sch_list;
 
 //./core/hw/sh4/interpr/sh4_interpreter.o
 extern int aica_schid;
-extern int rtc_schid;
-
 
 
 
@@ -767,37 +739,14 @@ bool dc_serialize(void **data, unsigned int *total_size)
 		return false ;
 
 	REICAST_S(version) ;
-	REICAST_S(aica_interr) ;
-	REICAST_S(aica_reg_L) ;
-	REICAST_S(e68k_out) ;
-	REICAST_S(e68k_reg_L) ;
-	REICAST_S(e68k_reg_M) ;
-
-	REICAST_SA(arm_Reg,RN_ARM_REG_COUNT);
-	REICAST_S(armIrqEnable);
-	REICAST_S(armFiqEnable);
-	REICAST_S(armMode);
-	REICAST_S(Arm7Enabled);
-	REICAST_SA(cpuBitsSet,256);
-	REICAST_S(intState);
-	REICAST_S(stopState);
-	REICAST_S(holdState);
+	
+	for (int i = 0; i < A0H_MAX; i++) {
+		sh4_cpu->GetA0Handler((Area0Hanlders)i)->serialize(data, total_size);
+	}
 
 	REICAST_S(dsp);
 
-	for ( i = 0 ; i < 3 ; i++)
-	{
-		REICAST_S(timers[i].c_step);
-		REICAST_S(timers[i].m_step);
-	}
-
-
-	REICAST_SA(aica_ram.data,aica_ram.size) ;
-	REICAST_S(VREG);
-	REICAST_S(ARMRST);
-	REICAST_S(rtc_EN);
-
-	REICAST_SA(aica_reg,0x8000);
+	REICAST_SA(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 
 
 
@@ -839,8 +788,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 
 	REICAST_SA(reply_11,16) ;
-
-	gdrom_serialize(data, total_size);
 
 
 	REICAST_SA(EEPROM,0x100);
@@ -890,7 +837,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(SFaceBaseColor);
 	REICAST_S(SFaceOffsColor);
 
-	REICAST_SA(vram.data, vram.size);
+	REICAST_SA(sh4_cpu->vram.data, sh4_cpu->vram.size);
 
 	REICAST_SA(OnChipRAM.data,OnChipRAM_SIZE);
 
@@ -954,17 +901,9 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(sch_list[aica_schid].start) ;
 	REICAST_S(sch_list[aica_schid].end) ;
 
-	REICAST_S(sch_list[rtc_schid].tag) ;
-	REICAST_S(sch_list[rtc_schid].start) ;
-	REICAST_S(sch_list[rtc_schid].end) ;
-
 	REICAST_S(sch_list[maple_schid].tag) ;
 	REICAST_S(sch_list[maple_schid].start) ;
 	REICAST_S(sch_list[maple_schid].end) ;
-
-	REICAST_S(sch_list[dma_sched_id].tag) ;
-	REICAST_S(sch_list[dma_sched_id].start) ;
-	REICAST_S(sch_list[dma_sched_id].end) ;
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -1082,39 +1021,13 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	int i = 0;
 	int j = 0;
 
-	REICAST_US(aica_interr) ;
-	REICAST_US(aica_reg_L) ;
-	REICAST_US(e68k_out) ;
-	REICAST_US(e68k_reg_L) ;
-	REICAST_US(e68k_reg_M) ;
-
-	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT);
-	REICAST_US(armIrqEnable);
-	REICAST_US(armFiqEnable);
-	REICAST_US(armMode);
-	REICAST_US(Arm7Enabled);
-	REICAST_USA(cpuBitsSet,256);
-	REICAST_US(intState);
-	REICAST_US(stopState);
-	REICAST_US(holdState);
+	for (int i = 0; i < A0H_MAX; i++) {
+		sh4_cpu->GetA0Handler((Area0Hanlders)i)->unserialize(data, total_size);
+	}
 
 	REICAST_US(dsp);
 
-	for ( i = 0 ; i < 3 ; i++)
-	{
-		REICAST_US(timers[i].c_step);
-		REICAST_US(timers[i].m_step);
-	}
-
-
-	REICAST_USA(aica_ram.data,aica_ram.size) ;
-	REICAST_US(VREG);
-	REICAST_US(ARMRST);
-	REICAST_US(rtc_EN);
-
-	REICAST_USA(aica_reg,0x8000);
-
-
+	REICAST_USA(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 
 	REICAST_USA(volume_lut,16);
 	REICAST_USA(tl_lut,256 + 768);
@@ -1162,7 +1075,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_USA(reply_11,16);
 
-	gdrom_unserialize(data, total_size);
 	REICAST_US(i); //LIBRETRO_S(GDROM_TICK);
 
 	REICAST_USA(EEPROM,0x100);
@@ -1234,7 +1146,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 			u32 buf[1024]; //u32 *ptr = detwiddle[i][j] ;
 			REICAST_US(buf); //LIBRETRO_SA(ptr,1024);
 		}
-	REICAST_USA(vram.data, vram.size);
+	REICAST_USA(sh4_cpu->vram.data, sh4_cpu->vram.size);
 
 	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
 
@@ -1292,17 +1204,9 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(sch_list[aica_schid].start) ;
 	REICAST_US(sch_list[aica_schid].end) ;
 
-	REICAST_US(sch_list[rtc_schid].tag) ;
-	REICAST_US(sch_list[rtc_schid].start) ;
-	REICAST_US(sch_list[rtc_schid].end) ;
-
 	REICAST_US(sch_list[maple_schid].tag) ;
 	REICAST_US(sch_list[maple_schid].start) ;
 	REICAST_US(sch_list[maple_schid].end) ;
-
-	REICAST_US(sch_list[dma_sched_id].tag) ;
-	REICAST_US(sch_list[dma_sched_id].start) ;
-	REICAST_US(sch_list[dma_sched_id].end) ;
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -1440,37 +1344,15 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		fprintf(stderr, "Save State version not supported: %d\n", version);
 		return false;
 	}
-	REICAST_US(aica_interr) ;
-	REICAST_US(aica_reg_L) ;
-	REICAST_US(e68k_out) ;
-	REICAST_US(e68k_reg_L) ;
-	REICAST_US(e68k_reg_M) ;
 
-	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT);
-	REICAST_US(armIrqEnable);
-	REICAST_US(armFiqEnable);
-	REICAST_US(armMode);
-	REICAST_US(Arm7Enabled);
-	REICAST_USA(cpuBitsSet,256);
-	REICAST_US(intState);
-	REICAST_US(stopState);
-	REICAST_US(holdState);
+	for (int i = 0; i < A0H_MAX; i++) {
+		sh4_cpu->GetA0Handler((Area0Hanlders)i)->unserialize(data, total_size);
+	}
 
 	REICAST_US(dsp);
 
-	for ( i = 0 ; i < 3 ; i++)
-	{
-		REICAST_US(timers[i].c_step);
-		REICAST_US(timers[i].m_step);
-	}
-
-	REICAST_USA(aica_ram.data,aica_ram.size) ;
-	REICAST_US(VREG);
-	REICAST_US(ARMRST);
-	REICAST_US(rtc_EN);
-
-	REICAST_USA(aica_reg,0x8000);
-
+	REICAST_USA(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
+	
 	REICAST_USA(volume_lut,16);
 	REICAST_USA(tl_lut,256 + 768);
 	REICAST_USA(AEG_ATT_SPS,64);
@@ -1507,10 +1389,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 
 	REICAST_USA(reply_11,16) ;
-
-	gdrom_unserialize(data, total_size);
-
-	
 
 
 	REICAST_USA(EEPROM,0x100);
@@ -1561,7 +1439,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	pal_needs_update = true;
 
-	REICAST_USA(vram.data, vram.size);
+	REICAST_USA(sh4_cpu->vram.data, sh4_cpu->vram.size);
 
 	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
 
@@ -1622,17 +1500,9 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(sch_list[aica_schid].start) ;
 	REICAST_US(sch_list[aica_schid].end) ;
 
-	REICAST_US(sch_list[rtc_schid].tag) ;
-	REICAST_US(sch_list[rtc_schid].start) ;
-	REICAST_US(sch_list[rtc_schid].end) ;
-
 	REICAST_US(sch_list[maple_schid].tag) ;
 	REICAST_US(sch_list[maple_schid].start) ;
 	REICAST_US(sch_list[maple_schid].end) ;
-
-	REICAST_US(sch_list[dma_sched_id].tag) ;
-	REICAST_US(sch_list[dma_sched_id].start) ;
-	REICAST_US(sch_list[dma_sched_id].end) ;
 
 	for (int i = 0; i < 3; i++)
 	{

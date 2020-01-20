@@ -21,6 +21,7 @@
 #include "profiler/profiler.h"
 #include "../dyna/blockmanager.h"
 #include "../sh4_sched.h"
+#include "hw/arm7/SoundCPU.h"
 
 #include "libswirl.h"
 
@@ -41,8 +42,7 @@ static s32 l;
 #define AICA_SAMPLE_CYCLES (SH4_MAIN_CLOCK/(44100/AICA_SAMPLE_GCM)*32)
 
 int aica_schid = -1;
-int rtc_schid = -1;
-
+int ds_schid = -1;
 //14336 Cycles
 
 const int AICA_TICK = 145124;
@@ -106,8 +106,8 @@ int AicaUpdate(void* psh4, int tag, int c, int j)
 
     //if (aica_sample_cycles>=AICA_SAMPLE_CYCLES)
     {
-        g_SoundCPU->Update(512 * 32);
-        g_AICA->Update(1 * 32);
+        sh4_cpu->GetA0H<SoundCPU>(A0H_SCPU)->Update(512 * 32);
+        sh4_cpu->GetA0H<AICA>(A0H_AICA)->Update(1 * 32);
         //aica_sample_cycles-=AICA_SAMPLE_CYCLES;
     }
 
@@ -117,8 +117,6 @@ int AicaUpdate(void* psh4, int tag, int c, int j)
 
 int DreamcastSecond(void* psh4, int tag, int c, int j)
 {
-    RealTimeClock++;
-
 #if 1 //HOST_OS==OS_WINDOWS
     prof_periodical();
 #endif
@@ -155,7 +153,7 @@ int UpdateSystem_INTC()
 }
 
 struct SH4IInterpreter : SuperH4Backend {
-
+    ~SH4IInterpreter() { Term(); }
     void Loop()
     {
         l = SH4_TIMESLICE;
@@ -211,7 +209,7 @@ MMIODevice* SuperH4_impl::GetA0Handler(Area0Hanlders slot) {
 }
 
 bool SuperH4_impl::setBackend(SuperH4Backends backend) {
-    if (sh4_backend) { sh4_backend->Term(); delete sh4_backend; sh4_backend = nullptr; }
+    if (sh4_backend) { delete sh4_backend; sh4_backend = nullptr; }
 
     switch (backend)
     {
@@ -326,8 +324,8 @@ bool SuperH4_impl::Init()
         aica_schid = sh4_sched_register(sh4_cpu, 0, &AicaUpdate);
         sh4_sched_request(aica_schid, AICA_TICK);
 
-        rtc_schid = sh4_sched_register(sh4_cpu, 0, &DreamcastSecond);
-        sh4_sched_request(rtc_schid, SH4_MAIN_CLOCK);
+        ds_schid = sh4_sched_register(sh4_cpu, 0, &DreamcastSecond);
+        sh4_sched_request(ds_schid, SH4_MAIN_CLOCK);
     }
     memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 
@@ -339,6 +337,10 @@ bool SuperH4_impl::Init()
 void SuperH4_impl::Term()
 {
     Stop();
+    
+    sh4_sched_cleanup();
+    if (sh4_backend) { delete sh4_backend; sh4_backend = nullptr; }
+
     printf("Sh4 Term\n");
 }
 

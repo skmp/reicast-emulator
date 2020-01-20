@@ -22,7 +22,7 @@
 #if HOST_CPU == CPU_ARM64 && FEAT_DSPREC != DYNAREC_NONE
 
 #include <sys/mman.h>
-#include "dsp.h"
+#include "dsp_backend.h"
 #include "hw/aica/aica_mem.h"
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
@@ -34,7 +34,7 @@ class DSPAssembler : public MacroAssembler
 public:
 	DSPAssembler(u8 *code_buffer, size_t size) : MacroAssembler(code_buffer, size), aica_ram_lit(NULL) {}
 
-	void Compile(struct dsp_t *DSP)
+	void Compile(u8* aica_ram, u32 aram_size, dsp_context_t *DSP)
 	{
 		this->DSP = DSP;
 		//printf("DSPAssembler::DSPCompile recompiling for arm64 at %p\n", GetBuffer()->GetStartAddress<void*>());
@@ -110,7 +110,7 @@ public:
 		{
 			u32 *mpro = &DSPData->MPRO[step * 4];
 			_INST op;
-			DecodeInst(mpro, &op);
+			DSPBackend::DecodeInst(mpro, &op);
 			const u32 COEF = step;
 
 			if (op.XSEL || op.YRL || (op.ADRL && op.SHIFT != 3))
@@ -315,11 +315,11 @@ public:
 				if (op.MRD)			// memory only allowed on odd. DoA inserts NOPs on even
 				{
 					//MEMVAL[(step + 2) & 3] = UNPACK(*(u16 *)&aica_ram[ADDR & ARAM_MASK]);
-					CalculateADDR(ADDR, op, ADRS_REG, MDEC_CT);
-					Ldr(x1, GetAicaRam());
+					CalculateADDR(aram_size, ADDR, op, ADRS_REG, MDEC_CT);
+					Ldr(x1, GetAicaRam(aica_ram));
 					MemOperand aram_op(x1, Register::GetXRegFromCode(ADDR.GetCode()));
 					Ldrh(w0, aram_op);
-					GenCallRuntime(UNPACK);
+					GenCallRuntime(DSPBackend::UNPACK);
 					Mov(w2, w0);
 					Str(w2, dsp_operand(DSP->MEMVAL, (step + 2) & 3));
 				}
@@ -327,11 +327,11 @@ public:
 				{
 					// *(u16 *)&aica_ram[ADDR & ARAM_MASK] = PACK(SHIFTED);
 					Mov(w0, SHIFTED);
-					GenCallRuntime(PACK);
+					GenCallRuntime(DSPBackend::PACK);
 					Mov(w2, w0);
 
-					CalculateADDR(ADDR, op, ADRS_REG, MDEC_CT);
-					Ldr(x1, GetAicaRam());
+					CalculateADDR(aram_size, ADDR, op, ADRS_REG, MDEC_CT);
+					Ldr(x1, GetAicaRam(aica_ram));
 					MemOperand aram_op(x1, Register::GetXRegFromCode(ADDR.GetCode()));
 					Strh(w2, aram_op);
 				}
@@ -395,7 +395,7 @@ public:
 private:
 	MemOperand dsp_operand(void *data, int index = 0, u32 element_size = 4)
 	{
-		ptrdiff_t offset = ((u8*)data - (u8*)DSP) - offsetof(dsp_t, TEMP) + index  * element_size;
+		ptrdiff_t offset = ((u8*)data - (u8*)DSP) - offsetof(dsp_context_t, TEMP) + index  * element_size;
 		if (offset < 16384)
 			return MemOperand(x28, offset);
 		Mov(x0, offset);
@@ -404,7 +404,7 @@ private:
 
 	MemOperand dsp_operand(void *data, const Register& offset_reg, u32 element_size = 4)
 	{
-		ptrdiff_t offset = ((u8*)data - (u8*)DSP) - offsetof(dsp_t, TEMP);
+		ptrdiff_t offset = ((u8*)data - (u8*)DSP) - offsetof(dsp_context_t, TEMP);
 		if (offset == 0)
 			return MemOperand(x28, offset_reg, LSL, element_size == 4 ? 2 : element_size == 2 ? 1 : 0);
 
@@ -433,7 +433,7 @@ private:
 		Bl(&function_label);
 	}
 
-	void CalculateADDR(const Register& ADDR, const _INST& op, const Register& ADRS_REG, const Register& MDEC_CT)
+	void CalculateADDR(u32 aram_size, const Register& ADDR, const _INST& op, const Register& ADRS_REG, const Register& MDEC_CT)
 	{
 		//u32 ADDR = DSPData->MADRS[op.MASA];
 		Ldr(ADDR, dspdata_operand(DSPData->MADRS, op.MASA));
@@ -464,15 +464,15 @@ private:
 		// RBP is constant for this program
 		Add(ADDR, ADDR, DSP->RBP);
 		// ADDR & ARAM_MASK
-		if (ARAM_SIZE == 2*1024*1024)
+		if (aram_size == 2*1024*1024)
 			Bfc(ADDR, 21, 11);
-		else if (ARAM_SIZE == 8*1024*1024)
+		else if (aram_size == 8*1024*1024)
 			Bfc(ADDR, 23, 9);
 		else
 			die("Unsupported ARAM_SIZE");
 	}
 
-	Literal<u8*> *GetAicaRam()
+	Literal<u8*> *GetAicaRam(u8* aica_ram)
 	{
 		if (aica_ram_lit == NULL)
 			aica_ram_lit = new Literal<u8*>(&aica_ram[0], GetLiteralPool(), RawLiteral::kDeletedOnPoolDestruction);
@@ -493,74 +493,46 @@ private:
 		}
 	}
 
-	struct dsp_t *DSP;
+	struct dsp_context_t* DSP;
 	Literal<u8*> *aica_ram_lit;
 };
 
-void dsp_recompile()
-{
-	dsp.Stopped = true;
-	for (int i = 127; i >= 0; --i)
-	{
-		u32 *IPtr = DSPData->MPRO + i * 4;
+struct DSPJITArm64 : DSPBackend {
+	u8* aica_ram;
+	u32 aram_size;
 
-		if (IPtr[0] != 0 || IPtr[1] != 0 || IPtr[2 ]!= 0 || IPtr[3] != 0)
+	DSPJITArm64(u8* aica_ram, u32 aram_size) : aica_ram(aica_ram), aram_size(aram_size) {
+		if (mprotect(dsp.DynCode, sizeof(dsp.DynCode), PROT_EXEC | PROT_READ | PROT_WRITE))
 		{
-			dsp.Stopped = false;
-			break;
+			perror("Couldn’t mprotect DSP code");
+			die("mprotect failed in arm64 dsp");
 		}
 	}
-	DSPAssembler assembler(&dsp.DynCode[0], sizeof(dsp.DynCode));
-	assembler.Compile(&dsp);
-}
 
-void dsp_init()
-{
-	memset(&dsp, 0, sizeof(dsp));
-	dsp.RBL = 0x8000 - 1;
-	dsp.RBP=0;
-	dsp.regs.MDEC_CT = 1;
-	dsp.dyndirty = true;
-
-	if (mprotect(dsp.DynCode, sizeof(dsp.DynCode), PROT_EXEC | PROT_READ | PROT_WRITE))
+	void Recompile()
 	{
-		perror("Couldn’t mprotect DSP code");
-		die("mprotect failed in arm64 dsp");
-	}
-}
+		dsp.Stopped = true;
+		for (int i = 127; i >= 0; --i)
+		{
+			u32* IPtr = DSPData->MPRO + i * 4;
 
-void dsp_step()
-{
-	if (dsp.dyndirty)
-	{
-		dsp.dyndirty = false;
-		dsp_recompile();
+			if (IPtr[0] != 0 || IPtr[1] != 0 || IPtr[2] != 0 || IPtr[3] != 0)
+			{
+				dsp.Stopped = false;
+				break;
+			}
+		}
+		DSPAssembler assembler(&dsp.DynCode[0], sizeof(dsp.DynCode));
+		assembler.Compile(aica_ram, aram_size, &dsp);
 	}
 
-#ifdef _ANDROID
-	((void (*)())&dsp.DynCode)();
-#endif
-}
+    void Step()
+    { 
+		((void (*)())&dsp.DynCode[0])();
+    }
+};
 
-void dsp_writenmem(u32 addr)
-{
-	if (addr >= 0x3400 && addr < 0x3C00)
-	{
-		dsp.dyndirty = true;
-	}
-	else if (addr >= 0x4000 && addr < 0x4400)
-	{
-		// TODO proper sharing of memory with sh4 through DSPData
-		memset(dsp.TEMP, 0, sizeof(dsp.TEMP));
-	}
-	else if (addr >= 0x4400 && addr < 0x4500)
-	{
-		// TODO proper sharing of memory with sh4 through DSPData
-		memset(dsp.MEMS, 0, sizeof(dsp.MEMS));
-	}
-}
-
-void dsp_term()
-{
+DSPBackend* DSPBackend::CreateJIT(u8* aica_ram, u32 aram_size) {
+	return new DSPJITArm64(aica_ram, aram_size);
 }
 #endif

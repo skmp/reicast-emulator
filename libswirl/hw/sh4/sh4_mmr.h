@@ -5,8 +5,8 @@
 
 //For mem mapping
 void map_area7_init();
-void map_area7(u32 base);
-void map_p4();
+void map_area7(SuperH4* sh4, u32 base);
+void map_p4(SuperH4* sh4);
 
 #define OnChipRAM_SIZE (0x2000)
 #define OnChipRAM_MASK (OnChipRAM_SIZE-1)

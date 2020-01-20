@@ -31,6 +31,8 @@
 #include "hw/maple/maple_if.h"
 #include "hw/modem/modem.h"
 #include "hw/holly/holly_intc.h"
+#include "hw/aica/aica_mmio.h"
+#include "hw/arm7/SoundCPU.h"
 
 #define fault_printf(...)
 
@@ -40,14 +42,8 @@
 
 unique_ptr<VirtualDreamcast> virtualDreamcast;
 unique_ptr<GDRomDisc> g_GDRDisc;
-unique_ptr<SoundCPU> g_SoundCPU;
-unique_ptr<AICA> g_AICA;
-MMIODevice* g_GDRomDrive;
 
 
-static unique_ptr<PowerVR> powerVR;
-
-void FlushCache();
 void LoadCustom();
 
 settings_t settings;
@@ -62,10 +58,9 @@ MMIODevice* Create_BiosDevice();
 MMIODevice* Create_FlashDevice();
 MMIODevice* Create_NaomiDevice(SystemBus* sb);
 SystemBus* Create_SystemBus();
-MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg);
+MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg, u8* vram);
 MMIODevice* Create_ExtDevice();
-MMIODevice* Create_AicaDevice(SystemBus* sb, ASIC* asic);
-MMIODevice* Create_RTCDevice();
+
 
 
 #if HOST_OS==OS_WINDOWS
@@ -119,10 +114,6 @@ int GetFile(char* szFileName)
 
 s32 plugins_Init()
 {
-    powerVR.reset(PowerVR::Create());
-
-    if (s32 rv = powerVR->Init())
-        return rv;
 
 #ifndef TARGET_DISPFRAME
     g_GDRDisc.reset(GDRomDisc::Create());
@@ -131,41 +122,19 @@ s32 plugins_Init()
         return rv;
 #endif
 
-    g_AICA.reset(AICA::Create());
-
-    if (s32 rv = g_AICA->Init())
-        return rv;
-
-    g_SoundCPU.reset(SoundCPU::Create());
-
-    if (s32 rv = g_SoundCPU->Init())
-        return rv;
-
     return rv_ok;
 }
 
 void plugins_Term()
 {
-    //term all plugins
-    g_SoundCPU->Term();
-    g_SoundCPU.reset(nullptr);
-
-    g_AICA->Term();
-
     g_GDRDisc->Term();
     g_GDRDisc.reset(nullptr);
-
-    powerVR->Term();
-    powerVR.reset(nullptr);
 }
 
 void plugins_Reset(bool Manual)
 {
     reios_reset();
-    powerVR->Reset(Manual);
     g_GDRDisc->Reset(Manual);
-    g_AICA->Reset(Manual);
-    g_SoundCPU->Reset(Manual);
     //libExtDevice_Reset(Manual);
 }
 
@@ -301,6 +270,9 @@ void InitSettings()
     settings.dynarec.idleskip = true;
     settings.dynarec.unstable_opt = false;
     settings.dynarec.safemode = true;
+    settings.dynarec.ScpuEnable = true;
+    settings.dynarec.DspEnable = true;
+
     settings.dreamcast.cable = 3;	// TV composite
     settings.dreamcast.region = 3;	// default
     settings.dreamcast.broadcast = 4;	// default
@@ -382,6 +354,9 @@ void LoadSettings(bool game_specific)
     settings.dynarec.unstable_opt = cfgLoadBool(config_section, "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
     settings.dynarec.safemode = cfgLoadBool(config_section, "Dynarec.safe-mode", settings.dynarec.safemode);
     settings.dynarec.SmcCheckLevel = (SmcCheckEnum)cfgLoadInt(config_section, "Dynarec.SmcCheckLevel", settings.dynarec.SmcCheckLevel);
+    settings.dynarec.ScpuEnable = cfgLoadInt(config_section, "Dynarec.ScpuEnabled", settings.dynarec.ScpuEnable);
+    settings.dynarec.DspEnable = cfgLoadInt(config_section, "Dynarec.DspEnabled", settings.dynarec.DspEnable);
+
     //disable_nvmem can't be loaded, because nvmem init is before cfg load
     settings.dreamcast.cable = cfgLoadInt(config_section, "Dreamcast.Cable", settings.dreamcast.cable);
     settings.dreamcast.region = cfgLoadInt(config_section, "Dreamcast.Region", settings.dreamcast.region);
@@ -516,6 +491,8 @@ void LoadCustom()
 void SaveSettings()
 {
     cfgSaveBool("config", "Dynarec.Enabled", settings.dynarec.Enable);
+    cfgSaveInt("config", "Dynarec.ScpuEnabled", settings.dynarec.ScpuEnable);
+    cfgSaveInt("config", "Dynarec.DspEnabled", settings.dynarec.DspEnable);
     cfgSaveInt("config", "Dreamcast.Cable", settings.dreamcast.cable);
     cfgSaveInt("config", "Dreamcast.Region", settings.dreamcast.region);
     cfgSaveInt("config", "Dreamcast.Broadcast", settings.dreamcast.broadcast);
@@ -621,16 +598,40 @@ void* dc_run(void*)
     luabindings_onstart();
 #endif
 
-    if (settings.dynarec.Enable)
+    if (settings.dynarec.Enable && sh4_cpu->setBackend(SH4BE_DYNAREC))
     {
-        sh4_cpu->setBackend(SH4BE_DYNAREC);
-        printf("Using Recompiler\n");
+        printf("Using MCPU Recompiler\n");
     }
     else
     {
         sh4_cpu->setBackend(SH4BE_INTERPRETER);
-        printf("Using Interpreter\n");
+        printf("Using MCPU Interpreter\n");
     }
+
+    auto scpu = sh4_cpu->GetA0H<SoundCPU>(A0H_SCPU);
+
+    if (settings.dynarec.ScpuEnable && scpu->setBackend(ARM7BE_DYNAREC))
+    {
+        printf("Using SCPU Recompiler\n");
+    }
+    else
+    {
+        scpu->setBackend(ARM7BE_INTERPRETER);
+        printf("Using SCPU Interpreter\n");
+    }
+
+    auto dsp = sh4_cpu->GetA0H<DSP>(A0H_DSP);
+
+    if (settings.dynarec.DspEnable && dsp->setBackend(DSPBE_DYNAREC))
+    {
+        printf("Using DSP Recompiler\n");
+    }
+    else
+    {
+        dsp->setBackend(DSPBE_INTERPRETER);
+        printf("Using DSP Interpreter\n");
+    }
+
     do {
         reset_requested = false;
 
@@ -659,19 +660,14 @@ void* dc_run(void*)
 cThread emu_thread(&dc_run, NULL);
 
 
-static bool init_done;
-
 int reicast_init(int argc, char* argv[])
 {
 #ifdef _WIN32
     setbuf(stdout, 0);
     setbuf(stderr, 0);
 #endif
-    if (!_vmem_reserve())
-    {
-        printf("Failed to alloc mem\n");
-        return -1;
-    }
+
+    // TODO: Move vmem_reserve back here
     if (ParseCommandLine(argc, argv))
     {
         return 69;
@@ -705,12 +701,16 @@ void reicast_ui_loop() {
 }
 
 void reicast_term() {
-    g_GUIRenderer.release();
+    g_GUIRenderer.reset();
 
-    g_GUI.release();
+    g_GUI.reset();
 }
 
 struct Dreamcast_impl : VirtualDreamcast {
+
+    ~Dreamcast_impl() {
+        Term();
+    }
 
     void Reset()
     {
@@ -719,52 +719,15 @@ struct Dreamcast_impl : VirtualDreamcast {
         mem_Reset((SuperH4_impl*)sh4_cpu, false);
 
         sh4_cpu->Reset(false);
+
+        sh4_cpu->vram.Zero();
+        sh4_cpu->aica_ram.Zero();
     }
 
     int StartGame(const char* path)
     {
         if (path != NULL)
             cfgSetVirtual("config", "image", path);
-
-        if (init_done)
-        {
-            InitSettings();
-            LoadSettings(false);
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-            if (!settings.bios.UseReios)
-#endif
-                if (!LoadRomFiles(get_readonly_data_path(DATA_PATH)))
-                    return -5;
-
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-            if (path == NULL)
-            {
-                // Boot BIOS
-                settings.imgread.LastImage[0] = 0;
-                g_GDRDisc->Swap(); // reload the gdrom file
-            }
-            else
-            {
-                g_GDRDisc->Swap(); // reload the gdrom file
-                LoadCustom();
-            }
-#elif DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-            if (!naomi_cart_SelectFile())
-                return -6;
-            LoadCustom();
-#if DC_PLATFORM == DC_PLATFORM_NAOMI
-            mcfg_CreateNAOMIJamma();
-#elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-            mcfg_CreateAtomisWaveControllers();
-#endif
-#endif
-
-            Reset();
-
-            Resume();
-
-            return 0;
-        }
 
         if (settings.bios.UseReios || !LoadRomFiles(get_readonly_data_path(DATA_PATH)))
         {
@@ -782,6 +745,8 @@ struct Dreamcast_impl : VirtualDreamcast {
             return -5;
 #endif
         }
+
+        rend_init_renderer(sh4_cpu->vram.data);
 
         if (plugins_Init())
             return -3;
@@ -802,7 +767,6 @@ struct Dreamcast_impl : VirtualDreamcast {
 #elif DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
         mcfg_CreateAtomisWaveControllers();
 #endif
-        init_done = true;
 
         Reset();
 
@@ -820,6 +784,12 @@ struct Dreamcast_impl : VirtualDreamcast {
     {
         sh4_cpu = SuperH4::Create();
 
+        if (!_vmem_reserve(&sh4_cpu->vram , &sh4_cpu->aica_ram, INTERNAL_ARAM_SIZE))
+        {
+            printf("Failed to alloc mem\n");
+            return false;
+        }
+
         MMIODevice* biosDevice = Create_BiosDevice();
         MMIODevice* flashDevice = Create_FlashDevice();
         
@@ -831,18 +801,21 @@ struct Dreamcast_impl : VirtualDreamcast {
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
             Create_NaomiDevice(systemBus)
 #else
-            (g_GDRomDrive = Create_GDRomDevice(systemBus, asic))
+            Create_GDRomDevice(systemBus, asic)
 #endif
         ;
 
         SPG* spg = SPG::Create(asic);
-        MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic, spg);
-        MMIODevice* aicaDevice = Create_AicaDevice(systemBus, asic);
+        MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic, spg, sh4_cpu->vram.data);
+        DSP* dsp = DSP::Create(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
+        AICA* aicaDevice = Create_AicaDevice(systemBus, asic, dsp, sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
+        SoundCPU* soundCPU = SoundCPU::Create(aicaDevice, sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
+
         MMIODevice* mapleDevice = Create_MapleDevice(systemBus, asic);
         
         MMIODevice* extDevice = Create_ExtDevice(); // or Create_Modem();
 
-        MMIODevice* modemDevice = extDevice;
+        MMIODevice* modemDevice = Create_ExtDevice(); // FIXME this is hacky
 
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
         modemDevice = Create_Modem(asic);
@@ -863,7 +836,9 @@ struct Dreamcast_impl : VirtualDreamcast {
         sh4_cpu->SetA0Handler(A0H_MAPLE, mapleDevice);
         sh4_cpu->SetA0Handler(A0H_ASIC, asic);
         sh4_cpu->SetA0Handler(A0H_SPG, spg);
-
+        sh4_cpu->SetA0Handler(A0H_SCPU, soundCPU);
+        sh4_cpu->SetA0Handler(A0H_DSP, dsp);
+        
         return sh4_cpu->Init();
     }
 
@@ -872,17 +847,20 @@ struct Dreamcast_impl : VirtualDreamcast {
     {
         sh4_cpu->Term();
         
-        g_GDRomDrive = nullptr;
-
 #if DC_PLATFORM != DC_PLATFORM_DREAMCAST
         naomi_cart_Close();
 #endif
         plugins_Term();
-        _vmem_release();
+        rend_term_renderer();
+
+        _vmem_release(&sh4_cpu->vram, &sh4_cpu->aica_ram);
 
         mcfg_DestroyDevices();
 
         SaveSettings();
+
+        delete sh4_cpu;
+        sh4_cpu = nullptr;
     }
 
     void Stop()
@@ -1025,9 +1003,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         data_ptr = data;
 
         sh4_cpu->ResetCache();
-#if FEAT_AREC == DYNAREC_JIT
-        FlushCache();
-#endif
+        sh4_cpu->GetA0H<SoundCPU>(A0H_SCPU)->InvalidateJitCache();
 
         if (!dc_unserialize(&data_ptr, &total_size))
         {
@@ -1038,7 +1014,6 @@ struct Dreamcast_impl : VirtualDreamcast {
         }
 
         mmu_set_state();
-        dsp.dyndirty = true;
         sh4_sched_ffts();
 
         // TODO: save state fix this
@@ -1057,7 +1032,7 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         u8* address = (u8*)addr;
 
-        if (VramLockedWrite(address))
+        if (VramLockedWrite(sh4_cpu->vram.data, address))
         {
             fault_printf("VramLockedWrite!\n");
 

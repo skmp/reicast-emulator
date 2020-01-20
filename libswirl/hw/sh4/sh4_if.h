@@ -250,15 +250,23 @@ enum Area0Hanlders {
 	A0H_MAPLE,
 	A0H_ASIC,
 	A0H_SPG,
+	A0H_SCPU,
+	A0H_DSP,
 
 	A0H_MAX
 };
 
 struct SuperH4 {
-    static SuperH4* Create();
+	VLockedMemory vram;
+	VLockedMemory aica_ram;
 
 	virtual void SetA0Handler(Area0Hanlders slot, MMIODevice* dev) = 0;
 	virtual MMIODevice* GetA0Handler(Area0Hanlders slot) = 0;
+
+	template<class T>
+	T* GetA0H(Area0Hanlders slot) {
+		return dynamic_cast<T*>(GetA0Handler(slot));
+	}
 
     virtual bool setBackend(SuperH4Backends backend) = 0;
 
@@ -276,9 +284,9 @@ struct SuperH4 {
 
     virtual void ResetCache() = 0;
 
-    //virtual void RaiseExeption(u32 ExeptionCode, u32 VectorAddress) = 0;
-
 	virtual ~SuperH4() { }
+
+	static SuperH4* Create();
 };
 
 struct Sh4Context
@@ -388,11 +396,10 @@ s32 rcb_poffs(T* ptr)
 
 struct SuperH4Backend {
     virtual bool Init() = 0;
-    virtual void Term() = 0;
     virtual void Loop() = 0;
     virtual void ClearCache() = 0;
 
-	virtual ~SuperH4Backend() { }
+	virtual ~SuperH4Backend() {  }
 };
 
 //Get an interface to sh4 interpreter

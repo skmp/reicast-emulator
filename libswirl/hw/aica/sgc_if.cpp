@@ -1,5 +1,6 @@
 #include "sgc_if.h"
 #include "dsp.h"
+#include "dsp_backend.h"
 #include "aica_mem.h"
 #include <math.h>
 #include <algorithm>
@@ -269,6 +270,7 @@ struct ChannelEx
 	static ChannelEx Chans[64];
 
 	ChannelCommonData* ccd;
+	u8* aica_ram;
 
 	u8* SA;
 	u32 CA;
@@ -358,11 +360,15 @@ struct ChannelEx
 
 	bool enabled;	//set to false to 'freeze' the channel
 	int ChanelNumber;
+	
+	void Setup(int cn, u8* ccd_raw, u8* aica_ram) {
+		ccd = (ChannelCommonData*)&ccd_raw[cn * 0x80];
+		ChanelNumber = cn;
+		this->aica_ram = aica_ram;
+	}
 
-	void Init(int cn,u8* ccd_raw)
+	void Init()
 	{
-		ccd=(ChannelCommonData*)&ccd_raw[cn*0x80];
-		ChanelNumber=cn;
 		for (u32 i=0;i<0x80;i++)
 			RegWrite(i);
 		disable();
@@ -529,7 +535,7 @@ struct ChannelEx
 		if (ccd->PCMS==0)
 			addr&=~1; //0: 16 bit
 		
-		SA=&aica_ram.data[addr];
+		SA=&aica_ram[addr];
 	}
 	//LSA,LEA
 	void UpdateLoop()
@@ -1086,8 +1092,13 @@ u32 CalcAegSteps(float t)
 	double steps=aeg_allsteps/scnt;
 	return (u32)(steps+0.5);
 }
-void sgc_Init()
+static u8* aica_reg;
+static u32 aram_mask;
+void sgc_Init(u8* aica_reg, u8* aica_ram, u32 aram_size)
 {
+	::aica_reg = aica_reg;
+	::aram_mask = aram_size - 1;
+
 	staticinitialise();
 
 	for (int i=0;i<16;i++)
@@ -1111,16 +1122,18 @@ void sgc_Init()
 		AEG_ATT_SPS[i]=CalcAegSteps(AEG_Attack_Time[i]);
 		AEG_DSR_SPS[i]=CalcAegSteps(AEG_DSR_Time[i]);
 	}
-	for (int i=0;i<64;i++)
-		Chans[i].Init(i,aica_reg);
-	dsp_out_vol=(DSP_OUT_VOL_REG*)&aica_reg[0x2000];
+	for (int i = 0; i < 64; i++)
+		Chans[i].Setup(i, aica_reg, aica_ram);
 
-	dsp_init();
+	for (int i = 0; i < 64; i++)
+		Chans[i].Init();
+
+	dsp_out_vol=(DSP_OUT_VOL_REG*)&aica_reg[0x2000];
 }
 
 void sgc_Term()
 {
-	dsp_term();
+
 }
 
 void WriteChannelReg8(u32 channel,u32 reg)
@@ -1169,7 +1182,7 @@ void WriteCommonReg8(u32 reg,u32 data)
 	if (reg==0x2804 || reg==0x2805)
 	{
 		dsp.RBL=(8192<<CommonData->RBL)-1;
-		dsp.RBP=( CommonData->RBP*2048&AICA_RAM_MASK);
+		dsp.RBP=( (CommonData->RBP*2048) & aram_mask);
 		dsp.dyndirty=true;
 	}
 }
@@ -1345,7 +1358,7 @@ void AICA_Sample()
 	}
 	//if (settings.aica.DSPEnabled)
 	{
-		dsp_step();
+		libDSP_Step();
 
 		for (int i=0;i<16;i++)
 		{
@@ -1406,7 +1419,7 @@ bool channel_serialize(void **data, unsigned int *total_size)
 
 	for ( i = 0 ; i < 64 ; i++)
 	{
-		addr = Chans[i].SA - (&(aica_ram.data[0])) ;
+		addr = Chans[i].SA - Chans[i].aica_ram ;
 		REICAST_S(addr);
 
 		REICAST_S(Chans[i].CA) ;
@@ -1461,7 +1474,7 @@ bool channel_unserialize(void **data, unsigned int *total_size)
 	for ( i = 0 ; i < 64 ; i++)
 	{
 		REICAST_US(addr);
-		Chans[i].SA = addr + (&(aica_ram.data[0])) ;
+		Chans[i].SA = addr + Chans[i].aica_ram;
 
 		REICAST_US(Chans[i].CA) ;
 		REICAST_US(Chans[i].step) ;

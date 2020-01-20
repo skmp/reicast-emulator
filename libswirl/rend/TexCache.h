@@ -629,8 +629,6 @@ void vramlock_Unlock_block(vram_block* block);
 vram_block* vramlock_Lock_32(u32 start_offset32,u32 end_offset32,void* userdata);
 vram_block* vramlock_Lock_64(u32 start_offset64,u32 end_offset64,void* userdata);
 
-void vram_LockedWrite(u32 offset64);
-
 void DePosterize(u32* source, u32* dest, int width, int height);
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);
-bool VramLockedWrite(u8* address);
+bool VramLockedWrite(u8* vram, u8* address);

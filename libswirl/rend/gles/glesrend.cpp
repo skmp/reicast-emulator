@@ -1005,14 +1005,14 @@ void OSD_DRAW(bool clear_screen)
     g_GUI->RenderOSD();
 }
 
-bool ProcessFrame(TA_context* ctx)
+bool ProcessFrame(u8* vram, TA_context* ctx)
 {
 	ctx->rend_inuse.Lock();
 
 	if (KillTex)
 		killtex();
 
-	if (!ta_parse_vdrc(ctx))
+	if (!ta_parse_vdrc(vram, ctx))
 		return false;
 
 	CollectCleanup();
@@ -1041,7 +1041,7 @@ static void upload_vertex_indices()
 	glCheck();
 }
 
-bool RenderFrame(bool isRenderFramebuffer)
+bool RenderFrame(u8* vram, bool isRenderFramebuffer)
 {
     if (isRenderFramebuffer) {
         RenderFramebuffer();
@@ -1487,15 +1487,18 @@ bool RenderFrame(bool isRenderFramebuffer)
 	KillTex=false;
 
 	if (is_rtt)
-		ReadRTTBuffer();
+		ReadRTTBuffer(vram);
 	else if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
 		render_output_framebuffer();
 
 	return !is_rtt;
 }
 
-struct glesrend : Renderer
+struct glesrend final : Renderer
 {
+	u8* vram;
+	glesrend(u8* vram) : vram(vram) { }
+
 	bool Init() { return gles_init(); }
 	void SetFBScale(float x, float y)
 	{
@@ -1511,9 +1514,9 @@ struct glesrend : Renderer
 		gles_term();
 	}
 
-	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
-	bool RenderPVR() { return RenderFrame(false); }
-    bool RenderFramebuffer() { return RenderFrame(true); }
+	bool Process(TA_context* ctx) { return ProcessFrame(vram, ctx); }
+	bool RenderPVR() { return RenderFrame(vram, false); }
+    bool RenderFramebuffer() { return RenderFrame(vram, true); }
 	bool RenderLastFrame() { return render_output_framebuffer(); }
 	void Present() { os_gl_swap(); glViewport(0, 0, screen_width, screen_height); }
 
@@ -1537,7 +1540,7 @@ struct glesrend : Renderer
 	}
 
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
-		return gl_GetTexture(tsp, tcw);
+		return gl_GetTexture(vram, tsp, tcw);
 	}
 };
 
@@ -1703,4 +1706,4 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 
 #include "hw/pvr/Renderer_if.h"
 
-static auto gles2rend = RegisterRendererBackend(rendererbackend_t{ "gles", "OpenGL ES 2/PC41 (Per Triangle Sort)", 1, []() { return (Renderer*) new glesrend(); } });
+static auto gles2rend = RegisterRendererBackend(rendererbackend_t{ "gles", "OpenGL ES 2/PC41 (Per Triangle Sort)", 1, [](u8* vram) { return (Renderer*) new glesrend(vram); } });

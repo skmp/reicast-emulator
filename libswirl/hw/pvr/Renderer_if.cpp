@@ -111,12 +111,12 @@ bool pend_rend = false;
 static std::map<const string, rendererbackend_t> backends;
 
 
-static void rend_create_renderer()
+static void rend_create_renderer(u8* vram)
 {
     if (backends.count(settings.pvr.backend))
     {
         printf("RendIF: renderer: %s\n", settings.pvr.backend.c_str());
-        renderer = backends[settings.pvr.backend].create();
+        renderer = backends[settings.pvr.backend].create(vram);
         renderer->backendInfo = backends[settings.pvr.backend];
     }
     else
@@ -125,13 +125,13 @@ static void rend_create_renderer()
 
         auto main = (*vec.begin());
 
-        renderer = main.create();
+        renderer = main.create(vram);
         renderer->backendInfo = main;
 
         if ((++vec.begin()) != vec.end())
         {
             auto fallback = (*(++vec.begin()));
-            fallback_renderer = fallback.create();
+            fallback_renderer = fallback.create(vram);
             fallback_renderer->backendInfo = fallback;
         }
 
@@ -143,10 +143,11 @@ static void rend_create_renderer()
     }
 }
 
-void rend_init_renderer()
+void rend_init_renderer(u8* vram)
 {
     if (renderer == NULL)
-        rend_create_renderer();
+        rend_create_renderer(vram);
+
     if (!renderer->Init())
     {
         printf("RendIF: Renderer %s did not initialize. Falling back to %s.\n",
@@ -183,13 +184,15 @@ void rend_term_renderer()
     }
 }
 
-static bool rend_frame(TA_context* ctx, bool draw_osd) {
+static bool rend_frame(u8* vram, TA_context* ctx, bool draw_osd) {
+#if FIXME
     if (dump_frame_switch) {
         char name[32];
         sprintf(name, "dcframe-%d", FrameCount);
         tactx_write_frame(name, _pvrrc, &vram[0]);
         dump_frame_switch = false;
     }
+#endif
 
     if (renderer_changed)
     {
@@ -198,7 +201,7 @@ static bool rend_frame(TA_context* ctx, bool draw_osd) {
     }
 
     if (renderer == nullptr) {
-        rend_init_renderer();
+        rend_init_renderer(vram);
     }
 
     bool proc = renderer->Process(ctx);
@@ -328,7 +331,7 @@ void rend_resize(int width, int height) {
 }
 
 
-void rend_start_render()
+void rend_start_render(u8* vram)
 {
 	render_called = true;
 	pend_rend = false;
@@ -385,7 +388,7 @@ void rend_start_render()
 			//tactx_Recycle(ctx); ctx = read_frame("frames/dcframe-SoA-intro-tr-autosort");
 			//printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
 			
-			FillBGP(ctx);
+			FillBGP(vram, ctx);
 			
 			ctx->rend.isRTT=is_rtt;
 
@@ -422,7 +425,7 @@ void rend_start_render()
                     
                     verify(_pvrrc == ctx);
                     
-                    bool do_swp = rend_frame(_pvrrc, true);
+                    bool do_swp = rend_frame(vram, _pvrrc, true);
 
                     if (_pvrrc->rend.isRTT)
                         re.Set();

@@ -38,7 +38,7 @@ else ifneq (,$(findstring arm64,$(platform)))
     USE_X11 := 1
     SUPPORT_GLX := 1
 
-    CFLAGS += -march=armv8-a -D TARGET_LINUX_ARMv8 -D TARGET_NO_AREC -fno-builtin-sqrtf
+    CFLAGS += -march=armv8-a -D TARGET_LINUX_ARMv8  -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
 
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)

@@ -246,9 +246,32 @@ namespace ARM
 	};
 
 
+	static u32 ARMImmid8r4_enc(u32 imm32)
+	{
+		for (int i = 0; i <= 30; i += 2)
+		{
+			u32 immv = (imm32 << i) | (imm32 >> (32 - i));
+			if (i == 0)
+				immv = imm32;
+			if (immv < 256)
+			{
+				return ((i / 2) << 8) | immv;
+			}
+		}
 
+		return -1;
+	}
 
+	static u32 ARMImmid8r4(u32 imm8r4)
+	{
+		u32 rv = ARMImmid8r4_enc(imm8r4);
 
+		verify(rv != -1);
+		return rv;
+	}
 
-
+	static bool is_i8r4(u32 i32)
+	{
+		return ARMImmid8r4_enc(i32) != -1;
+	}
 };

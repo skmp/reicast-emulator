@@ -59,7 +59,7 @@ bool IsOnSh4Ram(u32 addr)
 
 u32 dmacount=0;
 
-struct MapleDevice : MMIODevice {
+struct MapleDevice final : MMIODevice {
 
 	void SB_MSHTCL_Write(u32 addr, u32 data)
 	{
@@ -247,6 +247,56 @@ struct MapleDevice : MMIODevice {
 	{
 
 	}
+
+
+	void OnVblank()
+	{
+		if (SB_MDEN & 1)
+		{
+			if (SB_MDTSEL & 1)
+			{
+				if (maple_ddt_pending_reset)
+				{
+					//printf("DDT vblank ; reset pending\n");
+				}
+				else
+				{
+					//printf("DDT vblank\n");
+					SB_MDST = 1;
+					maple_DoDma();
+
+					SB_MDST = 0;
+					if ((SB_MSYS >> 12) & 1)
+					{
+						maple_ddt_pending_reset = true;
+					}
+				}
+			}
+			else
+			{
+				maple_ddt_pending_reset = false;
+			}
+		}
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+		handle_reconnect_periodical();
+#endif
+	}
+
+	u64 reconnect_time;
+	void handle_reconnect_periodical()
+	{
+		if (reconnect_time != 0 && reconnect_time <= sh4_sched_now64())
+		{
+			reconnect_time = 0;
+			mcfg_CreateDevices();
+		}
+	}
+
+	void ReconnectDevices()
+	{
+		mcfg_DestroyDevices();
+		reconnect_time = sh4_sched_now64() + SH4_MAIN_CLOCK / 10;
+	}
 };
 
 MMIODevice* Create_MapleDevice(SystemBus* sb, ASIC* asic) {
@@ -255,53 +305,10 @@ MMIODevice* Create_MapleDevice(SystemBus* sb, ASIC* asic) {
 
 void maple_vblank()
 {
-	if (SB_MDEN & 1)
-	{
-		if (SB_MDTSEL & 1)
-		{
-			if (maple_ddt_pending_reset)
-			{
-				//printf("DDT vblank ; reset pending\n");
-			}
-			else
-			{
-				//printf("DDT vblank\n");
-				SB_MDST = 1;
-				reinterpret_cast<MapleDevice*>(sh4_cpu->GetA0Handler(A0H_MAPLE))->maple_DoDma();
-
-				SB_MDST = 0;
-				if ((SB_MSYS >> 12) & 1)
-				{
-					maple_ddt_pending_reset = true;
-				}
-			}
-		}
-		else
-		{
-			maple_ddt_pending_reset = false;
-		}
-	}
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	maple_handle_reconnect();
-#endif
+	sh4_cpu->GetA0H<MapleDevice>(A0H_MAPLE)->OnVblank();
 }
-
-
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-static u64 reconnect_time;
 
 void maple_ReconnectDevices()
 {
-	mcfg_DestroyDevices();
-	reconnect_time = sh4_sched_now64() + SH4_MAIN_CLOCK / 10;
+	sh4_cpu->GetA0H<MapleDevice>(A0H_MAPLE)->ReconnectDevices();
 }
-
-static void maple_handle_reconnect()
-{
-	if (reconnect_time != 0 && reconnect_time <= sh4_sched_now64())
-	{
-		reconnect_time = 0;
-		mcfg_CreateDevices();
-	}
-}
-#endif

@@ -1507,7 +1507,7 @@ public:
 	}
 };
 
-static bool ClearZBeforePass(int pass_number);
+static bool ClearZBeforePass(u8* vram, int pass_number);
 
 FifoSplitter<0> TAFifo0;
 
@@ -1516,7 +1516,7 @@ int ta_parse_cnt = 0;
 /*
 	Also: gotta stage textures here
 */
-bool ta_parse_vdrc(TA_context* ctx)
+bool ta_parse_vdrc(u8* vram, TA_context* ctx)
 {
 	bool rv=false;
 	verify( vd_ctx == 0);
@@ -1550,8 +1550,8 @@ bool ta_parse_vdrc(TA_context* ctx)
 			render_pass->pt_count = vd_rc.global_param_pt.used();
 			render_pass->tr_count = vd_rc.global_param_tr.used();
 			render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
-			render_pass->autosort = UsingAutoSort(pass);
-			render_pass->z_clear = ClearZBeforePass(pass);
+			render_pass->autosort = UsingAutoSort(vram, pass);
+			render_pass->z_clear = ClearZBeforePass(vram, pass);
 		}
 		bool empty_context = true;
 		
@@ -1583,7 +1583,7 @@ bool ta_parse_vdrc(TA_context* ctx)
 
 //decode a vertex in the native pvr format
 //used for bg poly
-void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
+void decode_pvr_vertex(u8* vram, u32 base,u32 ptr,Vertex* cv)
 {
 	//ISP
 	//TSP
@@ -1592,9 +1592,9 @@ void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 	TSP tsp;
 	TCW tcw;
 
-	isp.full=vri(base);
-	tsp.full=vri(base+4);
-	tcw.full=vri(base+8);
+	isp.full=vri(vram, base);
+	tsp.full=vri(vram, base+4);
+	tcw.full=vri(vram, base+8);
 
 	//XYZ
 	//UV
@@ -1602,33 +1602,33 @@ void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 	//Offset Col
 
 	//XYZ are _allways_ there :)
-	cv->x=vrf(ptr);ptr+=4;
-	cv->y=vrf(ptr);ptr+=4;
-	cv->z=vrf(ptr);ptr+=4;
+	cv->x=vrf(vram, ptr);ptr+=4;
+	cv->y=vrf(vram, ptr);ptr+=4;
+	cv->z=vrf(vram, ptr);ptr+=4;
 
 	if (isp.Texture)
 	{	//Do texture , if any
 		if (isp.UV_16b)
 		{
-			u32 uv=vri(ptr);
+			u32 uv=vri(vram, ptr);
 			cv->u = f16((u16)uv);
 			cv->v = f16((u16)(uv >> 16));
 			ptr+=4;
 		}
 		else
 		{
-			cv->u=vrf(ptr);ptr+=4;
-			cv->v=vrf(ptr);ptr+=4;
+			cv->u=vrf(vram, ptr);ptr+=4;
+			cv->v=vrf(vram, ptr);ptr+=4;
 		}
 	}
 
 	//Color
-	u32 col=vri(ptr);ptr+=4;
+	u32 col=vri(vram, ptr);ptr+=4;
 	vert_packed_color_(cv->col,col);
 	if (isp.Offset)
 	{
 		//Intensity color (can be missing too ;p)
-		u32 col=vri(ptr);ptr+=4;
+		u32 col=vri(vram, ptr);ptr+=4;
 		vert_packed_color_(cv->spc,col);
 	}
 }
@@ -1663,7 +1663,7 @@ void vtxdec_init()
 
 static OnLoad ol_vtxdec(&vtxdec_init);
 
-void FillBGP(TA_context* ctx)
+void FillBGP(u8* vram, TA_context* ctx)
 {
 	
 	//Render pre-code
@@ -1698,9 +1698,9 @@ void FillBGP(TA_context* ctx)
 
 	bgpp->texid = -1;
 
-	bgpp->isp.full=vri(strip_base);
-	bgpp->tsp.full=vri(strip_base+4);
-	bgpp->tcw.full=vri(strip_base+8);
+	bgpp->isp.full=vri(vram, strip_base);
+	bgpp->tsp.full=vri(vram, strip_base+4);
+	bgpp->tcw.full=vri(vram, strip_base+8);
 	bgpp->tcw1.full = -1;
 	bgpp->tsp1.full = -1;
 	bgpp->texid1 = -1;
@@ -1720,7 +1720,7 @@ void FillBGP(TA_context* ctx)
 	float scale_x= (SCALER_CTL.hscale) ? 2.f:1.f;	//if AA hack the hacked pos value hacks
 	for (int i=0;i<3;i++)
 	{
-		decode_pvr_vertex(strip_base,vertex_ptr,&cv[i]);
+		decode_pvr_vertex(vram, strip_base,vertex_ptr,&cv[i]);
 		vertex_ptr+=strip_vs;
 	}
 
@@ -1745,12 +1745,12 @@ void FillBGP(TA_context* ctx)
 	cv[3].y=480+2000;
 }
 
-static RegionArrayTile getRegionTile(int pass_number)
+static RegionArrayTile getRegionTile(u8* vram, int pass_number)
 {
 	u32 addr = REGION_BASE;
 	bool empty_first_region = true;
 	for (int i = 0; i < 5; i++)
-		if ((vri(addr + (i + 1) * 4) & 0x80000000) == 0)
+		if ((vri(vram, addr + (i + 1) * 4) & 0x80000000) == 0)
 		{
 			empty_first_region = false;
 			break;
@@ -1759,12 +1759,12 @@ static RegionArrayTile getRegionTile(int pass_number)
 		addr += 6 * 4;
 
 	RegionArrayTile tile;
-	tile.full = vri(addr + pass_number * 6 * 4);
+	tile.full = vri(vram, addr + pass_number * 6 * 4);
 
 	return tile;
 }
 
-bool UsingAutoSort(int pass_number)
+bool UsingAutoSort(u8* vram, int pass_number)
 {
 	if (((FPU_PARAM_CFG >> 21) & 1) == 0)
 		// Type 1 region header type
@@ -1772,15 +1772,15 @@ bool UsingAutoSort(int pass_number)
 	else
 	{
 		// Type 2
-		RegionArrayTile tile = getRegionTile(pass_number);
+		RegionArrayTile tile = getRegionTile(vram, pass_number);
 
 		return !tile.PreSort;
 	}
 }
 
-static bool ClearZBeforePass(int pass_number)
+static bool ClearZBeforePass(u8* vram, int pass_number)
 {
-	RegionArrayTile tile = getRegionTile(pass_number);
+	RegionArrayTile tile = getRegionTile(vram, pass_number);
 
 	return !tile.NoZClear;
 }

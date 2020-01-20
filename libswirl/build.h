@@ -347,7 +347,7 @@
 	//DC : 16 mb ram, 8 mb vram, 2 mb aram, 2 mb bios, 128k flash
 	#define RAM_SIZE (16*1024*1024)
 	#define VRAM_SIZE (8*1024*1024)
-	#define ARAM_SIZE (2*1024*1024)
+	#define INTERNAL_ARAM_SIZE (2*1024*1024)
 	#define BIOS_SIZE (2*1024*1024)
 	#define FLASH_SIZE (128*1024)
 
@@ -362,7 +362,7 @@
 	//Devkit : 32 mb ram, 8? mb vram, 2? mb aram, 2? mb bios, ? flash
 	#define RAM_SIZE (32*1024*1024)
 	#define VRAM_SIZE (8*1024*1024)
-	#define ARAM_SIZE (2*1024*1024)
+	#define INTERNAL_ARAM_SIZE (2*1024*1024)
 	#define BIOS_SIZE (2*1024*1024)
 	#define FLASH_SIZE (128*1024)
 
@@ -375,7 +375,7 @@
 	//Naomi : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
 	#define RAM_SIZE (32*1024*1024)
 	#define VRAM_SIZE (16*1024*1024)
-	#define ARAM_SIZE (8*1024*1024)
+	#define INTERNAL_ARAM_SIZE (8*1024*1024)
 	#define BIOS_SIZE (2*1024*1024)
 	#define BBSRAM_SIZE (32*1024)
 
@@ -388,7 +388,7 @@
 	//Naomi2 : 32 mb ram, 16 mb vram, 8 mb aram, 2 mb bios, ? flash
 	#define RAM_SIZE (32*1024*1024)
 	#define VRAM_SIZE (16*1024*1024)
-	#define ARAM_SIZE (8*1024*1024)
+	#define INTERNAL_ARAM_SIZE (8*1024*1024)
 	#define BIOS_SIZE (2*1024*1024)
 	#define BBSRAM_SIZE (32*1024)
 
@@ -403,7 +403,7 @@
 	//Atomiswave : 16 mb ram, 8 mb vram, 8 mb aram, 128kb bios on flash, 128kb battery-backed ram
 	#define RAM_SIZE (16*1024*1024)
 	#define VRAM_SIZE (8*1024*1024)
-	#define ARAM_SIZE (8*1024*1024)
+	#define INTERNAL_ARAM_SIZE (8*1024*1024)
 	#define BIOS_SIZE (128*1024)
 	#define BBSRAM_SIZE (128*1024)
 
@@ -417,7 +417,6 @@
 
 #define RAM_MASK	(RAM_SIZE-1)
 #define VRAM_MASK	(VRAM_SIZE-1)
-#define ARAM_MASK	(ARAM_SIZE-1)
 #define BIOS_MASK	(BIOS_SIZE-1)
 
 #ifdef FLASH_SIZE

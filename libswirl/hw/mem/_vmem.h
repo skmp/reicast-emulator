@@ -95,8 +95,8 @@ void DYNACALL _vmem_WriteMem32(u32 Address,u32 data);
 void DYNACALL _vmem_WriteMem64(u32 Address,u64 data);
 
 //should be called at start up to ensure it will succeed :)
-bool _vmem_reserve();
-void _vmem_release();
+bool _vmem_reserve(VLockedMemory* vram, VLockedMemory* aica_ram, u32 aram_size);
+void _vmem_release(VLockedMemory* vram, VLockedMemory* aica_ram);
 
 //dynarec helpers
 void _vmem_get_ptrs(u32 sz,bool write,void*** vmap,void*** func);

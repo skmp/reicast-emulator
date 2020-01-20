@@ -181,21 +181,32 @@ endif()
 
 
 
-## Dynarec avail on x86,x64,arm and aarch64 in arm.32 compat 
-#
+## Main CPU Dynarec
 if((${HOST_CPU} EQUAL ${CPU_X86}) OR (${HOST_CPU} EQUAL ${CPU_X64}) OR
    (${HOST_CPU} EQUAL ${CPU_ARM}) OR (${HOST_CPU} EQUAL ${CPU_A64}))
-#
-  message("Dynarec Features Available")
-  
+  message("SH4 Dynarec Features Available")
   set(FEAT_SHREC  ${DYNAREC_JIT})
-  set(FEAT_AREC   ${DYNAREC_NONE})
-  set(FEAT_DSPREC ${DYNAREC_NONE})
+else()
+  message("SH4 Dynarec Features Missing")
+  set(FEAT_SHREC  ${DYNAREC_CPP})
+endif()
+
+# Sound CPU dynarec
+if((${HOST_CPU} EQUAL ${CPU_X86}) OR (${HOST_CPU} EQUAL ${CPU_A64}))
+  message("ARM7 Dynarec Features Available")
+  set(FEAT_AREC  ${DYNAREC_JIT})
+else()
+  message("ARM7 Dynarec Features Missing")
+  set(FEAT_AREC ${DYNAREC_NONE})
+endif()
+
+# Sound DSP dynarec
+if((${HOST_CPU} EQUAL ${CPU_X86}) OR (${HOST_CPU} EQUAL ${CPU_A64}))
+  message("DSP Dynarec Features Available")
+  set(FEAT_DSPREC  ${DYNAREC_JIT})
 #
 else()
-message("Dynarec Features Missing")
-  set(FEAT_SHREC  ${DYNAREC_CPP})
-  set(FEAT_AREC   ${DYNAREC_NONE})
+  message("DSP Dynarec Features Missing")
   set(FEAT_DSPREC ${DYNAREC_NONE})
 endif()
 
@@ -208,7 +219,6 @@ if(TARGET_NO_REC)
 endif()
 
 if(TARGET_NO_AREC)
-  set(FEAT_SHREC  ${DYNAREC_JIT})
   set(FEAT_AREC   ${DYNAREC_NONE})
   set(FEAT_DSPREC ${DYNAREC_NONE})
 endif()

@@ -437,6 +437,8 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 	return (void*)rv;
 }
 struct recSH4 : SuperH4Backend {
+	~recSH4() { Term(); }
+
     void ClearCache()
     {
         LastAddr = LastAddr_min;

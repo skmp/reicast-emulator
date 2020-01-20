@@ -598,7 +598,7 @@ static bool gles_init()
 	return true;
 }
 
-static bool RenderFrame(bool isRenderFramebuffer)
+static bool RenderFrame(u8* vram, bool isRenderFramebuffer)
 {
 	static int old_screen_width, old_screen_height, old_screen_scaling;
 	if (screen_width != old_screen_width || screen_height != old_screen_height || settings.rend.ScreenScaling != old_screen_scaling) {
@@ -924,7 +924,7 @@ static bool RenderFrame(bool isRenderFramebuffer)
 	KillTex=false;
 
 	if (is_rtt)
-		ReadRTTBuffer();
+		ReadRTTBuffer(vram);
 	else if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
 		gl4_render_output_framebuffer();
 
@@ -936,6 +936,10 @@ void termABuffer();
 
 struct gl4rend : Renderer
 {
+	u8* vram;
+
+	gl4rend(u8* vram) : vram(vram) { }
+
 	bool Init() { return gles_init(); }
 	void Resize(int w, int h)
 	{
@@ -1003,9 +1007,9 @@ struct gl4rend : Renderer
 	   gles_term();
 	}
 
-	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
-	bool RenderPVR() { return RenderFrame(false); }
-    bool RenderFramebuffer() { return RenderFrame(true); }
+	bool Process(TA_context* ctx) { return ProcessFrame(vram, ctx); }
+	bool RenderPVR() { return RenderFrame(vram, false); }
+    bool RenderFramebuffer() { return RenderFrame(vram, true); }
 	bool RenderLastFrame() { return gl4_render_output_framebuffer(); }
 
 	void Present() { os_gl_swap(); }
@@ -1019,10 +1023,10 @@ struct gl4rend : Renderer
 	}
 
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
-		return gl_GetTexture(tsp, tcw);
+		return gl_GetTexture(vram, tsp, tcw);
 	}
 };
 
 #include "hw/pvr/Renderer_if.h"
 
-static auto gl41rend = RegisterRendererBackend(rendererbackend_t{ "gl41", "OpenGL 4.1 (Per Pixel Sort)", 2, [](){ return (Renderer*) new gl4rend(); } });
+static auto gl41rend = RegisterRendererBackend(rendererbackend_t{ "gl41", "OpenGL 4.1 (Per Pixel Sort)", 2, [](u8* vram){ return (Renderer*) new gl4rend(vram); } });

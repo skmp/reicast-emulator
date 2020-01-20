@@ -43,7 +43,7 @@ class Assembler : public internal::AssemblerBase {
   bool allow_unpredictable_;
   bool allow_strongly_discouraged_;
 
- protected:
+ public:
   void EmitT32_16(uint16_t instr);
   void EmitT32_32(uint32_t instr);
   void EmitA32(uint32_t instr);

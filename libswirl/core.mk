@@ -41,7 +41,7 @@ ifdef X64_REC
 endif
 
 ifdef ARM32_REC
-    RZDCY_MODULES += jit/backend/arm32/ jit/emitter/arm/
+    RZDCY_MODULES += jit/backend/arm32/ jit/emitter/arm/ deps/vixl/ deps/vixl/aarch32/
 endif
 
 ifdef ARM64_REC

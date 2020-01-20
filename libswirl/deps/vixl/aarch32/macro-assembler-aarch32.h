@@ -411,6 +411,18 @@ class MacroAssembler : public Assembler, public MacroAssemblerInterface {
     pool_manager_.Bind(this, label, GetCursorOffset());
   }
 
+  void BindToOffset(Label* label, ptrdiff_t offset) {
+      // Assert that we have the correct buffer alignment.
+      if (IsUsingT32()) {
+          VIXL_ASSERT(GetBuffer()->Is16bitAligned());
+      }
+      else {
+          VIXL_ASSERT(GetBuffer()->Is32bitAligned());
+      }
+      
+      pool_manager_.Bind(this, label, GetCursorOffset() + offset);
+  }
+
   void RegisterLiteralReference(RawLiteral* literal) {
     if (literal->IsManuallyPlaced()) return;
     RegisterForwardReference(literal);

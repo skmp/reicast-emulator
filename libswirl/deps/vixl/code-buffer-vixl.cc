@@ -30,6 +30,7 @@ extern "C" {
 
 #include "code-buffer-vixl.h"
 #include "utils-vixl.h"
+#include <string.h>
 
 namespace vixl {
 
@@ -108,7 +109,7 @@ void CodeBuffer::EmitString(const char* string) {
   VIXL_ASSERT(HasSpaceFor(strlen(string) + 1));
   char* dst = reinterpret_cast<char*>(cursor_);
   dirty_ = true;
-  char* null_char = stpcpy(dst, string);
+  char* null_char = strcpy(dst, string) + strlen(string);
   cursor_ = reinterpret_cast<byte*>(null_char) + 1;
 }
 

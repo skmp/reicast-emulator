@@ -589,6 +589,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 				glcache.Enable(GL_DEPTH_TEST);
 				DrawList<ListType_Translucent, false, Pass::Color>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+				glcache.Disable(GL_BLEND);
 			}
 			glCheck();
 

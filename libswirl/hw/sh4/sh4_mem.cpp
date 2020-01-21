@@ -14,11 +14,6 @@
 #include "hw/mem/_vmem.h"
 #include "modules/mmu.h"
 
-
-
-//main system mem
-VLockedMemory mem_b;
-
 //MEM MAPPINNGG
 
 //AREA 1
@@ -64,7 +59,7 @@ void map_area3_init()
 void map_area3(SuperH4* sh4, u32 base)
 {
 	//32x2 or 16x4
-	_vmem_map_block_mirror(mem_b.data,0x0C | base,0x0F | base,RAM_SIZE);
+	_vmem_map_block_mirror(sh4->mram.data,0x0C | base,0x0F | base,RAM_SIZE);
 }
 
 //AREA 4
@@ -195,7 +190,7 @@ void mem_Reset(SuperH4_impl* sh4, bool Manual)
 	if (!Manual)
 	{
 		//fill mem w/ 0's
-		mem_b.Zero();
+		sh4->mram.Zero();
 	}
 
 	//Reset registers
@@ -313,7 +308,7 @@ u8* GetMemPtr(u32 Addr,u32 size)
 	switch ((Addr>>26)&0x7)
 	{
 		case 3:
-		return &mem_b[Addr & RAM_MASK];
+		return &sh4_cpu->mram[Addr & RAM_MASK];
 		
 		case 0:
 		case 1:

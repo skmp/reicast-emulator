@@ -482,7 +482,7 @@ struct recSH4 : SuperH4Backend {
         verify(rcb_noffs(&p_sh4rcb->cntx.interrupt_pend) == -148);
 
         if (_nvmem_enabled()) {
-            verify(mem_b.data == ((u8*)p_sh4rcb->sq_buffer + 512 + 0x0C000000));
+            verify(sh4_cpu->mram.data == ((u8*)p_sh4rcb->sq_buffer + 512 + 0x0C000000));
         }
 
         // Prepare some pointer to the pre-allocated code cache:

@@ -58,7 +58,7 @@ MMIODevice* Create_BiosDevice();
 MMIODevice* Create_FlashDevice();
 MMIODevice* Create_NaomiDevice(SystemBus* sb);
 SystemBus* Create_SystemBus();
-MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg, u8* vram);
+MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg, u8* mram, u8* vram);
 MMIODevice* Create_ExtDevice();
 
 
@@ -786,7 +786,7 @@ struct Dreamcast_impl : VirtualDreamcast {
     {
         sh4_cpu = SuperH4::Create();
 
-        if (!_vmem_reserve(&sh4_cpu->vram , &sh4_cpu->aica_ram, INTERNAL_ARAM_SIZE))
+        if (!_vmem_reserve(&sh4_cpu->mram, &sh4_cpu->vram , &sh4_cpu->aica_ram, INTERNAL_ARAM_SIZE))
         {
             printf("Failed to alloc mem\n");
             return false;
@@ -808,7 +808,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         ;
 
         SPG* spg = SPG::Create(asic);
-        MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic, spg, sh4_cpu->vram.data);
+        MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic, spg, sh4_cpu->mram.data, sh4_cpu->vram.data);
 
         aica_ctx.reset(AICA::CreateContext());
 
@@ -858,7 +858,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         plugins_Term();
         rend_term_renderer();
 
-        _vmem_release(&sh4_cpu->vram, &sh4_cpu->aica_ram);
+        _vmem_release(&sh4_cpu->mram, &sh4_cpu->vram, &sh4_cpu->aica_ram);
 
         mcfg_DestroyDevices();
 

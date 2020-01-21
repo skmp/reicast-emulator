@@ -87,7 +87,7 @@ struct PVRDevice : MMIODevice {
     }
     u32 calculate_start_link_addr()
     {
-        u8* base = &mem_b[SB_SDSTAW & RAM_MASK];
+        u8* base = &mram[SB_SDSTAW & RAM_MASK];
         u32 rv;
         if (SB_SDWLT == 0)
         {
@@ -116,7 +116,7 @@ struct PVRDevice : MMIODevice {
                 link_addr *= 32;
 
             u32 ea = (link_base_addr + link_addr) & RAM_MASK;
-            u32* ea_ptr = (u32*)&mem_b[ea];
+            u32* ea_ptr = (u32*)&mram[ea];
 
             link_addr = ea_ptr[0x1C >> 2];//Next link
             //transfer global param
@@ -146,9 +146,10 @@ struct PVRDevice : MMIODevice {
     SystemBus* sb;
     ASIC* asic;
     SPG* spg;
+    u8* mram;
     u8* vram;
 
-    PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg, u8* vram) : sb(sb), asic(asic), spg(spg), vram(vram) { }
+    PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg, u8* mram, u8* vram) : sb(sb), asic(asic), spg(spg), mram(mram), vram(vram) { }
 
     u32 Read(u32 addr, u32 sz)
     {
@@ -294,6 +295,6 @@ struct PVRDevice : MMIODevice {
 
 };
 
-MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg, u8* vram) {
-    return new PVRDevice(sb, asic, spg, vram);
+MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg, u8* mram, u8* vram) {
+    return new PVRDevice(sb, asic, spg, mram, vram);
 }

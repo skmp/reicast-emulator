@@ -1,9 +1,6 @@
 #pragma once
 #include "types.h"
 
-//main system mem
-extern VLockedMemory mem_b;
-
 #include "hw/mem/_vmem.h"
 #include "modules/mmu.h"
 

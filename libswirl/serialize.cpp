@@ -344,7 +344,6 @@ extern Array<RegisterStruct> SCIF; //SCIF : 10 registers
 
 
 //./core/hw/sh4/sh4_mem.o
-extern VLockedMemory mem_b;
 //one-time init
 //extern _vmem_handler area1_32b;
 //one-time init
@@ -850,7 +849,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	register_serialize(SCI, data, total_size) ;
 	register_serialize(SCIF, data, total_size) ;
 
-	REICAST_SA(mem_b.data, mem_b.size);
+	REICAST_SA(sh4_cpu->mram.data, sh4_cpu->mram.size);
 
 
 
@@ -1157,7 +1156,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	register_unserialize(SCI, data, total_size) ;
 	register_unserialize(SCIF, data, total_size) ;
 
-	REICAST_USA(mem_b.data, mem_b.size);
+	REICAST_USA(sh4_cpu->mram.data, sh4_cpu->mram.size);
 
 	REICAST_US(IRLPriority);
 	REICAST_USA(InterruptEnvId,32);
@@ -1448,7 +1447,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	register_unserialize(SCI, data, total_size) ;
 	register_unserialize(SCIF, data, total_size) ;
 
-	REICAST_USA(mem_b.data, mem_b.size);
+	REICAST_USA(sh4_cpu->mram.data, sh4_cpu->mram.size);
 
 	REICAST_US(IRLPriority);
 	REICAST_USA(InterruptEnvId,32);

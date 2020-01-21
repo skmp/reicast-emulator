@@ -257,6 +257,7 @@ enum Area0Hanlders {
 };
 
 struct SuperH4 {
+	VLockedMemory mram;
 	VLockedMemory vram;
 	VLockedMemory aica_ram;
 

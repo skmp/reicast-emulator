@@ -440,7 +440,7 @@ bool _vmem_bm_LockedWrite(u8* address) {
 	return false;
 }
 
-bool _vmem_reserve(VLockedMemory* vram, VLockedMemory* aica_ram, u32 aram_size) {
+bool _vmem_reserve(VLockedMemory* mram, VLockedMemory* vram, VLockedMemory* aica_ram, u32 aram_size) {
 	// TODO: Static assert?
 	verify((sizeof(Sh4RCB)%PAGE_SIZE)==0);
 
@@ -461,8 +461,8 @@ bool _vmem_reserve(VLockedMemory* vram, VLockedMemory* aica_ram, u32 aram_size) 
 		p_sh4rcb = (Sh4RCB*)malloc_pages(sizeof(Sh4RCB));
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
 
-		mem_b.size = RAM_SIZE;
-		mem_b.data = (u8*)malloc_pages(RAM_SIZE);
+		mram->size = RAM_SIZE;
+		mram->data = (u8*)malloc_pages(RAM_SIZE);
 
 		vram->size = VRAM_SIZE;
 		vram->data = (u8*)malloc_pages(VRAM_SIZE);
@@ -499,14 +499,14 @@ bool _vmem_reserve(VLockedMemory* vram, VLockedMemory* aica_ram, u32 aram_size) 
 		vram->size = VRAM_SIZE;
 		vram->data = &virt_ram_base[0x04000000];   // Points to first vram mirror (writtable and lockable)
 
-		mem_b.size = RAM_SIZE;
-		mem_b.data = &virt_ram_base[0x0C000000];   // Main memory, first mirror
+		mram->size = RAM_SIZE;
+		mram->data = &virt_ram_base[0x0C000000];   // Main memory, first mirror
 	}
 
 	// Clear out memory
 	aica_ram->Zero();
 	vram->Zero();
-	mem_b.Zero();
+	mram->Zero();
 
 	return true;
 }
@@ -514,14 +514,14 @@ bool _vmem_reserve(VLockedMemory* vram, VLockedMemory* aica_ram, u32 aram_size) 
 #define freedefptr(x) \
 	if (x) { free(x); x = NULL; }
 
-void _vmem_release(VLockedMemory* vram, VLockedMemory* aica_ram) {
+void _vmem_release(VLockedMemory* mram, VLockedMemory* vram, VLockedMemory* aica_ram) {
 	if (virt_ram_base)
 		vmem_platform_destroy();
 	else {
 		freedefptr(p_sh4rcb);
 		freedefptr(vram->data);
 		freedefptr(aica_ram->data);
-		freedefptr(mem_b.data);
+		freedefptr(mram->data);
 	}
 }
 

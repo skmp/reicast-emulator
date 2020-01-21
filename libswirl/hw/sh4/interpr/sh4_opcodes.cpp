@@ -1262,7 +1262,7 @@ extern "C" void DYNACALL do_sqw_nommu_area_3(u32 dst,u8* sqb)
 
 extern "C" void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst,u8* sqb)
 {
-	u8* pmem = mem_b.data;
+	u8* pmem = sh4_cpu->mram.data;
 
 	memcpy((u64*)&pmem[dst&(RAM_MASK-0x1F)],(u64*)&sqb[dst & 0x20],32);
 }

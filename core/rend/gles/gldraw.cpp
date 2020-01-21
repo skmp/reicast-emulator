@@ -148,7 +148,7 @@ static void SetTextureRepeatMode(GLuint dir, u32 clamp, u32 mirror)
 template <u32 Type, bool SortingEnabled>
 __forceinline static void SetGPState(const PolyParam* gp,u32 cflip=0)
 {
-	if (gp->pcw.Texture && gp->tsp.FilterMode > 1 && Type != ListType_Punch_Through)
+	if (gp->pcw.Texture && gp->tsp.FilterMode > 1 && Type != ListType_Punch_Through && gp->tcw.MipMapped == 1)
 	{
 		ShaderUniforms.trilinear_alpha = 0.25 * (gp->tsp.MipMapD & 0x3);
 		if (gp->tsp.FilterMode == 2)

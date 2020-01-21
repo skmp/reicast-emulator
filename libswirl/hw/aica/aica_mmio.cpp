@@ -17,80 +17,6 @@
 
 CommonData_struct* CommonData;
 DSPData_struct* DSPData;
-InterruptInfo* MCIEB;
-InterruptInfo* MCIPD;
-InterruptInfo* MCIRE;
-InterruptInfo* SCIEB;
-InterruptInfo* SCIPD;
-InterruptInfo* SCIRE;
-
-//Interrupts
-//arm side
-u32 GetL(u32 witch)
-{
-	if (witch > 7)
-		witch = 7; //higher bits share bit 7
-
-	u32 bit = 1 << witch;
-	u32 rv = 0;
-
-	if (CommonData->SCILV0 & bit)
-		rv = 1;
-
-	if (CommonData->SCILV1 & bit)
-		rv |= 2;
-
-	if (CommonData->SCILV2 & bit)
-		rv |= 4;
-
-	return rv;
-}
-void update_arm_interrupts()
-{
-	u32 p_ints = SCIEB->full & SCIPD->full;
-
-	u32 Lval = 0;
-	if (p_ints)
-	{
-		u32 bit_value = 1;//first bit
-		//scan all interrupts , lo to hi bit.I assume low bit ints have higher priority over others
-		for (u32 i = 0; i < 11; i++)
-		{
-			if (p_ints & bit_value)
-			{
-				//for the first one , Set the L reg & exit
-				Lval = GetL(i);
-				break;
-			}
-			bit_value <<= 1; //next bit
-		}
-	}
-
-	libARM_InterruptChange(p_ints, Lval);
-}
-
-//sh4 side
-void UpdateSh4Ints()
-{
-	u32 p_ints = MCIEB->full & MCIPD->full;
-	if (p_ints)
-	{
-		if ((SB_ISTEXT & SH4_IRQ_BIT) == 0)
-		{
-			//if no interrupt is already pending then raise one :)
-			asic_RaiseInterrupt(holly_SPU_IRQ);
-		}
-	}
-	else
-	{
-		if (SB_ISTEXT & SH4_IRQ_BIT)
-		{
-			asic_CancelInterrupt(holly_SPU_IRQ);
-		}
-	}
-
-}
-
 
 #include "hw/sh4/sh4_mmio.h"
 
@@ -218,6 +144,79 @@ struct AicaDevice final : AICA {
 
 	u8 aica_reg[0x8000];
 
+	InterruptInfo* MCIEB;
+	InterruptInfo* MCIPD;
+	InterruptInfo* MCIRE;
+	InterruptInfo* SCIEB;
+	InterruptInfo* SCIPD;
+	InterruptInfo* SCIRE;
+
+	//Interrupts
+	//arm side
+	u32 GetL(u32 witch)
+	{
+		if (witch > 7)
+			witch = 7; //higher bits share bit 7
+
+		u32 bit = 1 << witch;
+		u32 rv = 0;
+
+		if (CommonData->SCILV0 & bit)
+			rv = 1;
+
+		if (CommonData->SCILV1 & bit)
+			rv |= 2;
+
+		if (CommonData->SCILV2 & bit)
+			rv |= 4;
+
+		return rv;
+	}
+	void update_arm_interrupts()
+	{
+		u32 p_ints = SCIEB->full & SCIPD->full;
+
+		u32 Lval = 0;
+		if (p_ints)
+		{
+			u32 bit_value = 1;//first bit
+			//scan all interrupts , lo to hi bit.I assume low bit ints have higher priority over others
+			for (u32 i = 0; i < 11; i++)
+			{
+				if (p_ints & bit_value)
+				{
+					//for the first one , Set the L reg & exit
+					Lval = GetL(i);
+					break;
+				}
+				bit_value <<= 1; //next bit
+			}
+		}
+
+		libARM_InterruptChange(p_ints, Lval);
+	}
+
+	//sh4 side
+	void UpdateSh4Ints()
+	{
+		u32 p_ints = MCIEB->full & MCIPD->full;
+		if (p_ints)
+		{
+			if ((SB_ISTEXT & SH4_IRQ_BIT) == 0)
+			{
+				//if no interrupt is already pending then raise one :)
+				asic_RaiseInterrupt(holly_SPU_IRQ);
+			}
+		}
+		else
+		{
+			if (SB_ISTEXT & SH4_IRQ_BIT)
+			{
+				asic_CancelInterrupt(holly_SPU_IRQ);
+			}
+		}
+
+	}
 
 	//Memory i/o
 	template<u32 sz>
@@ -679,7 +678,7 @@ struct AicaDevice final : AICA {
 		sgc_Init(aica_reg, aica_ram, aram_size);
 
 		for (int i = 0; i < 3; i++)
-			timers[i].Init(aica_reg, i);
+			timers[i].Init(aica_reg, MCIPD, SCIPD, i);
 
 		//NRM
 		//6

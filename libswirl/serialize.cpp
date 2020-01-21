@@ -744,8 +744,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 		sh4_cpu->GetA0Handler((Area0Hanlders)i)->serialize(data, total_size);
 	}
 
-	REICAST_S(dsp);
-
 	REICAST_SA(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 
 
@@ -1024,8 +1022,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	for (int i = 0; i < A0H_MAX; i++) {
 		sh4_cpu->GetA0Handler((Area0Hanlders)i)->unserialize(data, total_size);
 	}
-
-	REICAST_US(dsp);
 
 	REICAST_USA(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 
@@ -1348,8 +1344,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	for (int i = 0; i < A0H_MAX; i++) {
 		sh4_cpu->GetA0Handler((Area0Hanlders)i)->unserialize(data, total_size);
 	}
-
-	REICAST_US(dsp);
 
 	REICAST_USA(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 	

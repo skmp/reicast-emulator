@@ -15,8 +15,11 @@
 struct DSPInterpreter_impl : DSPBackend {
 	u8* aica_ram;
 	u32 aram_mask;
+	DSPData_struct* DSPData;
+	dsp_context_t* dsp;
 
-	DSPInterpreter_impl(u8* aica_ram, u32 aram_size) : aica_ram(aica_ram), aram_mask(aram_size - 1) { }
+	DSPInterpreter_impl(DSPData_struct* DSPData, dsp_context_t* dsp, u8* aica_ram, u32 aram_size) 
+		: DSPData(DSPData), dsp(dsp), aica_ram(aica_ram), aram_mask(aram_size - 1) { }
 
 	void AICADSP_Step(struct dsp_context_t* DSP)
 	{
@@ -291,8 +294,8 @@ struct DSPInterpreter_impl : DSPBackend {
 
 		}
 		--DSP->regs.MDEC_CT;
-		if (dsp.regs.MDEC_CT == 0)
-			dsp.regs.MDEC_CT = dsp.RBL + 1;			// RBL is ring buffer length - 1
+		if (DSP->regs.MDEC_CT == 0)
+			DSP->regs.MDEC_CT = DSP->RBL + 1;			// RBL is ring buffer length - 1
 
 	//	memset(DSP->MIXS, 0, sizeof(DSP->MIXS));
 	//  if(f)
@@ -301,14 +304,14 @@ struct DSPInterpreter_impl : DSPBackend {
 
 	void Recompile ()
 	{
-		dsp.Stopped = 1;
+		dsp->Stopped = 1;
 		for (int i = 127; i >= 0; --i)
 		{
 			u32* IPtr = DSPData->MPRO + i * 4;
 
 			if (IPtr[0] != 0 || IPtr[1] != 0 || IPtr[2] != 0 || IPtr[3] != 0)
 			{
-				dsp.Stopped = 0;
+				dsp->Stopped = 0;
 				//printf("DSP: starting %d steps\n", i + 1);
 
 				break;
@@ -318,10 +321,10 @@ struct DSPInterpreter_impl : DSPBackend {
 
 	void Step()
 	{
-		AICADSP_Step(&dsp);
+		AICADSP_Step(dsp);
 	}
 };
 
-DSPBackend* DSPBackend::CreateInterpreter(u8* aica_ram, u32 aram_size) {
-	return new DSPInterpreter_impl(aica_ram, aram_size);
+DSPBackend* DSPBackend::CreateInterpreter(DSPData_struct* DSPData, dsp_context_t* dsp, u8* aica_ram, u32 aram_size) {
+	return new DSPInterpreter_impl(DSPData, dsp, aica_ram, aram_size);
 }

@@ -7,7 +7,9 @@ void AICA_Sample32();
 //u32 ReadChannelReg(u32 channel,u32 reg);
 void WriteChannelReg8(u32 channel,u32 reg);
 
-void sgc_Init(u8* aica_reg, u8* aica_ram, u32 aram_size);
+struct dsp_context_t;
+
+void sgc_Init(u8* aica_reg, dsp_context_t* dsp, u8* aica_ram, u32 aram_size);
 void sgc_Term();
 
 union fp_22_10

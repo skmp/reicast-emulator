@@ -15,9 +15,6 @@
 
 #define SH4_IRQ_BIT (1<<(holly_SPU_IRQ&255))
 
-CommonData_struct* CommonData;
-DSPData_struct* DSPData;
-
 #include "hw/sh4/sh4_mmio.h"
 
 #include "types.h"
@@ -126,7 +123,7 @@ struct AICARTC_impl : MMIODevice
 	}
 };
 
-MMIODevice* Create_RTCDevice() {
+MMIODevice* AICA::CreateRTC() {
 	return new AICARTC_impl();
 }
 
@@ -142,7 +139,10 @@ struct AicaDevice final : AICA {
 
 	AicaTimer timers[3];
 
-	u8 aica_reg[0x8000];
+	u8* aica_reg;
+
+	CommonData_struct* CommonData;
+	DSPData_struct* DSPData;
 
 	InterruptInfo* MCIEB;
 	InterruptInfo* MCIPD;
@@ -590,7 +590,7 @@ struct AicaDevice final : AICA {
 	u8* aica_ram;
 	u32 aram_size;
 
-	AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_ram, u32 aram_size) : sb(sb), asic(asic), dsp(dsp), aica_ram(aica_ram), aram_size(aram_size) { }
+	AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_reg, u8* aica_ram, u32 aram_size) : sb(sb), asic(asic), dsp(dsp), aica_reg(aica_reg), aica_ram(aica_ram), aram_size(aram_size) { }
 
 	u32 Read(u32 addr, u32 sz) {
 		addr &= 0x7FFF;
@@ -675,7 +675,7 @@ struct AicaDevice final : AICA {
 		MCIPD = (InterruptInfo*)&aica_reg[0x28B4 + 4];
 		MCIRE = (InterruptInfo*)&aica_reg[0x28B4 + 8];
 
-		sgc_Init(aica_reg, aica_ram, aram_size);
+		sgc_Init(aica_reg, dsp->GetDspContext(), aica_ram, aram_size);
 
 		for (int i = 0; i < 3; i++)
 			timers[i].Init(aica_reg, MCIPD, SCIPD, i);
@@ -770,8 +770,8 @@ struct AicaDevice final : AICA {
 
 };
 
-AICA* Create_AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_ram, u32 aram_size) {
-	return new AicaDevice(sb, asic, dsp, aica_ram, aram_size);
+AICA* AICA::Create(SystemBus* sb, ASIC* asic, DSP* dsp, AicaContext* aica_ctx, u8* aica_ram, u32 aram_size) {
+	return new AicaDevice(sb, asic, dsp, aica_ctx->regs, aica_ram, aram_size);
 }
 
 u32 libAICA_ReadReg(u32 addr, u32 sz) {

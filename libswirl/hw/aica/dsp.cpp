@@ -1,3 +1,4 @@
+#include "aica_mmio.h"
 #include "dsp.h"
 #include "dsp_backend.h"
 #include "aica_mem.h"
@@ -90,11 +91,17 @@ void DSPBackend::DecodeInst(u32* IPtr, _INST* i)
 struct DSP_impl final : DSP {
 	u8* aica_ram;
 	u32 aram_size;
+	DSPData_struct* DSPData;
 
 	unique_ptr<DSPBackend> backend;
 
-	DSP_impl(u8* aica_ram, u32 aram_size) : aica_ram(aica_ram), aram_size(aram_size) {
+	DSP_impl(u8* aica_reg, u8* aica_ram, u32 aram_size) : aica_ram(aica_ram), aram_size(aram_size) {
+		
+		DSPData = (DSPData_struct*)&aica_reg[0x3000];
+		
 		setBackend(DSPBE_INTERPRETER);
+
+		
 	}
 
 	bool Init() {
@@ -142,20 +149,32 @@ struct DSP_impl final : DSP {
 		dsp.dyndirty = true;
 
 		if (type == DSPBE_INTERPRETER) {
-			backend.reset(DSPBackend::CreateInterpreter(aica_ram, aram_size));
+			backend.reset(DSPBackend::CreateInterpreter(DSPData, &dsp, aica_ram, aram_size));
 			return true;
 		}
 #if FEAT_DSPREC == DYNAREC_JIT
 		else if (type == DSPBE_DYNAREC) {
-			backend.reset(DSPBackend::CreateJIT(aica_ram, aram_size));
+			backend.reset(DSPBackend::CreateJIT(DSPData, &dsp, aica_ram, aram_size));
 			return true;
 		}
 #endif
 
 		return false;
 	}
+
+	dsp_context_t* GetDspContext() {
+		return &dsp;
+	}
+
+	void serialize(void** data, unsigned int* total_size) {
+		REICAST_S(dsp);
+	}
+
+	void unserialize(void** data, unsigned int* total_size) {
+		REICAST_US(dsp);
+	}
 };
 
-DSP* DSP::Create(u8* aica_ram, u32 aram_size) {
-	return new DSP_impl(aica_ram, aram_size);
+DSP* DSP::Create(AicaContext* aica_ctx, u8* aica_ram, u32 aram_size) {
+	return new DSP_impl(aica_ctx->regs, aica_ram, aram_size);
 }

@@ -708,6 +708,8 @@ void reicast_term() {
 
 struct Dreamcast_impl : VirtualDreamcast {
 
+    unique_ptr<AicaContext> aica_ctx;
+
     ~Dreamcast_impl() {
         Term();
     }
@@ -807,8 +809,11 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         SPG* spg = SPG::Create(asic);
         MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic, spg, sh4_cpu->vram.data);
-        DSP* dsp = DSP::Create(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
-        AICA* aicaDevice = Create_AicaDevice(systemBus, asic, dsp, sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
+
+        aica_ctx.reset(AICA::CreateContext());
+
+        DSP* dsp = DSP::Create(aica_ctx.get(), sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
+        AICA* aicaDevice = AICA::Create(systemBus, asic, dsp, aica_ctx.get(), sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
         SoundCPU* soundCPU = SoundCPU::Create(aicaDevice, sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 
         MMIODevice* mapleDevice = Create_MapleDevice(systemBus, asic);
@@ -821,7 +826,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         modemDevice = Create_Modem(asic);
 #endif
 
-        MMIODevice* rtcDevice = Create_RTCDevice();
+        MMIODevice* rtcDevice = AICA::CreateRTC();
 
         sh4_cpu->SetA0Handler(A0H_BIOS, biosDevice);
         sh4_cpu->SetA0Handler(A0H_FLASH, flashDevice);

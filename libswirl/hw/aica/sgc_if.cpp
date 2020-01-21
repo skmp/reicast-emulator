@@ -95,7 +95,10 @@ void AICA_Sample();
 }
 s16 pl=0,pr=0;
 
-DSP_OUT_VOL_REG* dsp_out_vol;
+static DSP_OUT_VOL_REG* dsp_out_vol;
+static CommonData_struct* CommonData;
+static DSPData_struct* DSPData;
+static dsp_context_t* dsp;
 
 #pragma pack(push,1)
 //All regs are 16b , aligned to 32b (upper bits 0?)
@@ -620,7 +623,7 @@ struct ChannelEx
 	//ISEL
 	void UpdateDSPMIX()
 	{
-		VolMix.DSPOut = &dsp.MIXS[ccd->ISEL];
+		VolMix.DSPOut = &dsp->MIXS[ccd->ISEL];
 	}
 	//TL,DISDL,DIPAN,IMXL
 	void UpdateAtts()
@@ -1094,10 +1097,14 @@ u32 CalcAegSteps(float t)
 }
 static u8* aica_reg;
 static u32 aram_mask;
-void sgc_Init(u8* aica_reg, u8* aica_ram, u32 aram_size)
+void sgc_Init(u8* aica_reg, dsp_context_t* dsp, u8* aica_ram, u32 aram_size)
 {
 	::aica_reg = aica_reg;
 	::aram_mask = aram_size - 1;
+	dsp_out_vol = (DSP_OUT_VOL_REG*)&aica_reg[0x2000];
+	CommonData = (CommonData_struct*)&aica_reg[0x2800];
+	DSPData = (DSPData_struct*)&aica_reg[0x3000];
+	::dsp = dsp;
 
 	staticinitialise();
 
@@ -1127,8 +1134,6 @@ void sgc_Init(u8* aica_reg, u8* aica_ram, u32 aram_size)
 
 	for (int i = 0; i < 64; i++)
 		Chans[i].Init();
-
-	dsp_out_vol=(DSP_OUT_VOL_REG*)&aica_reg[0x2000];
 }
 
 void sgc_Term()
@@ -1181,9 +1186,9 @@ void WriteCommonReg8(u32 reg,u32 data)
 	WriteMemArr(aica_reg,reg,data,1);
 	if (reg==0x2804 || reg==0x2805)
 	{
-		dsp.RBL=(8192<<CommonData->RBL)-1;
-		dsp.RBP=( (CommonData->RBP*2048) & aram_mask);
-		dsp.dyndirty=true;
+		dsp->RBL=(8192<<CommonData->RBL)-1;
+		dsp->RBP=( (CommonData->RBP*2048) & aram_mask);
+		dsp->dyndirty=true;
 	}
 }
 
@@ -1321,7 +1326,7 @@ void AICA_Sample()
 	SampleType mixl,mixr;
 	mixl = 0;
 	mixr = 0;
-	memset(dsp.MIXS,0,sizeof(dsp.MIXS));
+	memset(dsp->MIXS,0,sizeof(dsp->MIXS));
 
 	ChannelEx::StepAll(mixl,mixr);
 	
@@ -1434,7 +1439,7 @@ bool channel_serialize(void **data, unsigned int *total_size)
 		REICAST_S(Chans[i].VolMix.DRAtt) ;
 		REICAST_S(Chans[i].VolMix.DSPAtt) ;
 
-		addr = Chans[i].VolMix.DSPOut - (&(dsp.MIXS[0])) ;
+		addr = Chans[i].VolMix.DSPOut - (&(dsp->MIXS[0])) ;
 		REICAST_S(addr);
 
 		REICAST_S(Chans[i].AEG.val) ;
@@ -1489,7 +1494,7 @@ bool channel_unserialize(void **data, unsigned int *total_size)
 		REICAST_US(Chans[i].VolMix.DSPAtt) ;
 
 		REICAST_US(addr);
-		Chans[i].VolMix.DSPOut = addr + (&(dsp.MIXS[0])) ;
+		Chans[i].VolMix.DSPOut = addr + (&(dsp->MIXS[0])) ;
 
 		REICAST_US(Chans[i].AEG.val) ;
 		REICAST_US(Chans[i].AEG.state) ;

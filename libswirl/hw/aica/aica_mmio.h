@@ -3,6 +3,15 @@
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mmio.h"
 
+struct AicaContext {
+	u8 regs[0x8000];
+};
+
+
+struct SystemBus;
+struct ASIC;
+struct DSP;
+
 struct AICA : MMIODevice {
 	//Mainloop
 	virtual void Update(u32 Samples) = 0;
@@ -12,14 +21,21 @@ struct AICA : MMIODevice {
 	virtual void WriteReg(u32 addr, u32 data, u32 size) = 0;
 
 	virtual void TimeStep() = 0;
+
+	static AicaContext* CreateContext() {
+		return new AicaContext();
+	}
+
+	static AICA* Create(SystemBus* sb, ASIC* asic, DSP* dsp, AicaContext* aica_ctx, u8* aica_ram, u32 aram_size);
+
+	static MMIODevice* CreateRTC();
 };
 
 struct ASIC;
 struct DSP;
 
-AICA* Create_AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_ram, u32 aram_size);
 
-MMIODevice* Create_RTCDevice();
+
 
 void libAICA_TimeStep();
 

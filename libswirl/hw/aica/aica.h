@@ -311,9 +311,6 @@ struct AicaTimerData
 #pragma pack(pop)
 #undef entry
 
-extern CommonData_struct* CommonData;
-extern DSPData_struct*	  DSPData;
-
 ////
 //Timers :)
 

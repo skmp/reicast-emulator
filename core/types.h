@@ -525,6 +525,7 @@ struct settings_t
 		bool DelayFrameSwapping; // Delay swapping frame until FB_R_SOF matches FB_W_SOF
 		bool WidescreenGameHacks;
 		int AnisotropicFiltering;
+		bool PowerVR2Filter;
 	} rend;
 
 	struct

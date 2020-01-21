@@ -8,6 +8,7 @@
 
 #include "hw/pvr/Renderer_if.h"
 #include "hw/mem/_vmem.h"
+#include "postprocess.h"
 
 #ifndef GL_RED
 #define GL_RED                            0x1903
@@ -931,6 +932,8 @@ static bool RenderFrame(void)
 	}
    else
    {
+   	if (settings.rend.PowerVR2Filter && !pvrrc.isRenderFramebuffer)
+   		postProcessor.SelectFramebuffer();
       glViewport(0, 0, screen_width, screen_height);
    }
 
@@ -1027,6 +1030,8 @@ static bool RenderFrame(void)
       scale_x /= scissoring_scale_x;
 
       DrawStrips();
+      if (settings.rend.PowerVR2Filter && !is_rtt)
+      	postProcessor.Render(hw_render.get_current_framebuffer());
    }
    else
    {
@@ -1037,12 +1042,18 @@ static bool RenderFrame(void)
       DrawFramebuffer(dc_width, dc_height);
    }
 
-   for ( vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
-      if ( vmu_screen_params[vmu_screen_number].vmu_screen_display )
-         DrawVmuTexture(vmu_screen_number, true) ;
-         
-   for ( lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
-         DrawGunCrosshair(lightgun_port, true) ;
+   if (!is_rtt)
+   {
+   	if (settings.System == DC_PLATFORM_DREAMCAST)
+   	{
+			for ( vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
+				if ( vmu_screen_params[vmu_screen_number].vmu_screen_display )
+					DrawVmuTexture(vmu_screen_number, true) ;
+   	}
+
+		for ( lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
+				DrawGunCrosshair(lightgun_port, true) ;
+   }
 
 	KillTex = false;
    
@@ -1110,11 +1121,15 @@ struct glesrend : Renderer
       fog_needs_update = true;
       TexCache.Clear();
 
+      if (settings.rend.PowerVR2Filter)
+      	postProcessor.Init();
+
       return true;
    }
 	void Resize(int w, int h) override { screen_width=w; screen_height=h; }
 	void Term() override
    {
+		postProcessor.Term();
 	   TexCache.Clear();
 
 	   gl_term();

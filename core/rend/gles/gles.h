@@ -1,6 +1,7 @@
 #pragma once
 #include <unordered_map>
 #include <atomic>
+#include <libretro.h>
 #include "rend/rend.h"
 #include "rend/TexCache.h"
 #include <glsm/glsm.h>
@@ -114,6 +115,7 @@ PipelineShader *GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear);
 void vertex_buffer_unmap(void);
 
+void findGLVersion();
 GLuint gl_CompileShader(const char* shader, GLuint type);
 GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader);
 bool CompilePipelineShader(PipelineShader* s);
@@ -184,3 +186,5 @@ extern GlTextureCache TexCache;
 
 extern const u32 Zfunction[8];
 extern const u32 SrcBlendGL[], DstBlendGL[];
+
+extern "C" struct retro_hw_render_callback hw_render;

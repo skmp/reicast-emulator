@@ -2,7 +2,6 @@
 #include "hw/pvr/Renderer_if.h"
 #include "gui/gui.h"
 #include "hw/sh4/sh4_mem.h"
-#include "hw/arm7/arm_mem.h"
 #include "libswirl.h"
 
 extern u32 vblank_count_monotonic;

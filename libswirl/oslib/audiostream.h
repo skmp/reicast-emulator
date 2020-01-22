@@ -1,6 +1,7 @@
 #pragma once
 #include "types.h"
 #include <tuple>
+#include <functional>
 
 //Get used size in the ring buffer
 u32 asRingUsedCount();
@@ -36,7 +37,7 @@ typedef struct {
 typedef audio_option_t* (*audio_options_func_t)(int* option_count);
 
 
-typedef u32(*audio_backend_pull_callback_t)(void* buffer, u32 buffer_size, u32 amt, u32 target_rate);
+typedef std::function<u32(void* buffer, u32 buffer_size, u32 amt, u32 target_rate)> audio_backend_pull_callback_t;
 typedef void (*audio_backend_init_func_t)(audio_backend_pull_callback_t pull_callback);
 typedef u32 (*audio_backend_push_func_t)(void*, u32, bool);
 typedef void (*audio_backend_term_func_t)();
@@ -50,12 +51,21 @@ typedef struct {
 	audio_options_func_t get_options;
 	audio_backend_prefer_pull_func_t prefer_pull;
 } audiobackend_t;
-extern bool RegisterAudioBackend(audiobackend_t* backend);
-extern void InitAudio();
-extern u32 PushAudio(void* frame, u32 amt, bool wait);
-extern void TermAudio();
+
+bool RegisterAudioBackend(audiobackend_t* backend);
 
 u32 GetAudioBackendCount();
 void SortAudioBackends();
 audiobackend_t* GetAudioBackend(int num);
 audiobackend_t* GetAudioBackend(std::string slug);
+
+
+struct AudioStream {
+	static AudioStream* Create();
+
+	virtual void InitAudio() = 0;
+	virtual void WriteSample(s16 right, s16 left) = 0;
+	virtual void TermAudio() = 0;
+
+	virtual ~AudioStream() { }
+};

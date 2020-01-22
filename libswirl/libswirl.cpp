@@ -585,79 +585,6 @@ void SaveSettings()
 
 static bool reset_requested;
 
-#ifndef TARGET_DISPFRAME
-void* dc_run(void*)
-{
-#if FEAT_HAS_NIXPROF
-    install_prof_handler(0);
-#endif
-
-    InitAudio();
-
-#ifdef SCRIPTING
-    luabindings_onstart();
-#endif
-
-    if (settings.dynarec.Enable && sh4_cpu->setBackend(SH4BE_DYNAREC))
-    {
-        printf("Using MCPU Recompiler\n");
-    }
-    else
-    {
-        sh4_cpu->setBackend(SH4BE_INTERPRETER);
-        printf("Using MCPU Interpreter\n");
-    }
-
-    auto scpu = sh4_cpu->GetA0H<SoundCPU>(A0H_SCPU);
-
-    if (settings.dynarec.ScpuEnable && scpu->setBackend(ARM7BE_DYNAREC))
-    {
-        printf("Using SCPU Recompiler\n");
-    }
-    else
-    {
-        scpu->setBackend(ARM7BE_INTERPRETER);
-        printf("Using SCPU Interpreter\n");
-    }
-
-    auto dsp = sh4_cpu->GetA0H<DSP>(A0H_DSP);
-
-    if (settings.dynarec.DspEnable && dsp->setBackend(DSPBE_DYNAREC))
-    {
-        printf("Using DSP Recompiler\n");
-    }
-    else
-    {
-        dsp->setBackend(DSPBE_INTERPRETER);
-        printf("Using DSP Interpreter\n");
-    }
-
-    do {
-        reset_requested = false;
-
-        sh4_cpu->Run();
-
-        SaveRomFiles(get_writable_data_path(DATA_PATH));
-        if (reset_requested)
-        {
-            virtualDreamcast->Reset();
-#ifdef SCRIPTING
-            luabindings_onreset();
-#endif
-        }
-    } while (reset_requested);
-
-#ifdef SCRIPTING
-    luabindings_onstop();
-#endif
-
-    TermAudio();
-
-    return NULL;
-}
-#endif
-
-cThread emu_thread(&dc_run, NULL);
 
 
 int reicast_init(int argc, char* argv[])
@@ -709,6 +636,83 @@ void reicast_term() {
 struct Dreamcast_impl : VirtualDreamcast {
 
     unique_ptr<AicaContext> aica_ctx;
+    unique_ptr<AudioStream> audio_stream;
+
+    cThread emu_thread;
+
+    Dreamcast_impl() : emu_thread(STATIC_FORWARD(Dreamcast_impl, dc_run), this) { }
+
+#ifndef TARGET_DISPFRAME
+    void* dc_run()
+    {
+#if FEAT_HAS_NIXPROF
+        install_prof_handler(0);
+#endif
+
+        audio_stream->InitAudio();
+
+#ifdef SCRIPTING
+        luabindings_onstart();
+#endif
+
+        if (settings.dynarec.Enable && sh4_cpu->setBackend(SH4BE_DYNAREC))
+        {
+            printf("Using MCPU Recompiler\n");
+        }
+        else
+        {
+            sh4_cpu->setBackend(SH4BE_INTERPRETER);
+            printf("Using MCPU Interpreter\n");
+        }
+
+        auto scpu = sh4_cpu->GetA0H<SoundCPU>(A0H_SCPU);
+
+        if (settings.dynarec.ScpuEnable && scpu->setBackend(ARM7BE_DYNAREC))
+        {
+            printf("Using SCPU Recompiler\n");
+        }
+        else
+        {
+            scpu->setBackend(ARM7BE_INTERPRETER);
+            printf("Using SCPU Interpreter\n");
+        }
+
+        auto dsp = sh4_cpu->GetA0H<DSP>(A0H_DSP);
+
+        if (settings.dynarec.DspEnable && dsp->setBackend(DSPBE_DYNAREC))
+        {
+            printf("Using DSP Recompiler\n");
+        }
+        else
+        {
+            dsp->setBackend(DSPBE_INTERPRETER);
+            printf("Using DSP Interpreter\n");
+        }
+
+        do {
+            reset_requested = false;
+
+            sh4_cpu->Run();
+
+            SaveRomFiles(get_writable_data_path(DATA_PATH));
+            if (reset_requested)
+            {
+                virtualDreamcast->Reset();
+#ifdef SCRIPTING
+                luabindings_onreset();
+#endif
+            }
+            } while (reset_requested);
+
+#ifdef SCRIPTING
+            luabindings_onstop();
+#endif
+
+            audio_stream->TermAudio();
+
+            return NULL;
+        }
+#endif
 
     ~Dreamcast_impl() {
         Term();
@@ -784,6 +788,8 @@ struct Dreamcast_impl : VirtualDreamcast {
 
     bool Init()
     {
+        audio_stream.reset(AudioStream::Create());
+
         sh4_cpu = SuperH4::Create();
 
         if (!_vmem_reserve(&sh4_cpu->mram, &sh4_cpu->vram , &sh4_cpu->aica_ram, INTERNAL_ARAM_SIZE))
@@ -813,7 +819,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         aica_ctx.reset(AICA::CreateContext());
 
         DSP* dsp = DSP::Create(aica_ctx.get(), sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
-        AICA* aicaDevice = AICA::Create(systemBus, asic, dsp, aica_ctx.get(), sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
+        AICA* aicaDevice = AICA::Create(audio_stream.get(), systemBus, asic, dsp, aica_ctx.get(), sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
         SoundCPU* soundCPU = SoundCPU::Create(aicaDevice, sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 
         MMIODevice* mapleDevice = Create_MapleDevice(systemBus, asic);
@@ -866,6 +872,8 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         delete sh4_cpu;
         sh4_cpu = nullptr;
+
+        audio_stream.reset();
     }
 
     void Stop()

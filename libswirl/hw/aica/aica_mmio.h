@@ -7,7 +7,7 @@ struct AicaContext {
 	u8 regs[0x8000];
 };
 
-
+struct AudioStream;
 struct SystemBus;
 struct ASIC;
 struct DSP;
@@ -26,7 +26,7 @@ struct AICA : MMIODevice {
 		return new AicaContext();
 	}
 
-	static AICA* Create(SystemBus* sb, ASIC* asic, DSP* dsp, AicaContext* aica_ctx, u8* aica_ram, u32 aram_size);
+	static AICA* Create(AudioStream* audio_stream, SystemBus* sb, ASIC* asic, DSP* dsp, AicaContext* aica_ctx, u8* aica_ram, u32 aram_size);
 
 	static MMIODevice* CreateRTC();
 };

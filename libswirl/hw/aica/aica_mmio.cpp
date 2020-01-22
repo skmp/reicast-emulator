@@ -584,6 +584,7 @@ struct AicaDevice final : AICA {
 			die("SB_DDST DMA not implemented");
 	}
 
+	AudioStream* audio_stream;
 	SystemBus* sb;
 	ASIC* asic;
 	DSP* dsp;
@@ -591,7 +592,8 @@ struct AicaDevice final : AICA {
 	u32 aram_size;
 	unique_ptr<SGC> sgc;
 
-	AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_reg, u8* aica_ram, u32 aram_size) : sb(sb), asic(asic), dsp(dsp), aica_reg(aica_reg), aica_ram(aica_ram), aram_size(aram_size) { }
+	AicaDevice(AudioStream* audio_stream, SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_reg, u8* aica_ram, u32 aram_size) 
+		: audio_stream(audio_stream), sb(sb), asic(asic), dsp(dsp), aica_reg(aica_reg), aica_ram(aica_ram), aram_size(aram_size) { }
 
 	u32 Read(u32 addr, u32 sz) {
 		addr &= 0x7FFF;
@@ -676,7 +678,7 @@ struct AicaDevice final : AICA {
 		MCIPD = (InterruptInfo*)&aica_reg[0x28B4 + 4];
 		MCIRE = (InterruptInfo*)&aica_reg[0x28B4 + 8];
 
-		sgc.reset(SGC::Create(aica_reg, dsp->GetDspContext(), aica_ram, aram_size));
+		sgc.reset(SGC::Create(audio_stream, aica_reg, dsp->GetDspContext(), aica_ram, aram_size));
 		
 		for (int i = 0; i < 3; i++)
 			timers[i].Init(aica_reg, MCIPD, SCIPD, i);
@@ -775,8 +777,8 @@ struct AicaDevice final : AICA {
 
 };
 
-AICA* AICA::Create(SystemBus* sb, ASIC* asic, DSP* dsp, AicaContext* aica_ctx, u8* aica_ram, u32 aram_size) {
-	return new AicaDevice(sb, asic, dsp, aica_ctx->regs, aica_ram, aram_size);
+AICA* AICA::Create(AudioStream* audio_stream, SystemBus* sb, ASIC* asic, DSP* dsp, AicaContext* aica_ctx, u8* aica_ram, u32 aram_size) {
+	return new AicaDevice(audio_stream, sb, asic, dsp, aica_ctx->regs, aica_ram, aram_size);
 }
 
 u32 libAICA_ReadReg(u32 addr, u32 sz) {

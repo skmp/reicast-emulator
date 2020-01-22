@@ -8,7 +8,6 @@ double os_GetSeconds();
 void os_DoEvents();
 void os_CreateWindow();
 void os_SetupInput();
-void WriteSample(s16 right, s16 left);
 
 #if BUILD_COMPILER==COMPILER_VC
 #include <intrin.h>

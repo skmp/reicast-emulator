@@ -2,6 +2,7 @@
 #include "dsp.h"
 #include "dsp_backend.h"
 #include "aica_mem.h"
+#include "oslib/audiostream.h"
 #include <math.h>
 #include <algorithm>
 using namespace std;
@@ -1100,9 +1101,11 @@ struct SGC_impl : SGC {
 	}
 	u8* aica_reg;
 	u32 aram_mask;
+	AudioStream* audio_stream;
 
-	SGC_impl(u8* aica_reg, dsp_context_t* dsp, u8* aica_ram, u32 aram_size)
+	SGC_impl(AudioStream* audio_stream, u8* aica_reg, dsp_context_t* dsp, u8* aica_ram, u32 aram_size)
 	{
+		this->audio_stream = audio_stream;
 		this->aica_reg = aica_reg;
 		this->aram_mask = aram_size - 1;
 		dsp_out_vol = (DSP_OUT_VOL_REG*)&aica_reg[0x2000];
@@ -1318,7 +1321,7 @@ struct SGC_impl : SGC {
 			pl = mixl;
 			pr = mixr;
 
-			if (!settings.aica.NoSound) WriteSample(mixr, mixl);
+			audio_stream->WriteSample(mixr, mixl);
 		}
 	}
 
@@ -1415,7 +1418,7 @@ struct SGC_impl : SGC {
 		pl = mixl;
 		pr = mixr;
 
-		WriteSample(mixr, mixl);
+		audio_stream->WriteSample(mixr, mixl);
 	}
 
 	bool channel_serialize(void** data, unsigned int* total_size)
@@ -1544,6 +1547,6 @@ struct SGC_impl : SGC {
 	}
 };
 
-SGC* SGC::Create(u8* aica_reg, dsp_context_t* dsp, u8* aica_ram, u32 aram_size) {
-	return new SGC_impl(aica_reg, dsp, aica_ram, aram_size);
+SGC* SGC::Create(AudioStream* audio_stream, u8* aica_reg, dsp_context_t* dsp, u8* aica_ram, u32 aram_size) {
+	return new SGC_impl(audio_stream, aica_reg, dsp, aica_ram, aram_size);
 }

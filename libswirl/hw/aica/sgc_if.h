@@ -3,6 +3,7 @@
 
 
 struct dsp_context_t;
+struct AudioStream;
 
 union fp_22_10
 {
@@ -57,7 +58,7 @@ struct SGC {
 
 	virtual void WriteChannelReg8(u32 channel, u32 reg) = 0;
 
-	static SGC* Create(u8* aica_reg, dsp_context_t* dsp, u8* aica_ram, u32 aram_size);
+	static SGC* Create(AudioStream* audio_stream, u8* aica_reg, dsp_context_t* dsp, u8* aica_ram, u32 aram_size);
 ;
 	virtual void ReadCommonReg(u32 reg,bool byte) = 0;
 	virtual void WriteCommonReg8(u32 reg,u32 data) = 0;

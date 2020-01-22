@@ -113,14 +113,6 @@ extern s16 pr;
 //void(* 	PLFOWS_CALC [4])(ChannelEx *ch)
 
 //special handling
-//extern AicaChannel AicaChannel::Chans[64];
-#define Chans AicaChannel::Chans
-#define CDDA_SIZE  (2352/2)
-extern s16 cdda_sector[CDDA_SIZE];
-extern u32 cdda_index;
-extern SampleType mxlr[64];
-extern u32 samples_gen;
-
 
 
 
@@ -754,14 +746,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(pl);
 	REICAST_S(pr);
 
-	channel_serialize(data, total_size) ;
-
-	REICAST_SA(cdda_sector,CDDA_SIZE);
-	REICAST_S(cdda_index);
-	REICAST_SA(mxlr,64);
-	REICAST_S(samples_gen);
-
-
 	register_serialize(sb_regs, data, total_size) ;
 	REICAST_S(SB_ISTNRM);
 	REICAST_S(SB_FFST_rc);
@@ -1030,13 +1014,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_USA(AEG_DSR_SPS,64);
 	REICAST_US(pl);
 	REICAST_US(pr);
-
-	channel_unserialize(data, total_size) ;
-
-	REICAST_USA(cdda_sector,CDDA_SIZE);
-	REICAST_US(cdda_index);
-	REICAST_USA(mxlr,64);
-	REICAST_US(samples_gen);
 
 
 	register_unserialize(sb_regs, data, total_size) ;
@@ -1352,13 +1329,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_USA(AEG_DSR_SPS,64);
 	REICAST_US(pl);
 	REICAST_US(pr);
-
-	channel_unserialize(data, total_size) ;
-
-	REICAST_USA(cdda_sector,CDDA_SIZE);
-	REICAST_US(cdda_index);
-	REICAST_USA(mxlr,64);
-	REICAST_US(samples_gen);
 
 	register_unserialize(sb_regs, data, total_size) ;
 	REICAST_US(SB_ISTNRM);

@@ -95,10 +95,7 @@ void AICA_Sample();
 }
 s16 pl=0,pr=0;
 
-static DSP_OUT_VOL_REG* dsp_out_vol;
-static CommonData_struct* CommonData;
-static DSPData_struct* DSPData;
-static dsp_context_t* dsp;
+
 
 #pragma pack(push,1)
 //All regs are 16b , aligned to 32b (upper bits 0?)
@@ -270,7 +267,8 @@ void (* PLFOWS_CALC[4])(ChannelEx* ch);
 
 struct ChannelEx
 {
-	static ChannelEx Chans[64];
+	ChannelEx* Chans;
+	dsp_context_t* dsp;
 
 	ChannelCommonData* ccd;
 	u8* aica_ram;
@@ -364,10 +362,12 @@ struct ChannelEx
 	bool enabled;	//set to false to 'freeze' the channel
 	int ChanelNumber;
 	
-	void Setup(int cn, u8* ccd_raw, u8* aica_ram) {
+	void Setup(int cn, u8* ccd_raw, u8* aica_ram, ChannelEx* chans, dsp_context_t* dsp) {
 		ccd = (ChannelCommonData*)&ccd_raw[cn * 0x80];
 		ChanelNumber = cn;
 		this->aica_ram = aica_ram;
+		this->Chans = chans;
+		this->dsp = dsp;
 	}
 
 	void Init()
@@ -453,7 +453,7 @@ struct ChannelEx
 		mixr+=oRight;
 	}
 
-	__forceinline static void StepAll(SampleType& mixl, SampleType& mixr)
+	__forceinline static void StepAll(ChannelEx* Chans, SampleType& mixl, SampleType& mixr)
 	{
 		for (int i = 0; i < 64; i++)
 		{
@@ -752,11 +752,11 @@ struct ChannelEx
 	} 
 };
 
-__forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
+__forceinline SampleType DecodeADPCM(u32 sample, s32 prev, s32& quant)
 {
-	s32 sign=1-2*(sample/8);
+	s32 sign = 1 - 2 * (sample / 8);
 
-	u32 data=sample&7;
+	u32 data = sample & 7;
 
 	/*(1 - 2 * L4) * (L3 + L2/2 +L1/4 + 1/8) * quantized width (ƒΆn) + decode value (Xn - 1) */
 	SampleType rv = (quant * adpcm_scale[data]) >> 3;
@@ -764,124 +764,123 @@ __forceinline SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
 		rv = 0x7FFF;
 	rv = sign * rv + prev;
 
-	quant = (quant * adpcm_qs[data])>>8;
+	quant = (quant * adpcm_qs[data]) >> 8;
 
-	clip(quant,127,24576);
+	clip(quant, 127, 24576);
 	clip16(rv);
 	return rv;
 }
 
-template<s32 PCMS,bool last>
-__forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
+template<s32 PCMS, bool last>
+__forceinline void StepDecodeSample(ChannelEx* ch, u32 CA)
 {
-	if (!last && PCMS<2)
-		return ;
+	if (!last && PCMS < 2)
+		return;
 
-	s16* sptr16=(s16*)ch->SA;
-	s8* sptr8=(s8*)sptr16;
-	u8* uptr8=(u8*)sptr16;
+	s16* sptr16 = (s16*)ch->SA;
+	s8* sptr8 = (s8*)sptr16;
+	u8* uptr8 = (u8*)sptr16;
 
-	SampleType s0,s1;
-	switch(PCMS)
+	SampleType s0, s1;
+	switch (PCMS)
 	{
 	case -1:
-		ch->noise_state = ch->noise_state*16807 + 0xbeef;	//beef is good
+		ch->noise_state = ch->noise_state * 16807 + 0xbeef;	//beef is good
 
-		s0=ch->noise_state;
-		s0>>=16;
-		
-		s1=ch->noise_state*16807 + 0xbeef;
-		s1>>=16;
+		s0 = ch->noise_state;
+		s0 >>= 16;
+
+		s1 = ch->noise_state * 16807 + 0xbeef;
+		s1 >>= 16;
 		break;
 
 	case 0:
-		{
-			//s16* ptr=(s16*)&aica_ram[(addr&~1)+(CA<<1)];
-			sptr16+=CA;
-			s0=sptr16[0];
-			s1=sptr16[1];
-		}
-		break;
+	{
+		//s16* ptr=(s16*)&aica_ram[(addr&~1)+(CA<<1)];
+		sptr16 += CA;
+		s0 = sptr16[0];
+		s1 = sptr16[1];
+	}
+	break;
 
 	case 1:
-		{
-			//s8* ptr=(s8*)&aica_ram[addr+(CA)];
-			sptr8+=CA;
-			s0=sptr8[0]<<8;
-			s1=sptr8[1]<<8;
-		}
-		break;
+	{
+		//s8* ptr=(s8*)&aica_ram[addr+(CA)];
+		sptr8 += CA;
+		s0 = sptr8[0] << 8;
+		s1 = sptr8[1] << 8;
+	}
+	break;
 
 	case 2:
 	case 3:
-		{
-			//u32 offs=CA;
-			u8 ad1=uptr8[CA>>1];
-			u8 ad2=uptr8[(CA+1)>>1];
+	{
+		//u32 offs=CA;
+		u8 ad1 = uptr8[CA >> 1];
+		u8 ad2 = uptr8[(CA + 1) >> 1];
 
-			u8 sf=(CA&1)*4;
-			ad1>>=sf;
-			ad2>>=4-sf;
-		
-			ad1&=0xF;
-			ad2&=0xF;
+		u8 sf = (CA & 1) * 4;
+		ad1 >>= sf;
+		ad2 >>= 4 - sf;
 
-			s32 q=ch->adpcm.last_quant;
-			s0=DecodeADPCM(ad1,ch->s0,q);
-			ch->adpcm.last_quant=q;
-			if (last)
-				s1=DecodeADPCM(ad2,s0,q);
-			else
-				s1=0;
-		}
-		break;
+		ad1 &= 0xF;
+		ad2 &= 0xF;
+
+		s32 q = ch->adpcm.last_quant;
+		s0 = DecodeADPCM(ad1, ch->s0, q);
+		ch->adpcm.last_quant = q;
+		if (last)
+			s1 = DecodeADPCM(ad2, s0, q);
+		else
+			s1 = 0;
 	}
-	
-	ch->s0=s0;
-	ch->s1=s1;
+	break;
+	}
+
+	ch->s0 = s0;
+	ch->s1 = s1;
 }
-
-
 
 template<s32 PCMS>
 void StepDecodeSampleInitial(ChannelEx* ch)
 {
-	StepDecodeSample<PCMS,true>(ch,0);
+	StepDecodeSample<PCMS, true>(ch, 0);
 }
-template<s32 PCMS,u32 LPCTL,u32 LPSLNK>
+
+template<s32 PCMS, u32 LPCTL, u32 LPSLNK>
 void StreamStep(ChannelEx* ch)
 {
-	ch->step.full+=ch->update_rate;
-	fp_22_10 sp=ch->step;
-	ch->step.ip=0;
+	ch->step.full += ch->update_rate;
+	fp_22_10 sp = ch->step;
+	ch->step.ip = 0;
 
-	while(sp.ip>0)
+	while (sp.ip > 0)
 	{
 		sp.ip--;
 
-		u32 CA=ch->CA + 1;
+		u32 CA = ch->CA + 1;
 
-		u32 ca_t=CA;
-		if (PCMS==3)
-			ca_t&=~3;	//adpcm "stream" mode needs this ...
+		u32 ca_t = CA;
+		if (PCMS == 3)
+			ca_t &= ~3;	//adpcm "stream" mode needs this ...
 
 		if (LPSLNK)
 		{
-			if ((ch->AEG.state==EG_Attack) && (CA>=ch->loop.LSA))
+			if ((ch->AEG.state == EG_Attack) && (CA >= ch->loop.LSA))
 			{
-				
-				step_printf("[%d]LPSLNK : Switching to EG_Decay1 %X\n",Channel,AEG.GetValue());
+
+				step_printf("[%d]LPSLNK : Switching to EG_Decay1 %X\n", Channel, AEG.GetValue());
 				ch->SetAegState(EG_Decay1);
 			}
 		}
 
-		if (ca_t>=ch->loop.LEA)
+		if (ca_t >= ch->loop.LEA)
 		{
-			ch->loop.looped=1;
-			CA=ch->loop.LSA;
+			ch->loop.looped = 1;
+			CA = ch->loop.LSA;
 			if (LPCTL)
 			{
-				if (PCMS==2) //if in adpcm non-stream mode, reset the decoder
+				if (PCMS == 2) //if in adpcm non-stream mode, reset the decoder
 				{
 					ch->adpcm.Reset(ch);
 				}
@@ -892,13 +891,13 @@ void StreamStep(ChannelEx* ch)
 			}
 		}
 
-		ch->CA=CA;
+		ch->CA = CA;
 
 		//keep adpcm up to date
-		if (sp.ip==0)
-			StepDecodeSample<PCMS,true>(ch,CA);
+		if (sp.ip == 0)
+			StepDecodeSample<PCMS, true>(ch, CA);
 		else
-			StepDecodeSample<PCMS,false>(ch,CA);
+			StepDecodeSample<PCMS, false>(ch, CA);
 	}
 
 
@@ -908,626 +907,643 @@ template<s32 ALFOWS>
 void CalcAlfo(ChannelEx* ch)
 {
 	u32 rv;
-	switch(ALFOWS)
+	switch (ALFOWS)
 	{
 	case 0: // Sawtooth
-		rv=ch->lfo.state;
+		rv = ch->lfo.state;
 		break;
 
 	case 1: // Square
-		rv=ch->lfo.state&0x80?255:0;
+		rv = ch->lfo.state & 0x80 ? 255 : 0;
 		break;
 
 	case 2: // Triangle
-		rv=(ch->lfo.state&0x7f)^(ch->lfo.state&0x80 ? 0x7F:0);
-		rv<<=1;
+		rv = (ch->lfo.state & 0x7f) ^ (ch->lfo.state & 0x80 ? 0x7F : 0);
+		rv <<= 1;
 		break;
 
 	case 3:// Random ! .. not :p
-		rv=(ch->lfo.state>>3)^(ch->lfo.state<<3)^(ch->lfo.state&0xE3);
+		rv = (ch->lfo.state >> 3) ^ (ch->lfo.state << 3) ^ (ch->lfo.state & 0xE3);
 		break;
 	}
-	ch->lfo.alfo=rv>>ch->lfo.alfo_shft;
+	ch->lfo.alfo = rv >> ch->lfo.alfo_shft;
 }
 
 template<s32 PLFOWS>
 void CalcPlfo(ChannelEx* ch)
 {
 	u32 rv;
-	switch(PLFOWS)
+	switch (PLFOWS)
 	{
 	case 0: // sawtooth
-		rv=ch->lfo.state;
+		rv = ch->lfo.state;
 		break;
 
 	case 1: // square
-		rv=ch->lfo.state&0x80?0x80:0x7F;
+		rv = ch->lfo.state & 0x80 ? 0x80 : 0x7F;
 		break;
 
 	case 2: // triangle
-		rv=(ch->lfo.state&0x7f)^(ch->lfo.state&0x80 ? 0x7F:0);
-		rv<<=1;
-		rv=(u8)(rv-0x80); //2's complement
+		rv = (ch->lfo.state & 0x7f) ^ (ch->lfo.state & 0x80 ? 0x7F : 0);
+		rv <<= 1;
+		rv = (u8)(rv - 0x80); //2's complement
 		break;
 
 	case 3:// random ! .. not :p
-		rv=(ch->lfo.state>>3)^(ch->lfo.state<<3)^(ch->lfo.state&0xE3);
+		rv = (ch->lfo.state >> 3) ^ (ch->lfo.state << 3) ^ (ch->lfo.state & 0xE3);
 		break;
 	}
-	ch->lfo.plfo=rv>>ch->lfo.plfo_shft;
+	ch->lfo.plfo = rv >> ch->lfo.plfo_shft;
 }
 
 template<u32 state>
 void AegStep(ChannelEx* ch)
 {
-	switch(state)
+	switch (state)
 	{
 	case EG_Attack:
+	{
+		//wii
+		ch->AEG.val -= ch->AEG.AttackRate;
+		if (ch->AEG.GetValue() <= 0)
 		{
-			//wii
-			ch->AEG.val-=ch->AEG.AttackRate;
-			if (ch->AEG.GetValue()<=0)
+			ch->AEG.SetValue(0);
+			if (!ch->ccd->LPSLNK)
 			{
-				ch->AEG.SetValue(0);
-				if (!ch->ccd->LPSLNK)
-				{
-					aeg_printf("[%d]AEG_step : Switching to EG_Decay1 %d\n",ch->AEG.GetValue());
-					ch->SetAegState(EG_Decay1);
-				}
+				aeg_printf("[%d]AEG_step : Switching to EG_Decay1 %d\n", ch->AEG.GetValue());
+				ch->SetAegState(EG_Decay1);
 			}
 		}
-		break;
+	}
+	break;
 	case EG_Decay1:
+	{
+		//x2
+		ch->AEG.val += ch->AEG.Decay1Rate;
+		if (((u32)ch->AEG.GetValue()) >= ch->AEG.Decay2Value)
 		{
-			//x2
-			ch->AEG.val+=ch->AEG.Decay1Rate;
-			if (((u32)ch->AEG.GetValue())>=ch->AEG.Decay2Value)
-			{
-				aeg_printf("[%d]AEG_step : Switching to EG_Decay2 @ %x\n",ch->AEG.GetValue());
-				ch->SetAegState(EG_Decay2);
-			}
+			aeg_printf("[%d]AEG_step : Switching to EG_Decay2 @ %x\n", ch->AEG.GetValue());
+			ch->SetAegState(EG_Decay2);
 		}
-		break;
+	}
+	break;
 	case EG_Decay2:
+	{
+		//x3
+		ch->AEG.val += ch->AEG.Decay2Rate;
+		if (ch->AEG.GetValue() >= 0x3FF)
 		{
-			//x3
-			ch->AEG.val+=ch->AEG.Decay2Rate;
-			if (ch->AEG.GetValue()>=0x3FF)
-			{
-				aeg_printf("[%d]AEG_step : Switching to EG_Release @ %x\n",ch->AEG.GetValue());
-				ch->AEG.SetValue(0x3FF);
-				ch->SetAegState(EG_Release);
-			}
+			aeg_printf("[%d]AEG_step : Switching to EG_Release @ %x\n", ch->AEG.GetValue());
+			ch->AEG.SetValue(0x3FF);
+			ch->SetAegState(EG_Release);
 		}
-		break;
+	}
+	break;
 	case EG_Release: //only on key_off ?
+	{
+		ch->AEG.val += ch->AEG.ReleaseRate;
+
+		if (ch->AEG.GetValue() >= 0x3FF)
 		{
-			ch->AEG.val+=ch->AEG.ReleaseRate;
-			
-			if (ch->AEG.GetValue()>=0x3FF)
-			{
-				aeg_printf("[%d]AEG_step : EG_Release End @ %x\n",ch->AEG.GetValue());
-				ch->AEG.SetValue(0x3FF); // TODO: mnn, should we do anything about it running wild ?
-				ch->disable(); // TODO: Is this ok here? It's a speed optimisation (since the channel is muted)
-			}
+			aeg_printf("[%d]AEG_step : EG_Release End @ %x\n", ch->AEG.GetValue());
+			ch->AEG.SetValue(0x3FF); // TODO: mnn, should we do anything about it running wild ?
+			ch->disable(); // TODO: Is this ok here? It's a speed optimisation (since the channel is muted)
 		}
-		break;
+	}
+	break;
 	}
 }
 template<u32 state>
 void FegStep(ChannelEx* ch)
 {
-	
+
 }
-void staticinitialise()
-{
-	STREAM_STEP_LUT[0][0][0]=&StreamStep<0,0,0>;
-	STREAM_STEP_LUT[1][0][0]=&StreamStep<1,0,0>;
-	STREAM_STEP_LUT[2][0][0]=&StreamStep<2,0,0>;
-	STREAM_STEP_LUT[3][0][0]=&StreamStep<3,0,0>;
-	STREAM_STEP_LUT[4][0][0]=&StreamStep<-1,0,0>;
 
-	STREAM_STEP_LUT[0][0][1]=&StreamStep<0,0,1>;
-	STREAM_STEP_LUT[1][0][1]=&StreamStep<1,0,1>;
-	STREAM_STEP_LUT[2][0][1]=&StreamStep<2,0,1>;
-	STREAM_STEP_LUT[3][0][1]=&StreamStep<3,0,1>;
-	STREAM_STEP_LUT[4][0][1]=&StreamStep<-1,0,1>;
+struct SGC_impl : SGC {
+	DSP_OUT_VOL_REG* dsp_out_vol;
+	CommonData_struct* CommonData;
+	DSPData_struct* DSPData;
+	dsp_context_t* dsp;
 
-	STREAM_STEP_LUT[0][1][0]=&StreamStep<0,1,0>;
-	STREAM_STEP_LUT[1][1][0]=&StreamStep<1,1,0>;
-	STREAM_STEP_LUT[2][1][0]=&StreamStep<2,1,0>;
-	STREAM_STEP_LUT[3][1][0]=&StreamStep<3,1,0>;
-	STREAM_STEP_LUT[4][1][0]=&StreamStep<-1,1,0>;
-
-	STREAM_STEP_LUT[0][1][1]=&StreamStep<0,1,1>;
-	STREAM_STEP_LUT[1][1][1]=&StreamStep<1,1,1>;
-	STREAM_STEP_LUT[2][1][1]=&StreamStep<2,1,1>;
-	STREAM_STEP_LUT[3][1][1]=&StreamStep<3,1,1>;
-	STREAM_STEP_LUT[4][1][1]=&StreamStep<-1,1,1>;
-
-	STREAM_INITAL_STEP_LUT[0]=&StepDecodeSampleInitial<0>;
-	STREAM_INITAL_STEP_LUT[1]=&StepDecodeSampleInitial<1>;
-	STREAM_INITAL_STEP_LUT[2]=&StepDecodeSampleInitial<2>;
-	STREAM_INITAL_STEP_LUT[3]=&StepDecodeSampleInitial<3>;
-	STREAM_INITAL_STEP_LUT[4]=&StepDecodeSampleInitial<-1>;
-
-	AEG_STEP_LUT[0]=&AegStep<0>;
-	AEG_STEP_LUT[1]=&AegStep<1>;
-	AEG_STEP_LUT[2]=&AegStep<2>;
-	AEG_STEP_LUT[3]=&AegStep<3>;
-
-	FEG_STEP_LUT[0]=&FegStep<0>;
-	FEG_STEP_LUT[1]=&FegStep<1>;
-	FEG_STEP_LUT[2]=&FegStep<2>;
-	FEG_STEP_LUT[3]=&FegStep<3>;
-
-	ALFOWS_CALC[0]=&CalcAlfo<0>;
-	ALFOWS_CALC[1]=&CalcAlfo<1>;
-	ALFOWS_CALC[2]=&CalcAlfo<2>;
-	ALFOWS_CALC[3]=&CalcAlfo<3>;
-
-	PLFOWS_CALC[0]=&CalcPlfo<0>;
-	PLFOWS_CALC[1]=&CalcPlfo<1>;
-	PLFOWS_CALC[2]=&CalcPlfo<2>;
-	PLFOWS_CALC[3]=&CalcPlfo<3>;
-}
-#define AicaChannel ChannelEx
-
-
-AicaChannel AicaChannel::Chans[64];
-
-#define Chans AicaChannel::Chans 
-double dbToval(double db)
-{
-	return pow(10,db/20.0);
-}
-u32 CalcAegSteps(float t)
-{
-	const double aeg_allsteps=1024*(1<<AEG_STEP_BITS)-1;
-
-	if (t<0)
-		return 0;
-	if (t==0)
-		return (u32)aeg_allsteps;
-
-	//44.1*ms = samples
-	double scnt=44.1*t;
-	double steps=aeg_allsteps/scnt;
-	return (u32)(steps+0.5);
-}
-static u8* aica_reg;
-static u32 aram_mask;
-void sgc_Init(u8* aica_reg, dsp_context_t* dsp, u8* aica_ram, u32 aram_size)
-{
-	::aica_reg = aica_reg;
-	::aram_mask = aram_size - 1;
-	dsp_out_vol = (DSP_OUT_VOL_REG*)&aica_reg[0x2000];
-	CommonData = (CommonData_struct*)&aica_reg[0x2800];
-	DSPData = (DSPData_struct*)&aica_reg[0x3000];
-	::dsp = dsp;
-
-	staticinitialise();
-
-	for (int i=0;i<16;i++)
+	void staticinitialise()
 	{
-		volume_lut[i]=(s32)((1<<15)/pow(2.0,(15-i)/2.0));
-		if (i==0)
-			volume_lut[i]=0;
+		STREAM_STEP_LUT[0][0][0] = &StreamStep<0, 0, 0>;
+		STREAM_STEP_LUT[1][0][0] = &StreamStep<1, 0, 0>;
+		STREAM_STEP_LUT[2][0][0] = &StreamStep<2, 0, 0>;
+		STREAM_STEP_LUT[3][0][0] = &StreamStep<3, 0, 0>;
+		STREAM_STEP_LUT[4][0][0] = &StreamStep<-1, 0, 0>;
+
+		STREAM_STEP_LUT[0][0][1] = &StreamStep<0, 0, 1>;
+		STREAM_STEP_LUT[1][0][1] = &StreamStep<1, 0, 1>;
+		STREAM_STEP_LUT[2][0][1] = &StreamStep<2, 0, 1>;
+		STREAM_STEP_LUT[3][0][1] = &StreamStep<3, 0, 1>;
+		STREAM_STEP_LUT[4][0][1] = &StreamStep<-1, 0, 1>;
+
+		STREAM_STEP_LUT[0][1][0] = &StreamStep<0, 1, 0>;
+		STREAM_STEP_LUT[1][1][0] = &StreamStep<1, 1, 0>;
+		STREAM_STEP_LUT[2][1][0] = &StreamStep<2, 1, 0>;
+		STREAM_STEP_LUT[3][1][0] = &StreamStep<3, 1, 0>;
+		STREAM_STEP_LUT[4][1][0] = &StreamStep<-1, 1, 0>;
+
+		STREAM_STEP_LUT[0][1][1] = &StreamStep<0, 1, 1>;
+		STREAM_STEP_LUT[1][1][1] = &StreamStep<1, 1, 1>;
+		STREAM_STEP_LUT[2][1][1] = &StreamStep<2, 1, 1>;
+		STREAM_STEP_LUT[3][1][1] = &StreamStep<3, 1, 1>;
+		STREAM_STEP_LUT[4][1][1] = &StreamStep<-1, 1, 1>;
+
+		STREAM_INITAL_STEP_LUT[0] = &StepDecodeSampleInitial<0>;
+		STREAM_INITAL_STEP_LUT[1] = &StepDecodeSampleInitial<1>;
+		STREAM_INITAL_STEP_LUT[2] = &StepDecodeSampleInitial<2>;
+		STREAM_INITAL_STEP_LUT[3] = &StepDecodeSampleInitial<3>;
+		STREAM_INITAL_STEP_LUT[4] = &StepDecodeSampleInitial<-1>;
+
+		AEG_STEP_LUT[0] = &AegStep<0>;
+		AEG_STEP_LUT[1] = &AegStep<1>;
+		AEG_STEP_LUT[2] = &AegStep<2>;
+		AEG_STEP_LUT[3] = &AegStep<3>;
+
+		FEG_STEP_LUT[0] = &FegStep<0>;
+		FEG_STEP_LUT[1] = &FegStep<1>;
+		FEG_STEP_LUT[2] = &FegStep<2>;
+		FEG_STEP_LUT[3] = &FegStep<3>;
+
+		ALFOWS_CALC[0] = &CalcAlfo<0>;
+		ALFOWS_CALC[1] = &CalcAlfo<1>;
+		ALFOWS_CALC[2] = &CalcAlfo<2>;
+		ALFOWS_CALC[3] = &CalcAlfo<3>;
+
+		PLFOWS_CALC[0] = &CalcPlfo<0>;
+		PLFOWS_CALC[1] = &CalcPlfo<1>;
+		PLFOWS_CALC[2] = &CalcPlfo<2>;
+		PLFOWS_CALC[3] = &CalcPlfo<3>;
 	}
 
-	for (int i=0;i<256;i++)
+	ChannelEx Chans[64];
+
+	double dbToval(double db)
 	{
-		tl_lut[i]=(s32)((1<<15)/pow(2.0,i/16.0));
+		return pow(10, db / 20.0);
 	}
-
-	//tl entries 256 to 1023 are 0
-	for (int i=256;i<1024;i++)
-		tl_lut[i]=0;
-
-	for (int i=0;i<64;i++)
+	u32 CalcAegSteps(float t)
 	{
-		AEG_ATT_SPS[i]=CalcAegSteps(AEG_Attack_Time[i]);
-		AEG_DSR_SPS[i]=CalcAegSteps(AEG_DSR_Time[i]);
+		const double aeg_allsteps = 1024 * (1 << AEG_STEP_BITS) - 1;
+
+		if (t < 0)
+			return 0;
+		if (t == 0)
+			return (u32)aeg_allsteps;
+
+		//44.1*ms = samples
+		double scnt = 44.1 * t;
+		double steps = aeg_allsteps / scnt;
+		return (u32)(steps + 0.5);
 	}
-	for (int i = 0; i < 64; i++)
-		Chans[i].Setup(i, aica_reg, aica_ram);
+	u8* aica_reg;
+	u32 aram_mask;
 
-	for (int i = 0; i < 64; i++)
-		Chans[i].Init();
-}
-
-void sgc_Term()
-{
-
-}
-
-void WriteChannelReg8(u32 channel,u32 reg)
-{
-	Chans[channel].RegWrite(reg);
-}
-
-void ReadCommonReg(u32 reg,bool byte)
-{
-	switch(reg)
+	SGC_impl(u8* aica_reg, dsp_context_t* dsp, u8* aica_ram, u32 aram_size)
 	{
-	case 0x2808:
-	case 0x2809:
-		CommonData->MIEMP=1;
-		CommonData->MOEMP=1;
-		break;
-	case 0x2810: //LP & misc
-	case 0x2811: //LP & misc
+		this->aica_reg = aica_reg;
+		this->aram_mask = aram_size - 1;
+		dsp_out_vol = (DSP_OUT_VOL_REG*)&aica_reg[0x2000];
+		CommonData = (CommonData_struct*)&aica_reg[0x2800];
+		DSPData = (DSPData_struct*)&aica_reg[0x3000];
+		this->dsp = dsp;
+
+		staticinitialise();
+
+		for (int i = 0; i < 16; i++)
 		{
-			u32 chan=CommonData->MSLC;
-			
-			CommonData->LP=Chans[chan].loop.looped;
-			verify(CommonData->AFSET==0);
-		
-			CommonData->EG=Chans[chan].AEG.GetValue(); //AEG is only 10 bits, FEG is 13 bits
-			CommonData->SGC=Chans[chan].AEG.state;
+			volume_lut[i] = (s32)((1 << 15) / pow(2.0, (15 - i) / 2.0));
+			if (i == 0)
+				volume_lut[i] = 0;
+		}
 
-			if (! (byte && reg==0x2810))
-				Chans[chan].loop.looped=0;
+		for (int i = 0; i < 256; i++)
+		{
+			tl_lut[i] = (s32)((1 << 15) / pow(2.0, i / 16.0));
+		}
+
+		//tl entries 256 to 1023 are 0
+		for (int i = 256; i < 1024; i++)
+			tl_lut[i] = 0;
+
+		for (int i = 0; i < 64; i++)
+		{
+			AEG_ATT_SPS[i] = CalcAegSteps(AEG_Attack_Time[i]);
+			AEG_DSR_SPS[i] = CalcAegSteps(AEG_DSR_Time[i]);
+		}
+		for (int i = 0; i < 64; i++)
+			Chans[i].Setup(i, aica_reg, aica_ram, Chans, dsp);
+
+		for (int i = 0; i < 64; i++)
+			Chans[i].Init();
+	}
+
+	~SGC_impl() { }
+
+	void WriteChannelReg8(u32 channel, u32 reg)
+	{
+		Chans[channel].RegWrite(reg);
+	}
+
+	void ReadCommonReg(u32 reg, bool byte)
+	{
+		switch (reg)
+		{
+		case 0x2808:
+		case 0x2809:
+			CommonData->MIEMP = 1;
+			CommonData->MOEMP = 1;
+			break;
+		case 0x2810: //LP & misc
+		case 0x2811: //LP & misc
+		{
+			u32 chan = CommonData->MSLC;
+
+			CommonData->LP = Chans[chan].loop.looped;
+			verify(CommonData->AFSET == 0);
+
+			CommonData->EG = Chans[chan].AEG.GetValue(); //AEG is only 10 bits, FEG is 13 bits
+			CommonData->SGC = Chans[chan].AEG.state;
+
+			if (!(byte && reg == 0x2810))
+				Chans[chan].loop.looped = 0;
 		}
 		break;
-	case 0x2814: //CA
-	case 0x2815: //CA
+		case 0x2814: //CA
+		case 0x2815: //CA
 		{
-			u32 chan=CommonData->MSLC;
+			u32 chan = CommonData->MSLC;
 			CommonData->CA = Chans[chan].CA /*& (~1023)*/; //mmnn??
 			//printf("[%d] CA read %d\n",chan,Chans[chan].CA);
 		}
 		break;
+		}
 	}
-}
 
-void WriteCommonReg8(u32 reg,u32 data)
-{
-	WriteMemArr(aica_reg,reg,data,1);
-	if (reg==0x2804 || reg==0x2805)
+	void WriteCommonReg8(u32 reg, u32 data)
 	{
-		dsp->RBL=(8192<<CommonData->RBL)-1;
-		dsp->RBP=( (CommonData->RBP*2048) & aram_mask);
-		dsp->dyndirty=true;
+		WriteMemArr(aica_reg, reg, data, 1);
+		if (reg == 0x2804 || reg == 0x2805)
+		{
+			dsp->RBL = (8192 << CommonData->RBL) - 1;
+			dsp->RBP = ((CommonData->RBP * 2048) & aram_mask);
+			dsp->dyndirty = true;
+		}
 	}
-}
 
 #define CDDA_SIZE  (2352/2)
-s16 cdda_sector[CDDA_SIZE]={0};
-u32 cdda_index=CDDA_SIZE<<1;
+	s16 cdda_sector[CDDA_SIZE] = { 0 };
+	u32 cdda_index = CDDA_SIZE << 1;
 
 
-SampleType mxlr[64];
+	SampleType mxlr[64];
 
-u32 samples_gen;
+	u32 samples_gen;
 
-//no DSP for now in this version
-void AICA_Sample32()
-{
-	if (settings.aica.NoBatch)
+	//no DSP for now in this version
+	void AICA_Sample32()
 	{
-		return;
-	}
-
-	memset(mxlr,0,sizeof(mxlr));
-
-	//Generate 32 samples for each channel, before moving to next channel
-	//much more cache efficient !
-	u32 sg=0;
-	for (int ch = 0; ch < 64; ch++)
-	{
-		for (int i=0;i<32;i++)
+		if (settings.aica.NoBatch)
 		{
-			SampleType oLeft,oRight,oDsp;
-			//stop working on this channel if its turned off ...
-			if (!Chans[ch].Step(oLeft, oRight, oDsp))
-				break;
+			return;
+		}
 
-			sg++;
+		memset(mxlr, 0, sizeof(mxlr));
 
-			if (0==(oLeft+oRight))
+		//Generate 32 samples for each channel, before moving to next channel
+		//much more cache efficient !
+		u32 sg = 0;
+		for (int ch = 0; ch < 64; ch++)
+		{
+			for (int i = 0; i < 32; i++)
 			{
-				oLeft=oRight=oDsp;
+				SampleType oLeft, oRight, oDsp;
+				//stop working on this channel if its turned off ...
+				if (!Chans[ch].Step(oLeft, oRight, oDsp))
+					break;
+
+				sg++;
+
+				if (0 == (oLeft + oRight))
+				{
+					oLeft = oRight = oDsp;
+				}
+
+				mxlr[i * 2 + 0] += oLeft;
+				mxlr[i * 2 + 1] += oRight;
+			}
+		}
+#if HOST_OS==OS_WINDOWS
+		samples_gen += sg;
+#endif
+		//OK , generated all Channels  , now DSP/ect + final mix ;p
+		//CDDA EXTS input
+
+		for (int i = 0; i < 32; i++)
+		{
+			SampleType mixl, mixr;
+
+			mixl = mxlr[i * 2 + 0];
+			mixr = mxlr[i * 2 + 1];
+
+			if (cdda_index >= CDDA_SIZE)
+			{
+				cdda_index = 0;
+				libCore_CDDA_Sector(cdda_sector);
+			}
+			s32 EXTS0L = cdda_sector[cdda_index];
+			s32 EXTS0R = cdda_sector[cdda_index + 1];
+			cdda_index += 2;
+
+			//Final MIX ..
+			//Add CDDA / DSP effect(s)
+
+			//CDDA
+			if (settings.aica.CDDAMute == 0)
+			{
+				VOLPAN(EXTS0L, dsp_out_vol[16].EFSDL, dsp_out_vol[16].EFPAN, mixl, mixr);
+				VOLPAN(EXTS0R, dsp_out_vol[17].EFSDL, dsp_out_vol[17].EFPAN, mixl, mixr);
 			}
 
-			mxlr[i*2+0] += oLeft;
-			mxlr[i*2+1] += oRight;
+			/*
+			no dsp for now -- needs special handling of oDSP for ch paraller version ...
+			if (settings.aica.DSPEnabled)
+			{
+				dsp_step();
+
+				for (int i=0;i<16;i++)
+				{
+					VOLPAN( (*(s16*)&DSPData->EFREG[i]) ,dsp_out_vol[i].EFSDL,dsp_out_vol[i].EFPAN,mixl,mixr);
+				}
+			}
+			*/
+
+			//Mono !
+			if (CommonData->Mono)
+			{
+				//Yay for mono =P
+				mixl += mixr;
+				mixr = mixl;
+			}
+
+			//MVOL !
+			//we want to make sure mix* is *At least* 23 bits wide here, so 64 bit mul !
+			u32 mvol = CommonData->MVOL;
+			s32 val = volume_lut[mvol];
+			mixl = (s32)FPMul((s64)mixl, val, 15);
+			mixr = (s32)FPMul((s64)mixr, val, 15);
+
+
+			if (CommonData->DAC18B)
+			{
+				//If 18 bit output , make it 16b :p
+				mixl = FPs(mixl, 2);
+				mixr = FPs(mixr, 2);
+			}
+
+			//Sample is ready ! clip/saturate and store :}
+
+#ifdef CLIP_WARN
+			if (((s16)mixl) != mixl)
+				printf("Clipped mixl %d\n", mixl);
+			if (((s16)mixr) != mixr)
+				printf("Clipped mixr %d\n", mixr);
+#endif
+
+			clip16(mixl);
+			clip16(mixr);
+
+			pl = mixl;
+			pr = mixr;
+
+			if (!settings.aica.NoSound) WriteSample(mixr, mixl);
 		}
 	}
-#if HOST_OS==OS_WINDOWS
-	samples_gen += sg;
-#endif
-	//OK , generated all Channels  , now DSP/ect + final mix ;p
-	//CDDA EXTS input
-	
-	for (int i=0;i<32;i++)
+
+	void AICA_Sample()
 	{
-		SampleType mixl,mixr;
+		SampleType mixl, mixr;
+		mixl = 0;
+		mixr = 0;
+		memset(dsp->MIXS, 0, sizeof(dsp->MIXS));
 
-		mixl=mxlr[i*2+0];
-		mixr=mxlr[i*2+1];
+		ChannelEx::StepAll(Chans, mixl, mixr);
 
-		if (cdda_index>=CDDA_SIZE)
+		//OK , generated all Channels  , now DSP/ect + final mix ;p
+		//CDDA EXTS input
+
+		if (cdda_index >= CDDA_SIZE)
 		{
-			cdda_index=0;
+			cdda_index = 0;
 			libCore_CDDA_Sector(cdda_sector);
 		}
-		s32 EXTS0L=cdda_sector[cdda_index];
-		s32 EXTS0R=cdda_sector[cdda_index+1];
-		cdda_index+=2;
+		s32 EXTS0L = cdda_sector[cdda_index];
+		s32 EXTS0R = cdda_sector[cdda_index + 1];
+		cdda_index += 2;
+
+		//No dsp tho ;p
 
 		//Final MIX ..
 		//Add CDDA / DSP effect(s)
 
 		//CDDA
-		if (settings.aica.CDDAMute==0) 
+		if (settings.aica.CDDAMute == 0)
 		{
-			VOLPAN(EXTS0L,dsp_out_vol[16].EFSDL,dsp_out_vol[16].EFPAN,mixl,mixr);
-			VOLPAN(EXTS0R,dsp_out_vol[17].EFSDL,dsp_out_vol[17].EFPAN,mixl,mixr);
+			VOLPAN(EXTS0L, dsp_out_vol[16].EFSDL, dsp_out_vol[16].EFPAN, mixl, mixr);
+			VOLPAN(EXTS0R, dsp_out_vol[17].EFSDL, dsp_out_vol[17].EFPAN, mixl, mixr);
+
+			DSPData->EXTS[0] = EXTS0L;
+			DSPData->EXTS[1] = EXTS0R;
 		}
-
-		/*
-		no dsp for now -- needs special handling of oDSP for ch paraller version ...
-		if (settings.aica.DSPEnabled)
+		else
 		{
-			dsp_step();
+			DSPData->EXTS[0] = 0;
+			DSPData->EXTS[1] = 0;
+		}
+		//if (settings.aica.DSPEnabled)
+		{
+			libDSP_Step();
 
-			for (int i=0;i<16;i++)
+			for (int i = 0; i < 16; i++)
 			{
-				VOLPAN( (*(s16*)&DSPData->EFREG[i]) ,dsp_out_vol[i].EFSDL,dsp_out_vol[i].EFPAN,mixl,mixr);
+				VOLPAN((*(s16*)&DSPData->EFREG[i]), dsp_out_vol[i].EFSDL, dsp_out_vol[i].EFPAN, mixl, mixr);
 			}
 		}
-		*/
+
+		if (settings.aica.NoSound)
+		{
+			return;
+		}
 
 		//Mono !
 		if (CommonData->Mono)
 		{
 			//Yay for mono =P
-			mixl+=mixr;
-			mixr=mixl;
+			mixl += mixr;
+			mixr = mixl;
 		}
 
 		//MVOL !
 		//we want to make sure mix* is *At least* 23 bits wide here, so 64 bit mul !
-		u32 mvol=CommonData->MVOL;
-		s32 val=volume_lut[mvol];
-		mixl=(s32)FPMul((s64)mixl,val,15);
-		mixr=(s32)FPMul((s64)mixr,val,15);
+		u32 mvol = CommonData->MVOL;
+		s32 val = volume_lut[mvol];
+		mixl = (s32)FPMul((s64)mixl, val, 15);
+		mixr = (s32)FPMul((s64)mixr, val, 15);
 
 
 		if (CommonData->DAC18B)
 		{
 			//If 18 bit output , make it 16b :p
-			mixl=FPs(mixl,2);
-			mixr=FPs(mixr,2);
+			mixl = FPs(mixl, 2);
+			mixr = FPs(mixr, 2);
 		}
 
 		//Sample is ready ! clip/saturate and store :}
 
 #ifdef CLIP_WARN
 		if (((s16)mixl) != mixl)
-			printf("Clipped mixl %d\n",mixl);
+			printf("Clipped mixl %d\n", mixl);
 		if (((s16)mixr) != mixr)
-			printf("Clipped mixr %d\n",mixr);
+			printf("Clipped mixr %d\n", mixr);
 #endif
 
 		clip16(mixl);
 		clip16(mixr);
 
-		pl=mixl;
-		pr=mixr;
+		pl = mixl;
+		pr = mixr;
 
-		if (!settings.aica.NoSound) WriteSample(mixr,mixl);
+		WriteSample(mixr, mixl);
 	}
-}
 
-void AICA_Sample()
-{
-	SampleType mixl,mixr;
-	mixl = 0;
-	mixr = 0;
-	memset(dsp->MIXS,0,sizeof(dsp->MIXS));
-
-	ChannelEx::StepAll(mixl,mixr);
-	
-	//OK , generated all Channels  , now DSP/ect + final mix ;p
-	//CDDA EXTS input
-	
-	if (cdda_index>=CDDA_SIZE)
+	bool channel_serialize(void** data, unsigned int* total_size)
 	{
-		cdda_index=0;
-		libCore_CDDA_Sector(cdda_sector);
-	}
-	s32 EXTS0L=cdda_sector[cdda_index];
-	s32 EXTS0R=cdda_sector[cdda_index+1];
-	cdda_index+=2;
+		REICAST_SA(cdda_sector, CDDA_SIZE);
+		REICAST_S(cdda_index);
+		REICAST_SA(mxlr, 64);
+		REICAST_S(samples_gen);
 
-	//No dsp tho ;p
+		int i = 0;
+		int addr = 0;
 
-	//Final MIX ..
-	//Add CDDA / DSP effect(s)
-
-	//CDDA
-	if (settings.aica.CDDAMute==0) 
-	{
-		VOLPAN(EXTS0L,dsp_out_vol[16].EFSDL,dsp_out_vol[16].EFPAN,mixl,mixr);
-		VOLPAN(EXTS0R,dsp_out_vol[17].EFSDL,dsp_out_vol[17].EFPAN,mixl,mixr);
-
-		DSPData->EXTS[0] = EXTS0L;
-		DSPData->EXTS[1] = EXTS0R;
-	}
-	else
-	{
-		DSPData->EXTS[0] = 0;
-		DSPData->EXTS[1] = 0;
-	}
-	//if (settings.aica.DSPEnabled)
-	{
-		libDSP_Step();
-
-		for (int i=0;i<16;i++)
+		for (i = 0; i < 64; i++)
 		{
-			VOLPAN( (*(s16*)&DSPData->EFREG[i]) ,dsp_out_vol[i].EFSDL,dsp_out_vol[i].EFPAN,mixl,mixr);
+			addr = Chans[i].SA - Chans[i].aica_ram;
+			REICAST_S(addr);
+
+			REICAST_S(Chans[i].CA);
+			REICAST_S(Chans[i].step);
+			REICAST_S(Chans[i].update_rate);
+			REICAST_S(Chans[i].s0);
+			REICAST_S(Chans[i].s1);
+			REICAST_S(Chans[i].loop);
+			REICAST_S(Chans[i].adpcm.last_quant);
+			REICAST_S(Chans[i].noise_state);
+			REICAST_S(Chans[i].VolMix.DLAtt);
+			REICAST_S(Chans[i].VolMix.DRAtt);
+			REICAST_S(Chans[i].VolMix.DSPAtt);
+
+			addr = Chans[i].VolMix.DSPOut - (&(dsp->MIXS[0]));
+			REICAST_S(addr);
+
+			REICAST_S(Chans[i].AEG.val);
+			REICAST_S(Chans[i].AEG.state);
+			REICAST_S(Chans[i].AEG.AttackRate);
+			REICAST_S(Chans[i].AEG.Decay1Rate);
+			REICAST_S(Chans[i].AEG.Decay2Rate);
+			REICAST_S(Chans[i].AEG.Decay2Value);
+			REICAST_S(Chans[i].AEG.ReleaseRate);
+			REICAST_S(Chans[i].FEG);
+			REICAST_S(Chans[i].step_stream_lut1);
+			REICAST_S(Chans[i].step_stream_lut2);
+			REICAST_S(Chans[i].step_stream_lut3);
+
+			REICAST_S(Chans[i].lfo.counter);
+			REICAST_S(Chans[i].lfo.start_value);
+			REICAST_S(Chans[i].lfo.state);
+			REICAST_S(Chans[i].lfo.alfo);
+			REICAST_S(Chans[i].lfo.alfo_shft);
+			REICAST_S(Chans[i].lfo.plfo);
+			REICAST_S(Chans[i].lfo.plfo_shft);
+			REICAST_S(Chans[i].lfo.alfo_calc_lut);
+			REICAST_S(Chans[i].lfo.plfo_calc_lut);
+			REICAST_S(Chans[i].enabled);
+			REICAST_S(Chans[i].ChanelNumber);
 		}
+
+		/* TODO/FIXME - no possibility for this to return false? */
+		return true;
 	}
 
-    if (settings.aica.NoSound)
-    {
-        return;
-    }
-
-	//Mono !
-	if (CommonData->Mono)
+	bool channel_unserialize(void** data, unsigned int* total_size)
 	{
-		//Yay for mono =P
-		mixl+=mixr;
-		mixr=mixl;
+		REICAST_USA(cdda_sector, CDDA_SIZE);
+		REICAST_US(cdda_index);
+		REICAST_USA(mxlr, 64);
+		REICAST_US(samples_gen);
+
+		int i = 0;
+		int addr = 0;
+
+		for (i = 0; i < 64; i++)
+		{
+			REICAST_US(addr);
+			Chans[i].SA = addr + Chans[i].aica_ram;
+
+			REICAST_US(Chans[i].CA);
+			REICAST_US(Chans[i].step);
+			REICAST_US(Chans[i].update_rate);
+			REICAST_US(Chans[i].s0);
+			REICAST_US(Chans[i].s1);
+			REICAST_US(Chans[i].loop);
+			REICAST_US(Chans[i].adpcm.last_quant);
+			REICAST_US(Chans[i].noise_state);
+			REICAST_US(Chans[i].VolMix.DLAtt);
+			REICAST_US(Chans[i].VolMix.DRAtt);
+			REICAST_US(Chans[i].VolMix.DSPAtt);
+
+			REICAST_US(addr);
+			Chans[i].VolMix.DSPOut = addr + (&(dsp->MIXS[0]));
+
+			REICAST_US(Chans[i].AEG.val);
+			REICAST_US(Chans[i].AEG.state);
+			Chans[i].StepAEG = AEG_STEP_LUT[Chans[i].AEG.state];
+			REICAST_US(Chans[i].AEG.AttackRate);
+			REICAST_US(Chans[i].AEG.Decay1Rate);
+			REICAST_US(Chans[i].AEG.Decay2Rate);
+			REICAST_US(Chans[i].AEG.Decay2Value);
+			REICAST_US(Chans[i].AEG.ReleaseRate);
+			REICAST_US(Chans[i].FEG);
+			Chans[i].StepFEG = FEG_STEP_LUT[Chans[i].FEG.state];
+			REICAST_US(Chans[i].step_stream_lut1);
+			REICAST_US(Chans[i].step_stream_lut2);
+			REICAST_US(Chans[i].step_stream_lut3);
+			Chans[i].StepStream = STREAM_STEP_LUT[Chans[i].step_stream_lut1][Chans[i].step_stream_lut2][Chans[i].step_stream_lut3];
+			Chans[i].StepStreamInitial = STREAM_INITAL_STEP_LUT[Chans[i].step_stream_lut1];
+
+			REICAST_US(Chans[i].lfo.counter);
+			REICAST_US(Chans[i].lfo.start_value);
+			REICAST_US(Chans[i].lfo.state);
+			REICAST_US(Chans[i].lfo.alfo);
+			REICAST_US(Chans[i].lfo.alfo_shft);
+			REICAST_US(Chans[i].lfo.plfo);
+			REICAST_US(Chans[i].lfo.plfo_shft);
+			REICAST_US(Chans[i].lfo.alfo_calc_lut);
+			REICAST_US(Chans[i].lfo.plfo_calc_lut);
+			Chans[i].lfo.alfo_calc = ALFOWS_CALC[Chans[i].lfo.alfo_calc_lut];
+			Chans[i].lfo.plfo_calc = PLFOWS_CALC[Chans[i].lfo.plfo_calc_lut];
+			REICAST_US(Chans[i].enabled);
+			REICAST_US(Chans[i].ChanelNumber);
+
+		}
+
+		/* TODO/FIXME - no possibility for this to return false? */
+		return true;
 	}
-	
-	//MVOL !
-	//we want to make sure mix* is *At least* 23 bits wide here, so 64 bit mul !
-	u32 mvol=CommonData->MVOL;
-	s32 val=volume_lut[mvol];
-	mixl=(s32)FPMul((s64)mixl,val,15);
-	mixr=(s32)FPMul((s64)mixr,val,15);
+};
 
-
-	if (CommonData->DAC18B)
-	{
-		//If 18 bit output , make it 16b :p
-		mixl=FPs(mixl,2);
-		mixr=FPs(mixr,2);
-	}
-
-	//Sample is ready ! clip/saturate and store :}
-
-#ifdef CLIP_WARN
-	if (((s16)mixl) != mixl)
-		printf("Clipped mixl %d\n",mixl);
-	if (((s16)mixr) != mixr)
-		printf("Clipped mixr %d\n",mixr);
-#endif
-
-	clip16(mixl);
-	clip16(mixr);
-
-	pl=mixl;
-	pr=mixr;
-
-	WriteSample(mixr,mixl);
-}
-
-bool channel_serialize(void **data, unsigned int *total_size)
-{
-	int i = 0 ;
-	int addr = 0 ;
-
-	for ( i = 0 ; i < 64 ; i++)
-	{
-		addr = Chans[i].SA - Chans[i].aica_ram ;
-		REICAST_S(addr);
-
-		REICAST_S(Chans[i].CA) ;
-		REICAST_S(Chans[i].step) ;
-		REICAST_S(Chans[i].update_rate) ;
-		REICAST_S(Chans[i].s0) ;
-		REICAST_S(Chans[i].s1) ;
-		REICAST_S(Chans[i].loop) ;
-		REICAST_S(Chans[i].adpcm.last_quant) ;
-		REICAST_S(Chans[i].noise_state) ;
-		REICAST_S(Chans[i].VolMix.DLAtt) ;
-		REICAST_S(Chans[i].VolMix.DRAtt) ;
-		REICAST_S(Chans[i].VolMix.DSPAtt) ;
-
-		addr = Chans[i].VolMix.DSPOut - (&(dsp->MIXS[0])) ;
-		REICAST_S(addr);
-
-		REICAST_S(Chans[i].AEG.val) ;
-		REICAST_S(Chans[i].AEG.state) ;
-		REICAST_S(Chans[i].AEG.AttackRate) ;
-		REICAST_S(Chans[i].AEG.Decay1Rate) ;
-		REICAST_S(Chans[i].AEG.Decay2Rate) ;
-		REICAST_S(Chans[i].AEG.Decay2Value) ;
-		REICAST_S(Chans[i].AEG.ReleaseRate) ;
-		REICAST_S(Chans[i].FEG) ;
-		REICAST_S(Chans[i].step_stream_lut1) ;
-		REICAST_S(Chans[i].step_stream_lut2) ;
-		REICAST_S(Chans[i].step_stream_lut3) ;
-
-		REICAST_S(Chans[i].lfo.counter) ;
-		REICAST_S(Chans[i].lfo.start_value) ;
-		REICAST_S(Chans[i].lfo.state) ;
-		REICAST_S(Chans[i].lfo.alfo) ;
-		REICAST_S(Chans[i].lfo.alfo_shft) ;
-		REICAST_S(Chans[i].lfo.plfo) ;
-		REICAST_S(Chans[i].lfo.plfo_shft) ;
-		REICAST_S(Chans[i].lfo.alfo_calc_lut) ;
-		REICAST_S(Chans[i].lfo.plfo_calc_lut) ;
-		REICAST_S(Chans[i].enabled) ;
-		REICAST_S(Chans[i].ChanelNumber) ;
-	}
-
-	/* TODO/FIXME - no possibility for this to return false? */
-	return true;
-}
-
-bool channel_unserialize(void **data, unsigned int *total_size)
-{
-	int i = 0 ;
-	int addr = 0 ;
-
-	for ( i = 0 ; i < 64 ; i++)
-	{
-		REICAST_US(addr);
-		Chans[i].SA = addr + Chans[i].aica_ram;
-
-		REICAST_US(Chans[i].CA) ;
-		REICAST_US(Chans[i].step) ;
-		REICAST_US(Chans[i].update_rate) ;
-		REICAST_US(Chans[i].s0) ;
-		REICAST_US(Chans[i].s1) ;
-		REICAST_US(Chans[i].loop) ;
-		REICAST_US(Chans[i].adpcm.last_quant) ;
-		REICAST_US(Chans[i].noise_state) ;
-		REICAST_US(Chans[i].VolMix.DLAtt) ;
-		REICAST_US(Chans[i].VolMix.DRAtt) ;
-		REICAST_US(Chans[i].VolMix.DSPAtt) ;
-
-		REICAST_US(addr);
-		Chans[i].VolMix.DSPOut = addr + (&(dsp->MIXS[0])) ;
-
-		REICAST_US(Chans[i].AEG.val) ;
-		REICAST_US(Chans[i].AEG.state) ;
-		Chans[i].StepAEG=AEG_STEP_LUT[Chans[i].AEG.state];
-		REICAST_US(Chans[i].AEG.AttackRate) ;
-		REICAST_US(Chans[i].AEG.Decay1Rate) ;
-		REICAST_US(Chans[i].AEG.Decay2Rate) ;
-		REICAST_US(Chans[i].AEG.Decay2Value) ;
-		REICAST_US(Chans[i].AEG.ReleaseRate) ;
-		REICAST_US(Chans[i].FEG) ;
-		Chans[i].StepFEG=FEG_STEP_LUT[Chans[i].FEG.state];
-		REICAST_US(Chans[i].step_stream_lut1) ;
-		REICAST_US(Chans[i].step_stream_lut2) ;
-		REICAST_US(Chans[i].step_stream_lut3) ;
-		Chans[i].StepStream=STREAM_STEP_LUT[Chans[i].step_stream_lut1][Chans[i].step_stream_lut2][Chans[i].step_stream_lut3] ;
-		Chans[i].StepStreamInitial=STREAM_INITAL_STEP_LUT[Chans[i].step_stream_lut1];
-
-		REICAST_US(Chans[i].lfo.counter) ;
-		REICAST_US(Chans[i].lfo.start_value) ;
-		REICAST_US(Chans[i].lfo.state) ;
-		REICAST_US(Chans[i].lfo.alfo) ;
-		REICAST_US(Chans[i].lfo.alfo_shft) ;
-		REICAST_US(Chans[i].lfo.plfo) ;
-		REICAST_US(Chans[i].lfo.plfo_shft) ;
-		REICAST_US(Chans[i].lfo.alfo_calc_lut) ;
-		REICAST_US(Chans[i].lfo.plfo_calc_lut) ;
-		Chans[i].lfo.alfo_calc = ALFOWS_CALC[Chans[i].lfo.alfo_calc_lut];
-		Chans[i].lfo.plfo_calc = PLFOWS_CALC[Chans[i].lfo.plfo_calc_lut];
-		REICAST_US(Chans[i].enabled) ;
-		REICAST_US(Chans[i].ChanelNumber) ;
-
-	}
-
-	/* TODO/FIXME - no possibility for this to return false? */
-	return true;
+SGC* SGC::Create(u8* aica_reg, dsp_context_t* dsp, u8* aica_ram, u32 aram_size) {
+	return new SGC_impl(aica_reg, dsp, aica_ram, aram_size);
 }

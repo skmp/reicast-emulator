@@ -1,16 +1,8 @@
 #pragma once
 #include "aica.h"
 
-void AICA_Sample();
-void AICA_Sample32();
-
-//u32 ReadChannelReg(u32 channel,u32 reg);
-void WriteChannelReg8(u32 channel,u32 reg);
 
 struct dsp_context_t;
-
-void sgc_Init(u8* aica_reg, dsp_context_t* dsp, u8* aica_ram, u32 aram_size);
-void sgc_Term();
 
 union fp_22_10
 {
@@ -56,9 +48,21 @@ struct DSP_OUT_VOL_REG
 //#define SAMPLE_TYPE_SHIFT (8)
 typedef s32 SampleType;
 
-void ReadCommonReg(u32 reg,bool byte);
-void WriteCommonReg8(u32 reg,u32 data);
 #define clip(x,min,max) if ((x)<(min)) (x)=(min); if ((x)>(max)) (x)=(max);
 #define clip16(x) clip(x,-32768,32767)
-bool channel_serialize(void **data, unsigned int *total_size);
-bool channel_unserialize(void **data, unsigned int *total_size);
+
+struct SGC {
+	virtual void AICA_Sample() = 0;
+	virtual void AICA_Sample32() = 0;
+
+	virtual void WriteChannelReg8(u32 channel, u32 reg) = 0;
+
+	static SGC* Create(u8* aica_reg, dsp_context_t* dsp, u8* aica_ram, u32 aram_size);
+;
+	virtual void ReadCommonReg(u32 reg,bool byte) = 0;
+	virtual void WriteCommonReg8(u32 reg,u32 data) = 0;
+	virtual bool channel_serialize(void **data, unsigned int *total_size) = 0;
+	virtual bool channel_unserialize(void **data, unsigned int *total_size) = 0;
+
+	virtual ~SGC() { }
+};

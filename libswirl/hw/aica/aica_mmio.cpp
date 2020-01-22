@@ -299,12 +299,12 @@ struct AicaDevice final : AICA {
 		{
 			if (sz == 1)
 			{
-				ReadCommonReg(addr, true);
+				sgc->ReadCommonReg(addr, true);
 				ReadMemArrRet(aica_reg, addr, 1);
 			}
 			else
 			{
-				ReadCommonReg(addr, false);
+				sgc->ReadCommonReg(addr, false);
 				//ReadCommonReg8(addr+1);
 				ReadMemArrRet(aica_reg, addr, 2);
 			}
@@ -323,13 +323,13 @@ struct AicaDevice final : AICA {
 			if (sz == 1)
 			{
 				WriteMemArr(aica_reg, addr, data, 1);
-				WriteChannelReg8(chan, reg);
+				sgc->WriteChannelReg8(chan, reg);
 			}
 			else
 			{
 				WriteMemArr(aica_reg, addr, data, 2);
-				WriteChannelReg8(chan, reg);
-				WriteChannelReg8(chan, reg + 1);
+				sgc->WriteChannelReg8(chan, reg);
+				sgc->WriteChannelReg8(chan, reg + 1);
 			}
 			return;
 		}
@@ -351,12 +351,12 @@ struct AicaDevice final : AICA {
 		{
 			if (sz == 1)
 			{
-				WriteCommonReg8(addr, data);
+				sgc->WriteCommonReg8(addr, data);
 			}
 			else
 			{
-				WriteCommonReg8(addr, data & 0xFF);
-				WriteCommonReg8(addr + 1, data >> 8);
+				sgc->WriteCommonReg8(addr, data & 0xFF);
+				sgc->WriteCommonReg8(addr + 1, data >> 8);
 			}
 			return;
 		}
@@ -589,6 +589,7 @@ struct AicaDevice final : AICA {
 	DSP* dsp;
 	u8* aica_ram;
 	u32 aram_size;
+	unique_ptr<SGC> sgc;
 
 	AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_reg, u8* aica_ram, u32 aram_size) : sb(sb), asic(asic), dsp(dsp), aica_reg(aica_reg), aica_ram(aica_ram), aram_size(aram_size) { }
 
@@ -675,8 +676,8 @@ struct AicaDevice final : AICA {
 		MCIPD = (InterruptInfo*)&aica_reg[0x28B4 + 4];
 		MCIRE = (InterruptInfo*)&aica_reg[0x28B4 + 8];
 
-		sgc_Init(aica_reg, dsp->GetDspContext(), aica_ram, aram_size);
-
+		sgc.reset(SGC::Create(aica_reg, dsp->GetDspContext(), aica_ram, aram_size));
+		
 		for (int i = 0; i < 3; i++)
 			timers[i].Init(aica_reg, MCIPD, SCIPD, i);
 
@@ -708,13 +709,13 @@ struct AicaDevice final : AICA {
 
 	void Term()
 	{
-		sgc_Term();
+		sgc.reset();
 	}
 
 	//Mainloop
 	void Update(u32 Samples)
 	{
-		AICA_Sample32();
+		sgc->AICA_Sample32();
 	}
 
 	//Aica reads (both sh4&arm)
@@ -735,7 +736,7 @@ struct AicaDevice final : AICA {
 		SCIPD->SAMPLE_DONE = 1;
 
 		if (settings.aica.NoBatch)
-			AICA_Sample();
+			sgc->AICA_Sample();
 
 		//Make sure sh4/arm interrupt system is up to date :)
 		update_arm_interrupts();
@@ -753,6 +754,8 @@ struct AicaDevice final : AICA {
 		REICAST_S(ARMRST);
 
 		REICAST_SA(aica_reg, 0x8000);
+
+		sgc->channel_serialize(data, total_size);
 	}
 
 	void unserialize(void** data, unsigned int* total_size) {
@@ -766,6 +769,8 @@ struct AicaDevice final : AICA {
 		REICAST_US(ARMRST);
 
 		REICAST_USA(aica_reg, 0x8000);
+
+		sgc->channel_unserialize(data, total_size);
 	}
 
 };

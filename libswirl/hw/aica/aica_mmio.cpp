@@ -699,7 +699,7 @@ struct AicaDevice final : AICA {
 
 	void Reset(bool Manual)
 	{
-		memset(aica_reg, 0, sizeof(aica_reg));
+		memset(aica_reg, 0, 0x8000);
 		
 		ARMRST = 0;
 		VREG = 0;

@@ -9,6 +9,7 @@
  */
 
 #include "m4cartridge.h"
+#include "serialize.h"
 
 
 // Decoder for M4-type NAOMI cart encryption

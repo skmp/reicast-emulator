@@ -5,6 +5,8 @@
 #include "oslib/audiostream.h"
 #include <math.h>
 #include <algorithm>
+#include "serialize.h"
+
 using namespace std;
 #undef FAR
 

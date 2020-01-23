@@ -39,16 +39,6 @@ u32 findfirstset(u32 v)
 #if FEAT_AREC != DYNAREC_NONE
 Arm7VirtBackend* virtBackend;
 
-/*
- *
- *	X86 Compiler
- *
- */
-
-void* EntryPoints[ARAM_SIZE_MAX / 4];
-
-
-
 template<u32 Pd>
 void DYNACALL MSR_do(Arm7Context* ctx, u32 v)
 {
@@ -138,9 +128,6 @@ struct ArmDPOP
     u32 flags;
 };
 
-vector<ArmDPOP> ops;
-
-
 #define DP_R_ROFC (OP_READ_FLAGS_S|OP_READ_REG_1) //Reads reg1, op2, flags if S
 #define DP_R_ROF (OP_READ_FLAGS|OP_READ_REG_1)    //Reads reg1, op2, flags (ADC & co)
 #define DP_R_OFC (OP_READ_FLAGS_S)                //Reads op2, flags if S
@@ -163,6 +150,11 @@ struct Arm7JitVirt_impl : ARM7Backend {
     unique_ptr<Arm7VirtBackend> armv;
     Arm7Context* ctx;
     Looppoints lps;
+
+    void* EntryPoints[ARAM_SIZE_MAX / 4];
+
+    vector<ArmDPOP> ops;
+
 
     Arm7JitVirt_impl(Arm7Context* ctx) : ctx(ctx) {
         armv.reset(Arm7VirtBackend::Create(this, ctx));

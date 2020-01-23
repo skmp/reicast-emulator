@@ -33,6 +33,5 @@ void pvr_mem_Init(SystemBus* sb);
 void TAWrite(u32 address,u32* data,u32 count, u8* vram);
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
 
-void YUV_init();
 //registers 
 #define PVR_BASE 0x005F8000

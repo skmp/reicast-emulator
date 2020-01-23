@@ -16,6 +16,7 @@
 #include "Renderer_if.h"
 #include "ta.h"
 #include "spg.h"
+#include "pvr_yuv.h"
 
 #include "hw/sh4/sh4_mmio.h"
 
@@ -232,7 +233,7 @@ struct PVRDevice : MMIODevice {
         if (addr == TA_YUV_TEX_BASE_addr || addr == TA_YUV_TEX_CTRL_addr)
         {
             PvrReg(addr, u32) = data;
-            YUV_init();
+            YUV_init(asic);
             return;
         }
 

@@ -56,7 +56,7 @@ static bool extra_depth_game;
 
 MMIODevice* Create_BiosDevice();
 MMIODevice* Create_FlashDevice();
-MMIODevice* Create_NaomiDevice(SystemBus* sb);
+MMIODevice* Create_NaomiDevice(SystemBus* sb, ASIC* asic);
 SystemBus* Create_SystemBus();
 MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg, u8* mram, u8* vram);
 MMIODevice* Create_ExtDevice();
@@ -807,7 +807,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         MMIODevice* gdromOrNaomiDevice =
         
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-            Create_NaomiDevice(systemBus)
+            Create_NaomiDevice(systemBus, asic)
 #else
             Create_GDRomDevice(systemBus, asic)
 #endif

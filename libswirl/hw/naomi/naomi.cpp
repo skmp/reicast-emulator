@@ -402,8 +402,9 @@ void naomi_process(u32 r3c,u32 r40,u32 r44, u32 r48)
 
 struct NaomiDevice_impl : MMIODevice {
 	SystemBus* sb;
+	ASIC* asic;
 
-	NaomiDevice_impl(SystemBus* sb) : sb(sb) { }
+	NaomiDevice_impl(SystemBus* sb, ASIC* asic) : sb(sb), asic(asic) { }
 
 	u32 Read(u32 Addr, u32 sz)
 	{
@@ -461,7 +462,7 @@ struct NaomiDevice_impl : MMIODevice {
 				}
 			}
 
-			asic_RaiseInterrupt(holly_GDROM_DMA);
+			asic->RaiseInterrupt(holly_GDROM_DMA);
 		}
 	}
 
@@ -562,7 +563,7 @@ struct NaomiDevice_impl : MMIODevice {
 		else if (naomi_updates==1)
 		{
 			naomi_updates=0;
-			asic_RaiseInterrupt(holly_EXP_PCI);
+			asic->RaiseInterrupt(holly_EXP_PCI);
 		}*/
 #if 0
 		if (!(SB_GDST & 1) || !(SB_GDEN & 1))
@@ -612,7 +613,7 @@ struct NaomiDevice_impl : MMIODevice {
 			//printf("Streamed GDMA end - %d bytes trasnfered\n",SB_GDLEND);
 			SB_GDST = 0;//done
 			// The DMA end interrupt flag
-			asic_RaiseInterrupt(holly_GDROM_DMA);
+			asic->RaiseInterrupt(holly_GDROM_DMA);
 		}
 		//Readed ALL sectors
 		if (read_params.remaining_sectors == 0)
@@ -629,8 +630,8 @@ struct NaomiDevice_impl : MMIODevice {
 	}
 };
 
-MMIODevice* Create_NaomiDevice(SystemBus* sb) {
-	return new NaomiDevice_impl(sb);
+MMIODevice* Create_NaomiDevice(SystemBus* sb, ASIC* asic) {
+	return new NaomiDevice_impl(sb, asic);
 }
 
 static u8 aw_maple_devs;

@@ -95,7 +95,7 @@ struct ModemDevice_impl : MMIODevice {
 		modem_regs.reg1e.TDBIA = modem_regs.reg1e.TDBIE && modem_regs.reg1e.TDBE;
 
 		if (modem_regs.reg1f.NCIA || modem_regs.reg1f.NSIA || modem_regs.reg1e.RDBIA || modem_regs.reg1e.TDBIA)
-			asic_RaiseInterrupt(holly_EXP_8BIT);
+			asic->RaiseInterrupt(holly_EXP_8BIT);
 		else
 			asic->CancelInterrupt(holly_EXP_8BIT);
 	}

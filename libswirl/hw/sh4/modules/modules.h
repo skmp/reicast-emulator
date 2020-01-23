@@ -5,24 +5,18 @@
 struct SuperH4Mmr;
 struct SystemBus;
 
-void bsc_init(SuperH4Mmr* sh4mmr);
-void bsc_reset();
-void bsc_term();
+#define DEFAULT_MOD(Mod) \
+    struct Sh4Mod##Mod : SuperH4Module { static Sh4Mod##Mod * Create(SuperH4Mmr* sh4mmr); };
 
-struct Sh4ModCpg : SuperH4Module {
+DEFAULT_MOD(Bsc)
 
-    static Sh4ModCpg* Create(SuperH4Mmr* sh4mmr);
-};
+DEFAULT_MOD(Cpg)
 
 void dmac_init(SuperH4Mmr* sh4mmr, SystemBus* sb);
 void dmac_reset();
 void dmac_term();
 
-struct Sh4ModRtc : SuperH4Module {
-    
-    static Sh4ModRtc* Create(SuperH4Mmr* sh4mmr);
-};
-
+DEFAULT_MOD(Rtc)
 
 void intc_init(SuperH4Mmr* sh4mmr);
 void intc_reset();

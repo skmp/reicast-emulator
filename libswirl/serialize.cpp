@@ -388,8 +388,6 @@ extern SCIF_SCFDR2_type SCIF_SCFDR2;
 
 
 //./core/hw/sh4/modules/bsc.o
-extern BSC_PDTRA_type BSC_PDTRA;
-
 
 
 
@@ -725,10 +723,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 		return false ;
 
 	REICAST_S(version) ;
-	
-	for (int i = 0; i < A0H_MAX; i++) {
-		sh4_cpu->GetA0Handler((Area0Hanlders)i)->serialize(data, total_size);
-	}
+
+	sh4_cpu->serialize(data, total_size);
 
 	REICAST_SA(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 
@@ -897,8 +893,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(SCIF_SCFRDR2);
 	REICAST_S(SCIF_SCFDR2);
 
-	REICAST_S(BSC_PDTRA);
-
 	REICAST_SA(tmu_shift,3);
 	REICAST_SA(tmu_mask,3);
 	REICAST_SA(tmu_mask64,3);
@@ -990,9 +984,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	int i = 0;
 	int j = 0;
 
-	for (int i = 0; i < A0H_MAX; i++) {
-		sh4_cpu->GetA0Handler((Area0Hanlders)i)->unserialize(data, total_size);
-	}
+	sh4_cpu->unserialize(data, total_size);
 
 	REICAST_USA(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 
@@ -1183,8 +1175,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(SCIF_SCFSR2);
 	REICAST_US(SCIF_SCFRDR2);
 	REICAST_US(SCIF_SCFDR2);
-
-	REICAST_US(BSC_PDTRA);
 
 	REICAST_USA(tmu_shift,3);
 	REICAST_USA(tmu_mask,3);
@@ -1465,11 +1455,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(SCIF_SCFSR2);
 	REICAST_US(SCIF_SCFRDR2);
 	REICAST_US(SCIF_SCFDR2);
-
-
-	REICAST_US(BSC_PDTRA);
-
-
 
 
 	REICAST_USA(tmu_shift,3);

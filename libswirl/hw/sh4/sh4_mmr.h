@@ -31,6 +31,9 @@ struct SuperH4Mmr {
 	virtual ~SuperH4Mmr() { }
 	virtual void rio_reg(void* context, Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rp = 0, RegWriteAddrFP* wp = 0) = 0;
 
+	virtual void serialize(void** data, unsigned int* total_size) { }
+	virtual void unserialize(void** data, unsigned int* total_size) { }
+
 	static SuperH4Mmr* Create(SuperH4* sh4, SystemBus* sb);
 };
 
@@ -903,7 +906,7 @@ union BSC_PDTRA_type
 	u16 full;
 };
 
-extern BSC_PDTRA_type BSC_PDTRA;
+//BSC_PDTRA_type BSC_PDTRA;
 
 //32 bits
 union BSC_PCTRB_type

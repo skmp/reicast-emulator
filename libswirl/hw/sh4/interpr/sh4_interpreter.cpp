@@ -307,6 +307,8 @@ void SuperH4_impl::Reset(bool Manual)
 
         //Clear cache
         sh4_backend->ClearCache();
+
+        sh4mmr->Reset();
     }
 }
 
@@ -315,7 +317,7 @@ bool SuperH4_impl::IsRunning()
     return sh4_int_bCpuRun;
 }
 
-bool SuperH4_impl::Init()
+bool SuperH4_impl::Init(SystemBus* sb)
 {
     verify(sizeof(Sh4cntx) == 448);
 
@@ -331,11 +333,15 @@ bool SuperH4_impl::Init()
 
     setBackend(SH4BE_INTERPRETER);
 
+    sh4mmr.reset(SuperH4Mmr::Create(this, sb));
+
     return true;
 }
 
 void SuperH4_impl::Term()
 {
+    sh4mmr.reset();
+
     Stop();
     
     sh4_sched_cleanup();
@@ -346,4 +352,20 @@ void SuperH4_impl::Term()
 
 void SuperH4_impl::ResetCache() {
     sh4_backend->ClearCache();
+}
+
+void SuperH4_impl::serialize(void** data, unsigned int* total_size) {
+    for (int i = 0; i < A0H_MAX; i++) {
+        sh4_cpu->GetA0Handler((Area0Hanlders)i)->serialize(data, total_size);
+    }
+
+    sh4mmr->serialize(data, total_size);
+}
+
+void SuperH4_impl::unserialize(void** data, unsigned int* total_size) {
+    for (int i = 0; i < A0H_MAX; i++) {
+        sh4_cpu->GetA0Handler((Area0Hanlders)i)->unserialize(data, total_size);
+    }
+
+    sh4mmr->unserialize(data, total_size);
 }

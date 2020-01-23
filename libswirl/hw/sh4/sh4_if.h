@@ -229,6 +229,7 @@ typedef bool IsCpuRunningFP();
 //sh4 interface
 
 struct MMIODevice;
+struct SystemBus;
 
 enum SuperH4Backends {
     SH4BE_INTERPRETER,
@@ -271,7 +272,7 @@ struct SuperH4 {
 
     virtual bool setBackend(SuperH4Backends backend) = 0;
 
-    virtual bool Init() = 0;
+    virtual bool Init(SystemBus* sb) = 0;
     virtual void Reset(bool Manual) = 0;
     virtual void Term() = 0;
 
@@ -286,6 +287,9 @@ struct SuperH4 {
     virtual void ResetCache() = 0;
 
 	virtual ~SuperH4() { }
+
+	virtual void serialize(void** data, unsigned int* total_size) { }
+	virtual void unserialize(void** data, unsigned int* total_size) { }
 
 	static SuperH4* Create();
 };

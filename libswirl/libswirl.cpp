@@ -764,7 +764,7 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         LoadCustom();
 
-        mem_Init((SuperH4_impl*)sh4_cpu, sh4_cpu->GetA0H<SystemBus>(A0H_SB));
+        mem_Init((SuperH4_impl*)sh4_cpu);
 
         mem_map_default((SuperH4_impl*)sh4_cpu);
 
@@ -850,7 +850,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         sh4_cpu->SetA0Handler(A0H_SCPU, soundCPU);
         sh4_cpu->SetA0Handler(A0H_DSP, dsp);
         
-        return sh4_cpu->Init();
+        return sh4_cpu->Init(systemBus);
     }
 
 

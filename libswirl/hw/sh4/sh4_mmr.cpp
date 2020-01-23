@@ -851,8 +851,9 @@ void map_p4(SuperH4* sh4)
 
 struct SuperH4Mmr_impl final : SuperH4Mmr
 {
-	unique_ptr<SuperH4Module> modRTC;
-	unique_ptr<SuperH4Module> modCPG;
+	unique_ptr<SuperH4Module> modRtc;
+	unique_ptr<SuperH4Module> modCpg;
+	unique_ptr<SuperH4Module> modBsc;
 
 	//Init/Res/Term
 	SuperH4Mmr_impl(SuperH4* psh, SystemBus* sb)
@@ -873,13 +874,16 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 			if (i < SCIF.Size) rio_reg(psh, SCIF, SCIF_BASE_addr + i * 4, RIO_NO_ACCESS, 32); //(10,true);    //SCIF : 10 registers
 		}
 
+#define DEFAULT_INIT(n) mod##n.reset(Sh4Mod##n::Create(this));
 		//initialise Register structs
-		bsc_init(this);
+		
+		DEFAULT_INIT(Bsc)
+
 		ccn_init(this);
-		modCPG.reset(Sh4ModCpg::Create(this));
+		DEFAULT_INIT(Cpg)
 		dmac_init(this, sb);
 		intc_init(this);
-		modRTC.reset(Sh4ModRtc::Create(this));
+		DEFAULT_INIT(Rtc)
 		serial_init(this);
 		tmu_init(this);
 		ubc_init(this);
@@ -888,14 +892,16 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 
 	void Reset()
 	{
+#define DEFAULT_RESET(n) mod##n->Reset();
+
 		OnChipRAM.Zero();
 		//Reset register values
-		bsc_reset();
+		DEFAULT_RESET(Bsc)
 		ccn_reset();
-		modCPG->Reset();
+		DEFAULT_RESET(Cpg)
 		dmac_reset();
 		intc_reset();
-		modRTC->Reset();
+		DEFAULT_RESET(Rtc)
 		serial_reset();
 		tmu_reset();
 		ubc_reset();
@@ -904,17 +910,19 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 
 	~SuperH4Mmr_impl()
 	{
+#define DEFAULT_TERM(n) mod##n.reset();
+
 		//free any alloc'd resources [if any]
 		MMU_term();
 		ubc_term();
 		tmu_term();
 		serial_term();
-		modRTC.reset();
+		DEFAULT_TERM(Rtc)
 		intc_term();
 		dmac_term();
-		modCPG.reset();
+		DEFAULT_TERM(Cpg)
 		ccn_term();
-		bsc_term();
+		DEFAULT_TERM(Bsc)
 		OnChipRAM.Free();
 	}
 

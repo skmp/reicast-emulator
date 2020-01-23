@@ -60,7 +60,7 @@ struct SuperH4_impl;
 
 //Init/Res/Term
 struct SystemBus;
-void mem_Init(SuperH4_impl* sh4, SystemBus* sb);
+void mem_Init(SuperH4_impl* sh4);
 void mem_Term(SuperH4_impl* sh4);
 void mem_Reset(SuperH4_impl* sh4, bool Manual);
 void mem_map_default(SuperH4_impl* sh4);

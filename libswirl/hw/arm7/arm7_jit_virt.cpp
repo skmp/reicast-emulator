@@ -37,8 +37,6 @@ u32 findfirstset(u32 v)
 
 
 #if FEAT_AREC != DYNAREC_NONE
-Arm7VirtBackend* virtBackend;
-
 template<u32 Pd>
 void DYNACALL MSR_do(Arm7Context* ctx, u32 v)
 {
@@ -135,16 +133,6 @@ struct ArmDPOP
 #define DP_W_RFC (OP_WRITE_FLAGS_S|OP_WRITE_REG)  //Writes reg, and flags if S
 #define DP_W_F (OP_WRITE_FLAGS)                   //Writes only flags, always (S=1)
 
-
-
-
-
-void  armEmit32(u32 emit32) {
-    virtBackend->Emit32(emit32);
-}
-void* armGetEmitPtr() {
-    return virtBackend->armGetEmitPtr();
-}
 
 struct Arm7JitVirt_impl : ARM7Backend {
     unique_ptr<Arm7VirtBackend> armv;
@@ -687,7 +675,7 @@ struct Arm7JitVirt_impl : ARM7Backend {
         //Opcode has been modified to use the new regs
         //Emit it ...
         arm_printf("Arm Virtual: %08X -> %08X\n", orig, opcd);
-        armEmit32(opcd);
+        armv->Emit32(opcd);
 
         //Store arm flags, rd12/rd16 (as indicated by the decoder flags)
         if (flag & OP_HAS_RD_12)
@@ -782,10 +770,6 @@ struct Arm7JitVirt_impl : ARM7Backend {
         }
 
         arm_printf("ARM7: Compiling block @ %08X\n", pc);
-
-        verify(virtBackend == nullptr);
-
-        virtBackend = armv.get();
 
         //Get the code ptr
         void* rv = armv->armGetEmitPtr();
@@ -1133,9 +1117,6 @@ struct Arm7JitVirt_impl : ARM7Backend {
         }
 
         armv->end(&lps, (void*)rv, Cycles);
-
-        verify(virtBackend == armv.get());
-        virtBackend = nullptr;
     }
 
 

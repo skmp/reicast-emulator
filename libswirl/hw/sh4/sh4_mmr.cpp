@@ -855,6 +855,7 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 	unique_ptr<SuperH4Module> modCpg;
 	unique_ptr<SuperH4Module> modBsc;
 	unique_ptr<SuperH4Module> modDmac;
+	unique_ptr<SuperH4Module> modIntc;
 
 	//Init/Res/Term
 	SuperH4Mmr_impl(SuperH4* psh)
@@ -883,7 +884,7 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 		ccn_init(this);
 		DEFAULT_INIT(Cpg)
 		DEFAULT_INIT(Dmac)
-		intc_init(this);
+		DEFAULT_INIT(Intc)
 		DEFAULT_INIT(Rtc)
 		serial_init(this);
 		tmu_init(this);
@@ -901,7 +902,7 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 		ccn_reset();
 		DEFAULT_RESET(Cpg)
 		DEFAULT_RESET(Dmac)
-		intc_reset();
+		DEFAULT_RESET(Intc)
 		DEFAULT_RESET(Rtc)
 		serial_reset();
 		tmu_reset();
@@ -919,7 +920,7 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 		tmu_term();
 		serial_term();
 		DEFAULT_TERM(Rtc)
-		intc_term();
+		DEFAULT_TERM(Intc)
 		DEFAULT_TERM(Dmac)
 		DEFAULT_TERM(Cpg)
 		ccn_term();

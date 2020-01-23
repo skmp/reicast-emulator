@@ -12,10 +12,7 @@ DEFAULT_MOD(Bsc)
 DEFAULT_MOD(Cpg)
 DEFAULT_MOD(Dmac)
 DEFAULT_MOD(Rtc)
-
-void intc_init(SuperH4Mmr* sh4mmr);
-void intc_reset();
-void intc_term();
+DEFAULT_MOD(Intc)
 
 void serial_init(SuperH4Mmr* sh4mmr);
 void serial_reset();

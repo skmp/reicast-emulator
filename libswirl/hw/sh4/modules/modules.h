@@ -9,13 +9,8 @@ struct SystemBus;
     struct Sh4Mod##Mod : SuperH4Module { static Sh4Mod##Mod * Create(SuperH4Mmr* sh4mmr); };
 
 DEFAULT_MOD(Bsc)
-
 DEFAULT_MOD(Cpg)
-
-void dmac_init(SuperH4Mmr* sh4mmr);
-void dmac_reset();
-void dmac_term();
-
+DEFAULT_MOD(Dmac)
 DEFAULT_MOD(Rtc)
 
 void intc_init(SuperH4Mmr* sh4mmr);

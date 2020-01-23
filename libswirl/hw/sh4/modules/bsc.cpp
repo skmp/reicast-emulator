@@ -70,56 +70,56 @@ struct BSC_impl: Sh4ModBsc {
     BSC_impl(SuperH4Mmr* sh4mmr) : sh4mmr(sh4mmr)
     {
         //BSC BCR1 0xFF800000 0x1F800000 32 0x00000000 Held Held Held Bclk
-        sh4_rio_reg(sh4_cpu, BSC, BSC_BCR1_addr, RIO_DATA, 32);
+        sh4_rio_reg(this, BSC, BSC_BCR1_addr, RIO_DATA, 32);
 
         //BSC BCR2 0xFF800004 0x1F800004 16 0x3FFC Held Held Held Bclk
-        sh4_rio_reg(sh4_cpu, BSC, BSC_BCR2_addr, RIO_DATA, 16);
+        sh4_rio_reg(this, BSC, BSC_BCR2_addr, RIO_DATA, 16);
 
         //BSC WCR1 0xFF800008 0x1F800008 32 0x77777777 Held Held Held Bclk
-        sh4_rio_reg(sh4_cpu, BSC, BSC_WCR1_addr, RIO_DATA, 32);
+        sh4_rio_reg(this, BSC, BSC_WCR1_addr, RIO_DATA, 32);
 
         //BSC WCR2 0xFF80000C 0x1F80000C 32 0xFFFEEFFF Held Held Held Bclk
-        sh4_rio_reg(sh4_cpu, BSC, BSC_WCR2_addr, RIO_DATA, 32);
+        sh4_rio_reg(this, BSC, BSC_WCR2_addr, RIO_DATA, 32);
 
         //BSC WCR3 0xFF800010 0x1F800010 32 0x07777777 Held Held Held Bclk
-        sh4_rio_reg(sh4_cpu, BSC, BSC_WCR3_addr, RIO_DATA, 32);
+        sh4_rio_reg(this, BSC, BSC_WCR3_addr, RIO_DATA, 32);
 
         //BSC MCR 0xFF800014 0x1F800014 32 0x00000000 Held Held Held Bclk
-        sh4_rio_reg(sh4_cpu, BSC, BSC_MCR_addr, RIO_DATA, 32);
+        sh4_rio_reg(this, BSC, BSC_MCR_addr, RIO_DATA, 32);
 
         //BSC PCR 0xFF800018 0x1F800018 16 0x0000 Held Held Held Bclk
-        sh4_rio_reg(sh4_cpu, BSC, BSC_PCR_addr, RIO_DATA, 16);
+        sh4_rio_reg(this, BSC, BSC_PCR_addr, RIO_DATA, 16);
 
         //BSC RTCSR 0xFF80001C 0x1F80001C 16 0x0000 Held Held Held Bclk
-        sh4_rio_reg(sh4_cpu, BSC, BSC_RTCSR_addr, RIO_DATA, 16);
+        sh4_rio_reg(this, BSC, BSC_RTCSR_addr, RIO_DATA, 16);
 
         //BSC RTCNT 0xFF800020 0x1F800020 16 0x0000 Held Held Held Bclk
-        sh4_rio_reg(sh4_cpu, BSC, BSC_RTCNT_addr, RIO_DATA, 16);
+        sh4_rio_reg(this, BSC, BSC_RTCNT_addr, RIO_DATA, 16);
 
         //BSC RTCOR 0xFF800024 0x1F800024 16 0x0000 Held Held Held Bclk
-        sh4_rio_reg(sh4_cpu, BSC, BSC_RTCOR_addr, RIO_DATA, 16);
+        sh4_rio_reg(this, BSC, BSC_RTCOR_addr, RIO_DATA, 16);
 
         //BSC RFCR 0xFF800028 0x1F800028 16 0x0000 Held Held Held Bclk
-        sh4_rio_reg(sh4_cpu, BSC, BSC_RFCR_addr, RIO_DATA, 16);
+        sh4_rio_reg(this, BSC, BSC_RFCR_addr, RIO_DATA, 16);
 
         //BSC PCTRA 0xFF80002C 0x1F80002C 32 0x00000000 Held Held Held Bclk
-        sh4_rio_reg(sh4_cpu, BSC, BSC_PCTRA_addr, RIO_WF, 16, 0, STATIC_FORWARD(BSC_impl, write_BSC_PCTRA));
+        sh4_rio_reg(this, BSC, BSC_PCTRA_addr, RIO_WF, 16, 0, STATIC_FORWARD(BSC_impl, write_BSC_PCTRA));
 
         //BSC PDTRA 0xFF800030 0x1F800030 16 Undefined Held Held Held Bclk
-        sh4_rio_reg(sh4_cpu, BSC, BSC_PDTRA_addr, RIO_FUNC, 16, STATIC_FORWARD(BSC_impl, read_BSC_PDTRA), STATIC_FORWARD(BSC_impl, write_BSC_PDTRA));
+        sh4_rio_reg(this, BSC, BSC_PDTRA_addr, RIO_FUNC, 16, STATIC_FORWARD(BSC_impl, read_BSC_PDTRA), STATIC_FORWARD(BSC_impl, write_BSC_PDTRA));
 
         //BSC PCTRB 0xFF800040 0x1F800040 32 0x00000000 Held Held Held Bclk
-        sh4_rio_reg(sh4_cpu, BSC, BSC_PCTRB_addr, RIO_DATA, 32);
+        sh4_rio_reg(this, BSC, BSC_PCTRB_addr, RIO_DATA, 32);
 
         //BSC PDTRB 0xFF800044 0x1F800044 16 Undefined Held Held Held Bclk
-        sh4_rio_reg(sh4_cpu, BSC, BSC_PDTRB_addr, RIO_DATA, 16);
+        sh4_rio_reg(this, BSC, BSC_PDTRB_addr, RIO_DATA, 16);
 
         //BSC GPIOIC 0xFF800048 0x1F800048 16 0x00000000 Held Held Held Bclk
-        sh4_rio_reg(sh4_cpu, BSC, BSC_GPIOIC_addr, RIO_DATA, 16);
+        sh4_rio_reg(this, BSC, BSC_GPIOIC_addr, RIO_DATA, 16);
 
         //note: naomi//aw might depend on rfcr
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-        sh4_rio_reg(sh4_cpu, BSC, BSC_RFCR_addr, RIO_RO, 16);
+        sh4_rio_reg(this, BSC, BSC_RFCR_addr, RIO_RO, 16);
         BSC_RFCR.full = 17;
 #endif
     }

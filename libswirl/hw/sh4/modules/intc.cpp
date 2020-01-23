@@ -54,19 +54,19 @@ struct Sh4ModIntc_impl : Sh4ModIntc {
 	Sh4ModIntc_impl(SuperH4Mmr* sh4mmr) : sh4mmr(sh4mmr)
 	{
 		//INTC ICR 0xFFD00000 0x1FD00000 16 0x0000 0x0000 Held Held Pclk
-		sh4_rio_reg(sh4_cpu, INTC, INTC_ICR_addr, RIO_DATA, 16);
+		sh4_rio_reg(this, INTC, INTC_ICR_addr, RIO_DATA, 16);
 
 		//INTC IPRA 0xFFD00004 0x1FD00004 16 0x0000 0x0000 Held Held Pclk
-		sh4_rio_reg(sh4_cpu, INTC, INTC_IPRA_addr, RIO_WF, 16, 0, STATIC_FORWARD(Sh4ModIntc_impl, write_INTC_IPRA));
+		sh4_rio_reg(this, INTC, INTC_IPRA_addr, RIO_WF, 16, 0, STATIC_FORWARD(Sh4ModIntc_impl, write_INTC_IPRA));
 
 		//INTC IPRB 0xFFD00008 0x1FD00008 16 0x0000 0x0000 Held Held Pclk
-		sh4_rio_reg(sh4_cpu, INTC, INTC_IPRB_addr, RIO_WF, 16, 0, STATIC_FORWARD(Sh4ModIntc_impl, write_INTC_IPRB));
+		sh4_rio_reg(this, INTC, INTC_IPRB_addr, RIO_WF, 16, 0, STATIC_FORWARD(Sh4ModIntc_impl, write_INTC_IPRB));
 
 		//INTC IPRC 0xFFD0000C 0x1FD0000C 16 0x0000 0x0000 Held Held Pclk
-		sh4_rio_reg(sh4_cpu, INTC, INTC_IPRC_addr, RIO_WF, 16, 0, STATIC_FORWARD(Sh4ModIntc_impl, write_INTC_IPRC));
+		sh4_rio_reg(this, INTC, INTC_IPRC_addr, RIO_WF, 16, 0, STATIC_FORWARD(Sh4ModIntc_impl, write_INTC_IPRC));
 
 		//INTC IPRD 0xFFD00010 0x1FD00010 16 0xDA74 0xDA74 Held Held Pclk	(SH7750S, SH7750R only)
-		sh4_rio_reg(sh4_cpu, INTC, INTC_IPRD_addr, RIO_RO_FUNC, 16, STATIC_FORWARD(Sh4ModIntc_impl, read_INTC_IPRD));
+		sh4_rio_reg(this, INTC, INTC_IPRD_addr, RIO_RO_FUNC, 16, STATIC_FORWARD(Sh4ModIntc_impl, read_INTC_IPRD));
 
 		interrupts_init();
 	}

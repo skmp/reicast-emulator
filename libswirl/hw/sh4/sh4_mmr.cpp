@@ -579,17 +579,6 @@ T DYNACALL ReadMem_area7(SuperH4* sh4, u32 addr)
 template <u32 sz,class T>
 void DYNACALL WriteMem_area7(SuperH4* sh4, u32 addr,T data)
 {
-	if (likely(addr==0xFF000038))
-	{
-		CCN_QACR_write<0>(sh4, addr,data);
-		return;
-	}
-	else if (likely(addr==0xFF00003C))
-	{
-		CCN_QACR_write<1>(sh4, addr,data);
-		return;
-	}	
-
 	//printf("%08X\n",addr);
 
 	addr&=0x1FFFFFFF;
@@ -851,12 +840,18 @@ void map_p4(SuperH4* sh4)
 
 struct SuperH4Mmr_impl final : SuperH4Mmr
 {
-	unique_ptr<SuperH4Module> modRtc;
-	unique_ptr<SuperH4Module> modCpg;
-	unique_ptr<SuperH4Module> modBsc;
-	unique_ptr<SuperH4Module> modDmac;
-	unique_ptr<SuperH4Module> modIntc;
+#define DEFAULT_DECL(n) unique_ptr<SuperH4Module> mod##n;
 
+	DEFAULT_DECL(Bsc) 
+	DEFAULT_DECL(Ccn)
+	DEFAULT_DECL(Cpg)
+	DEFAULT_DECL(Dmac)
+	DEFAULT_DECL(Intc)
+	DEFAULT_DECL(Rtc)
+	DEFAULT_DECL(Serial)
+	DEFAULT_DECL(Tmu)
+	DEFAULT_DECL(Ubc)
+	
 	//Init/Res/Term
 	SuperH4Mmr_impl(SuperH4* psh)
 	{
@@ -880,33 +875,34 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 		//initialise Register structs
 		
 		DEFAULT_INIT(Bsc)
-
-		ccn_init(this);
+		DEFAULT_INIT(Ccn)
 		DEFAULT_INIT(Cpg)
 		DEFAULT_INIT(Dmac)
 		DEFAULT_INIT(Intc)
 		DEFAULT_INIT(Rtc)
-		serial_init(this);
-		tmu_init(this);
-		ubc_init(this);
+		DEFAULT_INIT(Serial)
+		DEFAULT_INIT(Tmu)
+		DEFAULT_INIT(Ubc)
+
 		MMU_init();
 	}
 
 	void Reset()
 	{
-#define DEFAULT_RESET(n) mod##n->Reset();
+#define DEFAULT_RESET(n) mod##n->Reset()
 
 		OnChipRAM.Zero();
 		//Reset register values
-		DEFAULT_RESET(Bsc)
-		ccn_reset();
-		DEFAULT_RESET(Cpg)
-		DEFAULT_RESET(Dmac)
-		DEFAULT_RESET(Intc)
-		DEFAULT_RESET(Rtc)
-		serial_reset();
-		tmu_reset();
-		ubc_reset();
+		DEFAULT_RESET(Bsc);
+		DEFAULT_RESET(Ccn);
+		DEFAULT_RESET(Cpg);
+		DEFAULT_RESET(Dmac);
+		DEFAULT_RESET(Intc);
+		DEFAULT_RESET(Rtc);
+		DEFAULT_RESET(Serial);
+		DEFAULT_RESET(Tmu);
+		DEFAULT_RESET(Ubc);
+
 		MMU_reset();
 	}
 
@@ -916,14 +912,15 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 
 		//free any alloc'd resources [if any]
 		MMU_term();
-		ubc_term();
-		tmu_term();
-		serial_term();
+
+		DEFAULT_TERM(Ubc)
+		DEFAULT_TERM(Tmu)
+		DEFAULT_TERM(Serial)
 		DEFAULT_TERM(Rtc)
 		DEFAULT_TERM(Intc)
 		DEFAULT_TERM(Dmac)
 		DEFAULT_TERM(Cpg)
-		ccn_term();
+		DEFAULT_TERM(Ccn)
 		DEFAULT_TERM(Bsc)
 		OnChipRAM.Free();
 	}

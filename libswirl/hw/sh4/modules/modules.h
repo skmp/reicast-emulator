@@ -13,22 +13,10 @@ DEFAULT_MOD(Cpg)
 DEFAULT_MOD(Dmac)
 DEFAULT_MOD(Rtc)
 DEFAULT_MOD(Intc)
-
-void serial_init(SuperH4Mmr* sh4mmr);
-void serial_reset();
-void serial_term();
-
-void ubc_init(SuperH4Mmr* sh4mmr);
-void ubc_reset();
-void ubc_term();
-
-void tmu_init(SuperH4Mmr* sh4mmr);
-void tmu_reset();
-void tmu_term();
-
-void ccn_init(SuperH4Mmr* sh4mmr);
-void ccn_reset();
-void ccn_term();
+DEFAULT_MOD(Serial)
+DEFAULT_MOD(Ubc)
+DEFAULT_MOD(Tmu)
+DEFAULT_MOD(Ccn)
 
 void MMU_init();
 void MMU_reset();

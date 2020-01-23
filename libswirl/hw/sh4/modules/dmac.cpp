@@ -179,6 +179,8 @@ void UpdateDMA()
 	}*/
 }
 
+static SuperH4Mmr* sh4mmr;
+
 template<u32 ch>
 void WriteCHCR(void* that, u32 addr, u32 data)
 {
@@ -193,8 +195,9 @@ void WriteDMAOR(void* that, u32 addr, u32 data)
 }
 
 //Init term res
-void dmac_init(SystemBus* sb)
+void dmac_init(SuperH4Mmr* sh4mmr, SystemBus* sb)
 {
+	::sh4mmr = sh4mmr;
 	::sb = sb;
 
 	//DMAC SAR0 0xFFA00000 0x1FA00000 32 Undefined Undefined Held Held Bclk

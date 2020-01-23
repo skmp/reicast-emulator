@@ -3,10 +3,13 @@
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
 
+static SuperH4Mmr* sh4mmr;
 
 //Init term res
-void ubc_init()
+void ubc_init(SuperH4Mmr* sh4mmr)
 {
+	::sh4mmr = sh4mmr;
+
 	//UBC BARA 0xFF200000 0x1F200000 32 Undefined Held Held Held Iclk
 	sh4_rio_reg(sh4_cpu, UBC,UBC_BARA_addr,RIO_DATA,32);
 

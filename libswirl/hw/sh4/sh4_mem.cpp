@@ -3,6 +3,7 @@
 	Most of the work is now delegated on vtlb and only helpers are here
 */
 #include "types.h"
+#include <memory>
 
 #include "sh4_mem.h"
 #include "hw/sh4/sh4_mem_area0.h"
@@ -173,14 +174,17 @@ void mem_map_default(SuperH4_impl* sh4)
 	//map p4 region :)
 	map_p4(sh4);
 }
+
+static unique_ptr<SuperH4Mmr> sh4mmr;
+
 void mem_Init(SuperH4_impl* sh4, SystemBus* sb)
 {
 	//Allocate mem for memory/bios/flash
 	//mem_b.Init(&sh4_reserved_mem[0x0C000000],RAM_SIZE);
 
 	sh4_area0_Init(sh4);
-	sh4_mmr_init(sh4, sb);
-	MMU_init();
+	sh4mmr.reset(SuperH4Mmr::Create(sh4, sb));
+	
 }
 
 //Reset Sysmem/Regs -- Pvr is not changed , bios/flash are not zeroed out
@@ -195,14 +199,12 @@ void mem_Reset(SuperH4_impl* sh4, bool Manual)
 
 	//Reset registers
 	sh4_area0_Reset(sh4, Manual);
-	sh4_mmr_reset();
-	MMU_reset();
+	sh4mmr->Reset();
 }
 
 void mem_Term(SuperH4_impl* sh4)
 {
-	MMU_term();
-	sh4_mmr_term();
+	sh4mmr.reset();
 	sh4_area0_Term(sh4);
 
 	//write back Flash/SRAM

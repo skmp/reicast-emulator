@@ -5,6 +5,8 @@
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
 
+static SuperH4Mmr* sh4mmr;
+
 SCIF_SCFSR2_type SCIF_SCFSR2;
 u8 SCIF_SCFRDR2;
 SCIF_SCFDR2_type SCIF_SCFDR2;
@@ -87,8 +89,10 @@ u32 ReadSerialData(void* psh4, u32 addr)
 }
 
 //Init term res
-void serial_init()
+void serial_init(SuperH4Mmr* sh4mmr)
 {
+	::sh4mmr = sh4mmr;
+
 	//SCIF SCSMR2 0xFFE80000 0x1FE80000 16 0x0000 0x0000 Held Held Pclk
 	sh4_rio_reg(sh4_cpu, SCIF,SCIF_SCSMR2_addr,RIO_DATA,16);
 

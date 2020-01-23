@@ -8,6 +8,7 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_mmr.h"
 
+static SuperH4Mmr* sh4mmr;
 
 #define tmu_underflow 0x0100
 #define tmu_UNIE      0x0020
@@ -257,8 +258,10 @@ int sched_tmu_cb(void* psh4, int ch, int sch_cycl, int jitter)
 }
 
 //Init/Res/Term
-void tmu_init()
+void tmu_init(SuperH4Mmr* sh4mmr)
 {
+	::sh4mmr = sh4mmr;
+
 	//TMU TOCR 0xFFD80000 0x1FD80000 8 0x00 0x00 Held Held Pclk
 	sh4_rio_reg(sh4_cpu, TMU,TMU_TOCR_addr,RIO_DATA,8);
 

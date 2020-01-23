@@ -24,23 +24,17 @@ extern Array<RegisterStruct> TMU;  //TMU  : 12 registers
 extern Array<RegisterStruct> SCI;  //SCI  : 8 registers
 extern Array<RegisterStruct> SCIF; //SCIF : 10 registers
 
-/*
-//Region P4
-u32 ReadMem_P4(u32 addr,u32 sz);
-void WriteMem_P4(u32 addr,u32 data,u32 sz);
-
-//Area7
-u32 ReadMem_area7(u32 addr,u32 sz);
-void WriteMem_area7(u32 addr,u32 data,u32 sz);
-void DYNACALL WriteMem_sq_32(u32 address,u32 data);*/
-
-//Init/Res/Term
 struct SystemBus;
-void sh4_mmr_init(SuperH4* psh, SystemBus* sb);
-void sh4_mmr_reset();
-void sh4_mmr_term();
+struct SuperH4Mmr {
+	//Init/Res/Term
+	virtual void Reset() = 0;
+	virtual ~SuperH4Mmr() { }
+	virtual void rio_reg(void* context, Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rp = 0, RegWriteAddrFP* wp = 0) = 0;
 
-void sh4_rio_reg(void* context, Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rp=0, RegWriteAddrFP* wp=0);
+	static SuperH4Mmr* Create(SuperH4* sh4, SystemBus* sb);
+};
+
+#define sh4_rio_reg sh4mmr->rio_reg
 
 #define A7_REG_HASH(addr) ((addr>>16)&0x1FFF)
 

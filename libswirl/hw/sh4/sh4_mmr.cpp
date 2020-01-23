@@ -28,51 +28,6 @@ Array<RegisterStruct> TMU(12,true);  //TMU  : 12 registers
 Array<RegisterStruct> SCI(8,true);   //SCI  : 8 registers
 Array<RegisterStruct> SCIF(10,true); //SCIF : 10 registers
 
-u32 sh4io_read_noacc(void* psh4, u32 addr) 
-{ 
-	EMUERROR("sh4io: Invalid read access @@ %08X",addr);
-	return 0; 
-} 
-void sh4io_write_noacc(void* psh4, u32 addr, u32 data)
-{ 
-	EMUERROR("sh4io: Invalid write access @@ %08X %08X",addr,data);
-	//verify(false); 
-}
-void sh4io_write_const(void* psh4, u32 addr, u32 data)
-{ 
-	EMUERROR("sh4io: Const write ignored @@ %08X <- %08X",addr,data);
-}
-
-void sh4_rio_reg(void* context, Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf)
-{
-	u32 idx=(addr&255)/4;
-
-	verify(idx<arr.Size);
-
-	arr[idx].flags = flags | REG_ACCESS_32;
-	arr[idx].context = context;
-
-	if (flags == RIO_NO_ACCESS)
-	{
-		arr[idx].readFunctionAddr=&sh4io_read_noacc;
-		arr[idx].writeFunctionAddr=&sh4io_write_noacc;
-	}
-	else if (flags == RIO_CONST)
-	{
-		arr[idx].writeFunctionAddr=&sh4io_write_const;
-	}
-	else
-	{
-		arr[idx].data32=0;
-
-		if (flags & REG_RF)
-			arr[idx].readFunctionAddr=rf;
-
-		if (flags & REG_WF)
-			arr[idx].writeFunctionAddr=wf==0?&sh4io_write_noacc:wf;
-	}
-}
-
 template<u32 sz>
 u32 sh4_rio_read(Array<RegisterStruct>& sb_regs, u32 addr)
 {	
@@ -844,72 +799,6 @@ void DYNACALL WriteMem_area7_OCR_T(SuperH4* sh4, u32 addr,T data)
 		EMUERROR("On Chip Ram Write, but OCR is disabled");
 	}
 }
-
-static unique_ptr<SuperH4Module> modRTC;
-
-//Init/Res/Term
-void sh4_mmr_init(SuperH4* psh, SystemBus* sb)
-{
-	OnChipRAM.Resize(OnChipRAM_SIZE,false);
-
-	for (u32 i=0;i<30;i++)
-	{
-		if (i<CCN.Size)  sh4_rio_reg(psh, CCN,CCN_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(16,true);    //CCN  : 14 registers
-		if (i<UBC.Size)  sh4_rio_reg(psh, UBC,UBC_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(9,true);     //UBC  : 9 registers
-		if (i<BSC.Size)  sh4_rio_reg(psh, BSC,BSC_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(19,true);    //BSC  : 18 registers
-		if (i<DMAC.Size) sh4_rio_reg(psh, DMAC,DMAC_BASE_addr+i*4,RIO_NO_ACCESS,32); //(17,true);    //DMAC : 17 registers
-		if (i<CPG.Size)  sh4_rio_reg(psh, CPG,CPG_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(5,true);     //CPG  : 5 registers
-		if (i<RTC.Size)  sh4_rio_reg(psh, RTC,RTC_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(16,true);    //RTC  : 16 registers
-		if (i<INTC.Size) sh4_rio_reg(psh, INTC,INTC_BASE_addr+i*4,RIO_NO_ACCESS,32); //(4,true);     //INTC : 4 registers
-		if (i<TMU.Size)  sh4_rio_reg(psh, TMU,TMU_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(12,true);    //TMU  : 12 registers
-		if (i<SCI.Size)  sh4_rio_reg(psh, SCI,SCI_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(8,true);     //SCI  : 8 registers
-		if (i<SCIF.Size) sh4_rio_reg(psh, SCIF,SCIF_BASE_addr+i*4,RIO_NO_ACCESS,32); //(10,true);    //SCIF : 10 registers
-	}
-
-	//initialise Register structs
-	bsc_init();
-	ccn_init();
-	cpg_init();
-	dmac_init(sb);
-	intc_init();
-	
-	modRTC.reset(Sh4ModRtc::Create());
-	modRTC->Init();
-	
-	serial_init();
-	tmu_init();
-	ubc_init();
-}
-
-void sh4_mmr_reset()
-{
-	OnChipRAM.Zero();
-	//Reset register values
-	bsc_reset();
-	ccn_reset();
-	cpg_reset();
-	dmac_reset();
-	intc_reset();
-	modRTC->Reset();
-	serial_reset();
-	tmu_reset();
-	ubc_reset();
-}
-
-void sh4_mmr_term()
-{
-	//free any alloc'd resources [if any]
-	ubc_term();
-	tmu_term();
-	serial_term();
-	modRTC.reset();
-	intc_term();
-	dmac_term();
-	cpg_term();
-	ccn_term();
-	bsc_term();
-	OnChipRAM.Free();
-}
 //Mem map :)
 
 //AREA 7--Sh4 Regs
@@ -957,4 +846,125 @@ void map_p4(SuperH4* sh4)
 	_vmem_map_block(sq_both,0xE3,0xE3,63);
 
 	map_area7(sh4, 0xE0);
+}
+
+
+struct SuperH4Mmr_impl final : SuperH4Mmr
+{
+	unique_ptr<SuperH4Module> modRTC;
+	unique_ptr<SuperH4Module> modCPG;
+
+	//Init/Res/Term
+	SuperH4Mmr_impl(SuperH4* psh, SystemBus* sb)
+	{
+		OnChipRAM.Resize(OnChipRAM_SIZE, false);
+
+		for (u32 i = 0; i < 30; i++)
+		{
+			if (i < CCN.Size)  rio_reg(psh, CCN, CCN_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(16,true);    //CCN  : 14 registers
+			if (i < UBC.Size)  rio_reg(psh, UBC, UBC_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(9,true);     //UBC  : 9 registers
+			if (i < BSC.Size)  rio_reg(psh, BSC, BSC_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(19,true);    //BSC  : 18 registers
+			if (i < DMAC.Size) rio_reg(psh, DMAC, DMAC_BASE_addr + i * 4, RIO_NO_ACCESS, 32); //(17,true);    //DMAC : 17 registers
+			if (i < CPG.Size)  rio_reg(psh, CPG, CPG_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(5,true);     //CPG  : 5 registers
+			if (i < RTC.Size)  rio_reg(psh, RTC, RTC_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(16,true);    //RTC  : 16 registers
+			if (i < INTC.Size) rio_reg(psh, INTC, INTC_BASE_addr + i * 4, RIO_NO_ACCESS, 32); //(4,true);     //INTC : 4 registers
+			if (i < TMU.Size)  rio_reg(psh, TMU, TMU_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(12,true);    //TMU  : 12 registers
+			if (i < SCI.Size)  rio_reg(psh, SCI, SCI_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(8,true);     //SCI  : 8 registers
+			if (i < SCIF.Size) rio_reg(psh, SCIF, SCIF_BASE_addr + i * 4, RIO_NO_ACCESS, 32); //(10,true);    //SCIF : 10 registers
+		}
+
+		//initialise Register structs
+		bsc_init(this);
+		ccn_init(this);
+		modCPG.reset(Sh4ModCpg::Create(this));
+		dmac_init(this, sb);
+		intc_init(this);
+		modRTC.reset(Sh4ModRtc::Create(this));
+		serial_init(this);
+		tmu_init(this);
+		ubc_init(this);
+		MMU_init();
+	}
+
+	void Reset()
+	{
+		OnChipRAM.Zero();
+		//Reset register values
+		bsc_reset();
+		ccn_reset();
+		modCPG->Reset();
+		dmac_reset();
+		intc_reset();
+		modRTC->Reset();
+		serial_reset();
+		tmu_reset();
+		ubc_reset();
+		MMU_reset();
+	}
+
+	~SuperH4Mmr_impl()
+	{
+		//free any alloc'd resources [if any]
+		MMU_term();
+		ubc_term();
+		tmu_term();
+		serial_term();
+		modRTC.reset();
+		intc_term();
+		dmac_term();
+		modCPG.reset();
+		ccn_term();
+		bsc_term();
+		OnChipRAM.Free();
+	}
+
+	u32 sh4io_read_noacc(u32 addr)
+	{
+		EMUERROR("sh4io: Invalid read access @@ %08X", addr);
+		return 0;
+	}
+	void sh4io_write_noacc(u32 addr, u32 data)
+	{
+		EMUERROR("sh4io: Invalid write access @@ %08X %08X", addr, data);
+		//verify(false); 
+	}
+	void sh4io_write_const(u32 addr, u32 data)
+	{
+		EMUERROR("sh4io: Const write ignored @@ %08X <- %08X", addr, data);
+	}
+
+	virtual void rio_reg(void* context, Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf = nullptr, RegWriteAddrFP* wf = nullptr)
+	{
+		u32 idx = (addr & 255) / 4;
+
+		verify(idx < arr.Size);
+
+		arr[idx].flags = flags | REG_ACCESS_32;
+		arr[idx].context = context;
+
+		if (flags == RIO_NO_ACCESS)
+		{
+			arr[idx].readFunctionAddr = STATIC_FORWARD(SuperH4Mmr_impl, sh4io_read_noacc);
+			arr[idx].writeFunctionAddr = STATIC_FORWARD(SuperH4Mmr_impl, sh4io_write_noacc);
+		}
+		else if (flags == RIO_CONST)
+		{
+			arr[idx].writeFunctionAddr = STATIC_FORWARD(SuperH4Mmr_impl, sh4io_write_const);
+		}
+		else
+		{
+			arr[idx].data32 = 0;
+
+			if (flags & REG_RF)
+				arr[idx].readFunctionAddr = rf;
+
+			if (flags & REG_WF)
+				arr[idx].writeFunctionAddr = wf == 0 ? STATIC_FORWARD(SuperH4Mmr_impl, sh4io_write_noacc) : wf;
+		}
+	}
+
+};
+
+SuperH4Mmr* SuperH4Mmr::Create(SuperH4* sh4, SystemBus* sb) {
+	return new SuperH4Mmr_impl(sh4, sb);
 }

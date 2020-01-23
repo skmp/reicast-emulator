@@ -5,6 +5,9 @@
 
 #include "hw/naomi/naomi.h"
 
+
+static SuperH4Mmr* sh4mmr;
+
 BSC_PDTRA_type BSC_PDTRA;
 
 
@@ -62,8 +65,10 @@ u32 read_BSC_PDTRA(void* that, u32 addr)
 }
 
 //Init term res
-void bsc_init()
+void bsc_init(SuperH4Mmr* sh4mmr)
 {
+	::sh4mmr = sh4mmr;
+
 	//BSC BCR1 0xFF800000 0x1F800000 32 0x00000000 Held Held Held Bclk
 	sh4_rio_reg(sh4_cpu, BSC,BSC_BCR1_addr,RIO_DATA,32);
 

@@ -7,9 +7,8 @@
 #include "hw/sh4/sh4_mmr.h"
 
 struct Sh4ModRtc_impl : Sh4ModRtc {
-
-	//Init term res
-	void Init()
+	SuperH4Mmr* sh4mmr;
+	Sh4ModRtc_impl(SuperH4Mmr* sh4mmr) : sh4mmr(sh4mmr)
 	{
 		// NAOMI reads from at least RTC_R64CNT
 
@@ -87,6 +86,6 @@ struct Sh4ModRtc_impl : Sh4ModRtc {
 	}
 };
 
-Sh4ModRtc* Sh4ModRtc::Create() {
-	return new Sh4ModRtc_impl();
+Sh4ModRtc* Sh4ModRtc::Create(SuperH4Mmr* sh4mmr) {
+	return new Sh4ModRtc_impl(sh4mmr);
 }

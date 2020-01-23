@@ -16,6 +16,8 @@
 #define printf_smc(...) // printf
 
 
+static SuperH4Mmr* sh4mmr;
+
 u32 CCN_QACR_TR[2];
 
 template<u32 idx>
@@ -106,8 +108,10 @@ static u32 CCN_PRR_read(void* that, u32 addr)
 }
 
 //Init/Res/Term
-void ccn_init()
+void ccn_init(SuperH4Mmr* sh4mmr)
 {
+	::sh4mmr = sh4mmr;
+
 	//CCN PTEH 0xFF000000 0x1F000000 32 Undefined Undefined Held Held Iclk
 	sh4_rio_reg(sh4_cpu, CCN,CCN_PTEH_addr,RIO_DATA,32);
 

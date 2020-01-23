@@ -11,6 +11,7 @@
 #include "../sh4_interrupts.h"
 #include "../sh4_mmr.h"
 
+static SuperH4Mmr* sh4mmr;
 
 //Register writes need interrupt re-testing !
 
@@ -44,8 +45,10 @@ static u32 read_INTC_IPRD(void* that, u32 addr)
 }
 
 //Init/Res/Term
-void intc_init()
+void intc_init(SuperH4Mmr* sh4mmr)
 {
+	::sh4mmr = sh4mmr;
+
 	//INTC ICR 0xFFD00000 0x1FD00000 16 0x0000 0x0000 Held Held Pclk
 	sh4_rio_reg(sh4_cpu, INTC,INTC_ICR_addr,RIO_DATA,16);
 

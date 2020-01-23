@@ -845,7 +845,7 @@ void DYNACALL WriteMem_area7_OCR_T(SuperH4* sh4, u32 addr,T data)
 
 
 //Init/Res/Term
-void sh4_mmr_init(SuperH4* psh)
+void sh4_mmr_init(SuperH4* psh, SystemBus* sb)
 {
 	OnChipRAM.Resize(OnChipRAM_SIZE,false);
 
@@ -867,7 +867,7 @@ void sh4_mmr_init(SuperH4* psh)
 	bsc_init();
 	ccn_init();
 	cpg_init();
-	dmac_init();
+	dmac_init(sb);
 	intc_init();
 	rtc_init();
 	serial_init();

@@ -26,13 +26,9 @@ void DYNACALL pvr_write_area1_32(SuperH4*, u32 addr,u32 data);
 
 //regs
 
-void pvr_Update(u32 cycles);
-
+struct SystemBus;
 //Init/Term , global
-void pvr_Init();
-void pvr_Term();
-//Reset -> Reset - Initialise
-void pvr_Reset(bool Manual);
+void pvr_mem_Init(SystemBus* sb);
 
 void TAWrite(u32 address,u32* data,u32 count, u8* vram);
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);

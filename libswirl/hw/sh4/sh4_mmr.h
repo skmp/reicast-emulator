@@ -35,7 +35,8 @@ void WriteMem_area7(u32 addr,u32 data,u32 sz);
 void DYNACALL WriteMem_sq_32(u32 address,u32 data);*/
 
 //Init/Res/Term
-void sh4_mmr_init(SuperH4* psh);
+struct SystemBus;
+void sh4_mmr_init(SuperH4* psh, SystemBus* sb);
 void sh4_mmr_reset();
 void sh4_mmr_term();
 

@@ -31,6 +31,7 @@ u32 YUV_x_size;
 u32 YUV_y_size;
 
 static u32 YUV_index = 0;
+static SystemBus* sb;
 
 void YUV_init()
 {
@@ -335,10 +336,8 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
 
 //Misc interface
 
-//Reset -> Reset - Initialise to default values
-void pvr_Reset(bool Manual)
-{
-	
+void pvr_mem_Init(SystemBus* sb) {
+	::sb = sb;
 }
 
 #define VRAM_BANK_BIT 0x400000

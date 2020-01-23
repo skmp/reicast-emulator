@@ -118,11 +118,6 @@ extern s16 pr;
 
 
 //./core/hw/holly/sb.o
-extern Array<RegisterStruct> sb_regs;
-extern u32 SB_ISTNRM;
-extern u32 SB_FFST_rc;
-extern u32 SB_FFST;
-
 
 
 //./core/hw/holly/sb_mem.o
@@ -746,13 +741,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(pl);
 	REICAST_S(pr);
 
-	register_serialize(sb_regs, data, total_size) ;
-	REICAST_S(SB_ISTNRM);
-	REICAST_S(SB_FFST_rc);
-	REICAST_S(SB_FFST);
-
-
-
 	//this is one-time init, no updates - don't need to serialize
 	//extern RomChip sys_rom;
 	REICAST_S(sys_nvmem.size);
@@ -1014,13 +1002,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_USA(AEG_DSR_SPS,64);
 	REICAST_US(pl);
 	REICAST_US(pr);
-
-
-	register_unserialize(sb_regs, data, total_size) ;
-	REICAST_US(SB_ISTNRM);
-	REICAST_US(SB_FFST_rc);
-	REICAST_US(SB_FFST);
-
 
 
 	//this is one-time init, no updates - don't need to serialize
@@ -1329,11 +1310,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_USA(AEG_DSR_SPS,64);
 	REICAST_US(pl);
 	REICAST_US(pr);
-
-	register_unserialize(sb_regs, data, total_size) ;
-	REICAST_US(SB_ISTNRM);
-	REICAST_US(SB_FFST_rc);
-	REICAST_US(SB_FFST);
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern RomChip sys_rom;

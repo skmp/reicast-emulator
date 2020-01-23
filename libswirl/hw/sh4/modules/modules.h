@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+struct SystemBus;
 
 void bsc_init();
 void bsc_reset();
@@ -10,7 +11,7 @@ void cpg_init();
 void cpg_reset();
 void cpg_term();
 
-void dmac_init();
+void dmac_init(SystemBus* sb);
 void dmac_reset();
 void dmac_term();
 

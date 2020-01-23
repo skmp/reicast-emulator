@@ -173,13 +173,13 @@ void mem_map_default(SuperH4_impl* sh4)
 	//map p4 region :)
 	map_p4(sh4);
 }
-void mem_Init(SuperH4_impl* sh4)
+void mem_Init(SuperH4_impl* sh4, SystemBus* sb)
 {
 	//Allocate mem for memory/bios/flash
 	//mem_b.Init(&sh4_reserved_mem[0x0C000000],RAM_SIZE);
 
 	sh4_area0_Init(sh4);
-	sh4_mmr_init(sh4);
+	sh4_mmr_init(sh4, sb);
 	MMU_init();
 }
 

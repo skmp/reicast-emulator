@@ -73,10 +73,11 @@ struct RegisterStruct
 };
 
 struct SystemBus : MMIODevice {
+	Array<RegisterStruct> sb_regs;
+
+	SystemBus() : sb_regs(0x540) { }
     virtual void RegisterRIO(void* context, u32 reg_addr, RegIO flags, RegReadAddrFP* rf = nullptr, RegWriteAddrFP* wf = nullptr) = 0;
 };
-
-extern Array<RegisterStruct> sb_regs;
 
 #include "sb_regs.h"
 

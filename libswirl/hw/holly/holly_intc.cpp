@@ -10,12 +10,21 @@
 	part of the holly block on dc
 */
 
-//TODO: MOVE THIS
-u32 SB_ISTNRM;
-
 struct ASICDevice_impl final : ASIC {
 	SystemBus* sb;
+	u32 SB_ISTNRM;
+
 	ASICDevice_impl(SystemBus* sb) : sb(sb) { }
+
+	virtual void serialize(void** data, unsigned int* total_size)
+	{
+		REICAST_S(SB_ISTNRM);
+	}
+	
+	virtual void unserialize(void** data, unsigned int* total_size) 
+	{
+		REICAST_US(SB_ISTNRM);
+	}
 
 
 	//asic_RLXXPending: Update the intc flags for pending interrupts

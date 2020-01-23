@@ -59,7 +59,8 @@ void WriteMemBlock_nommu_dma(u32 dst,u32 src,u32 size);
 struct SuperH4_impl;
 
 //Init/Res/Term
-void mem_Init(SuperH4_impl* sh4);
+struct SystemBus;
+void mem_Init(SuperH4_impl* sh4, SystemBus* sb);
 void mem_Term(SuperH4_impl* sh4);
 void mem_Reset(SuperH4_impl* sh4, bool Manual);
 void mem_map_default(SuperH4_impl* sh4);

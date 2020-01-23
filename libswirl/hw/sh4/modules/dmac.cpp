@@ -24,6 +24,8 @@ DMAC_DMAOR_type DMAC_DMAOR;
 
 */
 
+static SystemBus* sb;
+
 void DMAC_Ch2St(u8* vram)
 {
 	u32 chcr = DMAC_CHCR(2).full;
@@ -191,8 +193,10 @@ void WriteDMAOR(void* that, u32 addr, u32 data)
 }
 
 //Init term res
-void dmac_init()
+void dmac_init(SystemBus* sb)
 {
+	::sb = sb;
+
 	//DMAC SAR0 0xFFA00000 0x1FA00000 32 Undefined Undefined Held Held Bclk
 	sh4_rio_reg(sh4_cpu, DMAC,DMAC_SAR0_addr,RIO_DATA,32);
 

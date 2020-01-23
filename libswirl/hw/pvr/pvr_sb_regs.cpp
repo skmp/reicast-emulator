@@ -260,6 +260,7 @@ struct PVRDevice : MMIODevice {
         //0x005F6820    SB_SDST RW  Sort-DMA start
         sb->RegisterRIO(this, SB_SDST_addr, RIO_WF, 0, STATIC_FORWARD(PVRDevice, SB_SDST_write));
 
+        pvr_mem_Init(sb);
         return true;
     }
 

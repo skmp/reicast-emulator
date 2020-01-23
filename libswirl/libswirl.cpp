@@ -850,7 +850,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         sh4_cpu->SetA0Handler(A0H_SCPU, soundCPU);
         sh4_cpu->SetA0Handler(A0H_DSP, dsp);
         
-        return sh4_cpu->Init(systemBus);
+        return sh4_cpu->Init();
     }
 
 

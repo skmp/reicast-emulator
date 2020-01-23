@@ -317,7 +317,7 @@ bool SuperH4_impl::IsRunning()
     return sh4_int_bCpuRun;
 }
 
-bool SuperH4_impl::Init(SystemBus* sb)
+bool SuperH4_impl::Init()
 {
     verify(sizeof(Sh4cntx) == 448);
 
@@ -333,7 +333,7 @@ bool SuperH4_impl::Init(SystemBus* sb)
 
     setBackend(SH4BE_INTERPRETER);
 
-    sh4mmr.reset(SuperH4Mmr::Create(this, sb));
+    sh4mmr.reset(SuperH4Mmr::Create(this));
 
     return true;
 }

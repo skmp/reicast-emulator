@@ -5,7 +5,6 @@
 //
 void dmac_ddt_ch0_ddt(u32 src,u32 dst,u32 count);
 void dmac_ddt_ch2_direct(u32 dst,u32 count);
-void DMAC_Ch2St(u8* vram);
 
 //Init/Res/Term
 

@@ -26,6 +26,127 @@ bool fog_needs_update = true;
 u8 pvr_regs[pvr_RegSize];
 
 struct PVRDevice : MMIODevice {
+    void DMAC_Ch2St(u8* vram)
+    {
+        u32 chcr = DMAC_CHCR(2).full;
+        u32 dmaor = DMAC_DMAOR.full;
+        u32 dmatcr = DMAC_DMATCR(2);
+
+        u32 src = DMAC_SAR(2);
+        u32 dst = SB_C2DSTAT;
+        u32 len = SB_C2DLEN;
+
+        if (0x8201 != (dmaor & DMAOR_MASK))
+        {
+            printf("\n!\tDMAC: DMAOR has invalid settings (%X) !\n", dmaor);
+            return;
+        }
+
+        if (len & 0x1F)
+        {
+            printf("\n!\tDMAC: SB_C2DLEN has invalid size (%X) !\n", len);
+            return;
+        }
+
+        //	printf(">>\tDMAC: Ch2 DMA SRC=%X DST=%X LEN=%X\n", src, dst, len );
+
+            // Direct DList DMA (Ch2)
+
+            // Texture DMA 
+        if ((dst >= 0x10000000) && (dst <= 0x10FFFFFF))
+        {
+            u32 p_addr = src & RAM_MASK;
+            //GetMemPtr perhaps ? it's not good to use the mem arrays directly 
+            while (len)
+            {
+                if ((p_addr + len) > RAM_SIZE)
+                {
+                    u32* sys_buf = (u32*)GetMemPtr(src, len);//(&mem_b[src&RAM_MASK]);
+                    u32 new_len = RAM_SIZE - p_addr;
+                    TAWrite(dst, sys_buf, (new_len / 32), vram);
+                    len -= new_len;
+                    src += new_len;
+                    //dst+=new_len;
+                }
+                else
+                {
+                    u32* sys_buf = (u32*)GetMemPtr(src, len);//(&mem_b[src&RAM_MASK]);
+                    TAWrite(dst, sys_buf, (len / 32), vram);
+                    src += len;
+                    break;
+                }
+            }
+            //libPvr_TADma(dst,sys_buf,(len/32));
+        }
+        // If SB_C2DSTAT reg is inrange from 0x11000000 to 0x11FFFFE0,	 set 1 in SB_LMMODE0 reg.
+        else if ((dst >= 0x11000000) && (dst <= 0x11FFFFE0))
+        {
+            //printf(">>\tDMAC: TEX LNMODE0 Ch2 DMA SRC=%X DST=%X LEN=%X SB_LMMODE0 %d\n", src, dst, len, SB_LMMODE0);
+            SB_C2DSTAT += len;
+
+            if (SB_LMMODE0 == 0)
+            {
+                // 64-bit path
+                dst = (dst & 0xFFFFFF) | 0xa4000000;
+                u32 p_addr = src & RAM_MASK;
+                while (len)
+                {
+                    if ((p_addr + len) > RAM_SIZE)
+                    {
+                        u32 new_len = RAM_SIZE - p_addr;
+                        WriteMemBlock_nommu_dma(dst, src, new_len);
+                        len -= new_len;
+                        src += new_len;
+                        dst += new_len;
+                    }
+                    else
+                    {
+                        WriteMemBlock_nommu_dma(dst, src, len);
+                        src += len;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                // 32-bit path
+                dst = (dst & 0xFFFFFF) | 0xa5000000;
+                while (len > 0)
+                {
+                    u32 v = ReadMem32(src);
+                    pvr_write_area1_32(sh4_cpu, dst, v);
+                    len -= 4;
+                    src += 4;
+                    dst += 4;
+                }
+            }
+        }
+        // If SB_C2DSTAT reg is in range from 0x13000000 to 0x13FFFFE0, set 1 in SB_LMMODE1 reg.
+        else if ((dst >= 0x13000000) && (dst <= 0x13FFFFE0))
+        {
+            die(".\tPVR DList DMA LNMODE1\n\n");
+            src += len;
+        }
+        else
+        {
+            printf("\n!\tDMAC: SB_C2DSTAT has invalid address (%X) !\n", dst);
+            src += len;
+        }
+
+
+        // Setup some of the regs so it thinks we've finished DMA
+
+        DMAC_SAR(2) = (src);
+        DMAC_CHCR(2).full &= 0xFFFFFFFE;
+        DMAC_DMATCR(2) = 0x00000000;
+
+        SB_C2DST = 0x00000000;
+        SB_C2DLEN = 0x00000000;
+
+        // The DMA end interrupt flag (SB_ISTNRM - bit 19: DTDE2INT) is set to "1."
+        //-> fixed , holly_PVR_DMA is for different use now (fixed the interrupts enum too)
+        asic->RaiseInterrupt(holly_CH2_DMA);
+    }
 
     void SB_C2DST_write(u32 addr, u32 data)
     {

@@ -12,7 +12,7 @@ DEFAULT_MOD(Bsc)
 
 DEFAULT_MOD(Cpg)
 
-void dmac_init(SuperH4Mmr* sh4mmr, SystemBus* sb);
+void dmac_init(SuperH4Mmr* sh4mmr);
 void dmac_reset();
 void dmac_term();
 

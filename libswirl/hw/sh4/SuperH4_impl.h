@@ -31,7 +31,7 @@ struct SuperH4_impl final : SuperH4 {
 
     bool IsRunning();
 
-    bool Init(SystemBus* sb);
+    bool Init();
 
     void Term();
 

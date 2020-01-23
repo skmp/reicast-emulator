@@ -34,7 +34,7 @@ struct SuperH4Mmr {
 	virtual void serialize(void** data, unsigned int* total_size) { }
 	virtual void unserialize(void** data, unsigned int* total_size) { }
 
-	static SuperH4Mmr* Create(SuperH4* sh4, SystemBus* sb);
+	static SuperH4Mmr* Create(SuperH4* sh4);
 };
 
 #define sh4_rio_reg sh4mmr->rio_reg

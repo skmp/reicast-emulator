@@ -856,7 +856,7 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 	unique_ptr<SuperH4Module> modBsc;
 
 	//Init/Res/Term
-	SuperH4Mmr_impl(SuperH4* psh, SystemBus* sb)
+	SuperH4Mmr_impl(SuperH4* psh)
 	{
 		OnChipRAM.Resize(OnChipRAM_SIZE, false);
 
@@ -881,7 +881,7 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 
 		ccn_init(this);
 		DEFAULT_INIT(Cpg)
-		dmac_init(this, sb);
+		dmac_init(this);
 		intc_init(this);
 		DEFAULT_INIT(Rtc)
 		serial_init(this);
@@ -973,6 +973,6 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 
 };
 
-SuperH4Mmr* SuperH4Mmr::Create(SuperH4* sh4, SystemBus* sb) {
-	return new SuperH4Mmr_impl(sh4, sb);
+SuperH4Mmr* SuperH4Mmr::Create(SuperH4* sh4) {
+	return new SuperH4Mmr_impl(sh4);
 }

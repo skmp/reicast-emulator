@@ -272,7 +272,7 @@ struct SuperH4 {
 
     virtual bool setBackend(SuperH4Backends backend) = 0;
 
-    virtual bool Init(SystemBus* sb) = 0;
+    virtual bool Init() = 0;
     virtual void Reset(bool Manual) = 0;
     virtual void Term() = 0;
 

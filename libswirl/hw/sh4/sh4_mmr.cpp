@@ -2,12 +2,14 @@
 	Sh4 internal register routing (P4 & 'area 7')
 */
 #include "types.h"
-#include "sh4_mmr.h"
+#include <memory>
 
+#include "sh4_mmr.h"
 #include "hw/mem/_vmem.h"
 #include "modules/mmu.h"
 #include "modules/ccn.h"
 #include "modules/modules.h"
+#include "modules/sh4_mod.h"
 
 //64bytes of sq // now on context ~
 
@@ -843,6 +845,7 @@ void DYNACALL WriteMem_area7_OCR_T(SuperH4* sh4, u32 addr,T data)
 	}
 }
 
+static unique_ptr<SuperH4Module> modRTC;
 
 //Init/Res/Term
 void sh4_mmr_init(SuperH4* psh, SystemBus* sb)
@@ -869,7 +872,10 @@ void sh4_mmr_init(SuperH4* psh, SystemBus* sb)
 	cpg_init();
 	dmac_init(sb);
 	intc_init();
-	rtc_init();
+	
+	modRTC.reset(Sh4ModRtc::Create());
+	modRTC->Init();
+	
 	serial_init();
 	tmu_init();
 	ubc_init();
@@ -884,7 +890,7 @@ void sh4_mmr_reset()
 	cpg_reset();
 	dmac_reset();
 	intc_reset();
-	rtc_reset();
+	modRTC->Reset();
 	serial_reset();
 	tmu_reset();
 	ubc_reset();
@@ -896,7 +902,7 @@ void sh4_mmr_term()
 	ubc_term();
 	tmu_term();
 	serial_term();
-	rtc_term();
+	modRTC.reset();
 	intc_term();
 	dmac_term();
 	cpg_term();

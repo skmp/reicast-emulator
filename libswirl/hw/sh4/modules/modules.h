@@ -1,5 +1,7 @@
 #pragma once
 #include "types.h"
+#include "sh4_mod.h"
+
 struct SystemBus;
 
 void bsc_init();
@@ -15,9 +17,11 @@ void dmac_init(SystemBus* sb);
 void dmac_reset();
 void dmac_term();
 
-void rtc_init();
-void rtc_reset();
-void rtc_term();
+struct Sh4ModRtc : SuperH4Module {
+    
+    static Sh4ModRtc* Create();
+};
+
 
 void intc_init();
 void intc_reset();

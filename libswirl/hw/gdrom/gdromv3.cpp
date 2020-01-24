@@ -974,7 +974,8 @@ struct GDRomV3_impl final : MMIODevice {
 
     SystemBus* sb;
     ASIC* asic;
-    GDRomV3_impl(SystemBus* sb, ASIC* asic) : sb(sb), asic(asic) {
+    SuperH4Mmr* sh4mmr;
+    GDRomV3_impl(SuperH4Mmr* sh4mmr, SystemBus* sb, ASIC* asic) : sh4mmr(sh4mmr), sb(sb), asic(asic) {
        
     }
 
@@ -1216,8 +1217,8 @@ struct GDRomV3_impl final : MMIODevice {
 
 #include <memory>
 
-MMIODevice* Create_GDRomDevice(SystemBus* sb, ASIC* asic) {
-    return new GDRomV3_impl(sb, asic);
+MMIODevice* Create_GDRomDevice(SuperH4Mmr* sh4mmr, SystemBus* sb, ASIC* asic) {
+    return new GDRomV3_impl(sh4mmr, sb, asic);
 }
 //Init/Term/Res
 

@@ -735,6 +735,7 @@ void,f2,(u32 r1),
 shil_compile
 (
 	shil_cf_arg_u32(rs1);
+	auto sh4mmr = sh4_cpu->sh4mmr.get();
 	if (CCN_MMUCR.AT)
 	{
 		shil_cf(f1);

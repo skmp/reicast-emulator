@@ -1,9 +1,14 @@
 #pragma once
 #include "types.h"
-#include "../holly/sb.h"
-#include "../sh4/sh4_if.h"
+#include "hw/RegisterStruct.h"
+#include "hw/StaticForward.h"
+#include <array>
 
+struct SuperH4;
 struct SuperH4Mmr;
+struct SystemBus;
+struct RegisterStruct;
+
 //For mem mapping
 void map_area7_init(SuperH4Mmr* mmr);
 void map_area7(SuperH4* sh4, u32 base);
@@ -14,23 +19,24 @@ void map_p4(SuperH4* sh4, SuperH4Mmr* mmr);
 
 #define sq_both ((u8*)sh4rcb.sq_buffer)
 
-extern Array<RegisterStruct> CCN;  //CCN  : 14 registers
-extern Array<RegisterStruct> UBC;  //UBC  : 9 registers
-extern Array<RegisterStruct> BSC;  //BSC  : 18 registers
-extern Array<RegisterStruct> DMAC; //DMAC : 17 registers
-extern Array<RegisterStruct> CPG;  //CPG  : 5 registers
-extern Array<RegisterStruct> RTC;  //RTC  : 16 registers
-extern Array<RegisterStruct> INTC; //INTC : 4 registers
-extern Array<RegisterStruct> TMU;  //TMU  : 12 registers
-extern Array<RegisterStruct> SCI;  //SCI  : 8 registers
-extern Array<RegisterStruct> SCIF; //SCIF : 10 registers
-
-struct SystemBus;
 struct SuperH4Mmr {
+	
+	array<RegisterStruct, 18> CCN;  //CCN  : 14 registers
+	array<RegisterStruct, 9> UBC;  //UBC  : 9 registers
+	array<RegisterStruct, 19> BSC;  //BSC  : 18 registers
+	array<RegisterStruct, 17> DMAC; //DMAC : 17 registers
+	array<RegisterStruct, 5> CPG;  //CPG  : 5 registers
+	array<RegisterStruct, 16> RTC;  //RTC  : 16 registers
+	array<RegisterStruct, 5> INTC; //INTC : 4 registers
+	array<RegisterStruct, 12> TMU;  //TMU  : 12 registers
+	array<RegisterStruct, 8> SCI;  //SCI  : 8 registers
+	array<RegisterStruct, 10> SCIF; //SCIF : 10 registers
+
+
 	//Init/Res/Term
 	virtual void Reset() = 0;
 	virtual ~SuperH4Mmr() { }
-	virtual void rio_reg(void* context, Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rp = 0, RegWriteAddrFP* wp = 0) = 0;
+	virtual void rio_reg(void* context, RegisterStruct* arr, size_t arr_size, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rp = 0, RegWriteAddrFP* wp = 0) = 0;
 
 	virtual void serialize(void** data, unsigned int* total_size) { }
 	virtual void unserialize(void** data, unsigned int* total_size) { }
@@ -38,11 +44,11 @@ struct SuperH4Mmr {
 	static SuperH4Mmr* Create(SuperH4* sh4);
 };
 
-#define sh4_rio_reg sh4mmr->rio_reg
+#define sh4_rio_reg(that, mod, ...) sh4mmr->rio_reg(that, sh4mmr->mod.data(), sh4mmr->mod.size(), __VA_ARGS__)
 
 #define A7_REG_HASH(addr) ((addr>>16)&0x1FFF)
 
-#define SH4IO_REGN(mod,addr,size) (mod[(addr&255)/4].data##size)
+#define SH4IO_REGN(mod,addr,size) (sh4mmr->mod[(addr&255)/4].data##size)
 #define SH4IO_REG(mod,name,size) SH4IO_REGN(mod,mod##_##name##_addr,size)
 #define SH4IO_REG_T(mod,name,size) ((mod##_##name##_type&)SH4IO_REG(mod,name,size))
 

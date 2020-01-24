@@ -268,10 +268,11 @@ struct PVRDevice : MMIODevice {
     SystemBus* sb;
     ASIC* asic;
     SPG* spg;
+    SuperH4Mmr* sh4mmr;
     u8* mram;
     u8* vram;
 
-    PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg, u8* mram, u8* vram) : sb(sb), asic(asic), spg(spg), mram(mram), vram(vram) { }
+    PVRDevice(SuperH4Mmr* sh4mmr, SystemBus* sb, ASIC* asic, SPG* spg, u8* mram, u8* vram) : sh4mmr(sh4mmr), sb(sb), asic(asic), spg(spg), mram(mram), vram(vram) { }
 
     u32 Read(u32 addr, u32 sz)
     {
@@ -418,6 +419,6 @@ struct PVRDevice : MMIODevice {
 
 };
 
-MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg, u8* mram, u8* vram) {
-    return new PVRDevice(sb, asic, spg, mram, vram);
+MMIODevice* Create_PVRDevice(SuperH4Mmr* sh4mmr, SystemBus* sb, ASIC* asic, SPG* spg, u8* mram, u8* vram) {
+    return new PVRDevice(sh4mmr, sb, asic, spg, mram, vram);
 }

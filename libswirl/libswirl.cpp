@@ -56,9 +56,9 @@ static bool extra_depth_game;
 
 MMIODevice* Create_BiosDevice();
 MMIODevice* Create_FlashDevice();
-MMIODevice* Create_NaomiDevice(SystemBus* sb, ASIC* asic);
+MMIODevice* Create_NaomiDevice(SuperH4Mmr* sh4mmr, SystemBus* sb, ASIC* asic);
 SystemBus* Create_SystemBus();
-MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg, u8* mram, u8* vram);
+MMIODevice* Create_PVRDevice(SuperH4Mmr* sh4mmr, SystemBus* sb, ASIC* asic, SPG* spg, u8* mram, u8* vram);
 MMIODevice* Create_ExtDevice();
 
 
@@ -798,6 +798,8 @@ struct Dreamcast_impl : VirtualDreamcast {
             return false;
         }
 
+        auto sh4mmr = SuperH4Mmr::Create(sh4_cpu);
+
         MMIODevice* biosDevice = Create_BiosDevice();
         MMIODevice* flashDevice = Create_FlashDevice();
         
@@ -807,14 +809,15 @@ struct Dreamcast_impl : VirtualDreamcast {
         MMIODevice* gdromOrNaomiDevice =
         
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-            Create_NaomiDevice(systemBus, asic)
+            Create_NaomiDevice(sh4mmr, systemBus, asic)
 #else
-            Create_GDRomDevice(systemBus, asic)
+            Create_GDRomDevice(sh4mmr, systemBus, asic)
 #endif
         ;
 
         SPG* spg = SPG::Create(asic);
-        MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic, spg, sh4_cpu->mram.data, sh4_cpu->vram.data);
+
+        MMIODevice* pvrDevice = Create_PVRDevice(sh4mmr, systemBus, asic, spg, sh4_cpu->mram.data, sh4_cpu->vram.data);
 
         aica_ctx.reset(AICA::CreateContext());
 
@@ -833,6 +836,8 @@ struct Dreamcast_impl : VirtualDreamcast {
 #endif
 
         MMIODevice* rtcDevice = AICA::CreateRTC();
+
+        sh4_cpu->sh4mmr.reset(sh4mmr);
 
         sh4_cpu->SetA0Handler(A0H_BIOS, biosDevice);
         sh4_cpu->SetA0Handler(A0H_FLASH, flashDevice);
@@ -1039,6 +1044,9 @@ struct Dreamcast_impl : VirtualDreamcast {
 
     bool HandleFault(unat addr, rei_host_context_t* ctx)
     {
+        if (!sh4_cpu)
+            return false;
+
         fault_printf("dc_handle_fault: %p from %p\n", (u8*)addr, (u8*)ctx->pc);
 
         bool dyna_cde = ((unat)CC_RX2RW(ctx->pc) > (unat)CodeCache) && ((unat)CC_RX2RW(ctx->pc) < (unat)(CodeCache + CODE_SIZE));

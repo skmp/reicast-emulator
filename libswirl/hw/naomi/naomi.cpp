@@ -403,8 +403,9 @@ void naomi_process(u32 r3c,u32 r40,u32 r44, u32 r48)
 struct NaomiDevice_impl : MMIODevice {
 	SystemBus* sb;
 	ASIC* asic;
+	SuperH4Mmr* sh4mmr;
 
-	NaomiDevice_impl(SystemBus* sb, ASIC* asic) : sb(sb), asic(asic) { }
+	NaomiDevice_impl(SuperH4Mmr* sh4mmr, SystemBus* sb, ASIC* asic) : sh4mmr(sh4mmr), sb(sb), asic(asic) { }
 
 	u32 Read(u32 Addr, u32 sz)
 	{
@@ -630,8 +631,8 @@ struct NaomiDevice_impl : MMIODevice {
 	}
 };
 
-MMIODevice* Create_NaomiDevice(SystemBus* sb, ASIC* asic) {
-	return new NaomiDevice_impl(sb, asic);
+MMIODevice* Create_NaomiDevice(SuperH4Mmr* sh4mmr, SystemBus* sb, ASIC* asic) {
+	return new NaomiDevice_impl(sh4mmr, sb, asic);
 }
 
 static u8 aw_maple_devs;

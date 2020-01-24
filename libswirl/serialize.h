@@ -13,5 +13,5 @@ bool dc_unserialize(void** data, unsigned int* total_size);
 #define REICAST_USA(v_arr,num) rc_unserialize(v_arr, sizeof(v_arr[0])*num, data, total_size)
 
 struct RegisterStruct;
-bool register_serialize(Array<RegisterStruct>& regs, void** data, unsigned int* total_size);
-bool register_unserialize(Array<RegisterStruct>& regs, void** data, unsigned int* total_size);
+bool register_serialize(RegisterStruct* regs, size_t size, void** data, unsigned int* total_size);
+bool register_unserialize(RegisterStruct* regs, size_t size, void** data, unsigned int* total_size);

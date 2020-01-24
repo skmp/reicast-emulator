@@ -68,7 +68,7 @@ struct Sh4ModIntc_impl : Sh4ModIntc {
 		//INTC IPRD 0xFFD00010 0x1FD00010 16 0xDA74 0xDA74 Held Held Pclk	(SH7750S, SH7750R only)
 		sh4_rio_reg(this, INTC, INTC_IPRD_addr, RIO_RO_FUNC, 16, STATIC_FORWARD(Sh4ModIntc_impl, read_INTC_IPRD));
 
-		interrupts_init();
+		interrupts_init(sh4mmr);
 	}
 
 	void Reset()

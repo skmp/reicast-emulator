@@ -315,19 +315,6 @@ extern DECL_ALIGN(4) u32 SFaceOffsColor;
 
 
 //./core/hw/sh4/sh4_mmr.o
-extern Array<u8> OnChipRAM;
-extern Array<RegisterStruct> CCN;  //CCN  : 14 registers
-extern Array<RegisterStruct> UBC;   //UBC  : 9 registers
-extern Array<RegisterStruct> BSC;  //BSC  : 18 registers
-extern Array<RegisterStruct> DMAC; //DMAC : 17 registers
-extern Array<RegisterStruct> CPG;   //CPG  : 5 registers
-extern Array<RegisterStruct> RTC;  //RTC  : 16 registers
-extern Array<RegisterStruct> INTC;  //INTC : 4 registers
-extern Array<RegisterStruct> TMU;  //TMU  : 12 registers
-extern Array<RegisterStruct> SCI;   //SCI  : 8 registers
-extern Array<RegisterStruct> SCIF; //SCIF : 10 registers
-
-
 
 
 //./core/hw/sh4/sh4_mem.o
@@ -681,29 +668,29 @@ bool rc_unserialize(void *src, unsigned int src_size, void **dest, unsigned int 
 	return true ;
 }
 
-bool register_serialize(Array<RegisterStruct>& regs,void **data, unsigned int *total_size )
+bool register_serialize(RegisterStruct* regs, size_t size, void **data, unsigned int *total_size )
 {
 	int i = 0 ;
 
-	for ( i = 0 ; i < regs.Size ; i++ )
+	for ( i = 0 ; i < size ; i++ )
 	{
-		REICAST_S(regs.data[i].flags) ;
-		REICAST_S(regs.data[i].data32) ;
+		REICAST_S(regs[i].flags) ;
+		REICAST_S(regs[i].data32) ;
 	}
 
 	return true ;
 }
 
-bool register_unserialize(Array<RegisterStruct>& regs,void **data, unsigned int *total_size )
+bool register_unserialize(RegisterStruct* regs, size_t size,void **data, unsigned int *total_size )
 {
 	int i = 0 ;
 	u32 dummy = 0 ;
 
-	for ( i = 0 ; i < regs.Size ; i++ )
+	for ( i = 0 ; i < size; i++ )
 	{
-		REICAST_US(regs.data[i].flags) ;
-		if ( ! (regs.data[i].flags & REG_RF) )
-			REICAST_US(regs.data[i].data32) ;
+		REICAST_US(regs[i].flags) ;
+		if ( ! (regs[i].flags & REG_RF) )
+			REICAST_US(regs[i].data32) ;
 		else
 			REICAST_US(dummy) ;
 	}
@@ -803,19 +790,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(SFaceOffsColor);
 
 	REICAST_SA(sh4_cpu->vram.data, sh4_cpu->vram.size);
-
-	REICAST_SA(OnChipRAM.data,OnChipRAM_SIZE);
-
-	register_serialize(CCN, data, total_size) ;
-	register_serialize(UBC, data, total_size) ;
-	register_serialize(BSC, data, total_size) ;
-	register_serialize(DMAC, data, total_size) ;
-	register_serialize(CPG, data, total_size) ;
-	register_serialize(RTC, data, total_size) ;
-	register_serialize(INTC, data, total_size) ;
-	register_serialize(TMU, data, total_size) ;
-	register_serialize(SCI, data, total_size) ;
-	register_serialize(SCIF, data, total_size) ;
 
 	REICAST_SA(sh4_cpu->mram.data, sh4_cpu->mram.size);
 
@@ -1093,19 +1067,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 		}
 	REICAST_USA(sh4_cpu->vram.data, sh4_cpu->vram.size);
 
-	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
-
-	register_unserialize(CCN, data, total_size) ;
-	register_unserialize(UBC, data, total_size) ;
-	register_unserialize(BSC, data, total_size) ;
-	register_unserialize(DMAC, data, total_size) ;
-	register_unserialize(CPG, data, total_size) ;
-	register_unserialize(RTC, data, total_size) ;
-	register_unserialize(INTC, data, total_size) ;
-	register_unserialize(TMU, data, total_size) ;
-	register_unserialize(SCI, data, total_size) ;
-	register_unserialize(SCIF, data, total_size) ;
-
 	REICAST_USA(sh4_cpu->mram.data, sh4_cpu->mram.size);
 
 	REICAST_US(IRLPriority);
@@ -1369,19 +1330,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	pal_needs_update = true;
 
 	REICAST_USA(sh4_cpu->vram.data, sh4_cpu->vram.size);
-
-	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
-
-	register_unserialize(CCN, data, total_size) ;
-	register_unserialize(UBC, data, total_size) ;
-	register_unserialize(BSC, data, total_size) ;
-	register_unserialize(DMAC, data, total_size) ;
-	register_unserialize(CPG, data, total_size) ;
-	register_unserialize(RTC, data, total_size) ;
-	register_unserialize(INTC, data, total_size) ;
-	register_unserialize(TMU, data, total_size) ;
-	register_unserialize(SCI, data, total_size) ;
-	register_unserialize(SCIF, data, total_size) ;
 
 	REICAST_USA(sh4_cpu->mram.data, sh4_cpu->mram.size);
 

@@ -11,22 +11,12 @@
 #include "modules/modules.h"
 #include "modules/sh4_mod.h"
 
+#include "serialize.h"
 //64bytes of sq // now on context ~
 
-Array<u8> OnChipRAM;
+
 
 //All registers are 4 byte aligned
-
-Array<RegisterStruct> CCN(18,true);  //CCN  : 16 registers
-Array<RegisterStruct> UBC(9,true);   //UBC  : 9 registers
-Array<RegisterStruct> BSC(19,true);  //BSC  : 18 registers
-Array<RegisterStruct> DMAC(17,true); //DMAC : 17 registers
-Array<RegisterStruct> CPG(5,true);   //CPG  : 5 registers
-Array<RegisterStruct> RTC(16,true);  //RTC  : 16 registers
-Array<RegisterStruct> INTC(5,true);  //INTC : 5 registers
-Array<RegisterStruct> TMU(12,true);  //TMU  : 12 registers
-Array<RegisterStruct> SCI(8,true);   //SCI  : 8 registers
-Array<RegisterStruct> SCIF(10,true); //SCIF : 10 registers
 
 
 //***********
@@ -43,9 +33,10 @@ _vmem_handler area7_orc_handler;
 
 struct SuperH4Mmr_impl final : SuperH4Mmr
 {
+	Array<u8> OnChipRAM;
 
-	template<u32 sz>
-	u32 sh4_rio_read(Array<RegisterStruct>& sb_regs, u32 addr)
+	template<u32 sz, typename ARR>
+	u32 sh4_rio_read(ARR& sb_regs, u32 addr)
 	{
 		u32 offset = addr & 255;
 #ifdef TRACE
@@ -87,8 +78,8 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 		return 0;
 	}
 
-	template<u32 sz>
-	void sh4_rio_write(Array<RegisterStruct>& sb_regs, u32 addr, u32 data)
+	template<u32 sz, typename ARR>
+	void sh4_rio_write(ARR& sb_regs, u32 addr, u32 data)
 	{
 		u32 offset = addr & 255;
 #ifdef TRACE
@@ -390,6 +381,7 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 	template <u32 sz, class T>
 	T ReadMem_area7(u32 addr)
 	{
+		auto sh4mmr = this;
 		/*
 		if (likely(addr==0xffd80024))
 		{
@@ -727,6 +719,8 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 	template <u32 sz, class T>
 	T DYNACALL ReadMem_area7_OCR_T(u32 addr)
 	{
+		auto sh4mmr = this;
+
 		if (CCN_CCR.ORA)
 		{
 			if (sz == 1)
@@ -752,6 +746,8 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 	template <u32 sz, class T>
 	void DYNACALL WriteMem_area7_OCR_T(u32 addr, T data)
 	{
+		auto sh4mmr = this;
+
 		if (CCN_CCR.ORA)
 		{
 			if (sz == 1)
@@ -785,20 +781,22 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 	//Init/Res/Term
 	SuperH4Mmr_impl(SuperH4* psh)
 	{
+		auto sh4mmr = this;
+
 		OnChipRAM.Resize(OnChipRAM_SIZE, false);
 
 		for (u32 i = 0; i < 30; i++)
 		{
-			if (i < CCN.Size)  rio_reg(psh, CCN, CCN_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(16,true);    //CCN  : 14 registers
-			if (i < UBC.Size)  rio_reg(psh, UBC, UBC_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(9,true);     //UBC  : 9 registers
-			if (i < BSC.Size)  rio_reg(psh, BSC, BSC_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(19,true);    //BSC  : 18 registers
-			if (i < DMAC.Size) rio_reg(psh, DMAC, DMAC_BASE_addr + i * 4, RIO_NO_ACCESS, 32); //(17,true);    //DMAC : 17 registers
-			if (i < CPG.Size)  rio_reg(psh, CPG, CPG_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(5,true);     //CPG  : 5 registers
-			if (i < RTC.Size)  rio_reg(psh, RTC, RTC_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(16,true);    //RTC  : 16 registers
-			if (i < INTC.Size) rio_reg(psh, INTC, INTC_BASE_addr + i * 4, RIO_NO_ACCESS, 32); //(4,true);     //INTC : 4 registers
-			if (i < TMU.Size)  rio_reg(psh, TMU, TMU_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(12,true);    //TMU  : 12 registers
-			if (i < SCI.Size)  rio_reg(psh, SCI, SCI_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(8,true);     //SCI  : 8 registers
-			if (i < SCIF.Size) rio_reg(psh, SCIF, SCIF_BASE_addr + i * 4, RIO_NO_ACCESS, 32); //(10,true);    //SCIF : 10 registers
+			if (i < CCN.size())  sh4_rio_reg(psh, CCN, CCN_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(16,true);    //CCN  : 14 registers
+			if (i < UBC.size())  sh4_rio_reg(psh, UBC, UBC_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(9,true);     //UBC  : 9 registers
+			if (i < BSC.size())  sh4_rio_reg(psh, BSC, BSC_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(19,true);    //BSC  : 18 registers
+			if (i < DMAC.size()) sh4_rio_reg(psh, DMAC, DMAC_BASE_addr + i * 4, RIO_NO_ACCESS, 32); //(17,true);    //DMAC : 17 registers
+			if (i < CPG.size())  sh4_rio_reg(psh, CPG, CPG_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(5,true);     //CPG  : 5 registers
+			if (i < RTC.size())  sh4_rio_reg(psh, RTC, RTC_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(16,true);    //RTC  : 16 registers
+			if (i < INTC.size()) sh4_rio_reg(psh, INTC, INTC_BASE_addr + i * 4, RIO_NO_ACCESS, 32); //(4,true);     //INTC : 4 registers
+			if (i < TMU.size())  sh4_rio_reg(psh, TMU, TMU_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(12,true);    //TMU  : 12 registers
+			if (i < SCI.size())  sh4_rio_reg(psh, SCI, SCI_BASE_addr + i * 4, RIO_NO_ACCESS, 32);   //(8,true);     //SCI  : 8 registers
+			if (i < SCIF.size()) sh4_rio_reg(psh, SCIF, SCIF_BASE_addr + i * 4, RIO_NO_ACCESS, 32); //(10,true);    //SCIF : 10 registers
 		}
 
 #define DEFAULT_INIT(n) mod##n.reset(Sh4Mod##n::Create(this));
@@ -870,11 +868,11 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 		EMUERROR("sh4io: Const write ignored @@ %08X <- %08X", addr, data);
 	}
 
-	virtual void rio_reg(void* context, Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf = nullptr, RegWriteAddrFP* wf = nullptr)
+	virtual void rio_reg(void* context, RegisterStruct* arr, size_t arr_size, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf = nullptr, RegWriteAddrFP* wf = nullptr)
 	{
 		u32 idx = (addr & 255) / 4;
 
-		verify(idx < arr.Size);
+		verify(idx < arr_size);
 
 		arr[idx].flags = flags | REG_ACCESS_32;
 		arr[idx].context = context;
@@ -900,6 +898,39 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 		}
 	}
 
+	virtual void serialize(void** data, unsigned int* total_size) {
+		REICAST_SA(OnChipRAM.data, OnChipRAM_SIZE);
+
+#define register_serialize(mod, data, total_size) register_serialize(mod.data(), mod.size(), data, total_size)
+
+		register_serialize(CCN, data, total_size);
+		register_serialize(UBC, data, total_size);
+		register_serialize(BSC, data, total_size);
+		register_serialize(DMAC, data, total_size);
+		register_serialize(CPG, data, total_size);
+		register_serialize(RTC, data, total_size);
+		register_serialize(INTC, data, total_size);
+		register_serialize(TMU, data, total_size);
+		register_serialize(SCI, data, total_size);
+		register_serialize(SCIF, data, total_size);
+	}
+
+	virtual void unserialize(void** data, unsigned int* total_size) {
+		REICAST_USA(OnChipRAM.data, OnChipRAM_SIZE);
+
+#define register_unserialize(mod, data, total_size) register_unserialize(mod.data(), mod.size(), data, total_size)
+		
+		register_unserialize(CCN, data, total_size);
+		register_unserialize(UBC, data, total_size);
+		register_unserialize(BSC, data, total_size);
+		register_unserialize(DMAC, data, total_size);
+		register_unserialize(CPG, data, total_size);
+		register_unserialize(RTC, data, total_size);
+		register_unserialize(INTC, data, total_size);
+		register_unserialize(TMU, data, total_size);
+		register_unserialize(SCI, data, total_size);
+		register_unserialize(SCIF, data, total_size);
+	}
 };
 
 SuperH4Mmr* SuperH4Mmr::Create(SuperH4* sh4) {

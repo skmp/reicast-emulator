@@ -33,14 +33,14 @@ struct SystemBus_impl final : SystemBus {
 
 	virtual void serialize(void** data, unsigned int* total_size)
 	{
-		register_serialize(sb_regs, data, total_size);
+		register_serialize(sb_regs.data(), sb_regs.size(), data, total_size);
 		REICAST_S(SB_FFST_rc);
 		REICAST_S(SB_FFST);
 	}
 
 	virtual void unserialize(void** data, unsigned int* total_size)
 	{
-		register_unserialize(sb_regs, data, total_size);
+		register_unserialize(sb_regs.data(), sb_regs.size(), data, total_size);
 		REICAST_US(SB_FFST_rc);
 		REICAST_US(SB_FFST);
 	}
@@ -96,9 +96,9 @@ struct SystemBus_impl final : SystemBus {
 	}
 
 	SystemBus_impl() {
-		sb_regs.Zero();
+		memset(sb_regs.data(), 0, sb_regs.size());
 
-		for (u32 i = 0; i < sb_regs.Size; i++)
+		for (u32 i = 0; i < sb_regs.size(); i++)
 		{
 			RegisterRIO(this, SB_BASE + i * 4, RIO_NO_ACCESS);
 			//sb_regs[i].flags=REG_NOT_IMPL;
@@ -663,7 +663,7 @@ struct SystemBus_impl final : SystemBus {
 	void RegisterRIO(void* context, u32 reg_addr, RegIO flags, RegReadAddrFP* rf = nullptr, RegWriteAddrFP* wf = nullptr) {
 		u32 idx = (reg_addr - SB_BASE) / 4;
 
-		verify(idx < sb_regs.Size);
+		verify(idx < sb_regs.size());
 
 		sb_regs[idx].flags = flags | REG_ACCESS_32;
 		sb_regs[idx].context = context;

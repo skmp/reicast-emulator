@@ -1,9 +1,9 @@
 //Bus state controller registers
 
 #include "types.h"
+#include "serialize.h"
 #include "modules.h"
 #include "hw/sh4/sh4_mmr.h"
-
 #include "hw/naomi/naomi.h"
 
 

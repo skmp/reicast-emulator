@@ -1,10 +1,10 @@
 // nullAICA.cpp : Defines the entry point for the DLL application.
 //
 
+#include "hw/aica/aica_mmio.h"
 #include "SoundCPU.h"
 #include "arm7.h"
 #include "arm7_context.h"
-#include "hw/aica/aica_mmio.h"
 
 #include <memory>
 

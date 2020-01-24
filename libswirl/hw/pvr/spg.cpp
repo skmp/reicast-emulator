@@ -1,3 +1,5 @@
+#include "hw/sh4/sh4_mmio.h"
+
 #include "spg.h"
 #include "Renderer_if.h"
 #include "pvr_regs.h"

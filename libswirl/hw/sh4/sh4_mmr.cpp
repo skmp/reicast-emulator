@@ -32,35 +32,6 @@ Array<RegisterStruct> SCIF(10,true); //SCIF : 10 registers
 //***********
 //Store Queue
 //***********
-//TODO : replace w/ mem mapped array
-//Read SQ
-template <u32 sz,class T>
-T DYNACALL ReadMem_sq(SuperH4* sh4, u32 addr)
-{
-	if (sz!=4)
-	{
-		EMUERROR("Store Queue Error - only 4 byte read are possible[x%X]",addr);
-		return 0xDE;
-	}
-
-	u32 united_offset=addr & 0x3C;
-
-	return (T)*(u32*)&sq_both[united_offset];
-}
-
-
-//Write SQ
-template <u32 sz,class T>
-void DYNACALL WriteMem_sq(SuperH4* sh4, u32 addr,T data)
-{
-	if (sz!=4)
-		EMUERROR("Store Queue Error - only 4 byte writes are possible[x%X=0x%X]",addr,data);
-
-	u32 united_offset=addr & 0x3C;
-
-	*(u32*)&sq_both[united_offset]=data;
-}
-
 
 //Mem map :)
 
@@ -179,7 +150,7 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 	//Region P4
 	//Read P4
 	template <u32 sz, class T>
-	T DYNACALL ReadMem_P4(u32 addr)
+	T ReadMem_P4(u32 addr)
 	{
 		/*if (((addr>>26)&0x7)==7)
 		{
@@ -267,7 +238,7 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 
 	//Write P4
 	template <u32 sz, class T>
-	void DYNACALL WriteMem_P4(u32 addr, T data)
+	void WriteMem_P4(u32 addr, T data)
 	{
 		/*if (((addr>>26)&0x7)==7)
 		{

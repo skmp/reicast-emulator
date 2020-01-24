@@ -167,29 +167,29 @@ struct FlashDevice : MMIODevice {
     }
 };
 
-struct ExtDevice : MMIODevice {
+struct ExtDevice_006 : MMIODevice {
     u32 Read(u32 addr, u32 sz) {
-        if (addr >> 16 == 0x0060) {
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-            return libExtDevice_ReadMem_A0_006(addr, sz);
+        return libExtDevice_ReadMem_A0_006(addr, sz);
 #else
-            return 0;
+        return 0;
 #endif
-        }
-        else {
-            return libExtDevice_ReadMem_A0_010(addr, sz);
-        }
     }
 
     void Write(u32 addr, u32 data, u32 sz) {
-        if (addr >> 16 == 0x0060) {
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-            libExtDevice_WriteMem_A0_006(addr, data, sz);
+		libExtDevice_WriteMem_A0_006(addr, data, sz);
 #endif
-        }
-        else {
-            libExtDevice_WriteMem_A0_010(addr, data, sz);
-        }
+    }
+};
+
+struct ExtDevice_010 : MMIODevice {
+    u32 Read(u32 addr, u32 sz) {
+        return libExtDevice_ReadMem_A0_010(addr, sz);
+    }
+
+    void Write(u32 addr, u32 data, u32 sz) {
+	    libExtDevice_WriteMem_A0_010(addr, data, sz);
     }
 };
 
@@ -201,18 +201,14 @@ MMIODevice* Create_FlashDevice() {
 	return new FlashDevice();
 }
 
-
-MMIODevice* Create_ExtDevice() {
-	return new ExtDevice();
+MMIODevice* Create_ExtDevice_006() {
+	return new ExtDevice_006();
 }
 
-
-SuperH4* SuperH4::Create() {
-
-	auto rv = new SuperH4_impl();
-
-    return rv;
+MMIODevice* Create_ExtDevice_010() {
+	return new ExtDevice_010();
 }
+
 
 //Area 0 mem map
 //0x00000000- 0x001FFFFF	:MPX	System/Boot ROM
@@ -276,7 +272,7 @@ T DYNACALL ReadMem_area0(void* ctx, u32 addr)
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) //	:MODEM
 	{
-        sh4->devices[A0H_MODEM]->Read(addr, sz);
+        sh4->devices[A0H_EXTDEV_006]->Read(addr, sz);
 	}
 	//map 0x0060 to 0x006F
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) //	:G2 (Reserved)
@@ -301,7 +297,7 @@ T DYNACALL ReadMem_area0(void* ctx, u32 addr)
 	//map 0x0100 to 0x01FF
 	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) //	:Ext. Device
 	{
-        sh4->devices[A0H_EXT]->Read(addr, sz);
+        sh4->devices[A0H_EXTDEV_010]->Read(addr, sz);
 	}
 	return 0;
 }
@@ -348,7 +344,7 @@ void  DYNACALL WriteMem_area0(void* ctx, u32 addr,T data)
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) // MODEM
 	{
-        sh4->devices[A0H_MODEM]->Write(addr, data, sz);
+        sh4->devices[A0H_EXTDEV_006]->Write(addr, data, sz);
 	}
 	//map 0x0060 to 0x006F
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) // G2 (Reserved)
@@ -376,7 +372,7 @@ void  DYNACALL WriteMem_area0(void* ctx, u32 addr,T data)
 	//map 0x0100 to 0x01FF
 	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) // Ext. Device
 	{
-        sh4->devices[A0H_EXT]->Write(addr, data, sz);
+        sh4->devices[A0H_EXTDEV_010]->Write(addr, data, sz);
 	}
 	return;
 }

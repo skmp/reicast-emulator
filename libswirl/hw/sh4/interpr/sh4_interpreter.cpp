@@ -371,3 +371,10 @@ void SuperH4_impl::unserialize(void** data, unsigned int* total_size) {
 
     sh4mmr->unserialize(data, total_size);
 }
+
+SuperH4* SuperH4::Create() {
+
+    auto rv = new SuperH4_impl();
+
+    return rv;
+}

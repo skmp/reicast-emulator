@@ -59,7 +59,8 @@ MMIODevice* Create_FlashDevice();
 MMIODevice* Create_NaomiDevice(SuperH4Mmr* sh4mmr, SystemBus* sb, ASIC* asic);
 SystemBus* Create_SystemBus();
 MMIODevice* Create_PVRDevice(SuperH4Mmr* sh4mmr, SystemBus* sb, ASIC* asic, SPG* spg, u8* mram, u8* vram);
-MMIODevice* Create_ExtDevice();
+MMIODevice* Create_ExtDevice_006();
+MMIODevice* Create_ExtDevice_010();
 
 
 
@@ -827,13 +828,17 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         MMIODevice* mapleDevice = Create_MapleDevice(systemBus, asic);
         
-        MMIODevice* extDevice = Create_ExtDevice(); // or Create_Modem();
 
-        MMIODevice* modemDevice = Create_ExtDevice(); // FIXME this is hacky
+        MMIODevice* extDevice_006 =
 
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
-        modemDevice = Create_Modem(asic);
+            Create_Modem(asic)
+#else
+            Create_ExtDevice_006()
 #endif
+        ;
+
+        MMIODevice* extDevice_010 = Create_ExtDevice_010();
 
         MMIODevice* rtcDevice = AICA::CreateRTC();
 
@@ -844,10 +849,10 @@ struct Dreamcast_impl : VirtualDreamcast {
         sh4_cpu->SetA0Handler(A0H_GDROM, gdromOrNaomiDevice);
         sh4_cpu->SetA0Handler(A0H_SB, systemBus);
         sh4_cpu->SetA0Handler(A0H_PVR, pvrDevice);
-        sh4_cpu->SetA0Handler(A0H_MODEM, modemDevice);
+        sh4_cpu->SetA0Handler(A0H_EXTDEV_006, extDevice_006);
         sh4_cpu->SetA0Handler(A0H_AICA, aicaDevice);
         sh4_cpu->SetA0Handler(A0H_RTC, rtcDevice);
-        sh4_cpu->SetA0Handler(A0H_EXT, extDevice);
+        sh4_cpu->SetA0Handler(A0H_EXTDEV_010, extDevice_010);
 
         sh4_cpu->SetA0Handler(A0H_MAPLE, mapleDevice);
         sh4_cpu->SetA0Handler(A0H_ASIC, asic);

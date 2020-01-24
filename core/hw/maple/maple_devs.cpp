@@ -1549,6 +1549,7 @@ public:
 		coin_chute[1] = false;
 		this->first_player = first_player;
 	}
+	virtual ~jvs_io_board() = default;
 
 	u32 handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_out);
 	bool maple_serialize(void **data, unsigned int *total_size);
@@ -1559,6 +1560,8 @@ public:
 protected:
 	virtual const char *get_id() = 0;
 	virtual u32 remap_buttons(u32 keycode) { return keycode; }
+	virtual u16 get_analog_value(int player_num, int player_axis);
+
 	u32 player_count = 0;
 	u32 digital_in_count = 0;
 	u32 coin_input_count = 0;
@@ -1566,6 +1569,7 @@ protected:
 	u32 encoder_count = 0;
 	u32 light_gun_count = 0;
 	u32 output_count = 0;
+	bool init_in_progress = false;
 
 private:
 	u16 read_rotary_encoder(f32 &encoder_value, f32 delta_value);
@@ -1685,6 +1689,15 @@ public:
 	}
 protected:
 	virtual const char *get_id() override { return "namco ltd.;FCB;Ver1.0;JPN,Touch Panel & Multipurpose"; }
+
+	virtual u16 get_analog_value(int player_num, int player_axis) override {
+		if (init_in_progress)
+			return 0;
+		if (mo_x_abs[player_num] < 0 || mo_x_abs[player_num] > 639 || mo_y_abs[player_num] < 0 || mo_y_abs[player_num] > 479)
+			return 0;
+		else
+			return 0x8000;
+	}
 };
 
 struct maple_naomi_jamma : maple_sega_controller
@@ -1737,7 +1750,7 @@ struct maple_naomi_jamma : maple_sega_controller
 		  io_boards.push_back(new jvs_namco_fcb(2, this));
 		  break;
 	   }
-	   if (use_lightgun)
+	   if (use_lightgun && settings.mapping.JammaSetup  != 8)
 		  io_boards.back()->lightgun_as_analog = true;
 	}
 
@@ -2296,6 +2309,27 @@ struct maple_naomi_jamma : maple_sega_controller
 	}
 };
 
+u16 jvs_io_board::get_analog_value(int player_num, int player_axis)
+{
+	switch (player_axis)
+	{
+	case 0:
+		return joyx[player_num] << 8;
+	case 1:
+		return joyy[player_num] << 8;
+	case 2:
+		return joyrx[player_num] << 8;
+	case 3:
+		return joyry[player_num] << 8;
+	case 4:
+		return rt[player_num] << 8;
+	case 5:
+		return lt[player_num] << 8;
+	default:
+		return 0x8000;
+	}
+}
+
 u16 jvs_io_board::read_rotary_encoder(f32 &encoder_value, f32 delta_value)
 {
    encoder_value = fmod(encoder_value + delta_value, 65536.f);
@@ -2408,6 +2442,27 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 	case 0x15:	// Master board ID
 		JVS_STATUS1();
 		JVS_STATUS1();
+		break;
+
+	case 0x70:
+		LOGJVS("JVS 0x70: %02x %02x %02x %02x", buffer_in[1], buffer_in[2], buffer_in[3], buffer_in[4]);
+		init_in_progress = true;
+		JVS_STATUS1();
+		JVS_STATUS1();
+		if (buffer_in[2] == 3)
+		{
+			JVS_OUT(0x10);
+			for (int i = 0; i < 16; i++)
+				JVS_OUT(0x7f);
+			if (buffer_in[4] == 0x10 || buffer_in[4] == 0x11)
+				init_in_progress = false;
+		}
+		else
+		{
+			JVS_OUT(2);
+			JVS_OUT(3);
+			JVS_OUT(1);
+		}
 		break;
 
 	default:
@@ -2558,27 +2613,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						   {
 							  if (naomi_game_inputs != NULL)
 							     player_axis = naomi_game_inputs->axes[player_axis].axis;
-							  switch (player_axis)
-							  {
-								 case 0:
-									axis_value = joyx[player_num] << 8;
-									break;
-								 case 1:
-									axis_value = joyy[player_num] << 8;
-									break;
-								 case 2:
-									axis_value = joyrx[player_num] << 8;
-									break;
-								 case 3:
-									axis_value = joyry[player_num] << 8;
-									break;
-								 case 4:
-									axis_value = rt[player_num] << 8;
-									break;
-								 case 5:
-									axis_value = lt[player_num] << 8;
-									break;
-							  }
+							  axis_value = get_analog_value(player_num, player_axis);
 						   }
 						   LOGJVS("P%d.%d:%4x ", player_num + 1, player_axis + 1, axis_value);
 						   JVS_OUT(axis_value >> 8);

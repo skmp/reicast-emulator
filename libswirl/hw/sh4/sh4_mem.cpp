@@ -3,6 +3,7 @@
 	Most of the work is now delegated on vtlb and only helpers are here
 */
 #include "types.h"
+#include <memory>
 
 #include "sh4_mem.h"
 #include "hw/sh4/sh4_mem_area0.h"
@@ -14,18 +15,13 @@
 #include "hw/mem/_vmem.h"
 #include "modules/mmu.h"
 
-
-
-//main system mem
-VLockedMemory mem_b;
-
 //MEM MAPPINNGG
 
 //AREA 1
 _vmem_handler area1_32b;
-void map_area1_init()
+void map_area1_init(SuperH4* sh4)
 {
-	area1_32b = _vmem_register_handler(pvr_read_area1_8,pvr_read_area1_16,pvr_read_area1_32,
+	area1_32b = _vmem_register_handler(sh4->vram.data, pvr_read_area1_8,pvr_read_area1_16,pvr_read_area1_32,
 									pvr_write_area1_8,pvr_write_area1_16,pvr_write_area1_32);
 }
 
@@ -64,7 +60,7 @@ void map_area3_init()
 void map_area3(SuperH4* sh4, u32 base)
 {
 	//32x2 or 16x4
-	_vmem_map_block_mirror(mem_b.data,0x0C | base,0x0F | base,RAM_SIZE);
+	_vmem_map_block_mirror(sh4->mram.data,0x0C | base,0x0F | base,RAM_SIZE);
 }
 
 //AREA 4
@@ -85,14 +81,14 @@ void map_area4(SuperH4* sh4, u32 base)
 //AREA 5	--	Ext. Device
 //Read Ext.Device
 template <u32 sz,class T>
-T DYNACALL ReadMem_extdev_T(SuperH4* sh4, u32 addr)
+T DYNACALL ReadMem_extdev_T(void* sh4, u32 addr)
 {
 	return (T)libExtDevice_ReadMem_A5(addr,sz);
 }
 
 //Write Ext.Device
 template <u32 sz,class T>
-void DYNACALL WriteMem_extdev_T(SuperH4* sh4, u32 addr,T data)
+void DYNACALL WriteMem_extdev_T(void* sh4, u32 addr,T data)
 {
 	libExtDevice_WriteMem_A5(addr,data,sz);
 }
@@ -100,7 +96,7 @@ void DYNACALL WriteMem_extdev_T(SuperH4* sh4, u32 addr,T data)
 _vmem_handler area5_handler;
 void map_area5_init()
 {
-	area5_handler = _vmem_register_handler_Template(ReadMem_extdev_T,WriteMem_extdev_T);
+	area5_handler = _vmem_register_handler_Template(nullptr, ReadMem_extdev_T,WriteMem_extdev_T);
 }
 
 void map_area5(SuperH4* sh4, u32 base)
@@ -124,7 +120,7 @@ void map_area6(SuperH4* sh4, u32 base)
 void mem_map_default(SuperH4_impl* sh4)
 {
 	//vmem - init/reset :)
-	_vmem_init((SuperH4*)sh4);
+	_vmem_init();
 
 	
 	//*TEMP*
@@ -152,14 +148,14 @@ void mem_map_default(SuperH4_impl* sh4)
 	//0xExxx xxxx	-> internal area
 
 	//Init Memmaps (register handlers)
-	map_area0_init();
-	map_area1_init();
+	map_area0_init(sh4);
+	map_area1_init(sh4);
 	map_area2_init();
 	map_area3_init();
 	map_area4_init();
 	map_area5_init();
 	map_area6_init();
-	map_area7_init();
+	map_area7_init(sh4->sh4mmr.get());
 
 	//0x0-0xD : 7 times the normal memmap mirrors :)
 	//some areas can be customised :)
@@ -176,16 +172,15 @@ void mem_map_default(SuperH4_impl* sh4)
 	}
 
 	//map p4 region :)
-	map_p4(sh4);
+	map_p4(sh4, sh4->sh4mmr.get());
 }
+
 void mem_Init(SuperH4_impl* sh4)
 {
 	//Allocate mem for memory/bios/flash
 	//mem_b.Init(&sh4_reserved_mem[0x0C000000],RAM_SIZE);
 
-	sh4_area0_Init(sh4);
-	sh4_mmr_init(sh4);
-	MMU_init();
+	sh4_area0_Init(sh4);	
 }
 
 //Reset Sysmem/Regs -- Pvr is not changed , bios/flash are not zeroed out
@@ -195,19 +190,15 @@ void mem_Reset(SuperH4_impl* sh4, bool Manual)
 	if (!Manual)
 	{
 		//fill mem w/ 0's
-		mem_b.Zero();
+		sh4->mram.Zero();
 	}
 
 	//Reset registers
 	sh4_area0_Reset(sh4, Manual);
-	sh4_mmr_reset();
-	MMU_reset();
 }
 
 void mem_Term(SuperH4_impl* sh4)
 {
-	MMU_term();
-	sh4_mmr_term();
 	sh4_area0_Term(sh4);
 
 	//write back Flash/SRAM
@@ -313,7 +304,7 @@ u8* GetMemPtr(u32 Addr,u32 size)
 	switch ((Addr>>26)&0x7)
 	{
 		case 3:
-		return &mem_b[Addr & RAM_MASK];
+		return &sh4_cpu->mram[Addr & RAM_MASK];
 		
 		case 0:
 		case 1:

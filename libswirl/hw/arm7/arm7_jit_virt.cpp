@@ -1,5 +1,4 @@
 #include "arm7.h"
-#include "arm_mem.h"
 #include "virt_arm.h"
 #include "arm7_context.h"
 #include "hw/aica/aica_mmio.h"
@@ -38,18 +37,6 @@ u32 findfirstset(u32 v)
 
 
 #if FEAT_AREC != DYNAREC_NONE
-Arm7VirtBackend* virtBackend;
-
-/*
- *
- *	X86 Compiler
- *
- */
-
-void* EntryPoints[ARAM_SIZE_MAX / 4];
-
-
-
 template<u32 Pd>
 void DYNACALL MSR_do(Arm7Context* ctx, u32 v)
 {
@@ -139,9 +126,6 @@ struct ArmDPOP
     u32 flags;
 };
 
-vector<ArmDPOP> ops;
-
-
 #define DP_R_ROFC (OP_READ_FLAGS_S|OP_READ_REG_1) //Reads reg1, op2, flags if S
 #define DP_R_ROF (OP_READ_FLAGS|OP_READ_REG_1)    //Reads reg1, op2, flags (ADC & co)
 #define DP_R_OFC (OP_READ_FLAGS_S)                //Reads op2, flags if S
@@ -150,20 +134,15 @@ vector<ArmDPOP> ops;
 #define DP_W_F (OP_WRITE_FLAGS)                   //Writes only flags, always (S=1)
 
 
-
-
-
-void  armEmit32(u32 emit32) {
-    virtBackend->Emit32(emit32);
-}
-void* armGetEmitPtr() {
-    return virtBackend->armGetEmitPtr();
-}
-
 struct Arm7JitVirt_impl : ARM7Backend {
     unique_ptr<Arm7VirtBackend> armv;
     Arm7Context* ctx;
     Looppoints lps;
+
+    void* EntryPoints[ARAM_SIZE_MAX / 4];
+
+    vector<ArmDPOP> ops;
+
 
     Arm7JitVirt_impl(Arm7Context* ctx) : ctx(ctx) {
         armv.reset(Arm7VirtBackend::Create(this, ctx));
@@ -696,7 +675,7 @@ struct Arm7JitVirt_impl : ARM7Backend {
         //Opcode has been modified to use the new regs
         //Emit it ...
         arm_printf("Arm Virtual: %08X -> %08X\n", orig, opcd);
-        armEmit32(opcd);
+        armv->Emit32(opcd);
 
         //Store arm flags, rd12/rd16 (as indicated by the decoder flags)
         if (flag & OP_HAS_RD_12)
@@ -791,10 +770,6 @@ struct Arm7JitVirt_impl : ARM7Backend {
         }
 
         arm_printf("ARM7: Compiling block @ %08X\n", pc);
-
-        verify(virtBackend == nullptr);
-
-        virtBackend = armv.get();
 
         //Get the code ptr
         void* rv = armv->armGetEmitPtr();
@@ -1142,9 +1117,6 @@ struct Arm7JitVirt_impl : ARM7Backend {
         }
 
         armv->end(&lps, (void*)rv, Cycles);
-
-        verify(virtBackend == armv.get());
-        virtBackend = nullptr;
     }
 
 

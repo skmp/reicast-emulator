@@ -910,7 +910,7 @@ void RenderFramebuffer()
 			{
 				for (int i = 0; i < width; i++)
 				{
-					u16 src = pvr_read_area1_16(sh4_cpu, addr);
+					u16 src = pvr_read_area1_16(sh4_cpu->vram.data, addr);
 					*dst++ = (((src >> 10) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
 					*dst++ = (((src >> 5) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
 					*dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
@@ -926,7 +926,7 @@ void RenderFramebuffer()
 			{
 				for (int i = 0; i < width; i++)
 				{
-					u16 src = pvr_read_area1_16(sh4_cpu, addr);
+					u16 src = pvr_read_area1_16(sh4_cpu->vram.data, addr);
 					*dst++ = (((src >> 11) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
 					*dst++ = (((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat >> 1);
 					*dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
@@ -943,14 +943,14 @@ void RenderFramebuffer()
 				{
 					if (addr & 1)
 					{
-						u32 src = pvr_read_area1_32(sh4_cpu, addr - 1);
+						u32 src = pvr_read_area1_32(sh4_cpu->vram.data, addr - 1);
 						*dst++ = src >> 16;
 						*dst++ = src >> 8;
 						*dst++ = src;
 					}
 					else
 					{
-						u32 src = pvr_read_area1_32(sh4_cpu, addr);
+						u32 src = pvr_read_area1_32(sh4_cpu->vram.data, addr);
 						*dst++ = src >> 24;
 						*dst++ = src >> 16;
 						*dst++ = src >> 8;
@@ -966,7 +966,7 @@ void RenderFramebuffer()
 			{
 				for (int i = 0; i < width; i++)
 				{
-					u32 src = pvr_read_area1_32(sh4_cpu, addr);
+					u32 src = pvr_read_area1_32(sh4_cpu->vram.data, addr);
 					*dst++ = src >> 16;
 					*dst++ = src >> 8;
 					*dst++ = src;

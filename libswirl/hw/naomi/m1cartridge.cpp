@@ -8,6 +8,7 @@
  *  // copyright-holders:Olivier Galibert
  */
 #include "m1cartridge.h"
+#include "serialize.h"
 
 M1Cartridge::M1Cartridge(u32 size) : NaomiCartridge(size)
 {

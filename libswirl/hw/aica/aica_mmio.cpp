@@ -15,83 +15,6 @@
 
 #define SH4_IRQ_BIT (1<<(holly_SPU_IRQ&255))
 
-CommonData_struct* CommonData;
-DSPData_struct* DSPData;
-InterruptInfo* MCIEB;
-InterruptInfo* MCIPD;
-InterruptInfo* MCIRE;
-InterruptInfo* SCIEB;
-InterruptInfo* SCIPD;
-InterruptInfo* SCIRE;
-
-//Interrupts
-//arm side
-u32 GetL(u32 witch)
-{
-	if (witch > 7)
-		witch = 7; //higher bits share bit 7
-
-	u32 bit = 1 << witch;
-	u32 rv = 0;
-
-	if (CommonData->SCILV0 & bit)
-		rv = 1;
-
-	if (CommonData->SCILV1 & bit)
-		rv |= 2;
-
-	if (CommonData->SCILV2 & bit)
-		rv |= 4;
-
-	return rv;
-}
-void update_arm_interrupts()
-{
-	u32 p_ints = SCIEB->full & SCIPD->full;
-
-	u32 Lval = 0;
-	if (p_ints)
-	{
-		u32 bit_value = 1;//first bit
-		//scan all interrupts , lo to hi bit.I assume low bit ints have higher priority over others
-		for (u32 i = 0; i < 11; i++)
-		{
-			if (p_ints & bit_value)
-			{
-				//for the first one , Set the L reg & exit
-				Lval = GetL(i);
-				break;
-			}
-			bit_value <<= 1; //next bit
-		}
-	}
-
-	libARM_InterruptChange(p_ints, Lval);
-}
-
-//sh4 side
-void UpdateSh4Ints()
-{
-	u32 p_ints = MCIEB->full & MCIPD->full;
-	if (p_ints)
-	{
-		if ((SB_ISTEXT & SH4_IRQ_BIT) == 0)
-		{
-			//if no interrupt is already pending then raise one :)
-			asic_RaiseInterrupt(holly_SPU_IRQ);
-		}
-	}
-	else
-	{
-		if (SB_ISTEXT & SH4_IRQ_BIT)
-		{
-			asic_CancelInterrupt(holly_SPU_IRQ);
-		}
-	}
-
-}
-
-
 #include "hw/sh4/sh4_mmio.h"
 
 #include "types.h"
@@ -200,7 +123,7 @@ struct AICARTC_impl : MMIODevice
 	}
 };
 
-MMIODevice* Create_RTCDevice() {
+MMIODevice* AICA::CreateRTC() {
 	return new AICARTC_impl();
 }
 
@@ -216,8 +139,84 @@ struct AicaDevice final : AICA {
 
 	AicaTimer timers[3];
 
-	u8 aica_reg[0x8000];
+	u8* aica_reg;
 
+	CommonData_struct* CommonData;
+	DSPData_struct* DSPData;
+
+	InterruptInfo* MCIEB;
+	InterruptInfo* MCIPD;
+	InterruptInfo* MCIRE;
+	InterruptInfo* SCIEB;
+	InterruptInfo* SCIPD;
+	InterruptInfo* SCIRE;
+
+	//Interrupts
+	//arm side
+	u32 GetL(u32 witch)
+	{
+		if (witch > 7)
+			witch = 7; //higher bits share bit 7
+
+		u32 bit = 1 << witch;
+		u32 rv = 0;
+
+		if (CommonData->SCILV0 & bit)
+			rv = 1;
+
+		if (CommonData->SCILV1 & bit)
+			rv |= 2;
+
+		if (CommonData->SCILV2 & bit)
+			rv |= 4;
+
+		return rv;
+	}
+	void update_arm_interrupts()
+	{
+		u32 p_ints = SCIEB->full & SCIPD->full;
+
+		u32 Lval = 0;
+		if (p_ints)
+		{
+			u32 bit_value = 1;//first bit
+			//scan all interrupts , lo to hi bit.I assume low bit ints have higher priority over others
+			for (u32 i = 0; i < 11; i++)
+			{
+				if (p_ints & bit_value)
+				{
+					//for the first one , Set the L reg & exit
+					Lval = GetL(i);
+					break;
+				}
+				bit_value <<= 1; //next bit
+			}
+		}
+
+		libARM_InterruptChange(p_ints, Lval);
+	}
+
+	//sh4 side
+	void UpdateSh4Ints()
+	{
+		u32 p_ints = MCIEB->full & MCIPD->full;
+		if (p_ints)
+		{
+			if ((SB_ISTEXT & SH4_IRQ_BIT) == 0)
+			{
+				//if no interrupt is already pending then raise one :)
+				asic->RaiseInterrupt(holly_SPU_IRQ);
+			}
+		}
+		else
+		{
+			if (SB_ISTEXT & SH4_IRQ_BIT)
+			{
+				asic->CancelInterrupt(holly_SPU_IRQ);
+			}
+		}
+
+	}
 
 	//Memory i/o
 	template<u32 sz>
@@ -300,12 +299,12 @@ struct AicaDevice final : AICA {
 		{
 			if (sz == 1)
 			{
-				ReadCommonReg(addr, true);
+				sgc->ReadCommonReg(addr, true);
 				ReadMemArrRet(aica_reg, addr, 1);
 			}
 			else
 			{
-				ReadCommonReg(addr, false);
+				sgc->ReadCommonReg(addr, false);
 				//ReadCommonReg8(addr+1);
 				ReadMemArrRet(aica_reg, addr, 2);
 			}
@@ -324,13 +323,13 @@ struct AicaDevice final : AICA {
 			if (sz == 1)
 			{
 				WriteMemArr(aica_reg, addr, data, 1);
-				WriteChannelReg8(chan, reg);
+				sgc->WriteChannelReg8(chan, reg);
 			}
 			else
 			{
 				WriteMemArr(aica_reg, addr, data, 2);
-				WriteChannelReg8(chan, reg);
-				WriteChannelReg8(chan, reg + 1);
+				sgc->WriteChannelReg8(chan, reg);
+				sgc->WriteChannelReg8(chan, reg + 1);
 			}
 			return;
 		}
@@ -352,12 +351,12 @@ struct AicaDevice final : AICA {
 		{
 			if (sz == 1)
 			{
-				WriteCommonReg8(addr, data);
+				sgc->WriteCommonReg8(addr, data);
 			}
 			else
 			{
-				WriteCommonReg8(addr, data & 0xFF);
-				WriteCommonReg8(addr + 1, data >> 8);
+				sgc->WriteCommonReg8(addr, data & 0xFF);
+				sgc->WriteCommonReg8(addr + 1, data >> 8);
 			}
 			return;
 		}
@@ -585,13 +584,16 @@ struct AicaDevice final : AICA {
 			die("SB_DDST DMA not implemented");
 	}
 
+	AudioStream* audio_stream;
 	SystemBus* sb;
 	ASIC* asic;
 	DSP* dsp;
 	u8* aica_ram;
 	u32 aram_size;
+	unique_ptr<SGC> sgc;
 
-	AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_ram, u32 aram_size) : sb(sb), asic(asic), dsp(dsp), aica_ram(aica_ram), aram_size(aram_size) { }
+	AicaDevice(AudioStream* audio_stream, SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_reg, u8* aica_ram, u32 aram_size) 
+		: audio_stream(audio_stream), sb(sb), asic(asic), dsp(dsp), aica_reg(aica_reg), aica_ram(aica_ram), aram_size(aram_size) { }
 
 	u32 Read(u32 addr, u32 sz) {
 		addr &= 0x7FFF;
@@ -676,10 +678,10 @@ struct AicaDevice final : AICA {
 		MCIPD = (InterruptInfo*)&aica_reg[0x28B4 + 4];
 		MCIRE = (InterruptInfo*)&aica_reg[0x28B4 + 8];
 
-		sgc_Init(aica_reg, aica_ram, aram_size);
-
+		sgc.reset(SGC::Create(audio_stream, aica_reg, dsp->GetDspContext(), aica_ram, aram_size));
+		
 		for (int i = 0; i < 3; i++)
-			timers[i].Init(aica_reg, i);
+			timers[i].Init(aica_reg, MCIPD, SCIPD, i);
 
 		//NRM
 		//6
@@ -699,7 +701,7 @@ struct AicaDevice final : AICA {
 
 	void Reset(bool Manual)
 	{
-		memset(aica_reg, 0, sizeof(aica_reg));
+		memset(aica_reg, 0, 0x8000);
 		
 		ARMRST = 0;
 		VREG = 0;
@@ -709,13 +711,13 @@ struct AicaDevice final : AICA {
 
 	void Term()
 	{
-		sgc_Term();
+		sgc.reset();
 	}
 
 	//Mainloop
 	void Update(u32 Samples)
 	{
-		AICA_Sample32();
+		sgc->AICA_Sample32();
 	}
 
 	//Aica reads (both sh4&arm)
@@ -736,7 +738,7 @@ struct AicaDevice final : AICA {
 		SCIPD->SAMPLE_DONE = 1;
 
 		if (settings.aica.NoBatch)
-			AICA_Sample();
+			sgc->AICA_Sample();
 
 		//Make sure sh4/arm interrupt system is up to date :)
 		update_arm_interrupts();
@@ -754,6 +756,8 @@ struct AicaDevice final : AICA {
 		REICAST_S(ARMRST);
 
 		REICAST_SA(aica_reg, 0x8000);
+
+		sgc->channel_serialize(data, total_size);
 	}
 
 	void unserialize(void** data, unsigned int* total_size) {
@@ -767,12 +771,14 @@ struct AicaDevice final : AICA {
 		REICAST_US(ARMRST);
 
 		REICAST_USA(aica_reg, 0x8000);
+
+		sgc->channel_unserialize(data, total_size);
 	}
 
 };
 
-AICA* Create_AicaDevice(SystemBus* sb, ASIC* asic, DSP* dsp, u8* aica_ram, u32 aram_size) {
-	return new AicaDevice(sb, asic, dsp, aica_ram, aram_size);
+AICA* AICA::Create(AudioStream* audio_stream, SystemBus* sb, ASIC* asic, DSP* dsp, AicaContext* aica_ctx, u8* aica_ram, u32 aram_size) {
+	return new AicaDevice(audio_stream, sb, asic, dsp, aica_ctx->regs, aica_ram, aram_size);
 }
 
 u32 libAICA_ReadReg(u32 addr, u32 sz) {

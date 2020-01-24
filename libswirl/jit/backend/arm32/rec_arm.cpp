@@ -1453,6 +1453,8 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				else
 					MOV(r0,reg.mapg(op->rs1));
 
+				auto sh4mmr = sh4_cpu->sh4mmr.get();
+
 				if (CCN_MMUCR.AT)
 				{
 					CALL((unat)&do_sqw_mmu,op->flags==0x1337?CC_AL:CC_EQ);

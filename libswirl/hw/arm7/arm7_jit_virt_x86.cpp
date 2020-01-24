@@ -1,4 +1,7 @@
 #include "types.h"
+#include "arm7.h"
+#include "arm7_context.h"
+#include "arm7_jit_virt_backend.h"
 
 #if HOST_CPU == CPU_X86 && FEAT_AREC == DYNAREC_JIT
 
@@ -9,9 +12,15 @@
 #include <Windows.h>
 #endif
 
+static Arm7VirtBackend* virtBackend;
 
-void  armEmit32(u32 emit32);
-void* armGetEmitPtr();
+static void  armEmit32(u32 emit32) {
+    virtBackend->Emit32(emit32);
+}
+
+static void* armGetEmitPtr() {
+    return virtBackend->armGetEmitPtr();
+}
 
 
 #define _DEVEL          (1)
@@ -19,10 +28,6 @@ void* armGetEmitPtr();
 #define EMIT_GET_PTR()  armGetEmitPtr()
 
 #include "jit/emitter/arm32/arm_emitter.h"
-
-#include "arm7.h"
-#include "arm7_context.h"
-#include "arm7_jit_virt_backend.h"
 
 #include "virt_arm.h"
 
@@ -324,6 +329,10 @@ struct Arm7VirtBackendX86 : Arm7VirtBackend {
             return false;
         }
 
+        // setup global for callback from the arm emitter
+        verify(virtBackend == nullptr);
+        virtBackend = this;
+
         //Setup emitter
         x86e = new x86_block();
         x86e->Init(0, 0);
@@ -377,6 +386,11 @@ struct Arm7VirtBackendX86 : Arm7VirtBackend {
 
         //Delete the x86 emitter ...
         delete x86e;
+        x86e = nullptr;
+
+        // reset global
+        verify(virtBackend == this);
+        virtBackend = nullptr;
     }
 
     //sanity check: non branch doesn't set pc

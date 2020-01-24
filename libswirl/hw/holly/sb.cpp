@@ -15,7 +15,7 @@
 #include "hw/naomi/naomi.h"
 #include "libswirl.h"
 
-Array<RegisterStruct> sb_regs(0x540);
+#include "serialize.h"
 
 //(addr>= 0x005F6800) && (addr<=0x005F7CFF) -> 0x1500 bytes -> 0x540 possible registers , 125 actually exist only
 // System Control Reg.   //0x100 bytes
@@ -27,11 +27,23 @@ Array<RegisterStruct> sb_regs(0x540);
 // much empty space
 
 
-// TODO: MOVE THESE!!! 
-u32 SB_FFST_rc;
-u32 SB_FFST;
-
 struct SystemBus_impl final : SystemBus {
+	u32 SB_FFST_rc;
+	u32 SB_FFST;
+
+	virtual void serialize(void** data, unsigned int* total_size)
+	{
+		register_serialize(sb_regs.data(), sb_regs.size(), data, total_size);
+		REICAST_S(SB_FFST_rc);
+		REICAST_S(SB_FFST);
+	}
+
+	virtual void unserialize(void** data, unsigned int* total_size)
+	{
+		register_unserialize(sb_regs.data(), sb_regs.size(), data, total_size);
+		REICAST_US(SB_FFST_rc);
+		REICAST_US(SB_FFST);
+	}
 
 	u32 sbio_read_noacc(u32 addr) {
 		verify(false); 
@@ -59,6 +71,8 @@ struct SystemBus_impl final : SystemBus {
 	template <u32 reg_addr>
 	void sbio_writeonly(u32 addr, u32 data)
 	{
+		auto sb = this;
+
 		SB_REGN_32(reg_addr) = data;
 	}
 
@@ -82,9 +96,9 @@ struct SystemBus_impl final : SystemBus {
 	}
 
 	SystemBus_impl() {
-		sb_regs.Zero();
+		memset(sb_regs.data(), 0, sb_regs.size());
 
-		for (u32 i = 0; i < sb_regs.Size; i++)
+		for (u32 i = 0; i < sb_regs.size(); i++)
 		{
 			RegisterRIO(this, SB_BASE + i * 4, RIO_NO_ACCESS);
 			//sb_regs[i].flags=REG_NOT_IMPL;
@@ -524,6 +538,8 @@ struct SystemBus_impl final : SystemBus {
     }
 
 	void Reset(bool m) { 
+		auto sb = this;
+
 		SB_SBREV = 0xB;
 		SB_G2ID = 0x12;
 		SB_G1SYSM = ((0x0 << 4) | (0x1));
@@ -647,7 +663,7 @@ struct SystemBus_impl final : SystemBus {
 	void RegisterRIO(void* context, u32 reg_addr, RegIO flags, RegReadAddrFP* rf = nullptr, RegWriteAddrFP* wf = nullptr) {
 		u32 idx = (reg_addr - SB_BASE) / 4;
 
-		verify(idx < sb_regs.Size);
+		verify(idx < sb_regs.size());
 
 		sb_regs[idx].flags = flags | REG_ACCESS_32;
 		sb_regs[idx].context = context;

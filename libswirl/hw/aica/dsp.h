@@ -6,12 +6,16 @@ enum DspBackends {
 	DSPBE_DYNAREC,
 };
 
+struct dsp_context_t;
+struct AicaContext;
+
 struct DSP : MMIODevice {
 	virtual void Step() = 0;
 	virtual void WritenMem(u32 addr) = 0;
 	virtual bool setBackend(DspBackends backend) = 0;
+	virtual dsp_context_t* GetDspContext() = 0;
 
-	static DSP* Create(u8* aica_ram, u32 aram_size);
+	static DSP* Create(AicaContext* aica_ctx, u8* aica_ram, u32 aram_size);
 };
 
 static void libDSP_Step() {

@@ -56,10 +56,11 @@ static bool extra_depth_game;
 
 MMIODevice* Create_BiosDevice();
 MMIODevice* Create_FlashDevice();
-MMIODevice* Create_NaomiDevice(SystemBus* sb);
+MMIODevice* Create_NaomiDevice(SuperH4Mmr* sh4mmr, SystemBus* sb, ASIC* asic);
 SystemBus* Create_SystemBus();
-MMIODevice* Create_PVRDevice(SystemBus* sb, ASIC* asic, SPG* spg, u8* vram);
-MMIODevice* Create_ExtDevice();
+MMIODevice* Create_PVRDevice(SuperH4Mmr* sh4mmr, SystemBus* sb, ASIC* asic, SPG* spg, u8* mram, u8* vram);
+MMIODevice* Create_ExtDevice_006();
+MMIODevice* Create_ExtDevice_010();
 
 
 
@@ -585,79 +586,6 @@ void SaveSettings()
 
 static bool reset_requested;
 
-#ifndef TARGET_DISPFRAME
-void* dc_run(void*)
-{
-#if FEAT_HAS_NIXPROF
-    install_prof_handler(0);
-#endif
-
-    InitAudio();
-
-#ifdef SCRIPTING
-    luabindings_onstart();
-#endif
-
-    if (settings.dynarec.Enable && sh4_cpu->setBackend(SH4BE_DYNAREC))
-    {
-        printf("Using MCPU Recompiler\n");
-    }
-    else
-    {
-        sh4_cpu->setBackend(SH4BE_INTERPRETER);
-        printf("Using MCPU Interpreter\n");
-    }
-
-    auto scpu = sh4_cpu->GetA0H<SoundCPU>(A0H_SCPU);
-
-    if (settings.dynarec.ScpuEnable && scpu->setBackend(ARM7BE_DYNAREC))
-    {
-        printf("Using SCPU Recompiler\n");
-    }
-    else
-    {
-        scpu->setBackend(ARM7BE_INTERPRETER);
-        printf("Using SCPU Interpreter\n");
-    }
-
-    auto dsp = sh4_cpu->GetA0H<DSP>(A0H_DSP);
-
-    if (settings.dynarec.DspEnable && dsp->setBackend(DSPBE_DYNAREC))
-    {
-        printf("Using DSP Recompiler\n");
-    }
-    else
-    {
-        dsp->setBackend(DSPBE_INTERPRETER);
-        printf("Using DSP Interpreter\n");
-    }
-
-    do {
-        reset_requested = false;
-
-        sh4_cpu->Run();
-
-        SaveRomFiles(get_writable_data_path(DATA_PATH));
-        if (reset_requested)
-        {
-            virtualDreamcast->Reset();
-#ifdef SCRIPTING
-            luabindings_onreset();
-#endif
-        }
-    } while (reset_requested);
-
-#ifdef SCRIPTING
-    luabindings_onstop();
-#endif
-
-    TermAudio();
-
-    return NULL;
-}
-#endif
-
-cThread emu_thread(&dc_run, NULL);
 
 
 int reicast_init(int argc, char* argv[])
@@ -707,6 +635,85 @@ void reicast_term() {
 }
 
 struct Dreamcast_impl : VirtualDreamcast {
+
+    unique_ptr<AicaContext> aica_ctx;
+    unique_ptr<AudioStream> audio_stream;
+
+    cThread emu_thread;
+
+    Dreamcast_impl() : emu_thread(STATIC_FORWARD(Dreamcast_impl, dc_run), this) { }
+
+#ifndef TARGET_DISPFRAME
+    void* dc_run()
+    {
+#if FEAT_HAS_NIXPROF
+        install_prof_handler(0);
+#endif
+
+        audio_stream->InitAudio();
+
+#ifdef SCRIPTING
+        luabindings_onstart();
+#endif
+
+        if (settings.dynarec.Enable && sh4_cpu->setBackend(SH4BE_DYNAREC))
+        {
+            printf("Using MCPU Recompiler\n");
+        }
+        else
+        {
+            sh4_cpu->setBackend(SH4BE_INTERPRETER);
+            printf("Using MCPU Interpreter\n");
+        }
+
+        auto scpu = sh4_cpu->GetA0H<SoundCPU>(A0H_SCPU);
+
+        if (settings.dynarec.ScpuEnable && scpu->setBackend(ARM7BE_DYNAREC))
+        {
+            printf("Using SCPU Recompiler\n");
+        }
+        else
+        {
+            scpu->setBackend(ARM7BE_INTERPRETER);
+            printf("Using SCPU Interpreter\n");
+        }
+
+        auto dsp = sh4_cpu->GetA0H<DSP>(A0H_DSP);
+
+        if (settings.dynarec.DspEnable && dsp->setBackend(DSPBE_DYNAREC))
+        {
+            printf("Using DSP Recompiler\n");
+        }
+        else
+        {
+            dsp->setBackend(DSPBE_INTERPRETER);
+            printf("Using DSP Interpreter\n");
+        }
+
+        do {
+            reset_requested = false;
+
+            sh4_cpu->Run();
+
+            SaveRomFiles(get_writable_data_path(DATA_PATH));
+            if (reset_requested)
+            {
+                virtualDreamcast->Reset();
+#ifdef SCRIPTING
+                luabindings_onreset();
+#endif
+            }
+            } while (reset_requested);
+
+#ifdef SCRIPTING
+            luabindings_onstop();
+#endif
+
+            audio_stream->TermAudio();
+
+            return NULL;
+        }
+#endif
 
     ~Dreamcast_impl() {
         Term();
@@ -782,13 +789,17 @@ struct Dreamcast_impl : VirtualDreamcast {
 
     bool Init()
     {
+        audio_stream.reset(AudioStream::Create());
+
         sh4_cpu = SuperH4::Create();
 
-        if (!_vmem_reserve(&sh4_cpu->vram , &sh4_cpu->aica_ram, INTERNAL_ARAM_SIZE))
+        if (!_vmem_reserve(&sh4_cpu->mram, &sh4_cpu->vram , &sh4_cpu->aica_ram, INTERNAL_ARAM_SIZE))
         {
             printf("Failed to alloc mem\n");
             return false;
         }
+
+        auto sh4mmr = SuperH4Mmr::Create(sh4_cpu);
 
         MMIODevice* biosDevice = Create_BiosDevice();
         MMIODevice* flashDevice = Create_FlashDevice();
@@ -799,39 +810,49 @@ struct Dreamcast_impl : VirtualDreamcast {
         MMIODevice* gdromOrNaomiDevice =
         
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE
-            Create_NaomiDevice(systemBus)
+            Create_NaomiDevice(sh4mmr, systemBus, asic)
 #else
-            Create_GDRomDevice(systemBus, asic)
+            Create_GDRomDevice(sh4mmr, systemBus, asic)
 #endif
         ;
 
         SPG* spg = SPG::Create(asic);
-        MMIODevice* pvrDevice = Create_PVRDevice(systemBus, asic, spg, sh4_cpu->vram.data);
-        DSP* dsp = DSP::Create(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
-        AICA* aicaDevice = Create_AicaDevice(systemBus, asic, dsp, sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
+
+        MMIODevice* pvrDevice = Create_PVRDevice(sh4mmr, systemBus, asic, spg, sh4_cpu->mram.data, sh4_cpu->vram.data);
+
+        aica_ctx.reset(AICA::CreateContext());
+
+        DSP* dsp = DSP::Create(aica_ctx.get(), sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
+        AICA* aicaDevice = AICA::Create(audio_stream.get(), systemBus, asic, dsp, aica_ctx.get(), sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
         SoundCPU* soundCPU = SoundCPU::Create(aicaDevice, sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 
         MMIODevice* mapleDevice = Create_MapleDevice(systemBus, asic);
         
-        MMIODevice* extDevice = Create_ExtDevice(); // or Create_Modem();
 
-        MMIODevice* modemDevice = Create_ExtDevice(); // FIXME this is hacky
+        MMIODevice* extDevice_006 =
 
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST && defined(ENABLE_MODEM)
-        modemDevice = Create_Modem(asic);
+            Create_Modem(asic)
+#else
+            Create_ExtDevice_006()
 #endif
+        ;
 
-        MMIODevice* rtcDevice = Create_RTCDevice();
+        MMIODevice* extDevice_010 = Create_ExtDevice_010();
+
+        MMIODevice* rtcDevice = AICA::CreateRTC();
+
+        sh4_cpu->sh4mmr.reset(sh4mmr);
 
         sh4_cpu->SetA0Handler(A0H_BIOS, biosDevice);
         sh4_cpu->SetA0Handler(A0H_FLASH, flashDevice);
         sh4_cpu->SetA0Handler(A0H_GDROM, gdromOrNaomiDevice);
         sh4_cpu->SetA0Handler(A0H_SB, systemBus);
         sh4_cpu->SetA0Handler(A0H_PVR, pvrDevice);
-        sh4_cpu->SetA0Handler(A0H_MODEM, modemDevice);
+        sh4_cpu->SetA0Handler(A0H_EXTDEV_006, extDevice_006);
         sh4_cpu->SetA0Handler(A0H_AICA, aicaDevice);
         sh4_cpu->SetA0Handler(A0H_RTC, rtcDevice);
-        sh4_cpu->SetA0Handler(A0H_EXT, extDevice);
+        sh4_cpu->SetA0Handler(A0H_EXTDEV_010, extDevice_010);
 
         sh4_cpu->SetA0Handler(A0H_MAPLE, mapleDevice);
         sh4_cpu->SetA0Handler(A0H_ASIC, asic);
@@ -853,7 +874,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         plugins_Term();
         rend_term_renderer();
 
-        _vmem_release(&sh4_cpu->vram, &sh4_cpu->aica_ram);
+        _vmem_release(&sh4_cpu->mram, &sh4_cpu->vram, &sh4_cpu->aica_ram);
 
         mcfg_DestroyDevices();
 
@@ -861,6 +882,8 @@ struct Dreamcast_impl : VirtualDreamcast {
 
         delete sh4_cpu;
         sh4_cpu = nullptr;
+
+        audio_stream.reset();
     }
 
     void Stop()
@@ -1026,6 +1049,9 @@ struct Dreamcast_impl : VirtualDreamcast {
 
     bool HandleFault(unat addr, rei_host_context_t* ctx)
     {
+        if (!sh4_cpu)
+            return false;
+
         fault_printf("dc_handle_fault: %p from %p\n", (u8*)addr, (u8*)ctx->pc);
 
         bool dyna_cde = ((unat)CC_RX2RW(ctx->pc) > (unat)CodeCache) && ((unat)CC_RX2RW(ctx->pc) < (unat)(CodeCache + CODE_SIZE));

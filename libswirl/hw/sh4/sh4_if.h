@@ -1,5 +1,7 @@
 #pragma once
 #include "types.h"
+#include <memory>
+#include "sh4_mmr.h"
 
 enum Sh4RegType
 {
@@ -229,6 +231,8 @@ typedef bool IsCpuRunningFP();
 //sh4 interface
 
 struct MMIODevice;
+struct SystemBus;
+struct SuperH4Mmr;
 
 enum SuperH4Backends {
     SH4BE_INTERPRETER,
@@ -242,10 +246,10 @@ enum Area0Hanlders {
 	A0H_GDROM,
 	A0H_SB,
 	A0H_PVR,
-	A0H_MODEM,
+	A0H_EXTDEV_006,
 	A0H_AICA,
 	A0H_RTC,
-	A0H_EXT,
+	A0H_EXTDEV_010,
 
 	A0H_MAPLE,
 	A0H_ASIC,
@@ -257,8 +261,10 @@ enum Area0Hanlders {
 };
 
 struct SuperH4 {
+	VLockedMemory mram;
 	VLockedMemory vram;
 	VLockedMemory aica_ram;
+	unique_ptr<SuperH4Mmr> sh4mmr;
 
 	virtual void SetA0Handler(Area0Hanlders slot, MMIODevice* dev) = 0;
 	virtual MMIODevice* GetA0Handler(Area0Hanlders slot) = 0;
@@ -285,6 +291,9 @@ struct SuperH4 {
     virtual void ResetCache() = 0;
 
 	virtual ~SuperH4() { }
+
+	virtual void serialize(void** data, unsigned int* total_size) { }
+	virtual void unserialize(void** data, unsigned int* total_size) { }
 
 	static SuperH4* Create();
 };

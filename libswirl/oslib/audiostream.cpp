@@ -1,4 +1,5 @@
 #include <limits.h>
+#include "hw/holly/sb.h" // for STATIC_FORWARD
 #include "cfg/cfg.h"
 #include "oslib/threading.h"
 #include "oslib/oslib.h"
@@ -14,7 +15,6 @@ WaveWriter rawout("d:\\aica_out.wav");
 static unsigned int audiobackends_num_max = 1;
 static unsigned int audiobackends_num_registered = 0;
 static audiobackend_t **audiobackends = NULL;
-static audiobackend_t *audiobackend_current = NULL;
 
 static float InterpolateCatmull4pt3oX(float x0, float x1, float x2, float x3, float t) {
 	return 0.45f* ((2 * x1) + t * ((-x0 + x2) + t * ((2 * x0 - 5 * x1 + 4 * x2 - x3) + t * (-x0 + 3 * x1 - 3 * x2 + x3))));
@@ -142,6 +142,9 @@ private:
 	volatile u32 WritePtr;  //last WRITEN sample
 
 public:
+	// set by creator
+	audiobackend_t* audiobackend_current;
+
 	u32 PushAudio(u32 amt, bool wait)
 	{
 		if (audiobackend_current != NULL) {
@@ -163,17 +166,6 @@ public:
 		}
 	}
 };
-
-static PullBuffer_t PullBuffer;
-static PushBuffer_t PushBuffer;
-
-u32 PullAudioCallback(void* buffer, u32 buffer_size, u32 amt, u32 target_rate)
-{
-	if (target_rate != 0 && target_rate != 44100)
-		return PullBuffer.ReadAudioResampling(buffer, buffer_size, amt, target_rate);
-	else
-		return PullBuffer.ReadAudio(buffer, buffer_size, amt);
-}
 
 u32 GetAudioBackendCount()
 {
@@ -264,29 +256,6 @@ audiobackend_t* GetAudioBackend(std::string slug)
 	return NULL;
 }
 
-bool IsPullMode()
-{
-	if (audiobackend_current != NULL && audiobackend_current->prefer_pull != NULL) {
-		return audiobackend_current->prefer_pull();
-	}
-	return false;
-}
-
-extern double mspdf;
-void WriteSample(s16 r, s16 l)
-{
-	bool wait = settings.aica.LimitFPS && (mspdf <= 11);
-	
-	if (IsPullMode())
-	{
-		PullBuffer.WriteSample(r, l, wait);
-	}
-	else
-	{
-		PushBuffer.WriteSample(r, l, wait);
-	}
-}
-
 static bool backends_sorted = false;
 void SortAudioBackends()
 {
@@ -308,38 +277,89 @@ void SortAudioBackends()
 	}
 }
 
-void InitAudio()
-{
-	if (cfgLoadInt("audio", "disable", 0)) {
-		printf("WARNING: Audio disabled in config!\n");
-		return;
+
+extern double mspdf;
+
+
+struct AudioStream_impl : AudioStream {
+	PullBuffer_t PullBuffer;
+	PushBuffer_t PushBuffer;
+	audiobackend_t* audiobackend_current = nullptr;
+
+	u32 PullAudioCallback(void* buffer, u32 buffer_size, u32 amt, u32 target_rate)
+	{
+		if (target_rate != 0 && target_rate != 44100)
+			return PullBuffer.ReadAudioResampling(buffer, buffer_size, amt, target_rate);
+		else
+			return PullBuffer.ReadAudio(buffer, buffer_size, amt);
 	}
 
-	cfgSaveInt("audio", "disable", 0);
 
-	if (audiobackend_current != NULL) {
-		printf("ERROR: The audio backend \"%s\" (%s) has already been initialized, you need to terminate it before you can call audio_init() again!\n", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
-		return;
+	bool IsPullMode()
+	{
+		if (audiobackend_current != NULL && audiobackend_current->prefer_pull != NULL) {
+			return audiobackend_current->prefer_pull();
+		}
+		return false;
 	}
 
-	SortAudioBackends();
+	void WriteSample(s16 r, s16 l)
+	{
+		bool wait = settings.aica.LimitFPS && (mspdf <= 11);
 
-	string audiobackend_slug = settings.audio.backend;
-	audiobackend_current = GetAudioBackend(audiobackend_slug);
-	if (audiobackend_current == NULL) {
-		printf("WARNING: Running without audio!\n");
-		return;
+		if (IsPullMode())
+		{
+			PullBuffer.WriteSample(r, l, wait);
+		}
+		else
+		{
+			PushBuffer.WriteSample(r, l, wait);
+		}
 	}
 
-	printf("Initializing audio backend \"%s\" (%s)...\n", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
-	audiobackend_current->init(PullAudioCallback);
-}
 
-void TermAudio()
-{
-	if (audiobackend_current != NULL) {
-		audiobackend_current->term();
-		printf("Terminating audio backend \"%s\" (%s)...\n", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
-		audiobackend_current = NULL;
+	void InitAudio()
+	{
+		if (cfgLoadInt("audio", "disable", 0)) {
+			printf("WARNING: Audio disabled in config!\n");
+			return;
+		}
+
+		cfgSaveInt("audio", "disable", 0);
+
+		if (audiobackend_current != NULL) {
+			printf("ERROR: The audio backend \"%s\" (%s) has already been initialized, you need to terminate it before you can call audio_init() again!\n", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
+			return;
+		}
+
+		SortAudioBackends();
+
+		string audiobackend_slug = settings.audio.backend;
+		audiobackend_current = GetAudioBackend(audiobackend_slug);
+		PushBuffer.audiobackend_current = audiobackend_current;
+
+		if (audiobackend_current == NULL) {
+			printf("WARNING: Running without audio!\n");
+			return;
+		}
+
+		printf("Initializing audio backend \"%s\" (%s)...\n", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
+		
+		audiobackend_current->init([=](void* buffer, u32 buffer_size, u32 amt, u32 target_rate) {
+			return this->PullAudioCallback(buffer, buffer_size, amt, target_rate); 
+		});
 	}
+
+	void TermAudio()
+	{
+		if (audiobackend_current != NULL) {
+			audiobackend_current->term();
+			printf("Terminating audio backend \"%s\" (%s)...\n", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
+			audiobackend_current = NULL;
+		}
+	}
+};
+
+AudioStream* AudioStream::Create() {
+	return new AudioStream_impl();
 }

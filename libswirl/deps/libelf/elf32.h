@@ -171,7 +171,7 @@ elf32_getSectionFlags(struct Elf32_Header *file, uint16_t s)
 	return elf32_getSectionTable(file)[s].sh_flags;
 }
 
-char * elf32_getSectionName(struct Elf32_Header *file, int i);
+const char * elf32_getSectionName(struct Elf32_Header *file, int i);
 uint32_t elf32_getSectionSize(struct Elf32_Header *file, int i);
 uint32_t elf32_getSectionLink(struct Elf32_Header *elfFile, int i);
 uint32_t elf32_getSectionAddr(struct Elf32_Header *elfFile, int i);

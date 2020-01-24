@@ -85,9 +85,6 @@ struct dsp_context_t
 	bool dyndirty;
 };
 
-DECL_ALIGN(4096)
-extern dsp_context_t dsp;
-
 struct _INST
 {
 	unsigned int TRA;
@@ -120,7 +117,7 @@ struct _INST
 };
 
 
-
+struct DSPData_struct;
 struct DSPBackend {
 	static u16 DYNACALL PACK(s32 val);
 	static s32 DYNACALL UNPACK(u16 val);
@@ -131,6 +128,6 @@ struct DSPBackend {
 
 	virtual ~DSPBackend() { }
 
-	static DSPBackend* CreateInterpreter(u8* aica_ram, u32 aram_size);
-	static DSPBackend* CreateJIT(u8* aica_ram, u32 aram_size);
+	static DSPBackend* CreateInterpreter(DSPData_struct* DSPData, dsp_context_t* dsp, u8* aica_ram, u32 aram_size);
+	static DSPBackend* CreateJIT(DSPData_struct* DSPData, dsp_context_t* dsp, u8* aica_ram, u32 aram_size);
 };

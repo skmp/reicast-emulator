@@ -113,24 +113,11 @@ extern s16 pr;
 //void(* 	PLFOWS_CALC [4])(ChannelEx *ch)
 
 //special handling
-//extern AicaChannel AicaChannel::Chans[64];
-#define Chans AicaChannel::Chans
-#define CDDA_SIZE  (2352/2)
-extern s16 cdda_sector[CDDA_SIZE];
-extern u32 cdda_index;
-extern SampleType mxlr[64];
-extern u32 samples_gen;
-
 
 
 
 
 //./core/hw/holly/sb.o
-extern Array<RegisterStruct> sb_regs;
-extern u32 SB_ISTNRM;
-extern u32 SB_FFST_rc;
-extern u32 SB_FFST;
-
 
 
 //./core/hw/holly/sb_mem.o
@@ -328,23 +315,9 @@ extern DECL_ALIGN(4) u32 SFaceOffsColor;
 
 
 //./core/hw/sh4/sh4_mmr.o
-extern Array<u8> OnChipRAM;
-extern Array<RegisterStruct> CCN;  //CCN  : 14 registers
-extern Array<RegisterStruct> UBC;   //UBC  : 9 registers
-extern Array<RegisterStruct> BSC;  //BSC  : 18 registers
-extern Array<RegisterStruct> DMAC; //DMAC : 17 registers
-extern Array<RegisterStruct> CPG;   //CPG  : 5 registers
-extern Array<RegisterStruct> RTC;  //RTC  : 16 registers
-extern Array<RegisterStruct> INTC;  //INTC : 4 registers
-extern Array<RegisterStruct> TMU;  //TMU  : 12 registers
-extern Array<RegisterStruct> SCI;   //SCI  : 8 registers
-extern Array<RegisterStruct> SCIF; //SCIF : 10 registers
-
-
 
 
 //./core/hw/sh4/sh4_mem.o
-extern VLockedMemory mem_b;
 //one-time init
 //extern _vmem_handler area1_32b;
 //one-time init
@@ -402,8 +375,6 @@ extern SCIF_SCFDR2_type SCIF_SCFDR2;
 
 
 //./core/hw/sh4/modules/bsc.o
-extern BSC_PDTRA_type BSC_PDTRA;
-
 
 
 
@@ -697,29 +668,29 @@ bool rc_unserialize(void *src, unsigned int src_size, void **dest, unsigned int 
 	return true ;
 }
 
-bool register_serialize(Array<RegisterStruct>& regs,void **data, unsigned int *total_size )
+bool register_serialize(RegisterStruct* regs, size_t size, void **data, unsigned int *total_size )
 {
 	int i = 0 ;
 
-	for ( i = 0 ; i < regs.Size ; i++ )
+	for ( i = 0 ; i < size ; i++ )
 	{
-		REICAST_S(regs.data[i].flags) ;
-		REICAST_S(regs.data[i].data32) ;
+		REICAST_S(regs[i].flags) ;
+		REICAST_S(regs[i].data32) ;
 	}
 
 	return true ;
 }
 
-bool register_unserialize(Array<RegisterStruct>& regs,void **data, unsigned int *total_size )
+bool register_unserialize(RegisterStruct* regs, size_t size,void **data, unsigned int *total_size )
 {
 	int i = 0 ;
 	u32 dummy = 0 ;
 
-	for ( i = 0 ; i < regs.Size ; i++ )
+	for ( i = 0 ; i < size; i++ )
 	{
-		REICAST_US(regs.data[i].flags) ;
-		if ( ! (regs.data[i].flags & REG_RF) )
-			REICAST_US(regs.data[i].data32) ;
+		REICAST_US(regs[i].flags) ;
+		if ( ! (regs[i].flags & REG_RF) )
+			REICAST_US(regs[i].data32) ;
 		else
 			REICAST_US(dummy) ;
 	}
@@ -739,12 +710,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 		return false ;
 
 	REICAST_S(version) ;
-	
-	for (int i = 0; i < A0H_MAX; i++) {
-		sh4_cpu->GetA0Handler((Area0Hanlders)i)->serialize(data, total_size);
-	}
 
-	REICAST_S(dsp);
+	sh4_cpu->serialize(data, total_size);
 
 	REICAST_SA(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 
@@ -756,21 +723,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_SA(AEG_DSR_SPS,64);
 	REICAST_S(pl);
 	REICAST_S(pr);
-
-	channel_serialize(data, total_size) ;
-
-	REICAST_SA(cdda_sector,CDDA_SIZE);
-	REICAST_S(cdda_index);
-	REICAST_SA(mxlr,64);
-	REICAST_S(samples_gen);
-
-
-	register_serialize(sb_regs, data, total_size) ;
-	REICAST_S(SB_ISTNRM);
-	REICAST_S(SB_FFST_rc);
-	REICAST_S(SB_FFST);
-
-
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern RomChip sys_rom;
@@ -839,20 +791,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	REICAST_SA(sh4_cpu->vram.data, sh4_cpu->vram.size);
 
-	REICAST_SA(OnChipRAM.data,OnChipRAM_SIZE);
-
-	register_serialize(CCN, data, total_size) ;
-	register_serialize(UBC, data, total_size) ;
-	register_serialize(BSC, data, total_size) ;
-	register_serialize(DMAC, data, total_size) ;
-	register_serialize(CPG, data, total_size) ;
-	register_serialize(RTC, data, total_size) ;
-	register_serialize(INTC, data, total_size) ;
-	register_serialize(TMU, data, total_size) ;
-	register_serialize(SCI, data, total_size) ;
-	register_serialize(SCIF, data, total_size) ;
-
-	REICAST_SA(mem_b.data, mem_b.size);
+	REICAST_SA(sh4_cpu->mram.data, sh4_cpu->mram.size);
 
 
 
@@ -927,8 +866,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(SCIF_SCFSR2);
 	REICAST_S(SCIF_SCFRDR2);
 	REICAST_S(SCIF_SCFDR2);
-
-	REICAST_S(BSC_PDTRA);
 
 	REICAST_SA(tmu_shift,3);
 	REICAST_SA(tmu_mask,3);
@@ -1021,11 +958,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	int i = 0;
 	int j = 0;
 
-	for (int i = 0; i < A0H_MAX; i++) {
-		sh4_cpu->GetA0Handler((Area0Hanlders)i)->unserialize(data, total_size);
-	}
-
-	REICAST_US(dsp);
+	sh4_cpu->unserialize(data, total_size);
 
 	REICAST_USA(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 
@@ -1035,20 +968,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_USA(AEG_DSR_SPS,64);
 	REICAST_US(pl);
 	REICAST_US(pr);
-
-	channel_unserialize(data, total_size) ;
-
-	REICAST_USA(cdda_sector,CDDA_SIZE);
-	REICAST_US(cdda_index);
-	REICAST_USA(mxlr,64);
-	REICAST_US(samples_gen);
-
-
-	register_unserialize(sb_regs, data, total_size) ;
-	REICAST_US(SB_ISTNRM);
-	REICAST_US(SB_FFST_rc);
-	REICAST_US(SB_FFST);
-
 
 
 	//this is one-time init, no updates - don't need to serialize
@@ -1148,20 +1067,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 		}
 	REICAST_USA(sh4_cpu->vram.data, sh4_cpu->vram.size);
 
-	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
-
-	register_unserialize(CCN, data, total_size) ;
-	register_unserialize(UBC, data, total_size) ;
-	register_unserialize(BSC, data, total_size) ;
-	register_unserialize(DMAC, data, total_size) ;
-	register_unserialize(CPG, data, total_size) ;
-	register_unserialize(RTC, data, total_size) ;
-	register_unserialize(INTC, data, total_size) ;
-	register_unserialize(TMU, data, total_size) ;
-	register_unserialize(SCI, data, total_size) ;
-	register_unserialize(SCIF, data, total_size) ;
-
-	REICAST_USA(mem_b.data, mem_b.size);
+	REICAST_USA(sh4_cpu->mram.data, sh4_cpu->mram.size);
 
 	REICAST_US(IRLPriority);
 	REICAST_USA(InterruptEnvId,32);
@@ -1230,8 +1136,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(SCIF_SCFSR2);
 	REICAST_US(SCIF_SCFRDR2);
 	REICAST_US(SCIF_SCFDR2);
-
-	REICAST_US(BSC_PDTRA);
 
 	REICAST_USA(tmu_shift,3);
 	REICAST_USA(tmu_mask,3);
@@ -1349,8 +1253,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		sh4_cpu->GetA0Handler((Area0Hanlders)i)->unserialize(data, total_size);
 	}
 
-	REICAST_US(dsp);
-
 	REICAST_USA(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 	
 	REICAST_USA(volume_lut,16);
@@ -1359,18 +1261,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_USA(AEG_DSR_SPS,64);
 	REICAST_US(pl);
 	REICAST_US(pr);
-
-	channel_unserialize(data, total_size) ;
-
-	REICAST_USA(cdda_sector,CDDA_SIZE);
-	REICAST_US(cdda_index);
-	REICAST_USA(mxlr,64);
-	REICAST_US(samples_gen);
-
-	register_unserialize(sb_regs, data, total_size) ;
-	REICAST_US(SB_ISTNRM);
-	REICAST_US(SB_FFST_rc);
-	REICAST_US(SB_FFST);
 
 	//this is one-time init, no updates - don't need to serialize
 	//extern RomChip sys_rom;
@@ -1441,20 +1331,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	REICAST_USA(sh4_cpu->vram.data, sh4_cpu->vram.size);
 
-	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
-
-	register_unserialize(CCN, data, total_size) ;
-	register_unserialize(UBC, data, total_size) ;
-	register_unserialize(BSC, data, total_size) ;
-	register_unserialize(DMAC, data, total_size) ;
-	register_unserialize(CPG, data, total_size) ;
-	register_unserialize(RTC, data, total_size) ;
-	register_unserialize(INTC, data, total_size) ;
-	register_unserialize(TMU, data, total_size) ;
-	register_unserialize(SCI, data, total_size) ;
-	register_unserialize(SCIF, data, total_size) ;
-
-	REICAST_USA(mem_b.data, mem_b.size);
+	REICAST_USA(sh4_cpu->mram.data, sh4_cpu->mram.size);
 
 	REICAST_US(IRLPriority);
 	REICAST_USA(InterruptEnvId,32);
@@ -1526,11 +1403,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(SCIF_SCFSR2);
 	REICAST_US(SCIF_SCFRDR2);
 	REICAST_US(SCIF_SCFDR2);
-
-
-	REICAST_US(BSC_PDTRA);
-
-
 
 
 	REICAST_USA(tmu_shift,3);

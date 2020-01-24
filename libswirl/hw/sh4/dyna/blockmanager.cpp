@@ -132,7 +132,7 @@ void bm_AddBlock(RuntimeBlockInfo* blk, bool lockRam)
 
 		if (lockRam)
 		{
-			mem_b.LockRegion(ram_page * PAGE_SIZE, PAGE_SIZE);
+			sh4_cpu->mram.LockRegion(ram_page * PAGE_SIZE, PAGE_SIZE);
 		}
 	}
 
@@ -358,8 +358,7 @@ bool bm_LockedWrite(u8* addy)
 			bm_DiscardBlock(*it);
 		}
 
-
-		mem_b.UnLockRegion(ram_obase, PAGE_SIZE);
+		sh4_cpu->mram.UnLockRegion(ram_obase, PAGE_SIZE);
 
 		return true;
 	}

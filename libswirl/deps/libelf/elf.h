@@ -335,7 +335,7 @@ bool elf_loadFile(void *elfFile, bool phys);
 char *elf_getStringTable(void *elfFile, int string_segment);
 char *elf_getSegmentStringTable(void *elfFile);
 void *elf_getSectionNamed(void *elfFile, char *str);
-char *elf_getSectionName(void *elfFile, int i);
+const char *elf_getSectionName(void *elfFile, int i);
 uint64_t elf_getSectionSize(void *elfFile, int i);
 uint64_t elf_getSectionLink(void *elfFile, int i);
 uint64_t elf_getSectionAddr(void *elfFile, int i);

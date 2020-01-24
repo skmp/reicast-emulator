@@ -1,9 +1,6 @@
 #pragma once
 #include "types.h"
 
-//main system mem
-extern VLockedMemory mem_b;
-
 #include "hw/mem/_vmem.h"
 #include "modules/mmu.h"
 
@@ -62,6 +59,7 @@ void WriteMemBlock_nommu_dma(u32 dst,u32 src,u32 size);
 struct SuperH4_impl;
 
 //Init/Res/Term
+struct SystemBus;
 void mem_Init(SuperH4_impl* sh4);
 void mem_Term(SuperH4_impl* sh4);
 void mem_Reset(SuperH4_impl* sh4, bool Manual);

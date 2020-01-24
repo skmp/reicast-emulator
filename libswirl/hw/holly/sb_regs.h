@@ -299,7 +299,7 @@
 //0x005F7CF8    SB_PDLEND   R   PVR-DMA transfer counter
 #define SB_PDLEND_addr 0x005F7CF8
 
-#define SB_REGN_32(addr) (sb_regs[(addr-SB_BASE)/4].data32)
+#define SB_REGN_32(addr) (sb->sb_regs[(addr-SB_BASE)/4].data32)
 #define SB_REG_32(name) SB_REGN_32(SB_##name##_addr)
 #define SB_REG_T(name) ((SB_name##_t&)SB_REG_T(name))
 
@@ -340,7 +340,7 @@
 //0x005F6888    SB_LMMODE1  RW  Via TA texture memory bus select 1
 #define SB_LMMODE1 SB_REG_32(LMMODE1)
 //0x005F688C    SB_FFST R   FIFO status
-extern u32 SB_FFST;
+//inside static alloc. TODO: FIXME?
 //0x005F6890    SB_SFRES    W   System reset
 #define SB_SFRES SB_REG_32(SFRES)
 
@@ -350,7 +350,8 @@ extern u32 SB_FFST;
 #define SB_RBSPLT SB_REG_32(RBSPLT)
 
 //0x005F6900    SB_ISTNRM   RW  Normal interrupt status
-extern u32 SB_ISTNRM;
+// Inside dynamic alloc. TODO: Fixme?
+
 //0x005F6904    SB_ISTEXT   R   External interrupt status
 #define SB_ISTEXT SB_REG_32(ISTEXT)
 //0x005F6908    SB_ISTERR   RW  Error interrupt status

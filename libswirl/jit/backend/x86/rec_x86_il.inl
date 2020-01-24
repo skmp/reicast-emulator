@@ -1417,6 +1417,8 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				x86e->Emit(op_cmp32,EDX,0x38);
 				x86e->Emit(op_jne,nosq);
 				{
+					auto sh4mmr = sh4_cpu->sh4mmr.get();
+
 					if (CCN_MMUCR.AT)
 						x86e->Emit(op_call,x86_ptr_imm(&do_sqw_mmu));	//call do_sqw_mmu
 					else

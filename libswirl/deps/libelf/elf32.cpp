@@ -128,7 +128,7 @@ elf32_getNumProgramHeaders(struct Elf32_Header *elfFile)
 	return fileHdr->e_phnum;
 }
 
-char *
+const char *
 elf32_getSectionName(struct Elf32_Header *elfFile, int i)
 {
 	struct Elf32_Shdr *sections = elf32_getSectionTable(elfFile);

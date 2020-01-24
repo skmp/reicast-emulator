@@ -3,7 +3,7 @@
 
 #include "SuperH4_impl.h"
 
-void map_area0_init();
+void map_area0_init(SuperH4* sh4);
 void map_area0(SuperH4* sh4, u32 base);
 
 //Init/Res/Term

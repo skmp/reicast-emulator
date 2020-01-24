@@ -114,6 +114,8 @@ struct Arm7VirtBackend {
     virtual void InvalidateJitCache() = 0;
 
     virtual ARM::eReg GetSafeReg() = 0;
+
+    virtual ~Arm7VirtBackend() { }
 };
 
 struct Arm7JitVirt_impl;

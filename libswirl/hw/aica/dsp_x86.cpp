@@ -31,10 +31,14 @@ struct DSPJitX86: DSPBackend {
     u8* aica_ram;
     u32 aram_mask;
 
-    DSPJitX86(u8* aica_ram, u32 aram_size) : aica_ram(aica_ram), aram_mask(aram_size-1) {
+    DSPData_struct* DSPData;
+    dsp_context_t* dsp;
+
+    DSPJitX86(DSPData_struct* DSPData, dsp_context_t* dsp, u8* aica_ram, u32 aram_size)
+        : DSPData(DSPData), dsp(dsp), aica_ram(aica_ram), aram_mask(aram_size - 1) {
 #if HOST_OS == OS_WINDOWS
         DWORD old;
-        VirtualProtect(dsp.DynCode, sizeof(dsp.DynCode), PAGE_EXECUTE_READWRITE, &old);
+        VirtualProtect(dsp->DynCode, sizeof(dsp->DynCode), PAGE_EXECUTE_READWRITE, &old);
 #endif
     }
 
@@ -107,39 +111,39 @@ struct DSPJitX86: DSPBackend {
         }
     }*/
 
-    static void* dyna_realloc(void* ptr, u32 oldsize, u32 newsize)
+    void* dyna_realloc(void* ptr, u32 oldsize, u32 newsize)
     {
-        return dsp.DynCode;
+        return dsp->DynCode;
     }
 
     void _dsp_debug_step_start()
     {
-        memset(&dsp.regs_init, 0, sizeof(dsp.regs_init));
+        memset(&dsp->regs_init, 0, sizeof(dsp->regs_init));
     }
 
     void _dsp_debug_step_end()
     {
-        verify(dsp.regs_init.MAD_OUT);
-        verify(dsp.regs_init.MEM_ADDR);
-        verify(dsp.regs_init.MEM_RD_DATA);
-        verify(dsp.regs_init.MEM_WT_DATA);
-        verify(dsp.regs_init.FRC_REG);
-        verify(dsp.regs_init.ADRS_REG);
-        verify(dsp.regs_init.Y_REG);
+        verify(dsp->regs_init.MAD_OUT);
+        verify(dsp->regs_init.MEM_ADDR);
+        verify(dsp->regs_init.MEM_RD_DATA);
+        verify(dsp->regs_init.MEM_WT_DATA);
+        verify(dsp->regs_init.FRC_REG);
+        verify(dsp->regs_init.ADRS_REG);
+        verify(dsp->regs_init.Y_REG);
 
-        //verify(dsp.regs_init.MDEC_CT); // -> its done on C
-        verify(dsp.regs_init.MWT_1);
-        verify(dsp.regs_init.MRD_1);
-        //	verify(dsp.regs_init.MADRS); //THAT WAS not real, MEM_ADDR is the deal ;p
-        verify(dsp.regs_init.MEMS);
-        verify(dsp.regs_init.NOFL_1);
-        verify(dsp.regs_init.NOFL_2);
-        verify(dsp.regs_init.TEMPS);
-        verify(dsp.regs_init.EFREG);
+        //verify(dsp->regs_init.MDEC_CT); // -> its done on C
+        verify(dsp->regs_init.MWT_1);
+        verify(dsp->regs_init.MRD_1);
+        //	verify(dsp->regs_init.MADRS); //THAT WAS not real, MEM_ADDR is the deal ;p
+        verify(dsp->regs_init.MEMS);
+        verify(dsp->regs_init.NOFL_1);
+        verify(dsp->regs_init.NOFL_2);
+        verify(dsp->regs_init.TEMPS);
+        verify(dsp->regs_init.EFREG);
     }
 
-#define nwtn(x) verify(!dsp.regs_init.x)
-#define wtn(x) nwtn(x);dsp.regs_init.x=true;
+#define nwtn(x) verify(!dsp->regs_init.x)
+#define wtn(x) nwtn(x);dsp->regs_init.x=true;
 
     //sign extend to 32 bits
     void dsp_rec_se(x86_block& x86e, x86_gpr_reg reg, u32 src_sz, u32 dst_sz = 0xFF)
@@ -167,7 +171,7 @@ struct DSPJitX86: DSPBackend {
         if (!(step & 1))
         {
             //Get and mask ram address :)
-            x86e.Emit(op_mov32, EAX, &dsp.regs.MEM_ADDR);
+            x86e.Emit(op_mov32, EAX, &dsp->regs.MEM_ADDR);
             x86e.Emit(op_and32, EAX, aram_mask);
 
             x86e.Emit(op_add32, EAX, (unat)aica_ram);
@@ -182,7 +186,7 @@ struct DSPJitX86: DSPBackend {
             if (prev_op.MWT)
             {
                 //Do the write [MEM_ADDRS] <-MEM_WT_DATA
-                x86e.Emit(op_mov32, EDX, &dsp.regs.MEM_WT_DATA);
+                x86e.Emit(op_mov32, EDX, &dsp->regs.MEM_WT_DATA);
                 x86e.Emit(op_mov16, x86_mrm(EAX), EDX);
             }
         }
@@ -205,7 +209,7 @@ struct DSPJitX86: DSPBackend {
 
             //Added if ADREB
             if (op.ADREB)
-                x86e.Emit(op_add32, EAX, &dsp.regs.ADRS_REG);
+                x86e.Emit(op_add32, EAX, &dsp->regs.ADRS_REG);
 
             //+1 if NXADR is set
             if (op.NXADR)
@@ -213,27 +217,27 @@ struct DSPJitX86: DSPBackend {
 
             //RBL warp around is here, according to docs, but that seems to cause _very_ bad results
         //	if (!op.TABLE)
-        //		x86e.Emit(op_and32,EAX,dsp.RBL);
+        //		x86e.Emit(op_and32,EAX,dsp->RBL);
 
             //MDEC_CT is added if !TABLE
             if (!op.TABLE)
-                x86e.Emit(op_add32, EAX, &dsp.regs.MDEC_CT);
+                x86e.Emit(op_add32, EAX, &dsp->regs.MDEC_CT);
 
             //RBL/RBP are constants for the program
             //Apply RBL if !TABLE
             //Else limit to 16 bit add
             //*update* always limit to 16 bit add adter MDEC_CT ?
             if (!op.TABLE)
-                x86e.Emit(op_and32, EAX, dsp.RBL);
+                x86e.Emit(op_and32, EAX, dsp->RBL);
             else
                 x86e.Emit(op_and32, EAX, 0xFFFF);
 
             //Calculate the value !
             //EAX*2 b/c it points to sample (16:1 of the address)
-            x86e.Emit(op_lea32, EDX, x86_mrm(EAX, sib_scale_2, x86_ptr::create(dsp.RBP)));
+            x86e.Emit(op_lea32, EDX, x86_mrm(EAX, sib_scale_2, x86_ptr::create(dsp->RBP)));
 
             //Save the result to MEM_ADDR
-            x86e.Emit(op_mov32, &dsp.regs.MEM_ADDR, EDX);
+            x86e.Emit(op_mov32, &dsp->regs.MEM_ADDR, EDX);
         }
         wtn(MEM_ADDR);
     }
@@ -251,12 +255,12 @@ struct DSPJitX86: DSPBackend {
         //Maby we dont need to convert, but just to sign extend ?
         if (op.IRA < 0x20)
         {
-            x86e.Emit(op_mov32, INPUTS, &dsp.MEMS[op.IRA]);
+            x86e.Emit(op_mov32, INPUTS, &dsp->MEMS[op.IRA]);
             dsp_rec_se(x86e, INPUTS, 24);
         }
         else if (op.IRA < 0x30)
         {
-            x86e.Emit(op_mov32, INPUTS, &dsp.MIXS[op.IRA - 0x20]);
+            x86e.Emit(op_mov32, INPUTS, &dsp->MIXS[op.IRA - 0x20]);
             dsp_rec_se(x86e, INPUTS, 20, 24);
         }
         else if (op.IRA < 0x32)
@@ -281,7 +285,7 @@ struct DSPJitX86: DSPBackend {
         //The converter's nofl flag has 2 steps delay (so that it can be set with the MRQ).
         if (op.IWT)
         {
-            x86e.Emit(op_movsx16to32, ECX, &dsp.regs.MEM_RD_DATA);
+            x86e.Emit(op_movsx16to32, ECX, &dsp->regs.MEM_RD_DATA);
             x86e.Emit(op_mov32, EAX, ECX);
 
             //Pad and signed extend EAX
@@ -294,7 +298,7 @@ struct DSPJitX86: DSPBackend {
                 x86_Label* no_fl = x86e.CreateLabel(false, 8);//no float conversions
 
                 //Do we have to convert ?
-                x86e.Emit(op_cmp32, &dsp.regs.NOFL_2, 1);
+                x86e.Emit(op_cmp32, &dsp->regs.NOFL_2, 1);
                 x86e.Emit(op_je, no_fl);
                 {
                     //Convert !
@@ -302,7 +306,7 @@ struct DSPJitX86: DSPBackend {
                 }
                 x86e.MarkLabel(no_fl);
             }
-            x86e.Emit(op_mov32, &dsp.MEMS[op.IWA], EAX);
+            x86e.Emit(op_mov32, &dsp->MEMS[op.IWA], EAX);
         }
 
         wtn(MEMS);
@@ -318,7 +322,7 @@ struct DSPJitX86: DSPBackend {
         //The MEM_RD_DATA_NV wire exists only on even steps
         if (!(step & 1))
         {
-            x86e.Emit(op_mov32, &dsp.regs.MEM_RD_DATA, MEM_RD_DATA_NV);
+            x86e.Emit(op_mov32, &dsp->regs.MEM_RD_DATA, MEM_RD_DATA_NV);
         }
 
         wtn(MEM_RD_DATA);
@@ -326,10 +330,10 @@ struct DSPJitX86: DSPBackend {
 
     x86_mrm_t dsp_reg_GenerateTempsAddrs(x86_block& x86e, u32 TEMPS_NUM, x86_gpr_reg TEMPSaddrsreg)
     {
-        x86e.Emit(op_mov32, TEMPSaddrsreg, &dsp.regs.MDEC_CT);
+        x86e.Emit(op_mov32, TEMPSaddrsreg, &dsp->regs.MDEC_CT);
         x86e.Emit(op_add32, TEMPSaddrsreg, TEMPS_NUM);
         x86e.Emit(op_and32, TEMPSaddrsreg, 127);
-        return x86_mrm(ECX, sib_scale_4, dsp.TEMP);
+        return x86_mrm(ECX, sib_scale_4, dsp->TEMP);
     }
 
     //Reads : INPUTS,TEMP,FRC_REG,COEF,Y_REG
@@ -368,7 +372,7 @@ struct DSPJitX86: DSPBackend {
         {
         case 0:
             //Y=FRC_REG[13]
-            x86e.Emit(op_mov32, EAX, &dsp.regs.FRC_REG);
+            x86e.Emit(op_mov32, EAX, &dsp->regs.FRC_REG);
             dsp_rec_se(x86e, EAX, 13);
             break;
 
@@ -380,13 +384,13 @@ struct DSPJitX86: DSPBackend {
 
         case 2:
             //Y=Y_REG[23:11] (Y_REG is 19 bits, INPUTS[23:4], so that is realy 19:7)
-            x86e.Emit(op_mov32, EAX, &dsp.regs.Y_REG);
+            x86e.Emit(op_mov32, EAX, &dsp->regs.Y_REG);
             dsp_rec_se(x86e, EAX, 19, 13);
             break;
 
         case 3:
             //Y=0'Y_REG[15:4] (Y_REG is 19 bits, INPUTS[23:4], so that is realy 11:0)
-            x86e.Emit(op_mov32, EAX, &dsp.regs.Y_REG);
+            x86e.Emit(op_mov32, EAX, &dsp->regs.Y_REG);
             x86e.Emit(op_and32, 0xFFF);//Clear bit 13+
             break;
         }
@@ -412,7 +416,7 @@ struct DSPJitX86: DSPBackend {
             {
                 //B=MAD_OUT[??]
                 //mad out is stored on s32 format, so no need for sign extension
-                x86e.Emit(op_mov32, EDX, &dsp.regs.MAD_OUT);
+                x86e.Emit(op_mov32, EDX, &dsp->regs.MAD_OUT);
             }
             else
             {
@@ -447,7 +451,7 @@ struct DSPJitX86: DSPBackend {
     {
         nwtn(MAD_OUT);
         //MAD_OUT is s32, no sign extension needed
-        x86e.Emit(op_mov32, EAX, &dsp.regs.MAD_OUT);
+        x86e.Emit(op_mov32, EAX, &dsp->regs.MAD_OUT);
         //sh .. l ?
         switch (op.SHIFT)
         {
@@ -527,7 +531,7 @@ struct DSPJitX86: DSPBackend {
                 x86e.Emit(op_mov32, ECX, EAX);
                 x86e.Emit(op_and32, ECX, (1 << 12) - 1);//bit 12 and up are 0'd
             }
-            x86e.Emit(op_mov32, &dsp.regs.FRC_REG, ECX);
+            x86e.Emit(op_mov32, &dsp->regs.FRC_REG, ECX);
         }
 
         //Write to ADDRS_REG ?
@@ -547,7 +551,7 @@ struct DSPJitX86: DSPBackend {
                 x86e.Emit(op_sar32, ECX, 12);
                 x86e.Emit(op_and32, ECX, (1 << 12) - 1);//bit 11 and up are 0'd
             }
-            x86e.Emit(op_mov32, &dsp.regs.ADRS_REG, ECX);
+            x86e.Emit(op_mov32, &dsp->regs.ADRS_REG, ECX);
         }
 
         //MEM_WT_DATA write
@@ -564,7 +568,7 @@ struct DSPJitX86: DSPBackend {
                 x86e.Emit(op_sar32, EAX, 8);
             }
             //data in on EAX
-            x86e.Emit(op_mov32, &dsp.regs.MEM_WT_DATA, EAX);
+            x86e.Emit(op_mov32, &dsp->regs.MEM_WT_DATA, EAX);
         }
 
         //more stuff here
@@ -578,7 +582,7 @@ struct DSPJitX86: DSPBackend {
     void Recompile()
     {
         x86_block x86e;
-        x86e.Init(dyna_realloc, dyna_realloc);
+        x86e.Init([this](void* p, u32 a, u32 b) { return dyna_realloc(p, a, b); }, [this](void* p, u32 a, u32 b) { return dyna_realloc(p, a, b); });
 
         x86e.Emit(op_push32, EBX);
         x86e.Emit(op_push32, EBP);
@@ -648,7 +652,7 @@ struct DSPJitX86: DSPBackend {
 
             //Write MAD_OUT_NV
             {
-                x86e.Emit(op_mov32, &dsp.regs.MAD_OUT, EDI);
+                x86e.Emit(op_mov32, &dsp->regs.MAD_OUT, EDI);
                 wtn(MAD_OUT);
             }
             //These are implemented here :p
@@ -659,7 +663,7 @@ struct DSPJitX86: DSPBackend {
                 if (op.YRL)
                 {
                     x86e.Emit(op_sar32, ESI, 4);//[23:4]
-                    x86e.Emit(op_mov32, &dsp.regs.Y_REG, ESI);
+                    x86e.Emit(op_mov32, &dsp->regs.Y_REG, ESI);
 
                 }
                 wtn(Y_REG);
@@ -668,10 +672,10 @@ struct DSPJitX86: DSPBackend {
             //NOFL delay propagation :)
             {
                 //NOFL_2=NOFL_1
-                x86e.Emit(op_mov32, EAX, &dsp.regs.NOFL_1);
-                x86e.Emit(op_mov32, &dsp.regs.NOFL_2, EAX);
+                x86e.Emit(op_mov32, EAX, &dsp->regs.NOFL_1);
+                x86e.Emit(op_mov32, &dsp->regs.NOFL_2, EAX);
                 //NOFL_1 = NOFL
-                x86e.Emit(op_mov32, &dsp.regs.NOFL_1, op.NOFL);
+                x86e.Emit(op_mov32, &dsp->regs.NOFL_1, op.NOFL);
 
                 wtn(NOFL_2);
                 wtn(NOFL_1);
@@ -680,9 +684,9 @@ struct DSPJitX86: DSPBackend {
             //MWT_1/MRD_1 propagation
             {
                 //MWT_1=MWT
-                x86e.Emit(op_mov32, &dsp.regs.MWT_1, op.MWT);
+                x86e.Emit(op_mov32, &dsp->regs.MWT_1, op.MWT);
                 //MRD_1=MRD
-                x86e.Emit(op_mov32, &dsp.regs.MRD_1, op.MRD);
+                x86e.Emit(op_mov32, &dsp->regs.MRD_1, op.MRD);
 
                 wtn(MWT_1);
                 wtn(MRD_1);
@@ -715,17 +719,17 @@ struct DSPJitX86: DSPBackend {
         //dsp_emu_grandia();
 
         //run the code :p
-        ((void (*)()) &dsp.DynCode[0])();
+        ((void (*)()) &dsp->DynCode[0])();
 
-        dsp.regs.MDEC_CT--;
-        if (dsp.regs.MDEC_CT == 0)
-            dsp.regs.MDEC_CT = dsp.RBL;
+        dsp->regs.MDEC_CT--;
+        if (dsp->regs.MDEC_CT == 0)
+            dsp->regs.MDEC_CT = dsp->RBL;
         //here ? or before ?
         //memset(DSP->MIXS,0,4*16);
     }
 };
 
-DSPBackend* DSPBackend::CreateJIT(u8* aica_ram, u32 aram_size) {
-    return new DSPJitX86(aica_ram, aram_size);
+DSPBackend* DSPBackend::CreateJIT(DSPData_struct* DSPData, dsp_context_t* dsp, u8* aica_ram, u32 aram_size) {
+    return new DSPJitX86(DSPData, dsp, aica_ram, aram_size);
 }
 #endif

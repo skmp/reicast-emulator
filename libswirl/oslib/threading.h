@@ -70,6 +70,7 @@ public :
 		:entry(function), param(param), hThread(NULL) {}
 	~cThread() { WaitToEnd(); }
 	void Start();
+	void Start(void* param) { this->param = param; Start(); }
 	void WaitToEnd();
 };
 #endif

@@ -19,6 +19,8 @@
 
 */
 
+static SuperH4Mmr* sh4mmr;
+
 //these are fixed
 u16 IRLPriority=0x0246;
 #define IRLP9 &IRLPriority,0
@@ -144,6 +146,8 @@ void ResetInterruptMask(InterruptID intr)
 
 bool Do_Interrupt(u32 intEvn)
 {
+	auto sh4mmr = sh4_cpu->sh4mmr.get();
+
 	CCN_INTEVT = intEvn;
 
 	ssr = sh4_sr_GetFull();
@@ -160,6 +164,8 @@ bool Do_Interrupt(u32 intEvn)
 
 bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect)
 {
+	auto sh4mmr = sh4_cpu->sh4mmr.get();
+
 	verify(sr.BL == 0);
 	CCN_EXPEVT = expEvn;
 
@@ -179,8 +185,9 @@ bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect)
 
 
 //Init/Res/Term
-void interrupts_init()
+void interrupts_init(SuperH4Mmr* sh4mmr)
 {
+	::sh4mmr = sh4mmr;
 	InterptSourceList_Entry InterruptSourceList2[]=
 	{
 		//IRL

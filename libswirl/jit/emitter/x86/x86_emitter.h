@@ -1,6 +1,8 @@
 #pragma once
 #include "types.h"
 #include "x86_op_classes.h"
+#include <functional>
+
 #if HOST_OS == OS_DARWIN
 	#include <TargetConditionals.h>
 #endif
@@ -190,8 +192,8 @@ enum x86_reg
 #define x86_gpr_reg x86_reg
 
 //memory management !
-typedef void* dyna_reallocFP(void*ptr,u32 oldsize,u32 newsize);
-typedef void* dyna_finalizeFP(void* ptr,u32 oldsize,u32 newsize);
+typedef std::function<void* (void* ptr, u32 oldsize, u32 newsize)> dyna_reallocFP;
+typedef std::function<void* (void* ptr, u32 oldsize, u32 newsize)> dyna_finalizeFP;
 
 //define it here cus we use it on label type ;)
 class x86_block;
@@ -306,8 +308,8 @@ class /*__declspec(dllexport)*/ x86_block
 private:
 	void* _labels;
 	void ApplyPatches(u8* base);
-	dyna_reallocFP* ralloc;
-	dyna_finalizeFP* allocfin;
+	dyna_reallocFP ralloc;
+	dyna_finalizeFP allocfin;
 public:
 	void* _patches;
 
@@ -327,7 +329,7 @@ public:
 	void  write32(u32 value);
 
 	//init things
-	void Init(dyna_reallocFP* ral,dyna_finalizeFP* alf);
+	void Init(dyna_reallocFP ral,dyna_finalizeFP alf);
 
 	//Generates code.
 	void* Generate();

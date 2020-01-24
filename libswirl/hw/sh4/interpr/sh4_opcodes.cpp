@@ -984,6 +984,8 @@ sh4op(i1011_iiii_iiii_iiii)
 // trapa #<imm>
 sh4op(i1100_0011_iiii_iiii)
 {
+	auto sh4mmr = sh4_cpu->sh4mmr.get();
+
 	//printf("trapa 0x%X\n",(GetImm8(op) << 2));
 	CCN_TRA = (GetImm8(op) << 2);
 	Do_Exception(next_pc,0x160,0x100);
@@ -1177,6 +1179,8 @@ sh4op(i0000_0000_0000_1001)
 //ldtlb
 sh4op(i0000_0000_0011_1000)
 {
+	auto sh4mmr = sh4_cpu->sh4mmr.get();
+
 	//printf("ldtlb %d/%d\n",CCN_MMUCR.URC,CCN_MMUCR.URB);
 	UTLB[CCN_MMUCR.URC].Data=CCN_PTEL;
 	UTLB[CCN_MMUCR.URC].Address=CCN_PTEH;
@@ -1262,7 +1266,7 @@ extern "C" void DYNACALL do_sqw_nommu_area_3(u32 dst,u8* sqb)
 
 extern "C" void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst,u8* sqb)
 {
-	u8* pmem = mem_b.data;
+	u8* pmem = sh4_cpu->mram.data;
 
 	memcpy((u64*)&pmem[dst&(RAM_MASK-0x1F)],(u64*)&sqb[dst & 0x20],32);
 }
@@ -1273,6 +1277,8 @@ sh4op(i0000_nnnn_1000_0011)
 {
 	u32 n = GetN(op);
 	u32 Dest = r[n];
+
+	auto sh4mmr = sh4_cpu->sh4mmr.get();
 
 	if ((Dest>>26) == 0x38) //Store Queue
 	{

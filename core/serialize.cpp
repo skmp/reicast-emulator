@@ -255,7 +255,6 @@ extern int SerStep;
 extern int SerStep2;
 extern unsigned char BSerial[];
 extern unsigned char GSerial[];
-extern bool NaomiDataRead;
 
 bool ra_serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size)
 {
@@ -570,7 +569,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	LIBRETRO_S(reg_dimm_parameterl);
 	LIBRETRO_S(reg_dimm_parameterh);
 	LIBRETRO_S(reg_dimm_status);
-	LIBRETRO_S(NaomiDataRead);
+	LIBRETRO_SKIP(1); // NaomiDataRead
 
 	LIBRETRO_S(settings.dreamcast.broadcast);
 	LIBRETRO_S(settings.dreamcast.cable);
@@ -1014,7 +1013,7 @@ bool dc_unserialize(void **data, unsigned int *total_size, size_t actual_data_si
 	LIBRETRO_US(reg_dimm_parameterl);
 	LIBRETRO_US(reg_dimm_parameterh);
 	LIBRETRO_US(reg_dimm_status);
-	LIBRETRO_US(NaomiDataRead);
+	LIBRETRO_SKIP(1); // NaomiDataRead
 	if (version < V4)
 	{
 	   LIBRETRO_US(dummy_int);		// NAOMI_ROM_OFFSETH

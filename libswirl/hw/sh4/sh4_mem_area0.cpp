@@ -236,9 +236,9 @@ SuperH4* SuperH4::Create() {
 //use unified size handler for registers
 //it really makes no sense to use different size handlers on em -> especially when we can use templates :p
 template<u32 sz, class T>
-T DYNACALL ReadMem_area0(SuperH4* psh4, u32 addr)
+T DYNACALL ReadMem_area0(void* ctx, u32 addr)
 {
-	auto sh4 = (SuperH4_impl*)psh4;
+	auto sh4 = (SuperH4_impl*)ctx;
 	addr &= 0x01FFFFFF;//to get rid of non needed bits
 	const u32 base=(addr>>16);
 	//map 0x0000 to 0x01FF to Default handler
@@ -307,9 +307,9 @@ T DYNACALL ReadMem_area0(SuperH4* psh4, u32 addr)
 }
 
 template<u32 sz, class T>
-void  DYNACALL WriteMem_area0(SuperH4* psh4, u32 addr,T data)
+void  DYNACALL WriteMem_area0(void* ctx, u32 addr,T data)
 {
-	auto sh4 = (SuperH4_impl*)psh4;
+	auto sh4 = (SuperH4_impl*)ctx;
 	addr &= 0x01FFFFFF;//to get rid of non needed bits
 
 	const u32 base=(addr>>16);
@@ -408,10 +408,10 @@ void sh4_area0_Term(SuperH4_impl* sh4)
 _vmem_handler area0_handler;
 
 
-void map_area0_init()
+void map_area0_init(SuperH4* sh4)
 {
 
-	area0_handler = _vmem_register_handler_Template(ReadMem_area0,WriteMem_area0);
+	area0_handler = _vmem_register_handler_Template(sh4, ReadMem_area0,WriteMem_area0);
 }
 void map_area0(SuperH4* sh4, u32 base)
 {

@@ -19,9 +19,9 @@
 
 //AREA 1
 _vmem_handler area1_32b;
-void map_area1_init()
+void map_area1_init(SuperH4* sh4)
 {
-	area1_32b = _vmem_register_handler(pvr_read_area1_8,pvr_read_area1_16,pvr_read_area1_32,
+	area1_32b = _vmem_register_handler(sh4->vram.data, pvr_read_area1_8,pvr_read_area1_16,pvr_read_area1_32,
 									pvr_write_area1_8,pvr_write_area1_16,pvr_write_area1_32);
 }
 
@@ -81,14 +81,14 @@ void map_area4(SuperH4* sh4, u32 base)
 //AREA 5	--	Ext. Device
 //Read Ext.Device
 template <u32 sz,class T>
-T DYNACALL ReadMem_extdev_T(SuperH4* sh4, u32 addr)
+T DYNACALL ReadMem_extdev_T(void* sh4, u32 addr)
 {
 	return (T)libExtDevice_ReadMem_A5(addr,sz);
 }
 
 //Write Ext.Device
 template <u32 sz,class T>
-void DYNACALL WriteMem_extdev_T(SuperH4* sh4, u32 addr,T data)
+void DYNACALL WriteMem_extdev_T(void* sh4, u32 addr,T data)
 {
 	libExtDevice_WriteMem_A5(addr,data,sz);
 }
@@ -96,7 +96,7 @@ void DYNACALL WriteMem_extdev_T(SuperH4* sh4, u32 addr,T data)
 _vmem_handler area5_handler;
 void map_area5_init()
 {
-	area5_handler = _vmem_register_handler_Template(ReadMem_extdev_T,WriteMem_extdev_T);
+	area5_handler = _vmem_register_handler_Template(nullptr, ReadMem_extdev_T,WriteMem_extdev_T);
 }
 
 void map_area5(SuperH4* sh4, u32 base)
@@ -120,7 +120,7 @@ void map_area6(SuperH4* sh4, u32 base)
 void mem_map_default(SuperH4_impl* sh4)
 {
 	//vmem - init/reset :)
-	_vmem_init((SuperH4*)sh4);
+	_vmem_init();
 
 	
 	//*TEMP*
@@ -148,14 +148,14 @@ void mem_map_default(SuperH4_impl* sh4)
 	//0xExxx xxxx	-> internal area
 
 	//Init Memmaps (register handlers)
-	map_area0_init();
-	map_area1_init();
+	map_area0_init(sh4);
+	map_area1_init(sh4);
 	map_area2_init();
 	map_area3_init();
 	map_area4_init();
 	map_area5_init();
 	map_area6_init();
-	map_area7_init();
+	map_area7_init(sh4->sh4mmr.get());
 
 	//0x0-0xD : 7 times the normal memmap mirrors :)
 	//some areas can be customised :)
@@ -172,7 +172,7 @@ void mem_map_default(SuperH4_impl* sh4)
 	}
 
 	//map p4 region :)
-	map_p4(sh4);
+	map_p4(sh4, sh4->sh4mmr.get());
 }
 
 void mem_Init(SuperH4_impl* sh4)

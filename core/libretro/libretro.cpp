@@ -165,7 +165,7 @@ void rend_cancel_emu_wait();
 bool acquire_mainloop_lock();
 
 static void refresh_devices(bool descriptors_only);
-static void init_disk_control_interface(const char *initial_image_path);
+static void init_disk_control_interface(void);
 static bool read_m3u(const char *file);
 
 static int co_argc;
@@ -190,8 +190,12 @@ bool reset_requested;
 
 // Disk swapping
 static struct retro_disk_control_callback retro_disk_control_cb;
+static struct retro_disk_control_ext_callback retro_disk_control_ext_cb;
+static unsigned disk_initial_index = 0;
+static std::string disk_initial_path;
 static unsigned disk_index = 0;
 static std::vector<std::string> disk_paths;
+static std::vector<std::string> disk_labels;
 static bool disc_tray_open = false;
 
 u64 pixel_buffer_size = 512 * 1024 * 1024;	// Initial size 512 MB
@@ -337,6 +341,8 @@ void retro_init(void)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))
       libretro_supports_bitmasks = true;
+
+   init_disk_control_interface();
 }
 
 void retro_deinit(void)
@@ -1904,11 +1910,26 @@ bool retro_load_game(const struct retro_game_info *game)
       if (disk_paths.size() > 0)
       {
          disk_index = 0;
+
+         /* Attempt to set initial disk index */
+         if ((disk_paths.size() > 1) &&
+             (disk_initial_index > 0) &&
+             (disk_initial_index < disk_paths.size()))
+            if (disk_paths[disk_initial_index].compare(disk_initial_path) == 0)
+               disk_index = disk_initial_index;
+
          game_data = strdup(disk_paths[disk_index].c_str());
       }
       else
       {
+         char disk_label[PATH_MAX];
+         disk_label[0] = '\0';
+
          disk_paths.push_back(game->path);
+
+         fill_short_pathname_representation(disk_label, game->path, sizeof(disk_label));
+         disk_labels.push_back(disk_label);
+
          game_data = strdup(game->path);
       } 
    }
@@ -1984,7 +2005,6 @@ bool retro_load_game(const struct retro_game_info *game)
    if (naomi_cart_GetRotation() == 3)
       rotation = rotate_screen ? 0 : 1;
    environ_cb(RETRO_ENVIRONMENT_SET_ROTATION, &rotation);
-   init_disk_control_interface(game->path);
    refresh_devices(true);
 
    return true;
@@ -3253,38 +3273,114 @@ static unsigned retro_get_num_images()
 static bool retro_add_image_index()
 {
    disk_paths.push_back("");
+   disk_labels.push_back("");
 
    return true;
 }
 
 static bool retro_replace_image_index(unsigned index, const struct retro_game_info *info)
 {
-  if (info == nullptr)
-  {
-    if (index < disk_paths.size())
-    {
-      disk_paths.erase(disk_paths.begin() + index);
-      if (disk_index >= index && disk_index > 0)
-        disk_index--;
-    }
-  }
-  else
-    disk_paths[index] = info->path;
+   if ((index >= disk_paths.size()) ||
+       (index >= disk_labels.size()))
+      return false;
 
-  return true;
+   if (info == nullptr)
+   {
+      disk_paths.erase(disk_paths.begin() + index);
+      disk_labels.erase(disk_labels.begin() + index);
+
+      if ((disk_index >= index) && (disk_index > 0))
+         disk_index--;
+   }
+   else
+   {
+      char disk_label[PATH_MAX];
+      disk_label[0] = '\0';
+
+      disk_paths[index] = info->path;
+
+      fill_short_pathname_representation(disk_label, info->path, sizeof(disk_label));
+      disk_labels[index] = disk_label;
+   }
+
+   return true;
 }
 
-static void init_disk_control_interface(const char *initial_image_path)
+static bool retro_set_initial_image(unsigned index, const char *path)
 {
-  retro_disk_control_cb.set_eject_state = retro_set_eject_state;
-  retro_disk_control_cb.get_eject_state = retro_get_eject_state;
-  retro_disk_control_cb.set_image_index = retro_set_image_index;
-  retro_disk_control_cb.get_image_index = retro_get_image_index;
-  retro_disk_control_cb.get_num_images  = retro_get_num_images;
-  retro_disk_control_cb.add_image_index = retro_add_image_index;
-  retro_disk_control_cb.replace_image_index = retro_replace_image_index;
+   if (!path || (*path == '\0'))
+      return false;
 
-  environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE, &retro_disk_control_cb);
+   disk_initial_index = index;
+   disk_initial_path  = path;
+
+   return true;
+}
+
+static bool retro_get_image_path(unsigned index, char *path, size_t len)
+{
+   if (len < 1)
+      return false;
+
+   if (index >= disk_paths.size())
+      return false;
+
+   if (disk_paths[index].empty())
+      return false;
+
+   strncpy(path, disk_paths[index].c_str(), len - 1);
+   path[len - 1] = '\0';
+
+   return true;
+}
+
+static bool retro_get_image_label(unsigned index, char *label, size_t len)
+{
+   if (len < 1)
+      return false;
+
+   if ((index >= disk_paths.size()) ||
+       (index >= disk_labels.size()))
+      return false;
+
+   if (disk_labels[index].empty())
+      return false;
+
+   strncpy(label, disk_labels[index].c_str(), len - 1);
+   label[len - 1] = '\0';
+
+   return true;
+}
+
+static void init_disk_control_interface(void)
+{
+   unsigned dci_version = 0;
+
+   retro_disk_control_cb.set_eject_state     = retro_set_eject_state;
+   retro_disk_control_cb.get_eject_state     = retro_get_eject_state;
+   retro_disk_control_cb.set_image_index     = retro_set_image_index;
+   retro_disk_control_cb.get_image_index     = retro_get_image_index;
+   retro_disk_control_cb.get_num_images      = retro_get_num_images;
+   retro_disk_control_cb.add_image_index     = retro_add_image_index;
+   retro_disk_control_cb.replace_image_index = retro_replace_image_index;
+
+   retro_disk_control_ext_cb.set_eject_state     = retro_set_eject_state;
+   retro_disk_control_ext_cb.get_eject_state     = retro_get_eject_state;
+   retro_disk_control_ext_cb.set_image_index     = retro_set_image_index;
+   retro_disk_control_ext_cb.get_image_index     = retro_get_image_index;
+   retro_disk_control_ext_cb.get_num_images      = retro_get_num_images;
+   retro_disk_control_ext_cb.add_image_index     = retro_add_image_index;
+   retro_disk_control_ext_cb.replace_image_index = retro_replace_image_index;
+   retro_disk_control_ext_cb.set_initial_image   = retro_set_initial_image;
+   retro_disk_control_ext_cb.get_image_path      = retro_get_image_path;
+   retro_disk_control_ext_cb.get_image_label     = retro_get_image_label;
+
+   disk_initial_index = 0;
+   disk_initial_path.clear();
+   if (environ_cb(RETRO_ENVIRONMENT_GET_DISK_CONTROL_INTERFACE_VERSION, &dci_version) && (dci_version >= 1))
+      environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE, &retro_disk_control_ext_cb);
+   else
+      environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE, &retro_disk_control_cb);
 }
 
 static bool read_m3u(const char *file)
@@ -3321,8 +3417,15 @@ static bool read_m3u(const char *file)
 
       if (line[0] != '\0')
       {
+         char disk_label[PATH_MAX];
+         disk_label[0] = '\0';
+
          snprintf(name, sizeof(name), "%s%s", g_roms_dir, line);
          disk_paths.push_back(name);
+
+         fill_short_pathname_representation(disk_label, name, sizeof(disk_label));
+         disk_labels.push_back(disk_label);
+
          disk_index++;
       }
    }

@@ -10,7 +10,7 @@ SCIF_SCFSR2_type SCIF_SCFSR2;
 u8 SCIF_SCFRDR2;
 SCIF_SCFDR2_type SCIF_SCFDR2;
 
-struct Sh4ModSerial_impl : Sh4ModSerial
+struct Sh4ModScif_impl : Sh4ModScif
 {
 	SuperH4Mmr* sh4mmr;
 	/*
@@ -91,7 +91,7 @@ struct Sh4ModSerial_impl : Sh4ModSerial
 	}
 
 	//Init term res
-	Sh4ModSerial_impl(SuperH4Mmr* sh4mmr) : sh4mmr(sh4mmr)
+	Sh4ModScif_impl(SuperH4Mmr* sh4mmr) : sh4mmr(sh4mmr)
 	{
 		//SCIF SCSMR2 0xFFE80000 0x1FE80000 16 0x0000 0x0000 Held Held Pclk
 		sh4_rio_reg(this, SCIF, SCIF_SCSMR2_addr, RIO_DATA, 16);
@@ -104,21 +104,21 @@ struct Sh4ModSerial_impl : Sh4ModSerial
 
 		//Write only 
 		//SCIF SCFTDR2 0xFFE8000C 0x1FE8000C 8 Undefined Undefined Held Held Pclk
-		sh4_rio_reg(this, SCIF, SCIF_SCFTDR2_addr, RIO_WF, 8, 0, STATIC_FORWARD(Sh4ModSerial_impl, SerialWrite));
+		sh4_rio_reg(this, SCIF, SCIF_SCFTDR2_addr, RIO_WF, 8, 0, STATIC_FORWARD(Sh4ModScif_impl, SerialWrite));
 
 		//SCIF SCFSR2 0xFFE80010 0x1FE80010 16 0x0060 0x0060 Held Held Pclk
-		sh4_rio_reg(this, SCIF, SCIF_SCFSR2_addr, RIO_FUNC, 16, STATIC_FORWARD(Sh4ModSerial_impl, ReadSerialStatus), STATIC_FORWARD(Sh4ModSerial_impl, WriteSerialStatus));
+		sh4_rio_reg(this, SCIF, SCIF_SCFSR2_addr, RIO_FUNC, 16, STATIC_FORWARD(Sh4ModScif_impl, ReadSerialStatus), STATIC_FORWARD(Sh4ModScif_impl, WriteSerialStatus));
 
 		//READ only
 		//SCIF SCFRDR2 0xFFE80014 0x1FE80014 8 Undefined Undefined Held Held Pclk
-		sh4_rio_reg(this, SCIF, SCIF_SCFRDR2_addr, RIO_RO_FUNC, 8, STATIC_FORWARD(Sh4ModSerial_impl, ReadSerialData));
+		sh4_rio_reg(this, SCIF, SCIF_SCFRDR2_addr, RIO_RO_FUNC, 8, STATIC_FORWARD(Sh4ModScif_impl, ReadSerialData));
 
 		//SCIF SCFCR2 0xFFE80018 0x1FE80018 16 0x0000 0x0000 Held Held Pclk
 		sh4_rio_reg(this, SCIF, SCIF_SCFCR2_addr, RIO_DATA, 16);
 
 		//Read only
 		//SCIF SCFDR2 0xFFE8001C 0x1FE8001C 16 0x0000 0x0000 Held Held Pclk
-		sh4_rio_reg(this, SCIF, SCIF_SCFDR2_addr, RIO_RO_FUNC, 16, STATIC_FORWARD(Sh4ModSerial_impl, Read_SCFDR2));
+		sh4_rio_reg(this, SCIF, SCIF_SCFDR2_addr, RIO_RO_FUNC, 16, STATIC_FORWARD(Sh4ModScif_impl, Read_SCFDR2));
 
 		//SCIF SCSPTR2 0xFFE80020 0x1FE80020 16 0x0000 0x0000 Held Held Pclk
 		sh4_rio_reg(this, SCIF, SCIF_SCSPTR2_addr, RIO_DATA, 16);
@@ -152,6 +152,6 @@ struct Sh4ModSerial_impl : Sh4ModSerial
 
 };
 
-Sh4ModSerial* Sh4ModSerial::Create(SuperH4Mmr* sh4mmr) {
-	return new Sh4ModSerial_impl(sh4mmr);
+Sh4ModScif* Sh4ModScif::Create(SuperH4Mmr* sh4mmr) {
+	return new Sh4ModScif_impl(sh4mmr);
 }

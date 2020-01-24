@@ -774,7 +774,8 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 	DEFAULT_DECL(Dmac)
 	DEFAULT_DECL(Intc)
 	DEFAULT_DECL(Rtc)
-	DEFAULT_DECL(Serial)
+	DEFAULT_DECL(Sci)
+	DEFAULT_DECL(Scif)
 	DEFAULT_DECL(Tmu)
 	DEFAULT_DECL(Ubc)
 	
@@ -808,7 +809,8 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 		DEFAULT_INIT(Dmac)
 		DEFAULT_INIT(Intc)
 		DEFAULT_INIT(Rtc)
-		DEFAULT_INIT(Serial)
+		DEFAULT_INIT(Sci)
+		DEFAULT_INIT(Scif)
 		DEFAULT_INIT(Tmu)
 		DEFAULT_INIT(Ubc)
 
@@ -827,7 +829,8 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 		DEFAULT_RESET(Dmac);
 		DEFAULT_RESET(Intc);
 		DEFAULT_RESET(Rtc);
-		DEFAULT_RESET(Serial);
+		DEFAULT_RESET(Sci);
+		DEFAULT_RESET(Scif);
 		DEFAULT_RESET(Tmu);
 		DEFAULT_RESET(Ubc);
 
@@ -843,7 +846,8 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 
 		DEFAULT_TERM(Ubc)
 		DEFAULT_TERM(Tmu)
-		DEFAULT_TERM(Serial)
+		DEFAULT_TERM(Scif)
+		DEFAULT_TERM(Sci)
 		DEFAULT_TERM(Rtc)
 		DEFAULT_TERM(Intc)
 		DEFAULT_TERM(Dmac)
@@ -901,35 +905,35 @@ struct SuperH4Mmr_impl final : SuperH4Mmr
 	virtual void serialize(void** data, unsigned int* total_size) {
 		REICAST_SA(OnChipRAM.data, OnChipRAM_SIZE);
 
-#define register_serialize(mod, data, total_size) register_serialize(mod.data(), mod.size(), data, total_size)
+#define register_serialize(mod1, mod2, data, total_size) register_serialize(mod1.data(), mod1.size(), data, total_size); mod##mod2->serialize(data, total_size)
 
-		register_serialize(CCN, data, total_size);
-		register_serialize(UBC, data, total_size);
-		register_serialize(BSC, data, total_size);
-		register_serialize(DMAC, data, total_size);
-		register_serialize(CPG, data, total_size);
-		register_serialize(RTC, data, total_size);
-		register_serialize(INTC, data, total_size);
-		register_serialize(TMU, data, total_size);
-		register_serialize(SCI, data, total_size);
-		register_serialize(SCIF, data, total_size);
+		register_serialize(CCN, Ccn, data, total_size);
+		register_serialize(UBC, Ubc, data, total_size);
+		register_serialize(BSC, Bsc, data, total_size);
+		register_serialize(DMAC, Dmac, data, total_size);
+		register_serialize(CPG, Cpg, data, total_size);
+		register_serialize(RTC, Rtc, data, total_size);
+		register_serialize(INTC, Intc, data, total_size);
+		register_serialize(TMU, Tmu, data, total_size);
+		register_serialize(SCI, Sci, data, total_size);
+		register_serialize(SCIF, Scif, data, total_size);
 	}
 
 	virtual void unserialize(void** data, unsigned int* total_size) {
 		REICAST_USA(OnChipRAM.data, OnChipRAM_SIZE);
 
-#define register_unserialize(mod, data, total_size) register_unserialize(mod.data(), mod.size(), data, total_size)
-		
-		register_unserialize(CCN, data, total_size);
-		register_unserialize(UBC, data, total_size);
-		register_unserialize(BSC, data, total_size);
-		register_unserialize(DMAC, data, total_size);
-		register_unserialize(CPG, data, total_size);
-		register_unserialize(RTC, data, total_size);
-		register_unserialize(INTC, data, total_size);
-		register_unserialize(TMU, data, total_size);
-		register_unserialize(SCI, data, total_size);
-		register_unserialize(SCIF, data, total_size);
+#define register_unserialize(mod1, mod2, data, total_size) register_unserialize(mod1.data(), mod1.size(), data, total_size); mod##mod2->unserialize(data, total_size)
+
+		register_unserialize(CCN, Ccn, data, total_size);
+		register_unserialize(UBC, Ubc, data, total_size);
+		register_unserialize(BSC, Bsc, data, total_size);
+		register_unserialize(DMAC, Dmac, data, total_size);
+		register_unserialize(CPG, Cpg, data, total_size);
+		register_unserialize(RTC, Rtc, data, total_size);
+		register_unserialize(INTC, Intc, data, total_size);
+		register_unserialize(TMU, Tmu, data, total_size);
+		register_unserialize(SCI, Sci, data, total_size);
+		register_unserialize(SCIF, Scif, data, total_size);
 	}
 };
 

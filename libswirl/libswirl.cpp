@@ -128,8 +128,7 @@ s32 plugins_Init()
 
 void plugins_Term()
 {
-    g_GDRDisc->Term();
-    g_GDRDisc.reset(nullptr);
+    g_GDRDisc.reset();
 }
 
 void plugins_Reset(bool Manual)

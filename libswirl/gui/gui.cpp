@@ -232,7 +232,7 @@ void ImGui_Impl_NewFrame()
 std::unique_ptr<GUI> g_GUI;
 
 struct ReicastUI_impl : GUI {
-
+    
     void Init()
     {
         if (inited)
@@ -421,8 +421,10 @@ struct ReicastUI_impl : GUI {
         gui_state = Onboarding;
     }
 
-    void Term()
+    ~ReicastUI_impl()
     {
+        virtualDreamcast.reset();
+
         inited = false;
         term_vmus();
         //ImGui_ImplOpenGL3_Shutdown(); // -> this is done on GUI_RENDERER now

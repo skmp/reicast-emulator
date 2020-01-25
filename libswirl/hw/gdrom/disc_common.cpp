@@ -355,10 +355,8 @@ struct GDRomDisc_impl : GDRomDisc {
 	}
 
 	//called when exiting from sh4 thread , from the new thread context (for any thread specific init) :P
-	void Term()
-	{
-		DiscTerm();
-	}
+
+	~GDRomDisc_impl() { DiscTerm(); }
 
 	void Swap()
 	{

@@ -142,12 +142,12 @@ extern u32 TA_VTX_O;
 
 	//Splitter function (normally ta_dma_main , modified for split dma's)
 	//extern TaListFP* TaCmd;
+static Renderer* renderer;
 
 template<u32 instance>
 class FifoSplitter
 {
 public:
-
 	static void ta_list_start(u32 new_list)
 	{
 		verify(CurrentList==ListType_None);
@@ -531,6 +531,7 @@ public:
 	//Fill in lookup table
 	FifoSplitter()
 	{
+		renderer = nullptr;
 		for (int i=0;i<256;i++)
 		{
 			PCW pcw;
@@ -727,8 +728,9 @@ public:
 	}
 
 
-	void vdec_init()
+	void vdec_init(Renderer* renderer)
 	{
+		::renderer = renderer;
 		VDECInit();
 		TaCmd=ta_main;
 		CurrentList = ListType_None;
@@ -1516,7 +1518,7 @@ int ta_parse_cnt = 0;
 /*
 	Also: gotta stage textures here
 */
-bool ta_parse_vdrc(u8* vram, TA_context* ctx)
+bool ta_parse_vdrc(Renderer* renderer, u8* vram, TA_context* ctx)
 {
 	bool rv=false;
 	verify( vd_ctx == 0);
@@ -1526,7 +1528,7 @@ bool ta_parse_vdrc(u8* vram, TA_context* ctx)
 	ta_parse_cnt++;
 	if (ctx->rend.isRTT || 0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
 	{
-		TAFifo0.vdec_init();
+		TAFifo0.vdec_init(renderer);
 		
 		for (int pass = 0; pass <= ctx->tad.render_pass_count; pass++)
 		{

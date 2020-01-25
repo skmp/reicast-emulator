@@ -836,7 +836,7 @@ struct softrend : Renderer
 
 		ctx->rend_inuse.Lock();
 
-		if (!ta_parse_vdrc(vram, ctx))
+		if (!ta_parse_vdrc(this, vram, ctx))
 			return false;
 
 		return true;
@@ -1167,7 +1167,7 @@ struct softrend : Renderer
 
 	}
 
-	virtual void Term() {
+	~softrend(){
 #if HOST_OS == OS_WINDOWS
 		if (hBMP) {
 			DeleteObject(SelectObject(hmem, holdBMP));

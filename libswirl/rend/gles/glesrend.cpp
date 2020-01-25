@@ -461,7 +461,6 @@ static void gles_term()
 	free_output_framebuffer();
 
 	gl_delete_shaders();
-	os_gl_term();
 }
 
 struct ShaderUniforms_t ShaderUniforms;
@@ -1005,14 +1004,14 @@ void OSD_DRAW(bool clear_screen)
     g_GUI->RenderOSD();
 }
 
-bool ProcessFrame(u8* vram, TA_context* ctx)
+bool ProcessFrame(Renderer* renderer, u8* vram, TA_context* ctx)
 {
 	ctx->rend_inuse.Lock();
 
 	if (KillTex)
 		killtex();
 
-	if (!ta_parse_vdrc(vram, ctx))
+	if (!ta_parse_vdrc(renderer, vram, ctx))
 		return false;
 
 	CollectCleanup();
@@ -1507,14 +1506,14 @@ struct glesrend final : Renderer
 	}
 
 	void Resize(int w, int h) { screen_width=w; screen_height=h; }
-	void Term()
+	~glesrend()
 	{
 		if (KillTex)
 			killtex();
 		gles_term();
 	}
 
-	bool Process(TA_context* ctx) { return ProcessFrame(vram, ctx); }
+	bool Process(TA_context* ctx) { return ProcessFrame(this, vram, ctx); }
 	bool RenderPVR() { return RenderFrame(vram, false); }
     bool RenderFramebuffer() { return RenderFrame(vram, true); }
 	bool RenderLastFrame() { return render_output_framebuffer(); }

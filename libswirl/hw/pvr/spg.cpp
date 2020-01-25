@@ -23,9 +23,9 @@ float last_fps = 0;
 #define PIXEL_CLOCK (54*1000*1000/2)
 u32 Line_Cycles = 0;
 u32 Frame_Cycles = 0;
-int render_end_schid;
-int vblank_schid;
-int time_sync;
+static int render_end_schid;
+static int vblank_schid;
+static int time_sync;
 
 double speed_load_mspdf;
 

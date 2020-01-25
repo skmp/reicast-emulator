@@ -75,8 +75,7 @@ struct d3d11 : Renderer
 
 	void SetFBScale(float x, float y) { }
 	void Resize(int w, int h) { }
-	void Term() { }
-
+	
 	bool Process(TA_context* ctx)
 	{
 		return true;

@@ -34,15 +34,13 @@
 #define GetN(str) ((str>>8) & 0xf)
 #define GetM(str) ((str>>4) & 0xf)
 
-static s32 l;
 //General update
 
 //3584 Cycles
 #define AICA_SAMPLE_GCM 441
 #define AICA_SAMPLE_CYCLES (SH4_MAIN_CLOCK/(44100/AICA_SAMPLE_GCM)*32)
 
-int aica_schid = -1;
-int ds_schid = -1;
+
 //14336 Cycles
 
 const int AICA_TICK = 145124;
@@ -53,7 +51,6 @@ static void ExecuteOpcode(u16 op)
 	if (sr.FD == 1 && OpDesc[op]->IsFloatingPoint())
 		RaiseFPUDisableException();
 	OpPtr[op](op);
-	l -= CPU_RATIO;
 }
 
 //TODO : Check for valid delayslot instruction
@@ -153,6 +150,8 @@ int UpdateSystem_INTC()
 }
 
 struct SH4IInterpreter : SuperH4Backend {
+    s32 l;
+
     ~SH4IInterpreter() { Term(); }
     void Loop()
     {
@@ -170,6 +169,8 @@ struct SH4IInterpreter : SuperH4Backend {
                     u32 op = IReadMem16(addr);
 
                     ExecuteOpcode(op);
+
+                    l -= CPU_RATIO;
                 } while (l > 0);
                 l += SH4_TIMESLICE;
                 UpdateSystem_INTC();

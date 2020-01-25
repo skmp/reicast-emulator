@@ -40,8 +40,6 @@ struct Renderer
 	virtual void Resize(int w, int h)=0;
 	virtual void SetFBScale(float x, float y) = 0;
 
-	virtual void Term()=0;
-
 	virtual bool Process(TA_context* ctx)=0;
 	virtual bool RenderPVR()=0;
     virtual bool RenderFramebuffer() = 0;
@@ -56,7 +54,6 @@ struct Renderer
 	virtual ~Renderer() { }
 };
 
-extern Renderer* renderer;
 extern bool renderer_enabled;	// Signals the renderer thread to exit
 extern bool renderer_changed;	// Signals the renderer thread to switch renderer
 

@@ -26,7 +26,6 @@ struct GUI {
     virtual void DisplayNotification(const char* msg, int duration) = 0;
     virtual void RenderOSD() = 0;
     virtual void OpenOnboarding() = 0;
-    virtual void Term() = 0;
     virtual void RefreshFiles() = 0;
 
     virtual bool IsOpen() = 0;

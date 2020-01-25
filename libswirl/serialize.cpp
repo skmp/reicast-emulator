@@ -152,7 +152,6 @@ extern bool EEPROM_loaded;
 
 //./core/hw/maple/maple_if.o
 //one time set
-extern int maple_schid;
 //incremented but never read
 //extern u32 dmacount;
 extern bool maple_ddt_pending_reset;
@@ -226,7 +225,6 @@ extern u32 prv_cur_scanline;
 extern u32 vblk_cnt;
 extern u32 Line_Cycles;
 extern u32 Frame_Cycles;
-extern int render_end_schid;
 extern int vblank_schid;
 extern int time_sync;
 extern double speed_load_mspdf;
@@ -353,16 +351,13 @@ extern u32 old_dn;
 
 
 //./core/hw/sh4/sh4_sched.o
-extern u64 sh4_sched_ffb;
-extern u32 sh4_sched_intr;
-extern vector<sched_list> sch_list;
+
 //extern int sh4_sched_next_id;
 
 
 
 
 //./core/hw/sh4/interpr/sh4_interpreter.o
-extern int aica_schid;
 
 
 
@@ -383,7 +378,6 @@ extern u32 tmu_shift[3];
 extern u32 tmu_mask[3];
 extern u64 tmu_mask64[3];
 extern u32 old_mode[3];
-extern int tmu_sched[3];
 extern u32 tmu_ch_base[3];
 extern u64 tmu_ch_base64[3];
 
@@ -828,40 +822,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(old_dn);
 
 
-
-
-	REICAST_S(sh4_sched_ffb);
-	REICAST_S(sh4_sched_intr);
-
-	//extern vector<sched_list> list;
-
-
-	REICAST_S(sch_list[aica_schid].tag) ;
-	REICAST_S(sch_list[aica_schid].start) ;
-	REICAST_S(sch_list[aica_schid].end) ;
-
-	REICAST_S(sch_list[maple_schid].tag) ;
-	REICAST_S(sch_list[maple_schid].start) ;
-	REICAST_S(sch_list[maple_schid].end) ;
-
-	for (int i = 0; i < 3; i++)
-	{
-		REICAST_S(sch_list[tmu_sched[i]].tag) ;
-		REICAST_S(sch_list[tmu_sched[i]].start) ;
-		REICAST_S(sch_list[tmu_sched[i]].end) ;
-	}
-
-	REICAST_S(sch_list[render_end_schid].tag) ;
-	REICAST_S(sch_list[render_end_schid].start) ;
-	REICAST_S(sch_list[render_end_schid].end) ;
-
-	REICAST_S(sch_list[vblank_schid].tag) ;
-	REICAST_S(sch_list[vblank_schid].start) ;
-	REICAST_S(sch_list[vblank_schid].end) ;
-
-	REICAST_S(sch_list[time_sync].tag) ;
-	REICAST_S(sch_list[time_sync].start) ;
-	REICAST_S(sch_list[time_sync].end) ;
+	sh4_sched_serialize(data, total_size);
 
 	REICAST_S(SCIF_SCFSR2);
 	REICAST_S(SCIF_SCFRDR2);
@@ -1101,37 +1062,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(old_rm);
 	REICAST_US(old_dn);
 
-	REICAST_US(sh4_sched_ffb);
-	REICAST_US(sh4_sched_intr);
-
-	//extern vector<sched_list> sch_list;
-
-	REICAST_US(sch_list[aica_schid].tag) ;
-	REICAST_US(sch_list[aica_schid].start) ;
-	REICAST_US(sch_list[aica_schid].end) ;
-
-	REICAST_US(sch_list[maple_schid].tag) ;
-	REICAST_US(sch_list[maple_schid].start) ;
-	REICAST_US(sch_list[maple_schid].end) ;
-
-	for (int i = 0; i < 3; i++)
-	{
-		REICAST_US(sch_list[tmu_sched[i]].tag) ;
-		REICAST_US(sch_list[tmu_sched[i]].start) ;
-		REICAST_US(sch_list[tmu_sched[i]].end) ;
-	}
-
-	REICAST_US(sch_list[render_end_schid].tag) ;
-	REICAST_US(sch_list[render_end_schid].start) ;
-	REICAST_US(sch_list[render_end_schid].end) ;
-
-	REICAST_US(sch_list[vblank_schid].tag) ;
-	REICAST_US(sch_list[vblank_schid].start) ;
-	REICAST_US(sch_list[vblank_schid].end) ;
-
-	REICAST_US(sch_list[time_sync].tag) ;
-	REICAST_US(sch_list[time_sync].start) ;
-	REICAST_US(sch_list[time_sync].end) ;
+	sh4_sched_unserialize(data, total_size);
 
 	REICAST_US(SCIF_SCFSR2);
 	REICAST_US(SCIF_SCFRDR2);
@@ -1365,41 +1296,8 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(old_rm);
 	REICAST_US(old_dn);
 
-
-
-
-	REICAST_US(sh4_sched_ffb);
-	REICAST_US(sh4_sched_intr);
-
-	//extern vector<sched_list> list;
-
-	REICAST_US(sch_list[aica_schid].tag) ;
-	REICAST_US(sch_list[aica_schid].start) ;
-	REICAST_US(sch_list[aica_schid].end) ;
-
-	REICAST_US(sch_list[maple_schid].tag) ;
-	REICAST_US(sch_list[maple_schid].start) ;
-	REICAST_US(sch_list[maple_schid].end) ;
-
-	for (int i = 0; i < 3; i++)
-	{
-		REICAST_US(sch_list[tmu_sched[i]].tag) ;
-		REICAST_US(sch_list[tmu_sched[i]].start) ;
-		REICAST_US(sch_list[tmu_sched[i]].end) ;
-	}
-
-	REICAST_US(sch_list[render_end_schid].tag) ;
-	REICAST_US(sch_list[render_end_schid].start) ;
-	REICAST_US(sch_list[render_end_schid].end) ;
-
-	REICAST_US(sch_list[vblank_schid].tag) ;
-	REICAST_US(sch_list[vblank_schid].start) ;
-	REICAST_US(sch_list[vblank_schid].end) ;
-
-	REICAST_US(sch_list[time_sync].tag) ;
-	REICAST_US(sch_list[time_sync].start) ;
-	REICAST_US(sch_list[time_sync].end) ;
-
+	sh4_sched_unserialize(data, total_size);
+	
 	REICAST_US(SCIF_SCFSR2);
 	REICAST_US(SCIF_SCFRDR2);
 	REICAST_US(SCIF_SCFDR2);

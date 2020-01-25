@@ -13,6 +13,8 @@
 
 #include "scripting/lua_bindings.h"
 
+#include <memory>
+
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"
 #endif
@@ -81,8 +83,8 @@ FILE* fCheckFrames;
 u32 VertexCount=0;
 u32 FrameCount=1;
 
-Renderer* renderer;
-static Renderer* fallback_renderer;
+static unique_ptr<Renderer> renderer;
+static unique_ptr<Renderer> fallback_renderer;
 //bool renderer_enabled = true;	// Signals the renderer thread to exit
 bool renderer_changed = false;	// Signals the renderer thread to switch renderer
 
@@ -108,7 +110,8 @@ bool pend_rend = false;
 //soft
 //softref
 //none
-static std::map<const string, rendererbackend_t> backends;
+static std::map<const string, rendererbackend_t>* p_backends;
+#define backends (*p_backends)
 
 
 static void rend_create_renderer(u8* vram)
@@ -116,7 +119,7 @@ static void rend_create_renderer(u8* vram)
     if (backends.count(settings.pvr.backend))
     {
         printf("RendIF: renderer: %s\n", settings.pvr.backend.c_str());
-        renderer = backends[settings.pvr.backend].create(vram);
+        renderer.reset(backends[settings.pvr.backend].create(vram));
         renderer->backendInfo = backends[settings.pvr.backend];
     }
     else
@@ -125,13 +128,13 @@ static void rend_create_renderer(u8* vram)
 
         auto main = (*vec.begin());
 
-        renderer = main.create(vram);
+        renderer.reset(main.create(vram));
         renderer->backendInfo = main;
 
         if ((++vec.begin()) != vec.end())
         {
             auto fallback = (*(++vec.begin()));
-            fallback_renderer = fallback.create(vram);
+            fallback_renderer.reset(fallback.create(vram));
             fallback_renderer->backendInfo = fallback;
         }
 
@@ -155,18 +158,13 @@ void rend_init_renderer(u8* vram)
             fallback_renderer->backendInfo.slug.c_str()
         );
 
-        delete renderer;
+        renderer = std::move(fallback_renderer);
 
-        renderer = fallback_renderer;
-
-        if (fallback_renderer == NULL || !fallback_renderer->Init())
+        if (renderer == NULL || !renderer->Init())
         {
-            if (fallback_renderer != NULL)
-                delete fallback_renderer;
+			renderer.reset();
             die("RendIF: Renderer initialization failed\n");
         }
-
-        fallback_renderer = NULL;	// avoid double-free
     }
 }
 
@@ -174,14 +172,8 @@ void rend_term_renderer()
 {
     killtex();
 
-    renderer->Term();
-    delete renderer;
-    renderer = NULL;
-    if (fallback_renderer != NULL)
-    {
-        delete fallback_renderer;
-        fallback_renderer = NULL;
-    }
+	renderer.reset();
+	fallback_renderer.reset();
 }
 
 static bool rend_frame(u8* vram, TA_context* ctx, bool draw_osd) {
@@ -492,6 +484,9 @@ void rend_set_fb_scale(float x, float y)
 
 bool RegisterRendererBackend(const rendererbackend_t& backend)
 {
+	if (!p_backends) {
+		p_backends = new std::map<const string, rendererbackend_t>();
+	}
 	backends[backend.slug] = backend;
 	return true;
 }

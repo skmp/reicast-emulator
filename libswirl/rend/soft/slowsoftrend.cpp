@@ -434,7 +434,7 @@ struct slowsoftrend : Renderer
 
         ctx->rend_inuse.Lock();
 
-        if (!ta_parse_vdrc(vram, ctx))
+        if (!ta_parse_vdrc(this, vram, ctx))
             return false;
 
         return true;
@@ -754,9 +754,7 @@ struct slowsoftrend : Renderer
 
     }
 
-    virtual void Term() {
-        //gui_term();
-        os_gl_term();
+    ~slowsoftrend() {
 
 #if HOST_OS == OS_WINDOWS
         if (hBMP) {

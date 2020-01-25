@@ -9,6 +9,8 @@
 
 struct SuperH4_impl final : SuperH4 {
     unique_ptr<MMIODevice> devices[A0H_MAX];
+    int aica_schid = -1;
+    int ds_schid = -1;
 
     void SetA0Handler(Area0Hanlders slot, MMIODevice* dev);
     MMIODevice* GetA0Handler(Area0Hanlders slot);

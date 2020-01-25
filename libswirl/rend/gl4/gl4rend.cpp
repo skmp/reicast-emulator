@@ -503,7 +503,6 @@ static void gles_term(void)
 	gl4_delete_shaders();
 	glDeleteVertexArrays(1, &gl4.vbo.main_vao);
 	glDeleteVertexArrays(1, &gl4.vbo.modvol_vao);
-
 }
 
 static void create_modvol_shader()
@@ -974,7 +973,7 @@ struct gl4rend : Renderer
 		fb_scale_y = y;
 	}
 
-	void Term()
+	~gl4rend()
 	{
 		termABuffer();
 	   if (stencilTexId != 0)
@@ -1007,7 +1006,7 @@ struct gl4rend : Renderer
 	   gles_term();
 	}
 
-	bool Process(TA_context* ctx) { return ProcessFrame(vram, ctx); }
+	bool Process(TA_context* ctx) { return ProcessFrame(this, vram, ctx); }
 	bool RenderPVR() { return RenderFrame(vram, false); }
     bool RenderFramebuffer() { return RenderFrame(vram, true); }
 	bool RenderLastFrame() { return gl4_render_output_framebuffer(); }

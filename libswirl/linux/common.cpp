@@ -128,10 +128,10 @@ naked void re_raise_fault()
     );
 }
 
-
+bool break_segfault = false;
 static void fatal_error()
 {
-    for (;;)
+    while(!break_segfault)
     {
         printf("fault_handler: Blocking before restoring default SIGSEGV handler\n");
         sleep(1);

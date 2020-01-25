@@ -650,7 +650,6 @@ void libCore_gdrom_disc_change();
 struct GDRomDisc {
 	virtual s32 Init() = 0;
 	virtual void Reset(bool M) = 0;
-	virtual void Term() = 0;
 
 	//IO
 	virtual void ReadSector(u8* buff, u32 StartSector, u32 SectorCount, u32 secsz) = 0;

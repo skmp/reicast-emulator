@@ -849,55 +849,6 @@ struct maple_sega_vmu: maple_base
 						}
 						config->SetImage(lcd_data_decoded);
 						push_vmu_screen(lcd_data_decoded);
-#if 0
-						// Update LCD window
-						if (!dev->lcd.visible)
-						{
-							dev->lcd.visible=true;
-							ShowWindow(dev->lcd.handle,SHOW_OPENNOACTIVATE);
-						}
-						
-							
-							InvalidateRect(dev->lcd.handle,NULL,FALSE);
-						}
-
-						// Logitech G series stuff start
-	#ifdef _HAS_LGLCD_
-						{
-							lgLcdBitmap160x43x1 bmp;
-							bmp.hdr.Format = LGLCD_BMP_FORMAT_160x43x1;
-
-							const u8 white=0x00;
-							const u8 black=0xFF;
-
-							//make it all black...
-							memset(bmp.pixels,black,sizeof(bmp.pixels));
-
-							//decode from the VMU
-							for(int y=0;y<32;++y)
-							{
-								u8 *dst=bmp.pixels+5816+((-y)*(48+112)); //ugly way to make things look right :p
-								u8 *src=dev->lcd.data+6*y+5;
-								for(int x=0;x<48/8;++x)
-								{
-									u8 val=*src;
-									for(int m=0;m<8;++m)
-									{
-										if(val&(1<<(m)))
-											*dst++=black;
-										else
-											*dst++=white;
-									}
-									--src;
-								}
-							}
-
-							//Set the damned bits
-							res = lgLcdUpdateBitmap(openContext.device, &bmp.hdr, LGLCD_ASYNC_UPDATE(LGLCD_PRIORITY_NORMAL));
-						}
-	#endif
-						//Logitech G series stuff end
-#endif
 						return  MDRS_DeviceReply;//just ko
 					}
 					break;
@@ -2648,7 +2599,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
-						   u32 keycode = read_digital_in(first_player + player);
+						   u32 keycode = read_digital_in(player);
 
 						   if (naomi_game_inputs != NULL)
 						   {

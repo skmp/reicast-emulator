@@ -25,7 +25,7 @@ enum MaplePattern
 
 maple_device* MapleDevices[4][6];
 
-int maple_schid;
+static int maple_schid;
 
 /*
 	Maple host controller

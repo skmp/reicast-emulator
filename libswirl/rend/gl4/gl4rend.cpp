@@ -503,7 +503,6 @@ static void gles_term(void)
 	gl4_delete_shaders();
 	glDeleteVertexArrays(1, &gl4.vbo.main_vao);
 	glDeleteVertexArrays(1, &gl4.vbo.modvol_vao);
-
 }
 
 static void create_modvol_shader()

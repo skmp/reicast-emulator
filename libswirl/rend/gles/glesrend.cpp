@@ -461,7 +461,6 @@ static void gles_term()
 	free_output_framebuffer();
 
 	gl_delete_shaders();
-	os_gl_term();
 }
 
 struct ShaderUniforms_t ShaderUniforms;

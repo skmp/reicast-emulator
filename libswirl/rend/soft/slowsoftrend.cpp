@@ -754,9 +754,7 @@ struct slowsoftrend : Renderer
 
     }
 
-    virtual void Term() {
-        //gui_term();
-        os_gl_term();
+    ~slowsoftrend() {
 
 #if HOST_OS == OS_WINDOWS
         if (hBMP) {

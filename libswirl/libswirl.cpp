@@ -613,9 +613,9 @@ int reicast_init(int argc, char* argv[])
     os_SetupInput();
 
     g_GUI.reset(GUI::Create());
-    g_GUIRenderer.reset(GUIRenderer::Create(g_GUI.get()));
-
     g_GUI->Init();
+
+    g_GUIRenderer.reset(GUIRenderer::Create(g_GUI.get()));
 
     if (showOnboarding)
         g_GUI->OpenOnboarding();

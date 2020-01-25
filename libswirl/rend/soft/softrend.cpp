@@ -1167,7 +1167,7 @@ struct softrend : Renderer
 
 	}
 
-	virtual void Term() {
+	~softrend(){
 #if HOST_OS == OS_WINDOWS
 		if (hBMP) {
 			DeleteObject(SelectObject(hmem, holdBMP));

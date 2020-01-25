@@ -98,6 +98,7 @@ struct GUIRenderer_impl : GUIRenderer {
     }
 
     virtual void UILoop() {
+        keepRunning = true;
         if (!os_gl_init((void*)libPvr_GetRenderTarget(),
             (void*)libPvr_GetRenderSurface()))
             return;

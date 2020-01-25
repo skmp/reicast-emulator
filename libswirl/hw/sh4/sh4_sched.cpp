@@ -4,6 +4,7 @@
 #include "sh4_core.h"
 #include "sh4_sched.h"
 #include "oslib/oslib.h"
+#include "serialize.h"
 
 
 //sh4 scheduler
@@ -171,4 +172,31 @@ void sh4_sched_tick(int cycles)
 
 void sh4_sched_cleanup() {
 	sch_list.clear();
+	sh4_sched_next_id = -1;
+	sh4_sched_ffb = 0;
+	sh4_sched_intr = 0;
+}
+
+void sh4_sched_serialize(void** data, unsigned int* total_size) {
+	REICAST_S(sh4_sched_next_id);
+	REICAST_S(sh4_sched_ffb);
+	REICAST_S(sh4_sched_intr);
+
+	for (auto& entry : sch_list) {
+		REICAST_S(entry.tag);
+		REICAST_S(entry.start);
+		REICAST_S(entry.end);
+	}
+}
+
+void sh4_sched_unserialize(void** data, unsigned int* total_size) {
+	REICAST_US(sh4_sched_next_id);
+	REICAST_US(sh4_sched_ffb);
+	REICAST_US(sh4_sched_intr);
+
+	for (auto& entry : sch_list) {
+		REICAST_US(entry.tag);
+		REICAST_US(entry.start);
+		REICAST_US(entry.end);
+	}
 }

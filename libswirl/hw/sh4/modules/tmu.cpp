@@ -26,7 +26,7 @@ const u32 tmu_ch_bit[3]={1,2,4};
 u32 old_mode[3] = {0xFFFF,0xFFFF,0xFFFF};
 
 const InterruptID tmu_intID[3]={sh4_TMU0_TUNI0,sh4_TMU1_TUNI1,sh4_TMU2_TUNI2};
-int tmu_sched[3];
+static int tmu_sched[3];
 
 u32 tmu_ch_base[3];
 u64 tmu_ch_base64[3];

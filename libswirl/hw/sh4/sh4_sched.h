@@ -1,5 +1,4 @@
-#ifndef SH4_SCHED_H
-#define SH4_SCHED_H
+#pragma once
 
 #include "types.h"
 
@@ -51,6 +50,9 @@ void sh4_sched_ffts();
 
 void sh4_sched_cleanup();
 
+void sh4_sched_serialize(void** data, unsigned int* total_size);
+void sh4_sched_unserialize(void** data, unsigned int* total_size);
+
 extern u32 sh4_sched_intr;
 
 struct sched_list
@@ -61,5 +63,3 @@ struct sched_list
 	int start;
 	int end;
 };
-
-#endif //SH4_SCHED_H

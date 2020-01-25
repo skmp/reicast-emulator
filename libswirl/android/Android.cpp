@@ -383,8 +383,6 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env, job
     return 0;
 }
 
-volatile static bool render_reinit;
-
 void *render_thread_func(void *)
 {
     reicast_ui_loop();
@@ -395,19 +393,24 @@ static cThread render_thread(render_thread_func, NULL);
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNative(JNIEnv * env, jobject obj, jobject surface)
 {
-	if (render_thread.hThread != NULL)
+    if (surface == NULL) {
+        verify(render_thread.hThread != NULL);
+        
+        g_GUIRenderer->Stop();
+        render_thread.WaitToEnd();
+
+        render_thread.hThread = NULL;
+        
+        verify(g_window != NULL);
+        ANativeWindow_release(g_window);
+        g_window = NULL;
+    }
+    else
 	{
-		if (surface == NULL)
-		{
-            g_GUIRenderer->Stop();
-	        render_thread.WaitToEnd();
-		}
-		else
-			render_reinit = true;
-	}
-	else if (surface != NULL)
-	{
+        verify(g_window == NULL);
+        verify(render_thread.hThread == NULL);
         g_window = ANativeWindow_fromSurface(env, surface);
+        g_GUIRenderer->Start();
         render_thread.Start();
 	}
 }

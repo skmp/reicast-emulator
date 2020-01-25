@@ -149,6 +149,7 @@ struct Arm7JitVirt_impl : ARM7Backend {
 
         armv->GenerateLooppoints(&lps);
 
+        InvalidateJitCache();
         armt_init();
     }
 

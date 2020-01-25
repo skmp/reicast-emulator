@@ -6,6 +6,7 @@
 
 struct GUIRenderer {
 
+    virtual void Start() = 0; // only sets the flag
     virtual void Stop() = 0;
 
     virtual void UILoop() = 0;

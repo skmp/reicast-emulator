@@ -9,7 +9,7 @@
 std::unique_ptr<GUIRenderer> g_GUIRenderer;
 
 #include "rend/gles/gles.h"
-
+#include "rend/gles/glcache.h"
 
 
 static void findGLVersion()
@@ -97,15 +97,21 @@ struct GUIRenderer_impl : GUIRenderer {
         keepRunning = false;
     }
 
-    virtual void UILoop() {
+    virtual void Start() {
         keepRunning = true;
+    }
+
+    virtual void UILoop() {
         if (!os_gl_init((void*)libPvr_GetRenderTarget(),
             (void*)libPvr_GetRenderSurface()))
             return;
         
         findGLVersion();
-        ImGui_ImplOpenGL3_Init();
 
+        glcache.EnableCache();
+        renderer_changed = true;
+
+        ImGui_ImplOpenGL3_Init();
 
         while (keepRunning) {
             if (g_GUI->IsOpen() || g_GUI->IsVJoyEdit())

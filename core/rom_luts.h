@@ -155,6 +155,8 @@ static struct game_type_naomi lut_games_naomi[] =
    { "KICK '4' CASH"                     , -1, -1, -1, -1, -1, -1,  -1,  2, 1 },                /* Kick '4' Cash */
    { "NINJA ASSAULT"                     , -1, -1, -1, -1, -1, -1,  -1,  7, 1 },                /* Ninja Assault */
    { "MAZAN"                             , -1, -1, -1, -1, -1, -1,  -1,  8, 1 },                /* Mazan */
+   { "WORLD KICKS"                       , -1, -1, -1, -1, -1, -1,  -1, 10, 1 },                /* World Kicks */
+   { "WORLD KICKS PCB"                   , -1, -1, -1, -1, -1, -1,  -1, 11, 1 },                /* World Kicks 2 kit a.k.a. World Kicks PCB */
 
    /* Input descriptors */
    { " BIOHAZARD  GUN SURVIVOR2"         , -1, -1, -1, -1, -1, -1,  -1, -1, 1, &gunsur2_inputs },  /* Gun Survivor 2 Biohazard Code: Veronica */

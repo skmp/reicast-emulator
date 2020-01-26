@@ -1245,10 +1245,16 @@ bool RenderFrame(u8* vram, bool isRenderFramebuffer)
 		}
 		else
 		{
-			dc2s_scale_h = screen_height / 480.0f;
-			ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
+			dc2s_scale_h = screen_height / dc_height;
+			ds2s_offs_x = (screen_width - dc2s_scale_h * dc_width * screen_stretching) / 2;
+
+			if (ds2s_offs_x < 0) {
+				dc2s_scale_h = screen_width / dc_width;
+				ds2s_offs_x = 0;
+			}
+
 			ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-			ShaderUniforms.scale_coefs[1] = -2.0f / dc_height;
+			ShaderUniforms.scale_coefs[1] = -2.0f / (screen_height / dc2s_scale_h);
 			ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
 			ShaderUniforms.scale_coefs[3] = -1;
 		}

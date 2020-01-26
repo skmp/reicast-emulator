@@ -694,11 +694,16 @@ static bool RenderFrame(u8* vram, bool isRenderFramebuffer)
 		}
 		else
 		{
-			dc2s_scale_h = screen_height / 480.0;
-			ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0 * screen_stretching) / 2;
-			//-1 -> too much to left
+			dc2s_scale_h = screen_height / dc_height;
+			ds2s_offs_x = (screen_width - dc2s_scale_h * dc_width * screen_stretching) / 2;
+
+			if (ds2s_offs_x < 0) {
+				dc2s_scale_h = screen_width / dc_width;
+				ds2s_offs_x = 0;
+			}
+
 			gl4ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-			gl4ShaderUniforms.scale_coefs[1] = -2.0f / dc_height;
+			gl4ShaderUniforms.scale_coefs[1] = -2.0f / (screen_height / dc2s_scale_h);
 			gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
 			gl4ShaderUniforms.scale_coefs[3] = -1;
 		}

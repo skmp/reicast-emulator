@@ -36,7 +36,6 @@ enum serialize_version_enum {
 	V2,
 	V3,
 	V4,
-	V5_LIBRETRO
 } ;
 
 //gdrom
@@ -914,255 +913,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	return true ;
 }
 
-static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
-{
-	int i = 0;
-	int j = 0;
-
-	sh4_cpu->unserialize(data, total_size);
-
-	REICAST_USA(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
-
-	REICAST_USA(volume_lut,16);
-	REICAST_USA(tl_lut,256 + 768);
-	REICAST_USA(AEG_ATT_SPS,64);
-	REICAST_USA(AEG_DSR_SPS,64);
-	REICAST_US(pl);
-	REICAST_US(pr);
-
-
-	//this is one-time init, no updates - don't need to serialize
-	//extern RomChip sys_rom;
-
-	REICAST_US(i); //LIBRETRO_S(sys_nvmem_sram.size);
-	verify(i == 0);
-	REICAST_US(i); //LIBRETRO_S(sys_nvmem_sram.mask);
-	//LIBRETRO_SA(sys_nvmem_sram.data,sys_nvmem_sram.size);
-
-	REICAST_US(sys_nvmem.size);
-	REICAST_US(sys_nvmem.mask);
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	REICAST_US(sys_nvmem.state);
-#else
-	// FIXME
-	die("Naomi/Atomiswave libretro savestates are not supported");
-#endif
-	REICAST_USA(sys_nvmem.data,sys_nvmem.size);
-
-
-	//this is one-time init, no updates - don't need to serialize
-	//extern _vmem_handler area0_handler;
-
-	REICAST_USA(reply_11,16);
-
-	REICAST_US(i); //LIBRETRO_S(GDROM_TICK);
-
-	REICAST_USA(EEPROM,0x100);
-	REICAST_US(EEPROM_loaded);
-
-
-	REICAST_US(maple_ddt_pending_reset);
-
-	mcfg_UnserializeDevices(data, total_size);
-
-	REICAST_US(FrameCount);
-	REICAST_US(pend_rend);
-
-
-	REICAST_USA(YUV_tempdata,512/4);
-	REICAST_US(YUV_dest);
-	REICAST_US(YUV_blockcount);
-	REICAST_US(YUV_x_curr);
-	REICAST_US(YUV_y_curr);
-	REICAST_US(YUV_x_size);
-	REICAST_US(YUV_y_size);
-
-	bool dumbool;
-	REICAST_US(dumbool); //LIBRETRO_S(fog_needs_update);
-	REICAST_USA(pvr_regs,pvr_RegSize);
-	fog_needs_update = true ;
-
-	REICAST_US(in_vblank);
-	REICAST_US(clc_pvr_scanline);
-	REICAST_US(pvr_numscanlines);
-	REICAST_US(prv_cur_scanline);
-	REICAST_US(vblk_cnt);
-	REICAST_US(Line_Cycles);
-	REICAST_US(Frame_Cycles);
-	REICAST_US(speed_load_mspdf);
-	REICAST_US(mips_counter);
-	REICAST_US(full_rps);
-
-	REICAST_USA(ta_type_lut,256);
-	REICAST_USA(ta_fsm,2049);
-	REICAST_US(ta_fsm_cl);
-
-	REICAST_US(dumbool); //LIBRETRO_S(pal_needs_update);
-	for (int i = 0; i < 4; i++) REICAST_US(j); //LIBRETRO_SA(_pal_rev_256,4);
-	for (int i = 0; i < 64; i++) REICAST_US(j); //LIBRETRO_SA(_pal_rev_16,64);
-	for (int i = 0; i < 4; i++) REICAST_US(j); //LIBRETRO_SA(pal_rev_256,4);
-	for (int i = 0; i < 64; i++) REICAST_US(j); //LIBRETRO_SA(pal_rev_16,64);
-	for ( i = 0 ; i < 3 ; i++ )
-	{
-		u32 buf[65536]; //u32 *ptr = decoded_colors[i] ;
-		REICAST_US(buf); //LIBRETRO_SA(ptr,65536);
-	}
-
-	REICAST_US(tileclip_val);
-	REICAST_USA(f32_su8_tbl,65536);
-	REICAST_USA(FaceBaseColor,4);
-	REICAST_USA(FaceOffsColor,4);
-	REICAST_US(SFaceBaseColor);
-	REICAST_US(SFaceOffsColor);
-
-	pal_needs_update = true;
-	REICAST_US(i); //LIBRETRO_S(palette_index);
-	REICAST_US(dumbool); //LIBRETRO_S(KillTex);
-	for (int i = 0; i < 1024; i++) REICAST_US(j); //LIBRETRO_SA(palette16_ram,1024);
-	for (int i = 0; i < 1024; i++) REICAST_US(j); //LIBRETRO_SA(palette32_ram,1024);
-	for (i = 0 ; i < 2 ; i++)
-		for (j = 0 ; j < 8 ; j++)
-		{
-			u32 buf[1024]; //u32 *ptr = detwiddle[i][j] ;
-			REICAST_US(buf); //LIBRETRO_SA(ptr,1024);
-		}
-	REICAST_USA(sh4_cpu->vram.data, sh4_cpu->vram.size);
-
-	REICAST_USA(sh4_cpu->mram.data, sh4_cpu->mram.size);
-
-	REICAST_US(IRLPriority);
-	REICAST_USA(InterruptEnvId,32);
-	REICAST_USA(InterruptBit,32);
-	REICAST_USA(InterruptLevelBit,16);
-	REICAST_US(interrupt_vpend);
-	REICAST_US(interrupt_vmask);
-	REICAST_US(decoded_srimask);
-
-	REICAST_US(i) ;
-	if ( i == 0 )
-		do_sqw_nommu = &do_sqw_nommu_area_3 ;
-	else if ( i == 1 )
-		do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem ;
-	else if ( i == 2 )
-		do_sqw_nommu = (sqw_fp*)&TAWriteSQ ;
-	else if ( i == 3 )
-		do_sqw_nommu = &do_sqw_nommu_full ;
-
-
-
-	REICAST_USA((*p_sh4rcb).sq_buffer,64/8);
-
-	//store these before unserializing and then restore after
-	//void *getptr = &((*p_sh4rcb).cntx.sr.GetFull) ;
-	//void *setptr = &((*p_sh4rcb).cntx.sr.SetFull) ;
-	REICAST_US((*p_sh4rcb).cntx);
-	//(*p_sh4rcb).cntx.sr.GetFull = getptr ;
-	//(*p_sh4rcb).cntx.sr.SetFull = setptr ;
-
-	REICAST_US(old_rm);
-	REICAST_US(old_dn);
-
-	sh4_sched_unserialize(data, total_size);
-
-	REICAST_US(SCIF_SCFSR2);
-	REICAST_US(SCIF_SCFRDR2);
-	REICAST_US(SCIF_SCFDR2);
-
-	REICAST_USA(tmu_shift,3);
-	REICAST_USA(tmu_mask,3);
-	REICAST_USA(tmu_mask64,3);
-	REICAST_USA(old_mode,3);
-	REICAST_USA(tmu_ch_base,3);
-	REICAST_USA(tmu_ch_base64,3);
-
-	REICAST_USA(CCN_QACR_TR,2);
-
-	REICAST_USA(UTLB,64);
-	REICAST_USA(ITLB,4);
-#if defined(NO_MMU)
-	REICAST_USA(sq_remap,64);
-#else
-	REICAST_USA(ITLB_LRU_USE,64);
-	REICAST_US(mmu_error_TT);
-#endif
-
-	REICAST_US(NullDriveDiscType);
-	REICAST_USA(q_subchannel,96);
-
-	REICAST_US(i);	// FLASH_SIZE
-	REICAST_US(i);	// BBSRAM_SIZE
-	REICAST_US(i);	// BIOS_SIZE
-	REICAST_US(i);	// RAM_SIZE
-	REICAST_US(i);	// ARAM_SIZE
-	REICAST_US(i);	// VRAM_SIZE
-	REICAST_US(i);	// RAM_MASK
-	REICAST_US(i);	// ARAM_MASK
-	REICAST_US(i);	// VRAM_MASK
-
-
-
-	REICAST_US(naomi_updates);
-	REICAST_US(i); // BoardID
-	REICAST_US(GSerialBuffer);
-	REICAST_US(BSerialBuffer);
-	REICAST_US(GBufPos);
-	REICAST_US(BBufPos);
-	REICAST_US(GState);
-	REICAST_US(BState);
-	REICAST_US(GOldClk);
-	REICAST_US(BOldClk);
-	REICAST_US(BControl);
-	REICAST_US(BCmd);
-	REICAST_US(BLastCmd);
-	REICAST_US(GControl);
-	REICAST_US(GCmd);
-	REICAST_US(GLastCmd);
-	REICAST_US(SerStep);
-	REICAST_US(SerStep2);
-	REICAST_USA(BSerial,69);
-	REICAST_USA(GSerial,69);
-	REICAST_US(reg_dimm_3c);
-	REICAST_US(reg_dimm_40);
-	REICAST_US(reg_dimm_44);
-	REICAST_US(reg_dimm_48);
-	REICAST_US(reg_dimm_4c);
-	REICAST_US(NaomiDataRead);
-
-	REICAST_US(i); //LIBRETRO_S(cycle_counter);
-#if FEAT_SHREC == DYNAREC_CPP
-	REICAST_US(idxnxx);
-#else
-	REICAST_US(i);
-#endif
-
-	REICAST_US(state);
-	REICAST_US(div_som_reg1);
-	REICAST_US(div_som_reg2);
-	REICAST_US(div_som_reg3);
-
-	//REICAST_USA(CodeCache,CODE_SIZE) ;
-	//REICAST_USA(SH4_TCB,CODE_SIZE+4096);
-	REICAST_US(LastAddr);
-	REICAST_US(LastAddr_min);
-	REICAST_USA(block_hash,1024);
-
-
-	REICAST_USA(RegisterWrite,sh4_reg_count);
-	REICAST_USA(RegisterRead,sh4_reg_count);
-	REICAST_US(fallback_blocks);
-	REICAST_US(total_blocks);
-	REICAST_US(REMOVED_OPS);
-
-	REICAST_US(settings.dreamcast.broadcast);
-	REICAST_US(settings.dreamcast.cable);
-	REICAST_US(settings.dreamcast.region);
-
-	if (CurrentCartridge != NULL)
-		CurrentCartridge->Unserialize(data, total_size);
-
-	return true ;
-}
-
 bool dc_unserialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
@@ -1172,17 +922,14 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	*total_size = 0 ;
 
 	REICAST_US(version) ;
-	if (version == V5_LIBRETRO)
-		return dc_unserialize_libretro(data, total_size);
+
 	if (version != V4)
 	{
 		fprintf(stderr, "Save State version not supported: %d\n", version);
 		return false;
 	}
 
-	for (int i = 0; i < A0H_MAX; i++) {
-		sh4_cpu->GetA0Handler((Area0Hanlders)i)->unserialize(data, total_size);
-	}
+	sh4_cpu->unserialize(data, total_size);
 
 	REICAST_USA(sh4_cpu->aica_ram.data, sh4_cpu->aica_ram.size);
 	

@@ -139,7 +139,12 @@ void SuperH4_impl::Reset(bool Manual)
         //Clear cache
         sh4_backend->ClearCache();
 
+        // reset mmrs/modules
         sh4mmr->Reset();
+
+        // reset devices
+        for (const auto& dev : devices)
+            dev->Reset(Manual);
     }
 }
 
@@ -160,11 +165,22 @@ bool SuperH4_impl::Init()
 
     setBackend(SH4BE_INTERPRETER);
 
+    // init devices
+    for (const auto& dev : devices)
+        if (!dev->Init())
+            return false;
+
     return true;
 }
 
 void SuperH4_impl::Term()
 {
+    for (const auto& dev : devices)
+        dev->Term();
+    
+    for (auto& dev : devices)
+        dev.reset();
+    
     sh4mmr.reset();
 
     Stop();

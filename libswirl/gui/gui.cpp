@@ -59,7 +59,7 @@ int screen_dpi = 96;
 static bool inited = false;
 float scaling = 1;
 
-GuiState gui_state = Main;
+GuiState gui_state = Welcome;
 
 bool settings_opening;
 static bool touch_up;
@@ -233,6 +233,9 @@ std::unique_ptr<GUI> g_GUI;
 
 struct ReicastUI_impl : GUI {
     
+    ImFont* font17;
+    ImFont* font64;
+
     void Init()
     {
         if (inited)
@@ -306,7 +309,8 @@ struct ReicastUI_impl : GUI {
         if (scaling > 1)
             ImGui::GetStyle().ScaleAllSizes(scaling);
 
-        io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, 17 * scaling);
+        font17 = io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, 17 * scaling);
+        font64 = io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, 128 * scaling);
         printf("Screen DPI is %d, size %d x %d. Scaling by %.2f\n", screen_dpi, screen_width, screen_height, scaling);
     }
 
@@ -328,6 +332,9 @@ struct ReicastUI_impl : GUI {
     {
         switch (gui_state)
         {
+        case Welcome: 
+            gui_welcome(font64);
+            break;
         case Settings:
             gui_settings();
             break;

@@ -9,6 +9,8 @@ void gui_settings_advanced();
 void gui_settings_social();
 void gui_settings_about();
 
+void gui_welcome(ImFont* font64);
+
 void reset_vmus();
 
 extern bool game_list_done;
@@ -41,6 +43,6 @@ extern f32 mo_wheel_delta;
 
 extern int screen_dpi;
 
-typedef enum { Closed, Commands, Settings, ClosedNoResume, Main, Onboarding, VJoyEdit, VJoyEditCommands } GuiState;
+typedef enum { Welcome, Closed, Commands, Settings, ClosedNoResume, Main, Onboarding, VJoyEdit, VJoyEditCommands } GuiState;
 extern GuiState gui_state;
 void ImGui_Impl_NewFrame();

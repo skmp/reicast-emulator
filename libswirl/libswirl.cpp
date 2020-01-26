@@ -859,6 +859,10 @@ struct Dreamcast_impl : VirtualDreamcast {
         sh4_cpu->SetA0Handler(A0H_SCPU, soundCPU);
         sh4_cpu->SetA0Handler(A0H_DSP, dsp);
         
+#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
+        mcfg_CreateDevices();
+#endif
+
         return sh4_cpu->Init();
     }
 

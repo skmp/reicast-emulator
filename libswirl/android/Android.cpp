@@ -193,9 +193,7 @@ void common_linux_setup();
 
 void os_SetupInput()
 {
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-    mcfg_CreateDevices();
-#endif
+
 }
 
 void os_SetWindowText(char const *Text)

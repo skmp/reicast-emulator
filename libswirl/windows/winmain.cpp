@@ -153,9 +153,6 @@ static std::shared_ptr<WinMouseGamepadDevice> mouse_gamepad;
 
 void os_SetupInput()
 {
-#if DC_PLATFORM == DC_PLATFORM_DREAMCAST
-	mcfg_CreateDevices();
-#endif
 	XInputGamepadDevice::CreateDevices();
 	kb_gamepad = std::make_shared<WinKbGamepadDevice>(0);
 	GamepadDevice::Register(kb_gamepad);

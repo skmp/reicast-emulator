@@ -504,11 +504,13 @@ static void update_variables(bool first_startup)
          per_content_vmus = 2;
    }
 
-   if ((per_content_vmus != previous_per_content_vmus) &&
-       (settings.System == DC_PLATFORM_DREAMCAST))
+   if (!first_startup && per_content_vmus != previous_per_content_vmus
+   		&& settings.System == DC_PLATFORM_DREAMCAST)
    {
-      mcfg_DestroyDevices();
-      mcfg_CreateDevices();
+   	// Recreate the VMUs so that the save location is taken into account.
+   	// Don't do this at startup because we don't know the system type yet
+   	// and the VMUs haven't been created anyway
+   	maple_ReconnectDevices();
    }
 
    var.key = CORE_OPTION_NAME "_widescreen_hack";
@@ -952,11 +954,6 @@ static void update_variables(bool first_startup)
       	enable_purupuru = (strcmp("enabled", var.value) == 0);
       	if (!first_startup)
       		maple_ReconnectDevices();
-      	else
-      	{
-      		mcfg_DestroyDevices();
-      		mcfg_CreateDevices();
-      	}
       }
    }
 

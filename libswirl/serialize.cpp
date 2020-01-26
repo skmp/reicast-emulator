@@ -5,7 +5,7 @@
 #include "hw/aica/aica.h"
 #include "hw/aica/sgc_if.h"
 #include "hw/arm7/arm7.h"
-#include "hw/sh4/sh4_mem_area0.h"
+#include "hw/holly/sh4_mem_area0.h"
 #include "hw/flashrom/flashrom.h"
 #include "hw/mem/_vmem.h"
 #include "hw/gdrom/gdromv3.h"

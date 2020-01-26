@@ -90,7 +90,7 @@ struct Sh4ModCcn_impl : Sh4ModCcn {
 				if (curr_pc != 0xAC13DBF8)
 				{
 					printf("Sh4: code cache clear (ICI) pc: %08X\n", curr_pc);
-					sh4_backend->ClearCache();
+					sh4_cpu->ResetCache();
 				}
 			}
 		}

@@ -287,7 +287,7 @@ DynarecCodeEntryPtr rdv_CompilePC_OrClearCache()
 
 	if (!rv)
 	{
-        sh4_backend->ClearCache();
+        sh4_cpu->ResetCache();
 
 		rv = rdv_CompilePC_OrFail(false);
 

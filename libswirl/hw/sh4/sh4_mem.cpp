@@ -6,7 +6,7 @@
 #include <memory>
 
 #include "sh4_mem.h"
-#include "hw/sh4/sh4_mem_area0.h"
+#include "hw/holly/sh4_mem_area0.h"
 #include "sh4_mmr.h"
 #include "modules/modules.h"
 #include "hw/pvr/pvr_mem.h"
@@ -117,7 +117,7 @@ void map_area6(SuperH4* sh4, u32 base)
 
 
 //set vmem to default values
-void mem_map_default(SuperH4_impl* sh4)
+void mem_map_default(SuperH4* sh4)
 {
 	//vmem - init/reset :)
 	_vmem_init();
@@ -175,16 +175,14 @@ void mem_map_default(SuperH4_impl* sh4)
 	map_p4(sh4, sh4->sh4mmr.get());
 }
 
-void mem_Init(SuperH4_impl* sh4)
+void mem_Init(SuperH4* sh4)
 {
 	//Allocate mem for memory/bios/flash
 	//mem_b.Init(&sh4_reserved_mem[0x0C000000],RAM_SIZE);
-
-	sh4_area0_Init(sh4);	
 }
 
 //Reset Sysmem/Regs -- Pvr is not changed , bios/flash are not zeroed out
-void mem_Reset(SuperH4_impl* sh4, bool Manual)
+void mem_Reset(SuperH4* sh4, bool Manual)
 {
 	//mem is reseted on hard restart(power on) , not manual...
 	if (!Manual)
@@ -192,15 +190,10 @@ void mem_Reset(SuperH4_impl* sh4, bool Manual)
 		//fill mem w/ 0's
 		sh4->mram.Zero();
 	}
-
-	//Reset registers
-	sh4_area0_Reset(sh4, Manual);
 }
 
-void mem_Term(SuperH4_impl* sh4)
+void mem_Term(SuperH4* sh4)
 {
-	sh4_area0_Term(sh4);
-
 	//write back Flash/SRAM
 	SaveRomFiles(get_writable_data_path(DATA_PATH));
 	

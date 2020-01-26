@@ -7,7 +7,7 @@
 #include "types.h"
 #include "hw/sh4/sh4_mem.h"
 
-#include "hw/sh4/sh4_mem_area0.h"
+#include "hw/holly/sh4_mem_area0.h"
 #include "hw/holly/sb.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/gdrom/gdrom_if.h"
@@ -18,7 +18,7 @@
 
 #include "hw/flashrom/flashrom.h"
 #include "reios/reios.h"
-#include "sh4_mmio.h"
+#include "hw/sh4/sh4_mmio.h"
 #include "hw/sh4/SuperH4_impl.h"
 
 #include <memory>
@@ -376,29 +376,6 @@ void  DYNACALL WriteMem_area0(void* ctx, u32 addr,T data)
 	}
 	return;
 }
-
-//Init/Res/Term
-bool sh4_area0_Init(SuperH4_impl* sh4)
-{
-	for (const auto& dev : sh4->devices)
-		if (!dev->Init())
-			return false;
-
-	return true;
-}
-
-void sh4_area0_Reset(SuperH4_impl* sh4, bool Manual)
-{
-	for (const auto& dev : sh4->devices)
-		dev->Reset(Manual);
-}
-
-void sh4_area0_Term(SuperH4_impl* sh4)
-{
-	for (const auto& dev : sh4->devices)
-		dev->Term();
-}
-
 
 //AREA 0
 _vmem_handler area0_handler;

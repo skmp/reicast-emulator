@@ -118,10 +118,15 @@ Building for Linux
 	* libasound2-dev
 	* mesa-common-dev
 	* libgl1-mesa-dev
+	* libudev-dev
+	* libpulse-dev (optional for using Pulseaudio)
 
 - From project root directory:
 ```
 cd reicast/linux
+
+# if you wish to use Pulseaudio, uncomment the following line
+# export USE_PULSEAUDIO=1
 
 make
 ```

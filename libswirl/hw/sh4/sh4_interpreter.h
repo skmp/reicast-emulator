@@ -38,11 +38,9 @@ enum OpcodeType
 	Branch_rel_d = Delayslot|Branch_rel, // Relative (rg pc+=10);
 };
 
-//interface
 
-extern SuperH4Backend* sh4_backend;
-
-//Other things (mainly used by the cpu core
+//Other things (mainly used by the cpu core)
+void ExecuteOpcode(u16 op);
 void ExecuteDelayslot();
 void ExecuteDelayslot_RTE();
 

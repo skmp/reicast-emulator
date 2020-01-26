@@ -1,16 +1,14 @@
 #pragma once
 
 #include "types.h"
-
-#include "sh4_interpreter.h"
-
 #include <memory>
 
+struct SuperH4Backend;
+struct MMIODevice;
 
 struct SuperH4_impl final : SuperH4 {
     unique_ptr<MMIODevice> devices[A0H_MAX];
-    int aica_schid = -1;
-    int ds_schid = -1;
+    unique_ptr<SuperH4Backend> sh4_backend;
 
     void SetA0Handler(Area0Hanlders slot, MMIODevice* dev);
     MMIODevice* GetA0Handler(Area0Hanlders slot);

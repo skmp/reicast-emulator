@@ -633,10 +633,24 @@ void reicast_term() {
     g_GUI.reset();
 }
 
+//General update
+
+//3584 Cycles
+#define AICA_SAMPLE_GCM 441
+#define AICA_SAMPLE_CYCLES (SH4_MAIN_CLOCK/(44100/AICA_SAMPLE_GCM)*32)
+
+
+//14336 Cycles
+
+const int AICA_TICK = 145124;
+
 struct Dreamcast_impl : VirtualDreamcast {
 
     unique_ptr<AicaContext> aica_ctx;
     unique_ptr<AudioStream> audio_stream;
+    
+    int aica_schid = -1;
+    int ds_schid = -1;
 
     cThread emu_thread;
 
@@ -716,6 +730,41 @@ struct Dreamcast_impl : VirtualDreamcast {
 
     ~Dreamcast_impl() {
         Term();
+    }
+
+
+    int AicaUpdate(int tag, int c, int j)
+    {
+        //gpc_counter=0;
+        //bm_Periodical_14k();
+
+        //static int aica_sample_cycles=0;
+        //aica_sample_cycles+=14336*AICA_SAMPLE_GCM;
+
+        //if (aica_sample_cycles>=AICA_SAMPLE_CYCLES)
+        {
+            sh4_cpu->GetA0H<SoundCPU>(A0H_SCPU)->Update(512 * 32);
+            sh4_cpu->GetA0H<AICA>(A0H_AICA)->Update(1 * 32);
+            //aica_sample_cycles-=AICA_SAMPLE_CYCLES;
+        }
+
+        return AICA_TICK;
+    }
+
+
+    int DreamcastSecond(int tag, int c, int j)
+    {
+#if 1 //HOST_OS==OS_WINDOWS
+        prof_periodical();
+#endif
+
+#if FEAT_SHREC != DYNAREC_NONE
+        bm_Periodical_1s();
+#endif
+
+        //printf("%d ticks\n",sh4_sched_intr);
+        sh4_sched_intr = 0;
+        return SH4_MAIN_CLOCK;
     }
 
     void Reset()
@@ -862,6 +911,12 @@ struct Dreamcast_impl : VirtualDreamcast {
 #if DC_PLATFORM == DC_PLATFORM_DREAMCAST
         mcfg_CreateDevices();
 #endif
+
+        aica_schid = sh4_sched_register(sh4_cpu, 0, STATIC_FORWARD(Dreamcast_impl, AicaUpdate));
+        sh4_sched_request(aica_schid, AICA_TICK);
+
+        ds_schid = sh4_sched_register(sh4_cpu, 0, STATIC_FORWARD(Dreamcast_impl, DreamcastSecond));
+        sh4_sched_request(ds_schid, SH4_MAIN_CLOCK);
 
         return sh4_cpu->Init();
     }

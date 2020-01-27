@@ -1,13 +1,11 @@
 #include <math.h>
 
-#include <libretro.h>
-
 #include "gl4.h"
 #include "rend/gles/glcache.h"
 #include "rend/rend.h"
 #include "rend/TexCache.h"
+#include "rend/gles/postprocess.h"
 
-extern "C" struct retro_hw_render_callback hw_render;
 gl4_ctx gl4;
 
 gl4ShaderUniforms_t gl4ShaderUniforms;
@@ -835,7 +833,13 @@ static bool RenderFrame(void)
 
       //restore scale_x
       scale_x /= scissoring_scale_x;
-		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
+   	if (settings.rend.PowerVR2Filter && !is_rtt)
+   	{
+   		gl4DrawStrips(postProcessor.GetFramebuffer(), rendering_width, rendering_height);
+   		postProcessor.Render(output_fbo);
+   	}
+   	else
+   		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
    }
    else
    {
@@ -849,9 +853,12 @@ static bool RenderFrame(void)
 
    if (!is_rtt)
    {
-		for ( vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
-			if ( vmu_screen_params[vmu_screen_number].vmu_screen_display )
-				gl4DrawVmuTexture(vmu_screen_number);
+   	if (settings.System == DC_PLATFORM_DREAMCAST)
+   	{
+			for ( vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
+				if ( vmu_screen_params[vmu_screen_number].vmu_screen_display )
+					gl4DrawVmuTexture(vmu_screen_number);
+   	}
 
 		for ( lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
 				gl4DrawGunCrosshair(lightgun_port);
@@ -926,15 +933,14 @@ struct gl4rend : Renderer
 {
    bool Init() override
    {
-	  int major = 0;
-	  int minor = 0;
-	  glGetIntegerv(GL_MAJOR_VERSION, &major);
-	  glGetIntegerv(GL_MINOR_VERSION, &minor);
-	  if (major < 4 || (major == 4 && minor < 3))
-	  {
-		  WARN_LOG(RENDERER, "Warning: OpenGL %d.%d doesn't support per-pixel sorting. 4.3 required", major, minor);
-		  return false;
-	  }
+      findGLVersion();
+      int minor = 0;
+      glGetIntegerv(GL_MINOR_VERSION, &minor);
+      if (gl.gl_major < 4 || (gl.gl_major == 4 && minor < 3))
+      {
+         WARN_LOG(RENDERER, "Warning: OpenGL %d.%d doesn't support per-pixel sorting. 4.3 required", gl.gl_major, minor);
+         return false;
+      }
 
 	  if (!gl_create_resources())
          return false;
@@ -960,6 +966,9 @@ struct gl4rend : Renderer
       fog_needs_update = true;
       TexCache.Clear();
 
+      if (settings.rend.PowerVR2Filter)
+      	postProcessor.Init();
+
       return true;
    }
    void Resize(int w, int h) override
@@ -970,6 +979,7 @@ struct gl4rend : Renderer
 	}
 	void Term() override
 	{
+		postProcessor.Term();
 		glcache.DeleteTextures(ARRAY_SIZE(vmuTextureId), vmuTextureId);
 		memset(vmuTextureId, 0, sizeof(vmuTextureId));
 		glcache.DeleteTextures(ARRAY_SIZE(lightgunTextureId), lightgunTextureId);

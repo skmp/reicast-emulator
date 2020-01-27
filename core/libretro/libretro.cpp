@@ -828,6 +828,12 @@ static void update_variables(bool first_startup)
       	settings.rend.AnisotropicFiltering = std::max(1, std::min(16, atoi(var.value)));
    }
 
+   var.key = CORE_OPTION_NAME "_pvr2_filtering";
+
+   settings.rend.PowerVR2Filter = false;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+     	settings.rend.PowerVR2Filter = !strcmp("enabled", var.value);
+
 #ifdef HAVE_TEXUPSCALE
    var.key = CORE_OPTION_NAME "_texupscale";
 

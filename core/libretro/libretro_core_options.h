@@ -546,6 +546,17 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "4",
    },
+   {
+      CORE_OPTION_NAME "_pvr2_filtering",
+      "PowerVR2 Post-processing Filter",
+      "Post-process the rendered image to simulate effects specific to the PowerVR2 GPU and analog video signals.",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
 #ifdef HAVE_TEXUPSCALE
    {
       CORE_OPTION_NAME "_texupscale",

@@ -160,10 +160,10 @@ void rend_init_renderer(u8* vram)
 
 		renderer.release();
 
-		printf("RendIF: Before move\n",
+		printf("RendIF: Before move\n");
 
         renderer = std::move(fallback_renderer);
-		printf("RendIF: After move\n",
+		printf("RendIF: After move\n");
 
 
         if (renderer == NULL || !renderer->Init())

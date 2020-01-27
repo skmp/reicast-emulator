@@ -941,10 +941,11 @@ void termABuffer();
 struct gl4rend : Renderer
 {
 	u8* vram;
+	bool hasInited = false;
 
 	gl4rend(u8* vram) : vram(vram) { }
 
-	bool Init() { return gles_init(); }
+	bool Init() { return (hasInited = gles_init()); }
 	void Resize(int w, int h)
 	{
 		screen_width=w;
@@ -980,6 +981,9 @@ struct gl4rend : Renderer
 
 	~gl4rend()
 	{
+		if (!hasInited)
+			return;
+
 		termABuffer();
 	   if (stencilTexId != 0)
 	   {

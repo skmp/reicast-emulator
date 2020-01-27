@@ -22,7 +22,7 @@ static ASIC* asic;
 
 void YUV_init(ASIC* asic)
 {
-	asic = asic;
+	::asic = asic;
 	YUV_x_curr = 0;
 	YUV_y_curr = 0;
 

@@ -276,7 +276,9 @@ struct PVRDevice : MMIODevice {
 
     u32 Read(u32 addr, u32 sz)
     {
-        verify(sz == 4);
+        if (sz != 4) {
+            printf("PVRDevice::Read: Wrong size %d(!=4) for reg %04X\n", sz, addr & pvr_RegMask);
+        }
         return PvrReg(addr, u32);
     }
 

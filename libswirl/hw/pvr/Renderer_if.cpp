@@ -158,7 +158,13 @@ void rend_init_renderer(u8* vram)
             fallback_renderer->backendInfo.slug.c_str()
         );
 
+		renderer.release();
+
+		printf("RendIF: Before move\n",
+
         renderer = std::move(fallback_renderer);
+		printf("RendIF: After move\n",
+
 
         if (renderer == NULL || !renderer->Init())
         {

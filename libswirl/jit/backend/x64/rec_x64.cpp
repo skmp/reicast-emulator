@@ -1379,6 +1379,13 @@ struct X64NGenBackend : NGenBackend
 		//printf("ngen_Rewrite pc %p\n", host_pc);
 		void *host_pc_rw = (void*)CC_RX2RW(ctx->pc);
 		RuntimeBlockInfo *block = bm_GetBlock((void*)ctx->pc);
+		
+		if (block == NULL)
+		{
+			printf("ngen_Rewrite: trying stale block for %p \n", (void *)ctx->pc);
+			block = bm_GetStaleBlock((void*)ctx->pc);
+		}
+
 		if (block == NULL)
 		{
 			printf("ngen_Rewrite: Block at %p not found\n", (void *)ctx->pc);

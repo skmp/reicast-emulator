@@ -121,7 +121,7 @@ void event_x11_handle()
 
 		if (event.type == ClientMessage &&
 				event.xclient.data.l[0] == wmDeleteMessage)
-			virtualDreamcast->Exit();
+			virtualDreamcast->Stop([] {});
 		else if (event.type == ConfigureNotify)
 		{
 			x11_width = event.xconfigure.width;

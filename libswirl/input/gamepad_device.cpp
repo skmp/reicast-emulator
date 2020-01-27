@@ -93,7 +93,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		case EMU_BTN_ESCAPE:
             verify(virtualDreamcast != nullptr);
             if (pressed)
-                virtualDreamcast->Exit();
+				virtualDreamcast->Stop([] { });
 			break;
 		case EMU_BTN_MENU:
 			if (pressed)

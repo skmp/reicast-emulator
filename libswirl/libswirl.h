@@ -3,12 +3,12 @@
 #include "types.h"
 #include "oslib/context.h"
 #include <memory>
+#include <functional>
 
 struct VirtualDreamcast {
     virtual void LoadState() = 0;
     virtual void SaveState() = 0;
-    virtual void Stop() = 0;
-    virtual void Exit() = 0;
+    virtual void Stop(function<void()> callback) = 0;
     virtual void Reset() = 0;
     virtual void Resume() = 0;
     virtual bool Init() = 0;

@@ -831,9 +831,14 @@ void os_DoEvents()
 		if (msg.message == WM_QUIT)
 		{
             if (virtualDreamcast) {
-                virtualDreamcast->Exit();
+				virtualDreamcast->Stop([] { 
+					g_GUIRenderer->Stop();
+				});
             }
-            g_GUIRenderer->Stop();
+			else
+			{
+				g_GUIRenderer->Stop();
+			}
 		}
 
 		// Translate the message and dispatch it to WindowProc()

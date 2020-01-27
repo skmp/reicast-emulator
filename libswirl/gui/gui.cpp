@@ -318,9 +318,11 @@ struct ReicastUI_impl : GUI {
     {
         if (gui_state == Closed)
         {
-            gui_state = Commands;
-            settings_opening = true;
-            HideOSD();
+            virtualDreamcast->Stop([this] {
+                gui_state = Commands;
+                settings_opening = true;
+                HideOSD();
+            });
         }
         else if (gui_state == VJoyEdit)
         {
@@ -514,8 +516,7 @@ struct ReicastUI_impl : GUI {
 
     void gui_render_commands()
     {
-        virtualDreamcast->Stop();
-
+        verify(!sh4_cpu->IsRunning());
         ImGui_Impl_NewFrame();
         ImGui::NewFrame();
         if (!settings_opening)
@@ -563,6 +564,7 @@ struct ReicastUI_impl : GUI {
         ImGui::NextColumn();
         if (ImGui::Button("Exit", ImVec2(150 * scaling, 50 * scaling)))
         {
+            // FIXME THIS IS WRONG //
             // Exit to main menu
             gui_state = Main;
             game_started = false;

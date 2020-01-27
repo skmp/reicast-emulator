@@ -648,6 +648,9 @@ struct Dreamcast_impl : VirtualDreamcast {
 
     unique_ptr<AicaContext> aica_ctx;
     unique_ptr<AudioStream> audio_stream;
+
+    cMutex callback_lock;
+    function<void()> callback;
     
     int aica_schid = -1;
     int ds_schid = -1;
@@ -724,6 +727,11 @@ struct Dreamcast_impl : VirtualDreamcast {
 
             audio_stream->TermAudio();
 
+            callback_lock.Lock();
+            verify(callback != nullptr);
+            callback();
+            callback = nullptr;
+            callback_lock.Unlock();
             return NULL;
         }
 #endif
@@ -944,10 +952,13 @@ struct Dreamcast_impl : VirtualDreamcast {
         audio_stream.reset();
     }
 
-    void Stop()
+    void Stop(function<void()> callback)
     {
+        callback_lock.Lock();
+        verify(this->callback == nullptr);
+        this->callback = callback;
+        callback_lock.Unlock();
         sh4_cpu->Stop();
-        emu_thread.WaitToEnd();
     }
 
     // Called on the emulator thread for soft reset
@@ -955,12 +966,6 @@ struct Dreamcast_impl : VirtualDreamcast {
     {
         reset_requested = true;
         sh4_cpu->Stop();
-    }
-
-    void Exit()
-    {
-        Stop();
-        g_GUIRenderer->FlushEmulatorQueue();
     }
 
     void Resume()
@@ -997,7 +1002,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         void* data_ptr = NULL;
         FILE* f;
 
-        Stop();
+        verify(!sh4_cpu->IsRunning());
 
         if (!dc_serialize(&data, &total_size))
         {
@@ -1053,7 +1058,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         void* data_ptr = NULL;
         FILE* f;
 
-        Stop();
+        verify(!sh4_cpu->IsRunning());
 
         filename = get_savestate_file_path();
         f = fopen(filename.c_str(), "rb");

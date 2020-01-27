@@ -38,7 +38,8 @@ static int emu_resume(lua_State* L) {
 
 static int emu_stop(lua_State* L) {
 	// TODO: verify it's not already stopped
-    virtualDreamcast->Stop();
+    //virtualDreamcast->Stop();
+	die("stop is async now. what to do in lua?");
 	return 0;
 }
 

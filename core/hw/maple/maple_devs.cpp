@@ -282,19 +282,14 @@ struct maple_sega_controller: maple_base
 				   //1
 				   w8(0);
 
-				   //joyx
-				   //1
-				   w8(pjs.joy[PJAI_X1] - 128);
-				   //joyy
-				   //1
-				   w8(pjs.joy[PJAI_Y1] - 128);
-
-				   //joyrx
-				   //1
-				   w8(pjs.joy[PJAI_X2] - 128);
-				   //joyry
-				   //1
-				   w8(pjs.joy[PJAI_Y2] - 128);
+				   // analog axes
+				   for (int i = 0; i < 4; i++)
+				   {
+				   	if (naomi_game_inputs != NULL && naomi_game_inputs->axes[i].name != NULL && naomi_game_inputs->axes[i].inverted)
+					   	w8(pjs.joy[i] == 0x80 ? 0xff : 128 - pjs.joy[i]);
+				   	else
+				   		w8(pjs.joy[i] - 128);
+				   }
 				}
 			}
 
@@ -1672,8 +1667,6 @@ protected:
 	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 
 	virtual u32 read_digital_in(int player_num) override {
-		if (player_num > 0)
-			return 0;
 		u32 keycode1 = ~kcode[0];
 		u32 keycode2 = ~kcode[1];
 		u32 keycode3 = ~kcode[2];
@@ -1684,19 +1677,32 @@ protected:
 				| ((keycode3 & NAOMI_BTN0_KEY) << 1)	// right
 				| ((keycode4 & NAOMI_BTN0_KEY) >> 1)	// btn1
 				// soft kick
-				| ((~keycode1 & NAOMI_BTN1_KEY) >> 1)	// btn2
-				| ((~keycode2 & NAOMI_BTN1_KEY) >> 3)	// btn4
-				| ((~keycode3 & NAOMI_BTN1_KEY) >> 5)	// btn6
-				| ((~keycode4 & NAOMI_BTN1_KEY) >> 7)	// test?
-				// hard kick
-				| ((~keycode1 & NAOMI_BTN2_KEY) >> 1)	// btn3
-				| ((~keycode2 & NAOMI_BTN2_KEY) >> 3)	// btn5
-				| ((~keycode3 & NAOMI_BTN2_KEY) >> 5)	// btn7
-				| ((~keycode4 & NAOMI_BTN2_KEY) >> 7)	// ?
+//				| ((~keycode1 & NAOMI_BTN1_KEY) >> 1)	// btn2
+//				| ((~keycode2 & NAOMI_BTN1_KEY) >> 3)	// btn4
+//				| ((~keycode3 & NAOMI_BTN1_KEY) >> 5)	// btn6
+//				| ((~keycode4 & NAOMI_BTN1_KEY) >> 7)	// test?
+//				// hard kick
+//				| ((~keycode1 & NAOMI_BTN2_KEY) >> 1)	// btn3
+//				| ((~keycode2 & NAOMI_BTN2_KEY) >> 3)	// btn5
+//				| ((~keycode3 & NAOMI_BTN2_KEY) >> 5)	// btn7
+//				| ((~keycode4 & NAOMI_BTN2_KEY) >> 7)	// ?
 				// enter
 				| ((keycode1 & NAOMI_BTN3_KEY) << 3)	// btn0
 				// service menu
 				| (keycode1 & (NAOMI_SERVICE_KEY | NAOMI_UP_KEY | NAOMI_DOWN_KEY));
+	}
+
+	u16 read_joystick_x(int joy_num)
+	{
+		s8 axis_x = joyx[joy_num];
+		axis_y = joyy[joy_num];
+		limit_joystick_magnitude<64>(axis_x, axis_y);
+		return (0xff - axis_x) << 8;
+	}
+
+	u16 read_joystick_y(int joy_num)
+	{
+		return (0xff - axis_y) << 8;
 	}
 
 	virtual u16 read_analog_axis(int player_num, int player_axis) override {
@@ -1706,13 +1712,13 @@ protected:
 			switch (player_axis)
 			{
 			case 0:
-				return (0xff - joyx[0]) << 8;
+				return read_joystick_x(0);
 			case 1:
-				return (0xff - joyy[0]) << 8;
+				return read_joystick_y(0);
 			case 2:
-				return (0xff - joyx[1]) << 8;
+				return read_joystick_x(1);
 			case 3:
-				return (0xff - joyy[1]) << 8;
+				return read_joystick_y(1);
 			}
 			break;
 
@@ -1720,13 +1726,13 @@ protected:
 			switch (player_axis)
 			{
 			case 0:
-				return (0xff - joyx[2]) << 8;
+				return read_joystick_x(2);
 			case 1:
-				return (0xff - joyy[2]) << 8;
+				return read_joystick_y(2);
 			case 2:
-				return (0xff - joyx[3]) << 8;
+				return read_joystick_x(3);
 			case 3:
-				return (0xff - joyy[3]) << 8;
+				return read_joystick_y(3);
 			}
 			break;
 
@@ -1736,16 +1742,19 @@ protected:
 			case 0:
 				return (rt[0] * 0x38 / 0xFF + 0xC7) << 8;
 			case 1:
-				return rt[1] << 8;
+				return (rt[1] * 0x38 / 0xFF + 0xC7) << 8;
 			case 2:
-				return rt[2] << 8;
+				return (rt[2] * 0x38 / 0xFF + 0xC7) << 8;
 			case 3:
-				return rt[3] << 8;
+				return (rt[3] * 0x38 / 0xFF + 0xC7) << 8;
 			}
 			break;
 		}
 		return 0x8000;
 	}
+
+private:
+	s8 axis_y = 0;
 };
 
 // World Kicks PCB
@@ -1775,6 +1784,19 @@ protected:
 				| ((keycode & NAOMI_BTN0_KEY) >> 4);		// remap button4 to button0 (change button)
 	}
 
+	u16 read_joystick_x(int joy_num)
+	{
+		s8 axis_x = joyx[joy_num];
+		axis_y = joyy[joy_num];
+		limit_joystick_magnitude<48>(axis_x, axis_y);
+		return axis_x << 8;
+	}
+
+	u16 read_joystick_y(int joy_num)
+	{
+		return (0xff - axis_y) << 8;
+	}
+
 	virtual u16 read_analog_axis(int player_num, int player_axis) override {
 		switch (player_num)
 		{
@@ -1782,9 +1804,9 @@ protected:
 			switch (player_axis)
 			{
 			case 0:
-				return joyx[0] << 8;
+				return read_joystick_x(0);
 			case 1:
-				return (0xff - joyy[0]) << 8;
+				return read_joystick_y(0);
 			}
 			break;
 
@@ -1792,14 +1814,17 @@ protected:
 			switch (player_axis)
 			{
 			case 0:
-				return joyx[1] << 8;
+				return read_joystick_x(1);
 			case 1:
-				return (0xff - joyy[1]) << 8;
+				return read_joystick_y(1);
 			}
 			break;
 		}
 		return 0x8000;
 	}
+
+private:
+	s8 axis_y = 0;
 };
 
 struct maple_naomi_jamma : maple_sega_controller
@@ -1837,7 +1862,7 @@ struct maple_naomi_jamma : maple_sega_controller
 		  io_boards.push_back(new jvs_837_13938(1, this));
 		  io_boards.push_back(new jvs_837_13551(2, this));
 		  break;
-	   case 3:
+	   case 3: // Sega Marine Fishing
 		  io_boards.push_back(new jvs_837_13844(1, this));
 		  break;
 	   case 4:

@@ -5559,7 +5559,9 @@ Games[] =
             // U14-U17 not populated 
             
             { NULL, 0, 0, 0x00000000 },
-        }
+        },
+        NULL,
+        &blockpong_inputs,
     },
     // Sega Clay Challenge
     {

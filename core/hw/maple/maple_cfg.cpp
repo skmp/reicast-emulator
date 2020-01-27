@@ -163,6 +163,12 @@ struct MapleConfigMap : IMapleConfigMap
 	   pjs->kcode=kcode[pnum];
 	   pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[pnum]);
 	   pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[pnum]);
+	   // I think the only Atomiswave game that uses an analog joystick is Block Pong-Pong but only the x axis.
+	   // Driving games use the first two axes for totally separate things.
+	   // So only do this for dreamcast
+	   if (settings.System == DC_PLATFORM_DREAMCAST)
+	   	limit_joystick_magnitude<128>((s8&)pjs->joy[PJAI_X1], (s8&)pjs->joy[PJAI_Y1]);
+
 	   pjs->joy[PJAI_X2]=GetBtFromSgn(joyrx[pnum]);
 	   pjs->joy[PJAI_Y2]=GetBtFromSgn(joyry[pnum]);
 	   pjs->trigger[PJTI_R]=rt[pnum];

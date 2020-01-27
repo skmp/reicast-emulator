@@ -1694,13 +1694,13 @@ protected:
 			switch (player_axis)
 			{
 			case 0:
-				return (rt[0] * 0x38 / 0xFF + 0xC7) << 8;
+				return rt[0] << 8;
 			case 1:
-				return (rt[1] * 0x38 / 0xFF + 0xC7) << 8;
+				return rt[1] << 8;
 			case 2:
-				return (rt[2] * 0x38 / 0xFF + 0xC7) << 8;
+				return rt[2] << 8;
 			case 3:
-				return (rt[3] * 0x38 / 0xFF + 0xC7) << 8;
+				return rt[3] << 8;
 			}
 			break;
 		}

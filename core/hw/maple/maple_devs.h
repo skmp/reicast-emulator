@@ -1,4 +1,5 @@
 #pragma once
+#include <math.h>
 #include "types.h"
 
 // WARNING: changing the order of this enum or inserting new values will break savestates compatibility
@@ -106,3 +107,17 @@ int push_vmu_screen(u8* buffer); //implemented in Android.cpp
 extern MapleDeviceType maple_devices[MAPLE_PORTS];	// Maple device configuration for mcfg_CreateDevices()
 
 extern bool enable_naomi_15khz_dipswitch;
+
+template<int Magnitude>
+void limit_joystick_magnitude(s8& joyx, s8& joyy)
+{
+	int xaxis = (u8)joyx - 128;
+	int yaxis = (u8)joyy - 128;
+	float mag = xaxis * xaxis + yaxis * yaxis;
+	if (mag > (float)Magnitude * Magnitude)
+	{
+		mag = sqrtf(mag) / (float)Magnitude;
+		joyx = (u32)lroundf(xaxis / mag) + 128;
+		joyy = (u32)lroundf(yaxis / mag) + 128;
+	}
+}

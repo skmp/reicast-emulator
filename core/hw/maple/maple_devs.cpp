@@ -190,9 +190,49 @@ struct maple_base: maple_device
 */
 struct maple_sega_controller: maple_base
 {
+	virtual u32 get_capabilities() {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xfe060f00;	// 4 analog axes (0-3) X Y A B Start U D L R
+	}
+
+	virtual u32 transform_kcode(u32 kcode) {
+		return kcode | 0xF901;		// mask off DPad2, C, D and Z;
+	}
+
+	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs)
+	{
+		switch (index)
+		{
+		case 2:
+			return pjs.joy[PJAI_X1];
+		case 3:
+			return pjs.joy[PJAI_Y1];
+		case 0:
+			return pjs.trigger[PJTI_R];		// Right trigger
+		case 1:
+			return pjs.trigger[PJTI_L];		// Left trigger
+		default:
+			return 0x80;					// unused
+		}
+	}
+
 	virtual MapleDeviceType get_device_type()
 	{
 		return MDT_SegaController;
+	}
+
+	virtual const char *get_device_name()
+	{
+		return maple_sega_controller_name;
+	}
+
+	virtual const char *get_device_brand()
+	{
+		return maple_sega_brand;
 	}
 
 	virtual u32 dma(u32 cmd)
@@ -207,11 +247,7 @@ struct maple_sega_controller: maple_base
 
 			//struct data
 			//3*4
-			if (settings.System != DC_PLATFORM_ATOMISWAVE)
-			   w32( 0xfe060f00);
-			else
-			   // More buttons, more digital axes
-			   w32( 0xff663f00 );
+			w32(get_capabilities());
 			w32( 0);
 			w32( 0);
 
@@ -222,16 +258,16 @@ struct maple_sega_controller: maple_base
 			w8(0);
 			
 			//30
-			wstr(maple_sega_controller_name,30);
+			wstr(get_device_name(), 30);
 
 			//60
-			wstr(maple_sega_brand,60);
+			wstr(get_device_brand(), 60);
 
 			//2
-			w16(0x01AE); 
+			w16(0x01AE);	// 43 mA
 
 			//2
-			w16(0x01F4);
+			w16(0x01F4);	// 50 mA
 
 			return MDRS_DeviceStatus;
 
@@ -245,219 +281,124 @@ struct maple_sega_controller: maple_base
 				//4
 				w32(MFID_0_Input);
 
-				if (settings.System != DC_PLATFORM_ATOMISWAVE)
-				{
-					//state data
-					//2 key code
-					w16(pjs.kcode | 0xF901); // disable unused bits (active low)
+				//state data
+				//2 key code
+				w16(transform_kcode(pjs.kcode));
 
-				   //triggers
-				   //1 R
-				   w8(pjs.trigger[PJTI_R]);
-				   //1 L
-				   w8(pjs.trigger[PJTI_L]);
+				//triggers
+				//1 R
+				w8(get_analog_axis(0, pjs));
+				//1 L
+				w8(get_analog_axis(1, pjs));
 
-				   //joyx
-				   //1
-				   w8(pjs.joy[PJAI_X1]);
-				   //joyy
-				   //1
-				   w8(pjs.joy[PJAI_Y1]);
+				//joyx
+				//1
+				w8(get_analog_axis(2, pjs));
+				//joyy
+				//1
+				w8(get_analog_axis(3, pjs));
 
-				   //not used
-				   //1
-				   w8(0x80);
-				   //1
-				   w8(0x80);
-				}
-				else
-				{
-					//state data
-					//2 key code
-					w16(pjs.kcode | AWAVE_TRIGGER_KEY);
-
-				   //not used
-				   //1
-				   w8(0);
-				   //1
-				   w8(0);
-
-				   //joyx
-				   //1
-				   w8(pjs.joy[PJAI_X1] - 128);
-				   //joyy
-				   //1
-				   w8(pjs.joy[PJAI_Y1] - 128);
-
-				   //joyrx
-				   //1
-				   w8(pjs.joy[PJAI_X2] - 128);
-				   //joyry
-				   //1
-				   w8(pjs.joy[PJAI_Y2] - 128);
-				}
+				//not used on dreamcast
+				//1
+				w8(get_analog_axis(4, pjs));
+				//1
+				w8(get_analog_axis(5, pjs));
 			}
-
-		return MDRS_DataTransfer;
+			return MDRS_DataTransfer;
 
 		default:
 			//printf("UNKNOWN MAPLE COMMAND %d\n",cmd);
          return MDRE_UnknownCmd;
 		}
-	}	
+	}
 };
 
+struct maple_atomiswave_controller : maple_sega_controller
+{
+	virtual u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xff663f00;	// 6 analog axes, X Y L2/D2(?) A B C Start U D L R
+	}
+
+	virtual u32 transform_kcode(u32 kcode) override {
+		return kcode | AWAVE_TRIGGER_KEY;
+	}
+
+	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+		if (index < 2 || index > 5)
+			return 0x80;
+		index -= 2;
+   	if (naomi_game_inputs != NULL && naomi_game_inputs->axes[index].name != NULL && naomi_game_inputs->axes[index].inverted)
+	   	return pjs.joy[index] == 0x80 ? 0xff : 128 - pjs.joy[index];
+   	else
+   		return pjs.joy[index] - 128;
+	}
+};
 
 /*
 	Sega Twin Stick Controller
-	No error checking of any kind, but works just fine
 */
-struct maple_sega_twinstick: maple_base
+struct maple_sega_twinstick : maple_sega_controller
 {
-	virtual MapleDeviceType get_device_type()
-	{
+	virtual u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xfefe0000;	// no analog axes, X Y A B D Start U/D/L/R U2/D2/L2/R2
+	}
+
+	virtual u32 transform_kcode(u32 kcode) override {
+		return kcode | 0x0101;
+	}
+
+	virtual MapleDeviceType get_device_type() override {
 		return MDT_TwinStick;
 	}
 
-	virtual u32 dma( u32 cmd )
-	{
-		//printf("maple_sega_twinstick::dma Called 0x%X;Command %d\n",device_instance->port,Command);
-		switch ( cmd )
-		{
+	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+		return 0x80;
+	}
 		
-		case MDC_DeviceRequest:
-			
-			//caps
-			//4
-			w32(MFID_0_Input);
-
-			//struct data
-			//3*4
-			w32( 0xfefe0000 );
-			w32( 0 );
-			w32( 0 );
-
-			//1	area code
-			w8(0xFF);
-
-			//1	direction
-			w8(0);
-			
-			//30
-			wstr(maple_sega_twinstick_name,30);
-
-			//60
-			wstr(maple_sega_brand,60);
-
-			//2
-			w16(0x00DC); 
-
-			//2
-			w16(0x012C);
-
-			return MDRS_DeviceStatus;
-
-		case MDCF_GetCondition:
-			{
-				PlainJoystickState pjs;
-				config->GetInput(&pjs);
-
-				//caps
-				//4
-				w32(MFID_0_Input);
-
-				//state data
-				//2 key code
-				w16(pjs.kcode | 0x0101 ); // or with key bits
-
-				//unused/reserved, 6
-				w16(0);
-				w32(0x80808080);
-			}
-
-			return MDRS_DataTransfer;
-
-		default:
-			//printf("UNKNOWN MAPLE COMMAND %d\n",cmd);
-			return MDRE_UnknownCmd;
-		}
-	}	
+	virtual const char *get_device_name() override {
+		return maple_sega_twinstick_name;
+	}
 };
 
 
 /*
 	Ascii Stick (Arcade Stick)
-	No error checking of any kind, but works just fine
 */
-struct maple_ascii_stick: maple_base
+struct maple_ascii_stick : maple_sega_controller
 {
-	virtual MapleDeviceType get_device_type()
-	{
+	virtual u32 get_capabilities() override {
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+
+		return 0xff070000;	// no analog axes, X Y Z A B C Start U/D/L/R
+	}
+
+	virtual u32 transform_kcode(u32 kcode) override {
+		return kcode | 0xF800;
+	}
+
+	virtual MapleDeviceType get_device_type() override {
 		return MDT_AsciiStick;
 	}
 
-	virtual u32 dma( u32 cmd )
-	{
-		//printf("maple_sega_twinstick::dma Called 0x%X;Command %d\n",device_instance->port,Command);
-		switch ( cmd )
-		{
+	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
+		return 0x80;
+	}
 		
-		case MDC_DeviceRequest:
-			
-			//caps
-			//4
-			w32(MFID_0_Input);
-
-			//struct data
-			//3*4
-			w32( 0xff070000 );
-			w32( 0 );
-			w32( 0 );
-
-			//1	area code
-			w8(0xFF);
-
-			//1	direction
-			w8(0);
-			
-			//30
-			wstr(maple_ascii_stick_name,30);
-
-			//60
-			wstr(maple_sega_brand,60);
-
-			//2
-			w16(0x010E); 
-
-			//2
-			w16(0x0172);
-
-			return MDRS_DeviceStatus;
-
-		case MDCF_GetCondition:
-			{
-				PlainJoystickState pjs;
-				config->GetInput(&pjs);
-
-				//caps
-				//4
-				w32(MFID_0_Input);
-
-				//state data
-				//2 key code
-				w16(pjs.kcode | 0xF800 ); // or with key bits
-
-				//unused/reserved, 6
-				w16(0);
-				w32(0x80808080);
-			}
-
-			return MDRS_DataTransfer;
-
-		default:
-			//printf("UNKNOWN MAPLE COMMAND %d\n",cmd);
-			return MDRE_UnknownCmd;
-		}
+	virtual const char *get_device_name() override {
+		return maple_ascii_stick_name;
 	}	
 };
 
@@ -1392,6 +1333,10 @@ struct maple_mouse : maple_base
 
 struct maple_lightgun : maple_base
 {
+	virtual u32 transform_kcode(u32 kcode) {
+		return kcode | 0xFF01;
+	}
+
    virtual MapleDeviceType get_device_type()
    {
 	  return MDT_LightGun;
@@ -1446,10 +1391,7 @@ struct maple_lightgun : maple_base
 
 		 //state data
 		 //2 key code
-		 if (settings.System != DC_PLATFORM_ATOMISWAVE)
-			w16(pjs.kcode | 0xFF01);
-		 else
-			w16((pjs.kcode & AWAVE_TRIGGER_KEY) == 0 ? ~AWAVE_BTN0_KEY : ~0);
+			w16(transform_kcode(pjs.kcode));
 
 		 //not used
 		 //2
@@ -1474,6 +1416,13 @@ struct maple_lightgun : maple_base
 	  config->GetAbsolutePosition(&x, &y);
 	  read_lightgun_position(x + 0.5f, y + 0.5f);
    }
+};
+
+struct atomiswave_lightgun : maple_lightgun
+{
+	virtual u32 transform_kcode(u32 kcode) override {
+		return (kcode & AWAVE_TRIGGER_KEY) == 0 ? ~AWAVE_BTN0_KEY : ~0;
+	}
 };
 
 extern u32 kcode[4];
@@ -1513,7 +1462,7 @@ protected:
 	virtual u32 remap_buttons(u32 keycode) { return keycode; }
 	virtual u16 read_analog_axis(int player_num, int player_axis);
 	virtual u32 read_digital_in(int player_num) {
-		u32 keycode = first_player + player_num > 3 ? 0 : ~kcode[first_player + player_num];
+		u32 keycode = player_num > 3 ? 0 : ~kcode[player_num];
 		return remap_buttons(keycode);
 	}
 
@@ -1672,8 +1621,6 @@ protected:
 	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 
 	virtual u32 read_digital_in(int player_num) override {
-		if (player_num > 0)
-			return 0;
 		u32 keycode1 = ~kcode[0];
 		u32 keycode2 = ~kcode[1];
 		u32 keycode3 = ~kcode[2];
@@ -1684,19 +1631,32 @@ protected:
 				| ((keycode3 & NAOMI_BTN0_KEY) << 1)	// right
 				| ((keycode4 & NAOMI_BTN0_KEY) >> 1)	// btn1
 				// soft kick
-				| ((~keycode1 & NAOMI_BTN1_KEY) >> 1)	// btn2
-				| ((~keycode2 & NAOMI_BTN1_KEY) >> 3)	// btn4
-				| ((~keycode3 & NAOMI_BTN1_KEY) >> 5)	// btn6
-				| ((~keycode4 & NAOMI_BTN1_KEY) >> 7)	// test?
-				// hard kick
-				| ((~keycode1 & NAOMI_BTN2_KEY) >> 1)	// btn3
-				| ((~keycode2 & NAOMI_BTN2_KEY) >> 3)	// btn5
-				| ((~keycode3 & NAOMI_BTN2_KEY) >> 5)	// btn7
-				| ((~keycode4 & NAOMI_BTN2_KEY) >> 7)	// ?
+//				| ((~keycode1 & NAOMI_BTN1_KEY) >> 1)	// btn2
+//				| ((~keycode2 & NAOMI_BTN1_KEY) >> 3)	// btn4
+//				| ((~keycode3 & NAOMI_BTN1_KEY) >> 5)	// btn6
+//				| ((~keycode4 & NAOMI_BTN1_KEY) >> 7)	// test?
+//				// hard kick
+//				| ((~keycode1 & NAOMI_BTN2_KEY) >> 1)	// btn3
+//				| ((~keycode2 & NAOMI_BTN2_KEY) >> 3)	// btn5
+//				| ((~keycode3 & NAOMI_BTN2_KEY) >> 5)	// btn7
+//				| ((~keycode4 & NAOMI_BTN2_KEY) >> 7)	// ?
 				// enter
 				| ((keycode1 & NAOMI_BTN3_KEY) << 3)	// btn0
 				// service menu
 				| (keycode1 & (NAOMI_SERVICE_KEY | NAOMI_UP_KEY | NAOMI_DOWN_KEY));
+	}
+
+	u16 read_joystick_x(int joy_num)
+	{
+		s8 axis_x = joyx[joy_num];
+		axis_y = joyy[joy_num];
+		limit_joystick_magnitude<64>(axis_x, axis_y);
+		return (0xff - axis_x) << 8;
+	}
+
+	u16 read_joystick_y(int joy_num)
+	{
+		return (0xff - axis_y) << 8;
 	}
 
 	virtual u16 read_analog_axis(int player_num, int player_axis) override {
@@ -1706,13 +1666,13 @@ protected:
 			switch (player_axis)
 			{
 			case 0:
-				return (0xff - joyx[0]) << 8;
+				return read_joystick_x(0);
 			case 1:
-				return (0xff - joyy[0]) << 8;
+				return read_joystick_y(0);
 			case 2:
-				return (0xff - joyx[1]) << 8;
+				return read_joystick_x(1);
 			case 3:
-				return (0xff - joyy[1]) << 8;
+				return read_joystick_y(1);
 			}
 			break;
 
@@ -1720,13 +1680,13 @@ protected:
 			switch (player_axis)
 			{
 			case 0:
-				return (0xff - joyx[2]) << 8;
+				return read_joystick_x(2);
 			case 1:
-				return (0xff - joyy[2]) << 8;
+				return read_joystick_y(2);
 			case 2:
-				return (0xff - joyx[3]) << 8;
+				return read_joystick_x(3);
 			case 3:
-				return (0xff - joyy[3]) << 8;
+				return read_joystick_y(3);
 			}
 			break;
 
@@ -1734,7 +1694,7 @@ protected:
 			switch (player_axis)
 			{
 			case 0:
-				return (rt[0] * 0x38 / 0xFF + 0xC7) << 8;
+				return rt[0] << 8;
 			case 1:
 				return rt[1] << 8;
 			case 2:
@@ -1746,6 +1706,9 @@ protected:
 		}
 		return 0x8000;
 	}
+
+private:
+	s8 axis_y = 0;
 };
 
 // World Kicks PCB
@@ -1775,6 +1738,19 @@ protected:
 				| ((keycode & NAOMI_BTN0_KEY) >> 4);		// remap button4 to button0 (change button)
 	}
 
+	u16 read_joystick_x(int joy_num)
+	{
+		s8 axis_x = joyx[joy_num];
+		axis_y = joyy[joy_num];
+		limit_joystick_magnitude<48>(axis_x, axis_y);
+		return axis_x << 8;
+	}
+
+	u16 read_joystick_y(int joy_num)
+	{
+		return (0xff - axis_y) << 8;
+	}
+
 	virtual u16 read_analog_axis(int player_num, int player_axis) override {
 		switch (player_num)
 		{
@@ -1782,9 +1758,9 @@ protected:
 			switch (player_axis)
 			{
 			case 0:
-				return joyx[0] << 8;
+				return read_joystick_x(0);
 			case 1:
-				return (0xff - joyy[0]) << 8;
+				return read_joystick_y(0);
 			}
 			break;
 
@@ -1792,14 +1768,17 @@ protected:
 			switch (player_axis)
 			{
 			case 0:
-				return joyx[1] << 8;
+				return read_joystick_x(1);
 			case 1:
-				return (0xff - joyy[1]) << 8;
+				return read_joystick_y(1);
 			}
 			break;
 		}
 		return 0x8000;
 	}
+
+private:
+	s8 axis_y = 0;
 };
 
 struct maple_naomi_jamma : maple_sega_controller
@@ -1837,7 +1816,7 @@ struct maple_naomi_jamma : maple_sega_controller
 		  io_boards.push_back(new jvs_837_13938(1, this));
 		  io_boards.push_back(new jvs_837_13551(2, this));
 		  break;
-	   case 3:
+	   case 3: // Sega Marine Fishing
 		  io_boards.push_back(new jvs_837_13844(1, this));
 		  break;
 	   case 4:
@@ -2599,7 +2578,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
-						   u32 keycode = read_digital_in(player);
+						   u32 keycode = read_digital_in(first_player + player);
 
 						   if (naomi_game_inputs != NULL)
 						   {
@@ -2844,19 +2823,22 @@ maple_device* maple_Create(MapleDeviceType type)
 	switch(type)
 	{
 	case MDT_SegaController:
-		rv=new maple_sega_controller();
+		if (settings.System == DC_PLATFORM_ATOMISWAVE)
+			rv = new maple_atomiswave_controller();
+		else
+			rv = new maple_sega_controller();
 		break;
 
 	case MDT_TwinStick:
-		rv=new maple_sega_twinstick();
+		rv = new maple_sega_twinstick();
 		break;
 
 	case MDT_AsciiStick:
-		rv=new maple_ascii_stick();
+		rv = new maple_ascii_stick();
 		break;
 
 	case MDT_Microphone:
-		rv=new maple_microphone();
+		rv = new maple_microphone();
 		break;
 
 	case MDT_SegaVMU:
@@ -2876,7 +2858,10 @@ maple_device* maple_Create(MapleDeviceType type)
 		break;
 
    case MDT_LightGun:
-		rv = new maple_lightgun();
+		if (settings.System == DC_PLATFORM_ATOMISWAVE)
+			rv = new atomiswave_lightgun();
+		else
+			rv = new maple_lightgun();
 		break;
 
 	case MDT_NaomiJamma:

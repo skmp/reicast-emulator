@@ -112,6 +112,7 @@ struct AxisDescriptor
    const char *name;
    AxisType type;
    u32 axis;
+   bool inverted;	// Only implemented for Atomiswave
 };
 
 struct InputDescriptors

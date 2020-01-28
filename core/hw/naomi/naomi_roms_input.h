@@ -429,4 +429,22 @@ InputDescriptors samsptk_inputs = {
 	  }
 };
 
+InputDescriptors blockpong_inputs = {
+	  {
+			{ AWAVE_BTN0_KEY, "SHOT1" },
+			{ AWAVE_BTN1_KEY, "SHOT2" },
+			{ AWAVE_BTN2_KEY, "SHOT3" },
+			{ AWAVE_BTN3_KEY, "SHOT4" },
+			{ AWAVE_BTN4_KEY, "SHOT5" },
+			AW_START_DESC
+			AW_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ "ANALOG X", Full, 0, true },
+			{ "ANALOG Y", Full, 1, false },	// not used?
+			{ NULL },
+	  },
+};
+
 #endif /* CORE_HW_NAOMI_NAOMI_ROMS_INPUT_H_ */

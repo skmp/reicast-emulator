@@ -920,10 +920,10 @@ struct Dreamcast_impl : VirtualDreamcast {
         mcfg_CreateDevices();
 #endif
 
-        aica_schid = sh4_sched_register(sh4_cpu, 0, STATIC_FORWARD(Dreamcast_impl, AicaUpdate));
+        aica_schid = sh4_sched_register(this, 0, STATIC_FORWARD(Dreamcast_impl, AicaUpdate));
         sh4_sched_request(aica_schid, AICA_TICK);
 
-        ds_schid = sh4_sched_register(sh4_cpu, 0, STATIC_FORWARD(Dreamcast_impl, DreamcastSecond));
+        ds_schid = sh4_sched_register(this, 0, STATIC_FORWARD(Dreamcast_impl, DreamcastSecond));
         sh4_sched_request(ds_schid, SH4_MAIN_CLOCK);
 
         return sh4_cpu->Init();

@@ -116,7 +116,7 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 	// Now try to allocate a contiguous piece of memory.
 	unsigned memsize = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
 	void *first_ptr = mmap(0, memsize, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
-	if (!first_ptr) {
+	if (first_ptr == MAP_FAILED) {
 		close(shmem_fd);
 		return MemTypeError;
 	}

@@ -656,6 +656,7 @@ struct Dreamcast_impl : VirtualDreamcast {
     int ds_schid = -1;
 
     cThread emu_thread;
+    cResetEvent emu_started;
 
     Dreamcast_impl() : emu_thread(STATIC_FORWARD(Dreamcast_impl, dc_run), this) { }
 
@@ -705,6 +706,10 @@ struct Dreamcast_impl : VirtualDreamcast {
             dsp->setBackend(DSPBE_INTERPRETER);
             printf("Using DSP Interpreter\n");
         }
+
+        sh4_cpu->Start();
+
+        emu_started.Set();
 
         do {
             reset_requested = false;
@@ -954,6 +959,8 @@ struct Dreamcast_impl : VirtualDreamcast {
 
     void Stop(function<void()> callback)
     {
+        verify(sh4_cpu->IsRunning());
+
         callback_lock.Lock();
         verify(this->callback == nullptr);
         this->callback = callback;
@@ -970,7 +977,9 @@ struct Dreamcast_impl : VirtualDreamcast {
 
     void Resume()
     {
+        verify(!sh4_cpu->IsRunning());
         emu_thread.Start();
+        emu_started.Wait();
     }
 
     void cleanup_serialize(void* data)

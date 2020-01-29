@@ -60,27 +60,21 @@ bool SuperH4_impl::setBackend(SuperH4Backends backend) {
 }
 
 void SuperH4_impl::Run() {
-    sh4_int_bCpuRun = true;
-
     sh4_backend->Loop();
-
-    sh4_int_bCpuRun = false;
 }
 
 void SuperH4_impl::Stop()
 {
-    if (sh4_int_bCpuRun)
-    {
-        sh4_int_bCpuRun = false;
-    }
+    verify(sh4_int_bCpuRun);
+
+    sh4_int_bCpuRun = false;
 }
 
 void SuperH4_impl::Start()
 {
-    if (!sh4_int_bCpuRun)
-    {
-        sh4_int_bCpuRun = true;
-    }
+    verify(!sh4_int_bCpuRun);
+    
+    sh4_int_bCpuRun = true;
 }
 
 void SuperH4_impl::Step()
@@ -175,6 +169,8 @@ bool SuperH4_impl::Init()
 
 void SuperH4_impl::Term()
 {
+    verify(!sh4_cpu->IsRunning());
+
     for (const auto& dev : devices)
         dev->Term();
     
@@ -182,8 +178,6 @@ void SuperH4_impl::Term()
         dev.reset();
     
     sh4mmr.reset();
-
-    Stop();
 
     sh4_sched_cleanup();
 

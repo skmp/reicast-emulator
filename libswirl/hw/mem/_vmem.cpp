@@ -409,6 +409,16 @@ void* malloc_pages(size_t size) {
 #endif
 }
 
+void free_pages(void* ptr) {
+#if HOST_OS == OS_WINDOWS
+	return _aligned_free(ptr);
+#elif defined(_ISOC11_SOURCE)
+	return free(ptr);
+#else
+	return free(ptr);;
+#endif
+}
+
 // Resets the FPCB table (by either clearing it to the default val
 // or by flushing it and making it fault on access again.
 void _vmem_bm_reset() {
@@ -513,7 +523,7 @@ bool _vmem_reserve(VLockedMemory* mram, VLockedMemory* vram, VLockedMemory* aica
 }
 
 #define freedefptr(x) \
-	if (x) { free(x); x = NULL; }
+	if (x) { free_pages(x); x = NULL; }
 
 void _vmem_release(VLockedMemory* mram, VLockedMemory* vram, VLockedMemory* aica_ram) {
 	if (virt_ram_base)

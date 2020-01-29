@@ -318,11 +318,15 @@ struct ReicastUI_impl : GUI {
     {
         if (gui_state == Closed)
         {
-            virtualDreamcast->Stop([this] {
-                gui_state = Commands;
-                settings_opening = true;
-                HideOSD();
-            });
+            // FIXME: This feels like a hack
+            // avoids assert if OpenSettings is called twice, before the core actually stops
+            if (sh4_cpu->IsRunning()) {
+                virtualDreamcast->Stop([this] {
+                    gui_state = Commands;
+                    settings_opening = true;
+                    HideOSD();
+                });
+            }
         }
         else if (gui_state == VJoyEdit)
         {
@@ -349,8 +353,8 @@ struct ReicastUI_impl : GUI {
             std::string game_file = cfgLoadStr("config", "image", "");
             if (!game_file.empty())
             {
-                gui_state = ClosedNoResume;
-                gui_start_game(game_file);
+                if (gui_start_game(game_file))
+                    gui_state = ClosedNoResume;
             }
             else
                 gui_render_content();
@@ -371,9 +375,7 @@ struct ReicastUI_impl : GUI {
             break;
         }
 
-        if (gui_state == Closed)
-            virtualDreamcast->Resume();
-        else if (gui_state == ClosedNoResume)
+        if (gui_state == ClosedNoResume)
             gui_state = Closed;
     }
 
@@ -552,6 +554,7 @@ struct ReicastUI_impl : GUI {
         ImGui::NextColumn();
         if (ImGui::Button("Resume", ImVec2(150 * scaling, 50 * scaling)))
         {
+            virtualDreamcast->Resume();
             gui_state = Closed;
         }
 
@@ -559,6 +562,7 @@ struct ReicastUI_impl : GUI {
         if (ImGui::Button("Restart", ImVec2(150 * scaling, 50 * scaling)))
         {
             virtualDreamcast->Reset();
+            virtualDreamcast->Resume();
             gui_state = Closed;
         }
         ImGui::NextColumn();
@@ -590,6 +594,7 @@ struct ReicastUI_impl : GUI {
         if (ImGui::Button("RenderDone Int", ImVec2(150 * scaling, 50 * scaling)))
         {
             asic_RaiseInterrupt(holly_RENDER_DONE);
+            virtualDreamcast->Resume();
             gui_state = Closed;
         }
 #endif
@@ -705,7 +710,7 @@ struct ReicastUI_impl : GUI {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
     }
 
-    void gui_start_game(const std::string& path)
+    bool gui_start_game(const std::string& path)
     {
         // do disc swap
         if (game_started)
@@ -713,8 +718,9 @@ struct ReicastUI_impl : GUI {
             cfgSetVirtual("config", "image", path.c_str());
             g_GDRDisc->Swap();
 
+            verify(virtualDreamcast != nullptr);
             virtualDreamcast->Resume();
-            return;
+            return true;
         }
 
         auto bios_path = get_readonly_data_path(DATA_PATH);
@@ -744,10 +750,13 @@ struct ReicastUI_impl : GUI {
             default:
                 break;
             }
+
+            return false;
         }
         else
         {
             game_started = true;
+            return true;
         }
     }
 
@@ -902,9 +911,9 @@ struct ReicastUI_impl : GUI {
             ImGui::PushID("bios");
             if (ImGui::Selectable("Dreamcast BIOS"))
             {
-                gui_state = ClosedNoResume;
                 cfgSetVirtual("config", "image", "");
-                gui_start_game("");
+                if (gui_start_game(""))
+                    gui_state = ClosedNoResume;
             }
             ImGui::PopID();
 #endif
@@ -918,8 +927,8 @@ struct ReicastUI_impl : GUI {
                     ImGui::PushID(game.path.c_str());
                     if (ImGui::Selectable(game.name.c_str()))
                     {
-                        gui_state = ClosedNoResume;
-                        gui_start_game(game.path);
+                        if (gui_start_game(game.path))
+                            gui_state = ClosedNoResume;
                     }
                     ImGui::PopID();
                 }

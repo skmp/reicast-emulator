@@ -34,14 +34,17 @@ static char * base_alloc = NULL;
 // Plase read the POSIX implementation for more information. On Windows this is
 // rather straightforward.
 VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
-	// Firt let's try to allocate the in-memory file
+	// Firt allocate the actual address space (it will be 64KB aligned on windows).
+	unsigned memsize = 512 * 1024 * 1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX;
+	base_alloc = (char*)VirtualAlloc(0, memsize, MEM_RESERVE, PAGE_NOACCESS);
+	if (base_alloc == NULL) {
+		return MemTypeError;
+	}
+
+	// Now let's try to allocate the in-memory file
 	mem_handle = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX, 0);
 	verify(mem_handle != INVALID_HANDLE_VALUE);
 
-	// Now allocate the actual address space (it will be 64KB aligned on windows).
-	unsigned memsize = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX;
-	base_alloc = (char*)VirtualAlloc(0, memsize, MEM_RESERVE, PAGE_NOACCESS);
-	verify(base_alloc != NULL);
 
 	// Calculate pointers now
 	*sh4rcb_addr = &base_alloc[0];

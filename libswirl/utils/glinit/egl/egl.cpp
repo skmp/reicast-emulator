@@ -177,8 +177,10 @@ bool egl_Init(void* wind, void* disp)
 		return false;
 	}
 
+#if !defined(TARGET_EMSCRIPTEN)
 	// Required when doing partial redraws
 	if (!eglSurfaceAttrib(egl_setup.display, egl_setup.surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED))
+#endif
 	{
 		printf("Swap buffers are not preserved. Last frame copy enabled\n");
 		gl.swap_buffer_not_preserved = true;

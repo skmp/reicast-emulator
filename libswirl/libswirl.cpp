@@ -1118,7 +1118,12 @@ struct Dreamcast_impl : VirtualDreamcast {
         printf("Loaded state from %s size %d\n", filename.c_str(), total_size);
     }
 
-
+#if defined(TARGET_NO_EXCEPTIONS)
+    bool HandleFault(unat addr, rei_host_context_t* ctx) {
+        die("Fault handling disabled");
+        return false;
+    }
+#else
     bool HandleFault(unat addr, rei_host_context_t* ctx)
     {
         if (!sh4_cpu)
@@ -1158,6 +1163,7 @@ struct Dreamcast_impl : VirtualDreamcast {
             return false;
         }
     }
+#endif
 };
 
 VirtualDreamcast* VirtualDreamcast::Create() {

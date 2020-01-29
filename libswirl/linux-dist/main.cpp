@@ -20,7 +20,7 @@
 #include "hw/pvr/Renderer_if.h"
 
 #if defined(TARGET_EMSCRIPTEN)
-	#include <emscripten.h>
+	#include "emscripten.h"
 #endif
 
 #if defined(SUPPORT_DISPMANX)
@@ -57,8 +57,13 @@
 #include "profiler/profiler.h"
 #endif
 
+#if defined(SUPPORT_GLX)
 #include "utils/glinit/glx/glx.h"
+#endif
+
+#if defined(SUPPORT_EGL)
 #include "utils/glinit/egl/egl.h"
+#endif
 
 void* x11_win = 0;
 void* x11_disp = 0;
@@ -113,6 +118,10 @@ void os_SetupInput()
 
 #if defined(USE_SDL)
 	input_sdl_init();
+#endif
+
+#if defined(TARGET_EMSCRIPTEN)
+	input_emscripten_init();
 #endif
 }
 
@@ -354,7 +363,7 @@ bool os_gl_init(void* hwnd, void* hdc)
 	#elif defined(SUPPORT_EGL)
 		return egl_Init(x11_win, x11_disp);
 	#else
-		#error "only x11 supported"
+		#error "only glx/egl supported"
 		return true;
 	#endif
 }
@@ -366,7 +375,7 @@ bool os_gl_swap()
 	#elif defined(SUPPORT_EGL)
 		return egl_Swap();
 	#else
-		#error "only x11 supported"
+		#error "only glx/egl supported"
 		return true;
 	#endif
 }
@@ -378,12 +387,13 @@ void os_gl_term()
 	#elif defined(SUPPORT_EGL)
 		egl_Term();
 	#else
-		#error "only x11 supported"
+		#error "only glx/egl supported"
 	#endif
 }
 
 int main(int argc, wchar* argv[])
 {
+
 	#ifdef TARGET_PANDORA
 		signal(SIGSEGV, clean_exit);
 		signal(SIGKILL, clean_exit);
@@ -403,6 +413,7 @@ int main(int argc, wchar* argv[])
 	{
 		add_system_data_dir(dirs[i]);
 	}
+	add_system_data_dir(find_user_data_dir());
 	printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
 	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
 

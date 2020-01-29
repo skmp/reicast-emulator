@@ -11,6 +11,10 @@ std::unique_ptr<GUIRenderer> g_GUIRenderer;
 #include "rend/gles/gles.h"
 #include "rend/gles/glcache.h"
 
+#if defined(TARGET_EMSCRIPTEN)
+#include <emscripten.h>
+#include <emscripten/html5.h>
+#endif
 
 static void findGLVersion()
 {
@@ -101,6 +105,48 @@ struct GUIRenderer_impl : GUIRenderer {
         keepRunning = true;
     }
 
+    virtual void UIFrame() {
+        if (g_GUI->IsOpen() || g_GUI->IsVJoyEdit())
+        {
+            os_DoEvents();
+
+            g_GUI->RenderUI();
+
+            if (!os_gl_swap()) // must re-create context
+            {
+                DestroyContext();
+
+                if (!CreateContext())
+                    return;
+            }
+        }
+        else
+        {
+            auto cb = callback;
+
+            callback_mutex.Lock();
+            {
+                cb = callback;
+                callback = nullptr;
+            }
+            callback_mutex.Unlock();
+
+            if (cb) {
+                if (cb(false)) {
+                    if (!os_gl_swap()) // must re-create context
+                    {
+                        DestroyContext();
+
+                        if (!CreateContext())
+                            return;
+                    }
+                }
+            }
+
+            os_DoEvents();
+        }
+    }
+    
     bool CreateContext() {
         printf("CreateContext\n");
         if (!os_gl_init((void*)libPvr_GetRenderTarget(),
@@ -123,45 +169,18 @@ struct GUIRenderer_impl : GUIRenderer {
         os_gl_term();
         printf("DestroyContext Done\n");
     }
+
     virtual void UILoop() {
         if (!CreateContext())
             return;
 
+#if defined(TARGET_EMSCRIPTEN)
+        emscripten_set_main_loop_arg(STATIC_FORWARD(GUIRenderer_impl, UIFrame), this, 60, true);
+#else
         while (keepRunning) {
-            if (g_GUI->IsOpen() || g_GUI->IsVJoyEdit())
-            {
-                os_DoEvents();
-
-                g_GUI->RenderUI();
-
-                if (!os_gl_swap()) // must re-create context
-                {
-                    DestroyContext();
-
-                    if (!CreateContext())
-                        return;
-                }
-            }
-            else {
-                auto cb = callback;
-
-                callback_mutex.Lock();
-                {
-                    cb = callback;
-                    callback = nullptr;
-                }
-                callback_mutex.Unlock();
-
-                if (cb) {
-                    if (cb(false)) {
-                        os_gl_swap();
-                    }
-                }
-
-                os_DoEvents();
-            }
+            UIFrame();
         }
-
+#endif
         DestroyContext();
     }
 

@@ -169,7 +169,16 @@ Disc* cue_parse(const wchar* file)
 
 	}
 
-	disc->FillGDSession();
+	if (disc->tracks.size() == 0)
+	{
+		// failed to parse or invalid file with 0 tracks
+		delete disc;
+		return nullptr;
+	}
+	else
+	{
+		disc->FillGDSession();
 
-	return disc;
+		return disc;
+	}
 }

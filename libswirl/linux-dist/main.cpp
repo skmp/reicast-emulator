@@ -359,14 +359,15 @@ bool os_gl_init(void* hwnd, void* hdc)
 	#endif
 }
 
-void os_gl_swap()
+bool os_gl_swap()
 {
 	#if defined(SUPPORT_GLX)
-		glx_Swap();
+		return glx_Swap();
 	#elif defined(SUPPORT_EGL)
-		egl_Swap(); 
+		return egl_Swap();
 	#else
 		#error "only x11 supported"
+		return true;
 	#endif
 }
 

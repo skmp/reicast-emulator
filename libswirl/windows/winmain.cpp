@@ -44,9 +44,9 @@ bool os_gl_init(void* hwnd, void* hdc)
 	return wgl_Init(hwnd, hdc);
 }
 
-void os_gl_swap()
+bool os_gl_swap()
 {
-	wgl_Swap();
+	return wgl_Swap();
 }
 
 void os_gl_term()

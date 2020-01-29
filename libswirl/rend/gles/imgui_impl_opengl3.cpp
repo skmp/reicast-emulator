@@ -110,8 +110,9 @@ void    ImGui_ImplOpenGL3_Shutdown()
 
 void    ImGui_ImplOpenGL3_NewFrame()
 {
-    if (!g_FontTexture)
+    if (!g_FontTexture) {
         ImGui_ImplOpenGL3_CreateDeviceObjects();
+    }
 }
 
 // OpenGL3 Render function.
@@ -259,6 +260,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
 
 bool ImGui_ImplOpenGL3_CreateFontsTexture()
 {
+    printf("CreateFontsTexture\n");
     // Build texture atlas
     ImGuiIO& io = ImGui::GetIO();
     unsigned char* pixels;

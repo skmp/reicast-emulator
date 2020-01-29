@@ -189,7 +189,7 @@ bool egl_Init(void* wind, void* disp)
 }
 
 //swap buffers
-void egl_Swap()
+bool egl_Swap()
 {
 #ifdef TARGET_PANDORA0
 	if (fbdev >= 0)
@@ -198,13 +198,21 @@ void egl_Swap()
 		ioctl(fbdev, FBIO_WAITFORVSYNC, &arg);
 	}
 #endif
-	eglSwapBuffers(egl_setup.display, egl_setup.surface);
+	auto status = eglSwapBuffers(egl_setup.display, egl_setup.surface);
+
+	bool rv = true;
+
+	if (status != GL_TRUE && status != GL_FALSE) {
+		rv = false;
+	}
 
 	EGLint w, h;
 	eglQuerySurface(egl_setup.display, egl_setup.surface, EGL_WIDTH, &w);
 	eglQuerySurface(egl_setup.display, egl_setup.surface, EGL_HEIGHT, &h);
 
 	rend_resize(w, h);
+
+	return rv;
 }
 
 void egl_Term()

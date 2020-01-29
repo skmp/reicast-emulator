@@ -101,17 +101,31 @@ struct GUIRenderer_impl : GUIRenderer {
         keepRunning = true;
     }
 
-    virtual void UILoop() {
+    bool CreateContext() {
+        printf("CreateContext\n");
         if (!os_gl_init((void*)libPvr_GetRenderTarget(),
-            (void*)libPvr_GetRenderSurface()))
-            return;
-        
+                        (void*)libPvr_GetRenderSurface()))
+            return false;
+
         findGLVersion();
 
         glcache.EnableCache();
         renderer_changed = true;
 
         ImGui_ImplOpenGL3_Init();
+        printf("CreateContext Done\n");
+        return true;
+    }
+
+    void DestroyContext() {
+        printf("DestroyContext\n");
+        ImGui_ImplOpenGL3_Shutdown();
+        os_gl_term();
+        printf("DestroyContext Done\n");
+    }
+    virtual void UILoop() {
+        if (!CreateContext())
+            return;
 
         while (keepRunning) {
             if (g_GUI->IsOpen() || g_GUI->IsVJoyEdit())
@@ -120,7 +134,13 @@ struct GUIRenderer_impl : GUIRenderer {
 
                 g_GUI->RenderUI();
 
-                os_gl_swap();
+                if (!os_gl_swap()) // must re-create context
+                {
+                    DestroyContext();
+
+                    if (!CreateContext())
+                        return;
+                }
             }
             else {
                 auto cb = callback;
@@ -142,8 +162,7 @@ struct GUIRenderer_impl : GUIRenderer {
             }
         }
 
-        ImGui_ImplOpenGL3_Shutdown();
-        os_gl_term();
+        DestroyContext();
     }
 
     virtual void QueueEmulatorFrame(std::function<bool(bool canceled)> cb) {

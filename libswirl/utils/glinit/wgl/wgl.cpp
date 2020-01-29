@@ -165,10 +165,11 @@ bool wgl_Init(void* hwnd, void* hdc)
 	return rv;
 }
 
-void wgl_Swap()
+bool wgl_Swap()
 {
 	wglSwapLayerBuffers(ourWindowHandleToDeviceContext, WGL_SWAP_MAIN_PLANE);
 	//SwapBuffers(ourWindowHandleToDeviceContext);
+	return true;
 }
 
 void wgl_Term()

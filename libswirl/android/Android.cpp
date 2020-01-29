@@ -310,19 +310,19 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)
 {
-    if (game_started)
+    if (game_started && sh4_cpu->IsRunning())
         virtualDreamcast->Stop([] {});
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)
 {
-    if (game_started)
+    if (game_started && !sh4_cpu->IsRunning() && gui_state == Closed)
         virtualDreamcast->Resume();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
 {
-    if (game_started)
+    if (game_started && sh4_cpu->IsRunning())
         virtualDreamcast->Stop([] {});
 }
 
@@ -670,7 +670,7 @@ bool os_gl_init(void* a, void* b)
     return egl_Init(a, b);
 }
 
-void os_gl_swap()
+bool os_gl_swap()
 {
     return egl_Swap();
 }

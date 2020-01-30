@@ -37,7 +37,7 @@ public:
 	const std::string& unique_id() { return _unique_id; }
 	virtual bool gamepad_btn_input(u32 code, bool pressed);
 	bool gamepad_axis_input(u32 code, int value);
-	GamepadDevice() : settingsOpenning(false) { }
+	
 	virtual ~GamepadDevice() {}
 	
 	void detect_btn_input(input_detected_cb button_pressed);
@@ -65,7 +65,7 @@ public:
 
 protected:
 	GamepadDevice(int maple_port, const char *api_name, bool remappable = true)
-		: _api_name(api_name), _maple_port(maple_port), input_mapper(NULL), _input_detected(NULL), _remappable(remappable)
+		: _api_name(api_name), _maple_port(maple_port), input_mapper(NULL), _input_detected(NULL), _remappable(remappable), settingsOpenning(false)
 	{
 	}
 	bool find_mapping(const char *custom_mapping = NULL);

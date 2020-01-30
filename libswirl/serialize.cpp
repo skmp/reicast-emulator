@@ -575,24 +575,13 @@ extern int idxnxx;
 //./core/hw/sh4/dyna/decoder.o
 //temp storage only
 //extern RuntimeBlockInfo* blk;
-extern state_t state;
-extern Sh4RegType div_som_reg1;
-extern Sh4RegType div_som_reg2;
-extern Sh4RegType div_som_reg3;
-
 
 
 
 //./core/hw/sh4/dyna/driver.o
 //extern u8 SH4_TCB[CODE_SIZE+4096];
 //one time ptr set
-//extern u8* CodeCache;
-extern u32 LastAddr;
-extern u32 LastAddr_min;
-//temp storage only
-//extern u32* emit_ptr;
-extern char block_hash[1024];
-
+//extern u8* CodeCache
 
 
 
@@ -881,15 +870,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(i);
 #endif
 
-	REICAST_S(state);
-	REICAST_S(div_som_reg1);
-	REICAST_S(div_som_reg2);
-	REICAST_S(div_som_reg3);
-
-	REICAST_S(LastAddr);
-	REICAST_S(LastAddr_min);
-	REICAST_SA(block_hash,1024);
-
 	REICAST_SA(RegisterWrite,sh4_reg_count);
 	REICAST_SA(RegisterRead,sh4_reg_count);
 	REICAST_S(fallback_blocks);
@@ -1123,16 +1103,8 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(i);
 #endif
 
-	REICAST_US(state);
-	REICAST_US(div_som_reg1);
-	REICAST_US(div_som_reg2);
-	REICAST_US(div_som_reg3);
-
 	//REICAST_USA(CodeCache,CODE_SIZE) ;
 	//REICAST_USA(SH4_TCB,CODE_SIZE+4096);
-	REICAST_US(LastAddr);
-	REICAST_US(LastAddr_min);
-	REICAST_USA(block_hash,1024);
 
 	REICAST_USA(RegisterWrite,sh4_reg_count);
 	REICAST_USA(RegisterRead,sh4_reg_count);

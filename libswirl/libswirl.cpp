@@ -667,8 +667,6 @@ struct Dreamcast_impl : VirtualDreamcast {
         install_prof_handler(0);
 #endif
 
-        audio_stream->InitAudio();
-
 #ifdef SCRIPTING
         luabindings_onstart();
 #endif
@@ -729,8 +727,6 @@ struct Dreamcast_impl : VirtualDreamcast {
 #ifdef SCRIPTING
             luabindings_onstop();
 #endif
-
-            audio_stream->TermAudio();
 
             callback_lock.Lock();
             verify(callback != nullptr);
@@ -851,6 +847,7 @@ struct Dreamcast_impl : VirtualDreamcast {
     bool Init()
     {
         audio_stream.reset(AudioStream::Create());
+        audio_stream->InitAudio();
 
         sh4_cpu = SuperH4::Create();
 
@@ -954,6 +951,7 @@ struct Dreamcast_impl : VirtualDreamcast {
         delete sh4_cpu;
         sh4_cpu = nullptr;
 
+        audio_stream->TermAudio();
         audio_stream.reset();
     }
 
@@ -1118,7 +1116,12 @@ struct Dreamcast_impl : VirtualDreamcast {
         printf("Loaded state from %s size %d\n", filename.c_str(), total_size);
     }
 
-
+#if defined(TARGET_NO_EXCEPTIONS)
+    bool HandleFault(unat addr, rei_host_context_t* ctx) {
+        die("Fault handling disabled");
+        return false;
+    }
+#else
     bool HandleFault(unat addr, rei_host_context_t* ctx)
     {
         if (!sh4_cpu)
@@ -1158,6 +1161,7 @@ struct Dreamcast_impl : VirtualDreamcast {
             return false;
         }
     }
+#endif
 };
 
 VirtualDreamcast* VirtualDreamcast::Create() {

@@ -47,10 +47,11 @@ bool SuperH4_impl::setBackend(SuperH4Backends backend) {
     case SH4BE_INTERPRETER:
         sh4_backend.reset(Get_Sh4Interpreter());
         break;
-
+#if FEAT_SHREC != DYNAREC_NONE
     case SH4BE_DYNAREC:
         sh4_backend.reset(Get_Sh4Recompiler());
         break;
+#endif
 
     default:
         return false;

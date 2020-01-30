@@ -322,6 +322,9 @@ void common_linux_setup()
 	settings.profile.run_counts=0;
 	
 	printf("Linux paging: %ld %08X %08X\n",sysconf(_SC_PAGESIZE),PAGE_SIZE,PAGE_MASK);
+
+#if !defined(TARGET_EMSCRIPTEN)
 	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
+#endif
 }
 #endif

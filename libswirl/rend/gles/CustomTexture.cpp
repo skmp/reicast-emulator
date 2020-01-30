@@ -112,8 +112,9 @@ bool CustomTexture::Init()
 				custom_textures_available = true;
 				closedir(dir);
 				loader_thread.Start();
-
+#if defined(SCRIPTING)
 				luabindings_findscripts(textures_path);
+#endif
 			}
 		}
 	}
@@ -133,7 +134,9 @@ void CustomTexture::Terminate()
 		loader_thread.WaitToEnd();
 	}
 
+#if defined(SCRIPTING)
 	luabindings_close();
+#endif
 }
 
 u8* CustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)

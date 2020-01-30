@@ -830,7 +830,7 @@ void os_DoEvents()
 		// If the message is WM_QUIT, exit the while loop
 		if (msg.message == WM_QUIT)
 		{
-            if (virtualDreamcast) {
+            if (virtualDreamcast && sh4_cpu->IsRunning()) {
 				virtualDreamcast->Stop([] { 
 					g_GUIRenderer->Stop();
 				});

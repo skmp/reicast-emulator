@@ -450,13 +450,22 @@ static void gles_term()
 {
 	glDeleteBuffers(1, &gl.vbo.geometry);
 	gl.vbo.geometry = 0;
+
 	glDeleteBuffers(1, &gl.vbo.modvols);
+	gl.vbo.modvols = 0;
+
 	glDeleteBuffers(1, &gl.vbo.idxs);
+	gl.vbo.idxs = 0;
+
 	glDeleteBuffers(1, &gl.vbo.idxs2);
+	gl.vbo.idxs2 = 0;
+
 	glcache.DeleteTextures(1, &fbTextureId);
 	fbTextureId = 0;
+
 	glcache.DeleteTextures(1, &fogTextureId);
 	fogTextureId = 0;
+
 	gl_free_osd_resources();
 	free_output_framebuffer();
 
@@ -692,7 +701,10 @@ void gl_load_osd_resources()
 
 void gl_free_osd_resources()
 {
-	glcache.DeleteProgram(gl.OSD_SHADER.program);
+	if (gl.OSD_SHADER.program != 0) {
+	    glcache.DeleteProgram(gl.OSD_SHADER.program);
+	    gl.OSD_SHADER.program = 0;
+	}
 
     if (osd_tex != 0) {
         glcache.DeleteTextures(1, &osd_tex);
@@ -772,11 +784,6 @@ bool gles_init()
 	//    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	//    glDebugMessageCallback(gl_DebugOutput, NULL);
 	//    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-
-	//clean up the buffer
-	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	os_gl_swap();
 
 #ifdef GL_GENERATE_MIPMAP_HINT
 	if (gl.is_gles)
@@ -1501,22 +1508,23 @@ bool RenderFrame(u8* vram, bool isRenderFramebuffer)
 
 struct glesrend final : Renderer
 {
+	bool wasInit=false;
 	u8* vram;
 	glesrend(u8* vram) : vram(vram) { }
 
-	bool Init() { return gles_init(); }
+	bool Init() { return (wasInit = gles_init()); }
 	void SetFBScale(float x, float y)
 	{
 		fb_scale_x = x;
 		fb_scale_y = y;
 	}
 
-	void Resize(int w, int h) { screen_width=w; screen_height=h; }
+	void Resize(int w, int h) { /* do nothing */ }
 	~glesrend()
 	{
-		if (KillTex)
-			killtex();
-		gles_term();
+		if (wasInit) {
+			gles_term();
+		}
 	}
 
 	bool Process(TA_context* ctx) { return ProcessFrame(this, vram, ctx); }

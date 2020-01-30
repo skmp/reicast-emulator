@@ -13,6 +13,7 @@
 #include "linux-dist/x11.h"
 #include "linux-dist/main.h"
 #include "gui/gui.h"
+#include "gui/gui_renderer.h"
 #include "gui/gui_partials.h"
 
 #include "input/gamepad.h"
@@ -120,8 +121,18 @@ void event_x11_handle()
 		XNextEvent((Display *)x11_disp, &event);
 
 		if (event.type == ClientMessage &&
-				event.xclient.data.l[0] == wmDeleteMessage)
-			virtualDreamcast->Stop([] {});
+			event.xclient.data.l[0] == wmDeleteMessage)
+		{
+			if (virtualDreamcast && sh4_cpu->IsRunning()) {
+				virtualDreamcast->Stop([] {
+					g_GUIRenderer->Stop();
+					});
+			}
+			else
+			{
+				g_GUIRenderer->Stop();
+			}
+		}
 		else if (event.type == ConfigureNotify)
 		{
 			x11_width = event.xconfigure.width;

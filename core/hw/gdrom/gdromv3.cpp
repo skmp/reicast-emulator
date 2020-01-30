@@ -100,7 +100,7 @@ void libCore_CDDA_Sector(s16* sector)
 		memset(sector,0,2352);
 	}
 }
-void gd_spi_pio_end(u8* buffer,u32 len,gd_states next_state=gds_pio_end);
+void gd_spi_pio_end(const u8* buffer, u32 len, gd_states next_state = gds_pio_end);
 void gd_process_spi_cmd();
 void gd_process_ata_cmd();
 
@@ -332,7 +332,7 @@ void libCore_gdrom_disc_change()
 }
 
 //This handles the work of setting up the pio regs/state :)
-void gd_spi_pio_end(u8* buffer, u32 len, gd_states next_state)
+void gd_spi_pio_end(const u8* buffer, u32 len, gd_states next_state)
 {
 	pio_buff.index=0;
 	pio_buff.size=len>>1;
@@ -409,7 +409,7 @@ void gd_process_ata_cmd()
 
 	case ATA_IDENTIFY_DEV:
 		printf_ata("ATA_IDENTIFY_DEV");
-		gd_spi_pio_end((u8*)&reply_a1[packet_cmd.data_8[2]>>1],packet_cmd.data_8[4]);
+		gd_spi_pio_end((const u8*)&reply_a1[packet_cmd.data_8[2] >> 1], packet_cmd.data_8[4]);
 		break;
 
 	case ATA_SET_FEATURES:
@@ -573,9 +573,9 @@ void gd_process_spi_cmd()
 		{
 			printf_spicmd("SPI : unknown ? [0x71]");
 			//printf("SPI : unknown ? [0x71]\n");
-			extern u32 reply_71_sz;
+			extern const u32 reply_71_sz;
 
-			gd_spi_pio_end((u8*)&reply_71[0],reply_71_sz);//uCount
+			gd_spi_pio_end((const u8*)&reply_71[0], reply_71_sz);//uCount
 
 
 			if (libGDR_GetDiscType()==GdRom || libGDR_GetDiscType()==CdRom_XA)
@@ -695,7 +695,7 @@ void gd_process_spi_cmd()
 			}
 			else
 			{
-				die("SPI_CD_SEEK  : not known parameter..");
+				die("SPI_CD_PLAY  : not known parameter..");
 			}
 			cdda.repeats=packet_cmd.data_8[6]&0xF;
 			DEBUG_LOG(GDROM, "cdda.StartAddr=%d",cdda.StartAddr.FAD);

@@ -24,8 +24,9 @@ LDFLAGS	:=
 
 
 CXXONLYFLAGS := -std=c++14
-CXXFLAGS := -s USE_PTHREADS=1 -s USE_SDL=2 -O3 -g2 -D RELEASE -c -D TARGET_EMSCRIPTEN -D TARGET_NO_JIT -D TARGET_NO_EXCEPTIONS -D TARGET_NO_WEBUI -D TARGET_NO_COREIO_HTTP -D TARGET_NO_OPENMP -D SUPPORT_EGL -D FEAT_HAS_NIXPROF=0 
-CXXFLAGS += #-D USE_SDL_AUDIO=1 # must fix this
+CXXFLAGS := -s USE_PTHREADS=1 -s USE_SDL=2 -O3 -D RELEASE -c -D TARGET_EMSCRIPTEN -D TARGET_NO_JIT -D TARGET_NO_EXCEPTIONS -D TARGET_NO_WEBUI -D TARGET_NO_COREIO_HTTP -D TARGET_NO_OPENMP -D SUPPORT_EGL -D FEAT_HAS_NIXPROF=0 
+CXXFLAGS += -D USE_SDL_AUDIO=1
+CXXFLAGS += #-g2 # for debug
 CXXFLAGS += -fno-strict-aliasing
 CXXFLAGS += -ffast-math
 
@@ -48,7 +49,7 @@ all: $(CPPFILES) $(EXECUTABLE)
 	
 $(EXECUTABLE): $(OBJECTS)
 	echo $(RZDCY_FILES)
-	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS)  $(OBJECTS) $(LIBS) -o $@ --preload-file data/dc_boot.bin --preload-file data/dc_flash.bin  --preload-file roms/ct.chd --preload-file emu.cfg -s TOTAL_MEMORY=536870912 -O3 -g2 -s USE_PTHREADS=1 -s USE_SDL=2
+	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS)  $(OBJECTS) $(LIBS) -o $@ --preload-file data/dc_boot.bin --preload-file data/dc_flash.bin  --preload-file roms/ct.chd --preload-file emu.cfg -s TOTAL_MEMORY=536870912 -O3 -s USE_PTHREADS=1 -s USE_SDL=2 #-g2 #for debug
 obj/%.build.obj : $(RZDCY_SRC_DIR)/%.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(EXTRAFLAGS) $(INCS) $(CXXFLAGS) $(CXXONLYFLAGS) $< -o $@

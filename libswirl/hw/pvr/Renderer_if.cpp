@@ -319,10 +319,12 @@ static void rend_cancel_emu_wait()
 
 }
 
+
+//called always on vlbank, even before rend_init_renderer
 void rend_resize(int width, int height) {
     screen_width = width;
     screen_height = height;
-	//renderer->Resize(width, height);
+	if (renderer) renderer->Resize(width, height);
 }
 
 

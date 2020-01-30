@@ -492,7 +492,7 @@ void gl4_delete_shaders()
 	gl4.modvol_shader.program = 0;
 }
 
-static void gles_term(void)
+static void gl41_term(void)
 {
 	glDeleteBuffers(1, &gl4.vbo.geometry);
 	gl4.vbo.geometry = 0;
@@ -517,7 +517,7 @@ static void create_modvol_shader()
 	gl4.modvol_shader.extra_depth_scale = glGetUniformLocation(gl4.modvol_shader.program, "extra_depth_scale");
 }
 
-static bool gl_create_resources()
+static bool gl4_create_resources()
 {
 	if (gl4.vbo.geometry != 0)
 		// Assume the resources have already been created
@@ -554,7 +554,7 @@ static bool gl_create_resources()
 //setup
 extern void initABuffer();
 
-static bool gles_init()
+static bool gl41_init()
 {
 	int major = 0;
 	int minor = 0;
@@ -567,23 +567,20 @@ static bool gles_init()
 	}
 	printf("Per-pixel sorting enabled\n");
 
-	glcache.DisableCache();
+	glcache.EnableCache();
 
-	if (!gl_create_resources())
+	if (!gl4_create_resources())
 		return false;
 
-//    glEnable(GL_DEBUG_OUTPUT);
-//    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-//    glDebugMessageCallback(gl_DebugOutput, NULL);
-//    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+	//    glEnable(GL_DEBUG_OUTPUT);
+	//    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	//    glDebugMessageCallback(gl_DebugOutput, NULL);
+	//    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 
-
-	//clean up the buffer
-	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	os_gl_swap();
 
 	initABuffer();
+
+	gl4_CreateSamplers();
 
 	if (settings.rend.TextureUpscale > 1)
 	{
@@ -599,13 +596,6 @@ static bool gles_init()
 
 static bool RenderFrame(u8* vram, bool isRenderFramebuffer)
 {
-	static int old_screen_width, old_screen_height, old_screen_scaling;
-	if (screen_width != old_screen_width || screen_height != old_screen_height || settings.rend.ScreenScaling != old_screen_scaling) {
-		rend_resize(screen_width, screen_height);
-		old_screen_width = screen_width;
-		old_screen_height = screen_height;
-		old_screen_scaling = settings.rend.ScreenScaling;
-	}
 	DoCleanup();
 	create_modvol_shader();
 
@@ -972,14 +962,59 @@ struct gl4rend : Renderer
 {
 	u8* vram;
 	bool hasInited = false;
+	int old_screen_width = -1, old_screen_height = -1 , old_screen_scaling = -1;
 
 	gl4rend(u8* vram) : vram(vram) { }
 
-	bool Init() { return (hasInited = gles_init()); }
+	bool Init() { return (hasInited = gl41_init()); }
 	void Resize(int w, int h)
 	{
-		screen_width=w;
-		screen_height=h;
+
+    	if (w != old_screen_width || h != old_screen_height || settings.rend.ScreenScaling != old_screen_scaling) {
+
+    	    if (stencilTexId != 0)
+            {
+                glcache.DeleteTextures(1, &stencilTexId);
+                stencilTexId = 0;
+            }
+            if (depthTexId != 0)
+            {
+                glcache.DeleteTextures(1, &depthTexId);
+                depthTexId = 0;
+            }
+            if (opaqueTexId != 0)
+            {
+                glcache.DeleteTextures(1, &opaqueTexId);
+                opaqueTexId = 0;
+            }
+            if (depthSaveTexId != 0)
+            {
+                glcache.DeleteTextures(1, &depthSaveTexId);
+                depthSaveTexId = 0;
+            }
+            reshapeABuffer(w, h);
+
+    		old_screen_width = w;
+    		old_screen_height = h;
+    		old_screen_scaling = settings.rend.ScreenScaling;
+    	}
+	}
+
+	void SetFBScale(float x, float y)
+	{
+		fb_scale_x = x;
+		fb_scale_y = y;
+	}
+
+	~gl4rend()
+	{
+		if (!hasInited)
+			return;
+
+		gl4_DestroySamplers();
+
+		termABuffer();
+		
 		if (stencilTexId != 0)
 		{
 			glcache.DeleteTextures(1, &stencilTexId);
@@ -1000,49 +1035,14 @@ struct gl4rend : Renderer
 			glcache.DeleteTextures(1, &depthSaveTexId);
 			depthSaveTexId = 0;
 		}
-		reshapeABuffer(w, h);
-	}
+		if (KillTex)
+			killtex();
 
-	void SetFBScale(float x, float y)
-	{
-		fb_scale_x = x;
-		fb_scale_y = y;
-	}
+		CollectCleanup();
 
-	~gl4rend()
-	{
-		if (!hasInited)
-			return;
-
-		termABuffer();
-	   if (stencilTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &stencilTexId);
-		  stencilTexId = 0;
-	   }
-	   if (depthTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &depthTexId);
-		  depthTexId = 0;
-	   }
-	   if (opaqueTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &opaqueTexId);
-		  opaqueTexId = 0;
-	   }
-	   if (depthSaveTexId != 0)
-	   {
-		  glcache.DeleteTextures(1, &depthSaveTexId);
-		  depthSaveTexId = 0;
-	   }
-	   if (KillTex)
-		  killtex();
-
-	   CollectCleanup();
-
-	   gl_free_osd_resources();
-	   free_output_framebuffer();
-	   gles_term();
+		gl_free_osd_resources();
+		free_output_framebuffer();
+		gl41_term();
 	}
 
 	bool Process(TA_context* ctx) { return ProcessFrame(this, vram, ctx); }

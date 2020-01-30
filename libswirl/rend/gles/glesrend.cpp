@@ -785,11 +785,6 @@ bool gles_init()
 	//    glDebugMessageCallback(gl_DebugOutput, NULL);
 	//    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 
-	//clean up the buffer
-	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	os_gl_swap();
-
 #ifdef GL_GENERATE_MIPMAP_HINT
 	if (gl.is_gles)
 		glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
@@ -1524,7 +1519,7 @@ struct glesrend final : Renderer
 		fb_scale_y = y;
 	}
 
-	void Resize(int w, int h) { screen_width=w; screen_height=h; }
+	void Resize(int w, int h) { /* do nothing */ }
 	~glesrend()
 	{
 		if (wasInit) {

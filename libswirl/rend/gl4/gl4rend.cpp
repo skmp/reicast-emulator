@@ -609,6 +609,36 @@ static bool RenderFrame(u8* vram, bool isRenderFramebuffer)
 	DoCleanup();
 	create_modvol_shader();
 
+	{
+		GLuint output_fbo;
+
+		float screen_scaling = settings.rend.ScreenScaling / 100.f;
+		float screen_stretching = settings.rend.ScreenStretching / 100.f;
+
+
+		if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
+		{
+			output_fbo = init_output_framebuffer(screen_width * screen_scaling + 0.5f, screen_height * screen_scaling + 0.5f);
+		}
+		else
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glViewport(0, 0, screen_width, screen_height);
+			output_fbo = 0;
+		}
+
+		if (isRenderFramebuffer) {
+			RenderFramebuffer();
+			glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+
+			glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+			glClear(GL_COLOR_BUFFER_BIT);
+
+			gl4DrawFramebuffer(640, 480);
+			return true;
+		}
+	}
+
 	bool is_rtt=pvrrc.isRTT;
 
 	//if (FrameCount&7) return;

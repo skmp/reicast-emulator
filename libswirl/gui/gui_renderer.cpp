@@ -166,12 +166,15 @@ struct GUIRenderer_impl : GUIRenderer {
         renderer_changed = true;
 
         ImGui_ImplOpenGL3_Init();
+
+        // rend_init_renderer(); // is lazy init on callback/rend_frame
         printf("CreateContext Done\n");
         return true;
     }
 
     void DestroyContext() {
         printf("DestroyContext\n");
+        rend_term_renderer();	// also cleans texcache
         ImGui_ImplOpenGL3_Shutdown();
         os_gl_term();
         printf("DestroyContext Done\n");

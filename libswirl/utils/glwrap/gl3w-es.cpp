@@ -1,5 +1,10 @@
+#include "types.h"
 #include "gl3w.h"
 #include "khronos/EGL/egl.h"
+
+#if defined(SUPPORT_EGL) && defined(_ANDROID)
+#include <dlfcn.h>
+#endif
 
 struct rglgen_sym_map { const char *sym; void *ptr; };
 extern const struct rglgen_sym_map rglgen_symbol_map[];
@@ -8,8 +13,23 @@ bool load_gles_symbols()
 {
 	#if defined(SUPPORT_EGL)
 		for (int i = 0; rglgen_symbol_map[i].sym != NULL; i++)
-			*(void **)rglgen_symbol_map[i].ptr = (void*)eglGetProcAddress(rglgen_symbol_map[i].sym);
-	
+		{
+		    *(void **)rglgen_symbol_map[i].ptr = nullptr;
+#if defined(_ANDROID)
+		    //try to load via dlsym -- older android can't load everything via eglGetProcAddress
+		    *(void **)rglgen_symbol_map[i].ptr = (void*)dlsym(RTLD_DEFAULT, rglgen_symbol_map[i].sym);
+#endif
+		    // try to load via eglGetProcAddress
+		    if (!*(void **)rglgen_symbol_map[i].ptr) {
+		      *(void **)rglgen_symbol_map[i].ptr = (void*)eglGetProcAddress(rglgen_symbol_map[i].sym);
+		    }
+
+            // print a warning if failed
+            if (!*(void **)rglgen_symbol_map[i].ptr)
+            {
+                printf("WARN: load_gles_symbols: failed to resolve %s\n", rglgen_symbol_map[i].sym);
+            }
+	    }
         return true;
     #else
         return false;    

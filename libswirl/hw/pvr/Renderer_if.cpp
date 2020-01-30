@@ -88,7 +88,7 @@ static unique_ptr<Renderer> fallback_renderer;
 //bool renderer_enabled = true;	// Signals the renderer thread to exit
 bool renderer_changed = false;	// Signals the renderer thread to switch renderer
 
-cResetEvent rs, re;
+static cResetEvent rs, re;
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 
@@ -406,12 +406,7 @@ void rend_start_render(u8* vram)
 			{
 				palette_update();
 
-                g_GUIRenderer->QueueEmulatorFrame([=](bool canceled){
-
-                    if (canceled) {
-                        re.Set();
-                        return false;
-                    }
+                g_GUIRenderer->QueueEmulatorFrame([=](){
 
                     _pvrrc = DequeueRender();
                     
@@ -465,10 +460,8 @@ void rend_vblank()
 	{
         fb_dirty = false;
 
-        g_GUIRenderer->QueueEmulatorFrame([] (bool canceled) {
-            if (!canceled) {
-                renderer->RenderFramebuffer();
-            }
+        g_GUIRenderer->QueueEmulatorFrame([] () {
+            renderer->RenderFramebuffer();
             return true;
         });
 	}

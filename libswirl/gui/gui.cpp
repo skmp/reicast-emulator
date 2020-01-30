@@ -536,14 +536,16 @@ struct ReicastUI_impl : GUI {
         ImGui::Columns(2, "buttons", false);
         if (ImGui::Button("Load State", ImVec2(150 * scaling, 50 * scaling)))
         {
-            gui_state = ClosedNoResume;
             virtualDreamcast->LoadState();
+            gui_state = Closed;
+            virtualDreamcast->Resume();
         }
         ImGui::NextColumn();
         if (ImGui::Button("Save State", ImVec2(150 * scaling, 50 * scaling)))
         {
-            gui_state = ClosedNoResume;
             virtualDreamcast->SaveState();
+            gui_state = Closed;
+            virtualDreamcast->Resume();
         }
 
         ImGui::NextColumn();

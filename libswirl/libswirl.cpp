@@ -728,6 +728,8 @@ struct Dreamcast_impl : VirtualDreamcast {
             luabindings_onstop();
 #endif
 
+            g_GUIRenderer->WaitQueueEmpty();
+
             callback_lock.Lock();
             verify(callback != nullptr);
             callback();
@@ -984,8 +986,6 @@ struct Dreamcast_impl : VirtualDreamcast {
     {
         if (data != NULL)
             free(data);
-
-        Resume();
     }
 
     string get_savestate_file_path()

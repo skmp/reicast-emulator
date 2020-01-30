@@ -11,9 +11,9 @@ struct GUIRenderer {
 
     virtual void UILoop() = 0;
 
-    virtual void QueueEmulatorFrame(std::function<bool(bool canceled)> callback) = 0;
+    virtual void QueueEmulatorFrame(std::function<bool()> callback) = 0;
 
-    virtual void FlushEmulatorQueue() = 0;
+    virtual void WaitQueueEmpty() = 0;
 
     virtual ~GUIRenderer() { }
 

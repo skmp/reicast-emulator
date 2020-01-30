@@ -91,7 +91,7 @@ struct GUIRenderer_impl : GUIRenderer {
     cMutex callback_mutex;
     cResetEvent pendingCallback;
 
-    std::function<bool(bool canceled)> callback;
+    std::function<bool()> callback;
 
     GUIRenderer_impl() { 
         keepRunning = true; 
@@ -105,45 +105,51 @@ struct GUIRenderer_impl : GUIRenderer {
         keepRunning = true;
     }
 
-    virtual void UIFrame() {
-        if (g_GUI->IsOpen() || g_GUI->IsVJoyEdit())
-        {
-            os_DoEvents();
+    virtual bool tryUIFrame() {
 
+        bool rv = true;
+
+        os_DoEvents();
+
+        auto cb = callback;
+
+        callback_mutex.Lock();
+        {
+            cb = callback;
+        }
+        callback_mutex.Unlock();
+
+        if (cb) {
+            if (cb()) {
+                if (!os_gl_swap()) // must re-create context
+                {
+                    rv = false;
+                }
+            }
+            callback_mutex.Lock();
+            callback = nullptr;
+            callback_mutex.Unlock();
+        }
+        else  if (g_GUI->IsOpen() || g_GUI->IsVJoyEdit())
+        {
             g_GUI->RenderUI();
 
             if (!os_gl_swap()) // must re-create context
             {
-                DestroyContext();
-
-                if (!CreateContext())
-                    return;
+                rv = false;
             }
         }
-        else
-        {
-            auto cb = callback;
 
-            callback_mutex.Lock();
-            {
-                cb = callback;
-                callback = nullptr;
+        return rv;
+    }
+
+    virtual void UIFrame() {
+        if (!tryUIFrame()) {
+            DestroyContext();
+
+            if (!CreateContext()) {
+                return;
             }
-            callback_mutex.Unlock();
-
-            if (cb) {
-                if (cb(false)) {
-                    if (!os_gl_swap()) // must re-create context
-                    {
-                        DestroyContext();
-
-                        if (!CreateContext())
-                            return;
-                    }
-                }
-            }
-
-            os_DoEvents();
         }
     }
     
@@ -184,26 +190,22 @@ struct GUIRenderer_impl : GUIRenderer {
         DestroyContext();
     }
 
-    virtual void QueueEmulatorFrame(std::function<bool(bool canceled)> cb) {
+    virtual void QueueEmulatorFrame(std::function<bool()> cb) {
         callback_mutex.Lock();
         callback = cb;
         callback_mutex.Unlock();
     }
 
-    virtual void FlushEmulatorQueue() {
+    virtual void WaitQueueEmpty() {
+        do {
+            auto cb = callback;
 
-        auto cb = callback;
-        
-        callback_mutex.Lock();
-        {
-            cb = callback;
-            callback = nullptr;
-        }
-        callback_mutex.Unlock();
-
-        if (cb) {
-            cb(true);
-        }
+            callback_mutex.Lock();
+            {
+                cb = callback;
+            }
+            callback_mutex.Unlock();
+        } while (callback);
     }
 };
 

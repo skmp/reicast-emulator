@@ -50,15 +50,16 @@ all: $(CPPFILES) $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS)
 	echo $(RZDCY_FILES)
 	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS)  $(OBJECTS) $(LIBS) -o $@ --preload-file data/dc_boot.bin --preload-file data/dc_flash.bin  --preload-file roms/ct.chd --preload-file emu.cfg -s TOTAL_MEMORY=536870912 -O3 -s USE_PTHREADS=1 -s USE_SDL=2 #-g2 #for debug
-obj/%.build.obj : $(RZDCY_SRC_DIR)/%.cpp
+
+obj/%.build.obj : $(RZDCY_SRC_DIR)/%.cpp $(VERSION_HEADER)
 	mkdir -p $(dir $@)
 	$(CXX) $(EXTRAFLAGS) $(INCS) $(CXXFLAGS) $(CXXONLYFLAGS) $< -o $@
 	
-obj/%.build.obj : $(RZDCY_SRC_DIR)/%.c
+obj/%.build.obj : $(RZDCY_SRC_DIR)/%.c $(VERSION_HEADER)
 	mkdir -p $(dir $@)
 	$(CC) $(EXTRAFLAGS) $(INCS) $(CXXFLAGS) $< -o $@
 
-obj/%.build.obj : $(RZDCY_SRC_DIR)/%.S
+obj/%.build.obj : $(RZDCY_SRC_DIR)/%.S $(VERSION_HEADER)
 	mkdir -p $(dir $@)	
 	$(AS) $(ASFLAGS) $(INCS) $< -o $@
 

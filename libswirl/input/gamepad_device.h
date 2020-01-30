@@ -19,7 +19,7 @@
 
 #pragma once
 #include <memory>
-#include <mutex>
+#include <atomic>
 #include "types.h"
 #include "mapping.h"
 #include "oslib/threading.h"
@@ -27,6 +27,8 @@
 class GamepadDevice
 {
 	typedef void (*input_detected_cb)(u32 code);
+	atomic<bool> settingsOpenning;
+
 public:
 	const std::string& api_name() { return _api_name; }
 	const std::string& name() { return _name; }
@@ -35,6 +37,7 @@ public:
 	const std::string& unique_id() { return _unique_id; }
 	virtual bool gamepad_btn_input(u32 code, bool pressed);
 	bool gamepad_axis_input(u32 code, int value);
+	GamepadDevice() : settingsOpenning(false) { }
 	virtual ~GamepadDevice() {}
 	
 	void detect_btn_input(input_detected_cb button_pressed);

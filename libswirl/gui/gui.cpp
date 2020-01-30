@@ -314,23 +314,32 @@ struct ReicastUI_impl : GUI {
         printf("Screen DPI is %d, size %d x %d. Scaling by %.2f\n", screen_dpi, screen_width, screen_height, scaling);
     }
 
-    void OpenSettings()
+    void OpenSettings(function<void()> cb)
     {
         if (gui_state == Closed)
         {
             // FIXME: This feels like a hack
             // avoids assert if OpenSettings is called twice, before the core actually stops
             if (sh4_cpu->IsRunning()) {
-                virtualDreamcast->Stop([this] {
+                virtualDreamcast->Stop([this, cb] {
                     gui_state = Commands;
                     settings_opening = true;
                     HideOSD();
+                    cb();
                 });
+            }
+            else {
+                cb();
             }
         }
         else if (gui_state == VJoyEdit)
         {
             gui_state = VJoyEditCommands;
+            cb();
+        }
+        else
+        {
+            cb();
         }
     }
 

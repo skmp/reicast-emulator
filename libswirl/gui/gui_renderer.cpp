@@ -88,6 +88,7 @@ static void findGLVersion()
 
 struct GUIRenderer_impl : GUIRenderer {
     std::atomic<bool> keepRunning;
+    std::atomic<bool> frameDone;
     cMutex callback_mutex;
     cResetEvent pendingCallback;
 
@@ -116,8 +117,11 @@ struct GUIRenderer_impl : GUIRenderer {
         callback_mutex.Lock();
         {
             cb = callback;
+            callback = nullptr;
+            frameDone = cb == nullptr;
         }
         callback_mutex.Unlock();
+        
 
         if (cb) {
             if (cb()) {
@@ -126,9 +130,6 @@ struct GUIRenderer_impl : GUIRenderer {
                     rv = false;
                 }
             }
-            callback_mutex.Lock();
-            callback = nullptr;
-            callback_mutex.Unlock();
         }
         else  if (g_GUI->IsOpen() || g_GUI->IsVJoyEdit())
         {
@@ -192,6 +193,7 @@ struct GUIRenderer_impl : GUIRenderer {
 
     virtual void QueueEmulatorFrame(std::function<bool()> cb) {
         callback_mutex.Lock();
+        frameDone = false;
         callback = cb;
         callback_mutex.Unlock();
     }
@@ -205,7 +207,7 @@ struct GUIRenderer_impl : GUIRenderer {
                 cb = callback;
             }
             callback_mutex.Unlock();
-        } while (callback);
+        } while (callback || !frameDone);
     }
 };
 

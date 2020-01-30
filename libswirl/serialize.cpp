@@ -733,8 +733,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	mcfg_SerializeDevices(data, total_size);
 
 	REICAST_S(FrameCount);
-	REICAST_S(pend_rend);
-
+	
 
 	REICAST_SA(YUV_tempdata,512/4);
 	REICAST_S(YUV_dest);
@@ -948,8 +947,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	mcfg_UnserializeDevices(data, total_size);
 
 	REICAST_US(FrameCount);
-	REICAST_US(pend_rend);
-
 
 	REICAST_USA(YUV_tempdata,512/4);
 	REICAST_US(YUV_dest);

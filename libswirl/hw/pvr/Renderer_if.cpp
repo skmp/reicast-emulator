@@ -14,6 +14,7 @@
 #include "scripting/lua_bindings.h"
 
 #include <memory>
+#include <atomic>
 
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"
@@ -88,6 +89,7 @@ static unique_ptr<Renderer> fallback_renderer;
 //bool renderer_enabled = true;	// Signals the renderer thread to exit
 bool renderer_changed = false;	// Signals the renderer thread to switch renderer
 
+static atomic<bool> pend_rend(false);
 static cResetEvent rs, re;
 
 int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
@@ -100,7 +102,6 @@ void killtex();
 bool render_output_framebuffer();
 
 bool dump_frame_switch = false;
-bool pend_rend = false;
 
 
 // auto or slug
@@ -198,9 +199,11 @@ static bool rend_frame(u8* vram, TA_context* ctx, bool draw_osd) {
 
     bool proc = renderer->Process(ctx);
 
-    if (!proc || !ctx->rend.isRTT)
-        // If rendering to texture, continue locking until the frame is rendered
-        re.Set();
+	if (!proc || !ctx->rend.isRTT) {
+		// If rendering to texture, continue locking until the frame is rendered
+		pend_rend = false;
+		re.Set();
+	}
 
     bool do_swp = proc && renderer->RenderPVR();
 
@@ -414,8 +417,10 @@ void rend_start_render(u8* vram)
                     
                     bool do_swp = rend_frame(vram, _pvrrc, true);
 
-                    if (_pvrrc->rend.isRTT)
+					if (_pvrrc->rend.isRTT) {
+						pend_rend = false;
                         re.Set();
+					}
 
                     //clear up & free data ..
                     FinishRender(_pvrrc);
@@ -424,9 +429,9 @@ void rend_start_render(u8* vram)
                     return do_swp;
                 });
 
+				pend_rend = true;
 				rs.Set();
 
-				pend_rend = true;
 			}
 		}
 		else

@@ -14,7 +14,7 @@ public final class JNIdc
 	public static native void setExternalStorageDirectories(Object[] pathList);
 	public static native void setGameUri(String fileName);
 	public static native void pause();
-	public static native void resume();
+
 	public static native void stop();
 	public static native void destroy();
 

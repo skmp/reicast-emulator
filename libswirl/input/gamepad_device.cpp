@@ -96,8 +96,12 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 				virtualDreamcast->Stop([] { });
 			break;
 		case EMU_BTN_MENU:
-			if (pressed)
-				g_GUI->OpenSettings();
+			if (pressed && !settingsOpenning) {
+				settingsOpenning = true;
+				g_GUI->OpenSettings([this] {
+					settingsOpenning = false;
+				});
+			}
 			break;
 		case EMU_BTN_TRIGGER_LEFT:
 			lt[_maple_port] = pressed ? 255 : 0;

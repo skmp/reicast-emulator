@@ -117,7 +117,6 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
             setFocusable(true);
             setFocusableInTouchMode(true);
             requestFocus();
-            JNIdc.resume();
         }
     }
 

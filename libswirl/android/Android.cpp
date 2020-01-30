@@ -158,7 +158,7 @@ extern bool print_stats;
 jobject g_emulator;
 jmethodID saveAndroidSettingsMid;
 jmethodID launchFromUrlMid;
-static ANativeWindow *g_window = 0;
+static std::atomic<ANativeWindow*> g_window(0);
 
 void os_DoEvents()
 {
@@ -310,14 +310,15 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)
 {
-    if (game_started && sh4_cpu->IsRunning())
-        virtualDreamcast->Stop([] {});
-}
+    static atomic<bool> isPausing(false);
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)
-{
-    if (game_started && !sh4_cpu->IsRunning() && gui_state == Closed)
-        virtualDreamcast->Resume();
+    if (!isPausing) {
+        isPausing = true;
+
+        g_GUI->OpenSettings([] {
+            isPausing = false;
+        });
+    }
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
@@ -392,19 +393,27 @@ static cThread render_thread(render_thread_func, NULL);
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNative(JNIEnv * env, jobject obj, jobject surface)
 {
     if (surface == NULL) {
-        verify(render_thread.hThread != NULL);
-        
-        g_GUIRenderer->Stop();
-        render_thread.WaitToEnd();
 
-        render_thread.hThread = NULL;
         
-        verify(g_window != NULL);
-        ANativeWindow_release(g_window);
-        g_window = NULL;
+        g_GUI->OpenSettings([] {
+            g_GUIRenderer->Stop();
+            verify(render_thread.hThread != NULL);
+            render_thread.WaitToEnd();
+
+            render_thread.hThread = NULL;
+
+
+            ANativeWindow_release(g_window);
+            verify(g_window != NULL);
+            g_window = NULL;
+        });
+
+        do {} while (g_window != NULL);
     }
     else
 	{
+        do {} while (g_window != NULL);
+
         verify(g_window == NULL);
         verify(render_thread.hThread == NULL);
         g_window = ANativeWindow_fromSurface(env, surface);
@@ -448,7 +457,14 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_getControllers(JNIEnv
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_guiOpenSettings(JNIEnv *env, jobject obj)
 {
-    g_GUI->OpenSettings();
+    static atomic<bool> setttingsOpening(false);
+    if (setttingsOpening == false)
+    {
+        setttingsOpening = true;
+        g_GUI->OpenSettings([] {
+            setttingsOpening = false;
+        });
+    }
 }
 
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_guiIsOpen(JNIEnv *env, jobject obj)

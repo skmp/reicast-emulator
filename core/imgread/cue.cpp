@@ -44,12 +44,15 @@ static u32 getSectorSize(const string& type) {
 
 Disc* cue_parse(const wchar* file)
 {
+	// Only try to open .cue files
+	size_t len = strlen(file);
+	if (len > 4 && stricmp( &file[len - 4], ".cue"))
+		return nullptr;
+
 	core_file* fsource = core_fopen(file);
 
-	if (fsource == NULL)
-		return NULL;
-
-	Disc* disc = new Disc();
+	if (fsource == nullptr)
+		return nullptr;
 
 	size_t cue_len = core_fsize(fsource);
 
@@ -59,7 +62,7 @@ Disc* cue_parse(const wchar* file)
 	{
 		WARN_LOG(GDROM, "CUE parse error: CUE file too big");
 		core_fclose(fsource);
-		return NULL;
+		return nullptr;
 	}
 
 	core_fread(fsource, cue_data, cue_len);
@@ -69,7 +72,6 @@ Disc* cue_parse(const wchar* file)
 
 	char path[512];
 	strcpy(path, file);
-	ssize_t len = strlen(file);
 	while (len >= 0)
 	{
 		if (path[len]=='\\' || path[len]=='/')
@@ -79,6 +81,7 @@ Disc* cue_parse(const wchar* file)
 	len++;
 	char* pathptr = &path[len];
 
+	Disc* disc = new Disc();
 	u32 current_fad = 150;
 	string track_filename;
 	u32 track_number = -1;
@@ -150,16 +153,18 @@ Disc* cue_parse(const wchar* file)
 				strcpy(pathptr, track_filename.c_str());
 
 				core_file* track_file = core_fopen(path);
-				if (track_file == NULL)
+				if (track_file == nullptr)
 				{
 					WARN_LOG(GDROM, "CUE file: cannot open track %d: %s", track_number, path);
-					return NULL;
+					delete disc;
+					return nullptr;
 				}
 				u32 sector_size = getSectorSize(track_type);
 				if (sector_size == 0)
 				{
 					WARN_LOG(GDROM, "CUE file: track %d has unknown sector type: %s", track_number, track_type.c_str());
-					return NULL;
+					delete disc;
+					return nullptr;
 				}
 				if (core_fsize(track_file) % sector_size != 0)
 					WARN_LOG(GDROM, "Warning: Size of track %s is not multiple of sector size %d", track_filename.c_str(), sector_size);
@@ -177,6 +182,12 @@ Disc* cue_parse(const wchar* file)
 			}
 		}
 
+	}
+	if (disc->tracks.empty())
+	{
+		WARN_LOG(GDROM, "CUE parse error: failed to parse or invalid file with 0 tracks");
+		delete disc;
+		return nullptr;
 	}
 
 	disc->FillGDSession();

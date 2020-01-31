@@ -21,12 +21,8 @@ u8 q_subchannel[96];
 
 static void PatchRegion_0(u8* sector,int size)
 {
-#ifndef NOT_REICAST
-	if (settings.imgread.PatchRegion==0)
+	if (!settings.imgread.PatchRegion)
 		return;
-#else
-	return;
-#endif
 
 	u8* usersect=sector;
 
@@ -42,12 +38,8 @@ static void PatchRegion_0(u8* sector,int size)
 
 static void PatchRegion_6(u8* sector,int size)
 {
-#ifndef NOT_REICAST
-	if (settings.imgread.PatchRegion==0)
+	if (!settings.imgread.PatchRegion)
 		return;
-#else
-	return;
-#endif
 
 	u8* usersect=sector;
 
@@ -148,7 +140,6 @@ bool InitDrive_(wchar* fn)
 	return disc != NULL;
 }
 
-#ifndef NOT_REICAST
 bool InitDrive(u32 fileflags)
 {
 	if (settings.imgread.LoadDefaultImage)
@@ -189,7 +180,6 @@ bool InitDrive(u32 fileflags)
 			sns_asc=0x29;
 			sns_ascq=0x00;
 			sns_key=0x6;
-		return true;
 	}
    return true;
 }
@@ -242,14 +232,9 @@ bool DiscSwap(u32 fileflags)
 		//msgboxf("Selected image failed to load",MBX_ICONERROR);
 		NullDriveDiscType=Open;
 		gd_setdisc();
-		return true;
 	}
-	else
-	{
-		return true;
-	}
+	return true;
 }
-#endif
 
 void TermDrive()
 {

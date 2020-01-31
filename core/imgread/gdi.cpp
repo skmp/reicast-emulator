@@ -4,14 +4,9 @@
 
 Disc* load_gdi(const char* file)
 {
-	u32 iso_tc;
-	Disc* disc = new Disc();
-	
-	//memset(&gdi_toc,0xFFFFFFFF,sizeof(gdi_toc));
-	//memset(&gdi_ses,0xFFFFFFFF,sizeof(gdi_ses));
 	core_file* t=core_fopen(file);
 	if (!t)
-		return 0;
+		return nullptr;
 
 	size_t gdi_len = core_fsize(t);
 
@@ -19,8 +14,9 @@ Disc* load_gdi(const char* file)
 
 	if (gdi_len >= sizeof(gdi_data))
 	{
+		WARN_LOG(GDROM, "GDI: file too big");
 		core_fclose(t);
-		return 0;
+		return nullptr;
 	}
 
 	core_fread(t, gdi_data, gdi_len);
@@ -28,7 +24,13 @@ Disc* load_gdi(const char* file)
 
 	istringstream gdi(gdi_data);
 
+	u32 iso_tc = 0;
 	gdi >> iso_tc;
+	if (iso_tc == 0)
+	{
+		WARN_LOG(GDROM, "GDI: empty or invalid GDI file");
+		return nullptr;
+	}
 	INFO_LOG(GDROM, "GDI : %d tracks", iso_tc);
 
 	char path[512];
@@ -42,6 +44,8 @@ Disc* load_gdi(const char* file)
 	}
 	len++;
 	char* pathptr=&path[len];
+
+	Disc* disc = new Disc();
 	u32 TRACK=0,FADS=0,CTRL=0,SSIZE=0;
 	s32 OFFSET=0;
 	for (u32 i=0;i<iso_tc;i++)
@@ -115,6 +119,3 @@ Disc* gdi_parse(const char* file)
 	return 0;
 }
 
-void iso_term()
-{
-}

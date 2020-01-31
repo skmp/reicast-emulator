@@ -671,7 +671,7 @@ static void update_variables(bool first_startup)
       var.key = CORE_OPTION_NAME "_hle_bios";
 
       if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-      	settings.bios.UseReios = !strcmp(var.value, "enabled");
+      	settings.bios.UseReios = !strcmp(var.value, "enabled") && !boot_to_bios;
       else
       	settings.bios.UseReios = false;
 

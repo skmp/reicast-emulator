@@ -439,6 +439,9 @@ int dc_init(int argc,wchar* argv[])
    {
       if (settings.bios.UseReios || !LoadRomFiles(new_system_dir))
       {
+      	if (boot_to_bios)
+      		// Booting the BIOS requires a BIOS file
+      		return -3;
          if (!LoadHle(new_system_dir))
             return -3;
          WARN_LOG(COMMON, "Did not load bios, using reios");
@@ -470,6 +473,14 @@ int dc_init(int argc,wchar* argv[])
 	switch (settings.System)
 	{
 		case DC_PLATFORM_DREAMCAST:
+			if (libGDR_GetDiscType() == NoDisk)
+			{
+				// Content loading failed so force HLE off and boot the BIOS
+				settings.bios.UseReios = false;
+				if (!LoadRomFiles(new_system_dir))
+					return -3;
+				settings.imgread.DefaultImage[0] = '\0';
+			}
 			reios_disk_id();
 			LoadSpecialSettings();
 			break;

@@ -3,6 +3,7 @@ package com.reicast.emulator.emu;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Vibrator;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -56,7 +57,16 @@ public class VirtualJoystickDelegate {
         VJoy.writeCustomVjoyValues(vjoy_d_cached, context);
 
         resetEditMode();
-        view.requestLayout();
+
+        // force re setting of jndidc.vjoy via layout
+        // *WATCH* we are not in Java UI thread here
+
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                view.requestLayout();
+            }
+        });
     }
 
 

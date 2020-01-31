@@ -1,6 +1,8 @@
 package com.reicast.emulator;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -54,7 +56,16 @@ public final class NativeGLActivity extends BaseGLActivity {
         VJoy.resetCustomVjoyValues(getApplicationContext());
         ((NativeGLView)mView).readCustomVjoyValues();
         ((NativeGLView)mView).resetEditMode();
-        mView.requestLayout();
+
+        // force re setting of jndidc.vjoy via layout
+        // *WATCH* we are not in Java UI thread here
+
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                mView.requestLayout();
+            }
+        });
     }
     // Called from native code
     private void VJoyStopEditing(boolean canceled) {

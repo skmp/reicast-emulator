@@ -17,8 +17,6 @@ struct
 } egl_setup;
 
 
-static bool created_context;
-
 bool egl_MakeCurrent()
 {
 	if (egl_setup.surface == EGL_NO_SURFACE || egl_setup.context == EGL_NO_CONTEXT)
@@ -163,7 +161,6 @@ bool egl_Init(void* wind, void* disp)
 			if (!load_gles_symbols())
 				die("Failed to load symbols");
 		}
-		created_context = true;
 	}
 	else if (glGetError == NULL)
 	{
@@ -204,7 +201,8 @@ bool egl_Swap()
 
 	bool rv = true;
 
-	if (status != GL_TRUE && status != GL_FALSE) {
+	if (status != GL_TRUE) {
+		printf("EGL: eglSwapBuffers failed. Error: %d\n", eglGetError());
 		rv = false;
 	}
 
@@ -219,26 +217,29 @@ bool egl_Swap()
 
 void egl_Term()
 {
-	if (!created_context)
-		return;
-	created_context = false;
-	eglMakeCurrent(egl_setup.display, NULL, NULL, EGL_NO_CONTEXT);
+
+	if (egl_setup.display != EGL_NO_DISPLAY) {
+		eglMakeCurrent(egl_setup.display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 #if HOST_OS == OS_WINDOWS
-	ReleaseDC((HWND)egl_setup.native_wind, (HDC)egl_setup.native_disp);
+		ReleaseDC((HWND)egl_setup.native_wind, (HDC)egl_setup.native_disp);
 #else
-	if (egl_setup.context != NULL)
-		eglDestroyContext(egl_setup.display, egl_setup.context);
-	if (egl_setup.surface != NULL)
-		eglDestroySurface(egl_setup.display, egl_setup.surface);
+		if (egl_setup.context != NULL)
+			eglDestroyContext(egl_setup.display, egl_setup.context);
+		if (egl_setup.surface != NULL)
+			eglDestroySurface(egl_setup.display, egl_setup.surface);
 #ifdef TARGET_PANDORA
-	if (egl_setup.display)
-		eglTerminate(egl_setup.display);
-	if (fbdev >= 0)
-		close(fbdev);
-	fbdev = -1;
+        if (egl_setup.display)
+            eglTerminate(egl_setup.display);
+        if (fbdev >= 0)
+            close(fbdev);
+        fbdev = -1;
 #endif
-#endif	// !OS_WINDOWS
-	egl_setup.context = EGL_NO_CONTEXT;
-	egl_setup.surface = EGL_NO_SURFACE;
-	egl_setup.display = EGL_NO_DISPLAY;
+#endif    // !OS_WINDOWS
+		eglTerminate(egl_setup.display);
+
+		egl_setup.context = EGL_NO_CONTEXT;
+		egl_setup.surface = EGL_NO_SURFACE;
+		egl_setup.display = EGL_NO_DISPLAY;
+
+	}
 }

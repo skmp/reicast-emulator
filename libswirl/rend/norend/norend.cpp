@@ -15,8 +15,6 @@ struct norend : Renderer
 
     bool Process(TA_context* ctx) { return true; }
 
-    void DrawOSD() {  }
-
 	bool RenderPVR()
 	{
 		return true;//!pvrrc.isRTT;

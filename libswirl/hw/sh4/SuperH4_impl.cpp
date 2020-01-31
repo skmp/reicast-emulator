@@ -17,7 +17,9 @@ int UpdateSystem()
     if (Sh4cntx.sh4_sched_next < 0)
         sh4_sched_tick(SH4_TIMESLICE);
 
-    return Sh4cntx.interrupt_pend;
+    // Force an interrupt check if the cpu has been stopped
+    // ngen is required to only check the bCpuRun on interrupt processing
+    return Sh4cntx.interrupt_pend | (sh4_int_bCpuRun == false);
 }
 
 int UpdateSystem_INTC()

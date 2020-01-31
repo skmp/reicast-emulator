@@ -43,6 +43,6 @@ extern f32 mo_wheel_delta;
 
 extern int screen_dpi;
 
-typedef enum { Welcome, Closed, Commands, Settings, ClosedNoResume, Main, Onboarding, VJoyEdit, VJoyEditCommands } GuiState;
+typedef enum { Welcome, Closed, Commands, Settings, Main, Onboarding, VJoyEdit, VJoyEditCommands } GuiState;
 extern GuiState gui_state;
 void ImGui_Impl_NewFrame();

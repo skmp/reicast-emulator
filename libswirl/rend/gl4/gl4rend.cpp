@@ -538,8 +538,6 @@ static bool gl4_create_resources()
 
 	create_modvol_shader();
 
-	gl_load_osd_resources();
-
 	// Create the buffer for Translucent poly params
 	glGenBuffers(1, &gl4.vbo.tr_poly_params);
 	// Bind it
@@ -969,6 +967,7 @@ struct gl4rend : Renderer
 	bool Init() { return (hasInited = gl41_init()); }
 	void Resize(int w, int h)
 	{
+		glViewport(0, 0, w, h);
 
     	if (w != old_screen_width || h != old_screen_height || settings.rend.ScreenScaling != old_screen_scaling) {
 
@@ -1040,7 +1039,6 @@ struct gl4rend : Renderer
 
 		CollectCleanup();
 
-		gl_free_osd_resources();
 		free_output_framebuffer();
 		gl41_term();
 	}
@@ -1051,14 +1049,6 @@ struct gl4rend : Renderer
 	bool RenderLastFrame() { return gl4_render_output_framebuffer(); }
 
 	void Present() { os_gl_swap(); }
-
-	void DrawOSD(bool clear_screen)
-	{
-		glBindVertexArray(gl4.vbo.main_vao);
-		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
-
-		OSD_DRAW(clear_screen);
-	}
 
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
 		return gl_GetTexture(vram, tsp, tcw);

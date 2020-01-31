@@ -5,6 +5,7 @@
 #include "types.h"
 
 #include "../sh4_interpreter.h"
+#include "../sh4_interrupts.h"
 #include "../sh4_opcode_list.h"
 #include "../sh4_core.h"
 #include "hw/sh4/sh4_mem.h"
@@ -86,8 +87,17 @@ struct SH4IInterpreter : SuperH4Backend {
 
                     l -= CPU_RATIO;
                 } while (l > 0);
+
                 l += SH4_TIMESLICE;
-                UpdateSystem_INTC();
+
+                // model how the jit works
+                // only check for sh4_int_bCpuRun on interrupts
+                if (UpdateSystem()) {
+                    UpdateINTC();
+                    if (!sh4_int_bCpuRun)
+                        break;
+                }
+
 #if !defined(NO_MMU)
             }
             catch (SH4ThrownException& ex) {
@@ -95,8 +105,7 @@ struct SH4IInterpreter : SuperH4Backend {
                 l -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
             }
 #endif
-
-        } while (sh4_int_bCpuRun);
+        } while (true);
     }
 
     bool Init() { return true; }

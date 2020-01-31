@@ -4,6 +4,8 @@
 
 #include "gui.h"
 
+void HideOSD();
+
 struct GUIRenderer {
 
     virtual void Start() = 0; // only sets the flag

@@ -718,11 +718,12 @@ struct Dreamcast_impl : VirtualDreamcast {
             if (reset_requested)
             {
                 virtualDreamcast->Reset();
+                sh4_cpu->Start();
 #ifdef SCRIPTING
                 luabindings_onreset();
 #endif
             }
-            } while (reset_requested);
+        } while (reset_requested);
 
 #ifdef SCRIPTING
             luabindings_onstop();

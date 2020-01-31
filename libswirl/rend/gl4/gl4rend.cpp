@@ -967,6 +967,7 @@ struct gl4rend : Renderer
 	bool Init() { return (hasInited = gl41_init()); }
 	void Resize(int w, int h)
 	{
+		glViewport(0, 0, w, h);
 
     	if (w != old_screen_width || h != old_screen_height || settings.rend.ScreenScaling != old_screen_scaling) {
 

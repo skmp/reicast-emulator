@@ -1227,7 +1227,9 @@ struct glesrend final : Renderer
 		fb_scale_y = y;
 	}
 
-	void Resize(int w, int h) { /* do nothing */ }
+	void Resize(int w, int h) {
+		glViewport(0, 0, w, h);
+	}
 	~glesrend()
 	{
 		if (wasInit) {

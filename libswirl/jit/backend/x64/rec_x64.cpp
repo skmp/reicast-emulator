@@ -122,6 +122,7 @@ public:
 		emit_Skip(getSize());
 	}
 
+	//TODO: FIXME THIS DOES NOT CONFORM TO NGEN SPEC AROUND INTERRUPT HANDLING
 	void build_mainloop() {
 		Xbyak::Label run_loop, slice_loop, end_loop;
 		// Store callee saved registers (64 bytes) + align stack

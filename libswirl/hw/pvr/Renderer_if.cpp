@@ -167,6 +167,8 @@ void rend_init_renderer(u8* vram)
             die("RendIF: Renderer initialization failed\n");
         }
     }
+
+	printf("RendIF: Using renderer: %s\n", renderer->backendInfo.slug.c_str());
 }
 
 void rend_term_renderer()

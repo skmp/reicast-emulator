@@ -449,8 +449,7 @@ struct GUIRenderer_impl : GUIRenderer {
         }
         callback_mutex.Unlock();
         
-
-        if (cb) {
+         if (cb) {
             if (cb()) {
                 DrawOSD(false);
                 g_GUI->RenderOSD();
@@ -484,11 +483,13 @@ struct GUIRenderer_impl : GUIRenderer {
 
     virtual void UIFrame() {
         if (!tryUIFrame()) {
-            DestroyContext();
 
-            if (!CreateContext()) {
-                return;
-            }
+            do
+            {
+                SleepMs(10);
+                printf("UIFRAME: Re-creating context...\n");
+                DestroyContext();
+            } while(!CreateContext());
         }
     }
 

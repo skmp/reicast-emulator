@@ -51,6 +51,7 @@
 #include "hw/maple/maple_if.h"
 
 #include "libswirl.h"
+#include "gui/gui_renderer.h"
 
 bool game_started;
 
@@ -363,14 +364,13 @@ struct ReicastUI_impl : GUI {
             if (!game_file.empty())
             {
                 if (gui_start_game(game_file))
-                    gui_state = ClosedNoResume;
+                    gui_state = Closed;
             }
             else
                 gui_render_content();
         }
         break;
         case Closed:
-        case ClosedNoResume:
             break;
         case Onboarding:
             gui_render_onboarding();
@@ -384,7 +384,7 @@ struct ReicastUI_impl : GUI {
             break;
         }
 
-        if (gui_state == ClosedNoResume)
+        if (gui_state == Closed)
             gui_state = Closed;
     }
 
@@ -924,7 +924,7 @@ struct ReicastUI_impl : GUI {
             {
                 cfgSetVirtual("config", "image", "");
                 if (gui_start_game(""))
-                    gui_state = ClosedNoResume;
+                    gui_state = Closed;
             }
             ImGui::PopID();
 #endif
@@ -939,7 +939,7 @@ struct ReicastUI_impl : GUI {
                     if (ImGui::Selectable(game.name.c_str()))
                     {
                         if (gui_start_game(game.path))
-                            gui_state = ClosedNoResume;
+                            gui_state = Closed;
                     }
                     ImGui::PopID();
                 }

@@ -47,8 +47,6 @@ struct Renderer
 
 	virtual void Present()=0;
 
-	virtual void DrawOSD(bool clear_screen) { }
-
 	virtual u32 GetTexture(TSP tsp, TCW tcw) { return 0; }
 
 	virtual ~Renderer() { }
@@ -59,5 +57,3 @@ extern bool renderer_changed;	// Signals the renderer thread to switch renderer
 
 extern bool RegisterRendererBackend(const rendererbackend_t& backend);
 vector<rendererbackend_t> rend_get_backends();
-
-void* rend_thread(void* p);

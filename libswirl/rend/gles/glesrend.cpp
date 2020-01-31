@@ -347,81 +347,6 @@ void main() \n\
 	gl_FragColor=vec4(0.0, 0.0, 0.0, sp_ShaderColor); \n\
 }";
 
-const char* OSD_VertexShader =
-"\
-%s \n\
-#define TARGET_GL %s \n\
- \n\
-#define GLES2 0 \n\
-#define GLES3 1 \n\
-#define GL2 2 \n\
-#define GL3 3 \n\
- \n\
-#if TARGET_GL == GL2 \n\
-#define highp \n\
-#define lowp \n\
-#define mediump \n\
-#endif \n\
-#if TARGET_GL == GLES2 || TARGET_GL == GL2 \n\
-#define in attribute \n\
-#define out varying \n\
-#endif \n\
- \n\
-uniform highp vec4      scale; \n\
- \n\
-in highp vec4    in_pos; \n\
-in lowp vec4     in_base; \n\
-in mediump vec2  in_uv; \n\
- \n\
-out lowp vec4 vtx_base; \n\
-out mediump vec2 vtx_uv; \n\
- \n\
-void main() \n\
-{ \n\
-	vtx_base = in_base; \n\
-	vtx_uv = in_uv; \n\
-	highp vec4 vpos = in_pos; \n\
-	\n\
-	vpos.w = 1.0; \n\
-	vpos.z = vpos.w; \n\
-	vpos.xy = vpos.xy * scale.xy - scale.zw;  \n\
-	gl_Position = vpos; \n\
-}";
-
-const char* OSD_Shader =
-"\
-%s \n\
-#define TARGET_GL %s \n\
- \n\
-#define GLES2 0 \n\
-#define GLES3 1 \n\
-#define GL2 2 \n\
-#define GL3 3 \n\
- \n\
-#if TARGET_GL == GL2 \n\
-#define highp \n\
-#define lowp \n\
-#define mediump \n\
-#endif \n\
-#if TARGET_GL != GLES2 && TARGET_GL != GL2 \n\
-out highp vec4 FragColor; \n\
-#define gl_FragColor FragColor \n\
-#else \n\
-#define in varying \n\
-#define texture texture2D \n\
-#endif \n\
- \n\
-in lowp vec4 vtx_base; \n\
-in mediump vec2 vtx_uv; \n\
-/* Vertex input*/ \n\
-uniform sampler2D tex; \n\
-void main() \n\
-{ \n\
-	mediump vec2 uv=vtx_uv; \n\
-	uv.y=1.0-uv.y; \n\
-	gl_FragColor = vtx_base*texture(tex,uv.st); \n\
-}";
-
 GLCache glcache;
 gl_ctx gl;
 
@@ -466,7 +391,6 @@ static void gles_term()
 	glcache.DeleteTextures(1, &fogTextureId);
 	fogTextureId = 0;
 
-	gl_free_osd_resources();
 	free_output_framebuffer();
 
 	gl_delete_shaders();
@@ -678,40 +602,6 @@ bool CompilePipelineShader(	PipelineShader* s)
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
-GLuint osd_tex;
-
-void gl_load_osd_resources()
-{
-	char vshader[8192];
-	char fshader[8192];
-
-	sprintf(vshader, OSD_VertexShader, gl.glsl_version_header, gl.gl_version);
-	sprintf(fshader, OSD_Shader, gl.glsl_version_header, gl.gl_version);
-
-	gl.OSD_SHADER.program = gl_CompileAndLink(vshader, fshader);
-	gl.OSD_SHADER.scale = glGetUniformLocation(gl.OSD_SHADER.program, "scale");
-	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"), 0);		//bind osd texture to slot 0
-
-#ifdef _ANDROID
-	int w, h;
-	if (osd_tex == 0)
-		osd_tex = loadPNG(get_readonly_data_path(DATA_PATH "buttons.png"), w, h);
-#endif
-}
-
-void gl_free_osd_resources()
-{
-	if (gl.OSD_SHADER.program != 0) {
-	    glcache.DeleteProgram(gl.OSD_SHADER.program);
-	    gl.OSD_SHADER.program = 0;
-	}
-
-    if (osd_tex != 0) {
-        glcache.DeleteTextures(1, &osd_tex);
-        osd_tex = 0;
-    }
-}
-
 static void create_modvol_shader()
 {
 	if (gl.modvol_shader.program != 0)
@@ -751,8 +641,6 @@ bool gl_create_resources()
 	glGenBuffers(1, &gl.vbo.idxs2);
 
 	create_modvol_shader();
-
-	gl_load_osd_resources();
 
 	return true;
 }
@@ -829,186 +717,6 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 	glCheck();
 
 	glActiveTexture(GL_TEXTURE0);
-}
-
-
-extern u16 kcode[4];
-extern u8 rt[4],lt[4];
-
-#if defined(_ANDROID)
-extern float vjoy_pos[14][8];
-#else
-
-float vjoy_pos[14][8]=
-{
-	{24+0,24+64,64,64},     //LEFT
-	{24+64,24+0,64,64},     //UP
-	{24+128,24+64,64,64},   //RIGHT
-	{24+64,24+128,64,64},   //DOWN
-
-	{440+0,280+64,64,64},   //X
-	{440+64,280+0,64,64},   //Y
-	{440+128,280+64,64,64}, //B
-	{440+64,280+128,64,64}, //A
-
-	{320-32,360+32,64,64},  //Start
-
-	{440,200,90,64},        //RT
-	{542,200,90,64},        //LT
-
-	{-24,128+224,128,128},  //ANALOG_RING
-	{96,320,64,64},         //ANALOG_POINT
-	{1}
-};
-#endif // !_ANDROID
-
-static List<Vertex> osd_vertices;
-static bool osd_vertices_overrun;
-
-static const float vjoy_sz[2][14] = {
-	{ 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64 },
-	{ 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64 },
-};
-
-void HideOSD()
-{
-	vjoy_pos[13][0] = 0;
-	vjoy_pos[13][1] = 0;
-	vjoy_pos[13][2] = 0;
-	vjoy_pos[13][3] = 0;
-}
-
-static void DrawButton(float* xy, u32 state)
-{
-	Vertex vtx;
-
-	vtx.z = 1;
-
-	vtx.col[0]=vtx.col[1]=vtx.col[2]=(0x7F-0x40*state/255)*vjoy_pos[13][0];
-
-	vtx.col[3]=0xA0*vjoy_pos[13][4];
-
-	vjoy_pos[13][4]+=(vjoy_pos[13][0]-vjoy_pos[13][4])/2;
-
-
-
-	vtx.x = xy[0]; vtx.y = xy[1];
-	vtx.u=xy[4]; vtx.v=xy[5];
-	*osd_vertices.Append() = vtx;
-
-	vtx.x = xy[0] + xy[2]; vtx.y = xy[1];
-	vtx.u=xy[6]; vtx.v=xy[5];
-	*osd_vertices.Append() = vtx;
-
-	vtx.x = xy[0]; vtx.y = xy[1] + xy[3];
-	vtx.u=xy[4]; vtx.v=xy[7];
-	*osd_vertices.Append() = vtx;
-
-	vtx.x = xy[0] + xy[2]; vtx.y = xy[1] + xy[3];
-	vtx.u=xy[6]; vtx.v=xy[7];
-	*osd_vertices.Append() = vtx;
-}
-
-static void DrawButton2(float* xy, bool state) { DrawButton(xy,state?0:255); }
-
-static void osd_gen_vertices()
-{
-	osd_vertices.Init(ARRAY_SIZE(vjoy_pos) * 4, &osd_vertices_overrun, "OSD vertices");
-	DrawButton2(vjoy_pos[0],kcode[0] & DC_DPAD_LEFT);
-	DrawButton2(vjoy_pos[1],kcode[0] & DC_DPAD_UP);
-	DrawButton2(vjoy_pos[2],kcode[0] & DC_DPAD_RIGHT);
-	DrawButton2(vjoy_pos[3],kcode[0] & DC_DPAD_DOWN);
-
-	DrawButton2(vjoy_pos[4],kcode[0] & DC_BTN_X);
-	DrawButton2(vjoy_pos[5],kcode[0] & DC_BTN_Y);
-	DrawButton2(vjoy_pos[6],kcode[0] & DC_BTN_B);
-	DrawButton2(vjoy_pos[7],kcode[0] & DC_BTN_A);
-
-	DrawButton2(vjoy_pos[8],kcode[0] & DC_BTN_START);
-
-	DrawButton(vjoy_pos[9],lt[0]);
-
-	DrawButton(vjoy_pos[10],rt[0]);
-
-	DrawButton2(vjoy_pos[11],1);
-	DrawButton2(vjoy_pos[12],0);
-}
-
-#define OSD_TEX_W 512
-#define OSD_TEX_H 256
-
-void OSD_DRAW(bool clear_screen)
-{
-#ifdef _ANDROID
-	if (osd_tex == 0)
-		gl_load_osd_resources();
-	if (osd_tex != 0)
-	{
-		osd_gen_vertices();
-
-		float u=0;
-		float v=0;
-
-		for (int i=0;i<13;i++)
-		{
-			//umin,vmin,umax,vmax
-			vjoy_pos[i][4]=(u+1)/OSD_TEX_W;
-			vjoy_pos[i][5]=(v+1)/OSD_TEX_H;
-
-			vjoy_pos[i][6]=((u+vjoy_sz[0][i]-1))/OSD_TEX_W;
-			vjoy_pos[i][7]=((v+vjoy_sz[1][i]-1))/OSD_TEX_H;
-
-			u+=vjoy_sz[0][i];
-			if (u>=OSD_TEX_W)
-			{
-				u-=OSD_TEX_W;
-				v+=vjoy_sz[1][i];
-			}
-			//v+=vjoy_pos[i][3];
-		}
-
-		verify(glIsProgram(gl.OSD_SHADER.program));
-		glcache.UseProgram(gl.OSD_SHADER.program);
-
-		float scale_h = screen_height / 480.f;
-		float offs_x = (screen_width - scale_h * 640.f) / 2.f;
-		float scale[4];
-		scale[0] = 2.f / (screen_width / scale_h);
-		scale[1]= -2.f / 480.f;
-		scale[2]= 1.f - 2.f * offs_x / screen_width;
-		scale[3]= -1.f;
-		glUniform4fv(gl.OSD_SHADER.scale, 1, scale);
-
-		glActiveTexture(GL_TEXTURE0);
-		glcache.BindTexture(GL_TEXTURE_2D, osd_tex);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		glBufferData(GL_ARRAY_BUFFER, osd_vertices.bytes(), osd_vertices.head(), GL_STREAM_DRAW); glCheck();
-
-		glcache.Enable(GL_BLEND);
-		glcache.Disable(GL_DEPTH_TEST);
-		glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		glcache.DepthMask(false);
-		glcache.DepthFunc(GL_ALWAYS);
-
-		glcache.Disable(GL_CULL_FACE);
-		glcache.Disable(GL_SCISSOR_TEST);
-		glViewport(0, 0, screen_width, screen_height);
-
-		if (clear_screen)
-		{
-			glcache.ClearColor(0.7f, 0.7f, 0.7f, 1.f);
-			glClear(GL_COLOR_BUFFER_BIT);
-		}
-		int dfa = osd_vertices.used() / 4;
-
-		for (int i = 0; i < dfa; i++)
-			glDrawArrays(GL_TRIANGLE_STRIP, i * 4, 4);
-	}
-#endif
-    g_GUI->RenderOSD();
 }
 
 bool ProcessFrame(Renderer* renderer, u8* vram, TA_context* ctx)
@@ -1532,25 +1240,6 @@ struct glesrend final : Renderer
     bool RenderFramebuffer() { return RenderFrame(vram, true); }
 	bool RenderLastFrame() { return render_output_framebuffer(); }
 	void Present() { os_gl_swap(); glViewport(0, 0, screen_width, screen_height); }
-
-	void DrawOSD(bool clear_screen)
-	{
-
-		if (gl.gl_major >= 3)
-			glBindVertexArray(gl.vbo.vao);
-
-		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
-		glEnableVertexAttribArray(VERTEX_POS_ARRAY);
-		glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x));
-
-		glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
-		glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col));
-
-		glEnableVertexAttribArray(VERTEX_UV_ARRAY);
-		glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
-
-		OSD_DRAW(clear_screen);
-	}
 
 	virtual u32 GetTexture(TSP tsp, TCW tcw) {
 		return gl_GetTexture(vram, tsp, tcw);

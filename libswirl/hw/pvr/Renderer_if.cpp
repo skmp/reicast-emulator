@@ -177,7 +177,7 @@ void rend_term_renderer()
 	fallback_renderer.reset();
 }
 
-static bool rend_frame(u8* vram, TA_context* ctx, bool draw_osd) {
+static bool rend_frame(u8* vram, TA_context* ctx) {
 #if FIXME
     if (dump_frame_switch) {
         char name[32];
@@ -206,9 +206,6 @@ static bool rend_frame(u8* vram, TA_context* ctx, bool draw_osd) {
 	}
 
     bool do_swp = proc && renderer->RenderPVR();
-
-    if (do_swp && draw_osd)
-        renderer->DrawOSD(false);
 
     return do_swp;
 }
@@ -417,7 +414,7 @@ void rend_start_render(u8* vram)
                     
                     verify(_pvrrc == ctx);
                     
-                    bool do_swp = rend_frame(vram, _pvrrc, true);
+                    bool do_swp = rend_frame(vram, _pvrrc);
 
 					if (_pvrrc->rend.isRTT) {
 						pend_rend = false;
@@ -459,7 +456,6 @@ void rend_end_render()
 		re.Wait();
 	}
 }
-
 
 void rend_vblank()
 {

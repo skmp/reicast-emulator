@@ -64,12 +64,6 @@ struct gl_ctx
 
 	struct
 	{
-		GLuint program;
-		GLuint scale;
-	} OSD_SHADER;
-
-	struct
-	{
 		GLuint geometry,modvols,idxs,idxs2;
 		GLuint vao;
 	} vbo;
@@ -120,8 +114,7 @@ struct text_info {
 };
 enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
-void gl_load_osd_resources();
-void gl_free_osd_resources();
+
 bool ProcessFrame(Renderer* renderer, u8* vram, TA_context* ctx);
 void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
 
@@ -142,8 +135,6 @@ GLuint init_output_framebuffer(int width, int height);
 bool render_output_framebuffer();
 void free_output_framebuffer();
 
-void HideOSD();
-void OSD_DRAW(bool clear_screen);
 PipelineShader *GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear);

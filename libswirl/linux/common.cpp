@@ -91,7 +91,7 @@ extern "C" u8* generic_fault_handler ()
 	}
 	else
 	{
-		fault_printf("generic_fault_handler: not in handled SIGSEGV pc: %lx addr:%p\n", ctx.pc, (void*)trap_si_addr);
+		fault_printf("generic_fault_handler: not in handled SIGSEGV pc: %lx addr:%p here %p\n", ctx.pc, (void*)trap_si_addr, (void*)generic_fault_handler);
 		trap_handled = false;
 	}
 

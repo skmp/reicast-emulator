@@ -35,6 +35,8 @@ static void findGLVersion()
     if (!strncmp(version, "OpenGL ES", 9))
     {
         gl.is_gles = true;
+        gl.gl_major = 2;
+
         if (gl.gl_major >= 3)
         {
             gl.gl_version = "GLES3";

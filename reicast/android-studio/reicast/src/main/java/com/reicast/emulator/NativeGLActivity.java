@@ -1,5 +1,6 @@
 package com.reicast.emulator;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -72,5 +73,17 @@ public final class NativeGLActivity extends BaseGLActivity {
         if (canceled)
             ((NativeGLView)mView).restoreCustomVjoyValues(vjoy_d_cached);
         ((NativeGLView)mView).setEditVjoyMode(false);
+    }
+
+    public void RecreateView() {
+        final Activity activity = this;
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                mLayout.removeAllViews();
+                mView = new NativeGLView(activity);
+                mLayout.addView(mView);
+            }
+        });
     }
 }

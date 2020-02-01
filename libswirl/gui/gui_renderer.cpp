@@ -12,6 +12,7 @@ std::unique_ptr<GUIRenderer> g_GUIRenderer;
 
 #include "rend/gles/gles.h"
 #include "rend/gles/glcache.h"
+#include "android/Android.h"
 
 #if defined(TARGET_EMSCRIPTEN)
 #include <emscripten.h>
@@ -483,13 +484,19 @@ struct GUIRenderer_impl : GUIRenderer {
 
     virtual void UIFrame() {
         if (!tryUIFrame()) {
-
-            do
+            printf("UIFRAME: Re-creating context...\n");
+            SleepMs(10);
+            DestroyContext();
+            if (!CreateContext())
             {
-                SleepMs(10);
-                printf("UIFRAME: Re-creating context...\n");
-                DestroyContext();
-            } while(!CreateContext());
+#if !defined(_ANDROID)
+                die("UIFrame: Failed to recover gl context")
+#else
+                printf("UIFRAME: Failed to create context - recreating view\n");
+                Stop();
+                android_RecreateView();
+#endif
+            }
         }
     }
 

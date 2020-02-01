@@ -84,7 +84,7 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         surfaceReady = true;
         JNIdc.rendinitNative(surfaceHolder.getSurface());
-        Emulator.getCurrentActivity().handleStateChange(false);
+        //Emulator.getCurrentActivity().handleStateChange(false);
     }
 
     @Override
@@ -97,7 +97,7 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
         //Log.i("reicast", "NativeGLView.surfaceDestroyed");
         surfaceReady = false;
         JNIdc.rendinitNative(null);
-        Emulator.getCurrentActivity().handleStateChange(true);
+        //Emulator.getCurrentActivity().handleStateChange(true);
     }
 
     public boolean isSurfaceReady() {

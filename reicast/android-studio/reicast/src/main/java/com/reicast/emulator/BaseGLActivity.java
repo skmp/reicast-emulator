@@ -174,7 +174,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     protected abstract void doResume();
     protected abstract boolean isSurfaceReady();
 
-    public void handleStateChange(boolean paused)
+    private void handleStateChange(boolean paused)
     {
         if (paused == this.paused)
             return;

@@ -394,19 +394,15 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNative(JNIEnv
 {
     if (surface == NULL) {
 
-        
-        g_GUI->OpenSettings([] {
-            g_GUIRenderer->Stop();
-            verify(render_thread.hThread != NULL);
-            render_thread.WaitToEnd();
+        g_GUIRenderer->Stop();
+        verify(render_thread.hThread != NULL);
+        render_thread.WaitToEnd();
 
-            render_thread.hThread = NULL;
+        render_thread.hThread = NULL;
 
-
-            ANativeWindow_release(g_window);
-            verify(g_window != NULL);
-            g_window = NULL;
-        });
+        ANativeWindow_release(g_window);
+        verify(g_window != NULL);
+        g_window = NULL;
 
         do {} while (g_window != NULL);
     }
@@ -694,4 +690,11 @@ bool os_gl_swap()
 void os_gl_term()
 {
     return egl_Term();
+}
+
+void android_RecreateView()
+{
+    JNIEnv *env = jvm_attacher.getEnv();
+    jmethodID RecreateViewMID = env->GetMethodID(env->GetObjectClass(g_activity), "RecreateView", "()V");
+    env->CallVoidMethod(g_activity, RecreateViewMID);
 }

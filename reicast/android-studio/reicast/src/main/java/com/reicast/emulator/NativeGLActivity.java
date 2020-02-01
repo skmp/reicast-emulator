@@ -77,6 +77,18 @@ public final class NativeGLActivity extends BaseGLActivity {
         ((NativeGLView)mView).setEditVjoyMode(false);
     }
 
+    public void RecreateView() {
+        final Activity activity = this;
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                mLayout.removeAllViews();
+                mView = new NativeGLView(activity);
+                mLayout.addView(mView);
+            }
+        });
+    }
+
     class ReadyState { public boolean value = false; }
 
     public int Msgbox(final String text, final int type) {

@@ -1,5 +1,8 @@
 package com.reicast.emulator;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -46,13 +49,13 @@ public final class NativeGLActivity extends BaseGLActivity {
     }
 
     // Called from native code
-    private void VJoyStartEditing() {
+    public void VJoyStartEditing() {
         vjoy_d_cached = VJoy.readCustomVjoyValues(getApplicationContext());
         JNIdc.show_osd();
         ((NativeGLView)mView).setEditVjoyMode(true);
     }
     // Called from native code
-    private void VJoyResetEditing() {
+    public void VJoyResetEditing() {
         VJoy.resetCustomVjoyValues(getApplicationContext());
         ((NativeGLView)mView).readCustomVjoyValues();
         ((NativeGLView)mView).resetEditMode();
@@ -68,9 +71,54 @@ public final class NativeGLActivity extends BaseGLActivity {
         });
     }
     // Called from native code
-    private void VJoyStopEditing(boolean canceled) {
+    public void VJoyStopEditing(boolean canceled) {
         if (canceled)
             ((NativeGLView)mView).restoreCustomVjoyValues(vjoy_d_cached);
         ((NativeGLView)mView).setEditVjoyMode(false);
+    }
+
+    class ReadyState { public boolean value = false; }
+
+    public int Msgbox(final String text, final int type) {
+
+        final ReadyState ready = new ReadyState();
+
+        final Activity activity = this;
+
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                AlertDialog ab;
+                AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+
+                String msg = text;
+
+                if ((type & 0x10) != 0) /* MBX_ICONERROR */
+                    msg += "\nPlease send a screenshot of this to the Reicast Team";
+
+                builder.setMessage(msg).setPositiveButton("Okay", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        synchronized (ready) {
+                            ready.value = true;
+                            ready.notify();
+                        }
+                    }
+                });
+                builder.create().show();
+
+            }
+        });
+
+        try
+        {
+            synchronized (ready) {
+                while (!ready.value)
+                    ready.wait();
+            }
+        } catch(InterruptedException is) {
+
+        }
+
+        return 1;
     }
 }

@@ -643,6 +643,7 @@ static jobject g_activity;
 static jmethodID VJoyStartEditingMID;
 static jmethodID VJoyStopEditingMID;
 static jmethodID VJoyResetEditingMID;
+static jmethodID MsgboxMID;
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_BaseGLActivity_register(JNIEnv *env, jobject obj, jobject activity)
 {
@@ -651,11 +652,13 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_BaseGLActivity_register(JNIEnv 
         env->DeleteGlobalRef(g_activity);
         g_activity = NULL;
     }
+
     if (activity != NULL) {
         g_activity = env->NewGlobalRef(activity);
         VJoyStartEditingMID = env->GetMethodID(env->GetObjectClass(activity), "VJoyStartEditing", "()V");
         VJoyStopEditingMID = env->GetMethodID(env->GetObjectClass(activity), "VJoyStopEditing", "(Z)V");
         VJoyResetEditingMID = env->GetMethodID(env->GetObjectClass(activity), "VJoyResetEditing", "()V");
+        MsgboxMID = env->GetMethodID(env->GetObjectClass(activity), "Msgbox", "(Ljava/lang/String;I)I");
     }
 }
 
@@ -695,3 +698,23 @@ void os_gl_term()
 {
     return egl_Term();
 }
+
+#if defined(_ANDROID)
+int msgboxf(const wchar* text, unsigned int type, ...) {
+    va_list args;
+
+    wchar temp[2048];
+    va_start(args, type);
+    vsnprintf(temp, sizeof(temp), text, args);
+    va_end(args);
+    printf("msgbox(%d) %s\n", type, temp);
+
+    auto jstr = jvm_attacher.getEnv()->NewStringUTF(temp);
+
+    auto rv = jvm_attacher.getEnv()->CallIntMethod(g_activity, MsgboxMID, jstr, type);
+
+    jvm_attacher.getEnv()->DeleteLocalRef(jstr);
+
+    return rv;
+}
+#endif

@@ -1044,7 +1044,7 @@ GUI* GUI::Create() {
     return new ReicastUI_impl();
 }
 
-
+#if !defined(_ANDROID)
 int msgboxf(const wchar* text, unsigned int type, ...) {
     va_list args;
 
@@ -1058,3 +1058,4 @@ int msgboxf(const wchar* text, unsigned int type, ...) {
 
     return 1;
 }
+#endif

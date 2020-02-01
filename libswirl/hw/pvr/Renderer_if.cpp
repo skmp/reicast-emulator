@@ -466,7 +466,9 @@ void rend_vblank()
         fb_dirty = false;
 
         g_GUIRenderer->QueueEmulatorFrame([] () {
-            renderer->RenderFramebuffer();
+            // TODO: FIXME Actually check and re init this. Better yet, refactor            if (renderer) {
+                renderer->RenderFramebuffer();
+            }
             return true;
         });
 	}

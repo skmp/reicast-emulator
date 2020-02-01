@@ -88,15 +88,15 @@ public final class NativeGLActivity extends BaseGLActivity {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
-                AlertDialog ab;
                 AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
                 String msg = text;
 
-                if ((type & 0x10) != 0) /* MBX_ICONERROR */
-                    msg += "\nPlease send a screenshot of this to the Reicast Team";
+                if ((type & 0x10) != 0) { /* MBX_ICONERROR */
+                    msg += "\n" + R.string.msgbox_please_report;
+                }
 
-                builder.setMessage(msg).setPositiveButton("Okay", new DialogInterface.OnClickListener() {
+                builder.setMessage(msg).setPositiveButton(R.string.msgbox_okay, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         synchronized (ready) {
                             ready.value = true;
@@ -105,7 +105,6 @@ public final class NativeGLActivity extends BaseGLActivity {
                     }
                 });
                 builder.create().show();
-
             }
         });
 

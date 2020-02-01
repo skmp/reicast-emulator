@@ -305,7 +305,7 @@ struct AudioStream_impl : AudioStream {
 
 	void WriteSample(s16 r, s16 l)
 	{
-		bool wait = settings.aica.LimitFPS && (mspdf <= 11);
+		bool wait = settings.aica.LimitFPS;
 
 		if (IsPullMode())
 		{

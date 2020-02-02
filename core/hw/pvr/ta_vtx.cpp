@@ -21,6 +21,7 @@ u32 pal_rev_16[64]={0};
 u32 decoded_colors[3][65536];
 
 extern rend_context vd_rc;
+extern int screen_height;
 
 #define TACALL DYNACALL
 #define PLD(ptr,offs)
@@ -1480,6 +1481,49 @@ FifoSplitter<0> TAFifo0;
 
 int ta_parse_cnt = 0;
 
+static void fix_texture_bleeding(const List<PolyParam> *list)
+{
+	for (const PolyParam *pp = list->head(); pp <= list->LastPtr(); pp++)
+	{
+		if (!pp->pcw.Texture || pp->count < 3)
+			continue;
+		// Find polygons that are facing the camera (constant z)
+		// and only use 0 and 1 for U and V (some tolerance around 1 for SA2)
+		// then apply a half-pixel correction on U and V.
+		const u32 first = vd_rc.idx.head()[pp->first];
+		const u32 last = vd_rc.idx.head()[pp->first + pp->count - 1];
+		bool need_fixing = true;
+		float z;
+		for (u32 idx = first; idx <= last && need_fixing; idx++)
+		{
+			Vertex& vtx = vd_rc.verts.head()[idx];
+
+			if (vtx.u != 0.f && vtx.u <= 0.995f)
+				need_fixing = false;
+			else if (vtx.v != 0.f && vtx.v <= 0.995f)
+				need_fixing = false;
+			else if (idx == first)
+				z = vtx.z;
+			else if (z != vtx.z)
+				need_fixing = false;
+		}
+		if (!need_fixing)
+			continue;
+		u32 tex_width = 8 << pp->tsp.TexU;
+		u32 tex_height = 8 << pp->tsp.TexV;
+		for (u32 idx = first; idx <= last; idx++)
+		{
+			Vertex& vtx = vd_rc.verts.head()[idx];
+			if (vtx.u > 0.995f)
+				vtx.u = 1.f;
+			vtx.u = (0.5f + vtx.u * (tex_width - 1)) / tex_width;
+			if (vtx.v > 0.995f)
+				vtx.v = 1.f;
+			vtx.v = (0.5f + vtx.v * (tex_height - 1)) / tex_height;
+		}
+	}
+}
+
 /*
 	Also: gotta stage textures here
 */
@@ -1520,6 +1564,12 @@ bool ta_parse_vdrc(TA_context* ctx)
          render_pass->z_clear = ClearZBeforePass(pass);
       }
 
+      if (screen_height > 480)
+      {
+      	fix_texture_bleeding(&vd_rc.global_param_op);
+      	fix_texture_bleeding(&vd_rc.global_param_pt);
+      	fix_texture_bleeding(&vd_rc.global_param_tr);
+      }
       bool empty_context = true;
 		
 		// Don't draw empty contexts.

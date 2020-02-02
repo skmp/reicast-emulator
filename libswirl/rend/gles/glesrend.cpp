@@ -479,7 +479,9 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 
 	glcache.UseProgram(program);
 
-	verify(glIsProgram(program));
+	if(!glIsProgram(program)) {
+	    printf("GLES: Failed to compile %d\n", program);
+	}
 
 	return program;
 }

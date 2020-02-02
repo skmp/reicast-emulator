@@ -306,7 +306,8 @@ void InitSettings()
     settings.pvr.backend = "auto";
 
     settings.pvr.MaxThreads = 3;
-    settings.pvr.SynchronousRender = true;
+    settings.pvr.SynchronousRender = false;
+    settings.pvr.ForceGLES2 = false;
 
     settings.debug.SerialConsole = false;
 
@@ -398,7 +399,8 @@ void LoadSettings(bool game_specific)
 
     settings.pvr.MaxThreads = cfgLoadInt(config_section, "pvr.MaxThreads", settings.pvr.MaxThreads);
     settings.pvr.SynchronousRender = cfgLoadBool(config_section, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
-
+    settings.pvr.ForceGLES2 = cfgLoadBool(config_section, "pvr.ForceGLES2", settings.pvr.ForceGLES2);
+    
     settings.debug.SerialConsole = cfgLoadBool(config_section, "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
 
     settings.bios.UseReios = cfgLoadBool(config_section, "bios.UseReios", settings.bios.UseReios);
@@ -549,6 +551,7 @@ void SaveSettings()
 
     cfgSaveInt("config", "pvr.MaxThreads", settings.pvr.MaxThreads);
     cfgSaveBool("config", "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+    cfgSaveBool("config", "pvr.ForceGLES2", settings.pvr.ForceGLES2);
 
     cfgSaveBool("config", "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
     cfgSaveInt("input", "MouseSensitivity", settings.input.MouseSensitivity);

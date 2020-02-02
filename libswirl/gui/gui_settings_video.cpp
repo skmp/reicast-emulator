@@ -37,9 +37,12 @@ void gui_settings_video()
 		}
 	    if (ImGui::CollapsingHeader("Rendering Options", ImGuiTreeNodeFlags_DefaultOpen))
 	    {
+			ImGui::Checkbox("Force GLESv2 Context", &settings.pvr.ForceGLES2);
+			ImGui::SameLine();
+			gui_ShowHelpMarker("Avoid using GLESv3. Works around old Adreno driver bugs");
 	    	ImGui::Checkbox("Synchronous Rendering", &settings.pvr.SynchronousRender);
             ImGui::SameLine();
-            gui_ShowHelpMarker("Reduce frame skipping by pausing the CPU when possible. Recommended for most platforms");
+            gui_ShowHelpMarker("Reduce frame skipping by pausing the CPU when possible. Recommended for powerful devices");
 	    	ImGui::Checkbox("Clipping", &settings.rend.Clipping);
             ImGui::SameLine();
             gui_ShowHelpMarker("Enable clipping. May produce graphical errors when disabled");

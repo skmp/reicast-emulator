@@ -35,6 +35,9 @@ static void findGLVersion()
     if (!strncmp(version, "OpenGL ES", 9))
     {
         gl.is_gles = true;
+        if (settings.pvr.ForceGLES2)
+            gl.gl_major = 2;
+
         if (gl.gl_major >= 3)
         {
             gl.gl_version = "GLES3";
@@ -492,9 +495,12 @@ struct GUIRenderer_impl : GUIRenderer {
 #if !defined(_ANDROID)
                 die("UIFrame: Failed to recover gl context")
 #else
+                msgboxf("Your graphics driver has crashed. Will try to recover.\n You can force a GLES2 context from the settings to avoid this message.\n\n Please upgrade your OS.", MBX_ICONEXCLAMATION);
                 printf("UIFRAME: Failed to create context - recreating view\n");
                 Stop();
                 android_RecreateView();
+                settings.pvr.ForceGLES2 = true;
+                SaveSettings();
 #endif
             }
         }

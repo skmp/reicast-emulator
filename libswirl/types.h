@@ -560,6 +560,7 @@ struct settings_t
 
 		u32 MaxThreads;
 		bool SynchronousRender;
+		bool ForceGLES2;
 	} pvr;
 
 	struct {

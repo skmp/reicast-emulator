@@ -19,6 +19,7 @@ std::unique_ptr<GUIRenderer> g_GUIRenderer;
 #include <emscripten/html5.h>
 #endif
 
+static bool force_es2 = false;
 static void findGLVersion()
 {
     gl.index_type = GL_UNSIGNED_INT;
@@ -35,7 +36,8 @@ static void findGLVersion()
     if (!strncmp(version, "OpenGL ES", 9))
     {
         gl.is_gles = true;
-        gl.gl_major = 2;
+        if (force_es2)
+            gl.gl_major = 2;
 
         if (gl.gl_major >= 3)
         {
@@ -494,9 +496,11 @@ struct GUIRenderer_impl : GUIRenderer {
 #if !defined(_ANDROID)
                 die("UIFrame: Failed to recover gl context")
 #else
+                msgboxf("Your graphics driver has crashed. Will try to recover. \n\n Please upgrade your OS.", MBX_ICONEXCLAMATION);
                 printf("UIFRAME: Failed to create context - recreating view\n");
                 Stop();
                 android_RecreateView();
+                force_es2 = true;
 #endif
             }
         }

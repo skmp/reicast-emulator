@@ -502,6 +502,7 @@ void gd_process_spi_cmd()
 		printf_spicmd("SPI_TEST_UNIT");
 
 		GDStatus.CHECK=SecNumber.Status==GD_BUSY; // Drive is ready ;)
+		cdda.playing = false;
 
 		gd_set_state(gds_procpacketdone);
 		break;
@@ -517,6 +518,7 @@ void gd_process_spi_cmd()
 		{
 #define readcmd packet_cmd.GDReadBlock
 
+			cdda.playing = false;
 			u32 sector_type=2048;
 			if (readcmd.head ==1 && readcmd.subh==1 && readcmd.data==1 && readcmd.expdtype==3 && readcmd.other==0)
 				sector_type=2340;

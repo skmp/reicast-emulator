@@ -28,6 +28,7 @@ list(APPEND CMAKE_MODULE_PATH "${reicast_shell_path}/cmake")
 
 include(GetGitRevisionDescription)
 git_describe(GIT_VERSION --tags)
+git_describe(GIT_HASH --exclude * --always)
 configure_file(${reicast_core_path}/version.h.in ${reicast_core_path}/version.h @ONLY)
 
 

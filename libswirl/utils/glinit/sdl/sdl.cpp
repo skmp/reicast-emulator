@@ -3,35 +3,19 @@
 #include "cfg/cfg.h"
 #include "linux-dist/main.h"
 #include "sdl/sdl.h"
-#include "gui/gui.h"
-#endif
-#include "hw/maple/maple_devs.h"
-#include "sdl_gamepad.h"
-#include "sdl_keyboard.h"
+
+#include "utils/glwrap/gl3w.h"
+#include "hw/pvr/Renderer_if.h"
 
 static bool sdl_gles;
+static SDL_Window* window;
+static SDL_GLContext glcontext;
 
-void sdlgl_CreateWindow(bool gles)
+bool sdlgl_CreateWindow(bool gles, int flags, int window_width, int window_height, void** wind, void** disp)
 {
 	sdl_gles = gles;
 
-	if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
-	{
-		if(SDL_InitSubSystem(SDL_INIT_VIDEO) != 0)
-		{
-			die("error initializing SDL Joystick subsystem");
-		}
-	}
-
-	int window_width  = cfgLoadInt("x11","width", WINDOW_WIDTH);
-	int window_height = cfgLoadInt("x11","height", WINDOW_HEIGHT);
-
-	int flags = SDL_WINDOW_OPENGL;
-	#ifdef TARGET_PANDORA
-		flags |= SDL_FULLSCREEN;
-	#else
-		flags |= SDL_SWSURFACE | SDL_WINDOW_RESIZABLE;
-	#endif
+	flags |= SDL_WINDOW_OPENGL;
 
 	if (gles)
 	{
@@ -54,30 +38,30 @@ void sdlgl_CreateWindow(bool gles)
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-	window = SDL_CreateWindow("Reicast Emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,	window_width, window_height, flags);
-	if (!window)
+	auto win = SDL_CreateWindow("Reicast Emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,	window_width, window_height, flags);
+	if (!win)
 	{
-		die("error creating SDL window");
+		return false;
 	}
 
-	glcontext = SDL_GL_CreateContext(window);
-	if (!glcontext)
+	auto glc = SDL_GL_CreateContext(window);
+	if (!glc)
 	{
-		die("Error creating SDL GL context");
+		SDL_DestroyWindow(win);
+		return false;
 	}
-	SDL_GL_MakeCurrent(window, NULL);
 
-	SDL_GL_GetDrawableSize(window, &screen_width, &screen_height);
+	*wind = win;
+	*disp = glc;
 
-	float ddpi, hdpi, vdpi;
-	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(window), &ddpi, &hdpi, &vdpi))
-		screen_dpi = (int)roundf(max(hdpi, vdpi));
-
-	printf("Created SDL Window (%ix%i) and GL Context successfully\n", window_width, window_height);
+	return true;
 }
 
 bool sdlgl_Init(void* wind, void* disp)
 {
+	window = reinterpret_cast<SDL_Window*>(wind);
+	glcontext = reinterpret_cast<SDL_GLContext>(disp);
+
 	SDL_GL_MakeCurrent(window, glcontext);
 
 	if (sdl_gles)
@@ -90,12 +74,20 @@ bool sdlgl_Init(void* wind, void* disp)
 	}
 }
 
-void sdlgl_Swap()
+bool sdlgl_Swap()
 {
 	SDL_GL_SwapWindow(window);
 
 	/* Check if drawable has been resized */
-	SDL_GL_GetDrawableSize(window, &screen_width, &screen_height);
+	int w;
+	int h;
+
+	SDL_GL_GetDrawableSize(window, &w, &h);
+
+	rend_resize(w, h);
+
+	//TODO: FIXME we don't handle context lost here
+	return true;
 }
 
 void sdlgl_Term()

@@ -87,6 +87,11 @@ ifdef SUPPORT_SDL
 	RZDCY_MODULES += utils/glinit/sdl/
 endif
 
+ifdef USE_SDL
+	RZDCY_CFLAGS  += 
+	RZDCY_MODULES += sdl/
+endif
+
 ifndef NO_NIXPROF
     RZDCY_MODULES += linux/nixprof/
 endif

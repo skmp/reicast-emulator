@@ -19,3 +19,5 @@ struct FI<R(C::*)(Args...)> {
 #define STATIC_FORWARD(klass, function)  FI<decltype(&klass::function)>::forward([](void* ctx, auto... args) { \
                                 auto that = reinterpret_cast<klass*>(ctx); return that->function(args...); \
                             })
+
+// this is here to prevent gcc warning

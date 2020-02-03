@@ -803,7 +803,7 @@ struct slowsoftrend : Renderer
         XFreeGC(x11_disp, gc);
 #else
         // TODO softrend without X11 (SDL f.e.)
-#error Cannot use softrend without X11
+    die("Softrend doesn't know how to update the screen");
 #endif
     }
 

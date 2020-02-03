@@ -444,8 +444,6 @@ int main(int argc, wchar* argv[])
 		clean_exit(0);
 	#endif
 
-	virtualDreamcast->Term();
-
 	#if defined(USE_EVDEV)
 		input_evdev_close();
 	#endif

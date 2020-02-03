@@ -57,12 +57,16 @@ void gui_welcome(ImFont* font64) {
 
 	DrawTextCentered("Reicast");
 	
-		string ver = REICAST_VERSION;
-	auto ver_numeric = ver.substr(0, ver.find_last_of("-"));
-	auto ver_hash = "(" + ver.substr(ver.find_last_of("-") + 2) + ")";
+	string ver_non_hash = REICAST_VERSION;
+
+	if (ver_non_hash.find(GIT_HASH) != ver_non_hash.npos) {
+		ver_non_hash = ver_non_hash.substr(0, ver_non_hash.find_last_of("-"));
+	}
+
+	string ver_hash = "(" GIT_HASH ")";
 
 	ImGui::SetWindowFontScale(scale / 3.5);
-	DrawTextCentered(ver_numeric.c_str());
+	DrawTextCentered(ver_non_hash.c_str());
 	
 	ImGui::SetWindowFontScale(scale / 6);
 	DrawTextCentered(ver_hash.c_str());

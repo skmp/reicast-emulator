@@ -270,6 +270,8 @@ set(reicast_SRCS ${core_SRCS} ${deps_SRCS} ${osd_SRCS})
 
 add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS}) 
 
+target_compile_features(${TNAME}${binSuffix} PRIVATE cxx_std_14)
+
 if(${HOST_OS} EQUAL ${OS_LINUX})
   find_package(ALSA)
   if(ALSA_FOUND)

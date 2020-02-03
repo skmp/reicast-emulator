@@ -24,7 +24,7 @@ struct GUI {
     virtual void Init() = 0;
     virtual void OpenSettings(std::function<void()> cb) = 0;
     virtual void RenderUI() = 0;
-    virtual void DisplayNotification(const char* msg, int duration) = 0;
+    virtual void DisplayNotification(const char* msg, int durationMs) = 0;
     virtual void RenderOSD() = 0;
     virtual void OpenOnboarding() = 0;
     virtual void RefreshFiles() = 0;
@@ -38,3 +38,6 @@ struct GUI {
 };
 
 extern std::unique_ptr<GUI> g_GUI;
+
+void gui_displaynotification(const char* text, int durationMs);
+void gui_displaynotificationf(const char* text, int durationMs, ...);

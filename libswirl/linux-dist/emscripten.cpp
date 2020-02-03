@@ -130,4 +130,9 @@ void input_emscripten_init() {
 	kb_gamepad = std::make_shared<emKbGamepadDevice>(0);
 	GamepadDevice::Register(kb_gamepad);
 }
+
+int os_MessageBox(const char* text, unsigned int type)
+{
+	return 1;
+}
 #endif

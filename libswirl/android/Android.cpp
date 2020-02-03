@@ -695,17 +695,9 @@ void os_gl_term()
     return egl_Term();
 }
 
-#if defined(_ANDROID)
-int msgboxf(const wchar* text, unsigned int type, ...) {
-    va_list args;
+int os_MessageBox(const char* text, unsigned int type) {
 
-    wchar temp[2048];
-    va_start(args, type);
-    vsnprintf(temp, sizeof(temp), text, args);
-    va_end(args);
-    printf("msgbox(%d) %s\n", type, temp);
-
-    auto jstr = jvm_attacher.getEnv()->NewStringUTF(temp);
+    auto jstr = jvm_attacher.getEnv()->NewStringUTF(text);
 
     auto rv = jvm_attacher.getEnv()->CallIntMethod(g_activity, MsgboxMID, jstr, type);
 
@@ -713,7 +705,6 @@ int msgboxf(const wchar* text, unsigned int type, ...) {
 
     return rv;
 }
-#endif
 
 void android_RecreateView()
 {

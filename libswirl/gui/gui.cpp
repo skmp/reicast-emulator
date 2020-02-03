@@ -1046,18 +1046,18 @@ GUI* GUI::Create() {
     return new ReicastUI_impl();
 }
 
-#if !defined(_ANDROID)
-int msgboxf(const wchar* text, unsigned int type, ...) {
+void gui_displaynotification(const wchar* text, int durationMs) {
+    printf("N: %s\n", text);
+    g_GUI->DisplayNotification(text, durationMs);
+}
+
+void gui_displaynotificationf(const wchar* text, int durationMs, ...) {
     va_list args;
 
     wchar temp[2048];
-    va_start(args, type);
+    va_start(args, durationMs);
     vsnprintf(temp, sizeof(temp), text, args);
     va_end(args);
-    printf("%s\n", temp);
 
-    g_GUI->DisplayNotification(temp, 2000);
-
-    return 1;
+    gui_displaynotificationf(temp, durationMs);
 }
-#endif

@@ -854,3 +854,8 @@ void os_LaunchFromURL(const string& url)
 {
 	ShellExecuteA((HWND)window_win, "open", url.c_str(), nullptr, nullptr, SW_SHOW);
 }
+
+int os_MessageBox(const char* text, unsigned int type)
+{
+	return MessageBoxA(NULL, text, VER_FULLNAME, type);
+}

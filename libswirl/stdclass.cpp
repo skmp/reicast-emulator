@@ -1,10 +1,13 @@
 #include <string.h>
+#include <stdarg.h>
 #include <vector>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "types.h"
 #include "cfg/cfg.h"
 #include "stdclass.h"
+#include "oslib/oslib.h"
+
 #if HOST_OS == OS_DARWIN
 #include <mach/clock.h>
 #include <mach/mach.h>
@@ -158,4 +161,14 @@ bool make_directory(const string& path)
 #endif
 }
 
+int msgboxf(const char* text, unsigned int type, ...)
+{
+	va_list args;
 
+	wchar temp[2048];
+	va_start(args, type);
+	vsnprintf(temp, sizeof(temp), text, args);
+	va_end(args);
+	
+	return os_MessageBox(temp, type);
+}

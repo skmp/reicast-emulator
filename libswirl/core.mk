@@ -101,7 +101,7 @@ ifdef PLATFORM_SDL
 endif
 
 ifdef PLATFORM_LINUX
-    RZDCY_MODULES += linux-dist/ linux/ oslib/posix/
+    RZDCY_MODULES += linux-dist/ linux/ oslib/posix/ deps/messagebox/
 endif
 
 ifdef PLATFORM_WINDOWS

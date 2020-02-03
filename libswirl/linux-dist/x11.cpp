@@ -25,6 +25,8 @@
 
 #include "utils/glinit/glx/glx.h"
 
+#include "messagebox/messagebox.h"
+
 #if defined(TARGET_PANDORA)
 	#define DEFAULT_FULLSCREEN    true
 	#define DEFAULT_WINDOW_WIDTH  800
@@ -517,4 +519,17 @@ void x11_window_destroy()
 	}
 }
 
+int os_MessageBox(const char* text, unsigned int type)
+{
+	Button btn;
+
+	btn.label = L"Okay";
+	btn.result = 1;
+
+	const size_t cSize = strlen(text) + 1;
+	std::wstring wc(cSize, L'#');
+	mbstowcs(&wc[0], text, cSize);
+
+	return Messagebox(VER_FULLNAME, wc.c_str(), &btn, 1);
+}
 #endif

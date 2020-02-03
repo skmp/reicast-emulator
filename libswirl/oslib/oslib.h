@@ -35,5 +35,7 @@ bool os_gl_init(void* hwnd, void* hdc);
 bool os_gl_swap();
 void os_gl_term();
 
+int os_MessageBox(const char* msg, unsigned int type);
+
 // FIXME 2 - this needs to be os_*
 void UpdateInputState(u32 port);

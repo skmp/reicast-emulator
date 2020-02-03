@@ -164,13 +164,6 @@ static void LoadSpecialSettings(void)
       {
       	INFO_LOG(BOOT, "[LUT]: Found game in LUT database..");
 
-         if (lut_games[i].dynarec_type != -1)
-         {
-         	NOTICE_LOG(BOOT, "[Hack]: Applying dynarec type hack.");
-            settings.dynarec.Type = lut_games[i].dynarec_type;
-            LoadSpecialSettingsCPU();
-         }
-
          if (lut_games[i].alpha_sort_mode != -1)
          {
          	NOTICE_LOG(BOOT, "[Hack]: Applying alpha sort hack.");
@@ -210,6 +203,11 @@ static void LoadSpecialSettings(void)
          {
          	NOTICE_LOG(BOOT, "[Hack]: Disabling WinCE virtual memory.");
             settings.dynarec.disable_vmem32 = true;
+         }
+         if (lut_games[i].no_rgb_component == 1)
+         {
+         	NOTICE_LOG(BOOT, "Disabling RGB component output");
+            settings.dreamcast.cable = 3;		// TV composite
          }
 
          break;
@@ -273,13 +271,6 @@ static void LoadSpecialSettingsNaomi(const char *name)
       if (strstr(lut_games_naomi[i].product_number, name))
       {
       	INFO_LOG(BOOT, "[LUT]: Found game in LUT database..");
-
-         if (lut_games_naomi[i].dynarec_type != -1)
-         {
-         	NOTICE_LOG(BOOT, "[Hack]: Applying dynarec type hack.");
-            settings.dynarec.Type = lut_games_naomi[i].dynarec_type;
-            LoadSpecialSettingsCPU();
-         }
 
          if (lut_games_naomi[i].alpha_sort_mode != -1)
          {

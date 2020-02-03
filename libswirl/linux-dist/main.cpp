@@ -65,8 +65,16 @@
 #include "utils/glinit/egl/egl.h"
 #endif
 
+#if defined(SUPPORT_SDL)
+#include "utils/glinit/sdl/sdl.h"
+#endif
+
 void* x11_win = 0;
 void* x11_disp = 0;
+
+
+void* sdl_win = 0;
+void* sdl_disp = 0;
 
 void* libPvr_GetRenderTarget()
 {
@@ -178,7 +186,7 @@ void os_CreateWindow()
 		x11_window_create();
 	#endif
 	#if defined(USE_SDL)
-		sdl_window_create();
+		sdl_window_create(&sdl_win, &sdl_disp);
 	#endif
 }
 
@@ -362,8 +370,10 @@ bool os_gl_init(void* hwnd, void* hdc)
 		return glx_Init(x11_win, x11_disp);
 	#elif defined(SUPPORT_EGL)
 		return egl_Init(x11_win, x11_disp);
+	#elif defined(SUPPORT_SDL)
+		return sdlgl_Init(sdl_win, sdl_win);
 	#else
-		#error "only glx/egl supported"
+		#error "only glx/egl/sdl supported"
 		return true;
 	#endif
 }
@@ -374,8 +384,10 @@ bool os_gl_swap()
 		return glx_Swap();
 	#elif defined(SUPPORT_EGL)
 		return egl_Swap();
+	#elif defined(SUPPORT_SDL)
+		return sdlgl_Swap();
 	#else
-		#error "only glx/egl supported"
+		#error "only glx/egl/sdl supported"
 		return true;
 	#endif
 }
@@ -386,8 +398,10 @@ void os_gl_term()
 		glx_Term();
 	#elif defined(SUPPORT_EGL)
 		egl_Term();
+	#elif defined(SUPPORT_SDL)
+		return sdlgl_Term();
 	#else
-		#error "only glx/egl supported"
+		#error "only glx/egl/sdl supported"
 	#endif
 }
 
@@ -443,8 +457,6 @@ int main(int argc, wchar* argv[])
 	#ifdef TARGET_PANDORA
 		clean_exit(0);
 	#endif
-
-	virtualDreamcast->Term();
 
 	#if defined(USE_EVDEV)
 		input_evdev_close();

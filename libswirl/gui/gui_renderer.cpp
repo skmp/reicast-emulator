@@ -555,8 +555,10 @@ struct GUIRenderer_impl : GUIRenderer {
     }
 
     virtual void UILoop() {
-        if (!CreateContext())
+        if (!CreateContext()) {
+            msgboxf("Failed to create rendering context\n", MBX_ICONERROR);
             return;
+        }
 
 #if defined(TARGET_EMSCRIPTEN)
         emscripten_set_main_loop_arg(STATIC_FORWARD(GUIRenderer_impl, UIFrame), this, 60, true);

@@ -6,13 +6,21 @@
 #include "linux-dist/main.h"
 #include "sdl/sdl.h"
 #include "gui/gui.h"
+#include "gui/gui_renderer.h"
+
+// for screenDPI
+#include "deps/imgui/imgui.h"
+#include "gui/gui_partials.h"
+
+#include "libswirl.h"
+#include "utils/glinit/sdl/sdl.h"
+
 #endif
 #include "hw/maple/maple_devs.h"
 #include "sdl_gamepad.h"
 #include "sdl_keyboard.h"
 
 static SDL_Window* window = NULL;
-static SDL_GLContext glcontext;
 
 #ifdef TARGET_PANDORA
 	#define WINDOW_WIDTH  800
@@ -117,7 +125,15 @@ void input_sdl_handle(u32 port)
 		switch (event.type)
 		{
 			case SDL_QUIT:
-				dc_exit();
+				if (virtualDreamcast && sh4_cpu->IsRunning()) {
+					virtualDreamcast->Stop([] { 
+						g_GUIRenderer->Stop();
+					});
+				}
+				else
+				{
+					g_GUIRenderer->Stop();
+				}
 				break;
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
@@ -202,4 +218,43 @@ void sdl_window_set_text(const char* text)
 			SDL_SetWindowTitle(window, text);    // *TODO*  Set Icon also...
 		}
 	#endif
+}
+
+bool sdl_window_create(void** wind, void** disp) {
+	
+	if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
+	{
+		if(SDL_InitSubSystem(SDL_INIT_VIDEO) != 0)
+		{
+			die("error initializing SDL Joystick subsystem");
+		}
+	}
+
+
+	int window_width  = cfgLoadInt("x11","width", WINDOW_WIDTH);
+	int window_height = cfgLoadInt("x11","height", WINDOW_HEIGHT);
+
+	int flags = 0;
+	#ifdef TARGET_PANDORA
+		flags |= SDL_FULLSCREEN;
+	#else
+		flags |= SDL_SWSURFACE | SDL_WINDOW_RESIZABLE;
+	#endif
+
+	// try full GL first
+	if (!sdlgl_CreateWindow(false, flags, window_width, window_height, wind, disp)) {
+		if (!sdlgl_CreateWindow(true, flags, window_width, window_height, wind, disp)) {
+			return false;
+		}
+	}
+
+	window = reinterpret_cast<SDL_Window*>(*wind);
+
+	SDL_GL_GetDrawableSize(window, &screen_width, &screen_height);
+
+	float ddpi, hdpi, vdpi;
+	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(window), &ddpi, &hdpi, &vdpi))
+		screen_dpi = (int)roundf(max(hdpi, vdpi));
+
+	printf("Created SDL Window (%ix%i) and GL Context successfully\n", window_width, window_height);
 }

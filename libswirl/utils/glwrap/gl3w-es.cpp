@@ -1,9 +1,15 @@
 #include "types.h"
 #include "gl3w.h"
-#include "khronos/EGL/egl.h"
 
-#if defined(SUPPORT_EGL) && defined(_ANDROID)
+#if defined(SUPPORT_EGL)
+#include "khronos/EGL/egl.h"
+#if defined(_ANDROID)
 #include <dlfcn.h>
+#endif
+#endif
+
+#if defined(SUPPORT_SDL)
+#include <SDL2/SDL.h>
 #endif
 
 struct rglgen_sym_map { const char *sym; void *ptr; };
@@ -11,7 +17,7 @@ extern const struct rglgen_sym_map rglgen_symbol_map[];
 
 bool load_gles_symbols()
 {
-	#if defined(SUPPORT_EGL)
+	#if defined(SUPPORT_EGL) ||  defined(SUPPORT_SDL)
 		for (int i = 0; rglgen_symbol_map[i].sym != NULL; i++)
 		{
 		    *(void **)rglgen_symbol_map[i].ptr = nullptr;
@@ -19,10 +25,20 @@ bool load_gles_symbols()
 		    //try to load via dlsym -- older android can't load everything via eglGetProcAddress
 		    *(void **)rglgen_symbol_map[i].ptr = (void*)dlsym(RTLD_DEFAULT, rglgen_symbol_map[i].sym);
 #endif
+
+#if defined(SUPPORT_EGL)
 		    // try to load via eglGetProcAddress
 		    if (!*(void **)rglgen_symbol_map[i].ptr) {
 		      *(void **)rglgen_symbol_map[i].ptr = (void*)eglGetProcAddress(rglgen_symbol_map[i].sym);
 		    }
+#endif
+
+#if defined(SUPPORT_SDL)
+		    // try to load via eglGetProcAddress
+		    if (!*(void **)rglgen_symbol_map[i].ptr) {
+		      *(void **)rglgen_symbol_map[i].ptr = (void*)SDL_GL_GetProcAddress(rglgen_symbol_map[i].sym);
+		    }
+#endif
 
             // print a warning if failed
             if (!*(void **)rglgen_symbol_map[i].ptr)

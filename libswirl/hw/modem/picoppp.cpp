@@ -3,6 +3,8 @@
 */
 #include "license/bsd"
 
+// for picoppp
+#include "license/dep_gpl"
 
 
 #if !defined(_MSC_VER) && !defined(TARGET_NO_THREADS)

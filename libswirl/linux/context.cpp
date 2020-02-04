@@ -144,17 +144,17 @@ void segfault_set_pc(void* segfault_ctx, unat new_pc, unat* old_pc)
 	// if THUMB, store the pointer in BX-compatible format
 	if (MCTX(.arm_cpsr) & (1<<5))
 		*old_pc += 1;
-#endif
 
 	ctx.pc = new_pc & ~1; // THUMB Bit set on CPSR, no need to set it here
 
-#if HOST_CPU == CPU_ARM
 	// restore from BX-compatible pointer
 	// set THUMB bit accordingly
 	if (new_pc & 1)
 		MCTX(.arm_cpsr) |= (1<<5);
 	else
 		MCTX(.arm_cpsr) &= ~(1<<5);
+#else
+	ctx.pc = new_pc;
 #endif
 	
 	context_segfault_bicopy(&ctx, UCTX_data, true);

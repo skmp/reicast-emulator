@@ -1498,9 +1498,9 @@ static void fix_texture_bleeding(const List<PolyParam> *list)
 		{
 			Vertex& vtx = vd_rc.verts.head()[idx];
 
-			if (vtx.u != 0.f && vtx.u <= 0.995f)
+			if (vtx.u != 0.f && (vtx.u <= 0.995f || vtx.u > 1.f))
 				need_fixing = false;
-			else if (vtx.v != 0.f && vtx.v <= 0.995f)
+			else if (vtx.v != 0.f && (vtx.v <= 0.995f || vtx.v > 1.f))
 				need_fixing = false;
 			else if (idx == first)
 				z = vtx.z;

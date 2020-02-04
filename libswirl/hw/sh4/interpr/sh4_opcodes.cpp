@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	sh4 base core
 	most of it is (very) old
 	could use many cleanups, lets hope someone does them

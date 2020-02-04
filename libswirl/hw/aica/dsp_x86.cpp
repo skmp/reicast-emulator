@@ -1,8 +1,6 @@
-#include "dsp_backend.h"
-#include "aica_mem.h"
-#include "oslib/oslib.h"
-
 /*
+	This file is part of libswirl
+
 	DSP rec_v1
 
 	Tries to emulate a guesstimation of the aica dsp, by directly emitting x86 opcodes.
@@ -18,6 +16,15 @@
 	Initiall code by skmp, now part of the reicast project.
 	See LICENSE & COPYRIGHT files further details
 */
+#include "license/bsd"
+
+
+
+#include "dsp_backend.h"
+#include "aica_mem.h"
+#include "oslib/oslib.h"
+
+
 
 
 #if HOST_CPU == CPU_X86 && FEAT_DSPREC == DYNAREC_JIT

@@ -1,0 +1,5 @@
+#pragma once
+
+#if TARGET_LICENSE != LICENSE_GPL
+#error gpl is required for this module
+#endif 

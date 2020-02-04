@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "oslib/audiostream.h"
 #if HOST_OS==OS_WINDOWS
 #include "oslib.h"

@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "_vmem.h"
 #include "hw/aica/aica_mem.h"
 #include "hw/sh4/dyna/blockmanager.h"

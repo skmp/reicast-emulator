@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
     PVR-SB handling
     DMA hacks are here
 */

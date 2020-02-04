@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 //gah , ccn emulation
 //CCN: Cache and TLB controller
 

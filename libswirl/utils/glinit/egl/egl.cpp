@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "rend/gles/gles.h"
 
 #include <EGL/egl.h>

@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #if defined(SUPPORT_DISPMANX)
 #include "linux-dist/dispmanx.h"
 #include "linux-dist/main.h"

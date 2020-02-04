@@ -4,6 +4,12 @@
 // Copyright (c) 2007-2009 R. Belmont and Richard Bannister, and others.
 // All rights reserved.
 //
+
+// TODO: FIXME mame is compatible, but double check
+#include "license/bsd"
+
+
+
 #include "dsp_backend.h"
 #include "aica_mem.h"
 

@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "virt_arm.h"
 
 #if HOST_CPU==CPU_X86 && FEAT_AREC != DYNAREC_NONE

@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 // serialize.cpp : save states
 #if 1
 #include "types.h"

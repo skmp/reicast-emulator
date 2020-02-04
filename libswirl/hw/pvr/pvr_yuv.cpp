@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "pvr_yuv.h"
 #include "pvr_regs.h"
 #include "hw/holly/holly_intc.h"

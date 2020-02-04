@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	PowerVR interface to plugins
 	Handles YUV conversion (slow and ugly -- but hey it works ...)
 

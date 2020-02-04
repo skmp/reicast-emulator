@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "utils/http.h"
 #include "utils/string.h"
 #include "utils/cloudrom.h"

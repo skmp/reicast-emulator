@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
  *	E_VDataOp.h		* VFP/A.SIMD Data Processing Instruction Set Encoding
  *
  *		V{<modifier>}<operation>{<shape>}<c><q>{.<dt>} {<dest>,} <src1>, <src2>

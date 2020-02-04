@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #ifndef NAOMI_CART_H
 #define NAOMI_CART_H
 

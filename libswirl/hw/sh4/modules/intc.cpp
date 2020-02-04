@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	SH4/mod/intc
 
 	Implements the register interface of the sh4 interrupt controller.

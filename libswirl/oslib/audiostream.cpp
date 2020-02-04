@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include <limits.h>
 #include "hw/holly/sb.h" // for STATIC_FORWARD
 #include "cfg/cfg.h"

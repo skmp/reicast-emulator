@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
  *	disasm.h,	a horribly static yet (hopefully) correct disassembler
  *
  */

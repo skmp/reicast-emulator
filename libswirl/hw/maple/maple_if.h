@@ -1,3 +1,15 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
 #include "types.h"
 #include "types.h"

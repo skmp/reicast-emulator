@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 //ubc is disabled on dreamcast and can't be used ... but kos-debug uses it !...
 
 #include "types.h"

@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
  *	H_fp.h
  *
  *		ARMv7 floating point help routines.

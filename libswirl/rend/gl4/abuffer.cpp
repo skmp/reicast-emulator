@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
  * abuffer.cpp
  *
  *  Created on: May 26, 2018

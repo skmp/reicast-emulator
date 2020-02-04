@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "types.h"
 
 #include "../sh4_interpreter.h"

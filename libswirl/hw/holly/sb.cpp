@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	System bus registers
 	This doesn't implement any functionality, only routing
 */

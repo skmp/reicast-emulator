@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
     Simple Core Audio backend for osx (and maybe ios?)
     Based off various audio core samples and dolphin's code
 

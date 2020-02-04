@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	Basic gdrom syscall emulation
 	Adapted from some (very) old pre-nulldc hle code
 */

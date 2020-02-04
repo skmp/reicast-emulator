@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "lua_bindings.h"
 #include "hw/pvr/Renderer_if.h"
 #include "gui/gui.h"

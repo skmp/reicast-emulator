@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include <list>
 #include <functional>
 #ifndef TARGET_NO_OPENMP

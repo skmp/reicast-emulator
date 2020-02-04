@@ -1,4 +1,10 @@
-﻿#include "types.h"
+﻿/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+#include "types.h"
 
 #if HOST_CPU == CPU_ARM && FEAT_AREC == DYNAREC_JIT
 

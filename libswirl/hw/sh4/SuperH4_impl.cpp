@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "SuperH4_impl.h"
 #include "sh4_interpreter.h"
 #include "sh4_core.h"

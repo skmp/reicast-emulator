@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "imgread_common.h"
 
 Disc* chd_parse(const wchar* file);

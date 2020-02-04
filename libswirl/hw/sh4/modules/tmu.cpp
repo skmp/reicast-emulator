@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	Lovely timers, its amazing how many times this module was bugged
 */
 

@@ -1,8 +1,13 @@
 /*
+	This file is part of libswirl
+	
 	Config file crap
 	Supports various things, as virtual config entries and such crap
 	Works surprisingly well considering how old it is ...
 */
+#include "license/bsd"
+
+
 
 #define _CRT_SECURE_NO_DEPRECATE (1)
 #include <errno.h>

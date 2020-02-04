@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #ifndef _NET_PLATFORM_H
 #define _NET_PLATFORM_H
 

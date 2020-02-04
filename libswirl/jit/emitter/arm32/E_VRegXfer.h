@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
  *	E_VRegXfer.h		* VFP/A.SIMD Register Transfer Instruction Set Encoding
  *
  */

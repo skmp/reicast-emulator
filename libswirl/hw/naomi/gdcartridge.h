@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
  * gdcartridge.h
  *
  *  Created on: Nov 16, 2018

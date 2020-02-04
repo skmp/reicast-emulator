@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	In case you wonder, the extern "C" stuff are for the assembly code on beagleboard/pandora
 */
 #include <map>

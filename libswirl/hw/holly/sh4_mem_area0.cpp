@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	Dreamcast 'area 0' emulation
 	Pretty much all peripheral registers are mapped here
 

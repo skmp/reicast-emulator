@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "arm7.h"
 #include "arm7_context.h"
 #include "hw/sh4/sh4_core.h"

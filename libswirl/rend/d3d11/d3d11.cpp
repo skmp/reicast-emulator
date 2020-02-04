@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include <d3d11.h>
 #include "hw/pvr/Renderer_if.h"
 #include "oslib/oslib.h"

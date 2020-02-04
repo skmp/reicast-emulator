@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "../input/gamepad_device.h"
 #include "oslib/oslib.h"
 #include "evdev.h"

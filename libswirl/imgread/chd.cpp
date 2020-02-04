@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "imgread_common.h"
 
 #include "deps/chdr/chd.h"

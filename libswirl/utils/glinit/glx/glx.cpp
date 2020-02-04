@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 
 // for gl binding before GLX
 #include "utils/glwrap/gl3w.h"

@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #if defined(USE_SDL_AUDIO)
 
 #include <SDL2/SDL.h>

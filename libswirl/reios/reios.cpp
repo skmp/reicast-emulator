@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	Extremely primitive bios replacement
 
 	Many thanks to Lars Olsson (jlo@ludd.luth.se) for bios decompile work

@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	Dreamcast serial port.
 	This is missing most of the functionality, but works for KOS (And thats all that uses it)
 */

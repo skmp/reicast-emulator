@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "gl4.h"
 #include "../gles/glcache.h"
 

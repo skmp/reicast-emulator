@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include <xinput.h>
 #include <windows.h>
 #include "input/gamepad_device.h"

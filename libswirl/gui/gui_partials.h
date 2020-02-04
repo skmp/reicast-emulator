@@ -1,3 +1,10 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+
 #pragma once
 
 void gui_settings();

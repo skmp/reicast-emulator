@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include <math.h>
 #include "glcache.h"
 #include "rend/TexCache.h"

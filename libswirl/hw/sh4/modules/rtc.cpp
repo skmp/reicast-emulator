@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	The rtc isn't working on dreamcast I'm told
 */
 #include "types.h"

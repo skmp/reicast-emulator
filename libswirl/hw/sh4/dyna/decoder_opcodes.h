@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #pragma once
 #if FEAT_SHREC != DYNAREC_NONE
 #define sh4dec(str) void dec_##str (u32 op)

@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "types.h"
 
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86

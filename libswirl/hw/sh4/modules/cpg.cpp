@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "types.h"
 #include "modules.h"
 #include "hw/sh4/sh4_mmr.h"

@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "hw/sh4/sh4_mmio.h"
 
 #include "spg.h"

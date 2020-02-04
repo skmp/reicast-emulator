@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "disc_common.h"
 
 u8 q_subchannel[96];		//latest q subcode

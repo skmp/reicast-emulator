@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include <imgui/imgui.h>
 #include "types.h"
 #include "gui/gui_partials.h"
@@ -465,7 +471,9 @@ void rend_vblank()
 	{
         fb_dirty = false;
 
-        g_GUIRenderer->QueueEmulatorFrame([] () {			// TODO: FIXME Actually check and re init this. Better yet, refactor            if (renderer)
+        g_GUIRenderer->QueueEmulatorFrame([] () {
+			// TODO: FIXME Actually check and re init this. Better yet, refactor
+            if (renderer)
 			{
                 renderer->RenderFramebuffer();
             }

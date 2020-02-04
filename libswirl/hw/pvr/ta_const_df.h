@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 ///this file is here to make up for C++'s limitations
 static TaListFP* ta_poly_data_lut[15] = 
 {

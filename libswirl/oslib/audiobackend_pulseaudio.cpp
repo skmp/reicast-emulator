@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "oslib/audiostream.h"
 #ifdef USE_PULSEAUDIO
 #include <sys/ioctl.h>

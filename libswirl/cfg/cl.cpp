@@ -1,9 +1,12 @@
 /*
+	This file is part of libswirl
+	
 	Command line parsing
 	~yay~
 
 	Nothing too interesting here, really
 */
+#include "license/bsd"
 
 #include <stdio.h>
 #include <ctype.h>

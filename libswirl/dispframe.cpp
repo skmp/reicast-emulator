@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include <signal.h>
 #include "cfg/cfg.h"
 #include "rend/TexCache.h"

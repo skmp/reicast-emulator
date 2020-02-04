@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
  *	<E_DataOp.h		Title="ARMv7 ISA Emitter Middle-ware:	Data-Processing Instructions"	/>
  *
  *	<?CTYPE

@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "reios.h"
 
 #include "deps/libelf/elf.h"

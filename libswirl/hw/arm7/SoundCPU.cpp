@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 // nullAICA.cpp : Defines the entry point for the DLL application.
 //
 

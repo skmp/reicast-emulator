@@ -3,6 +3,13 @@
 		Handles RTC, Display mode reg && arm reset reg !
 	arm7 is handled on a separate arm plugin now
 */
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+
 #include "aica.h"
 #include "sgc_if.h"
 #include "aica_mmio.h"

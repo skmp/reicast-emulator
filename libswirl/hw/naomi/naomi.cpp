@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	This file is a mix of my code, Zezu's, and duno wtf-else (most likely ElSemi's ?)
 */
 #include "types.h"

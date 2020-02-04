@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 //structs were getting tooo many , so i moved em here !
 
 #pragma once

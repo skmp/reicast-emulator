@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include <string.h>
 #include <vector>
 #include <sys/types.h>

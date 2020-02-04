@@ -1,3 +1,6 @@
+#include "license/bsd"
+
+
 /*
  * This file was generated with gl3w_gen.py, part of gl3w
  * (hosted at https://github.com/skaslev/gl3w)

@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 
 // Implementation of the vmem related function for POSIX-like platforms.
 // There's some minimal amount of platform specific hacks to support

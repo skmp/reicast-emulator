@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #if defined(SUPPORT_X11)
 #include <imgui/imgui.h>
 

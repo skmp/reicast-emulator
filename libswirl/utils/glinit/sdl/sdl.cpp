@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include <map>
 #include "types.h"
 #include "cfg/cfg.h"

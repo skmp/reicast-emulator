@@ -1,3 +1,10 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+
 #include <atomic>
 
 #include "imgui/imgui.h"

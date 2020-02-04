@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 //Emitting code ;)
 #pragma warning(disable:4127)
 #pragma warning(disable:4244)

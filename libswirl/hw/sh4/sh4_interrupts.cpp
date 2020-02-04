@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	Interrupt list caching and handling
 
 	SH4 has a very flexible interrupt controller. In order to handle it efficiently, a sorted

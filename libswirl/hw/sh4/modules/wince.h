@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "hw/sh4/sh4_sched.h"
 
 #define	PUserKData 			0x00005800

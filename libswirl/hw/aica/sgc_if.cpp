@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include "sgc_if.h"
 #include "dsp.h"
 #include "dsp_backend.h"

@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #include <jni.h>
 #include <signal.h>
 #include <string.h>

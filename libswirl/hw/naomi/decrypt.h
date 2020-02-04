@@ -1,3 +1,9 @@
+/*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
 #ifndef __DECRYPT_STV_H__
 #define __DECRYPT_STV_H__
 

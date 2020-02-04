@@ -1,4 +1,10 @@
 /*
+	This file is part of libswirl
+*/
+#include "license/bsd"
+
+
+/*
 	DMAC is not really emulated on nullDC. We just fake the dmas ;p
 		Dreamcast uses sh4's dmac in ddt mode to multiplex ch0 and ch2 for dma access.
 		nullDC just 'fakes' each dma as if it was a full channel, never bothering properly

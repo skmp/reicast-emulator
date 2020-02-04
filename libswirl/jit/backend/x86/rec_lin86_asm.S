@@ -1,3 +1,9 @@
+#
+#	This file is part of libswirl
+#
+# #include "license/bsd"
+
+
 .section .text
 .intel_syntax noprefix
 

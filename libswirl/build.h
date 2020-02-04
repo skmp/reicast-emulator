@@ -1,4 +1,9 @@
 /*
+
+	This file is part of libswirl
+
+	#include "license/bsd"
+
 	reicast build options
 
 		Reicast can support a lot of stuff, and this is an attempt
@@ -162,8 +167,15 @@
 #define DYNAREC_JIT		0x40000002
 #define DYNAREC_CPP		0x40000003
 
+//TARGET_LICENSE
+#define LICENSE_BSD 0x50000001
+#define LICENSE_GPL 0x50000002
 
 //automatic
+
+#if !defined(TARGET_LICENSE)
+#define TARGET_LICENSE LICENSE_GPL
+#endif
 
 #ifndef CMAKE_BUILD
 

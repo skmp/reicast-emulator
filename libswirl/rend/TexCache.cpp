@@ -3,6 +3,8 @@
 */
 #include "license/bsd"
 
+// for xbrz
+#include "license/dep_gpl"
 
 #include <list>
 #include <functional>

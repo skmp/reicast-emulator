@@ -1,7 +1,7 @@
 /*
-	This file is part of libswirl
+	This file is part of libswirl, likely derived from MAME
 */
-#include "license/bsd"
+#include "license/lgpl"
 
 
 #include "naomi_cart.h"

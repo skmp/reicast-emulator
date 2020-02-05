@@ -139,8 +139,10 @@ void SetFloatStatusReg()
                 : "r"(off_mask), "r"(on_mask)
             );
     #else
-        printf("SetFloatStatusReg: Unsupported platform\n");
-    #endif
+		#if !defined(TARGET_EMSCRIPTEN)
+			printf("SetFloatStatusReg: Unsupported platform\n");
+		#endif
+	#endif
 #endif
 
 	}

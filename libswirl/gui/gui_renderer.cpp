@@ -572,6 +572,7 @@ struct GUIRenderer_impl : GUIRenderer {
 #else
         while (keepRunning) {
             UIFrame();
+            SleepMs(1); // don't sleep too much
         }
 #endif
         DestroyContext();

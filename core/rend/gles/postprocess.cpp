@@ -102,22 +102,19 @@ void main()
 
 #if INTERLACED == 1
 	// Blend vertically for composite mode
-	int taps = int(8);
-	float tap = 0.62/taps;
+	int taps = int(3);
+	float tap = (1.333f/float(taps)) / float(TextureSize.y);
 	vec2 texcoord4  = vTexCoord;
-	texcoord4.x = texcoord4.x;
-	texcoord4.y = texcoord4.y + ((tap*(taps/2.))/480.0);
-	vec4 blur1 = COMPAT_TEXTURE(Source, texcoord4);
+	texcoord4.y -= tap*2;
 	int bl;
 	vec4 ble;
 
 	for (bl=0;bl<taps;bl++)
 	{
-		texcoord4.y += (tap  / 480.0);
-		ble.rgb += COMPAT_TEXTURE(Source, texcoord4).rgb / taps;
+		texcoord4.y += tap;
+		ble.rgb += (COMPAT_TEXTURE(Source, texcoord4).rgb / float(taps+1));
 	}
-
-  	color.rgb = color.rgb * 0.25 + ( ble.rgb * 0.75);
+	color.rgb = (color.rgb / float(taps+1)) + ( ble.rgb );
 #endif
 
 #if LUMBOOST == 1

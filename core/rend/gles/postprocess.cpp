@@ -45,19 +45,12 @@ static const char* FragmentShaderSource = R"(%s
 #define DITHERING %d
 #define INTERLACED %d
 #define VGASIGNAL %d
+#define LUMBOOST 0
 
 #define GLES2 0
 #define GLES3 1
 #define GL2 2
 #define GL3 3
-
-#if TARGET_GL == GL3 || TARGET_GL == GLES3
-#define COMPAT_TEXTURE texture
-out vec4 FragColor;
-#else
-#define FragColor gl_FragColor
-#define COMPAT_TEXTURE texture2D
-#endif
 
 #if TARGET_GL == GLES2 || TARGET_GL == GLES3
 #ifdef GL_FRAGMENT_PRECISION_HIGH
@@ -67,13 +60,21 @@ precision mediump float;
 #endif
 #endif
 
+#if TARGET_GL == GL3 || TARGET_GL == GLES3
+#define COMPAT_TEXTURE texture
+out vec4 FragColor;
+#else
+#define FragColor gl_FragColor
+#define COMPAT_TEXTURE texture2D
+#endif
+
 uniform int FrameCount;
 uniform sampler2D Texture;
 
 // compatibility #defines
 #define Source Texture
 #define TextureSize textureSize(Texture, 0)
-#define vTexCoord (gl_FragCoord.xy / textureSize(Texture, 0))
+#define vTexCoord (gl_FragCoord.xy / vec2(textureSize(Texture, 0)))
 #define texture(c, d) COMPAT_TEXTURE(c, d)
 
 float dithertable[16] = float[](
@@ -93,10 +94,10 @@ float dithertable[16] = float[](
 
 void main()
 {
-	vec2 texcoord  = vTexCoord;
-	vec2 texcoord2  = vTexCoord;
-	texcoord2.x *= TextureSize.x;
-	texcoord2.y *= TextureSize.y;
+	vec2 texcoord = vTexCoord;
+	vec2 texcoord2 = vTexCoord;
+	texcoord2.x *= float(TextureSize.x);
+	texcoord2.y *= float(TextureSize.y);
 	vec4 color = COMPAT_TEXTURE(Source, texcoord);
 	float fc = mod(float(FrameCount), 2.0);
 
@@ -105,7 +106,7 @@ void main()
 	int taps = int(3);
 	float tap = (1.333f/float(taps)) / float(TextureSize.y);
 	vec2 texcoord4  = vTexCoord;
-	texcoord4.y -= tap*2;
+	texcoord4.y -= tap * 2.f;
 	int bl;
 	vec4 ble;
 
@@ -129,7 +130,7 @@ void main()
 	float ohyes;
 	vec4 how;
 
-	for (yeh=ditdex; yeh<(ditdex+16); yeh++) 	ohyes =  ((((dithertable[yeh-15]) - 1) * 0.1));
+	for (yeh=ditdex; yeh<(ditdex+16); yeh++) 	ohyes =  ((((dithertable[yeh-15]) - 1.f) * 0.1));
 	color.rb -= (ohyes / 128.);
 	color.g -= (ohyes / 128.);
 	{

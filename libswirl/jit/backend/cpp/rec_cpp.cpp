@@ -778,8 +778,8 @@ struct opcode_check_block : public opcodeExec<opcode_check_block<sz>> {
 	}
 };
 
-#if !defined(_DEBUG)
-	#define DREP_1(x, phrase) if (x < cntd)  ops_bytes += reinterpret_cast<opcodeExec<void>*>(ops_bytes)->executeWithSize(); else return;
+#define DREP_COUNT 512
+	#define DREP_1(x, phrase) case x: { ops_bytes += reinterpret_cast<opcodeExec<void>*>(ops_bytes)->executeWithSize(); };
 	#define DREP_2(x, phrase) DREP_1(x, phrase) DREP_1(x+1, phrase)
 	#define DREP_4(x, phrase) DREP_2(x, phrase) DREP_2(x+2, phrase)
 	#define DREP_8(x, phrase) DREP_4(x, phrase) DREP_4(x+4, phrase)
@@ -789,15 +789,12 @@ struct opcode_check_block : public opcodeExec<opcode_check_block<sz>> {
 	#define DREP_128(x, phrase) DREP_64(x, phrase) DREP_64(x+64, phrase)
 	#define DREP_256(x, phrase) DREP_128(x, phrase) DREP_128(x+128, phrase)
 	#define DREP_512(x, phrase) DREP_256(x, phrase) DREP_256(x+256, phrase)
-#else
-	#define DREP_512(x, phrase) for (int i=0; i<cntd; i++) ops_bytes += reinterpret_cast<opcodeExec<void>*>(ops_bytes)->executeWithSize();
-#endif
 
 template <int id>
 class fnblock {
 public:
 	int cc;
-	int cntd;
+	int ncntd;
 
 	opcodeExec<void> ops[0];
 	void execute() {
@@ -808,8 +805,12 @@ public:
 #if MIPS_COUNTER
 		mips_counter += cnt;
 #endif
-
-		DREP_512(0, phrase);
+		switch (ncntd)
+		{
+			DREP_512(0, phrase)
+		case 512:
+			break;
+		}
 	}
 
 	static void runner(void* fnb) {
@@ -844,7 +845,7 @@ template<int id>
 fnrv fnnCtor(int cycles, int opcode_slots) {
 	auto rv = new fnblock<id>();
 	rv->cc = cycles;
-	rv->cntd = opcode_slots;
+	rv->ncntd = DREP_COUNT - opcode_slots;
 	fnrv rvb = { rv, &fnblock<id>::runner, rv->ops };
 	return rvb;
 }

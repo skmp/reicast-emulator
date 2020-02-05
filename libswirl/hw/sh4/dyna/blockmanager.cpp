@@ -73,6 +73,8 @@ RuntimeBlockInfo* DYNACALL bm_GetBlock(u32 addr)
 // This takes a RX address and returns the info block ptr (RW space)
 RuntimeBlockInfo* bm_GetBlock(void* dynarec_code)
 {
+	die("not valid in REC_CPP");
+	
 	if (blkmap.empty())
 		return 0;
 
@@ -119,11 +121,14 @@ void bm_AddBlock(RuntimeBlockInfo* blk, bool lockRam)
     
 
 	auto iter = blkmap.find((void*)blk->code);
+	/* if NOT REC_CPP
 	if (iter != blkmap.end()) {
 		printf("DUP: %08X %p %08X %p\n", iter->second->addr, iter->second->code, blk->addr, blk->code);
 		die("bm_AddBlock: dupplicate");
 	}
 	blkmap[(void*)blk->code] = blk;
+	*/
+	
 	all_blocks.insert(blk);
 
 	verify((void*)bm_GetCode(blk->addr)==(void*)rdv_ngen->FailedToFindBlock);
@@ -146,6 +151,8 @@ void bm_AddBlock(RuntimeBlockInfo* blk, bool lockRam)
 
 void bm_DiscardBlock(RuntimeBlockInfo* blk)
 {
+	/*
+	if not REC_CPP
 	auto iter = blkmap.find((void*)blk->code);
 	if (iter == blkmap.end()) {
 		printf("Missing: %p\n", blk->code);
@@ -153,6 +160,7 @@ void bm_DiscardBlock(RuntimeBlockInfo* blk)
 	}
 
 	blkmap.erase((void*)blk->code);
+	*/
 	all_blocks.erase(blk);
 	
 	blk->Discard();

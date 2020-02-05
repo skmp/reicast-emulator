@@ -74,7 +74,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	void AddRef(RuntimeBlockInfo* other);
 	void RemRef(RuntimeBlockInfo* other);
 
-	void Discard();
+	virtual void Discard();
 	void UpdateRefs();
 
 	u32 memops;

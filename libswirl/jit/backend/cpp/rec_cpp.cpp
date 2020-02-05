@@ -27,6 +27,13 @@
 
 #define MIPS_COUNTER 0
 
+int cycle_counter;
+extern int mips_counter;
+
+typedef void (*DynarecCodeEntryCppPtr)(void* prm);
+static void* fnb_lookup[FPCB_SIZE];
+#define FNB_FROM_PC(pc) fnb_lookup[((pc)>>1)&FPCB_MASK]
+
 struct DynaRBI : RuntimeBlockInfo
 {
 	virtual u32 Relink() {
@@ -37,10 +44,15 @@ struct DynaRBI : RuntimeBlockInfo
 	virtual void Relocate(void* dst) {
 		verify(false);
 	}
+
+	virtual void Discard() {
+		verify(FNB_FROM_PC(addr) != 0);
+		FNB_FROM_PC(addr) = 0;
+
+		return RuntimeBlockInfo::Discard();
+	}
 };
 
-int cycle_counter;
-extern int mips_counter;
 
 void rec_mainloop(void* v_cntx)
 {
@@ -51,8 +63,11 @@ void rec_mainloop(void* v_cntx)
 	while (sh4_int_bCpuRun) {
 		cycle_counter = SH4_TIMESLICE;
 		do {
-			DynarecCodeEntryPtr rcb = bm_GetCode(ctx->cntx.pc);
-			rcb();
+			auto rcb = reinterpret_cast<DynarecCodeEntryCppPtr>(bm_GetCode(ctx->cntx.pc));
+
+			void* fnb = FNB_FROM_PC(ctx->cntx.pc);
+
+			rcb(fnb);
 		} while (cycle_counter > 0);
 
 		if (UpdateSystem()) {
@@ -797,7 +812,8 @@ struct opcode_check_block : public opcodeExec {
 
 	opcodeExec* setup(RuntimeBlockInfo* block) {
 		this->block = block;
-		ptr = GetMemPtr(block->addr, 4);
+		ptr = GetMemPtr(block->addr, block->sh4_code_size);
+		verify(ptr);
 		code.resize(sz == -1 ? block->sh4_code_size : sz);
 		memcpy(&code[0], ptr, sz == -1 ? block->sh4_code_size : sz);
 
@@ -1123,20 +1139,6 @@ string getCTN(foas f) {
 	return it->first;
 }
 
-#define CODE_ENTRY_COUNT 16384
-
-struct {
-	void* fnb;
-	void(*runner)(void* fnb);
-} dispatchb[CODE_ENTRY_COUNT];
-
-template<int n>
-void disaptchn() {
-	dispatchb[n].runner(dispatchb[n].fnb);
-}
-
-int idxnxx = 0;
-//&disaptchn
 #define REP_1(x, phrase) phrase < x >
 #define REP_2(x, phrase) REP_1(x, phrase), REP_1(x+1, phrase)
 #define REP_4(x, phrase) REP_2(x, phrase), REP_2(x+2, phrase)
@@ -1153,15 +1155,6 @@ int idxnxx = 0;
 #define REP_8192(x, phrase) REP_4096(x, phrase), REP_4096(x+4096, phrase)
 
 
-DynarecCodeEntryPtr FNS[] = { REP_8192(0, &disaptchn), REP_8192(8192, &disaptchn) };
-
-DynarecCodeEntryPtr getndpn_forreal(int n) {
-	if (n >= CODE_ENTRY_COUNT)
-		return 0;
-	else
-		return FNS[n];
-}
-
 typedef fnrv(*FNAFB)(int cycles);
 
 FNAFB FNA[] = { REP_512(1, &fnnCtor) };
@@ -1170,6 +1163,24 @@ FNAFB fnnCtor_forreal(size_t n) {
 	verify(n > 0);
 	verify(n <= 512);
 	return FNA[n - 1];
+}
+
+typedef opcodeExec*(*FNAFB_SCBE)(RuntimeBlockInfo* block);
+typedef FNAFB_SCBE(*FNAFB_SCB)();
+
+template<int opcode_slots>
+FNAFB_SCBE fnnCtor_scb() {
+	return [](RuntimeBlockInfo* block) { 
+		return (new opcode_check_block<opcode_slots>())->setup(block);
+	};
+}
+
+FNAFB_SCB FNA_SCB[] = { REP_512(1, &fnnCtor_scb) };
+
+FNAFB_SCB fnnCtor_scb_forreal(size_t n) {
+	verify(n > 0);
+	verify(n <= 512);
+	return FNA_SCB[n - 1];
 }
 
 class BlockCompiler {
@@ -1183,15 +1194,11 @@ public:
 		auto ptrs = fnnCtor_forreal(block->oplist.size() + 1 + (smc_checks != NoCheck ? 1 : 0))(block->guest_cycles);
 
 		ptrsg = ptrs.ptrs;
+		verify(FNB_FROM_PC(block->addr) == 0);
+		FNB_FROM_PC(block->addr) = ptrs.fnb;
 
-		dispatchb[idxnxx].fnb = ptrs.fnb;
-		dispatchb[idxnxx].runner = ptrs.runner;
-
-		block->code = getndpn_forreal(idxnxx++);
-
-		if (getndpn_forreal(idxnxx) == 0) {
-			emit_Skip(emit_FreeSpace()-16);
-		}
+		// WATCH // see rec_mainloop
+		block->code = reinterpret_cast<DynarecCodeEntryPtr>(ptrs.runner);
 
 		size_t i = 0;
 		if (smc_checks != NoCheck)
@@ -1204,22 +1211,10 @@ public:
 				check_size = 4;
 			}
 
-			switch (block->sh4_code_size)
-			{
-			case 4:
-				op = (new opcode_check_block<4>())->setup(block);
-				break;
-			case 6:
-				op = (new opcode_check_block<6>())->setup(block);
-				break;
-			case 8:
-				op = (new opcode_check_block<8>())->setup(block);
-				break;
-			default:
-				op = (new opcode_check_block<-1>())->setup(block);
-				break;
-			}
+			// this is trippy
+			op = fnnCtor_scb_forreal(block->sh4_code_size)()(block);
 			ptrs.ptrs[i++] = op;
+
 		}
 
 		for (size_t opnum = 0; opnum < block->oplist.size(); opnum++, i++) {
@@ -1546,7 +1541,8 @@ public:
 
 BlockCompiler* compiler;
 
-static void ngen_FailedToFindBlock_cpp() {
+static void ngen_FailedToFindBlock_cpp(void* fnb) {
+	verify(fnb == nullptr);
 	rdv_FailedToFindBlock(Sh4cntx.pc);
 }
 
@@ -1555,7 +1551,7 @@ struct CPPNGenBackend: NGenBackend
 	bool Init()
 	{
 		this->Mainloop = &rec_mainloop;
-		this->FailedToFindBlock = &ngen_FailedToFindBlock_cpp;
+		this->FailedToFindBlock = reinterpret_cast<DynarecCodeEntryPtr>(&ngen_FailedToFindBlock_cpp);
 		return true;
 	}
 
@@ -1612,8 +1608,7 @@ struct CPPNGenBackend: NGenBackend
 
 	void OnResetBlocks()
 	{
-		idxnxx = 0;
-		int id = 0;
+		memset(fnb_lookup, 0 , sizeof(fnb_lookup));
 		/*
 		while (dispatchb[id].fnb)
 			delete dispatchb[id].fnb;

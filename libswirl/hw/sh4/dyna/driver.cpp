@@ -98,6 +98,13 @@ u32 emit_FreeSpace()
 
 SmcCheckEnum DoCheck(u32 pc, u32 len)
 {
+
+	// is on bios or such
+	if (!GetMemPtr(pc, len))
+	{
+		return NoCheck;
+	}
+	
 	// no need for checks if fault based discard is used for this block
 	if (!bm_RamPageHasData(pc, len))
 	{

@@ -572,9 +572,6 @@ extern bool NaomiDataRead;
 
 
 //./core/rec.o
-#if FEAT_SHREC == DYNAREC_CPP
-extern int idxnxx;
-#endif
 
 
 
@@ -869,12 +866,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(reg_dimm_4c);
 	REICAST_S(NaomiDataRead);
 
-#if FEAT_SHREC == DYNAREC_CPP
-	REICAST_S(idxnxx);
-#else
-	REICAST_S(i);
-#endif
-
 	REICAST_SA(RegisterWrite,sh4_reg_count);
 	REICAST_SA(RegisterRead,sh4_reg_count);
 	REICAST_S(fallback_blocks);
@@ -1099,12 +1090,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(reg_dimm_48);
 	REICAST_US(reg_dimm_4c);
 	REICAST_US(NaomiDataRead);
-
-#if FEAT_SHREC == DYNAREC_CPP
-	REICAST_US(idxnxx);
-#else
-	REICAST_US(i);
-#endif
 
 	//REICAST_USA(CodeCache,CODE_SIZE) ;
 	//REICAST_USA(SH4_TCB,CODE_SIZE+4096);

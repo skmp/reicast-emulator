@@ -22,7 +22,7 @@
 #include "profiler/profiler.h"
 #include "oslib/oslib.h"
 
-#define SHIL_MODE 2
+#define SHIL_MODE 1
 #include "hw/sh4/dyna/shil_canonical.h"
 
 #define MIPS_COUNTER 0
@@ -83,9 +83,11 @@ static void ngen_blockcheckfail(u32 pc) {
 
 class opcodeExec {
 	public:
-		virtual void execute() { die("sould not reach here"); };
+		size_t(*executeWithSizeCB)(u8* p);
 
-		virtual size_t executeWithSize() { die("should not reach here"); return 0; }
+		opcodeExec(size_t(*executeWithSizeCB)(u8* p)) : executeWithSizeCB(executeWithSizeCB) { }
+		
+		opcodeExec() : executeWithSizeCB(nullptr) { }
 
 		static void* operator new(std::size_t sz)
 		{
@@ -105,8 +107,19 @@ class opcodeExec {
 		}
 };
 
+#define GEN_EXCEC(klass) \
+	klass() : opcodeExec([](u8* p) { \
+		auto ctx = reinterpret_cast<klass*>(p); \
+		ctx->execute(); \
+		return sizeof(klass); \
+	}) {}
+
 class opcodeDie : public opcodeExec {
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+public:
+	
+	GEN_EXCEC(opcodeDie)
+
+	INLINE void execute() {
 		die("death opcode");
 	}
 };
@@ -135,14 +148,15 @@ struct opcode_cc_aBaCbC {
 			verify(prms.size() == 3);
 		}
 
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+		GEN_EXCEC(opex2)
+		INLINE void execute() {
 			*rd = ((u32(*)(u32, u32))&T::impl)(*rs1, rs2);
 		}
 	};
 };
 
 struct opcode_cc_aCaCbC {
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		u32* rs1;
 		u32* rs2;
 		u32* rd;
@@ -153,18 +167,15 @@ struct opcode_cc_aCaCbC {
 			rd = prms[2].prm->reg_ptr();
 			verify(prms.size() == 3);
 		}
-	};
 
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+		GEN_EXCEC(opex2) INLINE void execute() {
 			*rd = ((u32(*)(u32, u32))&T::impl)(*rs1, *rs2);
 		}
 	};
 };
 
 struct opcode_cc_aCbC {
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		u32* rs1;
 		u32* rd;
 
@@ -173,36 +184,30 @@ struct opcode_cc_aCbC {
 			rd = prms[1].prm->reg_ptr();
 			verify(prms.size() == 2);
 		}
-	};
-
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	
+		GEN_EXCEC(opex2) INLINE void execute() {
 			*rd = ((u32(*)(u32))&T::impl)(*rs1);
 		}
 	};
 };
 
 struct opcode_cc_aC {
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		u32* rs1;
 
 		void setup(const CC_pars_t& prms, void* fun) {
 			rs1 = prms[0].prm->reg_ptr();
 			verify(prms.size() == 1);
 		}
-	};
-
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	
+		GEN_EXCEC(opex2) INLINE void execute() {
 			((void(*)(u32))&T::impl)(*rs1);
 		}
 	};
 };
 
 struct opcode_cc_aCaCaCbC {
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		u32* rs1;
 		u32* rs2;
 		u32* rs3;
@@ -215,11 +220,8 @@ struct opcode_cc_aCaCaCbC {
 			rd = prms[3].prm->reg_ptr();
 			verify(prms.size() == 4);
 		}
-	};
 
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+		GEN_EXCEC(opex2) INLINE void execute() {
 			*rd = ((u32(*)(u32, u32, u32))&T::impl)(*rs1, *rs2, *rs3);
 		}
 	};
@@ -227,7 +229,7 @@ struct opcode_cc_aCaCaCbC {
 
 struct opcode_cc_aCaCaCcCdC {
 	//split this to two cases, u64 and u64L/u32H
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		u32* rs1;
 		u32* rs2;
 		u32* rs3;
@@ -244,10 +246,8 @@ struct opcode_cc_aCaCaCcCdC {
 			//verify((u64*)(rd2 - 1) == rd);
 			verify(prms.size() == 5);
 		}
-	};
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+
+		GEN_EXCEC(opex2) INLINE void execute() {
 			auto rv = ((u64(*)(u32, u32, u32))&T::impl)(*rs1, *rs2, *rs3);
 
 			*rd = (u32)rv;
@@ -258,7 +258,7 @@ struct opcode_cc_aCaCaCcCdC {
 };
 
 struct opcode_cc_aCaCcCdC {
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		u32* rs1;
 		u32* rs2;
 		u32* rd;
@@ -272,11 +272,8 @@ struct opcode_cc_aCaCcCdC {
 
 			verify(prms.size() == 4);
 		}
-	};
 
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+		GEN_EXCEC(opex2) INLINE void execute() {
 			auto rv = ((u64(*)(u32, u32))&T::impl)(*rs1, *rs2);
 			*rd = (u32)rv;
 			*rd2 = rv >> 32;
@@ -285,7 +282,7 @@ struct opcode_cc_aCaCcCdC {
 };
 
 struct opcode_cc_eDeDeDfD {
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		f32* rs1;
 		f32* rs2;
 		f32* rs3;
@@ -297,11 +294,8 @@ struct opcode_cc_eDeDeDfD {
 			rs1 = (f32*)prms[2].prm->reg_ptr();
 			rd = (f32*)prms[3].prm->reg_ptr();
 		}
-	};
 
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+		GEN_EXCEC(opex2) INLINE void execute() {
 			*rd = ((f32(*)(f32, f32, f32))&T::impl)(*rs1, *rs2, *rs3);
 		}
 	};
@@ -309,7 +303,7 @@ struct opcode_cc_eDeDeDfD {
 };
 
 struct opcode_cc_eDeDfD {
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		f32* rs1;
 		f32* rs2;
 		f32* rd;
@@ -319,18 +313,15 @@ struct opcode_cc_eDeDfD {
 			rs1 = (f32*)prms[1].prm->reg_ptr();
 			rd = (f32*)prms[2].prm->reg_ptr();
 		}
-	};
 
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+		GEN_EXCEC(opex2) INLINE void execute() {
 			*rd = ((f32(*)(f32, f32))&T::impl)(*rs1, *rs2);
 		}
 	};
 };
 
 struct opcode_cc_eDeDbC {
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		f32* rs1;
 		f32* rs2;
 		u32* rd;
@@ -340,18 +331,15 @@ struct opcode_cc_eDeDbC {
 			rs1 = (f32*)prms[1].prm->reg_ptr();
 			rd = (u32*)prms[2].prm->reg_ptr();
 		}
-	};
 
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+		GEN_EXCEC(opex2) INLINE void execute() {
 			*rd = ((u32(*)(f32, f32))&T::impl)(*rs1, *rs2);
 		}
 	};
 };
 
 struct opcode_cc_eDbC {
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		f32* rs1;
 		u32* rd;
 
@@ -359,18 +347,15 @@ struct opcode_cc_eDbC {
 			rs1 = (f32*)prms[0].prm->reg_ptr();
 			rd = (u32*)prms[1].prm->reg_ptr();
 		}
-	};
 
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+		GEN_EXCEC(opex2) INLINE void execute() {
 			*rd = ((u32(*)(f32))&T::impl)(*rs1);
 		}
 	};
 };
 
 struct opcode_cc_aCfD {
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		u32* rs1;
 		f32* rd;
 
@@ -378,36 +363,30 @@ struct opcode_cc_aCfD {
 			rs1 = (u32*)prms[0].prm->reg_ptr();
 			rd = (f32*)prms[1].prm->reg_ptr();
 		}
-	};
 
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+		GEN_EXCEC(opex2) INLINE void execute() {
 			*rd = ((f32(*)(u32))&T::impl)(*rs1);
 		}
 	};
 };
 
 struct opcode_cc_eDfD {
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		f32* rs1;
 		f32* rd;
 		void setup(const CC_pars_t& prms, void* fun) {
 			rs1 = (f32*)prms[0].prm->reg_ptr();
 			rd = (f32*)prms[1].prm->reg_ptr();
 		}
-	};
 
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+		GEN_EXCEC(opex2) INLINE void execute() {
 			*rd = ((f32(*)(f32))&T::impl)(*rs1);
 		}
 	};
 };
 
 struct opcode_cc_aCgE {
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		u32* rs1;
 		f32* rd;
 
@@ -415,18 +394,15 @@ struct opcode_cc_aCgE {
 			rs1 = (u32*)prms[0].prm->reg_ptr();
 			rd = (f32*)prms[1].prm->reg_ptr();
 		}
-	};
 
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+		GEN_EXCEC(opex2) INLINE void execute() {
 			((void(*)(f32*, u32))&T::impl)(rd, *rs1);
 		}
 	};
 };
 
 struct opcode_cc_gJgHgH {
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		f32* rs2;
 		f32* rs1;
 		f32* rd;
@@ -436,18 +412,15 @@ struct opcode_cc_gJgHgH {
 			rs1 = (f32*)prms[1].prm->reg_ptr();
 			rd = (f32*)prms[2].prm->reg_ptr();
 		}
-	};
 
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+		GEN_EXCEC(opex2) INLINE void execute() {
 			((void(*)(f32*, f32*, f32*))&T::impl)(rd, rs1, rs2);
 		}
 	};
 };
 
 struct opcode_cc_gHgHfD {
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		f32* rs2;
 		f32* rs1;
 		f32* rd;
@@ -457,26 +430,20 @@ struct opcode_cc_gHgHfD {
 			rs1 = (f32*)prms[1].prm->reg_ptr();
 			rd = (f32*)prms[2].prm->reg_ptr();
 		}
-	};
 
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+		GEN_EXCEC(opex2) INLINE void execute() {
 			*rd = ((f32(*)(f32*, f32*))&T::impl)(rs1, rs2);
 		}
 	};
 };
 
 struct opcode_cc_vV {
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		void setup(const CC_pars_t& prms, void* fun) {
 	
 		}
-	};
 
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+		GEN_EXCEC(opex2) INLINE void execute() {
 			((void(*)())&T::impl)();
 		}
 	};
@@ -485,7 +452,7 @@ struct opcode_cc_vV {
 //u64* fd1,u64* fd2,u64* fs1,u64* fs2
 //slightly violates the type, as it's FV4PTR but we pass u64*
 struct opcode_cc_gJgJgJgJ {
-	struct opex : public opcodeExec {
+	template<typename T> struct opex2 : public opcodeExec {
 		u64* rs2;
 		u64* rs1;
 		u64* rd;
@@ -497,11 +464,8 @@ struct opcode_cc_gJgJgJgJ {
 			rd2 = (u64*)prms[2].prm->reg_ptr();
 			rd = (u64*)prms[3].prm->reg_ptr();
 		}
-	};
-
-	template <typename T>
-	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+		
+		GEN_EXCEC(opex2) INLINE void execute() {
 			((void(*)(u64*, u64*, u64*, u64*))&T::impl)(rd, rd2, rs1, rs2);
 		}
 	};
@@ -512,7 +476,7 @@ struct opcode_ifb_pc : public opcodeExec{
 	u32 pc;
 	u16 opcode;
 	 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	GEN_EXCEC(opcode_ifb_pc) INLINE void execute() {
 		next_pc = pc;
 		oph(opcode);
 	}
@@ -522,14 +486,14 @@ struct opcode_ifb : public opcodeExec {
 	OpCallFP* oph;
 	u16 opcode;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	GEN_EXCEC(opcode_ifb) INLINE void execute() {
 		oph(opcode);
 	}
 };
 
 struct opcode_jdyn : public opcodeExec{
 	u32* src;
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	GEN_EXCEC(opcode_jdyn) INLINE void execute() {
 		Sh4cntx.jdyn = *src;
 	}
 };
@@ -537,7 +501,7 @@ struct opcode_jdyn : public opcodeExec{
 struct opcode_jdyn_imm : public opcodeExec {
 	u32* src;
 	u32 imm;
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	GEN_EXCEC(opcode_jdyn_imm) INLINE void execute() {
 		Sh4cntx.jdyn = *src + imm;
 	}
 };
@@ -546,7 +510,7 @@ struct opcode_mov32 : public opcodeExec {
 	u32* src;
 	u32* dst;
 	
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	GEN_EXCEC(opcode_mov32) INLINE void execute() {
 		*dst = *src;
 	}
 };
@@ -555,7 +519,7 @@ struct opcode_mov32_imm : public opcodeExec {
 	u32 src;
 	u32* dst;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	GEN_EXCEC(opcode_mov32_imm) INLINE void execute() {
 		*dst = src;
 	}
 };
@@ -564,7 +528,7 @@ struct opcode_mov64 : public opcodeExec {
 	u64* src;
 	u64* dst;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	GEN_EXCEC(opcode_mov64) INLINE void execute() {
 		*dst = *src;
 	}
 };
@@ -577,7 +541,7 @@ struct opcode_readm : public opcodeExec {
 	u32* src;
 	u32* dst;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	GEN_EXCEC(opcode_readm) INLINE void execute() {
 		auto a = *src;
 		do_readm(dst, a, sz);
 	}
@@ -588,7 +552,7 @@ struct opcode_readm_imm : public opcodeExec {
 	u32 src;
 	u32* dst;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	GEN_EXCEC(opcode_readm_imm) INLINE void execute() {
 		auto a = src;
 		do_readm(dst, a, sz);
 	}
@@ -600,7 +564,7 @@ struct opcode_readm_offs : public opcodeExec {
 	u32* dst;
 	u32* offs;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	GEN_EXCEC(opcode_readm_offs) INLINE void execute() {
 		auto a = *src + *offs;
 		do_readm(dst, a, sz);
 	}
@@ -612,7 +576,7 @@ struct opcode_readm_offs_imm : public opcodeExec {
 	u32* dst;
 	u32 offs;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	GEN_EXCEC(opcode_readm_offs_imm) INLINE void execute() {
 		auto a = *src + offs;
 		do_readm(dst, a, sz);
 	}
@@ -626,7 +590,7 @@ struct opcode_writem : public opcodeExec {
 	u32* src;
 	u32* src2;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	GEN_EXCEC(opcode_writem) INLINE void execute() {
 		auto a = *src;
 		do_writem(src2, a, sz);
 	}
@@ -637,7 +601,7 @@ struct opcode_writem_imm : public opcodeExec {
 	u32 src;
 	u32* src2;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	GEN_EXCEC(opcode_writem_imm) INLINE void execute() {
 		auto a = src;
 		do_writem(src2, a, sz);
 	}
@@ -649,7 +613,7 @@ struct opcode_writem_offs : public opcodeExec {
 	u32* src2;
 	u32* offs;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	GEN_EXCEC(opcode_writem_offs) INLINE void execute() {
 		auto a = *src + *offs;
 		do_writem(src2, a, sz);
 	}
@@ -661,7 +625,7 @@ struct opcode_writem_offs_imm : public opcodeExec {
 	u32* src2;
 	u32 offs;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	GEN_EXCEC(opcode_writem_offs_imm) INLINE void execute() {
 		auto a = *src + offs;
 		do_writem(src2, a, sz);
 	}
@@ -684,7 +648,7 @@ struct opcode_blockend : public opcodeExec {
 		return this;
 	}
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
+	GEN_EXCEC(opcode_blockend) INLINE void execute() {
 		//do whatever
 		
 
@@ -747,8 +711,8 @@ struct opcode_check_block : public opcodeExec {
 		return this;
 	}
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }
-	void execute() final {
+	GEN_EXCEC(opcode_check_block)
+	INLINE void execute() {
 		switch (sz)
 		{
 		case 4:
@@ -772,7 +736,7 @@ struct opcode_check_block : public opcodeExec {
 };
 
 #define DREP_COUNT 512
-	#define DREP_1(x, phrase) case x: { ops_bytes += reinterpret_cast<opcodeExec*>(ops_bytes)->executeWithSize(); };
+	#define DREP_1(x, phrase) case x: { ops_bytes += reinterpret_cast<opcodeExec*>(ops_bytes)->executeWithSizeCB(ops_bytes); };
 	#define DREP_2(x, phrase) DREP_1(x, phrase) DREP_1(x+1, phrase)
 	#define DREP_4(x, phrase) DREP_2(x, phrase) DREP_2(x+2, phrase)
 	#define DREP_8(x, phrase) DREP_4(x, phrase) DREP_4(x+4, phrase)
@@ -790,7 +754,8 @@ public:
 	int ncntd;
 
 	opcodeExec ops[0];
-	void execute() {
+	
+	INLINE void execute() {
 		cycle_counter -= cc;
 
 		u8* ops_bytes = reinterpret_cast<u8*>(ops);
@@ -1049,28 +1014,28 @@ opcodeExec* createType(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
 
 map< string, foas> unmap = {
 	{ "aBaCbC", &createType_fast<opcode_cc_aBaCbC> },
-	{ "aCaCbC", &createType<opcode_cc_aCaCbC> },
-	{ "aCbC", &createType<opcode_cc_aCbC> },
-	{ "aC", &createType<opcode_cc_aC> },
+	{ "aCaCbC", &createType_fast<opcode_cc_aCaCbC> },
+	{ "aCbC", &createType_fast<opcode_cc_aCbC> },
+	{ "aC", &createType_fast<opcode_cc_aC> },
 
-	{ "eDeDeDfD", &createType<opcode_cc_eDeDeDfD> },
-	{ "eDeDfD", &createType<opcode_cc_eDeDfD> },
+	{ "eDeDeDfD", &createType_fast<opcode_cc_eDeDeDfD> },
+	{ "eDeDfD", &createType_fast<opcode_cc_eDeDfD> },
 
-	{ "aCaCaCbC", &createType<opcode_cc_aCaCaCbC> },
-	{ "aCaCcCdC", &createType<opcode_cc_aCaCcCdC> },
-	{ "aCaCaCcCdC", &createType<opcode_cc_aCaCaCcCdC> },
+	{ "aCaCaCbC", &createType_fast<opcode_cc_aCaCaCbC> },
+	{ "aCaCcCdC", &createType_fast<opcode_cc_aCaCcCdC> },
+	{ "aCaCaCcCdC", &createType_fast<opcode_cc_aCaCaCcCdC> },
 
-	{ "eDbC", &createType<opcode_cc_eDbC> },
-	{ "aCfD", &createType<opcode_cc_aCfD> },
+	{ "eDbC", &createType_fast<opcode_cc_eDbC> },
+	{ "aCfD", &createType_fast<opcode_cc_aCfD> },
 
-	{ "eDeDbC", &createType<opcode_cc_eDeDbC> },
-	{ "eDfD", &createType<opcode_cc_eDfD> },
+	{ "eDeDbC", &createType_fast<opcode_cc_eDeDbC> },
+	{ "eDfD", &createType_fast<opcode_cc_eDfD> },
 
-	{ "aCgE", &createType<opcode_cc_aCgE> },
-	{ "gJgHgH", &createType<opcode_cc_gJgHgH> },
-	{ "gHgHfD", &createType<opcode_cc_gHgHfD> },
-	{ "gJgJgJgJ", &createType<opcode_cc_gJgJgJgJ> },
-	{ "vV", &createType<opcode_cc_vV> },
+	{ "aCgE", &createType_fast<opcode_cc_aCgE> },
+	{ "gJgHgH", &createType_fast<opcode_cc_gJgHgH> },
+	{ "gHgHfD", &createType_fast<opcode_cc_gHgHfD> },
+	{ "gJgJgJgJ", &createType_fast<opcode_cc_gJgJgJgJ> },
+	{ "vV", &createType_fast<opcode_cc_vV> },
 };
 
 string getCTN(foas f) {

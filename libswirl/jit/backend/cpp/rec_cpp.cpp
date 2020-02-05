@@ -81,7 +81,6 @@ static void ngen_blockcheckfail(u32 pc) {
 	rdv_BlockCheckFail(pc);
 }
 
-template<typename SubCode>
 class opcodeExec {
 	public:
 		virtual void execute() { die("sould not reach here"); };
@@ -106,13 +105,7 @@ class opcodeExec {
 		}
 };
 
-template<typename T>
-bool operator== (const opcodeExec<void>& c1, const opcodeExec<T>* c2)
-{
-	return &c1 == reinterpret_cast<const opcodeExec<void>*>(c2);
-}
-
-class opcodeDie : public opcodeExec<opcodeDie> {
+class opcodeDie : public opcodeExec {
 	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		die("death opcode");
 	}
@@ -129,7 +122,7 @@ typedef vector<CC_PS> CC_pars_t;
 
 struct opcode_cc_aBaCbC {
 	template <typename T>
-	struct opex2 : public opcodeExec<opex2<T>>  {
+	struct opex2 : public opcodeExec  {
 		
 		u32 rs2;
 		u32* rs1;
@@ -149,7 +142,7 @@ struct opcode_cc_aBaCbC {
 };
 
 struct opcode_cc_aCaCbC {
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		u32* rs1;
 		u32* rs2;
 		u32* rd;
@@ -171,7 +164,7 @@ struct opcode_cc_aCaCbC {
 };
 
 struct opcode_cc_aCbC {
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		u32* rs1;
 		u32* rd;
 
@@ -191,7 +184,7 @@ struct opcode_cc_aCbC {
 };
 
 struct opcode_cc_aC {
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		u32* rs1;
 
 		void setup(const CC_pars_t& prms, void* fun) {
@@ -209,7 +202,7 @@ struct opcode_cc_aC {
 };
 
 struct opcode_cc_aCaCaCbC {
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		u32* rs1;
 		u32* rs2;
 		u32* rs3;
@@ -234,7 +227,7 @@ struct opcode_cc_aCaCaCbC {
 
 struct opcode_cc_aCaCaCcCdC {
 	//split this to two cases, u64 and u64L/u32H
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		u32* rs1;
 		u32* rs2;
 		u32* rs3;
@@ -265,7 +258,7 @@ struct opcode_cc_aCaCaCcCdC {
 };
 
 struct opcode_cc_aCaCcCdC {
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		u32* rs1;
 		u32* rs2;
 		u32* rd;
@@ -292,7 +285,7 @@ struct opcode_cc_aCaCcCdC {
 };
 
 struct opcode_cc_eDeDeDfD {
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		f32* rs1;
 		f32* rs2;
 		f32* rs3;
@@ -316,7 +309,7 @@ struct opcode_cc_eDeDeDfD {
 };
 
 struct opcode_cc_eDeDfD {
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		f32* rs1;
 		f32* rs2;
 		f32* rd;
@@ -337,7 +330,7 @@ struct opcode_cc_eDeDfD {
 };
 
 struct opcode_cc_eDeDbC {
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		f32* rs1;
 		f32* rs2;
 		u32* rd;
@@ -358,7 +351,7 @@ struct opcode_cc_eDeDbC {
 };
 
 struct opcode_cc_eDbC {
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		f32* rs1;
 		u32* rd;
 
@@ -377,7 +370,7 @@ struct opcode_cc_eDbC {
 };
 
 struct opcode_cc_aCfD {
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		u32* rs1;
 		f32* rd;
 
@@ -396,7 +389,7 @@ struct opcode_cc_aCfD {
 };
 
 struct opcode_cc_eDfD {
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		f32* rs1;
 		f32* rd;
 		void setup(const CC_pars_t& prms, void* fun) {
@@ -414,7 +407,7 @@ struct opcode_cc_eDfD {
 };
 
 struct opcode_cc_aCgE {
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		u32* rs1;
 		f32* rd;
 
@@ -433,7 +426,7 @@ struct opcode_cc_aCgE {
 };
 
 struct opcode_cc_gJgHgH {
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		f32* rs2;
 		f32* rs1;
 		f32* rd;
@@ -454,7 +447,7 @@ struct opcode_cc_gJgHgH {
 };
 
 struct opcode_cc_gHgHfD {
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		f32* rs2;
 		f32* rs1;
 		f32* rd;
@@ -475,7 +468,7 @@ struct opcode_cc_gHgHfD {
 };
 
 struct opcode_cc_vV {
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		void setup(const CC_pars_t& prms, void* fun) {
 	
 		}
@@ -492,7 +485,7 @@ struct opcode_cc_vV {
 //u64* fd1,u64* fd2,u64* fs1,u64* fs2
 //slightly violates the type, as it's FV4PTR but we pass u64*
 struct opcode_cc_gJgJgJgJ {
-	struct opex : public opcodeExec<opex> {
+	struct opex : public opcodeExec {
 		u64* rs2;
 		u64* rs1;
 		u64* rd;
@@ -514,7 +507,7 @@ struct opcode_cc_gJgJgJgJ {
 	};
 };
 
-struct opcode_ifb_pc : public opcodeExec<opcode_ifb_pc>{
+struct opcode_ifb_pc : public opcodeExec{
 	OpCallFP* oph;
 	u32 pc;
 	u16 opcode;
@@ -525,7 +518,7 @@ struct opcode_ifb_pc : public opcodeExec<opcode_ifb_pc>{
 	}
 };
 
-struct opcode_ifb : public opcodeExec<opcode_ifb> {
+struct opcode_ifb : public opcodeExec {
 	OpCallFP* oph;
 	u16 opcode;
 
@@ -534,14 +527,14 @@ struct opcode_ifb : public opcodeExec<opcode_ifb> {
 	}
 };
 
-struct opcode_jdyn : public opcodeExec<opcode_jdyn>{
+struct opcode_jdyn : public opcodeExec{
 	u32* src;
 	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		Sh4cntx.jdyn = *src;
 	}
 };
 
-struct opcode_jdyn_imm : public opcodeExec<opcode_jdyn_imm> {
+struct opcode_jdyn_imm : public opcodeExec {
 	u32* src;
 	u32 imm;
 	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
@@ -549,7 +542,7 @@ struct opcode_jdyn_imm : public opcodeExec<opcode_jdyn_imm> {
 	}
 };
 
-struct opcode_mov32 : public opcodeExec<opcode_mov32> {
+struct opcode_mov32 : public opcodeExec {
 	u32* src;
 	u32* dst;
 	
@@ -558,7 +551,7 @@ struct opcode_mov32 : public opcodeExec<opcode_mov32> {
 	}
 };
 
-struct opcode_mov32_imm : public opcodeExec<opcode_mov32_imm> {
+struct opcode_mov32_imm : public opcodeExec {
 	u32 src;
 	u32* dst;
 
@@ -567,7 +560,7 @@ struct opcode_mov32_imm : public opcodeExec<opcode_mov32_imm> {
 	}
 };
 
-struct opcode_mov64 : public opcodeExec<opcode_mov64> {
+struct opcode_mov64 : public opcodeExec {
 	u64* src;
 	u64* dst;
 
@@ -580,7 +573,7 @@ struct opcode_mov64 : public opcodeExec<opcode_mov64> {
 								else if (sz == 4) { *d = ReadMem32(a);} else if (sz == 8) { *(u64*)d = ReadMem64(a); } \
 							  } while(0)
 template <int sz>
-struct opcode_readm : public opcodeExec<opcode_readm<sz>> {
+struct opcode_readm : public opcodeExec {
 	u32* src;
 	u32* dst;
 
@@ -591,7 +584,7 @@ struct opcode_readm : public opcodeExec<opcode_readm<sz>> {
 };
 
 template <int sz>
-struct opcode_readm_imm : public opcodeExec<opcode_readm_imm<sz>> {
+struct opcode_readm_imm : public opcodeExec {
 	u32 src;
 	u32* dst;
 
@@ -602,7 +595,7 @@ struct opcode_readm_imm : public opcodeExec<opcode_readm_imm<sz>> {
 };
 
 template <int sz>
-struct opcode_readm_offs : public opcodeExec<opcode_readm_offs<sz>> {
+struct opcode_readm_offs : public opcodeExec {
 	u32* src;
 	u32* dst;
 	u32* offs;
@@ -614,7 +607,7 @@ struct opcode_readm_offs : public opcodeExec<opcode_readm_offs<sz>> {
 };
 
 template <int sz>
-struct opcode_readm_offs_imm : public opcodeExec<opcode_readm_offs_imm<sz>> {
+struct opcode_readm_offs_imm : public opcodeExec {
 	u32* src;
 	u32* dst;
 	u32 offs;
@@ -629,7 +622,7 @@ struct opcode_readm_offs_imm : public opcodeExec<opcode_readm_offs_imm<sz>> {
 										else if (sz == 4) { WriteMem32(a, *d);} else if (sz == 8) { WriteMem64(a, *(u64*)d); } \
 							  } while(0)
 template <int sz>
-struct opcode_writem : public opcodeExec<opcode_writem<sz>> {
+struct opcode_writem : public opcodeExec {
 	u32* src;
 	u32* src2;
 
@@ -640,7 +633,7 @@ struct opcode_writem : public opcodeExec<opcode_writem<sz>> {
 };
 
 template <int sz>
-struct opcode_writem_imm : public opcodeExec<opcode_writem_imm<sz>> {
+struct opcode_writem_imm : public opcodeExec {
 	u32 src;
 	u32* src2;
 
@@ -651,7 +644,7 @@ struct opcode_writem_imm : public opcodeExec<opcode_writem_imm<sz>> {
 };
 
 template <int sz>
-struct opcode_writem_offs : public opcodeExec<opcode_writem_offs<sz>> {
+struct opcode_writem_offs : public opcodeExec {
 	u32* src;
 	u32* src2;
 	u32* offs;
@@ -663,7 +656,7 @@ struct opcode_writem_offs : public opcodeExec<opcode_writem_offs<sz>> {
 };
 
 template <int sz>
-struct opcode_writem_offs_imm : public opcodeExec<opcode_writem_offs_imm<sz>> {
+struct opcode_writem_offs_imm : public opcodeExec {
 	u32* src;
 	u32* src2;
 	u32 offs;
@@ -675,12 +668,12 @@ struct opcode_writem_offs_imm : public opcodeExec<opcode_writem_offs_imm<sz>> {
 };
 
 template<int end_type>
-struct opcode_blockend : public opcodeExec<opcode_blockend<end_type>> {
+struct opcode_blockend : public opcodeExec {
 	int next_pc_value;
 	int branch_pc_value;
 	u32* jdyn;
 
-	opcodeExec<void>* setup(RuntimeBlockInfo* block) {
+	opcodeExec* setup(RuntimeBlockInfo* block) {
 		next_pc_value = block->NextBlock;
 		branch_pc_value = block->BranchBlock;
 
@@ -688,7 +681,7 @@ struct opcode_blockend : public opcodeExec<opcode_blockend<end_type>> {
 		if (!block->has_jcond && BET_GET_CLS(block->BlockType) == BET_CLS_COND) {
 			jdyn = &sr.T;
 		}
-		return reinterpret_cast<opcodeExec<void>*>(this);
+		return this;
 	}
 
 	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
@@ -739,19 +732,19 @@ struct opcode_blockend : public opcodeExec<opcode_blockend<end_type>> {
 };
 
 template <int sz>
-struct opcode_check_block : public opcodeExec<opcode_check_block<sz>> {
+struct opcode_check_block : public opcodeExec {
 	RuntimeBlockInfo* block;
 	vector<u8> code;
 	void* ptr;
 
-	opcodeExec<void>* setup(RuntimeBlockInfo* block) {
+	opcodeExec* setup(RuntimeBlockInfo* block) {
 		this->block = block;
 		ptr = GetMemPtr(block->addr, block->sh4_code_size);
 		verify(ptr != nullptr);
 		code.resize(sz == -1 ? block->sh4_code_size : sz);
 		memcpy(&code[0], ptr, sz == -1 ? block->sh4_code_size : sz);
 
-		return reinterpret_cast<opcodeExec<void>*>(this);
+		return this;
 	}
 
 	virtual size_t executeWithSize() { execute(); return sizeof(*this); }
@@ -779,7 +772,7 @@ struct opcode_check_block : public opcodeExec<opcode_check_block<sz>> {
 };
 
 #define DREP_COUNT 512
-	#define DREP_1(x, phrase) case x: { ops_bytes += reinterpret_cast<opcodeExec<void>*>(ops_bytes)->executeWithSize(); };
+	#define DREP_1(x, phrase) case x: { ops_bytes += reinterpret_cast<opcodeExec*>(ops_bytes)->executeWithSize(); };
 	#define DREP_2(x, phrase) DREP_1(x, phrase) DREP_1(x+1, phrase)
 	#define DREP_4(x, phrase) DREP_2(x, phrase) DREP_2(x+2, phrase)
 	#define DREP_8(x, phrase) DREP_4(x, phrase) DREP_4(x+4, phrase)
@@ -796,7 +789,7 @@ public:
 	int cc;
 	int ncntd;
 
-	opcodeExec<void> ops[0];
+	opcodeExec ops[0];
 	void execute() {
 		cycle_counter -= cc;
 
@@ -838,7 +831,7 @@ public:
 struct fnrv {
 	void* fnb;
 	void(*runner)(void* fnb);
-	opcodeExec<void>* ptrs;
+	opcodeExec* ptrs;
 };
 
 template<int id>
@@ -851,13 +844,13 @@ fnrv fnnCtor(int cycles, int opcode_slots) {
 }
 
 template <typename shilop, typename CTR>
-opcodeExec<void>* createType2(const CC_pars_t& prms, void* fun) {
+opcodeExec* createType2(const CC_pars_t& prms, void* fun) {
 	typedef typename CTR::template opex2<shilop> thetype;
 	auto rv = new thetype();
 
 	rv->setup(prms, fun);
 
-	return reinterpret_cast<opcodeExec<void>*>(rv);
+	return rv;
 }
 
 
@@ -867,7 +860,7 @@ map<void*, int> funs;
 int funs_id_count;
 
 template <typename CTR>
-opcodeExec<void>* createType_fast(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
+opcodeExec* createType_fast(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
 	return 0;
 }
 
@@ -875,10 +868,10 @@ opcodeExec<void>* createType_fast(const CC_pars_t& prms, void* fun, shil_opcode*
 
 #define FAST_sig(sig, ...) \
 template <> \
-opcodeExec<void>* createType_fast<OPCODE_CC(sig)>(const CC_pars_t& prms, void* fun, shil_opcode* opcode) { \
+opcodeExec* createType_fast<OPCODE_CC(sig)>(const CC_pars_t& prms, void* fun, shil_opcode* opcode) { \
 	typedef OPCODE_CC(sig) CTR; \
 	\
-	static map<void*, opcodeExec<void>* (*)(const CC_pars_t& prms, void* fun)> funsf = {\
+	static map<void*, opcodeExec* (*)(const CC_pars_t& prms, void* fun)> funsf = {\
 		
 #define FAST_gis \
 };\
@@ -1029,12 +1022,12 @@ FAST_po(frswap)
 FAST_gis
 
 
-typedef opcodeExec<void>*(*foas)(const CC_pars_t& prms, void* fun, shil_opcode* opcode);
+typedef opcodeExec*(*foas)(const CC_pars_t& prms, void* fun, shil_opcode* opcode);
 
 string getCTN(foas code);
 
 template <typename CTR>
-opcodeExec<void>* createType(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
+opcodeExec* createType(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
 
 	auto frv = createType_fast<CTR>(prms, fun, opcode);
 	if (frv)
@@ -1051,7 +1044,7 @@ opcodeExec<void>* createType(const CC_pars_t& prms, void* fun, shil_opcode* opco
 
 	rv->setup(prms, fun);
 
-	return reinterpret_cast<opcodeExec<void>*>(rv);
+	return rv;
 }
 
 map< string, foas> unmap = {
@@ -1114,7 +1107,7 @@ FNAFB fnnCtor_forreal(size_t n) {
 	return FNA[n];
 }
 
-typedef opcodeExec<void>*(*FNAFB_SCBE)(RuntimeBlockInfo* block);
+typedef opcodeExec*(*FNAFB_SCBE)(RuntimeBlockInfo* block);
 typedef FNAFB_SCBE(*FNAFB_SCB)();
 
 template<int opcode_slots>
@@ -1136,7 +1129,7 @@ class BlockCompiler {
 public:
 
 	size_t opcode_index;
-	opcodeExec<void>* ptrsg;
+	opcodeExec* ptrsg;
 	void compile(RuntimeBlockInfo* block,  SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise) {
 		
 		static u32 id_fr = 0;
@@ -1155,7 +1148,7 @@ public:
 		if (smc_checks != NoCheck)
 		{
 			verify (smc_checks == FastCheck || smc_checks == FullCheck)
-			opcodeExec<void>* op;
+			opcodeExec* op;
 			int check_size = block->sh4_code_size;
 
 			if (smc_checks == FastCheck) {
@@ -1426,7 +1419,7 @@ public:
 
 		//Block end opcode
 		{
-			opcodeExec<void>* op;
+			opcodeExec* op;
 
 			#define CASEWS(n) case n: op = (new opcode_blockend<n>())->setup(block); break
 

@@ -21,6 +21,7 @@
 #include "hw/naomi/naomi_cart.h"
 #include "iso9660.h"
 #include "font.h"
+#include "hw/aica/aica.h"
 
 #include <map>
 
@@ -403,7 +404,14 @@ static void setup_syscall(u32 hook_addr, u32 syscall_addr) {
 	debugf(" - address %08X: data %04X [%04X]", hook_addr, ReadMem16(hook_addr), REIOS_OPCODE);
 }
 
-static void reios_setup_state(u32 boot_addr) {
+static void reios_setup_state(u32 boot_addr)
+{
+	// Set up AICA interrupt masks
+	libAICA_WriteReg(SCIEB_addr, 0x48, 2);
+	libAICA_WriteReg(SCILV0_addr, 0x18, 1);
+	libAICA_WriteReg(SCILV1_addr, 0x50, 1);
+	libAICA_WriteReg(SCILV2_addr, 0x08, 1);
+
 	/*
 	Post Boot registers from actual bios boot
 	r

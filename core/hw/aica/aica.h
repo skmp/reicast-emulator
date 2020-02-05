@@ -15,6 +15,11 @@
 #define TIMER_C (0x2890+8)
 #define REG_L (0x2D00)
 #define REG_M (0x2D04)
+
+#define SCILV0_addr 0x28A8
+#define SCILV1_addr 0x28AC
+#define SCILV2_addr 0x28B0
+
 #define entry(name,sz) u32 name:sz;
 struct CommonData_struct
 {

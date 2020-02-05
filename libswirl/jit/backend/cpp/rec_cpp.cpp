@@ -113,7 +113,7 @@ bool operator== (const opcodeExec<void>& c1, const opcodeExec<T>* c2)
 }
 
 class opcodeDie : public opcodeExec<opcodeDie> {
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		die("death opcode");
 	}
 };
@@ -142,7 +142,7 @@ struct opcode_cc_aBaCbC {
 			verify(prms.size() == 3);
 		}
 
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			*rd = ((u32(*)(u32, u32))&T::impl)(*rs1, rs2);
 		}
 	};
@@ -150,16 +150,11 @@ struct opcode_cc_aBaCbC {
 
 struct opcode_cc_aCaCbC {
 	struct opex : public opcodeExec<opex> {
-		void* fn;
 		u32* rs1;
 		u32* rs2;
 		u32* rd;
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			*rd = ((u32(*)(u32, u32))fn)(*rs1, *rs2);
-		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs2 = prms[0].prm->reg_ptr();
 			rs1 = prms[1].prm->reg_ptr();
 			rd = prms[2].prm->reg_ptr();
@@ -169,7 +164,7 @@ struct opcode_cc_aCaCbC {
 
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			*rd = ((u32(*)(u32, u32))&T::impl)(*rs1, *rs2);
 		}
 	};
@@ -177,15 +172,10 @@ struct opcode_cc_aCaCbC {
 
 struct opcode_cc_aCbC {
 	struct opex : public opcodeExec<opex> {
-		void* fn;
 		u32* rs1;
 		u32* rd;
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			*rd = ((u32(*)(u32))fn)(*rs1);
-		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs1 = prms[0].prm->reg_ptr();
 			rd = prms[1].prm->reg_ptr();
 			verify(prms.size() == 2);
@@ -194,7 +184,7 @@ struct opcode_cc_aCbC {
 
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			*rd = ((u32(*)(u32))&T::impl)(*rs1);
 		}
 	};
@@ -202,14 +192,9 @@ struct opcode_cc_aCbC {
 
 struct opcode_cc_aC {
 	struct opex : public opcodeExec<opex> {
-		void* fn;
 		u32* rs1;
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			((void(*)(u32))fn)(*rs1);
-		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs1 = prms[0].prm->reg_ptr();
 			verify(prms.size() == 1);
 		}
@@ -217,7 +202,7 @@ struct opcode_cc_aC {
 
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			((void(*)(u32))&T::impl)(*rs1);
 		}
 	};
@@ -225,17 +210,12 @@ struct opcode_cc_aC {
 
 struct opcode_cc_aCaCaCbC {
 	struct opex : public opcodeExec<opex> {
-		void* fn;
 		u32* rs1;
 		u32* rs2;
 		u32* rs3;
 		u32* rd;
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			*rd = ((u32(*)(u32, u32, u32))fn)(*rs1, *rs2, *rs3);
-		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs3 = prms[0].prm->reg_ptr();
 			rs2 = prms[1].prm->reg_ptr();
 			rs1 = prms[2].prm->reg_ptr();
@@ -246,7 +226,7 @@ struct opcode_cc_aCaCaCbC {
 
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			*rd = ((u32(*)(u32, u32, u32))&T::impl)(*rs1, *rs2, *rs3);
 		}
 	};
@@ -255,21 +235,13 @@ struct opcode_cc_aCaCaCbC {
 struct opcode_cc_aCaCaCcCdC {
 	//split this to two cases, u64 and u64L/u32H
 	struct opex : public opcodeExec<opex> {
-		void* fn;
 		u32* rs1;
 		u32* rs2;
 		u32* rs3;
 		u32* rd;
 		u32* rd2;
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			auto rv = ((u64(*)(u32, u32, u32))fn)(*rs1, *rs2, *rs3);
-
-			*rd = (u32)rv;
-			*rd2 = rv >> 32;
-		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs3 = prms[0].prm->reg_ptr();
 			rs2 = prms[1].prm->reg_ptr();
 			rs1 = prms[2].prm->reg_ptr();
@@ -282,7 +254,7 @@ struct opcode_cc_aCaCaCcCdC {
 	};
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			auto rv = ((u64(*)(u32, u32, u32))&T::impl)(*rs1, *rs2, *rs3);
 
 			*rd = (u32)rv;
@@ -294,19 +266,12 @@ struct opcode_cc_aCaCaCcCdC {
 
 struct opcode_cc_aCaCcCdC {
 	struct opex : public opcodeExec<opex> {
-		void* fn;
 		u32* rs1;
 		u32* rs2;
 		u32* rd;
 		u32* rd2;
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			auto rv = ((u64(*)(u32, u32))fn)(*rs1, *rs2);
-			*rd = (u32)rv;
-			*rd2 = rv >> 32;
-		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs2 = prms[0].prm->reg_ptr();
 			rs1 = prms[1].prm->reg_ptr();
 			rd = prms[2].prm->reg_ptr();
@@ -318,7 +283,7 @@ struct opcode_cc_aCaCcCdC {
 
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			auto rv = ((u64(*)(u32, u32))&T::impl)(*rs1, *rs2);
 			*rd = (u32)rv;
 			*rd2 = rv >> 32;
@@ -328,17 +293,12 @@ struct opcode_cc_aCaCcCdC {
 
 struct opcode_cc_eDeDeDfD {
 	struct opex : public opcodeExec<opex> {
-		void* fn;
 		f32* rs1;
 		f32* rs2;
 		f32* rs3;
 		f32* rd;
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			*rd = ((f32(*)(f32, f32, f32))fn)(*rs1, *rs2, *rs3);
-		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs3 = (f32*)prms[0].prm->reg_ptr();
 			rs2 = (f32*)prms[1].prm->reg_ptr();
 			rs1 = (f32*)prms[2].prm->reg_ptr();
@@ -348,7 +308,7 @@ struct opcode_cc_eDeDeDfD {
 
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			*rd = ((f32(*)(f32, f32, f32))&T::impl)(*rs1, *rs2, *rs3);
 		}
 	};
@@ -357,16 +317,11 @@ struct opcode_cc_eDeDeDfD {
 
 struct opcode_cc_eDeDfD {
 	struct opex : public opcodeExec<opex> {
-		void* fn;
 		f32* rs1;
 		f32* rs2;
 		f32* rd;
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			*rd = ((f32(*)(f32, f32))fn)(*rs1, *rs2);
-		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs2 = (f32*)prms[0].prm->reg_ptr();
 			rs1 = (f32*)prms[1].prm->reg_ptr();
 			rd = (f32*)prms[2].prm->reg_ptr();
@@ -375,7 +330,7 @@ struct opcode_cc_eDeDfD {
 
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			*rd = ((f32(*)(f32, f32))&T::impl)(*rs1, *rs2);
 		}
 	};
@@ -383,16 +338,11 @@ struct opcode_cc_eDeDfD {
 
 struct opcode_cc_eDeDbC {
 	struct opex : public opcodeExec<opex> {
-		void* fn;
 		f32* rs1;
 		f32* rs2;
 		u32* rd;
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			*rd = ((u32(*)(f32, f32))fn)(*rs1, *rs2);
-		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs2 = (f32*)prms[0].prm->reg_ptr();
 			rs1 = (f32*)prms[1].prm->reg_ptr();
 			rd = (u32*)prms[2].prm->reg_ptr();
@@ -401,7 +351,7 @@ struct opcode_cc_eDeDbC {
 
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			*rd = ((u32(*)(f32, f32))&T::impl)(*rs1, *rs2);
 		}
 	};
@@ -409,15 +359,10 @@ struct opcode_cc_eDeDbC {
 
 struct opcode_cc_eDbC {
 	struct opex : public opcodeExec<opex> {
-		void* fn;
 		f32* rs1;
 		u32* rd;
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			*rd = ((u32(*)(f32))fn)(*rs1);
-		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs1 = (f32*)prms[0].prm->reg_ptr();
 			rd = (u32*)prms[1].prm->reg_ptr();
 		}
@@ -425,7 +370,7 @@ struct opcode_cc_eDbC {
 
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			*rd = ((u32(*)(f32))&T::impl)(*rs1);
 		}
 	};
@@ -433,15 +378,10 @@ struct opcode_cc_eDbC {
 
 struct opcode_cc_aCfD {
 	struct opex : public opcodeExec<opex> {
-		void* fn;
 		u32* rs1;
 		f32* rd;
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			*rd = ((f32(*)(u32))fn)(*rs1);
-		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs1 = (u32*)prms[0].prm->reg_ptr();
 			rd = (f32*)prms[1].prm->reg_ptr();
 		}
@@ -449,7 +389,7 @@ struct opcode_cc_aCfD {
 
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			*rd = ((f32(*)(u32))&T::impl)(*rs1);
 		}
 	};
@@ -457,15 +397,9 @@ struct opcode_cc_aCfD {
 
 struct opcode_cc_eDfD {
 	struct opex : public opcodeExec<opex> {
-		void* fn;
 		f32* rs1;
 		f32* rd;
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			*rd = ((f32(*)(f32))fn)(*rs1);
-		}
-
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs1 = (f32*)prms[0].prm->reg_ptr();
 			rd = (f32*)prms[1].prm->reg_ptr();
 		}
@@ -473,7 +407,7 @@ struct opcode_cc_eDfD {
 
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			*rd = ((f32(*)(f32))&T::impl)(*rs1);
 		}
 	};
@@ -481,15 +415,10 @@ struct opcode_cc_eDfD {
 
 struct opcode_cc_aCgE {
 	struct opex : public opcodeExec<opex> {
-		void* fn;
 		u32* rs1;
 		f32* rd;
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			((void(*)(f32*, u32))fn)(rd, *rs1);
-		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs1 = (u32*)prms[0].prm->reg_ptr();
 			rd = (f32*)prms[1].prm->reg_ptr();
 		}
@@ -497,7 +426,7 @@ struct opcode_cc_aCgE {
 
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			((void(*)(f32*, u32))&T::impl)(rd, *rs1);
 		}
 	};
@@ -505,16 +434,11 @@ struct opcode_cc_aCgE {
 
 struct opcode_cc_gJgHgH {
 	struct opex : public opcodeExec<opex> {
-		void* fn;
 		f32* rs2;
 		f32* rs1;
 		f32* rd;
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			((void(*)(f32*, f32*, f32*))fn)(rd, rs1, rs2);
-		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs2 = (f32*)prms[0].prm->reg_ptr();
 			rs1 = (f32*)prms[1].prm->reg_ptr();
 			rd = (f32*)prms[2].prm->reg_ptr();
@@ -523,7 +447,7 @@ struct opcode_cc_gJgHgH {
 
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			((void(*)(f32*, f32*, f32*))&T::impl)(rd, rs1, rs2);
 		}
 	};
@@ -531,16 +455,11 @@ struct opcode_cc_gJgHgH {
 
 struct opcode_cc_gHgHfD {
 	struct opex : public opcodeExec<opex> {
-		void* fn;
 		f32* rs2;
 		f32* rs1;
 		f32* rd;
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			*rd = ((f32(*)(f32*, f32*))fn)(rs1, rs2);
-		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs2 = (f32*)prms[0].prm->reg_ptr();
 			rs1 = (f32*)prms[1].prm->reg_ptr();
 			rd = (f32*)prms[2].prm->reg_ptr();
@@ -549,7 +468,7 @@ struct opcode_cc_gHgHfD {
 
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			*rd = ((f32(*)(f32*, f32*))&T::impl)(rs1, rs2);
 		}
 	};
@@ -557,20 +476,14 @@ struct opcode_cc_gHgHfD {
 
 struct opcode_cc_vV {
 	struct opex : public opcodeExec<opex> {
-		void* fn;
-		
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			((void(*)())fn)();
-		}
-
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
+	
 		}
 	};
 
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			((void(*)())&T::impl)();
 		}
 	};
@@ -580,17 +493,12 @@ struct opcode_cc_vV {
 //slightly violates the type, as it's FV4PTR but we pass u64*
 struct opcode_cc_gJgJgJgJ {
 	struct opex : public opcodeExec<opex> {
-		void* fn;
 		u64* rs2;
 		u64* rs1;
 		u64* rd;
 		u64* rd2;
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
-			((void(*)(u64*, u64*, u64*, u64*))fn)(rd, rd2, rs1, rs2);
-		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
-			fn = fun;
 			rs2 = (u64*)prms[0].prm->reg_ptr();
 			rs1 = (u64*)prms[1].prm->reg_ptr();
 			rd2 = (u64*)prms[2].prm->reg_ptr();
@@ -600,7 +508,7 @@ struct opcode_cc_gJgJgJgJ {
 
 	template <typename T>
 	struct opex2 : public opex {
-		virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+		virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 			((void(*)(u64*, u64*, u64*, u64*))&T::impl)(rd, rd2, rs1, rs2);
 		}
 	};
@@ -611,7 +519,7 @@ struct opcode_ifb_pc : public opcodeExec<opcode_ifb_pc>{
 	u32 pc;
 	u16 opcode;
 	 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		next_pc = pc;
 		oph(opcode);
 	}
@@ -621,14 +529,14 @@ struct opcode_ifb : public opcodeExec<opcode_ifb> {
 	OpCallFP* oph;
 	u16 opcode;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		oph(opcode);
 	}
 };
 
 struct opcode_jdyn : public opcodeExec<opcode_jdyn>{
 	u32* src;
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		Sh4cntx.jdyn = *src;
 	}
 };
@@ -636,7 +544,7 @@ struct opcode_jdyn : public opcodeExec<opcode_jdyn>{
 struct opcode_jdyn_imm : public opcodeExec<opcode_jdyn_imm> {
 	u32* src;
 	u32 imm;
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		Sh4cntx.jdyn = *src + imm;
 	}
 };
@@ -645,7 +553,7 @@ struct opcode_mov32 : public opcodeExec<opcode_mov32> {
 	u32* src;
 	u32* dst;
 	
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		*dst = *src;
 	}
 };
@@ -654,7 +562,7 @@ struct opcode_mov32_imm : public opcodeExec<opcode_mov32_imm> {
 	u32 src;
 	u32* dst;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		*dst = src;
 	}
 };
@@ -663,7 +571,7 @@ struct opcode_mov64 : public opcodeExec<opcode_mov64> {
 	u64* src;
 	u64* dst;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		*dst = *src;
 	}
 };
@@ -676,7 +584,7 @@ struct opcode_readm : public opcodeExec<opcode_readm<sz>> {
 	u32* src;
 	u32* dst;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		auto a = *src;
 		do_readm(dst, a, sz);
 	}
@@ -687,7 +595,7 @@ struct opcode_readm_imm : public opcodeExec<opcode_readm_imm<sz>> {
 	u32 src;
 	u32* dst;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		auto a = src;
 		do_readm(dst, a, sz);
 	}
@@ -699,7 +607,7 @@ struct opcode_readm_offs : public opcodeExec<opcode_readm_offs<sz>> {
 	u32* dst;
 	u32* offs;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		auto a = *src + *offs;
 		do_readm(dst, a, sz);
 	}
@@ -711,7 +619,7 @@ struct opcode_readm_offs_imm : public opcodeExec<opcode_readm_offs_imm<sz>> {
 	u32* dst;
 	u32 offs;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		auto a = *src + offs;
 		do_readm(dst, a, sz);
 	}
@@ -725,7 +633,7 @@ struct opcode_writem : public opcodeExec<opcode_writem<sz>> {
 	u32* src;
 	u32* src2;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		auto a = *src;
 		do_writem(src2, a, sz);
 	}
@@ -736,7 +644,7 @@ struct opcode_writem_imm : public opcodeExec<opcode_writem_imm<sz>> {
 	u32 src;
 	u32* src2;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		auto a = src;
 		do_writem(src2, a, sz);
 	}
@@ -748,7 +656,7 @@ struct opcode_writem_offs : public opcodeExec<opcode_writem_offs<sz>> {
 	u32* src2;
 	u32* offs;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		auto a = *src + *offs;
 		do_writem(src2, a, sz);
 	}
@@ -760,7 +668,7 @@ struct opcode_writem_offs_imm : public opcodeExec<opcode_writem_offs_imm<sz>> {
 	u32* src2;
 	u32 offs;
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		auto a = *src + offs;
 		do_writem(src2, a, sz);
 	}
@@ -783,7 +691,7 @@ struct opcode_blockend : public opcodeExec<opcode_blockend<end_type>> {
 		return reinterpret_cast<opcodeExec<void>*>(this);
 	}
 
-	virtual size_t executeWithSize() { execute(); return sizeof(*this); }void execute()  {
+	virtual size_t executeWithSize() { execute(); return sizeof(*this); } virtual void execute() final {
 		//do whatever
 		
 
@@ -847,7 +755,7 @@ struct opcode_check_block : public opcodeExec<opcode_check_block<sz>> {
 	}
 
 	virtual size_t executeWithSize() { execute(); return sizeof(*this); }
-	void execute() {
+	void execute() final {
 		switch (sz)
 		{
 		case 4:
@@ -871,7 +779,7 @@ struct opcode_check_block : public opcodeExec<opcode_check_block<sz>> {
 };
 
 #if !defined(_DEBUG)
-	#define DREP_1(x, phrase) if (x < cnt)  ops_bytes += reinterpret_cast<opcodeExec<void>*>(ops_bytes)->executeWithSize(); else return;
+	#define DREP_1(x, phrase) if (x < cntd)  ops_bytes += reinterpret_cast<opcodeExec<void>*>(ops_bytes)->executeWithSize(); else return;
 	#define DREP_2(x, phrase) DREP_1(x, phrase) DREP_1(x+1, phrase)
 	#define DREP_4(x, phrase) DREP_2(x, phrase) DREP_2(x+2, phrase)
 	#define DREP_8(x, phrase) DREP_4(x, phrase) DREP_4(x+4, phrase)
@@ -882,13 +790,15 @@ struct opcode_check_block : public opcodeExec<opcode_check_block<sz>> {
 	#define DREP_256(x, phrase) DREP_128(x, phrase) DREP_128(x+128, phrase)
 	#define DREP_512(x, phrase) DREP_256(x, phrase) DREP_256(x+256, phrase)
 #else
-	#define DREP_512(x, phrase) for (int i=0; i<cnt; i++) ops_bytes += reinterpret_cast<opcodeExec<void>*>(ops_bytes)->executeWithSize();
+	#define DREP_512(x, phrase) for (int i=0; i<cntd; i++) ops_bytes += reinterpret_cast<opcodeExec<void>*>(ops_bytes)->executeWithSize();
 #endif
 
-template <int cnt>
+template <int id>
 class fnblock {
 public:
 	int cc;
+	int cntd;
+
 	opcodeExec<void> ops[0];
 	void execute() {
 		cycle_counter -= cc;
@@ -903,7 +813,7 @@ public:
 	}
 
 	static void runner(void* fnb) {
-		((fnblock<cnt>*)fnb)->execute();
+		((fnblock<id>*)fnb)->execute();
 	}
 
 	static void* operator new(std::size_t sz)
@@ -924,30 +834,18 @@ public:
 	}
 };
 
-template <>
-class fnblock<0> {
-	void execute() {
-		die("WHATNOT");
-	}
-};
-
 struct fnrv {
 	void* fnb;
 	void(*runner)(void* fnb);
 	opcodeExec<void>* ptrs;
 };
 
-template<int opcode_slots>
-fnrv fnnCtor(int cycles) {
-	auto rv = new fnblock<opcode_slots>();
+template<int id>
+fnrv fnnCtor(int cycles, int opcode_slots) {
+	auto rv = new fnblock<id>();
 	rv->cc = cycles;
-	fnrv rvb = { rv, &fnblock<opcode_slots>::runner, rv->ops };
-	return rvb;
-}
-
-template<>
-fnrv fnnCtor<0>(int cycles) {
-	fnrv rvb = { 0, 0, 0 };
+	rv->cntd = opcode_slots;
+	fnrv rvb = { rv, &fnblock<id>::runner, rv->ops };
 	return rvb;
 }
 
@@ -1187,6 +1085,8 @@ string getCTN(foas f) {
 	return it->first;
 }
 
+#define FNA_COUNT 512
+
 #define REP_1(x, phrase) phrase < x >
 #define REP_2(x, phrase) REP_1(x, phrase), REP_1(x+1, phrase)
 #define REP_4(x, phrase) REP_2(x, phrase), REP_2(x+2, phrase)
@@ -1203,14 +1103,14 @@ string getCTN(foas f) {
 #define REP_8192(x, phrase) REP_4096(x, phrase), REP_4096(x+4096, phrase)
 
 
-typedef fnrv(*FNAFB)(int cycles);
+typedef fnrv(*FNAFB)(int cycles, int len);
 
-FNAFB FNA[] = { REP_512(1, &fnnCtor) };
+FNAFB FNA[] = { REP_512(0, &fnnCtor) };
 
 FNAFB fnnCtor_forreal(size_t n) {
-	verify(n > 0);
-	verify(n <= 512);
-	return FNA[n - 1];
+	verify(n >= 0);
+	verify(n < FNA_COUNT);
+	return FNA[n];
 }
 
 typedef opcodeExec<void>*(*FNAFB_SCBE)(RuntimeBlockInfo* block);
@@ -1238,8 +1138,10 @@ public:
 	opcodeExec<void>* ptrsg;
 	void compile(RuntimeBlockInfo* block,  SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise) {
 		
+		static u32 id_fr = 0;
 		//we need an extra one for the end opcode and optionally one more for block check
-		auto ptrs = fnnCtor_forreal(block->oplist.size() + 1 + (smc_checks != NoCheck ? 1 : 0))(block->guest_cycles);
+		auto block_size = block->oplist.size() + 1 + (smc_checks != NoCheck ? 1 : 0);
+		auto ptrs = fnnCtor_forreal((id_fr++)%FNA_COUNT)(block->guest_cycles, block_size);
 
 		ptrsg = ptrs.ptrs;
 		verify(FNB_FROM_PC(block->addr) == 0);

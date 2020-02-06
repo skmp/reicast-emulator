@@ -114,6 +114,13 @@ class opcodeExec {
 		return sizeof(klass); \
 	}) {}
 
+#define GEN_EXCEC_PLUS(klass, plus) \
+	klass() : opcodeExec([](u8* p) { \
+		auto ctx = reinterpret_cast<klass*>(p); \
+		ctx->execute(); \
+		return sizeof(klass) + plus; \
+	}) {}
+
 class opcodeDie : public opcodeExec {
 public:
 	
@@ -716,20 +723,23 @@ struct opcode_blockend : public opcodeExec {
 template <int sz>
 struct opcode_check_block : public opcodeExec {
 	RuntimeBlockInfo* block;
-	vector<u8> code;
 	void* ptr;
+	u8 code[0];
 
 	opcodeExec* setup(RuntimeBlockInfo* block) {
 		this->block = block;
 		ptr = GetMemPtr(block->addr, block->sh4_code_size);
 		verify(ptr != nullptr);
-		code.resize(sz == -1 ? block->sh4_code_size : sz);
-		memcpy(&code[0], ptr, sz == -1 ? block->sh4_code_size : sz);
+		verify(code == (u8*)emit_GetCCPtr());
+		verify(sz != -1);
+		emit_Skip(sz * 2);
+
+		memcpy(&code[0], ptr, sz);
 
 		return this;
 	}
 
-	GEN_EXCEC(opcode_check_block)
+	GEN_EXCEC_PLUS(opcode_check_block, (sz*2))
 	INLINE void execute() {
 		switch (sz)
 		{
@@ -746,7 +756,7 @@ struct opcode_check_block : public opcodeExec {
 				ngen_blockcheckfail(block->addr);
 			break;
 		default:
-			if (memcmp(ptr, &code[0], sz == -1 ? block->sh4_code_size : sz) != 0)
+			if (memcmp(ptr, &code[0], sz) != 0)
 				ngen_blockcheckfail(block->addr);
 			break;
 		}
@@ -1139,7 +1149,7 @@ public:
 			}
 
 			// this is trippy
-			op = fnnCtor_scb_forreal(block->sh4_code_size)()(block);
+			op = fnnCtor_scb_forreal(check_size)()(block);
 
 		}
 

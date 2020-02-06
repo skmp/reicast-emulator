@@ -135,7 +135,9 @@ if(${FEAT_SHREC} EQUAL ${DYNAREC_JIT})
   endif()
 #
 elseif(${FEAT_SHREC} EQUAL ${DYNAREC_CPP})
-    list(APPEND core_SRCS ${d_core}/jit/backend/cpp/rec_cpp.cpp)
+    #list(APPEND core_SRCS ${d_core}/jit/backend/cpp/rec_cpp.cpp)
+    file(GLOB reccpp_SRCS ${d_core}/jit/backend/cpp/*.cpp)
+    list(APPEND core_SRCS ${reccpp_SRCS})
 endif()
 
 add_definitions(/DFEAT_HAS_SOFTREND=1)

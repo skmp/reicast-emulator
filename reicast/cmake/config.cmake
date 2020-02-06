@@ -185,7 +185,7 @@ endif()
 if((${HOST_CPU} EQUAL ${CPU_X86}) OR (${HOST_CPU} EQUAL ${CPU_X64}) OR
    (${HOST_CPU} EQUAL ${CPU_ARM}) OR (${HOST_CPU} EQUAL ${CPU_A64}))
   message("SH4 Dynarec Features Available")
-  set(FEAT_SHREC  ${DYNAREC_CPP})
+  set(FEAT_SHREC  ${DYNAREC_JIT})
 else()
   message("SH4 Dynarec Features Missing")
   set(FEAT_SHREC  ${DYNAREC_CPP})

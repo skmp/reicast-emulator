@@ -547,6 +547,24 @@ struct opcode_readm : public opcodeExec {
 	}
 };
 
+template <int sz, typename T>
+struct opcode_readm_imm_ptr : public opcodeExec {
+	u8* src;
+	u32* dst;
+
+	GEN_EXCEC(opcode_readm_imm_ptr) INLINE void execute() {
+		T a = *reinterpret_cast<T*>(src);
+		if (sz <= 4)
+		{
+			*dst = (s32)a;
+		}
+		else
+		{
+			*(u64*)dst = a;
+		}
+	}
+};
+
 template <int sz>
 struct opcode_readm_imm : public opcodeExec {
 	u32 src;
@@ -1217,22 +1235,45 @@ public:
 				u32 size = op.flags & 0x7f;
 				if (op.rs1.is_imm()) {
 					verify(op.rs2.is_null() && op.rs3.is_null());
+					auto ptr = GetMemPtr(op.rs1.imm_value(), size);
 
-					if (size == 1)
+					if (ptr)
 					{
-						auto opc = new opcode_readm_imm<1>();  opc->src = op.rs1.imm_value(); opc->dst = op.rd.reg_ptr();
+						if (size == 1)
+						{
+							auto opc = new opcode_readm_imm_ptr<1, s8>();  opc->src = ptr; opc->dst = op.rd.reg_ptr();
+						}
+						else if (size == 2)
+						{
+							auto opc = new opcode_readm_imm_ptr<2, s16>();  opc->src = ptr; opc->dst = op.rd.reg_ptr();
+						}
+						else if (size == 4)
+						{
+							auto opc = new opcode_readm_imm_ptr<4, u32>();  opc->src = ptr; opc->dst = op.rd.reg_ptr();
+						}
+						else if (size == 8)
+						{
+							auto opc = new opcode_readm_imm_ptr<8, u64>();  opc->src = ptr; opc->dst = op.rd.reg_ptr();
+						}
 					}
-					else if (size == 2)
+					else
 					{
-						auto opc = new opcode_readm_imm<2>();  opc->src = op.rs1.imm_value(); opc->dst = op.rd.reg_ptr();
-					}
-					else if (size == 4)
-					{
-						auto opc = new opcode_readm_imm<4>();  opc->src = op.rs1.imm_value(); opc->dst = op.rd.reg_ptr();
-					}
-					else if (size == 8)
-					{
-						auto opc = new opcode_readm_imm<8>();  opc->src = op.rs1.imm_value(); opc->dst = op.rd.reg_ptr();
+						if (size == 1)
+						{
+							auto opc = new opcode_readm_imm<1>();  opc->src = op.rs1.imm_value(); opc->dst = op.rd.reg_ptr();
+						}
+						else if (size == 2)
+						{
+							auto opc = new opcode_readm_imm<2>();  opc->src = op.rs1.imm_value(); opc->dst = op.rd.reg_ptr();
+						}
+						else if (size == 4)
+						{
+							auto opc = new opcode_readm_imm<4>();  opc->src = op.rs1.imm_value(); opc->dst = op.rd.reg_ptr();
+						}
+						else if (size == 8)
+						{
+							auto opc = new opcode_readm_imm<8>();  opc->src = op.rs1.imm_value(); opc->dst = op.rd.reg_ptr();
+						}
 					}
 				}
 				else if (op.rs3.is_imm()) {

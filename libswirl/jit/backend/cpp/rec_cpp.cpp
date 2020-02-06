@@ -30,10 +30,6 @@
 int cycle_counter;
 extern int mips_counter;
 
-typedef void (*DynarecCodeEntryCppPtr)(void* prm);
-static void* fnb_lookup[FPCB_SIZE];
-#define FNB_FROM_PC(pc) fnb_lookup[((pc)>>1)&FPCB_MASK]
-
 struct DynaRBI : RuntimeBlockInfo
 {
 	virtual u32 Relink() {
@@ -44,37 +40,8 @@ struct DynaRBI : RuntimeBlockInfo
 	virtual void Relocate(void* dst) {
 		verify(false);
 	}
-
-	virtual void Discard() {
-		verify(FNB_FROM_PC(addr) != 0);
-		FNB_FROM_PC(addr) = 0;
-
-		return RuntimeBlockInfo::Discard();
-	}
 };
 
-
-void rec_mainloop(void* v_cntx)
-{
-	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
-
-	cycle_counter = 0;
-
-	while (sh4_int_bCpuRun) {
-		cycle_counter += SH4_TIMESLICE;
-		do {
-			auto rcb = reinterpret_cast<DynarecCodeEntryCppPtr>(bm_GetCode(ctx->cntx.pc));
-
-			void* fnb = FNB_FROM_PC(ctx->cntx.pc);
-
-			rcb(fnb);
-		} while (cycle_counter > 0);
-
-		if (UpdateSystem()) {
-			rdv_DoInterrupts_pc(ctx->cntx.pc);
-		}
-	}
-}
 
 static void ngen_blockcheckfail(u32 pc) {
 	printf("REC CPP: SMC invalidation at %08X\n", pc);
@@ -128,6 +95,16 @@ public:
 
 	INLINE void execute() {
 		die("death opcode");
+	}
+};
+
+class opcodeCompileBlocks : public opcodeExec {
+public:
+
+	GEN_EXCEC(opcodeCompileBlocks)
+
+	INLINE void execute() {
+		rdv_FailedToFindBlock(Sh4cntx.pc);
 	}
 };
 
@@ -775,7 +752,7 @@ struct opcode_check_block : public opcodeExec {
 	#define DREP_256(x, phrase) DREP_128(x, phrase) DREP_128(x+128, phrase)
 	#define DREP_512(x, phrase) DREP_256(x, phrase) DREP_256(x+256, phrase)
 
-template <int id>
+
 class fnblock {
 public:
 	int cc;
@@ -799,10 +776,6 @@ public:
 		}
 	}
 
-	static void runner(void* fnb) {
-		((fnblock<id>*)fnb)->execute();
-	}
-
 	static void* operator new(std::size_t sz)
 	{
 		auto rv = emit_GetCCPtr();
@@ -823,18 +796,50 @@ public:
 
 struct fnrv {
 	void* fnb;
-	void(*runner)(void* fnb);
 	opcodeExec* ptrs;
 };
 
-template<int id>
 fnrv fnnCtor(int cycles, int opcode_slots) {
-	auto rv = new fnblock<id>();
+	auto rv = new fnblock();
 	rv->cc = cycles;
 	rv->ncntd = DREP_COUNT - opcode_slots;
-	fnrv rvb = { rv, &fnblock<id>::runner, rv->ops };
+	fnrv rvb = { rv, rv->ops };
 	return rvb;
 }
+
+#define XREP_COUNT 512
+#define XREP_1(x, phrase) case x: { fnblock<x>::runner(fnb); break; };
+#define XREP_2(x, phrase)   XREP_1(x, phrase)   XREP_1(x+1, phrase)
+#define XREP_4(x, phrase)   XREP_2(x, phrase)   XREP_2(x+2, phrase)
+#define XREP_8(x, phrase)   XREP_4(x, phrase)   XREP_4(x+4, phrase)
+#define XREP_16(x, phrase)  XREP_8(x, phrase)   XREP_8(x+8, phrase)
+#define XREP_32(x, phrase)  XREP_16(x, phrase)  XREP_16(x+16, phrase)
+#define XREP_64(x, phrase)  XREP_32(x, phrase)  XREP_32(x+32, phrase)
+#define XREP_128(x, phrase) XREP_64(x, phrase)  XREP_64(x+64, phrase)
+#define XREP_256(x, phrase) XREP_128(x, phrase) XREP_128(x+128, phrase)
+#define XREP_512(x, phrase) XREP_256(x, phrase) XREP_256(x+256, phrase)
+
+
+void rec_mainloop(void* v_cntx)
+{
+	Sh4RCB* ctx = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4RCB));
+
+	cycle_counter = 0;
+
+	while (sh4_int_bCpuRun) {
+		cycle_counter += SH4_TIMESLICE;
+		do {
+			auto fnb = reinterpret_cast<void*>(bm_GetCode(ctx->cntx.pc));
+
+			reinterpret_cast<fnblock*>(fnb)->execute();
+		} while (cycle_counter > 0);
+
+		if (UpdateSystem()) {
+			rdv_DoInterrupts_pc(ctx->cntx.pc);
+		}
+	}
+}
+
 
 template <typename shilop, typename CTR>
 opcodeExec* createType2(const CC_pars_t& prms, void* fun) {
@@ -1072,8 +1077,6 @@ string getCTN(foas f) {
 	return it->first;
 }
 
-#define FNA_COUNT 512
-
 #define REP_1(x, phrase) phrase < x >
 #define REP_2(x, phrase) REP_1(x, phrase), REP_1(x+1, phrase)
 #define REP_4(x, phrase) REP_2(x, phrase), REP_2(x+2, phrase)
@@ -1089,16 +1092,6 @@ string getCTN(foas f) {
 #define REP_4096(x, phrase) REP_2048(x, phrase), REP_2048(x+2048, phrase)
 #define REP_8192(x, phrase) REP_4096(x, phrase), REP_4096(x+4096, phrase)
 
-
-typedef fnrv(*FNAFB)(int cycles, int len);
-
-FNAFB FNA[] = { REP_512(0, &fnnCtor) };
-
-FNAFB fnnCtor_forreal(size_t n) {
-	verify(n >= 0);
-	verify(n < FNA_COUNT);
-	return FNA[n];
-}
 
 typedef opcodeExec*(*FNAFB_SCBE)(RuntimeBlockInfo* block);
 typedef FNAFB_SCBE(*FNAFB_SCB)();
@@ -1128,14 +1121,12 @@ public:
 		static u32 id_fr = 0;
 		//we need an extra one for the end opcode and optionally one more for block check
 		auto block_size = block->oplist.size() + 1 + (smc_checks != NoCheck ? 1 : 0);
-		auto ptrs = fnnCtor_forreal((id_fr++)%FNA_COUNT)(block->guest_cycles, block_size);
-
+		auto ptrs = fnnCtor(block->guest_cycles, block_size);
+		
 		ptrsg = ptrs.ptrs;
-		verify(FNB_FROM_PC(block->addr) == 0);
-		FNB_FROM_PC(block->addr) = ptrs.fnb;
 
 		// WATCH // see rec_mainloop
-		block->code = reinterpret_cast<DynarecCodeEntryPtr>(ptrs.runner);
+		block->code = reinterpret_cast<DynarecCodeEntryPtr>(ptrs.fnb);
 
 		size_t i = 0;
 		if (smc_checks != NoCheck)
@@ -1498,17 +1489,20 @@ public:
 
 BlockCompiler* compiler;
 
-static void ngen_FailedToFindBlock_cpp(void* fnb) {
-	verify(fnb == nullptr);
-	rdv_FailedToFindBlock(Sh4cntx.pc);
-}
+
 
 struct CPPNGenBackend: NGenBackend
 {
 	bool Init()
 	{
 		this->Mainloop = &rec_mainloop;
-		this->FailedToFindBlock = reinterpret_cast<DynarecCodeEntryPtr>(&ngen_FailedToFindBlock_cpp);
+		
+		auto failedtofind = fnnCtor(0, 1).fnb;
+		auto op = new opcodeCompileBlocks();
+
+		emit_SetBaseAddr();
+
+		this->FailedToFindBlock = reinterpret_cast<DynarecCodeEntryPtr>(failedtofind);
 		return true;
 	}
 
@@ -1565,11 +1559,7 @@ struct CPPNGenBackend: NGenBackend
 
 	void OnResetBlocks()
 	{
-		memset(fnb_lookup, 0 , sizeof(fnb_lookup));
-		/*
-		while (dispatchb[id].fnb)
-			delete dispatchb[id].fnb;
-		*/
+
 	}
 };
 

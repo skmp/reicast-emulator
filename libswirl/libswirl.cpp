@@ -316,6 +316,7 @@ void InitSettings()
     settings.pvr.ForceGLES2 = false;
 
     settings.debug.SerialConsole = false;
+    settings.debug.VirtualSerialPort = false;
 
     settings.bios.UseReios = 0;
     settings.reios.ElfFile = "";
@@ -408,7 +409,8 @@ void LoadSettings(bool game_specific)
     settings.pvr.ForceGLES2 = cfgLoadBool(config_section, "pvr.ForceGLES2", settings.pvr.ForceGLES2);
     
     settings.debug.SerialConsole = cfgLoadBool(config_section, "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
-
+    settings.debug.VirtualSerialPort = cfgLoadBool(config_section, "Debug.VirtualSerialPort", settings.debug.VirtualSerialPort);
+    
     settings.bios.UseReios = cfgLoadBool(config_section, "bios.UseReios", settings.bios.UseReios);
     settings.reios.ElfFile = cfgLoadStr(game_specific ? cfgGetGameId() : "reios", "ElfFile", settings.reios.ElfFile.c_str());
 
@@ -560,6 +562,8 @@ void SaveSettings()
     cfgSaveBool("config", "pvr.ForceGLES2", settings.pvr.ForceGLES2);
 
     cfgSaveBool("config", "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
+    cfgSaveBool("config", "Debug.VirtualSerialPort", settings.debug.VirtualSerialPort);
+    
     cfgSaveInt("input", "MouseSensitivity", settings.input.MouseSensitivity);
     cfgSaveInt("input", "VirtualGamepadVibration", settings.input.VirtualGamepadVibration);
     for (int i = 0; i < MAPLE_PORTS; i++)

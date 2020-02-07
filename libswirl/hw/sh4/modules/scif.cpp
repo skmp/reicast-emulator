@@ -16,6 +16,12 @@ SCIF_SCFSR2_type SCIF_SCFSR2;
 u8 SCIF_SCFRDR2;
 SCIF_SCFDR2_type SCIF_SCFDR2;
 
+#if HOST_OS == OS_LINUX
+#include <fcntl.h>
+#include <unistd.h>
+extern int pty_master;
+#endif
+
 struct Sh4ModScif_impl : Sh4ModScif
 {
 	SuperH4Mmr* sh4mmr;
@@ -58,12 +64,30 @@ struct Sh4ModScif_impl : Sh4ModScif
 		if (settings.debug.SerialConsole) {
 			putc(data, stdout);
 		}
+#if HOST_OS == OS_LINUX
+		if (pty_master != -1) {
+			write(pty_master, &data, 1);
+		}
+#endif
 	}
 
 	//SCIF_SCFSR2 read
 	u32 ReadSerialStatus(u32 addr)
 	{
-		if (false /*PendingSerialData()*/)
+		bool has_data = false;
+		#if HOST_OS == OS_LINUX
+			if (pty_master != -1) {
+				fd_set read_fds, write_fds, except_fds;
+				FD_ZERO(&read_fds);
+				FD_ZERO(&write_fds);
+				FD_ZERO(&except_fds);
+				FD_SET(pty_master, &read_fds);
+
+				has_data = select(pty_master + 1, &read_fds, &write_fds, &except_fds, NULL) == 1;
+			}
+		#endif
+
+		if (has_data /*PendingSerialData()*/)
 		{
 			return 0x60 | 2;
 		}
@@ -92,7 +116,12 @@ struct Sh4ModScif_impl : Sh4ModScif
 	//SCIF_SCFRDR2
 	u32 ReadSerialData(u32 addr)
 	{
-		s32 rd = 0;//ReadSerial();
+		u8 rd = 0;//ReadSerial();
+		#if HOST_OS == OS_LINUX
+			if (pty_master != -1){
+				read(pty_master, &rd, 1);
+			}
+		#endif
 		return (u8)rd;
 	}
 

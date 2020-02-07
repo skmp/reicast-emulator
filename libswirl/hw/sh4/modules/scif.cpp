@@ -16,7 +16,7 @@ SCIF_SCFSR2_type SCIF_SCFSR2;
 u8 SCIF_SCFRDR2;
 SCIF_SCFDR2_type SCIF_SCFDR2;
 
-#if HOST_OS == OS_LINUX  && !defined(_ANDROID)
+#if FEAT_HAS_SERIAL_TTY
 #include <fcntl.h>
 #include <unistd.h>
 extern int pty_master;
@@ -24,7 +24,7 @@ extern int pty_master;
 
 bool SerialHasPendingData() {
 	bool has_data = false;
-	#if HOST_OS == OS_LINUX && !defined(_ANDROID)
+	#if FEAT_HAS_SERIAL_TTY
 		if (pty_master != -1) {
 			fd_set read_fds, write_fds, except_fds;
 			FD_ZERO(&read_fds);
@@ -41,7 +41,7 @@ bool SerialHasPendingData() {
 
 u8 SerialReadData() {
 	u8 rd = 0;
-	#if HOST_OS == OS_LINUX  && !defined(_ANDROID)
+	#if FEAT_HAS_SERIAL_TTY
 		if (pty_master != -1){
 			verify(SerialHasPendingData());
 			while(read(pty_master, &rd, 1) != 1)
@@ -56,7 +56,7 @@ void SerialWriteData(u8 data) {
 		if (settings.debug.SerialConsole) {
 			putc(data, stdout);
 		}
-#if HOST_OS == OS_LINUX
+#if FEAT_HAS_SERIAL_TTY
 		if (pty_master != -1) {
 			while(write(pty_master, &data, 1) != 1)
 				printf("SERIAL: PTY write failed, %d\n", errno);

@@ -412,7 +412,9 @@ void os_gl_term()
 	#endif
 }
 
+#if FEAT_HAS_SERIAL_TTY
 int pty_master;
+#endif
 
 int main(int argc, wchar* argv[])
 {
@@ -454,7 +456,7 @@ int main(int argc, wchar* argv[])
 	if (reicast_init(argc, argv))
 		die("Reicast initialization failed\n");
 
-#if !defined(_ANDROID)
+#if FEAT_HAS_SERIAL_TTY
 	if (settings.debug.VirtualSerialPort) {
 		int slave;
 		char slave_name[2048];

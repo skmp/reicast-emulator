@@ -147,9 +147,11 @@ endif()
 ### deps.cmake #################################################################################
 
 set(d_deps ${reicast_core_path}/deps)
+set(gpl_deps ${reicast_core_path}/gpl/deps)
+
 include_directories ("${d_deps}")
-include_directories ("${d_deps}/picotcp/include")
-include_directories ("${d_deps}/picotcp/modules")
+include_directories ("${gpl_deps}/picotcp/include")
+include_directories ("${gpl_deps}/picotcp/modules")
 
 file(GLOB xbyak_H	${d_deps}/xbyak/*.h)		# include headers into cmake target/project view 
 
@@ -166,8 +168,8 @@ file(GLOB crypt_SRCS ${d_deps}/crypto/*.cpp)
 file(GLOB imgui_SRCS ${d_deps}/imgui/*.cpp)
 file(GLOB lua_SRCS   ${d_deps}/lua/*.c)
 
-file(GLOB picoModS   ${d_deps}/picotcp/modules/*.c)
-file(GLOB picoStkS   ${d_deps}/picotcp/stack/*.c)
+file(GLOB picoModS   ${gpl_deps}/picotcp/modules/*.c)
+file(GLOB picoStkS   ${gpl_deps}/picotcp/stack/*.c)
 set(pico_SRCS ${picoModS} ${picoStkS})
 
 set(deps_SRCS
@@ -179,7 +181,7 @@ set(deps_SRCS
   ${crypt_SRCS}
   ${imgui_SRCS}
   ${lua_SRCS}
-  ${d_deps}/xbrz/xbrz.cpp
+  ${gpl_deps}/xbrz/xbrz.cpp
   ${d_deps}/xxhash/xxhash.c
   ${d_deps}/cdipsr/cdipsr.cpp
   ${d_deps}/coreio/coreio.cpp

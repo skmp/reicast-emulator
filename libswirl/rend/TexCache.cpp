@@ -17,7 +17,7 @@
 #include "hw/pvr/pvr_regs.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/mem/_vmem.h"
-#include "deps/xbrz/xbrz.h"
+#include "gpl/deps/xbrz/xbrz.h"
 #include "deps/xxhash/xxhash.h"
 
 u8* vq_codebook;

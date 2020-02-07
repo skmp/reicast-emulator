@@ -16,11 +16,53 @@ SCIF_SCFSR2_type SCIF_SCFSR2;
 u8 SCIF_SCFRDR2;
 SCIF_SCFDR2_type SCIF_SCFDR2;
 
-#if HOST_OS == OS_LINUX
+#if HOST_OS == OS_LINUX  && !defined(_ANDROID)
 #include <fcntl.h>
 #include <unistd.h>
 extern int pty_master;
 #endif
+
+bool SerialHasPendingData() {
+	bool has_data = false;
+	#if HOST_OS == OS_LINUX && !defined(_ANDROID)
+		if (pty_master != -1) {
+			fd_set read_fds, write_fds, except_fds;
+			FD_ZERO(&read_fds);
+			FD_ZERO(&write_fds);
+			FD_ZERO(&except_fds);
+			FD_SET(pty_master, &read_fds);
+
+			timeval interval_timeout = { 0, 0};
+			has_data = select(pty_master + 1, &read_fds, &write_fds, &except_fds, &interval_timeout) == 1;
+		}
+	#endif
+	return has_data;
+}
+
+u8 SerialReadData() {
+	u8 rd = 0;
+	#if HOST_OS == OS_LINUX  && !defined(_ANDROID)
+		if (pty_master != -1){
+			verify(SerialHasPendingData());
+			while(read(pty_master, &rd, 1) != 1)
+				printf("SERIAL: PTY read failed, %d\n", errno);
+		}
+	#endif
+
+	return rd;
+}
+
+void SerialWriteData(u8 data) {
+		if (settings.debug.SerialConsole) {
+			putc(data, stdout);
+		}
+#if HOST_OS == OS_LINUX
+		if (pty_master != -1) {
+			while(write(pty_master, &data, 1) != 1)
+				printf("SERIAL: PTY write failed, %d\n", errno);
+		}
+#endif
+}
 
 struct Sh4ModScif_impl : Sh4ModScif
 {
@@ -61,33 +103,14 @@ struct Sh4ModScif_impl : Sh4ModScif
 
 	void SerialWrite(u32 addr, u32 data)
 	{
-		if (settings.debug.SerialConsole) {
-			putc(data, stdout);
-		}
-#if HOST_OS == OS_LINUX
-		if (pty_master != -1) {
-			write(pty_master, &data, 1);
-		}
-#endif
+		SerialWriteData(data);
 	}
 
 	//SCIF_SCFSR2 read
 	u32 ReadSerialStatus(u32 addr)
 	{
-		bool has_data = false;
-		#if HOST_OS == OS_LINUX
-			if (pty_master != -1) {
-				fd_set read_fds, write_fds, except_fds;
-				FD_ZERO(&read_fds);
-				FD_ZERO(&write_fds);
-				FD_ZERO(&except_fds);
-				FD_SET(pty_master, &read_fds);
-
-				has_data = select(pty_master + 1, &read_fds, &write_fds, &except_fds, NULL) == 1;
-			}
-		#endif
-
-		if (has_data /*PendingSerialData()*/)
+		
+		if (SerialHasPendingData())
 		{
 			return 0x60 | 2;
 		}
@@ -116,12 +139,8 @@ struct Sh4ModScif_impl : Sh4ModScif
 	//SCIF_SCFRDR2
 	u32 ReadSerialData(u32 addr)
 	{
-		u8 rd = 0;//ReadSerial();
-		#if HOST_OS == OS_LINUX
-			if (pty_master != -1){
-				read(pty_master, &rd, 1);
-			}
-		#endif
+		u8 rd = SerialReadData();
+		
 		return (u8)rd;
 	}
 

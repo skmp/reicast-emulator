@@ -464,7 +464,8 @@ int main(int argc, wchar* argv[])
 			printf("Creating virtual serial port at %s\n", slave_name);
 
 			// not for us to use, we use master
-			close(slave);
+			// do not close to avoid EIO though
+			// close(slave);
 		}
 	}
 #endif

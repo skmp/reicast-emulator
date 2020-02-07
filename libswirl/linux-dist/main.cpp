@@ -21,6 +21,7 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/maple/maple_cfg.h"
 #include <unistd.h>
+#include <pty.h>
 
 #include "libswirl.h"
 #include "hw/pvr/Renderer_if.h"
@@ -411,6 +412,10 @@ void os_gl_term()
 	#endif
 }
 
+#if FEAT_HAS_SERIAL_TTY
+int pty_master;
+#endif
+
 int main(int argc, wchar* argv[])
 {
 
@@ -451,7 +456,22 @@ int main(int argc, wchar* argv[])
 	if (reicast_init(argc, argv))
 		die("Reicast initialization failed\n");
 
-	
+#if FEAT_HAS_SERIAL_TTY
+	if (settings.debug.VirtualSerialPort) {
+		int slave;
+		char slave_name[2048];
+		pty_master = -1;
+		if (openpty(&pty_master, &slave, slave_name, nullptr, nullptr) >= 0)
+		{
+			printf("Creating virtual serial port at %s\n", slave_name);
+
+			// not for us to use, we use master
+			// do not close to avoid EIO though
+			// close(slave);
+		}
+	}
+#endif
+
 	#if FEAT_HAS_NIXPROF
 	install_prof_handler(1);
 	#endif

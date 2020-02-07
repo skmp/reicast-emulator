@@ -273,6 +273,9 @@ add_executable(${TNAME}${binSuffix} ${reicast_SRCS} ${deps_SRCS})
 target_compile_features(${TNAME}${binSuffix} PRIVATE cxx_std_14)
 
 if(${HOST_OS} EQUAL ${OS_LINUX})
+  # needed for opentty
+  target_link_libraries(${TNAME} -lutil)
+
   find_package(ALSA)
   if(ALSA_FOUND)
     target_compile_definitions(${TNAME} PUBLIC USE_ALSA)

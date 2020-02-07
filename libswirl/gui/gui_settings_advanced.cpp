@@ -94,6 +94,13 @@ void gui_settings_advanced()
             ImGui::SameLine();
             gui_ShowHelpMarker("Dump the Dreamcast serial console to stdout");
 #endif
+
+#if FEAT_HAS_SERIAL_TTY
+			ImGui::Checkbox("Create Virtual Serial Port", &settings.debug.VirtualSerialPort);
+            ImGui::SameLine();
+            gui_ShowHelpMarker("Create a PTY for use with dc-load. Requires restart.");
+#endif
+
 			ImGui::Checkbox("Dump Textures", &settings.rend.DumpTextures);
             ImGui::SameLine();
             gui_ShowHelpMarker("Dump all textures into data/texdump/<game id>");

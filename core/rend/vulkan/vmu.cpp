@@ -74,7 +74,7 @@ const std::vector<vk::CommandBuffer>* VulkanOSD::PrepareOSD(CommandPool *command
 		texture->SetPhysicalDevice(context->GetPhysicalDevice());
 		commandBuffers[context->GetCurrentImageIndex()].push_back(commandPool->Allocate());
 		texture->SetCommandBuffer(commandBuffers[context->GetCurrentImageIndex()].back());
-		texture->UploadToGPU(VMU_SCREEN_WIDTH, VMU_SCREEN_HEIGHT, temp_tex_buffer);
+		texture->UploadToGPU(VMU_SCREEN_WIDTH, VMU_SCREEN_HEIGHT, temp_tex_buffer, false);
 		texture->SetCommandBuffer(nullptr);
 		vmu_screen_param.vmu_screen_needs_update = false;
 	}
@@ -122,7 +122,7 @@ const std::vector<vk::CommandBuffer>* VulkanOSD::PrepareOSD(CommandPool *command
 		texture->SetPhysicalDevice(context->GetPhysicalDevice());
 		commandBuffers[context->GetCurrentImageIndex()].push_back(commandPool->Allocate());
 		texture->SetCommandBuffer(commandBuffers[context->GetCurrentImageIndex()].back());
-		texture->UploadToGPU(LIGHTGUN_CROSSHAIR_SIZE, LIGHTGUN_CROSSHAIR_SIZE, temp_tex_buffer);
+		texture->UploadToGPU(LIGHTGUN_CROSSHAIR_SIZE, LIGHTGUN_CROSSHAIR_SIZE, temp_tex_buffer, false);
 		texture->SetCommandBuffer(nullptr);
 		lightgun_params[i].dirty = false;
 	}

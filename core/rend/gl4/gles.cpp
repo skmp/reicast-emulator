@@ -934,11 +934,9 @@ struct gl4rend : Renderer
    bool Init() override
    {
       findGLVersion();
-      int minor = 0;
-      glGetIntegerv(GL_MINOR_VERSION, &minor);
-      if (gl.gl_major < 4 || (gl.gl_major == 4 && minor < 3))
+      if (gl.gl_major < 4 || (gl.gl_major == 4 && gl.gl_minor < 3))
       {
-         WARN_LOG(RENDERER, "Warning: OpenGL %d.%d doesn't support per-pixel sorting. 4.3 required", gl.gl_major, minor);
+         WARN_LOG(RENDERER, "Warning: OpenGL %d.%d doesn't support per-pixel sorting. 4.3 required", gl.gl_major, gl.gl_minor);
          return false;
       }
 

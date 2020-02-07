@@ -93,7 +93,7 @@ public:
 			curTexture->SetDevice(GetContext()->GetDevice());
 		}
 		curTexture->SetCommandBuffer(texCommandPool.Allocate());
-		curTexture->UploadToGPU(width, height, (u8*)pb.data());
+		curTexture->UploadToGPU(width, height, (u8*)pb.data(), false);
 		curTexture->SetCommandBuffer(nullptr);
 		texCommandPool.EndFrame();
 
@@ -210,7 +210,7 @@ private:
 		MakeFogTexture(texData);
 		fogTexture->SetCommandBuffer(texCommandPool.Allocate());
 
-		fogTexture->UploadToGPU(128, 2, texData);
+		fogTexture->UploadToGPU(128, 2, texData, false);
 
 		fogTexture->SetCommandBuffer(nullptr);
 	}

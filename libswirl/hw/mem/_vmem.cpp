@@ -8,9 +8,6 @@
 #include "hw/aica/aica_mem.h"
 #include "hw/sh4/dyna/blockmanager.h"
 
-#define HANDLER_MAX 0x1F
-#define HANDLER_COUNT (HANDLER_MAX+1)
-
 //top registered handler
 _vmem_handler       _vmem_lrp;
 
@@ -144,110 +141,6 @@ void* _vmem_page_info(u32 addr,bool& ismem,u32 sz,u32& page_sz,bool rw)
 
 	return 0;
 }
-
-template<typename T,typename Trv>
-INLINE Trv DYNACALL _vmem_readt(u32 addr)
-{
-	const u32 sz=sizeof(T);
-
-	u32   page=addr>>24;	//1 op, shift/extract
-	unat  iirf=(unat)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
-	void* ptr=(void*)(iirf&~HANDLER_MAX);     //2 ops, and // 1 op insert
-
-	if (likely(ptr!=0))
-	{
-		addr<<=iirf;
-		addr>>=iirf;
-
-		T data=(*((T*)&(((u8*)ptr)[addr])));
-		return data;
-	}
-	else
-	{
-		const u32 id=iirf;
-		if (sz==1)
-		{
-			return (T)_vmem_RF8[id/4](_vmem_CTX[id/4], addr);
-		}
-		else if (sz==2)
-		{
-			return (T)_vmem_RF16[id/4](_vmem_CTX[id/4], addr);
-		}
-		else if (sz==4)
-		{
-			return _vmem_RF32[id/4](_vmem_CTX[id/4], addr);
-		}
-		else if (sz==8)
-		{
-			T rv=_vmem_RF32[id/4](_vmem_CTX[id/4], addr);
-			rv|=(T)((u64)_vmem_RF32[id/4](_vmem_CTX[id/4], addr+4)<<32);
-			
-			return rv;
-		}
-		else
-		{
-			die("Invalid size");
-		}
-	}
-}
-template<typename T>
-INLINE void DYNACALL _vmem_writet(u32 addr,T data)
-{
-	const u32 sz=sizeof(T);
-
-	u32 page=addr>>24;
-	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
-	void* ptr=(void*)(iirf&~HANDLER_MAX);
-
-	if (likely(ptr!=0))
-	{
-		addr<<=iirf;
-		addr>>=iirf;
-
-		*((T*)&(((u8*)ptr)[addr]))=data;
-	}
-	else
-	{
-		const u32 id=iirf;
-		if (sz==1)
-		{
-			 _vmem_WF8[id/4](_vmem_CTX[id/4], addr,data);
-		}
-		else if (sz==2)
-		{
-			 _vmem_WF16[id/4](_vmem_CTX[id/4], addr,data);
-		}
-		else if (sz==4)
-		{
-			 _vmem_WF32[id/4](_vmem_CTX[id/4], addr,data);
-		}
-		else if (sz==8)
-		{
-			_vmem_WF32[id/4](_vmem_CTX[id/4], addr,(u32)data);
-			_vmem_WF32[id/4](_vmem_CTX[id/4], addr+4,(u32)((u64)data>>32));
-		}
-		else
-		{
-			die("Invalid size");
-		}
-	}
-}
-
-//ReadMem/WriteMem functions
-//ReadMem
-u32 DYNACALL _vmem_ReadMem8SX32(u32 Address) { return _vmem_readt<s8,s32>(Address); }
-u32 DYNACALL _vmem_ReadMem16SX32(u32 Address) { return _vmem_readt<s16,s32>(Address); }
-
-u8 DYNACALL _vmem_ReadMem8(u32 Address) { return _vmem_readt<u8,u8>(Address); }
-u16 DYNACALL _vmem_ReadMem16(u32 Address) { return _vmem_readt<u16,u16>(Address); }
-u32 DYNACALL _vmem_ReadMem32(u32 Address) { return _vmem_readt<u32,u32>(Address); }
-u64 DYNACALL _vmem_ReadMem64(u32 Address) { return _vmem_readt<u64,u64>(Address); }
-
-//WriteMem
-void DYNACALL _vmem_WriteMem8(u32 Address,u8 data) { _vmem_writet<u8>(Address,data); }
-void DYNACALL _vmem_WriteMem16(u32 Address,u16 data) { _vmem_writet<u16>(Address,data); }
-void DYNACALL _vmem_WriteMem32(u32 Address,u32 data) { _vmem_writet<u32>(Address,data); }
-void DYNACALL _vmem_WriteMem64(u32 Address,u64 data) { _vmem_writet<u64>(Address,data); }
 
 //0xDEADC0D3 or 0
 #define MEM_ERROR_RETURN_VALUE 0xDEADC0D3

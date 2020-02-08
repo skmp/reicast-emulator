@@ -3,6 +3,9 @@
 */
 #include "license/bsd"
 
+// for vba-arm
+#include "license/dep_gpl"
+
 
 #include "arm7.h"
 #include "arm7_context.h"
@@ -272,7 +275,7 @@ u32 DYNACALL ARM7Backend::singleOp(Arm7Context* ctx, u32 opcode) {
 
 #define NO_OPCODE_READ
 
-#include "arm-new.h"
+#include "gpl/vba-arm/arm-new.h"
 
 #undef NO_OPCODE_READ
 
@@ -288,7 +291,8 @@ u32 DYNACALL ARM7Backend::Step(Arm7Context* ctx) {
 	}
 
 	reg[15].I = armNextPC + 8;
-#include "arm-new.h"
+
+	#include "gpl/vba-arm/arm-new.h"
 
 	return clockTicks;
 }

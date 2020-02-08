@@ -2,6 +2,7 @@
 	This file is part of libswirl
 */
 #include "license/bsd"
+#include "license/dep_gpl"
 
 
 #include "virt_arm.h"
@@ -94,7 +95,7 @@ namespace VARM
 
 		armNextPC=reg[15].I=0;
 
-#include "arm-new.h"
+		#include "gpl/vba-arm/arm-new.h"
 
 		verify(reg[15].I==0 || reg[15].I == 4);
 		verify(arm_ArmNextPC==0);

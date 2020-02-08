@@ -3,6 +3,9 @@
 */
 #include "license/bsd"
 
+// for picoppp
+#include "license/dep_gpl"
+
 
 
 #include "types.h"

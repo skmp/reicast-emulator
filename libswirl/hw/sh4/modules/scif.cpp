@@ -12,6 +12,8 @@
 #include "hw/sh4/sh4_mmr.h"
 #include "modules.h"
 
+#include <queue>
+
 SCIF_SCFSR2_type SCIF_SCFSR2;
 u8 SCIF_SCFRDR2;
 SCIF_SCFDR2_type SCIF_SCFDR2;
@@ -19,37 +21,29 @@ SCIF_SCFDR2_type SCIF_SCFDR2;
 #if FEAT_HAS_SERIAL_TTY
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 extern int pty_master;
 #endif
 
-bool SerialHasPendingData() {
-	bool has_data = false;
+int SerialHasPendingData() {
+	int bytes_avaiable = 0;
 	#if FEAT_HAS_SERIAL_TTY
 		if (pty_master != -1) {
-			fd_set read_fds, write_fds, except_fds;
-			FD_ZERO(&read_fds);
-			FD_ZERO(&write_fds);
-			FD_ZERO(&except_fds);
-			FD_SET(pty_master, &read_fds);
-
-			timeval interval_timeout = { 0, 0};
-			has_data = select(pty_master + 1, &read_fds, &write_fds, &except_fds, &interval_timeout) == 1;
+			ioctl(pty_master, FIONREAD, &bytes_avaiable);
+			return bytes_avaiable;
 		}
 	#endif
-	return has_data;
+	return bytes_avaiable;
 }
 
-u8 SerialReadData() {
+void SerialReadData(u8* buffer, size_t nbytes) {
 	u8 rd = 0;
 	#if FEAT_HAS_SERIAL_TTY
 		if (pty_master != -1){
-			verify(SerialHasPendingData());
-			while(read(pty_master, &rd, 1) != 1)
+			while(read(pty_master, buffer, nbytes) != nbytes)
 				printf("SERIAL: PTY read failed, %d\n", errno);
 		}
 	#endif
-
-	return rd;
 }
 
 void SerialWriteData(u8 data) {
@@ -101,6 +95,45 @@ struct Sh4ModScif_impl : Sh4ModScif
 	SCLSR2_type SCIF_SCLSR2;
 	*/
 
+	queue<u8> fifo;
+
+	bool FifoRefill()
+	{
+		auto bytes = SerialHasPendingData();
+		if (!bytes)
+			return false;
+
+		if (bytes > 64)
+			bytes = 64;
+
+		u8 temp[64];
+		SerialReadData(temp, bytes);
+		for (int i = 0; i<bytes; i++) {
+			fifo.push(temp[i]);
+		}
+
+		return true;
+	}
+
+	u8 FifoRead()
+	{
+		if (fifo.empty())
+			FifoRefill();
+
+		verify(!fifo.empty());
+
+		auto rv = fifo.front();
+		
+		fifo.pop();
+		
+		return rv;
+	}
+
+	bool FifoHasPendingData()
+	{
+		return !fifo.empty() || FifoRefill();
+	}
+
 	void SerialWrite(u32 addr, u32 data)
 	{
 		SerialWriteData(data);
@@ -110,7 +143,7 @@ struct Sh4ModScif_impl : Sh4ModScif
 	u32 ReadSerialStatus(u32 addr)
 	{
 		
-		if (SerialHasPendingData())
+		if (FifoHasPendingData())
 		{
 			return 0x60 | 2;
 		}
@@ -139,7 +172,7 @@ struct Sh4ModScif_impl : Sh4ModScif
 	//SCIF_SCFRDR2
 	u32 ReadSerialData(u32 addr)
 	{
-		u8 rd = SerialReadData();
+		u8 rd = FifoRead();
 		
 		return (u8)rd;
 	}

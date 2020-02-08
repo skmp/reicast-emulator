@@ -457,18 +457,36 @@ int main(int argc, wchar* argv[])
 		die("Reicast initialization failed\n");
 
 #if FEAT_HAS_SERIAL_TTY
+	bool cleanup_pty_symlink = false;
 	if (settings.debug.VirtualSerialPort) {
 		int slave;
 		char slave_name[2048];
 		pty_master = -1;
 		if (openpty(&pty_master, &slave, slave_name, nullptr, nullptr) >= 0)
 		{
-			printf("Creating virtual serial port at %s\n", slave_name);
+			printf("Serial: Created virtual serial port at %s\n", slave_name);
 
+			if (settings.debug.VirtualSerialPortFile.size())
+			{
+				if (symlink(slave_name, settings.debug.VirtualSerialPortFile.c_str()) == 0)
+				{
+					cleanup_pty_symlink = true;
+					printf("Serial: Created symlink to %s\n",  settings.debug.VirtualSerialPortFile.c_str());
+				}
+				else
+				{
+					printf("Serial: Failed to create symlink to %s, %d\n", settings.debug.VirtualSerialPortFile.c_str(), errno);
+				}
+			}
 			// not for us to use, we use master
 			// do not close to avoid EIO though
 			// close(slave);
 		}
+		else
+		{
+			printf("Serial: Failed to create PTY: %d\n", errno);
+		}
+		
 	}
 #endif
 
@@ -477,7 +495,12 @@ int main(int argc, wchar* argv[])
 	#endif
 	
 	reicast_ui_loop();
-
+#if FEAT_HAS_SERIAL_TTY
+	if (cleanup_pty_symlink)
+	{
+		unlink(settings.debug.VirtualSerialPortFile.c_str());
+	}
+#endif
 	reicast_term();
 
 	#ifdef TARGET_PANDORA

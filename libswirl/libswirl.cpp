@@ -317,6 +317,7 @@ void InitSettings()
 
     settings.debug.SerialConsole = false;
     settings.debug.VirtualSerialPort = false;
+    settings.debug.VirtualSerialPortFile = "";
 
     settings.bios.UseReios = 0;
     settings.reios.ElfFile = "";
@@ -410,6 +411,7 @@ void LoadSettings(bool game_specific)
     
     settings.debug.SerialConsole = cfgLoadBool(config_section, "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
     settings.debug.VirtualSerialPort = cfgLoadBool(config_section, "Debug.VirtualSerialPort", settings.debug.VirtualSerialPort);
+    settings.debug.VirtualSerialPortFile = cfgLoadStr(config_section, "Debug.VirtualSerialPortFile", settings.debug.VirtualSerialPortFile.c_str());
     
     settings.bios.UseReios = cfgLoadBool(config_section, "bios.UseReios", settings.bios.UseReios);
     settings.reios.ElfFile = cfgLoadStr(game_specific ? cfgGetGameId() : "reios", "ElfFile", settings.reios.ElfFile.c_str());
@@ -563,6 +565,7 @@ void SaveSettings()
 
     cfgSaveBool("config", "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
     cfgSaveBool("config", "Debug.VirtualSerialPort", settings.debug.VirtualSerialPort);
+    cfgSaveStr("config", "Debug.VirtualSerialPortFile", settings.debug.VirtualSerialPortFile.c_str());
     
     cfgSaveInt("input", "MouseSensitivity", settings.input.MouseSensitivity);
     cfgSaveInt("input", "VirtualGamepadVibration", settings.input.VirtualGamepadVibration);

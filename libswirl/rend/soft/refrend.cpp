@@ -521,7 +521,6 @@ struct refrend : Renderer
 
 
     virtual bool RenderFramebuffer() {
-        Present();
         return false;
     }   
 
@@ -787,6 +786,7 @@ struct refrend : Renderer
 
         } while (!entry.control.last_region);
 
+        Present();
         return false;
     }
 

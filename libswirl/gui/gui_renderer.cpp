@@ -581,6 +581,7 @@ struct GUIRenderer_impl : GUIRenderer {
     virtual void QueueEmulatorFrame(std::function<bool()> cb) {
         callback_mutex.Lock();
         frameDone = false;
+        verify(callback == nullptr);
         callback = cb;
         callback_mutex.Unlock();
     }

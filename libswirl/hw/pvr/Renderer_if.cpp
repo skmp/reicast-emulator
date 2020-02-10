@@ -457,7 +457,7 @@ void rend_start_render(u8* vram)
 		g_GUIRenderer->QueueEmulatorFrame([=](){
 			bool do_swp = rend_frame(vram, nullptr);
 
-			pend_rend = false;
+			//pend_rend = false;
 			re.Set();
 
 			//clear up & free data ..
@@ -483,12 +483,12 @@ void rend_end_render()
 
 	if (pend_rend) {
 		re.Wait();
+		pend_rend = false;
 	}
 }
 
 void rend_vblank()
 {
-	fb_dirty = true;
 	if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
 	{
         fb_dirty = false;

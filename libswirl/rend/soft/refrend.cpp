@@ -40,7 +40,7 @@ extern u32 decoded_colors[3][65536];
 #define STRIDE_PIXEL_OFFSET MAX_RENDER_WIDTH
 #define Z_BUFFER_PIXEL_OFFSET MAX_RENDER_PIXELS
 
-static DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 8]; //Color + depth
+static DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 2]; //Color + depth
 
 
 union RegionArrayEntryControl {
@@ -257,6 +257,17 @@ static void PixelFlush(text_info* texture, float x, float y, u8* cb, IPs3& ip)
 
     float* zb = (float*)&cb[Z_BUFFER_PIXEL_OFFSET * 4];
 
+#if 0 // make sure we're writting to the right place
+    verify((uintptr_t) cb >= (uintptr_t)&render_buffer[0]);
+
+    verify((uintptr_t)cb < ((uintptr_t)&render_buffer[0] + sizeof(render_buffer)));
+
+
+    verify((uintptr_t)zb >= (uintptr_t)&render_buffer[0]);
+
+    verify((uintptr_t)zb < ((uintptr_t)&render_buffer[0] + sizeof(render_buffer)));
+#endif
+
     if (!BGP) {
         // Z test
         if (invW < * zb)
@@ -400,7 +411,7 @@ struct refrend : Renderer
         int miny = area->top;
 
         int spanx = area->right - minx;
-        int spany = area->right - miny;
+        int spany = area->bottom - miny;
 
 
         u8* cb_y = (u8*)colorBuffer;
@@ -421,8 +432,6 @@ struct refrend : Renderer
             for (int x = spanx; x > 0; x -= 1)
             {
                 PixelFlush TPL_PRMS_pixel(true) (&texture, x_ps, y_ps, cb_x, ip);
-                *cb_x = 0xFF;
-
                 cb_x += 4;
                 x_ps = x_ps + 1;
             }
@@ -832,6 +841,7 @@ struct refrend : Renderer
                     zb[i] = ISP_BACKGND_D.f;
                 }
 
+                //render bg poly
                 {
                     DrawParameters params;
                     Vertex vtx[4];
@@ -840,11 +850,6 @@ struct refrend : Renderer
                     decode_pvr_vetrices(&params, param_base + ISP_BACKGND_T.tag_address * 4, ISP_BACKGND_T.skip, ISP_BACKGND_T.shadow, vtx, 4);
                     DrawBGP(&params, 0, vtx, &rect);
                 }
-                
-
-                //render bg quad
-                // just black right now
-                memset(render_buffer, 0, MAX_RENDER_PIXELS * 4);
             }
             
             if (!entry.opaque.empty) {

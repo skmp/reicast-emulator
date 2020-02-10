@@ -205,12 +205,15 @@ static bool rend_frame(u8* vram, TA_context* ctx) {
         rend_init_renderer(vram);
     }
 
-    bool proc = renderer->Process(ctx);
+    bool proc = true;
 
-	if (!proc || !ctx->rend.isRTT) {
-		// If rendering to texture, continue locking until the frame is rendered
-		pend_rend = false;
-		re.Set();
+	if (ctx) {
+		proc = renderer->Process(ctx);
+		if (!proc || !ctx->rend.isRTT) {
+			// If rendering to texture, continue locking until the frame is rendered
+			pend_rend = false;
+			re.Set();
+		}
 	}
 
     bool do_swp = proc && renderer->RenderPVR();
@@ -447,6 +450,23 @@ void rend_start_render(u8* vram)
 			printf("WARNING: Rendering context is overrun (%d), aborting frame\n",ovrn);
 			tactx_Recycle(ctx);
 		}
+	}
+	else
+	{
+		g_GUIRenderer->QueueEmulatorFrame([=](){
+			bool do_swp = rend_frame(vram, nullptr);
+
+			pend_rend = false;
+			re.Set();
+
+			//clear up & free data ..
+			FinishRender(nullptr);
+
+			return do_swp;
+		});
+
+		pend_rend = true;
+		rs.Set();
 	}
 }
 

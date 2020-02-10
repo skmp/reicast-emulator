@@ -12,7 +12,7 @@
 #include "ta_structs.h"
 
 struct TA_context;
-
+#if 0
 void ta_init();
 void ta_reset();
 void ta_term();
@@ -24,6 +24,7 @@ void ta_vtx_SoftReset();
 
 void DYNACALL ta_vtx_data32(void* data);
 void ta_vtx_data(u32* data, u32 size);
+#endif
 
 struct Renderer;
 bool ta_parse_vdrc(Renderer* renderer, u8* vram, TA_context* ctx);

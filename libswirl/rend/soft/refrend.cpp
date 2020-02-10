@@ -42,7 +42,7 @@ extern u32 decoded_colors[3][65536];
 
 static DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 2]; //Color + depth
 
-
+#pragma pack(push, 1) 
 union RegionArrayEntryControl {
     struct {
         u32 res0 : 2;
@@ -68,21 +68,6 @@ union ListPointer {
         u32 empty : 1;
     };
     u32 full;
-};
-struct RegionArrayEntry {
-    RegionArrayEntryControl control;
-    ListPointer opaque;
-    ListPointer opaque_mod;
-    ListPointer trans;
-    ListPointer trans_mod;
-    ListPointer puncht;
-};
-
-struct DrawParameters
-{
-    ISP_TSP isp;
-    TSP tsp;
-    TCW tcw;
 };
 
 union ObjectListEntry {
@@ -125,6 +110,24 @@ union ObjectListEntry {
     } link;
 
     u32 full;
+};
+
+#pragma pack(pop)
+
+struct RegionArrayEntry {
+    RegionArrayEntryControl control;
+    ListPointer opaque;
+    ListPointer opaque_mod;
+    ListPointer trans;
+    ListPointer trans_mod;
+    ListPointer puncht;
+};
+
+struct DrawParameters
+{
+    ISP_TSP isp;
+    TSP tsp;
+    TCW tcw;
 };
 
 #if HOST_OS != OS_WINDOWS
@@ -667,7 +670,7 @@ struct refrend : Renderer
 
     u32 decode_pvr_vetrices(DrawParameters* params, pvr32addr_t base, u32 skip, u32 shadow, Vertex* vtx, int count)
     {
-        bool PSVM=FPU_SHAD_SCALE.intensity_shadow!=0;
+        bool PSVM=FPU_SHAD_SCALE.intensity_shadow == 0;
 
         if (!PSVM) {
             shadow = 0; // no double volume stuff
@@ -678,6 +681,8 @@ struct refrend : Renderer
         params->tcw.full=vri(vram, base+8);
 
         base += 12;
+        if (shadow)
+            base += 8;
 
         for (int i = 0; i < count; i++) {
             decode_pvr_vertex(params,base, &vtx[i]);

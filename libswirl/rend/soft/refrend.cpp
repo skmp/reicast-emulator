@@ -702,6 +702,18 @@ struct refrend : Renderer
         (this->*fn)(params, vertex_offset, vtx[0], vtx[1], vtx[2], render_buffer, area);
     }
 
+
+    template<int alpha_mode>
+    void DrawQuad(DrawParameters* params, Vertex* vtx, RECT* area)
+    {
+        RendtriangleFn fn = RendtriangleFns[alpha_mode][params->tsp.UseAlpha][params->isp.Texture][params->tsp.IgnoreTexA][params->tsp.ShadInstr][params->isp.Offset];
+
+        // TODO: This is a HACK
+        // The surface equation is only solved once for QUADs
+        (this->*fn)(params, 0, vtx[0], vtx[1], vtx[2], render_buffer, area);
+        (this->*fn)(params, 0, vtx[2], vtx[3], vtx[0], render_buffer, area);
+    }
+
     template<int alpha_mode>
     void RenderTriangleStrip(ObjectListEntry obj, RECT* rect)
     {
@@ -759,15 +771,23 @@ struct refrend : Renderer
     }
 
     template<int alpha_mode>
-    void DrawQuad(DrawParameters* params, Vertex* vtx, RECT* area)
-    {
-        //TODO: implement this
-    }
-
-    template<int alpha_mode>
     void RenderQuadArray(ObjectListEntry obj, RECT* rect)
     {
-        //TODO: implement this
+        auto quads = obj.qarray.prims + 1;
+        u32 param_base = PARAM_BASE & 0xF00000;
+
+
+        u32 param_ptr = param_base + obj.qarray.param_offs_in_words * 4;
+        
+        for (int i = 0; i<quads; i++)
+        {
+            DrawParameters params;
+            Vertex vtx[4];
+
+            param_ptr = decode_pvr_vetrices(&params, param_ptr, obj.qarray.skip, obj.qarray.shadow, vtx, 4);
+            
+            DrawQuad<alpha_mode>(&params, vtx, rect);
+        }
     }
 
     template<int alpha_mode>

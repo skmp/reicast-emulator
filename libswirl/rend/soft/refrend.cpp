@@ -665,7 +665,7 @@ struct refrend : Renderer
         }
     }
 
-    void decode_pvr_vetrices(DrawParameters* params, pvr32addr_t base, u32 skip, u32 shadow, Vertex* vtx, int count)
+    u32 decode_pvr_vetrices(DrawParameters* params, pvr32addr_t base, u32 skip, u32 shadow, Vertex* vtx, int count)
     {
         bool PSVM=FPU_SHAD_SCALE.intensity_shadow!=0;
 
@@ -683,6 +683,8 @@ struct refrend : Renderer
             decode_pvr_vertex(params,base, &vtx[i]);
             base += (3 + skip * (shadow+1)) * 4;
         }
+
+        return base;
     }
 
     void DrawBGP(DrawParameters* params, int vertex_offset, Vertex* vtx, RECT* area)
@@ -740,17 +742,19 @@ struct refrend : Renderer
     void RenderTriangleArray(ObjectListEntry obj, RECT* rect)
     {
         auto triangles = obj.tarray.prims + 1;
-        auto vertices = triangles * 3;
-
-        DrawParameters params;
-        Vertex* vtx = (Vertex *)alloca(vertices*sizeof(Vertex));
-
         u32 param_base = PARAM_BASE & 0xF00000;
 
-        decode_pvr_vetrices(&params, param_base + obj.tarray.param_offs_in_words * 4, obj.tarray.skip, obj.tarray.shadow, vtx, vertices);
+
+        u32 param_ptr = param_base + obj.tarray.param_offs_in_words * 4;
         
-        for (int i = 0; i < triangles; i++) {
-            DrawTriangle<alpha_mode>(&params, 0, &vtx[i*3], rect);
+        for (int i = 0; i<triangles; i++)
+        {
+            DrawParameters params;
+            Vertex vtx[3];
+
+            param_ptr = decode_pvr_vetrices(&params, param_ptr, obj.tarray.skip, obj.tarray.shadow, vtx, 3);
+            
+            DrawTriangle<alpha_mode>(&params, 0, vtx, rect);
         }
     }
 

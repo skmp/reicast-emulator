@@ -128,6 +128,8 @@ struct DrawParameters
     ISP_TSP isp;
     TSP tsp;
     TCW tcw;
+    TSP tsp2;
+    TSP tcw2;
 };
 
 #if HOST_OS != OS_WINDOWS
@@ -681,8 +683,11 @@ struct refrend : Renderer
         params->tcw.full=vri(vram, base+8);
 
         base += 12;
-        if (shadow)
+        if (shadow) {
+            params->tsp2.full=vri(vram, base+0);
+            params->tcw2.full=vri(vram, base+4);
             base += 8;
+        }
 
         for (int i = 0; i < count; i++) {
             decode_pvr_vertex(params,base, &vtx[i]);

@@ -49,9 +49,9 @@ static DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 2]; //Color + depth
             u32 tilex:6;
             u32 tiley:6;
             u32 res1:14;
-            u32 flush:1;
+            u32 no_writeout:1;
             u32 pre_sort:1;
-            u32 z_clear:1;
+            u32 z_keep:1;
             u32 last_region:1;
         };
         u32 full;
@@ -88,7 +88,7 @@ static DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 2]; //Color + depth
     union ObjectListEntry {
         struct {
             u32 pad0:31;
-            u32 is_not_triangle:1;
+            u32 is_not_triangle_strip:1;
         };
 
         struct {
@@ -97,21 +97,21 @@ static DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 2]; //Color + depth
         };
 
         struct {
-            u32 data_ptr_in_words: 21;
+            u32 param_offs_in_words: 21;
             u32 skip: 3;
             u32 shadow: 1;
             u32 mask: 6;
         } tstrip;
 
         struct {
-            u32 data_ptr_in_words: 21;
+            u32 param_offs_in_words: 21;
             u32 skip: 3;
             u32 shadow: 1;
             u32 prims: 4;
         } tarray;
 
         struct {
-            u32 data_ptr_in_words: 21;
+            u32 param_offs_in_words: 21;
             u32 skip: 3;
             u32 shadow: 1;
             u32 prims: 4;
@@ -386,25 +386,21 @@ struct refrend : Renderer
         text_info texture = { 0 };
 
         if (pp_Texture) {
-
-#pragma omp critical (texture_lookup)
-            {
-                texture = raw_GetTexture(vram, params->tsp, params->tcw);
-            }
-
+            texture = raw_GetTexture(vram, params->tsp, params->tcw);
         }
 
         const int stride_bytes = STRIDE_PIXEL_OFFSET * 4;
         //Plane equation
 
+#define FLUSH_NAN(a) isnan(a) ? 0 : a
 
-        const float Y1 = v1.y;
-        const float Y2 = v2.y;
-        const float Y3 = v3.y;
+        const float Y1 = FLUSH_NAN(v1.y);
+        const float Y2 = FLUSH_NAN(v2.y);
+        const float Y3 = FLUSH_NAN(v3.y);
 
-        const float X1 = v1.x;
-        const float X2 = v2.x;
-        const float X3 = v3.x;
+        const float X1 = FLUSH_NAN(v1.x);
+        const float X2 = FLUSH_NAN(v2.x);
+        const float X3 = FLUSH_NAN(v3.x);
 
         int sgn = 1;
 
@@ -525,7 +521,8 @@ struct refrend : Renderer
 
 
     virtual bool RenderFramebuffer() {
-        return true;
+        Present();
+        return false;
     }   
 
     u32 ReadRegionArrayEntry(u32 base, RegionArrayEntry* entry) 
@@ -608,6 +605,12 @@ struct refrend : Renderer
 
     void decode_pvr_vetrices(DrawParameters* params, pvr32addr_t base, u32 skip, u32 shadow, Vertex* vtx, int count)
     {
+        bool PSVM=FPU_SHAD_SCALE.intensity_shadow!=0;
+
+        if (!PSVM) {
+            shadow = 0; // no double volume stuff
+        }
+
         params->isp.full=vri(vram, base);
         params->tsp.full=vri(vram, base+4);
         params->tcw.full=vri(vram, base+8);
@@ -631,12 +634,14 @@ struct refrend : Renderer
     }
 
     template<int alpha_mode>
-    void RenderStrip(ObjectListEntry obj, RECT* rect)
+    void RenderTriangleStrip(ObjectListEntry obj, RECT* rect)
     {
         Vertex vtx[8];
         DrawParameters params;
 
-        decode_pvr_vetrices(&params, obj.tstrip.data_ptr_in_words * 4, obj.tstrip.skip, obj.tstrip.shadow, vtx, 8);
+        u32 param_base = PARAM_BASE & 0xF00000;
+
+        decode_pvr_vetrices(&params, param_base + obj.tstrip.param_offs_in_words * 4, obj.tstrip.skip, obj.tstrip.shadow, vtx, 8);
         
         if (obj.tstrip.mask & (1<<5)) {
             DrawTriangle<alpha_mode>(&params, 0, &vtx[0], rect);
@@ -663,6 +668,37 @@ struct refrend : Renderer
         }
     }
 
+
+    template<int alpha_mode>
+    void RenderTriangleArray(ObjectListEntry obj, RECT* rect)
+    {
+        auto triangles = obj.tarray.prims + 1;
+        auto vertices = triangles * 3;
+
+        DrawParameters params;
+        Vertex vtx[vertices];
+
+        u32 param_base = PARAM_BASE & 0xF00000;
+
+        decode_pvr_vetrices(&params, param_base + obj.tarray.param_offs_in_words * 4, obj.tarray.skip, obj.tarray.shadow, vtx, vertices);
+        
+        for (int i = 0; i < triangles; i++) {
+            DrawTriangle<alpha_mode>(&params, 0, &vtx[i*3], rect);
+        }
+    }
+
+    template<int alpha_mode>
+    void DrawQuad(DrawParameters* params, Vertex* vtx, RECT* area)
+    {
+        //TODO: implement this
+    }
+
+    template<int alpha_mode>
+    void RenderQuadArray(ObjectListEntry obj, RECT* rect)
+    {
+        //TODO: implement this
+    }
+
     template<int alpha_mode>
     void RenderObjectList(pvr32addr_t base, RECT* rect)
     {
@@ -672,19 +708,27 @@ struct refrend : Renderer
             obj.full = vri(vram, base);
             base += 4;
 
-            if (!obj.is_not_triangle) {
-                RenderStrip<alpha_mode>(obj, rect);
+            if (!obj.is_not_triangle_strip) {
+                RenderTriangleStrip<alpha_mode>(obj, rect);
             } else {
                 switch(obj.type) {
-                    case 0b111:
+                    case 0b111: // link
                         if (obj.link.end_of_list)
                             return;
 
                             base = obj.link.next_block_ptr_in_words * 4;
                         break;
 
+                    case 0b100: // triangle array
+                        RenderTriangleArray<alpha_mode>(obj, rect);
+                        break;
+                    
+                    case 0b101: // quad array
+                        RenderQuadArray<alpha_mode>(obj, rect);
+                        break;
+
                     default:
-                        printf("Not handled object type: %d\n", obj.type);
+                        printf("RenderObjectList: Not handled object type: %d\n", obj.type);
                 }
             }
         }
@@ -693,8 +737,6 @@ struct refrend : Renderer
     virtual bool RenderPVR() {
 
         u32 base = REGION_BASE;
-
-        
 
         RegionArrayEntry entry;
         int tilenum = 1;
@@ -712,6 +754,7 @@ struct refrend : Renderer
             printf("PT: %08X\n", entry.puncht.full);
 */
 
+
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 
@@ -722,6 +765,10 @@ struct refrend : Renderer
             rect.bottom = MIN(rect.top + 32, FB_Y_CLIP.max);
             rect.right = MIN(rect.left + 32, FB_X_CLIP.max);
 
+            if (!entry.control.z_keep) {
+                //render bg quad
+            }
+            
             if (!entry.opaque.empty) {
                 RenderObjectList<0>(entry.opaque.ptr_in_words * 4, &rect);
             }
@@ -734,41 +781,11 @@ struct refrend : Renderer
                 RenderObjectList<2>(entry.trans.ptr_in_words * 4, &rect);
             }
 
+            if (!entry.control.no_writeout) {
+                // copy to vram
+            }
+
         } while (!entry.control.last_region);
-
-        Present();
-        return false;
-
-        bool is_rtt = pvrrc.isRTT;
-
-        memset(render_buffer, 0, sizeof(render_buffer));
-
-        if (pvrrc.verts.used() < 3)
-            return false;
-
-        if (pvrrc.render_passes.head()[0].autosort)
-            SortPParams(0, pvrrc.global_param_tr.used());
-
-        int tcount = omp_get_num_procs() - 1;
-        if (tcount == 0) tcount = 1;
-        //if (tcount > settings.pvr.MaxThreads) tcount = settings.pvr.MaxThreads;
-#pragma omp parallel num_threads(tcount)
-        {
-            int thd = omp_get_thread_num();
-            int y_offs = 480 % omp_get_num_threads();
-            int y_thd = 480 / omp_get_num_threads();
-            int y_start = (!!thd) * y_offs + y_thd * thd;
-            int y_end = y_offs + y_thd * (thd + 1);
-
-            RECT area = { 0, y_start, 640, y_end };
-            //RenderParamList<0>(&pvrrc.global_param_op, &area);
-            //RenderParamList<1>(&pvrrc.global_param_pt, &area);
-            //RenderParamList<2>(&pvrrc.global_param_tr, &area);
-        }
-
-        if (!is_rtt) {
-            Present();
-        }
 
         return false;
     }

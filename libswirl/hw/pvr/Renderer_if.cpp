@@ -453,6 +453,7 @@ void rend_start_render(u8* vram)
 	}
 	else
 	{
+		SetREP(nullptr);
 		g_GUIRenderer->QueueEmulatorFrame([=](){
 			bool do_swp = rend_frame(vram, nullptr);
 
@@ -487,6 +488,7 @@ void rend_end_render()
 
 void rend_vblank()
 {
+	fb_dirty = true;
 	if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
 	{
         fb_dirty = false;
@@ -495,7 +497,7 @@ void rend_vblank()
 			// TODO: FIXME Actually check and re init this. Better yet, refactor
             if (renderer)
 			{
-                renderer->RenderFramebuffer();
+                return renderer->RenderFramebuffer();
             }
             return true;
         });

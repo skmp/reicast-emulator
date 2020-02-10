@@ -740,6 +740,14 @@ struct refrend : Renderer
         RegionArrayEntry entry;
         int tilenum = 1;
 
+        memset(render_buffer, 0, MAX_RENDER_PIXELS * 4);
+
+        auto zb = reinterpret_cast<float*>(render_buffer + Z_BUFFER_PIXEL_OFFSET);
+
+        for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
+            zb[i] = ISP_BACKGND_D.f;
+        }
+
         //printf("New Frame\n");
         do {
             base += ReadRegionArrayEntry(base, &entry);

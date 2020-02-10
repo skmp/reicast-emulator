@@ -408,6 +408,9 @@ void findGLVersion()
    glGetIntegerv(GL_MAJOR_VERSION, &gl.gl_major);
    if (glGetError() == GL_INVALID_ENUM)
       gl.gl_major = 2;
+   else
+   	glGetIntegerv(GL_MINOR_VERSION, &gl.gl_minor);
+
    const char *version = (const char *)glGetString(GL_VERSION);
    NOTICE_LOG(RENDERER, "OpenGL version: %s", version);
    if (!strncmp(version, "OpenGL ES", 9))

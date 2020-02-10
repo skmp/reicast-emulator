@@ -402,7 +402,6 @@ void TextureCacheData::Update()
 				_mm_free(pData);
 			}
 
-			printf("Texture: %dx%d\n", w, h);
 			pData = (u16*)_mm_malloc(w * h * 16, 16);
 			for (int y = 0; y < h; y++) {
 				for (int x = 0; x < w; x++) {

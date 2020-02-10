@@ -62,7 +62,7 @@ void SetREP(TA_context* cntx)
     }
     else
     {
-        sh4_sched_request(render_end_schid, 500000 * 5);
+        sh4_sched_request(render_end_schid, 500000 * 3);
     }
 }
 

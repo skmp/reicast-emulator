@@ -8,6 +8,7 @@
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/pvr_mem.h"
 #include "oslib/oslib.h"
+#include "rend/TexCache.h"
 
 /*
     SSE/MMX based softrend
@@ -32,8 +33,8 @@
 
 extern u32 decoded_colors[3][65536];
 
-#define MAX_RENDER_WIDTH 640
-#define MAX_RENDER_HEIGHT 480
+#define MAX_RENDER_WIDTH 32
+#define MAX_RENDER_HEIGHT 32
 #define MAX_RENDER_PIXELS (MAX_RENDER_WIDTH * MAX_RENDER_HEIGHT)
 
 #define STRIDE_PIXEL_OFFSET MAX_RENDER_WIDTH
@@ -462,7 +463,7 @@ struct refrend : Renderer
 
 
         u8* cb_y = (u8*)colorBuffer;
-        cb_y += miny * stride_bytes + minx * 4;
+        cb_y += (miny - area->top) * stride_bytes + (minx - area->left) * 4;
 
         DECL_ALIGN(64) IPs3 ip;
 
@@ -521,6 +522,7 @@ struct refrend : Renderer
 
 
     virtual bool RenderFramebuffer() {
+        Present();
         return false;
     }   
 
@@ -740,14 +742,6 @@ struct refrend : Renderer
         RegionArrayEntry entry;
         int tilenum = 1;
 
-        memset(render_buffer, 0, MAX_RENDER_PIXELS * 4);
-
-        auto zb = reinterpret_cast<float*>(render_buffer + Z_BUFFER_PIXEL_OFFSET);
-
-        for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
-            zb[i] = ISP_BACKGND_D.f;
-        }
-
         //printf("New Frame\n");
         do {
             base += ReadRegionArrayEntry(base, &entry);
@@ -773,7 +767,17 @@ struct refrend : Renderer
             rect.right = MIN(rect.left + 32, FB_X_CLIP.max);
 
             if (!entry.control.z_keep) {
+                
+                // Clear Z
+                auto zb = reinterpret_cast<float*>(render_buffer + Z_BUFFER_PIXEL_OFFSET);
+
+                for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
+                    zb[i] = ISP_BACKGND_D.f;
+                }
+
                 //render bg quad
+                // just black right now
+                memset(render_buffer, 0, MAX_RENDER_PIXELS * 4);
             }
             
             if (!entry.opaque.empty) {
@@ -790,11 +794,41 @@ struct refrend : Renderer
 
             if (!entry.control.no_writeout) {
                 // copy to vram
+
+                auto field = SCALER_CTL.fieldselect;
+                auto interlace = SCALER_CTL.interlace;
+                
+                auto base = (interlace && field) ? FB_W_SOF2 : FB_W_SOF1;
+
+                verify(SCALER_CTL.hscale == 0);
+                verify(SCALER_CTL.interlace == 0); // write both SOFs
+                auto vscale = SCALER_CTL.vscalefactor;
+                verify(vscale == 0x401 || vscale == 0x400 || vscale == 0x800);
+
+                auto fb_packmode = FB_W_CTRL.fb_packmode;
+                verify(fb_packmode == 0x1); // 565 RGB16
+
+                auto bpp = 2;
+                auto offset_bytes = entry.control.tilex * 32 * bpp + entry.control.tiley * 32  * FB_W_LINESTRIDE.stride * 8;
+
+                for (int y = 0; y<32; y++) {
+                    //auto base = (y&1) ? FB_W_SOF2 : FB_W_SOF1;
+                    auto dst = base + offset_bytes + (y) * FB_W_LINESTRIDE.stride * 8;
+                    auto src = reinterpret_cast<u8*>(render_buffer + y * STRIDE_PIXEL_OFFSET);
+
+                    for (int x = 0; x<32; x++) {
+                        auto pixel = (((src[0] >> 3) & 0x1F) << 11) | (((src[1] >> 2) & 0x3F) << 5) | ((src[2] >> 3) & 0x1F);
+                        pvr_write_area1_16(vram, dst, pixel);
+                        
+                        dst += bpp;
+                        src+=4; // skip alpha
+                    }    
+                }
             }
 
         } while (!entry.control.last_region);
 
-        Present();
+        //Present();
         return false;
     }
 
@@ -1059,10 +1093,119 @@ struct refrend : Renderer
 #endif
     }
 
-    virtual void Present() {
+    virtual void Present()
+    {
 
-        u32* psrc = (u32*)render_buffer;
-        
+        if (FB_R_SIZE.fb_x_size == 0 || FB_R_SIZE.fb_y_size == 0)
+            return;
+
+        int width = (FB_R_SIZE.fb_x_size + 1) << 1; // in 16-bit words
+        int height = FB_R_SIZE.fb_y_size + 1;
+        int modulus = (FB_R_SIZE.fb_modulus - 1) << 1;
+
+        int bpp;
+        switch (FB_R_CTRL.fb_depth)
+        {
+        case fbde_0555:
+        case fbde_565:
+            bpp = 2;
+            break;
+        case fbde_888:
+            bpp = 3;
+            width = (width * 2) / 3;     // in pixels
+            modulus = (modulus * 2) / 3; // in pixels
+            break;
+        case fbde_C888:
+            bpp = 4;
+            width /= 2;   // in pixels
+            modulus /= 2; // in pixels
+            break;
+        default:
+            die("Invalid framebuffer format\n");
+            bpp = 4;
+            break;
+        }
+        u32 addr = SPG_CONTROL.interlace && !SPG_STATUS.fieldnum ? FB_R_SOF2 : FB_R_SOF1;
+
+        PixelBuffer<u32> pb;
+        pb.init(width, height);
+        u8 *dst = (u8 *)pb.data();
+
+        switch (FB_R_CTRL.fb_depth)
+        {
+        case fbde_0555: // 555 RGB
+            for (int y = 0; y < height; y++)
+            {
+                for (int i = 0; i < width; i++)
+                {
+                    u16 src = pvr_read_area1_16(sh4_cpu->vram.data, addr);
+                    *dst++ = (((src >> 10) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+                    *dst++ = (((src >> 5) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+                    *dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+                    *dst++ = 0xFF;
+                    addr += bpp;
+                }
+                addr += modulus * bpp;
+            }
+            break;
+
+        case fbde_565: // 565 RGB
+            for (int y = 0; y < height; y++)
+            {
+                for (int i = 0; i < width; i++)
+                {
+                    u16 src = pvr_read_area1_16(sh4_cpu->vram.data, addr);
+                    *dst++ = (((src >> 11) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+                    *dst++ = (((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat >> 1);
+                    *dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+                    *dst++ = 0xFF;
+                    addr += bpp;
+                }
+                addr += modulus * bpp;
+            }
+            break;
+        case fbde_888: // 888 RGB
+            for (int y = 0; y < height; y++)
+            {
+                for (int i = 0; i < width; i++)
+                {
+                    if (addr & 1)
+                    {
+                        u32 src = pvr_read_area1_32(sh4_cpu->vram.data, addr - 1);
+                        *dst++ = src >> 16;
+                        *dst++ = src >> 8;
+                        *dst++ = src;
+                    }
+                    else
+                    {
+                        u32 src = pvr_read_area1_32(sh4_cpu->vram.data, addr);
+                        *dst++ = src >> 24;
+                        *dst++ = src >> 16;
+                        *dst++ = src >> 8;
+                    }
+                    *dst++ = 0xFF;
+                    addr += bpp;
+                }
+                addr += modulus * bpp;
+            }
+            break;
+        case fbde_C888: // 0888 RGB
+            for (int y = 0; y < height; y++)
+            {
+                for (int i = 0; i < width; i++)
+                {
+                    u32 src = pvr_read_area1_32(sh4_cpu->vram.data, addr);
+                    *dst++ = src >> 16;
+                    *dst++ = src >> 8;
+                    *dst++ = src;
+                    *dst++ = 0xFF;
+                    addr += bpp;
+                }
+                addr += modulus * bpp;
+            }
+            break;
+        }
+        u32 *psrc = pb.data();
 
 #if HOST_OS == OS_WINDOWS
         SetDIBits(hmem, hBMP, 0, 480, psrc, (BITMAPINFO*)& bi, DIB_RGB_COLORS);
@@ -1083,9 +1226,6 @@ struct refrend : Renderer
         extern Window x11_win;
         extern Display* x11_disp;
         extern Visual* x11_vis;
-
-        int width = 640;
-        int height = 480;
 
         extern int x11_width;
         extern int x11_height;

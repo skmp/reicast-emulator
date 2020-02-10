@@ -339,7 +339,13 @@ void rend_resize(int width, int height) {
 void rend_start_render(u8* vram)
 {
 	render_called = true;
-	pend_rend = false;
+	//test
+	// make sure no fb write is pending
+	if (pend_rend) {
+		re.Wait();
+		pend_rend = false;
+	}
+	
 	TA_context* ctx = tactx_Pop(CORE_CURRENT_CTX);
 
 	if (ctx)
@@ -489,11 +495,19 @@ void rend_end_render()
 
 void rend_vblank()
 {
-	if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
+	fb_dirty = true;
+	if (fb_dirty && FB_R_CTRL.fb_enable)
 	{
         fb_dirty = false;
 
+		if (pend_rend) {
+			re.Wait();
+			pend_rend = false;
+		}
+
+		pend_rend = true;
         g_GUIRenderer->QueueEmulatorFrame([] () {
+			re.Set();
 			// TODO: FIXME Actually check and re init this. Better yet, refactor
             if (renderer)
 			{

@@ -40,7 +40,7 @@ extern u32 decoded_colors[3][65536];
 #define STRIDE_PIXEL_OFFSET MAX_RENDER_WIDTH
 #define Z_BUFFER_PIXEL_OFFSET MAX_RENDER_PIXELS
 
-static DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 2]; //Color + depth
+static DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 8]; //Color + depth
 
 
 union RegionArrayEntryControl {
@@ -232,10 +232,10 @@ struct IPs3
 };
 
 
-#define TPL_DECL_pixel template<int alpha_mode, bool pp_UseAlpha, bool pp_Texture, bool pp_IgnoreTexA, int pp_ShadInstr, bool pp_Offset >
+#define TPL_DECL_pixel template<int alpha_mode, bool pp_UseAlpha, bool pp_Texture, bool pp_IgnoreTexA, int pp_ShadInstr, bool pp_Offset, bool BGP >
 #define TPL_DECL_triangle template<int alpha_mode, bool pp_UseAlpha, bool pp_Texture, bool pp_IgnoreTexA, int pp_ShadInstr, bool pp_Offset >
 
-#define TPL_PRMS_pixel <alpha_mode, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
+#define TPL_PRMS_pixel(BGP) <alpha_mode, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, BGP >
 #define TPL_PRMS_triangle <alpha_mode, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
 
 struct refrend;
@@ -243,6 +243,7 @@ struct refrend;
 //<alpha_blend, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
 typedef void(refrend::*RendtriangleFn)(DrawParameters* params, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area);
 static RendtriangleFn RendtriangleFns[3][2][2][2][4][2];
+static RendtriangleFn RendBGPFns[2][2][2][4][2];
 
 TPL_DECL_pixel
 static void PixelFlush(text_info* texture, float x, float y, u8* cb, IPs3& ip)
@@ -256,9 +257,11 @@ static void PixelFlush(text_info* texture, float x, float y, u8* cb, IPs3& ip)
 
     float* zb = (float*)&cb[Z_BUFFER_PIXEL_OFFSET * 4];
 
-    // Z test
-    if (invW < * zb)
-        return;
+    if (!BGP) {
+        // Z test
+        if (invW < * zb)
+            return;
+    }
 
     u8 rv[4];
     {
@@ -362,7 +365,7 @@ static void PixelFlush(text_info* texture, float x, float y, u8* cb, IPs3& ip)
     }
     else
     {
-        *zb = invW;
+        if (!BGP) *zb = invW;
         memcpy(cb, rv, 4);
     }
 }
@@ -379,6 +382,55 @@ struct refrend : Renderer
     u8* vram;
 
     refrend(u8* vram) : vram(vram) { }
+
+//u32 nok,fok;
+    TPL_DECL_triangle
+    void RendBGP(DrawParameters* params, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area)
+    {
+        text_info texture = { 0 };
+
+        if (pp_Texture) {
+            texture = raw_GetTexture(vram, params->tsp, params->tcw);
+        }
+
+        const int stride_bytes = STRIDE_PIXEL_OFFSET * 4;
+
+        // Bounding rectangle
+        int minx = area->left;
+        int miny = area->top;
+
+        int spanx = area->right - minx;
+        int spany = area->right - miny;
+
+
+        u8* cb_y = (u8*)colorBuffer;
+
+        DECL_ALIGN(64) IPs3 ip;
+
+        ip.Setup(&texture, v1, v2, v3);
+
+        
+        float y_ps = miny;
+        float minx_ps = minx;
+
+        // Loop through blocks
+        for (int y = spany; y > 0; y -= 1)
+        {
+            u8* cb_x = cb_y;
+            float x_ps = minx_ps;
+            for (int x = spanx; x > 0; x -= 1)
+            {
+                PixelFlush TPL_PRMS_pixel(true) (&texture, x_ps, y_ps, cb_x, ip);
+                *cb_x = 0xFF;
+
+                cb_x += 4;
+                x_ps = x_ps + 1;
+            }
+        next_y:
+            cb_y += stride_bytes;
+            y_ps = y_ps + 1;
+        }
+    }
 
     //u32 nok,fok;
     TPL_DECL_triangle
@@ -493,7 +545,7 @@ struct refrend : Renderer
                 // Skip block when outside an edge
                 if (inTriangle)
                 {
-                    PixelFlush TPL_PRMS_pixel(&texture, x_ps, y_ps, cb_x, ip);
+                    PixelFlush TPL_PRMS_pixel(false) (&texture, x_ps, y_ps, cb_x, ip);
                 }
 
                 cb_x += 4;
@@ -624,7 +676,12 @@ struct refrend : Renderer
         }
     }
 
-    
+    void DrawBGP(DrawParameters* params, int vertex_offset, Vertex* vtx, RECT* area)
+    {
+        RendtriangleFn fn = RendBGPFns[params->tsp.UseAlpha][params->isp.Texture][params->tsp.IgnoreTexA][params->tsp.ShadInstr][params->isp.Offset];
+
+        (this->*fn)(params, vertex_offset, vtx[0], vtx[1], vtx[2], render_buffer, area);
+    }
 
     template<int alpha_mode>
     void DrawTriangle(DrawParameters* params, int vertex_offset, Vertex* vtx, RECT* area)
@@ -775,6 +832,16 @@ struct refrend : Renderer
                     zb[i] = ISP_BACKGND_D.f;
                 }
 
+                {
+                    DrawParameters params;
+                    Vertex vtx[4];
+
+                    u32 param_base = PARAM_BASE & 0xF00000;
+                    decode_pvr_vetrices(&params, param_base + ISP_BACKGND_T.tag_address * 4, ISP_BACKGND_T.skip, ISP_BACKGND_T.shadow, vtx, 4);
+                    DrawBGP(&params, 0, vtx, &rect);
+                }
+                
+
                 //render bg quad
                 // just black right now
                 memset(render_buffer, 0, MAX_RENDER_PIXELS * 4);
@@ -878,6 +945,7 @@ struct refrend : Renderer
         }
 
 #define Rendtriangle refrend::Rendtriangle
+#define RendBGP refrend::RendBGP
         {
             RendtriangleFns[0][0][1][0][0][0] = &Rendtriangle<0, 0, 1, 0, 0, 0>;
             RendtriangleFns[0][0][1][0][0][1] = &Rendtriangle<0, 0, 1, 0, 0, 1>;
@@ -1073,8 +1141,74 @@ struct refrend : Renderer
             RendtriangleFns[2][1][0][1][2][1] = &Rendtriangle<2, 1, 0, 1, 2, 1>;
             RendtriangleFns[2][1][0][1][3][0] = &Rendtriangle<2, 1, 0, 1, 3, 0>;
             RendtriangleFns[2][1][0][1][3][1] = &Rendtriangle<2, 1, 0, 1, 3, 1>;
+
+            RendBGPFns[0][1][0][0][0] = &RendBGP<0, 0, 1, 0, 0, 0>;
+            RendBGPFns[0][1][0][0][1] = &RendBGP<0, 0, 1, 0, 0, 1>;
+            RendBGPFns[0][1][0][1][0] = &RendBGP<0, 0, 1, 0, 1, 0>;
+            RendBGPFns[0][1][0][1][1] = &RendBGP<0, 0, 1, 0, 1, 1>;
+            RendBGPFns[0][1][0][2][0] = &RendBGP<0, 0, 1, 0, 2, 0>;
+            RendBGPFns[0][1][0][2][1] = &RendBGP<0, 0, 1, 0, 2, 1>;
+            RendBGPFns[0][1][0][3][0] = &RendBGP<0, 0, 1, 0, 3, 0>;
+            RendBGPFns[0][1][0][3][1] = &RendBGP<0, 0, 1, 0, 3, 1>;
+            RendBGPFns[0][1][1][0][0] = &RendBGP<0, 0, 1, 1, 0, 0>;
+            RendBGPFns[0][1][1][0][1] = &RendBGP<0, 0, 1, 1, 0, 1>;
+            RendBGPFns[0][1][1][1][0] = &RendBGP<0, 0, 1, 1, 1, 0>;
+            RendBGPFns[0][1][1][1][1] = &RendBGP<0, 0, 1, 1, 1, 1>;
+            RendBGPFns[0][1][1][2][0] = &RendBGP<0, 0, 1, 1, 2, 0>;
+            RendBGPFns[0][1][1][2][1] = &RendBGP<0, 0, 1, 1, 2, 1>;
+            RendBGPFns[0][1][1][3][0] = &RendBGP<0, 0, 1, 1, 3, 0>;
+            RendBGPFns[0][1][1][3][1] = &RendBGP<0, 0, 1, 1, 3, 1>;
+            RendBGPFns[0][0][0][0][0] = &RendBGP<0, 0, 0, 0, 0, 0>;
+            RendBGPFns[0][0][0][0][1] = &RendBGP<0, 0, 0, 0, 0, 1>;
+            RendBGPFns[0][0][0][1][0] = &RendBGP<0, 0, 0, 0, 1, 0>;
+            RendBGPFns[0][0][0][1][1] = &RendBGP<0, 0, 0, 0, 1, 1>;
+            RendBGPFns[0][0][0][2][0] = &RendBGP<0, 0, 0, 0, 2, 0>;
+            RendBGPFns[0][0][0][2][1] = &RendBGP<0, 0, 0, 0, 2, 1>;
+            RendBGPFns[0][0][0][3][0] = &RendBGP<0, 0, 0, 0, 3, 0>;
+            RendBGPFns[0][0][0][3][1] = &RendBGP<0, 0, 0, 0, 3, 1>;
+            RendBGPFns[0][0][1][0][0] = &RendBGP<0, 0, 0, 1, 0, 0>;
+            RendBGPFns[0][0][1][0][1] = &RendBGP<0, 0, 0, 1, 0, 1>;
+            RendBGPFns[0][0][1][1][0] = &RendBGP<0, 0, 0, 1, 1, 0>;
+            RendBGPFns[0][0][1][1][1] = &RendBGP<0, 0, 0, 1, 1, 1>;
+            RendBGPFns[0][0][1][2][0] = &RendBGP<0, 0, 0, 1, 2, 0>;
+            RendBGPFns[0][0][1][2][1] = &RendBGP<0, 0, 0, 1, 2, 1>;
+            RendBGPFns[0][0][1][3][0] = &RendBGP<0, 0, 0, 1, 3, 0>;
+            RendBGPFns[0][0][1][3][1] = &RendBGP<0, 0, 0, 1, 3, 1>;
+            RendBGPFns[1][1][0][0][0] = &RendBGP<0, 1, 1, 0, 0, 0>;
+            RendBGPFns[1][1][0][0][1] = &RendBGP<0, 1, 1, 0, 0, 1>;
+            RendBGPFns[1][1][0][1][0] = &RendBGP<0, 1, 1, 0, 1, 0>;
+            RendBGPFns[1][1][0][1][1] = &RendBGP<0, 1, 1, 0, 1, 1>;
+            RendBGPFns[1][1][0][2][0] = &RendBGP<0, 1, 1, 0, 2, 0>;
+            RendBGPFns[1][1][0][2][1] = &RendBGP<0, 1, 1, 0, 2, 1>;
+            RendBGPFns[1][1][0][3][0] = &RendBGP<0, 1, 1, 0, 3, 0>;
+            RendBGPFns[1][1][0][3][1] = &RendBGP<0, 1, 1, 0, 3, 1>;
+            RendBGPFns[1][1][1][0][0] = &RendBGP<0, 1, 1, 1, 0, 0>;
+            RendBGPFns[1][1][1][0][1] = &RendBGP<0, 1, 1, 1, 0, 1>;
+            RendBGPFns[1][1][1][1][0] = &RendBGP<0, 1, 1, 1, 1, 0>;
+            RendBGPFns[1][1][1][1][1] = &RendBGP<0, 1, 1, 1, 1, 1>;
+            RendBGPFns[1][1][1][2][0] = &RendBGP<0, 1, 1, 1, 2, 0>;
+            RendBGPFns[1][1][1][2][1] = &RendBGP<0, 1, 1, 1, 2, 1>;
+            RendBGPFns[1][1][1][3][0] = &RendBGP<0, 1, 1, 1, 3, 0>;
+            RendBGPFns[1][1][1][3][1] = &RendBGP<0, 1, 1, 1, 3, 1>;
+            RendBGPFns[1][0][0][0][0] = &RendBGP<0, 1, 0, 0, 0, 0>;
+            RendBGPFns[1][0][0][0][1] = &RendBGP<0, 1, 0, 0, 0, 1>;
+            RendBGPFns[1][0][0][1][0] = &RendBGP<0, 1, 0, 0, 1, 0>;
+            RendBGPFns[1][0][0][1][1] = &RendBGP<0, 1, 0, 0, 1, 1>;
+            RendBGPFns[1][0][0][2][0] = &RendBGP<0, 1, 0, 0, 2, 0>;
+            RendBGPFns[1][0][0][2][1] = &RendBGP<0, 1, 0, 0, 2, 1>;
+            RendBGPFns[1][0][0][3][0] = &RendBGP<0, 1, 0, 0, 3, 0>;
+            RendBGPFns[1][0][0][3][1] = &RendBGP<0, 1, 0, 0, 3, 1>;
+            RendBGPFns[1][0][1][0][0] = &RendBGP<0, 1, 0, 1, 0, 0>;
+            RendBGPFns[1][0][1][0][1] = &RendBGP<0, 1, 0, 1, 0, 1>;
+            RendBGPFns[1][0][1][1][0] = &RendBGP<0, 1, 0, 1, 1, 0>;
+            RendBGPFns[1][0][1][1][1] = &RendBGP<0, 1, 0, 1, 1, 1>;
+            RendBGPFns[1][0][1][2][0] = &RendBGP<0, 1, 0, 1, 2, 0>;
+            RendBGPFns[1][0][1][2][1] = &RendBGP<0, 1, 0, 1, 2, 1>;
+            RendBGPFns[1][0][1][3][0] = &RendBGP<0, 1, 0, 1, 3, 0>;
+            RendBGPFns[1][0][1][3][1] = &RendBGP<0, 1, 0, 1, 3, 1>;
         }
 #undef Rendtriangle
+#undef RendBGP
 
         return true;
     }

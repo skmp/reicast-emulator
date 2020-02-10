@@ -547,8 +547,9 @@ static void ta_write_tile_entry( int x, int y, uint32_t tile_entry ) {
  */
 static void ta_commit_polygon( ) {
     int i, x, y;
-    int tx[ta_status.vertex_count], ty[ta_status.vertex_count];
-    struct tile_bounds triangle_bound[ta_status.vertex_count - 2];
+    int* tx = (int*)alloca(ta_status.vertex_count * sizeof(int));
+    int* ty = (int*)alloca(ta_status.vertex_count * sizeof(int));
+    struct tile_bounds* triangle_bound = (struct tile_bounds*)alloca((ta_status.vertex_count - 2) * sizeof(tile_bounds));
     struct tile_bounds polygon_bound;
     uint32_t poly_context[5];
 

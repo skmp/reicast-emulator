@@ -41,92 +41,92 @@ extern u32 decoded_colors[3][65536];
 
 static DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 2]; //Color + depth
 
-#if HOST_OS != OS_WINDOWS
 
- union RegionArrayEntryControl {
-        struct {
-            u32 res0:2;
-            u32 tilex:6;
-            u32 tiley:6;
-            u32 res1:14;
-            u32 no_writeout:1;
-            u32 pre_sort:1;
-            u32 z_keep:1;
-            u32 last_region:1;
-        };
-        u32 full;
+union RegionArrayEntryControl {
+    struct {
+        u32 res0 : 2;
+        u32 tilex : 6;
+        u32 tiley : 6;
+        u32 res1 : 14;
+        u32 no_writeout : 1;
+        u32 pre_sort : 1;
+        u32 z_keep : 1;
+        u32 last_region : 1;
     };
+    u32 full;
+};
 
-    typedef u32 pvr32addr_t;
+typedef u32 pvr32addr_t;
 
-    union ListPointer {
-      struct
-      {
-          u32 pad0:2;
-          u32 ptr_in_words: 22;
-          u32 pad1:7;
-          u32 empty:1;
-      };
-      u32 full;
-    };
-    struct RegionArrayEntry {
-        RegionArrayEntryControl control;
-        ListPointer opaque;
-        ListPointer opaque_mod;
-        ListPointer trans;
-        ListPointer trans_mod;
-        ListPointer puncht;
-    };
-
-    struct DrawParameters
+union ListPointer {
+    struct
     {
-        ISP_TSP isp;
-        TSP tsp;
-        TCW tcw;
+        u32 pad0 : 2;
+        u32 ptr_in_words : 22;
+        u32 pad1 : 7;
+        u32 empty : 1;
+    };
+    u32 full;
+};
+struct RegionArrayEntry {
+    RegionArrayEntryControl control;
+    ListPointer opaque;
+    ListPointer opaque_mod;
+    ListPointer trans;
+    ListPointer trans_mod;
+    ListPointer puncht;
+};
+
+struct DrawParameters
+{
+    ISP_TSP isp;
+    TSP tsp;
+    TCW tcw;
+};
+
+union ObjectListEntry {
+    struct {
+        u32 pad0 : 31;
+        u32 is_not_triangle_strip : 1;
     };
 
-    union ObjectListEntry {
-        struct {
-            u32 pad0:31;
-            u32 is_not_triangle_strip:1;
-        };
-
-        struct {
-            u32 pad1:29;
-            u32 type: 3;
-        };
-
-        struct {
-            u32 param_offs_in_words: 21;
-            u32 skip: 3;
-            u32 shadow: 1;
-            u32 mask: 6;
-        } tstrip;
-
-        struct {
-            u32 param_offs_in_words: 21;
-            u32 skip: 3;
-            u32 shadow: 1;
-            u32 prims: 4;
-        } tarray;
-
-        struct {
-            u32 param_offs_in_words: 21;
-            u32 skip: 3;
-            u32 shadow: 1;
-            u32 prims: 4;
-        } qarray;
-
-        struct {
-            u32 pad3: 2;
-            u32 next_block_ptr_in_words: 22;
-            u32 pad4: 4;
-            u32 end_of_list: 1;
-        } link;
-
-        u32 full;
+    struct {
+        u32 pad1 : 29;
+        u32 type : 3;
     };
 
+    struct {
+        u32 param_offs_in_words : 21;
+        u32 skip : 3;
+        u32 shadow : 1;
+        u32 mask : 6;
+    } tstrip;
+
+    struct {
+        u32 param_offs_in_words : 21;
+        u32 skip : 3;
+        u32 shadow : 1;
+        u32 prims : 4;
+    } tarray;
+
+    struct {
+        u32 param_offs_in_words : 21;
+        u32 skip : 3;
+        u32 shadow : 1;
+        u32 prims : 4;
+    } qarray;
+
+    struct {
+        u32 pad3 : 2;
+        u32 next_block_ptr_in_words : 22;
+        u32 pad4 : 4;
+        u32 end_of_list : 1;
+    } link;
+
+    u32 full;
+};
+
+#if HOST_OS != OS_WINDOWS
 struct RECT {
     int left, top, right, bottom;
 };
@@ -675,7 +675,7 @@ struct refrend : Renderer
         auto vertices = triangles * 3;
 
         DrawParameters params;
-        Vertex vtx[vertices];
+        Vertex* vtx = (Vertex *)alloca(vertices*sizeof(Vertex));
 
         u32 param_base = PARAM_BASE & 0xF00000;
 

@@ -3,23 +3,69 @@
 */
 #include "license/bsd"
 
+/*
+    REFSW: Reference-style software rasterizer
+
+    An attempt to model CLX2's CORE/SPG/RAMDAC at the lowest functional level
+
+    Rasterizer structure
+    ===
+
+    Reads tile lists in CORE format, generated from a LLE TA implementation or software running from sh4,
+    renders them in 32x32 tiles, reads out to VRAM and displays framebuffer from VRAM.
+
+    CORE high level overview
+    ===
+
+    CORE Renders based on the REGION ARRAY, which is a flag-terminated list of tiles. Each RegionArrayEntry
+    contains the TILE x/y position, control flags for Z clear/Write out/Presort and pointers to OBJECT LISTS.
+
+    OBJECT LISTS are inline linked lists containing ObjectListEntries. Each ObjectListEntry has a small
+    descriptor for the entry type and vertex size, and a pointer to the OBJECT DATA.
+
+    OBJECT DATA contains the PARAMETERS for the OBJECT (ISP, TSP, TCW, optional TSP2 and TCW2) and vertixes.
+
+    There are 3 OBJECT DATA TYPES
+    - Triangle Strips (PARAMETERS, up to 8 VTXs) x 1
+    - Triangle Arrays (PARAMETERS, 3 vtx) x Num_of_primitives
+    - Quad Arrays (PARAMETERS, 4 vtx) x Num_of_primitives
+
+    CORE renders the OBJECTS to its internal TILE BUFFERS, scales and filters the output (SCL)
+    and writes out to VRAM.
+
+    CORE Rendering details
+    ===
+
+    CORE has four main components, FPU (triangle setup) ISP (Rasterization, depth, stencil), TSP (Texutre + Shading)
+    and SCL (tile writeout + scaling). There are three color rendering modes: DEPTH FIRST, DEPTH + COLOR and LAYER PEELING.
+
+    OPAQUE OBJECTS are rendered using the DEPTH FIRST mode.
+    PUNCH THROUGH OBJECTS are rendered using the DEPTH + COLOR mode.
+    TRANSPARENT OBJECTS are rendered using either the DEPTH + COLOR mode or the LAYER PEELING mode.
+    
+    DEPTH FIRST mode
+    ---
+    OBJECTS are first rendered by ISP in the depth and tag buffers, 32 pixels (?) at a time. then the SPAN SORTER collects spans with the
+    same tag and sends them to TSP for shading processing, one pixel at a time.
+
+    DEPTH + COLOR mode
+    ---
+    OBJECTS are rendered by ISP and TSP at the same time, one pixel (?) at a time. ALPHA TEST feedback from TSP modifies the Z-write behavior.
+
+    LAYER PEELING mode
+    ---
+
+    OBJECTS are first rendered by ISP in the depth and tag buffers, using a depth pass and a depth test buffer. SPAN SORTER collects spans with
+    the same tag and sends them to TSP for shading processing. The process repeats itself until all layers have been indepedently rendered. On
+    each pass, only the pixels with the lowest depth value that pass the depth pass buffer are rendered.
+*/
+
 
 #include <omp.h>
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/pvr_mem.h"
 #include "oslib/oslib.h"
 #include "rend/TexCache.h"
-
-/*
-    SSE/MMX based softrend
-
-    Initial code by skmp and gigaherz
-
-    This is a rather weird very basic pvr softrend.
-    Renders	in some kind of tile format (that I forget now),
-    and does depth and color, but no alpha, texture, or pixel
-    processing. All of the pipeline is based on quads.
-*/
 
 #include <mmintrin.h>
 #include <xmmintrin.h>
@@ -38,9 +84,16 @@ extern u32 decoded_colors[3][65536];
 #define MAX_RENDER_PIXELS (MAX_RENDER_WIDTH * MAX_RENDER_HEIGHT)
 
 #define STRIDE_PIXEL_OFFSET MAX_RENDER_WIDTH
-#define Z_BUFFER_PIXEL_OFFSET MAX_RENDER_PIXELS
 
-static DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 2]; //Color + depth
+#define PARAM_BUFFER_PIXEL_OFFSET   0
+#define DEPTH1_BUFFER_PIXEL_OFFSET  (MAX_RENDER_PIXELS*1)
+#define DEPTH2_BUFFER_PIXEL_OFFSET  (MAX_RENDER_PIXELS*2)
+#define STENCIL_BUFFER_PIXEL_OFFSET (MAX_RENDER_PIXELS*3)
+#define ACCUM1_BUFFER_PIXEL_OFFSET  (MAX_RENDER_PIXELS*4)
+#define ACCUM2_BUFFER_PIXEL_OFFSET  (MAX_RENDER_PIXELS*5)
+
+static DECL_ALIGN(32) u32 render_buffer[MAX_RENDER_PIXELS * 6]; //param pointers + depth1 + depth2 + stencil + acum 1 + acum 2
+
 
 #pragma pack(push, 1) 
 union RegionArrayEntryControl {
@@ -210,7 +263,6 @@ struct PlaneStepper3
 
 struct IPs3
 {
-    PlaneStepper3 Z;
     PlaneStepper3 U;
     PlaneStepper3 V;
     PlaneStepper3 Col[4];
@@ -224,7 +276,6 @@ struct IPs3
             h = texture->height - 1;
         }
 
-        Z.Setup(v1, v2, v3, v1.z, v2.z, v3.z);
         U.Setup(v1, v2, v3, v1.u * w * v1.z, v2.u * w * v2.z, v3.u * w * v3.z);
         V.Setup(v1, v2, v3, v1.v * h * v1.z, v2.v * h * v2.z, v3.v * h * v3.z);
         
@@ -237,155 +288,15 @@ struct IPs3
 };
 
 
-#define TPL_DECL_pixel template<int alpha_mode, bool pp_UseAlpha, bool pp_Texture, bool pp_IgnoreTexA, int pp_ShadInstr, bool pp_Offset, bool BGP >
-#define TPL_DECL_triangle template<int alpha_mode, bool pp_UseAlpha, bool pp_Texture, bool pp_IgnoreTexA, int pp_ShadInstr, bool pp_Offset >
+#define TPL_DECL_pixel template<int alpha_mode, bool pp_UseAlpha, bool pp_Texture, bool pp_IgnoreTexA, int pp_ShadInstr, bool pp_Offset >
 
-#define TPL_PRMS_pixel(BGP) <alpha_mode, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, BGP >
-#define TPL_PRMS_triangle <alpha_mode, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
+#define TPL_PRMS_pixel <alpha_mode, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
 
 struct refrend;
 
 //<alpha_blend, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
-typedef void(refrend::*RendtriangleFn)(DrawParameters* params, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area);
-static RendtriangleFn RendtriangleFns[3][2][2][2][4][2];
-static RendtriangleFn RendBGPFns[2][2][2][4][2];
-
-TPL_DECL_pixel
-static void PixelFlush(text_info* texture, float x, float y, u8* cb, IPs3& ip)
-{
-    float invW = ip.Z.Ip(x, y);
-    float u = ip.U.Ip(x, y);
-    float v = ip.V.Ip(x, y);
-
-    u = u / invW;
-    v = v / invW;
-
-    float* zb = (float*)&cb[Z_BUFFER_PIXEL_OFFSET * 4];
-
-#if 0 // make sure we're writting to the right place
-    verify((uintptr_t) cb >= (uintptr_t)&render_buffer[0]);
-
-    verify((uintptr_t)cb < ((uintptr_t)&render_buffer[0] + sizeof(render_buffer)));
-
-
-    verify((uintptr_t)zb >= (uintptr_t)&render_buffer[0]);
-
-    verify((uintptr_t)zb < ((uintptr_t)&render_buffer[0] + sizeof(render_buffer)));
-#endif
-
-    if (!BGP) {
-        // Z test
-        if (invW < * zb)
-            return;
-    }
-
-    u8 rv[4];
-    {
-        rv[0] = ip.Col[2].Ip(x, y);
-        rv[1] = ip.Col[1].Ip(x, y);
-        rv[2] = ip.Col[0].Ip(x, y);
-        rv[3] = ip.Col[3].Ip(x, y);
-
-        if (!pp_UseAlpha) {
-            rv[3] = 255;
-        }
-
-        if (pp_Texture) {
-
-            int ui = u * 256;
-            int vi = v * 256;
-            mem128i px = ((mem128i*)texture->pdata)[((ui >> 8) % texture->width + (vi >> 8) % texture->height * texture->width)];
-
-            int ublend = ui & 255;
-            int vblend =  vi & 255;
-            int nublend = 255 - ublend;
-            int nvblend = 255 - vblend;
-
-            u8 textel[4];
-
-            for (int i = 0 ; i < 4; i++)
-            {
-                textel[i] =
-                    (px.m128i_u8[0 + i] * ublend * vblend) / 65536 +
-                    (px.m128i_u8[4 + i] * nublend * vblend) / 65536 +
-                    (px.m128i_u8[8 + i] * ublend * nvblend) / 65536 +
-                    (px.m128i_u8[12 + i] * nublend * nvblend) / 65536;
-            };
-
-            if (pp_IgnoreTexA) {
-                textel[3] = 255;
-            }
-
-            if (pp_ShadInstr == 0) {
-                //color.rgb = texcol.rgb;
-                //color.a = texcol.a;
-
-                memcpy(rv, textel, sizeof(rv));
-            }
-            else if (pp_ShadInstr == 1) {
-                //color.rgb *= texcol.rgb;
-                //color.a = texcol.a;
-                for (int i = 0; i < 3; i++)
-                {
-                    rv[i] = textel[i] * rv[i] / 256;
-                }
-
-                rv[3] = textel[3];
-            }
-            else if (pp_ShadInstr == 2) {
-                //color.rgb=mix(color.rgb,texcol.rgb,texcol.a);
-                u8 tb = textel[3];
-                u8 cb = 255 - tb;
-
-                for (int i = 0; i < 3; i++)
-                {
-                    rv[i] = (textel[i] * tb + rv[i] * cb) / 256;
-                }
-
-                //rv[3] is not affected
-            }
-            else if (pp_ShadInstr == 3) {
-                //color*=texcol
-                for (int i = 0; i < 4; i++)
-                {
-                    rv[i] = textel[i] * rv[i] / 256;
-                }
-            }
-
-            if (pp_Offset) {
-                //add offset
-
-                rv[0] += ip.Ofs[2].Ip(x, y);
-                rv[1] += ip.Ofs[1].Ip(x, y);
-                rv[2] += ip.Ofs[0].Ip(x, y);
-                rv[3] += ip.Ofs[3].Ip(x, y);
-            }
-        }
-    }
-
-    if (alpha_mode == 1) {
-        if (rv[3] < PT_ALPHA_REF) {
-            *zb = invW;
-            memcpy(cb, rv, 4);
-        }
-    }
-    else if (alpha_mode == 2) {
-        u8* fb = (u8*)cb;
-        u8 src_blend = rv[3];
-        u8 dst_blend = 255 - rv[3];
-        for (int j = 0; j < 3; j++) {
-            rv[j] = (rv[j] * src_blend) / 256 + (fb[j] * dst_blend) / 256;
-        }
-
-        memcpy(cb, rv, 4);
-    }
-    else
-    {
-        if (!BGP) *zb = invW;
-        memcpy(cb, rv, 4);
-    }
-}
-
+typedef bool(*PixelFlush_tspFn)(const text_info *texture, float x, float y, u8 *pb, IPs3 &ip);
+static PixelFlush_tspFn PixelFlush_tspFns[3][2][2][2][4][2];
 
 #if HOST_OS == OS_WINDOWS
 static BITMAPINFOHEADER bi = { sizeof(BITMAPINFOHEADER), 0, 0, 1, 32, BI_RGB };
@@ -396,66 +307,254 @@ bool gles_init();
 struct refrend : Renderer
 {
     u8* vram;
+    struct CacheEntry
+    {
+        IPs3 ips;
+        DrawParameters params;
+        text_info texture;
+        PixelFlush_tspFn shade;
+    };
+
+    map<u32, CacheEntry> tsp_cache;
 
     refrend(u8* vram) : vram(vram) { }
 
-//u32 nok,fok;
-    TPL_DECL_triangle
-    void RendBGP(DrawParameters* params, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area)
+    TPL_DECL_pixel 
+    static bool PixelFlush_tsp(const text_info *texture, float x, float y, u8 *pb, IPs3 &ip)
     {
-        text_info texture = { 0 };
+        float *zb = (float *)&pb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
+        u8 *cb = &pb[ACCUM1_BUFFER_PIXEL_OFFSET * 4];
 
-        if (pp_Texture) {
-            texture = raw_GetTexture(vram, params->tsp, params->tcw);
+        float invW = *zb;
+
+        float u = ip.U.Ip(x, y);
+        float v = ip.V.Ip(x, y);
+
+        u = u / invW;
+        v = v / invW;
+
+        u8 rv[4];
+        {
+            rv[0] = ip.Col[2].Ip(x, y);
+            rv[1] = ip.Col[1].Ip(x, y);
+            rv[2] = ip.Col[0].Ip(x, y);
+            rv[3] = ip.Col[3].Ip(x, y);
+
+            if (!pp_UseAlpha)
+            {
+                rv[3] = 255;
+            }
+
+            if (pp_Texture)
+            {
+
+                int ui = u * 256;
+                int vi = v * 256;
+                mem128i px = ((mem128i *)texture->pdata)[((ui >> 8) % texture->width + (vi >> 8) % texture->height * texture->width)];
+
+                int ublend = ui & 255;
+                int vblend = vi & 255;
+                int nublend = 255 - ublend;
+                int nvblend = 255 - vblend;
+
+                u8 textel[4];
+
+                for (int i = 0; i < 4; i++)
+                {
+                    textel[i] =
+                        (px.m128i_u8[0 + i] * ublend * vblend) / 65536 +
+                        (px.m128i_u8[4 + i] * nublend * vblend) / 65536 +
+                        (px.m128i_u8[8 + i] * ublend * nvblend) / 65536 +
+                        (px.m128i_u8[12 + i] * nublend * nvblend) / 65536;
+                };
+
+                if (pp_IgnoreTexA)
+                {
+                    textel[3] = 255;
+                }
+
+                if (pp_ShadInstr == 0)
+                {
+                    //color.rgb = texcol.rgb;
+                    //color.a = texcol.a;
+
+                    memcpy(rv, textel, sizeof(rv));
+                }
+                else if (pp_ShadInstr == 1)
+                {
+                    //color.rgb *= texcol.rgb;
+                    //color.a = texcol.a;
+                    for (int i = 0; i < 3; i++)
+                    {
+                        rv[i] = textel[i] * rv[i] / 256;
+                    }
+
+                    rv[3] = textel[3];
+                }
+                else if (pp_ShadInstr == 2)
+                {
+                    //color.rgb=mix(color.rgb,texcol.rgb,texcol.a);
+                    u8 tb = textel[3];
+                    u8 cb = 255 - tb;
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        rv[i] = (textel[i] * tb + rv[i] * cb) / 256;
+                    }
+
+                    //rv[3] is not affected
+                }
+                else if (pp_ShadInstr == 3)
+                {
+                    //color*=texcol
+                    for (int i = 0; i < 4; i++)
+                    {
+                        rv[i] = textel[i] * rv[i] / 256;
+                    }
+                }
+
+                if (pp_Offset)
+                {
+                    //add offset
+
+                    rv[0] += ip.Ofs[2].Ip(x, y);
+                    rv[1] += ip.Ofs[1].Ip(x, y);
+                    rv[2] += ip.Ofs[0].Ip(x, y);
+                    rv[3] += ip.Ofs[3].Ip(x, y);
+                }
+            }
         }
 
-        const int stride_bytes = STRIDE_PIXEL_OFFSET * 4;
-
-        // Bounding rectangle
-        int minx = area->left;
-        int miny = area->top;
-
-        int spanx = area->right - minx;
-        int spany = area->bottom - miny;
-
-
-        u8* cb_y = (u8*)colorBuffer;
-
-        DECL_ALIGN(64) IPs3 ip;
-
-        ip.Setup(&texture, v1, v2, v3);
-
-        
-        float y_ps = miny;
-        float minx_ps = minx;
-
-        // Loop through blocks
-        for (int y = spany; y > 0; y -= 1)
+        if (alpha_mode == 1)
         {
-            u8* cb_x = cb_y;
-            float x_ps = minx_ps;
-            for (int x = spanx; x > 0; x -= 1)
+            if (rv[3] < PT_ALPHA_REF)
             {
-                PixelFlush TPL_PRMS_pixel(true) (&texture, x_ps, y_ps, cb_x, ip);
-                cb_x += 4;
-                x_ps = x_ps + 1;
+                memcpy(cb, rv, 4);
+                return true;
             }
-        next_y:
-            cb_y += stride_bytes;
-            y_ps = y_ps + 1;
+            else
+            {
+                return false;
+            }
+        }
+        else if (alpha_mode == 2)
+        {
+            u8 *fb = (u8 *)cb;
+            u8 src_blend = rv[3];
+            u8 dst_blend = 255 - rv[3];
+            for (int j = 0; j < 3; j++)
+            {
+                rv[j] = (rv[j] * src_blend) / 256 + (fb[j] * dst_blend) / 256;
+            }
+
+            memcpy(cb, rv, 4);
+            return true;
+        }
+        else
+        {
+            memcpy(cb, rv, 4);
+            return true;
         }
     }
 
-    //u32 nok,fok;
-    TPL_DECL_triangle
-    void Rendtriangle(DrawParameters* params, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area)
+    ISP_BACKGND_T_type cache_tag = { -1 };
+    CacheEntry* cache_entry;
+
+    bool PixelFlush_tsp_cached(int alpha_mode, float x, float y, u8 *pb, ISP_BACKGND_T_type tag)
     {
-        text_info texture = { 0 };
+        if (tag.full == 0)
+            return false;
 
-        if (pp_Texture) {
-            texture = raw_GetTexture(vram, params->tsp, params->tcw);
+        if (tag.full == cache_tag.full)
+            return cache_entry->shade(&cache_entry->texture, x, y, pb, cache_entry->ips);
+
+        auto cacheEntry = tsp_cache.find(tag.full);
+
+        if (cacheEntry != tsp_cache.end())
+        {
+            cache_tag.full = tag.full;
+            cache_entry = &cacheEntry->second;
+            // use
+            return cacheEntry->second.shade(&cacheEntry->second.texture, x, y, pb, cacheEntry->second.ips);
         }
+        else
+        {
+            auto entry = &tsp_cache[tag.full];
 
+            // generate
+
+            Vertex vtx[8];
+            decode_pvr_vetrices(&entry->params, PARAM_BASE + tag.tag_address * 4, tag.skip, tag.shadow, vtx, tag.tag_offset + 3);
+
+            if (entry->params.isp.Texture)
+            {
+                entry->texture = raw_GetTexture(vram, entry->params.tsp, entry->params.tcw);
+            }
+
+            entry->ips.Setup(&entry->texture, vtx[tag.tag_offset + 0], vtx[tag.tag_offset + 1], vtx[tag.tag_offset + 2]);
+
+            entry->shade = PixelFlush_tspFns[alpha_mode][entry->params.tsp.UseAlpha][entry->params.isp.Texture][entry->params.tsp.IgnoreTexA][entry->params.tsp.ShadInstr][entry->params.isp.Offset];
+
+            return entry->shade(&entry->texture, x, y, pb, entry->ips);
+        }
+    }
+
+    template <int alpha_mode>
+    void PixelFlush_isp(float x, float y, u8 *pb, PlaneStepper3 &Z, ISP_BACKGND_T_type tag)
+    {
+        float invW = Z.Ip(x, y);
+        float *zb = (float *)&pb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
+        float *zb2 = (float *)&pb[DEPTH2_BUFFER_PIXEL_OFFSET * 4];
+
+#if 0 // make sure we're writting to the right place
+    verify((uintptr_t) pb >= (uintptr_t)&render_buffer[0]);
+
+    verify((uintptr_t)pb < ((uintptr_t)&render_buffer[0] + sizeof(render_buffer)));
+
+
+    verify((uintptr_t)zb >= (uintptr_t)&render_buffer[0]);
+
+    verify((uintptr_t)zb < ((uintptr_t)&render_buffer[0] + sizeof(render_buffer)));
+#endif
+
+        // Z test
+
+        if (alpha_mode == 0)
+        {
+            if (invW < *zb)
+                return;
+
+            *zb = invW;
+            *(u32*)pb = tag.full;
+        }
+        else if (alpha_mode == 1)
+        {
+            if (invW < *zb)
+                return;
+            if (PixelFlush_tsp_cached(alpha_mode, x, y, pb, tag))
+            {
+                *zb = invW;
+            }
+        }
+        else if (alpha_mode == 2)
+        {
+            if (invW <= *zb2)
+                return;
+
+            if (invW > *zb)
+                return;
+
+            PixelsDrawn++;
+            
+            *zb = invW;
+            *(u32*)pb = tag.full;
+        }
+    }
+
+    int PixelsDrawn;
+    template<int alpha_mode>
+    void Rendtriangle(DrawParameters* params, ISP_BACKGND_T_type tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area)
+    {
         const int stride_bytes = STRIDE_PIXEL_OFFSET * 4;
         //Plane equation
 
@@ -516,7 +615,6 @@ struct refrend : Renderer
         if (spanx < 0 || spany < 0)
             return;
 
-
         // Half-edge constants
         float C1 = DY12 * X1 - DX12 * Y1;
         float C2 = DY23 * X2 - DX23 * Y2;
@@ -531,10 +629,8 @@ struct refrend : Renderer
         u8* cb_y = (u8*)colorBuffer;
         cb_y += (miny - area->top) * stride_bytes + (minx - area->left) * 4;
 
-        DECL_ALIGN(64) IPs3 ip;
-
-        ip.Setup(&texture, v1, v2, v3);
-
+        PlaneStepper3 Z;
+        Z.Setup(v1, v2, v3, v1.z, v2.z, v3.z);
 
         float y_ps = miny;
         float minx_ps = minx;
@@ -559,7 +655,7 @@ struct refrend : Renderer
                 // Skip block when outside an edge
                 if (inTriangle)
                 {
-                    PixelFlush TPL_PRMS_pixel(false) (&texture, x_ps, y_ps, cb_x, ip);
+                    PixelFlush_isp<alpha_mode>(x_ps, y_ps, cb_x, Z, tag);
                 }
 
                 cb_x += 4;
@@ -590,7 +686,18 @@ struct refrend : Renderer
     virtual bool RenderFramebuffer() {
         Present();
         return false;
-    }   
+    }
+
+    void RenderParamTags(int alpha_mode, int tileX, int tileY) {
+
+        auto pb = reinterpret_cast<ISP_BACKGND_T_type*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
+
+        for (int y = 0; y < 32; y++) {
+            for (int x = 0; x < 32; x++) {
+                PixelFlush_tsp_cached(alpha_mode, tileX + x, tileY + y, (u8*)&render_buffer[x + y * MAX_RENDER_WIDTH], *pb++);
+            }
+        }
+    }
 
     u32 ReadRegionArrayEntry(u32 base, RegionArrayEntry* entry) 
     {
@@ -697,32 +804,6 @@ struct refrend : Renderer
         return base;
     }
 
-    void DrawBGP(DrawParameters* params, int vertex_offset, Vertex* vtx, RECT* area)
-    {
-        RendtriangleFn fn = RendBGPFns[params->tsp.UseAlpha][params->isp.Texture][params->tsp.IgnoreTexA][params->tsp.ShadInstr][params->isp.Offset];
-
-        (this->*fn)(params, vertex_offset, vtx[0], vtx[1], vtx[2], render_buffer, area);
-    }
-
-    template<int alpha_mode>
-    void DrawTriangle(DrawParameters* params, int vertex_offset, Vertex* vtx, RECT* area)
-    {
-        RendtriangleFn fn = RendtriangleFns[alpha_mode][params->tsp.UseAlpha][params->isp.Texture][params->tsp.IgnoreTexA][params->tsp.ShadInstr][params->isp.Offset];
-
-        (this->*fn)(params, vertex_offset, vtx[0], vtx[1], vtx[2], render_buffer, area);
-    }
-
-
-    template<int alpha_mode>
-    void DrawQuad(DrawParameters* params, Vertex* vtx, RECT* area)
-    {
-        RendtriangleFn fn = RendtriangleFns[alpha_mode][params->tsp.UseAlpha][params->isp.Texture][params->tsp.IgnoreTexA][params->tsp.ShadInstr][params->isp.Offset];
-
-        // TODO: This is a HACK
-        // The surface equation is only solved once for QUADs
-        (this->*fn)(params, 0, vtx[0], vtx[1], vtx[2], render_buffer, area);
-        (this->*fn)(params, 0, vtx[2], vtx[3], vtx[0], render_buffer, area);
-    }
 
     template<int alpha_mode>
     void RenderTriangleStrip(ObjectListEntry obj, RECT* rect)
@@ -733,29 +814,20 @@ struct refrend : Renderer
         u32 param_base = PARAM_BASE & 0xF00000;
 
         decode_pvr_vetrices(&params, param_base + obj.tstrip.param_offs_in_words * 4, obj.tstrip.skip, obj.tstrip.shadow, vtx, 8);
-        
-        if (obj.tstrip.mask & (1<<5)) {
-            DrawTriangle<alpha_mode>(&params, 0, &vtx[0], rect);
-        }
 
-        if (obj.tstrip.mask & (1<<4)) {
-            DrawTriangle<alpha_mode>(&params, 1, &vtx[1], rect);
-        }
+        ISP_BACKGND_T_type tag = {0};
 
-        if (obj.tstrip.mask & (1<<3)) {
-            DrawTriangle<alpha_mode>(&params, 0, &vtx[2], rect);
-        }
+        tag.skip = obj.tstrip.skip;
+        tag.shadow = obj.tstrip.shadow;
+        tag.tag_address = obj.tstrip.param_offs_in_words;
 
-        if (obj.tstrip.mask & (1<<2)) {
-            DrawTriangle<alpha_mode>(&params, 1, &vtx[3], rect);
-        }
-
-        if (obj.tstrip.mask & (1<<1)) {
-            DrawTriangle<alpha_mode>(&params, 0, &vtx[4], rect);
-        }
-
-        if (obj.tstrip.mask & (1<<0)) {
-            DrawTriangle<alpha_mode>(&params, 1, &vtx[5], rect);
+        for (int i = 0; i < 6; i++)
+        {
+            if (obj.tstrip.mask & (1 << (5-i)))
+            {
+                tag.tag_offset = i;
+                Rendtriangle<alpha_mode>(&params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], render_buffer, rect);
+            }
         }
     }
 
@@ -776,7 +848,13 @@ struct refrend : Renderer
 
             param_ptr = decode_pvr_vetrices(&params, param_ptr, obj.tarray.skip, obj.tarray.shadow, vtx, 3);
             
-            DrawTriangle<alpha_mode>(&params, 0, vtx, rect);
+            ISP_BACKGND_T_type tag = {0};
+
+            tag.skip = obj.tarray.skip;
+            tag.shadow = obj.tarray.shadow;
+            tag.tag_address = obj.tarray.param_offs_in_words;
+            tag.tag_offset = 0;
+            Rendtriangle<alpha_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], render_buffer, rect);
         }
     }
 
@@ -796,7 +874,15 @@ struct refrend : Renderer
 
             param_ptr = decode_pvr_vetrices(&params, param_ptr, obj.qarray.skip, obj.qarray.shadow, vtx, 4);
             
-            DrawQuad<alpha_mode>(&params, vtx, rect);
+            ISP_BACKGND_T_type tag = {0};
+
+            tag.skip = obj.qarray.skip;
+            tag.shadow = obj.qarray.shadow;
+            tag.tag_address = obj.qarray.param_offs_in_words;
+            tag.tag_offset = 0;
+
+            //TODO: FIXME
+            Rendtriangle<alpha_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], render_buffer, rect);
         }
     }
 
@@ -860,29 +946,26 @@ struct refrend : Renderer
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 
             RECT rect;
-            rect.top = MAX(entry.control.tiley * 32, FB_Y_CLIP.min);
-            rect.left = MAX(entry.control.tilex * 32, FB_X_CLIP.min);
+            rect.top = entry.control.tiley * 32;
+            rect.left = entry.control.tilex * 32;
             
-            rect.bottom = MIN(rect.top + 32, FB_Y_CLIP.max);
-            rect.right = MIN(rect.left + 32, FB_X_CLIP.max);
+            rect.bottom = rect.top + 32;
+            rect.right = rect.left + 32;
 
             if (!entry.control.z_keep) {
                 
                 // Clear Z
-                auto zb = reinterpret_cast<float*>(render_buffer + Z_BUFFER_PIXEL_OFFSET);
+                auto zb = reinterpret_cast<float*>(render_buffer + DEPTH1_BUFFER_PIXEL_OFFSET);
 
                 for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
                     zb[i] = ISP_BACKGND_D.f;
                 }
 
-                //render bg poly
-                {
-                    DrawParameters params;
-                    Vertex vtx[4];
+                // Clear PB
+                auto pb = reinterpret_cast<ISP_BACKGND_T_type*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
 
-                    u32 param_base = PARAM_BASE & 0xF00000;
-                    decode_pvr_vetrices(&params, param_base + ISP_BACKGND_T.tag_address * 4, ISP_BACKGND_T.skip, ISP_BACKGND_T.shadow, vtx, 4);
-                    DrawBGP(&params, 0, vtx, &rect);
+                for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
+                    pb[i] = ISP_BACKGND_T;
                 }
             }
             
@@ -890,13 +973,41 @@ struct refrend : Renderer
                 RenderObjectList<0>(entry.opaque.ptr_in_words * 4, &rect);
             }
 
+            RenderParamTags(0, rect.left, rect.top);
+
             if (!entry.puncht.empty) {
                 RenderObjectList<1>(entry.puncht.ptr_in_words * 4, &rect);
             }
 
             if (!entry.trans.empty) {
-                RenderObjectList<2>(entry.trans.ptr_in_words * 4, &rect);
+
+                do {
+                    PixelsDrawn = 0;
+
+                    // clear tags
+                    memset(render_buffer, 0, MAX_RENDER_PIXELS * 4);
+
+                    //copy depth test to depth pass buffer, clear test buffer
+
+                    auto zb = reinterpret_cast<float*>(render_buffer + DEPTH1_BUFFER_PIXEL_OFFSET);
+                    auto zb2 = reinterpret_cast<float*>(render_buffer + DEPTH2_BUFFER_PIXEL_OFFSET);
+
+//                    memcpy(render_buffer + DEPTH2_BUFFER_PIXEL_OFFSET, render_buffer + DEPTH1_BUFFER_PIXEL_OFFSET, MAX_RENDER_PIXELS);
+                    for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
+                        zb2[i] = zb[i];
+                        zb[i] = 3200000.0f;
+                    }
+
+                    // render new tags
+                    RenderObjectList<2>(entry.trans.ptr_in_words * 4, &rect);
+
+                    // draw them
+
+                    RenderParamTags(2, rect.left, rect.top);
+                } while (PixelsDrawn != 0);
             }
+
+            //RenderParamTags(2);
 
             if (!entry.control.no_writeout) {
                 // copy to vram
@@ -920,7 +1031,7 @@ struct refrend : Renderer
                 for (int y = 0; y<32; y++) {
                     //auto base = (y&1) ? FB_W_SOF2 : FB_W_SOF1;
                     auto dst = base + offset_bytes + (y) * FB_W_LINESTRIDE.stride * 8;
-                    auto src = reinterpret_cast<u8*>(render_buffer + y * STRIDE_PIXEL_OFFSET);
+                    auto src = reinterpret_cast<u8*>(render_buffer + y * STRIDE_PIXEL_OFFSET + ACCUM1_BUFFER_PIXEL_OFFSET);
 
                     for (int x = 0; x<32; x++) {
                         auto pixel = (((src[0] >> 3) & 0x1F) << 11) | (((src[1] >> 2) & 0x3F) << 5) | ((src[2] >> 3) & 0x1F);
@@ -933,6 +1044,10 @@ struct refrend : Renderer
             }
 
         } while (!entry.control.last_region);
+
+        // clear the tsp cache
+        tsp_cache.clear();
+        cache_tag.full = -1;
 
         //Present();
         return false;
@@ -983,271 +1098,205 @@ struct refrend : Renderer
             decoded_colors[2][c] = (REP_16((c >> 0) % 16) << 24) | (REP_16((c >> 12) % 16) << 16) | (REP_16((c >> 8) % 16) << 8) | (REP_16((c >> 4) % 16) << 0);
         }
 
-#define Rendtriangle refrend::Rendtriangle
-#define RendBGP refrend::RendBGP
+
+#define PixelFlush_tsp refrend::PixelFlush_tsp
         {
-            RendtriangleFns[0][0][1][0][0][0] = &Rendtriangle<0, 0, 1, 0, 0, 0>;
-            RendtriangleFns[0][0][1][0][0][1] = &Rendtriangle<0, 0, 1, 0, 0, 1>;
-            RendtriangleFns[0][0][1][0][1][0] = &Rendtriangle<0, 0, 1, 0, 1, 0>;
-            RendtriangleFns[0][0][1][0][1][1] = &Rendtriangle<0, 0, 1, 0, 1, 1>;
-            RendtriangleFns[0][0][1][0][2][0] = &Rendtriangle<0, 0, 1, 0, 2, 0>;
-            RendtriangleFns[0][0][1][0][2][1] = &Rendtriangle<0, 0, 1, 0, 2, 1>;
-            RendtriangleFns[0][0][1][0][3][0] = &Rendtriangle<0, 0, 1, 0, 3, 0>;
-            RendtriangleFns[0][0][1][0][3][1] = &Rendtriangle<0, 0, 1, 0, 3, 1>;
-            RendtriangleFns[0][0][1][1][0][0] = &Rendtriangle<0, 0, 1, 1, 0, 0>;
-            RendtriangleFns[0][0][1][1][0][1] = &Rendtriangle<0, 0, 1, 1, 0, 1>;
-            RendtriangleFns[0][0][1][1][1][0] = &Rendtriangle<0, 0, 1, 1, 1, 0>;
-            RendtriangleFns[0][0][1][1][1][1] = &Rendtriangle<0, 0, 1, 1, 1, 1>;
-            RendtriangleFns[0][0][1][1][2][0] = &Rendtriangle<0, 0, 1, 1, 2, 0>;
-            RendtriangleFns[0][0][1][1][2][1] = &Rendtriangle<0, 0, 1, 1, 2, 1>;
-            RendtriangleFns[0][0][1][1][3][0] = &Rendtriangle<0, 0, 1, 1, 3, 0>;
-            RendtriangleFns[0][0][1][1][3][1] = &Rendtriangle<0, 0, 1, 1, 3, 1>;
-            RendtriangleFns[0][0][0][0][0][0] = &Rendtriangle<0, 0, 0, 0, 0, 0>;
-            RendtriangleFns[0][0][0][0][0][1] = &Rendtriangle<0, 0, 0, 0, 0, 1>;
-            RendtriangleFns[0][0][0][0][1][0] = &Rendtriangle<0, 0, 0, 0, 1, 0>;
-            RendtriangleFns[0][0][0][0][1][1] = &Rendtriangle<0, 0, 0, 0, 1, 1>;
-            RendtriangleFns[0][0][0][0][2][0] = &Rendtriangle<0, 0, 0, 0, 2, 0>;
-            RendtriangleFns[0][0][0][0][2][1] = &Rendtriangle<0, 0, 0, 0, 2, 1>;
-            RendtriangleFns[0][0][0][0][3][0] = &Rendtriangle<0, 0, 0, 0, 3, 0>;
-            RendtriangleFns[0][0][0][0][3][1] = &Rendtriangle<0, 0, 0, 0, 3, 1>;
-            RendtriangleFns[0][0][0][1][0][0] = &Rendtriangle<0, 0, 0, 1, 0, 0>;
-            RendtriangleFns[0][0][0][1][0][1] = &Rendtriangle<0, 0, 0, 1, 0, 1>;
-            RendtriangleFns[0][0][0][1][1][0] = &Rendtriangle<0, 0, 0, 1, 1, 0>;
-            RendtriangleFns[0][0][0][1][1][1] = &Rendtriangle<0, 0, 0, 1, 1, 1>;
-            RendtriangleFns[0][0][0][1][2][0] = &Rendtriangle<0, 0, 0, 1, 2, 0>;
-            RendtriangleFns[0][0][0][1][2][1] = &Rendtriangle<0, 0, 0, 1, 2, 1>;
-            RendtriangleFns[0][0][0][1][3][0] = &Rendtriangle<0, 0, 0, 1, 3, 0>;
-            RendtriangleFns[0][0][0][1][3][1] = &Rendtriangle<0, 0, 0, 1, 3, 1>;
-            RendtriangleFns[0][1][1][0][0][0] = &Rendtriangle<0, 1, 1, 0, 0, 0>;
-            RendtriangleFns[0][1][1][0][0][1] = &Rendtriangle<0, 1, 1, 0, 0, 1>;
-            RendtriangleFns[0][1][1][0][1][0] = &Rendtriangle<0, 1, 1, 0, 1, 0>;
-            RendtriangleFns[0][1][1][0][1][1] = &Rendtriangle<0, 1, 1, 0, 1, 1>;
-            RendtriangleFns[0][1][1][0][2][0] = &Rendtriangle<0, 1, 1, 0, 2, 0>;
-            RendtriangleFns[0][1][1][0][2][1] = &Rendtriangle<0, 1, 1, 0, 2, 1>;
-            RendtriangleFns[0][1][1][0][3][0] = &Rendtriangle<0, 1, 1, 0, 3, 0>;
-            RendtriangleFns[0][1][1][0][3][1] = &Rendtriangle<0, 1, 1, 0, 3, 1>;
-            RendtriangleFns[0][1][1][1][0][0] = &Rendtriangle<0, 1, 1, 1, 0, 0>;
-            RendtriangleFns[0][1][1][1][0][1] = &Rendtriangle<0, 1, 1, 1, 0, 1>;
-            RendtriangleFns[0][1][1][1][1][0] = &Rendtriangle<0, 1, 1, 1, 1, 0>;
-            RendtriangleFns[0][1][1][1][1][1] = &Rendtriangle<0, 1, 1, 1, 1, 1>;
-            RendtriangleFns[0][1][1][1][2][0] = &Rendtriangle<0, 1, 1, 1, 2, 0>;
-            RendtriangleFns[0][1][1][1][2][1] = &Rendtriangle<0, 1, 1, 1, 2, 1>;
-            RendtriangleFns[0][1][1][1][3][0] = &Rendtriangle<0, 1, 1, 1, 3, 0>;
-            RendtriangleFns[0][1][1][1][3][1] = &Rendtriangle<0, 1, 1, 1, 3, 1>;
-            RendtriangleFns[0][1][0][0][0][0] = &Rendtriangle<0, 1, 0, 0, 0, 0>;
-            RendtriangleFns[0][1][0][0][0][1] = &Rendtriangle<0, 1, 0, 0, 0, 1>;
-            RendtriangleFns[0][1][0][0][1][0] = &Rendtriangle<0, 1, 0, 0, 1, 0>;
-            RendtriangleFns[0][1][0][0][1][1] = &Rendtriangle<0, 1, 0, 0, 1, 1>;
-            RendtriangleFns[0][1][0][0][2][0] = &Rendtriangle<0, 1, 0, 0, 2, 0>;
-            RendtriangleFns[0][1][0][0][2][1] = &Rendtriangle<0, 1, 0, 0, 2, 1>;
-            RendtriangleFns[0][1][0][0][3][0] = &Rendtriangle<0, 1, 0, 0, 3, 0>;
-            RendtriangleFns[0][1][0][0][3][1] = &Rendtriangle<0, 1, 0, 0, 3, 1>;
-            RendtriangleFns[0][1][0][1][0][0] = &Rendtriangle<0, 1, 0, 1, 0, 0>;
-            RendtriangleFns[0][1][0][1][0][1] = &Rendtriangle<0, 1, 0, 1, 0, 1>;
-            RendtriangleFns[0][1][0][1][1][0] = &Rendtriangle<0, 1, 0, 1, 1, 0>;
-            RendtriangleFns[0][1][0][1][1][1] = &Rendtriangle<0, 1, 0, 1, 1, 1>;
-            RendtriangleFns[0][1][0][1][2][0] = &Rendtriangle<0, 1, 0, 1, 2, 0>;
-            RendtriangleFns[0][1][0][1][2][1] = &Rendtriangle<0, 1, 0, 1, 2, 1>;
-            RendtriangleFns[0][1][0][1][3][0] = &Rendtriangle<0, 1, 0, 1, 3, 0>;
-            RendtriangleFns[0][1][0][1][3][1] = &Rendtriangle<0, 1, 0, 1, 3, 1>;
-            RendtriangleFns[1][0][1][0][0][0] = &Rendtriangle<1, 0, 1, 0, 0, 0>;
-            RendtriangleFns[1][0][1][0][0][1] = &Rendtriangle<1, 0, 1, 0, 0, 1>;
-            RendtriangleFns[1][0][1][0][1][0] = &Rendtriangle<1, 0, 1, 0, 1, 0>;
-            RendtriangleFns[1][0][1][0][1][1] = &Rendtriangle<1, 0, 1, 0, 1, 1>;
-            RendtriangleFns[1][0][1][0][2][0] = &Rendtriangle<1, 0, 1, 0, 2, 0>;
-            RendtriangleFns[1][0][1][0][2][1] = &Rendtriangle<1, 0, 1, 0, 2, 1>;
-            RendtriangleFns[1][0][1][0][3][0] = &Rendtriangle<1, 0, 1, 0, 3, 0>;
-            RendtriangleFns[1][0][1][0][3][1] = &Rendtriangle<1, 0, 1, 0, 3, 1>;
-            RendtriangleFns[1][0][1][1][0][0] = &Rendtriangle<1, 0, 1, 1, 0, 0>;
-            RendtriangleFns[1][0][1][1][0][1] = &Rendtriangle<1, 0, 1, 1, 0, 1>;
-            RendtriangleFns[1][0][1][1][1][0] = &Rendtriangle<1, 0, 1, 1, 1, 0>;
-            RendtriangleFns[1][0][1][1][1][1] = &Rendtriangle<1, 0, 1, 1, 1, 1>;
-            RendtriangleFns[1][0][1][1][2][0] = &Rendtriangle<1, 0, 1, 1, 2, 0>;
-            RendtriangleFns[1][0][1][1][2][1] = &Rendtriangle<1, 0, 1, 1, 2, 1>;
-            RendtriangleFns[1][0][1][1][3][0] = &Rendtriangle<1, 0, 1, 1, 3, 0>;
-            RendtriangleFns[1][0][1][1][3][1] = &Rendtriangle<1, 0, 1, 1, 3, 1>;
-            RendtriangleFns[1][0][0][0][0][0] = &Rendtriangle<1, 0, 0, 0, 0, 0>;
-            RendtriangleFns[1][0][0][0][0][1] = &Rendtriangle<1, 0, 0, 0, 0, 1>;
-            RendtriangleFns[1][0][0][0][1][0] = &Rendtriangle<1, 0, 0, 0, 1, 0>;
-            RendtriangleFns[1][0][0][0][1][1] = &Rendtriangle<1, 0, 0, 0, 1, 1>;
-            RendtriangleFns[1][0][0][0][2][0] = &Rendtriangle<1, 0, 0, 0, 2, 0>;
-            RendtriangleFns[1][0][0][0][2][1] = &Rendtriangle<1, 0, 0, 0, 2, 1>;
-            RendtriangleFns[1][0][0][0][3][0] = &Rendtriangle<1, 0, 0, 0, 3, 0>;
-            RendtriangleFns[1][0][0][0][3][1] = &Rendtriangle<1, 0, 0, 0, 3, 1>;
-            RendtriangleFns[1][0][0][1][0][0] = &Rendtriangle<1, 0, 0, 1, 0, 0>;
-            RendtriangleFns[1][0][0][1][0][1] = &Rendtriangle<1, 0, 0, 1, 0, 1>;
-            RendtriangleFns[1][0][0][1][1][0] = &Rendtriangle<1, 0, 0, 1, 1, 0>;
-            RendtriangleFns[1][0][0][1][1][1] = &Rendtriangle<1, 0, 0, 1, 1, 1>;
-            RendtriangleFns[1][0][0][1][2][0] = &Rendtriangle<1, 0, 0, 1, 2, 0>;
-            RendtriangleFns[1][0][0][1][2][1] = &Rendtriangle<1, 0, 0, 1, 2, 1>;
-            RendtriangleFns[1][0][0][1][3][0] = &Rendtriangle<1, 0, 0, 1, 3, 0>;
-            RendtriangleFns[1][0][0][1][3][1] = &Rendtriangle<1, 0, 0, 1, 3, 1>;
-            RendtriangleFns[1][1][1][0][0][0] = &Rendtriangle<1, 1, 1, 0, 0, 0>;
-            RendtriangleFns[1][1][1][0][0][1] = &Rendtriangle<1, 1, 1, 0, 0, 1>;
-            RendtriangleFns[1][1][1][0][1][0] = &Rendtriangle<1, 1, 1, 0, 1, 0>;
-            RendtriangleFns[1][1][1][0][1][1] = &Rendtriangle<1, 1, 1, 0, 1, 1>;
-            RendtriangleFns[1][1][1][0][2][0] = &Rendtriangle<1, 1, 1, 0, 2, 0>;
-            RendtriangleFns[1][1][1][0][2][1] = &Rendtriangle<1, 1, 1, 0, 2, 1>;
-            RendtriangleFns[1][1][1][0][3][0] = &Rendtriangle<1, 1, 1, 0, 3, 0>;
-            RendtriangleFns[1][1][1][0][3][1] = &Rendtriangle<1, 1, 1, 0, 3, 1>;
-            RendtriangleFns[1][1][1][1][0][0] = &Rendtriangle<1, 1, 1, 1, 0, 0>;
-            RendtriangleFns[1][1][1][1][0][1] = &Rendtriangle<1, 1, 1, 1, 0, 1>;
-            RendtriangleFns[1][1][1][1][1][0] = &Rendtriangle<1, 1, 1, 1, 1, 0>;
-            RendtriangleFns[1][1][1][1][1][1] = &Rendtriangle<1, 1, 1, 1, 1, 1>;
-            RendtriangleFns[1][1][1][1][2][0] = &Rendtriangle<1, 1, 1, 1, 2, 0>;
-            RendtriangleFns[1][1][1][1][2][1] = &Rendtriangle<1, 1, 1, 1, 2, 1>;
-            RendtriangleFns[1][1][1][1][3][0] = &Rendtriangle<1, 1, 1, 1, 3, 0>;
-            RendtriangleFns[1][1][1][1][3][1] = &Rendtriangle<1, 1, 1, 1, 3, 1>;
-            RendtriangleFns[1][1][0][0][0][0] = &Rendtriangle<1, 1, 0, 0, 0, 0>;
-            RendtriangleFns[1][1][0][0][0][1] = &Rendtriangle<1, 1, 0, 0, 0, 1>;
-            RendtriangleFns[1][1][0][0][1][0] = &Rendtriangle<1, 1, 0, 0, 1, 0>;
-            RendtriangleFns[1][1][0][0][1][1] = &Rendtriangle<1, 1, 0, 0, 1, 1>;
-            RendtriangleFns[1][1][0][0][2][0] = &Rendtriangle<1, 1, 0, 0, 2, 0>;
-            RendtriangleFns[1][1][0][0][2][1] = &Rendtriangle<1, 1, 0, 0, 2, 1>;
-            RendtriangleFns[1][1][0][0][3][0] = &Rendtriangle<1, 1, 0, 0, 3, 0>;
-            RendtriangleFns[1][1][0][0][3][1] = &Rendtriangle<1, 1, 0, 0, 3, 1>;
-            RendtriangleFns[1][1][0][1][0][0] = &Rendtriangle<1, 1, 0, 1, 0, 0>;
-            RendtriangleFns[1][1][0][1][0][1] = &Rendtriangle<1, 1, 0, 1, 0, 1>;
-            RendtriangleFns[1][1][0][1][1][0] = &Rendtriangle<1, 1, 0, 1, 1, 0>;
-            RendtriangleFns[1][1][0][1][1][1] = &Rendtriangle<1, 1, 0, 1, 1, 1>;
-            RendtriangleFns[1][1][0][1][2][0] = &Rendtriangle<1, 1, 0, 1, 2, 0>;
-            RendtriangleFns[1][1][0][1][2][1] = &Rendtriangle<1, 1, 0, 1, 2, 1>;
-            RendtriangleFns[1][1][0][1][3][0] = &Rendtriangle<1, 1, 0, 1, 3, 0>;
-            RendtriangleFns[1][1][0][1][3][1] = &Rendtriangle<1, 1, 0, 1, 3, 1>;
+            PixelFlush_tspFns[0][0][1][0][0][0] = &PixelFlush_tsp<0, 0, 1, 0, 0, 0>;
+            PixelFlush_tspFns[0][0][1][0][0][1] = &PixelFlush_tsp<0, 0, 1, 0, 0, 1>;
+            PixelFlush_tspFns[0][0][1][0][1][0] = &PixelFlush_tsp<0, 0, 1, 0, 1, 0>;
+            PixelFlush_tspFns[0][0][1][0][1][1] = &PixelFlush_tsp<0, 0, 1, 0, 1, 1>;
+            PixelFlush_tspFns[0][0][1][0][2][0] = &PixelFlush_tsp<0, 0, 1, 0, 2, 0>;
+            PixelFlush_tspFns[0][0][1][0][2][1] = &PixelFlush_tsp<0, 0, 1, 0, 2, 1>;
+            PixelFlush_tspFns[0][0][1][0][3][0] = &PixelFlush_tsp<0, 0, 1, 0, 3, 0>;
+            PixelFlush_tspFns[0][0][1][0][3][1] = &PixelFlush_tsp<0, 0, 1, 0, 3, 1>;
+            PixelFlush_tspFns[0][0][1][1][0][0] = &PixelFlush_tsp<0, 0, 1, 1, 0, 0>;
+            PixelFlush_tspFns[0][0][1][1][0][1] = &PixelFlush_tsp<0, 0, 1, 1, 0, 1>;
+            PixelFlush_tspFns[0][0][1][1][1][0] = &PixelFlush_tsp<0, 0, 1, 1, 1, 0>;
+            PixelFlush_tspFns[0][0][1][1][1][1] = &PixelFlush_tsp<0, 0, 1, 1, 1, 1>;
+            PixelFlush_tspFns[0][0][1][1][2][0] = &PixelFlush_tsp<0, 0, 1, 1, 2, 0>;
+            PixelFlush_tspFns[0][0][1][1][2][1] = &PixelFlush_tsp<0, 0, 1, 1, 2, 1>;
+            PixelFlush_tspFns[0][0][1][1][3][0] = &PixelFlush_tsp<0, 0, 1, 1, 3, 0>;
+            PixelFlush_tspFns[0][0][1][1][3][1] = &PixelFlush_tsp<0, 0, 1, 1, 3, 1>;
+            PixelFlush_tspFns[0][0][0][0][0][0] = &PixelFlush_tsp<0, 0, 0, 0, 0, 0>;
+            PixelFlush_tspFns[0][0][0][0][0][1] = &PixelFlush_tsp<0, 0, 0, 0, 0, 1>;
+            PixelFlush_tspFns[0][0][0][0][1][0] = &PixelFlush_tsp<0, 0, 0, 0, 1, 0>;
+            PixelFlush_tspFns[0][0][0][0][1][1] = &PixelFlush_tsp<0, 0, 0, 0, 1, 1>;
+            PixelFlush_tspFns[0][0][0][0][2][0] = &PixelFlush_tsp<0, 0, 0, 0, 2, 0>;
+            PixelFlush_tspFns[0][0][0][0][2][1] = &PixelFlush_tsp<0, 0, 0, 0, 2, 1>;
+            PixelFlush_tspFns[0][0][0][0][3][0] = &PixelFlush_tsp<0, 0, 0, 0, 3, 0>;
+            PixelFlush_tspFns[0][0][0][0][3][1] = &PixelFlush_tsp<0, 0, 0, 0, 3, 1>;
+            PixelFlush_tspFns[0][0][0][1][0][0] = &PixelFlush_tsp<0, 0, 0, 1, 0, 0>;
+            PixelFlush_tspFns[0][0][0][1][0][1] = &PixelFlush_tsp<0, 0, 0, 1, 0, 1>;
+            PixelFlush_tspFns[0][0][0][1][1][0] = &PixelFlush_tsp<0, 0, 0, 1, 1, 0>;
+            PixelFlush_tspFns[0][0][0][1][1][1] = &PixelFlush_tsp<0, 0, 0, 1, 1, 1>;
+            PixelFlush_tspFns[0][0][0][1][2][0] = &PixelFlush_tsp<0, 0, 0, 1, 2, 0>;
+            PixelFlush_tspFns[0][0][0][1][2][1] = &PixelFlush_tsp<0, 0, 0, 1, 2, 1>;
+            PixelFlush_tspFns[0][0][0][1][3][0] = &PixelFlush_tsp<0, 0, 0, 1, 3, 0>;
+            PixelFlush_tspFns[0][0][0][1][3][1] = &PixelFlush_tsp<0, 0, 0, 1, 3, 1>;
+            PixelFlush_tspFns[0][1][1][0][0][0] = &PixelFlush_tsp<0, 1, 1, 0, 0, 0>;
+            PixelFlush_tspFns[0][1][1][0][0][1] = &PixelFlush_tsp<0, 1, 1, 0, 0, 1>;
+            PixelFlush_tspFns[0][1][1][0][1][0] = &PixelFlush_tsp<0, 1, 1, 0, 1, 0>;
+            PixelFlush_tspFns[0][1][1][0][1][1] = &PixelFlush_tsp<0, 1, 1, 0, 1, 1>;
+            PixelFlush_tspFns[0][1][1][0][2][0] = &PixelFlush_tsp<0, 1, 1, 0, 2, 0>;
+            PixelFlush_tspFns[0][1][1][0][2][1] = &PixelFlush_tsp<0, 1, 1, 0, 2, 1>;
+            PixelFlush_tspFns[0][1][1][0][3][0] = &PixelFlush_tsp<0, 1, 1, 0, 3, 0>;
+            PixelFlush_tspFns[0][1][1][0][3][1] = &PixelFlush_tsp<0, 1, 1, 0, 3, 1>;
+            PixelFlush_tspFns[0][1][1][1][0][0] = &PixelFlush_tsp<0, 1, 1, 1, 0, 0>;
+            PixelFlush_tspFns[0][1][1][1][0][1] = &PixelFlush_tsp<0, 1, 1, 1, 0, 1>;
+            PixelFlush_tspFns[0][1][1][1][1][0] = &PixelFlush_tsp<0, 1, 1, 1, 1, 0>;
+            PixelFlush_tspFns[0][1][1][1][1][1] = &PixelFlush_tsp<0, 1, 1, 1, 1, 1>;
+            PixelFlush_tspFns[0][1][1][1][2][0] = &PixelFlush_tsp<0, 1, 1, 1, 2, 0>;
+            PixelFlush_tspFns[0][1][1][1][2][1] = &PixelFlush_tsp<0, 1, 1, 1, 2, 1>;
+            PixelFlush_tspFns[0][1][1][1][3][0] = &PixelFlush_tsp<0, 1, 1, 1, 3, 0>;
+            PixelFlush_tspFns[0][1][1][1][3][1] = &PixelFlush_tsp<0, 1, 1, 1, 3, 1>;
+            PixelFlush_tspFns[0][1][0][0][0][0] = &PixelFlush_tsp<0, 1, 0, 0, 0, 0>;
+            PixelFlush_tspFns[0][1][0][0][0][1] = &PixelFlush_tsp<0, 1, 0, 0, 0, 1>;
+            PixelFlush_tspFns[0][1][0][0][1][0] = &PixelFlush_tsp<0, 1, 0, 0, 1, 0>;
+            PixelFlush_tspFns[0][1][0][0][1][1] = &PixelFlush_tsp<0, 1, 0, 0, 1, 1>;
+            PixelFlush_tspFns[0][1][0][0][2][0] = &PixelFlush_tsp<0, 1, 0, 0, 2, 0>;
+            PixelFlush_tspFns[0][1][0][0][2][1] = &PixelFlush_tsp<0, 1, 0, 0, 2, 1>;
+            PixelFlush_tspFns[0][1][0][0][3][0] = &PixelFlush_tsp<0, 1, 0, 0, 3, 0>;
+            PixelFlush_tspFns[0][1][0][0][3][1] = &PixelFlush_tsp<0, 1, 0, 0, 3, 1>;
+            PixelFlush_tspFns[0][1][0][1][0][0] = &PixelFlush_tsp<0, 1, 0, 1, 0, 0>;
+            PixelFlush_tspFns[0][1][0][1][0][1] = &PixelFlush_tsp<0, 1, 0, 1, 0, 1>;
+            PixelFlush_tspFns[0][1][0][1][1][0] = &PixelFlush_tsp<0, 1, 0, 1, 1, 0>;
+            PixelFlush_tspFns[0][1][0][1][1][1] = &PixelFlush_tsp<0, 1, 0, 1, 1, 1>;
+            PixelFlush_tspFns[0][1][0][1][2][0] = &PixelFlush_tsp<0, 1, 0, 1, 2, 0>;
+            PixelFlush_tspFns[0][1][0][1][2][1] = &PixelFlush_tsp<0, 1, 0, 1, 2, 1>;
+            PixelFlush_tspFns[0][1][0][1][3][0] = &PixelFlush_tsp<0, 1, 0, 1, 3, 0>;
+            PixelFlush_tspFns[0][1][0][1][3][1] = &PixelFlush_tsp<0, 1, 0, 1, 3, 1>;
 
+            PixelFlush_tspFns[1][0][1][0][0][0] = &PixelFlush_tsp<1, 0, 1, 0, 0, 0>;
+            PixelFlush_tspFns[1][0][1][0][0][1] = &PixelFlush_tsp<1, 0, 1, 0, 0, 1>;
+            PixelFlush_tspFns[1][0][1][0][1][0] = &PixelFlush_tsp<1, 0, 1, 0, 1, 0>;
+            PixelFlush_tspFns[1][0][1][0][1][1] = &PixelFlush_tsp<1, 0, 1, 0, 1, 1>;
+            PixelFlush_tspFns[1][0][1][0][2][0] = &PixelFlush_tsp<1, 0, 1, 0, 2, 0>;
+            PixelFlush_tspFns[1][0][1][0][2][1] = &PixelFlush_tsp<1, 0, 1, 0, 2, 1>;
+            PixelFlush_tspFns[1][0][1][0][3][0] = &PixelFlush_tsp<1, 0, 1, 0, 3, 0>;
+            PixelFlush_tspFns[1][0][1][0][3][1] = &PixelFlush_tsp<1, 0, 1, 0, 3, 1>;
+            PixelFlush_tspFns[1][0][1][1][0][0] = &PixelFlush_tsp<1, 0, 1, 1, 0, 0>;
+            PixelFlush_tspFns[1][0][1][1][0][1] = &PixelFlush_tsp<1, 0, 1, 1, 0, 1>;
+            PixelFlush_tspFns[1][0][1][1][1][0] = &PixelFlush_tsp<1, 0, 1, 1, 1, 0>;
+            PixelFlush_tspFns[1][0][1][1][1][1] = &PixelFlush_tsp<1, 0, 1, 1, 1, 1>;
+            PixelFlush_tspFns[1][0][1][1][2][0] = &PixelFlush_tsp<1, 0, 1, 1, 2, 0>;
+            PixelFlush_tspFns[1][0][1][1][2][1] = &PixelFlush_tsp<1, 0, 1, 1, 2, 1>;
+            PixelFlush_tspFns[1][0][1][1][3][0] = &PixelFlush_tsp<1, 0, 1, 1, 3, 0>;
+            PixelFlush_tspFns[1][0][1][1][3][1] = &PixelFlush_tsp<1, 0, 1, 1, 3, 1>;
+            PixelFlush_tspFns[1][0][0][0][0][0] = &PixelFlush_tsp<1, 0, 0, 0, 0, 0>;
+            PixelFlush_tspFns[1][0][0][0][0][1] = &PixelFlush_tsp<1, 0, 0, 0, 0, 1>;
+            PixelFlush_tspFns[1][0][0][0][1][0] = &PixelFlush_tsp<1, 0, 0, 0, 1, 0>;
+            PixelFlush_tspFns[1][0][0][0][1][1] = &PixelFlush_tsp<1, 0, 0, 0, 1, 1>;
+            PixelFlush_tspFns[1][0][0][0][2][0] = &PixelFlush_tsp<1, 0, 0, 0, 2, 0>;
+            PixelFlush_tspFns[1][0][0][0][2][1] = &PixelFlush_tsp<1, 0, 0, 0, 2, 1>;
+            PixelFlush_tspFns[1][0][0][0][3][0] = &PixelFlush_tsp<1, 0, 0, 0, 3, 0>;
+            PixelFlush_tspFns[1][0][0][0][3][1] = &PixelFlush_tsp<1, 0, 0, 0, 3, 1>;
+            PixelFlush_tspFns[1][0][0][1][0][0] = &PixelFlush_tsp<1, 0, 0, 1, 0, 0>;
+            PixelFlush_tspFns[1][0][0][1][0][1] = &PixelFlush_tsp<1, 0, 0, 1, 0, 1>;
+            PixelFlush_tspFns[1][0][0][1][1][0] = &PixelFlush_tsp<1, 0, 0, 1, 1, 0>;
+            PixelFlush_tspFns[1][0][0][1][1][1] = &PixelFlush_tsp<1, 0, 0, 1, 1, 1>;
+            PixelFlush_tspFns[1][0][0][1][2][0] = &PixelFlush_tsp<1, 0, 0, 1, 2, 0>;
+            PixelFlush_tspFns[1][0][0][1][2][1] = &PixelFlush_tsp<1, 0, 0, 1, 2, 1>;
+            PixelFlush_tspFns[1][0][0][1][3][0] = &PixelFlush_tsp<1, 0, 0, 1, 3, 0>;
+            PixelFlush_tspFns[1][0][0][1][3][1] = &PixelFlush_tsp<1, 0, 0, 1, 3, 1>;
+            PixelFlush_tspFns[1][1][1][0][0][0] = &PixelFlush_tsp<1, 1, 1, 0, 0, 0>;
+            PixelFlush_tspFns[1][1][1][0][0][1] = &PixelFlush_tsp<1, 1, 1, 0, 0, 1>;
+            PixelFlush_tspFns[1][1][1][0][1][0] = &PixelFlush_tsp<1, 1, 1, 0, 1, 0>;
+            PixelFlush_tspFns[1][1][1][0][1][1] = &PixelFlush_tsp<1, 1, 1, 0, 1, 1>;
+            PixelFlush_tspFns[1][1][1][0][2][0] = &PixelFlush_tsp<1, 1, 1, 0, 2, 0>;
+            PixelFlush_tspFns[1][1][1][0][2][1] = &PixelFlush_tsp<1, 1, 1, 0, 2, 1>;
+            PixelFlush_tspFns[1][1][1][0][3][0] = &PixelFlush_tsp<1, 1, 1, 0, 3, 0>;
+            PixelFlush_tspFns[1][1][1][0][3][1] = &PixelFlush_tsp<1, 1, 1, 0, 3, 1>;
+            PixelFlush_tspFns[1][1][1][1][0][0] = &PixelFlush_tsp<1, 1, 1, 1, 0, 0>;
+            PixelFlush_tspFns[1][1][1][1][0][1] = &PixelFlush_tsp<1, 1, 1, 1, 0, 1>;
+            PixelFlush_tspFns[1][1][1][1][1][0] = &PixelFlush_tsp<1, 1, 1, 1, 1, 0>;
+            PixelFlush_tspFns[1][1][1][1][1][1] = &PixelFlush_tsp<1, 1, 1, 1, 1, 1>;
+            PixelFlush_tspFns[1][1][1][1][2][0] = &PixelFlush_tsp<1, 1, 1, 1, 2, 0>;
+            PixelFlush_tspFns[1][1][1][1][2][1] = &PixelFlush_tsp<1, 1, 1, 1, 2, 1>;
+            PixelFlush_tspFns[1][1][1][1][3][0] = &PixelFlush_tsp<1, 1, 1, 1, 3, 0>;
+            PixelFlush_tspFns[1][1][1][1][3][1] = &PixelFlush_tsp<1, 1, 1, 1, 3, 1>;
+            PixelFlush_tspFns[1][1][0][0][0][0] = &PixelFlush_tsp<1, 1, 0, 0, 0, 0>;
+            PixelFlush_tspFns[1][1][0][0][0][1] = &PixelFlush_tsp<1, 1, 0, 0, 0, 1>;
+            PixelFlush_tspFns[1][1][0][0][1][0] = &PixelFlush_tsp<1, 1, 0, 0, 1, 0>;
+            PixelFlush_tspFns[1][1][0][0][1][1] = &PixelFlush_tsp<1, 1, 0, 0, 1, 1>;
+            PixelFlush_tspFns[1][1][0][0][2][0] = &PixelFlush_tsp<1, 1, 0, 0, 2, 0>;
+            PixelFlush_tspFns[1][1][0][0][2][1] = &PixelFlush_tsp<1, 1, 0, 0, 2, 1>;
+            PixelFlush_tspFns[1][1][0][0][3][0] = &PixelFlush_tsp<1, 1, 0, 0, 3, 0>;
+            PixelFlush_tspFns[1][1][0][0][3][1] = &PixelFlush_tsp<1, 1, 0, 0, 3, 1>;
+            PixelFlush_tspFns[1][1][0][1][0][0] = &PixelFlush_tsp<1, 1, 0, 1, 0, 0>;
+            PixelFlush_tspFns[1][1][0][1][0][1] = &PixelFlush_tsp<1, 1, 0, 1, 0, 1>;
+            PixelFlush_tspFns[1][1][0][1][1][0] = &PixelFlush_tsp<1, 1, 0, 1, 1, 0>;
+            PixelFlush_tspFns[1][1][0][1][1][1] = &PixelFlush_tsp<1, 1, 0, 1, 1, 1>;
+            PixelFlush_tspFns[1][1][0][1][2][0] = &PixelFlush_tsp<1, 1, 0, 1, 2, 0>;
+            PixelFlush_tspFns[1][1][0][1][2][1] = &PixelFlush_tsp<1, 1, 0, 1, 2, 1>;
+            PixelFlush_tspFns[1][1][0][1][3][0] = &PixelFlush_tsp<1, 1, 0, 1, 3, 0>;
+            PixelFlush_tspFns[1][1][0][1][3][1] = &PixelFlush_tsp<1, 1, 0, 1, 3, 1>;
 
-            RendtriangleFns[2][0][1][0][0][0] = &Rendtriangle<2, 0, 1, 0, 0, 0>;
-            RendtriangleFns[2][0][1][0][0][1] = &Rendtriangle<2, 0, 1, 0, 0, 1>;
-            RendtriangleFns[2][0][1][0][1][0] = &Rendtriangle<2, 0, 1, 0, 1, 0>;
-            RendtriangleFns[2][0][1][0][1][1] = &Rendtriangle<2, 0, 1, 0, 1, 1>;
-            RendtriangleFns[2][0][1][0][2][0] = &Rendtriangle<2, 0, 1, 0, 2, 0>;
-            RendtriangleFns[2][0][1][0][2][1] = &Rendtriangle<2, 0, 1, 0, 2, 1>;
-            RendtriangleFns[2][0][1][0][3][0] = &Rendtriangle<2, 0, 1, 0, 3, 0>;
-            RendtriangleFns[2][0][1][0][3][1] = &Rendtriangle<2, 0, 1, 0, 3, 1>;
-            RendtriangleFns[2][0][1][1][0][0] = &Rendtriangle<2, 0, 1, 1, 0, 0>;
-            RendtriangleFns[2][0][1][1][0][1] = &Rendtriangle<2, 0, 1, 1, 0, 1>;
-            RendtriangleFns[2][0][1][1][1][0] = &Rendtriangle<2, 0, 1, 1, 1, 0>;
-            RendtriangleFns[2][0][1][1][1][1] = &Rendtriangle<2, 0, 1, 1, 1, 1>;
-            RendtriangleFns[2][0][1][1][2][0] = &Rendtriangle<2, 0, 1, 1, 2, 0>;
-            RendtriangleFns[2][0][1][1][2][1] = &Rendtriangle<2, 0, 1, 1, 2, 1>;
-            RendtriangleFns[2][0][1][1][3][0] = &Rendtriangle<2, 0, 1, 1, 3, 0>;
-            RendtriangleFns[2][0][1][1][3][1] = &Rendtriangle<2, 0, 1, 1, 3, 1>;
-            RendtriangleFns[2][0][0][0][0][0] = &Rendtriangle<2, 0, 0, 0, 0, 0>;
-            RendtriangleFns[2][0][0][0][0][1] = &Rendtriangle<2, 0, 0, 0, 0, 1>;
-            RendtriangleFns[2][0][0][0][1][0] = &Rendtriangle<2, 0, 0, 0, 1, 0>;
-            RendtriangleFns[2][0][0][0][1][1] = &Rendtriangle<2, 0, 0, 0, 1, 1>;
-            RendtriangleFns[2][0][0][0][2][0] = &Rendtriangle<2, 0, 0, 0, 2, 0>;
-            RendtriangleFns[2][0][0][0][2][1] = &Rendtriangle<2, 0, 0, 0, 2, 1>;
-            RendtriangleFns[2][0][0][0][3][0] = &Rendtriangle<2, 0, 0, 0, 3, 0>;
-            RendtriangleFns[2][0][0][0][3][1] = &Rendtriangle<2, 0, 0, 0, 3, 1>;
-            RendtriangleFns[2][0][0][1][0][0] = &Rendtriangle<2, 0, 0, 1, 0, 0>;
-            RendtriangleFns[2][0][0][1][0][1] = &Rendtriangle<2, 0, 0, 1, 0, 1>;
-            RendtriangleFns[2][0][0][1][1][0] = &Rendtriangle<2, 0, 0, 1, 1, 0>;
-            RendtriangleFns[2][0][0][1][1][1] = &Rendtriangle<2, 0, 0, 1, 1, 1>;
-            RendtriangleFns[2][0][0][1][2][0] = &Rendtriangle<2, 0, 0, 1, 2, 0>;
-            RendtriangleFns[2][0][0][1][2][1] = &Rendtriangle<2, 0, 0, 1, 2, 1>;
-            RendtriangleFns[2][0][0][1][3][0] = &Rendtriangle<2, 0, 0, 1, 3, 0>;
-            RendtriangleFns[2][0][0][1][3][1] = &Rendtriangle<2, 0, 0, 1, 3, 1>;
-            RendtriangleFns[2][1][1][0][0][0] = &Rendtriangle<2, 1, 1, 0, 0, 0>;
-            RendtriangleFns[2][1][1][0][0][1] = &Rendtriangle<2, 1, 1, 0, 0, 1>;
-            RendtriangleFns[2][1][1][0][1][0] = &Rendtriangle<2, 1, 1, 0, 1, 0>;
-            RendtriangleFns[2][1][1][0][1][1] = &Rendtriangle<2, 1, 1, 0, 1, 1>;
-            RendtriangleFns[2][1][1][0][2][0] = &Rendtriangle<2, 1, 1, 0, 2, 0>;
-            RendtriangleFns[2][1][1][0][2][1] = &Rendtriangle<2, 1, 1, 0, 2, 1>;
-            RendtriangleFns[2][1][1][0][3][0] = &Rendtriangle<2, 1, 1, 0, 3, 0>;
-            RendtriangleFns[2][1][1][0][3][1] = &Rendtriangle<2, 1, 1, 0, 3, 1>;
-            RendtriangleFns[2][1][1][1][0][0] = &Rendtriangle<2, 1, 1, 1, 0, 0>;
-            RendtriangleFns[2][1][1][1][0][1] = &Rendtriangle<2, 1, 1, 1, 0, 1>;
-            RendtriangleFns[2][1][1][1][1][0] = &Rendtriangle<2, 1, 1, 1, 1, 0>;
-            RendtriangleFns[2][1][1][1][1][1] = &Rendtriangle<2, 1, 1, 1, 1, 1>;
-            RendtriangleFns[2][1][1][1][2][0] = &Rendtriangle<2, 1, 1, 1, 2, 0>;
-            RendtriangleFns[2][1][1][1][2][1] = &Rendtriangle<2, 1, 1, 1, 2, 1>;
-            RendtriangleFns[2][1][1][1][3][0] = &Rendtriangle<2, 1, 1, 1, 3, 0>;
-            RendtriangleFns[2][1][1][1][3][1] = &Rendtriangle<2, 1, 1, 1, 3, 1>;
-            RendtriangleFns[2][1][0][0][0][0] = &Rendtriangle<2, 1, 0, 0, 0, 0>;
-            RendtriangleFns[2][1][0][0][0][1] = &Rendtriangle<2, 1, 0, 0, 0, 1>;
-            RendtriangleFns[2][1][0][0][1][0] = &Rendtriangle<2, 1, 0, 0, 1, 0>;
-            RendtriangleFns[2][1][0][0][1][1] = &Rendtriangle<2, 1, 0, 0, 1, 1>;
-            RendtriangleFns[2][1][0][0][2][0] = &Rendtriangle<2, 1, 0, 0, 2, 0>;
-            RendtriangleFns[2][1][0][0][2][1] = &Rendtriangle<2, 1, 0, 0, 2, 1>;
-            RendtriangleFns[2][1][0][0][3][0] = &Rendtriangle<2, 1, 0, 0, 3, 0>;
-            RendtriangleFns[2][1][0][0][3][1] = &Rendtriangle<2, 1, 0, 0, 3, 1>;
-            RendtriangleFns[2][1][0][1][0][0] = &Rendtriangle<2, 1, 0, 1, 0, 0>;
-            RendtriangleFns[2][1][0][1][0][1] = &Rendtriangle<2, 1, 0, 1, 0, 1>;
-            RendtriangleFns[2][1][0][1][1][0] = &Rendtriangle<2, 1, 0, 1, 1, 0>;
-            RendtriangleFns[2][1][0][1][1][1] = &Rendtriangle<2, 1, 0, 1, 1, 1>;
-            RendtriangleFns[2][1][0][1][2][0] = &Rendtriangle<2, 1, 0, 1, 2, 0>;
-            RendtriangleFns[2][1][0][1][2][1] = &Rendtriangle<2, 1, 0, 1, 2, 1>;
-            RendtriangleFns[2][1][0][1][3][0] = &Rendtriangle<2, 1, 0, 1, 3, 0>;
-            RendtriangleFns[2][1][0][1][3][1] = &Rendtriangle<2, 1, 0, 1, 3, 1>;
-
-            RendBGPFns[0][1][0][0][0] = &RendBGP<0, 0, 1, 0, 0, 0>;
-            RendBGPFns[0][1][0][0][1] = &RendBGP<0, 0, 1, 0, 0, 1>;
-            RendBGPFns[0][1][0][1][0] = &RendBGP<0, 0, 1, 0, 1, 0>;
-            RendBGPFns[0][1][0][1][1] = &RendBGP<0, 0, 1, 0, 1, 1>;
-            RendBGPFns[0][1][0][2][0] = &RendBGP<0, 0, 1, 0, 2, 0>;
-            RendBGPFns[0][1][0][2][1] = &RendBGP<0, 0, 1, 0, 2, 1>;
-            RendBGPFns[0][1][0][3][0] = &RendBGP<0, 0, 1, 0, 3, 0>;
-            RendBGPFns[0][1][0][3][1] = &RendBGP<0, 0, 1, 0, 3, 1>;
-            RendBGPFns[0][1][1][0][0] = &RendBGP<0, 0, 1, 1, 0, 0>;
-            RendBGPFns[0][1][1][0][1] = &RendBGP<0, 0, 1, 1, 0, 1>;
-            RendBGPFns[0][1][1][1][0] = &RendBGP<0, 0, 1, 1, 1, 0>;
-            RendBGPFns[0][1][1][1][1] = &RendBGP<0, 0, 1, 1, 1, 1>;
-            RendBGPFns[0][1][1][2][0] = &RendBGP<0, 0, 1, 1, 2, 0>;
-            RendBGPFns[0][1][1][2][1] = &RendBGP<0, 0, 1, 1, 2, 1>;
-            RendBGPFns[0][1][1][3][0] = &RendBGP<0, 0, 1, 1, 3, 0>;
-            RendBGPFns[0][1][1][3][1] = &RendBGP<0, 0, 1, 1, 3, 1>;
-            RendBGPFns[0][0][0][0][0] = &RendBGP<0, 0, 0, 0, 0, 0>;
-            RendBGPFns[0][0][0][0][1] = &RendBGP<0, 0, 0, 0, 0, 1>;
-            RendBGPFns[0][0][0][1][0] = &RendBGP<0, 0, 0, 0, 1, 0>;
-            RendBGPFns[0][0][0][1][1] = &RendBGP<0, 0, 0, 0, 1, 1>;
-            RendBGPFns[0][0][0][2][0] = &RendBGP<0, 0, 0, 0, 2, 0>;
-            RendBGPFns[0][0][0][2][1] = &RendBGP<0, 0, 0, 0, 2, 1>;
-            RendBGPFns[0][0][0][3][0] = &RendBGP<0, 0, 0, 0, 3, 0>;
-            RendBGPFns[0][0][0][3][1] = &RendBGP<0, 0, 0, 0, 3, 1>;
-            RendBGPFns[0][0][1][0][0] = &RendBGP<0, 0, 0, 1, 0, 0>;
-            RendBGPFns[0][0][1][0][1] = &RendBGP<0, 0, 0, 1, 0, 1>;
-            RendBGPFns[0][0][1][1][0] = &RendBGP<0, 0, 0, 1, 1, 0>;
-            RendBGPFns[0][0][1][1][1] = &RendBGP<0, 0, 0, 1, 1, 1>;
-            RendBGPFns[0][0][1][2][0] = &RendBGP<0, 0, 0, 1, 2, 0>;
-            RendBGPFns[0][0][1][2][1] = &RendBGP<0, 0, 0, 1, 2, 1>;
-            RendBGPFns[0][0][1][3][0] = &RendBGP<0, 0, 0, 1, 3, 0>;
-            RendBGPFns[0][0][1][3][1] = &RendBGP<0, 0, 0, 1, 3, 1>;
-            RendBGPFns[1][1][0][0][0] = &RendBGP<0, 1, 1, 0, 0, 0>;
-            RendBGPFns[1][1][0][0][1] = &RendBGP<0, 1, 1, 0, 0, 1>;
-            RendBGPFns[1][1][0][1][0] = &RendBGP<0, 1, 1, 0, 1, 0>;
-            RendBGPFns[1][1][0][1][1] = &RendBGP<0, 1, 1, 0, 1, 1>;
-            RendBGPFns[1][1][0][2][0] = &RendBGP<0, 1, 1, 0, 2, 0>;
-            RendBGPFns[1][1][0][2][1] = &RendBGP<0, 1, 1, 0, 2, 1>;
-            RendBGPFns[1][1][0][3][0] = &RendBGP<0, 1, 1, 0, 3, 0>;
-            RendBGPFns[1][1][0][3][1] = &RendBGP<0, 1, 1, 0, 3, 1>;
-            RendBGPFns[1][1][1][0][0] = &RendBGP<0, 1, 1, 1, 0, 0>;
-            RendBGPFns[1][1][1][0][1] = &RendBGP<0, 1, 1, 1, 0, 1>;
-            RendBGPFns[1][1][1][1][0] = &RendBGP<0, 1, 1, 1, 1, 0>;
-            RendBGPFns[1][1][1][1][1] = &RendBGP<0, 1, 1, 1, 1, 1>;
-            RendBGPFns[1][1][1][2][0] = &RendBGP<0, 1, 1, 1, 2, 0>;
-            RendBGPFns[1][1][1][2][1] = &RendBGP<0, 1, 1, 1, 2, 1>;
-            RendBGPFns[1][1][1][3][0] = &RendBGP<0, 1, 1, 1, 3, 0>;
-            RendBGPFns[1][1][1][3][1] = &RendBGP<0, 1, 1, 1, 3, 1>;
-            RendBGPFns[1][0][0][0][0] = &RendBGP<0, 1, 0, 0, 0, 0>;
-            RendBGPFns[1][0][0][0][1] = &RendBGP<0, 1, 0, 0, 0, 1>;
-            RendBGPFns[1][0][0][1][0] = &RendBGP<0, 1, 0, 0, 1, 0>;
-            RendBGPFns[1][0][0][1][1] = &RendBGP<0, 1, 0, 0, 1, 1>;
-            RendBGPFns[1][0][0][2][0] = &RendBGP<0, 1, 0, 0, 2, 0>;
-            RendBGPFns[1][0][0][2][1] = &RendBGP<0, 1, 0, 0, 2, 1>;
-            RendBGPFns[1][0][0][3][0] = &RendBGP<0, 1, 0, 0, 3, 0>;
-            RendBGPFns[1][0][0][3][1] = &RendBGP<0, 1, 0, 0, 3, 1>;
-            RendBGPFns[1][0][1][0][0] = &RendBGP<0, 1, 0, 1, 0, 0>;
-            RendBGPFns[1][0][1][0][1] = &RendBGP<0, 1, 0, 1, 0, 1>;
-            RendBGPFns[1][0][1][1][0] = &RendBGP<0, 1, 0, 1, 1, 0>;
-            RendBGPFns[1][0][1][1][1] = &RendBGP<0, 1, 0, 1, 1, 1>;
-            RendBGPFns[1][0][1][2][0] = &RendBGP<0, 1, 0, 1, 2, 0>;
-            RendBGPFns[1][0][1][2][1] = &RendBGP<0, 1, 0, 1, 2, 1>;
-            RendBGPFns[1][0][1][3][0] = &RendBGP<0, 1, 0, 1, 3, 0>;
-            RendBGPFns[1][0][1][3][1] = &RendBGP<0, 1, 0, 1, 3, 1>;
+            PixelFlush_tspFns[2][0][1][0][0][0] = &PixelFlush_tsp<2, 0, 1, 0, 0, 0>;
+            PixelFlush_tspFns[2][0][1][0][0][1] = &PixelFlush_tsp<2, 0, 1, 0, 0, 1>;
+            PixelFlush_tspFns[2][0][1][0][1][0] = &PixelFlush_tsp<2, 0, 1, 0, 1, 0>;
+            PixelFlush_tspFns[2][0][1][0][1][1] = &PixelFlush_tsp<2, 0, 1, 0, 1, 1>;
+            PixelFlush_tspFns[2][0][1][0][2][0] = &PixelFlush_tsp<2, 0, 1, 0, 2, 0>;
+            PixelFlush_tspFns[2][0][1][0][2][1] = &PixelFlush_tsp<2, 0, 1, 0, 2, 1>;
+            PixelFlush_tspFns[2][0][1][0][3][0] = &PixelFlush_tsp<2, 0, 1, 0, 3, 0>;
+            PixelFlush_tspFns[2][0][1][0][3][1] = &PixelFlush_tsp<2, 0, 1, 0, 3, 1>;
+            PixelFlush_tspFns[2][0][1][1][0][0] = &PixelFlush_tsp<2, 0, 1, 1, 0, 0>;
+            PixelFlush_tspFns[2][0][1][1][0][1] = &PixelFlush_tsp<2, 0, 1, 1, 0, 1>;
+            PixelFlush_tspFns[2][0][1][1][1][0] = &PixelFlush_tsp<2, 0, 1, 1, 1, 0>;
+            PixelFlush_tspFns[2][0][1][1][1][1] = &PixelFlush_tsp<2, 0, 1, 1, 1, 1>;
+            PixelFlush_tspFns[2][0][1][1][2][0] = &PixelFlush_tsp<2, 0, 1, 1, 2, 0>;
+            PixelFlush_tspFns[2][0][1][1][2][1] = &PixelFlush_tsp<2, 0, 1, 1, 2, 1>;
+            PixelFlush_tspFns[2][0][1][1][3][0] = &PixelFlush_tsp<2, 0, 1, 1, 3, 0>;
+            PixelFlush_tspFns[2][0][1][1][3][1] = &PixelFlush_tsp<2, 0, 1, 1, 3, 1>;
+            PixelFlush_tspFns[2][0][0][0][0][0] = &PixelFlush_tsp<2, 0, 0, 0, 0, 0>;
+            PixelFlush_tspFns[2][0][0][0][0][1] = &PixelFlush_tsp<2, 0, 0, 0, 0, 1>;
+            PixelFlush_tspFns[2][0][0][0][1][0] = &PixelFlush_tsp<2, 0, 0, 0, 1, 0>;
+            PixelFlush_tspFns[2][0][0][0][1][1] = &PixelFlush_tsp<2, 0, 0, 0, 1, 1>;
+            PixelFlush_tspFns[2][0][0][0][2][0] = &PixelFlush_tsp<2, 0, 0, 0, 2, 0>;
+            PixelFlush_tspFns[2][0][0][0][2][1] = &PixelFlush_tsp<2, 0, 0, 0, 2, 1>;
+            PixelFlush_tspFns[2][0][0][0][3][0] = &PixelFlush_tsp<2, 0, 0, 0, 3, 0>;
+            PixelFlush_tspFns[2][0][0][0][3][1] = &PixelFlush_tsp<2, 0, 0, 0, 3, 1>;
+            PixelFlush_tspFns[2][0][0][1][0][0] = &PixelFlush_tsp<2, 0, 0, 1, 0, 0>;
+            PixelFlush_tspFns[2][0][0][1][0][1] = &PixelFlush_tsp<2, 0, 0, 1, 0, 1>;
+            PixelFlush_tspFns[2][0][0][1][1][0] = &PixelFlush_tsp<2, 0, 0, 1, 1, 0>;
+            PixelFlush_tspFns[2][0][0][1][1][1] = &PixelFlush_tsp<2, 0, 0, 1, 1, 1>;
+            PixelFlush_tspFns[2][0][0][1][2][0] = &PixelFlush_tsp<2, 0, 0, 1, 2, 0>;
+            PixelFlush_tspFns[2][0][0][1][2][1] = &PixelFlush_tsp<2, 0, 0, 1, 2, 1>;
+            PixelFlush_tspFns[2][0][0][1][3][0] = &PixelFlush_tsp<2, 0, 0, 1, 3, 0>;
+            PixelFlush_tspFns[2][0][0][1][3][1] = &PixelFlush_tsp<2, 0, 0, 1, 3, 1>;
+            PixelFlush_tspFns[2][1][1][0][0][0] = &PixelFlush_tsp<2, 1, 1, 0, 0, 0>;
+            PixelFlush_tspFns[2][1][1][0][0][1] = &PixelFlush_tsp<2, 1, 1, 0, 0, 1>;
+            PixelFlush_tspFns[2][1][1][0][1][0] = &PixelFlush_tsp<2, 1, 1, 0, 1, 0>;
+            PixelFlush_tspFns[2][1][1][0][1][1] = &PixelFlush_tsp<2, 1, 1, 0, 1, 1>;
+            PixelFlush_tspFns[2][1][1][0][2][0] = &PixelFlush_tsp<2, 1, 1, 0, 2, 0>;
+            PixelFlush_tspFns[2][1][1][0][2][1] = &PixelFlush_tsp<2, 1, 1, 0, 2, 1>;
+            PixelFlush_tspFns[2][1][1][0][3][0] = &PixelFlush_tsp<2, 1, 1, 0, 3, 0>;
+            PixelFlush_tspFns[2][1][1][0][3][1] = &PixelFlush_tsp<2, 1, 1, 0, 3, 1>;
+            PixelFlush_tspFns[2][1][1][1][0][0] = &PixelFlush_tsp<2, 1, 1, 1, 0, 0>;
+            PixelFlush_tspFns[2][1][1][1][0][1] = &PixelFlush_tsp<2, 1, 1, 1, 0, 1>;
+            PixelFlush_tspFns[2][1][1][1][1][0] = &PixelFlush_tsp<2, 1, 1, 1, 1, 0>;
+            PixelFlush_tspFns[2][1][1][1][1][1] = &PixelFlush_tsp<2, 1, 1, 1, 1, 1>;
+            PixelFlush_tspFns[2][1][1][1][2][0] = &PixelFlush_tsp<2, 1, 1, 1, 2, 0>;
+            PixelFlush_tspFns[2][1][1][1][2][1] = &PixelFlush_tsp<2, 1, 1, 1, 2, 1>;
+            PixelFlush_tspFns[2][1][1][1][3][0] = &PixelFlush_tsp<2, 1, 1, 1, 3, 0>;
+            PixelFlush_tspFns[2][1][1][1][3][1] = &PixelFlush_tsp<2, 1, 1, 1, 3, 1>;
+            PixelFlush_tspFns[2][1][0][0][0][0] = &PixelFlush_tsp<2, 1, 0, 0, 0, 0>;
+            PixelFlush_tspFns[2][1][0][0][0][1] = &PixelFlush_tsp<2, 1, 0, 0, 0, 1>;
+            PixelFlush_tspFns[2][1][0][0][1][0] = &PixelFlush_tsp<2, 1, 0, 0, 1, 0>;
+            PixelFlush_tspFns[2][1][0][0][1][1] = &PixelFlush_tsp<2, 1, 0, 0, 1, 1>;
+            PixelFlush_tspFns[2][1][0][0][2][0] = &PixelFlush_tsp<2, 1, 0, 0, 2, 0>;
+            PixelFlush_tspFns[2][1][0][0][2][1] = &PixelFlush_tsp<2, 1, 0, 0, 2, 1>;
+            PixelFlush_tspFns[2][1][0][0][3][0] = &PixelFlush_tsp<2, 1, 0, 0, 3, 0>;
+            PixelFlush_tspFns[2][1][0][0][3][1] = &PixelFlush_tsp<2, 1, 0, 0, 3, 1>;
+            PixelFlush_tspFns[2][1][0][1][0][0] = &PixelFlush_tsp<2, 1, 0, 1, 0, 0>;
+            PixelFlush_tspFns[2][1][0][1][0][1] = &PixelFlush_tsp<2, 1, 0, 1, 0, 1>;
+            PixelFlush_tspFns[2][1][0][1][1][0] = &PixelFlush_tsp<2, 1, 0, 1, 1, 0>;
+            PixelFlush_tspFns[2][1][0][1][1][1] = &PixelFlush_tsp<2, 1, 0, 1, 1, 1>;
+            PixelFlush_tspFns[2][1][0][1][2][0] = &PixelFlush_tsp<2, 1, 0, 1, 2, 0>;
+            PixelFlush_tspFns[2][1][0][1][2][1] = &PixelFlush_tsp<2, 1, 0, 1, 2, 1>;
+            PixelFlush_tspFns[2][1][0][1][3][0] = &PixelFlush_tsp<2, 1, 0, 1, 3, 0>;
+            PixelFlush_tspFns[2][1][0][1][3][1] = &PixelFlush_tsp<2, 1, 0, 1, 3, 1>;
         }
-#undef Rendtriangle
-#undef RendBGP
+#undef PixelFlush_tsp
 
         return true;
     }

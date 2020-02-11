@@ -258,6 +258,15 @@ void rglSamplerParameteri(	GLuint sampler,
 #endif
 }
 
+void rglSamplerParameterf(	GLuint sampler,
+ 	GLenum pname,
+ 	GLfloat param)
+{
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) && defined(HAVE_OPENGLES3)
+   glSamplerParameterf(sampler, pname, param);
+#endif
+}
+
 void rglGenSamplers(	GLsizei n,
  	GLuint *samplers)
 {

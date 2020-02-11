@@ -44,6 +44,7 @@ RETRO_BEGIN_DECLS
 #define glDeleteSamplers            rglDeleteSamplers
 #define glBindSampler               rglBindSampler
 #define glSamplerParameteri         rglSamplerParameteri
+#define glSamplerParameterf         rglSamplerParameterf
 #define glGetBufferSubData          rglGetBufferSubData
 #define glUniform2iv                rglUniform2iv
 #define glUniform2uiv               rglUniform2uiv
@@ -467,6 +468,9 @@ void rglGetBufferSubData(	GLenum target,
 void rglSamplerParameteri(	GLuint sampler,
  	GLenum pname,
  	GLint param);
+void rglSamplerParameterf(	GLuint sampler,
+ 	GLenum pname,
+ 	GLfloat param);
 void rglBindSampler(	GLuint unit,
  	GLuint sampler);
 void rglGenSamplers(	GLsizei n,

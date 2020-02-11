@@ -535,7 +535,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       CORE_OPTION_NAME "_anisotropic_filtering",
       "Anisotropic Filtering",
-      "Enhance the quality of textures on surfaces that are at oblique viewing angles with respect to the camera. Vulkan only.",
+      "Enhance the quality of textures on surfaces that are at oblique viewing angles with respect to the camera.",
       {
          { "off", "disabled" },
          { "2",  NULL },

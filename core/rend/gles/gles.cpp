@@ -1,4 +1,5 @@
 #include <math.h>
+#include <string.h>
 
 #include <libretro.h>
 
@@ -450,6 +451,11 @@ void findGLVersion()
          gl.fog_image_format = GL_ALPHA;
       }
    }
+	const char* extensions = (const char *)glGetString(GL_EXTENSIONS);
+	if (strstr(extensions, "GL_EXT_texture_filter_anisotropic"))
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl.max_anisotropy);
+	else
+		gl.max_anisotropy = 1.f;
 }
 
 GLuint gl_CompileShader(const char* shader,GLuint type)

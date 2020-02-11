@@ -8,6 +8,13 @@
 #include <glsm/glsmsym.h>
 #include "glcache.h"
 
+#ifndef TEXTURE_MAX_ANISOTROPY_EXT
+#define TEXTURE_MAX_ANISOTROPY_EXT 0x84FE
+#endif
+#ifndef MAX_TEXTURE_MAX_ANISOTROPY_EXT
+#define MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
+#endif
+
 #define VERTEX_POS_ARRAY      0
 #define VERTEX_COL_BASE_ARRAY 1
 #define VERTEX_COL_OFFS_ARRAY 2
@@ -79,6 +86,7 @@ struct gl_ctx
    GLuint fog_image_format;
    GLenum index_type;
    bool stencil_present;
+   f32 max_anisotropy;
 
    size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };

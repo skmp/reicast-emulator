@@ -200,6 +200,19 @@ __forceinline static void SetGPState(const PolyParam* gp,u32 cflip=0)
 		//PowerVR supports also trilinear via two passes, but we ignore that for now
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (gp->tcw.MipMapped && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		if (gl.max_anisotropy > 1.f)
+		{
+			if (settings.rend.AnisotropicFiltering > 1)
+			{
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
+						std::min((f32)settings.rend.AnisotropicFiltering, gl.max_anisotropy));
+				// Set the recommended minification filter for best results
+				if (gp->tcw.MipMapped && settings.rend.UseMipmaps)
+					glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			}
+			else
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.f);
+		}
 	}
 
 	// Apparently punch-through polys support blending, or at least some combinations

@@ -73,6 +73,7 @@
 #include <smmintrin.h>
 
 #include <cmath>
+#include <float.h>
 
 #include "rend/gles/gles.h"
 #include "gui/gui.h"
@@ -231,7 +232,9 @@ static __forceinline bool EvalHalfSpaceAll(float cp12, float cp23, float cp31)
     return svt;
 }
 
-
+/*
+    Surface equation solver
+*/
 struct PlaneStepper3
 {
     float ddx, ddy;
@@ -261,6 +264,9 @@ struct PlaneStepper3
     }
 };
 
+/*
+    Interpolation helper
+*/
 struct IPs3
 {
     PlaneStepper3 U;
@@ -294,7 +300,7 @@ struct IPs3
 
 struct refrend;
 
-//<alpha_blend, pp_UseAlpha, pp_Texture, pp_IgnoreTexA, pp_ShadInstr, pp_Offset >
+// lookup tables
 typedef bool(*PixelFlush_tspFn)(const text_info *texture, float x, float y, u8 *pb, IPs3 &ip);
 static PixelFlush_tspFn PixelFlush_tspFns[3][2][2][2][4][2];
 
@@ -304,9 +310,14 @@ static BITMAPINFOHEADER bi = { sizeof(BITMAPINFOHEADER), 0, 0, 1, 32, BI_RGB };
 
 bool gles_init();
 
+/*
+    Main renderer class
+*/
 struct refrend : Renderer
 {
     u8* vram;
+
+    // Used for deferred TSP processing lookups
     struct CacheEntry
     {
         IPs3 ips;
@@ -319,6 +330,7 @@ struct refrend : Renderer
 
     refrend(u8* vram) : vram(vram) { }
 
+    // Texture and shade a pixel
     TPL_DECL_pixel 
     static bool PixelFlush_tsp(const text_info *texture, float x, float y, u8 *pb, IPs3 &ip)
     {
@@ -457,9 +469,10 @@ struct refrend : Renderer
         }
     }
 
-    ISP_BACKGND_T_type cache_tag = { -1 };
+    ISP_BACKGND_T_type cache_tag;
     CacheEntry* cache_entry;
 
+    // Lookup/create cached TSP parameters, and call PixelFlush_tsp
     bool PixelFlush_tsp_cached(int alpha_mode, float x, float y, u8 *pb, ISP_BACKGND_T_type tag)
     {
         if (tag.full == 0)
@@ -499,6 +512,7 @@ struct refrend : Renderer
         }
     }
 
+    // Depth processing for a pixel -- alpha_mode 0: OPAQ, 1: PT, 2: TRANS
     template <int alpha_mode>
     void PixelFlush_isp(float x, float y, u8 *pb, PlaneStepper3 &Z, ISP_BACKGND_T_type tag)
     {
@@ -517,25 +531,29 @@ struct refrend : Renderer
     verify((uintptr_t)zb < ((uintptr_t)&render_buffer[0] + sizeof(render_buffer)));
 #endif
 
-        // Z test
-
+        // OPAQ
         if (alpha_mode == 0)
         {
+            // Z pre-pass only
             if (invW < *zb)
                 return;
 
             *zb = invW;
             *(u32*)pb = tag.full;
         }
+        // PT
         else if (alpha_mode == 1)
         {
+            // Z + TSP syncronized for alpha test
             if (invW < *zb)
                 return;
+
             if (PixelFlush_tsp_cached(alpha_mode, x, y, pb, tag))
             {
                 *zb = invW;
             }
         }
+        // Layer Peeling. zb2 holds the reference depth, zb is used to find closest to reference
         else if (alpha_mode == 2)
         {
             if (invW <= *zb2)
@@ -551,7 +569,10 @@ struct refrend : Renderer
         }
     }
 
+    // Used by layer peeling to determine end of processing
     int PixelsDrawn;
+
+    // Rasterize a single triangle to ISP (or ISP+TSP for PT)
     template<int alpha_mode>
     void Rendtriangle(DrawParameters* params, ISP_BACKGND_T_type tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area)
     {
@@ -570,7 +591,7 @@ struct refrend : Renderer
 
         int sgn = 1;
 
-        // Deltas
+        // cull
         {
             //area: (X1-X3)*(Y2-Y3)-(Y1-Y3)*(X2-X3)
             float area = ((X1 - X3) * (Y2 - Y3) - (Y1 - Y3) * (X2 - X3));
@@ -596,14 +617,6 @@ struct refrend : Renderer
             }
         }
 
-        const float DX12 = sgn * (X1 - X2);
-        const float DX23 = sgn * (X2 - X3);
-        const float DX31 = sgn * (X3 - X1);
-
-        const float DY12 = sgn * (Y1 - Y2);
-        const float DY23 = sgn * (Y2 - Y3);
-        const float DY31 = sgn * (Y3 - Y1);
-
         // Bounding rectangle
         int minx = iround(mmin(X1, X2, X3, area->left));
         int miny = iround(mmin(Y1, Y2, Y3, area->top));
@@ -616,6 +629,14 @@ struct refrend : Renderer
             return;
 
         // Half-edge constants
+        const float DX12 = sgn * (X1 - X2);
+        const float DX23 = sgn * (X2 - X3);
+        const float DX31 = sgn * (X3 - X1);
+
+        const float DY12 = sgn * (Y1 - Y2);
+        const float DY23 = sgn * (Y2 - Y3);
+        const float DY31 = sgn * (Y3 - Y1);
+
         float C1 = DY12 * X1 - DX12 * Y1;
         float C2 = DY23 * X2 - DX23 * Y2;
         float C3 = DY31 * X3 - DX31 * Y3;
@@ -635,7 +656,7 @@ struct refrend : Renderer
         float y_ps = miny;
         float minx_ps = minx;
 
-        // Loop through blocks
+        // Loop through pixels
         for (int y = spany; y > 0; y -= 1)
         {
             float Xhs12 = hs12;
@@ -649,10 +670,8 @@ struct refrend : Renderer
                 Xhs23 -= DY23;
                 Xhs31 -= DY31;
 
-                // Corners of block
                 bool inTriangle = EvalHalfSpaceAll(Xhs12, Xhs23, Xhs31);
 
-                // Skip block when outside an edge
                 if (inTriangle)
                 {
                     PixelFlush_isp<alpha_mode>(x_ps, y_ps, cb_x, Z, tag);
@@ -683,11 +702,14 @@ struct refrend : Renderer
     }
 
 
+    // called on vblank
     virtual bool RenderFramebuffer() {
         Present();
         return false;
     }
 
+    // Render to ACCUM from TAG buffer
+    // TAG holds references to triangles, ACCUM is the tile framebuffer
     void RenderParamTags(int alpha_mode, int tileX, int tileY) {
 
         auto pb = reinterpret_cast<ISP_BACKGND_T_type*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
@@ -737,7 +759,6 @@ struct refrend : Renderer
 		}
 
     //decode a vertex in the native pvr format
-    //used for bg poly
     void decode_pvr_vertex(DrawParameters* params, pvr32addr_t ptr,Vertex* cv)
     {
         //XYZ
@@ -777,6 +798,7 @@ struct refrend : Renderer
         }
     }
 
+    // decode an object (params + vertexes)
     u32 decode_pvr_vetrices(DrawParameters* params, pvr32addr_t base, u32 skip, u32 shadow, Vertex* vtx, int count)
     {
         bool PSVM=FPU_SHAD_SCALE.intensity_shadow == 0;
@@ -805,6 +827,7 @@ struct refrend : Renderer
     }
 
 
+    // render a triangle strip object list entry
     template<int alpha_mode>
     void RenderTriangleStrip(ObjectListEntry obj, RECT* rect)
     {
@@ -832,6 +855,7 @@ struct refrend : Renderer
     }
 
 
+    // render a triangle array object list entry
     template<int alpha_mode>
     void RenderTriangleArray(ObjectListEntry obj, RECT* rect)
     {
@@ -858,6 +882,7 @@ struct refrend : Renderer
         }
     }
 
+    // render a quad array object list entry
     template<int alpha_mode>
     void RenderQuadArray(ObjectListEntry obj, RECT* rect)
     {
@@ -886,6 +911,7 @@ struct refrend : Renderer
         }
     }
 
+    // Render an object list
     template<int alpha_mode>
     void RenderObjectList(pvr32addr_t base, RECT* rect)
     {
@@ -921,6 +947,8 @@ struct refrend : Renderer
         }
     }
 
+    // Render a frame
+    // Called on START_RENDER write
     virtual bool RenderPVR() {
 
         u32 base = REGION_BASE;
@@ -928,22 +956,9 @@ struct refrend : Renderer
         RegionArrayEntry entry;
         int tilenum = 1;
 
-        //printf("New Frame\n");
+        // Parse region array
         do {
             base += ReadRegionArrayEntry(base, &entry);
-/*          
-            printf("Tile: %d at %dx%d\n", tilenum++, entry.control.tilex*32, entry.control.tiley*32);
-            printf("CTRL: %08X\n", entry.control.full);
-            printf("OPAQ: %08X\n", entry.opaque.full);
-            printf("OPAQMOD: %08X\n", entry.opaque_mod.full);
-            printf("TRANS: %08X\n", entry.trans.full);
-            printf("TRANSMOD: %08X\n", entry.trans_mod.full);
-            printf("PT: %08X\n", entry.puncht.full);
-*/
-
-
-#define MAX(x,y) ((x) > (y) ? (x) : (y))
-#define MIN(x,y) ((x) < (y) ? (x) : (y))
 
             RECT rect;
             rect.top = entry.control.tiley * 32;
@@ -952,6 +967,7 @@ struct refrend : Renderer
             rect.bottom = rect.top + 32;
             rect.right = rect.left + 32;
 
+            // Tile needs clear?
             if (!entry.control.z_keep) {
                 
                 // Clear Z
@@ -968,17 +984,23 @@ struct refrend : Renderer
                     pb[i] = ISP_BACKGND_T;
                 }
             }
-            
+
+            // Render OPAQ to TAGS          
             if (!entry.opaque.empty) {
                 RenderObjectList<0>(entry.opaque.ptr_in_words * 4, &rect);
             }
 
+            //TODO: Render OPAQ modvols
+
+            // Render TAGS to ACCUM
             RenderParamTags(0, rect.left, rect.top);
 
+            // render PT to ACCUM
             if (!entry.puncht.empty) {
                 RenderObjectList<1>(entry.puncht.ptr_in_words * 4, &rect);
             }
 
+            // layer peeling rendering
             if (!entry.trans.empty) {
 
                 do {
@@ -992,31 +1014,29 @@ struct refrend : Renderer
                     auto zb = reinterpret_cast<float*>(render_buffer + DEPTH1_BUFFER_PIXEL_OFFSET);
                     auto zb2 = reinterpret_cast<float*>(render_buffer + DEPTH2_BUFFER_PIXEL_OFFSET);
 
-//                    memcpy(render_buffer + DEPTH2_BUFFER_PIXEL_OFFSET, render_buffer + DEPTH1_BUFFER_PIXEL_OFFSET, MAX_RENDER_PIXELS);
                     for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
-                        zb2[i] = zb[i];
-                        zb[i] = 3200000.0f;
+                        zb2[i] = zb[i];     // keep old ZB for reference
+                        zb[i] = FLT_MAX;    // set the "closest" test to furthest value possible
                     }
 
-                    // render new tags
+                    // render to TAGS
                     RenderObjectList<2>(entry.trans.ptr_in_words * 4, &rect);
 
-                    // draw them
-
+                    // render TAGS to ACCUM
                     RenderParamTags(2, rect.left, rect.top);
                 } while (PixelsDrawn != 0);
             }
 
-            //RenderParamTags(2);
 
+            // Copy to vram
             if (!entry.control.no_writeout) {
-                // copy to vram
 
                 auto field = SCALER_CTL.fieldselect;
                 auto interlace = SCALER_CTL.interlace;
                 
                 auto base = (interlace && field) ? FB_W_SOF2 : FB_W_SOF1;
 
+                // very few configurations supported here
                 verify(SCALER_CTL.hscale == 0);
                 verify(SCALER_CTL.interlace == 0); // write both SOFs
                 auto vscale = SCALER_CTL.vscalefactor;
@@ -1049,7 +1069,6 @@ struct refrend : Renderer
         tsp_cache.clear();
         cache_tag.full = -1;
 
-        //Present();
         return false;
     }
 

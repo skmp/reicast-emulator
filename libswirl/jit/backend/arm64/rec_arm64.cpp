@@ -1077,7 +1077,8 @@ private:
 		else
 		{
 			// Not RAM
-			Mov(w0, op.rs1._imm);
+			Mov(x0, (uintptr_t)sh4_cpu);
+			Mov(w1, op.rs1._imm);
 
 			switch(size)
 			{

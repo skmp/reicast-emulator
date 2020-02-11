@@ -867,7 +867,8 @@ public:
 		else
 		{
 			// Not RAM: the returned pointer is a memory handler
-			mov(call_regs[0], op.rs1._imm);
+			mov(call_regs[0].cvt64(), (uintptr_t)sh4_cpu);
+			mov(call_regs[1], op.rs1._imm);
 
 			switch(size) {
 			case 2:

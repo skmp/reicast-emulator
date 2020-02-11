@@ -304,7 +304,8 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 #ifdef PROF2
 						x86e->Emit(op_add32,&srmls,1);
 #endif
-						x86e->Emit(op_mov32,ECX,op->rs1._imm);
+						x86e->Emit(op_mov32,ECX, (uintptr_t)(sh4_cpu));
+						x86e->Emit(op_mov32,EDX,op->rs1._imm);
 						fuct=ptr;
 					}
 				}

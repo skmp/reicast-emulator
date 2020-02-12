@@ -354,6 +354,8 @@ struct ReicastUI_impl : GUI {
             std::string game_file = cfgLoadStr("config", "image", "");
             if (!game_file.empty())
             {
+                if(game_file == "bios")
+                    game_file = "";
                 if (gui_start_game(game_file))
                     gui_state = Closed;
             }

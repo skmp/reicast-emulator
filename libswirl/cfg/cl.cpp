@@ -148,6 +148,11 @@ bool ParseCommandLine(int argc,wchar* argv[])
 				cfgSetVirtual("config", "reios.enabled", "1");
 				cfgSetVirtual("reios", "ElfFile", *arg);
 			}
+			else if (stricmp(*arg, "bios") == 0)
+			{
+				printf("Bios boot enabled\n");
+				cfgSetVirtual("config", "image", "bios");
+			}
 			else
 			{
 #if DC_PLATFORM == DC_PLATFORM_NAOMI || DC_PLATFORM == DC_PLATFORM_ATOMISWAVE

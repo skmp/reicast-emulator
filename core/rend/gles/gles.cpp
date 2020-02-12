@@ -17,6 +17,9 @@
 #ifndef GL_MAJOR_VERSION
 #define GL_MAJOR_VERSION                  0x821B
 #endif
+#ifndef GL_MINOR_VERSION
+#define GL_MINOR_VERSION                  0x821C
+#endif
 
 GLCache glcache;
 gl_ctx gl;

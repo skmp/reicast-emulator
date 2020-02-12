@@ -310,6 +310,8 @@ static BITMAPINFOHEADER bi = { sizeof(BITMAPINFOHEADER), 0, 0, 1, 32, BI_RGB };
 
 bool gles_init();
 
+typedef u32 parameter_tag_t;
+
 /*
     Main renderer class
 */
@@ -326,7 +328,7 @@ struct refrend : Renderer
         PixelFlush_tspFn shade;
     };
 
-    map<u32, CacheEntry> tsp_cache;
+    vector<CacheEntry> tsp_cache;
 
     refrend(u8* vram) : vram(vram) { }
 
@@ -469,52 +471,39 @@ struct refrend : Renderer
         }
     }
 
-    ISP_BACKGND_T_type cache_tag;
-    CacheEntry* cache_entry;
+    parameter_tag_t AddTspEntry(DrawParameters* params, Vertex* vtx, int alpha_mode)
+    {
+        CacheEntry entry;
+        entry.params = *params;
+        // generate
+        if (entry.params.isp.Texture)
+        {
+            entry.texture = raw_GetTexture(vram, entry.params.tsp, entry.params.tcw);
+        }
+
+        entry.ips.Setup(&entry.texture, vtx[0], vtx[1], vtx[2]);
+
+        entry.shade = PixelFlush_tspFns[alpha_mode][entry.params.tsp.UseAlpha][entry.params.isp.Texture][entry.params.tsp.IgnoreTexA][entry.params.tsp.ShadInstr][entry.params.isp.Offset];
+
+        tsp_cache.push_back(entry);
+
+        return tsp_cache.size();
+    }
 
     // Lookup/create cached TSP parameters, and call PixelFlush_tsp
-    bool PixelFlush_tsp_cached(int alpha_mode, float x, float y, u8 *pb, ISP_BACKGND_T_type tag)
+    bool PixelFlush_tsp_cached(float x, float y, u8 *pb, parameter_tag_t tag)
     {
-        if (tag.full == 0)
+        if (tag == 0)
             return false;
 
-        if (tag.full == cache_tag.full)
-            return cache_entry->shade(&cache_entry->texture, x, y, pb, cache_entry->ips);
-
-        auto cacheEntry = tsp_cache.find(tag.full);
-
-        if (cacheEntry != tsp_cache.end())
-        {
-            cache_tag.full = tag.full;
-            cache_entry = &cacheEntry->second;
-            // use
-            return cacheEntry->second.shade(&cacheEntry->second.texture, x, y, pb, cacheEntry->second.ips);
-        }
-        else
-        {
-            auto entry = &tsp_cache[tag.full];
-
-            // generate
-
-            Vertex vtx[8];
-            decode_pvr_vetrices(&entry->params, PARAM_BASE + tag.tag_address * 4, tag.skip, tag.shadow, vtx, tag.tag_offset + 3);
-
-            if (entry->params.isp.Texture)
-            {
-                entry->texture = raw_GetTexture(vram, entry->params.tsp, entry->params.tcw);
-            }
-
-            entry->ips.Setup(&entry->texture, vtx[tag.tag_offset + 0], vtx[tag.tag_offset + 1], vtx[tag.tag_offset + 2]);
-
-            entry->shade = PixelFlush_tspFns[alpha_mode][entry->params.tsp.UseAlpha][entry->params.isp.Texture][entry->params.tsp.IgnoreTexA][entry->params.tsp.ShadInstr][entry->params.isp.Offset];
-
-            return entry->shade(&entry->texture, x, y, pb, entry->ips);
-        }
+        auto entry = &tsp_cache[tag-1];
+        
+        return entry->shade(&entry->texture, x, y, pb, entry->ips);
     }
 
     // Depth processing for a pixel -- alpha_mode 0: OPAQ, 1: PT, 2: TRANS
     template <int alpha_mode>
-    void PixelFlush_isp(float x, float y, u8 *pb, PlaneStepper3 &Z, ISP_BACKGND_T_type tag)
+    void PixelFlush_isp(float x, float y, u8 *pb, PlaneStepper3 &Z, parameter_tag_t tag)
     {
         float invW = Z.Ip(x, y);
         float *zb = (float *)&pb[DEPTH1_BUFFER_PIXEL_OFFSET * 4];
@@ -539,7 +528,7 @@ struct refrend : Renderer
                 return;
 
             *zb = invW;
-            *(u32*)pb = tag.full;
+            *(parameter_tag_t*)pb = tag;
         }
         // PT
         else if (alpha_mode == 1)
@@ -548,7 +537,7 @@ struct refrend : Renderer
             if (invW < *zb)
                 return;
 
-            if (PixelFlush_tsp_cached(alpha_mode, x, y, pb, tag))
+            if (PixelFlush_tsp_cached(x, y, pb, tag))
             {
                 *zb = invW;
             }
@@ -565,7 +554,7 @@ struct refrend : Renderer
             PixelsDrawn++;
             
             *zb = invW;
-            *(u32*)pb = tag.full;
+            *(parameter_tag_t*)pb = tag;
         }
     }
 
@@ -574,7 +563,7 @@ struct refrend : Renderer
 
     // Rasterize a single triangle to ISP (or ISP+TSP for PT)
     template<int alpha_mode>
-    void Rendtriangle(DrawParameters* params, ISP_BACKGND_T_type tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area)
+    void Rendtriangle(DrawParameters* params, parameter_tag_t tag, int vertex_offset, const Vertex& v1, const Vertex& v2, const Vertex& v3, u32* colorBuffer, RECT* area)
     {
         const int stride_bytes = STRIDE_PIXEL_OFFSET * 4;
         //Plane equation
@@ -712,11 +701,11 @@ struct refrend : Renderer
     // TAG holds references to triangles, ACCUM is the tile framebuffer
     void RenderParamTags(int alpha_mode, int tileX, int tileY) {
 
-        auto pb = reinterpret_cast<ISP_BACKGND_T_type*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
+        auto pb = reinterpret_cast<parameter_tag_t*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
 
         for (int y = 0; y < 32; y++) {
             for (int x = 0; x < 32; x++) {
-                PixelFlush_tsp_cached(alpha_mode, tileX + x, tileY + y, (u8*)&render_buffer[x + y * MAX_RENDER_WIDTH], *pb++);
+                PixelFlush_tsp_cached(tileX + x, tileY + y, (u8*)&render_buffer[x + y * MAX_RENDER_WIDTH], *pb++);
             }
         }
     }
@@ -838,17 +827,13 @@ struct refrend : Renderer
 
         decode_pvr_vetrices(&params, param_base + obj.tstrip.param_offs_in_words * 4, obj.tstrip.skip, obj.tstrip.shadow, vtx, 8);
 
-        ISP_BACKGND_T_type tag = {0};
-
-        tag.skip = obj.tstrip.skip;
-        tag.shadow = obj.tstrip.shadow;
-        tag.tag_address = obj.tstrip.param_offs_in_words;
 
         for (int i = 0; i < 6; i++)
         {
             if (obj.tstrip.mask & (1 << (5-i)))
             {
-                tag.tag_offset = i;
+
+                parameter_tag_t tag = AddTspEntry(&params, &vtx[i], alpha_mode);
                 Rendtriangle<alpha_mode>(&params, tag, i&1, vtx[i+0], vtx[i+1], vtx[i+2], render_buffer, rect);
             }
         }
@@ -872,12 +857,7 @@ struct refrend : Renderer
 
             param_ptr = decode_pvr_vetrices(&params, param_ptr, obj.tarray.skip, obj.tarray.shadow, vtx, 3);
             
-            ISP_BACKGND_T_type tag = {0};
-
-            tag.skip = obj.tarray.skip;
-            tag.shadow = obj.tarray.shadow;
-            tag.tag_address = obj.tarray.param_offs_in_words;
-            tag.tag_offset = 0;
+            parameter_tag_t tag = AddTspEntry(&params, &vtx[0], alpha_mode);
             Rendtriangle<alpha_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], render_buffer, rect);
         }
     }
@@ -899,12 +879,7 @@ struct refrend : Renderer
 
             param_ptr = decode_pvr_vetrices(&params, param_ptr, obj.qarray.skip, obj.qarray.shadow, vtx, 4);
             
-            ISP_BACKGND_T_type tag = {0};
-
-            tag.skip = obj.qarray.skip;
-            tag.shadow = obj.qarray.shadow;
-            tag.tag_address = obj.qarray.param_offs_in_words;
-            tag.tag_offset = 0;
+            parameter_tag_t tag = AddTspEntry(&params, &vtx[0], alpha_mode);
 
             //TODO: FIXME
             Rendtriangle<alpha_mode>(&params, tag, 0, vtx[0], vtx[1], vtx[2], render_buffer, rect);
@@ -978,10 +953,16 @@ struct refrend : Renderer
                 }
 
                 // Clear PB
-                auto pb = reinterpret_cast<ISP_BACKGND_T_type*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
+                auto pb = reinterpret_cast<parameter_tag_t*>(render_buffer + PARAM_BUFFER_PIXEL_OFFSET);
+
+                DrawParameters params;
+                Vertex vtx[8];
+                decode_pvr_vetrices(&params, PARAM_BASE + ISP_BACKGND_T.tag_address * 4, ISP_BACKGND_T.skip, ISP_BACKGND_T.shadow, vtx, 8);
+
+                auto tag = AddTspEntry(&params, &vtx[ISP_BACKGND_T.tag_offset], 0);
 
                 for (int i = 0; i < MAX_RENDER_PIXELS; i++) {
-                    pb[i] = ISP_BACKGND_T;
+                    pb[i] = tag;
                 }
             }
 
@@ -1067,7 +1048,6 @@ struct refrend : Renderer
 
         // clear the tsp cache
         tsp_cache.clear();
-        cache_tag.full = -1;
 
         return false;
     }

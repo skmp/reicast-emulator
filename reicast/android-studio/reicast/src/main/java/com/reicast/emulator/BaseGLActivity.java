@@ -53,7 +53,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-	   setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+	  setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         if (!getFilesDir().exists()) {
             getFilesDir().mkdir();
